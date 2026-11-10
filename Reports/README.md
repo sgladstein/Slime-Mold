@@ -103,6 +103,18 @@ move.
   ahead at 60 s keeps the lead in about 80% of 700 games. Verb census, 16 seeds a dish: on the field a salt line
   across the rival's road moves share 0.02 on 14 of 16 and beats random 14 of 16; on The Wild One only the lamp
   moves it (15 of 16 up, 11 by 0.02); placed food loses on both. 700 of the games ran on four runner threads.
+  **Layout sweep and comeback test, later the same day** (in `field/`, with `sweep/` and `comeback/`): the counter
+  cycle holds on 0 of 8 new layouts (1 of 10 in all; cord usually simply wins), 768 games on runner threads; the side
+  behind at 60 s turns 6 of 12 lost games with one salt wall across the leader's road and 9 of 12 with one every 15 s
+  (both beat a random wall 16/16), and 12 of 15 and 13 of 15 on a symmetric Wild One; the lamp and the cut never do.
+- [rts-skirmish-2026-11-10.md](rts-skirmish-2026-11-10.md) — **the field skirmish, a playable RTS demo, and what wins
+  it** (`src/mould/skirmish.rs`, `web/`, harness `duel` mode; folder `rts-skirmish-2026-11-10/`). v1 (habits, salt,
+  lamp, a rival that counters your habit) is playable in the browser; its rival beat an idle hand 16/16 and lost 14 of
+  16 to a hand that counters at once; the owner played it and found no strategy (21:14Z). v2, the budget skirmish: a tithe of each
+  bite into a bank, spent on beacons (`Dish::beacons`), spores (`Dish::plant`) and habits, with late food. Nine
+  scripted plans, 576 games on four runner threads: soft (beacons then spores on the rival's thinnest pile) beat all 8
+  others, 127 of 128 games; no cycle among 36 pairings; 300 games ended in a wipe-out. A guard, a spore reach and
+  sleeping spores did not stop it. Page: *Budget Skirmish Strategies*.
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as
