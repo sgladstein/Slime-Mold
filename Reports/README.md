@@ -143,7 +143,14 @@ move.
   and walkers past it fly straight (random play reaches the food behind the wall on 5 seeds of 16), so the fields stay
   `f32`; moving all walkers at once cuts seam fights and costs The Wild One's warden its share on 15 of 16 seeds
   (p 0.0005). The owner (20:55Z) ruled the current dishes unlikely to be the true games, so later gates use engine
-  measures on a neutral dish.
+  measures on a neutral dish. Then the scaling rule and phase 2's big dish on the CPU ([scale/](gpu-plan-2026-11-10/scale/),
+  engine-only `mould::big`, 16 paired seeds): every number in today's units gives no network (today's net comes from its
+  coarse grain); four fine steps a tick costs 3.7x and is worse on every measure (rejected); the plain 4x port plus food
+  smelled at today's reach is chosen (64.5 loops against today's 3, strays 2.2%, 11 ms a tick on one core), though a
+  packed home blob stays a bag (3 piles at 20 s against 4). 100,000 walkers make 164 loops at 10 s.
+  The owner picked 100,000 walkers (22:32Z). The GPU timing test (`examples/gputime.rs`, four wgpu compute passes a
+  tick) is built; on a software GPU its dish matches the CPU's (165 loops against 163 at 100k, 10 s) and it waits for
+  the owner's GTX 1070.
 
 ## Added with the move (2026-11-10)
 

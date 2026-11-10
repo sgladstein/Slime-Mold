@@ -40,6 +40,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-10 22:32, card | The GPU mould aims for 100,000 walkers on 1024 x 640 (phase 2's gate), over 32,000 or stopping the GPU work | card ("100,000 walkers", on "Which scale should the GPU mould aim for?") | [scale](model/scale.md) |
 | 2026-11-10 21:17 | The field skirmish's next version spends a bank: food into a bank, beacons, spores, costed habits; explore how it plays and whether one strategy wins | "This is an interesting direction. Brainstorm/explore how these tools/game plays out. What different strategies would different players use to win. How complex or interesting are the strategies? Does one strategy beat all the others?" | [field skirmish](rts/skirmish.md) |
 | 2026-11-10 21:14 | The field skirmish's first version (habits, salt, the lamp) set aside after play | "Overall, user input seems limited and doesn't lead to any complex stratgy" | [field skirmish](rts/skirmish.md) |
 | 2026-11-10 20:42, card | Build both RTS demos at once, in two threads: the field skirmish and Two Fevers | card ("Both, in two threads") | [RTS directions](rts/directions.md) |

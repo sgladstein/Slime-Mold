@@ -44,6 +44,13 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   way on the CPU: a late census is safe; fixed-point trail and scent change
   play (the fields stay floats); moving all walkers at once cuts fights
   where two moulds meet. Later gates use engine measures, not today's dishes.
+  The scaling rule is chosen (today's numbers in fine cells, food smelled at
+  today's reach) and the big dish runs offline on the CPU (`mould::big`):
+  at 1024 x 640, 32,000 walkers make about 60 loops and 100,000 about 90-160,
+  against today's 3 ([page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs)).
+  The owner picked 100,000 walkers (22:32Z). Next: the GTX 1070 timing,
+  `cargo run --release --example gputime` at Scott-Desktop (built and
+  checked on a software GPU; its dish matches the CPU's).
 - How it is judged: [the census](wiki/method/census.md).
 - [The field skirmish](wiki/rts/skirmish.md): version 1 (habits, salt, the
   lamp) is playable (https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw) and
@@ -82,7 +89,9 @@ Ask each again; none has an answer to assume.
    measured: fixed-point trail and scent changed play, so the recommendation
    is now floats for the fields (integer positions still possible); upload
    Jones 2011 before phase 4; hold the Pixel_Physics multi-core renderer port
-   until the phase 2 gate.
+   until the phase 2 gate. The owner picked the target at phase 2's gate
+   (22:32Z): 100,000 walkers on 1024 x 640. The GTX 1070 timing test runs
+   next, when the owner is at Scott-Desktop.
 7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
    *Risks and open questions*): should it wait for the queued work or take
    over The Wild One's next steps (its Stage 0 answers the same mid-game

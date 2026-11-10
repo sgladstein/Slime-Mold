@@ -1,0 +1,8 @@
+bigdish: preset reach-uniform seeds [3] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 4, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 36.0, step: 1.0, deposit: 1.25, keep: 0.97400373, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: true, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: false, tube: 1.0, seed: 1 }
+== seed 3: 1024 x 640, 32000 walkers, 7 piles
+seed 3 reach-uniform t   5.0s  tube  3803.6  loops   22  width 4.93  reach  154.7  piles 7/7  strays 0.231  ms/tick 25.01
+seed 3 reach-uniform t  10.0s  tube  2802.0  loops   17  width 3.66  reach  154.9  piles 7/7  strays 0.362  ms/tick 24.63
+seed 3 reach-uniform t  15.0s  tube  2512.1  loops   12  width 3.31  reach  154.1  piles 7/7  strays 0.405  ms/tick 24.79
+seed 3 reach-uniform t  20.0s  tube  2278.2  loops    9  width 3.31  reach  153.7  piles 7/7  strays 0.480  ms/tick 24.58
+seed 3 reach-uniform hash=5e11f9452fcb6210
