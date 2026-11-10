@@ -156,8 +156,8 @@ def compare(runs, bars, arm):
             starsets = lambda xs: "".join(str(x[0]) for x in xs)
             print(
                 f"{hand:>9} | {st:>3} ({starsets([a for a, _ in pairs])}) | {sl:>3} ({starsets([b for _, b in pairs])}) | "
-                f"{show(dish, statistics.median(mt))} ({show(dish, min(mt))} to {show(dish, max(mt))}) | "
-                f"{show(dish, statistics.median(ml))} ({show(dish, min(ml))} to {show(dish, max(ml))}) | {w}-{lo}-{same}, p {p:.3f}"
+                f"{show(dish, statistics.median_low(mt))} ({show(dish, min(mt))} to {show(dish, max(mt))}) | "
+                f"{show(dish, statistics.median_low(ml))} ({show(dish, min(ml))} to {show(dish, max(ml))}) | {w}-{lo}-{same}, p {p:.3f}"
             )
         met = lambda a: sum(bars.get((a, dish, s), False) for s in seeds)
         print(f"{'ship bar':>9} | met on {met('today')} of {len(seeds)} seeds today, {met(arm)} under {arm}")
