@@ -150,6 +150,10 @@ pub struct Rules {
     pub rally_cost: f32,
     pub rally_seconds: u64,
     pub rally_gain: f32,
+    /// The two moulds take turns moving first (`Dish::take_turns`). Off,
+    /// yours always moves first, and won 14 of 16 mirror games; rounds 1-3
+    /// ran with it off.
+    pub take_turns: bool,
 }
 
 impl Default for Rules {
@@ -168,6 +172,7 @@ impl Default for Rules {
             rally_cost: RALLY_COST,
             rally_seconds: RALLY_SECONDS,
             rally_gain: RALLY_GAIN,
+            take_turns: true,
         }
     }
 }
@@ -191,6 +196,7 @@ impl Rules {
             "rally_cost" => self.rally_cost = v,
             "rally_seconds" => self.rally_seconds = v as u64,
             "rally_gain" => self.rally_gain = v,
+            "take_turns" => self.take_turns = v != 0.0,
             _ => return false,
         }
         true
@@ -480,6 +486,31 @@ impl Skirmish {
         }
     }
 
+    /// Set a rule (`Rules::set`) or one of the model's numbers on both
+    /// moulds at once: `fight`, `fight_fed`, `fight_unfed`, `upkeep`,
+    /// `upkeep_size`, `hold`, `hold_flip`. False if `name` is neither or
+    /// `value` is not a number.
+    pub fn set(&mut self, name: &str, value: &str) -> bool {
+        if self.rules.set(name, value) {
+            return true;
+        }
+        let Ok(v) = value.parse::<f32>() else { return false };
+        for s in 0..2 {
+            let p = &mut self.mould_mut(s).params;
+            match name {
+                "fight" => p.fight = v,
+                "fight_fed" => p.fight_fed = v,
+                "fight_unfed" => p.fight_unfed = v,
+                "upkeep" => p.upkeep = v,
+                "upkeep_size" => p.upkeep_size = v,
+                "hold" => p.hold = v,
+                "hold_flip" => p.hold_flip = v,
+                _ => return false,
+            }
+        }
+        true
+    }
+
     /// Side `s` sets its tithe (any fraction; the page offers `TITHES`).
     pub fn set_tithe(&mut self, s: usize, tithe: f32) {
         let tithe = tithe.clamp(0.0, 0.9);
@@ -682,6 +713,7 @@ impl Skirmish {
     /// each scripted side thinks once a second (the rival half a second
     /// after you).
     pub fn tick(&mut self) {
+        self.dish.take_turns = self.rules.take_turns;
         if self.dish.phase != Phase::Growing {
             return;
         }
@@ -1097,8 +1129,9 @@ mod tests {
         let (mine, theirs) = (s.walkers(0), s.walkers(1));
         assert!(s.act(0, Verb::Spore(20)));
         assert!(s.act(1, Verb::Spore(20)));
-        // A crowded pile takes fewer than the whole colony.
-        assert!(s.walkers(0) > mine + SPORE_WALKERS / 2 && s.walkers(0) <= mine + SPORE_WALKERS);
+        // A crowded pile takes fewer than the whole colony: the centre pile
+        // at 0:40 on dish 2 took 60 of 150 once the moulds took turns.
+        assert!(s.walkers(0) > mine + SPORE_WALKERS / 4 && s.walkers(0) <= mine + SPORE_WALKERS, "{} placed", s.walkers(0) - mine);
         assert!(s.walkers(1) > theirs && s.walkers(1) <= theirs + SPORE_WALKERS);
         assert!(s.act(0, Verb::Beacon(19)));
         assert_eq!(s.dish.beacons.len(), 1);
@@ -1124,6 +1157,45 @@ mod tests {
         let mine = s.dish.scent[i];
         let theirs = s.dish.rival.as_ref().unwrap().scent[i];
         assert!(mine > 2.0 * theirs, "beacon scent {mine} against {theirs}");
+    }
+
+    #[test]
+    fn the_holder_bites_harder_and_loses_the_pile_only_when_outnumbered() {
+        let mut p = super::super::Pile {
+            eaters: 10,
+            foe_eaters: 10,
+            ..Skirmish::new(1, [None, None]).dish.piles[1].clone()
+        };
+        let (table, eat) = (40, 0.03);
+        assert_eq!(p.bite_held(table, eat, 2.0), p.bite(table, eat), "nobody holds it yet");
+        p.held = 1;
+        assert!((p.bite_held(table, eat, 2.0) - 2.0 * p.bite_held(table, eat, 1.0) * 2.0 / 3.0).abs() < 1e-6);
+        p.held = -1;
+        assert!((p.bite_held(table, eat, 2.0) - p.bite(table, eat) * 2.0 / 3.0).abs() < 1e-6);
+        // In a skirmish the home piles are held by their own mould, and a
+        // plain head count marks nothing.
+        let mut s = Skirmish::new(2, [None, None]);
+        assert!(s.set("hold", "2"));
+        run(&mut s, 5);
+        assert_eq!(s.dish.piles[0].held, 1);
+        assert_eq!(s.dish.piles[22].held, -1);
+        assert_eq!(s.dish.rival.as_ref().unwrap().piles[22].held, 1);
+        let mut s = Skirmish::new(2, [None, None]);
+        run(&mut s, 5);
+        assert!(s.dish.piles.iter().all(|p| p.held == 0));
+        assert!(!s.set("no_such_rule", "1"));
+    }
+
+    #[test]
+    fn upkeep_that_grows_with_size_shrinks_a_lone_mould() {
+        let grow = |k: &str| {
+            let mut s = Skirmish::new(4, [None, None]);
+            assert!(s.set("upkeep_size", k));
+            run(&mut s, 30);
+            s.walkers(0)
+        };
+        let (flat, steep) = (grow("0"), grow("0.3"));
+        assert!(steep < flat, "{steep} walkers with a size cost, {flat} without");
     }
 
     #[test]
