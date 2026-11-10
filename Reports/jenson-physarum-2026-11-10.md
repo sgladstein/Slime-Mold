@@ -9,9 +9,11 @@ read of Jenson's post, Cherouvim and Jones 2010/2015 in
 [`mould-game-2026-11-08/depth-2026-11-09/sources-research.md`](mould-game-2026-11-08/depth-2026-11-09/sources-research.md).
 
 **How it was read.** Jenson's post (cargocollective.com/sagejenson/physarum)
-and sagejenson.com/physarum refused automated reading this time
-(robots.txt), so the post's quotes below come from the 2026-11-09 full read.
-Opened this time: sagejenson.com, sagejenson.com/36points (a JavaScript
+and sagejenson.com/physarum refuse automated reading (robots.txt). The owner
+saved the page as a PDF, kept here as
+[`jenson-physarum-2026-11-10/jenson-physarum-post-2019.pdf`](jenson-physarum-2026-11-10/jenson-physarum-post-2019.pdf);
+its text and five pictures were read from that (the GIFs print as one frame
+each), and the text matches the 2026-11-09 full read. Also opened: sagejenson.com, sagejenson.com/36points (a JavaScript
 viewer, no model text), the xCoAx 2020 paper (full text), This is Paper's
 *Primordium* article, raster.art's artist page, the MCPM paper (arXiv
 2204.01256, full text), the Polyphorm paper (arXiv 2009.02441), and the
@@ -24,7 +26,7 @@ say "their", so this file does too.
 
 ## Summary
 
-Jenson runs the same Jones 2010 rules we do, but with 5-10 million particles on a GPU, no one-particle-per-cell limit, and the trail drawn at full resolution. That, not a better rule, is most of why the pictures look so much more alive than ours (400-2,200 walkers on a 256 x 160 grid).
+Jenson runs the same Jones 2010 rules we do, but with 5-10 million particles on a GPU, no one-particle-per-cell limit, and the trail drawn at full resolution. That, not a better rule, is most of why the pictures look so much more alive than ours (400-2,200 walkers on a 256 x 160 grid). The one picture that looks like real mould has a network no bigger than ours; it differs in its soft haze, thin bright tubes and feathery growth fronts.
 
 - **Code:** Jenson has never published the physarum code. The closest readable code is [Bleuje's interactive-physarum](https://github.com/Bleuje/interactive-physarum), which ports Jenson's later *36 Points* parameter presets.
 - **More writing:** one paper, [Jenson & Kuksenok, xCoAx 2020](https://2020.xcoax.org/pdf/xCoAx2020-Jenson.pdf), about a live stylus-driven performance, plus its [video](https://youtu.be/hEbbmJaYHAc). Neither gives numbers.
@@ -41,6 +43,16 @@ Jenson never published the physarum code. The post (February 2019) is still the 
 - **Change 2: contagion** (next section).
 - **Scale.** C++ and GLSL in openFrameworks, all on the GPU, real time on a GTX 1070, "with most of the examples comprised of between 5 and 10 million particles".
 
+**What the post's five pictures show** (from the saved PDF; the GIFs print as one frame each). All five are grey trail on black, with no colour map. Only one of them looks like the organism.
+
+| Picture | What it shows | What it tells us |
+| --- | --- | --- |
+| 1, header | Bundles of straight parallel white lines running diagonally, over a fine square lattice | A grid-locked regime: lines at 45 and 90 degrees follow the pixel grid. Striking, but not organic. |
+| 2, after the intro | A round dish holding one network of about five loops of bright tubes. A soft grey haze fills the dish, and the rim has frayed, fan-shaped growth fronts | The realistic one. Its network is about as big as ours (a handful of loops in a disc); what differs is the haze, the thin bright tube cores, and the feathery fronts. |
+| 3, diagram | The six sub-steps of a tick: sense, rotate, move, deposit, diffuse, decay. Rotate: front strongest, keep going; front weakest, turn randomly; otherwise turn toward the stronger side | Exactly Jones's rule, and ours. |
+| 4, the contagion GIF | Inside a rough circle, curved fibrous bundles like nerve fibres, many hair-thin strands merging into thick cords. Outside it, the same straight square lattice as picture 1 | Read as the infection's front: infected particles form a different pattern from healthy ones, so you watch one pattern eat the other. One frame only, so this is my reading. |
+| 5, last | Sparse speckle of single particles, a bright ring in the middle, faint loops around it | Low density drawn as dots: grainy, like ours. |
+
 **What else is out there.**
 
 | Source | What it is | Technical detail it adds |
@@ -56,7 +68,7 @@ Jenson never published the physarum code. The post (February 2019) is still the 
 
 ## Contagion: a state that travels through the network
 
-Contagion is a second state that particles carry and pass on through the trail, so a change can be seen moving along the tubes. Jenson's whole description is two sentences: "I also added a contagion behavior that alters properties of the simulation. When a particle is infected, it lays down an infected trail which then spreads to other particles." The post's GIF shows it spreading out from the centre of the picture. No paper, video or port documents it further, so the mechanism below is a reconstruction from those two sentences, not Jenson's code.
+Contagion is a second state that particles carry and pass on through the trail, so a change can be seen moving along the tubes. Jenson's whole description is two sentences: "I also added a contagion behavior that alters properties of the simulation. When a particle is infected, it lays down an infected trail which then spreads to other particles." The post's GIF shows it spreading out from the centre of the picture. In the one frame the PDF keeps, the infected middle has become curved fibrous cords while the healthy outside is still a straight square lattice, so infection visibly changes how particles move, not just their colour. No paper, video or port documents it further, so the mechanism below is a reconstruction from those two sentences and that frame, not Jenson's code.
 
 The likely loop, one step at a time:
 
@@ -85,16 +97,18 @@ Jenson's model is the same as ours step for step; the difference is about 5,000 
 | Particles per cell | Several per pixel at 1080p (assumption above) | 0.01-0.07; about 0.2-0.3 on tube cells |
 | One per cell | Off: particles pile onto ridges | On (`occ`); a blocked walker is Jones's "gel" |
 | Where it runs | GPU (GLSL compute, openFrameworks), GTX 1070 | CPU, single thread, about 1.4 ms of frame per 1,500 walkers |
-| Picture | The trail, at full resolution, through a colour map | The trail as brightness at 4x pixel scale, hunger blended, a dot per walker |
+| Picture | The trail, at full resolution, grey on black | The trail as brightness at 4x pixel scale, hunger blended, a dot per walker |
 | Tube width | A few pixels, with finer veins inside | About 12 cells (`TUBE_WIDTH`), so roughly 20 tubes fit across the dish |
 | Extras | Contagion; later, parameters set by the sensed trail (36 Points) | Food, lamp push, salt, snips, water and sleep, a rival mould, walker food economy |
 
-**Why the pictures look more real, in order of how much I think each matters:**
+**Why the pictures look more real.** Only picture 2 looks like the organism, and its network is no bigger than ours: about five loops of tube in a round dish. What makes it read as alive is density and drawing, in order of how much I think each matters:
 
-1. **Density makes a continuous field.** With several particles per pixel the trail is smooth, so the eye reads soft gradients and thin veins. With one walker per 15-100 cells our trail is grainy, and a tube has to be about 12 cells wide to hold together.
-2. **No one-per-cell limit gives bright cores.** Particles stack on the ridge of a tube, so a vein has a very bright centre and a soft edge, a wide range of brightness like the real organism's veins. Ours cannot exceed one walker a cell, so tubes are flat.
-3. **Many scales at once.** At millions of particles a big network has fine branches between its big tubes. Our dish has room for only a couple of levels.
+1. **A haze where the mould has been.** Faint trail fills the dish as a smooth grey glow, brighter near tubes. At several particles per pixel the faint part is smooth; at our one walker per 15-100 cells it is grainy speckle, which is what Jenson's own low-density picture 5 looks like too.
+2. **Thin tubes with bright cores.** By eye, picture 2's tubes are about 1-2% of the dish's width, with a bright centre that falls off softly. Without the one-per-cell limit, particles stack on a tube's ridge. Ours are about 5% (12 cells of 256) and flat-topped.
+3. **Feathery growth fronts.** Where the network meets the rim, it frays into fan-shaped, wispy fronts, the look of a real plasmodium's leading edge. That needs many particles spreading out at once; at our density a front is a few dozen walkers (not yet checked against one of our stills).
 4. **Resolution.** Jenson's picture is drawn one pixel per trail cell; ours is a 256-wide field shown at 4x.
+
+Density alone does not give realism: pictures 1 and 4 are just as dense and lock onto the pixel grid in straight lines. Picture 2's settings are what avoid that, and the post does not give them.
 
 **What it would take here.** Scale is the only expensive part. On our CPU path, 5 million walkers would cost several seconds a step, so a Jenson-scale dish means moving the walkers to a GPU compute shader. Our window already draws through `pixels`, which sits on wgpu, so a compute path is in our stack rather than a new dependency. The game-side cost is bigger than the code: every per-walker rule (food stores, starvation, sleep, the rival's fight, the census's tube joins) would have to run on the GPU too, and constants tuned at sensor reach 9 on a 256-wide dish would all move. A cheaper middle step is a bigger grid (say 1024 x 640) with tens of thousands of walkers and one-per-cell off, as a look experiment before any GPU work. None of these has been measured here.
 

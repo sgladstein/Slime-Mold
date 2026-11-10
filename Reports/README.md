@@ -80,7 +80,8 @@ move.
   ours, but 5-10 million GPU particles with no one-per-cell limit and the trail drawn at full resolution, against our
   400-2,200 walkers on 256 x 160. Jenson never published the code; Bleuje's port of *36 Points* is the closest. Contagion
   is a state particles pass on through an "infected trail", the simulated pulse wanted since 11-09, not built. Surveys MCPM
-  and Polyphorm, Tero 2010, Lague, Ghassaei and Webb's list; five experiments, cheapest first. Live doc linked inside.
+  and Polyphorm, Tero 2010, Lague, Ghassaei and Webb's list; five experiments, cheapest first. Live doc linked inside;
+  the owner's PDF of Jenson's post (text and all five pictures) is in [jenson-physarum-2026-11-10/](jenson-physarum-2026-11-10/).
 
 ## Added with the move (2026-11-10)
 
