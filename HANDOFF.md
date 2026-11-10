@@ -1,10 +1,13 @@
-# Hand-off: the mould game at the account move (2026-11-10)
+# Hand-off: where the mould game stands
 
-On 2026-11-10 the owner moved all slime-mould work to a new account and
-project. This page is the single starting point for whoever picks it up
-there. It says where the game stands, what the owner still has to decide,
-and what to do next. Everything it points to is in this repository; nothing
-lives only in the old project.
+The single starting point for whoever picks up the mould game. It says where
+the game stands in one line per subject, what the owner still has to decide,
+and what to do next. It is written by hand, not generated: the facts behind
+each line live on the [wiki](wiki/index.md) pages it links, so update a line
+here when its page's **Now** changes, and keep the detail there (owner,
+2026-11-10 17:26Z; [`wiki/decisions.md`](wiki/decisions.md)). It began as the
+hand-off at the 2026-11-10 account move; everything it points to is in this
+repository.
 
 **Read first:** this page, then [`CLAUDE.md`](CLAUDE.md) (how to work here),
 then the [wiki page](wiki/index.md) for whatever you touch, then its
@@ -13,33 +16,26 @@ reports ([`Reports/README.md`](Reports/README.md) indexes them all).
 ## Where the game stands
 
 `cargo run --release --bin mould` is the game. Everything on screen is the
-simulation (the owner's ruling, 11-09 and 11-10: no drawn-only pulse, no
-thresholded tube edge, no fed/unfed colour line; the picture is the data).
+simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
+**Neither new dish has been played by the owner's hand yet.**
 
-- **Dishes.** An opening lesson, then five challenge dishes: Behind the Wall,
-  Beat the Ruler, Running Dry, **Keep It Alive** (the endless dish: oats land
-  one after another, farther each time, and you keep the mould alive with
-  lamp, oats and water) and **The Wild One** (a wild violet mould steals food
-  and fights yours). Free dishes and the Wanderer and Organ prototypes are
-  there too.
-- **Tools.** Lamp (pushes the mould away and dries the ground), oats, salt,
-  the knife (snip) and water (wet ground lets mould sleep through hunger
-  instead of dying).
-- **Look.** The from-the-simulation look is the default (owner 11-10 14:49Z:
-  "much better"): trail as brightness, hunger blended, a dot per walker. F7
-  brings back the old tube look for comparison.
-- **Model defaults.** Sensor angle 45 degrees, sensor reach 9 (finer tubes at
-  reach 6 were tried and not kept), food flow off (the T panel turns it on).
-  Keep It Alive and some dishes run at 22.5 degrees, which branches more;
-  `Params::settle_seconds` (off) eases 22.5 to 45.
-- **Scoring.** The Wild One scores your share of the food eaten over the
-  whole game (PR #6), because counting mould left at the bell let the last
-  ten seconds decide the stars. Keep It Alive scores how long it lives.
-- **How good is it as a game?** Review 2 found both new dishes work and
-  their numbers reproduce, but neither is yet a game you get better at by
-  playing: Keep It Alive's lives fall in two humps (dead by about 5:00 or
-  past 7:20) largely by luck, and The Wild One was an opening salt wall then
-  an aim test. PR #6 answers the scoring half of that for The Wild One.
+- [Keep It Alive](wiki/dishes/keep-it-alive.md): the endless dish works, but
+  which of two humps a game lands in (dead by about 5:00, or past 7:20) is
+  luck so far.
+- [The Wild One](wiki/dishes/the-wild-one.md): scored by your share of the
+  food eaten; the first star is the opening salt wall, the rest is aim.
+- The lesson and the three puzzle dishes (Behind the Wall, Beat the Ruler,
+  Running Dry): no page yet; [`Reports/mould-probe-2026-11-07.md`](Reports/mould-probe-2026-11-07.md).
+- Tools: [the lamp](wiki/tools/lamp.md) pushes and dries;
+  [the knife](wiki/tools/knife.md) moves nothing in The Wild One;
+  [water and sleep](wiki/model/water-and-sleep.md) carry mould through
+  famine in Keep It Alive. Oats and salt: no page yet.
+- Look: the from-the-simulation look is the default, F7 the old tube look;
+  no page yet, [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md).
+- Model defaults: sensor angle 45 degrees (22.5 on Keep It Alive and some
+  dishes), reach 9, food flow off; no page yet,
+  [`Reports/dead-ends.md`](Reports/dead-ends.md) for reach.
+- How it is judged: [the census](wiki/method/census.md).
 
 ## Decisions the owner has not made
 

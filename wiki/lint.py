@@ -8,7 +8,8 @@ Errors (fail): a relative link that does not resolve; a page that
 no longer appears anywhere under `src/`, `examples/` or the scripts kept in
 `Reports/`; a page missing a required frontmatter key; a row of a page's
 Numbers table with no link to its source; a line under "Owner's word" that
-does not start with a date; `index.md` over 150 lines.
+does not start with a date; `index.md` over 150 lines; a dish, tool or
+mechanism page that `HANDOFF.md` does not link.
 
 A top-level report under `Reports/` that no page cites is an error too,
 unless it is listed in `NOT_YET_INGESTED` (reports from before the wiki).
@@ -180,6 +181,17 @@ def main():
     if n > INDEX_CAP:
         errors.append(f"wiki/index.md: {n} lines, over the {INDEX_CAP}-line cap; "
                       "split it per folder (wiki/README.md, *Growth*)")
+
+    # HANDOFF.md is the front page: every dish, tool and mechanism page must
+    # be linked from it, so a new page cannot be missing from the summary.
+    with open(os.path.join(ROOT, "HANDOFF.md"), encoding="utf-8") as h:
+        handoff = h.read()
+    for p in all_pages:
+        with open(p, encoding="utf-8") as h:
+            kind = frontmatter(h.read()).get("kind")
+        rel = os.path.relpath(p, ROOT)
+        if kind in ("dish", "tool", "mechanism") and f"]({rel})" not in handoff:
+            errors.append(f"{rel}: not linked from HANDOFF.md's status section")
 
     reports = os.path.join(ROOT, "Reports")
     for f in sorted(os.listdir(reports)):

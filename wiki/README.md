@@ -92,5 +92,8 @@ a page whose Now a newer report overturned, or two pages that disagree.
 **Owner decision**: quote it with its time in [decisions.md](decisions.md),
 remove it from `HANDOFF.md`'s open list, update the pages it changes.
 
-**Hand-off**: run lint, then rewrite `HANDOFF.md` from the pages and
-[decisions.md](decisions.md), not from memory.
+**Hand-off**: `HANDOFF.md` is the hand-written front page: one linked line
+per subject, the open decisions, the next steps in order. Update a line when
+its page's Now changes; lint fails when a dish, tool or mechanism page is not
+linked from it. At a hand-off, run lint, then re-read each line against its
+page.

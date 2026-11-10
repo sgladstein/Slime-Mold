@@ -87,5 +87,8 @@ another thread); wiki pages list card paths in `sources:` like reports.
 ## Open for the owner
 
 - ~~Keep the lint in CI?~~ Owner, 17:25Z: "lint can stay in the CI for now."
-- Should `HANDOFF.md` become the overview page rewritten from the wiki, or
-  stay a separate hand-written note?
+- ~~What becomes of `HANDOFF.md`?~~ Owner, 17:26Z, "Sure" to the
+  recommendation: it stays the hand-written front page, its status section
+  becomes one linked line per subject, and it keeps the open decisions and
+  next steps. Lint fails when a dish, tool or mechanism page is not linked
+  from it.
