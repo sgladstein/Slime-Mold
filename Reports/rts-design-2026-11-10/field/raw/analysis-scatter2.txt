@@ -1,0 +1,35 @@
+scatter2: 400 games
+mirrors (self side share; fought a side; walkers at 60 s, both moulds)
+  hunter  16 games, share 0.332-0.660, both sides fought in 16/16, walkers60 6523-6717
+  mesh    16 games, share 0.416-0.571, both sides fought in 16/16, walkers60 6329-6717
+  runner  16 games, share 0.312-0.681, both sides fought in 16/16, walkers60 4104-4601
+  cord    16 games, share 0.454-0.586, both sides fought in 16/16, walkers60 6424-6602
+  maze    16 games, share 0.329-0.686, both sides fought in 16/16, walkers60 6349-7938
+pairings (wins of games for the first named, mean share, range, sign p)
+  hunter  v mesh    30/32  mean 0.587  0.490-0.700  p 2.5e-07
+  hunter  v runner  32/32  mean 0.782  0.737-0.819  p 4.7e-10
+  hunter  v cord    2/32  mean 0.422  0.330-0.514  p 2.5e-07
+  hunter  v maze    28/32  mean 0.574  0.352-0.664  p 1.9e-05
+  mesh    v runner  32/32  mean 0.860  0.822-0.886  p 4.7e-10
+  mesh    v cord    1/32 (1 tie)  mean 0.447  0.369-0.510  p 3e-08
+  mesh    v maze    2/32  mean 0.388  0.239-0.549  p 2.5e-07
+  runner  v cord    0/32  mean 0.134  0.082-0.216  p 4.7e-10
+  runner  v maze    0/32  mean 0.245  0.196-0.293  p 4.7e-10
+  cord    v maze    21/32  mean 0.521  0.453-0.643  p 0.11
+Holm over 10 pairings (alpha 0.05)
+  hunter > runner  p 4.7e-10  bar 0.0050  holds
+  mesh > runner  p 4.7e-10  bar 0.0056  holds
+  cord > runner  p 4.7e-10  bar 0.0063  holds
+  maze > runner  p 4.7e-10  bar 0.0071  holds
+  cord > mesh  p 3e-08  bar 0.0083  holds
+  cord > hunter  p 2.5e-07  bar 0.0100  holds
+  hunter > mesh  p 2.5e-07  bar 0.0125  holds
+  maze > mesh  p 2.5e-07  bar 0.0167  holds
+  hunter > maze  p 1.9e-05  bar 0.0250  holds
+  cord > maze  p 0.11  bar 0.0500  -
+3-cycles that hold: none
+opening: does the side ahead at 30 s / 60 s still lead at the end?
+  share30 all     leader keeps the lead 286/397  p 6.6e-19
+  share30 mirrors leader keeps the lead 57/78  p 5.6e-05
+  share60 all     leader keeps the lead 322/399  p 1e-36
+  share60 mirrors leader keeps the lead 66/80  p 3.1e-09

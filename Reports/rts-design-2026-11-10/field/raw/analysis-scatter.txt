@@ -1,0 +1,35 @@
+scatter: 444 games
+mirrors (self side share; fought a side; walkers at 60 s, both moulds)
+  hunter  16 games, share 0.336-0.556, both sides fought in 16/16, walkers60 6596-6739
+  mesh    16 games, share 0.439-0.554, both sides fought in 16/16, walkers60 6553-6661
+  runner  16 games, share 0.443-0.613, both sides fought in 16/16, walkers60 4476-5220
+  cord    16 games, share 0.485-0.725, both sides fought in 16/16, walkers60 6440-6666
+  maze    16 games, share 0.226-0.731, both sides fought in 16/16, walkers60 6617-7925
+pairings (wins of games for the first named, mean share, range, sign p)
+  hunter  v mesh    31/32  mean 0.570  0.478-0.665  p 1.5e-08
+  hunter  v runner  32/32  mean 0.747  0.683-0.845  p 4.7e-10
+  hunter  v cord    7/32  mean 0.453  0.369-0.580  p 0.0021
+  hunter  v maze    32/32  mean 0.652  0.554-0.784  p 4.7e-10
+  mesh    v runner  32/32  mean 0.803  0.748-0.876  p 4.7e-10
+  mesh    v cord    4/32  mean 0.433  0.285-0.590  p 1.9e-05
+  mesh    v maze    4/32  mean 0.379  0.188-0.520  p 1.9e-05
+  runner  v cord    0/32  mean 0.165  0.114-0.211  p 4.7e-10
+  runner  v maze    0/32  mean 0.179  0.106-0.254  p 4.7e-10
+  cord    v maze    2/32  mean 0.407  0.301-0.535  p 2.5e-07
+Holm over 10 pairings (alpha 0.05)
+  hunter > maze  p 4.7e-10  bar 0.0050  holds
+  hunter > runner  p 4.7e-10  bar 0.0056  holds
+  mesh > runner  p 4.7e-10  bar 0.0063  holds
+  cord > runner  p 4.7e-10  bar 0.0071  holds
+  maze > runner  p 4.7e-10  bar 0.0083  holds
+  hunter > mesh  p 1.5e-08  bar 0.0100  holds
+  maze > cord  p 2.5e-07  bar 0.0125  holds
+  cord > mesh  p 1.9e-05  bar 0.0167  holds
+  maze > mesh  p 1.9e-05  bar 0.0250  holds
+  cord > hunter  p 0.0021  bar 0.0500  holds
+3-cycles that hold: [('cord', 'hunter', 'maze')]
+opening: does the side ahead at 30 s / 60 s still lead at the end?
+  share30 all     leader keeps the lead 205/299  p 1.2e-10
+  share30 mirrors leader keeps the lead 45/60  p 0.00013
+  share60 all     leader keeps the lead 238/299  p 7.5e-26
+  share60 mirrors leader keeps the lead 48/60  p 3.2e-06

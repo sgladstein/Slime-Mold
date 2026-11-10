@@ -1,0 +1,27 @@
+== scatter, 16 seeds
+  lamp  plan-ctl share: up 12/16 (>=0.02: 9) p 0.0768 median +0.022 range -0.024..+0.057 | plan>random 10/16 p 0.4545 | territory up 9/16 | 5 s change > nudge 16/16
+  oats  plan-ctl share: up 5/16 (>=0.02: 2) p 0.2101 median -0.004 range -0.055..+0.024 | plan>random 6/16 p 0.4545 | territory up 9/16 | 5 s change > nudge 16/16
+  salt  plan-ctl share: up 15/16 (>=0.02: 14) p 0.0005 median +0.052 range -0.043..+0.101 | plan>random 14/16 p 0.0042 | territory up 14/16 | 5 s change > nudge 15/16
+  snip  plan-ctl share: up 11/16 (>=0.02: 4) p 0.2101 median +0.007 range -0.018..+0.044 | plan>random 11/16 p 0.2101 | territory up 11/16 | 5 s change > nudge 16/16
+  taut  plan-ctl share: up 16/16 (>=0.02: 16) p 0.0000 median +0.139 range +0.089..+0.194 | territory up 15/16 | 5 s change > nudge 16/16
+  molt  plan-ctl share: up 14/16 (>=0.02: 8) p 0.0042 median +0.025 range -0.026..+0.072 | plan>random 4/16 p 0.0768 | territory up 8/16 | 5 s change > nudge 16/16
+== wild, 16 seeds
+  lamp  plan-ctl share: up 15/16 (>=0.02: 11) p 0.0005 median +0.029 range +0.000..+0.051 | plan>random 14/16 p 0.0042 | territory up 9/16 | 5 s change > nudge 16/16
+  oats  plan-ctl share: up 6/16 (>=0.02: 1) p 0.4545 median +0.000 range -0.021..+0.023 | plan>random 5/16 p 0.2101 | territory up 6/16 | 5 s change > nudge 14/16
+  salt  plan-ctl share: up 7/16 (>=0.02: 2) p 0.8036 median +0.000 range -0.020..+0.022 | plan>random 6/16 p 0.4545 | territory up 9/16 | 5 s change > nudge 15/16
+  snip  plan-ctl share: up 8/16 (>=0.02: 0) p 1.0000 median +0.001 range -0.021..+0.018 | plan>random 6/16 p 0.4545 | territory up 7/16 | 5 s change > nudge 15/16
+  taut  plan-ctl share: up 5/16 (>=0.02: 3) p 0.2101 median -0.024 range -0.056..+0.030 | territory up 0/16 | 5 s change > nudge 16/16
+  molt  plan-ctl share: up 10/16 (>=0.02: 0) p 0.4545 median +0.002 range -0.004..+0.017 | plan>random 9/16 p 0.8036 | territory up 0/16 | 5 s change > nudge 16/16
+Holm over 12 plan-v-control tests (alpha 0.05):
+  scatter  taut  p 0.0000 bar 0.0042 survives
+  scatter  salt  p 0.0005 bar 0.0045 survives
+  wild     lamp  p 0.0005 bar 0.0050 survives
+  scatter  molt  p 0.0042 bar 0.0056 survives
+  scatter  lamp  p 0.0768 bar 0.0063 -
+  scatter  oats  p 0.2101 bar 0.0071 -
+  scatter  snip  p 0.2101 bar 0.0083 -
+  wild     taut  p 0.2101 bar 0.0100 -
+  wild     molt  p 0.4545 bar 0.0125 -
+  wild     oats  p 0.4545 bar 0.0167 -
+  wild     salt  p 0.8036 bar 0.0250 -
+  wild     snip  p 1.0000 bar 0.0500 -

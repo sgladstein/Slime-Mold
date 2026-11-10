@@ -1,9 +1,15 @@
 //! Red-team scratch harness. Links the slime-mould library; changes nothing in the repo.
 //! Modes:
 //!   grid SELF RIVAL SEED      one Wild One game, symmetric (400 v 400, repel 1.0 both), grains per side
-//!   taut SEED ANGLE SCENT     at 60 s clone; set this mould's fed_scent; compare network over 30 s
+//!   taut SEED ANGLE SCENT     at 60 s clone; set this mould's fed_scent; compare network over 30 s (ON_FIELD=1: on the field)
 //!   wave SEED CHARGE_S        flow on; at 60 s clone; inject CHARGE_S seconds of home-pile output as sap
 //!   speed SEED ANGLE          tag walkers at 60 s; displacement after 1, 2, 5 s
+//!   field SELF RIVAL SEED     the grid game on the field (added after the owner's 2026-11-10 19:24Z
+//!                             remark that 7 piles limit the options): 23 smaller mirrored piles, same grid
+//!   flook SELF RIVAL SEED SECS  a still of a field game (STILL=DIR)
+//!   verbs SEED                the paired-clone verb census (DISH=wild|field, FIELD=layout): at 60 s
+//!                             clone the dish, apply one verb in one copy, planned or at random, and
+//!                             compare 30 s against the untouched copy
 use slime_mould::mould::level::DISHES;
 use slime_mould::mould::{disc, Dish, Params, Phase, STEPS_PER_SECOND, W, H};
 
@@ -44,6 +50,133 @@ fn sym_dish(seed: u64, a: &Params, b: &Params) -> Dish {
         r.params = b.clone();
     }
     d
+}
+
+/// The field: The Wild One's grid and homes (400 walkers each side), but its
+/// seven piles replaced by many smaller ones, mirrored about x = 128. Each
+/// pile feeds at most `table * eat / upkeep` = 300 walkers, so more piles let
+/// the moulds grow denser.
+///
+/// Default, the scatter: a home pile each side (r 6, 30k food), nine piles a
+/// side at fixed, irregular spots (drawn once by a Poisson-disc sampler, at
+/// least 28 cells apart) and three on the centre line, r 4 and 15k each: 23
+/// piles, 375k food (The Wild One: 7 piles, 260k). `FIELD=lattice` is the
+/// first try, looked at and set aside: a 5 x 5 grid plus four by the homes,
+/// 31 piles of 18k, which grew a carpet over the whole dish (4,000-6,000
+/// walkers a side) rather than a network.
+fn field_dish(seed: u64, a: &Params, b: &Params) -> Dish {
+    let mut d = Dish::from_level_with(&DISHES[4], seed, a.clone());
+    let t = d.piles[0].clone();
+    let mk = |x: f32, y: f32, r: f32, food: f32| slime_mould::mould::Pile { x, y, r, food, full: food, ..t.clone() };
+    let mut piles = vec![mk(40.0, 80.0, 6.0, 30_000.0)];
+    if std::env::var("FIELD").as_deref() == Ok("lattice") {
+        for &x in &[64.0f32, 96.0, 128.0, 160.0, 192.0] {
+            for &y in &[24.0f32, 52.0, 80.0, 108.0, 136.0] {
+                piles.push(mk(x, y, 4.0, 18_000.0));
+            }
+        }
+        for &(x, y) in &[(40.0f32, 40.0f32), (40.0, 120.0), (216.0, 40.0), (216.0, 120.0)] {
+            piles.push(mk(x, y, 4.0, 18_000.0));
+        }
+    } else {
+        // `FIELD=scatter2`: a second draw of the same sampler (seed 11 not 7),
+        // to check that a result is not one layout's.
+        let left = if std::env::var("FIELD").as_deref() == Ok("scatter2") {
+            [(105.0f32, 75.0f32), (64.0, 92.0), (76.0, 121.0), (110.0, 145.0), (59.0, 49.0), (21.0, 98.0), (90.0, 48.0), (100.0, 16.0), (44.0, 121.0)]
+        } else {
+            [(78.0f32, 20.0f32), (67.0, 61.0), (18.0, 71.0), (56.0, 126.0), (110.0, 17.0), (98.0, 51.0), (92.0, 108.0), (96.0, 142.0), (65.0, 96.0)]
+        };
+        for &(x, y) in &left {
+            piles.push(mk(x, y, 4.0, 15_000.0));
+            piles.push(mk(256.0 - x, y, 4.0, 15_000.0));
+        }
+        for &y in &[40.0f32, 80.0, 120.0] {
+            piles.push(mk(128.0, y, 4.0, 15_000.0));
+        }
+    }
+    piles.push(mk(216.0, 80.0, 6.0, 30_000.0));
+    d.piles = piles;
+    d.add_rival_of((216.0, 80.0), 400);
+    if let Some(r) = d.rival.as_mut() {
+        r.params = b.clone();
+    }
+    d
+}
+
+/// The verb census's measures, read from a copy and its control.
+fn tube_mask(d: &Dish) -> (Vec<bool>, Vec<bool>) {
+    let r = d.rival.as_ref().unwrap();
+    let t = d.params.tube;
+    (d.trail.iter().map(|&v| v > t).collect(), r.trail.iter().map(|&v| v > t).collect())
+}
+
+/// Cells whose tube state differs between two copies, over the control's
+/// tube cells (both moulds): how much of the picture the verb changed.
+///
+/// The dish is chaotic: any change, however small, reorders the walkers'
+/// turns, so the whole picture drifts apart within seconds (a one-walker
+/// nudge does it too; the census's `nudge` row measures that drift). So
+/// `at` limits the count to cells within 24 of where the verb acted, and the
+/// count is of cells, not a ratio, since a spot on bare agar has no tube to
+/// divide by. The whole dish when `at` is None.
+fn visible_change(c: &Dish, v: &Dish, at: Option<(f32, f32)>) -> f32 {
+    let (ca, cb) = tube_mask(c);
+    let (va, vb) = tube_mask(v);
+    let near = |i: usize| at.is_none_or(|(x, y)| ((i % W) as f32 + 0.5 - x).hypot((i / W) as f32 + 0.5 - y) <= 24.0);
+    (0..W * H).filter(|&i| near(i)).map(|i| (ca[i] != va[i]) as usize + (cb[i] != vb[i]) as usize).sum::<usize>() as f32
+}
+
+/// Territory: this mould's share of the tube cells where one mould's trail
+/// is above the tube threshold and above the other's.
+fn territory(d: &Dish) -> f32 {
+    let r = d.rival.as_ref().unwrap();
+    let t = d.params.tube;
+    let (mut a, mut b) = (0usize, 0usize);
+    for (x, y) in d.trail.iter().zip(&r.trail) {
+        if *x > t && x > y {
+            a += 1;
+        } else if *y > t && y > x {
+            b += 1;
+        }
+    }
+    a as f32 / (a + b).max(1) as f32
+}
+
+/// Dish piles with food left that each mould holds (more eaters on it).
+fn piles_held(d: &Dish) -> (usize, usize) {
+    let live = d.piles.iter().filter(|p| !p.oats && p.food > 0.0);
+    let mine = live.clone().filter(|p| p.eaters > p.foe_eaters).count();
+    let theirs = live.filter(|p| p.foe_eaters > p.eaters).count();
+    (mine, theirs)
+}
+
+struct Xs(u64);
+impl Xs {
+    fn f(&mut self) -> f32 {
+        self.0 ^= self.0 << 13;
+        self.0 ^= self.0 >> 7;
+        self.0 ^= self.0 << 17;
+        (self.0 >> 40) as f32 / (1u64 << 24) as f32
+    }
+    /// A random open-dish point.
+    fn agar(&mut self, d: &Dish) -> (f32, f32) {
+        loop {
+            let (x, y) = (self.f() * W as f32, self.f() * H as f32);
+            if d.ground[(y as usize) * W + x as usize] == slime_mould::mould::Ground::Agar {
+                return (x, y);
+            }
+        }
+    }
+}
+
+/// A stroke of `tool` centred on `m`, along the unit direction `dir`.
+fn stroke(d: &mut Dish, tool: slime_mould::mould::Tool, m: (f32, f32), dir: (f32, f32), len: f32) {
+    let a = (m.0 - dir.0 * len / 2.0, m.1 - dir.1 * len / 2.0);
+    let b = (m.0 + dir.0 * len / 2.0, m.1 + dir.1 * len / 2.0);
+    if d.begin_stroke(tool, a.0, a.1) {
+        d.drag_stroke(b.0, b.1);
+        d.end_stroke();
+    }
 }
 
 fn run_to(d: &mut Dish, steps: u64) {
@@ -107,7 +240,13 @@ fn main() {
             let scent: f32 = args[3].parse().unwrap();
             let mut p = wild_params();
             p.sensor_angle = angle.to_radians();
-            let mut d = Dish::from_level_with(&DISHES[4], seed, p);
+            // ON_FIELD=1: the same test on the field (`field_dish`), both
+            // moulds on these numbers, after the owner's 19:24Z remark.
+            let mut d = if std::env::var("ON_FIELD").is_ok() {
+                field_dish(seed, &p, &p)
+            } else {
+                Dish::from_level_with(&DISHES[4], seed, p)
+            };
             run_to(&mut d, 60 * SPS);
             let mut c = d.clone();
             let mut t = d.clone();
@@ -277,6 +416,151 @@ fn main() {
                     q(0.5),
                     q(0.9),
                     ds[ds.len() - 1]
+                );
+            }
+        }
+        "field" | "flook" => {
+            let (ga, gb, seed) = (&args[1], &args[2], args[3].parse::<u64>().unwrap());
+            let mut a = wild_params();
+            let mut b = wild_params();
+            grain(ga, &mut a);
+            grain(gb, &mut b);
+            let mut d = field_dish(seed, &a, &b);
+            if args[0] == "flook" {
+                let dir = std::env::var("STILL").unwrap();
+                for s in args[4].split(',') {
+                    let s: u64 = s.parse().unwrap();
+                    run_to(&mut d, s * SPS);
+                    let layout = std::env::var("FIELD").unwrap_or_else(|_| "scatter".into());
+                    still(&d, &format!("{dir}/field-{layout}-{ga}-{gb}-s{seed}-{s}s.png"));
+                    let r = d.rival.as_ref().unwrap();
+                    println!("FLOOK {ga} v {gb} seed {seed} at {s}s: walkers {}/{} fought {}/{} piles left {}", d.walkers.len(), r.walkers.len(), d.counts.fought, r.counts.fought, d.piles.iter().filter(|p| p.food > 0.0).count());
+                }
+                return;
+            }
+            let t0 = std::time::Instant::now();
+            let sh = |d: &Dish| d.ate / (d.ate + d.wild_ate).max(1.0);
+            run_to(&mut d, 30 * SPS);
+            let s30 = sh(&d);
+            run_to(&mut d, 60 * SPS);
+            let s60 = sh(&d);
+            let w60 = (d.walkers.len(), d.rival.as_ref().unwrap().walkers.len());
+            run_to(&mut d, 150 * SPS + 2);
+            let r = d.rival.as_ref().unwrap();
+            let share = d.ate / (d.ate + d.wild_ate).max(1.0);
+            println!(
+                "FIELD layout={} self={ga} rival={gb} seed={seed} share={share:.3} share30={s30:.3} share60={s60:.3} walkers60={}/{} walkers={}/{} fought={}/{} ate={:.0}/{:.0} piles_left={} ({:.1}s)",
+                std::env::var("FIELD").unwrap_or_else(|_| "scatter".into()),
+                w60.0,
+                w60.1,
+                d.walkers.len(),
+                r.walkers.len(),
+                d.counts.fought,
+                r.counts.fought,
+                d.ate,
+                d.wild_ate,
+                d.piles.iter().filter(|p| p.food > 0.0).count(),
+                t0.elapsed().as_secs_f32()
+            );
+        }
+        "verbs" => {
+            use slime_mould::mould::Tool;
+            let seed = args[1].parse::<u64>().unwrap();
+            let on_field = std::env::var("DISH").as_deref() == Ok("field");
+            let p = wild_params();
+            let mut d = if on_field { field_dish(seed, &p, &p) } else { Dish::from_level_with(&DISHES[4], seed, p) };
+            run_to(&mut d, 60 * SPS);
+            let t0 = d.t;
+            let label = if on_field { std::env::var("FIELD").unwrap_or_else(|_| "scatter".into()) } else { "wild".into() };
+            // The plan's target: the rival's most forward pile, the one it
+            // holds (more of its eaters than ours) nearest our home; else
+            // the nearest pile it is on at all; else the centre.
+            let near = |q: &&slime_mould::mould::Pile| (q.x - 40.0).hypot(q.y - 80.0);
+            let live = || d.piles.iter().filter(|q| !q.oats && q.food > 0.0);
+            let target = live()
+                .filter(|q| q.foe_eaters > q.eaters)
+                .min_by(|a, b| near(a).total_cmp(&near(b)))
+                .or_else(|| live().filter(|q| q.foe_eaters > 0).min_by(|a, b| near(a).total_cmp(&near(b))))
+                .map(|q| (q.x, q.y))
+                .unwrap_or((128.0, 80.0));
+            let home = (216.0f32, 80.0f32);
+            let (dx, dy) = (target.0 - home.0, target.1 - home.1);
+            let n = dx.hypot(dy).max(1.0);
+            let along = (dx / n, dy / n);
+            let across = (-along.1, along.0);
+            let mid = (home.0 + dx * 0.5, home.1 + dy * 0.5);
+            let mut rng = Xs(seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1);
+            let mut c = d.clone();
+            let verbs: Vec<(&str, &str)> = vec![
+                ("lamp", "plan"), ("lamp", "random"),
+                ("oats", "plan"), ("oats", "random"),
+                ("salt", "plan"), ("salt", "random"),
+                ("snip", "plan"), ("snip", "random"),
+                ("taut", "plan"),
+                ("molt", "plan"), ("molt", "random"),
+                ("nudge", "null"),
+            ];
+            let mut copies: Vec<Dish> = Vec::new();
+            let mut spots: Vec<Option<(f32, f32)>> = Vec::new();
+            for &(verb, mode) in &verbs {
+                let mut v = d.clone();
+                let spot = match (verb, mode) {
+                    ("lamp", "plan") => { v.set_lamp(Some(target)); Some(target) }
+                    ("lamp", _) => { let q = rng.agar(&v); v.set_lamp(Some(q)); Some(q) }
+                    ("oats", "plan") => {
+                        // Just past the rival's pile on our side of it
+                        // (6 cells further from the rival's home), so
+                        // our walkers reach the new food first. It lost
+                        // share on both dishes: new food near the front
+                        // feeds whoever is already there.
+                        let q = (target.0 + along.0 * 6.0, target.1 + along.1 * 6.0);
+                        v.place_oats(q.0, q.1);
+                        Some(q)
+                    }
+                    ("oats", _) => { let q = rng.agar(&v); v.place_oats(q.0, q.1); Some(q) }
+                    ("salt", "plan") => { stroke(&mut v, Tool::Salt, mid, across, 60.0); Some(mid) }
+                    ("salt", _) => { let q = rng.agar(&v); let a = rng.f() * std::f32::consts::TAU; stroke(&mut v, Tool::Salt, q, (a.cos(), a.sin()), 60.0); Some(q) }
+                    ("snip", "plan") => { stroke(&mut v, Tool::Snip, mid, across, 30.0); Some(mid) }
+                    ("snip", _) => { let q = rng.agar(&v); let a = rng.f() * std::f32::consts::TAU; stroke(&mut v, Tool::Snip, q, (a.cos(), a.sin()), 30.0); Some(q) }
+                    // Taut and molt act on the whole mould, so their 5 s
+                    // change is counted over the whole dish (spot None),
+                    // while the nudge's is counted near the target. That
+                    // is not like for like: whole-dish change includes
+                    // chaos, so their 5 s "seen" figures do not count.
+                    ("taut", _) => { v.params.fed_scent = 1.0; None }
+                    ("molt", "plan") => { grain("cord", &mut v.params); None }
+                    ("molt", _) => { let g = ["cord", "maze", "runner", "hunter", "bead"][(rng.f() * 5.0) as usize % 5]; grain(g, &mut v.params); None }
+                    // The chaos floor: turn one walker by a hundredth of a
+                    // radian. Its 5 s change is measured near the plan's
+                    // target, where the placed verbs' plans act.
+                    ("nudge", _) => { if let Some(w) = v.walkers.first_mut() { w.heading += 0.01; } Some(target) }
+                    _ => unreachable!(),
+                };
+                copies.push(v);
+                spots.push(spot);
+            }
+            let (ca0, cw0) = (c.ate, c.wild_ate);
+            let since = |x: &Dish| (x.ate - ca0) / ((x.ate - ca0) + (x.wild_ate - cw0)).max(1.0);
+            let mut vis5 = vec![0.0f32; copies.len()];
+            let mut sh5 = vec![0.0f32; copies.len()];
+            run_to(&mut c, t0 + 5 * SPS);
+            let c5 = since(&c);
+            for (k, v) in copies.iter_mut().enumerate() {
+                // The lamp is held 10 s, then let go.
+                run_to(v, t0 + 5 * SPS);
+                vis5[k] = visible_change(&c, v, spots[k]);
+                sh5[k] = since(v);
+            }
+            run_to(&mut c, t0 + 30 * SPS);
+            let (c30, ct30, cp30) = (since(&c), territory(&c), piles_held(&c));
+            for (k, v) in copies.iter_mut().enumerate() {
+                run_to(v, t0 + 10 * SPS);
+                v.set_lamp(None);
+                run_to(v, t0 + 30 * SPS);
+                let (vp30, vt30) = (piles_held(v), territory(v));
+                println!(
+                    "VERB dish={label} seed={seed} verb={} mode={} share5={:.3} ctl5={c5:.3} share30={:.3} ctl30={c30:.3} vis5={:.0} terr30={vt30:.3} ctlterr30={ct30:.3} piles30={}/{} ctlpiles30={}/{} target={:.0},{:.0}",
+                    verbs[k].0, verbs[k].1, sh5[k], since(v), vis5[k], vp30.0, vp30.1, cp30.0, cp30.1, target.0, target.1
                 );
             }
         }

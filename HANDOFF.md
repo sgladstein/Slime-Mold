@@ -77,9 +77,15 @@ Ask each again; none has an answer to assume.
    direction to probe first. The red team recommends a paired-clone verb
    census (one verb in one of two cloned dishes, 16 seeds) before Bloomfront's
    Stage 0, whose gates would pass without testing the opening; then one
-   contagion strain on the CPU. Taut failed its probe; Two Fevers is the
-   strongest left. The food store sits at a median of 0, so any "pay from
-   the store" rule needs its own currency first. Page:
+   contagion strain on the CPU. The census has since run, with a retest on a
+   23-pile field after the owner said 7 piles limit the options
+   ([`field/`](Reports/rts-design-2026-11-10/field/README.md)): a salt line
+   across the rival's road passes on the field, only the lamp moves share on
+   The Wild One, Taut's pull wins on the field, and the pattern counters form
+   a cycle on one field layout of two. Next: one contagion strain, and
+   whether any verb can overturn a 60 s lead. Two Fevers is still the
+   strongest direction. The food store sits at a median of 0, so any "pay
+   from the store" rule needs its own currency first. Page:
    [the RTS directions](wiki/rts/directions.md).
 
 Decided and not yet built: **the forest floor from above** (owner's card,

@@ -1,0 +1,24 @@
+TAUT seed=2 angle=22.5 scent=0.3 t=60 len=660.8 tube=9573 near=0.41 walkers=3346
+TAUT seed=4 angle=22.5 scent=0.3 t=60 len=675.8 tube=9737 near=0.46 walkers=3233
+TAUT seed=1 angle=22.5 scent=0.3 t=60 len=622.1 tube=9124 near=0.43 walkers=3358
+TAUT seed=3 angle=22.5 scent=0.3 t=60 len=740.3 tube=10651 near=0.43 walkers=3655
+  + 2s control len=681.8 tube=9825 near=0.44 walkers=3305 share_since=0.498 | taut len=652.2 tube=9506 near=0.47 walkers=3396 share_since=0.516 reach 17/17
+  + 2s control len=675.2 tube=9844 near=0.42 walkers=3409 share_since=0.520 | taut len=719.3 tube=10398 near=0.47 walkers=3495 share_since=0.538 reach 18/17
+  + 2s control len=659.1 tube=9579 near=0.46 walkers=3282 share_since=0.504 | taut len=674.0 tube=9806 near=0.49 walkers=3360 share_since=0.515 reach 17/17
+  + 2s control len=678.6 tube=9831 near=0.43 walkers=3613 share_since=0.538 | taut len=699.0 tube=10130 near=0.47 walkers=3697 share_since=0.556 reach 18/17
+  + 5s control len=697.8 tube=10120 near=0.42 walkers=3399 share_since=0.519 | taut len=721.1 tube=10527 near=0.47 walkers=3702 share_since=0.554 reach 18/18
+  + 5s control len=670.4 tube=9775 near=0.47 walkers=3356 share_since=0.509 | taut len=655.0 tube=9615 near=0.50 walkers=3634 share_since=0.537 reach 17/17
+  + 5s control len=651.1 tube=9492 near=0.43 walkers=3419 share_since=0.511 | taut len=683.6 tube=9985 near=0.49 walkers=3657 share_since=0.537 reach 17/17
+  + 5s control len=648.8 tube=9366 near=0.44 walkers=3487 share_since=0.527 | taut len=673.0 tube=9761 near=0.48 walkers=3667 share_since=0.551 reach 15/17
+  +10s control len=694.2 tube=10067 near=0.42 walkers=3321 share_since=0.515 | taut len=698.6 tube=10212 near=0.49 walkers=3837 share_since=0.566 reach 17/15
+  +10s control len=675.9 tube=9985 near=0.44 walkers=3539 share_since=0.521 | taut len=725.0 tube=10633 near=0.49 walkers=3937 share_since=0.560 reach 19/18
+  +10s control len=687.8 tube=9789 near=0.41 walkers=3269 share_since=0.514 | taut len=633.3 tube=9220 near=0.50 walkers=3641 share_since=0.546 reach 15/16
+  +10s control len=666.5 tube=9715 near=0.42 walkers=3534 share_since=0.523 | taut len=676.6 tube=9928 near=0.51 walkers=3853 share_since=0.556 reach 17/17
+  +20s control len=689.3 tube=9963 near=0.41 walkers=3378 share_since=0.516 | taut len=727.5 tube=10652 near=0.47 walkers=4168 share_since=0.587 reach 18/17
+  +20s control len=778.0 tube=11245 near=0.41 walkers=3910 share_since=0.558 | taut len=760.2 tube=11010 near=0.47 walkers=4304 share_since=0.601 reach 19/18
+  +20s control len=676.2 tube=9752 near=0.41 walkers=3350 share_since=0.522 | taut len=724.9 tube=10549 near=0.50 walkers=4153 share_since=0.582 reach 17/18
+  +20s control len=682.2 tube=9873 near=0.40 walkers=3367 share_since=0.507 | taut len=691.7 tube=9975 near=0.46 walkers=3648 share_since=0.550 reach 17/17
+  +30s control len=612.8 tube=8941 near=0.40 walkers=2907 share_since=0.508 | taut len=736.8 tube=10820 near=0.46 walkers=4205 share_since=0.600 reach 16/19
+  +30s control len=794.0 tube=11436 near=0.39 walkers=3854 share_since=0.571 | taut len=730.6 tube=10658 near=0.46 walkers=4115 share_since=0.609 reach 19/18
+  +30s control len=672.9 tube=9715 near=0.40 walkers=3392 share_since=0.522 | taut len=765.8 tube=11115 near=0.45 walkers=4428 share_since=0.614 reach 17/18
+  +30s control len=618.3 tube=9024 near=0.40 walkers=3272 share_since=0.505 | taut len=689.2 tube=10053 near=0.46 walkers=3680 share_since=0.550 reach 17/17

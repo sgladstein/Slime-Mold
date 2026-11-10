@@ -1,0 +1,10 @@
+FLOOK maze v maze seed 1 at 60s: walkers 1186/5498 fought 4181/4044 piles left 23
+FLOOK hunter v hunter seed 1 at 60s: walkers 3820/2861 fought 2839/2801 piles left 23
+FLOOK cord v cord seed 1 at 60s: walkers 3671/2953 fought 6142/6313 piles left 23
+FLOOK mesh v mesh seed 1 at 60s: walkers 3358/3248 fought 3834/3687 piles left 23
+FLOOK bead v bead seed 1 at 60s: walkers 538/562 fought 0/0 piles left 23
+FLOOK runner v runner seed 1 at 60s: walkers 2700/2395 fought 3096/3180 piles left 23
+FLOOK hunter v maze seed 1 at 60s: walkers 5074/1663 fought 3723/3591 piles left 23
+FLOOK maze v cord seed 1 at 60s: walkers 4484/2023 fought 4652/4837 piles left 23
+FLOOK cord v hunter seed 1 at 60s: walkers 4492/1880 fought 7764/8156 piles left 23
+FLOOK mesh v mesh seed 1 at 60s: walkers 5836/2982 fought 6814/6929 piles left 31

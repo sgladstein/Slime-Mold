@@ -10,6 +10,13 @@ output and its stills into this folder unchanged, apart from the paths below.
 The harness still builds and reproduces the runs on the main branch of
 2026-11-10 (checked on `taut 1 22.5 1`).
 
+**Later the same day, a field retest turned two verdicts over**
+([`../field/README.md`](../field/README.md)). After the owner said 7 piles
+limit the options, §4 and §5 were rerun on 23 smaller mirrored piles at
+about Jones's density: Taut's pull wins food share there (8 of 8 seeds), and
+the pattern counters form a cycle on one layout of two. The findings below
+stand for The Wild One. The verb census this review recommends has run too.
+
 Reviewed: `Reports/rts-design-2026-11-10.md` (Bloomfront), the synthesis
 `Reports/rts-design-2026-11-10/brainstorm/README.md`, and its six notes.
 Checked against `src/mould/mod.rs`, `src/mould/level.rs`, the review 2 and
