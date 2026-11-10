@@ -6,7 +6,10 @@
 name: CI
 
 on:
+  # Branch pushes are covered by their pull_request run; running both doubled
+  # the billed minutes of every PR (seen on PR #1, 2026-11-10).
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
