@@ -1,7 +1,8 @@
 # An LLM wiki for the mould game: verdict, plan and review (2026-11-10)
 
-**Status: first build in (seven pages, `wiki/`); the success check below
-found the wiki ties reading the reports directly at this size.** Asked for by the owner (2026-11-10 16:40Z): review the repo,
+**Status: twelve pages in `wiki/` (seven, then oats, salt, the lesson and
+puzzle dishes, sensors and the look after the check); the success check
+below found the wiki ties reading the reports directly at seven pages.** Asked for by the owner (2026-11-10 16:40Z): review the repo,
 judge whether Karpathy's LLM-wiki idea
 (https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) fits it,
 and if so plan the design, rules and workflows. He then asked for a

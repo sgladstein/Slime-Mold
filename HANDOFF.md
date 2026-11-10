@@ -24,17 +24,19 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   luck so far.
 - [The Wild One](wiki/dishes/the-wild-one.md): scored by your share of the
   food eaten; the first star is the opening salt wall, the rest is aim.
-- The lesson and the three puzzle dishes (Behind the Wall, Beat the Ruler,
-  Running Dry): no page yet; [`Reports/mould-probe-2026-11-07.md`](Reports/mould-probe-2026-11-07.md).
-- Tools: [the lamp](wiki/tools/lamp.md) pushes and dries;
-  [the knife](wiki/tools/knife.md) moves nothing in The Wild One;
-  [water and sleep](wiki/model/water-and-sleep.md) carry mould through
-  famine in Keep It Alive. Oats and salt: no page yet.
-- Look: the from-the-simulation look is the default, F7 the old tube look;
-  no page yet, [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md).
-- Model defaults: sensor angle 45 degrees (22.5 on Keep It Alive and some
-  dishes), reach 9, food flow off; no page yet,
-  [`Reports/dead-ends.md`](Reports/dead-ends.md) for reach.
+- [The lesson and the three puzzle dishes](wiki/dishes/puzzle-dishes.md)
+  (Behind the Wall, Beat the Ruler, Running Dry): pass their bar at 45
+  degrees; review 1 would keep them as a side pack.
+- Tools: [oats](wiki/tools/oats.md) lead, [the lamp](wiki/tools/lamp.md)
+  pushes and dries, [salt](wiki/tools/salt.md) walls off (it is The Wild
+  One's first star), [the knife](wiki/tools/knife.md) moves nothing in The
+  Wild One; [water and sleep](wiki/model/water-and-sleep.md) carry mould
+  through famine in Keep It Alive.
+- [The simulation look](wiki/looks/simulation-look.md) is the default, F7
+  the old tube look.
+- [Sensor angle and reach](wiki/model/sensors.md): 45 degrees by default,
+  22.5 on Keep It Alive and The Wild One, reach 9. Food flow is off; no
+  page yet.
 - How it is judged: [the census](wiki/method/census.md).
 
 ## Decisions the owner has not made

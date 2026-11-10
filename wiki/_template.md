@@ -1,6 +1,6 @@
 ---
 title: Name of the subject
-kind: dish | tool | mechanism | method | prototype
+kind: dish | tool | mechanism | look | method | prototype
 status: current | open | decided | retired
 updated: YYYY-MM-DD
 sources: [Reports/report-name.md, Reports/other-report.md]
