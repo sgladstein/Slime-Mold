@@ -43,6 +43,10 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   loops where Jenson's GPU version holds hundreds; a six-phase GPU plan is
   reviewed and not started.
 - How it is judged: [the census](wiki/method/census.md).
+- [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
+  (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
+  for a neutral host and keep the ground they reach. The planner beats random
+  clicks 16 of 16, but only by 0.537; version 2 awaits the owner's hand.
 
 ## Decisions the owner has not made
 
@@ -82,9 +86,8 @@ Ask each again; none has an answer to assume.
    ([`field/`](Reports/rts-design-2026-11-10/field/README.md)): a salt line
    across the rival's road passes on the field, only the lamp moves share on
    The Wild One, Taut's pull wins on the field, and the pattern counters form
-   a cycle on one field layout of two. Next: one contagion strain, and
-   whether any verb can overturn a 60 s lead. Two Fevers is still the
-   strongest direction. The food store sits at a median of 0, so any "pay
+   a cycle on one field layout of two. Next: whether any verb can overturn a
+   60 s lead. Two Fevers is now a playable demo (below). The food store sits at a median of 0, so any "pay
    from the store" rule needs its own currency first. Page:
    [the RTS directions](wiki/rts/directions.md).
 

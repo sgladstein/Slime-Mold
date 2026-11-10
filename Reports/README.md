@@ -159,5 +159,10 @@ move.
 - [mould-sound-2026-11-10.md](mould-sound-2026-11-10.md) — sound for the game (owner: "yes to sound", 19:22Z). Pixel_Physics's
   listener / voice bank / device split with the mould's own sounds, every one a count off the dish; S toggles.
   Same game bit for bit with sound on; listener about 1 us a frame. Seven recordings on the Mould Sound page.
+- [two-fevers-2026-11-10/README.md](two-fevers-2026-11-10/README.md) — **Two Fevers, a playable browser demo**
+  (`src/mould/fever.rs`, `fevers-web/`). v1 scored carriers: rings swept the host and left it as before; owner
+  found no strategy. v2 (owner's card): walkers keep the last fever's colour, a 15 s hold, Hush. 16 seeds, both
+  colours: plan beats random 16/16 in both versions but by 0.536 / 0.537; without the hold random wins 14/16;
+  Hush when behind 10/16 (noise). 0.5-0.64 ms a step.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
