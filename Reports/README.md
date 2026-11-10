@@ -74,6 +74,12 @@ move.
   smoothing of the rim, tube insides, salt walls and cuts, a fading stain where mould has been, the lamp drawn as the light
   the simulation shines, and narrow tool tiles so the bar stops overlapping. All on by default, each behind a key (F3-F6).
   Same dish drawn both ways on the page; costs about 1.5-2.5 ms of drawing a frame at scale 4.
+- [rts-design-2026-11-10.md](rts-design-2026-11-10.md) — **design review, no build: how the simulation could become a
+  real-time strategy game.** About half an RTS already runs in The Wild One (shared piles as contested resources, tubes
+  as supply lines, trail repel as borders, fights that favour a fed front); proposes Bloomfront, an indirect-control
+  RTS where every tool is paid from the food store, with wells, announced blooms, spores and species as `Params`
+  presets. Measured here: two moulds step at about 1.1 ms a step. Recommends a cheap Stage 0 (a scripted hand steers
+  the wild mould on a mirrored dish) gated on equal hands splitting 45-55% and a sharp hand beating a clumsy one.
 
 ## Added with the move (2026-11-10)
 
