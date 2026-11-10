@@ -178,6 +178,7 @@ are the comeback control, and their reversal is a finding.
 
 ## Files
 
+- [`v3-design.md`](v3-design.md): the owner's verdict on version 2 and the design for version 3 (calls, fever by tube, pinch, foraging income).
 - [`summarise.py`](summarise.py): per-seed summary and sign test of a census file.
 - [`raw/`](raw/): every census run named above. v1 runs were made with the v1
   code (`owned` did not exist; the cross run later with `set=owned:0`).
