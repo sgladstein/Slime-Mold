@@ -163,6 +163,40 @@ takes `level=K`.
 - One seed. The looks are judged by eye on the page; no count can say whether
   they look better.
 - Glints against grains is put to the owner blind on the page. Key: A is
-  grains (the default), B is glints.
+  grains (the default), B is glints. Since the simulation look became the
+  default this only changes the F7 tube look: the simulation look always
+  draws one speck per walker (F4 off still hides them).
 - Not judged on a real screen at the owner's window size, or for motion
   sickness from the shimmer of 1,800 specks.
+
+## Where this stands, and the open next steps (2026-11-10, at the move)
+
+The owner's verdict on the simulation look, 14:49Z: "The new simulation
+based look is much better." It is the default (`look::FIELD`, F7 back to
+the tube look), merged as Pixel_Physics PR #1063 and carried here.
+
+Nothing of this pass is unfinished. What is left is small and none of it is
+started:
+
+- **Grains or glints** is still unanswered, and now matters only in the F7
+  tube look. If the tube look is kept just for comparison, the pick can be
+  dropped.
+- **Retire the tube look** once the owner no longer flips to it. That would
+  remove `wild`, the tube branch of `dish()`, and whatever of the F3, F4 and
+  F5 switches only the tube look reads. Check each read before cutting: the
+  F5 rim layer and F4's off setting are also used by the simulation look,
+  and the stain (F6), lamp, water and wet ground are shared. Ask before deleting: the owner chose to
+  keep a key back.
+- **Apply the same rule to anything new.** The owner's rule, which this
+  look answers: colour straight from a held quantity through one fixed ramp,
+  soft where the simulation is soft, hard only where it is hard (salt, the
+  rim, a snip), a dot per walker, and no fills, outlines or binary colour
+  switches on graded quantities. A new mechanic (spores, a steered rival,
+  melting salt) should be drawn in `field_mould`, not as a new tube-style
+  layer.
+- **Not yet looked at:** the owner's real window size, and whether 1,800
+  moving specks shimmer badly on a large screen. The quickest check is
+  playing it.
+- **Measure before adding cost.** The simulation look costs +0.6-0.8 ms a
+  frame at scale 4; `examples/mouldlooks.rs` (`field` arm, `level=K`) gives
+  paired draw times on identical states.
