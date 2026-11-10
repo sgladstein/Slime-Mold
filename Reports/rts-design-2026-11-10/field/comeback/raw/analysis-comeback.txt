@@ -1,0 +1,43 @@
+== scatter: 16 seeds; the side behind at 60 s trailed by 0.004-0.038; untouched, it still lost 12/16
+  salt-plan    bell share up 14/16 p 0.0042 median +0.033 | ahead at the bell 10/16, turned 6/12 lost games | beats random 16/16 p 0.0000
+  salt-random  bell share up 7/16 p 0.8036 median -0.006 | ahead at the bell 4/16, turned 3/12 lost games
+  salt-x6      bell share up 15/16 p 0.0005 median +0.041 | ahead at the bell 13/16, turned 9/12 lost games | beats random 16/16 p 0.0000
+  lamp-plan    bell share up 10/16 p 0.4545 median +0.006 | ahead at the bell 5/16, turned 2/12 lost games | beats random 8/16 p 1.0000
+  lamp-random  bell share up 7/16 p 0.8036 median +0.000 | ahead at the bell 5/16, turned 1/12 lost games
+  lamp-x6      bell share up 12/16 p 0.0768 median +0.011 | ahead at the bell 6/16, turned 3/12 lost games | beats random 12/16 p 0.0768
+  snip-plan    bell share up 9/16 p 0.8036 median +0.008 | ahead at the bell 5/16, turned 1/12 lost games
+  taut-plan    bell share up 16/16 p 0.0000 median +0.091 | ahead at the bell 16/16, turned 12/12 lost games
+  molt-hunter  bell share up 16/16 p 0.0000 median +0.062 | ahead at the bell 14/16, turned 10/12 lost games | beats random 9/16 p 0.8036
+  molt-random  bell share up 11/16 p 0.2101 median +0.033 | ahead at the bell 9/16, turned 6/12 lost games
+== scatter2: 16 seeds; the side behind at 60 s trailed by 0.002-0.111; untouched, it still lost 14/16
+  salt-plan    bell share up 8/16 p 1.0000 median +0.007 | ahead at the bell 4/16, turned 2/14 lost games | beats random 10/16 p 0.4545
+  salt-random  bell share up 6/16 p 0.4545 median -0.005 | ahead at the bell 2/16, turned 1/14 lost games
+  salt-x6      bell share up 8/16 p 1.0000 median +0.004 | ahead at the bell 4/16, turned 2/14 lost games | beats random 10/16 p 0.4545
+  lamp-plan    bell share up 8/16 p 1.0000 median +0.013 | ahead at the bell 4/16, turned 3/14 lost games | beats random 8/16 p 1.0000
+  lamp-random  bell share up 6/16 p 0.4545 median -0.008 | ahead at the bell 2/16, turned 0/14 lost games
+  lamp-x6      bell share up 9/16 p 0.8036 median +0.014 | ahead at the bell 5/16, turned 4/14 lost games | beats random 11/16 p 0.2101
+  snip-plan    bell share up 7/16 p 0.8036 median -0.003 | ahead at the bell 3/16, turned 1/14 lost games
+  taut-plan    bell share up 16/16 p 0.0000 median +0.111 | ahead at the bell 16/16, turned 14/14 lost games
+  molt-hunter  bell share up 16/16 p 0.0000 median +0.069 | ahead at the bell 13/16, turned 11/14 lost games | beats random 7/16 p 0.8036
+  molt-random  bell share up 11/16 p 0.2101 median +0.057 | ahead at the bell 10/16, turned 9/14 lost games
+== wild: 16 seeds; the side behind at 60 s trailed by 0.006-0.049; untouched, it still lost 15/16
+  salt-plan    bell share up 15/16 p 0.0005 median +0.031 | ahead at the bell 12/16, turned 12/15 lost games | beats random 11/16 p 0.2101
+  salt-random  bell share up 9/16 p 0.8036 median +0.005 | ahead at the bell 5/16, turned 4/15 lost games
+  salt-x6      bell share up 15/16 p 0.0005 median +0.030 | ahead at the bell 14/16, turned 13/15 lost games | beats random 13/16 p 0.0213
+  lamp-plan    bell share up 9/16 p 0.8036 median +0.005 | ahead at the bell 6/16, turned 6/15 lost games | beats random 8/16 p 1.0000
+  lamp-random  bell share up 8/16 p 1.0000 median +0.003 | ahead at the bell 3/16, turned 2/15 lost games
+  lamp-x6      bell share up 12/16 p 0.0768 median +0.050 | ahead at the bell 10/16, turned 9/15 lost games | beats random 10/16 p 0.4545
+  snip-plan    bell share up 8/16 p 1.0000 median +0.001 | ahead at the bell 2/16, turned 1/15 lost games
+  taut-plan    bell share up 1/16 p 0.0005 median -0.027 | ahead at the bell 0/16, turned 0/15 lost games
+  molt-hunter  bell share up 15/16 p 0.0005 median +0.017 | ahead at the bell 8/16, turned 8/15 lost games | beats random 11/16 p 0.2101
+  molt-random  bell share up 6/16 p 0.4545 median -0.010 | ahead at the bell 2/16, turned 2/15 lost games
+Holm over 30 tests (alpha 0.05):
+  scatter  molt-hunter  p 0.0000 bar 0.0017 survives
+  scatter  taut-plan    p 0.0000 bar 0.0017 survives
+  scatter2 molt-hunter  p 0.0000 bar 0.0018 survives
+  scatter2 taut-plan    p 0.0000 bar 0.0019 survives
+  scatter  salt-x6      p 0.0005 bar 0.0019 survives
+  wild     molt-hunter  p 0.0005 bar 0.0020 survives
+  wild     salt-plan    p 0.0005 bar 0.0021 survives
+  wild     salt-x6      p 0.0005 bar 0.0022 survives
+  wild     taut-plan    p 0.0005 bar 0.0023 survives

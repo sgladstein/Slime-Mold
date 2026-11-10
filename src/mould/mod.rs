@@ -57,12 +57,14 @@
 //! picker; a dish opens on a star from the one before.
 
 pub mod big;
+pub mod fever;
 pub mod lesson;
 pub mod level;
 pub mod look;
 pub mod organ;
 pub mod play;
 pub mod render;
+pub mod skirmish;
 pub mod tune;
 pub mod wander;
 
@@ -1050,6 +1052,22 @@ pub struct Dish {
     pub ate: f32,
     /// Food the wild mould has eaten, all dish (0 with no rival).
     pub wild_ate: f32,
+    /// **Beacons** (the field skirmish, `skirmish.rs`): piles this mould
+    /// craves, as (x, y, gain). A beacon pile gives off `gain` times a full
+    /// pile's scent to this mould alone, whether or not it is already
+    /// eating there (`Params::fed_scent` does not apply): each mould is its
+    /// own dish with its own scent, so the other mould smells the pile as
+    /// usual. Empty, nothing changes.
+    pub beacons: Vec<(f32, f32, f32)>,
+    /// **The tithe** (the field skirmish): the fraction of every bite this
+    /// mould takes that goes to its owner's bank (`tithed`) instead of to
+    /// the mould. Eating, and so the score, is unchanged; the mould is
+    /// thinner, since a pile now feeds `1 - tithe` of the walkers it did.
+    /// 0 (the default) changes nothing. Read by the shared store and by
+    /// `Params::pieces`, not by `Params::flow`.
+    pub tithe: f32,
+    /// Food taken by the tithe, all dish.
+    pub tithed: f32,
     /// Seconds spent in each pass of `step_own`, named by `STEP_PASSES`,
     /// summed over every step since it was set to `Some`. `None` (the
     /// default) times nothing. Probes set it to see where the simulation's
@@ -1318,6 +1336,9 @@ impl Dish {
             wild_left: 0,
             ate: 0.0,
             wild_ate: 0.0,
+            beacons: Vec::new(),
+            tithe: 0.0,
+            tithed: 0.0,
             step_cost: None,
             census_held: None,
             rng,
@@ -1810,6 +1831,43 @@ impl Dish {
         self.census();
     }
 
+    /// **A spore** (the field skirmish): up to `n` new walkers of this
+    /// mould in a blob on (x, y), each carrying `food` (`Walker::food`), on
+    /// open agar off `others`' cells. Returns how many landed. Unlike the
+    /// inoculum it leaves every other walker's food alone, and it does not
+    /// run the census early: the colony is counted at the next one, a few
+    /// steps on.
+    pub fn plant(&mut self, (hx, hy): (f32, f32), n: usize, food: f32, others: &[Walker]) -> usize {
+        self.hold_foe_cells(others, true);
+        let r = 12.0 * (n as f32 / INOCULUM as f32).sqrt();
+        let mut placed = 0;
+        let mut tries = 0;
+        while placed < n && tries < 20 * n.max(1) {
+            tries += 1;
+            let a = self.rng.f32() * TAU;
+            let d = self.rng.f32().sqrt() * r;
+            let (x, y) = (hx + a.cos() * d, hy + a.sin() * d);
+            if let Some(i) = cell(x, y) {
+                if self.ground[i] == Ground::Agar && self.occ[i] == 0 {
+                    self.occ[i] = 1;
+                    let heading = self.rng.f32() * TAU;
+                    self.walkers.push(Walker { slept: u64::MAX, woke: u64::MAX, x, y, heading, food });
+                    placed += 1;
+                }
+            }
+        }
+        self.hold_foe_cells(others, false);
+        placed
+    }
+
+    /// `plant` for the rival mould, round this mould's walkers.
+    pub fn plant_rival(&mut self, at: (f32, f32), n: usize, food: f32) -> usize {
+        let Some(mut r) = self.rival.take() else { return 0 };
+        let placed = r.plant(at, n, food, &self.walkers);
+        self.rival = Some(r);
+        placed
+    }
+
     fn step_own(&mut self) {
         // With `step_cost` unset this is one branch per pass and no clock
         // read. Set, it adds a clock read per pass: timed against main in
@@ -2004,7 +2062,11 @@ impl Dish {
             // Oats smell as strong as a pile, which is what makes a lure out
             // of five of them; a pile running low smells less.
             let mut strength = fd * (0.3 + 0.7 * (p.food / p.full).min(1.0));
-            if p.reached() {
+            // A beacon: one comparison per pile per step while any is lit.
+            let lit = self.beacons.iter().find(|b| (b.0 - p.x).abs() < 0.5 && (b.1 - p.y).abs() < 0.5);
+            if let Some(b) = lit {
+                strength = fd * b.2;
+            } else if p.reached() {
                 strength *= self.params.fed_scent;
             }
             for (ox, oy) in disc(p.r) {
@@ -2614,7 +2676,8 @@ impl Dish {
                 let Some(k) = self.census_keys.iter().position(|&c| c == key) else { continue };
                 let e = p.bite(table, eat);
                 p.food -= e;
-                food[self.piece_of_src[k] as usize] += e;
+                food[self.piece_of_src[k] as usize] += e * (1.0 - self.tithe);
+                self.tithed += e * self.tithe;
             }
         }
         // Each walker's piece, its share pooled, and upkeep.
@@ -3104,7 +3167,8 @@ impl Dish {
             if p.eaters > 0 && p.food > 0.0 {
                 let e = p.bite(self.params.table, eat);
                 p.food -= e;
-                self.store += e;
+                self.store += e * (1.0 - self.tithe);
+                self.tithed += e * self.tithe;
             }
         }
         // Upkeep.
@@ -3411,6 +3475,14 @@ impl Dish {
             h.u64(p.oats as u64);
         }
         h.floats(&[self.store, self.ate, self.wild_ate]);
+        // The skirmish's beacons and tithe, only when in use, so a dish
+        // without them hashes as it did before they existed.
+        for b in &self.beacons {
+            h.floats(&[b.0, b.1, b.2]);
+        }
+        if self.tithe != 0.0 || self.tithed != 0.0 {
+            h.floats(&[self.tithe, self.tithed]);
+        }
         for n in [self.oats_left, self.salt_left, self.snips_left, self.water_left, self.peak_mould] {
             h.u64(n as u64);
         }

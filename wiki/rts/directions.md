@@ -1,65 +1,55 @@
 ---
-title: The RTS directions (design only)
+title: The RTS directions
 kind: design
 status: open
 updated: 2026-11-10
-sources: [Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md]
-code: [Dish::rival, Dish::store, Dish::food_share, Pile::bite, Params::fed_scent, Params::flow, Params::foe_repel, Params::pieces, Params::wound, Params::table]
+sources: [Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md, Reports/rts-skirmish-2026-11-10.md]
+code: [Dish::rival, Dish::store, Dish::tithe, Dish::food_share, Pile::bite, Params::fed_scent, Params::flow, Params::foe_repel, Params::pieces, Params::wound, Params::table]
 ---
 
-# The RTS directions (design only)
+# The RTS directions
 
 ## Now
 
-**Nothing is built.** The owner asked on 2026-11-10 how the mould could
-become a real-time strategy game. The first draft, Bloomfront, built a keeper
-game on The Wild One's two moulds and the demo's five tools. Six brainstorm
-agents then widened it. The two that set the old tools aside proposed a
-contagion war over one neutral mould (Tincture, Two Fevers), timed food waves
-(Squeeze), tension on the food sources (Taut), and pattern counters (Grain,
-Grafts), with a card layer (the Rack) that could sit on any of them.
+**In the build phase.** The owner asked on 2026-11-10 how the mould could
+become a real-time strategy game, and at 20:33Z moved the work to playable
+demos, two of them: **the field skirmish** ([skirmish.md](skirmish.md)) and
+**Two Fevers** ([two-fevers.md](two-fevers.md)), a playable contagion war
+over one neutral mould (planner over random 16 of 16, but by only 0.537 of
+the summed score).
 
-A red team then probed four of them on The Wild One. Its pull for Taut
-collapsed the mould onto its piles, Squeeze from home moved food share by
-nothing, and the pattern counters formed a straight ladder. **Two Fevers is
-the strongest left**, because its verb rides the model and it scores host
-share, but it is wholly unbuilt.
+The design work behind them: a first draft (Bloomfront), six brainstorm
+agents, a red team on The Wild One, and a retest on **a field of 23 small
+mirrored piles**, where the moulds reach about 6,600 walkers
+([field retest](../../Reports/rts-design-2026-11-10/field/README.md)). On the
+field the habits form a cycle (hunt > maze > cord > hunt) on one layout, but
+a sweep of 8 more layouts found it on none of them: usually cord simply
+wins. With no hands the side ahead at 60 s keeps the lead in about 4 games of
+5, and a salt wall across the leader's road is the one old tool that turns
+lost games (6 of 12 once, 9 of 12 repeated); the lamp and the cut never do.
 
-The owner then noted that 7 piles limit the options, so the findings were
-rerun on **a field of 23 smaller mirrored piles**, where the moulds reach
-about 6,600 walkers, near Jones's density
-([field retest](../../Reports/rts-design-2026-11-10/field/README.md)). Two
-verdicts turn over. **The counters form a cycle** (hunter > maze > cord >
-hunter, every link surviving Holm) on one layout, though not on a second.
-**Taut's pull wins share** on every seed, so it is a lever there, but as one
-dial for the whole mould it is always best at full, a stat rather than a
-choice. With no hands, the side ahead at 60 s keeps the lead in about 4
-games of 5. The map matters as much as any verb: the same verb can do
-nothing on The Wild One and win on the field.
+The skirmish's first version, built on those numbers (habits, salt, the
+lamp), was played by the owner and set aside: "user input seems limited and
+doesn't lead to any complex stratgy" (21:14Z). Its second, **the budget
+skirmish**, gives the player costed decisions instead: a tithe of its food
+into a bank, spent on beacons, spores and habits. Nine scripted strategies
+played 576 games, and **one beat all the others**: beacons then spores on the
+rival's thinnest pile won 127 of 128 games, and the rest stand on a ladder
+with no cycle ([skirmish report](../../Reports/rts-skirmish-2026-11-10.md)).
+Three changes meant to give the defender an answer did not stop it. Finding
+counterplay is the open problem.
 
 Two facts constrain every direction. Food share mostly counts heads on piles:
 each pile pays at most `Params::table` 40 walkers' worth, split by head count
 (`Pile::bite`). And the food store (`Dish::store`) sits at a median of 0,
 because with `Params::pieces` on each piece turns any surplus into walkers at
-once, so no spending rule works until there is a currency. In mirror games on
-The Wild One the likelier failure was a dead draw; on the field every mirror
-fights, and the early leader usually holds on.
-
-**The verb census has run** on both dishes (clone at 60 s, one verb in one
-copy, 30 s, 16 seeds; the bar is 0.02 of food share the intended way on 13 of
-16, seen by 5 s on all 16, and beating a random use). On the field a salt
-line across the rival's road passes on share (14 of 16) and against random
-(14 of 16), and misses the 5 s check by one seed. On The Wild One only the
-lamp moves share (15 of 16 up, 11 by 0.02). Placed food loses on both. **Next
-is one contagion strain on the CPU**, and a test of whether any verb can
-overturn a 60 s lead. Bloomfront's Stage 0 is not the first step, because its
-gates would pass without testing the opening.
+once; the skirmish's tithe (`Dish::tithe`) is the currency that this needed.
 
 | Direction | Core verb | Red team |
 |---|---|---|
 | Bloomfront | Lure, push, wall, cut, water, each paid from food | Weak as a direction; its two-keeper plumbing is a useful harness |
 | Squeeze | Tap a held pile to send a wave of sap; hold it to charge | Home squeeze 0.000; flow costs 2.6x the step time; needs a fight scaled by load (not rerun on the field) |
-| Two Fevers | Seed a strain in a neutral mould; immunity feeds the trailer | Strongest; untested; risk of a rubber band that washes out skill |
+| Two Fevers | Seed a strain in a neutral mould; immunity feeds the trailer | Built as a demo ([page](two-fevers.md)); carriers-only scoring had no strategy; owned ground with a hold plays as a tug of war, skill margin thin |
 | Tincture | The same, but converts by majority | Feeds the leader; a different game from Two Fevers, so pick one |
 | Taut | Set each source slack, even or taut | Fails on The Wild One; wins share on the field, but untested per pile and always best at full |
 | Grain, Grafts | Regions or captured colonies with their own sensing rules | No cycle on The Wild One; a cycle on one field layout of two |
@@ -83,6 +73,9 @@ gates would pass without testing the opening.
 | Field Taut: one mould's `fed_scent` 0.15 to 1.0 at 60 s, share since at +30 s | 0.653-0.708 against 0.505-0.571 (scatter), 0.683-0.710 against 0.461-0.533 (scatter2); census +0.089 to +0.194 | 4 a layout; 16 | clones, 8 of 8; 16 of 16 | [field retest](../../Reports/rts-design-2026-11-10/field/README.md) |
 | Verb census, share since the action at +30 s, plan minus control | field: salt +0.052 median, 15/16 up, 14 by 0.02, beats random 14/16; taut +0.139, 16/16; lamp +0.022, 12/16; snip +0.007; oats -0.004. Wild One: lamp +0.029, 15/16 up, 11 by 0.02, beats random 14/16; salt, snip, oats, molt about 0; taut -0.024 | 16 a dish | clones; Holm over 12: field taut, field salt, Wild One lamp, field molt survive | [field retest](../../Reports/rts-design-2026-11-10/field/README.md) |
 | Two moulds stepping, The Wild One | about 1.1 ms a step | 4 | | [first draft, *Technical feasibility*](../../Reports/rts-design-2026-11-10.md) |
+| Field layout sweep: the scatter cycle on 9 more layouts | holds on none; hunt > maze on 9 of 10 layouts, cord > hunt on 8, cord > maze on 7; 20 of 24 links survive Holm | 16 a layout (32 games a pairing) | Holm over 3 a layout | [field retest, *Layout sweep*](../../Reports/rts-design-2026-11-10/field/README.md) |
+| Comeback: the side behind at 60 s gets one verb | scatter: salt once turns 6/12, every 15 s 9/12, both beat a random wall 16/16; taut 12/12; hunt 10/12 (beats random 9/16); lamp 2-3/12; snip 1/12. scatter2: salt 2/14. Symmetric Wild One: salt once 12/15, every 15 s 13/15 | 16 a dish | clones | [field retest, *Comeback test*](../../Reports/rts-design-2026-11-10/field/README.md) |
+| Budget skirmish round robin, 9 plans | soft beat all 8 others, 127 of 128 games; no cycle among 36 pairings; 300 of 576 games ended in a wipe-out | 8 (16 games a pairing) | Holm over 36 | [skirmish report, *Round 2*](../../Reports/rts-skirmish-2026-11-10.md) |
 
 ## Owner's word
 
@@ -91,6 +84,9 @@ gates would pass without testing the opening.
 - 2026-11-10 18:15Z: brainstorms must not anchor on the demo's tools: "I want to make sure we are truly brainstorms how this should best work and not doing limited exploration on what exists in our current demo." See [decisions.md](../decisions.md).
 - 2026-11-10 18:25Z: on a card rack with no shuffle, "not sure why we don't want luck. Isn't that part of the core fun or card games. Not a decision that needs to be made at this stage anyways though". Left open.
 - 2026-11-10 19:24Z: "Your test environment seems small with only 7 food sources. That probably limits the potential options." This led to the field retest.
+- 2026-11-10 20:33Z: "You can run these tests, especially if they are cheap and/or can be paralellized. But then lets focus on actually building playable demos". See [decisions.md](../decisions.md).
+- 2026-11-10 20:42Z, card: "Both, in two threads" (the field skirmish here, Two Fevers in its own thread).
+- 2026-11-10 21:14Z, on the skirmish's first version: "Overall, user input seems limited and doesn't lead to any complex stratgy". 21:17Z, on the budget skirmish: "This is an interesting direction." See [skirmish.md](skirmish.md).
 
 ## Tried and rejected
 
@@ -101,14 +97,15 @@ gates would pass without testing the opening.
 
 - The owner's questions are in [HANDOFF.md](../../HANDOFF.md), decision 7: which direction to probe first; whether the RTS waits for queued work; fog of war drawn from a held quantity; two keepers or three to four.
 - Missing from every direction: player count, match length and a food supply that lasts it (The Wild One runs dry at about 2:10-2:20), onboarding, why play twice, and whether the rival is an AI or a second human. No human has played The Wild One yet.
-- Whether the field cycle survives more layouts, and what about a layout makes the maze–cord link hold.
-- Whether any verb can overturn a 60 s lead, since with no hands the leader keeps it in about 4 games of 5.
+- What about the scatter layout makes the maze–cord link hold, since 9 other layouts lack it.
+- Counterplay in the budget skirmish: see [skirmish.md](skirmish.md).
 - Taut set per pile, or with a cost, so that it becomes a choice rather than a stat.
-- A long match with regrowing food, a contagion strain, and human play: the rest of the 2026-11-10 19:31Z list.
+- A long match with regrowing food and human play: the rest of the 2026-11-10 19:31Z list. The contagion strain is built ([Two Fevers](two-fevers.md)).
 
 ## Sources
 
 - [rts-design-2026-11-10.md](../../Reports/rts-design-2026-11-10.md): the first draft, Bloomfront. Claude Doc: https://claude.ai/artifact/EDygsdTpEg8vK7HZzTXhdp (listed in [`pages.md`](../../Reports/pages.md)).
 - [brainstorm/README.md](../../Reports/rts-design-2026-11-10/brainstorm/README.md): the synthesis, which links the six agents' full notes.
 - [red-team/README.md](../../Reports/rts-design-2026-11-10/red-team/README.md): the review, with its [harness](../../Reports/rts-design-2026-11-10/red-team/harness/src/main.rs), [raw output](../../Reports/rts-design-2026-11-10/red-team/raw/) and [stills](../../Reports/rts-design-2026-11-10/red-team/stills/).
-- [field/README.md](../../Reports/rts-design-2026-11-10/field/README.md): the field retest and the verb census, with [raw output](../../Reports/rts-design-2026-11-10/field/raw/) and [stills](../../Reports/rts-design-2026-11-10/field/stills/).
+- [field/README.md](../../Reports/rts-design-2026-11-10/field/README.md): the field retest, the verb census, the layout sweep and the comeback test, with [raw output](../../Reports/rts-design-2026-11-10/field/raw/) and [stills](../../Reports/rts-design-2026-11-10/field/stills/).
+- [rts-skirmish-2026-11-10.md](../../Reports/rts-skirmish-2026-11-10.md): the field skirmish, both versions, and the budget skirmish's round robin.

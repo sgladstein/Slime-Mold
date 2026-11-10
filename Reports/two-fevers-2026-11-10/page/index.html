@@ -1,0 +1,287 @@
+<meta charset="utf-8">
+<title>Two Fevers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column, the dish as the whole stage; the two strains' readouts
+   flank it as a scoreboard above, the controls sit under it. A single dark
+   look on purpose: the dish is dark agar and the strains are lit on it. */
+:root {
+  --agar: #0b0d10;
+  --panel: #14171c;
+  --line: #262b33;
+  --text: #e7e1d3;
+  --dim: #8f8a80;
+  --ember: #ff7a1e;
+  --tide: #2896ff;
+  --host: #d7cdaf;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { background: var(--agar); color: var(--text); }
+body {
+  font-family: var(--mono);
+  font-size: 13px;
+  padding-block: 18px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 12px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 18px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 1.9rem; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h1 .e { color: var(--ember); } h1 .t { color: var(--tide); }
+.tag { color: var(--dim); max-width: 60ch; }
+.board { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; }
+.side { display: grid; gap: 4px; min-width: 0; }
+.side.tide { text-align: right; }
+.who { font-family: var(--display); font-weight: 500; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.ember .who { color: var(--ember); } .tide .who { color: var(--tide); }
+.num { font-variant-numeric: tabular-nums; }
+.big { font-family: var(--display); font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.spores { display: flex; gap: 5px; }
+.tide .spores { justify-content: flex-end; }
+.row { display: flex; gap: 10px; align-items: center; }
+.tide .row { justify-content: flex-end; }
+button.hush { padding: 2px 8px; font-size: 12px; }
+button.hush[aria-pressed="true"] { background: var(--text); color: var(--agar); border-color: var(--text); }
+button.hush:disabled { opacity: 0.45; cursor: default; }
+.spore { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid currentColor; position: relative; overflow: hidden; }
+.ember .spore { color: var(--ember); } .tide .spore { color: var(--tide); }
+.spore i { position: absolute; left: 0; bottom: 0; width: 100%; background: currentColor; }
+.clock { text-align: center; display: grid; gap: 2px; }
+.clock .big { font-size: 2rem; }
+.split { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; display: flex; }
+.split b { display: block; height: 100%; }
+.split .e { background: var(--ember); } .split .t { background: var(--tide); margin-left: auto; }
+.stage { position: relative; border: 1px solid var(--line); background: #060608; line-height: 0; }
+canvas { width: 100%; height: auto; aspect-ratio: 256 / 160; image-rendering: pixelated; cursor: crosshair; touch-action: none; display: block; }
+#ring { position: absolute; pointer-events: none; border-radius: 50%; border: 1.5px solid var(--ember); transform: translate(-50%, -50%); }
+#ring span { position: absolute; left: 100%; top: -4px; margin-left: 6px; line-height: 1; white-space: nowrap; font-size: 12px; color: var(--text); text-shadow: 0 0 3px #000; }
+.card { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(6, 6, 8, 0.72); line-height: 1.5; }
+.card > div { max-width: 46ch; padding: 18px 22px; background: var(--panel); border: 1px solid var(--line); display: grid; gap: 10px; }
+.card h2 { font-family: var(--display); margin: 0; font-size: 1.4rem; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+label { color: var(--dim); display: flex; gap: 6px; align-items: center; }
+select, button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); padding: 6px 10px; border-radius: 3px; cursor: pointer; }
+button:hover, select:hover { border-color: var(--dim); }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--host); outline-offset: 1px; }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 24px; color: var(--dim); line-height: 1.55; }
+.rules b { color: var(--text); font-weight: 600; }
+.key { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--dim); }
+.sw { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
+@media (max-width: 560px) {
+  .board { grid-template-columns: 1fr 1fr; }
+  .clock { grid-column: 1 / -1; order: -1; }
+  h1 { font-size: 1.5rem; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><span class="e">Two</span> <span class="t">Fevers</span></h1>
+    <div class="tag">Two fevers fight over one neutral slime mould. Every walker a fever passes through stays its colour until the other fever takes it back.</div>
+  </header>
+
+  <div class="board">
+    <div class="side ember">
+      <div class="who" id="emberName">Ember · you</div>
+      <div class="big num" id="emberScore">0.0%</div>
+      <div class="num" id="emberNow">owns 0%</div>
+      <div class="row"><div class="spores" id="emberSpores"></div><button class="hush" id="hushE" title="Hush (H)">Hush</button></div>
+    </div>
+    <div class="clock">
+      <div class="big num" id="clock">3:00</div>
+      <div id="phase" style="color: var(--dim)">host growing</div>
+    </div>
+    <div class="side tide">
+      <div class="who" id="tideName">Tide · planner</div>
+      <div class="big num" id="tideScore">0.0%</div>
+      <div class="num" id="tideNow">owns 0%</div>
+      <div class="row"><button class="hush" id="hushT" title="Hush (J)">Hush</button><div class="spores" id="tideSpores"></div></div>
+    </div>
+  </div>
+  <div class="split"><b class="e" id="barE" style="width:50%"></b><b class="t" id="barT" style="width:50%"></b></div>
+
+  <div class="stage" id="stage">
+    <canvas id="dish" width="256" height="160"></canvas>
+    <div id="ring" hidden><span></span></div>
+    <div class="card" id="card">
+      <div>
+        <h2 id="cardTitle">Seed your fever</h2>
+        <div id="cardText">Click a tube to seed Ember. The walkers under the ring catch it, the fever runs along the tubes, and every walker it passes turns your colour and stays yours until Tide's fever takes it back. A spore pays for each seed; one grows back every 10 s, three at most. Your score is the share of the host you own, averaged over three minutes.</div>
+        <div><button id="go">Start</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label for="opp">Tide is played by
+      <select id="opp">
+        <option value="2" selected>the planner</option>
+        <option value="4">the planner, hushing when behind</option>
+        <option value="1">a random hand</option>
+        <option value="0">an idle hand (one seed)</option>
+        <option value="3">a second person (right-click or shift-click)</option>
+      </select>
+    </label>
+    <label for="speed">Speed
+      <select id="speed"><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+    </label>
+    <button id="pause">Pause</button>
+    <button id="restart">Same dish</button>
+    <button id="next">New dish</button>
+    <span class="num" id="seedLabel" style="color: var(--dim)">dish 1</span>
+  </div>
+
+  <div class="key">
+    <span><i class="sw" style="background: var(--host)"></i>nobody's yet</span>
+    <span><i class="sw" style="background: var(--ember)"></i>carrying Ember</span>
+    <span><i class="sw" style="background: #824d26"></i>Ember's, held</span>
+    <span><i class="sw" style="background: #e9a76e"></i>Ember's, open to Tide</span>
+    <span><i class="sw" style="background: var(--tide)"></i>carrying Tide</span>
+    <span><i class="sw" style="background: #2f587c"></i>Tide's, held</span>
+    <span><i class="sw" style="background: #88b4d3"></i>Tide's, open to Ember</span>
+    <span><i class="sw" style="background: #3f8f3a"></i>food pile (greener is fuller)</span>
+  </div>
+
+  <div class="rules">
+    <div><b>Spread.</b> A carrier lays its fever's own field along the tube. A walker standing in enough of it catches the fever, so a fever runs along tubes at a few cells a second and dies out across bare agar.</div>
+    <div><b>Hold.</b> After 4 s a carrier recovers and stays your colour. For 15 s it is held: neither fever can catch it. Then it is open to your rival, while your own fever cannot refresh it for 40 s. Deep colour is held ground, pale is ground that can be taken.</div>
+    <div><b>Hush.</b> A hushed fever's carriers lay no trail, so the tubes under them thin and break, which can cut a road your rival's fever would run down. Your fever needs those tubes too. Switch it with the button or H; it can switch every 3 s.</div>
+  </div>
+</div>
+
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const canvas = $("dish"), ctx = canvas.getContext("2d");
+  const img = ctx.createImageData(256, 160);
+  let wasm;
+  try {
+    const bytes = await (await fetch("fevers.wasm")).arrayBuffer();
+    wasm = (await WebAssembly.instantiate(bytes, {})).instance.exports;
+  } catch (e) {
+    $("cardTitle").textContent = "The dish did not load";
+    $("cardText").textContent = "fevers.wasm could not be fetched or started (" + e + "). Reload the page to try again.";
+    $("go").hidden = true;
+    return;
+  }
+  const W = wasm.fv_width(), H = wasm.fv_height();
+  let seed = 1, opp = 2, paused = true, started = false, last = performance.now();
+  const names = { 0: "idle hand", 1: "random hand", 2: "planner", 3: "player two", 4: "planner + hush" };
+  const max = () => wasm.fv_spores_max();
+
+  function fresh() {
+    opp = +$("opp").value;
+    wasm.fv_new(seed, opp);
+    $("seedLabel").textContent = "dish " + seed;
+    $("tideName").textContent = "Tide · " + names[opp];
+    $("emberName").textContent = opp === 3 ? "Ember · player one" : "Ember · you";
+    buildSpores();
+    wasm.fv_tick(0, 1);
+    draw();
+  }
+  function buildSpores() {
+    for (const s of ["ember", "tide"]) {
+      const el = $(s + "Spores"); el.innerHTML = "";
+      for (let k = 0; k < max(); k++) { const d = document.createElement("div"); d.className = "spore"; d.appendChild(document.createElement("i")); el.appendChild(d); }
+    }
+  }
+  function draw() {
+    const p = wasm.fv_frame();
+    img.data.set(new Uint8ClampedArray(wasm.memory.buffer, p, W * H * 4));
+    ctx.putImageData(img, 0, 0);
+  }
+  const pct = (v) => (v * 100).toFixed(1) + "%";
+  function hud() {
+    const phase = wasm.fv_phase();
+    const total = wasm.fv_match_seconds(), t = wasm.fv_play_seconds();
+    const left = Math.max(0, Math.ceil(total - t));
+    $("clock").textContent = phase === 0 ? Math.ceil(wasm.fv_warm_left()) + "s" : Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+    $("phase").textContent = phase === 0 ? "host growing, no seeds yet" : phase === 1 ? (paused ? "paused" : "playing") : "the bell";
+    const se = wasm.fv_score(0), st = wasm.fv_score(1);
+    $("emberScore").textContent = pct(se); $("tideScore").textContent = pct(st);
+    $("emberNow").textContent = "owns " + pct(wasm.fv_share(0)) + " · carrying " + pct(wasm.fv_carrying(0));
+    $("tideNow").textContent = "owns " + pct(wasm.fv_share(1)) + " · carrying " + pct(wasm.fv_carrying(1));
+    [["hushE", 0], ["hushT", 1]].forEach(([id, k]) => {
+      const on = wasm.fv_hush(k) === 1, wait = wasm.fv_hush_wait(k);
+      const b = $(id);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.textContent = on ? "Hushed" : "Hush";
+      b.disabled = phase !== 1 || wait > 0 || (k === 1 && opp !== 3);
+    });
+    const sum = se + st, e = sum > 0 ? se / sum : 0.5;
+    $("barE").style.width = (e * 100) + "%"; $("barT").style.width = ((1 - e) * 100) + "%";
+    [["ember", 0], ["tide", 1]].forEach(([s, k]) => {
+      const n = wasm.fv_spores(k), prog = wasm.fv_spore_progress(k);
+      [...$(s + "Spores").children].forEach((d, j) => { d.firstChild.style.height = (j < n ? 100 : j === n ? prog * 100 : 0) + "%"; });
+    });
+    if (phase === 2 && !$("card").dataset.over) {
+      $("card").dataset.over = "1";
+      const lead = se > st ? "Ember" : st > se ? "Tide" : "Nobody";
+      $("cardTitle").textContent = lead === "Nobody" ? "Dead level" : lead + " owned more of the host";
+      $("cardText").textContent = "Ember owned " + pct(se) + " of the host on average over the match, Tide " + pct(st) + ". Ember planted " + wasm.fv_seeds(0) + " seeds, Tide " + wasm.fv_seeds(1) + ".";
+      $("go").textContent = "Play again";
+      $("card").hidden = false;
+    }
+  }
+  function frame(now) {
+    const dt = now - last; last = now;
+    if (!paused) { wasm.fv_tick(dt, +$("speed").value); draw(); }
+    hud();
+    updateRing();
+    requestAnimationFrame(frame);
+  }
+
+  // Pointer: dish cell under it, the ring of the seed it would make.
+  let hover = null;
+  function cellAt(ev) {
+    const r = canvas.getBoundingClientRect();
+    return { x: (ev.clientX - r.left) / r.width * W, y: (ev.clientY - r.top) / r.height * H, px: ev.clientX - r.left, py: ev.clientY - r.top, k: r.width / W };
+  }
+  function updateRing() {
+    const ring = $("ring");
+    if (!hover || !started || wasm.fv_phase() !== 1) { ring.hidden = true; return; }
+    const strain = hover.tide ? 1 : 0;
+    const d = 2 * wasm.fv_seed_r() * hover.k;
+    ring.hidden = false;
+    Object.assign(ring.style, { left: hover.px + "px", top: hover.py + "px", width: d + "px", height: d + "px", borderColor: strain ? "var(--tide)" : "var(--ember)" });
+    const n = wasm.fv_would(strain, hover.x, hover.y);
+    ring.firstChild.textContent = wasm.fv_spores(strain) === 0 ? "no spore" : n === 0 ? "nothing to catch" : "catches " + n;
+  }
+  canvas.addEventListener("pointermove", (ev) => { hover = { ...cellAt(ev), tide: opp === 3 && ev.shiftKey }; });
+  canvas.addEventListener("pointerleave", () => { hover = null; });
+  canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
+  canvas.addEventListener("pointerdown", (ev) => {
+    if (!started || paused) return;
+    const c = cellAt(ev);
+    const tide = opp === 3 && (ev.button === 2 || ev.shiftKey);
+    wasm.fv_seed(tide ? 1 : 0, c.x, c.y);
+    hover = { ...c, tide };
+  });
+
+  function start() { $("card").hidden = true; delete $("card").dataset.over; started = true; paused = false; $("pause").textContent = "Pause"; last = performance.now(); }
+  $("go").addEventListener("click", () => { if (wasm.fv_phase() === 2) fresh(); start(); });
+  const hush = (k) => { if (started && !paused) wasm.fv_set_hush(k, wasm.fv_hush(k) ? 0 : 1); };
+  $("hushE").addEventListener("click", () => hush(0));
+  $("hushT").addEventListener("click", () => { if (opp === 3) hush(1); });
+  $("pause").addEventListener("click", () => { if (!started) return; paused = !paused; $("pause").textContent = paused ? "Resume" : "Pause"; });
+  $("restart").addEventListener("click", () => { fresh(); start(); });
+  $("next").addEventListener("click", () => { seed += 1; fresh(); start(); });
+  $("opp").addEventListener("change", () => { fresh(); if (started) start(); });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.target.tagName === "SELECT") return;
+    if (ev.key === " ") { ev.preventDefault(); $("pause").click(); }
+    if (ev.key === "r" || ev.key === "R") $("restart").click();
+    if (ev.key === "n" || ev.key === "N") $("next").click();
+    if (ev.key === "h" || ev.key === "H") hush(0);
+    if ((ev.key === "j" || ev.key === "J") && opp === 3) hush(1);
+  });
+
+  fresh();
+  requestAnimationFrame(frame);
+})();
+</script>

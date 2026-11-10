@@ -1,0 +1,21 @@
+# The browser build of the field skirmish (`slime_mould::mould::skirmish`):
+# a wasm32 cdylib with a plain C interface (no wasm-bindgen), driven by
+# `page/index.html`, which draws the game's own frame (`render::draw`) on a
+# canvas. Build: `./build.sh` (needs `rustup target add wasm32-unknown-unknown`).
+[package]
+name = "slime-web"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license-file = "../LICENSE"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+slime-mould = { path = ".." }
+
+[profile.release]
+codegen-units = 1
+opt-level = 3
+panic = "abort"
