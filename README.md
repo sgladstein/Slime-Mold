@@ -73,8 +73,8 @@ cargo clippy --all-targets --release --locked -- -D warnings
 
 CI runs both on every pull request and every push to main, plus a build of
 the organ's sound device for macOS and Windows (`.github/workflows/ci.yml`).
-A pull request that changes only `Reports/`, `handoff/`, `research/` or
-`*.md` skips both build jobs. Sound on Linux needs
+A pull request that changes only `Reports/`, `handoff/`, `research/`, `wiki/`
+or `*.md` skips both build jobs. Sound on Linux needs
 `--features audio-alsa` and `libasound2-dev`.
 
 **Licensing** (`.github/workflows/notices.yml`, runs only when `Cargo.toml`,

@@ -130,7 +130,7 @@ Each report's own "next steps" section has the reasons and numbers:
   with its archived source.
 - **Merging.** Merge a PR only when both CI jobs ("test + clippy" and "sound
   device builds (organ)") are green on its exact head, with a merge commit.
-  PRs that change only `Reports/`, `handoff/`, `research/` or `*.md` skip the
+  PRs that change only `Reports/`, `handoff/`, `research/`, `wiki/` or `*.md` skip the
   two build jobs (PR #5), so they show as skipped, which is green.
 - **Reaching the repo from a session.** Add `sgladstein/Slime-Mold` to the
   session (`add_repo`); the crate is `slime-mould`, imported as

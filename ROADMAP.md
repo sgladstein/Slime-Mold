@@ -188,8 +188,7 @@ decisions.
 - An owner answer moves into [`wiki/decisions.md`](wiki/decisions.md) as
   usual; then update the row it unblocks here.
 - The GPU go-ahead (17:50Z) and the owner's GPU (GTX 1070 on Scott-Desktop,
-  17:54Z) are being moved from HANDOFF decision 6 into `decisions.md` by the
-  GPU thread's first phase 1 PR.
+  17:54Z) are recorded in `decisions.md`.
 - Each thread merges its own PRs once both CI jobs are green on the exact
   head, with a merge commit (owner, 17:47Z). Any new report must be cited
   from a wiki page in the same PR; `python3 wiki/lint.py` fails otherwise.
