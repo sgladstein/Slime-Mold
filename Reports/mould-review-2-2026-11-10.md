@@ -24,9 +24,10 @@ holding the lamp at an aim a person does not have.
 Not played by hand. The thread's scripted hands (`sleeper`, `warden` in
 `examples/mouldprobe.rs`) were re-run on 16 seeds, then made worse on purpose
 on 8 seeds each, with a scratch copy of the probe
-([`mould-review-2026-11-10/mouldrev.patch`](mould-review-2026-11-10/mouldrev.patch);
-the committed patch lacks the later `INVARSHOW` line, which only prints the
-check's values):
+([`mould-review-2-2026-11-10/mouldrev.patch`](mould-review-2-2026-11-10/mouldrev.patch),
+refreshed against this repo's probe with the `INVARSHOW` line; how to apply
+it is in [the hand-off](mould-review-thread-handoff-2026-11-10.md). The job
+lines are in `commands.txt` and the bell traces in `traces/`):
 
 - `HJIT=n`: lamp, water, snip and oat placements land anywhere in a disc of
   n cells round the intended point.

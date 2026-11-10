@@ -11,4 +11,4 @@ FINDINGS (shipped mould, unchanged, one seed): side-on lab played_bed aged 20k f
 BUG FOUND: Dish::spread skips border cells, so trail on a livable edge never fades (harmless for the ellipse dish); told the mould thread.
 
 OPTIONS: A "mould under the garden" side-on probe in its own binary on a lab-built world (RECOMMENDED; food up/water down/light pushes down), B forest floor from above (fallback, own world), C outdoor journey with spores on real wind (later). Note: reverses Scott's 11-08 06:44Z "don't bring the world in" if he picks A.
-PENDING SCOTT: which option to prototype (decision card posted).
+SCOTT PICKED B, FOREST FLOOR FROM ABOVE (card 11-10 16:04Z). Not built; next step for the mould work in its new project (Slime-Mold, no engine). Recorded in report status + §5 via Slime-Mold PR #3 (head 59234cf7, repo-move thread merges).

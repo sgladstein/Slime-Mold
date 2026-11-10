@@ -9,7 +9,7 @@ metadata:
 Second independent review of the mould game, asked by Scott 2026-11-10 04:08Z ("After you finish all your work, have the fable thread review it"). Review only, no build. Same thread as [[mould-review-2026-11-10]]; reviews [[mould-keep-alive-2026-11-10]].
 
 - Page: https://claude.ai/artifact/DnqCHgesBQYWDJBHjE7PHr
-- Report: `Reports/mould-review-2-2026-11-10.md` in **sgladstein/Slime-Mold, PR #1** (opened 2026-11-10, handed to the Merge desk). The mould game lives in that repo since 2026-11-10 [[mould-own-repo-2026-11-10]]; clone at `/home/user/slime-mold` in this session.
+- Report: `Reports/mould-review-2-2026-11-10.md` in **sgladstein/Slime-Mold, PR #1, merged 2026-11-10 as e242d2d**. Later Slime-Mold PRs go to the repo-move thread (cmsg_016bYH3Ybq4z6xkGqHujo4HW6cW77Bfhu8KKiLAnGgzRt9), not the Merge desk: that thread relayed this as Scott's ruling "for now" (2026-11-10, not seen first-hand here). The mould game lives in that repo since 2026-11-10 [[mould-own-repo-2026-11-10]]; clone at `/home/user/slime-mold` in this session.
 - Method: about 270 scripted runs at Pixel_Physics main `b3bd36ac1`, the mould thread's hands made worse on purpose (aim error, slow looking, letting go early), paired seeds 1-8, sign tests. About 14 comparisons, so nothing passes the strict bar (0.004); an 8-0 is p 0.008.
 
 **Verdict: both dishes work and every reported number reproduces, but neither is yet a game a person can get better at.**

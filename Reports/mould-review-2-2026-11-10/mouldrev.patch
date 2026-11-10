@@ -1,0 +1,247 @@
+--- examples/mouldprobe.rs	2026-11-10 15:07:12.244701816 +0000
++++ examples/mouldrev.rs	2026-11-10 16:03:44.699974044 +0000
+@@ -251,6 +251,120 @@
+     a
+ }
+ 
++static JSTATE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0x9E37_79B9_7F4A_7C15);
++fn envf(k: &str, d: f32) -> f32 {
++    std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d)
++}
++fn jrand() -> f32 {
++    use std::sync::atomic::Ordering::Relaxed;
++    let mut x = JSTATE.load(Relaxed);
++    x ^= x << 13;
++    x ^= x >> 7;
++    x ^= x << 17;
++    JSTATE.store(x, Relaxed);
++    (x >> 40) as f32 / (1u64 << 24) as f32
++}
++/// A hand's aim error: a point in a disc of radius `HJIT` cells.
++fn jit((x, y): (f32, f32)) -> (f32, f32) {
++    let r = envf("HJIT", 0.0);
++    if r <= 0.0 {
++        return (x, y);
++    }
++    let a = jrand() * std::f32::consts::TAU;
++    let d = jrand().sqrt() * r;
++    (x + a.cos() * d, y + a.sin() * d)
++}
++
++/// Review hands for The Wild One: one opening move, then nothing.
++struct Opener {
++    kind: &'static str,
++    done: bool,
++}
++impl Player for Opener {
++    fn name(&self) -> &'static str {
++        self.kind
++    }
++    fn act(&mut self, d: &mut Dish) {
++        if d.phase != Phase::Growing || d.rival.is_none() {
++            return;
++        }
++        let sps = STEPS_PER_SECOND as u64;
++        let r = d.rival.as_ref().unwrap();
++        let n = r.walkers.len().max(1) as f32;
++        let (cx, cy) = (r.walkers.iter().map(|w| w.x).sum::<f32>() / n, r.walkers.iter().map(|w| w.y).sum::<f32>() / n);
++        match self.kind {
++            // The lamp held on the wild mould's middle all game.
++            "camp" => {
++                d.set_lamp(Some((cx, cy)));
++            }
++            // The lamp held on the wild mould's start pile all game.
++            "camphome" => {
++                if !self.done {
++                    self.done = true;
++                    d.set_lamp(Some((cx, cy)));
++                }
++            }
++            "nestsnip" => {
++                if !self.done && d.t >= sps / 2 {
++                    self.done = true;
++                    for k in 0..3 {
++                        let oy = (k as f32 - 1.0) * 7.0;
++                        if d.begin_stroke(Tool::Snip, cx - 13.0, cy + oy) {
++                            d.drag_stroke(cx + 13.0, cy + oy);
++                            d.end_stroke();
++                        }
++                    }
++                    println!("    nestsnip: wild {} -> after strokes (next step)", r_len(d));
++                }
++            }
++            "nestsalt" => {
++                if !self.done && d.t >= sps / 2 {
++                    self.done = true;
++                    if d.begin_stroke(Tool::Salt, cx - 30.0, cy) {
++                        d.drag_stroke(cx + 30.0, cy);
++                        d.end_stroke();
++                    }
++                }
++            }
++            "jail" => {
++                if !self.done && d.t >= sps / 2 {
++                    self.done = true;
++                    let rr = 9.5f32;
++                    if d.begin_stroke(Tool::Salt, cx + rr, cy) {
++                        for k in 1..=64 {
++                            let a = k as f32 / 64.0 * std::f32::consts::TAU;
++                            d.drag_stroke(cx + rr * a.cos(), cy + rr * a.sin());
++                        }
++                        d.end_stroke();
++                    }
++                }
++            }
++            // All three at once: salt through the nest, three snips, then camp the lamp.
++            "strike" => {
++                if !self.done && d.t >= sps / 2 {
++                    self.done = true;
++                    if d.begin_stroke(Tool::Salt, cx, cy - 30.0) {
++                        d.drag_stroke(cx, cy + 30.0);
++                        d.end_stroke();
++                    }
++                    for k in 0..3 {
++                        let oy = (k as f32 - 1.0) * 7.0;
++                        if d.begin_stroke(Tool::Snip, cx - 13.0, cy + oy) {
++                            d.drag_stroke(cx + 13.0, cy + oy);
++                            d.end_stroke();
++                        }
++                    }
++                }
++                d.set_lamp(Some((cx, cy)));
++            }
++            _ => {}
++        }
++    }
++}
++fn r_len(d: &Dish) -> usize {
++    d.rival.as_ref().map_or(0, |r| r.walkers.len())
++}
++
+ fn player(name: &str, seed: u64) -> Box<dyn Player> {
+     match name {
+         "idle" => Box::new(Idle),
+@@ -263,6 +377,12 @@
+         "guard" => Box::new(Guard),
+         "sleeper" => Box::new(Sleeper::new()),
+         "warden" => Box::new(Warden::new()),
++        "camp" => Box::new(Opener { kind: "camp", done: false }),
++        "camphome" => Box::new(Opener { kind: "camphome", done: false }),
++        "nestsnip" => Box::new(Opener { kind: "nestsnip", done: false }),
++        "nestsalt" => Box::new(Opener { kind: "nestsalt", done: false }),
++        "jail" => Box::new(Opener { kind: "jail", done: false }),
++        "strike" => Box::new(Opener { kind: "strike", done: false }),
+         "prune" => Box::new(Pruner { seed: seed | 1, frame: 0, from: 15, every: 30, len: 26.0 }),
+         _ => panic!("unknown player {name}"),
+     }
+@@ -309,6 +429,22 @@
+         }
+         let sps = STEPS_PER_SECOND as u64;
+         let mid = (128.0f32, 80.0f32);
++        // Review: STOPAT=seconds, the hand lets go after that.
++        let stop = envf("STOPAT", 1e9);
++        if d.t as f32 / sps as f32 >= stop {
++            if d.lamp.is_some() {
++                d.set_lamp(None);
++            }
++            return;
++        }
++        // Review: HLAG=seconds, the hand looks at the dish only that often.
++        let lag = envf("HLAG", 0.0);
++        if lag > 0.0 && !d.t.is_multiple_of((lag * sps as f32) as u64) {
++            if d.t >= self.lamp_until && d.lamp.is_some() {
++                d.set_lamp(None);
++            }
++            return;
++        }
+         if self.salt && d.salt_left > 0 && d.t >= sps / 2 && d.begin_stroke(Tool::Salt, 152.0, 50.0) {
+             d.drag_stroke(152.0, 110.0);
+             d.end_stroke();
+@@ -345,6 +481,7 @@
+                 .max_by_key(|h| h.2);
+             if let Some((x, y, n)) = hit {
+                 if n >= 30 {
++                    let (x, y) = jit((x, y));
+                     d.set_lamp(Some((x, y)));
+                     self.lamp_until = d.t + 2 * sps;
+                 }
+@@ -365,7 +502,7 @@
+                 }
+             }
+             if let Some((i, _)) = best {
+-                let (x, y) = ((i % W) as f32 + 0.5, (i / W) as f32 + 0.5);
++                let (x, y) = jit(((i % W) as f32 + 0.5, (i / W) as f32 + 0.5));
+                 // Across the tube: along the trail's level line, found from its slope.
+                 let gx = r.trail[i + 1] - r.trail[i - 1];
+                 let gy = r.trail[i + W] - r.trail[i - W];
+@@ -398,7 +535,8 @@
+                 if let Some(((x, y), g)) = from {
+                     if g > 16.0 {
+                         let f = (20.0 / g).min(1.0);
+-                        if d.place_oats(x + (mid.0 - x) * f, y + (mid.1 - y) * f) {
++                        let (ox, oy) = jit((x + (mid.0 - x) * f, y + (mid.1 - y) * f));
++                        if d.place_oats(ox, oy) {
+                             self.next_oat = d.t + 4 * sps;
+                         }
+                     }
+@@ -450,14 +588,15 @@
+             d.set_lamp(None);
+         }
+         self.route.act(d);
+-        if !d.t.is_multiple_of(sps / 2) {
++        let every = if envf("HLAG", 0.0) > 0.0 { (envf("HLAG", 0.0) * sps as f32) as u64 } else { sps / 2 };
++        if !d.t.is_multiple_of(every) {
+             return;
+         }
+         let awake: Vec<(f32, f32)> = d.walkers.iter().filter(|w| !w.asleep()).map(|w| (w.x, w.y)).collect();
+         let asleep: Vec<(f32, f32)> = d.walkers.iter().filter(|w| w.asleep()).map(|w| (w.x, w.y)).collect();
+         // Water: a pile with food the mould is not on, and sleepers within
+         // 45 cells of it: soak the sleeper nearest it, a little toward it.
+-        if d.water_left > 0 && !asleep.is_empty() {
++        if d.water_left > 0 && !asleep.is_empty() && std::env::var("NOWATER").is_err() {
+             let target = d
+                 .dish_piles()
+                 .filter(|p| !p.reached() && p.food > 0.0)
+@@ -475,7 +614,8 @@
+                 let g = (s.0 - t.0).hypot(s.1 - t.1);
+                 if g < 45.0 {
+                     let f = (8.0 / g.max(1.0)).min(1.0);
+-                    d.place_water(s.0 + (t.0 - s.0) * f, s.1 + (t.1 - s.1) * f);
++                    let (wx, wy) = jit((s.0 + (t.0 - s.0) * f, s.1 + (t.1 - s.1) * f));
++                    d.place_water(wx, wy);
+                     return;
+                 }
+             }
+@@ -506,6 +646,7 @@
+                 .copied()
+                 .max_by_key(|a| awake.iter().filter(|b| (a.0 - b.0).hypot(a.1 - b.1) < 8.0).count())
+                 .unwrap();
++            let at = jit(at);
+             d.set_lamp(Some(at));
+             self.bake_until = d.t + (self.bake * sps as f32) as u64;
+             self.baked_at = Some(d.t);
+@@ -2053,6 +2194,24 @@
+         for _ in 0..STEPS_PER_FRAME {
+             d.step();
+         }
++        if std::env::var("INVAR").is_ok() && d.t.is_multiple_of(15) {
++            if let Some(r) = d.rival.as_ref() {
++                use slime_mould::mould::W;
++                let mut mine = std::collections::HashSet::new();
++                for w in &d.walkers {
++                    mine.insert(w.y as usize * W + w.x as usize);
++                }
++                let shared = r.walkers.iter().filter(|w| mine.contains(&(w.y as usize * W + w.x as usize))).count();
++                let off = r.walkers.iter().filter(|w| r.ground[w.y as usize * W + w.x as usize] != slime_mould::mould::Ground::Agar).count();
++                let food_diff: f32 = d.piles.iter().zip(&r.piles).map(|(a, b)| (a.food - b.food).abs()).sum();
++                if std::env::var("INVARSHOW").is_ok() && d.t.is_multiple_of(1800) {
++                    println!("    INVAR check ran t={} mine {} wild {} shared {shared} off {off} food diff {food_diff:.4}", d.t, d.walkers.len(), r.walkers.len());
++                }
++                if shared > 0 || off > 0 || food_diff > 1e-3 || d.piles.len() != r.piles.len() {
++                    println!("    INVAR t={} shared cells {shared} wild off agar {off} pile food diff {food_diff:.3} piles {}/{}", d.t, d.piles.len(), r.piles.len());
++                }
++            }
++        }
+         if d.phase == Phase::Over && over_at.is_none() {
+             over_at = Some(d.t);
+         }

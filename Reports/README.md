@@ -62,6 +62,11 @@ move.
   The Wild One: the first star is the opening salt wall (letting go at 30 s keeps it on 8 of 8), the second and third need
   aim within about 2 cells, the snip delivers nothing, and the bell rings while both moulds are crashing (the player's
   loses 28-54% in the last ten seconds). No bug found in the two-mould step. Recommends scoring the share of food eaten.
+- [mould-review-thread-handoff-2026-11-10.md](mould-review-thread-handoff-2026-11-10.md) — **hand-off note, nothing built: what
+  the review thread knew when the work moved to a new account.** The one open owner decision (what to fix first after
+  review 2), the next steps in order, the owner's words in that thread with their times, the looks-pass review in words,
+  how to re-run review 2's probe on this repo (two baselines reproduce on `e242d2d`), what nobody has checked, and three
+  mistakes the review made.
 - [mould-looks-2026-11-10.md](mould-looks-2026-11-10.md) **(from Pixel_Physics)** — **built, drawing only: the mould game's looks pass.** A speck
   per real walker, one colour ramp for the food the tube holds (rescaled: the old reading was full on over half the tube),
   smoothing of the rim, tube insides, salt walls and cuts, a fading stain where mould has been, the lamp drawn as the light
