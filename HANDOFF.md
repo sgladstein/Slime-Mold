@@ -72,11 +72,15 @@ Ask each again; none has an answer to assume.
    over The Wild One's next steps (its Stage 0 answers the same mid-game
    question); is a fog of war allowed if it is drawn from a held quantity;
    two keepers, or three-to-four. Since the brainstorm
-   ([`brainstorm/`](Reports/rts-design-2026-11-10/brainstorm/README.md)): which
-   direction to probe first, Bloomfront's Stage 0 or one of the cheaper
-   questions (a no-input pattern-counter grid, a Squeeze timing probe, a
-   contagion test). The food store sits at a median of 0, so any "pay from
-   the store" rule needs its own currency first.
+   ([`brainstorm/`](Reports/rts-design-2026-11-10/brainstorm/README.md)) and
+   its [red team](Reports/rts-design-2026-11-10/red-team/README.md): which
+   direction to probe first. The red team recommends a paired-clone verb
+   census (one verb in one of two cloned dishes, 16 seeds) before Bloomfront's
+   Stage 0, whose gates would pass without testing the opening; then one
+   contagion strain on the CPU. Taut failed its probe; Two Fevers is the
+   strongest left. The food store sits at a median of 0, so any "pay from
+   the store" rule needs its own currency first. Page:
+   [the RTS directions](wiki/rts/directions.md).
 8. **Sound for the game:** wanted at all? The Pixel_Physics review
    recommends starting from that repo's `src/audio/` if so; the game window
    is silent today.

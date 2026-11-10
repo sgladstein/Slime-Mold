@@ -38,7 +38,7 @@ depends on is done, not when the band before it is finished.
 | S1 | GPU phase 1: frame profiler (also the review's E2), "GPU semantics" CPU arm, delayed-census arm, new rules off by default | GPU thread | E1 for the hash; owner go-ahead given 17:50Z | profiler done (PR #16: diffusion is 62% of the simulation, moving walkers 24%); the two arms next, on E1's hash |
 | E4 | Release profile re-measured on `mouldprobe` and one CI run | Pixel_Physics thread | E1 | queued |
 | E5 | Licence and notices gates, the JetBrains Mono OFL notice, `crispfont.py` | Pixel_Physics thread | nothing; must land before any build leaves the owner's machine | queued |
-| R- | Bloomfront research (four inspiration agents, then a red team) | RTS thread | nothing; design only | running |
+| R- | Bloomfront research (six brainstorm agents, then a red team) | RTS thread | nothing; design only | **done 11-10**: [red team](Reports/rts-design-2026-11-10/red-team/README.md), [page](wiki/rts/directions.md). Taut fails; Two Fevers strongest; next is a paired-clone verb census, which changes no game rule |
 
 ### Next: waits on the owner
 
@@ -165,6 +165,9 @@ decisions.
 3. **Bloomfront's three questions** (decision 7): wait for the queued work or
    take over The Wild One's next steps; fog of war drawn from a held
    quantity; two keepers or three-to-four. Recommended: do G2 as Stage 0.
+   *Since the red team (11-10):* Stage 0's gates would pass without testing
+   the opening, so the RTS thread recommends a paired-clone verb census
+   first; G2 can still use Stage 0's two-keeper plumbing.
 4. **Hold the multi-core renderer** until the scale gate (part of decision
    6). Recommended: yes. Needed now, because it is third in the Pixel_Physics
    thread's order.

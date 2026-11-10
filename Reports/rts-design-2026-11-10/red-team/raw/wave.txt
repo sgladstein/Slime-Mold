@@ -1,0 +1,61 @@
+WAVE seed=1 charge=10s amount=1440 (home bite/step 1.200, eaters 178), stream=1
+  +  250ms food diff by x/16:      0   119  1101   220    -7     2     1    -2    -2     0    -0     0     0     0     0     0
+           walker diff by x/16:    0   0   3  18 -23   7   2  -1   0   1   0   0   0   0   0   0  (walkers 933 v 940, share 0.518 v 0.518)
+  +  500ms food diff by x/16:      0   180   915   318    -2    -0     2    -3    -2    -0     0     0     0     0     0     0
+           walker diff by x/16:    0   1   5  24 -20  -1   2   1   1  -1   4   0   0   0   0   0  (walkers 931 v 947, share 0.518 v 0.518)
+  + 1000ms food diff by x/16:      0   170   720   363    29     1     4    -7    -3     2     2     1     0     0     0     0
+           walker diff by x/16:    0   0  22  21  -9  -5   0  -2   3   2   4   0   0   0   0   0  (walkers 928 v 964, share 0.519 v 0.519)
+  + 2000ms food diff by x/16:      0    85   650   228    82    27     6     2     3    -0    -0     0     0     0     0     0
+           walker diff by x/16:    0   1  13  37 -14  16   4  -6  11   9   4   0   0   0   0   0  (walkers 924 v 999, share 0.519 v 0.520)
+  + 3000ms food diff by x/16:      0   152   474   238    49    21    25     5   -16     5     3     1     0     0     0     0
+           walker diff by x/16:    0   1  35  18  -5  11  17  22   1   8   8   0   0   0   0   0  (walkers 915 v 1031, share 0.520 v 0.520)
+  + 5000ms food diff by x/16:      0    48   370   120    50    21    13   -19   -24     2     1     0     0     0     0     0
+           walker diff by x/16:    0   0  67  34  -9  32  14  14  -8   2   9   0   0   0   0   0  (walkers 920 v 1075, share 0.522 v 0.522)
+  + 8000ms food diff by x/16:      0    19   172    44    -5     1    27   -31   -26    -4     2     1     0     0     0     0
+           walker diff by x/16:    0  15  64   7  -4  41  21   8 -11   2  14   1   1   0   0   0  (walkers 918 v 1077, share 0.524 v 0.524)
+  +12000ms food diff by x/16:      0     1    17    19     0    13    31   -35   -20    -2    -1     0     0     0     0     0
+           walker diff by x/16:    0  11  60  17 -24  39   7  40  17   3   2   0   0   0   0   0  (walkers 880 v 1052, share 0.526 v 0.526)
+  x columns:                         0    16    32    48    64    80    96   112   128   144   160   176   192   208   224   240
+  control food by x/16 at end:       0    13   111    80   292   300    52    92    84     2     2     0     0     0     0     0
+WAVE seed=2 charge=10s amount=1440 (home bite/step 1.200, eaters 171), stream=1
+  +  250ms food diff by x/16:      0   139  1045   246     1    -0    -1    -0    -0     0     0    -0     0     0     0     0
+           walker diff by x/16:    0   0   1   2   2   0  -1   1  -2   1   0   0   0   0   0   0  (walkers 878 v 882, share 0.545 v 0.545)
+  +  500ms food diff by x/16:      0   172   863   351    -7     8    -4     2    -4     1     0    -0     0     0     0     0
+           walker diff by x/16:    0   0  12   9 -11   7  -8  10   1   0   0   0   0   0   0   0  (walkers 874 v 894, share 0.545 v 0.545)
+  + 1000ms food diff by x/16:      0   229   593   444     4    -4     1     6    -0     0     1     0    -0     0     0     0
+           walker diff by x/16:    0   1  27  15  -3  -4  -1  13   1  -1   2   0  -1   0   0   0  (walkers 870 v 919, share 0.545 v 0.545)
+  + 2000ms food diff by x/16:      0    52   695   224   117   -11     6     0     4     0     0    -0    -0    -0     0     0
+           walker diff by x/16:    0   4  31   4  36  -9  14  10   5  -8  -2   0   0  -2   0   0  (walkers 876 v 959, share 0.545 v 0.545)
+  + 3000ms food diff by x/16:      0   160   418   300    49    14    -4     1     7     0    -1     0    -0    -0     0     0
+           walker diff by x/16:    0   4  50  32  17   5  -6  36  -3  -2  -4   3  -2   0   0   0  (walkers 864 v 994, share 0.545 v 0.545)
+  + 5000ms food diff by x/16:      0    48   227   136    86    20   -11    -4     3    -0    -0    -0     0     0     0     0
+           walker diff by x/16:    0   2  53  49  41  30  -7  24  -2   0  -3   0  -1  -1   0   0  (walkers 868 v 1053, share 0.544 v 0.544)
+  + 8000ms food diff by x/16:      0    19    60    31    28    10    -0     1     8    -3    -1    -1     0     0     0     0
+           walker diff by x/16:    0   5  74  36  54  25   6  -2  -7  -6  -1   0   0   0   0   0  (walkers 858 v 1042, share 0.543 v 0.543)
+  +12000ms food diff by x/16:      0     5   -79   -22     8   -11   -14    -2     6     0    -1    -0     0     0     0     0
+           walker diff by x/16:    0   6  52  43  45  14  -9 -17  -3   6  -3  -1   0   1   0   0  (walkers 828 v 962, share 0.542 v 0.542)
+  x columns:                         0    16    32    48    64    80    96   112   128   144   160   176   192   208   224   240
+  control food by x/16 at end:       0     7   228   112   274   290    96    45    44     0     3     1     0     0     0     0
+WAVE seed=3 charge=10s amount=1440 (home bite/step 1.200, eaters 171), stream=1
+  +  250ms food diff by x/16:      0   146  1017   270     2    -2    -1    -0     0     0     0     0     0     0     0     0
+           walker diff by x/16:    0  -2   1   3   3   2  -1  -1   2   0   0   0   0   0   0   0  (walkers 828 v 835, share 0.528 v 0.528)
+  +  500ms food diff by x/16:      0   189   823   381     2    -2     4     0    -1     0     0     0     0     0     0     0
+           walker diff by x/16:    0   1   5   8  -4  -5   5   6  -2   0   0   0   0   0   0   0  (walkers 827 v 841, share 0.528 v 0.528)
+  + 1000ms food diff by x/16:      0   220   551   433    27    -1    11    -5    -1     0     0     0     0     0     0     0
+           walker diff by x/16:    0   6   1  16  16  -5  12   6  -5   0   0   0   0   0   0   0  (walkers 826 v 873, share 0.527 v 0.527)
+  + 2000ms food diff by x/16:      0    59   539   232   131     5     2    -4    -2     0     0     0     0     0     0     0
+           walker diff by x/16:    0   2  21   4  43  17   6  -8   2   0   0   0   0   0   0   0  (walkers 832 v 919, share 0.527 v 0.527)
+  + 3000ms food diff by x/16:      0   102   356   284    75    13    -0     1    -3     0     0     0     0     0     0     0
+           walker diff by x/16:    0   1  34  19  57  18   2 -15  -3   0   0   0   0   0   0   0  (walkers 832 v 945, share 0.527 v 0.527)
+  + 5000ms food diff by x/16:     -1    38   237   148    83    12    -7     8     3     0     0     0     0     0     0     0
+           walker diff by x/16:   -1  -3  36  53  61  32  -2   7   1   0   0   0   0   0   0   0  (walkers 827 v 1011, share 0.527 v 0.527)
+  + 8000ms food diff by x/16:     14    24    85    36    20    12     6    -3     2     0     0     0     0     0     0     0
+           walker diff by x/16:    2  25  34  35  49  40  10  -1   6   0   0   0   0   0   0   0  (walkers 831 v 1031, share 0.526 v 0.526)
+  +12000ms food diff by x/16:      1     5    -3    -6     1     0    -5    -2     3     1    -2    -0     0     0     0     0
+           walker diff by x/16:    4  21  30  22  51  28  12  15  -2   2   0  -2   0   0   0   0  (walkers 794 v 975, share 0.525 v 0.525)
+  x columns:                         0    16    32    48    64    80    96   112   128   144   160   176   192   208   224   240
+  control food by x/16 at end:       2    12   107    81   266   292    83    36    24     1     2     0     0     0     0     0
+
+real	1m22.172s
+user	1m21.790s
+sys	0m0.044s
