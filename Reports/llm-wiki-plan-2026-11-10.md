@@ -1,7 +1,7 @@
 # An LLM wiki for the mould game: verdict, plan and review (2026-11-10)
 
-**Status: first build in (seven pages, `wiki/`); the success check below has
-not been run.** Asked for by the owner (2026-11-10 16:40Z): review the repo,
+**Status: first build in (seven pages, `wiki/`); the success check below
+found the wiki ties reading the reports directly at this size.** Asked for by the owner (2026-11-10 16:40Z): review the repo,
 judge whether Karpathy's LLM-wiki idea
 (https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) fits it,
 and if so plan the design, rules and workflows. He then asked for a
@@ -63,15 +63,44 @@ being followed 8 of 8 against 0 of 8 for rules kept on wiki pages (a small,
 self-reported test in the gist thread); the lint is this repo's version of
 that.
 
-## Success check (not yet run)
+## Success check (run 2026-11-10, seven pages)
 
-Write 25-30 questions before the wiki grows, drawn from real past questions
-(the hand-off's next steps, review 2's checks). Answer each in fresh sessions
-three ways: with the wiki; with `HANDOFF.md` and `Reports/README.md` only
-(the real control, since HANDOFF already does much of the overview job); and
-with `Reports/` alone. Score blind. Deciding measure: wrong numbers quoted;
-also correct answers and files read. Paired by question, sign test. If the
-HANDOFF arm ties the wiki, the wiki is not paying for itself.
+25 questions were written from past questions (the hand-off's next steps,
+review 2's checks) with an answer key, before the next pages. Each was
+answered once by a fresh agent in a copy of the repo, three ways: **wiki**
+(the repo as it is, wiki included), **reports** (the same repo with `wiki/`
+removed), and **summaries** (`HANDOFF.md`, `README.md` and
+`Reports/README.md` only). A fourth agent scored the three answer sets
+against the key under shuffled labels (C correct, P partial, W wrong,
+N not found) and counted numbers that contradict the key. Deciding measure,
+named before the run: wrong numbers quoted. Files are in
+[`llm-wiki-plan-2026-11-10/check/`](llm-wiki-plan-2026-11-10/check/scores.tsv)
+(`blind-key.txt` maps X/Y/Z to arms).
+
+| Arm | Correct | Partial | Wrong | Not found | Wrong numbers | Files read | Tokens | Time |
+|---|---|---|---|---|---|---|---|---|
+| wiki | 22 | 3 | 0 | 0 | 0 | 10 | 69,666 | 41 s |
+| reports | 25 | 0 | 0 | 0 | 0 | 7 | 76,758 | 57 s |
+| summaries | 4 | 11 | 1 | 9 | 1 | 3 | 56,221 | 26 s |
+
+Paired by question (correct 2, partial 1, else 0), two-sided sign test, three
+comparisons (Bonferroni bar 0.017): wiki beats summaries 18-0 (p 0.000008),
+reports beat summaries 21-0 (p 0.000001), and **wiki against reports is 0-3
+with 22 ties (p 0.25)**. Only the first two survive.
+
+What it says. At this size the wiki **ties reading the reports directly**:
+no wrong numbers either way, about 9% fewer tokens and 29% less time, and
+three answers thinner because a page had dropped a detail its report keeps
+(why a shorter reach senses less, that The Wild One's lead moved by up to
+half at the bell, and the warden with and without the snip, 4-4 and 3-5).
+Those three details were added to their pages in the same change. The
+hand-off and report index alone are not enough (9 of 25 not found). The
+plan's bar ("if the control ties the wiki, it is not paying for itself") is
+not met yet: the corpus is about ten reports, small enough for one agent to
+read the right three in under a minute. One run per arm, so agent-to-agent
+variance is not measured. Re-run the same questions, plus new ones on the
+new pages, when the wiki doubles (rule in `wiki/README.md`, *Growth*); if
+the tie holds then, shrink the wiki to the index, decisions and lint.
 
 ## Growth (owner, 17:24Z)
 
