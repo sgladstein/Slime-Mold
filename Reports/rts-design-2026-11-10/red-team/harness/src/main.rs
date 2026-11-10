@@ -1,9 +1,12 @@
 //! Red-team scratch harness. Links the slime-mould library; changes nothing in the repo.
 //! Modes:
 //!   grid SELF RIVAL SEED      one Wild One game, symmetric (400 v 400, repel 1.0 both), grains per side
-//!   taut SEED ANGLE SCENT     at 60 s clone; set this mould's fed_scent; compare network over 30 s
+//!   taut SEED ANGLE SCENT     at 60 s clone; set this mould's fed_scent; compare network over 30 s (ON_FIELD=1: on the field)
 //!   wave SEED CHARGE_S        flow on; at 60 s clone; inject CHARGE_S seconds of home-pile output as sap
 //!   speed SEED ANGLE          tag walkers at 60 s; displacement after 1, 2, 5 s
+//!   field SELF RIVAL SEED     the grid game on the field (added after the owner's 2026-11-10 19:24Z
+//!                             remark that 7 piles limit the options): 23 smaller mirrored piles, same grid
+//!   flook SELF RIVAL SEED SECS  a still of a field game (STILL=DIR)
 use slime_mould::mould::level::DISHES;
 use slime_mould::mould::{disc, Dish, Params, Phase, STEPS_PER_SECOND, W, H};
 
@@ -40,6 +43,57 @@ fn sym_dish(seed: u64, a: &Params, b: &Params) -> Dish {
     let mut d = Dish::from_level_with(&DISHES[4], seed, a.clone());
     let p6 = (d.piles[6].x, d.piles[6].y);
     d.add_rival_of(p6, 400);
+    if let Some(r) = d.rival.as_mut() {
+        r.params = b.clone();
+    }
+    d
+}
+
+/// The field: The Wild One's grid and homes (400 walkers each side), but its
+/// seven piles replaced by many smaller ones, mirrored about x = 128. Each
+/// pile feeds at most `table * eat / upkeep` = 300 walkers, so more piles let
+/// the moulds grow denser.
+///
+/// Default, the scatter: a home pile each side (r 6, 30k food), nine piles a
+/// side at fixed, irregular spots (drawn once by a Poisson-disc sampler, at
+/// least 28 cells apart) and three on the centre line, r 4 and 15k each: 23
+/// piles, 375k food (The Wild One: 7 piles, 260k). `FIELD=lattice` is the
+/// first try, looked at and set aside: a 5 x 5 grid plus four by the homes,
+/// 31 piles of 18k, which grew a carpet over the whole dish (4,000-6,000
+/// walkers a side) rather than a network.
+fn field_dish(seed: u64, a: &Params, b: &Params) -> Dish {
+    let mut d = Dish::from_level_with(&DISHES[4], seed, a.clone());
+    let t = d.piles[0].clone();
+    let mk = |x: f32, y: f32, r: f32, food: f32| slime_mould::mould::Pile { x, y, r, food, full: food, ..t.clone() };
+    let mut piles = vec![mk(40.0, 80.0, 6.0, 30_000.0)];
+    if std::env::var("FIELD").as_deref() == Ok("lattice") {
+        for &x in &[64.0f32, 96.0, 128.0, 160.0, 192.0] {
+            for &y in &[24.0f32, 52.0, 80.0, 108.0, 136.0] {
+                piles.push(mk(x, y, 4.0, 18_000.0));
+            }
+        }
+        for &(x, y) in &[(40.0f32, 40.0f32), (40.0, 120.0), (216.0, 40.0), (216.0, 120.0)] {
+            piles.push(mk(x, y, 4.0, 18_000.0));
+        }
+    } else {
+        // `FIELD=scatter2`: a second draw of the same sampler (seed 11 not 7),
+        // to check that a result is not one layout's.
+        let left = if std::env::var("FIELD").as_deref() == Ok("scatter2") {
+            [(105.0f32, 75.0f32), (64.0, 92.0), (76.0, 121.0), (110.0, 145.0), (59.0, 49.0), (21.0, 98.0), (90.0, 48.0), (100.0, 16.0), (44.0, 121.0)]
+        } else {
+            [(78.0f32, 20.0f32), (67.0, 61.0), (18.0, 71.0), (56.0, 126.0), (110.0, 17.0), (98.0, 51.0), (92.0, 108.0), (96.0, 142.0), (65.0, 96.0)]
+        };
+        for &(x, y) in &left {
+            piles.push(mk(x, y, 4.0, 15_000.0));
+            piles.push(mk(256.0 - x, y, 4.0, 15_000.0));
+        }
+        for &y in &[40.0f32, 80.0, 120.0] {
+            piles.push(mk(128.0, y, 4.0, 15_000.0));
+        }
+    }
+    piles.push(mk(216.0, 80.0, 6.0, 30_000.0));
+    d.piles = piles;
+    d.add_rival_of((216.0, 80.0), 400);
     if let Some(r) = d.rival.as_mut() {
         r.params = b.clone();
     }
@@ -107,7 +161,13 @@ fn main() {
             let scent: f32 = args[3].parse().unwrap();
             let mut p = wild_params();
             p.sensor_angle = angle.to_radians();
-            let mut d = Dish::from_level_with(&DISHES[4], seed, p);
+            // ON_FIELD=1: the same test on the field (`field_dish`), both
+            // moulds on these numbers, after the owner's 19:24Z remark.
+            let mut d = if std::env::var("ON_FIELD").is_ok() {
+                field_dish(seed, &p, &p)
+            } else {
+                Dish::from_level_with(&DISHES[4], seed, p)
+            };
             run_to(&mut d, 60 * SPS);
             let mut c = d.clone();
             let mut t = d.clone();
@@ -279,6 +339,49 @@ fn main() {
                     ds[ds.len() - 1]
                 );
             }
+        }
+        "field" | "flook" => {
+            let (ga, gb, seed) = (&args[1], &args[2], args[3].parse::<u64>().unwrap());
+            let mut a = wild_params();
+            let mut b = wild_params();
+            grain(ga, &mut a);
+            grain(gb, &mut b);
+            let mut d = field_dish(seed, &a, &b);
+            if args[0] == "flook" {
+                let dir = std::env::var("STILL").unwrap();
+                for s in args[4].split(',') {
+                    let s: u64 = s.parse().unwrap();
+                    run_to(&mut d, s * SPS);
+                    still(&d, &format!("{dir}/field-{ga}-{gb}-s{seed}-{s}s.png"));
+                    let r = d.rival.as_ref().unwrap();
+                    println!("FLOOK {ga} v {gb} seed {seed} at {s}s: walkers {}/{} fought {}/{} piles left {}", d.walkers.len(), r.walkers.len(), d.counts.fought, r.counts.fought, d.piles.iter().filter(|p| p.food > 0.0).count());
+                }
+                return;
+            }
+            let t0 = std::time::Instant::now();
+            let sh = |d: &Dish| d.ate / (d.ate + d.wild_ate).max(1.0);
+            run_to(&mut d, 30 * SPS);
+            let s30 = sh(&d);
+            run_to(&mut d, 60 * SPS);
+            let s60 = sh(&d);
+            let w60 = (d.walkers.len(), d.rival.as_ref().unwrap().walkers.len());
+            run_to(&mut d, 150 * SPS + 2);
+            let r = d.rival.as_ref().unwrap();
+            let share = d.ate / (d.ate + d.wild_ate).max(1.0);
+            println!(
+                "FIELD layout={} self={ga} rival={gb} seed={seed} share={share:.3} share30={s30:.3} share60={s60:.3} walkers60={}/{} walkers={}/{} fought={}/{} ate={:.0}/{:.0} piles_left={} ({:.1}s)",
+                std::env::var("FIELD").unwrap_or_else(|_| "scatter".into()),
+                w60.0,
+                w60.1,
+                d.walkers.len(),
+                r.walkers.len(),
+                d.counts.fought,
+                r.counts.fought,
+                d.ate,
+                d.wild_ate,
+                d.piles.iter().filter(|p| p.food > 0.0).count(),
+                t0.elapsed().as_secs_f32()
+            );
         }
         m => panic!("mode {m}"),
     }
