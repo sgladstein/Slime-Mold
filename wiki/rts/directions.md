@@ -49,7 +49,7 @@ once; the skirmish's tithe (`Dish::tithe`) is the currency that this needed.
 |---|---|---|
 | Bloomfront | Lure, push, wall, cut, water, each paid from food | Weak as a direction; its two-keeper plumbing is a useful harness |
 | Squeeze | Tap a held pile to send a wave of sap; hold it to charge | Home squeeze 0.000; flow costs 2.6x the step time; needs a fight scaled by load (not rerun on the field) |
-| Two Fevers | Seed a strain in a neutral mould; immunity feeds the trailer | Built as a demo ([page](two-fevers.md)); carriers-only scoring had no strategy; owned ground with a hold plays as a tug of war, skill margin thin |
+| Two Fevers | Seed a strain in a neutral mould; immunity feeds the trailer | Built as a demo ([page](two-fevers.md)); v1 carriers-only had no strategy; v2 owned ground was a thin tug of war; v3 (calls, fever by tube, foraging, pinch) gives three plans that form a ladder, and the leader snowballs |
 | Tincture | The same, but converts by majority | Feeds the leader; a different game from Two Fevers, so pick one |
 | Taut | Set each source slack, even or taut | Fails on The Wild One; wins share on the field, but untested per pile and always best at full |
 | Grain, Grafts | Regions or captured colonies with their own sensing rules | No cycle on The Wild One; a cycle on one field layout of two |
