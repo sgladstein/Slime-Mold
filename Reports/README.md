@@ -194,5 +194,10 @@ move.
   fever by tube only, foraging income, starvation, free pinch, fed bodies resist. Census: trunk > web > raider,
   a ladder not a cycle (only trunk > raider survives Holm); trunk and web beat random 15/16, raider 7/16;
   mirror 1:30 leader kept the lead 32/32 (snowball). 0.70-0.84 ms a step.
+- [rts-research-2026-11-10.md](rts-research-2026-11-10.md) — **how RTS games work and are made, from 22 outside
+  sources** (Sirlin, Johnson, Browder, Shelley, Meier, Company of Heroes, Tooth and Tail, Creeper World, lockstep
+  engines, AlphaStar, the spinning top), lessons for the mould, and feedback on both demos: soft and Trunk are
+  dominant strategies and the snowball is unmanaged positive feedback; fix with a size cost, a pull-back rule, a
+  points ending and telegraphed attacks before adding verbs. Reading only, no runs. Cards in `research/sources/`.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
