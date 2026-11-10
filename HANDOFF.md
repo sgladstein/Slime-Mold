@@ -7,8 +7,8 @@ and what to do next. Everything it points to is in this repository; nothing
 lives only in the old project.
 
 **Read first:** this page, then [`CLAUDE.md`](CLAUDE.md) (how to work here),
-then the report for whatever you touch ([`Reports/README.md`](Reports/README.md)
-indexes them all).
+then the [wiki page](wiki/index.md) for whatever you touch, then its
+reports ([`Reports/README.md`](Reports/README.md) indexes them all).
 
 ## Where the game stands
 

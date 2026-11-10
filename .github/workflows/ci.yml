@@ -41,11 +41,19 @@ jobs:
           files=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
           echo "$files"
           # Docs-only paths: nothing under them is compiled. research/ holds
-          # engine sketches as .rs.txt on purpose (they need Pixel_Physics).
+          # engine sketches as .rs.txt on purpose (they need Pixel_Physics);
+          # wiki/ holds Markdown and its stdlib-only lint script.
           # Anything else, including this workflow, counts as code.
-          code=$(echo "$files" | grep -vE '^(Reports/|handoff/|research/)|\.md$|^LICENSE$' | grep -c . || true)
+          code=$(echo "$files" | grep -vE '^(Reports/|handoff/|research/|wiki/)|\.md$|^LICENSE$' | grep -c . || true)
           if [ "$code" -gt 0 ]; then echo "code=true"; else echo "code=false"; fi >> "$GITHUB_OUTPUT"
           echo "files that reach the build: $code"
+      # The wiki's mechanical checks (wiki/README.md). Run here rather than in
+      # a job of its own: this job already runs on every PR and push with full
+      # history (the lint reads git dates), so it adds seconds, not a runner.
+      # Docs-only PRs skip the build jobs, and those are the PRs that change
+      # the wiki, so without this step the lint would never run in CI.
+      - name: wiki lint
+        run: python3 wiki/lint.py
 
   test:
     name: test + clippy

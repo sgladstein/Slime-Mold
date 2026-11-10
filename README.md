@@ -45,6 +45,7 @@ code at build time.
 | `src/bin/mould.rs`, `src/bin/organ.rs` | the windows (winit + pixels only) |
 | `src/hud.rs`, `src/hud_crisp.rs`, `src/wav.rs` | copied from Pixel_Physics: font and WAV writer |
 | `examples/` | the tools, below |
+| `wiki/` | what is true now, one page per dish, tool and mechanism, each citing its reports: [wiki/index.md](wiki/index.md) |
 | `Reports/` | every report, review, brainstorm, page source and raw census output: [Reports/README.md](Reports/README.md) |
 | `research/engine-sketches/` | code that only runs inside Pixel_Physics, kept for reading |
 

@@ -1,0 +1,81 @@
+# An LLM wiki for the mould game: verdict, plan and review (2026-11-10)
+
+**Status: first build in (seven pages, `wiki/`); the success check below has
+not been run.** Asked for by the owner (2026-11-10 16:40Z): review the repo,
+judge whether Karpathy's LLM-wiki idea
+(https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) fits it,
+and if so plan the design, rules and workflows. He then asked for a
+sub-agent review of later ideas and of the plan (16:48Z), and to start with
+the first seven pages (16:49Z). The plan was written as a Claude Doc,
+https://claude.ai/artifact/SjjCHoyQubEkRxgAhAPjrP; this file is its copy in
+the repo. The rules and workflows themselves live in
+[`wiki/README.md`](../wiki/README.md), which is the version to follow.
+
+## Verdict
+
+Yes, a small one. The repo holds about 157,000 words of Markdown in about 90
+files, but most of that is the 11-07 brainstorm and the 11-08 game folder;
+the core mould reports are 10 files and about 22,500 words. They are filed
+by date and thread, not by subject, so the current truth about one thing
+(the lamp turns up in 9 files, sensor reach in 16, the snip in 41, the storm
+in 54) has to be re-assembled by every new session, and reports go stale in
+place. The repo already has most of the gist's parts: `CLAUDE.md` is the
+schema, `Reports/README.md` the index, `dead-ends.md` a concept page and
+`HANDOFF.md` the overview. What was missing is one page per subject saying
+what is true now, citing the reports behind it.
+
+Not wanted: an Obsidian vault, a search engine or embeddings (an index is
+enough at this size), a `log.md` (git and the commit messages already carry
+it), or a second copy of the code.
+
+## Design as built
+
+`wiki/README.md` (rules and workflows), `wiki/index.md` (one line per page,
+capped at 150 lines), `wiki/decisions.md` (owner rulings and decided choices,
+quoted with times; open decisions stay only in `HANDOFF.md`), `wiki/lint.py`
+(mechanical checks, run in CI), `wiki/_template.md`, and seven pages:
+Keep It Alive, The Wild One, water and sleep, the lamp, the knife, the
+census, and the decisions page. Each subject page has Now, Numbers (each row
+linked to its report), Owner's word (dated), Tried and rejected, Open and
+Sources, and frontmatter listing its sources and the code symbols it names.
+`CLAUDE.md` gained three lines pointing at the wiki.
+
+## The review, and what it changed
+
+A second agent read what people have reported since the gist, then critiqued
+the plan. Its sources were opened, not taken from search snippets.
+
+| Suggestion | Evidence | Taken? |
+|---|---|---|
+| Keep the always-loaded `CLAUDE.md` addition to a few lines; rules in a page read when needed | Measured: Gloaguen et al. 2026, "Evaluating AGENTS.md" (https://www.emergentmind.com/papers/2602.11988): LLM-written context files lowered success about 0.5-2% and raised cost over 20%; human-written ones gained up to about 4% at a cost | Yes |
+| Scripted lint for anything checkable, run in CI (CI skips docs-only PRs) | Anecdotal: https://mpt.solutions/karpathys-llm-wiki-works-heres-what-broke-when-i-ran-it-at-real-scale/ (a drift lint caught 9 stale files), https://www.rdworldonline.com/is-karpathys-viral-llm-wiki-helpful-mostly-yes-one-month-in/ | Yes: a CI job; also fails Numbers rows with no source and owner quotes with no date |
+| A change is not done while a page still describes the old state | This repo has a case: The Wild One report's status and *What it is* still describe walkers-at-the-bell scoring; only its later *Review 2 fixes* section and `level.rs` score food eaten | Yes, rule 9; the page states the food-share score |
+| Each Numbers row carries its dish, hand, seeds, paired count, p | Anecdotal: summaries drop qualifiers (https://effortlessacademic.com/andrej-karpathys-llm-wiki-doesnt-work-for-academics/) | Yes |
+| Size to the 10 core reports; a page only when it adds a synthesis | Opinion | Yes: 7 pages, candidates listed in the index |
+| One home for open decisions | The plan had two lists | Yes: `HANDOFF.md` |
+| Let reports grow by dated sections rather than freeze | That is how they grow today (the probe report has 11 commits) | Yes, rule 1 reworded |
+| Cut `log.md`; don't shorten `Reports/README.md` yet | Git already logs; the README entries are the most-read summaries | Yes |
+| Leave `handoff/project-memory/` frozen | It is a snapshot of the old account | Yes |
+| Strengthen the success check | 12 paired questions would pass a real 70/30 advantage less than half the time | Yes, below; not run |
+
+Also from the review, not acted on: a pattern of rules injected at edit time
+being followed 8 of 8 against 0 of 8 for rules kept on wiki pages (a small,
+self-reported test in the gist thread); the lint is this repo's version of
+that.
+
+## Success check (not yet run)
+
+Write 25-30 questions before the wiki grows, drawn from real past questions
+(the hand-off's next steps, review 2's checks). Answer each in fresh sessions
+three ways: with the wiki; with `HANDOFF.md` and `Reports/README.md` only
+(the real control, since HANDOFF already does much of the overview job); and
+with `Reports/` alone. Score blind. Deciding measure: wrong numbers quoted;
+also correct answers and files read. Paired by question, sign test. If the
+HANDOFF arm ties the wiki, the wiki is not paying for itself.
+
+## Open for the owner
+
+- Keep the lint in CI (a step in the existing "what changed" job, a few
+  seconds a PR, no extra runner), or run it only before hand-offs?
+- Should `HANDOFF.md` become the overview page rewritten from the wiki, or
+  stay a separate hand-written note?
