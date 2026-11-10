@@ -1,0 +1,70 @@
+<title>Wild One Scored by Food</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Same single dark look as the other mould pages. Paired columns stack on phones. */
+:root{
+  --ground:#0d1117; --panel:#161c24; --ink:#e9e6d8; --muted:#98a0a6; --rule:#2a323c; --gold:#f2b84b; --good:#9fd3a8; --cyan:#78f0ff; --dry:#e67828; --wet:#468cff;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+body{background:var(--ground);color:var(--ink);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:66rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:2rem 4rem;display:flex;flex-direction:column;gap:2.2rem}
+h1,h2{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(1.8rem,5vw,2.5rem)} h2{font-size:1.3rem;color:var(--gold)}
+p{margin:0;max-width:68ch}
+.kicker{font:500 .78rem/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:.85rem}
+ul{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:.4rem;max-width:68ch}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+@media (max-width:640px){.pair{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:.35rem;min-width:0}
+figure img{width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);display:block;background:#000}
+figcaption{font:500 .88rem/1.35 var(--mono);color:var(--ink)}
+figcaption span{color:var(--muted)}
+.count{font:500 .82rem/1.45 var(--mono);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:.45rem .7rem;font-variant-numeric:tabular-nums;max-width:68ch}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font:500 .86rem/1.4 var(--mono);font-variant-numeric:tabular-nums;min-width:34rem}
+th,td{text-align:left;padding:.4rem .8rem;border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:500}
+.good{color:var(--good)}
+code{font:500 .88em var(--mono);background:var(--panel);padding:.05rem .3rem;border-radius:4px}
+.ask{border-left:3px solid var(--gold);padding-left:.9rem}
+.key{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font:500 .82rem/1.4 var(--mono);color:var(--muted)}
+.sw{display:inline-block;width:.8em;height:.8em;border-radius:2px;margin-right:.35em;vertical-align:-.05em}
+</style>
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:.6rem">
+<p class="kicker">Mould · The Wild One · fixes from review 2 · 10 Nov 2026</p>
+<h1>The Wild One is now scored on the food you ate, not on who is left at the bell</h1>
+<p>The review found the old score, mould left at the bell, swinging by up to half in the last ten seconds as four piles ran dry together. Now the dish counts every bite each mould takes all game, and you win stars for your share of it. A crash at the end can't move a running total.</p>
+</header>
+<section><h2>What you see</h2>
+<div class="pair">
+<figure><img src="s1-warden-075.jpg" alt="seed 1 at 75 s"><figcaption>Seed 1, all four tools, 1:15 <span>(bar: you ate N%)</span></figcaption></figure>
+<figure><img src="s1-warden-bell.jpg" alt="seed 1 at the bell"><figcaption>The bell: "You ate 64% of the food", 2 stars</figcaption></figure>
+</div>
+<p class="count">Seed 1, tool hand: you ate 93,886 food, the wild one 52,017 (64%). 1,699 of yours and 1,830 of its walkers died fighting.</p>
+</section>
+<section><h2>Stars: 57% of the food, 62%, none of it left</h2>
+<p>Your share of all the food eaten, 8 seeds each, lowest to highest.</p>
+<div class="tbl"><table>
+<tr><th>Hand</th><th>Your share</th><th>Stars</th></tr>
+<tr><td>Doing nothing</td><td>0.494–0.526</td><td>0 on 8</td></tr>
+<tr><td>Random tools</td><td>0.467–0.559</td><td>0 on 8</td></tr>
+<tr><td>Tool hand, lets go at 0:30</td><td>0.567–0.577</td><td>1 on 7, 0 on 1</td></tr>
+<tr><td>Tool hand, clumsy (6 cells off, looks every 2 s)</td><td>0.575–0.584</td><td>1 on 8</td></tr>
+<tr><td>Tool hand, 3 cells off</td><td>0.583–0.616</td><td>1 on 8</td></tr>
+<tr><td class="good">Tool hand, exact</td><td class="good">0.642–0.722</td><td class="good">2 on 5, 3 on 3</td></tr>
+</table></div>
+<p class="count">Exact tool hand beats doing nothing and random 8–0 each (p 0.008). The margins either side of each bar are under one point, so a wider sweep should check them.</p>
+</section>
+<section><h2>Still open</h2>
+<ul>
+<li><b>The middle of the game still barely matters.</b> Letting go at 0:30 scores about what clumsy play to the bell does. I tried three late piles on the seam to make a race: doing nothing became noisier (one star on one seed) and play still didn't beat letting go, so they're out.</li>
+<li><b>Two stars need near-exact aim.</b> The review's finding stands under the new score.</li>
+<li><b>The snip still does nothing here</b> (without it the exact hand scores 4–4 against with it, the clumsy one 3–5; neither is a difference). Either make a cut-off wild piece visibly starve, or take the snip off this dish.</li>
+</ul>
+<p>Also fixed: salt kills now count as salt, not snips; a pile's last bite can't be eaten twice; the wild count is current; the score stops at the bell, so the bar matches the card.</p>
+</section>
+</div>

@@ -721,6 +721,9 @@ pub struct Counts {
     pub hungry: u64,
     pub burned: u64,
     pub snipped: u64,
+    /// Walkers killed by salt laid on them (counted as `snipped` before
+    /// review 2, 2026-11-10).
+    pub salted: u64,
     pub stormed: u64,
     /// Walkers lost fighting the wild mould at the seam (`Params::fight`).
     pub fought: u64,
@@ -886,8 +889,17 @@ pub struct Dish {
     /// This dish is the wild one: no tools, no level, no clock of its own.
     pub wild: bool,
     /// The wild mould's walkers as this dish's own step sees them (the
-    /// rival is out of `rival` while this mould steps).
+    /// rival is out of `rival` while this mould steps): its count after the
+    /// last step's fights.
     pub wild_left: usize,
+    /// Food this mould has eaten from piles and oats, all dish. With a
+    /// rival, The Wild One is scored on `ate` against `wild_ate`: a running
+    /// total cannot be moved by the crash when the piles run dry (review 2,
+    /// 2026-11-10, measured the walkers-at-the-bell score swinging 28-54% in
+    /// the last ten seconds).
+    pub ate: f32,
+    /// Food the wild mould has eaten, all dish (0 with no rival).
+    pub wild_ate: f32,
     rng: Rng,
 }
 
@@ -1125,6 +1137,8 @@ impl Dish {
             foe_trail: Vec::new(),
             wild: false,
             wild_left: 0,
+            ate: 0.0,
+            wild_ate: 0.0,
             rng,
         };
         // The inoculum: a blob on the home pile.
@@ -1355,7 +1369,7 @@ impl Dish {
                         }
                     }
                 }
-                self.kill_in(x, y, 1.5, Kill::Snip);
+                self.kill_in(x, y, 1.5, Kill::Salt);
             }
             Tool::Snip => {
                 let heal = self.t + (self.params.wound * STEPS_PER_SECOND as f32) as u64;
@@ -1407,6 +1421,7 @@ impl Dish {
             Kill::Hungry => self.counts.hungry += 1,
             Kill::Burned => self.counts.burned += 1,
             Kill::Snip => self.counts.snipped += 1,
+            Kill::Salt => self.counts.salted += 1,
             Kill::Storm => self.counts.stormed += 1,
             Kill::Fight => self.counts.fought += 1,
         }
@@ -1440,10 +1455,10 @@ impl Dish {
         let mut k = 0;
         while k < r.walkers.len() {
             let w = r.walkers[k];
-            if cell(w.x, w.y).is_none_or(|i| r.ground[i] != Ground::Agar) {
-                r.remove_walker(k, Kill::Snip);
-            } else {
-                k += 1;
+            match cell(w.x, w.y).map(|i| r.ground[i]) {
+                Some(Ground::Agar) => k += 1,
+                Some(Ground::Salt) => r.remove_walker(k, Kill::Salt),
+                _ => r.remove_walker(k, Kill::Snip),
             }
         }
         // This mould moves round the wild one where it stands, then the
@@ -1452,7 +1467,6 @@ impl Dish {
         self.foe_trail.resize(W * H, 0.0);
         self.foe_trail.copy_from_slice(&r.trail);
         self.hold_foe_cells(&r.walkers, true);
-        self.wild_left = r.walkers.len();
         self.step_own();
         self.hold_foe_cells(&r.walkers, false);
         r.foe_trail.resize(W * H, 0.0);
@@ -1462,13 +1476,25 @@ impl Dish {
         r.hold_foe_cells(&self.walkers, false);
         // Shared food: what the wild mould ate this step comes off this
         // dish's piles too, and its piles are this dish's again (the late
-        // food and the oats land here), keeping its own eaters.
+        // food and the oats land here), keeping its own eaters. Each mould
+        // ate from its own copy, so on a pile's last bite both can take
+        // it: the wild mould is credited only with what this mould left
+        // (review 2 found the pile giving up to a bite more than it held).
         for p in self.piles.iter_mut() {
             let key = pile_key(p);
             let was = before.iter().find(|b| b.0 == key).map(|b| b.1);
             let theirs = r.piles.iter().find(|q| pile_key(q) == key).map(|q| q.food);
             if let (Some(was), Some(theirs)) = (was, theirs) {
-                p.food = (p.food - (was - theirs).max(0.0)).max(0.0);
+                let mine = (was - p.food).max(0.0);
+                let wild = (was - theirs).max(0.0).min(p.food);
+                p.food -= wild;
+                // The window keeps stepping the dish behind the score card;
+                // the totals stop at the bell so the bar reads what the card
+                // does (review 2).
+                if self.phase != Phase::Over {
+                    self.ate += mine;
+                    self.wild_ate += wild;
+                }
             }
         }
         // Fighting where the two touch, both sides at once.
@@ -1489,6 +1515,9 @@ impl Dish {
         for q in r.piles.iter_mut() {
             (q.eaters, q.foe_eaters) = (theirs(pile_key(q)), q.eaters);
         }
+        // After the fights, so the next step's level check reads the wild
+        // mould as it now is (it was read before it stepped: review 2).
+        self.wild_left = r.walkers.len();
         self.rival = Some(r);
     }
 
@@ -1564,6 +1593,7 @@ impl Dish {
         }
         r.trail.fill(0.0);
         r.inoculate(at, &self.walkers, n);
+        self.wild_left = r.walkers.len();
         self.rival = Some(Box::new(r));
     }
 
@@ -3183,6 +3213,8 @@ enum Kill {
     Hungry,
     Burned,
     Snip,
+    /// Under salt as it was laid, or (the wild mould) standing on it.
+    Salt,
     Storm,
     Fight,
 }
