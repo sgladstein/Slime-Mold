@@ -13,6 +13,8 @@ const TICK_MS: f64 = 1000.0 / 60.0;
 /// The most ticks one call catches up, so a stalled tab does not freeze on
 /// return.
 const MAX_TICKS: u32 = 4;
+/// Calls a player may have at once.
+const MAX_CALLS: usize = 2;
 
 struct Game {
     g: Fevers,
@@ -30,8 +32,8 @@ fn with<R>(f: impl FnOnce(&mut Game) -> R, none: R) -> R {
     GAME.with(|g| g.borrow_mut().as_mut().map(f).unwrap_or(none))
 }
 
-/// A new match. `opponent`: 0 idle, 1 random, 2 plan, 3 a second person,
-/// 4 plan that hushes.
+/// A new match of version 3 (`Rules::v3`). `opponent`: 0 idle, 1 random,
+/// 2 plan, 3 a second person, 4 plan that hushes, 5 trunk, 6 raider, 7 web.
 #[no_mangle]
 pub extern "C" fn fv_new(seed: u32, opponent: u32) {
     let rival = match opponent {
@@ -39,10 +41,13 @@ pub extern "C" fn fv_new(seed: u32, opponent: u32) {
         1 => Some(Hand::Random),
         2 => Some(Hand::Plan),
         4 => Some(Hand::PlanHush),
+        5 => Some(Hand::Trunk),
+        6 => Some(Hand::Raider),
+        7 => Some(Hand::Web),
         _ => None,
     }
     .map(|h| Player::new(h, TIDE, seed as u64));
-    let g = Fevers::new(seed as u64, Rules::default());
+    let g = Fevers::new(seed as u64, Rules::v3());
     GAME.with(|cell| {
         *cell.borrow_mut() = Some(Game {
             g,
@@ -221,4 +226,86 @@ pub extern "C" fn fv_hush(strain: u32) -> u32 {
 #[no_mangle]
 pub extern "C" fn fv_hush_wait(strain: u32) -> f32 {
     with(|gm| gm.g.hush_wait(strain as usize & 1), 0.0)
+}
+
+/// Move one of the strain's calls to (x, y): the one nearest it while it
+/// has the most (`MAX_CALLS`), else add one. Returns the calls it now has.
+#[no_mangle]
+pub extern "C" fn fv_call(strain: u32, x: f32, y: f32) -> u32 {
+    with(
+        |gm| {
+            let s = strain as usize & 1;
+            let mut calls = gm.g.calls[s].clone();
+            if calls.len() >= MAX_CALLS {
+                let k = (0..calls.len())
+                    .min_by(|&a, &b| {
+                        let da = (calls[a].0 - x).hypot(calls[a].1 - y);
+                        let db = (calls[b].0 - x).hypot(calls[b].1 - y);
+                        da.total_cmp(&db)
+                    })
+                    .unwrap_or(0);
+                calls[k] = (x, y);
+            } else {
+                calls.push((x, y));
+            }
+            gm.g.set_calls(s, &calls);
+            calls.len() as u32
+        },
+        0,
+    )
+}
+
+/// The strain's calls: how many, and call `k`'s x and y.
+#[no_mangle]
+pub extern "C" fn fv_calls(strain: u32) -> u32 {
+    with(|gm| gm.g.calls[strain as usize & 1].len() as u32, 0)
+}
+
+#[no_mangle]
+pub extern "C" fn fv_call_x(strain: u32, k: u32) -> f32 {
+    with(|gm| gm.g.calls[strain as usize & 1].get(k as usize).map_or(-1.0, |c| c.0), -1.0)
+}
+
+#[no_mangle]
+pub extern "C" fn fv_call_y(strain: u32, k: u32) -> f32 {
+    with(|gm| gm.g.calls[strain as usize & 1].get(k as usize).map_or(-1.0, |c| c.1), -1.0)
+}
+
+/// Pinch the strain's own tube at (x, y) for a spore; 1 if it was made.
+#[no_mangle]
+pub extern "C" fn fv_pinch(strain: u32, x: f32, y: f32) -> u32 {
+    with(|gm| gm.g.pinch_paid(strain as usize & 1, x, y) as u32, 0)
+}
+
+#[no_mangle]
+pub extern "C" fn fv_pinch_r() -> f32 {
+    with(|gm| gm.g.rules.pinch_r, 0.0)
+}
+
+/// Pinches running: how many, and pinch `k`'s strain, x, y and seconds left.
+#[no_mangle]
+pub extern "C" fn fv_pinches() -> u32 {
+    with(|gm| gm.g.pinches.len() as u32, 0)
+}
+
+#[no_mangle]
+pub extern "C" fn fv_pinch_info(k: u32, what: u32) -> f32 {
+    with(
+        |gm| {
+            let Some(p) = gm.g.pinches.get(k as usize) else { return -1.0 };
+            match what {
+                0 => p.0 as f32,
+                1 => p.1,
+                2 => p.2,
+                _ => p.3.saturating_sub(gm.g.t) as f32 / STEPS_PER_SECOND as f32,
+            }
+        },
+        -1.0,
+    )
+}
+
+/// Walkers the strain owns on piles now (what its spores grow from).
+#[no_mangle]
+pub extern "C" fn fv_foragers(strain: u32) -> u32 {
+    with(|gm| gm.g.foragers[strain as usize & 1], 0)
 }
