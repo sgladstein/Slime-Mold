@@ -114,7 +114,8 @@ move.
   bite into a bank, spent on beacons (`Dish::beacons`), spores (`Dish::plant`) and habits, with late food. Nine
   scripted plans, 576 games on four runner threads: soft (beacons then spores on the rival's thinnest pile) beat all 8
   others, 127 of 128 games; no cycle among 36 pairings; 300 games ended in a wipe-out. A guard, a spore reach and
-  sleeping spores did not stop it. Page: *Budget Skirmish Strategies*.
+  sleeping spores did not stop it. v2 is playable in the browser against any plan (pages *Mould Budget Skirmish* and
+  *Budget Skirmish Strategies*).
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as

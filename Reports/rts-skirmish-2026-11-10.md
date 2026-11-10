@@ -1,7 +1,8 @@
 # The field skirmish: a playable RTS demo, and what wins it (2026-11-10)
 
 **Status: version 1 played by the owner and set aside; version 2 (the
-budget skirmish) built and played only by scripts.** The owner, 2026-11-10
+budget skirmish) playable at https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS,
+not yet played by the owner.** The owner, 2026-11-10
 20:33Z: "You can run these tests, especially if they are cheap and/or can be
 paralellized. But then lets focus on actually building playable demos". On
 the card at 20:42Z the owner chose "Both, in two threads": this one, and Two
@@ -237,6 +238,38 @@ Ideas from the model, each a change to test with the same round robin
    answers the scripts did not; the round robin says only that no simple
    rule beats soft.
 
+## Version 2's page
+
+https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS (source `web/page/`,
+`web/src/lib.rs`). You are the gold mould on the left. Below the dish: your
+bank and the four tithes; beacon, spore and rally, each with its price now
+(a spore's rises under the counterplay rules); the four habits with their
+price and cooldown. Pick one and click a pile: a press lands on the live
+pile within 9 cells. Beside it: the food share, both sides' walkers, bank,
+tithe and habit, and a feed of what each side bought. You pick the rival's
+plan (any of the scripted ones, soft by default, with a line saying what it
+does) and the rules (counterplay, the default, or as first built). Pause
+stops the clock and buying still works, so a player can plan a turn.
+
+Rings drawn over the dish show what is bought (gold yours, violet the
+rival's; thin a beacon, thick a rally, the arc the time left), "zz" and a
+count where a spore still sleeps, and a dashed ring with the price where a
+press would land. They are the interface, not the simulation. The frame
+itself is `render::draw` with `View::bare`, a new flag that leaves out the
+herding game's corner chips, tool bar and cards (which named its stars and
+the lamp); the page draws its own start card instead.
+
+**First look, in a test browser:** soft attacks within the first 10 s, and
+a hand that tithed 40% and bought a rally, a beacon and one spore by 0:23
+held 578 walkers to the rival's 4,582 (31% of the food). That matches the
+scripts: hoard, which tithes 40% and buys nothing, was gone by 0:44 against
+soft on seed 7 under the counterplay rules. The page shows the same game the
+round robins measured.
+
+**Frame cost:** 8.9-9.4 ms a frame on average over the first 30 s, headless
+Chromium on the 4-core box, which drew every other frame; the rings add 23
+piles' worth of canvas arcs a drawn frame.
+
 ## How it is built
 
 - `src/mould/mod.rs`: `Dish::beacons` (a pile smells `gain` times a full
@@ -258,10 +291,9 @@ Ideas from the model, each a change to test with the same round robin
 - `web/`: the browser build. The library compiles for
   `wasm32-unknown-unknown` unchanged; `web/src/lib.rs` is a cdylib with
   plain `extern "C"` functions (no generated glue) that steps the dish and
-  draws it with the game's own `render::draw` at scale 4. The page in
-  `web/page/` is still version 1's; until version 2 has its own page,
-  `lib.rs` runs the new rules under the old interface (the rival plays
-  counter; you tithe 10%).
+  draws it with the game's own `render::draw` at scale 4 (`View::bare`).
+  The page in `web/page/` is version 2's; version 1's is copied in
+  `rts-skirmish-2026-11-10/page-v1/`.
 - **Frame cost** (version 1, headless Chromium on the 4-core cloud box with
   every core busy, 30 s in): drawing 9.3 ms, stepping and drawing 14.3 ms a
   60th of a second. A beacon adds one comparison per pile per step while
@@ -270,6 +302,8 @@ Ideas from the model, each a change to test with the same round robin
 ## Pages
 
 - Version 1, playable: https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw
+  (copy in `rts-skirmish-2026-11-10/page-v1/`).
+- Version 2, playable: https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS
   (source `web/page/`).
 - Version 2's strategies, with the matrix and stills:
   [`Reports/pages.md`](pages.md), *Budget Skirmish Strategies*.

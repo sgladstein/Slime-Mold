@@ -11,8 +11,10 @@ code: [skirmish::FIELD, skirmish::Habit, skirmish::Plan, skirmish::Rules, skirmi
 
 ## Now
 
-**Version 2, the budget skirmish, is built and played only by scripts; it
-has no page of its own yet.** You and an equal rival mould share the
+**Version 2, the budget skirmish, is playable at
+https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS** (source `web/page/`),
+against any of the scripted plans, under the rules as first built or the
+counterplay rules (below). You and an equal rival mould share the
 field's 23 mirrored piles, with more food landing every 15 s from 0:20;
 whoever has eaten more at 2:30 wins. Each side sets a tithe (0, 10, 25 or
 40% of every bite goes to its bank instead of its mould) and spends it on
@@ -33,9 +35,9 @@ for 5 s did not stop soft. **Finding counterplay is the open problem.**
 
 **Version 1** (habits on keys 1-4, two salt walls, the lamp, a rival that
 answers your habit) is playable at
-https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw (source `web/page/`). The
-owner played it and set it aside (21:14Z). `web/src/lib.rs` now runs the new
-rules under that page's interface until version 2 has a page.
+https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw (copy in
+`Reports/rts-skirmish-2026-11-10/page-v1/`; source `web/` at 1b23018). The
+owner played it and set it aside (21:14Z).
 
 ## Numbers
 
@@ -50,6 +52,7 @@ rules under that page's interface until version 2 has a page.
 | Version 2, the game itself | 300 of 576 games ended before the bell with one mould gone; the side ahead at 1:00 won 416 of 473 | 8 | | [report, *The strategy map*](../../Reports/rts-skirmish-2026-11-10.md) |
 | Answers to soft: guard; beacons only; spore reach 25; spores asleep 5 s | none beat soft (4/4 against each defender); a beacons-only plan won 1 of 4 against idle; asleep spores brought idle level with soft, 2/4 | 2 (4 games a pairing) | | [report, *Looking for an answer to soft*](../../Reports/rts-skirmish-2026-11-10.md) |
 | Browser frame cost (version 1), 30 s in, loaded 4-core box | draw 9.3 ms, step and draw 14.3 ms a 60th of a second | 1 | | [report, *How it is built*](../../Reports/rts-skirmish-2026-11-10.md) |
+| Browser frame cost (version 2's page), first 30 s, headless Chromium, 4-core box | 8.9-9.4 ms a frame on average, drawing every other frame | 1 | | [report, *Version 2's page*](../../Reports/rts-skirmish-2026-11-10.md) |
 
 ## Owner's word
 
@@ -68,7 +71,6 @@ rules under that page's interface until version 2 has a page.
 ## Open
 
 - Counterplay: a cheap quick defence against slow, telegraphed spores; a spore price that rises; a plan that answers an attack by hitting the attacker's thinnest pile; or a person finding what the scripts did not (the report's *What would make it deeper*).
-- Version 2's own page, so the owner can play it against any of the nine plans.
 - A second map needs its own counter table; the habit cycle is real only on this layout.
 - Not in the native window (`cargo run --bin mould`), whose HUD calls the rival "wild".
 
