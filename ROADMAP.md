@@ -57,7 +57,7 @@ depends on is done, not when the band before it is finished.
 
 | # | Step | Owner | Waits on |
 | --- | --- | --- | --- |
-| S2 | GPU phase 2: offline 1024 x 640 with about 100k walkers, paired seeds; GPU timing test | GPU thread | offline dish **done 11-10** on the engine-only dish (economy left out under the owner's 20:55Z ruling): 32k and 100k walkers, videos and counts on the [4x Mould page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs). Waits on **the owner at Scott-Desktop with the Claude app open**, for the timing run on the GTX 1070 through Remote Control |
+| S2 | GPU phase 2: offline 1024 x 640 with about 100k walkers, paired seeds; GPU timing test | GPU thread | offline dish **done 11-10** on the engine-only dish (economy left out under the owner's 20:55Z ruling): 32k and 100k walkers, videos and counts on the [4x Mould page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs). Timing test built (`examples/gputime.rs`: four wgpu compute passes a tick; on a software GPU its dish matches the CPU's, 165 loops against 163 at 100k). Waits on **the owner at Scott-Desktop with the Claude app open**, for the timing run on the GTX 1070 through Remote Control |
 | **Gate** | **The owner picks a target scale and look, or stops** | Scotttt | **decided 22:32Z** (card): 100,000 walkers on 1024 x 640; the GPU timing test still runs before phase 3 |
 
 The two branches after the gate:

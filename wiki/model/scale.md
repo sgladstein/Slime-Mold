@@ -72,6 +72,12 @@ engine alone at any size, with the GPU's move and float fields, no economy;
   against today's 4); the economy's small start may avoid it.
 - At 100,000 walkers the net has 164 loops at 10 s and coarsens to 92 by 30 s.
 
+**The GPU timing test is built** (`examples/gputime.rs`): the same step as
+four wgpu compute passes a tick, with the CPU's keyed draws and claims by
+`atomicMin`. On a software GPU in the cloud its dish matches the CPU's
+measures (100k walkers at 10 s: 165 loops against 163, width 4.83 against
+4.96). It waits for the owner's GTX 1070.
+
 Three facts bind the design:
 
 - The census feeds the economy every step (`FED_EVERY` 6), so its fed and
@@ -101,6 +107,7 @@ tool in phase 6. Every outside source has a card in
 | Scaling rule, 1024 x 640 / 32k walkers vs today, spread start, 20 s (medians) | loops: today 3, naive 52.5, steps 15.5, smell 11, reach 12, turn 0, nose 64.5; strays: today 0.7%, nose 2.2%, reach 39% | 16 | yes | [gpu plan, *the scaling rule*](../../Reports/gpu-plan-2026-11-10.md) |
 | Scaling rule, piles reached at 20 s from a packed blob (medians) | today 4; naive 2.5; steps 2.5; smell 3; reach 4; turn 3; nose 3 (lower than today on 15 of 16) | 16 | yes | same |
 | Big dish, nose rule, seed 1 | 32k walkers: 94 loops at 10 s, 59 at 30 s; 100k: 164 and 92; today 3 | 1 | | same, [page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs) |
+| GPU step vs CPU step, same seed, 10 s, software Vulkan (llvmpipe) | 32k: loops 90 / 92, width 3.40 / 3.41, strays 0.9% / 1.0%; 100k: loops 165 / 163, width 4.83 / 4.96, strays 1.8% / 1.5% | seed 1 | | [gpu plan, *GPU timing test*](../../Reports/gpu-plan-2026-11-10.md) |
 | Big dish cost, ms a tick, one thread / four | today 0.54 / 0.53; nose 32k 11.3 / 6.7; nose 100k 21.6 / 20.2; steps 43.1 / 25.8; turn 71.1 / 31.7 | seed 1 | | same |
 | Step cost, bare move and diffusion, one core | 256 x 160 / 2.2k 0.13 ms; 1024 x 640 / 100k 9.5-11.2 ms; 1024 x 640 / 1M 96-98 ms; 2048 x 1280 / 1M 111-112 ms | 2 runs | | [gpu plan, *What the independent review changed*](../../Reports/gpu-plan-2026-11-10.md), [bench](../../Reports/gpu-plan-2026-11-10/step-bench.rs) |
 
