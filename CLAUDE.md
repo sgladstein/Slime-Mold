@@ -5,6 +5,11 @@ The mould game moved here from Pixel_Physics on 2026-11-10. Pixel_Physics's
 here are kept below, short. Read `README.md` for the layout and
 `Reports/README.md` for what has already been tried.
 
+**The wiki** (`wiki/`): before touching a dish, tool or mechanism, read
+`wiki/index.md` and its page. A change that adds a report, changes a default
+or records an owner decision updates those pages in the same commit; rules
+in `wiki/README.md`. Run `python3 wiki/lint.py` before committing (CI runs it).
+
 ## What the owner has ruled for this game
 
 - **Fun over fidelity.** Real slime mould biology and Jones's papers are

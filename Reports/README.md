@@ -98,5 +98,11 @@ move.
 - [mould-scratch-2026-11-10/](mould-scratch-2026-11-10/README.md) **(from Pixel_Physics)** — **raw census behind Keep It Alive, Water and
   Sleep, The Wild One and Finer Tubes**: the four pages' HTML and images, the census runners, `w5.py` (shares and
   paired sign tests), and every raw probe output of the wild-mould tuning arms and the sensor-reach sweep.
+- [llm-wiki-plan-2026-11-10.md](llm-wiki-plan-2026-11-10.md) — **built in part: an LLM-maintained wiki
+  (`wiki/`), seven pages so far.** Karpathy's LLM-wiki pattern judged a fit at small size (10 core reports, filed
+  by date, so the truth about one subject is spread over 9-54 files); design, rules and workflows; a sub-agent
+  review of later reports on the pattern (one measured: long context files cost over 20% more for little gain)
+  and of the plan, which cut `log.md`, kept open decisions only in `HANDOFF.md` and put the lint in CI. Success
+  check (25-30 questions, wiki vs `HANDOFF.md` vs `Reports/`, blind) not yet run.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

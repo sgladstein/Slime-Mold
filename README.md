@@ -12,9 +12,9 @@ cargo run --release --bin mould -- 3       # free dish seed 3   (-- 0 the lesson
 cargo run --release --bin organ            # side prototype: the network plays a rhythm
 ```
 
-**Picking this up after the 2026-11-10 account move? Start at
-[HANDOFF.md](HANDOFF.md):** where the game stands, the owner's open
-decisions, and the next steps.
+**Picking this up? Start at [HANDOFF.md](HANDOFF.md):** where the game
+stands (one line per subject, linked to its [wiki](wiki/index.md) page), the
+owner's open decisions, and the next steps.
 
 Keys are on screen. F2-F6 cycle the looks, T opens the tuning panel (saved
 to `mould-tune.txt`), M the dish picker, H the briefing card.
@@ -45,6 +45,7 @@ code at build time.
 | `src/bin/mould.rs`, `src/bin/organ.rs` | the windows (winit + pixels only) |
 | `src/hud.rs`, `src/hud_crisp.rs`, `src/wav.rs` | copied from Pixel_Physics: font and WAV writer |
 | `examples/` | the tools, below |
+| `wiki/` | what is true now, one page per dish, tool and mechanism, each citing its reports: [wiki/index.md](wiki/index.md) |
 | `Reports/` | every report, review, brainstorm, page source and raw census output: [Reports/README.md](Reports/README.md) |
 | `research/engine-sketches/` | code that only runs inside Pixel_Physics, kept for reading |
 
