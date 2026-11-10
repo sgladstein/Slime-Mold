@@ -13,9 +13,10 @@ Pixel_Physics; since the move it is kept for reading only, as
 `research/engine-sketches/mould_world_sketch.rs.txt` (it needs the engine and
 the mould in one crate).
 
-**Status, 2026-11-10: the choice in §5 is open.** Scott was asked on a
-decision card on 11-09 and had not answered when the mould game moved to this
-repo. Nothing has been built from this report.
+**Status, 2026-11-10: Scott chose the forest floor from above** (option B,
+decision card, 16:04Z), over the side-on option this report recommends.
+Nothing has been built yet; the build is the next step for the mould work in
+its new project. §5 records the choice and what B needs.
 
 **Scott's standing rulings this works under.** Everything on screen must be
 real simulation, no drawn-only effects (11-09); fun over fidelity; a switch
@@ -285,10 +286,11 @@ lamp push are enough to keep it from winning alone. The 40-row arm reached 4 of 
 beyond home in 10 s untouched; if that holds with the engine's water and
 light on, the game needs burying and drying to be the player's job.
 
-## 5. Open decision: side-on or top-down
+## 5. Decision: forest floor from above
 
-**Asked of Scott on 11-09 (decision card), unanswered at the move on 11-10:**
-which out-of-the-dish game to prototype first?
+**Asked of Scott on 11-09 (decision card); he picked "Forest floor from
+above" on 11-10 at 16:04Z**, as the mould work was moving to a new project.
+The question was: which out-of-the-dish game to prototype first?
 
 | Option | What happens if picked |
 |---|---|
@@ -304,6 +306,18 @@ rather than growing roots; or if the split into two repos makes an
 engine-backed mould too costly to build, which is new since the
 recommendation was written and is the first thing to weigh when this is
 picked up.
+
+**What the chosen option needs, in this repo (no engine):** a floor bigger
+than one dish with a camera that follows the mould's front; logs, stones and
+a puddle as ground the mould reads (the sketch's top view is the starting
+picture, `research/engine-sketches/`); and each "real world" layer built as
+simulation, never drawn only: wet ground that spreads and dries (the 11-09
+depth report's wet field, `mould-game-2026-11-08/depth-2026-11-09/complexity.md`,
+and the water and sleep already in the game), rain as falling drops, shade
+that moves with the day, wind for spores. Cost to watch: one all-open
+256x160 floor stepped at 0.89-1.04 ms here, so a floor several screens wide
+must step only what is near the mould. Judge it the dish's way: a planned
+hand against idle and random on paired seeds, plus Scott's play.
 
 **Note for a rerun:** every run here used the mould's settings on
 Pixel_Physics main of 11-09: sensor angle 45 degrees throughout. The game
