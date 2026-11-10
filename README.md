@@ -48,6 +48,7 @@ code at build time.
 | `wiki/` | what is true now, one page per dish, tool and mechanism, each citing its reports: [wiki/index.md](wiki/index.md) |
 | `Reports/` | every report, review, brainstorm, page source and raw census output: [Reports/README.md](Reports/README.md) |
 | `research/engine-sketches/` | code that only runs inside Pixel_Physics, kept for reading |
+| `research/sources/` | one card per outside source (papers, Jenson, other implementations): how fully read, local copy, licence, key facts: [research/sources/README.md](research/sources/README.md) |
 
 ## Tools
 

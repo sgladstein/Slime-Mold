@@ -18,6 +18,7 @@ Keep this file under 150 lines; lint checks it.
 ## Model
 
 - [Water and sleep](model/water-and-sleep.md): dry mould sleeps, water wakes it; Keep It Alive only.
+- [The mould at scale](model/scale.md): outside models (Jenson, MCPM) and the reviewed GPU plan; nothing built yet.
 
 ## Method and owner
 
