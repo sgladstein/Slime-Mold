@@ -104,5 +104,11 @@ move.
   review of later reports on the pattern (one measured: long context files cost over 20% more for little gain)
   and of the plan, which cut `log.md`, kept open decisions only in `HANDOFF.md` and put the lint in CI. Success
   check (25-30 questions, wiki vs `HANDOFF.md` vs `Reports/`, blind) not yet run.
+- [pixel-physics-review-2026-11-10.md](pixel-physics-review-2026-11-10.md) — **what to take from Pixel_Physics,
+  and the dish hash built.** The frame is 4.93 ms, sim 1.10 + draw 3.83, so the multi-core renderer is the engine
+  piece worth taking; sound, keyed random draws and empty-tile skipping next. Tools: determinism test, profiler,
+  licence gates, `crispfont.py`. Misfits: capitals-only font, missing OFL notice, unmeasured release profile.
+  `Dish::state_hash` and `every_dish_replays_bit_for_bit` built: all seven dishes replay bit for bit, and a
+  clock-seeded draw turns the test red.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
