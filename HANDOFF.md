@@ -48,12 +48,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
 
 Ask each again; none has an answer to assume.
 
-1. **What to fix first after review 2.** Asked on a card 11-10 15:12Z, never
-   answered. The Wild One's scoring has since been done (PR #6), so what is
-   left of the question is whether to trace Keep It Alive's luck next or wait
-   until the owner has played both dishes. Re-asked 11-10 ~18:05Z; the trace
-   was run on the recommended option meanwhile (measurement only).
-   [`Reports/mould-review-thread-handoff-2026-11-10.md`](Reports/mould-review-thread-handoff-2026-11-10.md)
+1. ~~What to fix first after review 2.~~ **Decided** 11-10 18:56Z (card:
+   "Trace it now"); the trace is done
+   ([`Reports/mould-keep-alive-luck-2026-11-10.md`](Reports/mould-keep-alive-luck-2026-11-10.md)),
+   see [`wiki/decisions.md`](wiki/decisions.md). The 20 s landing preview it
+   proposes changes the game and is not yet agreed. Kept as a numbered line
+   so the later numbers stay the same.
 2. **Grains or glints** for walkers in the tube look. Only matters while F7
    is kept. [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md)
 3. **Retire the tube look (F7)?** The owner chose to keep a key back; ask
@@ -72,14 +72,21 @@ Ask each again; none has an answer to assume.
    over The Wild One's next steps (its Stage 0 answers the same mid-game
    question); is a fog of war allowed if it is drawn from a held quantity;
    two keepers, or three-to-four. Since the brainstorm
-   ([`brainstorm/`](Reports/rts-design-2026-11-10/brainstorm/README.md)): which
-   direction to probe first, Bloomfront's Stage 0 or one of the cheaper
-   questions (a no-input pattern-counter grid, a Squeeze timing probe, a
-   contagion test). The food store sits at a median of 0, so any "pay from
-   the store" rule needs its own currency first.
-8. **Sound for the game:** wanted at all? The Pixel_Physics review
-   recommends starting from that repo's `src/audio/` if so; the game window
-   is silent today.
+   ([`brainstorm/`](Reports/rts-design-2026-11-10/brainstorm/README.md)) and
+   its [red team](Reports/rts-design-2026-11-10/red-team/README.md): which
+   direction to probe first. The red team recommends a paired-clone verb
+   census (one verb in one of two cloned dishes, 16 seeds) before Bloomfront's
+   Stage 0, whose gates would pass without testing the opening; then one
+   contagion strain on the CPU. The census has since run, with a retest on a
+   23-pile field after the owner said 7 piles limit the options
+   ([`field/`](Reports/rts-design-2026-11-10/field/README.md)): a salt line
+   across the rival's road passes on the field, only the lamp moves share on
+   The Wild One, Taut's pull wins on the field, and the pattern counters form
+   a cycle on one field layout of two. Next: one contagion strain, and
+   whether any verb can overturn a 60 s lead. Two Fevers is still the
+   strongest direction. The food store sits at a median of 0, so any "pay
+   from the store" rule needs its own currency first. Page:
+   [the RTS directions](wiki/rts/directions.md).
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
@@ -129,7 +136,7 @@ Each report's own "next steps" section has the reasons and numbers:
   with its archived source.
 - **Merging.** Merge a PR only when both CI jobs ("test + clippy" and "sound
   device builds (organ)") are green on its exact head, with a merge commit.
-  PRs that change only `Reports/`, `handoff/`, `research/` or `*.md` skip the
+  PRs that change only `Reports/`, `handoff/`, `research/`, `wiki/` or `*.md` skip the
   two build jobs (PR #5), so they show as skipped, which is green.
 - **Reaching the repo from a session.** Add `sgladstein/Slime-Mold` to the
   session (`add_repo`); the crate is `slime-mould`, imported as

@@ -1,29 +1,52 @@
 # Working in this repo
 
-The mould game moved here from Pixel_Physics on 2026-11-10. Pixel_Physics's
-`CLAUDE.md` holds the project's long-learned method; the parts that apply
-here are kept below, short. Read `README.md` for the layout and
-`Reports/README.md` for what has already been tried.
+**Read only what your task needs**; this file is the
+only thing every thread reads. A runner thread reads nothing else.
 
-**The wiki** (`wiki/`): before touching a dish, tool or mechanism, read
-`wiki/index.md` and its page. A change that adds a report, changes a default
+- Game or simulation work: `HANDOFF.md`, then `wiki/index.md` and the page
+  for the dish, tool or mechanism you touch.
+- Planning, or changing a step's state: `ROADMAP.md`.
+- Before trying an idea: grep `Reports/dead-ends.md` and `Reports/README.md`
+  for it; don't read them whole.
+- File layout and tools: `README.md`, when you need them.
+
+**The wiki** (`wiki/`): a change that adds a report, changes a default
 or records an owner decision updates those pages in the same commit; rules
 in `wiki/README.md`. Run `python3 wiki/lint.py` before committing (CI runs it).
 
 ## What the owner has ruled for this game
 
-- **Fun over fidelity.** Real slime mould biology and Jones's papers are
-  inspiration, not the bar. Judge every change by what it does for play.
+All rulings, quoted and timed: `wiki/decisions.md`.
+
+- **Fun over fidelity.** The goal is interesting simulations that can be
+  turned into a game, not a realistic slime mould (2026-11-10). Biology and
+  Jones's papers are inspiration, not the bar; judge every change by play.
 - **Everything on screen is the simulation, and looks like it** (2026-11-09,
   2026-11-10): no drawn-only effects (no painted pulse), no thresholded tube
   edge or fed/unfed colour line; the picture *is* the data.
 - **An outcome is a spread, not a yes/no; every tool must deliver something
   you can see.**
 - **Defaults on** unless there is a measured harm or a stated uncertainty.
+- **Brainstorms start from the model**, not from the demo's tools (lamp,
+  oats, salt, knife, water), which were built for the herding puzzle
+  (2026-11-10). Describe the simulation neutrally in a brainstorm brief.
+
+## How threads work
+
+- **Each thread merges its own PRs** (2026-11-10): once both CI jobs are
+  green on the exact head, with a merge commit. Docs-only PRs (`Reports/`,
+  `handoff/`, `research/`, `wiki/`, `*.md`) skip the build jobs; skipped is
+  green, but the wiki lint still runs.
+- **Long runs may use up to 4 Haiku runner threads** (2026-11-10), asked for
+  through the coordinator. Runners make no decisions: they run exactly the
+  commands given and send the raw output back.
+- **GPU work targets a GTX 1070** on the owner's home desktop, which is often
+  not the machine they are at. GPU timing waits until they are there with
+  the Claude app open, and runs through Remote Control.
 
 ## Method
 
-1. Look before you measure: render the dish (`mouldprobe look=DIR`,
+1. Look before you measure: render the dish (`mouldprobe -- look=DIR`,
    `mouldlooks`) and look at it.
 2. Name the deciding measure before a run. Compare paired seeds, quote
    differences as paired counts with a sign-test p, and say which survive a
@@ -38,8 +61,8 @@ in `wiki/README.md`. Run `python3 wiki/lint.py` before committing (CI runs it).
 Pictures and GIFs go on an Artifact page linked in the thread, with the
 counts beside each picture, never as chat attachments. A visual choice goes
 up as a blind A/B with the key kept off the page. Save each page's HTML and
-images under `Reports/<report-folder>/` in the same change, so the page
-outlives claude.ai.
+images under `Reports/<report-folder>/` and list it in `Reports/pages.md`
+in the same change, so the page outlives claude.ai.
 
 ## Records
 
@@ -55,7 +78,8 @@ outlives claude.ai.
 ## Commands
 
 ```
-cargo test --release
+cargo test --release --locked
 cargo clippy --all-targets --release --locked -- -D warnings
 cargo build --release --example mouldprobe   # examples are not rebuilt by `cargo build`; build the one you run
+python3 wiki/lint.py
 ```

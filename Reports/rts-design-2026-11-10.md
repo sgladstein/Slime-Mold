@@ -40,6 +40,23 @@ card layer) and their notes are in
 One finding corrects this draft: the food store is never a bank (see the
 correction under *The game: Bloomfront*).
 
+**Red team (2026-11-10, later).** A fresh agent attacked this draft and the
+brainstorm's directions, with probes on today's dish:
+[`rts-design-2026-11-10/red-team/`](rts-design-2026-11-10/red-team/README.md).
+For Bloomfront it found that Stage 0's gates would pass without testing the
+opening: equal scripts on a mirrored dish split near 50/50 by symmetry, and a
+sharp hand beating a clumsy one only confirms the aim test. It recommends a
+paired-clone verb census before Stage 0 (see the note under *Recommended
+path*).
+
+**Field retest and verb census (2026-11-10, later).** After the owner said 7
+piles limit the options, the red team's findings were rerun on 23 smaller
+mirrored piles, and the census was run on both dishes:
+[`rts-design-2026-11-10/field/`](rts-design-2026-11-10/field/README.md).
+Taut's pull wins share there, the pattern counters cycle on one layout of
+two, and a salt line across the rival's road is the one verb that passes on
+share; on The Wild One only the lamp moves share.
+
 ## What the simulation is today
 
 The game is a Jones-style walker model on one bounded 256 x 160 dish
@@ -307,3 +324,13 @@ If equal hands do not split near 50/50, the dish layout or the rng order
 favours a side and must be fixed before any RTS layer is worth building. If a
 sharp hand cannot beat a clumsy one, the mould does not reward skill against a
 thinking opponent, and Bloomfront should stop there.
+
+**Note (2026-11-10, later, after the red team).** Stage 0 is no longer the
+recommended first step. Its two gates would pass without testing Bloomfront's
+top risk, and running it first would re-anchor the plan on the demo's tools,
+against the owner's 18:15 ruling. The red team's first test is cheaper and
+can kill a direction outright: clone The Wild One at 60 s, apply one verb in
+one copy, and compare food share over 30 s on 16 seeds
+([red team, §9](rts-design-2026-11-10/red-team/README.md)). Stage 0's
+two-keeper plumbing stays useful as a harness for any direction that keeps two
+moulds.

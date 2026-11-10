@@ -78,6 +78,16 @@ report; list the pages it touches; rewrite each page's Now, add Numbers rows
 and Sources, bump `updated`; link any new `dead-ends.md` entry; update the
 page's index line; run `python3 wiki/lint.py`.
 
+**Notes behind a report** (a sub-agent's full write-up, a brainstorm, a
+red-team review, raw counts) are kept whole in a folder beside the report,
+`Reports/<report>/`, and are **not ingested one by one**. The parent report
+(`Reports/<report>.md`, or the folder's `README.md`) summarises them and
+links every note, and pages cite the parent. A page cites a note directly
+only when it uses a number or a quote that only the note holds. So every
+note is one hop from the wiki; lint fails on a note no parent or page
+reaches, and on a folder of notes with no parent (owner's question,
+2026-11-10 18:48Z: "Do the agents full notes get ingested into the wiki?").
+
 **Query**: `HANDOFF.md`, then [index.md](index.md), then the page; open a
 report only when the page does not answer.
 

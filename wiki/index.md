@@ -27,6 +27,11 @@ Keep this file under 150 lines; lint checks it.
 ## Looks
 
 - [The simulation look](looks/simulation-look.md): the default; the mould drawn straight from trail, hunger and walkers; F7 the old tube look.
+- [Sound](looks/sound.md): on by default, S toggles; every sound a count off the dish; the owner has not listened yet.
+
+## Games in design
+
+- [The RTS directions](rts/directions.md): nothing built; Taut failed its probe, Two Fevers is the strongest left; next a paired-clone verb census.
 
 ## Method and owner
 
@@ -40,6 +45,5 @@ the reports that would feed them: the free dish and the storm
 (`mould-probe-2026-11-07.md`, `dead-ends.md`); food, scent and food flow
 (`mould-probe`, *Food that flows*); the Wanderer and the Organ
 (`mould-game-2026-11-08/prototypes/`); the forest floor
-(`mould-real-world-2026-11-09.md`); the RTS design
-(`rts-design-2026-11-10.md`). The 2026-11-07 brainstorm is background,
+(`mould-real-world-2026-11-09.md`). The 2026-11-07 brainstorm is background,
 linked from [Reports/README.md](../Reports/README.md), not compiled.

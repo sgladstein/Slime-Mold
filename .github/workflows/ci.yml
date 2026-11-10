@@ -83,5 +83,5 @@ jobs:
       - run: rustup target add aarch64-apple-darwin x86_64-pc-windows-msvc
       - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - run: cargo clippy --lib --bins --release --locked --features audio-alsa -- -D warnings
-      - run: cargo check --locked --bin organ --target aarch64-apple-darwin
-      - run: cargo check --locked --bin organ --target x86_64-pc-windows-msvc
+      - run: cargo check --locked --bin organ --bin mould --target aarch64-apple-darwin
+      - run: cargo check --locked --bin organ --bin mould --target x86_64-pc-windows-msvc

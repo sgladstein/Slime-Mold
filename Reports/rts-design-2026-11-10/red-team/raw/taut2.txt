@@ -1,0 +1,72 @@
+TAUT seed=1 angle=22.5 scent=0 t=60 len=236.8 tube=3694 near=0.72 walkers=1031
+  + 2s control len=228.5 tube=3561 near=0.71 walkers=1024 share_since=0.500 | taut len=329.6 tube=4707 near=0.42 walkers=945 share_since=0.472 reach 4/5
+  + 5s control len=224.6 tube=3515 near=0.71 walkers=1010 share_since=0.498 | taut len=433.7 tube=5819 near=0.25 walkers=796 share_since=0.434 reach 4/4
+  +10s control len=199.7 tube=3201 near=0.72 walkers=1014 share_since=0.497 | taut len=324.1 tube=4563 near=0.33 walkers=554 share_since=0.360 reach 4/4
+  +20s control len=221.2 tube=3541 near=0.71 walkers=991 share_since=0.496 | taut len=93.8 tube=1245 near=0.20 walkers=128 share_since=0.202 reach 5/4
+  +30s control len=230.1 tube=3579 near=0.69 walkers=1000 share_since=0.495 | taut len=0.0 tube=0 near=0.00 walkers=0 share_since=0.143 reach 4/0
+TAUT seed=2 angle=22.5 scent=0 t=60 len=161.7 tube=2755 near=0.77 walkers=988
+  + 2s control len=178.5 tube=2926 near=0.75 walkers=995 share_since=0.490 | taut len=303.4 tube=4408 near=0.43 walkers=949 share_since=0.465 reach 4/5
+  + 5s control len=142.4 tube=2478 near=0.75 walkers=970 share_since=0.483 | taut len=323.2 tube=4490 near=0.35 walkers=738 share_since=0.381 reach 4/4
+  +10s control len=189.6 tube=3068 near=0.72 walkers=969 share_since=0.480 | taut len=221.2 tube=3073 near=0.25 walkers=387 share_since=0.281 reach 4/3
+  +20s control len=232.1 tube=3621 near=0.70 walkers=1007 share_since=0.488 | taut len=32.3 tube=493 near=0.44 walkers=55 share_since=0.161 reach 4/1
+  +30s control len=269.1 tube=4151 near=0.68 walkers=1023 share_since=0.494 | taut len=0.0 tube=0 near=1.00 walkers=1 share_since=0.108 reach 6/0
+TAUT seed=3 angle=22.5 scent=0 t=60 len=201.7 tube=3336 near=0.75 walkers=1106
+  + 2s control len=190.6 tube=3171 near=0.75 walkers=1091 share_since=0.531 | taut len=288.1 tube=4274 near=0.45 walkers=1033 share_since=0.507 reach 4/6
+  + 5s control len=193.7 tube=3211 near=0.74 walkers=1070 share_since=0.527 | taut len=363.9 tube=5045 near=0.33 walkers=883 share_since=0.460 reach 4/4
+  +10s control len=188.9 tube=3108 near=0.71 walkers=1036 share_since=0.520 | taut len=327.2 tube=4515 near=0.26 walkers=658 share_since=0.414 reach 4/5
+  +20s control len=215.2 tube=3393 near=0.71 walkers=1024 share_since=0.513 | taut len=196.8 tube=2777 near=0.19 walkers=319 share_since=0.337 reach 4/4
+  +30s control len=232.8 tube=3640 near=0.69 walkers=1009 share_since=0.508 | taut len=49.7 tube=613 near=0.13 walkers=63 share_since=0.229 reach 4/1
+TAUT seed=4 angle=22.5 scent=0 t=60 len=212.8 tube=3373 near=0.73 walkers=1000
+  + 2s control len=224.8 tube=3506 near=0.72 walkers=1001 share_since=0.495 | taut len=323.2 tube=4620 near=0.39 walkers=951 share_since=0.470 reach 4/5
+  + 5s control len=223.0 tube=3500 near=0.72 walkers=991 share_since=0.496 | taut len=373.8 tube=4964 near=0.20 walkers=796 share_since=0.440 reach 4/6
+  +10s control len=199.4 tube=3251 near=0.77 walkers=1009 share_since=0.497 | taut len=346.9 tube=4583 near=0.21 walkers=532 share_since=0.378 reach 4/3
+  +20s control len=215.8 tube=3438 near=0.73 walkers=1042 share_since=0.501 | taut len=123.2 tube=1706 near=0.18 walkers=161 share_since=0.241 reach 4/4
+  +30s control len=243.8 tube=3769 near=0.71 walkers=1033 share_since=0.505 | taut len=0.3 tube=4 near=0.50 walkers=2 share_since=0.160 reach 4/0
+TAUT seed=1 angle=22.5 scent=0.3 t=60 len=236.8 tube=3694 near=0.72 walkers=1031
+  + 2s control len=228.5 tube=3561 near=0.71 walkers=1024 share_since=0.500 | taut len=196.1 tube=3173 near=0.78 walkers=1025 share_since=0.504 reach 4/4
+  + 5s control len=224.6 tube=3515 near=0.71 walkers=1010 share_since=0.498 | taut len=188.6 tube=3114 near=0.80 walkers=1030 share_since=0.504 reach 4/4
+  +10s control len=199.7 tube=3201 near=0.72 walkers=1014 share_since=0.497 | taut len=132.2 tube=2424 near=0.82 walkers=1030 share_since=0.504 reach 4/4
+  +20s control len=221.2 tube=3541 near=0.71 walkers=991 share_since=0.496 | taut len=148.4 tube=2640 near=0.83 walkers=1038 share_since=0.504 reach 5/3
+  +30s control len=230.1 tube=3579 near=0.69 walkers=1000 share_since=0.495 | taut len=186.3 tube=3087 near=0.77 walkers=1042 share_since=0.506 reach 4/4
+TAUT seed=2 angle=22.5 scent=0.3 t=60 len=161.7 tube=2755 near=0.77 walkers=988
+  + 2s control len=178.5 tube=2926 near=0.75 walkers=995 share_since=0.490 | taut len=189.9 tube=3067 near=0.76 walkers=1006 share_since=0.496 reach 4/4
+  + 5s control len=142.4 tube=2478 near=0.75 walkers=970 share_since=0.483 | taut len=144.9 tube=2538 near=0.82 walkers=1020 share_since=0.501 reach 4/4
+  +10s control len=189.6 tube=3068 near=0.72 walkers=969 share_since=0.480 | taut len=154.6 tube=2685 near=0.77 walkers=969 share_since=0.504 reach 4/4
+  +20s control len=232.1 tube=3621 near=0.70 walkers=1007 share_since=0.488 | taut len=119.5 tube=2223 near=0.82 walkers=973 share_since=0.503 reach 4/3
+  +30s control len=269.1 tube=4151 near=0.68 walkers=1023 share_since=0.494 | taut len=109.8 tube=1954 near=0.81 walkers=900 share_since=0.489 reach 6/3
+TAUT seed=3 angle=22.5 scent=0.3 t=60 len=201.7 tube=3336 near=0.75 walkers=1106
+  + 2s control len=190.6 tube=3171 near=0.75 walkers=1091 share_since=0.531 | taut len=174.2 tube=3006 near=0.81 walkers=1095 share_since=0.536 reach 4/4
+  + 5s control len=193.7 tube=3211 near=0.74 walkers=1070 share_since=0.527 | taut len=177.1 tube=3061 near=0.81 walkers=1112 share_since=0.542 reach 4/4
+  +10s control len=188.9 tube=3108 near=0.71 walkers=1036 share_since=0.520 | taut len=159.6 tube=2817 near=0.83 walkers=1098 share_since=0.542 reach 4/4
+  +20s control len=215.2 tube=3393 near=0.71 walkers=1024 share_since=0.513 | taut len=177.3 tube=3006 near=0.80 walkers=1067 share_since=0.537 reach 4/4
+  +30s control len=232.8 tube=3640 near=0.69 walkers=1009 share_since=0.508 | taut len=200.1 tube=3253 near=0.79 walkers=1078 share_since=0.532 reach 4/4
+TAUT seed=4 angle=22.5 scent=0.3 t=60 len=212.8 tube=3373 near=0.73 walkers=1000
+  + 2s control len=224.8 tube=3506 near=0.72 walkers=1001 share_since=0.495 | taut len=183.9 tube=3039 near=0.81 walkers=1013 share_since=0.499 reach 4/4
+  + 5s control len=223.0 tube=3500 near=0.72 walkers=991 share_since=0.496 | taut len=193.8 tube=3187 near=0.80 walkers=1030 share_since=0.503 reach 4/4
+  +10s control len=199.4 tube=3251 near=0.77 walkers=1009 share_since=0.497 | taut len=178.8 tube=3025 near=0.81 walkers=1065 share_since=0.512 reach 4/4
+  +20s control len=215.8 tube=3438 near=0.73 walkers=1042 share_since=0.501 | taut len=169.8 tube=2857 near=0.79 walkers=1053 share_since=0.514 reach 4/4
+  +30s control len=243.8 tube=3769 near=0.71 walkers=1033 share_since=0.505 | taut len=157.5 tube=2728 near=0.80 walkers=1045 share_since=0.514 reach 4/4
+TAUT seed=1 angle=22.5 scent=0.5 t=60 len=236.8 tube=3694 near=0.72 walkers=1031
+  + 2s control len=228.5 tube=3561 near=0.71 walkers=1024 share_since=0.500 | taut len=140.3 tube=2514 near=0.88 walkers=1029 share_since=0.505 reach 4/3
+  + 5s control len=224.6 tube=3515 near=0.71 walkers=1010 share_since=0.498 | taut len=118.7 tube=2270 near=0.89 walkers=1023 share_since=0.510 reach 4/3
+  +10s control len=199.7 tube=3201 near=0.72 walkers=1014 share_since=0.497 | taut len=99.8 tube=2062 near=0.91 walkers=1012 share_since=0.510 reach 4/3
+  +20s control len=221.2 tube=3541 near=0.71 walkers=991 share_since=0.496 | taut len=95.6 tube=1868 near=0.88 walkers=933 share_since=0.499 reach 5/3
+  +30s control len=230.1 tube=3579 near=0.69 walkers=1000 share_since=0.495 | taut len=97.3 tube=1810 near=0.87 walkers=901 share_since=0.477 reach 4/3
+TAUT seed=2 angle=22.5 scent=0.5 t=60 len=161.7 tube=2755 near=0.77 walkers=988
+  + 2s control len=178.5 tube=2926 near=0.75 walkers=995 share_since=0.490 | taut len=124.7 tube=2286 near=0.84 walkers=987 share_since=0.495 reach 4/3
+  + 5s control len=142.4 tube=2478 near=0.75 walkers=970 share_since=0.483 | taut len=108.4 tube=2092 near=0.85 walkers=939 share_since=0.493 reach 4/3
+  +10s control len=189.6 tube=3068 near=0.72 walkers=969 share_since=0.480 | taut len=101.5 tube=1856 near=0.88 walkers=890 share_since=0.476 reach 4/3
+  +20s control len=232.1 tube=3621 near=0.70 walkers=1007 share_since=0.488 | taut len=93.9 tube=1771 near=0.87 walkers=899 share_since=0.452 reach 4/3
+  +30s control len=269.1 tube=4151 near=0.68 walkers=1023 share_since=0.494 | taut len=107.7 tube=1935 near=0.85 walkers=890 share_since=0.444 reach 6/3
+TAUT seed=3 angle=22.5 scent=0.5 t=60 len=201.7 tube=3336 near=0.75 walkers=1106
+  + 2s control len=190.6 tube=3171 near=0.75 walkers=1091 share_since=0.531 | taut len=141.5 tube=2576 near=0.85 walkers=1095 share_since=0.535 reach 4/4
+  + 5s control len=193.7 tube=3211 near=0.74 walkers=1070 share_since=0.527 | taut len=120.7 tube=2298 near=0.87 walkers=1092 share_since=0.534 reach 4/3
+  +10s control len=188.9 tube=3108 near=0.71 walkers=1036 share_since=0.520 | taut len=125.0 tube=2379 near=0.88 walkers=1073 share_since=0.531 reach 4/3
+  +20s control len=215.2 tube=3393 near=0.71 walkers=1024 share_since=0.513 | taut len=103.7 tube=2054 near=0.88 walkers=1030 share_since=0.527 reach 4/3
+  +30s control len=232.8 tube=3640 near=0.69 walkers=1009 share_since=0.508 | taut len=96.7 tube=1913 near=0.88 walkers=957 share_since=0.516 reach 4/3
+TAUT seed=4 angle=22.5 scent=0.5 t=60 len=212.8 tube=3373 near=0.73 walkers=1000
+  + 2s control len=224.8 tube=3506 near=0.72 walkers=1001 share_since=0.495 | taut len=126.2 tube=2348 near=0.89 walkers=996 share_since=0.498 reach 4/3
+  + 5s control len=223.0 tube=3500 near=0.72 walkers=991 share_since=0.496 | taut len=119.8 tube=2279 near=0.88 walkers=1025 share_since=0.505 reach 4/3
+  +10s control len=199.4 tube=3251 near=0.77 walkers=1009 share_since=0.497 | taut len=113.2 tube=2184 near=0.87 walkers=1011 share_since=0.506 reach 4/3
+  +20s control len=215.8 tube=3438 near=0.73 walkers=1042 share_since=0.501 | taut len=106.7 tube=1994 near=0.88 walkers=928 share_since=0.494 reach 4/3
+  +30s control len=243.8 tube=3769 near=0.71 walkers=1033 share_since=0.505 | taut len=94.9 tube=1772 near=0.85 walkers=900 share_since=0.473 reach 4/3

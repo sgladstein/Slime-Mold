@@ -13,6 +13,9 @@ mechanism page that `HANDOFF.md` does not link.
 
 A top-level report under `Reports/` that no page cites is an error too,
 unless it is listed in `NOT_YET_INGESTED` (reports from before the wiki).
+So is a note (.md) inside a report folder that cannot be reached by links
+from the folder's parent report or a wiki page, and a folder of notes with
+no parent; folders in `PRE_WIKI_FOLDERS` only warn.
 
 Warnings (print only): a page whose `updated` date is older than the last
 commit to one of its `sources`; a listed pre-wiki report still uncited.
@@ -38,6 +41,14 @@ NOT_SOURCES = {"README.md", "dead-ends.md", "pages.md"}
 # the repo is new and will grow, and a wiki that skips new reports goes stale
 # without anyone noticing. Remove a name once a page cites it.
 NOT_YET_INGESTED = set()  # rts-design-2026-11-10.md: cited by decisions.md since 2026-11-10
+# Report folders from before the wiki whose notes are not all reached from
+# a cited parent. They only warn. A new folder must have a parent (Reports/
+# <folder>.md, or <folder>/README.md cited by a page) that links every note
+# in it, so a sub-agent's full notes are always one hop from the wiki.
+PRE_WIKI_FOLDERS = {
+    "mould-game-2026-11-08",  # archive with its own README; no page cites the README yet
+    "new-game-brainstorm-2026-11-07",  # background, linked from Reports/README.md
+}
 INDEX_CAP = 150
 
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
@@ -201,6 +212,55 @@ def main():
                 warnings.append(f"Reports/{f}: no wiki page cites it yet (predates the wiki)")
             else:
                 errors.append(f"Reports/{f}: new report that no wiki page cites; ingest it")
+
+    # Notes inside report folders (a sub-agent's full notes, a brainstorm, a
+    # review). They are not each ingested: the parent report summarises them
+    # and a page cites the parent. Lint checks they are reachable: every .md
+    # in Reports/<folder>/ is linked, directly or through notes the parent
+    # links, from the parent or a wiki page (a link to a sub-folder covers
+    # what is in it). Owner's question, 2026-11-10 18:48Z.
+    for d in sorted(os.listdir(reports)):
+        folder = os.path.join(reports, d)
+        if not os.path.isdir(folder):
+            continue
+        notes = []
+        for dirpath, _, files in os.walk(folder):
+            notes += [os.path.join(dirpath, f) for f in files if f.endswith(".md")]
+        if not notes:
+            continue
+        top, readme = folder + ".md", os.path.join(folder, "README.md")
+        parent = top if os.path.exists(top) else readme if os.path.exists(readme) else None
+        say = warnings.append if d in PRE_WIKI_FOLDERS else errors.append
+        if parent is None:
+            say(f"Reports/{d}/: notes but no parent report (Reports/{d}.md or {d}/README.md)")
+            continue
+        if parent == readme and readme not in cited:
+            say(f"Reports/{d}/README.md: no wiki page cites it")
+        reached, covered = set(), set()
+        todo = [parent] + sorted(cited & set(notes))
+        while todo:
+            f = todo.pop()
+            if f in reached:
+                continue
+            reached.add(f)
+            with open(f, encoding="utf-8", errors="ignore") as h:
+                for target in LINK.findall(h.read()):
+                    if re.match(r"[a-z]+:", target) or target.startswith("#"):
+                        continue
+                    full = os.path.normpath(os.path.join(os.path.dirname(f), target.split("#", 1)[0]))
+                    if full in notes:
+                        todo.append(full)
+                    elif os.path.isdir(full) and full.startswith(folder + os.sep):
+                        covered.add(full.rstrip(os.sep))
+        missing = []
+        for n in notes:
+            if n == parent:
+                continue
+            if n not in reached and not any(n.startswith(c + os.sep) for c in covered):
+                missing.append(n)
+        if missing:
+            say(f"Reports/{d}/: {len(missing)} note(s) no parent or page links, e.g. "
+                f"{os.path.relpath(missing[0], ROOT)}")
 
     for w in warnings:
         print("warning:", w)

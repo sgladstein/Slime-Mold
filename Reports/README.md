@@ -90,7 +90,19 @@ move.
   six agents' notes (Creeper World and Particle Fleet, RTS craft, 20 simulation games, cards, and two clean-slate
   agents that set the old tools aside), a verification pass, and a synthesis. New directions: a contagion war over a
   neutral mould, timed food waves, road tension, pattern counters. Correction: the food store sits at a median of 0,
-  so spending needs its own currency.
+  so spending needs its own currency. **Red team the same day** ([`rts-design-2026-11-10/red-team/`](rts-design-2026-11-10/red-team/README.md),
+  harness, raw output and stills kept): road tension fails (raising the pull shrank the network to a third in 5 s on
+  4 of 4 seeds; lowering it starved the mould); a squeeze from home moved food share by 0.000 on 3 of 3 seeds; the
+  pattern counters are a straight ladder in 164 games at today's density; flow on two moulds costs 2.6x the step
+  time. Food share mostly counts heads on piles. Strongest left: Two Fevers. First test: a paired-clone verb census.
+  **Field retest and verb census the same day** ([`rts-design-2026-11-10/field/`](rts-design-2026-11-10/field/README.md),
+  after the owner said 7 piles limit the options): on 23 smaller mirrored piles (about 6,600 walkers, Jones's
+  density) the counters form a cycle on one layout (hunter > maze 32/32, maze > cord 30/32, cord > hunter 25/32, all
+  surviving Holm) but not on a second (cord v maze 21/32, p 0.11); Taut's pull wins share on 8 of 8 seeds and 16 of 16
+  in the census (median +0.139), so it is a lever there but, as one dial, always best at full; with no hands the side
+  ahead at 60 s keeps the lead in about 80% of 700 games. Verb census, 16 seeds a dish: on the field a salt line
+  across the rival's road moves share 0.02 on 14 of 16 and beats random 14 of 16; on The Wild One only the lamp
+  moves it (15 of 16 up, 11 by 0.02); placed food loses on both. 700 of the games ran on four runner threads.
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as
@@ -144,5 +156,8 @@ move.
   licence gates, `crispfont.py`. Misfits: capitals-only font, missing OFL notice, unmeasured release profile.
   `Dish::state_hash` and `every_dish_replays_bit_for_bit` built: all seven dishes replay bit for bit, and a
   clock-seeded draw turns the test red.
+- [mould-sound-2026-11-10.md](mould-sound-2026-11-10.md) — sound for the game (owner: "yes to sound", 19:22Z). Pixel_Physics's
+  listener / voice bank / device split with the mould's own sounds, every one a count off the dish; S toggles.
+  Same game bit for bit with sound on; listener about 1 us a frame. Seven recordings on the Mould Sound page.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
