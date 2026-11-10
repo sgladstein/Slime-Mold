@@ -152,6 +152,15 @@ move.
   tick) is built; on a software GPU its dish matches the CPU's (165 loops against 163 at 100k, 10 s) and it waits for
   the owner's GTX 1070.
 
+- [jenson-compare-2026-11-10.md](jenson-compare-2026-11-10.md) — **research with small tests, no game change: why
+  Jenson's clips look different from our mould.** Owner asked 22:48Z. Jenson's GIFs against the big dish (no food), and
+  the step as Bleuje, Lague, PolyPhy, gpu-io and Barradeau build it (all drop the one-a-cell limit). With our numbers
+  the limit off folds walkers into ropes (loops at 10 s 151.5 to 0, 8 of 8 seeds); sensor 45 / turn 22.5 / reach 18
+  gives polygons; the game's brightness curve makes tubes look about three times wider than a soft curve does; respawn 1% a
+  step (new `BigParams::respawn`, off by default) held a fine mesh (loops at 10 s 43.5 to 196, 8 of 8) and gave
+  Jenson's haze, for 4% more step time. Not reproduced: feathery fronts, trunks, contagion.
+  Page, pictures, run.sh, analyze.py and raw output in [`jenson-compare-2026-11-10/`](jenson-compare-2026-11-10/).
+
 ## Added with the move (2026-11-10)
 
 - [new-game-brainstorm-2026-11-07/](new-game-brainstorm-2026-11-07/) — **where the game came from.** The flows,

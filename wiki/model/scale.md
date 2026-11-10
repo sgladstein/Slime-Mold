@@ -3,8 +3,8 @@ title: The mould at scale (outside models and the GPU plan)
 kind: mechanism
 status: open
 updated: 2026-11-10
-sources: [Reports/jenson-physarum-2026-11-10.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md]
-code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure]
+sources: [Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md]
+code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn]
 ---
 
 # The mould at scale (outside models and the GPU plan)
@@ -87,6 +87,21 @@ Three facts bind the design:
 - Cloud sessions have no GPU, so an all-integer simulation is recommended,
   with the same bits on CPU, GPU and CI.
 
+**Why Jenson's clips look different** (compared on the big dish,
+2026-11-10, no food, spread start). Jenson runs the same step; the look
+comes from how it is run and drawn. Dropping the one-walker-a-cell limit
+with our numbers folds the walkers into a few ropes (0 loops at 10 s against
+151.5, 8 of 8 seeds), so Jenson's rule needs other settings; sensor 45,
+turn 22.5, sensors 18 out gave a polygon mesh. Half the look is the
+brightness curve: the game's saturates at a trail of about 15, and the same
+dish drawn with a soft curve or by walkers a cell shows veins as thin as
+Jenson's. Respawning 1% of walkers a step (`BigParams::respawn`, off by
+default; Jenson's later work respawns every 1,000 steps) held a fine mesh
+and gave Jenson's haze. Four times the walkers changed little. Every GPU
+port read (Bleuje, Lague, PolyPhy, gpu-io, Barradeau) drops the limit.
+Not reproduced: feathery fronts growing into a haze, lasting trunks, and
+contagion.
+
 **Contagion** (Jenson) is a mark that spreads from particle to particle
 through the trail. It is planned as an off-by-default rule in phase 1 and a
 tool in phase 6. Every outside source has a card in
@@ -109,6 +124,9 @@ tool in phase 6. Every outside source has a card in
 | Big dish, nose rule, seed 1 | 32k walkers: 94 loops at 10 s, 59 at 30 s; 100k: 164 and 92; today 3 | 1 | | same, [page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs) |
 | GPU step vs CPU step, same seed, 10 s, software Vulkan (llvmpipe) | 32k: loops 90 / 92, width 3.40 / 3.41, strays 0.9% / 1.0%; 100k: loops 165 / 163, width 4.83 / 4.96, strays 1.8% / 1.5% | seed 1 | | [gpu plan, *GPU timing test*](../../Reports/gpu-plan-2026-11-10.md) |
 | Big dish cost, ms a tick, one thread / four | today 0.54 / 0.53; nose 32k 11.3 / 6.7; nose 100k 21.6 / 20.2; steps 43.1 / 25.8; turn 71.1 / 31.7 | seed 1 | | same |
+| No one-a-cell limit vs the limit, 100k walkers, no food, spread start, loops at 10 s | 0 (0-2) vs 151.5 (144-160): fewer on 8 of 8, p 0.008, survives Bonferroni over 4 | 8 | yes | [jenson compare, *The tests*](../../Reports/jenson-compare-2026-11-10.md) |
+| Respawn 1% a step vs none, 1M walkers, no limit, sensor 45 / turn 22.5 / reach 18, loops at 10 s | 196 (187-208) vs 43.5 (38-52): more on 8 of 8, p 0.008, survives Bonferroni over 4; 166 vs 160 ms a tick on one core | 8 | yes | same |
+| Tube width and haze on the picture, Jenson network_2 last frame vs the 1M dish drawn three ways | Jenson 0.3-0.4% of the disc, haze 41%; game curve 1.4-1.6%, haze 8%; soft curve 0.4-0.6%, 15% (44% with respawn); walkers a cell 0.1% | one clip; seed 1 | | same, [page](https://claude.ai/artifact/HL7jZ4qGhr6f1HpUDmNEj2) |
 | Step cost, bare move and diffusion, one core | 256 x 160 / 2.2k 0.13 ms; 1024 x 640 / 100k 9.5-11.2 ms; 1024 x 640 / 1M 96-98 ms; 2048 x 1280 / 1M 111-112 ms | 2 runs | | [gpu plan, *What the independent review changed*](../../Reports/gpu-plan-2026-11-10.md), [bench](../../Reports/gpu-plan-2026-11-10/step-bench.rs) |
 
 ## Owner's word
@@ -136,10 +154,11 @@ tool in phase 6. Every outside source has a card in
 - What in the all-at-once move cuts the seam fights, measured on a neutral two-mould dish.
 - The bag: whether a packed start on the fine grid still stalls once the economy grows the mould from a small inoculum.
 - The GTX 1070 timing (phase 2), at the owner's pick of 100,000 walkers, and at 1,000,000 for headroom.
-- The Bleuje, Lague and PolyPhy code is still unread (phase 3). Only PolyPhy's MIT code may be reused.
+- Jenson's feathery fronts, lasting trunks and contagion are not reproduced; nor tried are settings set by the trail a walker stands in (36 Points), a square-root deposit (Bleuje), area sensors (Lague) and chance-weighted steering (MCPM). The outside code was read on 2026-11-10; only PolyPhy, gpu-io (MIT) and Barradeau (public domain) may be reused.
 
 ## Sources
 
 - [jenson-physarum-2026-11-10.md](../../Reports/jenson-physarum-2026-11-10.md), with the owner's PDF and GIFs in [its folder](../../Reports/jenson-physarum-2026-11-10/).
+- [jenson-compare-2026-11-10.md](../../Reports/jenson-compare-2026-11-10.md): the clips against the big dish, and how the outside versions build the step.
 - [gpu-plan-2026-11-10.md](../../Reports/gpu-plan-2026-11-10.md) and its [independent review](../../Reports/gpu-plan-2026-11-10/review.md).
-- Source cards: [index](../../research/sources/README.md); [Jenson's post](../../research/sources/jenson-physarum-post.md), [36 Points](../../research/sources/jenson-36-points.md), [Jones 2010](../../research/sources/jones-2010.md), [MCPM](../../research/sources/mcpm-2022.md).
+- Source cards: [index](../../research/sources/README.md); [Jenson's post](../../research/sources/jenson-physarum-post.md), [36 Points](../../research/sources/jenson-36-points.md), [Jones 2010](../../research/sources/jones-2010.md), [MCPM](../../research/sources/mcpm-2022.md), [Bleuje](../../research/sources/bleuje-interactive-physarum.md), [Lague](../../research/sources/lague-slime-simulation.md), [PolyPhy](../../research/sources/polyphy.md).
