@@ -18,8 +18,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Most PRs here are reports, pictures and notes: every PR on 2026-11-10
+  # (#1-#4) touched nothing outside Reports/ and handoff/. Building and
+  # testing for those spends billed minutes proving nothing. This job looks
+  # at what the PR changed and lets the two build jobs skip when no file can
+  # reach the build. A skipped job reports as passed, so a required check
+  # never hangs. Pushes to main and manual runs always build everything.
+  changes:
+    name: what changed
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
+          echo "$files"
+          # Docs-only paths: nothing under them is compiled. research/ holds
+          # engine sketches as .rs.txt on purpose (they need Pixel_Physics).
+          # Anything else, including this workflow, counts as code.
+          code=$(echo "$files" | grep -vE '^(Reports/|handoff/|research/)|\.md$|^LICENSE$' | grep -c . || true)
+          if [ "$code" -gt 0 ]; then echo "code=true"; else echo "code=false"; fi >> "$GITHUB_OUTPUT"
+          echo "files that reach the build: $code"
+
   test:
     name: test + clippy
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +63,8 @@ jobs:
 
   sound:
     name: sound device builds (organ)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
