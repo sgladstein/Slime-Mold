@@ -1,0 +1,19 @@
+# Clean cost: one run at a time on a 4-core cloud container, seed 1, blob start,
+# 5 dish seconds (600 ticks); ms a tick of simulation (no drawing), mean over the run.
+# 2026-11-10T21:56Z, 4 cores
+threads 1 seed 1 today t   5.0s  tube  3338.0  loops    6  width 14.23  reach   81.1  piles 4/7  strays 0.058  ms/tick 0.54
+threads 1 seed 1 naive t   5.0s  tube  2417.9  loops    9  width 8.60  reach  122.6  piles 4/7  strays 0.043  ms/tick 11.69
+threads 1 seed 1 nose t   5.0s  tube  2480.0  loops    6  width 11.13  reach   82.3  piles 3/7  strays 0.011  ms/tick 11.28
+threads 1 seed 1 steps t   5.0s  tube  2234.3  loops    3  width 9.41  reach  122.1  piles 4/7  strays 0.108  ms/tick 43.07
+threads 1 seed 1 smell t   5.0s  tube  2142.9  loops   19  width 6.09  reach   54.1  piles 3/7  strays 0.127  ms/tick 32.02
+threads 1 seed 1 reach t   5.0s  tube  1854.2  loops    7  width 4.92  reach  129.6  piles 6/7  strays 0.350  ms/tick 26.36
+threads 1 seed 1 turn t   5.0s  tube  3141.6  loops    0  width 29.09  reach   54.5  piles 3/7  strays 0.000  ms/tick 71.11
+threads 1 seed 1 dense t   5.0s  tube  7245.9  loops   12  width 22.57  reach   89.8  piles 3/7  strays 0.006  ms/tick 21.60
+threads 4 seed 1 today t   5.0s  tube  3338.0  loops    6  width 14.23  reach   81.1  piles 4/7  strays 0.058  ms/tick 0.53
+threads 4 seed 1 naive t   5.0s  tube  2417.9  loops    9  width 8.60  reach  122.6  piles 4/7  strays 0.043  ms/tick 6.41
+threads 4 seed 1 nose t   5.0s  tube  2480.0  loops    6  width 11.13  reach   82.3  piles 3/7  strays 0.011  ms/tick 6.74
+threads 4 seed 1 steps t   5.0s  tube  2234.3  loops    3  width 9.41  reach  122.1  piles 4/7  strays 0.108  ms/tick 25.80
+threads 4 seed 1 smell t   5.0s  tube  2142.9  loops   19  width 6.09  reach   54.1  piles 3/7  strays 0.127  ms/tick 19.62
+threads 4 seed 1 reach t   5.0s  tube  1854.2  loops    7  width 4.92  reach  129.6  piles 6/7  strays 0.350  ms/tick 18.94
+threads 4 seed 1 turn t   5.0s  tube  3141.6  loops    0  width 29.09  reach   54.5  piles 3/7  strays 0.000  ms/tick 31.67
+threads 4 seed 1 dense t   5.0s  tube  7245.9  loops   12  width 22.57  reach   89.8  piles 3/7  strays 0.006  ms/tick 20.20

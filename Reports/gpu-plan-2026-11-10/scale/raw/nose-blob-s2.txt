@@ -1,0 +1,8 @@
+bigdish: preset nose-blob seeds [2] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, scent_offset: 36.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: false, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: true, tube: 1.0, seed: 1 }
+== seed 2: 1024 x 640, 32000 walkers, 7 piles
+seed 2 nose-blob t   5.0s  tube  2548.2  loops    7  width 9.72  reach   69.8  piles 3/7  strays 0.013  ms/tick 11.17
+seed 2 nose-blob t  10.0s  tube  2437.2  loops    8  width 10.07  reach   70.2  piles 3/7  strays 0.015  ms/tick 11.22
+seed 2 nose-blob t  15.0s  tube  2418.4  loops   14  width 9.85  reach   70.0  piles 3/7  strays 0.019  ms/tick 11.20
+seed 2 nose-blob t  20.0s  tube  2385.8  loops    9  width 9.54  reach   70.5  piles 3/7  strays 0.019  ms/tick 11.19
+seed 2 nose-blob hash=0eb4f578fedd076b

@@ -1,0 +1,53 @@
+36 pairings, 576 games
+
+  winner    loser  games  p        Holm  winner's mean share
+ counter     boom  16/16  3.1e-05   yes  0.631
+    boom    hoard  16/16  3.1e-05   yes  0.697
+    idle     boom  16/16  3.1e-05   yes  0.674
+    raid     boom  16/16  3.1e-05   yes  0.740
+    soft     boom  16/16  3.1e-05   yes  0.775
+  centre    hoard  16/16  3.1e-05   yes  0.716
+    soft   centre  16/16  3.1e-05   yes  0.708
+ counter     fort  16/16  3.1e-05   yes  0.627
+ counter    hoard  16/16  3.1e-05   yes  0.665
+    soft  counter  16/16  3.1e-05   yes  0.748
+    fort    hoard  16/16  3.1e-05   yes  0.787
+    idle     fort  16/16  3.1e-05   yes  0.712
+    soft     fort  16/16  3.1e-05   yes  0.764
+    idle    hoard  16/16  3.1e-05   yes  0.785
+    raid    hoard  16/16  3.1e-05   yes  0.766
+    soft    hoard  16/16  3.1e-05   yes  0.762
+    raid     idle  16/16  3.1e-05   yes  0.684
+    soft     raid  16/16  3.1e-05   yes  0.757
+    soft   random  16/16  3.1e-05   yes  0.705
+    soft     idle  15/16  0.00052   yes  0.676
+  centre     fort  14/16  0.0042      -  0.608
+    raid   random  14/16  0.0042      -  0.699
+  centre     boom  13/16  0.021       -  0.618
+ counter     idle  13/16  0.021       -  0.526
+    raid  counter  13/16  0.021       -  0.626
+ counter   random  13/16  0.021       -  0.582
+  random    hoard  13/16  0.021       -  0.708
+  random     boom  12/16  0.077       -  0.589
+  centre   random  12/16  0.077       -  0.560
+    raid     fort  12/16  0.077       -  0.619
+    idle   random  12/16  0.077       -  0.597
+  centre  counter  11/16  0.21        -  0.579
+  random     fort  11/16  0.21        -  0.566
+  centre     idle  10/16  0.45        -  0.497
+    raid   centre   9/16  0.8         -  0.548
+    boom     fort   8/16  1           -  0.443
+
+Each plan: pairings won (surviving Holm), lost (surviving), mean share over all its games
+    soft: won 8 (8 survive), lost 0 (0 survive), mean share 0.737
+    raid: won 7 (3 survive), lost 1 (1 survive), mean share 0.615
+    idle: won 4 (3 survive), lost 4 (2 survive), mean share 0.548
+  centre: won 6 (1 survive), lost 2 (1 survive), mean share 0.540
+ counter: won 5 (3 survive), lost 3 (1 survive), mean share 0.510
+  random: won 3 (0 survive), lost 5 (1 survive), mean share 0.465
+    fort: won 1 (1 survive), lost 6 (3 survive), mean share 0.431
+    boom: won 1 (1 survive), lost 6 (4 survive), mean share 0.389
+   hoard: won 0 (0 survive), lost 8 (7 survive), mean share 0.264
+
+Cycles of three among surviving pairings: none
+Cycles of three on the majority alone: none

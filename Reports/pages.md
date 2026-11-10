@@ -34,3 +34,6 @@ if the link ever stops working. Newest last.
 | 11-10 | Mould Sound | https://claude.ai/artifact/6GXBj1swj93DzdytbUjqvA | `mould-sound-2026-11-10/` (open `index.html`; MP3s beside it) |
 | 11-10 | GPU Arms Census (late census, all at once, fixed point) | https://claude.ai/artifact/VjUK3dzoMSVQSvTAPZCUaK | `gpu-plan-2026-11-10/census/` (page.html and the two stills) |
 | 11-10 | Two Fevers (playable; v1, v2, then v3 at the same link) | https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a | `two-fevers-2026-11-10/page/` (HTML and `fevers.wasm`; source `fevers-web/`) |
+| 11-10 | Mould Field Skirmish (version 1, playable) | https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw | `web/page/` (HTML and `skirmish.wasm`, built from 6c28e01; source `web/src/`) |
+| 11-10 | Budget Skirmish Strategies (round robin matrix and stills) | https://claude.ai/artifact/33Voj1TERnjNSZfLwv3zRG | `rts-skirmish-2026-11-10/page/` (index.html and the 15 stills) |
+| 11-10 | The 4x Mould (scaling rule, big dish at 32k and 100k walkers) | https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs | `gpu-plan-2026-11-10/scale/` (page.html, `ladder/` stills, `video/` MP4s and posters) |

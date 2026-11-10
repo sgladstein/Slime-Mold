@@ -103,6 +103,18 @@ move.
   ahead at 60 s keeps the lead in about 80% of 700 games. Verb census, 16 seeds a dish: on the field a salt line
   across the rival's road moves share 0.02 on 14 of 16 and beats random 14 of 16; on The Wild One only the lamp
   moves it (15 of 16 up, 11 by 0.02); placed food loses on both. 700 of the games ran on four runner threads.
+  **Layout sweep and comeback test, later the same day** (in `field/`, with `sweep/` and `comeback/`): the counter
+  cycle holds on 0 of 8 new layouts (1 of 10 in all; cord usually simply wins), 768 games on runner threads; the side
+  behind at 60 s turns 6 of 12 lost games with one salt wall across the leader's road and 9 of 12 with one every 15 s
+  (both beat a random wall 16/16), and 12 of 15 and 13 of 15 on a symmetric Wild One; the lamp and the cut never do.
+- [rts-skirmish-2026-11-10.md](rts-skirmish-2026-11-10.md) — **the field skirmish, a playable RTS demo, and what wins
+  it** (`src/mould/skirmish.rs`, `web/`, harness `duel` mode; folder `rts-skirmish-2026-11-10/`). v1 (habits, salt,
+  lamp, a rival that counters your habit) is playable in the browser; its rival beat an idle hand 16/16 and lost 14 of
+  16 to a hand that counters at once; the owner played it and found no strategy (21:14Z). v2, the budget skirmish: a tithe of each
+  bite into a bank, spent on beacons (`Dish::beacons`), spores (`Dish::plant`) and habits, with late food. Nine
+  scripted plans, 576 games on four runner threads: soft (beacons then spores on the rival's thinnest pile) beat all 8
+  others, 127 of 128 games; no cycle among 36 pairings; 300 games ended in a wipe-out. A guard, a spore reach and
+  sleeping spores did not stop it. Page: *Budget Skirmish Strategies*.
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as
@@ -129,7 +141,14 @@ move.
   and walkers past it fly straight (random play reaches the food behind the wall on 5 seeds of 16), so the fields stay
   `f32`; moving all walkers at once cuts seam fights and costs The Wild One's warden its share on 15 of 16 seeds
   (p 0.0005). The owner (20:55Z) ruled the current dishes unlikely to be the true games, so later gates use engine
-  measures on a neutral dish.
+  measures on a neutral dish. Then the scaling rule and phase 2's big dish on the CPU ([scale/](gpu-plan-2026-11-10/scale/),
+  engine-only `mould::big`, 16 paired seeds): every number in today's units gives no network (today's net comes from its
+  coarse grain); four fine steps a tick costs 3.7x and is worse on every measure (rejected); the plain 4x port plus food
+  smelled at today's reach is chosen (64.5 loops against today's 3, strays 2.2%, 11 ms a tick on one core), though a
+  packed home blob stays a bag (3 piles at 20 s against 4). 100,000 walkers make 164 loops at 10 s.
+  The owner picked 100,000 walkers (22:32Z). The GPU timing test (`examples/gputime.rs`, four wgpu compute passes a
+  tick) is built; on a software GPU its dish matches the CPU's (165 loops against 163 at 100k, 10 s) and it waits for
+  the owner's GTX 1070.
 
 ## Added with the move (2026-11-10)
 

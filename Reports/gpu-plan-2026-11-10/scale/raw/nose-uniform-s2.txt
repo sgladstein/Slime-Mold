@@ -1,0 +1,8 @@
+bigdish: preset nose-uniform seeds [2] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, scent_offset: 36.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: false, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: false, tube: 1.0, seed: 1 }
+== seed 2: 1024 x 640, 32000 walkers, 7 piles
+seed 2 nose-uniform t   5.0s  tube  9215.4  loops  136  width 3.39  reach  189.8  piles 7/7  strays 0.003  ms/tick 11.95
+seed 2 nose-uniform t  10.0s  tube  7347.6  loops   90  width 3.40  reach  186.0  piles 7/7  strays 0.013  ms/tick 11.26
+seed 2 nose-uniform t  15.0s  tube  6389.2  loops   72  width 3.38  reach  181.4  piles 7/7  strays 0.020  ms/tick 11.13
+seed 2 nose-uniform t  20.0s  tube  5923.7  loops   63  width 3.44  reach  180.7  piles 7/7  strays 0.023  ms/tick 11.05
+seed 2 nose-uniform hash=d7bd94f17ccc94f5

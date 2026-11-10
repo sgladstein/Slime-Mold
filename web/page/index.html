@@ -1,0 +1,261 @@
+<title>Mould Field Skirmish</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: one column, the dish on top at its own width, the controls under it in a
+   strip that wraps; a single dark look that matches the game's frame. */
+:root {
+  --bg: #0a0d12;
+  --panel: #121722;
+  --line: #232b3b;
+  --fg: #e6e9f0;
+  --dim: #8a93a6;
+  --gold: #f0b54a;
+  --violet: #a98bff;
+  --good: #6fd18f;
+  --bad: #ff7a6b;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --text: "Inter", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  font-family: var(--text);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 32px;
+}
+.wrap { max-width: 1024px; margin: 0 auto; display: grid; gap: 12px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 1.5rem; letter-spacing: 0.04em; margin: 0; text-transform: uppercase; }
+h1 .you { color: var(--gold); }
+h1 .them { color: var(--violet); }
+.sub { color: var(--dim); font-size: 0.9rem; margin: 0; }
+.stage { position: relative; }
+canvas { display: block; width: 100%; height: auto; border-radius: 6px; background: #000; touch-action: none; cursor: crosshair; }
+.loading[hidden] { display: none; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); font-family: var(--display); letter-spacing: 0.08em; }
+.strip { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 720px) { .strip { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.label { font-family: var(--display); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.habits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 420px) { .habits { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.habit {
+  font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 6px; display: grid; gap: 2px; justify-items: center; cursor: pointer; min-width: 0;
+}
+.habit .k { font-family: var(--display); color: var(--dim); font-size: 0.75rem; }
+.habit .n { font-family: var(--display); font-weight: 700; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.habit .w { font-size: 0.72rem; color: var(--dim); text-align: center; }
+.habit[aria-pressed="true"] { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.habit[aria-pressed="true"] .n { color: var(--gold); }
+.habit:disabled { opacity: 0.45; cursor: default; }
+.habit:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.chip { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; }
+.chip.them { color: var(--violet); }
+.edge { font-size: 0.85rem; }
+.edge.good { color: var(--good); }
+.edge.bad { color: var(--bad); }
+.edge.even { color: var(--dim); }
+.share { display: grid; gap: 6px; }
+.bar { height: 10px; border-radius: 999px; background: var(--violet); overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 50%; background: var(--gold); transition: width 0.3s linear; }
+.nums { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+.nums .you { color: var(--gold); }
+.nums .them { color: var(--violet); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+button.small, select {
+  font: inherit; font-size: 0.85rem; color: var(--fg); background: transparent; border: 1px solid var(--line);
+  border-radius: 6px; padding: 6px 10px; cursor: pointer;
+}
+button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.help { color: var(--dim); font-size: 0.85rem; line-height: 1.5; margin: 0; }
+.help b { color: var(--fg); font-weight: 600; }
+.stat { font-variant-numeric: tabular-nums; color: var(--dim); font-size: 0.8rem; }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><span class="you">Your mould</span> v <span class="them">the rival</span></h1>
+    <p class="sub">The Field: 23 small food piles. Eat more of the food than the rival by the bell (2:30).</p>
+  </header>
+
+  <div class="stage">
+    <canvas id="dish" width="1024" height="680" aria-label="The dish"></canvas>
+    <div class="loading" id="loading">GROWING THE DISH&hellip;</div>
+  </div>
+
+  <div class="strip">
+    <section class="panel" aria-labelledby="habits-label">
+      <div class="row" style="justify-content: space-between">
+        <span class="label" id="habits-label">Your habit (keys 1-4)</span>
+        <span class="stat" id="cooldown">Ready to switch</span>
+      </div>
+      <div class="habits" id="habits">
+        <button class="habit" id="h0" data-h="0" aria-pressed="true"><span class="k">1</span><span class="n">Spread</span><span class="w">loses to all three</span></button>
+        <button class="habit" id="h1" data-h="1" aria-pressed="false"><span class="k">2</span><span class="n">Hunt</span><span class="w">beats maze</span></button>
+        <button class="habit" id="h2" data-h="2" aria-pressed="false"><span class="k">3</span><span class="n">Maze</span><span class="w">beats cord</span></button>
+        <button class="habit" id="h3" data-h="3" aria-pressed="false"><span class="k">4</span><span class="n">Cord</span><span class="w">beats hunt</span></button>
+      </div>
+      <div class="row">
+        <span class="label">Rival's habit</span>
+        <span class="chip them" id="theirs">Spread</span>
+        <span class="edge even" id="edge">Even</span>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Score and controls">
+      <div class="share">
+        <span class="label">Food eaten</span>
+        <div class="bar" role="img" id="bar" aria-label="Your share of the food eaten"><i id="fill"></i></div>
+        <div class="nums"><span class="you" id="mine">You 50%</span><span id="clock">0:00 / 2:30</span><span class="them" id="theirsShare">Rival 50%</span></div>
+      </div>
+      <div class="controls">
+        <button class="small" id="lamp" aria-pressed="true">Lamp (L)</button>
+        <button class="small" id="salt" aria-pressed="false">Salt wall (S): 2</button>
+        <button class="small" id="pause" aria-pressed="false">Pause (P)</button>
+        <button class="small" id="fast" aria-pressed="false">Fast (Space)</button>
+        <button class="small" id="again">New dish (R)</button>
+        <select id="rival" aria-label="Rival speed">
+          <option value="12">Slow rival</option>
+          <option value="8" selected>Fair rival</option>
+          <option value="4">Quick rival</option>
+        </select>
+      </div>
+      <p class="help"><b>Lamp:</b> hold on the dish to push both moulds away from the light. <b>Salt:</b> drag a wall nothing can cross; one comes back every 30 s. The rival walls your road when it is behind, and answers your habit with the one that beats it.</p>
+      <span class="stat" id="stat"></span>
+    </section>
+  </div>
+</div>
+
+<script>
+(async () => {
+  const canvas = document.getElementById('dish');
+  const ctx = canvas.getContext('2d');
+  const $ = (id) => document.getElementById(id);
+  const NAMES = ['Spread', 'Hunt', 'Maze', 'Cord'];
+  // Which habit beats which, on this field (32 games a pairing).
+  const BEATS = { 1: [0, 2], 2: [0, 3], 3: [0, 1] };
+  const beats = (a, b) => (BEATS[a] || []).includes(b);
+
+  let bytes;
+  try {
+    bytes = await (await fetch('skirmish.wasm')).arrayBuffer();
+  } catch (e) {
+    $('loading').textContent = 'The game file did not load. Reload the page to try again.';
+    return;
+  }
+  const { instance } = await WebAssembly.instantiate(bytes, {});
+  const sk = instance.exports;
+  const W = sk.sk_frame_w(), H = sk.sk_frame_h();
+  canvas.width = W; canvas.height = H;
+
+  let paused = false, fast = false;
+  const start = () => {
+    const seed = 1 + Math.floor(Math.random() * 9999);
+    sk.sk_new(seed, Number($('rival').value));
+    paused = false; fast = false;
+    sk.sk_pause(0); sk.sk_fast(0);
+    $('pause').setAttribute('aria-pressed', 'false');
+    $('fast').setAttribute('aria-pressed', 'false');
+    $('stat').textContent = 'Dish ' + seed;
+    lastSeed = seed;
+  };
+  let lastSeed = 0;
+  start();
+  $('loading').hidden = true;
+
+  // Pointer, in frame pixels.
+  const at = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
+  };
+  canvas.addEventListener('pointermove', (e) => { const [x, y] = at(e); sk.sk_pointer(x, y, 1); });
+  canvas.addEventListener('pointerdown', (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    const [x, y] = at(e); sk.sk_pointer(x, y, 1); sk.sk_button(1);
+  });
+  const up = () => sk.sk_button(0);
+  canvas.addEventListener('pointerup', up);
+  canvas.addEventListener('pointercancel', up);
+  canvas.addEventListener('pointerleave', () => sk.sk_pointer(0, 0, 0));
+
+  const switchTo = (h) => { sk.sk_unbrief(); sk.sk_switch(h); };
+  document.querySelectorAll('.habit').forEach((b) => b.addEventListener('click', () => switchTo(Number(b.dataset.h))));
+  $('lamp').addEventListener('click', () => sk.sk_tool(0));
+  $('salt').addEventListener('click', () => sk.sk_tool(2));
+  const togglePause = () => { paused = !paused; sk.sk_pause(paused ? 1 : 0); $('pause').setAttribute('aria-pressed', String(paused)); };
+  const toggleFast = () => { fast = !fast; sk.sk_fast(fast ? 1 : 0); $('fast').setAttribute('aria-pressed', String(fast)); };
+  $('pause').addEventListener('click', togglePause);
+  $('fast').addEventListener('click', toggleFast);
+  $('again').addEventListener('click', start);
+  $('rival').addEventListener('change', start);
+  window.addEventListener('keydown', (e) => {
+    if (e.target instanceof HTMLSelectElement) return;
+    const k = e.key.toLowerCase();
+    if (k >= '1' && k <= '4') { switchTo(Number(k) - 1); e.preventDefault(); return; }
+    if (k === 'p') { sk.sk_unbrief(); togglePause(); return; }
+    if (k === ' ') { sk.sk_unbrief(); toggleFast(); e.preventDefault(); return; }
+    if (k === 'l') { sk.sk_tool(0); return; }
+    if (k === 's') { sk.sk_tool(2); return; }
+    if (k === 'r') { start(); return; }
+    sk.sk_unbrief();
+  });
+
+  const clock = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  // A machine that cannot step and draw in a 60th of a second draws every
+  // other frame instead, so the dish keeps its speed (drawing is about two
+  // thirds of the cost).
+  let last = performance.now(), hudAt = 0, cost = 0, frames = 0, slow = false, odd = false;
+  const frame = (now) => {
+    const t0 = performance.now();
+    odd = !odd;
+    const draw = !slow || odd;
+    sk.sk_tick(now - last, draw ? 1 : 0);
+    last = now;
+    if (draw) {
+      const px = new Uint8ClampedArray(sk.memory.buffer, sk.sk_frame_ptr(), W * H * 4);
+      ctx.putImageData(new ImageData(px, W, H), 0, 0);
+    }
+    cost += performance.now() - t0; frames++;
+    if (now - hudAt > 150) {
+      hudAt = now;
+      const mine = sk.sk_habit(0), theirs = sk.sk_habit(1);
+      const cd = sk.sk_cooldown();
+      document.querySelectorAll('.habit').forEach((b) => {
+        const h = Number(b.dataset.h);
+        b.setAttribute('aria-pressed', String(h === mine));
+        b.disabled = cd > 0 && h !== mine;
+      });
+      $('cooldown').textContent = cd > 0 ? 'Next switch in ' + Math.ceil(cd) + ' s' : 'Ready to switch';
+      $('theirs').textContent = NAMES[theirs];
+      const edge = $('edge');
+      if (beats(mine, theirs)) { edge.className = 'edge good'; edge.textContent = 'Your ' + NAMES[mine].toLowerCase() + ' beats it'; }
+      else if (beats(theirs, mine)) { edge.className = 'edge bad'; edge.textContent = 'It beats your ' + NAMES[mine].toLowerCase(); }
+      else { edge.className = 'edge even'; edge.textContent = 'Even'; }
+      const share = sk.sk_share();
+      $('fill').style.width = (share * 100).toFixed(1) + '%';
+      $('mine').textContent = 'You ' + Math.round(share * 100) + '%';
+      $('theirsShare').textContent = 'Rival ' + (100 - Math.round(share * 100)) + '%';
+      $('bar').setAttribute('aria-label', 'You have eaten ' + Math.round(share * 100) + '% of the food');
+      $('clock').textContent = clock(Math.min(150, sk.sk_seconds())) + ' / 2:30';
+      const tool = sk.sk_tool_now();
+      $('lamp').setAttribute('aria-pressed', String(tool === 0));
+      $('salt').setAttribute('aria-pressed', String(tool === 2));
+      $('salt').textContent = 'Salt wall (S): ' + sk.sk_salt();
+      if (frames) {
+        const ms = cost / frames;
+        if (!slow && ms > 13) slow = true;
+        $('stat').textContent = 'Dish ' + lastSeed + ' \u00b7 ' + ms.toFixed(1) + ' ms a frame' + (slow ? ', drawing every other frame' : '');
+        cost = 0; frames = 0;
+      }
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+})();
+</script>
