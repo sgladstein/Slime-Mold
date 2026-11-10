@@ -45,7 +45,7 @@ depends on is done, not when the band before it is finished.
 | # | Step | Owner | Waits on |
 | --- | --- | --- | --- |
 | P | **Play Keep It Alive and The Wild One by hand** | Scotttt | nothing. This is the one step that unblocks most of the rest |
-| G1 | Keep It Alive: trace single games to find what sends one into the short or long hump. Measures only; the game does not change | Triage thread | **done 11-10** on the recommended option while the card waits: the first pile on mostly-asleep mould decides it ([report](Reports/mould-keep-alive-luck-2026-11-10.md)). Next: a 20 s landing preview, a game change |
+| G1 | Keep It Alive: trace single games to find what sends one into the short or long hump. Measures only; the game does not change | Triage thread | **done 11-10**; owner picked "Trace it now" (card, 18:56Z): the first pile on mostly-asleep mould decides it ([report](Reports/mould-keep-alive-luck-2026-11-10.md)). Next: a 20 s landing preview, a game change |
 | G2 + R0 | **The Wild One's middle (seconds 30 to 150), done as Bloomfront Stage 0.** First separate which of lamp, snip and oats needs the aim; then give the wild mould a scripted hand on a mirrored dish | one thread, to be chosen | P for G2; the owner's say for R0 (HANDOFF decision 7, "wait or replace") |
 | G3 | The snip: make a cut-off piece visibly starve, or take it off The Wild One | Triage thread | P |
 | E6 | Keyed random draws and the dead-dish slowdown | Pixel_Physics thread | timing only: see *One census reset*, below |
@@ -159,8 +159,9 @@ decisions.
 
 1. **Play Keep It Alive and The Wild One.** Blocks G2, G3, G4, Bloomfront
    Stage 1's gate, and most of decision 1.
-2. **Answer the trace card** in the triage thread (decision 1). Recommended:
-   trace now; it only measures.
+2. ~~Answer the trace card~~ (decision 1): answered 18:56Z, "Trace it now";
+   done. What follows from it, a 20 s landing preview, changes the game and
+   waits on the owner's go.
 3. **Bloomfront's three questions** (decision 7): wait for the queued work or
    take over The Wild One's next steps; fog of war drawn from a held
    quantity; two keepers or three-to-four. Recommended: do G2 as Stage 0.

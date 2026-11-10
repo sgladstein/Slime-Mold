@@ -5,7 +5,8 @@ water-hand lives fall in two humps (dead by about 5:00, or past 7:20) and that
 the same seed lands in either depending on the hand. This traces single games
 to find what decides it. Started while the owner's card "trace Keep It Alive's
 luck now, or wait until you've played?" (2026-11-10 ~18:05Z) was unanswered,
-on the option recommended there; it measures only.
+on the option recommended there; it measures only. **The owner then picked
+that option** (card, 2026-11-10 18:56Z: "Trace it now").
 
 ## Answer
 
