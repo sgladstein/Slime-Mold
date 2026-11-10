@@ -86,6 +86,11 @@ move.
   RTS where every tool is paid from the food store, with wells, announced blooms, spores and species as `Params`
   presets. Measured here: two moulds step at about 1.1 ms a step. Recommends a cheap Stage 0 (a scripted hand steers
   the wild mould on a mirrored dish) gated on equal hands splitting 45-55% and a sharp hand beating a clumsy one.
+  **Brainstorm added the same day** ([`rts-design-2026-11-10/brainstorm/`](rts-design-2026-11-10/brainstorm/README.md)):
+  six agents' notes (Creeper World and Particle Fleet, RTS craft, 20 simulation games, cards, and two clean-slate
+  agents that set the old tools aside), a verification pass, and a synthesis. New directions: a contagion war over a
+  neutral mould, timed food waves, road tension, pattern counters. Correction: the food store sits at a median of 0,
+  so spending needs its own currency.
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as

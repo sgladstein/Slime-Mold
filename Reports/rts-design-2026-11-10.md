@@ -32,6 +32,14 @@ The cheapest real test is small: let a scripted hand steer the wild mould in
 The Wild One, mirror the dish, and see whether two equal keepers split the
 food near 50/50 while a better hand beats a worse one on paired seeds.
 
+**Since this draft (2026-11-10, later).** Six brainstorm agents went further,
+including two that set the demo's tools aside. Their directions (a contagion
+war over a neutral mould, timed food waves, road tension, pattern counters, a
+card layer) and their notes are in
+[`rts-design-2026-11-10/brainstorm/`](rts-design-2026-11-10/brainstorm/README.md).
+One finding corrects this draft: the food store is never a bank (see the
+correction under *The game: Bloomfront*).
+
 ## What the simulation is today
 
 The game is a Jones-style walker model on one bounded 256 x 160 dish
@@ -99,6 +107,15 @@ food store that grows your mould. An oat, a lamp burn, a salt wall or a spore
 launch is food you did not turn into walkers. Today the tools have fixed
 stocks that regrow on a timer, so using them is always free; in Bloomfront
 spending is the decision.
+
+**Correction (2026-11-10, later):** the store holds almost nothing to spend.
+A trace of The Wild One every 10 s found `Dish::store` at a median of 0 and a
+maximum of 108, against 1,500 at the start, because each piece turns any
+surplus into walkers at once (`Params::pieces`;
+[`storetrace.txt`](rts-design-2026-11-10/brainstorm/storetrace.txt)). So the
+spending rule needs its own currency first, such as a capped reserve or
+paying with the mould nearest the click. It is not the small change the
+mechanics table below says.
 
 ### Player verbs
 
