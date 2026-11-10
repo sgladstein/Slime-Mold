@@ -40,6 +40,10 @@ use std::f32::consts::TAU;
 pub const W: usize = 256;
 pub const H: usize = 160;
 pub const STEPS_PER_SECOND: u32 = 120;
+/// Each side's home in version 3 (`Rules::home_r`): the field's two end piles.
+pub const HOMES: [(f32, f32); 2] = [(40.0, 80.0), (216.0, 80.0)];
+/// Steps between starvation checks (`Rules::starve_seconds`).
+const STARVE_EVERY: u64 = 6;
 
 /// The numbers of one match. `Default` is the demo.
 #[derive(Clone, Debug)]
@@ -91,6 +95,61 @@ pub struct Rules {
     pub hush_trail: f32,
     /// Seconds between a strain's hush switches.
     pub hush_cooldown: f32,
+    /// **Version 3 (design: `Reports/two-fevers-2026-11-10/v3-design.md`).**
+    /// Fever by tube: when above 0, each fever's field is multiplied, every
+    /// step, by `min(1, trail / tube_fever)` on each cell, so it lives only
+    /// on tube, thins on thin tube and stops at a gap. 0: version 2, where
+    /// it spreads over bare agar too.
+    pub tube_fever: f32,
+    /// The most that factor can be: above 1, thick tube keeps a fever's
+    /// field longer than `strain_keep`, so it runs faster there (keep times
+    /// cap must stay below 1).
+    pub tube_cap: f32,
+    /// A call's pull on the walkers its strain owns: `call_weight` at the
+    /// call, falling straight to 0 at `call_reach` cells, added to what they
+    /// sense. 0 weight: no calls. Not a diffusing field like scent: a 3x3
+    /// spread kept 0.97 a step carries a smell about 3 cells, and a call has
+    /// to reach a body tens of cells away.
+    pub call_weight: f32,
+    pub call_reach: f32,
+    /// Inside this many cells of a call its pull is flat (`call_weight`
+    /// everywhere), so walkers that have arrived build tubes by trail and
+    /// scent as usual instead of heaping on the call. Without it, a match
+    /// with the pull at 30 piled 70% of the host onto Tide's call by 2:00.
+    pub call_core: f32,
+    /// A pile pays foraging (`forage`) for at most this many of a strain's
+    /// walkers on it, so income counts piles reached rather than walkers
+    /// heaped: uncapped, the side ahead earned a seed every 4 s and took
+    /// the host (raider v trunk, seed 1: 44 seeds to 7).
+    pub forage_cap: u32,
+    /// A pinch: the strain's own walkers within `pinch_r` lay no trail for
+    /// `pinch_seconds`.
+    pub pinch_r: f32,
+    pub pinch_seconds: f32,
+    /// Foraging: each step a strain's spore clock moves 1 plus `forage` for
+    /// every walker it owns standing on a pile. 0: the flat clock of
+    /// versions 1 and 2.
+    pub forage: f32,
+    /// Version 3's start: as play begins each side owns the walkers within
+    /// this of its end pile ((40, 80) Ember, (216, 80) Tide) and calls
+    /// there. 0: nobody owns anything until the first seed.
+    pub home_r: f32,
+    /// Catch chance multiplier for a walker the other strain owns while it
+    /// is fed (on a tube route to food): a fed body resists a raid, a
+    /// starving or cut-off one does not. 1: no resistance.
+    pub resist: f32,
+    /// Spores a pinch costs, and the seconds a side waits between pinches.
+    /// A pinch first cost one spore; the scripted Web then spent every
+    /// spore on pinches, seeded once a game and kept 1-2% of the host, so
+    /// version 3 makes it free and lets the cut's real price be the supply
+    /// it cuts (`starve_seconds`).
+    pub pinch_cost: u32,
+    pub pinch_wait: f32,
+    /// A walker a strain owns that stands on no tube route to food (tube:
+    /// trail of at least `fed_trail`, joined to a pile) for this long goes
+    /// back to nobody's. 0: never.
+    pub starve_seconds: f32,
+    pub fed_trail: f32,
     pub seed_r: f32,
     /// Spores in hand at the start, the most there can be, and seconds per
     /// spore.
@@ -138,12 +197,54 @@ impl Default for Rules {
             hold_seconds: 15.0,
             hush_trail: 0.0,
             hush_cooldown: 3.0,
+            tube_fever: 0.0,
+            tube_cap: 1.0,
+            call_weight: 0.0,
+            call_reach: 60.0,
+            call_core: 15.0,
+            forage_cap: 12,
+            pinch_r: 5.0,
+            pinch_seconds: 6.0,
+            forage: 0.0,
+            home_r: 0.0,
+            resist: 1.0,
+            pinch_cost: 1,
+            pinch_wait: 0.0,
+            starve_seconds: 0.0,
+            fed_trail: 2.0,
             seed_r: 5.0,
             spores_start: 1,
             spores_max: 3,
             spore_seconds: 10.0,
             warm_seconds: 15.0,
             match_seconds: 180.0,
+        }
+    }
+}
+
+impl Rules {
+    /// Version 3 (`Reports/two-fevers-2026-11-10/v3-design.md`): calls,
+    /// fever by tube, pinch, foraging income and starvation, on version 2's
+    /// owned ground and hold.
+    pub fn v3() -> Self {
+        Rules {
+            tube_fever: 6.0,
+            call_weight: 10.0,
+            call_reach: 60.0,
+            // Tuned on seeds 1-2 of the three plans: forage 0.02 and 0.005
+            // with a pinch at one spore and no resistance gave the raider
+            // 0.96-0.99 of every game; resistance 0.1 brought trunk v raider
+            // to a contest (0.39-0.94); a free pinch every 5 s brought web
+            // v raider from 0.98 to 0.44-0.63.
+            forage: 0.005,
+            resist: 0.1,
+            pinch_cost: 0,
+            pinch_wait: 5.0,
+            spore_seconds: 20.0,
+            spores_max: 4,
+            starve_seconds: 12.0,
+            home_r: 12.0,
+            ..Rules::default()
         }
     }
 }
@@ -172,6 +273,8 @@ pub struct Host {
     pub immune: [u16; 2],
     /// 0 nobody, 1 + strain: the last fever it caught (`Rules::owned`).
     pub own: u8,
+    /// Steps it has stood off any tube route to food (`Rules::starve_seconds`).
+    pub hunger: u16,
 }
 
 impl Host {
@@ -269,8 +372,13 @@ pub struct Fevers {
     order: Vec<u32>,
     pub piles: Vec<Pile>,
     pub spores: [u32; 2],
-    /// Steps towards the next spore.
-    spore_clock: [u32; 2],
+    /// Steps towards the next spore (more than one a step with
+    /// `Rules::forage`).
+    spore_clock: [f32; 2],
+    /// Walkers each strain owns on piles at the last step.
+    pub foragers: [u32; 2],
+    /// Cells on a tube route to a pile (`Rules::starve_seconds`).
+    pub fed: Vec<bool>,
     /// Carrier-steps summed over play, per strain: the score is this over
     /// (walkers x play steps).
     pub held: [f64; 2],
@@ -283,6 +391,13 @@ pub struct Fevers {
     pub hush: [bool; 2],
     /// Step each strain may next switch hush.
     hush_at: [u64; 2],
+    /// Each strain's calls (x, y), felt only by the walkers that strain owns
+    /// (`Rules::call_weight`).
+    pub calls: [Vec<(f32, f32)>; 2],
+    /// Pinches: strain, centre, step it ends.
+    pub pinches: Vec<(usize, f32, f32, u64)>,
+    /// The step each side last paid for a pinch (`Rules::pinch_wait`).
+    pub pinch_paid_at: [u64; 2],
     rng: Rng,
 }
 
@@ -406,6 +521,7 @@ impl Fevers {
                         sick: 0,
                         immune: [0; 2],
                         own: 0,
+                        hunger: 0,
                     });
                 }
             }
@@ -424,13 +540,18 @@ impl Fevers {
             order: Vec::new(),
             piles,
             spores,
-            spore_clock: [0; 2],
+            spore_clock: [0.0; 2],
+            foragers: [0; 2],
+            fed: vec![true; W * H],
             held: [0.0; 2],
             seeds: [0; 2],
             seeded: [0; 2],
             marks: Vec::new(),
             hush: [false; 2],
             hush_at: [0; 2],
+            calls: [Vec::new(), Vec::new()],
+            pinches: Vec::new(),
+            pinch_paid_at: [0; 2],
             rng,
             agar,
             inv,
@@ -549,7 +670,7 @@ impl Fevers {
         if self.spores[s] >= self.rules.spores_max {
             return 1.0;
         }
-        self.spore_clock[s] as f32 / (self.rules.spore_seconds * STEPS_PER_SECOND as f32)
+        self.spore_clock[s] / (self.rules.spore_seconds * STEPS_PER_SECOND as f32)
     }
 
     /// Plant strain `s` at (x, y): every clear walker in the seed disc that
@@ -591,6 +712,17 @@ impl Fevers {
     }
 
     pub fn step(&mut self) {
+        if self.rules.home_r > 0.0 && self.t == self.warm_steps() {
+            let r2 = self.rules.home_r * self.rules.home_r;
+            for (s, (hx, hy)) in HOMES.into_iter().enumerate() {
+                for h in self.host.iter_mut() {
+                    if (h.x - hx).powi(2) + (h.y - hy).powi(2) <= r2 {
+                        h.own = 1 + s as u8;
+                    }
+                }
+                self.calls[s] = vec![(hx, hy)];
+            }
+        }
         self.lay_scent();
         self.move_host();
         self.diffuse();
@@ -600,18 +732,21 @@ impl Fevers {
             let c = self.counted();
             self.held[0] += c[0] as f64;
             self.held[1] += c[1] as f64;
-            let every = (self.rules.spore_seconds * STEPS_PER_SECOND as f32) as u32;
+            let every = self.rules.spore_seconds * STEPS_PER_SECOND as f32;
             for s in 0..2 {
                 if self.spores[s] < self.rules.spores_max {
-                    self.spore_clock[s] += 1;
+                    self.spore_clock[s] += 1.0 + self.rules.forage * self.foragers[s] as f32;
                     if self.spore_clock[s] >= every {
-                        self.spore_clock[s] = 0;
+                        self.spore_clock[s] -= every;
                         self.spores[s] += 1;
                     }
                 } else {
-                    self.spore_clock[s] = 0;
+                    self.spore_clock[s] = 0.0;
                 }
             }
+        }
+        if self.rules.starve_seconds > 0.0 && self.t.is_multiple_of(STARVE_EVERY) {
+            self.starve();
         }
         self.t += 1;
     }
@@ -630,12 +765,104 @@ impl Fevers {
         }
     }
 
+    /// What a walker senses at (x, y): trail and food scent, and, for a
+    /// walker a strain owns, that strain's calls (`own` is `Host::own`).
     #[inline]
-    fn sense(&self, x: f32, y: f32) -> f32 {
+    fn sense(&self, x: f32, y: f32, own: u8) -> f32 {
         match cell(x, y) {
-            Some(i) if self.agar[i] => self.trail[i] + self.scent[i],
+            Some(i) if self.agar[i] => {
+                let mut call = 0.0;
+                if own > 0 && self.rules.call_weight > 0.0 {
+                    let (core, reach) = (self.rules.call_core, self.rules.call_reach);
+                    let k = 1.0 / (reach - core).max(1.0);
+                    for &(cx, cy) in &self.calls[own as usize - 1] {
+                        call += (1.0 - ((cx - x).hypot(cy - y) - core).max(0.0) * k).max(0.0);
+                    }
+                    call *= self.rules.call_weight;
+                }
+                self.trail[i] + self.scent[i] + call
+            }
             _ => -1.0e6,
         }
+    }
+
+    /// Strain `s`'s walkers in a disc lay no trail for a while; the tube
+    /// there thins and breaks (`Rules::pinch_seconds`).
+    pub fn pinch(&mut self, s: usize, x: f32, y: f32) {
+        let until = self.t + (self.rules.pinch_seconds * STEPS_PER_SECOND as f32) as u64;
+        self.pinches.push((s, x, y, until));
+    }
+
+    /// A pinch the player pays for: one spore, and only where strain `s`
+    /// owns walkers. Returns whether it was made.
+    pub fn pinch_paid(&mut self, s: usize, x: f32, y: f32) -> bool {
+        let wait = (self.rules.pinch_wait * STEPS_PER_SECOND as f32) as u64;
+        if self.phase() != Phase::Play
+            || self.spores[s] < self.rules.pinch_cost
+            || (self.pinch_paid_at[s] > 0 && self.t < self.pinch_paid_at[s] + wait)
+        {
+            return false;
+        }
+        let r2 = self.rules.pinch_r * self.rules.pinch_r;
+        if !self
+            .host
+            .iter()
+            .any(|h| h.owner() == Some(s) && (h.x - x).powi(2) + (h.y - y).powi(2) <= r2)
+        {
+            return false;
+        }
+        self.spores[s] -= self.rules.pinch_cost;
+        self.pinch_paid_at[s] = self.t;
+        self.pinch(s, x, y);
+        true
+    }
+
+    /// Mark the cells on a tube route to a pile (breadth first from every
+    /// pile cell through cells of trail `fed_trail` or more), then let each
+    /// owned walker off them grow hungrier; past `starve_seconds` it is
+    /// nobody's again. A carrier keeps its fever meanwhile.
+    fn starve(&mut self) {
+        let thr = self.rules.fed_trail;
+        self.fed.fill(false);
+        let mut queue: Vec<usize> = Vec::new();
+        for (i, &k) in self.pile_at.iter().enumerate() {
+            if k != u8::MAX && self.agar[i] {
+                self.fed[i] = true;
+                queue.push(i);
+            }
+        }
+        let mut head = 0;
+        while head < queue.len() {
+            let i = queue[head];
+            head += 1;
+            for j in [i - 1, i + 1, i - W, i + W] {
+                if !self.fed[j] && self.agar[j] && self.trail[j] >= thr {
+                    self.fed[j] = true;
+                    queue.push(j);
+                }
+            }
+        }
+        let limit = (self.rules.starve_seconds * STEPS_PER_SECOND as f32) as u16;
+        for h in self.host.iter_mut() {
+            if h.own == 0 {
+                continue;
+            }
+            let i = cell(h.x, h.y).expect("walker inside the dish");
+            if self.fed[i] {
+                h.hunger = 0;
+            } else {
+                h.hunger = h.hunger.saturating_add(STARVE_EVERY as u16);
+                if h.hunger >= limit && h.carry == 0 {
+                    h.own = 0;
+                    h.hunger = 0;
+                }
+            }
+        }
+    }
+
+    /// Set strain `s`'s calls.
+    pub fn set_calls(&mut self, s: usize, calls: &[(f32, f32)]) {
+        self.calls[s] = calls.to_vec();
     }
 
     fn move_host(&mut self) {
@@ -654,6 +881,10 @@ impl Fevers {
             self.rules.strain_deposit,
         );
         let hushed = [0, 1].map(|s| if self.hush[s] { self.rules.hush_trail } else { 1.0 });
+        let t = self.t;
+        self.pinches.retain(|p| p.3 > t);
+        let pr2 = self.rules.pinch_r * self.rules.pinch_r;
+        let pinches = std::mem::take(&mut self.pinches);
         let (ssa, csa) = sa.sin_cos();
         let (sra, cra) = ra.sin_cos();
         for k in 0..n {
@@ -665,9 +896,9 @@ impl Fevers {
             let (sh, ch) = w.heading.sin_cos();
             let (sl, cl) = (sh * csa - ch * ssa, ch * csa + sh * ssa);
             let (sr, cr) = (sh * csa + ch * ssa, ch * csa - sh * ssa);
-            let f = self.sense(w.x + ch * so, w.y + sh * so);
-            let fl = self.sense(w.x + cl * so, w.y + sl * so);
-            let fr = self.sense(w.x + cr * so, w.y + sr * so);
+            let f = self.sense(w.x + ch * so, w.y + sh * so, w.own);
+            let fl = self.sense(w.x + cl * so, w.y + sl * so, w.own);
+            let fr = self.sense(w.x + cr * so, w.y + sr * so, w.own);
             let mut h = w.heading;
             let (mut dx, mut dy) = (ch, sh);
             let left = (sh * cra - ch * sra, ch * cra + sh * sra);
@@ -709,7 +940,14 @@ impl Fevers {
                     w.x = nx;
                     w.y = ny;
                     w.heading = h;
-                    self.trail[there] += w.carrying().map_or(dep, |s| dep * hushed[s]);
+                    let pinched = w.owner().is_some_and(|s| {
+                        pinches
+                            .iter()
+                            .any(|p| p.0 == s && (p.1 - nx).powi(2) + (p.2 - ny).powi(2) <= pr2)
+                    });
+                    if !pinched {
+                        self.trail[there] += w.carrying().map_or(dep, |s| dep * hushed[s]);
+                    }
                     there
                 }
                 None => {
@@ -722,6 +960,7 @@ impl Fevers {
             }
             self.host[wi] = w;
         }
+        self.pinches = pinches;
     }
 
     fn diffuse(&mut self) {
@@ -732,6 +971,13 @@ impl Fevers {
         for s in 0..2 {
             spread(&self.inv, &self.strain[s], &mut self.scratch, self.rules.strain_keep);
             std::mem::swap(&mut self.strain[s], &mut self.scratch);
+            if self.rules.tube_fever > 0.0 {
+                let k = 1.0 / self.rules.tube_fever;
+                let cap = self.rules.tube_cap;
+                for (f, &t) in self.strain[s].iter_mut().zip(&self.trail) {
+                    *f *= (t * k).min(cap);
+                }
+            }
         }
     }
 
@@ -739,6 +985,7 @@ impl Fevers {
         let sick = (self.rules.sick_seconds * STEPS_PER_SECOND as f32) as u16;
         let immune = (self.rules.immune_seconds * STEPS_PER_SECOND as f32) as u16;
         let hold = (self.rules.hold_seconds * STEPS_PER_SECOND as f32) as u16;
+        let resist = self.rules.resist;
         let (catch, floor, cross, owned) = (
             self.rules.catch,
             self.rules.catch_floor,
@@ -767,7 +1014,12 @@ impl Fevers {
                 let i = cell(h.x, h.y).expect("walker inside the dish");
                 let p = [0, 1].map(|s| {
                     if h.immune[s] == 0 {
-                        (catch * (self.strain[s][i] - floor)).max(0.0)
+                        let k = if h.own == 2 - s as u8 && h.hunger == 0 {
+                            resist
+                        } else {
+                            1.0
+                        };
+                        (k * catch * (self.strain[s][i] - floor)).max(0.0)
                     } else {
                         0.0
                     }
@@ -792,12 +1044,22 @@ impl Fevers {
         for p in self.piles.iter_mut() {
             p.eaters = 0;
         }
+        self.foragers = [0; 2];
+        let mut per = vec![[0u32; 2]; self.piles.len()];
         for h in &self.host {
             if let Some(i) = cell(h.x, h.y) {
                 let k = self.pile_at[i];
                 if k != u8::MAX {
                     self.piles[k as usize].eaters += 1;
+                    if let Some(s) = h.owner() {
+                        per[k as usize][s] += 1;
+                    }
                 }
+            }
+        }
+        for p in &per {
+            for (f, n) in self.foragers.iter_mut().zip(p) {
+                *f += n.min(&self.rules.forage_cap);
             }
         }
         let (eat, grow, full) = (self.rules.eat, self.rules.regrow, self.rules.pile_food);
@@ -868,6 +1130,7 @@ impl Fevers {
             rgba[o + 3] = 255;
         }
         let imm = self.rules.immune_seconds * STEPS_PER_SECOND as f32;
+        let starve = (self.rules.starve_seconds * STEPS_PER_SECOND as f32).max(1.0);
         for h in &self.host {
             let Some(i) = cell(h.x, h.y) else { continue };
             let o = i * 4;
@@ -877,7 +1140,12 @@ impl Fevers {
                 // pale where the rival can take it.
                 (None, Some(s)) if self.rules.owned => {
                     let held = h.immune[1 - s] > 0;
-                    let (k, m) = if held { (0.45, 0.85) } else { (1.0, 0.45) };
+                    let (k, mut m) = if held { (0.45, 0.85) } else { (1.0, 0.45) };
+                    // Starving (`Rules::starve_seconds`): the colour drains
+                    // towards nobody's as its hunger grows.
+                    if self.rules.starve_seconds > 0.0 && h.hunger > 0 {
+                        m *= 1.0 - 0.8 * h.hunger as f32 / starve;
+                    }
                     let base = [215.0, 205.0, 175.0];
                     [0, 1, 2].map(|j| base[j] * (1.0 - m) + C[s][j] * k * m)
                 }
@@ -921,6 +1189,18 @@ pub enum Hand {
     /// does: the plainest use of the firebreak, to see whether it moves the
     /// score at all.
     PlanHush,
+    /// Version 3. **Trunk:** one call, on the fullest pile near its body,
+    /// moved when that pile runs low; seeds (as Plan) with every spore.
+    /// Income first.
+    Trunk,
+    /// **Raider:** keeps its call at home and spends every spore at once,
+    /// seeding where the rival owns the thickest tube (a trunk is a highway
+    /// into the rival's body).
+    Raider,
+    /// **Web:** two calls on piles near its body, far apart, so it grows
+    /// many routes; pinches its own tube where a rival fever is closest to
+    /// its ground, and seeds (as Plan) only with a spore to spare.
+    Web,
 }
 
 impl Hand {
@@ -930,6 +1210,9 @@ impl Hand {
             "random" => Some(Hand::Random),
             "plan" => Some(Hand::Plan),
             "planhush" => Some(Hand::PlanHush),
+            "trunk" => Some(Hand::Trunk),
+            "raider" => Some(Hand::Raider),
+            "web" => Some(Hand::Web),
             _ => None,
         }
     }
@@ -939,6 +1222,9 @@ impl Hand {
             Hand::Random => "random",
             Hand::Plan => "plan",
             Hand::PlanHush => "planhush",
+            Hand::Trunk => "trunk",
+            Hand::Raider => "raider",
+            Hand::Web => "web",
         }
     }
 }
@@ -952,6 +1238,8 @@ pub struct Player {
     /// Random: the step it next spends at.
     next: u64,
     done: bool,
+    /// Web: the step its last pinch was paid at.
+    pinched_at: u64,
 }
 
 /// Coarse bins the planner reads the host through.
@@ -967,6 +1255,7 @@ impl Player {
             rng: Rng::new(seed ^ (0xA11CE + strain as u64 * 0x1_0000)),
             next: 0,
             done: false,
+            pinched_at: 0,
         }
     }
 
@@ -987,6 +1276,12 @@ impl Player {
                 }
             }
             Hand::Random => {
+                // Version 3: a random pile as its call every 20 s.
+                if g.rules.call_weight > 0.0 && g.t.is_multiple_of(20 * STEPS_PER_SECOND as u64) {
+                    let p = &g.piles[self.rng.below(g.piles.len() as u32) as usize];
+                    let c = (p.x, p.y);
+                    g.set_calls(s, &[c]);
+                }
                 if g.spores[s] == 0 {
                     return;
                 }
@@ -995,7 +1290,22 @@ impl Player {
                     self.next = g.t + self.rng.below(span) as u64;
                 }
                 if g.t >= self.next {
-                    if let Some((x, y)) = self.random_spot(g) {
+                    // With version 3's pinch, a quarter of the spores go on
+                    // pinches at a random walker it owns.
+                    let pinch = g.rules.home_r > 0.0 && self.rng.below(4) == 0;
+                    let own: Vec<(f32, f32)> = if pinch {
+                        g.host
+                            .iter()
+                            .filter(|h| h.owner() == Some(s))
+                            .map(|h| (h.x, h.y))
+                            .collect()
+                    } else {
+                        Vec::new()
+                    };
+                    if pinch && !own.is_empty() {
+                        let (x, y) = own[self.rng.below(own.len() as u32) as usize];
+                        g.pinch_paid(s, x, y);
+                    } else if let Some((x, y)) = self.random_spot(g) {
                         g.seed(s, x, y);
                     }
                     self.next = 0;
@@ -1017,6 +1327,126 @@ impl Player {
                     g.seed(s, x, y);
                 }
             }
+            Hand::Trunk | Hand::Raider | Hand::Web => {
+                if !g.t.is_multiple_of(30) {
+                    return;
+                }
+                self.v3(g);
+            }
+        }
+    }
+
+    /// The three version 3 plans (`Hand::Trunk`, `Raider`, `Web`).
+    fn v3(&mut self, g: &mut Fevers) {
+        let (s, o) = (self.strain, 1 - self.strain);
+        let home = HOMES[s];
+        // Where its body is: the mean of the walkers it owns (home if none).
+        let (mut cx, mut cy, mut n) = (0.0, 0.0, 0.0);
+        for h in g.host.iter().filter(|h| h.owner() == Some(s)) {
+            cx += h.x;
+            cy += h.y;
+            n += 1.0;
+        }
+        let body = if n > 0.0 { (cx / n, cy / n) } else { home };
+        let full = g.rules.pile_food;
+        // Piles by how good a call they are: food left, and near the body.
+        let mut piles: Vec<(f32, f32, f32)> = g
+            .piles
+            .iter()
+            .map(|p| {
+                (
+                    (p.food / full) / (1.0 + (p.x - body.0).hypot(p.y - body.1) / 40.0),
+                    p.x,
+                    p.y,
+                )
+            })
+            .collect();
+        piles.sort_by(|a, b| b.0.total_cmp(&a.0));
+        let every_5s = g.t.is_multiple_of(5 * STEPS_PER_SECOND as u64);
+        match self.hand {
+            Hand::Trunk => {
+                let stale = g.calls[s].first().is_none_or(|&(x, y)| {
+                    g.piles
+                        .iter()
+                        .any(|p| (p.x - x).abs() < 0.5 && (p.y - y).abs() < 0.5 && p.food < 0.3 * full)
+                });
+                if every_5s && (stale || g.calls[s].first() == Some(&home)) {
+                    g.set_calls(s, &[(piles[0].1, piles[0].2)]);
+                }
+                // It first saved to a full hand; that lost every game to a
+                // hand that spent at once (the neutral mould goes to whoever
+                // seeds it first), so it spends as Plan does.
+                if g.spores[s] > 0 {
+                    if let Some((x, y)) = self.best_spot(g) {
+                        g.seed(s, x, y);
+                    }
+                }
+            }
+            Hand::Raider => {
+                if g.spores[s] == 0 {
+                    return;
+                }
+                // The rival's walker, open to it, on the thickest trail.
+                let pick = g
+                    .host
+                    .iter()
+                    .filter(|h| h.owner() == Some(o) && h.open_to(s))
+                    .max_by(|a, b| {
+                        let ta = g.trail[a.y as usize * W + a.x as usize];
+                        let tb = g.trail[b.y as usize * W + b.x as usize];
+                        ta.total_cmp(&tb)
+                    })
+                    .map(|h| (h.x, h.y));
+                if let Some((x, y)) = pick.or_else(|| self.best_spot(g)) {
+                    g.seed(s, x, y);
+                }
+            }
+            Hand::Web => {
+                if every_5s {
+                    // The best pile, then the best one at least 50 cells from it.
+                    let a = (piles[0].1, piles[0].2);
+                    let b = piles[1..]
+                        .iter()
+                        .find(|p| (p.1 - a.0).hypot(p.2 - a.1) >= 50.0)
+                        .map(|p| (p.1, p.2));
+                    let calls: Vec<(f32, f32)> = std::iter::once(a).chain(b).collect();
+                    g.set_calls(s, &calls);
+                }
+                // A rival carrier within 12 cells of a walker it owns: pinch
+                // its own walker nearest that carrier. At first it pinched
+                // whenever it had a spore and no pinch running; once the
+                // rival's fever was everywhere that spent every spore on
+                // pinches (1 seed to the raider's 48 in a game), so it now
+                // pinches at most every 15 s and keeps one spore for it.
+                let pinching = g.pinches.iter().any(|p| p.0 == s);
+                let rested = self.pinched_at == 0 || g.t >= self.pinched_at + 15 * STEPS_PER_SECOND as u64;
+                if !pinching && rested {
+                    let mut best: Option<(f32, f32, f32)> = None;
+                    for c in g.host.iter().filter(|h| h.carrying() == Some(o)) {
+                        for m in g.host.iter().filter(|h| h.owner() == Some(s) && h.carry == 0) {
+                            let d = (c.x - m.x).hypot(c.y - m.y);
+                            if d <= 12.0 && best.is_none_or(|b| d < b.0) {
+                                best = Some((d, m.x, m.y));
+                            }
+                        }
+                        if best.is_some_and(|b| b.0 < 3.0) {
+                            break;
+                        }
+                    }
+                    if let Some((_, x, y)) = best {
+                        if g.pinch_paid(s, x, y) {
+                            self.pinched_at = g.t;
+                            return;
+                        }
+                    }
+                }
+                if g.spores[s] > g.rules.pinch_cost {
+                    if let Some((x, y)) = self.best_spot(g) {
+                        g.seed(s, x, y);
+                    }
+                }
+            }
+            _ => {}
         }
     }
 

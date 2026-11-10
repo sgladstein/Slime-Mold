@@ -29,7 +29,11 @@ fn seeds(s: Option<&str>) -> Vec<u64> {
 }
 
 fn rules(args: &[String]) -> Rules {
-    let mut r = Rules::default();
+    let mut r = if arg(args, "v3") == Some("1") {
+        Rules::v3()
+    } else {
+        Rules::default()
+    };
     if arg(args, "cross") == Some("1") {
         r.cross_immune = true;
     }
@@ -54,6 +58,16 @@ fn rules(args: &[String]) -> Rules {
                 "owned" => r.owned = f != 0.0,
                 "hold" => r.hold_seconds = f,
                 "hush_trail" => r.hush_trail = f,
+                "tube" => r.tube_fever = f,
+                "call_w" => r.call_weight = f,
+                "reach" => r.call_reach = f,
+                "forage" => r.forage = f,
+                "starve" => r.starve_seconds = f,
+                "home" => r.home_r = f,
+                "resist" => r.resist = f,
+                "pinch_cost" => r.pinch_cost = f as u32,
+                "pinch_wait" => r.pinch_wait = f,
+                "spores_max" => r.spores_max = f as u32,
                 _ => panic!("unknown rule {k}"),
             }
         }

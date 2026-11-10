@@ -169,6 +169,9 @@ move.
   (`src/mould/fever.rs`, `fevers-web/`). v1 scored carriers: rings swept the host and left it as before; owner
   found no strategy. v2 (owner's card): walkers keep the last fever's colour, a 15 s hold, Hush. 16 seeds, both
   colours: plan beats random 16/16 in both versions but by 0.536 / 0.537; without the hold random wins 14/16;
-  Hush when behind 10/16 (noise). 0.5-0.64 ms a step.
+  Hush when behind 10/16 (noise). 0.5-0.64 ms a step. v3 (owner's card, 22:06): calls move your own walkers,
+  fever by tube only, foraging income, starvation, free pinch, fed bodies resist. Census: trunk > web > raider,
+  a ladder not a cycle (only trunk > raider survives Holm); trunk and web beat random 15/16, raider 7/16;
+  mirror 1:30 leader kept the lead 32/32 (snowball). 0.70-0.84 ms a step.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

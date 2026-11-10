@@ -1,0 +1,2 @@
+tube_fever 6: cells/s to catch, thick tube (trail>=7) median 5.3 (n 10230), thin (<4) median 5.1 (n 668); farthest catch median 79
+tube_fever 0: cells/s to catch, thick tube (trail>=7) median 8.1 (n 17567), thin (<4) median 7.7 (n 16574); farthest catch median 121
