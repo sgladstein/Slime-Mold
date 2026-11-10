@@ -19,7 +19,7 @@ if the link ever stops working. Newest last.
 | 11-08 | Mould Starving Look (blind A/B/C) | https://claude.ai/artifact/GaadFXKa1YEzEE6EdnrfCP | `mould-game-2026-11-08/pages/8-starving-look/` |
 | 11-09 | Mould Food Flow | https://claude.ai/artifact/UtZ3tYPdiaCiL5wLVRjr7C | `mould-game-2026-11-08/pages/10-food-flow/` |
 | 11-09 | Mould Sensor Angle | https://claude.ai/artifact/5o7x5VLFe65dPGfxuxK4on | `mould-game-2026-11-08/pages/9-sensor-angle/` |
-| 11-09 | Mould Out of the Dish | https://claude.ai/artifact/Uda48Hzdse6pSLWWZEBGb1 | `mould-real-world-2026-11-09/page.html` and its images beside it |
+| 11-09 | Mould Out of the Dish | https://claude.ai/artifact/Uda48Hzdse6pSLWWZEBGb1 | `mould-real-world-2026-11-09/` (open `page.html`) |
 | 11-09 | Mould Bait Patches | https://claude.ai/artifact/A9PeyWDtzXzzX24m4iZCga | `mould-game-2026-11-08/pages/11-bait-patches/` |
 | 11-10 | Mould Game Review | https://claude.ai/artifact/W4EqSvxDWK1RC9YgpSQPTR | `mould-review-2026-11-10/page.html` and `img/` |
 | 11-10 | Keep It Alive | https://claude.ai/artifact/KsYzW2UTtsnBPAeKoNqDA1 | `mould-scratch-2026-11-10/alive/` |
