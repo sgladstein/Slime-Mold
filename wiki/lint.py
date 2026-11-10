@@ -37,10 +37,7 @@ NOT_SOURCES = {"README.md", "dead-ends.md", "pages.md"}
 # warn. Any report not listed here must be cited by a page, or lint fails:
 # the repo is new and will grow, and a wiki that skips new reports goes stale
 # without anyone noticing. Remove a name once a page cites it.
-NOT_YET_INGESTED = {
-    # Merged (PR #10) minutes before the wiki and its lint landed (PR #9).
-    "rts-design-2026-11-10.md",
-}
+NOT_YET_INGESTED = set()  # rts-design-2026-11-10.md: cited by decisions.md since 2026-11-10
 INDEX_CAP = 150
 
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
