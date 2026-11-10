@@ -3,8 +3,8 @@ title: The census (how a change is judged)
 kind: method
 status: current
 updated: 2026-11-10
-sources: [Reports/gpu-plan-2026-11-10.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md]
-code: [mouldprobe, HJIT, HLAG, STOPAT, NOWATER, INVAR, WARDEN]
+sources: [Reports/gpu-plan-2026-11-10.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md, Reports/pixel-physics-review-2026-11-10.md]
+code: [mouldprobe, state_hash, every_dish_replays_bit_for_bit, Dish::step_cost, HJIT, HLAG, STOPAT, NOWATER, INVAR, WARDEN]
 ---
 
 # The census (how a change is judged)
@@ -65,6 +65,18 @@ at scale 4, before and after, same session. The plan hand's run prints it, and s
 ([gpu plan, *Phase 1 progress*](../../Reports/gpu-plan-2026-11-10.md)). The Wild One's second dish costs
 about +1.4 ms a frame; the first probe ran at a 2.3-2.8 ms mean.
 
+## Same game, bit for bit
+
+A change meant to be faster, not different, must leave every game as it
+was. `Dish::state_hash` fingerprints the whole dish (fields, walkers, piles,
+store, random stream, tallies, the wild mould), and `mouldprobe` prints
+`hash=` per run: diff two builds' hash lines, and a timing beside identical
+hashes is a real speed-up. The test `every_dish_replays_bit_for_bit` replays
+all seven dishes under plan and random and goes red on a clock-seeded draw
+([pixel-physics-review](../../Reports/pixel-physics-review-2026-11-10.md),
+*Step 1*). The frame splits sim 1.10 + draw 3.83 ms on the free dish, plan
+hand, scale 4 (same report, *The frame, split*).
+
 ## Owner's word
 
 - 2026-10-27 02:51Z (Pixel Physics): "Do you take into account normal
@@ -94,3 +106,4 @@ about +1.4 ms a frame; the first probe ran at a 2.3-2.8 ms mean.
 - [mould-review-2-2026-11-10.md](../../Reports/mould-review-2-2026-11-10.md), *Method*.
 - [mould-wild-one-2026-11-10.md](../../Reports/mould-wild-one-2026-11-10.md) and [mould-keep-alive-2026-11-10.md](../../Reports/mould-keep-alive-2026-11-10.md): the hands' definitions.
 - [mould-scratch-2026-11-10/README.md](../../Reports/mould-scratch-2026-11-10/README.md): the runners.
+- [pixel-physics-review-2026-11-10.md](../../Reports/pixel-physics-review-2026-11-10.md), *Step 1*: the hash and the replay test.
