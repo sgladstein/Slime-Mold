@@ -10,6 +10,9 @@
 //!   verbs SEED                the paired-clone verb census (DISH=wild|field, FIELD=layout): at 60 s
 //!                             clone the dish, apply one verb in one copy, planned or at random, and
 //!                             compare 30 s against the untouched copy
+//!   comeback SEED             can a hand overturn the opening? (DISH=wild|field; wild is the symmetric
+//!                             Wild One): mesh v mesh to 60 s, then give the side behind one verb in
+//!                             one copy and run every copy to the bell against the untouched one
 use slime_mould::mould::level::DISHES;
 use slime_mould::mould::{disc, Dish, Params, Phase, STEPS_PER_SECOND, W, H};
 
@@ -80,11 +83,20 @@ fn field_dish(seed: u64, a: &Params, b: &Params) -> Dish {
         }
     } else {
         // `FIELD=scatter2`: a second draw of the same sampler (seed 11 not 7),
-        // to check that a result is not one layout's.
-        let left = if std::env::var("FIELD").as_deref() == Ok("scatter2") {
-            [(105.0f32, 75.0f32), (64.0, 92.0), (76.0, 121.0), (110.0, 145.0), (59.0, 49.0), (21.0, 98.0), (90.0, 48.0), (100.0, 16.0), (44.0, 121.0)]
+        // to check that a result is not one layout's. `FIELD_LEFT="x,y x,y
+        // ..."` gives any other draw (the layout sweep; the sampler is
+        // `field/sweep/layouts.py`, whose seeds 7 and 11 print these two).
+        let left: Vec<(f32, f32)> = if let Ok(l) = std::env::var("FIELD_LEFT") {
+            l.split_whitespace()
+                .map(|xy| {
+                    let (x, y) = xy.split_once(',').unwrap();
+                    (x.parse().unwrap(), y.parse().unwrap())
+                })
+                .collect()
+        } else if std::env::var("FIELD").as_deref() == Ok("scatter2") {
+            vec![(105.0f32, 75.0f32), (64.0, 92.0), (76.0, 121.0), (110.0, 145.0), (59.0, 49.0), (21.0, 98.0), (90.0, 48.0), (100.0, 16.0), (44.0, 121.0)]
         } else {
-            [(78.0f32, 20.0f32), (67.0, 61.0), (18.0, 71.0), (56.0, 126.0), (110.0, 17.0), (98.0, 51.0), (92.0, 108.0), (96.0, 142.0), (65.0, 96.0)]
+            vec![(78.0f32, 20.0f32), (67.0, 61.0), (18.0, 71.0), (56.0, 126.0), (110.0, 17.0), (98.0, 51.0), (92.0, 108.0), (96.0, 142.0), (65.0, 96.0)]
         };
         for &(x, y) in &left {
             piles.push(mk(x, y, 4.0, 15_000.0));
@@ -177,6 +189,27 @@ fn stroke(d: &mut Dish, tool: slime_mould::mould::Tool, m: (f32, f32), dir: (f32
         d.drag_stroke(b.0, b.1);
         d.end_stroke();
     }
+}
+
+/// The comeback test's aim, for the side behind (`actor_self`: the self
+/// mould; else the rival): the leader's most forward pile, the one it holds
+/// (more of its eaters than the actor's) nearest the actor's home; else the
+/// nearest pile the leader is on at all; else the centre. Returns the target
+/// and the leader's home, whose road to the target the strokes cross.
+fn front(d: &Dish, actor_self: bool) -> ((f32, f32), (f32, f32)) {
+    let (mine, theirs) = if actor_self { ((40.0f32, 80.0f32), (216.0f32, 80.0f32)) } else { ((216.0, 80.0), (40.0, 80.0)) };
+    let near = |q: &&slime_mould::mould::Pile| (q.x - mine.0).hypot(q.y - mine.1);
+    // `eaters` are the self mould's, `foe_eaters` the rival's.
+    let leader_on = |q: &slime_mould::mould::Pile| if actor_self { q.foe_eaters } else { q.eaters };
+    let actor_on = |q: &slime_mould::mould::Pile| if actor_self { q.eaters } else { q.foe_eaters };
+    let live = || d.piles.iter().filter(|q| !q.oats && q.food > 0.0);
+    let target = live()
+        .filter(|q| leader_on(q) > actor_on(q))
+        .min_by(|a, b| near(a).total_cmp(&near(b)))
+        .or_else(|| live().filter(|q| leader_on(q) > 0).min_by(|a, b| near(a).total_cmp(&near(b))))
+        .map(|q| (q.x, q.y))
+        .unwrap_or((128.0, 80.0));
+    (target, theirs)
 }
 
 fn run_to(d: &mut Dish, steps: u64) {
@@ -561,6 +594,104 @@ fn main() {
                 println!(
                     "VERB dish={label} seed={seed} verb={} mode={} share5={:.3} ctl5={c5:.3} share30={:.3} ctl30={c30:.3} vis5={:.0} terr30={vt30:.3} ctlterr30={ct30:.3} piles30={}/{} ctlpiles30={}/{} target={:.0},{:.0}",
                     verbs[k].0, verbs[k].1, sh5[k], since(v), vis5[k], vp30.0, vp30.1, cp30.0, cp30.1, target.0, target.1
+                );
+            }
+        }
+        "comeback" => {
+            // Can a hand overturn the opening? With no hands the side ahead
+            // at 60 s leads at the bell in about 4 games of 5 on the field
+            // (field/README.md). Equal moulds (mesh v mesh) to 60 s; then the
+            // side behind gets one verb in one copy, and every copy runs to
+            // the bell (150 s, as the field games) against the untouched one.
+            use slime_mould::mould::Tool;
+            let seed = args[1].parse::<u64>().unwrap();
+            let on_field = std::env::var("DISH").as_deref() == Ok("field");
+            let p = wild_params();
+            let mut d = if on_field { field_dish(seed, &p, &p) } else { sym_dish(seed, &p, &p) };
+            let label = if on_field { std::env::var("FIELD").unwrap_or_else(|_| "scatter".into()) } else { "wild".into() };
+            run_to(&mut d, 60 * SPS);
+            let t0 = d.t;
+            let self_share = |x: &Dish| x.ate / (x.ate + x.wild_ate).max(1.0);
+            let s60 = self_share(&d);
+            let actor_self = s60 < 0.5;
+            let mine = |s: f32| if actor_self { s } else { 1.0 - s };
+            let (a0, w0) = (d.ate, d.wild_ate);
+            let since = |x: &Dish| mine((x.ate - a0) / ((x.ate - a0) + (x.wild_ate - w0)).max(1.0));
+            // Aim at the leader's front: the target pile, and the middle of
+            // the leader's road from its home to it, with the across unit.
+            let aim = |v: &Dish| {
+                let (target, home) = front(v, actor_self);
+                let (dx, dy) = (target.0 - home.0, target.1 - home.1);
+                let n = dx.hypot(dy).max(1.0);
+                (target, (home.0 + dx * 0.5, home.1 + dy * 0.5), (-dy / n, dx / n))
+            };
+            fn actor_params(v: &mut Dish, actor_self: bool) -> &mut Params {
+                if actor_self { &mut v.params } else { &mut v.rival.as_mut().unwrap().params }
+            }
+            let mut rng = Xs(seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1);
+            // salt x6 and lamp x6 act again every 15 s, re-aimed each time:
+            // a hand that keeps working, not one move. Their salt is not
+            // limited by the dish's stock (`salt_left`), so they can.
+            let verbs: Vec<(&str, &str)> = vec![
+                ("none", "control"),
+                ("salt", "plan"), ("salt", "random"), ("salt", "x6"),
+                ("lamp", "plan"), ("lamp", "random"), ("lamp", "x6"),
+                ("snip", "plan"),
+                ("taut", "plan"),
+                ("molt", "hunter"), ("molt", "random"),
+            ];
+            let salt_at = |v: &mut Dish, rng: &mut Xs, planned: bool| {
+                v.salt_left = v.salt_left.max(1);
+                if planned {
+                    let (_, mid, across) = aim(v);
+                    stroke(v, Tool::Salt, mid, across, 60.0);
+                } else {
+                    let q = rng.agar(v);
+                    let a = rng.f() * std::f32::consts::TAU;
+                    stroke(v, Tool::Salt, q, (a.cos(), a.sin()), 60.0);
+                }
+            };
+            let mut copies: Vec<Dish> = Vec::new();
+            for &(verb, mode) in &verbs {
+                let mut v = d.clone();
+                match (verb, mode) {
+                    ("none", _) => {}
+                    ("salt", m) => salt_at(&mut v, &mut rng, m != "random"),
+                    ("lamp", "random") => { let q = rng.agar(&v); v.set_lamp(Some(q)); }
+                    ("lamp", _) => { let (t, _, _) = aim(&v); v.set_lamp(Some(t)); }
+                    ("snip", _) => { let (_, mid, across) = aim(&v); v.snips_left = v.snips_left.max(1); stroke(&mut v, Tool::Snip, mid, across, 30.0); }
+                    ("taut", _) => actor_params(&mut v, actor_self).fed_scent = 1.0,
+                    // Hunter beat mesh in 31 of 32 field games.
+                    ("molt", "hunter") => grain("hunter", actor_params(&mut v, actor_self)),
+                    ("molt", _) => { let g = ["cord", "maze", "runner", "hunter", "bead"][(rng.f() * 5.0) as usize % 5]; grain(g, actor_params(&mut v, actor_self)); }
+                    _ => unreachable!(),
+                }
+                copies.push(v);
+            }
+            // Lamps are held 10 s at a time.
+            for &(sec, act) in &[(10u64, false), (15, true), (25, false), (30, true), (40, false), (45, true), (55, false), (60, true), (70, false), (75, true), (85, false), (90, false)] {
+                for (k, v) in copies.iter_mut().enumerate() {
+                    run_to(v, t0 + sec * SPS);
+                    match (verbs[k], act) {
+                        (("lamp", "x6"), true) => { let (t, _, _) = aim(v); v.set_lamp(Some(t)); }
+                        (("lamp", _), false) => v.set_lamp(None),
+                        (("salt", "x6"), true) => salt_at(v, &mut rng, true),
+                        _ => {}
+                    }
+                }
+            }
+            let ctl = &copies[0];
+            let (cbell, csince) = (mine(self_share(ctl)), since(ctl));
+            for (k, v) in copies.iter().enumerate() {
+                println!(
+                    "COMEBACK dish={label} seed={seed} actor={} behind60={:.3} verb={} mode={} bell={:.3} ctlbell={cbell:.3} since={:.3} ctlsince={csince:.3} t={:.0}",
+                    if actor_self { "self" } else { "rival" },
+                    mine(s60),
+                    verbs[k].0,
+                    verbs[k].1,
+                    mine(self_share(v)),
+                    since(v),
+                    v.t as f32 / SPS as f32
                 );
             }
         }
