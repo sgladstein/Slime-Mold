@@ -1,0 +1,77 @@
+# Licensing gates, copied from Pixel_Physics on 2026-11-10
+# (Reports/pixel-physics-review-2026-11-10.md). Separate from ci.yml and
+# path-filtered, because both checks can only fail when the dependency graph
+# or the notices machinery changes, which is rare. This repo is private, so
+# Actions minutes are billed; a run here costs nothing on the PRs that make up
+# most of the traffic (reports and pictures).
+#
+# WHY GATE AT ALL. A new dependency leaves THIRD-PARTY-NOTICES.txt describing
+# the old graph, and the build succeeds, the tests pass, clippy is clean, the
+# game runs identically, and the notices file still reads as plausible licence
+# text. Nothing goes red until the licence is enforced against a shipped
+# binary. The game is proprietary (LICENSE) and meant to ship, so a copyleft
+# crate would also force source disclosure on the whole binary.
+#
+# Do not make this a required status check: a required check on a
+# path-filtered workflow never reports on PRs that do not touch those paths,
+# and the PR is then blocked for ever.
+name: Licensing
+
+on:
+  # The two path lists are duplicated rather than shared through a YAML
+  # anchor: GitHub Actions rejects anchors and aliases, though any local YAML
+  # parser accepts them. Keep them in sync by hand. Branch pushes are covered
+  # by their pull_request run (ci.yml's note: running both doubled billing).
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'about.toml'
+      - 'about.hbs'
+      - 'licenses/**'
+      - 'scripts/licensecheck.sh'
+      - 'scripts/notices.sh'
+      - '.github/workflows/notices.yml'
+  pull_request:
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'about.toml'
+      - 'about.hbs'
+      - 'licenses/**'
+      - 'scripts/licensecheck.sh'
+      - 'scripts/notices.sh'
+      - '.github/workflows/notices.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  licensing:
+    name: licence audit and third-party notices
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Pinned to match ci.yml and rust-toolchain.toml.
+      - uses: dtolnay/rust-toolchain@1.98
+      # Caches ~/.cargo/bin too, so cargo-about is built once, not per run.
+      - uses: Swatinem/rust-cache@v2
+
+      # First, because it is the serious failure and it is cheap: it needs
+      # only `cargo metadata`.
+      - name: no copyleft in the dependency tree
+        run: bash scripts/licensecheck.sh
+
+      # The version pin is load-bearing: notices.sh --check compares byte for
+      # byte, so a cargo-about release that reformats its output would turn
+      # the gate red on a commit that changed nothing. 0.9.2 generated the
+      # committed file. `--features cli` is not optional: without it cargo
+      # installs no binary and only warns.
+      - name: install cargo-about
+        run: command -v cargo-about >/dev/null || cargo install cargo-about --version 0.9.2 --locked --features cli
+
+      - name: THIRD-PARTY-NOTICES.txt matches Cargo.lock
+        run: bash scripts/notices.sh --check

@@ -96,3 +96,50 @@ in 1.3 s; reverted.
 hashes, and got 12. On two dishes neither hand had acted yet, so plan and
 random played the same game, which is right and not a collision. The
 control is now another seed.
+
+## Step 2: the release profile, measured on the mould
+
+Deciding measure, named before the runs: mean frame (sim + draw) on the
+`mouldprobe seeds=1 players=plan` cost line, with every arm's dish hashes
+equal. Four builds from `afc2e64` with the profile set by environment
+(`CARGO_PROFILE_RELEASE_LTO`, `..._CODEGEN_UNITS`), each in its own target
+directory, run alternately, three rounds, one 4-core container, nothing else
+running.
+
+| Build | Mean frame, ms (rounds 1-3) | Draw, ms | Sim, ms | Rebuild after touching `mould/mod.rs` |
+|---|---|---|---|---|
+| shipped: thin LTO + `codegen-units = 1` | 5.00, 4.88, 4.95 | 3.78-3.87 | 1.10-1.13 | 13.7 s |
+| `codegen-units = 1` alone | 4.86, 4.99, 4.95 | 3.76-3.86 | 1.10-1.13 | 13.4 s |
+| thin LTO alone | 5.44, 5.47, 5.38 | 4.28-4.35 | 1.10-1.12 | 9.5 s |
+| cargo's defaults | 5.39, 5.59, 5.39 | 4.28-4.44 | 1.11-1.15 | 7.6 s |
+
+Same answer as Pixel_Physics got on the sand engine: `codegen-units = 1` is
+the whole gain, about 0.45 ms a frame (9%), all of it in drawing, for about
++6 s a rebuild. Thin LTO adds nothing on top (shipped against cgu 1 alone:
+one round each way and one tie). Every arm printed the same hashes (plan
+`9b6233757f064155`, cost line `d50963c63fa89d11`), so no arm changed the
+game. Three rounds is a direction, not a sign test: the cgu-1 arms beat the
+default arms in all 12 same-round pairings, by 0.39-0.71 ms, against round-to-round spread
+of at most 0.2 ms within an arm. Cold builds (50-77 s) were too noisy here to
+rank. **Changed: `lto = "thin"` dropped, `codegen-units = 1` kept**
+(`Cargo.toml` carries the table). PR #14's `test + clippy` CI job, with thin
+LTO, took 289 s; the next CI run is the after.
+
+## Step 3: licence gates, the font notice, the font generator
+
+- `scripts/licensecheck.sh` (from Pixel_Physics, package name changed):
+  286 third-party packages, all permissive; `r-efi` offers LGPL only as one
+  option of three.
+- `scripts/notices.sh`, `about.toml`, `about.hbs` (cargo-about 0.9.2) write
+  `THIRD-PARTY-NOTICES.txt`; `--check` proves it is not stale. Added here: a
+  FONTS section. `src/hud_crisp.rs` is rasterised from JetBrains Mono
+  SemiBold 2.304, whose name table reads "Copyright 2020 The JetBrains Mono
+  Project Authors" and "licensed under the SIL Open Font License, Version
+  1.1"; its text is in `licenses/JetBrainsMono-OFL.txt`. (Debian's package
+  copyright file still says Apache-2.0, from before upstream changed licence;
+  the font's own name table is what was read.)
+- `.github/workflows/notices.yml` runs both, only when `Cargo.toml`,
+  `Cargo.lock`, `about.*`, `licenses/` or the two scripts change.
+- `scripts/crispfont.py` came across; run here it reproduces
+  `src/hud_crisp.rs` byte for byte, so glyphs (lowercase, say) can now be
+  added.

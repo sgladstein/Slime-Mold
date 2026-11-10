@@ -59,6 +59,7 @@ code at build time.
 | `cargo run --release --example mouldlooks` | the same dish at the same instant in each look, for before/after pictures and draw cost |
 | `cargo run --release --example mouldhand` | plays a dish from a written hand (`T lamp X Y DUR`, `T oats X Y`, ...) and writes frames; hands in `Reports/mould-review-2026-11-10/` |
 | `cargo run --release --example organprobe` | the organ: timing wobble, lamp bends, offline WAV and frames |
+| `scripts/crispfont.py` | regenerates `src/hud_crisp.rs` from JetBrains Mono; add a glyph here, never by hand |
 | `Reports/mould-scratch-2026-11-10/tune/run.sh`, `run5.sh`, `w5.py` | census runners (4-wide) and the paired sign-test summariser used for Keep It Alive and The Wild One |
 
 ## Checks
@@ -73,3 +74,13 @@ the organ's sound device for macOS and Windows (`.github/workflows/ci.yml`).
 A pull request that changes only `Reports/`, `handoff/`, `research/` or
 `*.md` skips both build jobs. Sound on Linux needs
 `--features audio-alsa` and `libasound2-dev`.
+
+**Licensing** (`.github/workflows/notices.yml`, runs only when `Cargo.toml`,
+`Cargo.lock`, `about.*`, `licenses/` or the scripts change):
+`bash scripts/licensecheck.sh` fails on a dependency with no permissive
+licence, and `bash scripts/notices.sh --check` fails when
+`THIRD-PARTY-NOTICES.txt` no longer matches `Cargo.lock`. After a dependency
+change, run `bash scripts/notices.sh` (needs `cargo install cargo-about
+--version 0.9.2 --locked --features cli`) and commit the file. The crisp
+font's table is generated: `python3 scripts/crispfont.py` (Pillow, and
+JetBrains Mono at the path in the script).
