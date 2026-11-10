@@ -1,0 +1,8 @@
+bigdish: preset naive-blob seeds [2] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: false, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: true, tube: 1.0, seed: 1 }
+== seed 2: 1024 x 640, 32000 walkers, 7 piles
+seed 2 naive-blob t   5.0s  tube  2459.7  loops    5  width 9.77  reach   60.0  piles 2/7  strays 0.036  ms/tick 10.87
+seed 2 naive-blob t  10.0s  tube  2350.8  loops    1  width 10.07  reach   60.4  piles 2/7  strays 0.044  ms/tick 11.34
+seed 2 naive-blob t  15.0s  tube  2299.9  loops    6  width 10.32  reach   62.4  piles 2/7  strays 0.045  ms/tick 11.34
+seed 2 naive-blob t  20.0s  tube  2282.9  loops    4  width 10.31  reach   69.2  piles 2/7  strays 0.052  ms/tick 11.56
+seed 2 naive-blob hash=05898e8c143968a1

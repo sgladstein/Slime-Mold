@@ -1,0 +1,8 @@
+bigdish: preset steps-blob seeds [11] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 4, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, step: 1.0, deposit: 1.25, keep: 0.97400373, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: false, scent_keep: 0.9924141, food_deposit: 5.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: true, tube: 1.0, seed: 1 }
+== seed 11: 1024 x 640, 32000 walkers, 7 piles
+seed 11 steps-blob t   5.0s  tube  2268.3  loops    3  width 11.33  reach   60.9  piles 2/7  strays 0.071  ms/tick 45.10
+seed 11 steps-blob t  10.0s  tube  2161.2  loops    2  width 10.77  reach   59.9  piles 2/7  strays 0.101  ms/tick 50.35
+seed 11 steps-blob t  15.0s  tube  2075.4  loops    3  width 10.95  reach   48.6  piles 2/7  strays 0.116  ms/tick 53.53
+seed 11 steps-blob t  20.0s  tube  2005.6  loops    2  width 11.60  reach   47.0  piles 2/7  strays 0.138  ms/tick 55.10
+seed 11 steps-blob hash=25271c6f85c7ef78

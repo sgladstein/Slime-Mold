@@ -1,0 +1,8 @@
+bigdish: preset today-uniform seeds [16] seconds 20 threads 1
+params BigParams { scale: 1, substeps: 1, walkers: 2000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: true, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: false, tube: 1.0, seed: 1 }
+== seed 16: 256 x 160, 2000 walkers, 7 piles
+seed 16 today-uniform t   5.0s  tube  6155.0  loops    4  width 12.59  reach  159.2  piles 7/7  strays 0.000  ms/tick 0.53
+seed 16 today-uniform t  10.0s  tube  5193.0  loops    2  width 13.68  reach  140.4  piles 7/7  strays 0.000  ms/tick 0.53
+seed 16 today-uniform t  15.0s  tube  4802.0  loops    3  width 13.23  reach  135.5  piles 7/7  strays 0.016  ms/tick 0.53
+seed 16 today-uniform t  20.0s  tube  4608.0  loops    2  width 14.27  reach  134.7  piles 7/7  strays 0.002  ms/tick 0.54
+seed 16 today-uniform hash=c5975b5316da92a8

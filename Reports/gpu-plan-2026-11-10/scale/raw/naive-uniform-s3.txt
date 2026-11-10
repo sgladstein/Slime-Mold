@@ -1,0 +1,8 @@
+bigdish: preset naive-uniform seeds [3] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: false, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: false, tube: 1.0, seed: 1 }
+== seed 3: 1024 x 640, 32000 walkers, 7 piles
+seed 3 naive-uniform t   5.0s  tube  8946.1  loops  152  width 3.37  reach  188.6  piles 7/7  strays 0.022  ms/tick 11.07
+seed 3 naive-uniform t  10.0s  tube  6761.4  loops   88  width 3.31  reach  185.4  piles 7/7  strays 0.035  ms/tick 10.45
+seed 3 naive-uniform t  15.0s  tube  5622.8  loops   68  width 3.27  reach  184.9  piles 7/7  strays 0.048  ms/tick 10.17
+seed 3 naive-uniform t  20.0s  tube  5128.9  loops   54  width 3.22  reach  183.9  piles 7/7  strays 0.076  ms/tick 9.99
+seed 3 naive-uniform hash=6af2ea7fdc13d807

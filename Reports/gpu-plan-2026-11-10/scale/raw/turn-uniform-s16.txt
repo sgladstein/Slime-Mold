@@ -1,0 +1,8 @@
+bigdish: preset turn-uniform seeds [16] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 4, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 36.0, step: 1.0, deposit: 1.25, keep: 0.97400373, trail_passes: 4, sense_every: 4, crowd: 1, scent_coarse: true, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: false, tube: 1.0, seed: 1 }
+== seed 16: 1024 x 640, 32000 walkers, 7 piles
+seed 16 turn-uniform t   5.0s  tube  7443.3  loops    4  width 11.98  reach  174.3  piles 7/7  strays 0.003  ms/tick 50.93
+seed 16 turn-uniform t  10.0s  tube  5564.3  loops    0  width 13.10  reach  164.3  piles 7/7  strays 0.002  ms/tick 50.47
+seed 16 turn-uniform t  15.0s  tube  5169.4  loops    0  width 13.39  reach  155.3  piles 7/7  strays 0.001  ms/tick 50.54
+seed 16 turn-uniform t  20.0s  tube  5021.6  loops    0  width 13.53  reach  149.9  piles 7/7  strays 0.001  ms/tick 51.36
+seed 16 turn-uniform hash=60398995b86e0493
