@@ -696,75 +696,60 @@ fn main() {
                 );
             }
         }
-        "skirmish" => {
-            // The field skirmish demo (`slime_mould::mould::skirmish`) with a
-            // scripted hand in your place against its scripted rival, to the
-            // bell. Hands: idle (spread, no walls), random (a random habit
-            // every 10-20 s, walls at random), counter (switches to what
-            // beats the rival's habit as soon as it may, and walls the
-            // rival's road when behind, as the rival does to you), late (the
-            // same, 10 s slower to answer). REACT: the rival's delay, s.
-            use slime_mould::mould::skirmish::{front, Habit, Skirmish};
-            use slime_mould::mould::Tool;
+        "duel" => {
+            // The budget skirmish (`slime_mould::mould::skirmish`, v2): two
+            // scripted plans, one a side, to the bell. `duel SEED LEFT
+            // RIGHT`; TRACE=1 prints both sides every 10 s. (The v1
+            // `skirmish` mode, a hand against the habit-and-salt rival, is
+            // in git history at 6c28e01; its census is
+            // Reports/rts-skirmish-2026-11-10/raw/hands-v1.txt.)
+            use slime_mould::mould::skirmish::{Plan, Skirmish};
             let seed = args[1].parse::<u64>().unwrap();
-            let hand = args[2].as_str();
-            let mut sk = Skirmish::new(seed);
-            if let Ok(r) = std::env::var("REACT") {
-                sk.ai = slime_mould::mould::skirmish::Ai::new(r.parse().unwrap());
-            }
-            let mut rng = Xs(seed.wrapping_mul(0x2545_F491_4F6C_DD1D) | 1);
-            let mut next = 10 * SPS;
-            let mut want: Option<(Habit, u64)> = None;
-            let mut switches = 0;
-            let mut walls = 0;
+            let plans = [Plan::parse(&args[2]).expect("plan"), Plan::parse(&args[3]).expect("plan")];
+            let trace = std::env::var("TRACE").is_ok();
+            let mut sk = Skirmish::new(seed, [Some(plans[0]), Some(plans[1])]);
             let t0 = std::time::Instant::now();
+            let mut at60 = 0.5;
             while sk.dish.phase != Phase::Over && sk.dish.t < 200 * SPS {
-                let t = sk.dish.t;
-                match hand {
-                    "random" if t >= next => {
-                        next = t + (10.0 + rng.f() * 10.0) as u64 * SPS;
-                        let h = Habit::ALL[(rng.f() * 4.0) as usize % 4];
-                        switches += sk.switch(h) as u32;
-                        if rng.f() < 0.4 && sk.dish.salt_left > 0 {
-                            let q = rng.agar(&sk.dish);
-                            let a = rng.f() * std::f32::consts::TAU;
-                            stroke(&mut sk.dish, Tool::Salt, q, (a.cos(), a.sin()), 60.0);
-                            walls += 1;
-                        }
-                    }
-                    "counter" | "late" => {
-                        let lag = if hand == "late" { 10 * SPS } else { 0 };
-                        let goal = sk.theirs.counter();
-                        match want {
-                            Some((h, _)) if h == goal => {}
-                            _ => want = Some((goal, t + lag)),
-                        }
-                        if let Some((h, at)) = want {
-                            if t >= at && h != sk.mine && sk.switch(h) {
-                                switches += 1;
-                            }
-                        }
-                        if t >= next && t >= 30 * SPS {
-                            next = t + 30 * SPS;
-                            if sk.share() < 0.5 && sk.dish.salt_left > 0 {
-                                let (target, from) = front(&sk.dish, true);
-                                let (dx, dy) = (target.0 - from.0, target.1 - from.1);
-                                let n = dx.hypot(dy).max(1.0);
-                                stroke(&mut sk.dish, Tool::Salt, (from.0 + dx * 0.5, from.1 + dy * 0.5), (-dy / n, dx / n), 60.0);
-                                walls += 1;
-                            }
-                        }
-                    }
-                    _ => {}
-                }
                 sk.tick();
                 sk.dish.step();
+                let t = sk.dish.t;
+                if t == 60 * SPS {
+                    at60 = sk.share();
+                }
+                if trace && t.is_multiple_of(10 * SPS) {
+                    let held = |s: usize| (0..sk.dish.piles.len()).filter(|&i| sk.eaters(s, i) > sk.eaters(1 - s, i)).count();
+                    let left: f32 = sk.dish.piles.iter().map(|p| p.food.max(0.0)).sum();
+                    println!(
+                        "  t={:>3} share={:.3} ate={:.0}/{:.0} walkers={}/{} held={}/{} bank={:.0}/{:.0} spent={:.0}/{:.0} food_left={left:.0}",
+                        t / SPS,
+                        sk.share(),
+                        sk.ate(0),
+                        sk.ate(1),
+                        sk.walkers(0),
+                        sk.walkers(1),
+                        held(0),
+                        held(1),
+                        sk.sides[0].bank,
+                        sk.sides[1].bank,
+                        sk.sides[0].tally.spent,
+                        sk.sides[1].tally.spent
+                    );
+                }
             }
+            let tally = |s: usize| {
+                let k = &sk.sides[s].tally;
+                format!("b{}s{}h{}", k.beacons, k.spores, k.switches)
+            };
             println!(
-                "SKIRMISH seed={seed} hand={hand} share={:.3} mine={:?} theirs={:?} switches={switches} walls={walls} t={:.0} ({:.1}s)",
+                "DUEL seed={seed} left={} right={} share={:.3} at60={at60:.3} ate={:.0}/{:.0} bought={}/{} t={:.0} ({:.1}s)",
+                plans[0].name(),
+                plans[1].name(),
                 sk.share(),
-                sk.mine,
-                sk.theirs,
+                sk.ate(0),
+                sk.ate(1),
+                tally(0),
+                tally(1),
                 sk.dish.t as f32 / SPS as f32,
                 t0.elapsed().as_secs_f32()
             );
