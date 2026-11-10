@@ -3,7 +3,7 @@ title: The RTS directions (design only)
 kind: design
 status: open
 updated: 2026-11-10
-sources: [Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md]
+sources: [Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md]
 code: [Dish::rival, Dish::store, Dish::food_share, Pile::bite, Params::fed_scent, Params::flow, Params::foe_repel, Params::pieces, Params::wound, Params::table]
 ---
 
@@ -50,16 +50,17 @@ copy, 30 s, 16 seeds; the bar is 0.02 of food share the intended way on 13 of
 16, seen by 5 s on all 16, and beating a random use). On the field a salt
 line across the rival's road passes on share (14 of 16) and against random
 (14 of 16), and misses the 5 s check by one seed. On The Wild One only the
-lamp moves share (15 of 16 up, 11 by 0.02). Placed food loses on both. **Next
-is one contagion strain on the CPU**, and a test of whether any verb can
-overturn a 60 s lead. Bloomfront's Stage 0 is not the first step, because its
+lamp moves share (15 of 16 up, 11 by 0.02). Placed food loses on both. **Two Fevers is now a playable demo**
+([its page](two-fevers.md)): owned ground with a hold, planner over random
+16 of 16 but by only 0.537 of the summed score. Still to test: whether any
+verb can overturn a 60 s lead. Bloomfront's Stage 0 is not the first step, because its
 gates would pass without testing the opening.
 
 | Direction | Core verb | Red team |
 |---|---|---|
 | Bloomfront | Lure, push, wall, cut, water, each paid from food | Weak as a direction; its two-keeper plumbing is a useful harness |
 | Squeeze | Tap a held pile to send a wave of sap; hold it to charge | Home squeeze 0.000; flow costs 2.6x the step time; needs a fight scaled by load (not rerun on the field) |
-| Two Fevers | Seed a strain in a neutral mould; immunity feeds the trailer | Strongest; untested; risk of a rubber band that washes out skill |
+| Two Fevers | Seed a strain in a neutral mould; immunity feeds the trailer | Built as a demo ([page](two-fevers.md)); carriers-only scoring had no strategy; owned ground with a hold plays as a tug of war, skill margin thin |
 | Tincture | The same, but converts by majority | Feeds the leader; a different game from Two Fevers, so pick one |
 | Taut | Set each source slack, even or taut | Fails on The Wild One; wins share on the field, but untested per pile and always best at full |
 | Grain, Grafts | Regions or captured colonies with their own sensing rules | No cycle on The Wild One; a cycle on one field layout of two |
@@ -104,7 +105,7 @@ gates would pass without testing the opening.
 - Whether the field cycle survives more layouts, and what about a layout makes the maze–cord link hold.
 - Whether any verb can overturn a 60 s lead, since with no hands the leader keeps it in about 4 games of 5.
 - Taut set per pile, or with a cost, so that it becomes a choice rather than a stat.
-- A long match with regrowing food, a contagion strain, and human play: the rest of the 2026-11-10 19:31Z list.
+- A long match with regrowing food and human play: the rest of the 2026-11-10 19:31Z list. The contagion strain is built ([Two Fevers](two-fevers.md)).
 
 ## Sources
 
