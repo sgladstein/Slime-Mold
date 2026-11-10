@@ -6,6 +6,8 @@ RTS brainstorm and its red team ranked strongest
 ([brainstorm](../rts-design-2026-11-10/brainstorm/README.md),
 [red team §3](../rts-design-2026-11-10/red-team/README.md)). It covers two
 versions, the census of each, and the owner's verdict on the first.
+Version 3 (calls, fever by tube, pinch, foraging) is at the end:
+[*Version 3*](#version-3-the-mould-at-the-centre).
 
 **Play it:** https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a (a copy is in
 [`page/`](page/)). **Code:** `src/mould/fever.rs` (the model and the
@@ -176,10 +178,113 @@ are the comeback control, and their reversal is a finding.
   (right-click or shift-click seeds Tide; J hushes Tide).
 - A native window build does not exist; the demo is the browser page.
 
+## Version 3: the mould at the centre
+
+The owner, 21:52Z, after version 2: "still feel overly simple with 1-2 tools
+that lead to mostly 1 strategy ... The slime mold seems more like background
+in this game and not the integral part". The design is in
+[`v3-design.md`](v3-design.md); the owner picked "Build it after the checks"
+(22:06Z). `Rules::v3()` holds every setting below; the page and the census
+use it.
+
+**What changed.** Each side starts owning the walkers within 12 cells of its
+end pile (`home_r`). The walkers you own smell your **calls** (two at most,
+free): a linear pull out to 60 cells with a flat core of 15, weight 10, felt
+by nobody else. A fever's field spreads only through tube, in proportion to
+trail up to 6 (`tube_fever`). Owned walkers on a pile earn spores (0.005 of a
+spore a step each, at most 12 per pile) on top of one every 20 s (at most 4).
+A walker you own that has stood off every tube route to food for 12 s goes
+back to nobody's (`starve_seconds`; the route is a breadth-first search from
+the piles through trail of 2 or more, every 6 steps). A **pinch** stops your
+own walkers in a 5-cell disc laying trail for 6 s. And a walker you own that
+is fed catches the rival's fever ten times less often (`resist` 0.1).
+
+### The three checks (before the build)
+
+Raw: [`raw/v3-checks/`](raw/v3-checks/), `examples/feverprobe.rs`, 16 seeds.
+
+| Check | Bar | Result |
+|---|---|---|
+| Fever by tube stops at a 3-cell cut | 16/16 | 0 carriers past the cut on 13/16, at most 7 on any; ungated 600-936 on every seed. Passed in substance |
+| A trunk carries the fever twice as fast | 2x | **Failed:** thick tube 5.3 cells/s, thin 5.1. What tube does is carry *more*: 10,230 catches on thick tube, 668 on thin (ungated 17,567 and 16,574) |
+| A call reshapes the body | 13/16 | 16/16: 96-165 owned walkers on the called pile at +20 s, 0-1 without |
+| A pinch cuts | 16/16 under tube strength within 5 s, for 6 s | 14/16: trail about 10 falls under 1.5 within 1 s |
+
+### Tuning (seeds 1-2 or 1-6, before the census)
+
+| Setting | What happened |
+|---|---|
+| Call weight 30 | 70% of the host heaped on the call by 2:00; no roads. Weight 10 and a flat core of 15 keep roads |
+| Uncapped foraging (0.008-0.02) | The raider's seeds bought ground, ground bought spores: 44 seeds to 7 |
+| Pinch at 1 spore | The Web plan spent every spore on pinches once the rival's fever was near, seeded 1-2 times a game, kept 1-2% of the host |
+| No resistance | Whoever seeded the neutral mould first took it all: raider 0.96-0.99 of every game |
+| `resist` 0.1, free pinch every 5 s, forage 0.005 (shipped) | Contested games: web v raider 0.44-0.63, trunk v raider 0.39-0.86 |
+
+### The census
+
+16 seeds, both colours, 3:00, `Rules::v3()`. Hands (`Hand::Trunk`, `Raider`,
+`Web`): **Trunk** calls the best pile near its body (food over distance) and
+moves when it runs low, and seeds as Plan with every spore. **Raider** keeps
+its call at home and seeds at once on the rival's walker on the thickest
+trail. **Web** calls two good piles 50 or more cells apart, pinches its own
+walker nearest a rival carrier (at most every 15 s) and seeds as Plan while
+it keeps one spore spare. Raw: [`raw/v3/`](raw/v3/).
+
+Deciding measures, named before the run: a cycle whose three links each
+survive Holm; each plan beating random on 13 of 16; and the snowball guard,
+the mirror's 1:30 leader losing at least a quarter of games.
+
+| Matchup (a v b) | a's part, median (range) | a won, seeds | p (one-sided, for the winner) | Leader at 1:30 kept it |
+|---|---|---|---|---|
+| trunk v raider | 0.651 (0.489-0.863) | 15/16 | 0.00026 | 32/32 |
+| raider v web | 0.417 (0.173-0.593) | 5/16 | web 0.105 | 30/32 |
+| web v trunk | 0.443 (0.219-0.598) | 4/16 | trunk 0.038 | 30/32 |
+| trunk v random | 0.659 (0.496-0.919) | 15/16 | 0.00026 | 29/32 |
+| web v random | 0.670 (0.465-0.909) | 15/16 | 0.00026 | 29/32 |
+| raider v random | 0.446 (0.189-0.846) | 7/16 | 0.77 | 31/32 |
+| trunk v idle | 0.767 (0.569-0.969) | 16/16 | 1.5e-5 | 27/32 |
+| web v idle | 0.768 (0.441-0.924) | 13/16 | 0.011 | 28/32 |
+| raider v idle | 0.786 (0.222-0.953) | 15/16 | 0.00026 | 26/32 |
+| raider v raider | 0.500 (mirror) | | | 32/32 |
+
+Holm over the nine named tests (three links, three plans over random, three
+over idle): trunk over raider, trunk and web over random, and all three over
+idle pass. Trunk over web (p 0.038) and web over raider (p 0.105) do not,
+and raider over random fails outright.
+
+- **No cycle.** The order is a ladder, trunk over web over raider, and only
+  its top link is firm. The design hoped the raider beats the trunk; with a
+  fed body resisting, seeding into the rival's thickest tube is seeding into
+  its best-fed walkers, so the raid is the worst use of a spore.
+- **Income is the game.** Both plans that move their calls to food beat
+  random 15/16; the one that stays home does not. The mould's shape matters
+  through where it eats.
+- **The snowball guard fails.** The raider mirror's 1:30 leader kept the lead
+  in 32 of 32 (version 2: 18 of 32), and every matchup is 26-32 of 32. The
+  hold no longer turns leads: ground pays spores, so the leader also earns more.
+- **Spreads are wide.** a's part runs 0.17-0.97 across seeds and colours; the
+  same pair on the same seed can swing by 0.5 with sides swapped (web v
+  trunk, seed 1: trunk's part 0.71 as Tide, 0.18 as Ember).
+
+**Cost.** 0.70-0.84 ms a step on one core of this container with stills
+written and a census on the other cores (version 2: 0.49-0.64), so about
+1.5 ms a frame at 2 steps. The rest is the starvation search every 6 steps,
+the call pull and the per-pile forage count.
+
+**What it is not yet.** The scripted plans are crude, and a ladder among
+three scripts is not a ladder among people; the owner's hand is the next
+test. The levers the census points at: something that feeds the trailer (a
+cap on spores from ground, or income that falls as a body grows), and a raid
+that pays (seeding a starving or cut-off part is the raid the rules reward
+now, and no script does it).
+
 ## Files
 
+- [`v3-design.md`](v3-design.md): the owner's verdict on version 2 and the design for version 3 (calls, fever by tube, pinch, foraging income).
 - [`summarise.py`](summarise.py): per-seed summary and sign test of a census file.
 - [`raw/`](raw/): every census run named above. v1 runs were made with the v1
   code (`owned` did not exist; the cross run later with `set=owned:0`).
-- [`page/`](page/): the published page and its `fevers.wasm`
+- [`page/`](page/): the published page (version 3 now) and its `fevers.wasm`
   (`fevers-web/build.sh`).
+- [`raw/v3-checks/`](raw/v3-checks/) and [`raw/v3/`](raw/v3/): version 3's
+  checks (`examples/feverprobe.rs`) and census.

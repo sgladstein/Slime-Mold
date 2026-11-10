@@ -768,7 +768,7 @@ fn main() {
             }
             let tally = |s: usize| {
                 let k = &sk.sides[s].tally;
-                format!("b{}s{}h{}", k.beacons, k.spores, k.switches)
+                format!("b{}s{}h{}r{}", k.beacons, k.spores, k.switches, k.rallies)
             };
             println!(
                 "DUEL seed={seed} left={} right={} share={:.3} at60={at60:.3} ate={:.0}/{:.0} bought={}/{} t={:.0} ({:.1}s)",

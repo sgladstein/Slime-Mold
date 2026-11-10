@@ -114,7 +114,9 @@ move.
   bite into a bank, spent on beacons (`Dish::beacons`), spores (`Dish::plant`) and habits, with late food. Nine
   scripted plans, 576 games on four runner threads: soft (beacons then spores on the rival's thinnest pile) beat all 8
   others, 127 of 128 games; no cycle among 36 pairings; 300 games ended in a wipe-out. A guard, a spore reach and
-  sleeping spores did not stop it. Page: *Budget Skirmish Strategies*.
+  sleeping spores did not stop it. Round 3 (a 5 s rally, a rising spore price, spores asleep abroad, plans trade, keep
+  and ward; 720 games): soft still lost no pairing, 124 of 144 games; the left mould wins 14 of 16 mirror games. v2 is
+  playable in the browser against any plan (pages *Mould Budget Skirmish* and *Budget Skirmish Strategies*).
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as
@@ -197,6 +199,14 @@ move.
   (`src/mould/fever.rs`, `fevers-web/`). v1 scored carriers: rings swept the host and left it as before; owner
   found no strategy. v2 (owner's card): walkers keep the last fever's colour, a 15 s hold, Hush. 16 seeds, both
   colours: plan beats random 16/16 in both versions but by 0.536 / 0.537; without the hold random wins 14/16;
-  Hush when behind 10/16 (noise). 0.5-0.64 ms a step.
+  Hush when behind 10/16 (noise). 0.5-0.64 ms a step. v3 (owner's card, 22:06): calls move your own walkers,
+  fever by tube only, foraging income, starvation, free pinch, fed bodies resist. Census: trunk > web > raider,
+  a ladder not a cycle (only trunk > raider survives Holm); trunk and web beat random 15/16, raider 7/16;
+  mirror 1:30 leader kept the lead 32/32 (snowball). 0.70-0.84 ms a step.
+- [rts-research-2026-11-10.md](rts-research-2026-11-10.md) — **how RTS games work and are made, from 22 outside
+  sources** (Sirlin, Johnson, Browder, Shelley, Meier, Company of Heroes, Tooth and Tail, Creeper World, lockstep
+  engines, AlphaStar, the spinning top), lessons for the mould, and feedback on both demos: soft and Trunk are
+  dominant strategies and the snowball is unmanaged positive feedback; fix with a size cost, a pull-back rule, a
+  points ending and telegraphed attacks before adding verbs. Reading only, no runs. Cards in `research/sources/`.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

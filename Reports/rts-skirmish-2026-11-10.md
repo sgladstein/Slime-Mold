@@ -1,7 +1,8 @@
 # The field skirmish: a playable RTS demo, and what wins it (2026-11-10)
 
 **Status: version 1 played by the owner and set aside; version 2 (the
-budget skirmish) built and played only by scripts.** The owner, 2026-11-10
+budget skirmish) playable at https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS,
+not yet played by the owner.** The owner, 2026-11-10
 20:33Z: "You can run these tests, especially if they are cheap and/or can be
 paralellized. But then lets focus on actually building playable demos". On
 the card at 20:42Z the owner chose "Both, in two threads": this one, and Two
@@ -17,6 +18,18 @@ plans, every pairing surviving Holm. The other eight form a straight ladder
 with no cycle among 36 pairings, so the game is shallow today: one line of
 rule play wins it. Three changes meant to give the defender an answer did
 not stop it. See *Version 2* below.
+
+**Round 3 (the counterplay rules) did not change that.** With spores asleep
+for 5 s where they land abroad, a spore price that rises half again for
+each one bought in 30 s, a cheap 5 s rally for defence, and three new plans
+built to use them, soft still lost no pairing in 720 games (124 of 144 games;
+6 of its 8 wins survive Holm). Only its own copy with a rally added (keep,
+8/16) and the plan that answers attacks with soft's own strike (trade, soft
+9/16) hold it. Played on the same seeds and sides, the new rules moved soft's
+record against idle from 15 to 12 of 16 (share lower in 8 of 16 games, p 1)
+and against raid, centre and fort not at all. Pure defence with the rally
+lost to soft 16/16. See *Round 3*. The game also favours the left mould,
+yours on the page: in mirror games it won 14 of 16.
 
 ## Version 1: habits, salt and the lamp
 
@@ -216,26 +229,135 @@ Being thick everywhere is the natural answer to an attack on the thinnest
 spot, once attacks are slow enough to answer; but no scripted defender
 that spends found it.
 
+### Round 3: the counterplay rules
+
+The first three ideas from *What would make the strategy deeper*, built
+(commit 8e3bbe7) and run as one rule set,
+`RULES="spore_dormant=5 dormant_abroad_only=1 spore_ramp=0.5"`:
+
+- **Rally** (`Verb::Rally`, 150, 5 s): a beacon at gain 10 (a beacon's is
+  3), only on a pile the side is already eating at.
+- **Rising spore price** (`Rules::spore_ramp` 0.5): a spore costs 1,000 x
+  (1 + 0.5 x your spores in the last 30 s).
+- **Sleeping spores** abroad (5 s), as in the last probe.
+- Three plans: **trade** (25%; saves until a rival spore lands on, or a
+  rival beacon or rally is lit on, one of its piles, then soft's strike for
+  10 s), **keep** (soft, but first a rally on any of its piles a rival
+  spore is landing on), **ward** (10%; rallies on piles under attack,
+  nothing else). Random now draws rallies too.
+
+Ten plans (idle, random, soft, raid, centre, fort, guard, trade, keep,
+ward), seeds 1-8, both sides: 720 games on four runner threads (raw
+`raw/rr2-runner-1..4.txt`; `analyse.py` output `raw/analysis-rr2.txt`). The
+deciding measure, named before the run: does any plan beat soft in a
+pairing, and is there a cycle among pairings that survive Holm over 45?
+
+| Plan | Pairings won (survive Holm) | Lost (survive) | Mean share |
+|---|---|---|---|
+| soft | 8 (6) | 0 (0) | 0.676 |
+| keep | 7 (6) | 1 (0) | 0.671 |
+| idle | 6 (3) | 2 (0) | 0.561 |
+| trade | 5 (4) | 4 (2) | 0.557 |
+| random | 4 (0) | 5 (2) | 0.455 |
+| centre | 4 (0) | 5 (3) | 0.431 |
+| ward | 4 (1) | 5 (3) | 0.428 |
+| raid | 1 (0) | 7 (3) | 0.414 |
+| guard | 2 (0) | 7 (4) | 0.409 |
+| fort | 2 (1) | 7 (4) | 0.399 |
+
+- **No plan beats soft.** Soft beat idle 12/16 (p 0.077), trade 9/16 and
+  keep 8/16; every other plan 15-16/16.
+- **Paired against round 2** (same seed, same side, the plans whose code
+  did not change): soft against idle won 15 then 12 of 16, its share lower
+  in 8 of 16 games (p 1); against raid 16 and 16 (lower in 11/16, p 0.21);
+  centre and fort 16 and 16. The rules did not move soft.
+- **The rally does not defend.** Ward, which only rallies (17 a game), lost
+  to soft 16/16 and to keep 16/16; fort lost 16/16 as before. Keep bought
+  4 rallies a game and tied soft 8/16, so the rally added nothing
+  measurable. A rally pulls walkers to a pile the attacker has already
+  thinned; it does not change who is fed there.
+- **Trade is soft when attacked and dead weight when not.** Against soft it
+  is attacked all game and strikes back all game (9/16 to soft). Against
+  idle and ward, who never attack, it tithes 25% and never spends: idle beat
+  it 16/16, ward 16/16.
+- **One cycle survives Holm:** fort > ward (15/16) > trade (16/16) > fort
+  (16/16). It is made of the tithe's cost (ward 10% and trade 25%, both idle
+  against a quiet rival) and of fort's strike, not of a strategic choice; all
+  three lose to soft 16/16.
+- **Snowball unchanged:** 353 of 720 games ended in a wipe-out (round 2:
+  300 of 576); the side ahead at 1:00 won 636 of 698 (round 2: 416 of 473).
+  Against the four rivals both rounds share, soft bought 10.2 spores a game
+  under the rising price, against 12.3 before.
+
+**Why.** The rules gave the defender time and a tool, but the attack's
+strength is not speed: a spore lands on the pile where the defender is
+thinnest, and from then on the head-count share and the fight rule
+(`Params::fight`: a walker on fed tube is half as likely to die, on unfed
+tube twice) keep feeding whoever is ahead there. A rally brings walkers,
+but they arrive unfed into a crowd that is fed.
+
+### Which side you play matters
+
+The field is mirrored, but the two moulds are not stepped alike: yours is
+the dish (`Dish`), the rival's is `Dish::rival`. In mirror games under the
+round 3 rules (`raw/mirror-rr2.txt`, seeds 1-8) the left mould won idle v
+idle 7 of 8 (mean share 0.524) and soft v soft 7 of 8 (0.612): 14 of 16
+together, p 0.004. Over all 720 round 3 games the left side won 459 (round
+2: 343 of 576). The round robins play every pairing from both sides, so
+they are fair; a person on the page plays left and has this edge. Not yet
+traced to its cause.
+
 ## What would make the strategy deeper
 
-Ideas from the model, each a change to test with the same round robin
-(about 20 minutes on four runners):
+Tested and failed (round 3): a quick defensive rally, a rising spore price
+and a plan that trades blows. What is left is in the model itself:
 
-1. **A cheap, quick defensive verb.** Beacons alone do nothing (lean tied
-   idle), but a short strong rally (every walker within reach of one of your
-   piles drawn to it for 5 s) would let a defender meet a spore where it
-   lands. With dormant spores, attack would be dear and slow and defence
-   cheap and quick: the shape that makes greed beat defence and attack beat
-   greed.
-2. **A price that rises.** Each spore within 30 s costs more than the last,
-   so spending everywhere at once is impossible and the target matters.
-3. **Exposure.** A side that tithes is thin at home; a plan that answers an
-   attack by hitting the attacker's thinnest pile ("trade") may beat soft by
-   racing it. Untested.
+1. **Ease the snowball at the pile.** The fight rule and the head-count
+   share both reward the side that is already fed. Possible changes: even
+   fights (no fed bonus), a hold bonus (a pile feeds the mould that holds it
+   first until it is outnumbered two to one), or starving walkers that
+   fight harder. Each is a rule to sweep against the same round robin.
+2. **Make size cost something.** Upkeep per walker that grows with the
+   mould's size, so a big mould is slow to spend and a small one cheap to
+   run.
+3. **Fix the side edge** before any human result on the page is read as a
+   strategy result.
 4. **A person.** The plans are one-line rules. A player who reads the
    picture (where the rival is thin, where its spores sleep) may find
-   answers the scripts did not; the round robin says only that no simple
+   answers the scripts did not; the round robins say only that no simple
    rule beats soft.
+
+## Version 2's page
+
+https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS (source `web/page/`,
+`web/src/lib.rs`). You are the gold mould on the left. Below the dish: your
+bank and the four tithes; beacon, spore and rally, each with its price now
+(a spore's rises under the counterplay rules); the four habits with their
+price and cooldown. Pick one and click a pile: a press lands on the live
+pile within 9 cells. Beside it: the food share, both sides' walkers, bank,
+tithe and habit, and a feed of what each side bought. You pick the rival's
+plan (any of the scripted ones, soft by default, with a line saying what it
+does) and the rules (counterplay, the default, or as first built). Pause
+stops the clock and buying still works, so a player can plan a turn.
+
+Rings drawn over the dish show what is bought (gold yours, violet the
+rival's; thin a beacon, thick a rally, the arc the time left), "zz" and a
+count where a spore still sleeps, and a dashed ring with the price where a
+press would land. They are the interface, not the simulation. The frame
+itself is `render::draw` with `View::bare`, a new flag that leaves out the
+herding game's corner chips, tool bar and cards (which named its stars and
+the lamp); the page draws its own start card instead.
+
+**First look, in a test browser:** soft attacks within the first 10 s, and
+a hand that tithed 40% and bought a rally, a beacon and one spore by 0:23
+held 578 walkers to the rival's 4,582 (31% of the food). That matches the
+scripts: hoard, which tithes 40% and buys nothing, was gone by 0:44 against
+soft on seed 7 under the counterplay rules. The page shows the same game the
+round robins measured.
+
+**Frame cost:** 8.9-9.4 ms a frame on average over the first 30 s, headless
+Chromium on the 4-core box, which drew every other frame; the rings add 23
+piles' worth of canvas arcs a drawn frame.
 
 ## How it is built
 
@@ -258,10 +380,9 @@ Ideas from the model, each a change to test with the same round robin
 - `web/`: the browser build. The library compiles for
   `wasm32-unknown-unknown` unchanged; `web/src/lib.rs` is a cdylib with
   plain `extern "C"` functions (no generated glue) that steps the dish and
-  draws it with the game's own `render::draw` at scale 4. The page in
-  `web/page/` is still version 1's; until version 2 has its own page,
-  `lib.rs` runs the new rules under the old interface (the rival plays
-  counter; you tithe 10%).
+  draws it with the game's own `render::draw` at scale 4 (`View::bare`).
+  The page in `web/page/` is version 2's; version 1's is copied in
+  `rts-skirmish-2026-11-10/page-v1/`.
 - **Frame cost** (version 1, headless Chromium on the 4-core cloud box with
   every core busy, 30 s in): drawing 9.3 ms, stepping and drawing 14.3 ms a
   60th of a second. A beacon adds one comparison per pile per step while
@@ -270,6 +391,8 @@ Ideas from the model, each a change to test with the same round robin
 ## Pages
 
 - Version 1, playable: https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw
+  (copy in `rts-skirmish-2026-11-10/page-v1/`).
+- Version 2, playable: https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS
   (source `web/page/`).
 - Version 2's strategies, with the matrix and stills:
   [`Reports/pages.md`](pages.md), *Budget Skirmish Strategies*.
