@@ -1,0 +1,311 @@
+# Raw result lines, review 2 (2026-11-10). Pixel_Physics main b3bd36ac1. Label = file the line came from.
+[base5_idle] seed 1      idle: 0 stars  YOU 354, WILD 543 | IT TOOK MORE OF THE FOOD  mould 348  oats 0 snips 0 lamp 0s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 550 fought 2954/2674
+[base5_idle] seed 2      idle: 0 stars  YOU 441, WILD 447 | IT TOOK MORE OF THE FOOD  mould 420  oats 0 snips 0 lamp 0s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 444 fought 2663/2664
+[base5_idle] seed 3      idle: 0 stars  YOU 395, WILD 482 | IT TOOK MORE OF THE FOOD  mould 388  oats 0 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 490 fought 2648/2611
+[base5_idle] seed 4      idle: 0 stars  YOU 439, WILD 431 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 436  oats 0 snips 0 lamp 0s joins 5  water 0 slept 0 woke 0 died asleep 0  wild 411 fought 2622/2573
+[base5_idle] seed 5      idle: 0 stars  YOU 503, WILD 371 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 482  oats 0 snips 0 lamp 0s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 380 fought 2700/2655
+[base5_idle] seed 6      idle: 0 stars  YOU 442, WILD 435 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 443  oats 0 snips 0 lamp 0s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 434 fought 3000/2865
+[base5_idle] seed 7      idle: 0 stars  YOU 411, WILD 490 | IT TOOK MORE OF THE FOOD  mould 422  oats 0 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 461 fought 3070/3221
+[base5_idle] seed 8      idle: 0 stars  YOU 429, WILD 430 | IT TOOK MORE OF THE FOOD  mould 426  oats 0 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 438 fought 2772/2798
+[base5_idle] seed 9      idle: 0 stars  YOU 492, WILD 377 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 474  oats 0 snips 0 lamp 0s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 371 fought 3194/3319
+[base5_idle] seed 10      idle: 0 stars  YOU 496, WILD 412 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 497  oats 0 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 398 fought 2437/2457
+[base5_idle] seed 11      idle: 0 stars  YOU 401, WILD 499 | IT TOOK MORE OF THE FOOD  mould 380  oats 0 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 491 fought 3064/3178
+[base5_idle] seed 12      idle: 0 stars  YOU 441, WILD 438 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 433  oats 0 snips 0 lamp 0s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 425 fought 2784/3155
+[base5_idle] seed 13      idle: 0 stars  YOU 461, WILD 424 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 428  oats 0 snips 0 lamp 0s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 417 fought 2859/3142
+[base5_idle] seed 14      idle: 0 stars  YOU 401, WILD 498 | IT TOOK MORE OF THE FOOD  mould 389  oats 0 snips 0 lamp 0s joins 6  water 0 slept 0 woke 0 died asleep 0  wild 488 fought 3004/2994
+[base5_idle] seed 15      idle: 0 stars  YOU 503, WILD 388 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 494  oats 0 snips 0 lamp 0s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 403 fought 2808/2841
+[base5_idle] seed 16      idle: 0 stars  YOU 438, WILD 424 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 438  oats 0 snips 0 lamp 0s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 410 fought 2572/2448
+[base5_random] seed 1    random: 0 stars  YOU 379, WILD 479 | IT TOOK MORE OF THE FOOD  mould 341  oats 13 snips 3 lamp 65s joins 25  water 0 slept 0 woke 0 died asleep 0  wild 494 fought 2739/2481
+[base5_random] seed 2    random: 0 stars  YOU 410, WILD 583 | IT TOOK MORE OF THE FOOD  mould 410  oats 13 snips 3 lamp 68s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 524 fought 2410/2317
+[base5_random] seed 3    random: 0 stars  YOU 460, WILD 378 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 478  oats 13 snips 3 lamp 61s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 376 fought 2799/2838
+[base5_random] seed 4    random: 0 stars  YOU 528, WILD 371 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 507  oats 13 snips 3 lamp 70s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 368 fought 2895/2963
+[base5_random] seed 5    random: 0 stars  YOU 441, WILD 436 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 441  oats 13 snips 3 lamp 77s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 420 fought 2945/2942
+[base5_random] seed 6    random: 1 stars  YOU 584, WILD 331 | 3X AS MUCH AS IT FOR 2 STARS  mould 562  oats 13 snips 3 lamp 82s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 320 fought 2194/2393
+[base5_random] seed 7    random: 0 stars  YOU 479, WILD 405 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 478  oats 13 snips 3 lamp 57s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 409 fought 3200/3152
+[base5_random] seed 8    random: 0 stars  YOU 446, WILD 440 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 452  oats 13 snips 3 lamp 68s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 428 fought 2802/2946
+[base5_random] seed 9    random: 0 stars  YOU 512, WILD 413 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 502  oats 13 snips 3 lamp 68s joins 24  water 0 slept 0 woke 0 died asleep 0  wild 402 fought 3394/3686
+[base5_random] seed 10    random: 0 stars  YOU 481, WILD 540 | IT TOOK MORE OF THE FOOD  mould 490  oats 13 snips 3 lamp 66s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 459 fought 3290/3151
+[base5_random] seed 11    random: 0 stars  YOU 433, WILD 512 | IT TOOK MORE OF THE FOOD  mould 434  oats 13 snips 3 lamp 65s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 470 fought 3342/3295
+[base5_random] seed 12    random: 0 stars  YOU 527, WILD 395 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 496  oats 13 snips 3 lamp 71s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 383 fought 2324/2404
+[base5_random] seed 13    random: 0 stars  YOU 474, WILD 395 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 462  oats 12 snips 3 lamp 67s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 399 fought 2190/2151
+[base5_random] seed 14    random: 0 stars  YOU 547, WILD 402 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 519  oats 13 snips 3 lamp 73s joins 21  water 0 slept 0 woke 0 died asleep 0  wild 401 fought 2625/2946
+[base5_random] seed 15    random: 1 stars  YOU 529, WILD 345 | 3X AS MUCH AS IT FOR 2 STARS  mould 546  oats 13 snips 3 lamp 71s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 343 fought 3243/3156
+[base5_random] seed 16    random: 0 stars  YOU 526, WILD 430 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 506  oats 13 snips 3 lamp 62s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 453 fought 2811/2795
+[base5_warden] seed 1    warden: 2 stars  YOU 783, WILD 204 | NOW CLEAR IT OFF THE DISH  mould 679  oats 4 snips 3 lamp 140s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 225 fought 1699/1830
+[base5_warden] seed 2    warden: 2 stars  YOU 1031, WILD 304 | NOW CLEAR IT OFF THE DISH  mould 948  oats 5 snips 3 lamp 140s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 265 fought 1295/1641
+[base5_warden] seed 3    warden: 2 stars  YOU 804, WILD 226 | NOW CLEAR IT OFF THE DISH  mould 717  oats 6 snips 3 lamp 123s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 209 fought 1758/1972
+[base5_warden] seed 4    warden: 3 stars  THE WILD ONE DIED AT 2:26; YOU 1100 | THE DISH IS YOURS  mould 992  oats 3 snips 3 lamp 118s joins 20  water 0 slept 0 woke 0 died asleep 0  wild 5 fought 1343/1397
+[base5_warden] seed 5    warden: 2 stars  YOU 885, WILD 150 | NOW CLEAR IT OFF THE DISH  mould 808  oats 4 snips 3 lamp 138s joins 25  water 0 slept 0 woke 0 died asleep 0  wild 119 fought 1732/1899
+[base5_warden] seed 6    warden: 1 stars  YOU 776, WILD 385 | 3X AS MUCH AS IT FOR 2 STARS  mould 726  oats 4 snips 3 lamp 141s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 309 fought 1654/1643
+[base5_warden] seed 7    warden: 3 stars  THE WILD ONE DIED AT 2:23; YOU 1553 | THE DISH IS YOURS  mould 1426  oats 4 snips 3 lamp 106s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 7 fought 1541/1609
+[base5_warden] seed 8    warden: 3 stars  THE WILD ONE DIED AT 2:05; YOU 2010 | THE DISH IS YOURS  mould 2055  oats 3 snips 3 lamp 114s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 12 fought 696/825
+[base5_warden] seed 9    warden: 2 stars  YOU 833, WILD 190 | NOW CLEAR IT OFF THE DISH  mould 731  oats 3 snips 3 lamp 124s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 207 fought 1346/1488
+[base5_warden] seed 10    warden: 2 stars  YOU 810, WILD 195 | NOW CLEAR IT OFF THE DISH  mould 711  oats 5 snips 3 lamp 142s joins 19  water 0 slept 0 woke 0 died asleep 0  wild 189 fought 1033/1291
+[base5_warden] seed 11    warden: 1 stars  YOU 746, WILD 481 | 3X AS MUCH AS IT FOR 2 STARS  mould 702  oats 5 snips 3 lamp 135s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 394 fought 2140/2282
+[base5_warden] seed 12    warden: 2 stars  YOU 772, WILD 213 | NOW CLEAR IT OFF THE DISH  mould 684  oats 6 snips 3 lamp 126s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 224 fought 1599/1681
+[base5_warden] seed 13    warden: 3 stars  THE WILD ONE DIED AT 2:06; YOU 2064 | THE DISH IS YOURS  mould 2050  oats 2 snips 3 lamp 102s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 6 fought 1167/1315
+[base5_warden] seed 14    warden: 2 stars  YOU 905, WILD 132 | NOW CLEAR IT OFF THE DISH  mould 849  oats 4 snips 3 lamp 128s joins 19  water 0 slept 0 woke 0 died asleep 0  wild 127 fought 1424/1621
+[base5_warden] seed 15    warden: 2 stars  YOU 882, WILD 255 | NOW CLEAR IT OFF THE DISH  mould 781  oats 5 snips 3 lamp 140s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 260 fought 1308/1421
+[base5_warden] seed 16    warden: 2 stars  YOU 778, WILD 232 | NOW CLEAR IT OFF THE DISH  mould 713  oats 5 snips 3 lamp 150s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 197 fought 993/1223
+[base4_idle] seed 1      idle: 0 stars  LIVED 2:13, AT MOST 1599 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 12  oats 0 snips 0 lamp 0s joins 2  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 2      idle: 0 stars  LIVED 2:27, AT MOST 1599 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 18  oats 0 snips 0 lamp 0s joins 3  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 3      idle: 0 stars  LIVED 2:53, AT MOST 1585 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 10  oats 0 snips 0 lamp 0s joins 4  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 4      idle: 0 stars  LIVED 3:48, AT MOST 1583 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 9  oats 0 snips 0 lamp 0s joins 7  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 5      idle: 0 stars  LIVED 2:06, AT MOST 1599 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 11  oats 0 snips 0 lamp 0s joins 2  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 6      idle: 0 stars  LIVED 1:08, AT MOST 1495 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 10  oats 0 snips 0 lamp 0s joins 2  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 7      idle: 0 stars  LIVED 1:47, AT MOST 1508 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 15  oats 0 snips 0 lamp 0s joins 0  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 8      idle: 0 stars  LIVED 1:47, AT MOST 1577 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 12  oats 0 snips 0 lamp 0s joins 2  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 9      idle: 0 stars  LIVED 1:46, AT MOST 1687 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 9  oats 0 snips 0 lamp 0s joins 1  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 10      idle: 0 stars  LIVED 2:10, AT MOST 1501 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 9  oats 0 snips 0 lamp 0s joins 4  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 11      idle: 0 stars  LIVED 2:08, AT MOST 1562 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 11  oats 0 snips 0 lamp 0s joins 3  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 12      idle: 0 stars  LIVED 2:29, AT MOST 1560 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 12  oats 0 snips 0 lamp 0s joins 3  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 13      idle: 0 stars  LIVED 2:09, AT MOST 1472 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 13  oats 0 snips 0 lamp 0s joins 4  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 14      idle: 0 stars  LIVED 3:06, AT MOST 1558 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 11  oats 0 snips 0 lamp 0s joins 4  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 15      idle: 0 stars  LIVED 2:33, AT MOST 1580 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 10  oats 0 snips 0 lamp 0s joins 3  water 0 slept 0 woke 0 died asleep 0
+[base4_idle] seed 16      idle: 0 stars  LIVED 1:27, AT MOST 1447 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 14  oats 0 snips 0 lamp 0s joins 2  water 0 slept 0 woke 0 died asleep 0
+[base4_random] seed 1    random: 0 stars  LIVED 2:49, AT MOST 1814 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 86s joins 1  water 6 slept 812 woke 3 died asleep 792
+[base4_random] seed 2    random: 0 stars  LIVED 2:03, AT MOST 1598 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 86s joins 6  water 6 slept 1456 woke 0 died asleep 1439
+[base4_random] seed 3    random: 0 stars  LIVED 1:41, AT MOST 1560 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 66s joins 5  water 5 slept 816 woke 1 died asleep 796
+[base4_random] seed 4    random: 0 stars  LIVED 1:07, AT MOST 2384 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 15  oats 6 snips 0 lamp 50s joins 4  water 4 slept 849 woke 0 died asleep 834
+[base4_random] seed 5    random: 0 stars  LIVED 2:04, AT MOST 1939 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 80s joins 3  water 5 slept 1416 woke 5 died asleep 1394
+[base4_random] seed 6    random: 0 stars  LIVED 2:07, AT MOST 1533 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 94s joins 5  water 6 slept 917 woke 0 died asleep 898
+[base4_random] seed 7    random: 0 stars  LIVED 1:42, AT MOST 1633 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 16  oats 6 snips 0 lamp 60s joins 5  water 5 slept 456 woke 0 died asleep 440
+[base4_random] seed 8    random: 0 stars  LIVED 1:06, AT MOST 1716 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 54s joins 1  water 4 slept 635 woke 0 died asleep 618
+[base4_random] seed 9    random: 0 stars  LIVED 1:46, AT MOST 1786 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 70s joins 4  water 5 slept 738 woke 0 died asleep 719
+[base4_random] seed 10    random: 0 stars  LIVED 3:29, AT MOST 1850 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 18  oats 6 snips 0 lamp 122s joins 10  water 8 slept 2132 woke 23 died asleep 2091
+[base4_random] seed 11    random: 0 stars  LIVED 1:54, AT MOST 1765 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 70s joins 6  water 5 slept 688 woke 0 died asleep 671
+[base4_random] seed 12    random: 0 stars  LIVED 2:27, AT MOST 1872 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 82s joins 3  water 6 slept 675 woke 0 died asleep 656
+[base4_random] seed 13    random: 0 stars  LIVED 1:04, AT MOST 1585 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 16  oats 6 snips 0 lamp 46s joins 1  water 4 slept 285 woke 1 died asleep 268
+[base4_random] seed 14    random: 0 stars  LIVED 3:29, AT MOST 1571 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 18  oats 6 snips 0 lamp 121s joins 10  water 7 slept 2487 woke 0 died asleep 2469
+[base4_random] seed 15    random: 0 stars  LIVED 1:05, AT MOST 1791 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 18  oats 6 snips 0 lamp 62s joins 1  water 4 slept 969 woke 0 died asleep 951
+[base4_random] seed 16    random: 0 stars  LIVED 2:45, AT MOST 1695 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 18  oats 6 snips 0 lamp 85s joins 6  water 6 slept 1386 woke 31 died asleep 1337
+[base4_intended] seed 1  intended: 0 stars  LIVED 3:09, AT MOST 1599 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 10  oats 6 snips 0 lamp 0s joins 5  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 2  intended: 1 stars  LIVED 4:26, AT MOST 1599 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 13  oats 6 snips 0 lamp 0s joins 12  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 3  intended: 0 stars  LIVED 4:09, AT MOST 1585 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 7  oats 6 snips 0 lamp 0s joins 15  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 4  intended: 0 stars  LIVED 3:28, AT MOST 1583 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 8  oats 6 snips 0 lamp 0s joins 12  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 5  intended: 0 stars  LIVED 3:48, AT MOST 1599 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 11  oats 6 snips 0 lamp 0s joins 9  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 6  intended: 0 stars  LIVED 4:08, AT MOST 1495 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 11  oats 6 snips 0 lamp 0s joins 14  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 7  intended: 1 stars  LIVED 5:26, AT MOST 1508 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 13  oats 6 snips 0 lamp 0s joins 14  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 8  intended: 0 stars  LIVED 3:29, AT MOST 1577 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 14  oats 6 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 9  intended: 0 stars  LIVED 3:31, AT MOST 1687 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 10  oats 6 snips 0 lamp 0s joins 9  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 10  intended: 0 stars  LIVED 3:34, AT MOST 1501 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 13  oats 6 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 11  intended: 0 stars  LIVED 2:57, AT MOST 1562 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 13  oats 6 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 12  intended: 0 stars  LIVED 3:26, AT MOST 1560 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 14  oats 6 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 13  intended: 0 stars  LIVED 3:53, AT MOST 1472 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 14  oats 6 snips 0 lamp 0s joins 9  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 14  intended: 0 stars  LIVED 3:06, AT MOST 1558 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 9  oats 6 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 15  intended: 1 stars  LIVED 4:39, AT MOST 1580 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 13  oats 6 snips 0 lamp 0s joins 15  water 0 slept 0 woke 0 died asleep 0
+[base4_intended] seed 16  intended: 0 stars  LIVED 2:47, AT MOST 1447 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 12  oats 6 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0
+[base4_sleeper] seed 1   sleeper: 3 stars  LIVED 8:01, AT MOST 1599 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 17  oats 6 snips 0 lamp 15s joins 11  water 10 slept 1565 woke 492 died asleep 1056
+[base4_sleeper] seed 2   sleeper: 3 stars  LIVED 9:21, AT MOST 1599 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 15  oats 6 snips 0 lamp 15s joins 18  water 10 slept 1328 woke 368 died asleep 945
+[base4_sleeper] seed 3   sleeper: 0 stars  LIVED 4:11, AT MOST 1585 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 4s joins 15  water 3 slept 512 woke 140 died asleep 355
+[base4_sleeper] seed 4   sleeper: 3 stars  LIVED 8:03, AT MOST 1590 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 17  oats 6 snips 0 lamp 18s joins 20  water 10 slept 2049 woke 320 died asleep 1712
+[base4_sleeper] seed 5   sleeper: 1 stars  LIVED 4:28, AT MOST 1599 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 6s joins 9  water 3 slept 688 woke 210 died asleep 459
+[base4_sleeper] seed 6   sleeper: 1 stars  LIVED 4:41, AT MOST 1495 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 16  oats 6 snips 0 lamp 8s joins 14  water 4 slept 489 woke 180 died asleep 293
+[base4_sleeper] seed 7   sleeper: 3 stars  LIVED 10:42, AT MOST 1640 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 18  oats 6 snips 0 lamp 14s joins 20  water 11 slept 1306 woke 362 died asleep 926
+[base4_sleeper] seed 8   sleeper: 1 stars  LIVED 4:41, AT MOST 1577 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 15  oats 6 snips 0 lamp 8s joins 10  water 5 slept 731 woke 130 died asleep 586
+[base4_sleeper] seed 9   sleeper: 3 stars  LIVED 10:41, AT MOST 3241 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 19  oats 6 snips 0 lamp 22s joins 17  water 14 slept 2372 woke 490 died asleep 1863
+[base4_sleeper] seed 10   sleeper: 1 stars  LIVED 5:04, AT MOST 1501 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 15  oats 6 snips 0 lamp 9s joins 9  water 6 slept 948 woke 223 died asleep 710
+[base4_sleeper] seed 11   sleeper: 0 stars  LIVED 3:22, AT MOST 1562 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 15  oats 6 snips 0 lamp 6s joins 8  water 3 slept 577 woke 120 died asleep 442
+[base4_sleeper] seed 12   sleeper: 0 stars  LIVED 3:28, AT MOST 1560 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 4s joins 10  water 4 slept 459 woke 137 died asleep 305
+[base4_sleeper] seed 13   sleeper: 1 stars  LIVED 4:41, AT MOST 1472 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 16  oats 6 snips 0 lamp 8s joins 9  water 4 slept 450 woke 132 died asleep 302
+[base4_sleeper] seed 14   sleeper: 0 stars  LIVED 3:03, AT MOST 1558 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 16  oats 6 snips 0 lamp 3s joins 8  water 2 slept 390 woke 113 died asleep 261
+[base4_sleeper] seed 15   sleeper: 3 stars  LIVED 7:21, AT MOST 1580 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 16  oats 6 snips 0 lamp 14s joins 17  water 7 slept 1126 woke 277 died asleep 833
+[base4_sleeper] seed 16   sleeper: 0 stars  LIVED 2:51, AT MOST 1447 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 16  oats 6 snips 0 lamp 4s joins 8  water 3 slept 407 woke 147 died asleep 244
+[k4_nowater_1] seed 1   sleeper: 0 stars  LIVED 2:57, AT MOST 1599 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 3s joins 5  water 0 slept 496 woke 0 died asleep 479
+[k4_nowater_2] seed 2   sleeper: 1 stars  LIVED 4:19, AT MOST 1599 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 2s joins 12  water 0 slept 187 woke 0 died asleep 168
+[k4_nowater_3] seed 3   sleeper: 0 stars  LIVED 4:00, AT MOST 1585 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 2s joins 15  water 0 slept 251 woke 0 died asleep 232
+[k4_nowater_4] seed 4   sleeper: 0 stars  LIVED 3:58, AT MOST 1583 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 3s joins 12  water 0 slept 484 woke 0 died asleep 467
+[k4_nowater_5] seed 5   sleeper: 0 stars  LIVED 3:39, AT MOST 1599 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 3s joins 9  water 0 slept 375 woke 0 died asleep 356
+[k4_nowater_6] seed 6   sleeper: 0 stars  LIVED 3:59, AT MOST 1495 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 15  oats 6 snips 0 lamp 2s joins 14  water 0 slept 208 woke 0 died asleep 193
+[k4_nowater_7] seed 7   sleeper: 1 stars  LIVED 5:16, AT MOST 1508 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 18  oats 6 snips 0 lamp 3s joins 14  water 0 slept 259 woke 0 died asleep 241
+[k4_nowater_8] seed 8   sleeper: 0 stars  LIVED 3:22, AT MOST 1577 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 3s joins 10  water 0 slept 424 woke 0 died asleep 405
+[k4_sloppier_1] seed 1   sleeper: 0 stars  LIVED 4:08, AT MOST 1599 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 4s joins 7  water 4 slept 582 woke 206 died asleep 357
+[k4_sloppier_2] seed 2   sleeper: 3 stars  LIVED 11:30, AT MOST 2089 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 17  oats 6 snips 0 lamp 16s joins 22  water 14 slept 1630 woke 417 died asleep 1196
+[k4_sloppier_3] seed 3   sleeper: 3 stars  LIVED 11:23, AT MOST 2286 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 18  oats 6 snips 0 lamp 18s joins 23  water 13 slept 2020 woke 413 died asleep 1589
+[k4_sloppier_4] seed 4   sleeper: 3 stars  LIVED 9:26, AT MOST 1583 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 17  oats 6 snips 0 lamp 14s joins 18  water 11 slept 1760 woke 395 died asleep 1348
+[k4_sloppier_5] seed 5   sleeper: 3 stars  LIVED 8:23, AT MOST 1599 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 18  oats 6 snips 0 lamp 9s joins 17  water 8 slept 1036 woke 325 died asleep 693
+[k4_sloppier_6] seed 6   sleeper: 0 stars  LIVED 4:09, AT MOST 1495 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 3s joins 14  water 2 slept 432 woke 215 died asleep 200
+[k4_sloppier_7] seed 7   sleeper: 3 stars  LIVED 11:38, AT MOST 2669 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 18  oats 6 snips 0 lamp 15s joins 26  water 11 slept 1905 woke 333 died asleep 1554
+[k4_sloppier_8] seed 8   sleeper: 3 stars  LIVED 8:15, AT MOST 1577 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 17  oats 6 snips 0 lamp 9s joins 12  water 7 slept 1067 woke 235 died asleep 815
+[k4_sloppy_1] seed 1   sleeper: 2 stars  LIVED 5:31, AT MOST 1599 MOULD | 3 STARS AT 6:40: MOVE ON SOONER  mould 15  oats 6 snips 0 lamp 8s joins 7  water 6 slept 846 woke 214 died asleep 617
+[k4_sloppy_2] seed 2   sleeper: 1 stars  LIVED 4:24, AT MOST 1599 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 18  oats 6 snips 0 lamp 3s joins 12  water 3 slept 339 woke 154 died asleep 167
+[k4_sloppy_3] seed 3   sleeper: 0 stars  LIVED 4:06, AT MOST 1585 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 3s joins 15  water 2 slept 466 woke 188 died asleep 261
+[k4_sloppy_4] seed 4   sleeper: 3 stars  LIVED 9:25, AT MOST 1583 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 19  oats 6 snips 0 lamp 15s joins 16  water 11 slept 1944 woke 557 died asleep 1368
+[k4_sloppy_5] seed 5   sleeper: 1 stars  LIVED 4:27, AT MOST 1599 MOULD | 2 STARS AT 5:30: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 6s joins 10  water 4 slept 721 woke 330 died asleep 374
+[k4_sloppy_6] seed 6   sleeper: 0 stars  LIVED 4:08, AT MOST 1495 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 18  oats 6 snips 0 lamp 4s joins 14  water 2 slept 437 woke 164 died asleep 255
+[k4_sloppy_7] seed 7   sleeper: 3 stars  LIVED 8:45, AT MOST 2579 MOULD | A LONG LIFE: IT KEPT MOVING HOUSE  mould 51  oats 6 snips 0 lamp 14s joins 22  water 8 slept 1539 woke 351 died asleep 1171
+[k4_sloppy_8] seed 8   sleeper: 0 stars  LIVED 4:09, AT MOST 1577 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 18  oats 6 snips 0 lamp 6s joins 10  water 5 slept 835 woke 356 died asleep 461
+[w5_camp_1] seed 1      camp: 0 stars  YOU 495, WILD 370 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 503  oats 0 snips 0 lamp 150s joins 7  water 0 slept 0 woke 0 died asleep 0  wild 354 fought 1901/1893
+[w5_camp_2] seed 2      camp: 0 stars  YOU 442, WILD 461 | IT TOOK MORE OF THE FOOD  mould 418  oats 0 snips 0 lamp 150s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 470 fought 2775/2587
+[w5_camp_3] seed 3      camp: 0 stars  YOU 433, WILD 437 | IT TOOK MORE OF THE FOOD  mould 447  oats 0 snips 0 lamp 150s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 412 fought 2813/2708
+[w5_camp_4] seed 4      camp: 0 stars  YOU 375, WILD 502 | IT TOOK MORE OF THE FOOD  mould 386  oats 0 snips 0 lamp 150s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 471 fought 2693/2813
+[w5_camp_5] seed 5      camp: 0 stars  YOU 431, WILD 462 | IT TOOK MORE OF THE FOOD  mould 421  oats 0 snips 0 lamp 150s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 440 fought 2734/2735
+[w5_camp_6] seed 6      camp: 0 stars  YOU 472, WILD 403 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 492  oats 0 snips 0 lamp 150s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 383 fought 3223/2961
+[w5_camp_7] seed 7      camp: 0 stars  YOU 486, WILD 433 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 486  oats 0 snips 0 lamp 150s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 424 fought 2332/2369
+[w5_camp_8] seed 8      camp: 0 stars  YOU 508, WILD 374 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 520  oats 0 snips 0 lamp 150s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 363 fought 2484/2526
+[w5_invarshow_3]     INVAR check ran t=1800 mine 1270 wild 900 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3]     INVAR check ran t=3600 mine 1199 wild 849 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3]     INVAR check ran t=5400 mine 1213 wild 856 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3]     INVAR check ran t=7200 mine 1212 wild 880 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3]     INVAR check ran t=9000 mine 1164 wild 890 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3]     INVAR check ran t=10800 mine 1307 wild 637 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3]     INVAR check ran t=12600 mine 1655 wild 389 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3]     INVAR check ran t=14400 mine 1761 wild 427 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3]     INVAR check ran t=16200 mine 1687 wild 305 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3]     INVAR check ran t=18000 mine 804 wild 227 shared 0 off 0 food diff 0.0000
+[w5_invarshow_3] seed 3    warden: 2 stars  YOU 804, WILD 226 | NOW CLEAR IT OFF THE DISH  mould 717  oats 6 snips 3 lamp 123s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 209 fought 1758/1972
+[w5_invar_1] seed 1    warden: 2 stars  YOU 783, WILD 204 | NOW CLEAR IT OFF THE DISH  mould 679  oats 4 snips 3 lamp 140s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 225 fought 1699/1830
+[w5_invar_1] seed 1    random: 0 stars  YOU 379, WILD 479 | IT TOOK MORE OF THE FOOD  mould 341  oats 13 snips 3 lamp 65s joins 25  water 0 slept 0 woke 0 died asleep 0  wild 494 fought 2739/2481
+[w5_invar_2] seed 2    warden: 2 stars  YOU 1031, WILD 304 | NOW CLEAR IT OFF THE DISH  mould 948  oats 5 snips 3 lamp 140s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 265 fought 1295/1641
+[w5_invar_2] seed 2    random: 0 stars  YOU 410, WILD 583 | IT TOOK MORE OF THE FOOD  mould 410  oats 13 snips 3 lamp 68s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 524 fought 2410/2317
+[w5_jail_1] seed 1      jail: 0 stars  YOU 459, WILD 339 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 463  oats 0 snips 0 lamp 0s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 317 fought 2760/3034
+[w5_jail_2] seed 2      jail: 1 stars  YOU 582, WILD 378 | 3X AS MUCH AS IT FOR 2 STARS  mould 566  oats 0 snips 0 lamp 0s joins 7  water 0 slept 0 woke 0 died asleep 0  wild 394 fought 2563/3177
+[w5_jail_3] seed 3      jail: 0 stars  YOU 480, WILD 345 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 496  oats 0 snips 0 lamp 0s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 296 fought 2953/2999
+[w5_jail_4] seed 4      jail: 1 stars  YOU 618, WILD 213 | 3X AS MUCH AS IT FOR 2 STARS  mould 621  oats 0 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 199 fought 2278/2878
+[w5_jail_5] seed 5      jail: 1 stars  YOU 552, WILD 252 | 3X AS MUCH AS IT FOR 2 STARS  mould 565  oats 0 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 223 fought 2605/2836
+[w5_jail_6] seed 6      jail: 1 stars  YOU 493, WILD 309 | 3X AS MUCH AS IT FOR 2 STARS  mould 477  oats 0 snips 0 lamp 0s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 288 fought 2663/2789
+[w5_jail_7] seed 7      jail: 1 stars  YOU 499, WILD 315 | 3X AS MUCH AS IT FOR 2 STARS  mould 485  oats 0 snips 0 lamp 0s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 304 fought 2892/2967
+[w5_jail_8] seed 8      jail: 0 stars  YOU 466, WILD 361 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 438  oats 0 snips 0 lamp 0s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 341 fought 2694/2690
+[w5_jit2_1] seed 1    warden: 1 stars  YOU 727, WILD 255 | 3X AS MUCH AS IT FOR 2 STARS  mould 689  oats 5 snips 3 lamp 150s joins 20  water 0 slept 0 woke 0 died asleep 0  wild 262 fought 992/1328
+[w5_jit2_2] seed 2    warden: 2 stars  YOU 887, WILD 215 | NOW CLEAR IT OFF THE DISH  mould 786  oats 5 snips 3 lamp 150s joins 20  water 0 slept 0 woke 0 died asleep 0  wild 223 fought 969/1205
+[w5_jit2_3] seed 3    warden: 2 stars  YOU 796, WILD 247 | NOW CLEAR IT OFF THE DISH  mould 723  oats 6 snips 3 lamp 150s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 253 fought 1092/1419
+[w5_jit2_4] seed 4    warden: 2 stars  YOU 851, WILD 212 | NOW CLEAR IT OFF THE DISH  mould 752  oats 5 snips 3 lamp 142s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 217 fought 1493/1845
+[w5_jit2_5] seed 5    warden: 2 stars  YOU 822, WILD 224 | NOW CLEAR IT OFF THE DISH  mould 719  oats 5 snips 3 lamp 125s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 245 fought 1419/1787
+[w5_jit2_6] seed 6    warden: 2 stars  YOU 705, WILD 197 | NOW CLEAR IT OFF THE DISH  mould 673  oats 7 snips 3 lamp 144s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 210 fought 1463/1659
+[w5_jit2_7] seed 7    warden: 1 stars  YOU 682, WILD 284 | 3X AS MUCH AS IT FOR 2 STARS  mould 662  oats 6 snips 3 lamp 150s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 257 fought 1169/1260
+[w5_jit2_8] seed 8    warden: 1 stars  YOU 611, WILD 366 | 3X AS MUCH AS IT FOR 2 STARS  mould 600  oats 5 snips 3 lamp 150s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 325 fought 775/675
+[w5_jit3_1] seed 1    warden: 1 stars  YOU 662, WILD 327 | 3X AS MUCH AS IT FOR 2 STARS  mould 638  oats 5 snips 3 lamp 150s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 290 fought 878/941
+[w5_jit3_2] seed 2    warden: 2 stars  YOU 750, WILD 212 | NOW CLEAR IT OFF THE DISH  mould 690  oats 7 snips 3 lamp 150s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 222 fought 987/1351
+[w5_jit3_3] seed 3    warden: 1 stars  YOU 625, WILD 322 | 3X AS MUCH AS IT FOR 2 STARS  mould 612  oats 6 snips 3 lamp 150s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 311 fought 988/1163
+[w5_jit3_4] seed 4    warden: 1 stars  YOU 628, WILD 314 | 3X AS MUCH AS IT FOR 2 STARS  mould 603  oats 5 snips 3 lamp 150s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 296 fought 1187/1311
+[w5_jit3_5] seed 5    warden: 1 stars  YOU 738, WILD 349 | 3X AS MUCH AS IT FOR 2 STARS  mould 662  oats 7 snips 3 lamp 150s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 315 fought 1305/1438
+[w5_jit3_6] seed 6    warden: 1 stars  YOU 658, WILD 345 | 3X AS MUCH AS IT FOR 2 STARS  mould 617  oats 7 snips 3 lamp 150s joins 21  water 0 slept 0 woke 0 died asleep 0  wild 328 fought 1325/1761
+[w5_jit3_7] seed 7    warden: 1 stars  YOU 798, WILD 270 | 3X AS MUCH AS IT FOR 2 STARS  mould 692  oats 5 snips 3 lamp 145s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 288 fought 1457/1528
+[w5_jit3_8] seed 8    warden: 1 stars  YOU 646, WILD 312 | 3X AS MUCH AS IT FOR 2 STARS  mould 624  oats 5 snips 3 lamp 150s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 298 fought 878/1154
+[w5_jitonly_1] seed 1    warden: 1 stars  YOU 734, WILD 304 | 3X AS MUCH AS IT FOR 2 STARS  mould 674  oats 6 snips 3 lamp 150s joins 19  water 0 slept 0 woke 0 died asleep 0  wild 292 fought 1050/1335
+[w5_jitonly_2] seed 2    warden: 1 stars  YOU 743, WILD 315 | 3X AS MUCH AS IT FOR 2 STARS  mould 647  oats 6 snips 3 lamp 150s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 311 fought 826/869
+[w5_jitonly_3] seed 3    warden: 1 stars  YOU 611, WILD 316 | 3X AS MUCH AS IT FOR 2 STARS  mould 607  oats 6 snips 3 lamp 150s joins 20  water 0 slept 0 woke 0 died asleep 0  wild 311 fought 1234/1702
+[w5_jitonly_4] seed 4    warden: 1 stars  YOU 603, WILD 323 | 3X AS MUCH AS IT FOR 2 STARS  mould 600  oats 6 snips 3 lamp 150s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 326 fought 940/1298
+[w5_jitonly_5] seed 5    warden: 1 stars  YOU 755, WILD 311 | 3X AS MUCH AS IT FOR 2 STARS  mould 673  oats 8 snips 3 lamp 150s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 312 fought 1096/1426
+[w5_jitonly_6] seed 6    warden: 1 stars  YOU 662, WILD 330 | 3X AS MUCH AS IT FOR 2 STARS  mould 616  oats 7 snips 3 lamp 150s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 308 fought 1602/1755
+[w5_jitonly_7] seed 7    warden: 1 stars  YOU 718, WILD 254 | 3X AS MUCH AS IT FOR 2 STARS  mould 670  oats 8 snips 3 lamp 150s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 239 fought 1430/1970
+[w5_jitonly_8] seed 8    warden: 1 stars  YOU 623, WILD 350 | 3X AS MUCH AS IT FOR 2 STARS  mould 616  oats 5 snips 3 lamp 150s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 303 fought 855/1168
+[w5_lagonly_1] seed 1    warden: 2 stars  YOU 691, WILD 224 | NOW CLEAR IT OFF THE DISH  mould 673  oats 4 snips 3 lamp 112s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 233 fought 2089/2350
+[w5_lagonly_2] seed 2    warden: 2 stars  YOU 886, WILD 237 | NOW CLEAR IT OFF THE DISH  mould 775  oats 2 snips 3 lamp 136s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 232 fought 1731/1767
+[w5_lagonly_3] seed 3    warden: 1 stars  YOU 748, WILD 258 | 3X AS MUCH AS IT FOR 2 STARS  mould 674  oats 2 snips 3 lamp 132s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 234 fought 1473/1408
+[w5_lagonly_4] seed 4    warden: 1 stars  YOU 798, WILD 322 | 3X AS MUCH AS IT FOR 2 STARS  mould 707  oats 3 snips 3 lamp 140s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 257 fought 1334/1741
+[w5_lagonly_5] seed 5    warden: 3 stars  THE WILD ONE DIED AT 1:28; YOU 2018 | THE DISH IS YOURS  mould 2056  oats 3 snips 0 lamp 64s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 5 fought 1055/961
+[w5_lagonly_6] seed 6    warden: 1 stars  YOU 774, WILD 277 | 3X AS MUCH AS IT FOR 2 STARS  mould 697  oats 5 snips 3 lamp 134s joins 21  water 0 slept 0 woke 0 died asleep 0  wild 225 fought 1769/2184
+[w5_lagonly_7] seed 7    warden: 2 stars  YOU 846, WILD 156 | NOW CLEAR IT OFF THE DISH  mould 770  oats 2 snips 3 lamp 114s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 129 fought 1519/1691
+[w5_lagonly_8] seed 8    warden: 1 stars  YOU 723, WILD 380 | 3X AS MUCH AS IT FOR 2 STARS  mould 681  oats 5 snips 3 lamp 140s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 267 fought 1948/2265
+[w5_nestsalt_1] seed 1  nestsalt: 0 stars  YOU 441, WILD 449 | IT TOOK MORE OF THE FOOD  mould 427  oats 0 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 436 fought 2457/2652
+[w5_nestsalt_2] seed 2  nestsalt: 0 stars  YOU 385, WILD 504 | IT TOOK MORE OF THE FOOD  mould 377  oats 0 snips 0 lamp 0s joins 7  water 0 slept 0 woke 0 died asleep 0  wild 494 fought 2857/2818
+[w5_nestsalt_3] seed 3  nestsalt: 0 stars  YOU 502, WILD 377 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 489  oats 0 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 386 fought 2877/3038
+[w5_nestsalt_4] seed 4  nestsalt: 0 stars  YOU 453, WILD 428 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 450  oats 0 snips 0 lamp 0s joins 2  water 0 slept 0 woke 0 died asleep 0  wild 410 fought 3102/3317
+[w5_nestsalt_5] seed 5  nestsalt: 1 stars  YOU 532, WILD 312 | 3X AS MUCH AS IT FOR 2 STARS  mould 529  oats 0 snips 0 lamp 0s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 316 fought 3195/3312
+[w5_nestsalt_6] seed 6  nestsalt: 0 stars  YOU 463, WILD 430 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 453  oats 0 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 417 fought 2466/2325
+[w5_nestsalt_7] seed 7  nestsalt: 0 stars  YOU 317, WILD 563 | IT TOOK MORE OF THE FOOD  mould 320  oats 0 snips 0 lamp 0s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 550 fought 3129/2865
+[w5_nestsalt_8] seed 8  nestsalt: 0 stars  YOU 487, WILD 358 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 489  oats 0 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 343 fought 2907/3168
+[w5_nestsnip_1] seed 1  nestsnip: 0 stars  YOU 421, WILD 454 | IT TOOK MORE OF THE FOOD  mould 415  oats 0 snips 3 lamp 0s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 448 fought 2479/2477
+[w5_nestsnip_2] seed 2  nestsnip: 0 stars  YOU 438, WILD 439 | IT TOOK MORE OF THE FOOD  mould 428  oats 0 snips 3 lamp 0s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 447 fought 2287/2365
+[w5_nestsnip_3] seed 3  nestsnip: 0 stars  YOU 485, WILD 408 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 496  oats 0 snips 3 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 396 fought 2662/2710
+[w5_nestsnip_4] seed 4  nestsnip: 0 stars  YOU 485, WILD 396 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 475  oats 0 snips 3 lamp 0s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 400 fought 2620/2487
+[w5_nestsnip_5] seed 5  nestsnip: 0 stars  YOU 377, WILD 488 | IT TOOK MORE OF THE FOOD  mould 372  oats 0 snips 3 lamp 0s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 481 fought 3562/3494
+[w5_nestsnip_6] seed 6  nestsnip: 0 stars  YOU 471, WILD 414 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 464  oats 0 snips 3 lamp 0s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 406 fought 2676/2909
+[w5_nestsnip_7] seed 7  nestsnip: 0 stars  YOU 463, WILD 427 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 474  oats 0 snips 3 lamp 0s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 407 fought 2655/2692
+[w5_nestsnip_8] seed 8  nestsnip: 0 stars  YOU 448, WILD 446 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 444  oats 0 snips 3 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 430 fought 2971/2968
+[w5_sloppier_1] seed 1    warden: 1 stars  YOU 610, WILD 309 | 3X AS MUCH AS IT FOR 2 STARS  mould 616  oats 5 snips 3 lamp 100s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 314 fought 1340/1518
+[w5_sloppier_2] seed 2    warden: 1 stars  YOU 616, WILD 337 | 3X AS MUCH AS IT FOR 2 STARS  mould 590  oats 4 snips 3 lamp 100s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 329 fought 1460/1599
+[w5_sloppier_3] seed 3    warden: 1 stars  YOU 611, WILD 339 | 3X AS MUCH AS IT FOR 2 STARS  mould 606  oats 3 snips 3 lamp 100s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 319 fought 1133/1233
+[w5_sloppier_4] seed 4    warden: 1 stars  YOU 587, WILD 319 | 3X AS MUCH AS IT FOR 2 STARS  mould 584  oats 4 snips 3 lamp 100s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 312 fought 914/993
+[w5_sloppier_5] seed 5    warden: 1 stars  YOU 708, WILD 307 | 3X AS MUCH AS IT FOR 2 STARS  mould 614  oats 8 snips 3 lamp 100s joins 21  water 0 slept 0 woke 0 died asleep 0  wild 306 fought 1677/2122
+[w5_sloppier_6] seed 6    warden: 1 stars  YOU 602, WILD 325 | 3X AS MUCH AS IT FOR 2 STARS  mould 601  oats 3 snips 3 lamp 100s joins 20  water 0 slept 0 woke 0 died asleep 0  wild 321 fought 1283/1626
+[w5_sloppier_7] seed 7    warden: 1 stars  YOU 647, WILD 375 | 3X AS MUCH AS IT FOR 2 STARS  mould 631  oats 6 snips 3 lamp 100s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 337 fought 1059/1202
+[w5_sloppier_8] seed 8    warden: 1 stars  YOU 614, WILD 308 | 3X AS MUCH AS IT FOR 2 STARS  mould 603  oats 5 snips 3 lamp 100s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 306 fought 1290/1659
+[w5_sloppy_1] seed 1    warden: 1 stars  YOU 637, WILD 336 | 3X AS MUCH AS IT FOR 2 STARS  mould 624  oats 4 snips 3 lamp 150s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 309 fought 922/1215
+[w5_sloppy_2] seed 2    warden: 1 stars  YOU 637, WILD 277 | 3X AS MUCH AS IT FOR 2 STARS  mould 630  oats 4 snips 3 lamp 150s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 274 fought 1013/1483
+[w5_sloppy_3] seed 3    warden: 1 stars  YOU 797, WILD 307 | 3X AS MUCH AS IT FOR 2 STARS  mould 748  oats 4 snips 3 lamp 150s joins 19  water 0 slept 0 woke 0 died asleep 0  wild 304 fought 1215/1656
+[w5_sloppy_4] seed 4    warden: 1 stars  YOU 711, WILD 333 | 3X AS MUCH AS IT FOR 2 STARS  mould 624  oats 4 snips 3 lamp 150s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 317 fought 960/1050
+[w5_sloppy_5] seed 5    warden: 1 stars  YOU 639, WILD 331 | 3X AS MUCH AS IT FOR 2 STARS  mould 596  oats 5 snips 3 lamp 150s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 320 fought 935/1058
+[w5_sloppy_6] seed 6    warden: 1 stars  YOU 600, WILD 313 | 3X AS MUCH AS IT FOR 2 STARS  mould 612  oats 6 snips 3 lamp 150s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 302 fought 1341/1542
+[w5_sloppy_7] seed 7    warden: 1 stars  YOU 628, WILD 355 | 3X AS MUCH AS IT FOR 2 STARS  mould 602  oats 5 snips 3 lamp 150s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 326 fought 1264/1371
+[w5_sloppy_8] seed 8    warden: 1 stars  YOU 616, WILD 321 | 3X AS MUCH AS IT FOR 2 STARS  mould 612  oats 5 snips 3 lamp 150s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 313 fought 1083/1279
+[w5_stop30_1] seed 1    warden: 1 stars  YOU 597, WILD 343 | 3X AS MUCH AS IT FOR 2 STARS  mould 602  oats 2 snips 1 lamp 30s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 333 fought 810/1142
+[w5_stop30_2] seed 2    warden: 1 stars  YOU 681, WILD 350 | 3X AS MUCH AS IT FOR 2 STARS  mould 607  oats 2 snips 0 lamp 30s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 323 fought 939/931
+[w5_stop30_3] seed 3    warden: 1 stars  YOU 622, WILD 334 | 3X AS MUCH AS IT FOR 2 STARS  mould 604  oats 2 snips 1 lamp 30s joins 23  water 0 slept 0 woke 0 died asleep 0  wild 323 fought 1378/1558
+[w5_stop30_4] seed 4    warden: 1 stars  YOU 585, WILD 332 | 3X AS MUCH AS IT FOR 2 STARS  mould 583  oats 2 snips 0 lamp 30s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 322 fought 1245/1537
+[w5_stop30_5] seed 5    warden: 1 stars  YOU 600, WILD 316 | 3X AS MUCH AS IT FOR 2 STARS  mould 601  oats 2 snips 1 lamp 30s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 306 fought 1000/1171
+[w5_stop30_6] seed 6    warden: 1 stars  YOU 635, WILD 331 | 3X AS MUCH AS IT FOR 2 STARS  mould 616  oats 2 snips 0 lamp 30s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 323 fought 1304/1545
+[w5_stop30_7] seed 7    warden: 1 stars  YOU 545, WILD 328 | 3X AS MUCH AS IT FOR 2 STARS  mould 554  oats 2 snips 1 lamp 30s joins 20  water 0 slept 0 woke 0 died asleep 0  wild 302 fought 1644/1787
+[w5_stop30_8] seed 8    warden: 1 stars  YOU 620, WILD 351 | 3X AS MUCH AS IT FOR 2 STARS  mould 613  oats 2 snips 1 lamp 30s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 334 fought 964/1278
+[w5_stop60_1] seed 1    warden: 1 stars  YOU 589, WILD 336 | 3X AS MUCH AS IT FOR 2 STARS  mould 591  oats 2 snips 2 lamp 60s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 327 fought 1586/1702
+[w5_stop60_2] seed 2    warden: 1 stars  YOU 582, WILD 342 | 3X AS MUCH AS IT FOR 2 STARS  mould 574  oats 3 snips 2 lamp 60s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 333 fought 831/983
+[w5_stop60_3] seed 3    warden: 1 stars  YOU 600, WILD 320 | 3X AS MUCH AS IT FOR 2 STARS  mould 594  oats 3 snips 2 lamp 60s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 311 fought 877/996
+[w5_stop60_4] seed 4    warden: 1 stars  YOU 591, WILD 316 | 3X AS MUCH AS IT FOR 2 STARS  mould 601  oats 2 snips 1 lamp 60s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 310 fought 1297/1614
+[w5_stop60_5] seed 5    warden: 1 stars  YOU 601, WILD 310 | 3X AS MUCH AS IT FOR 2 STARS  mould 598  oats 3 snips 2 lamp 60s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 311 fought 1338/1624
+[w5_stop60_6] seed 6    warden: 1 stars  YOU 583, WILD 339 | 3X AS MUCH AS IT FOR 2 STARS  mould 578  oats 3 snips 2 lamp 60s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 306 fought 1270/1445
+[w5_stop60_7] seed 7    warden: 1 stars  YOU 604, WILD 317 | 3X AS MUCH AS IT FOR 2 STARS  mould 608  oats 3 snips 2 lamp 60s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 306 fought 1427/1587
+[w5_stop60_8] seed 8    warden: 1 stars  YOU 607, WILD 335 | 3X AS MUCH AS IT FOR 2 STARS  mould 594  oats 2 snips 1 lamp 60s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 318 fought 1034/1172
+[w5_stop90_1] seed 1    warden: 1 stars  YOU 532, WILD 351 | 3X AS MUCH AS IT FOR 2 STARS  mould 528  oats 2 snips 3 lamp 85s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 329 fought 2330/2237
+[w5_stop90_2] seed 2    warden: 1 stars  YOU 604, WILD 346 | 3X AS MUCH AS IT FOR 2 STARS  mould 606  oats 3 snips 3 lamp 90s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 310 fought 940/1177
+[w5_stop90_3] seed 3    warden: 1 stars  YOU 610, WILD 326 | 3X AS MUCH AS IT FOR 2 STARS  mould 576  oats 4 snips 3 lamp 90s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 315 fought 1431/1533
+[w5_stop90_4] seed 4    warden: 1 stars  YOU 598, WILD 342 | 3X AS MUCH AS IT FOR 2 STARS  mould 591  oats 2 snips 3 lamp 90s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 329 fought 1142/1360
+[w5_stop90_5] seed 5    warden: 1 stars  YOU 617, WILD 326 | 3X AS MUCH AS IT FOR 2 STARS  mould 606  oats 3 snips 2 lamp 90s joins 26  water 0 slept 0 woke 0 died asleep 0  wild 310 fought 1542/1547
+[w5_stop90_6] seed 6    warden: 1 stars  YOU 603, WILD 305 | 3X AS MUCH AS IT FOR 2 STARS  mould 608  oats 4 snips 3 lamp 90s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 303 fought 1647/1591
+[w5_stop90_7] seed 7    warden: 1 stars  YOU 608, WILD 364 | 3X AS MUCH AS IT FOR 2 STARS  mould 598  oats 4 snips 3 lamp 86s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 321 fought 1725/1838
+[w5_stop90_8] seed 8    warden: 1 stars  YOU 642, WILD 382 | 3X AS MUCH AS IT FOR 2 STARS  mould 601  oats 3 snips 3 lamp 90s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 334 fought 693/927
+[w5_strike_1] seed 1    strike: 0 stars  YOU 275, WILD 569 | IT TOOK MORE OF THE FOOD  mould 260  oats 0 snips 3 lamp 150s joins 6  water 0 slept 0 woke 0 died asleep 0  wild 598 fought 2523/2783
+[w5_strike_2] seed 2    strike: 0 stars  YOU 435, WILD 438 | IT TOOK MORE OF THE FOOD  mould 438  oats 0 snips 3 lamp 150s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 405 fought 2960/3093
+[w5_strike_3] seed 3    strike: 0 stars  YOU 439, WILD 445 | IT TOOK MORE OF THE FOOD  mould 428  oats 0 snips 3 lamp 150s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 455 fought 2454/2581
+[w5_strike_4] seed 4    strike: 1 stars  YOU 639, WILD 288 | 3X AS MUCH AS IT FOR 2 STARS  mould 614  oats 0 snips 3 lamp 150s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 293 fought 3243/3271
+[w5_strike_5] seed 5    strike: 0 stars  YOU 323, WILD 595 | IT TOOK MORE OF THE FOOD  mould 303  oats 0 snips 3 lamp 150s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 585 fought 2956/3034
+[w5_strike_6] seed 6    strike: 1 stars  YOU 560, WILD 345 | 3X AS MUCH AS IT FOR 2 STARS  mould 559  oats 0 snips 3 lamp 150s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 336 fought 1799/1809
+[w5_strike_7] seed 7    strike: 0 stars  YOU 472, WILD 465 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 474  oats 0 snips 3 lamp 150s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 419 fought 2403/2522
+[w5_strike_8] seed 8    strike: 0 stars  YOU 362, WILD 529 | IT TOOK MORE OF THE FOOD  mould 362  oats 0 snips 3 lamp 150s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 509 fought 2631/2637
+# The Wild One, last 20 s (LEVELTRACE)
+[t5_1]     t=130s mould 1214 wild  851 asleep    0
+[t5_1]     t=140s mould 1508 wild  491 asleep    0
+[t5_1] seed 1    warden: 2 stars  YOU 783, WILD 204 | NOW CLEAR IT OFF THE DISH  mould 679  oats 4 snips 3 lamp 140s joins 18  water 0 slept 0 woke 0 died asleep 0  wild 225 fought 1699/1830
+[t5_1]     t=130s mould  920 wild 1062 asleep    0
+[t5_1]     t=140s mould  874 wild 1062 asleep    0
+[t5_1] seed 1      idle: 0 stars  YOU 354, WILD 543 | IT TOOK MORE OF THE FOOD  mould 348  oats 0 snips 0 lamp 0s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 550 fought 2954/2674
+[t5_2]     t=130s mould 1525 wild  428 asleep    0
+[t5_2]     t=140s mould 1439 wild  475 asleep    0
+[t5_2] seed 2    warden: 2 stars  YOU 1031, WILD 304 | NOW CLEAR IT OFF THE DISH  mould 948  oats 5 snips 3 lamp 140s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 265 fought 1295/1641
+[t5_2]     t=130s mould  918 wild 1091 asleep    0
+[t5_2]     t=140s mould  945 wild  944 asleep    0
+[t5_2] seed 2      idle: 0 stars  YOU 441, WILD 447 | IT TOOK MORE OF THE FOOD  mould 420  oats 0 snips 0 lamp 0s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 444 fought 2663/2664
+[t5_3]     t=130s mould 1624 wild  383 asleep    0
+[t5_3]     t=140s mould 1759 wild  230 asleep    0
+[t5_3] seed 3    warden: 2 stars  YOU 804, WILD 226 | NOW CLEAR IT OFF THE DISH  mould 717  oats 6 snips 3 lamp 123s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 209 fought 1758/1972
+[t5_3]     t=130s mould  849 wild 1173 asleep    0
+[t5_3]     t=140s mould  788 wild 1107 asleep    0
+[t5_3] seed 3      idle: 0 stars  YOU 395, WILD 482 | IT TOOK MORE OF THE FOOD  mould 388  oats 0 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 490 fought 2648/2611
+[t5_4]     t=130s mould 1809 wild  199 asleep    0
+[t5_4]     t=140s mould 1842 wild   93 asleep    0
+[t5_4] seed 4    warden: 3 stars  THE WILD ONE DIED AT 2:26; YOU 1100 | THE DISH IS YOURS  mould 992  oats 3 snips 3 lamp 118s joins 20  water 0 slept 0 woke 0 died asleep 0  wild 5 fought 1343/1397
+[t5_4]     t=130s mould 1000 wild 1010 asleep    0
+[t5_4]     t=140s mould  901 wild  941 asleep    0
+[t5_4] seed 4      idle: 0 stars  YOU 439, WILD 431 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 436  oats 0 snips 0 lamp 0s joins 5  water 0 slept 0 woke 0 died asleep 0  wild 411 fought 2622/2573
+[t5_5]     t=130s mould 1610 wild  444 asleep    0
+[t5_5]     t=140s mould 1613 wild  364 asleep    0
+[t5_5] seed 5    warden: 2 stars  YOU 885, WILD 150 | NOW CLEAR IT OFF THE DISH  mould 808  oats 4 snips 3 lamp 138s joins 25  water 0 slept 0 woke 0 died asleep 0  wild 119 fought 1732/1899
+[t5_5]     t=130s mould 1028 wild  966 asleep    0
+[t5_5]     t=140s mould 1001 wild  887 asleep    0
+[t5_5] seed 5      idle: 0 stars  YOU 503, WILD 371 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 482  oats 0 snips 0 lamp 0s joins 11  water 0 slept 0 woke 0 died asleep 0  wild 380 fought 2700/2655
+[t5_6]     t=130s mould 1295 wild  604 asleep    0
+[t5_6]     t=140s mould 1280 wild  734 asleep    0
+[t5_6] seed 6    warden: 1 stars  YOU 776, WILD 385 | 3X AS MUCH AS IT FOR 2 STARS  mould 726  oats 4 snips 3 lamp 141s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 309 fought 1654/1643
+[t5_6]     t=130s mould  950 wild 1057 asleep    0
+[t5_6]     t=140s mould  921 wild  970 asleep    0
+[t5_6] seed 6      idle: 0 stars  YOU 442, WILD 435 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 443  oats 0 snips 0 lamp 0s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 434 fought 3000/2865
+[t5_7]     t=130s mould 1866 wild  157 asleep    0
+[t5_7]     t=140s mould 1939 wild   43 asleep    0
+[t5_7] seed 7    warden: 3 stars  THE WILD ONE DIED AT 2:23; YOU 1553 | THE DISH IS YOURS  mould 1426  oats 4 snips 3 lamp 106s joins 14  water 0 slept 0 woke 0 died asleep 0  wild 7 fought 1541/1609
+[t5_7]     t=130s mould 1088 wild  891 asleep    0
+[t5_7]     t=140s mould  897 wild  954 asleep    0
+[t5_7] seed 7      idle: 0 stars  YOU 411, WILD 490 | IT TOOK MORE OF THE FOOD  mould 422  oats 0 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 461 fought 3070/3221
+[t5_8] seed 8    warden: 3 stars  THE WILD ONE DIED AT 2:05; YOU 2010 | THE DISH IS YOURS  mould 2055  oats 3 snips 3 lamp 114s joins 10  water 0 slept 0 woke 0 died asleep 0  wild 12 fought 696/825
+[t5_8]     t=130s mould  989 wild 1035 asleep    0
+[t5_8]     t=140s mould  909 wild  951 asleep    0
+[t5_8] seed 8      idle: 0 stars  YOU 429, WILD 430 | IT TOOK MORE OF THE FOOD  mould 426  oats 0 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 438 fought 2772/2798
