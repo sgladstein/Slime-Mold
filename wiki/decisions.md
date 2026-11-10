@@ -36,6 +36,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-10 17:51, card | Run the wiki's success check first, then add the next pages (oats, salt, the lesson and puzzle dishes, sensors, the look) and ingest review 1 | card ("Both, check first") | [plan report, *Success check*](../Reports/llm-wiki-plan-2026-11-10.md) |
 | 2026-11-10 17:26 | `HANDOFF.md` stays the hand-written front page; its status section becomes one linked line per subject, and it keeps the open decisions and next steps | "Sure" (to that recommendation) | [HANDOFF](../HANDOFF.md) |
 | 2026-11-10 17:25 | The wiki lint stays in CI | "lint can stay in the CI for now." | [README](README.md) |
 | 2026-11-10 17:24 | Plan agreed; build the wiki to grow with the repo | "I agree with the plan, but note that this repo is brand new so it will grow significantly." | [README, *Growth*](README.md) |
@@ -46,6 +47,7 @@ artifact links are left out; the quotes are kept in the sources named.
 | 2026-11-10 03:00 | A rival mould that fights and steals | "Also wondering about having multiple molds that can fight or steal resources from each other" | [The Wild One](dishes/the-wild-one.md) |
 | 2026-11-10 02:58 | More depth, not more tools | "We also need to add complexity to the game. The tools are quite one dimensionally right now" | [water and sleep](model/water-and-sleep.md) |
 | 2026-11-10 02:57, card | The keep-it-alive endless dish first | card | [Keep It Alive](dishes/keep-it-alive.md) |
+| 2026-11-09, card | Keep 22.5 degrees and find it new goals (after the 22.5 vs 45 page); dishes now set their own angle | card ("Keep 22.5, new goals") | [sensors](model/sensors.md) |
 | 2026-11-08, card | Each piece of mould eats only the food it is joined to (`Params::pieces`) | "Yes, each piece eats its own food" | [the knife](tools/knife.md) |
 | 2026-11-08 | The mould game is the most promising of the eight demos; it needs instruction and a challenge | "the most promise so far" | [probe report](../Reports/mould-probe-2026-11-07.md) |
 

@@ -9,7 +9,8 @@ here when its page's **Now** changes, and keep the detail there (owner,
 hand-off at the 2026-11-10 account move; everything it points to is in this
 repository.
 
-**Read first:** this page, then [`CLAUDE.md`](CLAUDE.md) (how to work here),
+**Read first:** this page, then [ROADMAP.md](ROADMAP.md) (every plan in one
+order), then [`CLAUDE.md`](CLAUDE.md) (how to work here),
 then the [wiki page](wiki/index.md) for whatever you touch, then its
 reports ([`Reports/README.md`](Reports/README.md) indexes them all).
 
@@ -25,17 +26,19 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   landing, which shows only 5 s ahead.
 - [The Wild One](wiki/dishes/the-wild-one.md): scored by your share of the
   food eaten; the first star is the opening salt wall, the rest is aim.
-- The lesson and the three puzzle dishes (Behind the Wall, Beat the Ruler,
-  Running Dry): no page yet; [`Reports/mould-probe-2026-11-07.md`](Reports/mould-probe-2026-11-07.md).
-- Tools: [the lamp](wiki/tools/lamp.md) pushes and dries;
-  [the knife](wiki/tools/knife.md) moves nothing in The Wild One;
-  [water and sleep](wiki/model/water-and-sleep.md) carry mould through
-  famine in Keep It Alive. Oats and salt: no page yet.
-- Look: the from-the-simulation look is the default, F7 the old tube look;
-  no page yet, [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md).
-- Model defaults: sensor angle 45 degrees (22.5 on Keep It Alive and some
-  dishes), reach 9, food flow off; no page yet,
-  [`Reports/dead-ends.md`](Reports/dead-ends.md) for reach.
+- [The lesson and the three puzzle dishes](wiki/dishes/puzzle-dishes.md)
+  (Behind the Wall, Beat the Ruler, Running Dry): pass their bar at 45
+  degrees; review 1 would keep them as a side pack.
+- Tools: [oats](wiki/tools/oats.md) lead, [the lamp](wiki/tools/lamp.md)
+  pushes and dries, [salt](wiki/tools/salt.md) walls off (it is The Wild
+  One's first star), [the knife](wiki/tools/knife.md) moves nothing in The
+  Wild One; [water and sleep](wiki/model/water-and-sleep.md) carry mould
+  through famine in Keep It Alive.
+- [The simulation look](wiki/looks/simulation-look.md) is the default, F7
+  the old tube look.
+- [Sensor angle and reach](wiki/model/sensors.md): 45 degrees by default,
+  22.5 on Keep It Alive and The Wild One, reach 9. Food flow is off; no
+  page yet.
 - Scale: [the mould at scale](wiki/model/scale.md). The dish holds a few dozen
   loops where Jenson's GPU version holds hundreds; a six-phase GPU plan is
   reviewed and not started.
@@ -66,6 +69,14 @@ Ask each again; none has an answer to assume.
    phase 4; hold the Pixel_Physics multi-core renderer port until the phase 2
    gate. Owner 11-10 17:24Z: "I like this plan, but run an independent review
    agent first." The review is folded in; no phase has a go yet.
+7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
+   *Risks and open questions*): should it wait for the queued work or take
+   over The Wild One's next steps (its Stage 0 answers the same mid-game
+   question); is a fog of war allowed if it is drawn from a held quantity;
+   two keepers, or three-to-four.
+8. **Sound for the game:** wanted at all? The Pixel_Physics review
+   recommends starting from that repo's `src/audio/` if so; the game window
+   is silent today.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
@@ -73,6 +84,9 @@ with no engine, is in §5 of
 [`Reports/mould-real-world-2026-11-09.md`](Reports/mould-real-world-2026-11-09.md).
 
 ## Next steps, in order
+
+How these sit against the GPU plan, the Pixel_Physics ports and the RTS,
+with what each waits on and which thread owns it: [ROADMAP.md](ROADMAP.md).
 
 1. **Keep It Alive: give the player the choice that decides the hump.**
    Traced: the first pile landing on mostly-asleep mould decides it, by

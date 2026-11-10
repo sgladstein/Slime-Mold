@@ -38,7 +38,6 @@ NOT_SOURCES = {"README.md", "dead-ends.md", "pages.md"}
 # the repo is new and will grow, and a wiki that skips new reports goes stale
 # without anyone noticing. Remove a name once a page cites it.
 NOT_YET_INGESTED = {
-    "mould-review-2026-11-10.md",
     # Merged (PR #10) minutes before the wiki and its lint landed (PR #9).
     "rts-design-2026-11-10.md",
 }
