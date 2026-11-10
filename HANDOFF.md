@@ -40,8 +40,10 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   22.5 on Keep It Alive and The Wild One, reach 9. Food flow is off; no
   page yet.
 - Scale: [the mould at scale](wiki/model/scale.md). The dish holds a few dozen
-  loops where Jenson's GPU version holds hundreds; a six-phase GPU plan is
-  reviewed and not started.
+  loops where Jenson's GPU version holds hundreds. GPU plan phase 1 is under
+  way on the CPU: a late census is safe; fixed-point trail and scent change
+  play (the fields stay floats); moving all walkers at once cuts fights
+  where two moulds meet. Later gates use engine measures, not today's dishes.
 - How it is judged: [the census](wiki/method/census.md).
 
 ## Decisions the owner has not made
@@ -63,10 +65,11 @@ Ask each again; none has an answer to assume.
 5. **The Organ and the Wanderer:** keep, change or drop. Neither has a
    verdict.
 6. **The GPU plan** ([`Reports/gpu-plan-2026-11-10.md`](Reports/gpu-plan-2026-11-10.md),
-   [page](wiki/model/scale.md)), now started (phase 1): all-integer
-   simulation or floats (phase 1 measures it first); upload Jones 2011 before
-   phase 4; hold the Pixel_Physics multi-core renderer port until the phase 2
-   gate.
+   [page](wiki/model/scale.md)), now started (phase 1): integer or floats is
+   measured: fixed-point trail and scent changed play, so the recommendation
+   is now floats for the fields (integer positions still possible); upload
+   Jones 2011 before phase 4; hold the Pixel_Physics multi-core renderer port
+   until the phase 2 gate.
 7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
    *Risks and open questions*): should it wait for the queued work or take
    over The Wild One's next steps (its Stage 0 answers the same mid-game

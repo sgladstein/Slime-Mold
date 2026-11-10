@@ -1,0 +1,29 @@
+mouldprobe: seeds [7] players ["idle", "random", "plan", "fresh", "shepherd", "lamponly", "dump"] scale 2 oats None stray_reach None params Params { sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, deposit: 5.0, keep: 0.9, food_deposit: 20.0, scent_keep: 0.97, light_weight: 0.0, light_fade: 0.0, tube: 1.0, feed_reach: 70, census_every: 6, census_lag: 0, upkeep: 0.004, eat: 0.03, table: 40, fed_scent: 0.15, divide: 0.03, crowd: 7, starve: 0.0016666667, hungry: 0.0011111111, burn: 0.0, lamp_reach: 16.0, lamp_soft: false, push: 0.9, pieces: true, wound: 4.0, stray_reach: inf, stray_grace: 2.0, oats_grace: 8.0, flow: false, carry_cap: 3.0, share: 0.5, sap: true, sap_speed: 2, absorb: 0.03, stream: 1.0, stream_bias: 0.35, want: 1.0, pulse_seconds: 2.5, pulse_strength: 0.8, wall_grow: 1.0, wall_half_life: 30.0, wall_pull: 1.0, settle_seconds: 0.0, explore_angle: 0.3926991, spared: 0, spared_scent: 0.5, foe_repel: 1.0, fight: 0.02, wet: false, wet_base: 0.5, wet_relax: 0.0005, dry_light: 0.05, crust_wet: 0.25, crust_rate: 0.05, revive_wet: 0.7, revive_rate: 0.05, crust_life: 20.0, crust_trail: 0.6, wake_grace: 5.0, water_r: 12.0 }
+
+== dish 1 BEHIND THE WALL: STARS: REACH IT. BY 1:00. BY 0:45 ==
+seed 7      idle: 0 stars  NOT REACHED: THE MOULD CAME WITHIN 60 CELLS | PAST THE WALL, BUT OUT OF REACH: LAY OATS  mould 305  oats 0 snips 0 lamp 0s joins 0  water 0 slept 0 woke 0 died asleep 0  hash=d7aff7ae3a4ab1e0  (9.8 s)
+seed 7    random: 0 stars  NOT REACHED: THE MOULD CAME WITHIN 81 CELLS | SCENT CAN'T CROSS SALT: LEAD IT TO THE GAP  mould 386  oats 10 snips 0 lamp 26s joins 2  water 0 slept 0 woke 0 died asleep 0  hash=75431d98cf5d5314  (10.3 s)
+seed 7      plan: 0 stars  NOT REACHED: ONLY STARVING STRAYS GOT THERE | PAST THE WALL, BUT OUT OF REACH: LAY OATS  mould 312  oats 4 snips 0 lamp 89s joins 1  water 0 slept 0 woke 0 died asleep 0  hash=8708b47b4fdf190a  (10.5 s)
+seed 7     fresh: 0 stars  NOT REACHED: ONLY STARVING STRAYS GOT THERE | PAST THE WALL, BUT OUT OF REACH: LAY OATS  mould 316  oats 2 snips 0 lamp 4s joins 0  water 0 slept 0 woke 0 died asleep 0  hash=016ddd53926803f0  (9.8 s)
+seed 7  intended: 3 stars  REACHED THE FOOD AT 0:11 | STRAIGHT ROUND THE WALL. NOTHING WASTED.  mould 896  oats 5 snips 0 lamp 0s joins 3  water 0 slept 0 woke 0 died asleep 0  hash=09831d6df8e626b5  (2.0 s)
+
+== dish 2 BEAT THE RULER: STARS: JOIN ALL 3. 0.98X RULER. 0.95X ==
+seed 7      idle: 0 stars  1 OF 3 FOODS JOINED AT THE BELL | MEET IN THE MIDDLE, THEN BRANCH OUT  mould 359  oats 0 snips 0 lamp 0s joins 0  water 0 slept 0 woke 0 died asleep 0  hash=6fd8ffccd96a0092  (10.0 s)
+seed 7    random: 0 stars  1 OF 3 FOODS JOINED AT THE BELL | MEET IN THE MIDDLE, THEN BRANCH OUT  mould 386  oats 11 snips 0 lamp 30s joins 0  water 0 slept 0 woke 0 died asleep 0  hash=882a5de2f2d6834f  (10.5 s)
+seed 7      plan: 0 stars  1 OF 3 FOODS JOINED AT THE BELL | MEET IN THE MIDDLE, THEN BRANCH OUT  mould 316  oats 2 snips 0 lamp 99s joins 1  water 0 slept 0 woke 0 died asleep 0  hash=329139a743135899  (10.3 s)
+seed 7     fresh: 0 stars  2 OF 3 FOODS JOINED AT THE BELL | MEET IN THE MIDDLE, THEN BRANCH OUT  mould 644  oats 11 snips 0 lamp 4s joins 1  water 0 slept 0 woke 0 died asleep 0  hash=48a55733504ef464  (11.1 s)
+seed 7  intended: 3 stars  ALL 3 JOINED, 0.88X THE RULER | A BRIDGE WHERE NO FOOD WAS. BEST 0.87X  mould 938 ruler 0.88x  oats 8 snips 0 lamp 0s joins 6  water 0 slept 0 woke 0 died asleep 0  hash=8047fa7c2d6f2902  (11.9 s)
+
+== dish 3 RUNNING DRY: STARS: 100, 200 AND 300 MOULD AT THE BELL ==
+seed 7      idle: 0 stars  THE MOULD DIED AT 1:02 | THE FOOD RAN OUT; NOTHING HEADED FOR MORE  mould 0  oats 0 snips 0 lamp 0s joins 0  water 0 slept 0 woke 0 died asleep 0  hash=b7353e210e3c2ec8  (10.7 s)
+seed 7    random: 3 stars  723 MOULD ALIVE AT THE BELL | IT KEPT MOVING HOUSE, AND IT LIVED  mould 691  oats 16 snips 0 lamp 40s joins 8  water 0 slept 0 woke 0 died asleep 0  hash=5e578a20836087bc  (14.7 s)
+seed 7      plan: 0 stars  THE MOULD DIED AT 1:21 | THE FOOD RAN OUT; NOTHING HEADED FOR MORE  mould 0  oats 7 snips 0 lamp 13s joins 2  water 0 slept 0 woke 0 died asleep 0  hash=f4243a9fe093380c  (10.3 s)
+seed 7     fresh: 1 stars  155 MOULD ALIVE AT THE BELL | 200 FOR 2 STARS: MOVE ON SOONER  mould 100  oats 16 snips 0 lamp 4s joins 4  water 0 slept 0 woke 0 died asleep 0  hash=48aae1d15ae238a3  (13.8 s)
+seed 7  intended: 3 stars  374 MOULD ALIVE AT THE BELL | IT KEPT MOVING HOUSE, AND IT LIVED  mould 353  oats 12 snips 0 lamp 0s joins 9  water 0 slept 0 woke 0 died asleep 0  hash=1201a457e00fe821  (14.0 s)
+
+== ship bar: do nothing 0, random at most 1, intended 3 (stars per seed [7]) ==
+dish 1 BEHIND THE WALL  idle [0]  random [0]  plan [0]  fresh [0]  intended [3]  -> MEETS THE BAR
+dish 2 BEAT THE RULER   idle [0]  random [0]  plan [0]  fresh [0]  intended [3]  -> MEETS THE BAR
+dish 3 RUNNING DRY      idle [0]  random [3]  plan [0]  fresh [1]  intended [3]  -> FAILS THE BAR
+
+frame cost, dish 1 intended hand: 667 frames, mean 8.91 ms, worst 16.54 ms

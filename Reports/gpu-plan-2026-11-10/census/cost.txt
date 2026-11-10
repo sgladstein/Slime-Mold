@@ -1,0 +1,30 @@
+== today run 1
+5880 frames, peak 1797 walkers: mean 4.79 ms (sim 1.08 + draw 3.71), worst 21.78 ms (worst sim alone 7.04)  hash=d50963c63fa89d11
+sim by pass, ms a frame (2 steps): light 0.042, food 0.010, move 0.242, flow 0.000, diffuse 0.683, census 0.048, economy 0.049, upkeep 0.001; timed 1.076 of sim 1.076
+== late run 1
+5880 frames, peak 1797 walkers: mean 4.96 ms (sim 1.05 + draw 3.91), worst 23.36 ms (worst sim alone 14.30)  hash=14cac0b20f66943f
+sim by pass, ms a frame (2 steps): light 0.045, food 0.011, move 0.243, flow 0.000, diffuse 0.683, census 0.012, economy 0.052, upkeep 0.003; timed 1.049 of sim 1.050
+== together run 1
+5880 frames, peak 1799 walkers: mean 5.20 ms (sim 1.13 + draw 4.07), worst 18.94 ms (worst sim alone 11.68)  hash=b51f4499dae35ea2
+sim by pass, ms a frame (2 steps): light 0.079, food 0.012, move 0.246, flow 0.000, diffuse 0.686, census 0.051, economy 0.051, upkeep 0.002; timed 1.126 of sim 1.127
+== fixed run 1
+5880 frames, peak 1799 walkers: mean 6.12 ms (sim 1.73 + draw 4.38), worst 22.04 ms (worst sim alone 12.87)  hash=176d388fffef2512
+sim by pass, ms a frame (2 steps): light 0.084, food 0.011, move 0.472, flow 0.000, diffuse 1.050, census 0.057, economy 0.056, upkeep 0.002; timed 1.734 of sim 1.735
+== gpu run 1
+5880 frames, peak 1800 walkers: mean 5.59 ms (sim 1.62 + draw 3.97), worst 20.81 ms (worst sim alone 11.64)  hash=e3befeb3565f75f1
+sim by pass, ms a frame (2 steps): light 0.053, food 0.010, move 0.458, flow 0.000, diffuse 1.029, census 0.012, economy 0.054, upkeep 0.002; timed 1.619 of sim 1.619
+== today run 2
+5880 frames, peak 1797 walkers: mean 4.83 ms (sim 1.09 + draw 3.75), worst 15.27 ms (worst sim alone 6.97)  hash=d50963c63fa89d11
+sim by pass, ms a frame (2 steps): light 0.043, food 0.011, move 0.247, flow 0.000, diffuse 0.685, census 0.050, economy 0.050, upkeep 0.001; timed 1.087 of sim 1.088
+== late run 2
+5880 frames, peak 1797 walkers: mean 5.06 ms (sim 1.08 + draw 3.98), worst 23.29 ms (worst sim alone 14.14)  hash=14cac0b20f66943f
+sim by pass, ms a frame (2 steps): light 0.049, food 0.011, move 0.252, flow 0.000, diffuse 0.697, census 0.013, economy 0.058, upkeep 0.003; timed 1.081 of sim 1.082
+== together run 2
+5880 frames, peak 1799 walkers: mean 5.08 ms (sim 1.10 + draw 3.98), worst 18.76 ms (worst sim alone 9.88)  hash=b51f4499dae35ea2
+sim by pass, ms a frame (2 steps): light 0.075, food 0.010, move 0.236, flow 0.000, diffuse 0.679, census 0.049, economy 0.048, upkeep 0.002; timed 1.099 of sim 1.100
+== fixed run 2
+5880 frames, peak 1799 walkers: mean 6.10 ms (sim 1.73 + draw 4.37), worst 21.88 ms (worst sim alone 12.89)  hash=176d388fffef2512
+sim by pass, ms a frame (2 steps): light 0.086, food 0.011, move 0.473, flow 0.000, diffuse 1.040, census 0.058, economy 0.056, upkeep 0.003; timed 1.727 of sim 1.728
+== gpu run 2
+5880 frames, peak 1800 walkers: mean 5.68 ms (sim 1.65 + draw 4.03), worst 21.01 ms (worst sim alone 11.74)  hash=e3befeb3565f75f1
+sim by pass, ms a frame (2 steps): light 0.058, food 0.011, move 0.464, flow 0.000, diffuse 1.040, census 0.013, economy 0.057, upkeep 0.002; timed 1.645 of sim 1.646

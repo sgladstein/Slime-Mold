@@ -1,0 +1,11 @@
+--- a/src/mould/mod.rs
++++ b/src/mould/mod.rs
+@@ -1967,7 +1967,7 @@
+             }
+         }
+         // Walkers.
+-        if self.params.all_at_once {
++        if self.params.all_at_once && std::env::var("SEQPUSH").is_err() {
+             self.push_walkers_at_once(lx, ly, push);
+             return;
+         }
