@@ -62,6 +62,7 @@ pub mod look;
 pub mod organ;
 pub mod play;
 pub mod render;
+pub mod skirmish;
 pub mod tune;
 pub mod wander;
 

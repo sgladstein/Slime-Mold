@@ -10,6 +10,7 @@
 //!   verbs SEED                the paired-clone verb census (DISH=wild|field, FIELD=layout): at 60 s
 //!                             clone the dish, apply one verb in one copy, planned or at random, and
 //!                             compare 30 s against the untouched copy
+//!   skirmish SEED HAND        the field skirmish demo, a scripted hand (idle|random|counter|late) v its rival
 //!   comeback SEED             can a hand overturn the opening? (DISH=wild|field; wild is the symmetric
 //!                             Wild One): mesh v mesh to 60 s, then give the side behind one verb in
 //!                             one copy and run every copy to the bell against the untouched one
@@ -694,6 +695,79 @@ fn main() {
                     v.t as f32 / SPS as f32
                 );
             }
+        }
+        "skirmish" => {
+            // The field skirmish demo (`slime_mould::mould::skirmish`) with a
+            // scripted hand in your place against its scripted rival, to the
+            // bell. Hands: idle (spread, no walls), random (a random habit
+            // every 10-20 s, walls at random), counter (switches to what
+            // beats the rival's habit as soon as it may, and walls the
+            // rival's road when behind, as the rival does to you), late (the
+            // same, 10 s slower to answer). REACT: the rival's delay, s.
+            use slime_mould::mould::skirmish::{front, Habit, Skirmish};
+            use slime_mould::mould::Tool;
+            let seed = args[1].parse::<u64>().unwrap();
+            let hand = args[2].as_str();
+            let mut sk = Skirmish::new(seed);
+            if let Ok(r) = std::env::var("REACT") {
+                sk.ai = slime_mould::mould::skirmish::Ai::new(r.parse().unwrap());
+            }
+            let mut rng = Xs(seed.wrapping_mul(0x2545_F491_4F6C_DD1D) | 1);
+            let mut next = 10 * SPS;
+            let mut want: Option<(Habit, u64)> = None;
+            let mut switches = 0;
+            let mut walls = 0;
+            let t0 = std::time::Instant::now();
+            while sk.dish.phase != Phase::Over && sk.dish.t < 200 * SPS {
+                let t = sk.dish.t;
+                match hand {
+                    "random" if t >= next => {
+                        next = t + (10.0 + rng.f() * 10.0) as u64 * SPS;
+                        let h = Habit::ALL[(rng.f() * 4.0) as usize % 4];
+                        switches += sk.switch(h) as u32;
+                        if rng.f() < 0.4 && sk.dish.salt_left > 0 {
+                            let q = rng.agar(&sk.dish);
+                            let a = rng.f() * std::f32::consts::TAU;
+                            stroke(&mut sk.dish, Tool::Salt, q, (a.cos(), a.sin()), 60.0);
+                            walls += 1;
+                        }
+                    }
+                    "counter" | "late" => {
+                        let lag = if hand == "late" { 10 * SPS } else { 0 };
+                        let goal = sk.theirs.counter();
+                        match want {
+                            Some((h, _)) if h == goal => {}
+                            _ => want = Some((goal, t + lag)),
+                        }
+                        if let Some((h, at)) = want {
+                            if t >= at && h != sk.mine && sk.switch(h) {
+                                switches += 1;
+                            }
+                        }
+                        if t >= next && t >= 30 * SPS {
+                            next = t + 30 * SPS;
+                            if sk.share() < 0.5 && sk.dish.salt_left > 0 {
+                                let (target, from) = front(&sk.dish, true);
+                                let (dx, dy) = (target.0 - from.0, target.1 - from.1);
+                                let n = dx.hypot(dy).max(1.0);
+                                stroke(&mut sk.dish, Tool::Salt, (from.0 + dx * 0.5, from.1 + dy * 0.5), (-dy / n, dx / n), 60.0);
+                                walls += 1;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+                sk.tick();
+                sk.dish.step();
+            }
+            println!(
+                "SKIRMISH seed={seed} hand={hand} share={:.3} mine={:?} theirs={:?} switches={switches} walls={walls} t={:.0} ({:.1}s)",
+                sk.share(),
+                sk.mine,
+                sk.theirs,
+                sk.dish.t as f32 / SPS as f32,
+                t0.elapsed().as_secs_f32()
+            );
         }
         m => panic!("mode {m}"),
     }
