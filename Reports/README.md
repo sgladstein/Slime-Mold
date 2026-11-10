@@ -74,6 +74,12 @@ move.
   smoothing of the rim, tube insides, salt walls and cuts, a fading stain where mould has been, the lamp drawn as the light
   the simulation shines, and narrow tool tiles so the bar stops overlapping. All on by default, each behind a key (F3-F6).
   Same dish drawn both ways on the page; costs about 1.5-2.5 ms of drawing a frame at scale 4.
+- [rts-design-2026-11-10.md](rts-design-2026-11-10.md) — **design review, no build: how the simulation could become a
+  real-time strategy game.** About half an RTS already runs in The Wild One (shared piles as contested resources, tubes
+  as supply lines, trail repel as borders, fights that favour a fed front); proposes Bloomfront, an indirect-control
+  RTS where every tool is paid from the food store, with wells, announced blooms, spores and species as `Params`
+  presets. Measured here: two moulds step at about 1.1 ms a step. Recommends a cheap Stage 0 (a scripted hand steers
+  the wild mould on a mirrored dish) gated on equal hands splitting 45-55% and a sharp hand beating a clumsy one.
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as
@@ -111,5 +117,11 @@ move.
 - [mould-scratch-2026-11-10/](mould-scratch-2026-11-10/README.md) **(from Pixel_Physics)** — **raw census behind Keep It Alive, Water and
   Sleep, The Wild One and Finer Tubes**: the four pages' HTML and images, the census runners, `w5.py` (shares and
   paired sign tests), and every raw probe output of the wild-mould tuning arms and the sensor-reach sweep.
+- [llm-wiki-plan-2026-11-10.md](llm-wiki-plan-2026-11-10.md) — **built in part: an LLM-maintained wiki
+  (`wiki/`), seven pages so far.** Karpathy's LLM-wiki pattern judged a fit at small size (10 core reports, filed
+  by date, so the truth about one subject is spread over 9-54 files); design, rules and workflows; a sub-agent
+  review of later reports on the pattern (one measured: long context files cost over 20% more for little gain)
+  and of the plan, which cut `log.md`, kept open decisions only in `HANDOFF.md` and put the lint in CI. Success
+  check (25-30 questions, wiki vs `HANDOFF.md` vs `Reports/`, blind) not yet run.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
