@@ -1,0 +1,25 @@
+Q1. Reach 9. At 6 (8 seeds) tubes only a little thinner, the mould senses food/oats from less far: Beat the Ruler planned hand 0 stars on all 8 at 7 and 6 (also half lost at 8: 30330300); Keep It Alive water hand shorter on 6 of 8 (median 6:21 -> 3:41); Wild One all-tools share 0.67-1.00 -> 0.49-0.63.
+Q2. Share of all food both moulds ate over the whole dish (Dish::food_share). Stars: 57%, 62%, none of it (the wild one) left.
+Q3. It was walkers at the bell; four of seven piles ran dry together near the bell and the player's mould lost 28-54% in the last ten seconds, so the lead moved by up to half; review 2 ranked share-of-food first.
+Q4. Nothing: snip only vs doing nothing 5-3, p 0.73, 0 stars on 8 (walker-count era). Three snips through the nest (nestsnip) 0 stars on 8 (7-1, p 0.07). Warden with vs without snip: 4-4 / 3-5.
+Q5. 1:08-3:48, median 2:10.
+Q6. 4:15, 5:30, 6:40.
+Q7. Water hand (sleeper) 2:51-10:42 (median 4:41) vs oat-saver 2:47-5:26 (3:34); water hand longer on 15 of 16, p 0.0005.
+Q8. 2 drops, one back every 40 s, radius 12.
+Q9. Dries it (light x wet); below wetness 0.25 walkers fall asleep (don't move/eat/pay upkeep, not pushed), die at random with mean life 20 s; water (>0.7) wakes them.
+Q10. Sensor lamp emptied the lit stretch and cut the tube: food join lost while held 3 s on a tube 5 of 5 (old) vs 0 of 5 (push); beside the tube 2 of 5 vs 0 of 5.
+Q11. push 0.9; LAMP_R 16 cells.
+Q12. 4 s (Params::wound).
+Q13. Over 32 water-hand runs: 17 dead by 5:05, 14 past 7:20, 1 between (5:31); 5:30 star earned once in 32; which hump looks like luck, not skill.
+Q14. 0.567-0.577, 1 star on 7 of 8 (0 on 1).
+Q15. About +1.4 ms a frame (mean 4.3-4.9 -> 5.7-6.3 ms).
+Q16. (1) what to fix first after review 2 (now: trace Keep It Alive's luck or wait until played); (2) grains or glints for walkers in the tube look; (3) retire the tube look F7; (4) food flow on or off; (5) keep/change/drop the Organ and the Wanderer.
+Q17. Forest floor from above, card 2026-11-10 16:04Z.
+Q18. Three or two cuts: toughness star earned 0 of 20 runs; one cut: 4 of 20, never by doing nothing.
+Q19. 20 s (crust_life).
+Q20. Wild 600 (WILD_START), player 400.
+Q21. About 14 comparisons, so 0.05/14 ~ 0.004; 8-0 (p 0.008) does not pass.
+Q22. Lamp 8-0 (p 0.008) and salt wall 8-0 (p 0.008) win alone; oats 6-2 (p 0.29) and snip 5-3 (p 0.73) do not.
+Q23. In one channel, the halo around each pile was drawn and counted as tube: pale rings, tube-connectivity joined nothing.
+Q24. Three piles on the seam at 0:45, 1:20, 1:50 were tried and removed: doing nothing spread to 0.44-0.60 (a star on one seed), clumsy warden still matched letting go at 30 s (5-3); the race was luck.
+Q25. 1:04-3:29 (median 2:03), 0 stars; water doesn't help: wet longer on 7 of 16, p 0.80 (its lamp sleeps mould, nothing wakes it).
