@@ -1,8 +1,6 @@
 # Working in this repo
 
-The mould game moved here from Pixel_Physics on 2026-11-10. Pixel_Physics's
-`CLAUDE.md` holds the project's long-learned method; the parts that apply
-here are kept below, short. Read `README.md` for the layout and
+Read `README.md` for the layout and
 `Reports/README.md` for what has already been tried.
 
 **The wiki** (`wiki/`): before touching a dish, tool or mechanism, read
