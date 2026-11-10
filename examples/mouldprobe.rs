@@ -27,7 +27,7 @@ use slime_mould::mould::play::{Dump, Fresh, Idle, IdleGo, LampOnly, Leader, Plan
 use slime_mould::mould::wander::{Outcome, FIRST_WALKERS};
 use slime_mould::mould::look::Style;
 use slime_mould::mould::render::{self, View};
-use slime_mould::mould::{Dish, Ground, Params, Phase, Score, Tool, LAMP_R, STEPS_PER_FRAME, STEPS_PER_SECOND};
+use slime_mould::mould::{Dish, Ground, Params, Phase, Score, Tool, LAMP_R, STEPS_PER_FRAME, STEPS_PER_SECOND, STEP_PASSES};
 
 struct Args {
     seeds: Vec<u64>,
@@ -1261,6 +1261,9 @@ fn cost(a: &Args) {
     println!("\n== frame cost: the whole dish awake, the window's frame (steps + draw at scale 4) ==");
     let mut d = Dish::with_params(a.seeds[0], a.params.clone());
     give_oats(&mut d, a);
+    // Where the simulation's share goes, pass by pass (the GPU plan's
+    // phase 1 profiler): timing adds a clock read per pass.
+    d.step_cost = Some(Box::default());
     let mut p = Plan::new();
     let (w, h) = render::frame_size(4);
     let mut buf = vec![0u8; (w * h * 4) as usize];
@@ -1295,6 +1298,19 @@ fn cost(a: &Args) {
         worst,
         worst_sim
     );
+    if let Some(c) = &d.step_cost {
+        let parts: Vec<String> = STEP_PASSES
+            .iter()
+            .zip(c.iter())
+            .map(|(name, s)| format!("{name} {:.3}", s * 1e3 / n as f64))
+            .collect();
+        let timed: f64 = c.iter().sum::<f64>() * 1e3 / n as f64;
+        println!(
+            "sim by pass, ms a frame ({STEPS_PER_FRAME} steps): {}; timed {timed:.3} of sim {:.3}",
+            parts.join(", "),
+            sim_t / n as f64
+        );
+    }
 }
 
 /// **Does the drawn mould flash grey?** (Owner's playtest, 2026-11-08:

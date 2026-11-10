@@ -3,7 +3,7 @@ title: The census (how a change is judged)
 kind: method
 status: current
 updated: 2026-11-10
-sources: [Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md]
+sources: [Reports/gpu-plan-2026-11-10.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md]
 code: [mouldprobe, HJIT, HLAG, STOPAT, NOWATER, INVAR, WARDEN]
 ---
 
@@ -59,7 +59,10 @@ direction that a correction usually does not pass (review 2's strict bar was
 ## Frame cost
 
 Quote the frame cost of anything that runs every step: mean and worst frame
-at scale 4, before and after, same session. The Wild One's second dish costs
+at scale 4, before and after, same session. The plan hand's run prints it, and since
+2026-11-10 it also prints the simulation's time pass by pass
+(`Dish::step_cost`): diffusion 62%, moving the walkers 24%, the census 4.5%
+([gpu plan, *Phase 1 progress*](../../Reports/gpu-plan-2026-11-10.md)). The Wild One's second dish costs
 about +1.4 ms a frame; the first probe ran at a 2.3-2.8 ms mean.
 
 ## Owner's word
