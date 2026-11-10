@@ -549,6 +549,34 @@ impl Rng {
     }
 }
 
+/// FNV-1a, 64-bit, for `Dish::state_hash`: fixed forever, so a hash printed
+/// today can be compared with one printed by any later build.
+struct Fnv(u64);
+
+impl Default for Fnv {
+    fn default() -> Self {
+        Fnv(0xCBF2_9CE4_8422_2325)
+    }
+}
+
+impl Fnv {
+    fn bytes(&mut self, b: &[u8]) {
+        for &x in b {
+            self.0 ^= x as u64;
+            self.0 = self.0.wrapping_mul(0x0000_0100_0000_01B3);
+        }
+    }
+    fn u64(&mut self, v: u64) {
+        self.bytes(&v.to_le_bytes());
+    }
+    fn floats(&mut self, f: &[f32]) {
+        self.u64(f.len() as u64);
+        for v in f {
+            self.bytes(&v.to_bits().to_le_bytes());
+        }
+    }
+}
+
 // ------------------------------------------------------------------- world
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -2984,6 +3012,63 @@ impl Dish {
         best
     }
 
+    /// **A fingerprint of everything the dish will step from**: the clock,
+    /// the random stream's state, every field, every walker and pile, the
+    /// store, the tallies, and the wild mould's dish if there is one.
+    ///
+    /// Why it exists (`Reports/pixel-physics-review-2026-11-10.md`): until
+    /// this, nothing could show that a speed-up left the game as it was.
+    /// Two builds that print the same hash after the same hand on the same
+    /// seed played the same game, bit for bit; a timing beside hashes that
+    /// moved is a different simulation, not a faster one (Pixel_Physics's
+    /// `scripts/perfbench.sh` rule). Floats go in by their bits, so a
+    /// one-ulp change shows. FNV-1a rather than std's `DefaultHasher`,
+    /// whose algorithm is not promised to stay the same across Rust
+    /// releases, and a hash that moved with the toolchain would read as a
+    /// game change. Scratch buffers that are rewritten before they are read
+    /// each step are left out.
+    pub fn state_hash(&self) -> u64 {
+        let mut h = Fnv::default();
+        h.u64(self.seed);
+        h.u64(self.t);
+        h.u64(self.rng.0);
+        for f in [&self.trail, &self.scent, &self.light, &self.carried, &self.walkers_seen, &self.sap, &self.wall, &self.wet] {
+            h.floats(f);
+        }
+        h.u64(self.ground.len() as u64);
+        for g in &self.ground {
+            h.u64(*g as u64);
+        }
+        for &v in &self.fed {
+            h.u64(v as u64);
+        }
+        h.u64(self.walkers.len() as u64);
+        for w in &self.walkers {
+            h.floats(&[w.x, w.y, w.heading, w.food]);
+            h.u64(w.slept);
+            h.u64(w.woke);
+        }
+        h.u64(self.piles.len() as u64);
+        for p in &self.piles {
+            h.floats(&[p.x, p.y, p.r, p.food, p.full]);
+            h.u64(p.expires);
+            h.u64(((p.eaters as u64) << 32) | p.foe_eaters as u64);
+            h.u64(p.oats as u64);
+        }
+        h.floats(&[self.store, self.ate, self.wild_ate]);
+        for n in [self.oats_left, self.salt_left, self.snips_left, self.water_left, self.peak_mould] {
+            h.u64(n as u64);
+        }
+        // The tallies and the score through their `Debug`, which prints
+        // every field; cheaper to keep right than a hand list that a new
+        // field would silently fall out of.
+        h.bytes(format!("{:?}|{:?}|{:?}", self.phase, self.counts, self.score).as_bytes());
+        if let Some(r) = &self.rival {
+            h.u64(r.state_hash());
+        }
+        h.0
+    }
+
     /// Reach, length and shortest, right now.
     pub fn measure(&self) -> Score {
         let (label, n) = self.pieces();
@@ -3304,6 +3389,69 @@ mod tests {
             (d.walkers.len(), d.store.to_bits(), d.sap.iter().sum::<f32>().to_bits())
         };
         assert_eq!(run(), run());
+    }
+
+    /// **Every dish replays bit for bit** (`Dish::state_hash`): two runs of
+    /// the same dish, seed and hand end on the same hash. Each kind of dish
+    /// the window opens is here (free, each challenge, the Wanderer), under
+    /// the random hand (oats, lamp, water, snips at random) and the plan,
+    /// so every tool's code path is stepped. 10 s of play each keeps the
+    /// test near 25 s in release.
+    #[test]
+    fn every_dish_replays_bit_for_bit() {
+        use super::play::{Plan, Player, Random};
+        let steps = 10 * STEPS_PER_SECOND as u64;
+        let build = |kind: usize, seed: u64| -> Dish {
+            match kind {
+                0 => Dish::new(seed),
+                k if k <= level::DISHES.len() => Dish::from_level(&level::DISHES[k - 1], seed),
+                _ => Dish::wanderer(seed, 1, wander::FIRST_WALKERS),
+            }
+        };
+        let play = |kind: usize, seed: u64, random: bool| -> u64 {
+            let mut d = build(kind, seed);
+            let mut hand: Box<dyn Player> = if random { Box::new(Random::new(seed)) } else { Box::new(Plan::new()) };
+            while d.t < steps {
+                hand.act(&mut d);
+                for _ in 0..STEPS_PER_FRAME {
+                    d.step();
+                }
+            }
+            d.state_hash()
+        };
+        for kind in 0..=level::DISHES.len() + 1 {
+            for random in [false, true] {
+                let (a, b) = (play(kind, 2, random), play(kind, 2, random));
+                assert_eq!(a, b, "dish kind {kind}, random hand {random}: two runs differ");
+            }
+            // The positive control: another seed must give another hash, or
+            // the check above would pass while proving nothing. (Not plan
+            // against random: on some dishes neither hand has acted by 10 s,
+            // and those two games really are the same.)
+            assert_ne!(play(kind, 2, false), play(kind, 3, false), "dish kind {kind}: seeds 2 and 3 gave one hash");
+        }
+    }
+
+    /// The hash sees a one-ulp change in one trail cell, a moved walker and
+    /// an advanced random stream: the kinds of drift a speed-up could cause.
+    #[test]
+    fn the_hash_sees_the_smallest_change() {
+        let mut d = Dish::new(4);
+        for _ in 0..240 {
+            d.step();
+        }
+        let base = d.state_hash();
+        let mut a = d.clone();
+        let i = a.trail.iter().position(|&v| v > 0.0).unwrap();
+        a.trail[i] = f32::from_bits(a.trail[i].to_bits() + 1);
+        let mut b = d.clone();
+        b.walkers[0].heading = f32::from_bits(b.walkers[0].heading.to_bits() ^ 1);
+        let mut c = d.clone();
+        c.rng.next_u64();
+        for (name, x) in [("trail", a), ("walker", b), ("rng", c)] {
+            assert_ne!(x.state_hash(), base, "{name} change not seen");
+        }
+        assert_eq!(d.clone().state_hash(), base);
     }
 
     #[test]

@@ -136,5 +136,11 @@ move.
   check (25 questions, blind-scored, files in `llm-wiki-plan-2026-11-10/check/`): wiki and reports both 0 wrong
   numbers, 22 vs 25 fully correct (0-3, p 0.25), 9% fewer tokens; summaries alone 9 not found. At ten reports the
   wiki ties reading them; re-run when it doubles.
+- [pixel-physics-review-2026-11-10.md](pixel-physics-review-2026-11-10.md) — **what to take from Pixel_Physics,
+  and the dish hash built.** The frame is 4.93 ms, sim 1.10 + draw 3.83, so the multi-core renderer is the engine
+  piece worth taking; sound, keyed random draws and empty-tile skipping next. Tools: determinism test, profiler,
+  licence gates, `crispfont.py`. Misfits: capitals-only font, missing OFL notice, unmeasured release profile.
+  `Dish::state_hash` and `every_dish_replays_bit_for_bit` built: all seven dishes replay bit for bit, and a
+  clock-seeded draw turns the test red.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

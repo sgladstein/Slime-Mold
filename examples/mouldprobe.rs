@@ -20,6 +20,13 @@
 //!
 //! Everything it draws goes through `mould::render::draw`, the window's own
 //! frame function, so a picture here is what a player sees.
+//!
+//! **Every run prints `hash=`** (`Dish::state_hash` at its end): per seed on
+//! the challenge dishes' lines, one line per hand on the free dish, and on
+//! the frame-cost line. Run two builds with the same arguments and diff the
+//! hash lines: the same hashes mean the same games, bit for bit, so a
+//! timing difference beside them is a real speed-up; moved hashes mean the
+//! change altered play.
 
 use std::time::Instant;
 
@@ -851,6 +858,9 @@ struct Run {
     peak: usize,
     /// (seconds, walkers, piles joined) every 10 s.
     trace: Vec<(u32, usize, u32)>,
+    /// `Dish::state_hash` at the end: two builds that print the same hashes
+    /// played the same games.
+    hash: u64,
 }
 
 fn run(seed: u64, who: &str, a: &Args) -> Run {
@@ -954,6 +964,7 @@ fn run(seed: u64, who: &str, a: &Args) -> Run {
         joins: c.snaps,
         peak,
         trace,
+        hash: d.state_hash(),
     }
 }
 
@@ -1287,13 +1298,14 @@ fn cost(a: &Args) {
         n += 1;
     }
     println!(
-        "{n} frames, peak {} walkers: mean {:.2} ms (sim {:.2} + draw {:.2}), worst {:.2} ms (worst sim alone {:.2})",
+        "{n} frames, peak {} walkers: mean {:.2} ms (sim {:.2} + draw {:.2}), worst {:.2} ms (worst sim alone {:.2})  hash={:016x}",
         d.walkers.len(),
         (sim_t + draw_t) / n as f64,
         sim_t / n as f64,
         draw_t / n as f64,
         worst,
-        worst_sim
+        worst_sim,
+        d.state_hash()
     );
 }
 
@@ -2328,7 +2340,7 @@ fn levels(a: &Args, which: &[usize]) {
                 let c = d.card.clone().unwrap_or_default();
                 let ratio = d.ruler_ratio().map(|r| format!(" ruler {r:.2}x")).unwrap_or_default();
                 println!(
-                    "seed {seed} {who:>9}: {} stars  {} | {}  mould {}{ratio}  oats {} snips {} lamp {:.0}s joins {}  water {} slept {} woke {} died asleep {}{}  ({:.1} s)",
+                    "seed {seed} {who:>9}: {} stars  {} | {}  mould {}{ratio}  oats {} snips {} lamp {:.0}s joins {}  water {} slept {} woke {} died asleep {}{}  hash={:016x}  ({:.1} s)",
                     c.stars,
                     c.amount,
                     c.why,
@@ -2342,6 +2354,7 @@ fn levels(a: &Args, which: &[usize]) {
                     d.counts.woke,
                     d.counts.died_asleep,
                     d.rival.as_ref().map(|r| format!("  wild {} fought {}/{} ate {:.0}/{:.0} share {:.3}", r.walkers.len(), d.counts.fought, r.counts.fought, d.ate, d.wild_ate, d.food_share())).unwrap_or_default(),
+                    d.state_hash(),
                     t0.elapsed().as_secs_f32()
                 );
                 // Every hand's end on the first seed, so a losing card
@@ -2608,6 +2621,9 @@ fn main() {
             joined.join(" "),
             n = runs.len()
         );
+        // One line a build comparison can diff (`Dish::state_hash`).
+        let hashes: Vec<String> = runs.iter().map(|r| format!("{:016x}", r.hash)).collect();
+        println!("{who:>9}: hash={}", hashes.join(","));
     }
     // Paired: each player against do-nothing, seed by seed.
     let get = |seed: u64, who: &str| table.iter().find(|(s, w, _)| *s == seed && w == who).map(|(_, _, r)| r);
