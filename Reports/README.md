@@ -90,7 +90,11 @@ move.
   six agents' notes (Creeper World and Particle Fleet, RTS craft, 20 simulation games, cards, and two clean-slate
   agents that set the old tools aside), a verification pass, and a synthesis. New directions: a contagion war over a
   neutral mould, timed food waves, road tension, pattern counters. Correction: the food store sits at a median of 0,
-  so spending needs its own currency.
+  so spending needs its own currency. **Red team the same day** ([`rts-design-2026-11-10/red-team/`](rts-design-2026-11-10/red-team/README.md),
+  harness, raw output and stills kept): road tension fails (raising the pull shrank the network to a third in 5 s on
+  4 of 4 seeds; lowering it starved the mould); a squeeze from home moved food share by 0.000 on 3 of 3 seeds; the
+  pattern counters are a straight ladder in 164 games at today's density; flow on two moulds costs 2.6x the step
+  time. Food share mostly counts heads on piles. Strongest left: Two Fevers. First test: a paired-clone verb census.
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as

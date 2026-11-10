@@ -1,0 +1,12 @@
+SPEED seed=1 angle=22.5 +1s tagged alive 1007 of 1031: displacement p10 0 median 3 p90 20 max 53 cells
+SPEED seed=1 angle=22.5 +2s tagged alive 991 of 1031: displacement p10 1 median 5 p90 26 max 71 cells
+SPEED seed=1 angle=22.5 +5s tagged alive 930 of 1031: displacement p10 1 median 7 p90 40 max 104 cells
+SPEED seed=1 angle=22.5 +10s tagged alive 831 of 1031: displacement p10 1 median 11 p90 47 max 88 cells
+SPEED seed=2 angle=22.5 +1s tagged alive 971 of 988: displacement p10 0 median 2 p90 11 max 44 cells
+SPEED seed=2 angle=22.5 +2s tagged alive 957 of 988: displacement p10 0 median 3 p90 17 max 50 cells
+SPEED seed=2 angle=22.5 +5s tagged alive 902 of 988: displacement p10 0 median 5 p90 32 max 77 cells
+SPEED seed=2 angle=22.5 +10s tagged alive 812 of 988: displacement p10 1 median 9 p90 49 max 91 cells
+SPEED seed=1 angle=45 +1s tagged alive 900 of 900: displacement p10 0 median 1 p90 9 max 34 cells
+SPEED seed=1 angle=45 +2s tagged alive 900 of 900: displacement p10 0 median 2 p90 14 max 40 cells
+SPEED seed=1 angle=45 +5s tagged alive 900 of 900: displacement p10 0 median 3 p90 20 max 44 cells
+SPEED seed=1 angle=45 +10s tagged alive 899 of 900: displacement p10 0 median 5 p90 30 max 52 cells

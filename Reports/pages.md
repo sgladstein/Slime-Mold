@@ -30,4 +30,4 @@ if the link ever stops working. Newest last.
 | 11-10 | Finer Mould Tubes | https://claude.ai/artifact/5JT3D1sv7CwSRmYfkR6VTW | `mould-scratch-2026-11-10/fine/page/` |
 | 11-10 | Mould Sim-True Look | https://claude.ai/artifact/Gk8QELawvDLuYMgjBrC1GM | `mould-review-2026-11-10/pages/sim-true-look/` |
 | 11-10 | Mould Review Two | https://claude.ai/artifact/DnqCHgesBQYWDJBHjE7PHr | `mould-review-2-2026-11-10/page/` |
-| 11-10 | Slime mould RTS: design review (Claude Doc) | https://claude.ai/artifact/EDygsdTpEg8vK7HZzTXhdp | `rts-design-2026-11-10.md` and `rts-design-2026-11-10/roadmap.png` |
+| 11-10 | Slime mould RTS: design review (Claude Doc; Brainstorm tab with the red team's pictures) | https://claude.ai/artifact/EDygsdTpEg8vK7HZzTXhdp | `rts-design-2026-11-10.md`, `rts-design-2026-11-10/roadmap.png`, `rts-design-2026-11-10/brainstorm/README.md`, and the pictures `rts-design-2026-11-10/red-team/stills/taut-trio.png` and `grain-grid.png` |
