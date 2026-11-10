@@ -49,7 +49,7 @@ depends on is done, not when the band before it is finished.
 | G2 + R0 | **The Wild One's middle (seconds 30 to 150), done as Bloomfront Stage 0.** First separate which of lamp, snip and oats needs the aim; then give the wild mould a scripted hand on a mirrored dish | one thread, to be chosen | P for G2; the owner's say for R0 (HANDOFF decision 7, "wait or replace") |
 | G3 | The snip: make a cut-off piece visibly starve, or take it off The Wild One | Triage thread | P |
 | E6 | Keyed random draws and the dead-dish slowdown | Pixel_Physics thread | timing only: see *One census reset*, below |
-| E7 | Sound for the game, from Pixel_Physics's `src/audio/` | Pixel_Physics thread | the owner wants it at all (HANDOFF decision 8) |
+| E7 | Sound for the game, from Pixel_Physics's `src/audio/` | Pixel_Physics thread | **built 11-10** (owner: "yes to sound", 19:22Z; [report](Reports/mould-sound-2026-11-10.md)). Next: the owner's ears on the Mould Sound page |
 
 ### Then: the scale fork
 
@@ -171,7 +171,7 @@ decisions.
 4. **Hold the multi-core renderer** until the scale gate (part of decision
    6). Recommended: yes. Needed now, because it is third in the Pixel_Physics
    thread's order.
-5. **Sound for the game** (decision 8): wanted or not.
+5. **Listen to the Mould Sound page** (https://claude.ai/artifact/6GXBj1swj93DzdytbUjqvA) and say whether the levels are right.
 6. **Be at Scott-Desktop with the Claude app open** when S2's timing test is
    ready; the GPU thread will ask.
 7. **Integer or float** (decision 6), after S1 has measured it. Recommended:
