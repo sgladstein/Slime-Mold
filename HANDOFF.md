@@ -22,7 +22,8 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
 
 - [Keep It Alive](wiki/dishes/keep-it-alive.md): the endless dish works, but
   which of two humps a game lands in (dead by about 5:00, or past 7:20) is
-  luck so far.
+  luck so far: traced, it turns on whether the mould sleeps near the next
+  landing, which shows only 5 s ahead.
 - [The Wild One](wiki/dishes/the-wild-one.md): scored by your share of the
   food eaten; the first star is the opening salt wall, the rest is aim.
 - [The lesson and the three puzzle dishes](wiki/dishes/puzzle-dishes.md)
@@ -50,7 +51,8 @@ Ask each again; none has an answer to assume.
 1. **What to fix first after review 2.** Asked on a card 11-10 15:12Z, never
    answered. The Wild One's scoring has since been done (PR #6), so what is
    left of the question is whether to trace Keep It Alive's luck next or wait
-   until the owner has played both dishes.
+   until the owner has played both dishes. Re-asked 11-10 ~18:05Z; the trace
+   was run on the recommended option meanwhile (measurement only).
    [`Reports/mould-review-thread-handoff-2026-11-10.md`](Reports/mould-review-thread-handoff-2026-11-10.md)
 2. **Grains or glints** for walkers in the tube look. Only matters while F7
    is kept. [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md)
@@ -86,10 +88,11 @@ with no engine, is in §5 of
 How these sit against the GPU plan, the Pixel_Physics ports and the RTS,
 with what each waits on and which thread owns it: [ROADMAP.md](ROADMAP.md).
 
-1. **Keep It Alive: trace individual games** to find what puts one in the
-   short hump or the long one, then give that choice to the player. Review 2's
-   untested guess: whether sleeping mould is within reach when a far pile lands
-   (about the twelfth pile, gap past 140 cells).
+1. **Keep It Alive: give the player the choice that decides the hump.**
+   Traced: the first pile landing on mostly-asleep mould decides it, by
+   whether a sleeper is within water reach. Next: a 20 s landing preview and a
+   hand that uses it, on fresh seeds
+   ([`Reports/mould-keep-alive-luck-2026-11-10.md`](Reports/mould-keep-alive-luck-2026-11-10.md)).
 2. **The Wild One: make the middle of the game matter.** Late food on the seam
    was tried and added luck, not play (`Reports/dead-ends.md`). Separate which
    of lamp, snip and oats needs the precision before trying again.

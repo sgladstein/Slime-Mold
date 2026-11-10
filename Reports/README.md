@@ -65,6 +65,11 @@ move.
   The Wild One: the first star is the opening salt wall (letting go at 30 s keeps it on 8 of 8), the second and third need
   aim within about 2 cells, the snip delivers nothing, and the bell rings while both moulds are crashing (the player's
   loses 28-54% in the last ten seconds). No bug found in the two-mould step. Recommends scoring the share of food eaten.
+- [mould-keep-alive-luck-2026-11-10.md](mould-keep-alive-luck-2026-11-10.md) — **measurement, no build: what puts a Keep It
+  Alive game in the short or the long hump.** 48 traced games (16 seeds x three water hands, `PILETRACE=1`): the first pile
+  that lands on mostly-asleep mould decides it. A sleeper within 45 cells of it: long 13, short 2; none: long 7, short 26
+  (Fisher p 0.00003, exploratory, cut named after looking). Luck because the landing shows 5 s ahead, after the mould is put
+  to sleep. Proposes a 20 s preview with a hand that uses it, measured on fresh seeds.
 - [mould-review-thread-handoff-2026-11-10.md](mould-review-thread-handoff-2026-11-10.md) — **hand-off note, nothing built: what
   the review thread knew when the work moved to a new account.** The one open owner decision (what to fix first after
   review 2), the next steps in order, the owner's words in that thread with their times, the looks-pass review in words,
