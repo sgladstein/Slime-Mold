@@ -75,6 +75,13 @@ move.
   the simulation shines, and narrow tool tiles so the bar stops overlapping. All on by default, each behind a key (F3-F6).
   Same dish drawn both ways on the page; costs about 1.5-2.5 ms of drawing a frame at scale 4.
 
+- [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
+  so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as
+  ours, but 5-10 million GPU particles with no one-per-cell limit and the trail drawn at full resolution, against our
+  400-2,200 walkers on 256 x 160. Jenson never published the code; Bleuje's port of *36 Points* is the closest. Contagion
+  is a state particles pass on through an "infected trail", the simulated pulse wanted since 11-09, not built. Surveys MCPM
+  and Polyphorm, Tero 2010, Lague, Ghassaei and Webb's list; five experiments, cheapest first. Live doc linked inside.
+
 ## Added with the move (2026-11-10)
 
 - [new-game-brainstorm-2026-11-07/](new-game-brainstorm-2026-11-07/) — **where the game came from.** The flows,
