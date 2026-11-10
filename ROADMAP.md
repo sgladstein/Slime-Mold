@@ -35,7 +35,7 @@ depends on is done, not when the band before it is finished.
 | # | Step | Owner | Waits on | State |
 | --- | --- | --- | --- | --- |
 | E1 | Dish hash and determinism test | Pixel_Physics thread | nothing | done: PR #14 (`Dish::state_hash`, `every_dish_replays_bit_for_bit`, `mouldprobe` prints `hash=`) |
-| S1 | GPU phase 1: frame profiler (also the review's E2), "GPU semantics" CPU arm, delayed-census arm, new rules off by default | GPU thread | E1 for the hash; owner go-ahead given 17:50Z | profiler in progress |
+| S1 | GPU phase 1: frame profiler (also the review's E2), "GPU semantics" CPU arm, delayed-census arm, new rules off by default | GPU thread | E1 for the hash; owner go-ahead given 17:50Z | profiler done (PR #16: diffusion is 62% of the simulation, moving walkers 24%); the two arms next, on E1's hash |
 | E4 | Release profile re-measured on `mouldprobe` and one CI run | Pixel_Physics thread | E1 | done: `codegen-units = 1` kept (about 0.45 ms a frame), thin LTO dropped (no gain); hashes unchanged |
 | E5 | Licence and notices gates, the JetBrains Mono OFL notice, `crispfont.py` | Pixel_Physics thread | nothing; must land before any build leaves the owner's machine | done: `scripts/licensecheck.sh`, `scripts/notices.sh` + `THIRD-PARTY-NOTICES.txt`, `notices.yml`, `scripts/crispfont.py` |
 | R- | Bloomfront research (four inspiration agents, then a red team) | RTS thread | nothing; design only | running |
@@ -45,7 +45,7 @@ depends on is done, not when the band before it is finished.
 | # | Step | Owner | Waits on |
 | --- | --- | --- | --- |
 | P | **Play Keep It Alive and The Wild One by hand** | Scotttt | nothing. This is the one step that unblocks most of the rest |
-| G1 | Keep It Alive: trace single games to find what sends one into the short or long hump. Measures only; the game does not change | Triage thread | **done 11-10** on the recommended option while the card waits: the first pile on mostly-asleep mould decides it ([report](Reports/mould-keep-alive-luck-2026-11-10.md)). Next: a 20 s landing preview, a game change |
+| G1 | Keep It Alive: trace single games to find what sends one into the short or long hump. Measures only; the game does not change | Triage thread | **done 11-10**; owner picked "Trace it now" (card, 18:56Z): the first pile on mostly-asleep mould decides it ([report](Reports/mould-keep-alive-luck-2026-11-10.md)). Next: a 20 s landing preview, a game change |
 | G2 + R0 | **The Wild One's middle (seconds 30 to 150), done as Bloomfront Stage 0.** First separate which of lamp, snip and oats needs the aim; then give the wild mould a scripted hand on a mirrored dish | one thread, to be chosen | P for G2; the owner's say for R0 (HANDOFF decision 7, "wait or replace") |
 | G3 | The snip: make a cut-off piece visibly starve, or take it off The Wild One | Triage thread | P |
 | E6 | Keyed random draws and the dead-dish slowdown | Pixel_Physics thread | timing only: see *One census reset*, below |
@@ -159,8 +159,9 @@ decisions.
 
 1. **Play Keep It Alive and The Wild One.** Blocks G2, G3, G4, Bloomfront
    Stage 1's gate, and most of decision 1.
-2. **Answer the trace card** in the triage thread (decision 1). Recommended:
-   trace now; it only measures.
+2. ~~Answer the trace card~~ (decision 1): answered 18:56Z, "Trace it now";
+   done. What follows from it, a 20 s landing preview, changes the game and
+   waits on the owner's go.
 3. **Bloomfront's three questions** (decision 7): wait for the queued work or
    take over The Wild One's next steps; fog of war drawn from a held
    quantity; two keepers or three-to-four. Recommended: do G2 as Stage 0.

@@ -38,8 +38,11 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-10 18:56, card | Trace Keep It Alive's luck now rather than wait until the owner has played (HANDOFF decision 1; The Wild One's scoring half was already done in PR #6). The trace had been run meanwhile on that recommended option | card ("Trace it now") | [Keep It Alive](dishes/keep-it-alive.md), [luck report](../Reports/mould-keep-alive-luck-2026-11-10.md) |
+| 2026-11-10 17:54 | GPU runs go on the owner's home desktop, a GeForce GTX 1070 (the GPU Jenson used), which is not the machine they usually work at | "my home machine has a geforce 1070. Not sure if we can access it right now." ... "It is not the computer that I can currently working on though." | [scale](model/scale.md) |
 | 2026-11-10 17:52 | No on-screen readability probe for the RTS yet: still early planning | "readability can be solved, I think we are still in the early planning stages, so we don't need that yet." | [RTS brainstorm](../Reports/rts-design-2026-11-10/brainstorm/README.md) |
 | 2026-11-10 17:51, card | Run the wiki's success check first, then add the next pages (oats, salt, the lesson and puzzle dishes, sensors, the look) and ingest review 1 | card ("Both, check first") | [plan report, *Success check*](../Reports/llm-wiki-plan-2026-11-10.md) |
+| 2026-11-10 17:50 | Start the GPU plan; asked whether it needs more threads or whether to proceed alone (answer given: the plan's thread builds phases 1 and 2, the Pixel_Physics review thread the dish hash) | "How many threads do we need to start your plan or do you want to just proceed with the implementations yourself?" | [scale](model/scale.md) |
 | 2026-11-10 17:26 | `HANDOFF.md` stays the hand-written front page; its status section becomes one linked line per subject, and it keeps the open decisions and next steps | "Sure" (to that recommendation) | [HANDOFF](../HANDOFF.md) |
 | 2026-11-10 17:25 | The wiki lint stays in CI | "lint can stay in the CI for now." | [README](README.md) |
 | 2026-11-10 17:24 | Plan agreed; build the wiki to grow with the repo | "I agree with the plan, but note that this repo is brand new so it will grow significantly." | [README, *Growth*](README.md) |

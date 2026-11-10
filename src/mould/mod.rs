@@ -928,8 +928,32 @@ pub struct Dish {
     pub ate: f32,
     /// Food the wild mould has eaten, all dish (0 with no rival).
     pub wild_ate: f32,
+    /// Seconds spent in each pass of `step_own`, named by `STEP_PASSES`,
+    /// summed over every step since it was set to `Some`. `None` (the
+    /// default) times nothing. Probes set it to see where the simulation's
+    /// time goes, which the GPU plan needs to know before porting any pass
+    /// (`Reports/gpu-plan-2026-11-10.md`, phase 1). Kept out of the dish's
+    /// state: it never changes what the mould does.
+    pub step_cost: Option<Box<[f64; STEP_PASSES.len()]>>,
     rng: Rng,
 }
+
+/// Adds the time since `at` to `pass` and restarts the clock; does nothing
+/// while `Dish::step_cost` is unset.
+#[inline]
+fn lap(cost: &mut Option<Box<[f64; STEP_PASSES.len()]>>, at: &mut Option<std::time::Instant>, pass: usize) {
+    if let (Some(t0), Some(cost)) = (*at, cost.as_mut()) {
+        let now = std::time::Instant::now();
+        cost[pass] += (now - t0).as_secs_f64();
+        *at = Some(now);
+    }
+}
+
+/// The passes `Dish::step_cost` times, in the order `step_own` runs them.
+/// "light" is the lamp, water and sleep ticks and the lamp's push; "census"
+/// runs on one step in `FED_EVERY`; "upkeep" is wounds, oats, the clock and
+/// the Wanderer.
+pub const STEP_PASSES: [&str; 8] = ["light", "food", "move", "flow", "diffuse", "census", "economy", "upkeep"];
 
 #[inline]
 fn idx(x: usize, y: usize) -> usize {
@@ -1167,6 +1191,7 @@ impl Dish {
             wild_left: 0,
             ate: 0.0,
             wild_ate: 0.0,
+            step_cost: None,
             rng,
         };
         // The inoculum: a blob on the home pile.
@@ -1657,14 +1682,25 @@ impl Dish {
     }
 
     fn step_own(&mut self) {
+        // With `step_cost` unset this is one branch per pass and no clock
+        // read. Set, it adds a clock read per pass: timed against main in
+        // one session (plan hand, seed 1, 5,880 frames), the simulation took
+        // 1.11-1.14 ms a frame timed and 1.11-1.12 untimed, inside the
+        // run-to-run spread.
+        let mut at = self.step_cost.is_some().then(std::time::Instant::now);
         self.update_light();
         self.wet_tick();
         self.sleep_tick();
         self.push_light();
+        lap(&mut self.step_cost, &mut at, 0);
         self.deposit_food();
+        lap(&mut self.step_cost, &mut at, 1);
         self.move_walkers();
+        lap(&mut self.step_cost, &mut at, 2);
         self.flow_out();
+        lap(&mut self.step_cost, &mut at, 3);
         self.diffuse();
+        lap(&mut self.step_cost, &mut at, 4);
         if self.t.is_multiple_of(FED_EVERY) {
             // Once the Wanderer has gone, who is fed is settled: the part
             // that left is fed, everything left behind is not (`wander.rs`).
@@ -1675,7 +1711,9 @@ impl Dish {
                 self.wander_census();
             }
         }
+        lap(&mut self.step_cost, &mut at, 5);
         self.economy();
+        lap(&mut self.step_cost, &mut at, 6);
         self.heal_wounds();
         self.expire_oats();
         self.phase_tick();
@@ -1683,6 +1721,7 @@ impl Dish {
         if self.lamp.is_some() {
             self.counts.lamp_steps += 1;
         }
+        lap(&mut self.step_cost, &mut at, 7);
         self.t += 1;
     }
 
@@ -3801,5 +3840,30 @@ mod tests {
         }
         assert!(d.measure().reach < 3, "the break splits the network");
         assert_eq!(d.best_join(), None, "the ruler hopped a break the food count sees");
+    }
+
+    /// Timing the passes (`Dish::step_cost`, the GPU plan's profiler) is
+    /// only a clock: the timed dish is the same dish, and every pass that
+    /// ran shows time.
+    #[test]
+    fn timing_the_step_changes_nothing() {
+        let mut a = Dish::new(7);
+        let mut b = Dish::new(7);
+        b.step_cost = Some(Box::default());
+        for _ in 0..600 {
+            a.step();
+            b.step();
+        }
+        assert_eq!(a.state_hash(), b.state_hash(), "timing changed the dish");
+        assert_eq!(a.trail, b.trail);
+        assert_eq!(a.scent, b.scent);
+        let at = |d: &Dish| d.walkers.iter().map(|w| (w.x, w.y, w.heading, w.food)).collect::<Vec<_>>();
+        assert_eq!(at(&a), at(&b));
+        assert!(a.step_cost.is_none());
+        let c = b.step_cost.as_ref().unwrap();
+        for pass in ["move", "diffuse", "census", "economy"] {
+            let k = STEP_PASSES.iter().position(|p| *p == pass).unwrap();
+            assert!(c[k] > 0.0, "{pass} ran but shows no time");
+        }
     }
 }

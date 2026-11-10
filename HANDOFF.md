@@ -48,12 +48,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
 
 Ask each again; none has an answer to assume.
 
-1. **What to fix first after review 2.** Asked on a card 11-10 15:12Z, never
-   answered. The Wild One's scoring has since been done (PR #6), so what is
-   left of the question is whether to trace Keep It Alive's luck next or wait
-   until the owner has played both dishes. Re-asked 11-10 ~18:05Z; the trace
-   was run on the recommended option meanwhile (measurement only).
-   [`Reports/mould-review-thread-handoff-2026-11-10.md`](Reports/mould-review-thread-handoff-2026-11-10.md)
+1. ~~What to fix first after review 2.~~ **Decided** 11-10 18:56Z (card:
+   "Trace it now"); the trace is done
+   ([`Reports/mould-keep-alive-luck-2026-11-10.md`](Reports/mould-keep-alive-luck-2026-11-10.md)),
+   see [`wiki/decisions.md`](wiki/decisions.md). The 20 s landing preview it
+   proposes changes the game and is not yet agreed. Kept as a numbered line
+   so the later numbers stay the same.
 2. **Grains or glints** for walkers in the tube look. Only matters while F7
    is kept. [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md)
 3. **Retire the tube look (F7)?** The owner chose to keep a key back; ask
@@ -63,12 +63,10 @@ Ask each again; none has an answer to assume.
 5. **The Organ and the Wanderer:** keep, change or drop. Neither has a
    verdict.
 6. **The GPU plan** ([`Reports/gpu-plan-2026-11-10.md`](Reports/gpu-plan-2026-11-10.md),
-   [page](wiki/model/scale.md)): start phases 1 and 2; which machine and GPU
-   the owner plays on (phase 2's timing test runs there); all-integer
+   [page](wiki/model/scale.md)), now started (phase 1): all-integer
    simulation or floats (phase 1 measures it first); upload Jones 2011 before
    phase 4; hold the Pixel_Physics multi-core renderer port until the phase 2
-   gate. Owner 11-10 17:24Z: "I like this plan, but run an independent review
-   agent first." The review is folded in; no phase has a go yet.
+   gate.
 7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
    *Risks and open questions*): should it wait for the queued work or take
    over The Wild One's next steps (its Stage 0 answers the same mid-game
