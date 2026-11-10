@@ -83,6 +83,12 @@ move.
   and Polyphorm, Tero 2010, Lague, Ghassaei and Webb's list; five experiments, cheapest first. Live doc linked inside;
   the owner's PDF of Jenson's post (text and all five pictures) is in [jenson-physarum-2026-11-10/](jenson-physarum-2026-11-10/).
 
+- [gpu-plan-2026-11-10.md](gpu-plan-2026-11-10.md) — **plan, no build: the mould at scale, GPU included.** Six gated
+  phases: CPU foundations (dish hash, contagion, crowd limit, density reach, stochastic steering, all off by default);
+  offline big dishes to pick a scale; a GPU sandbox on the wgpu device pixels already holds; game rules on the GPU with
+  census on the CPU from a coarse readback; port and retune every dish; new play from scale. Research status table
+  (code of Bleuje, Lague and PolyPhy still to read; Jones 2011 needs an upload), risks, and six owner decisions.
+
 ## Added with the move (2026-11-10)
 
 - [new-game-brainstorm-2026-11-07/](new-game-brainstorm-2026-11-07/) — **where the game came from.** The flows,
