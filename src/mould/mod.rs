@@ -56,6 +56,7 @@
 //! no storm, and the seeded free dishes above. M in the window is the dish
 //! picker; a dish opens on a star from the one before.
 
+pub mod big;
 pub mod lesson;
 pub mod level;
 pub mod look;
