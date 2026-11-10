@@ -48,7 +48,8 @@ move.
   surface; with five piles buried 12+ rows down it branches into roots (9 of 10), where the same ground without buried
   food stays a runner. From above, a forest floor keeps the dish's network but is not the engine. Records an edge-of-window
   trail bug the review caught (`Dish::spread` skips the border). Recommends a side-on "mould under the garden" probe in its
-  own binary, top-down as the fallback; waits on the owner.
+  own binary, top-down as the fallback. **The owner picked the forest floor from above (card, 2026-11-10 16:04Z)**;
+  §5 lists what it needs here. Not built.
 - [mould-review-2026-11-10.md](mould-review-2026-11-10.md) **(from Pixel_Physics)** — **independent review, no build: how to make the mould game
   fun and good-looking.** Played from written hands on the mould thread's unlanded branch. At 45 degrees the mould obeys
   every oat and then freezes (far pile joined by 15 s with 3 oats; every move the same move); at 22.5 it joins all the food
