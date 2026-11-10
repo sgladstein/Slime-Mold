@@ -49,6 +49,14 @@ sharp hand beating a clumsy one only confirms the aim test. It recommends a
 paired-clone verb census before Stage 0 (see the note under *Recommended
 path*).
 
+**Field retest and verb census (2026-11-10, later).** After the owner said 7
+piles limit the options, the red team's findings were rerun on 23 smaller
+mirrored piles, and the census was run on both dishes:
+[`rts-design-2026-11-10/field/`](rts-design-2026-11-10/field/README.md).
+Taut's pull wins share there, the pattern counters cycle on one layout of
+two, and a salt line across the rival's road is the one verb that passes on
+share; on The Wild One only the lamp moves share.
+
 ## What the simulation is today
 
 The game is a Jones-style walker model on one bounded 256 x 160 dish

@@ -95,6 +95,14 @@ move.
   4 of 4 seeds; lowering it starved the mould); a squeeze from home moved food share by 0.000 on 3 of 3 seeds; the
   pattern counters are a straight ladder in 164 games at today's density; flow on two moulds costs 2.6x the step
   time. Food share mostly counts heads on piles. Strongest left: Two Fevers. First test: a paired-clone verb census.
+  **Field retest and verb census the same day** ([`rts-design-2026-11-10/field/`](rts-design-2026-11-10/field/README.md),
+  after the owner said 7 piles limit the options): on 23 smaller mirrored piles (about 6,600 walkers, Jones's
+  density) the counters form a cycle on one layout (hunter > maze 32/32, maze > cord 30/32, cord > hunter 25/32, all
+  surviving Holm) but not on a second (cord v maze 21/32, p 0.11); Taut's pull wins share on 8 of 8 seeds and 16 of 16
+  in the census (median +0.139), so it is a lever there but, as one dial, always best at full; with no hands the side
+  ahead at 60 s keeps the lead in about 80% of 700 games. Verb census, 16 seeds a dish: on the field a salt line
+  across the rival's road moves share 0.02 on 14 of 16 and beats random 14 of 16; on The Wild One only the lamp
+  moves it (15 of 16 up, 11 by 0.02); placed food loses on both. 700 of the games ran on four runner threads.
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as
