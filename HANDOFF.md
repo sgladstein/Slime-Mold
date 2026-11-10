@@ -48,12 +48,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
 
 Ask each again; none has an answer to assume.
 
-1. **What to fix first after review 2.** Asked on a card 11-10 15:12Z, never
-   answered. The Wild One's scoring has since been done (PR #6), so what is
-   left of the question is whether to trace Keep It Alive's luck next or wait
-   until the owner has played both dishes. Re-asked 11-10 ~18:05Z; the trace
-   was run on the recommended option meanwhile (measurement only).
-   [`Reports/mould-review-thread-handoff-2026-11-10.md`](Reports/mould-review-thread-handoff-2026-11-10.md)
+1. ~~What to fix first after review 2.~~ **Decided** 11-10 18:56Z (card:
+   "Trace it now"); the trace is done
+   ([`Reports/mould-keep-alive-luck-2026-11-10.md`](Reports/mould-keep-alive-luck-2026-11-10.md)),
+   see [`wiki/decisions.md`](wiki/decisions.md). The 20 s landing preview it
+   proposes changes the game and is not yet agreed. Kept as a numbered line
+   so the later numbers stay the same.
 2. **Grains or glints** for walkers in the tube look. Only matters while F7
    is kept. [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md)
 3. **Retire the tube look (F7)?** The owner chose to keep a key back; ask
