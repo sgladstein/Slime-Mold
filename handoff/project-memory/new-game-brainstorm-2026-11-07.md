@@ -1,0 +1,20 @@
+---
+name: new-game-brainstorm-2026-11-07
+description: Scott's 11-07 brainstorm for a new non-plant, non-creature puzzle game on the engine (flows, gas diffusion, growth networks, Noita cards): files, verdict, open ask
+metadata:
+  type: project
+---
+Scott (11-07 15:44Z, thread "Brainstorm a flow and growth card puzzle game", cmsg_016bYH3Ybq4z6xkGqHujo4HWDJ2EqJa9aRueJpptdjyBis): a totally different challenge/puzzle game on the engine, NOT plants/creatures, NOT falling sand; inspired by flows, gas-like diffusion (as physics, not smell), growing-tip branching networks, and Noita wand/card mechanics. Later asked for slime mould / mycelium, and said cards are NOT required for every idea.
+
+Folder: /mnt/project-files/game-design/new-game-brainstorm-2026-11-07/ (brief.md, explorer-{a-flows,b-growth,c-open,d-cards}.md, all-explorers-compiled.md, review-brief.md, review-{1-player,2-engine,3-synthesis}.md). Page: https://claude.ai/artifact/2b3KnLZGmNCq5zmBReufvR
+
+Verdict (3 reviewers): (1) lightning with memory (Arc + Fulgurite glass scars + copper kept between storms; hold-to-call/release verb), top-2 for all three; (2) Mould herded with a flashlight, built on the Jones 2010 agent slime model over the existing fine trail field (pheromone.rs), top-3 for all; (3) Seep = Firedamp gas + mould that eats it (synthesis pick). Cards only where order is the fun (lightning); tools in-level + perks between levels for gas/slime.
+
+Engine facts checked: weather::strike is draw-only and forces full redraws; heat does NOT drive the air grid; FIELD_SCALE = 16 (air grid 16x16 blocks); trail field is per-cell, writable, no wind drift.
+
+DECIDED (Scott 11-07 16:12Z): three prototype threads, one each for lightning, Mould, Firedamp (Firedamp over Seep; Seep is the merge if both mould and gas probes are fun). Briefs: prototypes/common.md + 1-lightning.md, 2-mould.md, 3-firedamp.md in the folder. EXPANDED to SIX (Scott 16:18Z): + 4-seep.md (graph mould vs probe 2's agent mould; borrows Firedamp's gas), 5-quench.md (lid+splash drip engine, forge needs some lava), 6-fault.md (ice crack tips + shipped collapse, shimmer blind A/B). Each is its own binary src/bin/<name>.rs, not a lab seat; lands via merge desk with a paired-GIF page. Satchel lessons that drove the brief: [[noita-wands-research-2026-10-31]].
+
+EXPLORER E, PLANTS (Scott 16:37Z asked for one more agent on the plant growth engine): brief-e-plants.md, output explorer-e-plants.md. Ranking: Kudzu (cut back a vine eating a village; one-economy vine) > Heartwood (deck = tree genome, shade out rival) > Reclaim (roots topple a temple) > Tinder (tend forest before a wildfire) > Seedfall. Fact: plant cells tick every 45 frames (ORGANISM_TICK_INTERVAL), ~1 cell/s per tip; every concept needs 5-10x speed-up. PROTOTYPES 7-8 asked 11-07 17:38Z (Scott: top two): prototypes/7-kudzu.md, 8-heartwood.md + plant-engine-rules.md (game-only switches, never change ORGANISM_TICK_INTERVAL or shipped species, same-seed lab check in PR). Kudzu has no cards (Scott asked).
+
+Probe results (Seep, Fault, Heartwood, ...): [[new-game-probes-2026-11-07]].
+SEEP ROUND 2 (11-08, from Scott's 8-demo playtest, review /mnt/project-files/game-design/new-game-brainstorm-2026-11-07/playtest-2026-11-08/seep-review.md): PR #1044 to Merge desk; page https://claude.ai/artifact/FvUwqbkRK4DwheTaAeSdJu. Dripping stall + safety lamp B makes mould needed for 3rd star (plan 3★ 5/5, sparking alone 2★, nothing 0★); stars = carts 40/65/85. Cut still no job in play (0 tubes burned in 35 runs). Asked Scott: is leading the mould into the stall a puzzle or a chore? Help card added (head 4b6e257a). SCOTT PLAYED 11-08 05:54Z: gas+spark fun/satisfying, blow not, mould idea liked but damp-then-slow-growth not satisfying, instructions still weak, doing-well must be clearer -> ROUND 3 PR #1051 MERGED 07:38Z (ae666015), page https://claude.ai/artifact/3NDjQ5H1shLGDboZiZVSwW (mould races on fresh damp, blow streaks, star bar, coach). Next lever: faster eating once it arrives.
