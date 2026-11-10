@@ -50,6 +50,11 @@ pub struct BigParams {
     pub rotate_angle: f32,
     /// How far ahead a walker senses, in fine cells.
     pub sensor_offset: f32,
+    /// How far ahead a walker smells scent, in fine cells; 0 is
+    /// `sensor_offset`. Trail sensed near sets the mesh (Jones's network
+    /// size follows the sensor offset), scent smelled far sets how far off
+    /// food pulls: on a finer grid one offset cannot keep both.
+    pub scent_offset: f32,
     /// How far a walker moves a fine step, in fine cells.
     pub step: f32,
     pub deposit: f32,
@@ -102,6 +107,7 @@ impl BigParams {
             sensor_angle: std::f32::consts::FRAC_PI_4,
             rotate_angle: std::f32::consts::FRAC_PI_4,
             sensor_offset: 9.0,
+            scent_offset: 0.0,
             step: 1.0,
             deposit: 5.0,
             keep: 0.9,
@@ -345,9 +351,12 @@ impl BigDish {
         self.scent[y as usize * self.sw + x as usize]
     }
 
-    fn sense(&self, x: f32, y: f32) -> f32 {
-        match self.cell(x, y) {
-            Some(i) if self.agar[i] => self.trail[i] + self.scent_at(x, y),
+    /// Trail at `so` and scent at `sso` along heading `a`: off the agar
+    /// (by the trail sensor) reads as a wall.
+    fn sense(&self, x: f32, y: f32, a: f32, so: f32, sso: f32) -> f32 {
+        let (c, s) = (a.cos(), a.sin());
+        match self.cell(x + c * so, y + s * so) {
+            Some(i) if self.agar[i] => self.trail[i] + self.scent_at(x + c * sso, y + s * sso),
             _ => -1.0e6,
         }
     }
@@ -356,6 +365,7 @@ impl BigDish {
     fn move_walkers(&mut self) {
         let p = &self.p;
         let (sa, ra, so, st, dep, crowd) = (p.sensor_angle, p.rotate_angle, p.sensor_offset, p.step, p.deposit, p.crowd);
+        let sso = if p.scent_offset > 0.0 { p.scent_offset } else { so };
         let (seed, t) = (p.seed, self.steps);
         // (walker, from, to, x, y, heading); from == to for a move within a cell.
         let mut moves: Vec<(u32, u32, u32, f32, f32, f32)> = Vec::with_capacity(self.walkers.len());
@@ -364,9 +374,9 @@ impl BigDish {
         for k in 0..self.walkers.len() {
             let (x, y, mut h) = self.walkers[k];
             if look {
-                let f = self.sense(x + h.cos() * so, y + h.sin() * so);
-                let fl = self.sense(x + (h - sa).cos() * so, y + (h - sa).sin() * so);
-                let fr = self.sense(x + (h + sa).cos() * so, y + (h + sa).sin() * so);
+                let f = self.sense(x, y, h, so, sso);
+                let fl = self.sense(x, y, h - sa, so, sso);
+                let fr = self.sense(x, y, h + sa, so, sso);
                 if f > fl && f > fr {
                 } else if f < fl && f < fr {
                     h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 { ra } else { -ra };
@@ -675,6 +685,56 @@ mod tests {
             assert!(d.occ.iter().zip(&seen).all(|(&o, &s)| o == s as u16));
             assert!(d.claim.iter().all(|&c| c == u32::MAX));
         }
+    }
+
+    /// The scaling options keep the dish deterministic whatever the threads.
+    #[test]
+    fn scaling_options_ignore_threads() {
+        let p = BigParams { trail_passes: 2, sense_every: 2, scent_offset: 18.0, ..small(2, 2) };
+        let mut a = BigDish::new(p);
+        let mut b = a.clone();
+        b.threads = 3;
+        for _ in 0..40 {
+            a.tick();
+            b.tick();
+        }
+        assert_eq!(a.hash(), b.hash());
+    }
+
+    /// A scent reach of 0 means the trail sensor's reach, bit for bit.
+    #[test]
+    fn scent_offset_zero_is_the_sensor_offset() {
+        let p = small(2, 2);
+        let mut a = BigDish::new(p.clone());
+        let mut b = BigDish::new(BigParams { scent_offset: p.sensor_offset, ..p });
+        for _ in 0..30 {
+            a.tick();
+            b.tick();
+        }
+        assert_eq!(a.hash(), b.hash());
+    }
+
+    /// Between looks a walker keeps its heading; only a blocked walker,
+    /// which stays put, draws a new one.
+    #[test]
+    fn walkers_walk_straight_between_looks() {
+        // Spread start: a packed blob leaves most walkers blocked.
+        let mut d = BigDish::new(BigParams { sense_every: 2, blob: false, ..small(2, 2) });
+        for _ in 0..20 {
+            d.tick();
+        }
+        assert_eq!(d.steps % 2, 0);
+        d.steps += 1;
+        let before = d.walkers.clone();
+        d.move_walkers();
+        let mut moved = 0;
+        for (a, b) in before.iter().zip(&d.walkers) {
+            if (a.0, a.1) != (b.0, b.1) {
+                assert_eq!(a.2, b.2, "turned between looks");
+                moved += 1;
+            }
+        }
+        assert!(moved > before.len() / 2, "{moved} of {} moved", before.len());
     }
 
     /// The same layout of piles at every scale, so arms pair.

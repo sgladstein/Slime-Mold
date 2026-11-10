@@ -10,19 +10,22 @@
 #   strays (both):    share of walkers off the tube at 20 s
 #   cost:             ms a tick, one thread
 # Each arm is paired with today on the same seed (same pile layout).
+# The `nose` arm (trail sensed near, scent smelled far) was added after the
+# first five arms' results, as a follow-up; run it alone with ARMS=nose.
 #
-#   BIN=path/to/bigdish OUT=raw JOBS=4 SEEDS="1 2 3 4 5 6 7 8" bash run.sh
+#   BIN=path/to/bigdish OUT=raw JOBS=4 SEEDS="1 2 3 4 5 6 7 8" ARMS="today naive" bash run.sh
 set -euo pipefail
 BIN=${BIN:-./target/release/examples/bigdish}
 OUT=${OUT:-raw}
 JOBS=${JOBS:-4}
 SEEDS=${SEEDS:-1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16}
+ARMS=${ARMS:-turn steps smell reach nose naive today}
 mkdir -p "$OUT"
 jobs=()
 for start in blob uniform; do
   b=1; [ "$start" = uniform ] && b=0
   # Slowest arms first so the pool drains evenly.
-  for arm in turn steps smell reach naive today; do
+  for arm in $ARMS; do
     for seed in $SEEDS; do
       jobs+=("$arm $start $b $seed")
     done

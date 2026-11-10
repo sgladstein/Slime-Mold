@@ -1,0 +1,8 @@
+bigdish: preset smell-blob seeds [16] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 4, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, step: 1.0, deposit: 1.25, keep: 0.97400373, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: true, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: true, tube: 1.0, seed: 1 }
+== seed 16: 1024 x 640, 32000 walkers, 7 piles
+seed 16 smell-blob t   5.0s  tube  2132.5  loops    5  width 7.69  reach   50.7  piles 2/7  strays 0.108  ms/tick 31.28
+seed 16 smell-blob t  10.0s  tube  2004.8  loops    5  width 7.51  reach   51.7  piles 2/7  strays 0.149  ms/tick 34.37
+seed 16 smell-blob t  15.0s  tube  1891.1  loops    4  width 6.92  reach   51.8  piles 2/7  strays 0.201  ms/tick 35.57
+seed 16 smell-blob t  20.0s  tube  1813.1  loops    2  width 7.18  reach   51.7  piles 2/7  strays 0.240  ms/tick 35.56
+seed 16 smell-blob hash=8843b7a0dbe84080

@@ -3,8 +3,9 @@
 //!
 //! ```text
 //! cargo build --release --example bigdish
-//! ./target/release/examples/bigdish preset=smell seeds=1 seconds=60 threads=4
+//! ./target/release/examples/bigdish preset=nose seeds=1 seconds=60 threads=4
 //! ./target/release/examples/bigdish preset=dense gif=out/ every=12 down=2
+//! ./target/release/examples/bigdish preset=dense frames=out/ every=24   # PNGs for ffmpeg
 //! ./target/release/examples/bigdish preset=reach tag=reach-blob look=out/ at=5,15,30,60
 //! ```
 //!
@@ -24,7 +25,11 @@
 //!   spread a tick).
 //! - `turn`: walkers sense and turn once a tick, then walk four fine steps
 //!   straight: today's paths. Every number is today's in dish units.
-//! - `dense`: `smell` with 100,000 walkers (about Jones's density).
+//! - `nose`: `naive`, but scent smelled 36 fine cells out (today's 9 dish
+//!   cells) while trail is sensed 9 fine cells out: the census found the
+//!   naive port's fine mesh and today's pace come from different reaches.
+//! - `dense`: `nose` with 100,000 walkers (about Jones's density), the
+//!   phase 2 dish.
 //!
 //! Any `BigParams` number can follow: `walkers= keep= substeps= scale=
 //! crowd= sensor_offset= sensor_angle= (degrees) rotate_angle= (degrees)
@@ -54,14 +59,15 @@ fn preset(name: &str) -> BigParams {
     let reach = BigParams { sensor_offset: t.sensor_offset * 4.0, ..smell.clone() };
     match name {
         "today" => t,
-        "naive" => naive,
+        "naive" => naive.clone(),
+        "nose" => BigParams { scent_offset: t.sensor_offset * 4.0, ..naive },
         "steps" => steps,
         "smell" => smell,
         "spread" => BigParams { trail_passes: 4, ..reach.clone() },
         "turn" => BigParams { trail_passes: 4, sense_every: 4, ..reach },
         "reach" => reach.clone(),
-        "dense" => BigParams { walkers: 100_000, ..smell },
-        _ => panic!("unknown preset {name}: today, naive, steps, smell, reach, spread, turn, dense"),
+        "dense" => BigParams { walkers: 100_000, scent_offset: t.sensor_offset * 4.0, ..naive },
+        _ => panic!("unknown preset {name}: today, naive, steps, smell, reach, spread, turn, nose, dense"),
     }
 }
 
@@ -75,12 +81,14 @@ fn write_gif(path: &str, shots: Vec<image::RgbaImage>, ms: u32) {
 }
 
 fn main() {
-    let mut name = "smell".to_string();
+    let mut name = "nose".to_string();
     // Names the run in its output lines and files; the preset's name if not given.
     let mut tag: Option<String> = None;
     let mut seeds = vec![1u64];
     let (mut seconds, mut report, mut threads) = (60.0f32, 10.0f32, 1usize);
     let (mut gif, mut look): (Option<String>, Option<String>) = (None, None);
+    // Full-size PNG frames every `every` ticks, for a video encoder.
+    let mut frames: Option<String> = None;
     let (mut every, mut down) = (12u64, 1usize);
     let mut at: Vec<f32> = Vec::new();
     let mut overrides: Vec<(String, String)> = Vec::new();
@@ -94,6 +102,7 @@ fn main() {
             "report" => report = v.parse().unwrap(),
             "threads" => threads = v.parse().unwrap(),
             "gif" => gif = Some(v.into()),
+            "frames" => frames = Some(v.into()),
             "look" => look = Some(v.into()),
             "every" => every = v.parse().unwrap(),
             "down" => down = v.parse().unwrap(),
@@ -114,6 +123,7 @@ fn main() {
             "scale" => p.scale = f() as usize,
             "crowd" => p.crowd = f() as u8,
             "sensor_offset" => p.sensor_offset = f(),
+            "scent_offset" => p.scent_offset = f(),
             "sensor_angle" => p.sensor_angle = f().to_radians(),
             "rotate_angle" => p.rotate_angle = f().to_radians(),
             "scent_coarse" => p.scent_coarse = f() != 0.0,
@@ -146,6 +156,11 @@ fn main() {
             spent += t0.elapsed().as_secs_f64();
             if gif.is_some() && d.ticks.is_multiple_of(every) {
                 shots.push(d.image(down));
+            }
+            if let Some(dir) = &frames {
+                if d.ticks.is_multiple_of(every) {
+                    d.image(1).save(format!("{dir}/{name}-s{seed}-{:04}.png", d.ticks / every)).unwrap();
+                }
             }
             if let Some(dir) = &look {
                 if stills.contains(&d.ticks) {

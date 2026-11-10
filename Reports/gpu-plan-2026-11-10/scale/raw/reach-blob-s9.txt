@@ -1,0 +1,8 @@
+bigdish: preset reach-blob seeds [9] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 4, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 36.0, step: 1.0, deposit: 1.25, keep: 0.97400373, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: true, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: true, tube: 1.0, seed: 1 }
+== seed 9: 1024 x 640, 32000 walkers, 7 piles
+seed 9 reach-blob t   5.0s  tube  1732.4  loops    7  width 4.26  reach  107.5  piles 3/7  strays 0.369  ms/tick 29.62
+seed 9 reach-blob t  10.0s  tube  1694.1  loops    7  width 4.21  reach  110.0  piles 3/7  strays 0.443  ms/tick 31.26
+seed 9 reach-blob t  15.0s  tube  1648.3  loops    7  width 4.06  reach  111.3  piles 3/7  strays 0.467  ms/tick 31.68
+seed 9 reach-blob t  20.0s  tube  1611.2  loops    6  width 4.06  reach  112.1  piles 3/7  strays 0.479  ms/tick 31.82
+seed 9 reach-blob hash=3a8468f00735aa59

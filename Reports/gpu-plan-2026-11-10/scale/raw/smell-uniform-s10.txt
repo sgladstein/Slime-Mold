@@ -1,0 +1,8 @@
+bigdish: preset smell-uniform seeds [10] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 4, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, step: 1.0, deposit: 1.25, keep: 0.97400373, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: true, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: false, tube: 1.0, seed: 1 }
+== seed 10: 1024 x 640, 32000 walkers, 7 piles
+seed 10 smell-uniform t   5.0s  tube  5662.6  loops   32  width 4.67  reach  186.3  piles 7/7  strays 0.018  ms/tick 27.04
+seed 10 smell-uniform t  10.0s  tube  4558.9  loops   28  width 4.24  reach  184.8  piles 7/7  strays 0.072  ms/tick 25.76
+seed 10 smell-uniform t  15.0s  tube  3536.3  loops   17  width 3.80  reach  180.5  piles 7/7  strays 0.160  ms/tick 25.06
+seed 10 smell-uniform t  20.0s  tube  3043.5  loops   15  width 3.72  reach  169.7  piles 7/7  strays 0.225  ms/tick 24.73
+seed 10 smell-uniform hash=91f3ea7f9cfa61b3

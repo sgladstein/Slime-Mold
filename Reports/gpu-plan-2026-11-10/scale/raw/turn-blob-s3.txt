@@ -1,0 +1,8 @@
+bigdish: preset turn-blob seeds [3] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 4, walkers: 32000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 36.0, step: 1.0, deposit: 1.25, keep: 0.97400373, trail_passes: 4, sense_every: 4, crowd: 1, scent_coarse: true, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: true, tube: 1.0, seed: 1 }
+== seed 3: 1024 x 640, 32000 walkers, 7 piles
+seed 3 turn-blob t   5.0s  tube  3391.6  loops    0  width 26.63  reach   58.5  piles 3/7  strays 0.000  ms/tick 69.02
+seed 3 turn-blob t  10.0s  tube  3362.1  loops    0  width 25.40  reach   60.2  piles 3/7  strays 0.000  ms/tick 62.91
+seed 3 turn-blob t  15.0s  tube  3364.5  loops    0  width 24.56  reach   61.6  piles 3/7  strays 0.000  ms/tick 59.70
+seed 3 turn-blob t  20.0s  tube  3383.2  loops    0  width 24.21  reach   62.5  piles 3/7  strays 0.000  ms/tick 57.81
+seed 3 turn-blob hash=1aad117a2f53adcc
