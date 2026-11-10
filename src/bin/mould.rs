@@ -27,6 +27,12 @@
 //! the rim, tubes, salt and cuts, F6 the stain where mould has been, F7
 //! the mould drawn straight from the simulation or as tubes.
 //!
+//! **Sound** (`slime_mould::sound`, 2026-11-10): the dish is heard as well
+//! as seen, on by default where the build has a device (macOS, Windows,
+//! Linux with `--features audio-alsa`). S turns it off and on, named in the
+//! title. Paused, or behind a card, the textures fade and the tools still
+//! answer.
+//!
 //! **The Wanderer** (`mould::wander`, prototype 2026-11-08): `-- wander`
 //! (or `-- wander 3` for dish seed 3), W from any dish, or THE WANDERER on
 //! the picker. No clock and no stars: lead her to the crack on the right and
@@ -46,6 +52,7 @@ use slime_mould::mould::look::{self, Style};
 use slime_mould::mould::render::{self, Banner, Menu, QuitArm, View};
 use slime_mould::mould::wander::{Outcome, FIRST_WALKERS};
 use slime_mould::mould::{tune, Dish, Params, Phase, Tool, H, STEPS_PER_FRAME, W};
+use slime_mould::sound::{self, listen::Listener};
 use pixels::{Pixels, ScalingMode, SurfaceTexture};
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
@@ -222,6 +229,13 @@ struct Handler {
     /// opened and saved to `tune::TUNE_FILE`.
     tuned: Params,
     shift: bool,
+    /// The speaker (`slime_mould::sound`), or `None` on a build or machine
+    /// without one; the window then plays silent, as before sound existed.
+    speaker: Option<sound::Output>,
+    listener: Listener,
+    /// S turns sound off and on (on by default).
+    sound_on: bool,
+    last_heard: Instant,
     result: Result<(), Box<dyn std::error::Error>>,
 }
 
@@ -239,6 +253,14 @@ impl Handler {
             }
         }
         tune::apply(&tuned, &mut dish.params);
+        let speaker = match sound::Output::open(dish.seed) {
+            Ok(o) => Some(o),
+            Err(e) => {
+                eprintln!("mould: no sound ({e}); playing silent");
+                None
+            }
+        };
+        let listener = Listener::new(&dish);
         Handler {
             window: None,
             pixels: None,
@@ -267,6 +289,10 @@ impl Handler {
             quit: QuitArm::default(),
             tuned,
             shift: false,
+            speaker,
+            listener,
+            sound_on: true,
+            last_heard: Instant::now(),
             result: Ok(()),
         }
     }
@@ -595,6 +621,22 @@ impl Handler {
             }
             KeyCode::Space => self.view.fast = !self.view.fast,
             KeyCode::KeyP => self.view.paused = !self.view.paused,
+            // Sound off and on; named in the title. Off fades to silence
+            // (master 0) rather than cutting mid-grain.
+            KeyCode::KeyS => {
+                self.sound_on = !self.sound_on;
+                if let Some(sp) = self.speaker.as_mut() {
+                    sp.send([sound::SoundCmd::Master(if self.sound_on { sound::synth::DEFAULT_MASTER } else { 0.0 })]);
+                }
+                if let Some(w) = &self.window {
+                    let state = match (self.speaker.is_some(), self.sound_on) {
+                        (false, _) => "no sound on this machine",
+                        (true, true) => "sound on",
+                        (true, false) => "sound off",
+                    };
+                    w.set_title(&format!("Mould: {state} (S)"));
+                }
+            }
             KeyCode::KeyR => self.restart(self.entry),
             KeyCode::KeyN if self.journey.is_some() => self.next_stretch(),
             KeyCode::KeyN => self.next(),
@@ -665,6 +707,21 @@ impl Handler {
         self.hold();
     }
 
+    /// Once a drawn frame, after the steps: what the dish should sound like
+    /// now. The listener only reads the dish (`sound::listen`), so this
+    /// cannot change the game. Measured at about 1 us a frame
+    /// (`examples/mouldsound.rs`, `Reports/mould-sound-2026-11-10.md`).
+    fn hear(&mut self, now: Instant) {
+        let dt = (now - self.last_heard).as_secs_f32().min(0.25);
+        self.last_heard = now;
+        let Some(speaker) = self.speaker.as_mut() else { return };
+        let hushed = self.view.paused || self.view.brief || self.view.menu.is_some();
+        let cmds = self.listener.hear(&self.dish, dt, hushed);
+        if self.sound_on {
+            speaker.send(cmds);
+        }
+    }
+
     fn frame(&mut self, event_loop: &ActiveEventLoop) {
         let now = Instant::now();
         self.accumulator += now - self.last_frame;
@@ -709,6 +766,7 @@ impl Handler {
                 w.set_title(&title(self.entry, self.journey));
             }
         }
+        self.hear(now);
         let Some(pixels) = self.pixels.as_mut() else { return };
         self.view.cursor = self.cursor;
         self.view.quit_armed = self.quit.armed(now);

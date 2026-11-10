@@ -81,9 +81,6 @@ Ask each again; none has an answer to assume.
    strongest left. The food store sits at a median of 0, so any "pay from
    the store" rule needs its own currency first. Page:
    [the RTS directions](wiki/rts/directions.md).
-8. **Sound for the game:** wanted at all? The Pixel_Physics review
-   recommends starting from that repo's `src/audio/` if so; the game window
-   is silent today.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
