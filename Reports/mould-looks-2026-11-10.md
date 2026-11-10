@@ -182,9 +182,10 @@ started:
   tube look. If the tube look is kept just for comparison, the pick can be
   dropped.
 - **Retire the tube look** once the owner no longer flips to it. That would
-  remove `wild`, the tube branch of `dish()`, and the F3/F4 grains-glints
-  and F5 smoothing switches it alone reads; the stain (F6), lamp, water and
-  wet ground are shared and stay. Ask before deleting: the owner chose to
+  remove `wild`, the tube branch of `dish()`, and whatever of the F3, F4 and
+  F5 switches only the tube look reads. Check each read before cutting: the
+  F5 rim layer and F4's off setting are also used by the simulation look,
+  and the stain (F6), lamp, water and wet ground are shared. Ask before deleting: the owner chose to
   keep a key back.
 - **Apply the same rule to anything new.** The owner's rule, which this
   look answers: colour straight from a held quantity through one fixed ramp,
