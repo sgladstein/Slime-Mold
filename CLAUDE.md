@@ -1,11 +1,16 @@
 # Working in this repo
 
-Start at `HANDOFF.md` (where the game stands, the owner's open decisions,
-next steps), then `ROADMAP.md` (every plan in one order, who owns each step).
-`README.md` has the layout; `Reports/README.md` what has already been tried.
+**Read only what your task needs**; this file is the
+only thing every thread reads. A runner thread reads nothing else.
 
-**The wiki** (`wiki/`): before touching a dish, tool or mechanism, read
-`wiki/index.md` and its page. A change that adds a report, changes a default
+- Game or simulation work: `HANDOFF.md`, then `wiki/index.md` and the page
+  for the dish, tool or mechanism you touch.
+- Planning, or changing a step's state: `ROADMAP.md`.
+- Before trying an idea: grep `Reports/dead-ends.md` and `Reports/README.md`
+  for it; don't read them whole.
+- File layout and tools: `README.md`, when you need them.
+
+**The wiki** (`wiki/`): a change that adds a report, changes a default
 or records an owner decision updates those pages in the same commit; rules
 in `wiki/README.md`. Run `python3 wiki/lint.py` before committing (CI runs it).
 
