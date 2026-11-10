@@ -1,0 +1,38 @@
+mouldprobe: seeds [6] players ["warden", "idle"] scale 2 oats None stray_reach None params Params { sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, deposit: 5.0, keep: 0.9, food_deposit: 20.0, scent_keep: 0.97, light_weight: 0.0, light_fade: 0.0, tube: 1.0, feed_reach: 70, upkeep: 0.004, eat: 0.03, table: 40, fed_scent: 0.15, divide: 0.03, crowd: 7, starve: 0.0016666667, hungry: 0.0011111111, burn: 0.0, lamp_reach: 16.0, lamp_soft: false, push: 0.9, pieces: true, wound: 4.0, stray_reach: inf, stray_grace: 2.0, oats_grace: 8.0, flow: false, carry_cap: 3.0, share: 0.5, sap: true, sap_speed: 2, absorb: 0.03, stream: 1.0, stream_bias: 0.35, want: 1.0, pulse_seconds: 2.5, pulse_strength: 0.8, wall_grow: 1.0, wall_half_life: 30.0, wall_pull: 1.0, settle_seconds: 0.0, explore_angle: 0.3926991, spared: 0, spared_scent: 0.5, foe_repel: 1.0, fight: 0.02, wet: false, wet_base: 0.5, wet_relax: 0.0005, dry_light: 0.05, crust_wet: 0.25, crust_rate: 0.05, revive_wet: 0.7, revive_rate: 0.05, crust_life: 20.0, crust_trail: 0.6, wake_grace: 5.0, water_r: 12.0 }
+
+== dish 5 THE WILD ONE: STARS: 1.5X AS MUCH AS IT. 3X. NONE OF IT LEFT ==
+    t= 10s mould 1301 wild 1105 asleep    0 store       3 oats 2 piles *97%@0 *94%@0 *94%@0 *99%@0 93%@46 93%@47 97%@75
+    t= 20s mould 1207 wild  878 asleep    0 store       0 oats 3 piles *94%@0 *86%@0 *86%@0 *97%@0 86%@40 86%@0 94%@47
+    t= 30s mould 1201 wild  885 asleep    0 store       1 oats 3 piles *91%@0 *79%@0 *79%@0 *96%@0 79%@43 79%@41 91%@71
+    t= 40s mould 1201 wild  879 asleep    0 store       0 oats 4 piles *88%@0 *72%@0 *72%@0 *94%@0 72%@43 72%@41 88%@71
+    t= 50s mould 1234 wild  869 asleep    0 store       0 oats 4 piles *86%@0 *65%@0 *65%@0 *92%@0 64%@43 66%@0 86%@44
+    t= 60s mould 1208 wild  838 asleep    0 store       1 oats 4 piles *83%@0 *58%@0 *58%@0 *90%@0 *57%@0 59%@42 83%@34
+    t= 70s mould 1373 wild  851 asleep    0 store       1 oats 3 piles *80%@0 *50%@0 *50%@0 *88%@0 *50%@0 52%@0 80%@43
+    t= 80s mould 1520 wild  503 asleep    0 store       1 oats 4 piles *77%@0 *43%@0 *43%@0 *87%@0 *43%@0 *45%@0 *77%@0
+    t= 90s mould 1595 wild  453 asleep    0 store       1 oats 4 piles *74%@0 *36%@0 *36%@0 *85%@0 *36%@0 *38%@0 *74%@0
+    t=100s mould 1568 wild  398 asleep    0 store       2 oats 4 piles *71%@0 *29%@0 *29%@0 *83%@0 *28%@0 *31%@0 *71%@0
+    t=110s mould 1694 wild  350 asleep    0 store       0 oats 4 piles *68%@0 *22%@0 *22%@0 *81%@0 *21%@0 *24%@0 *68%@0
+    t=120s mould 1531 wild  407 asleep    0 store       1 oats 4 piles *65%@0 *14%@0 *14%@0 *79%@0 *14%@0 *17%@0 *65%@0
+    t=130s mould 1295 wild  604 asleep    0 store       7 oats 4 piles *63%@0 *7%@0 *7%@0 *78%@0 *8%@0 *11%@0 *63%@0
+    t=140s mould 1280 wild  734 asleep    0 store       3 oats 4 piles *60%@0 *0%@0 *76%@0 *1%@0 *4%@0 *60%@0
+seed 6    warden: 1 stars  YOU 776, WILD 385 | 3X AS MUCH AS IT FOR 2 STARS  mould 726  oats 4 snips 3 lamp 141s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 309 fought 1654/1643  (26.6 s)
+    t= 10s mould 1226 wild 1113 asleep    0 store       0 oats 4 piles *97%@0 *93%@0 *93%@0 100%@40 93%@81 93%@81 97%@123
+    t= 20s mould  900 wild  898 asleep    0 store       1 oats 4 piles *94%@0 *86%@0 *86%@0 100%@41 86%@43 86%@82 94%@92
+    t= 30s mould 1177 wild  892 asleep    0 store       1 oats 4 piles *91%@0 *79%@0 *79%@0 *99%@0 79%@44 79%@43 91%@73
+    t= 40s mould 1179 wild  892 asleep    0 store       1 oats 4 piles *88%@0 *72%@0 *72%@0 *97%@0 72%@0 72%@38 88%@47
+    t= 50s mould 1186 wild  887 asleep    0 store       1 oats 4 piles *86%@0 *64%@0 *64%@0 *95%@0 64%@39 *64%@0 86%@39
+    t= 60s mould 1096 wild  899 asleep    0 store       3 oats 4 piles *83%@0 *57%@0 *57%@0 *94%@0 *57%@0 *57%@0 83%@4
+    t= 70s mould 1091 wild  928 asleep    0 store       0 oats 4 piles *80%@0 *50%@0 *50%@0 *92%@0 50%@0 50%@0 80%@46
+    t= 80s mould 1072 wild  920 asleep    0 store       1 oats 4 piles *77%@0 *43%@0 *43%@0 *90%@0 43%@0 *43%@0 77%@1
+    t= 90s mould 1026 wild 1002 asleep    0 store       1 oats 4 piles *74%@0 *36%@0 *36%@0 *88%@0 36%@48 *36%@0 74%@43
+    t=100s mould 1012 wild  999 asleep    0 store       1 oats 4 piles *71%@0 *28%@0 *28%@0 *86%@0 *28%@0 28%@3 71%@39
+    t=110s mould 1031 wild  932 asleep    0 store       1 oats 4 piles *68%@0 *21%@0 *21%@0 *85%@0 *21%@0 *21%@0 68%@0
+    t=120s mould 1052 wild  955 asleep    0 store       0 oats 4 piles *65%@0 *14%@0 *14%@0 *83%@0 *14%@0 14%@0 65%@4
+    t=130s mould  950 wild 1057 asleep    0 store       0 oats 4 piles *63%@0 *7%@0 *7%@0 *81%@0 *7%@0 7%@0 63%@2
+    t=140s mould  921 wild  970 asleep    0 store       0 oats 4 piles *60%@0 *79%@0 60%@38
+seed 6      idle: 0 stars  YOU 442, WILD 435 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 443  oats 0 snips 0 lamp 0s joins 15  water 0 slept 0 woke 0 died asleep 0  wild 434 fought 3000/2865  (23.7 s)
+
+== ship bar: do nothing 0, random at most 1, intended 3 (stars per seed [6]) ==
+dish 5 THE WILD ONE     warden [1]  idle [0]  -> MEETS THE BAR
+
+frame cost, dish 5 intended hand: 9000 frames, mean 7.97 ms, worst 29.25 ms

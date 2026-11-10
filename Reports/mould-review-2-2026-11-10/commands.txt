@@ -1,0 +1,139 @@
+HJIT=6 HLAG=2 ./mouldrev level=5 players=warden seeds=1 > abl/w5_sloppy_1.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=5 players=warden seeds=1 > abl/w5_sloppier_1.txt 2>&1
+STOPAT=30 ./mouldrev level=5 players=warden seeds=1 > abl/w5_stop30_1.txt 2>&1
+STOPAT=60 ./mouldrev level=5 players=warden seeds=1 > abl/w5_stop60_1.txt 2>&1
+STOPAT=90 ./mouldrev level=5 players=warden seeds=1 > abl/w5_stop90_1.txt 2>&1
+./mouldrev level=5 players=camp seeds=1 > abl/w5_camp_1.txt 2>&1
+./mouldrev level=5 players=nestsnip seeds=1 > abl/w5_nestsnip_1.txt 2>&1
+./mouldrev level=5 players=nestsalt seeds=1 > abl/w5_nestsalt_1.txt 2>&1
+./mouldrev level=5 players=jail seeds=1 > abl/w5_jail_1.txt 2>&1
+./mouldrev level=5 players=strike seeds=1 > abl/w5_strike_1.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=5 players=warden seeds=2 > abl/w5_sloppy_2.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=5 players=warden seeds=2 > abl/w5_sloppier_2.txt 2>&1
+STOPAT=30 ./mouldrev level=5 players=warden seeds=2 > abl/w5_stop30_2.txt 2>&1
+STOPAT=60 ./mouldrev level=5 players=warden seeds=2 > abl/w5_stop60_2.txt 2>&1
+STOPAT=90 ./mouldrev level=5 players=warden seeds=2 > abl/w5_stop90_2.txt 2>&1
+./mouldrev level=5 players=camp seeds=2 > abl/w5_camp_2.txt 2>&1
+./mouldrev level=5 players=nestsnip seeds=2 > abl/w5_nestsnip_2.txt 2>&1
+./mouldrev level=5 players=nestsalt seeds=2 > abl/w5_nestsalt_2.txt 2>&1
+./mouldrev level=5 players=jail seeds=2 > abl/w5_jail_2.txt 2>&1
+./mouldrev level=5 players=strike seeds=2 > abl/w5_strike_2.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=5 players=warden seeds=3 > abl/w5_sloppy_3.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=5 players=warden seeds=3 > abl/w5_sloppier_3.txt 2>&1
+STOPAT=30 ./mouldrev level=5 players=warden seeds=3 > abl/w5_stop30_3.txt 2>&1
+STOPAT=60 ./mouldrev level=5 players=warden seeds=3 > abl/w5_stop60_3.txt 2>&1
+STOPAT=90 ./mouldrev level=5 players=warden seeds=3 > abl/w5_stop90_3.txt 2>&1
+./mouldrev level=5 players=camp seeds=3 > abl/w5_camp_3.txt 2>&1
+./mouldrev level=5 players=nestsnip seeds=3 > abl/w5_nestsnip_3.txt 2>&1
+./mouldrev level=5 players=nestsalt seeds=3 > abl/w5_nestsalt_3.txt 2>&1
+./mouldrev level=5 players=jail seeds=3 > abl/w5_jail_3.txt 2>&1
+./mouldrev level=5 players=strike seeds=3 > abl/w5_strike_3.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=5 players=warden seeds=4 > abl/w5_sloppy_4.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=5 players=warden seeds=4 > abl/w5_sloppier_4.txt 2>&1
+STOPAT=30 ./mouldrev level=5 players=warden seeds=4 > abl/w5_stop30_4.txt 2>&1
+STOPAT=60 ./mouldrev level=5 players=warden seeds=4 > abl/w5_stop60_4.txt 2>&1
+STOPAT=90 ./mouldrev level=5 players=warden seeds=4 > abl/w5_stop90_4.txt 2>&1
+./mouldrev level=5 players=camp seeds=4 > abl/w5_camp_4.txt 2>&1
+./mouldrev level=5 players=nestsnip seeds=4 > abl/w5_nestsnip_4.txt 2>&1
+./mouldrev level=5 players=nestsalt seeds=4 > abl/w5_nestsalt_4.txt 2>&1
+./mouldrev level=5 players=jail seeds=4 > abl/w5_jail_4.txt 2>&1
+./mouldrev level=5 players=strike seeds=4 > abl/w5_strike_4.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=5 players=warden seeds=5 > abl/w5_sloppy_5.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=5 players=warden seeds=5 > abl/w5_sloppier_5.txt 2>&1
+STOPAT=30 ./mouldrev level=5 players=warden seeds=5 > abl/w5_stop30_5.txt 2>&1
+STOPAT=60 ./mouldrev level=5 players=warden seeds=5 > abl/w5_stop60_5.txt 2>&1
+STOPAT=90 ./mouldrev level=5 players=warden seeds=5 > abl/w5_stop90_5.txt 2>&1
+./mouldrev level=5 players=camp seeds=5 > abl/w5_camp_5.txt 2>&1
+./mouldrev level=5 players=nestsnip seeds=5 > abl/w5_nestsnip_5.txt 2>&1
+./mouldrev level=5 players=nestsalt seeds=5 > abl/w5_nestsalt_5.txt 2>&1
+./mouldrev level=5 players=jail seeds=5 > abl/w5_jail_5.txt 2>&1
+./mouldrev level=5 players=strike seeds=5 > abl/w5_strike_5.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=5 players=warden seeds=6 > abl/w5_sloppy_6.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=5 players=warden seeds=6 > abl/w5_sloppier_6.txt 2>&1
+STOPAT=30 ./mouldrev level=5 players=warden seeds=6 > abl/w5_stop30_6.txt 2>&1
+STOPAT=60 ./mouldrev level=5 players=warden seeds=6 > abl/w5_stop60_6.txt 2>&1
+STOPAT=90 ./mouldrev level=5 players=warden seeds=6 > abl/w5_stop90_6.txt 2>&1
+./mouldrev level=5 players=camp seeds=6 > abl/w5_camp_6.txt 2>&1
+./mouldrev level=5 players=nestsnip seeds=6 > abl/w5_nestsnip_6.txt 2>&1
+./mouldrev level=5 players=nestsalt seeds=6 > abl/w5_nestsalt_6.txt 2>&1
+./mouldrev level=5 players=jail seeds=6 > abl/w5_jail_6.txt 2>&1
+./mouldrev level=5 players=strike seeds=6 > abl/w5_strike_6.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=5 players=warden seeds=7 > abl/w5_sloppy_7.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=5 players=warden seeds=7 > abl/w5_sloppier_7.txt 2>&1
+STOPAT=30 ./mouldrev level=5 players=warden seeds=7 > abl/w5_stop30_7.txt 2>&1
+STOPAT=60 ./mouldrev level=5 players=warden seeds=7 > abl/w5_stop60_7.txt 2>&1
+STOPAT=90 ./mouldrev level=5 players=warden seeds=7 > abl/w5_stop90_7.txt 2>&1
+./mouldrev level=5 players=camp seeds=7 > abl/w5_camp_7.txt 2>&1
+./mouldrev level=5 players=nestsnip seeds=7 > abl/w5_nestsnip_7.txt 2>&1
+./mouldrev level=5 players=nestsalt seeds=7 > abl/w5_nestsalt_7.txt 2>&1
+./mouldrev level=5 players=jail seeds=7 > abl/w5_jail_7.txt 2>&1
+./mouldrev level=5 players=strike seeds=7 > abl/w5_strike_7.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=5 players=warden seeds=8 > abl/w5_sloppy_8.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=5 players=warden seeds=8 > abl/w5_sloppier_8.txt 2>&1
+STOPAT=30 ./mouldrev level=5 players=warden seeds=8 > abl/w5_stop30_8.txt 2>&1
+STOPAT=60 ./mouldrev level=5 players=warden seeds=8 > abl/w5_stop60_8.txt 2>&1
+STOPAT=90 ./mouldrev level=5 players=warden seeds=8 > abl/w5_stop90_8.txt 2>&1
+./mouldrev level=5 players=camp seeds=8 > abl/w5_camp_8.txt 2>&1
+./mouldrev level=5 players=nestsnip seeds=8 > abl/w5_nestsnip_8.txt 2>&1
+./mouldrev level=5 players=nestsalt seeds=8 > abl/w5_nestsalt_8.txt 2>&1
+./mouldrev level=5 players=jail seeds=8 > abl/w5_jail_8.txt 2>&1
+./mouldrev level=5 players=strike seeds=8 > abl/w5_strike_8.txt 2>&1
+INVAR=1 ./mouldrev level=5 players=warden,random seeds=1 > abl/w5_invar_1.txt 2>&1
+INVAR=1 ./mouldrev level=5 players=warden,random seeds=2 > abl/w5_invar_2.txt 2>&1
+NOWATER=1 ./mouldrev level=4 players=sleeper seeds=1 > abl/k4_nowater_1.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=4 players=sleeper seeds=1 > abl/k4_sloppy_1.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=4 players=sleeper seeds=1 > abl/k4_sloppier_1.txt 2>&1
+NOWATER=1 ./mouldrev level=4 players=sleeper seeds=2 > abl/k4_nowater_2.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=4 players=sleeper seeds=2 > abl/k4_sloppy_2.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=4 players=sleeper seeds=2 > abl/k4_sloppier_2.txt 2>&1
+NOWATER=1 ./mouldrev level=4 players=sleeper seeds=3 > abl/k4_nowater_3.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=4 players=sleeper seeds=3 > abl/k4_sloppy_3.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=4 players=sleeper seeds=3 > abl/k4_sloppier_3.txt 2>&1
+NOWATER=1 ./mouldrev level=4 players=sleeper seeds=4 > abl/k4_nowater_4.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=4 players=sleeper seeds=4 > abl/k4_sloppy_4.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=4 players=sleeper seeds=4 > abl/k4_sloppier_4.txt 2>&1
+NOWATER=1 ./mouldrev level=4 players=sleeper seeds=5 > abl/k4_nowater_5.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=4 players=sleeper seeds=5 > abl/k4_sloppy_5.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=4 players=sleeper seeds=5 > abl/k4_sloppier_5.txt 2>&1
+NOWATER=1 ./mouldrev level=4 players=sleeper seeds=6 > abl/k4_nowater_6.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=4 players=sleeper seeds=6 > abl/k4_sloppy_6.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=4 players=sleeper seeds=6 > abl/k4_sloppier_6.txt 2>&1
+NOWATER=1 ./mouldrev level=4 players=sleeper seeds=7 > abl/k4_nowater_7.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=4 players=sleeper seeds=7 > abl/k4_sloppy_7.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=4 players=sleeper seeds=7 > abl/k4_sloppier_7.txt 2>&1
+NOWATER=1 ./mouldrev level=4 players=sleeper seeds=8 > abl/k4_nowater_8.txt 2>&1
+HJIT=6 HLAG=2 ./mouldrev level=4 players=sleeper seeds=8 > abl/k4_sloppy_8.txt 2>&1
+HJIT=10 HLAG=3 ./mouldrev level=4 players=sleeper seeds=8 > abl/k4_sloppier_8.txt 2>&1
+HJIT=6 ./mouldrev level=5 players=warden seeds=1 > abl/w5_jitonly_1.txt 2>&1
+HLAG=2 ./mouldrev level=5 players=warden seeds=1 > abl/w5_lagonly_1.txt 2>&1
+HJIT=6 ./mouldrev level=5 players=warden seeds=2 > abl/w5_jitonly_2.txt 2>&1
+HLAG=2 ./mouldrev level=5 players=warden seeds=2 > abl/w5_lagonly_2.txt 2>&1
+HJIT=6 ./mouldrev level=5 players=warden seeds=3 > abl/w5_jitonly_3.txt 2>&1
+HLAG=2 ./mouldrev level=5 players=warden seeds=3 > abl/w5_lagonly_3.txt 2>&1
+HJIT=6 ./mouldrev level=5 players=warden seeds=4 > abl/w5_jitonly_4.txt 2>&1
+HLAG=2 ./mouldrev level=5 players=warden seeds=4 > abl/w5_lagonly_4.txt 2>&1
+HJIT=6 ./mouldrev level=5 players=warden seeds=5 > abl/w5_jitonly_5.txt 2>&1
+HLAG=2 ./mouldrev level=5 players=warden seeds=5 > abl/w5_lagonly_5.txt 2>&1
+HJIT=6 ./mouldrev level=5 players=warden seeds=6 > abl/w5_jitonly_6.txt 2>&1
+HLAG=2 ./mouldrev level=5 players=warden seeds=6 > abl/w5_lagonly_6.txt 2>&1
+HJIT=6 ./mouldrev level=5 players=warden seeds=7 > abl/w5_jitonly_7.txt 2>&1
+HLAG=2 ./mouldrev level=5 players=warden seeds=7 > abl/w5_lagonly_7.txt 2>&1
+HJIT=6 ./mouldrev level=5 players=warden seeds=8 > abl/w5_jitonly_8.txt 2>&1
+HLAG=2 ./mouldrev level=5 players=warden seeds=8 > abl/w5_lagonly_8.txt 2>&1
+INVAR=1 INVARSHOW=1 ./mouldrev level=5 players=warden seeds=3 > abl/w5_invarshow_3.txt 2>&1
+HJIT=2 ./mouldrev level=5 players=warden seeds=1 > abl/w5_jit2_1.txt 2>&1
+HJIT=3 ./mouldrev level=5 players=warden seeds=1 > abl/w5_jit3_1.txt 2>&1
+HJIT=2 ./mouldrev level=5 players=warden seeds=2 > abl/w5_jit2_2.txt 2>&1
+HJIT=3 ./mouldrev level=5 players=warden seeds=2 > abl/w5_jit3_2.txt 2>&1
+HJIT=2 ./mouldrev level=5 players=warden seeds=3 > abl/w5_jit2_3.txt 2>&1
+HJIT=3 ./mouldrev level=5 players=warden seeds=3 > abl/w5_jit3_3.txt 2>&1
+HJIT=2 ./mouldrev level=5 players=warden seeds=4 > abl/w5_jit2_4.txt 2>&1
+HJIT=3 ./mouldrev level=5 players=warden seeds=4 > abl/w5_jit3_4.txt 2>&1
+HJIT=2 ./mouldrev level=5 players=warden seeds=5 > abl/w5_jit2_5.txt 2>&1
+HJIT=3 ./mouldrev level=5 players=warden seeds=5 > abl/w5_jit3_5.txt 2>&1
+HJIT=2 ./mouldrev level=5 players=warden seeds=6 > abl/w5_jit2_6.txt 2>&1
+HJIT=3 ./mouldrev level=5 players=warden seeds=6 > abl/w5_jit3_6.txt 2>&1
+HJIT=2 ./mouldrev level=5 players=warden seeds=7 > abl/w5_jit2_7.txt 2>&1
+HJIT=3 ./mouldrev level=5 players=warden seeds=7 > abl/w5_jit3_7.txt 2>&1
+HJIT=2 ./mouldrev level=5 players=warden seeds=8 > abl/w5_jit2_8.txt 2>&1
+HJIT=3 ./mouldrev level=5 players=warden seeds=8 > abl/w5_jit3_8.txt 2>&1
