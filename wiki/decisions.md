@@ -23,6 +23,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Ruling | Owner's words | Source |
 |---|---|---|---|
+| 2026-11-10 17:01 | Judge outside simulations by what is interesting to watch and could become play, not by how real they look | "our goal is not a realistic slime mold. It is interesting simulations that we can turn into a game." | [Jenson report](../Reports/jenson-physarum-2026-11-10.md), [scale](model/scale.md) |
 | 2026-11-10 | Research, harnesses, raw census output and page sources live in this repo, not the project's shared folder | (recorded in `CLAUDE.md`, no quote kept) | [CLAUDE.md](../CLAUDE.md) |
 | 2026-11-10 13:53, card 13:58 | Everything on screen is the simulation, and looks like it: no thresholded edges or colour lines; the picture is the data | "I want all the visuals to look like they're coming from a real simulation and not just graphics animations." | [review hand-off](../Reports/mould-review-thread-handoff-2026-11-10.md) |
 | 2026-11-09 01:09 | No drawn-only effects (the painted pulse) | "Everything we're seeing should be based on real pixel simulations." | [project-memory note](../handoff/project-memory/mould-everything-simulated.md) |

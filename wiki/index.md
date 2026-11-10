@@ -22,6 +22,7 @@ Keep this file under 150 lines; lint checks it.
 
 - [Water and sleep](model/water-and-sleep.md): dry mould sleeps, water wakes it; Keep It Alive only.
 - [Sensor angle and reach](model/sensors.md): 45 obeys then freezes, 22.5 lives but ignores you; reach stays 9.
+- [The mould at scale](model/scale.md): outside models (Jenson, MCPM) and the reviewed GPU plan; nothing built yet.
 
 ## Looks
 

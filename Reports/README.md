@@ -48,7 +48,8 @@ move.
   surface; with five piles buried 12+ rows down it branches into roots (9 of 10), where the same ground without buried
   food stays a runner. From above, a forest floor keeps the dish's network but is not the engine. Records an edge-of-window
   trail bug the review caught (`Dish::spread` skips the border). Recommends a side-on "mould under the garden" probe in its
-  own binary, top-down as the fallback; waits on the owner.
+  own binary, top-down as the fallback. **The owner picked the forest floor from above (card, 2026-11-10 16:04Z)**;
+  §5 lists what it needs here. Not built.
 - [mould-review-2026-11-10.md](mould-review-2026-11-10.md) **(from Pixel_Physics)** — **independent review, no build: how to make the mould game
   fun and good-looking.** Played from written hands on the mould thread's unlanded branch. At 45 degrees the mould obeys
   every oat and then freezes (far pile joined by 15 s with 3 oats; every move the same move); at 22.5 it joins all the food
@@ -80,6 +81,25 @@ move.
   RTS where every tool is paid from the food store, with wells, announced blooms, spores and species as `Params`
   presets. Measured here: two moulds step at about 1.1 ms a step. Recommends a cheap Stage 0 (a scripted hand steers
   the wild mould on a mirrored dish) gated on equal hands splitting 45-55% and a sharp hand beating a clumsy one.
+
+- [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
+  so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as
+  ours, but 5-10 million GPU particles with no one-per-cell limit and the trail drawn at full resolution, against our
+  400-2,200 walkers on 256 x 160. Jenson never published the code; Bleuje's port of *36 Points* is the closest. Contagion
+  is a state particles pass on through an "infected trail", the simulated pulse wanted since 11-09, not built. Surveys MCPM
+  and Polyphorm, Tero 2010, Lague, Ghassaei and Webb's list; five experiments, cheapest first. Live doc linked inside;
+  the owner's PDF of Jenson's post (text and all five pictures) is in [jenson-physarum-2026-11-10/](jenson-physarum-2026-11-10/).
+
+- [gpu-plan-2026-11-10.md](gpu-plan-2026-11-10.md) — **plan, no build: the mould at scale, GPU included.** Six gated
+  phases: CPU foundations (dish hash, a "GPU semantics" mode and a 4 Hz, two-frames-late census tested paired on every
+  dish, integer-or-float and scaling-rule choice, new rules all off by default); 1024 x 640 with about 100k walkers
+  offline with the economy on, gated on paired seeds, plus a GPU timing test on the owner's machine; a GPU sandbox on
+  pixels' wgpu device; game rules on the GPU with the census on the CPU from a fine readback, labels sent back; choose,
+  port and retune the dishes; new play from scale. Revised after an independent review
+  ([gpu-plan-2026-11-10/review.md](gpu-plan-2026-11-10/review.md)): the census feeds the economy every step, a 4x finer
+  grid slows the mould and shortens its smell like the sensor-reach dead end, and cloud sessions have no GPU, so an
+  all-integer simulation is recommended. Single-core step cost: 1024 x 640 with 100k walkers 11 ms, with 1M 97 ms;
+  2048 x 1280 dropped (111 ms). Research status, risks, and seven owner decisions.
 
 ## Added with the move (2026-11-10)
 
