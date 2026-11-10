@@ -84,10 +84,15 @@ move.
   the owner's PDF of Jenson's post (text and all five pictures) is in [jenson-physarum-2026-11-10/](jenson-physarum-2026-11-10/).
 
 - [gpu-plan-2026-11-10.md](gpu-plan-2026-11-10.md) — **plan, no build: the mould at scale, GPU included.** Six gated
-  phases: CPU foundations (dish hash, contagion, crowd limit, density reach, stochastic steering, all off by default);
-  offline big dishes to pick a scale; a GPU sandbox on the wgpu device pixels already holds; game rules on the GPU with
-  census on the CPU from a coarse readback; port and retune every dish; new play from scale. Research status table
-  (code of Bleuje, Lague and PolyPhy still to read; Jones 2011 needs an upload), risks, and six owner decisions.
+  phases: CPU foundations (dish hash, a "GPU semantics" mode and a 4 Hz, two-frames-late census tested paired on every
+  dish, integer-or-float and scaling-rule choice, new rules all off by default); 1024 x 640 with about 100k walkers
+  offline with the economy on, gated on paired seeds, plus a GPU timing test on the owner's machine; a GPU sandbox on
+  pixels' wgpu device; game rules on the GPU with the census on the CPU from a fine readback, labels sent back; choose,
+  port and retune the dishes; new play from scale. Revised after an independent review
+  ([gpu-plan-2026-11-10/review.md](gpu-plan-2026-11-10/review.md)): the census feeds the economy every step, a 4x finer
+  grid slows the mould and shortens its smell like the sensor-reach dead end, and cloud sessions have no GPU, so an
+  all-integer simulation is recommended. Single-core step cost: 1024 x 640 with 100k walkers 11 ms, with 1M 97 ms;
+  2048 x 1280 dropped (111 ms). Research status, risks, and seven owner decisions.
 
 ## Added with the move (2026-11-10)
 
