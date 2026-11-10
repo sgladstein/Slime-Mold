@@ -4,7 +4,7 @@ kind: mechanism
 status: open
 updated: 2026-11-10
 sources: [Reports/jenson-physarum-2026-11-10.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md]
-code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START]
+code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES]
 ---
 
 # The mould at scale (outside models and the GPU plan)
@@ -19,7 +19,7 @@ and no one-per-cell limit, and their network_2 clip grows from 3-5 loops to
 about 180-340 in nine seconds. Scale, not a better rule, is most of the gap,
 and the owner wants it for interesting play, not realism.
 
-**Nothing is built.** The plan, revised after an independent review on
+**Phase 1 has started; nothing on the GPU is built.** The plan, revised after an independent review on
 2026-11-10, has six gated phases:
 
 1. CPU foundations that test the port's riskiest assumptions at today's scale.
@@ -29,6 +29,8 @@ and the owner wants it for interesting play, not realism.
 4. Game rules on the GPU.
 5. Porting the dishes that survive a dense network.
 6. New play that only scale allows.
+
+Today, diffusing trail and scent is 62% of the simulation's time and moving the walkers 24% (`Dish::step_cost`, printed by `mouldprobe`).
 
 Three facts bind the design:
 
@@ -51,13 +53,16 @@ tool in phase 6. Every outside source has a card in
 | Jenson network_2, enclosed loops, first to last frame | 3-5 to 180-340 (two brightness cut-offs, 110 and 150) | one clip | | [jenson, *Pictures*](../../Reports/jenson-physarum-2026-11-10.md) |
 | Particles, Jenson vs ours | 5-10 million vs 400-2,200 walkers | | | [jenson, *How our mould compares*](../../Reports/jenson-physarum-2026-11-10.md) |
 | Frame today, mean | 4.93 ms: simulation 1.10, drawing 3.83; worst 14.94 | plan hand, seed 1 | | [gpu plan, *Where we start*](../../Reports/gpu-plan-2026-11-10.md) |
+| Today's step by pass, plan hand, free dish | diffuse 0.69-0.70 ms a frame (62%), move 0.27 (24%), census 0.05, economy 0.05, light 0.05; all 1.11-1.14 | seed 1, 2 runs | | [gpu plan, *Phase 1 progress*](../../Reports/gpu-plan-2026-11-10.md) |
 | Step cost, bare move and diffusion, one core | 256 x 160 / 2.2k 0.13 ms; 1024 x 640 / 100k 9.5-11.2 ms; 1024 x 640 / 1M 96-98 ms; 2048 x 1280 / 1M 111-112 ms | 2 runs | | [gpu plan, *What the independent review changed*](../../Reports/gpu-plan-2026-11-10.md), [bench](../../Reports/gpu-plan-2026-11-10/step-bench.rs) |
 
 ## Owner's word
 
 - 2026-11-10 17:01Z: "our goal is not a realistic slime mold. It is interesting simulations that we can turn into a game." (this subject's thread)
 - 2026-11-10 17:13Z: asked for "a comprehensive plan forward, including GPU development, not just the 5 cheapest tests".
-- 2026-11-10 17:24Z: "I like this plan, but run an independent review agent first." The review ran and its findings are in the plan; no phase is approved to start yet.
+- 2026-11-10 17:24Z: "I like this plan, but run an independent review agent first." The review ran and its findings are in the plan.
+- 2026-11-10 17:50Z: "How many threads do we need to start your plan or do you want to just proceed with the implementations yourself?" Phase 1 started in the plan's thread; the Pixel_Physics review thread builds the dish hash.
+- 2026-11-10 17:54Z: "my home machine has a geforce 1070", which is not the machine the owner usually works at, so GPU runs wait for them to be at it.
 
 ## Tried and rejected
 
@@ -67,7 +72,7 @@ tool in phase 6. Every outside source has a card in
 
 ## Open
 
-- The owner's decisions are in [HANDOFF.md](../../HANDOFF.md): whether to start phases 1 and 2, which machine and GPU, whether to go all-integer, uploading Jones 2011, and holding the Pixel_Physics renderer port.
+- The owner's decisions are in [HANDOFF.md](../../HANDOFF.md): whether to go all-integer, uploading Jones 2011, and holding the Pixel_Physics renderer port.
 - The Bleuje, Lague and PolyPhy code is still unread (phase 3). Only PolyPhy's MIT code may be reused.
 
 ## Sources

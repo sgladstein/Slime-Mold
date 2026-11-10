@@ -35,7 +35,7 @@ depends on is done, not when the band before it is finished.
 | # | Step | Owner | Waits on | State |
 | --- | --- | --- | --- | --- |
 | E1 | Dish hash and determinism test | Pixel_Physics thread | nothing | done: PR #14 (`Dish::state_hash`, `every_dish_replays_bit_for_bit`, `mouldprobe` prints `hash=`) |
-| S1 | GPU phase 1: frame profiler (also the review's E2), "GPU semantics" CPU arm, delayed-census arm, new rules off by default | GPU thread | E1 for the hash; owner go-ahead given 17:50Z | profiler in progress |
+| S1 | GPU phase 1: frame profiler (also the review's E2), "GPU semantics" CPU arm, delayed-census arm, new rules off by default | GPU thread | E1 for the hash; owner go-ahead given 17:50Z | profiler done (PR #16: diffusion is 62% of the simulation, moving walkers 24%); the two arms next, on E1's hash |
 | E4 | Release profile re-measured on `mouldprobe` and one CI run | Pixel_Physics thread | E1 | queued |
 | E5 | Licence and notices gates, the JetBrains Mono OFL notice, `crispfont.py` | Pixel_Physics thread | nothing; must land before any build leaves the owner's machine | queued |
 | R- | Bloomfront research (four inspiration agents, then a red team) | RTS thread | nothing; design only | running |

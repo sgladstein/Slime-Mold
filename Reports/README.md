@@ -109,7 +109,9 @@ move.
   ([gpu-plan-2026-11-10/review.md](gpu-plan-2026-11-10/review.md)): the census feeds the economy every step, a 4x finer
   grid slows the mould and shortens its smell like the sensor-reach dead end, and cloud sessions have no GPU, so an
   all-integer simulation is recommended. Single-core step cost: 1024 x 640 with 100k walkers 11 ms, with 1M 97 ms;
-  2048 x 1280 dropped (111 ms). Research status, risks, and seven owner decisions.
+  2048 x 1280 dropped (111 ms). Research status, risks, and seven owner decisions. *Phase 1 progress*: the step's
+  time by pass (`Dish::step_cost`, printed by `mouldprobe`): diffusion is 62% of the simulation (0.69 ms a frame), moving
+  1,800 walkers 24%, the census 4.5%.
 
 ## Added with the move (2026-11-10)
 

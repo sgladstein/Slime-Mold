@@ -63,12 +63,10 @@ Ask each again; none has an answer to assume.
 5. **The Organ and the Wanderer:** keep, change or drop. Neither has a
    verdict.
 6. **The GPU plan** ([`Reports/gpu-plan-2026-11-10.md`](Reports/gpu-plan-2026-11-10.md),
-   [page](wiki/model/scale.md)): start phases 1 and 2; which machine and GPU
-   the owner plays on (phase 2's timing test runs there); all-integer
+   [page](wiki/model/scale.md)), now started (phase 1): all-integer
    simulation or floats (phase 1 measures it first); upload Jones 2011 before
    phase 4; hold the Pixel_Physics multi-core renderer port until the phase 2
-   gate. Owner 11-10 17:24Z: "I like this plan, but run an independent review
-   agent first." The review is folded in; no phase has a go yet.
+   gate.
 7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
    *Risks and open questions*): should it wait for the queued work or take
    over The Wild One's next steps (its Stage 0 answers the same mid-game
