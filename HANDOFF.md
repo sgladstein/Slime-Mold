@@ -9,7 +9,8 @@ here when its page's **Now** changes, and keep the detail there (owner,
 hand-off at the 2026-11-10 account move; everything it points to is in this
 repository.
 
-**Read first:** this page, then [`CLAUDE.md`](CLAUDE.md) (how to work here),
+**Read first:** this page, then [ROADMAP.md](ROADMAP.md) (every plan in one
+order), then [`CLAUDE.md`](CLAUDE.md) (how to work here),
 then the [wiki page](wiki/index.md) for whatever you touch, then its
 reports ([`Reports/README.md`](Reports/README.md) indexes them all).
 
@@ -66,6 +67,14 @@ Ask each again; none has an answer to assume.
    phase 4; hold the Pixel_Physics multi-core renderer port until the phase 2
    gate. Owner 11-10 17:24Z: "I like this plan, but run an independent review
    agent first." The review is folded in; no phase has a go yet.
+7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
+   *Risks and open questions*): should it wait for the queued work or take
+   over The Wild One's next steps (its Stage 0 answers the same mid-game
+   question); is a fog of war allowed if it is drawn from a held quantity;
+   two keepers, or three-to-four.
+8. **Sound for the game:** wanted at all? The Pixel_Physics review
+   recommends starting from that repo's `src/audio/` if so; the game window
+   is silent today.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
@@ -73,6 +82,9 @@ with no engine, is in §5 of
 [`Reports/mould-real-world-2026-11-09.md`](Reports/mould-real-world-2026-11-09.md).
 
 ## Next steps, in order
+
+How these sit against the GPU plan, the Pixel_Physics ports and the RTS,
+with what each waits on and which thread owns it: [ROADMAP.md](ROADMAP.md).
 
 1. **Keep It Alive: trace individual games** to find what puts one in the
    short hump or the long one, then give that choice to the player. Review 2's
