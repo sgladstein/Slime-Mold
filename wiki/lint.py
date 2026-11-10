@@ -10,10 +10,11 @@ no longer appears anywhere under `src/`, `examples/` or the scripts kept in
 Numbers table with no link to its source; a line under "Owner's word" that
 does not start with a date; `index.md` over 150 lines.
 
+A top-level report under `Reports/` that no page cites is an error too,
+unless it is listed in `NOT_YET_INGESTED` (reports from before the wiki).
+
 Warnings (print only): a page whose `updated` date is older than the last
-commit to one of its `sources`; a top-level report under `Reports/` that no
-page cites yet (expected while the wiki is being filled in; see
-`wiki/index.md`, "Not yet written").
+commit to one of its `sources`; a listed pre-wiki report still uncited.
 
 Why a script and not an LLM pass: these checks are exact and cheap, so a
 session runs them before every wiki commit and spends its judgement on the
@@ -31,6 +32,12 @@ WIKI = os.path.join(ROOT, "wiki")
 REQUIRED = ("title", "kind", "status", "updated", "sources")
 # Reports that are indexes or records, not sources a page summarises.
 NOT_SOURCES = {"README.md", "dead-ends.md", "pages.md"}
+# Reports that predate the wiki (2026-11-10) and no page cites yet. They only
+# warn. Any report not listed here must be cited by a page, or lint fails:
+# the repo is new and will grow, and a wiki that skips new reports goes stale
+# without anyone noticing. Remove a name once a page cites it.
+NOT_YET_INGESTED = {"mould-review-2026-11-10.md"}
+INDEX_CAP = 150
 
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 
@@ -170,14 +177,18 @@ def main():
 
     with open(index, encoding="utf-8") as h:
         n = sum(1 for _ in h)
-    if n > 150:
-        errors.append(f"wiki/index.md: {n} lines, over the 150-line cap")
+    if n > INDEX_CAP:
+        errors.append(f"wiki/index.md: {n} lines, over the {INDEX_CAP}-line cap; "
+                      "split it per folder (wiki/README.md, *Growth*)")
 
     reports = os.path.join(ROOT, "Reports")
     for f in sorted(os.listdir(reports)):
         full = os.path.join(reports, f)
         if f.endswith(".md") and f not in NOT_SOURCES and full not in cited:
-            warnings.append(f"Reports/{f}: no wiki page cites it yet")
+            if f in NOT_YET_INGESTED:
+                warnings.append(f"Reports/{f}: no wiki page cites it yet (predates the wiki)")
+            else:
+                errors.append(f"Reports/{f}: new report that no wiki page cites; ingest it")
 
     for w in warnings:
         print("warning:", w)

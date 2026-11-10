@@ -44,7 +44,34 @@ Start at [index.md](index.md). Copy [_template.md](_template.md) for a new page.
 11. **Fun over fidelity.** Biology and Jones's papers are inspiration; never a
     reason a mechanism must stay.
 
+## Growth
+
+The repo is new and will grow a lot; the wiki is built to grow with it, by
+these triggers rather than by a plan for its final size:
+
+- **Every new report is ingested.** Lint fails on a report no page cites
+  (reports from before the wiki are listed in `lint.py`). A report that
+  touches no existing subject gets a new page or a line under an existing one.
+- **A page past about 300 lines splits** into a subject page and a sub-page
+  (for example a dish's tuning history), linked both ways.
+- **The index past 150 lines splits** into one index per folder
+  (`dishes/index.md`, ...), with `index.md` listing the folders. Lint enforces
+  the cap.
+- **Past about 100 pages, or once sessions start missing pages that exist**,
+  add search: a grep-based `wiki/find.py` first, a local search tool such as
+  qmd (named in Karpathy's gist) only if that is not enough.
+- **New folders** (`looks/`, `prototypes/`, a folder per new game such as the
+  forest floor) are added when their first page is.
+- **The success check** (`Reports/llm-wiki-plan-2026-11-10.md`) runs while the
+  wiki is small, so its worth is known before it is big, and again after it
+  doubles.
+
 ## Workflows
+
+**Outside sources** (papers, other people's simulations and code) have
+reference cards in `research/sources/`, one per source. A page that draws on
+one lists the card's path in `sources:` next to the reports; lint checks that
+it exists.
 
 **Ingest** (in the same PR as a report or a default change): read the
 report; list the pages it touches; rewrite each page's Now, add Numbers rows

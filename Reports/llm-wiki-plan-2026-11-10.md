@@ -73,9 +73,19 @@ with `Reports/` alone. Score blind. Deciding measure: wrong numbers quoted;
 also correct answers and files read. Paired by question, sign test. If the
 HANDOFF arm ties the wiki, the wiki is not paying for itself.
 
+## Growth (owner, 17:24Z)
+
+"I agree with the plan, but note that this repo is brand new so it will grow
+significantly." The wiki now grows by triggers in `wiki/README.md`, *Growth*:
+lint fails on any new report no page cites; pages past about 300 lines split;
+the index past 150 lines splits per folder; search is added past about 100
+pages or when sessions miss pages; the success check runs while the wiki is
+small and again after it doubles. External sources (papers, outside
+simulations) get their own reference cards in `research/sources/` (PR #8,
+another thread); wiki pages list card paths in `sources:` like reports.
+
 ## Open for the owner
 
-- Keep the lint in CI (a step in the existing "what changed" job, a few
-  seconds a PR, no extra runner), or run it only before hand-offs?
+- ~~Keep the lint in CI?~~ Owner, 17:25Z: "lint can stay in the CI for now."
 - Should `HANDOFF.md` become the overview page rewritten from the wiki, or
   stay a separate hand-written note?

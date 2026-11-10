@@ -35,6 +35,8 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-10 17:25 | The wiki lint stays in CI | "lint can stay in the CI for now." | [README](README.md) |
+| 2026-11-10 17:24 | Plan agreed; build the wiki to grow with the repo | "I agree with the plan, but note that this repo is brand new so it will grow significantly." | [README, *Growth*](README.md) |
 | 2026-11-10 16:49 | Build the wiki, starting with seven pages | "You can start with the first 7 pages, we can always revise once the review comes back" | [index](index.md) |
 | 2026-11-10 16:04, card | The first out-of-the-dish game is the forest floor seen from above (not side-on) | card | [real-world report, §5](../Reports/mould-real-world-2026-11-09.md) |
 | 2026-11-10 14:49 | The from-the-simulation look is the default; F7 keeps the tube look | "much better" | [HANDOFF](../HANDOFF.md) |
