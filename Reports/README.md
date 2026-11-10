@@ -84,7 +84,7 @@ move.
 - [mould-game-2026-11-08/](mould-game-2026-11-08/README.md) now also carries the pictures that were only in the
   project folder: the toy-feel sheets (`brainstorm/toy-feel/`), the second review's stills
   (`reviews/review-2-pictures/`), and every prototype round's GIFs, PNGs, WAVs and video (`prototypes/*/`).
-  [`depth-2026-11-09/PAPERS.md`](mould-game-2026-11-08/depth-2026-11-09/PAPERS.md) cites the two Jones papers.
+  [`depth-2026-11-09/PAPERS.md`](mould-game-2026-11-08/depth-2026-11-09/PAPERS.md) cites the two Jones papers, and `depth-2026-11-09/papers/` holds them (PDF and text).
 - [mould-review-2026-11-10/](mould-review-2026-11-10/) now also carries `hand-fixed.txt`, the from-the-simulation
   look mock (`mouldraw.rs.txt`), the review hands patch for `mouldprobe` (`mouldrev.patch`: aim error, slow
   reactions, one-move openings, a two-mould invariant check), and the page sources and images of the Looks Review

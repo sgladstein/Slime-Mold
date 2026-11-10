@@ -1,0 +1,20 @@
+---
+name: mould-review-2026-11-10
+description: Independent (Fable) review of the mould game 11-10: 45° obeys then freezes, 22.5° alive but deaf; Scott picked endless dish + looks, then agreed water-and-sleep tool depth and a wild rival mould
+metadata:
+  type: project
+  modified: 2026-11-10T02:21:50.956Z
+---
+Thread "Review the mould game for fun and looks" cmsg_016bYH3Ybq4z6xkGqHujo4HW8wgxAHEW1fvrMLaVGqw4vA (Scott 11-10 01:41Z; second ask 01:42Z: also review game design, philosophy and similar existing games). Review only, no build. Follows [[mould-depth-2026-11-09]], [[mould-everything-simulated]], [[mould-real-world-2026-11-09]].
+
+Page https://claude.ai/artifact/W4EqSvxDWK1RC9YgpSQPTR. Report Reports/mould-review-2026-11-10.md (+ folder with page source, hands, harness as .rs.txt), PR #1056 MERGED to main 11-10 02:46Z. Scratch harness `mouldhand` (plays a dish from a written hand: "T oats X Y", "T lamp X Y DUR", "T sweep ...", "T salt/snip X1 Y1 X2 Y2"; writes window frames; has walkers=1 and ghost=1 mock overlays) at /mnt/project-files/game-design/mould-review-2026-11-10/mouldhand.rs; compiles only on the mould branch claude/project-thread-cek3ly (reviewed at 69df5a1).
+
+FINDINGS (numbers in Reports/mould-review-2026-11-10.md): 45° oats are dot-to-dot (2 games: oats 17x, lamp 4 s, salt/snip never); 22.5° joins untouched and a lamp bend is lost in ~6 s; Running Dry idle dies later at 22.5 8/8 (p 0.008), random too strong.
+
+RECOMMENDED: fun = endless dish, marks that stay, oats as nudge, scored amount, 45° puzzle pack. Looks = draw walkers, finer mould, one flow colour ramp, stain, lamp as light.
+
+SCOTT PICKED (card, 11-10 02:57Z): KEEP-IT-ALIVE ENDLESS DISH first. Relayed to the mould thread (cmsg_016bYH3Ybq4z6xkGqHujo4HWKXbN7RGrsGS3sjZN1gbMSb), which builds it: Running Dry at 22.5 with no bell, fewer oats, food further each time; score an amount; bar: idle dies, random dies on most seeds, better plan lives longer. Scott 02:58Z "Looks too" (cmsg_016bYH3Ybq4z6xkGqHujo4HW8r9q3yoHrk9QfaGG43Rxan): also do the looks pass (draw walkers, thinner tubes, one colour ramp for flow, before/after page); relayed to the mould thread with his message attached. Review thread resolved.
+
+TOOL DEPTH + RIVAL MOULDS (Scott 11-10 02:58Z "need to add complexity, the tools are quite one dimensional"; 03:00Z "wondering about multiple molds that can fight or steal resources"). My answer: not more tools; link them through damp ground, building on the mould thread's complexity.md (branch cek3ly, Reports/mould-game-2026-11-08/depth-2026-11-09/), and a second mould gives salt/snip/lamp/oats each a second use. SCOTT AGREED (03:06Z cmsg_016bYH3Ybq4z6xkGqHujo4HWGv7c8n9GZur5Kh1JPm2vqW) to this order: 1 endless dish; 2 water tool + lamp dries + dry mould sleeps (crust), water wakes it, one step at a time; 3 a WILD SECOND MOULD (other colour, same rules, nobody steering) that steals from the same piles, then fighting at the seam. After, if those play well: melting salt, spores, a steered rival, same-kind moulds joining. Bars: a good game uses 3+ tools and random still loses to a plan; the player's hand must change which mould ends bigger (paired over seeds). Second-mould frame cost unmeasured (thread's estimate +0.3-0.5 ms). Relayed to the mould thread with his messages attached; review thread resolved.
+
+LOOKS PASS REVIEW (11-10 ~05:15Z, Scott asked 04:08Z in the looks thread cmsg_016bYH3Ybq4z6xkGqHujo4HWRgLiSYry5wTdeftNdJveXA for the Fable thread to review it): PR #1057 cbd13d8, my page https://claude.ai/artifact/KjnPQPgCp6HqdU4VxjFXbD. Smoothing good; fix: rim staircase under tube, starving warning (ramp keeps unfed tube orange ~6 s vs grey at 0.5 s), stain browns ~30% of dish at 22.5, flow-on muddy, lamp still grey puddle; specks = Scott's eye. Window always draws at scale 4, so narrow bar never fires (my scale-3 HUD claim was a probe artifact). Looks thread fixed them in PR #1058 (06:13Z; #1057 had merged first); not re-checked by me; specks on/off awaits Scott.

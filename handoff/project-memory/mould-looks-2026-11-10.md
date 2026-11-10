@@ -1,0 +1,20 @@
+---
+name: mould-looks-2026-11-10
+description: Mould looks pass 11-10 (thread cmsg_016bYH3Ybq4z6xkGqHujo4HWRgLiSYry5wTdeftNdJveXA): PR #1057 merged; Fable review fixes in PR #1058 merged (starving grey, warm lamp, fainter stain); water/sleep drawn PR #1060; FIELD look (Scott's pick) PR #1063
+metadata:
+  type: project
+  modified: 2026-11-10T16:00:00.000Z
+---
+Thread "Make the mould game look good" cmsg_016bYH3Ybq4z6xkGqHujo4HWRgLiSYry5wTdeftNdJveXA. Follows [[mould-review-2026-11-10]], rule [[mould-everything-simulated]].
+
+SCOTT 11-10: "Not sure look alive but look good"; "improve where the graphics look pixelated... we can still make things look better on top of that" (03:20Z); "in addition to everything else, not instead of" (03:25Z) = do all review looks items incl. stain, lamp glow, bar overlap; "After you finish all your work, have the fable thread review it" (04:08Z).
+
+BUILT (drawing only, src/mould/look.rs, all on by default): look::WALKER_LOOK grains (F4: grains/glints/off); STARVE_LOOK 3 = food ramp default (F3); SMOOTH (F5: rim anti-aliased, tube insides blended between cell centres, salt/snip from softened field); STAIN (F6, half-life 20 s, per cell softened); lamp drawn as sim light profile (Glow/Night only); narrow tiles below 950 px. Instrument examples/mouldlooks.rs (paired stills/GIFs + draw cost on identical states). Report Reports/mould-looks-2026-11-10.md. Page https://claude.ai/artifact/8qWbqcMcrdHKWEz9yjgvVR. PR #1057 head cbd13d8 to merge desk; it CARRIES the mould thread's unlanded cek3ly branch (at 1a9778c), agreed with that thread.
+PR #1057 MERGED 11-10 ~05:24Z as b034661d. Fable review (https://claude.ai/artifact/KjnPQPgCp6HqdU4VxjFXbD) fixes in PR #1058 MERGED 11-10 06:36Z: flow-off starving tube cold grey on looks_fed again, stain builds 10 s from 0 at 0.2, lamp warm multiplicative pool (LAMP_POOL), flow ramp lifted, rim-band tubes per pixel. Page updated (v2).
+Blind A/B on page: A grains (default), B glints, or off; awaiting Scott's pick.
+WATER/SLEEP DRAWN 11-10 ~09:30Z: PR #1060 MERGED 11-10 09:43Z (head 9e44237), stacked on mould thread's water PR #1059 (cek3ly 747dfef); crust (sleep share half grid), wet blue/dry pale ground, bar_slots() (wet dish = bar_tools by position, else fixed 4), drop icon, water preview 'Wakes N sleepers'; +0.35 ms/frame; page section 'New: water and sleeping mould'. mouldprobe stills take TOOL=/CURSOR= (x,y|sleepers).
+WILD MOULD (PR #1061) redrawn in look.rs in PR #1063.
+FROM-THE-SIMULATION LOOK 11-10: Scott tapped "Build the from-the-simulation look" (review card cmsg_016bYH3Ybq4z6xkGqHujo4HWUrd4mXHYcJ2YMUQx44sGU9, 13:58Z) after disliking sharp orange/black and orange/grey edges. Built as look::FIELD (default on, F7 back to tube look): mould drawn as smooth trail-density glow (ramp by 1-exp(-0.3 t)), food tint from sim (food_level with flow, else hunger), crust by sleep share, wild rival screened in violet, walker specks; no hard rims. Wild mould also redrawn in look.rs tube style (fn wild). Cost 45deg 6.72->7.36 ms, 22.5 6.91->7.72, Wild One 7.91->7.70. PR #1063 (head 014fe06) MERGED 11-10 15:00Z; page section 'Newest' (v4).
+REPO MOVE DONE 11-10 15:06Z: mould game now lives in sgladstein/Slime-Mold (private, crate slime_mould, file names unchanged; add_repo it). All mould work = branch+PR there; Pixel_Physics merge desk does NOT cover it; SCOTT 15:56Z: the repo-move thread cmsg_016bYH3Ybq4z6xkGqHujo4HW6cW77Bfhu8KKiLAnGgzRt9 merges all Slime-Mold PRs for now (send it PR number + head SHA; merges when both CI jobs green). Looks page + A/B key in Slime-Mold Reports/mould-looks-2026-11-10/page/ and ab-key.txt.
+SCOTT 11-10 14:49Z: "The new simulation based look is much better" (verdict on FIELD look). The grains/glints A/B now only matters in the F7 tube look.
+LOOKS THREAD CLOSED 11-10 ~16:10Z: open next steps written into Slime-Mold Reports/mould-looks-2026-11-10.md via Slime-Mold PR #2 (docs only, sent to repo-move thread to merge). Mould work moving to a new account/project (Scott 16:01Z).

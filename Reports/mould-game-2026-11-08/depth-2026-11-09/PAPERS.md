@@ -1,9 +1,10 @@
 # The two Jones papers
 
-Read in full for `sources-research.md` and `complexity.md`. The PDFs and text
-extractions are third-party copyright, so they are not committed; copies sit
-in the Pixel Physics project folder at
-`game-design/mould-depth-2026-11-09/papers/`.
+Read in full for `sources-research.md` and `complexity.md`. The PDFs and their text
+extractions are in `papers/` beside this file: the owner chose to keep them in
+this private repo (2026-11-10) so the new project has them. They are the
+publishers' and author's copyright, kept for reading here only; do not
+redistribute them.
 
 - Jeff Jones (2010). *Characteristics of Pattern Formation and Evolution in
   Approximations of Physarum Transport Networks.* Artificial Life 16(2),
