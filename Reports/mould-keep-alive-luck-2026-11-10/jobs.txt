@@ -1,0 +1,48 @@
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=1 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_1.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=1 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_1.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=1 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_1.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=2 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_2.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=2 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_2.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=2 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_2.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=3 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_3.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=3 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_3.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=3 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_3.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=4 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_4.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=4 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_4.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=4 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_4.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=5 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_5.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=5 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_5.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=5 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_5.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=6 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_6.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=6 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_6.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=6 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_6.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=7 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_7.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=7 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_7.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=7 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_7.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=8 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_8.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=8 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_8.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=8 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_8.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=9 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_9.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=9 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_9.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=9 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_9.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=10 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_10.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=10 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_10.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=10 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_10.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=11 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_11.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=11 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_11.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=11 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_11.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=12 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_12.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=12 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_12.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=12 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_12.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=13 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_13.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=13 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_13.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=13 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_13.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=14 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_14.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=14 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_14.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=14 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_14.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=15 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_15.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=15 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_15.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=15 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_15.txt 2>&1
+PILETRACE=1 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=16 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/precise_16.txt 2>&1
+PILETRACE=1 HJIT=6 HLAG=2 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=16 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppy_16.txt 2>&1
+PILETRACE=1 HJIT=10 HLAG=3 ./target/release/examples/mouldprobe level=4 players=sleeper seeds=16 > /tmp/claude-0/-home-user/2027f36b-b683-5e3f-a063-feff52a9340b/scratchpad/kia/sloppier_16.txt 2>&1

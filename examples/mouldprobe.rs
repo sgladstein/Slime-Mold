@@ -2189,6 +2189,8 @@ fn level_run(k: usize, seed: u64, who: &str, a: &Args, gif: Option<&str>) -> Dis
     let mut frame = 0u32;
     // To the bell, then 2 s of the score card.
     let mut over_at = None;
+    let mut seen_arrivals = d.arrived.len();
+    let mut prev_pile: Option<(f32, f32)> = None;
     while over_at.is_none_or(|t| d.t < t + 2 * STEPS_PER_SECOND as u64) {
         p.act(&mut d);
         for _ in 0..STEPS_PER_FRAME {
@@ -2211,6 +2213,29 @@ fn level_run(k: usize, seed: u64, who: &str, a: &Args, gif: Option<&str>) -> Dis
         }
         if d.phase == Phase::Over && over_at.is_none() {
             over_at = Some(d.t);
+        }
+        // `PILETRACE=1`: a line as each pile lands, with how far the
+        // nearest awake and the nearest sleeping walker are from it, to find
+        // what puts a Keep It Alive game in the short or the long hump
+        // (review 2's untested guess: sleepers within reach of a far pile).
+        if std::env::var("PILETRACE").is_ok() && d.arrived.len() > seen_arrivals {
+            for &(x, y, t) in &d.arrived[seen_arrivals..] {
+                let near = |sleep: bool| d.walkers.iter().filter(|w| w.asleep() == sleep).map(|w| (w.x - x).hypot(w.y - y)).fold(f32::INFINITY, f32::min);
+                let asleep = d.walkers.iter().filter(|w| w.asleep()).count();
+                let gap = prev_pile.map_or(f32::NAN, |(px, py): (f32, f32)| (px - x).hypot(py - y));
+                println!(
+                    "    PILE n={} t={:.1}s at=({x:.0},{y:.0}) gap={gap:.0} walkers={} asleep={asleep} near_awake={:.0} near_asleep={:.0} store={:.0} wet_here={:.2}",
+                    seen_arrivals + 1,
+                    t as f32 / STEPS_PER_SECOND as f32,
+                    d.walkers.len(),
+                    near(false),
+                    near(true),
+                    d.store,
+                    d.wet.get(y as usize * slime_mould::mould::W + x as usize).copied().unwrap_or(f32::NAN),
+                );
+                prev_pile = Some((x, y));
+                seen_arrivals += 1;
+            }
         }
         // `LEVELTRACE=1`: every 10 s, the mould, the food it is on, and how
         // far its nearest walker is from each pile that still has food.
