@@ -31,7 +31,8 @@ Keep this file under 150 lines; lint checks it.
 
 ## Games in design
 
-- [The RTS directions](rts/directions.md): Taut failed on The Wild One and won on the field; the verb census has run; Two Fevers is now a demo.
+- [The RTS directions](rts/directions.md): build phase; on the field the habit cycle holds on 1 layout of 10 and salt overturns the opening; two demos.
+- [The field skirmish](rts/skirmish.md): v1 (habits, salt, lamp) set aside after play; v2, a tithe spent on beacons and spores: one plan (soft) wins 127/128, no cycle.
 - [Two Fevers](rts/two-fevers.md): playable in the browser; owned ground with a 15 s hold; plan beats random 16/16 but by 0.537; Hush is noise so far.
 
 ## Method and owner
