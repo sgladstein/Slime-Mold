@@ -1,0 +1,6 @@
+idle|X=0|idle
+random|X=0|random
+warden|X=0|warden
+w-j6l2|HJIT=6 HLAG=2|warden
+w-stop30|STOPAT=30|warden
+w-nosnip-j6l2|WARDEN=salt,oats,lamp HJIT=6 HLAG=2|warden

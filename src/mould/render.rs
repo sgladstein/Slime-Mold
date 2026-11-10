@@ -1082,11 +1082,7 @@ fn level_status(d: &Dish, joined: &super::Score) -> String {
             d.walkers.len(),
             d.peak_mould
         ),
-        Win::Rival { .. } => format!(
-            "TIME {left}  YOU {}  WILD {}",
-            d.walkers.len(),
-            d.rival.as_ref().map_or(0, |r| r.walkers.len())
-        ),
+        Win::Rival { .. } => format!("TIME {left}  YOU ATE {}%  WILD {}", super::level::pct(d.food_share()), d.wild_left),
     }
 }
 
@@ -1174,8 +1170,8 @@ fn level_brief(l: &super::level::Level, frame: &mut [u8], (fw, fh): (u32, u32), 
             format!("*** AT {}", clock(bars[2])),
         ],
         Win::Rival { bars } => [
-            format!("*   {}X AS MUCH MOULD AS THE WILD ONE AT {bell}", bars[0]),
-            format!("**  {}X AS MUCH", bars[1]),
+            format!("*   EAT {}% OF THE FOOD BY {bell}", super::level::pct(bars[0])),
+            format!("**  {}% OF IT", super::level::pct(bars[1])),
             "*** NONE OF IT LEFT".to_string(),
         ],
     };
