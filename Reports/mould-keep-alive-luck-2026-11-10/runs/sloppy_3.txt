@@ -1,0 +1,23 @@
+mouldprobe: seeds [3] players ["sleeper"] scale 2 oats None stray_reach None params Params { sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, deposit: 5.0, keep: 0.9, food_deposit: 20.0, scent_keep: 0.97, light_weight: 0.0, light_fade: 0.0, tube: 1.0, feed_reach: 70, upkeep: 0.004, eat: 0.03, table: 40, fed_scent: 0.15, divide: 0.03, crowd: 7, starve: 0.0016666667, hungry: 0.0011111111, burn: 0.0, lamp_reach: 16.0, lamp_soft: false, push: 0.9, pieces: true, wound: 4.0, stray_reach: inf, stray_grace: 2.0, oats_grace: 8.0, flow: false, carry_cap: 3.0, share: 0.5, sap: true, sap_speed: 2, absorb: 0.03, stream: 1.0, stream_bias: 0.35, want: 1.0, pulse_seconds: 2.5, pulse_strength: 0.8, wall_grow: 1.0, wall_half_life: 30.0, wall_pull: 1.0, settle_seconds: 0.0, explore_angle: 0.3926991, spared: 0, spared_scent: 0.5, foe_repel: 1.0, fight: 0.02, wet: false, wet_base: 0.5, wet_relax: 0.0005, dry_light: 0.05, crust_wet: 0.25, crust_rate: 0.05, revive_wet: 0.7, revive_rate: 0.05, crust_life: 20.0, crust_trail: 0.6, wake_grace: 5.0, water_r: 12.0 }
+
+== dish 4 KEEP IT ALIVE: STARS: ALIVE AT 4:15, 5:30 AND 6:40 ==
+    PILE n=1 t=20.0s at=(83,128) gap=NaN walkers=1064 asleep=0 near_awake=21 near_asleep=inf store=0 wet_here=0.50
+    PILE n=2 t=40.0s at=(111,57) gap=76 walkers=560 asleep=0 near_awake=1 near_asleep=inf store=0 wet_here=0.50
+    PILE n=3 t=60.0s at=(135,136) gap=82 walkers=390 asleep=0 near_awake=16 near_asleep=inf store=1 wet_here=0.50
+    PILE n=4 t=80.0s at=(185,63) gap=88 walkers=432 asleep=0 near_awake=19 near_asleep=inf store=0 wet_here=0.50
+    PILE n=5 t=100.0s at=(93,82) gap=94 walkers=412 asleep=0 near_awake=30 near_asleep=inf store=1 wet_here=0.50
+    PILE n=6 t=120.0s at=(172,20) gap=100 walkers=522 asleep=0 near_awake=25 near_asleep=inf store=1 wet_here=0.50
+    PILE n=7 t=140.0s at=(124,115) gap=106 walkers=464 asleep=0 near_awake=6 near_asleep=inf store=0 wet_here=0.50
+    PILE n=8 t=160.0s at=(32,51) gap=112 walkers=666 asleep=0 near_awake=26 near_asleep=inf store=0 wet_here=0.50
+    PILE n=9 t=180.0s at=(147,75) gap=118 walkers=746 asleep=0 near_awake=23 near_asleep=inf store=0 wet_here=0.50
+    PILE n=10 t=200.0s at=(27,104) gap=124 walkers=634 asleep=0 near_awake=30 near_asleep=inf store=1 wet_here=0.50
+    PILE n=11 t=220.0s at=(152,140) gap=130 walkers=404 asleep=0 near_awake=63 near_asleep=inf store=1 wet_here=0.50
+    PILE n=12 t=240.0s at=(71,30) gap=136 walkers=326 asleep=169 near_awake=70 near_asleep=70 store=131 wet_here=0.50
+    PILE n=13 t=260.0s at=(212,46) gap=142 walkers=69 asleep=69 near_awake=inf near_asleep=177 store=13 wet_here=0.50
+    PILE n=14 t=280.0s at=(88,107) gap=138 walkers=27 asleep=27 near_awake=inf near_asleep=45 store=5 wet_here=0.50
+seed 3   sleeper: 0 stars  LIVED 4:06, AT MOST 1585 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 3s joins 15  water 2 slept 466 woke 188 died asleep 261  (16.2 s)
+
+== ship bar: do nothing 0, random at most 1, intended 3 (stars per seed [3]) ==
+dish 4 KEEP IT ALIVE    sleeper [0]  -> MEETS THE BAR
+
+frame cost, dish 4 intended hand: 14958 frames, mean 4.65 ms, worst 23.04 ms

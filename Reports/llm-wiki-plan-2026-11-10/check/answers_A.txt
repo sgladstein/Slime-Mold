@@ -1,0 +1,26 @@
+Q1. Reach is sensor_offset 9, and it was kept at 9. At reach 6, Keep It Alive's lamp+oats+water hand lived shorter on 6 of 8 seeds (median 6:21 -> 3:41), and The Wild One's all-tools share fell from 0.67-1.00 to 0.49-0.63. Beat the Ruler went from 33333333 stars at reach 9 to 00000000 at 7 and 6, and Behind the Wall fell to 20031231 at 6.
+Q2. It scores your share of all the food both moulds ate (Dish::food_share). The star bars are 57%, 62%, and for the third star none of the food left (Win::Rival { bars: [0.57, 0.62] }).
+Q3. It used to be scored by walkers at the bell. At the bell four of the seven piles run dry together, and the player's mould lost 28-54% of its walkers in the last ten seconds, so the score was switched to share of food eaten.
+Q4. Nothing. Scored by walker count, snip alone against doing nothing was 5-3 (p 0.73) with share 0.44-0.59 and 0 stars over 8 seeds. Three snips through the wild nest (nestsnip) also gave 0 stars on 8 (7-1 against doing nothing, p 0.07).
+Q5. Doing nothing lives 1:08-3:48, median 2:10, with 0 stars over 16 seeds.
+Q6. 4:15, 5:30 and 6:40 (Win::Endless { bars: [255, 330, 400] }).
+Q7. The water hand (sleeper, 2:51-10:42, median 4:41) beats the oat-saver (2:47-5:26, median 3:34) 15-1, p 0.0005, over 16 seeds.
+Q8. You hold 2 drops (WATER_STOCK), one comes back every 40 s (WATER_REGROW_SECONDS), and a drop is a wet disc of radius 12 (Params::water_r).
+Q9. The lamp dries the ground it shines on. On ground drier than 0.25 (rest is 0.5) a walker falls asleep: it does not move, eat, pay upkeep or get pushed by the lamp, and it dies at random with a mean life of 20 s; ground wetter than 0.7 wakes it.
+Q10. Repelling through the sensors erased the tube: held on a tube for 3 s, the sensor lamp cut the food join on 5 of 5 seeds at the shipped settings (weight 400, fade 0.25, burn), and every lighter setting also lost it, while the push lamp kept the join on 5 of 5. Held beside the tube, the push lamp stayed joined 5 of 5 against the old lamp's 3 of 5, because walkers that only turn away leave an empty stretch, and an empty stretch is a cut.
+Q11. Params::push is 0.9 (lit trail and walkers move one cell outward each step), and the reach is LAMP_R 16 cells.
+Q12. 4 s (Params::wound), then the cut cells heal back to agar.
+Q13. Over all 32 water-hand runs, 17 were dead by 5:05, 14 lived past 7:20 and 1 fell between. Which hump a game lands in looks like luck, and the 5:30 star was earned once in 32 runs.
+Q14. Letting go at 30 s gives a share of 0.567-0.577 and 1 star on 7 of 8 seeds.
+Q15. About +1.4 ms a frame.
+Q16. Five decisions are open: (1) what to fix first after review 2, which now means tracing Keep It Alive's luck next or waiting until the owner has played both dishes; (2) grains or glints for walkers in the tube look; (3) whether to retire the tube look (F7); (4) whether food flow is on or off; (5) whether to keep, change or drop the Organ and the Wanderer.
+Q17. The forest floor seen from above (not side-on), picked on a card on 2026-11-10 at 16:04Z.
+Q18. Three cuts split even a looped five-pile network, so the toughness star ("nothing lost") was earned in 0 of 20 runs at three cuts and 0 of 20 at two. At one cut it was earned 4 of 20 and never by doing nothing; a disc-shaped cut (radius 6) failed the other way, with the star earned every run.
+Q19. A mean life of 20 s (Params::crust_life).
+Q20. The wild mould starts with 600 walkers (WILD_START) and the player's mould with 400.
+Q21. The strict bar was p < 0.004, because review 2 made about 14 comparisons (Bonferroni, 0.05/14). So its 8-0 results (p 0.008) are consistent directions, not proofs.
+Q22. Scored by walker count over 8 seeds, the lamp alone won 8-0 and the salt wall alone 8-0 (p 0.008 each). Oats alone (6-2, p 0.29) and the snip alone (5-3, p 0.73) did not win.
+Q23. Laid into the trail field (one channel), the scent halo round every pile was drawn and counted as tube, so piles wore pale rings and the tube-connectivity score joined nothing. Scent is now its own field summed into the sensors, and an eaten pile keeps 15% of its smell (Params::fed_scent); full smell after eating had pulled every walker back, so doing nothing joined 1 of 5 and never explored.
+Q24. Three late piles were tried on the seam (0:45, 1:20, 1:50; 30k, 30k, 25k food) and taken out because they added luck, not play. Over 8 seeds doing nothing spread from 0.494-0.526 to 0.44-0.60 (a star on one seed), random went to 0.47-0.60, and the clumsy warden (0.57-0.65) still matched letting go at 30 s (0.52-0.64), 5-3 (p 0.73); the race went to whichever mould was nearer when a pile landed.
+Q25. A random hand lives 1:04-3:29 (median 2:03) with 0 stars over 16 seeds. Water does not help it: wet was longer on only 7 of 16, p 0.80, because its lamp puts mould to sleep and nothing wakes it.
+FILES READ: 10

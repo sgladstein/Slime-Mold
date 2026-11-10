@@ -48,7 +48,8 @@ move.
   surface; with five piles buried 12+ rows down it branches into roots (9 of 10), where the same ground without buried
   food stays a runner. From above, a forest floor keeps the dish's network but is not the engine. Records an edge-of-window
   trail bug the review caught (`Dish::spread` skips the border). Recommends a side-on "mould under the garden" probe in its
-  own binary, top-down as the fallback; waits on the owner.
+  own binary, top-down as the fallback. **The owner picked the forest floor from above (card, 2026-11-10 16:04Z)**;
+  §5 lists what it needs here. Not built.
 - [mould-review-2026-11-10.md](mould-review-2026-11-10.md) **(from Pixel_Physics)** — **independent review, no build: how to make the mould game
   fun and good-looking.** Played from written hands on the mould thread's unlanded branch. At 45 degrees the mould obeys
   every oat and then freezes (far pile joined by 15 s with 3 oats; every move the same move); at 22.5 it joins all the food
@@ -64,6 +65,11 @@ move.
   The Wild One: the first star is the opening salt wall (letting go at 30 s keeps it on 8 of 8), the second and third need
   aim within about 2 cells, the snip delivers nothing, and the bell rings while both moulds are crashing (the player's
   loses 28-54% in the last ten seconds). No bug found in the two-mould step. Recommends scoring the share of food eaten.
+- [mould-keep-alive-luck-2026-11-10.md](mould-keep-alive-luck-2026-11-10.md) — **measurement, no build: what puts a Keep It
+  Alive game in the short or the long hump.** 48 traced games (16 seeds x three water hands, `PILETRACE=1`): the first pile
+  that lands on mostly-asleep mould decides it. A sleeper within 45 cells of it: long 13, short 2; none: long 7, short 26
+  (Fisher p 0.00003, exploratory, cut named after looking). Luck because the landing shows 5 s ahead, after the mould is put
+  to sleep. Proposes a 20 s preview with a hand that uses it, measured on fresh seeds.
 - [mould-review-thread-handoff-2026-11-10.md](mould-review-thread-handoff-2026-11-10.md) — **hand-off note, nothing built: what
   the review thread knew when the work moved to a new account.** The one open owner decision (what to fix first after
   review 2), the next steps in order, the owner's words in that thread with their times, the looks-pass review in words,
@@ -120,10 +126,12 @@ move.
   Sleep, The Wild One and Finer Tubes**: the four pages' HTML and images, the census runners, `w5.py` (shares and
   paired sign tests), and every raw probe output of the wild-mould tuning arms and the sensor-reach sweep.
 - [llm-wiki-plan-2026-11-10.md](llm-wiki-plan-2026-11-10.md) — **built in part: an LLM-maintained wiki
-  (`wiki/`), seven pages so far.** Karpathy's LLM-wiki pattern judged a fit at small size (10 core reports, filed
+  (`wiki/`), twelve pages so far.** Karpathy's LLM-wiki pattern judged a fit at small size (10 core reports, filed
   by date, so the truth about one subject is spread over 9-54 files); design, rules and workflows; a sub-agent
   review of later reports on the pattern (one measured: long context files cost over 20% more for little gain)
   and of the plan, which cut `log.md`, kept open decisions only in `HANDOFF.md` and put the lint in CI. Success
-  check (25-30 questions, wiki vs `HANDOFF.md` vs `Reports/`, blind) not yet run.
+  check (25 questions, blind-scored, files in `llm-wiki-plan-2026-11-10/check/`): wiki and reports both 0 wrong
+  numbers, 22 vs 25 fully correct (0-3, p 0.25), 9% fewer tokens; summaries alone 9 not found. At ten reports the
+  wiki ties reading them; re-run when it doubles.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

@@ -1,0 +1,26 @@
+Q1. The default reach is 9 (HANDOFF.md, "Model defaults"). Why a reach of about 6 was not kept is not found; the hand-off only points to Reports/dead-ends.md, which is not in the folder.
+Q2. It is scored by your share of the food eaten. The star bars are 57%, 62% and "none left". Doing nothing and random get 0 stars, a clumsy tool hand 1, an exact hand 2-3.
+Q3. Review 2 recommended scoring the share of food eaten because the bell rang while both moulds were crashing: the player's mould lost 28-54% in the last ten seconds. The first star came from the opening salt wall alone, and stars 2-3 needed aim within about 2 cells. The original scoring rule is not stated (the report summary says "all four tools end bigger than it", which suggests it was based on size).
+Q4. The snip on its own delivers nothing: three cuts through the wild nest change nothing on 8 of 8 seeds. A paired snip-versus-nothing count beyond that is not found.
+Q5. Not found.
+Q6. Only a 5:30 star is named (earned once in 32 games in review 2). The three star times are not found.
+Q7. The hand using lamp, oats and water lives 2:51-10:42 and lives longer than the oat-only hand on 15 of 16 seeds. In review 2 even the clumsiest water hand beat the oat-saver 8-0.
+Q8. Not found.
+Q9. The lamp dries the ground, and dry mould goes to sleep through a famine; a drop of water wakes it by the next pile. Wet-dish specifics are not found.
+Q10. Not found. The pages only say the lamp now pushes a tube aside instead of erasing it (join lost while held on it: 5 of 5 seeds before, 0 of 5 after).
+Q11. Not found.
+Q12. Not found.
+Q13. Lives fall into two humps: 17 of 32 games dead by 5:05 and 14 past 7:20, and the same seed flips between them. HANDOFF puts it as dead by about 5:00 or past 7:20, which is luck so far.
+Q14. A warden that lets go at 30 s keeps the first star (the opening salt wall) on 8 of 8 seeds, so 1 star. The food share it gets is not found.
+Q15. About +1.4 ms a frame. Separately, the RTS report measured two moulds stepping at about 1.1 ms a step.
+Q16. Five decisions are open: (1) what to fix first after review 2, now whether to trace Keep It Alive's luck next or wait until the owner has played both dishes; (2) grains or glints for walkers in the tube look; (3) whether to retire the tube look (F7); (4) food flow on or off; (5) whether to keep, change or drop the Organ and the Wanderer. Also, neither new dish has been played by the owner's hand yet.
+Q17. The forest floor from above, picked on the owner's card at 11-10 16:04Z. It is decided but not yet built.
+Q18. Not found. The probe report "also records why the storm is one cut, not three", but no numbers are in the folder.
+Q19. Not found.
+Q20. Not found.
+Q21. Not found. Review 2 is described as about 270 scripted runs with deliberately clumsier, slower hands, but no significance bar is stated.
+Q22. Lamp and salt each win alone and the snip does not; all four tools together end bigger than the wild mould on 16 of 16 seeds. The paired count for each single tool is not found.
+Q23. Not found.
+Q24. Late piles on the seam were tried and taken out because they added luck, not play (recorded in Reports/dead-ends.md, which is not present).
+Q25. Random gets 0 stars on all 16 seeds and loses to the lamp+oats+water hand on 15 of 16. How long a random hand lives, and whether water helps it, is not found.
+FILES READ: 3

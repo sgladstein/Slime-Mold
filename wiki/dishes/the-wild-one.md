@@ -42,13 +42,17 @@ Scored by share of food eaten, 8 seeds, `mouldprobe level=5`:
 
 - Warden beats doing nothing and random 8-0 each (p 0.008). Clumsy against
   letting go at 30 s: 7-1 (p 0.07), no star moves.
+- Warden with against without the snip: exact 4-4, clumsy 3-5; the snip
+  moves nothing ([knife](../tools/knife.md)).
 - Each bar sits in a gap under one point wide between hands.
 - Earlier, scored by walkers at the bell (16 seeds): warden beat doing
   nothing and random 16-0 (p < 0.0001); one tool alone, 8 seeds: lamp 8-0
   and salt wall 8-0 (p 0.008 each), oats 6-2 (p 0.29), snip 5-3 (p 0.73)
   ([wild-one, *Numbers*](../../Reports/mould-wild-one-2026-11-10.md)).
 - Why the score changed: at the bell four of seven piles run dry together
-  and the player's mould lost 28-54% in the last ten seconds
+  and the player's mould lost 28-54% in the last ten seconds, so the lead
+  moved by up to half (seed 3: 7.6x at 140 s, 3.6x at the bell). Share of
+  food eaten only adds up, so a crash cannot move it
   ([review 2, *The Wild One*](../../Reports/mould-review-2-2026-11-10.md)).
 - The two-mould step was read in full and checked every 15 steps over four
   games: 0 shared cells, 0 wild walkers off agar, 0 pile-food difference.
