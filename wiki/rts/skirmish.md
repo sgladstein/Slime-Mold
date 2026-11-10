@@ -3,7 +3,7 @@ title: The field skirmish (playable demo)
 kind: prototype
 status: open
 updated: 2026-11-10
-sources: [Reports/rts-skirmish-2026-11-10.md, Reports/rts-design-2026-11-10/field/README.md]
+sources: [Reports/rts-research-2026-11-10.md, Reports/rts-skirmish-2026-11-10.md, Reports/rts-design-2026-11-10/field/README.md]
 code: [skirmish::FIELD, skirmish::Habit, skirmish::Plan, skirmish::Rules, skirmish::Skirmish, skirmish::Verb, skirmish::TITHES, skirmish::late_food, Dish::tithe, Dish::beacons, Dish::plant]
 ---
 
@@ -94,3 +94,4 @@ owner played it and set it aside (21:14Z).
 
 - [rts-skirmish-2026-11-10.md](../../Reports/rts-skirmish-2026-11-10.md): both versions, the rival's census, the round robins and the probes. Picture page: *Budget Skirmish Strategies* in [`pages.md`](../../Reports/pages.md).
 - [field/README.md](../../Reports/rts-design-2026-11-10/field/README.md): the measurements version 1 rests on.
+- [rts-research-2026-11-10.md](../../Reports/rts-research-2026-11-10.md): outside RTS design research and feedback on this demo (Part 5); page [rts-craft.md](rts-craft.md).

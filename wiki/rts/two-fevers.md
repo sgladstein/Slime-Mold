@@ -3,7 +3,7 @@ title: Two Fevers (playable demo)
 kind: prototype
 status: open
 updated: 2026-11-10
-sources: [Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md]
+sources: [Reports/rts-research-2026-11-10.md, Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md]
 code: [Fevers, Rules, Hand, Player, field_piles, play_match]
 ---
 
@@ -86,3 +86,4 @@ the owner found "overly simple" with the mould as "background" (21:52Z).
 - [brainstorm](../../Reports/rts-design-2026-11-10/brainstorm/README.md) and [clean-slate-player.md](../../Reports/rts-design-2026-11-10/brainstorm/clean-slate-player.md), *Concept 2*: where the idea came from.
 - [red team §3](../../Reports/rts-design-2026-11-10/red-team/README.md): its risks, including the rubber band.
 - [The RTS directions](directions.md).
+- [rts-research-2026-11-10.md](../../Reports/rts-research-2026-11-10.md): outside RTS design research and feedback on this demo (Part 5); page [rts-craft.md](rts-craft.md).

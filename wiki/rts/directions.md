@@ -3,7 +3,7 @@ title: The RTS directions
 kind: design
 status: open
 updated: 2026-11-10
-sources: [Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md, Reports/rts-skirmish-2026-11-10.md]
+sources: [Reports/rts-research-2026-11-10.md, Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md, Reports/rts-skirmish-2026-11-10.md]
 code: [Dish::rival, Dish::store, Dish::tithe, Dish::food_share, Pile::bite, Params::fed_scent, Params::flow, Params::foe_repel, Params::pieces, Params::wound, Params::table]
 ---
 
@@ -109,3 +109,4 @@ once; the skirmish's tithe (`Dish::tithe`) is the currency that this needed.
 - [red-team/README.md](../../Reports/rts-design-2026-11-10/red-team/README.md): the review, with its [harness](../../Reports/rts-design-2026-11-10/red-team/harness/src/main.rs), [raw output](../../Reports/rts-design-2026-11-10/red-team/raw/) and [stills](../../Reports/rts-design-2026-11-10/red-team/stills/).
 - [field/README.md](../../Reports/rts-design-2026-11-10/field/README.md): the field retest, the verb census, the layout sweep and the comeback test, with [raw output](../../Reports/rts-design-2026-11-10/field/raw/) and [stills](../../Reports/rts-design-2026-11-10/field/stills/).
 - [rts-skirmish-2026-11-10.md](../../Reports/rts-skirmish-2026-11-10.md): the field skirmish, both versions, and the budget skirmish's round robin.
+- [rts-research-2026-11-10.md](../../Reports/rts-research-2026-11-10.md): outside RTS design research and feedback on this demo (Part 5); page [rts-craft.md](rts-craft.md).
