@@ -114,7 +114,65 @@ more), and the mould senses food and oats from less far, so oat trails
 that solve each dish stop reaching. Kept at 9; the thin look belongs in the
 drawing. Entry in `Reports/dead-ends.md`.
 
-## Next
+## Review 2 fixes: scored by the food eaten (2026-11-10)
 
-The independent review of the endless dish, water and sleep, and the wild
-one.
+The second independent review
+([mould-review-2-2026-11-10.md](mould-review-2-2026-11-10.md)) found the
+walker count at the bell swinging 28-54% in the last ten seconds, as four of
+the seven piles ran dry together, and ranked "score the share of food eaten"
+first. Page: https://claude.ai/artifact/VBFB3yHpVxTJNePiDPQd63 (source in
+[`mould-wild-one-2026-11-10/score-by-food/`](mould-wild-one-2026-11-10/score-by-food/index.html)).
+
+- **Score**: `Dish::ate` and `Dish::wild_ate` count every bite each mould
+  takes, all dish; stars are your share (`Dish::food_share`): 57%, 62%, and
+  none of it left (`Win::Rival { bars: [0.57, 0.62] }`). The card reads "YOU
+  ATE N% OF THE FOOD", the bar "You ate N%  wild M".
+- **Small fixes from the review**: salt kills count as `Kill::Salt`
+  (`Counts::salted`), not snips; a pile's last bite is credited to the wild
+  mould only up to what this mould left; `wild_left` is set after the fights
+  (and at `add_rival_of`); the totals stop at the bell, so the bar matches
+  the card while the window keeps stepping. Guard:
+  `the_wild_one_shares_the_food_but_never_a_cell` now checks that the food
+  that left the piles equals what the two moulds were credited with; it
+  fails with the wild count cut by 10%.
+- **Probe**: the review's hands are now in `mouldprobe` (`HJIT=` aim error,
+  `HLAG=` seconds between looks, `STOPAT=`, `NOWATER=1`, `INVAR=1`, and the
+  openers `camp`, `nestsnip`, `nestsalt`, `jail`, `strike`); the print line
+  carries `ate mine/wild share`.
+
+Your share of the food, 8 seeds (`level=5`; runner, arms and raw output in
+[`score-by-food/census/`](mould-wild-one-2026-11-10/score-by-food/census/),
+whose `run.sh` paths point at a scratch folder):
+
+| Hand | Share | Stars |
+|---|---|---|
+| doing nothing | 0.494-0.526 | 0 on 8 |
+| random | 0.467-0.559 | 0 on 8 |
+| `jail` (salt ring round the nest) | 0.489-0.517 | 0 on 8 |
+| warden, `STOPAT=30` | 0.567-0.577 | 1 on 7, 0 on 1 |
+| warden, `HJIT=6 HLAG=2` | 0.575-0.584 | 1 on 8 |
+| warden, `HJIT=3` | 0.583-0.616 | 1 on 8 |
+| warden, exact | 0.642-0.722 | 2 on 5, 3 on 3 |
+
+Warden beats doing nothing and random 8-0 each (p 0.008); clumsy against
+letting go at 30 s 7-1 (p 0.07). Each bar sits in a gap under one point
+wide, so a wider sweep should check them. The snip: without it, the exact
+warden 4-4 and the clumsy one 3-5 against with it, no difference.
+
+**Tried and taken out**: three late piles on the seam (0:45, 1:20, 1:50,
+the warden's oats chasing each) to give the middle of the game a race.
+Doing nothing spread to 0.44-0.60 (a star on one seed), and the clumsy
+hand still matched letting go at 30 s (5-3). Entry in `Reports/dead-ends.md`.
+
+## Open next steps (handed over 2026-11-10, account move)
+
+1. **Make seconds 30-150 matter at a person's aim.** Letting go at 0:30
+   still scores about what clumsy play to the bell does; two stars need
+   aim within about 2 cells. Late food made it luckier, not more played.
+2. **The snip on this dish**: make a cut-off wild piece visibly starve, or
+   take the snip off The Wild One (it still moves nothing).
+3. **Check the star bars on 16+ seeds**: 57% and 62% each sit within a
+   point of a hand on the other side.
+4. **Keep It Alive (review 2, rank 3)**: trace per run what separates the
+   short games from the long ones, then hand that choice to the player;
+   its 5:30 star was earned once in 32.

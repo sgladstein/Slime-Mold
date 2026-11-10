@@ -33,7 +33,9 @@ move.
   mould that steals food and fights at the seam.** A whole second dish under the same rules, nobody steering, in violet;
   both moulds eat from one table per pile and kill each other where they touch. In THE WILD ONE, all four tools end
   bigger than it on 16 of 16 seeds (mostly 2 stars) where doing nothing and random get 0 stars on 16 and 14; lamp and salt
-  each win alone, the snip does not. Costs about +1.4 ms a frame.
+  each win alone, the snip does not. Costs about +1.4 ms a frame. **Since review 2: scored on the share of the food
+  eaten** (57%, 62%, none left): doing nothing and random 0 stars, a clumsy tool hand 1, an exact one 2-3; late seam
+  piles tried and taken out; open next steps listed at the end.
 - [mould-game-2026-11-08/](mould-game-2026-11-08/README.md) **(from Pixel_Physics)** — **the thinking around the mould game, kept so it
   is not lost (owner, 2026-11-09):** the five-agent brainstorm after his first play, the overnight build's briefs and
   results (dishes, Wanderer, Organ, the Night look and its blind key), both adversarial reviews, the HTML of every

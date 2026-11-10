@@ -298,7 +298,7 @@ pub static DISHES: [Level; 5] = [
     Level {
         key: "wild",
         name: "THE WILD ONE",
-        goal: ["A WILD MOULD SHARES THIS DISH.", "END WITH MORE MOULD THAN IT."],
+        goal: ["A WILD MOULD SHARES THIS DISH.", "EAT MORE OF THE FOOD THAN IT."],
         twist: "IT EATS THE SAME FOOD. NOBODY STEERS IT.",
         // Mirror halves: home and two small piles each side, one big pile
         // in the middle that both moulds can reach. Left alone, which one
@@ -324,13 +324,22 @@ pub static DISHES: [Level; 5] = [
         seconds: 150,
         sensor_deg: 22.5,
         rival: Some(6),
-        // Set from the probe (8 seeds, wild `foe_repel` 0.6, fights on):
-        // your share of the mould at the bell, doing nothing 0.39-0.58 and
-        // random 0.41-0.64, so "more than it" was a coin flip for both (3
-        // and 6 of 8). 1.5x is past doing nothing's best (1.38x); the
-        // scripted warden (lamp, oats, snips and salt) made 2.0-6x or
-        // cleared it.
-        win: Win::Rival { bars: [1.5, 3.0] },
+        // Your share of the food both moulds ate, all dish (`Dish::ate`),
+        // since review 2 (2026-11-10); it was walkers at the bell, which
+        // swung 28-54% as four piles ran dry in the last ten seconds. Set
+        // from the probe, 8 seeds (`mouldprobe level=5`): doing nothing
+        // 0.494-0.526, random 0.467-0.559, the warden letting go at 30 s
+        // 0.567-0.577, the warden clumsy (`HJIT=6 HLAG=2`) 0.575-0.584 or
+        // 3 cells off (`HJIT=3`) 0.583-0.616, the warden exact
+        // 0.642-0.722. So one star is the opening, two is aim, three is
+        // clearing it. The gaps either side of each bar are under a
+        // point: a wider seed sweep should check them.
+        //
+        // Tried and taken out: three late piles on the seam (0:45, 1:20,
+        // 1:50) to give the middle of the game a race. Doing nothing
+        // spread to 0.44-0.60 (a star on one seed) and the clumsy hand
+        // still matched letting go at 30 s (5-3), so the race was luck.
+        win: Win::Rival { bars: [0.57, 0.62] },
     },
 ];
 
@@ -361,7 +370,7 @@ impl Level {
             Win::UnderRuler { bars } => format!("STARS: JOIN ALL 3. {:.2}X RULER. {:.2}X", bars[0], bars[1]),
             Win::AliveAtBell { bars } => format!("STARS: {}, {} AND {} MOULD AT THE BELL", bars[0], bars[1], bars[2]),
             Win::Endless { bars, .. } => format!("STARS: ALIVE AT {}, {} AND {}", clock(bars[0]), clock(bars[1]), clock(bars[2])),
-            Win::Rival { bars } => format!("STARS: {}X AS MUCH AS IT. {}X. NONE OF IT LEFT", bars[0], bars[1]),
+            Win::Rival { bars } => format!("STARS: EAT {}% OF THE FOOD. {}%. NONE OF IT LEFT", pct(bars[0]), pct(bars[1])),
         }
     }
 
@@ -441,6 +450,21 @@ impl Level {
 /// Seconds as M:SS.
 pub fn clock(s: u32) -> String {
     format!("{}:{:02}", s / 60, s % 60)
+}
+
+/// A share (0-1) as a whole percent, rounded down so the card never shows
+/// a bar as reached when it was not.
+pub fn pct(share: f32) -> u32 {
+    (share * 100.0 + 1e-4).floor() as u32
+}
+
+impl Dish {
+    /// This mould's share of the food both moulds have eaten so far
+    /// (`Dish::ate`, `Dish::wild_ate`); a half before either has eaten.
+    pub fn food_share(&self) -> f32 {
+        let all = self.ate + self.wild_ate;
+        if all <= 0.0 { 0.5 } else { self.ate / all }
+    }
 }
 
 /// Behind the Wall's card when the far food was not joined in time, from
@@ -819,17 +843,21 @@ impl Dish {
                 }
             }
             Win::Rival { bars } => {
-                let (mine, wild) = (self.walkers.len(), self.wild_left);
+                let wild = self.wild_left;
                 let gone = wild < ENDLESS_MIN;
                 if !bell && !gone {
                     return;
                 }
                 let s = self.measure();
+                // Scored on the food each ate, all dish (`Dish::ate`): the
+                // walkers left at the bell swung 28-54% in the last ten
+                // seconds as the piles ran dry (review 2, 2026-11-10).
+                let share = self.food_share();
                 let stars = if gone {
                     3
-                } else if mine as f32 >= bars[1] * wild as f32 {
+                } else if share >= bars[1] {
                     2
-                } else if mine as f32 >= bars[0] * wild as f32 {
+                } else if share >= bars[0] {
                     1
                 } else {
                     0
@@ -837,12 +865,16 @@ impl Dish {
                 let why = match stars {
                     3 => "THE DISH IS YOURS".to_string(),
                     2 => "NOW CLEAR IT OFF THE DISH".to_string(),
-                    1 => format!("{}X AS MUCH AS IT FOR 2 STARS", bars[1]),
-                    _ if mine > wild => format!("MORE THAN IT, BUT {}X FOR A STAR", bars[0]),
+                    1 => format!("{}% OF THE FOOD FOR 2 STARS", pct(bars[1])),
+                    _ if share > 0.5 => format!("MORE THAN IT, BUT {}% FOR A STAR", pct(bars[0])),
                     _ => "IT TOOK MORE OF THE FOOD".to_string(),
                 };
                 let at = clock((self.t / sps) as u32);
-                let amount = if gone { format!("THE WILD ONE DIED AT {at}; YOU {mine}") } else { format!("YOU {mine}, WILD {wild}") };
+                let amount = if gone {
+                    format!("THE WILD ONE DIED AT {at}; YOU ATE {}%", pct(share))
+                } else {
+                    format!("YOU ATE {}% OF THE FOOD", pct(share))
+                };
                 self.finish(s, stars, amount, why);
             }
             Win::AliveAtBell { bars } => {
@@ -1154,6 +1186,14 @@ mod tests {
         let left = |d: &Dish| d.piles.iter().map(|p| p.food).collect::<Vec<_>>();
         assert_eq!(left(&d), left(r));
         assert!(left(&d).iter().sum::<f32>() < start);
+        // Review 2: every bite is counted once, to one mould (the score),
+        // and the wild count is the wild mould as it now is. Before the
+        // late food lands (0:45), what left the piles is what was eaten.
+        let gone = start - left(&d).iter().sum::<f32>();
+        let ate = d.ate + d.wild_ate;
+        assert!((gone - ate).abs() < 1e-3 * gone, "piles lost {gone}, moulds ate {ate}");
+        assert!(d.ate > 0.0 && d.wild_ate > 0.0);
+        assert_eq!(d.wild_left, r.walkers.len());
     }
 
     /// The layout is the level's: the seed moves the mould, not the food.
