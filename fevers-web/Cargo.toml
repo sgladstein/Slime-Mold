@@ -1,0 +1,23 @@
+# The browser build of Two Fevers (`slime_mould::mould::fever`): a wasm32
+# cdylib with a plain C interface (no wasm-bindgen), driven by
+# `page/index.html`, which copies `Fevers::paint`'s frame to a canvas. The
+# same arrangement as the skirmish's `web/` crate, kept apart so the two
+# fronts never edit the same file. Build: `./build.sh` (needs
+# `rustup target add wasm32-unknown-unknown`).
+[package]
+name = "fevers-web"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license-file = "../LICENSE"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+slime-mould = { path = ".." }
+
+[profile.release]
+codegen-units = 1
+opt-level = 3
+panic = "abort"

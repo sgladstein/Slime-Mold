@@ -1,0 +1,14 @@
+mouldprobe: seeds [16] players ["idle", "random", "plan", "fresh", "intended", "sleeper"] scale 2 oats None stray_reach None params Params { sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, deposit: 5.0, keep: 0.9, food_deposit: 20.0, scent_keep: 0.97, light_weight: 0.0, light_fade: 0.0, tube: 1.0, feed_reach: 70, census_every: 6, census_lag: 0, all_at_once: true, fixed_point: false, upkeep: 0.004, eat: 0.03, table: 40, fed_scent: 0.15, divide: 0.03, crowd: 7, starve: 0.0016666667, hungry: 0.0011111111, burn: 0.0, lamp_reach: 16.0, lamp_soft: false, push: 0.9, pieces: true, wound: 4.0, stray_reach: inf, stray_grace: 2.0, oats_grace: 8.0, flow: false, carry_cap: 3.0, share: 0.5, sap: true, sap_speed: 2, absorb: 0.03, stream: 1.0, stream_bias: 0.35, want: 1.0, pulse_seconds: 2.5, pulse_strength: 0.8, wall_grow: 1.0, wall_half_life: 30.0, wall_pull: 1.0, settle_seconds: 0.0, explore_angle: 0.3926991, spared: 0, spared_scent: 0.5, foe_repel: 1.0, fight: 0.02, wet: false, wet_base: 0.5, wet_relax: 0.0005, dry_light: 0.05, crust_wet: 0.25, crust_rate: 0.05, revive_wet: 0.7, revive_rate: 0.05, crust_life: 20.0, crust_trail: 0.6, wake_grace: 5.0, water_r: 12.0 }
+
+== dish 4 KEEP IT ALIVE: STARS: ALIVE AT 4:15, 5:30 AND 6:40 ==
+seed 16      idle: 0 stars  LIVED 2:07, AT MOST 1706 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 12  oats 0 snips 0 lamp 0s joins 4  water 0 slept 0 woke 0 died asleep 0  hash=ef43dffe55dd7a86  (6.7 s)
+seed 16    random: 0 stars  LIVED 2:48, AT MOST 1720 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 18  oats 6 snips 0 lamp 88s joins 10  water 6 slept 1197 woke 1 died asleep 1178  hash=ee0c6f2a37d4b153  (10.4 s)
+seed 16      plan: 0 stars  LIVED 1:05, AT MOST 1783 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 19  oats 6 snips 0 lamp 92s joins 2  water 0 slept 538 woke 0 died asleep 519  hash=c36eb9aa9fa234bf  (5.5 s)
+seed 16     fresh: 0 stars  LIVED 2:22, AT MOST 2512 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 14  oats 6 snips 0 lamp 4s joins 3  water 0 slept 516 woke 0 died asleep 516  hash=b38ec465c316edfb  (7.8 s)
+seed 16  intended: 0 stars  LIVED 3:09, AT MOST 1706 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 14  oats 6 snips 0 lamp 0s joins 13  water 0 slept 0 woke 0 died asleep 0  hash=4bb732bc8e4f6b21  (10.0 s)
+seed 16   sleeper: 3 stars  LIVED 14:59, AT MOST 4056 MOULD | IT OUTLIVED THE DISH  mould 1508  oats 6 snips 0 lamp 28s joins 38  water 18 slept 3445 woke 838 died asleep 2592  hash=6115a7ca922e2b74  (51.4 s)
+
+== ship bar: do nothing 0, random at most 1, intended 3 (stars per seed [16]) ==
+dish 4 KEEP IT ALIVE    idle [0]  random [0]  plan [0]  fresh [0]  intended [0]  sleeper [3]  -> FAILS THE BAR
+
+frame cost, dish 4 intended hand: 11373 frames, mean 4.46 ms, worst 51.42 ms

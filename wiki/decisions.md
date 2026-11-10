@@ -23,6 +23,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Ruling | Owner's words | Source |
 |---|---|---|---|
+| 2026-11-10 20:55 | The current demos (The Wild One and the other dishes) are unlikely to be the true games: don't spend effort tuning work to them; engine work such as the GPU plan is judged on the engine, and the project is now exploring RTS-type games | "I just think The Wild One and other current demos are unlikely to be the true games. So I don't want us to be wasting effort or get too far away from your original task which was not really about the game part of this project. (we are now exploring RTS type games)" | (GPU plan's thread), [scale](model/scale.md), [gpu plan](../Reports/gpu-plan-2026-11-10.md) |
 | 2026-11-10 19:44 | Threads with long test runs may start up to 4 Haiku runner threads for extra compute; runners make no decisions, run only the commands given and send the output back | "Feel free to start some haiku runner threads just to get additional compute. If you want to do that, they make no decisions and just run the code you tell them and send the output back to you. You can run up to 4 threads if you want" | (project chat), [CLAUDE.md](../CLAUDE.md) |
 | 2026-11-10 18:15 | A brainstorm for a new direction starts from the model, not from the demo's tools (lamp, oats, salt, knife, water), which were built for a herding puzzle | "it seems like all the brainstorm agents are just taking the current tools ... I want to make sure we are truly brainstorms how this should best work and not doing limited exploration on what exists in our current demo." | [RTS brainstorm](../Reports/rts-design-2026-11-10/brainstorm/README.md) |
 | 2026-11-10 17:47 | Each project thread merges its own pull requests | "all threads handle their own PR mergers" | (project chat) |
@@ -39,6 +40,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-10 21:15, card | Two Fevers' next version: owned ground and one host-shaping trait together (after the owner found no strategy in version 1, 21:11) | card ("Both together") | [Two Fevers](rts/two-fevers.md) |
 | 2026-11-10 19:22 | Build sound for the game (HANDOFF decision 8), from Pixel_Physics's `src/audio/` | "yes to sound" | [Sound](looks/sound.md) |
 | 2026-11-10 18:56, card | Trace Keep It Alive's luck now rather than wait until the owner has played (HANDOFF decision 1; The Wild One's scoring half was already done in PR #6). The trace had been run meanwhile on that recommended option | card ("Trace it now") | [Keep It Alive](dishes/keep-it-alive.md), [luck report](../Reports/mould-keep-alive-luck-2026-11-10.md) |
 | 2026-11-10 17:54 | GPU runs go on the owner's home desktop, a GeForce GTX 1070 (the GPU Jenson used), which is not the machine they usually work at | "my home machine has a geforce 1070. Not sure if we can access it right now." ... "It is not the computer that I can currently working on though." | [scale](model/scale.md) |

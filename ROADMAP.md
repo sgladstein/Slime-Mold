@@ -35,10 +35,11 @@ depends on is done, not when the band before it is finished.
 | # | Step | Owner | Waits on | State |
 | --- | --- | --- | --- | --- |
 | E1 | Dish hash and determinism test | Pixel_Physics thread | nothing | done: PR #14 (`Dish::state_hash`, `every_dish_replays_bit_for_bit`, `mouldprobe` prints `hash=`) |
-| S1 | GPU phase 1: frame profiler (also the review's E2), "GPU semantics" CPU arm, delayed-census arm, new rules off by default | GPU thread | E1 for the hash; owner go-ahead given 17:50Z | profiler done (PR #16: diffusion is 62% of the simulation, moving walkers 24%); the two arms next, on E1's hash |
+| S1 | GPU phase 1: frame profiler (also the review's E2), "GPU semantics" CPU arm, delayed-census arm, new rules off by default | GPU thread | E1 for the hash; owner go-ahead given 17:50Z | profiler done (PR #16: diffusion is 62% of the simulation, moving walkers 24%); arms measured on every dish: late census safe, fixed-point fields change play (fields stay `f32`), all-at-once move cuts seam fights (The Wild One's warden loses, p 0.0005); owner 20:55Z: today's dishes are not the true games, so gates use engine measures; next the scaling rule, then S2 |
 | E4 | Release profile re-measured on `mouldprobe` and one CI run | Pixel_Physics thread | E1 | done: `codegen-units = 1` kept (about 0.45 ms a frame), thin LTO dropped (no gain); hashes unchanged |
 | E5 | Licence and notices gates, the JetBrains Mono OFL notice, `crispfont.py` | Pixel_Physics thread | nothing; must land before any build leaves the owner's machine | done: `scripts/licensecheck.sh`, `scripts/notices.sh` + `THIRD-PARTY-NOTICES.txt`, `notices.yml`, `scripts/crispfont.py` |
 | R- | Bloomfront research (six brainstorm agents, then a red team, then a field retest and verb census) | RTS thread | nothing; design only | **done 11-10**: [red team](Reports/rts-design-2026-11-10/red-team/README.md), [field retest](Reports/rts-design-2026-11-10/field/README.md), [page](wiki/rts/directions.md). On The Wild One Taut fails and the counters are a ladder; on a 23-pile field Taut's pull wins and the counters cycle on one layout of two. Census: field salt passes on share; Wild One lamp moves share but not by 0.02. Two Fevers strongest; next is one contagion strain |
+| R-F | Two Fevers playable demo (`src/mould/fever.rs`, `fevers-web/`) | Two Fevers thread | nothing | **v2 done 11-10**: [report](Reports/two-fevers-2026-11-10/README.md), [page](wiki/rts/two-fevers.md), https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a. Owned ground with a hold; plan beats random 16/16 by 0.537; waits on the owner's hand |
 
 ### Next: waits on the owner
 
@@ -48,7 +49,7 @@ depends on is done, not when the band before it is finished.
 | G1 | Keep It Alive: trace single games to find what sends one into the short or long hump. Measures only; the game does not change | Triage thread | **done 11-10**; owner picked "Trace it now" (card, 18:56Z): the first pile on mostly-asleep mould decides it ([report](Reports/mould-keep-alive-luck-2026-11-10.md)). Next: a 20 s landing preview, a game change |
 | G2 + R0 | **The Wild One's middle (seconds 30 to 150), done as Bloomfront Stage 0.** First separate which of lamp, snip and oats needs the aim; then give the wild mould a scripted hand on a mirrored dish | one thread, to be chosen | P for G2; the owner's say for R0 (HANDOFF decision 7, "wait or replace") |
 | G3 | The snip: make a cut-off piece visibly starve, or take it off The Wild One | Triage thread | P |
-| E6 | Keyed random draws and the dead-dish slowdown | Pixel_Physics thread | timing only: see *One census reset*, below |
+| E6 | Keyed random draws and the dead-dish slowdown | Pixel_Physics thread | timing only: see *One census reset*, below; the keyed draw itself is built inside S1 (`keyed`, used only with `Params::all_at_once`, off by default) |
 | E7 | Sound for the game, from Pixel_Physics's `src/audio/` | Pixel_Physics thread | **built 11-10** (owner: "yes to sound", 19:22Z; [report](Reports/mould-sound-2026-11-10.md)). Next: the owner's ears on the Mould Sound page |
 
 ### Then: the scale fork

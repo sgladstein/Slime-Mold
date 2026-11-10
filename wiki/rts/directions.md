@@ -3,7 +3,7 @@ title: The RTS directions
 kind: design
 status: open
 updated: 2026-11-10
-sources: [Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md, Reports/rts-skirmish-2026-11-10.md]
+sources: [Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md, Reports/rts-skirmish-2026-11-10.md]
 code: [Dish::rival, Dish::store, Dish::tithe, Dish::food_share, Pile::bite, Params::fed_scent, Params::flow, Params::foe_repel, Params::pieces, Params::wound, Params::table]
 ---
 
@@ -13,8 +13,10 @@ code: [Dish::rival, Dish::store, Dish::tithe, Dish::food_share, Pile::bite, Para
 
 **In the build phase.** The owner asked on 2026-11-10 how the mould could
 become a real-time strategy game, and at 20:33Z moved the work to playable
-demos. Two are being built: **the field skirmish** here
-([skirmish.md](skirmish.md)) and **Two Fevers** in a thread of its own.
+demos, two of them: **the field skirmish** ([skirmish.md](skirmish.md)) and
+**Two Fevers** ([two-fevers.md](two-fevers.md)), a playable contagion war
+over one neutral mould (planner over random 16 of 16, but by only 0.537 of
+the summed score).
 
 The design work behind them: a first draft (Bloomfront), six brainstorm
 agents, a red team on The Wild One, and a retest on **a field of 23 small
@@ -47,7 +49,7 @@ once; the skirmish's tithe (`Dish::tithe`) is the currency that this needed.
 |---|---|---|
 | Bloomfront | Lure, push, wall, cut, water, each paid from food | Weak as a direction; its two-keeper plumbing is a useful harness |
 | Squeeze | Tap a held pile to send a wave of sap; hold it to charge | Home squeeze 0.000; flow costs 2.6x the step time; needs a fight scaled by load (not rerun on the field) |
-| Two Fevers | Seed a strain in a neutral mould; immunity feeds the trailer | Strongest; untested; risk of a rubber band that washes out skill |
+| Two Fevers | Seed a strain in a neutral mould; immunity feeds the trailer | Built as a demo ([page](two-fevers.md)); carriers-only scoring had no strategy; owned ground with a hold plays as a tug of war, skill margin thin |
 | Tincture | The same, but converts by majority | Feeds the leader; a different game from Two Fevers, so pick one |
 | Taut | Set each source slack, even or taut | Fails on The Wild One; wins share on the field, but untested per pile and always best at full |
 | Grain, Grafts | Regions or captured colonies with their own sensing rules | No cycle on The Wild One; a cycle on one field layout of two |
@@ -98,7 +100,7 @@ once; the skirmish's tithe (`Dish::tithe`) is the currency that this needed.
 - What about the scatter layout makes the maze–cord link hold, since 9 other layouts lack it.
 - Counterplay in the budget skirmish: see [skirmish.md](skirmish.md).
 - Taut set per pile, or with a cost, so that it becomes a choice rather than a stat.
-- A long match with regrowing food, a contagion strain, and human play: the rest of the 2026-11-10 19:31Z list.
+- A long match with regrowing food and human play: the rest of the 2026-11-10 19:31Z list. The contagion strain is built ([Two Fevers](two-fevers.md)).
 
 ## Sources
 

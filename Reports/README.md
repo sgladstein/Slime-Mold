@@ -123,7 +123,13 @@ move.
   all-integer simulation is recommended. Single-core step cost: 1024 x 640 with 100k walkers 11 ms, with 1M 97 ms;
   2048 x 1280 dropped (111 ms). Research status, risks, and seven owner decisions. *Phase 1 progress*: the step's
   time by pass (`Dish::step_cost`, printed by `mouldprobe`): diffusion is 62% of the simulation (0.69 ms a frame), moving
-  1,800 walkers 24%, the census 4.5%.
+  1,800 walkers 24%, the census 4.5%. Then three GPU arms, 16 paired seeds on every scored dish
+  ([census/](gpu-plan-2026-11-10/census/)): a census 4 a second and two frames late is safe (no change survives
+  Bonferroni); fixed-point trail and scent change play, because floats keep a smell too faint to draw over half the dish
+  and walkers past it fly straight (random play reaches the food behind the wall on 5 seeds of 16), so the fields stay
+  `f32`; moving all walkers at once cuts seam fights and costs The Wild One's warden its share on 15 of 16 seeds
+  (p 0.0005). The owner (20:55Z) ruled the current dishes unlikely to be the true games, so later gates use engine
+  measures on a neutral dish.
 
 ## Added with the move (2026-11-10)
 
@@ -159,5 +165,10 @@ move.
 - [mould-sound-2026-11-10.md](mould-sound-2026-11-10.md) — sound for the game (owner: "yes to sound", 19:22Z). Pixel_Physics's
   listener / voice bank / device split with the mould's own sounds, every one a count off the dish; S toggles.
   Same game bit for bit with sound on; listener about 1 us a frame. Seven recordings on the Mould Sound page.
+- [two-fevers-2026-11-10/README.md](two-fevers-2026-11-10/README.md) — **Two Fevers, a playable browser demo**
+  (`src/mould/fever.rs`, `fevers-web/`). v1 scored carriers: rings swept the host and left it as before; owner
+  found no strategy. v2 (owner's card): walkers keep the last fever's colour, a 15 s hold, Hush. 16 seeds, both
+  colours: plan beats random 16/16 in both versions but by 0.536 / 0.537; without the hold random wins 14/16;
+  Hush when behind 10/16 (noise). 0.5-0.64 ms a step.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

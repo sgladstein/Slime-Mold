@@ -31,7 +31,8 @@ Keep this file under 150 lines; lint checks it.
 
 ## Games in design
 
-- [The RTS directions](rts/directions.md): nothing built; Taut failed its probe, Two Fevers is the strongest left; next a paired-clone verb census.
+- [The RTS directions](rts/directions.md): Taut failed on The Wild One and won on the field; the verb census has run; Two Fevers is now a demo.
+- [Two Fevers](rts/two-fevers.md): playable in the browser; owned ground with a 15 s hold; plan beats random 16/16 but by 0.537; Hush is noise so far.
 
 ## Method and owner
 

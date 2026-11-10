@@ -40,9 +40,15 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   22.5 on Keep It Alive and The Wild One, reach 9. Food flow is off; no
   page yet.
 - Scale: [the mould at scale](wiki/model/scale.md). The dish holds a few dozen
-  loops where Jenson's GPU version holds hundreds; a six-phase GPU plan is
-  reviewed and not started.
+  loops where Jenson's GPU version holds hundreds. GPU plan phase 1 is under
+  way on the CPU: a late census is safe; fixed-point trail and scent change
+  play (the fields stay floats); moving all walkers at once cuts fights
+  where two moulds meet. Later gates use engine measures, not today's dishes.
 - How it is judged: [the census](wiki/method/census.md).
+- [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
+  (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
+  for a neutral host and keep the ground they reach. The planner beats random
+  clicks 16 of 16, but only by 0.537; version 2 awaits the owner's hand.
 
 ## Decisions the owner has not made
 
@@ -63,10 +69,11 @@ Ask each again; none has an answer to assume.
 5. **The Organ and the Wanderer:** keep, change or drop. Neither has a
    verdict.
 6. **The GPU plan** ([`Reports/gpu-plan-2026-11-10.md`](Reports/gpu-plan-2026-11-10.md),
-   [page](wiki/model/scale.md)), now started (phase 1): all-integer
-   simulation or floats (phase 1 measures it first); upload Jones 2011 before
-   phase 4; hold the Pixel_Physics multi-core renderer port until the phase 2
-   gate.
+   [page](wiki/model/scale.md)), now started (phase 1): integer or floats is
+   measured: fixed-point trail and scent changed play, so the recommendation
+   is now floats for the fields (integer positions still possible); upload
+   Jones 2011 before phase 4; hold the Pixel_Physics multi-core renderer port
+   until the phase 2 gate.
 7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
    *Risks and open questions*): should it wait for the queued work or take
    over The Wild One's next steps (its Stage 0 answers the same mid-game
@@ -82,9 +89,8 @@ Ask each again; none has an answer to assume.
    ([`field/`](Reports/rts-design-2026-11-10/field/README.md)): a salt line
    across the rival's road passes on the field, only the lamp moves share on
    The Wild One, Taut's pull wins on the field, and the pattern counters form
-   a cycle on one field layout of two. Next: one contagion strain, and
-   whether any verb can overturn a 60 s lead. Two Fevers is still the
-   strongest direction. The food store sits at a median of 0, so any "pay
+   a cycle on one field layout of two. Next: whether any verb can overturn a
+   60 s lead. Two Fevers is now a playable demo (below). The food store sits at a median of 0, so any "pay
    from the store" rule needs its own currency first. Page:
    [the RTS directions](wiki/rts/directions.md).
 
