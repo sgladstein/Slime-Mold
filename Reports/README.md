@@ -54,6 +54,14 @@ move.
   settings, a random hand lives on 1 of 8 at 45 and 6 of 8 at 22.5, the scripted plan 8 of 8 at both. Recommends, ranked
   with pros and cons: a keep-it-alive dish that does not end, player marks that stay (lights set down, salt rubbed out),
   drawing the real walkers and thinner tubes; plus design writing and a table of comparable games. Waits on the owner's pick.
+- [mould-review-2-2026-11-10.md](mould-review-2-2026-11-10.md) — **independent review, no build: Keep It Alive, water and sleep, and The Wild
+  One work as built but are not yet games a person can get better at.** About 270 scripted runs with the hands made
+  clumsier and slower on purpose; every figure in both dishes' reports reproduces. Keep It Alive: water is the mechanism
+  and the hand is not flattered by precision (the clumsiest hand beats the oat-saver 8-0), but lives fall in two humps
+  (17 of 32 dead by 5:05, 14 past 7:20) and the same seed flips between them, so the 5:30 star was earned once in 32.
+  The Wild One: the first star is the opening salt wall (letting go at 30 s keeps it on 8 of 8), the second and third need
+  aim within about 2 cells, the snip delivers nothing, and the bell rings while both moulds are crashing (the player's
+  loses 28-54% in the last ten seconds). No bug found in the two-mould step. Recommends scoring the share of food eaten.
 - [mould-looks-2026-11-10.md](mould-looks-2026-11-10.md) **(from Pixel_Physics)** — **built, drawing only: the mould game's looks pass.** A speck
   per real walker, one colour ramp for the food the tube holds (rescaled: the old reading was full on over half the tube),
   smoothing of the rim, tube insides, salt walls and cuts, a fading stain where mould has been, the lamp drawn as the light
