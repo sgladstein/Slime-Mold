@@ -455,8 +455,38 @@ impl BigDish {
         std::mem::swap(&mut self.scent, &mut self.scent_scratch);
     }
 
+    /// The scent the piles lay on each scent cell in one scent step, as
+    /// `lay_scent` adds it, for the piles reached so far. The GPU timing
+    /// harness (`examples/gputime.rs`) uploads it once.
+    pub fn scent_laid(&self) -> Vec<f32> {
+        let mut out = vec![0.0f32; self.sw * self.sh];
+        let k = if self.p.scent_coarse { 1.0 } else { self.p.scale as f32 };
+        let r = self.p.pile_r * k;
+        let n = r.ceil() as i32;
+        for (pi, &(px, py)) in self.piles.iter().enumerate() {
+            let strength = self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 };
+            let (cx, cy) = (px * k, py * k);
+            for dy in -n..=n {
+                for dx in -n..=n {
+                    if ((dx * dx + dy * dy) as f32) > r * r {
+                        continue;
+                    }
+                    let (x, y) = (cx + dx as f32, cy + dy as f32);
+                    if x < 0.0 || y < 0.0 || x >= self.sw as f32 || y >= self.sh as f32 {
+                        continue;
+                    }
+                    let i = y as usize * self.sw + x as usize;
+                    if self.scent_agar[i] {
+                        out[i] += strength;
+                    }
+                }
+            }
+        }
+        out
+    }
+
     /// A pile counts as reached once tube lies on it.
-    fn update_reached(&mut self) {
+    pub fn update_reached(&mut self) {
         let s = self.p.scale as f32;
         let r = self.p.pile_r * s;
         let n = r.ceil() as i32;

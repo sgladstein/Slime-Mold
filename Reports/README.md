@@ -146,6 +146,9 @@ move.
   coarse grain); four fine steps a tick costs 3.7x and is worse on every measure (rejected); the plain 4x port plus food
   smelled at today's reach is chosen (64.5 loops against today's 3, strays 2.2%, 11 ms a tick on one core), though a
   packed home blob stays a bag (3 piles at 20 s against 4). 100,000 walkers make 164 loops at 10 s.
+  The owner picked 100,000 walkers (22:32Z). The GPU timing test (`examples/gputime.rs`, four wgpu compute passes a
+  tick) is built; on a software GPU its dish matches the CPU's (165 loops against 163 at 100k, 10 s) and it waits for
+  the owner's GTX 1070.
 
 ## Added with the move (2026-11-10)
 
