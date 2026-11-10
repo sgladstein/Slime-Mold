@@ -48,10 +48,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
 - [The field skirmish](wiki/rts/skirmish.md): version 1 (habits, salt, the
   lamp) is playable (https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw) and
   set aside after the owner played it. Version 2, the budget skirmish (a
-  tithe spent on beacons, spores and habits), runs in the harness only: one
-  scripted plan, soft, beat the other eight in 127 of 128 games, so it needs
-  counterplay before it gets a page
-  (https://claude.ai/artifact/33Voj1TERnjNSZfLwv3zRG).
+  tithe spent on beacons, spores, rallies and habits), is playable
+  (https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS) against any scripted
+  plan. One plan, soft, beat the other eight in 127 of 128 games
+  (https://claude.ai/artifact/33Voj1TERnjNSZfLwv3zRG), and the counterplay
+  rules of round 3 (a rally, a rising spore price) did not stop it; the left
+  mould, the player's, has an edge (14 of 16 mirror games).
 - [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
   (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
   for a neutral host and keep the ground they reach. The planner beats random

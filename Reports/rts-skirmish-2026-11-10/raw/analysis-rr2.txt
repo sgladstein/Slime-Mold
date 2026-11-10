@@ -1,0 +1,63 @@
+45 pairings, 720 games
+
+  winner    loser  games  p        Holm  winner's mean share
+    keep   centre  16/16  3.1e-05   yes  0.734
+    soft   centre  16/16  3.1e-05   yes  0.718
+   trade   centre  16/16  3.1e-05   yes  0.729
+    idle     fort  16/16  3.1e-05   yes  0.738
+    keep     fort  16/16  3.1e-05   yes  0.757
+    soft     fort  16/16  3.1e-05   yes  0.768
+   trade     fort  16/16  3.1e-05   yes  0.773
+    keep    guard  16/16  3.1e-05   yes  0.748
+    soft    guard  16/16  3.1e-05   yes  0.755
+    idle    trade  16/16  3.1e-05   yes  0.716
+    keep     raid  16/16  3.1e-05   yes  0.754
+    keep     ward  16/16  3.1e-05   yes  0.772
+    soft     raid  16/16  3.1e-05   yes  0.740
+   trade     raid  16/16  3.1e-05   yes  0.754
+    soft     ward  16/16  3.1e-05   yes  0.772
+    ward    trade  16/16  3.1e-05   yes  0.627
+    fort     ward  15/16  0.00052   yes  0.682
+    idle    guard  15/16  0.00052   yes  0.620
+   trade    guard  15/16  0.00052   yes  0.583
+    soft   random  15/16  0.00052   yes  0.676
+    keep   random  14/16  0.00098   yes  0.667
+    idle     ward  14/16  0.0042      -  0.566
+  centre    guard  13/16  0.021       -  0.573
+    fort     raid  13/16  0.021       -  0.566
+  random     fort  12/16  0.077       -  0.591
+    ward    guard  12/16  0.077       -  0.566
+    keep     idle  12/16  0.077       -  0.637
+    idle   random  12/16  0.077       -  0.580
+    soft     idle  12/16  0.077       -  0.637
+    ward     raid  12/16  0.077       -  0.533
+  random     ward  12/16  0.077       -  0.559
+  centre   random  11/16  0.21        -  0.543
+    raid   random  11/16  0.21        -  0.578
+    idle   centre  10/16  0.45        -  0.620
+  centre     raid  10/16  0.45        -  0.521
+   guard     fort  10/16  0.45        -  0.510
+   trade     keep  10/16  0.45        -  0.531
+  centre     fort   9/16  0.8         -  0.519
+    ward   centre   9/16  0.8         -  0.475
+   guard     raid   9/16  0.8         -  0.510
+  random    guard   9/16  0.8         -  0.491
+  random    trade   9/16  0.8         -  0.494
+    soft    trade   9/16  0.8         -  0.518
+    idle     raid   8/16  1           -  0.478
+    keep     soft   8/16  1           -  0.502
+
+Each plan: pairings won (surviving Holm), lost (surviving), mean share over all its games
+    soft: won 8 (6 survive), lost 0 (0 survive), mean share 0.676
+    keep: won 7 (6 survive), lost 1 (0 survive), mean share 0.671
+    idle: won 6 (3 survive), lost 2 (0 survive), mean share 0.561
+   trade: won 5 (4 survive), lost 4 (2 survive), mean share 0.557
+  random: won 4 (0 survive), lost 5 (2 survive), mean share 0.455
+  centre: won 4 (0 survive), lost 5 (3 survive), mean share 0.431
+    ward: won 4 (1 survive), lost 5 (3 survive), mean share 0.428
+    raid: won 1 (0 survive), lost 7 (3 survive), mean share 0.414
+   guard: won 2 (0 survive), lost 7 (4 survive), mean share 0.409
+    fort: won 2 (1 survive), lost 7 (4 survive), mean share 0.399
+
+Cycles of three among surviving pairings: [('fort', 'ward', 'trade')]
+Cycles of three on the majority alone: [('idle', 'trade', 'keep'), ('fort', 'raid', 'random'), ('fort', 'ward', 'trade'), ('fort', 'ward', 'guard'), ('raid', 'random', 'trade'), ('raid', 'random', 'ward'), ('centre', 'fort', 'ward'), ('centre', 'random', 'trade'), ('centre', 'random', 'ward'), ('guard', 'raid', 'random'), ('keep', 'random', 'trade'), ('keep', 'ward', 'trade')]
