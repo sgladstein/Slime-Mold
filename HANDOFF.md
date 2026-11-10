@@ -35,6 +35,9 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
 - Model defaults: sensor angle 45 degrees (22.5 on Keep It Alive and some
   dishes), reach 9, food flow off; no page yet,
   [`Reports/dead-ends.md`](Reports/dead-ends.md) for reach.
+- Scale: [the mould at scale](wiki/model/scale.md). The dish holds a few dozen
+  loops where Jenson's GPU version holds hundreds; a six-phase GPU plan is
+  reviewed and not started.
 - How it is judged: [the census](wiki/method/census.md).
 
 ## Decisions the owner has not made
@@ -54,6 +57,13 @@ Ask each again; none has an answer to assume.
    from the owner's hand. [`Reports/mould-probe-2026-11-07.md`](Reports/mould-probe-2026-11-07.md), "Food that flows"
 5. **The Organ and the Wanderer:** keep, change or drop. Neither has a
    verdict.
+6. **The GPU plan** ([`Reports/gpu-plan-2026-11-10.md`](Reports/gpu-plan-2026-11-10.md),
+   [page](wiki/model/scale.md)): start phases 1 and 2; which machine and GPU
+   the owner plays on (phase 2's timing test runs there); all-integer
+   simulation or floats (phase 1 measures it first); upload Jones 2011 before
+   phase 4; hold the Pixel_Physics multi-core renderer port until the phase 2
+   gate. Owner 11-10 17:24Z: "I like this plan, but run an independent review
+   agent first." The review is folded in; no phase has a go yet.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
