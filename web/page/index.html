@@ -1,10 +1,12 @@
-<title>Mould Field Skirmish</title>
+<title>Mould Budget Skirmish</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;500;600&display=swap">
 <style>
-/* Layout: one column, the dish on top at its own width, the controls under it in a
-   strip that wraps; a single dark look that matches the game's frame. */
+/* Layout: one column, the dish on top at its own width, three panels under it
+   that stack on a narrow screen; one dark look that matches the game's frame.
+   The rings drawn over the dish are the interface (what you and the rival have
+   bought, and where a press would land), not the simulation. */
 :root {
   --bg: #0a0d12;
   --panel: #121722;
@@ -22,125 +24,210 @@
 html, body { background: var(--bg); color: var(--fg); }
 body {
   font-family: var(--text);
+  margin: 0;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 16px 32px;
 }
 .wrap { max-width: 1024px; margin: 0 auto; display: grid; gap: 12px; }
-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+header { display: grid; gap: 4px; }
 h1 { font-family: var(--display); font-weight: 700; font-size: 1.5rem; letter-spacing: 0.04em; margin: 0; text-transform: uppercase; }
 h1 .you { color: var(--gold); }
 h1 .them { color: var(--violet); }
-.sub { color: var(--dim); font-size: 0.9rem; margin: 0; }
+.sub { color: var(--dim); font-size: 0.9rem; margin: 0; line-height: 1.45; }
 .stage { position: relative; }
-canvas { display: block; width: 100%; height: auto; border-radius: 6px; background: #000; touch-action: none; cursor: crosshair; }
-.loading[hidden] { display: none; }
+canvas { display: block; width: 100%; height: auto; border-radius: 6px; }
+#dish { background: #000; }
+#marks { position: absolute; inset: 0; touch-action: none; cursor: crosshair; }
+.loading[hidden], .card[hidden] { display: none; }
+.card { position: absolute; inset: 0; display: grid; place-items: center; padding: 12px; pointer-events: none; }
+.card-in { max-width: 34rem; background: rgba(10, 13, 18, 0.92); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.card h2 { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; color: var(--gold); font-size: 1.2rem; }
+.card p { margin: 0; line-height: 1.45; font-size: 0.92rem; }
+.card b { font-weight: 600; }
+.card .go { font-family: var(--display); color: var(--gold); text-align: center; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.85rem; }
+/* On a phone the dish is too short to hold the card: it sits under the dish instead. */
+@media (max-width: 640px) { .card { position: static; padding: 8px 0 0; } .card-in { max-width: none; } }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); font-family: var(--display); letter-spacing: 0.08em; }
-.strip { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; }
-@media (max-width: 720px) { .strip { grid-template-columns: minmax(0, 1fr); } }
+.strip { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 760px) { .strip { grid-template-columns: minmax(0, 1fr); } }
+.col { display: grid; gap: 12px; align-content: start; min-width: 0; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
 .label { font-family: var(--display); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
-.habits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-@media (max-width: 420px) { .habits { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.habit {
-  font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 6px;
-  padding: 8px 6px; display: grid; gap: 2px; justify-items: center; cursor: pointer; min-width: 0;
-}
-.habit .k { font-family: var(--display); color: var(--dim); font-size: 0.75rem; }
-.habit .n { font-family: var(--display); font-weight: 700; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.05em; }
-.habit .w { font-size: 0.72rem; color: var(--dim); text-align: center; }
-.habit[aria-pressed="true"] { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
-.habit[aria-pressed="true"] .n { color: var(--gold); }
-.habit:disabled { opacity: 0.45; cursor: default; }
-.habit:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
-.chip { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; }
-.chip.them { color: var(--violet); }
-.edge { font-size: 0.85rem; }
-.edge.good { color: var(--good); }
-.edge.bad { color: var(--bad); }
-.edge.even { color: var(--dim); }
+.between { justify-content: space-between; }
+.bank { font-family: var(--display); font-weight: 700; font-size: 1.6rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+.seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.verbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.habits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 420px) { .tile .w { display: none; } .tile .n { font-size: 0.85rem; } }
+.tile {
+  font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 6px; display: grid; gap: 2px; justify-items: center; cursor: pointer; min-width: 0; text-align: center;
+}
+.tile .k { font-family: var(--display); color: var(--dim); font-size: 0.72rem; }
+.tile .n { font-family: var(--display); font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.tile .p { font-variant-numeric: tabular-nums; font-size: 0.8rem; color: var(--gold); }
+.tile .w { font-size: 0.72rem; color: var(--dim); line-height: 1.3; }
+.tile[aria-pressed="true"] { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.tile[aria-pressed="true"] .n { color: var(--gold); }
+.tile.short .p { color: var(--bad); }
+.tile:disabled { opacity: 0.45; cursor: default; }
+.seg .tile { padding: 6px 4px; }
+.seg .tile .n { font-size: 0.95rem; }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .share { display: grid; gap: 6px; }
 .bar { height: 10px; border-radius: 999px; background: var(--violet); overflow: hidden; }
 .bar > i { display: block; height: 100%; width: 50%; background: var(--gold); transition: width 0.3s linear; }
-.nums { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
-.nums .you { color: var(--gold); }
-.nums .them { color: var(--violet); }
+.nums { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+.you { color: var(--gold); }
+.them { color: var(--violet); }
+.facts { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); gap: 4px 12px; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.facts .h { color: var(--dim); }
+.feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 0.82rem; font-variant-numeric: tabular-nums; min-height: 5.5em; }
+.feed li { color: var(--dim); }
+.feed li b { font-weight: 600; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; }
 button.small, select {
   font: inherit; font-size: 0.85rem; color: var(--fg); background: transparent; border: 1px solid var(--line);
-  border-radius: 6px; padding: 6px 10px; cursor: pointer;
+  border-radius: 6px; padding: 6px 10px; cursor: pointer; max-width: 100%;
 }
+select { background: var(--panel); }
 button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
 .help { color: var(--dim); font-size: 0.85rem; line-height: 1.5; margin: 0; }
 .help b { color: var(--fg); font-weight: 600; }
 .stat { font-variant-numeric: tabular-nums; color: var(--dim); font-size: 0.8rem; }
+.result { font-family: var(--display); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.result.good { color: var(--good); }
+.result.bad { color: var(--bad); }
 @media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
 </style>
 
 <div class="wrap">
   <header>
     <h1><span class="you">Your mould</span> v <span class="them">the rival</span></h1>
-    <p class="sub">The Field: 23 small food piles. Eat more of the food than the rival by the bell (2:30).</p>
+    <p class="sub">The Field: 23 piles, and more food from 0:20. Whoever has eaten more at 2:30 wins. Tithe part of every bite to your bank, then spend it: pick what to buy, and click a pile.</p>
   </header>
 
   <div class="stage">
-    <canvas id="dish" width="1024" height="680" aria-label="The dish"></canvas>
+    <canvas id="dish" width="1024" height="640" aria-label="The dish"></canvas>
+    <canvas id="marks" width="1024" height="640" aria-hidden="true"></canvas>
+    <div class="card" id="card" hidden>
+      <div class="card-in">
+        <h2>The field</h2>
+        <p>Two moulds of 400 walkers, <span class="you">yours</span> on the left and <span class="them">the rival's</span> on the right, grow over 23 food piles. A pile feeds 40 at a time, split by head count, and well-fed walkers win fights. More food lands every 15 s from 0:20.</p>
+        <p>Your <b>tithe</b> sends part of every bite to your bank instead of your mould. Spend it on <b>beacons</b>, <b>spores</b>, <b>rallies</b> and <b>habits</b>: pick one below the dish, then click a pile.</p>
+        <p>The rival you pick below starts buying within seconds. <b>Pause</b> (P) stops the clock, and you can still buy while it is stopped.</p>
+        <p class="go">Click the dish or press a key to start</p>
+      </div>
+    </div>
     <div class="loading" id="loading">GROWING THE DISH&hellip;</div>
   </div>
 
   <div class="strip">
-    <section class="panel" aria-labelledby="habits-label">
-      <div class="row" style="justify-content: space-between">
-        <span class="label" id="habits-label">Your habit (keys 1-4)</span>
-        <span class="stat" id="cooldown">Ready to switch</span>
-      </div>
-      <div class="habits" id="habits">
-        <button class="habit" id="h0" data-h="0" aria-pressed="true"><span class="k">1</span><span class="n">Spread</span><span class="w">loses to all three</span></button>
-        <button class="habit" id="h1" data-h="1" aria-pressed="false"><span class="k">2</span><span class="n">Hunt</span><span class="w">beats maze</span></button>
-        <button class="habit" id="h2" data-h="2" aria-pressed="false"><span class="k">3</span><span class="n">Maze</span><span class="w">beats cord</span></button>
-        <button class="habit" id="h3" data-h="3" aria-pressed="false"><span class="k">4</span><span class="n">Cord</span><span class="w">beats hunt</span></button>
-      </div>
-      <div class="row">
-        <span class="label">Rival's habit</span>
-        <span class="chip them" id="theirs">Spread</span>
-        <span class="edge even" id="edge">Even</span>
-      </div>
-    </section>
+    <div class="col">
+      <section class="panel" aria-labelledby="bank-label">
+        <div class="row between">
+          <span class="label" id="bank-label">Your bank</span>
+          <span class="bank" id="bank">0</span>
+        </div>
+        <div class="label">Tithe: share of each bite to the bank</div>
+        <div class="seg" id="tithes">
+          <button class="tile" data-t="0" aria-pressed="false"><span class="n">0%</span></button>
+          <button class="tile" data-t="1" aria-pressed="true"><span class="n">10%</span></button>
+          <button class="tile" data-t="2" aria-pressed="false"><span class="n">25%</span></button>
+          <button class="tile" data-t="3" aria-pressed="false"><span class="n">40%</span></button>
+        </div>
+        <div class="label">Buy, then click a pile</div>
+        <div class="verbs" id="verbs">
+          <button class="tile" data-v="0" aria-pressed="true"><span class="k">B</span><span class="n">Beacon</span><span class="p" id="p0">300</span><span class="w">your mould alone craves the pile for 20 s; 3 at once</span></button>
+          <button class="tile" data-v="1" aria-pressed="false"><span class="k">S</span><span class="n">Spore</span><span class="p" id="p1">1,000</span><span class="w">plants 150 of your walkers on the pile</span></button>
+          <button class="tile" data-v="2" aria-pressed="false"><span class="k">R</span><span class="n">Rally</span><span class="p" id="p2">150</span><span class="w">a strong 5 s beacon, only where you are eating</span></button>
+        </div>
+        <div class="row between">
+          <span class="label">Habit (keys 1-4), <span id="p3">200</span></span>
+          <span class="stat" id="cooldown">Ready to switch</span>
+        </div>
+        <div class="habits" id="habits">
+          <button class="tile" data-h="0" aria-pressed="true"><span class="k">1</span><span class="n">Spread</span><span class="w">loses to all three</span></button>
+          <button class="tile" data-h="1" aria-pressed="false"><span class="k">2</span><span class="n">Hunt</span><span class="w">beats maze</span></button>
+          <button class="tile" data-h="2" aria-pressed="false"><span class="k">3</span><span class="n">Maze</span><span class="w">beats cord</span></button>
+          <button class="tile" data-h="3" aria-pressed="false"><span class="k">4</span><span class="n">Cord</span><span class="w">beats hunt</span></button>
+        </div>
+      </section>
+    </div>
 
-    <section class="panel" aria-label="Score and controls">
-      <div class="share">
-        <span class="label">Food eaten</span>
-        <div class="bar" role="img" id="bar" aria-label="Your share of the food eaten"><i id="fill"></i></div>
-        <div class="nums"><span class="you" id="mine">You 50%</span><span id="clock">0:00 / 2:30</span><span class="them" id="theirsShare">Rival 50%</span></div>
-      </div>
-      <div class="controls">
-        <button class="small" id="lamp" aria-pressed="true">Lamp (L)</button>
-        <button class="small" id="salt" aria-pressed="false">Salt wall (S): 2</button>
-        <button class="small" id="pause" aria-pressed="false">Pause (P)</button>
-        <button class="small" id="fast" aria-pressed="false">Fast (Space)</button>
-        <button class="small" id="again">New dish (R)</button>
-        <select id="rival" aria-label="Rival speed">
-          <option value="12">Slow rival</option>
-          <option value="8" selected>Fair rival</option>
-          <option value="4">Quick rival</option>
-        </select>
-      </div>
-      <p class="help"><b>Lamp:</b> hold on the dish to push both moulds away from the light. <b>Salt:</b> drag a wall nothing can cross; one comes back every 30 s. The rival walls your road when it is behind, and answers your habit with the one that beats it.</p>
-      <span class="stat" id="stat"></span>
-    </section>
+    <div class="col">
+      <section class="panel" aria-label="Score">
+        <div class="share">
+          <div class="row between"><span class="label">Food eaten</span><span class="result" id="result"></span></div>
+          <div class="bar" role="img" id="bar" aria-label="Your share of the food eaten"><i id="fill"></i></div>
+          <div class="nums"><span class="you" id="mine">You 50%</span><span id="clock">0:00 / 2:30</span><span class="them" id="theirsShare">Rival 50%</span></div>
+        </div>
+        <div class="facts">
+          <span class="h"></span><span class="you">You</span><span class="them">Rival</span>
+          <span class="h">Walkers</span><span id="w0">0</span><span id="w1">0</span>
+          <span class="h">Bank</span><span id="b0">0</span><span id="b1">0</span>
+          <span class="h">Tithe</span><span id="t0">10%</span><span id="t1">0%</span>
+          <span class="h">Habit</span><span id="h0">Spread</span><span id="h1">Spread</span>
+        </div>
+        <div class="label">Bought</div>
+        <ul class="feed" id="feed"><li>Nothing yet.</li></ul>
+      </section>
+
+      <section class="panel" aria-label="Game">
+        <div class="row">
+          <label class="label" for="rival">Rival plays</label>
+          <select id="rival"></select>
+        </div>
+        <p class="help" id="plan-help"></p>
+        <div class="row">
+          <label class="label" for="rules">Rules</label>
+          <select id="rules">
+            <option value="1" selected>Counterplay: spores sleep 5 s abroad, price rises</option>
+            <option value="0">As first built</option>
+          </select>
+        </div>
+        <div class="controls">
+          <button class="small" id="pause" aria-pressed="false">Pause (P)</button>
+          <button class="small" id="fast" aria-pressed="false">Fast (Space)</button>
+          <button class="small" id="again">New dish (N)</button>
+        </div>
+        <p class="help"><b>Rings on the dish:</b> gold is yours, violet the rival's; a thin ring is a beacon, a thick one a rally, and the arc is the time left. <b>zz</b> marks spores still asleep. A pile's food is split by head count, and well-fed walkers win fights.</p>
+        <span class="stat" id="stat"></span>
+      </section>
+    </div>
   </div>
 </div>
 
 <script>
 (async () => {
   const canvas = document.getElementById('dish');
+  const marks = document.getElementById('marks');
   const ctx = canvas.getContext('2d');
+  const mx = marks.getContext('2d');
   const $ = (id) => document.getElementById(id);
-  const NAMES = ['Spread', 'Hunt', 'Maze', 'Cord'];
-  // Which habit beats which, on this field (32 games a pairing).
-  const BEATS = { 1: [0, 2], 2: [0, 3], 3: [0, 1] };
-  const beats = (a, b) => (BEATS[a] || []).includes(b);
+  const HABITS = ['Spread', 'Hunt', 'Maze', 'Cord'];
+  const VERBS = ['beacon', 'spore', 'rally'];
+  const TITHES = ['0%', '10%', '25%', '40%'];
+  const GOLD = '#f0b54a', VIOLET = '#a98bff', BAD = '#ff7a6b';
+  // What each scripted plan does, in the words of skirmish.rs's `Plan`.
+  const PLAN_HELP = {
+    idle: 'Buys nothing and keeps every bite: the control. It came third of nine in round 2.',
+    random: 'Buys something at random about one second in four, and now and then changes its tithe.',
+    boom: 'Tithes 25% and races for the late food, nearest its home first.',
+    raid: 'Tithes 40%, switches to hunt, and attacks your piles nearest its home.',
+    soft: 'Tithes 25%: beacons, then spores, on your pile with the fewest of your walkers. It beat every other plan in round 2, 127 of 128 games.',
+    centre: 'Tithes 25% and takes the piles near the centre line, then expands.',
+    fort: 'Saves at 10% until you land a spore or eat at one of its piles, then reinforces that pile.',
+    hoard: 'Saves at 40% until 1:20, then raids with everything.',
+    counter: 'Habits only: answers your habit with the one that beats it.',
+    lean: 'Soft’s target, with beacons only.',
+    guard: 'Beacons on its own border piles before anyone attacks; a spore on any pile you attack.',
+    trade: 'Saves at 25% until you attack one of its piles, then hits your thinnest pile for 10 s.',
+    keep: 'Soft, but first a rally on any of its piles your spore lands on.',
+    ward: 'Saves at 10% and only rallies piles you attack.',
+  };
 
   let bytes;
   try {
@@ -151,62 +238,182 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
   }
   const { instance } = await WebAssembly.instantiate(bytes, {});
   const sk = instance.exports;
-  const W = sk.sk_frame_w(), H = sk.sk_frame_h();
+  // The dish's own rows of the frame; the page draws everything else.
+  const W = sk.sk_frame_w(), H = sk.sk_dish_h(), SCALE = sk.sk_scale();
   canvas.width = W; canvas.height = H;
+  marks.width = W; marks.height = H;
 
-  let paused = false, fast = false;
+  const dec = new TextDecoder();
+  const plans = [];
+  for (let i = 0; i < sk.sk_plans(); i++) {
+    plans.push(dec.decode(new Uint8Array(sk.memory.buffer, sk.sk_plan_name_ptr(i), sk.sk_plan_name_len(i))));
+  }
+  const sel = $('rival');
+  plans.forEach((p, i) => {
+    const o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = p.charAt(0).toUpperCase() + p.slice(1);
+    if (p === 'soft') o.selected = true;
+    sel.appendChild(o);
+  });
+  const planHelp = () => { $('plan-help').textContent = PLAN_HELP[plans[Number(sel.value)]] || ''; };
+  planHelp();
+
+  let paused = false, fast = false, verb = 0, hover = -1, lastSeed = 0;
+  let seen = [[0, 0, 0, 0], [0, 0, 0, 0]], feed = [];
+  const clock = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  const num = (x) => Math.floor(x).toLocaleString('en-US');
+
   const start = () => {
     const seed = 1 + Math.floor(Math.random() * 9999);
-    sk.sk_new(seed, Number($('rival').value));
+    sk.sk_new(seed, Number(sel.value), Number($('rules').value));
     paused = false; fast = false;
     sk.sk_pause(0); sk.sk_fast(0);
     $('pause').setAttribute('aria-pressed', 'false');
     $('fast').setAttribute('aria-pressed', 'false');
-    $('stat').textContent = 'Dish ' + seed;
     lastSeed = seed;
+    seen = [[0, 0, 0, 0], [0, 0, 0, 0]];
+    feed = [];
+    $('feed').innerHTML = '<li>Nothing yet.</li>';
+    $('result').textContent = ''; $('result').className = 'result';
+    $('card').hidden = false;
   };
-  let lastSeed = 0;
+  const unbrief = () => { sk.sk_unbrief(); $('card').hidden = true; };
   start();
   $('loading').hidden = true;
 
+  const pickVerb = (v) => {
+    verb = v;
+    document.querySelectorAll('#verbs .tile').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.v) === v)));
+  };
+  document.querySelectorAll('#verbs .tile').forEach((b) => b.addEventListener('click', () => pickVerb(Number(b.dataset.v))));
+  document.querySelectorAll('#tithes .tile').forEach((b) => b.addEventListener('click', () => { sk.sk_set_tithe(Number(b.dataset.t)); }));
+  const habit = (h) => { unbrief(); sk.sk_act(3, h); };
+  document.querySelectorAll('#habits .tile').forEach((b) => b.addEventListener('click', () => habit(Number(b.dataset.h))));
+
   // Pointer, in frame pixels.
   const at = (e) => {
-    const r = canvas.getBoundingClientRect();
+    const r = marks.getBoundingClientRect();
     return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
   };
-  canvas.addEventListener('pointermove', (e) => { const [x, y] = at(e); sk.sk_pointer(x, y, 1); });
-  canvas.addEventListener('pointerdown', (e) => {
-    canvas.setPointerCapture(e.pointerId);
-    const [x, y] = at(e); sk.sk_pointer(x, y, 1); sk.sk_button(1);
+  marks.addEventListener('pointermove', (e) => { const [x, y] = at(e); hover = sk.sk_pile_at(x, y); });
+  marks.addEventListener('pointerleave', () => { hover = -1; });
+  marks.addEventListener('pointerdown', (e) => {
+    if (!sk.sk_briefed()) { unbrief(); return; }
+    const [x, y] = at(e);
+    const i = sk.sk_pile_at(x, y);
+    hover = i;
+    if (i >= 0) sk.sk_act(verb, i);
   });
-  const up = () => sk.sk_button(0);
-  canvas.addEventListener('pointerup', up);
-  canvas.addEventListener('pointercancel', up);
-  canvas.addEventListener('pointerleave', () => sk.sk_pointer(0, 0, 0));
 
-  const switchTo = (h) => { sk.sk_unbrief(); sk.sk_switch(h); };
-  document.querySelectorAll('.habit').forEach((b) => b.addEventListener('click', () => switchTo(Number(b.dataset.h))));
-  $('lamp').addEventListener('click', () => sk.sk_tool(0));
-  $('salt').addEventListener('click', () => sk.sk_tool(2));
   const togglePause = () => { paused = !paused; sk.sk_pause(paused ? 1 : 0); $('pause').setAttribute('aria-pressed', String(paused)); };
   const toggleFast = () => { fast = !fast; sk.sk_fast(fast ? 1 : 0); $('fast').setAttribute('aria-pressed', String(fast)); };
-  $('pause').addEventListener('click', togglePause);
-  $('fast').addEventListener('click', toggleFast);
+  $('pause').addEventListener('click', () => { unbrief(); togglePause(); });
+  $('fast').addEventListener('click', () => { unbrief(); toggleFast(); });
   $('again').addEventListener('click', start);
-  $('rival').addEventListener('change', start);
+  sel.addEventListener('change', () => { planHelp(); start(); });
+  $('rules').addEventListener('change', start);
   window.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLSelectElement) return;
+    if (e.target instanceof HTMLSelectElement || e.metaKey || e.ctrlKey || e.altKey) return;
     const k = e.key.toLowerCase();
-    if (k >= '1' && k <= '4') { switchTo(Number(k) - 1); e.preventDefault(); return; }
-    if (k === 'p') { sk.sk_unbrief(); togglePause(); return; }
-    if (k === ' ') { sk.sk_unbrief(); toggleFast(); e.preventDefault(); return; }
-    if (k === 'l') { sk.sk_tool(0); return; }
-    if (k === 's') { sk.sk_tool(2); return; }
-    if (k === 'r') { start(); return; }
-    sk.sk_unbrief();
+    if (k >= '1' && k <= '4') { habit(Number(k) - 1); e.preventDefault(); return; }
+    if (k === 'b') { pickVerb(0); return; }
+    if (k === 's') { pickVerb(1); return; }
+    if (k === 'r') { pickVerb(2); return; }
+    if (k === 'p') { unbrief(); togglePause(); return; }
+    if (k === ' ') { unbrief(); toggleFast(); e.preventDefault(); return; }
+    if (k === 'n') { start(); return; }
+    unbrief();
   });
 
-  const clock = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  // The interface over the dish: rings for what is bought, and the pile a
+  // press would land on.
+  const ring = (x, y, r, colour, width, left, full) => {
+    mx.strokeStyle = colour; mx.lineWidth = width; mx.globalAlpha = 0.28;
+    mx.beginPath(); mx.arc(x, y, r, 0, Math.PI * 2); mx.stroke();
+    mx.globalAlpha = 1;
+    mx.beginPath(); mx.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, left / full)); mx.stroke();
+  };
+  const label = (x, y, text, colour) => {
+    mx.font = '600 20px Inter, system-ui, sans-serif';
+    mx.textAlign = 'center'; mx.textBaseline = 'middle';
+    mx.lineWidth = 4; mx.strokeStyle = 'rgba(0,0,0,0.75)'; mx.strokeText(text, x, y);
+    mx.fillStyle = colour; mx.fillText(text, x, y);
+  };
+  const drawMarks = () => {
+    mx.clearRect(0, 0, W, H);
+    const n = sk.sk_piles();
+    const R = 7 * SCALE;
+    for (let i = 0; i < n; i++) {
+      if (sk.sk_pile_food(i) <= 0) continue;
+      const x = sk.sk_pile_x(i), y = sk.sk_pile_y(i);
+      [[0, GOLD, 0], [1, VIOLET, 5]].forEach(([s, c, d]) => {
+        const b = sk.sk_lit(s, 0, i), r = sk.sk_lit(s, 1, i);
+        if (b > 0) ring(x, y, R + d, c, 3, b, 20);
+        if (r > 0) ring(x, y, R + d + 3, c, 8, r, 5);
+        const z = sk.sk_landing(s, i);
+        if (z > 0) label(x + (s ? 20 : -20), y - R - 14, 'zz ' + Math.ceil(z), c);
+      });
+    }
+    if (hover >= 0 && sk.sk_briefed() && !sk.sk_over()) {
+      const x = sk.sk_pile_x(hover), y = sk.sk_pile_y(hover);
+      const ok = sk.sk_can(verb, hover);
+      mx.setLineDash([8, 6]); mx.lineWidth = 2; mx.strokeStyle = ok ? '#ffffff' : BAD;
+      mx.beginPath(); mx.arc(x, y, R + 14, 0, Math.PI * 2); mx.stroke();
+      mx.setLineDash([]);
+      const why = ok ? '' : (sk.sk_bank(0) < sk.sk_price(verb) ? ' (short)' : (verb === 2 ? ' (not eating here)' : ' (not now)'));
+      label(x, y + R + 28, VERBS[verb] + ' ' + num(sk.sk_price(verb)) + why, ok ? '#ffffff' : BAD);
+    }
+  };
+
+  const hud = () => {
+    const bank = sk.sk_bank(0);
+    $('bank').textContent = num(bank);
+    for (let v = 0; v < 3; v++) {
+      const p = sk.sk_price(v);
+      $('p' + v).textContent = num(p);
+      document.querySelector('#verbs .tile[data-v="' + v + '"]').classList.toggle('short', bank < p);
+    }
+    $('p3').textContent = num(sk.sk_price(3));
+    const tithe = sk.sk_tithe(0);
+    document.querySelectorAll('#tithes .tile').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.t) === tithe)));
+    const mine = sk.sk_habit(0), cd = sk.sk_cooldown();
+    document.querySelectorAll('#habits .tile').forEach((b) => {
+      const h = Number(b.dataset.h);
+      b.setAttribute('aria-pressed', String(h === mine));
+      b.disabled = (cd > 0 || bank < sk.sk_price(3)) && h !== mine;
+    });
+    $('cooldown').textContent = cd > 0 ? 'Next switch in ' + Math.ceil(cd) + ' s' : (bank < sk.sk_price(3) ? 'Bank too low to switch' : 'Ready to switch');
+    const share = sk.sk_share();
+    $('fill').style.width = (share * 100).toFixed(1) + '%';
+    $('mine').textContent = 'You ' + Math.round(share * 100) + '%';
+    $('theirsShare').textContent = 'Rival ' + (100 - Math.round(share * 100)) + '%';
+    $('bar').setAttribute('aria-label', 'You have eaten ' + Math.round(share * 100) + '% of the food');
+    const t = sk.sk_seconds();
+    $('clock').textContent = clock(Math.min(150, t)) + ' / 2:30';
+    for (let s = 0; s < 2; s++) {
+      $('w' + s).textContent = num(sk.sk_walkers(s));
+      $('b' + s).textContent = num(sk.sk_bank(s));
+      $('t' + s).textContent = TITHES[sk.sk_tithe(s)];
+      $('h' + s).textContent = HABITS[sk.sk_habit(s)];
+      const names = ['beacon', 'spore', 'rally', 'habit switch'];
+      for (let k = 0; k < 4; k++) {
+        const now = sk.sk_bought(s, k);
+        if (now > seen[s][k]) {
+          feed.unshift('<li><span class="' + (s ? 'them' : 'you') + '"><b>' + (s ? 'Rival' : 'You') + '</b></span> ' + clock(t) + ' ' + names[k] + (k === 3 ? ' to ' + HABITS[sk.sk_habit(s)].toLowerCase() : '') + (now - seen[s][k] > 1 ? ' x' + (now - seen[s][k]) : '') + '</li>');
+          seen[s][k] = now;
+        }
+      }
+    }
+    feed = feed.slice(0, 6);
+    if (feed.length) $('feed').innerHTML = feed.join('');
+    if (sk.sk_over()) {
+      const won = share > 0.5;
+      $('result').textContent = won ? 'You won' : (share < 0.5 ? 'The rival won' : 'A draw');
+      $('result').className = 'result ' + (won ? 'good' : 'bad');
+    }
+  };
+
   // A machine that cannot step and draw in a 60th of a second draws every
   // other frame instead, so the dish keeps its speed (drawing is about two
   // thirds of the cost).
@@ -220,37 +427,16 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
     if (draw) {
       const px = new Uint8ClampedArray(sk.memory.buffer, sk.sk_frame_ptr(), W * H * 4);
       ctx.putImageData(new ImageData(px, W, H), 0, 0);
+      drawMarks();
     }
     cost += performance.now() - t0; frames++;
     if (now - hudAt > 150) {
       hudAt = now;
-      const mine = sk.sk_habit(0), theirs = sk.sk_habit(1);
-      const cd = sk.sk_cooldown();
-      document.querySelectorAll('.habit').forEach((b) => {
-        const h = Number(b.dataset.h);
-        b.setAttribute('aria-pressed', String(h === mine));
-        b.disabled = cd > 0 && h !== mine;
-      });
-      $('cooldown').textContent = cd > 0 ? 'Next switch in ' + Math.ceil(cd) + ' s' : 'Ready to switch';
-      $('theirs').textContent = NAMES[theirs];
-      const edge = $('edge');
-      if (beats(mine, theirs)) { edge.className = 'edge good'; edge.textContent = 'Your ' + NAMES[mine].toLowerCase() + ' beats it'; }
-      else if (beats(theirs, mine)) { edge.className = 'edge bad'; edge.textContent = 'It beats your ' + NAMES[mine].toLowerCase(); }
-      else { edge.className = 'edge even'; edge.textContent = 'Even'; }
-      const share = sk.sk_share();
-      $('fill').style.width = (share * 100).toFixed(1) + '%';
-      $('mine').textContent = 'You ' + Math.round(share * 100) + '%';
-      $('theirsShare').textContent = 'Rival ' + (100 - Math.round(share * 100)) + '%';
-      $('bar').setAttribute('aria-label', 'You have eaten ' + Math.round(share * 100) + '% of the food');
-      $('clock').textContent = clock(Math.min(150, sk.sk_seconds())) + ' / 2:30';
-      const tool = sk.sk_tool_now();
-      $('lamp').setAttribute('aria-pressed', String(tool === 0));
-      $('salt').setAttribute('aria-pressed', String(tool === 2));
-      $('salt').textContent = 'Salt wall (S): ' + sk.sk_salt();
+      hud();
       if (frames) {
         const ms = cost / frames;
         if (!slow && ms > 13) slow = true;
-        $('stat').textContent = 'Dish ' + lastSeed + ' \u00b7 ' + ms.toFixed(1) + ' ms a frame' + (slow ? ', drawing every other frame' : '');
+        $('stat').textContent = 'Dish ' + lastSeed + ' · ' + ms.toFixed(1) + ' ms a frame' + (slow ? ', drawing every other frame' : '');
         cost = 0; frames = 0;
       }
     }

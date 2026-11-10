@@ -103,6 +103,10 @@ pub const BEACON_GAIN: f32 = 3.0;
 pub const SPORE_COST: f32 = 1_000.0;
 pub const SPORE_WALKERS: usize = 150;
 pub const SPORE_FOOD: f32 = super::START_STORE / INOCULUM as f32;
+/// A rally: price, seconds and gain (`Verb::Rally`).
+pub const RALLY_COST: f32 = 150.0;
+pub const RALLY_SECONDS: u64 = 5;
+pub const RALLY_GAIN: f32 = 10.0;
 /// A habit switch: its price, and seconds before the next.
 pub const HABIT_COST: f32 = 200.0;
 pub const SWITCH_COOLDOWN: u64 = 10;
@@ -138,6 +142,14 @@ pub struct Rules {
     /// (more of its walkers eating there): one planted at home wakes at
     /// once.
     pub dormant_abroad_only: bool,
+    /// Each spore costs this much more, as a fraction of `spore_cost`, for
+    /// every spore the same side bought in the last 30 s (0: a flat price).
+    pub spore_ramp: f32,
+    /// A rally: its price, seconds and gain (a beacon's, but stronger and
+    /// shorter, and only on a pile the side is eating at).
+    pub rally_cost: f32,
+    pub rally_seconds: u64,
+    pub rally_gain: f32,
 }
 
 impl Default for Rules {
@@ -152,6 +164,10 @@ impl Default for Rules {
             spore_reach: f32::INFINITY,
             spore_dormant: 0,
             dormant_abroad_only: false,
+            spore_ramp: 0.0,
+            rally_cost: RALLY_COST,
+            rally_seconds: RALLY_SECONDS,
+            rally_gain: RALLY_GAIN,
         }
     }
 }
@@ -171,6 +187,10 @@ impl Rules {
             "spore_reach" => self.spore_reach = v,
             "spore_dormant" => self.spore_dormant = v as u64,
             "dormant_abroad_only" => self.dormant_abroad_only = v != 0.0,
+            "spore_ramp" => self.spore_ramp = v,
+            "rally_cost" => self.rally_cost = v,
+            "rally_seconds" => self.rally_seconds = v as u64,
+            "rally_gain" => self.rally_gain = v,
             _ => return false,
         }
         true
@@ -258,6 +278,8 @@ pub enum Verb {
     Beacon(usize),
     Spore(usize),
     Habit(Habit),
+    /// A short, strong beacon on a pile you are eating at: defence.
+    Rally(usize),
 }
 
 
@@ -301,10 +323,20 @@ pub enum Plan {
     /// cells) with the fewest of its walkers, before anyone attacks; a spore
     /// on any of its piles a rival spore lands on or the rival eats at.
     Guard,
+    /// Answer in kind (25%): saves until the rival attacks one of its piles
+    /// (a rival spore landing there, or a rival beacon or rally lit where it
+    /// eats), then strikes the rival's thinnest pile, as soft does, for 10 s.
+    Trade,
+    /// Soft with a shield (25%): a rally on any of its piles a rival spore
+    /// is landing on, before anything else; otherwise soft.
+    Keep,
+    /// Shield only (10%): a rally on any of its piles a rival spore is
+    /// landing on or the rival has lit; nothing else.
+    Ward,
 }
 
 impl Plan {
-    pub const ALL: [Plan; 11] = [
+    pub const ALL: [Plan; 14] = [
         Plan::Idle,
         Plan::Random,
         Plan::Boom,
@@ -316,6 +348,9 @@ impl Plan {
         Plan::Counter,
         Plan::Lean,
         Plan::Guard,
+        Plan::Trade,
+        Plan::Keep,
+        Plan::Ward,
     ];
 
     pub fn name(self) -> &'static str {
@@ -331,6 +366,9 @@ impl Plan {
             Plan::Counter => "counter",
             Plan::Lean => "lean",
             Plan::Guard => "guard",
+            Plan::Trade => "trade",
+            Plan::Keep => "keep",
+            Plan::Ward => "ward",
         }
     }
 
@@ -347,6 +385,7 @@ pub struct Tally {
     pub beacons: u32,
     pub spores: u32,
     pub switches: u32,
+    pub rallies: u32,
 }
 
 /// One side of the skirmish: 0 is you (the dish's own mould), 1 the rival
@@ -361,6 +400,13 @@ pub struct Side {
     pub bank: f32,
     /// Lit beacons: pile index and the step it goes out.
     pub beacons: Vec<(usize, u64)>,
+    /// Rallies, the same way.
+    pub rallies: Vec<(usize, u64)>,
+    /// Trade answers an attack until this step.
+    pub answer_until: u64,
+    /// The steps this side bought its spores in the last 30 s
+    /// (`Rules::spore_ramp`).
+    pub spore_times: Vec<u64>,
     /// `None`: a person plays this side.
     pub plan: Option<Plan>,
     pub tally: Tally,
@@ -410,6 +456,9 @@ impl Skirmish {
             ready_at: 0,
             bank: 0.0,
             beacons: Vec::new(),
+            rallies: Vec::new(),
+            answer_until: 0,
+            spore_times: Vec::new(),
             plan,
             tally: Tally::default(),
             tithed_seen: 0.0,
@@ -489,12 +538,16 @@ impl Skirmish {
         self.sides[s].ready_at.saturating_sub(self.dish.t) as f32 / SPS as f32
     }
 
-    /// What `v` costs.
-    pub fn price(&self, v: Verb) -> f32 {
+    /// What `v` costs side `s` now.
+    pub fn price(&self, s: usize, v: Verb) -> f32 {
         match v {
             Verb::Beacon(_) => self.rules.beacon_cost,
-            Verb::Spore(_) => self.rules.spore_cost,
+            Verb::Spore(_) => {
+                let recent = self.sides[s].spore_times.iter().filter(|&&t| t + 30 * SPS > self.dish.t).count();
+                self.rules.spore_cost * (1.0 + self.rules.spore_ramp * recent as f32)
+            }
             Verb::Habit(_) => self.rules.habit_cost,
+            Verb::Rally(_) => self.rules.rally_cost,
         }
     }
 
@@ -522,7 +575,7 @@ impl Skirmish {
 
     /// Whether side `s` could buy `v` now.
     pub fn can(&self, s: usize, v: Verb) -> bool {
-        if self.dish.phase != Phase::Growing || self.sides[s].bank < self.price(v) {
+        if self.dish.phase != Phase::Growing || self.sides[s].bank < self.price(s, v) {
             return false;
         }
         match v {
@@ -533,6 +586,7 @@ impl Skirmish {
                 .get(i)
                 .is_some_and(|p| p.food > 0.0 && !p.oats && self.within_reach(s, (p.x, p.y), self.rules.spore_reach)),
             Verb::Habit(h) => h != self.sides[s].habit && self.dish.t >= self.sides[s].ready_at,
+            Verb::Rally(i) => self.dish.piles.get(i).is_some_and(|p| p.food > 0.0 && !p.oats) && self.eaters(s, i) > 0,
         }
     }
 
@@ -551,6 +605,13 @@ impl Skirmish {
                 }
                 side.beacons.push((i, t + self.rules.beacon_seconds * SPS));
                 side.tally.beacons += 1;
+                self.light(s);
+            }
+            Verb::Rally(i) => {
+                let side = &mut self.sides[s];
+                side.rallies.retain(|b| b.0 != i);
+                side.rallies.push((i, t + self.rules.rally_seconds * SPS));
+                side.tally.rallies += 1;
                 self.light(s);
             }
             Verb::Spore(i) => {
@@ -581,6 +642,7 @@ impl Skirmish {
                     self.spores.push(Spore { side: s, pile: i, landed: t, wakes: t + self.rules.spore_dormant * SPS });
                 }
                 self.sides[s].tally.spores += 1;
+                self.sides[s].spore_times.push(t);
             }
             Verb::Habit(h) => {
                 h.apply(&mut self.mould_mut(s).params);
@@ -590,7 +652,7 @@ impl Skirmish {
                 side.tally.switches += 1;
             }
         }
-        let price = self.price(v);
+        let price = self.price(s, v);
         let side = &mut self.sides[s];
         side.bank -= price;
         side.tally.spent += price;
@@ -599,10 +661,19 @@ impl Skirmish {
 
     /// Side `s`'s lit beacons onto its mould.
     fn light(&mut self, s: usize) {
-        let lit: Vec<(f32, f32, f32)> = self.sides[s]
-            .beacons
+        let side = &self.sides[s];
+        let piles = &self.dish.piles;
+        // A rallied pile takes the rally's gain even if it is also lit.
+        let lit: Vec<(f32, f32, f32)> = side
+            .rallies
             .iter()
-            .map(|&(i, _)| (self.dish.piles[i].x, self.dish.piles[i].y, self.rules.beacon_gain))
+            .map(|&(i, _)| (piles[i].x, piles[i].y, self.rules.rally_gain))
+            .chain(
+                side.beacons
+                    .iter()
+                    .filter(|b| !side.rallies.iter().any(|r| r.0 == b.0))
+                    .map(|&(i, _)| (piles[i].x, piles[i].y, self.rules.beacon_gain)),
+            )
             .collect();
         self.mould_mut(s).beacons = lit;
     }
@@ -622,9 +693,11 @@ impl Skirmish {
             side.tithed_seen = tithed;
             side.bank += new;
             side.tally.banked += new;
-            let before = side.beacons.len();
+            let before = side.beacons.len() + side.rallies.len();
             side.beacons.retain(|b| b.1 > t);
-            if side.beacons.len() != before {
+            side.rallies.retain(|b| b.1 > t);
+            side.spore_times.retain(|&at| at + 30 * SPS > t);
+            if side.beacons.len() + side.rallies.len() != before {
                 self.light(s);
             }
         }
@@ -670,12 +743,28 @@ impl Skirmish {
         let lit = |sk: &Skirmish, i: usize| sk.sides[s].beacons.iter().any(|b| b.0 == i);
         let free = |sk: &Skirmish, i: usize| sk.eaters(s, i) == 0 && sk.eaters(o, i) == 0;
         let theirs = |sk: &Skirmish, i: usize| sk.eaters(o, i) > sk.eaters(s, i);
+        let thinnest = |sk: &Skirmish| {
+            (0..n)
+                .filter(|&i| live(sk, i) && theirs(sk, i))
+                .min_by_key(|&i| sk.eaters(o, i))
+        };
+        let rallied = |sk: &Skirmish, i: usize| sk.sides[s].rallies.iter().any(|b| b.0 == i);
+        // An own pile a rival spore is landing on (asleep there now).
+        let landing = |sk: &Skirmish| sk.spores.iter().find(|p| p.side == o && sk.eaters(s, p.pile) > 0).map(|p| p.pile);
+        // That, or an own pile the rival has a beacon or rally lit on.
+        let attacked = |sk: &Skirmish| {
+            landing(sk).or_else(|| {
+                let r = &sk.sides[o];
+                r.rallies.iter().chain(r.beacons.iter()).map(|b| b.0).find(|&i| sk.eaters(s, i) > sk.eaters(o, i))
+            })
+        };
         let bank = self.sides[s].bank;
         let tithe = match plan {
             Plan::Idle => 0.0,
             Plan::Random => self.sides[s].tithe,
             Plan::Counter | Plan::Fort | Plan::Lean | Plan::Guard => TITHES[1],
-            Plan::Boom | Plan::Soft | Plan::Centre => TITHES[2],
+            Plan::Ward => TITHES[1],
+            Plan::Boom | Plan::Soft | Plan::Centre | Plan::Trade | Plan::Keep => TITHES[2],
             Plan::Raid => TITHES[3],
             Plan::Hoard => {
                 if t < 80 * SPS {
@@ -692,10 +781,14 @@ impl Skirmish {
                 if self.roll(s) < 0.25 {
                     let i = (self.roll(s) * n as f32) as usize % n;
                     let k = self.roll(s);
-                    let v = if k < 0.45 {
+                    // A rally is drawn as often as a habit; `act` refuses it
+                    // on a pile the side is not eating at.
+                    let v = if k < 0.4 {
                         Verb::Beacon(i)
-                    } else if k < 0.8 {
+                    } else if k < 0.7 {
                         Verb::Spore(i)
+                    } else if k < 0.85 {
+                        Verb::Rally(i)
                     } else {
                         Verb::Habit(Habit::ALL[(self.roll(s) * 4.0) as usize % 4])
                     };
@@ -727,11 +820,35 @@ impl Skirmish {
                 }
             }
             Plan::Soft => {
-                let target = (0..n)
-                    .filter(|&i| live(self, i) && theirs(self, i))
-                    .min_by_key(|&i| self.eaters(o, i));
-                if let Some(i) = target {
+                if let Some(i) = thinnest(self) {
                     self.strike(s, i, &lit);
+                }
+            }
+            Plan::Trade => {
+                if attacked(self).is_some() {
+                    self.sides[s].answer_until = t + 10 * SPS;
+                }
+                if t < self.sides[s].answer_until {
+                    if let Some(i) = thinnest(self) {
+                        self.strike(s, i, &lit);
+                    }
+                }
+            }
+            Plan::Keep | Plan::Ward => {
+                let shield = if plan == Plan::Ward { attacked(self) } else { landing(self) };
+                if let Some(i) = shield {
+                    if !rallied(self, i) && self.act(s, Verb::Rally(i)) {
+                        return;
+                    }
+                    // Saving for the rally beats spending on the attack.
+                    if !rallied(self, i) {
+                        return;
+                    }
+                }
+                if plan == Plan::Keep {
+                    if let Some(i) = thinnest(self) {
+                        self.strike(s, i, &lit);
+                    }
                 }
             }
             Plan::Centre => {
@@ -1007,5 +1124,34 @@ mod tests {
         let mine = s.dish.scent[i];
         let theirs = s.dish.rival.as_ref().unwrap().scent[i];
         assert!(mine > 2.0 * theirs, "beacon scent {mine} against {theirs}");
+    }
+
+    #[test]
+    fn a_rally_needs_your_own_eaters_and_spores_cost_more_in_a_burst() {
+        let mut s = Skirmish::new(2, [None, None]);
+        s.rules.spore_ramp = 0.5;
+        run(&mut s, 30);
+        let mine = (0..s.dish.piles.len()).find(|&i| s.eaters(0, i) > 0 && s.eaters(1, i) == 0).unwrap();
+        let theirs = (0..s.dish.piles.len()).find(|&i| s.eaters(1, i) > 0 && s.eaters(0, i) == 0).unwrap();
+        s.sides[0].bank = 2.0 * RALLY_COST;
+        assert!(!s.act(0, Verb::Rally(theirs)), "a rally where you do not eat");
+        assert!(s.act(0, Verb::Rally(mine)));
+        assert_eq!(s.dish.beacons.len(), 1);
+        assert_eq!(s.dish.beacons[0].2, RALLY_GAIN);
+        // A beacon on a rallied pile does not dim it.
+        s.sides[0].bank = BEACON_COST;
+        assert!(s.act(0, Verb::Beacon(mine)));
+        assert_eq!(s.dish.beacons.len(), 1);
+        assert_eq!(s.dish.beacons[0].2, RALLY_GAIN);
+        run(&mut s, RALLY_SECONDS + 1);
+        assert_eq!(s.dish.beacons[0].2, BEACON_GAIN, "the rally never went out");
+        assert_eq!(s.price(0, Verb::Spore(theirs)), SPORE_COST);
+        s.sides[0].bank = 10.0 * SPORE_COST;
+        assert!(s.act(0, Verb::Spore(theirs)));
+        assert!(s.act(0, Verb::Spore(theirs)));
+        assert_eq!(s.price(0, Verb::Spore(theirs)), 2.0 * SPORE_COST);
+        assert_eq!(s.price(1, Verb::Spore(mine)), SPORE_COST, "the rival pays for your burst");
+        run(&mut s, 31);
+        assert_eq!(s.price(0, Verb::Spore(theirs)), SPORE_COST, "the price never came back down");
     }
 }

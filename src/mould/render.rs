@@ -50,6 +50,11 @@ pub struct View {
     pub quit_armed: bool,
     /// The tuning panel (T, `tune.rs`), open on this row.
     pub tune: Option<usize>,
+    /// The dish alone, for a page that draws its own interface (the budget
+    /// skirmish's, `web/`): no corner chips, tool bar, briefing card or end
+    /// card, which name the herding game's stars and tools. The game's look
+    /// only; the rows under the dish are left blank.
+    pub bare: bool,
 }
 
 impl Default for View {
@@ -66,6 +71,7 @@ impl Default for View {
             menu: None,
             quit_armed: false,
             tune: None,
+            bare: false,
         }
     }
 }

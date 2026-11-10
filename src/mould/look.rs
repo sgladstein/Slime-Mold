@@ -1149,6 +1149,9 @@ pub fn draw(d: &Dish, view: &View, scale: u32, frame: &mut [u8]) {
     ruler(&mut cv, d, &th, s);
     lamp(&mut cv, d, &th, s);
     preview(&mut cv, d, view, &th, s);
+    if view.bare {
+        return;
+    }
     corners(&mut cv, d, view, &th, &st, s);
     hud_strip(&mut cv, d, view, &th, s, &st);
     // The card covers the dish; the banner behind it was clutter.
