@@ -123,7 +123,13 @@ move.
   all-integer simulation is recommended. Single-core step cost: 1024 x 640 with 100k walkers 11 ms, with 1M 97 ms;
   2048 x 1280 dropped (111 ms). Research status, risks, and seven owner decisions. *Phase 1 progress*: the step's
   time by pass (`Dish::step_cost`, printed by `mouldprobe`): diffusion is 62% of the simulation (0.69 ms a frame), moving
-  1,800 walkers 24%, the census 4.5%.
+  1,800 walkers 24%, the census 4.5%. Then three GPU arms, 16 paired seeds on every scored dish
+  ([census/](gpu-plan-2026-11-10/census/)): a census 4 a second and two frames late is safe (no change survives
+  Bonferroni); fixed-point trail and scent change play, because floats keep a smell too faint to draw over half the dish
+  and walkers past it fly straight (random play reaches the food behind the wall on 5 seeds of 16), so the fields stay
+  `f32`; moving all walkers at once cuts seam fights and costs The Wild One's warden its share on 15 of 16 seeds
+  (p 0.0005). The owner (20:55Z) ruled the current dishes unlikely to be the true games, so later gates use engine
+  measures on a neutral dish.
 
 ## Added with the move (2026-11-10)
 

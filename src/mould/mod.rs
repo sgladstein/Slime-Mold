@@ -120,6 +120,46 @@ pub struct Params {
     pub tube: f32,
     /// Cells of tube from food beyond which a walker is unfed.
     pub feed_reach: u16,
+    /// Steps between feeding searches (`Dish::census`). `FED_EVERY` (6, 20
+    /// a second) is the game. The GPU plan's delayed-census arm sets 30 (4 a
+    /// second), the rate a GPU readback might run at, to measure what a
+    /// slower census does to every dish before any GPU code relies on it
+    /// (`Reports/gpu-plan-2026-11-10.md`, phase 1).
+    pub census_every: u64,
+    /// Steps between the state a census reads and the step its labels take
+    /// effect: 0 is the game. Above 0, the census on step t reads the trail
+    /// and walkers as they were on step t and its answer lands on step
+    /// t + lag, as a readback that arrives late would. Must be less than
+    /// `census_every`.
+    pub census_lag: u64,
+    /// Walkers move all at once, as a GPU would move them: the GPU plan's
+    /// phase 1 arm (`Reports/gpu-plan-2026-11-10.md`). Off is the game: one
+    /// walker at a time, in a shuffled order, each sensing the trail the
+    /// walkers before it have just laid and free to step into a cell one of
+    /// them has just left. On: every walker senses the trail as it stood
+    /// before anyone moved; a walker may only enter a cell that was empty
+    /// when the pass began; two walkers after one cell are settled by a
+    /// claim, the lower key winning (`keyed`); and every random draw in the
+    /// move and the lamp's push of walkers is keyed on seed, step and
+    /// walker, so nothing depends on the order walkers are visited in. A
+    /// cell holds at most one walker, so it takes at most one deposit a
+    /// step and the order of deposits cannot matter either: integer
+    /// deposits are the integer arm's question, not this one's. The lamp's
+    /// push of trail already reads each cell's share before any arrives
+    /// (outermost ring first), which is what a GPU gather does, so it is
+    /// the same in both.
+    pub all_at_once: bool,
+    /// Fixed point, as an all-integer GPU simulation would hold the dish:
+    /// the GPU plan's integer arm (phase 1). Off is the game's floats. On:
+    /// a moving walker's position sits on a 1/65,536-cell grid (`FIX`), its
+    /// heading is one of `HEADINGS` steps round the circle, with the sines
+    /// and cosines it steps by on the same grid, and trail and scent are
+    /// rounded down onto that grid after each step's diffusion, as integer
+    /// arithmetic rounds. It copies the integer design's rounding, not its
+    /// speed: the fields stay `f32`, and the question is only whether
+    /// rounding to integers changes play. Light, wet, sap and the wall
+    /// field stay floats, as the scaling rule may keep them on today's grid.
+    pub fixed_point: bool,
     /// Store spent per walker per step.
     pub upkeep: f32,
     /// Store gained per walker standing on food, per step.
@@ -368,6 +408,10 @@ impl Default for Params {
             light_fade: 0.0,
             tube: 1.0,
             feed_reach: 70,
+            census_every: FED_EVERY,
+            census_lag: 0,
+            all_at_once: false,
+            fixed_point: false,
             upkeep: 0.004,
             eat: 0.03,
             table: 40,
@@ -548,6 +592,78 @@ impl Rng {
     pub fn below(&mut self, n: u32) -> u32 {
         (((self.next_u64() >> 32) * n as u64) >> 32) as u32
     }
+}
+
+/// One walker's planned move in a pass with `Params::all_at_once`.
+#[derive(Clone, Copy)]
+struct Move {
+    walker: u32,
+    from: u32,
+    to: u32,
+    /// Its claim key on `to` (`keyed`).
+    key: u32,
+    x: f32,
+    y: f32,
+    heading: f32,
+}
+
+/// What a keyed draw is for (`keyed`): each use gets its own stream.
+const DRAW_TURN: u32 = 1;
+const DRAW_BLOCKED: u32 = 2;
+const DRAW_PUSH: u32 = 3;
+const CLAIM_MOVE: u32 = 4;
+const CLAIM_PUSH: u32 = 5;
+
+/// Chris Wellons's lowbias32: a bijection on `u32` that mixes well, in
+/// 32-bit integer steps only, so a WGSL shader can run the same lines.
+fn lowbias32(mut x: u32) -> u32 {
+    x ^= x >> 16;
+    x = x.wrapping_mul(0x7FEB_352D);
+    x ^= x >> 15;
+    x = x.wrapping_mul(0x846C_A68B);
+    x ^ (x >> 16)
+}
+
+/// A random draw keyed on seed, step, use and walker, not on a stream:
+/// every walker's draw is the same whatever order walkers are visited in,
+/// which is what lets a GPU thread per walker reproduce it
+/// (`Params::all_at_once`; the roadmap's keyed random draws, E6). For one
+/// seed, step and use it is a bijection on the walker, so as a claim key
+/// no two walkers ever tie.
+fn keyed(seed: u64, t: u64, use_: u32, walker: u32) -> u32 {
+    let s = (seed as u32) ^ ((seed >> 32) as u32) ^ use_.wrapping_mul(0x9E37_79B9);
+    let step = lowbias32(lowbias32(s) ^ t as u32);
+    lowbias32(walker ^ step)
+}
+
+/// Steps round the circle a heading takes with `Params::fixed_point`:
+/// 4,096, so today's 45 degree turns are 512 steps and 22.5 degrees 256.
+const HEADINGS: u32 = 4096;
+/// The fixed-point grid, in steps per cell (`Params::fixed_point`).
+const FIX: f32 = 65_536.0;
+
+/// Rounded down onto the fixed-point grid, as an integer would hold it. A
+/// position stays in its cell: the grid has every whole number on it.
+fn fix_down(v: f32) -> f32 {
+    (v * FIX).floor() / FIX
+}
+
+/// The nearest of `HEADINGS` steps round the circle, as an angle.
+fn snap_heading(a: f32) -> f32 {
+    let step = (a / TAU * HEADINGS as f32).round() as i64;
+    step.rem_euclid(HEADINGS as i64) as f32 * (TAU / HEADINGS as f32)
+}
+
+/// Cosine and sine of the nearest heading step, on the fixed-point grid:
+/// what an integer simulation would read from a shared table.
+fn fixed_dir(a: f32) -> (f32, f32) {
+    let a = snap_heading(a);
+    ((a.cos() * FIX).round() / FIX, (a.sin() * FIX).round() / FIX)
+}
+
+/// A keyed draw as a uniform number in [0, 1).
+fn unit(x: u32) -> f32 {
+    (x >> 8) as f32 / (1u32 << 24) as f32
 }
 
 /// FNV-1a, 64-bit, for `Dish::state_hash`: fixed forever, so a hash printed
@@ -787,6 +903,11 @@ pub struct Dish {
     occ: Vec<u8>,
     pub walkers: Vec<Walker>,
     order: Vec<u32>,
+    /// Per cell, the lowest claim key on it this pass (`Params::all_at_once`);
+    /// `u32::MAX` between passes.
+    claim: Vec<u32>,
+    /// Each walker's planned move this pass (`Params::all_at_once`).
+    moves: Vec<Move>,
     pub piles: Vec<Pile>,
     /// Tube distance to the nearest food the mould is touching; `u16::MAX`
     /// where no tube reaches.
@@ -936,6 +1057,9 @@ pub struct Dish {
     /// (`Reports/gpu-plan-2026-11-10.md`, phase 1). Kept out of the dish's
     /// state: it never changes what the mould does.
     pub step_cost: Option<Box<[f64; STEP_PASSES.len()]>>,
+    /// The trail and walkers a late census will read (`Params::census_lag`),
+    /// taken on the step the census was due: `None` with no lag.
+    census_held: Option<(Vec<f32>, Vec<Walker>)>,
     rng: Rng,
 }
 
@@ -1134,6 +1258,8 @@ impl Dish {
             occ: vec![0; W * H],
             walkers: Vec::new(),
             order: Vec::new(),
+            claim: vec![u32::MAX; W * H],
+            moves: Vec::new(),
             piles,
             fed: vec![u16::MAX; W * H],
             fed_at: vec![u64::MAX; W * H],
@@ -1193,6 +1319,7 @@ impl Dish {
             ate: 0.0,
             wild_ate: 0.0,
             step_cost: None,
+            census_held: None,
             rng,
         };
         // The inoculum: a blob on the home pile.
@@ -1639,6 +1766,7 @@ impl Dish {
         r.salt_left = 0;
         r.snips_left = 0;
         r.water_left = 0;
+        // `draw_seed` keys the wild mould's draws on the same number.
         r.rng = Rng::new(self.seed ^ 0x0057_11D0_0000_0002);
         for w in std::mem::take(&mut r.walkers) {
             if let Some(i) = cell(w.x, w.y) {
@@ -1696,20 +1824,36 @@ impl Dish {
         lap(&mut self.step_cost, &mut at, 0);
         self.deposit_food();
         lap(&mut self.step_cost, &mut at, 1);
-        self.move_walkers();
+        if self.params.all_at_once {
+            self.move_walkers_at_once();
+        } else {
+            self.move_walkers();
+        }
         lap(&mut self.step_cost, &mut at, 2);
         self.flow_out();
         lap(&mut self.step_cost, &mut at, 3);
         self.diffuse();
         lap(&mut self.step_cost, &mut at, 4);
-        if self.t.is_multiple_of(FED_EVERY) {
-            // Once the Wanderer has gone, who is fed is settled: the part
-            // that left is fed, everything left behind is not (`wander.rs`).
-            if self.wander_frozen() {
-                self.stamp_fed();
+        // A lag of a whole period or more would read a later census's input.
+        let every = self.params.census_every.max(1);
+        let lag = self.params.census_lag.min(every - 1);
+        if self.t.is_multiple_of(every) {
+            if lag == 0 {
+                self.feeding_census();
             } else {
-                self.census();
-                self.wander_census();
+                self.census_held = Some((self.trail.clone(), self.walkers.clone()));
+            }
+        }
+        if lag > 0 && self.t >= lag && (self.t - lag).is_multiple_of(every) {
+            // The late census: run on what the dish was `lag` steps ago,
+            // then put today's trail and walkers back. Only the census's
+            // answer (who is fed, from which pile, the pieces) is new.
+            if let Some((trail, walkers)) = self.census_held.take() {
+                let trail_now = std::mem::replace(&mut self.trail, trail);
+                let walkers_now = std::mem::replace(&mut self.walkers, walkers);
+                self.feeding_census();
+                self.trail = trail_now;
+                self.walkers = walkers_now;
             }
         }
         lap(&mut self.step_cost, &mut at, 5);
@@ -1724,6 +1868,19 @@ impl Dish {
         }
         lap(&mut self.step_cost, &mut at, 7);
         self.t += 1;
+    }
+
+    /// The feeding search and pile census, as `step_own` runs it on its
+    /// schedule (`Params::census_every`, `Params::census_lag`).
+    fn feeding_census(&mut self) {
+        // Once the Wanderer has gone, who is fed is settled: the part
+        // that left is fed, everything left behind is not (`wander.rs`).
+        if self.wander_frozen() {
+            self.stamp_fed();
+        } else {
+            self.census();
+            self.wander_census();
+        }
     }
 
     fn update_light(&mut self) {
@@ -1811,6 +1968,10 @@ impl Dish {
             }
         }
         // Walkers.
+        if self.params.all_at_once {
+            self.push_walkers_at_once(lx, ly, push);
+            return;
+        }
         for k in 0..self.walkers.len() {
             let w = self.walkers[k];
             let Some(i) = cell(w.x, w.y) else { continue };
@@ -1822,6 +1983,7 @@ impl Dish {
             }
             let d = (w.x - lx).hypot(w.y - ly).max(0.01);
             let (nx, ny) = (w.x + (w.x - lx) / d, w.y + (w.y - ly) / d);
+            let (nx, ny) = if self.params.fixed_point { (fix_down(nx), fix_down(ny)) } else { (nx, ny) };
             if let Some(j) = cell(nx, ny) {
                 if j != i && self.ground[j] == Ground::Agar && self.occ[j] == 0 {
                     self.occ[i] = 0;
@@ -1906,6 +2068,10 @@ impl Dish {
             self.params.deposit,
         );
         let sleep_dep = dep * self.params.crust_trail;
+        let fx = self.params.fixed_point;
+        let (sa, ra) = if fx { (snap_heading(sa), snap_heading(ra)) } else { (sa, ra) };
+        // Off, this is `a.cos()` and `a.sin()`, bit for bit as before.
+        let dir = |a: f32| if fx { fixed_dir(a) } else { (a.cos(), a.sin()) };
         for k in 0..n {
             let wi = self.order[k] as usize;
             let mut w = self.walkers[wi];
@@ -1916,10 +2082,11 @@ impl Dish {
                 }
                 continue;
             }
-            let h = w.heading;
-            let f = self.sense(w.x + h.cos() * so, w.y + h.sin() * so);
-            let fl = self.sense(w.x + (h - sa).cos() * so, w.y + (h - sa).sin() * so);
-            let fr = self.sense(w.x + (h + sa).cos() * so, w.y + (h + sa).sin() * so);
+            let (wx, wy, h) = if fx { (fix_down(w.x), fix_down(w.y), snap_heading(w.heading)) } else { (w.x, w.y, w.heading) };
+            let ((c, s), (cl, sl), (cr, sr)) = (dir(h), dir(h - sa), dir(h + sa));
+            let f = self.sense(wx + c * so, wy + s * so);
+            let fl = self.sense(wx + cl * so, wy + sl * so);
+            let fr = self.sense(wx + cr * so, wy + sr * so);
             let mut h = h;
             if f > fl && f > fr {
                 // straight on
@@ -1930,8 +2097,9 @@ impl Dish {
             } else if fr < fl {
                 h -= ra;
             }
-            let (nx, ny) = (w.x + h.cos(), w.y + h.sin());
-            let here = cell(w.x, w.y).expect("walker inside the dish");
+            let (c, s) = dir(h);
+            let (nx, ny) = (wx + c, wy + s);
+            let here = cell(wx, wy).expect("walker inside the dish");
             match cell(nx, ny) {
                 Some(there) if there == here => {
                     w.x = nx;
@@ -1956,6 +2124,148 @@ impl Dish {
         }
     }
 
+    /// The seed keyed draws use (`keyed`). The wild mould is a clone of the
+    /// player's dish with the same `seed`, so it keys on its own, the one its
+    /// `rng` was made from; else walker k of each mould would draw alike.
+    fn draw_seed(&self) -> u64 {
+        if self.wild {
+            self.seed ^ 0x0057_11D0_0000_0002
+        } else {
+            self.seed
+        }
+    }
+
+    /// The lamp's push of walkers with `Params::all_at_once`: the same rule
+    /// as `push_light`, but each walker's chance is a keyed draw, and only
+    /// a cell empty when the push began can take a pushed walker, the lower
+    /// claim key winning when two are pushed at one cell.
+    fn push_walkers_at_once(&mut self, lx: f32, ly: f32, push: f32) {
+        let (seed, t) = (self.draw_seed(), self.t);
+        let mut moves = std::mem::take(&mut self.moves);
+        moves.clear();
+        for k in 0..self.walkers.len() {
+            let w = self.walkers[k];
+            let Some(i) = cell(w.x, w.y) else { continue };
+            let l = self.light[i];
+            if l <= 0.0 || w.asleep() || unit(keyed(seed, t, DRAW_PUSH, k as u32)) >= push * l {
+                continue;
+            }
+            let d = (w.x - lx).hypot(w.y - ly).max(0.01);
+            let (nx, ny) = (w.x + (w.x - lx) / d, w.y + (w.y - ly) / d);
+            let (nx, ny) = if self.params.fixed_point { (fix_down(nx), fix_down(ny)) } else { (nx, ny) };
+            if let Some(j) = cell(nx, ny) {
+                if j != i && self.ground[j] == Ground::Agar && self.occ[j] == 0 {
+                    let key = keyed(seed, t, CLAIM_PUSH, k as u32);
+                    self.claim[j] = self.claim[j].min(key);
+                    moves.push(Move { walker: k as u32, from: i as u32, to: j as u32, key, x: nx, y: ny, heading: w.heading });
+                }
+            }
+        }
+        for m in &moves {
+            let (i, j) = (m.from as usize, m.to as usize);
+            if self.claim[j] == m.key {
+                self.occ[i] = 0;
+                self.occ[j] = 1;
+                let w = &mut self.walkers[m.walker as usize];
+                w.x = m.x;
+                w.y = m.y;
+            }
+        }
+        for m in &moves {
+            self.claim[m.to as usize] = u32::MAX;
+        }
+        self.moves = moves;
+    }
+
+    /// `move_walkers` with `Params::all_at_once`: sense against the trail
+    /// as it stood before anyone moved, claim, then move and deposit.
+    fn move_walkers_at_once(&mut self) {
+        let (sa, ra, so, dep) = (
+            self.sensor_angle_now(),
+            self.params.rotate_angle,
+            self.params.sensor_offset,
+            self.params.deposit,
+        );
+        let sleep_dep = dep * self.params.crust_trail;
+        let fx = self.params.fixed_point;
+        let (sa, ra) = if fx { (snap_heading(sa), snap_heading(ra)) } else { (sa, ra) };
+        // Off, this is `a.cos()` and `a.sin()`, bit for bit as before.
+        let dir = |a: f32| if fx { fixed_dir(a) } else { (a.cos(), a.sin()) };
+        let (seed, t) = (self.draw_seed(), self.t);
+        let mut moves = std::mem::take(&mut self.moves);
+        moves.clear();
+        // Sense and turn. Nothing here writes the trail, so every walker
+        // reads the same one.
+        let mut blocked: Vec<u32> = Vec::new();
+        for k in 0..self.walkers.len() {
+            let w = self.walkers[k];
+            if w.asleep() {
+                continue;
+            }
+            let (wx, wy, h) = if fx { (fix_down(w.x), fix_down(w.y), snap_heading(w.heading)) } else { (w.x, w.y, w.heading) };
+            let ((c, s), (cl, sl), (cr, sr)) = (dir(h), dir(h - sa), dir(h + sa));
+            let f = self.sense(wx + c * so, wy + s * so);
+            let fl = self.sense(wx + cl * so, wy + sl * so);
+            let fr = self.sense(wx + cr * so, wy + sr * so);
+            let mut h = h;
+            if f > fl && f > fr {
+                // straight on
+            } else if f < fl && f < fr {
+                h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 { ra } else { -ra };
+            } else if fl < fr {
+                h += ra;
+            } else if fr < fl {
+                h -= ra;
+            }
+            let (c, s) = dir(h);
+            let (nx, ny) = (wx + c, wy + s);
+            let here = cell(wx, wy).expect("walker inside the dish");
+            match cell(nx, ny) {
+                Some(there) if there == here || (self.ground[there] == Ground::Agar && self.occ[there] == 0) => {
+                    let key = keyed(seed, t, CLAIM_MOVE, k as u32);
+                    if there != here {
+                        self.claim[there] = self.claim[there].min(key);
+                    }
+                    moves.push(Move { walker: k as u32, from: here as u32, to: there as u32, key, x: nx, y: ny, heading: h });
+                }
+                _ => blocked.push(k as u32),
+            }
+        }
+        // Move and deposit. A cell empty when the pass began has one
+        // winner; a cell left this pass stays empty until the next.
+        for m in &moves {
+            let (i, j) = (m.from as usize, m.to as usize);
+            if i == j || self.claim[j] == m.key {
+                if i != j {
+                    self.occ[i] = 0;
+                    self.occ[j] = 1;
+                }
+                let w = &mut self.walkers[m.walker as usize];
+                w.x = m.x;
+                w.y = m.y;
+                w.heading = m.heading;
+                self.trail[j] += dep;
+            } else {
+                blocked.push(m.walker);
+            }
+        }
+        for m in &moves {
+            self.claim[m.to as usize] = u32::MAX;
+        }
+        // Blocked: Jones's rule, stay put and pick a new heading.
+        for &k in &blocked {
+            self.walkers[k as usize].heading = unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU;
+        }
+        for w in &self.walkers {
+            if w.asleep() {
+                if let Some(i) = cell(w.x, w.y) {
+                    self.trail[i] += sleep_dep;
+                }
+            }
+        }
+        self.moves = moves;
+    }
+
     fn diffuse(&mut self) {
         let (keep, fade, scent_keep) = (self.params.keep, self.params.light_fade, self.params.scent_keep);
         spread(
@@ -1968,6 +2278,11 @@ impl Dish {
         std::mem::swap(&mut self.trail, &mut self.scratch);
         spread(&self.ground, &self.scent, &mut self.scratch, scent_keep, None);
         std::mem::swap(&mut self.scent, &mut self.scratch);
+        if self.params.fixed_point {
+            for v in self.trail.iter_mut().chain(self.scent.iter_mut()) {
+                *v = fix_down(*v);
+            }
+        }
     }
 
     /// Which piles the mould is on, and how far every tube cell is from food.
@@ -3103,6 +3418,13 @@ impl Dish {
         // every field; cheaper to keep right than a hand list that a new
         // field would silently fall out of.
         h.bytes(format!("{:?}|{:?}|{:?}", self.phase, self.counts, self.score).as_bytes());
+        // A late census's held input decides labels still to come.
+        if let Some((trail, walkers)) = &self.census_held {
+            h.floats(trail);
+            for w in walkers {
+                h.floats(&[w.x, w.y, w.heading, w.food]);
+            }
+        }
         if let Some(r) = &self.rival {
             h.u64(r.state_hash());
         }
@@ -3865,6 +4187,78 @@ mod tests {
         for pass in ["move", "diffuse", "census", "economy"] {
             let k = STEP_PASSES.iter().position(|p| *p == pass).unwrap();
             assert!(c[k] > 0.0, "{pass} ran but shows no time");
+        }
+    }
+
+    /// `Params::all_at_once` keeps one walker to a cell through moves and
+    /// the lamp's push, leaves no claim behind, replays bit for bit, and
+    /// is not the game's rule.
+    #[test]
+    fn walkers_at_once_keep_one_to_a_cell() {
+        let run = |at_once: bool| {
+            let mut d = Dish::with_params(7, Params { all_at_once: at_once, ..Params::default() });
+            let (hx, hy) = (d.piles[0].x, d.piles[0].y);
+            for t in 0..600 {
+                d.set_lamp(if (100..300).contains(&t) { Some((hx + 6.0, hy)) } else { None });
+                d.step();
+                if at_once {
+                    let mut seen = vec![false; W * H];
+                    for w in &d.walkers {
+                        let i = cell(w.x, w.y).expect("walker inside the dish");
+                        assert!(!seen[i], "two walkers in cell {i} at step {t}");
+                        seen[i] = true;
+                        assert_eq!(d.occ[i], 1, "a walker's cell not marked at step {t}");
+                    }
+                    let marked = d.occ.iter().filter(|&&o| o == 1).count();
+                    assert_eq!(marked, d.walkers.len(), "a cell marked with no walker at step {t}");
+                    assert!(d.claim.iter().all(|&c| c == u32::MAX), "a claim left over at step {t}");
+                }
+            }
+            assert!(d.counts.lamp_steps > 0);
+            d.state_hash()
+        };
+        let a = run(true);
+        assert_eq!(a, run(true), "all at once did not replay");
+        assert_ne!(a, run(false), "all at once changed nothing");
+    }
+
+    /// `Params::fixed_point` keeps trail, scent and every walker that has
+    /// moved on the fixed-point grid, and headings on their steps.
+    #[test]
+    fn fixed_point_keeps_the_dish_on_its_grid() {
+        let on_grid = |v: f32| (v * FIX).fract() == 0.0;
+        for at_once in [false, true] {
+            let mut d = Dish::with_params(7, Params { fixed_point: true, all_at_once: at_once, ..Params::default() });
+            for _ in 0..300 {
+                d.step();
+            }
+            assert!(d.trail.iter().chain(&d.scent).all(|&v| on_grid(v)), "a field off the grid");
+            // A walker that has stepped sits on the grid; one blocked or
+            // just born keeps its float until it next moves.
+            let snapped = d.walkers.iter().filter(|w| on_grid(w.x) && on_grid(w.y)).count();
+            assert!(snapped * 2 > d.walkers.len(), "most walkers off the grid: {snapped} of {}", d.walkers.len());
+            let mut floats = Dish::with_params(7, Params { all_at_once: at_once, ..Params::default() });
+            for _ in 0..300 {
+                floats.step();
+            }
+            assert_ne!(d.state_hash(), floats.state_hash(), "fixed point changed nothing");
+        }
+        for a in [0.0, 0.3, -1.0, TAU, 100.0] {
+            let s = snap_heading(a);
+            let k = s / TAU * HEADINGS as f32;
+            assert!((k - k.round()).abs() < 1e-3 && (0.0..TAU).contains(&s), "{a} snapped to {s}");
+            let (c, sn) = fixed_dir(a);
+            assert!(on_grid(c) && on_grid(sn));
+        }
+    }
+
+    /// As a claim key, a keyed draw never ties: for one seed, step and use
+    /// it is a bijection on the walker.
+    #[test]
+    fn keyed_claims_never_tie() {
+        for (seed, t) in [(1u64, 0u64), (7, 12_345), (u64::MAX, 1 << 40)] {
+            let keys: std::collections::HashSet<u32> = (0..100_000).map(|k| keyed(seed, t, CLAIM_MOVE, k)).collect();
+            assert_eq!(keys.len(), 100_000);
         }
     }
 }

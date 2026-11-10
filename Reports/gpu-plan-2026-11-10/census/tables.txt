@@ -1,0 +1,212 @@
+
+######## late against today (16 seeds) ########
+
+== dish 1 Behind the Wall (16 seeds) ==
+     hand | stars today | stars late | measure today (median; worst to best) | measure late | late vs today: better-worse-same, p
+     idle |   3 (0000000000000300) |   0 (0000000000000000) | not (73 cells) (not (117 cells) to 0:15) | not (63 cells) (not (92 cells) to strays only) | 11-4-1, p 0.118
+   random |   1 (0000100000000000) |   0 (0000000000000000) | not (91 cells) (not (116 cells) to 1:10) | not (91 cells) (not (116 cells) to strays only) | 5-9-2, p 0.424
+     plan |   0 (0000000000000000) |   3 (0000000000000003) | strays only (not (87 cells) to strays only) | strays only (not (97 cells) to 0:29) | 6-5-5, p 1.000
+    fresh |   0 (0000000000000000) |   0 (0000000000000000) | not (70 cells) (not (118 cells) to strays only) | not (69 cells) (not (118 cells) to not (53 cells)) | 9-6-1, p 0.607
+ intended |  48 (3333333333333333) |  47 (3333332333333333) | 0:11 (0:13 to 0:09) | 0:12 (0:50 to 0:09) | 3-11-2, p 0.057
+ ship bar | met on 15 of 16 seeds today, 15 under late
+
+== dish 2 Beat the Ruler (16 seeds) ==
+     hand | stars today | stars late | measure today (median; worst to best) | measure late | late vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 1/3 joined (1/3 joined to 1/3 joined) | 1/3 joined (1/3 joined to 1/3 joined) | 0-0-16, p 1.000
+   random |   1 (0000000001000000) |   1 (0000000001000000) | 2/3 joined (1/3 joined to 1.01x) | 1/3 joined (1/3 joined to 1.04x) | 1-5-10, p 0.219
+     plan |   1 (0000000010000000) |   0 (0000000000000000) | 2/3 joined (0/3 joined to 2/3 joined) | 2/3 joined (1/3 joined to 2/3 joined) | 4-3-9, p 1.000
+    fresh |   3 (1000010001000000) |   0 (0000000000000000) | 2/3 joined (2/3 joined to 0.99x) | 2/3 joined (2/3 joined to 2/3 joined) | 0-3-13, p 0.250
+ intended |  48 (3333333333333333) |  45 (3333333333333303) | 0.88x (0.91x to 0.87x) | 0.88x (2/3 joined to 0.87x) | 4-6-6, p 0.754
+ ship bar | met on 16 of 16 seeds today, 15 under late
+
+== dish 3 Running Dry (16 seeds) ==
+     hand | stars today | stars late | measure today (median; worst to best) | measure late | late vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | died 64s (died 60s to died 84s) | died 66s (died 58s to died 81s) | 5-10-1, p 0.302
+   random |   3 (0000003000000000) |   3 (0000003000000000) | died 74s (died 59s to 723 alive) | died 71s (died 59s to 759 alive) | 9-6-1, p 0.607
+     plan |   6 (0030010000000011) |   7 (0000010210010110) | died 91s (died 81s to 332 alive) | died 91s (died 81s to 202 alive) | 12-4-0, p 0.077
+    fresh |  10 (0002211020010010) |  10 (0120000121000111) | 2 alive (died 84s to 216 alive) | 3 alive (died 78s to 299 alive) | 8-8-0, p 1.000
+ intended |  48 (3333333333333333) |  48 (3333333333333333) | 374 alive (354 alive to 411 alive) | 384 alive (360 alive to 409 alive) | 13-3-0, p 0.021
+ ship bar | met on 15 of 16 seeds today, 15 under late
+
+== dish 4 Keep It Alive (16 seeds) ==
+     hand | stars today | stars late | measure today (median; worst to best) | measure late | late vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 2:09 (1:08 to 3:48) | 2:12 (1:48 to 3:49) | 9-6-1, p 0.607
+   random |   0 (0000000000000000) |   2 (0200000000000000) | 1:54 (1:04 to 3:29) | 1:42 (1:04 to 6:06) | 6-8-2, p 0.791
+     plan |   0 (0000000000000000) |   0 (0000000000000000) | 2:03 (1:01 to 3:46) | 1:49 (1:03 to 4:08) | 7-9-0, p 0.804
+    fresh |   0 (0000000000000000) |   0 (0000000000000000) | 2:06 (1:07 to 3:16) | 2:26 (1:46 to 3:08) | 11-5-0, p 0.210
+ intended |   3 (0100001000000010) |   5 (1001011000100000) | 3:31 (2:47 to 5:26) | 3:47 (3:13 to 4:47) | 7-9-0, p 0.804
+  sleeper |  23 (3303113131001030) |  22 (3101313133101001) | 4:41 (2:51 to 10:42) | 5:20 (3:29 to 14:02) | 8-6-2, p 0.791
+ ship bar | met on 0 of 16 seeds today, 0 under late
+
+== dish 5 The Wild One (16 seeds) ==
+     hand | stars today | stars late | measure today (median; worst to best) | measure late | late vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 0.499 (0.474 to 0.534) | 0.507 (0.460 to 0.535) | 8-8-0, p 1.000
+   random |   0 (0000000000000000) |   0 (0000000000000000) | 0.519 (0.467 to 0.564) | 0.500 (0.455 to 0.548) | 5-11-0, p 0.210
+     plan |   0 (0000000000000000) |   0 (0000000000000000) | 0.501 (0.489 to 0.515) | 0.499 (0.459 to 0.524) | 5-11-0, p 0.210
+    fresh |  32 (2222222222222222) |  32 (2222222222222222) | 0.998 (0.998 to 0.999) | 0.998 (0.998 to 0.999) | 2-3-11, p 1.000
+ intended |   0 (0000000000000000) |   0 (0000000000000000) | 0.498 (0.484 to 0.522) | 0.505 (0.485 to 0.521) | 9-7-0, p 0.804
+   warden |  34 (2223223321223221) |  32 (2112231223131233) | 0.648 (0.593 to 0.720) | 0.643 (0.577 to 0.746) | 7-9-0, p 0.804
+ ship bar | met on 0 of 16 seeds today, 0 under late
+
+27 paired comparisons; Bonferroni bar p < 0.0019
+  none survives
+0 of 432 runs end on the same hash= as today's
+
+######## together against today (16 seeds) ########
+
+== dish 1 Behind the Wall (16 seeds) ==
+     hand | stars today | stars together | measure today (median; worst to best) | measure together | together vs today: better-worse-same, p
+     idle |   3 (0000000000000300) |   0 (0000000000000000) | not (73 cells) (not (117 cells) to 0:15) | not (88 cells) (not (117 cells) to not (55 cells)) | 5-11-0, p 0.210
+   random |   1 (0000100000000000) |   3 (0000300000000000) | not (91 cells) (not (116 cells) to 1:10) | not (91 cells) (not (1000 cells) to 0:28) | 7-8-1, p 1.000
+     plan |   0 (0000000000000000) |   4 (0000002020000000) | strays only (not (87 cells) to strays only) | strays only (not (73 cells) to 0:51) | 7-5-4, p 0.774
+    fresh |   0 (0000000000000000) |   0 (0000000000000000) | not (70 cells) (not (118 cells) to strays only) | not (92 cells) (not (118 cells) to not (53 cells)) | 5-11-0, p 0.210
+ intended |  48 (3333333333333333) |  48 (3333333333333333) | 0:11 (0:13 to 0:09) | 0:11 (0:16 to 0:09) | 2-7-7, p 0.180
+ ship bar | met on 15 of 16 seeds today, 15 under together
+
+== dish 2 Beat the Ruler (16 seeds) ==
+     hand | stars today | stars together | measure today (median; worst to best) | measure together | together vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 1/3 joined (1/3 joined to 1/3 joined) | 1/3 joined (1/3 joined to 1/3 joined) | 0-0-16, p 1.000
+   random |   1 (0000000001000000) |   1 (0000000001000000) | 2/3 joined (1/3 joined to 1.01x) | 1/3 joined (1/3 joined to 0.99x) | 2-5-9, p 0.453
+     plan |   1 (0000000010000000) |   0 (0000000000000000) | 2/3 joined (0/3 joined to 2/3 joined) | 2/3 joined (1/3 joined to 1.17x) | 3-1-12, p 0.625
+    fresh |   3 (1000010001000000) |   2 (0100000000100000) | 2/3 joined (2/3 joined to 0.99x) | 2/3 joined (2/3 joined to 0.99x) | 2-3-11, p 1.000
+ intended |  48 (3333333333333333) |  43 (3333331333333303) | 0.88x (0.91x to 0.87x) | 0.87x (2/3 joined to 0.87x) | 9-4-3, p 0.267
+ ship bar | met on 16 of 16 seeds today, 14 under together
+
+== dish 3 Running Dry (16 seeds) ==
+     hand | stars today | stars together | measure today (median; worst to best) | measure together | together vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | died 64s (died 60s to died 84s) | died 65s (died 58s to died 78s) | 8-7-1, p 1.000
+   random |   3 (0000003000000000) |  10 (0003003003000001) | died 74s (died 59s to 723 alive) | died 67s (died 62s to 701 alive) | 8-7-1, p 1.000
+     plan |   6 (0030010000000011) |   6 (0120100001000001) | died 91s (died 81s to 332 alive) | died 91s (died 85s to 211 alive) | 8-7-1, p 1.000
+    fresh |  10 (0002211020010010) |  11 (1110100110111101) | 2 alive (died 84s to 216 alive) | 133 alive (died 81s to 196 alive) | 8-8-0, p 1.000
+ intended |  48 (3333333333333333) |  48 (3333333333333333) | 374 alive (354 alive to 411 alive) | 376 alive (367 alive to 400 alive) | 9-7-0, p 0.804
+ ship bar | met on 15 of 16 seeds today, 13 under together
+
+== dish 4 Keep It Alive (16 seeds) ==
+     hand | stars today | stars together | measure today (median; worst to best) | measure together | together vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 2:09 (1:08 to 3:48) | 2:07 (1:06 to 3:49) | 9-6-1, p 0.607
+   random |   0 (0000000000000000) |   0 (0000000000000000) | 1:54 (1:04 to 3:29) | 2:07 (1:04 to 3:24) | 9-6-1, p 0.607
+     plan |   0 (0000000000000000) |   1 (0000000100000000) | 2:03 (1:01 to 3:46) | 2:06 (1:05 to 4:26) | 7-9-0, p 0.804
+    fresh |   0 (0000000000000000) |   0 (0000000000000000) | 2:06 (1:07 to 3:16) | 2:22 (1:08 to 3:47) | 10-5-1, p 0.302
+ intended |   3 (0100001000000010) |   4 (0100001100100000) | 3:31 (2:47 to 5:26) | 3:51 (3:00 to 5:07) | 10-5-1, p 0.302
+  sleeper |  23 (3303113131001030) |  27 (2312303303100303) | 4:41 (2:51 to 10:42) | 6:01 (3:22 to 14:59) | 8-7-1, p 1.000
+ ship bar | met on 0 of 16 seeds today, 0 under together
+
+== dish 5 The Wild One (16 seeds) ==
+     hand | stars today | stars together | measure today (median; worst to best) | measure together | together vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 0.499 (0.474 to 0.534) | 0.503 (0.476 to 0.547) | 9-7-0, p 0.804
+   random |   0 (0000000000000000) |   0 (0000000000000000) | 0.519 (0.467 to 0.564) | 0.515 (0.436 to 0.569) | 8-8-0, p 1.000
+     plan |   0 (0000000000000000) |   0 (0000000000000000) | 0.501 (0.489 to 0.515) | 0.503 (0.485 to 0.539) | 13-3-0, p 0.021
+    fresh |  32 (2222222222222222) |  32 (2222222222222222) | 0.998 (0.998 to 0.999) | 0.998 (0.997 to 0.999) | 0-9-7, p 0.004
+ intended |   0 (0000000000000000) |   0 (0000000000000000) | 0.498 (0.484 to 0.522) | 0.501 (0.480 to 0.527) | 10-6-0, p 0.454
+   warden |  34 (2223223321223221) |  17 (1112111111111111) | 0.648 (0.593 to 0.720) | 0.594 (0.580 to 0.638) | 1-15-0, p 0.001
+ ship bar | met on 0 of 16 seeds today, 0 under together
+
+27 paired comparisons; Bonferroni bar p < 0.0019
+  survives: dish 5 warden: 1-15, p 0.00052
+0 of 432 runs end on the same hash= as today's
+
+######## fixed against today (16 seeds) ########
+
+== dish 1 Behind the Wall (16 seeds) ==
+     hand | stars today | stars fixed | measure today (median; worst to best) | measure fixed | fixed vs today: better-worse-same, p
+     idle |   3 (0000000000000300) |   6 (0000000303000000) | not (73 cells) (not (117 cells) to 0:15) | not (63 cells) (not (91 cells) to 0:03) | 11-5-0, p 0.210
+   random |   1 (0000100000000000) |  15 (3030000333000000) | not (91 cells) (not (116 cells) to 1:10) | not (91 cells) (not (116 cells) to 0:02) | 9-7-0, p 0.804
+     plan |   0 (0000000000000000) |   4 (0000000010003000) | strays only (not (87 cells) to strays only) | not (40 cells) (not (96 cells) to 0:04) | 6-7-3, p 1.000
+    fresh |   0 (0000000000000000) |   0 (0000000000000000) | not (70 cells) (not (118 cells) to strays only) | not (71 cells) (not (115 cells) to not (52 cells)) | 8-8-0, p 1.000
+ intended |  48 (3333333333333333) |  48 (3333333333333333) | 0:11 (0:13 to 0:09) | 0:10 (0:20 to 0:03) | 11-3-2, p 0.057
+ ship bar | met on 15 of 16 seeds today, 11 under fixed
+
+== dish 2 Beat the Ruler (16 seeds) ==
+     hand | stars today | stars fixed | measure today (median; worst to best) | measure fixed | fixed vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 1/3 joined (1/3 joined to 1/3 joined) | 1/3 joined (1/3 joined to 1/3 joined) | 0-0-16, p 1.000
+   random |   1 (0000000001000000) |   7 (0000000003000301) | 2/3 joined (1/3 joined to 1.01x) | 2/3 joined (1/3 joined to 0.89x) | 6-3-7, p 0.508
+     plan |   1 (0000000010000000) |   0 (0000000000000000) | 2/3 joined (0/3 joined to 2/3 joined) | 1/3 joined (1/3 joined to 2/3 joined) | 2-8-6, p 0.109
+    fresh |   3 (1000010001000000) |   0 (0000000000000000) | 2/3 joined (2/3 joined to 0.99x) | 2/3 joined (2/3 joined to 2/3 joined) | 0-3-13, p 0.250
+ intended |  48 (3333333333333333) |  43 (3330331333333333) | 0.88x (0.91x to 0.87x) | 0.88x (2/3 joined to 0.87x) | 6-7-3, p 1.000
+ ship bar | met on 16 of 16 seeds today, 12 under fixed
+
+== dish 3 Running Dry (16 seeds) ==
+     hand | stars today | stars fixed | measure today (median; worst to best) | measure fixed | fixed vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | died 64s (died 60s to died 84s) | died 64s (died 59s to died 69s) | 6-8-2, p 0.791
+   random |   3 (0000003000000000) |   7 (0000003003100000) | died 74s (died 59s to 723 alive) | died 70s (died 57s to 721 alive) | 7-8-1, p 1.000
+     plan |   6 (0030010000000011) |   9 (1010301110000001) | died 91s (died 81s to 332 alive) | died 95s (died 81s to 468 alive) | 7-9-0, p 0.804
+    fresh |  10 (0002211020010010) |  11 (0131110110001001) | 2 alive (died 84s to 216 alive) | 125 alive (died 81s to 336 alive) | 7-9-0, p 0.804
+ intended |  48 (3333333333333333) |  48 (3333333333333333) | 374 alive (354 alive to 411 alive) | 370 alive (351 alive to 405 alive) | 6-9-1, p 0.607
+ ship bar | met on 15 of 16 seeds today, 14 under fixed
+
+== dish 4 Keep It Alive (16 seeds) ==
+     hand | stars today | stars fixed | measure today (median; worst to best) | measure fixed | fixed vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 2:09 (1:08 to 3:48) | 2:34 (1:07 to 4:06) | 12-3-1, p 0.035
+   random |   0 (0000000000000000) |   0 (0000000000000000) | 1:54 (1:04 to 3:29) | 1:48 (1:05 to 3:47) | 8-7-1, p 1.000
+     plan |   0 (0000000000000000) |   0 (0000000000000000) | 2:03 (1:01 to 3:46) | 2:05 (1:03 to 3:25) | 10-6-0, p 0.454
+    fresh |   0 (0000000000000000) |   0 (0000000000000000) | 2:06 (1:07 to 3:16) | 2:07 (1:07 to 3:12) | 9-7-0, p 0.804
+ intended |   3 (0100001000000010) |   4 (1011000001000000) | 3:31 (2:47 to 5:26) | 4:06 (2:58 to 4:48) | 9-6-1, p 0.607
+  sleeper |  23 (3303113131001030) |  38 (3322331131333313) | 4:41 (2:51 to 10:42) | 7:46 (4:27 to 14:59) | 9-6-1, p 0.607
+ ship bar | met on 0 of 16 seeds today, 0 under fixed
+
+== dish 5 The Wild One (16 seeds) ==
+     hand | stars today | stars fixed | measure today (median; worst to best) | measure fixed | fixed vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 0.499 (0.474 to 0.534) | 0.515 (0.451 to 0.542) | 7-9-0, p 0.804
+   random |   0 (0000000000000000) |   0 (0000000000000000) | 0.519 (0.467 to 0.564) | 0.535 (0.467 to 0.555) | 7-9-0, p 0.804
+     plan |   0 (0000000000000000) |   0 (0000000000000000) | 0.501 (0.489 to 0.515) | 0.496 (0.433 to 0.519) | 4-12-0, p 0.077
+    fresh |  32 (2222222222222222) |  32 (2222222222222222) | 0.998 (0.998 to 0.999) | 0.998 (0.997 to 0.999) | 4-5-7, p 1.000
+ intended |   0 (0000000000000000) |   0 (0000000000000000) | 0.498 (0.484 to 0.522) | 0.496 (0.477 to 0.503) | 7-9-0, p 0.804
+   warden |  34 (2223223321223221) |  34 (2213323223231203) | 0.648 (0.593 to 0.720) | 0.659 (0.445 to 0.723) | 8-8-0, p 1.000
+ ship bar | met on 0 of 16 seeds today, 0 under fixed
+
+27 paired comparisons; Bonferroni bar p < 0.0019
+  none survives
+0 of 432 runs end on the same hash= as today's
+
+######## gpu against today (16 seeds) ########
+
+== dish 1 Behind the Wall (16 seeds) ==
+     hand | stars today | stars gpu | measure today (median; worst to best) | measure gpu | gpu vs today: better-worse-same, p
+     idle |   3 (0000000000000300) |   0 (0000000000000000) | not (73 cells) (not (117 cells) to 0:15) | not (90 cells) (not (117 cells) to not (55 cells)) | 6-9-1, p 0.607
+   random |   1 (0000100000000000) |   2 (0000200000000000) | not (91 cells) (not (116 cells) to 1:10) | not (91 cells) (not (115 cells) to 0:57) | 8-6-2, p 0.791
+     plan |   0 (0000000000000000) |   1 (0000000000010000) | strays only (not (87 cells) to strays only) | not (66 cells) (not (102 cells) to 1:26) | 4-9-3, p 0.267
+    fresh |   0 (0000000000000000) |   3 (0000300000000000) | not (70 cells) (not (118 cells) to strays only) | not (93 cells) (not (117 cells) to 0:04) | 7-8-1, p 1.000
+ intended |  48 (3333333333333333) |  48 (3333333333333333) | 0:11 (0:13 to 0:09) | 0:11 (0:37 to 0:09) | 7-6-3, p 1.000
+ ship bar | met on 15 of 16 seeds today, 15 under gpu
+
+== dish 2 Beat the Ruler (16 seeds) ==
+     hand | stars today | stars gpu | measure today (median; worst to best) | measure gpu | gpu vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 1/3 joined (1/3 joined to 1/3 joined) | 1/3 joined (1/3 joined to 1/3 joined) | 0-0-16, p 1.000
+   random |   1 (0000000001000000) |   0 (0000000000000000) | 2/3 joined (1/3 joined to 1.01x) | 1/3 joined (1/3 joined to 2/3 joined) | 1-3-12, p 0.625
+     plan |   1 (0000000010000000) |   1 (0100000000000000) | 2/3 joined (0/3 joined to 2/3 joined) | 1/3 joined (1/3 joined to 1.13x) | 3-8-5, p 0.227
+    fresh |   3 (1000010001000000) |   1 (1000000000000000) | 2/3 joined (2/3 joined to 0.99x) | 2/3 joined (2/3 joined to 1.02x) | 0-3-13, p 0.250
+ intended |  48 (3333333333333333) |  45 (3303333333333333) | 0.88x (0.91x to 0.87x) | 0.87x (2/3 joined to 0.87x) | 10-2-4, p 0.039
+ ship bar | met on 16 of 16 seeds today, 15 under gpu
+
+== dish 3 Running Dry (16 seeds) ==
+     hand | stars today | stars gpu | measure today (median; worst to best) | measure gpu | gpu vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | died 64s (died 60s to died 84s) | died 65s (died 57s to died 71s) | 8-8-0, p 1.000
+   random |   3 (0000003000000000) |   3 (0000003000000000) | died 74s (died 59s to 723 alive) | died 74s (died 61s to 656 alive) | 10-6-0, p 0.454
+     plan |   6 (0030010000000011) |   1 (0000000000000100) | died 91s (died 81s to 332 alive) | died 88s (died 83s to 110 alive) | 6-8-2, p 0.791
+    fresh |  10 (0002211020010010) |   9 (2000011100001111) | 2 alive (died 84s to 216 alive) | died 99s (died 84s to 233 alive) | 7-9-0, p 0.804
+ intended |  48 (3333333333333333) |  48 (3333333333333333) | 374 alive (354 alive to 411 alive) | 383 alive (371 alive to 420 alive) | 13-3-0, p 0.021
+ ship bar | met on 15 of 16 seeds today, 15 under gpu
+
+== dish 4 Keep It Alive (16 seeds) ==
+     hand | stars today | stars gpu | measure today (median; worst to best) | measure gpu | gpu vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 2:09 (1:08 to 3:48) | 2:08 (1:08 to 2:48) | 7-9-0, p 0.804
+   random |   0 (0000000000000000) |   0 (0000000000000000) | 1:54 (1:04 to 3:29) | 1:42 (1:03 to 3:13) | 7-8-1, p 1.000
+     plan |   0 (0000000000000000) |   0 (0000000000000000) | 2:03 (1:01 to 3:46) | 2:08 (1:05 to 3:07) | 9-6-1, p 0.607
+    fresh |   0 (0000000000000000) |   0 (0000000000000000) | 2:06 (1:07 to 3:16) | 2:21 (1:10 to 3:10) | 7-7-2, p 1.000
+ intended |   3 (0100001000000010) |   1 (1000000000000000) | 3:31 (2:47 to 5:26) | 3:29 (2:54 to 4:49) | 6-10-0, p 0.454
+  sleeper |  23 (3303113131001030) |  25 (3201031113013132) | 4:41 (2:51 to 10:42) | 5:22 (4:01 to 14:59) | 8-7-1, p 1.000
+ ship bar | met on 0 of 16 seeds today, 0 under gpu
+
+== dish 5 The Wild One (16 seeds) ==
+     hand | stars today | stars gpu | measure today (median; worst to best) | measure gpu | gpu vs today: better-worse-same, p
+     idle |   0 (0000000000000000) |   0 (0000000000000000) | 0.499 (0.474 to 0.534) | 0.502 (0.464 to 0.557) | 10-6-0, p 0.454
+   random |   0 (0000000000000000) |   1 (0000000000010000) | 0.519 (0.467 to 0.564) | 0.543 (0.455 to 0.579) | 11-5-0, p 0.210
+     plan |   0 (0000000000000000) |   0 (0000000000000000) | 0.501 (0.489 to 0.515) | 0.498 (0.469 to 0.537) | 7-8-1, p 1.000
+    fresh |  32 (2222222222222222) |  32 (2222222222222222) | 0.998 (0.998 to 0.999) | 0.998 (0.997 to 0.998) | 0-7-9, p 0.016
+ intended |   0 (0000000000000000) |   0 (0000000000000000) | 0.498 (0.484 to 0.522) | 0.505 (0.490 to 0.526) | 11-5-0, p 0.210
+   warden |  34 (2223223321223221) |  17 (3111110121111110) | 0.648 (0.593 to 0.720) | 0.585 (0.490 to 0.649) | 0-16-0, p 0.000
+ ship bar | met on 0 of 16 seeds today, 0 under gpu
+
+27 paired comparisons; Bonferroni bar p < 0.0019
+  survives: dish 5 warden: 0-16, p 0.00003
+0 of 432 runs end on the same hash= as today's
