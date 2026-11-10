@@ -111,6 +111,7 @@ tool in phase 6. Every outside source has a card in
 - 2026-11-10 17:24Z: "I like this plan, but run an independent review agent first." The review ran and its findings are in the plan.
 - 2026-11-10 17:50Z: "How many threads do we need to start your plan or do you want to just proceed with the implementations yourself?" Phase 1 started in the plan's thread; the Pixel_Physics review thread builds the dish hash.
 - 2026-11-10 17:54Z: "my home machine has a geforce 1070", which is not the machine the owner usually works at, so GPU runs wait for them to be at it.
+- 2026-11-10 22:32Z, on a card after the 4x Mould page: the GPU mould aims for "100,000 walkers" (over 32,000, or stopping the GPU work).
 - 2026-11-10 20:55Z: "I just think The Wild One and other current demos are unlikely to be the true games. So I don't want us to be wasting effort or get too far away from your original task which was not really about the game part of this project. (we are now exploring RTS type games)"
 
 ## Tried and rejected
@@ -127,7 +128,7 @@ tool in phase 6. Every outside source has a card in
 - Whether the invisible far smell is good for play is open: the owner's rule on showing the simulation argues against an invisible mechanism, but today's dishes are tuned on it.
 - What in the all-at-once move cuts the seam fights, measured on a neutral two-mould dish.
 - The bag: whether a packed start on the fine grid still stalls once the economy grows the mould from a small inoculum.
-- The GTX 1070 timing (phase 2), then the owner's gate: 32,000 or 100,000 walkers, or stop.
+- The GTX 1070 timing (phase 2), at the owner's pick of 100,000 walkers, and at 1,000,000 for headroom.
 - The Bleuje, Lague and PolyPhy code is still unread (phase 3). Only PolyPhy's MIT code may be reused.
 
 ## Sources
