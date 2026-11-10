@@ -12,7 +12,7 @@ use std::cell::RefCell;
 
 use slime_mould::mould::look::Style;
 use slime_mould::mould::render::{self, Press, View};
-use slime_mould::mould::skirmish::{Habit, Skirmish};
+use slime_mould::mould::skirmish::{Habit, Plan, Skirmish, Verb, TITHES};
 use slime_mould::mould::{Phase, Tool, STEPS_PER_FRAME};
 
 /// Frame pixels per dish cell, as the window's.
@@ -129,12 +129,17 @@ impl Game {
     }
 }
 
-/// A new skirmish on dish `seed`; the rival answers your habit after
-/// `react_s` seconds. The briefing card is up until the first press.
+/// A new skirmish on dish `seed`. The briefing card is up until the first
+/// press.
+///
+/// Interim, until the budget skirmish has its own page: this is still the
+/// first page's interface over the new rules (`skirmish.rs`). The rival
+/// plays the counter plan (habits only), `react_s` is no longer used, and
+/// you tithe 10% so a habit switch can be paid for.
 #[no_mangle]
-pub extern "C" fn sk_new(seed: u32, react_s: u32) {
-    let mut sk = Skirmish::new(seed as u64);
-    sk.ai = slime_mould::mould::skirmish::Ai::new(react_s as u64);
+pub extern "C" fn sk_new(seed: u32, _react_s: u32) {
+    let mut sk = Skirmish::new(seed as u64, [None, Some(Plan::Counter)]);
+    sk.set_tithe(0, TITHES[1]);
     let (w, h) = render::frame_size(SCALE);
     let mut g = Game {
         sk,
@@ -198,7 +203,7 @@ pub extern "C" fn sk_button(down: u32) {
 #[no_mangle]
 pub extern "C" fn sk_switch(h: u32) -> u32 {
     with(
-        |g| Habit::ALL.get(h as usize).is_some_and(|&h| g.sk.switch(h)) as u32,
+        |g| Habit::ALL.get(h as usize).is_some_and(|&h| g.sk.act(0, Verb::Habit(h))) as u32,
         0,
     )
 }
@@ -240,7 +245,7 @@ pub extern "C" fn sk_unbrief() {
 pub extern "C" fn sk_habit(side: u32) -> u32 {
     with(
         |g| {
-            let h = if side == 0 { g.sk.mine } else { g.sk.theirs };
+            let h = g.sk.sides[(side as usize).min(1)].habit;
             Habit::ALL.iter().position(|&x| x == h).unwrap_or(0) as u32
         },
         0,
@@ -249,7 +254,7 @@ pub extern "C" fn sk_habit(side: u32) -> u32 {
 
 #[no_mangle]
 pub extern "C" fn sk_cooldown() -> f32 {
-    with(|g| g.sk.cooldown_s(), 0.0)
+    with(|g| g.sk.cooldown_s(0), 0.0)
 }
 
 #[no_mangle]

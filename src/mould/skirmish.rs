@@ -1,31 +1,32 @@
-//! The field skirmish: the RTS thread's first playable demo (owner,
-//! 2026-11-10 20:33Z: "lets focus on actually building playable demos").
+//! The field skirmish: the RTS thread's playable demo (owner, 2026-11-10
+//! 20:33Z: "lets focus on actually building playable demos").
 //!
 //! You and a rival mould share a field of 23 small food piles, mirrored so
-//! neither side has the better map; whoever eats more of the food by the
-//! bell wins. Everything here was measured first, in the RTS red team's
-//! harness (`Reports/rts-design-2026-11-10/field/README.md`):
+//! neither side has the better map, with more food landing from 0:20;
+//! whoever eats more of the food by the bell wins
+//! (`Reports/rts-skirmish-2026-11-10.md`).
 //!
-//! - **The field.** The Wild One's 7 piles made a dish where the opening
-//!   decided everything and no verb moved much. 23 smaller piles grow about
-//!   6,600 walkers by 60 s (Jones's density), where the moulds' growth
-//!   habits beat each other in a cycle and a wall across the rival's road
-//!   moves the food share.
-//! - **Habits** (keys 1-4). How your walkers sense: spread (the shipped
-//!   22.5 degrees), hunt (drawn to the rival's trail), maze (67.5) and cord
-//!   (45). On this layout, with 32 games a pairing: hunt beat maze 32/32,
-//!   maze beat cord 30/32, cord beat hunt 25/32, and all three beat spread
-//!   28-31 of 32. A switch shows: the mould's texture changes within
-//!   seconds, and the rival's habit is named on screen.
-//! - **Salt** across the rival's road: on the field it moved share by 0.02 on
-//!   14 of 16 seeds and beat a randomly placed wall on 14 of 16. Two walls,
-//!   one coming back every 30 s.
-//! - **The lamp** pushes both moulds; it moved share a little (12 of 16 up).
+//! **Version 2, the budget skirmish** (this file). Each side sets a tithe:
+//! a fraction of every bite goes to its bank instead of its mould
+//! (`Dish::tithe`), so money is walkers not grown. It spends the bank on
+//! beacons (a pile your mould alone craves, `Dish::beacons`), spores (a
+//! colony planted on a pile, `Dish::plant`) and habits. Nine scripted
+//! plans (`Plan`) play either side. In a 576-game round robin one of them,
+//! soft (beacons and spores on the rival's thinnest pile), won 127 of 128
+//! games and the rest stood on a ladder with no cycle: the strategy is
+//! shallow as built.
 //!
-//! The rival is a scripted hand (`Ai`): it answers your habit with the one
-//! that beats it after a reaction delay, and walls your road when it is
-//! behind. Left out: Taut's pull (always best at full, so not a choice yet),
-//! oats and the knife (they lost share or moved nothing on the field).
+//! **Version 1, set aside.** Habits on keys 1-4 (on this layout hunt beat
+//! maze 32/32, maze cord 30/32, cord hunt 25/32), two salt walls and the
+//! lamp, against a rival that answered your habit after a delay. The rival
+//! beat an idle hand 16/16, and a hand pressing the counter at once beat it
+//! 14/16. The owner played it (21:14Z): "user input seems limited and
+//! doesn't lead to any complex stratgy". Its code is at 6c28e01.
+//!
+//! **Tried in version 2 and dropped:** a bank paid a tenth of all food
+//! eaten without taking it from the mould. Money for nothing made every
+//! purchase pure gain (random spending beat idle 4/4), so the tithe
+//! replaced it.
 
 use super::level::{Level, PileSpec, Tools, Win};
 use super::{Dish, Params, Phase, INOCULUM, STEPS_PER_SECOND};
@@ -114,6 +115,68 @@ pub const LATE_EVERY: u64 = 15;
 pub const LATE_COUNT: u64 = 7;
 pub const LATE_FOOD: f32 = 12_000.0;
 
+/// The prices and reaches above, as one value a skirmish carries, so the
+/// harness can try others (`Rules::set`). `Rules::default()` is the game.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Rules {
+    pub beacon_cost: f32,
+    pub beacon_seconds: u64,
+    pub beacon_gain: f32,
+    pub spore_cost: f32,
+    pub spore_walkers: usize,
+    pub habit_cost: f32,
+    /// How far from its own fed tube a side may plant a spore, in cells
+    /// from the pile's centre (infinite: anywhere).
+    pub spore_reach: f32,
+    /// Seconds a spore lies dormant before it wakes (0: it lands awake).
+    /// Dormant walkers are the model's sleepers (`Walker::slept`): they do
+    /// not move, eat or pay upkeep, they hold their cells, and in a fight
+    /// they count as unfed, so a spore dropped among the rival's fed
+    /// walkers is eaten into before it wakes.
+    pub spore_dormant: u64,
+    /// Dormancy only for a spore landing on a pile the other side holds
+    /// (more of its walkers eating there): one planted at home wakes at
+    /// once.
+    pub dormant_abroad_only: bool,
+}
+
+impl Default for Rules {
+    fn default() -> Rules {
+        Rules {
+            beacon_cost: BEACON_COST,
+            beacon_seconds: BEACON_SECONDS,
+            beacon_gain: BEACON_GAIN,
+            spore_cost: SPORE_COST,
+            spore_walkers: SPORE_WALKERS,
+            habit_cost: HABIT_COST,
+            spore_reach: f32::INFINITY,
+            spore_dormant: 0,
+            dormant_abroad_only: false,
+        }
+    }
+}
+
+impl Rules {
+    /// Change one rule by name ("spore_cost", ...); false for a name it
+    /// does not know or a value it cannot read.
+    pub fn set(&mut self, name: &str, value: &str) -> bool {
+        let Ok(v) = value.parse::<f32>() else { return false };
+        match name {
+            "beacon_cost" => self.beacon_cost = v,
+            "beacon_seconds" => self.beacon_seconds = v as u64,
+            "beacon_gain" => self.beacon_gain = v,
+            "spore_cost" => self.spore_cost = v,
+            "spore_walkers" => self.spore_walkers = v as usize,
+            "habit_cost" => self.habit_cost = v,
+            "spore_reach" => self.spore_reach = v,
+            "spore_dormant" => self.spore_dormant = v as u64,
+            "dormant_abroad_only" => self.dormant_abroad_only = v != 0.0,
+            _ => return false,
+        }
+        true
+    }
+}
+
 pub static FIELD: Level = Level {
     key: "field",
     name: "THE FIELD",
@@ -197,15 +260,6 @@ pub enum Verb {
     Habit(Habit),
 }
 
-impl Verb {
-    pub fn price(self) -> f32 {
-        match self {
-            Verb::Beacon(_) => BEACON_COST,
-            Verb::Spore(_) => SPORE_COST,
-            Verb::Habit(_) => HABIT_COST,
-        }
-    }
-}
 
 /// **Scripted strategies**, for the rival and for the harness's
 /// round robin. Each thinks once a second and sees what a player sees: the
@@ -231,19 +285,26 @@ pub enum Plan {
     /// Take the middle (25%): the piles within 40 cells of the centre line
     /// it does not hold, nearest the line first; then expand.
     Centre,
-    /// Defend: a 10% tithe saved for when the rival eats at one of its
-    /// piles, then 25% and reinforce that pile, most rival eaters first;
-    /// otherwise light the nearest free pile.
+    /// Defend: a 10% tithe saved for when the rival lands a spore on, or
+    /// eats at, one of its piles, then 25% and reinforce that pile (a
+    /// landing spore first, then most rival eaters); otherwise light the
+    /// nearest free pile.
     Fort,
     /// Save at 40% until 1:20, then drop to 10% and raid with everything.
     Hoard,
     /// Habits only (10%): answer the rival's habit with the one that beats
     /// it.
     Counter,
+    /// Pick off on the cheap (10%): soft's target, beacons only.
+    Lean,
+    /// Guard (10%): beacons on its own border piles (a rival pile within 50
+    /// cells) with the fewest of its walkers, before anyone attacks; a spore
+    /// on any of its piles a rival spore lands on or the rival eats at.
+    Guard,
 }
 
 impl Plan {
-    pub const ALL: [Plan; 9] = [
+    pub const ALL: [Plan; 11] = [
         Plan::Idle,
         Plan::Random,
         Plan::Boom,
@@ -253,6 +314,8 @@ impl Plan {
         Plan::Fort,
         Plan::Hoard,
         Plan::Counter,
+        Plan::Lean,
+        Plan::Guard,
     ];
 
     pub fn name(self) -> &'static str {
@@ -266,6 +329,8 @@ impl Plan {
             Plan::Fort => "fort",
             Plan::Hoard => "hoard",
             Plan::Counter => "counter",
+            Plan::Lean => "lean",
+            Plan::Guard => "guard",
         }
     }
 
@@ -303,9 +368,27 @@ pub struct Side {
     rng: u64,
 }
 
+/// A spore that has landed and not yet woken: whose, on which pile, the
+/// step it landed (its walkers' `slept`) and the step it wakes.
+#[derive(Clone, Copy, Debug)]
+pub struct Spore {
+    pub side: usize,
+    pub pile: usize,
+    pub landed: u64,
+    pub wakes: u64,
+}
+
+/// A plan's question about one pile, and its search for the nearest pile
+/// that passes one.
+type PileTest<'a> = dyn Fn(&Skirmish, usize) -> bool + 'a;
+type Nearest<'a> = dyn Fn(&Skirmish, &PileTest<'_>) -> Option<usize> + 'a;
+
 pub struct Skirmish {
     pub dish: Dish,
     pub sides: [Side; 2],
+    pub rules: Rules,
+    /// Spores still dormant (`Rules::spore_dormant`).
+    pub spores: Vec<Spore>,
 }
 
 impl Skirmish {
@@ -335,6 +418,8 @@ impl Skirmish {
         Skirmish {
             dish,
             sides: [side(0, plans[0]), side(1, plans[1])],
+            rules: Rules::default(),
+            spores: Vec::new(),
         }
     }
 
@@ -404,13 +489,49 @@ impl Skirmish {
         self.sides[s].ready_at.saturating_sub(self.dish.t) as f32 / SPS as f32
     }
 
+    /// What `v` costs.
+    pub fn price(&self, v: Verb) -> f32 {
+        match v {
+            Verb::Beacon(_) => self.rules.beacon_cost,
+            Verb::Spore(_) => self.rules.spore_cost,
+            Verb::Habit(_) => self.rules.habit_cost,
+        }
+    }
+
+    /// Whether side `s`'s fed tube comes within `reach` cells of (x, y).
+    pub fn within_reach(&self, s: usize, (x, y): (f32, f32), reach: f32) -> bool {
+        if !reach.is_finite() {
+            return true;
+        }
+        let fed = &self.mould(s).fed;
+        let r = reach.ceil() as i32;
+        let (cx, cy) = (x as i32, y as i32);
+        for dy in -r..=r {
+            for dx in -r..=r {
+                if dx * dx + dy * dy > r * r {
+                    continue;
+                }
+                let (px, py) = (cx + dx, cy + dy);
+                if px >= 0 && py >= 0 && (px as usize) < super::W && (py as usize) < super::H && fed[py as usize * super::W + px as usize] != u16::MAX {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
     /// Whether side `s` could buy `v` now.
     pub fn can(&self, s: usize, v: Verb) -> bool {
-        if self.dish.phase != Phase::Growing || self.sides[s].bank < v.price() {
+        if self.dish.phase != Phase::Growing || self.sides[s].bank < self.price(v) {
             return false;
         }
         match v {
-            Verb::Beacon(i) | Verb::Spore(i) => self.dish.piles.get(i).is_some_and(|p| p.food > 0.0 && !p.oats),
+            Verb::Beacon(i) => self.dish.piles.get(i).is_some_and(|p| p.food > 0.0 && !p.oats),
+            Verb::Spore(i) => self
+                .dish
+                .piles
+                .get(i)
+                .is_some_and(|p| p.food > 0.0 && !p.oats && self.within_reach(s, (p.x, p.y), self.rules.spore_reach)),
             Verb::Habit(h) => h != self.sides[s].habit && self.dish.t >= self.sides[s].ready_at,
         }
     }
@@ -428,7 +549,7 @@ impl Skirmish {
                 if side.beacons.len() >= BEACONS_MAX {
                     side.beacons.remove(0);
                 }
-                side.beacons.push((i, t + BEACON_SECONDS * SPS));
+                side.beacons.push((i, t + self.rules.beacon_seconds * SPS));
                 side.tally.beacons += 1;
                 self.light(s);
             }
@@ -437,16 +558,27 @@ impl Skirmish {
                 let placed = if s == 0 {
                     let r = self.dish.rival.take();
                     let others = r.as_ref().map_or(&[][..], |r| &r.walkers[..]);
-                    let n = self.dish.plant(at, SPORE_WALKERS, SPORE_FOOD, others);
+                    let n = self.dish.plant(at, self.rules.spore_walkers, SPORE_FOOD, others);
                     self.dish.rival = r;
                     n
                 } else {
-                    let n = self.dish.plant_rival(at, SPORE_WALKERS, SPORE_FOOD);
+                    let n = self.dish.plant_rival(at, self.rules.spore_walkers, SPORE_FOOD);
                     self.dish.wild_left = self.dish.rival.as_ref().map_or(0, |r| r.walkers.len());
                     n
                 };
                 if placed == 0 {
                     return false;
+                }
+                let abroad = self.eaters(1 - s, i) > self.eaters(s, i);
+                if self.rules.spore_dormant > 0 && (abroad || !self.rules.dormant_abroad_only) {
+                    // The new walkers are the last ones in; they sleep
+                    // from now, tagged with this step.
+                    let walkers = &mut self.mould_mut(s).walkers;
+                    let k = walkers.len() - placed;
+                    for w in &mut walkers[k..] {
+                        w.slept = t;
+                    }
+                    self.spores.push(Spore { side: s, pile: i, landed: t, wakes: t + self.rules.spore_dormant * SPS });
                 }
                 self.sides[s].tally.spores += 1;
             }
@@ -458,9 +590,10 @@ impl Skirmish {
                 side.tally.switches += 1;
             }
         }
+        let price = self.price(v);
         let side = &mut self.sides[s];
-        side.bank -= v.price();
-        side.tally.spent += v.price();
+        side.bank -= price;
+        side.tally.spent += price;
         true
     }
 
@@ -469,7 +602,7 @@ impl Skirmish {
         let lit: Vec<(f32, f32, f32)> = self.sides[s]
             .beacons
             .iter()
-            .map(|&(i, _)| (self.dish.piles[i].x, self.dish.piles[i].y, BEACON_GAIN))
+            .map(|&(i, _)| (self.dish.piles[i].x, self.dish.piles[i].y, self.rules.beacon_gain))
             .collect();
         self.mould_mut(s).beacons = lit;
     }
@@ -495,6 +628,20 @@ impl Skirmish {
                 self.light(s);
             }
         }
+        // Spores due wake: every walker still asleep since the step one
+        // landed.
+        let due: Vec<Spore> = self.spores.iter().filter(|p| p.wakes <= t).copied().collect();
+        if !due.is_empty() {
+            self.spores.retain(|p| p.wakes > t);
+            for p in due {
+                for w in self.mould_mut(p.side).walkers.iter_mut() {
+                    if w.slept == p.landed {
+                        w.slept = u64::MAX;
+                        w.woke = t;
+                    }
+                }
+            }
+        }
         for s in 0..2 {
             if let Some(plan) = self.sides[s].plan {
                 if t % SPS == (s as u64) * (SPS / 2) {
@@ -515,7 +662,7 @@ impl Skirmish {
             let p = &sk.dish.piles[i];
             (p.x - home.0).hypot(p.y - home.1)
         };
-        let nearest = |sk: &Skirmish, f: &dyn Fn(&Skirmish, usize) -> bool| {
+        let nearest = |sk: &Skirmish, f: &PileTest<'_>| {
             (0..n)
                 .filter(|&i| live(sk, i) && f(sk, i))
                 .min_by(|&a, &b| dist(sk, a).total_cmp(&dist(sk, b)))
@@ -527,7 +674,7 @@ impl Skirmish {
         let tithe = match plan {
             Plan::Idle => 0.0,
             Plan::Random => self.sides[s].tithe,
-            Plan::Counter | Plan::Fort => TITHES[1],
+            Plan::Counter | Plan::Fort | Plan::Lean | Plan::Guard => TITHES[1],
             Plan::Boom | Plan::Soft | Plan::Centre => TITHES[2],
             Plan::Raid => TITHES[3],
             Plan::Hoard => {
@@ -606,9 +753,12 @@ impl Skirmish {
             Plan::Fort => {
                 // Its own piles the rival is eating at, most rival eaters
                 // first; a tithe only while there is one to defend.
-                let contested = (0..n)
-                    .filter(|&i| live(self, i) && self.eaters(s, i) > 0 && self.eaters(o, i) > 0)
-                    .max_by_key(|&i| self.eaters(o, i));
+                let landing = self.spores.iter().find(|p| p.side == o && self.eaters(s, p.pile) > 0).map(|p| p.pile);
+                let contested = landing.or_else(|| {
+                    (0..n)
+                        .filter(|&i| live(self, i) && self.eaters(s, i) > 0 && self.eaters(o, i) > 0)
+                        .max_by_key(|&i| self.eaters(o, i))
+                });
                 match contested {
                     Some(i) => {
                         self.set_tithe(s, TITHES[2]);
@@ -627,11 +777,46 @@ impl Skirmish {
                 let want = self.sides[o].habit.counter();
                 self.act(s, Verb::Habit(want));
             }
+            Plan::Lean => {
+                let target = (0..n)
+                    .filter(|&i| live(self, i) && theirs(self, i) && !lit(self, i))
+                    .min_by_key(|&i| self.eaters(o, i));
+                if let Some(i) = target {
+                    if self.sides[s].beacons.len() < BEACONS_MAX {
+                        self.act(s, Verb::Beacon(i));
+                    }
+                }
+            }
+            Plan::Guard => {
+                let landing = self.spores.iter().find(|p| p.side == o && self.eaters(s, p.pile) > 0).map(|p| p.pile);
+                let contested = landing.or_else(|| (0..n).find(|&i| live(self, i) && self.eaters(s, i) > 0 && self.eaters(o, i) > 0));
+                if let Some(i) = contested {
+                    if self.act(s, Verb::Spore(i)) {
+                        return;
+                    }
+                }
+                let border = |sk: &Skirmish, i: usize| {
+                    let p = &sk.dish.piles[i];
+                    sk.eaters(s, i) > sk.eaters(o, i)
+                        && (0..n).any(|j| {
+                            let q = &sk.dish.piles[j];
+                            live(sk, j) && theirs(sk, j) && (q.x - p.x).hypot(q.y - p.y) < 50.0
+                        })
+                };
+                let target = (0..n)
+                    .filter(|&i| live(self, i) && border(self, i) && !lit(self, i))
+                    .min_by_key(|&i| self.eaters(s, i));
+                if let Some(i) = target {
+                    if self.sides[s].beacons.len() < BEACONS_MAX {
+                        self.act(s, Verb::Beacon(i));
+                    }
+                }
+            }
         }
     }
 
     /// Light pile `i` if it is not lit, else plant a spore on it.
-    fn strike(&mut self, s: usize, i: usize, lit: &dyn Fn(&Skirmish, usize) -> bool) {
+    fn strike(&mut self, s: usize, i: usize, lit: &PileTest<'_>) {
         if !lit(self, i) && self.act(s, Verb::Beacon(i)) {
             return;
         }
@@ -644,9 +829,9 @@ impl Skirmish {
     fn expand(
         &mut self,
         s: usize,
-        nearest: &dyn Fn(&Skirmish, &dyn Fn(&Skirmish, usize) -> bool) -> Option<usize>,
-        lit: &dyn Fn(&Skirmish, usize) -> bool,
-        free: &dyn Fn(&Skirmish, usize) -> bool,
+        nearest: &Nearest<'_>,
+        lit: &PileTest<'_>,
+        free: &PileTest<'_>,
         bank: f32,
     ) {
         if let Some(i) = nearest(self, free) {
@@ -654,7 +839,7 @@ impl Skirmish {
                 return;
             }
         }
-        if bank >= SPORE_COST + BEACON_COST {
+        if bank >= self.rules.spore_cost + self.rules.beacon_cost {
             if let Some(i) = nearest(self, &|sk: &Skirmish, i: usize| free(sk, i) && !lit(sk, i)) {
                 self.act(s, Verb::Beacon(i));
             }

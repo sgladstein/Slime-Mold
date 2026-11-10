@@ -220,3 +220,103 @@ Taut and the settings change parameters only and add nothing per step. The
   `ON_FIELD=1 FIELD=scatter2 ./target/release/redteam taut 1 22.5 1`,
   `DISH=field ./target/release/redteam verbs 1`, then
   `python3 analyse.py scatter raw/fgrid-first.txt raw/runner-*.txt`.
+
+## Layout sweep (2026-11-10, later)
+
+**The cycle was the scatter layout's, not the field's.** Eight more draws of
+the same pile sampler (`sweep/layouts.py`, seeds 21-28; the same counts,
+food and spacing), the cycle's three links both ways, 16 seeds: 768 games,
+run on four runner threads from [`sweep/jobs/`](sweep/jobs/) at commit
+c6c3e29. Deciding measure, named before the run: a link holds when its
+winner takes the majority of 32 games with p surviving Holm over the
+layout's 3 links; the cycle holds when all three hold the cycle's way.
+
+| Layout | hunt v maze (hunt won) | maze v cord (maze won) | cord v hunt (cord won) | Cycle |
+|---|---|---|---|---|
+| scatter (seed 7) | 32/32 | 30/32 | 25/32 | holds |
+| scatter2 (seed 11) | 28/32 | 11/32 | 30/32 | no |
+| draw21 | 30/32 | 10/32 (p 0.05) | 31/32 | no |
+| draw22 | 32/32 | 1/32 | 8/32 | no |
+| draw23 | 32/32 | 1/32 | 19/32 (p 0.38) | no |
+| draw24 | 25/32 | 7/32 | 23/32 (p 0.02) | no |
+| draw25 | 31/32 | 8/32 | 25/32 | no |
+| draw26 | 32/32 | 4/32 | 32/32 | no |
+| draw27 | 26/32 | 0/32 | 31/32 | no |
+| draw28 | 20/32 (p 0.22) | 4/32 | 29/31 | no |
+
+- **The cycle holds on 1 of 10 layouts.** Hunt beats maze on 9 of 10 and
+  cord beats hunt on 8 of 10, but cord beats maze on 7 of 10 (a reversed
+  link surviving Holm), so the usual order is a ladder: cord > hunt > maze.
+  Of the 24 new links, 20 survive Holm over all 24 in one direction or the
+  other.
+- **What this means for play.** On most maps one habit (cord) is simply
+  best, which is a dominant strategy, not a counter game. The field
+  skirmish demo is built on scatter, the one layout where the cycle holds,
+  and says so. A counter game needs either maps chosen for the cycle,
+  habits designed so the cycle is robust, or a different source of
+  counters.
+- Raw output: [`sweep/raw/`](sweep/raw/) (`sweep-1..4.txt`, from the runner
+  branches `claude/project-thread-gtkmwj`, `claude/rts-layout-sweep-2`,
+  `claude/rts-sweep-3-runner`, `claude/rts-sweep-4-results`), analysed by
+  [`sweep/analyse.py`](sweep/analyse.py) into `analysis-sweep.txt`.
+
+## Comeback test (2026-11-10, later)
+
+**Can a hand overturn the opening?** With no hands the side ahead at 60 s
+keeps the lead in about 4 games of 5 (above), so a verb only matters if it
+can turn a losing game. Equal moulds (spread v spread, that is the shipped
+22.5 degrees) to 60 s; then the side behind gets one verb in one copy of the
+dish, and every copy runs to the bell (150 s) against the untouched one
+(`comeback` mode in the harness). 16 seeds on each of scatter, scatter2 and
+the symmetric Wild One (400 v 400, repel 1.0 both, as the red team's grid).
+Verbs: salt across the leader's road to its most forward pile, once
+(plan), at random, or re-aimed every 15 s (x6, six walls); the lamp on that
+pile for 10 s, at random, or every 15 s; a cut; Taut (pull 1.0 for the rest
+of the game); a switch to hunt, or to one of five settings at random.
+
+Deciding measures, named before the run: the trailing side's food share at
+the bell, copy minus control, sign test, Holm over all 30 verb-dish tests;
+and a verb **overturns the opening** on a dish if it wins at least half the
+seeds the untouched game loses and its planned use beats the same verb at
+random (sign test on bell share).
+
+At 60 s the side behind trailed by only 0.002-0.111 of the food, yet the
+untouched game still lost 12/16 (scatter), 14/16 (scatter2) and 15/16 (Wild
+One) of those seeds.
+
+| Verb, for the side behind | scatter: turned / bell share up / beats random | scatter2 | symmetric Wild One |
+|---|---|---|---|
+| Salt wall, once | **6/12**, 14/16, **16/16** | 2/14, 8/16, 10/16 | 12/15, 15/16, 11/16 (p 0.21) |
+| Salt wall, every 15 s | **9/12**, 15/16, **16/16** | 2/14, 8/16, 10/16 | **13/15**, 15/16, **13/16** (p 0.02) |
+| Lamp, once | 2/12, 10/16, 8/16 | 3/14, 8/16, 8/16 | 6/15, 9/16, 8/16 |
+| Lamp, every 15 s | 3/12, 12/16, 12/16 | 4/14, 9/16, 11/16 | 9/15, 12/16, 10/16 |
+| Cut | 1/12, 9/16 | 1/14, 7/16 | 1/15, 8/16 |
+| Taut (no random form) | 12/12, 16/16 | 14/14, 16/16 | 0/15, **1/16** (it hurts) |
+| Switch to hunt | 10/12, 16/16, 9/16 | 11/14, 16/16, 7/16 | 8/15, 15/16, 11/16 |
+| Switch at random | 6/12, 11/16 | 9/14, 11/16 | 2/15, 6/16 |
+
+"Turned" counts the seeds the untouched game lost that the verb won.
+Surviving Holm over 30 (p 0.0005 or less): Taut and the switch to hunt on
+both field layouts, salt every 15 s on scatter, and on the Wild One salt
+(once and every 15 s), the switch to hunt, and Taut, which loses.
+
+- **Yes, a hand can overturn the opening, on two dishes of three.** A salt
+  wall across the leader's road passes the named bar on scatter (once and
+  repeated) and on the symmetric Wild One (repeated). On scatter2 it does
+  nothing, the same layout where the counter cycle failed.
+- **The switch to hunt turns most lost games everywhere**, but against a
+  spread leader any of the three habits beats spread, so a random switch
+  does nearly as well and the planned one fails the "beats random" half of
+  the bar. In a game where the leader can also switch, this is the counter
+  race the skirmish demo is built on.
+- **Taut turns every lost field game and loses every Wild One game**: still
+  a stat on the field, still a trap on few big piles.
+- **The lamp and the cut never overturn anything.**
+- Salt works on the symmetric Wild One (15 of 16 up) though it did nothing
+  in the verb census on The Wild One as shipped, where the wild mould starts
+  with 600 walkers and a bolder repel (0.6). The census measured 30 s after
+  the act, this test the bell.
+- Raw: [`comeback/raw/comeback.txt`](comeback/raw/comeback.txt) (528 lines);
+  [`comeback/analyse.py`](comeback/analyse.py) writes
+  `comeback/raw/analysis-comeback.txt`. One field seed takes 2 min 50 s on
+  one core (11 copies of 90 s).

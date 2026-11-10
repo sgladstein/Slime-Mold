@@ -1,0 +1,218 @@
+<title>Budget Skirmish Strategies</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column (about 68ch) with the matrix and the stills allowed wider; gold is you, violet the rival, as on the dish. */
+:root {
+  --bg: #f6f5f9;
+  --panel: #ffffff;
+  --fg: #1d1a26;
+  --muted: #5d5770;
+  --line: #dcd8e6;
+  --gold: #b07812;
+  --violet: #6a4fd6;
+  --gold-cell: #e9a83a;
+  --violet-cell: #8a70ee;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f0d16; --panel: #17141f; --fg: #ece9f4; --muted: #a39cb8; --line: #2c2738;
+    --gold: #f0b54a; --violet: #a98bff; --gold-cell: #c98b22; --violet-cell: #6f55d8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f0d16; --panel: #17141f; --fg: #ece9f4; --muted: #a39cb8; --line: #2c2738;
+  --gold: #f0b54a; --violet: #a98bff; --gold-cell: #c98b22; --violet-cell: #6f55d8;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+.col { max-width: 70ch; display: grid; gap: 12px; min-width: 0; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; }
+h2 { font-size: 24px; font-weight: 700; }
+h3 { font-size: 17px; font-weight: 600; }
+p { margin: 0; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.you { color: var(--gold); font-weight: 600; }
+.them { color: var(--violet); font-weight: 600; }
+.lede { font-size: 18px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; }
+.stat b { font: 600 26px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 13.5px; }
+.scroll { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.matrix td, .matrix th { width: 62px; height: 46px; text-align: center; font: 500 13px/1.2 var(--mono); }
+.matrix th { color: var(--muted); font-weight: 600; }
+.matrix th.row { text-align: right; padding-right: 10px; width: auto; }
+.matrix th.colh { vertical-align: bottom; padding-bottom: 6px; }
+.matrix td { border: 2px solid var(--bg); color: var(--fg); }
+.matrix td.self { background: transparent; color: var(--muted); }
+.matrix td.sig { outline: 2px solid var(--fg); outline-offset: -4px; }
+.matrix td small { display: block; font-size: 10.5px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px 22px; color: var(--muted); font-size: 13.5px; align-items: center; }
+.sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
+.data { width: 100%; font-size: 14px; }
+.data th, .data td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.data th { font: 600 12px/1.3 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.data td.n { font-family: var(--mono); white-space: nowrap; }
+.data tr.top td { font-weight: 600; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+.pair .head { font: 600 13px/1.3 var(--mono); color: var(--muted); }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; height: auto; border-radius: 8px; display: block; background: #000; }
+figcaption { font: 13px/1.45 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+figcaption b { color: var(--fg); font-weight: 600; }
+.t { font: 600 13px/1 var(--mono); color: var(--fg); }
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 18px; }
+ol, ul { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
+.note { color: var(--muted); font-size: 13.5px; }
+code { font-family: var(--mono); font-size: .92em; }
+@media (max-width: 720px) {
+  .pair, .trio { grid-template-columns: 1fr; }
+  .lede { font-size: 16.5px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="col">
+    <div class="eyebrow">Mould RTS &middot; the budget skirmish &middot; 2026-11-10</div>
+    <h1>Does one strategy beat all the others?</h1>
+    <p class="lede">Yes, as built today. Tithe a quarter of your food and drop beacons, then spores, on whichever of the rival's piles has the fewest of its walkers. That plan, <b>soft</b>, won 127 of 128 games against eight other plans. The rest line up on a ladder with no rock-paper-scissors anywhere, so the strategy is shallow: one rule wins.</p>
+  </header>
+
+  <section class="stats" aria-label="Headline numbers">
+    <div class="stat"><b>127 / 128</b><span>games soft won against the other eight plans, every pairing surviving Holm</span></div>
+    <div class="stat"><b>0 cycles</b><span>among 36 pairings: if A beats B and B beats C, A beats C</span></div>
+    <div class="stat"><b>300 / 576</b><span>games ended before the bell with one mould wiped out</span></div>
+    <div class="stat"><b>416 / 473</b><span>games won by the side ahead at 1:00 (the lead snowballs)</span></div>
+  </section>
+
+  <section class="col">
+    <h2>The rules these games used</h2>
+    <p>Both moulds start equal on the field: 23 small piles mirrored left to right, more food landing every 15 s from 0:20 (seven times, somewhere new each dish). Whoever has eaten more at 2:30 wins. Each side sets a <b>tithe</b> (0, 10, 25 or 40% of every bite goes to its bank instead of its mould, so money is walkers not grown) and spends it on:</p>
+    <ul>
+      <li><b>Beacon</b>, 300: one pile smells three times a full pile to your mould alone, for 20 s; up to three lit.</li>
+      <li><b>Spore</b>, 1,000: 150 of your walkers put down on any pile, fed and fighting at once.</li>
+      <li><b>Habit</b>, 200: spread, hunt, maze or cord (10 s between switches).</li>
+    </ul>
+  </section>
+
+  <section style="display:grid;gap:14px">
+    <div class="col">
+      <h2>Every plan against every other</h2>
+      <p>Each cell is 16 games, the row's plan on each side of 8 dishes: games the row won, and its mean share of the food eaten. Gold where the row ate more, violet where it ate less. A ringed cell survives a Holm correction over the 36 pairings.</p>
+    </div>
+    <div class="scroll"><table class="matrix"><thead><tr><th></th><th class="colh">soft</th><th class="colh">raid</th><th class="colh">idle</th><th class="colh">centre</th><th class="colh">counter</th><th class="colh">random</th><th class="colh">fort</th><th class="colh">boom</th><th class="colh">hoard</th></tr></thead><tbody><tr><th class="row" scope="row">soft</th><td class="self">&middot;</td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 84%, var(--panel))" title="soft v raid: won 16 of 16, mean share 0.757">16/16<small>0.76</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 63%, var(--panel))" title="soft v idle: won 15 of 16, mean share 0.676">15/16<small>0.68</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 71%, var(--panel))" title="soft v centre: won 16 of 16, mean share 0.708">16/16<small>0.71</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 82%, var(--panel))" title="soft v counter: won 16 of 16, mean share 0.749">16/16<small>0.75</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 70%, var(--panel))" title="soft v random: won 16 of 16, mean share 0.705">16/16<small>0.70</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 85%, var(--panel))" title="soft v fort: won 16 of 16, mean share 0.764">16/16<small>0.76</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 88%, var(--panel))" title="soft v boom: won 16 of 16, mean share 0.775">16/16<small>0.78</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 85%, var(--panel))" title="soft v hoard: won 16 of 16, mean share 0.762">16/16<small>0.76</small></td></tr><tr><th class="row" scope="row">raid</th><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 84%, var(--panel))" title="raid v soft: won 0 of 16, mean share 0.243">0/16<small>0.24</small></td><td class="self">&middot;</td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 65%, var(--panel))" title="raid v idle: won 16 of 16, mean share 0.684">16/16<small>0.68</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 30%, var(--panel))" title="raid v centre: won 9 of 16, mean share 0.548">9/16<small>0.55</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 50%, var(--panel))" title="raid v counter: won 13 of 16, mean share 0.626">13/16<small>0.63</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 69%, var(--panel))" title="raid v random: won 14 of 16, mean share 0.699">14/16<small>0.70</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 48%, var(--panel))" title="raid v fort: won 12 of 16, mean share 0.619">12/16<small>0.62</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 79%, var(--panel))" title="raid v boom: won 16 of 16, mean share 0.740">16/16<small>0.74</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 86%, var(--panel))" title="raid v hoard: won 16 of 16, mean share 0.766">16/16<small>0.77</small></td></tr><tr><th class="row" scope="row">idle</th><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 63%, var(--panel))" title="idle v soft: won 1 of 16, mean share 0.324">1/16<small>0.32</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 65%, var(--panel))" title="idle v raid: won 0 of 16, mean share 0.316">0/16<small>0.32</small></td><td class="self">&middot;</td><td style="background:color-mix(in srgb, var(--gold-cell) 18%, var(--panel))" title="idle v centre: won 6 of 16, mean share 0.503">6/16<small>0.50</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 24%, var(--panel))" title="idle v counter: won 3 of 16, mean share 0.474">3/16<small>0.47</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 42%, var(--panel))" title="idle v random: won 12 of 16, mean share 0.597">12/16<small>0.60</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 72%, var(--panel))" title="idle v fort: won 16 of 16, mean share 0.712">16/16<small>0.71</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 62%, var(--panel))" title="idle v boom: won 16 of 16, mean share 0.674">16/16<small>0.67</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 90%, var(--panel))" title="idle v hoard: won 16 of 16, mean share 0.785">16/16<small>0.79</small></td></tr><tr><th class="row" scope="row">centre</th><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 71%, var(--panel))" title="centre v soft: won 0 of 16, mean share 0.292">0/16<small>0.29</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 30%, var(--panel))" title="centre v raid: won 7 of 16, mean share 0.452">7/16<small>0.45</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 18%, var(--panel))" title="centre v idle: won 10 of 16, mean share 0.497">10/16<small>0.50</small></td><td class="self">&middot;</td><td style="background:color-mix(in srgb, var(--gold-cell) 38%, var(--panel))" title="centre v counter: won 11 of 16, mean share 0.579">11/16<small>0.58</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 33%, var(--panel))" title="centre v random: won 12 of 16, mean share 0.560">12/16<small>0.56</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 45%, var(--panel))" title="centre v fort: won 14 of 16, mean share 0.608">14/16<small>0.61</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 48%, var(--panel))" title="centre v boom: won 13 of 16, mean share 0.618">13/16<small>0.62</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 73%, var(--panel))" title="centre v hoard: won 16 of 16, mean share 0.716">16/16<small>0.72</small></td></tr><tr><th class="row" scope="row">counter</th><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 81%, var(--panel))" title="counter v soft: won 0 of 16, mean share 0.252">0/16<small>0.25</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 50%, var(--panel))" title="counter v raid: won 3 of 16, mean share 0.374">3/16<small>0.37</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 24%, var(--panel))" title="counter v idle: won 13 of 16, mean share 0.526">13/16<small>0.53</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 38%, var(--panel))" title="counter v centre: won 5 of 16, mean share 0.421">5/16<small>0.42</small></td><td class="self">&middot;</td><td style="background:color-mix(in srgb, var(--gold-cell) 39%, var(--panel))" title="counter v random: won 13 of 16, mean share 0.582">13/16<small>0.58</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 50%, var(--panel))" title="counter v fort: won 16 of 16, mean share 0.627">16/16<small>0.63</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 51%, var(--panel))" title="counter v boom: won 16 of 16, mean share 0.631">16/16<small>0.63</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 60%, var(--panel))" title="counter v hoard: won 16 of 16, mean share 0.665">16/16<small>0.67</small></td></tr><tr><th class="row" scope="row">random</th><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 70%, var(--panel))" title="random v soft: won 0 of 16, mean share 0.295">0/16<small>0.29</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 69%, var(--panel))" title="random v raid: won 2 of 16, mean share 0.301">2/16<small>0.30</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 42%, var(--panel))" title="random v idle: won 4 of 16, mean share 0.403">4/16<small>0.40</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 33%, var(--panel))" title="random v centre: won 4 of 16, mean share 0.440">4/16<small>0.44</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 39%, var(--panel))" title="random v counter: won 3 of 16, mean share 0.418">3/16<small>0.42</small></td><td class="self">&middot;</td><td style="background:color-mix(in srgb, var(--gold-cell) 34%, var(--panel))" title="random v fort: won 11 of 16, mean share 0.566">11/16<small>0.57</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 40%, var(--panel))" title="random v boom: won 12 of 16, mean share 0.589">12/16<small>0.59</small></td><td style="background:color-mix(in srgb, var(--gold-cell) 71%, var(--panel))" title="random v hoard: won 13 of 16, mean share 0.708">13/16<small>0.71</small></td></tr><tr><th class="row" scope="row">fort</th><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 85%, var(--panel))" title="fort v soft: won 0 of 16, mean share 0.236">0/16<small>0.24</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 48%, var(--panel))" title="fort v raid: won 4 of 16, mean share 0.382">4/16<small>0.38</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 72%, var(--panel))" title="fort v idle: won 0 of 16, mean share 0.288">0/16<small>0.29</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 45%, var(--panel))" title="fort v centre: won 2 of 16, mean share 0.392">2/16<small>0.39</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 50%, var(--panel))" title="fort v counter: won 0 of 16, mean share 0.373">0/16<small>0.37</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 34%, var(--panel))" title="fort v random: won 5 of 16, mean share 0.434">5/16<small>0.43</small></td><td class="self">&middot;</td><td style="background:color-mix(in srgb, var(--gold-cell) 32%, var(--panel))" title="fort v boom: won 8 of 16, mean share 0.557">8/16<small>0.56</small></td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 90%, var(--panel))" title="fort v hoard: won 16 of 16, mean share 0.787">16/16<small>0.79</small></td></tr><tr><th class="row" scope="row">boom</th><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 88%, var(--panel))" title="boom v soft: won 0 of 16, mean share 0.225">0/16<small>0.23</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 79%, var(--panel))" title="boom v raid: won 0 of 16, mean share 0.260">0/16<small>0.26</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 62%, var(--panel))" title="boom v idle: won 0 of 16, mean share 0.326">0/16<small>0.33</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 48%, var(--panel))" title="boom v centre: won 3 of 16, mean share 0.382">3/16<small>0.38</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 51%, var(--panel))" title="boom v counter: won 0 of 16, mean share 0.369">0/16<small>0.37</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 40%, var(--panel))" title="boom v random: won 4 of 16, mean share 0.411">4/16<small>0.41</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 32%, var(--panel))" title="boom v fort: won 8 of 16, mean share 0.443">8/16<small>0.44</small></td><td class="self">&middot;</td><td class="sig" style="background:color-mix(in srgb, var(--gold-cell) 68%, var(--panel))" title="boom v hoard: won 16 of 16, mean share 0.697">16/16<small>0.70</small></td></tr><tr><th class="row" scope="row">hoard</th><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 85%, var(--panel))" title="hoard v soft: won 0 of 16, mean share 0.238">0/16<small>0.24</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 86%, var(--panel))" title="hoard v raid: won 0 of 16, mean share 0.234">0/16<small>0.23</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 90%, var(--panel))" title="hoard v idle: won 0 of 16, mean share 0.215">0/16<small>0.21</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 73%, var(--panel))" title="hoard v centre: won 0 of 16, mean share 0.284">0/16<small>0.28</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 60%, var(--panel))" title="hoard v counter: won 0 of 16, mean share 0.335">0/16<small>0.34</small></td><td style="background:color-mix(in srgb, var(--violet-cell) 71%, var(--panel))" title="hoard v random: won 3 of 16, mean share 0.292">3/16<small>0.29</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 90%, var(--panel))" title="hoard v fort: won 0 of 16, mean share 0.213">0/16<small>0.21</small></td><td class="sig" style="background:color-mix(in srgb, var(--violet-cell) 68%, var(--panel))" title="hoard v boom: won 0 of 16, mean share 0.303">0/16<small>0.30</small></td><td class="self">&middot;</td></tr></tbody></table></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--gold-cell)"></i>row ate more</span>
+      <span><i class="sw" style="background:var(--violet-cell)"></i>row ate less</span>
+      <span><i class="sw" style="outline:2px solid var(--fg);outline-offset:-3px"></i>survives Holm (16/16 or 15/16 here)</span>
+    </div>
+  </section>
+
+  <section class="col">
+    <h2>What each plan does</h2>
+    <div class="scroll">
+    <table class="data">
+      <thead><tr><th>Plan</th><th>Tithe</th><th>What it buys</th><th>Mean share</th></tr></thead>
+      <tbody>
+        <tr class="top"><td>soft</td><td class="n">25%</td><td>a beacon, then spores, on the rival's pile with the fewest of its walkers (49 beacons and 13 spores a game)</td><td class="n">0.737</td></tr>
+        <tr><td>raid</td><td class="n">40%</td><td>hunt, then beacons and spores on the rival's pile nearest its own home</td><td class="n">0.615</td></tr>
+        <tr><td>idle</td><td class="n">0</td><td>nothing: the thickest mould</td><td class="n">0.548</td></tr>
+        <tr><td>centre</td><td class="n">25%</td><td>the piles near the centre line it does not hold, then expands</td><td class="n">0.540</td></tr>
+        <tr><td>counter</td><td class="n">10%</td><td>habits only: the one that beats the rival's</td><td class="n">0.510</td></tr>
+        <tr><td>random</td><td class="n">random</td><td>something at random about one second in four</td><td class="n">0.465</td></tr>
+        <tr><td>fort</td><td class="n">10%, 25% under attack</td><td>reinforces its own piles the rival eats at</td><td class="n">0.431</td></tr>
+        <tr><td>boom</td><td class="n">25%</td><td>races for each pile of new food</td><td class="n">0.389</td></tr>
+        <tr><td>hoard</td><td class="n">40% to 1:20</td><td>saves, then raids with everything</td><td class="n">0.264</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="note">Doing nothing comes third: idle beat fort, boom and hoard 16 of 16 each, so a tithe spent badly is worse than none. Saving loses to every plan, since by 1:20 the lead has snowballed and the food is nearly gone.</p>
+  </section>
+
+  <section style="display:grid;gap:14px">
+    <div class="col">
+      <h2>One dish, played two ways</h2>
+      <p>Dish seed 2. Left: <span class="you">gold plays soft</span> against an idle <span class="them">violet</span>. Right: the same dish with both idle. Counts are gold's share of the food eaten so far, walkers gold/violet, piles held gold/violet, and what gold has bought. The tip in the corner is the old game's.</p>
+    </div>
+    <div class="pair">
+      <div class="head">gold soft, violet idle</div><div class="head">both idle</div>
+      <figure><img src="soft-idle-015.jpg" alt="Gold playing soft against idle violet at 0:15" width="768" height="440" loading="lazy"><figcaption><span class="t">0:15</span> &nbsp;share <b>.467</b> &middot; walkers 2430/3358 &middot; piles 13/10 &middot; bought 11 beacons, 1 spore</figcaption></figure>
+<figure><img src="idle-idle-015.jpg" alt="Both idle at 0:15" width="768" height="440" loading="lazy"><figcaption><span class="t">0:15</span> &nbsp;share <b>.515</b> &middot; walkers 3584/2999 &middot; piles 13/10</figcaption></figure>
+<figure><img src="soft-idle-030.jpg" alt="Gold playing soft against idle violet at 0:30" width="768" height="440" loading="lazy"><figcaption><span class="t">0:30</span> &nbsp;share <b>.496</b> &middot; walkers 2892/2913 &middot; piles 15/9 &middot; bought 25 beacons, 2 spores</figcaption></figure>
+<figure><img src="idle-idle-030.jpg" alt="Both idle at 0:30" width="768" height="440" loading="lazy"><figcaption><span class="t">0:30</span> &nbsp;share <b>.521</b> &middot; walkers 3696/3269 &middot; piles 13/11</figcaption></figure>
+<figure><img src="soft-idle-045.jpg" alt="Gold playing soft against idle violet at 0:45" width="768" height="440" loading="lazy"><figcaption><span class="t">0:45</span> &nbsp;share <b>.540</b> &middot; walkers 3258/2529 &middot; piles 16/10 &middot; bought 39 beacons, 3 spores</figcaption></figure>
+<figure><img src="idle-idle-045.jpg" alt="Both idle at 0:45" width="768" height="440" loading="lazy"><figcaption><span class="t">0:45</span> &nbsp;share <b>.528</b> &middot; walkers 4132/3422 &middot; piles 14/12</figcaption></figure>
+<figure><img src="soft-idle-060.jpg" alt="Gold playing soft against idle violet at 1:00" width="768" height="440" loading="lazy"><figcaption><span class="t">1:00</span> &nbsp;share <b>.558</b> &middot; walkers 3276/2842 &middot; piles 17/9 &middot; bought 54 beacons, 3 spores</figcaption></figure>
+<figure><img src="idle-idle-060.jpg" alt="Both idle at 1:00" width="768" height="440" loading="lazy"><figcaption><span class="t">1:00</span> &nbsp;share <b>.539</b> &middot; walkers 4458/3066 &middot; piles 16/10</figcaption></figure>
+<figure><img src="soft-idle-075.jpg" alt="Gold playing soft against idle violet at 1:15" width="768" height="440" loading="lazy"><figcaption><span class="t">1:15</span> &nbsp;share <b>.576</b> &middot; walkers 4451/2375 &middot; piles 21/7 &middot; bought 67 beacons, 5 spores</figcaption></figure>
+<figure><img src="idle-idle-075.jpg" alt="Both idle at 1:15" width="768" height="440" loading="lazy"><figcaption><span class="t">1:15</span> &nbsp;share <b>.550</b> &middot; walkers 4877/3178 &middot; piles 17/11</figcaption></figure>
+<figure><img src="soft-idle-090.jpg" alt="Gold playing soft against idle violet at 1:30" width="768" height="440" loading="lazy"><figcaption><span class="t">1:30</span> &nbsp;share <b>.619</b> &middot; walkers 5340/842 &middot; piles 26/2 &middot; bought 79 beacons, 8 spores</figcaption></figure>
+<figure><img src="idle-idle-090.jpg" alt="Both idle at 1:30" width="768" height="440" loading="lazy"><figcaption><span class="t">1:30</span> &nbsp;share <b>.562</b> &middot; walkers 5005/2879 &middot; piles 19/9</figcaption></figure>
+    </div>
+    <p class="note">Left alone, gold has the better side of this dish and eats 57.2% by the bell. Playing soft it eats 67.1%, and violet is gone at 1:43.</p>
+  </section>
+
+  <section style="display:grid;gap:14px">
+    <div class="col">
+      <h2>Soft against the defender</h2>
+      <p>Dish seed 3: <span class="you">gold soft</span> against <span class="them">violet fort</span>, which tithes 10% and reinforces any pile the rival eats at. Fort's spores always land after soft's.</p>
+    </div>
+    <div class="trio"><figure><img src="soft-fort-015.jpg" alt="Gold soft against violet fort at 0:15" width="768" height="440" loading="lazy"><figcaption><span class="t">0:15</span> &nbsp;share <b>.571</b> &middot; walkers 3261/1620 &middot; piles 17/6 &middot; bought 11 beacons + 2 spores / 7 + 2</figcaption></figure>
+<figure><img src="soft-fort-030.jpg" alt="Gold soft against violet fort at 0:30" width="768" height="440" loading="lazy"><figcaption><span class="t">0:30</span> &nbsp;share <b>.673</b> &middot; walkers 4597/658 &middot; piles 21/3 &middot; bought 23 + 5 / 17 + 2</figcaption></figure>
+<figure><img src="soft-fort-045.jpg" alt="Gold soft against violet fort at 0:45" width="768" height="440" loading="lazy"><figcaption><span class="t">0:45</span> &nbsp;share <b>.766</b> &middot; walkers 5352/33 &middot; piles 26/0 &middot; bought 29 + 8 / 20 + 2</figcaption></figure></div>
+    <p class="note">Violet is gone at 0:47, with gold at 77.5% of the food eaten.</p>
+  </section>
+
+  <section class="col">
+    <h2>Why soft wins</h2>
+    <ol>
+      <li><b>The field is full by 0:10.</b> Each mould stands on every pile of its own half within ten seconds, so there is little to expand into, and racing for new food (boom) loses even to doing nothing.</li>
+      <li><b>A pile feeds 40 eaters, shared by head count.</b> Extra walkers count only where the moulds meet. A spore on the rival's thinnest pile wins the head count there at once.</li>
+      <li><b>Fights favour the fed four to one.</b> The spore lands on food, so it fights at the good rate, and the rival's tube beyond it loses its food and starves. Losing piles loses fights, which loses more piles.</li>
+      <li><b>The food runs out at about 1:50</b>, so a late plan has nothing left to win.</li>
+    </ol>
+    <p>The defender's walkers are spread over every pile, and anything it buys lands after the attack. Raid, which hits the nearest pile however well held, comes second.</p>
+  </section>
+
+  <section class="col">
+    <h2>Looking for an answer to soft</h2>
+    <p>Four changes, 2 dishes from both sides each, so these are signs rather than verdicts.</p>
+    <div class="scroll">
+    <table class="data">
+      <thead><tr><th>Change</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Guard: beacons on its own thinnest border piles before any attack, spores where attacked</td><td>lost to soft 4/4, and to idle 4/4</td></tr>
+        <tr><td>Lean: soft's target with beacons only, 10% tithe</td><td>lost to soft 4/4, won 1 of 4 against idle: beacons alone do about nothing</td></tr>
+        <tr><td>Spores only within 25 cells of your own fed tube</td><td>soft still beat boom, centre and fort 4/4, idle 3/4: the field is so meshed that everything is in reach</td></tr>
+        <tr><td>Spores land asleep for 5 s, holding their cells but fighting as unfed</td><td>soft still beat boom, fort and guard 4/4; idle drew level, 2/4</td></tr>
+        <tr><td>The same, but spores at home wake at once</td><td>no change: soft 4/4 against boom, fort and guard; idle 2/4</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>The only thing that dented soft was a thick, untithed mould against spores that land asleep. Being thick everywhere answers an attack on the thinnest spot once the attack is slow enough, but no defender that spends money found that answer.</p>
+  </section>
+
+  <section class="col">
+    <h2>What could make it deeper</h2>
+    <ol>
+      <li><b>A cheap, quick defence.</b> A short, strong rally that pulls every walker near one of your piles onto it for a few seconds. With spores that land asleep, attack would be slow and dear and defence quick and cheap, which is the shape where attack beats greed, greed beats defence and defence beats attack.</li>
+      <li><b>A price that rises.</b> Each spore within 30 s costs more than the last, so you cannot hit everywhere and the target matters.</li>
+      <li><b>Punishing the attacker.</b> A side that tithes hard is thin at home. A plan that answers an attack by hitting the attacker's own thinnest pile might out-race soft. Not yet tried.</li>
+      <li><b>A person.</b> These plans are one-line rules. A player who reads the picture, seeing where the rival is thin and where its spores sleep, may find answers no script did. The round robin says only that no simple rule beats soft.</li>
+    </ol>
+    <p class="note">Each idea is a change to test the same way: nine plans, 576 games, about 20 minutes on four runners.</p>
+  </section>
+
+  <footer class="col note">
+    <p>Source: <code>Reports/rts-skirmish-2026-11-10.md</code> in the slime-mold repo, with the raw games in <code>Reports/rts-skirmish-2026-11-10/raw/</code> and the analysis script beside them. The first round, where the bank was free money, gave the same winner: soft won all 7 of its pairings, 27 of 28 games.</p>
+  </footer>
+</div>

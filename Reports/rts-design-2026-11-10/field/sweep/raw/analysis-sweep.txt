@@ -1,0 +1,34 @@
+draw21: cycle does not hold
+  hunter v maze: hunter won 30/32, mean share 0.630, p 2.5e-07 holds
+  maze v cord: maze won 10/32, mean share 0.404, p 0.05 -
+  cord v hunter: cord won 31/32, mean share 0.607, p 1.5e-08 holds
+draw22: cycle does not hold
+  hunter v maze: hunter won 32/32, mean share 0.697, p 4.7e-10 holds
+  maze v cord: maze won 1/32, mean share 0.258, p 1.5e-08 reversed
+  cord v hunter: cord won 8/32, mean share 0.449, p 0.007 reversed
+draw23: cycle does not hold
+  hunter v maze: hunter won 32/32, mean share 0.709, p 4.7e-10 holds
+  maze v cord: maze won 1/32, mean share 0.366, p 1.5e-08 reversed
+  cord v hunter: cord won 19/32, mean share 0.516, p 0.38 -
+draw24: cycle does not hold
+  hunter v maze: hunter won 25/32, mean share 0.557, p 0.0021 holds
+  maze v cord: maze won 7/32, mean share 0.386, p 0.0021 reversed
+  cord v hunter: cord won 23/32, mean share 0.560, p 0.02 holds
+draw25: cycle does not hold
+  hunter v maze: hunter won 31/32, mean share 0.654, p 1.5e-08 holds
+  maze v cord: maze won 8/32, mean share 0.468, p 0.007 reversed
+  cord v hunter: cord won 25/32, mean share 0.584, p 0.0021 holds
+draw26: cycle does not hold
+  hunter v maze: hunter won 32/32, mean share 0.667, p 4.7e-10 holds
+  maze v cord: maze won 4/32, mean share 0.359, p 1.9e-05 reversed
+  cord v hunter: cord won 32/32, mean share 0.647, p 4.7e-10 holds
+draw27: cycle does not hold
+  hunter v maze: hunter won 26/32, mean share 0.546, p 0.00054 holds
+  maze v cord: maze won 0/32, mean share 0.347, p 4.7e-10 reversed
+  cord v hunter: cord won 31/32, mean share 0.582, p 1.5e-08 holds
+draw28: cycle does not hold
+  hunter v maze: hunter won 20/32, mean share 0.518, p 0.22 -
+  maze v cord: maze won 4/32, mean share 0.443, p 1.9e-05 reversed
+  cord v hunter: cord won 29/31, mean share 0.538, p 4.6e-07 holds
+cycle holds on 0 of 8 new layouts
+Holm over all 24 links: 20 survive (either direction)

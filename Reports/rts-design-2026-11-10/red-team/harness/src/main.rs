@@ -707,7 +707,16 @@ fn main() {
             let seed = args[1].parse::<u64>().unwrap();
             let plans = [Plan::parse(&args[2]).expect("plan"), Plan::parse(&args[3]).expect("plan")];
             let trace = std::env::var("TRACE").is_ok();
+            // LOOK=DIR: a still of the dish every 15 s.
+            let look = std::env::var("LOOK").ok();
             let mut sk = Skirmish::new(seed, [Some(plans[0]), Some(plans[1])]);
+            // RULES="spore_reach=30 spore_cost=1500": other prices and reaches.
+            if let Ok(rules) = std::env::var("RULES") {
+                for kv in rules.split_whitespace() {
+                    let (k, v) = kv.split_once('=').expect("name=value");
+                    assert!(sk.rules.set(k, v), "rule {kv}");
+                }
+            }
             let t0 = std::time::Instant::now();
             let mut at60 = 0.5;
             while sk.dish.phase != Phase::Over && sk.dish.t < 200 * SPS {
@@ -716,6 +725,26 @@ fn main() {
                 let t = sk.dish.t;
                 if t == 60 * SPS {
                     at60 = sk.share();
+                }
+                if let Some(dir) = &look {
+                    if t.is_multiple_of(15 * SPS) {
+                        let name = format!("{dir}/duel-s{seed}-{}-{}-{:03}s.png", plans[0].name(), plans[1].name(), t / SPS);
+                        still(&sk.dish, &name);
+                        let held = |s: usize| (0..sk.dish.piles.len()).filter(|&i| sk.eaters(s, i) > sk.eaters(1 - s, i)).count();
+                        println!(
+                            "  still t={} share={:.3} walkers={}/{} held={}/{} bought={}+{}/{}+{}",
+                            t / SPS,
+                            sk.share(),
+                            sk.walkers(0),
+                            sk.walkers(1),
+                            held(0),
+                            held(1),
+                            sk.sides[0].tally.beacons,
+                            sk.sides[0].tally.spores,
+                            sk.sides[1].tally.beacons,
+                            sk.sides[1].tally.spores
+                        );
+                    }
                 }
                 if trace && t.is_multiple_of(10 * SPS) {
                     let held = |s: usize| (0..sk.dish.piles.len()).filter(|&i| sk.eaters(s, i) > sk.eaters(1 - s, i)).count();
