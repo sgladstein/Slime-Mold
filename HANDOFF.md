@@ -9,7 +9,8 @@ here when its page's **Now** changes, and keep the detail there (owner,
 hand-off at the 2026-11-10 account move; everything it points to is in this
 repository.
 
-**Read first:** this page, then [`CLAUDE.md`](CLAUDE.md) (how to work here),
+**Read first:** this page, then [ROADMAP.md](ROADMAP.md) (every plan in one
+order), then [`CLAUDE.md`](CLAUDE.md) (how to work here),
 then the [wiki page](wiki/index.md) for whatever you touch, then its
 reports ([`Reports/README.md`](Reports/README.md) indexes them all).
 
@@ -21,20 +22,26 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
 
 - [Keep It Alive](wiki/dishes/keep-it-alive.md): the endless dish works, but
   which of two humps a game lands in (dead by about 5:00, or past 7:20) is
-  luck so far.
+  luck so far: traced, it turns on whether the mould sleeps near the next
+  landing, which shows only 5 s ahead.
 - [The Wild One](wiki/dishes/the-wild-one.md): scored by your share of the
   food eaten; the first star is the opening salt wall, the rest is aim.
-- The lesson and the three puzzle dishes (Behind the Wall, Beat the Ruler,
-  Running Dry): no page yet; [`Reports/mould-probe-2026-11-07.md`](Reports/mould-probe-2026-11-07.md).
-- Tools: [the lamp](wiki/tools/lamp.md) pushes and dries;
-  [the knife](wiki/tools/knife.md) moves nothing in The Wild One;
-  [water and sleep](wiki/model/water-and-sleep.md) carry mould through
-  famine in Keep It Alive. Oats and salt: no page yet.
-- Look: the from-the-simulation look is the default, F7 the old tube look;
-  no page yet, [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md).
-- Model defaults: sensor angle 45 degrees (22.5 on Keep It Alive and some
-  dishes), reach 9, food flow off; no page yet,
-  [`Reports/dead-ends.md`](Reports/dead-ends.md) for reach.
+- [The lesson and the three puzzle dishes](wiki/dishes/puzzle-dishes.md)
+  (Behind the Wall, Beat the Ruler, Running Dry): pass their bar at 45
+  degrees; review 1 would keep them as a side pack.
+- Tools: [oats](wiki/tools/oats.md) lead, [the lamp](wiki/tools/lamp.md)
+  pushes and dries, [salt](wiki/tools/salt.md) walls off (it is The Wild
+  One's first star), [the knife](wiki/tools/knife.md) moves nothing in The
+  Wild One; [water and sleep](wiki/model/water-and-sleep.md) carry mould
+  through famine in Keep It Alive.
+- [The simulation look](wiki/looks/simulation-look.md) is the default, F7
+  the old tube look.
+- [Sensor angle and reach](wiki/model/sensors.md): 45 degrees by default,
+  22.5 on Keep It Alive and The Wild One, reach 9. Food flow is off; no
+  page yet.
+- Scale: [the mould at scale](wiki/model/scale.md). The dish holds a few dozen
+  loops where Jenson's GPU version holds hundreds; a six-phase GPU plan is
+  reviewed and not started.
 - How it is judged: [the census](wiki/method/census.md).
 
 ## Decisions the owner has not made
@@ -44,7 +51,8 @@ Ask each again; none has an answer to assume.
 1. **What to fix first after review 2.** Asked on a card 11-10 15:12Z, never
    answered. The Wild One's scoring has since been done (PR #6), so what is
    left of the question is whether to trace Keep It Alive's luck next or wait
-   until the owner has played both dishes.
+   until the owner has played both dishes. Re-asked 11-10 ~18:05Z; the trace
+   was run on the recommended option meanwhile (measurement only).
    [`Reports/mould-review-thread-handoff-2026-11-10.md`](Reports/mould-review-thread-handoff-2026-11-10.md)
 2. **Grains or glints** for walkers in the tube look. Only matters while F7
    is kept. [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md)
@@ -54,6 +62,21 @@ Ask each again; none has an answer to assume.
    from the owner's hand. [`Reports/mould-probe-2026-11-07.md`](Reports/mould-probe-2026-11-07.md), "Food that flows"
 5. **The Organ and the Wanderer:** keep, change or drop. Neither has a
    verdict.
+6. **The GPU plan** ([`Reports/gpu-plan-2026-11-10.md`](Reports/gpu-plan-2026-11-10.md),
+   [page](wiki/model/scale.md)): start phases 1 and 2; which machine and GPU
+   the owner plays on (phase 2's timing test runs there); all-integer
+   simulation or floats (phase 1 measures it first); upload Jones 2011 before
+   phase 4; hold the Pixel_Physics multi-core renderer port until the phase 2
+   gate. Owner 11-10 17:24Z: "I like this plan, but run an independent review
+   agent first." The review is folded in; no phase has a go yet.
+7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
+   *Risks and open questions*): should it wait for the queued work or take
+   over The Wild One's next steps (its Stage 0 answers the same mid-game
+   question); is a fog of war allowed if it is drawn from a held quantity;
+   two keepers, or three-to-four.
+8. **Sound for the game:** wanted at all? The Pixel_Physics review
+   recommends starting from that repo's `src/audio/` if so; the game window
+   is silent today.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
@@ -62,10 +85,14 @@ with no engine, is in §5 of
 
 ## Next steps, in order
 
-1. **Keep It Alive: trace individual games** to find what puts one in the
-   short hump or the long one, then give that choice to the player. Review 2's
-   untested guess: whether sleeping mould is within reach when a far pile lands
-   (about the twelfth pile, gap past 140 cells).
+How these sit against the GPU plan, the Pixel_Physics ports and the RTS,
+with what each waits on and which thread owns it: [ROADMAP.md](ROADMAP.md).
+
+1. **Keep It Alive: give the player the choice that decides the hump.**
+   Traced: the first pile landing on mostly-asleep mould decides it, by
+   whether a sleeper is within water reach. Next: a 20 s landing preview and a
+   hand that uses it, on fresh seeds
+   ([`Reports/mould-keep-alive-luck-2026-11-10.md`](Reports/mould-keep-alive-luck-2026-11-10.md)).
 2. **The Wild One: make the middle of the game matter.** Late food on the seam
    was tried and added luck, not play (`Reports/dead-ends.md`). Separate which
    of lamp, snip and oats needs the precision before trying again.

@@ -1,0 +1,76 @@
+q	set	grade	wrong_numbers	note
+Q1	X	P	0	reach 9 only; reason not found
+Q1	Y	P	0	measurements but not the why (senses less far)
+Q1	Z	C	0	
+Q2	X	C	0	
+Q2	Y	C	0	
+Q2	Z	C	0	
+Q3	X	P	0	original rule (walkers at bell) not stated
+Q3	Y	P	0	no lead-moved-by-half
+Q3	Z	C	0	
+Q4	X	P	0	no 5-3 paired count, no warden pair
+Q4	Y	P	0	no warden with/without snip pair
+Q4	Z	C	0	
+Q5	X	N	0	
+Q5	Y	C	0	
+Q5	Z	C	0	
+Q6	X	P	0	only 5:30 named
+Q6	Y	C	0	
+Q6	Z	C	0	
+Q7	X	P	0	no oat-saver range or p
+Q7	Y	C	0	
+Q7	Z	C	0	
+Q8	X	N	0	
+Q8	Y	C	0	
+Q8	Z	C	0	
+Q9	X	P	0	no 0.25/0.7 thresholds or 20 s life
+Q9	Y	C	0	
+Q9	Z	C	0	
+Q10	X	P	0	on-tube 5/5 vs 0/5 only; no why or beside-tube
+Q10	Y	C	0	
+Q10	Z	C	0	
+Q11	X	N	0	
+Q11	Y	C	0	
+Q11	Z	C	0	
+Q12	X	N	0	
+Q12	Y	C	0	
+Q12	Z	C	0	
+Q13	X	P	0	no 1 between / 5:30 once
+Q13	Y	C	0	
+Q13	Z	C	0	
+Q14	X	W	1	says 1 star on 8 of 8; key 7 of 8
+Q14	Y	C	0	
+Q14	Z	C	0	
+Q15	X	C	0	
+Q15	Y	C	0	
+Q15	Z	C	0	
+Q16	X	C	0	
+Q16	Y	C	0	
+Q16	Z	C	0	
+Q17	X	C	0	
+Q17	Y	C	0	
+Q17	Z	C	0	
+Q18	X	N	0	
+Q18	Y	C	0	
+Q18	Z	C	0	
+Q19	X	N	0	
+Q19	Y	C	0	
+Q19	Z	C	0	
+Q20	X	N	0	
+Q20	Y	C	0	
+Q20	Z	C	0	
+Q21	X	N	0	
+Q21	Y	C	0	
+Q21	Z	C	0	
+Q22	X	P	0	no paired counts; oats missing
+Q22	Y	C	0	
+Q22	Z	C	0	
+Q23	X	N	0	
+Q23	Y	C	0	
+Q23	Z	C	0	
+Q24	X	P	0	no times or results
+Q24	Y	C	0	
+Q24	Z	C	0	
+Q25	X	P	0	only 0 stars; no lifetime or water result
+Q25	Y	C	0	
+Q25	Z	C	0	

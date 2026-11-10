@@ -108,3 +108,9 @@ coasted to the ten-minute cap. Both levers were needed.
 - Wild second mould: next.
 - Finer tubes (sensor reach about 6): still to come, and they move the
   balance, so these numbers will need measuring again.
+
+*Note, 2026-11-10 (hand-off triage):* all three are since done. The wet
+ground, sleeping mould (a brown crust) and the water preview are drawn
+(`wet_field`, `sleep_field` and the legend in `src/mould/look.rs`); the wild
+mould is [The Wild One](mould-wild-one-2026-11-10.md); finer tubes were
+measured on every dish and kept at reach 9 ([`dead-ends.md`](dead-ends.md)).

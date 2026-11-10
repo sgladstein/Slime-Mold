@@ -1,0 +1,25 @@
+Q1. What sensor reach (sensor_offset) does the mould use, and why was a shorter reach (about 6) not kept? Give the numbers.
+Q2. How is The Wild One scored today, and what are its star bars?
+Q3. Why was The Wild One's scoring changed from what it was first? Give the numbers.
+Q4. In The Wild One, what does the snip achieve on its own, compared with doing nothing? Give the paired result.
+Q5. In Keep It Alive, how long does doing nothing live (range and median, 16 seeds)?
+Q6. What are Keep It Alive's three star times?
+Q7. In Keep It Alive, how does the water hand compare with the oat-saver hand, paired over 16 seeds?
+Q8. How many water drops does the player hold, how fast does one come back, and how big is a drop?
+Q9. What does the lamp do to the ground on a wet dish, and what happens to mould there?
+Q10. Why does the lamp push the mould instead of repelling it through the walkers' sensors? Give the measurement.
+Q11. What are the lamp's push value and reach?
+Q12. How long does a snip's wound stay open?
+Q13. Describe the "two humps" in Keep It Alive's lifetimes, with the counts.
+Q14. In The Wild One, what food share does the scripted warden get if it lets go at 30 s, and how many stars?
+Q15. What does the wild rival cost per frame?
+Q16. List the decisions the owner has not yet made.
+Q17. What did the owner pick as the first out-of-the-dish game, and when?
+Q18. Why does the storm cut only one tube? Give the numbers.
+Q19. How long does a sleeping walker live on average?
+Q20. How many walkers do the wild mould and the player's mould start with in The Wild One?
+Q21. In independent review 2, what was the strict significance bar, and why?
+Q22. In The Wild One, which single tools win on their own against doing nothing? Give the paired results for each tool.
+Q23. Why does food give off its scent in its own field rather than in the trail field?
+Q24. What happened with the late piles on the seam in The Wild One?
+Q25. In Keep It Alive, how long does a random hand live, and does water help a random hand?
