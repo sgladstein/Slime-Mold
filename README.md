@@ -12,6 +12,10 @@ cargo run --release --bin mould -- 3       # free dish seed 3   (-- 0 the lesson
 cargo run --release --bin organ            # side prototype: the network plays a rhythm
 ```
 
+**Picking this up after the 2026-11-10 account move? Start at
+[HANDOFF.md](HANDOFF.md):** where the game stands, the owner's open
+decisions, and the next steps.
+
 Keys are on screen. F2-F6 cycle the looks, T opens the tuning panel (saved
 to `mould-tune.txt`), M the dish picker, H the briefing card.
 
@@ -61,6 +65,8 @@ cargo test --release
 cargo clippy --all-targets --release --locked -- -D warnings
 ```
 
-CI runs both on every push, plus a build of the organ's sound device for
-macOS and Windows (`.github/workflows/ci.yml`). Sound on Linux needs
+CI runs both on every pull request and every push to main, plus a build of
+the organ's sound device for macOS and Windows (`.github/workflows/ci.yml`).
+A pull request that changes only `Reports/`, `handoff/`, `research/` or
+`*.md` skips both build jobs. Sound on Linux needs
 `--features audio-alsa` and `libasound2-dev`.
