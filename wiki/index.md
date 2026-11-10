@@ -27,6 +27,7 @@ Keep this file under 150 lines; lint checks it.
 ## Looks
 
 - [The simulation look](looks/simulation-look.md): the default; the mould drawn straight from trail, hunger and walkers; F7 the old tube look.
+- [Sound](looks/sound.md): on by default, S toggles; every sound a count off the dish; the owner has not listened yet.
 
 ## Games in design
 

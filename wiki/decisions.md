@@ -3,7 +3,7 @@ title: The owner's rulings and decided choices
 kind: method
 status: current
 updated: 2026-11-10
-sources: [CLAUDE.md, HANDOFF.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
+sources: [CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
 code: [Params::pieces]
 ---
 
@@ -23,6 +23,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Ruling | Owner's words | Source |
 |---|---|---|---|
+| 2026-11-10 19:44 | Threads with long test runs may start up to 4 Haiku runner threads for extra compute; runners make no decisions, run only the commands given and send the output back | "Feel free to start some haiku runner threads just to get additional compute. If you want to do that, they make no decisions and just run the code you tell them and send the output back to you. You can run up to 4 threads if you want" | (project chat), [CLAUDE.md](../CLAUDE.md) |
 | 2026-11-10 18:15 | A brainstorm for a new direction starts from the model, not from the demo's tools (lamp, oats, salt, knife, water), which were built for a herding puzzle | "it seems like all the brainstorm agents are just taking the current tools ... I want to make sure we are truly brainstorms how this should best work and not doing limited exploration on what exists in our current demo." | [RTS brainstorm](../Reports/rts-design-2026-11-10/brainstorm/README.md) |
 | 2026-11-10 17:47 | Each project thread merges its own pull requests | "all threads handle their own PR mergers" | (project chat) |
 | 2026-11-10 17:01 | Judge outside simulations by what is interesting to watch and could become play, not by how real they look | "our goal is not a realistic slime mold. It is interesting simulations that we can turn into a game." | [Jenson report](../Reports/jenson-physarum-2026-11-10.md), [scale](model/scale.md) |
@@ -38,6 +39,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-10 19:22 | Build sound for the game (HANDOFF decision 8), from Pixel_Physics's `src/audio/` | "yes to sound" | [Sound](looks/sound.md) |
 | 2026-11-10 18:56, card | Trace Keep It Alive's luck now rather than wait until the owner has played (HANDOFF decision 1; The Wild One's scoring half was already done in PR #6). The trace had been run meanwhile on that recommended option | card ("Trace it now") | [Keep It Alive](dishes/keep-it-alive.md), [luck report](../Reports/mould-keep-alive-luck-2026-11-10.md) |
 | 2026-11-10 17:54 | GPU runs go on the owner's home desktop, a GeForce GTX 1070 (the GPU Jenson used), which is not the machine they usually work at | "my home machine has a geforce 1070. Not sure if we can access it right now." ... "It is not the computer that I can currently working on though." | [scale](model/scale.md) |
 | 2026-11-10 17:52 | No on-screen readability probe for the RTS yet: still early planning | "readability can be solved, I think we are still in the early planning stages, so we don't need that yet." | [RTS brainstorm](../Reports/rts-design-2026-11-10/brainstorm/README.md) |

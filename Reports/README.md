@@ -156,5 +156,8 @@ move.
   licence gates, `crispfont.py`. Misfits: capitals-only font, missing OFL notice, unmeasured release profile.
   `Dish::state_hash` and `every_dish_replays_bit_for_bit` built: all seven dishes replay bit for bit, and a
   clock-seeded draw turns the test red.
+- [mould-sound-2026-11-10.md](mould-sound-2026-11-10.md) — sound for the game (owner: "yes to sound", 19:22Z). Pixel_Physics's
+  listener / voice bank / device split with the mould's own sounds, every one a count off the dish; S toggles.
+  Same game bit for bit with sound on; listener about 1 us a frame. Seven recordings on the Mould Sound page.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
