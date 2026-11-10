@@ -1,0 +1,7 @@
+/target
+**/*.rs.bk
+__pycache__/
+# The T tuning panel's saved settings (src/mould/tune.rs, TUNE_FILE): one
+# player's knobs, written next to wherever the game was run from.
+/mould-tune.txt
+/.claude/settings.local.json

@@ -1,0 +1,97 @@
+<title>Keep It Alive</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Same single dark look as the other mould pages. Paired columns: doing nothing left, the oat-saver right, same seed and moment; stack on phones. */
+:root{
+  --ground:#0d1117; --panel:#161c24; --ink:#e9e6d8; --muted:#98a0a6; --rule:#2a323c; --gold:#f2b84b; --good:#9fd3a8;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+body{background:var(--ground);color:var(--ink);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:66rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:2rem 4rem;display:flex;flex-direction:column;gap:2.2rem}
+h1,h2{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(1.8rem,5vw,2.5rem)} h2{font-size:1.3rem;color:var(--gold)}
+p{margin:0;max-width:68ch}
+.kicker{font:500 .78rem/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:.85rem}
+ul{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:.4rem;max-width:68ch}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+@media (max-width:640px){.pair{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:.35rem;min-width:0}
+figure img{width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);display:block;background:#000}
+figcaption{font:500 .88rem/1.35 var(--mono);color:var(--ink)}
+figcaption span{color:var(--muted)}
+.count{font:500 .82rem/1.45 var(--mono);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:.45rem .7rem;font-variant-numeric:tabular-nums;max-width:68ch}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font:500 .86rem/1.4 var(--mono);font-variant-numeric:tabular-nums;min-width:34rem}
+th,td{text-align:left;padding:.4rem .8rem;border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:500}
+.good{color:var(--good)}
+code{font:500 .88em var(--mono);background:var(--panel);padding:.05rem .3rem;border-radius:4px}
+.ask{border-left:3px solid var(--gold);padding-left:.9rem}
+</style>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:.6rem">
+    <p class="kicker">Mould · Keep It Alive · first cut · 10 Nov 2026</p>
+    <h1>An endless dish where spending oats at the right time keeps the mould alive</h1>
+    <p>Keep It Alive is Running Dry with no bell, at 22.5°. Small piles run out, and a new one lands every 20 s, a little further from the last each time. You get 6 oats and they don't come back. The dish ends when the mould dies, and the score is how long it lived.</p>
+  </header>
+
+  <section class="ask">
+    <h2>Saving your oats beats doing nothing</h2>
+    <ul>
+      <li>Over 16 seeds, doing nothing lives 1:21–4:08 (median 2:27), and random play 1:23–3:22.</li>
+      <li>A scripted hand that saves its oats lives 3:18–5:40 (median 3:49). It beats doing nothing on 14 of 16 seeds (sign test p = 0.004) and random play on 15 of 16. It only lays oats once the food the mould is eating is nearly gone and the next pile is out of reach.</li>
+      <li>Timing is what matters. The same hand laying oats as soon as a pile appears did no better than doing nothing (1:59–3:29 on the first 8 seeds). For the first minute and a half, piles land on mould that is already there, so early oats are wasted.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Seed 2: doing nothing (left) and saving oats (right)</h2>
+    <div class="pair">
+      <figure><img src="idle-060.jpg" alt="Doing nothing at 1:00"><figcaption>Do nothing, 1:00</figcaption></figure>
+      <figure><img src="intended-060.jpg" alt="Oat-saver at 1:00"><figcaption>Saving oats, 1:00 <span>· no oats spent yet</span></figcaption></figure>
+      <figure><img src="idle-120.jpg" alt="Doing nothing at 2:00"><figcaption>Do nothing, 2:00</figcaption></figure>
+      <figure><img src="intended-120.jpg" alt="Oat-saver at 2:00"><figcaption>Saving oats, 2:00</figcaption></figure>
+      <figure><img src="idle-160.jpg" alt="Doing nothing at 2:40"><figcaption>Do nothing, 2:40 <span>· 2 mould left; it died at 2:44</span></figcaption></figure>
+      <figure><img src="intended-160.jpg" alt="Oat-saver at 2:40"><figcaption>Saving oats, 2:40</figcaption></figure>
+      <figure><img src="intended-240.jpg" alt="Oat-saver at 4:00"><figcaption>Saving oats, 4:00 <span>· oats all spent, still alive</span></figcaption></figure>
+      <figure><img src="intended-290.jpg" alt="Oat-saver at 4:50"><figcaption>Saving oats, 4:50 <span>· died at 4:54</span></figcaption></figure>
+    </div>
+    <p class="count">Seed 2. Doing nothing lived 2:44; saving oats lived 4:54. Most mould at once was 1,599 for both. Bright piles still have food, dull brown ones are eaten out, and the dashed ring is the next pile landing.</p>
+  </section>
+
+  <section>
+    <h2>The card and the end</h2>
+    <div class="pair">
+      <figure><img src="alive-brief.jpg" alt="Keep It Alive briefing card"><figcaption>The briefing card</figcaption></figure>
+      <figure><img src="alive-intended-end.jpg" alt="End of the oat-saver's run"><figcaption>The end <span>· "Lived 4:54, at most 1599 mould"</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Every seed, how long it lived</h2>
+    <div class="tbl"><table>
+      <tr><th>Seed</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th></tr>
+      <tr><td>Do nothing</td><td>2:32</td><td>2:44</td><td>3:06</td><td>4:08</td><td>2:22</td><td>1:21</td><td>2:10</td><td>2:26</td><td>2:01</td><td>2:16</td><td>2:27</td><td>2:39</td><td>2:21</td><td>3:22</td><td>2:48</td><td>1:40</td></tr>
+      <tr><td>Random</td><td>2:27</td><td>2:31</td><td>1:40</td><td>3:02</td><td>1:23</td><td>3:16</td><td>1:58</td><td>2:37</td><td>1:59</td><td>3:13</td><td>2:29</td><td>2:03</td><td>2:41</td><td>3:22</td><td>3:17</td><td>2:34</td></tr>
+      <tr><td>Old plan hand</td><td>2:29</td><td>2:39</td><td>2:44</td><td>3:06</td><td>3:03</td><td>2:53</td><td>2:43</td><td>3:43</td><td>2:00</td><td>2:40</td><td>1:18</td><td>2:00</td><td>1:39</td><td>4:07</td><td>3:52</td><td>2:19</td></tr>
+      <tr><td class="good">Saving oats</td><td>3:20</td><td>4:54</td><td>4:22</td><td>3:49</td><td>4:10</td><td>4:21</td><td>5:40</td><td>3:48</td><td>3:42</td><td>3:49</td><td>3:18</td><td>3:42</td><td>4:18</td><td>3:19</td><td>4:54</td><td>3:18</td></tr>
+    </table></div>
+    <ul>
+      <li>Stars are set past doing nothing's longest run: alive at 4:15, 5:30 and 6:40. Doing nothing and random play get 0 stars on all 16 seeds. The scripted hand gets 1 star on 4 seeds; stars 2 and 3 are for a person to beat it.</li>
+      <li>Why the mould dies: it wanders onto a new pile but can't start eating it until fed tube grows within reach. Once the jumps grow past about 50 cells, it can't bridge them alone.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Not yet</h2>
+    <ul>
+      <li>The lamp has no job here yet. That's what water and sleep are for, next: a wet field you lay, and dry mould that sleeps until water wakes it.</li>
+      <li>Eaten piles stay on the dish as dull discs. They're real (spent food), but they pile up over five minutes.</li>
+      <li>Finer tubes (sensor reach about 6) are still to come. The looks are in their own thread.</li>
+    </ul>
+    <p class="count">Try it: <code>cargo run --release --bin mould</code>, open the dishes, then Keep It Alive (open from the start).</p>
+  </section>
+</div>

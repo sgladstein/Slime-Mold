@@ -1,0 +1,9 @@
+mouldprobe: seeds [12] players ["random"] scale 2 oats None stray_reach None params Params { sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, deposit: 5.0, keep: 0.9, food_deposit: 20.0, scent_keep: 0.97, light_weight: 0.0, light_fade: 0.0, tube: 1.0, feed_reach: 70, upkeep: 0.004, eat: 0.03, table: 40, fed_scent: 0.15, divide: 0.03, crowd: 7, starve: 0.0016666667, hungry: 0.0011111111, burn: 0.0, lamp_reach: 16.0, lamp_soft: false, push: 0.9, pieces: true, wound: 4.0, stray_reach: inf, stray_grace: 2.0, oats_grace: 8.0, flow: false, carry_cap: 3.0, share: 0.5, sap: true, sap_speed: 2, absorb: 0.03, stream: 1.0, stream_bias: 0.35, want: 1.0, pulse_seconds: 2.5, pulse_strength: 0.8, wall_grow: 1.0, wall_half_life: 30.0, wall_pull: 1.0, settle_seconds: 0.0, explore_angle: 0.3926991, spared: 0, spared_scent: 0.5, foe_repel: 1.0, wet: false, wet_base: 0.5, wet_relax: 0.0005, dry_light: 0.05, crust_wet: 0.25, crust_rate: 0.05, revive_wet: 0.7, revive_rate: 0.05, crust_life: 20.0, crust_trail: 0.6, wake_grace: 5.0, water_r: 12.0 }
+
+== dish 5 THE WILD ONE: STARS: MORE THAN IT. 2X AS MUCH. NONE OF IT LEFT ==
+seed 12    random: 2 stars  YOU 1027, WILD 22 | NOW CLEAR IT OFF THE DISH  mould 949  oats 13 snips 3 lamp 71s joins 9  water 0 slept 0 woke 0 died asleep 0  wild 22  (25.1 s)
+
+== ship bar: do nothing 0, random at most 1, intended 3 (stars per seed [12]) ==
+dish 5 THE WILD ONE     random [2]  -> FAILS THE BAR
+
+frame cost, dish 5 intended hand: 9000 frames, mean 8.63 ms, worst 30.58 ms

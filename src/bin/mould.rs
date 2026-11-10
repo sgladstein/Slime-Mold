@@ -1,7 +1,7 @@
 //! **Mould: herd a slime mould with a lamp.** `cargo run --release --bin mould`
 //!
 //! A probe of its own, not a lab seat: everything it does to a dish lives in
-//! `pixel_physics::mould`; this file is winit and `pixels` and nothing else,
+//! `slime_mould::mould`; this file is winit and `pixels` and nothing else,
 //! the split `src/bin/lab.rs` and `src/bin/druid.rs` use.
 //!
 //! The keys are on screen (the bottom line), and so is what the next click
@@ -40,12 +40,12 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use pixel_physics::mould::lesson::{Lesson, Step};
-use pixel_physics::mould::level::{Progress, DISHES, ENTRIES, FREE, WANDER};
-use pixel_physics::mould::look::{self, Style};
-use pixel_physics::mould::render::{self, Banner, Menu, QuitArm, View};
-use pixel_physics::mould::wander::{Outcome, FIRST_WALKERS};
-use pixel_physics::mould::{tune, Dish, Params, Phase, Tool, H, STEPS_PER_FRAME, W};
+use slime_mould::mould::lesson::{Lesson, Step};
+use slime_mould::mould::level::{Progress, DISHES, ENTRIES, FREE, WANDER};
+use slime_mould::mould::look::{self, Style};
+use slime_mould::mould::render::{self, Banner, Menu, QuitArm, View};
+use slime_mould::mould::wander::{Outcome, FIRST_WALKERS};
+use slime_mould::mould::{tune, Dish, Params, Phase, Tool, H, STEPS_PER_FRAME, W};
 use pixels::{Pixels, ScalingMode, SurfaceTexture};
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;

@@ -1,0 +1,43 @@
+# CI for the mould game. Kept to two jobs on purpose: the repo is private, so
+# Actions minutes are billed, and the whole crate builds and tests in a few
+# minutes on one runner. The toolchain is pinned to match rust-toolchain.toml
+# (Pixel_Physics learned that a floating `@stable` turns clippy red on its own
+# schedule).
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test + clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets --release --locked -- -D warnings
+      - run: cargo test --release --locked
+
+  sound:
+    name: sound device builds (organ)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup target add aarch64-apple-darwin x86_64-pc-windows-msvc
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - run: cargo clippy --lib --bins --release --locked --features audio-alsa -- -D warnings
+      - run: cargo check --locked --bin organ --target aarch64-apple-darwin
+      - run: cargo check --locked --bin organ --target x86_64-pc-windows-msvc

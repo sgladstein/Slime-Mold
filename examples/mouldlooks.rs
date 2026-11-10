@@ -11,10 +11,10 @@
 use std::sync::atomic::Ordering::Relaxed;
 use std::time::Instant;
 
-use pixel_physics::mould::look::{Style, FIELD, SMOOTH, STAIN, STARVE_LOOK, WALKER_LOOK};
-use pixel_physics::mould::play::{Plan, Player};
-use pixel_physics::mould::render::{self, View};
-use pixel_physics::mould::{Dish, Ground, Params, Tool, STEPS_PER_FRAME, STEPS_PER_SECOND};
+use slime_mould::mould::look::{Style, FIELD, SMOOTH, STAIN, STARVE_LOOK, WALKER_LOOK};
+use slime_mould::mould::play::{Plan, Player};
+use slime_mould::mould::render::{self, View};
+use slime_mould::mould::{Dish, Ground, Params, Tool, STEPS_PER_FRAME, STEPS_PER_SECOND};
 
 /// (tag, starving look, walker look, smoothing). Every look but `field`
 /// is the tube look (`FIELD` off); `field` is the mould drawn straight
@@ -86,7 +86,7 @@ fn main() {
     std::fs::create_dir_all(&out).unwrap();
     let p = Params { flow, sensor_angle: angle.to_radians(), ..Params::default() };
     let mut d = match level {
-        Some(k) => Dish::from_level(&pixel_physics::mould::level::DISHES[k - 1], seed),
+        Some(k) => Dish::from_level(&slime_mould::mould::level::DISHES[k - 1], seed),
         None => Dish::with_params(seed, p),
     };
     let mut pl = Plan::new();
@@ -143,7 +143,7 @@ fn main() {
             let thr = d.params.tube * 0.5;
             let tube: Vec<usize> = (0..d.trail.len()).filter(|&i| d.ground[i] == Ground::Agar && d.trail[i] > thr).collect();
             let fed = tube.iter().filter(|&&i| d.looks_fed(i)).count();
-            let lvl: Vec<f32> = tube.iter().filter_map(|&i| pixel_physics::mould::look::food_level(&d, i)).collect();
+            let lvl: Vec<f32> = tube.iter().filter_map(|&i| slime_mould::mould::look::food_level(&d, i)).collect();
             println!(
                 "t={sec}s walkers {} tube cells {} fed {} ({:.0}%)  food level on tube: {}",
                 d.walkers.len(),

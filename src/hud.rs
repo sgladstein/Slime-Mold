@@ -1,0 +1,400 @@
+//! On-screen text — M19/§9's UI-improvement pass's step 0, everything else
+//! in that section (brush label, hover inspector, keybind help) builds on
+//! this. The engine had zero on-screen text before this: `render.rs`'s own
+//! comment on the window title bar called it "cheaper than rendering text."
+//!
+//! A fixed-width 5x7 bitmap font, not the plan's originally-sketched full
+//! ASCII 0x20-0x7E (95 glyphs) range — deliberately scoped down to what the
+//! HUD actually needs: space, `A`-`Z`, `0`-`9`, and a small punctuation set
+//! (`. , : - / % ( ) [ ] ! ? + =`). Hand-authoring 95 accurate glyphs with no
+//! reference font to check against risks silently shipping wrong bitmap
+//! data for characters nothing exercises; every glyph actually defined here
+//! is a standard, easily-verified dot-matrix letterform. **HUD text is
+//! uppercase-only** as a direct consequence — every caller upper-cases its
+//! own string before calling `draw_text`, rather than this module silently
+//! rendering nothing (or garbage) for a lowercase letter it doesn't have a
+//! glyph for.
+
+/// Glyph width/height in pixels, plus one column/row of spacing baked into
+/// `draw_text`'s own advance rather than the glyph data — keeps the font
+/// table itself exactly 5 bits wide per row.
+pub const GLYPH_WIDTH: i32 = 5;
+pub const GLYPH_HEIGHT: i32 = 7;
+/// Pixels advanced between glyphs, beyond `GLYPH_WIDTH` itself.
+const GLYPH_SPACING: i32 = 1;
+
+/// One glyph: 7 rows, each the low 5 bits of a `u8` (bit 4 = leftmost
+/// column, bit 0 = rightmost) -- `0` unused for the top 3 bits of every row.
+type Glyph = [u8; 7];
+
+const BLANK: Glyph = [0, 0, 0, 0, 0, 0, 0];
+
+/// Whether the font can actually draw `c`, so a caller composing a fixed
+/// string can be tested for characters that would silently come out as a
+/// blank gap. `draw_text` upper-cases, so this does too.
+///
+/// Exists because that gap has shipped three times -- `[`/`]`, then the
+/// tunables panel's `_`/`<`/`>`, then `;`/`'` sitting blank in the help
+/// page for as long as they had been bound. A space is legitimately blank
+/// and is the one character this reports as present.
+pub fn has_glyph(c: char) -> bool {
+    let upper = c.to_ascii_uppercase();
+    upper == ' ' || glyph_for(upper) != BLANK
+}
+
+fn glyph_for(c: char) -> Glyph {
+    match c {
+        'A' => [0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
+        'B' => [0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110],
+        'C' => [0b01111, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b01111],
+        'D' => [0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110],
+        'E' => [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b11111],
+        'F' => [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000],
+        'G' => [0b01111, 0b10000, 0b10000, 0b10111, 0b10001, 0b10001, 0b01111],
+        'H' => [0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
+        'I' => [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b11111],
+        'J' => [0b00111, 0b00010, 0b00010, 0b00010, 0b00010, 0b10010, 0b01100],
+        'K' => [0b10001, 0b10010, 0b10100, 0b11000, 0b10100, 0b10010, 0b10001],
+        'L' => [0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111],
+        'M' => [0b10001, 0b11011, 0b10101, 0b10001, 0b10001, 0b10001, 0b10001],
+        'N' => [0b10001, 0b11001, 0b10101, 0b10011, 0b10001, 0b10001, 0b10001],
+        'O' => [0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
+        'P' => [0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000],
+        'Q' => [0b01110, 0b10001, 0b10001, 0b10001, 0b10101, 0b10010, 0b01101],
+        'R' => [0b11110, 0b10001, 0b10001, 0b11110, 0b10100, 0b10010, 0b10001],
+        'S' => [0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110],
+        'T' => [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100],
+        'U' => [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
+        'V' => [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01010, 0b00100],
+        'W' => [0b10001, 0b10001, 0b10001, 0b10101, 0b10101, 0b10101, 0b01010],
+        'X' => [0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001],
+        'Y' => [0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100],
+        'Z' => [0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b11111],
+        '0' => [0b01110, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b01110],
+        '1' => [0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
+        '2' => [0b01110, 0b10001, 0b00001, 0b00010, 0b00100, 0b01000, 0b11111],
+        '3' => [0b01110, 0b10001, 0b00001, 0b00110, 0b00001, 0b10001, 0b01110],
+        '4' => [0b00010, 0b00110, 0b01010, 0b10010, 0b11111, 0b00010, 0b00010],
+        '5' => [0b11111, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110],
+        '6' => [0b01110, 0b10000, 0b10000, 0b11110, 0b10001, 0b10001, 0b01110],
+        '7' => [0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b01000, 0b01000],
+        '8' => [0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b01110],
+        '9' => [0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110],
+        '.' => [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b01100, 0b01100],
+        ',' => [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b01100, 0b01000],
+        ':' => [0b00000, 0b01100, 0b01100, 0b00000, 0b01100, 0b01100, 0b00000],
+        '-' => [0b00000, 0b00000, 0b00000, 0b11111, 0b00000, 0b00000, 0b00000],
+        '/' => [0b00001, 0b00010, 0b00010, 0b00100, 0b01000, 0b01000, 0b10000],
+        '%' => [0b10001, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b10001],
+        '(' => [0b00100, 0b01000, 0b10000, 0b10000, 0b10000, 0b01000, 0b00100],
+        ')' => [0b00100, 0b00010, 0b00001, 0b00001, 0b00001, 0b00010, 0b00100],
+        // Square, not round like `(`/`)` -- caught by an independent visual
+        // check: the help overlay's own text uses `[`/`]` for the brush-
+        // size keybind, and this font had no glyph for either, so the
+        // rendered help screen showed a blank gap in place of both.
+        '[' => [0b11100, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11100],
+        ']' => [0b00111, 0b00001, 0b00001, 0b00001, 0b00001, 0b00001, 0b00111],
+        '!' => [0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000, 0b00100],
+        '?' => [0b01110, 0b10001, 0b00001, 0b00110, 0b00100, 0b00000, 0b00100],
+        '+' => [0b00000, 0b00100, 0b00100, 0b11111, 0b00100, 0b00100, 0b00000],
+        '=' => [0b00000, 0b00000, 0b11111, 0b00000, 0b11111, 0b00000, 0b00000],
+        // **The keep mark.** The roster tags a spared row `*1` so the keep
+        // list is readable at a glance, and this set had no `*` -- so the
+        // mark shipped as a blank gap and the only thing separating a spared
+        // row from an ordinary one was its tint, which is the single-channel
+        // readout the marker exists to avoid. Found the fourth time this
+        // exact omission has been found here, and again by looking at the
+        // rendered page rather than by any test.
+        //
+        // The params guard used to lean on this character's *absence* to
+        // catch markdown emphasis in a hover note. That check does not
+        // depend on the font any more -- it asserts on `**` directly, which
+        // is what it was always trying to say.
+        '*' => [0b00000, 0b10101, 0b01110, 0b11111, 0b01110, 0b10101, 0b00000],
+        // Added for the tunables panel: `_` because every tunable's name is
+        // a snake_case field name and rendering those as ragged gaps made
+        // them read as two separate words, and `<`/`>` for the pinned
+        // readout's own left/right adjust hint. Same class of omission the
+        // `[`/`]` comment above records finding by looking at the output.
+        '_' => [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b11111],
+        '<' => [0b00010, 0b00100, 0b01000, 0b10000, 0b01000, 0b00100, 0b00010],
+        '>' => [0b01000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b01000],
+        // Added for the help overlay's own keybinds, and the third time
+        // this exact omission has been found by looking at the output --
+        // see the `[`/`]` and `_`/`<`/`>` notes above. `;` (depth light)
+        // and `'` (glow shape) had been shipping as blank gaps in the help
+        // page for as long as they had been bound, so the page listed two
+        // keys it could not name; `` ` `` and `\` arrived with the water
+        // merge and would have done the same. `help_page_only_uses_glyphs_
+        // the_font_has` now fails for any character the page cannot draw.
+        ';' => [0b00000, 0b01100, 0b01100, 0b00000, 0b00000, 0b01100, 0b01000],
+        '\'' => [0b01100, 0b01100, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000],
+        '`' => [0b11000, 0b01100, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000],
+        '\\' => [0b10000, 0b01000, 0b01000, 0b00100, 0b00010, 0b00010, 0b00001],
+        ' ' => BLANK,
+        // Any other character (lowercase, accented, anything not in the set
+        // above) renders as blank rather than a mystery box or a panic --
+        // callers are expected to upper-case first, but a stray unsupported
+        // character (an apostrophe in a material name, say) should not take
+        // the whole label down with it.
+        _ => BLANK,
+    }
+}
+
+/// Draw `text` (upper-cased internally, so callers don't have to remember
+/// to) with its top-left corner at `(x, y)`, one call per glyph via `put`.
+/// Off-screen glyphs/pixels are simply clipped, the same as everything
+/// else `render.rs` draws.
+pub fn draw_text(frame: &mut [u8], width: u32, height: u32, x: i32, y: i32, text: &str, colour: [u8; 4]) {
+    let mut cursor_x = x;
+    for c in text.chars() {
+        let glyph = glyph_for(c.to_ascii_uppercase());
+        for (row, bits) in glyph.iter().enumerate() {
+            for col in 0..GLYPH_WIDTH {
+                if bits & (1 << (GLYPH_WIDTH - 1 - col)) != 0 {
+                    put(frame, width, height, cursor_x + col, y + row as i32, colour);
+                }
+            }
+        }
+        cursor_x += GLYPH_WIDTH + GLYPH_SPACING;
+    }
+}
+
+/// `draw_text` with each glyph pixel drawn as a `scale`-square block, so the
+/// text keeps its apparent size when the frame buffer is larger than the
+/// logical `WIDTH`x`HEIGHT` (`render::Hud`, and `Renderer::pixel_budget` for
+/// why the buffer grows at all). `(x, y)` and the advance stay in logical
+/// pixels; only the output lattice changes.
+pub fn draw_text_scaled(frame: &mut [u8], (width, height): (u32, u32), scale: i32, (x, y): (i32, i32), text: &str, colour: [u8; 4]) {
+    let s = scale.max(1);
+    let mut cursor_x = x;
+    for c in text.chars() {
+        let glyph = glyph_for(c.to_ascii_uppercase());
+        for (row, bits) in glyph.iter().enumerate() {
+            for col in 0..GLYPH_WIDTH {
+                if bits & (1 << (GLYPH_WIDTH - 1 - col)) != 0 {
+                    let (bx, by) = ((cursor_x + col) * s, (y + row as i32) * s);
+                    for dy in 0..s {
+                        for dx in 0..s {
+                            put(frame, width, height, bx + dx, by + dy, colour);
+                        }
+                    }
+                }
+            }
+        }
+        cursor_x += GLYPH_WIDTH + GLYPH_SPACING;
+    }
+}
+
+#[path = "hud_crisp.rs"]
+mod crisp;
+
+/// **The lab's crisp text**: `draw_text` on the same grid at exactly twice
+/// the resolution, with each glyph's antialiased coverage from a real face
+/// (`scripts/crispfont.py`) instead of the 5x7 dots blown up. `(x, y)` and
+/// the advance are logical, as for `draw_text_scaled` at scale 2, and a
+/// glyph's ink stays inside the 10x14 box a doubled 5x7 glyph fills plus one
+/// column -- so a page laid out for the dot font keeps its layout, and
+/// `text_width` stays true.
+///
+/// **Drawn into a premultiplied layer, not over the world.** The interface
+/// layer (`render::Hud::layer`) starts each repaint transparent and is
+/// composited over the box by the GPU, so coverage is an alpha: each pixel
+/// becomes `colour * a + dst * (1 - a)` in all four channels, which over a
+/// transparent pixel leaves a premultiplied colour and over an opaque panel
+/// is the ordinary blend. A character the table has no glyph for draws
+/// nothing, as in `draw_text`.
+pub fn draw_text_crisp(frame: &mut [u8], (width, height): (u32, u32), (x, y): (i32, i32), text: &str, colour: [u8; 4]) {
+    let (cw, ch) = (crisp::CELL_W as i32, crisp::CELL_H as i32);
+    let mut cursor_x = x * 2;
+    let top = y * 2;
+    let alpha = colour[3] as u32;
+    for c in text.chars() {
+        if let Some(cov) = crisp::coverage(c.to_ascii_uppercase()) {
+            for row in 0..ch {
+                let py = top + row;
+                if py < 0 || py >= height as i32 {
+                    continue;
+                }
+                for col in 0..cw {
+                    let px = cursor_x + col;
+                    let v = cov[(row * cw + col) as usize] as u32;
+                    if v == 0 || px < 0 || px >= width as i32 {
+                        continue;
+                    }
+                    let a = v * alpha / 255;
+                    let i = (py as usize * width as usize + px as usize) * 4;
+                    if a == 255 {
+                        frame[i..i + 3].copy_from_slice(&colour[..3]);
+                        frame[i + 3] = 255;
+                        continue;
+                    }
+                    for k in 0..3 {
+                        let d = frame[i + k] as u32;
+                        frame[i + k] = ((colour[k] as u32 * a + d * (255 - a) + 127) / 255) as u8;
+                    }
+                    let d = frame[i + 3] as u32;
+                    frame[i + 3] = ((255 * a + d * (255 - a) + 127) / 255) as u8;
+                }
+            }
+        }
+        cursor_x += (GLYPH_WIDTH + GLYPH_SPACING) * 2;
+    }
+}
+
+/// Whether the crisp table can draw `c` -- the same question `has_glyph`
+/// answers for the dot font, so a test can hold the two sets equal.
+pub fn has_crisp_glyph(c: char) -> bool {
+    let upper = c.to_ascii_uppercase();
+    upper == ' ' || crisp::coverage(upper).is_some()
+}
+
+/// Total pixel width `draw_text` would occupy for `text` — for right-
+/// aligning or centering a label before drawing it.
+pub fn text_width(text: &str) -> i32 {
+    let len = text.chars().count() as i32;
+    if len == 0 {
+        0
+    } else {
+        len * GLYPH_WIDTH + (len - 1) * GLYPH_SPACING
+    }
+}
+
+/// One pixel into an RGBA frame, clipped. Copied with this file from
+/// Pixel_Physics's `render::put` when the mould game moved to its own repo
+/// (2026-11-10): the font was the only engine piece the game drew with.
+fn put(frame: &mut [u8], width: u32, height: u32, x: i32, y: i32, colour: [u8; 4]) {
+    if x < 0 || y < 0 || x >= width as i32 || y >= height as i32 {
+        return;
+    }
+    let i = (y as usize * width as usize + x as usize) * 4;
+    frame[i..i + 4].copy_from_slice(&colour);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn count_lit(frame: &[u8], colour: [u8; 4]) -> usize {
+        frame.chunks_exact(4).filter(|p| *p == colour).count()
+    }
+
+    #[test]
+    fn drawing_a_known_glyph_sets_exactly_its_own_pixels() {
+        // 'I' is the simplest glyph to hand-verify: a full top row, a full
+        // bottom row, and a single-pixel-wide vertical stroke connecting
+        // them -- 5 + 5 + 5 (the three rows that are `11111` or the middle
+        // column) is not how it's counted; count bits directly instead of
+        // re-deriving the shape, so this test would catch a genuine
+        // transcription error in the glyph table, not just disagree with
+        // its own hand-copy of it.
+        let (w, h) = (16u32, 16u32);
+        let mut frame = vec![0u8; (w * h * 4) as usize];
+        let white = [255, 255, 255, 255];
+        draw_text(&mut frame, w, h, 0, 0, "I", white);
+
+        let expected_bits: u32 = glyph_for('I').iter().map(|row| row.count_ones()).sum();
+        assert_eq!(count_lit(&frame, white) as u32, expected_bits, "lit pixel count should match the glyph's own bit count");
+
+        // And spot-check actual positions: 'I' at (0,0) should light the
+        // full top row (columns 0-4, row 0) and leave (5, 0) (past the
+        // glyph) and (2, 1) (the top row's *second* row, a gap in the
+        // vertical stroke before it starts) dark.
+        for col in 0..5 {
+            let i = (col * 4) as usize; // row 0, so no `y * w` term needed
+            assert_eq!(&frame[i..i + 4], white, "column {col} of I's top row should be lit");
+        }
+        let past_glyph = (5 * 4) as usize; // row 0, column 5
+        assert_ne!(&frame[past_glyph..past_glyph + 4], white, "one column past the glyph should be dark");
+    }
+
+    #[test]
+    fn unsupported_characters_render_as_blank_not_a_panic() {
+        let (w, h) = (32u32, 16u32);
+        let mut frame = vec![0u8; (w * h * 4) as usize];
+        // Lowercase is upper-cased internally (covered); an apostrophe is
+        // genuinely outside the font and must not panic or draw garbage.
+        draw_text(&mut frame, w, h, 0, 0, "it's", [255, 255, 255, 255]);
+    }
+
+    #[test]
+    fn every_punctuation_glyph_the_module_doc_claims_to_support_actually_draws_something() {
+        // A regression guard for the exact bug an independent visual check
+        // caught: `[`/`]` were used in the live help overlay's own text but
+        // had no glyph defined, silently rendering as a gap rather than a
+        // bracket. Every character this module's own doc comment lists as
+        // supported must actually light at least one pixel, or it's lying
+        // about its own character set.
+        for c in ". , : - / % ( ) [ ] ! ? + =".chars().filter(|c| !c.is_whitespace()) {
+            let bits: u32 = glyph_for(c).iter().map(|row| row.count_ones()).sum();
+            assert!(bits > 0, "'{c}' is listed as supported but draws no pixels");
+        }
+    }
+
+    /// **The crisp table covers exactly the dot font's set**, so a string
+    /// that draws in one draws in the other -- the blank-gap bug the notes in
+    /// `glyph_for` record four times would otherwise come back on the crisp
+    /// layer alone.
+    #[test]
+    fn the_crisp_font_has_every_glyph_the_dot_font_has_and_no_more() {
+        for c in (0x20u8..0x7f).map(char::from) {
+            assert_eq!(has_glyph(c), has_crisp_glyph(c), "{c:?} is in one font and not the other");
+        }
+    }
+
+    /// **Crisp ink stays inside the cell a doubled dot glyph owns** -- the
+    /// promise that lets every page keep its layout. Every glyph is drawn
+    /// alone at (1, 1) logical into a buffer with room around it; nothing may
+    /// land outside the 11x14 box at (2, 2).
+    #[test]
+    fn crisp_glyphs_keep_inside_their_doubled_cell() {
+        let (w, h) = (40u32, 40u32);
+        for c in (0x21u8..0x7f).map(char::from).filter(|c| has_crisp_glyph(*c)) {
+            let mut frame = vec![0u8; (w * h * 4) as usize];
+            draw_text_crisp(&mut frame, (w, h), (1, 1), &c.to_string(), [255, 255, 255, 255]);
+            let mut lit = 0;
+            for y in 0..h as i32 {
+                for x in 0..w as i32 {
+                    if frame[((y * w as i32 + x) * 4 + 3) as usize] != 0 {
+                        lit += 1;
+                        assert!((2..13).contains(&x) && (2..16).contains(&y), "{c:?} inks ({x}, {y}), outside its cell");
+                    }
+                }
+            }
+            assert!(lit > 0, "{c:?} draws nothing");
+        }
+    }
+
+    #[test]
+    fn lowercase_input_renders_identically_to_uppercase() {
+        let (w, h) = (32u32, 16u32);
+        let white = [255, 255, 255, 255];
+        let mut lower = vec![0u8; (w * h * 4) as usize];
+        let mut upper = vec![0u8; (w * h * 4) as usize];
+        draw_text(&mut lower, w, h, 0, 0, "sand", white);
+        draw_text(&mut upper, w, h, 0, 0, "SAND", white);
+        assert_eq!(lower, upper);
+    }
+
+    #[test]
+    fn text_width_matches_what_draw_text_actually_occupies() {
+        let (w, h) = (64u32, 16u32);
+        let mut frame = vec![0u8; (w * h * 4) as usize];
+        let white = [255, 255, 255, 255];
+        let text = "HELLO";
+        draw_text(&mut frame, w, h, 0, 0, text, white);
+
+        let rightmost_lit = (0..w as i32)
+            .rev()
+            .find(|&x| (0..h as i32).any(|y| { let i = ((y * w as i32 + x) * 4) as usize; frame[i..i + 4] == white }));
+        // The reported width should be at least as wide as the rightmost
+        // actually-lit pixel plus one (a trailing glyph can legitimately
+        // have blank columns on its own right edge, e.g. most letters do,
+        // so this is a lower bound, not an exact match).
+        assert!(
+            rightmost_lit.is_some_and(|x| text_width(text) > x),
+            "text_width({text}) = {} should exceed the rightmost lit column {rightmost_lit:?}",
+            text_width(text)
+        );
+    }
+}

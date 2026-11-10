@@ -1,0 +1,114 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Mould Food Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column; paired old/flow media side by side, stacking on phones. Single dark look, like the game's Night dish. */
+:root{
+  --ground:#0d1117; --panel:#161c24; --ink:#e9e6d8; --muted:#98a0a6; --rule:#2a323c; --gold:#f2b84b; --teal:#4aa3b5;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+body{background:var(--ground);color:var(--ink);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:64rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:2rem 4rem;display:flex;flex-direction:column;gap:2.2rem}
+h1,h2{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(1.8rem,5vw,2.5rem)} h2{font-size:1.3rem;color:var(--gold)}
+p{margin:0;max-width:68ch}
+.kicker{font:500 .78rem/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:.85rem}
+ol,ul{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:.4rem;max-width:68ch}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+@media (max-width:640px){.pair{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:.35rem;min-width:0}
+figure img,figure video{width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);display:block;background:#000}
+figcaption{font:500 .9rem/1.35 var(--mono);color:var(--ink)}
+figcaption span{color:var(--muted)}
+.count{font:500 .82rem/1.45 var(--mono);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:.45rem .7rem;font-variant-numeric:tabular-nums;max-width:68ch}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font:500 .88rem/1.4 var(--mono);font-variant-numeric:tabular-nums;min-width:28rem}
+th,td{text-align:left;padding:.4rem .8rem;border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:500}
+code{font:500 .88em var(--mono);background:var(--panel);padding:.05rem .3rem;border-radius:4px}
+.ask{border-left:3px solid var(--gold);padding-left:.9rem}
+</style>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:.6rem">
+    <p class="kicker">Mould · food that really flows · 9 Nov 2026</p>
+    <h1>Food you can watch move down the tube</h1>
+    <p>You said the food looked fake: yellow out to a set distance, then grey. Now it is real. Food leaves each pile, is carried by the mould, streams along the tubes on a beat and runs low the further it goes. All three parts are behind switches, with every number on a panel you can change while playing.</p>
+  </header>
+
+  <section class="ask">
+    <h2>Play it and tune it</h2>
+    <p>It's off by default for now, because the three dishes were scored against the old rule. Press <b>T</b> in the game, set <b>FLOW</b> to ON, and turn the numbers. Your settings save to <code>mould-tune.txt</code> and come back the next time you play. Tell me which settings feel right, and I'll make them the default and re-check the dishes against them.</p>
+  </section>
+
+  <section>
+    <h2>The same hand, 0:40 to 0:48: old rule on the left, flow on the right</h2>
+    <div class="pair">
+      <figure><video src="run-0.mp4" autoplay muted loop playsinline></video><figcaption>Old rule <span>· yellow out to 70 cells of tube, grey past it; the white bands were drawn on, not simulated</span></figcaption></figure>
+      <figure><video src="run-1.mp4" autoplay muted loop playsinline></video><figcaption>Flow <span>· yellow is food the mould actually holds; it is brightest at the piles and thins down the tube</span></figcaption></figure>
+    </div>
+    <p class="count">Free dish, seed 1, the scripted plan. Old rule: 6 of 6 food joined, 2 stars. Flow: 6 of 6 joined, 1 star.</p>
+  </section>
+
+  <section>
+    <h2>Three moments, side by side</h2>
+    <p>0:30, before the late piles arrive.</p>
+    <div class="pair">
+      <figure><img src="old-030.png" alt="Old rule at 0:30"><figcaption>Old rule, 0:30</figcaption></figure>
+      <figure><img src="flow-030.png" alt="Flow at 0:30"><figcaption>Flow, 0:30</figcaption></figure>
+    </div>
+    <p>1:00. Under flow, the long arms out to the new piles go grey in the middle. The mould there is real but has had little food reach it yet.</p>
+    <div class="pair">
+      <figure><img src="old-060.png" alt="Old rule at 1:00"><figcaption>Old rule, 1:00 <span>· mould 1,776</span></figcaption></figure>
+      <figure><img src="flow-060.png" alt="Flow at 1:00"><figcaption>Flow, 1:00 <span>· mould 1,282</span></figcaption></figure>
+    </div>
+    <p>1:27, the storm warning.</p>
+    <div class="pair">
+      <figure><img src="old-087.png" alt="Old rule at 1:27"><figcaption>Old rule, 1:27</figcaption></figure>
+      <figure><img src="flow-087.png" alt="Flow at 1:27"><figcaption>Flow, 1:27</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What is simulated now</h2>
+    <ol>
+      <li><b>Food carried by the mould.</b> Each walker holds a load, pays its upkeep from it, divides from it and starves when it is empty. Neighbours even out their loads. There is no distance limit any more. Panel rows: <code>want</code>, <code>carry_cap</code>, <code>share</code>.</li>
+      <li><b>Food in the tube, a stream and a pulse.</b> Piles pump food into the tube on a beat. The tube carries it outward and back, faster in thick tube. The mould draws only what it is short of, so food is left over to reach further out. This beat is the real organism's back-and-forth streaming, sped up. Panel rows: <code>sap</code>, <code>absorb</code>, <code>sap_speed</code>, <code>stream</code>, <code>stream_bias</code>, <code>pulse_strength</code>, <code>pulse_seconds</code>.</li>
+      <li><b>Tubes that remember.</b> Food passing through a cell builds up a wall that fades slowly. A wall widens the tube and draws the mould back to old routes. Panel rows: <code>wall_grow</code>, <code>wall_half_life</code>, <code>wall_pull</code>.</li>
+    </ol>
+    <p>The drawn pulse is now off everywhere, including when flow is off. The old-rule clip above was recorded before that change, so it still shows the bands.</p>
+  </section>
+
+  <section>
+    <h2>The tuning panel (T)</h2>
+    <figure><img src="panel.png" alt="The tuning panel open over the dish"><figcaption>Up/Down picks a row, Left/Right changes it (hold Shift for ×5), Enter flips a switch, Backspace resets. The yellow line explains the row you're on.</figcaption></figure>
+  </section>
+
+  <section>
+    <h2>What it changes, measured</h2>
+    <div class="tbl"><table>
+      <tr><th>Free dish, seeds 1–4</th><th>Old rule</th><th>Flow</th></tr>
+      <tr><td>Plan: food joined</td><td>6 6 6 6</td><td>6 6 6 6</td></tr>
+      <tr><td>Plan: stars</td><td>2 2 2 2</td><td>1 1 2 1</td></tr>
+      <tr><td>Plan: storm cost a pile</td><td>2 of 4</td><td>4 of 4</td></tr>
+      <tr><td>Plan: most mould at once</td><td>1,857–2,199</td><td>1,566–1,664</td></tr>
+      <tr><td>Do nothing / random: stars</td><td>0 on all</td><td>0 on all</td></tr>
+      <tr><td>Frame time, average</td><td>3.3 ms</td><td>5.0 ms</td></tr>
+    </table></div>
+    <ul>
+      <li><b>The storm bites harder.</b> A piece the storm cuts off now really starves, because no food can cross the gap. It cost a pile on every run, so the plan lost its toughness star.</li>
+      <li><b>The middle of long tubes stays lean.</b> Walkers far from food average 0.08 of a full load. That's about 8 times more than with the stream switched off (0.010), but still thin. The stream and pulse rows on the panel are the ones to try first.</li>
+      <li><b>The mould is smaller</b>, about a fifth fewer walkers at its peak.</li>
+      <li><b>It costs 1.7 ms more a frame</b>, almost all of it in the simulation. That's well within budget.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Try it</h2>
+    <p class="count">git fetch origin claude/project-thread-cek3ly &amp;&amp; git checkout claude/project-thread-cek3ly<br>cargo run --release --bin mould<br>then press T and set FLOW to ON</p>
+  </section>
+</div>
+
+</body></html>

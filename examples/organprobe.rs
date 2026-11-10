@@ -16,9 +16,9 @@
 //! staircase between two points the same length, so a sideways bow of a
 //! tube does not register on `grid` at all (`bend=1` shows it).
 
-use pixel_physics::mould::organ;
-use pixel_physics::mould::render::{self, View};
-use pixel_physics::mould::{Dish, H, STEPS_PER_SECOND, W};
+use slime_mould::mould::organ;
+use slime_mould::mould::render::{self, View};
+use slime_mould::mould::{Dish, H, STEPS_PER_SECOND, W};
 
 struct Args {
     seeds: Vec<u64>,
@@ -159,7 +159,7 @@ fn dist_map(d: &Dish, dist: &[f32]) -> image::RgbaImage {
         }
     }
     for p in &d.piles {
-        for (ox, oy) in pixel_physics::mould::disc(p.r) {
+        for (ox, oy) in slime_mould::mould::disc(p.r) {
             let (x, y) = ((p.x + ox) as u32, (p.y + oy) as u32);
             for dy in 0..s {
                 for dx in 0..s {
@@ -473,7 +473,7 @@ fn play(a: &Args) {
                         // then oats just past the wall's far end lead the
                         // regrowth round it (placed a second later, below).
                         let half = 20.0;
-                        if o.dish.begin_stroke(pixel_physics::mould::Tool::Salt, mx - nx * half, my - ny * half) {
+                        if o.dish.begin_stroke(slime_mould::mould::Tool::Salt, mx - nx * half, my - ny * half) {
                             o.dish.drag_stroke(mx + nx * half, my + ny * half);
                             o.dish.end_stroke();
                         }
@@ -548,7 +548,7 @@ fn play(a: &Args) {
             let secs = (o.dish.t - t0) as f32 / sps as f32;
             let wav = organ::render_notes(&notes, secs + 1.5, 44_100);
             let path = format!("{}/organ-s{seed}.wav", a.frames.as_ref().unwrap());
-            pixel_physics::audio::wav::write(std::path::Path::new(&path), &wav, 2, 44_100).unwrap();
+            slime_mould::wav::write(std::path::Path::new(&path), &wav, 2, 44_100).unwrap();
             let mut log = String::new();
             for n in &notes {
                 log += &format!(

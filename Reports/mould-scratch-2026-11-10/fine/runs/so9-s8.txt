@@ -1,0 +1,45 @@
+mouldprobe: seeds [8] players ["idle", "random", "plan", "fresh", "shepherd", "lamponly", "dump"] scale 2 oats None stray_reach None params Params { sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, deposit: 5.0, keep: 0.9, food_deposit: 20.0, scent_keep: 0.97, light_weight: 0.0, light_fade: 0.0, tube: 1.0, feed_reach: 70, upkeep: 0.004, eat: 0.03, table: 40, fed_scent: 0.15, divide: 0.03, crowd: 7, starve: 0.0016666667, hungry: 0.0011111111, burn: 0.0, lamp_reach: 16.0, lamp_soft: false, push: 0.9, pieces: true, wound: 4.0, stray_reach: inf, stray_grace: 2.0, oats_grace: 8.0, flow: false, carry_cap: 3.0, share: 0.5, sap: true, sap_speed: 2, absorb: 0.03, stream: 1.0, stream_bias: 0.35, want: 1.0, pulse_seconds: 2.5, pulse_strength: 0.8, wall_grow: 1.0, wall_half_life: 30.0, wall_pull: 1.0, settle_seconds: 0.0, explore_angle: 0.3926991, spared: 0, spared_scent: 0.5, foe_repel: 1.0, fight: 0.02, wet: false, wet_base: 0.5, wet_relax: 0.0005, dry_light: 0.05, crust_wet: 0.25, crust_rate: 0.05, revive_wet: 0.7, revive_rate: 0.05, crust_life: 20.0, crust_trail: 0.6, wake_grace: 5.0, water_r: 12.0 }
+
+== dish 1 BEHIND THE WALL: STARS: REACH IT. BY 1:00. BY 0:45 ==
+seed 8      idle: 0 stars  NOT REACHED: THE MOULD CAME WITHIN 59 CELLS | PAST THE WALL, BUT OUT OF REACH: LAY OATS  mould 306  oats 0 snips 0 lamp 0s joins 0  water 0 slept 0 woke 0 died asleep 0  (6.2 s)
+seed 8    random: 0 stars  NOT REACHED: THE MOULD CAME WITHIN 33 CELLS | PAST THE WALL, BUT OUT OF REACH: LAY OATS  mould 306  oats 10 snips 0 lamp 40s joins 2  water 0 slept 0 woke 0 died asleep 0  (7.3 s)
+seed 8      plan: 0 stars  NOT REACHED: ONLY STARVING STRAYS GOT THERE | PAST THE WALL, BUT OUT OF REACH: LAY OATS  mould 318  oats 5 snips 0 lamp 89s joins 1  water 0 slept 0 woke 0 died asleep 0  (6.7 s)
+seed 8     fresh: 0 stars  NOT REACHED: THE MOULD CAME WITHIN 64 CELLS | PAST THE WALL, BUT OUT OF REACH: LAY OATS  mould 323  oats 2 snips 0 lamp 4s joins 1  water 0 slept 0 woke 0 died asleep 0  (10.0 s)
+seed 8  intended: 3 stars  REACHED THE FOOD AT 0:11 | STRAIGHT ROUND THE WALL. NOTHING WASTED.  mould 745  oats 5 snips 0 lamp 0s joins 5  water 0 slept 0 woke 0 died asleep 0  (1.1 s)
+
+== dish 2 BEAT THE RULER: STARS: JOIN ALL 3. 0.98X RULER. 0.95X ==
+seed 8      idle: 0 stars  1 OF 3 FOODS JOINED AT THE BELL | MEET IN THE MIDDLE, THEN BRANCH OUT  mould 316  oats 0 snips 0 lamp 0s joins 0  water 0 slept 0 woke 0 died asleep 0  (7.3 s)
+seed 8    random: 0 stars  2 OF 3 FOODS JOINED AT THE BELL | MEET IN THE MIDDLE, THEN BRANCH OUT  mould 618  oats 11 snips 0 lamp 44s joins 7  water 0 slept 0 woke 0 died asleep 0  (7.2 s)
+seed 8      plan: 0 stars  2 OF 3 FOODS JOINED AT THE BELL | MEET IN THE MIDDLE, THEN BRANCH OUT  mould 636  oats 5 snips 0 lamp 98s joins 3  water 0 slept 0 woke 0 died asleep 0  (7.6 s)
+seed 8     fresh: 0 stars  2 OF 3 FOODS JOINED AT THE BELL | MEET IN THE MIDDLE, THEN BRANCH OUT  mould 619  oats 11 snips 0 lamp 4s joins 1  water 0 slept 0 woke 0 died asleep 0  (7.2 s)
+seed 8  intended: 3 stars  ALL 3 JOINED, 0.92X THE RULER | A BRIDGE WHERE NO FOOD WAS. BEST 0.87X  mould 1075 ruler 0.91x  oats 9 snips 0 lamp 0s joins 9  water 0 slept 0 woke 0 died asleep 0  (8.0 s)
+
+== dish 3 RUNNING DRY: STARS: 100, 200 AND 300 MOULD AT THE BELL ==
+seed 8      idle: 0 stars  THE MOULD DIED AT 1:24 | THE FOOD RAN OUT; NOTHING HEADED FOR MORE  mould 0  oats 0 snips 0 lamp 0s joins 0  water 0 slept 0 woke 0 died asleep 0  (9.5 s)
+seed 8    random: 0 stars  THE MOULD DIED AT 1:03 | THE FOOD RAN OUT; NOTHING HEADED FOR MORE  mould 0  oats 11 snips 0 lamp 25s joins 2  water 0 slept 0 woke 0 died asleep 0  (7.5 s)
+seed 8      plan: 0 stars  THE MOULD DIED AT 1:26 | THE FOOD RAN OUT; NOTHING HEADED FOR MORE  mould 0  oats 8 snips 0 lamp 6s joins 3  water 0 slept 0 woke 0 died asleep 0  (6.7 s)
+seed 8     fresh: 0 stars  THE MOULD DIED AT 1:36 | THE FOOD RAN OUT; NOTHING HEADED FOR MORE  mould 0  oats 14 snips 0 lamp 4s joins 2  water 0 slept 0 woke 0 died asleep 0  (9.1 s)
+seed 8  intended: 3 stars  374 MOULD ALIVE AT THE BELL | IT KEPT MOVING HOUSE, AND IT LIVED  mould 345  oats 12 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  (9.0 s)
+
+== dish 4 KEEP IT ALIVE: STARS: ALIVE AT 4:15, 5:30 AND 6:40 ==
+seed 8      idle: 0 stars  LIVED 1:47, AT MOST 1577 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 12  oats 0 snips 0 lamp 0s joins 2  water 0 slept 0 woke 0 died asleep 0  (7.9 s)
+seed 8    random: 0 stars  LIVED 1:06, AT MOST 1716 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 6 snips 0 lamp 54s joins 1  water 4 slept 635 woke 0 died asleep 618  (8.5 s)
+seed 8      plan: 0 stars  LIVED 1:01, AT MOST 1650 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 17  oats 4 snips 0 lamp 90s joins 1  water 0 slept 593 woke 0 died asleep 576  (8.8 s)
+seed 8     fresh: 0 stars  LIVED 1:07, AT MOST 1776 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 16  oats 6 snips 0 lamp 4s joins 2  water 0 slept 585 woke 0 died asleep 569  (5.3 s)
+seed 8  intended: 0 stars  LIVED 3:29, AT MOST 1577 MOULD | 1 STAR AT 4:15: MOVE ON SOONER  mould 14  oats 6 snips 0 lamp 0s joins 10  water 0 slept 0 woke 0 died asleep 0  (15.6 s)
+
+== dish 5 THE WILD ONE: STARS: 1.5X AS MUCH AS IT. 3X. NONE OF IT LEFT ==
+seed 8      idle: 0 stars  YOU 429, WILD 430 | IT TOOK MORE OF THE FOOD  mould 426  oats 0 snips 0 lamp 0s joins 8  water 0 slept 0 woke 0 died asleep 0  wild 438 fought 2772/2798  (26.5 s)
+seed 8    random: 0 stars  YOU 446, WILD 440 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 452  oats 13 snips 3 lamp 68s joins 17  water 0 slept 0 woke 0 died asleep 0  wild 428 fought 2802/2946  (27.7 s)
+seed 8      plan: 0 stars  YOU 474, WILD 504 | IT TOOK MORE OF THE FOOD  mould 460  oats 12 snips 0 lamp 148s joins 13  water 0 slept 0 woke 0 died asleep 0  wild 449 fought 2807/2814  (28.1 s)
+seed 8     fresh: 0 stars  YOU 470, WILD 422 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 473  oats 13 snips 3 lamp 4s joins 12  water 0 slept 0 woke 0 died asleep 0  wild 430 fought 3212/3332  (26.3 s)
+seed 8  intended: 0 stars  YOU 456, WILD 415 | MORE THAN IT, BUT 1.5X FOR A STAR  mould 461  oats 13 snips 0 lamp 0s joins 16  water 0 slept 0 woke 0 died asleep 0  wild 407 fought 3191/3172  (25.1 s)
+
+== ship bar: do nothing 0, random at most 1, intended 3 (stars per seed [8]) ==
+dish 1 BEHIND THE WALL  idle [0]  random [0]  plan [0]  fresh [0]  intended [3]  -> MEETS THE BAR
+dish 2 BEAT THE RULER   idle [0]  random [0]  plan [0]  fresh [0]  intended [3]  -> MEETS THE BAR
+dish 3 RUNNING DRY      idle [0]  random [0]  plan [0]  fresh [0]  intended [3]  -> MEETS THE BAR
+dish 4 KEEP IT ALIVE    idle [0]  random [0]  plan [0]  fresh [0]  intended [0]  -> FAILS THE BAR
+dish 5 THE WILD ONE     idle [0]  random [0]  plan [0]  fresh [0]  intended [0]  -> FAILS THE BAR
+
+frame cost, dish 1 intended hand: 700 frames, mean 5.30 ms, worst 12.42 ms

@@ -1,0 +1,255 @@
+<title>Mould Looks Pass</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column of paired pictures, before left / after right, each pair with its counts beside it. */
+:root {
+  --bg: #f4f1e8; --fg: #1d1a14; --muted: #6b6455; --line: #d8d1bf; --card: #fbf9f3;
+  --accent: #b7791f; --before: #5f6b74;
+  --display: "Fraunces", Georgia, serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1114; --fg: #e8e4d8; --muted: #9a9585; --line: #263038; --card: #131a1f; --accent: #e7b24a; --before: #8fa1ad; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0d1114; --fg: #e8e4d8; --muted: #9a9585; --line: #263038; --card: #131a1f; --accent: #e7b24a; --before: #8fa1ad; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 28px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 36px; }
+h1 { font: 600 2.1rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.35rem/1.2 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 12px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pair.wide { grid-template-columns: 1fr; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; height: auto; display: block; border-radius: 4px; border: 1px solid var(--line); image-rendering: auto; }
+figcaption { font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+figcaption.b { color: var(--before); } figcaption.a { color: var(--accent); }
+.counts { font: 0.82rem/1.5 var(--mono); color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; overflow-x: auto; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 72ch; }
+table { border-collapse: collapse; font: 0.85rem/1.4 var(--mono); }
+th, td { text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl { overflow-x: auto; }
+.ask { border-left: 3px solid var(--accent); padding-left: 12px; }
+kbd { font: 0.85em var(--mono); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; background: var(--card); }
+@media (max-width: 640px) { .pair { grid-template-columns: 1fr; } h1 { font-size: 1.7rem; } }
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Mould looks pass</h1>
+    <p>Does the mould game look better? Every pair below is <b>the same dish at the same moment</b>, drawn the old way (left) and the new way (right). Nothing about how the mould behaves changed, and everything new on screen is something the dish really holds.</p>
+    <p class="ask"><b>Updated after the independent review.</b> The first version of this pass is already in the game. A second reviewer then found five things to fix, and the pictures below now show the fixed drawing: hungry tube goes grey again, the stain is fainter, the lamp is warm light, food flow is brighter, and the dish edge is smooth where a tube meets it.</p>
+    <p class="muted">Seed 1, the scripted plan hand. A salt wall goes down at 25 s, a snip at 35 s, and the lamp is held from 44 s. Scale 4, the game's own look. Thinner tubes are left out because they change how the mould behaves, so they stay with the mould thread.</p>
+  </header>
+
+  <section class="ask">
+    <h2>Newest: the mould drawn straight from the simulation</h2>
+    <p>You picked this on the review's card. It is now the default in the game, and <kbd>F7</kbd> flips back to the tube look for comparison. Left is the tube look, right is the new one, on the same dish at the same moment.</p>
+    <ul>
+      <li><b>No cut-off edge.</b> Brightness is the trail itself through one fixed curve, so a strand fades out the way its numbers do. Strands read thinner, with no change to how the mould behaves.</li>
+      <li><b>No fed/unfed line.</b> Colour slides from gold to grey by how long since food reached that part, spread along the strand. With food flow on it is the food the tube holds.</li>
+      <li><b>Every walker is a speck of light</b>, so busy places are brighter because more walkers are there.</li>
+      <li><b>The same for everything else:</b> the wild mould glows violet, sleeping mould is a dark amber crust, and the food piles are drawn on top so you can still read them. The rim cuts the light along its smooth curve.</li>
+    </ul>
+    <div class="pair">
+      <figure><figcaption class="b">Tube look</figcaption><img src="x1-before.jpg" alt="Free dish, tube look"></figure>
+      <figure><figcaption class="a">From the simulation</figcaption><img src="x1-after.jpg" alt="Free dish, drawn from the trail"></figure>
+    </div>
+    <div class="pair">
+      <figure><figcaption class="b">Close</figcaption><img src="x1-before-close.jpg" alt="Close, tube look"></figure>
+      <figure><figcaption class="a">Close</figcaption><img src="x1-after-close.jpg" alt="Close, from the simulation"></figure>
+    </div>
+    <div class="counts">Free dish, 22.5°, seed 1, 60 s, nobody playing · 1,773 walkers, one speck each · 8,042 cells above the old tube cut, 94% fed</div>
+    <div class="pair">
+      <figure><figcaption class="b">Gold against grey, tube look</figcaption><img src="x2-before-close.jpg" alt="Keep It Alive, sharp gold and grey"></figure>
+      <figure><figcaption class="a">Gold slides to grey</figcaption><img src="x2-after-close.jpg" alt="Keep It Alive, blended gold to grey"></figure>
+    </div>
+    <div class="counts">Keep It Alive, seed 1, 40 s, nobody playing · 540 walkers · 2,200 of 5,116 tube cells fed (43%)</div>
+    <div class="pair">
+      <figure><figcaption class="b">The wild mould, tube look</figcaption><img src="x3-before.jpg" alt="The Wild One, tube look"></figure>
+      <figure><figcaption class="a">The wild mould glows violet</figcaption><img src="x3-after.jpg" alt="The Wild One, from the simulation"></figure>
+    </div>
+    <div class="counts">The Wild One, seed 1, 60 s, nobody playing · yours 1,031 walkers, wild 1,006</div>
+    <div class="pair">
+      <figure><figcaption class="b">Sleeping mould, tube look</figcaption><img src="x6-before-close.jpg" alt="Crust, tube look"></figure>
+      <figure><figcaption class="a">Sleeping mould as a dark crust</figcaption><img src="x6-after-close.jpg" alt="Crust, from the simulation"></figure>
+    </div>
+    <div class="counts">Keep It Alive, seed 2, the sleeper hand, 4:20 · 348 walkers, 115 asleep</div>
+    <div class="pair">
+      <figure><figcaption class="b">Food flow on, tube look</figcaption><img src="x4-before-close.jpg" alt="Flow on, tube look"></figure>
+      <figure><figcaption class="a">Gold where the tube holds food</figcaption><img src="x4-after-close.jpg" alt="Flow on, from the simulation"></figure>
+    </div>
+    <div class="counts">Food flow on, 45°, 40 s · 1,090 walkers · food level on tube cells: median 0.51, a quarter below 0.20 (these go grey)</div>
+    <div class="pair">
+      <figure><figcaption class="b">In motion, tube look</figcaption><img src="xm-before.gif" alt="Motion, tube look"></figure>
+      <figure><figcaption class="a">In motion, from the simulation</figcaption><img src="xm-after.gif" alt="Motion, from the simulation"></figure>
+    </div>
+    <div class="pair">
+      <figure><figcaption class="b">The lamp, tube look</figcaption><img src="x5-before-close.jpg" alt="Lamp, tube look"></figure>
+      <figure><figcaption class="a">The lamp, from the simulation</figcaption><img src="x5-after-close.jpg" alt="Lamp, from the simulation"></figure>
+    </div>
+    <div class="counts">Is a pile joined? The ring on the pile and the food count in the bar still say it, as before.</div>
+    <div class="tbl"><table>
+      <tr><th>Draw time, scale 4, same dish states</th><th>Tube look</th><th>From the simulation</th></tr>
+      <tr><td>45°, 40–43 s, 91 frames</td><td class="n">6.72 ms</td><td class="n">7.36 ms</td></tr>
+      <tr><td>22.5°, 60–63 s, 91 frames</td><td class="n">6.91 ms</td><td class="n">7.72 ms</td></tr>
+      <tr><td>The Wild One, 57–60 s, 91 frames</td><td class="n">7.91 ms</td><td class="n">7.70 ms</td></tr>
+    </table></div>
+  </section>
+
+  <section class="ask">
+    <h2>New: water and sleeping mould</h2>
+    <p>Keep It Alive now has water. The lamp dries the ground, mould on dry ground falls asleep, and a drop of water wakes it. Until now the game drew sleeping mould as grey starving tube, drew no wet or dry ground, and had no water tile on the bar. Left is how it looked with the water code alone, right is the new drawing.</p>
+    <ul>
+      <li><b>Sleeping mould is a brown crust</b>, matte and unlit, like the real mould's dried resting form. It is drawn from the walkers that really are asleep.</li>
+      <li><b>Wet ground is darker and blue</b> where a drop landed, and <b>dried ground is pale and dusty</b> where the lamp has been. Both come from the dish's own wetness.</li>
+      <li><b>The water tool has its own tile</b> with a drop icon, its drops and the next one refilling. Before, the bar showed "Not here" where it should be.</li>
+      <li><b>Before you click</b>, the drop shows the ground it will soak and says how many sleepers it will wake, lighting each one. With none left it says when the next drop comes.</li>
+    </ul>
+    <div class="pair">
+      <figure><figcaption class="b">Before</figcaption><img src="w1-before-close.jpg" alt="Sleeping mould drawn as grey starving tube"></figure>
+      <figure><figcaption class="a">After</figcaption><img src="w1-after-close.jpg" alt="Sleeping mould drawn as a brown crust on wet blue ground"></figure>
+    </div>
+    <div class="pair">
+      <figure><figcaption class="b">Before, the whole dish</figcaption><img src="w1-before.jpg" alt="Whole dish before"></figure>
+      <figure><figcaption class="a">After, the whole dish</figcaption><img src="w1-after.jpg" alt="Whole dish after"></figure>
+    </div>
+    <div class="counts">Keep It Alive, seed 2, the scripted sleeper hand · 4:20 in · 348 walkers, 115 of them asleep · over the whole game: 10 drops, 1,328 fell asleep, 368 woke, 945 died asleep</div>
+    <div class="pair">
+      <figure><figcaption class="b">Before: water in hand</figcaption><img src="w2-before.jpg" alt="Water preview before: a plain ring"></figure>
+      <figure><figcaption class="a">After: what the drop will do</figcaption><img src="w2-after.jpg" alt="Water preview after: the soaked disc and Wakes 3 sleepers"></figure>
+    </div>
+    <div class="counts">8:10 in · 3 walkers asleep, all 3 inside the drop · "Wakes 3 sleepers" counts the ones the drop leaves wet enough to wake, by the game's own rule</div>
+    <div class="pair wide">
+      <figure><figcaption class="b">Before: no water tile</figcaption><img src="wbar-before.png" alt="Bar before with Not here slots"></figure>
+      <figure><figcaption class="a">After: lamp, oats, water</figcaption><img src="wbar-after.png" alt="Bar after with a water tile"></figure>
+    </div>
+    <div class="counts">Frame cost, the whole sleeper game (15,999 frames, scale 4, two runs each, alternating): before 6.13 and 6.29 ms, after 6.57 and 6.56 ms, about +0.35 ms</div>
+  </section>
+
+  <section>
+    <h2>What changed</h2>
+    <ul>
+      <li><b>You can see the walkers.</b> Every real walker is a small grain at its true position each frame. They stream along the tubes and crowd at the food. <kbd>F4</kbd> switches them between grains, glints and off.</li>
+      <li><b>Food has one colour ramp</b>, white-gold where it is rich through gold to amber. Tube that is cut off from food turns cold grey the moment it goes hungry, as before. With food flow on, the colour is the food the tube really carries, going grey where it carries almost none. <kbd>F3</kbd></li>
+      <li><b>No more 4-pixel steps.</b> The dish rim, the inside of every tube, salt walls and snip cuts are drawn smooth. <kbd>F5</kbd></li>
+      <li><b>A stain where the mould has been.</b> A faint film builds where tube has stood for about 10 s, and halves every 20 s once it has gone. <kbd>F6</kbd></li>
+      <li><b>The lamp looks like light</b>, a soft warm pool in the same shape the simulation shines, brightening what it lands on, instead of a lens with a bright ring.</li>
+      <li><b>The bottom bar stops overlapping</b> on smaller windows, where the tool tiles now shrink.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The shipped dish, 46 s in</h2>
+    <div class="pair">
+      <figure><figcaption class="b">Before</figcaption><img src="s1-before.jpg" alt="Old drawing: blocky rim, flat yellow tubes, lamp as a ringed lens"></figure>
+      <figure><figcaption class="a">After</figcaption><img src="s1-after.jpg" alt="New drawing: smooth rim, grained gold tubes, soft lamp, faint stain"></figure>
+    </div>
+    <div class="pair">
+      <figure><figcaption class="b">Before, close</figcaption><img src="s1-before-close.jpg" alt="Close view before"></figure>
+      <figure><figcaption class="a">After, close</figcaption><img src="s1-after-close.jpg" alt="Close view after"></figure>
+    </div>
+    <div class="counts">1,623 walkers drawn · 6,694 tube cells · 6,686 fed (100%) · salt wall laid 25 s · snip 35 s · lamp held 44 s on</div>
+  </section>
+
+  <section>
+    <h2>In motion, 3 seconds at real speed</h2>
+    <div class="pair">
+      <figure><figcaption class="b">Before</figcaption><img src="move-before.gif" alt="Animation before: tubes shift but nothing moves inside them"></figure>
+      <figure><figcaption class="a">After</figcaption><img src="move-after.gif" alt="Animation after: walker grains stream along the tubes"></figure>
+    </div>
+    <div class="pair">
+      <figure><figcaption class="b">Before, 22.5°</figcaption><img src="move225-before.gif" alt="Animation before at 22.5 degrees"></figure>
+      <figure><figcaption class="a">After, 22.5°</figcaption><img src="move225-after.gif" alt="Animation after at 22.5 degrees"></figure>
+    </div>
+    <div class="counts">40–43 s at 45° (shipped) · 60–63 s at 22.5° (the endless dish's angle) · every grain is one walker in the dish</div>
+  </section>
+
+  <section>
+    <h2>The endless dish's angle (22.5°), 85 s in</h2>
+    <div class="pair">
+      <figure><figcaption class="b">Before</figcaption><img src="s2-before.jpg" alt="22.5 degrees before"></figure>
+      <figure><figcaption class="a">After</figcaption><img src="s2-after.jpg" alt="22.5 degrees after, with the stain of old paths"></figure>
+    </div>
+    <div class="pair">
+      <figure><figcaption class="b">Before, close</figcaption><img src="s2-before-close.jpg" alt="Close view before"></figure>
+      <figure><figcaption class="a">After, close</figcaption><img src="s2-after-close.jpg" alt="Close view after"></figure>
+    </div>
+    <div class="counts">1,808 walkers · 9,539 tube cells · 9,297 fed (97%) · by 60 s the stain covers 15,875 cells (39% of the dish), which is why it fades</div>
+  </section>
+
+  <section>
+    <h2>The lamp, close</h2>
+    <p class="muted">The review found the light made cleared agar a slate-grey disc. It now brightens what it lands on and warms it; the tube under it glows.</p>
+    <div class="pair">
+      <figure><figcaption class="b">Before</figcaption><img src="lamp-before.jpg" alt="Old lamp: a bright ring and a grey lens"></figure>
+      <figure><figcaption class="a">After</figcaption><img src="lamp-after.jpg" alt="New lamp: a warm pool of light"></figure>
+    </div>
+    <div class="counts">lamp held from 44 s at the same spot in both · its reach and fall-off are the simulation's own</div>
+  </section>
+
+  <section>
+    <h2>A starving dish (22.5°), 180 s in</h2>
+    <p class="muted">The review's most important finding: in the first version, tube that had lost its food stayed orange for 6 s, so you could not see the mould starving. Now it goes grey the moment it is hungry, exactly as the old drawing did. Left is the old drawing, right the new one.</p>
+    <div class="pair">
+      <figure><figcaption class="b">Before</figcaption><img src="s4-before.jpg" alt="Starving dish, old drawing: hungry tube grey"></figure>
+      <figure><figcaption class="a">After</figcaption><img src="s4-after.jpg" alt="Starving dish, new drawing: hungry tube grey, fed tube gold"></figure>
+    </div>
+    <div class="counts">388 walkers · 5,041 tube cells · 2,077 fed (41%) · the grey is the 59% that is hungry</div>
+  </section>
+
+  <section>
+    <h2>With food flow on, 40 s in</h2>
+    <p class="muted">The old colour was clamped full on over more than half the tube, so fed tube was flat yellow and hungry tube was a grey smear. The ramp now uses its whole range: rich tube is bright gold, and the far branch that carries almost no food goes grey.</p>
+    <div class="pair">
+      <figure><figcaption class="b">Before</figcaption><img src="s3-before.jpg" alt="Flow on before: flat yellow and grey smears"></figure>
+      <figure><figcaption class="a">After</figcaption><img src="s3-after.jpg" alt="Flow on after: graded gold to brown"></figure>
+    </div>
+    <div class="pair">
+      <figure><figcaption class="b">Before, close</figcaption><img src="s3-before-close.jpg" alt="Close view before"></figure>
+      <figure><figcaption class="a">After, close</figcaption><img src="s3-after-close.jpg" alt="Close view after"></figure>
+    </div>
+    <div class="counts">1,090 walkers · 6,472 tube cells · food level on tube cells (0–1): p10 0.03 · p25 0.20 · median 0.51 · p75 0.80 · p90 1.00</div>
+  </section>
+
+  <section>
+    <h2>The bottom bar on a smaller window (scale 3)</h2>
+    <div class="pair wide">
+      <figure><figcaption class="b">Before: "Storm in" prints over the mould count</figcaption><img src="hud-before.png" alt="Bar before, overlapping text"></figure>
+      <figure><figcaption class="a">After: narrow tiles, room for the storm line</figcaption><img src="hud-after.png" alt="Bar after"></figure>
+    </div>
+  </section>
+
+  <section class="ask">
+    <h2>Your pick: which grains, or none?</h2>
+    <p>Each grain is one walker. They can be drawn darker than the tube or lighter. A is the default for now. The reviewer found they can read as pepper in a still picture, so a third answer is to turn them off (<kbd>F4</kbd> cycles all three in the game). Which do you prefer?</p>
+    <div class="pair">
+      <figure><figcaption>A</figcaption><img src="ab-A.jpg" alt="Option A"></figure>
+      <figure><figcaption>B</figcaption><img src="ab-B.jpg" alt="Option B"></figure>
+    </div>
+    <div class="pair">
+      <figure><figcaption>A</figcaption><img src="ab-A-2.jpg" alt="Option A at 22.5 degrees"></figure>
+      <figure><figcaption>B</figcaption><img src="ab-B-2.jpg" alt="Option B at 22.5 degrees"></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it costs</h2>
+    <p class="muted">Drawing time per frame at scale 4, with both arms drawn from the same dish in one run. A frame has about 16.7 ms, and the simulation takes 1.4–3.3 ms of it.</p>
+    <div class="tbl"><table>
+      <tr><th>Dish</th><th>Before</th><th>After</th><th>Extra</th></tr>
+      <tr><td>45°, 40–43 s, 91 frames</td><td class="n">4.28 ms</td><td class="n">6.30 ms</td><td class="n">+2.02 ms</td></tr>
+      <tr><td>22.5°, 60–63 s + 85 s + 180 s, 92 frames</td><td class="n">5.46 ms</td><td class="n">8.09 ms</td><td class="n">+2.63 ms</td></tr>
+      <tr><td>flow on, 40 s, 1 frame</td><td class="n">4.16 ms</td><td class="n">5.86 ms</td><td class="n">+1.70 ms</td></tr>
+    </table></div>
+    <p class="muted">About half of the extra is the smoothing and the stain (<kbd>F5</kbd>, <kbd>F6</kbd>), and half is the food ramp and the grains. The first try at smoothing doubled the drawing time, so tube insides are now blended between cell centres.</p>
+  </section>
+
+  <section>
+    <h2>Try it</h2>
+    <p><code>cargo run --release --bin mould</code>. All of this is on by default. <kbd>F3</kbd> to <kbd>F6</kbd> switch each part back to the old drawing, and the title bar names the one you are on.</p>
+  </section>
+</div>

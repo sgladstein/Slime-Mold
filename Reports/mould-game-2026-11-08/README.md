@@ -22,18 +22,21 @@ revised after a full read (its first version could not reach the sources; see it
 | [`prototypes/`](prototypes/) | The overnight build briefs (`common.md`, `challenges.md`, `interface.md`, `organ.md`, `wanderer.md`) and each one's result with its counts. `interface/key.md` is the key to the blind A/B/C look pages (A Toy, B Glow, C Bench, N the built Night look) |
 | [`reviews/`](reviews/) | The two adversarial bug reviews over all the demo work (13 and 12 findings, all fixed in PR #1054), and the second review's scratch harness |
 | [`depth-2026-11-09/`](depth-2026-11-09/) | The owner's 2026-11-09 asks. `sources-research.md`: Sage Jenson's physarum post, Georgios Cherouvim's work and Jones 2010, compared with our model, with improvements and new ideas. `complexity.md`: how the tools, events, ground and the mould's responses could interact for depth and discovery (water, crust, fruiting, salt that dissolves, a 15x15 interaction matrix, three new dishes, a ranked build plan) |
-| [`pages/`](pages/) | The HTML of every picture page shown to the owner, for the words and counts; the images they reference are not in the repo |
+| [`pages/`](pages/) | Every picture page shown to the owner, one folder each: its HTML and all the images, GIFs, videos and sounds it shows (images added when the game moved to its own repo, 2026-11-10), so each opens offline |
 
-## The pages (open these for the pictures)
+## The pages (open `index.html` in each folder, or the link)
 
-1. First look at the probe: https://claude.ai/artifact/R4Yjkt4bsozfZDV1CkpcDc (`pages/1-probe-first-look.html`)
-2. Playtest fixes, before and after: https://claude.ai/artifact/52KtqyTGjyhKMb7L14Eqq6 (`pages/2-playtest-fixes.html`)
-3. The lesson: https://claude.ai/artifact/PoyyzzGuRyqaEn4G8RidPK (`pages/3-lesson.html`)
-4. Brainstorm synthesis: https://claude.ai/artifact/16qnDdYhzg3Q5kL3LnApYE (`pages/4-brainstorm-synthesis.html`)
-5. The overnight build: https://claude.ai/artifact/TnWALC9vhyrkFQ2o52iWgY (`pages/5-overnight-build.html`)
-6. The Organ: https://claude.ai/artifact/Np5fa71YVHe8gnZq7oVZNW (`pages/6-organ.html`)
-7. The Wanderer: https://claude.ai/artifact/RrEJruyrAveXMGo6c7q5f4 (`pages/7-wanderer.html`)
-8. Starving mould, three looks (blind; key A embers, B grey, C dried slime): https://claude.ai/artifact/GaadFXKa1YEzEE6EdnrfCP (`pages/8-starving-look.html`)
+1. First look at the probe: https://claude.ai/artifact/R4Yjkt4bsozfZDV1CkpcDc (`pages/1-probe-first-look/`)
+2. Playtest fixes, before and after: https://claude.ai/artifact/52KtqyTGjyhKMb7L14Eqq6 (`pages/2-playtest-fixes/`)
+3. The lesson: https://claude.ai/artifact/PoyyzzGuRyqaEn4G8RidPK (`pages/3-lesson/`)
+4. Brainstorm synthesis: https://claude.ai/artifact/16qnDdYhzg3Q5kL3LnApYE (`pages/4-brainstorm-synthesis/`)
+5. The overnight build: https://claude.ai/artifact/TnWALC9vhyrkFQ2o52iWgY (`pages/5-overnight-build/`)
+6. The Organ: https://claude.ai/artifact/Np5fa71YVHe8gnZq7oVZNW (`pages/6-organ/`)
+7. The Wanderer: https://claude.ai/artifact/RrEJruyrAveXMGo6c7q5f4 (`pages/7-wanderer/`)
+8. Starving mould, three looks (blind; key A embers, B grey, C dried slime): https://claude.ai/artifact/GaadFXKa1YEzEE6EdnrfCP (`pages/8-starving-look/`)
+9. Sensor angle, 45 vs 22.5 degrees: https://claude.ai/artifact/5o7x5VLFe65dPGfxuxK4on (`pages/9-sensor-angle/`)
+10. Food that really flows: https://claude.ai/artifact/UtZ3tYPdiaCiL5wLVRjr7C (`pages/10-food-flow/`)
+11. Bait patches at 22.5 degrees: https://claude.ai/artifact/A9PeyWDtzXzzX24m4iZCga (`pages/11-bait-patches/`)
 
 ## Owner rulings that shaped it
 

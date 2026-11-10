@@ -1,0 +1,161 @@
+//! Review scratch (not for the repo): the same dish drawn as the game
+//! draws it, and "straight from the simulation": the trail field itself as
+//! brightness (no threshold), hunger as a blended tint, a dot per walker.
+//!
+//! mouldraw level=4|0 seed=1 at=40 angle=22.5 out=DIR tag=x
+use std::sync::atomic::Ordering::Relaxed;
+
+use pixel_physics::mould::level::DISHES;
+use pixel_physics::mould::look::{Style, STAIN};
+use pixel_physics::mould::render::{self, View};
+use pixel_physics::mould::{Dish, Ground, Params, H, STEPS_PER_FRAME, STEPS_PER_SECOND, W};
+
+type Rgb = [f32; 3];
+
+fn ramp(stops: &[Rgb], v: f32) -> Rgb {
+    let v = v.clamp(0.0, 1.0) * (stops.len() - 1) as f32;
+    let k = (v as usize).min(stops.len() - 2);
+    let a = v - k as f32;
+    [0, 1, 2].map(|c| stops[k][c] * (1.0 - a) + stops[k + 1][c] * a)
+}
+
+fn bilin(f: &[f32], x: f32, y: f32) -> f32 {
+    let (fx, fy) = ((x - 0.5).clamp(0.0, W as f32 - 1.001), (y - 0.5).clamp(0.0, H as f32 - 1.001));
+    let (x0, y0) = (fx as usize, fy as usize);
+    let (ax, ay) = (fx - x0 as f32, fy - y0 as f32);
+    let g = |x: usize, y: usize| f[y * W + x];
+    (g(x0, y0) * (1.0 - ax) + g(x0 + 1, y0) * ax) * (1.0 - ay) + (g(x0, y0 + 1) * (1.0 - ax) + g(x0 + 1, y0 + 1) * ax) * ay
+}
+
+fn main() {
+    let (mut level, mut seed, mut at, mut angle, mut scale) = (0usize, 1u64, vec![60u64], 22.5f32, 4u32);
+    let (mut out, mut tag) = (String::from("out"), String::from("x"));
+    let mut gain = 1.2f32;
+    for a in std::env::args().skip(1) {
+        let (k, v) = a.split_once('=').unwrap();
+        match k {
+            "level" => level = v.parse().unwrap(),
+            "seed" => seed = v.parse().unwrap(),
+            "at" => at = v.split(',').map(|s| s.parse().unwrap()).collect(),
+            "angle" => angle = v.parse().unwrap(),
+            "scale" => scale = v.parse().unwrap(),
+            "out" => out = v.into(),
+            "tag" => tag = v.into(),
+            "gain" => gain = v.parse().unwrap(),
+            _ => panic!("unknown {k}"),
+        }
+    }
+    println!("mouldraw level={level} seed={seed} at={at:?} angle={angle} scale={scale} gain={gain} out={out} tag={tag}");
+    std::fs::create_dir_all(&out).unwrap();
+    STAIN.store(false, Relaxed);
+    let mut d = if level == 0 {
+        Dish::with_params(seed, Params { sensor_angle: angle.to_radians(), ..Params::default() })
+    } else {
+        Dish::from_level(&DISHES[level - 1], seed)
+    };
+    let sps = STEPS_PER_SECOND as u64;
+    let end = *at.iter().max().unwrap();
+    let view = View { keys: false, style: Style::GAME, ..View::default() };
+    let (w, h) = render::frame_size(scale);
+    let s = scale as usize;
+    while d.t < end * sps {
+        for _ in 0..STEPS_PER_FRAME {
+            d.step();
+        }
+        let sec = d.t / sps;
+        if !(d.t.is_multiple_of(sps) && at.contains(&sec)) {
+            continue;
+        }
+        // Today's look.
+        let mut buf = vec![0u8; (w * h * 4) as usize];
+        render::draw(&d, &view, scale, &mut buf);
+        let today = image::RgbaImage::from_raw(w, h, buf).unwrap();
+        today.save(format!("{out}/{tag}-t{sec:03}-today.png")).unwrap();
+        // The dish with no mould on it: rim, agar, piles, salt, the bar.
+        let mut bare = d.clone();
+        bare.rival = None;
+        bare.walkers.clear();
+        bare.trail.fill(0.0);
+        let mut buf = vec![0u8; (w * h * 4) as usize];
+        render::draw(&bare, &view, scale, &mut buf);
+        let mut raw = image::RgbaImage::from_raw(w, h, buf).unwrap();
+        // Hunger per cell, 0 fed to 1 long unfed, then spread along the
+        // trail (a trail-weighted blur), so it blends the way food would.
+        let mut hun = vec![1.0f32; W * H];
+        for i in 0..W * H {
+            let a = d.fed_at[i];
+            if a != u64::MAX {
+                let secs = d.t.saturating_sub(a) as f32 / sps as f32;
+                hun[i] = ((secs - 0.5) / 6.0).clamp(0.0, 1.0);
+            }
+        }
+        for _ in 0..3 {
+            let mut nh = hun.clone();
+            for y in 1..H - 1 {
+                for x in 1..W - 1 {
+                    let (mut n, mut m) = (0.0, 0.0);
+                    for dy in 0..3 {
+                        for dx in 0..3 {
+                            let j = (y + dy - 1) * W + x + dx - 1;
+                            let wgt = d.trail[j] + 1e-4;
+                            n += hun[j] * wgt;
+                            m += wgt;
+                        }
+                    }
+                    nh[y * W + x] = n / m;
+                }
+            }
+            hun = nh;
+        }
+        let fed: [Rgb; 5] = [[0.0, 0.0, 0.0], [84.0, 40.0, 4.0], [190.0, 112.0, 12.0], [244.0, 180.0, 52.0], [255.0, 226.0, 150.0]];
+        let pale: [Rgb; 5] = [[0.0, 0.0, 0.0], [40.0, 44.0, 52.0], [96.0, 102.0, 112.0], [150.0, 156.0, 166.0], [196.0, 200.0, 208.0]];
+        let mut tr: Vec<f32> = d.trail.iter().filter(|&&t| t > 0.02).copied().collect();
+        tr.sort_by(|a, b| a.total_cmp(b));
+        let pc = |p: f32| tr.get(((tr.len().max(1) - 1) as f32 * p) as usize).copied().unwrap_or(0.0);
+        println!("t={sec}s walkers {} trail>0.02 cells {} p10 {:.2} p50 {:.2} p90 {:.2} p99 {:.2} tube bar {:.2}", d.walkers.len(), tr.len(), pc(0.1), pc(0.5), pc(0.9), pc(0.99), d.params.tube * 0.5);
+        // The mould layer, added over the bare dish.
+        let mut layer = vec![[0.0f32; 3]; (W * s) * (H * s)];
+        for py in 0..H * s {
+            for px in 0..W * s {
+                let (x, y) = ((px as f32 + 0.5) / s as f32, (py as f32 + 0.5) / s as f32);
+                let ci = (y as usize).min(H - 1) * W + (x as usize).min(W - 1);
+                if d.ground[ci] != Ground::Agar {
+                    continue;
+                }
+                let t = bilin(&d.trail, x, y);
+                // One fixed tone curve: brightness is the trail, saturating.
+                let b = 1.0 - (-t * gain).exp();
+                let hh = bilin(&hun, x, y);
+                let (cf, cp) = (ramp(&fed, b), ramp(&pale, b));
+                layer[py * W * s + px] = [0, 1, 2].map(|c| cf[c] * (1.0 - hh) + cp[c] * hh);
+            }
+        }
+        // A dot per walker, added on top: a sleeper dimmer and amber.
+        for wk in &d.walkers {
+            let (cx, cy) = ((wk.x * s as f32) as i32, (wk.y * s as f32) as i32);
+            let c: Rgb = if wk.asleep() { [90.0, 60.0, 20.0] } else { [96.0, 84.0, 58.0] };
+            for (ox, oy, k) in [(0, 0, 1.0f32), (1, 0, 0.6), (0, 1, 0.6), (-1, 0, 0.6), (0, -1, 0.6)] {
+                let (qx, qy) = (cx + ox, cy + oy);
+                if qx >= 0 && qy >= 0 && (qx as usize) < W * s && (qy as usize) < H * s {
+                    let l = &mut layer[qy as usize * W * s + qx as usize];
+                    for ch in 0..3 {
+                        l[ch] += c[ch] * k;
+                    }
+                }
+            }
+        }
+        for py in 0..H * s {
+            for px in 0..W * s {
+                let l = layer[py * W * s + px];
+                let p = raw.get_pixel_mut(px as u32, py as u32);
+                for ch in 0..3 {
+                    // Screen: light adds, and never clips to a flat fill.
+                    let a = p.0[ch] as f32 / 255.0;
+                    let bb = (l[ch] / 255.0).min(1.0);
+                    p.0[ch] = ((1.0 - (1.0 - a) * (1.0 - bb)) * 255.0) as u8;
+                }
+            }
+        }
+        raw.save(format!("{out}/{tag}-t{sec:03}-raw.png")).unwrap();
+    }
+}

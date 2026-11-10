@@ -1,0 +1,115 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Mould Bait Patches</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Same single dark look as the sensor-angle page, so the two read as a pair. Three-up grid for do nothing / random / guard, stacking on phones. */
+:root{
+  --ground:#0d1117; --panel:#161c24; --ink:#e9e6d8; --muted:#98a0a6; --rule:#2a323c; --gold:#f2b84b; --bad:#ff8a8a; --good:#9fd3a8;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+body{background:var(--ground);color:var(--ink);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:68rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:2rem 4rem;display:flex;flex-direction:column;gap:2.2rem}
+h1,h2{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(1.8rem,5vw,2.5rem)} h2{font-size:1.3rem;color:var(--gold)}
+p{margin:0;max-width:68ch}
+.kicker{font:500 .78rem/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:.85rem}
+ul{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:.4rem;max-width:68ch}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem}
+@media (max-width:720px){.trio{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:.35rem;min-width:0}
+figure img{width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);display:block;background:#000}
+figcaption{font:500 .86rem/1.35 var(--mono);color:var(--ink)}
+figcaption span{color:var(--muted)}
+.count{font:500 .82rem/1.45 var(--mono);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:.45rem .7rem;font-variant-numeric:tabular-nums;max-width:68ch}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font:500 .86rem/1.4 var(--mono);font-variant-numeric:tabular-nums;min-width:34rem}
+th,td{text-align:left;padding:.4rem .8rem;border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:500}
+.bad{color:var(--bad)} .good{color:var(--good)}
+code{font:500 .88em var(--mono);background:var(--panel);padding:.05rem .3rem;border-radius:4px}
+.ask{border-left:3px solid var(--gold);padding-left:.9rem}
+</style>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:.6rem">
+    <p class="kicker">Mould · goals for the 22.5° mould · 9 Nov 2026</p>
+    <h1>At 22.5° the mould is the threat, so the goal is to hold it back</h1>
+    <p>You picked "keep 22.5°, new goals". I measured the three goals I'd suggested, and the mould meets or beats all of them with nobody playing. So here is a first try at turning the game round. Two marked patches sit on the routes from the start pile, and they smell faintly of food. The mould wants to cover them; your job is to keep it off.</p>
+  </header>
+
+  <section class="ask">
+    <h2>Why the first goals didn't work</h2>
+    <ul>
+      <li><b>Quick:</b> in 39 of 42 runs, doing nothing included, all six piles were joined by 58 s. The last pile lands at 55 s, and the mould is usually already on the spot.</li>
+      <li><b>Weathered:</b> the loops route round the storm cut. Doing nothing kept all the food on 4 of 6 seeds.</li>
+      <li><b>Lean:</b> every hand's network is 1.3–2.0× the shortest. A cheating pruner with unlimited snips (150 cuts a dish, each one tested first so it never cut food off) still ended at 1.40–1.84×. The mould grows back faster than you can cut.</li>
+    </ul>
+    <p class="count">Free dish, 22.5°, seeds 1–6, 7 scripted hands each. Food flow on didn't help either: doing nothing came out leaner (1.28–1.48×) than the plan (1.37–1.67×).</p>
+  </section>
+
+  <section>
+    <h2>Seed 1 at 1:27, just before the storm</h2>
+    <p>The dashed rings are the patches: white means clean, red means mould is on it. The guard hand rings one patch with its one salt wall and holds the lamp on the other.</p>
+    <div class="trio">
+      <figure><img src="s1-idle-087.jpg" alt="Seed 1, doing nothing, at 1:27"><figcaption>Do nothing <span>· patches 197 / 0 cells · food 4 of 6</span></figcaption></figure>
+      <figure><img src="s1-random-087.jpg" alt="Seed 1, random hand, at 1:27"><figcaption>Random <span>· 197 / 197 · food 4 of 6</span></figcaption></figure>
+      <figure><img src="s1-guard-087.jpg" alt="Seed 1, guard hand, at 1:27"><figcaption>Guard <span>· 0 / 117 · food 6 of 6</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Seed 3 at 1:27</h2>
+    <div class="trio">
+      <figure><img src="s3-idle-087.jpg" alt="Seed 3, doing nothing, at 1:27"><figcaption>Do nothing <span>· 197 / 197 · food 6 of 6</span></figcaption></figure>
+      <figure><img src="s3-random-087.jpg" alt="Seed 3, random hand, at 1:27"><figcaption>Random <span>· 197 / 197 · food 6 of 6</span></figcaption></figure>
+      <figure><img src="s3-guard-087.jpg" alt="Seed 3, guard hand, at 1:27"><figcaption>Guard <span>· 0 / 141 · food 6 of 6</span></figcaption></figure>
+    </div>
+    <p class="count">A full patch is 197 cells. "Food" is piles joined in one piece when the storm strikes.</p>
+  </section>
+
+  <section>
+    <h2>Seed 1 at 0:50</h2>
+    <div class="trio">
+      <figure><img src="s1-idle-050.jpg" alt="Seed 1, doing nothing, at 0:50"><figcaption>Do nothing, 0:50</figcaption></figure>
+      <figure><img src="s1-random-050.jpg" alt="Seed 1, random hand, at 0:50"><figcaption>Random, 0:50</figcaption></figure>
+      <figure><img src="s1-guard-050.jpg" alt="Seed 1, guard hand, at 0:50"><figcaption>Guard, 0:50</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Counts, seeds 1–6</h2>
+    <p>Seeds where mould was on each patch at the bell, and seeds where all six piles were joined. The smell is how strongly a patch smells, as a share of a full pile of food.</p>
+    <div class="tbl"><table>
+      <tr><th>Smell</th><th>Hand</th><th>Patch A hit</th><th>Patch B hit</th><th>All food joined</th></tr>
+      <tr><td>none</td><td>do nothing</td><td>5 of 6</td><td>3 of 6</td><td>6 of 6</td></tr>
+      <tr><td>none</td><td>random</td><td>5 of 6</td><td>2 of 6</td><td>6 of 6</td></tr>
+      <tr><td>none</td><td>guard</td><td class="good">0 of 6</td><td class="good">0 of 6</td><td>6 of 6</td></tr>
+      <tr><td>0.1</td><td>do nothing</td><td>6 of 6</td><td>4 of 6</td><td class="bad">3 of 6</td></tr>
+      <tr><td>0.1</td><td>random</td><td>6 of 6</td><td>6 of 6</td><td>5 of 6</td></tr>
+      <tr><td>0.1</td><td>guard</td><td class="good">0 of 6</td><td class="bad">6 of 6</td><td>5 of 6</td></tr>
+      <tr><td>0.2</td><td>do nothing</td><td>6 of 6</td><td>5 of 6</td><td class="bad">3 of 6</td></tr>
+      <tr><td>0.2</td><td>guard</td><td class="good">0 of 6</td><td class="bad">6 of 6</td><td>4 of 6</td></tr>
+      <tr><td>0.5</td><td>do nothing</td><td>6 of 6</td><td>6 of 6</td><td class="bad">1 of 6</td></tr>
+      <tr><td>0.5</td><td>guard</td><td class="good">0 of 6</td><td class="bad">6 of 6</td><td>4 of 6</td></tr>
+    </table></div>
+    <ul>
+      <li><b>The smell makes the patch a trap as well as a target.</b> Mould crowds onto it and doesn't go on to the food: at 0.1 doing nothing lost food on 3 of 6 seeds, and at 0.5 on 5 of 6. That's a second reason to guard it, and one you can see happen.</li>
+      <li><b>Salt always saves a patch.</b> One ring kept patch A clean on every seed at every smell.</li>
+      <li><b>The lamp only works with no smell.</b> Held on patch B, it kept it clean on 6 of 6 with no smell, and on 0 of 6 once the patch smells. With one salt wall, the second patch is the hard part. That could be the puzzle, or the lamp may need to be stronger.</li>
+      <li>This is a scripted guard, not a person. It never moves the lamp or uses oats as a decoy, so a person should do better.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Not decided yet</h2>
+    <ul>
+      <li>The stars. One idea is a ladder: one patch clean, both clean, then both clean with all food joined. As it stands, doing nothing would still take the first star on 2 of 6 seeds, because it sometimes misses patch B.</li>
+      <li>The smell strength, and whether the lamp should beat it.</li>
+      <li>Nothing is on by default yet. The patches are a switch (<code>spared=2</code>) in the probe, and 45° is still the shipped angle.</li>
+    </ul>
+  </section>
+</div>
+
+</body></html>

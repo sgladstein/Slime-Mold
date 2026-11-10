@@ -23,11 +23,11 @@
 
 use std::time::Instant;
 
-use pixel_physics::mould::play::{Dump, Fresh, Idle, IdleGo, LampOnly, Leader, Plan, Player, Random, Shepherd};
-use pixel_physics::mould::wander::{Outcome, FIRST_WALKERS};
-use pixel_physics::mould::look::Style;
-use pixel_physics::mould::render::{self, View};
-use pixel_physics::mould::{Dish, Ground, Params, Phase, Score, Tool, LAMP_R, STEPS_PER_FRAME, STEPS_PER_SECOND};
+use slime_mould::mould::play::{Dump, Fresh, Idle, IdleGo, LampOnly, Leader, Plan, Player, Random, Shepherd};
+use slime_mould::mould::wander::{Outcome, FIRST_WALKERS};
+use slime_mould::mould::look::Style;
+use slime_mould::mould::render::{self, View};
+use slime_mould::mould::{Dish, Ground, Params, Phase, Score, Tool, LAMP_R, STEPS_PER_FRAME, STEPS_PER_SECOND};
 
 struct Args {
     seeds: Vec<u64>,
@@ -131,7 +131,7 @@ fn parse() -> Args {
                 a.players_given = true;
             }
             "level" => {
-                let n = pixel_physics::mould::level::DISHES.len();
+                let n = slime_mould::mould::level::DISHES.len();
                 a.level = Some(if v == "all" {
                     (0..n).collect()
                 } else {
@@ -155,18 +155,18 @@ fn parse() -> Args {
             "style" => a.style = Style::parse(v).unwrap_or_else(|| panic!("style: unknown {v}")),
             "grey" => {
                 let n: u8 = v.parse().unwrap();
-                assert!((n as usize) < pixel_physics::mould::look::STARVE_LOOKS.len(), "grey: 0 grey, 1 embers, 2 dried, 3 food ramp");
-                pixel_physics::mould::look::STARVE_LOOK.store(n, std::sync::atomic::Ordering::Relaxed);
-                println!("starving mould drawn as {}", pixel_physics::mould::look::STARVE_LOOKS[n as usize]);
+                assert!((n as usize) < slime_mould::mould::look::STARVE_LOOKS.len(), "grey: 0 grey, 1 embers, 2 dried, 3 food ramp");
+                slime_mould::mould::look::STARVE_LOOK.store(n, std::sync::atomic::Ordering::Relaxed);
+                println!("starving mould drawn as {}", slime_mould::mould::look::STARVE_LOOKS[n as usize]);
             }
             "specks" => {
                 let n: u8 = v.parse().unwrap();
-                assert!((n as usize) < pixel_physics::mould::look::WALKER_LOOKS.len(), "specks: 0 off, 1 grains, 2 glints");
-                pixel_physics::mould::look::WALKER_LOOK.store(n, std::sync::atomic::Ordering::Relaxed);
-                println!("walkers drawn as {}", pixel_physics::mould::look::WALKER_LOOKS[n as usize]);
+                assert!((n as usize) < slime_mould::mould::look::WALKER_LOOKS.len(), "specks: 0 off, 1 grains, 2 glints");
+                slime_mould::mould::look::WALKER_LOOK.store(n, std::sync::atomic::Ordering::Relaxed);
+                println!("walkers drawn as {}", slime_mould::mould::look::WALKER_LOOKS[n as usize]);
             }
-            "smooth" => pixel_physics::mould::look::SMOOTH.store(v == "1", std::sync::atomic::Ordering::Relaxed),
-            "stain" => pixel_physics::mould::look::STAIN.store(v == "1", std::sync::atomic::Ordering::Relaxed),
+            "smooth" => slime_mould::mould::look::SMOOTH.store(v == "1", std::sync::atomic::Ordering::Relaxed),
+            "stain" => slime_mould::mould::look::STAIN.store(v == "1", std::sync::atomic::Ordering::Relaxed),
             "cut" => a.cut = Some(v.into()),
             "scale" => a.scale = v.parse().unwrap(),
             "every" => a.every = v.parse().unwrap(),
@@ -221,7 +221,7 @@ fn parse() -> Args {
             "water_r" => p.water_r = f(),
             "tune" => {
                 let text = std::fs::read_to_string(v).unwrap_or_else(|e| panic!("tune: {v}: {e}"));
-                let bad = pixel_physics::mould::tune::from_text(&text, p);
+                let bad = slime_mould::mould::tune::from_text(&text, p);
                 assert!(bad.is_empty(), "tune: {v}: not understood: {bad:?}");
             }
             "carry_cap" => p.carry_cap = f(),
@@ -303,7 +303,7 @@ impl Player for Warden {
         "warden"
     }
     fn act(&mut self, d: &mut Dish) {
-        use pixel_physics::mould::{H, W};
+        use slime_mould::mould::{H, W};
         if d.phase != Phase::Growing || d.rival.is_none() {
             return;
         }
@@ -338,7 +338,7 @@ impl Player for Warden {
         // The pile the wild one eats most from and this one least.
         if self.lamp && d.lamp.is_none() {
             let piles: Vec<(f32, f32, f32)> = d.piles.iter().filter(|p| !p.oats && p.food > 0.0).map(|p| (p.x, p.y, p.r)).collect();
-            let near = |ws: &[pixel_physics::mould::Walker], x: f32, y: f32, pr: f32| ws.iter().filter(|w| (w.x - x).hypot(w.y - y) < pr + 4.0).count() as i32;
+            let near = |ws: &[slime_mould::mould::Walker], x: f32, y: f32, pr: f32| ws.iter().filter(|w| (w.x - x).hypot(w.y - y) < pr + 4.0).count() as i32;
             let hit = piles
                 .iter()
                 .map(|&(x, y, pr)| (x, y, near(&r.walkers, x, y, pr) - 2 * near(&d.walkers, x, y, pr)))
@@ -416,7 +416,7 @@ impl Player for Warden {
 /// and lets go, so the ground there is dry when the mould flows back and it
 /// falls asleep; when a pile lands, it waters the sleepers nearest it.
 struct Sleeper {
-    route: pixel_physics::mould::play::Route,
+    route: slime_mould::mould::play::Route,
     bake_until: u64,
     baked_at: Option<u64>,
     bake: f32,
@@ -424,9 +424,9 @@ struct Sleeper {
 
 impl Sleeper {
     fn new() -> Self {
-        let k = pixel_physics::mould::level::DISHES.iter().position(|l| l.key == "alive").unwrap();
+        let k = slime_mould::mould::level::DISHES.iter().position(|l| l.key == "alive").unwrap();
         Sleeper {
-            route: pixel_physics::mould::play::Route::for_level(k),
+            route: slime_mould::mould::play::Route::for_level(k),
             bake_until: 0,
             baked_at: None,
             bake: std::env::var("BAKE").ok().and_then(|v| v.parse().ok()).unwrap_or(1.5),
@@ -484,7 +484,7 @@ impl Player for Sleeper {
         // nobody asleep yet.
         let left: f32 = d.dish_piles().filter(|p| p.reached()).map(|p| p.food / p.full).sum();
         // Food within 35 cells of fed mould will be reached without help.
-        let w_ = pixel_physics::mould::W;
+        let w_ = slime_mould::mould::W;
         let fed: Vec<(f32, f32)> = d
             .walkers
             .iter()
@@ -571,7 +571,7 @@ impl Player for Pruner {
         {
             return;
         }
-        let w = pixel_physics::mould::W;
+        let w = slime_mould::mould::W;
         let tube = d.params.tube;
         let cand: Vec<usize> = (0..d.trail.len())
             .filter(|&i| {
@@ -622,11 +622,11 @@ fn frame_of(d: &Dish, scale: u32, style: Style) -> image::RgbaImage {
         // `TOOL=water CURSOR=x,y`: that tool in hand with the cursor on the
         // dish there, so a still shows the tool's preview and the bar's pick.
         tool: match std::env::var("TOOL").as_deref() {
-            Ok("oats") => pixel_physics::mould::Tool::Oats,
-            Ok("salt") => pixel_physics::mould::Tool::Salt,
-            Ok("snip") => pixel_physics::mould::Tool::Snip,
-            Ok("water") => pixel_physics::mould::Tool::Water,
-            _ => pixel_physics::mould::Tool::Lamp,
+            Ok("oats") => slime_mould::mould::Tool::Oats,
+            Ok("salt") => slime_mould::mould::Tool::Salt,
+            Ok("snip") => slime_mould::mould::Tool::Snip,
+            Ok("water") => slime_mould::mould::Tool::Water,
+            _ => slime_mould::mould::Tool::Lamp,
         },
         // `CURSOR=sleepers`: on the middle of the mould asleep, if any.
         cursor: std::env::var("CURSOR").ok().and_then(|v| {
@@ -653,7 +653,7 @@ fn frame_of(d: &Dish, scale: u32, style: Style) -> image::RgbaImage {
 /// drier than `crust_wet` is a dotted orange, ground wetter than
 /// `revive_wet` a dotted blue, and every sleeping walker a solid cyan cell.
 fn sleep_mark(d: &Dish, scale: u32, img: &mut image::RgbaImage) {
-    use pixel_physics::mould::{H, W};
+    use slime_mould::mould::{H, W};
     let (dry, wet) = (d.params.crust_wet, d.params.revive_wet);
     for y in 0..H {
         for x in 0..W {
@@ -912,7 +912,7 @@ fn lean(a: &Args) {
 /// The thickest tube cell away from every pile, and the unit normal to the
 /// line from home through it (roughly across the tube).
 fn trunk(d: &Dish) -> ((f32, f32), (f32, f32)) {
-    let w = pixel_physics::mould::W;
+    let w = slime_mould::mould::W;
     let mut best = (0.0f32, 0usize);
     for (i, &t) in d.trail.iter().enumerate() {
         let (x, y) = ((i % w) as f32, (i / w) as f32);
@@ -928,7 +928,7 @@ fn trunk(d: &Dish) -> ((f32, f32), (f32, f32)) {
 
 /// Trail-weighted offset of the tube along `n`, within 14 cells of `at`.
 fn tube_offset(d: &Dish, at: (f32, f32), n: (f32, f32)) -> f32 {
-    let w = pixel_physics::mould::W;
+    let w = slime_mould::mould::W;
     let (mut sum, mut wsum) = (0.0f32, 0.0f32);
     for (i, &t) in d.trail.iter().enumerate() {
         if t <= d.params.tube {
@@ -1046,16 +1046,16 @@ fn verbs(a: &Args, dir: &str) {
         let mut best = (0.0f32, 0usize);
         for (i, &t) in d.trail.iter().enumerate() {
             let (x, y) = (
-                (i % pixel_physics::mould::W) as f32,
-                (i / pixel_physics::mould::W) as f32,
+                (i % slime_mould::mould::W) as f32,
+                (i / slime_mould::mould::W) as f32,
             );
             if t > best.0 && d.piles.iter().all(|p| (p.x - x).hypot(p.y - y) > p.r + LAMP_R + 4.0) {
                 best = (t, i);
             }
         }
         let (tx, ty) = (
-            (best.1 % pixel_physics::mould::W) as f32 + 0.5,
-            (best.1 / pixel_physics::mould::W) as f32 + 0.5,
+            (best.1 % slime_mould::mould::W) as f32 + 0.5,
+            (best.1 / slime_mould::mould::W) as f32 + 0.5,
         );
         let (hx, hy) = (d.piles[0].x, d.piles[0].y);
         let len = (tx - hx).hypot(ty - hy).max(1.0);
@@ -1165,7 +1165,7 @@ fn cost(a: &Args) {
 /// switches back and forth, so the count is also split into cells that
 /// switched four or more times in a second.
 fn flicker(a: &Args) {
-    use pixel_physics::mould::{H, W};
+    use slime_mould::mould::{H, W};
     println!("\n== yellow<->grey switches per drawn frame (plan bot, 10-60 s) ==");
     let class = |c: [u8; 3]| -> u8 {
         let (r, g, b) = (c[0] as i32, c[1] as i32, c[2] as i32);
@@ -1223,10 +1223,10 @@ fn flicker(a: &Args) {
 /// began, and writes the window's frame (banner and all) half a second into
 /// each step to DIR, plus the briefing card over the opening frame.
 fn lesson(a: &Args, dir: &str) {
-    use pixel_physics::mould::lesson::{Lesson, Step};
-    use pixel_physics::mould::play::oats_toward_nearest;
-    use pixel_physics::mould::render::Banner;
-    use pixel_physics::mould::Tool;
+    use slime_mould::mould::lesson::{Lesson, Step};
+    use slime_mould::mould::play::oats_toward_nearest;
+    use slime_mould::mould::render::Banner;
+    use slime_mould::mould::Tool;
     let (mut d, mut l) = Lesson::dish_with(a.params.clone());
     let sps = STEPS_PER_SECOND as u64;
     let (hx, hy) = (d.piles[0].x, d.piles[0].y);
@@ -1401,10 +1401,10 @@ fn tag(style: Style) -> &'static str {
 /// score, `counts.txt`, and the draw cost of each look over the whole dish,
 /// timed on the same dish state frame by frame.
 fn looks(a: &Args, dir: &str) {
-    use pixel_physics::mould::lesson::{Lesson, Step};
-    use pixel_physics::mould::play::Fresh;
-    use pixel_physics::mould::render::Banner;
-    use pixel_physics::mould::Tool;
+    use slime_mould::mould::lesson::{Lesson, Step};
+    use slime_mould::mould::play::Fresh;
+    use slime_mould::mould::render::Banner;
+    use slime_mould::mould::Tool;
     let scale = 4;
     let sps = STEPS_PER_SECOND as u64;
     let seed = a.seeds[0];
@@ -1574,7 +1574,7 @@ fn looks(a: &Args, dir: &str) {
             for gy in (12..148).step_by(4) {
                 for gx in (12..244).step_by(4) {
                     let (x, y) = (gx as f32, gy as f32);
-                    let open = d.ground[gy * pixel_physics::mould::W + gx] == pixel_physics::mould::Ground::Agar;
+                    let open = d.ground[gy * slime_mould::mould::W + gx] == slime_mould::mould::Ground::Agar;
                     let on_pile = d.piles.iter().any(|p| (p.x - x).hypot(p.y - y) < p.r + 6.0);
                     if !open || on_pile {
                         continue;
@@ -1915,7 +1915,7 @@ fn pull(a: &Args) {
 /// flashed. Run once with the defaults and once with `pieces=0 wound=0` for
 /// the old snip. With cut=DIR (not "1"): stills at 0, 1, 2, 4, 8 s after.
 fn cut(a: &Args, dir: &str) {
-    let w = pixel_physics::mould::W;
+    let w = slime_mould::mould::W;
     println!("\n== one snip across the trunk at 40 s, plan hand ==");
     for &seed in &a.seeds {
         let mut d = Dish::with_params(seed, a.params.clone());
@@ -2002,15 +2002,15 @@ fn give_oats(d: &mut Dish, a: &Args) {
 /// (the runs, the `look=` stills and the frame cost) comes from here (review
 /// 1, P2: the stills and the frame cost were built at the defaults).
 fn level_dish(k: usize, seed: u64, a: &Args) -> Dish {
-    use pixel_physics::mould::level::DISHES;
+    use slime_mould::mould::level::DISHES;
     // The level's own sensor angle unless `sensor_angle=` moved it.
-    let angle = if a.params.sensor_angle == pixel_physics::mould::Params::default().sensor_angle {
+    let angle = if a.params.sensor_angle == slime_mould::mould::Params::default().sensor_angle {
         DISHES[k].sensor_deg.to_radians()
     } else {
         a.params.sensor_angle
     };
-    let params = pixel_physics::mould::Params {
-        stray_reach: a.strays.unwrap_or(pixel_physics::mould::level::STRAY_REACH),
+    let params = slime_mould::mould::Params {
+        stray_reach: a.strays.unwrap_or(slime_mould::mould::level::STRAY_REACH),
         sensor_angle: angle,
         wet: a.wet.unwrap_or(DISHES[k].tools.water > 0),
         ..a.params.clone()
@@ -2037,7 +2037,7 @@ fn level_dish(k: usize, seed: u64, a: &Args) -> Dish {
 /// One hand on one hand-made dish, to the bell: the dish, and every
 /// second's (walkers, fed piles, tube over ruler where there is one).
 fn level_run(k: usize, seed: u64, who: &str, a: &Args, gif: Option<&str>) -> Dish {
-    use pixel_physics::mould::play::Route;
+    use slime_mould::mould::play::Route;
     let mut d = level_dish(k, seed, a);
     let mut p: Box<dyn Player> = if who == "intended" {
         Box::new(Route::for_level(k))
@@ -2107,7 +2107,7 @@ fn level_run(k: usize, seed: u64, who: &str, a: &Args, gif: Option<&str>) -> Dis
 /// the intended hand's end, `gif=DIR` a GIF of the intended hand on the
 /// first seed, and the frame cost of the intended hand on the first seed.
 fn levels(a: &Args, which: &[usize]) {
-    use pixel_physics::mould::level::DISHES;
+    use slime_mould::mould::level::DISHES;
     let hands = if a.players_given {
         a.players.clone()
     } else {
@@ -2202,7 +2202,7 @@ fn levels(a: &Args, which: &[usize]) {
     // first dish asked for, intended hand.
     let k = which[0];
     let mut d = level_dish(k, a.seeds[0], a);
-    let mut p = pixel_physics::mould::play::Route::for_level(k);
+    let mut p = slime_mould::mould::play::Route::for_level(k);
     let (w, h) = render::frame_size(4);
     let mut buf = vec![0u8; (w * h * 4) as usize];
     let view = View {
@@ -2273,8 +2273,8 @@ fn rival_cost(a: &Args) {
 
 /// The dish picker as the window draws it, for a picture: `menu=DIR`.
 fn menu(a: &Args, dir: &str) {
-    use pixel_physics::mould::level::Progress;
-    use pixel_physics::mould::render::Menu;
+    use slime_mould::mould::level::Progress;
+    use slime_mould::mould::render::Menu;
     let d = Dish::with_params(a.seeds[0], a.params.clone());
     for (tag, text) in [("fresh", ""), ("some", "lesson 1\nwall 3\nruler 1\n")] {
         let view = View {

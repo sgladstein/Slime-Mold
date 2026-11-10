@@ -1,0 +1,78 @@
+<title>The Wild One</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Same single dark look as the other mould pages. Paired columns stack on phones. */
+:root{
+  --ground:#0d1117; --panel:#161c24; --ink:#e9e6d8; --muted:#98a0a6; --rule:#2a323c; --gold:#f2b84b; --good:#9fd3a8; --cyan:#78f0ff; --dry:#e67828; --wet:#468cff;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+body{background:var(--ground);color:var(--ink);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:66rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:2rem 4rem;display:flex;flex-direction:column;gap:2.2rem}
+h1,h2{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(1.8rem,5vw,2.5rem)} h2{font-size:1.3rem;color:var(--gold)}
+p{margin:0;max-width:68ch}
+.kicker{font:500 .78rem/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:.85rem}
+ul{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:.4rem;max-width:68ch}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+@media (max-width:640px){.pair{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:.35rem;min-width:0}
+figure img{width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);display:block;background:#000}
+figcaption{font:500 .88rem/1.35 var(--mono);color:var(--ink)}
+figcaption span{color:var(--muted)}
+.count{font:500 .82rem/1.45 var(--mono);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:.45rem .7rem;font-variant-numeric:tabular-nums;max-width:68ch}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font:500 .86rem/1.4 var(--mono);font-variant-numeric:tabular-nums;min-width:34rem}
+th,td{text-align:left;padding:.4rem .8rem;border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:500}
+.good{color:var(--good)}
+code{font:500 .88em var(--mono);background:var(--panel);padding:.05rem .3rem;border-radius:4px}
+.ask{border-left:3px solid var(--gold);padding-left:.9rem}
+.key{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font:500 .82rem/1.4 var(--mono);color:var(--muted)}
+.sw{display:inline-block;width:.8em;height:.8em;border-radius:2px;margin-right:.35em;vertical-align:-.05em}
+</style>
+
+<style>.violet{color:#b48cff}</style>
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:.6rem">
+<p class="kicker">Mould · The Wild One · step 3 of your order · 10 Nov 2026</p>
+<h1>A second mould nobody steers, eating from your piles</h1>
+<p>This is step 3 of the order you agreed: a wild mould in violet, under exactly the same rules as yours. It starts bigger than you (600 walkers to your 400) on the right of the dish. Both moulds eat from the same piles, and a pile can only feed so many mouths at once, so whoever has more walkers on a pile takes more of it. Where the two touch, walkers kill each other, and a walker on a well-fed tube holds its ground better than a stray. You win stars by ending bigger than it: 1.5 times its size is one star, 3 times is two, and none of it left is three.</p>
+</header>
+<section class="ask"><h2>What to try</h2>
+<p><code>cargo run --release --bin mould</code>, open the fifth dish, THE WILD ONE. Every tool has a second use here: salt walls it off, the lamp drives it off a pile you want, a snip cuts its supply line, and oats lead your mould to the contested middle pile first. Does fighting over food feel like a game, or like watching?</p></section>
+<section><h2>Who ends bigger, 16 seeds each</h2>
+<p>"Your share" is your walkers over both moulds' walkers when the bell rings. The tool hand is a scripted player in the probe that uses all four tools in a fixed way. Each pair is the same seed.</p>
+<div class="tbl"><table>
+<tr><th>Hand</th><th>Stars per seed</th><th>Your share</th><th>Ended bigger</th></tr>
+<tr><td>Doing nothing</td><td>0 on all 16</td><td>0.39–0.58</td><td>9 of 16</td></tr>
+<tr><td>Random tools</td><td>0 on 14, 1 on 2</td><td>0.41–0.64</td><td>12 of 16</td></tr>
+<tr><td class="good">All four tools</td><td class="good">1 on 2, 2 on 10, 3 on 4</td><td class="good">0.61–1.00</td><td class="good">16 of 16</td></tr>
+</table></div>
+<p class="count">All four tools beat doing nothing 16–0 and random 16–0 on share (sign test p &lt; 0.0001 each). Doing nothing vs random: 4–12, p 0.08, not significant. Three comparisons, so the bar is p &lt; 0.017.</p>
+<p>One tool at a time, 8 seeds each, against doing nothing on the same seeds:</p>
+<div class="tbl"><table>
+<tr><th>Only</th><th>Stars</th><th>Your share</th><th>Beat doing nothing</th></tr>
+<tr><td>Lamp</td><td>0–2, mostly 1</td><td>0.55–0.82</td><td>8–0, p 0.008</td></tr>
+<tr><td>Salt wall</td><td>1 on all 8</td><td>0.64–0.67</td><td>8–0, p 0.008</td></tr>
+<tr><td>Oats</td><td>0–1</td><td>0.50–0.67</td><td>6–2, p 0.29</td></tr>
+<tr><td>Snip</td><td>0 on all 8</td><td>0.44–0.59</td><td>5–3, p 0.73</td></tr>
+</table></div>
+<p>So the lamp and the wall each win alone, but only together do they get 2 and 3 stars. The snip, as the script uses it, does nothing on its own: the cut heals. That's the weakest tool here, and the next thing to look at.</p>
+</section>
+<section><h2>The same two seeds, side by side</h2>
+<p>The bottom bar shows "You N wild M" at that moment. On the right, the salt wall is the pale bar in the middle.</p>
+<p class="kicker">seed 4 · 30 s</p><div class="pair"><figure><img src="s4-idle-30.jpg" alt="seed 4, idle, 30 s"><figcaption>Doing nothing <span>(left)</span></figcaption></figure><figure><img src="s4-warden-30.jpg" alt="seed 4, warden, 30 s"><figcaption>All four tools <span>(right)</span></figcaption></figure></div><p class="kicker">seed 4 · 75 s</p><div class="pair"><figure><img src="s4-idle-75.jpg" alt="seed 4, idle, 75 s"><figcaption>Doing nothing <span>(left)</span></figcaption></figure><figure><img src="s4-warden-75.jpg" alt="seed 4, warden, 75 s"><figcaption>All four tools <span>(right)</span></figcaption></figure></div><p class="kicker">seed 4 · 120 s</p><div class="pair"><figure><img src="s4-idle-120.jpg" alt="seed 4, idle, 120 s"><figcaption>Doing nothing <span>(left)</span></figcaption></figure><figure><img src="s4-warden-120.jpg" alt="seed 4, warden, 120 s"><figcaption>All four tools <span>(right)</span></figcaption></figure></div><p class="kicker">seed 4 · 145 s · the wild one died at 2:26 on the right</p><div class="pair"><figure><img src="s4-idle-145.jpg" alt="seed 4, idle, 145 s"><figcaption>Doing nothing <span>(left)</span></figcaption></figure><figure><img src="s4-warden-145.jpg" alt="seed 4, warden, 145 s"><figcaption>All four tools <span>(right)</span></figcaption></figure></div>
+<p class="count">Seed 4 at the bell. Doing nothing: you 439, wild 431, 0 stars, 2,622 of yours and 2,573 of its walkers died fighting. All four tools: you 1,100, wild gone at 2:26, 3 stars, 1,343 / 1,397 died fighting.</p>
+<p class="kicker">seed 1 · 30 s</p><div class="pair"><figure><img src="s1-idle-30.jpg" alt="seed 1, idle, 30 s"><figcaption>Doing nothing <span>(left)</span></figcaption></figure><figure><img src="s1-warden-30.jpg" alt="seed 1, warden, 30 s"><figcaption>All four tools <span>(right)</span></figcaption></figure></div><p class="kicker">seed 1 · 75 s</p><div class="pair"><figure><img src="s1-idle-75.jpg" alt="seed 1, idle, 75 s"><figcaption>Doing nothing <span>(left)</span></figcaption></figure><figure><img src="s1-warden-75.jpg" alt="seed 1, warden, 75 s"><figcaption>All four tools <span>(right)</span></figcaption></figure></div><p class="kicker">seed 1 · 120 s</p><div class="pair"><figure><img src="s1-idle-120.jpg" alt="seed 1, idle, 120 s"><figcaption>Doing nothing <span>(left)</span></figcaption></figure><figure><img src="s1-warden-120.jpg" alt="seed 1, warden, 120 s"><figcaption>All four tools <span>(right)</span></figcaption></figure></div><p class="kicker">seed 1 · 145 s</p><div class="pair"><figure><img src="s1-idle-145.jpg" alt="seed 1, idle, 145 s"><figcaption>Doing nothing <span>(left)</span></figcaption></figure><figure><img src="s1-warden-145.jpg" alt="seed 1, warden, 145 s"><figcaption>All four tools <span>(right)</span></figcaption></figure></div>
+<p class="count">Seed 1 at the bell. Doing nothing: you 354, wild 543, 0 stars, it took more of the food; 2,954 / 2,674 died fighting. All four tools: you 783, wild 204, 2 stars; 1,699 / 1,830 died fighting.</p>
+</section>
+<section><h2>What it costs</h2>
+<p class="count">Frame time, free dish, the same run with and without a wild mould on alternating frames, 3 seeds: 4.3–4.9 ms becomes 5.7–6.3 ms a frame, about +1.4 ms. Worst frames are about the same, 15–22 ms either way.</p>
+<p>The wild mould is a whole second dish run under the same rules, so it costs about what your mould costs. It is only switched on in this one dish.</p>
+</section>
+<section><h2>What's next</h2>
+<p>Finer tubes (sensor reach about 6) and a re-measure, then the independent review of everything built since the last one. The violet drawing is a first pass, and I've told the looks thread so it can draw it properly.</p></section>
+</div>

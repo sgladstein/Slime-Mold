@@ -1,0 +1,98 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Mould Sensor Angle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column; paired 45 / 22.5 media side by side, stacking on phones. Single dark look, like the game's Night dish. */
+:root{
+  --ground:#0d1117; --panel:#161c24; --ink:#e9e6d8; --muted:#98a0a6; --rule:#2a323c; --gold:#f2b84b;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+body{background:var(--ground);color:var(--ink);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:64rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:2rem 4rem;display:flex;flex-direction:column;gap:2.2rem}
+h1,h2{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(1.8rem,5vw,2.5rem)} h2{font-size:1.3rem;color:var(--gold)}
+p{margin:0;max-width:68ch}
+.kicker{font:500 .78rem/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:.85rem}
+ul{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:.4rem;max-width:68ch}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+@media (max-width:640px){.pair{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:.35rem;min-width:0}
+figure img,figure video{width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);display:block;background:#000}
+figcaption{font:500 .9rem/1.35 var(--mono);color:var(--ink)}
+figcaption span{color:var(--muted)}
+.count{font:500 .82rem/1.45 var(--mono);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:.45rem .7rem;font-variant-numeric:tabular-nums;max-width:68ch}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font:500 .88rem/1.4 var(--mono);font-variant-numeric:tabular-nums;min-width:30rem}
+th,td{text-align:left;padding:.4rem .8rem;border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:500}
+code{font:500 .88em var(--mono);background:var(--panel);padding:.05rem .3rem;border-radius:4px}
+.ask{border-left:3px solid var(--gold);padding-left:.9rem}
+</style>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:.6rem">
+    <p class="kicker">Mould · Jones's sensor angle · 9 Nov 2026</p>
+    <h1>One number makes the mould explore on its own</h1>
+    <p>The walkers look ahead at three points: straight on, and some angle to either side. We ship 45°. Jones's own default is 22.5°, the setting where he says the network "never stabilizes completely" and keeps sprouting new branches across gaps. Below is the same dish with the player doing nothing, at each setting. Nothing else changed.</p>
+  </header>
+
+  <section class="ask">
+    <h2>It looks far more alive, and it plays the game for you</h2>
+    <p>At 22.5° the mould reaches all six piles by itself on every seed. Doing nothing earns stars, so the dishes stop being a challenge. Which way would you like to go?</p>
+    <ul>
+      <li><b>Explore, then settle.</b> Start each dish at 22.5° and ease toward 45° as it ages. The mould searches early, then pulls tight, and your tools decide what it found. This is the research agent's top pick, and Jones suggests something like it.</li>
+      <li><b>Keep 22.5° and change what the dish asks of you.</b> Thrift, storms and timing instead of reaching the food.</li>
+      <li><b>Keep 45°</b> and leave 22.5° as a panel toy.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Doing nothing, 0:50 to 0:58</h2>
+    <div class="pair">
+      <figure><video src="idle-45.mp4" autoplay muted loop playsinline></video><figcaption>45° (shipped) <span>· a V between three piles that has stopped changing</span></figcaption></figure>
+      <figure><video src="idle-22.mp4" autoplay muted loop playsinline></video><figcaption>22.5° <span>· loops, side branches and feelers that keep moving</span></figcaption></figure>
+    </div>
+    <p class="count">Seed 1, free dish, no player input. Joined by the end: 45° 4 of 6 piles, 22.5° 6 of 6. Network length against the shortest possible: 45° 1.13×, 22.5° 1.63×.</p>
+  </section>
+
+  <section>
+    <h2>The same run at three moments</h2>
+    <div class="pair">
+      <figure><img src="idle-45-020.png" alt="45 degrees at 0:20"><figcaption>45°, 0:20</figcaption></figure>
+      <figure><img src="idle-22-020.png" alt="22.5 degrees at 0:20"><figcaption>22.5°, 0:20</figcaption></figure>
+      <figure><img src="idle-45-050.png" alt="45 degrees at 0:50"><figcaption>45°, 0:50 <span>· 3 of 6 joined</span></figcaption></figure>
+      <figure><img src="idle-22-050.png" alt="22.5 degrees at 0:50"><figcaption>22.5°, 0:50 <span>· 5 of 6 joined</span></figcaption></figure>
+      <figure><img src="idle-45-080.png" alt="45 degrees at 1:20"><figcaption>45°, 1:20</figcaption></figure>
+      <figure><img src="idle-22-080.png" alt="22.5 degrees at 1:20"><figcaption>22.5°, 1:20</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Counts, seeds 1–4</h2>
+    <div class="tbl"><table>
+      <tr><th>Free dish</th><th>45° (shipped)</th><th>22.5°</th></tr>
+      <tr><td>Do nothing: stars</td><td>0 0 0 0</td><td>1 2 1 2</td></tr>
+      <tr><td>Do nothing: piles joined</td><td>4 2 3 2</td><td>6 6 6 6</td></tr>
+      <tr><td>Random play: stars</td><td>0 0 0 0</td><td>1 2 2 2</td></tr>
+      <tr><td>Scripted plan: stars</td><td>2 2 2 2</td><td>1 2 2 2</td></tr>
+      <tr><td>Thrift star, any hand</td><td>4 of 28 runs</td><td>0 of 28</td></tr>
+      <tr><td>Frame time, average</td><td>3.3 ms</td><td>3.8 ms</td></tr>
+      <tr><td>Frame time, worst</td><td>11 ms</td><td>25 ms</td></tr>
+    </table></div>
+    <ul>
+      <li>At 22.5° the plan is no better than doing nothing. The player isn't needed to reach the food.</li>
+      <li>The thrift star never comes: the network is bigger and loopier than the shortest one.</li>
+      <li>The storm hurts less, because the extra loops are natural detours.</li>
+      <li>One slow frame went over budget (25 ms, in the simulation). I'll trace it if we keep 22.5°.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Try it yourself</h2>
+    <p class="count">git fetch origin claude/project-thread-cek3ly &amp;&amp; git checkout claude/project-thread-cek3ly<br>cargo run --release --bin mould<br>T, then sensor_angle down to 22.5</p>
+  </section>
+</div>
+
+</body></html>

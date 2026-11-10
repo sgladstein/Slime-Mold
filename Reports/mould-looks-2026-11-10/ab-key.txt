@@ -1,0 +1,1 @@
+Blind A/B key for the walker look on the Looks Pass page (not shown on the page): A = grains (the default), B = glints.

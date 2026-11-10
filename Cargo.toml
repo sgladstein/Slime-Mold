@@ -1,0 +1,44 @@
+[package]
+name = "slime-mould"
+version = "0.1.0"
+edition = "2021"
+# Kept from Pixel_Physics: the real MSRV, and clippy reads it (it is why
+# `chunks_exact_to_as_chunks` does not fire -- `as_chunks` is newer).
+rust-version = "1.87"
+license-file = "LICENSE"
+publish = false
+default-run = "mould"
+
+# Moved out of Pixel_Physics on 2026-11-10 (owner's ask). The game never used
+# the falling-sand engine: its whole model is `src/mould/`, and the only
+# engine pieces it drew with were the 5x7 font (`src/hud.rs`) and, for the
+# organ probe's offline render, the WAV writer (`src/wav.rs`). Both were
+# copied rather than shared, so the two repos have no build link.
+[dependencies]
+image = { version = "0.25.10", default-features = false, features = ["png", "gif"] }
+pixels = "0.17"
+winit = "0.30"
+
+# Sound for `--bin organ`, the same arrangement Pixel_Physics uses: cpal needs
+# the ALSA headers on Linux, which neither cloud containers nor CI's
+# ubuntu-latest have, so it is a plain dependency on macOS and Windows and
+# opt-in on Linux (`--features audio-alsa`, needs libasound2-dev).
+# `default-features = false`: cpal's `realtime` pulls an MPL-2.0 crate.
+[target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
+cpal = { version = "0.18.2", default-features = false }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+cpal = { version = "0.18.2", default-features = false, optional = true }
+
+[features]
+audio-alsa = ["dep:cpal"]
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

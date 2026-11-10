@@ -1,6 +1,6 @@
 //! **Mould Organ: the slime mould plays a rhythm.** `cargo run --release --bin organ`
 //!
-//! A prototype beside `--bin mould`, on the same model (`pixel_physics::mould`,
+//! A prototype beside `--bin mould`, on the same model (`slime_mould::mould`,
 //! the organ itself in `mould::organ`). One food pile is the heart and three
 //! are bells; every two seconds a pulse leaves the heart along the tubes and
 //! each bell rings when it arrives, so the length of a tube is the timing of
@@ -14,7 +14,7 @@
 //!
 //! **Sound** plays where the build has a sound device -- macOS and Windows,
 //! and Linux with `--features audio-alsa` -- the same rule as the lab's
-//! (`pixel_physics::audio`). Elsewhere it runs silent, and the probe's
+//! (Pixel_Physics's `audio` module). Elsewhere it runs silent, and the probe's
 //! offline WAV (`examples/organprobe.rs`, `play=1 frames=DIR`) is the way
 //! to hear it.
 //!
@@ -25,9 +25,9 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use pixel_physics::mould::organ::{self, Note, Organ};
-use pixel_physics::mould::render::{self, QuitArm, View};
-use pixel_physics::mould::{Tool, H, STEPS_PER_FRAME, W};
+use slime_mould::mould::organ::{self, Note, Organ};
+use slime_mould::mould::render::{self, QuitArm, View};
+use slime_mould::mould::{Tool, H, STEPS_PER_FRAME, W};
 use pixels::{Pixels, ScalingMode, SurfaceTexture};
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
@@ -334,7 +334,7 @@ mod speaker {
 
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
     use cpal::{FromSample, SizedSample};
-    use pixel_physics::mould::organ::{Note, Voices};
+    use slime_mould::mould::organ::{Note, Voices};
 
     pub struct Speaker {
         live: Option<(cpal::Stream, SyncSender<Note>)>,
@@ -411,7 +411,7 @@ mod speaker {
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa"))))]
 mod speaker {
-    use pixel_physics::mould::organ::Note;
+    use slime_mould::mould::organ::Note;
 
     pub struct Speaker;
 

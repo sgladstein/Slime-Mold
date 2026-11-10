@@ -1,0 +1,70 @@
+<title>Finer Mould Tubes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Same single dark look as the other mould pages. Paired columns stack on phones. */
+:root{
+  --ground:#0d1117; --panel:#161c24; --ink:#e9e6d8; --muted:#98a0a6; --rule:#2a323c; --gold:#f2b84b; --good:#9fd3a8; --cyan:#78f0ff; --dry:#e67828; --wet:#468cff;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+body{background:var(--ground);color:var(--ink);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:66rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:2rem 4rem;display:flex;flex-direction:column;gap:2.2rem}
+h1,h2{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(1.8rem,5vw,2.5rem)} h2{font-size:1.3rem;color:var(--gold)}
+p{margin:0;max-width:68ch}
+.kicker{font:500 .78rem/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:.85rem}
+ul{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:.4rem;max-width:68ch}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+@media (max-width:640px){.pair{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:.35rem;min-width:0}
+figure img{width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);display:block;background:#000}
+figcaption{font:500 .88rem/1.35 var(--mono);color:var(--ink)}
+figcaption span{color:var(--muted)}
+.count{font:500 .82rem/1.45 var(--mono);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:.45rem .7rem;font-variant-numeric:tabular-nums;max-width:68ch}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font:500 .86rem/1.4 var(--mono);font-variant-numeric:tabular-nums;min-width:34rem}
+th,td{text-align:left;padding:.4rem .8rem;border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:500}
+.good{color:var(--good)}
+code{font:500 .88em var(--mono);background:var(--panel);padding:.05rem .3rem;border-radius:4px}
+.ask{border-left:3px solid var(--gold);padding-left:.9rem}
+.key{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font:500 .82rem/1.4 var(--mono);color:var(--muted)}
+.sw{display:inline-block;width:.8em;height:.8em;border-radius:2px;margin-right:.35em;vertical-align:-.05em}
+</style>
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:.6rem">
+<p class="kicker">Mould · finer tubes · 10 Nov 2026</p>
+<h1>Finer tubes make the mould short-sighted, and every planned solution gets worse</h1>
+<p>The review suggested finer tubes by shortening how far ahead each walker feels (its sensor reach, 9 cells today). I tried 6, 7 and 8 on all five dishes. The tubes do get a bit thinner and branch more. But the mould also senses food and oats from less far away, so it spreads more slowly and the oat trails that solve each dish stop working. I recommend keeping reach 9 and making tubes look thinner in how they're drawn instead.</p>
+</header>
+<section><h2>What it looks like</h2><p>Same seed, same moment, nobody playing. Left is today, right is reach 6.</p>
+<p class="kicker">Keep It Alive · doing nothing · 30 s</p><div class="pair">
+<figure><img src="d4-30-r9.jpg" alt="reach 9"><figcaption>Reach 9 <span>(today)</span></figcaption></figure>
+<figure><img src="d4-30-r6.jpg" alt="reach 6"><figcaption>Reach 6 <span>(finer)</span></figcaption></figure></div><p class="kicker">Keep It Alive · doing nothing · 60 s</p><div class="pair">
+<figure><img src="d4-60-r9.jpg" alt="reach 9"><figcaption>Reach 9 <span>(today)</span></figcaption></figure>
+<figure><img src="d4-60-r6.jpg" alt="reach 6"><figcaption>Reach 6 <span>(finer)</span></figcaption></figure></div><p class="kicker">Behind the Wall · doing nothing · 40 s</p><div class="pair">
+<figure><img src="d1-40-r9.jpg" alt="reach 9"><figcaption>Reach 9 <span>(today)</span></figcaption></figure>
+<figure><img src="d1-40-r6.jpg" alt="reach 6"><figcaption>Reach 6 <span>(finer)</span></figcaption></figure></div>
+<p class="count">Keep It Alive seed 2, doing nothing: lived 2:27 at reach 9, 2:30 at reach 6. Behind the Wall seed 2, doing nothing: came within 56 cells at reach 9, 92 at reach 6. Neither reached the food.</p>
+</section>
+<section><h2>What it does to the game, 8 seeds each</h2>
+<p>Stars per seed for the scripted hand that solves each dish. Doing nothing stays at 0 everywhere, at every reach.</p>
+<div class="tbl"><table>
+<tr><th>Dish, planned hand</th><th>Reach 9 (today)</th><th>8</th><th>7</th><th>6</th></tr>
+<tr><td>Behind the Wall</td><td class="good">33333333</td><td>33333333</td><td>13333323</td><td>20031231</td></tr>
+<tr><td>Beat the Ruler</td><td class="good">33333333</td><td>30330300</td><td>00000000</td><td>00000000</td></tr>
+<tr><td>Running Dry</td><td class="good">33333333</td><td>33333333</td><td>33333333</td><td>33333033</td></tr>
+</table></div>
+<div class="tbl"><table>
+<tr><th>Dish, best hand</th><th>Reach 9 (today)</th><th>Reach 6</th></tr>
+<tr><td>Keep It Alive, lamp + oats + water (lived)</td><td class="good">4:11–10:42, median 6:21</td><td>3:04–12:02, median 3:41; shorter on 6 of 8 seeds</td></tr>
+<tr><td>The Wild One, all four tools (your share)</td><td class="good">0.67–1.00; it died on 3 seeds</td><td>0.49–0.63; it took more on 2 seeds</td></tr>
+</table></div>
+<p class="count">Beat the Ruler fails because the third pile is never joined in time: "2 of 3 foods joined at the bell" on every failed seed at reach 7. The Wild One at reach 6: the tool hand went from 3 stars on 3 seeds and 2 on 4 to mostly 0.</p>
+<p>Every dish could be retuned for reach 6 (oats closer together, more oats, piles nearer), but that's all five dishes' stars redone, and the mould would be a slower, nearer-sighted creature to play with.</p>
+</section>
+<section class="ask"><h2>Recommendation</h2>
+<p>Keep reach 9. Get the finer look from how the tube is drawn instead, a job for the looks thread. Reach is still in the T tuning panel if you want to feel the difference in the window.</p></section>
+</div>
