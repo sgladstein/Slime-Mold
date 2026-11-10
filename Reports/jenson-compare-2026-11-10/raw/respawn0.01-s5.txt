@@ -1,0 +1,6 @@
+bigdish: preset respawn0.01-s5 seeds [5] seconds 10 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.01, tube: 1.0, seed: 1 }
+== seed 5: 1024 x 640, 1000000 walkers, 1 piles
+seed 5 respawn0.01-s5 t   5.0s  tube 21705.6  loops  193  width 7.83  reach  194.6  piles 1/1  strays 0.018  ms/tick 172.04
+seed 5 respawn0.01-s5 t  10.0s  tube 21713.8  loops  191  width 8.01  reach  194.6  piles 1/1  strays 0.017  ms/tick 166.13
+seed 5 respawn0.01-s5 hash=bc5dfbc759712bbf

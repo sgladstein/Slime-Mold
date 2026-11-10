@@ -1,0 +1,11 @@
+At 10 s, seed 1 upward. Bonferroni over 4 deciding comparisons (loops, width): p < 0.0125 survives (*).
+
+== one walker a cell (crowd 1) vs no limit (crowd 0), 100,000 walkers: 8 seeds
+  loops  crowd1 median   151.50 (144-160)  crowd0 median     0.00 (0-2)  crowd0 higher on 0, lower on 8  p 0.0078 *
+  width  crowd1 median     5.20 (5.15-5.23)  crowd0 median     5.74 (5.52-5.96)  crowd0 higher on 8, lower on 0  p 0.0078 *
+  tube   crowd1 median 12620.10 (12540.8-12793.5)  crowd0 median  3510.30 (2934.6-3921.2)  crowd0 higher on 0, lower on 8  p 0.0078  
+
+== respawn 0 vs 0.01 a step, 1,000,000 walkers, no limit: 8 seeds
+  loops  respawn0 median    43.50 (38-52)  respawn0.01 median   196.00 (187-208)  respawn0.01 higher on 8, lower on 0  p 0.0078 *
+  width  respawn0 median     5.83 (5.69-5.92)  respawn0.01 median     7.88 (7.7-8.01)  respawn0.01 higher on 8, lower on 0  p 0.0078 *
+  tube   respawn0 median  9736.30 (9405.4-10260.9)  respawn0.01 median 21798.45 (21670.0-21956.4)  respawn0.01 higher on 8, lower on 0  p 0.0078  

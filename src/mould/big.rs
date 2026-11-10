@@ -37,6 +37,7 @@ const DRAW_BLOCKED: u32 = 102;
 const CLAIM_MOVE: u32 = 103;
 const DRAW_START: u32 = 104;
 const DRAW_PILES: u32 = 105;
+const DRAW_RESPAWN: u32 = 106;
 
 #[derive(Clone, Debug)]
 pub struct BigParams {
@@ -91,6 +92,12 @@ pub struct BigParams {
     /// Walkers start in a blob on the home pile (true) or spread over the
     /// whole dish (false, Jones's start).
     pub blob: bool,
+    /// Chance a fine step that a walker jumps to a random agar cell with a
+    /// new heading (0: never, today's rule). Jenson's later work (*36
+    /// Points*, as Bleuje's port reads it) respawns each particle about
+    /// every 1,000 steps (0.001); added 2026-11-10 to see whether it gives
+    /// the haze of free walkers in Jenson's clips.
+    pub respawn: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     pub seed: u64,
@@ -121,6 +128,7 @@ impl BigParams {
             piles: 7,
             pile_r: 6.0,
             blob: true,
+            respawn: 0.0,
             tube: 1.0,
             seed: 1,
         }
@@ -365,6 +373,7 @@ impl BigDish {
     fn move_walkers(&mut self) {
         let p = &self.p;
         let (sa, ra, so, st, dep, crowd) = (p.sensor_angle, p.rotate_angle, p.sensor_offset, p.step, p.deposit, p.crowd);
+        let respawn = p.respawn;
         let sso = if p.scent_offset > 0.0 { p.scent_offset } else { so };
         let (seed, t) = (p.seed, self.steps);
         // (walker, from, to, x, y, heading); from == to for a move within a cell.
@@ -419,6 +428,33 @@ impl BigDish {
         // Blocked: Jones's rule, stay put and pick a new heading.
         for &k in &blocked {
             self.walkers[k as usize].2 = unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU;
+        }
+        if respawn > 0.0 {
+            self.respawn_walkers(respawn, crowd);
+        }
+    }
+
+    /// `respawn`: each walker, by its own keyed draws, may jump to a random
+    /// agar cell with a new heading; a jump onto rim or a full cell is lost.
+    fn respawn_walkers(&mut self, respawn: f32, crowd: u8) {
+        let (seed, t) = (self.p.seed, self.steps);
+        let (w, h) = (self.w as f32, self.h as f32);
+        for k in 0..self.walkers.len() {
+            let key = 4 * k as u32;
+            if unit(keyed(seed, t, DRAW_RESPAWN, key)) >= respawn {
+                continue;
+            }
+            let x = unit(keyed(seed, t, DRAW_RESPAWN, key + 1)) * w;
+            let y = unit(keyed(seed, t, DRAW_RESPAWN, key + 2)) * h;
+            let Some(j) = self.cell(x, y) else { continue };
+            if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) {
+                continue;
+            }
+            let (ox, oy, _) = self.walkers[k];
+            let i = self.cell(ox, oy).expect("walker inside the dish");
+            self.occ[i] -= 1;
+            self.occ[j] += 1;
+            self.walkers[k] = (x, y, unit(keyed(seed, t, DRAW_RESPAWN, key + 3)) * TAU);
         }
     }
 
@@ -673,6 +709,28 @@ impl BigDish {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn respawn_keeps_walkers_and_the_crowd_rule() {
+        let mut d = BigDish::new(BigParams { respawn: 0.2, blob: false, ..small(1, 1) });
+        let n = d.walkers.len();
+        let before = d.walkers.clone();
+        for _ in 0..5 {
+            d.tick();
+        }
+        assert_eq!(d.walkers.len(), n);
+        let mut occ = vec![0u16; d.w * d.h];
+        for &(x, y, _) in &d.walkers {
+            let i = d.cell(x, y).unwrap();
+            assert!(d.agar[i]);
+            occ[i] += 1;
+        }
+        assert!(occ.iter().all(|&c| c <= 1));
+        assert_eq!(occ, d.occ);
+        // About a fifth of them jump each step: most end far from their start.
+        let far = d.walkers.iter().zip(&before).filter(|(a, b)| (a.0 - b.0).hypot(a.1 - b.1) > 20.0).count();
+        assert!(far > n / 2, "{far} of {n} moved far");
+    }
 
     fn small(scale: usize, substeps: usize) -> BigParams {
         BigParams { scale, substeps, walkers: 600 * scale * scale, seed: 3, ..BigParams::today() }

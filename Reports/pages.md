@@ -37,3 +37,4 @@ if the link ever stops working. Newest last.
 | 11-10 | Mould Field Skirmish (version 1, playable) | https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw | `web/page/` (HTML and `skirmish.wasm`, built from 6c28e01; source `web/src/`) |
 | 11-10 | Budget Skirmish Strategies (round robin matrix and stills) | https://claude.ai/artifact/33Voj1TERnjNSZfLwv3zRG | `rts-skirmish-2026-11-10/page/` (index.html and the 15 stills) |
 | 11-10 | The 4x Mould (scaling rule, big dish at 32k and 100k walkers) | https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs | `gpu-plan-2026-11-10/scale/` (page.html, `ladder/` stills, `video/` MP4s and posters) |
+| 11-10 | Why Jenson's Mould Looks Different (Jenson's clips beside the big dish, tests, outside code) | https://claude.ai/artifact/HL7jZ4qGhr6f1HpUDmNEj2 | `jenson-compare-2026-11-10/` (page.html and `pics/`) |
