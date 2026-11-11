@@ -208,5 +208,9 @@ move.
   engines, AlphaStar, the spinning top), lessons for the mould, and feedback on both demos: soft and Trunk are
   dominant strategies and the snowball is unmanaged positive feedback; fix with a size cost, a pull-back rule, a
   points ending and telegraphed attacks before adding verbs. Reading only, no runs. Cards in `research/sources/`.
+- [mould-shooter-2026-11-11.md](mould-shooter-2026-11-11.md) — **the mould as the enemy, a shooter brainstorm**
+  (owner, 11-11 00:18Z). Lead shape Larder: a squad and the mould want the same food; stored food smells, so a
+  hoard draws the mould; shots cut supply by holding a tube clear, not by kills (the knife is weak); four
+  strategies meant to counter through the mould's lean or fat state; three cheap tests first. No runs.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
