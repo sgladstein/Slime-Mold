@@ -3,6 +3,7 @@
 //!
 //! ```text
 //! cargo run --release --example larderm2 -- census seeds=17-32 [off=hoard|hunger|drops]
+//! cargo run --release --example larderm2 -- cost
 //! cargo run --release --example larderm2 -- look=DIR seeds=1 [plan=reader] [lean=1]
 //! ```
 //!
@@ -610,6 +611,42 @@ fn census(seeds: &[u64], rules: Rules, label: &str) {
     println!("Reader beats every fixed plan and both controls in both conditions (15+ of 16, Holm): {}", if reader_ok { "PASS" } else { "FAIL" });
 }
 
+/// The game layer's cost a step with every M2 answer on (hoard smell,
+/// hunger, drops) and six turrets firing: the whole `Game::step` against a
+/// bare dish step on the same seed (the M1 method, `larderm1 cost`).
+fn cost(rules: Rules) {
+    for n in [4usize, 40] {
+        let rules = Rules { squad: n, start_bank: 1e9, ..rules };
+        let steps = 120 * GAME_SECOND;
+        let mut g = game(1, rules, false);
+        (0..n).for_each(|k| g.stance(k, Stance::Free));
+        for k in 0..TURRETS {
+            let a = k as f32 / TURRETS as f32 * std::f32::consts::TAU;
+            let s = g.soldiers[0];
+            g.build_turret((s.x + 8.0 * a.cos(), s.y + 8.0 * a.sin()));
+        }
+        let t0 = std::time::Instant::now();
+        for _ in 0..steps {
+            g.step();
+        }
+        let game_ns = t0.elapsed().as_nanos();
+        let mut bare = game(1, Rules { squad: 0, ..rules }, false);
+        let t0 = std::time::Instant::now();
+        for _ in 0..steps {
+            bare.dish.step();
+        }
+        let dish_ns = t0.elapsed().as_nanos();
+        let per = |ns: u128| ns as f64 / steps as f64 / 1e6;
+        println!(
+            "{n:2} soldiers, {} turrets: game step {:.3} ms, bare dish step {:.3} ms, game layer about {:.3} ms a step",
+            g.turrets.len(),
+            per(game_ns),
+            per(dish_ns),
+            per(game_ns) - per(dish_ns)
+        );
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let seeds = seeds(arg(&args, "seeds"));
@@ -640,10 +677,12 @@ fn main() {
                 println!("seed {seed} {} {}: {o:?}", if lean { "lean" } else { "fed" }, p.name());
             }
         }
+    } else if args.first().map(String::as_str) == Some("cost") {
+        cost(rules);
     } else if args.first().map(String::as_str) == Some("census") {
         census(&seeds, rules, &label);
     } else {
-        panic!("census | look=DIR");
+        panic!("census | cost | look=DIR");
     }
     let _ = (HOMES, W, H);
     println!("({:.1} s)", t0.elapsed().as_secs_f32());

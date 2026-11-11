@@ -1,0 +1,3 @@
+ 4 soldiers, 3 turrets: game step 0.819 ms, bare dish step 0.900 ms, game layer about -0.081 ms a step
+40 soldiers, 3 turrets: game step 0.884 ms, bare dish step 0.831 ms, game layer about 0.053 ms a step
+(6.2 s)
