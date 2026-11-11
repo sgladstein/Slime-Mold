@@ -52,8 +52,15 @@ jobs:
       # history (the lint reads git dates), so it adds seconds, not a runner.
       # Docs-only PRs skip the build jobs, and those are the PRs that change
       # the wiki, so without this step the lint would never run in CI.
+      # On a PR, --base also fails a page whose source report the PR changed
+      # without touching the page (README rule 9, added 2026-11-11).
       - name: wiki lint
-        run: python3 wiki/lint.py
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python3 wiki/lint.py --base="${{ github.event.pull_request.base.sha }}"
+          else
+            python3 wiki/lint.py
+          fi
 
   test:
     name: test + clippy

@@ -1,7 +1,7 @@
 ---
 title: Salt
 kind: tool
-status: open
+status: paused
 updated: 2026-11-10
 sources: [Reports/mould-probe-2026-11-07.md, Reports/mould-review-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-review-2-2026-11-10.md]
 code: [Tool::Salt, SALT_STOCK, SALT_LEN, Ground::Salt, Kill::Salt]
