@@ -586,6 +586,64 @@ fn main() {
                         left / tot[0].max(1e-9),
                         changed as f32 / both.max(1) as f32
                     );
+                    {
+                        // Each species' own tube: cells where its trail is
+                        // over the tube cut times its deposit over the
+                        // global deposit (`species_sets`; the same walker
+                        // traffic whatever it lays), as area (dish cells) and
+                        // 4-connected pieces of 16 fine cells or more
+                        // (bodies, or a network's pieces), and its walkers.
+                        let n = d.species_trail.len();
+                        let mut walkers = vec![0usize; n];
+                        for &c in &d.spec {
+                            walkers[c as usize] += 1;
+                        }
+                        let s2 = (d.p.scale * d.p.scale) as f32;
+                        let mut parts = Vec::new();
+                        for (sp, f) in d.species_trail.iter().enumerate() {
+                            let cut = if d.p.species_sets.is_empty() { d.p.tube } else { d.p.tube * d.p.species_sets[sp].deposit / d.p.deposit.max(1e-9) };
+                            let on: Vec<bool> = f.iter().map(|&v| v > cut).collect();
+                            let area = on.iter().filter(|&&b| b).count();
+                            let mut seen = vec![false; on.len()];
+                            let mut pieces = 0usize;
+                            let mut stack = Vec::new();
+                            for start in 0..on.len() {
+                                if !on[start] || seen[start] {
+                                    continue;
+                                }
+                                seen[start] = true;
+                                stack.push(start);
+                                let mut size = 0usize;
+                                while let Some(i) = stack.pop() {
+                                    size += 1;
+                                    let (x, y) = (i % d.w, i / d.w);
+                                    let mut push = |j: usize| {
+                                        if on[j] && !seen[j] {
+                                            seen[j] = true;
+                                            stack.push(j);
+                                        }
+                                    };
+                                    if x > 0 {
+                                        push(i - 1);
+                                    }
+                                    if x + 1 < d.w {
+                                        push(i + 1);
+                                    }
+                                    if y > 0 {
+                                        push(i - d.w);
+                                    }
+                                    if y + 1 < d.h {
+                                        push(i + d.w);
+                                    }
+                                }
+                                if size >= 16 {
+                                    pieces += 1;
+                                }
+                            }
+                            parts.push(format!("s{sp} walkers {} area {:.1} pieces {}", walkers[sp], area as f32 / s2, pieces));
+                        }
+                        println!("seed {seed} {name} t {:5.1}s  own {}", m.seconds, parts.join("  "));
+                    }
                     if d.p.species_convert > 0.0 {
                         // Walkers of each species (conversion moves them).
                         let n = d.species_trail.len();
