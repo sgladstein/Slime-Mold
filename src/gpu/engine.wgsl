@@ -90,6 +90,10 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // Growth: each slot's energy, below 0 for an empty slot (the CPU's `alive`
 // false). Read only while growth is on; one a slot.
 @group(0) @binding(32) var<storage, read_write> energy: array<f32>;
+// Each slot's food from crystals this tick (the CPU's `took`), added in
+// `life`: all 0 until a crystal pass writes it (the Larder World port, W1b),
+// which must write 0 for an empty slot, as the CPU does.
+@group(0) @binding(33) var<storage, read_write> took: array<f32>;
 
 const NONE: u32 = 0xFFFFFFFFu;
 
@@ -369,7 +373,7 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
     let n = f32(atomicLoad(&occ[i]));
-    let e = (energy[k] + min(grass[i] / n, P.graze_eat)) - P.upkeep;
+    let e = (energy[k] + min(grass[i] / n, P.graze_eat) + took[k]) - P.upkeep;
     if (e > 0.0) { energy[k] = e; return; }
     if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
         atomicSub(&occ[i], 1u);

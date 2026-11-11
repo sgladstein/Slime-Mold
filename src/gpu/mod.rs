@@ -496,7 +496,7 @@ pub struct Shared {
     pub plain: Vec<wgpu::ComputePipeline>,
 }
 
-pub const BINDINGS: u32 = 33;
+pub const BINDINGS: u32 = 34;
 pub const SENSE: usize = 0;
 pub const WALK: usize = 1;
 pub const TRAIL: usize = 2;
@@ -579,6 +579,9 @@ pub struct Engine {
     /// Growth: each slot's energy, below 0 for an empty slot; and whether
     /// growth is on (fixed for the dish's life, as the slots are).
     pub energy: wgpu::Buffer,
+    /// Each slot's crystal food this tick (the CPU's `took`), read by the
+    /// life pass; zeros until a crystal pass writes it.
+    pub took: wgpu::Buffer,
     pub grows: bool,
     /// From the last `write_params`: whether the conversion pass runs, and
     /// whether any outside rule is on (else the plain pipelines run).
@@ -669,11 +672,12 @@ impl Engine {
         let specs: Vec<u32> = (0..n).map(|k| k % nsp.max(1)).collect();
         let spec = buf("spec", &u32_bytes(&specs), storage);
         let energy = buf("energy", &f32_bytes(&energies(&d)), storage);
+        let took = zeros("took", n as usize * 4);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
                 &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec, &energy,
+                &species[b], &age, &grass, &gcount, &spec, &energy, &took,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -702,6 +706,7 @@ impl Engine {
             spec,
             grows: !d.energy.is_empty(),
             energy,
+            took,
             converts: false,
             outside: false,
             nsp,
