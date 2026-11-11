@@ -121,9 +121,10 @@ Ask each again; none has an answer to assume.
 
 8. **Larder, the mould-as-enemy shooter** ([`Reports/mould-shooter-2026-11-11.md`](Reports/mould-shooter-2026-11-11.md),
    [page](wiki/rts/shooter.md)). Owner chose (11-11 00:30Z) a squad, solo,
-   tests first. Tests: a shot must kill mould that is eating (90% saved),
-   not cut supply (0.5%); fronts must travel, so the next test needs a map
-   the mould takes 30 s or more to cross. Open: whether to run that.
+   tests first. After a snip fix, a ring of fire held from the start keeps
+   the mould off the larder (0 stolen, 16/16) and is now the dominant play.
+   Open: whether to run the design review's test (a priced ring, a larder
+   that runs dry, slowed fronts, scripted plans).
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo

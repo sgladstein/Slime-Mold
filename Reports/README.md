@@ -225,6 +225,7 @@ move.
   strategies meant to counter through the mould's lean or fat state. **Tests run** (`examples/larderprobe.rs`, 16
   seeds): a held ring of fire round the larder saves 0.5% (16/16), firing on the mould eating it saves 90% (16/16):
   a fed pile feeds its own eaters, so cuts only hurt mould with no food; a trail-only gun does nothing; smell and
-  lean-vs-fat show 16/16 but tiny effects, because the mould crosses today's dish in about 4 s.
+  lean-vs-fat show 16/16 but tiny effects, because the mould crosses today's dish in about 4 s. **Correction:** a re-fired
+  snip did not refresh its wound; fixed, a ring held from the start stops all theft (16/16); three reviews in `reviews/`.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
