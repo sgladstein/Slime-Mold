@@ -167,6 +167,31 @@ pub struct Rules {
     /// yours always moves first, and won 14 of 16 mirror games; rounds 1-3
     /// ran with it off.
     pub take_turns: bool,
+    /// **Food after 1:00** (the research thread's economy sketch, test 3).
+    /// Rounds 4-6 found about half the food eaten by 1:00 of a 2:30 match,
+    /// so even with no snowball the side ahead at 1:00 won about 70% of
+    /// games that reached the bell. These give the trailing side something
+    /// to come back with.
+    ///
+    /// The bell, in seconds (150 as built). Late food keeps landing to 40 s
+    /// before it (`late_count`). Set it with `Skirmish::set`, which moves
+    /// the bell and the late food together.
+    pub bell: u64,
+    /// Regrowth: each of the dish's piles regains this fraction of its full
+    /// food a second, up to full (0 as built: a pile eaten is gone).
+    pub regrow: f32,
+    /// ...times this on a pile nobody has eaten at for `regrow_after`
+    /// seconds: neglected food comes back faster, so the side that is
+    /// behind always has somewhere worth reaching. It is in the world, not a
+    /// bonus for losing.
+    pub regrow_idle: f32,
+    pub regrow_after: u64,
+    /// **Score by ground held** instead of food eaten: once a second, each
+    /// pile where a side's eaters outnumber the other's `held_ratio` to one
+    /// pays that side a point (`Skirmish::points`); the share is of points.
+    /// A wipe-out still ends the game.
+    pub score_held: bool,
+    pub held_ratio: f32,
 }
 
 impl Default for Rules {
@@ -186,6 +211,12 @@ impl Default for Rules {
             rally_seconds: RALLY_SECONDS,
             rally_gain: RALLY_GAIN,
             take_turns: true,
+            bell: FIELD.seconds as u64,
+            regrow: 0.0,
+            regrow_idle: 2.0,
+            regrow_after: 20,
+            score_held: false,
+            held_ratio: 2.0,
         }
     }
 }
@@ -210,6 +241,12 @@ impl Rules {
             "rally_seconds" => self.rally_seconds = v as u64,
             "rally_gain" => self.rally_gain = v,
             "take_turns" => self.take_turns = v != 0.0,
+            "bell" => self.bell = v as u64,
+            "regrow" => self.regrow = v,
+            "regrow_idle" => self.regrow_idle = v,
+            "regrow_after" => self.regrow_after = v as u64,
+            "score_held" => self.score_held = v != 0.0,
+            "held_ratio" => self.held_ratio = v,
             _ => return false,
         }
         true
@@ -454,6 +491,12 @@ pub struct Skirmish {
     pub rules: Rules,
     /// Spores still dormant (`Rules::spore_dormant`).
     pub spores: Vec<Spore>,
+    /// Points for ground held (`Rules::score_held`), each side; counted
+    /// under either score.
+    pub points: [f32; 2],
+    /// The step each dish pile was last eaten at (`Rules::regrow_idle`).
+    eaten_at: Vec<u64>,
+    seed: u64,
 }
 
 impl Skirmish {
@@ -468,7 +511,7 @@ impl Skirmish {
         if let Some(r) = dish.rival.as_mut() {
             r.params = p;
         }
-        late_food(&mut dish, seed);
+        late_food(&mut dish, seed, LATE_COUNT);
         let side = |k: u64, plan| Side {
             habit: Habit::Spread,
             tithe: 0.0,
@@ -488,6 +531,9 @@ impl Skirmish {
             sides: [side(0, plans[0]), side(1, plans[1])],
             rules: Rules::default(),
             spores: Vec::new(),
+            points: [0.0; 2],
+            eaten_at: Vec::new(),
+            seed,
         }
     }
 
@@ -505,6 +551,14 @@ impl Skirmish {
     /// `value` is not a number.
     pub fn set(&mut self, name: &str, value: &str) -> bool {
         if self.rules.set(name, value) {
+            if name == "bell" {
+                // Before the first step: the bell, and late food to 40 s
+                // before it (7 drops, 0:20 to 1:50, at the 2:30 bell).
+                let bell = self.rules.bell.max(LATE_FIRST + 40);
+                self.dish.storm_at = bell * SPS;
+                self.dish.pending.clear();
+                late_food(&mut self.dish, self.seed, late_count(bell));
+            }
             return true;
         }
         let Ok(v) = value.parse::<f32>() else { return false };
@@ -569,14 +623,41 @@ impl Skirmish {
         }
     }
 
-    /// Your share of the food eaten so far (half before anyone eats).
+    /// Your share of the score so far (half before anyone scores): of the
+    /// food eaten, or of the points for ground held (`Rules::score_held`).
     pub fn share(&self) -> f32 {
+        if self.rules.score_held {
+            self.points_share()
+        } else {
+            self.food_share()
+        }
+    }
+
+    /// Your share of the food eaten (half before anyone eats).
+    pub fn food_share(&self) -> f32 {
         let all = self.dish.ate + self.dish.wild_ate;
         if all < 1.0 {
             0.5
         } else {
             self.dish.ate / all
         }
+    }
+
+    /// Your share of the points for ground held (half before any).
+    pub fn points_share(&self) -> f32 {
+        let all = self.points[0] + self.points[1];
+        if all < 1.0 {
+            0.5
+        } else {
+            self.points[0] / all
+        }
+    }
+
+    /// Whether side `s` holds pile `i` for the score: eaters there, at
+    /// least `held_ratio` times the other side's.
+    pub fn holds(&self, s: usize, i: usize) -> bool {
+        let (mine, theirs) = (self.eaters(s, i), self.eaters(1 - s, i));
+        mine > 0 && mine as f32 >= self.rules.held_ratio * theirs as f32
     }
 
     /// Seconds until side `s` may switch habit (0: now).
@@ -748,6 +829,17 @@ impl Skirmish {
                 self.light(s);
             }
         }
+        self.regrow(t);
+        // Counted whichever score is in force, so a run can read both.
+        if t > 0 && t.is_multiple_of(SPS) {
+            for i in 0..self.dish.piles.len() {
+                for s in 0..2 {
+                    if self.holds(s, i) {
+                        self.points[s] += 1.0;
+                    }
+                }
+            }
+        }
         // Spores due wake: every walker still asleep since the step one
         // landed.
         let due: Vec<Spore> = self.spores.iter().filter(|p| p.wakes <= t).copied().collect();
@@ -767,6 +859,33 @@ impl Skirmish {
                 if t % SPS == (s as u64) * (SPS / 2) {
                     self.think(s, plan);
                 }
+            }
+        }
+    }
+
+    /// Piles regain food (`Rules::regrow`), faster where nobody has eaten
+    /// for `regrow_after` seconds. Late piles join the count as they land;
+    /// the dish copies its piles to the rival every step.
+    fn regrow(&mut self, t: u64) {
+        let n = self.dish.piles.len();
+        if self.eaten_at.len() < n {
+            self.eaten_at.resize(n, t);
+        }
+        if self.rules.regrow <= 0.0 {
+            return;
+        }
+        let idle_after = self.rules.regrow_after * SPS;
+        for (p, at) in self.dish.piles.iter_mut().zip(self.eaten_at.iter_mut()) {
+            if p.oats {
+                continue;
+            }
+            if p.eaters + p.foe_eaters > 0 {
+                *at = t;
+            }
+            if p.food < p.full {
+                let idle = t.saturating_sub(*at) >= idle_after;
+                let rate = self.rules.regrow * if idle { self.rules.regrow_idle } else { 1.0 };
+                p.food = (p.food + rate * p.full / SPS as f32).min(p.full);
             }
         }
     }
@@ -1021,11 +1140,17 @@ impl Skirmish {
     }
 }
 
+/// Late drops for a bell at `bell` seconds: every `LATE_EVERY` from
+/// `LATE_FIRST` to 40 s before it (`LATE_COUNT`, 7, at the 2:30 bell).
+pub fn late_count(bell: u64) -> u64 {
+    (bell.saturating_sub(40 + LATE_FIRST)) / LATE_EVERY + 1
+}
+
 /// Late food for dish `seed` (`LATE_FIRST`...): even turns one pile on the
 /// centre line, odd turns a mirrored pair, each on open agar at least 20
 /// cells from every other pile, early or late, and 30 from either home.
 /// Seeded apart from the dish's own random stream.
-fn late_food(dish: &mut Dish, seed: u64) {
+fn late_food(dish: &mut Dish, seed: u64, count: u64) {
     let mut r = seed.wrapping_mul(0xD1B5_4A32_D192_ED03) | 1;
     let mut roll = move || {
         r ^= r << 13;
@@ -1035,7 +1160,7 @@ fn late_food(dish: &mut Dish, seed: u64) {
     };
     let mut taken: Vec<(f32, f32)> = dish.piles.iter().map(|p| (p.x, p.y)).collect();
     let template = dish.piles[1].clone();
-    for k in 0..LATE_COUNT {
+    for k in 0..count {
         let at = (LATE_FIRST + k * LATE_EVERY) * SPS;
         let pair = k % 2 == 1;
         for _ in 0..500 {
@@ -1199,6 +1324,60 @@ mod tests {
         run(&mut s, 5);
         assert!(s.dish.piles.iter().all(|p| p.held == 0));
         assert!(!s.set("no_such_rule", "1"));
+    }
+
+    #[test]
+    fn a_later_bell_brings_late_food_until_40_s_before_it() {
+        assert_eq!(late_count(150), LATE_COUNT, "the 2:30 game is unchanged");
+        let mut s = Skirmish::new(3, [None, None]);
+        let first: Vec<u64> = s.dish.pending.iter().map(|p| p.0).collect();
+        assert!(s.set("bell", "240"));
+        assert_eq!(s.dish.storm_at, 240 * SPS);
+        let last = s.dish.pending.iter().map(|p| p.0).max().unwrap();
+        assert!(last > 150 * SPS && last <= 200 * SPS, "last drop at {}", last / SPS);
+        // The drops the 2:30 game had come first, in the same places.
+        assert_eq!(&s.dish.pending.iter().map(|p| p.0).collect::<Vec<_>>()[..first.len()], &first[..]);
+    }
+
+    #[test]
+    fn eaten_piles_regrow_and_neglected_ones_faster() {
+        let mut s = Skirmish::new(1, [None, None]);
+        let i = 19; // a centre-line pile nobody reaches at once
+        s.dish.piles[i].food = 0.0;
+        s.regrow(0);
+        assert_eq!(s.dish.piles[i].food, 0.0, "no regrowth as built");
+        s.rules.regrow = 0.01;
+        let step = 0.01 * s.dish.piles[i].full / SPS as f32;
+        s.regrow(SPS);
+        assert!((s.dish.piles[i].food - step).abs() < 1e-3);
+        s.regrow(25 * SPS);
+        assert!((s.dish.piles[i].food - 3.0 * step).abs() < 1e-3, "twice as fast once left alone 20 s");
+        let full = s.dish.piles[0].full;
+        s.dish.piles[0].food = full;
+        s.regrow(26 * SPS);
+        assert_eq!(s.dish.piles[0].food, full, "never past full");
+    }
+
+    #[test]
+    fn a_pile_counts_as_held_two_to_one() {
+        let mut s = Skirmish::new(1, [None, None]);
+        let mut at = |mine: u32, theirs: u32| {
+            s.dish.piles[5].eaters = mine;
+            s.dish.piles[5].foe_eaters = theirs;
+            (s.holds(0, 5), s.holds(1, 5))
+        };
+        assert_eq!(at(10, 5), (true, false));
+        assert_eq!(at(9, 5), (false, false));
+        assert_eq!(at(1, 0), (true, false));
+        assert_eq!(at(0, 0), (false, false));
+        assert_eq!(at(3, 7), (false, true));
+        // Points run under either score; the share reads the one in force.
+        let mut s = Skirmish::new(2, [None, None]);
+        run(&mut s, 10);
+        assert!(s.points[0] > 0.0 && s.points[1] > 0.0);
+        assert_eq!(s.share(), s.food_share());
+        s.rules.score_held = true;
+        assert_eq!(s.share(), s.points_share());
     }
 
     #[test]
