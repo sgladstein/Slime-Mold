@@ -182,8 +182,10 @@ pub struct BigParams {
     /// cell holds more than `species_convert` times its own species' trail
     /// of another species' trail joins that species (the largest other,
     /// lowest index on ties). Values above 1 leave a margin, so a border
-    /// moves only where one side clearly outweighs the other. Walkers keep
-    /// their species through respawn.
+    /// moves only where one side clearly outweighs the other. With
+    /// `species_cycle` only the previous species (the one that chases you)
+    /// can take you, as in rock, paper, scissors. Walkers keep their species
+    /// through respawn.
     pub species_convert: f32,
     /// Grazing (0 is off; added 2026-11-11 to make bodies roam, after
     /// Primordia's "Symbiosis" mode). A grass field starts at 1 on every agar
@@ -875,9 +877,14 @@ impl BigDish {
                 let i = self.cell(x, y).expect("walker inside the dish");
                 let own = self.spec[k] as usize;
                 let mut best = own;
-                for s in 0..n {
-                    if s != own && self.species_trail[s][i] > self.species_trail[best][i] {
-                        best = s;
+                if p.species_cycle && n >= 3 {
+                    // Cyclic: only the species that chases you can take you.
+                    best = (own + n - 1) % n;
+                } else {
+                    for s in 0..n {
+                        if s != own && self.species_trail[s][i] > self.species_trail[best][i] {
+                            best = s;
+                        }
                     }
                 }
                 if best != own && self.species_trail[best][i] > p.species_convert * self.species_trail[own][i] {
@@ -1389,7 +1396,8 @@ mod tests {
         for p in [
             BigParams { sensor_r: 1, chance_exp: 4.0, size_spread: 0.6, ..small(2, 1) },
             BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
-            BigParams { species: 3, species_cycle: true, ..small(2, 1) },
+            BigParams { species: 3, species_cycle: true, species_convert: 1.0, ..small(2, 1) },
+            BigParams { species: 2, species_convert: 1.5, graze_weight: 10.0, ..small(2, 1) },
             BigParams { blocked_keep: true, blocked_reset: 0.1, blocked_retry: 3, blocked_deposit: 1.0, ..small(2, 1) },
             BigParams { explore_steps: 30, explore_spread: 1.0, ..small(2, 1) },
         ] {
