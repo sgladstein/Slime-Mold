@@ -204,7 +204,9 @@ Health, energy, grass, each cell's take, and the agar and ground bits match exac
 | 15 | crystal footprint a disc, not a hexagon | crystals: trail L1 0.00e0, scent L1 5.85e-3 |
 | 16 | eating after growth | growth on crystals: energy L1 2.99e-2, grass 0.00e0 |
 
-**Frame cost.** On the cloud's software GPU (lavapipe on 4 cores, so relative only), 100,000 walkers, 23 crystals, 4 s, two runs each ([raw](larder-world-roadmap-2026-11-11/w1b/timing-lavapipe.txt)). The world's four passes (walls, eat, two pile sums, flow) take 0.73-0.82 ms a tick at 512 × 320 and 1.56-1.80 ms at 1024 × 640, against 6.0-6.9 and 14.0-17.8 ms for the base passes (sense, walk, trail, scent) in the same runs: **about 10-12% more GPU time a tick** at either size. The median frame (two ticks and the drawing) went from 14.1-14.5 to 15.2-16.0 ms at 512 × 320, and from 35.8-35.9 to 37.4-39.6 ms at 1024 × 640. The walls pass visits every cell and is the largest of the four at 1024 × 640 (0.68-0.82 ms). A list of wall cells would cut it, if the 1070 shows that it matters. The 1070's own numbers wait until that PC is back online. The same 10-12% of its 1.37 ms frame would be about 0.15 ms, but that is a guess from a software GPU, not a measurement.
+**Frame cost.** On the cloud's software GPU (lavapipe on 4 cores, so relative only), 100,000 walkers, 23 crystals, 4 s, two runs each ([raw](larder-world-roadmap-2026-11-11/w1b/timing-lavapipe.txt)). The world's four passes (walls, eat, two pile sums, flow) take 0.73-0.82 ms a tick at 512 × 320 and 1.56-1.80 ms at 1024 × 640, against 6.0-6.9 and 14.0-17.8 ms for the base passes (sense, walk, trail, scent) in the same runs: **about 10-12% more GPU time a tick** at either size. The median frame (two ticks and the drawing) went from 14.1-14.5 to 15.2-16.0 ms at 512 × 320, and from 35.8-35.9 to 37.4-39.6 ms at 1024 × 640. The walls pass visits every cell and is the largest of the four at 1024 × 640 (0.68-0.82 ms). A list of wall cells would cut it, if the 1070 shows that it matters.
+
+**On the GTX 1070** (Scott-Desktop, 4a1f42f, 10 s runs, three runs each, the same world; [raw](larder-world-roadmap-2026-11-11/w1b/timing-1070.txt)). At 1024 × 640 the median frame goes from 1.73 ms to 2.11 ms (all three runs within 0.01 ms), and the GPU time of the two ticks from 1.50-1.51 to 1.75-1.76 ms, **+0.25 ms a frame, about 16%**. The world's own passes take 0.042 ms a tick (walls 0.018, eat 0.007, the two pile sums 0.013, flow 0.004). The rest is in the base passes that now read the ground: sense +0.03, scent +0.035 and walk +0.015 ms a tick. At 512 × 320 the frame goes from 0.58-0.63 to 0.80-0.81 ms. The walls pass is 0.018 ms, so a list of wall cells is not worth building. With growth as well, the frame is 2.10-2.11 ms at 1024 × 640, with 54,873 walkers alive at 10 s. Everything is far under the 10 ms bar.
 
 **Picture**, 1024 × 640 (the W2 world), 100,000 walkers, 23 crystals at charge 512, rock 0.2, wet 0.2, two walls laid at 1 s and 2 s, at 4 s, drawn by the engine's own draw pass: [world](larder-world-roadmap-2026-11-11/w1b/world-1024x640-4s.jpg), and the same seed without the world fields: [base](larder-world-roadmap-2026-11-11/w1b/base-1024x640-4s.jpg). The crystals are hexagons, cyan by charge; the walls are grey by health; dark patches are rock. By 4 s the walls had taken 6,857 bites and none had broken (health 400). The mould runs its tubes between the crystals and around the rock, and nothing in the picture is drawn on top: it is the engine's fields.
 
@@ -239,3 +241,52 @@ Health, energy, grass, each cell's take, and the agar and ground bits match exac
 | W2c | Window | The owner plays it; frame under 10 ms p95 on the 1070 |
 
 W2b can start now on the CPU dish. W2a's GPU passes follow W1b's merge, and W2c follows #69.
+
+## W2a: the squad's hooks into the world, 2026-11-11
+
+**What runs.** `src/mould/squad.rs` holds the CPU twin and the buffer layout. Six GPU passes in `src/gpu/engine.wgsl` do the same work (shots, strike, cut, smell, units, harvest), driven by `Engine::set_squad` and `Engine::squad_out`. A frame takes up to 64 units and 256 shots.
+- At the frame's start, each shot walks its line every half cell. It stops at the first cell that looks like slime: trail at or above `slime_trail(knee)`, the trail whose look is 26/255. A cell that is not agar (rock or wall) stops it with no hit.
+- At the hit it strikes a disc of radius 7 or less. Living walkers in the disc die as starving ones do, counted for the first shot that covers them, and the trail there is cleared.
+- Each unit lays smell on the agar cells of its disc.
+- Then the ticks run.
+- At the frame's end, each unit reads how many walkers touch it and finds the densest 4 × 4 block in its sight (a tie goes to the first block in row order). Then units harvest crystal charge in their discs, in unit order, so a second unit on a patch gets what the first left.
+- The CPU computes the disc tests and the shot paths in integers, so both sides pick the same cells.
+- Bodies (hook 5 of the plan) move to W2b. A dead soldier's crystal is a spare pile the game fills through the crystal fields W1b already has, so it needs no pass.
+
+**Measure, named first.** One frame (shots, strike, smell, one tick, reads, harvest) on the GPU against `squad::frame` on the CPU from the same dish, after 60 ticks of growth with a wall. The squad's outputs must be equal exactly, and the world fields equal up to float sums. Then planted bugs, one at a time, each of which the test must fail. The test is `MOULDGPU_TEST_GPU=1 cargo test --release --bin mouldgpu -- squad`, run on lavapipe; it runs in CI.
+
+**Twin.** 16 shots: 15 hit, 19 walkers killed, 1 stopped by a wall. The touch counts and aims of 15 units are equal. The harvest is equal: 3,000 and 1,606.99 for two units on one patch, then 100 for each of five others. Every slot's life is equal, no walker is off, and the trail is exact; scent L1 is 1.4e-9 and charge L1 is 2.3e-10.
+
+**Planted bugs** (each alone; raw: [round 1](larder-world-roadmap-2026-11-11/w2a/bugs-round1-87ebf13.txt), [round 2](larder-world-roadmap-2026-11-11/w2a/bugs-round2-efe9337.txt), [round 3](larder-world-roadmap-2026-11-11/w2a/bugs-round3-3957496.txt), [script](larder-world-roadmap-2026-11-11/w2a/plant-bugs.py)).
+- **Round 1** caught 10 of 16. It missed:
+  - a walker counted for every shot that strikes it, because no two shot discs overlapped;
+  - empty slots struck, because no struck disc held a dead slot;
+  - smell laid on walls and rock, because no unit stood near the wall;
+  - aim tested at a block's corner, because no unit's sight was small enough to matter.
+  - Two of the round's bugs were faulty. "Touch counted over the sight" changed only the loop bound, which the disc test inside still filtered, so it changed nothing; it was replaced. "A strike one cell wider" failed only because the shader did not compile, so it tested nothing; it was fixed.
+- **The test then gained** a second copy of one shot, a shot from the cell of a slot that starved inside the mould, a unit with smell radius 4 standing on the first wall cell a shot meets, and six units with sights from 2.5 to 7.5.
+- **Round 3, at 3957496, caught all 16.** Fourteen fail on an output or field. "Strikes leave the trail" leaves 29 walkers off. "Smell on walls" gives scent L1 1.6e-5 against the 1e-6 bound. "A walker counted for every shot" makes the cell's count wrap below zero, and the test then hangs instead of failing (killed after 120 s; it normally takes half a second).
+
+**Frame cost on the GTX 1070** (the same runs as W1b's, [raw](larder-world-roadmap-2026-11-11/w1b/timing-1070.txt)). With the world and growth, `fire=N` sends N units a frame that cycle over the crystals, each shooting at the densest mould it saw the frame before. It also reads the squad's outputs back every frame. This is a load test, not play: with 40 units at 512 × 320 only 57 walkers were left at 10 s. Median frame in ms, three runs each:
+
+| | 512 × 320 | 1024 × 640 |
+|---|---|---|
+| World and growth, no squad | 0.97-0.98 | 2.10-2.11 |
+| 8 units a frame | 2.01 | 3.14-3.18 |
+| 40 units a frame | 2.35-2.36 | 3.56-3.58 |
+
+The worst frame with 40 units at 1024 × 640 was 5.2-5.4 ms. The squad's frame-end passes (units, harvest) show in the GPU's drawing span. They take 0.73 ms with 8 units and 0.81-0.85 ms with 40, at either size. The cost hardly depends on the unit count because the units pass gives each unit one thread, which walks every 4 × 4 block in its sight one after another (sight 30 is about 250 blocks, 4,000 cells). The rest of the 1.0-1.5 ms is the frame-start passes and the read-back, which waits for the GPU every frame. For W2b: one workgroup a unit for the sight scan, and read the previous frame's outputs without waiting. Both are under the W2c bar (10 ms p95) as they stand.
+
+## Maps in the plan (owner, 19:29Z)
+
+The owner saw the world drawn as a black background and asked: "Is it part of the roadmap to build an actual world?" Then: "We will want maps though. That should be part of the plan". Today's world has ground the simulation uses (rock, wet ground, rubble, crystals, walls), but noise and a pile layout place it. Open agar draws dark because the simulation stores nothing there except trail and scent. Under the rule that the picture is the data, a richer ground needs ground that does something. ROADMAP.md now has five map steps:
+
+| Step | What | Owner | Gate |
+|---|---|---|---|
+| WM1 | A map file and loader: ground kind per cell, crystals (centre, size, charge), starts; into the CPU big dish and the GPU engine; noise worlds can be saved as maps | Larder thread, with W2b | The CPU and GPU load a map the same (twin test); a saved noise world plays as the world it came from |
+| WM2 | Three to five designed maps, each made for a different plan ([the maps thread's plan](larder-maps-2026-11-11.md): five paper maps) | maps thread | Idle and random hands lose on each; the winning plan changes between maps |
+| WM3 | New ground kinds the simulation uses, brainstormed from the model (elevation is the first candidate: slower uphill, wet ground in the hollows, scent drifting downhill) | maps thread; GPU side with the Larder thread | Each kind changes a measured outcome and can be seen |
+| WM4 | The ground's look, drawn from those fields | graphics thread | #69, WM3 |
+| WM5 | A map editor in the window | to be chosen | WM1, W2c |
+
+Agreed with the graphics thread (19:33Z): byte 3 (bits 24-31) of the engine's ground word is elevation. The view shades it only once the simulation uses it. After rebasing on W1b, the view reads the engine's ground word in place of its own ground buffer. Agreed with the maps thread (19:40Z): soil kind in bits 12-15 and mould-made ground in 16-23. The loader reads `maps/<name>.png` at 1024 × 640 (R height, G the word's bits 8-15) and `maps/<name>.txt` (crystal, mould, landing and wall lines; soft rock is walls, so the engine builds them as it builds player walls), both written from the maps thread's `maps.json`.

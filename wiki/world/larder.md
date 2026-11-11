@@ -4,7 +4,7 @@ kind: design
 status: open
 updated: 2026-11-11T19:50Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
+code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -17,10 +17,11 @@ world on the GPU big dish, energy crystals that run out, several mould
 species. Six gated phases, W0-W5
 ([roadmap](../../Reports/larder-world-roadmap-2026-11-11.md); live doc
 https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ), replacing M4-M6 below.
-**Done:** W1a, the world's fields on the CPU big dish (PR #64), and W1b,
-the same fields on the GPU engine (waiting to merge after #63 and W0).
-**Next:** W2, Larder in the world. The small-dish M3 window still waits on
-the owner's playtest.
+**Done:** W1a, the world's fields on the CPU big dish (PR #64); W1b, the
+same fields on the GPU engine; W2a, the squad's hooks (PR #74).
+**Next:** W2b, M3's rules on the world, with the map loader (WM1); then the
+window. Designed maps are now part of the plan (owner, 19:29Z; ROADMAP
+WM1-WM5). The small-dish M3 window still waits on the owner's playtest.
 
 ## Larder World so far
 
@@ -43,9 +44,16 @@ mould gets through a ring in about 90 s; sealed, it walked past. Owner,
 **W1b**: the crystals, terrain and walls run on the GPU engine
 (`Engine::build_wall`), and one GPU tick matches one CPU tick on nine world dishes, with all 17
 planted bugs caught ([report, *W1b*](../../Reports/larder-world-roadmap-2026-11-11.md)).
-**W2**, Larder in the world, is planned in three steps: engine hooks (touch,
-smell, shots that stop at the first mould, harvest), M3's rules as a game
-layer, then the window ([report, *W2 plan*](../../Reports/larder-world-roadmap-2026-11-11.md)).
+On the GTX 1070 the world adds 0.25 ms to the frame at 1024 × 640 (1.73 to
+2.11 ms). **W2**, Larder in the world, is planned in three steps: engine
+hooks, M3's rules as a game layer, then the window ([report, *W2
+plan*](../../Reports/larder-world-roadmap-2026-11-11.md)). **W2a** is
+built (`mould::squad`, `Engine::set_squad`): shots stop at the first
+cell that looks like slime (trail for 26/255) or at a wall, and strike a
+disc; soldiers lay smell; each unit reads its touch and its densest block
+in sight, and harvests crystal charge. One GPU frame equals the CPU's
+exactly. On the 1070, 8 to 40 units add 1.0-1.5 ms a frame, mostly the
+units pass running one thread a unit; W2b cuts it.
 
 ## Small-dish milestones (M1-M3)
 
