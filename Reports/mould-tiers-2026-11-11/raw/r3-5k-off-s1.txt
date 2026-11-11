@@ -1,0 +1,10 @@
+== seed 1: 1024 x 640, 5000 walkers, 7 piles
+seed 1 r3-5k-off t  10.0s  tube   703.9  loops    2  width 3.99  reach  100.3  piles 2/7  strays 0.000  ms/tick 20.72
+seed 1 r3-5k-off t  10.0s  contrast 2.42
+seed 1 r3-5k-off t  10.0s  extent r50 43.6 r90 79.6
+seed 1 r3-5k-off t  10.0s  life walk 5000 spore 0 dormant 0 dead 0  held 2/7  bodies 1 big 702  centre 126.0,78.5  near 4504  rim 0.000
+seed 1 r3-5k-off t  20.0s  tube   634.7  loops    1  width 4.23  reach  100.3  piles 2/7  strays 0.000  ms/tick 17.41
+seed 1 r3-5k-off t  20.0s  contrast 2.21
+seed 1 r3-5k-off t  20.0s  extent r50 35.5 r90 154.5
+seed 1 r3-5k-off t  20.0s  life walk 5000 spore 0 dormant 0 dead 0  held 2/7  bodies 2 big 571  centre 123.9,77.4  near 4324  rim 0.000
+seed 1 r3-5k-off hash=e9ef5ab2ad6ae44d

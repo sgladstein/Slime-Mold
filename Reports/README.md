@@ -246,6 +246,13 @@ move.
   0.4%). It gives six ranked directions with first experiments, and a list of biology that was ignored. The prompt,
   the review verbatim, and the thread's response; scripts in
   [`research-review-2026-11-11/`](research-review-2026-11-11/).
+- [mould-tiers-2026-11-11.md](mould-tiers-2026-11-11.md) — **research with paired tests, no game change: new
+  mould tiers and how each answers attack.** Owner, 15:07Z: "consider how the mold reacts to the player, how it
+  reacts to being attacked". New `BigParams` life cycle, off by default (spores, dormancy, an alarm field the
+  player's strike lays). Sporer holds 6-7 of 7 piles against 3-5; struck, it scatters (7 of 7); a baited Sleeper
+  leaves 1858-2216 walkers at the strike against 2360-2971; a Swarmer loses 1144-4158 to fire against 614-3591:
+  each 8 of 8, p 0.0078, survives Bonferroni. Fleeing (Skittish) fails, p 0.375. Alarm +31% a step on one core.
+  Page, scripts and raw output in [`mould-tiers-2026-11-11/`](mould-tiers-2026-11-11/).
 
 ## Added with the move (2026-11-10)
 

@@ -1,0 +1,83 @@
+seed 1 t4-off t   1.0s  tube  3960.6  loops   87  width 5.43  reach  127.0  piles 4/7  strays 0.000  ms/tick 13.40
+seed 1 t4-off t   1.0s  contrast 1.80
+seed 1 t4-off t   1.0s  extent r50 112.9 r90 146.7
+seed 1 t4-off t   2.0s  tube  3489.9  loops   62  width 4.99  reach  127.4  piles 4/7  strays 0.000  ms/tick 17.11
+seed 1 t4-off t   2.0s  contrast 1.91
+seed 1 t4-off t   2.0s  extent r50 113.2 r90 145.3
+seed 1 t4-off t   3.0s  tube  3164.1  loops   44  width 4.82  reach  127.5  piles 4/7  strays 0.000  ms/tick 17.07
+seed 1 t4-off t   3.0s  contrast 1.94
+seed 1 t4-off t   3.0s  extent r50 114.4 r90 145.0
+seed 1 t4-off t   4.0s  tube  2974.2  loops   37  width 4.73  reach  127.9  piles 4/7  strays 0.000  ms/tick 16.66
+seed 1 t4-off t   4.0s  contrast 1.97
+seed 1 t4-off t   4.0s  extent r50 114.3 r90 147.7
+seed 1 t4-off t   5.0s  tube  2890.2  loops   35  width 4.80  reach  127.6  piles 4/7  strays 0.000  ms/tick 16.62
+seed 1 t4-off t   5.0s  contrast 1.95
+seed 1 t4-off t   5.0s  extent r50 114.7 r90 151.0
+seed 1 t4-off t   6.0s  tube  2751.7  loops   29  width 4.82  reach  127.9  piles 4/7  strays 0.001  ms/tick 16.60
+seed 1 t4-off t   6.0s  contrast 2.00
+seed 1 t4-off t   6.0s  extent r50 114.7 r90 155.3
+seed 1 t4-off t   7.0s  tube  2662.9  loops   24  width 4.94  reach  128.5  piles 4/7  strays 0.000  ms/tick 16.56
+seed 1 t4-off t   7.0s  contrast 1.97
+seed 1 t4-off t   7.0s  extent r50 114.5 r90 156.9
+seed 1 t4-off t   8.0s  tube  2585.1  loops   23  width 4.90  reach  127.9  piles 4/7  strays 0.002  ms/tick 16.59
+seed 1 t4-off t   8.0s  contrast 1.97
+seed 1 t4-off t   8.0s  extent r50 114.7 r90 159.8
+seed 1 t4-off t   9.0s  tube  2536.1  loops   21  width 4.93  reach  128.2  piles 4/7  strays 0.001  ms/tick 16.62
+seed 1 t4-off t   9.0s  contrast 1.98
+seed 1 t4-off t   9.0s  extent r50 114.3 r90 162.8
+seed 1 t4-off t  10.0s  strike at 95,80 r 8: killed 1113
+seed 1 t4-off t  10.0s  tube  2344.1  loops   18  width 4.75  reach  128.3  piles 4/7  strays 0.003  ms/tick 16.61
+seed 1 t4-off t  10.0s  contrast 2.07
+seed 1 t4-off t  10.0s  extent r50 113.9 r90 167.3
+seed 1 t4-off t  10.0s  life walk 18887 spore 0 dormant 0 dead 1113  held 3/7  bodies 3 big 2312  centre 130.5,79.7  near 1156
+seed 1 t4-off t  10.5s  strike at 95,80 r 8: killed 36
+seed 1 t4-off t  11.0s  strike at 95,80 r 8: killed 26
+seed 1 t4-off t  11.0s  tube  2347.6  loops   18  width 4.84  reach  128.6  piles 4/7  strays 0.003  ms/tick 16.59
+seed 1 t4-off t  11.0s  contrast 2.11
+seed 1 t4-off t  11.0s  extent r50 113.3 r90 170.7
+seed 1 t4-off t  11.0s  life walk 18825 spore 0 dormant 0 dead 1175  held 3/7  bodies 1 big 2344  centre 130.7,79.7  near 1099
+seed 1 t4-off t  11.5s  strike at 95,80 r 8: killed 9
+seed 1 t4-off t  12.0s  strike at 95,80 r 8: killed 8
+seed 1 t4-off t  12.0s  tube  2277.5  loops   14  width 4.88  reach  128.6  piles 4/7  strays 0.002  ms/tick 16.62
+seed 1 t4-off t  12.0s  contrast 2.08
+seed 1 t4-off t  12.0s  extent r50 112.4 r90 171.7
+seed 1 t4-off t  12.0s  life walk 18808 spore 0 dormant 0 dead 1192  held 3/7  bodies 1 big 2274  centre 130.8,79.7  near 1096
+seed 1 t4-off t  12.5s  strike at 95,80 r 8: killed 5
+seed 1 t4-off t  13.0s  strike at 95,80 r 8: killed 2
+seed 1 t4-off t  13.0s  tube  2277.8  loops   14  width 4.98  reach  128.7  piles 4/7  strays 0.002  ms/tick 16.73
+seed 1 t4-off t  13.0s  contrast 2.07
+seed 1 t4-off t  13.0s  extent r50 111.8 r90 173.8
+seed 1 t4-off t  13.0s  life walk 18801 spore 0 dormant 0 dead 1199  held 3/7  bodies 1 big 2275  centre 130.8,79.7  near 1114
+seed 1 t4-off t  13.5s  strike at 95,80 r 8: killed 0
+seed 1 t4-off t  14.0s  strike at 95,80 r 8: killed 0
+seed 1 t4-off t  14.0s  tube  2246.3  loops   13  width 4.97  reach  128.5  piles 4/7  strays 0.002  ms/tick 16.85
+seed 1 t4-off t  14.0s  contrast 2.20
+seed 1 t4-off t  14.0s  extent r50 111.4 r90 174.7
+seed 1 t4-off t  14.0s  life walk 18801 spore 0 dormant 0 dead 1199  held 3/7  bodies 1 big 2243  centre 130.8,79.7  near 1101
+seed 1 t4-off t  14.5s  strike at 95,80 r 8: killed 0
+seed 1 t4-off t  15.0s  strike at 95,80 r 8: killed 0
+seed 1 t4-off t  15.0s  tube  2213.0  loops   12  width 4.94  reach  128.6  piles 4/7  strays 0.003  ms/tick 16.97
+seed 1 t4-off t  15.0s  contrast 2.15
+seed 1 t4-off t  15.0s  extent r50 110.8 r90 175.9
+seed 1 t4-off t  15.0s  life walk 18801 spore 0 dormant 0 dead 1199  held 3/7  bodies 1 big 2210  centre 130.9,79.7  near 1115
+seed 1 t4-off t  16.0s  tube  2169.1  loops   10  width 4.97  reach  128.8  piles 4/7  strays 0.002  ms/tick 17.15
+seed 1 t4-off t  16.0s  contrast 2.14
+seed 1 t4-off t  16.0s  extent r50 110.1 r90 176.6
+seed 1 t4-off t  16.0s  life walk 18801 spore 0 dormant 0 dead 1199  held 3/7  bodies 2 big 2152  centre 131.0,79.7  near 1130
+seed 1 t4-off t  17.0s  tube  2167.9  loops   12  width 4.90  reach  128.7  piles 4/7  strays 0.007  ms/tick 17.20
+seed 1 t4-off t  17.0s  contrast 2.12
+seed 1 t4-off t  17.0s  extent r50 109.7 r90 177.7
+seed 1 t4-off t  17.0s  life walk 18801 spore 0 dormant 0 dead 1199  held 3/7  bodies 1 big 2164  centre 131.0,79.7  near 1144
+seed 1 t4-off t  18.0s  tube  2153.8  loops   11  width 4.98  reach  133.1  piles 4/7  strays 0.005  ms/tick 17.30
+seed 1 t4-off t  18.0s  contrast 2.16
+seed 1 t4-off t  18.0s  extent r50 109.2 r90 178.8
+seed 1 t4-off t  18.0s  life walk 18801 spore 0 dormant 0 dead 1199  held 3/7  bodies 1 big 2151  centre 131.1,79.7  near 1146
+seed 1 t4-off t  19.0s  tube  2145.2  loops    9  width 5.02  reach  135.1  piles 4/7  strays 0.003  ms/tick 17.34
+seed 1 t4-off t  19.0s  contrast 2.14
+seed 1 t4-off t  19.0s  extent r50 108.9 r90 179.6
+seed 1 t4-off t  19.0s  life walk 18801 spore 0 dormant 0 dead 1199  held 3/7  bodies 2 big 2112  centre 131.2,79.7  near 1158
+seed 1 t4-off t  20.0s  tube  2117.5  loops    9  width 5.03  reach  138.4  piles 4/7  strays 0.007  ms/tick 17.37
+seed 1 t4-off t  20.0s  contrast 2.38
+seed 1 t4-off t  20.0s  extent r50 108.6 r90 180.3
+seed 1 t4-off t  20.0s  life walk 18801 spore 0 dormant 0 dead 1199  held 3/7  bodies 3 big 2099  centre 131.2,79.7  near 1173
+seed 1 t4-off hash=f96a0d254be84de0

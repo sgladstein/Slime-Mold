@@ -65,6 +65,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   as controls too, twin-tested in CI
   ([report](Reports/gpu-sandbox-2026-11-11.md)). Phase 4 starts as Larder
   World's W0: births, upkeep and starving per walker on the GPU.
+- Mould tiers for the Larder ladder: [the life cycle](wiki/model/life-cycle.md)
+  (CPU big dish, off by default). Spores, dormancy and an alarm the
+  player's strike lays give a Sporer (starve it: struck, it scatters), a
+  Sleeper (bait it: after a wake it is deaf for 5 s) and a Swarmer (it
+  walks into a kill zone), each 8 of 8 paired seeds against its control.
+  A mould that flees attack did not split; a migrating tier is open.
 - How it is judged: [the census](wiki/method/census.md).
 - [The field skirmish](wiki/rts/skirmish.md): version 1 (habits, salt, the
   lamp) is playable (https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw) and

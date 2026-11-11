@@ -26,6 +26,7 @@ work; a thread working on one directly may change it.
 - [Water and sleep](model/water-and-sleep.md): dry mould sleeps, water wakes it; Keep It Alive only.
 - [Sensor angle and reach](model/sensors.md): 45 obeys then freezes, 22.5 lives but ignores you; reach stays 9.
 - [The mould at scale](model/scale.md): the GPU plan, the 1024 x 640 big dish and GPU timing test; the GPU sandbox (phase 3, built) with species, droplets and grazing as controls; phase 4 starts as Larder World W0 (growth); why Jenson's clips look different (no limit, drawing, respawn); trunks from a dense start, contagion on the big dish, fronts still open.
+- [The life cycle and the mould's answer to attack](model/life-cycle.md): spores, sleep and an alarm; Sporer, Sleeper and Swarmer tiers each beat their control 8/8 and have a counter (starve, bait, kill zone); fleeing fails.
 
 ## Looks
 

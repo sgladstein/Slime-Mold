@@ -1,0 +1,26 @@
+== seed 1: 1024 x 640, 20000 walkers, 7 piles
+seed 1 w-sporer t  10.0s  tube  2542.3  loops   18  width 4.78  reach  165.7  piles 7/7  strays 0.002  ms/tick 11.14
+seed 1 w-sporer t  10.0s  contrast 2.17
+seed 1 w-sporer t  10.0s  extent r50 113.3 r90 169.5
+seed 1 w-sporer t  10.0s  life walk 19971 spore 29 dormant 0 dead 0  held 4/7  bodies 4 big 2519  centre 128.6,79.7  near 4738  rim 0.000/0.002
+seed 1 w-sporer t  20.0s  tube  2815.5  loops   12  width 3.77  reach  166.5  piles 7/7  strays 0.002  ms/tick 12.49
+seed 1 w-sporer t  20.0s  contrast 2.34
+seed 1 w-sporer t  20.0s  extent r50 108.1 r90 196.9
+seed 1 w-sporer t  20.0s  life walk 19962 spore 38 dormant 0 dead 0  held 7/7  bodies 9 big 2649  centre 128.1,79.7  near 4528  rim 0.000/0.001
+seed 1 w-sporer t  30.0s  tube  3009.8  loops   13  width 3.43  reach  182.1  piles 7/7  strays 0.006  ms/tick 12.98
+seed 1 w-sporer t  30.0s  contrast 2.41
+seed 1 w-sporer t  30.0s  extent r50 106.3 r90 221.8
+seed 1 w-sporer t  30.0s  life walk 19948 spore 52 dormant 0 dead 0  held 7/7  bodies 9 big 2860  centre 127.4,79.5  near 4010  rim 0.000/0.003
+seed 1 w-sporer t  40.0s  tube  3372.3  loops    8  width 3.04  reach  178.9  piles 7/7  strays 0.003  ms/tick 13.43
+seed 1 w-sporer t  40.0s  contrast 2.49
+seed 1 w-sporer t  40.0s  extent r50 103.4 r90 259.6
+seed 1 w-sporer t  40.0s  life walk 19957 spore 43 dormant 0 dead 0  held 7/7  bodies 15 big 3118  centre 126.9,79.5  near 3774  rim 0.000/0.008
+seed 1 w-sporer t  50.0s  tube  3520.9  loops   10  width 3.02  reach  195.1  piles 7/7  strays 0.004  ms/tick 13.67
+seed 1 w-sporer t  50.0s  contrast 2.48
+seed 1 w-sporer t  50.0s  extent r50 102.6 r90 277.9
+seed 1 w-sporer t  50.0s  life walk 19939 spore 61 dormant 0 dead 0  held 7/7  bodies 16 big 3236  centre 126.2,79.1  near 4149  rim 0.000/0.003
+seed 1 w-sporer t  60.0s  tube  3542.2  loops   12  width 3.01  reach  184.7  piles 7/7  strays 0.007  ms/tick 12.97
+seed 1 w-sporer t  60.0s  contrast 2.45
+seed 1 w-sporer t  60.0s  extent r50 103.5 r90 290.3
+seed 1 w-sporer t  60.0s  life walk 19934 spore 66 dormant 0 dead 0  held 7/7  bodies 14 big 3195  centre 125.6,78.6  near 4438  rim 0.001/0.006
+seed 1 w-sporer hash=b9526e3c8822b2a4
