@@ -1,0 +1,36 @@
+== preset=nose
+bigdish: preset x seeds [1] seconds 3 threads 2
+== seed 1: 1024 x 640, 32000 walkers, 7 piles
+seed 1 x t   1.0s  tube  2535.6  loops    0  width 14.83  reach   56.2  piles 3/7  strays 0.001  
+seed 1 x t   1.0s  contrast 1.80
+seed 1 x t   2.0s  tube  2525.8  loops    1  width 12.79  reach   82.9  piles 3/7  strays 0.003  
+seed 1 x t   2.0s  contrast 1.87
+seed 1 x t   3.0s  tube  2520.4  loops    5  width 11.03  reach   81.9  piles 3/7  strays 0.008  
+seed 1 x t   3.0s  contrast 1.94
+seed 1 x hash=d145da5cc5567af0
+same as main
+== preset=nose graze_weight=10 graze_regrow=0.002
+bigdish: preset x seeds [1] seconds 3 threads 2
+== seed 1: 1024 x 640, 32000 walkers, 7 piles
+seed 1 x t   1.0s  tube  3288.6  loops    0  width 10.30  reach   56.5  piles 3/7  strays 0.001  
+seed 1 x t   1.0s  contrast 1.69
+seed 1 x t   2.0s  tube  3835.6  loops   21  width 6.33  reach   86.4  piles 4/7  strays 0.003  
+seed 1 x t   2.0s  contrast 1.70
+seed 1 x t   3.0s  tube  4338.8  loops   28  width 5.28  reach  116.3  piles 4/7  strays 0.008  
+seed 1 x t   3.0s  contrast 1.89
+seed 1 x hash=6bc04bab4dad46a7
+same as main
+== preset=dense species=2 respawn=0.01 explore_steps=60 explore_spread=1
+bigdish: preset x seeds [1] seconds 3 threads 2
+== seed 1: 1024 x 640, 100000 walkers, 7 piles
+seed 1 x t   1.0s  tube 25196.2  loops  628  width 5.18  reach  195.4  piles 7/7  strays 0.033  
+seed 1 x t   1.0s  contrast 3.62
+seed 1 x t   1.0s  pure 0.332  shares 0.500,0.500  left0 0.719  changed 0.000
+seed 1 x t   2.0s  tube 28742.0  loops  355  width 13.92  reach  196.6  piles 7/7  strays 0.005  
+seed 1 x t   2.0s  contrast 2.51
+seed 1 x t   2.0s  pure 0.541  shares 0.501,0.499  left0 0.566  changed 0.341
+seed 1 x t   3.0s  tube 28428.6  loops  475  width 10.93  reach  196.6  piles 7/7  strays 0.005  
+seed 1 x t   3.0s  contrast 2.38
+seed 1 x t   3.0s  pure 0.594  shares 0.499,0.501  left0 0.524  changed 0.244
+seed 1 x hash=e6c66f97807bb31d
+same as main

@@ -1,0 +1,23 @@
+# Planted bugs for the GPU growth twin test: name, file, old, new.
+B = [
+ ("no claim reset at death", "atomicSub(&occ[i], 1u);\n        atomicStore(&claim[i], NONE);", "atomicSub(&occ[i], 1u);"),
+ ("cell count kept at death", "atomicSub(&occ[i], 1u);\n        atomicStore(&claim[i], NONE);", "atomicStore(&claim[i], NONE);"),
+ ("starve drawn on the birth stream", "keyed(P.s_starve, S.t, k)", "keyed(P.s_birth, S.t, k)"),
+ ("no upkeep", ") - P.upkeep;", ");"),
+ ("share not split by the cell's count", "min(grass[i] / n, P.graze_eat)", "min(grass[i], P.graze_eat)"),
+ ("half the starving chance", "< P.starve) {", "< P.starve * 0.5) {"),
+ ("slot mask on the claim stream", "keyed(P.s_birth, t, 0xFFFFFFFFu)", "keyed(P.s_bclaim, t, 0xFFFFFFFFu)"),
+ ("four birth directions, not eight", "% 8u;", "% 4u;"),
+ ("births off the agar", "agar[j] == 0u || (P.crowd", "(P.crowd"),
+ ("births one over the crowd limit", "atomicLoad(&occ[j]) >= P.crowd)) { return; }", "atomicLoad(&occ[j]) > P.crowd)) { return; }"),
+ ("birth into a living slot", "|| lives(b)) { return; }", ") { return; }"),
+ ("parent keeps its energy", "energy[k] = half;", "energy[k] = energy[k];"),
+ ("no birth cost", "(energy[k] - P.birth_cost) * 0.5", "energy[k] * 0.5"),
+ ("child not counted in its cell", "atomicAdd(&occ[j], 1u);", ""),
+ ("child heading from the direction draw", "unit(keyed(P.s_birth, t, k | 0x80000000u)) * TAU", "unit(keyed(P.s_birth, t, k)) * TAU"),
+ ("child species not inherited", "spec[b] = spec[k];", "spec[b] = 0u;"),
+ ("child age not reset", "age[b] = 0u;", ""),
+ ("child sickness not reset", "sick[b] = 0u;", ""),
+ ("grass uneaten with growth on and grazing off", "return graze_w() != 0.0 || growth();", "return graze_w() != 0.0;"),
+ ("dead walkers walk", "fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {\n    let k = gid.x;\n    if (k >= P.n || !lives(k)) { return; }", "fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {\n    let k = gid.x;\n    if (k >= P.n) { return; }"),
+]

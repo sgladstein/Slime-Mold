@@ -46,11 +46,11 @@ if the link ever stops working. Newest last.
 | 11-11 | Grazing Mould Cells (droplets that crawl by grazing, two species of cells, conversion tries) | https://claude.ai/artifact/YYZJSPdm6VAb857m7WnJLR | `creatures-2026-11-11/` (page.html, `pics/`, graze.sh, drift.py, `raw/`) |
 | 11-11 | Larder M2 Census | https://claude.ai/artifact/1LKdbtQbsQJxv76ApxThRw | `larder-m2-2026-11-11/` (open `page.html`; pictures in `look/`) |
 | 11-11 | Larder M3 Window | https://claude.ai/artifact/CXSwsJbdxKyi2G5TnZhxZ4 | `larder-m3-2026-11-11/` (open `page.html`; pictures in `pics/`, made with `larder shot` from `pics/clear.txt`) |
-| 11-11 | Larder World Camera (pan, zoom, minimap, stand-in squad on a 2048 x 1280 world) | https://claude.ai/artifact/X4b5Nmwgkd11paVF8RS1mj | `world-camera-2026-11-11/` (open `page.html`; pictures from `mouldgpu look= view=1280x800 squad=1`) |
-<<<<<<< HEAD
-| 11-11 | Larder World Look (the world drawn from the simulation, shots, crystals, soldier A/B) | https://claude.ai/artifact/J7K7W5hSvxutqZmhN91yVd | `world-look-2026-11-11/` (open `page.html`; pictures from `examples/worldlook`) |
-=======
 | 11-11 | Mixed Mould Walkers (spread from one spot; mixed walkers sort into outriders, splitter, roamer) | https://claude.ai/artifact/Mp6XiXvfqo4gxc1gWaMjRz | `spread-mix-2026-11-11/` (page.html, `pics/`, run.sh, `raw/`) |
-| 11-11 | Larder Walls and Crystals (walls the mould wears down; crystals that drain as a whole) | https://claude.ai/artifact/ChBBfKkuMYaggBvXCKrxtN | `larder-world-roadmap-2026-11-11/` (open `page-walls.html`; pictures in `walls/` and `crystals/`, raw runs beside them) |
+| 11-11 | Larder Walls and Crystals (walls the mould wears down; crystals that drain as a whole) | https://claude.ai/artifact/ChBBfKkuMYaggBvXCKrxtN | `larder-world-roadmap-2026-11-11/` (open `page-walls.html`; pictures in `walls/`, `crystals/` and `w1b/` (the world on the GPU, added 19:30Z), raw runs beside them) |
+| 11-11 | Mould Growth and Starving (fed and starved moulds, the census, the GPU's match and cost, a first look on crystals) | https://claude.ai/artifact/EGgjauGkFxneuSRz8zTBei | `growth-2026-11-11/` (page.html, `video/` MP4s, stills and crystals.png) |
+| 11-11 | What Shapes the Mould (grass and crystals in one world, walker count with and without the crowd limit, crystals cap size by intake) | https://claude.ai/artifact/7YCmZjZyB4f4LMDhCKmzpt | `mould-shape-2026-11-11/` (page.html, `stills/`, grass-crystals.sh, walker-sweep-cloud.sh, `raw/`) |
+| 11-11 | Larder World Camera (pan, zoom, minimap, stand-in squad on a 2048 x 1280 world) | https://claude.ai/artifact/X4b5Nmwgkd11paVF8RS1mj | `world-camera-2026-11-11/` (open `page.html`; pictures from `mouldgpu look= view=1280x800 squad=1`) |
 | 11-11 | Sporer, Sleeper, Swarmer (new mould tiers, how each answers a strike, and the player's counter) | https://claude.ai/artifact/EGJKqpbfE5Gh8nDToXHfMu | `mould-tiers-2026-11-11/` (page.html, `pics/`, run.sh, robust.sh, pace.sh, wall.sh, cost.sh, media.sh, `raw/`) |
->>>>>>> origin/main
+| 11-11 | Larder World Maps (five paper maps, each for a different winning plan; ground kinds the simulation would use) | https://claude.ai/artifact/XPwkBkTAzsWq3Wg37pff7K | `larder-maps-2026-11-11/` (open `page.html`; `sketches/` made by `sketch_maps.py`, spec in `maps.json`) |
+| 11-11 | Larder World Look (the world drawn from the simulation, shots, crystals, soldier A/B) | https://claude.ai/artifact/J7K7W5hSvxutqZmhN91yVd | `world-look-2026-11-11/` (open `page.html`; pictures from `examples/worldlook`) |

@@ -1,0 +1,34 @@
+# W2a squad twin test and planted bugs at 87ebf13, lavapipe, 19:21Z
+# Bug [9] "touch counted over the sight" changed only the loop bound, which the disc test inside still filtered: a no-op, replaced in round 2. Bug [6] failed WGSL validation (u32 + i32), so it did not test the shader; fixed in round 2.
+test tests::the_squad_matches_the_cpu_for_one_frame ... adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+squad: 14 shots, 13 hit, 18 killed, 1 stopped by a wall; touching [9, 2, 2, 0, 0, 0, 2, 0]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0]
+squad world: 0 slots differ in life, 0 walkers off; trail L1 0.0e0, scent L1 1.4e-9, charge L1 2.3e-10; 0 agar and 0 ground off
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.47s
+# planted bugs (each alone)
+[0] shots fly through walls: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[1] shots hit the last slime on their line: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[2] a struck walker keeps its cell's count: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[3] a walker counts for every shot that strikes it: NOT CAUGHT
+[4] empty slots are struck too: NOT CAUGHT
+[5] strikes leave the trail: CAUGHT
+     28 walkers off
+[6] a strike one cell wider: CAUGHT
+     wgpu error: Validation Error
+[7] smell on walls and rock: NOT CAUGHT
+[8] smell laid twice: CAUGHT
+     trail L1 0.00e0, scent L1 6.95e-5, charge L1 2.29e-10
+[9] touch counted over the sight: NOT CAUGHT
+[10] aim ties go to the last block: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[11] aim tests the block's corner, not its centre: NOT CAUGHT
+[12] harvest takes whole cells: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[13] harvest in reverse unit order: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[14] reads before the ticks: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[15] smell after the ticks: CAUGHT
+     trail L1 0.00e0, scent L1 4.97e-5, charge L1 2.29e-10

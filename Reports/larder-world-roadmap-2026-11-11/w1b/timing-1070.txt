@@ -1,0 +1,150 @@
+# W1b and W2a frame cost on the GTX 1070 (Scott-Desktop), 2026-11-11 ~19:40Z
+# Worktree at 4a1f42f (W1b + W2a + fire=N). `cargo build --release --locked --bin mouldgpu`, 3m 10s.
+# The block, in PowerShell, run as is:
+# $W = "crystal=512","crystal_eat=0.005","rock=0.2","wet=0.2","walls=70,40,70,120,2@1;120,20,160,60,3@2"
+# $G = "upkeep=0.001","capacity=200000"
+# foreach ($sc in 2,4) { foreach ($r in 1,2,3) {
+#  base:   mouldgpu.exe look=$env:TEMP\w1b tag=b$sc$r seconds=10 scale=$sc piles=23 rect=1
+#  world:  ... piles=23 rect=1 @W
+#  growth: ... piles=23 rect=1 @W @G
+#  fire 8 / fire 40: ... piles=23 rect=1 @W @G fire=8 (fire=40)
+# }}   (each piped to Select-String for the wall ms, GPU ms a pass, world:, squad: and alive lines)
+# scale 2 is 512 x 320, scale 4 is 1024 x 640, 100,000 walkers to start.
+# fire=N: N units a frame cycling over the pile centres, each shooting at its last aim.
+# The fire runs' wall ms include reading the squad's outputs back every frame. The squad's
+# frame-end passes (units, harvest) fall inside the "drawing" GPU span; its frame-start passes
+# (shots, strike, cut, smell) come before the first timestamp and are counted only in wall ms.
+# Raw output as sent back from that PC (the "alive" filter also matched the "dish at 10.0s" line).
+
+## scale 2 run 1 base
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 512 x 320 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.628, worst 0.800; GPU ms ticks 0.435, drawing 0.025
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.058, walk 0.036, trail 0.045, scent 0.056, draw 0.020
+## scale 2 run 1 world
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.807, worst 1.382; GPU ms ticks 0.515, drawing 0.030
+world: crystals left 0.990, wall bites 44280, wall cells broken 84
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.074, walk 0.036, walls 0.006, eat 0.006, pilesum 0.004, flow 0.003, pilesum 0.004, trail 0.044, scent 0.066, draw 0.027
+## scale 2 run 1 growth
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.977, worst 5.815; GPU ms ticks 0.636, drawing 0.031
+dish at 10.0s: tube 10266.0  loops 0  width 8.09  reach 205.7  piles 23/23  strays 0.000  alive 20506
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.037, walk 0.022, walls 0.006, eat 0.004, pilesum 0.005, flow 0.003, pilesum 0.004, life 0.017, breed 0.009, born 0.005, trail 0.045, scent 0.068, draw 0.028
+## scale 2 run 1 fire 8
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.009, worst 2.831; GPU ms ticks 0.611, drawing 0.765
+squad: 8 units a frame, 4510 shots, 25297 walkers killed, 2400.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 8498.5  loops 1  width 7.31  reach 210.9  piles 23/23  strays 0.000  alive 15155
+## scale 2 run 1 fire 40
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.357, worst 3.638; GPU ms ticks 0.546, drawing 0.876
+squad: 40 units a frame, 20897 shots, 63022 walkers killed, 12000.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 179.0  loops 0  width 2.57  reach 205.7  piles 23/23  strays 0.035  alive 57
+## scale 2 run 2 base
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 512 x 320 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.576, worst 1.208; GPU ms ticks 0.399, drawing 0.023
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.056, walk 0.035, trail 0.044, scent 0.055, draw 0.020
+## scale 2 run 2 world
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.797, worst 1.419; GPU ms ticks 0.515, drawing 0.030
+world: crystals left 0.990, wall bites 44280, wall cells broken 84
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.074, walk 0.036, walls 0.006, eat 0.005, pilesum 0.004, flow 0.003, pilesum 0.004, trail 0.044, scent 0.066, draw 0.027
+## scale 2 run 2 growth
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.975, worst 1.790; GPU ms ticks 0.633, drawing 0.031
+dish at 10.0s: tube 10266.0  loops 0  width 8.09  reach 205.7  piles 23/23  strays 0.000  alive 20506
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.037, walk 0.022, walls 0.006, eat 0.004, pilesum 0.005, flow 0.003, pilesum 0.004, life 0.017, breed 0.009, born 0.004, trail 0.045, scent 0.068, draw 0.027
+## scale 2 run 2 fire 8
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.013, worst 4.697; GPU ms ticks 0.612, drawing 0.764
+squad: 8 units a frame, 4510 shots, 25297 walkers killed, 2400.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 8498.5  loops 1  width 7.31  reach 210.9  piles 23/23  strays 0.000  alive 15155
+## scale 2 run 2 fire 40
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.348, worst 3.702; GPU ms ticks 0.545, drawing 0.876
+squad: 40 units a frame, 20897 shots, 63022 walkers killed, 12000.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 179.0  loops 0  width 2.57  reach 205.7  piles 23/23  strays 0.035  alive 57
+## scale 2 run 3 base
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 512 x 320 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.586, worst 4.149; GPU ms ticks 0.398, drawing 0.023
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.057, walk 0.036, trail 0.044, scent 0.055, draw 0.020
+## scale 2 run 3 world
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.800, worst 1.428; GPU ms ticks 0.515, drawing 0.030
+world: crystals left 0.990, wall bites 44280, wall cells broken 84
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.074, walk 0.036, walls 0.006, eat 0.005, pilesum 0.005, flow 0.003, pilesum 0.004, trail 0.044, scent 0.067, draw 0.027
+## scale 2 run 3 growth
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.973, worst 1.741; GPU ms ticks 0.634, drawing 0.030
+dish at 10.0s: tube 10266.0  loops 0  width 8.09  reach 205.7  piles 23/23  strays 0.000  alive 20506
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.037, walk 0.022, walls 0.006, eat 0.004, pilesum 0.004, flow 0.003, pilesum 0.004, life 0.017, breed 0.009, born 0.005, trail 0.045, scent 0.068, draw 0.027
+## scale 2 run 3 fire 8
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.005, worst 3.179; GPU ms ticks 0.611, drawing 0.764
+squad: 8 units a frame, 4510 shots, 25297 walkers killed, 2400.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 8498.5  loops 1  width 7.31  reach 210.9  piles 23/23  strays 0.000  alive 15155
+## scale 2 run 3 fire 40
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.353, worst 3.562; GPU ms ticks 0.548, drawing 0.874
+squad: 40 units a frame, 20897 shots, 63022 walkers killed, 12000.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 179.0  loops 0  width 2.57  reach 205.7  piles 23/23  strays 0.035  alive 57
+## scale 4 run 1 base
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 1.729, worst 2.334; GPU ms ticks 1.499, drawing 0.069
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.301, walk 0.054, trail 0.156, scent 0.204, draw 0.066
+## scale 4 run 1 world
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.113, worst 2.577; GPU ms ticks 1.748, drawing 0.094
+world: crystals left 0.990, wall bites 17759, wall cells broken 0
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.330, walk 0.069, walls 0.018, eat 0.007, pilesum 0.007, flow 0.004, pilesum 0.006, trail 0.155, scent 0.238, draw 0.091
+## scale 4 run 1 growth
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.106, worst 2.958; GPU ms ticks 1.716, drawing 0.094
+dish at 10.0s: tube 7747.2  loops 59  width 3.10  reach 206.3  piles 23/23  strays 0.055  alive 54873
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.166, walk 0.054, walls 0.017, eat 0.006, pilesum 0.007, flow 0.004, pilesum 0.006, life 0.039, breed 0.020, born 0.007, trail 0.157, scent 0.240, draw 0.091
+## scale 4 run 1 fire 8
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 3.144, worst 4.898; GPU ms ticks 1.703, drawing 0.822
+squad: 8 units a frame, 4792 shots, 36124 walkers killed, 2400.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 7721.2  loops 47  width 3.03  reach 201.1  piles 23/23  strays 0.041  alive 49693
+## scale 4 run 1 fire 40
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 3.574, worst 5.150; GPU ms ticks 1.653, drawing 0.900
+squad: 40 units a frame, 23912 shots, 94862 walkers killed, 12000.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 6312.5  loops 18  width 2.87  reach 204.1  piles 23/23  strays 0.004  alive 30788
+## scale 4 run 2 base
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 1.733, worst 2.329; GPU ms ticks 1.509, drawing 0.070
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.301, walk 0.054, trail 0.157, scent 0.205, draw 0.066
+## scale 4 run 2 world
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.107, worst 2.527; GPU ms ticks 1.756, drawing 0.095
+world: crystals left 0.990, wall bites 17759, wall cells broken 0
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.328, walk 0.069, walls 0.018, eat 0.007, pilesum 0.007, flow 0.004, pilesum 0.006, trail 0.156, scent 0.240, draw 0.092
+## scale 4 run 2 growth
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.103, worst 3.006; GPU ms ticks 1.717, drawing 0.094
+dish at 10.0s: tube 7747.2  loops 59  width 3.10  reach 206.3  piles 23/23  strays 0.055  alive 54873
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.167, walk 0.055, walls 0.017, eat 0.007, pilesum 0.007, flow 0.004, pilesum 0.006, life 0.039, breed 0.021, born 0.007, trail 0.158, scent 0.242, draw 0.092
+## scale 4 run 2 fire 8
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 3.177, worst 4.865; GPU ms ticks 1.698, drawing 0.830
+squad: 8 units a frame, 4792 shots, 36124 walkers killed, 2400.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 7721.2  loops 47  width 3.03  reach 201.1  piles 23/23  strays 0.041  alive 49693
+## scale 4 run 2 fire 40
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 3.577, worst 5.289; GPU ms ticks 1.655, drawing 0.904
+squad: 40 units a frame, 23912 shots, 94862 walkers killed, 12000.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 6312.5  loops 18  width 2.87  reach 204.1  piles 23/23  strays 0.004  alive 30788
+## scale 4 run 3 base
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 1.735, worst 2.346; GPU ms ticks 1.508, drawing 0.069
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.303, walk 0.054, trail 0.158, scent 0.205, draw 0.066
+## scale 4 run 3 world
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.110, worst 2.556; GPU ms ticks 1.755, drawing 0.095
+world: crystals left 0.990, wall bites 17759, wall cells broken 0
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.330, walk 0.069, walls 0.018, eat 0.007, pilesum 0.007, flow 0.004, pilesum 0.006, trail 0.156, scent 0.240, draw 0.092
+## scale 4 run 3 growth
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 2.114, worst 3.339; GPU ms ticks 1.717, drawing 0.094
+dish at 10.0s: tube 7747.2  loops 59  width 3.10  reach 206.3  piles 23/23  strays 0.055  alive 54873
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.167, walk 0.054, walls 0.017, eat 0.007, pilesum 0.007, flow 0.004, pilesum 0.006, life 0.039, breed 0.021, born 0.007, trail 0.159, scent 0.242, draw 0.092
+## scale 4 run 3 fire 8
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 3.180, worst 4.823; GPU ms ticks 1.709, drawing 0.833
+squad: 8 units a frame, 4792 shots, 36124 walkers killed, 2400.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 7721.2  loops 47  width 3.03  reach 201.1  piles 23/23  strays 0.041  alive 49693
+## scale 4 run 3 fire 40
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 3.563, worst 5.392; GPU ms ticks 1.655, drawing 0.906
+squad: 40 units a frame, 23912 shots, 94862 walkers killed, 12000.0 charge taken (the wall ms above include reading it back every frame)
+dish at 10.0s: tube 6312.5  loops 18  width 2.87  reach 204.1  piles 23/23  strays 0.004  alive 30788

@@ -22,6 +22,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use crate::mould::big::{BigDish, BigParams};
+use crate::mould::squad;
 use crate::mould::STEPS_PER_SECOND;
 use pixels::wgpu;
 
@@ -46,9 +47,32 @@ pub const DRAW_WANDER: u32 = 108;
 pub const DRAW_CHANCE: u32 = 109;
 pub const DRAW_SIZE: u32 = 110;
 pub const DRAW_KEEP: u32 = 111;
+/// Growth's draws (big.rs `DRAW_STARVE`, `DRAW_BIRTH`, `CLAIM_BIRTH`).
+pub const DRAW_STARVE: u32 = 401;
+pub const DRAW_BIRTH: u32 = 402;
+pub const CLAIM_BIRTH: u32 = 403;
 
-/// Bytes in `Params` (84 words).
-pub const PARAMS_BYTES: usize = 336;
+/// Bytes in `Params` (104 words).
+pub const PARAMS_BYTES: usize = 448;
+
+/// The Larder World's switches in `Params::world` (engine.wgsl).
+pub const WORLD_CRYSTALS: u32 = 1;
+pub const WORLD_WETS: u32 = 2;
+pub const WORLD_WALLS: u32 = 4;
+pub const WORLD_TERRAIN: u32 = 8;
+/// A cell's `ground` bits (engine.wgsl): its crystal's pile (index + 1) in
+/// the low byte, then wet, wall, a wall that lets scent through, rock.
+pub const GROUND_PILE: u32 = 0xFF;
+pub const GROUND_WET: u32 = 0x100;
+pub const GROUND_WALL: u32 = 0x200;
+pub const GROUND_SCENT_WALL: u32 = 0x400;
+pub const GROUND_ROCK: u32 = 0x800;
+/// Rounds of `evict` a wall runs between checks, and at most: walkers that
+/// lost a free cell to another try the next nearest, until none finds one.
+/// (Four rounds in all left 24 of 178 covered walkers inside on the twin
+/// test's packed home crystal, which the CPU had all moved.)
+pub const EVICT_ROUNDS: usize = 4;
+pub const EVICT_MAX: usize = 64;
 
 /// Species the sandbox draws (a colour each, as `style=species`).
 pub const MAX_SPECIES: u8 = 4;
@@ -192,6 +216,36 @@ pub struct Settings {
     pub graze_regrow: f32,
     /// PR #58: species 0 lays this many times the deposit (1 even).
     pub boost: f32,
+    /// Growth (Larder World W0, `BigParams::upkeep`; 0 off): energy a
+    /// walker pays a tick, what it starts with, what it divides at, what a
+    /// division costs, the chance a tick that a walker at zero dies, and
+    /// the slots (0: `walkers`; the first `walkers` start alive). Growth
+    /// and the slots are fixed for a dish's life.
+    pub upkeep: f32,
+    pub start_energy: f32,
+    pub birth_energy: f32,
+    pub birth_cost: f32,
+    pub starve: f32,
+    pub capacity: usize,
+    /// The Larder World (W1b, 2026-11-11; `BigParams`'s names in `set`):
+    /// the dish's piles and its shape (`rect`); crystal charge a cell (0
+    /// off), eaten in equal shares, flowing inside a crystal and regrowing
+    /// as on the CPU; rock and wet ground (`terrain_rock`, `terrain_wet`,
+    /// 0 off) and the wet step; walls' health (0: they never break), the
+    /// bite a blocked walker takes, and the scent they let through.
+    pub piles: usize,
+    pub rect: bool,
+    pub crystal: f32,
+    pub crystal_eat: f32,
+    pub crystal_flow: f32,
+    pub crystal_regrow: f32,
+    pub rock: f32,
+    pub wet: f32,
+    pub wet_step: f32,
+    pub terrain_blob: f32,
+    pub wall_hp: f32,
+    pub wall_bite: f32,
+    pub wall_scent: f32,
     pub seed: u64,
 }
 
@@ -260,6 +314,25 @@ impl Settings {
             graze_eat: t.graze_eat,
             graze_regrow: t.graze_regrow,
             boost: t.species_boost,
+            upkeep: t.upkeep,
+            start_energy: t.start_energy,
+            birth_energy: t.birth_energy,
+            birth_cost: t.birth_cost,
+            starve: t.starve,
+            capacity: t.capacity,
+            piles: t.piles,
+            rect: t.rect,
+            crystal: t.crystal_charge,
+            crystal_eat: t.crystal_eat,
+            crystal_flow: t.crystal_flow,
+            crystal_regrow: t.crystal_regrow,
+            rock: t.terrain_rock,
+            wet: t.terrain_wet,
+            wet_step: t.wet_step,
+            terrain_blob: t.terrain_blob,
+            wall_hp: t.wall_hp,
+            wall_bite: t.wall_bite,
+            wall_scent: t.wall_scent,
             seed: 1,
         }
     }
@@ -362,6 +435,26 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "graze_eat" => s.graze_eat = f()?,
         "graze_regrow" => s.graze_regrow = f()?,
         "boost" | "species_boost" => s.boost = f()?,
+        "upkeep" => s.upkeep = f()?,
+        "start_energy" => s.start_energy = f()?,
+        "birth_energy" => s.birth_energy = f()?,
+        "birth_cost" => s.birth_cost = f()?,
+        "starve" => s.starve = f()?,
+        "capacity" | "slots" => s.capacity = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
+        // The Larder World.
+        "piles" => s.piles = int()?.min(MAX_PILES as u32) as usize,
+        "rect" => s.rect = b()?,
+        "crystal" | "crystal_charge" => s.crystal = f()?,
+        "crystal_eat" => s.crystal_eat = f()?,
+        "crystal_flow" => s.crystal_flow = f()?,
+        "crystal_regrow" => s.crystal_regrow = f()?,
+        "rock" | "terrain_rock" => s.rock = f()?,
+        "wet" | "terrain_wet" => s.wet = f()?,
+        "wet_step" => s.wet_step = f()?,
+        "terrain_blob" => s.terrain_blob = f()?,
+        "wall_hp" => s.wall_hp = f()?,
+        "wall_bite" => s.wall_bite = f()?,
+        "wall_scent" => s.wall_scent = f()?,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }
@@ -425,6 +518,25 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         graze_eat: s.graze_eat,
         graze_regrow: s.graze_regrow,
         species_boost: s.boost,
+        upkeep: s.upkeep,
+        start_energy: s.start_energy,
+        birth_energy: s.birth_energy,
+        birth_cost: s.birth_cost,
+        starve: s.starve,
+        capacity: s.capacity,
+        piles: s.piles,
+        rect: s.rect,
+        crystal_charge: s.crystal,
+        crystal_eat: s.crystal_eat,
+        crystal_flow: s.crystal_flow,
+        crystal_regrow: s.crystal_regrow,
+        terrain_rock: s.rock,
+        terrain_wet: s.wet,
+        wet_step: s.wet_step,
+        terrain_blob: s.terrain_blob,
+        wall_hp: s.wall_hp,
+        wall_bite: s.wall_bite,
+        wall_scent: s.wall_scent,
         seed: s.seed,
         ..t
     }
@@ -456,14 +568,16 @@ pub struct Hand {
 /// across restarts.
 pub struct Shared {
     pub bgl: wgpu::BindGroupLayout,
-    /// sense, walk, trail, scent, histogram, top, draw, jump, land, convert.
+    /// sense, walk, trail, scent, histogram, top, draw, jump, land,
+    /// convert, and the Larder World's eat, pilesum, flow, walls, build,
+    /// evict, settle, unclaim.
     pub pipes: Vec<wgpu::ComputePipeline>,
     /// The same with the outside rules compiled out (`OUTSIDE` false), for
     /// a dish with all of them off.
     pub plain: Vec<wgpu::ComputePipeline>,
 }
 
-pub const BINDINGS: u32 = 34;
+pub const BINDINGS: u32 = 46;
 /// The most shot hits a frame (`Engine::set_hits`).
 pub const MAX_HITS: usize = 256;
 pub const SENSE: usize = 0;
@@ -476,6 +590,29 @@ pub const DRAW: usize = 6;
 pub const JUMP: usize = 7;
 pub const LAND: usize = 8;
 pub const CONVERT: usize = 9;
+pub const LIFE: usize = 10;
+pub const BREED: usize = 11;
+pub const BORN: usize = 12;
+pub const EAT: usize = 13;
+pub const PILESUM: usize = 14;
+pub const FLOW: usize = 15;
+pub const WALLS: usize = 16;
+pub const BUILD: usize = 17;
+pub const EVICT: usize = 18;
+pub const SETTLE: usize = 19;
+pub const UNCLAIM: usize = 20;
+/// The squad (Larder World W2a, `set_squad`): before a frame's first tick,
+/// then after its last.
+pub const SHOTS: usize = 21;
+pub const STRIKE: usize = 22;
+pub const CUT: usize = 23;
+pub const SMELL: usize = 24;
+pub const UNITS: usize = 25;
+pub const HARVEST: usize = 26;
+/// Every entry point, in pipeline order.
+pub const PASSES: [&str; 27] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest",
+];
 
 impl Shared {
     pub fn new(dev: &wgpu::Device) -> Self {
@@ -490,12 +627,12 @@ impl Shared {
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let mut entries = vec![entry(0, wgpu::BufferBindingType::Uniform)];
         for b in 1..BINDINGS {
-            entries.push(entry(b, if matches!(b, 8 | 9 | 16 | 17 | 32) { ro } else { rw }));
+            entries.push(entry(b, if matches!(b, 9 | 16 | 17 | 38 | 41 | 44) { ro } else { rw }));
         }
         let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("sandbox"), entries: &entries });
         let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("sandbox"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let build = |constants: &[(&str, f64)]| {
-            ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert"]
+            PASSES
                 .iter()
                 .map(|entry_point| {
                     dev.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -525,6 +662,8 @@ pub struct Engine {
     /// only binds them).
     pub state: wgpu::Buffer,
     pub occ: wgpu::Buffer,
+    /// Agar a cell: written by walls (`build`, and `walls` when one breaks).
+    pub agar: wgpu::Buffer,
     pub trail: [wgpu::Buffer; 2],
     pub scent: [wgpu::Buffer; 2],
     pub lay: wgpu::Buffer,
@@ -542,9 +681,42 @@ pub struct Engine {
     /// PR #56: grass a cell, and each walker's species.
     pub grass: wgpu::Buffer,
     pub spec: wgpu::Buffer,
-    /// Which cells are agar (1) or not (0): walls the game builds clear it.
-    pub agar: wgpu::Buffer,
-    /// This frame's shot hits (`set_hits`), and how many.
+    /// Growth: each slot's energy, below 0 for an empty slot; and whether
+    /// growth is on (fixed for the dish's life, as the slots are).
+    pub energy: wgpu::Buffer,
+    pub grows: bool,
+    /// What each walker on a cell took from its crystal this tick (the
+    /// CPU's `took`, a cell not a slot; growth's `life` adds it).
+    pub share: wgpu::Buffer,
+    /// The Larder World (engine.wgsl's bindings 34-41): ground bits, crystal
+    /// charge, wall health, the bites walls took this tick, the crystal
+    /// cells pile by pile, each pile's run and sums, the wall counters, and
+    /// the wall being built.
+    pub ground: wgpu::Buffer,
+    pub charge: wgpu::Buffer,
+    pub health: wgpu::Buffer,
+    pub bites: wgpu::Buffer,
+    pub pcell: wgpu::Buffer,
+    pub piles: wgpu::Buffer,
+    pub wstat: wgpu::Buffer,
+    pub wb: wgpu::Buffer,
+    /// Crystal cells listed (`pcell`) and the dish's piles; whether a wall
+    /// has been built (the wall passes then run every tick).
+    pub npc: u32,
+    pub npiles: u32,
+    pub walled: bool,
+    /// From the last `write_params`: whether crystal charge flows or
+    /// regrows (the flow pass and its first sum then run).
+    pub flows: bool,
+    /// The squad (Larder World W2a): the frame's units and shots in
+    /// `squad::pack`'s layout, each shot's kills, this frame's counts and
+    /// slime trail (`set_squad`), and whether the next `record` runs them.
+    pub sq: wgpu::Buffer,
+    pub kills: wgpu::Buffer,
+    pub squad: (u32, u32, f32),
+    pub squad_due: bool,
+    /// This frame's shot hits (`set_hits`), and how many: the world look's
+    /// stand-in fight (bindings 44, 45 after the Larder World's 32-43).
     pub hits: wgpu::Buffer,
     pub n_hits: u32,
     /// The look a cell (thickness, walkers, wound, scent; a byte each),
@@ -580,7 +752,7 @@ pub struct Engine {
 impl Engine {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize) -> Self {
         let agar_cells = BigDish::new(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
-        let crowd_ok = s.walkers <= agar_cells / 2;
+        let crowd_ok = s.walkers.max(s.capacity) <= agar_cells / 2;
         let d = BigDish::new(big_params(s, scale, s.crowd && crowd_ok));
         let dev = device;
         let cells = (d.w * d.h) as u32;
@@ -598,11 +770,7 @@ impl Engine {
         let walkers = buf("walkers", &f32_bytes(&flat), storage);
         let intent = zeros("intent", n as usize * 16);
         let icell = zeros("icell", n as usize * 4);
-        let mut occ = vec![0u32; cells as usize];
-        for &(x, y, _) in &d.walkers {
-            occ[y as usize * d.w + x as usize] += 1;
-        }
-        let occ = buf("occ", &u32_bytes(&occ), storage);
+        let occ = buf("occ", &u32_bytes(&occupancy(&d)), storage);
         let claim = buf("claim", &u32_bytes(&vec![u32::MAX; cells as usize]), storage);
         // A block of counts a species (`dep`, `sdep`), two for explorers'
         // and blocked walkers' classes (`edep`, `bdep`).
@@ -637,18 +805,32 @@ impl Engine {
         // Grass starts full on the agar (the CPU's, made only with grazing
         // on; here always, so grazing can be switched on as the dish runs);
         // walker k starts as species k % n.
-        let full: Vec<f32> = d.agar.iter().map(|&a| a as u32 as f32).collect();
-        let grass = buf("grass", &f32_bytes(&full), storage);
+        let grass = buf("grass", &f32_bytes(&grass_of(&d)), storage);
         let gcount = zeros("gcount", cells as usize * 4);
         let specs: Vec<u32> = (0..n).map(|k| k % nsp.max(1)).collect();
         let spec = buf("spec", &u32_bytes(&specs), storage);
+        let energy = buf("energy", &f32_bytes(&energies(&d)), storage);
+        let share = zeros("share", cells as usize * 4);
+        // The Larder World's fields, always there (a wall can go up on any
+        // dish); the crystal list only as long as the dish's crystals.
+        let wd = world_data(&d);
+        let ground = buf("ground", &u32_bytes(&wd.ground), storage);
+        let charge = buf("charge", &f32_bytes(&wd.charge), storage);
+        let health = buf("health", &f32_bytes(&wd.health), storage);
+        let bites = zeros("bites", cells as usize * 4);
+        let pcell = buf("pcell", &u32_bytes(&wd.pcell), storage);
+        let piles = buf("piles", &u32_bytes(&wd.piles), storage);
+        let wstat = zeros("wstat", 16);
+        let wb = zeros("wall build", 48);
+        let sq = zeros("squad", squad::WORDS * 4);
+        let kills = zeros("kills", squad::SHOTS_MAX * 4);
         let hits = zeros("hits", MAX_HITS * 16);
         let look = zeros("look", cells as usize * 4);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
                 &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec, &hits, &look,
+                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -662,6 +844,7 @@ impl Engine {
             walkers,
             state,
             occ,
+            agar,
             trail,
             scent,
             lay,
@@ -675,7 +858,25 @@ impl Engine {
             age,
             grass,
             spec,
-            agar,
+            grows: !d.energy.is_empty(),
+            energy,
+            share,
+            ground,
+            charge,
+            health,
+            bites,
+            pcell,
+            piles,
+            wstat,
+            wb,
+            npc: wd.pcell.len() as u32,
+            npiles: wd.npiles,
+            walled: !d.wall.is_empty(),
+            flows: false,
+            sq,
+            kills,
+            squad: (0, 0, 0.0),
+            squad_due: false,
             hits,
             n_hits: 0,
             look,
@@ -716,16 +917,19 @@ impl Engine {
             for dy in -n..=n {
                 for dx in -n..=n {
                     let (x, y) = (cx + dx as f32, cy + dy as f32);
-                    if ((dx * dx + dy * dy) as f32) > r * r || x < 0.0 || y < 0.0 || x >= d.w as f32 || y >= d.h as f32 {
+                    // A crystal's footprint is its hexagon (`BigDish::in_pile`).
+                    if !d.in_pile(dx as f32, dy as f32, r) || x < 0.0 || y < 0.0 || x >= d.w as f32 || y >= d.h as f32 {
                         continue;
                     }
+                    // Every cell of the footprint: the scent pass lays only
+                    // where scent spreads (agar, or a wall that lets it
+                    // through), as the CPU's `lay_scent` lays on its
+                    // `scent_agar`, so rubble a broken wall leaves lays again.
                     let i = y as usize * d.w + x as usize;
-                    if d.agar[i] {
-                        if lays {
-                            lay[i] += d.p.food_deposit;
-                        }
-                        pile[i] = pi as u32 + 1;
+                    if lays {
+                        lay[i] += d.p.food_deposit;
                     }
+                    pile[i] = pi as u32 + 1;
                 }
             }
         }
@@ -746,11 +950,9 @@ impl Engine {
         assert_eq!((d.w, d.h, d.walkers.len() as u32, d.sw, d.sh), (self.dish.w, self.dish.h, self.n, d.w, d.h), "a dish of this engine's size, on the fine scent grid");
         let flat: Vec<f32> = d.walkers.iter().flat_map(|&(x, y, h)| [x, y, h, 0.0]).collect();
         self.queue.write_buffer(&self.walkers, 0, &f32_bytes(&flat));
-        let mut occ = vec![0u32; self.cells as usize];
-        for &(x, y, _) in &d.walkers {
-            occ[y as usize * d.w + x as usize] += 1;
-        }
-        self.queue.write_buffer(&self.occ, 0, &u32_bytes(&occ));
+        self.queue.write_buffer(&self.occ, 0, &u32_bytes(&occupancy(d)));
+        assert_eq!(d.energy.is_empty(), !self.grows, "a dish with this engine's growth");
+        self.queue.write_buffer(&self.energy, 0, &f32_bytes(&energies(d)));
         // The tick's bind group reads side `done % 2`.
         let side = (d.steps % 2) as usize;
         self.queue.write_buffer(&self.trail[side], 0, &f32_bytes(&d.trail));
@@ -773,8 +975,20 @@ impl Engine {
         let ages: Vec<u32> = if d.age.is_empty() { vec![0; self.n as usize] } else { d.age.iter().map(|&a| a as u32).collect() };
         self.queue.write_buffer(&self.age, 0, &u32_bytes(&ages));
         self.exploring = !d.age.is_empty();
-        let grass: Vec<f32> = if d.grass.is_empty() { d.agar.iter().map(|&a| a as u32 as f32).collect() } else { d.grass.clone() };
-        self.queue.write_buffer(&self.grass, 0, &f32_bytes(&grass));
+        self.queue.write_buffer(&self.grass, 0, &f32_bytes(&grass_of(d)));
+        // The Larder World: the agar too, since walls change it.
+        let agar: Vec<u32> = d.agar.iter().map(|&a| a as u32).collect();
+        self.queue.write_buffer(&self.agar, 0, &u32_bytes(&agar));
+        let wd = world_data(d);
+        assert_eq!(wd.pcell.len() as u32, self.npc, "a dish with this engine's crystals");
+        self.queue.write_buffer(&self.ground, 0, &u32_bytes(&wd.ground));
+        self.queue.write_buffer(&self.charge, 0, &f32_bytes(&wd.charge));
+        self.queue.write_buffer(&self.health, 0, &f32_bytes(&wd.health));
+        self.queue.write_buffer(&self.pcell, 0, &u32_bytes(&wd.pcell));
+        self.queue.write_buffer(&self.piles, 0, &u32_bytes(&wd.piles));
+        self.queue.write_buffer(&self.bites, 0, &vec![0u8; self.cells as usize * 4]);
+        self.queue.write_buffer(&self.wstat, 0, &[0u8; 16]);
+        self.walled = !d.wall.is_empty();
         let specs: Vec<u32> = if d.spec.is_empty() { (0..self.n).map(|k| k % self.nsp.max(1)).collect() } else { d.spec.iter().map(|&c| c as u32).collect() };
         self.queue.write_buffer(&self.spec, 0, &u32_bytes(&specs));
         self.done = d.steps;
@@ -788,7 +1002,9 @@ impl Engine {
         let seed = s.seed;
         let (w, h) = (self.dish.w as u32, self.dish.h as u32);
         let crowd = (s.crowd && self.crowd_ok) as u32;
-        let deposit = s.laid * 100_000.0 / self.n.max(1) as f32;
+        // Per walker as the CPU's `big_params`: the starting walkers, not
+        // the slots (they are the same with growth off).
+        let deposit = s.laid * 100_000.0 / s.walkers.max(1) as f32;
         let (bx, by) = hand.at.unwrap_or((-1.0e6, -1.0e6));
         let br = 6.0 * self.dish.p.scale as f32;
         let pull = if hand.pull && hand.at.is_some() { PULL } else { 0.0 };
@@ -827,10 +1043,35 @@ impl Engine {
         b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
         b.extend(u32_bytes(&[s.sensor_r as u32, stream(seed, DRAW_CHANCE), stream(seed, DRAW_KEEP)]));
         b.extend(f32_bytes(&[s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost]));
-        b.extend(u32_bytes(&[self.n_hits, 0]));
+        // Growth: its upkeep as the dish was made with (off stays off).
+        let upkeep = if self.grows { s.upkeep.max(f32::MIN_POSITIVE) } else { 0.0 };
+        b.extend(f32_bytes(&[upkeep, s.birth_energy, s.birth_cost, s.starve]));
+        let mask = self.n.max(2).next_power_of_two() - 1;
+        b.extend(u32_bytes(&[stream(seed, DRAW_STARVE), stream(seed, DRAW_BIRTH), stream(seed, CLAIM_BIRTH), mask, 0, 0]));
+        // The Larder World: what the dish was made with (crystals, terrain,
+        // full charge and health), what has been built (walls), and the
+        // rates as set now.
+        let mut world = 0;
+        if self.npc > 0 {
+            world |= WORLD_CRYSTALS;
+        }
+        if t.terrain_wet > 0.0 || self.walled {
+            world |= WORLD_WETS;
+        }
+        if self.walled {
+            world |= WORLD_WALLS;
+        }
+        if t.terrain_rock > 0.0 || t.terrain_wet > 0.0 {
+            world |= WORLD_TERRAIN;
+        }
+        b.extend(u32_bytes(&[world, self.npiles, self.npc, 0]));
+        b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
+        b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), 0]));
+        self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
+        b.extend(u32_bytes(&[self.n_hits, 0, 0, 0]));
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.converts = s.convert > 0.0 && self.nsp > 0;
-        self.outside = self.nsp > 0 || s.explore > 0 || s.blocked_lay > 0.0 || s.blocked_keep || s.chance > 0.0 || s.size_spread > 0.0 || s.sensor_r > 0 || s.graze != 0.0;
+        self.outside = self.nsp > 0 || s.explore > 0 || s.blocked_lay > 0.0 || s.blocked_keep || s.chance > 0.0 || s.size_spread > 0.0 || s.sensor_r > 0 || s.graze != 0.0 || self.grows;
         self.queue.write_buffer(&self.params, 0, &b);
         self.jumps = s.respawn > 0.0 || pull > 0.0;
         self.crowd = crowd > 0;
@@ -870,6 +1111,28 @@ impl Engine {
         };
         let tick = self.tick_passes();
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
+        let (nunits, nshots, _) = self.squad;
+        let due = std::mem::take(&mut self.squad_due);
+        let dispatch = |enc: &mut wgpu::CommandEncoder, group: &wgpu::BindGroup, passes: &[(usize, u32)]| {
+            for &(p, groups) in passes {
+                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
+                pass.set_pipeline(&pipes[p]);
+                pass.set_bind_group(0, group, &[]);
+                pass.dispatch_workgroups(groups, 1, 1);
+            }
+        };
+        if due {
+            // The squad's frame start (`squad.rs`): shots, their strikes,
+            // then the smell, on the trail and scent the first tick reads.
+            let mut pre = Vec::new();
+            if nshots > 0 {
+                pre.extend([(SHOTS, nshots.div_ceil(256)), (STRIKE, self.n.div_ceil(256)), (CUT, nshots)]);
+            }
+            if nunits > 0 {
+                pre.push((SMELL, 1));
+            }
+            dispatch(enc, &self.groups[(self.done % 2) as usize], &pre);
+        }
         for k in 0..ticks {
             let group = &self.groups[(self.done % 2) as usize];
             for (q, &(p, size)) in tick.iter().enumerate() {
@@ -881,6 +1144,10 @@ impl Engine {
                 pass.dispatch_workgroups(size, 1, 1);
             }
             self.done += 1;
+        }
+        if due && nunits > 0 {
+            // The squad's frame end: reads, then the harvest.
+            dispatch(enc, &self.groups[(self.done % 2) as usize], &[(UNITS, 1), (HARVEST, 1)]);
         }
         let group = &self.groups[(self.done % 2) as usize];
         for &(p, groups) in &self.draw_passes(soft) {
@@ -898,6 +1165,22 @@ impl Engine {
     pub fn tick_passes(&self) -> Vec<(usize, u32)> {
         let (n, cells) = (self.n.div_ceil(256), self.cells.div_ceil(256));
         let mut tick = vec![(SENSE, n), (WALK, n)];
+        // The Larder World, in the CPU's order: bites on walls (in the
+        // move), then eating; both before growth, which eats what they give.
+        if self.walled {
+            tick.push((WALLS, cells));
+        }
+        if self.npc > 0 {
+            let pc = self.npc.div_ceil(256);
+            tick.push((EAT, pc));
+            if self.flows {
+                tick.extend([(PILESUM, self.npiles), (FLOW, pc)]);
+            }
+            tick.push((PILESUM, self.npiles));
+        }
+        if self.grows {
+            tick.extend([(LIFE, n), (BREED, n), (BORN, n)]);
+        }
         if self.converts {
             tick.push((CONVERT, n));
         }
@@ -926,7 +1209,6 @@ impl Engine {
     /// pass's start and end stamped), submitted and waited for: GPU ms a
     /// pass, by name. It runs the tick, so the dish moves on by one.
     pub fn profile(&mut self, shared: &Shared, soft: bool) -> Vec<(&'static str, f64)> {
-        const NAMES: [&str; 10] = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert"];
         let tick = self.tick_passes();
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
         let passes: Vec<(usize, u32, usize)> = tick.iter().map(|&(p, g)| (p, g, (self.done % 2) as usize)).chain(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, ((self.done + 1) % 2) as usize))).collect();
@@ -946,7 +1228,7 @@ impl Engine {
         self.queue.submit([enc.finish()]);
         let t: Vec<u64> = read_back(&self.device, &self.queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
         let period = self.queue.get_timestamp_period() as f64;
-        passes.iter().enumerate().map(|(q, &(p, ..))| (NAMES[p], t[2 * q + 1].saturating_sub(t[2 * q]) as f64 * period / 1e6)).collect()
+        passes.iter().enumerate().map(|(q, &(p, ..))| (PASSES[p], t[2 * q + 1].saturating_sub(t[2 * q]) as f64 * period / 1e6)).collect()
     }
 
     /// Reads the dish back into the CPU dish and measures it.
@@ -954,7 +1236,22 @@ impl Engine {
         let side = (self.done % 2) as usize;
         self.dish.trail = floats(&read_back(&self.device, &self.queue, &self.trail[side]));
         self.dish.walkers = floats(&read_back(&self.device, &self.queue, &self.walkers)).chunks_exact(4).map(|c| (c[0], c[1], c[2])).collect();
+        if self.grows {
+            let e = floats(&read_back(&self.device, &self.queue, &self.energy));
+            self.dish.alive = e.iter().take(self.n as usize).map(|&v| v >= 0.0).collect();
+            self.dish.energy = e.iter().take(self.n as usize).map(|&v| v.max(0.0)).collect();
+        }
         self.dish.ticks = self.done;
+        // The Larder World: the crystals as the GPU holds them, so the
+        // measure's crystal share left is the GPU's.
+        if self.npiles > 0 {
+            self.dish.charge = floats(&read_back(&self.device, &self.queue, &self.charge));
+            let (sums, ..) = self.world_counts();
+            for (p, (sum, cells)) in sums.into_iter().enumerate() {
+                self.dish.pile_charge[p] = sum;
+                self.dish.pile_full[p] = self.dish.p.crystal_charge * cells as f32;
+            }
+        }
         // The GPU marks a pile from the trail a tick late (see `trail`), so
         // the CPU marks any the last tick's trail reached, as it would.
         let reached = read_back(&self.device, &self.queue, &self.reached);
@@ -965,6 +1262,15 @@ impl Engine {
         self.dish.measure()
     }
 
+    /// The living walkers now, with growth on (a read-back of the energy;
+    /// a dead slot holds -1). With growth off, every walker.
+    pub fn alive(&self) -> usize {
+        if !self.grows {
+            return self.n as usize;
+        }
+        floats(&read_back(&self.device, &self.queue, &self.energy)).iter().take(self.n as usize).filter(|&&v| v >= 0.0).count()
+    }
+
     /// The share of walkers sick now (counter over `immune`).
     pub fn sick_share(&self, s: &Settings) -> f64 {
         let c = read_back(&self.device, &self.queue, &self.sick);
@@ -972,10 +1278,193 @@ impl Engine {
         sick as f64 / self.n.max(1) as f64
     }
 
+    /// A wall from (`ax`, `ay`) to (`bx`, `by`), dish cells, `width` dish
+    /// cells thick, as `BigDish::build_wall` builds it, on the GPU: the
+    /// `build` pass over the wall's box, then `EVICT_ROUNDS` rounds that
+    /// move the walkers it covers to the nearest free cells (the CPU moves
+    /// them one by one in walker order, so where they land can differ).
+    /// Writes the params from `s` first, as the passes read them. The CPU
+    /// mirror (`dish`) is not changed.
+    #[allow(clippy::too_many_arguments)]
+    pub fn build_wall(&mut self, shared: &Shared, s: &Settings, ax: f32, ay: f32, bx: f32, by: f32, width: f32) {
+        let k = self.dish.p.scale as f32;
+        let (w, h) = (self.dish.w, self.dish.h);
+        let (ax, ay, bx, by, r) = (ax * k, ay * k, bx * k, by * k, (width * k / 2.0).max(0.5));
+        let (x0, x1) = ((ax.min(bx) - r).floor().max(0.0) as usize, ((ax.max(bx) + r).ceil() as usize).min(w - 1));
+        let (y0, y1) = ((ay.min(by) - r).floor().max(0.0) as usize, ((ay.max(by) + r).ceil() as usize).min(h - 1));
+        if x1 < x0 || y1 < y0 {
+            return;
+        }
+        let (bw, bh) = ((x1 - x0 + 1) as u32, (y1 - y0 + 1) as u32);
+        let hp = if self.dish.p.wall_hp > 0.0 { self.dish.p.wall_hp } else { f32::INFINITY };
+        let reach = (16.0 * k).ceil() as u32;
+        let mut wb = f32_bytes(&[ax, ay, bx, by, r, hp]);
+        wb.extend(u32_bytes(&[x0 as u32, y0 as u32, bw, bh, (s.wall_scent > 0.0) as u32, reach]));
+        self.queue.write_buffer(&self.wb, 0, &wb);
+        self.walled = true;
+        self.write_params(s, Hand::default(), 0);
+        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
+        let group = &self.groups[(self.done % 2) as usize];
+        let (n, cells) = (self.n.div_ceil(256), self.cells.div_ceil(256));
+        let submit = |passes: &[(usize, u32)]| {
+            let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("wall") });
+            for &(p, groups) in passes {
+                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
+                pass.set_pipeline(&pipes[p]);
+                pass.set_bind_group(0, group, &[]);
+                pass.dispatch_workgroups(groups, 1, 1);
+            }
+            self.queue.submit([enc.finish()]);
+        };
+        submit(&[(BUILD, (bw * bh).div_ceil(256))]);
+        let round = [(EVICT, n), (SETTLE, n), (UNCLAIM, cells)];
+        for _ in 0..EVICT_MAX / EVICT_ROUNDS {
+            self.queue.write_buffer(&self.wstat, 8, &[0u8; 4]);
+            submit(&round.repeat(EVICT_ROUNDS));
+            let st = read_back(&self.device, &self.queue, &self.wstat);
+            if u32::from_le_bytes(st[8..12].try_into().unwrap()) == 0 {
+                break;
+            }
+        }
+    }
+
+    /// The Larder World read back: each pile's charge and cells still
+    /// crystal (from the last tick's sum), and walls' bites and cells
+    /// broken so far.
+    /// The squad's frame (Larder World W2a; `squad.rs` has the CPU twins and
+    /// the order): the next `record` runs its shots, strikes and smell before
+    /// its first tick, and its reads and harvest after its last. Shots need
+    /// growth on (a struck walker's slot is emptied). `squad_out` reads the
+    /// results back.
+    pub fn set_squad(&mut self, f: &squad::Frame) {
+        assert!(f.shots.is_empty() || self.grows, "shots kill by emptying slots: growth must be on");
+        let (words, nunits, nshots) = squad::pack(self.dish.w, self.dish.h, f);
+        self.queue.write_buffer(&self.sq, 0, &u32_bytes(&words));
+        self.queue.write_buffer(&self.kills, 0, &[0u8; squad::SHOTS_MAX * 4]);
+        self.squad = (nunits, nshots, f.slime);
+        self.squad_due = true;
+        self.queue.write_buffer(&self.params, (PARAMS_BYTES - 16) as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), 0]));
+    }
+
+    /// The last squad frame's results (`set_squad`), read back.
+    pub fn squad_out(&self) -> squad::FrameOut {
+        let words: Vec<u32> = read_back(&self.device, &self.queue, &self.sq).chunks_exact(4).take(squad::PATH).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+        let kills: Vec<u32> = read_back(&self.device, &self.queue, &self.kills).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+        squad::unpack(self.dish.w, &words, &kills, self.squad.0 as usize, self.squad.1 as usize)
+    }
+
+    pub fn world_counts(&self) -> (Vec<(f32, u32)>, u32, u32) {
+        let piles = read_back(&self.device, &self.queue, &self.piles);
+        let word = |b: &[u8], i: usize| u32::from_le_bytes(b[4 * i..4 * i + 4].try_into().unwrap());
+        let sums = (0..self.npiles as usize).map(|p| (f32::from_bits(word(&piles, p * 8 + 4)), word(&piles, p * 8 + 2))).collect();
+        let st = read_back(&self.device, &self.queue, &self.wstat);
+        (sums, word(&st, 0), word(&st, 1))
+    }
+
     pub fn picture(&self) -> image::RgbaImage {
         let bytes = read_back(&self.device, &self.queue, &self.frame);
         image::RgbaImage::from_raw(self.dish.w as u32, self.dish.h as u32, bytes).expect("frame size")
     }
+}
+
+/// The living walkers a cell of a CPU dish (its `occ`).
+pub fn occupancy(d: &BigDish) -> Vec<u32> {
+    let mut occ = vec![0u32; d.w * d.h];
+    for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+        if d.lives(k) {
+            occ[y as usize * d.w + x as usize] += 1;
+        }
+    }
+    occ
+}
+
+/// Each slot's energy as the GPU keeps it: -1 for an empty slot (0s with
+/// growth off, never read).
+pub fn energies(d: &BigDish) -> Vec<f32> {
+    if d.energy.is_empty() {
+        return vec![0.0; d.walkers.len()];
+    }
+    d.energy.iter().zip(&d.alive).map(|(&e, &a)| if a { e } else { -1.0 }).collect()
+}
+
+/// The grass a CPU dish starts the GPU's with: its own, or with none full
+/// on the agar (so grazing can be switched on as the dish runs), but none
+/// with crystals on, where the CPU makes no grass unless grazing is set
+/// (growth would otherwise eat grass the CPU does not have).
+pub fn grass_of(d: &BigDish) -> Vec<f32> {
+    if !d.grass.is_empty() {
+        d.grass.clone()
+    } else if d.p.crystal_charge > 0.0 {
+        vec![0.0; d.w * d.h]
+    } else {
+        d.agar.iter().map(|&a| a as u32 as f32).collect()
+    }
+}
+
+/// A CPU dish's Larder World as the GPU holds it (engine.wgsl, bindings
+/// 34-39): ground bits, charge and health a cell, the crystal cells pile
+/// by pile (`BigDish::pile_cells`), and each pile's run and sums, 8 words
+/// a pile for `MAX_PILES` piles.
+pub struct WorldData {
+    pub ground: Vec<u32>,
+    pub charge: Vec<f32>,
+    pub health: Vec<f32>,
+    pub pcell: Vec<u32>,
+    pub piles: Vec<u32>,
+    /// Piles with crystal (the dish's piles with crystals on, else 0).
+    pub npiles: u32,
+}
+
+pub fn world_data(d: &BigDish) -> WorldData {
+    let cells = d.w * d.h;
+    let on = |v: &[bool], i: usize| !v.is_empty() && v[i];
+    // The scent grid is the fine one here (`Engine::inject` checks), so
+    // `scent_wall` is a cell's.
+    let ground = (0..cells)
+        .map(|i| {
+            let mut g = if d.pile_of.is_empty() { 0 } else { d.pile_of[i] as u32 & GROUND_PILE };
+            if on(&d.wet, i) {
+                g |= GROUND_WET;
+            }
+            if on(&d.rock, i) {
+                g |= GROUND_ROCK;
+            }
+            if on(&d.wall, i) {
+                g |= GROUND_WALL;
+                if on(&d.scent_wall, i) {
+                    g |= GROUND_SCENT_WALL;
+                }
+            }
+            g
+        })
+        .collect();
+    let charge = if d.charge.is_empty() { vec![0.0; cells] } else { d.charge.clone() };
+    // A wall built with `wall_hp` 0 never breaks: infinite health.
+    let health = (0..cells).map(|i| if !on(&d.wall, i) { 0.0 } else if d.wall_health.is_empty() { f32::INFINITY } else { d.wall_health[i] }).collect();
+    let mut piles = vec![0u32; MAX_PILES * 8];
+    for p in 0..MAX_PILES {
+        piles[p * 8 + 5] = 1f32.to_bits();
+    }
+    let npiles = if d.charge.is_empty() { 0 } else { d.piles.len().min(MAX_PILES) };
+    // Each pile's run of the list: the cells still in it bound it (one a
+    // wall took out of its pile stays listed, skipped by its 0).
+    let (mut start, mut end) = (vec![u32::MAX; MAX_PILES], vec![0u32; MAX_PILES]);
+    for (q, &i) in d.pile_cells.iter().enumerate() {
+        let p = d.pile_of[i as usize] as usize;
+        if p > 0 && p <= MAX_PILES {
+            start[p - 1] = start[p - 1].min(q as u32);
+            end[p - 1] = end[p - 1].max(q as u32 + 1);
+        }
+    }
+    for p in 0..npiles {
+        if start[p] != u32::MAX {
+            piles[p * 8] = start[p];
+            piles[p * 8 + 1] = end[p] - start[p];
+        }
+        piles[p * 8 + 4] = d.pile_charge[p].to_bits();
+        piles[p * 8 + 5] = d.crystal_left(p).to_bits();
+    }
+    WorldData { ground, charge, health, pcell: d.pile_cells.clone(), piles, npiles: npiles as u32 }
 }
 
 pub fn read_back(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer) -> Vec<u8> {

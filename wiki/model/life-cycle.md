@@ -43,6 +43,7 @@ and *Robustness*.
 ## Open
 
 - The GPU port: every rule's doc comment in `BigParams` is the spec; the GPU thread owns births and upkeep.
+- With [growth](growth.md) on, spores and the dormant pay no upkeep and the struck free their slots; whether sleep should cost food is open there.
 - A tier that splits or migrates as a body.
 - The Sporer's rate for play, and whether spores should cost food (today they are free).
 - Mould against economy (crystals, upkeep) belongs to the creature thread.

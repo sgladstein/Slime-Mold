@@ -43,7 +43,7 @@ code { font-size: 0.88em; }
 <main>
   <header style="display:grid;gap:8px">
     <h1>Larder walls and crystals</h1>
-    <p class="lede">Big dish on the CPU, 512 × 320, 20,000 walkers, 23 crystals that run dry. Every picture is the simulation at 40 s. 2026-11-11, PR #64.</p>
+    <p class="lede">Big dish on the CPU, 512 × 320, 20,000 walkers, 23 crystals that run dry; every picture there is the simulation at 40 s (PR #64). The last section is the same world on the GPU engine at 1024 × 640. 2026-11-11.</p>
   </header>
 
   <section>
@@ -98,5 +98,21 @@ code { font-size: 0.88em; }
       </figure>
     </div>
     <p>Over 12 seeds the share eaten by 40 s goes from <b>0.476 to 0.829</b>, higher on 12 of 12 (sign test p 0.0005, survives a Holm correction over three flow rates). Faster flow does no better. The cost is within noise, 7.8 ms a tick either way.</p>
+  </section>
+  <section>
+    <span class="tag c">On the GPU</span>
+    <h2>The same world runs on the GPU engine</h2>
+    <p>Crystals, rock, wet ground and walls the mould wears down now run on the GPU engine too, at 1024 × 640, the size the Larder world will use. One GPU step matches one CPU step on nine test worlds, and a wall built on the GPU matches the CPU's cell for cell. All 17 bugs planted to check the test were caught.</p>
+    <div class="pair">
+      <figure>
+        <img src="w1b/base-1024x640-4s.jpg" alt="The GPU engine at 1024 by 640 after 4 seconds without the world's fields: an even amber network over the whole field.">
+        <figcaption><b>Without the world.</b> 100,000 walkers at 4 s, same seed.</figcaption>
+      </figure>
+      <figure>
+        <img src="w1b/world-1024x640-4s.jpg" alt="The same seed with crystals, rock, wet ground and two walls: tubes run between cyan hexagonal crystals and around dark rock, and two grey walls cut across the network.">
+        <figcaption><b>With the world.</b> 23 crystals, rock, wet ground, two walls laid at 1 s and 2 s. The walls took 6,857 bites by 4 s and none broke (health 400).</figcaption>
+      </figure>
+    </div>
+    <p>On your GTX 1070 the world adds 0.25 ms a frame at 1024 × 640: the median frame goes from 1.73 ms to 2.11 ms, three runs each, all within 0.01 ms. With the growing mould as well it is 2.10-2.11 ms, with 54,873 walkers alive at 10 s. On the cloud's software GPU the world adds about 10-12% to each step.</p>
   </section>
 </main>

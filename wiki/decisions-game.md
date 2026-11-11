@@ -17,6 +17,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-11 19:29 | Larder World gets designed maps: a real world with ground the simulation uses, not a black background; a Maps track (WM1-WM5) on the roadmap | "Right now, the world is a black background. Is it part of the roadmap to build an actual world?" ... "We will want maps though. That should be part of the plan" | [Larder](world/larder.md) |
 | 2026-11-11 16:48 | Soldiers are drawn as an SVG sprite (A in the blind A/B), not the shader-drawn figure | "Solider A looks better" | [World camera](world/world-camera.md) |
 | 2026-11-11 15:50 | Graphics: shader art for most of the world; the visuals follow the simulation, especially the slime, including shooting, damage to the slime, environment, walls and crystals | "As much as possible (especially with the slime) the visuals should follow the simulation, not just pretty graphics on top" | [World camera](world/world-camera.md) |
 | 2026-11-11 16:48 | Gunfire hits the first mould in its path, not a disc on a thick cell in range. Crystals are hexagons, not circles: in the simulation, so their cells, scent and reach are the hexagon (the picture is the data) | "Gun fire should hit the first slime in its path. This doesn't look good." ... "The crystals should have hexagonal outline, not circle." | [Larder](world/larder.md), [scale](model/scale.md) |

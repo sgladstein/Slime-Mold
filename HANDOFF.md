@@ -23,7 +23,7 @@ One line per subject; the page holds the detail. The owner's rulings:
 persistent world on the GPU big dish, with energy crystals that drain
 (owner, 11-11 14:06Z: "Put everything into the world version").
 
-- [Larder World](wiki/world/larder.md): phases W0-W5; W1a's crystals, terrain and walls are on the CPU big dish; next W0 growth on the GPU, then Larder in the world ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)).
+- [Larder World](wiki/world/larder.md): phases W0-W5; W1a's crystals, terrain and walls are on the CPU big dish; W0 [growth and starving](wiki/model/growth.md) is built on the CPU and the GPU (PR #73, after #63); next W1b, those fields on the GPU, then Larder in the world ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)).
 - [The mould tiers](wiki/world/mould-tiers.md): the difficulty ladder; Sporer, Sleeper and Swarmer built ([the life cycle](wiki/model/life-cycle.md)).
 - [The Larder player AI](wiki/world/player-ai.md): plays through the player's commands; `cargo run --release --bin larder -- 17 ai=lure`.
 - [The world camera and UI](wiki/world/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls; the engine is `slime_mould::gpu`; sandbox W, Q, M; 0.3-0.4 ms a frame on the 1070.

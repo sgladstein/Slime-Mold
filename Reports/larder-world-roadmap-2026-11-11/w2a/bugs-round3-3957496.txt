@@ -1,0 +1,38 @@
+# W2a squad twin test and planted bugs at 3957496, lavapipe, 19:41Z
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+squad: 16 shots, 15 hit, 19 killed, 1 stopped by a wall; touching [9, 2, 2, 0, 0, 0, 2, 0, 0, 5, 10, 3, 3, 1, 0]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+squad world: 0 slots differ in life, 0 walkers off; trail L1 0.0e0, scent L1 1.4e-9, charge L1 2.3e-10; 0 agar and 0 ground off
+test tests::the_squad_matches_the_cpu_for_one_frame ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.47s
+# planted bugs (each alone)
+[0] shots fly through walls: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[1] shots hit the last slime on their line: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[2] a struck walker keeps its cell's count: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[3] a walker counts for every shot that strikes it: CAUGHT (the test hung; killed after 120 s)
+[4] empty slots are struck too: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[5] strikes leave the trail: CAUGHT
+     29 walkers off
+[6] a strike one cell wider: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[7] smell on walls and rock: CAUGHT
+     trail L1 0.00e0, scent L1 1.60e-5, charge L1 2.29e-10
+[8] smell laid twice: CAUGHT
+     trail L1 0.00e0, scent L1 1.37e-4, charge L1 2.29e-10
+[9] touch counted over the square, not the disc: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[10] aim ties go to the last block: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[11] aim tests the block's corner, not its centre: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[12] harvest takes whole cells: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[13] harvest in reverse unit order: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[14] reads before the ticks: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[15] smell after the ticks: CAUGHT
+     trail L1 0.00e0, scent L1 8.31e-5, charge L1 2.29e-10

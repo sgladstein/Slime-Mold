@@ -1,0 +1,48 @@
+# W2a squad twin test and planted bugs at efe9337, lavapipe, 19:31Z
+# Bug [3] hung the test (normally 0.5 s); it was killed by hand after about 4 minutes, which is the SIGTERM below. Bug [9] here is the replacement "touch counted over the square, not the disc"; round 1's [9] was a no-op mutation.
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+squad: 16 shots, 15 hit, 19 killed, 1 stopped by a wall; touching [9, 2, 2, 0, 0, 0, 2, 0, 0, 5, 10, 3, 3, 1, 0]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+squad world: 0 slots differ in life, 0 walkers off; trail L1 0.0e0, scent L1 1.4e-9, charge L1 2.3e-10; 0 agar and 0 ground off
+test tests::the_squad_matches_the_cpu_for_one_frame ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.52s
+# planted bugs (each alone)
+[0] shots fly through walls: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[1] shots hit the last slime on their line: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[2] a struck walker keeps its cell's count: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[3] a walker counts for every shot that strikes it: BUILD/OTHER
+   Compiling slime-mould v0.1.0 (/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/w1b-bugs)
+    Finished `release` profile [optimized] target(s) in 21.25s
+     Running unittests src/bin/mouldgpu.rs (target/release/deps/mouldgpu-2756e87f9908f10e)
+
+running 1 test
+test tests::the_squad_matches_the_cpu_for_one_frame ... error: test failed, to rerun pass `--bin mouldgpu`
+
+Caused by:
+  process didn't exit successfully: `/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/w1b-bugs/target/release/deps/mouldgpu-2756e87f9908f10e squad --test-threads 1` (signal: 15, SIGTERM: termination signal)
+
+[4] empty slots are struck too: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[5] strikes leave the trail: CAUGHT
+     29 walkers off
+[6] a strike one cell wider: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[7] smell on walls and rock: NOT CAUGHT
+[8] smell laid twice: CAUGHT
+     trail L1 0.00e0, scent L1 1.54e-4, charge L1 2.29e-10
+[9] touch counted over the square, not the disc: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[10] aim ties go to the last block: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[11] aim tests the block's corner, not its centre: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[12] harvest takes whole cells: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[13] harvest in reverse unit order: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[14] reads before the ticks: CAUGHT
+     assertion `left == right` failed: the squad's outputs
+[15] smell after the ticks: CAUGHT
+     trail L1 0.00e0, scent L1 8.54e-5, charge L1 2.29e-10

@@ -2,8 +2,8 @@
 title: Outside looks and creature rules on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-11T19:10Z
-sources: [Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/spread-mix-2026-11-11.md, Reports/research-review-2026-11-11.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, research/sources/primordia.md, research/sources/reginato-2024.md]
+updated: 2026-11-11T19:15Z
+sources: [Reports/mould-shape-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/spread-mix-2026-11-11.md, Reports/research-review-2026-11-11.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, research/sources/primordia.md, research/sources/reginato-2024.md]
 code: [BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigDish::infect, BigParams::chance_exp, BigParams::explore_spread, BigParams::graze_weight, BigParams::species_convert]
 ---
 
@@ -35,7 +35,13 @@ brightness curve: the game's saturates at a trail of about 15, and the same
 dish drawn with a soft curve or by walkers a cell shows veins as thin as
 Jenson's. Respawning 1% of walkers a step (`BigParams::respawn`, off by
 default; Jenson's later work respawns every 1,000 steps) held a fine mesh
-and gave Jenson's haze. Four times the walkers changed little. Every GPU
+and gave Jenson's haze. Four times the walkers changed little. In the GPU
+sandbox's Jenson preset the count matters only with the limit
+([mould shape](../../Reports/mould-shape-2026-11-11.md), 8 seeds, 30 s):
+without it 32,000 to 1,000,000 walkers all fold into strands (0-1 loops);
+with it 32,000, 100,000 and 200,000 give 43-54, 57-70 and 120-144 loops, a
+net thickening into a sheet with holes (the sandbox forces the limit off
+above half the agar). Every GPU
 port read (Bleuje, Lague, PolyPhy, gpu-io, Barradeau) drops the limit.
 A follow-up ([jenson looks](../../Reports/jenson-looks-2026-11-11.md))
 added off-by-default rules for the three looks still missing. **Trunks**
@@ -62,6 +68,7 @@ polygons at once. Every outside source has a card in
 
 ## Sources
 
+- [mould-shape-2026-11-11.md](../../Reports/mould-shape-2026-11-11.md): walker count with and without the crowd limit.
 - [spread-mix-2026-11-11.md](../../Reports/spread-mix-2026-11-11.md): spread from one spot, and mixed walkers in one mould.
 - [research-review-2026-11-11.md](../../Reports/research-review-2026-11-11.md): the independent review of the creature work.
 - [jenson-physarum-2026-11-10.md](../../Reports/jenson-physarum-2026-11-10.md), with the owner's PDF and GIFs in [its folder](../../Reports/jenson-physarum-2026-11-10/).
