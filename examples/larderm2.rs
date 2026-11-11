@@ -61,6 +61,8 @@ const SMALL: usize = 3000;
 const ARMY: usize = 16;
 const READ_AFTER: u64 = 120;
 const LEAN: f32 = 0.25;
+/// The striker baits and farms until this game second, then hunts.
+const STRIKE_AT: u64 = 360;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Plan {
@@ -70,10 +72,11 @@ enum Plan {
     Farmer,
     Hunter,
     Baiter,
+    Striker,
     Reader,
 }
 
-const WORKING: [Plan; 5] = [Plan::Fortress, Plan::Farmer, Plan::Hunter, Plan::Baiter, Plan::Reader];
+const WORKING: [Plan; 6] = [Plan::Fortress, Plan::Farmer, Plan::Hunter, Plan::Baiter, Plan::Striker, Plan::Reader];
 
 impl Plan {
     fn name(self) -> &'static str {
@@ -84,11 +87,12 @@ impl Plan {
             Plan::Farmer => "farmer",
             Plan::Hunter => "hunter",
             Plan::Baiter => "baiter",
+            Plan::Striker => "striker",
             Plan::Reader => "reader",
         }
     }
     fn parse(s: &str) -> Plan {
-        [Plan::Idle, Plan::Random(0.5), Plan::Fortress, Plan::Farmer, Plan::Hunter, Plan::Baiter, Plan::Reader]
+        [Plan::Idle, Plan::Random(0.5), Plan::Fortress, Plan::Farmer, Plan::Hunter, Plan::Baiter, Plan::Striker, Plan::Reader]
             .into_iter()
             .find(|p| p.name() == s)
             .expect("plan")
@@ -215,9 +219,19 @@ fn hunt_step(g: &mut Game) {
             // "no target, attack the core" marched the squad across the
             // field at 0 s, when the core is the only pile eaten, and it
             // died at 34-38 s on seeds 1-4.)
+            // M2b: walking on the core alone left the rest of a small
+            // mould alive at the cap (seed 17, lean: 10 walkers). Now the
+            // squad walks to the walker nearest it, firing on the way.
             None if g.dish.walkers.len() < SMALL => {
-                if g.soldiers[k].order != Order::Attack {
-                    g.order(k, Order::Attack);
+                let s = g.soldiers[k];
+                let near = g
+                    .dish
+                    .walkers
+                    .iter()
+                    .min_by(|a, b| (a.x - s.x).hypot(a.y - s.y).total_cmp(&(b.x - s.x).hypot(b.y - s.y)))
+                    .map(|w| (w.x, w.y));
+                if let Some(at) = near {
+                    g.order(k, Order::Move(at.0, at.1));
                 }
             }
             None => {
@@ -302,6 +316,17 @@ fn each_second(g: &mut Game, plan: Plan) {
                 }
             }
         }
+        // M2b/M3: a fixed plan that attacks at a set time, whatever it
+        // sees: 6:00, by when a lean mould has crashed to a few hundred
+        // walkers (seed 1, baiter: 6,591 at 2:00, 446 at 6:00) and a fed
+        // one has not (6,563).
+        Plan::Striker => {
+            if sec < STRIKE_AT {
+                each_second(g, Plan::Baiter);
+            } else if sec.is_multiple_of(HUNT_EVERY) {
+                hunt_step(g);
+            }
+        }
         Plan::Reader => {
             // Until it has seen the mould grow (`READ_AFTER`), it baits and
             // farms three piles, as the baiter does. Then a small mould
@@ -346,6 +371,7 @@ fn run(seed: u64, plan: Plan, rules: Rules, lean: bool, look: Option<&str>) -> O
             }
             if let Some(dir) = look {
                 if g.dish.t.is_multiple_of(60 * GAME_SECOND) {
+                    println!("  {:3} s: walkers {:5}  hunger {:.2}  soldiers {:2}  bank {:6.0}", g.dish.t / GAME_SECOND, g.dish.walkers.len(), g.hunger, g.alive(), g.bank);
                     save(&g, &format!("{dir}/m2-s{seed}-{}-{}-{:03}.png", if lean { "lean" } else { "fed" }, plan.name(), g.dish.t / GAME_SECOND));
                 }
             }
@@ -564,7 +590,7 @@ fn census(seeds: &[u64], rules: Rules, label: &str) {
     // fixed working plans in each condition, for the crossover; (2) the
     // reader against each fixed plan and the two controls in each
     // condition. Holm over all of them.
-    let fixed = [Plan::Fortress, Plan::Farmer, Plan::Hunter, Plan::Baiter];
+    let fixed = [Plan::Fortress, Plan::Farmer, Plan::Hunter, Plan::Baiter, Plan::Striker];
     let get = |r: &Results, p: Plan| r.iter().find(|(q, _)| q.name() == p.name()).map(|x| x.1.clone()).unwrap();
     let mut tests: Vec<(String, usize, usize, f64, bool)> = Vec::new();
     for (cname, r) in [("fed", &fed), ("lean", &lean)] {

@@ -123,6 +123,19 @@ pub const HUNGER_WINDOW: usize = 30;
 /// Food a walker eats in a game second when the mould is fed (`Game::hunger`).
 pub const FED_RATE: f32 = 0.04;
 
+/// Soldier `k`'s place in a loose formation round where it was sent: a
+/// sunflower spiral 1.5 cells apart, so a squad sent to one point spreads
+/// instead of stacking on one cell (M2b: 17 soldiers on one cell drew the
+/// mould in on 17 smells at once).
+fn slot(k: usize) -> (f32, f32) {
+    if k == 0 {
+        return (0.0, 0.0);
+    }
+    let r = 1.5 * (k as f32).sqrt();
+    let a = k as f32 * 2.399_963;
+    (r * a.cos(), r * a.sin())
+}
+
 /// A fixed gun the squad builds.
 #[derive(Clone, Copy, Debug)]
 pub struct Turret {
@@ -193,6 +206,79 @@ pub enum Order {
     Burn((f32, f32), (f32, f32)),
     /// Walk on the mould's core, firing freely.
     Attack,
+}
+
+/// **A player's command**, as the window gives it. Every command goes
+/// through `Game::apply`, which keeps the log; a log replayed on the same
+/// seed and rules reaches the same dish hash (build plan M3: "replay to the
+/// same hash").
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Cmd {
+    Order(usize, Order),
+    Stance(usize, Stance),
+    Buy,
+    Turret((f32, f32)),
+    Bait((f32, f32), f32),
+}
+
+impl Cmd {
+    /// One line of a replay file, after the step: `order 3 move 120.5 40`.
+    pub fn to_line(self) -> String {
+        match self {
+            Cmd::Order(k, o) => match o {
+                Order::Hold => format!("order {k} hold"),
+                Order::Move(x, y) => format!("order {k} move {x} {y}"),
+                Order::Clear(x, y) => format!("order {k} clear {x} {y}"),
+                Order::Burn(a, b) => format!("order {k} burn {} {} {} {}", a.0, a.1, b.0, b.1),
+                Order::Attack => format!("order {k} attack"),
+            },
+            Cmd::Stance(k, st) => format!(
+                "stance {k} {}",
+                match st {
+                    Stance::HoldFire => "hold",
+                    Stance::Defend => "defend",
+                    Stance::Free => "free",
+                }
+            ),
+            Cmd::Buy => "buy".into(),
+            Cmd::Turret(at) => format!("turret {} {}", at.0, at.1),
+            Cmd::Bait(at, f) => format!("bait {} {} {f}", at.0, at.1),
+        }
+    }
+
+    /// The inverse of `to_line`. Floats print in Rust's shortest exact
+    /// form, so a line reads back to the same bits.
+    pub fn parse(line: &str) -> Option<Cmd> {
+        let w: Vec<&str> = line.split_whitespace().collect();
+        let f = |i: usize| w.get(i).and_then(|v| v.parse::<f32>().ok());
+        let k = || w.get(1).and_then(|v| v.parse::<usize>().ok());
+        Some(match *w.first()? {
+            "order" => Cmd::Order(
+                k()?,
+                match *w.get(2)? {
+                    "hold" => Order::Hold,
+                    "move" => Order::Move(f(3)?, f(4)?),
+                    "clear" => Order::Clear(f(3)?, f(4)?),
+                    "burn" => Order::Burn((f(3)?, f(4)?), (f(5)?, f(6)?)),
+                    "attack" => Order::Attack,
+                    _ => return None,
+                },
+            ),
+            "stance" => Cmd::Stance(
+                k()?,
+                match *w.get(2)? {
+                    "hold" => Stance::HoldFire,
+                    "defend" => Stance::Defend,
+                    "free" => Stance::Free,
+                    _ => return None,
+                },
+            ),
+            "buy" => Cmd::Buy,
+            "turret" => Cmd::Turret((f(1)?, f(2)?)),
+            "bait" => Cmd::Bait((f(1)?, f(2)?), f(3)?),
+            _ => return None,
+        })
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -275,6 +361,8 @@ pub struct Game {
     /// mould's dice (engineering review, finding 11).
     pub rng: Rng,
     bins: Vec<u16>,
+    /// The player's commands, each at the step it was given (`Cmd`).
+    pub log: Vec<(u64, Cmd)>,
 }
 
 /// **The M1 dish**: the 23-pile field (`skirmish::FIELD`) with one mould
@@ -334,6 +422,7 @@ impl Game {
             hunger: 0.0,
             next_drop: None,
             food_then: 0.0,
+            log: Vec::new(),
         }
     }
 
@@ -344,6 +433,64 @@ impl Game {
 
     pub fn alive(&self) -> usize {
         self.soldiers.iter().filter(|s| s.alive).count()
+    }
+
+    /// Carry out a player's command and log it at this step (`Cmd`).
+    /// True if it took effect (a buy, turret or bait can fail).
+    pub fn apply(&mut self, c: Cmd) -> bool {
+        self.log.push((self.dish.t, c));
+        match c {
+            Cmd::Order(k, o) => {
+                self.order(k, o);
+                true
+            }
+            Cmd::Stance(k, st) => {
+                self.stance(k, st);
+                true
+            }
+            Cmd::Buy => self.buy(),
+            Cmd::Turret(at) => self.build_turret(at),
+            Cmd::Bait(at, food) => self.bait(at, food),
+        }
+    }
+
+    /// The log as a replay file: a header line with the seed, then one
+    /// command a line after its step.
+    pub fn replay_text(&self, seed: u64) -> String {
+        let mut out = format!("larder replay seed {seed} end {}\n", self.dish.t);
+        for (t, c) in &self.log {
+            out += &format!("{t} {}\n", c.to_line());
+        }
+        out
+    }
+
+    /// Play a replay file's commands on a fresh game: the same seed and
+    /// rules give the same dish (`same_commands_same_hash`). Returns the
+    /// game at the recorded end step.
+    pub fn replay(text: &str, rules: Rules) -> Option<Game> {
+        let mut lines = text.lines();
+        let head: Vec<&str> = lines.next()?.split_whitespace().collect();
+        let seed: u64 = head.get(3)?.parse().ok()?;
+        let end: u64 = head.get(5)?.parse().ok()?;
+        let mut cmds = Vec::new();
+        for l in lines {
+            let (t, rest) = l.split_once(' ')?;
+            cmds.push((t.parse::<u64>().ok()?, Cmd::parse(rest)?));
+        }
+        let mut g = field_game(seed, rules);
+        let mut next = 0;
+        while g.dish.t < end && g.end.is_none() {
+            while next < cmds.len() && cmds[next].0 == g.dish.t {
+                g.apply(cmds[next].1);
+                next += 1;
+            }
+            g.step();
+        }
+        while next < cmds.len() && cmds[next].0 == g.dish.t {
+            g.apply(cmds[next].1);
+            next += 1;
+        }
+        Some(g)
     }
 
     pub fn order(&mut self, k: usize, order: Order) {
@@ -383,6 +530,11 @@ impl Game {
         let h = self.rules.line / 2.0;
         self.fire_line((at.0 - ux * h, at.1 - uy * h), (at.0 + ux * h, at.1 + uy * h));
         self.soldiers[k].ready = t + secs(self.rules.shot_every);
+        // The bins are counted once a step; empty the one just shot so the
+        // next soldier aims elsewhere (M2b: stacked squads all fired on one
+        // bin, already emptied, while the mould closed in round them).
+        let (bx, by) = ((at.0.max(0.0) as usize / BIN).min(BW - 1), (at.1.max(0.0) as usize / BIN).min(BH - 1));
+        self.bins[by * BW + bx] = 0;
         true
     }
 
@@ -822,15 +974,29 @@ impl Game {
         match s.order {
             Order::Hold => self.defend(k, here),
             Order::Move(x, y) => {
-                self.walk(k, (x, y), 0.5);
+                let o = slot(k);
+                self.walk(k, (x + o.0, y + o.1), 0.5);
                 self.defend(k, here);
             }
             Order::Clear(x, y) => {
-                let at = self.walk(k, (x, y), 2.0);
                 let Some(pi) = self.pile_at((x, y)) else {
                     self.soldiers[k].order = Order::Hold;
                     return;
                 };
+                // While the mould is eating the pile, fire from range and
+                // walk in only once it is clear. Walking straight on (M1,
+                // M2) put the squad in the mould: in M2b's first look a
+                // striker's 18 soldiers died in 47 s on a 446-walker mould,
+                // each body a 400-food pile for it.
+                let stop = if self.dish.piles[pi].eaters > 0 { self.rules.range - 2.0 } else { 2.0 };
+                let o = slot(k);
+                self.walk(k, (x + o.0, y + o.1), stop);
+                // At the pile: on or beside it, wherever its formation slot
+                // put it (a slot 2.6 cells out never came within the old
+                // 2-cell stop of the centre, and the fortress's farmer
+                // harvested nothing).
+                let me = self.soldiers[k];
+                let at = stop <= 2.0 && (me.x - x).hypot(me.y - y) <= self.dish.piles[pi].r + 2.0 + o.0.hypot(o.1);
                 let p = &self.dish.piles[pi];
                 let (eaters, food, r) = (p.eaters, p.food, p.r);
                 if eaters > 0 || s.stance == Stance::Free {
@@ -1038,6 +1204,45 @@ mod tests {
         }
         assert!(g.bank < 1e6 - g.rules.turret_cost, "its shots were paid for");
         assert!(gone, "a turret in the mould is eaten");
+    }
+
+    #[test]
+    fn same_commands_same_hash() {
+        let mut g = game(4);
+        g.bank = 5000.0;
+        let s = g.soldiers[0];
+        for step in 0..secs(90.0) {
+            match step {
+                5 => {
+                    g.apply(Cmd::Order(0, Order::Move(s.x - 30.3, s.y + 7.7)));
+                }
+                40 => {
+                    g.apply(Cmd::Stance(1, Stance::Free));
+                }
+                60 => {
+                    g.apply(Cmd::Buy);
+                }
+                90 => {
+                    g.apply(Cmd::Order(2, Order::Burn((s.x - 9.1, s.y - 5.0), (s.x - 9.1, s.y + 5.0))));
+                }
+                200 => {
+                    g.apply(Cmd::Order(3, Order::Attack));
+                }
+                _ => {}
+            }
+            g.step();
+        }
+        let text = g.replay_text(4);
+        let mut again = Game::replay(&text, Rules { start_bank: 5000.0, ..Rules::default() }).expect("parses");
+        // The bank was set by hand above, before any command: the replay
+        // starts with it in the rules instead.
+        assert_eq!(again.dish.t, g.dish.t);
+        assert_eq!(again.dish.state_hash(), g.dish.state_hash());
+        assert_eq!(again.bought, 1);
+        for c in [Cmd::Order(2, Order::Burn((1.5, 2.25), (3.0, 4.0))), Cmd::Bait((9.75, 3.0), 300.0), Cmd::Stance(0, Stance::HoldFire), Cmd::Turret((7.0, 8.0))] {
+            assert_eq!(Cmd::parse(&c.to_line()), Some(c));
+        }
+        again.step();
     }
 
     #[test]

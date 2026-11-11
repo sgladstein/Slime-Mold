@@ -14,8 +14,16 @@
 //!   carry its food to the larder; on ground, they walk there.
 //! - Hold F and left drag: the selected soldiers hold that line burning.
 //! - A: attack the mould's core (its home pile, on the left).
-//! - 1 hold fire, 2 defend (the default: only mould near them), 3 free fire.
+//! - Z hold fire, X defend (the default: only mould near them), C free fire.
+//!   (M1b had these on 1/2/3; M3 gives the digits to groups.)
+//! - Ctrl+1..9 makes the selection a group; 1..9 selects that group.
+//! - V shows the scent field the mould follows (the dish's own `scent`).
 //! - Space pauses; Tab runs four times faster; R restarts; Esc quits.
+//!   R and Esc save the round's commands to `larder-replay-SEED.txt`;
+//!   `cargo run --release --bin larder -- replay FILE` plays one back with
+//!   no window and prints the dish hash it reaches (build plan M3).
+//!   `-- shot REPLAY OUT.png [scent]` saves the window's frame at the
+//!   replay's end; `-- bench` times a frame's work with 40 soldiers.
 //! - Spending (M2): B buys a soldier at the larder (400 food); T builds a
 //!   turret under the cursor (600, within a soldier's range); G lays 300
 //!   food of bait under the cursor (within a soldier's range).
@@ -36,7 +44,7 @@ use std::time::{Duration, Instant};
 
 use pixels::{Pixels, ScalingMode, SurfaceTexture};
 use slime_mould::hud;
-use slime_mould::mould::larder::{field_game, Game, Order, Rules, Stance, GAME_SECOND};
+use slime_mould::mould::larder::{field_game, Cmd, Game, Order, Rules, Stance, GAME_SECOND};
 use slime_mould::mould::look::Style;
 use slime_mould::mould::render::{self, View};
 use slime_mould::mould::{H, W};
@@ -55,7 +63,86 @@ const FAST: u32 = 4;
 const BAIT: f32 = 300.0;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let seed = std::env::args().nth(1).and_then(|s| s.parse().ok()).unwrap_or(1);
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("replay") {
+        let path = args.get(1).ok_or("replay FILE")?;
+        let text = std::fs::read_to_string(path)?;
+        let g = Game::replay(&text, Rules::default()).ok_or("not a replay file")?;
+        println!(
+            "replayed {} commands to step {} ({:.1} game s): dish hash {:016x}, {} soldiers alive, bank {:.0}",
+            g.log.len(),
+            g.dish.t,
+            g.time(),
+            g.dish.state_hash(),
+            g.alive(),
+            g.bank
+        );
+        return Ok(());
+    }
+    if args.first().map(String::as_str) == Some("bench") {
+        // The M3 gate's frame with no window: 40 soldiers on free fire,
+        // one game step and one full draw (dish, scent view, squad, HUD)
+        // a frame, as at Tab speed, for 60 game seconds. Times the work
+        // the window does a frame, not the swap to the screen.
+        let rules = Rules { squad: 40, start_bank: 1e9, ..Rules::default() };
+        let mut g = field_game(1, rules);
+        for k in 0..40 {
+            g.apply(Cmd::Stance(k, Stance::Free));
+        }
+        let (w, h) = render::frame_size(SCALE);
+        let mut frame = vec![0u8; (w * h * 4) as usize];
+        let view = View { bare: true, keys: false, style: Style::GAME, ..View::default() };
+        let all: Vec<usize> = (0..40).collect();
+        let mut times = Vec::new();
+        for _ in 0..60 * GAME_SECOND {
+            let t0 = Instant::now();
+            g.step();
+            render::draw(&g.dish, &view, SCALE, &mut frame);
+            draw_scent(&g, &mut frame);
+            draw_squad(&g, &all, None, false, &mut frame);
+            draw_hud(&g, false, true, &mut frame);
+            times.push(t0.elapsed().as_secs_f64() * 1e3);
+        }
+        times.sort_by(|a, b| a.total_cmp(b));
+        let mean = times.iter().sum::<f64>() / times.len() as f64;
+        println!(
+            "40 soldiers, step + draw with scent view: mean {mean:.2} ms, p95 {:.2} ms, max {:.2} ms over {} frames; {} alive, {} walkers at the end",
+            times[times.len() * 95 / 100],
+            times[times.len() - 1],
+            times.len(),
+            g.alive(),
+            g.dish.walkers.len()
+        );
+        return Ok(());
+    }
+    if args.first().map(String::as_str) == Some("shot") {
+        // The window's exact frame, with no window: replay a file and
+        // draw what the window would show at its end (for pages, and to
+        // look at the HUD and the scent view in a container with no
+        // display). `shot REPLAY OUT.png [scent]`.
+        let path = args.get(1).ok_or("shot REPLAY OUT.png [scent]")?;
+        let out = args.get(2).ok_or("shot REPLAY OUT.png [scent]")?;
+        let g = Game::replay(&std::fs::read_to_string(path)?, Rules::default()).ok_or("not a replay file")?;
+        let (w, h) = render::frame_size(SCALE);
+        let mut frame = vec![0u8; (w * h * 4) as usize];
+        let view = View {
+            bare: true,
+            keys: false,
+            style: Style::GAME,
+            ..View::default()
+        };
+        render::draw(&g.dish, &view, SCALE, &mut frame);
+        if args.get(3).map(String::as_str) == Some("scent") {
+            draw_scent(&g, &mut frame);
+        }
+        let all: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
+        draw_squad(&g, &all, None, false, &mut frame);
+        draw_hud(&g, false, false, &mut frame);
+        image::RgbaImage::from_raw(w, h, frame).ok_or("frame size")?.save(out)?;
+        println!("{out}: step {}, {} soldiers, {} walkers", g.dish.t, g.alive(), g.dish.walkers.len());
+        return Ok(());
+    }
+    let seed = args.first().and_then(|s| s.parse().ok()).unwrap_or(1);
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = App::new(seed);
@@ -73,10 +160,17 @@ struct App {
     cursor: Option<(f32, f32)>,
     drag_from: Option<(f32, f32)>,
     f_held: bool,
+    ctrl: bool,
     paused: bool,
     fast: bool,
+    scent: bool,
+    groups: [Vec<usize>; 9],
     last: Instant,
     owed: Duration,
+    /// Frame times since the last report, for the M3 gate (frame under
+    /// 10 ms with 40 soldiers): a line to stdout every 5 s.
+    frames: Vec<Duration>,
+    reported: Instant,
 }
 
 impl App {
@@ -90,8 +184,13 @@ impl App {
             cursor: None,
             drag_from: None,
             f_held: false,
+            ctrl: false,
             paused: false,
             fast: false,
+            scent: false,
+            groups: Default::default(),
+            frames: Vec::new(),
+            reported: Instant::now(),
             last: Instant::now(),
             owed: Duration::ZERO,
         }
@@ -119,7 +218,7 @@ impl App {
         let far = (c.0 - from.0).hypot(c.1 - from.1) > 2.0;
         if self.f_held && far {
             for &k in &self.selected {
-                self.game.order(k, Order::Burn(from, c));
+                self.game.apply(Cmd::Order(k, Order::Burn(from, c)));
             }
         } else if far {
             let (x0, x1) = (from.0.min(c.0), from.0.max(c.0));
@@ -149,45 +248,90 @@ impl App {
                 Some(p) => Order::Clear(p.0, p.1),
                 None => Order::Move(c.0, c.1),
             };
-            self.game.order(k, o);
+            self.game.apply(Cmd::Order(k, o));
+        }
+    }
+
+    fn save_replay(&self) {
+        if self.game.log.is_empty() {
+            return;
+        }
+        let path = format!("larder-replay-{}.txt", self.seed);
+        match std::fs::write(&path, self.game.replay_text(self.seed)) {
+            Ok(()) => println!("saved {} commands to {path} (dish hash {:016x} at step {})", self.game.log.len(), self.game.dish.state_hash(), self.game.dish.t),
+            Err(e) => eprintln!("could not save {path}: {e}"),
         }
     }
 
     fn key(&mut self, code: KeyCode, el: &ActiveEventLoop) {
         match code {
-            KeyCode::Escape => el.exit(),
+            KeyCode::Escape => {
+                self.save_replay();
+                el.exit();
+            }
+            KeyCode::KeyV => self.scent = !self.scent,
             KeyCode::Space => self.paused = !self.paused,
             KeyCode::Tab => self.fast = !self.fast,
             KeyCode::KeyR => {
+                self.save_replay();
                 self.game = field_game(self.seed, Rules::default());
                 self.selected.clear();
             }
             KeyCode::KeyB => {
-                self.game.buy();
+                self.game.apply(Cmd::Buy);
             }
             KeyCode::KeyT => {
                 if let Some(c) = self.cursor {
-                    self.game.build_turret(c);
+                    self.game.apply(Cmd::Turret(c));
                 }
             }
             KeyCode::KeyG => {
                 if let Some(c) = self.cursor {
-                    self.game.bait(c, BAIT);
+                    self.game.apply(Cmd::Bait(c, BAIT));
                 }
             }
             KeyCode::KeyA => {
                 for &k in &self.selected {
-                    self.game.order(k, Order::Attack);
+                    self.game.apply(Cmd::Order(k, Order::Attack));
                 }
             }
-            KeyCode::Digit1 | KeyCode::Digit2 | KeyCode::Digit3 => {
+            KeyCode::KeyZ | KeyCode::KeyX | KeyCode::KeyC => {
                 let st = match code {
-                    KeyCode::Digit1 => Stance::HoldFire,
-                    KeyCode::Digit2 => Stance::Defend,
+                    KeyCode::KeyZ => Stance::HoldFire,
+                    KeyCode::KeyX => Stance::Defend,
                     _ => Stance::Free,
                 };
                 for &k in &self.selected {
-                    self.game.stance(k, st);
+                    self.game.apply(Cmd::Stance(k, st));
+                }
+            }
+            KeyCode::Digit1
+            | KeyCode::Digit2
+            | KeyCode::Digit3
+            | KeyCode::Digit4
+            | KeyCode::Digit5
+            | KeyCode::Digit6
+            | KeyCode::Digit7
+            | KeyCode::Digit8
+            | KeyCode::Digit9 => {
+                let g = [
+                    KeyCode::Digit1,
+                    KeyCode::Digit2,
+                    KeyCode::Digit3,
+                    KeyCode::Digit4,
+                    KeyCode::Digit5,
+                    KeyCode::Digit6,
+                    KeyCode::Digit7,
+                    KeyCode::Digit8,
+                    KeyCode::Digit9,
+                ]
+                .iter()
+                .position(|&d| d == code)
+                .expect("a digit");
+                if self.ctrl {
+                    self.groups[g] = self.selected.clone();
+                } else {
+                    self.selected = self.groups[g].iter().copied().filter(|&k| self.game.soldiers[k].alive).collect();
                 }
             }
             _ => {}
@@ -196,6 +340,7 @@ impl App {
 
     fn frame(&mut self, el: &ActiveEventLoop) {
         let now = Instant::now();
+        let started = now;
         self.owed += now - self.last;
         self.last = now;
         let step = if self.fast { STEP / FAST } else { STEP };
@@ -223,6 +368,9 @@ impl App {
         };
         let frame = pixels.frame_mut();
         render::draw(&self.game.dish, &view, SCALE, frame);
+        if self.scent {
+            draw_scent(&self.game, frame);
+        }
         draw_squad(
             &self.game,
             &self.selected,
@@ -234,6 +382,25 @@ impl App {
         if let Err(e) = pixels.render() {
             eprintln!("render failed: {e}");
             el.exit();
+        }
+        // Simulation steps plus drawing: what the M3 gate measures.
+        self.frames.push(started.elapsed());
+        if self.reported.elapsed() >= Duration::from_secs(5) && !self.frames.is_empty() {
+            let mut f: Vec<f64> = self.frames.iter().map(|d| d.as_secs_f64() * 1e3).collect();
+            f.sort_by(|a, b| a.total_cmp(b));
+            let mean = f.iter().sum::<f64>() / f.len() as f64;
+            println!(
+                "{:.0} game s: {} soldiers, {} walkers; frame mean {mean:.2} ms, p95 {:.2} ms, max {:.2} ms over {} frames{}",
+                self.game.time(),
+                self.game.alive(),
+                self.game.dish.walkers.len(),
+                f[f.len() * 95 / 100],
+                f[f.len() - 1],
+                f.len(),
+                if self.fast { " (fast)" } else { "" }
+            );
+            self.frames.clear();
+            self.reported = Instant::now();
         }
     }
 
@@ -334,6 +501,37 @@ fn draw_squad(g: &Game, selected: &[usize], drag: Option<((f32, f32), (f32, f32)
     }
 }
 
+/// The scent field over the dish (V): the dish's own `scent`, the smell
+/// the mould climbs (piles, soldiers, the bank, drops about to land), as a
+/// violet wash, log-scaled to the field's maximum. A view of the data,
+/// not an effect.
+fn draw_scent(g: &Game, frame: &mut [u8]) {
+    let sc = &g.dish.scent;
+    let max = sc.iter().cloned().fold(0.0f32, f32::max);
+    if max <= 0.0 {
+        return;
+    }
+    let lmax = (1.0 + max).ln();
+    let (fw, _) = render::frame_size(SCALE);
+    for y in 0..H {
+        for x in 0..W {
+            let v = sc[y * W + x];
+            if v <= 0.0 {
+                continue;
+            }
+            let a = ((1.0 + v).ln() / lmax).clamp(0.0, 1.0) * 0.8;
+            for dy in 0..SCALE {
+                for dx in 0..SCALE {
+                    let i = (((y as u32 * SCALE + dy) * fw + x as u32 * SCALE + dx) * 4) as usize;
+                    for (c, t) in frame[i..i + 3].iter_mut().zip([190.0f32, 120.0, 255.0]) {
+                        *c = (*c as f32 * (1.0 - a) + t * a) as u8;
+                    }
+                }
+            }
+        }
+    }
+}
+
 fn dotted(frame: &mut [u8], a: (f32, f32), b: (f32, f32), c: [u8; 4]) {
     let s_ = SCALE as f32;
     let n = ((b.0 - a.0).hypot(b.1 - a.1) * s_) as i32;
@@ -378,13 +576,13 @@ fn draw_hud(g: &Game, paused: bool, fast: bool, frame: &mut [u8]) {
             e.band().to_uppercase(),
             g.score().unwrap_or(0.0)
         ),
-        None => "R-CLICK PILE: CLEAR  R-CLICK: MOVE  F+DRAG: BURN  A: CORE  1/2/3: HOLD/DEFEND/FREE".into(),
+        None => "R-CLICK: CLEAR/MOVE  F+DRAG: BURN  A: CORE  Z/X/C: HOLD/DEFEND/FREE  CTRL+1-9: GROUP".into(),
     };
     hud::draw_text_scaled(frame, (w, h), s, (4, y + 10), &line2, [170, 175, 160, 255]);
     let line3 = if g.core_down.is_some() {
         "THE MOULD'S CORE IS TAKEN: IT CAN NO LONGER DIVIDE"
     } else {
-        "B: SOLDIER 400  T: TURRET 600  G: BAIT 300  SPACE: PAUSE  TAB: FAST  R: RESTART"
+        "B: SOLDIER 400  T: TURRET 600  G: BAIT 300  V: SCENT  SPACE: PAUSE  TAB: FAST"
     };
     hud::draw_text_scaled(frame, (w, h), s, (4, y + 20), line3, [170, 175, 160, 255]);
 }
@@ -435,6 +633,8 @@ impl ApplicationHandler for App {
                 if let PhysicalKey::Code(code) = event.physical_key {
                     if code == KeyCode::KeyF {
                         self.f_held = event.state == ElementState::Pressed;
+                    } else if matches!(code, KeyCode::ControlLeft | KeyCode::ControlRight) {
+                        self.ctrl = event.state == ElementState::Pressed;
                     } else if event.state == ElementState::Pressed && !event.repeat {
                         self.key(code, el);
                     }
