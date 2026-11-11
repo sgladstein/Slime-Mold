@@ -34,7 +34,7 @@ code: [Brain, Style, Side, RandomHand, set_rule, Game::apply]
 ## Open
 
 - Port `View` and `Side` to the Larder world when crystals and a second side land; add a team id to `Cmd` there ([roadmap](../../Reports/larder-world-roadmap-2026-11-11.md)).
-- W1: measure how often the early leader wins with each opening (bar: well under 80%).
+- W1: how often the early leader wins with each opening and crystal rule, as a per-mould difficulty stat on the mould ladder (owner, 14:14Z and 14:54Z), not a gate.
 - An exploiter search over `Style` knobs against a rule change.
 
 ## Sources
