@@ -1,0 +1,20 @@
+seed 16 grazers t  10.0s  tube  4175.9  loops    0  width 6.33  reach  146.6  piles 11/12  strays 0.000  ms/tick 12.22
+seed 16 grazers t  10.0s  contrast 3.14
+seed 16 grazers t  10.0s  extent r50 141.0 r90 204.6
+seed 16 grazers t  20.0s  tube  4058.2  loops    0  width 6.42  reach  146.4  piles 12/12  strays 0.000  ms/tick 11.87
+seed 16 grazers t  20.0s  contrast 2.92
+seed 16 grazers t  20.0s  extent r50 139.3 r90 219.8
+seed 16 grazers t  30.0s  tube  3766.1  loops    0  width 7.04  reach  148.6  piles 12/12  strays 0.000  ms/tick 11.60
+seed 16 grazers t  30.0s  contrast 2.28
+seed 16 grazers t  30.0s  extent r50 140.4 r90 228.3
+seed 16 grazers t  40.0s  tube  3684.0  loops    0  width 7.23  reach  150.1  piles 12/12  strays 0.000  ms/tick 11.39
+seed 16 grazers t  40.0s  contrast 2.10
+seed 16 grazers t  40.0s  extent r50 141.8 r90 232.3
+seed 16 grazers t  50.0s  tube  3643.9  loops    0  width 7.01  reach  147.9  piles 12/12  strays 0.000  ms/tick 11.25
+seed 16 grazers t  50.0s  contrast 2.04
+seed 16 grazers t  50.0s  extent r50 140.9 r90 236.2
+seed 16 grazers t  60.0s  tube  3582.2  loops    0  width 7.35  reach  160.5  piles 12/12  strays 0.000  ms/tick 11.16
+seed 16 grazers t  60.0s  contrast 1.93
+seed 16 grazers t  60.0s  extent r50 142.1 r90 238.7
+seed 16 grazers firsts 0:72:0.57:0.0 1:66:0.64:0.6 2:21:0.23:0.0 3:58:0.68:0.1 4:38:0.48:0.0 5:63:0.81:0.3 6:58:0.58:0.1 7:75:0.82:3.7 8:47:0.55:0.0 9:73:0.58:5.3 10:87:0.80:16.6 11:35:0.28:0.0
+seed 16 grazers hash=e25ee51eb78f5933

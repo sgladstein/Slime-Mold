@@ -1,0 +1,26 @@
+seed 4 dropfast t  10.0s  tube  4434.3  loops    2  width 6.61  reach  126.5  piles 8/12  strays 0.002  ms/tick 13.44
+seed 4 dropfast t  10.0s  contrast 4.05
+seed 4 dropfast t  10.0s  extent r50 141.2 r90 188.8
+seed 4 dropfast t  10.0s  kinds k0 n 23945 on 1.000 r 141.0  k1 n 6055 on 0.988 r 142.0
+seed 4 dropfast t  20.0s  tube  4072.0  loops    0  width 6.84  reach  127.1  piles 8/12  strays 0.003  ms/tick 13.54
+seed 4 dropfast t  20.0s  contrast 3.42
+seed 4 dropfast t  20.0s  extent r50 141.2 r90 196.1
+seed 4 dropfast t  20.0s  kinds k0 n 23945 on 1.000 r 140.5  k1 n 6055 on 0.985 r 144.4
+seed 4 dropfast t  30.0s  tube  3956.1  loops    0  width 6.91  reach  127.4  piles 8/12  strays 0.002  ms/tick 13.08
+seed 4 dropfast t  30.0s  contrast 3.19
+seed 4 dropfast t  30.0s  extent r50 141.3 r90 201.5
+seed 4 dropfast t  30.0s  kinds k0 n 23945 on 1.000 r 140.1  k1 n 6055 on 0.989 r 148.1
+seed 4 dropfast t  40.0s  tube  3870.2  loops    0  width 7.06  reach  127.8  piles 8/12  strays 0.002  ms/tick 13.00
+seed 4 dropfast t  40.0s  contrast 3.05
+seed 4 dropfast t  40.0s  extent r50 142.2 r90 205.1
+seed 4 dropfast t  40.0s  kinds k0 n 23945 on 1.000 r 140.4  k1 n 6055 on 0.988 r 151.7
+seed 4 dropfast t  50.0s  tube  3779.1  loops    0  width 7.17  reach  127.9  piles 8/12  strays 0.003  ms/tick 13.07
+seed 4 dropfast t  50.0s  contrast 2.86
+seed 4 dropfast t  50.0s  extent r50 142.5 r90 208.1
+seed 4 dropfast t  50.0s  kinds k0 n 23945 on 1.000 r 140.2  k1 n 6055 on 0.986 r 153.8
+seed 4 dropfast t  60.0s  tube  3728.1  loops    0  width 7.23  reach  128.0  piles 8/12  strays 0.003  ms/tick 13.09
+seed 4 dropfast t  60.0s  contrast 2.74
+seed 4 dropfast t  60.0s  extent r50 143.2 r90 210.2
+seed 4 dropfast t  60.0s  kinds k0 n 23945 on 1.000 r 140.4  k1 n 6055 on 0.987 r 155.6
+seed 4 dropfast firsts 0:72:0.57:0.0 1:56:0.51:0.0 2:98:0.80:-1.0 3:83:0.80:-1.0 4:51:0.65:0.0 5:76:0.75:-1.0 6:32:0.36:0.0 7:114:0.91:-1.0 8:41:0.49:0.0 9:69:0.84:2.1 10:61:0.78:0.2 11:64:0.72:0.3
+seed 4 dropfast hash=58977880ff47f7be

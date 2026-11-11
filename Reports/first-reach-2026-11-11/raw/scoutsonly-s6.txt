@@ -1,0 +1,26 @@
+seed 6 scoutsonly t  10.0s  tube  3378.9  loops    3  width 7.61  reach  130.7  piles 7/12  strays 0.007  ms/tick 14.52
+seed 6 scoutsonly t  10.0s  contrast 1.86
+seed 6 scoutsonly t  10.0s  extent r50 146.6 r90 198.7
+seed 6 scoutsonly t  10.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 146.6
+seed 6 scoutsonly t  20.0s  tube  3220.2  loops    2  width 8.15  reach  131.9  piles 7/12  strays 0.006  ms/tick 15.14
+seed 6 scoutsonly t  20.0s  contrast 1.60
+seed 6 scoutsonly t  20.0s  extent r50 144.9 r90 203.9
+seed 6 scoutsonly t  20.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.994 r 144.9
+seed 6 scoutsonly t  30.0s  tube  3203.8  loops    1  width 8.01  reach  132.2  piles 8/12  strays 0.005  ms/tick 15.49
+seed 6 scoutsonly t  30.0s  contrast 1.56
+seed 6 scoutsonly t  30.0s  extent r50 143.7 r90 207.0
+seed 6 scoutsonly t  30.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.995 r 143.7
+seed 6 scoutsonly t  40.0s  tube  3146.0  loops    2  width 7.90  reach  141.4  piles 8/12  strays 0.006  ms/tick 15.60
+seed 6 scoutsonly t  40.0s  contrast 1.48
+seed 6 scoutsonly t  40.0s  extent r50 145.2 r90 209.5
+seed 6 scoutsonly t  40.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.994 r 145.2
+seed 6 scoutsonly t  50.0s  tube  3099.9  loops    2  width 7.73  reach  142.1  piles 8/12  strays 0.005  ms/tick 15.22
+seed 6 scoutsonly t  50.0s  contrast 1.40
+seed 6 scoutsonly t  50.0s  extent r50 149.0 r90 211.7
+seed 6 scoutsonly t  50.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.995 r 149.0
+seed 6 scoutsonly t  60.0s  tube  3041.0  loops    1  width 7.44  reach  143.2  piles 8/12  strays 0.007  ms/tick 15.04
+seed 6 scoutsonly t  60.0s  contrast 1.30
+seed 6 scoutsonly t  60.0s  extent r50 153.3 r90 213.9
+seed 6 scoutsonly t  60.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 153.3
+seed 6 scoutsonly firsts 0:72:0.57:0.0 1:27:0.35:0.0 2:45:0.42:0.0 3:48:0.51:0.0 4:74:0.68:28.0 5:80:0.72:-1.0 6:53:0.69:0.0 7:55:0.45:0.0 8:83:0.80:-1.0 9:53:0.68:0.0 10:103:0.83:-1.0 11:100:0.83:-1.0
+seed 6 scoutsonly hash=03c8db54f78753cb

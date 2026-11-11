@@ -1,0 +1,12 @@
+droplets     seeds 16  scored 77  by 30 s 9 (0.12)  by 60 s 10 (0.13)  inner 2/28 wall 7/49 by 30 s  median first 2.8 s  farthest 72
+             10 s r50 142 r90 188 ms/tick 12.9 | 30 s r50 142 r90 192 ms/tick 13.3 | 60 s r50 144 r90 197 ms/tick 13.4
+dropscouts   seeds 16  scored 77  by 30 s 5 (0.06)  by 60 s 6 (0.08)  inner 1/28 wall 4/49 by 30 s  median first 1.4 s  farthest 71
+             10 s r50 142 r90 185 ms/tick 13.5 | 30 s r50 143 r90 189 ms/tick 13.7 | 60 s r50 144 r90 194 ms/tick 13.6
+dropfast     seeds 16  scored 77  by 30 s 19 (0.25)  by 60 s 23 (0.30)  inner 10/28 wall 9/49 by 30 s  median first 12.5 s  farthest 81
+             10 s r50 142 r90 190 ms/tick 12.8 | 30 s r50 143 r90 196 ms/tick 12.9 | 60 s r50 145 r90 201 ms/tick 12.8
+scoutsonly   seeds 16  scored 77  by 30 s 3 (0.04)  by 60 s 4 (0.05)  inner 1/28 wall 2/49 by 30 s  median first 15.3 s  farthest 74
+             10 s r50 147 r90 191 ms/tick 13.8 | 30 s r50 143 r90 205 ms/tick 14.2 | 60 s r50 143 r90 211 ms/tick 14.2
+grazers      seeds 16  scored 77  by 30 s 49 (0.64)  by 60 s 56 (0.73)  inner 22/28 wall 27/49 by 30 s  median first 7.7 s  farthest 113
+             10 s r50 142 r90 201 ms/tick 14.2 | 30 s r50 145 r90 215 ms/tick 13.2 | 60 s r50 147 r90 228 ms/tick 12.8
+grazescouts  seeds 16  scored 77  by 30 s 62 (0.81)  by 60 s 72 (0.94)  inner 25/28 wall 37/49 by 30 s  median first 4.7 s  farthest 113
+             10 s r50 146 r90 226 ms/tick 13.6 | 30 s r50 157 r90 253 ms/tick 13.0 | 60 s r50 164 r90 270 ms/tick 12.6
