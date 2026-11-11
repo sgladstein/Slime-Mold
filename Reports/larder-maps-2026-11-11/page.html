@@ -26,69 +26,69 @@ table{border-collapse:collapse;width:100%;font-size:.9rem}
 th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-family:var(--display);font-weight:500}
 td:first-child{font-weight:600;white-space:nowrap}
+.grid5{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+figure{margin:0;display:grid;gap:6px}figure img{width:100%;border-radius:4px;display:block}figcaption{font-size:.88rem}figcaption b{font-family:var(--display)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.85rem;color:var(--muted)}
 .sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 ol{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:72ch}
 </style>
 <div class="wrap">
 <header class="lede">
-<span class="tag">Larder World · WM2 and WM3 · 2026-11-11 · plan only</span>
+<span class="tag">Larder World · maps · 2026-11-11 · updated 21:30Z</span>
 <h1>Larder World maps</h1>
-<p>Five paper maps for the 1024 × 640 world, each drawn so a different plan wins, and the new ground kinds they need. These are drawings of a map spec: <strong>no walker has run on them yet</strong>. A map is kept only if idle and random play lose on it and the winning plan changes from map to map.</p>
+<p>Which ground the mould actually feels, tested on paired seeds, and five flat maps built from that ground. Height is parked: you asked how much it changes the mould, and nothing had measured it.</p>
 </header>
 
 <section style="display:grid;gap:12px">
-<h2>New ground, chosen by what the simulation does with it</h2>
-<p>Every ground kind changes one term of the model in a cell: step, trail kept, scent spread, upkeep, births, or what a shot does. Nothing here is painted on.</p>
-<div class="tbl"><table>
-<tr><th>Kind</th><th>What it changes</th><th>What it makes in play</th></tr>
-<tr><td>Height</td><td>Walkers and soldiers step slower uphill</td><td>Tubes follow contours; high ground is slow to take and cheap to hold</td></tr>
-<tr><td>Downhill drift</td><td>Scent slides toward lower cells</td><td>Scent pools in valleys, so valley crystals call from far away and a hollow hides a crystal from the plateau</td></tr>
-<tr><td>Water table</td><td>Wet ground sits below a waterline</td><td>The richest smell sits in the slowest ground</td></tr>
-<tr><td>High ground for shots</td><td>Ridges block fire; height adds range</td><td>The squad wants the heights the mould avoids</td></tr>
-<tr><td>Soil kinds</td><td>Sand fades trail, clay keeps it, warm is fast and hungry, cold slow and frugal, barren has no births</td><td>Fronts that can't hold ground, ground the mould never gives up, regions with their own tempo</td></tr>
-<tr><td>Soft rock</td><td>Walls with health, already built</td><td>Thickets and gates the mould chews through slowly</td></tr>
-<tr><td>Dry heights</td><td>Upkeep rises with height</td><td>A mould on a plateau starves thin</td></tr>
-<tr><td>Mould-made ground</td><td>Long-held ground forms crust that keeps tubes and regrows mould</td><td>Burning the mould is not the same as clearing it</td></tr>
-</table></div>
-<p class="note">Order: height with drift and the water table first (one byte, three effects, and the graphics thread can shade it once it matters), then shots, then soils.</p>
+<h2>Which ground the mould feels</h2>
+<p>Same world, same patch of ground (30% of the map, blue tint) in every picture, seed 4 at 60 s of growth. Only what the patch is changes. The counts are medians of 16 paired seeds against plain ground.</p>
+<div class="grid5">
+<figure><img src="ground/look/s4-60s-plain.png" alt="Plain ground: the control"><figcaption><b>Plain</b> (control). 7,165 alive; 10.8% of walkers on the patch.</figcaption></figure>
+<figure><img src="ground/look/s4-60s-wet.png" alt="Wet ground: the mould reaches fewer crystals"><figcaption><b>Wet</b> (step halved). 4,044 alive, smaller on 16 of 16 seeds. Walkers crowd onto it.</figcaption></figure>
+<figure><img src="ground/look/s4-60s-sand.png" alt="Sand: the mould spreads further"><figcaption><b>Sand</b> (trail fades fast). 11,462 alive, bigger on 14 of 16. Walkers leave it (7.0% on it) and find crystals sooner.</figcaption></figure>
+<figure><img src="ground/look/s4-60s-clay.png" alt="Clay: tubes thicken on the patches"><figcaption><b>Clay</b> (trail lasts). Walkers gather on it (13.8%); eats less on 15 of 16.</figcaption></figure>
+<figure><img src="ground/look/s4-60s-barren.png" alt="Barren ground: the eastern network starves"><figcaption><b>Barren</b> (no births, upkeep ×3). 3,603 alive, half size on 15 of 16.</figcaption></figure>
+</div>
+<p class="note">Every kind changes the mould. Slow ground halves it, which also means a slope that slows would matter; flat wet ground gives that effect without height. Sand surprised me: it makes the mould spread faster, not hold ground worse. Sign tests, Holm over 16: all hold except barren's patch share and clay's size.</p>
 </section>
 
 <section style="display:grid;gap:14px">
-<h2>The five maps</h2>
+<h2>Five maps, flat</h2>
 <div class="legend">
-<span><i class="sw" style="background:#5d6b4b"></i>ground, shaded by height, with contours</span>
-<span><i class="sw" style="background:#2b5b8c"></i>water</span>
-<span><i class="sw" style="background:#1f1c1f"></i>rock</span>
-<span><i class="sw" style="background:#735233"></i>soft rock</span>
-<span><i class="sw" style="background:#3cdce6"></i>crystal (size is charge)</span>
+<span><i class="sw" style="background:#6b5438"></i>soil</span>
+<span><i class="sw" style="background:#c7b37a"></i>sand</span>
+<span><i class="sw" style="background:#85452e"></i>clay</span>
+<span><i class="sw" style="background:#61636b"></i>rock</span>
+<span><i class="sw" style="background:#2b5b6b"></i>water</span>
+<span><i class="sw" style="background:#384d24"></i>soft rock (the mould chews through)</span>
+<span><i class="sw" style="background:#3cdce6"></i>crystal</span>
 <span><i class="sw" style="background:transparent;border:2px solid #ffd228"></i>mould start</span>
-<span><i class="sw" style="background:transparent;border:2px solid #999"></i>squad lands</span>
 </div>
+<p class="note">These are sketches of the map files. The next version is drawn by the game's own world look, with sand, clay and barren added to it.</p>
 
-<article class="map"><img src="sketches/basin.png" alt="The Basin: a bowl with a lake, mould at the lake's edge, crystals on the rim, squad on the south-west rim">
-<dl><h3>The Basin</h3><dt>Drawn for</dt><dd>Turtle: hold the rim</dd><dt>Why</dt><dd>Rim scent drifts down and calls the mould up slopes where it is slow and in the squad's sight. Rushing down means fighting in wet ground in the mould's own pooled scent.</dd><dt>Turned by</dt><dd>A Sporer, whose spores fly over the slope</dd><dt>Sketch</dt><dd>12 crystals, 3,456 charge, 3.5% water</dd></dl></article>
+<article class="map"><img src="sketches/rim.png" alt="The Rim: a rock ring with four gaps round a clay floor, sand belt outside">
+<dl><h3>The Rim</h3><dt>Drawn for</dt><dd>Turtle: hold the four gaps</dd><dt>Ground</dt><dd>Clay inside holds the mould at home; a rock ring lets it out only through gaps, onto a sand belt where it spreads fast.</dd><dt>Turned by</dt><dd>A Sporer, which flies over the ring</dd></dl></article>
 
-<article class="map"><img src="sketches/fork.png" alt="The Fork: a Y-shaped valley, mould at the low end, crystals up both forks, squad on the wedge between">
-<dl><h3>The Fork</h3><dt>Drawn for</dt><dd>Lure: bait one fork, harvest the other</dd><dt>Why</dt><dd>Both forks drift scent down to the mould, so it is pulled two ways. Bait tips it into one fork while the squad on the high wedge harvests the other. A rush meets the whole mould in the narrow stem.</dd><dt>Turned by</dt><dd>A Hunter, which follows soldiers rather than bait</dd><dt>Sketch</dt><dd>10 crystals, 3,200 charge</dd></dl></article>
+<article class="map"><img src="sketches/fork.png" alt="The Fork: rock walls make a Y, the mould at the bottom on clay">
+<dl><h3>The Fork</h3><dt>Drawn for</dt><dd>Lure: bait one fork, harvest the other</dd><dt>Ground</dt><dd>Rock walls make a Y; the mould starts on clay at the stem; a pool slows one fork.</dd><dt>Turned by</dt><dd>A Hunter, which follows soldiers rather than bait</dd></dl></article>
 
 <article class="map"><img src="sketches/flats.png" alt="The Flats: sand with five clay islands and many small crystals">
-<dl><h3>The Flats</h3><dt>Drawn for</dt><dd>Boom: out-harvest</dd><dt>Why</dt><dd>32 small crystals on sand, where tubes fade fast; only five clay islands hold the mould's network. A spread squad harvests faster than a mould that cannot hold the sand.</dd><dt>Turned by</dt><dd>A Trunk, which holds ground by thickness, not soil</dd><dt>Sketch</dt><dd>32 crystals, 4,000 charge</dd></dl></article>
+<dl><h3>The Flats</h3><dt>Drawn for</dt><dd>Boom: out-harvest</dd><dt>Ground</dt><dd>Sand everywhere, so the mould spreads fast; only five clay islands hold it. Can a spread squad still harvest faster?</dd><dt>Turned by</dt><dd>A Trunk, which holds ground by thickness</dd></dl></article>
 
-<article class="map"><img src="sketches/nest.png" alt="The Nest: a soft-rock ring on warm ground with two rich crystals and one gap facing the squad">
-<dl><h3>The Nest</h3><dt>Drawn for</dt><dd>Rush: strike before it breaks out</dd><dt>Why</dt><dd>Warm ground makes the mould inside fast and hungry. Left alone it fattens on 1,280 charge and breaks out strong, so idle loses badly. Struck early through the gap, it is small.</dd><dt>Turned by</dt><dd>A Sleeper, which sleeps through a strike</dd><dt>Sketch</dt><dd>9 crystals, 2,496 charge</dd></dl></article>
+<article class="map"><img src="sketches/nest.png" alt="The Nest: a soft-rock ring with one gap round clay and two rich crystals">
+<dl><h3>The Nest</h3><dt>Drawn for</dt><dd>Rush: strike before it breaks out</dd><dt>Ground</dt><dd>A soft-rock ring round clay and 1,280 charge; one gap faces the squad. Left alone, it breaks out at full strength.</dd><dt>Turned by</dt><dd>A Sleeper, which sleeps through a strike</dd></dl></article>
 
-<article class="map"><img src="sketches/passes.png" alt="The Passes: a cold northern valley and a warm southern valley, each with a rival mould, rock ranges with passes, squad in the middle band">
-<dl><h3>The Passes</h3><dt>Drawn for</dt><dd>Adapt: set two moulds on each other</dd><dt>Why</dt><dd>The warm rival comes first and fast through the open south pass. Bait across the middle leads it to the cold rival's border; a soft-rock gate in the north range sets when the cold one arrives.</dd><dt>Turned by</dt><dd>A Converter, which grows by winning that border fight</dd><dt>Sketch</dt><dd>9 crystals, 3,392 charge, 5% rock</dd></dl></article>
+<article class="map"><img src="sketches/passes.png" alt="The Passes: a clay valley and a sand valley, each with a rival mould">
+<dl><h3>The Passes</h3><dt>Drawn for</dt><dd>Adapt: set two moulds on each other</dd><dt>Ground</dt><dd>The sand-valley rival is fast and comes through the open pass; the clay-valley rival is slow and dug in behind a soft-rock gate.</dd><dt>Turned by</dt><dd>A Converter, which grows by winning that border</dd></dl></article>
 </section>
 
 <section style="display:grid;gap:10px">
 <h2>How a map is kept</h2>
 <ol>
-<li>On each map, 16 paired seeds of five styles plus idle and random, scored by the game's own harness: the best plan beats idle and random (sign test, Holm over the maps).</li>
-<li>At least three different winners among the five maps, each ahead of the runner-up on its map.</li>
-<li>The winner changes when the mould tier changes, which is the difficulty ladder.</li>
+<li>On each map, 16 paired seeds of the five player-AI styles plus idle and random: the best plan beats idle and random (sign test, Holm over the maps).</li>
+<li>At least three different winners among the five maps.</li>
+<li>The winner changes when the mould tier changes.</li>
 </ol>
-<p class="note">A map that fails is redrawn from its shape list, not tuned by hand. Next: height on the simulation, looked at first, then measured. Record: Reports/larder-maps-2026-11-11.md.</p>
+<p class="note">Waits on the Larder thread's map loader (in progress) and its game harness. Record: Reports/larder-maps-2026-11-11.md.</p>
 </section>
 </div>
