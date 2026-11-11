@@ -2333,7 +2333,10 @@ mod tests {
             // (below), with room in the slots: births land in cells freed
             // by deaths in the same tick, some of them claimed by the
             // walker's own move just before it died.
-            ("hungry, dying beside breeding", Settings { starve: 1.0, capacity: 60_000, ..hungry(small(0)) }),
+            // With species, explorers and contagion, so a child landing in
+            // the slot of a walker that died keeps no age, sickness or
+            // species of the dead one's.
+            ("hungry, dying beside breeding", Settings { starve: 1.0, capacity: 60_000, species: 2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..hungry(small(0)) }),
         ];
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -2376,15 +2379,16 @@ mod tests {
             let occ: Vec<u32> = read_back(&device, &queue, &e.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
             let occ_off = occ.iter().zip(occupancy(&cpu)).filter(|(g, c)| **g != *c).count();
             let alive = cpu.alive.iter().filter(|&&a| a).count();
+            let lg = l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass);
             eprintln!(
-                "{name}: {n} slots, {alive} alive, {born} born and {starved} starved in the tick, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, energy L1 {le:.1e}; {lives_off} lives off, {occ_off} cells' counts off, {ages_off} ages, {specs_off} species and {sick_off} sick counters off"
+                "{name}: {n} slots, {alive} alive, {born} born and {starved} starved in the tick, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, energy L1 {le:.1e}, grass L1 {lg:.1e}; {lives_off} lives off, {occ_off} cells' counts off, {ages_off} ages, {specs_off} species and {sick_off} sick counters off"
             );
             assert!(born > 0, "{name}: someone is born in the tick");
             if hungry {
                 assert!(starved > 0, "{name}: someone starves in the tick");
             }
             assert!(off * 1000 <= n && lives_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {off} walkers, {lives_off} lives, {occ_off} counts off of {n}");
-            assert!(lt <= 1e-4 && ls <= 1e-6 && le <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, energy L1 {le:.2e}");
+            assert!(lt <= 1e-4 && ls <= 1e-6 && le <= 1e-4 && lg <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, energy L1 {le:.2e}, grass L1 {lg:.2e}");
             assert!((ages_off + specs_off + sick_off) * 1000 <= n, "{name}: {ages_off} ages, {specs_off} species, {sick_off} sick off");
         }
     }
