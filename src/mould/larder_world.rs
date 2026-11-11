@@ -68,8 +68,14 @@ pub trait World {
     fn living(&self) -> usize;
     /// Each crystal's centre (fine cells) and charge left.
     fn crystals(&self) -> Vec<((f32, f32), f32)>;
-    /// A crystal's radius, fine cells.
-    fn crystal_r(&self) -> f32;
+    /// Crystal `c`'s radius, fine cells.
+    fn crystal_r(&self, c: usize) -> f32;
+    /// Where the squad lands, fine cells, if the world places it (a map,
+    /// `BigDish::with_map`); else the game puts the larder on the crystal
+    /// farthest from the mould's home (`far_crystal`).
+    fn landing(&self) -> Option<(f32, f32)> {
+        None
+    }
     /// Open ground a soldier can stand on (agar: not rock, wall or rim).
     fn open(&self, x: f32, y: f32) -> bool;
     /// The mould's core is taken: no more births.
@@ -110,8 +116,13 @@ impl World for BigDish {
         self.piles.iter().enumerate().map(|(p, &(x, y))| ((x * s, y * s), self.pile_charge.get(p).copied().unwrap_or(0.0))).collect()
     }
 
-    fn crystal_r(&self) -> f32 {
-        self.p.pile_r * self.p.scale as f32
+    fn crystal_r(&self, c: usize) -> f32 {
+        self.pile_rs[c] * self.p.scale as f32
+    }
+
+    fn landing(&self) -> Option<(f32, f32)> {
+        let s = self.p.scale as f32;
+        self.landing.map(|(x, y)| (x * s, y * s))
     }
 
     fn open(&self, x: f32, y: f32) -> bool {
@@ -453,7 +464,7 @@ impl<W: World> Game<W> {
     /// The squad at the crystal farthest from the mould's home, the mould on
     /// its home crystal (crystal 0).
     pub fn new(world: W, rules: Rules, seed: u64) -> Self {
-        let larder = far_crystal(&world);
+        let larder = world.landing().unwrap_or_else(|| far_crystal(&world));
         let core = world.crystals()[0].0;
         let mould = world.living();
         let start_charge: Vec<f32> = world.crystals().iter().map(|c| c.1).collect();
@@ -587,8 +598,8 @@ impl<W: World> Game<W> {
     /// The crystal a point is inside (or nearest, within its radius plus 2
     /// dish cells): its index and centre.
     pub fn crystal_at(&self, p: (f32, f32)) -> Option<(usize, (f32, f32))> {
-        let r = self.world.crystal_r() + 2.0 * self.s();
-        self.world.crystals().iter().enumerate().map(|(i, c)| (i, c.0)).filter(|(_, c)| (c.0 - p.0).hypot(c.1 - p.1) <= r).min_by(|a, b| {
+        let sc = self.s();
+        self.world.crystals().iter().enumerate().map(|(i, c)| (i, c.0)).filter(|&(i, c)| (c.0 - p.0).hypot(c.1 - p.1) <= self.world.crystal_r(i) + 2.0 * sc).min_by(|a, b| {
             let d = |c: (f32, f32)| (c.0 - p.0).hypot(c.1 - p.1);
             d(a.1).total_cmp(&d(b.1))
         })
@@ -721,8 +732,8 @@ impl<W: World> Game<W> {
             Stance::Defend => {
                 let mut ok = s.touching > 0 || near((s.x, s.y), self.rules.defend * sc);
                 if let Order::Clear(x, y) = s.order {
-                    if let Some((_, c)) = self.crystal_at((x, y)) {
-                        ok |= near(c, self.world.crystal_r() + 2.0 * sc);
+                    if let Some((i, c)) = self.crystal_at((x, y)) {
+                        ok |= near(c, self.world.crystal_r(i) + 2.0 * sc);
                     }
                 }
                 ok.then_some(aim)
@@ -766,7 +777,7 @@ impl<W: World> Game<W> {
                 } else if s.carry >= r.carry {
                     self.soldiers[k].homing = true;
                 } else if let Some((i, c)) = self.crystal_at((x, y)) {
-                    if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r() + 1.0 * sc {
+                    if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + 1.0 * sc {
                         take = (r.harvest * dt).min(r.carry - s.carry) * r.charge;
                         at_crystal = Some(i);
                     }
@@ -790,7 +801,7 @@ impl<W: World> Game<W> {
                 y: s.y,
                 touch: r.touch * sc,
                 sight: r.range * sc,
-                take_r: self.world.crystal_r().min(4.0 * sc),
+                take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
                 smell_r: 2.0 * sc,
                 smell: self.world.food_deposit() * r.smell * r.frame_ticks as f32,
@@ -816,7 +827,8 @@ impl<W: World> Game<W> {
         self.shots += f.shots.len() as u32;
         self.last_shots = f.shots.iter().zip(&out.shots).map(|(i, o)| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed }).collect();
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
-        for ((u, k), c) in out.units.iter().zip(&who).zip(&from) {
+        let left: Vec<f32> = self.world.crystals().iter().map(|c| c.1).collect();
+        for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
             if let Some(c) = *c {
                 self.taken[c] += u.took;
             }
@@ -827,6 +839,28 @@ impl<W: World> Game<W> {
                     s.aim = u.target;
                     s.dense = u.dense;
                     s.carry += u.took / r.charge;
+                    // A crystal running dry sends its carrier home with what
+                    // it has: the frame gave less than half its ask, and the
+                    // whole crystal holds less than the rest of a load.
+                    // (Without this, on the Fork map (WM1) a soldier emptied
+                    // a small crystal, 12,032 charge or 188 food, and waited
+                    // there for a full 300 load that never came; on the Nest
+                    // the take dwindled toward 0 as charge flowed in from
+                    // the crystal's edge, so `took == 0` never fired either,
+                    // and it sat at 128 food. The race world's crystals
+                    // never ran dry under one soldier, so W2b never met it.
+                    // M3 has the same rule and the same gap. Going home on
+                    // the short take alone was tried: on race seeds 5 and 6
+                    // the farm and wall hands banked the same food but
+                    // scored lower on all 4 games, -0.136 against -0.029 on
+                    // farm seed 5, because soldiers walked home whenever the
+                    // cells in reach ran low and were off their crystals at
+                    // the cap.)
+                    if let Some(i) = *c {
+                        if u.took < 0.5 * ask.take && s.carry > 0.0 && left[i] < (r.carry - s.carry) * r.charge {
+                            s.homing = true;
+                        }
+                    }
                     if u.touching > 0 {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
@@ -895,11 +929,11 @@ impl<W: World> Game<W> {
     /// an idle squad scored as if overrun from the first second.)
     pub fn share(&self) -> f32 {
         let (mut ours, mut theirs) = (0, 0);
-        let cr = self.world.crystal_r();
         for (i, (c, charge)) in self.world.crystals().into_iter().enumerate() {
             if charge <= 0.0 {
                 continue;
             }
+            let cr = self.world.crystal_r(i);
             let eaten = self.start_charge[i] - charge - self.taken[i] > 0.01 * self.start_charge[i];
             let on: Vec<&Soldier> = self.soldiers.iter().filter(|s| s.alive && (s.x - c.0).hypot(s.y - c.1) <= cr + 2.0 * self.s()).collect();
             if !on.is_empty() && on.iter().all(|s| s.touching == 0) {
@@ -1045,8 +1079,15 @@ mod tests {
             g.step();
         }
         assert!(g.harvested >= g.rules.carry, "banked {} in 30 s", g.harvested);
-        assert_eq!(g.bank, g.rules.start_bank + g.harvested - g.spent - g.stolen);
-        let gone = before - g.world.crystals()[k].1;
+        // Equal to f32 rounding: a carrier that walks home whenever its
+        // crystal runs low banks in many small loads.
+        let books = g.rules.start_bank + g.harvested - g.spent - g.stolen;
+        assert!((g.bank - books).abs() < 0.01, "bank {} books {books}", g.bank);
+        // From the cells: the pile's total is summed a tick late (the next
+        // tick's eating), and the frame's last take is after the ticks.
+        let d = &g.world;
+        let now: f64 = d.pile_cells.iter().filter(|&&i| d.pile_of[i as usize] as usize == k + 1).map(|&i| d.charge[i as usize] as f64).sum();
+        let gone = before - now as f32;
         let held = (g.harvested + g.soldiers[0].carry) * g.rules.charge;
         assert!(gone >= held * 0.999, "the crystal lost {gone}, the squad holds {held}");
     }

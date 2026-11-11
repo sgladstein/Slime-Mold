@@ -61,6 +61,7 @@ pub mod fever;
 pub mod larder;
 pub mod larder_ai;
 pub mod larder_world;
+pub mod map;
 pub mod lesson;
 pub mod level;
 pub mod look;

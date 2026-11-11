@@ -32,6 +32,7 @@
 use std::f32::consts::TAU;
 
 use super::{keyed, unit, H, STEPS_PER_SECOND, W};
+use super::map::{self, Map, G_ROCK, G_WET, MAP_SCALE};
 
 /// What a keyed draw is for here (`keyed`): its own streams, apart from the
 /// game's.
@@ -780,6 +781,15 @@ pub struct BigDish {
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
+    /// Each pile's radius, dish cells, and its crystal's charge a full
+    /// cell: `pile_r` and `crystal_charge` for every pile, unless a map
+    /// (`with_map`, ROADMAP WM1) gives each crystal its own.
+    pub pile_rs: Vec<f32>,
+    pub pile_fill: Vec<f32>,
+    /// Where the mould's blob starts and the squad lands, dish cells: pile
+    /// 0's centre and none, unless a map places them.
+    pub home: (f32, f32),
+    pub landing: Option<(f32, f32)>,
     /// Crystals (`crystal_charge` > 0), else empty: charge a fine cell,
     /// which pile owns it (index + 1, 0 none), each pile's charge left and
     /// at the start, each walker's take this fine step, and all eaten.
@@ -899,6 +909,22 @@ fn spread(agar: &[bool], from: &[f32], to: &mut [f32], w: usize, h: usize, keep:
 
 impl BigDish {
     pub fn new(p: BigParams) -> Self {
+        Self::build(p, None)
+    }
+
+    /// A designed world (`map::Map`, ROADMAP WM1): the map's crystals in
+    /// place of the keyed piles, each its own size and charge, the one
+    /// nearest the mould's start first (pile 0, the mould's home); rock and
+    /// wet from the map's ground in place of the noise; its walls built
+    /// with their health; and the mould's blob on its start. `p` still
+    /// switches each system on: crystals need `crystal_charge` > 0 (the
+    /// map's charges replace it), and the rest of `p` is the world's as
+    /// before. The map's soil waits for the maps thread's soil fields.
+    pub fn with_map(p: BigParams, m: &Map) -> Self {
+        Self::build(p, Some(m))
+    }
+
+    fn build(p: BigParams, map: Option<&Map>) -> Self {
         assert!(
             p.species_sets.is_empty() || p.species_sets.len() >= p.species.max(1) as usize,
             "species_sets needs one set per species"
@@ -941,6 +967,10 @@ impl BigDish {
             alarm: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
+            pile_rs: Vec::new(),
+            pile_fill: Vec::new(),
+            home: (0.0, 0.0),
+            landing: None,
             charge: Vec::new(),
             pile_of: Vec::new(),
             pile_charge: Vec::new(),
@@ -958,9 +988,24 @@ impl BigDish {
             threads: 1,
             p,
         };
-        d.place_piles();
-        d.place_terrain();
+        match map {
+            Some(m) => {
+                d.map_piles(m);
+                d.map_terrain(m);
+            }
+            None => {
+                d.place_piles();
+                d.place_terrain();
+            }
+        }
         d.place_crystals();
+        if let Some(m) = map {
+            // Before the walkers, so none starts inside a wall.
+            for wl in &m.items.walls {
+                let (a, b) = (Map::dish(wl.a), Map::dish(wl.b));
+                d.build_wall_hp(a.0, a.1, b.0, b.1, wl.thick / MAP_SCALE, wl.hp);
+            }
+        }
         d.place_walkers();
         if d.p.upkeep > 0.0 {
             // The living first, then empty slots at the centre (any cell
@@ -1086,6 +1131,54 @@ impl BigDish {
         }
         self.reached = vec![false; self.piles.len()];
         self.reached[0] = true;
+        self.pile_rs = vec![r; self.piles.len()];
+        self.pile_fill = vec![self.p.crystal_charge; self.piles.len()];
+        self.home = self.piles[0];
+    }
+
+    /// A map's crystals as the piles, the one nearest the mould's start
+    /// first, the rest in the map's order; the start and landing from the
+    /// map (the start on the first crystal without one).
+    fn map_piles(&mut self, m: &Map) {
+        let mut cs = m.items.crystals.clone();
+        assert!(!cs.is_empty(), "a map needs a crystal");
+        let start = m.items.mould.unwrap_or((cs[0].x, cs[0].y));
+        let d2 = |c: &map::Crystal| (c.x - start.0).hypot(c.y - start.1);
+        let near = (0..cs.len()).min_by(|&a, &b| d2(&cs[a]).total_cmp(&d2(&cs[b]))).unwrap();
+        let first = cs.remove(near);
+        cs.insert(0, first);
+        self.piles = cs.iter().map(|c| Map::dish((c.x, c.y))).collect();
+        self.pile_rs = cs.iter().map(|c| c.r / MAP_SCALE).collect();
+        self.pile_fill = cs.iter().map(|c| if self.p.crystal_charge > 0.0 { c.charge } else { 0.0 }).collect();
+        self.reached = vec![false; self.piles.len()];
+        self.reached[0] = true;
+        self.home = Map::dish(start);
+        self.landing = m.items.landing.map(Map::dish);
+    }
+
+    /// A map's ground: rock leaves the agar on the fine and scent grids,
+    /// wet lies on the agar (the map's cell at each cell's centre,
+    /// `Map::ground_fine`). The noise's `terrain_rock` and `terrain_wet`
+    /// are not read.
+    fn map_terrain(&mut self, m: &Map) {
+        let (w, h, s) = (self.w, self.h, self.p.scale);
+        self.rock = vec![false; w * h];
+        self.wet = vec![false; w * h];
+        for i in 0..w * h {
+            let g = m.ground_fine(s, i % w, i / w);
+            if g & G_ROCK != 0 {
+                self.rock[i] = true;
+                self.agar[i] = false;
+            } else if g & G_WET != 0 && self.agar[i] {
+                self.wet[i] = true;
+            }
+        }
+        let k = if self.p.scent_coarse { 1 } else { s };
+        for i in 0..self.sw * self.sh {
+            if m.ground_fine(k, i % self.sw, i / self.sw) & G_ROCK != 0 {
+                self.scent_agar[i] = false;
+            }
+        }
     }
 
     /// Terrain (`terrain_rock`, `terrain_wet`): rock leaves the agar, on
@@ -1096,10 +1189,9 @@ impl BigDish {
             return;
         }
         let (seed, cell, s) = (self.p.seed, self.p.terrain_blob.max(1.0), self.p.scale as f32);
-        let clear = self.p.pile_r + 4.0;
-        let piles = self.piles.clone();
+        let piles: Vec<(f32, f32, f32)> = self.piles.iter().zip(&self.pile_rs).map(|(&(x, y), &r)| (x, y, r + 4.0)).collect();
         let is_rock = |x: f32, y: f32| {
-            rock_t > 0.0 && noise(seed, 0, x, y, cell) < rock_t && piles.iter().all(|&(px, py)| (px - x).hypot(py - y) > clear)
+            rock_t > 0.0 && noise(seed, 0, x, y, cell) < rock_t && piles.iter().all(|&(px, py, clear)| (px - x).hypot(py - y) > clear)
         };
         let (w, h) = (self.w, self.h);
         self.rock = vec![false; w * h];
@@ -1131,6 +1223,12 @@ impl BigDish {
     /// agar cell, searching outward ring by ring, or stays if none is free
     /// within 16 dish cells (a packed blob has few free cells near). Returns the fine cells walled.
     pub fn build_wall(&mut self, ax: f32, ay: f32, bx: f32, by: f32, width: f32) -> usize {
+        self.build_wall_hp(ax, ay, bx, by, width, self.p.wall_hp)
+    }
+
+    /// `build_wall` with its cells' health `hp` (0: it never breaks), as a
+    /// map's walls are built.
+    pub fn build_wall_hp(&mut self, ax: f32, ay: f32, bx: f32, by: f32, width: f32, hp: f32) -> usize {
         let s = self.p.scale as f32;
         let (w, h) = (self.w, self.h);
         if self.wall.is_empty() {
@@ -1154,14 +1252,14 @@ impl BigDish {
                 }
             }
         }
-        if self.p.wall_hp > 0.0 && self.wall_health.is_empty() {
+        if hp > 0.0 && self.wall_health.is_empty() {
             self.wall_health = vec![0.0; w * h];
         }
         for &i in &cells {
             self.agar[i] = false;
             self.wall[i] = true;
             if !self.wall_health.is_empty() {
-                self.wall_health[i] = self.p.wall_hp;
+                self.wall_health[i] = hp;
             }
             self.trail[i] = 0.0;
             for f in self.species_trail.iter_mut() {
@@ -1169,7 +1267,7 @@ impl BigDish {
             }
             if !self.charge.is_empty() && self.pile_of[i] > 0 {
                 self.pile_charge[self.pile_of[i] as usize - 1] -= self.charge[i];
-                self.pile_full[self.pile_of[i] as usize - 1] -= self.p.crystal_charge;
+                self.pile_full[self.pile_of[i] as usize - 1] -= self.pile_fill[self.pile_of[i] as usize - 1];
                 self.charge[i] = 0.0;
                 self.pile_of[i] = 0;
             }
@@ -1282,13 +1380,13 @@ impl BigDish {
             return;
         }
         let s = self.p.scale as f32;
-        let r = self.p.pile_r * s;
-        let n = r.ceil() as i32;
         self.charge = vec![0.0; self.w * self.h];
         self.pile_of = vec![0; self.w * self.h];
         self.pile_full = vec![0.0; self.piles.len()];
         self.pile_cells.clear();
         for pi in 0..self.piles.len() {
+            let (r, full) = (self.pile_rs[pi] * s, self.pile_fill[pi]);
+            let n = r.ceil() as i32;
             let (cx, cy) = (self.piles[pi].0 * s, self.piles[pi].1 * s);
             for dy in -n..=n {
                 for dx in -n..=n {
@@ -1297,9 +1395,9 @@ impl BigDish {
                     }
                     if let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) {
                         if self.agar[i] && self.pile_of[i] == 0 {
-                            self.charge[i] = self.p.crystal_charge;
+                            self.charge[i] = full;
                             self.pile_of[i] = pi as u16 + 1;
-                            self.pile_full[pi] += self.p.crystal_charge;
+                            self.pile_full[pi] += full;
                             self.pile_cells.push(i as u32);
                         }
                     }
@@ -1406,11 +1504,13 @@ impl BigDish {
         }
         let g = self.p.crystal_regrow;
         if g > 0.0 {
-            let full = self.p.crystal_charge;
             for &i in &self.pile_cells {
                 let i = i as usize;
-                if self.pile_of[i] > 0 && self.charge[i] < full {
-                    self.charge[i] += g * (full - self.charge[i]);
+                if self.pile_of[i] > 0 {
+                    let full = self.pile_fill[self.pile_of[i] as usize - 1];
+                    if self.charge[i] < full {
+                        self.charge[i] += g * (full - self.charge[i]);
+                    }
                 }
             }
         }
@@ -1422,7 +1522,7 @@ impl BigDish {
 
     fn place_walkers(&mut self) {
         let (seed, n, s) = (self.p.seed, self.p.walkers, self.p.scale as f32);
-        let (hx, hy) = (self.piles[0].0 * s, self.piles[0].1 * s);
+        let (hx, hy) = (self.home.0 * s, self.home.1 * s);
         // A blob as dense as today's inoculum: about 0.9 of the cells in it.
         let r = (n as f32 / (0.9 * std::f32::consts::PI)).sqrt();
         let (hx, hy, r) = if self.p.blob_r > 0.0 { (self.w as f32 / 2.0, self.h as f32 / 2.0, self.p.blob_r * s) } else { (hx, hy, r) };
@@ -2338,9 +2438,9 @@ impl BigDish {
     /// then `fed_scent` of that, as today's `deposit_food` does.
     fn lay_scent(&mut self) {
         let k = if self.p.scent_coarse { 1.0 } else { self.p.scale as f32 };
-        let r = self.p.pile_r * k;
-        let n = r.ceil() as i32;
         for (pi, &(px, py)) in self.piles.iter().enumerate() {
+            let r = self.pile_rs[pi] * k;
+            let n = r.ceil() as i32;
             let strength = self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 } * self.crystal_left(pi);
             let (cx, cy) = (px * k, py * k);
             for dy in -n..=n {
@@ -2381,9 +2481,9 @@ impl BigDish {
     pub fn scent_laid(&self) -> Vec<f32> {
         let mut out = vec![0.0f32; self.sw * self.sh];
         let k = if self.p.scent_coarse { 1.0 } else { self.p.scale as f32 };
-        let r = self.p.pile_r * k;
-        let n = r.ceil() as i32;
         for (pi, &(px, py)) in self.piles.iter().enumerate() {
+            let r = self.pile_rs[pi] * k;
+            let n = r.ceil() as i32;
             let strength = self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 } * self.crystal_left(pi);
             let (cx, cy) = (px * k, py * k);
             for dy in -n..=n {
@@ -2408,12 +2508,12 @@ impl BigDish {
     /// A pile counts as reached once tube lies on it.
     pub fn update_reached(&mut self) {
         let s = self.p.scale as f32;
-        let r = self.p.pile_r * s;
-        let n = r.ceil() as i32;
         for pi in 0..self.piles.len() {
             if self.reached[pi] {
                 continue;
             }
+            let r = self.pile_rs[pi] * s;
+            let n = r.ceil() as i32;
             let (cx, cy) = (self.piles[pi].0 * s, self.piles[pi].1 * s);
             'pile: for dy in -n..=n {
                 for dx in -n..=n {
@@ -2575,8 +2675,8 @@ impl BigDish {
                         let i = (py as usize * down + dy) * self.w + px as usize * down + dx;
                         v = v.max(self.trail[i]);
                         inside |= self.agar[i];
-                        if !self.charge.is_empty() {
-                            ch = ch.max(self.charge[i] / self.p.crystal_charge);
+                        if !self.charge.is_empty() && self.pile_of[i] > 0 {
+                            ch = ch.max(self.charge[i] / self.pile_fill[self.pile_of[i] as usize - 1]);
                         }
                         if !self.rock.is_empty() {
                             rock |= self.rock[i];
