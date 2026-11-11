@@ -1,0 +1,15 @@
+seed 1 fight t   2.0s  walkers 0.503,0.497
+seed 1 fight t   4.0s  walkers 0.509,0.491
+seed 1 fight t   6.0s  walkers 0.513,0.487
+seed 1 fight t   8.0s  walkers 0.519,0.481
+seed 1 fight t  10.0s  walkers 0.518,0.482
+seed 1 fight t  12.0s  walkers 0.499,0.501
+seed 1 fight t  14.0s  walkers 0.477,0.523
+seed 1 fight t  16.0s  walkers 0.460,0.540
+seed 1 fight t  18.0s  walkers 0.424,0.576
+seed 1 fight t  20.0s  walkers 0.392,0.608
+seed 1 fight t  22.0s  walkers 0.368,0.632
+seed 1 fight t  24.0s  walkers 0.352,0.648
+seed 1 fight t  26.0s  walkers 0.343,0.657
+seed 1 fight t  28.0s  walkers 0.341,0.659
+seed 1 fight t  30.0s  walkers 0.341,0.659

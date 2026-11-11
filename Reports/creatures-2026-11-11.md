@@ -39,6 +39,22 @@ droplets crawl and making species fight over a border. Page: https://claude.ai/a
   Seed 1 each. A fight needs an imbalance the player can make (more walkers,
   food, a push), which these symmetric dishes do not have.
 
+## An edge in the fight (`species_boost`)
+
+Species 0 lays `species_boost` times the deposit. On the two halves of the 1M
+network with conversion 1.2 and no avoidance, boost 1.5 against 1.0 (even),
+8 seeds, deciding measure named before the run: species 0's share of
+walkers at 16 s. **0.448-0.518 (median 0.474) against 0.450-0.580 (0.500):
+lower on 6 of 8, p 0.29.** A louder trail is not a lasting edge. It wins
+early (share at 8 s higher on 6 of 8) and then loses walkers (falling from
+8 to 16 s on 7 of 8): the boosted side pushes its tubes into the other
+half, where they are outweighed and convert. Even games swing too (0.45 to
+0.58 at 16 s), so conversion does move walkers; what it rewards is not yet
+clear. On seed 1 over 30 s, the boosted side wrapped tubes round the rim,
+lost them, and ended with 0.34 of the walkers, the two bodies drawn apart
+with an empty band between them. Script:
+[`creatures-2026-11-11/fight.sh`](creatures-2026-11-11/fight.sh).
+
 ## What this means for play
 
 A grazing droplet is a small creature with a body, a wake of bare ground
@@ -46,9 +62,9 @@ behind it and a reason to move, all from the simulation. Several hundred of
 them roam a dish; two species roam among each other without merging. That
 gives the RTS direction countable units made of mould. Grass is also a map
 resource that the creatures visibly use up, and its regrowth rate sets how
-far they roam. The next question is what makes one body beat another: an
-uneven start, food that grows a body, or a rule where the larger body takes
-the smaller on contact.
+far they roam. A stronger trail is not that edge: it overreaches. The next tries are an
+edge in numbers (more walkers at the start, or food that grows a body) and
+a rule where a body that touches a smaller one takes it.
 
 ## Commands
 
