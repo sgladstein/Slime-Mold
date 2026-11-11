@@ -1,0 +1,26 @@
+seed 15 dropfast t  10.0s  tube  4267.2  loops    1  width 6.91  reach  135.5  piles 7/12  strays 0.003  ms/tick 11.97
+seed 15 dropfast t  10.0s  contrast 3.68
+seed 15 dropfast t  10.0s  extent r50 134.2 r90 183.8
+seed 15 dropfast t  10.0s  kinds k0 n 24035 on 1.000 r 135.7  k1 n 5965 on 0.987 r 131.0
+seed 15 dropfast t  20.0s  tube  3997.9  loops    1  width 7.14  reach  136.1  piles 9/12  strays 0.003  ms/tick 11.90
+seed 15 dropfast t  20.0s  contrast 3.18
+seed 15 dropfast t  20.0s  extent r50 134.1 r90 183.3
+seed 15 dropfast t  20.0s  kinds k0 n 24035 on 1.000 r 136.0  k1 n 5965 on 0.985 r 129.7
+seed 15 dropfast t  30.0s  tube  3875.6  loops    0  width 7.24  reach  136.2  piles 9/12  strays 0.002  ms/tick 11.90
+seed 15 dropfast t  30.0s  contrast 2.97
+seed 15 dropfast t  30.0s  extent r50 133.3 r90 182.7
+seed 15 dropfast t  30.0s  kinds k0 n 24035 on 1.000 r 135.4  k1 n 5965 on 0.988 r 127.8
+seed 15 dropfast t  40.0s  tube  3790.2  loops    0  width 7.45  reach  136.9  piles 9/12  strays 0.003  ms/tick 11.85
+seed 15 dropfast t  40.0s  contrast 2.81
+seed 15 dropfast t  40.0s  extent r50 132.7 r90 182.4
+seed 15 dropfast t  40.0s  kinds k0 n 24035 on 1.000 r 135.2  k1 n 5965 on 0.987 r 125.9
+seed 15 dropfast t  50.0s  tube  3727.3  loops    0  width 7.40  reach  136.8  piles 9/12  strays 0.003  ms/tick 11.82
+seed 15 dropfast t  50.0s  contrast 2.70
+seed 15 dropfast t  50.0s  extent r50 132.0 r90 181.8
+seed 15 dropfast t  50.0s  kinds k0 n 24035 on 1.000 r 134.5  k1 n 5965 on 0.986 r 123.5
+seed 15 dropfast t  60.0s  tube  3660.3  loops    0  width 7.46  reach  136.9  piles 9/12  strays 0.002  ms/tick 11.81
+seed 15 dropfast t  60.0s  contrast 2.59
+seed 15 dropfast t  60.0s  extent r50 131.8 r90 181.6
+seed 15 dropfast t  60.0s  kinds k0 n 24035 on 1.000 r 134.4  k1 n 5965 on 0.989 r 122.6
+seed 15 dropfast firsts 0:72:0.57:0.0 1:61:0.51:0.2 2:90:0.72:-1.0 3:34:0.27:0.0 4:75:0.87:14.5 5:98:0.85:-1.0 6:4:0.04:0.0 7:65:0.60:0.5 8:25:0.31:0.0 9:66:0.73:0.6 10:71:0.80:12.5 11:77:0.81:-1.0
+seed 15 dropfast hash=5a33c089d8af4248

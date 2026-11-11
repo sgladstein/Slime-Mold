@@ -1,0 +1,26 @@
+seed 2 scoutsonly t  10.0s  tube  3378.9  loops    3  width 7.79  reach  125.3  piles 8/12  strays 0.006  ms/tick 12.86
+seed 2 scoutsonly t  10.0s  contrast 1.88
+seed 2 scoutsonly t  10.0s  extent r50 150.3 r90 191.5
+seed 2 scoutsonly t  10.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.994 r 150.3
+seed 2 scoutsonly t  20.0s  tube  3235.8  loops    1  width 7.90  reach  126.7  piles 8/12  strays 0.007  ms/tick 12.99
+seed 2 scoutsonly t  20.0s  contrast 1.64
+seed 2 scoutsonly t  20.0s  extent r50 147.6 r90 200.0
+seed 2 scoutsonly t  20.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 147.6
+seed 2 scoutsonly t  30.0s  tube  3155.1  loops    3  width 7.63  reach  127.6  piles 8/12  strays 0.007  ms/tick 13.38
+seed 2 scoutsonly t  30.0s  contrast 1.44
+seed 2 scoutsonly t  30.0s  extent r50 143.0 r90 205.7
+seed 2 scoutsonly t  30.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 143.0
+seed 2 scoutsonly t  40.0s  tube  2903.0  loops    0  width 7.95  reach  127.9  piles 8/12  strays 0.008  ms/tick 13.30
+seed 2 scoutsonly t  40.0s  contrast 1.18
+seed 2 scoutsonly t  40.0s  extent r50 138.9 r90 208.3
+seed 2 scoutsonly t  40.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.992 r 138.9
+seed 2 scoutsonly t  50.0s  tube  2899.4  loops    2  width 7.29  reach  128.3  piles 8/12  strays 0.007  ms/tick 13.18
+seed 2 scoutsonly t  50.0s  contrast 1.17
+seed 2 scoutsonly t  50.0s  extent r50 138.0 r90 209.9
+seed 2 scoutsonly t  50.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 138.0
+seed 2 scoutsonly t  60.0s  tube  2873.4  loops    0  width 7.66  reach  128.5  piles 8/12  strays 0.007  ms/tick 13.25
+seed 2 scoutsonly t  60.0s  contrast 1.16
+seed 2 scoutsonly t  60.0s  extent r50 137.8 r90 211.5
+seed 2 scoutsonly t  60.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 137.8
+seed 2 scoutsonly firsts 0:72:0.57:0.0 1:51:0.66:0.0 2:20:0.26:0.0 3:80:0.87:-1.0 4:70:0.58:-1.0 5:65:0.80:0.5 6:49:0.49:0.0 7:72:0.86:-1.0 8:86:0.76:-1.0 9:11:0.14:0.0 10:53:0.48:0.0 11:40:0.32:0.0
+seed 2 scoutsonly hash=ad085e9459fc28c6

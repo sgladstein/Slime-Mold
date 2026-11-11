@@ -1,0 +1,25 @@
+seed 3 together t  10.0s  tube 13129.8  loops   33  width 5.32  reach  195.4  piles 1/1  strays 0.001  ms/tick 221.93
+seed 3 together t  10.0s  contrast 17.92
+seed 3 together t  10.0s  pure 0.983  shares 0.306,0.694  left0 0.992  changed 0.000
+seed 3 together t  10.0s  own s0 walkers 29869 area 2959.0 pieces 82  s1 walkers 1000131 area 7023.8 pieces 12
+seed 3 together t  20.0s  tube 14500.8  loops   59  width 5.35  reach  196.2  piles 1/1  strays 0.001  ms/tick 222.31
+seed 3 together t  20.0s  contrast 22.93
+seed 3 together t  20.0s  pure 0.967  shares 0.306,0.694  left0 0.987  changed 0.118
+seed 3 together t  20.0s  own s0 walkers 29869 area 2860.4 pieces 64  s1 walkers 1000131 area 8680.5 pieces 7
+seed 3 together t  30.0s  tube 14348.6  loops   50  width 5.65  reach  196.6  piles 1/1  strays 0.000  ms/tick 221.70
+seed 3 together t  30.0s  contrast 21.01
+seed 3 together t  30.0s  pure 0.969  shares 0.306,0.694  left0 0.991  changed 0.093
+seed 3 together t  30.0s  own s0 walkers 29869 area 2791.7 pieces 61  s1 walkers 1000131 area 8768.6 pieces 4
+seed 3 together t  40.0s  tube 13501.5  loops   54  width 6.16  reach  196.4  piles 1/1  strays 0.000  ms/tick 219.72
+seed 3 together t  40.0s  contrast 20.95
+seed 3 together t  40.0s  pure 0.967  shares 0.306,0.694  left0 0.995  changed 0.104
+seed 3 together t  40.0s  own s0 walkers 29869 area 2726.2 pieces 49  s1 walkers 1000131 area 8468.4 pieces 2
+seed 3 together t  50.0s  tube 12798.5  loops   40  width 6.64  reach  196.6  piles 1/1  strays 0.000  ms/tick 217.43
+seed 3 together t  50.0s  contrast 12.54
+seed 3 together t  50.0s  pure 0.969  shares 0.306,0.694  left0 0.992  changed 0.084
+seed 3 together t  50.0s  own s0 walkers 29869 area 2715.2 pieces 47  s1 walkers 1000131 area 8110.2 pieces 1
+seed 3 together t  60.0s  tube 12087.8  loops   22  width 6.90  reach  196.6  piles 1/1  strays 0.000  ms/tick 216.76
+seed 3 together t  60.0s  contrast 9.57
+seed 3 together t  60.0s  pure 0.963  shares 0.306,0.694  left0 0.992  changed 0.086
+seed 3 together t  60.0s  own s0 walkers 29869 area 2660.1 pieces 43  s1 walkers 1000131 area 7637.7 pieces 1
+seed 3 together hash=d202db652812ca44

@@ -1,0 +1,26 @@
+seed 8 scoutsonly t  10.0s  tube  3462.2  loops    1  width 7.35  reach  127.2  piles 6/12  strays 0.007  ms/tick 14.87
+seed 8 scoutsonly t  10.0s  contrast 2.04
+seed 8 scoutsonly t  10.0s  extent r50 151.8 r90 199.4
+seed 8 scoutsonly t  10.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 151.8
+seed 8 scoutsonly t  20.0s  tube  3358.2  loops    0  width 7.25  reach  128.3  piles 6/12  strays 0.007  ms/tick 15.45
+seed 8 scoutsonly t  20.0s  contrast 1.81
+seed 8 scoutsonly t  20.0s  extent r50 149.9 r90 207.9
+seed 8 scoutsonly t  20.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 149.9
+seed 8 scoutsonly t  30.0s  tube  3399.1  loops    3  width 7.18  reach  129.0  piles 6/12  strays 0.007  ms/tick 15.32
+seed 8 scoutsonly t  30.0s  contrast 1.87
+seed 8 scoutsonly t  30.0s  extent r50 148.2 r90 211.7
+seed 8 scoutsonly t  30.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 148.2
+seed 8 scoutsonly t  40.0s  tube  3222.6  loops    2  width 7.85  reach  129.7  piles 6/12  strays 0.006  ms/tick 15.26
+seed 8 scoutsonly t  40.0s  contrast 1.61
+seed 8 scoutsonly t  40.0s  extent r50 145.5 r90 214.3
+seed 8 scoutsonly t  40.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.994 r 145.5
+seed 8 scoutsonly t  50.0s  tube  3046.9  loops    0  width 7.86  reach  129.8  piles 6/12  strays 0.006  ms/tick 15.05
+seed 8 scoutsonly t  50.0s  contrast 1.33
+seed 8 scoutsonly t  50.0s  extent r50 145.2 r90 216.1
+seed 8 scoutsonly t  50.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.994 r 145.2
+seed 8 scoutsonly t  60.0s  tube  3026.0  loops    1  width 7.42  reach  130.4  piles 6/12  strays 0.007  ms/tick 15.06
+seed 8 scoutsonly t  60.0s  contrast 1.30
+seed 8 scoutsonly t  60.0s  extent r50 144.9 r90 217.7
+seed 8 scoutsonly t  60.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 144.9
+seed 8 scoutsonly firsts 0:72:0.57:0.0 1:88:0.71:-1.0 2:80:0.83:-1.0 3:52:0.42:0.0 4:52:0.63:0.0 5:100:0.84:-1.0 6:16:0.16:0.0 7:69:0.82:-1.0 8:17:0.21:0.0 9:93:0.79:-1.0 10:59:0.77:0.2 11:80:0.81:-1.0
+seed 8 scoutsonly hash=d859f592e2122406
