@@ -44,3 +44,4 @@ if the link ever stops working. Newest last.
 | 11-11 | Jenson's Missing Looks (trunks, contagion, fronts on the big dish) | https://claude.ai/artifact/DqJxgjQGVgnwQNwbbzoGrg | `jenson-looks-2026-11-11/` (page.html, `pics/` stills and MP4s) |
 | 11-11 | Mould Creature Rules (outside rules judged as creatures: species, explorers, droplets; texture knobs) | https://claude.ai/artifact/VLnRN8wTX9RxniD4c8drBw | `outside-rules-2026-11-11/` (page.html, `pics/` stills and MP4s, run.sh, `raw/`) |
 | 11-11 | Grazing Mould Cells (droplets that crawl by grazing, two species of cells, conversion tries) | https://claude.ai/artifact/YYZJSPdm6VAb857m7WnJLR | `creatures-2026-11-11/` (page.html, `pics/`, graze.sh, drift.py, `raw/`) |
+| 11-11 | Larder M2 Census | https://claude.ai/artifact/1LKdbtQbsQJxv76ApxThRw | `larder-m2-2026-11-11/` (open `page.html`; pictures in `look/`) |

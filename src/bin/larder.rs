@@ -16,6 +16,9 @@
 //! - A: attack the mould's core (its home pile, on the left).
 //! - 1 hold fire, 2 defend (the default: only mould near them), 3 free fire.
 //! - Space pauses; Tab runs four times faster; R restarts; Esc quits.
+//! - Spending (M2): B buys a soldier at the larder (400 food); T builds a
+//!   turret under the cursor (600, within a soldier's range); G lays 300
+//!   food of bait under the cursor (within a soldier's range).
 //!
 //! **What is drawn.** The dish exactly as the simulation has it (the game's
 //! look, `View::bare`): a shot is the wound it leaves, nothing painted.
@@ -48,6 +51,8 @@ const SCALE: u32 = 4;
 /// One dish step of game time at normal speed.
 const STEP: Duration = Duration::from_nanos(1_000_000_000 / GAME_SECOND);
 const FAST: u32 = 4;
+/// Food a G press lays as bait (the baiter plan's size, `larderm2`).
+const BAIT: f32 = 300.0;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let seed = std::env::args().nth(1).and_then(|s| s.parse().ok()).unwrap_or(1);
@@ -157,6 +162,19 @@ impl App {
                 self.game = field_game(self.seed, Rules::default());
                 self.selected.clear();
             }
+            KeyCode::KeyB => {
+                self.game.buy();
+            }
+            KeyCode::KeyT => {
+                if let Some(c) = self.cursor {
+                    self.game.build_turret(c);
+                }
+            }
+            KeyCode::KeyG => {
+                if let Some(c) = self.cursor {
+                    self.game.bait(c, BAIT);
+                }
+            }
             KeyCode::KeyA => {
                 for &k in &self.selected {
                     self.game.order(k, Order::Attack);
@@ -244,6 +262,20 @@ fn draw_squad(g: &Game, selected: &[usize], drag: Option<((f32, f32), (f32, f32)
             dotted(frame, a, b, [255, 150, 60, 255]);
         }
     }
+    // Turrets: a grey square, its hp as a bar under it.
+    for t in &g.turrets {
+        let (cx, cy) = ((t.x * s_) as i32, (t.y * s_) as i32);
+        for dy in -4..=4 {
+            for dx in -4..=4 {
+                put(frame, cx + dx, cy + dy, [150, 160, 175, 255]);
+            }
+        }
+        let w = (t.hp / g.rules.turret_hp * 12.0).round() as i32;
+        for dx in -6..6 {
+            let c = if dx + 6 < w { [90, 220, 110, 255] } else { [70, 30, 30, 255] };
+            put(frame, cx + dx, cy + 7, c);
+        }
+    }
     for (k, s) in g.soldiers.iter().enumerate() {
         let (cx, cy) = ((s.x * s_) as i32, (s.y * s_) as i32);
         let col = if s.alive {
@@ -323,7 +355,9 @@ fn draw_hud(g: &Game, paused: bool, fast: bool, frame: &mut [u8]) {
     for px in frame[top..].chunks_exact_mut(4) {
         px.copy_from_slice(&[14, 16, 12, 255]);
     }
-    let y = (H as u32 * SCALE) as i32 + 8;
+    // `draw_text_scaled` takes logical pixels (half the frame's at scale
+    // 2). M1b passed frame pixels, which put every line below the frame.
+    let y = (H as u32 * SCALE / 2) as i32 + 4;
     let t = g.time();
     let clock = format!("{}:{:02}", t as u32 / 60, t as u32 % 60);
     let line1 = format!(
@@ -337,22 +371,22 @@ fn draw_hud(g: &Game, paused: bool, fast: bool, frame: &mut [u8]) {
         if fast { "   FAST" } else { "" },
     );
     let s = 2;
-    hud::draw_text_scaled(frame, (w, h), s, (8, y), &line1, [235, 235, 220, 255]);
+    hud::draw_text_scaled(frame, (w, h), s, (4, y), &line1, [235, 235, 220, 255]);
     let line2 = match g.end {
         Some(e) => format!(
             "ROUND OVER: {} - SCORE {:.2} - R TO RESTART",
             e.band().to_uppercase(),
             g.score().unwrap_or(0.0)
         ),
-        None => "R-CLICK PILE: CLEAR   R-CLICK: MOVE   F+DRAG: BURN   A: ATTACK CORE   1/2/3: HOLD/DEFEND/FREE".into(),
+        None => "R-CLICK PILE: CLEAR  R-CLICK: MOVE  F+DRAG: BURN  A: CORE  1/2/3: HOLD/DEFEND/FREE".into(),
     };
-    hud::draw_text_scaled(frame, (w, h), s, (8, y + 20), &line2, [170, 175, 160, 255]);
+    hud::draw_text_scaled(frame, (w, h), s, (4, y + 10), &line2, [170, 175, 160, 255]);
     let line3 = if g.core_down.is_some() {
         "THE MOULD'S CORE IS TAKEN: IT CAN NO LONGER DIVIDE"
     } else {
-        "SPACE: PAUSE   TAB: FAST   R: RESTART"
+        "B: SOLDIER 400  T: TURRET 600  G: BAIT 300  SPACE: PAUSE  TAB: FAST  R: RESTART"
     };
-    hud::draw_text_scaled(frame, (w, h), s, (8, y + 40), line3, [170, 175, 160, 255]);
+    hud::draw_text_scaled(frame, (w, h), s, (4, y + 20), line3, [170, 175, 160, 255]);
 }
 
 impl ApplicationHandler for App {
