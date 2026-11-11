@@ -266,3 +266,31 @@ in 30 s and never reached the pile behind the wall; 20,000 with growth on
 this world). A mould that spreads from a spot needs growth fed by the
 crystals: the Larder thread's W2b race start. This harness is ready for it
 (any GPU setting can be passed: `upkeep=`, `capacity=`, `crystal=`).
+
+### Why it stayed a blob, and a start that spreads (owner, 20:58Z)
+
+The owner: "Isn't this the whole point of slime molds that they spread out
+and find food and navigate mazes. Why does our stay as one blob?" The
+start was the cause, not the model: packed at home with one walker a cell
+(the crowd rule), the walkers have nowhere to step and every sensor reads
+the same thick trail, so nothing leads outward. A 30,000-walker grazing
+start (the creature thread's food-reach settings: sensor angle 90, turn
+45, reach 18 fine cells, deposit 5, keep 0.93, blocked deposit 1, graze
+weight 10) in a disc of 300 fine cells (about 6% full) at the world's
+middle becomes a network at once. Same seed, 60 s:
+
+| Pile (dish cells from the start) | Terrain + wall: reached at | Open ground: reached at |
+|---|---|---|
+| 4 (51) | 3 s | 4 s |
+| 1 (54, the wall across its way) | 13 s | 3 s |
+| 5 (59) | 12 s | 12 s |
+| 6 (76) | 35 s | 24 s |
+| 3 (94) | 36 s | 44 s |
+| 2 (96) | 49 s | 43 s |
+| All 7 | 50 s | 44 s |
+
+Open ground covered stays near 6.5% (a fixed body: tubes move, they do not
+add up). The network flows round rock and along its edges, the wall costs
+the pile behind it 10 s (the mould goes round it; 57 wall bites, none
+broken), and every crystal is reached in under a minute. One seed: a
+picture of the behaviour, not a census.

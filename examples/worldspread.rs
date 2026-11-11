@@ -57,15 +57,20 @@ fn main() {
     let mut e = Engine::new(&device, &queue, &shared, &s, scale);
     let (w, h) = (e.dish.w, e.dish.h);
     let piles = e.dish.piles.clone();
-    let home = piles[0];
+    // Where the mould starts: its home pile, or the dish's middle for a
+    // disc start (`start=disc disc=R`, R in fine cells).
+    let home = if s.start == Start::Disc { (w as f32 / scale as f32 / 2.0, h as f32 / scale as f32 / 2.0) } else { piles[0] };
+    let start_r = if s.start == Start::Disc { s.disc / scale as f32 } else { 0.0 };
     // A wall across the way to the nearest pile: 24 dish cells long, 2
     // thick, square to the line, 70% of the way there (past the start blob).
     if wall {
-        let (k, &(px, py)) = piles.iter().enumerate().skip(1).min_by(|a, b| (a.1 .0 - home.0).hypot(a.1 .1 - home.1).total_cmp(&(b.1 .0 - home.0).hypot(b.1 .1 - home.1))).unwrap();
+        let (k, &(px, py)) = piles.iter().enumerate().skip(1).filter(|(_, p)| (p.0 - home.0).hypot(p.1 - home.1) > start_r + 14.0).min_by(|a, b| (a.1 .0 - home.0).hypot(a.1 .1 - home.1).total_cmp(&(b.1 .0 - home.0).hypot(b.1 .1 - home.1))).unwrap();
         let (dx, dy) = (px - home.0, py - home.1);
         let d = dx.hypot(dy);
         let (ux, uy) = (dx / d, dy / d);
-        let (cx, cy) = (home.0 + dx * 0.7, home.1 + dy * 0.7);
+        // Past the start disc, short of the pile.
+        let at = (0.7 * d).max(start_r + 6.0).min(d - 6.0) / d;
+        let (cx, cy) = (home.0 + dx * at, home.1 + dy * at);
         e.build_wall(&shared, &s, cx - uy * 12.0, cy + ux * 12.0, cx + uy * 12.0, cy - ux * 12.0, 2.0);
         println!("wall across the way to pile {k}, {d:.0} dish cells from home");
     }
