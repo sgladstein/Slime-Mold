@@ -336,6 +336,8 @@ fn main() {
             "wet_step" => p.wet_step = f(),
             "terrain_blob" => p.terrain_blob = f(),
             "rect" => p.rect = f() != 0.0,
+            "wall_hp" => p.wall_hp = f(),
+            "wall_bite" => p.wall_bite = f(),
             "blocked_keep" => p.blocked_keep = f() != 0.0,
             "blocked_reset" => p.blocked_reset = f(),
             "blocked_retry" => p.blocked_retry = f() as u8,

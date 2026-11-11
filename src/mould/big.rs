@@ -291,6 +291,15 @@ pub struct BigParams {
     /// A rectangular world, three dish cells in from the edge, instead of
     /// the dish's ellipse: a world, not a dish (owner, 11-11 14:01Z).
     pub rect: bool,
+    /// Wall health a fine cell (0: walls never break). Owner, 11-11 15:24Z:
+    /// the mould must be able to damage walls or grow over them, with a
+    /// big slowdown, or a wall round a crystal shuts it out for good. Each
+    /// fine step every walker blocked by a wall cell it tried to enter
+    /// takes `wall_bite` from that cell; at 0 the cell is ground again, as
+    /// rubble: wet (the step x `wet_step`) and open to scent. The picture
+    /// draws a wall's brightness from its health.
+    pub wall_hp: f32,
+    pub wall_bite: f32,
     pub seed: u64,
 }
 
@@ -370,6 +379,8 @@ impl BigParams {
             wet_step: 0.5,
             terrain_blob: 12.0,
             rect: false,
+            wall_hp: 0.0,
+            wall_bite: 1.0,
             seed: 1,
         }
     }
@@ -457,6 +468,9 @@ pub struct BigDish {
     /// first. A wall is ground the mould cannot enter, the same channel as
     /// the rim and rock.
     pub wall: Vec<bool>,
+    /// Each wall cell's health (`wall_hp` > 0), else empty; and cells broken.
+    pub wall_health: Vec<f32>,
+    pub broken: usize,
     /// Threads for the field passes. Each cell is computed from the last
     /// field alone, so the result does not depend on it.
     pub threads: usize,
@@ -588,6 +602,8 @@ impl BigDish {
             rock: Vec::new(),
             wet: Vec::new(),
             wall: Vec::new(),
+            wall_health: Vec::new(),
+            broken: 0,
             threads: 1,
             p,
         };
@@ -730,9 +746,15 @@ impl BigDish {
                 }
             }
         }
+        if self.p.wall_hp > 0.0 && self.wall_health.is_empty() {
+            self.wall_health = vec![0.0; w * h];
+        }
         for &i in &cells {
             self.agar[i] = false;
             self.wall[i] = true;
+            if !self.wall_health.is_empty() {
+                self.wall_health[i] = self.p.wall_hp;
+            }
             self.trail[i] = 0.0;
             for f in self.species_trail.iter_mut() {
                 f[i] = 0.0;
@@ -785,6 +807,47 @@ impl BigDish {
             }
         }
         cells.len()
+    }
+
+    /// Blocked walkers bite the wall cell they tried to enter (`wall_hp`).
+    /// Damage is summed first and applied after, so walker order does not
+    /// matter; a cell at 0 becomes rubble: ground again, wet, scent open.
+    fn bite_walls(&mut self, blocked: &[(u32, f32, f32)]) {
+        let bite = self.p.wall_bite;
+        let mut hit: Vec<usize> = Vec::new();
+        for &(k, h, st) in blocked {
+            let (x, y, _) = self.walkers[k as usize];
+            if let Some(j) = self.cell(x + h.cos() * st, y + h.sin() * st) {
+                if self.wall[j] {
+                    hit.push(j);
+                }
+            }
+        }
+        for &j in &hit {
+            self.wall_health[j] -= bite;
+        }
+        let s = self.p.scale as f32;
+        let k = if self.p.scent_coarse { 1.0 / s } else { 1.0 };
+        for &j in &hit {
+            if self.wall[j] && self.wall_health[j] <= 0.0 {
+                self.wall[j] = false;
+                self.wall_health[j] = 0.0;
+                self.agar[j] = true;
+                if self.wet.is_empty() {
+                    self.wet = vec![false; self.w * self.h];
+                    if self.rock.is_empty() {
+                        self.rock = vec![false; self.w * self.h];
+                    }
+                }
+                self.wet[j] = true;
+                let (fx, fy) = ((j % self.w) as f32 * k, (j / self.w) as f32 * k);
+                let si = fy as usize * self.sw + fx as usize;
+                if si < self.scent_agar.len() {
+                    self.scent_agar[si] = true;
+                }
+                self.broken += 1;
+            }
+        }
     }
 
     /// Crystals (`crystal_charge`): every fine agar cell in a pile's disc
@@ -1145,6 +1208,9 @@ impl BigDish {
                 self.lay(k as usize, i, dep * p.blocked_deposit * self.explore_share(k as usize));
             }
         }
+        if !self.wall_health.is_empty() {
+            self.bite_walls(&blocked);
+        }
         for &(k, h, _) in &blocked {
             let keep = p.blocked_keep && unit(keyed(seed, t, DRAW_KEEP, k)) >= p.blocked_reset;
             self.walkers[k as usize].2 = if keep { h } else { unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU };
@@ -1482,6 +1548,7 @@ impl BigDish {
         for py in 0..ih {
             for px in 0..iw {
                 let (mut v, mut inside, mut ch, mut rock, mut wet, mut wall) = (0.0f32, false, 0.0f32, false, false, false);
+                let mut wall_left = 1.0f32;
                 for dy in 0..down {
                     for dx in 0..down {
                         let i = (py as usize * down + dy) * self.w + px as usize * down + dx;
@@ -1494,8 +1561,11 @@ impl BigDish {
                             rock |= self.rock[i];
                             wet |= self.wet[i];
                         }
-                        if !self.wall.is_empty() {
-                            wall |= self.wall[i];
+                        if !self.wall.is_empty() && self.wall[i] {
+                            wall = true;
+                            if !self.wall_health.is_empty() {
+                                wall_left = wall_left.min(self.wall_health[i] / self.p.wall_hp);
+                            }
                         }
                     }
                 }
@@ -1504,7 +1574,15 @@ impl BigDish {
                 let sc = self.scent_at(c, r);
                 let px_rgb = if !inside {
                     // Rock is drawn apart from the world's edge: it is ground.
-                    if wall { [150, 150, 158] } else if rock { [34, 30, 28] } else { [8, 14, 18] }
+                    if wall {
+                        // A worn wall dims toward the rock colour.
+                        let a = 0.25 + 0.75 * wall_left.max(0.0);
+                        [(34.0 + 116.0 * a) as u8, (30.0 + 120.0 * a) as u8, (28.0 + 130.0 * a) as u8]
+                    } else if rock {
+                        [34, 30, 28]
+                    } else {
+                        [8, 14, 18]
+                    }
                 } else {
                     // Trail: a soft knee, so faint wisps show and tubes glow.
                     let a = 1.0 - (-v / 6.0).exp();
@@ -1547,7 +1625,7 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.grass).chain(&self.charge).chain(self.species_trail.iter().flatten()) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
         for &c in &self.spec {
@@ -1830,6 +1908,23 @@ mod tests {
         for (i, &wl) in d.wall.iter().enumerate() {
             if wl {
                 assert!(d.trail[i] == 0.0, "no trail enters a wall");
+            }
+        }
+        assert_eq!(d.broken, 0, "walls without health never break");
+        // With health, the crowd pressing on a wall wears it through.
+        let mut b = BigDish::new(BigParams { crystal_charge: 0.0, terrain_rock: 0.0, terrain_wet: 0.0, wall_hp: 2.0, wall_bite: 1.0, ..p.clone() });
+        for _ in 0..20 {
+            b.tick();
+        }
+        let (hx, hy) = b.piles[0];
+        b.build_wall(hx - 3.0, hy - 10.0, hx - 3.0, hy + 10.0, 2.0);
+        for _ in 0..60 {
+            b.tick();
+        }
+        assert!(b.broken > 0, "the mould breaks a weak wall");
+        for (i, &wl) in b.wall.iter().enumerate() {
+            if !wl && b.wall_health[i] == 0.0 && b.wet[i] {
+                assert!(b.agar[i], "rubble is ground again");
             }
         }
         for &(px, py) in &a.piles {

@@ -18,6 +18,8 @@ use slime_mould::mould::big::{BigDish, BigParams};
 fn main() {
     let mut seeds: Vec<u64> = (1..=8).collect();
     let (mut scale, mut walkers, mut seconds, mut threads, mut look) = (2usize, 20_000usize, 30u32, 4usize, None::<String>);
+    let mut arms: Vec<String> = vec!["none".into(), "road".into(), "random".into()];
+    let (mut wall_hp, mut wall_bite) = (0.0f32, 1.0f32);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
         match k {
@@ -30,13 +32,16 @@ fn main() {
             "seconds" => seconds = v.parse().unwrap(),
             "threads" => threads = v.parse().unwrap(),
             "look" => look = Some(v.into()),
+            "arms" => arms = v.split(',').map(String::from).collect(),
+            "wall_hp" => wall_hp = v.parse().unwrap(),
+            "wall_bite" => wall_bite = v.parse().unwrap(),
             _ => panic!("unknown {k}"),
         }
     }
-    println!("worldwall scale {scale} walkers {walkers} seconds {seconds}");
+    println!("worldwall scale {scale} walkers {walkers} seconds {seconds} wall_hp {wall_hp} wall_bite {wall_bite}");
     for &seed in &seeds {
         let mut out = Vec::new();
-        for arm in ["none", "road", "random"] {
+        for arm in arms.iter().map(String::as_str) {
             let p = BigParams {
                 scale,
                 substeps: scale,
@@ -47,6 +52,8 @@ fn main() {
                 rect: true,
                 crystal_charge: 1.0,
                 crystal_eat: 0.005,
+                wall_hp,
+                wall_bite,
                 seed,
                 ..BigParams::today()
             };
@@ -54,8 +61,33 @@ fn main() {
             d.threads = threads;
             let ticks_per_s = slime_mould::mould::STEPS_PER_SECOND as u64;
             let mut wall_cells = 0;
+            // `ring`: a closed wall round a crystal, and the game second
+            // the mould first eats from it. The crystal is picked at 5 s, the
+            // same way in every arm (the arms share their first 5 s): the
+            // one nearest home that is still full and has no walker within
+            // the ring. (A first try took the nearest crystal at the start;
+            // the home blob already covered it.)
+            let mut ring_pile = 0usize;
+            let mut first_bite: Option<f32> = None;
             for t in 0..seconds as u64 * ticks_per_s {
-                if t == 5 * ticks_per_s && arm != "none" {
+                if t == 5 * ticks_per_s {
+                    let (hx, hy) = d.piles[0];
+                    let (s, r) = (scale as f32, d.p.pile_r + 6.0);
+                    ring_pile = (1..d.piles.len())
+                        .filter(|&i| d.crystal_left(i) >= 0.999)
+                        .filter(|&i| !d.walkers.iter().any(|&(x, y, _)| (x / s - d.piles[i].0).hypot(y / s - d.piles[i].1) < r))
+                        .min_by(|&a, &b| (d.piles[a].0 - hx).hypot(d.piles[a].1 - hy).total_cmp(&(d.piles[b].0 - hx).hypot(d.piles[b].1 - hy)))
+                        .unwrap_or(0);
+                }
+                if t == 5 * ticks_per_s && arm == "ring" {
+                    let (cx, cy) = d.piles[ring_pile];
+                    let r = d.p.pile_r + 4.0;
+                    let n = 16;
+                    for q in 0..n {
+                        let (a0, a1) = (q as f32 / n as f32 * std::f32::consts::TAU, (q + 1) as f32 / n as f32 * std::f32::consts::TAU);
+                        wall_cells += d.build_wall(cx + r * a0.cos(), cy + r * a0.sin(), cx + r * a1.cos(), cy + r * a1.sin(), 2.0);
+                    }
+                } else if t == 5 * ticks_per_s && arm != "none" {
                     let (hx, hy) = d.piles[0];
                     let (len, width) = (60.0f32, 3.0f32);
                     let (cx, cy, ang) = if arm == "road" {
@@ -83,16 +115,29 @@ fn main() {
                     wall_cells = d.build_wall(cx - dx, cy - dy, cx + dx, cy + dy, width);
                 }
                 d.tick();
+                if ring_pile > 0 && first_bite.is_none() && d.crystal_left(ring_pile) < 0.999 {
+                    first_bite = Some(d.seconds());
+                }
             }
             let others: f32 = (1..d.piles.len()).map(|i| d.pile_full[i] - d.pile_charge[i]).sum();
             let full: f32 = d.pile_full[1..].iter().sum();
-            println!("seed {seed} {arm:6} wall {wall_cells:5} drained {:.4} of others  home left {:.3}  hash {:016x}", others / full, d.crystal_left(0), d.hash());
+            println!(
+                "seed {seed} {arm:6} wall {wall_cells:5} drained {:.4} of others  home left {:.3}  ring pile bitten {}  left {:.3}  broken {}  hash {:016x}",
+                others / full,
+                d.crystal_left(0),
+                first_bite.map_or("never".to_string(), |s| format!("{s:.1}s")),
+                d.crystal_left(ring_pile),
+                d.broken,
+                d.hash()
+            );
             if let Some(dir) = &look {
                 std::fs::create_dir_all(dir).unwrap();
                 d.image(1).save(format!("{dir}/wall-s{seed}-{arm}.png")).unwrap();
             }
             out.push(others / full);
         }
-        println!("seed {seed} road-none {:+.4} road-random {:+.4}", out[1] - out[0], out[1] - out[2]);
+        if out.len() == 3 {
+            println!("seed {seed} road-none {:+.4} road-random {:+.4}", out[1] - out[0], out[1] - out[2]);
+        }
     }
 }
