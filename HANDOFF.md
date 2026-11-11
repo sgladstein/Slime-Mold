@@ -65,6 +65,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   as controls too, twin-tested in CI
   ([report](Reports/gpu-sandbox-2026-11-11.md)). Phase 4 starts as Larder
   World's W0: births, upkeep and starving per walker on the GPU.
+- Mould tiers for the Larder ladder: [the life cycle](wiki/model/life-cycle.md)
+  (CPU big dish, off by default). Spores, dormancy and an alarm the
+  player's strike lays give a Sporer (starve it: struck, it scatters), a
+  Sleeper (bait it: after a wake it is deaf for 5 s) and a Swarmer (it
+  walks into a kill zone), each 8 of 8 paired seeds against its control.
+  A mould that flees attack did not split; a migrating tier is open.
 - How it is judged: [the census](wiki/method/census.md).
 - [The field skirmish](wiki/rts/skirmish.md): version 1 (habits, salt, the
   lamp) is playable (https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw) and
@@ -154,6 +160,12 @@ Ask each again; none has an answer to assume.
    (world size, how a world ends, allies or rivals, fog of war, what carries
    between worlds) are listed in
    [its report](Reports/larder-world-roadmap-2026-11-11.md).
+
+9. **The Larder player AI** ([`Reports/larder-ai-2026-11-11.md`](Reports/larder-ai-2026-11-11.md),
+   [page](wiki/rts/player-ai.md)). Plays the soldiers through the player's own
+   commands (every round a replay), sees what a player sees, one brain per
+   side; five styles. Watch it: `cargo run --release --bin larder -- 17 ai=lure`.
+   Built on the CPU field as a harness to port to the Larder world.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo

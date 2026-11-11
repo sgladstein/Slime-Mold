@@ -1,0 +1,37 @@
+== seed 1: 1024 x 640, 20000 walkers, 7 piles
+seed 1 w-swarm t  10.0s  strike at 95,80 r 8: killed 1113
+seed 1 w-swarm t  10.0s  tube  2344.1  loops   18  width 4.75  reach  128.3  piles 4/7  strays 0.003  ms/tick 15.61
+seed 1 w-swarm t  10.0s  contrast 2.07
+seed 1 w-swarm t  10.0s  extent r50 113.9 r90 167.3
+seed 1 w-swarm t  10.0s  life walk 18887 spore 0 dormant 0 dead 1113  held 3/7  bodies 3 big 2312  centre 130.5,79.7  near 1156  rim 0.000/0.002
+seed 1 w-swarm t  10.5s  strike at 95,80 r 8: killed 90
+seed 1 w-swarm t  11.0s  strike at 95,80 r 8: killed 49
+seed 1 w-swarm t  11.5s  strike at 95,80 r 8: killed 42
+seed 1 w-swarm t  12.0s  strike at 95,80 r 8: killed 101
+seed 1 w-swarm t  12.5s  strike at 95,80 r 8: killed 90
+seed 1 w-swarm t  13.0s  strike at 95,80 r 8: killed 98
+seed 1 w-swarm t  13.5s  strike at 95,80 r 8: killed 81
+seed 1 w-swarm t  14.0s  strike at 95,80 r 8: killed 100
+seed 1 w-swarm t  14.5s  strike at 95,80 r 8: killed 50
+seed 1 w-swarm t  15.0s  strike at 95,80 r 8: killed 82
+seed 1 w-swarm t  20.0s  tube  2074.6  loops   10  width 4.99  reach  136.5  piles 4/7  strays 0.004  ms/tick 16.60
+seed 1 w-swarm t  20.0s  contrast 2.22
+seed 1 w-swarm t  20.0s  extent r50 110.3 r90 181.5
+seed 1 w-swarm t  20.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 1 big 2072  centre 131.0,79.5  near 3456  rim 0.000/0.004
+seed 1 w-swarm t  30.0s  tube  2010.1  loops    8  width 4.85  reach  164.7  piles 4/7  strays 0.005  ms/tick 17.21
+seed 1 w-swarm t  30.0s  contrast 2.21
+seed 1 w-swarm t  30.0s  extent r50 107.9 r90 187.6
+seed 1 w-swarm t  30.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 4 big 1968  centre 131.6,79.5  near 3345  rim 0.000/0.004
+seed 1 w-swarm t  40.0s  tube  1974.8  loops    8  width 4.79  reach  178.5  piles 4/7  strays 0.011  ms/tick 17.56
+seed 1 w-swarm t  40.0s  contrast 2.35
+seed 1 w-swarm t  40.0s  extent r50 106.8 r90 193.4
+seed 1 w-swarm t  40.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 3 big 1911  centre 132.3,79.4  near 3105  rim 0.000/0.007
+seed 1 w-swarm t  50.0s  tube  1946.9  loops    6  width 4.85  reach  191.4  piles 4/7  strays 0.008  ms/tick 19.24
+seed 1 w-swarm t  50.0s  contrast 2.33
+seed 1 w-swarm t  50.0s  extent r50 106.6 r90 197.2
+seed 1 w-swarm t  50.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 5 big 1840  centre 132.9,79.3  near 2925  rim 0.000/0.006
+seed 1 w-swarm t  60.0s  tube  1889.6  loops    7  width 4.87  reach  187.9  piles 4/7  strays 0.017  ms/tick 24.27
+seed 1 w-swarm t  60.0s  contrast 2.31
+seed 1 w-swarm t  60.0s  extent r50 105.2 r90 199.0
+seed 1 w-swarm t  60.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 3 big 1792  centre 133.3,79.2  near 2796  rim 0.000/0.002
+seed 1 w-swarm hash=a5229cede95b8c74

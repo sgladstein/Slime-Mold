@@ -1,7 +1,7 @@
 ---
 title: Name of the subject
 kind: dish | tool | mechanism | look | method | prototype | design
-status: current | open | decided | retired
+status: current | open | decided | paused | retired
 updated: YYYY-MM-DD
 sources: [Reports/report-name.md, Reports/other-report.md]
 code: [Params::field, Dish::field, CONST_NAME]
@@ -13,14 +13,6 @@ code: [Params::field, Dish::field, CONST_NAME]
 
 Two to five sentences: what is true today, the default value, the headline
 number with its spread. Rewrite this paragraph on every ingest; never append.
-
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| what was compared | the figure, with its range | 16 | 15-1, p 0.0005 | [report, section](../../Reports/report-name.md) |
-
-Only figures that are in a report. Copy the headline, link the rest.
 
 ## Owner's word
 

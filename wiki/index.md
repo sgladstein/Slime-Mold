@@ -7,6 +7,9 @@ Keep this file under 150 lines; lint checks it.
 
 ## Dishes
 
+Paused (owner, 2026-11-10 20:55Z): not tuned as a side effect of other
+work; a thread working on one directly may change it.
+
 - [Keep It Alive](dishes/keep-it-alive.md): the endless dish; works, but which of two humps a game lands in is luck so far.
 - [The Wild One](dishes/the-wild-one.md): a rival mould; scored by share of food eaten; first star is the opening, the rest is aim.
 - [The lesson and the three puzzle dishes](dishes/puzzle-dishes.md): Behind the Wall, Beat the Ruler, Running Dry; pass their bar at 45 degrees.
@@ -23,6 +26,7 @@ Keep this file under 150 lines; lint checks it.
 - [Water and sleep](model/water-and-sleep.md): dry mould sleeps, water wakes it; Keep It Alive only.
 - [Sensor angle and reach](model/sensors.md): 45 obeys then freezes, 22.5 lives but ignores you; reach stays 9.
 - [The mould at scale](model/scale.md): the GPU plan, the 1024 x 640 big dish and GPU timing test; the GPU sandbox (phase 3, built) with species, droplets and grazing as controls; phase 4 starts as Larder World W0 (growth); why Jenson's clips look different (no limit, drawing, respawn); trunks from a dense start, contagion on the big dish, fronts still open.
+- [The life cycle and the mould's answer to attack](model/life-cycle.md): spores, sleep and an alarm; Sporer, Sleeper and Swarmer tiers each beat their control 8/8 and have a counter (starve, bait, kill zone); fleeing fails.
 
 ## Looks
 
@@ -36,6 +40,7 @@ Keep this file under 150 lines; lint checks it.
 - [How RTS games are designed](rts/rts-craft.md): outside research (22 sources) and what it says about our demos: dominant strategies and unmanaged snowballs, fix the structure first.
 - [Larder, the mould as the enemy](rts/shooter.md): now Larder World (owner 11-11 14:06Z), a persistent GPU world with crystals and several species, phases W0-W5; before it, on the small dish: a held ring keeps the mould off your larder; priced, ring-forever never wins but ring-then-mow tops every seed: a ladder, not a cycle; M2 (spending, mould answers) still a ladder; M3 soldiers that fire from range loosened it (no plan best on 13+/16).
 - [The world camera and UI](rts/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls over a world bigger than the screen; in the sandbox (W, Q, M); 0.3-0.4 ms a frame on the 1070.
+- [The Larder player AI](rts/player-ai.md): plays soldiers through the player's commands, one brain per side; five styles; boom, lure, adapt beat idle and random 16/16 held out.
 - [Two Fevers](rts/two-fevers.md): playable in the browser, version 3 (call, seed, pinch): Trunk > Web > Raider, a ladder, and the leader at 1:30 keeps it; not yet played by hand.
 
 ## Method and owner

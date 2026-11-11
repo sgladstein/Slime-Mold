@@ -1,0 +1,33 @@
+worldwall scale 2 walkers 20000 seconds 30
+seed 1 none   wall     0 drained 0.4544 of others  home left 0.000  hash 5561adf7b7de2c90
+seed 1 road   wall   748 drained 0.4957 of others  home left 0.000  hash 4919bddde3cf840f
+seed 1 random wall   746 drained 0.4800 of others  home left 0.000  hash c1bb3730005c3ebc
+seed 1 road-none +0.0413 road-random +0.0157
+seed 2 none   wall     0 drained 0.5282 of others  home left 0.000  hash fc9ee3ee5055ee6d
+seed 2 road   wall   747 drained 0.5330 of others  home left 0.000  hash 9114c966314923c2
+seed 2 random wall   750 drained 0.5399 of others  home left 0.000  hash 2badba030ff7eea4
+seed 2 road-none +0.0048 road-random -0.0069
+seed 3 none   wall     0 drained 0.4632 of others  home left 0.000  hash f5c95131d8476df1
+seed 3 road   wall   545 drained 0.4032 of others  home left 0.000  hash 61584a0f9f45fa1e
+seed 3 random wall   747 drained 0.4637 of others  home left 0.000  hash cfcfc810abe9eef2
+seed 3 road-none -0.0600 road-random -0.0605
+seed 4 none   wall     0 drained 0.3378 of others  home left 0.000  hash 76a515c55be8a28b
+seed 4 road   wall   744 drained 0.3429 of others  home left 0.000  hash 35a17daf07239c69
+seed 4 random wall   749 drained 0.4380 of others  home left 0.000  hash e361604f2c5d907c
+seed 4 road-none +0.0052 road-random -0.0950
+seed 5 none   wall     0 drained 0.4349 of others  home left 0.000  hash 5a18a8d496b8d69d
+seed 5 road   wall   746 drained 0.4334 of others  home left 0.000  hash 2fa5285825676b4c
+seed 5 random wall   749 drained 0.4361 of others  home left 0.000  hash 2b663a770acc9c47
+seed 5 road-none -0.0015 road-random -0.0027
+seed 6 none   wall     0 drained 0.3933 of others  home left 0.000  hash f2579751f3cf2870
+seed 6 road   wall   748 drained 0.3863 of others  home left 0.000  hash b8f92f483a825688
+seed 6 random wall   751 drained 0.3845 of others  home left 0.000  hash e1957c636ed81ec4
+seed 6 road-none -0.0070 road-random +0.0018
+seed 7 none   wall     0 drained 0.4764 of others  home left 0.000  hash 9a148b1c49c927d5
+seed 7 road   wall   729 drained 0.4729 of others  home left 0.000  hash 7c6019e1da41fec1
+seed 7 random wall   747 drained 0.4758 of others  home left 0.000  hash cd28ba4f6ffcd381
+seed 7 road-none -0.0035 road-random -0.0029
+seed 8 none   wall     0 drained 0.4533 of others  home left 0.000  hash 4de41f11d20b2a9c
+seed 8 road   wall   572 drained 0.4477 of others  home left 0.000  hash b11bb72b9a6d7b9b
+seed 8 random wall   750 drained 0.4640 of others  home left 0.000  hash 0910c6f0edcd8505
+seed 8 road-none -0.0055 road-random -0.0163

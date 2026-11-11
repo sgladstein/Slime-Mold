@@ -1,0 +1,190 @@
+# run.sh spread-net, seeds 1-3, on a runner at 8282218 (no extent line).
+seed 1 chance t   2.0s  tube   856.9  loops    4  width 9.07  reach   89.8  piles 1/1  strays 0.000  ms/tick 127.07
+seed 1 chance t   2.0s  contrast 64.45
+seed 1 chance t   4.0s  tube   709.4  loops    1  width 8.14  reach   90.3  piles 1/1  strays 0.000  ms/tick 125.45
+seed 1 chance t   4.0s  contrast 38.31
+seed 1 chance t   6.0s  tube   761.6  loops    1  width 8.03  reach   91.6  piles 1/1  strays 0.000  ms/tick 125.11
+seed 1 chance t   6.0s  contrast 36.17
+seed 1 chance t   8.0s  tube   820.0  loops    1  width 7.96  reach   93.1  piles 1/1  strays 0.000  ms/tick 126.48
+seed 1 chance t   8.0s  contrast 35.13
+seed 1 chance t  10.0s  tube   881.2  loops    1  width 7.89  reach   94.6  piles 1/1  strays 0.000  ms/tick 128.19
+seed 1 chance t  10.0s  contrast 33.48
+seed 1 chance t  12.0s  tube   946.8  loops    1  width 7.82  reach   96.3  piles 1/1  strays 0.000  ms/tick 128.71
+seed 1 chance t  12.0s  contrast 31.23
+seed 1 chance t  14.0s  tube  1010.4  loops    1  width 7.74  reach   97.9  piles 1/1  strays 0.000  ms/tick 129.43
+seed 1 chance t  14.0s  contrast 30.44
+seed 1 chance t  16.0s  tube  1075.6  loops    1  width 7.68  reach   99.8  piles 1/1  strays 0.000  ms/tick 129.99
+seed 1 chance t  16.0s  contrast 29.48
+seed 1 chance t  18.0s  tube  1140.1  loops    1  width 7.63  reach  101.3  piles 1/1  strays 0.000  ms/tick 130.24
+seed 1 chance t  18.0s  contrast 30.37
+seed 1 chance t  20.0s  tube  1201.9  loops    1  width 7.58  reach  102.9  piles 1/1  strays 0.000  ms/tick 130.34
+seed 1 chance t  20.0s  contrast 26.86
+seed 1 chance hash=3193ddb8447165aa
+seed 2 chance t   2.0s  tube   821.1  loops    3  width 8.49  reach   89.1  piles 1/1  strays 0.000  ms/tick 121.59
+seed 2 chance t   2.0s  contrast 62.98
+seed 2 chance t   4.0s  tube   708.2  loops    1  width 8.09  reach   89.9  piles 1/1  strays 0.000  ms/tick 121.22
+seed 2 chance t   4.0s  contrast 37.34
+seed 2 chance t   6.0s  tube   761.6  loops    1  width 8.04  reach   91.3  piles 1/1  strays 0.000  ms/tick 122.78
+seed 2 chance t   6.0s  contrast 37.89
+seed 2 chance t   8.0s  tube   818.3  loops    1  width 7.95  reach   92.8  piles 1/1  strays 0.000  ms/tick 125.78
+seed 2 chance t   8.0s  contrast 36.08
+seed 2 chance t  10.0s  tube   881.4  loops    1  width 7.89  reach   94.3  piles 1/1  strays 0.000  ms/tick 127.35
+seed 2 chance t  10.0s  contrast 34.38
+seed 2 chance t  12.0s  tube   945.7  loops    1  width 7.82  reach   95.8  piles 1/1  strays 0.000  ms/tick 127.81
+seed 2 chance t  12.0s  contrast 32.69
+seed 2 chance t  14.0s  tube  1010.8  loops    1  width 7.76  reach   97.6  piles 1/1  strays 0.000  ms/tick 129.13
+seed 2 chance t  14.0s  contrast 30.06
+seed 2 chance t  16.0s  tube  1074.4  loops    1  width 7.68  reach   99.1  piles 1/1  strays 0.000  ms/tick 129.84
+seed 2 chance t  16.0s  contrast 29.10
+seed 2 chance t  18.0s  tube  1135.7  loops    1  width 7.60  reach  100.9  piles 1/1  strays 0.000  ms/tick 130.06
+seed 2 chance t  18.0s  contrast 29.06
+seed 2 chance t  20.0s  tube  1201.3  loops    1  width 7.57  reach  102.4  piles 1/1  strays 0.000  ms/tick 130.42
+seed 2 chance t  20.0s  contrast 27.52
+seed 2 chance hash=21574996c56ccb6f
+seed 3 chance t   2.0s  tube   805.4  loops    3  width 8.68  reach   90.1  piles 1/1  strays 0.000  ms/tick 127.78
+seed 3 chance t   2.0s  contrast 65.77
+seed 3 chance t   4.0s  tube   705.4  loops    1  width 8.13  reach   91.1  piles 1/1  strays 0.000  ms/tick 125.94
+seed 3 chance t   4.0s  contrast 36.29
+seed 3 chance t   6.0s  tube   758.8  loops    1  width 8.05  reach   92.1  piles 1/1  strays 0.000  ms/tick 125.42
+seed 3 chance t   6.0s  contrast 36.33
+seed 3 chance t   8.0s  tube   816.4  loops    1  width 7.97  reach   93.6  piles 1/1  strays 0.000  ms/tick 127.67
+seed 3 chance t   8.0s  contrast 34.25
+seed 3 chance t  10.0s  tube   877.1  loops    1  width 7.88  reach   95.1  piles 1/1  strays 0.000  ms/tick 128.23
+seed 3 chance t  10.0s  contrast 32.18
+seed 3 chance t  12.0s  tube   942.5  loops    1  width 7.82  reach   96.6  piles 1/1  strays 0.000  ms/tick 129.13
+seed 3 chance t  12.0s  contrast 32.01
+seed 3 chance t  14.0s  tube  1006.6  loops    1  width 7.74  reach   98.3  piles 1/1  strays 0.000  ms/tick 129.69
+seed 3 chance t  14.0s  contrast 28.54
+seed 3 chance t  16.0s  tube  1071.4  loops    1  width 7.68  reach  100.1  piles 1/1  strays 0.000  ms/tick 130.05
+seed 3 chance t  16.0s  contrast 27.37
+seed 3 chance t  18.0s  tube  1135.1  loops    1  width 7.64  reach  101.6  piles 1/1  strays 0.000  ms/tick 130.39
+seed 3 chance t  18.0s  contrast 29.16
+seed 3 chance t  20.0s  tube  1198.0  loops    1  width 7.58  reach  103.1  piles 1/1  strays 0.000  ms/tick 130.49
+seed 3 chance t  20.0s  contrast 25.91
+seed 3 chance hash=05021965fa62d2e9
+seed 1 explore t   2.0s  tube 11793.0  loops   92  width 5.25  reach  150.6  piles 1/1  strays 0.145  ms/tick 161.45
+seed 1 explore t   2.0s  contrast 9.10
+seed 1 explore t   4.0s  tube 14548.8  loops  136  width 4.28  reach  196.6  piles 1/1  strays 0.139  ms/tick 161.27
+seed 1 explore t   4.0s  contrast 10.91
+seed 1 explore t   6.0s  tube 15636.7  loops  165  width 4.38  reach  195.6  piles 1/1  strays 0.162  ms/tick 169.58
+seed 1 explore t   6.0s  contrast 13.83
+seed 1 explore t   8.0s  tube 14762.5  loops  135  width 4.29  reach  194.9  piles 1/1  strays 0.157  ms/tick 179.37
+seed 1 explore t   8.0s  contrast 15.37
+seed 1 explore t  10.0s  tube 13827.7  loops  107  width 4.41  reach  193.8  piles 1/1  strays 0.148  ms/tick 180.78
+seed 1 explore t  10.0s  contrast 13.69
+seed 1 explore t  12.0s  tube 12530.4  loops   78  width 4.69  reach  193.1  piles 1/1  strays 0.123  ms/tick 188.15
+seed 1 explore t  12.0s  contrast 12.97
+seed 1 explore t  14.0s  tube 11771.8  loops   60  width 4.98  reach  192.9  piles 1/1  strays 0.059  ms/tick 189.93
+seed 1 explore t  14.0s  contrast 11.62
+seed 1 explore t  16.0s  tube  9913.2  loops   43  width 5.67  reach  192.5  piles 1/1  strays 0.000  ms/tick 187.55
+seed 1 explore t  16.0s  contrast 7.94
+seed 1 explore t  18.0s  tube  9573.3  loops   39  width 5.86  reach  192.7  piles 1/1  strays 0.000  ms/tick 185.95
+seed 1 explore t  18.0s  contrast 7.43
+seed 1 explore t  20.0s  tube  9321.9  loops   38  width 5.88  reach  193.1  piles 1/1  strays 0.000  ms/tick 185.74
+seed 1 explore t  20.0s  contrast 8.31
+seed 1 explore hash=219d162cbd933b97
+seed 2 explore t   2.0s  tube 12061.2  loops  106  width 5.28  reach  150.7  piles 1/1  strays 0.143  ms/tick 146.67
+seed 2 explore t   2.0s  contrast 9.23
+seed 2 explore t   4.0s  tube 14553.4  loops  118  width 4.20  reach  196.6  piles 1/1  strays 0.143  ms/tick 175.07
+seed 2 explore t   4.0s  contrast 9.97
+seed 2 explore t   6.0s  tube 15926.4  loops  160  width 4.52  reach  194.4  piles 1/1  strays 0.153  ms/tick 176.46
+seed 2 explore t   6.0s  contrast 12.77
+seed 2 explore t   8.0s  tube 15365.4  loops  157  width 4.32  reach  194.4  piles 1/1  strays 0.166  ms/tick 182.25
+seed 2 explore t   8.0s  contrast 14.73
+seed 2 explore t  10.0s  tube 14012.9  loops  110  width 4.35  reach  194.9  piles 1/1  strays 0.155  ms/tick 182.18
+seed 2 explore t  10.0s  contrast 15.06
+seed 2 explore t  12.0s  tube 12795.4  loops   90  width 4.49  reach  190.6  piles 1/1  strays 0.122  ms/tick 180.70
+seed 2 explore t  12.0s  contrast 14.06
+seed 2 explore t  14.0s  tube 11564.4  loops   62  width 4.88  reach  191.0  piles 1/1  strays 0.064  ms/tick 184.71
+seed 2 explore t  14.0s  contrast 12.57
+seed 2 explore t  16.0s  tube  9779.9  loops   42  width 5.58  reach  190.7  piles 1/1  strays 0.001  ms/tick 186.93
+seed 2 explore t  16.0s  contrast 8.87
+seed 2 explore t  18.0s  tube  9295.1  loops   37  width 5.85  reach  191.2  piles 1/1  strays 0.000  ms/tick 186.90
+seed 2 explore t  18.0s  contrast 8.97
+seed 2 explore t  20.0s  tube  9060.9  loops   36  width 5.80  reach  190.8  piles 1/1  strays 0.000  ms/tick 183.72
+seed 2 explore t  20.0s  contrast 9.74
+seed 2 explore hash=b427ce88da4e5104
+seed 3 explore t   2.0s  tube 11557.2  loops   84  width 5.01  reach  150.7  piles 1/1  strays 0.144  ms/tick 138.63
+seed 3 explore t   2.0s  contrast 9.92
+seed 3 explore t   4.0s  tube 14556.2  loops  114  width 4.27  reach  196.6  piles 1/1  strays 0.145  ms/tick 156.95
+seed 3 explore t   4.0s  contrast 10.86
+seed 3 explore t   6.0s  tube 16016.1  loops  151  width 4.50  reach  194.7  piles 1/1  strays 0.149  ms/tick 176.43
+seed 3 explore t   6.0s  contrast 13.54
+seed 3 explore t   8.0s  tube 15097.5  loops  123  width 4.47  reach  194.9  piles 1/1  strays 0.147  ms/tick 179.22
+seed 3 explore t   8.0s  contrast 13.92
+seed 3 explore t  10.0s  tube 14002.2  loops   99  width 4.59  reach  195.1  piles 1/1  strays 0.141  ms/tick 180.35
+seed 3 explore t  10.0s  contrast 14.09
+seed 3 explore t  12.0s  tube 12550.9  loops   72  width 4.50  reach  194.9  piles 1/1  strays 0.118  ms/tick 182.72
+seed 3 explore t  12.0s  contrast 12.46
+seed 3 explore t  14.0s  tube 11790.3  loops   61  width 4.90  reach  194.3  piles 1/1  strays 0.062  ms/tick 188.52
+seed 3 explore t  14.0s  contrast 11.64
+seed 3 explore t  16.0s  tube 10018.1  loops   46  width 5.62  reach  192.9  piles 1/1  strays 0.000  ms/tick 189.12
+seed 3 explore t  16.0s  contrast 8.74
+seed 3 explore t  18.0s  tube  9350.9  loops   40  width 5.70  reach  192.5  piles 1/1  strays 0.000  ms/tick 188.85
+seed 3 explore t  18.0s  contrast 8.53
+seed 3 explore t  20.0s  tube  8826.6  loops   34  width 6.01  reach  192.9  piles 1/1  strays 0.000  ms/tick 187.88
+seed 3 explore t  20.0s  contrast 7.80
+seed 3 explore hash=df95829ad46baa39
+seed 1 net t   2.0s  tube  1571.6  loops    2  width 5.69  reach  151.2  piles 1/1  strays 0.001  ms/tick 110.42
+seed 1 net t   2.0s  contrast 471.04
+seed 1 net t   4.0s  tube  1418.9  loops    1  width 3.64  reach  192.7  piles 1/1  strays 0.000  ms/tick 109.21
+seed 1 net t   4.0s  contrast 489.07
+seed 1 net t   6.0s  tube  1552.5  loops    1  width 3.16  reach  192.4  piles 1/1  strays 0.001  ms/tick 109.24
+seed 1 net t   6.0s  contrast 607.10
+seed 1 net t   8.0s  tube  1700.0  loops    1  width 2.87  reach  191.6  piles 1/1  strays 0.001  ms/tick 109.51
+seed 1 net t   8.0s  contrast 690.92
+seed 1 net t  10.0s  tube  1720.6  loops    1  width 2.95  reach  192.3  piles 1/1  strays 0.001  ms/tick 109.71
+seed 1 net t  10.0s  contrast 664.73
+seed 1 net t  12.0s  tube  1818.4  loops    1  width 2.91  reach  192.5  piles 1/1  strays 0.001  ms/tick 109.42
+seed 1 net t  12.0s  contrast 651.60
+seed 1 net t  14.0s  tube  1825.2  loops    1  width 2.91  reach  192.5  piles 1/1  strays 0.001  ms/tick 109.42
+seed 1 net t  14.0s  contrast 588.59
+seed 1 net t  16.0s  tube  1870.1  loops    1  width 2.91  reach  193.2  piles 1/1  strays 0.001  ms/tick 109.48
+seed 1 net t  16.0s  contrast 555.16
+seed 1 net t  18.0s  tube  1899.2  loops    1  width 3.06  reach  192.2  piles 1/1  strays 0.001  ms/tick 109.54
+seed 1 net t  18.0s  contrast 488.93
+seed 1 net t  20.0s  tube  1892.5  loops    1  width 3.12  reach  191.8  piles 1/1  strays 0.001  ms/tick 109.54
+seed 1 net t  20.0s  contrast 424.01
+seed 1 net hash=f5d8161bf1559339
+seed 2 net t   2.0s  tube  1565.4  loops    3  width 5.61  reach  151.3  piles 1/1  strays 0.001  ms/tick 112.57
+seed 2 net t   2.0s  contrast 504.16
+seed 2 net t   4.0s  tube  1429.1  loops    1  width 3.63  reach  192.9  piles 1/1  strays 0.000  ms/tick 111.33
+seed 2 net t   4.0s  contrast 477.85
+seed 2 net t   6.0s  tube  1460.9  loops    1  width 3.37  reach  192.4  piles 1/1  strays 0.001  ms/tick 110.52
+seed 2 net t   6.0s  contrast 468.58
+seed 2 net t   8.0s  tube  1687.4  loops    1  width 3.06  reach  191.6  piles 1/1  strays 0.001  ms/tick 110.05
+seed 2 net t   8.0s  contrast 664.67
+seed 2 net t  10.0s  tube  1693.7  loops    1  width 3.01  reach  192.6  piles 1/1  strays 0.001  ms/tick 110.08
+seed 2 net t  10.0s  contrast 614.80
+seed 2 net t  12.0s  tube  1794.1  loops    1  width 2.97  reach  192.3  piles 1/1  strays 0.001  ms/tick 109.49
+seed 2 net t  12.0s  contrast 638.00
+seed 2 net t  14.0s  tube  1753.6  loops    1  width 3.20  reach  192.1  piles 1/1  strays 0.001  ms/tick 109.33
+seed 2 net t  14.0s  contrast 504.30
+seed 2 net t  16.0s  tube  1838.2  loops    1  width 3.07  reach  192.1  piles 1/1  strays 0.001  ms/tick 109.31
+seed 2 net t  16.0s  contrast 492.04
+seed 2 net t  18.0s  tube  1903.1  loops    1  width 3.07  reach  191.8  piles 1/1  strays 0.001  ms/tick 109.30
+seed 2 net t  18.0s  contrast 475.55
+seed 2 net t  20.0s  tube  1938.6  loops    1  width 3.23  reach  192.1  piles 1/1  strays 0.001  ms/tick 109.43
+seed 2 net t  20.0s  contrast 450.16
+seed 2 net hash=acaae81809837e23
+seed 3 net t   2.0s  tube  1521.3  loops    3  width 5.48  reach  151.3  piles 1/1  strays 0.001  ms/tick 107.99
+seed 3 net t   2.0s  contrast 566.97
+seed 3 net t   4.0s  tube  1420.5  loops    1  width 3.57  reach  192.7  piles 1/1  strays 0.000  ms/tick 108.30
+seed 3 net t   4.0s  contrast 507.90
+seed 3 net t   6.0s  tube  1541.7  loops    1  width 3.08  reach  191.9  piles 1/1  strays 0.001  ms/tick 108.48
+seed 3 net t   6.0s  contrast 626.08
+seed 3 net t   8.0s  tube  1642.0  loops    1  width 2.90  reach  190.8  piles 1/1  strays 0.001  ms/tick 108.45
+seed 3 net t   8.0s  contrast 694.34
+seed 3 net t  10.0s  tube  1645.7  loops    1  width 2.86  reach  190.7  piles 1/1  strays 0.001  ms/tick 107.97
+seed 3 net t  10.0s  contrast 610.59
+seed 3 net t  12.0s  tube  1759.2  loops    1  width 2.98  reach  189.8  piles 1/1  strays 0.001  ms/tick 108.06
+seed 3 net t  12.0s  contrast 644.13
+seed 3 net t  14.0s  tube  1780.8  loops    1  width 3.06  reach  189.9  piles 1/1  strays 0.001  ms/tick 108.22
+seed 3 net t  14.0s  contrast 567.85
+seed 3 net t  16.0s  tube  1806.1  loops    1  width 2.94  reach  190.2  piles 1/1  strays 0.001  ms/tick 108.16
+seed 3 net t  16.0s  contrast 558.64
+seed 3 net t  18.0s  tube  1853.2  loops    1  width 3.08  reach  189.1  piles 1/1  strays 0.001  ms/tick 108.07
+seed 3 net t  18.0s  contrast 504.95
+seed 3 net t  20.0s  tube  1831.7  loops    1  width 3.15  reach  189.6  piles 1/1  strays 0.001  ms/tick 108.08
+seed 3 net t  20.0s  contrast 398.37
+seed 3 net hash=bf6e8b56dee22eb8

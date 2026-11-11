@@ -30,7 +30,7 @@ how to keep the sources available to other agents).
 | [jones-2011](jones-2011.md) | Influences on the formation and evolution of Physarum polycephalum inspired emergent transport networks | 2011 | quoted passages only | no | publisher's copyright |
 | [jones-2015-book](jones-2015-book.md) | From Pattern Formation to Material Computation: Multi-agent Modelling of Physarum Polycephalum | 2015 | not read | no | publisher's copyright |
 | [jones-2015-survey](jones-2015-survey.md) | Applications of Multi-Agent Slime Mould Computing | 2015 | full | yes | author's and publisher's copyright |
-| [jones-adamatzky-2012](jones-adamatzky-2012.md) | Emergence of self-organized amoeboid movement in a multi-agent approximation of Physarum polycephalum | 2012 | quoted passages only | no | publisher's copyright |
+| [jones-adamatzky-2012](jones-adamatzky-2012.md) | Emergence of self-organized amoeboid movement in a multi-agent approximation of Physarum polycephalum | 2012 | pp. 1-13 (2026-11-11) | no | publisher's copyright |
 | [lague-slime-simulation](lague-slime-simulation.md) | Slime Simulation (and the video "Coding Adventure: Ant and Slime Simulations") | 2021 | compute shader and presets in full | no | GPL-3.0 |
 | [mcpm-2022](mcpm-2022.md) | Monte Carlo Physarum Machine: Characteristics of Pattern Formation in Continuous Stochastic Transport Networks | 2022 | full text | no | arXiv preprint |
 | [nicoptere-physarum](nicoptere-physarum.md) | physarum (three.js) |  | shaders in full | no | public domain (Unlicense) |
