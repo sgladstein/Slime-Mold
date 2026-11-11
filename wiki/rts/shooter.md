@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-11T16:51Z
+updated: 2026-11-11T17:10Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 ---
@@ -12,21 +12,17 @@ code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::st
 ## Now
 
 **Larder World is the line all Larder work now goes to** (owner, 2026-11-11
-14:06Z: "Put everything into the world version"): a squad lands in a
-persistent world on the GPU big dish, energy crystals that drain give off
-the scent the mould and the squad live on, and several mould species fight
-over them. No more small-dish tuning. The roadmap
-([`larder-world-roadmap-2026-11-11.md`](../../Reports/larder-world-roadmap-2026-11-11.md);
-live doc https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ) has six gated
-phases: **W0** births, upkeep and starving per walker on the GPU (the GPU
-plan's phase 4; the big dish's walker count is still fixed), **W1** a world
-with terrain and crystals and both openings (a landing on a world mostly
-mould, and a race from one small area), **W2** the soldiers, extractors,
-camera and UI in the world, **W3** two or three species, **W4** a persistent
-world, **W5** a campaign. Those phases replace M4-M6 of the small-dish build
-plan below. The small-dish milestones M1-M3, which follow, are the evidence
-the world builds on: what the squad's tools do and why the plans formed a
-ladder.
+14:06Z: "Put everything into the world version"): a squad in a persistent
+world on the GPU big dish, energy crystals that run out, several mould
+species. Six gated phases, W0-W5
+([roadmap](../../Reports/larder-world-roadmap-2026-11-11.md); live doc
+https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ), replacing M4-M6 below.
+**Done:** W1a, the world's fields on the CPU big dish (PR #64, below).
+**Next:** W1b, those fields on the GPU engine (after #63 and the GPU
+thread's W0), then W2, Larder in the world. The small-dish M3 window still
+waits on the owner's playtest.
+
+## Larder World so far
 
 **W1a** (PR #64): crystals that run dry or refill (`crystal_charge`,
 `crystal_eat`, `crystal_regrow`), rock and wet terrain, a rectangular world,
@@ -45,6 +41,11 @@ sizing with growth*).
 Walls leak 0.9 of their scent, so a walled crystal still calls and a growing
 mould gets through a ring in about 90 s; sealed, it walked past. Owner,
 16:48Z: crystals are hexagons, and gunfire hits the first mould in its path.
+
+## Small-dish milestones (M1-M3)
+
+The evidence the world builds on: what the squad's tools do and why the
+plans formed a ladder.
 
 Brainstorm: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
 A squad shoots the mould; both want the same food; the player's larder is a
