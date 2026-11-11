@@ -2,8 +2,8 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-11T19:20Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
+updated: 2026-11-11T19:50Z
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 ---
 
@@ -107,6 +107,7 @@ owner's playtest.
 
 ## Open
 
+- **Maps** (owner, 19:29Z: "We will want maps though. That should be part of the plan"): five paper maps, each drawn for a different winning style, and ground kinds ranked by the model term each changes, height first ([plan](../../Reports/larder-maps-2026-11-11.md), [page](https://claude.ai/artifact/XPwkBkTAzsWq3Wg37pff7K)). No runs yet; maps wait on the map loader and the W2b harness.
 - Larder World, phase by phase, per the roadmap; the open questions there (world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds) are the owner's.
 - The M3 window stays playable (`cargo run --release --bin larder -- 17`). Hunger barely acts on the small dish and needs a lower bar or should go.
 
@@ -118,5 +119,6 @@ owner's playtest.
 ## Sources
 
 - [larder-world-roadmap-2026-11-11.md](../../Reports/larder-world-roadmap-2026-11-11.md): the world plan, phases W0-W5 and their gates.
+- [larder-maps-2026-11-11.md](../../Reports/larder-maps-2026-11-11.md): maps and ground kinds (WM2, WM3), a plan.
 - [mould-shooter-2026-11-11.md](../../Reports/mould-shooter-2026-11-11.md): the whole brainstorm.
 - [rts-research-2026-11-10.md](../../Reports/rts-research-2026-11-10.md) and the [Creeper World card](../../research/sources/creeper-world-2025.md): the nearest published game with a simulated enemy.
