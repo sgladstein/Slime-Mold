@@ -56,34 +56,47 @@ const fn home(x: f32, y: f32) -> PileSpec {
 /// The scatter layout (the field sampler's seed 7, at least 28 cells
 /// apart): nine piles a side mirrored about x = 128, three on the centre
 /// line, and the two homes. 375k food.
+///
+/// **Half a cell in from the whole number** (2026-11-10): a pile's own
+/// cells (where `fed` starts, where spores land) are the disc of cells
+/// round `floor(x)`, so a pile at 40.0 owned the cells round cell 40 and
+/// its mirror at 216.0 those round cell 216, one column off the true
+/// mirror (cell 215). On whole-number x the left mould won 24 of 32 idle v
+/// idle games (mean share 0.534) and 14 of 16 mirror games in all; with
+/// every side pile half a cell toward the centre line it won 16 of 32
+/// (0.505). Swapping which mould starts where showed the edge followed
+/// the left start, not your mould, and letting the moulds take turns
+/// (`Dish::take_turns`) changed nothing. The three centre-line piles stay
+/// on 128.0, one column right of centre: no odd disc can sit on a line
+/// between cells.
 static PILES: [PileSpec; 23] = [
-    home(40.0, 80.0),
-    small(78.0, 20.0),
-    small(178.0, 20.0),
-    small(67.0, 61.0),
-    small(189.0, 61.0),
-    small(18.0, 71.0),
-    small(238.0, 71.0),
-    small(56.0, 126.0),
-    small(200.0, 126.0),
-    small(110.0, 17.0),
-    small(146.0, 17.0),
-    small(98.0, 51.0),
-    small(158.0, 51.0),
-    small(92.0, 108.0),
-    small(164.0, 108.0),
-    small(96.0, 142.0),
-    small(160.0, 142.0),
-    small(65.0, 96.0),
-    small(191.0, 96.0),
+    home(40.5, 80.0),
+    small(78.5, 20.0),
+    small(177.5, 20.0),
+    small(67.5, 61.0),
+    small(188.5, 61.0),
+    small(18.5, 71.0),
+    small(237.5, 71.0),
+    small(56.5, 126.0),
+    small(199.5, 126.0),
+    small(110.5, 17.0),
+    small(145.5, 17.0),
+    small(98.5, 51.0),
+    small(157.5, 51.0),
+    small(92.5, 108.0),
+    small(163.5, 108.0),
+    small(96.5, 142.0),
+    small(159.5, 142.0),
+    small(65.5, 96.0),
+    small(190.5, 96.0),
     small(128.0, 40.0),
     small(128.0, 80.0),
     small(128.0, 120.0),
-    home(216.0, 80.0),
+    home(215.5, 80.0),
 ];
 
 /// The two homes: yours (gold, left) and the rival's (violet, right).
-pub const HOMES: [(f32, f32); 2] = [(40.0, 80.0), (216.0, 80.0)];
+pub const HOMES: [(f32, f32); 2] = [(40.5, 80.0), (215.5, 80.0)];
 
 /// **The tithe and the bank.** A side sets what fraction of every bite its
 /// mould takes goes to its bank instead (`Dish::tithe`): one of these. The

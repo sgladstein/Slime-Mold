@@ -40,8 +40,11 @@ abroad, and three plans built on them: in 720 games soft lost no pairing
 answers attacks with soft's own strike (trade, 9/16) hold it. A rally brings
 walkers to a pile the attacker already feeds on, so they arrive unfed into
 a fed crowd. **Counterplay now looks like a change to the model** (the fed
-fight bonus and the head-count share feed the leader), not a price. The left
-mould, yours on the page, has an edge: it won 14 of 16 mirror games.
+fight bonus and the head-count share feed the leader), not a price; the
+owner said "lets explore this" (23:29Z). The left mould used to win 14 of 16
+mirror games: the piles sat on whole-cell coordinates, one column off a
+true mirror. Moved half a cell in, the sides are even (left 14 of 32 idle v
+idle, 6 of 16 soft v soft).
 
 **Version 1** (habits on keys 1-4, two salt walls, the lamp, a rival that
 answers your habit) is playable at
@@ -64,6 +67,8 @@ owner played it and set it aside (21:14Z).
 | Round 3, counterplay rules (rally, spore ramp 0.5, spores asleep 5 s abroad), 10 plans | soft lost no pairing, 124 of 144 games; keep 8/16 and trade 7/16 against it; ward (rally only) lost to soft 16/16; one cycle survives, fort > ward > trade > fort; 353 of 720 wipe-outs | 8 (16 games a pairing) | Holm over 45: soft's 6 of 8 | [report, *Round 3*](../../Reports/rts-skirmish-2026-11-10.md) |
 | Same seeds and sides, round 2 rules v round 3 rules | soft v idle won 15 then 12 of 16, share lower in 8/16 (p 1); v raid, centre, fort 16 and 16 | 8 | paired by game | [report, *Round 3*](../../Reports/rts-skirmish-2026-11-10.md) |
 | Side edge, mirror games (round 3 rules) | left won idle v idle 7/8 (0.524), soft v soft 7/8 (0.612); 14/16, p 0.004 | 8 | | [report, *Which side you play matters*](../../Reports/rts-skirmish-2026-11-10.md) |
+| Side edge traced, idle v idle | as built left 24/32 (0.523); taking turns 24/32; your mould started right, left still 19/32; piles half a cell in 16/32 (0.505) | 32 | by seed | [report, *Which side you play matters*](../../Reports/rts-skirmish-2026-11-10.md) |
+| Side edge fixed (piles half a cell in) | idle v idle left 14/32 (0.504); soft v soft left 6/16 (0.488) | 32 and 16 | | [report, *Which side you play matters*](../../Reports/rts-skirmish-2026-11-10.md) |
 | Browser frame cost (version 1), 30 s in, loaded 4-core box | draw 9.3 ms, step and draw 14.3 ms a 60th of a second | 1 | | [report, *How it is built*](../../Reports/rts-skirmish-2026-11-10.md) |
 | Browser frame cost (version 2's page), first 30 s, headless Chromium, 4-core box | 8.9-9.4 ms a frame on average, drawing every other frame | 1 | | [report, *Version 2's page*](../../Reports/rts-skirmish-2026-11-10.md) |
 
@@ -72,6 +77,7 @@ owner played it and set it aside (21:14Z).
 - 2026-11-10 20:33Z: "You can run these tests, especially if they are cheap and/or can be paralellized. But then lets focus on actually building playable demos"
 - 2026-11-10 20:42Z, card: "Both, in two threads" (this demo here; Two Fevers in its own thread). See [decisions.md](../decisions.md).
 - 2026-11-10 21:14Z, after playing version 1: "This is still using the old tools, but not sure what the strategy is with these tools. The lamp moves the slime mold, and it used to work well for pushing the slime mold to food it wasn't finding on its own. At 22.5 the mold moves and explores well on its own, so I don't know how to use the tool to cause any affect. The salt should block a path but it doesn't have as strong of a reaction as I was expecting. Overall, user input seems limited and doesn't lead to any complex stratgy"
+- 2026-11-10 23:29Z, on "The fix probably has to be in the model itself": "then lets explore this".
 - 2026-11-10 21:17Z, on the budget proposal: "This is an interesting direction. Brainstorm/explore how these tools/game plays out. What different strategies would different players use to win. How complex or interesting are the strategies? Does one strategy beat all the others?" See [decisions.md](../decisions.md).
 
 ## Tried and rejected
@@ -86,7 +92,6 @@ owner played it and set it aside (21:14Z).
 ## Open
 
 - Counterplay in the model: ease the snowball at the pile (even fights, a hold bonus, or starving walkers that fight harder), or make size cost something; or a person finding what the scripts did not (the report's *What would make the strategy deeper*).
-- The left mould's edge (14 of 16 mirror games): trace and fix before reading a person's results on the page.
 - A second map needs its own counter table; the habit cycle is real only on this layout.
 - Not in the native window (`cargo run --bin mould`), whose HUD calls the rival "wild".
 

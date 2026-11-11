@@ -296,7 +296,7 @@ thinnest, and from then on the head-count share and the fight rule
 tube twice) keep feeding whoever is ahead there. A rally brings walkers,
 but they arrive unfed into a crowd that is fed.
 
-### Which side you play matters
+### Which side you play matters (found and fixed)
 
 The field is mirrored, but the two moulds are not stepped alike: yours is
 the dish (`Dish`), the rival's is `Dish::rival`. In mirror games under the
@@ -304,8 +304,33 @@ round 3 rules (`raw/mirror-rr2.txt`, seeds 1-8) the left mould won idle v
 idle 7 of 8 (mean share 0.524) and soft v soft 7 of 8 (0.612): 14 of 16
 together, p 0.004. Over all 720 round 3 games the left side won 459 (round
 2: 343 of 576). The round robins play every pairing from both sides, so
-they are fair; a person on the page plays left and has this edge. Not yet
-traced to its cause.
+they are fair; a person on the page played left and had this edge.
+
+**Tracing it** (idle v idle, seeds 1-32, raw `raw/side-swap-turns.txt`
+with its job list, and `raw/side-half-cell.txt`):
+
+| Setup | Left won | Left's mean share |
+|---|---|---|
+| As built (your mould left, moves first every step) | 24/32 (p 0.007) | 0.523 |
+| Taking turns to move first (`Dish::take_turns`) | 24/32 | 0.534 |
+| Your mould started on the right instead | 19/32 | 0.521 |
+| The same, taking turns | 20/32 | 0.511 |
+| Every side pile half a cell toward the centre line | 16/32 | 0.505 |
+
+The edge followed the left **start**, not your mould, and moving first did
+not matter. The cause was half a cell: a pile's own cells (where `fed`
+starts and spores land) are the disc of cells round `floor(x)`, so a pile
+at x = 40.0 owned the cells round cell 40 while its mirror at 216.0 owned
+those round cell 216, one column off the true mirror (cell 215). Every
+pile on the left sat one column nearer the middle than its twin.
+
+**Fix:** `PILES` and `HOMES` now sit half a cell in (40.5 and 215.5, and
+so on), which mirrors exactly in cells as well as in space. On the fixed
+layout (`raw/mirror-fixed.txt`) the left won idle v idle 14 of 32 (mean
+0.504) and soft v soft 6 of 16 (0.488): even. Taking turns stays on in the
+skirmish (`Rules::take_turns`): it costs nothing and measured no harm. The
+three centre-line piles stay on 128.0, one column right of centre. Rounds
+1-4 ran on the old layout, paired by side, so their comparisons stand.
 
 ## What would make the strategy deeper
 
@@ -320,8 +345,7 @@ and a plan that trades blows. What is left is in the model itself:
 2. **Make size cost something.** Upkeep per walker that grows with the
    mould's size, so a big mould is slow to spend and a small one cheap to
    run.
-3. **Fix the side edge** before any human result on the page is read as a
-   strategy result.
+3. ~~Fix the side edge~~: done, see *Which side you play matters*.
 4. **A person.** The plans are one-line rules. A player who reads the
    picture (where the rival is thin, where its spores sleep) may find
    answers the scripts did not; the round robins say only that no simple
