@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-11T15:40Z
+updated: 2026-11-11T16:35Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 ---
@@ -33,7 +33,15 @@ ladder.
 and player walls (`build_wall`): scent and trail don't cross a wall, and with
 `wall_hp` set, mould pressing on a wall wears it down to slow rubble (owner,
 15:24Z: walls must not seal a crystal for good). All on the big dish, CPU,
-off by default.
+off by default. Wall health defaults to 400: a whole caged mould breaks out
+in 20-30 s, while a passing tube never breaks a wall. Crystal charge flows
+inside a crystal (`crystal_flow` 0.01), so the mould eats whole crystals.
+With growth (scratch, no player), charge sets how long the mould lasts, not
+how big it gets. Charge 64 booms and dies within 5 minutes; charge 512 gives
+about 10-12 minutes of food on the 512 × 320 world, the first number for
+the race start
+([report](../../Reports/larder-world-roadmap-2026-11-11.md), *Crystal
+sizing with growth*).
 
 Brainstorm: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
 A squad shoots the mould; both want the same food; the player's larder is a

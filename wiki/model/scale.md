@@ -2,7 +2,7 @@
 title: The mould at scale (outside models and the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-11T15:56Z
+updated: 2026-11-11T16:35Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md, Reports/creatures-2026-11-11.md]
 code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost, BigParams::crystal_charge, BigParams::crystal_regrow, BigParams::terrain_rock, BigParams::rect, BigDish::build_wall, BigParams::wall_hp, BigParams::wall_scent, BigParams::crystal_flow]
 ---
@@ -177,6 +177,7 @@ polygons at once. Every outside source has a card in
 - `BigDish::build_wall`: a player wall that leaves the agar, so walkers, trail and scent all stay out.
 - `wall_hp` (default 400) and `wall_bite`: blocked walkers wear a wall cell down to slow rubble (owner, 15:24Z). A caged 20k-walker mould breaks out by 20-30 s; at 1,600 it is still inside at 40 s; a tube passing a ringed crystal bites it 0-76 times in 35 s. `wall_scent` (scent through walls) is built and off.
 - `crystal_flow` (default 0.01): charge flows inside a crystal toward the eaten cells, so a tube touching one edge drains the whole disc. Share of the other crystals eaten by 40 s: 0.476 to 0.829, 12 of 12 seeds, p 0.0005.
+- With growth (scratch on the GPU thread's CPU growth, no player): the mould levels off at 18,000-24,000 walkers on 512 × 320 whatever the charge, and the charge sets how long it lasts (64: dead by 300 s; 512: 55-65% left at 300 s). Mean energy climbs without limit (30 at 300 s): interior walkers hoard because no cell beside them is free. Pile totals are summed in f64 each step; a running f32 total stood still at charge 512.
 
 At 512 × 320 the cost is within noise. A first wall test showed no effect while the walker count is fixed (road wall against none, 5 of 8 seeds, p 0.73). It waits on growth (W0).
 
