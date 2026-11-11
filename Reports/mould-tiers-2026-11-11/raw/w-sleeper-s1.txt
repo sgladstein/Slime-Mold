@@ -1,0 +1,27 @@
+== seed 1: 1024 x 640, 20000 walkers, 7 piles
+seed 1 w-sleeper t  10.0s  tube  3940.5  loops   92  width 5.10  reach  127.4  piles 4/7  strays 0.011  ms/tick 15.47
+seed 1 w-sleeper t  10.0s  contrast 3.07
+seed 1 w-sleeper t  10.0s  extent r50 112.8 r90 147.4
+seed 1 w-sleeper t  10.0s  life walk 187 spore 0 dormant 19813 dead 0  held 2/7  bodies 2 big 3890  centre 128.1,79.9  near 2190  rim 0.000/0.000
+seed 1 w-sleeper t  14.0s  strike at 161,80 r 8: killed 717
+seed 1 w-sleeper t  20.0s  tube  2826.3  loops   45  width 3.99  reach  127.4  piles 4/7  strays 0.010  ms/tick 15.66
+seed 1 w-sleeper t  20.0s  contrast 2.74
+seed 1 w-sleeper t  20.0s  extent r50 113.0 r90 143.9
+seed 1 w-sleeper t  20.0s  life walk 1323 spore 0 dormant 17960 dead 717  held 2/7  bodies 3 big 2790  centre 126.9,79.6  near 2491  rim 0.000/0.000
+seed 1 w-sleeper t  30.0s  tube  2825.9  loops   45  width 3.96  reach  127.3  piles 4/7  strays 0.010  ms/tick 14.99
+seed 1 w-sleeper t  30.0s  contrast 2.80
+seed 1 w-sleeper t  30.0s  extent r50 113.0 r90 143.9
+seed 1 w-sleeper t  30.0s  life walk 534 spore 0 dormant 18749 dead 717  held 2/7  bodies 3 big 2788  centre 126.9,79.6  near 2486  rim 0.000/0.000
+seed 1 w-sleeper t  40.0s  tube  2827.1  loops   45  width 3.97  reach  127.3  piles 4/7  strays 0.010  ms/tick 14.70
+seed 1 w-sleeper t  40.0s  contrast 2.79
+seed 1 w-sleeper t  40.0s  extent r50 113.0 r90 143.9
+seed 1 w-sleeper t  40.0s  life walk 518 spore 0 dormant 18765 dead 717  held 2/7  bodies 2 big 2790  centre 126.9,79.6  near 2491  rim 0.000/0.000
+seed 1 w-sleeper t  50.0s  tube  2828.9  loops   45  width 3.97  reach  127.3  piles 4/7  strays 0.010  ms/tick 15.61
+seed 1 w-sleeper t  50.0s  contrast 2.79
+seed 1 w-sleeper t  50.0s  extent r50 113.0 r90 143.9
+seed 1 w-sleeper t  50.0s  life walk 515 spore 0 dormant 18768 dead 717  held 2/7  bodies 3 big 2790  centre 126.9,79.6  near 2490  rim 0.000/0.000
+seed 1 w-sleeper t  60.0s  tube  2829.7  loops   45  width 3.97  reach  127.3  piles 4/7  strays 0.010  ms/tick 21.20
+seed 1 w-sleeper t  60.0s  contrast 2.79
+seed 1 w-sleeper t  60.0s  extent r50 113.0 r90 143.9
+seed 1 w-sleeper t  60.0s  life walk 512 spore 0 dormant 18771 dead 717  held 2/7  bodies 2 big 2792  centre 126.9,79.7  near 2489  rim 0.000/0.000
+seed 1 w-sleeper hash=ab568a1a64533ce6

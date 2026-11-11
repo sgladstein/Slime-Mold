@@ -1,0 +1,27 @@
+== seed 2: 1024 x 640, 20000 walkers, 7 piles
+seed 2 w-burst t  10.0s  strike at 95,80 r 10: killed 893
+seed 2 w-burst t  10.0s  tube  2350.8  loops   21  width 4.64  reach  115.3  piles 5/7  strays 0.011  ms/tick 15.97
+seed 2 w-burst t  10.0s  contrast 2.21
+seed 2 w-burst t  10.0s  extent r50 106.8 r90 169.8
+seed 2 w-burst t  10.0s  life walk 19107 spore 0 dormant 0 dead 893  held 4/7  bodies 1 big 2350  centre 128.4,78.6  near 1339  rim 0.000/0.000
+seed 2 w-burst t  20.0s  tube  3067.3  loops   17  width 3.47  reach  143.6  piles 7/7  strays 0.014  ms/tick 15.71
+seed 2 w-burst t  20.0s  contrast 2.45
+seed 2 w-burst t  20.0s  extent r50 116.1 r90 255.4
+seed 2 w-burst t  20.0s  life walk 19107 spore 0 dormant 0 dead 893  held 7/7  bodies 4 big 2853  centre 129.5,78.1  near 79  rim 0.000/0.011
+seed 2 w-burst t  30.0s  tube  2783.4  loops   16  width 3.42  reach  144.1  piles 7/7  strays 0.017  ms/tick 16.70
+seed 2 w-burst t  30.0s  contrast 2.67
+seed 2 w-burst t  30.0s  extent r50 119.2 r90 257.4
+seed 2 w-burst t  30.0s  life walk 19107 spore 0 dormant 0 dead 893  held 7/7  bodies 9 big 2464  centre 129.7,78.3  near 68  rim 0.000/0.009
+seed 2 w-burst t  40.0s  tube  2570.2  loops   15  width 3.42  reach  144.5  piles 7/7  strays 0.023  ms/tick 17.74
+seed 2 w-burst t  40.0s  contrast 2.72
+seed 2 w-burst t  40.0s  extent r50 120.8 r90 260.0
+seed 2 w-burst t  40.0s  life walk 19107 spore 0 dormant 0 dead 893  held 7/7  bodies 11 big 2287  centre 129.9,78.0  near 34  rim 0.000/0.007
+seed 2 w-burst t  50.0s  tube  2466.4  loops   21  width 3.41  reach  144.8  piles 7/7  strays 0.037  ms/tick 21.60
+seed 2 w-burst t  50.0s  contrast 2.79
+seed 2 w-burst t  50.0s  extent r50 121.2 r90 262.3
+seed 2 w-burst t  50.0s  life walk 19107 spore 0 dormant 0 dead 893  held 7/7  bodies 6 big 2360  centre 129.9,77.8  near 27  rim 0.000/0.002
+seed 2 w-burst t  60.0s  tube  2422.7  loops   17  width 3.51  reach  144.9  piles 7/7  strays 0.034  ms/tick 26.11
+seed 2 w-burst t  60.0s  contrast 2.72
+seed 2 w-burst t  60.0s  extent r50 121.1 r90 262.8
+seed 2 w-burst t  60.0s  life walk 19107 spore 0 dormant 0 dead 893  held 7/7  bodies 6 big 2280  centre 129.8,77.5  near 0  rim 0.000/0.001
+seed 2 w-burst hash=a0ccbefbed2af041

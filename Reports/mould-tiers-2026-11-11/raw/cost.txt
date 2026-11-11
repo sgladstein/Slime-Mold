@@ -1,0 +1,12 @@
+round 1 off ms/tick 25.93
+round 1 lifeline ms/tick 26.71
+round 1 alarm ms/tick 34.56
+round 1 spores ms/tick 27.66
+round 1 sleep ms/tick 16.82
+round 1 all ms/tick 16.24
+round 2 off ms/tick 25.20
+round 2 lifeline ms/tick 25.59
+round 2 alarm ms/tick 33.00
+round 2 spores ms/tick 29.16
+round 2 sleep ms/tick 16.53
+round 2 all ms/tick 17.42
