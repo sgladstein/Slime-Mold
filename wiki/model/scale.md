@@ -90,7 +90,8 @@ option the Jenson comparison tested as a control (walkers to 8 million,
 the one-a-cell limit, angles, reach, step, trail laid and kept, respawn,
 food, colour, trail or walker counts, the game's or a soft curve) and the
 comparison's dishes on keys 1-8 (the owner's ask, 00:06Z). The left mouse
-pulls walkers to it, the right wipes trail, F drops food. On a software
+drops walkers under it (0.2% of all walkers a tick, taken from random
+places), the right wipes trail, F drops food. On a software
 GPU and on the GTX 1070 its dishes match the CPU's spread at 10 s on 8
 seeds (16 for the food dish): no measure differs after Bonferroni over 20
 tests a GPU, once an independent review (11-11) had found and fixed two

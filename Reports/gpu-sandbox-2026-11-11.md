@@ -40,7 +40,11 @@ the walker count and the start, which restart it.
 The mouse: left drag pulls walkers to the mouse (0.2% of them a tick jump
 into a disc there, as respawned walkers jump; Jenson's 2020 performance
 spawned particles with a stylus), right drag wipes the trail under it, F
-drops a food pile. Keys 1-8 load the presets:
+drops a food pile. *Note (2026-11-11 04:04Z, the owner's playtest):*
+"pulls" misdescribed it. The walkers taken are picked at random over the
+whole dish and jump into the disc, so left drag reads as dropping
+(painting) mould at the mouse; the panel and the page now say "drops
+walkers". Keys 1-8 load the presets:
 
 | Key | Preset | Numbers |
 | --- | --- | --- |
