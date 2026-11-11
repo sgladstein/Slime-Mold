@@ -53,6 +53,7 @@ dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-varian
 .strip .row-label { grid-column: 1 / -1; display: grid; gap: 4px; padding-top: 14px; }
 .strip .row-label b { font: 500 12px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
 .strip .row-label span { font-size: 14px; color: var(--muted); max-width: 80ch; }
+.strip.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .pending { border: 1px dashed var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 8px; color: var(--muted); max-width: 80ch; }
 .strip figure { gap: 6px; }
 .strip figcaption { font: 12px/1.45 var(--mono); font-variant-numeric: tabular-nums; gap: 0; }
@@ -71,7 +72,7 @@ code { font-family: var(--mono); font-size: 0.92em; color: var(--fg); }
 a { color: var(--vein); }
 a:focus-visible, video:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 @media (max-width: 760px) {
-  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .strip, .strip.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 </style>
 
@@ -122,13 +123,44 @@ a:focus-visible, video:focus-visible { outline: 2px solid var(--amber); outline-
   </section>
 
   <section>
-    <h2>Walker count</h2>
-    <div class="pending">
-      <p><strong>Running on the GTX 1070 now.</strong> Jenson's dish, 1024 × 640, changing only the walker count (32,000 to 2,000,000) and the crowd limit (on or off), 8 seeds each. The deciding measure, named before the run, is the closed loops at 30 s. This section fills in when it finishes.</p>
+    <h2>Walker count, with and without the crowd limit</h2>
+    <p>Jenson's dish from the GPU sandbox (preset 3), 1024 × 640, no food, 30 s. Only two things change: the walker count, and the crowd limit, which lets at most one walker stand on a cell. The deciding measure, named before the runs, was the closed loops in the net at 30 s, over 8 seeds. Stills are seed 1 at 30 s.</p>
+    <div class="strip three">
+      <div class="row-label"><b>Crowd limit off</b><span>Any number of walkers may share a cell.</span></div>
+      <figure><img src="stills/crowd0-32k-030s.jpg" alt="Four short bright strands on black" loading="lazy"><figcaption><span>32,000 walkers</span><span>loops <b>0</b> (8 seeds 0-0)</span><span>tube 1,205 cells</span></figcaption></figure>
+      <figure><img src="stills/crowd0-100k-030s.jpg" alt="Three bright strands, one long and curved" loading="lazy"><figcaption><span>100,000 walkers</span><span>loops <b>0</b> (8 seeds 0-1)</span><span>tube 1,874 cells</span></figcaption></figure>
+      <figure><img src="stills/crowd0-200k-030s.jpg" alt="Two bright strands" loading="lazy"><figcaption><span>200,000 walkers</span><span>loops <b>0</b> (8 seeds 0-1)</span><span>tube 1,551 cells</span></figcaption></figure>
+      <div class="row-label"><b>Crowd limit on</b><span>One walker a cell.</span></div>
+      <figure><img src="stills/crowd1-32k-030s.jpg" alt="A lacy net of thin tubes filling an oval" loading="lazy"><figcaption><span>32,000 walkers</span><span>loops <b>51</b> (8 seeds 43-54)</span><span>tube 7,571 cells</span></figcaption></figure>
+      <figure><img src="stills/crowd1-100k-030s.jpg" alt="A denser net with thicker tubes" loading="lazy"><figcaption><span>100,000 walkers</span><span>loops <b>65</b> (8 seeds 57-70)</span><span>tube 10,320 cells</span></figcaption></figure>
+      <figure><img src="stills/crowd1-200k-030s.jpg" alt="A sheet with round holes" loading="lazy"><figcaption><span>200,000 walkers</span><span>loops <b>144</b> (8 seeds 120-144)</span><span>tube 15,245 cells</span></figcaption></figure>
     </div>
+    <ul class="list">
+      <li><strong>Without the crowd limit, the count changes nothing.</strong> Every seed at every count, from 32,000 to 1,000,000 walkers, has pulled into a few thick strands by 30 s: 0 or 1 loops, about 800-2,500 cells of tube. The GTX 1070 runs (32,000 to 1,000,000) and the cloud runs (32,000 to 200,000) agree.</li>
+      <li><strong>With it, the count sets the shape.</strong> 32,000 walkers make a lacy net, 100,000 a denser one, and 200,000 a sheet with holes. Each step up gives more loops on 8 of 8 seeds.</li>
+      <li><strong>Why.</strong> With one walker a cell, walkers can't all crowd onto the strongest tube. A blocked walker turns and lays trail beside it, so tubes widen, branch and close into loops, and the mould has to cover at least as many cells as it has walkers. Without the limit, every walker joins the few strongest tubes.</li>
+      <li><strong>For the game.</strong> With growth on, the count follows the food, so a mould that grows thickens from a net into a sheet, and a starving one thins back, as long as the crowd limit is on. The sandbox switches the limit off once walkers pass half the dish's cells (300,000 here), which is why its big presets come out as ropes.</li>
+    </ul>
+    <p class="note">Crowd limit on against off: more loops on 8 of 8 seeds at each count (sign test p 0.0078 each). With the two count steps, all five comparisons survive Holm. The GTX 1070 ran the limit off at 32,000 to 1,000,000 walkers, at 10 s and 30 s. The pictures, the limit on, and the limit off at 200,000 ran in the cloud on software Vulkan with the same code, because the PC's disk was full. On the 1070, without the limit, two ticks take 0.69 / 0.89 / 1.34 / 3.01 ms of GPU time at 32,000 / 100,000 / 300,000 / 1,000,000 walkers.</p>
+  </section>
+
+  <section>
+    <h2>On crystals, size follows how fast the mould can eat</h2>
+    <p>The Larder thread grew the mould for 300 s on its world with crystals of three sizes. It levelled off at about 20,000 walkers whatever the charge, while the walkers packed on the crystals hoarded energy, about 30 each by the end. Letting energy flow between neighbouring walkers turns that hoard into walkers. Seed 1:</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Charge a crystal cell</th><th>Alive at 300 s, as built</th><th>Alive at 300 s, energy flowing</th><th>Mean energy, as built / flowing</th></tr></thead>
+        <tbody>
+          <tr><td class="n">64</td><td class="n">141</td><td class="n">2,309</td><td class="n">1.7 / 0.89</td></tr>
+          <tr><td class="n">512</td><td class="n">21,015</td><td class="n">24,206</td><td class="n">26.4 / 0.66</td></tr>
+          <tr><td class="n">4,096</td><td class="n">18,200</td><td class="n">22,515</td><td class="n">30.0 / 0.69</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Flow gives 15-24% more walkers, but size still doesn't rise with the charge. One walker a cell can stand on a crystal, and each bites 0.005 a step, so the crystals' area sets the intake and the intake sets the size. The charge only sets how long it lasts. For a mould left alone to keep getting stronger, a crystal's yield has to grow with its charge (a bigger bite from a richer cell, or richer crystals that cover more ground). That rule belongs to the Larder thread. Energy flow stays an option, off by default; it also means a cut tube starves what lies beyond it, which hasn't been tested yet.</p>
   </section>
 
   <footer>
-    <p>Runs, raw output and this page: <code>Reports/mould-shape-2026-11-11/</code> (<code>grass-crystals.sh</code>, <code>raw/</code>, <code>stills/</code>). Code: growth (Larder World W0) on the Larder thread's crystals branch at f292952, one scratch commit (65d914f). Growth itself: <code>Reports/growth-2026-11-11.md</code>.</p>
+    <p>Runs, raw output and this page: <code>Reports/mould-shape-2026-11-11/</code> (<code>grass-crystals.sh</code>, <code>walker-sweep-cloud.sh</code>, <code>raw/</code>, <code>stills/</code>). Code: growth (Larder World W0) on the Larder thread's crystals branch at f292952, one scratch commit (65d914f). Growth itself: <code>Reports/growth-2026-11-11.md</code>; energy flow's raw output: <code>Reports/growth-2026-11-11/raw/energy-flow.txt</code>.</p>
   </footer>
 </div>

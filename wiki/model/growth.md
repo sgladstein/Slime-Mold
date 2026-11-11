@@ -2,8 +2,8 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-11T16:00Z
-sources: [Reports/growth-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
+updated: 2026-11-11T17:10Z
+sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [BigParams::upkeep, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
 
@@ -32,7 +32,15 @@ walkers; with crystals that run dry, the mould starves by 60 s with 61% of
 the charge left, because it eats only the cells its tubes cross. With
 Larder's `crystal_flow` (charge evens out inside a crystal) it eats 99% of
 the charge, peaks at 2,400 against 1,454, and starves at about 20 s
-because the food is gone.
+because the food is gone. On crystals the size stops near 20,000 whatever
+the charge (the Larder thread's 300 s runs): one walker a cell stands on a
+crystal and bites 0.005, so the crystals' area sets the intake and the
+intake sets the size, while walkers packed on the crystals hoard (mean
+energy 26-30). A scratch `energy_flow` (energy evens out between
+neighbouring walkers) turns the hoard into 15-24% more walkers, not more
+with charge ([mould shape](../../Reports/mould-shape-2026-11-11.md)). Grass
+under the crystals swamps them: the mould fills its slots by 5 s and eats
+every crystal by 10 s.
 
 ## Numbers
 
@@ -61,8 +69,10 @@ because the food is gone.
 ## Open
 
 - Run-dry crystals: `crystal_flow` makes the whole disc reachable (one
-  seed); the world's charge now has to be sized against upkeep for a long
-  game, with the Larder thread, which owns crystals.
+  seed); for a mould left alone to keep growing, a crystal's yield has to
+  rise with its charge (the Larder thread's rule).
+- `energy_flow` (scratch, this thread's branch): keep it for the
+  cut-a-tube lever? A cut has not been tested.
 - Add Larder's crystal take (`took`) to the energy gain once both are on
   main.
 - The GTX 1070's cost of the three growth passes.
@@ -70,4 +80,5 @@ because the food is gone.
 ## Sources
 
 - [growth](../../Reports/growth-2026-11-11.md), all sections.
+- [mould shape](../../Reports/mould-shape-2026-11-11.md), grass and crystals, size on crystals.
 - [Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md), W0.

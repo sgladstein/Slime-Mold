@@ -2,8 +2,8 @@
 title: The mould at scale (outside models and the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-11T16:00Z
-sources: [Reports/growth-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md, Reports/creatures-2026-11-11.md]
+updated: 2026-11-11T17:10Z
+sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md, Reports/creatures-2026-11-11.md]
 code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost]
 ---
 
@@ -158,7 +158,13 @@ brightness curve: the game's saturates at a trail of about 15, and the same
 dish drawn with a soft curve or by walkers a cell shows veins as thin as
 Jenson's. Respawning 1% of walkers a step (`BigParams::respawn`, off by
 default; Jenson's later work respawns every 1,000 steps) held a fine mesh
-and gave Jenson's haze. Four times the walkers changed little. Every GPU
+and gave Jenson's haze. Four times the walkers changed little. In the GPU
+sandbox's Jenson preset the count matters only with the limit
+([mould shape](../../Reports/mould-shape-2026-11-11.md), 8 seeds, 30 s):
+without it 32,000 to 1,000,000 walkers all fold into strands (0-1 loops);
+with it 32,000, 100,000 and 200,000 give 43-54, 57-70 and 120-144 loops, a
+net thickening into a sheet with holes (the sandbox forces the limit off
+above half the agar). Every GPU
 port read (Bleuje, Lague, PolyPhy, gpu-io, Barradeau) drops the limit.
 A follow-up ([jenson looks](../../Reports/jenson-looks-2026-11-11.md))
 added off-by-default rules for the three looks still missing. **Trunks**
@@ -257,5 +263,6 @@ polygons at once. Every outside source has a card in
 - [jenson-looks-2026-11-11.md](../../Reports/jenson-looks-2026-11-11.md): trunks, contagion and fronts on the big dish; [page](https://claude.ai/artifact/DqJxgjQGVgnwQNwbbzoGrg).
 - [creatures-2026-11-11.md](../../Reports/creatures-2026-11-11.md): grazing droplets that crawl, two species of cells, conversion.
 - [outside-rules-2026-11-11.md](../../Reports/outside-rules-2026-11-11.md): outside rules judged as creatures (species, explorers, droplets) and a survey of 14 more open-source simulations.
+- [mould-shape-2026-11-11.md](../../Reports/mould-shape-2026-11-11.md): walker count with and without the crowd limit; grass and crystals in one world.
 - [gpu-plan-2026-11-10.md](../../Reports/gpu-plan-2026-11-10.md) and its [independent review](../../Reports/gpu-plan-2026-11-10/review.md).
 - Source cards: [index](../../research/sources/README.md); [Jenson's post](../../research/sources/jenson-physarum-post.md), [36 Points](../../research/sources/jenson-36-points.md), [Jones 2010](../../research/sources/jones-2010.md), [MCPM](../../research/sources/mcpm-2022.md), [Bleuje](../../research/sources/bleuje-interactive-physarum.md), [Lague](../../research/sources/lague-slime-simulation.md), [PolyPhy](../../research/sources/polyphy.md), [Primordia](../../research/sources/primordia.md), [Reginato 2024](../../research/sources/reginato-2024.md).
