@@ -112,7 +112,7 @@ submitted and waited for; four presets also in the window with vsync
 - **Phase 3's bar holds at the owner's pick:** 100,000 walkers at 60 frames
   a second with the GPU busy 1.4 ms of the 16.7 ms frame headless, 4.6 ms in
   the window. The same seed gave the same frame twice on all eight presets.
-  The twin test in CI is still to do.
+  The twin test is now in CI (*The twin test in CI*, below).
 - **A million walkers fit a 60 Hz frame** (8-10 ms) but not the half-frame
   bar; four million do not fit (37 frames a second).
 - **The drawing costs 0.06-0.18 ms** a frame, the histogram included.
@@ -134,10 +134,36 @@ GPU (`run.sh`; raw output `raw/p1.txt`-`raw/p8.txt`), so the counts beside
 them are the software GPU's, with the 1070's in brackets. The window
 screenshot is preset 5 under Xvfb.
 
+## The twin test in CI
+
+Phase 3's gate asks for a twin test: the GPU's step against the CPU's. The
+fields are `f32`, so a GPU dish and the CPU dish drift apart over a run
+(the GPUs round `cos`, `sin` and sums differently, and the dish amplifies
+it), and the plan's fallback applies: **one GPU tick from the CPU dish's
+own state against one `BigDish::tick`**. `Engine::inject` loads a CPU
+dish's walkers, trail, scent, pile scent and step into the GPU's buffers.
+Three tests in `src/bin/mouldgpu.rs`, run by `cargo test`:
+
+| Test | What it checks | On software Vulkan, 2026-11-11 |
+| --- | --- | --- |
+| `one_gpu_tick_matches_one_cpu_tick` | presets 1, 3 and 4 at a quarter of the walkers on a 512 x 320 dish, warmed 40 ticks on the CPU, then one tick each | every walker within 0.001 (0.1% not to the bit), trail and scent to the bit, on all three |
+| `the_same_seed_gives_the_same_picture_twice` | preset 5 (respawn 1%, soft curve) for 40 ticks with the pull and the wipe, twice | the same picture and walkers to the bit |
+| `the_crowd_limit_holds_through_jumps` | preset 1 with respawn 1% and the pull, 60 ticks | the GPU's count a cell equals the walkers there, none above one, all on agar |
+
+The bounds (at most 0.1% of walkers off by more than 0.001, trail L1 1e-4,
+scent L1 1e-6) leave room for a real GPU's rounding to flip a near-tie.
+Two planted bugs show the test bites: the tick's step off by one put 0.6%
+to 58% of walkers off and the trail 5e-4 to 8e-3 off; the blocked
+walkers' draw on the wrong stream put 52% off on preset 1.
+
+CI's test job installs Mesa's software Vulkan (`mesa-vulkan-drivers`) and
+sets `MOULDGPU_TEST_GPU=1`, so a missing GPU fails the tests there; on a
+machine with no GPU and without that variable they skip and say so. The
+three take about 1.5 s on the cloud's software Vulkan.
+
 ## Next
 
 - The owner's hands on it.
 - The thread "Reproduce Jenson's missing mould looks" tests feathery fronts,
   trunks and contagion on the CPU; what works comes here as controls.
   Phase 3 also plans contagion on a key and the tools as field writes.
-- The twin test in CI on lavapipe (phase 3's gate).

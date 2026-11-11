@@ -92,7 +92,9 @@ comparison's dishes on keys 1-8 (the owner's ask, 00:06Z). The left mouse
 pulls walkers to it, the right wipes trail, F drops food. On a software
 GPU its dishes match the CPU's at 10 s (one a cell: 148 loops against 151;
 1M with respawn: 200 against 200), and a seed gives the same frame twice.
-On the GTX 1070 a frame of two ticks and the drawing takes 1.4 ms at
+A twin test in CI checks one GPU tick from a CPU dish's state against one
+CPU tick on software Vulkan: every walker within 0.001, the trail and scent
+to the bit. On the GTX 1070 a frame of two ticks and the drawing takes 1.4 ms at
 100,000 walkers, 8-10 ms at 1,000,000 and 30 ms at 4,000,000; the drawing
 is 0.06-0.18 ms of it ([report](../../Reports/gpu-sandbox-2026-11-11.md),
 [page](https://claude.ai/artifact/1rdrxadVcNdxTmbxp2KJGy)).
