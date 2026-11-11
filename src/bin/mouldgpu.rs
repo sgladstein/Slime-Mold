@@ -35,6 +35,11 @@
 //! after N frames, prints the frame cost and quits (the game has the same
 //! hook).
 //!
+//! **Tests on a GPU** (the twin test, phase 3's gate): one GPU tick from a
+//! CPU dish's state against one `BigDish::tick`, the same seed twice, and
+//! the crowd limit through jumps. They skip on a machine with no GPU unless
+//! `MOULDGPU_TEST_GPU=1`, which CI sets with Mesa's software Vulkan.
+//!
 //! **One tick is the timing test's four compute passes** (`examples/gputime.rs`,
 //! whose shader this one extends; that file stays as it was measured on the
 //! GTX 1070): `sense` (a thread a walker: sensors, turn, aim, claim with
@@ -761,7 +766,15 @@ struct Engine {
     groups: [wgpu::BindGroup; 2],
     params: wgpu::Buffer,
     walkers: wgpu::Buffer,
+    /// Kept for the twin tests' `inject` and checks (the sandbox itself
+    /// only binds them).
+    #[cfg_attr(not(test), allow(dead_code))]
+    state: wgpu::Buffer,
+    #[cfg_attr(not(test), allow(dead_code))]
+    occ: wgpu::Buffer,
     trail: [wgpu::Buffer; 2],
+    #[cfg_attr(not(test), allow(dead_code))]
+    scent: [wgpu::Buffer; 2],
     lay: wgpu::Buffer,
     frame: wgpu::Buffer,
     hud: wgpu::Buffer,
@@ -821,7 +834,7 @@ impl Engine {
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
         };
         let groups = [group(true), group(false)];
-        let mut e = Engine { device: device.clone(), queue: queue.clone(), groups, params, walkers, trail, lay, frame, hud, dish: d, dropped: Vec::new(), n, cells, done: 0, crowd_ok };
+        let mut e = Engine { device: device.clone(), queue: queue.clone(), groups, params, walkers, state, occ, trail, scent, lay, frame, hud, dish: d, dropped: Vec::new(), n, cells, done: 0, crowd_ok };
         e.lay_food(s.food);
         e
     }
@@ -848,6 +861,30 @@ impl Engine {
             }
         }
         self.queue.write_buffer(&self.lay, 0, &f32_bytes(&lay));
+    }
+
+    /// Loads a CPU dish's state (walkers, trail, scent, the scent its piles
+    /// lay, and its step for the keyed draws) in place of the GPU's, for the
+    /// twin test: one GPU tick from it should match one `BigDish::tick`.
+    /// The dish must have this engine's settings.
+    #[cfg(test)]
+    fn inject(&mut self, d: &BigDish) {
+        assert_eq!((d.w, d.h, d.walkers.len() as u32, d.sw, d.sh), (self.dish.w, self.dish.h, self.n, d.w, d.h), "a dish of this engine's size, on the fine scent grid");
+        let flat: Vec<f32> = d.walkers.iter().flat_map(|&(x, y, h)| [x, y, h, 0.0]).collect();
+        self.queue.write_buffer(&self.walkers, 0, &f32_bytes(&flat));
+        let mut occ = vec![0u32; self.cells as usize];
+        for &(x, y, _) in &d.walkers {
+            occ[y as usize * d.w + x as usize] += 1;
+        }
+        self.queue.write_buffer(&self.occ, 0, &u32_bytes(&occ));
+        // The tick's bind group reads side `done % 2`.
+        let side = (d.steps % 2) as usize;
+        self.queue.write_buffer(&self.trail[side], 0, &f32_bytes(&d.trail));
+        self.queue.write_buffer(&self.scent[side], 0, &f32_bytes(&d.scent));
+        self.queue.write_buffer(&self.lay, 0, &f32_bytes(&d.scent_laid()));
+        self.queue.write_buffer(&self.state, 0, &u32_bytes(&[d.steps as u32, 1f32.to_bits(), 0, 0]));
+        self.done = d.steps;
+        self.dish = d.clone();
     }
 
     fn write_params(&self, s: &Settings, hand: Hand) {
@@ -1614,6 +1651,148 @@ mod tests {
         assert_eq!(next_in(&RESPAWN_STEPS, 0.0, -1), 0.0);
         assert_eq!(thousands(1_000_000), "1,000,000");
         assert_eq!(thousands(32_000), "32,000");
+    }
+
+    /// A GPU for the twin tests, or `None` (the test then passes, saying it
+    /// was skipped) on a machine with none. CI installs Mesa's software
+    /// Vulkan (lavapipe) and sets `MOULDGPU_TEST_GPU=1`, so there a missing
+    /// GPU fails the test instead.
+    fn test_gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
+        let required = std::env::var("MOULDGPU_TEST_GPU").is_ok_and(|v| v == "1");
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+        let adapter = match block_on(instance.request_adapter(&wgpu::RequestAdapterOptions::default())) {
+            Ok(a) => a,
+            Err(e) => {
+                assert!(!required, "MOULDGPU_TEST_GPU=1 but no GPU adapter: {e}");
+                eprintln!("no GPU adapter ({e}): skipped");
+                return None;
+            }
+        };
+        let info = adapter.get_info();
+        eprintln!("adapter: {} ({:?})", info.name, info.backend);
+        let desc = wgpu::DeviceDescriptor { label: Some("twin"), required_limits: adapter.limits(), ..Default::default() };
+        Some(block_on(adapter.request_device(&desc)).expect("device"))
+    }
+
+    /// Small dishes for the GPU tests: scale 2 (512 x 320 fine cells), a
+    /// quarter of the walkers, so software Vulkan runs them in seconds.
+    const SCALE: usize = 2;
+
+    fn small(k: usize) -> Settings {
+        let s = preset(k);
+        Settings { walkers: s.walkers / 4, ..s }
+    }
+
+    fn run(e: &mut Engine, shared: &Shared, s: &Settings, ticks: u32, hand: Hand) {
+        e.write_params(s, hand);
+        let mut enc = e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        e.record(shared, &mut enc, ticks, s.curve == Curve::Soft, None);
+        e.queue.submit([enc.finish()]);
+    }
+
+    fn walkers_of(e: &Engine) -> Vec<(f32, f32, f32)> {
+        floats(&read_back(&e.device, &e.queue, &e.walkers)).chunks_exact(4).map(|c| (c[0], c[1], c[2])).collect()
+    }
+
+    /// The sum of |a - b| over the sum of |b|.
+    fn l1(a: &[f32], b: &[f32]) -> f64 {
+        let d: f64 = a.iter().zip(b).map(|(x, y)| (x - y).abs() as f64).sum();
+        d / b.iter().map(|y| y.abs() as f64).sum::<f64>().max(1e-30)
+    }
+
+    /// **The twin test** (GPU plan phase 3's gate). The fields are `f32`, so
+    /// a GPU and the CPU drift apart over a run (different `cos`, `sin` and
+    /// summing order), and the plan's fallback applies: one GPU tick from
+    /// the CPU dish's own state against one `BigDish::tick`. Each dish is
+    /// warmed on the CPU first, so the trail, scent and crowding are a
+    /// real dish's.
+    #[test]
+    fn one_gpu_tick_matches_one_cpu_tick() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        // Presets 1 (one a cell, food), 3 (no limit) and 4 (Jenson's angles
+        // and reach, a million walkers in the sandbox).
+        for k in [0, 2, 3] {
+            let s = small(k);
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..40 {
+                cpu.tick();
+            }
+            let before = cpu.walkers.clone();
+            e.inject(&cpu);
+            run(&mut e, &shared, &s, 1, Hand::default());
+            cpu.tick();
+            let gpu = walkers_of(&e);
+            let side = (e.done % 2) as usize;
+            let trail = floats(&read_back(&device, &queue, &e.trail[side]));
+            let scent = floats(&read_back(&device, &queue, &e.scent[side]));
+            let off = gpu.iter().zip(&cpu.walkers).filter(|(g, c)| (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3).count();
+            let (lt, ls) = (l1(&trail, &cpu.trail), l1(&scent, &cpu.scent));
+            let moved = before.iter().zip(&cpu.walkers).filter(|(a, b)| a != b).count();
+            eprintln!("preset {}: {} walkers, {moved} moved or turned, {off} off by more than 0.001; trail L1 {lt:.1e}, scent L1 {ls:.1e}", k + 1, gpu.len());
+            // On software Vulkan (2026-11-11) every walker agreed within
+            // 0.001 (0.1% of them not to the bit: `cos` and `sin` round
+            // differently), and the trail and scent agreed to the bit. The
+            // bounds leave room for a real GPU's rounding to flip a near-tie
+            // or two. Checked against two planted bugs: the tick's step
+            // off by one put 143-14,492 walkers off (0.6-58%) and the trail
+            // 5e-4-8e-3 off; the blocked draw on the wrong stream put 52%
+            // off on preset 1.
+            assert_eq!(moved, gpu.len(), "preset {}: every walker steps, turns or is blocked", k + 1);
+            assert!(off * 1000 <= gpu.len(), "preset {}: {off} of {} walkers off", k + 1, gpu.len());
+            assert!(lt <= 1e-4 && ls <= 1e-6, "preset {}: trail L1 {lt:.2e}, scent L1 {ls:.2e}", k + 1);
+        }
+    }
+
+    /// The same seed gives the same dish and picture twice, bit for bit,
+    /// with every random thing on: respawn, the pull, the wipe, the soft
+    /// curve's histogram.
+    #[test]
+    fn the_same_seed_gives_the_same_picture_twice() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = small(4);
+        let hand = |f: u32| Hand { at: Some((200.0 + 4.0 * f as f32, 150.0)), pull: f < 10, wipe: f >= 10 };
+        let mut seen = Vec::new();
+        for _ in 0..2 {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            for f in 0..20 {
+                run(&mut e, &shared, &s, s.ticks, hand(f));
+            }
+            seen.push((e.picture(), walkers_of(&e)));
+        }
+        let bits = |w: &[(f32, f32, f32)]| w.iter().flat_map(|&(x, y, h)| [x.to_bits(), y.to_bits(), h.to_bits()]).collect::<Vec<u32>>();
+        assert!(seen[0].0 == seen[1].0, "the pictures differ");
+        assert_eq!(bits(&seen[0].1), bits(&seen[1].1), "the walkers differ");
+    }
+
+    /// One walker a cell holds on the GPU through its claims, jumps and
+    /// pulls: the count a cell kept on the GPU is the walkers standing
+    /// there, none above one, and every walker is on agar.
+    #[test]
+    fn the_crowd_limit_holds_through_jumps() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { respawn: 0.01, ..small(0) };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        assert!(e.crowd_ok);
+        for f in 0..30 {
+            let hand = Hand { at: Some((256.0, 160.0)), pull: f % 2 == 0, wipe: false };
+            run(&mut e, &shared, &s, s.ticks, hand);
+        }
+        let walkers = walkers_of(&e);
+        assert_eq!(walkers.len(), e.n as usize);
+        let occ: Vec<u32> = read_back(&device, &queue, &e.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+        let mut counted = vec![0u32; e.cells as usize];
+        for &(x, y, _) in &walkers {
+            assert!(x >= 0.0 && y >= 0.0 && (x as usize) < e.dish.w && (y as usize) < e.dish.h, "a walker outside the dish at {x}, {y}");
+            let i = y as usize * e.dish.w + x as usize;
+            assert!(e.dish.agar[i], "a walker off the agar at {x}, {y}");
+            counted[i] += 1;
+        }
+        assert_eq!(occ, counted, "the GPU's count a cell is the walkers there");
+        assert!(counted.iter().all(|&c| c <= 1), "two walkers in a cell");
     }
 
     #[test]
