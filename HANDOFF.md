@@ -116,6 +116,11 @@ Ask each again; none has an answer to assume.
    from the store" rule needs its own currency first. Page:
    [the RTS directions](wiki/rts/directions.md).
 
+8. **Larder, the mould-as-enemy shooter** ([`Reports/mould-shooter-2026-11-11.md`](Reports/mould-shooter-2026-11-11.md),
+   [page](wiki/rts/shooter.md)): one soldier or a squad; solo or Versus (two
+   squads, one mould); run its three cheap tests first or build v0 in the
+   browser first.
+
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
 with no engine, is in §5 of
