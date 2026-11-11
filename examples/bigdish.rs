@@ -742,30 +742,36 @@ fn main() {
                         .enumerate()
                         .filter(|&(k, &(x, y, _))| (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (x / s - strike_x).hypot(y / s - strike_y) <= 2.0 * strike_r)
                         .count();
-                    // `rim`: the share of them within 2 dish cells of the
-                    // agar's edge along a row or column (the review's wall
-                    // rail: a rule that sends walkers to ride the wall).
-                    let edge = 2 * d.p.scale as i64;
+                    // `rim`: the share of them within 2 and within 10 dish
+                    // cells of the agar's edge along a row or column (the
+                    // review's wall rail: a rule that sends walkers to ride
+                    // the wall). The wall reads as a wall to sensors 9 dish
+                    // cells out, so a start spread to the edge leaves the
+                    // 2-cell band in 0.2 s; a rider would sit within 10.
                     let off = |x: i64, y: i64| x < 0 || y < 0 || x >= d.w as i64 || y >= d.h as i64 || !d.agar[y as usize * d.w + x as usize];
-                    let rim = d
-                        .walkers
-                        .iter()
-                        .enumerate()
-                        .filter(|&(k, &(x, y, _))| {
-                            let (x, y) = (x as i64, y as i64);
-                            (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (off(x - edge, y) || off(x + edge, y) || off(x, y - edge) || off(x, y + edge))
-                        })
-                        .count();
+                    let rim = |cells: i64| {
+                        let edge = cells * d.p.scale as i64;
+                        d.walkers
+                            .iter()
+                            .enumerate()
+                            .filter(|&(k, &(x, y, _))| {
+                                let (x, y) = (x as i64, y as i64);
+                                (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (off(x - edge, y) || off(x + edge, y) || off(x, y - edge) || off(x, y + edge))
+                            })
+                            .count()
+                    };
+                    let (rim2, rim10) = (rim(2), rim(10));
                     let (nb, big) = bodies(&d, (4.0 * s * s) as usize);
                     let n = n.max(1) as f64;
                     println!(
-                        "seed {seed} {name} t {:5.1}s  life walk {wk} spore {sp} dormant {dor} dead {dead}  held {held}/{}  bodies {nb} big {:.0}  centre {:.1},{:.1}  near {near_strike}  rim {:.3}",
+                        "seed {seed} {name} t {:5.1}s  life walk {wk} spore {sp} dormant {dor} dead {dead}  held {held}/{}  bodies {nb} big {:.0}  centre {:.1},{:.1}  near {near_strike}  rim {:.3}/{:.3}",
                         m.seconds,
                         d.piles.len(),
                         big as f32 / (s * s),
                         sx / n / s as f64,
                         sy / n / s as f64,
-                        rim as f64 / n
+                        rim2 as f64 / n,
+                        rim10 as f64 / n
                     );
                 }
                 if !d.kind.is_empty() {

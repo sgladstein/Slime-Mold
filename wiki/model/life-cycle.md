@@ -24,7 +24,8 @@ paired seeds each:
   20 s against 3-5 (8 of 8). Struck, it sprays spores (`spore_burst`) and
   holds 7 of 7 on every seed against 3-5. **Counter: starve it, don't hit
   it.** At `spore_rate` 1e-4 it is too fast for the owner's pace rule (7
-  of 7 piles by 10 s on 6 of 8 seeds); the slower rates are in the report.
+  of 7 piles by 10 s on 6 of 8 seeds); at 1e-5 it holds 4-6 piles at 10 s
+  and 6-7 by 60 s (seeds 1-3), so the rate is the dial.
 - **Sleeper**: walkers away from food fall dormant into a crust
   (`sleep_rate`). A strike's alarm wakes the crust in a wave
   (`alarm_relay`), and the woken mould rushes the wound
@@ -36,7 +37,8 @@ paired seeds each:
   strikes in 5 s kill 1144-4158 walkers against 614-3591 (more on 8 of 8).
   **Counter: a kill zone.**
 
-A mould that flees attack (**Skittish**, `alarm_weight` below 0, after
+Over two minutes the Sporer keeps its piles and the Sleeper stays a
+crust, and no tier rides the dish wall (seeds 1-3). A mould that flees attack (**Skittish**, `alarm_weight` below 0, after
 Jones and Adamatzky's light) did not break up or move off measurably; it is
 an option, not a tier (dead end). The splitting and migrating tier is still
 open. Cost: the alarm field is one more full-grid pass, +31% a step on one
@@ -51,6 +53,9 @@ core at 100,000 walkers; spores +6-16%.
 | Sleeper bait: walkers near the strike 2 s after it, bait 4 s before vs none | 1858-2216 (median 2030) vs 2360-2971 (median 2736) | 8 | fewer 8-0, p 0.0078, survives | same, *Sleeper* |
 | Swarmer: walkers killed by 11 strikes, `alarm_weight` +3 vs 0 | 1144-4158 (median 1393) vs 614-3591 (median 816) | 8 | more 8-0, p 0.0078, survives | same, *Swarmer* |
 | Skittish: tube bodies at 20 s under the same fire, `alarm_weight` -10 vs 0 | 1-5 (median 2) vs 1-3 (median 1.5) | 8 | 4-1, 3 ties, p 0.375, fails | same, *Skittish* |
+| Sporer pace: piles held at 10 / 60 s, `spore_rate` 1e-5 vs none | 4-6 / 6-7 vs 3-5 / 3-5; at 3e-6, 3-6 throughout | 3 | no | same, *Robustness* |
+| Two minutes with food: Sporer piles held at 120 s; Sleeper dormant at 120 s | 7 of 7 on 3 of 3 vs 4-5; 15,498-18,782 of 20,000 | 3 | no | same |
+| Wall rail: share of walkers within 10 dish cells of the wall, 20 and 60 s | 0-1.8% on every tier, plain 0-0.8% (spread evenly: 18.8%) | 3 | no | same |
 | Frame cost, 100k walkers spread, one core, ms a step | off 25.2-25.9; alarm 33.0-34.6; spores 27.7-29.2 | 1, 2 runs | no | same, *Cost* |
 
 ## Owner's word

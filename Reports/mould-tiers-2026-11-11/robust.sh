@@ -12,6 +12,9 @@
 #     80k (blob_r 70), both about a quarter full like the 20k disc of 40.
 #  R4 wall rail: `rim` (the share of grounded living walkers within 2 dish
 #     cells of the agar edge) at 20 and 120 s, each tier against its control.
+#     It read 0 on every arm: the wall reads as a wall 9 dish cells out, so
+#     the 2-cell band empties in 0.2 s. `rim` now also gives the 10-cell
+#     share (the later runs here print both), and wall.sh is the check.
 set -u
 JOBS=${1:-4}; OUT=${2:-Reports/mould-tiers-2026-11-11/raw}; mkdir -p "$OUT"
 BIN=./target/release/examples/bigdish

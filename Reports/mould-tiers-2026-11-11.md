@@ -9,7 +9,7 @@ that lies dormant, a mould that splits or migrates) from what published
 agent-Physarum work suggests, each with a body and a weakness the player
 can use. The owner, 15:07Z, in this thread: "You should also consider how
 the mold reacts to the player, how it reacts to being attacked, etc."
-Page: PAGE_URL (source and media in
+Page: https://claude.ai/artifact/EGJKqpbfE5Gh8nDToXHfMu (source and media in
 [`mould-tiers-2026-11-11/`](mould-tiers-2026-11-11/)). Wiki:
 [`wiki/model/life-cycle.md`](../wiki/model/life-cycle.md).
 
@@ -42,12 +42,22 @@ Page: PAGE_URL (source and media in
   still open.
 - **Pace.** At `spore_rate` 1e-4 the Sporer is too fast for the owner's
   rule (14:59Z: "The mold shouldn't be able to take over a whole map in
-  10 seconds"): it holds 7 of 7 piles by 10 s on 6 of 8 seeds (by 5 s on 5), against 3-5 without spores. PACE_LINE
+  10 seconds"): it holds 7 of 7 piles by 10 s on 6 of 8 seeds (by 5 s
+  on 5), against 3-5 without spores.
+  `spore_rate` is the dial (`pace.sh`, seeds 1-3): at 1e-5 it holds 4-6
+  piles at 10 s (7 on none of 3) and 6-7 by 60 s; at 3e-6, 3-6 from 10 s
+  to 60 s, barely above the 3-5 of the plain body.
 - **Cost**, one core, 100,000 walkers: the alarm field is one more
   full-grid pass, 33.0-34.6 ms a step against 25.2-25.9 (+31%); spores
   27.7-29.2 (+6-16%); a dish that sleeps is cheaper, since dormant walkers
   don't move.
-- ROBUST_LINE
+- **Robustness** (`robust.sh`, `wall.sh`, seeds 1-3, descriptive): over
+  2 minutes the Sporer keeps all 7 piles and the Sleeper stays a crust
+  (15,498-18,782 of 20,000 dormant at 120 s); at 5,000 walkers a Sporer
+  whose body reaches no pile never feeds, so it never fruits; at 80,000 the
+  plain body already holds 5-7 piles. No tier rides the wall: at most
+  1.8% of walkers within 10 dish cells of it, where walkers spread evenly
+  put 18.8%.
 
 ## Method
 
@@ -109,7 +119,7 @@ picked after the run). The strike killed 678-2170.
 only the piles it sits on (2 of 7). A dormant walker lays 0.3 x deposit,
 so the crust keeps its own trail; scent or alarm over 1 wakes it, and a
 waking walker adds 20 to the alarm on its cell, once: the wake runs
-through the crust as a wave (an excitable medium) in about a second. The
+through the crust as a wave (an excitable medium), across the whole body in about 2 s (seed 1). The
 woken mould swarms to the alarm (`alarm_weight` 3). After 2 s awake it can
 sleep again, and a walker that falls asleep is deaf to alarm for 5 s
 (scent still wakes it).
@@ -164,7 +174,46 @@ sense nor move.
 
 ## Robustness
 
-ROBUST_SECTION
+Seeds 1-3, descriptive, measures named in the scripts before the runs.
+
+**Two minutes with food** (`robust.sh`, R1 and R2). The Sporer holds 7 of
+7 piles at 60 and 120 s on all three seeds, against 4-5 for the plain body
+at 120 s; 104-164 spores are in the air at 120 s (more walkers sit on
+food by then) and its outposts make 2-7 tube bodies against 1-3. Nothing
+dies (the model has no births or deaths yet). The Sleeper stays a crust:
+15,465-18,771 walkers dormant at 60 s and 15,498-18,782 at 120 s, after
+the strike at 14 s has woken it and it has gone back down; it holds 2-3
+piles against 3-5 for the plain body under the same strike. Neither
+drifts between 60 and 120 s.
+
+**Other sizes** (R3, 20 s, discs about a quarter full). At 5,000 walkers
+(radius 20) the Sporer holds 0-6 piles against 0-2; on seed 3 the body
+reaches no pile, never feeds and never fruits, so a small Sporer must
+reach a crystal first. At 80,000 (radius 70) it holds 7 of 7 at 10 s on
+all three against 5-7: the plain body nearly covers the piles already.
+
+**Pace** (`pace.sh`). Piles held, `spore_rate` 1e-5 / 3e-6 / none:
+
+| Seed | 10 s | 20 s | 60 s |
+|---|---|---|---|
+| 1 | 4 / 3 / 3 | 4 / 3 / 3 | 6 / 3 / 3 |
+| 2 | 6 / 6 / 4 | 7 / 6 / 4 | 7 / 6 / 4 |
+| 3 | 6 / 5 / 5 | 6 / 5 / 5 | 7 / 5 / 5 |
+
+The outposts are landed spores, not roads: with no streak
+(`spore_deposit` 0, `spore_rate` 1e-4) the Sporer still holds 7 of 7 at
+20 s on seeds 1-3 (raw `x-nostreak-*`).
+
+**The wall** (`wall.sh`, R4, 60 s). The creature review warned that the
+dish wall can be a rail a rule leans on. The wall reads as a wall to
+sensors 9 dish cells out, so walkers spread to the edge leave a 2-cell
+band in 0.2 s (1.8% of them at 0.1 s, 0.7% at 0.2 s); `rim` counts the
+share within 2 and within 10 dish cells. Spread evenly, 18.8% sit within
+10. At 20 and 60 s every arm reads 0.000-0.001 within 2 cells and, within
+10: plain 0.000-0.008, Sporer 0.001-0.018, struck Sporer 0.000-0.011,
+Sleeper 0.000, Swarmer 0.000-0.007, Skittish 0.000-0.008. The struck
+Sporer's spores reach the wall (on the page) but land on food, away from
+it. No tier rides the wall.
 
 ## Tried and changed on the way
 
@@ -175,7 +224,7 @@ ROBUST_SECTION
 - Fruiting was first gated on the body's own trail; it is now gated on
   food scent (`spore_scent`), so a mould fruits only where it feeds.
 - A wake relay of 5 with alarm keep 0.95 died out in the crust; 20 with
-  0.98 runs through the whole body in about a second.
+  0.98 runs through the whole body in about 2 s.
 - The alarm laid only where the strike kills barely spread; it now reaches
   twice the kill radius.
 - A 100,000-walker body of radius 20 jammed (only 20,375 placed, no
