@@ -1,0 +1,16 @@
+seed 1 w0 179 bodies, median size 205.0 drift over 20 frames: median 0.7 p90 1.78 ms/tick 14.59
+seed 1 w10 176 bodies, median size 208.5 drift over 20 frames: median 6.59 p90 32.19 ms/tick 14.65
+seed 2 w0 191 bodies, median size 183.0 drift over 20 frames: median 0.75 p90 1.87 ms/tick 14.69
+seed 2 w10 183 bodies, median size 195.0 drift over 20 frames: median 7.51 p90 33.32 ms/tick 14.10
+seed 3 w0 184 bodies, median size 199.5 drift over 20 frames: median 0.72 p90 1.52 ms/tick 14.13
+seed 3 w10 190 bodies, median size 199.5 drift over 20 frames: median 6.75 p90 33.54 ms/tick 14.83
+seed 4 w0 193 bodies, median size 186.0 drift over 20 frames: median 0.75 p90 1.6 ms/tick 13.52
+seed 4 w10 168 bodies, median size 214.0 drift over 20 frames: median 6.56 p90 25.55 ms/tick 14.49
+seed 5 w0 181 bodies, median size 194.0 drift over 20 frames: median 0.74 p90 1.51 ms/tick 11.26
+seed 5 w10 175 bodies, median size 209.0 drift over 20 frames: median 6.5 p90 26.59 ms/tick 13.85
+seed 6 w0 193 bodies, median size 187.0 drift over 20 frames: median 0.77 p90 1.5 ms/tick 12.60
+seed 6 w10 174 bodies, median size 217.0 drift over 20 frames: median 6.51 p90 31.75 ms/tick 12.18
+seed 7 w0 187 bodies, median size 188.0 drift over 20 frames: median 0.67 p90 1.67 ms/tick 10.65
+seed 7 w10 180 bodies, median size 213.5 drift over 20 frames: median 7.35 p90 31.5 ms/tick 12.88
+seed 8 w0 190 bodies, median size 194.0 drift over 20 frames: median 0.77 p90 1.55 ms/tick 11.85
+seed 8 w10 189 bodies, median size 196.0 drift over 20 frames: median 7.64 p90 29.44 ms/tick 14.12

@@ -3,8 +3,8 @@ title: The mould at scale (outside models and the GPU plan)
 kind: mechanism
 status: open
 updated: 2026-11-11
-sources: [Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md]
-code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit]
+sources: [Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md, Reports/creatures-2026-11-11.md]
+code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert]
 ---
 
 # The mould at scale (outside models and the GPU plan)
@@ -188,6 +188,7 @@ polygons at once. Every outside source has a card in
 | Two species in their own halves, avoidance 1 vs 0, species 0's trail in its half at 20 s / tube cells 80%+ one species | 0.89-1.00 vs 0.88-1.00, 5 of 8, p 0.73 / 0.994-1.000 vs 0.966-0.983, cleaner on 8 of 8, p 0.008 | 8 | yes | same |
 | Cyclic vs plain three species, tube cells changing lead in 2 s at 10 s / loops | 0.65-0.70 vs 0.75-0.85, lower on 8 of 8 (the guess was higher) / 97-125 vs 22-63 | 8 | yes | same |
 | Packed walkers laying trail where they stand (30k, one a cell, SO 9), bodies and drift | about 180 droplets of about 200 cells, drift 0.6-0.7 cells a second | seed 1 | | same |
+| Grazing weight 10 vs 0 on those droplets, body drift over the last 2 s of 10 s | 6.5-7.6 vs 0.67-0.77 cells: more on 8 of 8, p 0.008; bodies 168-190 vs 179-193; 12-15 ms a tick either way | 8 | yes | [creatures](../../Reports/creatures-2026-11-11.md) |
 | Cost of the new rules, 1M walkers, one core, ms a tick | base 132.7; trail-dependent step 176.5; square-root deposit 150.9; floor 139.6; wander 142.5; contagion 142.9 | seed 1 | | same |
 | Step cost, bare move and diffusion, one core | 256 x 160 / 2.2k 0.13 ms; 1024 x 640 / 100k 9.5-11.2 ms; 1024 x 640 / 1M 96-98 ms; 2048 x 1280 / 1M 111-112 ms | 2 runs | | [gpu plan, *What the independent review changed*](../../Reports/gpu-plan-2026-11-10.md), [bench](../../Reports/gpu-plan-2026-11-10/step-bench.rs) |
 
@@ -218,7 +219,7 @@ polygons at once. Every outside source has a card in
 - The bag: whether a packed start on the fine grid still stalls once the economy grows the mould from a small inoculum.
 - Census readback and the economy on the GPU are not yet timed; the drawing is (0.07-0.29 ms a frame on the GTX 1070, sandbox).
 - Jenson's feathery fronts: seven mechanisms failed ([jenson looks](../../Reports/jenson-looks-2026-11-11.md)); explorers that turn into networkers one by one (`explore_spread`) grow radial feathery veins from a disc, one seed so far ([outside rules](../../Reports/outside-rules-2026-11-11.md)).
-- A creature that moves as a body: packed walkers that lay trail where they stand cohere into still droplets; what makes them crawl is open (see the amoeboid entry in [`dead-ends.md`](../../Reports/dead-ends.md)).
+- A creature that moves as a body: still droplets crawl once they graze a regrowing field ([creatures](../../Reports/creatures-2026-11-11.md)). What lets one body beat another is open: conversion alone moved no border on even dishes.
 - Whether contagion can leave a lasting mark for play (see the contagion entry in [`dead-ends.md`](../../Reports/dead-ends.md)). The outside code was read on 2026-11-10; only PolyPhy, gpu-io (MIT) and Barradeau (public domain) may be reused.
 
 ## Sources
@@ -227,6 +228,7 @@ polygons at once. Every outside source has a card in
 - [jenson-compare-2026-11-10.md](../../Reports/jenson-compare-2026-11-10.md): the clips against the big dish, and how the outside versions build the step.
 - [gpu-sandbox-2026-11-11.md](../../Reports/gpu-sandbox-2026-11-11.md): the GPU sandbox, its controls and presets, and its check against the CPU dish.
 - [jenson-looks-2026-11-11.md](../../Reports/jenson-looks-2026-11-11.md): trunks, contagion and fronts on the big dish; [page](https://claude.ai/artifact/DqJxgjQGVgnwQNwbbzoGrg).
+- [creatures-2026-11-11.md](../../Reports/creatures-2026-11-11.md): grazing droplets that crawl, two species of cells, conversion.
 - [outside-rules-2026-11-11.md](../../Reports/outside-rules-2026-11-11.md): outside rules judged as creatures (species, explorers, droplets) and a survey of 14 more open-source simulations.
 - [gpu-plan-2026-11-10.md](../../Reports/gpu-plan-2026-11-10.md) and its [independent review](../../Reports/gpu-plan-2026-11-10/review.md).
 - Source cards: [index](../../research/sources/README.md); [Jenson's post](../../research/sources/jenson-physarum-post.md), [36 Points](../../research/sources/jenson-36-points.md), [Jones 2010](../../research/sources/jones-2010.md), [MCPM](../../research/sources/mcpm-2022.md), [Bleuje](../../research/sources/bleuje-interactive-physarum.md), [Lague](../../research/sources/lague-slime-simulation.md), [PolyPhy](../../research/sources/polyphy.md), [Primordia](../../research/sources/primordia.md), [Reginato 2024](../../research/sources/reginato-2024.md).
