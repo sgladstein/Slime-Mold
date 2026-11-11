@@ -28,7 +28,9 @@ import sys
 from collections import defaultdict
 
 BY_60 = 0.46
-LINE = re.compile(r"^(\w+) DUEL seed=(\d+) left=(\w+) right=(\w+) share=([\d.]+) at60=([\d.]+) .* t=(\d+)(?: by60=([\d.]+))?.*?(?: bell=(\d+))?(?: \(|$)")
+LINE = re.compile(r"^(\w+) DUEL seed=(\d+) left=(\w+) right=(\w+) share=([\d.]+) at60=([\d.]+) .* t=(\d+)")
+BY60 = re.compile(r" by60=([\d.]+)")
+BELL = re.compile(r" bell=(\d+)")
 
 
 def sign_p(k, n):
@@ -48,8 +50,9 @@ for f in sys.argv[2:]:
             continue
         if m[1] not in order:
             order.append(m[1])
-        by60 = float(m[8]) if m[8] else BY_60
-        bell = int(m[9]) if m[9] else 150
+        b, k = BY60.search(line), BELL.search(line)
+        by60 = float(b[1]) if b else BY_60
+        bell = int(k[1]) if k else 150
         games[m[1]][(int(m[2]), m[3], m[4])] = (float(m[5]), float(m[6]), int(m[7]), by60, bell)
 
 

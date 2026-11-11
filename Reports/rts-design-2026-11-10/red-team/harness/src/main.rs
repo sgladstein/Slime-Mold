@@ -788,7 +788,7 @@ fn main() {
                 format!("{}/{},f{}/{},r{}/{}", held(&v.iter().collect::<Vec<_>>()), v.len(), held(&f), f.len(), held(&r), r.len())
             };
             println!(
-                "DUEL seed={seed} left={} right={} share={:.3} at60={at60:.3} ate={:.0}/{:.0} bought={}/{} t={:.0} by60={:.3} held={:.3} held60={held60:.3} hby60={:.3} bell={} def={};{} ({:.1}s)",
+                "DUEL seed={seed} left={} right={} share={:.3} at60={at60:.3} ate={:.0}/{:.0} bought={}/{} t={:.0} by60={:.3} held={:.3} held60={held60:.3} hby60={:.3} bell={} def={};{} walkers={}/{} gone={} ({:.1}s)",
                 plans[0].name(),
                 plans[1].name(),
                 sk.share(),
@@ -803,6 +803,9 @@ fn main() {
                 sk.rules.bell,
                 def(0),
                 def(1),
+                sk.walkers(0),
+                sk.walkers(1),
+                ["L", "R"].get(sk.gone().unwrap_or(2)).unwrap_or(&"-"),
                 t0.elapsed().as_secs_f32()
             );
         }

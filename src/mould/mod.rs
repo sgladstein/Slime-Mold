@@ -1717,6 +1717,18 @@ impl Dish {
             return self.step_own();
         };
         let before: Vec<(u64, f32)> = self.piles.iter().map(|p| (pile_key(p), p.food)).collect();
+        // The wild mould eats from its own copy of the piles, made at the
+        // end of the last step. Food that changed since (the skirmish's
+        // regrowth) must reach that copy first, or the difference reads as
+        // eaten by the wild mould and comes off the pile: regrowth reached
+        // only this mould's walkers and was scored to the other's
+        // (`Skirmish::regrow`, round 7, fixed 2026-11-11). Nothing else
+        // changes a pile's food between steps, so the hashes stand.
+        for q in r.piles.iter_mut() {
+            if let Some(b) = before.iter().find(|b| b.0 == pile_key(q)) {
+                q.food = b.1;
+            }
+        }
         // What the player did this step reaches the wild mould too.
         let t = self.t;
         let snips: Vec<(f32, f32)> = self.snip_marks.iter().filter(|m| m.2 == t).map(|m| (m.0, m.1)).collect();

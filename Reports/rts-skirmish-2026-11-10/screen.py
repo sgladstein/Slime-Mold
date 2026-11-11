@@ -12,7 +12,8 @@ import re
 import sys
 from collections import defaultdict
 
-LINE = re.compile(r"^(\w+) DUEL seed=(\d+) left=(\w+) right=(\w+) share=([\d.]+) at60=([\d.]+) .* t=(\d+).*?(?: bell=(\d+))?(?: \(|$)")
+LINE = re.compile(r"^(\w+) DUEL seed=(\d+) left=(\w+) right=(\w+) share=([\d.]+) at60=([\d.]+) .* t=(\d+)")
+BELL = re.compile(r" bell=(\d+)")
 
 
 def sign_p(k, n):
@@ -33,7 +34,8 @@ for f in sys.argv[1:]:
         if tag not in order:
             order.append(tag)
         # The bell is on the line from round 7; 150 before.
-        games[tag].append((int(m[2]), m[3], m[4], float(m[5]), float(m[6]), int(m[7]), int(m[8] or 150)))
+        k = BELL.search(line)
+        games[tag].append((int(m[2]), m[3], m[4], float(m[5]), float(m[6]), int(m[7]), int(k[1]) if k else 150))
 
 for tag in order:
     g = games[tag]

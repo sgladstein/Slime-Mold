@@ -28,7 +28,7 @@
 //! purchase pure gain (random spending beat idle 4/4), so the tithe
 //! replaced it.
 
-use super::level::{Level, PileSpec, Tools, Win};
+use super::level::{Level, PileSpec, Tools, Win, ENDLESS_MIN};
 use super::{Dish, Params, Phase, INOCULUM, STEPS_PER_SECOND};
 
 const SPS: u64 = STEPS_PER_SECOND as u64;
@@ -680,6 +680,36 @@ impl Skirmish {
             self.dish.ate
         } else {
             self.dish.wild_ate
+        }
+    }
+
+    /// The side wiped out, if either is: none of your walkers left, or the
+    /// rival under `ENDLESS_MIN`, which is what ends the dish early.
+    pub fn gone(&self) -> Option<usize> {
+        if self.dish.walkers.is_empty() {
+            Some(0)
+        } else if self.dish.wild_left < ENDLESS_MIN {
+            Some(1)
+        } else {
+            None
+        }
+    }
+
+    /// Who wins as things stand: the survivor of a wipe-out, whatever the
+    /// score (the economy sketch's "a wipe-out still ends the game"; under
+    /// the held-ground score a side can be wiped out with more points
+    /// banked than its killer), otherwise the larger share; None on a tie.
+    pub fn winner(&self) -> Option<usize> {
+        if let Some(s) = self.gone() {
+            return Some(1 - s);
+        }
+        let x = self.share();
+        if x > 0.5 {
+            Some(0)
+        } else if x < 0.5 {
+            Some(1)
+        } else {
+            None
         }
     }
 
@@ -1539,6 +1569,18 @@ mod tests {
         s.dish.piles[0].food = full;
         s.regrow(26 * SPS);
         assert_eq!(s.dish.piles[0].food, full, "never past full");
+        // In play: the regrowth stays on the pile, for both moulds, and
+        // nobody is scored for eating it. Before the fix the rival's copy
+        // of the piles missed it, so it came off as the rival's bite.
+        let mut s = Skirmish::new(1, [None, None]);
+        s.rules.regrow = 0.01;
+        run(&mut s, 1);
+        let i = (0..s.dish.piles.len()).find(|&i| s.eaters(0, i) + s.eaters(1, i) == 0).unwrap();
+        s.dish.piles[i].food = 0.0;
+        run(&mut s, 1);
+        assert_eq!(s.eaters(0, i) + s.eaters(1, i), 0, "nobody there yet");
+        assert!(s.dish.piles[i].food > 0.9 * step * SPS as f32, "it grew back");
+        assert_eq!(s.dish.rival.as_ref().unwrap().piles[i].food, s.dish.piles[i].food, "the rival sees it too");
     }
 
     #[test]

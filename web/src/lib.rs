@@ -395,6 +395,13 @@ pub extern "C" fn sk_cooldown() -> f32 {
     with(|g| g.sk.cooldown_s(0), 0.0)
 }
 
+/// Who wins as things stand (`Skirmish::winner`): 0 you, 1 the rival, 2 a
+/// tie. A wipe-out is the survivor's whatever the score.
+#[no_mangle]
+pub extern "C" fn sk_winner() -> u32 {
+    with(|g| g.sk.winner().map_or(2, |s| s as u32), 2)
+}
+
 /// Your share of the score in force: food eaten, or points for ground
 /// held (`Rules::score_held`).
 #[no_mangle]

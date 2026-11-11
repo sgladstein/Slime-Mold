@@ -441,8 +441,9 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
     feed = feed.slice(0, 6);
     if (feed.length) $('feed').innerHTML = feed.join('');
     if (sk.sk_over()) {
-      const won = share > 0.5;
-      $('result').textContent = won ? 'You won' : (share < 0.5 ? 'The rival won' : 'A draw');
+      // A wipe-out is the survivor's, whatever the score.
+      const w = sk.sk_winner(), won = w === 0;
+      $('result').textContent = won ? 'You won' : (w === 1 ? 'The rival won' : 'A draw');
       $('result').className = 'result ' + (won ? 'good' : 'bad');
     }
   };
