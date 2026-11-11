@@ -15,8 +15,10 @@ default-run = "mould"
 # organ probe's offline render, the WAV writer (`src/wav.rs`). Both were
 # copied rather than shared, so the two repos have no build link.
 [dependencies]
+ab_glyph = { version = "0.2.32", default-features = false, features = ["std"] }
 image = { version = "0.25.10", default-features = false, features = ["png", "gif"] }
 pixels = "0.17"
+tiny-skia = { version = "0.11.4", default-features = false, features = ["std"] }
 winit = "0.30"
 
 # Sound for `--bin organ`, the same arrangement Pixel_Physics uses: cpal needs
