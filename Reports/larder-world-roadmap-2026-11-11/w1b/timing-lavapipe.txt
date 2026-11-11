@@ -1,0 +1,82 @@
+# W1b frame cost on the cloud software GPU (lavapipe, 4 cores): relative only. Script: base (piles=23 rect=1), world (+ crystal=512 crystal_eat=0.005 rock=0.2 wet=0.2, two walls at 1 s and 2 s), growth (+ upkeep=0.001 capacity=200000, so twice the slots), at scales 2 and 4, two runs each, 4 s.
+# commit e1e321f, 19:06Z, nproc 4
+## scale 2 arm base run 1: ./target/release/mouldgpu look=LOOK tag=s2-base-1 seconds=4 scale=2 piles=23 rect=1 
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 512 x 320 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 14.067, worst 24.401; GPU ms ticks 13.166, drawing 1.020
+GPU ms a pass, median of 11 ticks each submitted alone: sense 2.221, walk 1.809, trail 1.037, scent 1.244, draw 0.924
+## scale 2 arm world run 1: ./target/release/mouldgpu look=LOOK tag=s2-world-1 seconds=4 scale=2 piles=23 rect=1 crystal=512 crystal_eat=0.005 rock=0.2 wet=0.2 walls=70,40,70,120,2@1;120,20,160,60,3@2
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 512 x 320 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 15.991, worst 22.655; GPU ms ticks 15.048, drawing 1.162
+world: crystals left 0.995, wall bites 8068, wall cells broken 4
+GPU ms a pass, median of 11 ticks each submitted alone: sense 2.598, walk 1.982, walls 0.243, eat 0.121, pilesum 0.181, flow 0.098, pilesum 0.178, trail 1.043, scent 1.309, draw 1.052
+## scale 2 arm growth run 1: ./target/release/mouldgpu look=LOOK tag=s2-growth-1 seconds=4 scale=2 piles=23 rect=1 crystal=512 crystal_eat=0.005 rock=0.2 wet=0.2 walls=70,40,70,120,2@1;120,20,160,60,3@2 upkeep=0.001 capacity=200000
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 200000 walkers on 512 x 320 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 24.216, worst 33.803; GPU ms ticks 23.301, drawing 1.182
+dish at 4.0s: tube 13263.8  loops 1  width 10.24  reach 210.9  piles 23/23  strays 0.000  alive 100002
+world: crystals left 0.995, wall bites 8068, wall cells broken 4
+GPU ms a pass, median of 11 ticks each submitted alone: sense 3.382, walk 2.777, walls 0.262, eat 0.138, pilesum 0.195, flow 0.116, pilesum 0.181, life 0.643, breed 0.308, born 0.265, trail 1.374, scent 1.713, draw 1.077
+## scale 2 arm base run 2: ./target/release/mouldgpu look=LOOK tag=s2-base-2 seconds=4 scale=2 piles=23 rect=1 
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 512 x 320 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 14.521, worst 20.036; GPU ms ticks 13.660, drawing 0.986
+GPU ms a pass, median of 11 ticks each submitted alone: sense 2.403, walk 1.896, trail 1.045, scent 1.241, draw 0.913
+## scale 2 arm world run 2: ./target/release/mouldgpu look=LOOK tag=s2-world-2 seconds=4 scale=2 piles=23 rect=1 crystal=512 crystal_eat=0.005 rock=0.2 wet=0.2 walls=70,40,70,120,2@1;120,20,160,60,3@2
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 512 x 320 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 15.191, worst 80.911; GPU ms ticks 14.141, drawing 1.137
+world: crystals left 0.995, wall bites 8068, wall cells broken 4
+GPU ms a pass, median of 11 ticks each submitted alone: sense 2.245, walk 1.411, walls 0.202, eat 0.107, pilesum 0.168, flow 0.093, pilesum 0.157, trail 1.035, scent 1.263, draw 1.028
+## scale 2 arm growth run 2: ./target/release/mouldgpu look=LOOK tag=s2-growth-2 seconds=4 scale=2 piles=23 rect=1 crystal=512 crystal_eat=0.005 rock=0.2 wet=0.2 walls=70,40,70,120,2@1;120,20,160,60,3@2 upkeep=0.001 capacity=200000
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 200000 walkers on 512 x 320 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 24.449, worst 32.516; GPU ms ticks 23.332, drawing 1.176
+dish at 4.0s: tube 13263.8  loops 1  width 10.24  reach 210.9  piles 23/23  strays 0.000  alive 100002
+world: crystals left 0.995, wall bites 8068, wall cells broken 4
+GPU ms a pass, median of 11 ticks each submitted alone: sense 5.325, walk 3.092, walls 0.242, eat 0.148, pilesum 0.202, flow 0.138, pilesum 0.191, life 0.826, breed 0.332, born 0.269, trail 1.405, scent 1.749, draw 1.087
+## scale 4 arm base run 1: ./target/release/mouldgpu look=LOOK tag=s4-base-1 seconds=4 scale=4 piles=23 rect=1 
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 35.865, worst 44.095; GPU ms ticks 32.317, drawing 2.627
+GPU ms a pass, median of 11 ticks each submitted alone: sense 4.590, walk 1.857, trail 3.448, scent 4.124, draw 3.260
+## scale 4 arm world run 1: ./target/release/mouldgpu look=LOOK tag=s4-world-1 seconds=4 scale=4 piles=23 rect=1 crystal=512 crystal_eat=0.005 rock=0.2 wet=0.2 walls=70,40,70,120,2@1;120,20,160,60,3@2
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 39.647, worst 54.001; GPU ms ticks 38.217, drawing 3.105
+world: crystals left 0.996, wall bites 6857, wall cells broken 0
+GPU ms a pass, median of 11 ticks each submitted alone: sense 6.528, walk 2.348, walls 0.818, eat 0.344, pilesum 0.238, flow 0.182, pilesum 0.221, trail 3.936, scent 4.978, draw 3.922
+## scale 4 arm growth run 1: ./target/release/mouldgpu look=LOOK tag=s4-growth-1 seconds=4 scale=4 piles=23 rect=1 crystal=512 crystal_eat=0.005 rock=0.2 wet=0.2 walls=70,40,70,120,2@1;120,20,160,60,3@2 upkeep=0.001 capacity=200000
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 54.284, worst 89.985; GPU ms ticks 53.252, drawing 3.521
+dish at 4.0s: tube 16062.2  loops 194  width 4.28  reach 211.1  piles 23/23  strays 0.021  alive 107563
+world: crystals left 0.996, wall bites 8435, wall cells broken 0
+GPU ms a pass, median of 11 ticks each submitted alone: sense 8.718, walk 3.160, walls 0.816, eat 0.353, pilesum 0.234, flow 0.190, pilesum 0.233, life 1.621, breed 0.805, born 0.273, trail 5.249, scent 5.080, draw 4.044
+## scale 4 arm base run 2: ./target/release/mouldgpu look=LOOK tag=s4-base-2 seconds=4 scale=4 piles=23 rect=1 
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 35.832, worst 47.090; GPU ms ticks 32.591, drawing 3.512
+GPU ms a pass, median of 11 ticks each submitted alone: sense 5.173, walk 1.697, trail 3.981, scent 4.558, draw 3.389
+## scale 4 arm world run 2: ./target/release/mouldgpu look=LOOK tag=s4-world-2 seconds=4 scale=4 piles=23 rect=1 crystal=512 crystal_eat=0.005 rock=0.2 wet=0.2 walls=70,40,70,120,2@1;120,20,160,60,3@2
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 37.377, worst 56.996; GPU ms ticks 33.539, drawing 3.947
+world: crystals left 0.996, wall bites 6857, wall cells broken 0
+GPU ms a pass, median of 11 ticks each submitted alone: sense 4.973, walk 2.037, walls 0.681, eat 0.310, pilesum 0.202, flow 0.162, pilesum 0.207, trail 3.671, scent 4.370, draw 3.622
+## scale 4 arm growth run 2: ./target/release/mouldgpu look=LOOK tag=s4-growth-2 seconds=4 scale=4 piles=23 rect=1 crystal=512 crystal_eat=0.005 rock=0.2 wet=0.2 walls=70,40,70,120,2@1;120,20,160,60,3@2 upkeep=0.001 capacity=200000
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+   world: 23 piles in a rectangle, crystal 512 eat 0.005 flow 0.01 regrow 0; rock 0.2 wet 0.2 (step 0.5); walls 2 (health 400 bite 1 scent 0.9)
+wall ms a frame of 2 ticks and the drawing, 240 frames: median 57.265, worst 82.490; GPU ms ticks 54.330, drawing 3.974
+dish at 4.0s: tube 16062.2  loops 194  width 4.28  reach 211.1  piles 23/23  strays 0.021  alive 107563
+world: crystals left 0.996, wall bites 8435, wall cells broken 0
+GPU ms a pass, median of 11 ticks each submitted alone: sense 7.700, walk 2.787, walls 0.778, eat 0.356, pilesum 0.231, flow 0.169, pilesum 0.208, life 1.254, breed 0.805, born 0.274, trail 4.859, scent 5.372, draw 2.722

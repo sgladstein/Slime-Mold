@@ -154,3 +154,88 @@ Bites at 0.9 against sealed: more on 6 of 7 untied seeds (p 0.125). Not signific
 ## Owner, 16:48Z (graphics thread)
 
 "Gun fire should hit the first slime in its path" and "The crystals should have hexagonal outline, not circle." Crystals are now pointy-top hexagons of circumradius `pile_r` in the simulation itself (`BigDish::in_pile`): the crystal's cells, its scent and where it counts as reached, about 0.83 of the disc's area, so every crystal holds about 17% less charge than in the runs above. Piles with crystals off keep their disc. The graphics thread writes `world::look::first_hit` (march the shot's line, stop at the first mould); the Larder world's firing rule will use it.
+
+## W1b: crystals, walls and terrain on the GPU engine, 2026-11-11
+
+Branch `claude/project-thread-u9z06g` (7766f32; W0's later merges of main, with #70's mould tiers, came in cleanly at e1e321f and f8f4eb9, and all 16 mouldgpu tests still pass), stacked on the GPU thread's W0 (growth on `gpu::Engine`, 55778bc), which is stacked on #63 (the engine in the library). The merge order agreed with the graphics thread (18:58Z): #63, W0, W1b, then #69 rebased onto it (its shot hits and look move to bindings 42 and 43, and its `Engine::block` becomes a call to `Engine::build_wall`).
+
+**What runs on the GPU now**, each the CPU big dish's rule from W1a (PR #64):
+
+- **Crystals.** A charge a cell (`charge`), and the crystals' cells listed pile by pile (`pcell`, `piles`). The `eat` pass gives the n walkers on a crystal cell equal shares, `min(crystal_eat, c / n)` each, floored at 0, and keeps each cell's share (`share`), which the growth pass `life` eats directly (it replaces W0's per-walker `took` buffer and saves a pass). `pilesum` sums each pile in one workgroup (an f32 tree; the CPU sums in f64, and the two agree to about 3e-10 of charge a tick), `flow` moves charge toward its pile's mean (`crystal_flow`) and regrows it (`crystal_regrow`), and a crystal's scent is scaled by its share left. Footprints are the hexagons of `BigDish::in_pile`.
+- **Terrain.** Rock is not agar; on wet ground the step is multiplied by `wet_step`.
+- **Walls.** One `ground` word a cell holds the pile index, WET, WALL, SCENT_WALL and ROCK bits. A walker that a wall blocks bites the wall cell it aimed at (`bites`, an atomic count a cell); the `walls` pass takes `wall_bite` of health a bite, and a cell at 0 turns to wet rubble open to walkers and scent. Walls pass on `wall_scent` of the scent spread into them. `Engine::build_wall(ax, ay, bx, by, width)` lays a capsule wall on the GPU: it clears the trail and scent under it and moves each walker it covers to the nearest free cell, in the CPU's ring order and under the crowd limit, in rounds until no walker moves (four fixed rounds left 24 of 178 inside).
+- **Order in a tick**, as the CPU's: walk, walls, eat (then pilesum, flow), pilesum, growth (life, breed, born), convert, then trail and scent.
+
+**Measure, named first.** One GPU tick against one `BigDish::tick` from the same CPU dish after 60 ticks of warm-up, on nine world dishes chosen so that every rule acts in the tick, and a wall built on the GPU against `BigDish::build_wall` on three dishes. Then 17 planted bugs, one at a time, each of which the test must fail. On lavapipe (`MOULDGPU_TEST_GPU=1 cargo test --release --bin mouldgpu -- world wall`); raw output: [twin and bugs](larder-world-roadmap-2026-11-11/w1b/twin-and-bugs.txt).
+
+| Dish (25,000 walkers unless said) | Walkers off | Trail L1 | Scent L1 | Charge L1 | Bites, broken (CPU / GPU) |
+|---|---|---|---|---|---|
+| crystals (charge 512, 23 piles) | 0 | 0 | 1.2e-9 | 2.3e-10 | - |
+| crystals at 1, no crowd limit, regrowing | 0 | 0 | 1.9e-9 | 3.5e-10 | - |
+| crystals at 1, no flow, no crowd limit | 0 | 0 | 2.6e-10 | 0 | - |
+| rock and wet ground | 0 | 0 | 1.2e-10 | 2.0e-10 | - |
+| walls that break (health 3), leaking scent | 0 | 0 | 8.8e-10 | 1.5e-10 | 11, 4 / 11, 4 |
+| walls that never break, sealed | 0 | 0 | 1.6e-9 | 3.2e-10 | 0, 0 / 4, 0 |
+| walls under a crowd (health 1,000), no limit | 0 | 0 | 2.7e-9 | 3.1e-10 | 11, 0 / 11, 0 |
+| a cage round a packed start (5,000) | 0 | 0 | 0 | 0 | 53, 0 / 53, 0 |
+| growth on crystals (15,000 slots) | 0 | 0 | 9.2e-10 | 3.1e-10 | 1, 0 / 1, 0 |
+
+Health, energy, grass, each cell's take, and the agar and ground bits match exactly on every dish. The one difference is by design: walls that never break keep no health on the CPU, so it counts no bites; the GPU counts them on infinite health, which changes nothing. A wall built on the GPU covers the same 812 cells as the CPU's, moves all 178 covered walkers (250 with no crowd limit) out, loses none, and leaves no cell over the limit.
+
+**Planted bugs**: all 17 caught. Two were missed at first and the test grew to catch them: charge that goes negative when eaten (caught once a no-flow dish at charge 1 drains cells to 0, and any negative charge fails), and one bite a cell however many walkers hit it (caught once the cage dish puts 53 bites into a tick).
+
+| # | Bug | Caught by |
+|---|---|---|
+| 0 | eat share not divided by the walkers on a cell | crystals at 1, no limit, regrowing: 753 takes, 0 agar, 0 ground off |
+| 1 | eaten charge not floored at 0 | crystals at 1, no flow, no limit: charge L1 inf, health L1 0.00e0 |
+| 2 | flow away from the mean | crystals: charge L1 9.48e-6, health L1 0.00e0 |
+| 3 | no regrowing | crystals at 1, no limit, regrowing: trail L1 0.00e0, scent L1 3.18e-5 |
+| 4 | pile sums count cells a wall took | walls that break, leaking scent: trail L1 0.00e0, scent L1 3.08e-4 |
+| 5 | crystal scent not scaled by the share left | crystals: trail L1 0.00e0, scent L1 2.83e-5 |
+| 6 | wet ground not slowing | rock and wet ground: 6345 of 25000 walkers off |
+| 7 | every blocked walker bites | walls that break, leaking scent: bites and cells broken |
+| 8 | one bite a cell however many hit it | a cage round a packed start: charge L1 0.00e0, health L1 4.16e-6 |
+| 9 | rubble not wet | walls that break, leaking scent: 0 takes, 0 agar, 4 ground off |
+| 10 | walls keep all the scent spread into them | walls that break, leaking scent: trail L1 0.00e0, scent L1 4.00e-4 |
+| 11 | scent does not spread through leaky walls | walls that break, leaking scent: trail L1 0.00e0, scent L1 4.08e-3 |
+| 12 | a new wall keeps its trail | one a cell: 0 agar, 0 ground, 812 cells left on |
+| 13 | evicted walkers ignore the crowd limit | one a cell: 0 counts off, 48 crowded |
+| 14 | growth eats the take of the cell beside | growth on crystals: energy L1 2.51e-2, grass 0.00e0 |
+| 15 | crystal footprint a disc, not a hexagon | crystals: trail L1 0.00e0, scent L1 5.85e-3 |
+| 16 | eating after growth | growth on crystals: energy L1 2.99e-2, grass 0.00e0 |
+
+**Frame cost.** On the cloud's software GPU (lavapipe on 4 cores, so relative only), 100,000 walkers, 23 crystals, 4 s, two runs each ([raw](larder-world-roadmap-2026-11-11/w1b/timing-lavapipe.txt)). The world's four passes (walls, eat, two pile sums, flow) take 0.73-0.82 ms a tick at 512 × 320 and 1.56-1.80 ms at 1024 × 640, against 6.0-6.9 and 14.0-17.8 ms for the base passes (sense, walk, trail, scent) in the same runs: **about 10-12% more GPU time a tick** at either size. The median frame (two ticks and the drawing) went from 14.1-14.5 to 15.2-16.0 ms at 512 × 320, and from 35.8-35.9 to 37.4-39.6 ms at 1024 × 640. The walls pass visits every cell and is the largest of the four at 1024 × 640 (0.68-0.82 ms). A list of wall cells would cut it, if the 1070 shows that it matters. The 1070's own numbers wait until that PC is back online. The same 10-12% of its 1.37 ms frame would be about 0.15 ms, but that is a guess from a software GPU, not a measurement.
+
+**Picture**, 1024 × 640 (the W2 world), 100,000 walkers, 23 crystals at charge 512, rock 0.2, wet 0.2, two walls laid at 1 s and 2 s, at 4 s, drawn by the engine's own draw pass: [world](larder-world-roadmap-2026-11-11/w1b/world-1024x640-4s.jpg), and the same seed without the world fields: [base](larder-world-roadmap-2026-11-11/w1b/base-1024x640-4s.jpg). The crystals are hexagons, cyan by charge; the walls are grey by health; dark patches are rock. By 4 s the walls had taken 6,857 bites and none had broken (health 400). The mould runs its tubes between the crystals and around the rock, and nothing in the picture is drawn on top: it is the engine's fields.
+
+## W2 plan: Larder in the world, 2026-11-11
+
+**Goal.** A native GPU build the owner plays on the GTX 1070 (owner, 00:30Z: the real game is a native GPU app): a squad against a growing mould on the 1024 × 640 world, with crystals that run out, rock and wet ground, and walls, seen through the camera and UI of #63 and drawn by the look of #69. The mould starts on one crystal and grows (the race; owner, 14:54Z: "if you do nothing, the slime should get much stronger than you and kill you").
+
+**What carries over from M3** (`src/mould/larder.rs`): `Rules`, the orders (hold, move, clear, burn, attack), the stances, `Cmd` and its replay log, the squad's turn (walk, defend, clear, burn), buying soldiers, turrets and bait. The controls of #63 were written for these orders.
+
+**What changes in the world:**
+- **Food is crystal charge, for both sides.** A clear order on a crystal harvests its charge into the soldier's carry, which it walks home to the larder. Charge the squad takes is charge the mould can't eat: the race is over the same crystals.
+- **Fire stops at the first mould** (owner, 16:48Z). The shot's line from the soldier toward its target stops at the first cell that looks like slime, trail thickness 26/255 or more on a fresh read (the graphics thread, 18:57Z: a stricter test let 98 of 120 shots fly through visible slime), and strikes a disc there: it kills the walkers and clears the trail (`BigDish::strike`, #70; with growth the slot is freed).
+- **The mould attacks as in M3**: soldiers smell like a small crystal, walkers within `touch` drain health, and a dead soldier becomes a small crystal.
+- **Walls are a squad tool**, priced by the cell and built with `Engine::build_wall`; the mould wears them down (W1a).
+- **The core** is the mould's home crystal; holding it clear stops births.
+
+**Engine hooks**, each a GPU pass with a CPU twin and a one-tick twin test with planted bugs, as in W1b:
+1. `squad`: one workgroup a unit (64 at most). Walkers within `touch` (summing `occ`), the densest mould within range, and harvest from the crystal cells under it. Read back each frame: a few hundred bytes.
+2. `smell`: scent added on each soldier's disc before the scent pass.
+3. `shots`: each shot marches its line on the trail and strikes at the first slime cell, in the same tick, so there is no 2.6 MB readback of the world. The hit points come back for the look's tracers.
+4. `strike`: kill walkers and clear trail in discs.
+5. Bodies: spare crystal slots reserved at the start and filled when a soldier dies.
+
+**Game layer**, `src/mould/larder_world.rs`, no window. The rules run over a small `World` trait with two sides: the CPU big dish, for tests, CI and small censuses, and `gpu::Engine`, for play and censuses on the 1070. A replay (seed plus command log) reaches the same hash on one machine.
+
+**Window**, `src/bin/larderworld.rs`: `Camera`, `View`, `Controls` and `Marks` from #63, the look from #69, and a panel with the bank, the squad, the crystals left, the mould's size and the time.
+
+| Step | What | Gate |
+|---|---|---|
+| W2a | Engine hooks (squad, smell, shots, strike, bodies) | GPU matches CPU in a one-tick twin test; every planted bug caught; frame cost on the 1070 |
+| W2b | Game layer, rules over `World` | Idle and random hands lose to the mould; a plan (harvest and defend) beats both on paired seeds (sign test, Holm) |
+| W2c | Window | The owner plays it; frame under 10 ms p95 on the 1070 |
+
+W2b can start now on the CPU dish. W2a's GPU passes follow W1b's merge, and W2c follows #69.

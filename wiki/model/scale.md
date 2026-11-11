@@ -2,7 +2,7 @@
 title: The mould at scale (the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-11T19:15Z
+updated: 2026-11-11T19:20Z
 sources: [Reports/gpu-plan-2026-11-10.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost, BigParams::crystal_charge, BigParams::crystal_regrow, BigParams::terrain_rock, BigParams::rect, BigDish::build_wall, BigParams::wall_hp, BigParams::wall_scent, BigParams::crystal_flow, BigDish::in_pile, BigParams::species_share, BigParams::species_convert_r, BigParams::mix_share]
 ---
@@ -42,7 +42,9 @@ report](../../Reports/gpu-plan-2026-11-10.md).
 
 Phase 4 (game rules on the GPU) has begun with Larder World's W0: births,
 upkeep and starving per walker, built on the CPU and the GPU and matched
-to the bit in CI ([growth and starving](growth.md);
+to the bit in CI ([growth and starving](growth.md)). W1b adds the world's
+crystals, terrain and walls to the engine, twin-tested on nine dishes
+(report, *W1b*;
 [Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md),
 [Larder](../world/larder.md)).
 

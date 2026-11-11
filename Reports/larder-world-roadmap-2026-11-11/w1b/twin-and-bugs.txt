@@ -1,0 +1,60 @@
+# W1b twin tests and planted bugs, lavapipe (llvmpipe Vulkan), at 7766f32, 2026-11-11 18:57-19:25Z.
+# Command: MOULDGPU_TEST_GPU=1 cargo test --release --locked --bin mouldgpu -- world wall --test-threads 1 --nocapture; then each bug patched in alone (scratchpad plant.py: the 17 replacements named below) and the same test run.
+    Finished `release` profile [optimized] target(s) in 1m 09s
+     Running unittests src/bin/mouldgpu.rs (target/release/deps/mouldgpu-2756e87f9908f10e)
+
+running 2 tests
+test tests::a_wall_builds_on_the_gpu_as_on_the_cpu ... adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+one a cell: 812 cells walled, 25000 walkers; 178 moved out on the CPU, 178 on the GPU; 0 and 0 left inside; 0 agar and 0 ground cells off, 0 walled cells with trail, scent or charge, 0 counts off, 0 cells over the limit
+no limit: 812 cells walled, 25000 walkers; 250 moved out on the CPU, 250 on the GPU; 0 and 0 left inside; 0 agar and 0 ground cells off, 0 walled cells with trail, scent or charge, 0 counts off, 0 cells over the limit
+sealed: 812 cells walled, 25000 walkers; 178 moved out on the CPU, 178 on the GPU; 0 and 0 left inside; 0 agar and 0 ground cells off, 0 walled cells with trail, scent or charge, 0 counts off, 0 cells over the limit
+ok
+test tests::the_world_matches_the_cpu_for_one_tick ... adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+crystals: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 1.2e-9, charge L1 2.3e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 49.1 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+crystals at 1, no limit, regrowing: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 1.9e-9, charge L1 3.5e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 35.2 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+crystals at 1, no flow, no limit: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 2.6e-10, charge L1 0.0e0, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 27.5 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+rock and wet ground: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 1.2e-10, charge L1 2.0e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 128.6 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+walls that break, leaking scent: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 8.8e-10, charge L1 1.5e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 48.5 eaten; 11 bites and 4 cells broken on the CPU, 11 and 4 on the GPU; 0 takes, 0 agar and 0 ground cells off
+walls that never break, sealed: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 1.6e-9, charge L1 3.2e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 72.1 eaten; 0 bites and 0 cells broken on the CPU, 4 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+walls under a crowd, no limit: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 2.7e-9, charge L1 3.1e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 71.9 eaten; 11 bites and 0 cells broken on the CPU, 11 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+a cage round a packed start: 5000 walkers, 5000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, charge L1 0.0e0, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 16.8 eaten; 53 bites and 0 cells broken on the CPU, 53 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+growth on crystals: 15000 walkers, 4646 moved or turned, 0 off; trail L1 0.0e0, scent L1 9.2e-10, charge L1 3.1e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 8.1 eaten; 1 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 6.88s
+
+# planted bugs
+[0] eat share not divided by the walkers on a cell: CAUGHT
+     crystals at 1, no limit, regrowing: 753 takes, 0 agar, 0 ground off
+[1] eaten charge not floored at 0: CAUGHT
+     crystals at 1, no flow, no limit: charge L1 inf, health L1 0.00e0
+[2] flow away from the mean: CAUGHT
+     crystals: charge L1 9.48e-6, health L1 0.00e0
+[3] no regrowing: CAUGHT
+     crystals at 1, no limit, regrowing: trail L1 0.00e0, scent L1 3.18e-5
+[4] pile sums count cells a wall took: CAUGHT
+     walls that break, leaking scent: trail L1 0.00e0, scent L1 3.08e-4
+[5] crystal scent not scaled by the share left: CAUGHT
+     crystals: trail L1 0.00e0, scent L1 2.83e-5
+[6] wet ground not slowing: CAUGHT
+     rock and wet ground: 6345 of 25000 walkers off
+[7] every blocked walker bites: CAUGHT
+     assertion `left == right` failed: walls that break, leaking scent: bites and cells broken
+[8] one bite a cell however many hit it: CAUGHT
+     a cage round a packed start: charge L1 0.00e0, health L1 4.16e-6
+[9] rubble not wet: CAUGHT
+     walls that break, leaking scent: 0 takes, 0 agar, 4 ground off
+[10] walls keep all the scent spread into them: CAUGHT
+     walls that break, leaking scent: trail L1 0.00e0, scent L1 4.00e-4
+[11] scent does not spread through leaky walls: CAUGHT
+     walls that break, leaking scent: trail L1 0.00e0, scent L1 4.08e-3
+[12] a new wall keeps its trail: CAUGHT
+     one a cell: 0 agar, 0 ground, 812 cells left on
+[13] evicted walkers ignore the crowd limit: CAUGHT
+     one a cell: 0 counts off, 48 crowded
+[14] growth eats the take of the cell beside: CAUGHT
+     growth on crystals: energy L1 2.51e-2, grass 0.00e0
+[15] crystal footprint a disc, not a hexagon: CAUGHT
+     crystals: trail L1 0.00e0, scent L1 5.85e-3
+[16] eating after growth: CAUGHT
+     growth on crystals: energy L1 2.99e-2, grass 0.00e0
