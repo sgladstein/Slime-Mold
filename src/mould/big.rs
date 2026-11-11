@@ -3292,6 +3292,35 @@ mod tests {
     /// Crystals run dry: charge only falls, the eaten total matches what
     /// left the piles, and a drained pile lays less scent. Terrain is the
     /// same map at every scale and keeps rock off the piles.
+    /// Soil (Larder World maps): sand thins the trail, clay keeps it, and
+    /// barren ground costs upkeep and takes no births; an empty soil field
+    /// changes nothing.
+    #[test]
+    fn soil_kinds_act_on_their_terms() {
+        let p = BigParams { upkeep: 0.001, capacity: 1200, ..small(1, 1) };
+        let run = |kind: u8| {
+            let mut d = BigDish::new(p.clone());
+            if kind > 0 {
+                d.soil = vec![kind; d.w * d.h];
+            }
+            for _ in 0..30 {
+                d.tick();
+            }
+            (d.trail.iter().sum::<f32>(), d.alive.iter().filter(|&&a| a).count(), d.hash())
+        };
+        let (plain, sand, clay, barren) = (run(0), run(SOIL_SAND), run(SOIL_CLAY), run(SOIL_BARREN));
+        assert!(sand.0 < plain.0 * 0.5, "sand {} plain {}", sand.0, plain.0);
+        assert!(clay.0 > plain.0, "clay {} plain {}", clay.0, plain.0);
+        assert!(barren.1 <= plain.1 && barren.2 != plain.2);
+        // Soil all plain (0) is the same dish as no soil field.
+        let mut d = BigDish::new(p.clone());
+        d.soil = vec![0; d.w * d.h];
+        for _ in 0..30 {
+            d.tick();
+        }
+        assert_eq!(d.hash(), plain.2);
+    }
+
     #[test]
     fn crystals_run_dry_and_terrain_pairs() {
         let p = BigParams { crystal_charge: 2.0, crystal_eat: 0.2, terrain_rock: 0.3, terrain_wet: 0.3, rect: true, ..small(2, 2) };
