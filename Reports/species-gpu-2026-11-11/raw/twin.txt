@@ -1,0 +1,39 @@
+
+running 4 tests
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+growing, one a cell: 15000 slots, 14889 alive, 62 born and 0 starved in the tick, 14889 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, energy L1 0.0e0, grass L1 0.0e0; 0 lives off, 0 cells' counts off, 0 ages, 0 species and 0 sick counters off
+one a cell: 812 cells walled, 25000 walkers; 178 moved out on the CPU, 178 on the GPU; 0 and 0 left inside; 0 agar and 0 ground cells off, 0 walled cells with trail, scent or charge, 0 counts off, 0 cells over the limit; 0 empty slots under the wall, 0 of them moved
+growing, no limit: 100000 slots, 32744 alive, 12744 born and 0 starved in the tick, 32744 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, energy L1 0.0e0, grass L1 0.0e0; 0 lives off, 0 cells' counts off, 0 ages, 0 species and 0 sick counters off
+no limit: 812 cells walled, 25000 walkers; 250 moved out on the CPU, 250 on the GPU; 0 and 0 left inside; 0 agar and 0 ground cells off, 0 walled cells with trail, scent or charge, 0 counts off, 0 cells over the limit; 0 empty slots under the wall, 0 of them moved
+sealed: 812 cells walled, 25000 walkers; 178 moved out on the CPU, 178 on the GPU; 0 and 0 left inside; 0 agar and 0 ground cells off, 0 walled cells with trail, scent or charge, 0 counts off, 0 cells over the limit; 0 empty slots under the wall, 0 of them moved
+hungry, one a cell: 15000 slots, 14991 alive, 1 born and 1 starved in the tick, 14991 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, energy L1 0.0e0, grass L1 0.0e0; 0 lives off, 0 cells' counts off, 0 ages, 0 species and 0 sick counters off
+hungry, no limit, Jenson's: 1000000 slots, 60836 alive, 1 born and 6813 starved in the tick, 67649 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, energy L1 6.1e-6, grass L1 0.0e0; 0 lives off, 0 cells' counts off, 0 ages, 0 species and 0 sick counters off
+growth, empty slots under the wall: 812 cells walled, 37500 walkers; 39 moved out on the CPU, 39 on the GPU; 0 and 0 left inside; 0 agar and 0 ground cells off, 0 walled cells with trail, scent or charge, 0 counts off, 0 cells over the limit; 195 empty slots under the wall, 0 of them moved
+test tests::a_wall_builds_on_the_gpu_as_on_the_cpu ... ok
+species 0 at 70%, converting: 250000 walkers, 250000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off; 181579 of species 0, 9774 joined another species, 0 species off; 0 of the second kind, 0 kinds off; grass L1 0.0e0
+rows of 512 cells, radius 8: 0 sums off by more than 1e-5, worst 3.9e-7; trail summed by the cells beside a piece's edge up to 1995.9
+test tests::the_squares_rows_sum_every_cell_of_the_row ... ok
+hungry, species converting, explorers, contagion, respawn: 15000 slots, 15000 alive, 1 born and 1 starved in the tick, 15000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, energy L1 0.0e0, grass L1 0.0e0; 0 lives off, 0 cells' counts off, 0 ages, 0 species and 0 sick counters off
+converting over a square of 3, bands: 250000 walkers, 250000 moved or turned, 0 off; trail L1 1.1e-13, scent L1 0.0e0, species L1 1.3e-13; 0 ages off; 124948 of species 0, 518 joined another species, 0 species off; 0 of the second kind, 0 kinds off; grass L1 0.0e0
+hunting droplets converting over a square of 8 (the dead-end's dish): 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off; 13755 of species 0, 163 joined another species, 0 species off; 0 of the second kind, 0 kinds off; grass L1 0.0e0
+hungry, cap, grazing off: 1000000 slots, 61709 alive, 5 born and 6782 starved in the tick, 68491 moved or turned, 0 off; trail L1 1.0e-8, scent L1 0.0e0, energy L1 1.7e-5, grass L1 0.0e0; 0 lives off, 0 cells' counts off, 0 ages, 0 species and 0 sick counters off
+hungry, dying beside breeding: 60000 slots, 41668 alive, 4359 born and 352 starved in the tick, 41873 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, energy L1 0.0e0, grass L1 0.0e0; 0 lives off, 0 cells' counts off, 0 ages, 0 species and 0 sick counters off
+hungry, mixed walkers, crowd limits by species: 15000 slots, 14995 alive, 3 born and 2 starved in the tick, 14996 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, energy L1 0.0e0, grass L1 0.0e0; 0 lives off, 0 cells' counts off, 0 ages, 0 species and 0 sick counters off
+test tests::growth_matches_the_cpu_for_one_tick ... ok
+three cyclic species converting over a square of 2, cap: 250000 walkers, 250000 moved or turned, 0 off; trail L1 1.9e-8, scent L1 0.0e0, species L1 2.0e-8; 0 ages off; 82039 of species 0, 27831 joined another species, 0 species off; 0 of the second kind, 0 kinds off; grass L1 0.0e0
+mixed walkers: 250000 walkers, 250000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off; 0 of species 0, 0 joined another species, 0 species off; 75581 of the second kind, 0 kinds off; grass L1 0.0e0
+mixed walkers, one a cell, blocked lay and keep: 25000 walkers, 4612 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off; 0 of species 0, 0 joined another species, 0 species off; 7728 of the second kind, 0 kinds off; grass L1 0.0e0
+mixed walkers, two species, cap, explorers, contagion: 250000 walkers, 250000 moved or turned, 0 off; trail L1 1.2e-8, scent L1 0.0e0, species L1 1.3e-8; 0 ages off; 125000 of species 0, 0 joined another species, 0 species off; 75581 of the second kind, 0 kinds off; grass L1 0.0e0
+a droplet species and a network species: 25000 walkers, 25000 moved or turned, 0 off; trail L1 5.7e-11, scent L1 0.0e0, species L1 5.8e-11; 0 ages off; 12500 of species 0, 0 joined another species, 0 species off; 0 of the second kind, 0 kinds off; grass L1 0.0e0
+own reach, step, deposit and keep, scent at the own reach, respawn: 250000 walkers, 250000 moved or turned, 0 off; trail L1 1.3e-8, scent L1 0.0e0, species L1 1.3e-8; 0 ages off; 125000 of species 0, 0 joined another species, 0 species off; 0 of the second kind, 0 kinds off; grass L1 0.0e0
+crowd limits by species, respawn: 25000 walkers, 25000 moved or turned, 0 off; trail L1 2.2e-12, scent L1 0.0e0, species L1 2.7e-12; 0 ages off; 12500 of species 0, 0 joined another species, 0 species off; 0 of the second kind, 0 kinds off; grass L1 0.0e0
+crowd limits by species, heavy respawn: 25000 walkers, 25000 moved or turned, 44 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off; 12500 of species 0, 0 joined another species, 0 species off; 0 of the second kind, 0 kinds off; grass L1 0.0e0
+   7484 jumped, 5153 into cells no jumper left: 0 off; 35 limited walkers aimed at a cell an unlimited one took first
+own settings, mixed, converting over a square of 4: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off; 12525 of species 0, 31 joined another species, 0 species off; 7728 of the second kind, 0 kinds off; grass L1 0.0e0
+test tests::the_species_settings_match_the_cpu_for_one_tick ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 16.46s
+

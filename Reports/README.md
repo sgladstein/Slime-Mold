@@ -171,6 +171,14 @@ move.
   step (new `BigParams::respawn`, off by default) held a fine mesh (loops at 10 s 43.5 to 196, 8 of 8) and gave
   Jenson's haze, for 4% more step time. Not reproduced: feathery fronts, trunks, contagion.
   Page, pictures, run.sh, analyze.py and raw output in [`jenson-compare-2026-11-10/`](jenson-compare-2026-11-10/).
+- [world-look-2026-11-11.md](world-look-2026-11-11.md) — **built: the Larder world drawn
+  from the simulation**: mould height, gloss and colour from its thickness, every
+  walker a speck, shots that cut trail and leave a fading burn (`Engine::set_hits`),
+  walls by health, crystals as six-faced cones by charge (`world::look` ground
+  field), soldiers as the SVG sprite the owner picked in a blind A/B, shots that
+  stop at the first slime (`first_hit`; at the visible 26/255, not 60, 98 of 120 shots crossed slime
+  before, 0 after), hexagonal crystals. Bare ground as soil, rock and wet
+  ground shown. View 0.8-1.2 ms on the 1070 at 1080p (1.6-1.8 before the prep pass), against 0.3 ms without.
 - [world-camera-2026-11-11.md](world-camera-2026-11-11.md) — **built: the camera and UI
   for a world bigger than the screen** (`slime_mould::world`): pan, zoom at the
   cursor, minimap, GPU marks and Larder's controls as `UiCommand`s; the GPU
@@ -332,6 +340,7 @@ move.
   dominant strategies and the snowball is unmanaged positive feedback; fix with a size cost, a pull-back rule, a
   points ending and telegraphed attacks before adding verbs. Reading only, no runs. Cards in `research/sources/`.
 - [growth-2026-11-11.md](growth-2026-11-11.md) — **Growth and starving on the big dish (Larder World W0)**: walkers eat, pay upkeep, divide and starve, in fixed slots paired by one keyed mask a step; on the GPU it matches the CPU exactly. Fed 96,358 against starved 428 alive at 30 s (8 of 8, p 0.0078); size nearly linear in food (1.9x a doubling); a walker lives about 3 s; CPU cost within noise. Open: tubes between point crystals may starve.
+- [species-gpu-2026-11-11.md](species-gpu-2026-11-11.md) — **The species rules on the GPU (Larder World W3a)**: species 0's share, conversion over a square, a second kind of walker in one mould and each species' own settings on `gpu::Engine`, off by default. One GPU tick matches one CPU tick on 12 dishes and a growth dish (every kind exact), every row sum of the square matches the CPU's, and all 28 planted bugs are caught (27 of 28 before the row check). Off they cost nothing measurable on the software GPU; the square of radius 8 costs about a trail pass a tick there (rows 24-25 ms against trail 18). A W1b fix: a wall built with growth on moved the empty slots under it (195 under a test wall, 349 counts off; now 0). The 1070's timing is to come. Scripts and raw output in [`species-gpu-2026-11-11/`](species-gpu-2026-11-11/).
 - [mould-shape-2026-11-11.md](mould-shape-2026-11-11.md) — **What shapes the mould (owner's questions, 16:01-16:05Z)**: food sets the size, what walkers follow sets the shape. Grass and crystals in one world (seed 1): crystals alone give roads, grass that never regrows a boom and bust (dead by 40 s), regrowing grass a steady fine net, piles that only smell a coarse one; full grass swamps the crystals. Walker count matters only with the crowd limit: off, 32k-1M all fold into strands (0-1 loops at 30 s); on, 32k/100k/200k give 43-54/57-70/120-144 loops (8 of 8 each, p 0.0078, Holm). On crystals size follows intake (crystal area x bite), not charge; scratch `energy_flow` turns the hoard into 15-24% more walkers.
 - [larder-ai-2026-11-11.md](larder-ai-2026-11-11.md) — **Larder player AI**: plays through `Cmd`s only (every round a replay), reads a `View` of what a player sees, commands a `Side` (ready for a second soldier team); five styles on knobs plus idle and random. Held out (17-32), boom, lure and adapt beat idle and random 16/16 in both fields; turtle and rush lose to idle 16/16. Fixed: buying unarmed soldiers, bait while hunting. A harness to port to the world, not a balance result.
 - [larder-m3-2026-11-11.md](larder-m3-2026-11-11.md) — **Larder M3, full controls and soldiers that fight from range**: groups, scent view, replays to the same hash, a headless frame shot and bench. Firing from range, spread shots and a loose formation loosened the ladder: on held-out seeds no plan is best on 13+/16 (reader 8 fed, 10 lean; was 13 and 12), two pairs flip between fields but neither survives Holm. Desktop frame 7.2 ms mean, 9.6 p95 at 40 soldiers. Spores and a dormant crust were tried as mould answers and rejected.

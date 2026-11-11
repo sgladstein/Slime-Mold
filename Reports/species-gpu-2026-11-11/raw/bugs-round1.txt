@@ -1,0 +1,28 @@
+# Round 1 (before the explorer dish, the mistyped bug 20 and the jump check; summary lines only, the full output was overwritten by round 2)
+== 0 the second kind's multipliers dropped: caught
+== 1 the second kind smells farther too: caught
+== 2 the second kind lays the full deposit: caught
+== 3 the second kind's walkers counted in the first kind's block: caught
+== 4 conversion forgets the kind: caught
+== 5 a child is the first kind: caught
+== 6 the global crowd limit for every species: caught
+== 7 the global keep for every species: caught
+== 8 the global deposit for every species: caught
+== 9 the global grazing weight for every species: caught
+== 10 the global explorer stage for every species: MISSED
+== 11 the global blocked share for every species: caught
+== 12 the global scent reach for every species: caught
+== 13 a species' scent reach from the global reach: caught
+== 14 every species eats grass: caught
+== 15 growth on grass feeds only the grazing species: caught
+== 16 the square's rows a cell short: caught
+== 17 the square's columns a cell short: caught
+== 18 conversion by the cell, not the square: caught
+== 19 the rows pass not run: caught
+== 20 : MISSED
+== 21 a walker steps by the global crowd limit: caught
+== 22 a parent breeds by the global crowd limit: caught
+== 23 an unlimited jumper claims no cell beside limited ones: MISSED
+== 24 the GPU starts every walker as species k % n and the first kind: caught
+
+[exited with code 0]

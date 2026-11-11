@@ -1,0 +1,33 @@
+== round 1
+plain base:        wall ms a frame of 2 ticks and the drawing, 300 frames: median 30.520, worst 36.139; GPU ms ticks 27.398, drawing 3.311
+plain new:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 30.389, worst 45.956; GPU ms ticks 26.771, drawing 3.271
+two species base:  wall ms a frame of 2 ticks and the drawing, 300 frames: median 64.640, worst 101.234; GPU ms ticks 64.204, drawing 3.330
+two species new:   wall ms a frame of 2 ticks and the drawing, 300 frames: median 65.003, worst 103.553; GPU ms ticks 59.838, drawing 3.427
+own settings off:  wall ms a frame of 2 ticks and the drawing, 300 frames: median 64.422, worst 120.386; GPU ms ticks 57.270, drawing 3.275
+own settings on:   wall ms a frame of 2 ticks and the drawing, 300 frames: median 63.153, worst 97.563; GPU ms ticks 59.300, drawing 3.170
+mix off:           wall ms a frame of 2 ticks and the drawing, 300 frames: median 28.823, worst 41.873; GPU ms ticks 25.783, drawing 3.095
+mix on:            wall ms a frame of 2 ticks and the drawing, 300 frames: median 39.804, worst 65.466; GPU ms ticks 39.218, drawing 2.309
+square 0:          wall ms a frame of 2 ticks and the drawing, 300 frames: median 66.711, worst 97.667; GPU ms ticks 62.925, drawing 3.194
+square 8:          wall ms a frame of 2 ticks and the drawing, 300 frames: median 143.538, worst 236.385; GPU ms ticks 142.248, drawing 3.207
+== round 2
+plain base:        wall ms a frame of 2 ticks and the drawing, 300 frames: median 30.700, worst 60.637; GPU ms ticks 27.319, drawing 3.277
+plain new:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 29.220, worst 39.407; GPU ms ticks 26.404, drawing 3.044
+two species base:  wall ms a frame of 2 ticks and the drawing, 300 frames: median 58.583, worst 92.308; GPU ms ticks 56.881, drawing 3.151
+two species new:   wall ms a frame of 2 ticks and the drawing, 300 frames: median 67.130, worst 174.000; GPU ms ticks 64.239, drawing 3.476
+own settings off:  wall ms a frame of 2 ticks and the drawing, 300 frames: median 63.004, worst 103.139; GPU ms ticks 60.344, drawing 3.134
+own settings on:   wall ms a frame of 2 ticks and the drawing, 300 frames: median 63.653, worst 106.982; GPU ms ticks 62.785, drawing 3.225
+mix off:           wall ms a frame of 2 ticks and the drawing, 300 frames: median 29.940, worst 50.587; GPU ms ticks 26.787, drawing 3.205
+mix on:            wall ms a frame of 2 ticks and the drawing, 300 frames: median 39.115, worst 75.012; GPU ms ticks 40.281, drawing 2.368
+square 0:          wall ms a frame of 2 ticks and the drawing, 300 frames: median 68.130, worst 109.563; GPU ms ticks 60.799, drawing 3.150
+square 8:          wall ms a frame of 2 ticks and the drawing, 300 frames: median 143.567, worst 214.077; GPU ms ticks 136.294, drawing 3.214
+== round 3
+plain base:        wall ms a frame of 2 ticks and the drawing, 300 frames: median 30.420, worst 42.120; GPU ms ticks 27.331, drawing 3.232
+plain new:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 29.254, worst 42.748; GPU ms ticks 26.228, drawing 3.170
+two species base:  wall ms a frame of 2 ticks and the drawing, 300 frames: median 60.189, worst 98.525; GPU ms ticks 58.371, drawing 3.143
+two species new:   wall ms a frame of 2 ticks and the drawing, 300 frames: median 62.021, worst 109.367; GPU ms ticks 58.122, drawing 3.139
+own settings off:  wall ms a frame of 2 ticks and the drawing, 300 frames: median 64.094, worst 96.779; GPU ms ticks 63.119, drawing 3.310
+own settings on:   wall ms a frame of 2 ticks and the drawing, 300 frames: median 63.953, worst 100.814; GPU ms ticks 59.651, drawing 3.178
+mix off:           wall ms a frame of 2 ticks and the drawing, 300 frames: median 30.056, worst 38.887; GPU ms ticks 26.078, drawing 3.275
+mix on:            wall ms a frame of 2 ticks and the drawing, 300 frames: median 39.302, worst 72.656; GPU ms ticks 35.726, drawing 2.249
+square 0:          wall ms a frame of 2 ticks and the drawing, 300 frames: median 64.614, worst 117.602; GPU ms ticks 63.378, drawing 3.254
+square 8:          wall ms a frame of 2 ticks and the drawing, 300 frames: median 142.959, worst 229.868; GPU ms ticks 139.516, drawing 3.136

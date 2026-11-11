@@ -2,8 +2,8 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-11T21:30Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md]
+updated: 2026-11-11T22:00Z
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md]
 code: [BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate]
 ---
 
@@ -42,7 +42,13 @@ now have its own settings on one dish (`species_sets`;
 
 ## Open
 
-- The order of the added tiers, and which tiers reach the GPU first (after W0).
+- The order of the added tiers. On the GPU engine, species and
+  conversion came with the outside rules, and each species' own settings,
+  conversion over a square and a second kind followed (11-11, [species on
+  the GPU](../../Reports/species-gpu-2026-11-11.md)), so a rival pair can
+  pair a droplet species with a network one there. The life cycle (Sporer,
+  Sleeper, Swarmer) is next, after the tiers' re-test at the world's
+  operating point.
 - Each tier's counter tested with the player AI ([player AI](player-ai.md)) once Larder runs in the world.
 
 ## Sources
@@ -51,3 +57,4 @@ now have its own settings on one dish (`species_sets`;
 - [mould-tiers-2026-11-11.md](../../Reports/mould-tiers-2026-11-11.md): Sporer, Sleeper, Swarmer.
 - [first-reach-2026-11-11.md](../../Reports/first-reach-2026-11-11.md): droplet moulds and mixes on food piles.
 - [species-sets-2026-11-11.md](../../Reports/species-sets-2026-11-11.md): per-species settings, two species on one dish.
+- [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species rules on the GPU engine.
