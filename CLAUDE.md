@@ -41,8 +41,9 @@ All rulings, quoted and timed: `wiki/decisions.md`.
   through the coordinator. Runners make no decisions: they run exactly the
   commands given and send the raw output back.
 - **GPU work targets a GTX 1070** on the owner's home desktop, which is often
-  not the machine they are at. GPU timing waits until they are there with
-  the Claude app open, and runs through Remote Control.
+  not the machine they are at. GPU runs go through Remote Control when that
+  PC is on with the Claude app open; the owner gave a standing OK for tests
+  there (2026-11-11).
 
 ## Method
 

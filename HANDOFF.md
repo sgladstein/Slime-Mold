@@ -48,9 +48,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   today's reach) and the big dish runs offline on the CPU (`mould::big`):
   at 1024 x 640, 32,000 walkers make about 60 loops and 100,000 about 90-160,
   against today's 3 ([page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs)).
-  The owner picked 100,000 walkers (22:32Z). Next: the GTX 1070 timing,
-  `cargo run --release --example gputime` at Scott-Desktop (built and
-  checked on a software GPU; its dish matches the CPU's).
+  The owner picked 100,000 walkers (22:32Z). On the GTX 1070 (11-11) a frame
+  of two ticks takes 1.37 ms at 100,000 walkers and 3.52 ms at 1,000,000,
+  against an 8 ms bar, and the GPU dish matches the CPU's. Phase 3 has
+  started: the GPU sandbox, `cargo run --release --bin mouldgpu`, with
+  every Jenson-comparison option as a control (owner, 11-11 00:06Z;
+  [report](Reports/gpu-sandbox-2026-11-11.md)).
 - How it is judged: [the census](wiki/method/census.md).
 - [The field skirmish](wiki/rts/skirmish.md): version 1 (habits, salt, the
   lamp) is playable (https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw) and
@@ -59,8 +62,10 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   (https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS) against any scripted
   plan. One plan, soft, beat the other eight in 127 of 128 games
   (https://claude.ai/artifact/33Voj1TERnjNSZfLwv3zRG), and the counterplay
-  rules of round 3 (a rally, a rising spore price) did not stop it; the left
-  mould, the player's, has an edge (14 of 16 mirror games).
+  rules of round 3 (a rally, a rising spore price) did not stop it, nor did
+  changes to the model (rounds 4-6). The page opens on desperate fights,
+  which ease the snowball; the sides are even since the piles moved half a
+  cell. Next: the economy sketch's food after 1:00 and Fortify.
 - [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
   (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
   for a neutral host and keep the ground they reach. The planner beats random
@@ -90,8 +95,8 @@ Ask each again; none has an answer to assume.
    is now floats for the fields (integer positions still possible); upload
    Jones 2011 before phase 4; hold the Pixel_Physics multi-core renderer port
    until the phase 2 gate. The owner picked the target at phase 2's gate
-   (22:32Z): 100,000 walkers on 1024 x 640. The GTX 1070 timing test runs
-   next, when the owner is at Scott-Desktop.
+   (22:32Z): 100,000 walkers on 1024 x 640. The GTX 1070 timing passed
+   (11-11): 1.37 ms a frame of two ticks at 100,000 walkers.
 7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
    *Risks and open questions*): should it wait for the queued work or take
    over The Wild One's next steps (its Stage 0 answers the same mid-game
@@ -113,6 +118,13 @@ Ask each again; none has an answer to assume.
    Fevers (above). The food store sits at a median of 0, so any "pay
    from the store" rule needs its own currency first. Page:
    [the RTS directions](wiki/rts/directions.md).
+
+8. **Larder, the mould-as-enemy shooter** ([`Reports/mould-shooter-2026-11-11.md`](Reports/mould-shooter-2026-11-11.md),
+   [page](wiki/rts/shooter.md)). Owner chose (11-11 00:30Z) a squad, solo,
+   tests first. After a snip fix, a ring of fire held from the start keeps
+   the mould off the larder (0 stolen, 16/16) and is now the dominant play.
+   Open: whether to run the design review's test (a priced ring, a larder
+   that runs dry, slowed fronts, scripted plans).
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo

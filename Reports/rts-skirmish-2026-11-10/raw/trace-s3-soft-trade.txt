@@ -1,0 +1,15 @@
+  t= 10 share=0.546 ate=15041/12523 walkers=2658/2089 held=12/11 bank=457/993 spent=3300/2100 food_left=347435
+  t= 20 share=0.561 ate=33369/26091 walkers=2888/1824 held=12/11 bank=638/1386 spent=7700/5100 food_left=315535
+  t= 30 share=0.571 ate=52734/39613 walkers=2908/1952 held=13/10 bank=1479/566 spent=11700/9300 food_left=294640
+  t= 40 share=0.571 ate=72359/54409 walkers=3003/2143 held=15/11 bank=3385/1564 spent=14700/12000 food_left=284216
+  t= 50 share=0.563 ate=91330/70921 walkers=2781/2546 held=13/13 bank=2930/992 spent=19900/16700 food_left=248745
+  t= 60 share=0.564 ate=111648/86298 walkers=3005/2100 held=16/10 bank=5010/2137 spent=22900/19400 food_left=213074
+  t= 70 share=0.572 ate=134794/100871 walkers=3641/1995 held=16/12 bank=6097/2781 spent=27600/22400 food_left=199383
+  t= 80 share=0.576 ate=157401/115985 walkers=3653/2084 held=17/11 bank=1948/3560 spent=37400/25400 food_left=161708
+  t= 90 share=0.582 ate=181310/130209 walkers=3663/1989 held=18/10 bank=4925/4117 spent=40400/28400 food_left=123612
+  t=100 share=0.589 ate=206514/144266 walkers=3823/2063 held=19/11 bank=8226/3431 spent=43400/32600 food_left=108396
+  t=110 share=0.594 ate=229336/157062 walkers=2802/1844 held=14/10 bank=10934/4830 spent=46400/34400 food_left=72818
+  t=120 share=0.590 ate=239738/166254 walkers=1212/1077 held=4/4 bank=10536/5930 spent=49400/35600 food_left=53253
+  t=130 share=0.589 ate=244828/170690 walkers=676/690 held=4/2 bank=5909/-161 spent=55300/42800 food_left=43732
+  t=140 share=0.594 ate=251591/172095 walkers=1255/84 held=6/0 bank=1799/191 spent=61100/42800 food_left=35572
+DUEL seed=3 left=soft right=trade share=0.598 at60=0.564 ate=256305/172313 bought=b112s12h0r0/b106s6h0r0 t=146 (23.7s)

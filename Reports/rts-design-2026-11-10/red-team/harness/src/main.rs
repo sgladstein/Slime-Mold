@@ -714,7 +714,7 @@ fn main() {
             if let Ok(rules) = std::env::var("RULES") {
                 for kv in rules.split_whitespace() {
                     let (k, v) = kv.split_once('=').expect("name=value");
-                    assert!(sk.rules.set(k, v), "rule {kv}");
+                    assert!(sk.set(k, v), "rule {kv}");
                 }
             }
             let t0 = std::time::Instant::now();

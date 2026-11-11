@@ -184,7 +184,10 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
         <div class="row">
           <label class="label" for="rules">Rules</label>
           <select id="rules">
-            <option value="1" selected>Counterplay: spores sleep 5 s abroad, price rises</option>
+            <option value="4" selected>Desperate fights: starving walkers fight harder (fewer blowouts)</option>
+            <option value="3">Size upkeep: each walker costs more the bigger the mould (closest games)</option>
+            <option value="2">Holder's bonus: a pile's holder counts double there until outnumbered 2 to 1</option>
+            <option value="1">Counterplay only: spores sleep 5 s abroad, price rises</option>
             <option value="0">As first built</option>
           </select>
         </div>
@@ -193,7 +196,7 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
           <button class="small" id="fast" aria-pressed="false">Fast (Space)</button>
           <button class="small" id="again">New dish (N)</button>
         </div>
-        <p class="help"><b>Rings on the dish:</b> gold is yours, violet the rival's; a thin ring is a beacon, a thick one a rally, and the arc is the time left. <b>zz</b> marks spores still asleep. A pile's food is split by head count, and well-fed walkers win fights.</p>
+        <p class="help"><b>Rings on the dish:</b> gold is yours, violet the rival's; a thin ring is a beacon, a thick one a rally, and the arc is the time left. <b>zz</b> marks spores still asleep. A pile's food is split by head count. Walkers on tube joined to food win fights, except under desperate fights (the default), where starving walkers fight harder.</p>
         <span class="stat" id="stat"></span>
       </section>
     </div>
@@ -225,7 +228,7 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
     lean: 'Soft’s target, with beacons only.',
     guard: 'Beacons on its own border piles before anyone attacks; a spore on any pile you attack.',
     trade: 'Saves at 25% until you attack one of its piles, then hits your thinnest pile for 10 s.',
-    keep: 'Soft, but first a rally on any of its piles your spore lands on.',
+    keep: 'Soft, but first a rally on any of its piles your spore lands on. It lost no pairing in round 5 under desperate fights.',
     ward: 'Saves at 10% and only rallies piles you attack.',
   };
 

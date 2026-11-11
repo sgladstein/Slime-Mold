@@ -2,8 +2,8 @@
 title: The knife (snip)
 kind: tool
 status: open
-updated: 2026-11-10
-sources: [Reports/mould-probe-2026-11-07.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md]
+updated: 2026-11-11
+sources: [Reports/mould-shooter-2026-11-11.md, Reports/mould-probe-2026-11-07.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md]
 code: [Tool::Snip, Tools::snips, Params::wound, Params::pieces, Ground::Wound]
 ---
 
@@ -13,7 +13,7 @@ code: [Tool::Snip, Tools::snips, Params::wound, Params::pieces, Ground::Wound]
 
 A snip cuts a line through the mould. The cut cells become wound ground
 that the mould cannot cross for 4 s (`Params::wound`), then heal back to
-agar. Because each piece eats only the food it is joined to
+agar; a snip over an open wound keeps it open from then (fixed 2026-11-11: before, only agar was wounded, so a held line of snips healed all at once, [Larder correction](../../Reports/mould-shooter-2026-11-11.md)). Because each piece eats only the food it is joined to
 (`Params::pieces`, on), a piece cut off from its food goes hungry, farthest
 from food first. Of the challenge dishes, only
 [The Wild One](../dishes/the-wild-one.md) gives snips (3); the lesson has a

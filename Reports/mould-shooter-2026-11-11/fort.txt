@@ -1,0 +1,39 @@
+fortress: ring held from 0 s, 90 s, 16 seeds
+Idle:
+  seed  1: stolen   12261  ate   273240  walkers  6900  first bite    4.4  shots   0  loops@45   9  walkers@45  6899
+  seed  2: stolen   12345  ate   275057  walkers  6898  first bite    3.7  shots   0  loops@45  10  walkers@45  6901
+  seed  3: stolen   12301  ate   274717  walkers  6899  first bite    2.9  shots   0  loops@45   9  walkers@45  6900
+  seed  4: stolen   12372  ate   274975  walkers  6901  first bite    3.7  shots   0  loops@45  11  walkers@45  6900
+  seed  5: stolen   12352  ate   275036  walkers  6900  first bite    3.8  shots   0  loops@45  10  walkers@45  6901
+  seed  6: stolen   12262  ate   273750  walkers  6898  first bite    4.2  shots   0  loops@45   8  walkers@45  6901
+  seed  7: stolen   12270  ate   274192  walkers  6900  first bite    3.9  shots   0  loops@45  10  walkers@45  6900
+  seed  8: stolen   12298  ate   274701  walkers  6900  first bite    4.1  shots   0  loops@45  10  walkers@45  6901
+  seed  9: stolen   12312  ate   274474  walkers  6900  first bite    4.0  shots   0  loops@45  10  walkers@45  6900
+  seed 10: stolen   12203  ate   274119  walkers  6900  first bite    4.9  shots   0  loops@45  10  walkers@45  6900
+  seed 11: stolen   12384  ate   275036  walkers  6899  first bite    3.5  shots   0  loops@45  11  walkers@45  6902
+  seed 12: stolen   12416  ate   275309  walkers  6901  first bite    2.8  shots   0  loops@45  10  walkers@45  6898
+  seed 13: stolen   12389  ate   274941  walkers  6900  first bite    3.3  shots   0  loops@45  10  walkers@45  6900
+  seed 14: stolen   12268  ate   273918  walkers  6898  first bite    4.4  shots   0  loops@45  10  walkers@45  6901
+  seed 15: stolen   12257  ate   274877  walkers  6899  first bite    4.2  shots   0  loops@45  10  walkers@45  6900
+  seed 16: stolen   12301  ate   274292  walkers  6900  first bite    4.1  shots   0  loops@45  12  walkers@45  6901
+  median stolen 12301, ate 274717, walkers 6900, first bite 4.0 s, loops@45 10
+Fort:
+  seed  1: stolen       0  ate   273437  walkers  6590  first bite  never  shots 360  loops@45  10  walkers@45  6580
+  seed  2: stolen       0  ate   274660  walkers  6578  first bite  never  shots 360  loops@45  10  walkers@45  6582
+  seed  3: stolen       0  ate   275273  walkers  6593  first bite  never  shots 360  loops@45   9  walkers@45  6585
+  seed  4: stolen       0  ate   275008  walkers  6590  first bite  never  shots 360  loops@45   9  walkers@45  6586
+  seed  5: stolen       0  ate   274805  walkers  6566  first bite  never  shots 360  loops@45   9  walkers@45  6588
+  seed  6: stolen       0  ate   273889  walkers  6586  first bite  never  shots 360  loops@45   9  walkers@45  6593
+  seed  7: stolen       0  ate   274071  walkers  6588  first bite  never  shots 360  loops@45   9  walkers@45  6587
+  seed  8: stolen       0  ate   274819  walkers  6573  first bite  never  shots 360  loops@45  10  walkers@45  6569
+  seed  9: stolen       0  ate   274563  walkers  6590  first bite  never  shots 360  loops@45   8  walkers@45  6573
+  seed 10: stolen       0  ate   274224  walkers  6517  first bite  never  shots 360  loops@45  10  walkers@45  6564
+  seed 11: stolen       0  ate   274994  walkers  6583  first bite  never  shots 360  loops@45   9  walkers@45  6587
+  seed 12: stolen       0  ate   275237  walkers  6565  first bite  never  shots 360  loops@45  10  walkers@45  6569
+  seed 13: stolen       0  ate   275374  walkers  6590  first bite  never  shots 360  loops@45   9  walkers@45  6589
+  seed 14: stolen       0  ate   274394  walkers  6530  first bite  never  shots 360  loops@45   9  walkers@45  6592
+  seed 15: stolen       0  ate   274314  walkers  6555  first bite  never  shots 360  loops@45  10  walkers@45  6585
+  seed 16: stolen       0  ate   274367  walkers  6589  first bite  never  shots 360  loops@45   8  walkers@45  6577
+  median stolen 0, ate 274660, walkers 6586, first bite 90.0 s, loops@45 9
+stolen: fort better than idle on 16 of 16 (p 0.0000)
+(138.9 s)

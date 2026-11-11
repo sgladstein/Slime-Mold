@@ -2,7 +2,7 @@
 title: The owner's rulings and decided choices
 kind: method
 status: current
-updated: 2026-11-10
+updated: 2026-11-11
 sources: [CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
 code: [Params::pieces]
 ---
@@ -23,6 +23,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Ruling | Owner's words | Source |
 |---|---|---|---|
+| 2026-11-11 00:06 | Tests may run on the owner's PC (Scott-Desktop, the GTX 1070) whenever it is reachable, as many as needed; threads may start sub-agents or more threads to explore the Jenson comparison and mould simulations | "you can use my local PC for as many tests as you want." ... "Feel free to start sub-agents or additional threads to explore this comparison further and/or more research asking mold simulations" | (GPU plan's thread), [scale](model/scale.md), [CLAUDE.md](../CLAUDE.md) |
 | 2026-11-10 20:55 | The current demos (The Wild One and the other dishes) are unlikely to be the true games: don't spend effort tuning work to them; engine work such as the GPU plan is judged on the engine, and the project is now exploring RTS-type games | "I just think The Wild One and other current demos are unlikely to be the true games. So I don't want us to be wasting effort or get too far away from your original task which was not really about the game part of this project. (we are now exploring RTS type games)" | (GPU plan's thread), [scale](model/scale.md), [gpu plan](../Reports/gpu-plan-2026-11-10.md) |
 | 2026-11-10 19:44 | Threads with long test runs may start up to 4 Haiku runner threads for extra compute; runners make no decisions, run only the commands given and send the output back | "Feel free to start some haiku runner threads just to get additional compute. If you want to do that, they make no decisions and just run the code you tell them and send the output back to you. You can run up to 4 threads if you want" | (project chat), [CLAUDE.md](../CLAUDE.md) |
 | 2026-11-10 18:15 | A brainstorm for a new direction starts from the model, not from the demo's tools (lamp, oats, salt, knife, water), which were built for a herding puzzle | "it seems like all the brainstorm agents are just taking the current tools ... I want to make sure we are truly brainstorms how this should best work and not doing limited exploration on what exists in our current demo." | [RTS brainstorm](../Reports/rts-design-2026-11-10/brainstorm/README.md) |
@@ -42,6 +43,7 @@ artifact links are left out; the quotes are kept in the sources named.
 |---|---|---|---|
 | 2026-11-10 22:32, card | The GPU mould aims for 100,000 walkers on 1024 x 640 (phase 2's gate), over 32,000 or stopping the GPU work | card ("100,000 walkers", on "Which scale should the GPU mould aim for?") | [scale](model/scale.md) |
 | 2026-11-10 22:06, card | Two Fevers version 3 (calls, fever by tube, pinch, foraging, starvation; [design](../Reports/two-fevers-2026-11-10/v3-design.md)), built after three cheap checks, after the owner found version 2 "overly simple" with the mould as "background" (21:52) | card ("Build it after the checks (recommended)") | [Two Fevers](rts/two-fevers.md) |
+| 2026-11-10 23:29 | The field skirmish's counterplay: explore changes to the model itself (the fed fight bonus, the head-count share, a cost of size) rather than more prices | On "The fix probably has to be in the model itself": "then lets explore this" | [field skirmish](rts/skirmish.md) |
 | 2026-11-10 21:17 | The field skirmish's next version spends a bank: food into a bank, beacons, spores, costed habits; explore how it plays and whether one strategy wins | "This is an interesting direction. Brainstorm/explore how these tools/game plays out. What different strategies would different players use to win. How complex or interesting are the strategies? Does one strategy beat all the others?" | [field skirmish](rts/skirmish.md) |
 | 2026-11-10 21:14 | The field skirmish's first version (habits, salt, the lamp) set aside after play | "Overall, user input seems limited and doesn't lead to any complex stratgy" | [field skirmish](rts/skirmish.md) |
 | 2026-11-10 20:42, card | Build both RTS demos at once, in two threads: the field skirmish and Two Fevers | card ("Both, in two threads") | [RTS directions](rts/directions.md) |

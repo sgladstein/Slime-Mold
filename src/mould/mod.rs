@@ -356,6 +356,38 @@ pub struct Params {
     /// one is eaten into: feed the side that is fighting. No effect with
     /// no rival.
     pub fight: f32,
+    /// The fight's multipliers on a walker's chance of dying: on fed tube
+    /// (`fight_fed`, 0.5) and on tube no food reaches (`fight_unfed`, 2).
+    /// As shipped a fed front holds and a starving one is eaten into, which
+    /// feeds the side ahead (the field skirmish: the side ahead at 1:00
+    /// won 416 of 473 games, 2026-11-10). 1 and 1 is an even fight; 2 and
+    /// 0.5 is a desperate one, where the starving fight harder. Ways to
+    /// ease the snowball, measured in `Reports/rts-skirmish-2026-11-10.md`.
+    pub fight_fed: f32,
+    pub fight_unfed: f32,
+    /// **Upkeep that grows with size**: each walker's upkeep is `upkeep` x
+    /// (1 + `upkeep_size` x the mould's walkers / 1,000). 0, as shipped,
+    /// is a flat upkeep. A big mould pays more for every walker, so a lead
+    /// costs more to keep (Civ IV's answer to its dominant plan, per the
+    /// RTS research report). The pieces and store economies only.
+    pub upkeep_size: f32,
+    /// **The holder's bite**: a pile is held by the mould that ate there
+    /// alone, until the other has `hold_flip` times its eaters there
+    /// (`Pile::held`); the holder's eaters count `hold` times in the
+    /// head-count share. 1, as shipped, is a plain head count, and then no
+    /// pile is ever marked held. Above 1 an attack must outnumber the
+    /// defence, not just match it.
+    pub hold: f32,
+    pub hold_flip: f32,
+    /// **Supply lines**: a walker fights as fed (`fight_fed`) only within
+    /// `supply` cells of tube from eaten food (`Dish::fed`); farther out it
+    /// fights as unfed. `u16::MAX`, as shipped, is no limit but the feeding
+    /// search's own (`feed_reach`, 70). A low value makes a mould that
+    /// reaches across the dish weak at its far front, and a compact one
+    /// strong but small (the RTS research thread's size cost,
+    /// `Reports/rts-research-2026-11-10/skirmish-economy-sketch.md`). Only
+    /// the fight's check reads it.
+    pub supply: u16,
     /// **Water and sleep** (2026-11-10, owner's pick "water and sleep
     /// first"; the depth report's items 1 and 2,
     /// `Reports/mould-game-2026-11-08/depth-2026-11-09/complexity.md`).
@@ -450,6 +482,12 @@ impl Default for Params {
             spared_scent: 0.5,
             foe_repel: 1.0,
             fight: 0.02,
+            fight_fed: 0.5,
+            fight_unfed: 2.0,
+            upkeep_size: 0.0,
+            hold: 1.0,
+            hold_flip: 2.0,
+            supply: u16::MAX,
             wet: false,
             wet_base: 0.5,
             wet_relax: 0.0005,
@@ -730,6 +768,9 @@ pub struct Pile {
     /// feeds at most `Params::table` walkers whoever they are, shared by
     /// head count: crowding a pile is how one mould steals from the other.
     pub foe_eaters: u32,
+    /// Who holds it (`Params::hold`): 1 this mould, -1 the other, 0
+    /// nobody. Always 0 unless `hold` is above 1.
+    pub held: i8,
 }
 
 impl Pile {
@@ -745,6 +786,25 @@ impl Pile {
             return 0.0;
         }
         let share = all.min(table) as f32 * self.eaters as f32 / all as f32;
+        (share * eat).min(self.food)
+    }
+
+    /// `bite`, with the holder's eaters counting `hold` times
+    /// (`Params::hold`); the same number as `bite` at 1.
+    pub fn bite_held(&self, table: u32, eat: f32, hold: f32) -> f32 {
+        if hold == 1.0 || self.held == 0 {
+            return self.bite(table, eat);
+        }
+        let all = self.eaters + self.foe_eaters;
+        if all == 0 {
+            return 0.0;
+        }
+        let (mine, theirs) = if self.held > 0 {
+            (self.eaters as f32 * hold, self.foe_eaters as f32)
+        } else {
+            (self.eaters as f32, self.foe_eaters as f32 * hold)
+        };
+        let share = all.min(table) as f32 * mine / (mine + theirs);
         (share * eat).min(self.food)
     }
 }
@@ -1040,6 +1100,17 @@ pub struct Dish {
     foe_trail: Vec<f32>,
     /// This dish is the wild one: no tools, no level, no clock of its own.
     pub wild: bool,
+    /// **Take turns** with the rival: on odd steps the rival moves first
+    /// and has the last bite of a pile, on even steps this mould does. Off,
+    /// this mould always goes first: it claims a contested cell before the
+    /// rival moves, has a pile's last bite, and senses the rival's trail a
+    /// step stale while the rival senses its fresh one. On the field
+    /// skirmish's mirrored dish that gave the first mover 14 of 16 mirror
+    /// games (idle v idle 7/8, soft v soft 7/8, 2026-11-10), so the
+    /// skirmish turns it on. Off by default: The Wild One is a player's
+    /// mould against the dish, its numbers were measured with this mould
+    /// first, and nobody has asked for that game to be even.
+    pub take_turns: bool,
     /// The wild mould's walkers as this dish's own step sees them (the
     /// rival is out of `rival` while this mould steps): its count after the
     /// last step's fights.
@@ -1188,6 +1259,7 @@ impl Dish {
                 expires: u64::MAX,
                 eaters: 0,
                 foe_eaters: 0,
+                held: 0,
             })
             .collect::<Vec<_>>();
         // Late food: the farthest pile waits, and a sixth goes wherever is
@@ -1333,6 +1405,7 @@ impl Dish {
             rival: None,
             foe_trail: Vec::new(),
             wild: false,
+            take_turns: false,
             wild_left: 0,
             ate: 0.0,
             wild_ate: 0.0,
@@ -1495,6 +1568,7 @@ impl Dish {
             expires,
             eaters: 0,
             foe_eaters: 0,
+            held: 0,
         });
         true
     }
@@ -1583,6 +1657,16 @@ impl Dish {
                             self.wounds.push((i, heal));
                             self.wound_until[i] = heal;
                             self.counts.wound_cells += 1;
+                        } else if self.ground[i] == Ground::Wound && self.wound_until[i] < heal {
+                            // A snip over an open wound keeps it open from
+                            // now, as `heal_wounds` expects ("a later snip
+                            // keeps it open longer"). Before 2026-11-11 only
+                            // agar was wounded, so re-firing on a wound did
+                            // nothing and a ring held by repeated snips
+                            // healed all at once 4 s after its first shots
+                            // (`examples/larderprobe.rs`, fort hand).
+                            self.wounds.push((i, heal));
+                            self.wound_until[i] = heal;
                         }
                     }
                 }
@@ -1663,19 +1747,16 @@ impl Dish {
                 _ => r.remove_walker(k, Kill::Snip),
             }
         }
-        // This mould moves round the wild one where it stands, then the
-        // wild one round this one where it now stands: no cell is ever
-        // held by both.
-        self.foe_trail.resize(W * H, 0.0);
-        self.foe_trail.copy_from_slice(&r.trail);
-        self.hold_foe_cells(&r.walkers, true);
-        self.step_own();
-        self.hold_foe_cells(&r.walkers, false);
-        r.foe_trail.resize(W * H, 0.0);
-        r.foe_trail.copy_from_slice(&self.trail);
-        r.hold_foe_cells(&self.walkers, true);
-        r.step_own();
-        r.hold_foe_cells(&self.walkers, false);
+        // The first mould moves round the second where it stands, then the
+        // second round the first where it now stands: no cell is ever held
+        // by both. This mould is first unless it takes turns
+        // (`Dish::take_turns`) and the step is odd.
+        let wild_first = self.take_turns && t % 2 == 1;
+        if wild_first {
+            Dish::step_pair(&mut r, self);
+        } else {
+            Dish::step_pair(self, &mut r);
+        }
         // Shared food: what the wild mould ate this step comes off this
         // dish's piles too, and its piles are this dish's again (the late
         // food and the oats land here), keeping its own eaters. Each mould
@@ -1687,9 +1768,15 @@ impl Dish {
             let was = before.iter().find(|b| b.0 == key).map(|b| b.1);
             let theirs = r.piles.iter().find(|q| pile_key(q) == key).map(|q| q.food);
             if let (Some(was), Some(theirs)) = (was, theirs) {
-                let mine = (was - p.food).max(0.0);
-                let wild = (was - theirs).max(0.0).min(p.food);
-                p.food -= wild;
+                // The mould that moved first has the last bite.
+                let (mine, wild) = if wild_first {
+                    let wild = (was - theirs).max(0.0);
+                    ((was - p.food).max(0.0).min((was - wild).max(0.0)), wild)
+                } else {
+                    let mine = (was - p.food).max(0.0);
+                    (mine, (was - theirs).max(0.0).min(p.food))
+                };
+                p.food = (p.food - wild).max(0.0);
                 // The window keeps stepping the dish behind the score card;
                 // the totals stop at the bell so the bar reads what the card
                 // does (review 2).
@@ -1713,14 +1800,57 @@ impl Dish {
         for p in self.piles.iter_mut() {
             p.foe_eaters = theirs(pile_key(p));
         }
+        self.update_held();
         r.piles.clone_from(&self.piles);
         for q in r.piles.iter_mut() {
             (q.eaters, q.foe_eaters) = (theirs(pile_key(q)), q.eaters);
+            q.held = -q.held;
         }
         // After the fights, so the next step's level check reads the wild
         // mould as it now is (it was read before it stepped: review 2).
         self.wild_left = r.walkers.len();
         self.rival = Some(r);
+    }
+
+    /// Each walker's upkeep now (`Params::upkeep_size`).
+    fn upkeep_now(&self) -> f32 {
+        if self.params.upkeep_size == 0.0 {
+            return self.params.upkeep;
+        }
+        self.params.upkeep * (1.0 + self.params.upkeep_size * self.walkers.len() as f32 / 1000.0)
+    }
+
+    /// Who holds each pile now (`Params::hold`), from this step's eaters.
+    fn update_held(&mut self) {
+        if self.params.hold == 1.0 {
+            return;
+        }
+        let flip = self.params.hold_flip;
+        for p in self.piles.iter_mut() {
+            let (m, f) = (p.eaters as f32, p.foe_eaters as f32);
+            p.held = match p.held {
+                _ if m == 0.0 && f == 0.0 => p.held,
+                0 if f == 0.0 => 1,
+                0 if m == 0.0 => -1,
+                1 if f > 0.0 && f >= flip * m => -1,
+                -1 if m > 0.0 && m >= flip * f => 1,
+                h => h,
+            };
+        }
+    }
+
+    /// One step of two moulds sharing the dish, `first` moving first.
+    fn step_pair(first: &mut Dish, second: &mut Dish) {
+        first.foe_trail.resize(W * H, 0.0);
+        first.foe_trail.copy_from_slice(&second.trail);
+        first.hold_foe_cells(&second.walkers, true);
+        first.step_own();
+        first.hold_foe_cells(&second.walkers, false);
+        second.foe_trail.resize(W * H, 0.0);
+        second.foe_trail.copy_from_slice(&first.trail);
+        second.hold_foe_cells(&first.walkers, true);
+        second.step_own();
+        second.hold_foe_cells(&first.walkers, false);
     }
 
     /// Which of this mould's walkers (indices, rising) die fighting the
@@ -1746,7 +1876,9 @@ impl Dish {
             if n == 0 {
                 continue;
             }
-            let fed = if self.fed[i] != u16::MAX { 0.5 } else { 2.0 };
+            // `fed` is u16::MAX off the fed tube, so with no supply limit
+            // this is the old test (fed tube at all).
+            let fed = if self.fed[i] < self.params.supply { self.params.fight_fed } else { self.params.fight_unfed };
             if self.rng.f32() < fight * n as f32 / 8.0 * fed {
                 out.push(k);
             }
@@ -2664,7 +2796,7 @@ impl Dish {
     /// tube no food reaches) lives on its own share until it starves.
     fn economy_by_piece(&mut self) {
         let pieces = self.piece_count;
-        let upkeep = self.params.upkeep;
+        let upkeep = self.upkeep_now();
         let mut food = vec![0.0f32; pieces];
         // Eating, credited to the eating pile's piece. A pile added since
         // the census has no eaters yet; one gone since is simply absent.
@@ -2674,7 +2806,7 @@ impl Dish {
             if p.eaters > 0 && p.food > 0.0 {
                 let key = pile_key(p);
                 let Some(k) = self.census_keys.iter().position(|&c| c == key) else { continue };
-                let e = p.bite(table, eat);
+                let e = p.bite_held(table, eat, self.params.hold);
                 p.food -= e;
                 food[self.piece_of_src[k] as usize] += e * (1.0 - self.tithe);
                 self.tithed += e * self.tithe;
@@ -3165,14 +3297,14 @@ impl Dish {
         let eat = self.params.eat;
         for p in self.piles.iter_mut() {
             if p.eaters > 0 && p.food > 0.0 {
-                let e = p.bite(self.params.table, eat);
+                let e = p.bite_held(self.params.table, eat, self.params.hold);
                 p.food -= e;
                 self.store += e * (1.0 - self.tithe);
                 self.tithed += e * self.tithe;
             }
         }
         // Upkeep.
-        self.store -= self.walkers.len() as f32 * self.params.upkeep;
+        self.store -= self.walkers.len() as f32 * self.upkeep_now();
         let empty = self.store <= 0.0;
         if empty {
             self.store = 0.0;
