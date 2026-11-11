@@ -1,0 +1,32 @@
+bigdish: preset Ccut-s8 seeds [8] seconds 7 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 1200, immune_steps: 2400, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 3.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 8: 1024 x 640, 1000000 walkers, 1 piles
+seed 8 Ccut-s8 t   0.5s  tube 17264.9  loops  251  width 5.62  reach  193.2  piles 1/1  strays 0.001  ms/tick 156.09
+seed 8 Ccut-s8 t   0.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Ccut-s8 t   1.0s  tube 14470.2  loops  189  width 5.03  reach  192.1  piles 1/1  strays 0.000  ms/tick 156.83
+seed 8 Ccut-s8 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Ccut-s8 t   1.5s  tube 13223.6  loops  162  width 4.90  reach  191.4  piles 1/1  strays 0.000  ms/tick 150.46
+seed 8 Ccut-s8 t   1.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Ccut-s8 t   2.0s  tube 12284.8  loops  140  width 4.79  reach  191.1  piles 1/1  strays 0.000  ms/tick 148.60
+seed 8 Ccut-s8 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Ccut-s8 t   2.5s  tube 11610.4  loops  125  width 4.75  reach  190.8  piles 1/1  strays 0.000  ms/tick 144.31
+seed 8 Ccut-s8 t   2.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Ccut-s8 t   3.0s  tube 11071.6  loops  111  width 4.75  reach  190.6  piles 1/1  strays 0.000  ms/tick 145.64
+seed 8 Ccut-s8 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Ccut-s8 t   3.5s  tube 10555.2  loops   99  width 4.79  reach  190.4  piles 1/1  strays 0.000  ms/tick 146.58
+seed 8 Ccut-s8 t   3.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Ccut-s8 t   4.0s  tube  9913.8  loops   83  width 4.58  reach  190.4  piles 1/1  strays 0.010  ms/tick 143.87
+seed 8 Ccut-s8 t   4.0s  sick 0.011  ever 0.011  front    9.1  far 0.000
+seed 8 Ccut-s8 t   4.5s  tube  9621.7  loops   83  width 4.71  reach  190.3  piles 1/1  strays 0.000  ms/tick 144.06
+seed 8 Ccut-s8 t   4.5s  sick 0.041  ever 0.041  front   23.0  far 0.000
+seed 8 Ccut-s8 t   5.0s  tube  9365.6  loops   77  width 4.76  reach  190.3  piles 1/1  strays 0.000  ms/tick 144.98
+seed 8 Ccut-s8 t   5.0s  sick 0.110  ever 0.110  front   33.6  far 0.002
+seed 8 Ccut-s8 t   5.5s  tube  9169.6  loops   70  width 4.88  reach  190.1  piles 1/1  strays 0.000  ms/tick 143.68
+seed 8 Ccut-s8 t   5.5s  sick 0.227  ever 0.227  front   49.6  far 0.064
+seed 8 Ccut-s8 t   6.0s  tube  8953.3  loops   64  width 4.88  reach  189.3  piles 1/1  strays 0.000  ms/tick 142.49
+seed 8 Ccut-s8 t   6.0s  sick 0.406  ever 0.406  front   59.4  far 0.232
+seed 8 Ccut-s8 t   6.5s  tube  8949.1  loops   63  width 5.00  reach  188.6  piles 1/1  strays 0.000  ms/tick 142.61
+seed 8 Ccut-s8 t   6.5s  sick 0.618  ever 0.618  front   69.9  far 0.516
+seed 8 Ccut-s8 t   7.0s  tube  8839.9  loops   61  width 5.10  reach  188.1  piles 1/1  strays 0.000  ms/tick 143.28
+seed 8 Ccut-s8 t   7.0s  sick 0.807  ever 0.807  front   81.2  far 0.762
+seed 8 Ccut-s8 hash=9ab2620b7db7d2a9

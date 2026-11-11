@@ -1,0 +1,32 @@
+bigdish: preset Ccut-s3 seeds [3] seconds 7 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 1200, immune_steps: 2400, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 3.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 3: 1024 x 640, 1000000 walkers, 1 piles
+seed 3 Ccut-s3 t   0.5s  tube 17409.8  loops  257  width 5.65  reach  193.4  piles 1/1  strays 0.001  ms/tick 160.85
+seed 3 Ccut-s3 t   0.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 3 Ccut-s3 t   1.0s  tube 14841.4  loops  201  width 5.04  reach  192.2  piles 1/1  strays 0.000  ms/tick 159.01
+seed 3 Ccut-s3 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 3 Ccut-s3 t   1.5s  tube 13626.3  loops  169  width 4.91  reach  191.3  piles 1/1  strays 0.000  ms/tick 159.46
+seed 3 Ccut-s3 t   1.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 3 Ccut-s3 t   2.0s  tube 12781.4  loops  151  width 4.86  reach  190.6  piles 1/1  strays 0.000  ms/tick 159.27
+seed 3 Ccut-s3 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 3 Ccut-s3 t   2.5s  tube 11972.0  loops  133  width 4.75  reach  189.8  piles 1/1  strays 0.000  ms/tick 158.99
+seed 3 Ccut-s3 t   2.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 3 Ccut-s3 t   3.0s  tube 11325.8  loops  118  width 4.68  reach  189.1  piles 1/1  strays 0.000  ms/tick 158.56
+seed 3 Ccut-s3 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 3 Ccut-s3 t   3.5s  tube 10834.9  loops  111  width 4.65  reach  188.6  piles 1/1  strays 0.000  ms/tick 158.12
+seed 3 Ccut-s3 t   3.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 3 Ccut-s3 t   4.0s  tube 10331.2  loops   93  width 4.56  reach  188.1  piles 1/1  strays 0.008  ms/tick 157.31
+seed 3 Ccut-s3 t   4.0s  sick 0.015  ever 0.015  front    9.5  far 0.000
+seed 3 Ccut-s3 t   4.5s  tube 10148.6  loops   95  width 4.66  reach  187.9  piles 1/1  strays 0.000  ms/tick 157.18
+seed 3 Ccut-s3 t   4.5s  sick 0.049  ever 0.049  front   20.0  far 0.000
+seed 3 Ccut-s3 t   5.0s  tube  9979.1  loops   91  width 4.77  reach  187.7  piles 1/1  strays 0.000  ms/tick 156.81
+seed 3 Ccut-s3 t   5.0s  sick 0.111  ever 0.111  front   33.0  far 0.001
+seed 3 Ccut-s3 t   5.5s  tube  9760.6  loops   83  width 4.85  reach  187.0  piles 1/1  strays 0.000  ms/tick 156.48
+seed 3 Ccut-s3 t   5.5s  sick 0.218  ever 0.218  front   45.0  far 0.044
+seed 3 Ccut-s3 t   6.0s  tube  9495.8  loops   75  width 4.89  reach  186.4  piles 1/1  strays 0.000  ms/tick 156.33
+seed 3 Ccut-s3 t   6.0s  sick 0.383  ever 0.383  front   56.3  far 0.172
+seed 3 Ccut-s3 t   6.5s  tube  9240.0  loops   70  width 4.89  reach  185.5  piles 1/1  strays 0.000  ms/tick 156.30
+seed 3 Ccut-s3 t   6.5s  sick 0.584  ever 0.584  front   68.1  far 0.426
+seed 3 Ccut-s3 t   7.0s  tube  8968.6  loops   56  width 5.02  reach  184.5  piles 1/1  strays 0.000  ms/tick 155.95
+seed 3 Ccut-s3 t   7.0s  sick 0.785  ever 0.785  front   80.8  far 0.704
+seed 3 Ccut-s3 hash=5a3b87064e54f2bc

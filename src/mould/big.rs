@@ -38,6 +38,8 @@ const CLAIM_MOVE: u32 = 103;
 const DRAW_START: u32 = 104;
 const DRAW_PILES: u32 = 105;
 const DRAW_RESPAWN: u32 = 106;
+const DRAW_HAZE: u32 = 107;
+const DRAW_WANDER: u32 = 108;
 
 #[derive(Clone, Debug)]
 pub struct BigParams {
@@ -98,6 +100,65 @@ pub struct BigParams {
     /// every 1,000 steps (0.001); added 2026-11-10 to see whether it gives
     /// the haze of free walkers in Jenson's clips.
     pub respawn: f32,
+    /// With `blob`, the starting blob's radius in dish cells, centred on the
+    /// dish, walkers drawn evenly over it; 0 is today's packed inoculum on
+    /// the home pile. Added 2026-11-11 for Jenson's network_2, which starts
+    /// from a dense disc in the middle of the dish.
+    pub blob_r: f32,
+    /// With `blob`, the share of walkers that start spread evenly over the
+    /// whole dish instead (a haze around the seed); 0 is today's.
+    pub haze: f32,
+    /// Trail-dependent settings (Jenson's *36 Points*, as Bleuje's port
+    /// reads it). 0 is off (today's). Otherwise each walker, when it looks,
+    /// reads the trail at its own cell as the pass began and takes
+    /// `s = min(trail * sense_scale, 1)`; then, with each `*_mod` = `[amp,
+    /// exp]`, sensor offset = `sensor_offset + amp * s^exp`, likewise sensor
+    /// angle and rotate angle (radians) and step (fine cells). The scent
+    /// reach is not changed. A step under 0 is taken as 0.
+    pub sense_scale: f32,
+    pub offset_mod: [f32; 2],
+    pub angle_mod: [f32; 2],
+    pub turn_mod: [f32; 2],
+    pub step_mod: [f32; 2],
+    /// Capped square-root deposit (Bleuje's port of *36 Points*). 0 is
+    /// today's: each walker that moves lays `deposit` where it lands.
+    /// Otherwise, after all walkers have moved, each cell holding n walkers
+    /// (moved or not) gets `deposit * sqrt(min(n, deposit_cap))`, so a crowd
+    /// lays less trail a walker than a lone one.
+    pub deposit_cap: u16,
+    /// Sensing floor. 0 is off (today's). Otherwise a walker whose three
+    /// sensors all read under `sense_floor` (trail plus scent) ignores them
+    /// and turns `rotate_angle` left or right at random (a keyed draw), so
+    /// trail too faint to matter leaves it wandering. Added 2026-11-11: with
+    /// no floor any haze, however thin, organises on its own, because the
+    /// turn rule compares sensors only.
+    pub sense_floor: f32,
+    /// Chance a look that a walker ignores its sensors and takes a random
+    /// heading (a keyed draw); 0 is never (today's). Lets walkers leak out of
+    /// tubes into a glow around them.
+    pub wander: f32,
+    /// Contagion (Jenson's 2019 post: an infected particle lays an infected
+    /// trail, which spreads to other particles). Off when 0. Each walker
+    /// holds a counter c: 0 is healthy, over `immune_steps` is sick,
+    /// 1..=`immune_steps` is immune. A healthy walker whose cell's germ
+    /// field (as the pass began) is over `sick_catch` sets c =
+    /// `sick_steps + immune_steps`. A sick walker moves `sick_speed` times
+    /// as far and deposits `sick_trail` times as much trail, and lays
+    /// `sick_deposit` germ on its cell; it senses `sick_reach` times as far
+    /// and turns `sick_turn` times as sharply (after `sense_scale`). c falls by one each fine step after
+    /// the move, to 0. The germ field gets one 3x3 mean a fine step, times
+    /// `sick_keep`. Walkers within `sick_seed_r` dish cells of the dish
+    /// centre start sick (`BigDish::infect` seeds it later).
+    pub sick_steps: u16,
+    pub immune_steps: u16,
+    pub sick_catch: f32,
+    pub sick_deposit: f32,
+    pub sick_keep: f32,
+    pub sick_speed: f32,
+    pub sick_trail: f32,
+    pub sick_reach: f32,
+    pub sick_turn: f32,
+    pub sick_seed_r: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     pub seed: u64,
@@ -129,6 +190,26 @@ impl BigParams {
             pile_r: 6.0,
             blob: true,
             respawn: 0.0,
+            blob_r: 0.0,
+            haze: 0.0,
+            sense_scale: 0.0,
+            offset_mod: [0.0, 1.0],
+            angle_mod: [0.0, 1.0],
+            turn_mod: [0.0, 1.0],
+            step_mod: [0.0, 1.0],
+            deposit_cap: 0,
+            sense_floor: 0.0,
+            wander: 0.0,
+            sick_steps: 0,
+            immune_steps: 0,
+            sick_catch: 1.0,
+            sick_deposit: 1.0,
+            sick_keep: 0.9,
+            sick_speed: 1.0,
+            sick_trail: 1.0,
+            sick_reach: 1.0,
+            sick_turn: 1.0,
+            sick_seed_r: 0.0,
             tube: 1.0,
             seed: 1,
         }
@@ -185,6 +266,10 @@ pub struct BigDish {
     pub walkers: Vec<(f32, f32, f32)>,
     occ: Vec<u16>,
     claim: Vec<u32>,
+    /// Contagion (`sick_steps` > 0): each walker's counter, and the germ
+    /// field on the fine grid. Both empty when contagion is off.
+    pub sick: Vec<u16>,
+    pub germ: Vec<f32>,
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
@@ -275,6 +360,8 @@ impl BigDish {
             walkers: Vec::with_capacity(p.walkers),
             occ: vec![0; w * h],
             claim: vec![u32::MAX; w * h],
+            sick: Vec::new(),
+            germ: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
             threads: 1,
@@ -282,7 +369,28 @@ impl BigDish {
         };
         d.place_piles();
         d.place_walkers();
+        if d.p.sick_steps > 0 {
+            d.sick = vec![0; d.walkers.len()];
+            d.germ = vec![0.0; w * h];
+            let (cx, cy) = (W as f32 / 2.0, H as f32 / 2.0);
+            d.infect(cx, cy, d.p.sick_seed_r);
+        }
         d
+    }
+
+    /// Contagion: every walker within `r` dish cells of (`x`, `y`, dish
+    /// cells) falls sick, immune or not. Does nothing with contagion off.
+    pub fn infect(&mut self, x: f32, y: f32, r: f32) {
+        if self.sick.is_empty() || r <= 0.0 {
+            return;
+        }
+        let s = self.p.scale as f32;
+        let c = self.p.sick_steps + self.p.immune_steps;
+        for (k, &(wx, wy, _)) in self.walkers.iter().enumerate() {
+            if (wx / s - x).hypot(wy / s - y) <= r {
+                self.sick[k] = c;
+            }
+        }
     }
 
     fn cell(&self, x: f32, y: f32) -> Option<usize> {
@@ -323,6 +431,7 @@ impl BigDish {
         let (hx, hy) = (self.piles[0].0 * s, self.piles[0].1 * s);
         // A blob as dense as today's inoculum: about 0.9 of the cells in it.
         let r = (n as f32 / (0.9 * std::f32::consts::PI)).sqrt();
+        let (hx, hy, r) = if self.p.blob_r > 0.0 { (self.w as f32 / 2.0, self.h as f32 / 2.0, self.p.blob_r * s) } else { (hx, hy, r) };
         let mut k = 0u32;
         while self.walkers.len() < n && k < 50 * n as u32 + 1000 {
             let (a, b, c) = (
@@ -331,7 +440,8 @@ impl BigDish {
                 unit(keyed(seed, 1, DRAW_START, 3 * k + 2)),
             );
             k += 1;
-            let (x, y) = if self.p.blob {
+            let hazy = self.p.haze > 0.0 && unit(keyed(seed, 1, DRAW_HAZE, k)) < self.p.haze;
+            let (x, y) = if self.p.blob && !hazy {
                 let (ang, dist) = (a * TAU, b.sqrt() * r);
                 (hx + ang.cos() * dist, hy + ang.sin() * dist)
             } else {
@@ -371,9 +481,11 @@ impl BigDish {
 
     /// One fine step of the walkers: sense, turn, claim, move, deposit.
     fn move_walkers(&mut self) {
-        let p = &self.p;
+        let p = self.p.clone();
         let (sa, ra, so, st, dep, crowd) = (p.sensor_angle, p.rotate_angle, p.sensor_offset, p.step, p.deposit, p.crowd);
         let respawn = p.respawn;
+        let (ss, cap, contagion) = (p.sense_scale, p.deposit_cap, !self.sick.is_empty());
+        let (sick_at, catch_c) = (p.immune_steps, p.sick_steps + p.immune_steps);
         let sso = if p.scent_offset > 0.0 { p.scent_offset } else { so };
         let (seed, t) = (p.seed, self.steps);
         // (walker, from, to, x, y, heading); from == to for a move within a cell.
@@ -382,11 +494,36 @@ impl BigDish {
         let look = t.is_multiple_of(p.sense_every.max(1) as u64);
         for k in 0..self.walkers.len() {
             let (x, y, mut h) = self.walkers[k];
+            let here = self.cell(x, y).expect("walker inside the dish");
+            // Trail-dependent settings (`sense_scale`), read where it stands.
+            let (mut so, mut sa, mut ra, mut st) = (so, sa, ra, st);
+            if ss > 0.0 {
+                let v = (self.trail[here] * ss).min(1.0);
+                let m = |b: f32, [amp, e]: [f32; 2]| b + amp * v.powf(e);
+                so = m(so, p.offset_mod);
+                sa = m(sa, p.angle_mod);
+                ra = m(ra, p.turn_mod);
+                st = m(st, p.step_mod).max(0.0);
+            }
+            if contagion {
+                if self.sick[k] == 0 && self.germ[here] > p.sick_catch {
+                    self.sick[k] = catch_c;
+                }
+                if self.sick[k] > sick_at {
+                    st *= p.sick_speed;
+                    so *= p.sick_reach;
+                    ra *= p.sick_turn;
+                }
+            }
             if look {
                 let f = self.sense(x, y, h, so, sso);
                 let fl = self.sense(x, y, h - sa, so, sso);
                 let fr = self.sense(x, y, h + sa, so, sso);
-                if f > fl && f > fr {
+                if p.wander > 0.0 && unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x8000_0000)) < p.wander {
+                    h = unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x4000_0000)) * TAU;
+                } else if p.sense_floor > 0.0 && f.max(fl).max(fr) < p.sense_floor {
+                    h += if keyed(seed, t, DRAW_WANDER, k as u32) & 1 == 0 { ra } else { -ra };
+                } else if f > fl && f > fr {
                 } else if f < fl && f < fr {
                     h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 { ra } else { -ra };
                 } else if fl < fr {
@@ -396,7 +533,6 @@ impl BigDish {
                 }
             }
             let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
-            let here = self.cell(x, y).expect("walker inside the dish");
             match self.cell(nx, ny) {
                 Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16)) => {
                     if there != here && crowd > 0 {
@@ -415,7 +551,10 @@ impl BigDish {
                 self.occ[i] -= 1;
                 self.occ[j] += 1;
                 self.walkers[k as usize] = (nx, ny, h);
-                self.trail[j] += dep;
+                if cap == 0 {
+                    let sick = contagion && self.sick[k as usize] > sick_at;
+                    self.trail[j] += if sick { dep * self.p.sick_trail } else { dep };
+                }
             } else {
                 blocked.push(k);
             }
@@ -428,6 +567,30 @@ impl BigDish {
         // Blocked: Jones's rule, stay put and pick a new heading.
         for &k in &blocked {
             self.walkers[k as usize].2 = unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU;
+        }
+        if cap > 0 {
+            // Capped square-root deposit: per cell, from the walkers on it.
+            let sick_trail = self.p.sick_trail;
+            for k in 0..self.walkers.len() {
+                let (x, y, _) = self.walkers[k];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                let n = self.occ[i].min(cap) as f32;
+                // Each of the n walkers on the cell lays its share of
+                // deposit * sqrt(n): sqrt(n) / n of a lone walker's.
+                let share = dep * n.sqrt() / self.occ[i] as f32;
+                let sick = contagion && self.sick[k] > sick_at;
+                self.trail[i] += if sick { share * sick_trail } else { share };
+            }
+        }
+        if contagion {
+            for k in 0..self.walkers.len() {
+                if self.sick[k] > sick_at {
+                    let (x, y, _) = self.walkers[k];
+                    let i = self.cell(x, y).expect("walker inside the dish");
+                    self.germ[i] += self.p.sick_deposit;
+                }
+                self.sick[k] = self.sick[k].saturating_sub(1);
+            }
         }
         if respawn > 0.0 {
             self.respawn_walkers(respawn, crowd);
@@ -556,6 +719,10 @@ impl BigDish {
                 let keep = if pass == 0 { self.p.keep } else { 1.0 };
                 spread(&self.agar, &self.trail, &mut self.scratch, self.w, self.h, keep, self.threads);
                 std::mem::swap(&mut self.trail, &mut self.scratch);
+            }
+            if !self.germ.is_empty() {
+                spread(&self.agar, &self.germ, &mut self.scratch, self.w, self.h, self.p.sick_keep, self.threads);
+                std::mem::swap(&mut self.germ, &mut self.scratch);
             }
             if !self.p.scent_coarse {
                 self.scent_step();
@@ -699,8 +866,11 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ) {
             eat(v.to_bits());
+        }
+        for &c in &self.sick {
+            eat(c as u32);
         }
         h
     }
@@ -823,6 +993,55 @@ mod tests {
             }
         }
         assert!(moved > before.len() / 2, "{moved} of {} moved", before.len());
+    }
+
+    /// The 2026-11-11 options (Jenson's looks) keep the dish deterministic
+    /// whatever the threads, and a sickness seeded in the middle spreads.
+    #[test]
+    fn jenson_options_ignore_threads_and_spread() {
+        let p = BigParams {
+            crowd: 0,
+            blob_r: 20.0,
+            haze: 0.3,
+            sense_scale: 0.05,
+            step_mod: [1.0, 1.0],
+            turn_mod: [-0.2, 2.0],
+            deposit_cap: 50,
+            sense_floor: 0.5,
+            wander: 0.01,
+            sick_steps: 60,
+            immune_steps: 60,
+            sick_catch: 0.2,
+            sick_reach: 0.5,
+            sick_turn: 2.0,
+            sick_trail: 3.0,
+            sick_seed_r: 6.0,
+            ..small(2, 1)
+        };
+        let mut a = BigDish::new(p);
+        let seeded = a.sick.iter().filter(|&&c| c > 0).count();
+        assert!(seeded > 0);
+        let mut b = a.clone();
+        b.threads = 3;
+        let mut ever = vec![false; a.walkers.len()];
+        for _ in 0..60 {
+            a.tick();
+            b.tick();
+            for (e, &c) in ever.iter_mut().zip(&a.sick) {
+                *e |= c > a.p.immune_steps;
+            }
+        }
+        assert_eq!(a.hash(), b.hash());
+        let caught = ever.iter().filter(|&&e| e).count();
+        assert!(caught > 2 * seeded, "{caught} caught from {seeded} seeded");
+    }
+
+    /// With every new option at its default the dish is today's, and the
+    /// contagion state is not even allocated.
+    #[test]
+    fn new_options_default_off() {
+        let d = BigDish::new(small(2, 2));
+        assert!(d.sick.is_empty() && d.germ.is_empty());
     }
 
     /// The same layout of piles at every scale, so arms pair.

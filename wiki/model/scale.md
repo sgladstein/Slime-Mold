@@ -2,9 +2,9 @@
 title: The mould at scale (outside models and the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-10
-sources: [Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md]
-code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn]
+updated: 2026-11-11
+sources: [Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/jenson-looks-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md]
+code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect]
 ---
 
 # The mould at scale (outside models and the GPU plan)
@@ -99,12 +99,19 @@ Jenson's. Respawning 1% of walkers a step (`BigParams::respawn`, off by
 default; Jenson's later work respawns every 1,000 steps) held a fine mesh
 and gave Jenson's haze. Four times the walkers changed little. Every GPU
 port read (Bleuje, Lague, PolyPhy, gpu-io, Barradeau) drops the limit.
-Not reproduced: feathery fronts growing into a haze, lasting trunks, and
-contagion.
-
-**Contagion** (Jenson) is a mark that spreads from particle to particle
-through the trail. It is planned as an off-by-default rule in phase 1 and a
-tool in phase 6. Every outside source has a card in
+A follow-up ([jenson looks](../../Reports/jenson-looks-2026-11-11.md))
+added off-by-default rules for the three looks still missing. **Trunks**
+come from the start: a dense centred disc (`BigParams::blob_r`, `haze`)
+keeps its edge as a thick ring inside a mesh at 20 s, while respawn stays
+slow (0.001). **Contagion** is built on the big dish (`sick_steps` and the
+other `sick_*` fields, `BigDish::infect`, the same rule as Two Fevers): it
+runs along the tubes in 2-4 s, coarsens the mesh while it passes when sick
+walkers steer differently, leaves no mark by 20 s, and a knife cut does not
+stop it. **Feathery fronts** are still not reproduced: with Jenson's rule any
+haze organises on its own. 36 Points' trail-dependent settings
+(`sense_scale`) gave long curves, a ring that expands across the dish, or a
+lasting round trunk; Bleuje's square-root deposit (`deposit_cap`) gave even
+polygons at once. Every outside source has a card in
 [`research/sources/`](../../research/sources/README.md).
 
 ## Numbers
@@ -127,6 +134,10 @@ tool in phase 6. Every outside source has a card in
 | No one-a-cell limit vs the limit, 100k walkers, no food, spread start, loops at 10 s | 0 (0-2) vs 151.5 (144-160): fewer on 8 of 8, p 0.008, survives Bonferroni over 4 | 8 | yes | [jenson compare, *The tests*](../../Reports/jenson-compare-2026-11-10.md) |
 | Respawn 1% a step vs none, 1M walkers, no limit, sensor 45 / turn 22.5 / reach 18, loops at 10 s | 196 (187-208) vs 43.5 (38-52): more on 8 of 8, p 0.008, survives Bonferroni over 4; 166 vs 160 ms a tick on one core | 8 | yes | same |
 | Tube width and haze on the picture, Jenson network_2 last frame vs the 1M dish drawn three ways | Jenson 0.3-0.4% of the disc, haze 41%; game curve 1.4-1.6%, haze 8%; soft curve 0.4-0.6%, 15% (44% with respawn); walkers a cell 0.1% | one clip; seed 1 | | same, [page](https://claude.ai/artifact/HL7jZ4qGhr6f1HpUDmNEj2) |
+| Trunk: dense disc + 30% haze vs even start, 1M walkers, respawn 0.001, step x (1 + trail/50); share of the brightest 1% of trail in the first ring's band at 20 s | 0.70 (0.20-0.86) vs 0.15 (0.09-0.31): more on 8 of 8, p 0.008, survives Bonferroni over 3 | 8 | yes | [jenson looks, *The tests*](../../Reports/jenson-looks-2026-11-11.md) |
+| Contagion with rope steering (sick 2 s) vs none, loops at 9 s / 20 s | 41-51 vs 48-58, fewer on 8 of 8, p 0.008 / 15-25 vs 17-25, p 0.45 | 8 | yes | same |
+| Knife cut across the dish as the sickness starts vs none, far side ever sick at 6 s | 0.155-0.254 vs 0.157-0.260; 4 of 8, p 1 | 8 | yes | same |
+| Cost of the new rules, 1M walkers, one core, ms a tick | base 132.7; trail-dependent step 176.5; square-root deposit 150.9; floor 139.6; wander 142.5; contagion 142.9 | seed 1 | | same |
 | Step cost, bare move and diffusion, one core | 256 x 160 / 2.2k 0.13 ms; 1024 x 640 / 100k 9.5-11.2 ms; 1024 x 640 / 1M 96-98 ms; 2048 x 1280 / 1M 111-112 ms | 2 runs | | [gpu plan, *What the independent review changed*](../../Reports/gpu-plan-2026-11-10.md), [bench](../../Reports/gpu-plan-2026-11-10/step-bench.rs) |
 
 ## Owner's word
@@ -154,11 +165,13 @@ tool in phase 6. Every outside source has a card in
 - What in the all-at-once move cuts the seam fights, measured on a neutral two-mould dish.
 - The bag: whether a packed start on the fine grid still stalls once the economy grows the mould from a small inoculum.
 - The GTX 1070 timing (phase 2), at the owner's pick of 100,000 walkers, and at 1,000,000 for headroom.
-- Jenson's feathery fronts, lasting trunks and contagion are not reproduced; nor tried are settings set by the trail a walker stands in (36 Points), a square-root deposit (Bleuje), area sensors (Lague) and chance-weighted steering (MCPM). The outside code was read on 2026-11-10; only PolyPhy, gpu-io (MIT) and Barradeau (public domain) may be reused.
+- Jenson's feathery fronts are not reproduced (seven mechanisms, [jenson looks](../../Reports/jenson-looks-2026-11-11.md)); untried: several dense starting spots, sensing walker counts, speed-dependent deposit, area sensors (Lague) and chance-weighted steering (MCPM).
+- Whether contagion can leave a lasting mark for play (see the contagion entry in [`dead-ends.md`](../../Reports/dead-ends.md)). The outside code was read on 2026-11-10; only PolyPhy, gpu-io (MIT) and Barradeau (public domain) may be reused.
 
 ## Sources
 
 - [jenson-physarum-2026-11-10.md](../../Reports/jenson-physarum-2026-11-10.md), with the owner's PDF and GIFs in [its folder](../../Reports/jenson-physarum-2026-11-10/).
 - [jenson-compare-2026-11-10.md](../../Reports/jenson-compare-2026-11-10.md): the clips against the big dish, and how the outside versions build the step.
+- [jenson-looks-2026-11-11.md](../../Reports/jenson-looks-2026-11-11.md): trunks, contagion and fronts on the big dish; [page](https://claude.ai/artifact/DqJxgjQGVgnwQNwbbzoGrg).
 - [gpu-plan-2026-11-10.md](../../Reports/gpu-plan-2026-11-10.md) and its [independent review](../../Reports/gpu-plan-2026-11-10/review.md).
 - Source cards: [index](../../research/sources/README.md); [Jenson's post](../../research/sources/jenson-physarum-post.md), [36 Points](../../research/sources/jenson-36-points.md), [Jones 2010](../../research/sources/jones-2010.md), [MCPM](../../research/sources/mcpm-2022.md), [Bleuje](../../research/sources/bleuje-interactive-physarum.md), [Lague](../../research/sources/lague-slime-simulation.md), [PolyPhy](../../research/sources/polyphy.md).

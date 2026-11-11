@@ -39,3 +39,4 @@ if the link ever stops working. Newest last.
 | 11-10 | Mould Budget Skirmish (version 2, playable) | https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS | `web/page/` (HTML and `skirmish.wasm`; source `web/src/`) |
 | 11-10 | The 4x Mould (scaling rule, big dish at 32k and 100k walkers) | https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs | `gpu-plan-2026-11-10/scale/` (page.html, `ladder/` stills, `video/` MP4s and posters) |
 | 11-10 | Why Jenson's Mould Looks Different (Jenson's clips beside the big dish, tests, outside code) | https://claude.ai/artifact/HL7jZ4qGhr6f1HpUDmNEj2 | `jenson-compare-2026-11-10/` (page.html and `pics/`) |
+| 11-11 | Jenson's Missing Looks (trunks, contagion, fronts on the big dish) | https://claude.ai/artifact/DqJxgjQGVgnwQNwbbzoGrg | `jenson-looks-2026-11-11/` (page.html, `pics/` stills and MP4s) |

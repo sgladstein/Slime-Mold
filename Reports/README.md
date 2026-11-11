@@ -160,6 +160,13 @@ move.
   step (new `BigParams::respawn`, off by default) held a fine mesh (loops at 10 s 43.5 to 196, 8 of 8) and gave
   Jenson's haze, for 4% more step time. Not reproduced: feathery fronts, trunks, contagion.
   Page, pictures, run.sh, analyze.py and raw output in [`jenson-compare-2026-11-10/`](jenson-compare-2026-11-10/).
+- [jenson-looks-2026-11-11.md](jenson-looks-2026-11-11.md) — **research with small tests, no game change: Jenson's
+  three missing looks on the big dish.** Owner asked 00:06Z. New `BigParams` rules, all off by default: a centred
+  starting disc and haze, 36 Points' trail-dependent settings, Bleuje's square-root deposit, a sensing floor, wander, and
+  contagion. A dense disc keeps a thick ring at 20 s (8 of 8 seeds, p 0.008), as long as respawn is slow. Contagion runs
+  along the tubes, coarsens the mesh while it passes (8 of 8 at 9 s) but leaves no mark by 20 s, and a knife cut does
+  not stop it (4 of 8). Feathery fronts: seven mechanisms failed; any haze organises on its own. Page, pictures,
+  videos, scripts and raw output in [`jenson-looks-2026-11-11/`](jenson-looks-2026-11-11/).
 
 ## Added with the move (2026-11-10)
 

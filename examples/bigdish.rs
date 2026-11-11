@@ -47,11 +47,27 @@
 //! (`style=amber,grey`) saves each style's still; frames and GIFs use the
 //! first. `raw` in the list also saves the trail and walkers a cell as raw
 //! f32 (`.f32`, w x h each) for drawing offline.
+//!
+//! Added 2026-11-11 for the looks the comparison could not reproduce
+//! (`Reports/jenson-looks-2026-11-11.md`): `style=soft` draws the trail
+//! over its 99.9th percentile to the power `gamma` (default 0.6), the
+//! comparison's soft curve; `style=sick` is `soft` with the germ field in
+//! red, full at four times `sick_catch`. New keys: `blob_r= haze= sense_scale= deposit_cap= sense_floor= wander= sick_steps=
+//! immune_steps= sick_catch= sick_deposit= sick_keep= sick_speed=
+//! sick_trail= sick_reach= sick_turn= sick_seed_r=`, and `offset_mod= angle_mod= turn_mod=
+//! step_mod=` as `amp:exp` (angles in degrees). Events: `infect=T` makes
+//! walkers within `infect_r` (default 10) dish cells of the centre sick at
+//! T seconds; `cut=T` clears trail and germ in a band `cut_w` (default 2)
+//! dish cells wide at dish x `cut_x` (default 160) at T seconds, as the
+//! knife does. With contagion on, the report adds the share sick, the share
+//! ever sick, the sick front (90th percentile distance of sick walkers from
+//! the centre, dish cells) and the share of walkers beyond `cut_x` ever
+//! sick.
 
 use std::time::Instant;
 
 use slime_mould::mould::big::{BigDish, BigParams};
-use slime_mould::mould::STEPS_PER_SECOND;
+use slime_mould::mould::{H, STEPS_PER_SECOND, W};
 
 fn preset(name: &str) -> BigParams {
     let t = BigParams::today();
@@ -104,8 +120,14 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
             }
             c
         }
-        _ => panic!("style={style}: amber, grey or count"),
+        "soft" | "sick" => d.trail.clone(),
+        _ => panic!("style={style}: amber, grey, count, soft or sick"),
     };
+    let soft = style == "soft" || style == "sick";
+    // The soft curve's reference: the trail's 99.9th percentile over the agar.
+    let refv = if soft { pct(&field, 0.999) } else { 1.0 };
+    // Germ on a fixed scale: full red at four times the catch level.
+    let germ_ref = 4.0 * d.p.sick_catch.max(1e-6);
     let down = down.max(1);
     let (iw, ih) = ((d.w / down) as u32, (d.h / down) as u32);
     let mut img = image::RgbaImage::new(iw, ih);
@@ -117,11 +139,37 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
                     v = v.max(field[(py as usize * down + dy) * d.w + px as usize * down + dx]);
                 }
             }
+            if soft {
+                let g = (v / refv).clamp(0.0, 1.0).powf(knee);
+                let mut germ = 0.0f32;
+                if style == "sick" && !d.germ.is_empty() {
+                    for dy in 0..down {
+                        for dx in 0..down {
+                            germ = germ.max(d.germ[(py as usize * down + dy) * d.w + px as usize * down + dx]);
+                        }
+                    }
+                    germ = (germ / germ_ref).clamp(0.0, 1.0).powf(0.5);
+                }
+                let r = (255.0 * g.max(germ)) as u8;
+                let gb = (255.0 * g * (1.0 - 0.8 * germ)) as u8;
+                img.put_pixel(px, py, image::Rgba([r, gb, gb, 255]));
+                continue;
+            }
             let g = (255.0 * (1.0 - (-v / knee).exp())).clamp(0.0, 255.0) as u8;
             img.put_pixel(px, py, image::Rgba([g, g, g, 255]));
         }
     }
     img
+}
+
+/// The `q` quantile of the positive values of `v` (1 if none).
+fn pct(v: &[f32], q: f32) -> f32 {
+    let mut pos: Vec<f32> = v.iter().copied().filter(|&x| x > 0.0).collect();
+    if pos.is_empty() {
+        return 1.0;
+    }
+    let k = ((pos.len() - 1) as f32 * q) as usize;
+    *pos.select_nth_unstable_by(k, |a, b| a.total_cmp(b)).1
 }
 
 fn main() {
@@ -136,6 +184,7 @@ fn main() {
     let (mut every, mut down) = (12u64, 1usize);
     let (mut style, mut knee) = ("amber".to_string(), 6.0f32);
     let mut at: Vec<f32> = Vec::new();
+    let (mut infect, mut infect_r, mut cut, mut cut_x, mut cut_w) = (-1.0f32, 10.0f32, -1.0f32, 160.0f32, 2.0f32);
     let mut overrides: Vec<(String, String)> = Vec::new();
     for arg in std::env::args().skip(1) {
         let (k, v) = arg.split_once('=').unwrap_or_else(|| panic!("expected key=value, got {arg}"));
@@ -153,6 +202,12 @@ fn main() {
             "down" => down = v.parse().unwrap(),
             "style" => style = v.into(),
             "knee" => knee = v.parse().unwrap(),
+            "gamma" => knee = v.parse().unwrap(),
+            "infect" => infect = v.parse().unwrap(),
+            "infect_r" => infect_r = v.parse().unwrap(),
+            "cut" => cut = v.parse().unwrap(),
+            "cut_x" => cut_x = v.parse().unwrap(),
+            "cut_w" => cut_w = v.parse().unwrap(),
             "at" => at = v.split(',').map(|s| s.parse().unwrap()).collect(),
             _ => overrides.push((k.into(), v.into())),
         }
@@ -183,6 +238,36 @@ fn main() {
             "fed_scent" => p.fed_scent = f(),
             "pile_r" => p.pile_r = f(),
             "respawn" => p.respawn = f(),
+            "blob_r" => p.blob_r = f(),
+            "haze" => p.haze = f(),
+            "sense_scale" => p.sense_scale = f(),
+            "offset_mod" | "angle_mod" | "turn_mod" | "step_mod" => {
+                let (a, e) = v.split_once(':').unwrap_or_else(|| panic!("{k}=amp:exp"));
+                let (mut a, e): (f32, f32) = (a.parse().unwrap(), e.parse().unwrap());
+                if k != "offset_mod" && k != "step_mod" {
+                    a = a.to_radians();
+                }
+                let m = [a, e];
+                match k.as_str() {
+                    "offset_mod" => p.offset_mod = m,
+                    "angle_mod" => p.angle_mod = m,
+                    "turn_mod" => p.turn_mod = m,
+                    _ => p.step_mod = m,
+                }
+            }
+            "deposit_cap" => p.deposit_cap = f() as u16,
+            "sense_floor" => p.sense_floor = f(),
+            "wander" => p.wander = f(),
+            "sick_steps" => p.sick_steps = f() as u16,
+            "immune_steps" => p.immune_steps = f() as u16,
+            "sick_catch" => p.sick_catch = f(),
+            "sick_deposit" => p.sick_deposit = f(),
+            "sick_keep" => p.sick_keep = f(),
+            "sick_speed" => p.sick_speed = f(),
+            "sick_trail" => p.sick_trail = f(),
+            "sick_reach" => p.sick_reach = f(),
+            "sick_turn" => p.sick_turn = f(),
+            "sick_seed_r" => p.sick_seed_r = f(),
             _ => panic!("unknown key {k}"),
         }
     }
@@ -196,12 +281,34 @@ fn main() {
         println!("== seed {seed}: {} x {}, {} walkers, {} piles", d.w, d.h, d.walkers.len(), d.piles.len());
         let mut shots = Vec::new();
         let mut spent = 0.0f64;
+        let to_tick = |t: f32| if t < 0.0 { u64::MAX } else { (t * STEPS_PER_SECOND as f32).round() as u64 };
+        let (infect_tick, cut_tick) = (to_tick(infect), to_tick(cut));
+        let mut ever = vec![false; d.walkers.len()];
         let mut stills: Vec<u64> = at.iter().map(|s| (s * STEPS_PER_SECOND as f32).round() as u64).collect();
         stills.sort_unstable();
         while d.ticks < ticks {
             let t0 = Instant::now();
             d.tick();
             spent += t0.elapsed().as_secs_f64();
+            if d.ticks == infect_tick {
+                d.infect(W as f32 / 2.0, H as f32 / 2.0, infect_r);
+            }
+            if d.ticks == cut_tick {
+                // The knife: clear trail and germ in a band across the dish.
+                let s = d.p.scale as f32;
+                let (x0, x1) = (((cut_x - cut_w / 2.0) * s) as usize, ((cut_x + cut_w / 2.0) * s) as usize);
+                for y in 0..d.h {
+                    for x in x0..x1.min(d.w) {
+                        d.trail[y * d.w + x] = 0.0;
+                        if !d.germ.is_empty() {
+                            d.germ[y * d.w + x] = 0.0;
+                        }
+                    }
+                }
+            }
+            for (e, &c) in ever.iter_mut().zip(&d.sick) {
+                *e |= c > d.p.immune_steps;
+            }
             if gif.is_some() && d.ticks.is_multiple_of(every) {
                 shots.push(picture(&d, style.split(',').next().unwrap(), knee, down));
             }
@@ -252,6 +359,34 @@ fn main() {
                     m.strays,
                     spent * 1e3 / d.ticks as f64
                 );
+                if !d.sick.is_empty() {
+                    let s = d.p.scale as f32;
+                    let (cx, cy) = (W as f32 / 2.0, H as f32 / 2.0);
+                    let mut dist: Vec<f32> = d
+                        .walkers
+                        .iter()
+                        .zip(&d.sick)
+                        .filter(|(_, &c)| c > d.p.immune_steps)
+                        .map(|(&(x, y, _), _)| (x / s - cx).hypot(y / s - cy))
+                        .collect();
+                    let n = d.walkers.len() as f32;
+                    let front = if dist.is_empty() {
+                        0.0
+                    } else {
+                        let k = ((dist.len() - 1) as f32 * 0.9) as usize;
+                        *dist.select_nth_unstable_by(k, |a, b| a.total_cmp(b)).1
+                    };
+                    let beyond: Vec<bool> = d.walkers.iter().zip(&ever).filter(|(w, _)| w.0 / s > cut_x + cut_w / 2.0).map(|(_, &e)| e).collect();
+                    let far = beyond.iter().filter(|&&e| e).count() as f32 / beyond.len().max(1) as f32;
+                    println!(
+                        "seed {seed} {name} t {:5.1}s  sick {:.3}  ever {:.3}  front {:6.1}  far {:.3}",
+                        m.seconds,
+                        dist.len() as f32 / n,
+                        ever.iter().filter(|&&e| e).count() as f32 / n,
+                        front,
+                        far
+                    );
+                }
             }
         }
         println!("seed {seed} {name} hash={:016x}", d.hash());
