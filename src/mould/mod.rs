@@ -68,6 +68,7 @@ pub mod play;
 pub mod render;
 pub mod skirmish;
 pub mod squad;
+pub mod tiers;
 pub mod tune;
 pub mod wander;
 
