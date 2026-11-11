@@ -187,6 +187,14 @@ pub struct BigParams {
     /// can take you, as in rock, paper, scissors. Walkers keep their species
     /// through respawn.
     pub species_convert: f32,
+    /// Conversion compares each species' trail summed over the
+    /// (2r+1) x (2r+1) square round the walker's cell (clipped at the dish
+    /// edge) instead of the cell alone (0 is the cell; added 2026-11-11 so a
+    /// bigger body takes a smaller one where they touch: at a contact the
+    /// side with more trail within r wins, and a small body is outweighed
+    /// across its whole width). Built from one summed-area table a species
+    /// each step (f64, so the sums are exact enough at 1M walkers).
+    pub species_convert_r: u32,
     /// Species 0 lays this many times the deposit (1 is even; added
     /// 2026-11-11 to give one side an edge in a fight).
     pub species_boost: f32,
@@ -318,6 +326,7 @@ impl BigParams {
             species: 0,
             species_avoid: 1.0,
             species_convert: 0.0,
+            species_convert_r: 0,
             species_boost: 1.0,
             species_share: 0.0,
             graze_weight: 0.0,
@@ -890,9 +899,40 @@ impl BigDish {
         }
         if p.species_convert > 0.0 && !self.spec.is_empty() {
             let n = self.species_trail.len();
+            let (w, h, r) = (self.w, self.h, p.species_convert_r as usize);
+            // Summed-area tables, (w+1) x (h+1), when comparing squares.
+            let sat: Vec<Vec<f64>> = if r > 0 {
+                self.species_trail
+                    .iter()
+                    .map(|f| {
+                        let mut t = vec![0.0f64; (w + 1) * (h + 1)];
+                        for y in 0..h {
+                            let mut row = 0.0f64;
+                            for x in 0..w {
+                                row += f[y * w + x] as f64;
+                                t[(y + 1) * (w + 1) + x + 1] = t[y * (w + 1) + x + 1] + row;
+                            }
+                        }
+                        t
+                    })
+                    .collect()
+            } else {
+                Vec::new()
+            };
+            let weigh = |s: usize, cx: usize, cy: usize, i: usize| -> f64 {
+                if r == 0 {
+                    return self.species_trail[s][i] as f64;
+                }
+                let (x0, y0) = (cx.saturating_sub(r), cy.saturating_sub(r));
+                let (x1, y1) = ((cx + r + 1).min(w), (cy + r + 1).min(h));
+                let t = &sat[s];
+                t[y1 * (w + 1) + x1] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0] + t[y0 * (w + 1) + x0]
+            };
+            let mut next = self.spec.clone();
             for k in 0..self.walkers.len() {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
+                let (cx, cy) = (i % w, i / w);
                 let own = self.spec[k] as usize;
                 let mut best = own;
                 if p.species_cycle && n >= 3 {
@@ -900,15 +940,24 @@ impl BigDish {
                     best = (own + n - 1) % n;
                 } else {
                     for s in 0..n {
-                        if s != own && self.species_trail[s][i] > self.species_trail[best][i] {
+                        if s != own && weigh(s, cx, cy, i) > weigh(best, cx, cy, i) {
                             best = s;
                         }
                     }
                 }
-                if best != own && self.species_trail[best][i] > p.species_convert * self.species_trail[own][i] {
-                    self.spec[k] = best as u8;
+                // r 0 keeps the f32 product, so older runs keep their hashes.
+                let wins = if r == 0 {
+                    self.species_trail[best][i] > p.species_convert * self.species_trail[own][i]
+                } else {
+                    weigh(best, cx, cy, i) > p.species_convert as f64 * weigh(own, cx, cy, i)
+                };
+                if best != own && wins {
+                    next[k] = best as u8;
                 }
             }
+            // Conversion reads only trails, so writing to a copy is the same
+            // as converting in place.
+            self.spec = next;
         }
         if respawn > 0.0 {
             self.respawn_walkers(respawn, crowd);
@@ -1433,6 +1482,7 @@ mod tests {
             BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
             BigParams { species: 3, species_cycle: true, species_convert: 1.0, ..small(2, 1) },
             BigParams { species: 2, species_convert: 1.5, species_boost: 1.5, graze_weight: 10.0, ..small(2, 1) },
+            BigParams { species: 2, species_zones: true, species_convert: 1.2, species_convert_r: 3, species_share: 0.6, ..small(2, 1) },
             BigParams { blocked_keep: true, blocked_reset: 0.1, blocked_retry: 3, blocked_deposit: 1.0, ..small(2, 1) },
             BigParams { explore_steps: 30, explore_spread: 1.0, ..small(2, 1) },
         ] {

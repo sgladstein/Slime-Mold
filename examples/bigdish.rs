@@ -317,6 +317,7 @@ fn main() {
             "species_convert" => p.species_convert = f(),
             "species_boost" => p.species_boost = f(),
             "species_share" => p.species_share = f(),
+            "species_convert_r" => p.species_convert_r = f() as u32,
             "graze_weight" => p.graze_weight = f(),
             "graze_eat" => p.graze_eat = f(),
             "graze_regrow" => p.graze_regrow = f(),
