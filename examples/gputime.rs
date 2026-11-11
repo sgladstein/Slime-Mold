@@ -474,6 +474,9 @@ fn main() {
             m.seconds, m.tube_area, m.loops, m.width, m.reach, m.reached, d.piles.len(), m.strays
         );
         if let Some(dir) = &look {
+            // Make the folder: the first run on the GTX 1070 (2026-11-10)
+            // stopped here with "path not found" on a fresh clone.
+            std::fs::create_dir_all(dir).unwrap();
             let path = format!("{dir}/gpu-{}-s{seed}-{:03}s.png", n, (m.seconds.round()) as u32);
             d.image(1).save(&path).unwrap();
             println!("wrote {path}");
