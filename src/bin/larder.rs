@@ -81,38 +81,57 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if args.first().map(String::as_str) == Some("bench") {
         // The M3 gate's frame with no window: 40 soldiers on free fire,
-        // one game step and one full draw (dish, scent view, squad, HUD)
-        // a frame, as at Tab speed, for 60 game seconds. Times the work
-        // the window does a frame, not the swap to the screen.
-        let rules = Rules { squad: 40, start_bank: 1e9, ..Rules::default() };
-        let mut g = field_game(1, rules);
-        for k in 0..40 {
-            g.apply(Cmd::Stance(k, Stance::Free));
+        // one game step and one full draw (dish, squad, HUD, and the scent
+        // view in the second pass) a frame, as at Tab speed, for 60 game
+        // seconds. Times the work the window does a frame, not the swap to
+        // the screen.
+        for scent in [false, true] {
+            let rules = Rules { squad: 40, start_bank: 1e9, ..Rules::default() };
+            let mut g = field_game(1, rules);
+            for k in 0..40 {
+                g.apply(Cmd::Stance(k, Stance::Free));
+            }
+            let (w, h) = render::frame_size(SCALE);
+            let mut frame = vec![0u8; (w * h * 4) as usize];
+            let view = View { bare: true, keys: false, style: Style::GAME, ..View::default() };
+            let all: Vec<usize> = (0..40).collect();
+            let mut times = Vec::new();
+            let mut parts = [0.0f64; 4];
+            for _ in 0..60 * GAME_SECOND {
+                let t0 = Instant::now();
+                g.step();
+                let t1 = Instant::now();
+                render::draw(&g.dish, &view, SCALE, &mut frame);
+                let t2 = Instant::now();
+                if scent {
+                    draw_scent(&g, &mut frame);
+                }
+                let t3 = Instant::now();
+                draw_squad(&g, &all, None, false, &mut frame);
+                draw_hud(&g, false, true, &mut frame);
+                let t4 = Instant::now();
+                for (p, d) in parts.iter_mut().zip([t1 - t0, t2 - t1, t3 - t2, t4 - t3]) {
+                    *p += d.as_secs_f64() * 1e3;
+                }
+                times.push(t0.elapsed().as_secs_f64() * 1e3);
+            }
+            let n = times.len() as f64;
+            times.sort_by(|a, b| a.total_cmp(b));
+            println!(
+                "40 soldiers, scent view {}: frame mean {:.2} ms, p95 {:.2} ms, max {:.2} ms over {} frames (game step {:.2}, dish draw {:.2}, scent {:.2}, squad and HUD {:.2}); {} alive, {} walkers at the end",
+                if scent { "on" } else { "off" },
+                times.iter().sum::<f64>() / n,
+                times[times.len() * 95 / 100],
+                times[times.len() - 1],
+                times.len(),
+                parts[0] / n,
+                parts[1] / n,
+                parts[2] / n,
+                parts[3] / n,
+                g.alive(),
+                g.dish.walkers.len()
+            );
         }
-        let (w, h) = render::frame_size(SCALE);
-        let mut frame = vec![0u8; (w * h * 4) as usize];
-        let view = View { bare: true, keys: false, style: Style::GAME, ..View::default() };
-        let all: Vec<usize> = (0..40).collect();
-        let mut times = Vec::new();
-        for _ in 0..60 * GAME_SECOND {
-            let t0 = Instant::now();
-            g.step();
-            render::draw(&g.dish, &view, SCALE, &mut frame);
-            draw_scent(&g, &mut frame);
-            draw_squad(&g, &all, None, false, &mut frame);
-            draw_hud(&g, false, true, &mut frame);
-            times.push(t0.elapsed().as_secs_f64() * 1e3);
-        }
-        times.sort_by(|a, b| a.total_cmp(b));
-        let mean = times.iter().sum::<f64>() / times.len() as f64;
-        println!(
-            "40 soldiers, step + draw with scent view: mean {mean:.2} ms, p95 {:.2} ms, max {:.2} ms over {} frames; {} alive, {} walkers at the end",
-            times[times.len() * 95 / 100],
-            times[times.len() - 1],
-            times.len(),
-            g.alive(),
-            g.dish.walkers.len()
-        );
         return Ok(());
     }
     if args.first().map(String::as_str) == Some("shot") {
