@@ -1520,6 +1520,12 @@ struct Look {
     /// cells, each built (`Engine::build_wall`) before the first frame at or
     /// after its time.
     walls: Vec<([f32; 5], f32)>,
+    /// `fire=N`: the Larder world's squad hooks every frame (`Engine::
+    /// set_squad`, W2a): N units on the crystals in turn, each taking a
+    /// little charge and smelling, and (with growth on) N shots, each from a
+    /// unit at the block it aimed at last frame, read back every frame as
+    /// the game will, for the frame cost.
+    fire: usize,
 }
 
 /// The headless run: frames as the window would submit them (one frame of
@@ -1629,6 +1635,8 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
         let half = (STEPS_PER_SECOND as u64 / 2 / s.ticks as u64).max(1);
         let mut course = Vec::new();
         let mut built = vec![false; look.walls.len()];
+        let mut aims: Vec<Option<(f32, f32)>> = vec![None; look.fire];
+        let (mut fired, mut kills, mut took) = (0u64, 0u64, 0f64);
         for f in 0..frames {
             let now = (f * s.ticks as u64) as f32 / STEPS_PER_SECOND as f32;
             for (b, &(w, at)) in built.iter_mut().zip(&look.walls) {
@@ -1636,6 +1644,20 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     e.build_wall(&shared, s, w[0], w[1], w[2], w[3], w[4]);
                     *b = true;
                 }
+            }
+            if look.fire > 0 {
+                use slime_mould::mould::squad::{slime_trail, Frame, ShotIn, UnitIn};
+                let k = e.dish.p.scale as f32;
+                let piles = &e.dish.piles;
+                let units: Vec<UnitIn> = (0..look.fire)
+                    .map(|u| {
+                        let (px, py) = piles[u % piles.len()];
+                        UnitIn { x: px * k + (u / piles.len()) as f32 * 3.0, y: py * k, touch: 3.0, sight: 30.0, take_r: 4.0, take: 0.5, smell_r: 2.0, smell: 0.5 }
+                    })
+                    .collect();
+                let shots: Vec<ShotIn> = if e.grows { units.iter().zip(&aims).filter_map(|(u, a)| a.map(|to| ShotIn { from: (u.x, u.y), to, r: 3.0 })).collect() } else { Vec::new() };
+                fired += shots.len() as u64;
+                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee) });
             }
             // GPU time on every tenth frame (the read back waits).
             let stamp = st.as_ref().filter(|_| f % 10 == 5);
@@ -1649,6 +1671,13 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             let t0 = Instant::now();
             queue.submit([enc.finish()]);
             device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
+            if look.fire > 0 {
+                // The game reads the frame back before it plans the next.
+                let out = e.squad_out();
+                aims = out.units.iter().map(|u| u.target).collect();
+                kills += out.shots.iter().map(|q| q.killed as u64).sum::<u64>();
+                took += out.units.iter().map(|u| u.took as f64).sum::<f64>();
+            }
             wall.push(t0.elapsed().as_secs_f64() * 1e3);
             if stamp.is_some() {
                 let x = st.as_mut().unwrap();
@@ -1690,6 +1719,9 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 print!("; GPU ms ticks {:.3}, drawing {:.3}", median(&mut a), median(&mut b));
             }
             println!();
+            if look.fire > 0 {
+                println!("squad: {} units a frame, {fired} shots, {kills} walkers killed, {took:.1} charge taken (the wall ms above include reading it back every frame)", look.fire);
+            }
             let mm = e.measure();
             let mut sick = if s.sick_on() { format!("  sick {:.3}", e.sick_share(s)) } else { String::new() };
             if e.grows {
@@ -1786,7 +1818,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut s = Settings::big_dish();
     let mut picked = 0usize;
     let mut scale = 4usize;
-    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new(), view: None, cam: None, squad: false, walls: Vec::new() };
+    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new(), view: None, cam: None, squad: false, walls: Vec::new(), fire: 0 };
     let args: Vec<String> = std::env::args().skip(1).collect();
     // The preset first, so the other keys change it.
     for arg in &args {
@@ -1817,6 +1849,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 look.cam = Some((*p.first().ok_or("cam=X,Y,ZOOM")?, *p.get(1).ok_or("cam=X,Y,ZOOM")?, p.get(2).copied().unwrap_or(1.0)));
             }
             "squad" => look.squad = on_off(k, v)?,
+            "fire" => look.fire = v.parse::<usize>()?.min(slime_mould::mould::squad::UNITS_MAX),
             "walls" => {
                 for w in v.split(';').filter(|w| !w.is_empty()) {
                     let (seg, at) = w.split_once('@').unwrap_or((w, "0"));
