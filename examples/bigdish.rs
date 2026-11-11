@@ -330,6 +330,7 @@ fn main() {
             "size_spread" => p.size_spread = f(),
             "crystal_charge" => p.crystal_charge = f(),
             "crystal_eat" => p.crystal_eat = f(),
+            "crystal_regrow" => p.crystal_regrow = f(),
             "terrain_rock" => p.terrain_rock = f(),
             "terrain_wet" => p.terrain_wet = f(),
             "wet_step" => p.wet_step = f(),

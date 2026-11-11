@@ -271,6 +271,13 @@ pub struct BigParams {
     /// does not depend on walker order (a count per cell, as on a GPU); the
     /// GPU thread's growth step (W0) credits it to each walker's energy.
     pub crystal_eat: f32,
+    /// Crystals that refill (0 is off: they run dry). Each fine step a
+    /// crystal cell regains this share of what it is missing. The owner,
+    /// 11-11 14:54Z: crystals that run out go with the race start (one
+    /// spot, it must expand); a landing on a world mostly mould probably
+    /// wants crystals that don't run out. Both are tested; 14:55Z: "just my
+    /// initial thought", to be settled by playtests.
+    pub crystal_regrow: f32,
     /// Terrain (0 is off): a smooth keyed noise on today's grid, blobs about
     /// `terrain_blob` dish cells across, the same layout at every scale.
     /// Where the first channel is under `terrain_rock` the ground is rock:
@@ -357,6 +364,7 @@ impl BigParams {
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
+            crystal_regrow: 0.0,
             terrain_rock: 0.0,
             terrain_wet: 0.0,
             wet_step: 0.5,
@@ -758,6 +766,18 @@ impl BigDish {
             let pi = self.pile_of[i] as usize - 1;
             self.pile_charge[pi] -= t;
             self.eaten += t as f64;
+        }
+        let g = self.p.crystal_regrow;
+        if g > 0.0 {
+            let full = self.p.crystal_charge;
+            for i in 0..self.charge.len() {
+                let pi = self.pile_of[i] as usize;
+                if pi > 0 && self.charge[i] < full {
+                    let add = g * (full - self.charge[i]);
+                    self.charge[i] += add;
+                    self.pile_charge[pi - 1] += add;
+                }
+            }
         }
     }
 
@@ -1684,6 +1704,14 @@ mod tests {
         }
         assert!(same as f32 > 0.97 * (a.w * a.h) as f32);
         assert!(a.rock.iter().any(|&r| r) && a.wet.iter().any(|&w| w));
+        // Crystals that refill end fuller than ones that run dry.
+        let mut r = BigDish::new(BigParams { crystal_regrow: 0.05, ..p.clone() });
+        let mut n = BigDish::new(p.clone());
+        for _ in 0..60 {
+            r.tick();
+            n.tick();
+        }
+        assert!(r.crystals_left() > n.crystals_left());
         for &(px, py) in &a.piles {
             assert!(!a.rock[py as usize * a.w + px as usize]);
         }
