@@ -389,3 +389,66 @@ shots anywhere cut the mould's whole economy.
 **Cost.** A 90 s run takes about 9-11 s on one core whatever the hand
 (287.6 s for 80 runs on four cores); shots were not timed apart from the
 step.
+
+## The priced ring (2026-11-11, 03:03-03:25Z)
+
+Owner, 03:03Z: "Yes." to the design review's test: a ring priced by use, a
+larder that runs dry, slowed fronts, scripted plans against random. Harness:
+`larderprobe econ` (`econ_run`); raw: [`econ.txt`](mould-shooter-2026-11-11/econ.txt).
+
+**Setup.** The same field and mould, slowed: a game second is 15 steps (an
+eighth of today's), so the mould first bites the larder at a median 31.6
+game seconds instead of 4; wounds last 4 game seconds. A round is 480 game
+seconds. The squad holds three piles: the larder (30,000 food) and the two
+field piles nearest it (15,000 each). Each game second it harvests 100 from
+each held pile that has food and **no mould eating there**; harvest comes
+off the pile, so the larder runs dry. Every shot costs the price; a plan
+fires only while the bank can pay. Score: the bank at the bell. The ring is
+the fort's five lines, one every 0.6 game seconds (each refreshed every 3 s),
+so it costs 1.67 shots a second. Plans: idle; random (a shot a second
+anywhere); ring (the larder's ring all round); mow (fire through each held
+pile with mould eating, once a second each); ring+mow (ring the larder, mow
+the two away piles); ring-then-mow (ring the larder while it holds more than
+3,000, then mow all three). 16 paired seeds at prices 10, 40 and 120.
+
+| Plan | Bank at 10 | Bank at 40 | Bank at 120 |
+|---|---|---|---|
+| Idle | 10,600 | 10,600 | **10,600** |
+| Random | 6,710 | 20 | 60 |
+| Ring all round | 31,510 | 7,540 | 60 |
+| Mow | 32,085 | 10,392 | 60 |
+| Ring + mow | 48,119 | 13,559 | 40 |
+| **Ring, then mow** | **50,480** | **23,420** | 40 |
+
+(Medians. Best plan on every one of the 16 seeds: ring-then-mow at 10 and
+40, idle at 120.)
+
+- **Ring all round is never the best plan.** At price 10 it lost to
+  ring+mow and ring-then-mow on 16/16; at 40 it lost to idle on 16/16
+  (7,540 against 10,600): once the larder is dry the ring guards nothing and
+  still costs 1.67 shots a second. The larder that runs dry is what does it.
+- **Random loses to every shooting plan at 10 and 40** (16/16 each), and to
+  idle at every price (16/16). Plans beat random: the dish rewards aim.
+- **But it is still a ladder.** One plan, ring-then-mow, tops all 16 seeds at
+  10 and 40, and at 120 no shooting pays (every plan spends its bank to
+  nothing, because the scripts fire whenever they can pay). The decision the
+  game offers is *when to drop the ring*, a timing choice, not a choice
+  between strategies that counter each other.
+- **Mowing barely pays at 40** (10,392 against idle's 10,600, 7/16): one
+  shot a second kills the eaters but the mould is back within the second,
+  so the pile rarely sits uneaten for a whole harvest tick.
+
+Comparisons: 51 printed; the 16/16 results (p 0.00003) survive Holm; mow
+against idle at 40 (7/16) is noise.
+
+**Why no cycle, and what would make one.** The mould does not adapt to the
+squad: it grows the same whatever the plan, so the best plan for a dish is
+fixed once the prices are. Counters need the mould's answer to depend on what
+the squad does. Candidates from the model, untested: the larder's smell
+grows with the bank (a rich squad draws the mould), starving mould fights
+harder at a ring's edge, food drops elsewhere that pull fronts away from a
+ring, and layouts where the best piles to hold differ. The next test would
+add one of these and look for a second plan that wins some seeds.
+
+**Cost.** 288 runs of 480 game seconds (7,200 steps) took 528 s on four
+cores, about 7.3 s a run.

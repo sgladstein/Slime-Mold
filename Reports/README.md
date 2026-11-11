@@ -253,5 +253,6 @@ move.
   a fed pile feeds its own eaters, so cuts only hurt mould with no food; a trail-only gun does nothing; smell and
   lean-vs-fat show 16/16 but tiny effects, because the mould crosses today's dish in about 4 s. **Correction:** a re-fired
   snip did not refresh its wound; fixed, a ring held from the start stops all theft (16/16); three reviews in `reviews/`.
+  **Priced ring** (`econ`): ring-forever never best; ring-then-mow best on 16/16 at prices 10 and 40; a ladder.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
