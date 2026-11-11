@@ -470,9 +470,16 @@ fn half(b: u32) -> vec2<f32> {
     return h;
 }
 
+// Each mark gets SPLIT workgroups (wg.y), which share its box (or line)
+// between them. One 64-thread workgroup a mark walked a big mark's whole
+// box alone: one 480-pixel ring cost the view 0.7 ms on the GTX 1070 (the
+// camera thread, 2026-11-11). Small marks leave the extra groups idle.
+const SPLIT: u32 = 16u;
+
 @compute @workgroup_size(64)
 fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_index) li: u32) {
     let k = wg.x;
+    let t0 = li + 64u * wg.y;
     if (k >= P.n_marks) { return; }
     let b = k * 12u;
     let s = anchor(b);
@@ -482,7 +489,7 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
     let flags = marks[b + 10u];
     let extra = marks[b + 11u];
     // A dot on the minimap: four threads, a 2 x 2 dot.
-    if ((flags & 2u) != 0u && P.mw > 0u && li < 4u) {
+    if ((flags & 2u) != 0u && P.mw > 0u && wg.y == 0u && li < 4u) {
         let ms = f32(P.mw) / f32(P.ww);
         let mx = i32(f32(P.mx) + bitcast<f32>(marks[b]) * ms) + i32(li & 1u);
         let my = i32(f32(P.my) + bitcast<f32>(marks[b + 1u]) * ms) + i32(li >> 1u);
@@ -493,7 +500,7 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
         let len = distance(s, e);
         let n = u32(ceil(len));
         let dash = u32(max(fill, 0.0));
-        for (var i = li; i <= n; i += 64u) {
+        for (var i = t0; i <= n; i += 64u * SPLIT) {
             if (dash > 0u && (i / dash) % 2u == 1u) { continue; }
             let p = mix(s, e, f32(i) / f32(max(n, 1u)));
             claim(i32(floor(p.x)), i32(floor(p.y)), k, false);
@@ -525,7 +532,7 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
     if (x1 < x0 || y1 < y0) { return; }
     let w = u32(x1 - x0) + 1u;
     let total = w * (u32(y1 - y0) + 1u);
-    for (var j = li; j < total; j += 64u) {
+    for (var j = t0; j < total; j += 64u * SPLIT) {
         let qx = x0 + f32(j % w);
         let qy = y0 + f32(j / w);
         let d = vec2<f32>(qx + 0.5, qy + 0.5) - s;

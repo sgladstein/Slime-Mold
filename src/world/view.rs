@@ -331,7 +331,8 @@ impl View {
         }
         passes.push((0, (gx, gy)));
         if self.n_marks > 0 {
-            passes.push((1, (self.n_marks, 1)));
+            // `SPLIT` workgroups a mark (view.wgsl's draw_marks).
+            passes.push((1, (self.n_marks, 16)));
         }
         if self.has_overlay || self.n_marks > 0 {
             passes.push((2, (gx, gy)));
