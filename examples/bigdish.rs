@@ -74,6 +74,11 @@
 //! `style=species` (each species in its own colour). With species the
 //! report adds `pure` (share of tube cells where one species lays 80% or
 //! more of the trail) and each species' share of all trail.
+//!
+//! Growth (Larder World W0, 2026-11-11): `upkeep= start_energy=
+//! birth_energy= birth_cost= starve= capacity=` (`BigParams::upkeep`); the
+//! report adds the living walkers, their mean energy, births and starvings
+//! so far, and the grass left. `count` draws only the living.
 
 use std::time::Instant;
 
@@ -126,8 +131,10 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
         "grey" => d.trail.clone(),
         "count" => {
             let mut c = vec![0.0f32; d.w * d.h];
-            for &(x, y, _) in &d.walkers {
-                c[y as usize * d.w + x as usize] += 1.0;
+            for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+                if d.lives(k) {
+                    c[y as usize * d.w + x as usize] += 1.0;
+                }
             }
             c
         }
@@ -332,6 +339,12 @@ fn main() {
             "blocked_reset" => p.blocked_reset = f(),
             "blocked_retry" => p.blocked_retry = f() as u8,
             "blocked_deposit" => p.blocked_deposit = f(),
+            "upkeep" => p.upkeep = f(),
+            "start_energy" => p.start_energy = f(),
+            "birth_energy" => p.birth_energy = f(),
+            "birth_cost" => p.birth_cost = f(),
+            "starve" => p.starve = f(),
+            "capacity" => p.capacity = f() as usize,
             _ => panic!("unknown key {k}"),
         }
     }
@@ -398,8 +411,10 @@ fn main() {
                             // for drawing offline with other curves.
                             let mut bytes = Vec::with_capacity(8 * d.w * d.h);
                             let mut count = vec![0.0f32; d.w * d.h];
-                            for &(x, y, _) in &d.walkers {
-                                count[y as usize * d.w + x as usize] += 1.0;
+                            for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+                                if d.lives(k) {
+                                    count[y as usize * d.w + x as usize] += 1.0;
+                                }
                             }
                             for v in d.trail.iter().chain(&count) {
                                 bytes.extend_from_slice(&v.to_le_bytes());
@@ -430,6 +445,16 @@ fn main() {
                     m.strays,
                     spent * 1e3 / d.ticks as f64
                 );
+                if !d.energy.is_empty() {
+                    // Growth: living walkers, their mean energy, births and
+                    // starvings so far, and the grass left (mean over agar).
+                    let agar = d.agar.iter().filter(|&&a| a).count().max(1) as f64;
+                    let grass: f64 = d.grass.iter().map(|&g| g as f64).sum::<f64>() / agar;
+                    println!(
+                        "seed {seed} {name} t {:5.1}s  alive {}  energy {:.3}  born {}  starved {}  grass {:.3}",
+                        m.seconds, m.alive, m.energy, d.births, d.starved, grass
+                    );
+                }
                 {
                     // Trunk contrast: the 99th percentile of trail over its
                     // median, among cells over the tube cut.

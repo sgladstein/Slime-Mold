@@ -4,9 +4,12 @@
 //! the scaling rule and the look of a dense network can be judged on the CPU
 //! before any GPU code exists.
 //!
-//! What is left out on purpose: the economy (eating, upkeep, births,
-//! starving), the census, tools, levels and the wild mould. The walker count
-//! is fixed, as in Jones 2010 and in Sage Jenson's sketches. The owner ruled
+//! What is left out on purpose: the game's economy (its shared store and
+//! food flowing through tubes), the census, tools, levels and the wild
+//! mould. The walker count is fixed, as in Jones 2010 and in Sage Jenson's
+//! sketches, unless growth is on (`BigParams::upkeep`, Larder World's W0,
+//! 2026-11-11): then each walker has its own energy, gains what it eats,
+//! pays upkeep, starves, and divides into a free slot. The owner ruled
 //! on 2026-11-10 (20:55Z) that today's dishes are unlikely to be the true
 //! games, so this is judged by engine measures (`BigMeasure`), not stars.
 //!
@@ -45,6 +48,10 @@ const DRAW_SIZE: u32 = 110;
 const DRAW_KEEP: u32 = 111;
 /// Claims in `blocked_retry` round r use CLAIM_RETRY + r.
 const CLAIM_RETRY: u32 = 112;
+/// Growth (`upkeep`): past CLAIM_RETRY's 255 rounds, so no stream is shared.
+const DRAW_STARVE: u32 = 401;
+const DRAW_BIRTH: u32 = 402;
+const CLAIM_BIRTH: u32 = 403;
 
 #[derive(Clone, Debug)]
 pub struct BigParams {
@@ -255,6 +262,32 @@ pub struct BigParams {
     /// keep their own crowd smelling of trail, so a blob holds together
     /// instead of its edge, the only part moving, drawing the crowd out.
     pub blocked_deposit: f32,
+    /// Growth and starving (Larder World W0, 2026-11-11). 0 is off: the
+    /// walker count is fixed. Otherwise each walker holds energy, starting
+    /// at `start_energy`. A fine step it gains what it eats (its equal share
+    /// of the grass its cell lost, `graze_eat`, so the walkers on a cell
+    /// share alike whatever their order) and pays `upkeep`. At zero it
+    /// starves: it dies with chance `starve` a step, unless it eats first,
+    /// so a starving mould thins rather than vanishing at once. A walker
+    /// with `birth_energy` or more divides: its child lands in a free agar
+    /// cell beside it (one of the eight, by a keyed draw; with a crowd
+    /// limit, ties go to the lowest claim) and each keeps half of what is
+    /// left after `birth_cost`. Walkers hold fixed slots, `capacity` of
+    /// them (0: `walkers`), of which the first `walkers` placed start
+    /// alive, so a walker's keyed draws stay its own for its life, as a GPU
+    /// thread per slot needs. A child takes slot k xor m of its parent k, if
+    /// that slot is empty, with m a keyed draw a step: xor with one mask
+    /// pairs the slots, one parent a slot, so no order decides who is born,
+    /// and a parent finds an empty slot as often as slots are empty. (A
+    /// first try cycled m through the single bits; with the living in the
+    /// first slots most masks paired the living with each other, so a small
+    /// mould could breed only about one step in five.)
+    pub upkeep: f32,
+    pub start_energy: f32,
+    pub birth_energy: f32,
+    pub birth_cost: f32,
+    pub starve: f32,
+    pub capacity: usize,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     pub seed: u64,
@@ -327,6 +360,12 @@ impl BigParams {
             blocked_reset: 0.01,
             blocked_retry: 0,
             blocked_deposit: 0.0,
+            upkeep: 0.0,
+            start_energy: 0.5,
+            birth_energy: 1.0,
+            birth_cost: 0.2,
+            starve: 0.01,
+            capacity: 0,
             tube: 1.0,
             seed: 1,
         }
@@ -358,6 +397,9 @@ pub struct BigMeasure {
     pub reached: usize,
     /// Share of walkers standing where the trail is under `tube`.
     pub strays: f32,
+    /// Living walkers, and their mean energy (0 with growth off).
+    pub alive: usize,
+    pub energy: f32,
 }
 
 #[derive(Clone)]
@@ -393,8 +435,16 @@ pub struct BigDish {
     pub age: Vec<u16>,
     /// Each walker's species (`species` > 1), else empty. Starts k % n.
     pub spec: Vec<u8>,
-    /// Grass (`graze_weight` > 0) a cell, else empty.
+    /// Grass (`graze_weight` > 0, or growth on) a cell, else empty.
     pub grass: Vec<f32>,
+    /// Growth (`upkeep` > 0): whether each slot holds a living walker and
+    /// its energy; both empty with growth off, when every walker lives. A
+    /// dead slot is left as it was and skipped by every rule.
+    pub alive: Vec<bool>,
+    pub energy: Vec<f32>,
+    /// Births and starvings so far (growth on).
+    pub births: u64,
+    pub starved: u64,
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
@@ -491,6 +541,10 @@ impl BigDish {
             age: Vec::new(),
             spec: Vec::new(),
             grass: Vec::new(),
+            alive: Vec::new(),
+            energy: Vec::new(),
+            births: 0,
+            starved: 0,
             piles: Vec::new(),
             reached: Vec::new(),
             threads: 1,
@@ -498,10 +552,20 @@ impl BigDish {
         };
         d.place_piles();
         d.place_walkers();
+        if d.p.upkeep > 0.0 {
+            // The living first, then empty slots at the centre (any cell
+            // inside the dish would do: a dead slot is never read).
+            let n = d.walkers.len();
+            let cap = if d.p.capacity > 0 { d.p.capacity.max(n) } else { n };
+            let (cx, cy) = (d.w as f32 / 2.0 + 0.5, d.h as f32 / 2.0 + 0.5);
+            d.walkers.resize(cap, (cx, cy, 0.0));
+            d.alive = (0..cap).map(|k| k < n).collect();
+            d.energy = (0..cap).map(|k| if k < n { d.p.start_energy } else { 0.0 }).collect();
+        }
         if d.p.explore_steps > 0 {
             d.age = vec![0; d.walkers.len()];
         }
-        if d.p.graze_weight != 0.0 {
+        if d.p.graze_weight != 0.0 || d.p.upkeep > 0.0 {
             d.grass = d.agar.iter().map(|&a| if a { 1.0 } else { 0.0 }).collect();
         }
         if d.p.species > 1 {
@@ -527,10 +591,15 @@ impl BigDish {
         let s = self.p.scale as f32;
         let c = self.p.sick_steps + self.p.immune_steps;
         for (k, &(wx, wy, _)) in self.walkers.iter().enumerate() {
-            if (wx / s - x).hypot(wy / s - y) <= r {
+            if self.lives(k) && (wx / s - x).hypot(wy / s - y) <= r {
                 self.sick[k] = c;
             }
         }
+    }
+
+    /// Whether slot `k` holds a living walker (always, with growth off).
+    pub fn lives(&self, k: usize) -> bool {
+        self.alive.is_empty() || self.alive[k]
     }
 
     fn cell(&self, x: f32, y: f32) -> Option<usize> {
@@ -688,6 +757,9 @@ impl BigDish {
         let look = t.is_multiple_of(p.sense_every.max(1) as u64);
         let nsp = self.species_trail.len().max(1);
         for k in 0..self.walkers.len() {
+            if !self.lives(k) {
+                continue;
+            }
             let sp = if nsp > 1 { self.spec[k] as usize } else { 0 };
             let (x, y, mut h) = self.walkers[k];
             let here = self.cell(x, y).expect("walker inside the dish");
@@ -841,6 +913,9 @@ impl BigDish {
             // Capped square-root deposit: per cell, from the walkers on it.
             let sick_trail = self.p.sick_trail;
             for k in 0..self.walkers.len() {
+                if !self.lives(k) {
+                    continue;
+                }
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 let n = self.occ[i].min(cap) as f32;
@@ -854,6 +929,9 @@ impl BigDish {
         }
         if contagion {
             for k in 0..self.walkers.len() {
+                if !self.lives(k) {
+                    continue;
+                }
                 if self.sick[k] > sick_at {
                     let (x, y, _) = self.walkers[k];
                     let i = self.cell(x, y).expect("walker inside the dish");
@@ -862,11 +940,29 @@ impl BigDish {
                 self.sick[k] = self.sick[k].saturating_sub(1);
             }
         }
-        for a in self.age.iter_mut() {
-            *a = a.saturating_add(1);
+        for k in 0..self.age.len() {
+            if self.lives(k) {
+                self.age[k] = self.age[k].saturating_add(1);
+            }
         }
         if !self.grass.is_empty() {
+            if !self.energy.is_empty() {
+                // Each walker's equal share of what its cell loses below:
+                // min(grass, n x eat) over the n walkers on it.
+                for k in 0..self.walkers.len() {
+                    if !self.lives(k) {
+                        continue;
+                    }
+                    let (x, y, _) = self.walkers[k];
+                    let i = self.cell(x, y).expect("walker inside the dish");
+                    let n = self.occ[i] as f32;
+                    self.energy[k] += (self.grass[i] / n).min(p.graze_eat);
+                }
+            }
             for k in 0..self.walkers.len() {
+                if !self.lives(k) {
+                    continue;
+                }
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 self.grass[i] = (self.grass[i] - p.graze_eat).max(0.0);
@@ -877,9 +973,15 @@ impl BigDish {
                 }
             }
         }
+        if !self.energy.is_empty() {
+            self.live_and_die();
+        }
         if p.species_convert > 0.0 && !self.spec.is_empty() {
             let n = self.species_trail.len();
             for k in 0..self.walkers.len() {
+                if !self.lives(k) {
+                    continue;
+                }
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 let own = self.spec[k] as usize;
@@ -901,6 +1003,88 @@ impl BigDish {
         }
         if respawn > 0.0 {
             self.respawn_walkers(respawn, crowd);
+        }
+    }
+
+    /// Growth's step (`upkeep`), after eating: upkeep and starving, then
+    /// births. Deaths come first, so a cell a walker starved on is free for
+    /// a birth in the same step; births only see the dish as it stood after
+    /// the deaths (cells free then, the claims among themselves), as a GPU
+    /// pass would.
+    fn live_and_die(&mut self) {
+        let p = self.p.clone();
+        let (seed, t, crowd) = (p.seed, self.steps, p.crowd);
+        let n = self.walkers.len();
+        for k in 0..n {
+            if !self.alive[k] {
+                continue;
+            }
+            let e = self.energy[k] - p.upkeep;
+            if e > 0.0 {
+                self.energy[k] = e;
+                continue;
+            }
+            self.energy[k] = 0.0;
+            if unit(keyed(seed, t, DRAW_STARVE, k as u32)) < p.starve {
+                let (x, y, _) = self.walkers[k];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                self.occ[i] -= 1;
+                self.alive[k] = false;
+                self.starved += 1;
+            }
+        }
+        // Births: parent k's child takes slot k ^ m if that slot is empty
+        // and k ^ m < n; m is a keyed draw a step, below the power of two
+        // at or over n.
+        let mask = n.max(2).next_power_of_two() - 1;
+        let m = keyed(seed, t, DRAW_BIRTH, u32::MAX) as usize & mask;
+        const NEXT: [(f32, f32); 8] = [(1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (-1.0, 1.0), (-1.0, 0.0), (-1.0, -1.0), (0.0, -1.0), (1.0, -1.0)];
+        // (parent, child slot, cell, x, y)
+        let mut tries: Vec<(u32, u32, u32, f32, f32)> = Vec::new();
+        for k in 0..n {
+            let b = k ^ m;
+            if !self.alive[k] || self.energy[k] < p.birth_energy || b >= n || self.alive[b] {
+                continue;
+            }
+            let (x, y, _) = self.walkers[k];
+            let (dx, dy) = NEXT[(keyed(seed, t, DRAW_BIRTH, k as u32) % 8) as usize];
+            let (nx, ny) = (x + dx, y + dy);
+            let Some(j) = self.cell(nx, ny) else { continue };
+            if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) {
+                continue;
+            }
+            if crowd > 0 {
+                let key = keyed(seed, t, CLAIM_BIRTH, k as u32);
+                self.claim[j] = self.claim[j].min(key);
+            }
+            tries.push((k as u32, b as u32, j as u32, nx, ny));
+        }
+        for &(k, b, j, nx, ny) in &tries {
+            let (k, b, j) = (k as usize, b as usize, j as usize);
+            if crowd > 0 && self.claim[j] != keyed(seed, t, CLAIM_BIRTH, k as u32) {
+                continue;
+            }
+            let half = ((self.energy[k] - p.birth_cost) * 0.5).max(0.0);
+            self.energy[k] = half;
+            self.energy[b] = half;
+            self.alive[b] = true;
+            self.occ[j] += 1;
+            self.walkers[b] = (nx, ny, unit(keyed(seed, t, DRAW_BIRTH, k as u32 | 0x8000_0000)) * TAU);
+            if !self.age.is_empty() {
+                self.age[b] = 0;
+            }
+            if !self.sick.is_empty() {
+                self.sick[b] = 0;
+            }
+            if !self.spec.is_empty() {
+                self.spec[b] = self.spec[k];
+            }
+            self.births += 1;
+        }
+        if crowd > 0 {
+            for &(_, _, j, ..) in &tries {
+                self.claim[j as usize] = u32::MAX;
+            }
         }
     }
 
@@ -934,7 +1118,7 @@ impl BigDish {
         let (w, h) = (self.w as f32, self.h as f32);
         for k in 0..self.walkers.len() {
             let key = 4 * k as u32;
-            if unit(keyed(seed, t, DRAW_RESPAWN, key)) >= respawn {
+            if !self.lives(k) || unit(keyed(seed, t, DRAW_RESPAWN, key)) >= respawn {
                 continue;
             }
             let x = unit(keyed(seed, t, DRAW_RESPAWN, key + 1)) * w;
@@ -1142,11 +1326,12 @@ impl BigDish {
                 loops += 1;
             }
         }
-        let strays = self
-            .walkers
-            .iter()
-            .filter(|&&(x, y, _)| self.cell(x, y).is_some_and(|i| self.trail[i] <= self.p.tube))
+        let strays = (0..self.walkers.len())
+            .filter(|&k| self.lives(k))
+            .filter(|&k| self.cell(self.walkers[k].0, self.walkers[k].1).is_some_and(|i| self.trail[i] <= self.p.tube))
             .count();
+        let alive = (0..self.walkers.len()).filter(|&k| self.lives(k)).count();
+        let energy = if self.energy.is_empty() { 0.0 } else { self.energy.iter().sum::<f32>() / alive.max(1) as f32 };
         BigMeasure {
             seconds: self.seconds(),
             tube_area: area as f32 / (s * s),
@@ -1154,7 +1339,9 @@ impl BigDish {
             width: if edge > 0 { 2.0 * area as f32 / edge as f32 / s } else { 0.0 },
             reach: reach / s,
             reached: self.reached.iter().filter(|&&r| r).count(),
-            strays: strays as f32 / self.walkers.len().max(1) as f32,
+            strays: strays as f32 / alive.max(1) as f32,
+            alive,
+            energy,
         }
     }
 
@@ -1222,6 +1409,12 @@ impl BigDish {
         }
         for &c in self.sick.iter().chain(&self.age) {
             eat(c as u32);
+        }
+        for &a in &self.alive {
+            eat(a as u32);
+        }
+        for &e in &self.energy {
+            eat(e.to_bits());
         }
         h
     }
@@ -1425,6 +1618,55 @@ mod tests {
                 }
             }
         }
+    }
+
+    /// Growth (Larder World W0): threads change nothing, a cell's count is
+    /// its living walkers, the crowd limit holds through births, and food
+    /// decides the size: with the grass regrowing the mould outgrows its
+    /// start, with none it eats the dish bare and dies down.
+    #[test]
+    fn growth_follows_food() {
+        let grow = |regrow: f32| BigParams { upkeep: 0.01, capacity: 4 * 600, graze_weight: 10.0, graze_regrow: regrow, ..small(1, 1) };
+        let mut a = BigDish::new(grow(0.002));
+        let mut b = a.clone();
+        b.threads = 3;
+        let start = a.measure().alive;
+        assert_eq!((start, a.walkers.len()), (600, 2400));
+        let mut peak = 0;
+        for _ in 0..600 {
+            a.tick();
+            b.tick();
+            peak = peak.max(a.measure().alive);
+        }
+        assert_eq!(a.hash(), b.hash());
+        let mut occ = vec![0u16; a.w * a.h];
+        for k in 0..a.walkers.len() {
+            if a.lives(k) {
+                let (x, y, _) = a.walkers[k];
+                let i = a.cell(x, y).unwrap();
+                assert!(a.agar[i]);
+                occ[i] += 1;
+            }
+        }
+        assert!(occ.iter().all(|&c| c <= 1));
+        assert_eq!(occ, a.occ);
+        let fed = a.measure().alive;
+        assert!(a.births > 0 && a.starved > 0 && fed > 2 * start, "fed: {fed} alive of {start}, peak {peak}");
+        // The dish holds about 30,000 grass; 2,400 walkers burn 24 a step.
+        let mut c = BigDish::new(grow(0.0));
+        for _ in 0..3000 {
+            c.tick();
+        }
+        let starved = c.measure().alive;
+        assert!(starved < start / 2, "starved: {starved} alive of {start}");
+    }
+
+    /// With growth off nothing is kept for it: every slot lives.
+    #[test]
+    fn growth_off_keeps_no_slots() {
+        let d = BigDish::new(small(1, 1));
+        assert!(d.alive.is_empty() && d.energy.is_empty() && d.grass.is_empty());
+        assert_eq!(d.measure().alive, d.walkers.len());
     }
 
     /// The same layout of piles at every scale, so arms pair.
