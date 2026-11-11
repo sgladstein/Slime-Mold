@@ -72,6 +72,10 @@ a { color: var(--vein); }
     <div class="cmd">cargo run --release --bin mouldgpu</div>
     <p class="note">It is a toy for looking: the big dish's step with no economy, census or score. Everything on screen is the simulation, apart from the panel, which H hides.</p>
     <div class="callout">
+      <h3>New: Jenson's missing looks as controls (2026-11-11)</h3>
+      <p>The trunk ring, the contagion wave and the trail-set turning from the looks thread are now controls on two new panel pages, with seven presets on keys 9, 0 and Shift+1 to 5 (<a href="#looks">below</a>). Each matches the CPU's rule to the bit on a one-tick test. Turned off, they cost nothing measurable; contagion costs 0.3 ms a frame at 100,000 walkers. The sandbox is open on Scott-Desktop on key 0, the contagion wave.</p>
+    </div>
+    <div class="callout">
       <h3>Updated after an independent review (2026-11-11)</h3>
       <p>Two fresh reviewers checked the code and every number. Two real gaps were found and fixed. Food piles now go quiet once the mould reaches them, as on the CPU; before, keys 1 and 2 had twice the CPU's strays. Respawned walkers now jump after their step, as on the CPU; before, a quarter of the jumps froze a walker, and key 5's tubes were wider than every CPU seed. Over 8 to 16 seeds, on the cloud's software GPU and on the GTX 1070, no measure now differs from the CPU's after a correction for 20 tests. The videos of keys 1, 2, 5 and 6, their counts and the costs are new. The slow frames in the window were the GPU stepping its clocks down at light load.</p>
     </div>
@@ -86,12 +90,15 @@ a { color: var(--vein); }
       </figure>
       <dl class="keys">
         <dt>1-8</dt><dd>Load a preset (below)</dd>
+        <dt>9, 0, Shift+1-5</dt><dd>Load a looks preset (new, below)</dd>
+        <dt>Tab</dt><dd>Turn the panel's page: MAIN, LOOKS, CONTAGION</dd>
         <dt>Up, Down</dt><dd>Pick a control</dd>
         <dt>Left, Right</dt><dd>Change it; hold Shift for bigger steps</dd>
         <dt>Space, .</dt><dd>Pause; step one tick</dd>
         <dt>R, N</dt><dd>Restart; restart on a new seed</dd>
         <dt>Left drag</dt><dd>Pull walkers to the mouse (0.2% of them jump there each tick)</dd>
-        <dt>Right drag</dt><dd>Wipe the trail under the mouse</dd>
+        <dt>Right drag</dt><dd>Wipe the trail (and germ) under the mouse</dd>
+        <dt>Middle drag, I</dt><dd>Make the walkers under the mouse sick</dd>
         <dt>F</dt><dd>Drop a food pile at the mouse</dd>
         <dt>H, Esc</dt><dd>Hide the panel; quit</dd>
       </dl>
@@ -178,6 +185,88 @@ a { color: var(--vein); }
     </div>
   </section>
 
+  <section id="looks">
+    <h2>The looks, as controls</h2>
+    <p>The looks from the thread on Jenson's missing mould looks are now controls, on two new pages of the panel (Tab turns the page), and seven presets. Each runs the CPU's own rule: one GPU tick matches one CPU tick to the bit on six test dishes. All are off unless a preset or the panel turns them on.</p>
+    <ul class="list">
+      <li><strong>LOOKS page:</strong> a disc start and its radius, the haze around it, how the trail a walker stands in sets its reach, sensor angle, turn and step (an amount and a power each), the square-root deposit cap, a sensing floor, and wander.</li>
+      <li><strong>CONTAGION page:</strong> how long a walker is sick and then immune, how much germ makes it catch, germ laid and kept, what sickness does to speed, trail, reach and turn, and when and how wide the centre is seeded. Middle drag, or I, makes the walkers under the mouse sick. The red is the germ field itself.</li>
+    </ul>
+    <p>1,000,000 walkers with Jenson's settings (key 4) plus each look, seed 1, the first 10 seconds at real speed, drawn on the cloud's software GPU. Counts at 10 s with the GTX 1070's own dish in brackets; the sick shares are the 1070's. The GPU cost is the 1070's GPU time for a frame of two ticks and the drawing.</p>
+    <div class="grid">
+      <figure>
+        <video src="looks/video/p9.mp4" poster="looks/video/p9-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 9</span>
+          <strong>Trunk ring</strong>
+          <span>A dense disc at the centre with a haze around it, slow respawn, and longer steps where the trail is thick. The disc's edge stays a bright, thick ring inside a fine mesh.</span>
+          <dl class="stats"><dt>loops</dt><dd>53 (52)</dd><dt>width</dt><dd>4.94 (5.07) cells</dd><dt>GPU</dt><dd>6.07 ms a frame</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="looks/video/p10.mp4" poster="looks/video/p10-6s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 0</span>
+          <strong>Contagion wave</strong>
+          <span>Key 4's dish with the deposit cap. At 4 s the centre falls sick; sick walkers lay germ (red) and three times the trail, and anyone standing in enough germ catches it. The still is at 6 s.</span>
+          <dl class="stats"><dt>sick</dt><dd>14% at 4.5 s, 68% at 5.5, 17% at 6.5, 0 from 7</dd><dt>loops</dt><dd>46 (46) at 10 s</dd><dt>GPU</dt><dd>10.08 ms a frame</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="looks/video/p11.mp4" poster="looks/video/p11-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+1</span>
+          <strong>Sweeping ring</strong>
+          <span>The trunk ring, but the trail sets the turn instead of the step: the ring sweeps out past the disc to the dish's edge, leaving long veins.</span>
+          <dl class="stats"><dt>loops</dt><dd>57 (56)</dd><dt>width</dt><dd>4.09 (4.12) cells</dd><dt>GPU</dt><dd>6.26 ms a frame</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="looks/video/p12.mp4" poster="looks/video/p12-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+2</span>
+          <strong>Long curves</strong>
+          <span>The trail sets the sensor angle instead: long curving ropes and a small bright ring at the centre.</span>
+          <dl class="stats"><dt>loops</dt><dd>34 (27)</dd><dt>width</dt><dd>4.04 (4.03) cells</dd><dt>GPU</dt><dd>4.12 ms a frame</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="looks/video/p13.mp4" poster="looks/video/p13-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+3</span>
+          <strong>Even polygons</strong>
+          <span>The disc and haze with the square-root deposit cap and no trail-set settings: an even mesh of polygons.</span>
+          <dl class="stats"><dt>loops</dt><dd>83 (76)</dd><dt>width</dt><dd>4.60 (4.58) cells</dd><dt>GPU</dt><dd>7.84 ms a frame</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="looks/video/p14.mp4" poster="looks/video/p14-6s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+4</span>
+          <strong>Endemic</strong>
+          <span>The wave with short sickness (0.5 s) and short immunity (1 s): it never ends. The whole dish falls sick together every 1.5 s. The still is at 6 s.</span>
+          <dl class="stats"><dt>sick</dt><dd>29-39% from 5 s on</dd><dt>loops</dt><dd>44 (45) at 10 s</dd><dt>GPU</dt><dd>9.98 ms a frame</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="looks/video/p15.mp4" poster="looks/video/p15-6s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+5</span>
+          <strong>Sick ropes</strong>
+          <span>Sick walkers sense half as far and turn twice as hard, for 2 s, and catch it only in thick germ: a slower wave along thinner red tubes, and behind it the centre's tubes fade. On the CPU the mesh had fewer loops behind the wave on 8 of 8 seeds. The still is at 6 s.</span>
+          <dl class="stats"><dt>sick</dt><dd>14% at 5 s, 72% at 7, 0 at 10</dd><dt>loops</dt><dd>44 (41) at 10 s</dd><dt>GPU</dt><dd>9.75 ms a frame</dd></dl>
+        </figcaption>
+      </figure>
+    </div>
+    <h3>What the looks cost on the GTX 1070</h3>
+    <ul class="list">
+      <li><strong>With every look off, the new code costs 0.01 ms a frame.</strong> Key 1 took 1.39 ms of GPU a frame on the new build against 1.38 ms before, three rounds each, with the same dish; key 4 showed no difference (7.81-7.83 against 7.82-7.84 ms).</li>
+      <li><strong>Contagion costs 0.3 ms a frame at 100,000 walkers</strong> (key 1 with the wave's sickness: 1.39 to 1.69 ms), mostly the germ field spreading. At a million walkers the contagion presets take 9.5-9.8 ms of GPU ticks a frame against key 4's 7.8: inside a 60 Hz frame, over phase 3's half-frame bar.</li>
+      <li><strong>The trail-set presets are cheaper than key 4</strong> (3.9 to 6.0 ms), probably because the walkers bunch onto fewer paths. The floor and wander cost nothing measurable.</li>
+      <li><strong>The same seed gave the same picture twice</strong> on all seven presets, on both GPUs.</li>
+    </ul>
+  </section>
+
   <section>
     <h2>What it costs on the GTX 1070</h2>
     <p>Measured on Scott-Desktop through Remote Control after the review's fixes (build 9d4a2d1): 600 frames of two ticks and the drawing, each submitted and waited for, as the window does, and each pass timed alone. A 60 Hz frame is 16.7 ms; phase 3's bar is the GPU busy under half of it, 8.3 ms.</p>
@@ -246,7 +335,7 @@ a { color: var(--vein); }
   <section>
     <h2>Next</h2>
     <ul class="list">
-      <li><strong>The looks from the thread "Reproduce Jenson's missing mould looks"</strong> come here as controls: trunks from a dense start with slow respawn, contagion running along the tubes, and turning or sensing set by the trail a walker stands in.</li>
+      <li><strong>Your hands on it:</strong> the looks presets and pages are new; the contagion wave is open on Scott-Desktop.</li>
       <li><strong>Phase 3 also plans</strong> the tools as writes to the fields.</li>
     </ul>
   </section>
