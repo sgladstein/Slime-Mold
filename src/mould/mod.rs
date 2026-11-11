@@ -1130,6 +1130,10 @@ pub struct Dish {
     /// own dish with its own scent, so the other mould smells the pile as
     /// usual. Empty, nothing changes.
     pub beacons: Vec<(f32, f32, f32)>,
+    /// **Fortified ground** (the field skirmish's Fortify): discs (x, y,
+    /// radius) where this mould's walkers fight harder, their chance of
+    /// dying in a fight times `mult`. Empty as built.
+    pub fortify: Vec<(f32, f32, f32, f32)>,
     /// **The tithe** (the field skirmish): the fraction of every bite this
     /// mould takes that goes to its owner's bank (`tithed`) instead of to
     /// the mould. Eating, and so the score, is unchanged; the mould is
@@ -1410,6 +1414,7 @@ impl Dish {
             ate: 0.0,
             wild_ate: 0.0,
             beacons: Vec::new(),
+            fortify: Vec::new(),
             tithe: 0.0,
             tithed: 0.0,
             step_cost: None,
@@ -1722,6 +1727,18 @@ impl Dish {
             return self.step_own();
         };
         let before: Vec<(u64, f32)> = self.piles.iter().map(|p| (pile_key(p), p.food)).collect();
+        // The wild mould eats from its own copy of the piles, made at the
+        // end of the last step. Food that changed since (the skirmish's
+        // regrowth) must reach that copy first, or the difference reads as
+        // eaten by the wild mould and comes off the pile: regrowth reached
+        // only this mould's walkers and was scored to the other's
+        // (`Skirmish::regrow`, round 7, fixed 2026-11-11). Nothing else
+        // changes a pile's food between steps, so the hashes stand.
+        for q in r.piles.iter_mut() {
+            if let Some(b) = before.iter().find(|b| b.0 == pile_key(q)) {
+                q.food = b.1;
+            }
+        }
         // What the player did this step reaches the wild mould too.
         let t = self.t;
         let snips: Vec<(f32, f32)> = self.snip_marks.iter().filter(|m| m.2 == t).map(|m| (m.0, m.1)).collect();
@@ -1879,7 +1896,14 @@ impl Dish {
             // `fed` is u16::MAX off the fed tube, so with no supply limit
             // this is the old test (fed tube at all).
             let fed = if self.fed[i] < self.params.supply { self.params.fight_fed } else { self.params.fight_unfed };
-            if self.rng.f32() < fight * n as f32 / 8.0 * fed {
+            // Fortified ground: one multiply, only inside a disc, so the
+            // dice and the hashes are untouched without one.
+            let dug = self
+                .fortify
+                .iter()
+                .find(|&&(fx, fy, r, _)| (w.x - fx).powi(2) + (w.y - fy).powi(2) <= r * r)
+                .map_or(1.0, |f| f.3);
+            if self.rng.f32() < fight * n as f32 / 8.0 * fed * dug {
                 out.push(k);
             }
         }

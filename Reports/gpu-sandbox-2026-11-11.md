@@ -40,7 +40,11 @@ the walker count and the start, which restart it.
 The mouse: left drag pulls walkers to the mouse (0.2% of them a tick jump
 into a disc there, as respawned walkers jump; Jenson's 2020 performance
 spawned particles with a stylus), right drag wipes the trail under it, F
-drops a food pile. Keys 1-8 load the presets:
+drops a food pile. *Note (2026-11-11 04:04Z, the owner's playtest):*
+"pulls" misdescribed it. The walkers taken are picked at random over the
+whole dish and jump into the disc, so left drag reads as dropping
+(painting) mould at the mouse; the panel and the page now say "drops
+walkers". Keys 1-8 load the presets:
 
 | Key | Preset | Numbers |
 | --- | --- | --- |
@@ -339,12 +343,154 @@ load is the GPU idling, not lost time; headless is the figure to quote.
 The driver's "prefer maximum performance" setting would hold the clock for
 window timings (not tried).
 
+## The looks as controls (2026-11-11)
+
+The next step after the review: the looks from the thread "Reproduce
+Jenson's missing mould looks" ([`jenson-looks-2026-11-11.md`](jenson-looks-2026-11-11.md),
+PR #45) as controls. Every rule that report added to `BigParams` now runs
+on the GPU, off by default, on two new panel pages (Tab turns the page):
+
+| Page | Controls | The CPU's `BigParams` |
+| --- | --- | --- |
+| MAIN | Start: spread, home blob, or a disc at the centre | `blob_r` |
+| LOOKS | Disc radius; haze at start (the share of walkers spread over the dish outside the disc) | `blob_r`, `haze` |
+| LOOKS | Trail scale; reach, angle, turn and step by trail, each an amount and a power (a setting is its base plus amount x s^power, s = trail x scale capped at 1); trail power sets all four powers at once | `sense_scale`, `offset_mod`, `angle_mod`, `turn_mod`, `step_mod` |
+| LOOKS | Square-root deposit cap (a cell's walkers lay deposit x sqrt(min(n, cap)) between them) | `deposit_cap` |
+| LOOKS | Sensing floor (all three sensors below it: turn a random way); wander a tick (that share of walkers take a random heading) | `sense_floor`, `wander` |
+| CONTAGION | Sick for, immune for (ticks); catches at germ; germ laid and kept a tick; sick speed, trail, reach and turn (multipliers); seeded at (seconds) and seed radius | `sick_steps`, `immune_steps`, `sick_catch`, `sick_deposit`, `sick_keep`, `sick_speed`, `sick_trail`, `sick_reach`, `sick_turn`, `sick_seed_r`; `BigDish::infect` |
+
+The mouse: middle drag, or I once, makes the walkers under it sick; right
+drag wipes germ with the trail. Germ is drawn in red over the trail, full at
+four times the catch level (the CPU's `style=sick`), so the wave is the
+germ field itself, not a painted effect. The GPU keeps one counter a walker
+(sick, then immune) and a germ field in two more buffers.
+
+Seven presets, from the looks report's dishes (1M walkers, Jenson's
+settings, 1024 x 640):
+
+| Key | Preset | Settings on top of key 4 |
+| --- | --- | --- |
+| 9 | Trunk ring | disc 180 fine cells, haze 0.3, respawn 0.1%, trail scale 0.02, step by trail (1, 1) |
+| 0 | Contagion wave | cap 100; sick 120 ticks, immune 480, catch 0.5, sick trail x3; seeded at 4 s, radius 40 |
+| Shift+1 | Sweeping ring | trunk ring with turn by trail (-20 degrees, 1) in place of step |
+| Shift+2 | Long curves | trunk ring with angle by trail (-30 degrees, 1) in place of step |
+| Shift+3 | Even polygons | disc and haze, respawn 0.1%, cap 100, no trail-set settings |
+| Shift+4 | Endemic | the wave with sick 60, immune 120 |
+| Shift+5 | Sick ropes | the wave with sick 240, immune 6000, catch 5, sick reach x0.5, sick turn x2, sick trail x1 |
+
+### Twin-tested to the bit
+
+A new twin test, `the_looks_match_the_cpu_for_one_tick`, runs one GPU tick
+from a CPU dish's state against one `BigDish::tick` on six dishes (512 x
+320, a quarter of the walkers, warmed 40 ticks on the CPU): trail-set
+settings (trail scale 0.01, reach (4, 0.5), angle (-10 degrees, 2), turn
+(-5 degrees, 1.5), step (0.5, 0.75)); floor 20 with wander 1%; cap 50;
+contagion on a disc of 60 with haze 0.3, seeded at the start; contagion
+with cap 100 and respawn 1%; and contagion one a cell. **On software Vulkan
+every walker, the trail, the scent, the counters and the germ field match
+to the bit on all six** (the bounds are as before, plus counters off for at
+most 0.1% of walkers and germ L1 1e-4). The same-seed test now also runs a
+looks and contagion dish with a mouse infection and compares the counters:
+the same twice.
+
+Planted bugs: the angle's power read from the turn's put 7165 walkers off;
+the floor's random turn on another stream put 3046 off. The first test
+dishes caught both only weakly (trail scale 0.05 with equal powers: 171
+off; floor 0.5 and 3: 2 and 43 off), so the dishes were changed to the
+ones above, where each setting moves most walkers.
+
+### What they look like
+
+Seed 1, 10 s, on the cloud's software GPU (`looks/run.sh`, raw
+`looks/raw/`), with the GTX 1070's own dish in brackets
+(`looks/gtx1070/raw/`). Looked at frame by frame before measuring:
+
+| Key | Loops at 10 s | Width | What it does |
+| --- | --- | --- | --- |
+| 9 trunk ring | 53 (52) | 4.94 (5.07) | the disc's edge stays a bright thick ring inside a fine mesh |
+| 0 contagion wave | 46 (46) | 4.73 (4.74) | red runs out from the centre along the tubes in about 2 s and is gone by 7 s |
+| Shift+1 sweeping ring | 57 (56) | 4.09 (4.12) | the ring sweeps out past the disc to the dish's edge, leaving long veins |
+| Shift+2 long curves | 34 (27) | 4.04 (4.03) | long curving ropes and a small bright ring at the centre |
+| Shift+3 even polygons | 83 (76) | 4.60 (4.58) | an even mesh of polygons over the disc |
+| Shift+4 endemic | 44 (45) | 5.39 (5.44) | the wave never ends: the dish stays red, and the share sick cycles every 1.5 s |
+| Shift+5 sick ropes | 44 (41) | 4.67 (4.73) | a slower wave (most sick at 7 s, not 5.5) along thinner red tubes; behind it, at 8 s, the centre's tubes have faded |
+
+The share of walkers sick every half second from the seed at 4 s (1070):
+
+| Key | 4.5 s | 5 | 5.5 | 6 | 6.5 | 7 | 7.5 | 8 | 9 | 10 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 contagion wave | 14% | 43% | 68% | 56% | 17% | 0 | 0 | 0 | 0 | 0 |
+| Shift+4 endemic | 14% | 29% | 39% | 29% | 31% | 39% | 29% | 31% | 29% | 39% |
+| Shift+5 sick ropes | 5% | 14% | 27% | 47% | 64% | 72% | 69% | 53% | 14% | 0 |
+| key 1 + the wave's sickness, 100k one a cell | 2.5% | 6% | 7% | 9% | 10% | 14% | 20% | 20% | 22% | 16% |
+
+On the software GPU the wave reads 12%, 41%, 66%, 58%, 21%, then 0, and
+the sick ropes 5%, 13%, 24%, 42%, 60%, 69%, 69%, 58%, 18%, 0 (the same
+shapes; each GPU's seed is its own dish). As on the CPU the wave
+crosses the dish in about 2 s, and with immunity of 1 s (endemic) it never
+ends: the whole dish falls sick together every 1.5 s, sampled here at
+three phases of that beat (29-39%; the CPU report gave 30-36%). On the
+owner's 100k dish one a cell the wave is slower and never takes more than
+a quarter of the walkers by 10 s, probably because a tenth of the walkers
+lay a tenth of the germ, so less of a tube reaches the catch level (not
+tested).
+
+### What they cost on the GTX 1070
+
+Build b1f0383 against main before it (cf06d9c), headless, seed 1, 600
+frames of two ticks and the drawing (`looks/run-1070.ps1`; raw
+`looks/gtx1070/raw/`, checked against the PC's files by hash:
+[`looks/gtx1070/README.md`](gpu-sandbox-2026-11-11/looks/gtx1070/README.md)).
+
+**With every look off the new code costs 0.01 ms of GPU a frame.** Three
+rounds each, alternating builds:
+
+| Key | main: GPU ticks, wall median | looks build | Dish |
+| --- | --- | --- | --- |
+| 1 (100k) | 1.378-1.382 ms; 1.569-1.574 | 1.385-1.394 ms; 1.594-1.596 | the same counts on both builds |
+| 4 (1M, Jenson) | 7.816-7.843; 8.234-8.248 | 7.812-7.832; 8.233-8.319 | the same |
+
+On key 1 the new build was slower in all three rounds, by 0.01 ms of GPU
+ticks and 0.02 ms of wall time a frame (the trail pass 0.128 -> 0.132 ms a
+tick, the walk pass 0.050 -> 0.052: the extra parameters read); on key 4
+the difference is inside the noise.
+
+**Each look switched on**, GPU ms a frame (ticks + drawing):
+
+| Run | GPU a frame | Wall median | Where it goes, a tick |
+| --- | --- | --- | --- |
+| Key 1, looks build (for reference) | 1.39 + 0.07 | 1.59 | sense 0.305, trail 0.132 |
+| Key 1 + floor 0.25 + wander 1% | 1.40 + 0.07 | 1.60 | sense 0.310 |
+| Key 1 + trail-set turn and step | 1.45 + 0.07 | 1.66 | sense 0.333 |
+| Key 1 + contagion (the wave's) | 1.69 + 0.08 | 1.90 | trail 0.219 (the germ's spread), scent 0.175, sense 0.326 |
+| 9 trunk ring | 5.81 + 0.27 | 6.25 | sense 2.31, walk 0.68 |
+| 0 contagion wave | 9.79 + 0.29 | 10.34 | sense 2.62, walk 0.64, trail 0.23 |
+| Shift+1 sweeping ring | 5.99 + 0.27 | 6.45 | sense 1.64, walk 0.65 |
+| Shift+2 long curves | 3.86 + 0.26 | 4.31 | sense 1.09, walk 0.45 |
+| Shift+3 even polygons | 7.58 + 0.27 | 7.97 | sense 2.76, walk 0.92 |
+| Shift+4 endemic | 9.69 + 0.29 | 10.15 | sense 2.37, walk 1.38 |
+| Shift+5 sick ropes | 9.45 + 0.29 | 9.84 | sense 2.19, walk 0.59 |
+
+- **Contagion costs 0.30 ms a frame at 100k** (22% on key 1), most of it
+  the germ field's 3x3 spread, which nearly doubles the trail pass, and
+  0.01 ms of drawing. At 1M the contagion presets take 9.5-9.8 ms of GPU
+  ticks a frame against key 4's 7.8: they fit a 60 Hz frame but not phase
+  3's half-frame bar (8.3 ms). The pass profile, taken at 10 s once the
+  wave has gone, accounts for 0.4 ms of the 1.6-2.0 ms over key 4 (sense
+  +0.11 and trail +0.09 ms a tick); the rest (the cap, the wave's own
+  frames) is not broken down.
+- **The trail-set presets (9, Shift+1, Shift+2) are cheaper than key 4**
+  (3.9-6.0 ms against 7.8), probably because the walkers bunch onto fewer
+  paths, so their sensor reads hit the same memory (not tested). Floor and wander cost nothing
+  measurable (0.01 ms).
+- The same seed gave the same picture twice on all seven presets, on both
+  GPUs.
+
 ## Next
 
-- The owner's hands on it: the PC's window runs build 9d4a2d1, with the
-  fixes.
-- The thread "Reproduce Jenson's missing mould looks" has reported
-  ([`jenson-looks-2026-11-11.md`](jenson-looks-2026-11-11.md)): trunks from a dense start with slow respawn, contagion along the
-  tubes, and trail-set turn and angle, all off by default in `BigParams`.
-  Those come here as controls next, each with a twin test. Phase 3 also
-  plans the tools as field writes.
+- The owner's hands on it: the PC's window runs build b1f0383, with the
+  looks, open on key 0 (the contagion wave).
+- *Done 2026-11-11:* the looks of
+  [`jenson-looks-2026-11-11.md`](jenson-looks-2026-11-11.md) are controls,
+  each twin-tested (*The looks as controls*, above).
+- Phase 3 also plans the tools as field writes.

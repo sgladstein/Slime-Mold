@@ -58,7 +58,7 @@ canvas { display: block; width: 100%; height: auto; border-radius: 6px; }
 .between { justify-content: space-between; }
 .bank { font-family: var(--display); font-weight: 700; font-size: 1.6rem; color: var(--gold); font-variant-numeric: tabular-nums; }
 .seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.verbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.verbs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .habits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 @media (max-width: 420px) { .tile .w { display: none; } .tile .n { font-size: 0.85rem; } }
 .tile {
@@ -106,7 +106,7 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
 <div class="wrap">
   <header>
     <h1><span class="you">Your mould</span> v <span class="them">the rival</span></h1>
-    <p class="sub">The Field: 23 piles, and more food from 0:20. Whoever has eaten more at 2:30 wins. Tithe part of every bite to your bank, then spend it: pick what to buy, and click a pile.</p>
+    <p class="sub"><span id="aim">The Field: 23 piles, and more food from 0:20. Whoever has eaten more at 2:30 wins.</span> Tithe part of every bite to your bank, then spend it: pick what to buy, and click a pile.</p>
   </header>
 
   <div class="stage">
@@ -141,8 +141,9 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
         <div class="label">Buy, then click a pile</div>
         <div class="verbs" id="verbs">
           <button class="tile" data-v="0" aria-pressed="true"><span class="k">B</span><span class="n">Beacon</span><span class="p" id="p0">300</span><span class="w">your mould alone craves the pile for 20 s; 3 at once</span></button>
-          <button class="tile" data-v="1" aria-pressed="false"><span class="k">S</span><span class="n">Spore</span><span class="p" id="p1">1,000</span><span class="w">plants 150 of your walkers on the pile</span></button>
+          <button class="tile" data-v="1" aria-pressed="false"><span class="k">S</span><span class="n">Spore</span><span class="p" id="p1">1,000</span><span class="w" id="spore-what">plants 150 of your walkers on the pile</span></button>
           <button class="tile" data-v="2" aria-pressed="false"><span class="k">R</span><span class="n">Rally</span><span class="p" id="p2">150</span><span class="w">a strong 5 s beacon, only where you are eating</span></button>
+          <button class="tile" data-v="4" aria-pressed="false"><span class="k">F</span><span class="n">Fortify</span><span class="p" id="p4">150</span><span class="w">for 15 s, in a ring round a pile where you eat, your walkers die a quarter as often in fights and the rival&rsquo;s four times as often</span></button>
         </div>
         <div class="row between">
           <span class="label">Habit (keys 1-4), <span id="p3">200</span></span>
@@ -160,12 +161,14 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
     <div class="col">
       <section class="panel" aria-label="Score">
         <div class="share">
-          <div class="row between"><span class="label">Food eaten</span><span class="result" id="result"></span></div>
+          <div class="row between"><span class="label" id="score-label">Food eaten</span><span class="result" id="result"></span></div>
           <div class="bar" role="img" id="bar" aria-label="Your share of the food eaten"><i id="fill"></i></div>
           <div class="nums"><span class="you" id="mine">You 50%</span><span id="clock">0:00 / 2:30</span><span class="them" id="theirsShare">Rival 50%</span></div>
         </div>
         <div class="facts">
           <span class="h"></span><span class="you">You</span><span class="them">Rival</span>
+          <span class="h">Food eaten</span><span id="f0">50%</span><span id="f1">50%</span>
+          <span class="h">Ground held</span><span id="g0">50%</span><span id="g1">50%</span>
           <span class="h">Walkers</span><span id="w0">0</span><span id="w1">0</span>
           <span class="h">Bank</span><span id="b0">0</span><span id="b1">0</span>
           <span class="h">Tithe</span><span id="t0">10%</span><span id="t1">0%</span>
@@ -184,7 +187,10 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
         <div class="row">
           <label class="label" for="rules">Rules</label>
           <select id="rules">
-            <option value="4" selected>Desperate fights: starving walkers fight harder (fewer blowouts)</option>
+            <option value="5" selected>Strike and Fortify: spores land 5 s after you buy them, in plain view; desperate fights</option>
+            <option value="6">Long match: 4:00, eaten piles grow back; desperate fights (fewest blowouts)</option>
+            <option value="7">The whole economy sketch (untried together): Strike and Fortify, 4:00, piles grow back, scored on ground held</option>
+            <option value="4">Desperate fights: starving walkers fight harder (fewer blowouts)</option>
             <option value="3">Size upkeep: each walker costs more the bigger the mould (closest games)</option>
             <option value="2">Holder's bonus: a pile's holder counts double there until outnumbered 2 to 1</option>
             <option value="1">Counterplay only: spores sleep 5 s abroad, price rises</option>
@@ -211,7 +217,7 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
   const mx = marks.getContext('2d');
   const $ = (id) => document.getElementById(id);
   const HABITS = ['Spread', 'Hunt', 'Maze', 'Cord'];
-  const VERBS = ['beacon', 'spore', 'rally'];
+  const VERBS = ['beacon', 'spore', 'rally', 'habit', 'fortify'];
   const TITHES = ['0%', '10%', '25%', '40%'];
   const GOLD = '#f0b54a', VIOLET = '#a98bff', BAD = '#ff7a6b';
   // What each scripted plan does, in the words of skirmish.rs's `Plan`.
@@ -230,6 +236,7 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
     trade: 'Saves at 25% until you attack one of its piles, then hits your thinnest pile for 10 s.',
     keep: 'Soft, but first a rally on any of its piles your spore lands on. It lost no pairing in round 5 under desperate fights.',
     ward: 'Saves at 10% and only rallies piles you attack.',
+    brace: 'Soft, but first it fortifies any of its piles your strike is counting down on or landing on. Under Strike and Fortify it beat every other plan (round 7b).',
   };
 
   let bytes;
@@ -262,8 +269,8 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
   const planHelp = () => { $('plan-help').textContent = PLAN_HELP[plans[Number(sel.value)]] || ''; };
   planHelp();
 
-  let paused = false, fast = false, verb = 0, hover = -1, lastSeed = 0;
-  let seen = [[0, 0, 0, 0], [0, 0, 0, 0]], feed = [];
+  let paused = false, fast = false, verb = 0, hover = -1, lastSeed = 0, heldScore = false;
+  let seen = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], feed = [];
   const clock = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   const num = (x) => Math.floor(x).toLocaleString('en-US');
 
@@ -275,10 +282,19 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
     $('pause').setAttribute('aria-pressed', 'false');
     $('fast').setAttribute('aria-pressed', 'false');
     lastSeed = seed;
-    seen = [[0, 0, 0, 0], [0, 0, 0, 0]];
+    seen = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]];
     feed = [];
     $('feed').innerHTML = '<li>Nothing yet.</li>';
     $('result').textContent = ''; $('result').className = 'result';
+    heldScore = sk.sk_score_held() === 1;
+    const delay = sk.sk_strike_delay();
+    $('spore-what').textContent = delay > 0 ? 'plants 150 of your walkers on the pile ' + delay + ' s after you buy it; both sides see it coming' : 'plants 150 of your walkers on the pile';
+    const bell = clock(sk.sk_bell()), late = sk.sk_bell() > 150;
+    $('score-label').textContent = heldScore ? 'Ground held' : 'Food eaten';
+    $('aim').textContent = 'The Field: 23 piles, and more food from 0:20' + (late ? ' until near the end' : '') + '.' +
+      (sk.sk_regrow() > 0 ? ' Eaten piles grow back, twice as fast once nobody has eaten there for 20 s.' : '') +
+      (heldScore ? ' Every second, each pile where your walkers outnumber the rival’s two to one scores you a point (a dot in your colour); whoever has more points at ' + bell + ' wins.'
+                 : ' Whoever has eaten more at ' + bell + ' wins.');
     $('card').hidden = false;
   };
   const unbrief = () => { sk.sk_unbrief(); $('card').hidden = true; };
@@ -323,6 +339,7 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
     if (k === 'b') { pickVerb(0); return; }
     if (k === 's') { pickVerb(1); return; }
     if (k === 'r') { pickVerb(2); return; }
+    if (k === 'f') { pickVerb(4); return; }
     if (k === 'p') { unbrief(); togglePause(); return; }
     if (k === ' ') { unbrief(); toggleFast(); e.preventDefault(); return; }
     if (k === 'n') { start(); return; }
@@ -351,11 +368,22 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
       if (sk.sk_pile_food(i) <= 0) continue;
       const x = sk.sk_pile_x(i), y = sk.sk_pile_y(i);
       [[0, GOLD, 0], [1, VIOLET, 5]].forEach(([s, c, d]) => {
+        // Under the held score, a dot in the holder's colour over each pile
+        // it holds two to one: what scores a point this second.
+        if (heldScore && sk.sk_holds(s, i)) {
+          mx.fillStyle = c; mx.beginPath(); mx.arc(x, y - R - 7, 5, 0, Math.PI * 2); mx.fill();
+        }
         const b = sk.sk_lit(s, 0, i), r = sk.sk_lit(s, 1, i);
         if (b > 0) ring(x, y, R + d, c, 3, b, 20);
         if (r > 0) ring(x, y, R + d + 3, c, 8, r, 5);
+        // Fortify: a heavy dashed ring.
+        const f = sk.sk_lit(s, 2, i);
+        if (f > 0) { mx.setLineDash([4, 4]); ring(x, y, R + d + 8, c, 5, f, 15); mx.setLineDash([]); }
         const z = sk.sk_landing(s, i);
         if (z > 0) label(x + (s ? 20 : -20), y - R - 14, 'zz ' + Math.ceil(z), c);
+        // A strike counting down here, seen by both sides.
+        const k = sk.sk_strike(s, i);
+        if (k > 0) label(x + (s ? 20 : -20), y + R + 16, 'strike ' + Math.ceil(k), c);
       });
     }
     if (hover >= 0 && sk.sk_briefed() && !sk.sk_over()) {
@@ -372,7 +400,7 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
   const hud = () => {
     const bank = sk.sk_bank(0);
     $('bank').textContent = num(bank);
-    for (let v = 0; v < 3; v++) {
+    for (const v of [0, 1, 2, 4]) {
       const p = sk.sk_price(v);
       $('p' + v).textContent = num(p);
       document.querySelector('#verbs .tile[data-v="' + v + '"]').classList.toggle('short', bank < p);
@@ -391,16 +419,20 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
     $('fill').style.width = (share * 100).toFixed(1) + '%';
     $('mine').textContent = 'You ' + Math.round(share * 100) + '%';
     $('theirsShare').textContent = 'Rival ' + (100 - Math.round(share * 100)) + '%';
-    $('bar').setAttribute('aria-label', 'You have eaten ' + Math.round(share * 100) + '% of the food');
+    const held = sk.sk_score_held(), bell = sk.sk_bell();
+    $('bar').setAttribute('aria-label', held ? 'You have ' + Math.round(share * 100) + '% of the points for ground held' : 'You have eaten ' + Math.round(share * 100) + '% of the food');
+    const fs = sk.sk_food_share(), ps = sk.sk_points_share();
+    $('f0').textContent = Math.round(fs * 100) + '%'; $('f1').textContent = (100 - Math.round(fs * 100)) + '%';
+    $('g0').textContent = Math.round(ps * 100) + '%'; $('g1').textContent = (100 - Math.round(ps * 100)) + '%';
     const t = sk.sk_seconds();
-    $('clock').textContent = clock(Math.min(150, t)) + ' / 2:30';
+    $('clock').textContent = clock(Math.min(bell, t)) + ' / ' + clock(bell);
     for (let s = 0; s < 2; s++) {
       $('w' + s).textContent = num(sk.sk_walkers(s));
       $('b' + s).textContent = num(sk.sk_bank(s));
       $('t' + s).textContent = TITHES[sk.sk_tithe(s)];
       $('h' + s).textContent = HABITS[sk.sk_habit(s)];
-      const names = ['beacon', 'spore', 'rally', 'habit switch'];
-      for (let k = 0; k < 4; k++) {
+      const names = ['beacon', 'spore', 'rally', 'habit switch', 'fortify'];
+      for (let k = 0; k < 5; k++) {
         const now = sk.sk_bought(s, k);
         if (now > seen[s][k]) {
           feed.unshift('<li><span class="' + (s ? 'them' : 'you') + '"><b>' + (s ? 'Rival' : 'You') + '</b></span> ' + clock(t) + ' ' + names[k] + (k === 3 ? ' to ' + HABITS[sk.sk_habit(s)].toLowerCase() : '') + (now - seen[s][k] > 1 ? ' x' + (now - seen[s][k]) : '') + '</li>');
@@ -411,8 +443,9 @@ button.small[aria-pressed="true"] { border-color: var(--gold); color: var(--gold
     feed = feed.slice(0, 6);
     if (feed.length) $('feed').innerHTML = feed.join('');
     if (sk.sk_over()) {
-      const won = share > 0.5;
-      $('result').textContent = won ? 'You won' : (share < 0.5 ? 'The rival won' : 'A draw');
+      // A wipe-out is the survivor's, whatever the score.
+      const w = sk.sk_winner(), won = w === 0;
+      $('result').textContent = won ? 'You won' : (w === 1 ? 'The rival won' : 'A draw');
       $('result').className = 'result ' + (won ? 'good' : 'bad');
     }
   };

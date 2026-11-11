@@ -719,12 +719,19 @@ fn main() {
             }
             let t0 = std::time::Instant::now();
             let mut at60 = 0.5;
-            while sk.dish.phase != Phase::Over && sk.dish.t < 200 * SPS {
+            // The score banked by 1:00 (food eaten, or points), for the
+            // snowball's null in compare.py.
+            let mut eaten60 = 0.0;
+            let (mut held60, mut points60) = (0.5, 0.0);
+            while sk.dish.phase != Phase::Over && sk.dish.t < (sk.rules.bell + 50) * SPS {
                 sk.tick();
                 sk.dish.step();
                 let t = sk.dish.t;
                 if t == 60 * SPS {
                     at60 = sk.share();
+                    eaten60 = sk.ate(0) + sk.ate(1);
+                    held60 = sk.points_share();
+                    points60 = sk.points[0] + sk.points[1];
                 }
                 if let Some(dir) = &look {
                     if t.is_multiple_of(15 * SPS) {
@@ -768,10 +775,20 @@ fn main() {
             }
             let tally = |s: usize| {
                 let k = &sk.sides[s].tally;
-                format!("b{}s{}h{}r{}", k.beacons, k.spores, k.switches, k.rallies)
+                format!("b{}s{}h{}r{}f{}", k.beacons, k.spores, k.switches, k.rallies, k.fortifies)
+            };
+            // Strikes on a pile side `d` held, read 10 s after landing:
+            // held/all, then the same for those it had fortified and those
+            // it had rallied.
+            let def = |d: usize| {
+                let v: Vec<_> = sk.strike_log.iter().filter(|g| g.side != d && g.held.is_some()).collect();
+                let held = |w: &[&&slime_mould::mould::skirmish::StrikeLog]| w.iter().filter(|g| g.held == Some(true)).count();
+                let f: Vec<_> = v.iter().filter(|g| g.fortified).collect();
+                let r: Vec<_> = v.iter().filter(|g| g.rallied).collect();
+                format!("{}/{},f{}/{},r{}/{}", held(&v.iter().collect::<Vec<_>>()), v.len(), held(&f), f.len(), held(&r), r.len())
             };
             println!(
-                "DUEL seed={seed} left={} right={} share={:.3} at60={at60:.3} ate={:.0}/{:.0} bought={}/{} t={:.0} ({:.1}s)",
+                "DUEL seed={seed} left={} right={} share={:.3} at60={at60:.3} ate={:.0}/{:.0} bought={}/{} t={:.0} by60={:.3} held={:.3} held60={held60:.3} hby60={:.3} bell={} def={};{} walkers={}/{} gone={} ({:.1}s)",
                 plans[0].name(),
                 plans[1].name(),
                 sk.share(),
@@ -780,6 +797,15 @@ fn main() {
                 tally(0),
                 tally(1),
                 sk.dish.t as f32 / SPS as f32,
+                eaten60 / (sk.ate(0) + sk.ate(1)).max(1.0),
+                sk.points_share(),
+                points60 / (sk.points[0] + sk.points[1]).max(1.0),
+                sk.rules.bell,
+                def(0),
+                def(1),
+                sk.walkers(0),
+                sk.walkers(1),
+                ["L", "R"].get(sk.gone().unwrap_or(2)).unwrap_or(&"-"),
                 t0.elapsed().as_secs_f32()
             );
         }

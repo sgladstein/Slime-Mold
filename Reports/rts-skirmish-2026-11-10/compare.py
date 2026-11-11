@@ -12,9 +12,12 @@ a two-sided sign test p.
 
 Last, the snowball against a null: among games that reach the bell, how
 often the side ahead at 1:00 won, and how often it would if what happens
-after 1:00 were shuffled between games (no snowball at all). `BY_60`, the
-part of all the food eaten by 1:00, is from three traced games on seed 3
-(`raw/trace-s3-*.txt`: 0.46-0.47).
+after 1:00 were shuffled between games (no snowball at all). Each game's
+part of the score banked by 1:00 is its `by60` (harness lines from round 7
+on); older lines use `BY_60`, from three traced games on seed 3
+(`raw/trace-s3-*.txt`: 0.46-0.47). The bell is each line's `bell` (150
+before round 7). To read the held-ground score instead, pass the lines
+through `held.py` first.
 
 Usage: compare.py CONTROL_TAG FILE...
 """
@@ -26,6 +29,8 @@ from collections import defaultdict
 
 BY_60 = 0.46
 LINE = re.compile(r"^(\w+) DUEL seed=(\d+) left=(\w+) right=(\w+) share=([\d.]+) at60=([\d.]+) .* t=(\d+)")
+BY60 = re.compile(r" by60=([\d.]+)")
+BELL = re.compile(r" bell=(\d+)")
 
 
 def sign_p(k, n):
@@ -36,7 +41,7 @@ def sign_p(k, n):
 
 
 control = sys.argv[1]
-games = defaultdict(dict)  # tag -> {(seed, left, right): (share, at60, t)}
+games = defaultdict(dict)  # tag -> {(seed, left, right): (share, at60, t, by60, bell)}
 order = []
 for f in sys.argv[2:]:
     for line in open(f):
@@ -45,13 +50,16 @@ for f in sys.argv[2:]:
             continue
         if m[1] not in order:
             order.append(m[1])
-        games[m[1]][(int(m[2]), m[3], m[4])] = (float(m[5]), float(m[6]), int(m[7]))
+        b, k = BY60.search(line), BELL.search(line)
+        by60 = float(b[1]) if b else BY_60
+        bell = int(k[1]) if k else 150
+        games[m[1]][(int(m[2]), m[3], m[4])] = (float(m[5]), float(m[6]), int(m[7]), by60, bell)
 
 
-def facts(share, at60, t):
+def facts(share, at60, t, by60, bell):
     decided = at60 != 0.5 and share != 0.5
     return {
-        "wiped": t < 150,
+        "wiped": t < bell,
         "comeback": decided and (at60 > 0.5) != (share > 0.5),
         "decided": decided,
         "close": abs(share - 0.5) < 0.1,
@@ -86,11 +94,17 @@ for tag in order:
 print("\nGames that reach the bell: the side ahead at 1:00 won, and would win with the rest of the game shuffled between games (200 shuffles):")
 rng = random.Random(1)
 for tag in order:
-    v = [(s, a) for s, a, t in games[tag].values() if t == 150 and a != 0.5]
-    real = sum((a > 0.5) == (s > 0.5) for s, a in v)
-    rest = [(s - BY_60 * a) / (1 - BY_60) for s, a in v]
+    v = [(s, a, b) for s, a, t, b, bell in games[tag].values() if t >= bell and a != 0.5 and b < 1.0]
+    if not v:
+        print(f"  {tag:>10}: no game reached the bell")
+        continue
+    real = sum((a > 0.5) == (s > 0.5) for s, a, b in v)
+    # What each game scored after 1:00, as a share; shuffled between games,
+    # each keeping its own lead at 1:00 and its own part banked by then.
+    rest = [(s - b * a) / (1 - b) for s, a, b in v]
     won = 0
     for _ in range(200):
         rng.shuffle(rest)
-        won += sum((a > 0.5) == (BY_60 * a + (1 - BY_60) * x > 0.5) for (s, a), x in zip(v, rest))
-    print(f"  {tag:>10}: {real}/{len(v)} ({real / len(v):.0%}); shuffled {won / (200 * len(v)):.0%}")
+        won += sum((a > 0.5) == (b * a + (1 - b) * x > 0.5) for (s, a, b), x in zip(v, rest))
+    banked = sum(b for _, _, b in v) / len(v)
+    print(f"  {tag:>10}: {real}/{len(v)} ({real / len(v):.0%}); shuffled {won / (200 * len(v)):.0%}; banked by 1:00 {banked:.2f}")

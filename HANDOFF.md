@@ -63,9 +63,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   plan. One plan, soft, beat the other eight in 127 of 128 games
   (https://claude.ai/artifact/33Voj1TERnjNSZfLwv3zRG), and the counterplay
   rules of round 3 (a rally, a rising spore price) did not stop it, nor did
-  changes to the model (rounds 4-6). The page opens on desperate fights,
-  which ease the snowball; the sides are even since the piles moved half a
-  cell. Next: the economy sketch's food after 1:00 and Fortify.
+  changes to the model (rounds 4-6), nor food after 1:00 (round 7b: the
+  side ahead at 1:00 still wins 80-85%). A strike counted down in view, with
+  a Fortify that kills attackers in its ring, does dethrone soft, but the
+  plan that strikes and fortifies (brace) then wins every pairing. The page
+  opens on Strike and Fortify. Next: Fortify's price and the economy
+  sketch's exploiter search against brace.
 - [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
   (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
   for a neutral host and keep the ground they reach. The planner beats random
@@ -123,8 +126,9 @@ Ask each again; none has an answer to assume.
    [page](wiki/rts/shooter.md)). Owner chose (11-11 00:30Z) a squad, solo,
    tests first. After a snip fix, a ring of fire held from the start keeps
    the mould off the larder (0 stolen, 16/16) and is now the dominant play.
-   Open: whether to run the design review's test (a priced ring, a larder
-   that runs dry, slowed fronts, scripted plans).
+   Priced (shots cost food, larder runs dry, slowed fronts), ring-forever
+   never wins but ring-then-mow tops every seed: a ladder. Open: which
+   mould answer to add so plans can counter each other.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo

@@ -90,7 +90,8 @@ option the Jenson comparison tested as a control (walkers to 8 million,
 the one-a-cell limit, angles, reach, step, trail laid and kept, respawn,
 food, colour, trail or walker counts, the game's or a soft curve) and the
 comparison's dishes on keys 1-8 (the owner's ask, 00:06Z). The left mouse
-pulls walkers to it, the right wipes trail, F drops food. On a software
+drops walkers under it (0.2% of all walkers a tick, taken from random
+places), the right wipes trail, F drops food. On a software
 GPU and on the GTX 1070 its dishes match the CPU's spread at 10 s on 8
 seeds (16 for the food dish): no measure differs after Bonferroni over 20
 tests a GPU, once an independent review (11-11) had found and fixed two
@@ -105,6 +106,14 @@ pass); the drawing is 0.07-0.29 ms of it. In the vsynced window at light
 load the GPU steps its clocks down, so the window reads slower than
 headless ([report, *Independent review*](../../Reports/gpu-sandbox-2026-11-11.md),
 [page](https://claude.ai/artifact/1rdrxadVcNdxTmbxp2KJGy)).
+The looks of the [jenson looks](../../Reports/jenson-looks-2026-11-11.md)
+report (disc and haze start, trail-set settings, square-root deposit cap,
+sensing floor, wander, contagion) are sandbox controls too (11-11), on
+two panel pages and keys 9, 0 and Shift+1-5; a twin test matches them to
+the bit on six dishes. Off, they cost 0.01 ms a frame on the GTX 1070;
+contagion costs 0.3 ms at 100,000 walkers, and the contagion presets
+take 9.5-9.8 ms of GPU ticks a frame at a million ([report, *The looks as
+controls*](../../Reports/gpu-sandbox-2026-11-11.md)).
 
 Three facts bind the design:
 
@@ -165,6 +174,7 @@ polygons at once. Every outside source has a card in
 | GPU sandbox on the GTX 1070, a frame of two ticks and the drawing (median), seed 1, before the review's fixes (window figure a running average; "busy 1.4" is wall time, GPU 1.30) | 32k 0.88 ms; 100k 1.42 (4.6 in the vsynced window); 100k no limit 0.99; 1M Jenson settings 8.00; with respawn 9.84; 4M 30.07 (37 frames a second); drawing 0.06-0.18 | seed 1 | | [gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md) |
 | GPU sandbox vs CPU dish after the review's fixes, 10 s, spread start, software Vulkan and GTX 1070 | no measure (loops, width, tube, strays on five dishes) differs after Bonferroni over 20 a GPU; smallest p 0.013 (1070, 32k with food, more loops on 12 of 16); 1M respawn width CPU 7.70-8.01, software 7.83-8.00, 1070 7.82-8.12; 32k strays 0.8-1.8%, 0.5-1.4%, 0.8-1.7% | 8 (16 for 32k) | by seed | [gpu sandbox, *Independent review*](../../Reports/gpu-sandbox-2026-11-11.md) |
 | GPU sandbox on the GTX 1070 after the fixes, GPU ms a frame of two ticks + drawing, headless, seed 1 | 32k 0.82 + 0.07; 100k 1.39 + 0.07; 100k no limit 0.91 + 0.06; 1M Jenson settings 7.85 + 0.29; with respawn 9.68 + 0.27; 4M 29.79 + 0.29; 4M ours 12.57 + 0.28; sense pass a tick 2.51 ms at 1M (Jenson) against 3.72 at 4M (ours) | seed 1 | | same |
+| GPU sandbox looks on the GTX 1070, GPU ms a frame of two ticks + drawing, headless, seed 1 | looks off: key 1 1.385-1.394 against main 1.378-1.382 (3 rounds), key 4 no change; key 1 + contagion 1.69 + 0.08 (trail pass 0.13 -> 0.22 a tick); key 1 + trail-set 1.45; + floor and wander 1.40; at 1M: trunk ring 5.81, contagion wave 9.79, sweeping ring 5.99, long curves 3.86, even polygons 7.58, endemic 9.69, sick ropes 9.45, drawing 0.26-0.29 | seed 1 | | [gpu sandbox, *The looks as controls*](../../Reports/gpu-sandbox-2026-11-11.md) |
 | GPU clocks in the vsynced window, 100k, GTX 1070 | window median 1.80 + 0.08 ms with the clocks stepping 1594 to 797 MHz (memory 810 MHz) against headless 1.39 + 0.07 at 1936 MHz; 8 ticks a frame or 1M walkers hold 1936 MHz | seed 1 | | same |
 | Big dish cost, ms a tick, one thread / four | today 0.54 / 0.53; nose 32k 11.3 / 6.7; nose 100k 21.6 / 20.2; steps 43.1 / 25.8; turn 71.1 / 31.7 | seed 1 | | same |
 | No one-a-cell limit vs the limit, 100k walkers, no food, spread start, loops at 10 s | 0 (0-2) vs 151.5 (144-160): fewer on 8 of 8, p 0.008, survives Bonferroni over 4 | 8 | yes | [jenson compare, *The tests*](../../Reports/jenson-compare-2026-11-10.md) |

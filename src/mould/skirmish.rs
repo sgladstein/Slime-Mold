@@ -28,7 +28,7 @@
 //! purchase pure gain (random spending beat idle 4/4), so the tithe
 //! replaced it.
 
-use super::level::{Level, PileSpec, Tools, Win};
+use super::level::{Level, PileSpec, Tools, Win, ENDLESS_MIN};
 use super::{Dish, Params, Phase, INOCULUM, STEPS_PER_SECOND};
 
 const SPS: u64 = STEPS_PER_SECOND as u64;
@@ -120,6 +120,8 @@ pub const SPORE_FOOD: f32 = super::START_STORE / INOCULUM as f32;
 pub const RALLY_COST: f32 = 150.0;
 pub const RALLY_SECONDS: u64 = 5;
 pub const RALLY_GAIN: f32 = 10.0;
+/// Fortify's price (`Verb::Fortify`): a rally's.
+pub const FORTIFY_COST: f32 = 150.0;
 /// A habit switch: its price, and seconds before the next.
 pub const HABIT_COST: f32 = 200.0;
 pub const SWITCH_COOLDOWN: u64 = 10;
@@ -167,6 +169,51 @@ pub struct Rules {
     /// yours always moves first, and won 14 of 16 mirror games; rounds 1-3
     /// ran with it off.
     pub take_turns: bool,
+    /// **Food after 1:00** (the research thread's economy sketch, test 3).
+    /// Rounds 4-6 found about half the food eaten by 1:00 of a 2:30 match,
+    /// so even with no snowball the side ahead at 1:00 won about 70% of
+    /// games that reached the bell. These give the trailing side something
+    /// to come back with.
+    ///
+    /// The bell, in seconds (150 as built). Late food keeps landing to 40 s
+    /// before it (`late_count`). Set it with `Skirmish::set`, which moves
+    /// the bell and the late food together.
+    pub bell: u64,
+    /// Regrowth: each of the dish's piles regains this fraction of its full
+    /// food a second, up to full (0 as built: a pile eaten is gone).
+    pub regrow: f32,
+    /// ...times this on a pile nobody has eaten at for `regrow_after`
+    /// seconds: neglected food comes back faster, so the side that is
+    /// behind always has somewhere worth reaching. It is in the world, not a
+    /// bonus for losing.
+    pub regrow_idle: f32,
+    pub regrow_after: u64,
+    /// **Score by ground held** instead of food eaten: once a second, each
+    /// pile where a side's eaters outnumber the other's `held_ratio` to one
+    /// pays that side a point (`Skirmish::points`); the share is of points.
+    /// A wipe-out still ends the game.
+    pub score_held: bool,
+    pub held_ratio: f32,
+    /// **A strike with a countdown** (the economy sketch's Strike): a spore
+    /// bought now lands this many seconds later, and both sides can see
+    /// where (`Skirmish::strikes`). 0, as built, lands at once.
+    pub strike_delay: u64,
+    /// **Fortify** (`Verb::Fortify`): for `fortify_seconds`, the side's
+    /// walkers within `fortify_reach` cells of a pile's edge die in fights
+    /// at `fortify_mult` times their usual rate (`Dish::fortify`). Not
+    /// "count as fed": at a pile both sides' walkers already are.
+    /// `fortify_harm`: the *other* side's walkers in the ring die at that
+    /// many times their usual rate. At 1 (defenders only die less), the
+    /// defender held 64% of the strikes on its piles 10 s on, below the 72%
+    /// with no answer at all, and won 9 of 16 against soft; at 4 it held
+    /// 88% and won 15 of 16 (2026-11-11, `raw/t1b-fortify-variants.txt`).
+    /// Defenders that never die (`fortify_mult` 0) held 75%, and a ring of
+    /// 12 cells 74%.
+    pub fortify_cost: f32,
+    pub fortify_seconds: u64,
+    pub fortify_mult: f32,
+    pub fortify_reach: f32,
+    pub fortify_harm: f32,
 }
 
 impl Default for Rules {
@@ -186,6 +233,18 @@ impl Default for Rules {
             rally_seconds: RALLY_SECONDS,
             rally_gain: RALLY_GAIN,
             take_turns: true,
+            bell: FIELD.seconds as u64,
+            regrow: 0.0,
+            regrow_idle: 2.0,
+            regrow_after: 20,
+            score_held: false,
+            held_ratio: 2.0,
+            strike_delay: 0,
+            fortify_cost: FORTIFY_COST,
+            fortify_seconds: 15,
+            fortify_mult: 0.25,
+            fortify_reach: 6.0,
+            fortify_harm: 4.0,
         }
     }
 }
@@ -210,6 +269,18 @@ impl Rules {
             "rally_seconds" => self.rally_seconds = v as u64,
             "rally_gain" => self.rally_gain = v,
             "take_turns" => self.take_turns = v != 0.0,
+            "bell" => self.bell = v as u64,
+            "regrow" => self.regrow = v,
+            "regrow_idle" => self.regrow_idle = v,
+            "regrow_after" => self.regrow_after = v as u64,
+            "score_held" => self.score_held = v != 0.0,
+            "held_ratio" => self.held_ratio = v,
+            "strike_delay" => self.strike_delay = v as u64,
+            "fortify_cost" => self.fortify_cost = v,
+            "fortify_seconds" => self.fortify_seconds = v as u64,
+            "fortify_mult" => self.fortify_mult = v,
+            "fortify_reach" => self.fortify_reach = v,
+            "fortify_harm" => self.fortify_harm = v,
             _ => return false,
         }
         true
@@ -299,6 +370,9 @@ pub enum Verb {
     Habit(Habit),
     /// A short, strong beacon on a pile you are eating at: defence.
     Rally(usize),
+    /// Dig in at a pile you are eating at: your walkers there fight harder
+    /// for a while (`Rules::fortify_mult`).
+    Fortify(usize),
 }
 
 
@@ -352,10 +426,14 @@ pub enum Plan {
     /// Shield only (10%): a rally on any of its piles a rival spore is
     /// landing on or the rival has lit; nothing else.
     Ward,
+    /// Soft that digs in (25%): fortifies any of its piles a rival strike
+    /// is counting down on or landing on, before anything else; otherwise
+    /// soft. Keep with Fortify for the rally.
+    Brace,
 }
 
 impl Plan {
-    pub const ALL: [Plan; 14] = [
+    pub const ALL: [Plan; 15] = [
         Plan::Idle,
         Plan::Random,
         Plan::Boom,
@@ -370,6 +448,7 @@ impl Plan {
         Plan::Trade,
         Plan::Keep,
         Plan::Ward,
+        Plan::Brace,
     ];
 
     pub fn name(self) -> &'static str {
@@ -388,6 +467,7 @@ impl Plan {
             Plan::Trade => "trade",
             Plan::Keep => "keep",
             Plan::Ward => "ward",
+            Plan::Brace => "brace",
         }
     }
 
@@ -405,6 +485,7 @@ pub struct Tally {
     pub spores: u32,
     pub switches: u32,
     pub rallies: u32,
+    pub fortifies: u32,
 }
 
 /// One side of the skirmish: 0 is you (the dish's own mould), 1 the rival
@@ -421,6 +502,8 @@ pub struct Side {
     pub beacons: Vec<(usize, u64)>,
     /// Rallies, the same way.
     pub rallies: Vec<(usize, u64)>,
+    /// Fortified piles, the same way.
+    pub fortified: Vec<(usize, u64)>,
     /// Trade answers an attack until this step.
     pub answer_until: u64,
     /// The steps this side bought its spores in the last 30 s
@@ -443,6 +526,32 @@ pub struct Spore {
     pub wakes: u64,
 }
 
+/// A strike counting down (`Rules::strike_delay`): whose, on which pile,
+/// and the step it lands.
+#[derive(Clone, Copy, Debug)]
+pub struct Strike {
+    pub side: usize,
+    pub pile: usize,
+    pub lands: u64,
+}
+
+/// A spore that landed on a pile the other side held (more of its eaters
+/// there), and whether the defender still held it 10 s later: the economy
+/// sketch's test of Fortify against a strike.
+#[derive(Clone, Copy, Debug)]
+pub struct StrikeLog {
+    pub side: usize,
+    pub pile: usize,
+    pub landed: u64,
+    /// Whether the defender had Fortify up on the pile when it landed.
+    pub fortified: bool,
+    /// Whether the defender had a rally up on the pile when it landed.
+    pub rallied: bool,
+    /// The defender still has more eaters there 10 s on (None until then,
+    /// or if the game ended first).
+    pub held: Option<bool>,
+}
+
 /// A plan's question about one pile, and its search for the nearest pile
 /// that passes one.
 type PileTest<'a> = dyn Fn(&Skirmish, usize) -> bool + 'a;
@@ -454,6 +563,16 @@ pub struct Skirmish {
     pub rules: Rules,
     /// Spores still dormant (`Rules::spore_dormant`).
     pub spores: Vec<Spore>,
+    /// Points for ground held (`Rules::score_held`), each side; counted
+    /// under either score.
+    pub points: [f32; 2],
+    /// The step each dish pile was last eaten at (`Rules::regrow_idle`).
+    eaten_at: Vec<u64>,
+    seed: u64,
+    /// Strikes counting down (`Rules::strike_delay`).
+    pub strikes: Vec<Strike>,
+    /// Every spore that landed on a pile the other side held.
+    pub strike_log: Vec<StrikeLog>,
 }
 
 impl Skirmish {
@@ -468,7 +587,7 @@ impl Skirmish {
         if let Some(r) = dish.rival.as_mut() {
             r.params = p;
         }
-        late_food(&mut dish, seed);
+        late_food(&mut dish, seed, LATE_COUNT);
         let side = |k: u64, plan| Side {
             habit: Habit::Spread,
             tithe: 0.0,
@@ -476,6 +595,7 @@ impl Skirmish {
             bank: 0.0,
             beacons: Vec::new(),
             rallies: Vec::new(),
+            fortified: Vec::new(),
             answer_until: 0,
             spore_times: Vec::new(),
             plan,
@@ -488,6 +608,11 @@ impl Skirmish {
             sides: [side(0, plans[0]), side(1, plans[1])],
             rules: Rules::default(),
             spores: Vec::new(),
+            points: [0.0; 2],
+            eaten_at: Vec::new(),
+            seed,
+            strikes: Vec::new(),
+            strike_log: Vec::new(),
         }
     }
 
@@ -505,6 +630,14 @@ impl Skirmish {
     /// `value` is not a number.
     pub fn set(&mut self, name: &str, value: &str) -> bool {
         if self.rules.set(name, value) {
+            if name == "bell" {
+                // Before the first step: the bell, and late food to 40 s
+                // before it (7 drops, 0:20 to 1:50, at the 2:30 bell).
+                let bell = self.rules.bell.max(LATE_FIRST + 40);
+                self.dish.storm_at = bell * SPS;
+                self.dish.pending.clear();
+                late_food(&mut self.dish, self.seed, late_count(bell));
+            }
             return true;
         }
         let Ok(v) = value.parse::<f32>() else { return false };
@@ -550,6 +683,36 @@ impl Skirmish {
         }
     }
 
+    /// The side wiped out, if either is: none of your walkers left, or the
+    /// rival under `ENDLESS_MIN`, which is what ends the dish early.
+    pub fn gone(&self) -> Option<usize> {
+        if self.dish.walkers.is_empty() {
+            Some(0)
+        } else if self.dish.wild_left < ENDLESS_MIN {
+            Some(1)
+        } else {
+            None
+        }
+    }
+
+    /// Who wins as things stand: the survivor of a wipe-out, whatever the
+    /// score (the economy sketch's "a wipe-out still ends the game"; under
+    /// the held-ground score a side can be wiped out with more points
+    /// banked than its killer), otherwise the larger share; None on a tie.
+    pub fn winner(&self) -> Option<usize> {
+        if let Some(s) = self.gone() {
+            return Some(1 - s);
+        }
+        let x = self.share();
+        if x > 0.5 {
+            Some(0)
+        } else if x < 0.5 {
+            Some(1)
+        } else {
+            None
+        }
+    }
+
     /// Side `s`'s walkers.
     pub fn walkers(&self, s: usize) -> usize {
         if s == 0 {
@@ -569,14 +732,41 @@ impl Skirmish {
         }
     }
 
-    /// Your share of the food eaten so far (half before anyone eats).
+    /// Your share of the score so far (half before anyone scores): of the
+    /// food eaten, or of the points for ground held (`Rules::score_held`).
     pub fn share(&self) -> f32 {
+        if self.rules.score_held {
+            self.points_share()
+        } else {
+            self.food_share()
+        }
+    }
+
+    /// Your share of the food eaten (half before anyone eats).
+    pub fn food_share(&self) -> f32 {
         let all = self.dish.ate + self.dish.wild_ate;
         if all < 1.0 {
             0.5
         } else {
             self.dish.ate / all
         }
+    }
+
+    /// Your share of the points for ground held (half before any).
+    pub fn points_share(&self) -> f32 {
+        let all = self.points[0] + self.points[1];
+        if all < 1.0 {
+            0.5
+        } else {
+            self.points[0] / all
+        }
+    }
+
+    /// Whether side `s` holds pile `i` for the score: eaters there, at
+    /// least `held_ratio` times the other side's.
+    pub fn holds(&self, s: usize, i: usize) -> bool {
+        let (mine, theirs) = (self.eaters(s, i), self.eaters(1 - s, i));
+        mine > 0 && mine as f32 >= self.rules.held_ratio * theirs as f32
     }
 
     /// Seconds until side `s` may switch habit (0: now).
@@ -594,6 +784,7 @@ impl Skirmish {
             }
             Verb::Habit(_) => self.rules.habit_cost,
             Verb::Rally(_) => self.rules.rally_cost,
+            Verb::Fortify(_) => self.rules.fortify_cost,
         }
     }
 
@@ -632,7 +823,9 @@ impl Skirmish {
                 .get(i)
                 .is_some_and(|p| p.food > 0.0 && !p.oats && self.within_reach(s, (p.x, p.y), self.rules.spore_reach)),
             Verb::Habit(h) => h != self.sides[s].habit && self.dish.t >= self.sides[s].ready_at,
-            Verb::Rally(i) => self.dish.piles.get(i).is_some_and(|p| p.food > 0.0 && !p.oats) && self.eaters(s, i) > 0,
+            Verb::Rally(i) | Verb::Fortify(i) => {
+                self.dish.piles.get(i).is_some_and(|p| p.food > 0.0 && !p.oats) && self.eaters(s, i) > 0
+            }
         }
     }
 
@@ -641,6 +834,12 @@ impl Skirmish {
         if !self.can(s, v) {
             return false;
         }
+        // The price `can` checked, read before the purchase counts: read
+        // after, a spore under `spore_ramp` cost one step more than shown
+        // (1,500 for the first at 0.5) and could take the bank below zero.
+        // Rounds 3-7 and the first Fortify test ran with that overcharge
+        // (fixed 2026-11-11).
+        let price = self.price(s, v);
         let t = self.dish.t;
         match v {
             Verb::Beacon(i) => {
@@ -660,32 +859,19 @@ impl Skirmish {
                 side.tally.rallies += 1;
                 self.light(s);
             }
+            Verb::Fortify(i) => {
+                let side = &mut self.sides[s];
+                side.fortified.retain(|b| b.0 != i);
+                side.fortified.push((i, t + self.rules.fortify_seconds * SPS));
+                side.tally.fortifies += 1;
+                self.dig_in();
+            }
             Verb::Spore(i) => {
-                let at = (self.dish.piles[i].x, self.dish.piles[i].y);
-                let placed = if s == 0 {
-                    let r = self.dish.rival.take();
-                    let others = r.as_ref().map_or(&[][..], |r| &r.walkers[..]);
-                    let n = self.dish.plant(at, self.rules.spore_walkers, SPORE_FOOD, others);
-                    self.dish.rival = r;
-                    n
-                } else {
-                    let n = self.dish.plant_rival(at, self.rules.spore_walkers, SPORE_FOOD);
-                    self.dish.wild_left = self.dish.rival.as_ref().map_or(0, |r| r.walkers.len());
-                    n
-                };
-                if placed == 0 {
+                if self.rules.strike_delay > 0 {
+                    // Paid now, lands later, in plain view.
+                    self.strikes.push(Strike { side: s, pile: i, lands: t + self.rules.strike_delay * SPS });
+                } else if !self.land_spore(s, i) {
                     return false;
-                }
-                let abroad = self.eaters(1 - s, i) > self.eaters(s, i);
-                if self.rules.spore_dormant > 0 && (abroad || !self.rules.dormant_abroad_only) {
-                    // The new walkers are the last ones in; they sleep
-                    // from now, tagged with this step.
-                    let walkers = &mut self.mould_mut(s).walkers;
-                    let k = walkers.len() - placed;
-                    for w in &mut walkers[k..] {
-                        w.slept = t;
-                    }
-                    self.spores.push(Spore { side: s, pile: i, landed: t, wakes: t + self.rules.spore_dormant * SPS });
                 }
                 self.sides[s].tally.spores += 1;
                 self.sides[s].spore_times.push(t);
@@ -698,11 +884,80 @@ impl Skirmish {
                 side.tally.switches += 1;
             }
         }
-        let price = self.price(s, v);
         let side = &mut self.sides[s];
         side.bank -= price;
         side.tally.spent += price;
         true
+    }
+
+    /// Plant side `s`'s spore on pile `i` now (asleep, if the rules say),
+    /// and log it when it lands on a pile the other side holds. False if no
+    /// walker could be placed.
+    fn land_spore(&mut self, s: usize, i: usize) -> bool {
+        let t = self.dish.t;
+        let at = (self.dish.piles[i].x, self.dish.piles[i].y);
+        let placed = if s == 0 {
+            let r = self.dish.rival.take();
+            let others = r.as_ref().map_or(&[][..], |r| &r.walkers[..]);
+            let n = self.dish.plant(at, self.rules.spore_walkers, SPORE_FOOD, others);
+            self.dish.rival = r;
+            n
+        } else {
+            let n = self.dish.plant_rival(at, self.rules.spore_walkers, SPORE_FOOD);
+            self.dish.wild_left = self.dish.rival.as_ref().map_or(0, |r| r.walkers.len());
+            n
+        };
+        if placed == 0 {
+            return false;
+        }
+        let abroad = self.eaters(1 - s, i) > self.eaters(s, i);
+        if self.rules.spore_dormant > 0 && (abroad || !self.rules.dormant_abroad_only) {
+            // The new walkers are the last ones in; they sleep
+            // from now, tagged with this step.
+            let walkers = &mut self.mould_mut(s).walkers;
+            let k = walkers.len() - placed;
+            for w in &mut walkers[k..] {
+                w.slept = t;
+            }
+            self.spores.push(Spore { side: s, pile: i, landed: t, wakes: t + self.rules.spore_dormant * SPS });
+        }
+        if abroad {
+            let d = &self.sides[1 - s];
+            self.strike_log.push(StrikeLog {
+                side: s,
+                pile: i,
+                landed: t,
+                fortified: d.fortified.iter().any(|f| f.0 == i),
+                rallied: d.rallies.iter().any(|r| r.0 == i),
+                held: None,
+            });
+        }
+        true
+    }
+
+    /// Both sides' fortified piles onto the moulds (`Dish::fortify`): a
+    /// mould's own rings at `fortify_mult`, then the other side's at
+    /// `fortify_harm` when that is not 1. A walker takes the first ring it
+    /// stands in, so where both sides have dug in, its own counts.
+    fn dig_in(&mut self) {
+        let reach = self.rules.fortify_reach;
+        let rings = |sk: &Skirmish, s: usize, mult: f32| -> Vec<(f32, f32, f32, f32)> {
+            sk.sides[s]
+                .fortified
+                .iter()
+                .map(|&(i, _)| {
+                    let p = &sk.dish.piles[i];
+                    (p.x, p.y, p.r + reach, mult)
+                })
+                .collect()
+        };
+        for s in 0..2 {
+            let mut discs = rings(self, s, self.rules.fortify_mult);
+            if self.rules.fortify_harm != 1.0 {
+                discs.extend(rings(self, 1 - s, self.rules.fortify_harm));
+            }
+            self.mould_mut(s).fortify = discs;
+        }
     }
 
     /// Side `s`'s lit beacons onto its mould.
@@ -744,8 +999,25 @@ impl Skirmish {
             side.beacons.retain(|b| b.1 > t);
             side.rallies.retain(|b| b.1 > t);
             side.spore_times.retain(|&at| at + 30 * SPS > t);
+            let dug = side.fortified.len();
+            side.fortified.retain(|b| b.1 > t);
+            let dug = side.fortified.len() != dug;
             if side.beacons.len() + side.rallies.len() != before {
                 self.light(s);
+            }
+            if dug {
+                self.dig_in();
+            }
+        }
+        self.regrow(t);
+        // Counted whichever score is in force, so a run can read both.
+        if t > 0 && t.is_multiple_of(SPS) {
+            for i in 0..self.dish.piles.len() {
+                for s in 0..2 {
+                    if self.holds(s, i) {
+                        self.points[s] += 1.0;
+                    }
+                }
             }
         }
         // Spores due wake: every walker still asleep since the step one
@@ -762,11 +1034,52 @@ impl Skirmish {
                 }
             }
         }
+        // Strikes due land; a strike's outcome is read 10 s after.
+        if self.strikes.iter().any(|k| k.lands <= t) {
+            let due: Vec<Strike> = self.strikes.iter().filter(|k| k.lands <= t).copied().collect();
+            self.strikes.retain(|k| k.lands > t);
+            for k in due {
+                self.land_spore(k.side, k.pile);
+            }
+        }
+        for k in 0..self.strike_log.len() {
+            let g = self.strike_log[k];
+            if g.held.is_none() && t >= g.landed + 10 * SPS {
+                self.strike_log[k].held = Some(self.eaters(1 - g.side, g.pile) > self.eaters(g.side, g.pile));
+            }
+        }
         for s in 0..2 {
             if let Some(plan) = self.sides[s].plan {
                 if t % SPS == (s as u64) * (SPS / 2) {
                     self.think(s, plan);
                 }
+            }
+        }
+    }
+
+    /// Piles regain food (`Rules::regrow`), faster where nobody has eaten
+    /// for `regrow_after` seconds. Late piles join the count as they land;
+    /// the dish copies its piles to the rival every step.
+    fn regrow(&mut self, t: u64) {
+        let n = self.dish.piles.len();
+        if self.eaten_at.len() < n {
+            self.eaten_at.resize(n, t);
+        }
+        if self.rules.regrow <= 0.0 {
+            return;
+        }
+        let idle_after = self.rules.regrow_after * SPS;
+        for (p, at) in self.dish.piles.iter_mut().zip(self.eaten_at.iter_mut()) {
+            if p.oats {
+                continue;
+            }
+            if p.eaters + p.foe_eaters > 0 {
+                *at = t;
+            }
+            if p.food < p.full {
+                let idle = t.saturating_sub(*at) >= idle_after;
+                let rate = self.rules.regrow * if idle { self.rules.regrow_idle } else { 1.0 };
+                p.food = (p.food + rate * p.full / SPS as f32).min(p.full);
             }
         }
     }
@@ -796,8 +1109,15 @@ impl Skirmish {
                 .min_by_key(|&i| sk.eaters(o, i))
         };
         let rallied = |sk: &Skirmish, i: usize| sk.sides[s].rallies.iter().any(|b| b.0 == i);
-        // An own pile a rival spore is landing on (asleep there now).
-        let landing = |sk: &Skirmish| sk.spores.iter().find(|p| p.side == o && sk.eaters(s, p.pile) > 0).map(|p| p.pile);
+        // An own pile a rival strike is counting down on, or a rival spore
+        // is landing on (asleep there now).
+        let landing = |sk: &Skirmish| {
+            sk.strikes
+                .iter()
+                .find(|k| k.side == o && sk.eaters(s, k.pile) > 0)
+                .map(|k| k.pile)
+                .or_else(|| sk.spores.iter().find(|p| p.side == o && sk.eaters(s, p.pile) > 0).map(|p| p.pile))
+        };
         // That, or an own pile the rival has a beacon or rally lit on.
         let attacked = |sk: &Skirmish| {
             landing(sk).or_else(|| {
@@ -811,7 +1131,7 @@ impl Skirmish {
             Plan::Random => self.sides[s].tithe,
             Plan::Counter | Plan::Fort | Plan::Lean | Plan::Guard => TITHES[1],
             Plan::Ward => TITHES[1],
-            Plan::Boom | Plan::Soft | Plan::Centre | Plan::Trade | Plan::Keep => TITHES[2],
+            Plan::Boom | Plan::Soft | Plan::Centre | Plan::Trade | Plan::Keep | Plan::Brace => TITHES[2],
             Plan::Raid => TITHES[3],
             Plan::Hoard => {
                 if t < 80 * SPS {
@@ -898,6 +1218,18 @@ impl Skirmish {
                     }
                 }
             }
+            Plan::Brace => {
+                if let Some(i) = landing(self) {
+                    if !self.sides[s].fortified.iter().any(|b| b.0 == i) {
+                        // Dig in, or save for it: it comes before the attack.
+                        self.act(s, Verb::Fortify(i));
+                        return;
+                    }
+                }
+                if let Some(i) = thinnest(self) {
+                    self.strike(s, i, &lit);
+                }
+            }
             Plan::Centre => {
                 let band = |sk: &Skirmish, i: usize| {
                     let p = &sk.dish.piles[i];
@@ -917,7 +1249,7 @@ impl Skirmish {
             Plan::Fort => {
                 // Its own piles the rival is eating at, most rival eaters
                 // first; a tithe only while there is one to defend.
-                let landing = self.spores.iter().find(|p| p.side == o && self.eaters(s, p.pile) > 0).map(|p| p.pile);
+                let landing = landing(self);
                 let contested = landing.or_else(|| {
                     (0..n)
                         .filter(|&i| live(self, i) && self.eaters(s, i) > 0 && self.eaters(o, i) > 0)
@@ -952,7 +1284,7 @@ impl Skirmish {
                 }
             }
             Plan::Guard => {
-                let landing = self.spores.iter().find(|p| p.side == o && self.eaters(s, p.pile) > 0).map(|p| p.pile);
+                let landing = landing(self);
                 let contested = landing.or_else(|| (0..n).find(|&i| live(self, i) && self.eaters(s, i) > 0 && self.eaters(o, i) > 0));
                 if let Some(i) = contested {
                     if self.act(s, Verb::Spore(i)) {
@@ -1021,11 +1353,17 @@ impl Skirmish {
     }
 }
 
+/// Late drops for a bell at `bell` seconds: every `LATE_EVERY` from
+/// `LATE_FIRST` to 40 s before it (`LATE_COUNT`, 7, at the 2:30 bell).
+pub fn late_count(bell: u64) -> u64 {
+    (bell.saturating_sub(40 + LATE_FIRST)) / LATE_EVERY + 1
+}
+
 /// Late food for dish `seed` (`LATE_FIRST`...): even turns one pile on the
 /// centre line, odd turns a mirrored pair, each on open agar at least 20
 /// cells from every other pile, early or late, and 30 from either home.
 /// Seeded apart from the dish's own random stream.
-fn late_food(dish: &mut Dish, seed: u64) {
+fn late_food(dish: &mut Dish, seed: u64, count: u64) {
     let mut r = seed.wrapping_mul(0xD1B5_4A32_D192_ED03) | 1;
     let mut roll = move || {
         r ^= r << 13;
@@ -1035,7 +1373,7 @@ fn late_food(dish: &mut Dish, seed: u64) {
     };
     let mut taken: Vec<(f32, f32)> = dish.piles.iter().map(|p| (p.x, p.y)).collect();
     let template = dish.piles[1].clone();
-    for k in 0..LATE_COUNT {
+    for k in 0..count {
         let at = (LATE_FIRST + k * LATE_EVERY) * SPS;
         let pair = k % 2 == 1;
         for _ in 0..500 {
@@ -1202,6 +1540,119 @@ mod tests {
     }
 
     #[test]
+    fn a_later_bell_brings_late_food_until_40_s_before_it() {
+        assert_eq!(late_count(150), LATE_COUNT, "the 2:30 game is unchanged");
+        let mut s = Skirmish::new(3, [None, None]);
+        let first: Vec<u64> = s.dish.pending.iter().map(|p| p.0).collect();
+        assert!(s.set("bell", "240"));
+        assert_eq!(s.dish.storm_at, 240 * SPS);
+        let last = s.dish.pending.iter().map(|p| p.0).max().unwrap();
+        assert!(last > 150 * SPS && last <= 200 * SPS, "last drop at {}", last / SPS);
+        // The drops the 2:30 game had come first, in the same places.
+        assert_eq!(&s.dish.pending.iter().map(|p| p.0).collect::<Vec<_>>()[..first.len()], &first[..]);
+    }
+
+    #[test]
+    fn eaten_piles_regrow_and_neglected_ones_faster() {
+        let mut s = Skirmish::new(1, [None, None]);
+        let i = 19; // a centre-line pile nobody reaches at once
+        s.dish.piles[i].food = 0.0;
+        s.regrow(0);
+        assert_eq!(s.dish.piles[i].food, 0.0, "no regrowth as built");
+        s.rules.regrow = 0.01;
+        let step = 0.01 * s.dish.piles[i].full / SPS as f32;
+        s.regrow(SPS);
+        assert!((s.dish.piles[i].food - step).abs() < 1e-3);
+        s.regrow(25 * SPS);
+        assert!((s.dish.piles[i].food - 3.0 * step).abs() < 1e-3, "twice as fast once left alone 20 s");
+        let full = s.dish.piles[0].full;
+        s.dish.piles[0].food = full;
+        s.regrow(26 * SPS);
+        assert_eq!(s.dish.piles[0].food, full, "never past full");
+        // In play: the regrowth stays on the pile, for both moulds, and
+        // nobody is scored for eating it. Before the fix the rival's copy
+        // of the piles missed it, so it came off as the rival's bite.
+        let mut s = Skirmish::new(1, [None, None]);
+        s.rules.regrow = 0.01;
+        run(&mut s, 1);
+        let i = (0..s.dish.piles.len()).find(|&i| s.eaters(0, i) + s.eaters(1, i) == 0).unwrap();
+        s.dish.piles[i].food = 0.0;
+        run(&mut s, 1);
+        assert_eq!(s.eaters(0, i) + s.eaters(1, i), 0, "nobody there yet");
+        assert!(s.dish.piles[i].food > 0.9 * step * SPS as f32, "it grew back");
+        assert_eq!(s.dish.rival.as_ref().unwrap().piles[i].food, s.dish.piles[i].food, "the rival sees it too");
+    }
+
+    #[test]
+    fn a_pile_counts_as_held_two_to_one() {
+        let mut s = Skirmish::new(1, [None, None]);
+        let mut at = |mine: u32, theirs: u32| {
+            s.dish.piles[5].eaters = mine;
+            s.dish.piles[5].foe_eaters = theirs;
+            (s.holds(0, 5), s.holds(1, 5))
+        };
+        assert_eq!(at(10, 5), (true, false));
+        assert_eq!(at(9, 5), (false, false));
+        assert_eq!(at(1, 0), (true, false));
+        assert_eq!(at(0, 0), (false, false));
+        assert_eq!(at(3, 7), (false, true));
+        // Points run under either score; the share reads the one in force.
+        let mut s = Skirmish::new(2, [None, None]);
+        run(&mut s, 10);
+        assert!(s.points[0] > 0.0 && s.points[1] > 0.0);
+        assert_eq!(s.share(), s.food_share());
+        s.rules.score_held = true;
+        assert_eq!(s.share(), s.points_share());
+    }
+
+    #[test]
+    fn a_strike_counts_down_in_view_and_fortified_walkers_fight_harder() {
+        let mut s = Skirmish::new(2, [None, None]);
+        s.rules.strike_delay = 5;
+        run(&mut s, 30);
+        let theirs = (0..s.dish.piles.len()).find(|&i| s.eaters(1, i) > 0 && s.eaters(0, i) == 0).unwrap();
+        s.sides[0].bank = 2.0 * SPORE_COST;
+        let before = s.walkers(0);
+        assert!(s.act(0, Verb::Spore(theirs)));
+        assert_eq!(s.walkers(0), before, "nothing lands at once");
+        assert_eq!(s.strikes.len(), 1);
+        assert_eq!(s.strikes[0].pile, theirs);
+        assert!(s.sides[0].bank < SPORE_COST * 1.01, "paid when bought");
+        run(&mut s, 6);
+        assert!(s.strikes.is_empty());
+        assert_eq!(s.strike_log.len(), 1, "it landed on a pile the rival held");
+        // Fortify only where you eat; it lasts its seconds.
+        s.sides[1].bank = 1000.0;
+        assert!(!s.act(1, Verb::Fortify(0)), "the rival does not eat at your home");
+        assert!(s.act(1, Verb::Fortify(22)));
+        assert_eq!(s.dish.rival.as_ref().unwrap().fortify.len(), 1);
+        assert_eq!(s.dish.fortify.len(), 1, "the other side's walkers there die faster");
+        assert_eq!(s.dish.fortify[0].3, 4.0);
+        s.rules.fortify_harm = 1.0;
+        assert!(s.act(1, Verb::Fortify(22)));
+        assert!(s.dish.fortify.is_empty(), "unless the rules say not");
+        run(&mut s, 16);
+        assert!(s.dish.rival.as_ref().unwrap().fortify.is_empty(), "gone after 15 s");
+        assert!(s.dish.fortify.is_empty());
+        // The same dish and dice with every walker dug in at nothing: no
+        // losses where there were some.
+        let mut s = Skirmish::new(3, [Some(Plan::Raid), Some(Plan::Raid)]);
+        let mut fronts = 0;
+        for _ in 0..40 {
+            run(&mut s, 1);
+            let foe = s.dish.rival.as_ref().unwrap().occ.clone();
+            let mut open = s.dish.clone();
+            let mut dug = s.dish.clone();
+            dug.fortify = vec![(128.0, 80.0, 400.0, 0.0)];
+            let (a, b) = (open.fight_losses(&foe), dug.fight_losses(&foe));
+            assert!(b.is_empty());
+            fronts += !a.is_empty() as u32;
+        }
+        assert!(fronts > 0);
+        assert_eq!(Plan::parse("brace"), Some(Plan::Brace));
+    }
+
+    #[test]
     fn short_supply_lines_lose_more_walkers_at_the_same_front() {
         // Two raiders meet; the same dish and the same dice, fought with and
         // without a supply limit. Every walker that dies fed also dies
@@ -1258,9 +1709,12 @@ mod tests {
         run(&mut s, RALLY_SECONDS + 1);
         assert_eq!(s.dish.beacons[0].2, BEACON_GAIN, "the rally never went out");
         assert_eq!(s.price(0, Verb::Spore(theirs)), SPORE_COST);
-        s.sides[0].bank = 10.0 * SPORE_COST;
+        s.sides[0].bank = 2.5 * SPORE_COST;
         assert!(s.act(0, Verb::Spore(theirs)));
+        assert_eq!(s.sides[0].bank, 1.5 * SPORE_COST, "charged the price shown");
         assert!(s.act(0, Verb::Spore(theirs)));
+        assert_eq!(s.sides[0].bank, 0.0, "the second at half again, and never below zero");
+        assert!(!s.act(0, Verb::Spore(theirs)));
         assert_eq!(s.price(0, Verb::Spore(theirs)), 2.0 * SPORE_COST);
         assert_eq!(s.price(1, Verb::Spore(mine)), SPORE_COST, "the rival pays for your burst");
         run(&mut s, 31);

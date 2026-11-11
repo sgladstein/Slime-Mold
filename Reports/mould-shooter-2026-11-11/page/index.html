@@ -47,6 +47,25 @@ ul { margin: 0; padding-left: 1.2em; max-width: 65ch; display: grid; gap: 6px; }
   </header>
 
   <section>
+    <h2>The priced ring: ringing forever never wins</h2>
+    <p class="verdict">With every shot costing food, the larder running dry and fronts slowed to arrive at about 32 s, the best plan is to ring the larder while it has food, then mow the mould off the other piles. It tops all 16 seeds at shot prices 10 and 40. At 120, no shooting pays.</p>
+    <p>The squad harvests 100 food a second from its larder and the two nearest piles, but nothing from a pile while mould eats there. A round is 480 game seconds. The score is the food left in the bank at the end. A ring held all round keeps the larder clean, but once the larder is empty it guards nothing and still costs 1.67 shots a second. Every shooting plan beats random fire at prices 10 and 40 on 16 of 16 seeds. It is still a ladder, though, not strategies that counter each other: the mould grows the same whatever the squad does, so one plan wins.</p>
+    <div class="tbl"><table>
+      <tr><th>Plan (median bank)</th><th>Price 10</th><th>Price 40</th><th>Price 120</th></tr>
+      <tr><td>Idle</td><td class="num">10,600</td><td class="num">10,600</td><td class="num good">10,600</td></tr>
+      <tr><td>Random fire</td><td class="num">6,710</td><td class="num bad">20</td><td class="num">60</td></tr>
+      <tr><td>Ring all round</td><td class="num">31,510</td><td class="num">7,540</td><td class="num">60</td></tr>
+      <tr><td>Mow the eaters</td><td class="num">32,085</td><td class="num">10,392</td><td class="num">60</td></tr>
+      <tr><td>Ring + mow</td><td class="num">48,119</td><td class="num">13,559</td><td class="num">40</td></tr>
+      <tr><td><b>Ring, then mow</b></td><td class="num good">50,480</td><td class="num good">23,420</td><td class="num">40</td></tr>
+    </table></div>
+    <div class="pics">
+      <figure><img src="econ-ring.png" alt="Seed 1 at 360 game seconds, price 40: a pentagon ring round an empty larder"><figcaption><b>Ring all round, 6:00</b><span class="n">larder empty, ring still paid for · bank 7,540 median at the bell</span></figcaption></figure>
+      <figure><img src="econ-mow.png" alt="Seed 1 at 120 game seconds, price 40: shot marks on three held piles with mould round them"><figcaption><b>Mow the eaters, 2:00</b><span class="n">mould back within a second of each shot · bank 10,392 median</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
     <h2>Correction: a ring held from the start stops all theft</h2>
     <p class="verdict">With the snip fixed, a ring of fire held from the first second kept every walker off the larder: 0 stolen on 16 of 16 seeds, against 12,301 with no shooting.</p>
     <p>The first runs had a bug. Firing again on ground already wounded did nothing, so a ring held by repeated shots healed all at once 4 seconds after its first shots, and the mould poured in then. Now a shot over an open wound keeps it open. Rerun with the fix, a ring raised only once the mould is near still saves 0.6% (it bites at about 4 s, and once any walker eats, a pile's theft rate is capped), and firing at the mould on the larder saves 98.7% (154 stolen). Three independent reviews (code, write-up, game design) are in the repo; the design review finds the ring is now the dominant play and proposes pricing it by length and time.</p>

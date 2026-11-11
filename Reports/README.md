@@ -120,8 +120,12 @@ move.
   control): a holder's bonus made the snowball worse, supply lines did nothing, size upkeep eased it most but let doing
   nothing tie the best plans, and desperate fights (starving walkers fight harder) eased it with the tools intact and
   are now the page's default; soft and keep stay on top under every rule. Half the food is gone by 1:00, so even with
-  no snowball the side ahead then would win about 70%. v2 is playable in the browser against any plan (pages *Mould
-  Budget Skirmish* and *Budget Skirmish Strategies*).
+  no snowball the side ahead then would win about 70%. Rounds 7 and 7b (the economy sketch, 2,240 games after two bug
+  fixes): food after 1:00 (a 4:00 match, regrowing piles) goes to the side ahead at 1:00, which still wins 80-85%;
+  regrowth cuts wipe-outs (132 against 217 of 448); a held-ground score changes nothing. A strike counted down 5 s in
+  view, with a Fortify that kills attackers in its ring, dethrones soft (brace 15/16, keep 14/16), but brace (strike,
+  and fortify what is struck) then wins every pairing. v2 is playable in the browser against any plan and opens on
+  Strike and Fortify (pages *Mould Budget Skirmish* and *Budget Skirmish Strategies*).
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as
@@ -183,6 +187,13 @@ move.
   810 MHz); the Jenson settings cost twice ours in the sense pass. Seed
   tables, per-pass costs and clock logs in
   [`gpu-sandbox-2026-11-11/review/`](gpu-sandbox-2026-11-11/review/).
+  *Looks as controls (11-11):* the looks report's rules (disc and haze,
+  trail-set settings, deposit cap, floor, wander, contagion) on two new
+  panel pages and seven presets (keys 9, 0, Shift+1-5); a new twin test
+  matches them to the bit on six dishes (planted bugs: 7165 and 3046
+  walkers off). Off, they cost 0.01 ms a frame on the GTX 1070; contagion
+  0.3 ms at 100k; the 1M presets 3.9-9.8 ms. Videos, raw output and the
+  1070's runs in [`gpu-sandbox-2026-11-11/looks/`](gpu-sandbox-2026-11-11/looks/).
 - [jenson-looks-2026-11-11.md](jenson-looks-2026-11-11.md) — **research with small tests, no game change: Jenson's
   three missing looks on the big dish.** Owner asked 00:06Z. New `BigParams` rules, all off by default: a centred
   starting disc and haze, 36 Points' trail-dependent settings, Bleuje's square-root deposit, a sensing floor, wander, and
@@ -247,6 +258,7 @@ move.
   engines, AlphaStar, the spinning top), lessons for the mould, and feedback on both demos: soft and Trunk are
   dominant strategies and the snowball is unmanaged positive feedback; fix with a size cost, a pull-back rule, a
   points ending and telegraphed attacks before adding verbs. Reading only, no runs. Cards in `research/sources/`.
+- [larder-build-plan-2026-11-11.md](larder-build-plan-2026-11-11.md) — **Larder build plan for the RTS demo** (Claude Doc copy), three independent reviews and their prompts (`larder-build-plan-2026-11-11/reviews/`), and the plan revised after them: crossover gate in place of an impossible counter cycle, bait and turret, killable mould core, one ordered score.
 - [mould-shooter-2026-11-11.md](mould-shooter-2026-11-11.md) — **the mould as the enemy, a shooter brainstorm**
   (owner, 11-11 00:18Z). Lead shape Larder: a squad and the mould want the same food; stored food smells, so a
   hoard draws the mould; shots cut supply by holding a tube clear, not by kills (the knife is weak); four
@@ -255,5 +267,6 @@ move.
   a fed pile feeds its own eaters, so cuts only hurt mould with no food; a trail-only gun does nothing; smell and
   lean-vs-fat show 16/16 but tiny effects, because the mould crosses today's dish in about 4 s. **Correction:** a re-fired
   snip did not refresh its wound; fixed, a ring held from the start stops all theft (16/16); three reviews in `reviews/`.
+  **Priced ring** (`econ`): ring-forever never best; ring-then-mow best on 16/16 at prices 10 and 40; a ladder.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

@@ -13,6 +13,7 @@ import sys
 from collections import defaultdict
 
 LINE = re.compile(r"^(\w+) DUEL seed=(\d+) left=(\w+) right=(\w+) share=([\d.]+) at60=([\d.]+) .* t=(\d+)")
+BELL = re.compile(r" bell=(\d+)")
 
 
 def sign_p(k, n):
@@ -32,7 +33,9 @@ for f in sys.argv[1:]:
         tag = m[1]
         if tag not in order:
             order.append(tag)
-        games[tag].append((int(m[2]), m[3], m[4], float(m[5]), float(m[6]), int(m[7])))
+        # The bell is on the line from round 7; 150 before.
+        k = BELL.search(line)
+        games[tag].append((int(m[2]), m[3], m[4], float(m[5]), float(m[6]), int(m[7]), int(k[1]) if k else 150))
 
 for tag in order:
     g = games[tag]
@@ -40,7 +43,7 @@ for tag in order:
     wins = defaultdict(int)  # (a, b) -> games a won against b
     n = defaultdict(int)
     share = defaultdict(list)
-    for seed, l, r, s, s60, t in g:
+    for seed, l, r, s, s60, t, _bell in g:
         n[(l, r)] += 1
         n[(r, l)] += 1
         share[l].append(s)
@@ -49,8 +52,8 @@ for tag in order:
             wins[(l, r)] += 1
         elif s < 0.5:
             wins[(r, l)] += 1
-    lead = [(s60 > 0.5) == (s > 0.5) for _, _, _, s, s60, _ in g if s60 != 0.5 and s != 0.5]
-    wiped = sum(1 for x in g if x[5] < 150)
+    lead = [(s60 > 0.5) == (s > 0.5) for _, _, _, s, s60, _, _ in g if s60 != 0.5 and s != 0.5]
+    wiped = sum(1 for x in g if x[5] < x[6])
     print(f"== {tag}: {len(g)} games; ahead at 1:00 won {sum(lead)}/{len(lead)} ({sum(lead)/len(lead):.0%}); wipe-outs {wiped}")
     print("   soft v: " + ", ".join(f"{o} {wins[('soft', o)]}/{n[('soft', o)]}" for o in plans if o != "soft"))
     beats_soft = [o for o in plans if o != "soft" and wins[(o, "soft")] > n[(o, "soft")] / 2]
