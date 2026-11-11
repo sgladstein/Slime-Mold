@@ -123,8 +123,9 @@ Ask each again; none has an answer to assume.
    [page](wiki/rts/shooter.md)). Owner chose (11-11 00:30Z) a squad, solo,
    tests first. After a snip fix, a ring of fire held from the start keeps
    the mould off the larder (0 stolen, 16/16) and is now the dominant play.
-   Open: whether to run the design review's test (a priced ring, a larder
-   that runs dry, slowed fronts, scripted plans).
+   Priced (shots cost food, larder runs dry, slowed fronts), ring-forever
+   never wins but ring-then-mow tops every seed: a ladder. Open: which
+   mould answer to add so plans can counter each other.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo

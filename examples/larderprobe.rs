@@ -484,6 +484,252 @@ fn show(name: &str, seeds: &[u64], o: &[Out]) {
     );
 }
 
+// ------------------------------------------------------------ the economy
+
+/// **The priced ring** (`econ`; the design review's test, owner's yes at
+/// 2026-11-11 03:03Z). The mould is slowed: one game second is `SLOW_STEPS`
+/// steps (an eighth of today's second), so it first reaches the larder at
+/// about 30 game seconds instead of 4, and wounds last `Params::wound`
+/// game seconds. The squad holds three piles: the larder and the two field
+/// piles nearest it. Each game second it harvests `HARVEST` food from each
+/// held pile with food left and **no mould eating there**; what it takes
+/// comes off the pile, so the larder runs dry. Every shot costs `price`.
+/// The score is the bank at the end: food harvested less food spent.
+const SLOW_STEPS: u64 = SPS / 8;
+const ROUND: u64 = 480;
+const HARVEST: f32 = 100.0;
+/// Seconds between ring shots: five arcs refreshed every 3 s, inside the
+/// 4 s a wound lasts.
+const RING_GAP: f32 = 0.6;
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Plan {
+    Idle,
+    /// One shot a game second anywhere on the dish.
+    Random,
+    /// The larder's ring from 0 s to the bell, whatever it costs.
+    Ring,
+    /// Fire through each held pile with mould eating it, once a second each.
+    Mow,
+    /// Ring on the larder and mow the two away piles.
+    RingMow,
+    /// Ring the larder only while it still holds food worth guarding
+    /// (more than `RING_GAP` seconds of shots would cost), then mow.
+    RingThenMow,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct Econ {
+    bank: f32,
+    harvested: f32,
+    spent: f32,
+    shots: u32,
+    mould_ate: f32,
+    larder_left: f32,
+    first_bite: Option<f32>,
+}
+
+fn held_piles(d: &Dish) -> Vec<usize> {
+    let li = larder_index(d);
+    let mut by: Vec<(f32, usize)> = d
+        .piles
+        .iter()
+        .enumerate()
+        .filter(|&(k, _)| k != li)
+        .map(|(k, p)| ((p.x - LARDER.0).hypot(p.y - LARDER.1), k))
+        .collect();
+    by.sort_by(|a, b| a.0.total_cmp(&b.0));
+    vec![li, by[0].1, by[1].1]
+}
+
+fn econ_run(seed: u64, plan: Plan, price: f32, look: Option<&str>) -> Econ {
+    let mut d = dish(
+        seed,
+        Setup {
+            hand: Hand::Idle,
+            gun: Gun::Snip,
+            gain: 0.0,
+            food: 1.0,
+            every: EVERY,
+        },
+    );
+    // Wounds last 4 game seconds: `wound` is read in today's seconds.
+    d.params.wound = 4.0 * SLOW_STEPS as f32 / SPS as f32;
+    let held = held_piles(&d);
+    let li = held[0];
+    let start: Vec<f32> = d.piles.iter().map(|p| p.food).collect();
+    let mut rng = Rng(seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1);
+    let mut e = Econ::default();
+    let ring_every = (RING_GAP * SLOW_STEPS as f32) as u64;
+    let mut arc = 0u64;
+    let mut squad_took = vec![0.0f32; d.piles.len()];
+    for t in 0..ROUND * SLOW_STEPS {
+        let second = t % SLOW_STEPS == 0;
+        let fire = |d: &mut Dish, line: ((f32, f32), (f32, f32)), e: &mut Econ| {
+            if e.bank >= price {
+                e.bank -= price;
+                e.spent += price;
+                e.shots += 1;
+                snip(d, line);
+            }
+        };
+        let larder_worth = d.piles[li].food > HARVEST * 30.0;
+        let ring_on = match plan {
+            Plan::Ring | Plan::RingMow => true,
+            Plan::RingThenMow => larder_worth,
+            _ => false,
+        };
+        if ring_on && t % ring_every == 0 {
+            let a = (arc % FORT_ARCS) as f32 + 0.5;
+            let a = a / FORT_ARCS as f32 * std::f32::consts::TAU;
+            arc += 1;
+            fire(
+                &mut d,
+                (
+                    (LARDER.0 + RING * a.cos(), LARDER.1 + RING * a.sin()),
+                    (-a.sin(), a.cos()),
+                ),
+                &mut e,
+            );
+        }
+        if second {
+            let mow: &[usize] = match plan {
+                Plan::Mow => &held,
+                Plan::RingMow => &held[1..],
+                Plan::RingThenMow => {
+                    if ring_on {
+                        &held[1..]
+                    } else {
+                        &held
+                    }
+                }
+                _ => &[],
+            };
+            for &k in mow {
+                if d.piles[k].eaters > 0 {
+                    let ang = rng.f() * std::f32::consts::PI;
+                    let at = (d.piles[k].x, d.piles[k].y);
+                    fire(&mut d, (at, (ang.cos(), ang.sin())), &mut e);
+                }
+            }
+            if plan == Plan::Random {
+                let ang = rng.f() * std::f32::consts::PI;
+                let at = loop {
+                    let at = (rng.f() * W as f32, rng.f() * H as f32);
+                    if on_agar(&d, at.0, at.1) {
+                        break at;
+                    }
+                };
+                fire(&mut d, (at, (ang.cos(), ang.sin())), &mut e);
+            }
+            // The harvest: none from a pile the mould is eating at.
+            for &k in &held {
+                let p = &mut d.piles[k];
+                if p.eaters == 0 && p.food > 0.0 {
+                    let take = HARVEST.min(p.food);
+                    p.food -= take;
+                    squad_took[k] += take;
+                    e.bank += take;
+                    e.harvested += take;
+                }
+            }
+        }
+        d.step();
+        if e.first_bite.is_none() && d.piles[li].eaters > 0 {
+            e.first_bite = Some(t as f32 / SLOW_STEPS as f32);
+        }
+        if let Some(dir) = look {
+            if (t + 1) % (60 * SLOW_STEPS) == 0 {
+                save(
+                    &d,
+                    &format!("{dir}/econ-s{seed}-{plan:?}-p{price}-{:03}.png", (t + 1) / SLOW_STEPS),
+                );
+            }
+        }
+    }
+    e.mould_ate = d
+        .piles
+        .iter()
+        .enumerate()
+        .map(|(k, p)| start[k] - p.food - squad_took[k])
+        .sum();
+    e.larder_left = d.piles[li].food;
+    e
+}
+
+fn econ_main(seeds: &[u64], prices: &[f32]) {
+    const PLANS: [Plan; 6] = [
+        Plan::Idle,
+        Plan::Random,
+        Plan::Ring,
+        Plan::Mow,
+        Plan::RingMow,
+        Plan::RingThenMow,
+    ];
+    println!(
+        "priced ring: round {ROUND} game s, a game second = {SLOW_STEPS} steps, harvest {HARVEST}/s from 3 held piles, {} seeds",
+        seeds.len()
+    );
+    for &price in prices {
+        println!("\n== shot price {price}");
+        let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1);
+        let mut res: Vec<Vec<Econ>> = Vec::new();
+        for &plan in &PLANS {
+            let mut out = vec![Econ::default(); seeds.len()];
+            std::thread::scope(|sc| {
+                let n = seeds.len().div_ceil(threads);
+                for (o, s) in out.chunks_mut(n).zip(seeds.chunks(n)) {
+                    sc.spawn(move || {
+                        for (slot, &seed) in o.iter_mut().zip(s) {
+                            *slot = econ_run(seed, plan, price, None);
+                        }
+                    });
+                }
+            });
+            let med = |f: &dyn Fn(&Econ) -> f32| median(out.iter().map(f).collect());
+            println!(
+                "  {:12} bank {:7.0}  harvested {:7.0}  spent {:6.0}  shots {:5.0}  mould ate {:7.0}  larder left {:6.0}  first bite {:5.1}",
+                format!("{plan:?}"),
+                med(&|e| e.bank),
+                med(&|e| e.harvested),
+                med(&|e| e.spent),
+                med(&|e| e.shots as f32),
+                med(&|e| e.mould_ate),
+                med(&|e| e.larder_left),
+                med(&|e| e.first_bite.unwrap_or(ROUND as f32)),
+            );
+            res.push(out);
+        }
+        // Who wins each seed, and each plan against idle and random.
+        let mut wins = [0u32; PLANS.len()];
+        for k in 0..seeds.len() {
+            let best = (0..PLANS.len())
+                .max_by(|&a, &b| res[a][k].bank.total_cmp(&res[b][k].bank))
+                .unwrap();
+            wins[best] += 1;
+        }
+        let bank = |i: usize| res[i].iter().map(|e| e.bank).collect::<Vec<_>>();
+        for (i, plan) in PLANS.iter().enumerate() {
+            println!(
+                "  {:12} best on {:2} seeds; {}; {}",
+                format!("{plan:?}"),
+                wins[i],
+                paired("it", "idle", &bank(i), &bank(0), false),
+                paired("it", "random", &bank(i), &bank(1), false)
+            );
+        }
+        println!(
+            "  ring v ring+mow: {}",
+            paired("ring", "ring+mow", &bank(2), &bank(4), false)
+        );
+        println!("  ring v mow: {}", paired("ring", "mow", &bank(2), &bank(3), false));
+        println!(
+            "  ring v ring-then-mow: {}",
+            paired("ring", "ring-then-mow", &bank(2), &bank(5), false)
+        );
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let seeds = seeds(arg(&args, "seeds"));
@@ -515,6 +761,23 @@ fn main() {
     }
     let t0 = std::time::Instant::now();
     match args.first().map(String::as_str) {
+        Some("econ") => {
+            let prices: Vec<f32> = arg(&args, "prices")
+                .unwrap_or("10,40,120")
+                .split(',')
+                .map(|v| v.parse().unwrap())
+                .collect();
+            econ_main(&seeds, &prices);
+        }
+        Some("econlook") => {
+            let dir = arg(&args, "dir").unwrap_or("econlook");
+            std::fs::create_dir_all(dir).expect("dir");
+            let price: f32 = arg(&args, "price").map(|v| v.parse().unwrap()).unwrap_or(40.0);
+            for plan in [Plan::Idle, Plan::Ring, Plan::Mow] {
+                let e = econ_run(seeds[0], plan, price, Some(dir));
+                println!("{plan:?}: {e:?}");
+            }
+        }
         Some("fort") => {
             println!("fortress: ring held from 0 s, {SECONDS} s, {} seeds", seeds.len());
             let idle = par(&seeds, |sd| {
