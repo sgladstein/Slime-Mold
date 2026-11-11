@@ -26,6 +26,7 @@ persistent world on the GPU big dish, with energy crystals that drain
 - [Larder World](wiki/world/larder.md): phases W0-W5; W1a's crystals, terrain and walls are on the CPU big dish; next W0 growth on the GPU, then Larder in the world ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)).
 - [The mould tiers](wiki/world/mould-tiers.md): the difficulty ladder; Sporer, Sleeper and Swarmer built ([the life cycle](wiki/model/life-cycle.md)).
 - [The Larder player AI](wiki/world/player-ai.md): plays through the player's commands; `cargo run --release --bin larder -- 17 ai=lure`.
+- [The world camera and UI](wiki/world/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls; the engine is `slime_mould::gpu`; sandbox W, Q, M; 0.3-0.4 ms a frame on the 1070.
 - [The mould at scale](wiki/model/scale.md): GPU phases 1-3 done; phase 4 is W0. [The GPU sandbox](wiki/model/gpu-sandbox.md): `cargo run --release --bin mouldgpu`. [Outside looks and creature rules](wiki/model/outside-looks.md): species, droplets, trunks, contagion.
 - [The field skirmish](wiki/rts/skirmish.md) and [Two Fevers](wiki/rts/two-fevers.md): playable RTS demos where one strategy still wins; [the RTS directions](wiki/rts/directions.md).
 - How work is judged: [the census](wiki/method/census.md).

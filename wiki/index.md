@@ -40,6 +40,7 @@ work; a thread working on one directly may change it.
 - [Larder World](world/larder.md): a squad against several mould species in a persistent GPU world with crystals; phases W0-W5; W1a fields done; the small-dish M1-M3 history.
 - [The Larder player AI](world/player-ai.md): plays soldiers through the player's commands, one brain per side; boom, lure, adapt beat idle and random 16/16.
 - [The mould tiers](world/mould-tiers.md): the difficulty ladder, Drifter to Mixes plus Sporer, Sleeper, Swarmer; each tier has a counter.
+- [The world camera and UI](world/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls over a world bigger than the screen; sandbox W, Q, M; 0.3-0.4 ms on the 1070.
 
 ## Other games in design
 

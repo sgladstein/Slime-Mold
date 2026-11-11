@@ -44,7 +44,9 @@ code at build time.
 | `src/mould/wander.rs` | The Wanderer prototype |
 | `src/mould/organ.rs` | the Mould Organ prototype |
 | `src/mould/tune.rs` | the T tuning panel |
+| `src/gpu/` | the big dish on the GPU: `engine.wgsl` and `Engine`, shared by the sandbox and the Larder world (wgpu through pixels) |
 | `src/bin/mould.rs`, `src/bin/organ.rs` | the windows (winit + pixels only) |
+| `src/bin/mouldgpu.rs`, `src/bin/larder.rs` | the GPU sandbox's window, panel and presets; the Larder window |
 | `src/hud.rs`, `src/hud_crisp.rs`, `src/wav.rs` | copied from Pixel_Physics: font and WAV writer |
 | `examples/` | the tools, below |
 | `wiki/` | what is true now, one page per dish, tool and mechanism, each citing its reports: [wiki/index.md](wiki/index.md) |
