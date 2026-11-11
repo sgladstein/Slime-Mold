@@ -86,19 +86,35 @@ impl Game {
     }
 }
 
-/// A new skirmish on dish `seed` against `Plan::ALL[rival]`. `rules` 1 is
-/// round 3's counterplay rules: spores sleep 5 s where the buyer has no
-/// mould, and a spore costs half again for each one bought in the last
-/// 30 s; 0 is version 2 as first built. You start on a 10% tithe. Time
-/// stands still until `sk_unbrief`.
+/// The page's rule sets, by `sk_new`'s `rules`: 0 version 2 as first
+/// built; 1 round 3's counterplay (spores sleep 5 s where the buyer has no
+/// mould, and a spore costs half again for each bought in the last 30 s);
+/// 2-4 that plus one of round 4's model changes: a holder's bonus at a
+/// pile (`hold` 2), upkeep that grows with size (`upkeep_size` 0.2), or
+/// desperate fights (starving walkers fight harder).
+const RULE_SETS: [&[(&str, &str)]; 5] = [
+    &[],
+    &[("spore_dormant", "5"), ("dormant_abroad_only", "1"), ("spore_ramp", "0.5")],
+    &[("spore_dormant", "5"), ("dormant_abroad_only", "1"), ("spore_ramp", "0.5"), ("hold", "2")],
+    &[("spore_dormant", "5"), ("dormant_abroad_only", "1"), ("spore_ramp", "0.5"), ("upkeep_size", "0.2")],
+    &[
+        ("spore_dormant", "5"),
+        ("dormant_abroad_only", "1"),
+        ("spore_ramp", "0.5"),
+        ("fight_fed", "2"),
+        ("fight_unfed", "0.5"),
+    ],
+];
+
+/// A new skirmish on dish `seed` against `Plan::ALL[rival]`, under
+/// `RULE_SETS[rules]`. You start on a 10% tithe. Time stands still until
+/// `sk_unbrief`.
 #[no_mangle]
 pub extern "C" fn sk_new(seed: u32, rival: u32, rules: u32) {
     let plan = Plan::ALL.get(rival as usize).copied().unwrap_or(Plan::Soft);
     let mut sk = Skirmish::new(seed as u64, [None, Some(plan)]);
-    if rules == 1 {
-        for (k, v) in [("spore_dormant", "5"), ("dormant_abroad_only", "1"), ("spore_ramp", "0.5")] {
-            sk.rules.set(k, v);
-        }
+    for (k, v) in RULE_SETS.get(rules as usize).copied().unwrap_or(&[]) {
+        sk.set(k, v);
     }
     sk.set_tithe(0, TITHES[1]);
     let (w, h) = render::frame_size(SCALE);
