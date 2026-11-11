@@ -8,15 +8,19 @@
 # (r 0) or over a 17 x 17 square (r 8). Arm A: species 0 has 0.55 of the
 # walkers; arm B: 0.5 (same interleaving). Deciding measure, named before the
 # run: species 0's gain in walker share from the start to 30 s, A against B,
-# for each r.
+# for each r. With ZONES=1 the species start in their own halves of the
+# whole dish (blob 0, species_zones), r 8 only, so the bodies form apart
+# and meet as bodies; the measure is the same.
 set -u
 JOBS=${1:-4}; SEEDS=${SEEDS:-"1 2 3 4 5 6 7 8"}
 OUT=${OUT:-/tmp/hunt}; mkdir -p "$OUT"
 BIN=${BIN:-./target/release/examples/bigdish}
 B="preset=dense piles=1 food_deposit=0 crowd=1 walkers=30000 deposit=5 rotate_angle=45 sensor_angle=90 sensor_offset=9 keep=0.93 blob=1 blob_r=120 blocked_deposit=1 graze_weight=10 species=2 species_avoid=-0.5 species_convert=1.2 report=10 threads=1 seconds=30"
+RS="0 8"
+if [ "${ZONES:-0}" = 1 ]; then B="${B/blob=1 blob_r=120/blob=0 species_zones=1}"; RS=8; fi
 n=0
 for s in $SEEDS; do
-  for r in 0 8; do
+  for r in $RS; do
     for arm in A B; do
       share=0.5; [ $arm = A ] && share=0.55
       ( $BIN $B seeds=$s tag=hunt-r$r-$arm species_convert_r=$r species_share=$share 2>&1 | grep -E "walkers" ) > "$OUT/r$r-$arm-$s.txt" &
@@ -25,4 +29,4 @@ for s in $SEEDS; do
   done
 done
 wait
-for s in $SEEDS; do for r in 0 8; do for arm in A B; do cat "$OUT/r$r-$arm-$s.txt"; done; done; done
+for s in $SEEDS; do for r in $RS; do for arm in A B; do cat "$OUT/r$r-$arm-$s.txt"; done; done; done
