@@ -56,34 +56,47 @@ const fn home(x: f32, y: f32) -> PileSpec {
 /// The scatter layout (the field sampler's seed 7, at least 28 cells
 /// apart): nine piles a side mirrored about x = 128, three on the centre
 /// line, and the two homes. 375k food.
+///
+/// **Half a cell in from the whole number** (2026-11-10): a pile's own
+/// cells (where `fed` starts, where spores land) are the disc of cells
+/// round `floor(x)`, so a pile at 40.0 owned the cells round cell 40 and
+/// its mirror at 216.0 those round cell 216, one column off the true
+/// mirror (cell 215). On whole-number x the left mould won 24 of 32 idle v
+/// idle games (mean share 0.534) and 14 of 16 mirror games in all; with
+/// every side pile half a cell toward the centre line it won 16 of 32
+/// (0.505). Swapping which mould starts where showed the edge followed
+/// the left start, not your mould, and letting the moulds take turns
+/// (`Dish::take_turns`) changed nothing. The three centre-line piles stay
+/// on 128.0, one column right of centre: no odd disc can sit on a line
+/// between cells.
 static PILES: [PileSpec; 23] = [
-    home(40.0, 80.0),
-    small(78.0, 20.0),
-    small(178.0, 20.0),
-    small(67.0, 61.0),
-    small(189.0, 61.0),
-    small(18.0, 71.0),
-    small(238.0, 71.0),
-    small(56.0, 126.0),
-    small(200.0, 126.0),
-    small(110.0, 17.0),
-    small(146.0, 17.0),
-    small(98.0, 51.0),
-    small(158.0, 51.0),
-    small(92.0, 108.0),
-    small(164.0, 108.0),
-    small(96.0, 142.0),
-    small(160.0, 142.0),
-    small(65.0, 96.0),
-    small(191.0, 96.0),
+    home(40.5, 80.0),
+    small(78.5, 20.0),
+    small(177.5, 20.0),
+    small(67.5, 61.0),
+    small(188.5, 61.0),
+    small(18.5, 71.0),
+    small(237.5, 71.0),
+    small(56.5, 126.0),
+    small(199.5, 126.0),
+    small(110.5, 17.0),
+    small(145.5, 17.0),
+    small(98.5, 51.0),
+    small(157.5, 51.0),
+    small(92.5, 108.0),
+    small(163.5, 108.0),
+    small(96.5, 142.0),
+    small(159.5, 142.0),
+    small(65.5, 96.0),
+    small(190.5, 96.0),
     small(128.0, 40.0),
     small(128.0, 80.0),
     small(128.0, 120.0),
-    home(216.0, 80.0),
+    home(215.5, 80.0),
 ];
 
 /// The two homes: yours (gold, left) and the rival's (violet, right).
-pub const HOMES: [(f32, f32); 2] = [(40.0, 80.0), (216.0, 80.0)];
+pub const HOMES: [(f32, f32); 2] = [(40.5, 80.0), (215.5, 80.0)];
 
 /// **The tithe and the bank.** A side sets what fraction of every bite its
 /// mould takes goes to its bank instead (`Dish::tithe`): one of these. The
@@ -150,6 +163,10 @@ pub struct Rules {
     pub rally_cost: f32,
     pub rally_seconds: u64,
     pub rally_gain: f32,
+    /// The two moulds take turns moving first (`Dish::take_turns`). Off,
+    /// yours always moves first, and won 14 of 16 mirror games; rounds 1-3
+    /// ran with it off.
+    pub take_turns: bool,
 }
 
 impl Default for Rules {
@@ -168,6 +185,7 @@ impl Default for Rules {
             rally_cost: RALLY_COST,
             rally_seconds: RALLY_SECONDS,
             rally_gain: RALLY_GAIN,
+            take_turns: true,
         }
     }
 }
@@ -191,6 +209,7 @@ impl Rules {
             "rally_cost" => self.rally_cost = v,
             "rally_seconds" => self.rally_seconds = v as u64,
             "rally_gain" => self.rally_gain = v,
+            "take_turns" => self.take_turns = v != 0.0,
             _ => return false,
         }
         true
@@ -480,6 +499,33 @@ impl Skirmish {
         }
     }
 
+    /// Set a rule (`Rules::set`) or one of the model's numbers on both
+    /// moulds at once: `fight`, `fight_fed`, `fight_unfed`, `upkeep`,
+    /// `upkeep_size`, `hold`, `hold_flip`, `supply`. False if `name` is neither or
+    /// `value` is not a number.
+    pub fn set(&mut self, name: &str, value: &str) -> bool {
+        if self.rules.set(name, value) {
+            return true;
+        }
+        let Ok(v) = value.parse::<f32>() else { return false };
+        for s in 0..2 {
+            let p = &mut self.mould_mut(s).params;
+            match name {
+                "fight" => p.fight = v,
+                "fight_fed" => p.fight_fed = v,
+                "fight_unfed" => p.fight_unfed = v,
+                "upkeep" => p.upkeep = v,
+                "upkeep_size" => p.upkeep_size = v,
+                "hold" => p.hold = v,
+                "hold_flip" => p.hold_flip = v,
+                // 0 or less is no limit.
+                "supply" => p.supply = if v <= 0.0 { u16::MAX } else { v.min(65_534.0) as u16 },
+                _ => return false,
+            }
+        }
+        true
+    }
+
     /// Side `s` sets its tithe (any fraction; the page offers `TITHES`).
     pub fn set_tithe(&mut self, s: usize, tithe: f32) {
         let tithe = tithe.clamp(0.0, 0.9);
@@ -682,6 +728,7 @@ impl Skirmish {
     /// each scripted side thinks once a second (the rival half a second
     /// after you).
     pub fn tick(&mut self) {
+        self.dish.take_turns = self.rules.take_turns;
         if self.dish.phase != Phase::Growing {
             return;
         }
@@ -1097,8 +1144,9 @@ mod tests {
         let (mine, theirs) = (s.walkers(0), s.walkers(1));
         assert!(s.act(0, Verb::Spore(20)));
         assert!(s.act(1, Verb::Spore(20)));
-        // A crowded pile takes fewer than the whole colony.
-        assert!(s.walkers(0) > mine + SPORE_WALKERS / 2 && s.walkers(0) <= mine + SPORE_WALKERS);
+        // A crowded pile takes fewer than the whole colony: the centre pile
+        // at 0:40 on dish 2 took 60 of 150 once the moulds took turns.
+        assert!(s.walkers(0) > mine + SPORE_WALKERS / 4 && s.walkers(0) <= mine + SPORE_WALKERS, "{} placed", s.walkers(0) - mine);
         assert!(s.walkers(1) > theirs && s.walkers(1) <= theirs + SPORE_WALKERS);
         assert!(s.act(0, Verb::Beacon(19)));
         assert_eq!(s.dish.beacons.len(), 1);
@@ -1124,6 +1172,70 @@ mod tests {
         let mine = s.dish.scent[i];
         let theirs = s.dish.rival.as_ref().unwrap().scent[i];
         assert!(mine > 2.0 * theirs, "beacon scent {mine} against {theirs}");
+    }
+
+    #[test]
+    fn the_holder_bites_harder_and_loses_the_pile_only_when_outnumbered() {
+        let mut p = super::super::Pile {
+            eaters: 10,
+            foe_eaters: 10,
+            ..Skirmish::new(1, [None, None]).dish.piles[1].clone()
+        };
+        let (table, eat) = (40, 0.03);
+        assert_eq!(p.bite_held(table, eat, 2.0), p.bite(table, eat), "nobody holds it yet");
+        p.held = 1;
+        assert!((p.bite_held(table, eat, 2.0) - 2.0 * p.bite_held(table, eat, 1.0) * 2.0 / 3.0).abs() < 1e-6);
+        p.held = -1;
+        assert!((p.bite_held(table, eat, 2.0) - p.bite(table, eat) * 2.0 / 3.0).abs() < 1e-6);
+        // In a skirmish the home piles are held by their own mould, and a
+        // plain head count marks nothing.
+        let mut s = Skirmish::new(2, [None, None]);
+        assert!(s.set("hold", "2"));
+        run(&mut s, 5);
+        assert_eq!(s.dish.piles[0].held, 1);
+        assert_eq!(s.dish.piles[22].held, -1);
+        assert_eq!(s.dish.rival.as_ref().unwrap().piles[22].held, 1);
+        let mut s = Skirmish::new(2, [None, None]);
+        run(&mut s, 5);
+        assert!(s.dish.piles.iter().all(|p| p.held == 0));
+        assert!(!s.set("no_such_rule", "1"));
+    }
+
+    #[test]
+    fn short_supply_lines_lose_more_walkers_at_the_same_front() {
+        // Two raiders meet; the same dish and the same dice, fought with and
+        // without a supply limit. Every walker that dies fed also dies
+        // unfed, so the limit can only add losses, and at a real front it
+        // adds some.
+        let mut s = Skirmish::new(3, [Some(Plan::Raid), Some(Plan::Raid)]);
+        let mut fronts = 0;
+        for _ in 0..40 {
+            run(&mut s, 1);
+            let foe = s.dish.rival.as_ref().unwrap().occ.clone();
+            let mut long = s.dish.clone();
+            let mut short = s.dish.clone();
+            short.params.supply = 5;
+            let (a, b) = (long.fight_losses(&foe), short.fight_losses(&foe));
+            assert!(a.iter().all(|k| b.contains(k)));
+            if b.len() > a.len() {
+                fronts += 1;
+            }
+        }
+        assert!(fronts > 0, "no front where the supply limit mattered");
+        assert!(s.set("supply", "40") && s.dish.params.supply == 40);
+        assert!(s.set("supply", "0") && s.dish.params.supply == u16::MAX);
+    }
+
+    #[test]
+    fn upkeep_that_grows_with_size_shrinks_a_lone_mould() {
+        let grow = |k: &str| {
+            let mut s = Skirmish::new(4, [None, None]);
+            assert!(s.set("upkeep_size", k));
+            run(&mut s, 30);
+            s.walkers(0)
+        };
+        let (flat, steep) = (grow("0"), grow("0.3"));
+        assert!(steep < flat, "{steep} walkers with a size cost, {flat} without");
     }
 
     #[test]

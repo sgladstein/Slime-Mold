@@ -549,6 +549,7 @@ impl Dish {
             expires: u64::MAX,
             eaters: 0,
             foe_eaters: 0,
+            held: 0,
         };
         let sps = STEPS_PER_SECOND as u64;
         let piles = level.piles.iter().filter(|s| s.arrives.is_none()).map(make).collect();
