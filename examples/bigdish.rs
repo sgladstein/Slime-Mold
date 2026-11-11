@@ -352,6 +352,7 @@ fn main() {
             "blocked_retry" => p.blocked_retry = f() as u8,
             "blocked_deposit" => p.blocked_deposit = f(),
             "upkeep" => p.upkeep = f(),
+            "energy_flow" => p.energy_flow = f(),
             "start_energy" => p.start_energy = f(),
             "birth_energy" => p.birth_energy = f(),
             "birth_cost" => p.birth_cost = f(),

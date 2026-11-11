@@ -289,6 +289,20 @@ pub struct BigParams {
     pub birth_cost: f32,
     pub starve: f32,
     pub capacity: usize,
+    /// Energy that flows through the mould (2026-11-11, scratch, after the
+    /// Larder thread's sizing runs; 0 is off). Each step after eating, the
+    /// walkers' mean energy on each cell evens out with the eight cells
+    /// round it that hold walkers: a cell gains `energy_flow` x the sum of
+    /// (neighbour mean - own mean), shared alike by its walkers. Pairs give
+    /// and take the same, so energy is kept. Why: with births only into a
+    /// free cell beside the parent, walkers packed on a crystal fill up
+    /// (mean energy 30 at 300 s on charge 512) and never pass it on, while
+    /// children born at the edge get about 0.4 and starve; the mould
+    /// levelled off at 18-24k walkers whatever the charge. Flowing energy
+    /// lets a crystal's food reach the front through the tubes, so food
+    /// can become size, and a cut tube starves what is beyond it. Stable
+    /// up to 1/8 (eight neighbours, one walker a cell).
+    pub energy_flow: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
@@ -453,6 +467,7 @@ impl BigParams {
             birth_cost: 0.2,
             starve: 0.01,
             capacity: 0,
+            energy_flow: 0.0,
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
@@ -1478,6 +1493,9 @@ impl BigDish {
             }
         }
         self.eat_crystals();
+        if self.p.energy_flow > 0.0 && !self.energy.is_empty() {
+            self.flow_energy();
+        }
         if !self.energy.is_empty() {
             self.live_and_die();
         }
@@ -1508,6 +1526,57 @@ impl BigDish {
         }
         if respawn > 0.0 {
             self.respawn_walkers(respawn, crowd);
+        }
+    }
+
+    /// `energy_flow`: walkers' mean energy evens out between neighbouring
+    /// cells that hold walkers. Sums in f64 over slots in order, so the
+    /// result does not depend on how walkers sit in their slots beyond
+    /// rounding; a GPU port would sum in fixed point.
+    fn flow_energy(&mut self) {
+        let d = self.p.energy_flow as f64;
+        let (w, h) = (self.w, self.h);
+        let mut mean = vec![0f64; w * h];
+        let mut cells = vec![usize::MAX; self.walkers.len()];
+        for k in 0..self.walkers.len() {
+            if !self.lives(k) {
+                continue;
+            }
+            let (x, y, _) = self.walkers[k];
+            let i = self.cell(x, y).expect("walker inside the dish");
+            cells[k] = i;
+            mean[i] += self.energy[k] as f64;
+        }
+        for (i, m) in mean.iter_mut().enumerate() {
+            if self.occ[i] > 0 {
+                *m /= self.occ[i] as f64;
+            }
+        }
+        let mut gain = vec![0f64; w * h];
+        for y in 0..h {
+            for x in 0..w {
+                let i = y * w + x;
+                if self.occ[i] == 0 {
+                    continue;
+                }
+                let mut f = 0.0;
+                for (dx, dy) in [(1i64, 0i64), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)] {
+                    let (nx, ny) = (x as i64 + dx, y as i64 + dy);
+                    if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
+                        continue;
+                    }
+                    let j = ny as usize * w + nx as usize;
+                    if self.occ[j] > 0 {
+                        f += mean[j] - mean[i];
+                    }
+                }
+                gain[i] = d * f / self.occ[i] as f64;
+            }
+        }
+        for (k, &i) in cells.iter().enumerate() {
+            if i != usize::MAX {
+                self.energy[k] = (self.energy[k] as f64 + gain[i]).max(0.0) as f32;
+            }
         }
     }
 
