@@ -1,0 +1,38 @@
+Q1. Reach 9. At 6 (8 seeds) tubes only a little thinner, the mould senses food/oats from less far: Beat the Ruler planned hand 0 stars on all 8 at 7 and 6 (also half lost at 8: 30330300); Keep It Alive water hand shorter on 6 of 8 (median 6:21 -> 3:41); Wild One all-tools share 0.67-1.00 -> 0.49-0.63.
+Q2. Share of all food both moulds ate over the whole dish (Dish::food_share). Stars: 57%, 62%, none of it (the wild one) left.
+Q3. It was walkers at the bell; four of seven piles ran dry together near the bell and the player's mould lost 28-54% in the last ten seconds, so the lead moved by up to half; review 2 ranked share-of-food first.
+Q4. Nothing: snip only vs doing nothing 5-3, p 0.73, 0 stars on 8 (walker-count era). Three snips through the nest (nestsnip) 0 stars on 8 (7-1, p 0.07). Warden with vs without snip: 4-4 / 3-5.
+Q5. 1:08-3:48, median 2:10.
+Q6. 4:15, 5:30, 6:40.
+Q7. Water hand (sleeper) 2:51-10:42 (median 4:41) vs oat-saver 2:47-5:26 (3:34); water hand longer on 15 of 16, p 0.0005.
+Q8. 2 drops, one back every 40 s, radius 12.
+Q9. Dries it (light x wet); below wetness 0.25 walkers fall asleep (don't move/eat/pay upkeep, not pushed), die at random with mean life 20 s; water (>0.7) wakes them.
+Q10. Sensor lamp emptied the lit stretch and cut the tube: food join lost while held 3 s on a tube 5 of 5 (old) vs 0 of 5 (push); beside the tube 2 of 5 vs 0 of 5.
+Q11. push 0.9; LAMP_R 16 cells.
+Q12. 4 s (Params::wound).
+Q13. Over 32 water-hand runs: 17 dead by 5:05, 14 past 7:20, 1 between (5:31); 5:30 star earned once in 32; which hump looks like luck, not skill.
+Q14. 0.567-0.577, 1 star on 7 of 8 (0 on 1).
+Q15. About +1.4 ms a frame (mean 4.3-4.9 -> 5.7-6.3 ms).
+Q16. (1) what to fix first after review 2 (now: trace Keep It Alive's luck or wait until played); (2) grains or glints for walkers in the tube look; (3) retire the tube look F7; (4) food flow on or off; (5) keep/change/drop the Organ and the Wanderer.
+Q17. Forest floor from above, card 2026-11-10 16:04Z.
+Q18. Three or two cuts: toughness star earned 0 of 20 runs; one cut: 4 of 20, never by doing nothing.
+Q19. 20 s (crust_life).
+Q20. Wild 600 (WILD_START), player 400.
+Q21. About 14 comparisons, so 0.05/14 ~ 0.004; 8-0 (p 0.008) does not pass.
+Q22. Lamp 8-0 (p 0.008) and salt wall 8-0 (p 0.008) win alone; oats 6-2 (p 0.29) and snip 5-3 (p 0.73) do not.
+Q23. In one channel, the halo around each pile was drawn and counted as tube: pale rings, tube-connectivity joined nothing.
+Q24. Three piles on the seam at 0:45, 1:20, 1:50 were tried and removed: doing nothing spread to 0.44-0.60 (a star on one seed), clumsy warden still matched letting go at 30 s (5-3); the race was luck.
+Q25. 1:04-3:29 (median 2:03), 0 stars; water doesn't help: wet longer on 7 of 16, p 0.80 (its lamp sleeps mould, nothing wakes it).
+Q26. 0.82 ms (32k), 1.37 ms (100k), 3.52 ms (1M, no crowd limit); bar 8 ms (phase 3 gate). Worst 1M frame about 12 ms. (gpu-plan, GPU timing on the GTX 1070)
+Q27. Fixed point at 1/65,536 rounds away weak trail/scent: after 200 steps 15,247 of 29,899 agar cells hold trail below that step in floats; walkers past the network sense nothing; random reaches the walled food on 5 of 16 seeds (15 stars vs 1); ship bar 11/12/14 vs 15/16/15. (gpu-plan, three GPU arms; dead-ends fixed_point)
+Q28. 0 loops (0-2) vs 151.5 (144-160): fewer on 8 of 8, p 0.008 (survives Bonferroni over 4). (jenson-compare)
+Q29. 66.5 (60-73) vs 44 (38-52) loops at 10 s, more on 8 of 8, p 0.008; about +15% cost. (outside-rules)
+Q30. Body drift over the last 2 s of 10 s: 6.5-7.6 vs 0.67-0.77 cells, more on 8 of 8, p 0.008. (creatures)
+Q31. With the strike counted down in view, keep (rally) beat soft 14/16 and brace (Fortify) 15/16; in an eight-plan round robin brace won every pairing. (rts-skirmish, rounds 7-7b)
+Q32. No. With regrowth over a 4:00 match, four fifths of food is eaten after 1:00, so with no snowball the 1:00 leader would win about 56%; it wins 80% (80-85%). Regrowth cut wipe-outs 132 of 448 vs 217. (rts-skirmish round 7b)
+Q33. M3 held-out (seeds 17-32): reader/striker/farmer best on 8/5/3 fed and 10/4/2 lean; M2 reader was best on 13 (fed) and 12 (lean); no plan best on 13+ of 16 now. (larder-m3)
+Q34. 7.2 ms mean off / 8.9 on; p95 9.6 / 11.6 ms (i5-6600K, 3 runs). (larder-m3)
+Q35. W0 births/upkeep/starving per walker on GPU; W1 world with terrain and crystals, both starts; W2 soldiers, fire, buying, bait, extractors, camera+UI in world; W3 two-three species fighting; W4 persistent world (save/load, base); W5 campaign. W0 gate: GPU matches CPU in CI; fed mould grows, starved shrinks; cost quoted at 100k walkers. (larder-world-roadmap)
+Q36. Larder becomes a world on the big GPU dish: longer persistent world, maybe a campaign; energy crystals that run out and force expansion; several mould species; "Put everything into the world version" (no more small-dish tuning); a camera and UI thread. (decisions.md / roadmap)
+Q37. Trunk beats Raider 15/16 and Web 12/16; Web beats Raider 11/16; only the top link survives Holm; Raider no better than random (7/16); a ladder, not a cycle; leader at 1:30 keeps the lead in 26-32 of 32 games. (two-fevers report)
+Q38. Compiled in but off they cost 18-24% on the software GPU (key 1 32.4-32.6 vs 26.1-26.8 ms), so the sandbox compiles them out when off (then within noise). (gpu-sandbox, The outside rules as controls)
