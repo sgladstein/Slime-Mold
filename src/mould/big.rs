@@ -1404,7 +1404,7 @@ mod tests {
             BigParams { sensor_r: 1, chance_exp: 4.0, size_spread: 0.6, ..small(2, 1) },
             BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
             BigParams { species: 3, species_cycle: true, species_convert: 1.0, ..small(2, 1) },
-            BigParams { species: 2, species_convert: 1.5, graze_weight: 10.0, ..small(2, 1) },
+            BigParams { species: 2, species_convert: 1.5, species_boost: 1.5, graze_weight: 10.0, ..small(2, 1) },
             BigParams { blocked_keep: true, blocked_reset: 0.1, blocked_retry: 3, blocked_deposit: 1.0, ..small(2, 1) },
             BigParams { explore_steps: 30, explore_spread: 1.0, ..small(2, 1) },
         ] {
