@@ -9,8 +9,8 @@
 Errors (fail): a relative link that does not resolve; a page that
 `wiki/index.md` does not link; a `code:` symbol in a page's frontmatter that
 no longer appears anywhere under `src/`, `examples/` or the scripts kept in
-`Reports/`; a page missing a required frontmatter key; a row of a page's
-Numbers table with no link to its source; a line under "Owner's word" that
+`Reports/`; a page missing a required frontmatter key; a line under
+"Owner's word" that
 does not start with a date; `index.md` over 150 lines; a dish, tool or
 mechanism page that `HANDOFF.md` does not link.
 
@@ -20,7 +20,7 @@ So is a note (.md) inside a report folder that cannot be reached by links
 from the folder's parent report or a wiki page, and a folder of notes with
 no parent; folders in `PRE_WIKI_FOLDERS` only warn.
 
-Warnings (print only): a page over 12 KB, a Now over 2 KB, an index line
+Warnings (print only): a page with a Numbers table, a page over 12 KB, a Now over 2 KB, an index line
 over 200 characters; a page whose `updated` date (or UTC time, such as
 2026-11-11T15:30Z) is older than the last commit to one of its `sources`; a
 page that links a report its `sources` do not list; a listed pre-wiki report
@@ -177,11 +177,10 @@ def main():
                 errors.append(f"{rel}: code symbol `{sym}` not found in src/ or examples/")
         for section, rows in sections(text):
             if section == "Numbers":
-                for r in rows:
-                    if r.startswith("|") and not re.match(r"\|[-| ]+\|$", r) \
-                            and "](" not in r and "same" not in r \
-                            and not r.startswith("| Measure") and not r.startswith("| Hand"):
-                        errors.append(f"{rel}: Numbers row has no source link: {r[:60]}")
+                # Owner's card, 2026-11-11 15:28Z: short pages, the numbers
+                # stay in the reports. A warning while open PRs still add one.
+                warnings.append(f"{rel}: has a Numbers table; pages keep numbers in their "
+                                "reports (wiki/README.md rule 2)")
             if section == "Owner's word":
                 for r in rows:
                     if r.startswith("- ") and not re.match(r"- (\*\*)?(20\d\d-\d\d-\d\d|None)", r):

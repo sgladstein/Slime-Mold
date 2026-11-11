@@ -23,14 +23,6 @@ dishes and Keep It Alive give none. In [The Wild One](../dishes/the-wild-one.md)
 the opening salt wall alone wins (8-0) and is the whole first star; on the
 free dish, review 1 never needed it.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| The Wild One, salt wall alone vs doing nothing (walker count) | share 0.64-0.67, 1 star on all 8 | 8 | 8-0, p 0.008 | [wild-one, *Numbers*](../../Reports/mould-wild-one-2026-11-10.md) |
-| The Wild One, `jail` (salt ring radius 9.5 round the nest), walker count | a star on 5 of 8 | 8 | 8-0, p 0.008 | [review 2, *The Wild One*](../../Reports/mould-review-2-2026-11-10.md) |
-| Same, scored by food share | 0.489-0.517, 0 on 8 | 8 | | [wild-one, *Review 2 fixes*](../../Reports/mould-wild-one-2026-11-10.md) |
-| Free dish played at 45 degrees, two games | salt never needed | 1 seed, played | | [review 1](../../Reports/mould-review-2026-11-10.md) |
 
 ## Owner's word
 
