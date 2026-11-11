@@ -1,0 +1,36 @@
+== hold: 168 games; ahead at 1:00 won 133/156 (85%); wipe-outs 110
+   soft v: fort 8/8, idle 8/8, keep 4/8, raid 8/8, random 8/8, trade 2/8
+   beat soft (majority): ['trade']
+   by mean share: keep 0.667, soft 0.655, trade 0.559, idle 0.486, random 0.439, raid 0.407, fort 0.287
+   majority cycles of three: 6 [('fort', 'idle', 'raid'), ('fort', 'raid', 'random'), ('idle', 'raid', 'trade'), ('idle', 'soft', 'trade'), ('raid', 'random', 'trade'), ('random', 'soft', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 14 of 21
+== base: 168 games; ahead at 1:00 won 144/161 (89%); wipe-outs 94
+   soft v: fort 8/8, idle 7/8, keep 4/8, raid 8/8, random 8/8, trade 5/8
+   beat soft (majority): none
+   by mean share: soft 0.655, keep 0.646, trade 0.535, idle 0.521, random 0.464, raid 0.360, fort 0.319
+   majority cycles of three: 3 [('fort', 'idle', 'raid'), ('idle', 'raid', 'random'), ('idle', 'raid', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 10 of 21
+== even: 168 games; ahead at 1:00 won 141/160 (88%); wipe-outs 88
+   soft v: fort 8/8, idle 8/8, keep 2/8, raid 8/8, random 7/8, trade 3/8
+   beat soft (majority): ['keep', 'trade']
+   by mean share: keep 0.645, soft 0.614, trade 0.525, idle 0.524, random 0.478, raid 0.398, fort 0.316
+   majority cycles of three: 2 [('idle', 'soft', 'trade'), ('random', 'soft', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 11 of 21
+== all: 168 games; ahead at 1:00 won 144/166 (87%); wipe-outs 42
+   soft v: fort 8/8, idle 8/8, keep 3/8, raid 7/8, random 8/8, trade 4/8
+   beat soft (majority): ['keep']
+   by mean share: keep 0.624, soft 0.606, trade 0.542, raid 0.488, idle 0.431, fort 0.409, random 0.401
+   majority cycles of three: 3 [('fort', 'idle', 'random'), ('idle', 'raid', 'trade'), ('idle', 'random', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 11 of 21
+== desperate: 168 games; ahead at 1:00 won 134/162 (83%); wipe-outs 78
+   soft v: fort 8/8, idle 8/8, keep 4/8, raid 8/8, random 8/8, trade 3/8
+   beat soft (majority): ['trade']
+   by mean share: keep 0.640, soft 0.636, trade 0.521, idle 0.497, random 0.447, raid 0.402, fort 0.357
+   majority cycles of three: 4 [('fort', 'idle', 'raid'), ('idle', 'raid', 'trade'), ('idle', 'soft', 'trade'), ('random', 'soft', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 12 of 21
+== size: 168 games; ahead at 1:00 won 139/164 (85%); wipe-outs 44
+   soft v: fort 8/8, idle 5/8, keep 3/8, raid 8/8, random 8/8, trade 4/8
+   beat soft (majority): ['keep']
+   by mean share: soft 0.592, keep 0.586, trade 0.552, idle 0.527, random 0.485, fort 0.380, raid 0.377
+   majority cycles of three: 4 [('fort', 'idle', 'raid'), ('fort', 'raid', 'random'), ('idle', 'raid', 'trade'), ('raid', 'random', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 10 of 21
