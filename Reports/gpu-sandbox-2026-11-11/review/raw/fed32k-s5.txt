@@ -1,0 +1,5 @@
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 1.5999999 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 5
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 22.341, worst 51.325; GPU ms ticks 19.384, drawing 3.350
+dish at 10.0s: tube 7537.8  loops 89  width 3.42  reach 185.7  piles 7/7  strays 0.007
+wrote /tmp/sandbox-review/fed32k-s5-010s.png

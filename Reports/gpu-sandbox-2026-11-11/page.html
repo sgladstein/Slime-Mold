@@ -34,6 +34,8 @@ header { display: grid; gap: 16px; }
 .lead { font-size: 17px; }
 section { display: grid; gap: 20px; }
 section > p, .note { color: var(--muted); }
+.callout { border: 1px solid #4a3f28; background: #17140e; border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; max-width: 80ch; }
+.callout p { color: var(--muted); max-width: none; }
 .cmd { font: 500 14px/1.5 var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; white-space: pre; }
 .shot { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
@@ -69,6 +71,10 @@ a { color: var(--vein); }
     <p class="lead">Every option the Jenson comparison tested is now a control you can turn while the dish runs, at up to 8 million walkers. It is open on Scott-Desktop. To start it again, run this in the Slime Mold folder:</p>
     <div class="cmd">cargo run --release --bin mouldgpu</div>
     <p class="note">It is a toy for looking: the big dish's step with no economy, census or score. Everything on screen is the simulation, apart from the panel, which H hides.</p>
+    <div class="callout">
+      <h3>Updated after an independent review (2026-11-11)</h3>
+      <p>Two fresh reviewers checked the code and every number. Two real gaps were found and fixed. Food piles now go quiet once the mould reaches them, as on the CPU; before, keys 1 and 2 had twice the CPU's strays. Respawned walkers now jump after their step, as on the CPU; before, a quarter of the jumps froze a walker, and key 5's tubes were wider than every CPU seed. Over 8 to 16 seeds, on the cloud's software GPU and on the GTX 1070, no measure now differs from the CPU's after a correction for 20 tests. The videos of keys 1, 2, 5 and 6, their counts and the costs are new. The slow frames in the window were the GPU stepping its clocks down at light load.</p>
+    </div>
   </header>
 
   <section>
@@ -95,7 +101,7 @@ a { color: var(--vein); }
 
   <section>
     <h2>The eight presets</h2>
-    <p>Each is a dish from the Jenson comparison or the 4x Mould page, 1024 x 640, seed 1, the first 10 seconds from a spread start, at real speed. The videos were drawn by the sandbox's own code on the cloud's software GPU. Counts are at 10 s, with the GTX 1070's own dish in brackets (its sums round differently). Frame cost is the 1070's, for a frame of two ticks and the drawing.</p>
+    <p>Each is a dish from the Jenson comparison or the 4x Mould page, 1024 x 640, seed 1, the first 10 seconds from a spread start, at real speed. The videos were drawn by the sandbox's own code on the cloud's software GPU, after the review's fixes. Counts are at 10 s, with the GTX 1070's own dish in brackets: a seed is a slightly different dish on each GPU, because their sums round differently. The GPU cost is the 1070's GPU time for a frame of two ticks and the drawing.</p>
     <div class="grid">
       <figure>
         <video src="video/p1.mp4" poster="video/p1-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
@@ -103,7 +109,7 @@ a { color: var(--vein); }
           <span class="key">Key 1</span>
           <strong>Big dish (phase 2)</strong>
           <span>The nose rule at the owner's pick of 100,000 walkers, one a cell, seven food piles, the game's amber.</span>
-          <dl class="stats"><dt>loops</dt><dd>174 (192)</dd><dt>width</dt><dd>4.61 (4.60) cells</dd><dt>strays</dt><dd>3.3% (3.3%)</dd><dt>frame</dt><dd>1.42 ms</dd></dl>
+          <dl class="stats"><dt>loops</dt><dd>161 (171)</dd><dt>width</dt><dd>4.94 (4.90) cells</dd><dt>strays</dt><dd>1.5% (1.7%)</dd><dt>GPU</dt><dd>1.45 ms a frame</dd></dl>
         </figcaption>
       </figure>
       <figure>
@@ -112,7 +118,7 @@ a { color: var(--vein); }
           <span class="key">Key 2</span>
           <strong>32,000 walkers</strong>
           <span>The same dish with 32,000 walkers, each laying today's deposit.</span>
-          <dl class="stats"><dt>loops</dt><dd>94 (101)</dd><dt>width</dt><dd>3.24 (3.26) cells</dd><dt>strays</dt><dd>3.6% (3.3%)</dd><dt>frame</dt><dd>0.88 ms</dd></dl>
+          <dl class="stats"><dt>loops</dt><dd>97 (97)</dd><dt>width</dt><dd>3.40 (3.41) cells</dd><dt>strays</dt><dd>1.3% (1.3%)</dd><dt>GPU</dt><dd>0.89 ms a frame</dd></dl>
         </figcaption>
       </figure>
       <figure>
@@ -121,7 +127,7 @@ a { color: var(--vein); }
           <span class="key">Key 3</span>
           <strong>No limit, our numbers</strong>
           <span>100,000 walkers with no one-a-cell limit, no food, grey. The walkers fold into ropes, as on the CPU (0 loops against 151.5 with the limit).</span>
-          <dl class="stats"><dt>loops</dt><dd>0 (0)</dd><dt>width</dt><dd>5.52 (6.14) cells</dd><dt>frame</dt><dd>0.99 ms</dd></dl>
+          <dl class="stats"><dt>loops</dt><dd>0 (0)</dd><dt>width</dt><dd>5.52 (6.14) cells</dd><dt>GPU</dt><dd>0.97 ms a frame</dd></dl>
         </figcaption>
       </figure>
       <figure>
@@ -130,7 +136,7 @@ a { color: var(--vein); }
           <span class="key">Key 4</span>
           <strong>Jenson settings, 1M</strong>
           <span>1,000,000 walkers, no limit, sensor 45, turn 22.5, sensors 18 out, the soft curve: straight-sided polygons.</span>
-          <dl class="stats"><dt>loops</dt><dd>43 (43)</dd><dt>width</dt><dd>5.74 (5.83) cells</dd><dt>frame</dt><dd>8.00 ms</dd></dl>
+          <dl class="stats"><dt>loops</dt><dd>43 (43)</dd><dt>width</dt><dd>5.74 (5.83) cells</dd><dt>GPU</dt><dd>8.13 ms a frame</dd></dl>
         </figcaption>
       </figure>
       <figure>
@@ -138,8 +144,8 @@ a { color: var(--vein); }
         <figcaption>
           <span class="key">Key 5</span>
           <strong>Jenson + respawn 1%</strong>
-          <span>Key 4 with 1% of walkers jumping to a random spot each tick: a fine mesh that stays alive, and a haze.</span>
-          <dl class="stats"><dt>loops</dt><dd>200 (211)</dd><dt>width</dt><dd>8.33 (8.44) cells</dd><dt>strays</dt><dd>1.4% (1.4%)</dd><dt>frame</dt><dd>9.84 ms</dd></dl>
+          <span>Key 4 with 1% of walkers jumping to a random spot each tick, after their step: a fine mesh that stays alive, and a haze.</span>
+          <dl class="stats"><dt>loops</dt><dd>197 (206)</dd><dt>width</dt><dd>8.00 (8.12) cells</dd><dt>strays</dt><dd>1.7% (1.7%)</dd><dt>GPU</dt><dd>9.95 ms a frame</dd></dl>
         </figcaption>
       </figure>
       <figure>
@@ -148,7 +154,7 @@ a { color: var(--vein); }
           <span class="key">Key 6</span>
           <strong>Drawn by walkers</strong>
           <span>The dish of key 5, drawn from walkers a cell instead of the trail, as Jenson's later work is drawn: hair-thin veins and ghost tubes.</span>
-          <dl class="stats"><dt>loops</dt><dd>200 (211), the same dish</dd><dt>frame</dt><dd>9.83 ms</dd></dl>
+          <dl class="stats"><dt>loops</dt><dd>197 (206), the same dish</dd><dt>GPU</dt><dd>9.95 ms a frame</dd></dl>
         </figcaption>
       </figure>
       <figure>
@@ -157,7 +163,7 @@ a { color: var(--vein); }
           <span class="key">Key 7</span>
           <strong>4M walkers</strong>
           <span>Key 4 with 4,000,000 walkers, about 8 a cell of agar. Smoother, and much the same network.</span>
-          <dl class="stats"><dt>loops</dt><dd>37 (36)</dd><dt>width</dt><dd>5.78 (5.85) cells</dd><dt>frame</dt><dd>30.1 ms, 37 a second</dd></dl>
+          <dl class="stats"><dt>loops</dt><dd>37 (36)</dd><dt>width</dt><dd>5.78 (5.85) cells</dd><dt>GPU</dt><dd>30.1 ms a frame, too slow for 60 Hz</dd></dl>
         </figcaption>
       </figure>
       <figure>
@@ -166,7 +172,7 @@ a { color: var(--vein); }
           <span class="key">Key 8</span>
           <strong>4M, our numbers</strong>
           <span>4,000,000 walkers with today's angles and reach and no limit: ropes again.</span>
-          <dl class="stats"><dt>loops</dt><dd>2 (1)</dd><dt>width</dt><dd>5.73 (5.90) cells</dd><dt>frame</dt><dd>12.8 ms</dd></dl>
+          <dl class="stats"><dt>loops</dt><dd>2 (1)</dd><dt>width</dt><dd>5.73 (5.90) cells</dd><dt>GPU</dt><dd>12.8 ms a frame</dd></dl>
         </figcaption>
       </figure>
     </div>
@@ -174,53 +180,74 @@ a { color: var(--vein); }
 
   <section>
     <h2>What it costs on the GTX 1070</h2>
-    <p>Measured on Scott-Desktop through Remote Control: 600 frames of two ticks and the drawing, each submitted and waited for, as the window does. A 60 Hz frame is 16.7 ms; phase 3's bar is the GPU busy under half of it.</p>
+    <p>Measured on Scott-Desktop through Remote Control after the review's fixes (build 9d4a2d1): 600 frames of two ticks and the drawing, each submitted and waited for, as the window does, and each pass timed alone. A 60 Hz frame is 16.7 ms; phase 3's bar is the GPU busy under half of it, 8.3 ms.</p>
     <div class="scroll">
       <table>
-        <thead><tr><th>Key</th><th>Dish</th><th>Frame, median / worst</th><th>GPU: ticks + drawing</th><th>In the window: GPU a frame, frames a second</th></tr></thead>
+        <thead><tr><th>Key</th><th>Dish</th><th>GPU a frame: ticks + drawing</th><th>Before the fixes</th><th>Frame on the clock, median / worst</th><th>The slowest pass, a tick</th></tr></thead>
         <tbody>
-          <tr class="pick"><td>1</td><td>Big dish, 100,000</td><td class="n">1.42 / 2.18 ms</td><td class="n">1.23 + 0.07 ms</td><td class="n">4.62 ms, 58.8</td></tr>
-          <tr><td>2</td><td>32,000</td><td class="n">0.88 / 1.21 ms</td><td class="n">0.70 + 0.07 ms</td><td></td></tr>
-          <tr><td>3</td><td>No limit, 100,000</td><td class="n">0.99 / 1.71 ms</td><td class="n">0.81 + 0.06 ms</td><td></td></tr>
-          <tr><td>4</td><td>Jenson settings, 1M</td><td class="n">8.00 / 12.22 ms</td><td class="n">7.69 + 0.18 ms</td><td class="n">7.02 ms, 60.2</td></tr>
-          <tr><td>5</td><td>+ respawn 1%</td><td class="n">9.84 / 12.22 ms</td><td class="n">9.51 + 0.16 ms</td><td class="n">9.60 ms, 60.4</td></tr>
-          <tr><td>6</td><td>Drawn by walkers</td><td class="n">9.83 / 12.21 ms</td><td class="n">9.52 + 0.16 ms</td><td></td></tr>
-          <tr><td>7</td><td>4M walkers</td><td class="n">30.07 / 47.08 ms</td><td class="n">29.82 + 0.18 ms</td><td class="n">26.29 ms, 37.2</td></tr>
-          <tr><td>8</td><td>4M, our numbers</td><td class="n">12.84 / 47.25 ms</td><td class="n">12.50 + 0.17 ms</td><td></td></tr>
+          <tr class="pick"><td>1</td><td>Big dish, 100,000</td><td class="n">1.39 + 0.07 ms</td><td class="n">1.23 + 0.07</td><td class="n">1.58 / 2.18 ms</td><td class="n">sense 0.31 ms</td></tr>
+          <tr><td>2</td><td>32,000</td><td class="n">0.82 + 0.07 ms</td><td class="n">0.70 + 0.07</td><td class="n">1.01 / 1.21 ms</td><td class="n">scent 0.16 ms</td></tr>
+          <tr><td>3</td><td>No limit, 100,000</td><td class="n">0.91 + 0.06 ms</td><td class="n">0.81 + 0.06</td><td class="n">1.09 / 1.80 ms</td><td class="n">scent 0.16 ms</td></tr>
+          <tr><td>4</td><td>Jenson settings, 1M</td><td class="n">7.85 + 0.29 ms</td><td class="n">7.69 + 0.18</td><td class="n">8.24 / 37.7 ms</td><td class="n">sense 2.51 ms</td></tr>
+          <tr><td>5</td><td>+ respawn 1%</td><td class="n">9.68 + 0.27 ms</td><td class="n">9.51 + 0.16</td><td class="n">10.12 / 36.0 ms</td><td class="n">sense 3.05 ms</td></tr>
+          <tr><td>6</td><td>Drawn by walkers</td><td class="n">9.69 + 0.27 ms</td><td class="n">9.52 + 0.16</td><td class="n">10.12 / 12.6 ms</td><td class="n">sense 3.04 ms</td></tr>
+          <tr><td>7</td><td>4M walkers</td><td class="n">29.79 + 0.29 ms</td><td class="n">29.82 + 0.18</td><td class="n">30.11 / 47.2 ms</td><td class="n">sense 10.42 ms</td></tr>
+          <tr><td>8</td><td>4M, our numbers</td><td class="n">12.57 + 0.28 ms</td><td class="n">12.50 + 0.17</td><td class="n">12.98 / 47.4 ms</td><td class="n">sense 3.72 ms</td></tr>
         </tbody>
       </table>
     </div>
     <ul class="list">
-      <li><strong>The owner's pick passes phase 3's bar.</strong> 100,000 walkers run at 60 frames a second with the GPU busy 1.4 ms of each frame (4.6 ms in the window).</li>
-      <li><strong>Up to a million walkers fit a 60 Hz frame.</strong> They take 8-10 ms of it, which is over the half-frame bar. Four million do not fit: 37 frames a second.</li>
-      <li><strong>The drawing is cheap:</strong> 0.06-0.18 ms, the soft curve's histogram included.</li>
-      <li><strong>Not explained yet:</strong> key 1 costs 4.25 ms of ticks in the window against 1.23 ms headless. A guess, not measured: the GPU drops its clock while it idles between frames at 60 Hz.</li>
+      <li><strong>The owner's pick passes phase 3's bar.</strong> 100,000 walkers keep the GPU busy 1.45 ms of each 16.7 ms frame.</li>
+      <li><strong>A million walkers fit the half-frame bar with Jenson's settings</strong> (8.1 ms) and a 60 Hz frame with respawn (10 ms). Four million fit a 60 Hz frame with our numbers (12.9 ms), not with Jenson's (30 ms).</li>
+      <li><strong>Jenson's settings cost twice ours</strong> because of the sensing: sensors 18 cells out read memory farther from each walker. The sense pass takes 2.5 ms a tick at a million walkers, against 0.93 ms a million with our numbers.</li>
+      <li><strong>The fixes cost 0.1-0.17 ms a frame</strong> on keys 1-6, and the bigger histogram behind the soft curve adds 0.1 ms of drawing on keys 4-8. The drawing is 0.06-0.29 ms in all. Each figure is one run.</li>
+      <li><strong>The odd worst frames</strong> (36-38 ms on keys 4 and 5) are single hitches on the PC: key 6, the same dish, had a worst of 12.6 ms.</li>
     </ul>
   </section>
 
   <section>
-    <h2>Checked</h2>
-    <p>The sandbox's dish against the comparison's CPU runs, seed 1, 10 s, no food, on the cloud's software GPU:</p>
+    <h2>Why the window looked slower</h2>
+    <p>Before the review, key 1 read 4.6 ms a frame in the window against 1.4 ms headless. The GPU's clocks were logged through four runs:</p>
     <div class="scroll">
       <table>
-        <thead><tr><th>Dish</th><th>Loops, sandbox / CPU</th><th>Width</th><th>Tube area</th></tr></thead>
+        <thead><tr><th>Run</th><th>GPU a frame, median of about 300 frames</th><th>The GPU's clocks</th></tr></thead>
         <tbody>
-          <tr><td>100,000, one a cell</td><td class="n">148 / 151</td><td class="n">5.21 / 5.21</td><td class="n">12,610 / 12,615</td></tr>
-          <tr><td>100,000, no limit</td><td class="n">0 / 0</td><td class="n">5.52 / 5.85</td><td class="n">3,695 / 3,759</td></tr>
-          <tr><td>1,000,000, Jenson settings</td><td class="n">43 / 42</td><td class="n">5.74 / 5.69</td><td class="n">9,663 / 9,641</td></tr>
-          <tr><td>the same, respawn 1%</td><td class="n">200 / 200</td><td class="n">8.33 / 7.99</td><td class="n">22,654 / 21,892</td></tr>
+          <tr><td>Headless, key 1</td><td class="n">1.39 + 0.07 ms</td><td>1936 MHz, memory 4006 MHz throughout</td></tr>
+          <tr class="pick"><td>Window, key 1</td><td class="n">1.80 + 0.08 ms, 58.7 a second</td><td>1594, then 1012, then for the last 2 s 797 MHz with the memory at 810 MHz</td></tr>
+          <tr><td>Window, key 1, 8 ticks a frame</td><td class="n">4.94 + 0.07 ms, 60.5 a second</td><td>1936 MHz throughout</td></tr>
+          <tr><td>Window, key 4</td><td class="n">7.84 + 0.27 ms, 60.4 a second</td><td>1936 MHz throughout</td></tr>
         </tbody>
       </table>
     </div>
-    <p>The same seed gave the same frame twice on every preset, on the software GPU and on the GTX 1070.</p>
+    <p>At 100,000 walkers the GPU idles nine-tenths of each frame, so its driver steps the clocks down until the memory runs at a fifth of its speed, and the step, which reads memory everywhere, takes about three times as long. The old 4.6 ms was a running average read at the end, in that slow stretch. Given more work, the GPU holds its full clock and the window costs what headless does. So it is the GPU resting, not lost time.</p>
   </section>
 
   <section>
-    <h2>What differs from the CPU dish, and what comes next</h2>
+    <h2>Checked against the CPU</h2>
+    <p>The sandbox's dishes after the fixes against the CPU's own runs of the same dishes, 10 s from a spread start: the range over 8 seeds (16 for the food dish). Each measure is a paired sign test by seed; none differs after a correction for the 20 tests on each GPU. The smallest p is 0.013 (the 1070's food dish, more loops on 12 of 16 seeds), against the 0.0025 needed.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Dish</th><th>Measure</th><th>CPU</th><th>Software GPU</th><th>GTX 1070</th></tr></thead>
+        <tbody>
+          <tr><td>32,000 with food (key 2)</td><td>strays</td><td class="n">0.8-1.8%</td><td class="n">0.5-1.4%</td><td class="n">0.8-1.7%</td></tr>
+          <tr><td></td><td>width</td><td class="n">3.37-3.45</td><td class="n">3.38-3.47</td><td class="n">3.34-3.46</td></tr>
+          <tr><td></td><td>loops</td><td class="n">86-100</td><td class="n">88-98</td><td class="n">92-101</td></tr>
+          <tr><td>100,000, one a cell, no food</td><td>loops</td><td class="n">144-160</td><td class="n">143-156</td><td class="n">150-161</td></tr>
+          <tr><td>100,000, no limit (key 3)</td><td>width</td><td class="n">5.52-5.96</td><td class="n">5.51-6.05</td><td class="n">5.65-6.14</td></tr>
+          <tr><td>1M, Jenson settings (key 4)</td><td>loops</td><td class="n">38-52</td><td class="n">38-48</td><td class="n">37-51</td></tr>
+          <tr><td>1M, respawn 1% (key 5)</td><td>width</td><td class="n">7.70-8.01</td><td class="n">7.83-8.00</td><td class="n">7.82-8.12</td></tr>
+          <tr><td></td><td>loops</td><td class="n">187-208</td><td class="n">181-202</td><td class="n">192-206</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Before the fixes, key 2 had 3.6% strays and width 3.24 on seed 1, and key 5 had width 8.33, both outside every CPU seed. The check that holds to the bit is the twin test in CI: one GPU tick from a CPU dish's state against one CPU tick, on keys 1, 3, 4 and 5. The same seed gave the same frame twice on every key, on both GPUs.</p>
+  </section>
+
+  <section>
+    <h2>Next</h2>
     <ul class="list">
-      <li><strong>A jump is a step.</strong> Respawn and the pull replace a walker's step that tick and join the same claim for a cell. The CPU respawns after the move.</li>
-      <li><strong>Piles keep calling.</strong> A reached pile keeps laying full scent. The CPU turns it down, which needs the trail read back.</li>
-      <li><strong>Next:</strong> the thread "Reproduce Jenson's missing mould looks" tests feathery fronts, trunks inside a fine mesh, and contagion on the CPU. What works there becomes a control here. Phase 3 also plans contagion on a key, the tools as writes to the fields, and the twin test in CI.</li>
+      <li><strong>The looks from the thread "Reproduce Jenson's missing mould looks"</strong> come here as controls: trunks from a dense start with slow respawn, contagion running along the tubes, and turning or sensing set by the trail a walker stands in.</li>
+      <li><strong>Phase 3 also plans</strong> the tools as writes to the fields.</li>
     </ul>
   </section>
 

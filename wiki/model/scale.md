@@ -76,7 +76,8 @@ engine alone at any size, with the GPU's move and float fields, no economy;
 four wgpu compute passes a tick, with the CPU's keyed draws and claims by
 `atomicMin`. On a software GPU in the cloud its dish matches the CPU's
 measures (100k walkers at 10 s: 165 loops against 163, width 4.83 against
-4.96). **On the owner's GTX 1070** (2026-11-11), a 60 Hz frame of two ticks,
+4.96; one seed, and the CPU's own count moves about as much from one tick
+to the next). **On the owner's GTX 1070** (2026-11-11), a 60 Hz frame of two ticks,
 submitted one frame at a time, takes 0.82 ms at 32,000 walkers, 1.37 ms at
 100,000 and 3.52 ms at 1,000,000 (no crowd limit), against the phase 3 bar
 of 8 ms; the worst 1M frame was about 12 ms. The GPU dish matches the CPU's
@@ -90,13 +91,19 @@ the one-a-cell limit, angles, reach, step, trail laid and kept, respawn,
 food, colour, trail or walker counts, the game's or a soft curve) and the
 comparison's dishes on keys 1-8 (the owner's ask, 00:06Z). The left mouse
 pulls walkers to it, the right wipes trail, F drops food. On a software
-GPU its dishes match the CPU's at 10 s (one a cell: 148 loops against 151;
-1M with respawn: 200 against 200), and a seed gives the same frame twice.
-A twin test in CI checks one GPU tick from a CPU dish's state against one
-CPU tick on software Vulkan: every walker within 0.001, the trail and scent
-to the bit. On the GTX 1070 a frame of two ticks and the drawing takes 1.4 ms at
-100,000 walkers, 8-10 ms at 1,000,000 and 30 ms at 4,000,000; the drawing
-is 0.06-0.18 ms of it ([report](../../Reports/gpu-sandbox-2026-11-11.md),
+GPU and on the GTX 1070 its dishes match the CPU's spread at 10 s on 8
+seeds (16 for the food dish): no measure differs after Bonferroni over 20
+tests a GPU, once an independent review (11-11) had found and fixed two
+gaps, fed scent and jumps after the step. A seed is a different dish on
+each GPU, since their `f32` sums round differently, but gives the same frame
+twice on one. A twin test in CI checks one GPU tick from a CPU dish's state
+against one CPU tick on software Vulkan: to the bit on keys 1, 3, 4 and 5.
+On the GTX 1070 a frame of two ticks and the drawing takes 1.45 ms of GPU
+time at 100,000 walkers, 8.1-10 ms at 1,000,000 and 12.8 ms at 4,000,000
+with our numbers (30 ms with Jenson's, whose far sensors double the sense
+pass); the drawing is 0.07-0.29 ms of it. In the vsynced window at light
+load the GPU steps its clocks down, so the window reads slower than
+headless ([report, *Independent review*](../../Reports/gpu-sandbox-2026-11-11.md),
 [page](https://claude.ai/artifact/1rdrxadVcNdxTmbxp2KJGy)).
 
 Three facts bind the design:
@@ -105,8 +112,9 @@ Three facts bind the design:
   piece labels must go back up to the GPU.
 - A finer grid changes the mesh and the smell range in dish terms; the
   chosen scaling rule keeps the fine mesh and today's smell reach.
-- Cloud sessions have no GPU, so an all-integer simulation is recommended,
-  with the same bits on CPU, GPU and CI.
+- Cloud sessions have no GPU. CI runs the GPU step on Mesa's software
+  Vulkan; with the fields `f32` (fixed point changed play, below), the twin
+  test is one tick from a CPU state, not the same bits over a run.
 
 **Why Jenson's clips look different** (compared on the big dish,
 2026-11-10, no food, spread start). Jenson runs the same step; the look
@@ -146,8 +154,11 @@ tool in phase 6. Every outside source has a card in
 | GPU step vs CPU step, same seed, 10 s, software Vulkan (llvmpipe) | 32k: loops 90 / 92, width 3.40 / 3.41, strays 0.9% / 1.0%; 100k: loops 165 / 163, width 4.83 / 4.96, strays 1.8% / 1.5% | seed 1 | | [gpu plan, *GPU timing test*](../../Reports/gpu-plan-2026-11-10.md) |
 | GPU step on the GTX 1070, nose rule, seed 1: ms a tick (median), 120 ticks a submit / 2 a submit | 32k 0.374 / 0.410; 100k 0.631 / 0.685; 1M, crowd 0, 1.537 / 1.760 (worst 6.09); frame of two ticks 0.82, 1.37, 3.52 ms | seed 1 | | [gpu plan, *GPU timing on the GTX 1070*](../../Reports/gpu-plan-2026-11-10.md) |
 | GPU dish vs CPU dish on the GTX 1070, 20 s, seed 1 | 32k: loops 66 / 68, width 3.48 / 3.48, strays 2.3% / 1.8%; 100k: loops 115 / 114, width 5.08 / 5.20, strays 2.0% / 1.9%; CPU 9.98 and 23.63 ms a tick on four threads | seed 1 | | same |
-| GPU sandbox vs CPU dish, software Vulkan, 10 s, seed 1, no food: loops sandbox / CPU | one a cell 148 / 151; no limit 0 / 0; 1M Jenson settings 43 / 42; with respawn 1% 200 / 200 (width 8.33 / 7.99) | seed 1 | | [gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md) |
-| GPU sandbox on the GTX 1070, a frame of two ticks and the drawing (median), seed 1 | 32k 0.88 ms; 100k 1.42 (4.6 in the vsynced window); 100k no limit 0.99; 1M Jenson settings 8.00; with respawn 9.84; 4M 30.07 (37 frames a second); drawing 0.06-0.18 | seed 1 | | [gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md) |
+| GPU sandbox vs CPU dish, software Vulkan, 10 s, seed 1, no food, before the review's fixes: loops sandbox / CPU | one a cell 148 / 151; no limit 0 / 0; 1M Jenson settings 43 / 42; with respawn 1% 200 / 200 (width 8.33 / 7.99) | seed 1 | | [gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md) |
+| GPU sandbox on the GTX 1070, a frame of two ticks and the drawing (median), seed 1, before the review's fixes (window figure a running average; "busy 1.4" is wall time, GPU 1.30) | 32k 0.88 ms; 100k 1.42 (4.6 in the vsynced window); 100k no limit 0.99; 1M Jenson settings 8.00; with respawn 9.84; 4M 30.07 (37 frames a second); drawing 0.06-0.18 | seed 1 | | [gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md) |
+| GPU sandbox vs CPU dish after the review's fixes, 10 s, spread start, software Vulkan and GTX 1070 | no measure (loops, width, tube, strays on five dishes) differs after Bonferroni over 20 a GPU; smallest p 0.013 (1070, 32k with food, more loops on 12 of 16); 1M respawn width CPU 7.70-8.01, software 7.83-8.00, 1070 7.82-8.12; 32k strays 0.8-1.8%, 0.5-1.4%, 0.8-1.7% | 8 (16 for 32k) | by seed | [gpu sandbox, *Independent review*](../../Reports/gpu-sandbox-2026-11-11.md) |
+| GPU sandbox on the GTX 1070 after the fixes, GPU ms a frame of two ticks + drawing, headless, seed 1 | 32k 0.82 + 0.07; 100k 1.39 + 0.07; 100k no limit 0.91 + 0.06; 1M Jenson settings 7.85 + 0.29; with respawn 9.68 + 0.27; 4M 29.79 + 0.29; 4M ours 12.57 + 0.28; sense pass a tick 2.51 ms at 1M (Jenson) against 3.72 at 4M (ours) | seed 1 | | same |
+| GPU clocks in the vsynced window, 100k, GTX 1070 | window median 1.80 + 0.08 ms with the clocks stepping 1594 to 797 MHz (memory 810 MHz) against headless 1.39 + 0.07 at 1936 MHz; 8 ticks a frame or 1M walkers hold 1936 MHz | seed 1 | | same |
 | Big dish cost, ms a tick, one thread / four | today 0.54 / 0.53; nose 32k 11.3 / 6.7; nose 100k 21.6 / 20.2; steps 43.1 / 25.8; turn 71.1 / 31.7 | seed 1 | | same |
 | No one-a-cell limit vs the limit, 100k walkers, no food, spread start, loops at 10 s | 0 (0-2) vs 151.5 (144-160): fewer on 8 of 8, p 0.008, survives Bonferroni over 4 | 8 | yes | [jenson compare, *The tests*](../../Reports/jenson-compare-2026-11-10.md) |
 | Respawn 1% a step vs none, 1M walkers, no limit, sensor 45 / turn 22.5 / reach 18, loops at 10 s | 196 (187-208) vs 43.5 (38-52): more on 8 of 8, p 0.008, survives Bonferroni over 4; 166 vs 160 ms a tick on one core | 8 | yes | same |
@@ -179,7 +190,7 @@ tool in phase 6. Every outside source has a card in
 - Whether the invisible far smell is good for play is open: the owner's rule on showing the simulation argues against an invisible mechanism, but today's dishes are tuned on it.
 - What in the all-at-once move cuts the seam fights, measured on a neutral two-mould dish.
 - The bag: whether a packed start on the fine grid still stalls once the economy grows the mould from a small inoculum.
-- Drawing, census readback and the economy on the GPU are not yet timed; the sandbox (phase 3) adds the drawing.
+- Census readback and the economy on the GPU are not yet timed; the drawing is (0.07-0.29 ms a frame on the GTX 1070, sandbox).
 - Jenson's feathery fronts, lasting trunks and contagion are not reproduced; nor tried are settings set by the trail a walker stands in (36 Points), a square-root deposit (Bleuje), area sensors (Lague) and chance-weighted steering (MCPM). The outside code was read on 2026-11-10; only PolyPhy, gpu-io (MIT) and Barradeau (public domain) may be reused.
 
 ## Sources

@@ -1,0 +1,6 @@
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 28.463, worst 42.412; GPU ms ticks 25.962, drawing 2.921
+dish at 10.0s: tube 12383.7  loops 161  width 4.94  reach 190.1  piles 7/7  strays 0.015
+wrote /tmp/claude-0/vframes/p1-010s.png
+same picture twice: yes
