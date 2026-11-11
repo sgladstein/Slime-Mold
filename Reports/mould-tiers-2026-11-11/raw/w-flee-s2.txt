@@ -1,0 +1,37 @@
+== seed 2: 1024 x 640, 20000 walkers, 7 piles
+seed 2 w-flee t  10.0s  strike at 95,80 r 8: killed 626
+seed 2 w-flee t  10.0s  tube  2389.9  loops   21  width 4.68  reach  115.3  piles 5/7  strays 0.011  ms/tick 16.31
+seed 2 w-flee t  10.0s  contrast 2.21
+seed 2 w-flee t  10.0s  extent r50 106.8 r90 169.8
+seed 2 w-flee t  10.0s  life walk 19374 spore 0 dormant 0 dead 626  held 4/7  bodies 1 big 2389  centre 128.0,78.7  near 1275  rim 0.000/0.000
+seed 2 w-flee t  10.5s  strike at 95,80 r 8: killed 87
+seed 2 w-flee t  11.0s  strike at 95,80 r 8: killed 21
+seed 2 w-flee t  11.5s  strike at 95,80 r 8: killed 0
+seed 2 w-flee t  12.0s  strike at 95,80 r 8: killed 0
+seed 2 w-flee t  12.5s  strike at 95,80 r 8: killed 0
+seed 2 w-flee t  13.0s  strike at 95,80 r 8: killed 0
+seed 2 w-flee t  13.5s  strike at 95,80 r 8: killed 0
+seed 2 w-flee t  14.0s  strike at 95,80 r 8: killed 0
+seed 2 w-flee t  14.5s  strike at 95,80 r 8: killed 0
+seed 2 w-flee t  15.0s  strike at 95,80 r 8: killed 0
+seed 2 w-flee t  20.0s  tube  2049.1  loops   21  width 4.48  reach  110.5  piles 5/7  strays 0.031  ms/tick 17.47
+seed 2 w-flee t  20.0s  contrast 2.34
+seed 2 w-flee t  20.0s  extent r50 104.6 r90 179.8
+seed 2 w-flee t  20.0s  life walk 19266 spore 0 dormant 0 dead 734  held 4/7  bodies 1 big 2048  centre 128.0,79.0  near 0  rim 0.000/0.000
+seed 2 w-flee t  30.0s  tube  1942.6  loops   16  width 5.10  reach  106.2  piles 5/7  strays 0.021  ms/tick 18.39
+seed 2 w-flee t  30.0s  contrast 2.51
+seed 2 w-flee t  30.0s  extent r50 102.6 r90 181.1
+seed 2 w-flee t  30.0s  life walk 19266 spore 0 dormant 0 dead 734  held 4/7  bodies 1 big 1943  centre 127.5,79.2  near 0  rim 0.000/0.000
+seed 2 w-flee t  40.0s  tube  1817.1  loops   14  width 5.13  reach  104.6  piles 5/7  strays 0.026  ms/tick 19.30
+seed 2 w-flee t  40.0s  contrast 2.59
+seed 2 w-flee t  40.0s  extent r50 101.2 r90 184.2
+seed 2 w-flee t  40.0s  life walk 19266 spore 0 dormant 0 dead 734  held 4/7  bodies 1 big 1816  centre 127.4,79.2  near 0  rim 0.000/0.000
+seed 2 w-flee t  50.0s  tube  1782.1  loops   14  width 5.44  reach  103.8  piles 5/7  strays 0.025  ms/tick 21.32
+seed 2 w-flee t  50.0s  contrast 2.55
+seed 2 w-flee t  50.0s  extent r50 100.1 r90 187.1
+seed 2 w-flee t  50.0s  life walk 19266 spore 0 dormant 0 dead 734  held 4/7  bodies 1 big 1782  centre 127.3,79.1  near 0  rim 0.000/0.000
+seed 2 w-flee t  60.0s  tube  1668.2  loops   14  width 5.60  reach  102.9  piles 5/7  strays 0.027  ms/tick 26.57
+seed 2 w-flee t  60.0s  contrast 2.74
+seed 2 w-flee t  60.0s  extent r50 98.6 r90 189.2
+seed 2 w-flee t  60.0s  life walk 19266 spore 0 dormant 0 dead 734  held 4/7  bodies 1 big 1667  centre 127.2,79.0  near 0  rim 0.000/0.000
+seed 2 w-flee hash=70a2d4059c9c46cd

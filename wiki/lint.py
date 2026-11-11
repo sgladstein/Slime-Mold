@@ -187,7 +187,8 @@ def main():
                         errors.append(f"{rel}: owner quote without a date: {r[:60]}")
         if fm.get("status") and fm["status"] not in STATUSES:
             errors.append(f"{rel}: status `{fm['status']}` is not one of {sorted(STATUSES)}")
-        if len(text.encode()) > PAGE_CAP:
+        # The decision logs only grow; they split by subject, not by this cap.
+        if len(text.encode()) > PAGE_CAP and not os.path.basename(p).startswith("decisions"):
             warnings.append(f"{rel}: {len(text.encode()) // 1000} KB, over the "
                             f"{PAGE_CAP // 1000} KB cap; split it (wiki/README.md, *Growth*)")
         for section, rows in sections(text):
@@ -214,7 +215,7 @@ def main():
         # decisions.md is a log of rulings whose links are pointers, not a
         # summary of those reports, so it is left out.
         srcs = {os.path.normpath(os.path.join(ROOT, s)) for s in fm.get("sources", []) or []}
-        for target in sorted(set(LINK.findall(body))) if not p.endswith("decisions.md") else []:
+        for target in sorted(set(LINK.findall(body))) if not os.path.basename(p).startswith("decisions") else []:
             path = os.path.normpath(os.path.join(os.path.dirname(p), target.split("#", 1)[0]))
             if os.path.dirname(path) == os.path.join(ROOT, "Reports") and path.endswith(".md") \
                     and os.path.basename(path) not in NOT_SOURCES and path not in srcs \

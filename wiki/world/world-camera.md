@@ -32,17 +32,10 @@ blind A/B, 16:48Z) with facing, team helmet and muzzle flash; crystals are
 hexagons, as in the simulation. On the 1070 at 1080p the view takes
 1.8-2.0 ms with the look against 0.3 ms without.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Through the camera at zoom 1 against the engine's frame, 1024 x 640 dish | 0 of 573,440 pixels differ | 1 | - | [report, *Checked*](../../Reports/world-camera-2026-11-11.md) |
-| View pass, 1920 x 1080, 49 marks, GTX 1070, zoom 1 / 4 / fit 0.84 | 0.333 / 0.315 / 0.415 ms | 1 | - | [report, *On the GTX 1070*](../../Reports/world-camera-2026-11-11.md) |
-
 ## Owner's word
 
 - 2026-11-11 16:48Z: "Solider A looks better" (the SVG sprite); "Gun fire should hit the first slime in its path"; "The crystals should have hexagonal outline, not circle."
-
+- 2026-11-11 17:37Z: "from looking at the gif/video it doesn't always look like that" (shots stopping at the first slime): the stand-in counted only thick tubes; now anything that looks like slime (26/255) stops a shot.
 - 2026-11-11 14:06Z: "We should do a camera UI thread too as you suggested".
 - 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand."
 

@@ -1,0 +1,49 @@
+# worldwall none arm, crystal_flow 0 / 0.01 / 0.05 / 0.2. 512x320, 20k walkers, 23 crystals that run dry (charge 1, eat 0.005), 40 s. Measure: 'drained ... of others'
+## r4-none
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1 crystal_flow 0 wall_scent 0
+seed 1 none   wall     0 drained 0.4928 of others  home left 0.000  ring pile bitten 5.8s  left 0.803  broken 0  hash 226ffed617b52609
+seed 2 none   wall     0 drained 0.5609 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  hash d4151ead051c5cf9
+seed 3 none   wall     0 drained 0.4984 of others  home left 0.000  ring pile bitten 8.6s  left 0.783  broken 0  hash 7ebdce113b5dd1f5
+seed 4 none   wall     0 drained 0.3578 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 50e723eef41efcc2
+seed 5 none   wall     0 drained 0.4723 of others  home left 0.000  ring pile bitten 7.6s  left 0.840  broken 0  hash 556d054f54199cab
+seed 6 none   wall     0 drained 0.4077 of others  home left 0.000  ring pile bitten never  left 0.999  broken 0  hash e5d9fb27748c3057
+## r7-flow0
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1 crystal_flow 0 wall_scent 0
+seed 7 none   wall     0 drained 0.5216 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  wall bites 0  hash b83728fe3b8cb875
+seed 8 none   wall     0 drained 0.4768 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash 36bd0af4375b70d0
+seed 9 none   wall     0 drained 0.4873 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash 03aee17fc35a12af
+seed 10 none   wall     0 drained 0.4991 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash 381e18db78df4769
+seed 11 none   wall     0 drained 0.4538 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  wall bites 0  hash 6b476985abbe62b7
+seed 12 none   wall     0 drained 0.4858 of others  home left 0.000  ring pile bitten never  left 0.999  broken 0  wall bites 0  hash 2efa1167e7bbd2f2
+## r6-flow0.01
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1 crystal_flow 0.01 wall_scent 0
+seed 1 none   wall     0 drained 0.8883 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  wall bites 0  hash d39c865553cd1e8b
+seed 2 none   wall     0 drained 0.9207 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  wall bites 0  hash 0c516d67d53d4a35
+seed 3 none   wall     0 drained 0.7866 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash 8516573f47d3c33b
+seed 4 none   wall     0 drained 0.5877 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash 2d1c867581a14a98
+seed 5 none   wall     0 drained 0.9006 of others  home left 0.000  ring pile bitten 15.5s  left 0.391  broken 0  wall bites 0  hash 0513a62a946176d9
+seed 6 none   wall     0 drained 0.7232 of others  home left 0.000  ring pile bitten 19.5s  left 0.591  broken 0  wall bites 0  hash 2bfca5818d176f86
+## r7-flow0.01
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1 crystal_flow 0.01 wall_scent 0
+seed 7 none   wall     0 drained 0.9153 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  wall bites 0  hash 47e59e59e3343bb1
+seed 8 none   wall     0 drained 0.7804 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash e7366a166e0b6cf5
+seed 9 none   wall     0 drained 0.9671 of others  home left 0.000  ring pile bitten 30.2s  left 0.549  broken 0  wall bites 0  hash 437a2a10e1f5ac55
+seed 10 none   wall     0 drained 0.8668 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash ded7503b945c36de
+seed 11 none   wall     0 drained 0.7811 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  wall bites 0  hash a44e7ac64aee81b7
+seed 12 none   wall     0 drained 0.8343 of others  home left 0.000  ring pile bitten never  left 0.999  broken 0  wall bites 0  hash 2fafb0724702305e
+## r6-flow0.05
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1 crystal_flow 0.05 wall_scent 0
+seed 1 none   wall     0 drained 0.8969 of others  home left 0.000  ring pile bitten 6.6s  left 0.988  broken 0  wall bites 0  hash de51481e62a73121
+seed 2 none   wall     0 drained 0.9338 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  wall bites 0  hash 89a6cbca16e3d388
+seed 3 none   wall     0 drained 0.4548 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash 3842cff381435ef7
+seed 4 none   wall     0 drained 0.5905 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash 761855824b47c04e
+seed 5 none   wall     0 drained 0.8923 of others  home left 0.000  ring pile bitten 13.5s  left 0.927  broken 0  wall bites 0  hash 0a237865bcf64f0a
+seed 6 none   wall     0 drained 0.7261 of others  home left 0.000  ring pile bitten 21.8s  left 0.769  broken 0  wall bites 0  hash 2367417162116474
+## r6-flow0.2
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1 crystal_flow 0.2 wall_scent 0
+seed 1 none   wall     0 drained 0.9090 of others  home left 0.000  ring pile bitten 6.0s  left 0.994  broken 0  wall bites 0  hash 173a69657baa3ecd
+seed 2 none   wall     0 drained 0.9718 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  wall bites 0  hash c5a23cbb0411efd2
+seed 3 none   wall     0 drained 0.5003 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  wall bites 0  hash e924514517f42834
+seed 4 none   wall     0 drained 0.7868 of others  home left 0.000  ring pile bitten 7.8s  left 0.461  broken 0  wall bites 0  hash a046c6bfc38955b6
+seed 5 none   wall     0 drained 0.9075 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  wall bites 0  hash 61d5957449324b3d
+seed 6 none   wall     0 drained 0.7259 of others  home left 0.000  ring pile bitten 23.9s  left 0.669  broken 0  wall bites 0  hash 70e61d41e82461ca

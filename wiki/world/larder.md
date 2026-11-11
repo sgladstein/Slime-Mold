@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-11T15:40Z
+updated: 2026-11-11T17:10Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 ---
@@ -12,21 +12,40 @@ code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::st
 ## Now
 
 **Larder World is the line all Larder work now goes to** (owner, 2026-11-11
-14:06Z: "Put everything into the world version"): a squad lands in a
-persistent world on the GPU big dish, energy crystals that drain give off
-the scent the mould and the squad live on, and several mould species fight
-over them. No more small-dish tuning. The roadmap
-([`larder-world-roadmap-2026-11-11.md`](../../Reports/larder-world-roadmap-2026-11-11.md);
-live doc https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ) has six gated
-phases: **W0** births, upkeep and starving per walker on the GPU (the GPU
-plan's phase 4; the big dish's walker count is still fixed), **W1** a world
-with terrain and crystals and both openings (a landing on a world mostly
-mould, and a race from one small area), **W2** the soldiers, extractors,
-camera and UI in the world, **W3** two or three species, **W4** a persistent
-world, **W5** a campaign. Those phases replace M4-M6 of the small-dish build
-plan below. The small-dish milestones M1-M3, which follow, are the evidence
-the world builds on: what the squad's tools do and why the plans formed a
-ladder.
+14:06Z: "Put everything into the world version"): a squad in a persistent
+world on the GPU big dish, energy crystals that run out, several mould
+species. Six gated phases, W0-W5
+([roadmap](../../Reports/larder-world-roadmap-2026-11-11.md); live doc
+https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ), replacing M4-M6 below.
+**Done:** W1a, the world's fields on the CPU big dish (PR #64, below).
+**Next:** W1b, those fields on the GPU engine (after #63 and the GPU
+thread's W0), then W2, Larder in the world. The small-dish M3 window still
+waits on the owner's playtest.
+
+## Larder World so far
+
+**W1a** (PR #64): crystals that run dry or refill (`crystal_charge`,
+`crystal_eat`, `crystal_regrow`), rock and wet terrain, a rectangular world,
+and player walls (`build_wall`): scent and trail don't cross a wall, and with
+`wall_hp` set, mould pressing on a wall wears it down to slow rubble (owner,
+15:24Z: walls must not seal a crystal for good). All on the big dish, CPU,
+off by default. Wall health defaults to 400: a whole caged mould breaks out
+in 20-30 s, while a passing tube never breaks a wall. Crystal charge flows
+inside a crystal (`crystal_flow` 0.01), so the mould eats whole crystals.
+With growth (scratch, no player), charge sets how long the mould lasts, not
+how big it gets. Charge 64 booms and dies within 5 minutes; charge 512 gives
+about 10-12 minutes of food on the 512 × 320 world, the first number for
+the race start
+([report](../../Reports/larder-world-roadmap-2026-11-11.md), *Crystal
+sizing with growth*).
+Walls leak 0.9 of their scent, so a walled crystal still calls and a growing
+mould gets through a ring in about 90 s; sealed, it walked past. Owner,
+16:48Z: crystals are hexagons, and gunfire hits the first mould in its path.
+
+## Small-dish milestones (M1-M3)
+
+The evidence the world builds on: what the squad's tools do and why the
+plans formed a ladder.
 
 Brainstorm: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
 A squad shoots the mould; both want the same food; the player's larder is a
@@ -57,25 +76,12 @@ best on 13+ of 16 any more. The window has groups, a scent view and replays;
 its frame on Scott-Desktop is 7.2 ms mean with 40 soldiers. Next: the
 owner's playtest.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| M3, best plan per seed, held-out: reader / striker / farmer, fed and lean | 8/5/3 and 10/4/2 (M2: reader 13 and 12) | 16 (17-32) | flips striker-farmer, striker-baiter, none survives Holm over 34 | [M3 report, *Census*](../../Reports/larder-m3-2026-11-11.md) |
-| M3 window frame, 40 soldiers, Scott-Desktop (i5-6600K), scent view off / on | 7.2 / 8.9 ms mean, 9.6 / 11.6 ms p95 | 3 runs | - | [M3 report](../../Reports/larder-m3-2026-11-11.md) |
-| M2 gate, held-out: reader against farmer (fed) / baiter (lean), larder field | 13 of 16 / 12 of 16 | 16 (17-32) | p 0.021 / 0.077, neither survives Holm over 24 | [M2 report, *The census*](../../Reports/larder-m2-2026-11-11.md) |
-| M2, hoard smell off: fed reader median score | -0.300 to 0.167 | 16 (17-32) | reader over farmer 13 to 16 of 16 | [M2 report, *Each answer switched off*](../../Reports/larder-m2-2026-11-11.md) |
-| M2, drops off: lean mould wiped, baiter and reader | 16 of 16 each (5 and 11 with drops) | 16 (17-32) | - | [M2 report, *Each answer switched off*](../../Reports/larder-m2-2026-11-11.md) |
-| Larder theft, ring held from 0 s (fixed snip), against idle | 0 against 12,301 | 16 | 16-0, p 0.00003 | [report, *Correction*](../../Reports/mould-shooter-2026-11-11.md) |
-| Priced ring, bank at the bell: ring then mow / ring all round / idle, shot price 40 | 23,420 / 7,540 / 10,600 | 16 | ring-then-mow best on 16/16; ring below idle 16/16 | [report, *The priced ring*](../../Reports/mould-shooter-2026-11-11.md) |
-| Larder theft, ring raised when mould is near (fixed snip), against idle | 12,225 against 12,301 | 16 | 15-1, p 0.0005 | [report, *Correction*](../../Reports/mould-shooter-2026-11-11.md) |
-| Larder theft, snips through the larder (fixed snip), against idle | 154 against 12,301 | 16 | 16-0, p 0.00003 | [report, *Correction*](../../Reports/mould-shooter-2026-11-11.md) |
-| Trail-only gun, any hand against idle | 12,269-12,275 | 16 | 7-9 of 16, p >= 0.80 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
-| First bite of the larder, smell 3 against 0.3 | 4.1 s against 4.6 s | 16 | 16-0, p 0.00003 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
-| Loops at 45 s, piles full against a quarter | 10 against 1 | 16 | 16-0, p 0.00003 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
 
 ## Owner's word
 
+- 2026-11-11 14:54Z (14:55: "just my initial thought", for playtests to settle): test crystals that run out against ones that don't. Run-out crystals go with the race (an idle player should be overrun), refilling ones probably with the landing. Walls first, the Sporer and Sleeper tiers and a player-owned species are agreed. A CPU world for small tests, and the 1070 for GPU work.
+- 2026-11-11 14:25Z: the mould tier ladder is agreed, and it grows as research finds new behaviours. Walls or weapons can come first.
+- 2026-11-11 14:14Z: the early leader's win rate is a per-mould difficulty, not a gate. There should be mould tiers from easy to hard, and player walls, upgrades and weapons, so strategy depends on the mix.
 - 2026-11-11 14:09Z: also explore a race start, "both the player and the mold starting in one small area and then we're both trying to expand at the same time".
 - 2026-11-11 14:07Z: a player AI thread for automated testing; later "two soldier teams against multiple molds so in the future the AI could also play soldiers".
 - 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand. Several species sounds interesting. Put everything into the world version."
