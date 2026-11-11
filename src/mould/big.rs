@@ -45,6 +45,7 @@ const DRAW_SIZE: u32 = 110;
 const DRAW_KEEP: u32 = 111;
 /// Claims in `blocked_retry` round r use CLAIM_RETRY + r.
 const CLAIM_RETRY: u32 = 112;
+const DRAW_MIX: u32 = 113;
 
 #[derive(Clone, Debug)]
 pub struct BigParams {
@@ -254,6 +255,21 @@ pub struct BigParams {
     /// u), u in [-1, 1] from a keyed draw on k alone, fixed for its life, so
     /// big walkers see and move far and small ones near.
     pub size_spread: f32,
+    /// Mixed walkers in one mould (added 2026-11-11, owner: "what if some of
+    /// the walkers had different properties than other ones?"). Walker k is
+    /// the second kind when unit(keyed(seed, 0, DRAW_MIX, k)) < `mix_share`
+    /// (0 is off: every walker is the first kind). Both kinds lay and read
+    /// the same trail; the second kind's sensor offset, sensor angle, turn
+    /// and step are the first kind's times `mix_reach`, `mix_angle`,
+    /// `mix_turn` and `mix_step`, and everything it lays (moving, blocked or
+    /// capped) is times `mix_deposit` (1 is the same). The kind is fixed for
+    /// the walker's life, through respawn.
+    pub mix_share: f32,
+    pub mix_reach: f32,
+    pub mix_angle: f32,
+    pub mix_turn: f32,
+    pub mix_step: f32,
+    pub mix_deposit: f32,
     /// Blocked walkers keep their heading (Jones and Adamatzky 2012, the
     /// amoeboid model) rather than drawing a new one, except with chance
     /// `blocked_reset` a step, when they draw one as today. False is today's
@@ -341,6 +357,12 @@ impl BigParams {
             explore_spread: 0.0,
             explore_deposit: 0.05,
             size_spread: 0.0,
+            mix_share: 0.0,
+            mix_reach: 1.0,
+            mix_angle: 1.0,
+            mix_turn: 1.0,
+            mix_step: 1.0,
+            mix_deposit: 1.0,
             blocked_keep: false,
             blocked_reset: 0.01,
             blocked_retry: 0,
@@ -411,6 +433,8 @@ pub struct BigDish {
     pub age: Vec<u16>,
     /// Each walker's species (`species` > 1), else empty. Starts k % n.
     pub spec: Vec<u8>,
+    /// Each walker's kind, 0 or 1 (`mix_share` > 0), else empty.
+    pub kind: Vec<u8>,
     /// Grass (`graze_weight` > 0) a cell, else empty.
     pub grass: Vec<f32>,
     /// Pile centres in dish cells, and whether the tube has reached each.
@@ -508,6 +532,7 @@ impl BigDish {
             species_trail: Vec::new(),
             age: Vec::new(),
             spec: Vec::new(),
+            kind: Vec::new(),
             grass: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
@@ -516,6 +541,10 @@ impl BigDish {
         };
         d.place_piles();
         d.place_walkers();
+        if d.p.mix_share > 0.0 {
+            let (seed, share) = (d.p.seed, d.p.mix_share);
+            d.kind = (0..d.walkers.len()).map(|k| u8::from(unit(keyed(seed, 0, DRAW_MIX, k as u32)) < share)).collect();
+        }
         if d.p.explore_steps > 0 {
             d.age = vec![0; d.walkers.len()];
         }
@@ -683,6 +712,7 @@ impl BigDish {
 
     /// Lay `amount` of trail on cell `j` for walker `k` (and its species).
     fn lay(&mut self, k: usize, j: usize, amount: f32) {
+        let amount = if !self.kind.is_empty() && self.kind[k] == 1 { amount * self.p.mix_deposit } else { amount };
         self.trail[j] += amount;
         if !self.species_trail.is_empty() {
             let sp = self.spec[k] as usize;
@@ -713,6 +743,12 @@ impl BigDish {
             let here = self.cell(x, y).expect("walker inside the dish");
             // Trail-dependent settings (`sense_scale`), read where it stands.
             let (mut so, mut sa, mut ra, mut st) = (so, sa, ra, st);
+            if !self.kind.is_empty() && self.kind[k] == 1 {
+                so *= p.mix_reach;
+                sa *= p.mix_angle;
+                ra *= p.mix_turn;
+                st *= p.mix_step;
+            }
             if p.size_spread > 0.0 {
                 let u = 2.0 * unit(keyed(seed, 0, DRAW_SIZE, k as u32)) - 1.0;
                 let sc = (p.size_spread * u).exp2();
@@ -1294,7 +1330,7 @@ impl BigDish {
         for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.grass).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
-        for &c in &self.spec {
+        for &c in self.spec.iter().chain(&self.kind) {
             eat(c as u32);
         }
         for &c in self.sick.iter().chain(&self.age) {
@@ -1483,6 +1519,7 @@ mod tests {
             BigParams { species: 3, species_cycle: true, species_convert: 1.0, ..small(2, 1) },
             BigParams { species: 2, species_convert: 1.5, species_boost: 1.5, graze_weight: 10.0, ..small(2, 1) },
             BigParams { species: 2, species_zones: true, species_convert: 1.2, species_convert_r: 3, species_share: 0.6, ..small(2, 1) },
+            BigParams { mix_share: 0.3, mix_reach: 3.0, mix_angle: 0.5, mix_turn: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..small(2, 1) },
             BigParams { blocked_keep: true, blocked_reset: 0.1, blocked_retry: 3, blocked_deposit: 1.0, ..small(2, 1) },
             BigParams { explore_steps: 30, explore_spread: 1.0, ..small(2, 1) },
         ] {

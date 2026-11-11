@@ -131,11 +131,14 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
             }
             c
         }
-        "soft" | "sick" | "species" => d.trail.clone(),
-        _ => panic!("style={style}: amber, grey, count, soft or sick"),
+        "soft" | "sick" | "species" | "kinds" => d.trail.clone(),
+        _ => panic!("style={style}: amber, grey, count, soft, sick, species or kinds"),
     };
     if style == "species" && !d.species_trail.is_empty() {
         return species_picture(d, down);
+    }
+    if style == "kinds" {
+        return kinds_picture(d, down);
     }
     let soft = style == "soft" || style == "sick" || style == "species";
     // The soft curve's reference: the trail's 99.9th percentile over the agar.
@@ -171,6 +174,44 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
             }
             let g = (255.0 * (1.0 - (-v / knee).exp())).clamp(0.0, 255.0) as u8;
             img.put_pixel(px, py, image::Rgba([g, g, g, 255]));
+        }
+    }
+    img
+}
+
+/// Mixed walkers (`mix_share`): the shared trail in dim grey on the soft
+/// curve, and where the walkers of each kind stand, the first amber and the
+/// second teal, each as 1 - exp(-count / mean count a cell) over the block.
+/// Every colour is data: trail and walker counts, no outline drawn.
+fn kinds_picture(d: &BigDish, down: usize) -> image::RgbaImage {
+    let refv = pct(&d.trail, 0.999).max(1e-6);
+    let down = down.max(1);
+    let (iw, ih) = ((d.w / down) as u32, (d.h / down) as u32);
+    let mut c = [vec![0.0f32; (iw * ih) as usize], vec![0.0f32; (iw * ih) as usize]];
+    for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+        let (px, py) = (x as usize / down, y as usize / down);
+        if px < iw as usize && py < ih as usize {
+            let kd = if d.kind.is_empty() { 0 } else { d.kind[k] as usize };
+            c[kd][py * iw as usize + px] += 1.0;
+        }
+    }
+    let cells = d.agar.iter().filter(|&&a| a).count().max(1) as f32;
+    let mean = [0usize, 1].map(|kd| (c[kd].iter().sum::<f32>() / cells * (down * down) as f32).max(1e-3));
+    let mut img = image::RgbaImage::new(iw, ih);
+    for py in 0..ih {
+        for px in 0..iw {
+            let mut v = 0.0f32;
+            for dy in 0..down {
+                for dx in 0..down {
+                    v = v.max(d.trail[(py as usize * down + dy) * d.w + px as usize * down + dx]);
+                }
+            }
+            let g = 0.35 * (v / refv).clamp(0.0, 1.0).powf(0.6);
+            let i = (py * iw + px) as usize;
+            let a = 1.0 - (-c[0][i] / (2.0 * mean[0])).exp();
+            let b = 1.0 - (-c[1][i] / (2.0 * mean[1])).exp();
+            let col = |ca: f32, cb: f32| (255.0 * g + ca * a + cb * b).min(255.0) as u8;
+            img.put_pixel(px, py, image::Rgba([col(255.0, 60.0), col(170.0, 200.0), col(60.0, 220.0), 255]));
         }
     }
     img
@@ -330,6 +371,12 @@ fn main() {
             "explore_deposit" => p.explore_deposit = f(),
             "explore_spread" => p.explore_spread = f(),
             "size_spread" => p.size_spread = f(),
+            "mix_share" => p.mix_share = f(),
+            "mix_reach" => p.mix_reach = f(),
+            "mix_angle" => p.mix_angle = f(),
+            "mix_turn" => p.mix_turn = f(),
+            "mix_step" => p.mix_step = f(),
+            "mix_deposit" => p.mix_deposit = f(),
             "blocked_keep" => p.blocked_keep = f() != 0.0,
             "blocked_reset" => p.blocked_reset = f(),
             "blocked_retry" => p.blocked_retry = f() as u8,
@@ -511,6 +558,30 @@ fn main() {
                         let w: Vec<String> = c.iter().map(|&v| format!("{:.3}", v as f32 / d.spec.len().max(1) as f32)).collect();
                         println!("seed {seed} {name} t {:5.1}s  walkers {}", m.seconds, w.join(","));
                     }
+                }
+                if !d.kind.is_empty() {
+                    // Mixed walkers: for each kind, the share of its walkers
+                    // on tube cells (trail above `tube`) and their median
+                    // distance from the dish centre in fine cells.
+                    let (cx, cy) = (d.w as f32 / 2.0, d.h as f32 / 2.0);
+                    let mut parts = Vec::new();
+                    for kd in 0..2u8 {
+                        let mut on = 0usize;
+                        let mut dist: Vec<f32> = Vec::new();
+                        for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+                            if d.kind[k] != kd {
+                                continue;
+                            }
+                            if d.trail[y as usize * d.w + x as usize] > d.p.tube {
+                                on += 1;
+                            }
+                            dist.push((x - cx).hypot(y - cy));
+                        }
+                        dist.sort_by(|a, b| a.total_cmp(b));
+                        let n = dist.len().max(1);
+                        parts.push(format!("k{kd} n {} on {:.3} r {:.1}", dist.len(), on as f32 / n as f32, dist.get(n / 2).copied().unwrap_or(0.0)));
+                    }
+                    println!("seed {seed} {name} t {:5.1}s  kinds {}", m.seconds, parts.join("  "));
                 }
                 if !d.sick.is_empty() {
                     let s = d.p.scale as f32;
