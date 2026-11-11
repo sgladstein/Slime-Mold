@@ -1,0 +1,39 @@
+bigdish: preset grass seeds [1] seconds 60 threads 1
+== seed 1: 512 x 320, 50000 walkers, 23 piles
+seed 1 grass t   5.0s  tube 24315.5  loops   35  width 16.68  reach  202.2  piles 23/23  strays 0.001  crystals 1.000  ms/tick 15.59
+seed 1 grass t   5.0s  alive 49449  energy 1.255  born 67557  starved 23108  grass 0.256
+seed 1 grass t   5.0s  contrast 2.07
+seed 1 grass t  10.0s  tube 20343.2  loops   24  width 14.10  reach  210.9  piles 23/23  strays 0.002  crystals 1.000  ms/tick 16.42
+seed 1 grass t  10.0s  alive 48705  energy 0.919  born 104859  starved 61154  grass 0.061
+seed 1 grass t  10.0s  contrast 2.41
+seed 1 grass t  15.0s  tube 15237.8  loops   17  width 11.38  reach  210.9  piles 23/23  strays 0.005  crystals 1.000  ms/tick 16.03
+seed 1 grass t  15.0s  alive 29905  energy 0.344  born 131225  starved 106320  grass 0.064
+seed 1 grass t  15.0s  contrast 2.25
+seed 1 grass t  20.0s  tube  8910.5  loops    6  width 7.70  reach  210.9  piles 23/23  strays 0.002  crystals 1.000  ms/tick 14.24
+seed 1 grass t  20.0s  alive 9021  energy 0.323  born 139572  starved 135551  grass 0.099
+seed 1 grass t  20.0s  contrast 2.38
+seed 1 grass t  25.0s  tube 13093.0  loops   13  width 9.39  reach  208.1  piles 23/23  strays 0.001  crystals 1.000  ms/tick 12.77
+seed 1 grass t  25.0s  alive 16088  energy 0.421  born 155305  starved 144217  grass 0.087
+seed 1 grass t  25.0s  contrast 2.28
+seed 1 grass t  30.0s  tube 11378.2  loops   14  width 8.41  reach  210.9  piles 23/23  strays 0.002  crystals 1.000  ms/tick 12.07
+seed 1 grass t  30.0s  alive 13024  energy 0.354  born 168756  starved 160732  grass 0.084
+seed 1 grass t  30.0s  contrast 2.35
+seed 1 grass t  35.0s  tube 10464.5  loops    8  width 7.93  reach  205.4  piles 23/23  strays 0.002  crystals 1.000  ms/tick 11.42
+seed 1 grass t  35.0s  alive 12288  energy 0.317  born 181842  starved 174554  grass 0.086
+seed 1 grass t  35.0s  contrast 2.27
+seed 1 grass t  40.0s  tube  9910.2  loops    6  width 7.43  reach  205.4  piles 23/23  strays 0.002  crystals 1.000  ms/tick 10.80
+seed 1 grass t  40.0s  alive 10198  energy 0.352  born 192062  starved 186864  grass 0.106
+seed 1 grass t  40.0s  contrast 2.45
+seed 1 grass t  45.0s  tube 13017.8  loops   17  width 8.21  reach  204.5  piles 23/23  strays 0.002  crystals 1.000  ms/tick 10.41
+seed 1 grass t  45.0s  alive 14714  energy 0.384  born 207190  starved 197476  grass 0.095
+seed 1 grass t  45.0s  contrast 2.37
+seed 1 grass t  50.0s  tube 11799.2  loops   17  width 7.56  reach  205.2  piles 23/23  strays 0.003  crystals 1.000  ms/tick 10.16
+seed 1 grass t  50.0s  alive 12863  energy 0.360  born 220558  starved 212695  grass 0.094
+seed 1 grass t  50.0s  contrast 2.43
+seed 1 grass t  55.0s  tube 10703.8  loops   13  width 8.40  reach  206.6  piles 23/23  strays 0.002  crystals 1.000  ms/tick 10.02
+seed 1 grass t  55.0s  alive 12903  energy 0.317  born 234753  starved 226850  grass 0.088
+seed 1 grass t  55.0s  contrast 2.34
+seed 1 grass t  60.0s  tube 11941.2  loops   14  width 7.88  reach  210.9  piles 23/23  strays 0.002  crystals 1.000  ms/tick 9.76
+seed 1 grass t  60.0s  alive 12444  energy 0.386  born 247388  starved 239944  grass 0.094
+seed 1 grass t  60.0s  contrast 2.44
+seed 1 grass hash=2293f6a6a23a34b7

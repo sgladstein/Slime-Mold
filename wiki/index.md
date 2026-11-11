@@ -28,6 +28,7 @@ work; a thread working on one directly may change it.
 - [The mould at scale](model/scale.md): the GPU plan; phases 1-3 done, fields stay f32, 1.37 ms a frame at 100k walkers on the 1070; phase 4 starts as Larder World W0.
 - [The GPU sandbox](model/gpu-sandbox.md): the big dish live on the GPU with every tested option as a control; matches the CPU; 1.45 ms a frame at 100k.
 - [Outside looks and creature rules](model/outside-looks.md): why Jenson's clips look different; trunks, contagion, species, explorers, grazing droplets; fronts still open.
+- [Growth and starving](model/growth.md): the big dish's walkers eat, divide and starve (off by default); size follows food; matches on the GPU; on crystals that run dry it eats only its roads.
 - [The life cycle and the answer to attack](model/life-cycle.md): spores, sleep and an alarm; Sporer, Sleeper and Swarmer each beat their control 8/8 and have a counter.
 
 ## Looks

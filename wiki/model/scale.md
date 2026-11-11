@@ -2,7 +2,7 @@
 title: The mould at scale (the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-11T19:10Z
+updated: 2026-11-11T19:15Z
 sources: [Reports/gpu-plan-2026-11-10.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost, BigParams::crystal_charge, BigParams::crystal_regrow, BigParams::terrain_rock, BigParams::rect, BigDish::build_wall, BigParams::wall_hp, BigParams::wall_scent, BigParams::crystal_flow, BigDish::in_pile, BigParams::species_share, BigParams::species_convert_r, BigParams::mix_share]
 ---
@@ -22,9 +22,9 @@ reach) gives about 65 loops at 32,000 walkers on the 1024 x 640 big dish
 100,000 walkers and 3.52 ms at a million, against an 8 ms bar. Phase 3, the
 live sandbox, has [its own page](gpu-sandbox.md); what the outside looks and
 creature rules do is on [outside looks and creatures](outside-looks.md).
-**Phase 4 now starts as Larder World's W0** (births, upkeep and starving per
-walker on the GPU), and the world's fields are on the
-[Larder](../world/larder.md) page. Tables: [the GPU plan
+**Phase 4 has begun with Larder World's W0**, [growth and
+starving](growth.md) per walker, built on the CPU and the GPU and matched
+in CI, and the world's fields are on the [Larder](../world/larder.md) page. Tables: [the GPU plan
 report](../../Reports/gpu-plan-2026-11-10.md).
 
 ## The plan and phase 1
@@ -40,9 +40,10 @@ report](../../Reports/gpu-plan-2026-11-10.md).
 5. Porting the dishes that survive a dense network.
 6. New play that only scale allows.
 
-Phase 4 (game rules on the GPU) now starts as Larder World's W0: births,
-upkeep and starving per walker, since the big dish's walker count is fixed
-([Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md),
+Phase 4 (game rules on the GPU) has begun with Larder World's W0: births,
+upkeep and starving per walker, built on the CPU and the GPU and matched
+to the bit in CI ([growth and starving](growth.md);
+[Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md),
 [Larder](../world/larder.md)).
 
 Today, diffusing trail and scent is 62% of the simulation's time and moving the walkers 24% (`Dish::step_cost`, printed by `mouldprobe`).

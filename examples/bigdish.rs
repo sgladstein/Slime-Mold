@@ -75,6 +75,10 @@
 //! report adds `pure` (share of tube cells where one species lays 80% or
 //! more of the trail) and each species' share of all trail.
 //!
+//! Growth (Larder World W0, 2026-11-11): `upkeep= start_energy=
+//! birth_energy= birth_cost= starve= capacity=` (`BigParams::upkeep`); the
+//! report adds the living walkers, their mean energy, births and starvings
+//! so far, and the grass left. `count` draws only the living.
 //! Later keys (2026-11-11): `graze_weight= graze_eat= graze_regrow=`
 //! (grazing), `species_convert= species_convert_r= species_boost=
 //! species_share=` (conversion, a louder or more numerous species 0),
@@ -141,7 +145,7 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
         "count" => {
             let mut c = vec![0.0f32; d.w * d.h];
             for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
-                if d.life.is_empty() || d.life[k] != LIFE_DEAD {
+                if d.lives(k) && (d.life.is_empty() || d.life[k] != LIFE_DEAD) {
                     c[y as usize * d.w + x as usize] += 1.0;
                 }
             }
@@ -212,7 +216,7 @@ fn life_picture(d: &BigDish, down: usize) -> image::RgbaImage {
     let mut living = 0usize;
     for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
         let l = if d.life.is_empty() { 0 } else { d.life[k] };
-        if l == LIFE_DEAD {
+        if !d.lives(k) || l == LIFE_DEAD {
             continue;
         }
         living += 1;
@@ -527,6 +531,13 @@ fn main() {
             "blocked_reset" => p.blocked_reset = f(),
             "blocked_retry" => p.blocked_retry = f() as u8,
             "blocked_deposit" => p.blocked_deposit = f(),
+            "upkeep" => p.upkeep = f(),
+            "energy_flow" => p.energy_flow = f(),
+            "start_energy" => p.start_energy = f(),
+            "birth_energy" => p.birth_energy = f(),
+            "birth_cost" => p.birth_cost = f(),
+            "starve" => p.starve = f(),
+            "capacity" => p.capacity = f() as usize,
             "spore_rate" => p.spore_rate = f(),
             "spore_scent" => p.spore_scent = f(),
             "spore_alarm" => p.spore_alarm = f(),
@@ -649,8 +660,10 @@ fn main() {
                             // for drawing offline with other curves.
                             let mut bytes = Vec::with_capacity(8 * d.w * d.h);
                             let mut count = vec![0.0f32; d.w * d.h];
-                            for &(x, y, _) in &d.walkers {
-                                count[y as usize * d.w + x as usize] += 1.0;
+                            for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+                                if d.lives(k) {
+                                    count[y as usize * d.w + x as usize] += 1.0;
+                                }
                             }
                             for v in d.trail.iter().chain(&count) {
                                 bytes.extend_from_slice(&v.to_le_bytes());
@@ -682,6 +695,16 @@ fn main() {
                     d.crystals_left(),
                     spent * 1e3 / d.ticks as f64
                 );
+                if !d.energy.is_empty() {
+                    // Growth: living walkers, their mean energy, births and
+                    // starvings so far, and the grass left (mean over agar).
+                    let agar = d.agar.iter().filter(|&&a| a).count().max(1) as f64;
+                    let grass: f64 = d.grass.iter().map(|&g| g as f64).sum::<f64>() / agar;
+                    println!(
+                        "seed {seed} {name} t {:5.1}s  alive {}  energy {:.3}  born {}  starved {}  grass {:.3}",
+                        m.seconds, m.alive, m.energy, d.births, d.starved, grass
+                    );
+                }
                 {
                     // Trunk contrast: the 99th percentile of trail over its
                     // median, among cells over the tube cut.
@@ -842,7 +865,7 @@ fn main() {
                     let mut near = vec![0usize; d.piles.len()];
                     let (mut sx, mut sy, mut n) = (0.0f64, 0.0f64, 0usize);
                     for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
-                        if !d.life.is_empty() && matches!(d.life[k], LIFE_SPORE | LIFE_DEAD) {
+                        if !d.lives(k) || (!d.life.is_empty() && matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) {
                             continue;
                         }
                         sx += x as f64;
@@ -860,7 +883,7 @@ fn main() {
                         .walkers
                         .iter()
                         .enumerate()
-                        .filter(|&(k, &(x, y, _))| (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (x / s - strike_x).hypot(y / s - strike_y) <= 2.0 * strike_r)
+                        .filter(|&(k, &(x, y, _))| d.lives(k) && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (x / s - strike_x).hypot(y / s - strike_y) <= 2.0 * strike_r)
                         .count();
                     // `rim`: the share of them within 2 and within 10 dish
                     // cells of the agar's edge along a row or column (the
@@ -876,7 +899,7 @@ fn main() {
                             .enumerate()
                             .filter(|&(k, &(x, y, _))| {
                                 let (x, y) = (x as i64, y as i64);
-                                (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (off(x - edge, y) || off(x + edge, y) || off(x, y - edge) || off(x, y + edge))
+                                d.lives(k) && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (off(x - edge, y) || off(x + edge, y) || off(x, y - edge) || off(x, y + edge))
                             })
                             .count()
                     };

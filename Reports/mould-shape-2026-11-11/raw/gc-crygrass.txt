@@ -1,0 +1,39 @@
+bigdish: preset crygrass seeds [1] seconds 60 threads 1
+== seed 1: 512 x 320, 50000 walkers, 23 piles
+seed 1 crygrass t   5.0s  tube 24300.0  loops   46  width 15.84  reach  199.4  piles 23/23  strays 0.000  crystals 0.096  ms/tick 15.91
+seed 1 crygrass t   5.0s  alive 49576  energy 1.635  born 64006  starved 19430  grass 0.199
+seed 1 crygrass t   5.0s  contrast 1.86
+seed 1 crygrass t  10.0s  tube 24636.0  loops   74  width 12.31  reach  210.9  piles 23/23  strays 0.000  crystals 0.000  ms/tick 17.71
+seed 1 crygrass t  10.0s  alive 49575  energy 1.275  born 98112  starved 53537  grass 0.022
+seed 1 crygrass t  10.0s  contrast 1.82
+seed 1 crygrass t  15.0s  tube 24973.8  loops   86  width 12.01  reach  210.9  piles 23/23  strays 0.000  crystals 0.000  ms/tick 17.83
+seed 1 crygrass t  15.0s  alive 45660  energy 0.433  born 131838  starved 91178  grass 0.019
+seed 1 crygrass t  15.0s  contrast 1.83
+seed 1 crygrass t  20.0s  tube 18721.2  loops   95  width 7.23  reach  210.9  piles 23/23  strays 0.001  crystals 0.000  ms/tick 16.66
+seed 1 crygrass t  20.0s  alive 14077  energy 0.327  born 140781  starved 131704  grass 0.025
+seed 1 crygrass t  20.0s  contrast 2.24
+seed 1 crygrass t  25.0s  tube 18606.8  loops   99  width 7.29  reach  210.2  piles 23/23  strays 0.000  crystals 0.000  ms/tick 15.01
+seed 1 crygrass t  25.0s  alive 14203  energy 0.404  born 148731  starved 139528  grass 0.023
+seed 1 crygrass t  25.0s  contrast 2.20
+seed 1 crygrass t  30.0s  tube 18399.0  loops   90  width 7.05  reach  210.9  piles 23/23  strays 0.001  crystals 0.000  ms/tick 14.13
+seed 1 crygrass t  30.0s  alive 14283  energy 0.387  born 156546  starved 147263  grass 0.025
+seed 1 crygrass t  30.0s  contrast 2.23
+seed 1 crygrass t  35.0s  tube 18449.0  loops   90  width 7.14  reach  210.4  piles 23/23  strays 0.000  crystals 0.000  ms/tick 13.73
+seed 1 crygrass t  35.0s  alive 14287  energy 0.386  born 164402  starved 155115  grass 0.024
+seed 1 crygrass t  35.0s  contrast 2.20
+seed 1 crygrass t  40.0s  tube 17867.0  loops   92  width 7.43  reach  210.5  piles 23/23  strays 0.000  crystals 0.000  ms/tick 13.44
+seed 1 crygrass t  40.0s  alive 14083  energy 0.381  born 171916  starved 162833  grass 0.026
+seed 1 crygrass t  40.0s  contrast 2.11
+seed 1 crygrass t  45.0s  tube 18101.2  loops   92  width 7.30  reach  210.7  piles 23/23  strays 0.000  crystals 0.000  ms/tick 13.25
+seed 1 crygrass t  45.0s  alive 14247  energy 0.385  born 179813  starved 170566  grass 0.025
+seed 1 crygrass t  45.0s  contrast 2.21
+seed 1 crygrass t  50.0s  tube 18050.2  loops   90  width 7.18  reach  210.9  piles 23/23  strays 0.000  crystals 0.000  ms/tick 13.13
+seed 1 crygrass t  50.0s  alive 14239  energy 0.381  born 187774  starved 178535  grass 0.025
+seed 1 crygrass t  50.0s  contrast 2.19
+seed 1 crygrass t  55.0s  tube 17893.0  loops   89  width 7.35  reach  207.5  piles 23/23  strays 0.001  crystals 0.000  ms/tick 13.11
+seed 1 crygrass t  55.0s  alive 14287  energy 0.389  born 195554  starved 186267  grass 0.025
+seed 1 crygrass t  55.0s  contrast 2.13
+seed 1 crygrass t  60.0s  tube 18498.2  loops  104  width 7.28  reach  207.5  piles 23/23  strays 0.000  crystals 0.000  ms/tick 13.07
+seed 1 crygrass t  60.0s  alive 14312  energy 0.385  born 203340  starved 194028  grass 0.025
+seed 1 crygrass t  60.0s  contrast 2.19
+seed 1 crygrass hash=d85ba36b855ca5f8

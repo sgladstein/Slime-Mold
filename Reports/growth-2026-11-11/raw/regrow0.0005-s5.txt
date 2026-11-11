@@ -1,0 +1,40 @@
+bigdish: preset regrow0.0005-s5 seeds [5] seconds 60 threads 1
+params BigParams { scale: 2, substeps: 1, walkers: 2500, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, scent_offset: 18.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: false, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: true, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 0, sense_floor: 0.0, wander: 0.0, sick_steps: 0, immune_steps: 0, sick_catch: 1.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 1.0, sick_turn: 1.0, sick_seed_r: 0.0, sensor_r: 0, species: 0, species_avoid: 1.0, species_convert: 0.0, species_boost: 1.0, graze_weight: 10.0, graze_eat: 0.05, graze_regrow: 0.0005, species_zones: false, chance_exp: 0.0, species_cycle: false, species_next: 0.6, species_prev: -1.0, explore_steps: 0, explore_deposit: 0.05, explore_spread: 0.0, size_spread: 0.0, blocked_keep: false, blocked_reset: 0.01, blocked_retry: 0, blocked_deposit: 0.0, upkeep: 0.01, start_energy: 0.5, birth_energy: 1.0, birth_cost: 0.2, starve: 0.01, capacity: 50000, tube: 1.0, seed: 1 }
+== seed 5: 512 x 320, 50000 walkers, 7 piles
+seed 5 regrow0.0005-s5 t   5.0s  tube 12161.2  loops   24  width 11.39  reach  176.6  piles 6/7  strays 0.001  ms/tick 5.71
+seed 5 regrow0.0005-s5 t   5.0s  alive 18297  energy 0.197  born 63671  starved 47874  grass 0.391
+seed 5 regrow0.0005-s5 t   5.0s  contrast 1.71
+seed 5 regrow0.0005-s5 t  10.0s  tube 12231.5  loops   32  width 7.03  reach  194.6  piles 7/7  strays 0.002  ms/tick 5.01
+seed 5 regrow0.0005-s5 t  10.0s  alive 11591  energy 0.255  born 94596  starved 85505  grass 0.190
+seed 5 regrow0.0005-s5 t  10.0s  contrast 2.61
+seed 5 regrow0.0005-s5 t  15.0s  tube 12810.2  loops   42  width 6.40  reach  196.5  piles 7/7  strays 0.001  ms/tick 4.67
+seed 5 regrow0.0005-s5 t  15.0s  alive 9304  energy 0.213  born 120192  starved 113388  grass 0.073
+seed 5 regrow0.0005-s5 t  15.0s  contrast 2.77
+seed 5 regrow0.0005-s5 t  20.0s  tube 12483.5  loops   44  width 5.64  reach  194.5  piles 7/7  strays 0.002  ms/tick 4.36
+seed 5 regrow0.0005-s5 t  20.0s  alive 6679  energy 0.280  born 133807  starved 129628  grass 0.075
+seed 5 regrow0.0005-s5 t  20.0s  contrast 2.84
+seed 5 regrow0.0005-s5 t  25.0s  tube 12832.0  loops   48  width 5.85  reach  196.1  piles 7/7  strays 0.002  ms/tick 4.11
+seed 5 regrow0.0005-s5 t  25.0s  alive 7115  energy 0.301  born 147927  starved 143312  grass 0.072
+seed 5 regrow0.0005-s5 t  25.0s  contrast 2.76
+seed 5 regrow0.0005-s5 t  30.0s  tube 13359.8  loops   55  width 6.05  reach  196.5  piles 7/7  strays 0.002  ms/tick 4.00
+seed 5 regrow0.0005-s5 t  30.0s  alive 7184  energy 0.276  born 161672  starved 156988  grass 0.071
+seed 5 regrow0.0005-s5 t  30.0s  contrast 2.66
+seed 5 regrow0.0005-s5 t  35.0s  tube 12952.2  loops   48  width 5.84  reach  193.4  piles 7/7  strays 0.002  ms/tick 3.90
+seed 5 regrow0.0005-s5 t  35.0s  alive 7145  energy 0.274  born 175207  starved 170562  grass 0.073
+seed 5 regrow0.0005-s5 t  35.0s  contrast 2.75
+seed 5 regrow0.0005-s5 t  40.0s  tube 12788.8  loops   53  width 5.75  reach  196.1  piles 7/7  strays 0.002  ms/tick 3.82
+seed 5 regrow0.0005-s5 t  40.0s  alive 6884  energy 0.282  born 188673  starved 184289  grass 0.076
+seed 5 regrow0.0005-s5 t  40.0s  contrast 2.77
+seed 5 regrow0.0005-s5 t  45.0s  tube 12817.8  loops   44  width 5.94  reach  194.4  piles 7/7  strays 0.004  ms/tick 3.77
+seed 5 regrow0.0005-s5 t  45.0s  alive 6945  energy 0.268  born 202315  starved 197870  grass 0.076
+seed 5 regrow0.0005-s5 t  45.0s  contrast 2.68
+seed 5 regrow0.0005-s5 t  50.0s  tube 12786.8  loops   49  width 5.92  reach  192.8  piles 7/7  strays 0.001  ms/tick 3.71
+seed 5 regrow0.0005-s5 t  50.0s  alive 7219  energy 0.284  born 216123  starved 211404  grass 0.076
+seed 5 regrow0.0005-s5 t  50.0s  contrast 2.83
+seed 5 regrow0.0005-s5 t  55.0s  tube 12561.0  loops   46  width 5.90  reach  194.6  piles 7/7  strays 0.002  ms/tick 3.66
+seed 5 regrow0.0005-s5 t  55.0s  alive 6889  energy 0.283  born 229641  starved 225252  grass 0.077
+seed 5 regrow0.0005-s5 t  55.0s  contrast 2.78
+seed 5 regrow0.0005-s5 t  60.0s  tube 12969.0  loops   49  width 5.86  reach  191.2  piles 7/7  strays 0.002  ms/tick 3.63
+seed 5 regrow0.0005-s5 t  60.0s  alive 7029  energy 0.279  born 243601  starved 239072  grass 0.076
+seed 5 regrow0.0005-s5 t  60.0s  contrast 2.85
+seed 5 regrow0.0005-s5 hash=71f9a7e8813e0855

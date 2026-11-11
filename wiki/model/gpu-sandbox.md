@@ -2,7 +2,7 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-11T19:10Z
+updated: 2026-11-11T19:15Z
 sources: [Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md]
 code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost]
 ---
@@ -68,6 +68,10 @@ matches them on fifteen dishes (every walker, age and species; fields
 within 2.4e-8). `blocked_retry` is not ported. Compiled in but off they
 cost 18-24% on the software GPU, so the sandbox compiles them out when off
 ([report, *The outside rules as controls*](../../Reports/gpu-sandbox-2026-11-11.md)).
+On the GTX 1070 their presets take 1.0-1.8 ms of ticks a frame at 30,000
+walkers and 9.6-17.9 at a million (ribbons the dearest, from sensing).
+Growth and starving (GPU phase 4's first rule, Larder World W0) has [its
+own page](growth.md); it is a fifth panel page and keys Ctrl+3 and 4.
 
 Three facts bind the design:
 

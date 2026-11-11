@@ -648,6 +648,17 @@ ticks a frame (two ticks), seed 1:
   16.1 against 18.5-20.2 and 11.6-13.5).
 - **The GTX 1070's timing is pending**: the PC's session is parked until
   the owner next writes.
+- **On the GTX 1070** (added 2026-11-11 15:17Z; run through the Larder
+  thread's session on build cc88693, the growth branch, with growth off;
+  raw in [`growth-2026-11-11/raw/gtx1070.txt`](growth-2026-11-11/raw/gtx1070.txt)),
+  GPU ms of ticks + drawing a frame of two ticks, seed 1, 10 s: at a
+  million walkers territories 11.08 + 0.29, ribbons 17.91 + 0.30, explorer
+  front 9.65 + 0.26, against key 4's 7.85 + 0.29 (*What a frame costs on
+  the GTX 1070 now*); at 30,000 droplets 1.02 + 0.27, beads 1.04 + 0.27,
+  grazing droplets 1.19 + 0.28, grazing species 1.77 + 0.30. Sensing is
+  most of it at a million: 3.74, 6.85 and 2.92 ms a tick (the ribbons'
+  reach of 32 and three species double it). The rules' cost when off was
+  not timed on the 1070.
 
 ## Next
 
@@ -659,6 +670,7 @@ ticks a frame (two ticks), seed 1:
 - *Done 2026-11-11:* the outside rules and creatures reports' rules are
   controls, twin-tested (*The outside rules as controls*, above). Their
   cost on the GTX 1070 is next, when the PC's session wakes; the PC's
-  window still runs b1f0383, without them.
+  window still runs b1f0383, without them. *Timed 2026-11-11 15:17Z* (*What
+  they cost*, above).
 - The looks thread's `species_share` comes next, once it merges.
 - Phase 3 also plans the tools as field writes.

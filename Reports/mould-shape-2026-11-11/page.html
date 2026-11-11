@@ -1,0 +1,166 @@
+<title>What Shapes the Mould</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the same dark lightbox as the growth, GPU sandbox and Jenson pages, so
+   the series reads as one. Black dishes sit flush on the ground; every
+   picture has its counts beside it in mono. One look, dark, by choice. */
+:root {
+  --bg: #0c0e0d;
+  --panel: #151917;
+  --line: #2a302d;
+  --fg: #e9ece9;
+  --muted: #9ba49f;
+  --amber: #ffbe5a;
+  --vein: #cfe3dc;
+  --fed: #9fd8b0;
+  --hungry: #e8a27c;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 600; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 16px; }
+.lead { font-size: 17px; }
+section { display: grid; gap: 20px; }
+section > p, .note { color: var(--muted); }
+.callout { border: 1px solid #4a3f28; background: #17140e; border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; max-width: 80ch; }
+.callout p { color: var(--muted); max-width: none; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 28px 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+video, figure img { width: 100%; max-width: 100%; height: auto; aspect-ratio: 8 / 5; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+.key { font: 500 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.key.fed { color: var(--fed); }
+.key.hungry { color: var(--hungry); }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.strip .row-label { grid-column: 1 / -1; display: grid; gap: 4px; padding-top: 14px; }
+.strip .row-label b { font: 500 12px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.strip .row-label span { font-size: 14px; color: var(--muted); max-width: 80ch; }
+.strip.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pending { border: 1px dashed var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 8px; color: var(--muted); max-width: 80ch; }
+.strip figure { gap: 6px; }
+.strip figcaption { font: 12px/1.45 var(--mono); font-variant-numeric: tabular-nums; gap: 0; }
+.strip figcaption b { color: var(--fg); font-weight: 500; }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; font-size: 13px; min-width: 640px; width: 100%; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); background: var(--panel); }
+tr.sum td { background: #141a17; color: var(--fg); }
+ul.list { margin: 0; padding-left: 18px; display: grid; gap: 10px; max-width: 72ch; color: var(--muted); }
+ul.list strong { color: var(--fg); font-weight: 600; }
+footer { display: grid; gap: 10px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px; }
+code { font-family: var(--mono); font-size: 0.92em; color: var(--fg); }
+.cmd { font: 500 14px/1.5 var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; white-space: pre; max-width: 100%; }
+a { color: var(--vein); }
+a:focus-visible, video:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+@media (max-width: 760px) {
+  .strip, .strip.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Larder World · 2026-11-11 · seed 1, a first look</div>
+    <h1>Food sets how big the mould gets. What it follows sets its shape.</h1>
+    <p class="lead">The same mould on the same 512 × 320 world, with four kinds of food. Every walker eats by the same rule: an equal share of what its cell loses, upkeep 0.001 a step, divide when full, starve when empty. Only the food's layout changes, and the mould comes out as roads, a boom and bust, a fine net or a coarse one.</p>
+  </header>
+
+  <section>
+    <h2>Grass and crystals in one world</h2>
+    <p>The Larder thread's world: 23 crystals that run dry, with charge that evens out inside each crystal. 5,000 walkers to start in 50,000 slots. Grass, where it is on, starts full on every cell, and walkers lean toward fresh grass. Stills at 5, 10, 20 and 60 s, with the walkers alive, the food left and the closed loops in the net.</p>
+    <div class="strip">
+      <div class="row-label"><b>Crystals only</b><span>23 crystals that run dry; nothing to eat between them.</span></div>
+      <figure><img src="stills/cry-005s.jpg" alt="Tubes linking the crystals, drawn as blue discs" loading="lazy"><figcaption><span>5 s</span><span>alive <b>2,297</b></span><span>crystals 69% left</span><span>loops 3</span></figcaption></figure>
+      <figure><img src="stills/cry-010s.jpg" alt="Fewer tubes; discs fading as they are eaten" loading="lazy"><figcaption><span>10 s</span><span>alive <b>2,400</b></span><span>crystals 41% left</span><span>loops 1</span></figcaption></figure>
+      <figure><img src="stills/cry-020s.jpg" alt="A few thin tubes left" loading="lazy"><figcaption><span>20 s</span><span>alive <b>515</b></span><span>crystals 3% left</span><span>loops 0</span></figcaption></figure>
+      <figure><img src="stills/cry-060s.jpg" alt="Almost nothing: one small mark" loading="lazy"><figcaption><span>60 s</span><span>alive <b>20</b></span><span>crystals 0.8% left</span><span>loops 0</span></figcaption></figure>
+      <div class="row-label"><b>Crystals on grass that never comes back</b><span>The same crystals, and every cell starts with grass that does not regrow.</span></div>
+      <figure><img src="stills/crypantry-005s.jpg" alt="A sheet of mould filling most of the dish with round holes" loading="lazy"><figcaption><span>5 s</span><span>alive <b>49,548</b></span><span>grass 15% left</span><span>loops 42</span></figcaption></figure>
+      <figure><img src="stills/crypantry-010s.jpg" alt="A net of tubes across the whole dish" loading="lazy"><figcaption><span>10 s</span><span>alive <b>48,069</b></span><span>grass 0.2% left</span><span>loops 30</span></figcaption></figure>
+      <figure><img src="stills/crypantry-020s.jpg" alt="Nearly empty: two faint strands" loading="lazy"><figcaption><span>20 s</span><span>alive <b>33</b></span><span>grass 0.1% left</span><span>loops 0</span></figcaption></figure>
+      <figure><img src="stills/crypantry-060s.jpg" alt="Empty dish" loading="lazy"><figcaption><span>60 s</span><span>alive <b>0</b></span><span>grass 0.1% left</span><span>loops 0</span></figcaption></figure>
+      <div class="row-label"><b>Crystals on grass that regrows</b><span>The same, with grass growing back at 0.0001 a step.</span></div>
+      <figure><img src="stills/crygrass-005s.jpg" alt="A sheet of mould filling most of the dish with round holes" loading="lazy"><figcaption><span>5 s</span><span>alive <b>49,576</b></span><span>grass 20% left</span><span>loops 46</span></figcaption></figure>
+      <figure><img src="stills/crygrass-010s.jpg" alt="A fine net across the whole dish" loading="lazy"><figcaption><span>10 s</span><span>alive <b>49,575</b></span><span>grass 2% left</span><span>loops 74</span></figcaption></figure>
+      <figure><img src="stills/crygrass-020s.jpg" alt="An even net of small cells over the whole dish" loading="lazy"><figcaption><span>20 s</span><span>alive <b>14,077</b></span><span>grass 2.5% left</span><span>loops 95</span></figcaption></figure>
+      <figure><img src="stills/crygrass-060s.jpg" alt="The same even net of small cells, still standing" loading="lazy"><figcaption><span>60 s</span><span>alive <b>14,312</b></span><span>grass 2.5% left</span><span>loops 104</span></figcaption></figure>
+      <div class="row-label"><b>Grass that regrows, piles that only smell</b><span>Crystal charge 0: the 23 piles still give off scent at full strength but feed nothing.</span></div>
+      <figure><img src="stills/grass-005s.jpg" alt="A sheet of mould with large holes" loading="lazy"><figcaption><span>5 s</span><span>alive <b>49,449</b></span><span>grass 26% left</span><span>loops 35</span></figcaption></figure>
+      <figure><img src="stills/grass-010s.jpg" alt="A coarse net of thick tubes" loading="lazy"><figcaption><span>10 s</span><span>alive <b>48,705</b></span><span>grass 6% left</span><span>loops 24</span></figcaption></figure>
+      <figure><img src="stills/grass-020s.jpg" alt="A coarse net of thick tubes with a few big cells" loading="lazy"><figcaption><span>20 s</span><span>alive <b>9,021</b></span><span>grass 10% left</span><span>loops 6</span></figcaption></figure>
+      <figure><img src="stills/grass-060s.jpg" alt="A coarse net of thick tubes running between the piles" loading="lazy"><figcaption><span>60 s</span><span>alive <b>12,444</b></span><span>grass 9% left</span><span>loops 14</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it shows</h2>
+    <ul class="list">
+      <li><strong>Crystals alone give roads.</strong> Food only at the crystals means only tubes between them survive. With crystals that run dry, the mould peaks at 2,400 walkers, eats 99% of the charge and is nearly gone by 30 s.</li>
+      <li><strong>Grass that never comes back is a boom and bust.</strong> The mould fills its 50,000 slots by 5 s, about 20 times the size it reaches on crystals alone. It eats the grass and every crystal by 10 s, and it is dead by 40 s, sooner than on crystals alone.</li>
+      <li><strong>Grass that regrows sets a steady size and a fine net.</strong> After the same boom, the mould settles at about 14,000 walkers in an even net of small cells (95-104 loops) over the whole dish. The crystals are eaten in the first 10 s; after that the grass alone holds it.</li>
+      <li><strong>Smell bends the net into roads.</strong> The last row has the same grass, but the 23 piles keep smelling and feed nothing. The net comes out coarse, with thick tubes running between the piles (6-14 loops). In the row above, eaten crystals stop smelling, so only the grass steers the walkers. The amount of food sets the size; what the walkers follow sets the shape.</li>
+      <li><strong>In this world the grass outweighs the crystals by far.</strong> With grass under them, the crystals are a snack the mould finishes in 10 s. If the real game has both, the crystals need to be much richer than the grass, or the grass much thinner, for the crystals to matter.</li>
+    </ul>
+    <p class="note">One seed, so these are looks, not counts across seeds. Three of the four runs hit the 50,000-slot cap early, so slots, not food, cap their boom.</p>
+  </section>
+
+  <section>
+    <h2>Walker count, with and without the crowd limit</h2>
+    <p>Jenson's dish from the GPU sandbox (preset 3), 1024 × 640, no food, 30 s. Only two things change: the walker count, and the crowd limit, which lets at most one walker stand on a cell. The deciding measure, named before the runs, was the closed loops in the net at 30 s, over 8 seeds. Stills are seed 1 at 30 s.</p>
+    <div class="strip three">
+      <div class="row-label"><b>Crowd limit off</b><span>Any number of walkers may share a cell.</span></div>
+      <figure><img src="stills/crowd0-32k-030s.jpg" alt="Four short bright strands on black" loading="lazy"><figcaption><span>32,000 walkers</span><span>loops <b>0</b> (8 seeds 0-0)</span><span>tube 1,205 cells</span></figcaption></figure>
+      <figure><img src="stills/crowd0-100k-030s.jpg" alt="Three bright strands, one long and curved" loading="lazy"><figcaption><span>100,000 walkers</span><span>loops <b>0</b> (8 seeds 0-1)</span><span>tube 1,874 cells</span></figcaption></figure>
+      <figure><img src="stills/crowd0-200k-030s.jpg" alt="Two bright strands" loading="lazy"><figcaption><span>200,000 walkers</span><span>loops <b>0</b> (8 seeds 0-1)</span><span>tube 1,551 cells</span></figcaption></figure>
+      <div class="row-label"><b>Crowd limit on</b><span>One walker a cell.</span></div>
+      <figure><img src="stills/crowd1-32k-030s.jpg" alt="A lacy net of thin tubes filling an oval" loading="lazy"><figcaption><span>32,000 walkers</span><span>loops <b>51</b> (8 seeds 43-54)</span><span>tube 7,571 cells</span></figcaption></figure>
+      <figure><img src="stills/crowd1-100k-030s.jpg" alt="A denser net with thicker tubes" loading="lazy"><figcaption><span>100,000 walkers</span><span>loops <b>65</b> (8 seeds 57-70)</span><span>tube 10,320 cells</span></figcaption></figure>
+      <figure><img src="stills/crowd1-200k-030s.jpg" alt="A sheet with round holes" loading="lazy"><figcaption><span>200,000 walkers</span><span>loops <b>144</b> (8 seeds 120-144)</span><span>tube 15,245 cells</span></figcaption></figure>
+    </div>
+    <ul class="list">
+      <li><strong>Without the crowd limit, the count changes nothing.</strong> Every seed at every count, from 32,000 to 1,000,000 walkers, has pulled into a few thick strands by 30 s: 0 or 1 loops, about 800-2,500 cells of tube. The GTX 1070 runs (32,000 to 1,000,000) and the cloud runs (32,000 to 200,000) agree.</li>
+      <li><strong>With it, the count sets the shape.</strong> 32,000 walkers make a lacy net, 100,000 a denser one, and 200,000 a sheet with holes. Each step up gives more loops on 8 of 8 seeds.</li>
+      <li><strong>Why.</strong> With one walker a cell, walkers can't all crowd onto the strongest tube. A blocked walker turns and lays trail beside it, so tubes widen, branch and close into loops, and the mould has to cover at least as many cells as it has walkers. Without the limit, every walker joins the few strongest tubes.</li>
+      <li><strong>For the game.</strong> With growth on, the count follows the food, so a mould that grows thickens from a net into a sheet, and a starving one thins back, as long as the crowd limit is on. The sandbox switches the limit off once walkers pass half the dish's cells (300,000 here), which is why its big presets come out as ropes.</li>
+    </ul>
+    <p class="note">Crowd limit on against off: more loops on 8 of 8 seeds at each count (sign test p 0.0078 each). With the two count steps, all five comparisons survive Holm. The GTX 1070 ran the limit off at 32,000 to 1,000,000 walkers, at 10 s and 30 s. The pictures, the limit on, and the limit off at 200,000 ran in the cloud on software Vulkan with the same code, because the PC's disk was full. On the 1070, without the limit, two ticks take 0.69 / 0.89 / 1.34 / 3.01 ms of GPU time at 32,000 / 100,000 / 300,000 / 1,000,000 walkers.</p>
+  </section>
+
+  <section>
+    <h2>On crystals, size follows how fast the mould can eat</h2>
+    <p>The Larder thread grew the mould for 300 s on its world with crystals of three sizes. It levelled off at about 20,000 walkers whatever the charge, while the walkers packed on the crystals hoarded energy, about 30 each by the end. Letting energy flow between neighbouring walkers turns that hoard into walkers. Seed 1:</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Charge a crystal cell</th><th>Alive at 300 s, as built</th><th>Alive at 300 s, energy flowing</th><th>Mean energy, as built / flowing</th></tr></thead>
+        <tbody>
+          <tr><td class="n">64</td><td class="n">141</td><td class="n">2,309</td><td class="n">1.7 / 0.89</td></tr>
+          <tr><td class="n">512</td><td class="n">21,015</td><td class="n">24,206</td><td class="n">26.4 / 0.66</td></tr>
+          <tr><td class="n">4,096</td><td class="n">18,200</td><td class="n">22,515</td><td class="n">30.0 / 0.69</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Flow gives 15-24% more walkers, but size still doesn't rise with the charge. One walker a cell can stand on a crystal, and each bites 0.005 a step, so the crystals' area sets the intake and the intake sets the size. The charge only sets how long it lasts. For a mould left alone to keep getting stronger, a crystal's yield has to grow with its charge (a bigger bite from a richer cell, or richer crystals that cover more ground). That rule belongs to the Larder thread. Energy flow stays an option, off by default; it also means a cut tube starves what lies beyond it, which hasn't been tested yet.</p>
+  </section>
+
+  <footer>
+    <p>Runs, raw output and this page: <code>Reports/mould-shape-2026-11-11/</code> (<code>grass-crystals.sh</code>, <code>walker-sweep-cloud.sh</code>, <code>raw/</code>, <code>stills/</code>). Code: growth (Larder World W0) on the Larder thread's crystals branch at f292952, one scratch commit (65d914f). Growth itself: <code>Reports/growth-2026-11-11.md</code>; energy flow's raw output: <code>Reports/growth-2026-11-11/raw/energy-flow.txt</code>.</p>
+  </footer>
+</div>

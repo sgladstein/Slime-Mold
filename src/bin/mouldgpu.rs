@@ -13,10 +13,14 @@
 //! - 1-8: the presets, each a dish from the comparison or the 4x Mould page
 //!   (`PRESETS`). 9, 0 and Shift+1-5: the looks of Reports/jenson-looks-2026-11-11.md
 //!   (trunk ring, contagion wave, sweeping ring, long curves, even polygons,
-//!   endemic, sick ropes).
+//!   endemic, sick ropes). Shift+6-0 and Ctrl+1-2: the outside rules'
+//!   creatures. Ctrl+3 and 4: a fed and a starving mould (growth,
+//!   Reports/growth-2026-11-11.md).
 //! - Tab turns the panel's page: MAIN (the comparison's controls), LOOKS
 //!   (start shape, the settings the trail sets, the deposit cap, the sensing
-//!   floor, wander) and CONTAGION (sickness, immunity, the germ field).
+//!   floor, wander), CONTAGION (sickness, immunity, the germ field), OUTSIDE
+//!   RULES and GROWTH (upkeep, births, starving, slots, the grass). With
+//!   growth on the bottom line counts the living.
 //! - Up / Down picks a control, Left / Right changes it (Shift: bigger steps).
 //! - Space pauses, `.` steps one tick, R restarts, N restarts on a new seed.
 //! - Left drag drops walkers at the mouse: each tick 0.2% of all walkers,
@@ -146,7 +150,7 @@ use winit::window::{Window, WindowId};
 /// The presets: keys 1-8 the dishes of the 4x Mould page and the Jenson
 /// comparison; 9, 0 and Shift 1-5 the looks report's, Shift 6-0 the
 /// outside rules report's, Ctrl 1-2 the creatures report's (2026-11-11).
-const PRESETS: [&str; 22] = [
+const PRESETS: [&str; 24] = [
     "BIG DISH (PHASE 2)",
     "32,000 WALKERS",
     "NO LIMIT, OUR NUMBERS",
@@ -169,6 +173,8 @@ const PRESETS: [&str; 22] = [
     "BEADS ON STRINGS",
     "GRAZING DROPLETS",
     "GRAZING SPECIES",
+    "FED MOULD",
+    "STARVING MOULD",
 ];
 
 /// The key a preset is on.
@@ -259,7 +265,17 @@ fn preset(k: usize) -> Settings {
         // amber and teal cells (drawn by trail, in species colours).
         20 => Settings { graze: 10.0, ..droplets.clone() },
         21 => Settings { graze: 10.0, species: 2, avoid: 0.0, field: Field::Trail, ..droplets },
-        _ => panic!("preset {k}: 0-21"),
+        // Growth (Larder World W0, `Reports/growth-2026-11-11.md`): the
+        // census's dishes, 10,000 walkers in a blob in 100,000 slots,
+        // upkeep 0.01, grazing 10; the grass regrows (fed) or does not
+        // (starving). Fed fills the dish with about 96,000 by 30 s; starving
+        // spreads as far, hollows out and is nearly gone by 30 s. The trail
+        // laid is per 100,000 walkers at the start, so 0.5 here is the
+        // census's deposit of 5 a walker (the default 5 would be 50 a
+        // walker: thick ropes, not a mesh).
+        22 => Settings { walkers: 10_000, capacity: 100_000, laid: 0.5, upkeep: 0.01, graze: 10.0, graze_regrow: 0.002, start: Start::Home, ..b.clone() },
+        23 => Settings { walkers: 10_000, capacity: 100_000, laid: 0.5, upkeep: 0.01, graze: 10.0, graze_regrow: 0.0, start: Start::Home, ..b },
+        _ => panic!("preset {k}: 0-23"),
     }
 }
 
@@ -328,6 +344,13 @@ enum Knob {
     Graze,
     GrazeEat,
     GrazeRegrow,
+    // The growth page.
+    Upkeep,
+    StartEnergy,
+    BirthEnergy,
+    BirthCost,
+    Starve,
+    Slots,
 }
 
 const LOOKS: [Knob; 11] = [Knob::Disc, Knob::Haze, Knob::TrailScale, Knob::ReachBy, Knob::AngleBy, Knob::TurnBy, Knob::StepBy, Knob::TrailPower, Knob::Cap, Knob::Floor, Knob::Wander];
@@ -356,10 +379,14 @@ const OUTSIDE: [Knob; 20] = [
     Knob::GrazeRegrow,
 ];
 
+/// Growth and starving (Larder World W0): the walkers eat the grass, so
+/// grazing's three controls are here too.
+const GROWTH: [Knob; 9] = [Knob::Upkeep, Knob::StartEnergy, Knob::BirthEnergy, Knob::BirthCost, Knob::Starve, Knob::Slots, Knob::GrazeRegrow, Knob::GrazeEat, Knob::Graze];
+
 /// The panel's pages (Tab turns them): the first holds the comparison's
-/// controls, the others the looks report's and the outside rules
-/// report's (2026-11-11).
-const PAGES: [(&str, &[Knob]); 4] = [("MAIN", &KNOBS), ("LOOKS", &LOOKS), ("CONTAGION", &SICK), ("OUTSIDE RULES", &OUTSIDE)];
+/// controls, the others the looks report's, the outside rules report's
+/// and growth's (2026-11-11).
+const PAGES: [(&str, &[Knob]); 5] = [("MAIN", &KNOBS), ("LOOKS", &LOOKS), ("CONTAGION", &SICK), ("OUTSIDE RULES", &OUTSIDE), ("GROWTH", &GROWTH)];
 
 const KNOBS: [Knob; 18] = [
     Knob::Walkers,
@@ -398,6 +425,10 @@ const CHANCE_STEPS: [f32; 8] = [0.0, 0.5, 1.0, 1.5, 2.0, 4.0, 8.0, 16.0];
 /// Conversion's factor (the creatures report tried 1.2-2) and grazing's
 /// weight (10 crawls; 30 loses walkers; 100 a gas).
 const CONVERT_STEPS: [f32; 8] = [0.0, 1.0, 1.1, 1.2, 1.5, 2.0, 3.0, 5.0];
+/// Growth's upkeep a tick (the census: 0.01 against at most 0.05 eaten)
+/// and the starving's chance of dying a tick.
+const UPKEEP_STEPS: [f32; 9] = [0.0, 0.001, 0.003, 0.005, 0.01, 0.015, 0.02, 0.03, 0.05];
+const STARVE_STEPS: [f32; 8] = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 0.5, 1.0];
 const GRAZE_STEPS: [f32; 9] = [0.0, 1.0, 3.0, 5.0, 10.0, 20.0, 30.0, 50.0, 100.0];
 
 /// The entry of `list` after (or before) the last one at or below `v`.
@@ -502,6 +533,12 @@ impl Knob {
             Knob::Graze => "GRAZING",
             Knob::GrazeEat => "GRASS EATEN A TICK",
             Knob::GrazeRegrow => "GRASS REGROWS",
+            Knob::Upkeep => "UPKEEP A TICK",
+            Knob::StartEnergy => "START ENERGY",
+            Knob::BirthEnergy => "DIVIDES AT",
+            Knob::BirthCost => "BIRTH COST",
+            Knob::Starve => "STARVING DIES",
+            Knob::Slots => "SLOTS",
         }
     }
 
@@ -595,7 +632,16 @@ impl Knob {
             Knob::Graze if s.graze == 0.0 => "OFF".into(),
             Knob::Graze => format!("{}", s.graze),
             Knob::GrazeEat => format!("{:.3}", s.graze_eat),
+            Knob::GrazeRegrow if s.graze_regrow == 0.0 => "OFF".into(),
             Knob::GrazeRegrow => format!("{:.4}", s.graze_regrow),
+            Knob::Upkeep if s.upkeep == 0.0 => "OFF (FIXED COUNT)".into(),
+            Knob::Upkeep => format!("{:.3}", s.upkeep),
+            Knob::StartEnergy => format!("{:.2}", s.start_energy),
+            Knob::BirthEnergy => format!("{:.2}", s.birth_energy),
+            Knob::BirthCost => format!("{:.2}", s.birth_cost),
+            Knob::Starve => format!("{} A TICK", percent(s.starve)),
+            Knob::Slots if s.capacity <= s.walkers => "THE WALKERS".into(),
+            Knob::Slots => thousands(s.capacity),
         }
     }
 
@@ -712,7 +758,29 @@ impl Knob {
             Knob::Boost => s.boost = (s.boost + 0.1 * k * d).clamp(0.1, 4.0),
             Knob::Graze => s.graze = next_in(&GRAZE_STEPS, s.graze, dir),
             Knob::GrazeEat => s.graze_eat = mul(s.graze_eat, if big { 2.0 } else { 1.25 }).clamp(0.001, 1.0),
+            // Down past 0.0001 is off: the grass never comes back.
+            Knob::GrazeRegrow if s.graze_regrow == 0.0 => s.graze_regrow = if dir > 0 { 0.0001 } else { 0.0 },
+            Knob::GrazeRegrow if dir < 0 && s.graze_regrow <= 0.0001 => s.graze_regrow = 0.0,
             Knob::GrazeRegrow => s.graze_regrow = mul(s.graze_regrow, if big { 2.0 } else { 1.25 }).clamp(0.0001, 1.0),
+            // Turning growth on or off restarts the dish (the slots and
+            // their energy are made at the start); changing it does not.
+            Knob::Upkeep => {
+                let was = s.upkeep > 0.0;
+                s.upkeep = next_in(&UPKEEP_STEPS, s.upkeep, dir);
+                return (s.upkeep > 0.0) != was;
+            }
+            Knob::StartEnergy => {
+                s.start_energy = (s.start_energy + 0.05 * k * d).clamp(0.05, 2.0);
+                return s.upkeep > 0.0;
+            }
+            Knob::BirthEnergy => s.birth_energy = (s.birth_energy + 0.05 * k * d).clamp(0.1, 4.0),
+            Knob::BirthCost => s.birth_cost = (s.birth_cost + 0.05 * k * d).clamp(0.0, 1.0),
+            Knob::Starve => s.starve = next_in(&STARVE_STEPS, s.starve, dir),
+            Knob::Slots => {
+                let before = s.capacity.max(s.walkers);
+                s.capacity = next_in(&WALKER_STEPS, before, dir).min(max_walkers).max(s.walkers);
+                return s.upkeep > 0.0 && s.capacity != before;
+            }
         }
         false
     }
@@ -785,6 +853,8 @@ struct App {
     shot_after: Option<u64>,
     fps_clock: Instant,
     fps: f64,
+    /// Living walkers, read twice a second while growth is on.
+    alive: Option<usize>,
     result: Result<(), String>,
     /// The camera over the dish (a world bigger than the window scrolls),
     /// the view pass that draws through it, and the RTS controls.
@@ -825,6 +895,7 @@ impl App {
             shot_after: std::env::var("MOULDGPU_SCREENSHOT_AFTER_FRAMES").ok().and_then(|v| v.parse().ok()),
             fps_clock: Instant::now(),
             fps: 0.0,
+            alive: None,
             result: Ok(()),
             camera: Camera::new((1024, 640), (1024, 640)),
             view: None,
@@ -914,11 +985,11 @@ impl App {
             ("1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(), WHITE),
             ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(), WHITE),
             ("SHIFT+6 TERRITORIES  7 RIBBONS  8 EXPLORERS  9 DROPLETS  0 BEADS".to_string(), WHITE),
-            ("CTRL+1 GRAZING DROPLETS  2 GRAZING SPECIES".to_string(), WHITE),
+            ("CTRL+1 GRAZING DROPLETS  2 GRAZING SPECIES  3 FED MOULD  4 STARVING MOULD".to_string(), WHITE),
             ("ARROWS PICK AND CHANGE (SHIFT: MORE)  SPACE PAUSE  . STEP  R RESTART  N NEW SEED".to_string(), DIM),
             (mouse.to_string(), DIM),
             (camera, DIM),
-            (format!("{ms}  {:.0} FPS  {:.1} S  SEED {}{}", self.fps, done as f64 / STEPS_PER_SECOND as f64, self.s.seed, if self.paused { "  PAUSED" } else { "" }), WHITE),
+            (format!("{ms}  {:.0} FPS  {:.1} S  SEED {}{}{}", self.fps, done as f64 / STEPS_PER_SECOND as f64, self.s.seed, self.alive.map_or(String::new(), |a| format!("  ALIVE {}", thousands(a))), if self.paused { "  PAUSED" } else { "" }), WHITE),
         ];
         (lines, bottom)
     }
@@ -1021,6 +1092,9 @@ impl App {
             self.frames = 0;
             self.fps_clock = Instant::now();
             self.panel_dirty = true;
+            // A blocking read of the energy (0.4 MB at 100,000 slots), only
+            // while growth is on and the panel shows it.
+            self.alive = self.engine.as_ref().filter(|e| e.grows && self.show_panel).map(|e| e.alive());
         }
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
@@ -1485,6 +1559,12 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     s.start, s.disc, s.haze, s.trail_scale, s.reach_by, s.angle_by, s.turn_by, s.step_by, s.cap, s.floor, s.wander
                 );
             }
+            if s.upkeep > 0.0 {
+                println!(
+                    "   growth: upkeep {} start energy {} divides at {} birth cost {} starving dies {} a tick, {} slots",
+                    s.upkeep, s.start_energy, s.birth_energy, s.birth_cost, s.starve, s.capacity.max(s.walkers)
+                );
+            }
             if s.sick_on() {
                 println!(
                     "   contagion: sick {} immune {} ticks, catch {}, germ {} kept {}, sick speed {} trail {} reach {} turn {}, seeded at {} s r {}",
@@ -1581,7 +1661,10 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             }
             println!();
             let mm = e.measure();
-            let sick = if s.sick_on() { format!("  sick {:.3}", e.sick_share(s)) } else { String::new() };
+            let mut sick = if s.sick_on() { format!("  sick {:.3}", e.sick_share(s)) } else { String::new() };
+            if e.grows {
+                sick += &format!("  alive {}", mm.alive);
+            }
             println!("dish at {:.1}s: tube {:.1}  loops {}  width {:.2}  reach {:.1}  piles {}/{}  strays {:.3}{sick}", mm.seconds, mm.tube_area, mm.loops, mm.width, mm.reach, mm.reached, e.dish.piles.len(), mm.strays);
             if !course.is_empty() {
                 println!("sick every 0.5 s: {}", course.join(" "));
@@ -1812,6 +1895,10 @@ mod tests {
         // Every preset has a key: 1-9 and 0, then Shift with 1-9 and 0.
         assert_eq!((preset_key(8), preset_key(9), preset_key(14)), ("9".to_string(), "0".to_string(), "SHIFT+5".to_string()));
         assert_eq!((preset_key(15), preset_key(19), preset_key(20), preset_key(21)), ("SHIFT+6".to_string(), "SHIFT+0".to_string(), "CTRL+1".to_string(), "CTRL+2".to_string()));
+        // Growth's two: the census's fed and starved dishes.
+        let (fed, starving) = (big_params(&preset(22), 4, true), big_params(&preset(23), 4, true));
+        assert_eq!((preset_key(22), preset_key(23)), ("CTRL+3".to_string(), "CTRL+4".to_string()));
+        assert_eq!((fed.walkers, fed.capacity, fed.upkeep, fed.graze_weight, fed.graze_regrow, starving.graze_regrow), (10_000, 100_000, 0.01, 10.0, 0.002, 0.0));
     }
 
     #[test]
@@ -1846,6 +1933,17 @@ mod tests {
         assert_eq!((percent(0.3), percent(0.0001), percent(0.0)), ("30%".to_string(), "0.01%".to_string(), "OFF".to_string()));
         // The limit restarts the dish (switched on mid-run it would jam).
         assert!(Knob::Crowd.nudge(&mut s, 1, false, 8_000_000));
+        // Growth: on or off restarts, a change while on does not; the
+        // grass's regrowth goes down to off and back.
+        let mut g = Settings::big_dish();
+        assert!(Knob::Upkeep.nudge(&mut g, 1, false, 8_000_000) && g.upkeep > 0.0);
+        assert!(!Knob::Upkeep.nudge(&mut g, 1, false, 8_000_000));
+        assert!(Knob::Slots.nudge(&mut g, 1, false, 8_000_000) && g.capacity == 200_000);
+        g.graze_regrow = 0.0001;
+        Knob::GrazeRegrow.nudge(&mut g, -1, false, 8_000_000);
+        assert_eq!((g.graze_regrow, Knob::GrazeRegrow.value(&g, true)), (0.0, "OFF".to_string()));
+        Knob::GrazeRegrow.nudge(&mut g, 1, false, 8_000_000);
+        assert_eq!(g.graze_regrow, 0.0001);
         assert_eq!(thousands(1_000_000), "1,000,000");
         assert_eq!(thousands(32_000), "32,000");
     }
@@ -2303,5 +2401,99 @@ mod tests {
         }
         set(&mut s, "ticks", "0").unwrap();
         assert_eq!(s.ticks, 1);
+    }
+    /// The twin test for growth (Larder World W0, 2026-11-11): one GPU tick
+    /// from a warmed CPU dish against one `BigDish::tick`, with births and
+    /// starving in the tick. Every slot's position, energy and life are
+    /// compared, and its age, species and sickness where those are on.
+    #[test]
+    fn growth_matches_the_cpu_for_one_tick() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        // A fifth of the preset's walkers to start, so the mould is still
+        // growing at the twin tick. One a cell gets slots for three times
+        // that (it needs them at most half the agar: 512 x 320 holds about
+        // 128,000 cells); with no limit nothing slows a birth but the slots,
+        // so it gets twenty times (it doubles about every 10 ticks of the
+        // 40-tick warm-up; three times was full by then).
+        let g = |s: Settings| Settings { upkeep: 0.01, walkers: s.walkers / 5, capacity: if s.crowd { 3 } else { 20 } * s.walkers / 5, graze: 10.0, ..s };
+        // Hungry: grass eaten faster than it pays (0.03 upkeep against at
+        // most 0.05 eaten), so some starve while others breed.
+        let hungry = |s: Settings| Settings { upkeep: 0.03, starve: 0.2, birth_energy: 0.6, graze_regrow: 0.0, ..g(s) };
+        let dishes = [
+            ("growing, one a cell", g(small(0))),
+            ("growing, no limit", g(small(2))),
+            ("hungry, one a cell", hungry(small(0))),
+            ("hungry, no limit, Jenson's", hungry(small(3))),
+            ("hungry, species converting, explorers, contagion, respawn", Settings { species: 2, convert: 1.2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, respawn: 0.01, ..hungry(small(0)) }),
+            ("hungry, cap, grazing off", Settings { cap: 100, graze: 0.0, ..hungry(small(3)) }),
+            // Every other walker set starving and the rest set to breed
+            // (below), with room in the slots: births land in cells freed
+            // by deaths in the same tick, some of them claimed by the
+            // walker's own move just before it died.
+            // With species, explorers and contagion, so a child landing in
+            // the slot of a walker that died keeps no age, sickness or
+            // species of the dead one's.
+            ("hungry, dying beside breeding", Settings { starve: 1.0, capacity: 60_000, species: 2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..hungry(small(0)) }),
+        ];
+        for (name, s) in dishes {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            assert!(e.grows, "{name}: growth on");
+            let mut cpu = e.dish.clone();
+            for _ in 0..40 {
+                cpu.tick();
+            }
+            // With no limit every walker eats alike and they breed in
+            // waves (5,000 became exactly 20,000), so warm up on to the
+            // first tick that has births (and starving, when hungry).
+            let hungry = name.starts_with("hungry");
+            for _ in 0..100 {
+                let mut next = cpu.clone();
+                next.tick();
+                if next.births > cpu.births && (!hungry || next.starved > cpu.starved) {
+                    break;
+                }
+                cpu = next;
+            }
+            if name.ends_with("dying beside breeding") {
+                for k in 0..cpu.walkers.len() {
+                    if cpu.alive[k] {
+                        cpu.energy[k] = if k % 2 == 0 { 0.0 } else { 1.0 };
+                        // The starving set sick too, so a slot freed this
+                        // tick holds a sickness a child must not keep (the
+                        // sickness seeded at the start had gone by now).
+                        if k % 2 == 0 {
+                            cpu.sick[k] = 100;
+                        }
+                    }
+                }
+            }
+            let n = cpu.walkers.len();
+            let (born, starved) = (cpu.births, cpu.starved);
+            let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            let (born, starved) = (cpu.births - born, cpu.starved - starved);
+            let energy = floats(&read_back(&device, &queue, &e.energy));
+            let want = energies(&cpu);
+            let lives_off = energy.iter().zip(&want).filter(|(g, c)| (**g >= 0.0) != (**c >= 0.0)).count();
+            let le = l1(&energy.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>(), &want.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>());
+            let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+            let ages_off = if cpu.age.is_empty() { 0 } else { u32s(&e.age).iter().zip(&cpu.age).filter(|(g, c)| **g != **c as u32).count() };
+            let specs_off = if cpu.spec.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.spec).filter(|(g, c)| **g != **c as u32).count() };
+            let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick).iter().zip(&cpu.sick).filter(|(g, c)| **g != **c as u32).count() };
+            let occ: Vec<u32> = read_back(&device, &queue, &e.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+            let occ_off = occ.iter().zip(occupancy(&cpu)).filter(|(g, c)| **g != *c).count();
+            let alive = cpu.alive.iter().filter(|&&a| a).count();
+            let lg = l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass);
+            eprintln!(
+                "{name}: {n} slots, {alive} alive, {born} born and {starved} starved in the tick, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, energy L1 {le:.1e}, grass L1 {lg:.1e}; {lives_off} lives off, {occ_off} cells' counts off, {ages_off} ages, {specs_off} species and {sick_off} sick counters off"
+            );
+            assert!(born > 0, "{name}: someone is born in the tick");
+            if hungry {
+                assert!(starved > 0, "{name}: someone starves in the tick");
+            }
+            assert!(off * 1000 <= n && lives_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {off} walkers, {lives_off} lives, {occ_off} counts off of {n}");
+            assert!(lt <= 1e-4 && ls <= 1e-6 && le <= 1e-4 && lg <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, energy L1 {le:.2e}, grass L1 {lg:.2e}");
+            assert!((ages_off + specs_off + sick_off) * 1000 <= n, "{name}: {ages_off} ages, {specs_off} species, {sick_off} sick off");
+        }
     }
 }

@@ -1,0 +1,80 @@
+== 0 no claim reset at death: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (15570) panicked at src/bin/mouldgpu.rs:2495:13:
+hungry, dying beside breeding: trail L1 0.00e0, scent L1 0.00e0, energy L1 2.12e-4, grass L1 0.00e0
+== 1 cell count kept at death: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (15670) panicked at src/bin/mouldgpu.rs:2494:13:
+hungry, no limit, Jenson's: 0 walkers, 0 lives, 5997 counts off of 1000000
+== 2 starve drawn on the birth stream: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (15790) panicked at src/bin/mouldgpu.rs:2495:13:
+hungry, one a cell: trail L1 0.00e0, scent L1 0.00e0, energy L1 1.88e-4, grass L1 0.00e0
+== 3 no upkeep: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (15882) panicked at src/bin/mouldgpu.rs:2495:13:
+growing, one a cell: trail L1 0.00e0, scent L1 0.00e0, energy L1 9.32e-3, grass L1 0.00e0
+== 4 share not split by the cell's count: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (15979) panicked at src/bin/mouldgpu.rs:2494:13:
+growing, no limit: 213 walkers, 213 lives, 190 counts off of 100000
+== 5 half the starving chance: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (16096) panicked at src/bin/mouldgpu.rs:2494:13:
+hungry, no limit, Jenson's: 0 walkers, 3401 lives, 3178 counts off of 1000000
+== 6 slot mask on the claim stream: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (16322) panicked at src/bin/mouldgpu.rs:2494:13:
+growing, one a cell: 67 walkers, 65 lives, 69 counts off of 15000
+== 7 four birth directions, not eight: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (16489) panicked at src/bin/mouldgpu.rs:2494:13:
+growing, one a cell: 46 walkers, 17 lives, 75 counts off of 15000
+== 8 births off the agar: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (16604) panicked at src/bin/mouldgpu.rs:2495:13:
+hungry, dying beside breeding: trail L1 0.00e0, scent L1 0.00e0, energy L1 2.17e-4, grass L1 0.00e0
+== 9 births one over the crowd limit: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (16689) panicked at src/bin/mouldgpu.rs:2494:13:
+growing, one a cell: 28 walkers, 28 lives, 28 counts off of 15000
+== 10 birth into a living slot: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (16787) panicked at src/bin/mouldgpu.rs:2494:13:
+growing, one a cell: 2809 walkers, 2 lives, 2805 counts off of 15000
+== 11 parent keeps its energy: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (17879) panicked at src/bin/mouldgpu.rs:2495:13:
+growing, one a cell: trail L1 0.00e0, scent L1 0.00e0, energy L1 3.31e-3, grass L1 0.00e0
+== 12 no birth cost: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (18262) panicked at src/bin/mouldgpu.rs:2495:13:
+growing, one a cell: trail L1 0.00e0, scent L1 0.00e0, energy L1 7.79e-4, grass L1 0.00e0
+== 13 child not counted in its cell: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (18668) panicked at src/bin/mouldgpu.rs:2494:13:
+growing, one a cell: 0 walkers, 0 lives, 62 counts off of 15000
+== 14 child heading from the direction draw: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (18823) panicked at src/bin/mouldgpu.rs:2494:13:
+growing, one a cell: 62 walkers, 0 lives, 0 counts off of 15000
+== 15 child species not inherited: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (18947) panicked at src/bin/mouldgpu.rs:2496:13:
+hungry, dying beside breeding: 0 ages, 2414 species, 0 sick off
+== 16 child age not reset: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (23602) panicked at src/bin/mouldgpu.rs:2496:13:
+hungry, dying beside breeding: 147 ages, 0 species, 0 sick off
+== 17 child sickness not reset: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (2288) panicked at src/bin/mouldgpu.rs:2496:13:
+hungry, dying beside breeding: 0 ages, 0 species, 147 sick off
+== 18 grass uneaten with growth on and grazing off: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (29739) panicked at src/bin/mouldgpu.rs:2495:13:
+hungry, cap, grazing off: trail L1 1.05e-8, scent L1 0.00e0, energy L1 1.73e-5, grass L1 5.60e-3
+== 19 dead walkers walk: caught
+
+thread 'tests::growth_matches_the_cpu_for_one_tick' (7573) panicked at src/bin/mouldgpu.rs:2494:13:
+growing, one a cell: 111 walkers, 0 lives, 0 counts off of 15000

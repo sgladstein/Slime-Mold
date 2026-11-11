@@ -1,0 +1,145 @@
+# Walker-count sweep, cloud stopgap (2026-11-11 16:23-17:05Z) while the GTX 1070's disk was full: mouldgpu at b1f0383 on llvmpipe (software Vulkan; positions differ from the 1070 in the last bits; timings are not GPU numbers). Script: walker-sweep-cloud.sh. Per run: the header and dish line, verbatim.
+## crowd1-32000-s1-30s
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 1
+dish at 30.0s: tube 7571.2  loops 51  width 4.99  reach 184.6  piles 7/7  strays 0.000
+## crowd1-32000-s2-30s
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 2
+dish at 30.0s: tube 6948.1  loops 43  width 5.04  reach 181.4  piles 7/7  strays 0.000
+## crowd1-32000-s3-30s
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 3
+dish at 30.0s: tube 7440.2  loops 50  width 5.00  reach 182.0  piles 7/7  strays 0.000
+## crowd1-32000-s4-30s
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 4
+dish at 30.0s: tube 7238.8  loops 45  width 4.99  reach 177.3  piles 7/7  strays 0.000
+## crowd1-32000-s5-30s
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 5
+dish at 30.0s: tube 7612.3  loops 54  width 4.98  reach 183.3  piles 7/7  strays 0.000
+## crowd1-32000-s6-30s
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 6
+dish at 30.0s: tube 7361.8  loops 50  width 5.02  reach 177.2  piles 7/7  strays 0.000
+## crowd1-32000-s7-30s
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 7
+dish at 30.0s: tube 7182.6  loops 46  width 5.11  reach 178.9  piles 7/7  strays 0.000
+## crowd1-32000-s8-30s
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 8
+dish at 30.0s: tube 7212.9  loops 46  width 5.03  reach 181.6  piles 7/7  strays 0.000
+## crowd1-100000-s1-30s
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 1
+dish at 30.0s: tube 10319.8  loops 65  width 6.20  reach 185.8  piles 7/7  strays 0.000
+## crowd1-100000-s2-30s
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 2
+dish at 30.0s: tube 10295.6  loops 64  width 6.23  reach 185.7  piles 7/7  strays 0.000
+## crowd1-100000-s3-30s
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 3
+dish at 30.0s: tube 10434.6  loops 67  width 6.17  reach 186.4  piles 7/7  strays 0.000
+## crowd1-100000-s4-30s
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 4
+dish at 30.0s: tube 10382.4  loops 68  width 6.27  reach 184.2  piles 7/7  strays 0.000
+## crowd1-100000-s5-30s
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 5
+dish at 30.0s: tube 10406.7  loops 67  width 6.14  reach 183.7  piles 7/7  strays 0.000
+## crowd1-100000-s6-30s
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 6
+dish at 30.0s: tube 10122.9  loops 57  width 6.40  reach 184.6  piles 7/7  strays 0.000
+## crowd1-100000-s7-30s
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 7
+dish at 30.0s: tube 10359.4  loops 65  width 6.17  reach 185.2  piles 7/7  strays 0.000
+## crowd1-100000-s8-30s
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 8
+dish at 30.0s: tube 10492.9  loops 70  width 6.13  reach 183.7  piles 7/7  strays 0.000
+## crowd1-200000-s1-30s
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 1
+dish at 30.0s: tube 15244.9  loops 144  width 7.17  reach 189.4  piles 7/7  strays 0.023
+## crowd1-200000-s2-30s
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 2
+dish at 30.0s: tube 15373.2  loops 120  width 7.63  reach 189.8  piles 7/7  strays 0.018
+## crowd1-200000-s3-30s
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 3
+dish at 30.0s: tube 15356.8  loops 134  width 7.36  reach 189.1  piles 7/7  strays 0.020
+## crowd1-200000-s4-30s
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 4
+dish at 30.0s: tube 15305.1  loops 134  width 7.25  reach 188.6  piles 7/7  strays 0.023
+## crowd1-200000-s5-30s
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 5
+dish at 30.0s: tube 15318.6  loops 127  width 7.35  reach 188.3  piles 7/7  strays 0.020
+## crowd1-200000-s6-30s
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 6
+dish at 30.0s: tube 15338.9  loops 136  width 7.30  reach 188.6  piles 7/7  strays 0.022
+## crowd1-200000-s7-30s
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 7
+dish at 30.0s: tube 15125.8  loops 135  width 7.57  reach 188.1  piles 7/7  strays 0.021
+## crowd1-200000-s8-30s
+== 200000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 8
+dish at 30.0s: tube 15284.6  loops 123  width 7.42  reach 188.6  piles 7/7  strays 0.021
+## crowd0-32000-s1-30s
+== 32000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 1
+dish at 30.0s: tube 1205.4  loops 0  width 6.95  reach 174.8  piles 7/7  strays 0.000
+## crowd0-32000-s2-30s
+== 32000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 2
+dish at 30.0s: tube 1401.8  loops 0  width 5.94  reach 168.6  piles 7/7  strays 0.000
+## crowd0-32000-s3-30s
+== 32000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 3
+dish at 30.0s: tube 1191.9  loops 0  width 7.32  reach 130.1  piles 7/7  strays 0.000
+## crowd0-32000-s4-30s
+== 32000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 4
+dish at 30.0s: tube 1662.3  loops 0  width 6.33  reach 165.5  piles 7/7  strays 0.000
+## crowd0-32000-s5-30s
+== 32000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 5
+dish at 30.0s: tube 1925.8  loops 0  width 6.34  reach 161.3  piles 7/7  strays 0.000
+## crowd0-32000-s6-30s
+== 32000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 6
+dish at 30.0s: tube 1457.3  loops 0  width 6.55  reach 146.3  piles 7/7  strays 0.000
+## crowd0-32000-s7-30s
+== 32000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 7
+dish at 30.0s: tube 1137.8  loops 0  width 6.42  reach 144.0  piles 7/7  strays 0.000
+## crowd0-32000-s8-30s
+== 32000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 8
+dish at 30.0s: tube 1896.2  loops 0  width 6.00  reach 158.2  piles 7/7  strays 0.000
+## crowd0-100000-s1-30s
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 1
+dish at 30.0s: tube 1873.7  loops 0  width 6.12  reach 167.1  piles 7/7  strays 0.000
+## crowd0-100000-s2-30s
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 2
+dish at 30.0s: tube 1842.7  loops 0  width 6.39  reach 168.3  piles 7/7  strays 0.000
+## crowd0-100000-s3-30s
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 3
+dish at 30.0s: tube 1641.2  loops 0  width 6.16  reach 165.3  piles 7/7  strays 0.000
+## crowd0-100000-s4-30s
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 4
+dish at 30.0s: tube 1154.9  loops 0  width 6.79  reach 185.2  piles 7/7  strays 0.000
+## crowd0-100000-s5-30s
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 5
+dish at 30.0s: tube 1925.1  loops 0  width 6.37  reach 183.3  piles 7/7  strays 0.000
+## crowd0-100000-s6-30s
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 6
+dish at 30.0s: tube 1398.4  loops 1  width 6.19  reach 125.9  piles 7/7  strays 0.000
+## crowd0-100000-s7-30s
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 7
+dish at 30.0s: tube 1218.8  loops 0  width 6.64  reach 144.9  piles 7/7  strays 0.000
+## crowd0-100000-s8-30s
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 8
+dish at 30.0s: tube 1113.3  loops 0  width 6.78  reach 134.9  piles 7/7  strays 0.000
+## crowd0-200000-s1-30s
+== 200000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 1
+dish at 30.0s: tube 1551.4  loops 0  width 6.91  reach 128.8  piles 7/7  strays 0.000
+## crowd0-200000-s2-30s
+== 200000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 2
+dish at 30.0s: tube 1974.8  loops 0  width 6.21  reach 112.6  piles 7/7  strays 0.000
+## crowd0-200000-s3-30s
+== 200000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 3
+dish at 30.0s: tube 2420.6  loops 0  width 5.88  reach 175.1  piles 7/7  strays 0.000
+## crowd0-200000-s4-30s
+== 200000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 4
+dish at 30.0s: tube 1492.7  loops 0  width 6.50  reach 170.9  piles 7/7  strays 0.000
+## crowd0-200000-s5-30s
+== 200000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 5
+dish at 30.0s: tube 1323.2  loops 0  width 6.82  reach 148.2  piles 7/7  strays 0.000
+## crowd0-200000-s6-30s
+== 200000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 6
+dish at 30.0s: tube 1318.3  loops 1  width 6.32  reach 130.7  piles 7/7  strays 0.000
+## crowd0-200000-s7-30s
+== 200000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 7
+dish at 30.0s: tube 1534.4  loops 0  width 6.39  reach 178.4  piles 7/7  strays 0.000
+## crowd0-200000-s8-30s
+== 200000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 8
+dish at 30.0s: tube 1652.7  loops 0  width 6.22  reach 167.3  piles 7/7  strays 0.000

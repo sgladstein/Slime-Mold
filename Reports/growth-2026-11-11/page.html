@@ -1,0 +1,217 @@
+<title>Mould Growth and Starving</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the same dark lightbox as the GPU sandbox and Jenson pages, so
+   the series reads as one. Black dishes sit flush on the ground; every
+   picture has its counts beside it in mono. One look, dark, by choice. */
+:root {
+  --bg: #0c0e0d;
+  --panel: #151917;
+  --line: #2a302d;
+  --fg: #e9ece9;
+  --muted: #9ba49f;
+  --amber: #ffbe5a;
+  --vein: #cfe3dc;
+  --fed: #9fd8b0;
+  --hungry: #e8a27c;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 600; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 16px; }
+.lead { font-size: 17px; }
+section { display: grid; gap: 20px; }
+section > p, .note { color: var(--muted); }
+.callout { border: 1px solid #4a3f28; background: #17140e; border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; max-width: 80ch; }
+.callout p { color: var(--muted); max-width: none; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 28px 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+video, figure img { width: 100%; max-width: 100%; height: auto; aspect-ratio: 8 / 5; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+.key { font: 500 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.key.fed { color: var(--fed); }
+.key.hungry { color: var(--hungry); }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.strip { display: grid; grid-template-columns: 88px repeat(4, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.strip .row-label { font: 500 12px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding-top: 4px; }
+.strip figure { gap: 6px; }
+.strip figcaption { font: 12px/1.45 var(--mono); font-variant-numeric: tabular-nums; gap: 0; }
+.strip figcaption b { color: var(--fg); font-weight: 500; }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; font-size: 13px; min-width: 640px; width: 100%; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); background: var(--panel); }
+tr.sum td { background: #141a17; color: var(--fg); }
+ul.list { margin: 0; padding-left: 18px; display: grid; gap: 10px; max-width: 72ch; color: var(--muted); }
+ul.list strong { color: var(--fg); font-weight: 600; }
+footer { display: grid; gap: 10px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px; }
+code { font-family: var(--mono); font-size: 0.92em; color: var(--fg); }
+.cmd { font: 500 14px/1.5 var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; white-space: pre; max-width: 100%; }
+a { color: var(--vein); }
+a:focus-visible, video:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+@media (max-width: 760px) {
+  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .strip .row-label { grid-column: 1 / -1; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Larder World, phase W0 · 2026-11-11</div>
+    <h1>A mould that grows on food and starves without it</h1>
+    <p class="lead">The big dish's walker count used to be fixed. Now each walker eats, pays upkeep, divides when it has eaten enough and dies when it has gone hungry too long. Fed, the mould grows from 10,000 walkers to about 96,000 in 30 seconds. Starved, it grows on the food it is standing on and then dies down to almost nothing.</p>
+    <p class="note">Everything below is the simulation: brightness is the trail the walkers lay, and nothing is drawn on top. The rule is off unless a dish turns it on, so every existing dish is unchanged.</p>
+  </header>
+
+  <section>
+    <h2>Fed and starved, side by side</h2>
+    <p>Seed 1. Both dishes start the same: 10,000 walkers in a blob on the 1024 × 640 dish, with grass on every cell. In the fed dish the grass grows back (0.002 a step); in the starved dish it does not. Videos play at twice speed.</p>
+    <div class="pair">
+      <figure>
+        <video src="video/fed.mp4" controls muted loop playsinline preload="metadata" poster="video/fed-030s.jpg"></video>
+        <figcaption>
+          <span class="key fed">Fed: grass regrows</span>
+          <strong>A sheet with a fine mesh behind its front covers the dish and holds.</strong>
+          <dl class="stats">
+            <dt>alive at 30 s</dt><dd>96,127 of 100,000 slots</dd>
+            <dt>born / starved</dt><dd>943,323 / 857,196</dd>
+            <dt>grass left</dt><dd>0.128</dd>
+            <dt>loops at 30 s</dt><dd>481</dd>
+          </dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="video/starved.mp4" controls muted loop playsinline preload="metadata" poster="video/starved-012s.jpg"></video>
+        <figcaption>
+          <span class="key hungry">Starved: grass does not regrow</span>
+          <strong>It spreads as far, then hollows out behind its front and dies.</strong>
+          <dl class="stats">
+            <dt>alive at 30 s</dt><dd>32</dd>
+            <dt>born / starved</dt><dd>400,312 / 410,280</dd>
+            <dt>grass left</dt><dd>0.001</dd>
+            <dt>loops at 30 s</dt><dd>0</dd>
+          </dl>
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="strip" aria-label="Stills at 1, 6, 12 and 30 seconds">
+      <div class="row-label key fed">Fed</div>
+      <figure><img src="video/fed-001s.jpg" alt="Fed mould at 1 s: a blob throwing out tubes" loading="lazy"><figcaption><span>1 s</span><span>alive <b>24,890</b></span><span>grass 0.95</span></figcaption></figure>
+      <figure><img src="video/fed-006s.jpg" alt="Fed mould at 6 s: a sheet with a mesh crossing half the dish" loading="lazy"><figcaption><span>6 s</span><span>alive <b>85,576</b></span><span>grass 0.50</span></figcaption></figure>
+      <figure><img src="video/fed-012s.jpg" alt="Fed mould at 12 s: the mesh covers most of the dish" loading="lazy"><figcaption><span>12 s</span><span>alive <b>84,804</b></span><span>grass 0.34</span></figcaption></figure>
+      <figure><img src="video/fed-030s.jpg" alt="Fed mould at 30 s: an even net of small loops fills the dish" loading="lazy"><figcaption><span>30 s</span><span>alive <b>96,127</b></span><span>grass 0.13</span></figcaption></figure>
+      <div class="row-label key hungry">Starved</div>
+      <figure><img src="video/starved-001s.jpg" alt="Starved mould at 1 s: the same blob" loading="lazy"><figcaption><span>1 s</span><span>alive <b>23,836</b></span><span>grass 0.95</span></figcaption></figure>
+      <figure><img src="video/starved-006s.jpg" alt="Starved mould at 6 s: coarse loops behind the front" loading="lazy"><figcaption><span>6 s</span><span>alive <b>55,544</b></span><span>grass 0.45</span></figcaption></figure>
+      <figure><img src="video/starved-012s.jpg" alt="Starved mould at 12 s: a rope along the front and a few spokes" loading="lazy"><figcaption><span>12 s</span><span>alive <b>22,880</b></span><span>grass 0.20</span></figcaption></figure>
+      <figure><img src="video/starved-030s.jpg" alt="Starved mould at 30 s: a faint arc" loading="lazy"><figcaption><span>30 s</span><span>alive <b>32</b></span><span>grass 0.001</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>The rule</h2>
+    <ul class="list">
+      <li><strong>Eating.</strong> Each step a walker gets its equal share of the grass its cell loses, so walkers on the same cell share alike. It pays a fixed upkeep (0.01 here).</li>
+      <li><strong>Starving.</strong> At zero energy it dies with a 1% chance each step unless it eats first, so a hungry mould thins over a second or two instead of vanishing at once.</li>
+      <li><strong>Dividing.</strong> With enough energy it divides into a free cell next to it. Parent and child each keep half of what is left after a birth cost. The child keeps its parent's species.</li>
+      <li><strong>Fixed slots.</strong> Walkers live in a fixed number of slots (100,000 here). A child's slot comes from one random pairing a step, so no walker goes first, and the GPU can run one thread per slot and get the same answer.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Fed against starved, eight seeds</h2>
+    <p>The deciding measure was named before the runs: living walkers at 30 s, fed against starved on the same seed. A fed mould should end above its 10,000 start and a starved one below it.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Seed</th><th>Fed, alive at 30 s</th><th>Fed, grass left</th><th>Starved, alive at 30 s</th><th>Starved, grass left</th><th>Starved, alive at 5 s</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td class="n">96,127</td><td class="n">0.128</td><td class="n">32</td><td class="n">0.001</td><td class="n">66,757</td></tr>
+          <tr><td class="n">2</td><td class="n">96,903</td><td class="n">0.123</td><td class="n">3</td><td class="n">0.001</td><td class="n">44,535</td></tr>
+          <tr><td class="n">3</td><td class="n">96,034</td><td class="n">0.152</td><td class="n">9</td><td class="n">0.001</td><td class="n">51,866</td></tr>
+          <tr><td class="n">4</td><td class="n">96,909</td><td class="n">0.123</td><td class="n">9,420</td><td class="n">0.028</td><td class="n">28,420</td></tr>
+          <tr><td class="n">5</td><td class="n">92,641</td><td class="n">0.197</td><td class="n">823</td><td class="n">0.002</td><td class="n">55,707</td></tr>
+          <tr><td class="n">6</td><td class="n">96,588</td><td class="n">0.137</td><td class="n">7,481</td><td class="n">0.009</td><td class="n">47,418</td></tr>
+          <tr><td class="n">7</td><td class="n">96,689</td><td class="n">0.124</td><td class="n">0</td><td class="n">0.001</td><td class="n">45,698</td></tr>
+          <tr><td class="n">8</td><td class="n">95,566</td><td class="n">0.153</td><td class="n">6,904</td><td class="n">0.020</td><td class="n">59,870</td></tr>
+          <tr class="sum"><td>All 8</td><td class="n">median 96,358</td><td></td><td class="n">median 428</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Fed beat starved on 8 of 8 seeds (sign test p 0.0078). Every fed mould ended above its start and every starved one below it. The fed dishes stop near their 100,000 slots with grass still left, so the slots, not the food, cap them. The three starved dishes still above 6,000 at 30 s had some grass left and were still falling.</p>
+  </section>
+
+  <section>
+    <h2>The mould is as big as its food</h2>
+    <p>Second measure: living walkers at 60 s on a half-size dish (512 × 320, 2,500 walkers to start, 50,000 slots, never full) with the grass regrowing at three rates.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Grass regrowth a step</th><th>Alive at 60 s, median (range)</th><th>Against the rate below it</th></tr></thead>
+        <tbody>
+          <tr><td class="n">0.0005</td><td class="n">7,113 (6,991-7,707)</td><td></td></tr>
+          <tr><td class="n">0.001</td><td class="n">13,522 (13,004-13,841)</td><td class="n">more on 8 of 8, p 0.0078; 1.90×</td></tr>
+          <tr><td class="n">0.002</td><td class="n">25,029 (24,248-25,284)</td><td class="n">more on 8 of 8, p 0.0078; 1.87×</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Doubling the food nearly doubles the mould. These dishes settle by about 15 s and hold there. They also turn over fast: at the top rate about 8,700 walkers are born and about as many starve each second against 25,000 alive, so a walker lives about 3 seconds. All three comparisons survive the Holm correction.</p>
+  </section>
+
+  <section id="gpu">
+    <h2>On the GPU, and in the sandbox</h2>
+    <p>The GPU runs the same rule as three short passes after the walkers move, one thread a slot. A test in CI takes a dish from the CPU, runs one tick on the GPU and compares every walker, every cell's count, the trail, the scent and the grass. It matches to the bit on five of seven dishes; on the other two the only gap is floats added in a different order. Twenty bugs planted in the GPU code one at a time, from a death that keeps its cell to a child that keeps a dead walker's sickness, all fail the test.</p>
+    <p>In the GPU sandbox it is the fifth panel page, GROWTH, with a fed mould on Ctrl+3 and a starving one on Ctrl+4. With growth on, the bottom line counts the walkers alive. To try it on Scott-Desktop, run this in the Slime Mold folder once the change is merged:</p>
+    <div class="cmd">cargo run --release --bin mouldgpu</div>
+  </section>
+
+  <section>
+    <h2>Cost</h2>
+    <p>On the CPU with 100,000 walkers on one thread, growth adds nothing measurable: 26.80-28.35 ms a tick with it on against 27.30-27.67 off, three rounds each. On the GTX 1070 it adds 0.16 ms to a 1.82 ms frame at 100,000 walkers (1.99 against 1.82 ms of GPU time for two ticks, three rounds each). The fed mould growing from 10,000 to 96,000 walkers runs at 1.79 ms a frame.</p>
+  </section>
+
+  <section>
+    <h2>A first look on crystals</h2>
+    <p>One seed, on the Larder thread's world: 512 × 320 with 23 crystals that the walkers eat, and no grass. 5,000 walkers to start.</p>
+    <figure>
+      <img src="video/crystals.png" alt="Left: a loose net of tubes between crystals at 5 s, crystals that run dry. Right: a similar net still standing at 40 s, crystals that refill." loading="lazy" style="aspect-ratio: 1024 / 330;">
+      <figcaption>
+        <strong>Left: crystals that run dry, at 5 s. Right: crystals that refill, at 40 s.</strong>
+        <dl class="stats">
+          <dt>run dry, alive</dt><dd>934 at 10 s, 106 at 20 s, 1 at 60 s; 61% of the charge left</dd>
+          <dt>refill, alive</dt><dd>1,920-2,281 from 10 s to 60 s; tube 4,177-4,501 cells</dd>
+        </dl>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What this means for the world</h2>
+    <ul class="list">
+      <li><strong>Food sets the mould's size.</strong> A world meant to last a long game needs crystals that yield enough against upkeep. Here, grass regrowing at 0.002 a step across a 512 × 320 dish feeds about 25,000 walkers.</li>
+      <li><strong>A mould without new food dies on its own.</strong> With food that does not come back, it grows on what is there and is nearly gone within 30 s. If crystals run dry, a player who waits may win, unless the crystals hold far more than the mould can eat in one game.</li>
+      <li><strong>On crystals, the mould eats only its roads.</strong> A first look on the Larder thread's crystals (one seed): with crystals that refill, a net of tubes linking them holds at about 2,000 walkers. With crystals that run dry, the mould is dead by 60 s with 61% of the charge left, because it only eats the cells its tubes cross. Crystals that run dry need the whole crystal within reach before a mould left alone can outgrow you.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Report: <code>Reports/growth-2026-11-11.md</code>. Runs, raw output, this page and its videos: <code>Reports/growth-2026-11-11/</code>. Wiki: <code>wiki/model/growth.md</code>.</p>
+  </footer>
+</div>
