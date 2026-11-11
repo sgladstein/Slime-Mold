@@ -14,7 +14,7 @@ code: [Dish::rival, Dish::store, Dish::tithe, Dish::food_share, Pile::bite, Para
 **In the build phase; the main line is now Larder World.** Three RTS demos
 were built: the field skirmish ([skirmish.md](skirmish.md)), Two Fevers
 ([two-fevers.md](two-fevers.md)) and Larder, the mould as a squad's enemy
-([shooter.md](shooter.md)), which the owner moved into a persistent GPU
+([larder.md](../world/larder.md)), which the owner moved into a persistent GPU
 world on 2026-11-11 14:06Z. In every demo so far one strategy beats the
 others and the side ahead early keeps its lead about 4 games in 5; finding
 counterplay is the open problem.

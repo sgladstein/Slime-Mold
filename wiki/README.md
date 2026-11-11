@@ -29,7 +29,8 @@ Start at [index.md](index.md). Copy [_template.md](_template.md) for a new page.
    one disappears from `src/` or `examples/`.
 5. **The owner's words are quoted, with the date and time.** Never firmer
    than he said. Open decisions live only in `HANDOFF.md`; decided ones move
-   to [decisions.md](decisions.md) with the quote.
+   to [decisions.md](decisions.md) (standing rulings) or
+   [decisions-game.md](decisions-game.md) (choices about a game) with the quote.
 6. **Extend, don't create.** Check the index first. Write a page only when
    someone has a synthesis to add that a second report would otherwise
    repeat; one page per entity is not a goal.
@@ -111,7 +112,8 @@ links a report its `sources:` do not list (so the age check cannot see it),
 and lists reports no page cites yet. Then read the warned pages for the part a script cannot do:
 a page whose Now a newer report overturned, or two pages that disagree.
 
-**Owner decision**: quote it with its time in [decisions.md](decisions.md),
+**Owner decision**: quote it with its time in [decisions.md](decisions.md)
+or [decisions-game.md](decisions-game.md),
 remove it from `HANDOFF.md`'s open list, update the pages it changes.
 
 **Hand-off**: `HANDOFF.md` is the hand-written front page: one linked line
