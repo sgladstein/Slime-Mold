@@ -1525,15 +1525,34 @@ impl BigDish {
         let (hx, hy) = (self.home.0 * s, self.home.1 * s);
         // A blob as dense as today's inoculum: about 0.9 of the cells in it.
         let r = (n as f32 / (0.9 * std::f32::consts::PI)).sqrt();
-        let (hx, hy, r) = if self.p.blob_r > 0.0 { (self.w as f32 / 2.0, self.h as f32 / 2.0, self.p.blob_r * s) } else { (hx, hy, r) };
+        let (hx, hy, mut r) = if self.p.blob_r > 0.0 { (self.w as f32 / 2.0, self.h as f32 / 2.0, self.p.blob_r * s) } else { (hx, hy, r) };
         let mut k = 0u32;
-        while self.walkers.len() < n && k < 50 * n as u32 + 1000 {
+        let mut budget = 50 * n as u32 + 1000;
+        // A blob that cannot fit (a map's start near the rim or rock: the
+        // Fork's, 12 dish cells from the edge, took 3,752 of 5,000) widens
+        // by a quarter and goes on, up to the world's size. The first round
+        // is the one every dish had, so a blob that fits draws the same.
+        loop {
+            self.place_round(seed, n, hx, hy, r, &mut k, budget);
+            if self.walkers.len() >= n || !self.p.blob || r > self.w.max(self.h) as f32 {
+                break;
+            }
+            r *= 1.25;
+            budget += 50 * n as u32 + 1000;
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn place_round(&mut self, seed: u64, n: usize, hx: f32, hy: f32, r: f32, k: &mut u32, budget: u32) {
+        while self.walkers.len() < n && *k < budget {
+            let k0 = *k;
             let (a, b, c) = (
-                unit(keyed(seed, 1, DRAW_START, 3 * k)),
-                unit(keyed(seed, 1, DRAW_START, 3 * k + 1)),
-                unit(keyed(seed, 1, DRAW_START, 3 * k + 2)),
+                unit(keyed(seed, 1, DRAW_START, 3 * k0)),
+                unit(keyed(seed, 1, DRAW_START, 3 * k0 + 1)),
+                unit(keyed(seed, 1, DRAW_START, 3 * k0 + 2)),
             );
-            k += 1;
+            *k += 1;
+            let k = *k;
             let hazy = self.p.haze > 0.0 && unit(keyed(seed, 1, DRAW_HAZE, k)) < self.p.haze;
             let (x, y) = if self.p.blob && !hazy {
                 let (ang, dist) = (a * TAU, b.sqrt() * r);

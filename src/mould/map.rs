@@ -287,6 +287,10 @@ mod tests {
             rocks += count(&d.rock);
         }
         assert!(rocks > 0, "rock to compare");
+        // The Fork's start is 12 dish cells from the rim, so its blob does
+        // not fit at the usual size and widens until all its walkers do.
+        let fork = BigDish::with_map(race_params(1, 2, 5000), &Map::load(&dir, "fork").unwrap());
+        assert_eq!(fork.alive.iter().filter(|&&a| a).count(), 5000);
     }
 
     /// Every map the maps thread has written loads, with crystals and

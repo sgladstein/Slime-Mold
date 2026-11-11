@@ -3086,7 +3086,9 @@ mod tests {
                 }
             }
             eprintln!("{name}: game s, living CPU, GPU: {sizes:?}; banked {} / {}", cpu.harvested, gpu.harvested);
-            assert!(cpu.harvested > 0.0 && gpu.harvested == cpu.harvested, "{name}: banked {} on the GPU, {} on the CPU", gpu.harvested, cpu.harvested);
+            // Equal to f32 rounding: a partial load (a crystal running dry)
+            // is a sum of takes the GPU adds in another order.
+            assert!(cpu.harvested > 0.0 && (gpu.harvested - cpu.harvested).abs() <= 1e-3 * cpu.harvested, "{name}: banked {} on the GPU, {} on the CPU", gpu.harvested, cpu.harvested);
             for &(t, a, b) in &sizes {
                 let (a, b) = (a as f64, b as f64);
                 assert!((a - b).abs() <= 0.08 * a, "{name}: mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
