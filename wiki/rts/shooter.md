@@ -11,7 +11,7 @@ code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::st
 
 ## Now
 
-**Larder World (2026-11-11 14:06Z):** the owner moved Larder into a persistent world on the GPU big dish, with energy crystals that run out and several mould species; no more small-dish tuning. Roadmap: [`larder-world-roadmap-2026-11-11.md`](../../Reports/larder-world-roadmap-2026-11-11.md) (doc https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ). Below is the small-dish history it builds on.
+**Larder World (2026-11-11 14:06Z):** the owner moved Larder into a persistent world on the GPU big dish, with energy crystals that run out and several mould species; no more small-dish tuning. Roadmap: [`larder-world-roadmap-2026-11-11.md`](../../Reports/larder-world-roadmap-2026-11-11.md) (doc https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ). **W1a** (PR #64): crystals that run dry or refill (`crystal_charge`, `crystal_eat`, `crystal_regrow`), rock and wet terrain, a rectangular world, and player walls (`build_wall`; scent and trail don't cross a wall). All of it is on the big dish, CPU, off by default, at a cost within noise. Below is the small-dish history it builds on.
 
 Brainstorm: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
 A squad shoots the mould; both want the same food; the player's larder is a
@@ -61,6 +61,9 @@ owner's playtest.
 
 ## Owner's word
 
+- 2026-11-11 14:54Z (14:55: "just my initial thought", for playtests to settle): test crystals that run out against ones that don't. Run-out crystals go with the race (an idle player should be overrun), refilling ones probably with the landing. Walls first, the Sporer and Sleeper tiers and a player-owned species are agreed. A CPU world for small tests, and the 1070 for GPU work.
+- 2026-11-11 14:25Z: the mould tier ladder is agreed, and it grows as research finds new behaviours. Walls or weapons can come first.
+- 2026-11-11 14:14Z: the early leader's win rate is a per-mould difficulty, not a gate. There should be mould tiers from easy to hard, and player walls, upgrades and weapons, so strategy depends on the mix.
 - 2026-11-11 14:09Z: also explore a race start, "both the player and the mold starting in one small area and then we're both trying to expand at the same time".
 - 2026-11-11 14:07Z: a player AI thread for automated testing; later "two soldier teams against multiple molds so in the future the AI could also play soldiers".
 - 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand. Several species sounds interesting. Put everything into the world version."
