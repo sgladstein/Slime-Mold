@@ -1,0 +1,24 @@
+round 1 key 1 main: wall ms a frame of 2 ticks and the drawing, 300 frames: median 28.607, worst 36.654; GPU ms ticks 25.159, drawing 2.537
+round 1 key 1 main: GPU ms a pass, median of 11 ticks each submitted alone: sense 4.092, walk 1.092, trail 2.053, scent 3.396, draw 3.080
+round 1 key 1 new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 29.828, worst 37.781; GPU ms ticks 26.503, drawing 2.516
+round 1 key 1 new: GPU ms a pass, median of 11 ticks each submitted alone: sense 4.761, walk 1.723, trail 2.992, scent 3.630, draw 3.122
+round 1 key 4 main: wall ms a frame of 2 ticks and the drawing, 300 frames: median 84.169, worst 273.022; GPU ms ticks 75.905, drawing 8.114
+round 1 key 4 main: GPU ms a pass, median of 11 ticks each submitted alone: sense 19.715, walk 13.048, trail 1.993, scent 2.348, histogram 5.428, top 0.096, draw 1.742
+round 1 key 4 new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 82.547, worst 142.085; GPU ms ticks 76.466, drawing 7.276
+round 1 key 4 new: GPU ms a pass, median of 11 ticks each submitted alone: sense 22.515, walk 11.779, trail 2.091, scent 2.304, histogram 5.406, top 0.095, draw 1.953
+round 2 key 1 main: wall ms a frame of 2 ticks and the drawing, 300 frames: median 28.696, worst 46.405; GPU ms ticks 25.466, drawing 2.596
+round 2 key 1 main: GPU ms a pass, median of 11 ticks each submitted alone: sense 4.663, walk 1.544, trail 2.830, scent 3.374, draw 3.061
+round 2 key 1 new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 28.051, worst 52.353; GPU ms ticks 25.658, drawing 3.211
+round 2 key 1 new: GPU ms a pass, median of 11 ticks each submitted alone: sense 3.763, walk 1.671, trail 2.912, scent 3.444, draw 3.126
+round 2 key 4 main: wall ms a frame of 2 ticks and the drawing, 300 frames: median 82.483, worst 115.711; GPU ms ticks 76.161, drawing 7.259
+round 2 key 4 main: GPU ms a pass, median of 11 ticks each submitted alone: sense 21.006, walk 13.319, trail 2.017, scent 2.495, histogram 5.724, top 0.095, draw 1.734
+round 2 key 4 new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 81.780, worst 141.521; GPU ms ticks 72.882, drawing 7.176
+round 2 key 4 new: GPU ms a pass, median of 11 ticks each submitted alone: sense 17.758, walk 11.923, trail 2.026, scent 2.320, histogram 5.345, top 0.094, draw 1.721
+round 3 key 1 main: wall ms a frame of 2 ticks and the drawing, 300 frames: median 28.426, worst 38.091; GPU ms ticks 25.664, drawing 2.645
+round 3 key 1 main: GPU ms a pass, median of 11 ticks each submitted alone: sense 4.236, walk 1.481, trail 2.567, scent 3.378, draw 3.118
+round 3 key 1 new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 30.033, worst 39.686; GPU ms ticks 25.697, drawing 3.169
+round 3 key 1 new: GPU ms a pass, median of 11 ticks each submitted alone: sense 5.660, walk 1.609, trail 2.119, scent 3.390, draw 3.129
+round 3 key 4 main: wall ms a frame of 2 ticks and the drawing, 300 frames: median 81.233, worst 117.328; GPU ms ticks 74.131, drawing 7.303
+round 3 key 4 main: GPU ms a pass, median of 11 ticks each submitted alone: sense 18.573, walk 12.004, trail 1.959, scent 2.289, histogram 5.363, top 0.083, draw 1.728
+round 3 key 4 new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 81.396, worst 122.047; GPU ms ticks 73.146, drawing 7.217
+round 3 key 4 new: GPU ms a pass, median of 11 ticks each submitted alone: sense 21.190, walk 13.327, trail 2.811, scent 3.278, histogram 5.874, top 0.098, draw 2.972

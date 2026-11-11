@@ -169,9 +169,10 @@ struct Params {
     espread: f32, bshare: f32, bkeep: u32, breset: f32,
     chance: f32, size_sp: f32, sensor_r: u32, s_chance: u32,
     // PR #56: a walker joins a species whose trail at its cell outweighs
-    // its own `convert` times (0 off); grazing (`graze_w` 0 off).
+    // its own `convert` times (0 off); grazing (`graze_w` 0 off). PR #58:
+    // species 0 lays `boost` times the deposit.
     s_keep: u32, convert: f32, graze_w: f32, graze_eat: f32,
-    graze_regrow: f32, _q0: u32, _q1: u32, _q2: u32,
+    graze_regrow: f32, boost: f32, _q1: u32, _q2: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 
@@ -497,16 +498,16 @@ fn convert(@builtin(global_invocation_id) gid: vec3<u32>) {
     var all = 0.0;
     if (P.cap > 0u) { all = counted(i); }
     let own = spec[k];
-    let ov = sp_in[own * c + i] + laid(own, i, all);
+    let ov = sp_in[own * c + i] + laid_by(own, i, all);
     var best = own;
     var bv = ov;
     if (P.cycle != 0u && nsp() >= 3u) {
         best = (own + nsp() - 1u) % nsp();
-        bv = sp_in[best * c + i] + laid(best, i, all);
+        bv = sp_in[best * c + i] + laid_by(best, i, all);
     } else {
         for (var s = 0u; s < nsp(); s++) {
             if (s != own) {
-                let v = sp_in[s * c + i] + laid(s, i, all);
+                let v = sp_in[s * c + i] + laid_by(s, i, all);
                 if (v > bv) { best = s; bv = v; }
             }
         }
@@ -622,6 +623,14 @@ fn laid(s: u32, j: u32, all: f32) -> f32 {
     return P.deposit * sqrt(min(all, f32(P.cap))) / all * w;
 }
 
+// The trail species s lays on cell j this tick, with species 0's boost
+// (the CPU's `species_boost`, applied to each of its walkers' deposits).
+fn laid_by(s: u32, j: u32, all: f32) -> f32 {
+    let l = laid(s, j, all);
+    if (s == 0u) { return l * P.boost; }
+    return l;
+}
+
 @compute @workgroup_size(256)
 fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
@@ -683,7 +692,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (agar[j] != 0u) {
                     var all = 0.0;
                     if (capped) { all = counted(j); }
-                    for (var s = 0u; s < nsp(); s++) { sums[s] += sp_in[s * c + j] + laid(s, j, all); }
+                    for (var s = 0u; s < nsp(); s++) { sums[s] += sp_in[s * c + j] + laid_by(s, j, all); }
                     if (germs) { gsum += germ_in[j] + P.sick_dep * f32(atomicLoad(&gdep[j])); }
                     n += 1.0;
                 }
@@ -1003,6 +1012,8 @@ struct Settings {
     graze: f32,
     graze_eat: f32,
     graze_regrow: f32,
+    /// PR #58: species 0 lays this many times the deposit (1 even).
+    boost: f32,
     seed: u64,
 }
 
@@ -1070,6 +1081,7 @@ impl Settings {
             graze: t.graze_weight,
             graze_eat: t.graze_eat,
             graze_regrow: t.graze_regrow,
+            boost: t.species_boost,
             seed: 1,
         }
     }
@@ -1270,6 +1282,7 @@ enum Knob {
     SizeSpread,
     SensorR,
     Convert,
+    Boost,
     Graze,
     GrazeEat,
     GrazeRegrow,
@@ -1278,7 +1291,7 @@ enum Knob {
 const LOOKS: [Knob; 11] = [Knob::Disc, Knob::Haze, Knob::TrailScale, Knob::ReachBy, Knob::AngleBy, Knob::TurnBy, Knob::StepBy, Knob::TrailPower, Knob::Cap, Knob::Floor, Knob::Wander];
 const SICK: [Knob; 11] = [Knob::Sick, Knob::Immune, Knob::Catch, Knob::Germ, Knob::GermKeep, Knob::SickSpeed, Knob::SickTrail, Knob::SickReach, Knob::SickTurn, Knob::SeedAt, Knob::SeedR];
 
-const OUTSIDE: [Knob; 19] = [
+const OUTSIDE: [Knob; 20] = [
     Knob::Species,
     Knob::Avoid,
     Knob::Zones,
@@ -1295,6 +1308,7 @@ const OUTSIDE: [Knob; 19] = [
     Knob::SizeSpread,
     Knob::SensorR,
     Knob::Convert,
+    Knob::Boost,
     Knob::Graze,
     Knob::GrazeEat,
     Knob::GrazeRegrow,
@@ -1442,6 +1456,7 @@ impl Knob {
             Knob::SizeSpread => "SIZE SPREAD",
             Knob::SensorR => "AREA SENSOR RADIUS",
             Knob::Convert => "CONVERT AT",
+            Knob::Boost => "SPECIES 0 LAYS",
             Knob::Graze => "GRAZING",
             Knob::GrazeEat => "GRASS EATEN A TICK",
             Knob::GrazeRegrow => "GRASS REGROWS",
@@ -1534,6 +1549,7 @@ impl Knob {
             Knob::SensorR => format!("{} ({} CELLS)", s.sensor_r, (2 * s.sensor_r as u32 + 1).pow(2)),
             Knob::Convert if s.convert == 0.0 => "OFF".into(),
             Knob::Convert => format!("{:.1}X OWN", s.convert),
+            Knob::Boost => format!("{:.2}X", s.boost),
             Knob::Graze if s.graze == 0.0 => "OFF".into(),
             Knob::Graze => format!("{}", s.graze),
             Knob::GrazeEat => format!("{:.3}", s.graze_eat),
@@ -1651,6 +1667,7 @@ impl Knob {
             Knob::SizeSpread => s.size_spread = (s.size_spread + 0.1 * k * d).clamp(0.0, 2.0),
             Knob::SensorR => s.sensor_r = (s.sensor_r as i32 + dir).clamp(0, 3) as u8,
             Knob::Convert => s.convert = next_in(&CONVERT_STEPS, s.convert, dir),
+            Knob::Boost => s.boost = (s.boost + 0.1 * k * d).clamp(0.1, 4.0),
             Knob::Graze => s.graze = next_in(&GRAZE_STEPS, s.graze, dir),
             Knob::GrazeEat => s.graze_eat = mul(s.graze_eat, if big { 2.0 } else { 1.25 }).clamp(0.001, 1.0),
             Knob::GrazeRegrow => s.graze_regrow = mul(s.graze_regrow, if big { 2.0 } else { 1.25 }).clamp(0.0001, 1.0),
@@ -1741,6 +1758,7 @@ fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "graze" | "graze_weight" => s.graze = f()?,
         "graze_eat" => s.graze_eat = f()?,
         "graze_regrow" => s.graze_regrow = f()?,
+        "boost" | "species_boost" => s.boost = f()?,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }
@@ -1803,6 +1821,7 @@ fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         graze_weight: s.graze,
         graze_eat: s.graze_eat,
         graze_regrow: s.graze_regrow,
+        species_boost: s.boost,
         seed: s.seed,
         ..t
     }
@@ -2196,8 +2215,8 @@ impl Engine {
         b.extend(u32_bytes(&[s.blocked_keep as u32]));
         b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
         b.extend(u32_bytes(&[s.sensor_r as u32, stream(seed, DRAW_CHANCE), stream(seed, DRAW_KEEP)]));
-        b.extend(f32_bytes(&[s.convert, s.graze, s.graze_eat, s.graze_regrow]));
-        b.extend(u32_bytes(&[0, 0, 0]));
+        b.extend(f32_bytes(&[s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost]));
+        b.extend(u32_bytes(&[0, 0]));
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.converts = s.convert > 0.0 && self.nsp > 0;
         self.outside = self.nsp > 0 || s.explore > 0 || s.blocked_lay > 0.0 || s.blocked_keep || s.chance > 0.0 || s.size_spread > 0.0 || s.sensor_r > 0 || s.graze != 0.0;
@@ -2931,7 +2950,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             }
             if (s.fields(), s.explore, s.blocked_lay, s.blocked_keep, s.chance, s.size_spread, s.sensor_r, s.graze) != (0, 0, 0.0, false, 0.0, 0.0, 0, 0.0) {
                 println!(
-                    "   outside: species {} avoid {} zones {} cycle {} next {} prev {} convert {}; explore {} ticks, trail {} spread {}; blocked lay {} keep {} reset {}; chance {} size spread {} sensor r {}; graze {} eat {} regrow {}",
+                    "   outside: species {} avoid {} zones {} cycle {} next {} prev {} convert {} boost {}; explore {} ticks, trail {} spread {}; blocked lay {} keep {} reset {}; chance {} size spread {} sensor r {}; graze {} eat {} regrow {}",
                     s.fields(),
                     s.avoid,
                     s.zones as u8,
@@ -2939,6 +2958,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     s.next,
                     s.prev,
                     s.convert,
+                    s.boost,
                     s.explore,
                     s.explorer_trail,
                     s.explore_spread,
@@ -3204,7 +3224,7 @@ mod tests {
         assert!(s.sick + s.immune <= u16::MAX as u32 && s.catch_at > 0.0 && s.germ_keep < 1.0 && s.disc >= 10.0);
         assert!([s.reach_by[1], s.angle_by[1], s.turn_by[1], s.step_by[1]].iter().all(|&e| e >= 0.0));
         // The outside rules: at most four species (a colour each), never one.
-        assert!(s.species <= MAX_SPECIES && s.species != 1 && s.sensor_r <= 3 && s.explorer_trail >= 0.0 && s.explore_spread <= 1.0 && s.chance >= 0.0);
+        assert!(s.species <= MAX_SPECIES && s.species != 1 && s.sensor_r <= 3 && s.explorer_trail >= 0.0 && s.explore_spread <= 1.0 && s.chance >= 0.0 && s.boost >= 0.1);
         let mut t = Settings::big_dish();
         assert!(Knob::Species.nudge(&mut t, 1, false, 8_000_000) && t.fields() == 2, "species start at two, with a restart");
         assert!(Knob::Species.nudge(&mut t, -1, false, 8_000_000) && t.fields() == 0);
@@ -3380,17 +3400,21 @@ mod tests {
         }
     }
 
-    /// The twin test for the outside rules (PRs #55 and #56, 2026-11-11): one
+    /// The twin test for the outside rules (PRs #55, #56, #58, 2026-11-11): one
     /// GPU tick from a warmed CPU dish against one `BigDish::tick` with each
     /// rule on (species, cyclic species with a fourth weighed as an other,
     /// explorers with their spread and respawn, blocked walkers laying and
     /// keeping their heading, the chance turn, size spread, area sensors,
-    /// grazing, conversion, and mixes with the cap and contagion). Each
+    /// grazing, conversion, species 0's boost, and mixes with the cap and
+    /// contagion). Each
     /// species' field, every walker's age and species, and the grass are
     /// compared too. On software Vulkan (2026-11-11) every walker, age and
     /// species agreed on all fifteen dishes, the grass to the bit, and the
-    /// fields to 2.4e-8 or better (exact on eleven). Fourteen planted bugs
-    /// each failed it. PR #56's: conversion reading the field before the
+    /// fields to 2.4e-8 or better (exact on eleven). Sixteen planted bugs
+    /// each failed it. PR #58's: the boost on species 1 (trail L1 4.0e-2),
+    /// no boost on a walker's own reading in the convert pass (339 species
+    /// off; 11, under the bound, with the boost of 1.1 a boosted warm-up
+    /// allowed). PR #56's: conversion reading the field before the
     /// tick's deposit (1,434 of 250,000 species off), cyclic species
     /// joining the next not the previous (31,458), grass regrowing before
     /// it is eaten (grass L1 0.12), grass eaten where the walker stood
@@ -3410,7 +3434,8 @@ mod tests {
         let one = small(0);
         let sick = |s: Settings| Settings { sick: 60, immune: 60, catch_at: 0.2, sick_trail: 3.0, seed_at: 0.0, seed_r: 60.0, ..s };
         let dishes = [
-            ("two species in bands", Settings { species: 2, zones: true, avoid: 0.75, ..j.clone() }),
+            // PR #58's boost: species 0 lays 1.5 times as much.
+            ("two species in bands, species 0 boosted", Settings { species: 2, zones: true, avoid: 0.75, boost: 1.5, ..j.clone() }),
             ("three cyclic species", Settings { species: 3, cycle: true, avoid: 0.5, sensor_angle: 20.0, turn: 20.0, reach: 32.0, step: 2.0, ..j.clone() }),
             ("four cyclic species", Settings { species: 4, cycle: true, next: 0.4, prev: -0.8, ..j.clone() }),
             ("explorers, spread, respawn", Settings { explore: 60, explore_spread: 1.0, explorer_trail: 0.1, respawn: 0.01, ..j.clone() }),
@@ -3423,16 +3448,27 @@ mod tests {
             // PR #56: grazing and conversion.
             ("grazing droplets", small(20)),
             ("two species of grazing droplets", small(21)),
-            ("two species converting", Settings { species: 2, convert: 1.2, ..j.clone() }),
+            ("two species converting, species 0 boosted", Settings { species: 2, convert: 1.2, boost: 1.5, ..j.clone() }),
             ("three cyclic species converting", Settings { species: 3, cycle: true, convert: 1.0, ..j.clone() }),
             ("converting, grazing, cap, explorers, respawn", Settings { species: 2, convert: 1.5, graze: 10.0, cap: 100, explore: 60, explore_spread: 1.0, respawn: 0.01, ..j.clone() }),
         ];
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
+            // A converting dish warms up unboosted: boosted, species 0 takes
+            // every walker within the 40 ticks (boost 1.5 at convert 1.2, or
+            // 2 at 3, left none or one to convert), and a missing boost in
+            // the convert pass slipped through at a boost of 1.1 (11 species
+            // off, under the bound). The GPU has the boost all along; the
+            // twin tick is the CPU's first with it.
+            let boost = cpu.p.species_boost;
+            if s.convert > 0.0 {
+                cpu.p.species_boost = 1.0;
+            }
             for _ in 0..40 {
                 cpu.tick();
             }
+            cpu.p.species_boost = boost;
             let n = cpu.walkers.len();
             let before_age = cpu.age.clone();
             let before_spec = cpu.spec.clone();
@@ -3646,10 +3682,10 @@ mod tests {
         assert_eq!((s.species, s.cycle, s.avoid, s.explore, s.explore_spread, s.blocked_lay, s.blocked_keep, s.chance, s.size_spread, s.sensor_r), (3, true, 0.5, 900, 1.0, 1.0, true, 4.0, 0.6, 1));
         set(&mut s, "species", "9").unwrap();
         assert_eq!(s.fields(), 4);
-        for (k, v) in [("species_convert", "1.5"), ("graze_weight", "10"), ("graze_eat", "0.1"), ("graze_regrow", "0.004")] {
+        for (k, v) in [("species_convert", "1.5"), ("graze_weight", "10"), ("graze_eat", "0.1"), ("graze_regrow", "0.004"), ("species_boost", "1.5")] {
             set(&mut s, k, v).unwrap();
         }
-        assert_eq!((s.convert, s.graze, s.graze_eat, s.graze_regrow), (1.5, 10.0, 0.1, 0.004));
+        assert_eq!((s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost), (1.5, 10.0, 0.1, 0.004, 1.5));
         assert!(set(&mut s, "nonsense", "1").is_err());
         // Switches and names are strict: `crowd=false` is off, a misspelt
         // name is an error, and no frame has 0 ticks.
