@@ -253,3 +253,72 @@ frame on today's dish; to be measured with `Dish::step_cost` when built.
 - [scale](../wiki/model/scale.md), [sensors](../wiki/model/sensors.md)
 - [rts-craft](../wiki/rts/rts-craft.md) and [rts-research-2026-11-10.md](rts-research-2026-11-10.md) (size cost, points ending, telegraphed attacks; Creeper World as the nearest published game with a simulated enemy)
 - [skirmish](../wiki/rts/skirmish.md), [two-fevers](../wiki/rts/two-fevers.md)
+
+## Results of the three tests (2026-11-11, after the owner's choice)
+
+Owner, 2026-11-11 00:30Z: "Squad, start just you against the mold, tests
+first". Harness: `examples/larderprobe.rs`. Raw output:
+[`fire-snip.txt`](mould-shooter-2026-11-11/fire-snip.txt),
+[`fire-clear.txt`](mould-shooter-2026-11-11/fire-clear.txt),
+[`smell.txt`](mould-shooter-2026-11-11/smell.txt),
+[`lean.txt`](mould-shooter-2026-11-11/lean.txt). Page with pictures:
+https://claude.ai/artifact/GnXVrCVuddegthHYoxFixA (source in
+[`page/`](mould-shooter-2026-11-11/page/index.html)).
+
+**Setup.** The field skirmish's 23-pile field (`skirmish::FIELD`) with one
+mould, started on the left home; the right home pile (216, 80; 30,000 food)
+is the larder. 90 s a run, 16 paired seeds, a shot every quarter second
+while any mould is within 50 cells of the larder. Deciding measure: food
+stolen from the larder.
+
+**Look first.** The mould covers the field and first bites the larder at a
+median 4.2 s: at 120 steps a second it crosses the dish in about 4 s, so
+no front travels long enough to be seen, shot or steered. A held ring of
+cuts 14 cells round the larder closes, and a self-fed island of mould
+inside it keeps eating. So a fifth hand, firing through the larder itself,
+was added before the census.
+
+**Test 1, held fire (snip gun).** Median stolen: idle 12,273; ring aimed at
+the thickest tube in 12,213 (lower on 16/16, p 0.00003, but by 0.5%); ring
+blind 12,175 (13/16, p 0.021); random anywhere 12,264 (9/16, p 0.80);
+**through the larder 1,220** (lower than idle 16/16 and than the aimed ring
+16/16, p 0.00003). With a gun that only zeroes trail (no kills, no wound),
+every hand stole 12,269-12,275 (7-9 of 16 against idle, p >= 0.80): walkers
+lay the trail again at once. **Fails as stated: cutting a supply line does
+not protect a pile, because the mould on a pile is fed by that pile.** Only
+mould with no food of its own (a front in transit, a tree's branch) starves
+when cut. Killing the eaters works, tenfold.
+
+**Test 2, larder smell (idle).** Smell 3 against 0.3 times a full pile's:
+first bite sooner on 16/16 (p 0.00003) and theft higher on 16/16, but the
+first bite moves from 4.6 s to 4.1 s and theft by under 1%. **Passes the
+sign test, fails in size:** on this dish everything is reached in seconds.
+
+**Test 3, lean against fat.** Piles at a quarter of their food: loops at
+45 s 1 against 10 (fat more on 16/16, p 0.00003); walkers at the end 341
+against 6,900. Starved mould is the tree the design hoped for, with grey
+unfed branches. Aimed ring fire saved a median 1% of the larder either way
+(lean more on 8 of 12, p 0.39): the piece on the larder lives on the larder.
+
+**Corrections.** 26 comparisons; under Holm every 16/16 result, aim against
+random (15/16) and the smell results at 15/16 and 12/12 survive; the blind
+ring (p 0.021) does not.
+
+**Cost.** One run of 90 s takes about 11 s on one core, idle or firing; the
+shots were not timed apart from the step.
+
+### What it changes
+
+1. **The shot is a kill on mould that is eating**, not a cut. The core verb
+   becomes clearing mould off a pile and keeping it off. Cuts keep a place
+   in the design only against mould with no food: fronts and branches.
+2. **Fronts must travel for the rest of the design to exist** (smell,
+   telegraphed attacks, cutting fronts, bait). That needs a map the mould
+   takes tens of seconds to cross: the GPU scale (4x the cells), or a
+   slower mould on today's dish as a cheap stand-in.
+3. **Lean against fat is real** (16/16), so Farmer-then-Hunter has a
+   footing once fronts travel.
+
+Next, if the owner agrees: re-run tests 1 and 2 on a dish where the mould
+needs 30 s or more to reach the larder (slowed walkers on today's CPU dish
+first, since the GPU dish has no economy yet).

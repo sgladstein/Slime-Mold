@@ -11,31 +11,39 @@ code: [Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 
 ## Now
 
-A brainstorm, no runs and no code: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
-A squad shoots the mould; both sides need the same food. The lead shape,
-Larder, makes the player's stored food smell like any pile, so hoarding draws
-the mould (a size cost from the scent field), scores food shipped out over a
-fixed round, and makes a shot matter by holding a tube clear (an empty
-stretch is a cut while it stays empty) rather than by killing walkers, which
-the knife shows is weak. Four strategies (Fortress, Hunter, Farmer, Baiter)
-are meant to counter each other through the state each pushes the mould into
-(lean and tree-like, or fat and looped); that is a hypothesis. Three cheap
-tests on today's dish come first; v0 would be a browser build on today's dish.
+Brainstorm: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
+A squad shoots the mould; both want the same food; the player's larder is a
+pile the mould steals from. The owner chose a squad, solo, tests first. **The
+three cheap tests have run** (`examples/larderprobe.rs`, today's dish): a held
+ring of fire round the larder saves 0.5%, firing on the mould eating it saves
+90%, because a pile feeds the piece on it; cuts only starve mould with no food.
+A trail-only gun does nothing. Smell and lean-against-fat are real (16/16) but
+tiny here, because the mould crosses today's dish in about 4 s. So the shot is
+a kill on eaters, and the rest of the design needs a map where fronts travel.
 
 ## Numbers
 
 | Measure | Result | Seeds | Paired | Source |
 |---|---|---|---|---|
-| None yet: a brainstorm. The facts it leans on are on [knife](../tools/knife.md) and in [dead-ends](../../Reports/dead-ends.md) (`Params::light_weight`) | | | | [report](../../Reports/mould-shooter-2026-11-11.md) |
+| Larder theft, ring of snips on the thickest tube in, against idle | 12,213 against 12,273 | 16 | 16-0, p 0.00003 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
+| Larder theft, snips through the larder, against idle | 1,220 against 12,273 | 16 | 16-0, p 0.00003 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
+| Trail-only gun, any hand against idle | 12,269-12,275 | 16 | 7-9 of 16, p >= 0.80 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
+| First bite of the larder, smell 3 against 0.3 | 4.1 s against 4.6 s | 16 | 16-0, p 0.00003 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
+| Loops at 45 s, piles full against a quarter | 10 against 1 | 16 | 16-0, p 0.00003 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
 
 ## Owner's word
 
+- 2026-11-11 00:30Z: "Squad, start just you against the mold, tests first" (and asked why a browser build, since the browser cannot run the GPU-scale game).
 - 2026-11-11 00:18Z: "brainstorm a demo where the slime mold is the enemy. The player is a soldier or unit of soldiers who can shoot the mold to destroy parts of it. The player needs food to upgrade, build defenses, etc. and the slime mold wants food to expand/survive, etc,"
+
+## Tried and rejected
+
+- A held ring of cuts round a pile to keep the mould off it: [`dead-ends.md`](../../Reports/dead-ends.md), Larder entry.
 
 ## Open
 
-- One soldier or a squad; solo or Versus (two squads, one mould); tests first or v0 first. Owner's call, in `HANDOFF.md`.
-- Test 1 (does held fire cut supply where a snip does not) decides whether shooting clears or must scorch.
+- Re-run tests 1 and 2 on a dish the mould takes 30 s or more to cross (slowed walkers on the CPU dish first; the GPU dish has no economy yet).
+- Versus (two squads, one mould) is set aside for now (owner, 00:30Z: solo first).
 
 ## Sources
 
