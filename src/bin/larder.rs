@@ -24,6 +24,11 @@
 //!   no window and prints the dish hash it reaches (build plan M3).
 //!   `-- shot REPLAY OUT.png [scent]` saves the window's frame at the
 //!   replay's end; `-- bench` times a frame's work with 40 soldiers.
+//! - **Watch the AI** (`larder_ai`): `-- SEED ai=STYLE` lets a player AI
+//!   (`adapt`, `turtle`, `boom`, `rush`, `lure`, with knobs after a colon,
+//!   as `examples/larderai.rs` takes them) play the round, through the
+//!   same commands; your own commands still go in beside it, and R or Esc
+//!   saves the round as a replay as usual.
 //! - Spending (M2): B buys a soldier at the larder (400 food); T builds a
 //!   turret under the cursor (600, within a soldier's range); G lays 300
 //!   food of bait under the cursor (within a soldier's range).
@@ -45,6 +50,7 @@ use std::time::{Duration, Instant};
 use pixels::{Pixels, ScalingMode, SurfaceTexture};
 use slime_mould::hud;
 use slime_mould::mould::larder::{field_game, Cmd, Game, Order, Rules, Stance, GAME_SECOND};
+use slime_mould::mould::larder_ai::Hand;
 use slime_mould::mould::look::Style;
 use slime_mould::mould::render::{self, View};
 use slime_mould::mould::{H, W};
@@ -162,9 +168,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     let seed = args.first().and_then(|s| s.parse().ok()).unwrap_or(1);
+    let ai = args.iter().find_map(|a| a.strip_prefix("ai=")).map(String::from);
+    if let Some(name) = &ai {
+        Hand::named(name, &field_game(seed, Rules::default()), seed).ok_or("ai=adapt|turtle|boom|rush|lure[:knob=v+...]")?;
+    }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
-    let mut app = App::new(seed);
+    let mut app = App::new(seed, ai);
     event_loop.run_app(&mut app)?;
     Ok(())
 }
@@ -172,6 +182,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 struct App {
     seed: u64,
     game: Game,
+    /// The player AI playing this round, if `ai=` was given, and its name.
+    hand: Option<Hand>,
+    ai: Option<String>,
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
     selected: Vec<usize>,
@@ -193,10 +206,13 @@ struct App {
 }
 
 impl App {
-    fn new(seed: u64) -> App {
+    fn new(seed: u64, ai: Option<String>) -> App {
+        let game = field_game(seed, Rules::default());
         App {
             seed,
-            game: field_game(seed, Rules::default()),
+            hand: ai.as_deref().and_then(|n| Hand::named(n, &game, seed)),
+            ai,
+            game,
             window: None,
             pixels: None,
             selected: Vec::new(),
@@ -294,6 +310,7 @@ impl App {
             KeyCode::KeyR => {
                 self.save_replay();
                 self.game = field_game(self.seed, Rules::default());
+                self.hand = self.ai.as_deref().and_then(|n| Hand::named(n, &self.game, self.seed));
                 self.selected.clear();
             }
             KeyCode::KeyB => {
@@ -368,6 +385,11 @@ impl App {
             self.owed -= step;
             n += 1;
             if !self.paused {
+                if let Some(h) = self.hand.as_mut() {
+                    if self.game.dish.t.is_multiple_of(GAME_SECOND) {
+                        h.play(&mut self.game);
+                    }
+                }
                 self.game.step();
             }
         }
@@ -425,8 +447,9 @@ impl App {
 
     fn title(&self) -> String {
         format!(
-            "LARDER (seed {}) - {}",
+            "LARDER (seed {}{}) - {}",
             self.seed,
+            self.ai.as_deref().map(|n| format!(", AI {n}")).unwrap_or_default(),
             if self.paused { "paused" } else { "running" }
         )
     }

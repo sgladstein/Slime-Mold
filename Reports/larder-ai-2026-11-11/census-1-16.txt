@@ -1,0 +1,104 @@
+fed field, seeds 1..16 (16 rounds)
+hand      median       quartiles   win  cap loss  end s most buys turret   bait harvest shots  cmds   think
+idle      -1.789  -1.794..-1.780      0    0   16    190    4    0      0      0       0   200     0      0us
+random    -1.887  -1.898..-1.876      0    0   16    101    6    2      1    300       0    50    50     16us
+turtle    -1.912  -1.914..-1.905      0    0   16     79    4    0      2      0    1500   230    23     22us
+boom      -0.400  -0.409..-0.375      0   15    1    900    9    6      0      0   30606  2871    20     36us
+rush      -1.912  -1.915..-1.910      0    0   16     79    5    1      0      0       0   160    20     15us
+lure      -0.278  -0.500..-0.214      0   12    4    900   14   10      0   3000   36034  2845  2059     30us
+adapt     -0.500  -0.500..-0.375      0   15    1    900    8    4      0   4800   32722  1955   821     37us
+
+Per seed (score):
+seed      idle   random   turtle     boom     rush     lure    adapt  best style
+    1   -1.770   -1.862   -1.905   -0.375   -1.912   -0.250   -0.500  lure
+    2   -1.787   -1.896   -1.905   -0.409   -1.910   -1.168   -0.500  boom
+    3   -1.794   -1.902   -1.917   -0.389   -1.914   -0.250   -0.357  lure
+    4   -1.801   -1.887   -1.917   -0.500   -1.913   -0.300   -0.375  lure
+    5   -1.796   -1.894   -1.905   -0.300   -1.907   -1.301   -0.500  boom
+    6   -1.767   -1.899   -1.912   -0.389   -1.915   -0.214   -0.375  lure
+    7   -1.790   -1.886   -1.921   -0.357   -1.918   -0.500   -0.227  adapt
+    8   -1.780   -1.898   -1.911   -0.500   -1.912   -0.278   -0.500  lure
+    9   -1.778   -1.867   -1.914   -1.100   -1.910   -0.167   -0.500  lure
+   10   -1.785   -1.887   -1.904   -0.400   -1.908   -1.157   -0.500  boom
+   11   -1.792   -1.876   -1.915   -0.400   -1.917   -0.375   -0.500  lure
+   12   -1.804   -1.911   -1.913   -0.409   -1.912   -0.167   -0.500  lure
+   13   -1.789   -1.888   -1.913   -0.400   -1.911   -0.100   -0.500  lure
+   14   -1.786   -1.920   -1.911   -0.389   -1.915   -0.214   -0.500  lure
+   15   -1.791   -1.875   -1.914   -0.400   -1.916   -1.066   -0.500  boom
+   16   -1.794   -1.881   -1.912   -0.300   -1.908   -0.389   -1.026  boom
+Best style per seed: turtle 0 boom 5 rush 0 lure 10 adapt 1
+
+Paired sign tests (ties dropped), Holm over 20:
+  turtle > idle           0 of 16  p 0.00003  survives
+  turtle > random         1 of 16  p 0.00052  survives
+  turtle > boom           0 of 16  p 0.00003  survives
+  turtle > rush           9 of 16  p 0.80362  -
+  turtle > lure           0 of 16  p 0.00003  survives
+  turtle > adapt          0 of 16  p 0.00003  survives
+  boom > idle            16 of 16  p 0.00003  survives
+  boom > random          16 of 16  p 0.00003  survives
+  boom > rush            16 of 16  p 0.00003  survives
+  boom > lure             6 of 16  p 0.45450  -
+  boom > adapt           10 of 15  p 0.30176  -
+  rush > idle             0 of 16  p 0.00003  survives
+  rush > random           1 of 16  p 0.00052  survives
+  rush > lure             0 of 16  p 0.00003  survives
+  rush > adapt            0 of 16  p 0.00003  survives
+  lure > idle            16 of 16  p 0.00003  survives
+  lure > random          16 of 16  p 0.00003  survives
+  lure > adapt           11 of 16  p 0.21011  -
+  adapt > idle           16 of 16  p 0.00003  survives
+  adapt > random         16 of 16  p 0.00003  survives
+(197.9 s)
+lean field, seeds 1..16 (16 rounds)
+hand      median       quartiles   win  cap loss  end s most buys turret   bait harvest shots  cmds   think
+idle      -1.788  -1.794..-1.782      0    0   16    191    4    0      0      0       0   200     0      0us
+random    -1.886  -1.900..-1.878      0    0   16    103    6    2      1    300       0    50    49     16us
+turtle    -1.912  -1.915..-1.908      0    0   16     80    4    0      2      0    1500   230    23     21us
+boom       2.002   1.982..2.030      15    1    0    540   24   20      0      0   27606  1404   318     22us
+rush      -1.913  -1.916..-1.909      0    0   16     78    5    1      0      0       0   160    20     14us
+lure       1.898   1.844..1.975      16    0    0    514   23   19      0   4200   27055  1015   521     22us
+adapt      1.373   0.000..1.531       9    7    0    891    8    4      0   3900   33315  1137   261     18us
+
+Per seed (score):
+seed      idle   random   turtle     boom     rush     lure    adapt  best style
+    1   -1.794   -1.894   -1.912    2.030   -1.918    1.947    1.541  boom
+    2   -1.776   -1.886   -1.913    1.950   -1.915    1.958    1.570  lure
+    3   -1.791   -1.901   -1.920    1.987   -1.911    1.712    1.514  boom
+    4   -1.793   -1.852   -1.917    2.022   -1.910    1.975    1.482  boom
+    5   -1.802   -1.900   -1.917    2.125   -1.913    1.895    1.373  boom
+    6   -1.788   -1.912   -1.911    1.978   -1.908    1.737    1.531  boom
+    7   -1.786   -1.885   -1.910    1.930   -1.916    1.996   -0.500  lure
+    8   -1.776   -1.898   -1.902    2.024   -1.898    2.191    0.000  lure
+    9   -1.784   -1.870   -1.920   -0.500   -1.911    1.704    1.210  lure
+   10   -1.779   -1.874   -1.905    2.105   -1.915    1.940    0.000  boom
+   11   -1.797   -1.878   -1.914    2.030   -1.919    1.993    1.508  boom
+   12   -1.787   -1.894   -1.912    2.000   -1.917    1.844   -0.500  boom
+   13   -1.782   -1.885   -1.901    1.982   -1.898    1.888   -0.500  boom
+   14   -1.803   -1.917   -1.910    2.002   -1.915    1.587    0.000  boom
+   15   -1.794   -1.879   -1.908    1.983   -1.920    1.898    1.610  boom
+   16   -1.794   -1.902   -1.915    2.068   -1.909    1.865   -0.500  boom
+Best style per seed: turtle 0 boom 12 rush 0 lure 4 adapt 0
+
+Paired sign tests (ties dropped), Holm over 20:
+  turtle > idle           0 of 16  p 0.00003  survives
+  turtle > random         2 of 16  p 0.00418  survives
+  turtle > boom           0 of 16  p 0.00003  survives
+  turtle > rush           8 of 16  p 1.00000  -
+  turtle > lure           0 of 16  p 0.00003  survives
+  turtle > adapt          0 of 16  p 0.00003  survives
+  boom > idle            16 of 16  p 0.00003  survives
+  boom > random          16 of 16  p 0.00003  survives
+  boom > rush            16 of 16  p 0.00003  survives
+  boom > lure            12 of 16  p 0.07681  -
+  boom > adapt           15 of 16  p 0.00052  survives
+  rush > idle             0 of 16  p 0.00003  survives
+  rush > random           2 of 15  p 0.00739  survives
+  rush > lure             0 of 16  p 0.00003  survives
+  rush > adapt            0 of 16  p 0.00003  survives
+  lure > idle            16 of 16  p 0.00003  survives
+  lure > random          16 of 16  p 0.00003  survives
+  lure > adapt           16 of 16  p 0.00003  survives
+  adapt > idle           16 of 16  p 0.00003  survives
+  adapt > random         16 of 16  p 0.00003  survives
+(106.0 s)
