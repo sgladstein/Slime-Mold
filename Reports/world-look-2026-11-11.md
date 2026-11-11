@@ -235,3 +235,34 @@ The card has two speed states: runs 1 and 4 are slow (their plain view is
 its extra over the plain view goes from about 1.4 to about 0.6-0.9 ms a
 frame. Prep is faster in all three pairs at every zoom; one seed and one
 place, so it is a timing, not a census.
+
+## The mould from one spot (owner, 20:07Z)
+
+The owner: "If you start a slime mold in one part of your map instead of
+everywhere, how well does it navigate the rock/terrain and walls, etc.?"
+`examples/worldspread.rs`: the GPU mould (after merging the Larder World's
+engine, so rock, wet ground and walls are in the simulation) starts packed
+on its home pile, 2048 x 1280, seed 1, 60 s, 150,000 walkers, no growth
+(today's default). The terrain run has the dish's rock (298,524 cells)
+and wet ground (253,965) and a wall 24 dish cells long, 2 thick, 70% of
+the way to the nearest pile; the open run has none. Deciding measures
+(named before): piles reached and the share of open ground that looks like
+slime (thickness 26 or more), every 5 s.
+
+| Run | Piles reached at 60 s | Open ground covered, 5 s / 60 s | Wall cells broken |
+|---|---|---|---|
+| Terrain + wall | 3 of 7 (home, 28 and 46 dish cells away) | 6.4% / 6.6% | 1,611 of the wall's cells by 60 s |
+| Open | 3 of 7 (the same) | 6.5% / 6.0% | - |
+
+What it shows: today's mould does not set out from a spot. With a fixed
+body it stays the blob it starts as (the start disc is about 27 dish
+cells across, so it already touches two piles and the wall) and sends out
+two or three thin tubes, which run along rock edges. Rock and wet ground
+change almost nothing because the mould hardly moves. The wall, inside
+the blob's reach, is chewed by the walkers pressed against it. Two
+smaller starts said the same: 60,000 walkers stayed a disc covering 2.7%
+in 30 s and never reached the pile behind the wall; 20,000 with growth on
+(upkeep 0.01, crystals 2) starved to nothing in 10 s (growth untuned on
+this world). A mould that spreads from a spot needs growth fed by the
+crystals: the Larder thread's W2b race start. This harness is ready for it
+(any GPU setting can be passed: `upkeep=`, `capacity=`, `crystal=`).
