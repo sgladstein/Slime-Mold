@@ -73,9 +73,51 @@ pub fn ground(w: usize, cells: usize, f: &Fields) -> Vec<u32> {
     g
 }
 
-/// The dish's piles as crystals (pile index + 1 a fine cell, inside
-/// `pile_r` of each pile on the agar): the sandbox's crystals until the
-/// Larder world's own `pile_of` reaches the GPU.
+/// Where a shot along a line ends (`first_hit`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Shot {
+    /// It met mould first, at this point (fine cells): cut there.
+    Mould(f32, f32),
+    /// It met something that stops it (rock) first, at this point.
+    Stopped(f32, f32),
+    /// Nothing on the way: it flies to the line's end.
+    Clear,
+}
+
+/// A shot from `from` to `to` (fine cells) on a `w` x `h` world, marched
+/// in half-cell steps from the muzzle: the first cell where `mould(i)` is
+/// true ends it (the owner, 2026-11-11 16:48Z: "Gun fire should hit the
+/// first slime in its path"), and so does the first where `stops(i)` is
+/// (rock; the Larder thread lets shots pass over player walls for now). A
+/// game passes its own tests, such as the engine's look thickness over a
+/// threshold; the cut itself is `Engine::set_hits` at the point.
+pub fn first_hit(w: usize, h: usize, from: (f32, f32), to: (f32, f32), mould: impl Fn(usize) -> bool, stops: impl Fn(usize) -> bool) -> Shot {
+    let (dx, dy) = (to.0 - from.0, to.1 - from.1);
+    let n = ((dx.hypot(dy)) * 2.0).ceil().max(1.0) as usize;
+    for k in 0..=n {
+        let t = k as f32 / n as f32;
+        let (x, y) = (from.0 + dx * t, from.1 + dy * t);
+        if x < 0.0 || y < 0.0 || x >= w as f32 || y >= h as f32 {
+            return Shot::Stopped(x.clamp(0.0, w as f32), y.clamp(0.0, h as f32));
+        }
+        let i = y as usize * w + x as usize;
+        if stops(i) {
+            return Shot::Stopped(x, y);
+        }
+        if mould(i) {
+            return Shot::Mould(x, y);
+        }
+    }
+    Shot::Clear
+}
+
+/// The dish's piles as crystals (pile index + 1 a fine cell, in a
+/// pointy-top hexagon of circumradius `pile_r` round each pile, on the
+/// agar): the sandbox's crystals until the Larder world's own `pile_of`
+/// reaches the GPU. The owner, 2026-11-11 16:48Z: "The crystals should have
+/// hexagonal outline, not circle"; the Larder thread makes the same hexagon
+/// the crystal's footprint in the simulation (PR #64). In the sandbox the
+/// food the engine lays is still the pile's disc round it.
 pub fn dish_crystals(d: &crate::mould::big::BigDish) -> Vec<u16> {
     let (w, h) = (d.w, d.h);
     let sc = d.p.scale as f32;
@@ -85,7 +127,8 @@ pub fn dish_crystals(d: &crate::mould::big::BigDish) -> Vec<u16> {
         let (px, py) = (px * sc, py * sc);
         for y in (py - r).max(0.0) as usize..((py + r).max(0.0) as usize).min(h) {
             for x in (px - r).max(0.0) as usize..((px + r).max(0.0) as usize).min(w) {
-                if (x as f32 + 0.5 - px).hypot(y as f32 + 0.5 - py) <= r && d.agar[y * w + x] {
+                let (dx, dy) = ((x as f32 + 0.5 - px).abs(), (y as f32 + 0.5 - py).abs());
+                if dx <= r * 3f32.sqrt() / 2.0 && dy <= r - dx / 3f32.sqrt() && d.agar[y * w + x] {
                     crystal[y * w + x] = k as u16 + 1;
                 }
             }
@@ -158,6 +201,23 @@ mod tests {
         let wet = [false, false, false, false, true];
         let g = ground(5, 5, &Fields { agar: &agar, wall: &wall, wall_share: &share, crystal: &crystal, wet: &wet, ..Default::default() });
         assert_eq!(g, vec![0, 3 | 64 << 8, 5 | 255 << 8 | 255 << 16, 0, 1 | 255 << 8], "a lone crystal cell is its own deepest");
+    }
+
+    #[test]
+    fn a_shot_stops_at_the_first_mould_or_rock_on_its_line() {
+        let (w, h) = (20, 3);
+        // Mould at x 8 and 14, rock at x 11, on row 1.
+        let mould = |i: usize| i == 20 + 8 || i == 20 + 14;
+        let rock = |i: usize| i == 20 + 11;
+        match first_hit(w, h, (1.5, 1.5), (18.5, 1.5), mould, rock) {
+            Shot::Mould(x, _) => assert!((8.0..9.0).contains(&x), "first mould, not the thicker one behind: {x}"),
+            s => panic!("{s:?}"),
+        }
+        match first_hit(w, h, (18.5, 1.5), (9.5, 1.5), |i| i == 20 + 8, rock) {
+            Shot::Stopped(x, _) => assert!((11.0..12.0).contains(&x)),
+            s => panic!("{s:?}"),
+        }
+        assert_eq!(first_hit(w, h, (1.5, 0.5), (18.5, 0.5), mould, rock), Shot::Clear);
     }
 
     #[test]

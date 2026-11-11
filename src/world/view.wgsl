@@ -35,6 +35,9 @@ struct V {
 @group(0) @binding(8) var<storage, read> ground: array<u32>;
 @group(0) @binding(9) var<storage, read> walkers: array<vec4<f32>>;
 @group(0) @binding(10) var<storage, read_write> specks: array<atomic<u32>>;
+// The soldier sprites (`src/world/sprites/`): 512 x 160 RGBA, four 128 px
+// tiles (body, helmet, flash, dead) above the same at 32 px.
+@group(0) @binding(11) var<storage, read> atlas: array<u32>;
 
 fn unpack(c: u32) -> vec3<f32> {
     return vec3<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u));
@@ -192,15 +195,11 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let h = height(x, y);
     let dx = height(x + e, y) - height(x - e, y);
     let dy = height(x, y + e) - height(x, y - e);
-    var n = normalize(vec3<f32>(-dx / (2.0 * e), -dy / (2.0 * e), 1.0));
-    // A crystal's cone cut into six faces: its slope turned to the
-    // nearest sixth, so it catches light face by face.
-    if (m.gem > 0.5 && length(n.xy) > 0.05) {
-        let az = atan2(n.y, n.x);
-        let q = round(az / 1.0471976) * 1.0471976;
-        let sl = length(n.xy);
-        n = normalize(vec3<f32>(cos(q) * sl, sin(q) * sl, n.z));
-    }
+    let n = normalize(vec3<f32>(-dx / (2.0 * e), -dy / (2.0 * e), 1.0));
+    // A crystal stands as a pyramid on its footprint (height from its
+    // depth inside it), so a hexagonal crystal has six flat faces. An
+    // earlier version turned each slope to the nearest sixth to fake faces
+    // on round crystals; the hexagon footprint made that unneeded.
     let l = normalize(LIGHT);
     var shade = 1.0 + 1.25 * (dot(n, l) - l.z);
     // A short cast shadow: something taller toward the light.
@@ -292,97 +291,84 @@ const GLYPH: u32 = 5u;
 const LINE: u32 = 6u;
 const SOLDIER: u32 = 7u;
 
-// ---- The soldier: a top-down figure from shapes, no sprite ----
+// ---- The soldier ----
 //
-// In the soldier's own frame (u along its facing, v across, in radii):
-// helmet, shoulders, pack, two arms and a rifle held to the right, a
-// shadow cast to the bottom right (the world's light), and a muzzle flash
-// while `flash` (0-1, the shot's own timer) is above 0. Lit by the same
-// light as the world. Returns colour and alpha (0: not covered).
+// First drawn from shapes in the shader (shadow, pack, shoulders, arms,
+// rifle, helmet, lit by the world's light). The owner compared it blind
+// against the same design as an SVG sprite and picked the sprite (A,
+// 2026-11-11 16:48Z), so the figure is now the sprite atlas; the shapes'
+// code is in git history (commit 105c358). The shadow stays a shape here.
 
 fn sd_ellipse(p: vec2<f32>, c: vec2<f32>, r: vec2<f32>) -> f32 {
     let q = (p - c) / r;
     return (length(q) - 1.0) * min(r.x, r.y);
 }
 
-fn sd_capsule(p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, r: f32) -> f32 {
-    let pa = p - a; let ba = b - a;
-    let h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-    return length(pa - ba * h) - r;
-}
-
-fn sd_box(p: vec2<f32>, c: vec2<f32>, b: vec2<f32>, round: f32) -> f32 {
-    let d = abs(p - c) - b + vec2<f32>(round);
-    return length(max(d, vec2<f32>(0.0))) + min(max(d.x, d.y), 0.0) - round;
-}
-
-// A lit part: a dome of radius `r` round `c` (in radii), coloured `base`.
-fn lit(p: vec2<f32>, c: vec2<f32>, r: f32, base: vec3<f32>, ang: f32, gloss: f32) -> vec3<f32> {
-    let q = (p - c) / r;
-    let z = sqrt(max(1.0 - dot(q, q), 0.0));
-    // The light into the soldier's frame (it turns, the light does not).
-    let ca = cos(ang); let sa = sin(ang);
-    let l = normalize(LIGHT);
-    let ll = vec3<f32>(l.x * ca + l.y * sa, -l.x * sa + l.y * ca, l.z);
-    let n = normalize(vec3<f32>(q, max(z, 0.2)));
-    let d = max(dot(n, ll), 0.0);
-    let sp = pow(max(dot(n, normalize(ll + vec3<f32>(0.0, 0.0, 1.0))), 0.0), 24.0) * gloss;
-    return base * (0.35 + 0.8 * d) + vec3<f32>(255.0) * sp * 0.6;
-}
-
-fn over(under: vec4<f32>, c: vec3<f32>, a: f32) -> vec4<f32> {
-    let oa = a + under.w * (1.0 - a);
-    if (oa <= 0.0) { return vec4<f32>(0.0); }
-    return vec4<f32>((c * a + under.xyz * under.w * (1.0 - a)) / oa, oa);
-}
-
 fn cover(sd: f32, aa: f32) -> f32 { return clamp(0.5 - sd / aa, 0.0, 1.0); }
 
+// One texel of the atlas, premultiplied.
+fn texel(x: i32, y: i32) -> vec4<f32> {
+    let c = atlas[u32(clamp(y, 0, 159)) * 512u + u32(clamp(x, 0, 511))];
+    let a = f32(c >> 24u) / 255.0;
+    return vec4<f32>(unpack(c) * a, a);
+}
+
+// Tile `k` (0 body, 1 helmet, 2 flash, 3 dead) at point `p` in radii
+// (-2..2 across the tile), bilinear, from the 128 px or the 32 px row.
+fn sprite(k: u32, p: vec2<f32>, small: bool) -> vec4<f32> {
+    var size = 128.0; var oy = 0.0;
+    if (small) { size = 32.0; oy = 128.0; }
+    let u = (p.x + 2.0) / 4.0 * size - 0.5;
+    let v = (p.y + 2.0) / 4.0 * size - 0.5;
+    if (u < -1.0 || v < -1.0 || u > size || v > size) { return vec4<f32>(0.0); }
+    let ox = f32(k) * size;
+    let x0 = floor(u); let y0 = floor(v);
+    let tx = u - x0; let ty = v - y0;
+    let lo = size - 1.0;
+    let ix0 = i32(ox + clamp(x0, 0.0, lo)); let ix1 = i32(ox + clamp(x0 + 1.0, 0.0, lo));
+    let iy0 = i32(oy + clamp(y0, 0.0, lo)); let iy1 = i32(oy + clamp(y0 + 1.0, 0.0, lo));
+    let inside = vec4<f32>(f32(x0 >= 0.0 && y0 >= 0.0), f32(x0 + 1.0 <= lo && y0 >= 0.0), f32(x0 >= 0.0 && y0 + 1.0 <= lo), f32(x0 + 1.0 <= lo && y0 + 1.0 <= lo));
+    let a = mix(texel(ix0, iy0) * inside.x, texel(ix1, iy0) * inside.y, tx);
+    let b = mix(texel(ix0, iy1) * inside.z, texel(ix1, iy1) * inside.w, tx);
+    return mix(a, b, ty);
+}
+
+// Premultiplied `top` over premultiplied `under`.
+fn pm_over(under: vec4<f32>, top: vec4<f32>) -> vec4<f32> {
+    return top + under * (1.0 - top.w);
+}
+
+// The soldier: the owner's pick of an SVG sprite (2026-11-11 16:48Z, A over
+// the shader-drawn figure of the first look), rotated to its facing, with
+// the helmet tinted the team's colour, the muzzle flash while `flash` > 0
+// and the dead pose; the shadow is cast in screen space by the world's
+// light. Returns straight colour and alpha.
 fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bool) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
-    // The shadow, in screen space (the light does not turn with him).
     let l = normalize(LIGHT);
-    var out = vec4<f32>(0.0);
     let sh = sd_ellipse(d / r, vec2<f32>(-l.x, -l.y) * 0.32, vec2<f32>(0.78, 0.78));
-    out = over(out, vec3<f32>(0.0), 0.38 * cover(sh, aa * 2.5));
-    // Into his frame: u along the facing, v across, in radii.
+    var out = vec4<f32>(0.0, 0.0, 0.0, 0.38 * cover(sh, aa * 2.5));
     let ca = cos(ang); let sa = sin(ang);
     let s = d / r;
     let p = vec2<f32>(s.x * ca + s.y * sa, -s.x * sa + s.y * ca);
-    var dim = 1.0;
-    if (dead) { dim = 0.45; }
-    // Fatigues are olive drab leaning a quarter toward the team; the
-    // helmet carries the team's colour whole, so it reads from far out.
-    let drab = vec3<f32>(92.0, 98.0, 66.0);
-    let uniform_c = mix(drab, team, 0.25) * dim;
-    let pack_c = mix(drab, team, 0.12) * 0.62 * dim;
-    let sleeve = mix(drab, team, 0.25) * 1.1 * dim;
-    // Pack, then shoulders.
-    let pk = sd_box(p, vec2<f32>(-0.48, 0.0), vec2<f32>(0.2, 0.4), 0.12);
-    out = over(out, lit(p, vec2<f32>(-0.48, 0.0), 0.5, pack_c, ang, 0.1), cover(pk, aa));
-    let body = sd_ellipse(p, vec2<f32>(-0.08, 0.0), vec2<f32>(0.38, 0.8));
-    out = over(out, lit(p, vec2<f32>(-0.06, 0.0), 0.8, uniform_c, ang, 0.1), cover(body, aa));
-    if (!dead) {
-        // Arms out to the rifle, held to his right (+v).
-        let arm_r = sd_capsule(p, vec2<f32>(-0.02, 0.58), vec2<f32>(0.5, 0.36), 0.15);
-        let arm_l = sd_capsule(p, vec2<f32>(0.0, -0.56), vec2<f32>(0.78, 0.26), 0.14);
-        out = over(out, lit(p, vec2<f32>(0.25, 0.47), 0.35, sleeve, ang, 0.1), cover(arm_r, aa));
-        out = over(out, lit(p, vec2<f32>(0.39, -0.15), 0.45, sleeve, ang, 0.1), cover(arm_l, aa));
-        // The rifle.
-        let gun = sd_capsule(p, vec2<f32>(0.0, 0.3), vec2<f32>(1.45, 0.3), 0.1);
-        out = over(out, vec3<f32>(34.0, 34.0, 38.0) + vec3<f32>(70.0) * clamp(0.35 - (p.y - 0.3) * 3.0, 0.0, 1.0), cover(gun, aa * 0.7));
+    // Under 12 px across the radius the 32 px tiles, so a small soldier is
+    // averaged rather than aliased.
+    let small = r < 12.0;
+    if (dead) {
+        out = pm_over(out, sprite(3u, p, small));
+        let h = sprite(1u, p - vec2<f32>(-0.55, -0.75), small);
+        out = pm_over(out, vec4<f32>(h.xyz * team / 255.0 * 0.5, h.w));
+    } else {
+        out = pm_over(out, sprite(0u, p, small));
+        let h = sprite(1u, p, small);
+        out = pm_over(out, vec4<f32>(h.xyz * team / 255.0, h.w));
+        if (flash > 0.0) {
+            let f = sprite(2u, p, small) * clamp(flash * 1.5, 0.0, 1.0);
+            out = pm_over(out, f);
+        }
     }
-    // The helmet, the team's colour, glossy.
-    let hc = vec2<f32>(0.04, 0.0);
-    let helm = length(p - hc) - 0.34;
-    out = over(out, lit(p, hc, 0.34, team * dim, ang, 0.7 * dim), cover(helm, aa));
-    // The muzzle flash: the shot leaving, as long as the game says it lasts.
-    if (flash > 0.0 && !dead) {
-        let fl = sd_ellipse(p, vec2<f32>(1.62, 0.3), vec2<f32>(0.3 * flash + 0.08, 0.17 * flash + 0.05));
-        let core = 1.0 - clamp(length((p - vec2<f32>(1.58, 0.3)) / vec2<f32>(0.3, 0.17)), 0.0, 1.0);
-        out = over(out, mix(vec3<f32>(255.0, 170.0, 60.0), vec3<f32>(255.0, 250.0, 220.0), core), cover(fl, aa) * clamp(flash * 1.5, 0.0, 1.0));
-    }
-    return out;
+    if (out.w <= 0.0) { return vec4<f32>(0.0); }
+    return vec4<f32>(out.xyz / out.w, out.w);
 }
 
 // Marks claim pixels: each covered pixel keeps the highest mark index that

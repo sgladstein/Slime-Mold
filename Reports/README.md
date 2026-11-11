@@ -175,8 +175,9 @@ move.
   from the simulation**: mould height, gloss and colour from its thickness, every
   walker a speck, shots that cut trail and leave a fading burn (`Engine::set_hits`),
   walls by health, crystals as six-faced cones by charge (`world::look` ground
-  field), shader soldiers with facing and muzzle flash. View 2.2x the plain
-  view's time on the software GPU; 1070 timing pending. Soldier A/B (SVG vs shader).
+  field), soldiers as the SVG sprite the owner picked in a blind A/B, shots that
+  stop at the first slime (`first_hit`), hexagonal crystals. View about 2.3x the
+  plain view's time on the software GPU; 1070 timing pending.
 - [world-camera-2026-11-11.md](world-camera-2026-11-11.md) — **built: the camera and UI
   for a world bigger than the screen** (`slime_mould::world`): pan, zoom at the
   cursor, minimap, GPU marks and Larder's controls as `UiCommand`s; the GPU

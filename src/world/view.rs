@@ -22,6 +22,10 @@ use super::marks::{Marks, MARK_WORDS, MAX_MARKS};
 
 pub const SHADER: &str = include_str!("view.wgsl");
 
+/// The soldier sprites, rendered from `sprites/soldier.svg` by
+/// `sprites/render.js` (the owner's pick, 2026-11-11 16:48Z).
+pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
+
 /// Bytes in the uniform (20 words).
 const PARAMS_BYTES: usize = 80;
 
@@ -66,6 +70,8 @@ pub struct View {
     ground: wgpu::Buffer,
     walkers: wgpu::Buffer,
     specks: wgpu::Buffer,
+    /// The soldier sprites (`SPRITES`), RGBA a texel.
+    atlas: wgpu::Buffer,
     n_walk: u32,
     shade: bool,
     /// The screen-sized result, rows `stride` pixels apart.
@@ -100,7 +106,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -113,7 +119,8 @@ impl View {
         let (stride, out, overlay, top) = Self::screen_buffers(device, screen);
         let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
         let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 4);
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks]);
+        let atlas = Self::atlas(device, queue);
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -128,6 +135,7 @@ impl View {
             ground,
             walkers,
             specks,
+            atlas,
             n_walk: 0,
             shade: false,
             out,
@@ -143,6 +151,16 @@ impl View {
         }
     }
 
+    /// The soldier sprite atlas on the GPU: `SPRITES` decoded, a u32 RGBA
+    /// a texel, 512 x 160.
+    fn atlas(dev: &wgpu::Device, queue: &wgpu::Queue) -> wgpu::Buffer {
+        let img = image::load_from_memory(SPRITES).expect("sprites.png").to_rgba8();
+        assert_eq!(img.dimensions(), (512, 160), "the atlas the view's shader expects");
+        let b = storage(dev, "sprites", img.as_raw().len() as u64);
+        queue.write_buffer(&b, 0, img.as_raw());
+        b
+    }
+
     fn screen_buffers(dev: &wgpu::Device, screen: (u32, u32)) -> (u32, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let stride = screen.0.div_ceil(64) * 64;
         let out = storage(dev, "view out", stride as u64 * screen.1 as u64 * 4);
@@ -151,13 +169,13 @@ impl View {
         (stride, out, overlay, top)
     }
 
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 11]) -> wgpu::BindGroup {
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 12]) -> wgpu::BindGroup {
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas]);
     }
 
     /// A new world frame (a restart made a new engine).

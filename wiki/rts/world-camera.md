@@ -4,7 +4,7 @@ kind: mechanism
 status: current
 updated: 2026-11-11
 sources: [Reports/world-camera-2026-11-11.md, Reports/world-look-2026-11-11.md]
-code: [Camera::wheel, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS]
+code: [Camera::wheel, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES]
 ---
 
 # The world camera and UI
@@ -26,10 +26,11 @@ pixel-identical to the engine's own frame. On the GTX 1070 the view costs
 the view shades the world from the engine's look field (mould thickness,
 walkers, wounds) and a ground field (rock, walls by health, crystals by
 charge): height, light, gloss, a speck a walker. Shots (`Engine::set_hits`)
-cut trail and leave a fading burn; soldiers are shader figures with facing
-and a muzzle flash. About 2.2x the plain view's time on the software GPU;
-the 1070 cost is not yet measured. A blind soldier A/B (SVG against shader)
-is on the page, unanswered.
+stop at the first slime or rock on their line (`first_hit`) and cut there,
+leaving a fading burn. Soldiers are an SVG sprite (the owner's pick of a
+blind A/B, 16:48Z) with facing, team helmet and muzzle flash; crystals are
+hexagons, as in the simulation. About 2.2x the plain view's time on the
+software GPU; the 1070 cost is not yet measured.
 
 ## Numbers
 
@@ -39,6 +40,8 @@ is on the page, unanswered.
 | View pass, 1920 x 1080, 49 marks, GTX 1070, zoom 1 / 4 / fit 0.84 | 0.333 / 0.315 / 0.415 ms | 1 | - | [report, *On the GTX 1070*](../../Reports/world-camera-2026-11-11.md) |
 
 ## Owner's word
+
+- 2026-11-11 16:48Z: "Solider A looks better" (the SVG sprite); "Gun fire should hit the first slime in its path"; "The crystals should have hexagonal outline, not circle."
 
 - 2026-11-11 14:06Z: "We should do a camera UI thread too as you suggested".
 - 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand."

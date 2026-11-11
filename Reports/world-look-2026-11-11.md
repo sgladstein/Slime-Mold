@@ -97,3 +97,38 @@ A/B says sprites are worth it.
 - Walkers that were inside a cell when it became a wall stay there as specks.
 - Soldiers' shadows can cover a neighbour's body where they overlap (each
   pixel shows one mark).
+
+## The owner's picks and what changed (16:48Z)
+
+The owner, 16:48Z: "1) Solider A looks better. 2) [...] Gun fire should
+hit the first slime in its path. This doesn't look good. 3) The crystals
+should have hexagonal outline, not circle."
+
+1. **Soldiers are the SVG sprite.** `src/world/sprites/soldier.svg` is
+   rendered by `sprites/render.js` (Playwright's Chromium) into
+   `sprites.png`, a 512 x 160 atlas: body, helmet (white, tinted with the
+   team's colour in the shader), muzzle flash and a dead pose, at 128 px and
+   again at 32 px for soldiers under 12 px across the radius. The view
+   samples it bilinearly, rotated to the soldier's facing; the shadow stays
+   a shape cast by the world's light. The shape-drawn figure's code is in
+   commit 105c358.
+2. **Shots stop at the first slime.** `world::look::first_hit` marches the
+   shot's line in half-cell steps from the muzzle and returns the first
+   mould cell (cut there with `Engine::set_hits`) or the first rock cell
+   (the shot stops); player walls let shots over, as the Larder thread asked
+   (it owns the firing rule and calls this). In the stand-in fight each
+   soldier fires every 0.3 s at a random angle within 0.8 rad of its front,
+   to full range 16 dish cells, against thickness over 60/255 read back
+   every 3 frames; the cut is 0.4 dish cells across the radius.
+3. **Crystals are hexagons.** The Larder world's simulation now makes each
+   crystal's footprint a pointy-top hexagon of circumradius `pile_r` (PR
+   #64, 6456f6b); `dish_crystals` draws the same hexagon in the sandbox. A
+   crystal's height is charge x its depth inside the footprint, so a
+   hexagon stands as a six-faced pyramid; the slope rounding that faked
+   faces on round crystals is gone.
+
+| Measure (same set-up as above, 4 s of fire) | Result |
+|---|---|
+| Shots / stopped by mould | 120 / 63 |
+| View pass, look on, zoom 1 / 2 / 4 (lavapipe, median of 21) | 33.4 / 32.7 / 33.0 ms |
+| View pass, look off | 13.5 / 13.3 / 15.2 ms |

@@ -24,7 +24,7 @@
 use pixels::wgpu;
 use slime_mould::gpu::*;
 use slime_mould::mould::STEPS_PER_SECOND;
-use slime_mould::world::look::{dish_crystals, ground, ground_buffer, Fields, Ground};
+use slime_mould::world::look::{dish_crystals, first_hit, ground, ground_buffer, Fields, Ground, Shot};
 use slime_mould::world::marks::team_colour;
 use slime_mould::world::{Camera, Marks, View};
 
@@ -37,6 +37,8 @@ struct Soldier {
     /// Seconds since the last shot.
     since: f32,
     team: u8,
+    /// Where it faces when not firing (the arc it fires into).
+    facing0: f32,
 }
 
 struct Tracer {
@@ -143,10 +145,10 @@ fn main() {
     let mut squad: Vec<Soldier> = (0..9)
         .map(|k| {
             let a = -2.4 + k as f32 * 0.6;
-            Soldier { x: fx - 2.0 * sc + a * 2.4 * sc, y: fy + 5.5 * sc + (a * 0.5).powi(2) * sc, facing: -std::f32::consts::FRAC_PI_2, wait: (k as f32 * 0.037) % 0.3, since: 9.0, team: 0 }
+            Soldier { x: fx - 2.0 * sc + a * 2.4 * sc, y: fy + 5.5 * sc + (a * 0.5).powi(2) * sc, facing: -std::f32::consts::FRAC_PI_2, wait: (k as f32 * 0.037) % 0.3, since: 9.0, team: 0, facing0: -std::f32::consts::FRAC_PI_2 }
         })
         .collect();
-    squad.push(Soldier { x: fx + 9.0 * sc, y: fy - 1.0 * sc, facing: 2.6, wait: 9e9, since: 9.0, team: 1 });
+    squad.push(Soldier { x: fx + 9.0 * sc, y: fy - 1.0 * sc, facing: 2.6, wait: 9e9, since: 9.0, team: 1, facing0: 2.6 });
     let range = 16.0 * sc;
     let mut tracers: Vec<Tracer> = Vec::new();
     let screen_gif = (640u32, 400u32);
@@ -162,7 +164,7 @@ fn main() {
     let mut thick: Vec<u8> = Vec::new();
     let fight_frames = (fight * fps) as u32;
     for f in 0..fight_frames {
-        if f % 6 == 0 {
+        if f % 3 == 0 {
             thick = read_back(&device, &queue, &e.look).chunks_exact(4).map(|c| c[0]).collect();
         }
         let mut hits = Vec::new();
@@ -173,30 +175,27 @@ fn main() {
                 continue;
             }
             so.wait += 0.3;
-            // A thick cell in range, picked from a few tries.
-            let mut best: Option<(f32, f32, u8)> = None;
-            for t in 0..48u32 {
-                let rnd = lowbias(f * 7919 + k as u32 * 104_729 + t * 31);
-                let a = -std::f32::consts::FRAC_PI_2 + ((rnd & 0xffff) as f32 / 65535.0 - 0.5) * 3.6;
-                let d = range * (0.25 + 0.75 * (rnd >> 16) as f32 / 65535.0);
-                let (x, y) = (so.x + a.cos() * d, so.y + a.sin() * d);
-                if x < 0.0 || y < 0.0 || x >= w as f32 || y >= h as f32 {
-                    continue;
-                }
-                let v = thick[y as usize * w + x as usize];
-                if v > 60 && best.is_none_or(|b| v > b.2) {
-                    best = Some((x, y, v));
-                }
-            }
+            // Aim somewhere in the arc ahead; the shot flies along that line
+            // and ends at the first mould on it (`first_hit`; the owner,
+            // 16:48Z), or at rock, or at full range.
+            let rnd = lowbias(f * 7919 + k as u32 * 104_729);
+            let a = so.facing0 + ((rnd & 0xffff) as f32 / 65535.0 - 0.5) * 1.6;
+            let muzzle = (so.x + a.cos() * 1.6 * 0.9 * sc, so.y + a.sin() * 1.6 * 0.9 * sc);
+            let end = (so.x + a.cos() * range, so.y + a.sin() * range);
+            let shot = first_hit(w, h, muzzle, end, |i| thick[i] > 60, |i| !e.dish.agar[i] && !is_wall[i]);
             fired += 1;
-            if let Some((x, y, _)) = best {
-                landed += 1;
-                so.facing = (y - so.y).atan2(x - so.x);
-                so.since = 0.0;
-                let muzzle = (so.x + so.facing.cos() * 1.6 * 0.9 * sc, so.y + so.facing.sin() * 1.6 * 0.9 * sc);
-                tracers.push(Tracer { from: muzzle, to: (x, y), age: 0.0 });
-                hits.push((x, y, 0.55 * sc));
-            }
+            so.facing = a;
+            so.since = 0.0;
+            let to = match shot {
+                Shot::Mould(x, y) => {
+                    landed += 1;
+                    hits.push((x, y, 0.4 * sc));
+                    (x, y)
+                }
+                Shot::Stopped(x, y) => (x, y),
+                Shot::Clear => end,
+            };
+            tracers.push(Tracer { from: muzzle, to, age: 0.0 });
         }
         e.set_hits(&hits);
         run(&mut e, 1);
@@ -214,7 +213,7 @@ fn main() {
             gif.push(gif_view.picture());
         }
     }
-    println!("fight {fight} s: {fired} shots, {landed} at thick mould");
+    println!("fight {fight} s: {fired} shots, {landed} stopped by mould");
     let ms = (2000.0 / fps).round() as u32;
     write_gif(&format!("{out}/fight.gif"), gif, ms);
 
