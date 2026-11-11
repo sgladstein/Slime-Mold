@@ -559,6 +559,15 @@ fn main() {
                         println!("seed {seed} {name} t {:5.1}s  walkers {}", m.seconds, w.join(","));
                     }
                 }
+                if d.p.blob {
+                    // Spread from one spot: the median and 90th-percentile
+                    // walker distance from the start centre, in fine cells.
+                    let (cx, cy) = if d.p.blob_r > 0.0 { (d.w as f32 / 2.0, d.h as f32 / 2.0) } else { (d.piles[0].0 * d.p.scale as f32, d.piles[0].1 * d.p.scale as f32) };
+                    let mut dist: Vec<f32> = d.walkers.iter().map(|&(x, y, _)| (x - cx).hypot(y - cy)).collect();
+                    dist.sort_by(|a, b| a.total_cmp(b));
+                    let at = |q: f32| dist.get(((dist.len() as f32 * q) as usize).min(dist.len().saturating_sub(1))).copied().unwrap_or(0.0);
+                    println!("seed {seed} {name} t {:5.1}s  extent r50 {:.1} r90 {:.1}", m.seconds, at(0.5), at(0.9));
+                }
                 if !d.kind.is_empty() {
                     // Mixed walkers: for each kind, the share of its walkers
                     // on tube cells (trail above `tube`) and their median

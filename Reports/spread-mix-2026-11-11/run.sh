@@ -5,13 +5,16 @@
 # GROUP: spread-net (network types, 1M walkers), spread-drop (droplet
 # types, 30k), mix-net, mix-drop. Each run starts from one spot in the dish
 # centre and prints report lines every 2 s (tube area, reach, and with
-# mixes the per-kind `kinds` line); stills in style=soft or style=kinds.
+# mixes the per-kind `kinds` line, and `extent`: median and 90th-percentile
+# walker distance from the start); stills in style=soft or style=kinds.
+# blob_r is in dish units (x scale 4 = fine cells): 20 is an 80-cell disc for
+# the network, 26 packs the 30k droplet walkers one a cell.
 set -u
 G=$1; JOBS=${2:-4}; OUT=${3:-/tmp/spread-mix}; mkdir -p "$OUT"
 BIN=./target/release/examples/bigdish
 SEEDS=${SEEDS:-"1 2 3"}; SECS=${SECS:-20}
 N="preset=dense piles=1 food_deposit=0 crowd=0 walkers=1000000 deposit=0.5 rotate_angle=22.5 sensor_offset=18 blob=1 blob_r=20"
-D="preset=dense piles=1 food_deposit=0 crowd=1 walkers=30000 deposit=5 rotate_angle=45 sensor_angle=90 sensor_offset=9 keep=0.93 blob=1 blob_r=100 blocked_deposit=1"
+D="preset=dense piles=1 food_deposit=0 crowd=1 walkers=30000 deposit=5 rotate_angle=45 sensor_angle=90 sensor_offset=9 keep=0.93 blob=1 blob_r=26 blocked_deposit=1"
 case $G in
   spread-net) STYLE=soft; LIST="net|$N
 chance|$N chance_exp=4
