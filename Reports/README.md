@@ -175,7 +175,8 @@ move.
   for a world bigger than the screen** (`slime_mould::world`): pan, zoom at the
   cursor, minimap, GPU marks and Larder's controls as `UiCommand`s; the GPU
   engine moved into the library (`slime_mould::gpu`). In the sandbox (W, Q, M).
-  Today's dish through the camera is pixel-identical; not yet timed on the 1070.
+  Today's dish through the camera is pixel-identical; 0.3-0.4 ms a frame on
+  the 1070 at 1920 x 1080.
 - [gpu-sandbox-2026-11-11.md](gpu-sandbox-2026-11-11.md) — **built: GPU plan phase 3's sandbox,
   `--bin mouldgpu`.** The big dish on the GPU, drawn live, with every option
   the Jenson comparison tested as a control and its dishes on keys 1-8 (the

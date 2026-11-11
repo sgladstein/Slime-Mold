@@ -1,6 +1,6 @@
 # World camera and UI (2026-11-11)
 
-**Built, not yet played or timed on the GTX 1070.** The owner asked for a
+**Built and timed on the GTX 1070 (0.32-0.42 ms a frame at 1920 x 1080); not yet played.** The owner asked for a
 camera and UI thread for the Larder world (2026-11-11 14:06Z, "We should do
 a camera UI thread too as you suggested"). Larder is moving from the 256 x
 160 CPU dish onto the GPU as a world bigger than the screen ("A longer
@@ -62,15 +62,29 @@ giving orders in it. Page: https://claude.ai/artifact/X4b5Nmwgkd11paVF8RS1mj (co
 | Camera and controls (15 tests: inverse transforms, zoom keeps the point under the cursor, clamp, edge scroll, team-only selection, pick at three zooms, burn, groups, minimap orders, middle pan) | pass |
 | View pass on lavapipe, 1280 x 800, 49 marks | 15.5-15.8 ms at zoom 1 and 4, 17.2 ms at the fit, 26.9 ms at 0.75. **A CPU emulating a GPU: not a frame cost** |
 
-**Not yet measured:** the view's cost on the GTX 1070. It needs the owner's
-PC through Remote Control. The command is
-`cargo run --release --bin mouldgpu -- look=out seconds=10 scale=8 walkers=400000 view=1920x1080 squad=1`
-at `cam=1024,640,1`, `,4` and `,0.75`. The window's panel shows the same
-figure live as VIEW.
+## On the GTX 1070 (11-11)
+
+Run by the Larder thread through Remote Control on Scott-Desktop, branch at
+`57f63b2`, release build, NVIDIA driver 582.66:
+`cargo run --release --bin mouldgpu -- look=out seconds=10 scale=8 walkers=400000 view=1920x1080 squad=1 cam=...`.
+The dish is 2048 x 1280 with 400,000 walkers and seed 1. Each view time is the
+median of 21 frames.
+
+| Camera | View pass, GPU | Rest of the frame (2 ticks + draw), GPU | Wall a frame, median (worst) |
+|---|---|---|---|
+| zoom 1, centre | 0.333 ms | 7.826 + 0.250 ms | 8.263 (10.665) ms |
+| zoom 4 | 0.315 ms | 7.832 + 0.250 ms | 8.241 (10.327) ms |
+| asked 0.75, clamped to the fit 0.84 (1080 / 1280) | 0.415 ms | 7.827 + 0.250 ms | 8.228 (10.345) ms |
+
+So the camera, minimap, 49 marks and overlay cost about 0.3-0.4 ms of a
+frame at full HD, or 4-5% of the frame. Zoomed out costs most because of the
+box mean. At 400,000 walkers the ticks dominate: `sense` alone is 2.35 ms a
+tick. The 8 ms bar is the GPU thread's, at 100,000 walkers on the 1024 x 640
+dish. Dish at 10 s: tube 6589.7, loops 466, width 0.84, piles 7/7, strays
+0.347.
 
 ## Open
 
-- The 1070 figure (above).
 - The owner's hands: pan, zoom, the minimap and the squad (Q, W) in the
   sandbox.
 - The Larder world binary, which the Larder thread builds on these pieces.

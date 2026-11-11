@@ -73,7 +73,8 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   minimap, GPU marks and Larder's controls over a world bigger than the
   screen, with no game rules; the GPU engine is a library (`slime_mould::gpu`)
   for the Larder world to build on. Try it in the sandbox with W (a 2048 x
-  1280 world), Q (a stand-in squad) and M; not yet timed on the 1070
+  1280 world), Q (a stand-in squad) and M; the view costs 0.3-0.4 ms a
+  frame at 1920 x 1080 on the 1070
   ([page](https://claude.ai/artifact/X4b5Nmwgkd11paVF8RS1mj)).
 - [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
   (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
