@@ -1,0 +1,94 @@
+<title>Larder World Maps</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; map cards stack, picture left and notes right on wide screens */
+:root{--bg:#f3f4ef;--fg:#1d2219;--muted:#5b6455;--line:#d5d9cd;--card:#fbfcf8;--accent:#1f8a92;
+--display:"Space Grotesk",system-ui,sans-serif;--body:Inter,system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151912;--fg:#e4e8dd;--muted:#9aa492;--line:#2d3428;--card:#1c2118;--accent:#5cc8cf;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151912;--fg:#e4e8dd;--muted:#9aa492;--line:#2d3428;--card:#1c2118;--accent:#5cc8cf;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:2rem}h2{font-size:1.35rem}h3{font-size:1.1rem}
+p{margin:0;max-width:70ch}
+.lede{display:grid;gap:10px}
+.note{color:var(--muted);font-size:.9rem}
+.tag{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.map{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px}
+.map img{width:100%;border-radius:4px;display:block}
+.map dl{margin:0;display:grid;gap:8px}
+.map dt{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.map dd{margin:0}
+@media (max-width:720px){.map{grid-template-columns:1fr}}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:500}
+td:first-child{font-weight:600;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.85rem;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+ol{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:72ch}
+</style>
+<div class="wrap">
+<header class="lede">
+<span class="tag">Larder World · WM2 and WM3 · 2026-11-11 · plan only</span>
+<h1>Larder World maps</h1>
+<p>Five paper maps for the 1024 × 640 world, each drawn so a different plan wins, and the new ground kinds they need. These are drawings of a map spec: <strong>no walker has run on them yet</strong>. A map is kept only if idle and random play lose on it and the winning plan changes from map to map.</p>
+</header>
+
+<section style="display:grid;gap:12px">
+<h2>New ground, chosen by what the simulation does with it</h2>
+<p>Every ground kind changes one term of the model in a cell: step, trail kept, scent spread, upkeep, births, or what a shot does. Nothing here is painted on.</p>
+<div class="tbl"><table>
+<tr><th>Kind</th><th>What it changes</th><th>What it makes in play</th></tr>
+<tr><td>Height</td><td>Walkers and soldiers step slower uphill</td><td>Tubes follow contours; high ground is slow to take and cheap to hold</td></tr>
+<tr><td>Downhill drift</td><td>Scent slides toward lower cells</td><td>Scent pools in valleys, so valley crystals call from far away and a hollow hides a crystal from the plateau</td></tr>
+<tr><td>Water table</td><td>Wet ground sits below a waterline</td><td>The richest smell sits in the slowest ground</td></tr>
+<tr><td>High ground for shots</td><td>Ridges block fire; height adds range</td><td>The squad wants the heights the mould avoids</td></tr>
+<tr><td>Soil kinds</td><td>Sand fades trail, clay keeps it, warm is fast and hungry, cold slow and frugal, barren has no births</td><td>Fronts that can't hold ground, ground the mould never gives up, regions with their own tempo</td></tr>
+<tr><td>Soft rock</td><td>Walls with health, already built</td><td>Thickets and gates the mould chews through slowly</td></tr>
+<tr><td>Dry heights</td><td>Upkeep rises with height</td><td>A mould on a plateau starves thin</td></tr>
+<tr><td>Mould-made ground</td><td>Long-held ground forms crust that keeps tubes and regrows mould</td><td>Burning the mould is not the same as clearing it</td></tr>
+</table></div>
+<p class="note">Order: height with drift and the water table first (one byte, three effects, and the graphics thread can shade it once it matters), then shots, then soils.</p>
+</section>
+
+<section style="display:grid;gap:14px">
+<h2>The five maps</h2>
+<div class="legend">
+<span><i class="sw" style="background:#5d6b4b"></i>ground, shaded by height, with contours</span>
+<span><i class="sw" style="background:#2b5b8c"></i>water</span>
+<span><i class="sw" style="background:#1f1c1f"></i>rock</span>
+<span><i class="sw" style="background:#735233"></i>soft rock</span>
+<span><i class="sw" style="background:#3cdce6"></i>crystal (size is charge)</span>
+<span><i class="sw" style="background:transparent;border:2px solid #ffd228"></i>mould start</span>
+<span><i class="sw" style="background:transparent;border:2px solid #999"></i>squad lands</span>
+</div>
+
+<article class="map"><img src="sketches/basin.png" alt="The Basin: a bowl with a lake, mould at the lake's edge, crystals on the rim, squad on the south-west rim">
+<dl><h3>The Basin</h3><dt>Drawn for</dt><dd>Turtle: hold the rim</dd><dt>Why</dt><dd>Rim scent drifts down and calls the mould up slopes where it is slow and in the squad's sight. Rushing down means fighting in wet ground in the mould's own pooled scent.</dd><dt>Turned by</dt><dd>A Sporer, whose spores fly over the slope</dd><dt>Sketch</dt><dd>12 crystals, 3,456 charge, 3.5% water</dd></dl></article>
+
+<article class="map"><img src="sketches/fork.png" alt="The Fork: a Y-shaped valley, mould at the low end, crystals up both forks, squad on the wedge between">
+<dl><h3>The Fork</h3><dt>Drawn for</dt><dd>Lure: bait one fork, harvest the other</dd><dt>Why</dt><dd>Both forks drift scent down to the mould, so it is pulled two ways. Bait tips it into one fork while the squad on the high wedge harvests the other. A rush meets the whole mould in the narrow stem.</dd><dt>Turned by</dt><dd>A Hunter, which follows soldiers rather than bait</dd><dt>Sketch</dt><dd>10 crystals, 3,200 charge</dd></dl></article>
+
+<article class="map"><img src="sketches/flats.png" alt="The Flats: sand with five clay islands and many small crystals">
+<dl><h3>The Flats</h3><dt>Drawn for</dt><dd>Boom: out-harvest</dd><dt>Why</dt><dd>32 small crystals on sand, where tubes fade fast; only five clay islands hold the mould's network. A spread squad harvests faster than a mould that cannot hold the sand.</dd><dt>Turned by</dt><dd>A Trunk, which holds ground by thickness, not soil</dd><dt>Sketch</dt><dd>32 crystals, 4,000 charge</dd></dl></article>
+
+<article class="map"><img src="sketches/nest.png" alt="The Nest: a soft-rock ring on warm ground with two rich crystals and one gap facing the squad">
+<dl><h3>The Nest</h3><dt>Drawn for</dt><dd>Rush: strike before it breaks out</dd><dt>Why</dt><dd>Warm ground makes the mould inside fast and hungry. Left alone it fattens on 1,280 charge and breaks out strong, so idle loses badly. Struck early through the gap, it is small.</dd><dt>Turned by</dt><dd>A Sleeper, which sleeps through a strike</dd><dt>Sketch</dt><dd>9 crystals, 2,496 charge</dd></dl></article>
+
+<article class="map"><img src="sketches/passes.png" alt="The Passes: a cold northern valley and a warm southern valley, each with a rival mould, rock ranges with passes, squad in the middle band">
+<dl><h3>The Passes</h3><dt>Drawn for</dt><dd>Adapt: set two moulds on each other</dd><dt>Why</dt><dd>The warm rival comes first and fast through the open south pass. Bait across the middle leads it to the cold rival's border; a soft-rock gate in the north range sets when the cold one arrives.</dd><dt>Turned by</dt><dd>A Converter, which grows by winning that border fight</dd><dt>Sketch</dt><dd>9 crystals, 3,392 charge, 5% rock</dd></dl></article>
+</section>
+
+<section style="display:grid;gap:10px">
+<h2>How a map is kept</h2>
+<ol>
+<li>On each map, 16 paired seeds of five styles plus idle and random, scored by the game's own harness: the best plan beats idle and random (sign test, Holm over the maps).</li>
+<li>At least three different winners among the five maps, each ahead of the runner-up on its map.</li>
+<li>The winner changes when the mould tier changes, which is the difficulty ladder.</li>
+</ol>
+<p class="note">A map that fails is redrawn from its shape list, not tuned by hand. Next: height on the simulation, looked at first, then measured. Record: Reports/larder-maps-2026-11-11.md.</p>
+</section>
+</div>
