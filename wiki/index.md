@@ -22,7 +22,7 @@ Keep this file under 150 lines; lint checks it.
 
 - [Water and sleep](model/water-and-sleep.md): dry mould sleeps, water wakes it; Keep It Alive only.
 - [Sensor angle and reach](model/sensors.md): 45 obeys then freezes, 22.5 lives but ignores you; reach stays 9.
-- [The mould at scale](model/scale.md): the GPU plan, the 1024 x 640 big dish and GPU timing test; why Jenson's clips look different (no limit, drawing, respawn); trunks from a dense start, contagion on the big dish, fronts still open.
+- [The mould at scale](model/scale.md): the GPU plan, the 1024 x 640 big dish and GPU timing test; the GPU sandbox (phase 3, built) with species, droplets and grazing as controls; phase 4 starts as Larder World W0 (growth); why Jenson's clips look different (no limit, drawing, respawn); trunks from a dense start, contagion on the big dish, fronts still open.
 
 ## Looks
 
@@ -31,12 +31,12 @@ Keep this file under 150 lines; lint checks it.
 
 ## Games in design
 
-- [The RTS directions](rts/directions.md): build phase; on the field the habit cycle holds on 1 layout of 10 and salt overturns the opening; two demos.
-- [The field skirmish](rts/skirmish.md): v1 (habits, salt, lamp) set aside after play; v2, a tithe spent on beacons and spores: one plan (soft) wins 127/128, no cycle.
+- [The RTS directions](rts/directions.md): build phase; three demos, each with one strategy on top so far; the main line is now Larder World.
+- [The field skirmish](rts/skirmish.md): v1 (habits, salt, lamp) set aside after play; v2, a tithe spent on beacons and spores: soft won 127/128; Strike and Fortify dethrone it, but brace (strike and fortify) wins every pairing.
 - [How RTS games are designed](rts/rts-craft.md): outside research (22 sources) and what it says about our demos: dominant strategies and unmanaged snowballs, fix the structure first.
-- [Larder, the mould as the enemy](rts/shooter.md): shooter; a held ring keeps the mould off your larder; priced, ring-forever never wins but ring-then-mow tops every seed: a ladder, not a cycle; M2 (spending, mould answers) still a ladder; M3 soldiers that fire from range loosened it (no plan best on 13+/16).
-- [The Larder player AI](rts/player-ai.md): plays the soldiers through the player's own commands, sees what a player sees, one brain per side; five styles; boom, lure and adapt beat idle and random 16/16 held out.
-- [Two Fevers](rts/two-fevers.md): playable in the browser; owned ground with a 15 s hold; plan beats random 16/16 but by 0.537; Hush is noise so far.
+- [Larder, the mould as the enemy](rts/shooter.md): now Larder World (owner 11-11 14:06Z), a persistent GPU world with crystals and several species, phases W0-W5; before it, on the small dish: a held ring keeps the mould off your larder; priced, ring-forever never wins but ring-then-mow tops every seed: a ladder, not a cycle; M2 (spending, mould answers) still a ladder; M3 soldiers that fire from range loosened it (no plan best on 13+/16).
+- [The Larder player AI](rts/player-ai.md): plays soldiers through the player's commands, one brain per side; five styles; boom, lure, adapt beat idle and random 16/16 held out.
+- [Two Fevers](rts/two-fevers.md): playable in the browser, version 3 (call, seed, pinch): Trunk > Web > Raider, a ladder, and the leader at 1:30 keeps it; not yet played by hand.
 
 ## Method and owner
 
