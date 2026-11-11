@@ -14,14 +14,6 @@ code: [Params::field, Dish::field, CONST_NAME]
 Two to five sentences: what is true today, the default value, the headline
 number with its spread. Rewrite this paragraph on every ingest; never append.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| what was compared | the figure, with its range | 16 | 15-1, p 0.0005 | [report, section](../../Reports/report-name.md) |
-
-Only figures that are in a report. Copy the headline, link the rest.
-
 ## Owner's word
 
 - 2026-11-10 03:06Z: "the owner's words, quoted" (where they were said).
