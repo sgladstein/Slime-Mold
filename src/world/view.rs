@@ -22,8 +22,8 @@ use super::marks::{Marks, MARK_WORDS, MAX_MARKS};
 
 pub const SHADER: &str = include_str!("view.wgsl");
 
-/// Bytes in the uniform (16 words).
-const PARAMS_BYTES: usize = 64;
+/// Bytes in the uniform (20 words).
+const PARAMS_BYTES: usize = 80;
 
 /// The minimap's longest side, in pixels, and its margin from the corner.
 pub const MINIMAP_SIDE: u32 = 240;
@@ -53,13 +53,21 @@ pub fn minimap_world(rect: (u32, u32, u32, u32), world: (usize, usize), at: (f32
 pub struct View {
     device: wgpu::Device,
     queue: wgpu::Queue,
-    pipes: [wgpu::ComputePipeline; 3],
+    pipes: [wgpu::ComputePipeline; 4],
     bgl: wgpu::BindGroupLayout,
     params: wgpu::Buffer,
     world_frame: wgpu::Buffer,
     overlay: wgpu::Buffer,
     marks: wgpu::Buffer,
     vis: wgpu::Buffer,
+    /// The look (`set_look`): the engine's look field, the game's ground
+    /// field, the walkers, and walkers a screen pixel.
+    look: wgpu::Buffer,
+    ground: wgpu::Buffer,
+    walkers: wgpu::Buffer,
+    specks: wgpu::Buffer,
+    n_walk: u32,
+    shade: bool,
     /// The screen-sized result, rows `stride` pixels apart.
     pub out: wgpu::Buffer,
     /// Which mark each screen pixel shows (cleared as it is read).
@@ -91,18 +99,21 @@ impl View {
             count: None,
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, wgpu::BufferBindingType::Storage { read_only: false }), entry(5, ro), entry(6, wgpu::BufferBindingType::Storage { read_only: false })];
+        let rw = wgpu::BufferBindingType::Storage { read_only: false };
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(&layout), module: &module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None })
         };
-        let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose")];
+        let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks")];
         let params = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view params"), size: PARAMS_BYTES as u64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let marks = storage(device, "marks", (MAX_MARKS * MARK_WORDS * 4) as u64);
         let vis = storage(device, "visibility", 16);
         let (stride, out, overlay, top) = Self::screen_buffers(device, screen);
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top]);
+        let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
+        let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 4);
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -113,6 +124,12 @@ impl View {
             overlay,
             marks,
             vis,
+            look,
+            ground,
+            walkers,
+            specks,
+            n_walk: 0,
+            shade: false,
             out,
             top,
             group,
@@ -134,13 +151,13 @@ impl View {
         (stride, out, overlay, top)
     }
 
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 7]) -> wgpu::BindGroup {
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 11]) -> wgpu::BindGroup {
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -150,13 +167,39 @@ impl View {
         if self.has_vis {
             self.set_visibility(None);
         }
+        self.clear_look();
         self.rebind();
+    }
+
+    /// Shades the world from the simulation (`view.wgsl`, *The look*): the
+    /// engine's `look` field (a u32 a cell), the game's `ground` field (a
+    /// u32 a cell: kind, value; see `look::ground`), and `n_walk` walkers
+    /// (`vec4<f32>` x, y, heading, _ in cells) drawn a speck each. Bound
+    /// buffers, so they follow the engine with no copy; set again after a
+    /// restart (`set_world` drops them).
+    pub fn set_look(&mut self, look: &wgpu::Buffer, ground: &wgpu::Buffer, walkers: &wgpu::Buffer, n_walk: u32) {
+        (self.look, self.ground, self.walkers, self.n_walk, self.shade) = (look.clone(), ground.clone(), walkers.clone(), n_walk, true);
+        self.rebind();
+    }
+
+    /// Back to drawing the world frame as it is (the shading off).
+    pub fn clear_look(&mut self) {
+        if self.shade {
+            (self.look, self.ground, self.walkers) = (storage(&self.device, "look", 16), storage(&self.device, "ground", 16), storage(&self.device, "walkers", 16));
+            (self.n_walk, self.shade) = (0, false);
+            self.rebind();
+        }
+    }
+
+    pub fn shading(&self) -> bool {
+        self.shade
     }
 
     /// A new screen size: the overlay is cleared.
     pub fn resize(&mut self, screen: (u32, u32)) {
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
         (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
+        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 4);
         self.has_overlay = false;
         self.rebind();
     }
@@ -229,12 +272,16 @@ impl View {
         for v in [cam.x, cam.y, cam.zoom, 0.0] {
             b.extend(v.to_le_bytes());
         }
-        for v in [mm.0, mm.1, mm.2, mm.3] {
+        for v in [mm.0, mm.1, mm.2, mm.3, self.shade as u32, self.n_walk, 0, 0] {
             b.extend(v.to_le_bytes());
         }
         self.queue.write_buffer(&self.params, 0, &b);
         let (gx, gy) = (self.screen.0.div_ceil(16), self.screen.1.div_ceil(16));
-        let mut passes: Vec<(usize, (u32, u32))> = vec![(0, (gx, gy))];
+        let mut passes: Vec<(usize, (u32, u32))> = Vec::new();
+        if self.shade && self.n_walk > 0 && cam.zoom >= 1.0 {
+            passes.push((3, (self.n_walk.div_ceil(256), 1)));
+        }
+        passes.push((0, (gx, gy)));
         if self.n_marks > 0 {
             passes.push((1, (self.n_marks, 1)));
         }

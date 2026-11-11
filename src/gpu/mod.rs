@@ -463,7 +463,9 @@ pub struct Shared {
     pub plain: Vec<wgpu::ComputePipeline>,
 }
 
-pub const BINDINGS: u32 = 32;
+pub const BINDINGS: u32 = 34;
+/// The most shot hits a frame (`Engine::set_hits`).
+pub const MAX_HITS: usize = 256;
 pub const SENSE: usize = 0;
 pub const WALK: usize = 1;
 pub const TRAIL: usize = 2;
@@ -488,7 +490,7 @@ impl Shared {
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let mut entries = vec![entry(0, wgpu::BufferBindingType::Uniform)];
         for b in 1..BINDINGS {
-            entries.push(entry(b, if matches!(b, 8 | 9 | 16 | 17) { ro } else { rw }));
+            entries.push(entry(b, if matches!(b, 8 | 9 | 16 | 17 | 32) { ro } else { rw }));
         }
         let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("sandbox"), entries: &entries });
         let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("sandbox"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
@@ -540,6 +542,14 @@ pub struct Engine {
     /// PR #56: grass a cell, and each walker's species.
     pub grass: wgpu::Buffer,
     pub spec: wgpu::Buffer,
+    /// Which cells are agar (1) or not (0): walls the game builds clear it.
+    pub agar: wgpu::Buffer,
+    /// This frame's shot hits (`set_hits`), and how many.
+    pub hits: wgpu::Buffer,
+    pub n_hits: u32,
+    /// The look a cell (thickness, walkers, wound, scent; a byte each),
+    /// written by the trail and draw passes, read by the view's shading.
+    pub look: wgpu::Buffer,
     /// From the last `write_params`: whether the conversion pass runs, and
     /// whether any outside rule is on (else the plain pipelines run).
     pub converts: bool,
@@ -632,11 +642,13 @@ impl Engine {
         let gcount = zeros("gcount", cells as usize * 4);
         let specs: Vec<u32> = (0..n).map(|k| k % nsp.max(1)).collect();
         let spec = buf("spec", &u32_bytes(&specs), storage);
+        let hits = zeros("hits", MAX_HITS * 16);
+        let look = zeros("look", cells as usize * 4);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
                 &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec,
+                &species[b], &age, &grass, &gcount, &spec, &hits, &look,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -663,6 +675,10 @@ impl Engine {
             age,
             grass,
             spec,
+            agar,
+            hits,
+            n_hits: 0,
+            look,
             converts: false,
             outside: false,
             nsp,
@@ -811,13 +827,37 @@ impl Engine {
         b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
         b.extend(u32_bytes(&[s.sensor_r as u32, stream(seed, DRAW_CHANCE), stream(seed, DRAW_KEEP)]));
         b.extend(f32_bytes(&[s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost]));
-        b.extend(u32_bytes(&[0, 0]));
+        b.extend(u32_bytes(&[self.n_hits, 0]));
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.converts = s.convert > 0.0 && self.nsp > 0;
         self.outside = self.nsp > 0 || s.explore > 0 || s.blocked_lay > 0.0 || s.blocked_keep || s.chance > 0.0 || s.size_spread > 0.0 || s.sensor_r > 0 || s.graze != 0.0;
         self.queue.write_buffer(&self.params, 0, &b);
         self.jumps = s.respawn > 0.0 || pull > 0.0;
         self.crowd = crowd > 0;
+    }
+
+    /// Shots that land in the next frame (`write_params` sends the count):
+    /// discs (x, y, radius) in fine cells that cut trail as the wipe does,
+    /// leaving a wound the look shows. At most `MAX_HITS`.
+    pub fn set_hits(&mut self, hits: &[(f32, f32, f32)]) {
+        let n = hits.len().min(MAX_HITS);
+        if n > 0 {
+            let flat: Vec<f32> = hits[..n].iter().flat_map(|&(x, y, r)| [x, y, r, 0.0]).collect();
+            self.queue.write_buffer(&self.hits, 0, &f32_bytes(&flat));
+        }
+        self.n_hits = n as u32;
+    }
+
+    /// Makes fine cells not agar (a wall the game built): walkers, trail
+    /// and scent cannot enter them. Also changes `dish.agar`.
+    pub fn block(&mut self, cells: &[usize]) {
+        for &i in cells {
+            if i < self.dish.agar.len() {
+                self.dish.agar[i] = false;
+            }
+        }
+        let agar: Vec<u32> = self.dish.agar.iter().map(|&a| a as u32).collect();
+        self.queue.write_buffer(&self.agar, 0, &u32_bytes(&agar));
     }
 
     /// Records a frame: `ticks` ticks, then the drawing. With `stamps`

@@ -9,12 +9,15 @@
 //!   screen-space overlay.
 //! - `marks`: what a game draws over the world (units, bars, buildings,
 //!   lines, labels), drawn on the GPU.
+//! - `look`: the ground field the view shades the world from (kind and
+//!   value a cell), beside the engine's own look field.
 //! - `controls`: box select, orders, burn lines, groups, minimap clicks.
 //!
 //! Not built for wasm32 (the view is wgpu).
 
 pub mod camera;
 pub mod controls;
+pub mod look;
 pub mod marks;
 pub mod view;
 

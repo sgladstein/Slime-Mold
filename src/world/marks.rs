@@ -32,6 +32,11 @@ pub enum Shape {
     /// A line from the anchor to (`hw`, `hh`), a world point; dashed every
     /// `fill` pixels if `fill` > 0.
     Line = 6,
+    /// A top-down soldier `hw` across the radius (world cells with
+    /// `WORLD`): facing `fill` radians (0 east, clockwise on screen, as
+    /// `atan2(dy, dx)`), the team's colour, `extra` bits 0-7 the muzzle
+    /// flash (0-255), bit 8 dead. Drawn and lit in the view's shader.
+    Soldier = 7,
 }
 
 /// `hw` and `hh` are world cells (scaled by the zoom, at least 2 pixels)
@@ -167,6 +172,14 @@ impl Marks {
                 ..Mark::new(Shape::Glyph, at, (scale, scale), colour)
             });
         }
+    }
+
+    /// A soldier at `at`, `r` world cells across the radius, facing
+    /// `facing` radians, `flash` 0-1 the muzzle flash of a shot this
+    /// moment (0 none). Also a dot on the minimap.
+    pub fn soldier(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool) {
+        let extra = (flash.clamp(0.0, 1.0) * 255.0).round() as u32 | if alive { 0 } else { 256 };
+        self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, ..Mark::new(Shape::Soldier, at, (r, r), colour) });
     }
 
     /// The words the view pass reads, `MARK_WORDS` a mark.

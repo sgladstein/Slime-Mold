@@ -31,7 +31,7 @@ struct Params {
     // its own `convert` times (0 off); grazing (`graze_w` 0 off). PR #58:
     // species 0 lays `boost` times the deposit.
     s_keep: u32, convert: f32, graze_w: f32, graze_eat: f32,
-    graze_regrow: f32, boost: f32, _q1: u32, _q2: u32,
+    graze_regrow: f32, boost: f32, nhits: u32, _q2: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 
@@ -82,6 +82,13 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 @group(0) @binding(29) var<storage, read_write> grass: array<f32>;
 @group(0) @binding(30) var<storage, read_write> gcount: array<atomic<u32>>;
 @group(0) @binding(31) var<storage, read_write> spec: array<u32>;
+// The look (2026-11-11, src/world/look in the view): shots that landed this
+// frame, `nhits` discs (x, y, r, _) in fine cells, which cut trail as the
+// right mouse's wipe does; and a u32 a cell the view shades the world from:
+// mould thickness (the trail's brightness), walkers on the cell, the wound
+// (the thickness a hit took away, fading), and the scent, a byte each.
+@group(0) @binding(32) var<storage, read> hits: array<vec4<f32>>;
+@group(0) @binding(33) var<storage, read_write> look: array<u32>;
 
 const NONE: u32 = 0xFFFFFFFFu;
 
@@ -518,6 +525,20 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         let dx = f32(x) + 0.5 - P.bx; let dy = f32(y) + 0.5 - P.by;
         gone = dx * dx + dy * dy <= P.br * P.br;
     }
+    // Shots: a hit cuts as the wipe does, and the cell's wound takes the
+    // thickness it cut (what the shot destroyed, not a drawn splash). The
+    // wound fades about 0.8% a tick (half in about 0.75 s).
+    var wound = (look[i] >> 16u) & 255u;
+    wound -= min(wound, max(wound / 128u, 1u));
+    for (var q = 0u; q < P.nhits; q++) {
+        let hp = hits[q];
+        let dx = f32(x) + 0.5 - hp.x; let dy = f32(y) + 0.5 - hp.y;
+        if (agar[i] != 0u && dx * dx + dy * dy <= hp.z * hp.z) {
+            wound = max(wound, u32(bright(trail_in[i]) * 255.0));
+            gone = true;
+        }
+    }
+    look[i] = (look[i] & 0xFF00FFFFu) | (wound << 16u);
     if (gone) {
         trail_out[i] = 0.0;
         if (germs) { germ_out[i] = 0.0; }
@@ -699,6 +720,11 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
         let gs = sqrt(clamp(germ_in[i] / (4.0 * max(P.catch_at, 1.0e-6)), 0.0, 1.0));
         c = vec3<f32>(max(c.x, 255.0 * gs), c.y * (1.0 - 0.8 * gs), c.z * (1.0 - 0.8 * gs));
     }
+    // The look the view shades from (byte 2, the wound, is the trail pass's).
+    let thick = u32(clamp(g, 0.0, 1.0) * 255.0);
+    let crowd = min(atomicLoad(&occ[i]), 255u);
+    let smell = u32(clamp(1.0 - exp(-scent_in[i] / 60.0), 0.0, 1.0) * 255.0);
+    look[i] = thick | (crowd << 8u) | (look[i] & 0x00FF0000u) | (smell << 24u);
     // The panel, premultiplied, over the dish.
     let o = hud[i];
     let a = f32(o >> 24u) / 255.0;

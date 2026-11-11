@@ -135,7 +135,8 @@ use slime_mould::gpu::*;
 use slime_mould::hud;
 use slime_mould::mould::STEPS_PER_SECOND;
 use slime_mould::world::controls::unit_marks;
-use slime_mould::world::{Button, Camera, Controls, Marks, UiCommand, Unit, View};
+use slime_mould::world::marks::team_colour;
+use slime_mould::world::{look, Button, Camera, Controls, Marks, UiCommand, Unit, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
@@ -795,6 +796,11 @@ struct App {
     squad: Option<Squad>,
     marks: Marks,
     last_frame: Instant,
+    /// L: the look (the world shaded from the simulation's fields, every
+    /// walker a speck, soldiers as figures), on by default; off draws the
+    /// engine's frame as it is. Its ground field (agar and piles).
+    look: bool,
+    ground: Option<wgpu::Buffer>,
 }
 
 impl App {
@@ -835,6 +841,8 @@ impl App {
             },
             squad: None,
             marks: Marks::default(),
+            look: true,
+            ground: None,
             last_frame: Instant::now(),
         }
     }
@@ -870,10 +878,28 @@ impl App {
             v.set_world(&e.frame, world);
         }
         self.engine = Some(e);
+        self.ground = None;
+        self.apply_look();
         self.panel_dirty = true;
         if let Some(w) = &self.window {
             w.set_title(&format!("Mould sandbox (GPU): {}", PRESETS[self.preset].to_lowercase()));
         }
+    }
+
+    /// Binds the look to the view (or takes it off), from the engine's
+    /// fields and a ground field made from its dish.
+    fn apply_look(&mut self) {
+        let (Some(p), Some(e), Some(v)) = (&self.pixels, &self.engine, self.view.as_mut()) else { return };
+        if !self.look {
+            v.clear_look();
+            return;
+        }
+        let g = self.ground.get_or_insert_with(|| {
+            let crystal = look::dish_crystals(&e.dish);
+            let codes = look::ground(e.dish.w, e.dish.w * e.dish.h, &look::Fields { agar: &e.dish.agar, crystal: &crystal, ..Default::default() });
+            look::ground_buffer(p.device(), p.queue(), &codes)
+        });
+        v.set_look(&e.look, g, &e.walkers, e.n);
     }
 
     fn panel_lines(&self) -> (Lines, Lines) {
@@ -909,7 +935,7 @@ impl App {
             "LEFT DRAG DROPS WALKERS  RIGHT DRAG WIPES  F DROPS FOOD  ESC QUITS"
         };
         let world = self.engine.as_ref().map_or((0, 0), |e| (e.dish.w, e.dish.h));
-        let camera = format!("WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  W WORLD {}X{}  Q SQUAD", self.camera.zoom, world.0, world.1);
+        let camera = format!("WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  L LOOK  W WORLD {}X{}  Q SQUAD", self.camera.zoom, world.0, world.1);
         let bottom = vec![
             ("1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(), WHITE),
             ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(), WHITE),
@@ -974,6 +1000,10 @@ impl App {
                 self.restart();
             }
             KeyCode::KeyH => self.show_panel = !self.show_panel,
+            KeyCode::KeyL => {
+                self.look = !self.look;
+                self.apply_look();
+            }
             KeyCode::KeyM => {
                 if let Some(v) = self.view.as_mut() {
                     v.minimap = !v.minimap;
@@ -1044,7 +1074,7 @@ impl App {
             sq.step(if self.paused { 0.0 } else { dt });
             let units = sq.units();
             self.controls.prune(&units);
-            sq.marks(self.camera.zoom, &mut self.marks);
+            sq.marks(self.camera.zoom, self.look, &mut self.marks);
             self.controls.marks(&units, &self.camera, sq.radius(), &mut self.marks);
         }
         if let Some(v) = self.view.as_mut() {
@@ -1131,6 +1161,8 @@ struct StandIn {
     team: u8,
     to: Option<(f32, f32)>,
     burn: Option<((f32, f32), (f32, f32))>,
+    /// Radians, the way it last walked (drawn with the look on).
+    facing: f32,
 }
 
 impl Squad {
@@ -1140,10 +1172,10 @@ impl Squad {
         let mut units = Vec::new();
         for k in 0..12 {
             let (i, j) = ((k % 4) as f32, (k / 4) as f32);
-            units.push(StandIn { x: w * 0.3 + i * 4.0 * s, y: h * 0.5 + j * 4.0 * s, team: 0, to: None, burn: None });
+            units.push(StandIn { x: w * 0.3 + i * 4.0 * s, y: h * 0.5 + j * 4.0 * s, team: 0, to: None, burn: None, facing: -std::f32::consts::FRAC_PI_2 });
         }
         for k in 0..6 {
-            units.push(StandIn { x: w * 0.7 + (k % 3) as f32 * 4.0 * s, y: h * 0.4 + (k / 3) as f32 * 4.0 * s, team: 1, to: None, burn: None });
+            units.push(StandIn { x: w * 0.7 + (k % 3) as f32 * 4.0 * s, y: h * 0.4 + (k / 3) as f32 * 4.0 * s, team: 1, to: None, burn: None, facing: std::f32::consts::FRAC_PI_2 });
         }
         // Larder's soldier speed, about 12 dish cells a second.
         Squad { units, speed: 12.0 * s, scale: s }
@@ -1206,12 +1238,14 @@ impl Squad {
                 } else {
                     u.x += dx / d * step;
                     u.y += dy / d * step;
+                    u.facing = dy.atan2(dx);
                 }
             }
         }
     }
 
-    fn marks(&self, zoom: f32, out: &mut Marks) {
+    /// With `figures`, each unit a soldier figure (the look) instead of a disc.
+    fn marks(&self, zoom: f32, figures: bool, out: &mut Marks) {
         for (id, u) in self.units.iter().enumerate() {
             if let Some((a, b)) = u.burn {
                 out.line(a, b, 4.0, [255, 150, 60, 255]);
@@ -1219,7 +1253,13 @@ impl Squad {
             if let Some(to) = u.to {
                 out.line((u.x, u.y), to, 2.0, [255, 255, 255, 90]);
             }
-            unit_marks(&Unit { id, team: u.team, x: u.x, y: u.y, alive: true }, self.radius(), 1.0, zoom, out);
+            if figures {
+                let r = self.radius();
+                out.soldier((u.x, u.y), r, u.facing, team_colour(u.team), 0.0, true);
+                out.bar((u.x, u.y), (r * zoom).max(2.0) + 5.0, (7.0, 1.0), 1.0, [90, 220, 110, 255], [70, 30, 30, 255]);
+            } else {
+                unit_marks(&Unit { id, team: u.team, x: u.x, y: u.y, alive: true }, self.radius(), 1.0, zoom, out);
+            }
         }
         // A world-space label, as a game would put a count beside a crystal.
         if let Some(u) = self.units.iter().find(|u| u.team == 1) {
@@ -1287,6 +1327,7 @@ impl ApplicationHandler for App {
             self.view = Some(View::new(p.device(), p.queue(), &e.frame, world, (w, h)));
             self.camera = Camera::new(world, (w, h));
         }
+        self.apply_look();
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
@@ -1637,7 +1678,7 @@ fn view_shot(device: &wgpu::Device, queue: &wgpu::Queue, e: &Engine, screen: (u3
         sq.step(0.5);
         k.selected = vec![0, 4, 5];
         let units = sq.units();
-        sq.marks(cam.zoom, &mut marks);
+        sq.marks(cam.zoom, false, &mut marks);
         k.marks(&units, &cam, sq.radius(), &mut marks);
     }
     view.set_marks(&marks);

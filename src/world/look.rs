@@ -1,0 +1,173 @@
+//! **The look's ground field**: what the ground is in each cell, for the
+//! view's shading (`view.wgsl`, *The look*). One `u32` a fine cell: byte 0
+//! the kind, byte 1 a value 0-255 where the kind is graded (a wall's share
+//! of its health, a crystal's share of its charge). The view takes the
+//! cell's height, colour and glow from these, so a wall sinks and dims as
+//! the mould wears it and a crystal shrinks and dims as it drains: the
+//! picture is the data (owner, 2026-11-09/10), not art laid on top.
+//!
+//! Byte 2 is depth: how far a crystal cell is inside its crystal, 0 at
+//! the rim to 255 at the deepest cell (the shape, so a crystal stands as
+//! a cone its charge tall; `ground` works it out).
+//!
+//! The game fills it from its own fields every frame something changes
+//! (the Larder world's `BigDish::{agar, rock, wet, wall, wall_health,
+//! charge, pile_of}`, PR #64); the sandbox fills it from the dish's agar
+//! and piles.
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(u8)]
+pub enum Ground {
+    Agar = 0,
+    Wet = 1,
+    Rock = 2,
+    Wall = 3,
+    Rubble = 4,
+    Crystal = 5,
+}
+
+/// One cell's code: `value` 0-1 (clamped).
+pub fn code(kind: Ground, value: f32) -> u32 {
+    kind as u32 | ((value.clamp(0.0, 1.0) * 255.0).round() as u32) << 8
+}
+
+/// The world's own fields, a value a fine cell (index y * w + x); an empty
+/// slice is a feature that is off.
+#[derive(Default)]
+pub struct Fields<'a> {
+    pub agar: &'a [bool],
+    pub rock: &'a [bool],
+    pub wet: &'a [bool],
+    pub wall: &'a [bool],
+    /// Each wall cell's share of its full health (empty: walls can't break).
+    pub wall_share: &'a [f32],
+    /// Which crystal a cell belongs to (index + 1, 0 none).
+    pub crystal: &'a [u16],
+    /// Each crystal cell's share of its full charge (empty: crystals full).
+    pub charge_share: &'a [f32],
+}
+
+/// The ground field for a `w`-wide world of `cells` cells. Off the agar
+/// and not a wall is rock (the rim of a dish is rock too).
+pub fn ground(w: usize, cells: usize, f: &Fields) -> Vec<u32> {
+    let at = |v: &[bool], i: usize| v.get(i).copied().unwrap_or(false);
+    let depth = crystal_depth(w, cells, f.crystal);
+    let mut g: Vec<u32> = (0..cells)
+        .map(|i| {
+            if at(f.wall, i) {
+                code(Ground::Wall, f.wall_share.get(i).copied().unwrap_or(1.0))
+            } else if f.crystal.get(i).copied().unwrap_or(0) > 0 {
+                code(Ground::Crystal, f.charge_share.get(i).copied().unwrap_or(1.0))
+            } else if at(f.rock, i) || (!f.agar.is_empty() && !at(f.agar, i)) {
+                code(Ground::Rock, 1.0)
+            } else if at(f.wet, i) {
+                code(Ground::Wet, 1.0)
+            } else {
+                code(Ground::Agar, 0.0)
+            }
+        })
+        .collect();
+    for (c, d) in g.iter_mut().zip(depth) {
+        *c |= (d as u32) << 16;
+    }
+    g
+}
+
+/// The dish's piles as crystals (pile index + 1 a fine cell, inside
+/// `pile_r` of each pile on the agar): the sandbox's crystals until the
+/// Larder world's own `pile_of` reaches the GPU.
+pub fn dish_crystals(d: &crate::mould::big::BigDish) -> Vec<u16> {
+    let (w, h) = (d.w, d.h);
+    let sc = d.p.scale as f32;
+    let r = d.p.pile_r * sc;
+    let mut crystal = vec![0u16; w * h];
+    for (k, &(px, py)) in d.piles.iter().enumerate() {
+        let (px, py) = (px * sc, py * sc);
+        for y in (py - r).max(0.0) as usize..((py + r).max(0.0) as usize).min(h) {
+            for x in (px - r).max(0.0) as usize..((px + r).max(0.0) as usize).min(w) {
+                if (x as f32 + 0.5 - px).hypot(y as f32 + 0.5 - py) <= r && d.agar[y * w + x] {
+                    crystal[y * w + x] = k as u16 + 1;
+                }
+            }
+        }
+    }
+    crystal
+}
+
+/// A ground buffer on the GPU from codes (`ground`), for `View::set_look`.
+pub fn ground_buffer(device: &pixels::wgpu::Device, queue: &pixels::wgpu::Queue, codes: &[u32]) -> pixels::wgpu::Buffer {
+    use pixels::wgpu;
+    let b = device.create_buffer(&wgpu::BufferDescriptor { label: Some("ground"), size: (codes.len() * 4).max(16) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    queue.write_buffer(&b, 0, &crate::gpu::u32_bytes(codes));
+    b
+}
+
+/// Each crystal cell's depth inside its crystal (the distance to the
+/// nearest cell that is not of the same crystal), scaled so each crystal's
+/// deepest cell is 255; 0 outside crystals. Exact distances to each
+/// crystal's rim cells, so a round crystal stands as a round cone.
+fn crystal_depth(w: usize, cells: usize, crystal: &[u16]) -> Vec<u8> {
+    let mut out = vec![0u8; cells];
+    if crystal.is_empty() || w == 0 {
+        return out;
+    }
+    let h = cells / w;
+    let piles = crystal.iter().copied().max().unwrap_or(0) as usize;
+    let mut members: Vec<Vec<usize>> = vec![Vec::new(); piles + 1];
+    let mut rims: Vec<Vec<(f32, f32)>> = vec![Vec::new(); piles + 1];
+    for i in 0..cells.min(crystal.len()) {
+        let k = crystal[i] as usize;
+        if k == 0 {
+            continue;
+        }
+        members[k].push(i);
+        let (x, y) = (i % w, i / w);
+        let same = |xx: usize, yy: usize| crystal.get(yy * w + xx).copied() == Some(k as u16);
+        if x == 0 || y == 0 || x + 1 == w || y + 1 == h || !same(x - 1, y) || !same(x + 1, y) || !same(x, y - 1) || !same(x, y + 1) {
+            rims[k].push((x as f32, y as f32));
+        }
+    }
+    for k in 1..=piles {
+        let d: Vec<f32> = members[k]
+            .iter()
+            .map(|&i| {
+                let (x, y) = ((i % w) as f32, (i / w) as f32);
+                rims[k].iter().map(|&(rx, ry)| (rx - x).hypot(ry - y)).fold(f32::MAX, f32::min) + 1.0
+            })
+            .collect();
+        let top = d.iter().cloned().fold(1.0f32, f32::max);
+        for (&i, v) in members[k].iter().zip(d) {
+            out[i] = (v / top * 255.0).round() as u8;
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn kinds_and_values_pack_into_the_low_bytes() {
+        assert_eq!(code(Ground::Crystal, 1.0), 5 | 255 << 8);
+        assert_eq!(code(Ground::Wall, 0.5), 3 | 128 << 8);
+        let agar = [true, false, true, true, true];
+        let wall = [false, true, false, false, false];
+        let share = [1.0, 0.25, 1.0, 1.0, 1.0];
+        let crystal = [0u16, 0, 1, 0, 0];
+        let wet = [false, false, false, false, true];
+        let g = ground(5, 5, &Fields { agar: &agar, wall: &wall, wall_share: &share, crystal: &crystal, wet: &wet, ..Default::default() });
+        assert_eq!(g, vec![0, 3 | 64 << 8, 5 | 255 << 8 | 255 << 16, 0, 1 | 255 << 8], "a lone crystal cell is its own deepest");
+    }
+
+    #[test]
+    fn a_crystal_is_deepest_in_its_middle() {
+        let w = 9;
+        let crystal: Vec<u16> = (0..81).map(|i| ((i % w) as i32 - 4).pow(2) + ((i / w) as i32 - 4).pow(2) <= 9).map(|c| c as u16).collect();
+        let g = ground(w, 81, &Fields { crystal: &crystal, ..Default::default() });
+        let depth = |x: usize, y: usize| (g[y * w + x] >> 16) & 255;
+        assert_eq!(depth(4, 4), 255);
+        assert!(depth(4, 2) < depth(4, 3) && depth(4, 3) < 255);
+        assert_eq!(depth(0, 0), 0);
+    }
+}
