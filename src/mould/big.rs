@@ -100,6 +100,10 @@ impl SpeciesSet {
     }
 }
 const DRAW_TERRAIN: u32 = 140;
+/// Soil kinds in `BigDish::soil` (`BigParams::sand_keep`).
+pub const SOIL_SAND: u8 = 1;
+pub const SOIL_CLAY: u8 = 2;
+pub const SOIL_BARREN: u8 = 3;
 
 #[derive(Clone, Debug)]
 pub struct BigParams {
@@ -532,6 +536,19 @@ pub struct BigParams {
     pub terrain_wet: f32,
     pub wet_step: f32,
     pub terrain_blob: f32,
+    /// Soil kinds (Larder World maps, WM3; off while `BigDish::soil` is
+    /// empty, which it is unless a map or a harness fills it): a fine
+    /// cell's kind, SOIL_SAND, SOIL_CLAY or SOIL_BARREN (0 is plain). After
+    /// each fine step's trail spread, trail on sand is x `sand_keep` (it
+    /// fades fast, so tubes there are thin) and on clay x `clay_keep` (it
+    /// lasts). On barren ground upkeep is x `barren_upkeep` and no child is
+    /// born there. Why these three: the brainstorm ranked ground by the
+    /// model term it changes, and these touch trail kept and growth, the
+    /// terms that steer and size the mould, where wet ground (the step)
+    /// had no measured effect (Reports/larder-maps-2026-11-11.md).
+    pub sand_keep: f32,
+    pub clay_keep: f32,
+    pub barren_upkeep: f32,
     /// A rectangular world, three dish cells in from the edge, instead of
     /// the dish's ellipse: a world, not a dish (owner, 11-11 14:01Z).
     pub rect: bool,
@@ -685,6 +702,9 @@ impl BigParams {
             terrain_wet: 0.0,
             wet_step: 0.5,
             terrain_blob: 12.0,
+            sand_keep: 0.8,
+            clay_keep: 1.05,
+            barren_upkeep: 3.0,
             rect: false,
             wall_hp: 400.0,
             wall_bite: 1.0,
@@ -796,6 +816,8 @@ pub struct BigDish {
     /// wet a fine cell.
     pub rock: Vec<bool>,
     pub wet: Vec<bool>,
+    /// Soil kind a fine cell (`BigParams::sand_keep`), else empty.
+    pub soil: Vec<u8>,
     /// Walls the player built (`build_wall`), a fine cell; empty until the
     /// first. A wall is ground the mould cannot enter, the same channel as
     /// the rim and rock.
@@ -950,6 +972,7 @@ impl BigDish {
             eaten: 0.0,
             rock: Vec::new(),
             wet: Vec::new(),
+            soil: Vec::new(),
             wall: Vec::new(),
             wall_health: Vec::new(),
             broken: 0,
@@ -2017,7 +2040,14 @@ impl BigDish {
             // Its crystal take this step (`took`, Larder World) counts as
             // food like its grass share.
             let took = if self.took.is_empty() { 0.0 } else { self.took[k] };
-            let e = self.energy[k] + took - p.upkeep;
+            let up = if self.soil.is_empty() {
+                p.upkeep
+            } else {
+                let (x, y, _) = self.walkers[k];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                if self.soil[i] == SOIL_BARREN { p.upkeep * p.barren_upkeep } else { p.upkeep }
+            };
+            let e = self.energy[k] + took - up;
             if e > 0.0 {
                 self.energy[k] = e;
                 continue;
@@ -2049,7 +2079,7 @@ impl BigDish {
             let (nx, ny) = (x + dx, y + dy);
             let Some(j) = self.cell(nx, ny) else { continue };
             let crowd = crowd_of(self, k);
-            if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) {
+            if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) || (!self.soil.is_empty() && self.soil[j] == SOIL_BARREN) {
                 continue;
             }
             if crowd > 0 {
@@ -2456,6 +2486,19 @@ impl BigDish {
                 }
                 for (i, v) in self.trail.iter_mut().enumerate() {
                     *v = self.species_trail.iter().map(|f| f[i]).sum();
+                }
+            }
+            if !self.soil.is_empty() {
+                let (sand, clay) = (self.p.sand_keep, self.p.clay_keep);
+                let soil = &self.soil;
+                for f in std::iter::once(&mut self.trail).chain(self.species_trail.iter_mut()) {
+                    for (v, &k) in f.iter_mut().zip(soil) {
+                        match k {
+                            SOIL_SAND => *v *= sand,
+                            SOIL_CLAY => *v *= clay,
+                            _ => {}
+                        }
+                    }
                 }
             }
             if !self.germ.is_empty() {

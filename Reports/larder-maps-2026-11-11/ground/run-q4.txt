@@ -1,0 +1,6 @@
+worldground seconds 60 cover 0.3 sand_keep 0.8 clay_keep 1.05 barren_upkeep 3
+seed 13 plain  patch 0.300 of agar  on-patch share 0.148 0.145  alive 13031 14326  eaten 0.0579  ms/tick 8.18  hash ee43b7bdc2074887
+seed 13 wet    patch 0.300 of agar  on-patch share 0.200 0.150  alive 5992 11585  eaten 0.0347  ms/tick 7.18  hash b157e47a920ef529
+seed 13 sand   patch 0.300 of agar  on-patch share 0.076 0.078  alive 11877 13624  eaten 0.0615  ms/tick 8.18  hash 4f827ebcc10a4680
+seed 13 clay   patch 0.300 of agar  on-patch share 0.205 0.198  alive 9882 12396  eaten 0.0425  ms/tick 7.55  hash 7d9449c655980635
+seed 13 barren patch 0.300 of agar  on-patch share 0.147 0.116  alive 4400 6462  eaten 0.0256  ms/tick 6.17  hash de824a5cc82f4491

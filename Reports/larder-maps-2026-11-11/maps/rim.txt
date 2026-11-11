@@ -1,0 +1,13 @@
+crystal 460 280 14 512
+crystal 575 360 14 512
+crystal 560 250 12 384
+crystal 150 120 9 256
+crystal 880 120 9 256
+crystal 150 520 9 256
+crystal 880 520 9 256
+crystal 512 50 9 256
+crystal 512 595 9 256
+crystal 60 320 8 192
+crystal 970 320 8 192
+mould 512 320
+landing 90 580
