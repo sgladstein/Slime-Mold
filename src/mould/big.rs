@@ -200,8 +200,8 @@ pub struct BigParams {
     pub species_boost: f32,
     /// Species 0's share of the walkers (0 is even, k % n). Otherwise
     /// walker k is species 0 when (k x share) mod 1 + share >= 1, so the
-    /// shares interleave down the walker list, and the rest are k % (n - 1)
-    /// + 1 among themselves. With `species_zones` the bands stay equal, so
+    /// shares interleave down the walker list, and the rest are species
+    /// 1 + k % (n - 1). With `species_zones` the bands stay equal, so
     /// a bigger share is a *denser* side, not more ground (equal density on
     /// wider ground would just be a bigger, equally strong territory).
     /// Added 2026-11-11: an edge in numbers.
@@ -929,7 +929,7 @@ impl BigDish {
                 t[y1 * (w + 1) + x1] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0] + t[y0 * (w + 1) + x0]
             };
             let mut next = self.spec.clone();
-            for k in 0..self.walkers.len() {
+            for (k, slot) in next.iter_mut().enumerate() {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 let (cx, cy) = (i % w, i / w);
@@ -952,7 +952,7 @@ impl BigDish {
                     weigh(best, cx, cy, i) > p.species_convert as f64 * weigh(own, cx, cy, i)
                 };
                 if best != own && wins {
-                    next[k] = best as u8;
+                    *slot = best as u8;
                 }
             }
             // Conversion reads only trails, so writing to a copy is the same

@@ -96,4 +96,21 @@ code { font-family: var(--mono); font-size: 0.9em; color: var(--amber); }
       <span>A stronger trail wins ground early and loses it later. The next things to try are an edge in numbers, and a rule that lets a bigger body take a smaller one when they touch.</span></figcaption></figure>
   </div>
 </section>
+
+<section>
+  <span class="eyebrow">5 · Numbers</span>
+  <h2>The bigger side wins only where the two are mixed</h2>
+  <p>Hunting droplets: the same grazing droplets, but each species is drawn to the other (<code>species_avoid</code> −0.5) and conversion is on (1.2, over a 17 × 17 square, <code>species_convert_r</code> 8). Both start mixed in one blob. Left: amber has 55% of the walkers (<code>species_share</code> 0.55). Right: 50%. Seed 1, 0 to 12 s.</p>
+  <div class="pair">
+    <figure style="grid-column: 1 / -1"><video src="pics/hunt.mp4" poster="pics/hunt-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>55% amber (left) against 50% (right), mixed start</strong>
+      <dl class="stats"><dt>amber's walkers at 30 s</dt><dd>0.75-0.88 against 0.40-0.57</dd><dt>gain, paired</dt><dd>higher on 8 of 8, p 0.008, square or single cell alike</dd><dt>by 10 s</dt><dd>0.77-0.85 already</dd></dl>
+      <span>The mixed blob sorts into droplets, and while it sorts, each cell takes the colour of the local majority. A 55/45 mix becomes about 80/20.</span></figcaption></figure>
+  </div>
+  <dl class="stats">
+    <dt>started apart, 55% vs 50%</dt><dd>gain −0.009 to +0.017 vs −0.027 to +0.029: higher on 5 of 7, one tie</dd>
+    <dt>denser half of the 1M network, 60% vs 50%</dt><dd>gain −0.08 to +0.08 vs −0.04 to +0.06: higher on 3 of 8</dd>
+  </dl>
+  <p>Once the bodies are one colour each, numbers don't move the border. A tool that mixes the two (spores spilled into an enemy body) would start a vote that the bigger side wins.</p>
+</section>
 </div>
