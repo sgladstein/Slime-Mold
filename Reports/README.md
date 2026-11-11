@@ -120,8 +120,12 @@ move.
   control): a holder's bonus made the snowball worse, supply lines did nothing, size upkeep eased it most but let doing
   nothing tie the best plans, and desperate fights (starving walkers fight harder) eased it with the tools intact and
   are now the page's default; soft and keep stay on top under every rule. Half the food is gone by 1:00, so even with
-  no snowball the side ahead then would win about 70%. v2 is playable in the browser against any plan (pages *Mould
-  Budget Skirmish* and *Budget Skirmish Strategies*).
+  no snowball the side ahead then would win about 70%. Rounds 7 and 7b (the economy sketch, 2,240 games after two bug
+  fixes): food after 1:00 (a 4:00 match, regrowing piles) goes to the side ahead at 1:00, which still wins 80-85%;
+  regrowth cuts wipe-outs (132 against 217 of 448); a held-ground score changes nothing. A strike counted down 5 s in
+  view, with a Fortify that kills attackers in its ring, dethrones soft (brace 15/16, keep 14/16), but brace (strike,
+  and fortify what is struck) then wins every pairing. v2 is playable in the browser against any plan and opens on
+  Strike and Fortify (pages *Mould Budget Skirmish* and *Budget Skirmish Strategies*).
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as

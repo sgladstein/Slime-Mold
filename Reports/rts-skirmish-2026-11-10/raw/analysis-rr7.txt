@@ -1,0 +1,44 @@
+# Round 7 (2db63cb): ctl and long; rg5 and rg10 void (regrowth bug)
+## compare.py ctl, food
+     rules games  ahead at 1:00 won comebacks wipe-outs  close margin
+       ctl   448        363/430  84%        67       198    145  0.152
+      long   448        361/429  84%        68       346    161  0.148
+
+Paired against ctl, game by game (only games both rule sets played):
+  long v ctl (448 games)
+        wiped: only under long 150, only under ctl 2, p=4.1e-42
+     comeback: only under long 6, only under ctl 5, p=1
+        close: only under long 20, only under ctl 4, p=0.0015
+    margin smaller under long in 160, larger in 126, p=0.051
+
+Games that reach the bell: the side ahead at 1:00 won, and would win with the rest of the game shuffled between games (200 shuffles):
+         ctl: 206/249 (83%); shuffled 69%; banked by 1:00 0.45
+        long: 83/101 (82%); shuffled 71%; banked by 1:00 0.37
+## held.py | compare.py ctl
+     rules games  ahead at 1:00 won comebacks wipe-outs  close margin
+       ctl   448        355/428  83%        73       198    147  0.160
+      long   448        351/429  82%        78       346    155  0.156
+
+Paired against ctl, game by game (only games both rule sets played):
+  long v ctl (448 games)
+        wiped: only under long 150, only under ctl 2, p=4.1e-42
+     comeback: only under long 9, only under ctl 4, p=0.27
+        close: only under long 15, only under ctl 7, p=0.13
+    margin smaller under long in 150, larger in 129, p=0.23
+
+Games that reach the bell: the side ahead at 1:00 won, and would win with the rest of the game shuffled between games (200 shuffles):
+         ctl: 202/250 (81%); shuffled 68%; banked by 1:00 0.43
+        long: 77/102 (75%); shuffled 70%; banked by 1:00 0.35
+## screen.py
+== ctl: 448 games; ahead at 1:00 won 363/430 (84%); wipe-outs 198
+   soft v: fort 16/16, idle 16/16, keep 5/16, raid 16/16, random 14/16, trade 7/16, ward 16/16
+   beat soft (majority): ['keep', 'trade']
+   by mean share: keep 0.661, soft 0.640, trade 0.523, idle 0.495, raid 0.439, ward 0.425, random 0.418, fort 0.399
+   majority cycles of three: 8 [('fort', 'idle', 'raid'), ('fort', 'raid', 'random'), ('fort', 'trade', 'ward'), ('idle', 'raid', 'trade'), ('idle', 'raid', 'ward'), ('idle', 'soft', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 19 of 28
+== long: 448 games; ahead at 1:00 won 361/429 (84%); wipe-outs 346
+   soft v: fort 16/16, idle 16/16, keep 6/16, raid 16/16, random 14/16, trade 7/16, ward 16/16
+   beat soft (majority): ['keep', 'trade']
+   by mean share: keep 0.664, soft 0.641, trade 0.523, idle 0.487, raid 0.444, ward 0.422, random 0.415, fort 0.403
+   majority cycles of three: 8 [('fort', 'idle', 'raid'), ('fort', 'raid', 'random'), ('fort', 'trade', 'ward'), ('idle', 'raid', 'trade'), ('idle', 'raid', 'ward'), ('idle', 'soft', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 18 of 28

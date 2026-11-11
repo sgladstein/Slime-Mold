@@ -2,7 +2,7 @@
 
 **Status: version 1 played by the owner and set aside; version 2 (the
 budget skirmish) playable at https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS,
-not yet played by the owner; it opens on desperate fights (round 5).** The owner, 2026-11-10
+not yet played by the owner; it opens on Strike and Fortify (round 7b).** The owner, 2026-11-10
 20:33Z: "You can run these tests, especially if they are cheap and/or can be
 paralellized. But then lets focus on actually building playable demos". On
 the card at 20:42Z the owner chose "Both, in two threads": this one, and Two
@@ -47,6 +47,21 @@ lost no pairing under six of the seven (all but size upkeep). About half
 the food is eaten by 1:00, so even with no snowball the side ahead then
 would win about 70% of games that reach the bell: a comeback needs food
 after 1:00, which is the economy sketch's next test. See *Rounds 4 to 6*.
+
+**Rounds 7 and 7b (the economy sketch's tests, 2026-11-11):** food after
+1:00 does not bring comebacks. With piles that regrow over a 4:00 match,
+four fifths of the food is eaten after 1:00, yet the side ahead at 1:00
+still wins 80-85% of games, because the bigger mould eats the regrowth;
+regrowth at 1% a second does cut the wipe-outs (132 of 448 against 217)
+with the tools intact. A score from ground held changes nothing. **A
+strike with a 5 s countdown and a Fortify that kills attackers in its
+ring do dethrone soft:** a plan that fortifies the pile a strike is
+counting down on (brace) beat soft 15 of 16 and won every pairing of an
+eight-plan round robin; keep, with the rally, came second. So one
+strategy still beats the others, now strike-and-defend rather than strike
+alone, and the page opens on these rules. Two bugs were found and fixed
+on the way (spores overcharged under the price ramp; regrowth scored to
+the rival). See *Round 7* to *Two bugs*.
 
 ## Version 1: habits, salt and the lamp
 
@@ -472,30 +487,272 @@ fights' comebacks (p 0.05) do not.
   The snowball adds 10-20 points to a lead that is mostly banked already. A comeback needs food after 1:00: the sketch's longer
   match with regrowing piles, or a score that is not food eaten.
 
+### Round 7: food after 1:00 (the sketch's test 3)
+
+Rounds 4-6 ended on a ceiling: about half the food is eaten by 1:00 of a
+2:30 match, so a lead then is mostly banked. The research thread's
+[economy sketch](rts-research-2026-11-10/skirmish-economy-sketch.md),
+which the owner said "all sound good" (2026-11-11 00:16Z), adds food after
+1:00 and a score that is not food eaten. Built as rules, all off by
+default (commit 2db63cb):
+
+- **A later bell** (`Rules::bell`, seconds; 150 as built): late food lands
+  every 15 s from 0:20 until 40 s before the bell (`late_count`), so a
+  4:00 match has 13 late piles where 2:30 has 7.
+- **Regrowth** (`regrow`, a fraction of a pile's full size a second): an
+  eaten pile grows back, twice as fast once nobody has eaten there for
+  20 s (`regrow_idle`, `regrow_after`), the sketch's pull-back rule.
+- **The held-ground score** (`score_held`): every second, each pile where
+  a side's eaters outnumber the other's two to one (`held_ratio`) pays it a
+  point (`Skirmish::points`); the share is of points. Points are counted
+  in every game, so one run reads both scores (`held.py` rewrites the
+  lines to the held score).
+
+**Frame cost:** regrowth is one pass over the 23 piles a step; the points
+census one pass a second; neither was timed.
+
+**Round 7** (four runner threads at 2db63cb; 8 plans, seeds 1-8, both
+sides, 448 games a rule set; `raw/rr7-runner-1..4.txt`): desperate fights
+on round 3's rules, at 2:30 (ctl, round 5's set again, and its numbers
+again: 198 wipe-outs, the side ahead at 1:00 won 84%), at 4:00 (long), and
+at 4:00 with regrowth at 0.5% and 1% a second (rg5, rg10). The deciding
+measures, named before the run: wipe-outs, comebacks, and the side ahead
+at 1:00 against the shuffled floor.
+
+- **A longer match on its own adds wipe-outs, not comebacks.** At 4:00 the
+  side ahead at 1:00 still won 84%, comebacks were level (paired 6 against
+  5), and 346 of 448 games ended in a wipe-out against 198 (paired 150
+  against 2, p 4e-42). Close games rose a little (paired 20 against 4, p
+  0.002). The 90 s more is time for the leader to finish the job. The
+  plans' order did not move: soft and keep on top, keep 6/16 against soft.
+- **The held-ground score on its own changes little.** Read from the same
+  games, the side ahead on points at 1:00 won 83% at 2:30 and 82% at 4:00;
+  comebacks 73 and 78 of 448.
+- **The regrowth runs were void.** The rival eats from its own copy of
+  the piles, made at the end of each step; regrowth added food between
+  steps that the copy never saw, so the difference read as the rival's
+  bite: regrown food reached only the left mould's walkers, came off the
+  pile, and was scored to the right mould. Under rg10 every game ended in
+  a wipe-out; in a check of 48 of them with the sides' walkers printed
+  (`raw/rr7-wipe-check.txt`, stopped partway) the right mould was wiped out
+  in 42, and led on food in all 42. Fixed in
+  `Dish::step` (4c25bfe): the copy takes each pile's food at the start of
+  the step. Nothing else changes a pile's food between steps, so the full
+  suite's hashes stand. Rerun as round 7b.
+
+**Round 7b** (four runner threads at 4c25bfe, with both bugs fixed, see
+*Two bugs*; the same 8 plans and seeds, 448 games a rule set;
+`raw/rr7b-runner-1..4.txt`, analysis `raw/analysis-rr7b.txt`). The
+harness now prints each side's walkers and which side was wiped out.
+Scored on food as before:
+
+| Rules (desperate fights on round 3's) | Ahead at 1:00 won | Comebacks | Wipe-outs | Close | Mean margin | Ahead at 1:00 won, games to the bell (shuffled floor; food eaten by 1:00) |
+|---|---|---|---|---|---|---|
+| 2:30 (control) | 366/430 (85%) | 64 | 217 | 145 | 0.157 | 83% (69%; 45%) |
+| 4:00 | 365/430 (85%) | 65 | 358 | 150 | 0.153 | 81% (71%; 37%) |
+| 4:00, regrowth 0.5% a second | 366/432 (85%) | 66 | 204 | 157 | 0.152 | 81% (57%; 21%) |
+| 4:00, regrowth 1% a second | 362/437 (83%) | 75 | 132 | 152 | 0.146 | 80% (56%; 20%) |
+
+Game by game against the control: the 4:00 match ended 144 more games in a
+wipe-out and 3 fewer (p 6e-39), comebacks 6 against 5; regrowth at 0.5%
+moved nothing (every p 0.29 or more); regrowth at 1% ended 25 games in a
+wipe-out that the control did not and spared 110 (p 6e-14), with smaller
+margins in 271 games and larger in 173 (p 4e-6), and comebacks 56 against
+45 (p 0.32). Of the 12 tests these three survive Holm. Soft and keep stay
+the top two under all four, and both beat idle 16/16 under each.
+
+- **Food after 1:00 goes to the side ahead at 1:00.** With regrowth at 1%,
+  four fifths of the food is eaten after 1:00, so with no snowball the side
+  ahead then would win only 56% of the games that reach the bell. It wins
+  80%. The lead is now carried almost entirely by the snowball: the
+  bigger mould holds more piles, and more piles regrow under it (inferred). The
+  sketch's test 3 fails on its deciding measure.
+- **Regrowth at 1% does make games less of a blowout**, with the tools
+  intact: 132 wipe-outs against 217, and closer finishes. Looked at
+  (`stills-r7/`, seed 3, keep against soft, at 1:00, 3:00 and 4:00): soft was down to 769 walkers at
+  1:00 against 4,006, grew back to 3,688 by 3:00 and held 18 piles to keep's
+  16, and still lost on food, 0.397. The trailing mould does come back on
+  the dish; it does not catch up on the score.
+- **A longer match on its own is worse**: the same leader wins, and the
+  extra 90 s is time to finish the job.
+- **The held-ground score changes nothing** at either length: the side
+  ahead on points at 1:00 won 83% (2:30), 78% (4:00), 86% and 84% (with
+  regrowth), counting a wipe-out as the survivor's.
+- **A wipe-out is now the survivor's whatever the score**
+  (`Skirmish::winner`; the page and `wiped.py` use it). Under the food
+  score the side wiped out had eaten more in 69 of 899 wipe-outs; scoring
+  those as the survivor's adds comebacks under the 4:00 match (paired 40
+  against 16, p 0.002): a trailing mould that outlasts the leader. The
+  table above counts food as printed, to compare with earlier rounds.
+
+### Fortify against a counted-down strike (the sketch's test 1)
+
+Built for the economy sketch's first test, as rules that are off by
+default (hashes unchanged):
+
+- **The Strike** (`strike_delay` 5): a spore is paid for when bought and
+  lands 5 s later, and both sides see where (`Skirmish::strikes`; on the
+  page a ring with "strike" and the seconds left). The sketch's "a wait
+  with a specific answer the defender must pay for"; the sleeping spores of
+  round 3 were a wait with none, and are off under these rules.
+- **Fortify** (`Verb::Fortify`, 150, a rally's price, on a pile where you
+  eat): for 15 s your walkers within 6 cells of the pile's edge die in
+  fights at a quarter of their usual rate (`Rules::fortify_mult`,
+  `Dish::fortify`), and, since the variants below, the rival's at four
+  times theirs (`fortify_harm`). The sketch's "count as fed" would do
+  nothing: at a pile both sides' walkers already are fed.
+- **Brace**, a new plan: soft that fortifies any of its piles a strike is
+  counting down on or landing on, before anything else, as keep does with
+  the rally.
+
+The test: brace and keep against soft, and soft against itself, under
+desperate fights with the countdown, seeds 1-8 from both sides, 40 games
+(`raw/t1-strike-fortify.txt`; `strikes.py`). The deciding measure, the
+sketch's: of the strikes that land on a pile the defender holds (more of
+its eaters there), the defender still holds at least 12 of 16 (75%) 10 s
+later, against the rally on the same seeds.
+
+| Defender | Its answer | Strikes on a pile it held | Held 10 s later | Won against soft |
+|---|---|---|---|---|
+| soft | none | 82 | 59 (72%) | (mirror) |
+| keep | rally | 74 | 54 (73%) | 14/16 |
+| brace | Fortify, own losses x0.25 | 90 | 58 (64%) | 9/16 |
+
+- **The countdown lets the rally answer the strike.** Keep beat soft 14 of
+  16 (sign p 0.004). On the same seeds and sides under round 5's desperate
+  fights, with sleeping spores instead of the countdown, it won 11 of 16;
+  game by game its share was higher with the countdown in 10 of 16 (p
+  0.45, so not a clear change).
+- **Fortify as first built did not answer it.** With only its own walkers
+  dying less, brace held 64% of the struck piles, below the 72% soft held
+  with no answer at all, beat soft 9 of 16, and took less of the score than
+  keep in 12 of 16 games (p 0.08). The sketch's bar of 12 in 16 barely
+  separates anything here: a strike of 150 walkers on a crowd fails to take
+  the pile within 10 s about 72% of the time with no answer. Why a lower
+  death rate alone does little (inferred, not traced): the attackers count
+  in the head-count share whether they fight or not, and soft lights a
+  beacon on the pile first, so its mould's flow keeps coming.
+- **Fortify that also harms the attacker does.** Three variants, brace
+  against soft on the same 16 games each (`raw/t1b-fortify-variants.txt`):
+
+| Fortify | Held 10 s later | Won against soft | Share above brace as built, game by game | Above keep |
+|---|---|---|---|---|
+| as built (own losses x0.25) | 58/90 (64%) | 9/16 | | 4 of 16 (p 0.08) |
+| own walkers never die (x0) | 55/73 (75%) | 14/16 | 11 of 16 (p 0.21) | 7 of 16 (p 0.8) |
+| a 12-cell ring | 64/87 (74%) | 10/16 | 9 of 16 (p 0.8) | 4 of 16 (p 0.08) |
+| x0.25, and the rival's walkers in the ring x4 | 72/82 (88%) | 15/16 (p 0.0005) | 14 of 16 (p 0.004) | 10 of 16 (p 0.45) |
+
+  Of the six game-by-game tests only the last against brace as built
+  survives Holm (0.004 x 6 = 0.025). It passes the sketch's bar (88%
+  against 75%), so **Fortify now harms the attacker: `fortify_harm` 4 is the
+  default.** Looked at in a test browser: a strike at 0:03 on brace's
+  biggest pile, fortified by brace at 0:04, left none of its 150 walkers
+  there by 0:09.
+- **It may be too good an answer.** Fortify costs 150 and a strike 1,000 or
+  more, and brace fortified up to 12 times a game, so a strike may be
+  worthless against a defender who is watching. Brace plays soft when not
+  struck, so it is at least as good as soft against anything that does not
+  strike. Whether anything beats it (two strikes at once, striking after
+  the 15 s ring, or not striking at all) is the sketch's test 4.
+- **The price bug moved these numbers.** The first run, with spores costing
+  one step more than shown (see *Two bugs*), had brace at 12 of 16 and
+  its fortified piles holding 54 of 68 (79%), which would have passed with
+  Fortify as first built. It is kept as `raw/t1-strike-fortify-overcharged.txt`.
+
+**Frame cost** of the Fortify check (one distance test per ring for each
+walker in a fight, only while a ring is up): 1.435 ms a step with no rings
+and 1.445 ms with every pile ringed for both moulds, the same play both ways
+(`fortifycost.rs`, mean of three 10 s runs after a warm-up; single runs
+spread 1.425-1.455).
+
+### Round 7b's round robin under Strike and Fortify (the sketch's test 4, first half)
+
+With the strike counted down and Fortify that harms the attacker, does any
+plan still beat all the others? Eight plans under desperate fights with
+the countdown (no sleeping spores), seeds 1-8, both sides, 448 games
+(`raw/rr7b-runner-1..4.txt`, tag `sf`; a wipe-out counted as the
+survivor's): idle and random (the controls), lean and boom (greed: lean
+lights soft's target with beacons only, boom races for the late food),
+soft (the strike), keep and brace (soft that rallies or fortifies a pile
+being struck), and trade (strikes back only when struck). The deciding
+measure, the sketch's: no plan wins every pairing, and a cycle whose links
+each survive Holm, every plan in it beating random 13 of 16.
+
+| Plan | Pairings won (surviving Holm over 28) | Lost (surviving) | Mean share | Against soft |
+|---|---|---|---|---|
+| brace | 7 (6) | 0 | 0.871 | 15/16 |
+| keep | 6 (6) | 1 (0) | 0.852 | 14/16 |
+| soft | 4 (4) | 3 (2) | 0.669 | |
+| trade | 4 (2) | 3 (3) | 0.510 | 9/16 |
+| idle | 3 (2) | 4 (3) | 0.400 | 0/16 |
+| lean | 3 (1) | 4 (4) | 0.307 | 0/16 |
+| random | 1 (0) | 6 (3) | 0.236 | 1/16 |
+| boom | 0 | 7 (6) | 0.155 | 0/16 |
+
+- **Soft is dethroned, and brace takes its place.** Brace won every
+  pairing, six surviving Holm; against keep it won 12 of 16 (p 0.08). The
+  strike beats greed (soft beat lean and boom 16/16), and an answered
+  strike loses (brace 15/16 and keep 14/16 against soft), but the third
+  link of the sketch's triangle, greed beating Fortify, fails: brace beat
+  lean and boom 16/16. Brace fortifies only when struck (3.1 times a game
+  on average, 150 each) and otherwise strikes like soft, so greed never
+  makes it waste its bank. No cycle survives Holm; on the majority alone,
+  idle > trade > lean > idle and idle > trade > soft > idle (trade saves a
+  quarter of its food for a counter-strike that idle never provokes).
+- **So one strategy still beats the others:** strike the rival's thinnest
+  pile, and fortify any of your piles a strike is counting down on. It is
+  the plan a careful player would find first. What could beat it is the
+  second half of test 4, an exploiter search over strike timing (two at
+  once, or just after a ring ends), and Fortify's price: at 150 against a
+  strike's 1,000 or more, answering always pays.
+- **Snowball:** 268 of 448 games ended in a wipe-out; the side ahead at
+  1:00 won 80%.
+- **The page now opens on these rules**, since under them soft, the
+  default rival, can be beaten by a plan a person can copy: watch for the
+  countdown and fortify.
+
+### Two bugs found on the way (both fixed 2026-11-11)
+
+- **Spores cost one step more than shown under the price ramp.**
+  `Skirmish::act` read a spore's price after counting the purchase, so under
+  `spore_ramp` 0.5 the first spore cost 1,500 where `can` had checked
+  1,000, and the bank could go below zero (the page showed the rival at
+  -142). Every striker paid it, in rounds 3 to 7 and the first Fortify run.
+  The paired comparisons within each round stand, since every rule set had
+  it; the records move. On the same control games, round 7 (with it) and
+  round 7b (fixed) differ in 53 of 448 winners: soft against keep went from
+  5 of 16 to 10 of 16, and wipe-outs from 198 to 217. So round 5's "keep
+  lost no pairing" leaned on overpriced strikes.
+- **Regrowth was scored to the rival** (see *Round 7*): `Dish::step` now
+  gives the rival's copy of the piles each pile's food before it eats.
+
 ## What would make the strategy deeper
 
-Tested and failed: prices and a defensive rally (round 3), and four changes
-to the model (rounds 4-6): the holder's bonus makes the snowball worse,
-supply lines do nothing, size upkeep eases it but lets doing nothing tie the
-best plans, and desperate fights ease it a little (now the page's default).
-Under all of them the strike on the thinnest pile wins. What is left:
+Tested and failed: prices and a defensive rally (round 3), four changes to
+the model (rounds 4-6), food after 1:00 and a held-ground score (round 7b).
+Under all of them the strike on the thinnest pile wins. A counted-down
+strike with a Fortify that harms the attacker (round 7b) finally beats
+it, but only by a plan that strikes as well: strike-and-defend wins every
+pairing. What is left:
 
-1. **Food after 1:00.** About half the food is eaten by 1:00 and the bell
-   is at 2:30, so a lead at 1:00 is mostly banked; even with no snowball the
-   side ahead then would win about 70% of the games that reach the bell.
-   The economy sketch's longer match (4:00) with piles that regrow (faster
-   where nobody has eaten for 20 s), or a score from ground held over time,
-   is the next test: its test 3, with wipe-outs and comebacks as the
-   measures and this report's shuffled 70% as the floor to compare with.
-2. **An answer tied to the strike.** The sketch's Fortify against a strike
-   with a countdown both sides see (its test 1). At a pile both sides'
-   walkers already fight as fed, so Fortify must do more than make walkers
-   count as fed there: a lower death rate inside the ring, for example.
-3. ~~Fix the side edge~~: done, see *Which side you play matters*.
-4. **A person.** The plans are one-line rules. A player who reads the
-   picture (where the rival is thin, where its spores sleep) may find
-   answers the scripts did not; the round robins say only that no simple
-   rule beats soft and keep.
+1. **Price the answer.** Fortify costs 150 and a strike 1,000 or more, and
+   brace fortified about 3 times a game, so answering a strike always pays.
+   A dearer Fortify (300-600), a smaller ring, or `fortify_harm` 2 would
+   let a strike sometimes win; the sketch's exploiter search (test 4's
+   second half: random plans over tithe, target, when to strike and when
+   to fortify, against brace) is the measure.
+2. **A reason not to strike.** The sketch's triangle needs greed to beat
+   Fortify, and brace never wastes a Fortify on an attack that is not
+   coming. Income that a strike forfeits (a bank that pays interest, or
+   ground held paying into the bank) would give greed a payoff.
+3. **The snowball itself.** Food after 1:00 goes to the leader. What is
+   left to try is food that lands where the trailing mould is, which the
+   sketch avoided as a rubber band, or size upkeep at a rate below round
+   6's 0.2 (0.05-0.1, not run).
+4. ~~Fix the side edge~~: done, see *Which side you play matters*.
+5. **A person.** The plans are one-line rules. A player who reads the
+   picture (where the rival is thin, a strike's countdown) may find
+   answers the scripts did not.
 
 ## Version 2's page
 
@@ -507,9 +764,15 @@ price and cooldown. Pick one and click a pile: a press lands on the live
 pile within 9 cells. Beside it: the food share, both sides' walkers, bank,
 tithe and habit, and a feed of what each side bought. You pick the rival's
 plan (any of the scripted ones, soft by default, with a line saying what it
-does) and the rules: desperate fights (the default since round 5), size
+does) and the rules: **Strike and Fortify** (the default since round 7b:
+spores land 5 s after they are bought, in view, plus a Fortify tile;
+desperate fights), the long match (4:00 with regrowth, round 7b's rg10),
+the whole economy sketch at once (Strike and Fortify, 4:00, regrowth,
+scored on ground held; not measured together), desperate fights, size
 upkeep, the holder's bonus, the counterplay rules alone, or as first built.
-Each model change runs on top of the counterplay rules. Pause
+Under the held-ground score a dot over each pile shows who holds it, and
+the facts list both scores; a wipe-out is the survivor's game whatever the
+score. Pause
 stops the clock and buying still works, so a player can plan a turn.
 
 Rings drawn over the dish show what is bought (gold yours, violet the
@@ -551,10 +814,21 @@ piles' worth of canvas arcs a drawn frame.
   `Pile::bite_held`), and `supply`. `Skirmish::set` sets a rule or one of
   these on both moulds; three tests (the holder's bite, size upkeep, and a
   short supply only adding losses at the same front).
+- Round 7 and the strike: `Rules::bell` (with `late_count`), `regrow`,
+  `regrow_idle`, `regrow_after`, `score_held` and `held_ratio`
+  (`Skirmish::points`, `holds`, `food_share`, `points_share`),
+  `strike_delay` (`Skirmish::strikes`, `strike_log`), `Verb::Fortify` with
+  `fortify_cost`, `fortify_seconds`, `fortify_mult`, `fortify_reach` and
+  `fortify_harm` (`Dish::fortify`, read in `fight_losses`), `Plan::Brace`,
+  and `Skirmish::gone` and `winner`. Off by default except Fortify's
+  strength, which acts only when someone fortifies.
 - Analysis scripts in `rts-skirmish-2026-11-10/`: `analyse.py` (one round
   robin: sign tests, Holm, cycles), `screen.py` (several rule sets, tagged
-  lines: records, majority cycles, the snowball) and `compare.py` (rule sets
-  game by game against a control, and the shuffled null).
+  lines: records, majority cycles, the snowball), `compare.py` (rule sets
+  game by game against a control, and the shuffled null), `held.py` (lines
+  rewritten to the held-ground score), `wiped.py` (a wipe-out to the
+  survivor), `strikes.py` (strikes on a held pile, and who still held it
+  10 s on) and `fortifycost.rs` (the Fortify check's frame cost).
 - The harness's `duel SEED LEFT RIGHT` mode
   (`rts-design-2026-11-10/red-team/harness`), with `TRACE=1` (both sides
   every 10 s), `LOOK=DIR` (a still every 15 s) and `RULES="name=value ..."`.

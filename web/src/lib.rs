@@ -96,7 +96,7 @@ impl Game {
 /// with the economy sketch's Strike, a spore that lands 5 s after it is
 /// bought in view of both sides (no sleeping), against which Fortify and
 /// the rally answer.
-const RULE_SETS: [&[(&str, &str)]; 6] = [
+const RULE_SETS: [&[(&str, &str)]; 8] = [
     &[],
     &[("spore_dormant", "5"), ("dormant_abroad_only", "1"), ("spore_ramp", "0.5")],
     &[("spore_dormant", "5"), ("dormant_abroad_only", "1"), ("spore_ramp", "0.5"), ("hold", "2")],
@@ -109,6 +109,26 @@ const RULE_SETS: [&[(&str, &str)]; 6] = [
         ("fight_unfed", "0.5"),
     ],
     &[("spore_ramp", "0.5"), ("fight_fed", "2"), ("fight_unfed", "0.5"), ("strike_delay", "5")],
+    // Round 7b's rg10: desperate fights, a 4:00 match, piles that regrow.
+    &[
+        ("spore_dormant", "5"),
+        ("dormant_abroad_only", "1"),
+        ("spore_ramp", "0.5"),
+        ("fight_fed", "2"),
+        ("fight_unfed", "0.5"),
+        ("bell", "240"),
+        ("regrow", "0.01"),
+    ],
+    // Everything in the economy sketch at once; not measured together.
+    &[
+        ("spore_ramp", "0.5"),
+        ("fight_fed", "2"),
+        ("fight_unfed", "0.5"),
+        ("strike_delay", "5"),
+        ("bell", "240"),
+        ("regrow", "0.01"),
+        ("score_held", "1"),
+    ],
 ];
 
 /// A new skirmish on dish `seed` against `Plan::ALL[rival]`, under

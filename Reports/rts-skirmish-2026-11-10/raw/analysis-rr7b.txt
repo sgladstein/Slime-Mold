@@ -1,0 +1,209 @@
+# Round 7b (4c25bfe): ctl, long, rg5, rg10
+## compare.py ctl, food score as printed
+     rules games  ahead at 1:00 won comebacks wipe-outs  close margin
+       ctl   448        366/430  85%        64       217    145  0.157
+      long   448        365/430  85%        65       358    150  0.153
+       rg5   448        366/432  85%        66       204    157  0.152
+      rg10   448        362/437  83%        75       132    152  0.146
+
+Paired against ctl, game by game (only games both rule sets played):
+  long v ctl (448 games)
+        wiped: only under long 144, only under ctl 3, p=5.9e-39
+     comeback: only under long 6, only under ctl 5, p=1
+        close: only under long 14, only under ctl 9, p=0.4
+    margin smaller under long in 152, larger in 123, p=0.091
+  rg5 v ctl (448 games)
+        wiped: only under rg5 57, only under ctl 70, p=0.29
+     comeback: only under rg5 50, only under ctl 48, p=0.92
+        close: only under rg5 62, only under ctl 50, p=0.3
+    margin smaller under rg5 in 234, larger in 211, p=0.3
+  rg10 v ctl (448 games)
+        wiped: only under rg10 25, only under ctl 110, p=6.4e-14
+     comeback: only under rg10 56, only under ctl 45, p=0.32
+        close: only under rg10 53, only under ctl 46, p=0.55
+    margin smaller under rg10 in 271, larger in 173, p=3.8e-06
+
+Games that reach the bell: the side ahead at 1:00 won, and would win with the rest of the game shuffled between games (200 shuffles):
+         ctl: 191/230 (83%); shuffled 69%; banked by 1:00 0.45
+        long: 72/89 (81%); shuffled 71%; banked by 1:00 0.37
+         rg5: 197/244 (81%); shuffled 57%; banked by 1:00 0.21
+        rg10: 252/315 (80%); shuffled 56%; banked by 1:00 0.20
+## wiped.py | compare.py ctl (a wipe-out is the survivor's)
+wiped.py: 899 wipe-outs; the side wiped out had led on the score in 69
+     rules games  ahead at 1:00 won comebacks wipe-outs  close margin
+       ctl   448        356/430  83%        74       217    122  0.295
+      long   448        332/430  77%        98       358     64  0.411
+       rg5   448        367/432  85%        65       204    140  0.275
+      rg10   448        361/438  82%        77       132    143  0.223
+
+Paired against ctl, game by game (only games both rule sets played):
+  long v ctl (448 games)
+        wiped: only under long 144, only under ctl 3, p=5.9e-39
+     comeback: only under long 40, only under ctl 16, p=0.0018
+        close: only under long 6, only under ctl 64, p=2.4e-13
+    margin smaller under long in 75, larger in 160, p=3e-08
+  rg5 v ctl (448 games)
+        wiped: only under rg5 57, only under ctl 70, p=0.29
+     comeback: only under rg5 50, only under ctl 59, p=0.44
+        close: only under rg5 65, only under ctl 47, p=0.11
+    margin smaller under rg5 in 168, larger in 138, p=0.097
+  rg10 v ctl (448 games)
+        wiped: only under rg10 25, only under ctl 110, p=6.4e-14
+     comeback: only under rg10 55, only under ctl 52, p=0.85
+        close: only under rg10 55, only under ctl 34, p=0.033
+    margin smaller under rg10 in 236, larger in 104, p=6.2e-13
+
+Games that reach the bell: the side ahead at 1:00 won, and would win with the rest of the game shuffled between games (200 shuffles):
+         ctl: 192/230 (83%); shuffled 69%; banked by 1:00 0.45
+        long: 72/89 (81%); shuffled 71%; banked by 1:00 0.37
+         rg5: 197/244 (81%); shuffled 57%; banked by 1:00 0.21
+        rg10: 252/315 (80%); shuffled 56%; banked by 1:00 0.20
+## held.py | wiped.py | compare.py ctl
+wiped.py: 899 wipe-outs; the side wiped out had led on the score in 66
+     rules games  ahead at 1:00 won comebacks wipe-outs  close margin
+       ctl   448        356/431  83%        75       217    120  0.297
+      long   448        335/431  78%        96       358     66  0.410
+       rg5   448        367/428  86%        61       204    129  0.278
+      rg10   448        366/436  84%        70       132    138  0.228
+
+Paired against ctl, game by game (only games both rule sets played):
+  long v ctl (448 games)
+        wiped: only under long 144, only under ctl 3, p=5.9e-39
+     comeback: only under long 38, only under ctl 17, p=0.0065
+        close: only under long 6, only under ctl 60, p=2.7e-12
+    margin smaller under long in 71, larger in 162, p=2.4e-09
+  rg5 v ctl (448 games)
+        wiped: only under rg5 57, only under ctl 70, p=0.29
+     comeback: only under rg5 43, only under ctl 57, p=0.19
+        close: only under rg5 59, only under ctl 50, p=0.44
+    margin smaller under rg5 in 167, larger in 140, p=0.14
+  rg10 v ctl (448 games)
+        wiped: only under rg10 25, only under ctl 110, p=6.4e-14
+     comeback: only under rg10 49, only under ctl 54, p=0.69
+        close: only under rg10 55, only under ctl 37, p=0.076
+    margin smaller under rg10 in 231, larger in 110, p=5.1e-11
+
+Games that reach the bell: the side ahead at 1:00 won, and would win with the rest of the game shuffled between games (200 shuffles):
+         ctl: 188/231 (81%); shuffled 68%; banked by 1:00 0.43
+        long: 72/90 (80%); shuffled 71%; banked by 1:00 0.35
+         rg5: 201/244 (82%); shuffled 57%; banked by 1:00 0.20
+        rg10: 255/313 (81%); shuffled 56%; banked by 1:00 0.20
+## screen.py, survivor rule
+== ctl: 448 games; ahead at 1:00 won 356/430 (83%); wipe-outs 217
+   soft v: fort 16/16, idle 16/16, keep 10/16, raid 16/16, random 16/16, trade 8/16, ward 16/16
+   beat soft (majority): none
+   by mean share: soft 0.823, keep 0.803, trade 0.592, idle 0.450, raid 0.360, ward 0.359, random 0.316, fort 0.296
+   majority cycles of three: 9 [('fort', 'idle', 'raid'), ('fort', 'raid', 'random'), ('fort', 'trade', 'ward'), ('idle', 'keep', 'trade'), ('idle', 'raid', 'trade'), ('idle', 'raid', 'ward')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 19 of 28
+== long: 448 games; ahead at 1:00 won 332/430 (77%); wipe-outs 358
+   soft v: fort 16/16, idle 16/16, keep 3/16, raid 13/16, random 16/16, trade 7/16, ward 16/16
+   beat soft (majority): ['keep', 'trade']
+   by mean share: keep 0.914, soft 0.772, trade 0.562, raid 0.468, idle 0.372, ward 0.349, fort 0.322, random 0.241
+   majority cycles of three: 8 [('fort', 'raid', 'ward'), ('fort', 'trade', 'ward'), ('idle', 'raid', 'trade'), ('idle', 'raid', 'ward'), ('idle', 'soft', 'trade'), ('raid', 'random', 'ward')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 19 of 28
+== rg5: 448 games; ahead at 1:00 won 367/432 (85%); wipe-outs 204
+   soft v: fort 16/16, idle 16/16, keep 10/16, raid 16/16, random 15/16, trade 9/16, ward 16/16
+   beat soft (majority): none
+   by mean share: keep 0.789, soft 0.775, trade 0.623, idle 0.514, ward 0.369, raid 0.361, fort 0.312, random 0.256
+   majority cycles of three: 6 [('fort', 'idle', 'raid'), ('fort', 'trade', 'ward'), ('idle', 'raid', 'trade'), ('idle', 'raid', 'ward'), ('raid', 'random', 'ward'), ('random', 'trade', 'ward')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 21 of 28
+== rg10: 448 games; ahead at 1:00 won 361/438 (82%); wipe-outs 132
+   soft v: fort 16/16, idle 16/16, keep 3/16, raid 16/16, random 16/16, trade 5/16, ward 16/16
+   beat soft (majority): ['keep', 'trade']
+   by mean share: keep 0.778, soft 0.697, trade 0.598, idle 0.497, raid 0.409, ward 0.387, fort 0.366, random 0.267
+   majority cycles of three: 9 [('fort', 'idle', 'raid'), ('fort', 'raid', 'random'), ('fort', 'trade', 'ward'), ('idle', 'raid', 'trade'), ('idle', 'raid', 'ward'), ('idle', 'soft', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 22 of 28
+
+# Round 7b: sf, the round robin under Strike and Fortify
+wiped.py: 268 wipe-outs; the side wiped out had led on the score in 4
+## screen.py, survivor rule
+== sf: 448 games; ahead at 1:00 won 327/411 (80%); wipe-outs 268
+   soft v: boom 16/16, brace 1/16, idle 16/16, keep 2/16, lean 16/16, random 15/16, trade 7/16
+   beat soft (majority): ['brace', 'keep', 'trade']
+   by mean share: brace 0.871, keep 0.852, soft 0.669, trade 0.510, idle 0.400, lean 0.307, random 0.236, boom 0.155
+   majority cycles of three: 2 [('idle', 'lean', 'trade'), ('idle', 'soft', 'trade')]
+   pairings won 7/8 or 8/8 (p < 0.05 unadjusted): 24 of 28
+## analyse.py, survivor rule
+28 pairings, 448 games
+
+  winner    loser  games  p        Holm  winner's mean share
+   brace     boom  16/16  3.1e-05   yes  1.000
+    idle     boom  16/16  3.1e-05   yes  0.719
+    keep     boom  16/16  3.1e-05   yes  1.000
+    lean     boom  16/16  3.1e-05   yes  0.663
+    soft     boom  16/16  3.1e-05   yes  1.000
+   trade     boom  16/16  3.1e-05   yes  1.000
+   brace     idle  16/16  3.1e-05   yes  0.919
+   brace     lean  16/16  3.1e-05   yes  0.957
+   brace   random  16/16  3.1e-05   yes  0.961
+    keep     idle  16/16  3.1e-05   yes  0.919
+    soft     idle  16/16  3.1e-05   yes  0.919
+    idle    trade  16/16  3.1e-05   yes  0.748
+    keep     lean  16/16  3.1e-05   yes  0.957
+    soft     lean  16/16  3.1e-05   yes  0.957
+   brace     soft  15/16  0.00052   yes  0.812
+   brace    trade  15/16  0.00052   yes  0.839
+    keep   random  15/16  0.00052   yes  0.967
+    keep    trade  15/16  0.00052   yes  0.890
+    soft   random  15/16  0.00052   yes  0.931
+    keep     soft  14/16  0.0042    yes  0.836
+   trade     lean  14/16  0.0042    yes  0.818
+    idle   random  13/16  0.021       -  0.634
+    lean   random  13/16  0.021       -  0.633
+   trade   random  13/16  0.021       -  0.753
+  random     boom  12/16  0.077       -  0.529
+   brace     keep  12/16  0.077       -  0.607
+    lean     idle  12/16  0.077       -  0.544
+   trade     soft   9/16  0.8         -  0.479
+
+Each plan: pairings won (surviving Holm), lost (surviving), mean share over all its games
+   brace: won 7 (6 survive), lost 0 (0 survive), mean share 0.871
+    keep: won 6 (6 survive), lost 1 (0 survive), mean share 0.852
+    soft: won 4 (4 survive), lost 3 (2 survive), mean share 0.669
+   trade: won 4 (2 survive), lost 3 (3 survive), mean share 0.510
+    idle: won 3 (2 survive), lost 4 (3 survive), mean share 0.400
+    lean: won 3 (1 survive), lost 4 (4 survive), mean share 0.307
+  random: won 1 (0 survive), lost 6 (3 survive), mean share 0.236
+    boom: won 0 (0 survive), lost 7 (6 survive), mean share 0.155
+
+Cycles of three among surviving pairings: none
+Cycles of three on the majority alone: [('idle', 'trade', 'lean'), ('idle', 'trade', 'soft')]
+## strikes.py
+Strikes by soft on a pile the defender held, held 10 s later:
+    boom: all 5/35, fortified 0/0, rallied 0/0
+   brace: all 72/82, fortified 72/82, rallied 0/0
+    idle: all 31/82, fortified 0/0, rallied 0/0
+    keep: all 54/74, fortified 0/0, rallied 54/74
+    lean: all 34/89, fortified 0/0, rallied 0/0
+  random: all 29/58, fortified 0/0, rallied 1/1
+   trade: all 51/70, fortified 0/0, rallied 0/0
+Games against soft (won/played):
+    boom: 0/16
+   brace: 15/16
+    idle: 0/16
+    keep: 14/16
+    lean: 0/16
+  random: 1/16
+   trade: 8/16
+Game by game against soft (same seed and side):
+  boom more than brace in 0, less in 16 of 16, p=3.1e-05
+  boom more than idle in 3, less in 13 of 16, p=0.021
+  boom more than keep in 0, less in 16 of 16, p=3.1e-05
+  boom more than lean in 1, less in 15 of 16, p=0.00052
+  boom more than random in 2, less in 14 of 16, p=0.0042
+  boom more than trade in 0, less in 16 of 16, p=3.1e-05
+  brace more than idle in 16, less in 0 of 16, p=3.1e-05
+  brace more than keep in 10, less in 6 of 16, p=0.45
+  brace more than lean in 16, less in 0 of 16, p=3.1e-05
+  brace more than random in 16, less in 0 of 16, p=3.1e-05
+  brace more than trade in 14, less in 2 of 16, p=0.0042
+  idle more than keep in 0, less in 16 of 16, p=3.1e-05
+  idle more than lean in 7, less in 9 of 16, p=0.8
+  idle more than random in 6, less in 10 of 16, p=0.45
+  idle more than trade in 1, less in 15 of 16, p=0.00052
+  keep more than lean in 16, less in 0 of 16, p=3.1e-05
+  keep more than random in 16, less in 0 of 16, p=3.1e-05
+  keep more than trade in 12, less in 4 of 16, p=0.077
+  lean more than random in 9, less in 7 of 16, p=0.8
+  lean more than trade in 1, less in 15 of 16, p=0.00052
+  random more than trade in 2, less in 14 of 16, p=0.0042
