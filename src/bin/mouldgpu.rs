@@ -2329,6 +2329,11 @@ mod tests {
             ("hungry, no limit, Jenson's", hungry(small(3))),
             ("hungry, species converting, explorers, contagion, respawn", Settings { species: 2, convert: 1.2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, respawn: 0.01, ..hungry(small(0)) }),
             ("hungry, cap, grazing off", Settings { cap: 100, graze: 0.0, ..hungry(small(3)) }),
+            // Every other walker set starving and the rest set to breed
+            // (below), with room in the slots: births land in cells freed
+            // by deaths in the same tick, some of them claimed by the
+            // walker's own move just before it died.
+            ("hungry, dying beside breeding", Settings { starve: 1.0, capacity: 60_000, ..hungry(small(0)) }),
         ];
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -2348,6 +2353,13 @@ mod tests {
                     break;
                 }
                 cpu = next;
+            }
+            if name.ends_with("dying beside breeding") {
+                for k in 0..cpu.walkers.len() {
+                    if cpu.alive[k] {
+                        cpu.energy[k] = if k % 2 == 0 { 0.0 } else { 1.0 };
+                    }
+                }
             }
             let n = cpu.walkers.len();
             let (born, starved) = (cpu.births, cpu.starved);
