@@ -1087,7 +1087,7 @@ impl Engine {
             // then the smell, on the trail and scent the first tick reads.
             let mut pre = Vec::new();
             if nshots > 0 {
-                pre.extend([(SHOTS, nshots.div_ceil(256)), (STRIKE, self.n.div_ceil(256)), (CUT, self.cells.div_ceil(256))]);
+                pre.extend([(SHOTS, nshots.div_ceil(256)), (STRIKE, self.n.div_ceil(256)), (CUT, nshots)]);
             }
             if nunits > 0 {
                 pre.push((SMELL, 1));

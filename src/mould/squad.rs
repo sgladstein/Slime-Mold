@@ -40,6 +40,10 @@ pub const SHOTS_MAX: usize = 256;
 pub const PATH_MAX: usize = 16_384;
 /// The side of the blocks a unit aims at, in cells.
 pub const BIN: usize = 4;
+/// The widest strike, in cells: the GPU clears a shot's trail over the
+/// 15 x 15 box round its hit (one workgroup a shot), so the cost is the
+/// shots', not the world's. Radii above it are cut to it on both sides.
+pub const R_MAX: f32 = 7.0;
 /// The drawn thickness that reads as slime (the graphics thread, 2026-11-11
 /// 18:57Z: "on screen a cell reads as slime from about 26/255"; a test at
 /// 60/255 let 98 of 120 shots fly through visible slime).
@@ -66,7 +70,8 @@ pub struct UnitIn {
     pub smell: f32,
 }
 
-/// One shot: its line and the radius it strikes at the first slime.
+/// One shot: its line and the radius it strikes at the first slime (at
+/// most `R_MAX`).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ShotIn {
     pub from: (f32, f32),
@@ -182,7 +187,7 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32) -> Vec<ShotOut> {
             NONE
         })
         .collect();
-    let r2s: Vec<u32> = shots.iter().map(|s| r2(s.r)).collect();
+    let r2s: Vec<u32> = shots.iter().map(|s| r2(s.r.min(R_MAX))).collect();
     let inside = |c: usize, q: usize| {
         let hit = hits[q];
         if hit == NONE {
@@ -203,9 +208,12 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32) -> Vec<ShotOut> {
             killed[q] += 1;
         }
     }
-    for c in 0..w * h {
-        if (0..shots.len()).any(|q| inside(c, q)) {
-            d.trail[c] = 0.0;
+    for q in 0..shots.len() {
+        if hits[q] != NONE {
+            let (hx, hy) = ((hits[q] as usize % w) as i64, (hits[q] as usize / w) as i64);
+            for c in disc(w, h, hx, hy, r2s[q]) {
+                d.trail[c] = 0.0;
+            }
         }
     }
     hits.iter()
@@ -345,7 +353,7 @@ pub fn pack(w: usize, h: usize, f: &Frame) -> (Vec<u32>, u32, u32) {
     for (q, s) in shots.iter().enumerate() {
         let p = path(w, h, s.from, s.to);
         let p = &p[..p.len().min(PATH_MAX - cells.len())];
-        b[S_IN + 4 * q..S_IN + 4 * q + 3].copy_from_slice(&[cells.len() as u32, p.len() as u32, r2(s.r)]);
+        b[S_IN + 4 * q..S_IN + 4 * q + 3].copy_from_slice(&[cells.len() as u32, p.len() as u32, r2(s.r.min(R_MAX))]);
         cells.extend_from_slice(p);
     }
     for q in 0..SHOTS_MAX {

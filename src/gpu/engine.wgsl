@@ -1194,17 +1194,20 @@ fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 }
 
-// A strike clears the trail on its cells.
+// A strike clears the trail on its cells: a workgroup a shot, a thread a
+// cell of the 15 x 15 box round its hit (radius 7 at most, `squad::R_MAX`),
+// so the pass costs the shots, not the world. Two shots clearing one cell
+// write the same 0.
 @compute @workgroup_size(256)
-fn cut(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let i = gid.x;
-    if (i >= P.w * P.h) { return; }
-    for (var q = 0u; q < P.nshots; q++) {
-        if (struck(i, q)) {
-            trail_in[i] = 0.0;
-            return;
-        }
-    }
+fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
+    let q = wid.x;
+    let hit = SQ.sout[q].hit;
+    if (q >= P.nshots || hit == NONE || li >= 225u) { return; }
+    let x = i32(hit % P.w) + i32(li % 15u) - 7;
+    let y = i32(hit / P.w) + i32(li / 15u) - 7;
+    if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h)) { return; }
+    let i = u32(y) * P.w + u32(x);
+    if (struck(i, q)) { trail_in[i] = 0.0; }
 }
 
 // Each unit's smell on the agar cells of its disc. One thread, units in
