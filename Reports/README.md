@@ -214,7 +214,8 @@ move.
   move and fight.** Owner, overnight: "Keep exploring". New `BigParams` options, off by default: grazing (a regrowing
   grass field walkers eat and lean toward) and species conversion. Grazing droplets crawl 6.5-7.6 cells per 2 s
   against 0.7 (8 of 8, p 0.008) and stay bodies; two species roam among each other as one-colour cells. Conversion
-  alone moved no border on even dishes (seed 1). Page, script and raw output in
+  alone moved no border on even dishes (seed 1); a 1.5x louder trail wins early and loses walkers by 16 s (6 of 8,
+  p 0.29). Page, scripts and raw output in
   [`creatures-2026-11-11/`](creatures-2026-11-11/).
 
 ## Added with the move (2026-11-10)
