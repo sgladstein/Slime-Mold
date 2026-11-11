@@ -22,13 +22,6 @@ Q a stand-in squad, M the minimap. Today's dish at zoom 1 comes out
 pixel-identical to the engine's own frame. On the GTX 1070 the view costs
 0.32-0.42 ms a frame at 1920 x 1080. Not yet played by the owner.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Through the camera at zoom 1 against the engine's frame, 1024 x 640 dish | 0 of 573,440 pixels differ | 1 | - | [report, *Checked*](../../Reports/world-camera-2026-11-11.md) |
-| View pass, 1920 x 1080, 49 marks, GTX 1070, zoom 1 / 4 / fit 0.84 | 0.333 / 0.315 / 0.415 ms | 1 | - | [report, *On the GTX 1070*](../../Reports/world-camera-2026-11-11.md) |
-
 ## Owner's word
 
 - 2026-11-11 14:06Z: "We should do a camera UI thread too as you suggested".
