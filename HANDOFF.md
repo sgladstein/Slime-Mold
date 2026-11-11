@@ -16,160 +16,42 @@ reports ([`Reports/README.md`](Reports/README.md) indexes them all).
 
 ## Where the game stands
 
-**Where the work is now (2026-11-11):** RTS-type games, and above all
-**Larder World** ([page](wiki/rts/shooter.md),
-[roadmap](Reports/larder-world-roadmap-2026-11-11.md)): a squad against
-several mould species in a persistent world on the GPU big dish, with
-energy crystals that drain (owner, 11-11 14:06Z: "Put everything into the
-world version"). The owner ruled the dishes below unlikely to be the true
-games (11-10 20:55Z), so they are kept and documented but not tuned further.
+One line per subject; the page holds the detail. The owner's rulings:
+[`wiki/decisions.md`](wiki/decisions.md).
 
-`cargo run --release --bin mould` is the dish game. Everything on screen is the
-simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
-**Neither new dish has been played by the owner's hand yet.**
+**Live work: Larder World.** A squad against several mould species in a
+persistent world on the GPU big dish, with energy crystals that drain
+(owner, 11-11 14:06Z: "Put everything into the world version").
 
-- [Keep It Alive](wiki/dishes/keep-it-alive.md): the endless dish works, but
-  which of two humps a game lands in (dead by about 5:00, or past 7:20) is
-  luck so far: traced, it turns on whether the mould sleeps near the next
-  landing, which shows only 5 s ahead.
-- [The Wild One](wiki/dishes/the-wild-one.md): scored by your share of the
-  food eaten; the first star is the opening salt wall, the rest is aim.
-- [The lesson and the three puzzle dishes](wiki/dishes/puzzle-dishes.md)
-  (Behind the Wall, Beat the Ruler, Running Dry): pass their bar at 45
-  degrees; review 1 would keep them as a side pack.
-- Tools: [oats](wiki/tools/oats.md) lead, [the lamp](wiki/tools/lamp.md)
-  pushes and dries, [salt](wiki/tools/salt.md) walls off (it is The Wild
-  One's first star), [the knife](wiki/tools/knife.md) moves nothing in The
-  Wild One; [water and sleep](wiki/model/water-and-sleep.md) carry mould
-  through famine in Keep It Alive.
-- [The simulation look](wiki/looks/simulation-look.md) is the default, F7
-  the old tube look.
-- [Sensor angle and reach](wiki/model/sensors.md): 45 degrees by default,
-  22.5 on Keep It Alive and The Wild One, reach 9. Food flow is off; no
-  page yet.
-- Scale: [the mould at scale](wiki/model/scale.md). The dish holds a few dozen
-  loops where Jenson's GPU version holds hundreds. GPU plan phase 1 is under
-  way on the CPU: a late census is safe; fixed-point trail and scent change
-  play (the fields stay floats); moving all walkers at once cuts fights
-  where two moulds meet. Later gates use engine measures, not today's dishes.
-  The scaling rule is chosen (today's numbers in fine cells, food smelled at
-  today's reach) and the big dish runs offline on the CPU (`mould::big`):
-  at 1024 x 640, 32,000 walkers make about 60 loops and 100,000 about 90-160,
-  against today's 3 ([page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs)).
-  The owner picked 100,000 walkers (22:32Z). On the GTX 1070 (11-11) a frame
-  of two ticks takes 1.37 ms at 100,000 walkers and 3.52 ms at 1,000,000,
-  against an 8 ms bar, and the GPU dish matches the CPU's. Phase 3 is
-  built: the GPU sandbox, `cargo run --release --bin mouldgpu`, with
-  every Jenson-comparison option as a control (owner, 11-11 00:06Z), and
-  the outside rules and creatures (species, explorers, droplets, grazing)
-  as controls too, twin-tested in CI
-  ([report](Reports/gpu-sandbox-2026-11-11.md)). Phase 4 has begun with
-  Larder World's W0, [growth and starving](wiki/model/growth.md): each
-  walker eats, divides and starves, on the CPU and the GPU (matched in CI,
-  0.16 ms a frame on the 1070 at 100,000); a fed mould grows and a starved
-  one dies on 8 of 8 seeds, its size nearly linear in its food. In the
-  sandbox: a GROWTH page, Ctrl+3 and 4.
-- Mould tiers for the Larder ladder: [the life cycle](wiki/model/life-cycle.md)
-  (CPU big dish, off by default). Spores, dormancy and an alarm the
-  player's strike lays give a Sporer (starve it: struck, it scatters), a
-  Sleeper (bait it: after a wake it is deaf for 5 s) and a Swarmer (it
-  walks into a kill zone), each 8 of 8 paired seeds against its control.
-  A mould that flees attack did not split; a migrating tier is open.
-- How it is judged: [the census](wiki/method/census.md).
-- [The field skirmish](wiki/rts/skirmish.md): version 1 (habits, salt, the
-  lamp) is playable (https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw) and
-  set aside after the owner played it. Version 2, the budget skirmish (a
-  tithe spent on beacons, spores, rallies and habits), is playable
-  (https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS) against any scripted
-  plan. One plan, soft, beat the other eight in 127 of 128 games
-  (https://claude.ai/artifact/33Voj1TERnjNSZfLwv3zRG), and the counterplay
-  rules of round 3 (a rally, a rising spore price) did not stop it, nor did
-  changes to the model (rounds 4-6), nor food after 1:00 (round 7b: the
-  side ahead at 1:00 still wins 80-85%). A strike counted down in view, with
-  a Fortify that kills attackers in its ring, does dethrone soft, but the
-  plan that strikes and fortifies (brace) then wins every pairing. The page
-  opens on Strike and Fortify. Next: Fortify's price and the economy
-  sketch's exploiter search against brace.
-- [The world camera and UI](wiki/rts/world-camera.md): pan, zoom, a
-  minimap, GPU marks and Larder's controls over a world bigger than the
-  screen, with no game rules; the GPU engine is a library (`slime_mould::gpu`)
-  for the Larder world to build on. Try it in the sandbox with W (a 2048 x
-  1280 world), Q (a stand-in squad) and M; the view costs 0.3-0.4 ms a
-  frame at 1920 x 1080 on the 1070
-  ([page](https://claude.ai/artifact/X4b5Nmwgkd11paVF8RS1mj)).
-- [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
-  (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
-  for a neutral host and keep the ground they reach. Version 3 (call, seed,
-  pinch) puts the mould at the centre; its three plans form a ladder (Trunk
-  over Web over Raider) and the leader at 1:30 keeps the lead in 26-32 of
-  32 games. No one has played version 3 by hand yet.
+- [Larder World](wiki/world/larder.md): phases W0-W5; W1a's crystals, terrain and walls are on the CPU big dish; W0 [growth and starving](wiki/model/growth.md) is built on the CPU and the GPU (PR #73, after #63); next W1b, those fields on the GPU, then Larder in the world ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)).
+- [The mould tiers](wiki/world/mould-tiers.md): the difficulty ladder; Sporer, Sleeper and Swarmer built ([the life cycle](wiki/model/life-cycle.md)).
+- [The Larder player AI](wiki/world/player-ai.md): plays through the player's commands; `cargo run --release --bin larder -- 17 ai=lure`.
+- [The world camera and UI](wiki/rts/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls over a world bigger than the screen; the GPU engine is a library (`slime_mould::gpu`).
+- [The mould at scale](wiki/model/scale.md): GPU phases 1-3 done; phase 4 is W0. [The GPU sandbox](wiki/model/gpu-sandbox.md): `cargo run --release --bin mouldgpu`. [Outside looks and creature rules](wiki/model/outside-looks.md): species, droplets, trunks, contagion.
+- [The field skirmish](wiki/rts/skirmish.md) and [Two Fevers](wiki/rts/two-fevers.md): playable RTS demos where one strategy still wins; [the RTS directions](wiki/rts/directions.md).
+- How work is judged: [the census](wiki/method/census.md).
+
+**Paused: the dish game** (`cargo run --release --bin mould`; owner, 11-10
+20:55Z: unlikely to be the true games). Not tuned as a side effect of other
+work; neither new dish has been played by the owner's hand.
+
+- [Keep It Alive](wiki/dishes/keep-it-alive.md), [The Wild One](wiki/dishes/the-wild-one.md), [the lesson and puzzle dishes](wiki/dishes/puzzle-dishes.md).
+- Tools: [oats](wiki/tools/oats.md), [the lamp](wiki/tools/lamp.md), [salt](wiki/tools/salt.md), [the knife](wiki/tools/knife.md); [water and sleep](wiki/model/water-and-sleep.md); [sensor angle and reach](wiki/model/sensors.md).
+- [The simulation look](wiki/looks/simulation-look.md) (default; F7 the tube look) and [sound](wiki/looks/sound.md).
 
 ## Decisions the owner has not made
 
-Ask each again; none has an answer to assume.
+Ask each again; none has an answer to assume. Numbers are kept so older
+references stay right.
 
-1. ~~What to fix first after review 2.~~ **Decided** 11-10 18:56Z (card:
-   "Trace it now"); the trace is done
-   ([`Reports/mould-keep-alive-luck-2026-11-10.md`](Reports/mould-keep-alive-luck-2026-11-10.md)),
-   see [`wiki/decisions.md`](wiki/decisions.md). The 20 s landing preview it
-   proposes changes the game and is not yet agreed. Kept as a numbered line
-   so the later numbers stay the same.
-2. **Grains or glints** for walkers in the tube look. Only matters while F7
-   is kept. [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md)
-3. **Retire the tube look (F7)?** The owner chose to keep a key back; ask
-   before deleting. Same report.
-4. **Food flow:** on or off. It is real, off by default, and has no verdict
-   from the owner's hand. [`Reports/mould-probe-2026-11-07.md`](Reports/mould-probe-2026-11-07.md), "Food that flows"
-5. **The Organ and the Wanderer:** keep, change or drop. Neither has a
-   verdict.
-6. **The GPU plan** ([`Reports/gpu-plan-2026-11-10.md`](Reports/gpu-plan-2026-11-10.md),
-   [page](wiki/model/scale.md)), now started (phase 1): integer or floats is
-   measured: fixed-point trail and scent changed play, so the recommendation
-   is now floats for the fields (integer positions still possible); upload
-   Jones 2011 before phase 4; hold the Pixel_Physics multi-core renderer port
-   until the phase 2 gate. The owner picked the target at phase 2's gate
-   (22:32Z): 100,000 walkers on 1024 x 640. The GTX 1070 timing passed
-   (11-11): 1.37 ms a frame of two ticks at 100,000 walkers.
-7. **Bloomfront, the RTS** ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md),
-   *Risks and open questions*): should it wait for the queued work or take
-   over The Wild One's next steps (its Stage 0 answers the same mid-game
-   question); is a fog of war allowed if it is drawn from a held quantity;
-   two keepers, or three-to-four. Since the brainstorm
-   ([`brainstorm/`](Reports/rts-design-2026-11-10/brainstorm/README.md)) and
-   its [red team](Reports/rts-design-2026-11-10/red-team/README.md): which
-   direction to probe first. The red team recommends a paired-clone verb
-   census (one verb in one of two cloned dishes, 16 seeds) before Bloomfront's
-   Stage 0, whose gates would pass without testing the opening; then one
-   contagion strain on the CPU. The census has since run, with a retest on a
-   23-pile field after the owner said 7 piles limit the options
-   ([`field/`](Reports/rts-design-2026-11-10/field/README.md)): a salt line
-   across the rival's road passes on the field, only the lamp moves share on
-   The Wild One, Taut's pull wins on the field, and the pattern counters form
-   a cycle on one field layout of two (a later sweep: 1 of 10). A salt wall
-   can overturn a 60 s lead on that layout. The work is now two playable
-   demos (owner, 20:33Z and the 20:42Z card): the field skirmish and Two
-   Fevers (above). The food store sits at a median of 0, so any "pay
-   from the store" rule needs its own currency first. Page:
-   [the RTS directions](wiki/rts/directions.md).
-
-8. **Larder, the mould-as-enemy shooter** ([`Reports/mould-shooter-2026-11-11.md`](Reports/mould-shooter-2026-11-11.md),
-   [page](wiki/rts/shooter.md)). Owner chose (11-11 00:30Z) a squad, solo,
-   tests first. After a snip fix, a ring of fire held from the start keeps
-   the mould off the larder (0 stolen, 16/16) and is now the dominant play.
-   Priced (shots cost food, larder runs dry, slowed fronts), ring-forever
-   never wins but ring-then-mow tops every seed: a ladder. M2's mould
-   answers kept it a ladder; M3's soldiers firing from range loosened it (no
-   plan best on 13+ of 16). On 11-11 14:06Z the owner moved Larder into
-   Larder World (see the top of this page); the roadmap's open questions
-   (world size, how a world ends, allies or rivals, fog of war, what carries
-   between worlds) are listed in
-   [its report](Reports/larder-world-roadmap-2026-11-11.md).
-
-9. **The Larder player AI** ([`Reports/larder-ai-2026-11-11.md`](Reports/larder-ai-2026-11-11.md),
-   [page](wiki/rts/player-ai.md)). Plays the soldiers through the player's own
-   commands (every round a replay), sees what a player sees, one brain per
-   side; five styles. Watch it: `cargo run --release --bin larder -- 17 ai=lure`.
-   Built on the CPU field as a harness to port to the Larder world.
+1. ~~What to fix first after review 2.~~ Decided 11-10 18:56Z ("Trace it now"); the 20 s landing preview it proposes is not agreed.
+2. **Grains or glints** for walkers in the tube look (only while F7 is kept). [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md)
+3. **Retire the tube look (F7)?** Ask before deleting. Same report.
+4. **Food flow:** on or off; off by default, no verdict. [`Reports/mould-probe-2026-11-07.md`](Reports/mould-probe-2026-11-07.md), "Food that flows"
+5. **The Organ and the Wanderer:** keep, change or drop.
+6. **The GPU plan:** upload Jones 2011 before phase 4 (W0); hold the Pixel_Physics multi-core renderer port. ([page](wiki/model/scale.md))
+7. **Bloomfront's open questions** (fog of war from a held quantity; two keepers or three-to-four), now folded into Larder World's. ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md))
+8. **Larder World's open questions:** world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds. ([roadmap](Reports/larder-world-roadmap-2026-11-11.md))
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
