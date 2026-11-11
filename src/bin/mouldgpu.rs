@@ -1801,27 +1801,41 @@ fn view_shot(device: &wgpu::Device, queue: &wgpu::Queue, e: &Engine, screen: (u3
     }
     let mut cp = CanvasPass::new(device, queue);
     cp.upload(&mut canvas);
-    let mut times = Vec::new();
-    let qs = timestamps.then(|| device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("view"), ty: wgpu::QueryType::Timestamp, count: 2 }));
-    let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view stamps"), size: 16, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+    // The view and the UI timed apart (stamps 0-1 and 2-3), and the UI's
+    // CPU side (binning and upload, every frame in the game) on the clock.
+    let (mut times, mut ui_times, mut cpu_times) = (Vec::new(), Vec::new(), Vec::new());
+    let qs = timestamps.then(|| device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("view"), ty: wgpu::QueryType::Timestamp, count: 4 }));
+    let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view stamps"), size: 32, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
     for _ in 0..21 {
+        let t0 = Instant::now();
+        cp.upload(&mut canvas);
+        cpu_times.push(t0.elapsed().as_secs_f64() * 1e3);
         let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-        view.record(&mut enc, &cam, qs.as_ref().map(|q| (q, Some(0), None)));
-        cp.record_timed(&mut enc, &view.out, view.stride, qs.as_ref().map(|q| (q, None, Some(1))));
+        view.record(&mut enc, &cam, qs.as_ref().map(|q| (q, Some(0), Some(1))));
+        cp.record_timed(&mut enc, &view.out, view.stride, qs.as_ref().map(|q| (q, Some(2), Some(3))));
         if let Some(q) = &qs {
-            enc.resolve_query_set(q, 0..2, &resolve, 0);
+            enc.resolve_query_set(q, 0..4, &resolve, 0);
         }
         queue.submit([enc.finish()]);
         if qs.is_some() {
             let t: Vec<u64> = read_back(device, queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
-            times.push(t[1].saturating_sub(t[0]) as f64 * queue.get_timestamp_period() as f64 / 1e6);
+            let period = queue.get_timestamp_period() as f64 / 1e6;
+            times.push(t[1].saturating_sub(t[0]) as f64 * period);
+            ui_times.push(t[3].saturating_sub(t[2]) as f64 * period);
         }
     }
-    times.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let median = |v: &mut Vec<f64>| {
+        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        v.get(v.len() / 2).copied()
+    };
     let path = format!("{}/{}-view.png", look.dir, look.tag);
     view.picture().save(&path).unwrap();
-    let ms = times.get(times.len() / 2).map_or("no timestamps".to_string(), |m| format!("GPU {m:.3} ms"));
-    println!("view {}x{} at zoom {:.2} on ({cx:.0}, {cy:.0}), {} marks, {} UI shapes: {ms} for the view and the UI (median of {}); wrote {path}", screen.0, screen.1, cam.zoom, marks.len(), canvas.len(), times.len());
+    let ms = match (median(&mut times), median(&mut ui_times)) {
+        (Some(v), Some(u)) => format!("GPU {v:.3} ms the view, {u:.3} ms the UI"),
+        _ => "no timestamps".to_string(),
+    };
+    let cpu = median(&mut cpu_times).unwrap_or(0.0);
+    println!("view {}x{} at zoom {:.2} on ({cx:.0}, {cy:.0}), {} marks, {} UI shapes: {ms}, CPU {cpu:.3} ms binning and uploading the UI (medians of 21); wrote {path}", screen.0, screen.1, cam.zoom, marks.len(), canvas.len());
 }
 
 /// The squad and its UI in one of the page's states (`ui=STATE`). The UI
@@ -1906,7 +1920,18 @@ fn ui_state(state: &str, sq: &mut Squad, k: &mut Controls, cam: &mut Camera, vie
         "help" => hud.show_help(),
         _ => {}
     }
-    draw(sq, k, cam, canvas, hud, marks, state == "menu" || state == "help");
+    let paused = state == "menu" || state == "help";
+    draw(sq, k, cam, canvas, hud, marks, paused);
+    // The CPU cost of a frame's model and HUD layout, which the game pays
+    // every frame (median of 21; the last draw is the one shown).
+    let mut cpu = Vec::new();
+    for _ in 0..21 {
+        let t0 = Instant::now();
+        draw(sq, k, cam, canvas, hud, marks, paused);
+        cpu.push(t0.elapsed().as_secs_f64() * 1e3);
+    }
+    cpu.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    println!("ui {state}: CPU {:.3} ms the model and the HUD's layout (median of 21)", cpu[10]);
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
