@@ -63,6 +63,17 @@
 //! ever sick, the sick front (90th percentile distance of sick walkers from
 //! the centre, dish cells) and the share of walkers beyond `cut_x` ever
 //! sick.
+//!
+//! Outside rules (2026-11-11, `Reports/outside-rules-2026-11-11.md`):
+//! `sensor_r=` (Lague's area sensors), `species= species_avoid= species_zones=`
+//! (Lague's species; zones start each in its own band), `chance_exp=` (MCPM's chance-weighted turn), and
+//! `species_cycle= species_next= species_prev=` (Primordia's cyclic
+//! species), `explore_steps= explore_deposit=` (explorers that turn
+//! networkers), `size_spread=` (per-walker size), `blocked_keep=
+//! blocked_reset=` (Jones and Adamatzky's blocked walkers), and
+//! `style=species` (each species in its own colour). With species the
+//! report adds `pure` (share of tube cells where one species lays 80% or
+//! more of the trail) and each species' share of all trail.
 
 use std::time::Instant;
 
@@ -120,10 +131,13 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
             }
             c
         }
-        "soft" | "sick" => d.trail.clone(),
+        "soft" | "sick" | "species" => d.trail.clone(),
         _ => panic!("style={style}: amber, grey, count, soft or sick"),
     };
-    let soft = style == "soft" || style == "sick";
+    if style == "species" && !d.species_trail.is_empty() {
+        return species_picture(d, down);
+    }
+    let soft = style == "soft" || style == "sick" || style == "species";
     // The soft curve's reference: the trail's 99.9th percentile over the agar.
     let refv = if soft { pct(&field, 0.999) } else { 1.0 };
     // Germ on a fixed scale: full red at four times the catch level.
@@ -157,6 +171,35 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
             }
             let g = (255.0 * (1.0 - (-v / knee).exp())).clamp(0.0, 255.0) as u8;
             img.put_pixel(px, py, image::Rgba([g, g, g, 255]));
+        }
+    }
+    img
+}
+
+/// Each species' trail in its own colour (amber, teal, violet, green), on
+/// the soft curve over the total trail's 99.9th percentile; colours add.
+fn species_picture(d: &BigDish, down: usize) -> image::RgbaImage {
+    const COL: [[f32; 3]; 4] = [[255.0, 170.0, 60.0], [60.0, 200.0, 220.0], [190.0, 110.0, 255.0], [120.0, 230.0, 90.0]];
+    let refv = pct(&d.trail, 0.999).max(1e-6);
+    let down = down.max(1);
+    let (iw, ih) = ((d.w / down) as u32, (d.h / down) as u32);
+    let mut img = image::RgbaImage::new(iw, ih);
+    for py in 0..ih {
+        for px in 0..iw {
+            let mut rgb = [0.0f32; 3];
+            for (sp, f) in d.species_trail.iter().enumerate() {
+                let mut v = 0.0f32;
+                for dy in 0..down {
+                    for dx in 0..down {
+                        v = v.max(f[(py as usize * down + dy) * d.w + px as usize * down + dx]);
+                    }
+                }
+                let g = (v / refv).clamp(0.0, 1.0).powf(0.6);
+                for c in 0..3 {
+                    rgb[c] += COL[sp % 4][c] * g;
+                }
+            }
+            img.put_pixel(px, py, image::Rgba([rgb[0].min(255.0) as u8, rgb[1].min(255.0) as u8, rgb[2].min(255.0) as u8, 255]));
         }
     }
     img
@@ -268,6 +311,19 @@ fn main() {
             "sick_reach" => p.sick_reach = f(),
             "sick_turn" => p.sick_turn = f(),
             "sick_seed_r" => p.sick_seed_r = f(),
+            "sensor_r" => p.sensor_r = f() as u8,
+            "species" => p.species = f() as u8,
+            "species_avoid" => p.species_avoid = f(),
+            "species_zones" => p.species_zones = f() != 0.0,
+            "chance_exp" => p.chance_exp = f(),
+            "species_cycle" => p.species_cycle = f() != 0.0,
+            "species_next" => p.species_next = f(),
+            "species_prev" => p.species_prev = f(),
+            "explore_steps" => p.explore_steps = f() as u16,
+            "explore_deposit" => p.explore_deposit = f(),
+            "size_spread" => p.size_spread = f(),
+            "blocked_keep" => p.blocked_keep = f() != 0.0,
+            "blocked_reset" => p.blocked_reset = f(),
             _ => panic!("unknown key {k}"),
         }
     }
@@ -288,6 +344,7 @@ fn main() {
         let to_tick = |t: f32| if t < 0.0 { u64::MAX } else { (t * STEPS_PER_SECOND as f32).round() as u64 };
         let (infect_tick, cut_tick) = (to_tick(infect), to_tick(cut));
         let mut ever = vec![false; d.walkers.len()];
+        let mut prev_lead: Vec<u8> = Vec::new();
         let mut stills: Vec<u64> = at.iter().map(|s| (s * STEPS_PER_SECOND as f32).round() as u64).collect();
         stills.sort_unstable();
         while d.ticks < ticks {
@@ -363,6 +420,76 @@ fn main() {
                     m.strays,
                     spent * 1e3 / d.ticks as f64
                 );
+                {
+                    // Trunk contrast: the 99th percentile of trail over its
+                    // median, among cells over the tube cut.
+                    let mut tube: Vec<f32> = d.trail.iter().copied().filter(|&v| v > d.p.tube).collect();
+                    if tube.len() > 10 {
+                        let n = tube.len();
+                        let p99 = *tube.select_nth_unstable_by(n * 99 / 100, |a, b| a.total_cmp(b)).1;
+                        let p50 = *tube.select_nth_unstable_by(n / 2, |a, b| a.total_cmp(b)).1;
+                        println!("seed {seed} {name} t {:5.1}s  contrast {:.2}", m.seconds, p99 / p50.max(1e-9));
+                    }
+                }
+                if !d.species_trail.is_empty() {
+                    // Segregation: of the cells with total trail over the
+                    // tube cut, the share where one species lays at least
+                    // 80% of it; and each species' share of all trail.
+                    let (mut tube, mut pure) = (0usize, 0usize);
+                    let mut tot = vec![0.0f64; d.species_trail.len()];
+                    for i in 0..d.w * d.h {
+                        for (sp, f) in d.species_trail.iter().enumerate() {
+                            tot[sp] += f[i] as f64;
+                        }
+                        if d.trail[i] > d.p.tube {
+                            tube += 1;
+                            let top = d.species_trail.iter().map(|f| f[i]).fold(0.0f32, f32::max);
+                            if top >= 0.8 * d.trail[i] {
+                                pure += 1;
+                            }
+                        }
+                    }
+                    let all: f64 = tot.iter().sum();
+                    let shares: Vec<String> = tot.iter().map(|v| format!("{:.3}", v / all.max(1e-9))).collect();
+                    // Species 0's trail in the left half (territories), and
+                    // the share of tube cells whose leading species changed
+                    // since the last report (motion).
+                    let left: f64 = (0..d.w * d.h).filter(|i| i % d.w < d.w / 2).map(|i| d.species_trail[0][i] as f64).sum();
+                    let lead: Vec<u8> = (0..d.w * d.h)
+                        .map(|i| {
+                            if d.trail[i] <= d.p.tube {
+                                return u8::MAX;
+                            }
+                            let mut best = 0;
+                            for sp in 1..d.species_trail.len() {
+                                if d.species_trail[sp][i] > d.species_trail[best][i] {
+                                    best = sp;
+                                }
+                            }
+                            best as u8
+                        })
+                        .collect();
+                    let (mut both, mut changed) = (0usize, 0usize);
+                    if prev_lead.len() == lead.len() {
+                        for (a, b) in lead.iter().zip(&prev_lead) {
+                            if *a != u8::MAX && *b != u8::MAX {
+                                both += 1;
+                                if a != b {
+                                    changed += 1;
+                                }
+                            }
+                        }
+                    }
+                    prev_lead = lead;
+                    println!(
+                        "seed {seed} {name} t {:5.1}s  pure {:.3}  shares {}  left0 {:.3}  changed {:.3}",
+                        m.seconds,
+                        pure as f32 / tube.max(1) as f32,
+                        shares.join(","),
+                        left / tot[0].max(1e-9),
+                        changed as f32 / both.max(1) as f32
+                    );
+                }
                 if !d.sick.is_empty() {
                     let s = d.p.scale as f32;
                     let (cx, cy) = (W as f32 / 2.0, H as f32 / 2.0);
