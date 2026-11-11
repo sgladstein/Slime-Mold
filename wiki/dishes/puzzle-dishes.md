@@ -1,7 +1,7 @@
 ---
 title: The lesson and the three puzzle dishes
 kind: dish
-status: current
+status: paused
 updated: 2026-11-10
 sources: [Reports/mould-probe-2026-11-07.md, Reports/mould-review-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md]
 code: [Lesson, Lesson::dish_with, Dish::best_join, Dish::storm_at, Params::stray_reach, Params::stray_grace, Params::oats_grace, STRAY_REACH, Route]
@@ -38,17 +38,6 @@ stray only starts eating within 24 cells of fed mould (`STRAY_REACH`), which
 is what stops doing nothing joining by drift. Keep It Alive grew out of
 Running Dry ([Keep It Alive](keep-it-alive.md)).
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Ship bar: doing nothing / random / intended, stars | Wall 0 / one 1 / 3s; Ruler 0 / 0 / 3s; Dry 0 / seed 7 only 3 / 3s | 8 | | [probe, *Review 2 fixes*](../../Reports/mould-probe-2026-11-07.md) |
-| Intended hand's result | Wall joined 0:10-0:11; Ruler 0.87-0.92x; Dry 354-411 alive | 8 | | [probe, *Review 1 fixes*](../../Reports/mould-probe-2026-11-07.md) |
-| Running Dry, doing nothing died at, 45 vs 22.5 degrees | 1:02-1:24 vs 1:44-1:50 or the bell | 8 | later at 22.5 on 8 of 8, p 0.008 | [review 1, *What playing showed*](../../Reports/mould-review-2026-11-10.md) |
-| Running Dry, random alive at the bell, 45 vs 22.5 | 1 of 8 vs 6 of 8 | 8 | 5-0, 3 level, p 0.06 | same |
-| Planned hand at sensor reach 9 / 8 / 7 / 6 | Wall 33333333 / 33333333 / 13333323 / 20031231; Ruler 33333333 / 30330300 / 00000000 / 00000000 | 8 | | [wild-one, *Finer tubes*](../../Reports/mould-wild-one-2026-11-10.md) |
-| Lesson, scripted hand | all six steps, ends at 51 s, 2 stars | 1 | | [probe, *What the owner's play found*](../../Reports/mould-probe-2026-11-07.md) |
-| A slow lesson before the refill | 0 of 400 walkers at 200 s left alone | 1 | test `a_slow_lesson_does_not_starve` | same |
 
 ## Owner's word
 

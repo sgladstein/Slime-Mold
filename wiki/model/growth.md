@@ -26,7 +26,10 @@ CPU to the bit in a one-tick twin test in CI, and on the GTX 1070 it adds
 0.16 ms to a 1.82 ms frame at 100,000 walkers. In the GPU sandbox it is
 the GROWTH panel page, with a fed and a starving mould on Ctrl+3 and 4.
 
-On Larder's crystals (one seed, a scratch merge with PR #64): with
+With Larder's crystals on (main since PR #64), a walker's crystal take
+(`took`) is food like its grass share, empty slots take nothing, and there
+is no grass unless `graze_weight` asks for it (`growth_eats_crystals`).
+On those crystals (one seed, first run on a scratch merge): with
 crystals that refill, a net of tubes linking them holds at about 2,000
 walkers; with crystals that run dry, the mould starves by 60 s with 61% of
 the charge left, because it eats only the cells its tubes cross. With
@@ -73,9 +76,6 @@ every crystal by 10 s.
   rise with its charge (the Larder thread's rule).
 - `energy_flow` (scratch, this thread's branch): keep it for the
   cut-a-tube lever? A cut has not been tested.
-- Add Larder's crystal take (`took`) to the energy gain once both are on
-  main.
-- The GTX 1070's cost of the three growth passes.
 
 ## Sources
 

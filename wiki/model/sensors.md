@@ -33,17 +33,6 @@ branch more), but the mould then senses food and oats from less far, so the
 oat trails that solve each dish stop reaching. The thin look belongs in the
 drawing ([the simulation look](../looks/simulation-look.md)).
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Running Dry, doing nothing, 22.5 vs 45 | lived longer at 22.5 | 8 | 8 of 8, p 0.008 | [review 1, *What playing showed*](../../Reports/mould-review-2026-11-10.md) |
-| Running Dry, random alive at the bell, 45 vs 22.5 | 1 of 8 vs 6 of 8 | 8 | 5-0, 3 level, p 0.06 | same |
-| Free dish at 22.5, untouched | joined 6 of 6 by 56 s, 1 star | 1, played | | same |
-| Planned hand, reach 9 / 8 / 7 / 6 | Beat the Ruler 33333333 / 30330300 / 00000000 / 00000000; Behind the Wall 33333333 / 33333333 / 13333323 / 20031231 | 8 | | [wild-one, *Finer tubes*](../../Reports/mould-wild-one-2026-11-10.md) |
-| Keep It Alive, lamp+oats+water hand, reach 6 vs 9 | median 3:41 vs 6:21 | 8 | shorter on 6 of 8 | same |
-| The Wild One, all-tools share, reach 6 vs 9 | 0.49-0.63 vs 0.67-1.00 | 8 | | same |
-| Reach 4 | joined 1 of 6 | 1, played | | [review 1, *Looks*](../../Reports/mould-review-2026-11-10.md) |
 
 ## Owner's word
 

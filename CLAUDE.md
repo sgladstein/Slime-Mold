@@ -12,7 +12,7 @@ only thing every thread reads. A runner thread reads nothing else.
 
 **The wiki** (`wiki/`): a change that adds a report, changes a default
 or records an owner decision updates those pages in the same commit; rules
-in `wiki/README.md`. Run `python3 wiki/lint.py` before committing (CI runs it).
+in `wiki/README.md`. Run `python3 wiki/lint.py --base=origin/main` before committing (CI runs it).
 
 ## What the owner has ruled for this game
 
@@ -82,5 +82,5 @@ in the same change, so the page outlives claude.ai.
 cargo test --release --locked
 cargo clippy --all-targets --release --locked -- -D warnings
 cargo build --release --example mouldprobe   # examples are not rebuilt by `cargo build`; build the one you run
-python3 wiki/lint.py
+python3 wiki/lint.py --base=origin/main
 ```

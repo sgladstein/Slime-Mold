@@ -37,11 +37,6 @@ design for the skirmish (supply lines, points from held ground, Call,
 Fortify and a counted-down Strike), with tests:
 [`skirmish-economy-sketch.md`](../../Reports/rts-research-2026-11-10/skirmish-economy-sketch.md).
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| None: a reading report. The demo figures it uses are on [skirmish.md](skirmish.md) and [two-fevers.md](two-fevers.md) | | | | [report](../../Reports/rts-research-2026-11-10.md) |
 
 ## Owner's word
 

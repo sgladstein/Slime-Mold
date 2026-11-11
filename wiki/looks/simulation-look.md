@@ -27,19 +27,6 @@ held quantity through one fixed ramp, a dot per walker, no fills, outlines
 or binary colour switches on graded quantities. A new mechanic is drawn in
 `field_mould`, not as a new tube-style layer.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Draw time, tube look then this, 45 degrees 40-43 s | 6.72 -> 7.36 ms | 1, 91 frames | | [looks, *The mould drawn straight from the simulation*](../../Reports/mould-looks-2026-11-10.md) |
-| Same, 22.5 degrees 60-63 s | 6.91 -> 7.72 ms | 1, 91 frames | | same |
-| Same, The Wild One 57-60 s | 7.91 -> 7.70 ms | 1, 91 frames | | same |
-| First looks pass (specks, ramp, smoothing, stain) | +2.0 to +2.6 ms a frame | 1 | | [looks, *The independent review*](../../Reports/mould-looks-2026-11-10.md) |
-| Water and sleep drawn, whole Keep It Alive game | about +0.35 ms | 1, 15,999 frames | | [looks, *Water and sleeping mould drawn*](../../Reports/mould-looks-2026-11-10.md) |
-| Walkers per tube cell, plan hand | 0.21-0.33, none off the tube | 1 | | [looks, *Numbers*](../../Reports/mould-looks-2026-11-10.md) |
-| Stain at 22.5 degrees by 60 s, before it faded | 39% of the dish | 1 | | same |
-
-The window's frame is 16.7 ms; the simulation takes 1.4-3.3 ms of it.
 
 ## Owner's word
 

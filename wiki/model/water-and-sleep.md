@@ -1,7 +1,7 @@
 ---
 title: Water and sleep
 kind: mechanism
-status: current
+status: paused
 updated: 2026-11-10
 sources: [Reports/mould-keep-alive-2026-11-10.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-looks-2026-11-10.md]
 code: [Params::wet, Dish::wet, Params::crust_life, Params::water_r, Tool::Water, WATER_STOCK, WATER_REGROW_SECONDS]
@@ -25,19 +25,6 @@ makes the tools work on each other: bake mould asleep through a famine with
 the [lamp](../tools/lamp.md), wake it with water by the next pile. A wet
 dish nobody lights behaves step for step like the dry one.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Wet vs dry, doing nothing and oat-saver | identical lives | 16 | 16 of 16 the same | [keep-alive, *Water and sleep*](../../Reports/mould-keep-alive-2026-11-10.md) |
-| Water hand vs oat-saver | 2:51-10:42 vs 2:47-5:26 | 16 | 15-1, p 0.0005 | [keep-alive, *Numbers*](../../Reports/mould-keep-alive-2026-11-10.md) |
-| Random, wet vs dry | wet longer on 7 | 16 | p 0.80 | same |
-| Bake but never water vs oat-saver | a few seconds shorter | 8 | 1-7, p 0.07 | [review 2](../../Reports/mould-review-2-2026-11-10.md) |
-
-Water does not help a random hand: its lamp puts mould to sleep and nothing
-wakes it. The gain is the waking, not the baking. Guards:
-`a_wet_dish_left_alone_is_the_dry_dish` and
-`the_lamp_puts_mould_to_sleep_and_water_wakes_it`.
 
 ## Owner's word
 

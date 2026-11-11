@@ -7,6 +7,9 @@ Keep this file under 150 lines; lint checks it.
 
 ## Dishes
 
+Paused (owner, 2026-11-10 20:55Z): not tuned as a side effect of other
+work; a thread working on one directly may change it.
+
 - [Keep It Alive](dishes/keep-it-alive.md): the endless dish; works, but which of two humps a game lands in is luck so far.
 - [The Wild One](dishes/the-wild-one.md): a rival mould; scored by share of food eaten; first star is the opening, the rest is aim.
 - [The lesson and the three puzzle dishes](dishes/puzzle-dishes.md): Behind the Wall, Beat the Ruler, Running Dry; pass their bar at 45 degrees.
