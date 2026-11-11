@@ -20,13 +20,6 @@ tool, join, pile arrival, storm and ending sounds when its tally moves
 built*). The listener only reads the dish, so sound on and off play the same
 game bit for bit. Levels are first guesses; the owner has not listened yet.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| dish hash, listened every frame vs not | equal | free dish 4, 1,800 frames, one test | n/a | [report, *Measured*](../../Reports/mould-sound-2026-11-10.md) |
-| listener cost | mean 0.6-1.6 us a frame, worst 194 us, against a 5.12 ms frame | seven runs, seed 1 | n/a | [report, *Measured*](../../Reports/mould-sound-2026-11-10.md) |
-| loudness, whole run | -30.5 dBFS (idle) to -27.0 (Wild One, random); fast forward -23.2 | seven runs, seed 1 | n/a | [report, *Measured*](../../Reports/mould-sound-2026-11-10.md) |
 
 ## Owner's word
 

@@ -40,25 +40,6 @@ Earlier: version 1 scored carriers only and had no strategy (the owner,
 21:11Z); version 2 added owned ground, a 15 s hold and Hush, a tug of war
 the owner found "overly simple" with the mould as "background" (21:52Z).
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Lone front, catch 0.03, sick 4 s: p90 carrier distance at 1 / 5 / 9 s | 10-13 / 46-47 / 75-76 cells; 1,983 of 5,000 carrying at the peak | 2 | | [report, *Tuning the front*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v1 plan v random, carriers' share | plan's part 0.536 (0.511-0.569) | 16, both colours | 16/16, p 1.5e-5 | [report, *Results*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v1 plan v idle; random v idle | 0.801; 0.795 | 16 | 16/16 each | [report, *Results*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v2 plan v random, owned share | plan's part 0.537 (0.514-0.576); owns 0.51 against 0.44 | 16 | 16/16, p 1.5e-5 | [report, *Results*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v2 plan v idle; random v idle | 0.934; 0.887 | 16 | 16/16 each | [report, *Results*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v2 with no hold, plan v random | plan's part 0.454; random wins 14/16 | 16 | p 0.002 for random | [report, *Results*](../../Reports/two-fevers-2026-11-10/README.md) |
-| Plan mirror, leader at 1:30 still ahead at the bell | v1 18/32 (24/32 when immune to both); v2 18/32; v2 no hold 30/32 | 16 | | [report, *Results*](../../Reports/two-fevers-2026-11-10/README.md) |
-| Hush when behind v the same planner | 0.508; 10/16 | 16 | p 0.23 | [report, *Results*](../../Reports/two-fevers-2026-11-10/README.md) |
-| Step cost | 0.49-0.64 ms a step native; 2.5 ms a 60 Hz tick in V8 | 1 | | [report, *The model*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v3 checks: fever stops at a 3-cell cut; call; pinch | 13/16 (at most 7 carriers past); 16/16; 14/16 | 16 | | [report, *Version 3*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v3 fever speed, thick v thin tube | 5.3 v 5.1 cells/s (not faster); 10,230 v 668 catches | 16 | | [report, *Version 3*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v3 trunk v raider; raider v web; web v trunk | trunk 0.651, 15/16; raider 0.417, web wins 11/16; web 0.443, trunk wins 12/16 | 16, both colours | p 0.00026; 0.105; 0.038 | [report, *Version 3*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v3 plans v random | trunk 15/16, web 15/16, raider 7/16 | 16 | p 0.00026, 0.00026, 0.77 | [report, *Version 3*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v3 leader at 1:30 kept it | raider mirror 32/32; other matchups 26-31/32 | 16 | | [report, *Version 3*](../../Reports/two-fevers-2026-11-10/README.md) |
-| v3 step cost | 0.70-0.84 ms a step native | 1 | | [report, *Version 3*](../../Reports/two-fevers-2026-11-10/README.md) |
 
 ## Owner's word
 

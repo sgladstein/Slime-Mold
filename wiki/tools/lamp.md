@@ -1,7 +1,7 @@
 ---
 title: The lamp
 kind: tool
-status: current
+status: paused
 updated: 2026-11-10
 sources: [Reports/mould-probe-2026-11-07.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-looks-2026-11-10.md]
 code: [Params::push, Dish::push_light, Params::lamp_reach, LAMP_R, Params::light_weight, Params::light_fade]
@@ -26,15 +26,6 @@ scripted warden holds it for 102-150 s of 150. In
 [Keep It Alive](../dishes/keep-it-alive.md) it is on for only 3-22 s of a
 3-10 minute game.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Food join lost while held on a tube 3 s, old lamp vs push lamp | 5 of 5 vs 0 of 5 | 5 | | [probe, *Playtest fixes*](../../Reports/mould-probe-2026-11-07.md) |
-| Held 8 cells beside the tube | lost 2 of 5 vs 0 of 5; moved 6.5-8.1 vs 5.2-6.6 cells | 5 | | same |
-| Lamp to recoil | 0.02-0.07 s; never in 10 s with `push=0` (control) | 9 placements | | same |
-| Lamp-only hands (shepherd, lamp-only plan) | 3 stars each, never all food | 5 | | same |
-| The Wild One, lamp alone vs doing nothing (walker count) | share 0.55-0.82 | 8 | 8-0, p 0.008 | [wild-one, *Numbers*](../../Reports/mould-wild-one-2026-11-10.md) |
 
 ## Owner's word
 

@@ -1,0 +1,203 @@
+# Same command before the f64 fix (65d914f alone): charge 1 and 8 are valid (small piles); charge 64 roughly; charge 512 was stopped at 180 s because its pile totals stood still (crystal_left read 1.000).
+## c1-s1
+== seed 1: 512 x 320, 50000 walkers, 23 piles
+seed 1 today t  15.0s  tube  2764.8  loops    1  width 4.67  reach  168.4  piles 23/23  strays 0.002  crystals 0.604  ms/tick 4.80
+seed 1 today t  15.0s  alive 1126  energy 0.437  born 1617  starved 5491  grass -0.000
+seed 1 today t  15.0s  contrast 2.97
+seed 1 today t  30.0s  tube  1871.0  loops    2  width 3.24  reach  183.8  piles 23/23  strays 0.007  crystals 0.308  ms/tick 4.67
+seed 1 today t  30.0s  alive 584  energy 0.382  born 2408  starved 6824  grass -0.000
+seed 1 today t  30.0s  contrast 3.62
+seed 1 today t  45.0s  tube   895.2  loops    0  width 2.80  reach  186.7  piles 23/23  strays 0.041  crystals 0.171  ms/tick 4.56
+seed 1 today t  45.0s  alive 320  energy 0.462  born 2846  starved 7526  grass -0.000
+seed 1 today t  45.0s  contrast 3.21
+seed 1 today t  60.0s  tube   110.8  loops    0  width 1.68  reach  187.5  piles 23/23  strays 0.128  crystals 0.124  ms/tick 4.63
+seed 1 today t  60.0s  alive 39  energy 0.551  born 2940  starved 7901  grass -0.000
+seed 1 today t  60.0s  contrast 2.11
+seed 1 today t  75.0s  tube   429.8  loops    0  width 5.09  reach   77.4  piles 23/23  strays 0.000  crystals 0.045  ms/tick 4.73
+seed 1 today t  75.0s  alive 208  energy 0.409  born 3360  starved 8152  grass -0.000
+seed 1 today t  75.0s  contrast 2.50
+seed 1 today t  90.0s  tube    16.8  loops    0  width 1.72  reach   74.0  piles 23/23  strays 0.000  crystals 0.033  ms/tick 6.40
+seed 1 today t  90.0s  alive 6  energy 0.235  born 3387  starved 8381  grass -0.000
+seed 1 today t  90.0s  contrast 1.95
+seed 1 today t 105.0s  tube    56.0  loops    0  width 3.93  reach   76.2  piles 23/23  strays 0.000  crystals 0.029  ms/tick 8.37
+seed 1 today t 105.0s  alive 24  energy 0.688  born 3409  starved 8385  grass -0.000
+seed 1 today t 105.0s  contrast 2.43
+seed 1 today t 120.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 10.21
+seed 1 today t 120.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 135.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 11.99
+seed 1 today t 135.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 150.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 13.42
+seed 1 today t 150.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 165.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 14.65
+seed 1 today t 165.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 180.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 16.52
+seed 1 today t 180.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 195.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 18.38
+seed 1 today t 195.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 210.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 20.02
+seed 1 today t 210.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 225.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 21.46
+seed 1 today t 225.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 240.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 22.63
+seed 1 today t 240.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 255.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 23.70
+seed 1 today t 255.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 270.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 24.72
+seed 1 today t 270.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 285.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 24.87
+seed 1 today t 285.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today t 300.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.023  ms/tick 24.97
+seed 1 today t 300.0s  alive 0  energy 0.000  born 3438  starved 8438  grass -0.000
+seed 1 today hash=e583802ef5b629f1
+## c8-s1
+== seed 1: 512 x 320, 50000 walkers, 23 piles
+seed 1 today t  15.0s  tube  3906.2  loops    3  width 6.10  reach  152.5  piles 23/23  strays 0.002  crystals 0.861  ms/tick 5.28
+seed 1 today t  15.0s  alive 2843  energy 0.741  born 6757  starved 8914  grass -0.000
+seed 1 today t  15.0s  contrast 2.77
+seed 1 today t  30.0s  tube  4426.2  loops    4  width 6.96  reach  151.0  piles 23/23  strays 0.003  crystals 0.626  ms/tick 5.68
+seed 1 today t  30.0s  alive 5512  energy 0.705  born 20181  starved 19669  grass -0.000
+seed 1 today t  30.0s  contrast 2.46
+seed 1 today t  45.0s  tube  3445.5  loops    3  width 5.35  reach  185.7  piles 23/23  strays 0.004  crystals 0.414  ms/tick 5.97
+seed 1 today t  45.0s  alive 3829  energy 0.810  born 32981  starved 34152  grass -0.000
+seed 1 today t  45.0s  contrast 2.78
+seed 1 today t  60.0s  tube  3348.5  loops    2  width 5.02  reach  192.2  piles 23/23  strays 0.003  crystals 0.213  ms/tick 5.87
+seed 1 today t  60.0s  alive 3906  energy 1.430  born 43371  starved 44465  grass -0.000
+seed 1 today t  60.0s  contrast 3.25
+seed 1 today t  75.0s  tube   399.0  loops    0  width 1.92  reach  175.9  piles 23/23  strays 0.085  crystals 0.205  ms/tick 5.69
+seed 1 today t  75.0s  alive 130  energy 0.190  born 46824  starved 51694  grass -0.000
+seed 1 today t  75.0s  contrast 2.70
+seed 1 today t  90.0s  tube     2.5  loops    0  width 1.00  reach  125.6  piles 23/23  strays 0.750  crystals 0.205  ms/tick 5.67
+seed 1 today t  90.0s  alive 4  energy 0.442  born 46827  starved 51823  grass -0.000
+seed 1 today t 105.0s  tube     0.2  loops    0  width 1.00  reach   72.8  piles 23/23  strays 1.000  crystals 0.205  ms/tick 6.29
+seed 1 today t 105.0s  alive 1  energy 0.639  born 46828  starved 51827  grass -0.000
+seed 1 today t 120.0s  tube     1.8  loops    0  width 1.00  reach  100.6  piles 23/23  strays 1.000  crystals 0.205  ms/tick 7.26
+seed 1 today t 120.0s  alive 3  energy 0.459  born 46830  starved 51827  grass -0.000
+seed 1 today t 135.0s  tube     3.0  loops    0  width 1.00  reach   87.9  piles 23/23  strays 0.750  crystals 0.205  ms/tick 7.90
+seed 1 today t 135.0s  alive 4  energy 0.470  born 46832  starved 51828  grass -0.000
+seed 1 today t 135.0s  contrast 1.12
+seed 1 today t 150.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 8.35
+seed 1 today t 150.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 165.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 10.00
+seed 1 today t 165.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 180.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 11.33
+seed 1 today t 180.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 195.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 12.55
+seed 1 today t 195.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 210.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 14.44
+seed 1 today t 210.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 225.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 16.20
+seed 1 today t 225.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 240.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 17.76
+seed 1 today t 240.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 255.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 19.08
+seed 1 today t 255.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 270.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 20.31
+seed 1 today t 270.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 285.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 21.41
+seed 1 today t 285.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today t 300.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.205  ms/tick 22.43
+seed 1 today t 300.0s  alive 0  energy 0.000  born 46832  starved 51832  grass -0.000
+seed 1 today hash=c51c867afe6ffc75
+## c64-s1
+== seed 1: 512 x 320, 50000 walkers, 23 piles
+seed 1 today t  15.0s  tube  4287.5  loops    4  width 6.89  reach  179.3  piles 23/23  strays 0.013  crystals 0.972  ms/tick 5.61
+seed 1 today t  15.0s  alive 3999  energy 1.273  born 8299  starved 9300  grass -0.000
+seed 1 today t  15.0s  contrast 2.67
+seed 1 today t  30.0s  tube  5380.2  loops    9  width 8.30  reach  185.8  piles 23/23  strays 0.020  crystals 0.912  ms/tick 6.02
+seed 1 today t  30.0s  alive 8171  energy 1.950  born 26602  starved 23431  grass -0.000
+seed 1 today t  30.0s  contrast 2.47
+seed 1 today t  45.0s  tube  7084.5  loops   16  width 9.51  reach  178.7  piles 23/23  strays 0.027  crystals 0.801  ms/tick 6.74
+seed 1 today t  45.0s  alive 12534  energy 3.071  born 60509  starved 52975  grass -0.000
+seed 1 today t  45.0s  contrast 2.54
+seed 1 today t  60.0s  tube  7884.5  loops   24  width 8.88  reach  186.4  piles 23/23  strays 0.031  crystals 0.674  ms/tick 7.25
+seed 1 today t  60.0s  alive 14542  energy 4.391  born 103803  starved 94261  grass -0.000
+seed 1 today t  60.0s  contrast 2.66
+seed 1 today t  75.0s  tube  8462.0  loops   26  width 9.13  reach  192.7  piles 23/23  strays 0.028  crystals 0.543  ms/tick 7.72
+seed 1 today t  75.0s  alive 17616  energy 4.754  born 155050  starved 142434  grass -0.000
+seed 1 today t  75.0s  contrast 2.49
+seed 1 today t  90.0s  tube  8082.5  loops   23  width 9.58  reach  193.2  piles 23/23  strays 0.023  crystals 0.414  ms/tick 8.07
+seed 1 today t  90.0s  alive 17888  energy 5.261  born 208717  starved 195829  grass -0.000
+seed 1 today t  90.0s  contrast 2.47
+seed 1 today t 105.0s  tube  8289.0  loops   23  width 9.88  reach  193.2  piles 23/23  strays 0.018  crystals 0.277  ms/tick 8.40
+seed 1 today t 105.0s  alive 18966  energy 5.364  born 269489  starved 255523  grass -0.000
+seed 1 today t 105.0s  contrast 2.51
+seed 1 today t 120.0s  tube  7519.5  loops   19  width 9.49  reach  193.7  piles 23/23  strays 0.012  crystals 0.149  ms/tick 8.59
+seed 1 today t 120.0s  alive 16664  energy 6.903  born 322200  starved 310536  grass -0.000
+seed 1 today t 120.0s  contrast 2.59
+seed 1 today t 135.0s  tube  6907.0  loops   22  width 8.32  reach  193.4  piles 23/23  strays 0.027  crystals 0.062  ms/tick 8.65
+seed 1 today t 135.0s  alive 14858  energy 7.481  born 367688  starved 357830  grass -0.000
+seed 1 today t 135.0s  contrast 2.59
+seed 1 today t 150.0s  tube  6496.0  loops   19  width 8.07  reach  192.8  piles 23/23  strays 0.017  crystals 0.002  ms/tick 8.67
+seed 1 today t 150.0s  alive 13122  energy 7.066  born 410773  starved 402651  grass -0.000
+seed 1 today t 150.0s  contrast 2.60
+seed 1 today t 165.0s  tube  5265.2  loops   11  width 7.23  reach  192.0  piles 23/23  strays 0.023  crystals 0.000  ms/tick 8.99
+seed 1 today t 165.0s  alive 9682  energy 6.682  born 444256  starved 439574  grass -0.000
+seed 1 today t 165.0s  contrast 2.62
+seed 1 today t 180.0s  tube  4129.0  loops    6  width 6.45  reach  191.0  piles 23/23  strays 0.016  crystals 0.000  ms/tick 9.36
+seed 1 today t 180.0s  alive 6830  energy 6.866  born 467597  starved 465767  grass -0.000
+seed 1 today t 180.0s  contrast 2.61
+seed 1 today t 195.0s  tube  3178.8  loops    2  width 5.55  reach  190.1  piles 23/23  strays 0.015  crystals 0.000  ms/tick 9.97
+seed 1 today t 195.0s  alive 4641  energy 6.056  born 484854  starved 485213  grass -0.000
+seed 1 today t 195.0s  contrast 2.81
+seed 1 today t 210.0s  tube  2125.8  loops    1  width 5.21  reach  170.5  piles 23/23  strays 0.028  crystals 0.000  ms/tick 11.35
+seed 1 today t 210.0s  alive 2690  energy 5.517  born 494855  starved 497165  grass -0.000
+seed 1 today t 210.0s  contrast 2.75
+seed 1 today t 225.0s  tube  1042.5  loops    1  width 4.98  reach  169.3  piles 23/23  strays 0.029  crystals 0.000  ms/tick 13.42
+seed 1 today t 225.0s  alive 1373  energy 6.139  born 499300  starved 502927  grass -0.000
+seed 1 today t 225.0s  contrast 2.86
+seed 1 today t 240.0s  tube   535.0  loops    1  width 4.11  reach   90.6  piles 23/23  strays 0.006  crystals 0.000  ms/tick 15.52
+seed 1 today t 240.0s  alive 633  energy 7.784  born 501589  starved 505956  grass -0.000
+seed 1 today t 240.0s  contrast 3.31
+seed 1 today t 255.0s  tube   391.8  loops    1  width 4.18  reach   83.5  piles 23/23  strays 0.047  crystals 0.000  ms/tick 17.84
+seed 1 today t 255.0s  alive 491  energy 5.834  born 503026  starved 507535  grass -0.000
+seed 1 today t 255.0s  contrast 3.00
+seed 1 today t 270.0s  tube   322.5  loops    0  width 4.83  reach   82.8  piles 23/23  strays 0.000  crystals 0.000  ms/tick 20.24
+seed 1 today t 270.0s  alive 348  energy 3.634  born 504344  starved 508996  grass -0.000
+seed 1 today t 270.0s  contrast 3.01
+seed 1 today t 285.0s  tube   226.8  loops    0  width 5.34  reach   82.1  piles 23/23  strays 0.000  crystals 0.000  ms/tick 22.51
+seed 1 today t 285.0s  alive 228  energy 0.719  born 505447  starved 510219  grass -0.000
+seed 1 today t 285.0s  contrast 2.56
+seed 1 today t 300.0s  tube     0.0  loops    0  width 0.00  reach    0.0  piles 23/23  strays 0.000  crystals 0.000  ms/tick 23.98
+seed 1 today t 300.0s  alive 0  energy 0.000  born 505585  starved 510585  grass -0.000
+seed 1 today hash=fc24fd33c634b603
+## c512-s1
+== seed 1: 512 x 320, 50000 walkers, 23 piles
+seed 1 today t  15.0s  tube  4273.2  loops    5  width 6.78  reach  187.4  piles 23/23  strays 0.011  crystals 1.000  ms/tick 5.36
+seed 1 today t  15.0s  alive 3835  energy 1.301  born 8052  starved 9217  grass -0.000
+seed 1 today t  15.0s  contrast 2.72
+seed 1 today t  30.0s  tube  5945.2  loops    6  width 8.43  reach  178.1  piles 23/23  strays 0.010  crystals 1.000  ms/tick 5.88
+seed 1 today t  30.0s  alive 8509  energy 1.899  born 26625  starved 23116  grass -0.000
+seed 1 today t  30.0s  contrast 2.50
+seed 1 today t  45.0s  tube  6833.5  loops   12  width 9.28  reach  186.0  piles 23/23  strays 0.015  crystals 1.000  ms/tick 6.50
+seed 1 today t  45.0s  alive 11525  energy 3.231  born 57614  starved 51089  grass -0.000
+seed 1 today t  45.0s  contrast 2.53
+seed 1 today t  60.0s  tube  7718.0  loops   20  width 9.36  reach  184.4  piles 23/23  strays 0.023  crystals 1.000  ms/tick 7.06
+seed 1 today t  60.0s  alive 13964  energy 4.488  born 96862  starved 87898  grass -0.000
+seed 1 today t  60.0s  contrast 2.58
+seed 1 today t  75.0s  tube  8112.5  loops   24  width 9.15  reach  186.8  piles 23/23  strays 0.027  crystals 1.000  ms/tick 7.51
+seed 1 today t  75.0s  alive 14664  energy 6.108  born 140086  starved 130422  grass -0.000
+seed 1 today t  75.0s  contrast 2.54
+seed 1 today t  90.0s  tube  8902.0  loops   31  width 9.72  reach  193.2  piles 23/23  strays 0.027  crystals 1.000  ms/tick 7.84
+seed 1 today t  90.0s  alive 16352  energy 7.481  born 187834  starved 176482  grass -0.000
+seed 1 today t  90.0s  contrast 2.60
+seed 1 today t 105.0s  tube  8934.0  loops   23  width 9.79  reach  193.5  piles 23/23  strays 0.028  crystals 1.000  ms/tick 8.10
+seed 1 today t 105.0s  alive 16651  energy 9.378  born 236479  starved 224828  grass -0.000
+seed 1 today t 105.0s  contrast 2.74
+seed 1 today t 120.0s  tube  8909.5  loops   26  width 9.45  reach  193.2  piles 23/23  strays 0.026  crystals 1.000  ms/tick 8.30
+seed 1 today t 120.0s  alive 16796  energy 11.264  born 286067  starved 274271  grass -0.000
+seed 1 today t 120.0s  contrast 2.71
+seed 1 today t 135.0s  tube  8973.0  loops   25  width 10.01  reach  193.6  piles 23/23  strays 0.023  crystals 1.000  ms/tick 8.45
+seed 1 today t 135.0s  alive 16987  energy 13.053  born 336392  starved 324405  grass -0.000
+seed 1 today t 135.0s  contrast 2.70
+seed 1 today t 150.0s  tube  9099.0  loops   32  width 9.58  reach  194.3  piles 23/23  strays 0.031  crystals 1.000  ms/tick 8.59
+seed 1 today t 150.0s  alive 17267  energy 14.694  born 386898  starved 374631  grass -0.000
+seed 1 today t 150.0s  contrast 2.68
+seed 1 today t 165.0s  tube  9080.8  loops   29  width 9.59  reach  194.3  piles 23/23  strays 0.028  crystals 1.000  ms/tick 8.72
+seed 1 today t 165.0s  alive 17397  energy 16.386  born 438309  starved 425912  grass -0.000
+seed 1 today t 165.0s  contrast 2.71
+seed 1 today t 180.0s  tube  9018.8  loops   28  width 9.60  reach  193.2  piles 23/23  strays 0.040  crystals 1.000  ms/tick 8.82
+seed 1 today t 180.0s  alive 17351  energy 18.223  born 489460  starved 477109  grass -0.000
+seed 1 today t 180.0s  contrast 2.69
+seed 1 today t 195.0s  tube  9027.5  loops   27  width 9.86  reach  193.5  piles 23/23  strays 0.031  crystals 1.000  ms/tick 8.90
+seed 1 today t 195.0s  alive 17234  energy 20.141  born 540989  starved 528755  grass -0.000
+seed 1 today t 195.0s  contrast 2.71
