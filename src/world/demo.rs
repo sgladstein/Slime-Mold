@@ -71,6 +71,8 @@ pub struct StandIn {
     /// Hold position: does not chase.
     pub hold: bool,
     warned: bool,
+    /// Radians, the way it last walked (the look draws it facing so).
+    pub facing: f32,
 }
 
 /// What the stand-in squad tells the window to show as an alert.
@@ -127,7 +129,7 @@ impl Squad {
         let (w, h) = (world.0 as f32, world.1 as f32);
         let s = scale as f32;
         let mut units = Vec::new();
-        let unit = |x, y, team| StandIn { x, y, team, hp: MAX_HP, to: None, burn: None, stance: Stance::Defend, weapon: Weapon::Rifle, attack: false, hold: false, warned: false };
+        let unit = |x, y, team| StandIn { x, y, team, hp: MAX_HP, to: None, burn: None, stance: Stance::Defend, weapon: Weapon::Rifle, attack: false, hold: false, warned: false, facing: -std::f32::consts::FRAC_PI_2 };
         for k in 0..12 {
             let (i, j) = ((k % 4) as f32, (k / 4) as f32);
             let mut u = unit(w * 0.3 + i * 4.0 * s, h * 0.5 + j * 4.0 * s, 0);
@@ -242,7 +244,7 @@ impl Squad {
                     self.energy -= RECRUIT;
                     let n = self.units.iter().filter(|u| u.team == 0).count() as f32;
                     let at = (self.home.0 + (n % 4.0) * gap, self.home.1 - 3.0 * gap);
-                    self.units.push(StandIn { x: at.0, y: at.1, team: 0, hp: MAX_HP, to: None, burn: None, stance: Stance::Defend, weapon: Weapon::Rifle, attack: false, hold: false, warned: false });
+                    self.units.push(StandIn { x: at.0, y: at.1, team: 0, hp: MAX_HP, to: None, burn: None, stance: Stance::Defend, weapon: Weapon::Rifle, attack: false, hold: false, warned: false, facing: -std::f32::consts::FRAC_PI_2 });
                     self.note("A soldier has joined at the larder".into(), Some(at), false);
                 }
                 UPGRADE_ID if self.energy >= UPGRADE && self.research.is_none() && self.armour < 3 => {
@@ -321,6 +323,7 @@ impl Squad {
                 } else {
                     u.x += dx / d * step;
                     u.y += dy / d * step;
+                    u.facing = dy.atan2(dx);
                 }
             }
         }
@@ -372,6 +375,12 @@ impl Squad {
     }
 
     pub fn marks(&self, zoom: f32, out: &mut Marks) {
+        self.marks_with(zoom, false, out);
+    }
+
+    /// With `figures` (the world look on), each living unit is the soldier
+    /// sprite facing the way it walked, with its health bar, instead of a disc.
+    pub fn marks_with(&self, zoom: f32, figures: bool, out: &mut Marks) {
         let s = self.scale;
         for &(a, b) in &self.walls {
             // A wall: a thick line of discs, as it would sit in the ground.
@@ -404,7 +413,15 @@ impl Squad {
             if let (Some(to), true) = (u.to, u.hp > 0.0) {
                 out.line((u.x, u.y), to, 2.0, if u.attack { [255, 110, 110, 120] } else { [255, 255, 255, 90] });
             }
-            unit_marks(&Unit { id, team: u.team, x: u.x, y: u.y, alive: u.hp > 0.0 }, self.radius(), u.hp / MAX_HP, zoom, out);
+            if figures {
+                let r = self.radius();
+                out.soldier((u.x, u.y), r, u.facing, team_colour(u.team), 0.0, u.hp > 0.0);
+                if u.hp > 0.0 {
+                    out.bar((u.x, u.y), (r * zoom).max(2.0) + 5.0, (7.0, 1.0), u.hp / MAX_HP, [90, 220, 110, 255], [70, 30, 30, 255]);
+                }
+            } else {
+                unit_marks(&Unit { id, team: u.team, x: u.x, y: u.y, alive: u.hp > 0.0 }, self.radius(), u.hp / MAX_HP, zoom, out);
+            }
         }
     }
 

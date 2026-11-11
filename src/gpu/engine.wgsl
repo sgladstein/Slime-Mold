@@ -48,6 +48,8 @@ struct Params {
     // The squad (Larder World W2a, `Engine::set_squad`): this frame's units
     // and shots in `SQ`, and the trail that looks like slime.
     nunits: u32, nshots: u32, slime: f32, _s0: u32,
+    // The look's hits (`Engine::set_hits`, the world look's stand-in fight).
+    nhits: u32, _h0: u32, _h1: u32, _h2: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -144,6 +146,13 @@ struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
 struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
 @group(0) @binding(42) var<storage, read_write> SQ: Squad;
 @group(0) @binding(43) var<storage, read_write> kills: array<atomic<u32>>;
+// The look (2026-11-11, src/world/look in the view): shots that landed this
+// frame, `nhits` discs (x, y, r, _) in fine cells, which cut trail as the
+// right mouse's wipe does; and a u32 a cell the view shades the world from:
+// mould thickness (the trail's brightness), walkers on the cell, the wound
+// (the thickness a hit took away, fading), and the scent, a byte each.
+@group(0) @binding(44) var<storage, read> hits: array<vec4<f32>>;
+@group(0) @binding(45) var<storage, read_write> look: array<u32>;
 
 const NONE: u32 = 0xFFFFFFFFu;
 
@@ -693,6 +702,20 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         let dx = f32(x) + 0.5 - P.bx; let dy = f32(y) + 0.5 - P.by;
         gone = dx * dx + dy * dy <= P.br * P.br;
     }
+    // Shots: a hit cuts as the wipe does, and the cell's wound takes the
+    // thickness it cut (what the shot destroyed, not a drawn splash). The
+    // wound fades about 0.8% a tick (half in about 0.75 s).
+    var wound = (look[i] >> 16u) & 255u;
+    wound -= min(wound, max(wound / 128u, 1u));
+    for (var q = 0u; q < P.nhits; q++) {
+        let hp = hits[q];
+        let dx = f32(x) + 0.5 - hp.x; let dy = f32(y) + 0.5 - hp.y;
+        if (agar[i] != 0u && dx * dx + dy * dy <= hp.z * hp.z) {
+            wound = max(wound, u32(bright(trail_in[i]) * 255.0));
+            gone = true;
+        }
+    }
+    look[i] = (look[i] & 0xFF00FFFFu) | (wound << 16u);
     if (gone) {
         trail_out[i] = 0.0;
         if (germs) { germ_out[i] = 0.0; }
@@ -910,6 +933,11 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
         let gs = sqrt(clamp(germ_in[i] / (4.0 * max(P.catch_at, 1.0e-6)), 0.0, 1.0));
         c = vec3<f32>(max(c.x, 255.0 * gs), c.y * (1.0 - 0.8 * gs), c.z * (1.0 - 0.8 * gs));
     }
+    // The look the view shades from (byte 2, the wound, is the trail pass's).
+    let thick = u32(clamp(g, 0.0, 1.0) * 255.0);
+    let crowd = min(atomicLoad(&occ[i]), 255u);
+    let smell = u32(clamp(1.0 - exp(-scent_in[i] / 60.0), 0.0, 1.0) * 255.0);
+    look[i] = thick | (crowd << 8u) | (look[i] & 0x00FF0000u) | (smell << 24u);
     // The panel, premultiplied, over the dish.
     let o = hud[i];
     let a = f32(o >> 24u) / 255.0;
