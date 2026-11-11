@@ -1,0 +1,99 @@
+<title>Mixed Mould Walkers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the same lightbox as the outside-rules page; single dark theme so
+   the black dishes sit flush, counts in mono beside each picture. */
+:root {
+  --bg: #0c0e0d; --panel: #151917; --line: #2a302d;
+  --fg: #e9ece9; --muted: #9ba49f; --amber: #ffbe5a; --vein: #cfe3dc; --red: #ff6b5e;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; }
+h2 { font-size: 24px; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header, section { display: grid; gap: 18px; }
+section > p { color: var(--muted); }
+.strip { display: grid; gap: 10px; }
+.strip img { width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+.times { display: grid; grid-template-columns: repeat(4, 1fr); font: 12px/1 var(--mono); color: var(--muted); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+figure img, figure video { width: 100%; max-width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+code { font-family: var(--mono); font-size: 0.9em; color: var(--amber); }
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Big dish · 1024 × 640 · no food · 11 Nov 2026</span>
+  <h1>Started in one spot, and walkers that differ</h1>
+  <p>Two questions. How far does each kind of mould spread when it starts in one spot at the centre? And what happens when some of the walkers in one mould have different settings from the rest? These are looks with 3 seeds each, not paired tests. Each strip shows seed 1 at 2, 5, 10 and 20 s.</p>
+</header>
+
+<section>
+  <span class="eyebrow">1 · Spread from one spot</span>
+  <h2>Only explorers cross the map</h2>
+  <p>Without food, the plain network curls into a single ring that widens slowly. Droplets stay where they form. Explorers fill the dish in about 10 s.</p>
+  <figure class="strip"><img src="pics/net.jpg" alt="Jenson network, 1M walkers, at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Jenson network, 1M walkers</strong><dl class="stats"><dt>tube at 20 s</dt><dd>1832-1939 cells, 0.4% of the dish</dd><dt>ring radius</dt><dd>64 → 96 cells from 2 to 20 s</dd></dl></figcaption></figure>
+  <figure class="strip"><img src="pics/chance.jpg" alt="Chance-weighted turn, at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Chance-weighted turn</strong><dl class="stats"><dt>tube at 20 s</dt><dd>1198-1202 cells</dd><dt>ring radius</dt><dd>61 → 115 cells</dd></dl></figcaption></figure>
+  <figure class="strip"><img src="pics/explore.jpg" alt="Explorers (spread 1), at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Explorers (spread 1)</strong><dl class="stats"><dt>tube</dt><dd>13828-14013 cells at 10 s, 8827-9322 at 20 s</dd><dt>loops at 20 s</dt><dd>34-38</dd></dl></figcaption></figure>
+  <figure class="strip"><img src="pics/droplets.jpg" alt="Droplets, 30k walkers from a 200-cell disc (frames at 2, 5, 10, 20 s of 30), at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Droplets, 30k walkers from a 200-cell disc (frames at 2, 5, 10, 20 s of 30)</strong><dl class="stats"><dt>outer edge (r90)</dt><dd>185 → 180-182 cells in 30 s</dd></dl></figcaption></figure>
+  <figure class="strip"><img src="pics/grazers.jpg" alt="Grazing droplets, at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Grazing droplets</strong><dl class="stats"><dt>outer edge (r90)</dt><dd>185 → 192-199 cells in 30 s</dd></dl></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">2 · Mixed walkers</span>
+  <h2>The two kinds sort themselves into parts</h2>
+  <p>A share of the walkers is a second kind with its own reach, angles, step or deposit. Both kinds lay and smell one shared trail, so it's still one mould. Amber is where the ordinary walkers stand, teal is where the second kind stands, and grey is the trail. Wherever the second kind moves differently, the two end up in different places.</p>
+  <figure class="strip"><img src="pics/scouts.jpg" alt="Outriders: 10% reach far, step twice as far, lay 0.3x, at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Outriders: 10% reach far, step twice as far, lay 0.3x</strong><dl class="stats"><dt>scouts off the trail</dt><dd>6-7%, core 0%</dd><dt>3 seeds</dt><dd>same picture</dd></dl><span>Within 2 s the scouts reach the dish wall and ride it as a faint halo. The core stays in the middle as nested rings.</span></figcaption></figure>
+  <figure class="strip"><img src="pics/wanderers.jpg" alt="Splitter: 20% turn 4x as sharply, with sensors twice as wide, at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Splitter: 20% turn 4x as sharply, with sensors twice as wide</strong><dl class="stats"><dt>median distance at 20 s</dt><dd>ordinary 138-372, wanderers 29-49</dd><dt>apart</dt><dd>3 of 3 seeds</dd></dl><span>The ordinary walkers fly out to the wall. The wanderers hold a tight ring at the centre, which had become one cord across the dish by 20 s.</span></figcaption></figure>
+  <figure class="strip"><img src="pics/twoscale.jpg" alt="Roamer: half the walkers reach 3x as far, at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Roamer: half the walkers reach 3x as far</strong><dl class="stats"><dt>median distance</dt><dd>13-28 at 2 s, then 251-329 at 20 s</dd></dl><span>The long-reach half rides the wall. The short half balls up into a knot that crawls across the dish.</span></figcaption></figure>
+  <figure class="strip"><img src="pics/builders.jpg" alt="Builders: 30% step half as far and lay 3x, at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Builders: 30% step half as far and lay 3x</strong><dl class="stats"><dt>median distance at 20 s</dt><dd>70-77 (seed 3: 129-158)</dd></dl><span>Looks like the plain ring.</span></figcaption></figure>
+  <figure class="strip"><img src="pics/grazescouts.jpg" alt="Grazing outriders: grazing droplets, 20% reach 3x and lay 0.3x (frames at 2, 5, 10, 20 s of 30), at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Grazing outriders: grazing droplets, 20% reach 3x and lay 0.3x (frames at 2, 5, 10, 20 s of 30)</strong><dl class="stats"><dt>outer edge at 30 s</dt><dd>299-303 against 192-199 for plain grazers, 3 of 3</dd><dt>scouts off the trail</dt><dd>25%</dd></dl><span>The droplets stay as bodies. Their scouts leave and haze out over the whole dish.</span></figcaption></figure>
+  <figure class="strip"><img src="pics/dropscouts.jpg" alt="Bridged droplets: droplets, 20% reach 3x and lay 0.3x, at 2, 5, 10 and 20 s">
+    <div class="times"><span>2 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Bridged droplets: droplets, 20% reach 3x and lay 0.3x</strong><dl class="stats"><dt>outer edge at 30 s</dt><dd>174-176 against 180-182</dd></dl><span>The scouts collect at the edges of the droplets and link neighbours into chains.</span></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">3 · For play</span>
+  <h2>A body plan, not a uniform mesh</h2>
+  <p>Mixed walkers don't blend. They split into parts with jobs: outriders on the edge, a core that holds, a cord, a crawling knot. Outriders reach the edge of the map in seconds but are faint, so they're easy to cut. A splitter sends its mass out and keeps a dense core. A roamer moves its whole body. The next test runs these with food, to see whether a body plan changes who reaches a crystal first and who keeps it.</p>
+</section>
+</div>
