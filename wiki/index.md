@@ -41,13 +41,13 @@ work; a thread working on one directly may change it.
 - [Larder World](world/larder.md): a squad against several mould species in a persistent GPU world with crystals; phases W0-W5; W1a fields done; the small-dish M1-M3 history.
 - [The Larder player AI](world/player-ai.md): plays soldiers through the player's commands, one brain per side; boom, lure, adapt beat idle and random 16/16.
 - [The mould tiers](world/mould-tiers.md): the difficulty ladder, Drifter to Mixes plus Sporer, Sleeper, Swarmer; each tier has a counter.
+- [The world camera and UI](world/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls over a world bigger than the screen; sandbox W, Q, M; 0.3-0.4 ms on the 1070.
 
 ## Other games in design
 
 - [The RTS directions](rts/directions.md): build phase; three demos, each with one strategy on top so far; the main line is now Larder World.
 - [The field skirmish](rts/skirmish.md): v2 budget skirmish; soft won 127/128; Strike and Fortify dethrone it, but brace then wins every pairing.
 - [How RTS games are designed](rts/rts-craft.md): outside research (22 sources) and what it says about our demos: dominant strategies and unmanaged snowballs, fix the structure first.
-- [The world camera and UI](rts/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls over a world bigger than the screen; in the sandbox (W, Q, M); 0.3-0.4 ms a frame on the 1070.
 - [Two Fevers](rts/two-fevers.md): playable in the browser, version 3 (call, seed, pinch): Trunk > Web > Raider, a ladder, and the leader at 1:30 keeps it; not yet played by hand.
 
 ## Method and owner
