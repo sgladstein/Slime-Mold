@@ -165,6 +165,48 @@ def render(m, h, rock, soft, soil):
     d.text((lx + 16, ly - 6), "squad lands", fill=(255, 255, 255))
     return im
 
+WALL_HP = 400  # soft rock: the engine's player-wall default health
+
+def soft_segments(m):
+    """Soft rock as wall segments (x0, y0, x1, y1, thick) for the engine's
+    own build_wall; a ring becomes a polygon of 10-degree chords, leaving
+    out the chords inside a gap."""
+    segs = []
+    for s in m["soft"]:
+        if s[0] == "poly":
+            segs += [(*a, *b, 2 * s[2]) for a, b in zip(s[1], s[1][1:])]
+            continue
+        _, cx, cy, r, wd, gaps = s
+        def open_at(a):
+            return all(abs(((a - g + 180) % 360) - 180) > half for g, half in gaps)
+        for a in range(0, 360, 10):
+            mid = a + 5
+            if open_at(mid):
+                p = lambda t: (round(cx + r * math.cos(math.radians(t))), round(cy + r * math.sin(math.radians(t))))
+                segs.append((*p(a), *p(a + 10), 2 * wd))
+    return segs
+
+def export(m, h, rock, soil):
+    """What the Larder world's loader reads (agreed with the Larder thread,
+    2026-11-11 19:40Z): maps/<name>.png, RGBA 1024 x 640, R = height
+    (ground byte 3), G = ground bits 8-15 (wet 0x01, rock 0x08, soil kind in
+    the high nibble), B = 0 (mould-made ground), A = 255; crystal and wall
+    cells are left out, the engine makes them. maps/<name>.txt: one item a
+    line in 1024 x 640 cells; a wall's thick is its full width."""
+    os.makedirs(os.path.join(HERE, "maps"), exist_ok=True)
+    g = np.zeros((H, W), np.uint8)
+    g |= (h < m["waterline"]).astype(np.uint8) * 0x01
+    g |= rock.astype(np.uint8) * 0x08
+    g |= (soil.astype(np.uint8) & 0x0F) << 4
+    rgba = np.stack([np.round(h).astype(np.uint8), g, np.zeros_like(g), np.full_like(g, 255)], -1)
+    Image.fromarray(rgba, "RGBA").save(os.path.join(HERE, "maps", m["name"] + ".png"), optimize=True)
+    lines = [f"crystal {x} {y} {r} {c}" for x, y, r, c in m["crystals"]]
+    lines += [f"mould {x} {y}" for x, y, *_ in m["moulds"]]
+    lines.append("landing {} {}".format(*m["landing"]))
+    lines += [f"wall {x0} {y0} {x1} {y1} {t} {WALL_HP}" for x0, y0, x1, y1, t in soft_segments(m)]
+    with open(os.path.join(HERE, "maps", m["name"] + ".txt"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+
 if __name__ == "__main__":
     os.makedirs(os.path.join(HERE, "sketches"), exist_ok=True)
     stats = {}
@@ -175,6 +217,7 @@ if __name__ == "__main__":
         stats[m["name"]] = dict(h_min=int(h.min()), h_max=int(h.max()), wet=round(float(wet), 3),
                                 rock=round(float(rock.mean()), 3), soft=round(float(soft.mean()), 3),
                                 crystals=len(m["crystals"]), charge=int(sum(c[3] for c in m["crystals"])))
+        export(m, h, rock, soil)
     with open(os.path.join(HERE, "maps.json"), "w") as f:
         json.dump(dict(world=[W, H], soils=SOILS, maps=MAPS, stats=stats), f, indent=1)
     for k, v in stats.items():

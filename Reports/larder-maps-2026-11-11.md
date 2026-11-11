@@ -70,6 +70,14 @@ A map that fails is redrawn, not tuned by hand: the spec is a list of shapes, so
 - **On WM1 and W2b**: load the five maps, run the gate.
 - **WM5, the editor**: later. The spec is already a list of shapes (bumps, trenches, ridges, discs, rings with gaps, crystals, starts), so an editor places and drags shapes and rasterises them, rather than painting cells.
 
+## Loader files, agreed with the Larder thread (19:40Z)
+
+`sketch_maps.py` now also writes what WM1's loader reads, so the crate needs no JSON parser. `maps.json` stays the source. For each map:
+- [`maps/<name>.png`](larder-maps-2026-11-11/maps/) is RGBA at 1024 × 640. R is height (ground byte 3). G is ground bits 8-15: wet 0x01, rock 0x08, and the soil kind in the high nibble. B is 0 (kept for mould-made ground), and A is 255. Crystal and wall cells are not drawn in, because the engine makes them.
+- `maps/<name>.txt` has one item a line, in 1024 × 640 cells: `crystal x y r charge`, `mould x y`, `landing x y`, and `wall x0 y0 x1 y1 thick hp`. Soft rock is written as wall lines (thick is the full width, hp 400, the player wall's default), so the engine's own `build_wall` draws it with health and leaky scent. The Nest's ring is 10-degree chords with the gap left out.
+
+The ground-word layout above is agreed. The loader resamples these files to the world's size, so 512 × 320 takes every other cell.
+
 ## Sources
 
 - [larder-world-roadmap-2026-11-11.md](larder-world-roadmap-2026-11-11.md): W1a/W1b fields, wall health, crystal sizing, the W2 plan.
