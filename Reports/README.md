@@ -238,6 +238,14 @@ move.
   outriders riding the wall, a splitter's core apart from its ring (3 of 3), a crawling knot, and grazing scouts
   that haze over the dish (r90 299-303 against 192-199). Page, script and raw output in
   [`spread-mix-2026-11-11/`](spread-mix-2026-11-11/).
+- [research-review-2026-11-11.md](research-review-2026-11-11.md) — **an independent review of the creature
+  research** (jenson-looks, creatures, spread-mix), asked for by the owner at 15:08Z with a big-picture brief. It
+  found the work tuned to the wrong operating point: no food, a fixed walker count, the dish wall as a hidden rail,
+  and no player verb. Species can't have their own settings, which blocks the ladder. The knife test cut before the
+  front arrived (void); the boost story contradicts the model; spread-mix's tube share was a unit slip (6%, not
+  0.4%). It gives six ranked directions with first experiments, and a list of biology that was ignored. The prompt,
+  the review verbatim, and the thread's response; scripts in
+  [`research-review-2026-11-11/`](research-review-2026-11-11/).
 
 ## Added with the move (2026-11-10)
 

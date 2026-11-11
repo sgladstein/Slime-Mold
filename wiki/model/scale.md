@@ -157,8 +157,8 @@ keeps its edge as a thick ring inside a mesh at 20 s, while respawn stays
 slow (0.001). **Contagion** is built on the big dish (`sick_steps` and the
 other `sick_*` fields, `BigDish::infect`, the same rule as Two Fevers): it
 runs along the tubes in 2-4 s, coarsens the mesh while it passes when sick
-walkers steer differently, leaves no mark by 20 s, and a knife cut does not
-stop it. **Feathery fronts** are still not reproduced: with Jenson's rule any
+walkers steer differently, leaves no mark by 20 s. Whether a knife cut stops it is untested: the
+cut was made before the front arrived and healed first. **Feathery fronts** are still not reproduced: with Jenson's rule any
 haze organises on its own. 36 Points' trail-dependent settings
 (`sense_scale`) gave long curves, a ring that expands across the dish, or a
 lasting round trunk; Bleuje's square-root deposit (`deposit_cap`) gave even
@@ -197,7 +197,7 @@ polygons at once. Every outside source has a card in
 | Tube width and haze on the picture, Jenson network_2 last frame vs the 1M dish drawn three ways | Jenson 0.3-0.4% of the disc, haze 41%; game curve 1.4-1.6%, haze 8%; soft curve 0.4-0.6%, 15% (44% with respawn); walkers a cell 0.1% | one clip; seed 1 | | same, [page](https://claude.ai/artifact/HL7jZ4qGhr6f1HpUDmNEj2) |
 | Trunk: dense disc + 30% haze vs even start, 1M walkers, respawn 0.001, step x (1 + trail/50); share of the brightest 1% of trail in the first ring's band at 20 s | 0.70 (0.20-0.86) vs 0.15 (0.09-0.31): more on 8 of 8, p 0.008, survives Bonferroni over 3 | 8 | yes | [jenson looks, *The tests*](../../Reports/jenson-looks-2026-11-11.md) |
 | Contagion with rope steering (sick 2 s) vs none, loops at 9 s / 20 s | 41-51 vs 48-58, fewer on 8 of 8, p 0.008 / 15-25 vs 17-25, p 0.45 | 8 | yes | same |
-| Knife cut across the dish as the sickness starts vs none, far side ever sick at 6 s | 0.155-0.254 vs 0.157-0.260; 4 of 8, p 1 | 8 | yes | same |
+| Knife cut across the dish as the sickness starts vs none, far side ever sick at 6 s (void: the cut healed before the front arrived) | 0.155-0.254 vs 0.157-0.260; 4 of 8, p 1 | 8 | yes | same |
 | Chance-weighted turn (MCPM, e 4) vs Jones's turn, 1M walkers, loops at 10 s | 66.5 (60-73) vs 44 (38-52): more on 8 of 8, p 0.008, survives Bonferroni over 5; about +15% cost | 8 | yes | [outside rules, *The tests*](../../Reports/outside-rules-2026-11-11.md) |
 | Area sensors 3 x 3 (Lague) vs one cell, loops at 10 s | 38 (32-46) vs 43.5 (38-52): fewer on 8 of 8, p 0.008; 290 vs 190 ms a tick (+50%) | 8 | yes | same |
 | Two species in their own halves, avoidance 1 vs 0, species 0's trail in its half at 20 s / tube cells 80%+ one species | 0.89-1.00 vs 0.88-1.00, 5 of 8, p 0.73 / 0.994-1.000 vs 0.966-0.983, cleaner on 8 of 8, p 0.008 | 8 | yes | same |
@@ -206,7 +206,7 @@ polygons at once. Every outside source has a card in
 | Grazing weight 10 vs 0 on those droplets, body drift over the last 2 s of 10 s | 6.5-7.6 vs 0.67-0.77 cells: more on 8 of 8, p 0.008; bodies 168-190 vs 179-193; 12-15 ms a tick either way | 8 | yes | [creatures](../../Reports/creatures-2026-11-11.md) |
 | Fight edge: species 0 lays 1.5x vs even, conversion 1.2, two halves of the 1M network, species 0's walker share at 16 s | 0.474 (0.448-0.518) vs 0.500 (0.450-0.580): lower on 6 of 8, p 0.29; higher at 8 s on 6 of 8 | 8 | yes | [creatures, *An edge*](../../Reports/creatures-2026-11-11.md) |
 | Edge in numbers, species 0's walker-share gain vs an even game: denser half of the 1M network (0.6, 16 s) / hunting droplets mixed (0.55, 30 s, r 0 and r 8) / hunting droplets apart (0.55, r 8) | higher on 3 of 8, p 0.73 / +0.19 to +0.33 vs -0.10 to +0.07, higher on 8 of 8 both, p 0.008 / 5 of 7 with a tie, p 0.45 | 8 | yes | [creatures](../../Reports/creatures-2026-11-11.md) |
-| Spread from one spot, no food, 3 seeds: tube cells / outer edge | network 1832-1939 at 20 s (one ring); explorers 13828-14013 at 10 s; droplets r90 185 → 180-182, grazers → 192-199 in 30 s | 3 | no | [spread-mix](../../Reports/spread-mix-2026-11-11.md) |
+| Spread from one spot, no food, 3 seeds: tube cells / outer edge | network 1832-1939 at 20 s (a ring plus a faint halo on the wall; the wall is a rail); explorers 13828-14013 at 10 s; droplets r90 185 → 180-182, grazers → 192-199 in 30 s | 3 | no | [spread-mix](../../Reports/spread-mix-2026-11-11.md) |
 | Mixed walkers in one mould (`mix_share`), median distance of each kind at 20 s | splitter (20% turn x4): ordinary 138-372 vs 29-49, apart 3 of 3; grazing outriders r90 299-303 vs 192-199 | 3 | no | same |
 | Cost of the new rules, 1M walkers, one core, ms a tick | base 132.7; trail-dependent step 176.5; square-root deposit 150.9; floor 139.6; wander 142.5; contagion 142.9 | seed 1 | | same |
 | Step cost, bare move and diffusion, one core | 256 x 160 / 2.2k 0.13 ms; 1024 x 640 / 100k 9.5-11.2 ms; 1024 x 640 / 1M 96-98 ms; 2048 x 1280 / 1M 111-112 ms | 2 runs | | [gpu plan, *What the independent review changed*](../../Reports/gpu-plan-2026-11-10.md), [bench](../../Reports/gpu-plan-2026-11-10/step-bench.rs) |
@@ -238,7 +238,8 @@ polygons at once. Every outside source has a card in
 - The bag: whether a packed start on the fine grid still stalls once the economy grows the mould from a small inoculum.
 - Census readback and the economy on the GPU are not yet timed; the drawing is (0.07-0.29 ms a frame on the GTX 1070, sandbox).
 - Jenson's feathery fronts: seven mechanisms failed ([jenson looks](../../Reports/jenson-looks-2026-11-11.md)); explorers that turn into networkers one by one (`explore_spread`) grow radial feathery veins from a disc, one seed so far ([outside rules](../../Reports/outside-rules-2026-11-11.md)).
-- A creature that moves as a body: still droplets crawl once they graze a regrowing field ([creatures](../../Reports/creatures-2026-11-11.md)). What lets one body beat another is partly open: numbers win where two species are mixed (a 55% side ends with 75-88%), but sorted bodies hold their border against a louder trail or a denser side.
+- A creature that moves as a body: still droplets crawl once they graze a regrowing field ([creatures](../../Reports/creatures-2026-11-11.md)). What lets one body beat another is partly open: numbers win where two species are mixed (a 55% side ends with 75-88%), but sorted bodies hold their border against a denser side. With no avoidance two species don't sense each other, so they pass through each other and only conversion acts; per-species settings (needed for the ladder) don't exist yet ([review](../../Reports/research-review-2026-11-11.md)).
+- How the creatures behave at the game's operating point. The independent [review](../../Reports/research-review-2026-11-11.md) found every look so far was judged with no food, a fixed walker count and runs of 20-30 s. The dish wall is also a rail that walkers ride. Its proposed bar for a creature: identity over time, self-propulsion, behaviour away from walls and at 0.25-4x the walkers, a 2-5 min run, and a play probe.
 - Whether contagion can leave a lasting mark for play (see the contagion entry in [`dead-ends.md`](../../Reports/dead-ends.md)). The outside code was read on 2026-11-10; only PolyPhy, gpu-io (MIT) and Barradeau (public domain) may be reused.
 
 ## Sources
