@@ -40,7 +40,12 @@ Copy of the roadmap doc, [Larder World: long-term roadmap](https://claude.ai/art
 | 4 | Hunter | Hungry mould smells and drains soldiers, eats bodies (Larder hunger) | Turrets, walls, bait elsewhere |
 | 5 | Rival pair | Two species with own trails fighting over borders (`species_avoid`) | Lure one into the other |
 | 6 | Converter | Converts rivals' walkers where it outnumbers them (`species_convert`, `species_cycle`) | Kill early, keep rivals apart |
+| added | Sporer | Fed walkers fly as spores to new crystals; struck, it scatters (`spore_rate`) | Starve it; don't hit it |
+| added | Sleeper | A dormant crust that wakes in a wave and rushes a wound, then is deaf for 5 s (`sleep_rate`) | Bait it awake, then strike |
+| added | Swarmer | Walks toward where it is hit, into the fire (`alarm_weight`) | A kill zone |
 | 7 | Mixes | Several of the above | Adapt the build to the mix |
+
+The three added tiers come from the tiers thread ([mould-tiers-2026-11-11.md](mould-tiers-2026-11-11.md), PR #70); each beat its control 8/8. Their place on the ladder is for play to settle; W2b's rules take a tier once its `Tier::apply` lands.
 
 Player side: walls (a terrain field the mould can't enter), upgrades, new weapons (M4's burner and long gun); each tool answers a tier. The early leader's win rate (80-85% on the field skirmish) is a per-mould difficulty stat, not a gate (owner 14:14Z).
 
@@ -276,6 +281,52 @@ W2b can start now on the CPU dish. W2a's GPU passes follow W1b's merge, and W2c 
 | 40 units a frame | 2.35-2.36 | 3.56-3.58 |
 
 The worst frame with 40 units at 1024 × 640 was 5.2-5.4 ms. The squad's frame-end passes (units, harvest) show in the GPU's drawing span. They take 0.73 ms with 8 units and 0.81-0.85 ms with 40, at either size. The cost hardly depends on the unit count because the units pass gives each unit one thread, which walks every 4 × 4 block in its sight one after another (sight 30 is about 250 blocks, 4,000 cells). The rest of the 1.0-1.5 ms is the frame-start passes and the read-back, which waits for the GPU every frame. For W2b: one workgroup a unit for the sight scan, and read the previous frame's outputs without waiting. Both are under the W2c bar (10 ms p95) as they stand.
+
+## W2b: Larder's rules on the world, 2026-11-11
+
+**What runs.** `src/mould/larder_world.rs` is the game: M3's squad over a `World` (the CPU big dish, and `gpu::larder_world::GpuWorld` on the engine). Each squad frame the game walks the soldiers, harvests, picks shots, and hands one `squad::Frame` to the world (W2a), then reads back touch, aim, the aimed block's walkers and harvest. `examples/larderworld.rs` plays fixed hands on paired seeds.
+- **The world** (`race_world`): 512 × 320 fine cells (scale 2, M3's 256 × 160 dish), 23 crystals at charge 512 a cell that run dry, rock and wet ground at 0.2, and a mould of 5,000 walkers that starts as a blob on crystal 0 and grows (upkeep 0.001, room for 50,000). The squad of 4 starts on the crystal farthest from it, which is the larder.
+- **Rules** (`Rules`, M3's where they carry over): 15 ticks a game second, a 900 s cap. Soldiers walk 10 dish cells a second, see and fire 15, strike 2.5, one shot a second at 10 food, 100 health, drained 1 a second by each touching walker. A clear order harvests 30 food a second into a carry of 300 (64 charge a food), walked home to the larder. A soldier costs 400; the bank starts at 2,000. Walls cost 20 food a dish cell, need a soldier in range of both ends, and wear down as in W1a. The larder smells of the bank, and walkers touching it steal 1 food a second each. Holding the core clear of mould for 5 s stops births.
+- **Ends and score**: M3's ordered score. The squad wipes when no soldier is alive and the bank can't buy one; the mould wipes when no walker lives; at the cap the score is the squad's share of the crystals held, minus 0.5. The squad holds a crystal with an untouched soldier on it; the mould holds one it has eaten from with no soldier on it. (The first version gave the mould every crystal without a soldier, reached or not.)
+- **Not ported yet**: turrets, bait, hunger, and bodies as crystals.
+
+**Hands** (fixed, `examples/larderworld.rs`): *idle* never orders, so the four stand at the larder on Defend. *random* gives one soldier a random order and stance every 5 s, buys with chance 1/4 and lays a short wall with chance 1/8. *farm* sends soldier k to clear the k-th nearest crystal, on Defend, and buys up to 8 soldiers while the bank stays over 600 after the purchase. *rush* sends everyone at the core, buying with all but 600. *wall* farms and also builds a wall 26 dish cells long across the core-to-larder road, 0.6 of the way to the larder, as soon as a soldier can reach it.
+
+**Measure, named first.** The score paired by seed, each plan (farm, rush, wall) against idle and against random, a two-sided sign test, and Holm over the six comparisons. Gate (ROADMAP): idle and random lose; a plan beats both.
+
+**First look and a first census** (seeds 1-4, before the fixes below; [raw](larder-world-roadmap-2026-11-11/w2b/census-1-4-before-fixes.txt)). Random was wiped on 4 of 4 seeds and idle on 2 of 4, at 316-630 s. Farm and wall reached the cap on all four. Three faults showed:
+- **Rush hardly killed.** 80 shots killed 13 to 46 walkers on three seeds. A trace of seed 1 ([raw](larder-world-roadmap-2026-11-11/w2b/rush-trace-seed1-2.txt), [script](larder-world-roadmap-2026-11-11/w2b/rush-trace.rs)) showed why. Three of four soldiers stood behind rock 50 cells short of the core, and the fourth never moved: walking only slid along an axis when blocked. 196 of their 200 shots went into the rock, which stops a shot with no hit, until the bank ran dry at 80 s.
+- **The wall hand built no wall** on seeds 1 and 3. It tried once at 5 s, out of range, and the farm hand took back the soldier sent to build it.
+- A shot fired at a block of lone walkers can fly through: they don't show as slime. The units pass now also returns the aimed block's walker count (`UnitOut::dense`, on the CPU and the GPU; the W2a twin test compares it and caught a planted bug in it), and `Rules::aim_min` holds fire below it.
+
+**Fixes.** Soldiers walk round rock and walls on a distance map to their goal: Dijkstra over open cells, 5 a side step and 7 a diagonal, no corner cut, built when first needed, and rebuilt every 30 game seconds and after each wall. They fire only along a clear line to the aim. On rush seed 1 all four soldiers then reached the core by 20 s, none of 200 shots was wasted, and they killed 1,282 walkers instead of 13; on seed 2, 1,452. With the sight check, `aim_min` above 1 bought nothing: on seed 2, 1 wasted 1 shot of 200 and killed 1,600, 2 killed 1,486, and 4 killed 1,452. So it stays at 1, and the read stays for the window and the player AI. The wall hand now sends soldier 0 to stand by the wall's middle until it can build. A [test](../src/mould/larder_world.rs) checks that the walking map goes round a wall through its gap and that a sealed goal reads unreachable.
+
+**Held-out census** (seeds 5-20, all five hands, to the 900 s cap; [raw](larder-world-roadmap-2026-11-11/w2b/census-5-20.txt)). **The gate passes.** Idle and random lose on all 16 seeds, and farm and wall each score higher than both on 16 of 16 (sign test p < 0.0001, all four comparisons hold under Holm over six).
+
+| Hand | Mean score | Squad wiped | Reached the cap | Score above 0 | Food harvested (mean) | Walkers killed (mean) |
+|---|---|---|---|---|---|---|
+| idle | −0.779 | 5 (274-432 s) | 11, holding 6-17% of the contested crystals | 0 | 0 | 216 |
+| random | −1.373 | 12 (98-894 s) | 4 | 0 | 956 | 856 |
+| farm | −0.027 | 0 | 16, holding 27-64% | 5 (3 at exactly 0) | 22,725 | 3,072 |
+| wall | −0.021 | 0 | 16 | 7 | 22,331 | 2,811 |
+| rush | −1.874 | 16 (10 of them by 36 s) | 0 | 0 | 0 | 899 |
+
+What it says, beyond the gate:
+- **No plan wins outright.** No hand wipes the mould, and farm and wall end in the stalemate band. Their share of the contested crystals spreads from 27% to 64% by seed, which is the spread the owner asked an outcome to be.
+- **The wall adds nothing here.** Wall against farm: 6 seeds higher, 7 lower, 3 tied (p 1). One 26-cell wall across the road is too small on this world for the mould to notice.
+- **The rush is suicide.** Seven soldiers reach the core in about 25 s and kill about 900 walkers, just as the mould's first walkers starve (start energy runs out near 17 s on every hand). On several seeds the mould is down to 968-2,082 when the bank runs dry and they die. Farm first, buy an army, then rush (M1's reader plan) is the obvious next hand.
+- **An idle squad is beaten but often not killed.** On 11 seeds the mould has not reached the larder by 15 minutes. The owner's race wants an idle player overrun (14:54Z), so a smaller world, a nearer start or a faster mould is worth trying when maps arrive (WM2).
+
+The 80 games took 24.6 minutes on four threads.
+
+**The game on the GPU engine.** `GpuWorld` implements `World` over `Engine`. The CPU race world takes `scale` fine steps a tick, and everything that moves, eats or grows runs once a fine step. The engine takes one fine step a tick, so the GPU world runs `scale` engine ticks for each game tick. `race_settings` gives the engine the settings whose params are the CPU race world's, bar `substeps`; a unit test checks the params are equal. A GPU test (`the_larder_game_runs_on_the_engine_as_on_the_cpu`, lavapipe in CI) plays seed 3 for 20 game seconds on both:
+- the crystals, mould, larder and core are equal at the start;
+- a soldier clearing the larder's crystal banks 300 food on both;
+- the mould stays within 8% of the CPU's size every 5 s. The starting walkers starve at about 17 s on both, so at 20 s the count falls from 5,234 to 3,120 on the CPU and 3,220 on the GPU.
+
+With one engine tick a game tick (planted), the GPU's mould still held 5,129 at 20 s and the test failed. The GPU world reads its squad results back each frame and waits for them; the 1070's frame cost of the game, and the units-pass speedup W2a named, come with the window (W2c).
+
+**Cost.** On the CPU, the race world with the game layer costs 5.5-14 ms a tick on this 4-core box (the most when a farm squad of 8 is out), so a 900 s game takes 1.5-3 minutes and a 16-seed census of five hands about 45 minutes on four threads.
 
 ## Maps in the plan (owner, 19:29Z)
 

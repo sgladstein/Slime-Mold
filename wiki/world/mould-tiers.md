@@ -2,7 +2,7 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-11T20:15Z
+updated: 2026-11-11T21:10Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md]
 code: [BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate]
 ---
