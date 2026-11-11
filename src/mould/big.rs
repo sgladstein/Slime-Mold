@@ -673,7 +673,7 @@ pub struct BigDish {
     pub pile_full: Vec<f32>,
     /// The fine cells of every pile's crystal, pile by pile (a wall can
     /// take one out of its pile: its `pile_of` is then 0).
-    pile_cells: Vec<u32>,
+    pub pile_cells: Vec<u32>,
     pub took: Vec<f32>,
     pub eaten: f64,
     /// Terrain (`terrain_rock` or `terrain_wet` > 0), else empty: rock and
@@ -1162,7 +1162,7 @@ impl BigDish {
     /// cells, its scent and where it counts as reached are all the
     /// hexagon, about 0.83 of the disc's area). With crystals off it is
     /// the disc it always was, so older dishes do not change.
-    fn in_pile(&self, dx: f32, dy: f32, r: f32) -> bool {
+    pub fn in_pile(&self, dx: f32, dy: f32, r: f32) -> bool {
         if self.p.crystal_charge > 0.0 {
             let ax = dx.abs();
             ax <= r * 0.866_025_4 && dy.abs() <= r - ax * 0.577_350_3

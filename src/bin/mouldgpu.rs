@@ -1516,6 +1516,10 @@ struct Look {
     view: Option<(u32, u32)>,
     cam: Option<(f32, f32, f32)>,
     squad: bool,
+    /// `walls=AX,AY,BX,BY,WIDTH@SECONDS;...`: Larder World walls, in dish
+    /// cells, each built (`Engine::build_wall`) before the first frame at or
+    /// after its time.
+    walls: Vec<([f32; 5], f32)>,
 }
 
 /// The headless run: frames as the window would submit them (one frame of
@@ -1565,6 +1569,24 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     s.upkeep, s.start_energy, s.birth_energy, s.birth_cost, s.starve, s.capacity.max(s.walkers)
                 );
             }
+            if s.crystal > 0.0 || s.rock > 0.0 || s.wet > 0.0 || !look.walls.is_empty() {
+                println!(
+                    "   world: {} piles{}, crystal {} eat {} flow {} regrow {}; rock {} wet {} (step {}); walls {} (health {} bite {} scent {})",
+                    s.piles,
+                    if s.rect { " in a rectangle" } else { "" },
+                    s.crystal,
+                    s.crystal_eat,
+                    s.crystal_flow,
+                    s.crystal_regrow,
+                    s.rock,
+                    s.wet,
+                    s.wet_step,
+                    look.walls.len(),
+                    s.wall_hp,
+                    s.wall_bite,
+                    s.wall_scent
+                );
+            }
             if s.sick_on() {
                 println!(
                     "   contagion: sick {} immune {} ticks, catch {}, germ {} kept {}, sick speed {} trail {} reach {} turn {}, seeded at {} s r {}",
@@ -1606,7 +1628,15 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
         // wave's course (a read back, so it only runs headless).
         let half = (STEPS_PER_SECOND as u64 / 2 / s.ticks as u64).max(1);
         let mut course = Vec::new();
+        let mut built = vec![false; look.walls.len()];
         for f in 0..frames {
+            let now = (f * s.ticks as u64) as f32 / STEPS_PER_SECOND as f32;
+            for (b, &(w, at)) in built.iter_mut().zip(&look.walls) {
+                if !*b && now >= at {
+                    e.build_wall(&shared, s, w[0], w[1], w[2], w[3], w[4]);
+                    *b = true;
+                }
+            }
             // GPU time on every tenth frame (the read back waits).
             let stamp = st.as_ref().filter(|_| f % 10 == 5);
             // Again each frame, for the timed seeding.
@@ -1668,6 +1698,10 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             println!("dish at {:.1}s: tube {:.1}  loops {}  width {:.2}  reach {:.1}  piles {}/{}  strays {:.3}{sick}", mm.seconds, mm.tube_area, mm.loops, mm.width, mm.reach, mm.reached, e.dish.piles.len(), mm.strays);
             if !course.is_empty() {
                 println!("sick every 0.5 s: {}", course.join(" "));
+            }
+            if e.npiles > 0 || e.walled {
+                let (_, bites, broken) = e.world_counts();
+                println!("world: crystals left {:.3}, wall bites {bites}, wall cells broken {broken}", e.dish.crystals_left());
             }
             let path = format!("{}/{}-{:03}s.png", look.dir, look.tag, look.seconds.round() as u32);
             pic.save(&path).unwrap();
@@ -1752,7 +1786,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut s = Settings::big_dish();
     let mut picked = 0usize;
     let mut scale = 4usize;
-    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new(), view: None, cam: None, squad: false };
+    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new(), view: None, cam: None, squad: false, walls: Vec::new() };
     let args: Vec<String> = std::env::args().skip(1).collect();
     // The preset first, so the other keys change it.
     for arg in &args {
@@ -1783,6 +1817,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 look.cam = Some((*p.first().ok_or("cam=X,Y,ZOOM")?, *p.get(1).ok_or("cam=X,Y,ZOOM")?, p.get(2).copied().unwrap_or(1.0)));
             }
             "squad" => look.squad = on_off(k, v)?,
+            "walls" => {
+                for w in v.split(';').filter(|w| !w.is_empty()) {
+                    let (seg, at) = w.split_once('@').unwrap_or((w, "0"));
+                    let p: Vec<f32> = seg.split(',').map(|x| x.parse()).collect::<Result<_, _>>()?;
+                    let p: [f32; 5] = p.try_into().map_err(|_| "walls=AX,AY,BX,BY,WIDTH@SECONDS;...")?;
+                    look.walls.push((p, at.parse()?));
+                }
+            }
             _ => set(&mut s, k, v)?,
         }
     }
@@ -2494,6 +2536,190 @@ mod tests {
             assert!(off * 1000 <= n && lives_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {off} walkers, {lives_off} lives, {occ_off} counts off of {n}");
             assert!(lt <= 1e-4 && ls <= 1e-6 && le <= 1e-4 && lg <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, energy L1 {le:.2e}, grass L1 {lg:.2e}");
             assert!((ages_off + specs_off + sick_off) * 1000 <= n, "{name}: {ages_off} ages, {specs_off} species, {sick_off} sick off");
+        }
+    }
+
+    /// What the GPU holds of the Larder World after a tick, against the CPU
+    /// dish: (crystal charge L1, or infinite if any charge is below 0;
+    /// walkers whose crystal take is off by more than 1e-6, wall health L1,
+    /// cells whose agar differs, cells whose ground bits differ).
+    fn world_off(e: &Engine, cpu: &BigDish) -> (f64, usize, f64, usize, usize) {
+        let (device, queue) = (&e.device, &e.queue);
+        let wd = world_data(cpu);
+        let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(device, queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+        let charge = floats(&read_back(device, queue, &e.charge));
+        // Eaten charge is floored at 0, as on the CPU; a cell below it is a
+        // bug however small (a planted one left -1e-4 of a cell's charge).
+        let lc = if charge.iter().any(|&c| c < 0.0) { f64::INFINITY } else { l1(&charge, &wd.charge) };
+        let share = floats(&read_back(device, queue, &e.share));
+        let took_off = if cpu.took.is_empty() {
+            0
+        } else {
+            (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).filter(|&k| {
+                let (x, y, _) = cpu.walkers[k];
+                (share[y as usize * cpu.w + x as usize] - cpu.took[k]).abs() > 1e-6
+            }).count()
+        };
+        // Infinite health (a wall that never breaks) on both sides reads as 0.
+        let finite = |v: Vec<f32>| -> Vec<f32> { v.into_iter().map(|h| if h.is_finite() { h } else { 0.0 }).collect() };
+        let lh = l1(&finite(floats(&read_back(device, queue, &e.health))), &finite(wd.health));
+        let agar_off = u32s(&e.agar).iter().zip(&cpu.agar).filter(|(g, c)| (**g != 0) != **c).count();
+        let ground_off = u32s(&e.ground).iter().zip(&wd.ground).filter(|(g, c)| g != c).count();
+        (lc, took_off, lh, agar_off, ground_off)
+    }
+
+    /// **The Larder World's twin test** (W1b, 2026-11-11): one GPU tick from
+    /// a warmed CPU dish against one `BigDish::tick`, with crystals (equal
+    /// shares, the flow inside a crystal, regrowing, hexagonal footprints
+    /// and their scent by the share left), rock and wet ground, walls the
+    /// mould bites and breaks into rubble (leaky and sealed), and growth fed
+    /// by the crystals. The charge, each walker's take, the walls' health,
+    /// the agar and every cell's ground bits are compared too.
+    #[test]
+    fn the_world_matches_the_cpu_for_one_tick() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        // The Larder world's dish (23 piles, a rectangle), crystals at 512.
+        let w = |s: Settings| Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.05, ..s };
+        // Walls across home's way out, and one that cuts through a crystal
+        // (pile 0 sits at 56, 80 in dish cells), built a third of the way
+        // through the warm-up; and one across home's crystal and the crowd
+        // on it, built just before the tick, so the walkers it moves out
+        // crowd its edge; and a cage round a packed start, so the crowd
+        // presses on it and several walkers bite one cell at once.
+        type Build = fn(&mut BigDish, u32);
+        let walls: Build = |cpu, t| {
+            if t == 20 {
+                cpu.build_wall(70.0, 40.0, 70.0, 120.0, 2.0);
+                cpu.build_wall(40.0, 70.0, 60.0, 90.0, 1.5);
+            }
+        };
+        let late: Build = |cpu, t| {
+            if t == 57 {
+                cpu.build_wall(45.0, 60.0, 70.0, 100.0, 4.0);
+            }
+        };
+        let cage: Build = |cpu, t| {
+            if t == 0 {
+                let (cx, cy, r) = (56.0f32, 80.0f32, 24.0f32);
+                for q in 0..16 {
+                    let (a, b) = (q as f32 * std::f32::consts::TAU / 16.0, (q + 1) as f32 * std::f32::consts::TAU / 16.0);
+                    cpu.build_wall(cx + r * a.cos(), cy + r * a.sin(), cx + r * b.cos(), cy + r * b.sin(), 2.0);
+                }
+            }
+        };
+        let none: Build = |_, _| {};
+        let dishes: [(&str, Settings, Build); 9] = [
+            ("crystals", w(small(0)), none),
+            // Many walkers to a cell share it, and charge 1 is eaten to the
+            // floor, so the share left goes to 0 and the regrowing shows.
+            ("crystals at 1, no limit, regrowing", Settings { crystal: 1.0, crystal_regrow: 0.002, ..w(small(2)) }, none),
+            // Charge 1 and no flow: cells are eaten to the floor and stay.
+            ("crystals at 1, no flow, no limit", Settings { crystal: 1.0, crystal_flow: 0.0, ..w(small(2)) }, none),
+            ("rock and wet ground", Settings { rock: 0.35, wet: 0.35, ..w(small(0)) }, none),
+            // Health 3 (bites 1): walls break in the warm-up and the tick.
+            ("walls that break, leaking scent", Settings { wall_hp: 3.0, ..w(small(0)) }, walls),
+            ("walls that never break, sealed", Settings { wall_hp: 0.0, wall_scent: 0.0, ..w(small(2)) }, walls),
+            // No limit, so several walkers on a cell bite one wall cell in
+            // the same tick, and health 1,000 so the bites add up unbroken.
+            ("walls under a crowd, no limit", Settings { wall_hp: 1000.0, ..w(small(2)) }, late),
+            ("a cage round a packed start", Settings { wall_hp: 1000.0, walkers: 5_000, start: Start::Home, ..w(small(0)) }, cage),
+            // Growth eating the crystals (the GPU thread's W0): the life
+            // pass adds each walker's take.
+            ("growth on crystals", Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, wall_hp: 3.0, ..w(small(0)) }, walls),
+        ];
+        for (name, s, build) in dishes {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            for t in 0..60 {
+                build(&mut cpu, t);
+                cpu.tick();
+            }
+            let n = cpu.walkers.len();
+            let (broken, bitten, eaten) = (cpu.broken, cpu.wall_hits, cpu.eaten);
+            let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            let (broken, bitten, eaten) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten);
+            let (lc, took_off, lh, agar_off, ground_off) = world_off(&e, &cpu);
+            let (_, hits, gpu_broken) = e.world_counts();
+            // Growth: what the walkers ate turned into energy; and no grass
+            // where the CPU has none (crystals on, grazing off).
+            let le = if e.grows { l1(&floats(&read_back(&device, &queue, &e.energy)).iter().map(|&v| v.max(0.0)).collect::<Vec<_>>(), &energies(&cpu).iter().map(|&v| v.max(0.0)).collect::<Vec<_>>()) } else { 0.0 };
+            let grass = floats(&read_back(&device, &queue, &e.grass));
+            let lg = if cpu.grass.is_empty() { grass.iter().map(|&g| g.abs() as f64).sum() } else { l1(&grass, &cpu.grass) };
+            eprintln!(
+                "{name}: {n} walkers, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}, health L1 {lh:.1e}, energy L1 {le:.1e}, grass {lg:.1e}; {eaten:.1} eaten; {bitten} bites and {broken} cells broken on the CPU, {hits} and {gpu_broken} on the GPU; {took_off} takes, {agar_off} agar and {ground_off} ground cells off"
+            );
+            assert!(le <= 1e-5 && lg <= 1e-6, "{name}: energy L1 {le:.2e}, grass {lg:.2e}");
+            assert!(eaten > 0.0, "{name}: the mould eats in the tick");
+            // Walls that never break take no bites on the CPU (it keeps no
+            // health for them); the GPU counts the bites on their infinite
+            // health, which changes nothing.
+            if !cpu.wall.is_empty() && s.wall_hp > 0.0 {
+                assert!(bitten > 0, "{name}: walkers bite the walls in the tick");
+                // Health 3 breaks in the warm-up; 1,000 holds.
+                assert!(s.wall_hp > 10.0 || cpu.broken > 0, "{name}: a wall broke in the warm-up");
+                assert_eq!((hits as u64, gpu_broken as usize), (bitten, broken), "{name}: bites and cells broken");
+            }
+            if s.wet > 0.0 {
+                assert!(!cpu.wet.is_empty() && cpu.walkers.iter().any(|&(x, y, _)| cpu.wet[y as usize * cpu.w + x as usize]), "{name}: walkers on wet ground");
+            }
+            assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
+            assert!(lt <= 1e-4 && ls <= 1e-6, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}");
+            assert!(lc <= 1e-6 && lh <= 1e-6, "{name}: charge L1 {lc:.2e}, health L1 {lh:.2e}");
+            assert!(took_off * 1000 <= n && agar_off == 0 && ground_off == 0, "{name}: {took_off} takes, {agar_off} agar, {ground_off} ground off");
+        }
+    }
+
+    /// A wall built on the GPU (`Engine::build_wall`) against the same wall
+    /// on the CPU, from the same warmed dish: the same cells walled, their
+    /// trail, scent and charge gone, a crystal it cuts losing those cells,
+    /// and every walker it covered moved to a free cell (the CPU moves them
+    /// one by one, so not always to the same cells), with the crowd limit
+    /// holding and no walker lost.
+    #[test]
+    fn a_wall_builds_on_the_gpu_as_on_the_cpu() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let w = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
+        for (name, s) in [("one a cell", w.clone()), ("no limit", Settings { crowd: false, ..w.clone() }), ("sealed", Settings { wall_scent: 0.0, ..w })] {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..40 {
+                cpu.tick();
+            }
+            e.inject(&cpu);
+            // Across home's crystal and the mould on it (pile 0 at 56, 80).
+            let seg = (45.0, 60.0, 70.0, 100.0, 4.0);
+            let cells = cpu.build_wall(seg.0, seg.1, seg.2, seg.3, seg.4);
+            e.build_wall(&shared, &s, seg.0, seg.1, seg.2, seg.3, seg.4);
+            let (_, _, _, agar_off, ground_off) = world_off(&e, &cpu);
+            let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+            let agar: Vec<bool> = u32s(&e.agar).iter().map(|&a| a != 0).collect();
+            let side = (e.done % 2) as usize;
+            let trail = floats(&read_back(&device, &queue, &e.trail[side]));
+            let scent = floats(&read_back(&device, &queue, &e.scent[side]));
+            let charge = floats(&read_back(&device, &queue, &e.charge));
+            let walled: Vec<usize> = (0..cpu.agar.len()).filter(|&i| cpu.wall[i]).collect();
+            let left_on = walled.iter().filter(|&&i| trail[i] != 0.0 || scent[i] != 0.0 || charge[i] != 0.0).count();
+            let gpu = walkers_of(&e);
+            let inside = |ws: &[(f32, f32, f32)], ag: &[bool]| ws.iter().filter(|&&(x, y, _)| !ag[y as usize * cpu.w + x as usize]).count();
+            let (gpu_inside, cpu_inside) = (inside(&gpu, &agar), inside(&cpu.walkers, &cpu.agar));
+            let moved_gpu = gpu.iter().zip(&e.dish.walkers).filter(|(a, b)| a != b).count();
+            let moved_cpu = cpu.walkers.iter().zip(&e.dish.walkers).filter(|(a, b)| a != b).count();
+            let occ = u32s(&e.occ);
+            let mut want = vec![0u32; occ.len()];
+            for &(x, y, _) in &gpu {
+                want[y as usize * cpu.w + x as usize] += 1;
+            }
+            let occ_off = occ.iter().zip(&want).filter(|(a, b)| a != b).count();
+            let crowded = if s.crowd { occ.iter().filter(|&&c| c > 1).count() } else { 0 };
+            eprintln!("{name}: {cells} cells walled, {} walkers; {moved_cpu} moved out on the CPU, {moved_gpu} on the GPU; {cpu_inside} and {gpu_inside} left inside; {agar_off} agar and {ground_off} ground cells off, {left_on} walled cells with trail, scent or charge, {occ_off} counts off, {crowded} cells over the limit", gpu.len());
+            assert!(cells > 0 && moved_cpu > 0, "{name}: the wall covers walkers");
+            assert!(agar_off == 0 && ground_off == 0 && left_on == 0, "{name}: {agar_off} agar, {ground_off} ground, {left_on} cells left on");
+            assert_eq!(gpu.len(), cpu.walkers.len(), "{name}: no walker lost");
+            assert!(gpu_inside <= cpu_inside, "{name}: {gpu_inside} walkers left inside the wall, {cpu_inside} on the CPU");
+            assert!(moved_gpu == moved_cpu, "{name}: {moved_gpu} walkers moved, {moved_cpu} on the CPU");
+            assert!(occ_off == 0 && crowded == 0, "{name}: {occ_off} counts off, {crowded} crowded");
         }
     }
 }
