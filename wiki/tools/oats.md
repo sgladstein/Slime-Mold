@@ -1,7 +1,7 @@
 ---
 title: Oats
 kind: tool
-status: current
+status: paused
 updated: 2026-11-10
 sources: [Reports/mould-probe-2026-11-07.md, Reports/mould-review-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md]
 code: [Tool::Oats, OATS_STOCK, OATS_FOOD, OATS_R, OATS_SECONDS, OATS_REGROW_SECONDS, Params::oats_grace, Params::stray_reach, STRAY_REACH, Dish::oats_would_start]

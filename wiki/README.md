@@ -41,7 +41,13 @@ Start at [index.md](index.md). Copy [_template.md](_template.md) for a new page.
    A change is not done while a page's Now still describes the old state.
 10. **Pictures stay on Artifact pages.** Pages link the archived copies listed
     in [`Reports/pages.md`](../Reports/pages.md).
-11. **Fun over fidelity.** Biology and Jones's papers are inspiration; never a
+11. **Status** (frontmatter `status:`): `current` (settled), `open` (work
+    under way), `decided`, `paused`, `retired`. **Paused** marks a subject the
+    owner has stepped back from (the dishes and their tools, 2026-11-10
+    20:55Z): don't tune it as a side effect of other work, but a thread that
+    is working on that subject directly may change it and its page (owner,
+    2026-11-11 15:17Z). Lint fails on any other value.
+12. **Fun over fidelity.** Biology and Jones's papers are inspiration; never a
     reason a mechanism must stay.
 
 ## Growth
@@ -52,7 +58,7 @@ these triggers rather than by a plan for its final size:
 - **Every new report is ingested.** Lint fails on a report no page cites
   (reports from before the wiki are listed in `lint.py`). A report that
   touches no existing subject gets a new page or a line under an existing one.
-- **A page past about 300 lines splits** into a subject page and a sub-page
+- **A page past 12 KB (about 3,000 tokens) splits** into a subject page and a sub-page
   (for example a dish's tuning history), linked both ways.
 - **The index past 150 lines splits** into one index per folder
   (`dishes/index.md`, ...), with `index.md` listing the folders. Lint enforces
@@ -64,7 +70,8 @@ these triggers rather than by a plan for its final size:
   forest floor) are added when their first page is.
 - **The success check** (`Reports/llm-wiki-plan-2026-11-10.md`) runs while the
   wiki is small, so its worth is known before it is big, and again after it
-  doubles.
+  doubles. Run 2 (2026-11-11, 21 pages): still a tie with reading the
+  reports (3-2, 33 ties; 13% fewer tokens), so its shrink rule applies.
 
 ## Workflows
 
@@ -91,12 +98,17 @@ reaches, and on a folder of notes with no parent (owner's question,
 **Query**: `HANDOFF.md`, then [index.md](index.md), then the page; open a
 report only when the page does not answer.
 
-**Lint** (CI runs it on every PR; also run it before a hand-off):
-`python3 wiki/lint.py` fails on broken links, pages missing from the index,
+**Lint** (CI runs it on every PR, with `--base`; run `python3 wiki/lint.py
+--base=origin/main` before pushing): with `--base` it fails a page whose
+source report the PR changed while the page did not change (ingest it, or
+bump `updated` once you have checked it is still true). It also fails on broken links, pages missing from the index,
 code symbols that no longer exist, required frontmatter missing, a Numbers
 row with no source link, and an owner quote with no date. It warns when a
-page is older than one of its sources (by git date) and lists reports no
-page cites yet. Then read the warned pages for the part a script cannot do:
+page is older than one of its sources (by git date, or by UTC time when
+`updated` carries one, such as `2026-11-11T15:40Z`; use the time on a busy
+day, since a date misses a source changed later the same day), when a page
+links a report its `sources:` do not list (so the age check cannot see it),
+and lists reports no page cites yet. Then read the warned pages for the part a script cannot do:
 a page whose Now a newer report overturned, or two pages that disagree.
 
 **Owner decision**: quote it with its time in [decisions.md](decisions.md),

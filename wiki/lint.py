@@ -2,6 +2,9 @@
 """Mechanical checks for the mould game's wiki (wiki/).
 
     python3 wiki/lint.py            # from the repo root; exit 1 on any error
+    python3 wiki/lint.py --base=SHA # also: every page whose source report
+                                    # changed since SHA must change too (CI
+                                    # does this on PRs via GITHUB_BASE_REF)
 
 Errors (fail): a relative link that does not resolve; a page that
 `wiki/index.md` does not link; a `code:` symbol in a page's frontmatter that
@@ -17,8 +20,11 @@ So is a note (.md) inside a report folder that cannot be reached by links
 from the folder's parent report or a wiki page, and a folder of notes with
 no parent; folders in `PRE_WIKI_FOLDERS` only warn.
 
-Warnings (print only): a page whose `updated` date is older than the last
-commit to one of its `sources`; a listed pre-wiki report still uncited.
+Warnings (print only): a page over 12 KB, a Now over 2 KB, an index line
+over 200 characters; a page whose `updated` date (or UTC time, such as
+2026-11-11T15:30Z) is older than the last commit to one of its `sources`; a
+page that links a report its `sources` do not list; a listed pre-wiki report
+still uncited.
 
 Why a script and not an LLM pass: these checks are exact and cheap, so a
 session runs them before every wiki commit and spends its judgement on the
@@ -50,6 +56,13 @@ PRE_WIKI_FOLDERS = {
     "new-game-brainstorm-2026-11-07",  # background, linked from Reports/README.md
 }
 INDEX_CAP = 150
+# Size caps, in bytes, since lines vary from 60 to 1,000+ characters (a
+# Numbers row is one line): the owner asked whether 300 lines was right
+# (2026-11-11 15:16Z), and a 255-line page was then 27 KB, about 7k tokens.
+PAGE_CAP = 12_000      # a page past this splits (warning)
+NOW_CAP = 2_000        # a page's Now past this is being appended to (warning)
+INDEX_LINE_CAP = 200   # one index line is one sentence (warning)
+STATUSES = {"current", "open", "decided", "paused", "retired"}
 
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 
@@ -96,9 +109,12 @@ def sections(text):
 
 
 def last_commit_date(path):
+    """The last commit to `path` as a UTC `YYYY-MM-DDTHH:MMZ` string."""
     try:
         r = subprocess.run(
-            ["git", "log", "-1", "--format=%cs", "--", path],
+            ["git", "log", "-1", "--date=format-local:%Y-%m-%dT%H:%MZ",
+             "--format=%cd", "--", path],
+            env=dict(os.environ, TZ="UTC"),
             cwd=ROOT, capture_output=True, text=True, check=False)
         return r.stdout.strip() or None
     except OSError:
@@ -170,6 +186,16 @@ def main():
                 for r in rows:
                     if r.startswith("- ") and not re.match(r"- (\*\*)?(20\d\d-\d\d-\d\d|None)", r):
                         errors.append(f"{rel}: owner quote without a date: {r[:60]}")
+        if fm.get("status") and fm["status"] not in STATUSES:
+            errors.append(f"{rel}: status `{fm['status']}` is not one of {sorted(STATUSES)}")
+        if len(text.encode()) > PAGE_CAP:
+            warnings.append(f"{rel}: {len(text.encode()) // 1000} KB, over the "
+                            f"{PAGE_CAP // 1000} KB cap; split it (wiki/README.md, *Growth*)")
+        for section, rows in sections(text):
+            size = len("\n".join(rows).strip().encode())
+            if section == "Now" and size > NOW_CAP:
+                warnings.append(f"{rel}: Now is {size // 100 / 10} KB, over {NOW_CAP // 1000} KB; "
+                                "rewrite it short and move detail to a section or sub-page")
         updated = fm.get("updated")
         for s in fm.get("sources", []) or []:
             sp = os.path.normpath(os.path.join(ROOT, s))
@@ -178,8 +204,23 @@ def main():
                 continue
             cited.add(sp)
             d = last_commit_date(sp)
-            if updated and d and d > updated:
-                warnings.append(f"{rel}: updated {updated}, but {s} changed {d}")
+            # `updated` may be a date or a UTC time (2026-11-11T15:30Z). A
+            # date compares by day, so a source changed later the same day
+            # does not warn; on a busy day write the time (added 2026-11-11,
+            # when ten reports a day made the day check miss same-day edits).
+            if updated and d and d[:len(updated)] > updated:
+                warnings.append(f"{rel}: updated {updated}, but {s} changed {d[:len(updated)]}")
+        # A report linked in the body but missing from `sources:` escapes
+        # the check above, so the page can go stale without a warning.
+        # decisions.md is a log of rulings whose links are pointers, not a
+        # summary of those reports, so it is left out.
+        srcs = {os.path.normpath(os.path.join(ROOT, s)) for s in fm.get("sources", []) or []}
+        for target in sorted(set(LINK.findall(body))) if not p.endswith("decisions.md") else []:
+            path = os.path.normpath(os.path.join(os.path.dirname(p), target.split("#", 1)[0]))
+            if os.path.dirname(path) == os.path.join(ROOT, "Reports") and path.endswith(".md") \
+                    and os.path.basename(path) not in NOT_SOURCES and path not in srcs \
+                    and os.path.exists(path):
+                warnings.append(f"{rel}: links {os.path.relpath(path, ROOT)} but `sources:` does not list it")
 
     for p in all_pages:
         if p in (index,):
@@ -189,6 +230,11 @@ def main():
 
     with open(index, encoding="utf-8") as h:
         n = sum(1 for _ in h)
+    with open(index, encoding="utf-8") as h:
+        for i, line in enumerate(h, 1):
+            if line.startswith("- [") and len(line.rstrip()) > INDEX_LINE_CAP:
+                warnings.append(f"wiki/index.md:{i}: {len(line.rstrip())} characters, over "
+                                f"{INDEX_LINE_CAP}; one sentence an entry")
     if n > INDEX_CAP:
         errors.append(f"wiki/index.md: {n} lines, over the {INDEX_CAP}-line cap; "
                       "split it per folder (wiki/README.md, *Growth*)")
@@ -261,6 +307,34 @@ def main():
         if missing:
             say(f"Reports/{d}/: {len(missing)} note(s) no parent or page links, e.g. "
                 f"{os.path.relpath(missing[0], ROOT)}")
+
+    # Same-commit rule (README rule 9), enforced on a PR: a report the PR
+    # changes must come with a change to every page that lists it in
+    # `sources:`. The age warnings above never failed CI, and on 2026-11-11
+    # four pages had drifted behind reports changed hours earlier; the owner
+    # asked how to stop that recurring (15:18Z). A change that leaves a page
+    # true still bumps its `updated`, which says someone checked.
+    base = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--base=")), None)
+    # In CI, GitHub Actions sets GITHUB_BASE_REF on pull requests, and the
+    # lint step checks out full history, so the check runs there without a
+    # workflow change (one would make every wiki PR run the build jobs).
+    if base is None and os.environ.get("GITHUB_BASE_REF"):
+        base = "origin/" + os.environ["GITHUB_BASE_REF"]
+    if base:
+        r = subprocess.run(["git", "diff", "--name-only", base + "...HEAD"],
+                           cwd=ROOT, capture_output=True, text=True, check=False)
+        changed = {os.path.normpath(os.path.join(ROOT, f)) for f in r.stdout.split()}
+        for p in all_pages:
+            if p in changed:
+                continue
+            with open(p, encoding="utf-8") as h:
+                fm = frontmatter(h.read())
+            for s in fm.get("sources", []) or []:
+                sp = os.path.normpath(os.path.join(ROOT, s))
+                if sp in changed and sp.startswith(os.path.join(ROOT, "Reports")):
+                    errors.append(f"{os.path.relpath(p, ROOT)}: this PR changes {s}, a source "
+                                  "of this page, but not the page; ingest it, or bump `updated` "
+                                  "if the page is still true")
 
     for w in warnings:
         print("warning:", w)

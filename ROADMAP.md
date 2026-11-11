@@ -21,6 +21,7 @@ everything on screen is the simulation, and an outcome is a spread
 | **E** Engine checks and ports from Pixel_Physics | Dish hash, profiler, parallel draw, licence gates, keyed random draws, sound | *Review Pixel_Physics for reusable code* | Pixel_Physics review doc (https://claude.ai/artifact/Pe83NVdRMXhPvxeYoKASRu) |
 | **S** Scale (GPU) | Six gated phases, from CPU foundations to new play at scale | *Research Sage Jenson's physarum work* | [`Reports/gpu-plan-2026-11-10.md`](Reports/gpu-plan-2026-11-10.md), [the mould at scale](wiki/model/scale.md) |
 | **R** RTS (Bloomfront) | Five gated stages, from two keepers on today's dish to online play | *Explore turning the simulation into an RTS* | [`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md) |
+| **L** Larder World | Six gated phases (W0-W5): growth on the GPU, a world with crystals, Larder in the world, several species, persistence, campaign | *Larder* thread, with the GPU, creature, *Camera and UI* and *Player AI* threads | [`Reports/larder-world-roadmap-2026-11-11.md`](Reports/larder-world-roadmap-2026-11-11.md) (doc https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ); owner ruling 11-11 14:06Z |
 
 Thread names are the project's thread titles on claude.ai. When a thread is
 closed, its track is unowned until a new thread takes it; say so in its row.

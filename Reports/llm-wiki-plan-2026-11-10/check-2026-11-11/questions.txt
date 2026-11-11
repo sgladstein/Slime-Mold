@@ -1,0 +1,38 @@
+Q1. What sensor reach (sensor_offset) does the mould use, and why was a shorter reach (about 6) not kept? Give the numbers.
+Q2. How is The Wild One scored today, and what are its star bars?
+Q3. Why was The Wild One's scoring changed from what it was first? Give the numbers.
+Q4. In The Wild One, what does the snip achieve on its own, compared with doing nothing? Give the paired result.
+Q5. In Keep It Alive, how long does doing nothing live (range and median, 16 seeds)?
+Q6. What are Keep It Alive's three star times?
+Q7. In Keep It Alive, how does the water hand compare with the oat-saver hand, paired over 16 seeds?
+Q8. How many water drops does the player hold, how fast does one come back, and how big is a drop?
+Q9. What does the lamp do to the ground on a wet dish, and what happens to mould there?
+Q10. Why does the lamp push the mould instead of repelling it through the walkers' sensors? Give the measurement.
+Q11. What are the lamp's push value and reach?
+Q12. How long does a snip's wound stay open?
+Q13. Describe the "two humps" in Keep It Alive's lifetimes, with the counts.
+Q14. In The Wild One, what food share does the scripted warden get if it lets go at 30 s, and how many stars?
+Q15. What does the wild rival cost per frame?
+Q16. List the decisions the owner has not yet made.
+Q17. What did the owner pick as the first out-of-the-dish game, and when?
+Q18. Why does the storm cut only one tube? Give the numbers.
+Q19. How long does a sleeping walker live on average?
+Q20. How many walkers do the wild mould and the player's mould start with in The Wild One?
+Q21. In independent review 2, what was the strict significance bar, and why?
+Q22. In The Wild One, which single tools win on their own against doing nothing? Give the paired results for each tool.
+Q23. Why does food give off its scent in its own field rather than in the trail field?
+Q24. What happened with the late piles on the seam in The Wild One?
+Q25. In Keep It Alive, how long does a random hand live, and does water help a random hand?
+Q26. On the owner's GTX 1070, how long does the GPU timing test's 60 Hz frame of two ticks take at 32,000, 100,000 and 1,000,000 walkers, against what bar?
+Q27. Why does the GPU keep trail and scent as f32 floats rather than fixed point? Give the numbers.
+Q28. On the big dish with 100,000 walkers, what does dropping the one-walker-a-cell limit do to loops at 10 s? Give the paired result.
+Q29. How does the chance-weighted turn (MCPM) compare with Jones's turn on loops at 1M walkers, and what does it cost?
+Q30. What does grazing (graze_weight 10 against 0) do to the droplets' drift? Give the paired result.
+Q31. In the budget skirmish under Strike and Fortify, which plans beat soft and by how much, and which plan wins the round robin?
+Q32. Did food arriving after 1:00 fix the skirmish's snowball? Give the numbers.
+Q33. In Larder M3, on held-out seeds, how often is each plan (reader, striker, farmer) best, fed and lean, and how does that compare with M2?
+Q34. What is the Larder M3 window's frame time on Scott-Desktop with 40 soldiers, scent view off and on?
+Q35. Name Larder World's phases W0-W5 in a few words each, and give W0's gate.
+Q36. What did the owner rule about Larder at 2026-11-11 14:06Z?
+Q37. In Two Fevers version 3, how do the three scripted plans rank against each other and against random, and does the leader keep the lead?
+Q38. What do the GPU sandbox's outside rules cost when compiled in but switched off, and what was done about it?
