@@ -7,6 +7,9 @@ play with in a sandbox". The GTX 1070 timing had just passed the phase 3 bar
 (100,000 walkers: 1.37 ms for a frame of two ticks), so the sandbox is
 phase 3's toy, built on the timing test's step.
 
+Page: https://claude.ai/artifact/1rdrxadVcNdxTmbxp2KJGy (source, videos,
+run script and raw output in [`gpu-sandbox-2026-11-11/`](gpu-sandbox-2026-11-11/)).
+
 ```
 cargo run --release --bin mouldgpu
 cargo run --release --bin mouldgpu -- preset=5          # opens on a preset
@@ -86,10 +89,54 @@ Cost on llvmpipe, a CPU emulating a GPU (not GPU numbers): a frame of two
 ticks and the drawing took 27 ms at 100,000 walkers and 80 ms at 1,000,000;
 the drawing passes 3-7 ms of it.
 
+## On the GTX 1070
+
+Built and run through Remote Control at Scott-Desktop (main at 3ac5b20,
+build 32 s), then left open for the owner on preset 1. Every preset 10 s
+headless (`twice=1`), 600 frames of two ticks and the drawing, each
+submitted and waited for; four presets also in the window with vsync
+(`MOULDGPU_SCREENSHOT_AFTER_FRAMES=600`). Raw:
+[`gpu-sandbox-2026-11-11/raw/gtx1070.txt`](gpu-sandbox-2026-11-11/raw/gtx1070.txt).
+
+| Key | Dish | Frame, median / worst | GPU: ticks + drawing | Window: GPU a frame, frames a second | Loops, width at 10 s |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Big dish, 100,000 | 1.42 / 2.18 ms | 1.23 + 0.07 | 4.62 ms, 58.8 | 192, 4.60 |
+| 2 | 32,000 | 0.88 / 1.21 | 0.70 + 0.07 | | 101, 3.26 |
+| 3 | No limit, 100,000 | 0.99 / 1.71 | 0.81 + 0.06 | | 0, 6.14 |
+| 4 | Jenson settings, 1M | 8.00 / 12.22 | 7.69 + 0.18 | 7.02 ms, 60.2 | 43, 5.83 |
+| 5 | + respawn 1% | 9.84 / 12.22 | 9.51 + 0.16 | 9.60 ms, 60.4 | 211, 8.44 |
+| 6 | Drawn by walkers | 9.83 / 12.21 | 9.52 + 0.16 | | (the dish of 5) |
+| 7 | 4M walkers | 30.07 / 47.08 | 29.82 + 0.18 | 26.29 ms, 37.2 | 36, 5.85 |
+| 8 | 4M, our numbers | 12.84 / 47.25 | 12.50 + 0.17 | | 1, 5.90 |
+
+- **Phase 3's bar holds at the owner's pick:** 100,000 walkers at 60 frames
+  a second with the GPU busy 1.4 ms of the 16.7 ms frame headless, 4.6 ms in
+  the window. The same seed gave the same frame twice on all eight presets.
+  The twin test in CI is still to do.
+- **A million walkers fit a 60 Hz frame** (8-10 ms) but not the half-frame
+  bar; four million do not fit (37 frames a second).
+- **The drawing costs 0.06-0.18 ms** a frame, the histogram included.
+- **Not explained:** key 1 costs 4.25 ms of ticks in the window against 1.23
+  ms headless, while key 4 costs a little less in the window. A guess, not
+  measured: the GPU lowers its clock while it idles between vsynced frames
+  at light load. Also not explained: key 4's 1M dish costs 7.7 ms for two
+  ticks against the timing test's 3.5 ms at 1M with today's numbers (sensors
+  twice as far, and a mesh instead of a few ropes).
+- The 1070's dishes differ a little from the software GPU's (192 loops
+  against 174 on key 1, 211 against 200 on key 5): the GPUs round their
+  sums differently, and the dish amplifies it.
+
+## The page's pictures
+
+The videos are the first 10 s of each preset at real speed (a frame every
+four, 15 a second), drawn by the sandbox's own code on the cloud's software
+GPU (`run.sh`; raw output `raw/p1.txt`-`raw/p8.txt`), so the counts beside
+them are the software GPU's, with the 1070's in brackets. The window
+screenshot is preset 5 under Xvfb.
+
 ## Next
 
-- The run on the GTX 1070: the frame with drawing, per preset, and the
-  owner's hands on it.
+- The owner's hands on it.
 - The thread "Reproduce Jenson's missing mould looks" tests feathery fronts,
   trunks and contagion on the CPU; what works comes here as controls.
   Phase 3 also plans contagion on a key and the tools as field writes.

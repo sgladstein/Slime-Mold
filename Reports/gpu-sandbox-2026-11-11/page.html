@@ -1,0 +1,230 @@
+<title>Mould Sandbox on the GPU</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the same lightbox as the Jenson comparison page, so the two read
+   as one series. Dark ground so the black dishes sit flush; every video
+   has its counts beside it in mono. */
+:root {
+  --bg: #0c0e0d;
+  --panel: #151917;
+  --line: #2a302d;
+  --fg: #e9ece9;
+  --muted: #9ba49f;
+  --amber: #ffbe5a;
+  --vein: #cfe3dc;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 600; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 16px; }
+.lead { font-size: 17px; }
+section { display: grid; gap: 20px; }
+section > p, .note { color: var(--muted); }
+.cmd { font: 500 14px/1.5 var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; white-space: pre; }
+.shot { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
+.keys dt { font: 500 13px/1.6 var(--mono); color: var(--amber); white-space: nowrap; }
+.keys dd { margin: 0; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 28px 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+video, figure img { width: 100%; height: auto; aspect-ratio: 8 / 5; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+.key { font: 500 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; font-size: 13px; min-width: 760px; width: 100%; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); background: var(--panel); }
+tr.pick td { background: #1a1813; }
+ul.list { margin: 0; padding-left: 18px; display: grid; gap: 10px; max-width: 72ch; color: var(--muted); }
+ul.list strong { color: var(--fg); font-weight: 600; }
+footer { display: grid; gap: 10px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px; }
+code { font-family: var(--mono); font-size: 0.92em; color: var(--fg); }
+a { color: var(--vein); }
+@media (max-width: 760px) { .shot { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">GPU plan, phase 3 · 2026-11-11</div>
+    <h1>The mould sandbox, on the GPU</h1>
+    <p class="lead">Every option the Jenson comparison tested is now a control you can turn while the dish runs, at up to 8 million walkers. It is open on Scott-Desktop. To start it again, run this in the Slime Mold folder:</p>
+    <div class="cmd">cargo run --release --bin mouldgpu</div>
+    <p class="note">It is a toy for looking: the big dish's step with no economy, census or score. Everything on screen is the simulation, apart from the panel, which H hides.</p>
+  </header>
+
+  <section>
+    <h2>The window</h2>
+    <div class="shot">
+      <figure>
+        <img src="video/panel.jpg" alt="The sandbox window: preset 5, a fine grey mesh with a haze, and the control panel at the top left">
+        <figcaption>Preset 5 after 10 s, with the panel. Drawn on the cloud's software GPU; on the GTX 1070 the same code runs this preset at 60 frames a second.</figcaption>
+      </figure>
+      <dl class="keys">
+        <dt>1-8</dt><dd>Load a preset (below)</dd>
+        <dt>Up, Down</dt><dd>Pick a control</dd>
+        <dt>Left, Right</dt><dd>Change it; hold Shift for bigger steps</dd>
+        <dt>Space, .</dt><dd>Pause; step one tick</dd>
+        <dt>R, N</dt><dd>Restart; restart on a new seed</dd>
+        <dt>Left drag</dt><dd>Pull walkers to the mouse (0.2% of them jump there each tick)</dd>
+        <dt>Right drag</dt><dd>Wipe the trail under the mouse</dd>
+        <dt>F</dt><dd>Drop a food pile at the mouse</dd>
+        <dt>H, Esc</dt><dd>Hide the panel; quit</dd>
+      </dl>
+    </div>
+    <p>The controls: walkers (10,000 to 8 million), one walker a cell, sensor angle, turn, sensor reach, step, trail laid per 100,000 walkers, trail kept a tick, respawn a tick, dish food, how far food is smelled, amber or grey, drawn from the trail or from walkers a cell, the game's brightness curve or a soft one, ticks a frame, and a spread or blob start. Walkers and start restart the dish; everything else changes it as it runs.</p>
+  </section>
+
+  <section>
+    <h2>The eight presets</h2>
+    <p>Each is a dish from the Jenson comparison or the 4x Mould page, 1024 x 640, seed 1, the first 10 seconds from a spread start, at real speed. The videos were drawn by the sandbox's own code on the cloud's software GPU. Counts are at 10 s, with the GTX 1070's own dish in brackets (its sums round differently). Frame cost is the 1070's, for a frame of two ticks and the drawing.</p>
+    <div class="grid">
+      <figure>
+        <video src="video/p1.mp4" poster="video/p1-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 1</span>
+          <strong>Big dish (phase 2)</strong>
+          <span>The nose rule at the owner's pick of 100,000 walkers, one a cell, seven food piles, the game's amber.</span>
+          <dl class="stats"><dt>loops</dt><dd>174 (192)</dd><dt>width</dt><dd>4.61 (4.60) cells</dd><dt>strays</dt><dd>3.3% (3.3%)</dd><dt>frame</dt><dd>1.42 ms</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="video/p2.mp4" poster="video/p2-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 2</span>
+          <strong>32,000 walkers</strong>
+          <span>The same dish with 32,000 walkers, each laying today's deposit.</span>
+          <dl class="stats"><dt>loops</dt><dd>94 (101)</dd><dt>width</dt><dd>3.24 (3.26) cells</dd><dt>strays</dt><dd>3.6% (3.3%)</dd><dt>frame</dt><dd>0.88 ms</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="video/p3.mp4" poster="video/p3-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 3</span>
+          <strong>No limit, our numbers</strong>
+          <span>100,000 walkers with no one-a-cell limit, no food, grey. The walkers fold into ropes, as on the CPU (0 loops against 151.5 with the limit).</span>
+          <dl class="stats"><dt>loops</dt><dd>0 (0)</dd><dt>width</dt><dd>5.52 (6.14) cells</dd><dt>frame</dt><dd>0.99 ms</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="video/p4.mp4" poster="video/p4-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 4</span>
+          <strong>Jenson settings, 1M</strong>
+          <span>1,000,000 walkers, no limit, sensor 45, turn 22.5, sensors 18 out, the soft curve: straight-sided polygons.</span>
+          <dl class="stats"><dt>loops</dt><dd>43 (43)</dd><dt>width</dt><dd>5.74 (5.83) cells</dd><dt>frame</dt><dd>8.00 ms</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="video/p5.mp4" poster="video/p5-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 5</span>
+          <strong>Jenson + respawn 1%</strong>
+          <span>Key 4 with 1% of walkers jumping to a random spot each tick: a fine mesh that stays alive, and a haze.</span>
+          <dl class="stats"><dt>loops</dt><dd>200 (211)</dd><dt>width</dt><dd>8.33 (8.44) cells</dd><dt>strays</dt><dd>1.4% (1.4%)</dd><dt>frame</dt><dd>9.84 ms</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="video/p6.mp4" poster="video/p6-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 6</span>
+          <strong>Drawn by walkers</strong>
+          <span>The dish of key 5, drawn from walkers a cell instead of the trail, as Jenson's later work is drawn: hair-thin veins and ghost tubes.</span>
+          <dl class="stats"><dt>loops</dt><dd>200 (211), the same dish</dd><dt>frame</dt><dd>9.83 ms</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="video/p7.mp4" poster="video/p7-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 7</span>
+          <strong>4M walkers</strong>
+          <span>Key 4 with 4,000,000 walkers, about 8 a cell of agar. Smoother, and much the same network.</span>
+          <dl class="stats"><dt>loops</dt><dd>37 (36)</dd><dt>width</dt><dd>5.78 (5.85) cells</dd><dt>frame</dt><dd>30.1 ms, 37 a second</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="video/p8.mp4" poster="video/p8-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Key 8</span>
+          <strong>4M, our numbers</strong>
+          <span>4,000,000 walkers with today's angles and reach and no limit: ropes again.</span>
+          <dl class="stats"><dt>loops</dt><dd>2 (1)</dd><dt>width</dt><dd>5.73 (5.90) cells</dd><dt>frame</dt><dd>12.8 ms</dd></dl>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it costs on the GTX 1070</h2>
+    <p>Measured on Scott-Desktop through Remote Control: 600 frames of two ticks and the drawing, each submitted and waited for, as the window does. A 60 Hz frame is 16.7 ms; phase 3's bar is the GPU busy under half of it.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Key</th><th>Dish</th><th>Frame, median / worst</th><th>GPU: ticks + drawing</th><th>In the window: GPU a frame, frames a second</th></tr></thead>
+        <tbody>
+          <tr class="pick"><td>1</td><td>Big dish, 100,000</td><td class="n">1.42 / 2.18 ms</td><td class="n">1.23 + 0.07 ms</td><td class="n">4.62 ms, 58.8</td></tr>
+          <tr><td>2</td><td>32,000</td><td class="n">0.88 / 1.21 ms</td><td class="n">0.70 + 0.07 ms</td><td></td></tr>
+          <tr><td>3</td><td>No limit, 100,000</td><td class="n">0.99 / 1.71 ms</td><td class="n">0.81 + 0.06 ms</td><td></td></tr>
+          <tr><td>4</td><td>Jenson settings, 1M</td><td class="n">8.00 / 12.22 ms</td><td class="n">7.69 + 0.18 ms</td><td class="n">7.02 ms, 60.2</td></tr>
+          <tr><td>5</td><td>+ respawn 1%</td><td class="n">9.84 / 12.22 ms</td><td class="n">9.51 + 0.16 ms</td><td class="n">9.60 ms, 60.4</td></tr>
+          <tr><td>6</td><td>Drawn by walkers</td><td class="n">9.83 / 12.21 ms</td><td class="n">9.52 + 0.16 ms</td><td></td></tr>
+          <tr><td>7</td><td>4M walkers</td><td class="n">30.07 / 47.08 ms</td><td class="n">29.82 + 0.18 ms</td><td class="n">26.29 ms, 37.2</td></tr>
+          <tr><td>8</td><td>4M, our numbers</td><td class="n">12.84 / 47.25 ms</td><td class="n">12.50 + 0.17 ms</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="list">
+      <li><strong>The owner's pick passes phase 3's bar.</strong> 100,000 walkers run at 60 frames a second with the GPU busy 1.4 ms of each frame (4.6 ms in the window).</li>
+      <li><strong>Up to a million walkers fit a 60 Hz frame.</strong> They take 8-10 ms of it, which is over the half-frame bar. Four million do not fit: 37 frames a second.</li>
+      <li><strong>The drawing is cheap:</strong> 0.06-0.18 ms, the soft curve's histogram included.</li>
+      <li><strong>Not explained yet:</strong> key 1 costs 4.25 ms of ticks in the window against 1.23 ms headless. A guess, not measured: the GPU drops its clock while it idles between frames at 60 Hz.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Checked</h2>
+    <p>The sandbox's dish against the comparison's CPU runs, seed 1, 10 s, no food, on the cloud's software GPU:</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Dish</th><th>Loops, sandbox / CPU</th><th>Width</th><th>Tube area</th></tr></thead>
+        <tbody>
+          <tr><td>100,000, one a cell</td><td class="n">148 / 151</td><td class="n">5.21 / 5.21</td><td class="n">12,610 / 12,615</td></tr>
+          <tr><td>100,000, no limit</td><td class="n">0 / 0</td><td class="n">5.52 / 5.85</td><td class="n">3,695 / 3,759</td></tr>
+          <tr><td>1,000,000, Jenson settings</td><td class="n">43 / 42</td><td class="n">5.74 / 5.69</td><td class="n">9,663 / 9,641</td></tr>
+          <tr><td>the same, respawn 1%</td><td class="n">200 / 200</td><td class="n">8.33 / 7.99</td><td class="n">22,654 / 21,892</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The same seed gave the same frame twice on every preset, on the software GPU and on the GTX 1070.</p>
+  </section>
+
+  <section>
+    <h2>What differs from the CPU dish, and what comes next</h2>
+    <ul class="list">
+      <li><strong>A jump is a step.</strong> Respawn and the pull replace a walker's step that tick and join the same claim for a cell. The CPU respawns after the move.</li>
+      <li><strong>Piles keep calling.</strong> A reached pile keeps laying full scent. The CPU turns it down, which needs the trail read back.</li>
+      <li><strong>Next:</strong> the thread "Reproduce Jenson's missing mould looks" tests feathery fronts, trunks inside a fine mesh, and contagion on the CPU. What works there becomes a control here. Phase 3 also plans contagion on a key, the tools as writes to the fields, and the twin test in CI.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Code: <code>src/bin/mouldgpu.rs</code>. Report, run script, raw output and this page's source: <code>Reports/gpu-sandbox-2026-11-11/</code> in the Slime-Mold repository. The comparison it builds on: <code>Reports/jenson-compare-2026-11-10.md</code>.</p>
+  </footer>
+</div>
