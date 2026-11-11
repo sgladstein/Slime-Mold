@@ -1,0 +1,9 @@
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 30000 walkers on 1024 x 640 (crowd 1), sensor 90 turn 45 reach 27 laid 1.5 keep 0.93 respawn 0 food 0, drawn Grey Walkers Soft, seed 1
+   looks: start Disc disc 480 haze 0; trail scale 0 reach [0.0, 1.0] angle [0.0, 1.0] turn [0.0, 1.0] step [0.0, 1.0]; cap 0 floor 0 wander 0
+   outside: species 0 avoid 1 zones 0 cycle 0 next 0.6 prev -1; explore 0 ticks, trail 0.05 spread 0; blocked lay 1 keep 0 reset 0.01; chance 0 size spread 0 sensor r 0
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 32.865, worst 58.948; GPU ms ticks 25.725, drawing 6.835
+dish at 10.0s: tube 7761.4  loops 6  width 7.01  reach 181.1  piles 7/7  strays 0.000
+wrote /tmp/mouldgpu-frames/p20-010s.png
+GPU ms a pass, median of 11 ticks each submitted alone: sense 1.857, walk 0.908, trail 6.026, scent 4.181, histogram 3.656, top 0.100, draw 2.116
+same picture twice: yes

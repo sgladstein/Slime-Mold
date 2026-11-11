@@ -1,0 +1,290 @@
+Larder M2 census (off: hoard): 16 seeds (17-32), squad 4 growing to 40, cap 900 game s; hoard 0, hunger 1, drops every 60 s
+
+==== FED field (every pile full)
+idle:
+  seed 17: score -1.818  squad wiped  at  164  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6840  end walkers  7318  hunger 0.00
+  seed 18: score -1.831  squad wiped  at  152  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6560  end walkers  7042  hunger 0.00
+  seed 19: score -1.813  squad wiped  at  169  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6834  end walkers  7100  hunger 0.00
+  seed 20: score -1.808  squad wiped  at  173  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6729  end walkers  7253  hunger 0.00
+  seed 21: score -1.797  squad wiped  at  182  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6758  end walkers  7068  hunger 0.00
+  seed 22: score -1.823  squad wiped  at  159  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6871  end walkers  7204  hunger 0.00
+  seed 23: score -1.821  squad wiped  at  161  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6804  end walkers  7176  hunger 0.00
+  seed 24: score -1.828  squad wiped  at  155  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  7026  end walkers  7188  hunger 0.00
+  seed 25: score -1.806  squad wiped  at  175  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6806  end walkers  7193  hunger 0.00
+  seed 26: score -1.822  squad wiped  at  160  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6787  end walkers  7277  hunger 0.00
+  seed 27: score -1.826  squad wiped  at  157  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6829  end walkers  7255  hunger 0.00
+  seed 28: score -1.819  squad wiped  at  162  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  7064  end walkers  7207  hunger 0.00
+  seed 29: score -1.812  squad wiped  at  169  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6670  end walkers  7397  hunger 0.00
+  seed 30: score -1.814  squad wiped  at  168  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6704  end walkers  7301  hunger 0.00
+  seed 31: score -1.816  squad wiped  at  166  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6794  end walkers  7235  hunger 0.00
+  seed 32: score -1.824  squad wiped  at  158  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6778  end walkers  7291  hunger 0.00
+  median score -1.818; mould wiped 0, cap 0, squad wiped 16; median end 164 s
+random:
+  seed 17: score -1.914  squad wiped  at   78  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6572  hunger 0.00
+  seed 18: score -1.909  squad wiped  at   82  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  7021  hunger 0.00
+  seed 19: score -1.913  squad wiped  at   78  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  7007  hunger 0.00
+  seed 20: score -1.911  squad wiped  at   80  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6790  hunger 0.00
+  seed 21: score -1.909  squad wiped  at   81  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6658  hunger 0.00
+  seed 22: score -1.917  squad wiped  at   74  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  5980  hunger 0.00
+  seed 23: score -1.920  squad wiped  at   72  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6663  hunger 0.00
+  seed 24: score -1.919  squad wiped  at   73  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6284  hunger 0.00
+  seed 25: score -1.908  squad wiped  at   83  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  7144  hunger 0.00
+  seed 26: score -1.917  squad wiped  at   75  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6869  hunger 0.00
+  seed 27: score -1.911  squad wiped  at   80  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6643  hunger 0.00
+  seed 28: score -1.922  squad wiped  at   71  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  5796  hunger 0.00
+  seed 29: score -1.916  squad wiped  at   76  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6847  hunger 0.00
+  seed 30: score -1.905  squad wiped  at   85  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  7282  hunger 0.00
+  seed 31: score -1.918  squad wiped  at   74  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6600  hunger 0.00
+  seed 32: score -1.914  squad wiped  at   77  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6697  hunger 0.00
+  median score -1.914; mould wiped 0, cap 0, squad wiped 16; median end 78 s
+fortress:
+  seed 17: score -1.848  squad wiped  at  137  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6573  end walkers  7030  hunger 0.00
+  seed 18: score -1.834  squad wiped  at  149  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  6373  end walkers  6920  hunger 0.00
+  seed 19: score -1.824  squad wiped  at  159  left  0 most  4  shots   470  spent   5900  harvested   3900  bought  0  turrets 2  bait     0  core    -  walkers@read  6576  end walkers  7045  hunger 0.00
+  seed 20: score -1.833  squad wiped  at  150  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  6535  end walkers  7104  hunger 0.00
+  seed 21: score -1.757  squad wiped  at  219  left  0 most  4  shots   650  spent   7700  harvested   5700  bought  0  turrets 2  bait     0  core    -  walkers@read  6564  end walkers  7067  hunger 0.00
+  seed 22: score -1.835  squad wiped  at  148  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  7283  end walkers  7243  hunger 0.00
+  seed 23: score -1.848  squad wiped  at  137  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6600  end walkers  7003  hunger 0.00
+  seed 24: score -1.837  squad wiped  at  147  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  6894  end walkers  7044  hunger 0.00
+  seed 25: score -1.858  squad wiped  at  128  left  0 most  4  shots   380  spent   5000  harvested   3000  bought  0  turrets 2  bait     0  core    -  walkers@read  6739  end walkers  7091  hunger 0.00
+  seed 26: score -1.838  squad wiped  at  146  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  6565  end walkers  7023  hunger 0.00
+  seed 27: score -1.835  squad wiped  at  149  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  7014  end walkers  7151  hunger 0.00
+  seed 28: score -1.849  squad wiped  at  136  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6727  end walkers  7102  hunger 0.00
+  seed 29: score -1.825  squad wiped  at  158  left  0 most  4  shots   470  spent   5900  harvested   3900  bought  0  turrets 2  bait     0  core    -  walkers@read  6558  end walkers  7116  hunger 0.00
+  seed 30: score -1.833  squad wiped  at  150  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  6548  end walkers  7088  hunger 0.00
+  seed 31: score -1.848  squad wiped  at  137  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6597  end walkers  7055  hunger 0.00
+  seed 32: score -1.820  squad wiped  at  162  left  0 most  4  shots   470  spent   5900  harvested   3900  bought  0  turrets 2  bait     0  core    -  walkers@read  6570  end walkers  7193  hunger 0.00
+  median score -1.835; mould wiped 0, cap 0, squad wiped 16; median end 149 s
+farmer:
+  seed 17: score -1.551  squad wiped  at  404  left  0 most  8  shots  1240  spent  14000  harvested  12000  bought  4  turrets 0  bait     0  core    -  walkers@read  5135  end walkers  7452  hunger 0.00
+  seed 18: score -1.420  squad wiped  at  522  left  0 most  8  shots  1540  spent  17000  harvested  15000  bought  4  turrets 0  bait     0  core    -  walkers@read  5420  end walkers  7065  hunger 0.00
+  seed 19: score -1.543  squad wiped  at  411  left  0 most  8  shots  1180  spent  13400  harvested  11400  bought  4  turrets 0  bait     0  core    -  walkers@read  5741  end walkers  7447  hunger 0.00
+  seed 20: score -1.423  squad wiped  at  519  left  0 most  8  shots  1530  spent  17300  harvested  15300  bought  5  turrets 0  bait     0  core    -  walkers@read  5048  end walkers  7182  hunger 0.00
+  seed 21: score -1.425  squad wiped  at  517  left  0 most  8  shots  1480  spent  16400  harvested  14400  bought  4  turrets 0  bait     0  core    -  walkers@read  5284  end walkers  7214  hunger 0.00
+  seed 22: score -1.808  squad wiped  at  173  left  0 most  8  shots   550  spent   7100  harvested   5100  bought  4  turrets 0  bait     0  core    -  walkers@read  5300  end walkers  6891  hunger 0.00
+  seed 23: score -0.286  cap          at  900  left  8 most  8  shots  3171  spent  34510  harvested  34200  bought  7  turrets 0  bait     0  core    -  walkers@read  5342  end walkers  2596  hunger 0.00
+  seed 24: score -1.319  squad wiped  at  613  left  0 most  8  shots  2410  spent  26900  harvested  24900  bought  7  turrets 0  bait     0  core    -  walkers@read  5137  end walkers  7134  hunger 0.00
+  seed 25: score -1.579  squad wiped  at  379  left  0 most  8  shots  1050  spent  12500  harvested  10500  bought  5  turrets 0  bait     0  core    -  walkers@read  4980  end walkers  7045  hunger 0.00
+  seed 26: score -0.136  cap          at  900  left  8 most  8  shots  3240  spent  34800  harvested  39000  bought  6  turrets 0  bait     0  core    -  walkers@read  5334  end walkers  2079  hunger 0.01
+  seed 27: score -1.621  squad wiped  at  341  left  0 most  8  shots   960  spent  11600  harvested   9600  bought  5  turrets 0  bait     0  core    -  walkers@read  5703  end walkers  7294  hunger 0.00
+  seed 28: score -1.741  squad wiped  at  233  left  0 most  8  shots   760  spent   9200  harvested   7200  bought  4  turrets 0  bait     0  core    -  walkers@read  4833  end walkers  6854  hunger 0.00
+  seed 29: score -1.811  squad wiped  at  170  left  0 most  8  shots   490  spent   6500  harvested   4500  bought  4  turrets 0  bait     0  core    -  walkers@read  5110  end walkers  7160  hunger 0.00
+  seed 30: score -1.555  squad wiped  at  401  left  0 most  8  shots  1150  spent  13100  harvested  11100  bought  4  turrets 0  bait     0  core    -  walkers@read  5817  end walkers  7696  hunger 0.00
+  seed 31: score -1.690  squad wiped  at  279  left  0 most  8  shots   850  spent  10100  harvested   8100  bought  4  turrets 0  bait     0  core    -  walkers@read  5451  end walkers  7674  hunger 0.00
+  seed 32: score -0.115  cap          at  900  left  8 most  8  shots  3065  spent  33450  harvested  32100  bought  7  turrets 0  bait     0  core    -  walkers@read  5362  end walkers  2512  hunger 0.00
+  median score -1.543; mould wiped 0, cap 3, squad wiped 13; median end 411 s
+hunter:
+  seed 17: score -1.953  squad wiped  at   42  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2249  hunger 0.00
+  seed 18: score -1.955  squad wiped  at   41  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2895  hunger 0.00
+  seed 19: score -1.953  squad wiped  at   43  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2657  hunger 0.00
+  seed 20: score -1.947  squad wiped  at   48  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3630  hunger 0.00
+  seed 21: score -1.950  squad wiped  at   45  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3297  hunger 0.00
+  seed 22: score -1.946  squad wiped  at   49  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2540  hunger 0.00
+  seed 23: score -1.949  squad wiped  at   46  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3259  hunger 0.00
+  seed 24: score -1.951  squad wiped  at   44  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2613  hunger 0.00
+  seed 25: score -1.946  squad wiped  at   49  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3332  hunger 0.00
+  seed 26: score -1.958  squad wiped  at   38  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2769  hunger 0.00
+  seed 27: score -1.948  squad wiped  at   46  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3095  hunger 0.00
+  seed 28: score -1.948  squad wiped  at   47  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2499  hunger 0.00
+  seed 29: score -1.956  squad wiped  at   40  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3068  hunger 0.00
+  seed 30: score -1.951  squad wiped  at   44  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2647  hunger 0.00
+  seed 31: score -1.944  squad wiped  at   51  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3612  hunger 0.00
+  seed 32: score -1.950  squad wiped  at   45  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3017  hunger 0.00
+  median score -1.950; mould wiped 0, cap 0, squad wiped 16; median end 45 s
+baiter:
+  seed 17: score  0.250  cap          at  900  left  4 most  4  shots  1809  spent  19590  harvested  29702  bought  0  turrets 0  bait  1500  core    -  walkers@read  6715  end walkers  2509  hunger 0.00
+  seed 18: score -0.100  cap          at  900  left  4 most  4  shots  1469  spent  16190  harvested  29701  bought  0  turrets 0  bait  1500  core    -  walkers@read  6371  end walkers  2312  hunger 0.01
+  seed 19: score -0.300  cap          at  900  left  3 most  4  shots  1546  spent  16660  harvested  29700  bought  0  turrets 0  bait  1200  core    -  walkers@read  6611  end walkers  2831  hunger 0.00
+  seed 20: score -0.333  cap          at  900  left  4 most  4  shots  1448  spent  15680  harvested  30003  bought  0  turrets 0  bait  1200  core    -  walkers@read  6452  end walkers  2532  hunger 0.00
+  seed 21: score -0.250  cap          at  900  left  4 most  4  shots  1241  spent  13610  harvested  30002  bought  0  turrets 0  bait  1200  core    -  walkers@read  6606  end walkers  2538  hunger 0.00
+  seed 22: score -0.100  cap          at  900  left  4 most  4  shots  1692  spent  18120  harvested  30002  bought  0  turrets 0  bait  1200  core    -  walkers@read  6708  end walkers  2342  hunger 0.00
+  seed 23: score  0.000  cap          at  900  left  4 most  4  shots  1835  spent  19250  harvested  29700  bought  0  turrets 0  bait   900  core    -  walkers@read  6586  end walkers  2584  hunger 0.00
+  seed 24: score -0.167  cap          at  900  left  4 most  4  shots  1741  spent  18610  harvested  30002  bought  0  turrets 0  bait  1200  core    -  walkers@read  6735  end walkers  2321  hunger 0.01
+  seed 25: score -0.250  cap          at  900  left  4 most  4  shots  1342  spent  14620  harvested  30002  bought  0  turrets 0  bait  1200  core    -  walkers@read  6572  end walkers  2510  hunger 0.00
+  seed 26: score  0.167  cap          at  900  left  4 most  4  shots  1348  spent  14680  harvested  30003  bought  0  turrets 0  bait  1200  core    -  walkers@read  6493  end walkers  2350  hunger 0.01
+  seed 27: score -0.214  cap          at  900  left  4 most  4  shots  1960  spent  21100  harvested  29400  bought  0  turrets 0  bait  1500  core    -  walkers@read  6812  end walkers  2567  hunger 0.00
+  seed 28: score -0.500  cap          at  900  left  4 most  4  shots  1482  spent  16020  harvested  30004  bought  0  turrets 0  bait  1200  core    -  walkers@read  7351  end walkers  2418  hunger 0.00
+  seed 29: score  0.167  cap          at  900  left  4 most  4  shots  1131  spent  12210  harvested  30002  bought  0  turrets 0  bait   900  core    -  walkers@read  6533  end walkers  2588  hunger 0.00
+  seed 30: score -0.167  cap          at  900  left  4 most  4  shots  1237  spent  13870  harvested  30002  bought  0  turrets 0  bait  1500  core    -  walkers@read  6392  end walkers  2474  hunger 0.00
+  seed 31: score -0.250  cap          at  900  left  4 most  4  shots  1342  spent  14620  harvested  30002  bought  0  turrets 0  bait  1200  core    -  walkers@read  6622  end walkers  2328  hunger 0.01
+  seed 32: score -0.167  cap          at  900  left  4 most  4  shots  1318  spent  14080  harvested  30004  bought  0  turrets 0  bait   900  core    -  walkers@read  6539  end walkers  2278  hunger 0.01
+  median score -0.167; mould wiped 0, cap 16, squad wiped 0; median end 900 s
+reader:
+  seed 17: score  0.250  cap          at  900  left  8 most  8  shots  1815  spent  21250  harvested  29702  bought  4  turrets 0  bait  1500  core    -  walkers@read  6715  end walkers  2528  hunger 0.00
+  seed 18: score  0.250  cap          at  900  left  8 most  8  shots  1485  spent  17650  harvested  29701  bought  4  turrets 0  bait  1200  core    -  walkers@read  6371  end walkers  2195  hunger 0.01
+  seed 19: score -0.500  cap          at  900  left  6 most  6  shots  1552  spent  17920  harvested  29700  bought  3  turrets 0  bait  1200  core    -  walkers@read  6611  end walkers  2796  hunger 0.00
+  seed 20: score  0.167  cap          at  900  left  8 most  8  shots  1469  spent  17490  harvested  30003  bought  4  turrets 0  bait  1200  core    -  walkers@read  6452  end walkers  2412  hunger 0.00
+  seed 21: score  0.250  cap          at  900  left  8 most  8  shots  1251  spent  15310  harvested  30002  bought  4  turrets 0  bait  1200  core    -  walkers@read  6606  end walkers  2478  hunger 0.00
+  seed 22: score  0.300  cap          at  900  left  8 most  8  shots  1709  spent  19890  harvested  30002  bought  4  turrets 0  bait  1200  core    -  walkers@read  6708  end walkers  2223  hunger 0.00
+  seed 23: score  0.000  cap          at  900  left  8 most  8  shots  1840  spent  20900  harvested  29700  bought  4  turrets 0  bait   900  core    -  walkers@read  6586  end walkers  2531  hunger 0.00
+  seed 24: score  0.250  cap          at  900  left  8 most  8  shots  1769  spent  20190  harvested  30002  bought  4  turrets 0  bait   900  core    -  walkers@read  6735  end walkers  2308  hunger 0.01
+  seed 25: score  0.250  cap          at  900  left  8 most  8  shots  1364  spent  16440  harvested  30002  bought  4  turrets 0  bait  1200  core    -  walkers@read  6572  end walkers  2417  hunger 0.00
+  seed 26: score  0.167  cap          at  900  left  8 most  8  shots  1350  spent  16000  harvested  30003  bought  4  turrets 0  bait   900  core    -  walkers@read  6493  end walkers  2356  hunger 0.01
+  seed 27: score -0.214  cap          at  900  left  8 most  8  shots  1986  spent  22960  harvested  29400  bought  4  turrets 0  bait  1500  core    -  walkers@read  6812  end walkers  2404  hunger 0.00
+  seed 28: score  0.000  cap          at  900  left  8 most  8  shots  1506  spent  17560  harvested  30004  bought  4  turrets 0  bait   900  core    -  walkers@read  7351  end walkers  2365  hunger 0.00
+  seed 29: score  0.167  cap          at  900  left  8 most  8  shots  1136  spent  13860  harvested  30002  bought  4  turrets 0  bait   900  core    -  walkers@read  6533  end walkers  2522  hunger 0.00
+  seed 30: score  0.250  cap          at  900  left  8 most  8  shots  1245  spent  15250  harvested  30002  bought  4  turrets 0  bait  1200  core    -  walkers@read  6392  end walkers  2473  hunger 0.00
+  seed 31: score  0.000  cap          at  900  left  8 most  8  shots  1366  spent  16160  harvested  30002  bought  4  turrets 0  bait   900  core    -  walkers@read  6622  end walkers  2294  hunger 0.01
+  seed 32: score  0.167  cap          at  900  left  8 most  8  shots  1340  spent  15900  harvested  30004  bought  4  turrets 0  bait   900  core    -  walkers@read  6539  end walkers  2300  hunger 0.01
+  median score 0.167; mould wiped 0, cap 16, squad wiped 0; median end 900 s
+  best working plan per seed: reader reader baiter reader reader reader reader reader reader reader reader reader reader reader reader reader
+
+==== LEAN field (every pile but the larder at a quarter)
+idle:
+  seed 17: score -1.812  squad wiped  at  169  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6674  end walkers  7154  hunger 0.00
+  seed 18: score -1.813  squad wiped  at  168  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6588  end walkers  7150  hunger 0.00
+  seed 19: score -1.817  squad wiped  at  165  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6807  end walkers  7194  hunger 0.00
+  seed 20: score -1.818  squad wiped  at  164  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6823  end walkers  7176  hunger 0.00
+  seed 21: score -1.815  squad wiped  at  167  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6691  end walkers  7141  hunger 0.00
+  seed 22: score -1.831  squad wiped  at  153  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6843  end walkers  7315  hunger 0.00
+  seed 23: score -1.820  squad wiped  at  162  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6747  end walkers  7176  hunger 0.00
+  seed 24: score -1.820  squad wiped  at  162  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6770  end walkers  7162  hunger 0.00
+  seed 25: score -1.812  squad wiped  at  169  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6619  end walkers  7350  hunger 0.00
+  seed 26: score -1.826  squad wiped  at  157  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6737  end walkers  7384  hunger 0.00
+  seed 27: score -1.826  squad wiped  at  157  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6872  end walkers  7190  hunger 0.00
+  seed 28: score -1.816  squad wiped  at  166  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6864  end walkers  7218  hunger 0.00
+  seed 29: score -1.814  squad wiped  at  167  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6741  end walkers  7180  hunger 0.00
+  seed 30: score -1.814  squad wiped  at  167  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6742  end walkers  7259  hunger 0.00
+  seed 31: score -1.816  squad wiped  at  165  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6751  end walkers  7235  hunger 0.00
+  seed 32: score -1.825  squad wiped  at  158  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read  6820  end walkers  7290  hunger 0.00
+  median score -1.816; mould wiped 0, cap 0, squad wiped 16; median end 165 s
+random:
+  seed 17: score -1.918  squad wiped  at   74  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6845  hunger 0.00
+  seed 18: score -1.909  squad wiped  at   82  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6841  hunger 0.00
+  seed 19: score -1.918  squad wiped  at   74  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6538  hunger 0.00
+  seed 20: score -1.897  squad wiped  at   93  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  7219  hunger 0.00
+  seed 21: score -1.916  squad wiped  at   76  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6692  hunger 0.00
+  seed 22: score -1.920  squad wiped  at   72  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6012  hunger 0.00
+  seed 23: score -1.888  squad wiped  at  101  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  7187  hunger 0.00
+  seed 24: score -1.913  squad wiped  at   78  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6791  hunger 0.00
+  seed 25: score -1.909  squad wiped  at   82  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6711  hunger 0.00
+  seed 26: score -1.914  squad wiped  at   78  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6686  hunger 0.00
+  seed 27: score -1.900  squad wiped  at   90  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  7396  hunger 0.00
+  seed 28: score -1.921  squad wiped  at   71  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  5942  hunger 0.00
+  seed 29: score -1.914  squad wiped  at   77  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6866  hunger 0.00
+  seed 30: score -1.911  squad wiped  at   80  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  7285  hunger 0.00
+  seed 31: score -1.917  squad wiped  at   75  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  6894  hunger 0.00
+  seed 32: score -1.893  squad wiped  at   97  left  0 most  4  shots   200  spent   2000  harvested      0  bought  0  turrets 0  bait     0  core    -  walkers@read     0  end walkers  7833  hunger 0.00
+  median score -1.913; mould wiped 0, cap 0, squad wiped 16; median end 78 s
+fortress:
+  seed 17: score -1.870  squad wiped  at  117  left  0 most  4  shots   350  spent   4700  harvested   2700  bought  0  turrets 2  bait     0  core    -  walkers@read     0  end walkers  6825  hunger 0.00
+  seed 18: score -1.846  squad wiped  at  138  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6421  end walkers  6888  hunger 0.00
+  seed 19: score -1.824  squad wiped  at  158  left  0 most  4  shots   470  spent   5900  harvested   3900  bought  0  turrets 2  bait     0  core    -  walkers@read  6552  end walkers  7060  hunger 0.00
+  seed 20: score -1.838  squad wiped  at  146  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  6610  end walkers  7118  hunger 0.00
+  seed 21: score -1.857  squad wiped  at  129  left  0 most  4  shots   380  spent   5000  harvested   3000  bought  0  turrets 2  bait     0  core    -  walkers@read  6735  end walkers  7019  hunger 0.00
+  seed 22: score -1.858  squad wiped  at  128  left  0 most  4  shots   380  spent   5000  harvested   3000  bought  0  turrets 2  bait     0  core    -  walkers@read  7118  end walkers  7293  hunger 0.00
+  seed 23: score -1.850  squad wiped  at  135  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6574  end walkers  6997  hunger 0.00
+  seed 24: score -1.848  squad wiped  at  137  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6556  end walkers  7046  hunger 0.00
+  seed 25: score -1.836  squad wiped  at  148  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  6480  end walkers  6945  hunger 0.00
+  seed 26: score -1.833  squad wiped  at  150  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  6558  end walkers  7199  hunger 0.00
+  seed 27: score -1.849  squad wiped  at  136  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6912  end walkers  7191  hunger 0.00
+  seed 28: score -1.847  squad wiped  at  137  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6674  end walkers  7115  hunger 0.00
+  seed 29: score -1.823  squad wiped  at  160  left  0 most  4  shots   470  spent   5900  harvested   3900  bought  0  turrets 2  bait     0  core    -  walkers@read  6532  end walkers  7072  hunger 0.00
+  seed 30: score -1.822  squad wiped  at  160  left  0 most  4  shots   470  spent   5900  harvested   3900  bought  0  turrets 2  bait     0  core    -  walkers@read  6610  end walkers  7045  hunger 0.00
+  seed 31: score -1.833  squad wiped  at  151  left  0 most  4  shots   440  spent   5600  harvested   3600  bought  0  turrets 2  bait     0  core    -  walkers@read  6450  end walkers  7080  hunger 0.00
+  seed 32: score -1.845  squad wiped  at  139  left  0 most  4  shots   410  spent   5300  harvested   3300  bought  0  turrets 2  bait     0  core    -  walkers@read  6558  end walkers  7157  hunger 0.00
+  median score -1.845; mould wiped 0, cap 0, squad wiped 16; median end 139 s
+farmer:
+  seed 17: score -1.727  squad wiped  at  246  left  0 most  8  shots   780  spent   9800  harvested   7800  bought  5  turrets 0  bait     0  core    -  walkers@read  5110  end walkers  4394  hunger 0.00
+  seed 18: score -1.649  squad wiped  at  316  left  0 most  8  shots   940  spent  11000  harvested   9000  bought  4  turrets 0  bait     0  core    -  walkers@read  5591  end walkers  3128  hunger 0.01
+  seed 19: score -1.773  squad wiped  at  204  left  0 most  8  shots   580  spent   7400  harvested   5400  bought  4  turrets 0  bait     0  core    -  walkers@read  5871  end walkers  7455  hunger 0.00
+  seed 20: score  0.500  cap          at  900  left  8 most  8  shots  1791  spent  19910  harvested  28204  bought  5  turrets 0  bait     0  core    -  walkers@read  4972  end walkers    13  hunger 0.02
+  seed 21: score -1.648  squad wiped  at  317  left  0 most  8  shots   970  spent  11300  harvested   9302  bought  4  turrets 0  bait     0  core    -  walkers@read  5416  end walkers  2006  hunger 0.06
+  seed 22: score -1.811  squad wiped  at  170  left  0 most  8  shots   550  spent   7100  harvested   5100  bought  4  turrets 0  bait     0  core    -  walkers@read  5243  end walkers  7109  hunger 0.00
+  seed 23: score  1.214  mould wiped  at  887  left  8 most  8  shots  1827  spent  20270  harvested  30902  bought  5  turrets 0  bait     0  core    -  walkers@read  5112  end walkers     0  hunger 0.01
+  seed 24: score  1.605  mould wiped  at  536  left  8 most  8  shots  1621  spent  18610  harvested  20704  bought  6  turrets 0  bait     0  core    -  walkers@read  4999  end walkers     0  hunger 0.17
+  seed 25: score -1.634  squad wiped  at  329  left  0 most  8  shots   970  spent  11300  harvested   9300  bought  4  turrets 0  bait     0  core    -  walkers@read  4927  end walkers  2806  hunger 0.05
+  seed 26: score -1.473  squad wiped  at  475  left  0 most  8  shots  1740  spent  19400  harvested  17401  bought  5  turrets 0  bait     0  core    -  walkers@read  5424  end walkers  1966  hunger 0.01
+  seed 27: score  1.570  mould wiped  at  567  left  8 most  8  shots  1099  spent  12990  harvested  18004  bought  5  turrets 0  bait     0  core    -  walkers@read  5736  end walkers     0  hunger 0.25
+  seed 28: score -1.783  squad wiped  at  196  left  0 most  8  shots   600  spent   8000  harvested   6000  bought  5  turrets 0  bait     0  core    -  walkers@read  4849  end walkers  6741  hunger 0.00
+  seed 29: score -1.782  squad wiped  at  196  left  0 most  8  shots   550  spent   7100  harvested   5100  bought  4  turrets 0  bait     0  core    -  walkers@read  4972  end walkers  7637  hunger 0.00
+  seed 30: score -1.665  squad wiped  at  302  left  0 most  8  shots   880  spent  10400  harvested   8400  bought  4  turrets 0  bait     0  core    -  walkers@read  5880  end walkers  3065  hunger 0.01
+  seed 31: score -1.723  squad wiped  at  249  left  0 most  8  shots   760  spent   9200  harvested   7200  bought  4  turrets 0  bait     0  core    -  walkers@read  5411  end walkers  4963  hunger 0.00
+  seed 32: score  0.333  cap          at  900  left  8 most  8  shots  1968  spent  21680  harvested  31804  bought  5  turrets 0  bait     0  core    -  walkers@read  5222  end walkers    28  hunger 0.03
+  median score -1.648; mould wiped 3, cap 2, squad wiped 11; median end 317 s
+hunter:
+  seed 17: score -1.947  squad wiped  at   48  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2698  hunger 0.00
+  seed 18: score -1.940  squad wiped  at   54  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  4012  hunger 0.00
+  seed 19: score -1.953  squad wiped  at   42  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2812  hunger 0.00
+  seed 20: score -1.949  squad wiped  at   46  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3397  hunger 0.00
+  seed 21: score -1.942  squad wiped  at   53  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3652  hunger 0.00
+  seed 22: score -1.940  squad wiped  at   54  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2786  hunger 0.00
+  seed 23: score -1.954  squad wiped  at   42  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3740  hunger 0.00
+  seed 24: score -1.953  squad wiped  at   42  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2766  hunger 0.00
+  seed 25: score -1.946  squad wiped  at   49  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3350  hunger 0.00
+  seed 26: score -1.954  squad wiped  at   41  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2739  hunger 0.00
+  seed 27: score -1.955  squad wiped  at   41  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  1668  hunger 0.00
+  seed 28: score -1.954  squad wiped  at   41  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2846  hunger 0.00
+  seed 29: score -1.955  squad wiped  at   41  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2702  hunger 0.00
+  seed 30: score -1.948  squad wiped  at   47  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3531  hunger 0.00
+  seed 31: score -1.952  squad wiped  at   43  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  3739  hunger 0.00
+  seed 32: score -1.951  squad wiped  at   45  left  0 most  7  shots    80  spent   2000  harvested      0  bought  3  turrets 0  bait     0  core    -  walkers@read     0  end walkers  2776  hunger 0.00
+  median score -1.951; mould wiped 0, cap 0, squad wiped 16; median end 45 s
+baiter:
+  seed 17: score  1.148  mould wiped  at  856  left  4 most  4  shots  1349  spent  15290  harvested  29400  bought  0  turrets 0  bait  1800  core    -  walkers@read  6457  end walkers     0  hunger 0.07
+  seed 18: score  0.167  cap          at  900  left  4 most  4  shots   783  spent   8730  harvested  29400  bought  0  turrets 0  bait   900  core    -  walkers@read  6389  end walkers    37  hunger 0.04
+  seed 19: score  0.071  cap          at  900  left  4 most  4  shots   877  spent   9970  harvested  30605  bought  0  turrets 0  bait  1200  core    -  walkers@read  6526  end walkers   166  hunger 0.06
+  seed 20: score  0.000  cap          at  900  left  4 most  4  shots  1011  spent  11010  harvested  29702  bought  0  turrets 0  bait   900  core    -  walkers@read  6502  end walkers    34  hunger 0.05
+  seed 21: score  1.403  mould wiped  at  627  left  4 most  4  shots   688  spent   7780  harvested  29700  bought  0  turrets 0  bait   900  core    -  walkers@read  6535  end walkers     0  hunger 0.28
+  seed 22: score -1.124  squad wiped  at  788  left  0 most  4  shots  1550  spent  17900  harvested  15902  bought  0  turrets 0  bait  2400  core    -  walkers@read  6571  end walkers   472  hunger 0.03
+  seed 23: score  0.000  cap          at  900  left  4 most  4  shots  1219  spent  14290  harvested  30002  bought  0  turrets 0  bait  2100  core    -  walkers@read  6556  end walkers   195  hunger 0.07
+  seed 24: score  0.167  cap          at  900  left  4 most  4  shots  1187  spent  13970  harvested  29702  bought  0  turrets 0  bait  2100  core    -  walkers@read  6511  end walkers   108  hunger 0.02
+  seed 25: score  0.000  cap          at  900  left  4 most  4  shots   701  spent   7910  harvested  29700  bought  0  turrets 0  bait   900  core    -  walkers@read  6243  end walkers    22  hunger 0.08
+  seed 26: score  1.384  mould wiped  at  644  left  4 most  4  shots   821  spent   9410  harvested  30004  bought  0  turrets 0  bait  1200  core    -  walkers@read  6480  end walkers     0  hunger 0.33
+  seed 27: score -1.457  squad wiped  at  489  left  0 most  4  shots  1169  spent  14390  harvested  16502  bought  0  turrets 0  bait  2700  core    -  walkers@read  7035  end walkers   936  hunger 0.04
+  seed 28: score  1.381  mould wiped  at  647  left  4 most  4  shots   995  spent  11750  harvested  29702  bought  0  turrets 0  bait  1800  core    -  walkers@read  7092  end walkers     0  hunger 0.12
+  seed 29: score  1.213  mould wiped  at  798  left  4 most  4  shots   990  spent  11400  harvested  30004  bought  0  turrets 0  bait  1500  core    -  walkers@read  6537  end walkers     0  hunger 0.04
+  seed 30: score  1.171  mould wiped  at  836  left  4 most  4  shots  1321  spent  15310  harvested  29400  bought  0  turrets 0  bait  2100  core    -  walkers@read  6477  end walkers     0  hunger 0.08
+  seed 31: score  0.167  cap          at  900  left  4 most  4  shots   951  spent  11010  harvested  30002  bought  0  turrets 0  bait  1500  core    -  walkers@read  6438  end walkers    33  hunger 0.03
+  seed 32: score  0.000  cap          at  900  left  4 most  4  shots   751  spent   9010  harvested  30304  bought  0  turrets 0  bait  1500  core    -  walkers@read  6578  end walkers    38  hunger 0.10
+  median score 0.167; mould wiped 6, cap 8, squad wiped 2; median end 900 s
+reader:
+  seed 17: score  0.167  cap          at  900  left  8 most  8  shots  1593  spent  18430  harvested  30000  bought  4  turrets 0  bait   900  core    -  walkers@read  6457  end walkers    41  hunger 0.03
+  seed 18: score  1.412  mould wiped  at  709  left  8 most  8  shots   865  spent  10850  harvested  30604  bought  4  turrets 0  bait   600  core    -  walkers@read  6389  end walkers     0  hunger 0.31
+  seed 19: score  0.357  cap          at  900  left  8 most  8  shots   855  spent  11050  harvested  29702  bought  4  turrets 0  bait   900  core    -  walkers@read  6526  end walkers    23  hunger 0.10
+  seed 20: score  1.497  mould wiped  at  632  left  8 most  8  shots  1344  spent  15940  harvested  30001  bought  4  turrets 0  bait   900  core    -  walkers@read  6502  end walkers     0  hunger 0.11
+  seed 21: score  0.167  cap          at  900  left  8 most  8  shots   925  spent  11750  harvested  30001  bought  4  turrets 0  bait   900  core    -  walkers@read  6535  end walkers     1  hunger 0.03
+  seed 22: score  1.615  mould wiped  at  526  left  8 most  8  shots   919  spent  11990  harvested  30304  bought  4  turrets 0  bait  1200  core    -  walkers@read  6571  end walkers     0  hunger 0.24
+  seed 23: score  1.411  mould wiped  at  710  left  8 most  8  shots  1017  spent  12970  harvested  29702  bought  4  turrets 0  bait  1200  core    -  walkers@read  6556  end walkers     0  hunger 0.18
+  seed 24: score  1.429  mould wiped  at  694  left  8 most  8  shots   696  spent   9760  harvested  30302  bought  4  turrets 0  bait  1200  core    -  walkers@read  6511  end walkers     0  hunger 0.43
+  seed 25: score  1.483  mould wiped  at  645  left  8 most  8  shots   730  spent   9800  harvested  33601  bought  4  turrets 0  bait   900  core    -  walkers@read  6243  end walkers     0  hunger 0.26
+  seed 26: score -0.250  cap          at  900  left  8 most  8  shots  1241  spent  15210  harvested  30604  bought  4  turrets 0  bait  1200  core    -  walkers@read  6480  end walkers   113  hunger 0.03
+  seed 27: score  0.500  cap          at  900  left  8 most  8  shots   979  spent  12290  harvested  30002  bought  4  turrets 0  bait   900  core    -  walkers@read  7035  end walkers     1  hunger 0.41
+  seed 28: score  0.500  cap          at  900  left  8 most  8  shots   956  spent  12360  harvested  30003  bought  4  turrets 0  bait  1200  core    -  walkers@read  7092  end walkers     9  hunger 0.11
+  seed 29: score  1.562  mould wiped  at  574  left  8 most  8  shots   610  spent   8600  harvested  30302  bought  4  turrets 0  bait   900  core    -  walkers@read  6537  end walkers     0  hunger 0.30
+  seed 30: score  1.524  mould wiped  at  609  left  8 most  8  shots   627  spent   8770  harvested  29400  bought  4  turrets 0  bait   900  core    -  walkers@read  6477  end walkers     0  hunger 0.34
+  seed 31: score  0.250  cap          at  900  left  8 most  8  shots  1037  spent  13170  harvested  29702  bought  4  turrets 0  bait  1200  core    -  walkers@read  6438  end walkers    13  hunger 0.03
+  seed 32: score  1.262  mould wiped  at  844  left  8 most  8  shots   806  spent  10860  harvested  30302  bought  4  turrets 0  bait  1200  core    -  walkers@read  6578  end walkers     0  hunger 0.09
+  median score 1.411; mould wiped 9, cap 7, squad wiped 0; median end 844 s
+  best working plan per seed: baiter reader reader reader baiter reader reader farmer reader baiter farmer baiter reader reader reader reader
+
+Comparisons (paired by seed, ties dropped; Holm over 24):
+  fed: farmer > fortress           16 of 16  p 0.00003  survives Holm
+  fed: fortress > hunter           16 of 16  p 0.00003  survives Holm
+  fed: baiter > fortress           16 of 16  p 0.00003  survives Holm
+  fed: farmer > hunter             16 of 16  p 0.00003  survives Holm
+  fed: baiter > farmer             15 of 16  p 0.00052  survives Holm
+  fed: baiter > hunter             16 of 16  p 0.00003  survives Holm
+  fed: reader > idle               16 of 16  p 0.00003  survives Holm
+  fed: reader > random             16 of 16  p 0.00003  survives Holm
+  fed: reader > fortress           16 of 16  p 0.00003  survives Holm
+  fed: reader > farmer             16 of 16  p 0.00003  survives Holm
+  fed: reader > hunter             16 of 16  p 0.00003  survives Holm
+  fed: reader > baiter             10 of 11  p 0.01172  survives Holm
+  lean: farmer > fortress          16 of 16  p 0.00003  survives Holm
+  lean: fortress > hunter          16 of 16  p 0.00003  survives Holm
+  lean: baiter > fortress          16 of 16  p 0.00003  survives Holm
+  lean: farmer > hunter            16 of 16  p 0.00003  survives Holm
+  lean: baiter > farmer            11 of 16  p 0.21011  -
+  lean: baiter > hunter            16 of 16  p 0.00003  survives Holm
+  lean: reader > idle              16 of 16  p 0.00003  survives Holm
+  lean: reader > random            16 of 16  p 0.00003  survives Holm
+  lean: reader > fortress          16 of 16  p 0.00003  survives Holm
+  lean: reader > farmer            14 of 16  p 0.00418  survives Holm
+  lean: reader > hunter            16 of 16  p 0.00003  survives Holm
+  lean: reader > baiter            12 of 16  p 0.07681  -
+
+Crossovers (A > B fed and B > A lean, or the reverse, 15+ each way, both survive Holm):
+  none: no pair of fixed plans changes winner between fed and lean
+Reader beats every fixed plan and both controls in both conditions (15+ of 16, Holm): FAIL
+(276.1 s)

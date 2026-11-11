@@ -72,7 +72,11 @@ a { color: var(--vein); }
     <div class="cmd">cargo run --release --bin mouldgpu</div>
     <p class="note">It is a toy for looking: the big dish's step with no economy, census or score. Everything on screen is the simulation, apart from the panel, which H hides.</p>
     <div class="callout">
-      <h3>New: Jenson's missing looks as controls (2026-11-11)</h3>
+      <h3>New: species, explorers, droplets and grazers as controls (2026-11-11)</h3>
+      <p>The creature rules from the two latest outside-model reports are now controls, on a fourth panel page, OUTSIDE RULES. That covers rival and cyclic species, conversion, explorers, packed walkers that lay trail where they stand, grazing, and three texture rules. Seven presets go with them, on Shift+6 to Shift+0 and Ctrl+1 and 2 (<a href="#outside">below</a>). Each rule matches the CPU on a one-tick test over 15 dishes. With every rule off, they are compiled out of the GPU code.</p>
+    </div>
+    <div class="callout">
+      <h3>Jenson's missing looks as controls (2026-11-11)</h3>
       <p>The trunk ring, the contagion wave and the trail-set turning from the looks thread are now controls on two new panel pages, with seven presets on keys 9, 0 and Shift+1 to 5 (<a href="#looks">below</a>). Each matches the CPU's rule to the bit on a one-tick test. Turned off, they cost nothing measurable; contagion costs 0.3 ms a frame at 100,000 walkers. The sandbox is open on Scott-Desktop on key 0, the contagion wave.</p>
     </div>
     <div class="callout">
@@ -90,8 +94,9 @@ a { color: var(--vein); }
       </figure>
       <dl class="keys">
         <dt>1-8</dt><dd>Load a preset (below)</dd>
-        <dt>9, 0, Shift+1-5</dt><dd>Load a looks preset (new, below)</dd>
-        <dt>Tab</dt><dd>Turn the panel's page: MAIN, LOOKS, CONTAGION</dd>
+        <dt>9, 0, Shift+1-5</dt><dd>Load a looks preset (below)</dd>
+        <dt>Shift+6-0, Ctrl+1-2</dt><dd>Load a creature preset (new, below)</dd>
+        <dt>Tab</dt><dd>Turn the panel's page: MAIN, LOOKS, CONTAGION, OUTSIDE RULES</dd>
         <dt>Up, Down</dt><dd>Pick a control</dd>
         <dt>Left, Right</dt><dd>Change it; hold Shift for bigger steps</dd>
         <dt>Space, .</dt><dd>Pause; step one tick</dd>
@@ -188,6 +193,7 @@ a { color: var(--vein); }
   <section id="looks">
     <h2>The looks, as controls</h2>
     <p>The looks from the thread on Jenson's missing mould looks are now controls, on two new pages of the panel (Tab turns the page), and seven presets. Each runs the CPU's own rule: one GPU tick matches one CPU tick to the bit on six test dishes. All are off unless a preset or the panel turns them on.</p>
+    <p class="note">Correction (2026-11-11): the six test dishes match to the bit for every walker and the germ. The trail matches to the bit on four of them. On the two with the deposit cap it differs by at most 1.1 parts in ten million, because the GPU adds up a cell's shares in a different order.</p>
     <ul class="list">
       <li><strong>LOOKS page:</strong> a disc start and its radius, the haze around it, how the trail a walker stands in sets its reach, sensor angle, turn and step (an amount and a power each), the square-root deposit cap, a sensing floor, and wander.</li>
       <li><strong>CONTAGION page:</strong> how long a walker is sick and then immune, how much germ makes it catch, germ laid and kept, what sickness does to speed, trail, reach and turn, and when and how wide the centre is seeded. Middle drag, or I, makes the walkers under the mouse sick. The red is the germ field itself.</li>
@@ -267,6 +273,90 @@ a { color: var(--vein); }
     </ul>
   </section>
 
+  <section id="outside">
+    <h2>Species, explorers, droplets and grazers, as controls</h2>
+    <p>The rules from the looks thread's two latest reports, outside rules and creatures, are controls on a fourth page of the panel, OUTSIDE RULES. Each runs the CPU's own rule. On 15 test dishes, one GPU tick from the CPU's state matches one CPU tick: every walker's position, age and species, and the grass exactly, and the trail fields to within 2.4 parts in a hundred million. All are off unless a preset or the panel turns them on.</p>
+    <ul class="list">
+      <li><strong>Species:</strong> 2 to 4, each with its own trail and colour, smelling its own trail and avoiding the others' by an amount you set. Species can start in bands or mixed. Cyclic species are drawn to the next species and flee the previous one. With conversion, a walker joins whichever species' trail outweighs its own where it stands. SPECIES 0 LAYS gives the amber species more trail than the rest, an edge in a fight. Changing the species count or bands restarts the dish.</li>
+      <li><strong>Explorers:</strong> walkers younger than the time you set steer away from trail and lay a share of it. A spread gives each walker its own time. Switching explorers on, or dropping walkers with the left mouse, starts the stage again.</li>
+      <li><strong>Packed walkers:</strong> a blocked walker can lay trail where it stands, and can keep its heading instead of picking a new one.</li>
+      <li><strong>Grazing:</strong> grass on the dish that walkers eat and that grows back. Fresh grass draws them, and the grass is drawn as green ground.</li>
+      <li><strong>Texture:</strong> the chance-weighted turn, a size for each walker, and sensors that read a square of cells.</li>
+    </ul>
+    <p>Seed 1, at real speed, drawn on the cloud's software GPU. Counts are from the end of each clip. Bodies are connected patches of over 30 cells, counted as the creatures report counted them on the CPU. The CPU's figures are from the outside rules and creatures reports.</p>
+    <div class="grid">
+      <figure>
+        <video src="outside/video/p16.mp4" poster="outside/video/p16-20s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+6</span>
+          <strong>Two territories</strong>
+          <span>A million walkers in two species, each started in its own half, each smelling its own trail and avoiding the other's. Two meshes, amber and teal, hold their halves with a dark border between. The still is at 20 s.</span>
+          <dl class="stats"><dt>loops</dt><dd>27 at 20 s</dd><dt>width</dt><dd>5.67 cells</dd><dt>CPU, 8 seeds</dt><dd>tube cells 80%+ one species: 0.994-1.000</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="outside/video/p17.mp4" poster="outside/video/p17-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+7</span>
+          <strong>Cyclic ribbons</strong>
+          <span>Three species mixed, each drawn to the next species' trail and away from the previous one's. They braid into ribbons of mixed colour that keep flowing round the dish.</span>
+          <dl class="stats"><dt>loops</dt><dd>93 at 10 s</dd><dt>CPU, 8 seeds</dt><dd>97-125</dd><dt>width</dt><dd>7.93 cells</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="outside/video/p18.mp4" poster="outside/video/p18-2s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+8</span>
+          <strong>Explorer front</strong>
+          <span>From a small disc, young walkers steer away from trail and lay a twentieth of it, each for its own share of 0 to 15 s. Radial veins grow behind a feathery front, as on the CPU, then close into a mesh. The still is at 2 s.</span>
+          <dl class="stats"><dt>loops</dt><dd>134 at 6 s</dd><dt>width</dt><dd>4.13 cells</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="outside/video/p19.mp4" poster="outside/video/p19-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+9</span>
+          <strong>Droplets</strong>
+          <span>30,000 walkers, one a cell. A walker that cannot move lays its trail where it stands, so a packed crowd smells of itself and holds together as round droplets that hardly move. Drawn by walkers a cell.</span>
+          <dl class="stats"><dt>bodies</dt><dd>182 of 204 cells (median)</dd><dt>drift</dt><dd>0.64 cells in 2 s</dd><dt>CPU, 8 seeds</dt><dd>179-193 bodies of about 200 cells; drift 0.67-0.77</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="outside/video/p20.mp4" poster="outside/video/p20-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Shift+0</span>
+          <strong>Beads on strings</strong>
+          <span>The droplets with three times the reach: a network of thin strings with a bead at each junction, coarsening as it goes.</span>
+          <dl class="stats"><dt>beads</dt><dd>37 of 419 cells (median)</dd><dt>loops</dt><dd>6 at 10 s</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="outside/video/p21.mp4" poster="outside/video/p21-10s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Ctrl+1</span>
+          <strong>Grazing droplets</strong>
+          <span>The droplets on grass. Each walker eats the grass under it, the grass slowly grows back, and fresh grass smells good. A droplet eats its ground bare and leans toward fresh ground, so it keeps crawling. The grass is the dim green, and the darker wakes are the ground the droplets have eaten.</span>
+          <dl class="stats"><dt>bodies</dt><dd>181 of 217 cells (median)</dd><dt>drift</dt><dd>7.62 cells in 2 s</dd><dt>CPU, 8 seeds</dt><dd>168-190 bodies; drift 6.5-7.6</dd></dl>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="outside/video/p22.mp4" poster="outside/video/p22-20s.jpg" muted loop playsinline autoplay controls preload="metadata"></video>
+        <figcaption>
+          <span class="key">Ctrl+2</span>
+          <strong>Grazing species</strong>
+          <span>The grazing droplets in two species that do not avoid each other, drawn by trail in species colours. Amber and teal cells roam among each other and stay one colour each. The still is at 20 s.</span>
+          <dl class="stats"><dt>loops</dt><dd>9 at 20 s</dd><dt>CPU</dt><dd>80%+ one species on 0.91 of tube cells (seed 1)</dd></dl>
+        </figcaption>
+      </figure>
+    </div>
+    <h3>What they cost</h3>
+    <ul class="list">
+      <li><strong>Off, nothing measurable.</strong> When every outside rule is off, the sandbox runs a second build of its GPU code with the rules compiled out. On the cloud's software GPU, key 1's ticks take 25.7-26.5 ms a frame against 25.2-25.7 before the rules, and key 4's 72.9-76.5 against 74.1-76.2 (three rounds each). Compiled in but switched off, they had cost 18-24% more, which is why the second build exists.</li>
+      <li><strong>On, on the software GPU:</strong> at a million walkers, territories take 123 ms of ticks a frame, ribbons 152 and the explorer front 94, against key 4's 74-76. At 30,000 walkers, droplets, beads and grazing droplets take 26-29 ms and grazing species 56. Species cost most in the trail pass, which sums each species' field.</li>
+      <li><strong>The GTX 1070's numbers are pending.</strong> They need the PC's session, which starts again when you next write in the thread.</li>
+    </ul>
+  </section>
+
   <section>
     <h2>What it costs on the GTX 1070</h2>
     <p>Measured on Scott-Desktop through Remote Control after the review's fixes (build 9d4a2d1): 600 frames of two ticks and the drawing, each submitted and waited for, as the window does, and each pass timed alone. A 60 Hz frame is 16.7 ms; phase 3's bar is the GPU busy under half of it, 8.3 ms.</p>
@@ -335,7 +425,8 @@ a { color: var(--vein); }
   <section>
     <h2>Next</h2>
     <ul class="list">
-      <li><strong>Your hands on it:</strong> the looks presets and pages are new; the contagion wave is open on Scott-Desktop.</li>
+      <li><strong>Your hands on it:</strong> the creature presets (Shift+6 to Shift+0, Ctrl+1 and 2) and the OUTSIDE RULES page are new. Grazing species (Ctrl+2) is the most creature-like dish so far.</li>
+      <li><strong>Their cost on the GTX 1070,</strong> measured when the PC's session is next awake.</li>
       <li><strong>Phase 3 also plans</strong> the tools as writes to the fields.</li>
     </ul>
   </section>

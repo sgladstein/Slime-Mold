@@ -1,0 +1,14 @@
+Scott-Desktop (Intel Core i5-6600K @ 3.50GHz), commit 75c5332, release build, no window.
+`cargo run --release --locked --bin larder -- bench`, three runs, raw output:
+
+Run 1:
+40 soldiers, scent view off: frame mean 7.15 ms, p95 9.60 ms, max 10.59 ms over 900 frames (game step 0.93, dish draw 6.13, scent 0.00, squad and HUD 0.09); 40 alive, 4455 walkers at the end
+40 soldiers, scent view on: frame mean 8.92 ms, p95 11.57 ms, max 13.93 ms over 900 frames (game step 0.92, dish draw 5.87, scent 2.03, squad and HUD 0.10); 40 alive, 4455 walkers at the end
+Run 2:
+40 soldiers, scent view off: frame mean 7.15 ms, p95 9.64 ms, max 10.34 ms over 900 frames (game step 0.93, dish draw 6.13, scent 0.00, squad and HUD 0.09); 40 alive, 4455 walkers at the end
+40 soldiers, scent view on: frame mean 8.93 ms, p95 11.63 ms, max 12.36 ms over 900 frames (game step 0.92, dish draw 5.89, scent 2.02, squad and HUD 0.09); 40 alive, 4455 walkers at the end
+Run 3:
+40 soldiers, scent view off: frame mean 7.16 ms, p95 9.56 ms, max 10.41 ms over 900 frames (game step 0.93, dish draw 6.14, scent 0.00, squad and HUD 0.09); 40 alive, 4455 walkers at the end
+40 soldiers, scent view on: frame mean 8.93 ms, p95 11.60 ms, max 12.45 ms over 900 frames (game step 0.92, dish draw 5.89, scent 2.02, squad and HUD 0.10); 40 alive, 4455 walkers at the end
+
+Earlier run at 076c5db (scent view always on): mean 9.17-9.21 ms, p95 11.60-11.70 ms, max 12.19-13.15 ms.
