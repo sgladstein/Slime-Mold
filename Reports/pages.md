@@ -47,3 +47,4 @@ if the link ever stops working. Newest last.
 | 11-11 | Larder M2 Census | https://claude.ai/artifact/1LKdbtQbsQJxv76ApxThRw | `larder-m2-2026-11-11/` (open `page.html`; pictures in `look/`) |
 | 11-11 | Larder M3 Window | https://claude.ai/artifact/CXSwsJbdxKyi2G5TnZhxZ4 | `larder-m3-2026-11-11/` (open `page.html`; pictures in `pics/`, made with `larder shot` from `pics/clear.txt`) |
 | 11-11 | Mixed Mould Walkers (spread from one spot; mixed walkers sort into outriders, splitter, roamer) | https://claude.ai/artifact/Mp6XiXvfqo4gxc1gWaMjRz | `spread-mix-2026-11-11/` (page.html, `pics/`, run.sh, `raw/`) |
+| 11-11 | Larder Walls and Crystals (walls the mould wears down; crystals that drain as a whole) | https://claude.ai/artifact/ChBBfKkuMYaggBvXCKrxtN | `larder-world-roadmap-2026-11-11/` (open `page-walls.html`; pictures in `walls/` and `crystals/`, raw runs beside them) |

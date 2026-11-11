@@ -1,0 +1,11 @@
+# worldwall cage arm, first try: a harness bug also built a random wall at 5 s in this arm (fixed); not counted
+## r7-cage-hp400.txt
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 400 wall_bite 1 crystal_flow 0 wall_scent 0.3
+seed 1 cage   wall   719 first break 5.1s  broken 1027 of 719  wall bites 444548  walkers outside 2879  hash d74d102a9077f761
+seed 2 cage   wall   750 first break 4.2s  broken 795 of 750  wall bites 351967  walkers outside 2674  hash 801cdf7339360098
+seed 3 cage   wall   722 first break 4.1s  broken 1564 of 722  wall bites 675919  walkers outside 4832  hash 85685ac44ef39064
+## r7-cage-hp50.txt
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 50 wall_bite 1 crystal_flow 0 wall_scent 0.3
+seed 1 cage   wall   719 first break 1.4s  broken 1301 of 719  wall bites 72664  walkers outside 3908  hash 0784074fa8d43402
+seed 2 cage   wall   750 first break 1.1s  broken 1280 of 750  wall bites 67347  walkers outside 2525  hash 91dd9cd18ee3ef06
+seed 3 cage   wall   722 first break 0.9s  broken 2283 of 722  wall bites 119602  walkers outside 4355  hash b34b17a14517b6b9

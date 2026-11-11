@@ -30,22 +30,6 @@ and short 2; without, long 7 and short 26 (48 games, p 0.00003). It is luck
 because the landing spot shows only 5 s ahead, after the mould has been put
 to sleep. Waits on the owner's play.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Lived, doing nothing | 1:08-3:48 (median 2:10), 0 stars | 16 | | [keep-alive, *Numbers*](../../Reports/mould-keep-alive-2026-11-10.md) |
-| Lived, random | 1:04-3:29 (2:03), 0 stars | 16 | | same |
-| Lived, oat-saver (no water) | 2:47-5:26 (3:34), 1 star on 3 | 16 | beats doing nothing 14-1, p 0.001 | same |
-| Lived, waterer (`sleeper`) | 2:51-10:42 (4:41) | 16 | beats oat-saver, random, doing nothing 15-1 each, p 0.0005 | same |
-| Bake without water vs oat-saver | a few seconds shorter | 8 | 1-7, p 0.07 | [review 2, *Keep It Alive*](../../Reports/mould-review-2-2026-11-10.md) |
-| Clumsiest water hand (`HJIT=10 HLAG=3`) vs oat-saver | longer | 8 | 8-0, p 0.008 | same |
-| Two humps, all water-hand runs | 17 dead by 5:05, 14 past 7:20, 1 between | 32 | | same |
-| First mostly-asleep pile has a sleeper within 45 cells: long / short | 13 / 2 (else 7 / 26) | 16 x 3 hands | Fisher p 0.00003, cut named after looking | [keep-alive luck, *Answer*](../../Reports/mould-keep-alive-luck-2026-11-10.md) |
-
-Review 2 made about 14 comparisons, so its strict bar is p < 0.004; its 8-0
-results are consistent directions, not proofs. The water hand is a script,
-not a person; the lamp is on for 3-22 s of a 3-10 minute game.
 
 ## Owner's word
 

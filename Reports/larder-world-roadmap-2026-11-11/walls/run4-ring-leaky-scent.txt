@@ -1,0 +1,33 @@
+# worldwall ring arm, run 4: walls leak scent (wall_scent 0.3), health 0 / 30 / 300; none arm alongside. 512x320, 20k walkers, 40 s, seeds 1-6
+## r4-none
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1 crystal_flow 0 wall_scent 0
+seed 1 none   wall     0 drained 0.4928 of others  home left 0.000  ring pile bitten 5.8s  left 0.803  broken 0  hash 226ffed617b52609
+seed 2 none   wall     0 drained 0.5609 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  hash d4151ead051c5cf9
+seed 3 none   wall     0 drained 0.4984 of others  home left 0.000  ring pile bitten 8.6s  left 0.783  broken 0  hash 7ebdce113b5dd1f5
+seed 4 none   wall     0 drained 0.3578 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 50e723eef41efcc2
+seed 5 none   wall     0 drained 0.4723 of others  home left 0.000  ring pile bitten 7.6s  left 0.840  broken 0  hash 556d054f54199cab
+seed 6 none   wall     0 drained 0.4077 of others  home left 0.000  ring pile bitten never  left 0.999  broken 0  hash e5d9fb27748c3057
+## r4-ws03-hp0
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1 crystal_flow 0 wall_scent 0.3
+seed 1 ring   wall   497 drained 0.4734 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 53fc91b295d87463
+seed 2 ring   no crystal unreached at 5 s: skipped
+seed 3 ring   wall   499 drained 0.5010 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 832d3ee3e51c10c9
+seed 4 ring   wall   492 drained 0.3578 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 35f089f6b7ae8422
+seed 5 ring   wall   496 drained 0.4634 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 19da1fb15604addd
+seed 6 ring   wall   505 drained 0.4027 of others  home left 0.000  ring pile bitten never  left 0.999  broken 0  hash bbd85eab0aafa4a0
+## r4-ws03-hp30
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 30 wall_bite 1 crystal_flow 0 wall_scent 0.3
+seed 1 ring   wall   497 drained 0.4734 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash d8b0fe346ec9d0b0
+seed 2 ring   no crystal unreached at 5 s: skipped
+seed 3 ring   wall   499 drained 0.5010 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 6538a40f0f4d3f46
+seed 4 ring   wall   492 drained 0.3578 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 6edfcdcade59ed62
+seed 5 ring   wall   496 drained 0.4634 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash abab56bb6d16b20d
+seed 6 ring   wall   505 drained 0.4027 of others  home left 0.000  ring pile bitten never  left 0.999  broken 0  hash 9678ab320053d3c3
+## r4-ws03-hp300
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 300 wall_bite 1 crystal_flow 0 wall_scent 0.3
+seed 1 ring   wall   497 drained 0.4734 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 9739857d02e3fdca
+seed 2 ring   no crystal unreached at 5 s: skipped
+seed 3 ring   wall   499 drained 0.5010 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 22152f53c6bfd93c
+seed 4 ring   wall   492 drained 0.3578 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 8e340d2f1bc6c52a
+seed 5 ring   wall   496 drained 0.4634 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash fab6f8370b7c40ad
+seed 6 ring   wall   505 drained 0.4027 of others  home left 0.000  ring pile bitten never  left 0.999  broken 0  hash c2b4cd647676fa63

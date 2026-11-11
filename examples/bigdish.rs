@@ -398,6 +398,18 @@ fn main() {
             "mix_turn" => p.mix_turn = f(),
             "mix_step" => p.mix_step = f(),
             "mix_deposit" => p.mix_deposit = f(),
+            "crystal_charge" => p.crystal_charge = f(),
+            "crystal_eat" => p.crystal_eat = f(),
+            "crystal_regrow" => p.crystal_regrow = f(),
+            "crystal_flow" => p.crystal_flow = f(),
+            "terrain_rock" => p.terrain_rock = f(),
+            "terrain_wet" => p.terrain_wet = f(),
+            "wet_step" => p.wet_step = f(),
+            "terrain_blob" => p.terrain_blob = f(),
+            "rect" => p.rect = f() != 0.0,
+            "wall_hp" => p.wall_hp = f(),
+            "wall_bite" => p.wall_bite = f(),
+            "wall_scent" => p.wall_scent = f(),
             "blocked_keep" => p.blocked_keep = f() != 0.0,
             "blocked_reset" => p.blocked_reset = f(),
             "blocked_retry" => p.blocked_retry = f() as u8,
@@ -517,7 +529,7 @@ fn main() {
             if d.ticks.is_multiple_of(report_every) || d.ticks == ticks {
                 let m = d.measure();
                 println!(
-                    "seed {seed} {name} t {:5.1}s  tube {:7.1}  loops {:4}  width {:.2}  reach {:6.1}  piles {}/{}  strays {:.3}  ms/tick {:.2}",
+                    "seed {seed} {name} t {:5.1}s  tube {:7.1}  loops {:4}  width {:.2}  reach {:6.1}  piles {}/{}  strays {:.3}  crystals {:.3}  ms/tick {:.2}",
                     m.seconds,
                     m.tube_area,
                     m.loops,
@@ -526,6 +538,7 @@ fn main() {
                     m.reached,
                     d.piles.len(),
                     m.strays,
+                    d.crystals_left(),
                     spent * 1e3 / d.ticks as f64
                 );
                 {

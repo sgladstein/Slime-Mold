@@ -82,6 +82,7 @@ impl SpeciesSet {
         }
     }
 }
+const DRAW_TERRAIN: u32 = 140;
 
 #[derive(Clone, Debug)]
 pub struct BigParams {
@@ -340,6 +341,92 @@ pub struct BigParams {
     pub blocked_deposit: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
+    /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
+    /// 0 is off). Every fine agar cell of a pile holds this much charge at
+    /// the start and none is ever added: a crystal runs dry. A pile's scent
+    /// is `food_deposit` x the share of its charge left, so a drained
+    /// crystal stops calling, and the picture draws the charge itself (the
+    /// glow is the number, not an effect). The owner's rulings, 11-11 14:06Z:
+    /// food becomes energy crystals that run out, which forces expansion.
+    pub crystal_charge: f32,
+    /// Charge a walker takes from its cell a fine step. The n walkers on a
+    /// cell take equal shares, min(`crystal_eat`, charge / n), so the take
+    /// does not depend on walker order (a count per cell, as on a GPU); the
+    /// GPU thread's growth step (W0) credits it to each walker's energy.
+    pub crystal_eat: f32,
+    /// Crystals that refill (0 is off: they run dry). Each fine step a
+    /// crystal cell regains this share of what it is missing. The owner,
+    /// 11-11 14:54Z: crystals that run out go with the race start (one
+    /// spot, it must expand); a landing on a world mostly mould probably
+    /// wants crystals that don't run out. Both are tested; 14:55Z: "just my
+    /// initial thought", to be settled by playtests.
+    pub crystal_regrow: f32,
+    /// Charge that flows inside a crystal (0 is off). Each fine step every
+    /// cell of a pile moves this share of the way to the pile's mean, so
+    /// the total is kept and a tube that touches one edge of a disc drains
+    /// all of it, and the whole disc dims together. Why: the GPU thread's
+    /// first growth run on run-dry crystals (11-11 15:27Z, one seed) saw
+    /// the mould eat only the cells its tubes cross and starve with 61% of
+    /// the charge still there; the owner wants an idle player to lose to
+    /// a mould that keeps growing (14:54Z). On a GPU it is a per-pile sum
+    /// (an atomic add per cell into a few dozen slots) and a second pass.
+    ///
+    /// 0.01 (worldwall, 11-11, 512 x 320, 20k walkers, 23 crystals that
+    /// run dry): the share of the other crystals' charge eaten by 40 s goes
+    /// from 0.476 to 0.829 (mean of 12 seeds), higher on 12 of 12 (sign
+    /// test p 0.0005, survives Holm over 3 flows); 0.05 and 0.2 do no
+    /// better (0.749, 0.800 on 6 seeds). The cost is within noise (7.8 ms
+    /// a tick with and without, 4 threads).
+    pub crystal_flow: f32,
+    /// Terrain (0 is off): a smooth keyed noise on today's grid, blobs about
+    /// `terrain_blob` dish cells across, the same layout at every scale.
+    /// Where the first channel is under `terrain_rock` the ground is rock:
+    /// not agar, so no walker, trail or scent enters it. Where the second
+    /// is under `terrain_wet` it is wet: a walker's step there is x
+    /// `wet_step`. Pile discs are kept clear of rock.
+    pub terrain_rock: f32,
+    pub terrain_wet: f32,
+    pub wet_step: f32,
+    pub terrain_blob: f32,
+    /// A rectangular world, three dish cells in from the edge, instead of
+    /// the dish's ellipse: a world, not a dish (owner, 11-11 14:01Z).
+    pub rect: bool,
+    /// Wall health a fine cell (0: walls never break). Owner, 11-11 15:24Z:
+    /// the mould must be able to damage walls or grow over them, with a
+    /// big slowdown, or a wall round a crystal shuts it out for good. Each
+    /// fine step every walker blocked by a wall cell it tried to enter
+    /// takes `wall_bite` from that cell; at 0 the cell is ground again, as
+    /// rubble: wet (the step x `wet_step`) and open to scent. The picture
+    /// draws a wall's brightness from its health.
+    ///
+    /// 400, a first number for play (worldwall, 11-11, 512 x 320, 20k
+    /// walkers, 3 seeds): a wall 2 dish cells thick round the whole home
+    /// blob, the hardest the mould can press, loses its first cell at
+    /// 3.4-4.7 s and lets 6-660 walkers out by 20 s, 2,000-2,900 by 40 s.
+    /// At 1,600 the first cell goes at 13.6-15.9 s and none are out by
+    /// 40 s; at 6,400 nothing breaks. A tube passing a ringed crystal
+    /// bites it 0-76 times in 35 s (5 seeds), so only a crowd breaks a
+    /// wall. Recalibrate once the mould grows (W0).
+    pub wall_hp: f32,
+    pub wall_bite: f32,
+    /// The share of scent a walled scent cell keeps each scent step (0:
+    /// walls stop scent). Scent spreads into a wall and fades there, so a
+    /// little gets across and a walled crystal still calls, faintly. Why:
+    /// with walls that stop scent, a ring round a crystal hides it, and the
+    /// mould never presses on the ring however weak it is (worldwall ring
+    /// arm, 11-11: no bite and no broken cell in 35 s at health 30 or 300,
+    /// 2 seeds of 2 valid; a fixed-size mould presses nowhere).
+    ///
+    /// 0.9 (11-11, with the GPU thread's growth, scratch; 512 x 320, charge
+    /// 512, a health-400 ring round the nearest unreached crystal at 5 s,
+    /// 90 s, 8 seeds): the ring was bitten on 2 / 4 / 7 seeds of 8 at
+    /// 0 / 0.5 / 0.9, broken through in places on 1 / 3 / 6, and the
+    /// crystal inside eaten on 0 / 0 / 2 (both at 86 s). Bites, 0.9 against
+    /// sealed: more on 6 of 7 untied seeds (p 0.125); not significant, but
+    /// the trend is steady and the owner's ruling is that a walled crystal
+    /// must be reachable (15:24Z). Sealed, the mould walks past a ringed
+    /// crystal as if it were not there.
+    pub wall_scent: f32,
     pub seed: u64,
 }
 
@@ -420,6 +507,18 @@ impl BigParams {
             blocked_retry: 0,
             blocked_deposit: 0.0,
             tube: 1.0,
+            crystal_charge: 0.0,
+            crystal_eat: 0.05,
+            crystal_regrow: 0.0,
+            crystal_flow: 0.01,
+            terrain_rock: 0.0,
+            terrain_wet: 0.0,
+            wet_step: 0.5,
+            terrain_blob: 12.0,
+            rect: false,
+            wall_hp: 400.0,
+            wall_bite: 1.0,
+            wall_scent: 0.9,
             seed: 1,
         }
     }
@@ -492,9 +591,62 @@ pub struct BigDish {
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
+    /// Crystals (`crystal_charge` > 0), else empty: charge a fine cell,
+    /// which pile owns it (index + 1, 0 none), each pile's charge left and
+    /// at the start, each walker's take this fine step, and all eaten.
+    pub charge: Vec<f32>,
+    pub pile_of: Vec<u16>,
+    pub pile_charge: Vec<f32>,
+    pub pile_full: Vec<f32>,
+    /// The fine cells of every pile's crystal, pile by pile (a wall can
+    /// take one out of its pile: its `pile_of` is then 0).
+    pile_cells: Vec<u32>,
+    pub took: Vec<f32>,
+    pub eaten: f64,
+    /// Terrain (`terrain_rock` or `terrain_wet` > 0), else empty: rock and
+    /// wet a fine cell.
+    pub rock: Vec<bool>,
+    pub wet: Vec<bool>,
+    /// Walls the player built (`build_wall`), a fine cell; empty until the
+    /// first. A wall is ground the mould cannot enter, the same channel as
+    /// the rim and rock.
+    pub wall: Vec<bool>,
+    /// Each wall cell's health (`wall_hp` > 0), else empty; and cells broken.
+    pub wall_health: Vec<f32>,
+    pub broken: usize,
+    /// Walker bites on walls so far (a measure, not state).
+    pub wall_hits: u64,
+    /// Scent cells inside a wall (`wall_scent` > 0), else empty.
+    pub scent_wall: Vec<bool>,
     /// Threads for the field passes. Each cell is computed from the last
     /// field alone, so the result does not depend on it.
     pub threads: usize,
+}
+
+/// Agar inside a rectangle `margin` cells in from the edge (`rect`).
+fn rect(w: usize, h: usize, margin: f32) -> Vec<bool> {
+    let m = margin as usize;
+    (0..w * h).map(|i| {
+        let (x, y) = (i % w, i / w);
+        x >= m && y >= m && x + m < w && y + m < h
+    }).collect()
+}
+
+/// Smooth value noise in [0, 1] at a dish-cell position: keyed lattice
+/// values `cell` dish cells apart, blended with a smoothstep. Keyed on the
+/// seed and the lattice point alone, so every scale draws the same map.
+fn noise(seed: u64, channel: u32, x: f32, y: f32, cell: f32) -> f32 {
+    let (gx, gy) = (x / cell, y / cell);
+    let (ix, iy) = (gx.floor(), gy.floor());
+    let (fx, fy) = (gx - ix, gy - iy);
+    let (sx, sy) = (fx * fx * (3.0 - 2.0 * fx), fy * fy * (3.0 - 2.0 * fy));
+    let v = |a: f32, b: f32| {
+        let k = ((a as i32 + 64) as u32 & 0xFFFF) | (((b as i32 + 64) as u32 & 0x7FFF) << 16);
+        unit(keyed(seed, channel as u64, DRAW_TERRAIN, k))
+    };
+    let top = v(ix, iy) + (v(ix + 1.0, iy) - v(ix, iy)) * sx;
+    let bot = v(ix, iy + 1.0) + (v(ix + 1.0, iy + 1.0) - v(ix, iy + 1.0)) * sx;
+    top + (bot - top) * sy
 }
 
 /// Agar inside an ellipse three dish cells in from the edge, as today's
@@ -564,9 +716,10 @@ impl BigDish {
         );
         let (w, h) = (p.w(), p.h());
         let s = p.scale as f32;
-        let agar = ellipse(w, h, 3.0 * s);
+        let ground = |w: usize, h: usize, m: f32| if p.rect { rect(w, h, m) } else { ellipse(w, h, m) };
+        let agar = ground(w, h, 3.0 * s);
         let (sw, sh) = if p.scent_coarse { (W, H) } else { (w, h) };
-        let scent_agar = if p.scent_coarse { ellipse(W, H, 3.0) } else { agar.clone() };
+        let scent_agar = if p.scent_coarse { ground(W, H, 3.0) } else { agar.clone() };
         let mut d = BigDish {
             w,
             h,
@@ -592,10 +745,26 @@ impl BigDish {
             grass: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
+            charge: Vec::new(),
+            pile_of: Vec::new(),
+            pile_charge: Vec::new(),
+            pile_full: Vec::new(),
+            pile_cells: Vec::new(),
+            took: Vec::new(),
+            eaten: 0.0,
+            rock: Vec::new(),
+            wet: Vec::new(),
+            wall: Vec::new(),
+            wall_health: Vec::new(),
+            broken: 0,
+            wall_hits: 0,
+            scent_wall: Vec::new(),
             threads: 1,
             p,
         };
         d.place_piles();
+        d.place_terrain();
+        d.place_crystals();
         d.place_walkers();
         if d.p.mix_share > 0.0 {
             let (seed, share) = (d.p.seed, d.p.mix_share);
@@ -652,9 +821,10 @@ impl BigDish {
         let seed = self.p.seed;
         let r = self.p.pile_r;
         let (cx, cy, rx, ry) = (W as f32 / 2.0, H as f32 / 2.0, W as f32 / 2.0 - 3.0, H as f32 / 2.0 - 3.0);
+        let square = self.p.rect;
         let inside = |x: f32, y: f32| {
             let (dx, dy) = ((x - cx) / (rx - r - 4.0), (y - cy) / (ry - r - 4.0));
-            dx * dx + dy * dy <= 1.0
+            if square { dx.abs() <= 1.0 && dy.abs() <= 1.0 } else { dx * dx + dy * dy <= 1.0 }
         };
         self.piles.push((W as f32 * 0.22, H as f32 * 0.5));
         let mut k = 0u32;
@@ -668,6 +838,323 @@ impl BigDish {
         }
         self.reached = vec![false; self.piles.len()];
         self.reached[0] = true;
+    }
+
+    /// Terrain (`terrain_rock`, `terrain_wet`): rock leaves the agar, on
+    /// the fine grid and the scent grid alike; pile discs stay clear.
+    fn place_terrain(&mut self) {
+        let (rock_t, wet_t) = (self.p.terrain_rock, self.p.terrain_wet);
+        if rock_t <= 0.0 && wet_t <= 0.0 {
+            return;
+        }
+        let (seed, cell, s) = (self.p.seed, self.p.terrain_blob.max(1.0), self.p.scale as f32);
+        let clear = self.p.pile_r + 4.0;
+        let piles = self.piles.clone();
+        let is_rock = |x: f32, y: f32| {
+            rock_t > 0.0 && noise(seed, 0, x, y, cell) < rock_t && piles.iter().all(|&(px, py)| (px - x).hypot(py - y) > clear)
+        };
+        let (w, h) = (self.w, self.h);
+        self.rock = vec![false; w * h];
+        self.wet = vec![false; w * h];
+        for i in 0..w * h {
+            let (x, y) = (((i % w) as f32 + 0.5) / s, ((i / w) as f32 + 0.5) / s);
+            if is_rock(x, y) {
+                self.rock[i] = true;
+                self.agar[i] = false;
+            } else if wet_t > 0.0 && self.agar[i] && noise(seed, 1, x, y, cell) < wet_t {
+                self.wet[i] = true;
+            }
+        }
+        let k = if self.p.scent_coarse { 1.0 } else { s };
+        for i in 0..self.sw * self.sh {
+            let (x, y) = (((i % self.sw) as f32 + 0.5) / k, ((i / self.sw) as f32 + 0.5) / k);
+            if is_rock(x, y) {
+                self.scent_agar[i] = false;
+            }
+        }
+    }
+
+    /// A wall from (`ax`, `ay`) to (`bx`, `by`), dish cells, `width` dish
+    /// cells thick: those cells leave the agar (fine and scent grids) and
+    /// lose their trail, scent and charge. The Larder World's first player
+    /// tool (roadmap reviews, 11-11: a salt wall across the leader's road
+    /// turned 6 of 12 lost skirmish games and beat a random wall 16/16).
+    /// A walker standing where the wall goes is pushed to the nearest free
+    /// agar cell, searching outward ring by ring, or stays if none is free
+    /// within 16 dish cells (a packed blob has few free cells near). Returns the fine cells walled.
+    pub fn build_wall(&mut self, ax: f32, ay: f32, bx: f32, by: f32, width: f32) -> usize {
+        let s = self.p.scale as f32;
+        let (w, h) = (self.w, self.h);
+        if self.wall.is_empty() {
+            self.wall = vec![false; w * h];
+        }
+        let (ax, ay, bx, by, r) = (ax * s, ay * s, bx * s, by * s, (width * s / 2.0).max(0.5));
+        let (dx, dy) = (bx - ax, by - ay);
+        let len2 = (dx * dx + dy * dy).max(1e-6);
+        let near = |x: f32, y: f32| {
+            let t = (((x - ax) * dx + (y - ay) * dy) / len2).clamp(0.0, 1.0);
+            (x - ax - t * dx).hypot(y - ay - t * dy) <= r
+        };
+        let (x0, x1) = ((ax.min(bx) - r).floor().max(0.0) as usize, ((ax.max(bx) + r).ceil() as usize).min(w - 1));
+        let (y0, y1) = ((ay.min(by) - r).floor().max(0.0) as usize, ((ay.max(by) + r).ceil() as usize).min(h - 1));
+        let mut cells = Vec::new();
+        for y in y0..=y1 {
+            for x in x0..=x1 {
+                let i = y * w + x;
+                if self.agar[i] && near(x as f32 + 0.5, y as f32 + 0.5) {
+                    cells.push(i);
+                }
+            }
+        }
+        if self.p.wall_hp > 0.0 && self.wall_health.is_empty() {
+            self.wall_health = vec![0.0; w * h];
+        }
+        for &i in &cells {
+            self.agar[i] = false;
+            self.wall[i] = true;
+            if !self.wall_health.is_empty() {
+                self.wall_health[i] = self.p.wall_hp;
+            }
+            self.trail[i] = 0.0;
+            for f in self.species_trail.iter_mut() {
+                f[i] = 0.0;
+            }
+            if !self.charge.is_empty() && self.pile_of[i] > 0 {
+                self.pile_charge[self.pile_of[i] as usize - 1] -= self.charge[i];
+                self.pile_full[self.pile_of[i] as usize - 1] -= self.p.crystal_charge;
+                self.charge[i] = 0.0;
+                self.pile_of[i] = 0;
+            }
+        }
+        // The scent grid: a scent cell is walled when its centre is.
+        let k = if self.p.scent_coarse { 1.0 } else { s };
+        for i in 0..self.sw * self.sh {
+            let (x, y) = (((i % self.sw) as f32 + 0.5) / k * s, ((i / self.sw) as f32 + 0.5) / k * s);
+            if self.scent_agar[i] && near(x, y) {
+                if self.p.wall_scent > 0.0 {
+                    if self.scent_wall.is_empty() {
+                        self.scent_wall = vec![false; self.sw * self.sh];
+                    }
+                    self.scent_wall[i] = true;
+                } else {
+                    self.scent_agar[i] = false;
+                }
+                self.scent[i] = 0.0;
+            }
+        }
+        // Walkers inside move out, in walker order (a CPU rule; the GPU
+        // port does this with a claim pass).
+        let reach = (16.0 * s).ceil() as i32;
+        for k in 0..self.walkers.len() {
+            let (x, y, hd) = self.walkers[k];
+            let i = self.cell(x, y).expect("walker inside the dish");
+            if self.agar[i] {
+                continue;
+            }
+            let (cx, cy) = (x as i32, y as i32);
+            'ring: for d in 1..=reach {
+                for oy in -d..=d {
+                    for ox in -d..=d {
+                        if ox.abs() != d && oy.abs() != d {
+                            continue;
+                        }
+                        let (nx, ny) = (cx + ox, cy + oy);
+                        if nx < 0 || ny < 0 || nx as usize >= w || ny as usize >= h {
+                            continue;
+                        }
+                        let j = ny as usize * w + nx as usize;
+                        if self.agar[j] && (self.p.crowd == 0 || self.occ[j] < self.p.crowd as u16) {
+                            self.occ[i] -= 1;
+                            self.occ[j] += 1;
+                            self.walkers[k] = (nx as f32 + 0.5, ny as f32 + 0.5, hd);
+                            break 'ring;
+                        }
+                    }
+                }
+            }
+        }
+        cells.len()
+    }
+
+    /// Blocked walkers bite the wall cell they tried to enter (`wall_hp`).
+    /// Damage is summed first and applied after, so walker order does not
+    /// matter; a cell at 0 becomes rubble: ground again, wet, scent open.
+    fn bite_walls(&mut self, blocked: &[(u32, f32, f32)]) {
+        let bite = self.p.wall_bite;
+        let mut hit: Vec<usize> = Vec::new();
+        for &(k, h, st) in blocked {
+            let (x, y, _) = self.walkers[k as usize];
+            if let Some(j) = self.cell(x + h.cos() * st, y + h.sin() * st) {
+                if self.wall[j] {
+                    hit.push(j);
+                }
+            }
+        }
+        self.wall_hits += hit.len() as u64;
+        for &j in &hit {
+            self.wall_health[j] -= bite;
+        }
+        let s = self.p.scale as f32;
+        let k = if self.p.scent_coarse { 1.0 / s } else { 1.0 };
+        for &j in &hit {
+            if self.wall[j] && self.wall_health[j] <= 0.0 {
+                self.wall[j] = false;
+                self.wall_health[j] = 0.0;
+                self.agar[j] = true;
+                if self.wet.is_empty() {
+                    self.wet = vec![false; self.w * self.h];
+                    if self.rock.is_empty() {
+                        self.rock = vec![false; self.w * self.h];
+                    }
+                }
+                self.wet[j] = true;
+                let (fx, fy) = ((j % self.w) as f32 * k, (j / self.w) as f32 * k);
+                let si = fy as usize * self.sw + fx as usize;
+                if si < self.scent_agar.len() {
+                    self.scent_agar[si] = true;
+                    if !self.scent_wall.is_empty() {
+                        self.scent_wall[si] = false;
+                    }
+                }
+                self.broken += 1;
+            }
+        }
+    }
+
+    /// Crystals (`crystal_charge`): every fine agar cell in a pile's disc
+    /// holds the full charge.
+    fn place_crystals(&mut self) {
+        if self.p.crystal_charge <= 0.0 {
+            return;
+        }
+        let s = self.p.scale as f32;
+        let r = self.p.pile_r * s;
+        let n = r.ceil() as i32;
+        self.charge = vec![0.0; self.w * self.h];
+        self.pile_of = vec![0; self.w * self.h];
+        self.pile_full = vec![0.0; self.piles.len()];
+        self.pile_cells.clear();
+        for pi in 0..self.piles.len() {
+            let (cx, cy) = (self.piles[pi].0 * s, self.piles[pi].1 * s);
+            for dy in -n..=n {
+                for dx in -n..=n {
+                    if !self.in_pile(dx as f32, dy as f32, r) {
+                        continue;
+                    }
+                    if let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) {
+                        if self.agar[i] && self.pile_of[i] == 0 {
+                            self.charge[i] = self.p.crystal_charge;
+                            self.pile_of[i] = pi as u16 + 1;
+                            self.pile_full[pi] += self.p.crystal_charge;
+                            self.pile_cells.push(i as u32);
+                        }
+                    }
+                }
+            }
+        }
+        self.pile_charge = self.pile_full.clone();
+    }
+
+    /// Whether the offset (`dx`, `dy`) from a pile's centre is inside it,
+    /// for a pile of radius `r` on whatever grid the caller uses. With
+    /// crystals on, a pile is a pointy-top hexagon of circumradius `r`
+    /// (the owner, 11-11 16:48Z: "The crystals should have hexagonal
+    /// outline, not circle"; the picture is the data, so the crystal's
+    /// cells, its scent and where it counts as reached are all the
+    /// hexagon, about 0.83 of the disc's area). With crystals off it is
+    /// the disc it always was, so older dishes do not change.
+    fn in_pile(&self, dx: f32, dy: f32, r: f32) -> bool {
+        if self.p.crystal_charge > 0.0 {
+            let ax = dx.abs();
+            ax <= r * 0.866_025_4 && dy.abs() <= r - ax * 0.577_350_3
+        } else {
+            dx * dx + dy * dy <= r * r
+        }
+    }
+
+    /// The share of a pile's crystal left (1 with crystals off).
+    pub fn crystal_left(&self, pi: usize) -> f32 {
+        if self.pile_full.is_empty() || self.pile_full[pi] <= 0.0 {
+            return 1.0;
+        }
+        (self.pile_charge[pi] / self.pile_full[pi]).max(0.0)
+    }
+
+    /// Crystal charge left over all piles, as a share of the start.
+    pub fn crystals_left(&self) -> f32 {
+        let full: f32 = self.pile_full.iter().sum();
+        if full <= 0.0 { 1.0 } else { self.pile_charge.iter().sum::<f32>().max(0.0) / full }
+    }
+
+    /// Eating (`crystal_charge`): the n walkers on a cell take equal shares.
+    fn eat_crystals(&mut self) {
+        if self.charge.is_empty() {
+            return;
+        }
+        let eat = self.p.crystal_eat;
+        if self.took.len() != self.walkers.len() {
+            self.took = vec![0.0; self.walkers.len()];
+        }
+        // Each walker's share, from the charge as the pass began.
+        for k in 0..self.walkers.len() {
+            let (x, y, _) = self.walkers[k];
+            let i = self.cell(x, y).expect("walker inside the dish");
+            let n = self.occ[i].max(1) as f32;
+            self.took[k] = eat.min(self.charge[i] / n);
+        }
+        for k in 0..self.walkers.len() {
+            let t = self.took[k];
+            if t <= 0.0 {
+                continue;
+            }
+            let (x, y, _) = self.walkers[k];
+            let i = self.cell(x, y).expect("walker inside the dish");
+            self.charge[i] = (self.charge[i] - t).max(0.0);
+            self.eaten += t as f64;
+        }
+        // Pile totals are summed afresh from the cells, in f64. (They were
+        // a running f32 total until 11-11: at charge 512 a pile holds about
+        // 180,000, a 0.005 bite is below that total's f32 step of 0.016,
+        // so the totals stopped moving, crystal_left read 1.000 and the
+        // piles called at full scent while the mould ate them.)
+        let np = self.piles.len();
+        let sums = |d: &Self| {
+            let (mut sum, mut cells) = (vec![0.0f64; np], vec![0u32; np]);
+            for &i in &d.pile_cells {
+                let pi = d.pile_of[i as usize] as usize;
+                if pi > 0 {
+                    sum[pi - 1] += d.charge[i as usize] as f64;
+                    cells[pi - 1] += 1;
+                }
+            }
+            (sum, cells)
+        };
+        let f = self.p.crystal_flow;
+        if f > 0.0 {
+            let (sum, cells) = sums(self);
+            for &i in &self.pile_cells {
+                let pi = self.pile_of[i as usize] as usize;
+                if pi > 0 {
+                    let mean = (sum[pi - 1] / cells[pi - 1] as f64) as f32;
+                    let c = &mut self.charge[i as usize];
+                    *c += f * (mean - *c);
+                }
+            }
+        }
+        let g = self.p.crystal_regrow;
+        if g > 0.0 {
+            let full = self.p.crystal_charge;
+            for &i in &self.pile_cells {
+                let i = i as usize;
+                if self.pile_of[i] > 0 && self.charge[i] < full {
+                    self.charge[i] += g * (full - self.charge[i]);
+                }
+            }
+        }
+        let (sum, _) = sums(self);
+        for (pc, s) in self.pile_charge.iter_mut().zip(sum) {
+            *pc = s as f32;
+        }
     }
 
     fn place_walkers(&mut self) {
@@ -839,6 +1326,9 @@ impl BigDish {
                 st *= sc;
             }
             let explorer = self.explores(k);
+            if !self.wet.is_empty() && self.wet[here] {
+                st *= p.wet_step;
+            }
             if ss > 0.0 {
                 let v = (self.trail[here] * ss).min(1.0);
                 let m = |b: f32, [amp, e]: [f32; 2]| b + amp * v.powf(e);
@@ -984,6 +1474,9 @@ impl BigDish {
                 self.lay(k as usize, i, set.deposit * set.blocked_deposit * self.explore_share(k as usize));
             }
         }
+        if !self.wall_health.is_empty() {
+            self.bite_walls(&blocked);
+        }
         for &(k, h, _) in &blocked {
             let keep = p.blocked_keep && unit(keyed(seed, t, DRAW_KEEP, k)) >= p.blocked_reset;
             self.walkers[k as usize].2 = if keep { h } else { unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU };
@@ -1032,6 +1525,7 @@ impl BigDish {
                 }
             }
         }
+        self.eat_crystals();
         if p.species_convert > 0.0 && !self.spec.is_empty() {
             let n = self.species_trail.len();
             let (w, h, r) = (self.w, self.h, p.species_convert_r as usize);
@@ -1174,11 +1668,11 @@ impl BigDish {
         let r = self.p.pile_r * k;
         let n = r.ceil() as i32;
         for (pi, &(px, py)) in self.piles.iter().enumerate() {
-            let strength = self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 };
+            let strength = self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 } * self.crystal_left(pi);
             let (cx, cy) = (px * k, py * k);
             for dy in -n..=n {
                 for dx in -n..=n {
-                    if ((dx * dx + dy * dy) as f32) > r * r {
+                    if !self.in_pile(dx as f32, dy as f32, r) {
                         continue;
                     }
                     let (x, y) = (cx + dx as f32, cy + dy as f32);
@@ -1198,6 +1692,14 @@ impl BigDish {
         self.lay_scent();
         spread(&self.scent_agar, &self.scent, &mut self.scent_scratch, self.sw, self.sh, self.p.scent_keep, self.threads);
         std::mem::swap(&mut self.scent, &mut self.scent_scratch);
+        if !self.scent_wall.is_empty() {
+            let keep = self.p.wall_scent;
+            for (v, &w) in self.scent.iter_mut().zip(&self.scent_wall) {
+                if w {
+                    *v *= keep;
+                }
+            }
+        }
     }
 
     /// The scent the piles lay on each scent cell in one scent step, as
@@ -1209,11 +1711,11 @@ impl BigDish {
         let r = self.p.pile_r * k;
         let n = r.ceil() as i32;
         for (pi, &(px, py)) in self.piles.iter().enumerate() {
-            let strength = self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 };
+            let strength = self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 } * self.crystal_left(pi);
             let (cx, cy) = (px * k, py * k);
             for dy in -n..=n {
                 for dx in -n..=n {
-                    if ((dx * dx + dy * dy) as f32) > r * r {
+                    if !self.in_pile(dx as f32, dy as f32, r) {
                         continue;
                     }
                     let (x, y) = (cx + dx as f32, cy + dy as f32);
@@ -1242,7 +1744,7 @@ impl BigDish {
             let (cx, cy) = (self.piles[pi].0 * s, self.piles[pi].1 * s);
             'pile: for dy in -n..=n {
                 for dx in -n..=n {
-                    if ((dx * dx + dy * dy) as f32) > r * r {
+                    if !self.in_pile(dx as f32, dy as f32, r) {
                         continue;
                     }
                     if let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) {
@@ -1383,24 +1885,56 @@ impl BigDish {
         let mut img = image::RgbaImage::new(iw, ih);
         for py in 0..ih {
             for px in 0..iw {
-                let (mut v, mut inside) = (0.0f32, false);
+                let (mut v, mut inside, mut ch, mut rock, mut wet, mut wall) = (0.0f32, false, 0.0f32, false, false, false);
+                let mut wall_left = 1.0f32;
                 for dy in 0..down {
                     for dx in 0..down {
                         let i = (py as usize * down + dy) * self.w + px as usize * down + dx;
                         v = v.max(self.trail[i]);
                         inside |= self.agar[i];
+                        if !self.charge.is_empty() {
+                            ch = ch.max(self.charge[i] / self.p.crystal_charge);
+                        }
+                        if !self.rock.is_empty() {
+                            rock |= self.rock[i];
+                            wet |= self.wet[i];
+                        }
+                        if !self.wall.is_empty() && self.wall[i] {
+                            wall = true;
+                            if !self.wall_health.is_empty() {
+                                wall_left = wall_left.min(self.wall_health[i] / self.p.wall_hp);
+                            }
+                        }
                     }
                 }
                 let c = (px as f32 + 0.5) * down as f32;
                 let r = (py as f32 + 0.5) * down as f32;
                 let sc = self.scent_at(c, r);
                 let px_rgb = if !inside {
-                    [8, 14, 18]
+                    // Rock is drawn apart from the world's edge: it is ground.
+                    if wall {
+                        // A worn wall dims toward the rock colour.
+                        let a = 0.25 + 0.75 * wall_left.max(0.0);
+                        [(34.0 + 116.0 * a) as u8, (30.0 + 120.0 * a) as u8, (28.0 + 130.0 * a) as u8]
+                    } else if rock {
+                        [34, 30, 28]
+                    } else {
+                        [8, 14, 18]
+                    }
                 } else {
                     // Trail: a soft knee, so faint wisps show and tubes glow.
                     let a = 1.0 - (-v / 6.0).exp();
                     let g = 1.0 - (-sc / 60.0).exp();
-                    let base = [12.0 + 30.0 * g, 22.0 + 26.0 * g, 26.0 + 10.0 * g];
+                    let mut base = [12.0 + 30.0 * g, 22.0 + 26.0 * g, 26.0 + 10.0 * g];
+                    if wet {
+                        base = [base[0] * 0.7, base[1] * 0.9, base[2] * 1.0 + 16.0];
+                    }
+                    // A crystal's glow is its charge: full is bright cyan,
+                    // drained is ground again, with nothing drawn in between.
+                    let crystal = [140.0, 235.0, 255.0];
+                    for k in 0..3 {
+                        base[k] += (crystal[k] - base[k]) * ch;
+                    }
                     let hot = [255.0, 190.0, 90.0];
                     let mut out = [0u8; 3];
                     for k in 0..3 {
@@ -1429,7 +1963,7 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.grass).chain(self.species_trail.iter().flatten()) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
         for &c in self.spec.iter().chain(&self.kind) {
@@ -1607,6 +2141,7 @@ mod tests {
     #[test]
     fn new_options_default_off() {
         let d = BigDish::new(small(2, 2));
+        assert!(d.charge.is_empty() && d.rock.is_empty() && d.took.is_empty());
         assert!(d.sick.is_empty() && d.germ.is_empty());
         assert!(d.species_trail.is_empty() && d.age.is_empty());
         assert!(d.kind.is_empty() && d.grass.is_empty() && d.p.species_sets.is_empty());
@@ -1725,7 +2260,194 @@ mod tests {
         }
     }
 
+    /// Crystals run dry: charge only falls, the eaten total matches what
+    /// left the piles, and a drained pile lays less scent. Terrain is the
+    /// same map at every scale and keeps rock off the piles.
+    #[test]
+    fn crystals_run_dry_and_terrain_pairs() {
+        let p = BigParams { crystal_charge: 2.0, crystal_eat: 0.2, terrain_rock: 0.3, terrain_wet: 0.3, rect: true, ..small(2, 2) };
+        let mut d = BigDish::new(p.clone());
+        let full: f32 = d.pile_full.iter().sum();
+        assert!(full > 0.0 && d.crystals_left() == 1.0);
+        let mut last = 1.0;
+        for _ in 0..60 {
+            d.tick();
+            let left = d.crystals_left();
+            assert!(left <= last + 1e-6);
+            last = left;
+        }
+        assert!(last < 1.0, "the home crystal is eaten");
+        let gone = full - d.pile_charge.iter().sum::<f32>();
+        assert!((gone as f64 - d.eaten).abs() < 1e-2 * full as f64);
+        assert!(d.crystal_left(0) < 1.0);
+        let mut t = BigDish::new(p.clone());
+        t.threads = 4;
+        let mut e = BigDish::new(p.clone());
+        for _ in 0..10 {
+            t.tick();
+            e.tick();
+        }
+        assert_eq!(t.hash(), e.hash(), "threads change nothing");
+        // The terrain map pairs across scales: rock at the same dish cells.
+        let (a, b) = (BigDish::new(BigParams { scale: 1, substeps: 1, ..p.clone() }), BigDish::new(BigParams { scale: 2, ..p.clone() }));
+        let mut same = 0;
+        for y in 0..a.h {
+            for x in 0..a.w {
+                if a.rock[y * a.w + x] == b.rock[(2 * y) * b.w + 2 * x] {
+                    same += 1;
+                }
+            }
+        }
+        assert!(same as f32 > 0.97 * (a.w * a.h) as f32);
+        assert!(a.rock.iter().any(|&r| r) && a.wet.iter().any(|&w| w));
+        // Crystals that refill end fuller than ones that run dry.
+        let mut r = BigDish::new(BigParams { crystal_regrow: 0.05, ..p.clone() });
+        let mut n = BigDish::new(p.clone());
+        for _ in 0..60 {
+            r.tick();
+            n.tick();
+        }
+        assert!(r.crystals_left() > n.crystals_left());
+        // A wall leaves the agar, clears its trail and moves walkers out.
+        let mut d = BigDish::new(BigParams { crystal_charge: 0.0, terrain_rock: 0.0, terrain_wet: 0.0, wall_hp: 0.0, ..p.clone() });
+        for _ in 0..20 {
+            d.tick();
+        }
+        let (hx, hy) = d.piles[0];
+        let n = d.build_wall(hx - 3.0, hy - 10.0, hx - 3.0, hy + 10.0, 2.0);
+        assert!(n > 0);
+        for (i, &wl) in d.wall.iter().enumerate() {
+            if wl {
+                assert!(!d.agar[i] && d.trail[i] == 0.0);
+            }
+        }
+        let inside = d.walkers.iter().filter(|&&(x, y, _)| d.wall[y as usize * d.w + x as usize]).count();
+        assert!(inside < 5, "{inside} walkers left inside the wall");
+        for _ in 0..30 {
+            d.tick();
+        }
+        for (i, &wl) in d.wall.iter().enumerate() {
+            if wl {
+                assert!(d.trail[i] == 0.0, "no trail enters a wall");
+            }
+        }
+        assert_eq!(d.broken, 0, "walls without health never break");
+        // With health, the crowd pressing on a wall wears it through.
+        let mut b = BigDish::new(BigParams { crystal_charge: 0.0, terrain_rock: 0.0, terrain_wet: 0.0, wall_hp: 2.0, wall_bite: 1.0, ..p.clone() });
+        for _ in 0..20 {
+            b.tick();
+        }
+        let (hx, hy) = b.piles[0];
+        b.build_wall(hx - 3.0, hy - 10.0, hx - 3.0, hy + 10.0, 2.0);
+        for _ in 0..60 {
+            b.tick();
+        }
+        assert!(b.broken > 0, "the mould breaks a weak wall");
+        for (i, &wl) in b.wall.iter().enumerate() {
+            if !wl && b.wall_health[i] == 0.0 && b.wet[i] {
+                assert!(b.agar[i], "rubble is ground again");
+            }
+        }
+        for &(px, py) in &a.piles {
+            assert!(!a.rock[py as usize * a.w + px as usize]);
+        }
+    }
+
     /// The same layout of piles at every scale, so arms pair.
+    #[test]
+    fn crystal_flow_keeps_the_total_and_evens_a_disc() {
+        // Pile 1 with half its cells emptied by hand, and no eating: without
+        // flow it stays half empty, with flow the cells even out and still
+        // add up to the pile's charge.
+        let p = BigParams { crystal_charge: 2.0, crystal_eat: 0.0, crystal_flow: 0.0, ..small(2, 2) };
+        let spread = |d: &BigDish| {
+            let cells: Vec<f32> = d.pile_cells.iter().filter(|&&i| d.pile_of[i as usize] == 2).map(|&i| d.charge[i as usize]).collect();
+            let (lo, hi) = cells.iter().fold((f32::MAX, f32::MIN), |(lo, hi), &c| (lo.min(c), hi.max(c)));
+            (hi - lo, cells.iter().sum::<f32>())
+        };
+        let half = |d: &mut BigDish| {
+            let cells: Vec<u32> = d.pile_cells.iter().copied().filter(|&i| d.pile_of[i as usize] == 2).collect();
+            for &i in &cells[..cells.len() / 2] {
+                d.pile_charge[1] -= d.charge[i as usize];
+                d.charge[i as usize] = 0.0;
+            }
+        };
+        let mut still = BigDish::new(p.clone());
+        let mut flow = BigDish::new(BigParams { crystal_flow: 0.2, ..p });
+        half(&mut still);
+        half(&mut flow);
+        for _ in 0..30 {
+            still.tick();
+            flow.tick();
+        }
+        let ((s0, _), (s1, sum1)) = (spread(&still), spread(&flow));
+        assert!(s0 > 1.9, "without flow the disc stays uneven ({s0})");
+        assert!(s1 < 0.01, "flow evens it ({s1})");
+        assert!((sum1 - flow.pile_charge[1]).abs() < 1e-3 * flow.pile_full[1], "the total is kept");
+        assert!((flow.crystal_left(1) - 0.5).abs() < 0.05);
+    }
+
+    #[test]
+    fn crystals_are_hexagons() {
+        // Pointy-top, circumradius pile_r: the top vertex is in, the same
+        // distance out sideways is not (a flat side is at 0.87 r), and the
+        // area is the hexagon's, not the disc's.
+        let d = BigDish::new(BigParams { crystal_charge: 1.0, terrain_rock: 0.0, ..small(2, 2) });
+        let s = d.p.scale as f32;
+        let r = d.p.pile_r * s;
+        let (cx, cy) = (d.piles[1].0 * s, d.piles[1].1 * s);
+        let at = |x: f32, y: f32| d.pile_of[d.cell(x, y).unwrap()] == 2;
+        assert!(at(cx, cy - r + 1.0) && at(cx, cy + r - 1.0), "top and bottom vertices");
+        assert!(!at(cx + 0.95 * r, cy) && !at(cx - 0.95 * r, cy), "outside the flat sides");
+        assert!(at(cx + 0.8 * r, cy));
+        let cells = d.pile_of.iter().filter(|&&p| p == 2).count() as f32;
+        let hex = 2.598 * r * r;
+        assert!((cells - hex).abs() < 0.1 * hex, "{cells} cells against a hexagon's {hex}");
+    }
+
+    #[test]
+    fn deep_crystals_still_count_down() {
+        // Charge 512 a cell: a pile holds far more than a bite's f32 step,
+        // and its total must still fall as the walkers eat (a running f32
+        // total stood still here).
+        let mut d = BigDish::new(BigParams { crystal_charge: 512.0, crystal_eat: 0.005, ..small(2, 2) });
+        let full: f64 = d.pile_full.iter().map(|&v| v as f64).sum();
+        for _ in 0..60 {
+            d.tick();
+        }
+        let gone = full - d.pile_charge.iter().map(|&v| v as f64).sum::<f64>();
+        assert!(d.eaten > 0.0 && d.crystal_left(0) < 1.0);
+        assert!((gone - d.eaten).abs() < 0.01 * d.eaten, "gone {gone} eaten {}", d.eaten);
+    }
+
+    #[test]
+    fn leaky_walls_let_a_little_scent_across() {
+        // A ring round pile 1 (dish cells; the scent grid is today's).
+        // Outside it, 3 cells past the ring on the far side from home, a
+        // sealed ring leaves less scent than a leaky one, and the leaky
+        // one less than no ring.
+        let p = BigParams { walkers: 50, ..small(2, 2) };
+        let at = |ring: Option<f32>| {
+            let mut d = BigDish::new(BigParams { wall_scent: ring.unwrap_or(0.0), ..p.clone() });
+            let ((hx, hy), (cx, cy)) = (d.piles[0], d.piles[1]);
+            let r = d.p.pile_r + 3.0;
+            if ring.is_some() {
+                for q in 0..24 {
+                    let (a0, a1) = (q as f32 / 24.0 * std::f32::consts::TAU, (q + 1) as f32 / 24.0 * std::f32::consts::TAU);
+                    d.build_wall(cx + r * a0.cos(), cy + r * a0.sin(), cx + r * a1.cos(), cy + r * a1.sin(), 2.0);
+                }
+            }
+            for _ in 0..200 {
+                d.tick();
+            }
+            let a = (cy - hy).atan2(cx - hx);
+            let (x, y) = (cx + (r + 3.0) * a.cos(), cy + (r + 3.0) * a.sin());
+            d.scent[y as usize * d.sw + x as usize]
+        };
+        let (open, leaky, sealed) = (at(None), at(Some(0.3)), at(Some(0.0)));
+        assert!(sealed < leaky && leaky < open, "sealed {sealed} leaky {leaky} open {open}");
+    }
+
     #[test]
     fn piles_pair_across_scales() {
         let a = BigDish::new(small(1, 1));

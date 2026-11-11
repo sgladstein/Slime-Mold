@@ -16,10 +16,11 @@ Start at [index.md](index.md). Copy [_template.md](_template.md) for a new page.
 1. **Reports keep their history.** A later finding is a new report, or a new
    dated section appended to the old one. Never rewrite a past section's
    numbers; correct it with a dated note. Pages cite sections by name.
-2. **No number without its conditions and its source.** Each row in a page's
-   Numbers table names the dish, the hand, the seed count, the paired count
-   and p where there is a comparison, and links the report section. A
-   number that is in no report does not go in the wiki.
+2. **Short pages; the numbers live in the reports** (owner's card,
+   2026-11-11 15:28Z, after the second success check tied). A page has no
+   Numbers table: its Now gives the headline result with its conditions in a
+   sentence and links the report section that holds the table. A number that
+   is in no report does not go in the wiki.
 3. **The wiki holds no new measurement.** A question that needs a run gets a
    report first; the wiki then cites it. A synthesis of existing reports may
    become a page.
@@ -34,7 +35,7 @@ Start at [index.md](index.md). Copy [_template.md](_template.md) for a new page.
    repeat; one page per entity is not a goal.
 7. **Never overwrite silently.** When a newer report disagrees, keep both,
    dated, and say in **Now** which holds and why.
-8. **Rewrite Now; don't append to it.** History stays in the Numbers table,
+8. **Rewrite Now; don't append to it.** History stays in
    the reports and git.
 9. **Same commit.** A change that adds a report, changes a default or records
    an owner decision updates the affected pages and the index in that commit.
@@ -81,8 +82,8 @@ one lists the card's path in `sources:` next to the reports; lint checks that
 it exists.
 
 **Ingest** (in the same PR as a report or a default change): read the
-report; list the pages it touches; rewrite each page's Now, add Numbers rows
-and Sources, bump `updated`; link any new `dead-ends.md` entry; update the
+report; list the pages it touches; rewrite each page's Now, add the report to
+Sources, bump `updated`; link any new `dead-ends.md` entry; update the
 page's index line; run `python3 wiki/lint.py`.
 
 **Notes behind a report** (a sub-agent's full write-up, a brainstorm, a
@@ -102,8 +103,7 @@ report only when the page does not answer.
 --base=origin/main` before pushing): with `--base` it fails a page whose
 source report the PR changed while the page did not change (ingest it, or
 bump `updated` once you have checked it is still true). It also fails on broken links, pages missing from the index,
-code symbols that no longer exist, required frontmatter missing, a Numbers
-row with no source link, and an owner quote with no date. It warns when a
+code symbols that no longer exist, required frontmatter missing, and an owner quote with no date. It warns when a
 page is older than one of its sources (by git date, or by UTC time when
 `updated` carries one, such as `2026-11-11T15:40Z`; use the time on a busy
 day, since a date misses a source changed later the same day), when a page

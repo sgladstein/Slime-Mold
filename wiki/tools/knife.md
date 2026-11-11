@@ -24,15 +24,6 @@ nothing, three cuts through the wild nest change nothing, and taking it away
 from the scripted warden changes nothing. A cut heals, and a trunk between
 two fed piles leaves both sides fed.
 
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Old snip (no wound): grey tube in a whole scripted game | 0 cells at 30, 60, 82 s; healed in about 0.5 s | | | [probe, *Making a cut matter*](../../Reports/mould-probe-2026-11-07.md) |
-| Wound snip across the trunk at 40 s, most grey tube in 12 s | 14, 139, 308, 40, 12 cells vs 26, 80, 74, 31, 21 for the old snip | 5 | not paired (different cut places) | same |
-| The Wild One, snip only vs doing nothing (walker count) | share 0.44-0.59, 0 stars | 8 | 5-3, p 0.73 | [wild-one, *Numbers*](../../Reports/mould-wild-one-2026-11-10.md) |
-| Three snips through the wild nest at 0.5 s (`nestsnip`) | 0 stars on 8 | 8 | 7-1 vs doing nothing, p 0.07 | [review 2](../../Reports/mould-review-2-2026-11-10.md) |
-| Warden with vs without the snip (food share) | exact 4-4, clumsy 3-5 | 8 | no difference | [wild-one, *Review 2 fixes*](../../Reports/mould-wild-one-2026-11-10.md) |
 
 ## Owner's word
 

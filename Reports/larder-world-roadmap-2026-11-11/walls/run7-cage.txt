@@ -1,0 +1,21 @@
+# worldwall cage arm, run 7: a 2-cell wall round the whole home blob at the start; health 0 / 400 / 1600 / 6400; walls stop scent. 512x320, 20k walkers, 40 s, seeds 1-3
+## r8-cage-hp0
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1 crystal_flow 0.01 wall_scent 0
+seed 1 cage   wall  2412 first break never  broken 0 of 2412  wall bites 0  walkers outside at 10 s, 20 s.. [0, 0, 0, 0]  hash 9793ecc149e29750
+seed 2 cage   wall  2414 first break never  broken 0 of 2414  wall bites 0  walkers outside at 10 s, 20 s.. [0, 0, 0, 0]  hash 4fa563f4ebf58230
+seed 3 cage   wall  2412 first break never  broken 0 of 2412  wall bites 0  walkers outside at 10 s, 20 s.. [0, 0, 0, 0]  hash a057748f77461d65
+## r8-cage-hp400
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 400 wall_bite 1 crystal_flow 0.01 wall_scent 0
+seed 1 cage   wall  2412 first break 4.7s  broken 527 of 2412  wall bites 234438  walkers outside at 10 s, 20 s.. [0, 6, 1311, 2023]  hash a6704f69ee37742b
+seed 2 cage   wall  2414 first break 4.3s  broken 850 of 2414  wall bites 385228  walkers outside at 10 s, 20 s.. [0, 217, 1578, 2927]  hash b7f0854850b36dc3
+seed 3 cage   wall  2412 first break 3.4s  broken 1018 of 2412  wall bites 481174  walkers outside at 10 s, 20 s.. [0, 660, 2683, 2319]  hash 59e7b90be5019838
+## r8-cage-hp1600
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 1600 wall_bite 1 crystal_flow 0.01 wall_scent 0
+seed 1 cage   wall  2412 first break 15.9s  broken 167 of 2412  wall bites 410877  walkers outside at 10 s, 20 s.. [0, 0, 0, 0]  hash d4b982912d0ad867
+seed 2 cage   wall  2414 first break 14.8s  broken 254 of 2414  wall bites 645922  walkers outside at 10 s, 20 s.. [0, 0, 0, 0]  hash f6a8c1444d251fb3
+seed 3 cage   wall  2412 first break 13.6s  broken 299 of 2412  wall bites 721326  walkers outside at 10 s, 20 s.. [0, 0, 0, 0]  hash d1753504ed43e2a8
+## r8-cage-hp6400
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 6400 wall_bite 1 crystal_flow 0.01 wall_scent 0
+seed 1 cage   wall  2412 first break never  broken 0 of 2412  wall bites 469832  walkers outside at 10 s, 20 s.. [0, 0, 0, 0]  hash 81a06c9269286816
+seed 2 cage   wall  2414 first break never  broken 0 of 2414  wall bites 712155  walkers outside at 10 s, 20 s.. [0, 0, 0, 0]  hash 0fcde7192c2ff375
+seed 3 cage   wall  2412 first break never  broken 0 of 2412  wall bites 807416  walkers outside at 10 s, 20 s.. [0, 0, 0, 0]  hash aa33c3765fc20587
