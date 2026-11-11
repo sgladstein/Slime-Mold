@@ -3,7 +3,8 @@
 
     python3 wiki/lint.py            # from the repo root; exit 1 on any error
     python3 wiki/lint.py --base=SHA # also: every page whose source report
-                                    # changed since SHA must change too (CI)
+                                    # changed since SHA must change too (CI
+                                    # does this on PRs via GITHUB_BASE_REF)
 
 Errors (fail): a relative link that does not resolve; a page that
 `wiki/index.md` does not link; a `code:` symbol in a page's frontmatter that
@@ -314,6 +315,11 @@ def main():
     # asked how to stop that recurring (15:18Z). A change that leaves a page
     # true still bumps its `updated`, which says someone checked.
     base = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--base=")), None)
+    # In CI, GitHub Actions sets GITHUB_BASE_REF on pull requests, and the
+    # lint step checks out full history, so the check runs there without a
+    # workflow change (one would make every wiki PR run the build jobs).
+    if base is None and os.environ.get("GITHUB_BASE_REF"):
+        base = "origin/" + os.environ["GITHUB_BASE_REF"]
     if base:
         r = subprocess.run(["git", "diff", "--name-only", base + "...HEAD"],
                            cwd=ROOT, capture_output=True, text=True, check=False)
