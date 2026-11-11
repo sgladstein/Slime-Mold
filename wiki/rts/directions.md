@@ -2,7 +2,7 @@
 title: The RTS directions
 kind: design
 status: open
-updated: 2026-11-10
+updated: 2026-11-11T15:40Z
 sources: [Reports/rts-research-2026-11-10.md, Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md, Reports/rts-skirmish-2026-11-10.md]
 code: [Dish::rival, Dish::store, Dish::tithe, Dish::food_share, Pile::bite, Params::fed_scent, Params::flow, Params::foe_repel, Params::pieces, Params::wound, Params::table]
 ---
@@ -11,12 +11,15 @@ code: [Dish::rival, Dish::store, Dish::tithe, Dish::food_share, Pile::bite, Para
 
 ## Now
 
-**In the build phase.** The owner asked on 2026-11-10 how the mould could
-become a real-time strategy game, and at 20:33Z moved the work to playable
-demos, two of them: **the field skirmish** ([skirmish.md](skirmish.md)) and
-**Two Fevers** ([two-fevers.md](two-fevers.md)), a playable contagion war
-over one neutral mould (planner over random 16 of 16, but by only 0.537 of
-the summed score).
+**In the build phase, and the main line is now Larder World.** The owner
+asked on 2026-11-10 how the mould could become a real-time strategy game,
+and at 20:33Z moved the work to playable demos: **the field skirmish**
+([skirmish.md](skirmish.md)) and **Two Fevers** ([two-fevers.md](two-fevers.md)),
+a contagion war over one neutral mould, now at version 3 (three plans form a
+ladder). A third, **Larder** ([shooter.md](shooter.md)), made the mould the
+enemy of a squad of soldiers, and on 2026-11-11 14:06Z the owner moved it
+into a persistent world on the GPU big dish with energy crystals and several
+mould species, where all Larder work now goes.
 
 The design work behind them: a first draft (Bloomfront), six brainstorm
 agents, a red team on The Wild One, and a retest on **a field of 23 small
@@ -36,8 +39,12 @@ into a bank, spent on beacons, spores and habits. Nine scripted strategies
 played 576 games, and **one beat all the others**: beacons then spores on the
 rival's thinnest pile won 127 of 128 games, and the rest stand on a ladder
 with no cycle ([skirmish report](../../Reports/rts-skirmish-2026-11-10.md)).
-Three changes meant to give the defender an answer did not stop it. Finding
-counterplay is the open problem.
+Neither new prices, nor changes to the model, nor food after 1:00 stopped it;
+a strike counted down in view with a Fortify that kills attackers did, but
+the plan that strikes and fortifies (brace) then won every pairing. One
+strategy still beats the others in every demo so far, and the side ahead
+early keeps the lead about 4 games in 5: finding counterplay is the open
+problem ([skirmish.md](skirmish.md)).
 
 Two facts constrain every direction. Food share mostly counts heads on piles:
 each pile pays at most `Params::table` 40 walkers' worth, split by head count

@@ -1,17 +1,32 @@
 ---
-title: Larder, the mould as the enemy (shooter brainstorm)
+title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-11
-sources: [Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
+updated: 2026-11-11T15:40Z
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 ---
 
-# Larder, the mould as the enemy (shooter brainstorm)
+# Larder, the mould as the enemy (Larder World)
 
 ## Now
 
-**Larder World (2026-11-11 14:06Z):** the owner moved Larder into a persistent world on the GPU big dish, with energy crystals that run out and several mould species; no more small-dish tuning. Roadmap: [`larder-world-roadmap-2026-11-11.md`](../../Reports/larder-world-roadmap-2026-11-11.md) (doc https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ). Below is the small-dish history it builds on.
+**Larder World is the line all Larder work now goes to** (owner, 2026-11-11
+14:06Z: "Put everything into the world version"): a squad lands in a
+persistent world on the GPU big dish, energy crystals that drain give off
+the scent the mould and the squad live on, and several mould species fight
+over them. No more small-dish tuning. The roadmap
+([`larder-world-roadmap-2026-11-11.md`](../../Reports/larder-world-roadmap-2026-11-11.md);
+live doc https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ) has six gated
+phases: **W0** births, upkeep and starving per walker on the GPU (the GPU
+plan's phase 4; the big dish's walker count is still fixed), **W1** a world
+with terrain and crystals and both openings (a landing on a world mostly
+mould, and a race from one small area), **W2** the soldiers, extractors,
+camera and UI in the world, **W3** two or three species, **W4** a persistent
+world, **W5** a campaign. Those phases replace M4-M6 of the small-dish build
+plan below. The small-dish milestones M1-M3, which follow, are the evidence
+the world builds on: what the squad's tools do and why the plans formed a
+ladder.
 
 Brainstorm: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
 A squad shoots the mould; both want the same food; the player's larder is a
@@ -81,14 +96,16 @@ owner's playtest.
 
 ## Open
 
-- The owner's playtest of the M3 window (`cargo run --release --bin larder -- 17`); then M4 upgrades and the M2 gate re-run. Hunger barely acts and needs a lower bar or should go.
+- Larder World, phase by phase, per the roadmap; the open questions there (world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds) are the owner's.
+- The M3 window stays playable (`cargo run --release --bin larder -- 17`). Hunger barely acts on the small dish and needs a lower bar or should go.
 
 - Make the mould answer the squad so plans can counter each other: smell growing with the bank, starving mould fighting harder at a ring, drops that pull fronts away, layouts where the best piles differ.
-- The build plan, reviewed by three independent agents and revised ([larder-build-plan-2026-11-11.md](../../Reports/larder-build-plan-2026-11-11.md); Claude Doc "Larder: build plan for the RTS demo", https://claude.ai/artifact/5ricncRubPz7WTBGJZFnHs): six milestones, M1 soldiers in the harness, M2 the mould answers back (gate: a crossover under visible conditions plus a reader plan that beats every fixed plan), M3 first playable window, M4 economy, M5 polish, M6 GPU port after S4. **M1 built** ([report](../../Reports/larder-m1-2026-11-11.md)): fortress and farmer beat idle and random 16/16 held-out; four soldiers attacking (hunter) die in ~45 game s; no mould wipe; window `cargo run --release --bin larder`.
+- The build plan, reviewed by three independent agents and revised ([larder-build-plan-2026-11-11.md](../../Reports/larder-build-plan-2026-11-11.md); Claude Doc "Larder: build plan for the RTS demo", https://claude.ai/artifact/5ricncRubPz7WTBGJZFnHs): six milestones, M1 soldiers in the harness, M2 the mould answers back (gate: a crossover under visible conditions plus a reader plan that beats every fixed plan), M3 first playable window, M4 economy, M5 polish, M6 GPU port after S4 (M4-M6 replaced by the world phases, 11-11 14:06Z). **M1 built** ([report](../../Reports/larder-m1-2026-11-11.md)): fortress and farmer beat idle and random 16/16 held-out; four soldiers attacking (hunter) die in ~45 game s; no mould wipe; window `cargo run --release --bin larder`.
 - Re-run smell on a dish the mould takes 30 s or more to cross.
 - Versus (two squads, one mould) is set aside for now (owner, 00:30Z: solo first).
 
 ## Sources
 
+- [larder-world-roadmap-2026-11-11.md](../../Reports/larder-world-roadmap-2026-11-11.md): the world plan, phases W0-W5 and their gates.
 - [mould-shooter-2026-11-11.md](../../Reports/mould-shooter-2026-11-11.md): the whole brainstorm.
 - [rts-research-2026-11-10.md](../../Reports/rts-research-2026-11-10.md) and the [Creeper World card](../../research/sources/creeper-world-2025.md): the nearest published game with a simulated enemy.

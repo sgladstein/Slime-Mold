@@ -2,8 +2,8 @@
 title: The mould at scale (outside models and the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-11
-sources: [Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md, Reports/creatures-2026-11-11.md]
+updated: 2026-11-11T15:40Z
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md, Reports/creatures-2026-11-11.md]
 code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost]
 ---
 
@@ -29,6 +29,11 @@ and the owner wants it for interesting play, not realism.
 4. Game rules on the GPU.
 5. Porting the dishes that survive a dense network.
 6. New play that only scale allows.
+
+Phase 4 (game rules on the GPU) now starts as Larder World's W0: births,
+upkeep and starving per walker, since the big dish's walker count is fixed
+([Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md),
+[Larder](../rts/shooter.md)).
 
 Today, diffusing trail and scent is 62% of the simulation's time and moving the walkers 24% (`Dish::step_cost`, printed by `mouldprobe`).
 

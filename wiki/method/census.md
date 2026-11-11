@@ -2,8 +2,8 @@
 title: The census (how a change is judged)
 kind: method
 status: current
-updated: 2026-11-10
-sources: [Reports/gpu-plan-2026-11-10.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md, Reports/pixel-physics-review-2026-11-10.md]
+updated: 2026-11-11T15:40Z
+sources: [Reports/gpu-plan-2026-11-10.md, Reports/larder-m2-2026-11-11.md, Reports/gpu-sandbox-2026-11-11.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md, Reports/pixel-physics-review-2026-11-10.md]
 code: [mouldprobe, state_hash, every_dish_replays_bit_for_bit, Dish::step_cost, HJIT, HLAG, STOPAT, NOWATER, INVAR, WARDEN]
 ---
 
@@ -77,6 +77,22 @@ all seven dishes under plan and random and goes red on a clock-seeded draw
 *Step 1*). The frame splits sim 1.10 + draw 3.83 ms on the free dish, plan
 hand, scale 4 (same report, *The frame, split*).
 
+## Beyond the dish probe
+
+The same rules carry to the newer harnesses, with three additions:
+
+- **Held-out seeds.** Larder's censuses tune on seeds 1-16 and report seeds
+  17-32, so a plan is not judged on the seeds it was tuned on
+  ([Larder M2](../../Reports/larder-m2-2026-11-11.md), `examples/larderm2.rs`).
+- **Holm, not only Bonferroni**, when there are many comparisons (Holm over
+  24 in Larder M2); say which correction was used.
+- **Engine measures on a neutral dish** for engine work (loops, tube width,
+  strays, spread at 10-20 s, `examples/bigdish.rs`), since the owner ruled
+  today's dishes unlikely to be the true games (2026-11-10 20:55Z). GPU code
+  is checked by a twin test, one GPU tick from a CPU dish's state against one
+  CPU tick, in CI on software Vulkan
+  ([gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md)).
+
 ## Owner's word
 
 - 2026-10-27 02:51Z (Pixel Physics): "Do you take into account normal
@@ -107,3 +123,4 @@ hand, scale 4 (same report, *The frame, split*).
 - [mould-wild-one-2026-11-10.md](../../Reports/mould-wild-one-2026-11-10.md) and [mould-keep-alive-2026-11-10.md](../../Reports/mould-keep-alive-2026-11-10.md): the hands' definitions.
 - [mould-scratch-2026-11-10/README.md](../../Reports/mould-scratch-2026-11-10/README.md): the runners.
 - [pixel-physics-review-2026-11-10.md](../../Reports/pixel-physics-review-2026-11-10.md), *Step 1*: the hash and the replay test.
+- [larder-m2-2026-11-11.md](../../Reports/larder-m2-2026-11-11.md): held-out seeds and Holm; [gpu-sandbox-2026-11-11.md](../../Reports/gpu-sandbox-2026-11-11.md): the twin test.
