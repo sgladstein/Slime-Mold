@@ -27,7 +27,11 @@ pub const SHADER: &str = include_str!("view.wgsl");
 pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
 /// Bytes in the uniform (20 words).
-const PARAMS_BYTES: usize = 80;
+const PARAMS_BYTES: usize = 96;
+/// Cells round the shown ones that the look's samples reach: the slope
+/// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
+/// blend (1) all fit in 4.
+const MARGIN: u32 = 4;
 
 /// The minimap's longest side, in pixels, and its margin from the corner.
 pub const MINIMAP_SIDE: u32 = 240;
@@ -57,7 +61,7 @@ pub fn minimap_world(rect: (u32, u32, u32, u32), world: (usize, usize), at: (f32
 pub struct View {
     device: wgpu::Device,
     queue: wgpu::Queue,
-    pipes: [wgpu::ComputePipeline; 4],
+    pipes: [wgpu::ComputePipeline; 5],
     bgl: wgpu::BindGroupLayout,
     params: wgpu::Buffer,
     world_frame: wgpu::Buffer,
@@ -72,6 +76,10 @@ pub struct View {
     specks: wgpu::Buffer,
     /// The soldier sprites (`SPRITES`), RGBA a texel.
     atlas: wgpu::Buffer,
+    /// Each shown cell's height and material, worked out once a frame by
+    /// the `prep` pass (`view.wgsl`), sized for the screen at zoom 1.
+    hcell: wgpu::Buffer,
+    mcell: wgpu::Buffer,
     n_walk: u32,
     shade: bool,
     /// The screen-sized result, rows `stride` pixels apart.
@@ -106,13 +114,13 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(&layout), module: &module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None })
         };
-        let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks")];
+        let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks"), pipe("prep")];
         let params = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view params"), size: PARAMS_BYTES as u64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let marks = storage(device, "marks", (MAX_MARKS * MARK_WORDS * 4) as u64);
         let vis = storage(device, "visibility", 16);
@@ -120,7 +128,8 @@ impl View {
         let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
         let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 4);
         let atlas = Self::atlas(device, queue);
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas]);
+        let (hcell, mcell) = Self::cell_buffers(device, screen);
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -136,6 +145,8 @@ impl View {
             walkers,
             specks,
             atlas,
+            hcell,
+            mcell,
             n_walk: 0,
             shade: false,
             out,
@@ -169,13 +180,20 @@ impl View {
         (stride, out, overlay, top)
     }
 
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 12]) -> wgpu::BindGroup {
+    /// The cells `prep` works out: at zoom 1 or more the screen shows at
+    /// most its own size in cells, plus the margin (`MARGIN` each side).
+    fn cell_buffers(dev: &wgpu::Device, screen: (u32, u32)) -> (wgpu::Buffer, wgpu::Buffer) {
+        let n = (screen.0 + 2 * MARGIN + 2) as u64 * (screen.1 + 2 * MARGIN + 2) as u64;
+        (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 8))
+    }
+
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 14]) -> wgpu::BindGroup {
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -218,6 +236,7 @@ impl View {
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
         (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
         self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 4);
+        (self.hcell, self.mcell) = Self::cell_buffers(&self.device, screen);
         self.has_overlay = false;
         self.rebind();
     }
@@ -278,7 +297,7 @@ impl View {
         minimap_rect(self.world, self.screen)
     }
 
-    /// Records the three passes for camera `cam` (after the engine's draw).
+    /// Records the passes for camera `cam` (after the engine's draw).
     /// With `stamp`, timestamps at the first pass's start and the last
     /// pass's end, at the indices given.
     pub fn record(&self, enc: &mut wgpu::CommandEncoder, cam: &Camera, stamp: Option<(&wgpu::QuerySet, Option<u32>, Option<u32>)>) {
@@ -293,11 +312,22 @@ impl View {
         for v in [mm.0, mm.1, mm.2, mm.3, self.shade as u32, self.n_walk, 0, 0] {
             b.extend(v.to_le_bytes());
         }
+        // The shown cells and a margin: what `prep` works out.
+        let (ox, oy) = (cam.x.floor() as i32 - MARGIN as i32, cam.y.floor() as i32 - MARGIN as i32);
+        let zoom = cam.zoom.max(1.0);
+        let (rw, rh) = ((self.screen.0 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2, (self.screen.1 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2);
+        b.extend(ox.to_le_bytes());
+        b.extend(oy.to_le_bytes());
+        b.extend(rw.to_le_bytes());
+        b.extend(rh.to_le_bytes());
         self.queue.write_buffer(&self.params, 0, &b);
         let (gx, gy) = (self.screen.0.div_ceil(16), self.screen.1.div_ceil(16));
         let mut passes: Vec<(usize, (u32, u32))> = Vec::new();
         if self.shade && self.n_walk > 0 && cam.zoom >= 1.0 {
             passes.push((3, (self.n_walk.div_ceil(256), 1)));
+        }
+        if self.shade && cam.zoom >= 1.0 {
+            passes.push((4, (rw.div_ceil(16), rh.div_ceil(16))));
         }
         passes.push((0, (gx, gy)));
         if self.n_marks > 0 {

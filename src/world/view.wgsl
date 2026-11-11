@@ -1,7 +1,7 @@
 // The camera's view pass (src/world/view.rs): a world-sized RGBA frame
 // (any producer; the GPU engine's `frame`) drawn onto a screen-sized
 // buffer through the camera, with the minimap, the game's marks and the
-// screen-space overlay (HUD text) on top. Three passes: `base` (a thread a
+// screen-space overlay (HUD text) on top. Passes: `prep` (each shown cell once), `base` (a thread a
 // screen pixel), `draw_marks` (a workgroup a mark, claiming pixels), and
 // `compose` (a thread a pixel: the marks' colours and the overlay).
 
@@ -14,6 +14,10 @@ struct V {
     // The look (`View::set_look`): 1 shades the world from the engine's
     // look and ground fields, with every walker a speck; 0 the frame only.
     shade: u32, n_walk: u32, _l0: u32, _l1: u32,
+    // The rectangle of cells `prep` works out (origin ox, oy; rw x rh):
+    // the cells the screen shows and a margin of 4 for the slope, shadow
+    // and blend samples.
+    ox: i32, oy: i32, rw: u32, rh: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -38,6 +42,13 @@ struct V {
 // The soldier sprites (`src/world/sprites/`): 512 x 160 RGBA, four 128 px
 // tiles (body, helmet, flash, dead) above the same at 32 px.
 @group(0) @binding(11) var<storage, read> atlas: array<u32>;
+// Each shown cell's height and material, worked out once a frame by `prep`
+// (rows `rw` apart from cell ox, oy). `base` reads these: a pixel needs 24
+// heights (bilinear at six points) and four materials, and before this it
+// worked each one out from the fields itself, which made the look cost
+// 1.8-2.0 ms against 0.3 ms plain on the GTX 1070 at 1080p.
+@group(0) @binding(12) var<storage, read_write> hcell: array<f32>;
+@group(0) @binding(13) var<storage, read_write> mcell: array<vec2<u32>>;
 
 fn unpack(c: u32) -> vec3<f32> {
     return vec3<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u));
@@ -113,12 +124,21 @@ fn cell_height(ix: i32, iy: i32) -> f32 {
     return h;
 }
 
+// A shown cell's place in `hcell` and `mcell` (clamped to the rectangle).
+fn ridx(ix: i32, iy: i32) -> u32 {
+    let x = clamp(ix - P.ox, 0, i32(P.rw) - 1);
+    let y = clamp(iy - P.oy, 0, i32(P.rh) - 1);
+    return u32(y) * P.rw + u32(x);
+}
+
+fn hc(ix: i32, iy: i32) -> f32 { return hcell[ridx(ix, iy)]; }
+
 fn height(x: f32, y: f32) -> f32 {
     let fx = x - 0.5; let fy = y - 0.5;
     let ix = i32(floor(fx)); let iy = i32(floor(fy));
     let tx = fx - floor(fx); let ty = fy - floor(fy);
-    let a = mix(cell_height(ix, iy), cell_height(ix + 1, iy), tx);
-    let b = mix(cell_height(ix, iy + 1), cell_height(ix + 1, iy + 1), tx);
+    let a = mix(hc(ix, iy), hc(ix + 1, iy), tx);
+    let b = mix(hc(ix, iy + 1), hc(ix + 1, iy + 1), tx);
     return mix(a, b, ty);
 }
 
@@ -174,12 +194,43 @@ fn cell_mat(ix: i32, iy: i32) -> Mat {
     return m;
 }
 
+// A material in two u32s: albedo and gloss, glow and wound, a byte each
+// (albedo and glow in colour units, gloss and wound 0-1 as 0-255). `gem`
+// is not drawn and not kept.
+fn mat_pack(m: Mat) -> vec2<u32> {
+    let a = vec4<u32>(vec4<f32>(clamp(m.albedo, vec3<f32>(0.0), vec3<f32>(255.0)), clamp(m.gloss, 0.0, 1.0) * 255.0) + 0.5);
+    let g = vec4<u32>(vec4<f32>(clamp(m.glow, vec3<f32>(0.0), vec3<f32>(255.0)), clamp(m.wound, 0.0, 1.0) * 255.0) + 0.5);
+    return vec2<u32>(a.x | a.y << 8u | a.z << 16u | a.w << 24u, g.x | g.y << 8u | g.z << 16u | g.w << 24u);
+}
+
+fn mc(ix: i32, iy: i32) -> Mat {
+    let p = mcell[ridx(ix, iy)];
+    var m: Mat;
+    m.albedo = unpack(p.x);
+    m.gloss = byte(p.x, 3u);
+    m.glow = unpack(p.y);
+    m.wound = byte(p.y, 3u);
+    m.gem = 0.0;
+    return m;
+}
+
+// Works out each shown cell's height and material once a frame (a thread
+// a cell of the rectangle).
+@compute @workgroup_size(16, 16)
+fn prep(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x >= P.rw || gid.y >= P.rh) { return; }
+    let ix = P.ox + i32(gid.x); let iy = P.oy + i32(gid.y);
+    let i = gid.y * P.rw + gid.x;
+    hcell[i] = cell_height(ix, iy);
+    mcell[i] = mat_pack(cell_mat(ix, iy));
+}
+
 fn mat_at(x: f32, y: f32) -> Mat {
     let fx = x - 0.5; let fy = y - 0.5;
     let ix = i32(floor(fx)); let iy = i32(floor(fy));
     let tx = fx - floor(fx); let ty = fy - floor(fy);
-    let a = cell_mat(ix, iy); let b = cell_mat(ix + 1, iy);
-    let c = cell_mat(ix, iy + 1); let d = cell_mat(ix + 1, iy + 1);
+    let a = mc(ix, iy); let b = mc(ix + 1, iy);
+    let c = mc(ix, iy + 1); let d = mc(ix + 1, iy + 1);
     var m: Mat;
     m.albedo = mix(mix(a.albedo, b.albedo, tx), mix(c.albedo, d.albedo, tx), ty);
     m.glow = mix(mix(a.glow, b.glow, tx), mix(c.glow, d.glow, tx), ty);
