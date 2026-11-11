@@ -11,52 +11,23 @@ code: [BigParams::spore_rate, BigParams::spore_scent, BigParams::spore_burst, Bi
 
 ## Now
 
-The CPU big dish (`src/mould/big.rs`) gives each walker a life state: an
-ordinary walker, a spore in flight, dormant, or dead. All of it is off by
-default and the default hash is unchanged. Three new rungs for the Larder
-World ladder come out of it, each with a body, an answer to the player's
-strike (`BigDish::strike`: kill a disc, clear its trail, lay an alarm), and
-a counter the player can learn. On a 20,000-walker body with 7 piles, 8
-paired seeds each:
+On the CPU big dish (`src/mould/big.rs`) each walker can be ordinary, a
+spore, dormant or dead, and the player's strike (`BigDish::strike`) lays an
+alarm field. All off by default. Three Larder ladder tiers, each beating its
+control on 8 of 8 paired seeds (20,000 walkers, 7 piles), each with a
+counter:
 
-- **Sporer**: fed walkers fruit (`spore_rate`); a spore flies straight,
-  then homes on scent and lands on a new pile. It holds 6-7 of 7 piles at
-  20 s against 3-5 (8 of 8). Struck, it sprays spores (`spore_burst`) and
-  holds 7 of 7 on every seed against 3-5. **Counter: starve it, don't hit
-  it.** At `spore_rate` 1e-4 it is too fast for the owner's pace rule (7
-  of 7 piles by 10 s on 6 of 8 seeds); at 1e-5 it holds 4-6 piles at 10 s
-  and 6-7 by 60 s (seeds 1-3), so the rate is the dial.
-- **Sleeper**: walkers away from food fall dormant into a crust
-  (`sleep_rate`). A strike's alarm wakes the crust in a wave
-  (`alarm_relay`), and the woken mould rushes the wound
-  (`alarm_weight` +3). After a wake the crust is deaf to alarm for 5 s
-  (`sleep_rest`). **Counter: bait.** A harmless shock at the far edge
-  4 s before the real strike leaves 1858-2216 walkers at the strike
-  against 2360-2971 (fewer on 8 of 8).
-- **Swarmer**: `alarm_weight` +3 alone. It feeds itself into the fire: 11
-  strikes in 5 s kill 1144-4158 walkers against 614-3591 (more on 8 of 8).
-  **Counter: a kill zone.**
+- **Sporer** (`spore_rate`): fed walkers fly to new piles; struck, it
+  scatters (`spore_burst`). Starve it. At 1e-4 it takes all 7 piles by 10 s
+  on 6 of 8 seeds, too fast for the owner's rule; 1e-5 is gentler.
+- **Sleeper** (`sleep_rate`): a dormant crust that wakes in a wave and
+  rushes a wound, then is deaf for 5 s (`sleep_rest`). Bait it, then strike.
+- **Swarmer** (`alarm_weight` +3): walks into fire. Use a kill zone.
 
-Over two minutes the Sporer keeps its piles and the Sleeper stays a
-crust, and no tier rides the dish wall (seeds 1-3). A mould that flees attack (**Skittish**, `alarm_weight` below 0, after
-Jones and Adamatzky's light) did not break up or move off measurably; it is
-an option, not a tier (dead end). The splitting and migrating tier is still
-open. Cost: the alarm field is one more full-grid pass, +31% a step on one
-core at 100,000 walkers; spores +6-16%.
-
-## Numbers
-
-| Measure | Result | Seeds | Paired | Source |
-|---|---|---|---|---|
-| Sporer: piles held at 20 s (20+ grounded walkers by a pile), `spore_rate` 1e-4 vs none | 6-7 (median 7) vs 3-5 (median 4) | 8 | higher 8-0, p 0.0078, survives Bonferroni x5 | [mould-tiers, *Sporer*](../../Reports/mould-tiers-2026-11-11.md) |
-| Struck Sporer: piles held at 20 s after a strike at 10 s, `spore_burst` 0.05 vs none | 7 on all 8 vs 3-5 | 8 | higher 8-0, p 0.0078, survives | same, *Hitting a Sporer* |
-| Sleeper bait: walkers near the strike 2 s after it, bait 4 s before vs none | 1858-2216 (median 2030) vs 2360-2971 (median 2736) | 8 | fewer 8-0, p 0.0078, survives | same, *Sleeper* |
-| Swarmer: walkers killed by 11 strikes, `alarm_weight` +3 vs 0 | 1144-4158 (median 1393) vs 614-3591 (median 816) | 8 | more 8-0, p 0.0078, survives | same, *Swarmer* |
-| Skittish: tube bodies at 20 s under the same fire, `alarm_weight` -10 vs 0 | 1-5 (median 2) vs 1-3 (median 1.5) | 8 | 4-1, 3 ties, p 0.375, fails | same, *Skittish* |
-| Sporer pace: piles held at 10 / 60 s, `spore_rate` 1e-5 vs none | 4-6 / 6-7 vs 3-5 / 3-5; at 3e-6, 3-6 throughout | 3 | no | same, *Robustness* |
-| Two minutes with food: Sporer piles held at 120 s; Sleeper dormant at 120 s | 7 of 7 on 3 of 3 vs 4-5; 15,498-18,782 of 20,000 | 3 | no | same |
-| Wall rail: share of walkers within 10 dish cells of the wall, 20 and 60 s | 0-1.8% on every tier, plain 0-0.8% (spread evenly: 18.8%) | 3 | no | same |
-| Frame cost, 100k walkers spread, one core, ms a step | off 25.2-25.9; alarm 33.0-34.6; spores 27.7-29.2 | 1, 2 runs | no | same, *Cost* |
+Fleeing (`alarm_weight` below 0) did not split the body; a splitting or
+migrating tier is open. The alarm field costs +31% a step on one core.
+Tables: [the report](../../Reports/mould-tiers-2026-11-11.md), *Summary*
+and *Robustness*.
 
 ## Owner's word
 
