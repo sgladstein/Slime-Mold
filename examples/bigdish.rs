@@ -84,7 +84,10 @@
 //! species, field one of sensor_angle, rotate_angle (degrees),
 //! sensor_offset, step, deposit, keep, crowd, blocked_deposit,
 //! graze_weight, explore_steps). The first `sN_` key copies the final
-//! global settings into a set per species, then changes that field.
+//! global settings into a set per species, then changes that field. At the
+//! end a `firsts` line lists each pile as index:distance from the start
+//! (dish cells):radius fraction (1 at the wall):seconds to first reach
+//! (0 at the start, -1 never).
 
 use std::time::Instant;
 
@@ -442,10 +445,18 @@ fn main() {
         let mut prev_lead: Vec<u8> = Vec::new();
         let mut stills: Vec<u64> = at.iter().map(|s| (s * STEPS_PER_SECOND as f32).round() as u64).collect();
         stills.sort_unstable();
+        // When each pile was first reached (tube on it), dish seconds; 0 for
+        // piles reached at the start (pile 0), -1 for never.
+        let mut first: Vec<f32> = d.reached.iter().map(|&r| if r { 0.0 } else { -1.0 }).collect();
         while d.ticks < ticks {
             let t0 = Instant::now();
             d.tick();
             spent += t0.elapsed().as_secs_f64();
+            for (f, &r) in first.iter_mut().zip(&d.reached) {
+                if *f < 0.0 && r {
+                    *f = d.seconds();
+                }
+            }
             if d.ticks == infect_tick {
                 d.infect(W as f32 / 2.0, H as f32 / 2.0, infect_r);
             }
@@ -717,6 +728,25 @@ fn main() {
                     );
                 }
             }
+        }
+        {
+            // Each pile: distance from the start (the dish centre with
+            // `blob_r`, else pile 0) in dish cells, how far out it sits
+            // (0 at the centre, 1 at the dish wall: the ellipse's radius
+            // fraction), and when it was first reached.
+            let (cx, cy) = if d.p.blob_r > 0.0 { (W as f32 / 2.0, H as f32 / 2.0) } else { d.piles[0] };
+            let (rx, ry) = (W as f32 / 2.0 - 3.0, H as f32 / 2.0 - 3.0);
+            let parts: Vec<String> = d
+                .piles
+                .iter()
+                .zip(&first)
+                .enumerate()
+                .map(|(i, (&(x, y), &f))| {
+                    let rho = (((x - W as f32 / 2.0) / rx).powi(2) + ((y - H as f32 / 2.0) / ry).powi(2)).sqrt();
+                    format!("{i}:{:.0}:{:.2}:{:.1}", (x - cx).hypot(y - cy), rho, f)
+                })
+                .collect();
+            println!("seed {seed} {name} firsts {}", parts.join(" "));
         }
         println!("seed {seed} {name} hash={:016x}", d.hash());
         if let Some(dir) = &gif {
