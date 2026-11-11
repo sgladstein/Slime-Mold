@@ -1227,6 +1227,36 @@ mod tests {
     fn new_options_default_off() {
         let d = BigDish::new(small(2, 2));
         assert!(d.sick.is_empty() && d.germ.is_empty());
+        assert!(d.species_trail.is_empty() && d.age.is_empty());
+    }
+
+    /// The outside rules (2026-11-11) are keyed draws too: threads change
+    /// nothing, and the species fields add up to the shared trail.
+    #[test]
+    fn outside_rules_ignore_threads() {
+        for p in [
+            BigParams { sensor_r: 1, chance_exp: 4.0, size_spread: 0.6, ..small(2, 1) },
+            BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
+            BigParams { species: 3, species_cycle: true, ..small(2, 1) },
+            BigParams { blocked_keep: true, blocked_reset: 0.1, ..small(2, 1) },
+        ] {
+            let mut a = BigDish::new(p);
+            let mut b = a.clone();
+            b.threads = 3;
+            for _ in 0..40 {
+                a.tick();
+                b.tick();
+            }
+            assert_eq!(a.hash(), b.hash());
+            let n = a.p.species as usize;
+            assert_eq!(a.species_trail.len(), if n > 1 { n } else { 0 });
+            if n > 1 {
+                for (i, &t) in a.trail.iter().enumerate() {
+                    let sum: f32 = a.species_trail.iter().map(|f| f[i]).sum();
+                    assert!((t - sum).abs() <= 1e-3 * t.abs().max(1.0), "cell {i}: {t} vs {sum}");
+                }
+            }
+        }
     }
 
     /// The same layout of piles at every scale, so arms pair.
