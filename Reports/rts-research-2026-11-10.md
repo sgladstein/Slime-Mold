@@ -463,6 +463,17 @@ and then put it in a person's hands. If one demo shows a cycle among good
 plans after that, the other can borrow its economy, as the v3 design
 already suggests.
 
+## 2026-11-11: the economy and the player's actions, as a design
+
+The owner, 00:09Z: "What do you think about our resources/economy and
+options for the player to control/interact with the game". The answer gave
+each part of the mould its own job (food as income, walkers as army and
+workers, tube as infrastructure whose length costs, score from held ground)
+and proposed three actions (Call, Fortify, a telegraphed Strike). The owner,
+00:16Z: "These all sound good". The design and its tests, for the skirmish
+first: [`skirmish-economy-sketch.md`](rts-research-2026-11-10/skirmish-economy-sketch.md).
+Nothing is built or run yet.
+
 ## Sources
 
 The cards, one per source, are listed in

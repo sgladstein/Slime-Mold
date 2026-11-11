@@ -34,10 +34,19 @@
 //! Any `BigParams` number can follow: `walkers= keep= substeps= scale=
 //! crowd= sensor_offset= sensor_angle= (degrees) rotate_angle= (degrees)
 //! scent_coarse=0|1 blob=0|1 piles= deposit= step= food_deposit= scent_keep=
-//! fed_scent= pile_r=`.
+//! fed_scent= pile_r= respawn=`.
 //!
 //! Prints the engine's measures (`BigMeasure`) every `report` seconds and
 //! the simulation's cost a tick.
+//!
+//! `style=` sets how frames are drawn (2026-11-10, comparing with Jenson's
+//! clips): `amber` (default) is `BigDish::image`, the game's look; `grey`
+//! is the same trail grey on black with brightness 1 - exp(-trail/`knee`)
+//! (default knee 6, the game's); `count` draws walkers a cell the same way,
+//! as Bleuje's port of Jenson's later work draws particle counts. A list
+//! (`style=amber,grey`) saves each style's still; frames and GIFs use the
+//! first. `raw` in the list also saves the trail and walkers a cell as raw
+//! f32 (`.f32`, w x h each) for drawing offline.
 
 use std::time::Instant;
 
@@ -80,6 +89,41 @@ fn write_gif(path: &str, shots: Vec<image::RgbaImage>, ms: u32) {
     enc.encode_frames(frames).expect("gif encode");
 }
 
+/// A frame in `style` (see the header): the brightest fine cell of each
+/// `down` x `down` block, with a smooth knee and no edge drawn.
+fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage {
+    if style == "amber" {
+        return d.image(down);
+    }
+    let field: Vec<f32> = match style {
+        "grey" => d.trail.clone(),
+        "count" => {
+            let mut c = vec![0.0f32; d.w * d.h];
+            for &(x, y, _) in &d.walkers {
+                c[y as usize * d.w + x as usize] += 1.0;
+            }
+            c
+        }
+        _ => panic!("style={style}: amber, grey or count"),
+    };
+    let down = down.max(1);
+    let (iw, ih) = ((d.w / down) as u32, (d.h / down) as u32);
+    let mut img = image::RgbaImage::new(iw, ih);
+    for py in 0..ih {
+        for px in 0..iw {
+            let mut v = 0.0f32;
+            for dy in 0..down {
+                for dx in 0..down {
+                    v = v.max(field[(py as usize * down + dy) * d.w + px as usize * down + dx]);
+                }
+            }
+            let g = (255.0 * (1.0 - (-v / knee).exp())).clamp(0.0, 255.0) as u8;
+            img.put_pixel(px, py, image::Rgba([g, g, g, 255]));
+        }
+    }
+    img
+}
+
 fn main() {
     let mut name = "nose".to_string();
     // Names the run in its output lines and files; the preset's name if not given.
@@ -90,6 +134,7 @@ fn main() {
     // Full-size PNG frames every `every` ticks, for a video encoder.
     let mut frames: Option<String> = None;
     let (mut every, mut down) = (12u64, 1usize);
+    let (mut style, mut knee) = ("amber".to_string(), 6.0f32);
     let mut at: Vec<f32> = Vec::new();
     let mut overrides: Vec<(String, String)> = Vec::new();
     for arg in std::env::args().skip(1) {
@@ -106,6 +151,8 @@ fn main() {
             "look" => look = Some(v.into()),
             "every" => every = v.parse().unwrap(),
             "down" => down = v.parse().unwrap(),
+            "style" => style = v.into(),
+            "knee" => knee = v.parse().unwrap(),
             "at" => at = v.split(',').map(|s| s.parse().unwrap()).collect(),
             _ => overrides.push((k.into(), v.into())),
         }
@@ -135,8 +182,13 @@ fn main() {
             "scent_keep" => p.scent_keep = f(),
             "fed_scent" => p.fed_scent = f(),
             "pile_r" => p.pile_r = f(),
+            "respawn" => p.respawn = f(),
             _ => panic!("unknown key {k}"),
         }
+    }
+    // Output folders are made here, so a fresh clone needs no setup.
+    for dir in [&gif, &frames, &look].into_iter().flatten() {
+        std::fs::create_dir_all(dir).unwrap();
     }
     println!("bigdish: preset {name} seeds {seeds:?} seconds {seconds} threads {threads}");
     println!("params {p:?}");
@@ -155,16 +207,39 @@ fn main() {
             d.tick();
             spent += t0.elapsed().as_secs_f64();
             if gif.is_some() && d.ticks.is_multiple_of(every) {
-                shots.push(d.image(down));
+                shots.push(picture(&d, style.split(',').next().unwrap(), knee, down));
             }
             if let Some(dir) = &frames {
                 if d.ticks.is_multiple_of(every) {
-                    d.image(1).save(format!("{dir}/{name}-s{seed}-{:04}.png", d.ticks / every)).unwrap();
+                    picture(&d, style.split(',').next().unwrap(), knee, 1).save(format!("{dir}/{name}-s{seed}-{:04}.png", d.ticks / every)).unwrap();
                 }
             }
             if let Some(dir) = &look {
                 if stills.contains(&d.ticks) {
-                    d.image(1).save(format!("{dir}/big-{name}-s{seed}-{:03}s.png", d.ticks / STEPS_PER_SECOND as u64)).unwrap();
+                    // One still a style when several are listed (style=amber,grey).
+                    let secs = d.ticks / STEPS_PER_SECOND as u64;
+                    for st in style.split(',') {
+                        if st == "raw" {
+                            // The trail and walkers a cell as f32 little-endian, w x h each,
+                            // for drawing offline with other curves.
+                            let mut bytes = Vec::with_capacity(8 * d.w * d.h);
+                            let mut count = vec![0.0f32; d.w * d.h];
+                            for &(x, y, _) in &d.walkers {
+                                count[y as usize * d.w + x as usize] += 1.0;
+                            }
+                            for v in d.trail.iter().chain(&count) {
+                                bytes.extend_from_slice(&v.to_le_bytes());
+                            }
+                            std::fs::write(format!("{dir}/big-{name}-s{seed}-{secs:03}s.f32"), bytes).unwrap();
+                            continue;
+                        }
+                        let file = if style.contains(',') {
+                            format!("{dir}/big-{name}-s{seed}-{secs:03}s-{st}.png")
+                        } else {
+                            format!("{dir}/big-{name}-s{seed}-{secs:03}s.png")
+                        };
+                        picture(&d, st, knee, 1).save(file).unwrap();
+                    }
                 }
             }
             if d.ticks.is_multiple_of(report_every) || d.ticks == ticks {

@@ -92,6 +92,7 @@ owner played it and set it aside (21:14Z).
 ## Open
 
 - Counterplay in the model: ease the snowball at the pile (even fights, a hold bonus, or starving walkers that fight harder), or make size cost something; or a person finding what the scripts did not (the report's *What would make the strategy deeper*).
+- A redesign of the economy and the actions (supply lines, points, Call, Fortify, counted-down Strike), which the owner said "all sound good" (2026-11-11 00:16Z): [`skirmish-economy-sketch.md`](../../Reports/rts-research-2026-11-10/skirmish-economy-sketch.md), tests first.
 - A second map needs its own counter table; the habit cycle is real only on this layout.
 - Not in the native window (`cargo run --bin mould`), whose HUD calls the rival "wild".
 

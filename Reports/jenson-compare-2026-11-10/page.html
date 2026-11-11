@@ -1,0 +1,266 @@
+<title>Why Jenson's Mould Looks Different</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lightbox. Dark ground so the black dishes sit flush; Jenson's
+   frames and ours always side by side, numbers in mono beside each. */
+:root {
+  --bg: #0c0e0d;
+  --panel: #151917;
+  --line: #2a302d;
+  --fg: #e9ece9;
+  --muted: #9ba49f;
+  --amber: #ffbe5a;
+  --vein: #cfe3dc;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 600; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 16px; }
+.lead { font-size: 17px; color: var(--fg); }
+section { display: grid; gap: 20px; }
+section > p, .note { color: var(--muted); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.pair figure img { aspect-ratio: 5 / 4; object-fit: contain; }
+figure img { width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+.who { font: 500 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.who.j { color: var(--vein); }
+.who.o { color: var(--amber); }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.strip img { width: 100%; border-radius: 4px; border: 1px solid var(--line); }
+.diffs { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.diff { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1.4fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.diff > div { min-width: 0; font-size: 14px; }
+.diff .h { font: 500 11px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-bottom: 4px; }
+.diff.head { padding: 8px 0; }
+.diff.head > div { font: 500 11px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.diff h3 { font-size: 15px; }
+.tag { display: inline-block; font: 500 11px/1 var(--mono); padding: 4px 7px; border-radius: 3px; border: 1px solid var(--line); margin-top: 6px; color: var(--muted); }
+.tag.yes { color: var(--vein); border-color: #3c5a50; }
+.tag.no { color: var(--amber); border-color: #5a4a2c; }
+.test { display: grid; gap: 14px; padding: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.test .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.verdict { font-size: 14px; color: var(--fg); }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; font-size: 13px; min-width: 900px; width: 100%; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font: 500 11px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); background: var(--panel); }
+td:first-child { font-weight: 600; white-space: nowrap; }
+tr.ours td { background: #1a1813; }
+ul.means { margin: 0; padding-left: 18px; display: grid; gap: 10px; max-width: 72ch; }
+footer { display: grid; gap: 10px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px; }
+code { font-family: var(--mono); font-size: 0.92em; color: var(--fg); }
+a { color: var(--vein); }
+@media (max-width: 760px) {
+  .diff { grid-template-columns: 1fr; gap: 6px; }
+  .diff.head { display: none; }
+  .diff .h { display: block; }
+}
+@media (min-width: 761px) { .diff .h { display: none; } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Slime mould · outside work · 2026-11-10</div>
+  <h1>Why Jenson's Mould Looks Different</h1>
+  <p class="lead">Jenson runs the same step we do: sense, turn, move, deposit, blur, fade. The look comes from how it is run and drawn. Four things we could test on our 1024 x 640 dish explain most of it: no one-walker-a-cell limit, settings that suit that, a brightness curve that keeps tube cores from saturating, and walkers that respawn at random. Two things are still not reproduced: the feathery fronts that grow into the haze, and the contagion events.</p>
+</header>
+
+<section>
+  <h2>Side by side</h2>
+  <div class="pair">
+    <figure>
+      <img src="pics/jenson-network-c.jpg" alt="Jenson's network clip, last frame: a fine polygon mesh of thin bright veins over a dim haze, with one thicker old ring">
+      <figcaption>
+        <span class="who j">Jenson · network_2.gif, last frame (about 9 s)</span>
+        <dl class="stats">
+          <dt>Loops</dt><dd>180 to 340 (3 to 5 at the start)</dd>
+          <dt>Tube width</dt><dd>1.5 to 1.9 px, 0.3 to 0.4% of the disc</dd>
+          <dt>Dim haze</dt><dd>41% of the disc</dd>
+          <dt>Particles</dt><dd>5 to 10 million (the post)</dd>
+        </dl>
+      </figcaption>
+    </figure>
+    <figure>
+      <img src="pics/ours-dense-30s.jpg" alt="Our big dish at 30 seconds: wide amber tubes around round dark holes, food piles as star-shaped knots">
+      <figcaption>
+        <span class="who o">Ours · the 4x Mould page, 100,000 walkers, 30 s</span>
+        <dl class="stats">
+          <dt>Loops</dt><dd>92 (164 at 10 s: it coarsens)</dd>
+          <dt>Tube width</dt><dd>4.8 dish cells at 10 s, about 1.9% of the dish</dd>
+          <dt>Strays</dt><dd>1.5% of walkers at 10 s</dd>
+          <dt>Walkers</dt><dd>100,000, one a cell at most</dd>
+        </dl>
+      </figcaption>
+    </figure>
+  </div>
+  <p class="note">Width and haze on Jenson's frame are measured on the picture (brightness over 110 or 150 of 255 is tube; 20 to 80 is haze). Ours are the engine's own measures (seed 1). The same picture measure is used for every grey picture below, so those compare directly with Jenson's.</p>
+</section>
+
+<section>
+  <h2>Seven differences you can see</h2>
+  <p>Each row is something visible in the clips, what ours does instead, the likely cause, and whether a test here backs it.</p>
+  <div class="diffs">
+    <div class="diff head"><div>Difference</div><div>Jenson</div><div>Ours</div><div>Likely cause</div></div>
+
+    <div class="diff">
+      <div><h3>Thin veins, wide tubes</h3><span class="tag yes">tested</span></div>
+      <div><span class="h">Jenson</span>Hairline veins with a bright core and a soft glow.</div>
+      <div><span class="h">Ours</span>Flat amber bands about four times wider, grainy inside.</div>
+      <div><span class="h">Likely cause</span>Two things. One walker a cell makes a tube as wide as its crowd: 100,000 walkers need about a fifth of the dish. And our brightness curve is full at a trail of about 15, so a tube's flanks look as bright as its core. Drawn with a softer curve, the same dish shows veins 0.4 to 0.7% wide.</div>
+    </div>
+
+    <div class="diff">
+      <div><h3>A haze of free walkers</h3><span class="tag yes">tested</span></div>
+      <div><span class="h">Jenson</span>Dim grey fog over 41% of the disc.</div>
+      <div><span class="h">Ours</span>Dark ground: 1 to 2% of walkers off the tubes.</div>
+      <div><span class="h">Likely cause</span>A small free share of millions of particles is a fog; ours is a few hundred specks. Jenson's later work also respawns every particle at random about every 1,000 steps. With respawn at 1% a step, our haze reaches 44%.</div>
+    </div>
+
+    <div class="diff">
+      <div><h3>Finer over time, not coarser</h3><span class="tag yes">tested</span></div>
+      <div><span class="h">Jenson</span>3 to 5 loops grow to 180 to 340 in 9 s.</div>
+      <div><span class="h">Ours</span>164 loops at 10 s fall to 92 at 30 s.</div>
+      <div><span class="h">Likely cause</span>Every one of our runs coarsens. Respawn held the mesh in our test (196 loops at 10 s against 43.5, 8 of 8 seeds). In Jenson's later performance a stylus spawned particles and changed settings live (the 2020 paper), so a clip may span changes made by hand.</div>
+    </div>
+
+    <div class="diff">
+      <div><h3>Polygons, not bubbles</h3><span class="tag yes">tested</span></div>
+      <div><span class="h">Jenson</span>Cells with straight sides meeting three at a joint.</div>
+      <div><span class="h">Ours</span>Round holes, like foam.</div>
+      <div><span class="h">Likely cause</span>Settings. With no limit, a smaller turn (22.5 degrees) and sensors further out (18 cells) gave straight-sided polygons here. Our numbers with no limit gave ropes instead.</div>
+    </div>
+
+    <div class="diff">
+      <div><h3>Feathery growth fronts</h3><span class="tag no">not reproduced</span></div>
+      <div><span class="h">Jenson</span>Branching tips grow out of the network into the haze, then close into loops.</div>
+      <div><span class="h">Ours</span>A blob start makes one bag with a few tendrils; a spread start organises everywhere at once.</div>
+      <div><span class="h">Likely cause</span>A guess: a network capturing a haze too thin to organise on its own, so growth happens only at the edge. Jenson's 2020 paper names a critical particle density with a tipping point. Even 4 million walkers (6 a cell) organised everywhere within 1 s here.</div>
+    </div>
+
+    <div class="diff">
+      <div><h3>Trunks and capillaries</h3><span class="tag">partly seen</span></div>
+      <div><span class="h">Jenson</span>The first ring stays as a thick trunk inside a fine mesh.</div>
+      <div><span class="h">Ours</span>Every tube is about the same width.</div>
+      <div><span class="h">Likely cause</span>One walker a cell caps how bright a busy tube can get. With no limit, busy tubes carry more walkers and show brighter here, but a lasting trunk did not form in 10 s.</div>
+    </div>
+
+    <div class="diff">
+      <div><h3>Events that sweep the dish</h3><span class="tag no">not built</span></div>
+      <div><span class="h">Jenson</span>A bright burst replaces a faint net (explosion); a fibrous region sits inside a straight lattice (web).</div>
+      <div><span class="h">Ours</span>Nothing travels through the network.</div>
+      <div><span class="h">Likely cause</span>Contagion: particles carry a second state and pass it on through an infected trail, and the state changes how they move. In the post, "the gif below" is the web clip, so its fibrous circle is probably the infected region. The straight lattice looks like particles locked to the pixel grid.</div>
+    </div>
+  </div>
+  <div class="strip">
+    <img src="pics/jenson-network-b.jpg" alt="Jenson's network clip half way: feathery branching fronts growing into a dim haze around a central ring">
+    <img src="pics/jenson-explosion-b.jpg" alt="Jenson's explosion clip: thick bright ropes bursting out over a faint speckled network">
+    <img src="pics/jenson-web.jpg" alt="Jenson's web clip: fibrous cords inside a circle, a straight square lattice outside">
+  </div>
+  <p class="note">Left to right: network_2 half way (the fronts and the haze), explosion during the burst, and ef_9 (the web). From the owner's saved copies.</p>
+</section>
+
+<section>
+  <h2>The tests, one change at a time</h2>
+  <p>All on our big dish (1024 x 640, the chosen nose rule), spread start, seed 1 in the pictures. Food is off from row 1 on (one pile, no scent), because Jenson's clips have none. Loops are the engine's count; width and haze are the picture measure above.</p>
+
+  <div class="test">
+    <h3>1 · Drop the one-walker-a-cell limit, our numbers, 100,000 walkers</h3>
+    <div class="row">
+      <figure><img src="pics/limit-on-100k-10s.jpg" alt="Limit on: a fine foam of round holes"><figcaption><strong>Limit on, 10 s</strong><dl class="stats"><dt>Loops</dt><dd>151.5 median (144 to 160)</dd><dt>Tube area</dt><dd>12,620 dish cells</dd></dl></figcaption></figure>
+      <figure><img src="pics/limit-off-100k-10s.jpg" alt="Limit off: a few thick open-ended ropes"><figcaption><strong>Limit off (Jenson's rule), 10 s</strong><dl class="stats"><dt>Loops</dt><dd>0 median (0 to 2)</dd><dt>Tube area</dt><dd>3,510 dish cells</dd></dl></figcaption></figure>
+    </div>
+    <p class="verdict">Fewer loops with the limit off on 8 of 8 seeds (sign test p = 0.008, survives the correction over 4). Without the limit, our settings fold the walkers into a few thick ropes within seconds. So Jenson's rule needs other settings.</p>
+  </div>
+
+  <div class="test">
+    <h3>2 · Limit off: which turn and reach keep a mesh</h3>
+    <figure><img src="pics/limit-off-angles-grid.jpg" alt="Twelve small dishes for sensor angle 22.5, 45 and 90, turn 22.5 and 45, sensors 9 and 18 cells out"><figcaption><strong>100,000 walkers, 10 s, seed 1.</strong> Labels read sensor angle, turn, sensor reach. Loops at 10 s: 47 for sensor 45, turn 22.5, reach 18; 0 to 15 for the other eleven.</figcaption></figure>
+    <p class="verdict">The best mesh came from sensor angle 45, turn 22.5 and sensors 18 cells out: straight-sided polygons. That arm is used from here on.</p>
+  </div>
+
+  <div class="test">
+    <h3>3 · The same dish, drawn three ways (1,000,000 walkers, limit off)</h3>
+    <div class="row">
+      <figure><img src="pics/m-game-curve-10s.jpg" alt="Drawn with the game's curve: thick white ropes"><figcaption><strong>The game's curve, 10 s</strong><dl class="stats"><dt>Width</dt><dd>1.4 to 1.6% of the dish</dd><dt>Haze</dt><dd>8%</dd></dl></figcaption></figure>
+      <figure><img src="pics/m-soft-10s.jpg" alt="Drawn with a soft curve: thin veins with a glow and faint ghost tubes"><figcaption><strong>Soft curve, 10 s</strong><dl class="stats"><dt>Width</dt><dd>0.4 to 0.6%</dd><dt>Haze</dt><dd>15%</dd></dl></figcaption></figure>
+      <figure><img src="pics/m-count-10s.jpg" alt="Drawn by walkers a cell: hairline veins"><figcaption><strong>Walkers a cell, 10 s</strong><dl class="stats"><dt>Width</dt><dd>0.1%</dd><dt>Haze</dt><dd>7%</dd></dl></figcaption></figure>
+    </div>
+    <p class="verdict">Same data, 42 loops in all three. The game's curve is nearly full at a trail of 15, so it paints the flanks as solid tube. These tubes peak near 100 to 200. The soft curve (trail over its 99.9th percentile, to the power 0.6) is Jenson's width range; drawing walker counts, as Bleuje's port of Jenson's later work does, is thinner still.</p>
+  </div>
+
+  <div class="test">
+    <h3>4 · More walkers: 1 million against 4 million (6 a cell, Bleuje's density)</h3>
+    <div class="row">
+      <figure><img src="pics/m-soft-5s.jpg" alt="One million walkers at 5 seconds, soft curve: polygon mesh"><figcaption><strong>1 million, 5 s</strong><dl class="stats"><dt>Loops</dt><dd>70</dd><dt>Width</dt><dd>0.4 to 0.6%</dd></dl></figcaption></figure>
+      <figure><img src="pics/g-soft-1s.jpg" alt="Four million walkers at 1 second: a fine mesh over the whole dish"><figcaption><strong>4 million, 1 s</strong><dl class="stats"><dt>Loops</dt><dd>171</dd><dt>Width</dt><dd>0.5 to 0.7%</dd></dl></figcaption></figure>
+      <figure><img src="pics/g-soft-5s.jpg" alt="Four million walkers at 5 seconds: the mesh has coarsened"><figcaption><strong>4 million, 5 s</strong><dl class="stats"><dt>Loops</dt><dd>60</dd><dt>Width</dt><dd>0.4 to 0.6%</dd></dl></figcaption></figure>
+    </div>
+    <p class="verdict">Density alone changes little. The turn rule only compares sensors, so more walkers mostly smooth the grain. Four times the walkers still made the mesh everywhere at once and still coarsened (171 loops at 1 s to 60 at 5 s).</p>
+  </div>
+
+  <div class="test">
+    <h3>5 · Respawn: 1% of walkers a step jump to a random spot</h3>
+    <div class="row">
+      <figure><img src="pics/respawn-soft-5s.jpg" alt="Respawn at 5 seconds: a fine mesh with haze"><figcaption><strong>Respawn, 5 s</strong><dl class="stats"><dt>Loops</dt><dd>184</dd><dt>Haze</dt><dd>44%</dd></dl></figcaption></figure>
+      <figure><img src="pics/respawn-soft-10s.jpg" alt="Respawn at 10 seconds: the fine mesh holds, with faint ghost tubes and haze"><figcaption><strong>Respawn, 10 s</strong><dl class="stats"><dt>Loops</dt><dd>200</dd><dt>Width</dt><dd>0.5 to 0.7%</dd><dt>Haze</dt><dd>44%</dd></dl></figcaption></figure>
+      <figure><img src="pics/m-soft-10s.jpg" alt="No respawn at 10 seconds: a coarser mesh on dark ground"><figcaption><strong>No respawn, 10 s</strong><dl class="stats"><dt>Loops</dt><dd>42</dd><dt>Haze</dt><dd>15%</dd></dl></figcaption></figure>
+    </div>
+    <p class="verdict">More loops with respawn on 8 of 8 seeds: 196 median (187 to 208) against 43.5 (38 to 52), sign test p = 0.008, survives the correction. The mesh stays fine and a haze of fresh walkers fills the gaps, as in Jenson's clips. By the engine's trail cut the tubes are wider (7.9 against 5.8 dish cells) because the haze lifts the trail around them; on the picture they are 0.5 to 0.7% against 0.4 to 0.6%.</p>
+  </div>
+</section>
+
+<section>
+  <h2>How other people build the step</h2>
+  <p>Read from each project's code on 2026-11-10, except Jenson's, which is not published. Every GPU version drops the one-a-cell limit.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Who</th><th>Walkers</th><th>One a cell</th><th>Sense and turn</th><th>Deposit, blur, fade</th><th>Edges</th><th>What is drawn</th></tr></thead>
+      <tbody>
+        <tr class="ours"><td>Ours (big dish)</td><td>100,000 on 1024 x 640, 0.2 a cell</td><td>Yes</td><td>3 point sensors 9 cells out at 45°, turn 45° a step, step 1 cell</td><td>5 a walker step; 3x3 mean, keep 0.9 a step; food scent</td><td>Ellipse wall, sensed as −1e6</td><td>Trail, 1 − e^(−v/6), amber</td></tr>
+        <tr><td>Jenson, physarum (2019)</td><td>5 to 10 million</td><td>No ("usually ignored")</td><td>Sensor distance, size and angle, turn and step all set by hand; numbers not published</td><td>3x3 mean, multiplicative decay; deposit size and diffuse size configurable</td><td>Not stated</td><td>Grey on black</td></tr>
+        <tr><td>Jenson, 36 Points (Bleuje's port)</td><td>5.8 million on 1280 x 736, 6 a pixel</td><td>No</td><td>Each walker senses the trail where it stands, then sets sensor distance, sensor angle, turn and step as base + amplitude × s^exponent</td><td>√(walkers on the pixel, at most 100) × 0.003; 3x3 mean, keep 0.75</td><td>Wraps</td><td>Walkers a pixel through a steep curve; respawn every 1,000 steps</td></tr>
+        <tr><td>Lague, Slime Simulation</td><td>250,000 on 1920 x 1080 (preset A)</td><td>No</td><td>Sensors sum a 3x3 area, 35 px out at 30°; turn a random part of about 14° a step; step 0.4 px</td><td>Trail capped at 1; blur blends 6% a step toward the 3x3 mean; fade subtracts 0.004 a step</td><td>Clamp, random new heading</td><td>Trail by species colour; species attract their own trail and avoid others'</td></tr>
+        <tr><td>PolyPhy / MCPM</td><td>Up to 10 million (paper)</td><td>No</td><td>Compares straight ahead with one random side direction and picks by chance, weighted by trail^exponent; sensing distance and step drawn at random each step</td><td>Deposit (keep 0.9) guides walkers; a separate "trace" of where walkers went fades slower (keep 0.96)</td><td>Wrap or reset</td><td>Trace and deposit in two colours, through a log curve</td></tr>
+        <tr><td>Ghassaei, gpu-io</td><td>0.35 a pixel</td><td>No</td><td>"Fibers" preset: sensors 18 px out at 5.5°, turn 45°, step 2</td><td>4 a step; keep 0.9</td><td>Wraps</td><td>Trail × 0.03</td></tr>
+        <tr><td>Barradeau, three.js</td><td>Up to 262,144</td><td>No (the check is commented out)</td><td>Classic three sensors, settings by slider</td><td>Keep 0.9</td><td>Wraps</td><td>Trail</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Bleuje (CC BY-NC-SA) and Lague (GPL-3.0) are read for ideas only; PolyPhy and gpu-io (MIT) and Barradeau (public domain) may be reused with their notices.</p>
+</section>
+
+<section>
+  <h2>What it means for the GPU mould</h2>
+  <ul class="means">
+    <li><strong>Jenson's rule needs Jenson-style settings.</strong> Dropping the one-a-cell limit with our numbers gives a few ropes, not a mesh. A smaller turn with longer sensors gave polygons.</li>
+    <li><strong>How we draw it is half the look.</strong> A softer brightness curve, or walker counts, turns the same data into thin glowing veins with ghost tubes. Both are still the simulation drawn straight.</li>
+    <li><strong>Respawn is the cheapest thing that kept a fine, living mesh.</strong> One random draw a walker a step, about 6 ms a tick more at a million walkers on one core (166 against 160). It is off by default in the big dish (<code>respawn=</code>).</li>
+    <li><strong>Not tried yet:</strong> feathery fronts growing into a haze, contagion, settings set by the trail a walker stands in (36 Points), Bleuje's square-root deposit, area sensors (Lague), and chance-weighted steering (MCPM).</li>
+  </ul>
+</section>
+
+<footer>
+  <div><strong>Method.</strong> <code>examples/bigdish.rs</code> with <code>preset=dense blob=0 piles=1 food_deposit=0</code> plus each row's change; deposit scaled by 100,000 / walkers so every arm lays the same trail a dish. Paired counts: <code>Reports/jenson-compare-2026-11-10/run.sh</code> and <code>analyze.py</code>, results in <code>tables.txt</code>. Pictures are single seeds; the counts in rows 1 and 5 are over 8 paired seeds each.</div>
+  <div><strong>Sources.</strong> Jenson's 2019 post and GIFs (the owner's saved copy); the code of Bleuje/interactive-physarum, SebLague/Slime-Simulation, PolyPhyHub/PolyPhy, amandaghassaei/gpu-io and nicoptere/physarum. Jenson's frames are here for comparison only; keep this page private.</div>
+</footer>
+</div>

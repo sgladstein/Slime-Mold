@@ -152,6 +152,21 @@ move.
   tick) is built; on a software GPU its dish matches the CPU's (165 loops against 163 at 100k, 10 s) and it waits for
   the owner's GTX 1070.
 
+- [jenson-compare-2026-11-10.md](jenson-compare-2026-11-10.md) — **research with small tests, no game change: why
+  Jenson's clips look different from our mould.** Owner asked 22:48Z. Jenson's GIFs against the big dish (no food), and
+  the step as Bleuje, Lague, PolyPhy, gpu-io and Barradeau build it (all drop the one-a-cell limit). With our numbers
+  the limit off folds walkers into ropes (loops at 10 s 151.5 to 0, 8 of 8 seeds); sensor 45 / turn 22.5 / reach 18
+  gives polygons; the game's brightness curve makes tubes look about three times wider than a soft curve does; respawn 1% a
+  step (new `BigParams::respawn`, off by default) held a fine mesh (loops at 10 s 43.5 to 196, 8 of 8) and gave
+  Jenson's haze, for 4% more step time. Not reproduced: feathery fronts, trunks, contagion.
+  Page, pictures, run.sh, analyze.py and raw output in [`jenson-compare-2026-11-10/`](jenson-compare-2026-11-10/).
+- [gpu-sandbox-2026-11-11.md](gpu-sandbox-2026-11-11.md) — **built: GPU plan phase 3's sandbox,
+  `--bin mouldgpu`.** The big dish on the GPU, drawn live, with every option
+  the Jenson comparison tested as a control and its dishes on keys 1-8 (the
+  owner's ask, 2026-11-11 00:06Z). On a software GPU its dishes match the
+  CPU's at 10 s, seed 1 (100k one a cell: 148 loops against 151; 1M with
+  respawn: 200 against 200), and the same seed gives the same frame twice.
+
 ## Added with the move (2026-11-10)
 
 - [new-game-brainstorm-2026-11-07/](new-game-brainstorm-2026-11-07/) — **where the game came from.** The flows,
@@ -199,5 +214,9 @@ move.
   engines, AlphaStar, the spinning top), lessons for the mould, and feedback on both demos: soft and Trunk are
   dominant strategies and the snowball is unmanaged positive feedback; fix with a size cost, a pull-back rule, a
   points ending and telegraphed attacks before adding verbs. Reading only, no runs. Cards in `research/sources/`.
+- [mould-shooter-2026-11-11.md](mould-shooter-2026-11-11.md) — **the mould as the enemy, a shooter brainstorm**
+  (owner, 11-11 00:18Z). Lead shape Larder: a squad and the mould want the same food; stored food smells, so a
+  hoard draws the mould; shots cut supply by holding a tube clear, not by kills (the knife is weak); four
+  strategies meant to counter through the mould's lean or fat state; three cheap tests first. No runs.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

@@ -1,0 +1,6 @@
+bigdish: preset crowd1-s8 seeds [8] seconds 10 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 100000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, scent_offset: 36.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, tube: 1.0, seed: 1 }
+== seed 8: 1024 x 640, 100000 walkers, 1 piles
+seed 8 crowd1-s8 t   5.0s  tube 14644.9  loops  240  width 4.96  reach  191.7  piles 1/1  strays 0.000  ms/tick 25.62
+seed 8 crowd1-s8 t  10.0s  tube 12793.5  loops  160  width 5.18  reach  189.6  piles 1/1  strays 0.000  ms/tick 24.54
+seed 8 crowd1-s8 hash=943da637e9cf1742

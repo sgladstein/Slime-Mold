@@ -22,7 +22,7 @@ Keep this file under 150 lines; lint checks it.
 
 - [Water and sleep](model/water-and-sleep.md): dry mould sleeps, water wakes it; Keep It Alive only.
 - [Sensor angle and reach](model/sensors.md): 45 obeys then freezes, 22.5 lives but ignores you; reach stays 9.
-- [The mould at scale](model/scale.md): outside models (Jenson, MCPM) and the reviewed GPU plan; nothing built yet.
+- [The mould at scale](model/scale.md): the GPU plan, the 1024 x 640 big dish and GPU timing test; why Jenson's clips look different (no limit, drawing, respawn).
 
 ## Looks
 
@@ -34,6 +34,7 @@ Keep this file under 150 lines; lint checks it.
 - [The RTS directions](rts/directions.md): build phase; on the field the habit cycle holds on 1 layout of 10 and salt overturns the opening; two demos.
 - [The field skirmish](rts/skirmish.md): v1 (habits, salt, lamp) set aside after play; v2, a tithe spent on beacons and spores: one plan (soft) wins 127/128, no cycle.
 - [How RTS games are designed](rts/rts-craft.md): outside research (22 sources) and what it says about our demos: dominant strategies and unmanaged snowballs, fix the structure first.
+- [Larder, the mould as the enemy](rts/shooter.md): shooter brainstorm; your hoard smells and draws the mould; a shot matters by holding a tube clear; no runs yet.
 - [Two Fevers](rts/two-fevers.md): playable in the browser; owned ground with a 15 s hold; plan beats random 16/16 but by 0.537; Hush is noise so far.
 
 ## Method and owner
