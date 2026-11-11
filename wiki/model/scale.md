@@ -2,8 +2,8 @@
 title: The mould at scale (outside models and the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-11T15:40Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md, Reports/creatures-2026-11-11.md]
+updated: 2026-11-11T16:00Z
+sources: [Reports/growth-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md, Reports/creatures-2026-11-11.md]
 code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost]
 ---
 
@@ -30,9 +30,10 @@ and the owner wants it for interesting play, not realism.
 5. Porting the dishes that survive a dense network.
 6. New play that only scale allows.
 
-Phase 4 (game rules on the GPU) now starts as Larder World's W0: births,
-upkeep and starving per walker, since the big dish's walker count is fixed
-([Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md),
+Phase 4 (game rules on the GPU) has begun with Larder World's W0: births,
+upkeep and starving per walker, built on the CPU and the GPU and matched
+to the bit in CI ([growth and starving](growth.md);
+[Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md),
 [Larder](../rts/shooter.md)).
 
 Today, diffusing trail and scent is 62% of the simulation's time and moving the walkers 24% (`Dish::step_cost`, printed by `mouldprobe`).
@@ -132,6 +133,10 @@ matches them on fifteen dishes (every walker, age and species; fields
 within 2.4e-8). `blocked_retry` is not ported. Compiled in but off they
 cost 18-24% on the software GPU, so the sandbox compiles them out when off
 ([report, *The outside rules as controls*](../../Reports/gpu-sandbox-2026-11-11.md)).
+On the GTX 1070 their presets take 1.0-1.8 ms of ticks a frame at 30,000
+walkers and 9.6-17.9 at a million (ribbons the dearest, from sensing).
+Growth and starving (GPU phase 4's first rule, Larder World W0) has [its
+own page](growth.md); it is a fifth panel page and keys Ctrl+3 and 4.
 
 Three facts bind the design:
 
@@ -194,6 +199,7 @@ polygons at once. Every outside source has a card in
 | GPU sandbox on the GTX 1070 after the fixes, GPU ms a frame of two ticks + drawing, headless, seed 1 | 32k 0.82 + 0.07; 100k 1.39 + 0.07; 100k no limit 0.91 + 0.06; 1M Jenson settings 7.85 + 0.29; with respawn 9.68 + 0.27; 4M 29.79 + 0.29; 4M ours 12.57 + 0.28; sense pass a tick 2.51 ms at 1M (Jenson) against 3.72 at 4M (ours) | seed 1 | | same |
 | GPU sandbox looks on the GTX 1070, GPU ms a frame of two ticks + drawing, headless, seed 1 | looks off: key 1 1.385-1.394 against main 1.378-1.382 (3 rounds), key 4 no change; key 1 + contagion 1.69 + 0.08 (trail pass 0.13 -> 0.22 a tick); key 1 + trail-set 1.45; + floor and wander 1.40; at 1M: trunk ring 5.81, contagion wave 9.79, sweeping ring 5.99, long curves 3.86, even polygons 7.58, endemic 9.69, sick ropes 9.45, drawing 0.26-0.29 | seed 1 | | [gpu sandbox, *The looks as controls*](../../Reports/gpu-sandbox-2026-11-11.md) |
 | GPU sandbox outside rules, one GPU tick against one CPU tick, software Vulkan, 15 dishes | every walker, age and species agree; grass exact; fields exact on 11, else trail L1 1.4e-8 to 2.4e-8, species L1 1.3e-13 to 1.8e-8; 16 planted bugs all fail it | one tick | | [gpu sandbox, *The outside rules as controls*](../../Reports/gpu-sandbox-2026-11-11.md) |
+| GPU sandbox outside rules' presets on the GTX 1070, GPU ms of ticks + drawing a frame of two ticks | 1M: territories 11.08 + 0.29, ribbons 17.91 + 0.30, explorer front 9.65 + 0.26 (key 4 7.85 + 0.29); 30k: droplets 1.02, beads 1.04, grazing droplets 1.19, grazing species 1.77 (+ 0.27-0.30); sensing 2.92-6.85 ms a tick at 1M | seed 1 | | [gpu sandbox, *The outside rules as controls*](../../Reports/gpu-sandbox-2026-11-11.md) |
 | GPU sandbox outside rules off, software Vulkan (not the 1070), GPU ms of ticks a frame, 3 rounds | compiled in: key 1 32.4-32.6 against main 26.1-26.8, key 4 88.2-90.3 against 74.4-76.3; compiled out when off: key 1 25.7-26.5 against 25.2-25.7, key 4 72.9-76.5 against 74.1-76.2 | seed 1 | | [gpu sandbox, *The outside rules as controls*](../../Reports/gpu-sandbox-2026-11-11.md) |
 | GPU clocks in the vsynced window, 100k, GTX 1070 | window median 1.80 + 0.08 ms with the clocks stepping 1594 to 797 MHz (memory 810 MHz) against headless 1.39 + 0.07 at 1936 MHz; 8 ticks a frame or 1M walkers hold 1936 MHz | seed 1 | | same |
 | Big dish cost, ms a tick, one thread / four | today 0.54 / 0.53; nose 32k 11.3 / 6.7; nose 100k 21.6 / 20.2; steps 43.1 / 25.8; turn 71.1 / 31.7 | seed 1 | | same |

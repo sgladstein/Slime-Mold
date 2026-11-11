@@ -22,7 +22,8 @@ Keep this file under 150 lines; lint checks it.
 
 - [Water and sleep](model/water-and-sleep.md): dry mould sleeps, water wakes it; Keep It Alive only.
 - [Sensor angle and reach](model/sensors.md): 45 obeys then freezes, 22.5 lives but ignores you; reach stays 9.
-- [The mould at scale](model/scale.md): the GPU plan, the 1024 x 640 big dish and GPU timing test; the GPU sandbox (phase 3, built) with species, droplets and grazing as controls; phase 4 starts as Larder World W0 (growth); why Jenson's clips look different (no limit, drawing, respawn); trunks from a dense start, contagion on the big dish, fronts still open.
+- [The mould at scale](model/scale.md): the GPU plan, the 1024 x 640 big dish and GPU timing test; the GPU sandbox (phase 3, built) with species, droplets and grazing as controls; phase 4 begun with Larder World W0 (growth, own page); why Jenson's clips look different (no limit, drawing, respawn); trunks from a dense start, contagion on the big dish, fronts still open.
+- [Growth and starving](model/growth.md): the big dish's walkers eat, divide and starve (off by default); size follows food; matches on the GPU; on crystals that run dry it eats only its roads.
 
 ## Looks
 

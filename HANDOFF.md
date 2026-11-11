@@ -63,8 +63,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   every Jenson-comparison option as a control (owner, 11-11 00:06Z), and
   the outside rules and creatures (species, explorers, droplets, grazing)
   as controls too, twin-tested in CI
-  ([report](Reports/gpu-sandbox-2026-11-11.md)). Phase 4 starts as Larder
-  World's W0: births, upkeep and starving per walker on the GPU.
+  ([report](Reports/gpu-sandbox-2026-11-11.md)). Phase 4 has begun with
+  Larder World's W0, [growth and starving](wiki/model/growth.md): each
+  walker eats, divides and starves, on the CPU and the GPU (matched in CI,
+  0.16 ms a frame on the 1070 at 100,000); a fed mould grows and a starved
+  one dies on 8 of 8 seeds, its size nearly linear in its food. In the
+  sandbox: a GROWTH page, Ctrl+3 and 4.
 - How it is judged: [the census](wiki/method/census.md).
 - [The field skirmish](wiki/rts/skirmish.md): version 1 (habits, salt, the
   lamp) is playable (https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw) and

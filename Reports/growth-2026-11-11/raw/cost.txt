@@ -1,0 +1,6 @@
+round 1 off: seed 1 off t  10.0s  tube 11326.0  loops   66  width 6.21  reach  165.4  piles 7/7  strays 0.011  ms/tick 27.67
+round 1 on: seed 1 on t  10.0s  tube 11326.0  loops   66  width 6.21  reach  165.4  piles 7/7  strays 0.011  ms/tick 26.80
+round 2 off: seed 1 off t  10.0s  tube 11326.0  loops   66  width 6.21  reach  165.4  piles 7/7  strays 0.011  ms/tick 27.30
+round 2 on: seed 1 on t  10.0s  tube 11326.0  loops   66  width 6.21  reach  165.4  piles 7/7  strays 0.011  ms/tick 27.88
+round 3 off: seed 1 off t  10.0s  tube 11326.0  loops   66  width 6.21  reach  165.4  piles 7/7  strays 0.011  ms/tick 27.65
+round 3 on: seed 1 on t  10.0s  tube 11326.0  loops   66  width 6.21  reach  165.4  piles 7/7  strays 0.011  ms/tick 28.35
