@@ -1,20 +1,21 @@
 #!/bin/sh
-# The outside rules presets (Shift+6 to Shift+0, presets 16-20) for the
-# sandbox page (2026-11-11). From the repo root: cargo build --release
+# The outside rules presets (Shift+6 to Shift+0, presets 16-20) and the
+# creatures report's (Ctrl+1 and Ctrl+2, presets 21-22) for the sandbox
+# page (2026-11-11). From the repo root: cargo build --release
 # --locked --bin mouldgpu, then this. As ../looks/run.sh: seed 1, a PNG
 # every 4 frames (15 a second) for the video, the measures, the cost of each
 # pass, and whether the same seed gives the same frame twice. Territories
-# run 20 s (the report's measure time), the explorer front 6 s (best at
-# about 2 s), the rest 10 s. On the cloud this runs on llvmpipe (a CPU
+# and the grazing species run 20 s (their reports' time), the explorer
+# front 6 s (best at about 2 s), the rest 10 s. On the cloud this runs on llvmpipe (a CPU
 # emulating a GPU), so its costs are not GPU numbers.
 set -e
 BIN=${BIN:-target/release/mouldgpu}
 F=${F:-/tmp/mouldgpu-frames}
 D=Reports/gpu-sandbox-2026-11-11/outside
 mkdir -p "$F" "$D/raw" "$D/video"
-for p in ${PRESETS:-16 17 18 19 20}; do
+for p in ${PRESETS:-16 17 18 19 20 21 22}; do
   case $p in
-    16) sec=20 ;;
+    16|22) sec=20 ;;
     18) sec=6 ;;
     *) sec=10 ;;
   esac
