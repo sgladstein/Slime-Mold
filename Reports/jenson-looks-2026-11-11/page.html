@@ -1,0 +1,171 @@
+<title>Jenson's Missing Looks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lightbox, single dark theme so the black dishes sit flush; each
+   picture carries its counts in mono beside it. Same identity as the
+   comparison page this follows. */
+:root {
+  --bg: #0c0e0d; --panel: #151917; --line: #2a302d;
+  --fg: #e9ece9; --muted: #9ba49f; --amber: #ffbe5a; --vein: #cfe3dc; --sick: #ff6b5e;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; }
+h2 { font-size: 24px; font-weight: 600; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header, section { display: grid; gap: 18px; }
+section > p, .note { color: var(--muted); }
+.verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.verdict { border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; background: var(--panel); display: grid; gap: 6px; align-content: start; }
+.verdict .who { font: 500 11px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.yes { color: var(--vein); } .part { color: var(--amber); } .no { color: var(--muted); } .red { color: var(--sick); }
+.verdict p { font-size: 14px; color: var(--muted); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+figure img, figure video { width: 100%; max-width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; min-width: 560px; width: 100%; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+code { font-family: var(--mono); font-size: 13px; color: var(--vein); }
+a { color: var(--amber); }
+a:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+</style>
+<div class="wrap">
+<header>
+  <span class="eyebrow">Big dish · 1,000,000 walkers · 1024 x 640 · 2026-11-11</span>
+  <h1>Jenson's missing looks</h1>
+  <p>The comparison page matched Jenson's thin veins, haze and polygons but not three things. Here is what new rules on the big dish did with each. Every rule is a <code>BigParams</code> field, off by default, so the GPU sandbox can offer it as a switch.</p>
+  <div class="verdicts">
+    <div class="verdict"><span class="who part">Trunks · partly</span><h3>A dense start leaves a lasting ring</h3><p>Brightest tube sits on the first ring at 20 s on 8 of 8 seeds (p 0.008). Slow respawn keeps it; faster respawn dissolves it.</p></div>
+    <div class="verdict"><span class="who red">Contagion · built</span><h3>A sickness runs along the tubes</h3><p>Crosses the dish in 2-4 s. Sick walkers can coarsen the mesh into ropes, but the mark fades by 20 s. A knife cut does not stop it.</p></div>
+    <div class="verdict"><span class="who no">Feathery fronts · not yet</span><h3>Seven mechanisms, no branching</h3><p>Any haze organises on its own with Jenson's rule. With a sensing floor it stays a haze, and the network swallows it.</p></div>
+  </div>
+</header>
+
+<section>
+  <span class="eyebrow">1 · Trunks</span>
+  <h2>A dense disc in a haze keeps its edge as a trunk</h2>
+  <p>70% of the walkers start in a disc 45 dish cells across the middle, 30% spread over the dish. The disc's edge becomes a thick bright ring and the rest becomes mesh. Walkers move faster in strong trail here (<code>step_mod</code>), which keeps the ring round.</p>
+  <div class="pair">
+    <figure><img src="pics/jenson-network-b.jpg" alt="Jenson's network_2: a bright elliptical ring inside a fine mesh">
+      <figcaption><strong>Jenson, network_2</strong><span>The first ring stays thick while a fine mesh grows around and inside it.</span></figcaption></figure>
+    <figure><video src="pics/big-gif-trunk-s1.mp4" poster="pics/trunk-disc-haze-2-5-10s.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Ours, 0 to 20 s at 3x</strong>
+      <dl class="stats"><dt>start</dt><dd>disc r 45 + 30% haze</dd><dt>respawn</dt><dd>0.001 a step</dd><dt>speed</dt><dd>1 + trail/50, up to 2</dd></dl></figcaption></figure>
+  </div>
+  <div class="pair">
+    <figure><img src="pics/trunk-paired-disc-20s.jpg" alt="Three dishes at 20 s from a dense disc start">
+      <figcaption><strong>Disc start, seeds 1, 3, 6 at 20 s</strong>
+      <dl class="stats"><dt>ring share</dt><dd>0.70 median (0.20-0.86)</dd><dt>loops</dt><dd>49.5 (40-52)</dd></dl>
+      <span>Ring share: the part of the brightest 1% of trail lying 35-55 dish cells from the centre. Seeds 3 and 6 are the two where the ring has merged into the mesh.</span></figcaption></figure>
+    <figure><img src="pics/trunk-paired-even-20s.jpg" alt="Three dishes at 20 s from an even start">
+      <figcaption><strong>Even start, same seeds and rules</strong>
+      <dl class="stats"><dt>ring share</dt><dd>0.15 median (0.09-0.31)</dd><dt>loops</dt><dd>52.5 (48-58)</dd></dl>
+      <span>Ring share higher from the disc on 8 of 8 seeds, p 0.008. Loops fewer on 7 of 8, p 0.07.</span></figcaption></figure>
+  </div>
+  <figure><img src="pics/trunk-respawn-sweep.jpg" alt="Four rows of four dishes, respawn rising down the rows">
+    <figcaption><strong>Respawn sets how long the trunk remembers</strong>
+    <span>Rows: respawn 0, 0.001, 0.003, 0.01 a step. Columns: 5, 10, 20, 30 s. Loops at 30 s: 14, 43, 95, 210. The ring lasts past 30 s in the first two rows, merges by 20 s in the third, and is gone by 5 s in the last. Seed 1, no speed rule.</span></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">2 · Settings set by the trail</span>
+  <h2>36 Points' rule gives four different dishes</h2>
+  <p>Each walker reads the trail where it stands, s = trail / 50 capped at 1, and one setting becomes base + amp x s. Same disc start and respawn 0.001; 5, 10 and 20 s.</p>
+  <figure><img src="pics/trail-settings-sweep.jpg" alt="Four rows of three dishes, one per trail-dependent rule">
+    <figcaption>
+    <dl class="stats">
+      <dt>row 1</dt><dd>square-root deposit, cap 100: the disc vanishes at once into even polygons, 71 loops at 20 s</dd>
+      <dt>row 2</dt><dd>sensors 30° narrower in strong trail: long sweeping curves, 25 loops</dd>
+      <dt>row 3</dt><dd>turn 20° less in strong trail: the ring expands and sweeps the whole dish, 50 loops</dd>
+      <dt>row 4</dt><dd>step doubles in strong trail: the ring stays round, finer mesh inside, 49 loops</dd>
+    </dl>
+    <span>Row 3 is a travelling front of its own: a visible wave that rewrites the mesh as it passes. One seed.</span></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">3 · Contagion</span>
+  <h2>A sickness that travels the network</h2>
+  <p>Sick walkers lay a germ field (red). A healthy walker standing in more than the catch level falls sick, stays sick for a while, then is immune. Here sick walkers also sense half as far and turn twice as hard, which makes ropes. Seeded at 4 s in a disc of radius 10.</p>
+  <div class="pair">
+    <figure><video src="pics/big-gif-sick-s1.mp4" autoplay muted loop playsinline></video>
+      <figcaption><strong>The wave, 0 to 14 s at 3x</strong>
+      <dl class="stats"><dt>sick</dt><dd>2 s, then immune 50 s</dd><dt>catch</dt><dd>germ 5</dd><dt>sick share</dt><dd>12% at 5 s, 43% at 6, 69% at 7, 0 at 10</dd><dt>ever sick</dt><dd>100% by 8.5 s</dd></dl></figcaption></figure>
+    <figure><img src="pics/sick-ropes-5-14s.jpg" alt="Six dishes, the red region coarsening as the wave spreads">
+      <figcaption><strong>Sick for 10 s: the mesh thickens behind the front</strong>
+      <span>5, 6, 7, 8, 10 and 14 s. Sick walkers lay three times the trail. The nearest we got to the explosion clip's bright ropes.</span></figcaption></figure>
+  </div>
+  <div class="pair">
+    <figure><img src="pics/rewire-sick-6-9-20s.jpg" alt="Three dishes at 6, 9 and 20 s after a sickness">
+      <figcaption><strong>After the wave, 6, 9 and 20 s</strong>
+      <dl class="stats"><dt>loops at 9 s</dt><dd>41-51</dd><dt>loops at 20 s</dt><dd>15-25</dd></dl></figcaption></figure>
+    <figure><img src="pics/rewire-control-6-9-20s.jpg" alt="Three dishes at 6, 9 and 20 s with no sickness">
+      <figcaption><strong>No sickness, same seeds</strong>
+      <dl class="stats"><dt>loops at 9 s</dt><dd>48-58</dd><dt>loops at 20 s</dt><dd>17-25</dd></dl>
+      <span>While the wave passes: fewer loops on 8 of 8 seeds, p 0.008. At 20 s: fewer on 5, more on 2, one tie, p 0.45. The dish coarsens as far on its own, so the wave leaves no lasting mark.</span></figcaption></figure>
+  </div>
+  <div class="pair">
+    <figure><img src="pics/sick-fast-wave-4-6-8s.jpg" alt="Three dishes, the red ring travelling outward">
+      <figcaption><strong>Low catch level (0.5): about 50 dish cells a second</strong><span>4, 6 and 8 s. Inside the ring the walkers are already immune.</span></figcaption></figure>
+    <figure><img src="pics/sick-endemic-5-12s.jpg" alt="Six dishes, all red after the first wave">
+      <figcaption><strong>Immune for only 1 s: it never ends</strong><span>After the first wave 30-36% of walkers are sick at any time, the cycle repeating every 1.5 s. No travelling waves or spirals.</span></figcaption></figure>
+  </div>
+  <p class="note">A knife cut does not stop it. Trail and germ cleared in a band 2 dish cells wide, 32 cells from the seed, as the wave starts: 2 s later the far side was as sick as without the cut (more on 4 of 8 seeds, fewer on 4, p 1). Walkers carry it across; a cut removes trail, not walkers.</p>
+</section>
+
+<section>
+  <span class="eyebrow">4 · Feathery fronts</span>
+  <h2>What did not branch</h2>
+  <p>Jenson's fronts branch into the haze and later close into loops. We tried seven ways to make a haze that the network grows into. The first problem: with Jenson's rule even 2% of the walkers organise into a mesh within 2 s, because the turn only compares sensors.</p>
+  <div class="pair">
+    <figure><img src="pics/fronts-thin-haze-2pct.jpg" alt="A ring with a faint mesh around it">
+      <figcaption><strong>Haze of 2% of the walkers, 2, 5, 10 s</strong><span>It organises on its own; nothing invades it.</span></figcaption></figure>
+    <figure><img src="pics/fronts-floor-sweep.jpg" alt="Five rows, sensing floor rising">
+      <figcaption><strong>Sensing floor 2, 3, 3.5, 4, 4.5</strong><span>At 3 worms appear everywhere at once. From 3.5 the haze stays a haze, and the ring eats the haze beside it, leaving a dark moat.</span></figcaption></figure>
+    <figure><img src="pics/fronts-sticky.jpg" alt="Four rows of a disc reorganising">
+      <figcaption><strong>Floor plus sticky capture and short sight</strong><span>The disc rebuilds itself inside; nothing grows out.</span></figcaption></figure>
+    <figure><img src="pics/fronts-short-reach-wide-spread.jpg" alt="Four rows of fat worms">
+      <figcaption><strong>Short reach, wide trail spread, floors 0-6.5</strong><span>Fat worms. At floor 6 worms grow in from the rim, the only front seen, smooth rather than feathery.</span></figcaption></figure>
+    <figure><img src="pics/fronts-leak.jpg" alt="Four rows of a single disc network">
+      <figcaption><strong>Walkers leaking out at random</strong><span>The leakers are pulled back; no glow builds.</span></figcaption></figure>
+    <figure><img src="pics/fronts-freeze.jpg" alt="A frozen white disc in a grey haze">
+      <figcaption><strong>Freezing in strong trail (aggregation)</strong><span>A frozen disc with a rough edge; too slow to grow in 8 s.</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Rules and cost</span>
+  <h2>The switches for the GPU sandbox</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Field</th><th>What it does</th><th>ms a tick, 1M walkers, one core</th></tr></thead>
+    <tbody>
+      <tr><td><code>blob_r</code>, <code>haze</code></td><td>Start: a centred disc of this radius, and the share spread over the dish</td><td class="n">start only</td></tr>
+      <tr><td><code>sense_scale</code>, <code>*_mod</code></td><td>Sensor reach, sensor angle, turn and step = base + amp x s^exp</td><td class="n">176.5 vs 132.7 (+33%)</td></tr>
+      <tr><td><code>deposit_cap</code></td><td>Each cell lays deposit x sqrt(min(walkers, cap))</td><td class="n">150.9 (+14%)</td></tr>
+      <tr><td><code>sense_floor</code></td><td>All sensors under it: random turn</td><td class="n">139.6 (+5%)</td></tr>
+      <tr><td><code>wander</code></td><td>Chance a look of a random heading</td><td class="n">142.5 (+7%)</td></tr>
+      <tr><td><code>sick_*</code>, <code>immune_steps</code></td><td>Contagion: catch level, sick and immune time, germ laid and kept, and how sick walkers move and deposit</td><td class="n">142.9 (+8%)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Report: <code>Reports/jenson-looks-2026-11-11.md</code>. Base for every run: no food, no crowd limit, sensor 45°, turn 22.5°, reach 18, deposit 0.5. Seeds paired; Bonferroni over three paired tests.</p>
+</section>
+</div>

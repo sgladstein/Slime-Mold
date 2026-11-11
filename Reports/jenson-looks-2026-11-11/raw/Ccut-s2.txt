@@ -1,0 +1,32 @@
+bigdish: preset Ccut-s2 seeds [2] seconds 7 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 1200, immune_steps: 2400, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 3.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 2: 1024 x 640, 1000000 walkers, 1 piles
+seed 2 Ccut-s2 t   0.5s  tube 17655.6  loops  262  width 5.68  reach  193.4  piles 1/1  strays 0.001  ms/tick 146.23
+seed 2 Ccut-s2 t   0.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Ccut-s2 t   1.0s  tube 14773.0  loops  196  width 5.19  reach  192.2  piles 1/1  strays 0.000  ms/tick 138.67
+seed 2 Ccut-s2 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Ccut-s2 t   1.5s  tube 13174.7  loops  157  width 4.88  reach  191.4  piles 1/1  strays 0.000  ms/tick 136.62
+seed 2 Ccut-s2 t   1.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Ccut-s2 t   2.0s  tube 12289.2  loops  141  width 4.74  reach  190.6  piles 1/1  strays 0.000  ms/tick 139.84
+seed 2 Ccut-s2 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Ccut-s2 t   2.5s  tube 11670.4  loops  127  width 4.70  reach  189.9  piles 1/1  strays 0.000  ms/tick 138.11
+seed 2 Ccut-s2 t   2.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Ccut-s2 t   3.0s  tube 11248.2  loops  118  width 4.75  reach  189.1  piles 1/1  strays 0.000  ms/tick 139.84
+seed 2 Ccut-s2 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Ccut-s2 t   3.5s  tube 10708.9  loops  110  width 4.64  reach  188.4  piles 1/1  strays 0.000  ms/tick 139.87
+seed 2 Ccut-s2 t   3.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Ccut-s2 t   4.0s  tube 10226.4  loops   95  width 4.54  reach  187.8  piles 1/1  strays 0.012  ms/tick 141.10
+seed 2 Ccut-s2 t   4.0s  sick 0.012  ever 0.012  front    9.2  far 0.000
+seed 2 Ccut-s2 t   4.5s  tube 10102.0  loops   94  width 4.78  reach  187.3  piles 1/1  strays 0.000  ms/tick 141.82
+seed 2 Ccut-s2 t   4.5s  sick 0.051  ever 0.051  front   23.1  far 0.000
+seed 2 Ccut-s2 t   5.0s  tube  9764.8  loops   86  width 4.79  reach  186.8  piles 1/1  strays 0.000  ms/tick 142.85
+seed 2 Ccut-s2 t   5.0s  sick 0.130  ever 0.130  front   36.2  far 0.006
+seed 2 Ccut-s2 t   5.5s  tube  9436.1  loops   77  width 4.82  reach  186.6  piles 1/1  strays 0.000  ms/tick 143.78
+seed 2 Ccut-s2 t   5.5s  sick 0.249  ever 0.249  front   48.7  far 0.077
+seed 2 Ccut-s2 t   6.0s  tube  9317.7  loops   72  width 4.91  reach  186.1  piles 1/1  strays 0.000  ms/tick 144.68
+seed 2 Ccut-s2 t   6.0s  sick 0.436  ever 0.436  front   63.3  far 0.225
+seed 2 Ccut-s2 t   6.5s  tube  9278.0  loops   69  width 5.06  reach  185.6  piles 1/1  strays 0.000  ms/tick 145.44
+seed 2 Ccut-s2 t   6.5s  sick 0.700  ever 0.700  front   72.7  far 0.501
+seed 2 Ccut-s2 t   7.0s  tube  9059.1  loops   62  width 5.18  reach  185.1  piles 1/1  strays 0.000  ms/tick 145.31
+seed 2 Ccut-s2 t   7.0s  sick 0.883  ever 0.883  front   83.6  far 0.770
+seed 2 Ccut-s2 hash=c898f13a0e540739

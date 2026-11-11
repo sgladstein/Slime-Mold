@@ -41,3 +41,4 @@ if the link ever stops working. Newest last.
 | 11-10 | Why Jenson's Mould Looks Different (Jenson's clips beside the big dish, tests, outside code) | https://claude.ai/artifact/HL7jZ4qGhr6f1HpUDmNEj2 | `jenson-compare-2026-11-10/` (page.html and `pics/`) |
 | 11-11 | Mould Sandbox on the GPU (every Jenson-comparison option as a control; eight presets as videos with counts; GTX 1070 costs) | https://claude.ai/artifact/1rdrxadVcNdxTmbxp2KJGy | `gpu-sandbox-2026-11-11/` (page.html, `video/` MP4s, posters and the panel screenshot, run.sh, `raw/`) |
 | 11-11 | Larder First Tests (fire, smell, lean against fat, with stills) | https://claude.ai/artifact/GnXVrCVuddegthHYoxFixA | `mould-shooter-2026-11-11/page/` (index.html and six stills; v2 adds the fixed-snip ring) |
+| 11-11 | Jenson's Missing Looks (trunks, contagion, fronts on the big dish) | https://claude.ai/artifact/DqJxgjQGVgnwQNwbbzoGrg | `jenson-looks-2026-11-11/` (page.html, `pics/` stills and MP4s) |

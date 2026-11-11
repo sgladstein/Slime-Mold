@@ -1,0 +1,44 @@
+bigdish: preset Rsick-s4 seeds [4] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 240, immune_steps: 6000, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 4: 1024 x 640, 1000000 walkers, 1 piles
+seed 4 Rsick-s4 t   1.0s  tube 15006.0  loops  202  width 5.24  reach  192.8  piles 1/1  strays 0.000  ms/tick 163.77
+seed 4 Rsick-s4 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rsick-s4 t   2.0s  tube 12601.0  loops  145  width 4.84  reach  190.8  piles 1/1  strays 0.000  ms/tick 160.40
+seed 4 Rsick-s4 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rsick-s4 t   3.0s  tube 11345.8  loops  119  width 4.77  reach  187.9  piles 1/1  strays 0.000  ms/tick 157.60
+seed 4 Rsick-s4 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rsick-s4 t   4.0s  tube 10348.8  loops   97  width 4.73  reach  186.3  piles 1/1  strays 0.000  ms/tick 155.24
+seed 4 Rsick-s4 t   4.0s  sick 0.009  ever 0.009  front    9.3  far 0.000
+seed 4 Rsick-s4 t   5.0s  tube  9501.2  loops   87  width 4.63  reach  184.7  piles 1/1  strays 0.000  ms/tick 155.14
+seed 4 Rsick-s4 t   5.0s  sick 0.134  ever 0.134  front   34.3  far 0.007
+seed 4 Rsick-s4 t   6.0s  tube  8546.1  loops   77  width 4.35  reach  181.7  piles 1/1  strays 0.000  ms/tick 154.99
+seed 4 Rsick-s4 t   6.0s  sick 0.450  ever 0.459  front   62.2  far 0.279
+seed 4 Rsick-s4 t   7.0s  tube  7690.8  loops   59  width 4.28  reach  181.0  piles 1/1  strays 0.000  ms/tick 154.36
+seed 4 Rsick-s4 t   7.0s  sick 0.718  ever 0.853  front   84.4  far 0.843
+seed 4 Rsick-s4 t   8.0s  tube  7371.2  loops   53  width 4.36  reach  180.0  piles 1/1  strays 0.000  ms/tick 153.46
+seed 4 Rsick-s4 t   8.0s  sick 0.537  ever 1.000  front   99.0  far 1.000
+seed 4 Rsick-s4 t   9.0s  tube  7212.8  loops   49  width 4.50  reach  178.8  piles 1/1  strays 0.000  ms/tick 153.19
+seed 4 Rsick-s4 t   9.0s  sick 0.146  ever 1.000  front   97.9  far 1.000
+seed 4 Rsick-s4 t  10.0s  tube  7023.6  loops   47  width 4.58  reach  177.9  piles 1/1  strays 0.000  ms/tick 151.86
+seed 4 Rsick-s4 t  10.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  11.0s  tube  6874.3  loops   46  width 4.68  reach  178.0  piles 1/1  strays 0.000  ms/tick 150.04
+seed 4 Rsick-s4 t  11.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  12.0s  tube  6576.5  loops   41  width 4.70  reach  177.8  piles 1/1  strays 0.000  ms/tick 149.12
+seed 4 Rsick-s4 t  12.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  13.0s  tube  6331.6  loops   40  width 4.71  reach  177.3  piles 1/1  strays 0.000  ms/tick 148.28
+seed 4 Rsick-s4 t  13.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  14.0s  tube  6060.8  loops   35  width 4.78  reach  177.3  piles 1/1  strays 0.000  ms/tick 146.64
+seed 4 Rsick-s4 t  14.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  15.0s  tube  5841.2  loops   35  width 4.71  reach  177.1  piles 1/1  strays 0.000  ms/tick 145.16
+seed 4 Rsick-s4 t  15.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  16.0s  tube  5679.2  loops   34  width 4.74  reach  177.1  piles 1/1  strays 0.000  ms/tick 144.54
+seed 4 Rsick-s4 t  16.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  17.0s  tube  5510.8  loops   31  width 4.81  reach  177.2  piles 1/1  strays 0.000  ms/tick 145.44
+seed 4 Rsick-s4 t  17.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  18.0s  tube  5245.0  loops   28  width 4.76  reach  177.4  piles 1/1  strays 0.000  ms/tick 146.55
+seed 4 Rsick-s4 t  18.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  19.0s  tube  5081.8  loops   26  width 4.72  reach  177.4  piles 1/1  strays 0.000  ms/tick 147.67
+seed 4 Rsick-s4 t  19.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 t  20.0s  tube  4953.2  loops   25  width 4.73  reach  177.5  piles 1/1  strays 0.000  ms/tick 148.58
+seed 4 Rsick-s4 t  20.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 4 Rsick-s4 hash=156bf785519b1fa1

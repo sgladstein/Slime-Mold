@@ -1,0 +1,32 @@
+bigdish: preset Ccut-s5 seeds [5] seconds 7 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 1200, immune_steps: 2400, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 3.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 5: 1024 x 640, 1000000 walkers, 1 piles
+seed 5 Ccut-s5 t   0.5s  tube 17262.1  loops  254  width 5.61  reach  194.2  piles 1/1  strays 0.001  ms/tick 152.90
+seed 5 Ccut-s5 t   0.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 5 Ccut-s5 t   1.0s  tube 14500.8  loops  189  width 5.04  reach  193.4  piles 1/1  strays 0.000  ms/tick 144.86
+seed 5 Ccut-s5 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 5 Ccut-s5 t   1.5s  tube 13232.9  loops  161  width 4.85  reach  192.4  piles 1/1  strays 0.000  ms/tick 148.82
+seed 5 Ccut-s5 t   1.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 5 Ccut-s5 t   2.0s  tube 12394.4  loops  136  width 4.78  reach  191.2  piles 1/1  strays 0.000  ms/tick 149.58
+seed 5 Ccut-s5 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 5 Ccut-s5 t   2.5s  tube 11847.2  loops  124  width 4.79  reach  190.6  piles 1/1  strays 0.000  ms/tick 149.99
+seed 5 Ccut-s5 t   2.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 5 Ccut-s5 t   3.0s  tube 11198.7  loops  110  width 4.76  reach  189.9  piles 1/1  strays 0.000  ms/tick 150.14
+seed 5 Ccut-s5 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 5 Ccut-s5 t   3.5s  tube 10667.8  loops  103  width 4.73  reach  189.1  piles 1/1  strays 0.000  ms/tick 149.77
+seed 5 Ccut-s5 t   3.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 5 Ccut-s5 t   4.0s  tube 10109.7  loops   85  width 4.65  reach  188.2  piles 1/1  strays 0.008  ms/tick 150.23
+seed 5 Ccut-s5 t   4.0s  sick 0.013  ever 0.013  front    9.4  far 0.000
+seed 5 Ccut-s5 t   4.5s  tube  9840.6  loops   89  width 4.73  reach  187.1  piles 1/1  strays 0.000  ms/tick 150.38
+seed 5 Ccut-s5 t   4.5s  sick 0.064  ever 0.064  front   22.0  far 0.000
+seed 5 Ccut-s5 t   5.0s  tube  9543.6  loops   82  width 4.78  reach  186.1  piles 1/1  strays 0.000  ms/tick 150.14
+seed 5 Ccut-s5 t   5.0s  sick 0.148  ever 0.148  front   34.5  far 0.000
+seed 5 Ccut-s5 t   5.5s  tube  9317.8  loops   77  width 4.81  reach  184.7  piles 1/1  strays 0.000  ms/tick 150.12
+seed 5 Ccut-s5 t   5.5s  sick 0.277  ever 0.277  front   46.2  far 0.049
+seed 5 Ccut-s5 t   6.0s  tube  9262.8  loops   74  width 4.94  reach  183.0  piles 1/1  strays 0.000  ms/tick 150.53
+seed 5 Ccut-s5 t   6.0s  sick 0.457  ever 0.457  front   58.7  far 0.155
+seed 5 Ccut-s5 t   6.5s  tube  9151.6  loops   68  width 5.14  reach  182.4  piles 1/1  strays 0.000  ms/tick 150.81
+seed 5 Ccut-s5 t   6.5s  sick 0.652  ever 0.652  front   69.1  far 0.366
+seed 5 Ccut-s5 t   7.0s  tube  8823.7  loops   61  width 5.25  reach  181.9  piles 1/1  strays 0.000  ms/tick 150.87
+seed 5 Ccut-s5 t   7.0s  sick 0.839  ever 0.839  front   80.7  far 0.672
+seed 5 Ccut-s5 hash=017899879d403b1c

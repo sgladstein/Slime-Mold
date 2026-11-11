@@ -1,0 +1,44 @@
+bigdish: preset Rctl-s2 seeds [2] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 240, immune_steps: 6000, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 2: 1024 x 640, 1000000 walkers, 1 piles
+seed 2 Rctl-s2 t   1.0s  tube 14773.0  loops  196  width 5.19  reach  192.2  piles 1/1  strays 0.000  ms/tick 160.79
+seed 2 Rctl-s2 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t   2.0s  tube 12289.2  loops  141  width 4.74  reach  190.6  piles 1/1  strays 0.000  ms/tick 154.96
+seed 2 Rctl-s2 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t   3.0s  tube 11248.2  loops  118  width 4.75  reach  189.1  piles 1/1  strays 0.000  ms/tick 153.40
+seed 2 Rctl-s2 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t   4.0s  tube 10331.8  loops  104  width 4.64  reach  187.8  piles 1/1  strays 0.000  ms/tick 153.41
+seed 2 Rctl-s2 t   4.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t   5.0s  tube  9627.9  loops   85  width 4.72  reach  186.8  piles 1/1  strays 0.000  ms/tick 151.62
+seed 2 Rctl-s2 t   5.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t   6.0s  tube  8961.8  loops   75  width 4.67  reach  186.1  piles 1/1  strays 0.000  ms/tick 151.14
+seed 2 Rctl-s2 t   6.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t   7.0s  tube  8371.4  loops   66  width 4.66  reach  185.1  piles 1/1  strays 0.000  ms/tick 150.23
+seed 2 Rctl-s2 t   7.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t   8.0s  tube  7911.0  loops   59  width 4.70  reach  184.0  piles 1/1  strays 0.000  ms/tick 149.40
+seed 2 Rctl-s2 t   8.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t   9.0s  tube  7532.4  loops   54  width 4.71  reach  182.4  piles 1/1  strays 0.000  ms/tick 148.14
+seed 2 Rctl-s2 t   9.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  10.0s  tube  7143.2  loops   49  width 4.74  reach  180.7  piles 1/1  strays 0.000  ms/tick 146.45
+seed 2 Rctl-s2 t  10.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  11.0s  tube  6727.9  loops   43  width 4.71  reach  179.0  piles 1/1  strays 0.000  ms/tick 145.51
+seed 2 Rctl-s2 t  11.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  12.0s  tube  6472.9  loops   41  width 4.75  reach  176.9  piles 1/1  strays 0.000  ms/tick 144.95
+seed 2 Rctl-s2 t  12.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  13.0s  tube  6038.1  loops   36  width 4.76  reach  174.5  piles 1/1  strays 0.000  ms/tick 144.72
+seed 2 Rctl-s2 t  13.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  14.0s  tube  5753.3  loops   33  width 4.79  reach  174.1  piles 1/1  strays 0.000  ms/tick 144.41
+seed 2 Rctl-s2 t  14.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  15.0s  tube  5498.3  loops   30  width 4.83  reach  172.1  piles 1/1  strays 0.000  ms/tick 144.17
+seed 2 Rctl-s2 t  15.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  16.0s  tube  5204.6  loops   28  width 4.80  reach  168.1  piles 1/1  strays 0.000  ms/tick 143.37
+seed 2 Rctl-s2 t  16.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  17.0s  tube  4933.5  loops   26  width 4.78  reach  167.3  piles 1/1  strays 0.000  ms/tick 142.78
+seed 2 Rctl-s2 t  17.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  18.0s  tube  4700.4  loops   23  width 4.91  reach  167.1  piles 1/1  strays 0.000  ms/tick 142.42
+seed 2 Rctl-s2 t  18.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  19.0s  tube  4384.4  loops   21  width 4.75  reach  166.4  piles 1/1  strays 0.000  ms/tick 142.07
+seed 2 Rctl-s2 t  19.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 t  20.0s  tube  4208.8  loops   18  width 4.74  reach  165.4  piles 1/1  strays 0.000  ms/tick 141.28
+seed 2 Rctl-s2 t  20.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 2 Rctl-s2 hash=fc9a5e1eb69fe481

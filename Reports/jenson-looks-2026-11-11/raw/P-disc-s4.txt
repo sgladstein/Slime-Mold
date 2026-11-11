@@ -1,0 +1,6 @@
+bigdish: preset P-disc-s4 seeds [4] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: true, respawn: 0.001, blob_r: 45.0, haze: 0.3, sense_scale: 0.02, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [1.0, 1.0], deposit_cap: 0, sense_floor: 0.0, wander: 0.0, sick_steps: 0, immune_steps: 0, sick_catch: 1.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 1.0, sick_turn: 1.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 4: 1024 x 640, 1000000 walkers, 1 piles
+seed 4 P-disc-s4 t  10.0s  tube 10596.9  loops   58  width 4.92  reach  190.4  piles 1/1  strays 0.010  ms/tick 163.47
+seed 4 P-disc-s4 t  20.0s  tube 10784.8  loops   46  width 5.05  reach  190.8  piles 1/1  strays 0.010  ms/tick 163.94
+seed 4 P-disc-s4 hash=e1bfb982dab235b6
