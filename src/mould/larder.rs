@@ -88,6 +88,48 @@ pub struct Rules {
     pub cap: f32,
     pub start_bank: f32,
     pub squad: usize,
+    // ------------------------------------------------ M2: spending
+    /// Food a new soldier costs, and the most there can be (owner, 03:38Z:
+    /// "start with 4 and can grow to 40").
+    pub soldier_cost: f32,
+    pub max_squad: usize,
+    /// A turret: a fixed gun on free fire, paid per shot from the bank like
+    /// a soldier's; the mould wears it down like a soldier. No smell.
+    pub turret_cost: f32,
+    pub turret_hp: f32,
+    pub turret_range: f32,
+    // ------------------------------------------- M2: the mould's answers
+    /// **Hoard smell**: the larder smells of the bank, `hoard` times a full
+    /// pile per 10,000 food banked. 0 is off.
+    pub hoard: f32,
+    /// **Hunger**: a mould that has eaten little in the last
+    /// `HUNGER_WINDOW` game seconds drains soldiers and smells them up to
+    /// `1 + hunger` times as hard. A fed mould is slow to anger; a starved
+    /// one hunts the squad. 0 is off.
+    pub hunger: f32,
+    /// **Drops**: a pile of `drop_food` lands every `drop_every` game
+    /// seconds at a random open spot, smelling `drop_warn` seconds before it
+    /// lands, and none after `drops_stop` (owner, 04:04Z: food stops late
+    /// in the round). `drop_every` 0 is off.
+    pub drop_every: f32,
+    pub drop_food: f32,
+    pub drop_warn: f32,
+    pub drops_stop: f32,
+}
+
+/// Game seconds over which the mould's eating is counted for `hunger`.
+pub const HUNGER_WINDOW: usize = 30;
+
+/// Food a walker eats in a game second when the mould is fed (`Game::hunger`).
+pub const FED_RATE: f32 = 0.04;
+
+/// A fixed gun the squad builds.
+#[derive(Clone, Copy, Debug)]
+pub struct Turret {
+    pub x: f32,
+    pub y: f32,
+    pub hp: f32,
+    ready: u64,
 }
 
 impl Default for Rules {
@@ -101,7 +143,7 @@ impl Default for Rules {
             price: 10.0,
             wound: 4.0,
             hp: 100.0,
-            drain: 2.0,
+            drain: 1.0,
             touch: 1.5,
             smell: 0.5,
             body: 400.0,
@@ -112,6 +154,17 @@ impl Default for Rules {
             cap: 900.0,
             start_bank: 2000.0,
             squad: 4,
+            soldier_cost: 400.0,
+            max_squad: 40,
+            turret_cost: 600.0,
+            turret_hp: 300.0,
+            turret_range: 12.0,
+            hoard: 1.0,
+            hunger: 1.0,
+            drop_every: 60.0,
+            drop_food: 1500.0,
+            drop_warn: 10.0,
+            drops_stop: 600.0,
         }
     }
 }
@@ -208,6 +261,16 @@ pub struct Game {
     /// Game second a soldier was first touched, if one was.
     pub first_touch: Option<f32>,
     pub end: Option<End>,
+    pub turrets: Vec<Turret>,
+    pub bought: u32,
+    pub baited: f32,
+    /// Food the mould ate in each of the last game seconds, newest last.
+    pub eaten: Vec<f32>,
+    /// 0 fed to 1 starving (`Rules::hunger`).
+    pub hunger: f32,
+    /// The next drop: when (step) and where.
+    pub next_drop: Option<(u64, (f32, f32))>,
+    food_then: f32,
     /// Own RNG, apart from the dish's, so a soldier rule never shifts the
     /// mould's dice (engineering review, finding 11).
     pub rng: Rng,
@@ -264,6 +327,13 @@ impl Game {
             end: None,
             rng: Rng::new(seed ^ 0x001a_2de2_501d),
             bins: vec![0; BW * BH],
+            turrets: Vec::new(),
+            bought: 0,
+            baited: 0.0,
+            eaten: Vec::new(),
+            hunger: 0.0,
+            next_drop: None,
+            food_then: 0.0,
         }
     }
 
@@ -391,15 +461,36 @@ impl Game {
                 if self.first_touch.is_none() {
                     self.first_touch = Some(self.time());
                 }
-                self.soldiers[k].hp -= self.rules.drain * n as f32 * per_step;
+                let anger = 1.0 + self.rules.hunger * self.hunger;
+                self.soldiers[k].hp -= self.rules.drain * anger * n as f32 * per_step;
                 if self.soldiers[k].hp <= 0.0 {
                     self.die(k);
                 }
             }
         }
+        self.turrets_turn();
         self.smell();
+        self.hoard_smell();
+        self.drops();
         self.check_core();
+        let food_before = self.pile_food();
         self.dish.step();
+        // What the mould ate this step: pile food that went, less what the
+        // squad took (counted where it takes it) and plus what landed.
+        self.food_then += (food_before - self.pile_food()).max(0.0);
+        if self.dish.t.is_multiple_of(GAME_SECOND) {
+            self.eaten.push(self.food_then);
+            self.food_then = 0.0;
+            if self.eaten.len() > HUNGER_WINDOW {
+                self.eaten.remove(0);
+            }
+            // Fed: eating `FED_RATE` food a walker a game second or more.
+            // At 0.1 a fully fed mould on the full field read 0.37 hungry
+            // (M2 first look, seeds 1-4, idle): it ate about 0.06.
+            let ate: f32 = self.eaten.iter().sum::<f32>() / self.eaten.len() as f32;
+            let need = FED_RATE * self.dish.walkers.len().max(1) as f32;
+            self.hunger = (1.0 - ate / need).clamp(0.0, 1.0);
+        }
         self.check_end();
     }
 
@@ -425,7 +516,7 @@ impl Game {
     }
 
     fn smell(&mut self) {
-        let strength = self.dish.params.food_deposit * self.rules.smell;
+        let strength = self.dish.params.food_deposit * self.rules.smell * (1.0 + self.rules.hunger * self.hunger);
         if strength <= 0.0 {
             return;
         }
@@ -512,6 +603,187 @@ impl Game {
             self.step();
         }
         self.end.expect("ended")
+    }
+
+    fn pile_food(&self) -> f32 {
+        self.dish.piles.iter().map(|p| p.food).sum()
+    }
+
+    /// Buy a soldier at the larder. True if bought.
+    pub fn buy(&mut self) -> bool {
+        if self.bank < self.rules.soldier_cost || self.alive() >= self.rules.max_squad {
+            return false;
+        }
+        self.bank -= self.rules.soldier_cost;
+        self.spent += self.rules.soldier_cost;
+        self.bought += 1;
+        let a = self.rng.f32() * std::f32::consts::TAU;
+        self.soldiers.push(Soldier {
+            x: self.larder.0 + 3.0 * a.cos(),
+            y: self.larder.1 + 3.0 * a.sin(),
+            hp: self.rules.hp,
+            order: Order::Hold,
+            stance: Stance::Defend,
+            carry: 0.0,
+            homing: false,
+            alive: true,
+            ready: 0,
+            beat: 0,
+        });
+        true
+    }
+
+    /// Within range of a live soldier: where the squad can build or bait.
+    pub fn reachable(&self, at: (f32, f32)) -> bool {
+        self.soldiers
+            .iter()
+            .any(|s| s.alive && (s.x - at.0).hypot(s.y - at.1) <= self.rules.range)
+    }
+
+    /// **Bait**: spend `food` from the bank to lay a pile of it at `at`,
+    /// within range of a soldier, on open agar. The mould smells it like
+    /// any pile (the design review's verb for the Baiter plan).
+    pub fn bait(&mut self, at: (f32, f32), food: f32) -> bool {
+        if food <= 0.0 || self.bank < food || !self.reachable(at) || !self.open(at) {
+            return false;
+        }
+        self.bank -= food;
+        self.spent += food;
+        self.baited += food;
+        self.dish.piles.push(Pile {
+            x: at.0,
+            y: at.1,
+            r: 2.5,
+            food,
+            full: food,
+            oats: false,
+            expires: u64::MAX,
+            eaters: 0,
+            foe_eaters: 0,
+            held: 0,
+        });
+        true
+    }
+
+    fn open(&self, at: (f32, f32)) -> bool {
+        at.0 >= 1.0
+            && at.1 >= 1.0
+            && (at.0 as usize) < W - 1
+            && (at.1 as usize) < H - 1
+            && self.dish.ground[at.1 as usize * W + at.0 as usize] == Ground::Agar
+            && self.dish.piles.iter().all(|p| (p.x - at.0).hypot(p.y - at.1) > p.r + 3.0)
+    }
+
+    /// **A turret** at `at`, within range of a soldier. True if built.
+    pub fn build_turret(&mut self, at: (f32, f32)) -> bool {
+        if self.bank < self.rules.turret_cost || !self.reachable(at) || !self.open(at) {
+            return false;
+        }
+        self.bank -= self.rules.turret_cost;
+        self.spent += self.rules.turret_cost;
+        self.turrets.push(Turret {
+            x: at.0,
+            y: at.1,
+            hp: self.rules.turret_hp,
+            ready: 0,
+        });
+        true
+    }
+
+    fn turrets_turn(&mut self) {
+        let t = self.dish.t;
+        let per_step = 1.0 / GAME_SECOND as f32;
+        let mut k = 0;
+        while k < self.turrets.len() {
+            let tu = self.turrets[k];
+            if tu.ready <= t && self.bank >= self.rules.price {
+                if let Some(at) = self.densest((tu.x, tu.y), self.rules.turret_range) {
+                    let (dx, dy) = (at.0 - tu.x, at.1 - tu.y);
+                    let d = dx.hypot(dy).max(0.1);
+                    let (ux, uy) = (-dy / d, dx / d);
+                    let h = self.rules.line / 2.0;
+                    self.fire_line((at.0 - ux * h, at.1 - uy * h), (at.0 + ux * h, at.1 + uy * h));
+                    self.turrets[k].ready = t + secs(self.rules.shot_every);
+                }
+            }
+            let n = self.walkers_near((tu.x, tu.y), self.rules.touch + 1.0);
+            self.turrets[k].hp -= self.rules.drain * n as f32 * per_step;
+            if self.turrets[k].hp <= 0.0 {
+                self.turrets.swap_remove(k);
+            } else {
+                k += 1;
+            }
+        }
+    }
+
+    /// The larder smells of the bank (`Rules::hoard`).
+    fn hoard_smell(&mut self) {
+        if self.rules.hoard <= 0.0 || self.bank <= 0.0 {
+            return;
+        }
+        let strength = self.dish.params.food_deposit * self.rules.hoard * self.bank / 10_000.0;
+        let r = 4.0;
+        for (ox, oy) in disc(r) {
+            let (x, y) = (self.larder.0 + ox, self.larder.1 + oy);
+            if x < 0.0 || y < 0.0 || x as usize >= W || y as usize >= H {
+                continue;
+            }
+            let i = y as usize * W + x as usize;
+            if self.dish.ground[i] == Ground::Agar {
+                self.dish.scent[i] += strength;
+            }
+        }
+    }
+
+    /// Timed drops (`Rules::drop_every`): the next one is chosen a drop's
+    /// interval ahead, smells from `drop_warn` before, and lands.
+    fn drops(&mut self) {
+        let r = self.rules;
+        if r.drop_every <= 0.0 {
+            return;
+        }
+        let t = self.dish.t;
+        if self.next_drop.is_none() {
+            let when = t + secs(r.drop_every);
+            if when > secs(r.drops_stop) {
+                return;
+            }
+            let at = loop {
+                let at = (self.rng.f32() * W as f32, self.rng.f32() * H as f32);
+                if self.open(at) {
+                    break at;
+                }
+            };
+            self.next_drop = Some((when, at));
+        }
+        let (when, at) = self.next_drop.expect("set");
+        if t + secs(r.drop_warn) >= when {
+            let strength = self.dish.params.food_deposit;
+            for (ox, oy) in disc(2.5) {
+                let (x, y) = (at.0 + ox, at.1 + oy);
+                if x >= 0.0 && y >= 0.0 && (x as usize) < W && (y as usize) < H {
+                    let i = y as usize * W + x as usize;
+                    if self.dish.ground[i] == Ground::Agar {
+                        self.dish.scent[i] += strength;
+                    }
+                }
+            }
+        }
+        if t >= when {
+            self.dish.piles.push(Pile {
+                x: at.0,
+                y: at.1,
+                r: 2.5,
+                food: r.drop_food,
+                full: r.drop_food,
+                oats: false,
+                expires: u64::MAX,
+                eaters: 0,
+                foe_eaters: 0,
+                held: 0,
+            });
+            self.next_drop = None;
+        }
     }
 
     // ------------------------------------------------------- the soldier
@@ -698,6 +970,74 @@ mod tests {
         assert!(win_late > stalemate && stalemate > lose_late);
         assert!(End::MouldWiped(100.0).score(4, cap) > End::MouldWiped(200.0).score(4, cap));
         assert!(End::SquadWiped(200.0).score(0, cap) > End::SquadWiped(100.0).score(0, cap));
+    }
+
+    /// Open agar within `r` of soldier 0, away from piles.
+    fn open_near(g: &Game, r: f32) -> (f32, f32) {
+        let s = g.soldiers[0];
+        (0..64)
+            .flat_map(|k| {
+                let a = k as f32 / 64.0 * std::f32::consts::TAU;
+                (1..=r as usize).map(move |d| (s.x + d as f32 * a.cos(), s.y + d as f32 * a.sin()))
+            })
+            .find(|&at| g.open(at))
+            .expect("open agar near the squad")
+    }
+
+    #[test]
+    fn buying_costs_food_and_stops_at_the_cap() {
+        let mut g = game(1);
+        g.bank = 1e9;
+        let start = g.alive();
+        assert!(g.buy());
+        assert_eq!(g.alive(), start + 1);
+        assert_eq!(g.bank, 1e9 - g.rules.soldier_cost);
+        while g.buy() {}
+        assert_eq!(g.alive(), g.rules.max_squad);
+        g.bank = g.rules.soldier_cost - 1.0;
+        g.rules.max_squad += 1;
+        assert!(!g.buy(), "broke");
+    }
+
+    #[test]
+    fn bait_is_a_pile_laid_in_range() {
+        let mut g = game(1);
+        let piles = g.dish.piles.len();
+        let s = g.soldiers[0];
+        assert!(!g.bait((s.x + 60.0, s.y), 300.0), "out of every soldier's range");
+        let at = open_near(&g, g.rules.range);
+        assert!(g.bait(at, 300.0));
+        assert_eq!(g.dish.piles.len(), piles + 1);
+        assert_eq!(g.dish.piles[piles].food, 300.0);
+        assert_eq!(g.bank, g.rules.start_bank - 300.0);
+        g.bank = 100.0;
+        let at2 = open_near(&g, g.rules.range);
+        assert!(!g.bait(at2, 300.0), "broke");
+    }
+
+    #[test]
+    fn a_turret_fires_from_the_bank_and_the_mould_eats_it() {
+        let mut g = game(2);
+        g.soldiers.iter_mut().for_each(|s| s.stance = Stance::HoldFire);
+        let w = g.dish.walkers[0];
+        // Stand soldier 0 on the mould's first cell; build next to it.
+        g.soldiers[0].x = w.x + 4.0;
+        g.soldiers[0].y = w.y;
+        g.bank = 1e6;
+        let at = open_near(&g, 4.0);
+        assert!(g.build_turret(at));
+        assert_eq!(g.turrets.len(), 1);
+        let mut gone = false;
+        for _ in 0..secs(600.0) {
+            g.soldiers[0].hp = g.rules.hp;
+            g.step();
+            if g.turrets.is_empty() {
+                gone = true;
+                break;
+            }
+        }
+        assert!(g.bank < 1e6 - g.rules.turret_cost, "its shots were paid for");
+        assert!(gone, "a turret in the mould is eaten");
     }
 
     #[test]

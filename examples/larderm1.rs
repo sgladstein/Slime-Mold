@@ -532,8 +532,13 @@ fn cost() {
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let seeds = seeds(arg(&args, "seeds"));
+    // M1 as it was measured: none of M2's answers (hoard smell, hunger,
+    // drops), so this census reruns to the same numbers.
     let rules = Rules {
         squad: arg(&args, "squad").map(|v| v.parse().unwrap()).unwrap_or(4),
+        hoard: 0.0,
+        hunger: 0.0,
+        drop_every: 0.0,
         ..Rules::default()
     };
     let t0 = std::time::Instant::now();
