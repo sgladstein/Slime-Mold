@@ -1,0 +1,32 @@
+seed 1 chance-A t  10.0s  tube 11572.8  loops   73  width 6.01  reach  195.6  piles 1/1  strays 0.000  ms/tick 203.40
+seed 1 chance-A t  10.0s  contrast 5.48
+seed 1 chance-B t  10.0s  tube  9640.9  loops   42  width 5.69  reach  194.8  piles 1/1  strays 0.000  ms/tick 171.01
+seed 1 chance-B t  10.0s  contrast 9.57
+seed 2 chance-A t  10.0s  tube 11288.3  loops   65  width 6.06  reach  191.8  piles 1/1  strays 0.000  ms/tick 204.21
+seed 2 chance-A t  10.0s  contrast 5.25
+seed 2 chance-B t  10.0s  tube 10125.6  loops   48  width 5.83  reach  191.0  piles 1/1  strays 0.000  ms/tick 172.97
+seed 2 chance-B t  10.0s  contrast 8.51
+seed 3 chance-A t  10.0s  tube 11354.7  loops   67  width 6.04  reach  190.2  piles 1/1  strays 0.000  ms/tick 203.56
+seed 3 chance-A t  10.0s  contrast 5.93
+seed 3 chance-B t  10.0s  tube  9405.4  loops   38  width 5.83  reach  185.3  piles 1/1  strays 0.000  ms/tick 181.79
+seed 3 chance-B t  10.0s  contrast 8.27
+seed 4 chance-A t  10.0s  tube 10838.2  loops   61  width 6.07  reach  194.4  piles 1/1  strays 0.000  ms/tick 205.97
+seed 4 chance-A t  10.0s  contrast 5.62
+seed 4 chance-B t  10.0s  tube  9836.5  loops   47  width 5.90  reach  190.3  piles 1/1  strays 0.000  ms/tick 179.41
+seed 4 chance-B t  10.0s  contrast 8.73
+seed 5 chance-A t  10.0s  tube 11675.3  loops   69  width 6.12  reach  191.3  piles 1/1  strays 0.000  ms/tick 206.69
+seed 5 chance-A t  10.0s  contrast 5.44
+seed 5 chance-B t  10.0s  tube 10260.9  loops   52  width 5.77  reach  192.0  piles 1/1  strays 0.000  ms/tick 181.48
+seed 5 chance-B t  10.0s  contrast 8.34
+seed 6 chance-A t  10.0s  tube 10848.4  loops   60  width 6.14  reach  191.9  piles 1/1  strays 0.000  ms/tick 209.08
+seed 6 chance-A t  10.0s  contrast 5.75
+seed 6 chance-B t  10.0s  tube  9650.2  loops   43  width 5.92  reach  192.5  piles 1/1  strays 0.000  ms/tick 184.04
+seed 6 chance-B t  10.0s  contrast 8.29
+seed 7 chance-A t  10.0s  tube 11590.4  loops   71  width 6.03  reach  192.9  piles 1/1  strays 0.000  ms/tick 200.63
+seed 7 chance-A t  10.0s  contrast 5.54
+seed 7 chance-B t  10.0s  tube  9556.3  loops   38  width 5.73  reach  194.6  piles 1/1  strays 0.000  ms/tick 178.33
+seed 7 chance-B t  10.0s  contrast 9.12
+seed 8 chance-A t  10.0s  tube 11235.4  loops   66  width 6.16  reach  193.9  piles 1/1  strays 0.000  ms/tick 201.82
+seed 8 chance-A t  10.0s  contrast 5.42
+seed 8 chance-B t  10.0s  tube  9822.4  loops   44  width 5.89  reach  196.2  piles 1/1  strays 0.000  ms/tick 176.08
+seed 8 chance-B t  10.0s  contrast 7.65

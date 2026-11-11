@@ -1,0 +1,164 @@
+<title>Mould Creature Rules</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lightbox, single dark theme so the black dishes sit flush; each
+   picture carries its counts in mono beside it. Same identity as the
+   Jenson pages this follows. */
+:root {
+  --bg: #0c0e0d; --panel: #151917; --line: #2a302d;
+  --fg: #e9ece9; --muted: #9ba49f; --amber: #ffbe5a; --teal: #5fd0d0; --vein: #cfe3dc; --red: #ff6b5e;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; }
+h2 { font-size: 24px; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header, section { display: grid; gap: 18px; }
+section > p, .note { color: var(--muted); }
+.verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.verdict { border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; background: var(--panel); display: grid; gap: 6px; align-content: start; }
+.verdict .who { font: 500 11px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.yes { color: var(--vein); } .part { color: var(--amber); } .no { color: var(--muted); } .red { color: var(--red); }
+.verdict p { font-size: 14px; color: var(--muted); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+figure img, figure video { width: 100%; max-width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; min-width: 640px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 12px/1.3 var(--mono); color: var(--muted); letter-spacing: 0.04em; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+code { font-family: var(--mono); font-size: 0.9em; color: var(--amber); }
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Big dish · 1024 × 640 · 11 Nov 2026</span>
+  <h1>Which outside rules make a creature?</h1>
+  <p>Rules from Lague, MCPM, Primordia, Jones and Adamatzky, and Reginato 2024, built on the CPU big dish as sandbox options, all off by default. As you asked at 04:11, each is judged by whether it makes a creature for play, not a new pattern. Paired tests use 8 seeds; a result of 8 of 8 is p 0.008 and survives a correction for the 5 tests.</p>
+  <div class="verdicts">
+    <div class="verdict"><span class="who yes">Creature · rival species</span><p>Two species hold two territories with a clean border. Avoiding the other species cleans the border (8 of 8); following your own trail is what keeps you home.</p></div>
+    <div class="verdict"><span class="who yes">Creature · growing front</span><p>Explorers that turn into tube builders one by one grow radial, feathery veins from a disc. This is the first rule here that draws something like Jenson's fronts.</p></div>
+    <div class="verdict"><span class="who part">Creature · droplets and beads</span><p>Packed walkers that lay trail where they stand pull together into about 180 small round bodies, or a network with a blob at each junction. They don't move yet.</p></div>
+    <div class="verdict"><span class="who part">Moving · cyclic species</span><p>Three species chasing each other braid into ribbons that keep flowing. They mix rather than separate.</p></div>
+    <div class="verdict"><span class="who no">Texture only</span><p>The chance turn gives more loops (8 of 8), area sensors give fewer (8 of 8) at 1.5× the cost, and size spread gives trunks with capillaries on one seed (its measure failed, 6 of 8 the wrong way). They go in the sandbox and get no more tests.</p></div>
+    <div class="verdict"><span class="who red">Did not work</span><p>Jones and Adamatzky's crawling blob: on our dish the walkers spread out in 2 s instead of crawling.</p></div>
+  </div>
+</header>
+
+<section>
+  <span class="eyebrow">1 · Rival species</span>
+  <h2>Two bodies, two territories, one border</h2>
+  <p>Each species lays and smells its own trail field. It reads its own trail × (1 + a), minus all trail × a; a is <code>species_avoid</code>. With <code>species_zones</code> each species starts in its own band of the dish. 1,000,000 walkers.</p>
+  <div class="pair">
+    <figure><video src="pics/territory.mp4" poster="pics/terr-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Two species from their own halves, 0 to 13 s</strong>
+      <dl class="stats"><dt>held by one species</dt><dd>0.994-1.000 of tube cells (avoid 1)</dd><dt>without avoiding</dt><dd>0.966-0.983, cleaner with avoid on 8 of 8</dd><dt>changing hands in 2 s</dt><dd>0.000-0.005 against 0.007-0.028</dd><dt>species 0 at home</dt><dd>0.89-1.00 either way (5 of 8, p 0.73)</dd></dl></figcaption></figure>
+    <figure><img src="pics/species-zones.jpg" alt="Three dishes at 2, 5 and 10 s, amber on the left and teal on the right, each a mesh with a straight border between">
+      <figcaption><strong>Zones at 2, 5 and 10 s</strong><span>The border holds without avoidance too: a walker that follows its own trail stays home. Avoidance makes the line clean.</span></figcaption></figure>
+  </div>
+  <div class="pair">
+    <figure><img src="pics/species-2-b.jpg" alt="Three dishes of an interleaved amber and teal labyrinth">
+      <figcaption><strong>Two species started mixed, 2, 5, 10 s</strong><span>An interleaved labyrinth: 97% of tube cells belong to one species.</span></figcaption></figure>
+    <figure><img src="pics/species-3.jpg" alt="Three dishes of three-coloured braided worms">
+      <figcaption><strong>Three species started mixed</strong><span>Braided worms. Four species (not shown) braid finer.</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">2 · Cyclic species</span>
+  <h2>Rock, paper, scissors keeps the dish moving</h2>
+  <p>Primordia's preset: a walker reads its own trail +1, the next species +0.6 and the previous −1 (<code>species_cycle</code>). Sensors 20° and 32 cells out, turn 20°, step 2.</p>
+  <div class="pair">
+    <figure><video src="pics/cyclic.mp4" poster="pics/cycle-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Three cyclic species, 0 to 11 s</strong>
+      <dl class="stats"><dt>loops at 10 s</dt><dd>104 (97-125) against 36.5 (22-63) without cycling</dd><dt>held by one species</dt><dd>0.46-0.52 against 0.83-0.89</dd><dt>lead changes in 2 s</dt><dd>0.65-0.70 against 0.75-0.85 (lower 8 of 8)</dd><dt>cost</dt><dd>about +14%</dd></dl>
+      <span>The measure named beforehand went the wrong way. Plain avoidance makes thin single-species tubes whose lead flickers at every crossing. Cycling shares the tubes and keeps them flowing.</span></figcaption></figure>
+    <figure><img src="pics/cyclic-still.jpg" alt="Three dishes of flowing multicoloured ribbons">
+      <figcaption><strong>Cyclic at 2, 5 and 10 s</strong></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">3 · Explorers</span>
+  <h2>A disc that reaches out before it settles</h2>
+  <p>From Reginato 2024: a walker younger than <code>explore_steps</code> steers toward the lowest trail and lays 5% of the deposit, then becomes an ordinary walker. With <code>explore_spread</code> each walker's explorer stage lasts 0 to 2 times that, so walkers switch one by one. 1,000,000 walkers from a disc of radius 20. Seed 1.</p>
+  <div class="pair">
+    <figure><video src="pics/explorers-spread.mp4" poster="pics/explorers-spread.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Spread 1, 0 to 6 s</strong><span>The walkers that switch early build veins behind the ones still pushing out, so the disc grows radial branching veins with a feathery edge. It closes into a mesh by 4 s.</span></figcaption></figure>
+    <figure><video src="pics/explorers-at-once.mp4" poster="pics/explorers-at-once.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>All switching together, 0 to 12 s</strong><span>A fan-textured disc expands, then turns into a mesh everywhere at once at 5 s.</span></figcaption></figure>
+  </div>
+  <figure><img src="pics/explorers-spread.jpg" alt="Five dishes: radial branching veins at 2 s, then a mesh by 4 s that coarsens">
+    <figcaption><strong>Spread 1 at 2, 4, 6, 8 and 12 s</strong></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">4 · Droplets and beads</span>
+  <h2>Packed walkers become countable bodies</h2>
+  <p>One walker a cell, sensors 90° apart, turn 45°, deposit 5, trail keep 0.93, 30,000 walkers. Normally only a walker that moves lays trail. With <code>blocked_deposit</code> 1, a walker that can't move lays its deposit where it stands, so a crowd smells of itself and holds together. Seed 1, walker counts shown.</p>
+  <div class="pair">
+    <figure><video src="pics/droplets.mp4" poster="pics/drop-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Droplets, sensors 9 cells out, 0 to 10 s</strong>
+      <dl class="stats"><dt>bodies</dt><dd>185 at 7 s, 177 at 9 s</dd><dt>size</dt><dd>about 200 cells each</dd><dt>drift</dt><dd>0.6-0.7 cells a second (still)</dd></dl></figcaption></figure>
+    <figure><video src="pics/beads.mp4" poster="pics/beads-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Beads on strings, sensors 27 cells out, 0 to 20 s</strong>
+      <dl class="stats"><dt>loops</dt><dd>19 at 5 s, 9 at 10 s, 8 at 20 s</dd></dl>
+      <span>A network with a blob at each junction that coarsens over time.</span></figcaption></figure>
+  </div>
+  <div class="pair">
+    <figure><img src="pics/droplets-zoom.jpg" alt="Three close-ups of round droplets, the streaks between them fading over time">
+      <figcaption><strong>Droplets close up at 3, 6.5 and 10 s</strong></figcaption></figure>
+    <figure><video src="pics/droplets-food.mp4" poster="pics/droplets-food.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>With four food piles, 0 to 20 s</strong><span>The piles grow big blobs, but the droplets don't crawl to them. Making a droplet move is the open question.</span></figcaption></figure>
+  </div>
+  <figure><img src="pics/amoeboid-fail.jpg" alt="Left: trail broken into specks. Right: walkers spread over the dish as a labyrinth">
+    <figcaption><strong>Without it: Jones and Adamatzky's rules alone, 100,000 walkers</strong><span>Blocked walkers keep their heading (<code>blocked_keep</code>), with retry rounds into cells emptied that step (<code>blocked_retry</code>). The walkers spread over the dish within 2 s (right, counts at 3 s) and the trail breaks into specks (left, 10 s): 92-94% of walkers end up off any tube. A jammed core lays no trail, so the moving edge draws the crowd out.</span></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">5 · Texture knobs</span>
+  <h2>Three rules that change the mesh, not the creature</h2>
+  <p>On the plain Jones dish (1,000,000 walkers, sensors 45° and 18 cells out, turn 22.5°), each row at 2, 5 and 10 s. These are in the sandbox and get no more tests: what they do is already well known from their sources.</p>
+  <figure><img src="pics/jones-base.jpg" alt="Three dishes of the plain Jones mesh">
+    <figcaption><strong>Jones's turn, for comparison</strong><dl class="stats"><dt>loops at 10 s</dt><dd>44 median (38-52) over 8 seeds</dd></dl></figcaption></figure>
+  <figure><img src="pics/chance-e4.jpg" alt="Three dishes of a finer, more even mesh">
+    <figcaption><strong>Chance-weighted turn, MCPM, <code>chance_exp</code> 4</strong><dl class="stats"><dt>loops at 10 s</dt><dd>66.5 (60-73), more on 8 of 8, p 0.008</dd><dt>contrast</dt><dd>5.3-5.9 against 7.7-9.6</dd><dt>cost</dt><dd>about +15%</dd></dl></figcaption></figure>
+  <figure><img src="pics/area-r1.jpg" alt="Three dishes of a coarser mesh">
+    <figcaption><strong>Area sensors, Lague, <code>sensor_r</code> 1 (3 × 3)</strong><dl class="stats"><dt>loops at 10 s</dt><dd>38 (32-46), fewer on 8 of 8, p 0.008</dd><dt>cost</dt><dd>+50% (290 against 190 ms a tick)</dd></dl><span>A wider sensor offset coarsens for free.</span></figcaption></figure>
+  <figure><img src="pics/size-spread.jpg" alt="Three dishes: thick trunks with fine radial capillaries">
+    <figcaption><strong>Size spread, Primordia, <code>size_spread</code> 0.6</strong><span>Each walker's reach and step are scaled by 2^(0.6 × u), u fixed per walker. Thick trunks with fine side capillaries on this seed, but the measure named beforehand did not confirm brighter trunks. Respawn 0.002, turn 45°, sensors 12 out, step 1.2, keep 0.97.</span><dl class="stats"><dt>contrast at 10 s</dt><dd id="size-result">123.6 (107-151) against 134.5 (124-157), lower on 6 of 8, p 0.29</dd></dl></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">6 · The paired tests</span>
+  <h2>Measures named before each run</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Test</th><th>Deciding measure</th><th>With</th><th>Without</th><th>Paired</th><th>p</th></tr></thead>
+    <tbody>
+      <tr><td>Chance turn, e 4</td><td>loops at 10 s</td><td class="num">66.5</td><td class="num">44</td><td>more 8/8</td><td class="num">0.008</td></tr>
+      <tr><td>Area sensors, r 1</td><td>loops at 10 s</td><td class="num">38</td><td class="num">43.5</td><td>fewer 8/8</td><td class="num">0.008</td></tr>
+      <tr><td>Two species in halves, avoid 1 v 0</td><td>species 0's trail in its half, 20 s</td><td class="num">0.99</td><td class="num">0.98</td><td>more 5/8</td><td class="num">0.73</td></tr>
+      <tr><td>Cyclic v plain, 3 species</td><td>tube cells changing lead in 2 s</td><td class="num">0.68</td><td class="num">0.80</td><td>lower 8/8, wrong way</td><td class="num">0.008</td></tr>
+      <tr><td>Size spread 0.6</td><td>contrast at 10 s</td><td class="num">123.6</td><td class="num">134.5</td><td>lower 6/8</td><td class="num">0.29</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Medians over 8 seeds. Costs come from machines running 4 jobs at once, so read them only as relative. The droplet, bead and explorer results are from one seed each and are not tested. Report: <code>Reports/outside-rules-2026-11-11.md</code>. The survey of 14 more open-source simulations is in <code>code-survey.md</code> beside it.</p>
+</section>
+</div>

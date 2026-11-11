@@ -40,6 +40,11 @@ const DRAW_PILES: u32 = 105;
 const DRAW_RESPAWN: u32 = 106;
 const DRAW_HAZE: u32 = 107;
 const DRAW_WANDER: u32 = 108;
+const DRAW_CHANCE: u32 = 109;
+const DRAW_SIZE: u32 = 110;
+const DRAW_KEEP: u32 = 111;
+/// Claims in `blocked_retry` round r use CLAIM_RETRY + r.
+const CLAIM_RETRY: u32 = 112;
 
 #[derive(Clone, Debug)]
 pub struct BigParams {
@@ -159,6 +164,75 @@ pub struct BigParams {
     pub sick_reach: f32,
     pub sick_turn: f32,
     pub sick_seed_r: f32,
+    /// Area sensors (Lague's Slime-Simulation): a sensor reads the sum over
+    /// the (2r+1) x (2r+1) square of agar cells centred where it points,
+    /// not one cell. 0 is one cell (today's). The square's centre cell
+    /// decides the wall; scent is still read at one point. Added 2026-11-11.
+    pub sensor_r: u8,
+    /// Species (Lague): walker k belongs to species k % `species`, each with
+    /// its own trail field, laid, spread and kept as the trail is; `trail`
+    /// is then their sum, for drawing and the measures. A walker senses
+    /// own - `species_avoid` x others = (1 + avoid) x own - avoid x total
+    /// (Lague's mask gives 1). 0 or 1 is one species (today's). Added
+    /// 2026-11-11 for the RTS direction: moulds that share one dish.
+    pub species: u8,
+    pub species_avoid: f32,
+    /// With `species` > 1 and a spread start (`blob` false), species s
+    /// starts in its own vertical band of the dish, s/n to (s+1)/n of the
+    /// width (false: all mixed), so moulds begin as neighbours.
+    pub species_zones: bool,
+    /// Chance-weighted turn (MCPM, Elek et al. 2022). 0 is off (today's
+    /// Jones rule). Otherwise, at a look, the walker picks the left or right
+    /// sensor by a keyed draw and turns `rotate_angle` toward it with
+    /// probability g^e / (f^e + g^e), f the front sensor and g that side
+    /// (each floored at 0; 1/2 if both are 0), e = `chance_exp`; else it
+    /// goes straight. The wander and floor rules still come first.
+    pub chance_exp: f32,
+    /// Cyclic species (Primordia's "Chasing Waves", MIT): with `species` 3
+    /// or more and this on, a walker of species s weighs species s+1's
+    /// trail by `species_next` and species s-1's by `species_prev` (mod n)
+    /// instead of -`species_avoid`; any others stay at -`species_avoid`.
+    /// Primordia's preset: own 1, next 0.6, previous -1.
+    pub species_cycle: bool,
+    pub species_next: f32,
+    pub species_prev: f32,
+    /// Explorers and networkers (Reginato, Proverbio and Giordano 2024;
+    /// Defei-Wang's two deposits). 0 is off. Otherwise each walker holds an
+    /// age, reset to 0 at the start and on `respawn`, counted up a fine step.
+    /// While its age is under `explore_steps` it is an explorer: it steers
+    /// by the same rule toward the *lowest* sensor (walls still read as
+    /// walls) and lays `explore_deposit` times the deposit; after, it is an
+    /// ordinary walker.
+    pub explore_steps: u16,
+    pub explore_deposit: f32,
+    /// Spread of the explorer stage (0 is off): walker k explores for
+    /// explore_steps x (1 + spread x (2u - 1)) steps, u in [0, 1) from a
+    /// keyed draw on k alone (`DRAW_SIZE` with the top bit set), so walkers
+    /// turn into networkers one by one rather than all at once. Those that
+    /// turn early build a network behind the explorers still pushing out.
+    pub explore_spread: f32,
+    /// Per-walker size (Primordia's "Dendrites", MIT). 0 is off. Otherwise
+    /// walker k's sensor offset and step are both multiplied by 2^(spread x
+    /// u), u in [-1, 1] from a keyed draw on k alone, fixed for its life, so
+    /// big walkers see and move far and small ones near.
+    pub size_spread: f32,
+    /// Blocked walkers keep their heading (Jones and Adamatzky 2012, the
+    /// amoeboid model) rather than drawing a new one, except with chance
+    /// `blocked_reset` a step, when they draw one as today. False is today's
+    /// rule. Only matters with a crowd limit.
+    pub blocked_keep: bool,
+    pub blocked_reset: f32,
+    /// Retry rounds a step for blocked walkers (0 is today). In each round
+    /// every still-blocked walker tries the same step again into a cell
+    /// that is now below the crowd limit; ties go to the lowest keyed draw
+    /// (`CLAIM_RETRY` + round), as in the first claim. Losers stay blocked.
+    /// Only matters with a crowd limit.
+    pub blocked_retry: u8,
+    /// The share of the deposit a blocked walker lays where it stands (0 is
+    /// today: only a walker that moves lays trail). Packed walkers then
+    /// keep their own crowd smelling of trail, so a blob holds together
+    /// instead of its edge, the only part moving, drawing the crowd out.
+    pub blocked_deposit: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     pub seed: u64,
@@ -210,6 +284,22 @@ impl BigParams {
             sick_reach: 1.0,
             sick_turn: 1.0,
             sick_seed_r: 0.0,
+            sensor_r: 0,
+            species: 0,
+            species_avoid: 1.0,
+            species_zones: false,
+            chance_exp: 0.0,
+            species_cycle: false,
+            species_next: 0.6,
+            species_prev: -1.0,
+            explore_steps: 0,
+            explore_spread: 0.0,
+            explore_deposit: 0.05,
+            size_spread: 0.0,
+            blocked_keep: false,
+            blocked_reset: 0.01,
+            blocked_retry: 0,
+            blocked_deposit: 0.0,
             tube: 1.0,
             seed: 1,
         }
@@ -270,6 +360,10 @@ pub struct BigDish {
     /// field on the fine grid. Both empty when contagion is off.
     pub sick: Vec<u16>,
     pub germ: Vec<f32>,
+    /// One trail field per species (`species` > 1), else empty.
+    pub species_trail: Vec<Vec<f32>>,
+    /// Each walker's age in fine steps (`explore_steps` > 0), else empty.
+    pub age: Vec<u16>,
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
@@ -362,6 +456,8 @@ impl BigDish {
             claim: vec![u32::MAX; w * h],
             sick: Vec::new(),
             germ: Vec::new(),
+            species_trail: Vec::new(),
+            age: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
             threads: 1,
@@ -369,6 +465,12 @@ impl BigDish {
         };
         d.place_piles();
         d.place_walkers();
+        if d.p.explore_steps > 0 {
+            d.age = vec![0; d.walkers.len()];
+        }
+        if d.p.species > 1 {
+            d.species_trail = vec![vec![0.0; w * h]; d.p.species as usize];
+        }
         if d.p.sick_steps > 0 {
             d.sick = vec![0; d.walkers.len()];
             d.germ = vec![0.0; w * h];
@@ -444,6 +546,11 @@ impl BigDish {
             let (x, y) = if self.p.blob && !hazy {
                 let (ang, dist) = (a * TAU, b.sqrt() * r);
                 (hx + ang.cos() * dist, hy + ang.sin() * dist)
+            } else if self.p.species_zones && self.p.species > 1 {
+                // Walker number `len` (the next pushed) is species len % n.
+                let n = self.p.species as f32;
+                let sp = (self.walkers.len() % self.p.species as usize) as f32;
+                ((sp + a) / n * self.w as f32, b * self.h as f32)
             } else {
                 (a * self.w as f32, b * self.h as f32)
             };
@@ -471,11 +578,54 @@ impl BigDish {
 
     /// Trail at `so` and scent at `sso` along heading `a`: off the agar
     /// (by the trail sensor) reads as a wall.
-    fn sense(&self, x: f32, y: f32, a: f32, so: f32, sso: f32) -> f32 {
+    fn sense(&self, x: f32, y: f32, a: f32, so: f32, sso: f32, sp: usize) -> f32 {
         let (c, s) = (a.cos(), a.sin());
         match self.cell(x + c * so, y + s * so) {
-            Some(i) if self.agar[i] => self.trail[i] + self.scent_at(x + c * sso, y + s * sso),
+            Some(i) if self.agar[i] => self.trail_seen(i, sp) + self.scent_at(x + c * sso, y + s * sso),
             _ => -1.0e6,
+        }
+    }
+
+    /// The trail a walker of species `sp` reads at cell `i`: one cell or a
+    /// square (`sensor_r`), own trail weighed against others' (`species`).
+    fn trail_seen(&self, i: usize, sp: usize) -> f32 {
+        let at = |j: usize| {
+            if self.species_trail.is_empty() {
+                self.trail[j]
+            } else {
+                let a = self.p.species_avoid;
+                let n = self.species_trail.len();
+                if self.p.species_cycle && n >= 3 {
+                    let (own, next, prev) = (self.species_trail[sp][j], self.species_trail[(sp + 1) % n][j], self.species_trail[(sp + n - 1) % n][j]);
+                    own + self.p.species_next * next + self.p.species_prev * prev - a * (self.trail[j] - own - next - prev)
+                } else {
+                    (1.0 + a) * self.species_trail[sp][j] - a * self.trail[j]
+                }
+            }
+        };
+        let r = self.p.sensor_r as usize;
+        if r == 0 {
+            return at(i);
+        }
+        let (x, y) = (i % self.w, i / self.w);
+        let mut sum = 0.0;
+        for yy in y.saturating_sub(r)..(y + r + 1).min(self.h) {
+            for xx in x.saturating_sub(r)..(x + r + 1).min(self.w) {
+                let j = yy * self.w + xx;
+                if self.agar[j] {
+                    sum += at(j);
+                }
+            }
+        }
+        sum
+    }
+
+    /// Lay `amount` of trail on cell `j` for walker `k` (and its species).
+    fn lay(&mut self, k: usize, j: usize, amount: f32) {
+        self.trail[j] += amount;
+        if !self.species_trail.is_empty() {
+            let n = self.species_trail.len();
+            self.species_trail[k % n][j] += amount;
         }
     }
 
@@ -489,14 +639,24 @@ impl BigDish {
         let sso = if p.scent_offset > 0.0 { p.scent_offset } else { so };
         let (seed, t) = (p.seed, self.steps);
         // (walker, from, to, x, y, heading); from == to for a move within a cell.
-        let mut moves: Vec<(u32, u32, u32, f32, f32, f32)> = Vec::with_capacity(self.walkers.len());
-        let mut blocked: Vec<u32> = Vec::new();
+        let mut moves: Vec<(u32, u32, u32, f32, f32, f32, f32)> = Vec::with_capacity(self.walkers.len());
+        // (walker, heading, step) of each walker that could not move.
+        let mut blocked: Vec<(u32, f32, f32)> = Vec::new();
         let look = t.is_multiple_of(p.sense_every.max(1) as u64);
+        let nsp = self.species_trail.len().max(1);
         for k in 0..self.walkers.len() {
+            let sp = k % nsp;
             let (x, y, mut h) = self.walkers[k];
             let here = self.cell(x, y).expect("walker inside the dish");
             // Trail-dependent settings (`sense_scale`), read where it stands.
             let (mut so, mut sa, mut ra, mut st) = (so, sa, ra, st);
+            if p.size_spread > 0.0 {
+                let u = 2.0 * unit(keyed(seed, 0, DRAW_SIZE, k as u32)) - 1.0;
+                let sc = (p.size_spread * u).exp2();
+                so *= sc;
+                st *= sc;
+            }
+            let explorer = self.explores(k);
             if ss > 0.0 {
                 let v = (self.trail[here] * ss).min(1.0);
                 let m = |b: f32, [amp, e]: [f32; 2]| b + amp * v.powf(e);
@@ -516,13 +676,26 @@ impl BigDish {
                 }
             }
             if look {
-                let f = self.sense(x, y, h, so, sso);
-                let fl = self.sense(x, y, h - sa, so, sso);
-                let fr = self.sense(x, y, h + sa, so, sso);
+                let (mut f, mut fl, mut fr) = (self.sense(x, y, h, so, sso, sp), self.sense(x, y, h - sa, so, sso, sp), self.sense(x, y, h + sa, so, sso, sp));
+                if explorer {
+                    // Toward the lowest reading; a wall stays a wall.
+                    for v in [&mut f, &mut fl, &mut fr] {
+                        if *v > -1.0e5 {
+                            *v = -*v;
+                        }
+                    }
+                }
                 if p.wander > 0.0 && unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x8000_0000)) < p.wander {
                     h = unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x4000_0000)) * TAU;
                 } else if p.sense_floor > 0.0 && f.max(fl).max(fr) < p.sense_floor {
                     h += if keyed(seed, t, DRAW_WANDER, k as u32) & 1 == 0 { ra } else { -ra };
+                } else if p.chance_exp > 0.0 {
+                    let left = keyed(seed, t, DRAW_CHANCE, k as u32) & 1 == 0;
+                    let (fe, ge) = (f.max(0.0).powf(p.chance_exp), (if left { fl } else { fr }).max(0.0).powf(p.chance_exp));
+                    let turn = if fe + ge > 0.0 { ge / (fe + ge) } else { 0.5 };
+                    if unit(keyed(seed, t, DRAW_CHANCE, k as u32 | 0x8000_0000)) < turn {
+                        h += if left { -ra } else { ra };
+                    }
                 } else if f > fl && f > fr {
                 } else if f < fl && f < fr {
                     h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 { ra } else { -ra };
@@ -539,12 +712,12 @@ impl BigDish {
                         let key = keyed(seed, t, CLAIM_MOVE, k as u32);
                         self.claim[there] = self.claim[there].min(key);
                     }
-                    moves.push((k as u32, here as u32, there as u32, nx, ny, h));
+                    moves.push((k as u32, here as u32, there as u32, nx, ny, h, st));
                 }
-                _ => blocked.push(k as u32),
+                _ => blocked.push((k as u32, h, st)),
             }
         }
-        for &(k, from, to, nx, ny, h) in &moves {
+        for &(k, from, to, nx, ny, h, st) in &moves {
             let (i, j) = (from as usize, to as usize);
             let wins = i == j || crowd == 0 || self.claim[j] == keyed(seed, t, CLAIM_MOVE, k);
             if wins {
@@ -553,10 +726,11 @@ impl BigDish {
                 self.walkers[k as usize] = (nx, ny, h);
                 if cap == 0 {
                     let sick = contagion && self.sick[k as usize] > sick_at;
-                    self.trail[j] += if sick { dep * self.p.sick_trail } else { dep };
+                    let amount = if sick { dep * self.p.sick_trail } else { dep };
+                    self.lay(k as usize, j, amount * self.explore_share(k as usize));
                 }
             } else {
-                blocked.push(k);
+                blocked.push((k, h, st));
             }
         }
         if crowd > 0 {
@@ -564,9 +738,61 @@ impl BigDish {
                 self.claim[to as usize] = u32::MAX;
             }
         }
-        // Blocked: Jones's rule, stay put and pick a new heading.
-        for &k in &blocked {
-            self.walkers[k as usize].2 = unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU;
+        // Retry rounds (`blocked_retry`): a blocked walker tries its step
+        // again into cells emptied this step, so a packed crowd moving one
+        // way moves together, as in Jones's random sequential update,
+        // instead of only its front row moving.
+        for r in 0..if crowd > 0 { p.blocked_retry } else { 0 } {
+            let mut tries: Vec<(u32, u32, u32, f32, f32, f32, f32)> = Vec::new();
+            let mut still: Vec<(u32, f32, f32)> = Vec::new();
+            for &(k, h, st) in &blocked {
+                let (x, y, _) = self.walkers[k as usize];
+                let here = self.cell(x, y).expect("walker inside the dish");
+                let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
+                match self.cell(nx, ny) {
+                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 => {
+                        let key = keyed(seed, t, CLAIM_RETRY + r as u32, k);
+                        self.claim[there] = self.claim[there].min(key);
+                        tries.push((k, here as u32, there as u32, nx, ny, h, st));
+                    }
+                    _ => still.push((k, h, st)),
+                }
+            }
+            if tries.is_empty() {
+                break;
+            }
+            for &(k, from, to, nx, ny, h, st) in &tries {
+                let (i, j) = (from as usize, to as usize);
+                if self.claim[j] == keyed(seed, t, CLAIM_RETRY + r as u32, k) {
+                    self.occ[i] -= 1;
+                    self.occ[j] += 1;
+                    self.walkers[k as usize] = (nx, ny, h);
+                    if cap == 0 {
+                        let sick = contagion && self.sick[k as usize] > sick_at;
+                        let amount = if sick { dep * self.p.sick_trail } else { dep };
+                        self.lay(k as usize, j, amount * self.explore_share(k as usize));
+                    }
+                } else {
+                    still.push((k, h, st));
+                }
+            }
+            for &(_, _, to, ..) in &tries {
+                self.claim[to as usize] = u32::MAX;
+            }
+            blocked = still;
+        }
+        // Blocked: Jones's rule, stay put and pick a new heading; or
+        // (`blocked_keep`) keep the heading it chose, bar a rare reset.
+        if p.blocked_deposit > 0.0 && cap == 0 {
+            for &(k, ..) in &blocked {
+                let (x, y, _) = self.walkers[k as usize];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                self.lay(k as usize, i, dep * p.blocked_deposit * self.explore_share(k as usize));
+            }
+        }
+        for &(k, h, _) in &blocked {
+            let keep = p.blocked_keep && unit(keyed(seed, t, DRAW_KEEP, k)) >= p.blocked_reset;
+            self.walkers[k as usize].2 = if keep { h } else { unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU };
         }
         if cap > 0 {
             // Capped square-root deposit: per cell, from the walkers on it.
@@ -579,7 +805,8 @@ impl BigDish {
                 // deposit * sqrt(n): sqrt(n) / n of a lone walker's.
                 let share = dep * n.sqrt() / self.occ[i] as f32;
                 let sick = contagion && self.sick[k] > sick_at;
-                self.trail[i] += if sick { share * sick_trail } else { share };
+                let amount = if sick { share * sick_trail } else { share };
+                self.lay(k, i, amount * self.explore_share(k));
             }
         }
         if contagion {
@@ -592,8 +819,34 @@ impl BigDish {
                 self.sick[k] = self.sick[k].saturating_sub(1);
             }
         }
+        for a in self.age.iter_mut() {
+            *a = a.saturating_add(1);
+        }
         if respawn > 0.0 {
             self.respawn_walkers(respawn, crowd);
+        }
+    }
+
+    /// The share of the deposit walker `k` lays: `explore_deposit` while it
+    /// explores, else 1.
+    /// Whether walker `k` is still an explorer (`explore_steps`, `explore_spread`).
+    fn explores(&self, k: usize) -> bool {
+        if self.age.is_empty() {
+            return false;
+        }
+        let mut n = self.p.explore_steps as f32;
+        if self.p.explore_spread > 0.0 {
+            let u = unit(keyed(self.p.seed, 0, DRAW_SIZE, k as u32 | 0x8000_0000));
+            n *= 1.0 + self.p.explore_spread * (2.0 * u - 1.0);
+        }
+        (self.age[k] as f32) < n
+    }
+
+    fn explore_share(&self, k: usize) -> f32 {
+        if self.explores(k) {
+            self.p.explore_deposit
+        } else {
+            1.0
         }
     }
 
@@ -618,6 +871,9 @@ impl BigDish {
             self.occ[i] -= 1;
             self.occ[j] += 1;
             self.walkers[k] = (x, y, unit(keyed(seed, t, DRAW_RESPAWN, key + 3)) * TAU);
+            if !self.age.is_empty() {
+                self.age[k] = 0;
+            }
         }
     }
 
@@ -715,10 +971,25 @@ impl BigDish {
     pub fn tick(&mut self) {
         for _ in 0..self.p.substeps {
             self.move_walkers();
-            for pass in 0..self.p.trail_passes.max(1) {
-                let keep = if pass == 0 { self.p.keep } else { 1.0 };
-                spread(&self.agar, &self.trail, &mut self.scratch, self.w, self.h, keep, self.threads);
-                std::mem::swap(&mut self.trail, &mut self.scratch);
+            if self.species_trail.is_empty() {
+                for pass in 0..self.p.trail_passes.max(1) {
+                    let keep = if pass == 0 { self.p.keep } else { 1.0 };
+                    spread(&self.agar, &self.trail, &mut self.scratch, self.w, self.h, keep, self.threads);
+                    std::mem::swap(&mut self.trail, &mut self.scratch);
+                }
+            } else {
+                // Each species' field spreads as the trail would; the trail
+                // is their sum (the spread is linear, so the same field).
+                for sp in 0..self.species_trail.len() {
+                    for pass in 0..self.p.trail_passes.max(1) {
+                        let keep = if pass == 0 { self.p.keep } else { 1.0 };
+                        spread(&self.agar, &self.species_trail[sp], &mut self.scratch, self.w, self.h, keep, self.threads);
+                        std::mem::swap(&mut self.species_trail[sp], &mut self.scratch);
+                    }
+                }
+                for (i, v) in self.trail.iter_mut().enumerate() {
+                    *v = self.species_trail.iter().map(|f| f[i]).sum();
+                }
             }
             if !self.germ.is_empty() {
                 spread(&self.agar, &self.germ, &mut self.scratch, self.w, self.h, self.p.sick_keep, self.threads);
@@ -866,10 +1137,10 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent).chain(&self.germ) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
-        for &c in &self.sick {
+        for &c in self.sick.iter().chain(&self.age) {
             eat(c as u32);
         }
         h
@@ -1042,6 +1313,37 @@ mod tests {
     fn new_options_default_off() {
         let d = BigDish::new(small(2, 2));
         assert!(d.sick.is_empty() && d.germ.is_empty());
+        assert!(d.species_trail.is_empty() && d.age.is_empty());
+    }
+
+    /// The outside rules (2026-11-11) are keyed draws too: threads change
+    /// nothing, and the species fields add up to the shared trail.
+    #[test]
+    fn outside_rules_ignore_threads() {
+        for p in [
+            BigParams { sensor_r: 1, chance_exp: 4.0, size_spread: 0.6, ..small(2, 1) },
+            BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
+            BigParams { species: 3, species_cycle: true, ..small(2, 1) },
+            BigParams { blocked_keep: true, blocked_reset: 0.1, blocked_retry: 3, blocked_deposit: 1.0, ..small(2, 1) },
+            BigParams { explore_steps: 30, explore_spread: 1.0, ..small(2, 1) },
+        ] {
+            let mut a = BigDish::new(p);
+            let mut b = a.clone();
+            b.threads = 3;
+            for _ in 0..40 {
+                a.tick();
+                b.tick();
+            }
+            assert_eq!(a.hash(), b.hash());
+            let n = a.p.species as usize;
+            assert_eq!(a.species_trail.len(), if n > 1 { n } else { 0 });
+            if n > 1 {
+                for (i, &t) in a.trail.iter().enumerate() {
+                    let sum: f32 = a.species_trail.iter().map(|f| f[i]).sum();
+                    assert!((t - sum).abs() <= 1e-3 * t.abs().max(1.0), "cell {i}: {t} vs {sum}");
+                }
+            }
+        }
     }
 
     /// The same layout of piles at every scale, so arms pair.

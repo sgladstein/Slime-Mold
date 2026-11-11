@@ -36,6 +36,8 @@ how to keep the sources available to other agents).
 | [nicoptere-physarum](nicoptere-physarum.md) | physarum (three.js) |  | shaders in full | no | public domain (Unlicense) |
 | [polyphorm-2020](polyphorm-2020.md) | Polyphorm: Structural Analysis of Cosmological Datasets via Interactive Physarum Polycephalum Visualization | 2020 | about 40% verbatim | no | authors' copyright |
 | [polyphy](polyphy.md) | PolyPhy | about 2022 onward | agent kernels and defaults | no | MIT (code may be reused with its notice) |
+| [primordia](primordia.md) | Primordia (Rust/wgpu Physarum sandbox, with the "Symbiosis" mode) |  | WGSL shaders and presets (helper) | no | MIT |
+| [reginato-2024](reginato-2024.md) | Explorers and networkers (agent model of Physarum foraging) | 2024 | abstract and model (helper) | no | arXiv preprint |
 | [tero-2010](tero-2010.md) | Rules for Biologically Inspired Adaptive Network Design | 2010 | listing only | no | publisher's copyright |
 | [webb-morphogenesis-resources](webb-morphogenesis-resources.md) | morphogenesis-resources (Physarum section) |  | Physarum section in full | no | n/a (a link list) |
 | [sirlin-balancing-2014](sirlin-balancing-2014.md) | Balancing Multiplayer Games, Parts 1-3 (Definitions; Viable Options; Fairness) | 2014 | parts 1-3 in full (2026-11-10); part 4 not read | no | author's copyright |
