@@ -50,9 +50,10 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   against today's 3 ([page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs)).
   The owner picked 100,000 walkers (22:32Z). On the GTX 1070 (11-11) a frame
   of two ticks takes 1.37 ms at 100,000 walkers and 3.52 ms at 1,000,000,
-  against an 8 ms bar, and the GPU dish matches the CPU's. Next: phase 3,
-  a GPU sandbox with every Jenson-comparison option as a control (owner,
-  11-11 00:06Z).
+  against an 8 ms bar, and the GPU dish matches the CPU's. Phase 3 has
+  started: the GPU sandbox, `cargo run --release --bin mouldgpu`, with
+  every Jenson-comparison option as a control (owner, 11-11 00:06Z;
+  [report](Reports/gpu-sandbox-2026-11-11.md)).
 - How it is judged: [the census](wiki/method/census.md).
 - [The field skirmish](wiki/rts/skirmish.md): version 1 (habits, salt, the
   lamp) is playable (https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw) and
