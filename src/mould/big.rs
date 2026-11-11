@@ -983,25 +983,32 @@ impl BigDish {
             let (x, y, _) = self.walkers[k];
             let i = self.cell(x, y).expect("walker inside the dish");
             self.charge[i] = (self.charge[i] - t).max(0.0);
-            let pi = self.pile_of[i] as usize - 1;
-            self.pile_charge[pi] -= t;
             self.eaten += t as f64;
         }
-        let f = self.p.crystal_flow;
-        if f > 0.0 {
-            let np = self.piles.len();
-            let (mut sum, mut cells) = (vec![0.0f32; np], vec![0u32; np]);
-            for &i in &self.pile_cells {
-                let pi = self.pile_of[i as usize] as usize;
+        // Pile totals are summed afresh from the cells, in f64. (They were
+        // a running f32 total until 11-11: at charge 512 a pile holds about
+        // 180,000, a 0.005 bite is below that total's f32 step of 0.016,
+        // so the totals stopped moving, crystal_left read 1.000 and the
+        // piles called at full scent while the mould ate them.)
+        let np = self.piles.len();
+        let sums = |d: &Self| {
+            let (mut sum, mut cells) = (vec![0.0f64; np], vec![0u32; np]);
+            for &i in &d.pile_cells {
+                let pi = d.pile_of[i as usize] as usize;
                 if pi > 0 {
-                    sum[pi - 1] += self.charge[i as usize];
+                    sum[pi - 1] += d.charge[i as usize] as f64;
                     cells[pi - 1] += 1;
                 }
             }
+            (sum, cells)
+        };
+        let f = self.p.crystal_flow;
+        if f > 0.0 {
+            let (sum, cells) = sums(self);
             for &i in &self.pile_cells {
                 let pi = self.pile_of[i as usize] as usize;
                 if pi > 0 {
-                    let mean = sum[pi - 1] / cells[pi - 1] as f32;
+                    let mean = (sum[pi - 1] / cells[pi - 1] as f64) as f32;
                     let c = &mut self.charge[i as usize];
                     *c += f * (mean - *c);
                 }
@@ -1010,14 +1017,16 @@ impl BigDish {
         let g = self.p.crystal_regrow;
         if g > 0.0 {
             let full = self.p.crystal_charge;
-            for i in 0..self.charge.len() {
-                let pi = self.pile_of[i] as usize;
-                if pi > 0 && self.charge[i] < full {
-                    let add = g * (full - self.charge[i]);
-                    self.charge[i] += add;
-                    self.pile_charge[pi - 1] += add;
+            for &i in &self.pile_cells {
+                let i = i as usize;
+                if self.pile_of[i] > 0 && self.charge[i] < full {
+                    self.charge[i] += g * (full - self.charge[i]);
                 }
             }
+        }
+        let (sum, _) = sums(self);
+        for (pc, s) in self.pile_charge.iter_mut().zip(sum) {
+            *pc = s as f32;
         }
     }
 
@@ -2055,6 +2064,21 @@ mod tests {
         assert!(s1 < 0.01, "flow evens it ({s1})");
         assert!((sum1 - flow.pile_charge[1]).abs() < 1e-3 * flow.pile_full[1], "the total is kept");
         assert!((flow.crystal_left(1) - 0.5).abs() < 0.05);
+    }
+
+    #[test]
+    fn deep_crystals_still_count_down() {
+        // Charge 512 a cell: a pile holds far more than a bite's f32 step,
+        // and its total must still fall as the walkers eat (a running f32
+        // total stood still here).
+        let mut d = BigDish::new(BigParams { crystal_charge: 512.0, crystal_eat: 0.005, ..small(2, 2) });
+        let full: f64 = d.pile_full.iter().map(|&v| v as f64).sum();
+        for _ in 0..60 {
+            d.tick();
+        }
+        let gone = full - d.pile_charge.iter().map(|&v| v as f64).sum::<f64>();
+        assert!(d.eaten > 0.0 && d.crystal_left(0) < 1.0);
+        assert!((gone - d.eaten).abs() < 0.01 * d.eaten, "gone {gone} eaten {}", d.eaten);
     }
 
     #[test]
