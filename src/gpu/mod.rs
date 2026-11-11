@@ -46,9 +46,13 @@ pub const DRAW_WANDER: u32 = 108;
 pub const DRAW_CHANCE: u32 = 109;
 pub const DRAW_SIZE: u32 = 110;
 pub const DRAW_KEEP: u32 = 111;
+/// Growth's draws (big.rs `DRAW_STARVE`, `DRAW_BIRTH`, `CLAIM_BIRTH`).
+pub const DRAW_STARVE: u32 = 401;
+pub const DRAW_BIRTH: u32 = 402;
+pub const CLAIM_BIRTH: u32 = 403;
 
-/// Bytes in `Params` (84 words).
-pub const PARAMS_BYTES: usize = 336;
+/// Bytes in `Params` (92 words).
+pub const PARAMS_BYTES: usize = 368;
 
 /// Species the sandbox draws (a colour each, as `style=species`).
 pub const MAX_SPECIES: u8 = 4;
@@ -192,6 +196,17 @@ pub struct Settings {
     pub graze_regrow: f32,
     /// PR #58: species 0 lays this many times the deposit (1 even).
     pub boost: f32,
+    /// Growth (Larder World W0, `BigParams::upkeep`; 0 off): energy a
+    /// walker pays a tick, what it starts with, what it divides at, what a
+    /// division costs, the chance a tick that a walker at zero dies, and
+    /// the slots (0: `walkers`; the first `walkers` start alive). Growth
+    /// and the slots are fixed for a dish's life.
+    pub upkeep: f32,
+    pub start_energy: f32,
+    pub birth_energy: f32,
+    pub birth_cost: f32,
+    pub starve: f32,
+    pub capacity: usize,
     pub seed: u64,
 }
 
@@ -260,6 +275,12 @@ impl Settings {
             graze_eat: t.graze_eat,
             graze_regrow: t.graze_regrow,
             boost: t.species_boost,
+            upkeep: t.upkeep,
+            start_energy: t.start_energy,
+            birth_energy: t.birth_energy,
+            birth_cost: t.birth_cost,
+            starve: t.starve,
+            capacity: t.capacity,
             seed: 1,
         }
     }
@@ -362,6 +383,12 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "graze_eat" => s.graze_eat = f()?,
         "graze_regrow" => s.graze_regrow = f()?,
         "boost" | "species_boost" => s.boost = f()?,
+        "upkeep" => s.upkeep = f()?,
+        "start_energy" => s.start_energy = f()?,
+        "birth_energy" => s.birth_energy = f()?,
+        "birth_cost" => s.birth_cost = f()?,
+        "starve" => s.starve = f()?,
+        "capacity" | "slots" => s.capacity = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }
@@ -425,6 +452,12 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         graze_eat: s.graze_eat,
         graze_regrow: s.graze_regrow,
         species_boost: s.boost,
+        upkeep: s.upkeep,
+        start_energy: s.start_energy,
+        birth_energy: s.birth_energy,
+        birth_cost: s.birth_cost,
+        starve: s.starve,
+        capacity: s.capacity,
         seed: s.seed,
         ..t
     }
@@ -463,7 +496,7 @@ pub struct Shared {
     pub plain: Vec<wgpu::ComputePipeline>,
 }
 
-pub const BINDINGS: u32 = 32;
+pub const BINDINGS: u32 = 33;
 pub const SENSE: usize = 0;
 pub const WALK: usize = 1;
 pub const TRAIL: usize = 2;
@@ -474,6 +507,9 @@ pub const DRAW: usize = 6;
 pub const JUMP: usize = 7;
 pub const LAND: usize = 8;
 pub const CONVERT: usize = 9;
+pub const LIFE: usize = 10;
+pub const BREED: usize = 11;
+pub const BORN: usize = 12;
 
 impl Shared {
     pub fn new(dev: &wgpu::Device) -> Self {
@@ -493,7 +529,7 @@ impl Shared {
         let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("sandbox"), entries: &entries });
         let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("sandbox"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let build = |constants: &[(&str, f64)]| {
-            ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert"]
+            ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born"]
                 .iter()
                 .map(|entry_point| {
                     dev.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -540,6 +576,10 @@ pub struct Engine {
     /// PR #56: grass a cell, and each walker's species.
     pub grass: wgpu::Buffer,
     pub spec: wgpu::Buffer,
+    /// Growth: each slot's energy, below 0 for an empty slot; and whether
+    /// growth is on (fixed for the dish's life, as the slots are).
+    pub energy: wgpu::Buffer,
+    pub grows: bool,
     /// From the last `write_params`: whether the conversion pass runs, and
     /// whether any outside rule is on (else the plain pipelines run).
     pub converts: bool,
@@ -570,7 +610,7 @@ pub struct Engine {
 impl Engine {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize) -> Self {
         let agar_cells = BigDish::new(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
-        let crowd_ok = s.walkers <= agar_cells / 2;
+        let crowd_ok = s.walkers.max(s.capacity) <= agar_cells / 2;
         let d = BigDish::new(big_params(s, scale, s.crowd && crowd_ok));
         let dev = device;
         let cells = (d.w * d.h) as u32;
@@ -588,11 +628,7 @@ impl Engine {
         let walkers = buf("walkers", &f32_bytes(&flat), storage);
         let intent = zeros("intent", n as usize * 16);
         let icell = zeros("icell", n as usize * 4);
-        let mut occ = vec![0u32; cells as usize];
-        for &(x, y, _) in &d.walkers {
-            occ[y as usize * d.w + x as usize] += 1;
-        }
-        let occ = buf("occ", &u32_bytes(&occ), storage);
+        let occ = buf("occ", &u32_bytes(&occupancy(&d)), storage);
         let claim = buf("claim", &u32_bytes(&vec![u32::MAX; cells as usize]), storage);
         // A block of counts a species (`dep`, `sdep`), two for explorers'
         // and blocked walkers' classes (`edep`, `bdep`).
@@ -632,11 +668,12 @@ impl Engine {
         let gcount = zeros("gcount", cells as usize * 4);
         let specs: Vec<u32> = (0..n).map(|k| k % nsp.max(1)).collect();
         let spec = buf("spec", &u32_bytes(&specs), storage);
+        let energy = buf("energy", &f32_bytes(&energies(&d)), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
                 &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec,
+                &species[b], &age, &grass, &gcount, &spec, &energy,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -663,6 +700,8 @@ impl Engine {
             age,
             grass,
             spec,
+            grows: !d.energy.is_empty(),
+            energy,
             converts: false,
             outside: false,
             nsp,
@@ -730,11 +769,9 @@ impl Engine {
         assert_eq!((d.w, d.h, d.walkers.len() as u32, d.sw, d.sh), (self.dish.w, self.dish.h, self.n, d.w, d.h), "a dish of this engine's size, on the fine scent grid");
         let flat: Vec<f32> = d.walkers.iter().flat_map(|&(x, y, h)| [x, y, h, 0.0]).collect();
         self.queue.write_buffer(&self.walkers, 0, &f32_bytes(&flat));
-        let mut occ = vec![0u32; self.cells as usize];
-        for &(x, y, _) in &d.walkers {
-            occ[y as usize * d.w + x as usize] += 1;
-        }
-        self.queue.write_buffer(&self.occ, 0, &u32_bytes(&occ));
+        self.queue.write_buffer(&self.occ, 0, &u32_bytes(&occupancy(d)));
+        assert_eq!(d.energy.is_empty(), !self.grows, "a dish with this engine's growth");
+        self.queue.write_buffer(&self.energy, 0, &f32_bytes(&energies(d)));
         // The tick's bind group reads side `done % 2`.
         let side = (d.steps % 2) as usize;
         self.queue.write_buffer(&self.trail[side], 0, &f32_bytes(&d.trail));
@@ -772,7 +809,9 @@ impl Engine {
         let seed = s.seed;
         let (w, h) = (self.dish.w as u32, self.dish.h as u32);
         let crowd = (s.crowd && self.crowd_ok) as u32;
-        let deposit = s.laid * 100_000.0 / self.n.max(1) as f32;
+        // Per walker as the CPU's `big_params`: the starting walkers, not
+        // the slots (they are the same with growth off).
+        let deposit = s.laid * 100_000.0 / s.walkers.max(1) as f32;
         let (bx, by) = hand.at.unwrap_or((-1.0e6, -1.0e6));
         let br = 6.0 * self.dish.p.scale as f32;
         let pull = if hand.pull && hand.at.is_some() { PULL } else { 0.0 };
@@ -811,10 +850,14 @@ impl Engine {
         b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
         b.extend(u32_bytes(&[s.sensor_r as u32, stream(seed, DRAW_CHANCE), stream(seed, DRAW_KEEP)]));
         b.extend(f32_bytes(&[s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost]));
-        b.extend(u32_bytes(&[0, 0]));
+        // Growth: its upkeep as the dish was made with (off stays off).
+        let upkeep = if self.grows { s.upkeep.max(f32::MIN_POSITIVE) } else { 0.0 };
+        b.extend(f32_bytes(&[upkeep, s.birth_energy, s.birth_cost, s.starve]));
+        let mask = (self.n.max(2).next_power_of_two() - 1) as u32;
+        b.extend(u32_bytes(&[stream(seed, DRAW_STARVE), stream(seed, DRAW_BIRTH), stream(seed, CLAIM_BIRTH), mask, 0, 0]));
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.converts = s.convert > 0.0 && self.nsp > 0;
-        self.outside = self.nsp > 0 || s.explore > 0 || s.blocked_lay > 0.0 || s.blocked_keep || s.chance > 0.0 || s.size_spread > 0.0 || s.sensor_r > 0 || s.graze != 0.0;
+        self.outside = self.nsp > 0 || s.explore > 0 || s.blocked_lay > 0.0 || s.blocked_keep || s.chance > 0.0 || s.size_spread > 0.0 || s.sensor_r > 0 || s.graze != 0.0 || self.grows;
         self.queue.write_buffer(&self.params, 0, &b);
         self.jumps = s.respawn > 0.0 || pull > 0.0;
         self.crowd = crowd > 0;
@@ -858,6 +901,9 @@ impl Engine {
     pub fn tick_passes(&self) -> Vec<(usize, u32)> {
         let (n, cells) = (self.n.div_ceil(256), self.cells.div_ceil(256));
         let mut tick = vec![(SENSE, n), (WALK, n)];
+        if self.grows {
+            tick.extend([(LIFE, n), (BREED, n), (BORN, n)]);
+        }
         if self.converts {
             tick.push((CONVERT, n));
         }
@@ -886,7 +932,7 @@ impl Engine {
     /// pass's start and end stamped), submitted and waited for: GPU ms a
     /// pass, by name. It runs the tick, so the dish moves on by one.
     pub fn profile(&mut self, shared: &Shared, soft: bool) -> Vec<(&'static str, f64)> {
-        const NAMES: [&str; 10] = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert"];
+        const NAMES: [&str; 13] = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born"];
         let tick = self.tick_passes();
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
         let passes: Vec<(usize, u32, usize)> = tick.iter().map(|&(p, g)| (p, g, (self.done % 2) as usize)).chain(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, ((self.done + 1) % 2) as usize))).collect();
@@ -914,6 +960,11 @@ impl Engine {
         let side = (self.done % 2) as usize;
         self.dish.trail = floats(&read_back(&self.device, &self.queue, &self.trail[side]));
         self.dish.walkers = floats(&read_back(&self.device, &self.queue, &self.walkers)).chunks_exact(4).map(|c| (c[0], c[1], c[2])).collect();
+        if self.grows {
+            let e = floats(&read_back(&self.device, &self.queue, &self.energy));
+            self.dish.alive = e.iter().take(self.n as usize).map(|&v| v >= 0.0).collect();
+            self.dish.energy = e.iter().take(self.n as usize).map(|&v| v.max(0.0)).collect();
+        }
         self.dish.ticks = self.done;
         // The GPU marks a pile from the trail a tick late (see `trail`), so
         // the CPU marks any the last tick's trail reached, as it would.
@@ -936,6 +987,26 @@ impl Engine {
         let bytes = read_back(&self.device, &self.queue, &self.frame);
         image::RgbaImage::from_raw(self.dish.w as u32, self.dish.h as u32, bytes).expect("frame size")
     }
+}
+
+/// The living walkers a cell of a CPU dish (its `occ`).
+pub fn occupancy(d: &BigDish) -> Vec<u32> {
+    let mut occ = vec![0u32; d.w * d.h];
+    for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+        if d.lives(k) {
+            occ[y as usize * d.w + x as usize] += 1;
+        }
+    }
+    occ
+}
+
+/// Each slot's energy as the GPU keeps it: -1 for an empty slot (0s with
+/// growth off, never read).
+pub fn energies(d: &BigDish) -> Vec<f32> {
+    if d.energy.is_empty() {
+        return vec![0.0; d.walkers.len()];
+    }
+    d.energy.iter().zip(&d.alive).map(|(&e, &a)| if a { e } else { -1.0 }).collect()
 }
 
 pub fn read_back(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer) -> Vec<u8> {

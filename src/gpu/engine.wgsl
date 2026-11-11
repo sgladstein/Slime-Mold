@@ -31,7 +31,12 @@ struct Params {
     // its own `convert` times (0 off); grazing (`graze_w` 0 off). PR #58:
     // species 0 lays `boost` times the deposit.
     s_keep: u32, convert: f32, graze_w: f32, graze_eat: f32,
-    graze_regrow: f32, boost: f32, _q1: u32, _q2: u32,
+    graze_regrow: f32, boost: f32, upkeep: f32, birth_at: f32,
+    // Growth (Larder World W0, `BigParams::upkeep`, 0 off): births cost
+    // `birth_cost`; a walker at zero energy dies with chance `starve` a
+    // step; a child takes slot k ^ (a keyed draw & `bmask`).
+    birth_cost: f32, starve: f32, s_starve: u32, s_birth: u32,
+    s_bclaim: u32, bmask: u32, _r0: u32, _r1: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 
@@ -82,6 +87,9 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 @group(0) @binding(29) var<storage, read_write> grass: array<f32>;
 @group(0) @binding(30) var<storage, read_write> gcount: array<atomic<u32>>;
 @group(0) @binding(31) var<storage, read_write> spec: array<u32>;
+// Growth: each slot's energy, below 0 for an empty slot (the CPU's `alive`
+// false). Read only while growth is on; one a slot.
+@group(0) @binding(32) var<storage, read_write> energy: array<f32>;
 
 const NONE: u32 = 0xFFFFFFFFu;
 
@@ -99,6 +107,12 @@ fn chance() -> f32 { if (OUTSIDE) { return P.chance; } return 0.0; }
 fn size_sp() -> f32 { if (OUTSIDE) { return P.size_sp; } return 0.0; }
 fn sensor_r() -> u32 { if (OUTSIDE) { return P.sensor_r; } return 0u; }
 fn graze_w() -> f32 { if (OUTSIDE) { return P.graze_w; } return 0.0; }
+fn growth() -> bool { if (OUTSIDE) { return P.upkeep > 0.0; } return false; }
+// Whether slot k holds a living walker (always, with growth off).
+fn lives(k: u32) -> bool { return !growth() || energy[k] >= 0.0; }
+// The walkers eat the grass with grazing or growth on (the CPU makes the
+// grass field for either).
+fn grazes() -> bool { return graze_w() != 0.0 || growth(); }
 const TAU: f32 = 6.2831855;
 
 fn lowbias32(v: u32) -> u32 {
@@ -197,7 +211,7 @@ fn pow0(v: f32, e: f32) -> f32 {
 @compute @workgroup_size(256)
 fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
-    if (k >= P.n) { return; }
+    if (k >= P.n || !lives(k)) { return; }
     let t = S.t;
     let wk = walkers[k];
     var h = wk.z;
@@ -281,7 +295,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
-    if (k >= P.n) { return; }
+    if (k >= P.n || !lives(k)) { return; }
     let t = S.t;
     let aim = icell[k];
     let wk = walkers[k];
@@ -318,7 +332,7 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
     let c = P.w * P.h;
     let o = species_of(k) * c + at;
     // Grazing: every walker eats where it stands after the move.
-    if (graze_w() != 0.0) { atomicAdd(&gcount[at], 1u); }
+    if (grazes()) { atomicAdd(&gcount[at], 1u); }
     if (P.cap > 0u || wins) {
         if (ex) {
             atomicAdd(&edep[o + select(0u, nsp1() * c, ill)], 1u);
@@ -341,6 +355,83 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (explore() > 0u) { age[k] = min(age[k] + 1u, 65535u); }
 }
 
+// Growth (Larder World W0), after the move, three passes, as the CPU's
+// `live_and_die`. `life`: each walker gains its equal share of what its
+// cell's grass loses this tick (min(grass / n, eat) for the n walkers on
+// it; the trail pass eats it after), pays `upkeep`, and at zero dies with
+// chance `starve`, leaving its cell (and clearing the cell's claim, so a
+// birth can claim it this tick as on the CPU, which clears move claims
+// before births). Only dispatched with growth on.
+@compute @workgroup_size(256)
+fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let wk = walkers[k];
+    let i = cell(wk.x, wk.y);
+    let n = f32(atomicLoad(&occ[i]));
+    let e = (energy[k] + min(grass[i] / n, P.graze_eat)) - P.upkeep;
+    if (e > 0.0) { energy[k] = e; return; }
+    if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
+        atomicSub(&occ[i], 1u);
+        atomicStore(&claim[i], NONE);
+        energy[k] = -1.0;
+    } else {
+        energy[k] = 0.0;
+    }
+}
+
+// The slot a parent's child takes this tick: k xor one keyed mask, so each
+// empty slot has one parent.
+fn child_of(k: u32, t: u32) -> u32 {
+    return k ^ (keyed(P.s_birth, t, 0xFFFFFFFFu) & P.bmask);
+}
+
+// Where parent k's child lands: one of the eight cells beside it.
+fn birth_spot(k: u32, t: u32) -> vec2<f32> {
+    let d = keyed(P.s_birth, t, k) % 8u;
+    var dx = array<f32, 8>(1.0, 1.0, 0.0, -1.0, -1.0, -1.0, 0.0, 1.0);
+    var dy = array<f32, 8>(0.0, 1.0, 1.0, 1.0, 0.0, -1.0, -1.0, -1.0);
+    let wk = walkers[k];
+    return vec2<f32>(wk.x + dx[d], wk.y + dy[d]);
+}
+
+// `breed`: a parent with `birth_at` energy or more whose child slot is
+// empty aims at a free agar cell beside it (claimed, lowest key wins, with
+// the crowd limit) and keeps it in `icell`; `born` lands the winners.
+@compute @workgroup_size(256)
+fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    icell[k] = NONE;
+    let t = S.t;
+    let b = child_of(k, t);
+    if (!lives(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
+    let at = birth_spot(k, t);
+    let j = cell(at.x, at.y);
+    if (j == NONE || agar[j] == 0u || (P.crowd > 0u && atomicLoad(&occ[j]) >= P.crowd)) { return; }
+    if (P.crowd > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }
+    icell[k] = j;
+}
+
+@compute @workgroup_size(256)
+fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    let j = icell[k];
+    let t = S.t;
+    if (j == NONE || (P.crowd > 0u && atomicLoad(&claim[j]) != keyed(P.s_bclaim, t, k))) { return; }
+    let b = child_of(k, t);
+    let half = max((energy[k] - P.birth_cost) * 0.5, 0.0);
+    energy[k] = half;
+    energy[b] = half;
+    atomicAdd(&occ[j], 1u);
+    let at = birth_spot(k, t);
+    walkers[b] = vec4<f32>(at, unit(keyed(P.s_birth, t, k | 0x80000000u)) * TAU, 0.0);
+    if (explore() > 0u) { age[b] = 0u; }
+    if (P.sick_steps > 0u) { sick[b] = 0u; }
+    if (nsp() > 0u) { spec[b] = spec[k]; }
+}
+
 // Conversion (PR #56), after the move and its deposit, before any jump: a
 // walker joins the species with the most trail at its cell (with cyclic
 // species, only the previous one, which chases it) if that trail outweighs
@@ -350,7 +441,7 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn convert(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
-    if (k >= P.n) { return; }
+    if (k >= P.n || !lives(k)) { return; }
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
     let c = P.w * P.h;
@@ -401,6 +492,7 @@ fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n) { return; }
     icell[k] = NONE;
+    if (!lives(k)) { return; }
     let j = jump_of(k, S.t);
     if (j.w == 0.0) { return; }
     let to = cell(j.x, j.y);
@@ -505,7 +597,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Grazing: the walkers on the cell each eat `graze_eat` (floored at 0,
     // one at a time, as the CPU does), then the grass regrows. In place:
     // only the next tick's sense pass reads it.
-    if (graze_w() != 0.0 && agar[i] != 0u) {
+    if (grazes() && agar[i] != 0u) {
         var g = grass[i];
         let eaters = atomicLoad(&gcount[i]);
         for (var q = 0u; q < eaters && g > 0.0; q++) { g = max(g - P.graze_eat, 0.0); }

@@ -2304,4 +2304,76 @@ mod tests {
         set(&mut s, "ticks", "0").unwrap();
         assert_eq!(s.ticks, 1);
     }
+    /// The twin test for growth (Larder World W0, 2026-11-11): one GPU tick
+    /// from a warmed CPU dish against one `BigDish::tick`, with births and
+    /// starving in the tick. Every slot's position, energy and life are
+    /// compared, and its age, species and sickness where those are on.
+    #[test]
+    fn growth_matches_the_cpu_for_one_tick() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        // A fifth of the preset's walkers to start, so the mould is still
+        // growing at the twin tick. One a cell gets slots for three times
+        // that (it needs them at most half the agar: 512 x 320 holds about
+        // 128,000 cells); with no limit nothing slows a birth but the slots,
+        // so it gets twenty times (it doubles about every 10 ticks of the
+        // 40-tick warm-up; three times was full by then).
+        let g = |s: Settings| Settings { upkeep: 0.01, walkers: s.walkers / 5, capacity: if s.crowd { 3 } else { 20 } * s.walkers / 5, graze: 10.0, ..s };
+        // Hungry: grass eaten faster than it pays (0.03 upkeep against at
+        // most 0.05 eaten), so some starve while others breed.
+        let hungry = |s: Settings| Settings { upkeep: 0.03, starve: 0.2, birth_energy: 0.6, graze_regrow: 0.0, ..g(s) };
+        let dishes = [
+            ("growing, one a cell", g(small(0))),
+            ("growing, no limit", g(small(2))),
+            ("hungry, one a cell", hungry(small(0))),
+            ("hungry, no limit, Jenson's", hungry(small(3))),
+            ("hungry, species converting, explorers, contagion, respawn", Settings { species: 2, convert: 1.2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, respawn: 0.01, ..hungry(small(0)) }),
+            ("hungry, cap, grazing off", Settings { cap: 100, graze: 0.0, ..hungry(small(3)) }),
+        ];
+        for (name, s) in dishes {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            assert!(e.grows, "{name}: growth on");
+            let mut cpu = e.dish.clone();
+            for _ in 0..40 {
+                cpu.tick();
+            }
+            // With no limit every walker eats alike and they breed in
+            // waves (5,000 became exactly 20,000), so warm up on to the
+            // first tick that has births (and starving, when hungry).
+            let hungry = name.starts_with("hungry");
+            for _ in 0..100 {
+                let mut next = cpu.clone();
+                next.tick();
+                if next.births > cpu.births && (!hungry || next.starved > cpu.starved) {
+                    break;
+                }
+                cpu = next;
+            }
+            let n = cpu.walkers.len();
+            let (born, starved) = (cpu.births, cpu.starved);
+            let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            let (born, starved) = (cpu.births - born, cpu.starved - starved);
+            let energy = floats(&read_back(&device, &queue, &e.energy));
+            let want = energies(&cpu);
+            let lives_off = energy.iter().zip(&want).filter(|(g, c)| (**g >= 0.0) != (**c >= 0.0)).count();
+            let le = l1(&energy.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>(), &want.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>());
+            let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+            let ages_off = if cpu.age.is_empty() { 0 } else { u32s(&e.age).iter().zip(&cpu.age).filter(|(g, c)| **g != **c as u32).count() };
+            let specs_off = if cpu.spec.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.spec).filter(|(g, c)| **g != **c as u32).count() };
+            let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick).iter().zip(&cpu.sick).filter(|(g, c)| **g != **c as u32).count() };
+            let occ: Vec<u32> = read_back(&device, &queue, &e.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+            let occ_off = occ.iter().zip(occupancy(&cpu)).filter(|(g, c)| **g != *c).count();
+            let alive = cpu.alive.iter().filter(|&&a| a).count();
+            eprintln!(
+                "{name}: {n} slots, {alive} alive, {born} born and {starved} starved in the tick, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, energy L1 {le:.1e}; {lives_off} lives off, {occ_off} cells' counts off, {ages_off} ages, {specs_off} species and {sick_off} sick counters off"
+            );
+            assert!(born > 0, "{name}: someone is born in the tick");
+            if hungry {
+                assert!(starved > 0, "{name}: someone starves in the tick");
+            }
+            assert!(off * 1000 <= n && lives_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {off} walkers, {lives_off} lives, {occ_off} counts off of {n}");
+            assert!(lt <= 1e-4 && ls <= 1e-6 && le <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, energy L1 {le:.2e}");
+            assert!((ages_off + specs_off + sick_off) * 1000 <= n, "{name}: {ages_off} ages, {specs_off} species, {sick_off} sick off");
+        }
+    }
 }
