@@ -1,0 +1,3 @@
+ 4 soldiers: game step 0.830 ms, bare dish step 0.830 ms, squad layer about 0.000 ms a step (172 shots, 6422 walkers at the end vs 6900)
+40 soldiers: game step 0.967 ms, bare dish step 0.869 ms, squad layer about 0.098 ms a step (554 shots, 6319 walkers at the end vs 6900)
+(6.3 s)
