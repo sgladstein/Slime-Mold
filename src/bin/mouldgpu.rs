@@ -2670,6 +2670,95 @@ mod tests {
         }
     }
 
+    /// **The squad's twin test** (Larder World W2a, 2026-11-11): one frame
+    /// of one tick with units and shots (`slime_mould::mould::squad`) from a
+    /// warmed CPU world with growth, crystals and walls, on the GPU against
+    /// `squad::frame` on the CPU. Every output must agree exactly (each
+    /// shot's hit and kills; each unit's walkers touching, the block it aims
+    /// at, and the charge it took), and the world after the frame as in the
+    /// world twin test: walkers, which slots live, trail, scent and charge.
+    /// The frame is chosen so that every hook acts: shots that hit slime and
+    /// kill, one that a wall stops, units in the mould and on crystals (two
+    /// on one crystal, so the harvest's order shows), and smell.
+    #[test]
+    fn the_squad_matches_the_cpu_for_one_frame() {
+        use slime_mould::mould::squad::{self, Frame, ShotIn, UnitIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, wall_hp: 1000.0, ..small(0) };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        for t in 0..60 {
+            if t == 20 {
+                cpu.build_wall(70.0, 40.0, 70.0, 120.0, 2.0);
+            }
+            cpu.tick();
+        }
+        let (w, h) = (cpu.w, cpu.h);
+        let k = SCALE as f32;
+        let slime = squad::slime_trail(s.knee);
+        let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
+        let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+        let pile = |p: usize| (cpu.piles[p].0 * k, cpu.piles[p].1 * k);
+        let unit = |at: (f32, f32), take: f32| UnitIn { x: at.0, y: at.1, touch: 3.0, sight: 30.0, take_r: 4.0, take, smell_r: 2.0, smell: 0.5 };
+        // Two units on one small patch of crystal 3, asking more than it
+        // holds, so the second gets what the first left.
+        let patch = |take: f32| UnitIn { take_r: 1.5, ..unit(pile(3), take) };
+        let mut units = vec![unit(t, 0.0), patch(3000.0), patch(3000.0)];
+        units.extend((5..10).map(|p| unit(pile(p), 100.0)));
+        // Shots from each crystal toward the thickest mould, and two across
+        // the wall at x = 140 (fine cells), one of them from beside it.
+        let mut shots: Vec<ShotIn> = (0..12).map(|p| ShotIn { from: pile(p), to: t, r: 3.0 }).collect();
+        shots.push(ShotIn { from: (120.0, 160.0), to: (190.0, 160.0), r: 3.0 });
+        // A shot that meets the wall before any slime: from a clear cell
+        // beside it, across it.
+        let clear = (60..250)
+            .flat_map(|y| (120..138).map(move |x| (x as f32 + 0.5, y as f32 + 0.5)))
+            .find(|&(x, y)| {
+                let p = squad::path(w, h, (x, y), (x + 30.0, y));
+                let stop = p.iter().position(|&i| !cpu.agar[i as usize]);
+                stop.is_some_and(|n| p[..n].iter().all(|&i| cpu.trail[i as usize] < slime))
+            })
+            .expect("a clear way to the wall");
+        shots.push(ShotIn { from: clear, to: (clear.0 + 30.0, clear.1), r: 2.0 });
+        let f = Frame { units, shots, slime };
+        e.inject(&cpu);
+        e.set_squad(&f);
+        run(&mut e, &shared, &s, 1, Hand::default());
+        let cpu_out = squad::frame(&mut cpu, &f, 1);
+        let gpu_out = e.squad_out();
+        let kills: u32 = cpu_out.shots.iter().map(|q| q.killed).sum();
+        let walled = f.shots.iter().zip(&cpu_out.shots).filter(|(q, o)| o.hit.is_none() && squad::path(w, h, q.from, q.to).iter().any(|&i| !cpu.agar[i as usize])).count();
+        let took: Vec<f32> = cpu_out.units.iter().map(|u| u.took).collect();
+        eprintln!(
+            "squad: {} shots, {} hit, {kills} killed, {walled} stopped by a wall; touching {:?}; took {took:?}",
+            f.shots.len(),
+            cpu_out.shots.iter().filter(|q| q.hit.is_some()).count(),
+            cpu_out.units.iter().map(|u| u.touching).collect::<Vec<_>>()
+        );
+        assert_eq!(gpu_out, cpu_out, "the squad's outputs");
+        assert!(kills > 0 && walled > 0, "shots kill, and a wall stops one");
+        assert!(cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some(), "the unit in the mould is touched and aims");
+        assert!(took[1] == 3000.0 && took[2] > 0.0 && took[2] < 3000.0 && took[3..].iter().any(|&t| t > 0.0), "units harvest; the second on a patch gets what the first left");
+        // The world after the frame.
+        let gpu = walkers_of(&e);
+        let energy = floats(&read_back(&device, &queue, &e.energy));
+        let lives_off = (0..cpu.walkers.len()).filter(|&k| (energy[k] >= 0.0) != cpu.lives(k)).count();
+        let off = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).filter(|&k| {
+            let (g, c) = (gpu[k], cpu.walkers[k]);
+            (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3
+        }).count();
+        let side = (e.done % 2) as usize;
+        let lt = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
+        let ls = l1(&floats(&read_back(&device, &queue, &e.scent[side])), &cpu.scent);
+        let (lc, _, _, agar_off, ground_off) = world_off(&e, &cpu);
+        eprintln!("squad world: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}; {agar_off} agar and {ground_off} ground off");
+        assert_eq!(lives_off, 0, "the same walkers die");
+        assert!(off * 1000 <= cpu.walkers.len(), "{off} walkers off");
+        assert!(lt <= 1e-4 && ls <= 1e-6 && lc <= 1e-6, "trail L1 {lt:.2e}, scent L1 {ls:.2e}, charge L1 {lc:.2e}");
+        assert!(agar_off == 0 && ground_off == 0);
+    }
+
     /// A wall built on the GPU (`Engine::build_wall`) against the same wall
     /// on the CPU, from the same warmed dish: the same cells walled, their
     /// trail, scent and charge gone, a crystal it cuts losing those cells,

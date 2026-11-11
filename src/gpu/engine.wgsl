@@ -45,6 +45,9 @@ struct Params {
     world: u32, npiles: u32, npc: u32, _w0: u32,
     full: f32, eat: f32, flow: f32, regrow: f32,
     wet_step: f32, bite: f32, wall_scent: f32, hp: f32,
+    // The squad (Larder World W2a, `Engine::set_squad`): this frame's units
+    // and shots in `SQ`, and the trail that looks like slime.
+    nunits: u32, nshots: u32, slime: f32, _s0: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -129,6 +132,18 @@ struct WallBuild { ax: f32, ay: f32, bx: f32, by: f32, r: f32, hp: f32, x0: u32,
 @group(0) @binding(39) var<storage, read_write> piles: array<Pile>;
 @group(0) @binding(40) var<storage, read_write> wstat: array<atomic<u32>>;
 @group(0) @binding(41) var<storage, read> wb: WallBuild;
+// The squad (W2a; `src/mould/squad.rs` holds the CPU twins, the order of a
+// frame and the layout, `squad::pack`): units in and out, shots in and out,
+// and the cells each shot's line crosses. A unit's cell and its squared
+// radii are whole numbers, so both sides test the same integers. `kills`
+// counts the walkers each shot killed.
+struct SqUnit { x: u32, y: u32, touch2: u32, sight2: u32, take2: u32, take: f32, smell2: u32, smell: f32 };
+struct SqUnitOut { touching: u32, aim: u32, took: f32, _p: u32 };
+struct SqShot { start: u32, count: u32, r2: u32, _p: u32 };
+struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
+struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
+@group(0) @binding(42) var<storage, read_write> SQ: Squad;
+@group(0) @binding(43) var<storage, read_write> kills: array<atomic<u32>>;
 
 const NONE: u32 = 0xFFFFFFFFu;
 
@@ -1115,4 +1130,183 @@ fn unclaim(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h) { return; }
     atomicStore(&claim[i], NONE);
+}
+
+// ---------------------------------------------- the squad (Larder World W2a)
+// The CPU twins and the order of a frame: `src/mould/squad.rs`. Before the
+// frame's first tick: `shots`, then `strike` and `cut`, then `smell`; after
+// its last: `units` and `harvest`.
+
+// The largest r with r * r <= r2.
+fn isqrt(r2: u32) -> i32 {
+    var r = 0;
+    loop {
+        let n = r + 1;
+        if (u32(n * n) > r2) { break; }
+        r = n;
+    }
+    return r;
+}
+
+// Each shot walks its cells and stops at the first off the agar (a wall or
+// rock: no hit) or the first that looks like slime (the hit). The owner,
+// 2026-11-11 16:48Z: "Gun fire should hit the first slime in its path".
+@compute @workgroup_size(256)
+fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let q = gid.x;
+    if (q >= P.nshots) { return; }
+    let s = SQ.shots[q];
+    var hit = NONE;
+    for (var m = 0u; m < s.count; m++) {
+        let i = SQ.path[s.start + m];
+        if (agar[i] == 0u) { break; }
+        if (trail_in[i] >= P.slime) { hit = i; break; }
+    }
+    SQ.sout[q].hit = hit;
+}
+
+// Whether cell c is inside shot q's strike.
+fn struck(c: u32, q: u32) -> bool {
+    let hit = SQ.sout[q].hit;
+    if (hit == NONE) { return false; }
+    let dx = i32(c % P.w) - i32(hit % P.w);
+    let dy = i32(c / P.w) - i32(hit / P.w);
+    return u32(dx * dx + dy * dy) <= SQ.shots[q].r2;
+}
+
+// A living walker on a struck cell dies as a starving one does (`life`),
+// counted for the first shot that struck it. Growth must be on: an empty
+// slot is how a walker dies here.
+@compute @workgroup_size(256)
+fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let wk = walkers[k];
+    let c = cell(wk.x, wk.y);
+    for (var q = 0u; q < P.nshots; q++) {
+        if (struck(c, q)) {
+            atomicSub(&occ[c], 1u);
+            atomicStore(&claim[c], NONE);
+            energy[k] = -1.0;
+            atomicAdd(&kills[q], 1u);
+            return;
+        }
+    }
+}
+
+// A strike clears the trail on its cells.
+@compute @workgroup_size(256)
+fn cut(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    if (i >= P.w * P.h) { return; }
+    for (var q = 0u; q < P.nshots; q++) {
+        if (struck(i, q)) {
+            trail_in[i] = 0.0;
+            return;
+        }
+    }
+}
+
+// Each unit's smell on the agar cells of its disc. One thread, units in
+// order, so overlapping discs add up without a race.
+@compute @workgroup_size(1)
+fn smell(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x != 0u) { return; }
+    for (var u = 0u; u < P.nunits; u++) {
+        let un = SQ.units[u];
+        if (un.smell <= 0.0) { continue; }
+        let r = isqrt(un.smell2);
+        for (var dy = -r; dy <= r; dy++) {
+            for (var dx = -r; dx <= r; dx++) {
+                let x = i32(un.x) + dx;
+                let y = i32(un.y) + dy;
+                if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h) || u32(dx * dx + dy * dy) > un.smell2) { continue; }
+                let i = u32(y) * P.w + u32(x);
+                if (agar[i] != 0u) { scent_in[i] += un.smell; }
+            }
+        }
+    }
+}
+
+// Each unit's walkers within `touch`, and the 4 x 4 block with the most
+// walkers whose centre is within `sight` (ties to the first, row-major).
+@compute @workgroup_size(64)
+fn units(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let u = gid.x;
+    if (u >= P.nunits) { return; }
+    let un = SQ.units[u];
+    let cx = i32(un.x);
+    let cy = i32(un.y);
+    let w = i32(P.w);
+    let h = i32(P.h);
+    var touching = 0u;
+    let r = isqrt(un.touch2);
+    for (var dy = -r; dy <= r; dy++) {
+        for (var dx = -r; dx <= r; dx++) {
+            let x = cx + dx;
+            let y = cy + dy;
+            if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
+            touching += atomicLoad(&occ[u32(y * w + x)]);
+        }
+    }
+    let b = 4;
+    let nbw = (w + b - 1) / b;
+    let nbh = (h + b - 1) / b;
+    let rs = isqrt(un.sight2) + 2;
+    let by0 = max(cy - rs, 0) / b;
+    let by1 = min((cy + rs) / b, nbh - 1);
+    let bx0 = max(cx - rs, 0) / b;
+    let bx1 = min((cx + rs) / b, nbw - 1);
+    var best = 0u;
+    var bi = NONE;
+    for (var by = by0; by <= by1; by++) {
+        for (var bx = bx0; bx <= bx1; bx++) {
+            let mx = bx * b + b / 2 - cx;
+            let my = by * b + b / 2 - cy;
+            if (u32(mx * mx + my * my) > un.sight2) { continue; }
+            var n = 0u;
+            for (var y = by * b; y < min((by + 1) * b, h); y++) {
+                for (var x = bx * b; x < min((bx + 1) * b, w); x++) {
+                    n += atomicLoad(&occ[u32(y * w + x)]);
+                }
+            }
+            if (n > best) { best = n; bi = u32(by * nbw + bx); }
+        }
+    }
+    SQ.uout[u].touching = touching;
+    SQ.uout[u].aim = bi;
+}
+
+// The harvest: in unit order, each unit with `take` takes up to that much
+// charge from the crystal cells of its disc, cell by cell. One thread, so
+// two units on one crystal take in order.
+@compute @workgroup_size(1)
+fn harvest(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x != 0u) { return; }
+    for (var u = 0u; u < P.nunits; u++) {
+        let un = SQ.units[u];
+        var took = 0.0;
+        if (un.take > 0.0 && world(CRYSTALS)) {
+            var rem = un.take;
+            let r = isqrt(un.take2);
+            var done = false;
+            for (var dy = -r; dy <= r && !done; dy++) {
+                for (var dx = -r; dx <= r; dx++) {
+                    let x = i32(un.x) + dx;
+                    let y = i32(un.y) + dy;
+                    if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h) || u32(dx * dx + dy * dy) > un.take2) { continue; }
+                    let i = u32(y) * P.w + u32(x);
+                    let c = charge[i];
+                    if (c > 0.0) {
+                        let t = min(c, rem);
+                        charge[i] = c - t;
+                        rem = rem - t;
+                        if (rem <= 0.0) { done = true; break; }
+                    }
+                }
+            }
+            took = un.take - rem;
+        }
+        SQ.uout[u].took = took;
+    }
 }

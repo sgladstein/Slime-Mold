@@ -1027,6 +1027,33 @@ impl BigDish {
         self.alive.is_empty() || self.alive[k]
     }
 
+    /// Walkers on each fine cell (the crowd count), for the Larder world's
+    /// squad reads (`squad`, W2a).
+    pub fn occupancy(&self) -> &[u16] {
+        &self.occ
+    }
+
+    /// Kills walker `k` as `strike` does (it leaves its cell; with growth
+    /// its slot is freed for births, and with life states, made here if
+    /// growth is off, it is dead): the
+    /// Larder world's shots (`squad::shots`, W2a). The caller checks that it
+    /// lives and holds a cell.
+    pub fn kill(&mut self, k: usize) {
+        if self.alive.is_empty() && self.life.is_empty() {
+            self.life = vec![LIFE_WALKER; self.walkers.len()];
+            self.life_t = vec![0; self.walkers.len()];
+        }
+        let (x, y, _) = self.walkers[k];
+        let i = self.cell(x, y).expect("walker inside the dish");
+        self.occ[i] -= 1;
+        if !self.alive.is_empty() {
+            self.alive[k] = false;
+        }
+        if !self.life.is_empty() {
+            self.life[k] = LIFE_DEAD;
+        }
+    }
+
     fn cell(&self, x: f32, y: f32) -> Option<usize> {
         if x < 0.0 || y < 0.0 {
             return None;

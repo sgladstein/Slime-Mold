@@ -22,6 +22,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use crate::mould::big::{BigDish, BigParams};
+use crate::mould::squad;
 use crate::mould::STEPS_PER_SECOND;
 use pixels::wgpu;
 
@@ -52,7 +53,7 @@ pub const DRAW_BIRTH: u32 = 402;
 pub const CLAIM_BIRTH: u32 = 403;
 
 /// Bytes in `Params` (104 words).
-pub const PARAMS_BYTES: usize = 416;
+pub const PARAMS_BYTES: usize = 432;
 
 /// The Larder World's switches in `Params::world` (engine.wgsl).
 pub const WORLD_CRYSTALS: u32 = 1;
@@ -576,7 +577,7 @@ pub struct Shared {
     pub plain: Vec<wgpu::ComputePipeline>,
 }
 
-pub const BINDINGS: u32 = 42;
+pub const BINDINGS: u32 = 44;
 pub const SENSE: usize = 0;
 pub const WALK: usize = 1;
 pub const TRAIL: usize = 2;
@@ -598,8 +599,18 @@ pub const BUILD: usize = 17;
 pub const EVICT: usize = 18;
 pub const SETTLE: usize = 19;
 pub const UNCLAIM: usize = 20;
+/// The squad (Larder World W2a, `set_squad`): before a frame's first tick,
+/// then after its last.
+pub const SHOTS: usize = 21;
+pub const STRIKE: usize = 22;
+pub const CUT: usize = 23;
+pub const SMELL: usize = 24;
+pub const UNITS: usize = 25;
+pub const HARVEST: usize = 26;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 21] = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim"];
+pub const PASSES: [&str; 27] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest",
+];
 
 impl Shared {
     pub fn new(dev: &wgpu::Device) -> Self {
@@ -695,6 +706,13 @@ pub struct Engine {
     /// From the last `write_params`: whether crystal charge flows or
     /// regrows (the flow pass and its first sum then run).
     pub flows: bool,
+    /// The squad (Larder World W2a): the frame's units and shots in
+    /// `squad::pack`'s layout, each shot's kills, this frame's counts and
+    /// slime trail (`set_squad`), and whether the next `record` runs them.
+    pub sq: wgpu::Buffer,
+    pub kills: wgpu::Buffer,
+    pub squad: (u32, u32, f32),
+    pub squad_due: bool,
     /// From the last `write_params`: whether the conversion pass runs, and
     /// whether any outside rule is on (else the plain pipelines run).
     pub converts: bool,
@@ -795,11 +813,13 @@ impl Engine {
         let piles = buf("piles", &u32_bytes(&wd.piles), storage);
         let wstat = zeros("wstat", 16);
         let wb = zeros("wall build", 48);
+        let sq = zeros("squad", squad::WORDS * 4);
+        let kills = zeros("kills", squad::SHOTS_MAX * 4);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
                 &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb,
+                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -842,6 +862,10 @@ impl Engine {
             npiles: wd.npiles,
             walled: !d.wall.is_empty(),
             flows: false,
+            sq,
+            kills,
+            squad: (0, 0, 0.0),
+            squad_due: false,
             converts: false,
             outside: false,
             nsp,
@@ -1028,6 +1052,7 @@ impl Engine {
         }
         b.extend(u32_bytes(&[world, self.npiles, self.npc, 0]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
+        b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), 0]));
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.converts = s.convert > 0.0 && self.nsp > 0;
@@ -1047,6 +1072,28 @@ impl Engine {
         };
         let tick = self.tick_passes();
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
+        let (nunits, nshots, _) = self.squad;
+        let due = std::mem::take(&mut self.squad_due);
+        let dispatch = |enc: &mut wgpu::CommandEncoder, group: &wgpu::BindGroup, passes: &[(usize, u32)]| {
+            for &(p, groups) in passes {
+                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
+                pass.set_pipeline(&pipes[p]);
+                pass.set_bind_group(0, group, &[]);
+                pass.dispatch_workgroups(groups, 1, 1);
+            }
+        };
+        if due {
+            // The squad's frame start (`squad.rs`): shots, their strikes,
+            // then the smell, on the trail and scent the first tick reads.
+            let mut pre = Vec::new();
+            if nshots > 0 {
+                pre.extend([(SHOTS, nshots.div_ceil(256)), (STRIKE, self.n.div_ceil(256)), (CUT, self.cells.div_ceil(256))]);
+            }
+            if nunits > 0 {
+                pre.push((SMELL, 1));
+            }
+            dispatch(enc, &self.groups[(self.done % 2) as usize], &pre);
+        }
         for k in 0..ticks {
             let group = &self.groups[(self.done % 2) as usize];
             for (q, &(p, size)) in tick.iter().enumerate() {
@@ -1058,6 +1105,10 @@ impl Engine {
                 pass.dispatch_workgroups(size, 1, 1);
             }
             self.done += 1;
+        }
+        if due && nunits > 0 {
+            // The squad's frame end: reads, then the harvest.
+            dispatch(enc, &self.groups[(self.done % 2) as usize], &[(UNITS, 1), (HARVEST, 1)]);
         }
         let group = &self.groups[(self.done % 2) as usize];
         for &(p, groups) in &self.draw_passes(soft) {
@@ -1241,6 +1292,28 @@ impl Engine {
     /// The Larder World read back: each pile's charge and cells still
     /// crystal (from the last tick's sum), and walls' bites and cells
     /// broken so far.
+    /// The squad's frame (Larder World W2a; `squad.rs` has the CPU twins and
+    /// the order): the next `record` runs its shots, strikes and smell before
+    /// its first tick, and its reads and harvest after its last. Shots need
+    /// growth on (a struck walker's slot is emptied). `squad_out` reads the
+    /// results back.
+    pub fn set_squad(&mut self, f: &squad::Frame) {
+        assert!(f.shots.is_empty() || self.grows, "shots kill by emptying slots: growth must be on");
+        let (words, nunits, nshots) = squad::pack(self.dish.w, self.dish.h, f);
+        self.queue.write_buffer(&self.sq, 0, &u32_bytes(&words));
+        self.queue.write_buffer(&self.kills, 0, &[0u8; squad::SHOTS_MAX * 4]);
+        self.squad = (nunits, nshots, f.slime);
+        self.squad_due = true;
+        self.queue.write_buffer(&self.params, (PARAMS_BYTES - 16) as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), 0]));
+    }
+
+    /// The last squad frame's results (`set_squad`), read back.
+    pub fn squad_out(&self) -> squad::FrameOut {
+        let words: Vec<u32> = read_back(&self.device, &self.queue, &self.sq).chunks_exact(4).take(squad::PATH).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+        let kills: Vec<u32> = read_back(&self.device, &self.queue, &self.kills).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+        squad::unpack(self.dish.w, &words, &kills, self.squad.0 as usize, self.squad.1 as usize)
+    }
+
     pub fn world_counts(&self) -> (Vec<(f32, u32)>, u32, u32) {
         let piles = read_back(&self.device, &self.queue, &self.piles);
         let word = |b: &[u8], i: usize| u32::from_le_bytes(b[4 * i..4 * i + 4].try_into().unwrap());
