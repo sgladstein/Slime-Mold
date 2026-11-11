@@ -3,7 +3,7 @@ title: Larder, the mould as the enemy (shooter brainstorm)
 kind: design
 status: open
 updated: 2026-11-11
-sources: [Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
+sources: [Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 ---
 
@@ -32,10 +32,20 @@ expand once it is small) is best on 12-13 of 16. Hoard smell makes saving
 cost and drops keep a lean mould alive; hunger barely acts. Next, per the
 plan: one more mould answer that makes waiting lose against a lean mould.
 
+**Build, M3** ([report](../../Reports/larder-m3-2026-11-11.md)): two such
+answers (spores, a dormant crust) failed and were cut. What loosened the
+ladder was the soldiers: firing from range instead of walking onto an eaten
+pile, spreading shots, and a loose formation. On held-out seeds no plan is
+best on 13+ of 16 any more. The window has groups, a scent view and replays;
+its frame on Scott-Desktop is 7.2 ms mean with 40 soldiers. Next: the
+owner's playtest.
+
 ## Numbers
 
 | Measure | Result | Seeds | Paired | Source |
 |---|---|---|---|---|
+| M3, best plan per seed, held-out: reader / striker / farmer, fed and lean | 8/5/3 and 10/4/2 (M2: reader 13 and 12) | 16 (17-32) | flips striker-farmer, striker-baiter, none survives Holm over 34 | [M3 report, *Census*](../../Reports/larder-m3-2026-11-11.md) |
+| M3 window frame, 40 soldiers, Scott-Desktop (i5-6600K), scent view off / on | 7.2 / 8.9 ms mean, 9.6 / 11.6 ms p95 | 3 runs | - | [M3 report](../../Reports/larder-m3-2026-11-11.md) |
 | M2 gate, held-out: reader against farmer (fed) / baiter (lean), larder field | 13 of 16 / 12 of 16 | 16 (17-32) | p 0.021 / 0.077, neither survives Holm over 24 | [M2 report, *The census*](../../Reports/larder-m2-2026-11-11.md) |
 | M2, hoard smell off: fed reader median score | -0.300 to 0.167 | 16 (17-32) | reader over farmer 13 to 16 of 16 | [M2 report, *Each answer switched off*](../../Reports/larder-m2-2026-11-11.md) |
 | M2, drops off: lean mould wiped, baiter and reader | 16 of 16 each (5 and 11 with drops) | 16 (17-32) | - | [M2 report, *Each answer switched off*](../../Reports/larder-m2-2026-11-11.md) |
@@ -60,11 +70,12 @@ plan: one more mould answer that makes waiting lose against a lean mould.
 ## Tried and rejected
 
 - A ring of cuts raised round a pile once the mould is near (a ring held from the start works): [`dead-ends.md`](../../Reports/dead-ends.md), Larder entry.
+- Spores and a dormant crust as the mould's fourth answer ([`dead-ends.md`](../../Reports/dead-ends.md), two Larder entries).
 - The reader buying soldiers toward an army once the mould is small: the extra soldiers feed a starving mould ([`dead-ends.md`](../../Reports/dead-ends.md), larderm2 entry).
 
 ## Open
 
-- M2's next step: a starving mould spores to far piles (so waiting loses against a lean mould and attacking pays), then re-run the M2 gate. The reader should hunt a small remnant; hunger needs a lower bar or should go.
+- The owner's playtest of the M3 window (`cargo run --release --bin larder -- 17`); then M4 upgrades and the M2 gate re-run. Hunger barely acts and needs a lower bar or should go.
 
 - Make the mould answer the squad so plans can counter each other: smell growing with the bank, starving mould fighting harder at a ring, drops that pull fronts away, layouts where the best piles differ.
 - The build plan, reviewed by three independent agents and revised ([larder-build-plan-2026-11-11.md](../../Reports/larder-build-plan-2026-11-11.md); Claude Doc "Larder: build plan for the RTS demo", https://claude.ai/artifact/5ricncRubPz7WTBGJZFnHs): six milestones, M1 soldiers in the harness, M2 the mould answers back (gate: a crossover under visible conditions plus a reader plan that beats every fixed plan), M3 first playable window, M4 economy, M5 polish, M6 GPU port after S4. **M1 built** ([report](../../Reports/larder-m1-2026-11-11.md)): fortress and farmer beat idle and random 16/16 held-out; four soldiers attacking (hunter) die in ~45 game s; no mould wipe; window `cargo run --release --bin larder`.

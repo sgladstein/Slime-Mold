@@ -1,0 +1,9 @@
+larder replay seed 17 end 675
+1 order 0 clear 237.5 71
+1 order 1 clear 237.5 71
+1 order 2 clear 237.5 71
+1 order 3 clear 237.5 71
+150 buy
+151 buy
+152 order 4 burn 200 60 200 100
+153 order 5 burn 200 60 200 100

@@ -34,7 +34,7 @@ Keep this file under 150 lines; lint checks it.
 - [The RTS directions](rts/directions.md): build phase; on the field the habit cycle holds on 1 layout of 10 and salt overturns the opening; two demos.
 - [The field skirmish](rts/skirmish.md): v1 (habits, salt, lamp) set aside after play; v2, a tithe spent on beacons and spores: one plan (soft) wins 127/128, no cycle.
 - [How RTS games are designed](rts/rts-craft.md): outside research (22 sources) and what it says about our demos: dominant strategies and unmanaged snowballs, fix the structure first.
-- [Larder, the mould as the enemy](rts/shooter.md): shooter; a held ring keeps the mould off your larder; priced, ring-forever never wins but ring-then-mow tops every seed: a ladder, not a cycle; M2 (spending, mould answers) still a ladder, gate failed.
+- [Larder, the mould as the enemy](rts/shooter.md): shooter; a held ring keeps the mould off your larder; priced, ring-forever never wins but ring-then-mow tops every seed: a ladder, not a cycle; M2 (spending, mould answers) still a ladder; M3 soldiers that fire from range loosened it (no plan best on 13+/16).
 - [Two Fevers](rts/two-fevers.md): playable in the browser; owned ground with a 15 s hold; plan beats random 16/16 but by 0.537; Hush is noise so far.
 
 ## Method and owner
