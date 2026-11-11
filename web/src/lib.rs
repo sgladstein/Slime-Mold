@@ -53,6 +53,7 @@ fn verb(v: u32, arg: u32) -> Option<Verb> {
         1 => Some(Verb::Spore(i)),
         2 => Some(Verb::Rally(i)),
         3 => Habit::ALL.get(i).map(|&h| Verb::Habit(h)),
+        4 => Some(Verb::Fortify(i)),
         _ => None,
     }
 }
@@ -91,8 +92,11 @@ impl Game {
 /// mould, and a spore costs half again for each bought in the last 30 s);
 /// 2-4 that plus one of round 4's model changes: a holder's bonus at a
 /// pile (`hold` 2), upkeep that grows with size (`upkeep_size` 0.2), or
-/// desperate fights (starving walkers fight harder).
-const RULE_SETS: [&[(&str, &str)]; 5] = [
+/// desperate fights (starving walkers fight harder). 5: desperate fights
+/// with the economy sketch's Strike, a spore that lands 5 s after it is
+/// bought in view of both sides (no sleeping), against which Fortify and
+/// the rally answer.
+const RULE_SETS: [&[(&str, &str)]; 6] = [
     &[],
     &[("spore_dormant", "5"), ("dormant_abroad_only", "1"), ("spore_ramp", "0.5")],
     &[("spore_dormant", "5"), ("dormant_abroad_only", "1"), ("spore_ramp", "0.5"), ("hold", "2")],
@@ -104,6 +108,7 @@ const RULE_SETS: [&[(&str, &str)]; 5] = [
         ("fight_fed", "2"),
         ("fight_unfed", "0.5"),
     ],
+    &[("spore_ramp", "0.5"), ("fight_fed", "2"), ("fight_unfed", "0.5"), ("strike_delay", "5")],
 ];
 
 /// A new skirmish on dish `seed` against `Plan::ALL[rival]`, under
@@ -250,14 +255,18 @@ pub extern "C" fn sk_eaters(s: u32, i: u32) -> u32 {
     with(|g| if (i as usize) < g.sk.dish.piles.len() { g.sk.eaters(side(s), i as usize) } else { 0 }, 0)
 }
 
-/// Seconds left on side `s`'s beacon (`kind` 0) or rally (`kind` 1) on
-/// pile `i`, 0 if none is lit.
+/// Seconds left on side `s`'s beacon (`kind` 0), rally (1) or Fortify
+/// (2) on pile `i`, 0 if none is lit.
 #[no_mangle]
 pub extern "C" fn sk_lit(s: u32, kind: u32, i: u32) -> f32 {
     with(
         |g| {
             let sd = &g.sk.sides[side(s)];
-            let list = if kind == 0 { &sd.beacons } else { &sd.rallies };
+            let list = match kind {
+                0 => &sd.beacons,
+                1 => &sd.rallies,
+                _ => &sd.fortified,
+            };
             list.iter()
                 .find(|b| b.0 == i as usize)
                 .map_or(0.0, |b| b.1.saturating_sub(g.sk.dish.t) as f32 / STEPS_PER_SECOND as f32)
@@ -330,7 +339,7 @@ pub extern "C" fn sk_act(v: u32, arg: u32) -> u32 {
 }
 
 /// Side `s`'s purchases so far: `k` 0 beacons, 1 spores, 2 rallies, 3
-/// habit switches.
+/// habit switches, 4 fortifies.
 #[no_mangle]
 pub extern "C" fn sk_bought(s: u32, k: u32) -> u32 {
     with(
@@ -340,7 +349,8 @@ pub extern "C" fn sk_bought(s: u32, k: u32) -> u32 {
                 0 => t.beacons,
                 1 => t.spores,
                 2 => t.rallies,
-                _ => t.switches,
+                3 => t.switches,
+                _ => t.fortifies,
             }
         },
         0,
@@ -385,9 +395,70 @@ pub extern "C" fn sk_cooldown() -> f32 {
     with(|g| g.sk.cooldown_s(0), 0.0)
 }
 
+/// Your share of the score in force: food eaten, or points for ground
+/// held (`Rules::score_held`).
 #[no_mangle]
 pub extern "C" fn sk_share() -> f32 {
     with(|g| g.sk.share(), 0.5)
+}
+
+/// Your share of the food eaten and of the points for ground held, whichever
+/// score is in force (the page shows both).
+#[no_mangle]
+pub extern "C" fn sk_food_share() -> f32 {
+    with(|g| g.sk.food_share(), 0.5)
+}
+
+#[no_mangle]
+pub extern "C" fn sk_points_share() -> f32 {
+    with(|g| g.sk.points_share(), 0.5)
+}
+
+/// 1 when the score is ground held, 0 when it is food eaten.
+#[no_mangle]
+pub extern "C" fn sk_score_held() -> u32 {
+    with(|g| g.sk.rules.score_held as u32, 0)
+}
+
+/// The bell, in seconds (150, or the rule set's).
+#[no_mangle]
+pub extern "C" fn sk_bell() -> u32 {
+    with(|g| g.sk.rules.bell as u32, 150)
+}
+
+/// Seconds a spore counts down before it lands (0: at once).
+#[no_mangle]
+pub extern "C" fn sk_strike_delay() -> u32 {
+    with(|g| g.sk.rules.strike_delay as u32, 0)
+}
+
+/// The piles' regrowth, a fraction of full a second (0: none).
+#[no_mangle]
+pub extern "C" fn sk_regrow() -> f32 {
+    with(|g| g.sk.rules.regrow, 0.0)
+}
+
+/// Seconds until side `s`'s strike lands on pile `i` (`Rules::strike_delay`),
+/// 0 if none is counting down there.
+#[no_mangle]
+pub extern "C" fn sk_strike(s: u32, i: u32) -> f32 {
+    with(
+        |g| {
+            g.sk.strikes
+                .iter()
+                .filter(|k| k.side == side(s) && k.pile == i as usize)
+                .map(|k| k.lands.saturating_sub(g.sk.dish.t) as f32 / STEPS_PER_SECOND as f32)
+                .fold(0.0, f32::max)
+        },
+        0.0,
+    )
+}
+
+/// 1 if side `s` holds pile `i` for the points (its eaters there at least
+/// twice the other side's).
+#[no_mangle]
+pub extern "C" fn sk_holds(s: u32, i: u32) -> u32 {
+    with(|g| ((i as usize) < g.sk.dish.piles.len() && g.sk.holds(side(s), i as usize)) as u32, 0)
 }
 
 /// Walkers in side `s`'s mould.
