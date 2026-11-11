@@ -1,0 +1,26 @@
+== 100k, one a cell, no food (preset 1, food off): 8 seeds
+  loops   CPU 144-160 (mean 151.1)   GPU 150-161 (mean 153.9)   GPU higher 5, lower 2, sign p 0.453
+  width   CPU 5.15-5.23 (mean 5.194)   GPU 5.13-5.24 (mean 5.2)   GPU higher 4, lower 3, sign p 1
+  tube    CPU 12540.8-12793.5 (mean 1.265e+04)   GPU 12645.6-12828.3 (mean 1.271e+04)   GPU higher 6, lower 2, sign p 0.289
+  strays  CPU 0-0 (mean 0)   GPU 0-0 (mean 0)   GPU higher 0, lower 0, sign p 1
+== 100k, no limit (preset 3): 8 seeds
+  loops   CPU 0-2 (mean 0.25)   GPU 0-1 (mean 0.375)   GPU higher 2, lower 1, sign p 1
+  width   CPU 5.52-5.96 (mean 5.75)   GPU 5.65-6.14 (mean 5.814)   GPU higher 4, lower 4, sign p 1
+  tube    CPU 2934.6-3921.2 (mean 3488)   GPU 2639.3-4067.9 (mean 3487)   GPU higher 5, lower 3, sign p 0.727
+  strays  CPU 0-0 (mean 0)   GPU 0-0 (mean 0)   GPU higher 0, lower 0, sign p 1
+== 1M, Jenson settings (preset 4): 8 seeds
+  loops   CPU 38-52 (mean 44)   GPU 37-51 (mean 43)   GPU higher 4, lower 4, sign p 1
+  width   CPU 5.69-5.92 (mean 5.82)   GPU 5.83-5.92 (mean 5.862)   GPU higher 6, lower 1, sign p 0.125
+  tube    CPU 9405.4-10260.9 (mean 9787)   GPU 9431.8-10381.5 (mean 9764)   GPU higher 4, lower 4, sign p 1
+  strays  CPU 0-0 (mean 0)   GPU 0-0 (mean 0)   GPU higher 0, lower 0, sign p 1
+== 1M, respawn 1% (preset 5): 8 seeds
+  loops   CPU 187-208 (mean 196.2)   GPU 192-206 (mean 198.4)   GPU higher 5, lower 3, sign p 0.727
+  width   CPU 7.7-8.01 (mean 7.875)   GPU 7.82-8.12 (mean 7.951)   GPU higher 6, lower 2, sign p 0.289
+  tube    CPU 21670-21956.4 (mean 2.181e+04)   GPU 21733.1-22021.6 (mean 2.187e+04)   GPU higher 6, lower 2, sign p 0.289
+  strays  CPU 0.017-0.018 (mean 0.01713)   GPU 0.017-0.017 (mean 0.017)   GPU higher 0, lower 1, sign p 1
+== 32k, food on (preset 2): 16 seeds
+  loops   CPU 86-100 (mean 93.25)   GPU 92-101 (mean 95.38)   GPU higher 12, lower 2, sign p 0.0129
+  width   CPU 3.37-3.45 (mean 3.406)   GPU 3.34-3.46 (mean 3.41)   GPU higher 8, lower 7, sign p 1
+  tube    CPU 7199.5-7676.8 (mean 7464)   GPU 7382.6-7663.5 (mean 7520)   GPU higher 9, lower 7, sign p 0.804
+  strays  CPU 0.008-0.018 (mean 0.01219)   GPU 0.008-0.017 (mean 0.01244)   GPU higher 10, lower 5, sign p 0.302
+Bonferroni over 20 tests: p < 0.0025 survives: none

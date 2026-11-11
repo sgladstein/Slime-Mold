@@ -1,0 +1,5 @@
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan, Cpu, driver llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2))
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 8
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 23.063, worst 49.046; GPU ms ticks 20.118, drawing 2.744
+dish at 10.0s: tube 3559.8  loops 1  width 5.90  reach 167.7  piles 7/7  strays 0.000
+wrote /tmp/sandbox-review/crowd0-s8-010s.png

@@ -1,0 +1,6 @@
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Game, seed 8
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 1.109, worst 1.815; GPU ms ticks 0.931, drawing 0.057
+dish at 10.0s: tube 3316.2  loops 1  width 5.65  reach 165.1  piles 7/7  strays 0.000
+wrote target\sandbox-review\pics/crowd0-s8-010s.png
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.110, walk 0.036, trail 0.129, scent 0.160, draw 0.054

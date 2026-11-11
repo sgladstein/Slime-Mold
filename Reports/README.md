@@ -155,7 +155,9 @@ move.
   packed home blob stays a bag (3 piles at 20 s against 4). 100,000 walkers make 164 loops at 10 s.
   The owner picked 100,000 walkers (22:32Z). The GPU timing test (`examples/gputime.rs`, four wgpu compute passes a
   tick) is built; on a software GPU its dish matches the CPU's (165 loops against 163 at 100k, 10 s) and it waits for
-  the owner's GTX 1070.
+  the owner's GTX 1070. *Since 11-11:* run there, 1.37 ms for a frame of two ticks at 100k (the gate's timing part;
+  raw recovered by the review into `gpu-plan-2026-11-10/raw/`); the independent review's corrections are dated in
+  the plan (one seed, no raw for phase 1's step table).
 
 - [jenson-compare-2026-11-10.md](jenson-compare-2026-11-10.md) — **research with small tests, no game change: why
   Jenson's clips look different from our mould.** Owner asked 22:48Z. Jenson's GIFs against the big dish (no food), and
@@ -171,6 +173,16 @@ move.
   owner's ask, 2026-11-11 00:06Z). On a software GPU its dishes match the
   CPU's at 10 s, seed 1 (100k one a cell: 148 loops against 151; 1M with
   respawn: 200 against 200), and the same seed gives the same frame twice.
+  On the GTX 1070, 100k walkers take 1.3 ms of GPU a frame with the drawing.
+  The twin test (one GPU tick against one CPU tick) runs in CI on software
+  Vulkan. *Independent review (11-11):* fed scent and jumps after the step
+  were missing on the GPU (key 2 strays 3.6% against the CPU's 0.8-1.8%;
+  key 5 width outside all 8 CPU seeds); fixed, and on 8-16 seeds on both
+  GPUs no measure differs after Bonferroni over 20. The window's slow
+  frames were the GPU's clocks stepping down at light load (797 MHz, memory
+  810 MHz); the Jenson settings cost twice ours in the sense pass. Seed
+  tables, per-pass costs and clock logs in
+  [`gpu-sandbox-2026-11-11/review/`](gpu-sandbox-2026-11-11/review/).
 - [jenson-looks-2026-11-11.md](jenson-looks-2026-11-11.md) — **research with small tests, no game change: Jenson's
   three missing looks on the big dish.** Owner asked 00:06Z. New `BigParams` rules, all off by default: a centred
   starting disc and haze, 36 Points' trail-dependent settings, Bleuje's square-root deposit, a sensing floor, wander, and
