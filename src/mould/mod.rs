@@ -58,6 +58,7 @@
 
 pub mod big;
 pub mod fever;
+pub mod larder;
 pub mod lesson;
 pub mod level;
 pub mod look;
@@ -1680,6 +1681,62 @@ impl Dish {
             }
             _ => {}
         }
+    }
+
+    /// **A soldier's shot** (Larder, `larder.rs`): the snip's dab, laid
+    /// along a segment, without the snip's budget, phase check or painted
+    /// mark. Each cell within `r` of the segment loses its trail and, off a
+    /// pile, is wounded until step `heal` (a wound already open stays open
+    /// to the later of the two). Walkers within `r` of the segment die.
+    /// Returns how many died.
+    ///
+    /// Why not `begin_stroke`: the stroke spends `snips_left`, refuses
+    /// outside the growing phase, pushes a `snip_marks` flash (a painted
+    /// effect, and a list never pruned: ~3.5M entries over a 15-minute
+    /// round) and runs `kill_in`, a pass over every walker, once per dab,
+    /// about 20 passes for one 24-cell line. Here the walkers are passed
+    /// once per shot (engineering review, 2026-11-11, findings 5 and 6).
+    pub fn fire(&mut self, a: (f32, f32), b: (f32, f32), r: f32, heal: u64) -> u32 {
+        let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+        let len2 = (dx * dx + dy * dy).max(1e-6);
+        let dist2 = |x: f32, y: f32| {
+            let t = (((x - a.0) * dx + (y - a.1) * dy) / len2).clamp(0.0, 1.0);
+            let (px, py) = (a.0 + dx * t, a.1 + dy * t);
+            (x - px).powi(2) + (y - py).powi(2)
+        };
+        let r2 = r * r;
+        let (x0, x1) = ((a.0.min(b.0) - r).floor().max(0.0) as usize, (a.0.max(b.0) + r).ceil().max(0.0) as usize);
+        let (y0, y1) = ((a.1.min(b.1) - r).floor().max(0.0) as usize, (a.1.max(b.1) + r).ceil().max(0.0) as usize);
+        for y in y0..=y1.min(H - 1) {
+            for x in x0..=x1.min(W - 1) {
+                if dist2(x as f32 + 0.5, y as f32 + 0.5) > r2 {
+                    continue;
+                }
+                let i = idx(x, y);
+                self.trail[i] = 0.0;
+                if self.ground[i] == Ground::Agar && !self.on_pile(i) {
+                    self.ground[i] = Ground::Wound;
+                    self.wounds.push((i, heal));
+                    self.wound_until[i] = heal;
+                    self.counts.wound_cells += 1;
+                } else if self.ground[i] == Ground::Wound && self.wound_until[i] < heal {
+                    self.wounds.push((i, heal));
+                    self.wound_until[i] = heal;
+                }
+            }
+        }
+        let mut killed = 0;
+        let mut k = 0;
+        while k < self.walkers.len() {
+            let w = self.walkers[k];
+            if dist2(w.x, w.y) <= r2 {
+                self.remove_walker(k, Kill::Snip);
+                killed += 1;
+            } else {
+                k += 1;
+            }
+        }
+        killed
     }
 
     fn on_pile(&self, i: usize) -> bool {

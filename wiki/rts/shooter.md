@@ -3,8 +3,8 @@ title: Larder, the mould as the enemy (shooter brainstorm)
 kind: design
 status: open
 updated: 2026-11-11
-sources: [Reports/mould-shooter-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
+sources: [Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
+code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 ---
 
 # Larder, the mould as the enemy (shooter brainstorm)
@@ -53,7 +53,7 @@ folder.
 ## Open
 
 - Make the mould answer the squad so plans can counter each other: smell growing with the bank, starving mould fighting harder at a ring, drops that pull fronts away, layouts where the best piles differ.
-- The build plan, reviewed by three independent agents and revised ([larder-build-plan-2026-11-11.md](../../Reports/larder-build-plan-2026-11-11.md); Claude Doc "Larder: build plan for the RTS demo", https://claude.ai/artifact/5ricncRubPz7WTBGJZFnHs): six milestones, M1 soldiers in the harness, M2 the mould answers back (gate: a crossover under visible conditions plus a reader plan that beats every fixed plan), M3 first playable window, M4 economy, M5 polish, M6 GPU port after S4. Not built.
+- The build plan, reviewed by three independent agents and revised ([larder-build-plan-2026-11-11.md](../../Reports/larder-build-plan-2026-11-11.md); Claude Doc "Larder: build plan for the RTS demo", https://claude.ai/artifact/5ricncRubPz7WTBGJZFnHs): six milestones, M1 soldiers in the harness, M2 the mould answers back (gate: a crossover under visible conditions plus a reader plan that beats every fixed plan), M3 first playable window, M4 economy, M5 polish, M6 GPU port after S4. **M1 built** ([report](../../Reports/larder-m1-2026-11-11.md)): fortress and farmer beat idle and random 16/16 held-out; four soldiers attacking (hunter) die in ~45 game s; no mould wipe; window `cargo run --release --bin larder`.
 - Re-run smell on a dish the mould takes 30 s or more to cross.
 - Versus (two squads, one mould) is set aside for now (owner, 00:30Z: solo first).
 

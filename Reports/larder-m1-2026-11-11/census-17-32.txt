@@ -1,0 +1,109 @@
+Larder M1 census: 16 seeds (17-32), squad 4, cap 900 game s, a game second = 15 steps
+
+idle:
+  seed 17: score -1.826  squad wiped  at  157  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   54  larder bite   59  core down    -  walkers  6739
+  seed 18: score -1.833  squad wiped  at  150  left 0  shots   200  spent   2000  harvested      0  front out    5  first touch   48  larder bite   47  core down    -  walkers  6707
+  seed 19: score -1.823  squad wiped  at  159  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   58  larder bite   53  core down    -  walkers  6733
+  seed 20: score -1.817  squad wiped  at  165  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   43  larder bite   44  core down    -  walkers  6802
+  seed 21: score -1.816  squad wiped  at  166  left 0  shots   200  spent   2000  harvested      0  front out    2  first touch   96  larder bite   81  core down    -  walkers  6738
+  seed 22: score -1.826  squad wiped  at  157  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   72  larder bite   91  core down    -  walkers  6811
+  seed 23: score -1.821  squad wiped  at  161  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   80  larder bite   43  core down    -  walkers  6726
+  seed 24: score -1.833  squad wiped  at  150  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   60  larder bite   81  core down    -  walkers  6750
+  seed 25: score -1.805  squad wiped  at  176  left 0  shots   200  spent   2000  harvested      0  front out    2  first touch   73  larder bite  117  core down    -  walkers  6786
+  seed 26: score -1.835  squad wiped  at  149  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   63  larder bite   61  core down    -  walkers  6752
+  seed 27: score -1.841  squad wiped  at  143  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   84  larder bite   50  core down    -  walkers  6738
+  seed 28: score -1.829  squad wiped  at  154  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   47  larder bite   47  core down    -  walkers  6729
+  seed 29: score -1.812  squad wiped  at  169  left 0  shots   200  spent   2000  harvested      0  front out    2  first touch   86  larder bite  140  core down    -  walkers  6768
+  seed 30: score -1.814  squad wiped  at  167  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch  137  larder bite   67  core down    -  walkers  6756
+  seed 31: score -1.825  squad wiped  at  157  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   76  larder bite   75  core down    -  walkers  6766
+  seed 32: score -1.836  squad wiped  at  148  left 0  shots   200  spent   2000  harvested      0  front out    2  first touch   79  larder bite   69  core down    -  walkers  6746
+  median score -1.825; mould wiped 0, cap 0, squad wiped 16; median end 157 s; median shots 200
+
+random:
+  seed 17: score -1.895  squad wiped  at   94  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   36  larder bite   36  core down    -  walkers  8172
+  seed 18: score -1.930  squad wiped  at   63  left 0  shots   130  spent   1300  harvested      0  front out    5  first touch   23  larder bite   25  core down    -  walkers  6114
+  seed 19: score -1.912  squad wiped  at   79  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   38  larder bite   46  core down    -  walkers  6933
+  seed 20: score -1.891  squad wiped  at   98  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   36  larder bite   37  core down    -  walkers  6981
+  seed 21: score -1.910  squad wiped  at   81  left 0  shots   200  spent   2000  harvested      0  front out    2  first touch   39  larder bite   34  core down    -  walkers  6697
+  seed 22: score -1.895  squad wiped  at   94  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   38  larder bite   39  core down    -  walkers  7977
+  seed 23: score -1.914  squad wiped  at   78  left 0  shots   198  spent   1980  harvested      0  front out    3  first touch   35  larder bite   34  core down    -  walkers  6428
+  seed 24: score -1.909  squad wiped  at   82  left 0  shots   196  spent   1960  harvested      0  front out    3  first touch   29  larder bite   29  core down    -  walkers  6962
+  seed 25: score -1.903  squad wiped  at   88  left 0  shots   200  spent   2000  harvested      0  front out    2  first touch   45  larder bite   46  core down    -  walkers  7178
+  seed 26: score -1.897  squad wiped  at   93  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   30  larder bite   29  core down    -  walkers  7318
+  seed 27: score -1.897  squad wiped  at   93  left 0  shots   181  spent   1810  harvested      0  front out    3  first touch   30  larder bite   33  core down    -  walkers  7447
+  seed 28: score -1.904  squad wiped  at   86  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   37  larder bite   38  core down    -  walkers  7302
+  seed 29: score -1.905  squad wiped  at   85  left 0  shots   189  spent   1890  harvested      0  front out    2  first touch   34  larder bite   42  core down    -  walkers  7035
+  seed 30: score -1.900  squad wiped  at   90  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   49  larder bite   51  core down    -  walkers  7290
+  seed 31: score -1.912  squad wiped  at   79  left 0  shots   200  spent   2000  harvested      0  front out    3  first touch   29  larder bite   29  core down    -  walkers  7200
+  seed 32: score -1.908  squad wiped  at   83  left 0  shots   200  spent   2000  harvested      0  front out    2  first touch   31  larder bite   31  core down    -  walkers  7339
+  median score -1.904; mould wiped 0, cap 0, squad wiped 16; median end 86 s; median shots 200
+
+fortress:
+  seed 17: score -0.167  cap          at  900  left 4  shots  2809  spent  28090  harvested  26700  front out    3  first touch    -  larder bite  768  core down    -  walkers  2817
+  seed 18: score -0.167  cap          at  900  left 4  shots  2775  spent  27750  harvested  26700  front out    5  first touch    -  larder bite    -  core down    -  walkers  2920
+  seed 19: score -0.167  cap          at  900  left 4  shots  2753  spent  27530  harvested  26700  front out    3  first touch    -  larder bite    -  core down    -  walkers  2927
+  seed 20: score -0.167  cap          at  900  left 4  shots  2816  spent  28160  harvested  26700  front out    3  first touch    -  larder bite    -  core down    -  walkers  2849
+  seed 21: score -0.167  cap          at  900  left 4  shots  2791  spent  27910  harvested  26700  front out    2  first touch    -  larder bite  560  core down    -  walkers  2936
+  seed 22: score -0.167  cap          at  900  left 4  shots  2799  spent  27990  harvested  26700  front out    3  first touch    -  larder bite    -  core down    -  walkers  2878
+  seed 23: score -0.167  cap          at  900  left 4  shots  2784  spent  27840  harvested  26700  front out    3  first touch    -  larder bite    -  core down    -  walkers  2813
+  seed 24: score -0.167  cap          at  900  left 4  shots  2818  spent  28180  harvested  26700  front out    3  first touch    -  larder bite    -  core down    -  walkers  2883
+  seed 25: score -0.167  cap          at  900  left 4  shots  2753  spent  27530  harvested  26700  front out    2  first touch    -  larder bite  433  core down    -  walkers  2838
+  seed 26: score -0.167  cap          at  900  left 4  shots  2787  spent  27870  harvested  26700  front out    3  first touch    -  larder bite    -  core down    -  walkers  2811
+  seed 27: score -0.167  cap          at  900  left 4  shots  2804  spent  28040  harvested  26700  front out    3  first touch    -  larder bite    -  core down    -  walkers  2887
+  seed 28: score -0.167  cap          at  900  left 4  shots  2789  spent  27890  harvested  26700  front out    3  first touch    -  larder bite    -  core down    -  walkers  2854
+  seed 29: score -0.167  cap          at  900  left 4  shots  2777  spent  27770  harvested  26700  front out    2  first touch    -  larder bite  790  core down    -  walkers  2863
+  seed 30: score -0.167  cap          at  900  left 4  shots  2829  spent  28290  harvested  26700  front out    3  first touch    -  larder bite    -  core down    -  walkers  2720
+  seed 31: score -0.167  cap          at  900  left 4  shots  2815  spent  28150  harvested  26700  front out    3  first touch    -  larder bite  204  core down    -  walkers  2727
+  seed 32: score -0.167  cap          at  900  left 4  shots  2822  spent  28220  harvested  26700  front out    2  first touch    -  larder bite    -  core down    -  walkers  2815
+  median score -0.167; mould wiped 0, cap 16, squad wiped 0; median end 900 s; median shots 2799
+
+farmer:
+  seed 17: score  0.000  cap          at  900  left 4  shots  1190  spent  11900  harvested  29400  front out    3  first touch   38  larder bite   38  core down    -  walkers  2449
+  seed 18: score  0.000  cap          at  900  left 4  shots  1082  spent  10820  harvested  29400  front out    5  first touch   52  larder bite   52  core down    -  walkers  2339
+  seed 19: score  0.000  cap          at  900  left 4  shots  1059  spent  10590  harvested  29400  front out    3  first touch   59  larder bite   59  core down    -  walkers  2620
+  seed 20: score -0.167  cap          at  900  left 4  shots  1071  spent  10710  harvested  29400  front out    3  first touch   53  larder bite   41  core down    -  walkers  2659
+  seed 21: score  0.000  cap          at  900  left 4  shots   900  spent   9000  harvested  29400  front out    2  first touch  121  larder bite   72  core down    -  walkers  2739
+  seed 22: score  0.000  cap          at  900  left 4  shots  1228  spent  12280  harvested  29400  front out    3  first touch   72  larder bite   42  core down    -  walkers  2507
+  seed 23: score  0.000  cap          at  900  left 4  shots  1077  spent  10770  harvested  29400  front out    3  first touch   68  larder bite   68  core down    -  walkers  2389
+  seed 24: score  0.000  cap          at  900  left 4  shots  1141  spent  11410  harvested  29400  front out    3  first touch   52  larder bite   74  core down    -  walkers  2336
+  seed 25: score  0.000  cap          at  900  left 4  shots  1040  spent  10400  harvested  29400  front out    2  first touch   47  larder bite   47  core down    -  walkers  2570
+  seed 26: score  0.000  cap          at  900  left 4  shots  1181  spent  11810  harvested  29400  front out    3  first touch   37  larder bite   37  core down    -  walkers  2503
+  seed 27: score  0.000  cap          at  900  left 4  shots  1155  spent  11550  harvested  29400  front out    3  first touch   45  larder bite   45  core down    -  walkers  2431
+  seed 28: score  0.000  cap          at  900  left 4  shots  1136  spent  11360  harvested  29400  front out    3  first touch   73  larder bite   73  core down    -  walkers  2519
+  seed 29: score  0.000  cap          at  900  left 4  shots  1101  spent  11010  harvested  29400  front out    2  first touch   77  larder bite   63  core down    -  walkers  2691
+  seed 30: score  0.000  cap          at  900  left 4  shots  1167  spent  11670  harvested  29400  front out    3  first touch   50  larder bite   51  core down    -  walkers  2517
+  seed 31: score -0.500  cap          at  900  left 3  shots  1347  spent  13470  harvested  29400  front out    3  first touch   42  larder bite   42  core down    -  walkers  2621
+  seed 32: score  0.000  cap          at  900  left 4  shots  1136  spent  11360  harvested  29400  front out    2  first touch   74  larder bite   75  core down    -  walkers  2537
+  median score 0.000; mould wiped 0, cap 16, squad wiped 0; median end 900 s; median shots 1136
+
+hunter:
+  seed 17: score -1.953  squad wiped  at   42  left 0  shots   104  spent   1040  harvested      0  front out    3  first touch   16  larder bite   31  core down    -  walkers  2491
+  seed 18: score -1.956  squad wiped  at   40  left 0  shots    96  spent    960  harvested      0  front out    5  first touch   16  larder bite   33  core down    -  walkers  2924
+  seed 19: score -1.953  squad wiped  at   43  left 0  shots   112  spent   1120  harvested      0  front out    3  first touch   15  larder bite   38  core down    -  walkers  3383
+  seed 20: score -1.950  squad wiped  at   45  left 0  shots   121  spent   1210  harvested      0  front out    3  first touch   16  larder bite   28  core down    -  walkers  3746
+  seed 21: score -1.934  squad wiped  at   60  left 0  shots   172  spent   1720  harvested      0  front out    2  first touch   16  larder bite   34  core down    -  walkers  4774
+  seed 22: score -1.953  squad wiped  at   42  left 0  shots   104  spent   1040  harvested      0  front out    3  first touch   16  larder bite   33  core down    -  walkers  2607
+  seed 23: score -1.949  squad wiped  at   46  left 0  shots   123  spent   1230  harvested      0  front out    3  first touch   16  larder bite   35  core down    -  walkers  3794
+  seed 24: score -1.952  squad wiped  at   43  left 0  shots   107  spent   1070  harvested      0  front out    3  first touch   16  larder bite   35  core down    -  walkers  2444
+  seed 25: score -1.954  squad wiped  at   41  left 0  shots   104  spent   1040  harvested      0  front out    2  first touch   16  larder bite   35  core down    -  walkers  3309
+  seed 26: score -1.942  squad wiped  at   52  left 0  shots   138  spent   1380  harvested      0  front out    3  first touch   16  larder bite   36  core down    -  walkers  4310
+  seed 27: score -1.955  squad wiped  at   40  left 0  shots    99  spent    990  harvested      0  front out    3  first touch   16  larder bite   32  core down    -  walkers  2317
+  seed 28: score -1.930  squad wiped  at   63  left 0  shots   185  spent   1850  harvested      0  front out    3  first touch   16  larder bite   35  core down    -  walkers  4257
+  seed 29: score -1.953  squad wiped  at   42  left 0  shots   107  spent   1070  harvested      0  front out    2  first touch   16  larder bite   35  core down    -  walkers  2966
+  seed 30: score -1.945  squad wiped  at   49  left 0  shots   139  spent   1390  harvested      0  front out    3  first touch   16  larder bite   33  core down    -  walkers  3738
+  seed 31: score -1.935  squad wiped  at   59  left 0  shots   174  spent   1740  harvested      0  front out    3  first touch   16  larder bite   33  core down    -  walkers  4600
+  seed 32: score -1.932  squad wiped  at   61  left 0  shots   181  spent   1810  harvested      0  front out    2  first touch   16  larder bite   30  core down    -  walkers  4481
+  median score -1.950; mould wiped 0, cap 0, squad wiped 16; median end 45 s; median shots 121
+
+Gate comparisons (paired by seed, ties dropped, Holm over 6):
+  fortress > idle      16 of 16  p 0.00003  Holm survives  gate (15+ of 16) PASS
+  fortress > random    16 of 16  p 0.00003  Holm survives  gate (15+ of 16) PASS
+  farmer > idle        16 of 16  p 0.00003  Holm survives  gate (15+ of 16) PASS
+  farmer > random      16 of 16  p 0.00003  Holm survives  gate (15+ of 16) PASS
+  hunter > idle         0 of 16  p 0.00003  Holm survives  gate (15+ of 16) FAIL
+  hunter > random       0 of 16  p 0.00003  Holm survives  gate (15+ of 16) FAIL
+  band mould wiped: 0 of 80 runs (0%)
+  band cap        : 32 of 80 runs (40%)
+  band squad wiped: 48 of 80 runs (60%)
+  front travel (idle: front out to first touch or larder bite) >= 10 s on 16 of 16; median 71 s
+(137.6 s)
