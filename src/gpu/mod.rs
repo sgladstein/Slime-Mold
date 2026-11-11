@@ -853,7 +853,7 @@ impl Engine {
         // Growth: its upkeep as the dish was made with (off stays off).
         let upkeep = if self.grows { s.upkeep.max(f32::MIN_POSITIVE) } else { 0.0 };
         b.extend(f32_bytes(&[upkeep, s.birth_energy, s.birth_cost, s.starve]));
-        let mask = (self.n.max(2).next_power_of_two() - 1) as u32;
+        let mask = self.n.max(2).next_power_of_two() - 1;
         b.extend(u32_bytes(&[stream(seed, DRAW_STARVE), stream(seed, DRAW_BIRTH), stream(seed, CLAIM_BIRTH), mask, 0, 0]));
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.converts = s.convert > 0.0 && self.nsp > 0;
