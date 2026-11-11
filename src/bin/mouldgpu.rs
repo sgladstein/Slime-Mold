@@ -19,8 +19,12 @@
 //!   floor, wander) and CONTAGION (sickness, immunity, the germ field).
 //! - Up / Down picks a control, Left / Right changes it (Shift: bigger steps).
 //! - Space pauses, `.` steps one tick, R restarts, N restarts on a new seed.
-//! - Left drag pulls walkers to the mouse (they jump there, as respawned
-//!   walkers do; Jenson's 2020 performance spawned particles with a stylus).
+//! - Left drag drops walkers at the mouse: each tick 0.2% of all walkers,
+//!   taken from random places on the dish, jump into a disc under it, as
+//!   respawned walkers jump (Jenson's 2020 performance spawned particles
+//!   with a stylus). It reads as painting mould on; the walkers taken are
+//!   spread too thin to see go. (Called "pulls" until the owner's playtest,
+//!   2026-11-11 04:04Z, found it works as a deposit.)
 //!   Right drag wipes the trail (and germ) under the mouse. Middle drag, or
 //!   I once, makes the walkers under the mouse sick. F drops a food pile at
 //!   the mouse. Esc quits.
@@ -1896,12 +1900,18 @@ impl App {
             let ms = self.stamps.as_ref().map_or("GPU TIME N/A".to_string(), |st| format!("GPU {:.2} MS A FRAME (TICKS {:.2} + DRAWING {:.2})", st.sim_ms + st.draw_ms, st.sim_ms, st.draw_ms));
             (d, ms)
         });
-        let sick = if self.s.sick_on() { "  MIDDLE DRAG OR I INFECTS" } else { "" };
+        // Each line fits the 1024-cell dish at the crisp font's 12 px a
+        // character (`the_bottom_lines_fit_the_dish`).
+        let mouse = if self.s.sick_on() {
+            "LEFT DROPS WALKERS  RIGHT WIPES  MIDDLE OR I INFECTS  F DROPS FOOD  ESC QUITS"
+        } else {
+            "LEFT DRAG DROPS WALKERS  RIGHT DRAG WIPES  F DROPS FOOD  ESC QUITS"
+        };
         let bottom = vec![
             ("1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(), WHITE),
-            ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 SICK ROPES".to_string(), WHITE),
+            ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(), WHITE),
             ("ARROWS PICK AND CHANGE (SHIFT: MORE)  SPACE PAUSE  . STEP  R RESTART  N NEW SEED".to_string(), DIM),
-            (format!("LEFT DRAG PULLS  RIGHT DRAG WIPES  F DROPS FOOD{sick}  ESC QUITS"), DIM),
+            (mouse.to_string(), DIM),
             (format!("{ms}  {:.0} FPS  {:.1} S  SEED {}{}", self.fps, done as f64 / STEPS_PER_SECOND as f64, self.s.seed, if self.paused { "  PAUSED" } else { "" }), WHITE),
         ];
         (lines, bottom)
@@ -2413,6 +2423,20 @@ mod tests {
         for t in texts {
             for c in t.chars() {
                 assert!(hud::has_crisp_glyph(c), "{c:?} in {t:?} has no glyph");
+            }
+        }
+    }
+
+    /// The looks build's preset line (87 characters) and the mouse line
+    /// with contagion on (84) ran past the right edge of the 1024-cell dish.
+    #[test]
+    fn the_bottom_lines_fit_the_dish() {
+        for k in [0, 9] {
+            let app = App::new(preset(k), k, 4);
+            let (_, bottom) = app.panel_lines();
+            for (t, _) in bottom {
+                // Drawn from x = 4 at twice the font's logical size.
+                assert!(8 + 2 * hud::text_width(&t) <= 1024, "{t:?} is wider than the dish");
             }
         }
     }
