@@ -952,7 +952,7 @@ impl Knob {
             Knob::TrailPower => "TRAIL POWER",
             Knob::Cap => "SQRT DEPOSIT CAP",
             Knob::Floor => "SENSING FLOOR",
-            Knob::Wander => "WANDER A LOOK",
+            Knob::Wander => "WANDER A TICK",
             Knob::Sick => "SICK FOR",
             Knob::Immune => "IMMUNE FOR",
             Knob::Catch => "CATCHES AT GERM",

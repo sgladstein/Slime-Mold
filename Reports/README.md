@@ -183,6 +183,13 @@ move.
   810 MHz); the Jenson settings cost twice ours in the sense pass. Seed
   tables, per-pass costs and clock logs in
   [`gpu-sandbox-2026-11-11/review/`](gpu-sandbox-2026-11-11/review/).
+  *Looks as controls (11-11):* the looks report's rules (disc and haze,
+  trail-set settings, deposit cap, floor, wander, contagion) on two new
+  panel pages and seven presets (keys 9, 0, Shift+1-5); a new twin test
+  matches them to the bit on six dishes (planted bugs: 7165 and 3046
+  walkers off). Off, they cost 0.01 ms a frame on the GTX 1070; contagion
+  0.3 ms at 100k; the 1M presets 3.9-9.8 ms. Videos, raw output and the
+  1070's runs in [`gpu-sandbox-2026-11-11/looks/`](gpu-sandbox-2026-11-11/looks/).
 - [jenson-looks-2026-11-11.md](jenson-looks-2026-11-11.md) — **research with small tests, no game change: Jenson's
   three missing looks on the big dish.** Owner asked 00:06Z. New `BigParams` rules, all off by default: a centred
   starting disc and haze, 36 Points' trail-dependent settings, Bleuje's square-root deposit, a sensing floor, wander, and
