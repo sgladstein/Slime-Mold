@@ -2,9 +2,9 @@
 title: The mould at scale (outside models and the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-11T15:40Z
+updated: 2026-11-11T15:56Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, research/sources/primordia.md, research/sources/reginato-2024.md, Reports/creatures-2026-11-11.md]
-code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost, BigParams::crystal_charge, BigParams::crystal_regrow, BigParams::terrain_rock, BigParams::rect, BigDish::build_wall, BigParams::wall_hp]
+code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost, BigParams::crystal_charge, BigParams::crystal_regrow, BigParams::terrain_rock, BigParams::rect, BigDish::build_wall, BigParams::wall_hp, BigParams::wall_scent, BigParams::crystal_flow]
 ---
 
 # The mould at scale (outside models and the GPU plan)
@@ -170,11 +170,13 @@ lasting round trunk; Bleuje's square-root deposit (`deposit_cap`) gave even
 polygons at once. Every outside source has a card in
 [`research/sources/`](../../research/sources/README.md).
 
-**World fields for the Larder World (W1a, 2026-11-11, [roadmap](../../Reports/larder-world-roadmap-2026-11-11.md)).** These are on the CPU big dish and off by default:
+**World fields for the Larder World (W1a, 2026-11-11, [roadmap](../../Reports/larder-world-roadmap-2026-11-11.md)).** These are on the CPU big dish. Crystals, terrain and the rectangular world are off by default; the wall and flow defaults act once walls or crystals exist:
 - `crystal_charge`, `crystal_eat` and `crystal_regrow`: finite charge in each pile cell. The walkers on a cell take equal shares. Pile scent is multiplied by the share of charge left, and the picture's glow is the charge.
 - `terrain_rock` and `terrain_wet`: keyed value noise, the same map at every scale. Rock is not agar, and wet ground halves the step.
 - `rect`: a rectangular world.
 - `BigDish::build_wall`: a player wall that leaves the agar, so walkers, trail and scent all stay out.
+- `wall_hp` (default 400) and `wall_bite`: blocked walkers wear a wall cell down to slow rubble (owner, 15:24Z). A caged 20k-walker mould breaks out by 20-30 s; at 1,600 it is still inside at 40 s; a tube passing a ringed crystal bites it 0-76 times in 35 s. `wall_scent` (scent through walls) is built and off.
+- `crystal_flow` (default 0.01): charge flows inside a crystal toward the eaten cells, so a tube touching one edge drains the whole disc. Share of the other crystals eaten by 40 s: 0.476 to 0.829, 12 of 12 seeds, p 0.0005.
 
 At 512 × 320 the cost is within noise. A first wall test showed no effect while the walker count is fixed (road wall against none, 5 of 8 seeds, p 0.73). It waits on growth (W0).
 

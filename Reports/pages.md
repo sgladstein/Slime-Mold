@@ -46,3 +46,4 @@ if the link ever stops working. Newest last.
 | 11-11 | Grazing Mould Cells (droplets that crawl by grazing, two species of cells, conversion tries) | https://claude.ai/artifact/YYZJSPdm6VAb857m7WnJLR | `creatures-2026-11-11/` (page.html, `pics/`, graze.sh, drift.py, `raw/`) |
 | 11-11 | Larder M2 Census | https://claude.ai/artifact/1LKdbtQbsQJxv76ApxThRw | `larder-m2-2026-11-11/` (open `page.html`; pictures in `look/`) |
 | 11-11 | Larder M3 Window | https://claude.ai/artifact/CXSwsJbdxKyi2G5TnZhxZ4 | `larder-m3-2026-11-11/` (open `page.html`; pictures in `pics/`, made with `larder shot` from `pics/clear.txt`) |
+| 11-11 | Larder Walls and Crystals (walls the mould wears down; crystals that drain as a whole) | https://claude.ai/artifact/ChBBfKkuMYaggBvXCKrxtN | `larder-world-roadmap-2026-11-11/` (open `page-walls.html`; pictures in `walls/` and `crystals/`, raw runs beside them) |

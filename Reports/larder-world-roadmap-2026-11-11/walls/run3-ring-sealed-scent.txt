@@ -1,0 +1,25 @@
+# worldwall ring arm, first run (stopped after 3 seeds; walls block scent; seed 2 had no unreached crystal and fell back to ringing home, a bug)
+## ring-none.txt
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1
+seed 1 none   wall     0 drained 0.4928 of others  home left 0.000  ring pile bitten 5.8s  left 0.803  broken 0  hash 226ffed617b52609
+seed 2 none   wall     0 drained 0.5609 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  hash d4151ead051c5cf9
+seed 3 none   wall     0 drained 0.4984 of others  home left 0.000  ring pile bitten 8.6s  left 0.783  broken 0  hash 7ebdce113b5dd1f5
+seed 4 none   wall     0 drained 0.3578 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 50e723eef41efcc2
+## ring-hp0.txt
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 0 wall_bite 1
+seed 1 ring   wall   497 drained 0.4776 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash ece70d5dc75d9128
+seed 2 ring   wall   498 drained 0.5650 of others  home left 0.000  ring pile bitten never  left 0.000  broken 0  hash c4db542fb93f6a2b
+seed 3 ring   wall   499 drained 0.4997 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash bbdeacd69836abc2
+seed 4 ring   wall   492 drained 0.3578 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash b32244c2677cc9e4
+## ring-hp30.txt
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 30 wall_bite 1
+seed 1 ring   wall   497 drained 0.4776 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 148cd79792f935a3
+seed 2 ring   wall   498 drained 0.5481 of others  home left 0.000  ring pile bitten never  left 0.000  broken 498  hash 986bbb5b863f2716
+seed 3 ring   wall   499 drained 0.4997 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash fa374cc5fe78e145
+seed 4 ring   wall   492 drained 0.3578 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 576740c0b90a2b24
+## ring-hp300.txt
+worldwall scale 2 walkers 20000 seconds 40 wall_hp 300 wall_bite 1
+seed 1 ring   wall   497 drained 0.4776 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 9ffb748acf45829c
+seed 2 ring   wall   498 drained 0.5604 of others  home left 0.000  ring pile bitten never  left 0.000  broken 498  hash c54975bc760fb8ac
+seed 3 ring   wall   499 drained 0.4997 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash c8f16fb2a1e8d341
+seed 4 ring   wall   492 drained 0.3578 of others  home left 0.000  ring pile bitten never  left 1.000  broken 0  hash 35b030fd885fea3c

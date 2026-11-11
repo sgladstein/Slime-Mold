@@ -74,3 +74,36 @@ First look, 512 × 320, 20k walkers, 23 crystals, seed 1 ([5 s](larder-world-roa
 - Run 2 ([raw](larder-world-roadmap-2026-11-11/walls/run2-wall-at-front.txt)): the road wall drained less than none on 5 of 8 seeds (two-sided sign test p 0.73) and less than random on 6 of 8 (p 0.29). The differences run from -0.060 to +0.041 of the charge. **No effect.**
 
 Why: the walker count is fixed, so the mould's total eating rate is set by how many walkers stand on crystals, not by which crystals it reaches. A 60-cell wall is also simply walked around ([seed 1](larder-world-roadmap-2026-11-11/walls/run2-s1-road.png)). This says nothing yet about walls in play. It says the test needs W0's growth, where cutting the mould off from crystals should shrink it. Rerun when W0 merges, with the mould's walker count at 30 and 60 s as the measure.
+
+## Walls the mould can wear down, and crystals that drain as a whole, 2026-11-11
+
+Page: [Larder Walls and Crystals](https://claude.ai/artifact/ChBBfKkuMYaggBvXCKrxtN) (source `larder-world-roadmap-2026-11-11/page-walls.html`).
+
+**Owner, 15:24Z:** "There should be a way for slime to damage walls or grow over it (but it has to be a significant slow down), otherwise walls can just fully surround crystals and the slime can do nothing."
+
+**Mechanism** (`BigParams::wall_hp`, `wall_bite`): each wall cell has health. Each fine step, every walker that a wall cell blocks takes `wall_bite` from the cell it tried to enter (summed per cell and applied after the pass, so walker order does not matter). At 0 the cell is rubble: agar again, wet (step × `wet_step`), open to scent. The picture draws a wall's brightness from its health. A unit test checks that a weak wall across the home blob breaks within 60 ticks and that a wall without health never does.
+
+All runs below: `examples/worldwall.rs`, 512 × 320 (scale 2), 20k walkers, 23 crystals that run dry (charge 1, eat 0.005), 40 s.
+
+- **Ring round one crystal** (at 5 s, round the nearest crystal the mould has not reached; picked the same way in every arm). Measure named first: the second the mould first eats from it. With walls that stop scent ([raw](larder-world-roadmap-2026-11-11/walls/run3-ring-sealed-scent.txt)) and with walls that leak 0.3 of their scent ([raw](larder-world-roadmap-2026-11-11/walls/run4-ring-leaky-scent.txt)), the mould never ate a ringed crystal and broke no cell at health 30 or 300 (5 valid seeds; seed 2 had no unreached crystal). Without the ring it first ate there at 5.8-8.6 s on 3 of the 5. Counting bites with health set too high to break ([raw](larder-world-roadmap-2026-11-11/walls/run5-ring-bites.txt)): 0 to 76 bites on the whole ring in 35 s. Today's mould has a fixed walker count, forms a network and does not press anywhere.
+- **Cage round the whole home blob** at the start (its farthest walker plus 6 dish cells), the hardest the mould can press ([raw](larder-world-roadmap-2026-11-11/walls/run7-cage.txt)). A first try also built a random wall at 5 s in this arm, a harness bug, and is not counted ([raw](larder-world-roadmap-2026-11-11/walls/run6-cage-bug-extra-wall.txt)).
+
+| Wall health | First cell broken (seeds 1, 2, 3) | Walkers outside at 20 s | at 40 s |
+|---|---|---|---|
+| 0 | never | 0, 0, 0 | 0, 0, 0 |
+| 400 | 4.7, 4.3, 3.4 s | 6, 217, 660 | 2,023, 2,927, 2,319 |
+| 1,600 | 15.9, 14.8, 13.6 s | 0, 0, 0 | 0, 0, 0 |
+| 6,400 | never | 0, 0, 0 | 0, 0, 0 |
+
+**Default `wall_hp` 400**, a first number for play: the whole mould pressing breaks out in 20-30 s, while a tube passing a wall never breaks it. Recalibrate when the mould grows (W0): a growing mould presses wherever it is crowded. **`wall_scent`** (scent leaking through a wall) is built and off: it changed nothing measurable here (seed 1: 12 bites against 9 sealed), and on the fine scent grid a wall 4 scent cells thick passes very little.
+
+**Crystal flow** (`BigParams::crystal_flow`). The GPU thread's first growth run on crystals that run dry (one seed, 15:27Z) saw the mould starve with 61% of the charge left, because it ate only the cells its tubes crossed. Now each fine step every cell of a crystal moves `crystal_flow` of the way to the crystal's mean charge: the total is kept, a tube touching one edge drains the whole disc, and the whole disc dims together. Measure named first: the share of the non-home crystals' charge eaten by 40 s, paired by seed ([raw](larder-world-roadmap-2026-11-11/crystals/flow-runs.txt)).
+
+| Flow | Share eaten, mean | Seeds | Higher than no flow | Sign test p |
+|---|---|---|---|---|
+| 0 | 0.476 | 12 | - | - |
+| 0.01 | 0.829 | 12 | 12 of 12 | 0.0005 (survives Holm over 3) |
+| 0.05 | 0.749 | 6 | 5 of 6 | 0.22 |
+| 0.2 | 0.800 | 6 | 6 of 6 | 0.031 (not after Holm) |
+
+**Default `crystal_flow` 0.01.** Cost within noise: 7.8 ms a tick with and without (bigdish, 4 threads, 10 s). Pictures, seed 3 at 40 s: [no flow](larder-world-roadmap-2026-11-11/crystals/flow-off-s3-40s.png), [flow 0.01](larder-world-roadmap-2026-11-11/crystals/flow-on-s3-40s.png). Without growth this shows the mould can now reach the food; whether it then keeps growing is the GPU thread's rerun.
