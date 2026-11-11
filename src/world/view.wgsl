@@ -109,6 +109,19 @@ fn cidx(ix: i32, iy: i32) -> u32 {
 
 fn byte(v: u32, k: u32) -> f32 { return f32((v >> (8u * k)) & 255u) / 255.0; }
 
+// How tall the land's full elevation stands, in cells: about a fat tube's
+// height (4), so hills light and shade like the mould without hiding it.
+// Maps leave elevation 0 until the simulation uses it (the Larder thread
+// proposes it as the first new ground kind: slower uphill, wet hollows,
+// scent drifting down), so the height drawn is the height the mould feels.
+const ELEV: f32 = 5.0;
+// Bare ground: damp low loam to dry high soil, by elevation.
+const SOIL_LOW: vec3<f32> = vec3<f32>(30.0, 34.0, 28.0);
+const SOIL_HIGH: vec3<f32> = vec3<f32>(84.0, 74.0, 58.0);
+// The engine's colour for bare agar; what it adds above this (scent,
+// species, germ, grass tints) is laid over the soil.
+const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
+
 // A cell's height in cells: off the world is rock.
 fn cell_height(ix: i32, iy: i32) -> f32 {
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) { return 3.0; }
@@ -116,12 +129,15 @@ fn cell_height(ix: i32, iy: i32) -> f32 {
     let g = ground[i];
     let kind = g & 255u;
     let v = byte(g, 1u);
+    // The land (byte 3, the map's elevation) under everything on it.
+    let land = ELEV * byte(g, 3u);
     var h = 4.0 * pow(byte(look[i], 0u), 0.65);
     if (kind == ROCK) { h = 3.0; }
+    else if (kind == WET) { h = max(h - 0.3, 0.0); }
     else if (kind == WALL) { h = 0.6 + 2.6 * v; }
     else if (kind == RUBBLE) { h = 0.2 + 0.6 * v; }
     else if (kind == CRYSTAL) { h = max(h, (0.6 + 9.0 * byte(g, 2u)) * v); }
-    return h;
+    return land + h;
 }
 
 // A shown cell's place in `hcell` and `mcell` (clamped to the rectangle).
@@ -164,18 +180,25 @@ fn cell_mat(ix: i32, iy: i32) -> Mat {
     // look carries it at full strength wherever there is mould, by the
     // thickness, so a thin film reads as slime, not as dim ground.
     let th = byte(lk, 0u);
-    let tint = max(c - vec3<f32>(12.0, 22.0, 26.0), vec3<f32>(0.0));
+    let tint = max(c - AGAR_RGB, vec3<f32>(0.0));
     let hue = tint / max(max(tint.x, max(tint.y, tint.z)), 1.0) * 240.0;
-    m.albedo = mix(c, hue * (0.55 + 0.45 * th), clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
+    // Bare ground is soil by the land's elevation, with the engine's tints
+    // over it; before 2026-11-11 19:29Z it was the engine's flat near-black.
+    // Flat land (elevation 0, every map until the simulation uses height)
+    // is the middle of the range.
+    let soil = mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * byte(g, 3u)) + tint * 0.6;
+    m.albedo = mix(soil, hue * (0.55 + 0.45 * th), clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
     m.glow = vec3<f32>(0.0);
     m.gloss = 0.08 + 0.7 * sqrt(th);
     m.wound = byte(lk, 2u);
     m.gem = 0.0;
     if (kind == WET) {
-        m.albedo = c * vec3<f32>(0.70, 0.82, 1.0) + vec3<f32>(0.0, 4.0, 12.0);
-        m.gloss = max(m.gloss, 0.5);
+        // Standing water over the soil: dark blue-green, glossy; mould in
+        // it keeps its own colour.
+        m.albedo = mix(vec3<f32>(22.0, 46.0, 62.0) + tint * 0.4, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
+        m.gloss = max(m.gloss, 0.75);
     } else if (kind == ROCK) {
-        m.albedo = vec3<f32>(58.0, 60.0, 66.0); m.gloss = 0.04;
+        m.albedo = mix(vec3<f32>(70.0, 72.0, 76.0), vec3<f32>(118.0, 116.0, 110.0), byte(g, 3u)); m.gloss = 0.04;
     } else if (kind == WALL) {
         // Health is the wall's brightness as well as its height.
         m.albedo = mix(vec3<f32>(70.0, 58.0, 48.0), vec3<f32>(168.0, 156.0, 132.0), v); m.gloss = 0.1;

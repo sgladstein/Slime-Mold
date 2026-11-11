@@ -748,6 +748,13 @@ fn rect(w: usize, h: usize, margin: f32) -> Vec<bool> {
     }).collect()
 }
 
+/// The terrain's noise (`place_terrain`'s channels: 0 rock, 1 wet), for
+/// drawing the same land the dish places: the world look's elevation is
+/// channel 0 turned over, so rock is the high ground.
+pub fn terrain_noise(seed: u64, channel: u32, x: f32, y: f32, cell: f32) -> f32 {
+    noise(seed, channel, x, y, cell)
+}
+
 /// Smooth value noise in [0, 1] at a dish-cell position: keyed lattice
 /// values `cell` dish cells apart, blended with a smoothstep. Keyed on the
 /// seed and the lattice point alone, so every scale draws the same map.

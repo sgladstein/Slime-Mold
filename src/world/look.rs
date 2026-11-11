@@ -10,6 +10,15 @@
 //! the rim to 255 at the deepest cell (the shape, so a crystal stands as
 //! a cone its charge tall; `ground` works it out).
 //!
+//! Byte 3 is the land's elevation, 0-255, from the map (`Fields::elev`;
+//! 0 where a map has none): the view raises the ground, and everything on
+//! it, by it and colours bare ground from damp low loam to dry high soil,
+//! so the land reads as terrain lit like the mould. Added 2026-11-11 after
+//! the owner saw bare ground as "just black background" (19:29Z): before,
+//! bare agar took the engine's near-black frame colour, flat.
+//! Maps leave it 0 until the simulation uses height (no drawn-only
+//! relief; the Larder thread, 19:33Z); bare ground is then mid soil.
+//!
 //! The game fills it from its own fields every frame something changes
 //! (the Larder world's `BigDish::{agar, rock, wet, wall, wall_health,
 //! charge, pile_of}`, PR #64); the sandbox fills it from the dish's agar
@@ -45,6 +54,8 @@ pub struct Fields<'a> {
     pub crystal: &'a [u16],
     /// Each crystal cell's share of its full charge (empty: crystals full).
     pub charge_share: &'a [f32],
+    /// The land's elevation a cell, 0-255 (empty: flat).
+    pub elev: &'a [u8],
 }
 
 /// The ground field for a `w`-wide world of `cells` cells. Off the agar
@@ -67,8 +78,8 @@ pub fn ground(w: usize, cells: usize, f: &Fields) -> Vec<u32> {
             }
         })
         .collect();
-    for (c, d) in g.iter_mut().zip(depth) {
-        *c |= (d as u32) << 16;
+    for (i, (c, d)) in g.iter_mut().zip(depth).enumerate() {
+        *c |= (d as u32) << 16 | (f.elev.get(i).copied().unwrap_or(0) as u32) << 24;
     }
     g
 }

@@ -24,6 +24,7 @@
 use pixels::wgpu;
 use slime_mould::gpu::*;
 use slime_mould::mould::STEPS_PER_SECOND;
+use slime_mould::mould::big::terrain_noise;
 use slime_mould::world::look::{dish_crystals, first_hit, ground, ground_buffer, Fields, Ground, Shot};
 use slime_mould::world::marks::team_colour;
 use slime_mould::world::{Camera, Marks, View};
@@ -57,6 +58,10 @@ const TRACER: f32 = 0.09;
 const HIT: u8 = 26;
 /// Thickness at which a cell looks like slime, for the audit of shots.
 const SEEN: u8 = 26;
+/// Terrain thresholds on the dish's noise: about a tenth of the ground
+/// rock and a tenth wet.
+const ROCK_T: f32 = 0.22;
+const WET_T: f32 = 0.22;
 
 fn lowbias(mut v: u32) -> u32 {
     v ^= v >> 16;
@@ -135,9 +140,33 @@ fn main() {
         is_wall[i] = true;
         share[i] = v;
     }
+    // Terrain: the CPU dish's own rock and wet noise (`terrain_noise`,
+    // blobs 12 dish cells across), kept off the piles and the fight. Rock
+    // leaves the agar, so the mould really cannot enter it. Wet ground is
+    // only drawn here: the GPU engine slows walkers on it once the Larder
+    // world's engine ground word lands (PR #74); until then it is a
+    // preview of the look, not yet the simulation.
+    let (mut rock, mut wet) = (Vec::new(), vec![false; w * h]);
+    {
+        let pr = e.dish.p.pile_r + 4.0;
+        for i in 0..w * h {
+            let (x, y) = (((i % w) as f32 + 0.5) / sc, ((i / w) as f32 + 0.5) / sc);
+            let clear = e.dish.piles.iter().all(|&(px, py)| (px - x).hypot(py - y) > pr) && (x - fx / sc).hypot(y - fy / sc) > 26.0;
+            if !clear || !e.dish.agar[i] || is_wall[i] {
+                continue;
+            }
+            if terrain_noise(seed, 0, x, y, 12.0) < ROCK_T {
+                rock.push(i);
+            } else if terrain_noise(seed, 1, x, y, 12.0) < WET_T {
+                wet[i] = true;
+            }
+        }
+    }
+    e.block(&rock);
+    println!("terrain: {} rock cells, {} wet", rock.len(), wet.iter().filter(|&&b| b).count());
     // Crystals: the dish's piles.
     let crystal = dish_crystals(&e.dish);
-    let codes = ground(w, w * h, &Fields { agar: &e.dish.agar, wall: &is_wall, wall_share: &share, crystal: &crystal, ..Default::default() });
+    let codes = ground(w, w * h, &Fields { agar: &e.dish.agar, wall: &is_wall, wall_share: &share, crystal: &crystal, wet: &wet, ..Default::default() });
     assert_eq!(codes[cells[0]] & 255, Ground::Wall as u32);
     let ground_buf = ground_buffer(&device, &queue, &codes);
 
