@@ -52,21 +52,29 @@
 //! **What the sandbox adds to the timing test's step:**
 //! - **Jumps.** `respawn` moves that share of walkers a tick to a random spot
 //!   with a random heading (`BigParams::respawn` on the CPU). The pull
-//!   (left drag) moves 0.2% of walkers a tick to a disc at the mouse. On the
-//!   GPU a jump replaces that tick's step and takes part in the same claim,
-//!   so with the crowd limit on, a jump into a full or claimed cell fails
-//!   like a blocked step; the CPU's respawn runs after the move instead.
+//!   (left drag) moves 0.2% of walkers a tick to a disc at the mouse. As on
+//!   the CPU, a jump comes after the walker's step (which lays its trail
+//!   where it stepped), a jump off the agar is lost, and with the crowd
+//!   limit a jump into a full cell is lost; two jumps into one empty cell go
+//!   to the lower walker, the CPU's order. Two passes (`jump`, `land`), run
+//!   only while respawn or the pull is on. (Until the independent review of
+//!   2026-11-11 a jump replaced the step and joined its claim, so the jumper
+//!   laid its trail where it landed: 1% respawn then spread trail over the
+//!   dish and widened the tubes past every CPU seed, 8.33 against 7.70-8.01.)
 //! - **The trail laid is set per 100,000 walkers** (`laid`): the deposit is
 //!   `laid x 100,000 / walkers`, so changing the walker count keeps the trail
 //!   over the dish the same, as the comparison's runs did.
 //! - **Drawing** from the trail or from walkers a cell (`occ`), in the game's
 //!   amber or grey on black, through the game's curve (1 - e^(-v/knee)) or
 //!   a soft one ((v / p99.9)^gamma). The soft curve's p99.9 comes from a
-//!   256-bin log histogram on the GPU each frame (8 bins an octave, so within
+//!   512-bin log histogram on the GPU each frame (8 bins an octave, so within
 //!   9% of the true percentile), with no read back.
-//! - **No fed scent.** A pile keeps calling at full strength after the mould
-//!   reaches it (the home pile at `fed_scent`, as at the start); the CPU dish
-//!   drops a reached pile's scent, which needs the trail read back.
+//! - **Fed scent on the GPU.** A pile lays `fed_scent` of its scent once tube
+//!   lies on it, as on the CPU: the trail pass marks it (`reached`, one flag
+//!   a pile) and the scent pass reads the flag, with no read back. (Until the
+//!   review of 2026-11-11 the GPU had no fed scent, and every pile called at
+//!   full strength for good: strays on the 32,000 dish were 3.6% at 10 s
+//!   against 0.8-1.8% on the CPU's 16 seeds.)
 //!
 //! Every control is drawn straight from the simulation (the owner's rule);
 //! the panel and the line at the bottom are the only things on screen that
@@ -96,6 +104,7 @@ struct Params {
     respawn: f32, pull: f32, bx: f32, by: f32,
     br: f32, knee: f32, gamma: f32, s_pull: u32,
     wipe: u32, colour: u32, field: u32, curve: u32,
+    tube: f32, fed: f32, _p0: u32, _p1: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 
@@ -116,6 +125,10 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 @group(0) @binding(14) var<storage, read_write> hist: array<atomic<u32>>;
 @group(0) @binding(15) var<storage, read_write> frame: array<u32>;
 @group(0) @binding(16) var<storage, read> hud: array<u32>;
+// Which pile a cell's food belongs to (index + 1, 0 for none), and whether
+// the tube has reached each pile (the CPU's `BigDish::reached`).
+@group(0) @binding(17) var<storage, read> pile: array<u32>;
+@group(0) @binding(18) var<storage, read_write> reached: array<atomic<u32>>;
 
 const NONE: u32 = 0xFFFFFFFFu;
 const TAU: f32 = 6.2831855;
@@ -167,23 +180,8 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     } else if (fr < fl) {
         h -= P.ra;
     }
-    var nx = wk.x + cos(h) * P.st;
-    var ny = wk.y + sin(h) * P.st;
-    // A jump replaces the step: the pull (to a disc at the mouse) first,
-    // then respawn (anywhere), each with its own keyed draws.
-    var jump = false;
-    if (P.pull > 0.0 && unit(keyed(P.s_pull, t, 4u * k)) < P.pull) {
-        let a = unit(keyed(P.s_pull, t, 4u * k + 1u)) * TAU;
-        let r = sqrt(unit(keyed(P.s_pull, t, 4u * k + 2u))) * P.br;
-        nx = P.bx + cos(a) * r;
-        ny = P.by + sin(a) * r;
-        jump = true;
-    } else if (P.respawn > 0.0 && unit(keyed(P.s_jump, t, 4u * k)) < P.respawn) {
-        nx = unit(keyed(P.s_jump, t, 4u * k + 1u)) * f32(P.w);
-        ny = unit(keyed(P.s_jump, t, 4u * k + 2u)) * f32(P.h);
-        jump = true;
-    }
-    if (jump) { h = unit(keyed(P.s_jump, t, 4u * k + 3u)) * TAU; }
+    let nx = wk.x + cos(h) * P.st;
+    let ny = wk.y + sin(h) * P.st;
     let here = cell(wk.x, wk.y);
     let there = cell(nx, ny);
     var aim = NONE;
@@ -223,10 +221,75 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 }
 
+// Where walker k jumps this tick, if it does (w = 1): the pull (to a disc
+// at the mouse) first, then respawn (anywhere), each by its own keyed
+// draws; the heading by respawn's (the CPU's `respawn_walkers`).
+fn jump_of(k: u32, t: u32) -> vec4<f32> {
+    var at = vec2<f32>(0.0, 0.0);
+    if (P.pull > 0.0 && unit(keyed(P.s_pull, t, 4u * k)) < P.pull) {
+        let a = unit(keyed(P.s_pull, t, 4u * k + 1u)) * TAU;
+        let r = sqrt(unit(keyed(P.s_pull, t, 4u * k + 2u))) * P.br;
+        at = vec2<f32>(P.bx + cos(a) * r, P.by + sin(a) * r);
+    } else if (P.respawn > 0.0 && unit(keyed(P.s_jump, t, 4u * k)) < P.respawn) {
+        at = vec2<f32>(unit(keyed(P.s_jump, t, 4u * k + 1u)) * f32(P.w), unit(keyed(P.s_jump, t, 4u * k + 2u)) * f32(P.h));
+    } else {
+        return vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    }
+    return vec4<f32>(at, unit(keyed(P.s_jump, t, 4u * k + 3u)) * TAU, 1.0);
+}
+
+// Jumps come after the move, as on the CPU: a walker steps (and lays its
+// trail where it stepped), then may jump. A jump off the agar is lost. With
+// no crowd limit it lands here; with one, it claims its cell (lowest walker
+// wins, the CPU's order) and `land` moves the winners. Only dispatched while
+// respawn or the pull is on.
+@compute @workgroup_size(256)
+fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    icell[k] = NONE;
+    let j = jump_of(k, S.t);
+    if (j.w == 0.0) { return; }
+    let to = cell(j.x, j.y);
+    if (to == NONE || agar[to] == 0u) { return; }
+    let wk = walkers[k];
+    let here = cell(wk.x, wk.y);
+    if (P.crowd == 0u) {
+        if (to != here) {
+            atomicSub(&occ[here], 1u);
+            atomicAdd(&occ[to], 1u);
+        }
+        walkers[k] = vec4<f32>(j.xyz, 0.0);
+        return;
+    }
+    // A cell claimed by a step this tick now holds its winner, so it is
+    // full and never claimed here: the claim's stale keys cannot win.
+    if (atomicLoad(&occ[to]) >= P.crowd) { return; }
+    atomicMin(&claim[to], k);
+    icell[k] = to;
+}
+
+@compute @workgroup_size(256)
+fn land(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    let to = icell[k];
+    if (to == NONE || atomicLoad(&claim[to]) != k) { return; }
+    let wk = walkers[k];
+    atomicSub(&occ[cell(wk.x, wk.y)], 1u);
+    atomicAdd(&occ[to], 1u);
+    walkers[k] = vec4<f32>(jump_of(k, S.t).xyz, 0.0);
+}
+
 @compute @workgroup_size(256)
 fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h) { return; }
+    // A pile is reached once tube lies on it: the CPU marks it at the end
+    // of a tick from that tick's trail, which is this tick's `trail_in`, so
+    // the scent pass below lays this tick's food as the CPU's next tick does.
+    let pi = pile[i];
+    if (pi != 0u && trail_in[i] > P.tube) { atomicMax(&reached[pi - 1u], 1u); }
     let x = i % P.w; let y = i / P.w;
     if (agar[i] == 0u || x == 0u || y == 0u || x + 1u == P.w || y + 1u == P.h) { trail_out[i] = 0.0; return; }
     if (P.wipe != 0u) {
@@ -260,7 +323,10 @@ fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
         for (var dx = 0u; dx < 3u; dx++) {
             let j = (y + dy - 1u) * P.w + x + dx - 1u;
             if (agar[j] != 0u) {
-                sum += scent_in[j] + lay[j];
+                // A reached pile lays `fed` of its scent (the CPU's `fed_scent`).
+                var l = lay[j];
+                if (l != 0.0 && pile[j] != 0u && atomicLoad(&reached[pile[j] - 1u]) != 0u) { l *= P.fed; }
+                sum += scent_in[j] + l;
                 n += 1.0;
             }
         }
@@ -275,34 +341,40 @@ fn shown(i: u32) -> f32 {
 }
 
 // The soft curve's reference, p99.9 of the shown field over cells above 0:
-// a 256-bin histogram of log2 (8 bins an octave from 2^-16), summed in
-// workgroup memory first so the global bins see one add a workgroup.
-var<workgroup> local: array<atomic<u32>, 256>;
+// a 512-bin histogram of log2 (8 bins an octave from 2^-16 to 2^48), summed
+// in workgroup memory first so the global bins see one add a workgroup. (It
+// had 256 bins, to 2^16, until the review of 2026-11-11: a trail laid at
+// 2,000 passed that and 0.66% of cells clipped to full brightness.)
+const BINS: u32 = 512u;
+var<workgroup> local: array<atomic<u32>, 512>;
 
 @compute @workgroup_size(256)
 fn histogram(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
     atomicStore(&local[li], 0u);
+    atomicStore(&local[li + 256u], 0u);
     workgroupBarrier();
     let i = gid.x;
     if (i < P.w * P.h) {
         let v = shown(i);
         if (v > 0.0) {
-            let b = u32(clamp((log2(v) + 16.0) * 8.0, 0.0, 255.0));
+            let b = u32(clamp((log2(v) + 16.0) * 8.0, 0.0, f32(BINS - 1u)));
             atomicAdd(&local[b], 1u);
         }
     }
     workgroupBarrier();
-    let c = atomicLoad(&local[li]);
-    if (c > 0u) { atomicAdd(&hist[li], c); }
+    for (var j = li; j < BINS; j += 256u) {
+        let c = atomicLoad(&local[j]);
+        if (c > 0u) { atomicAdd(&hist[j], c); }
+    }
 }
 
 @compute @workgroup_size(1)
 fn top() {
     var total = 0u;
-    for (var j = 0u; j < 256u; j++) { total += atomicLoad(&hist[j]); }
+    for (var j = 0u; j < BINS; j++) { total += atomicLoad(&hist[j]); }
     let want = max(total / 1000u, 1u);
     var seen = 0u;
-    var b = 256u;
+    var b = BINS;
     loop {
         if (b == 0u) { break; }
         b -= 1u;
@@ -311,7 +383,7 @@ fn top() {
     }
     // The bin's upper edge.
     S.top = exp2((f32(b) + 1.0) / 8.0 - 16.0);
-    for (var j = 0u; j < 256u; j++) { atomicStore(&hist[j], 0u); }
+    for (var j = 0u; j < BINS; j++) { atomicStore(&hist[j], 0u); }
 }
 
 @compute @workgroup_size(256)
@@ -360,8 +432,12 @@ const CLAIM_MOVE: u32 = 103;
 const DRAW_JUMP: u32 = 106;
 const DRAW_PULL: u32 = 107;
 
-/// Bytes in `Params` (28 words).
-const PARAMS_BYTES: usize = 112;
+/// Bytes in `Params` (32 words).
+const PARAMS_BYTES: usize = 128;
+
+/// Piles the GPU tracks (the dish's seven and food dropped with F); F does
+/// nothing once they are all used.
+const MAX_PILES: usize = 64;
 
 /// The share of walkers the pull moves a tick (0.2%: at 100,000 walkers, a
 /// quarter of them in about a second of holding).
@@ -530,7 +606,11 @@ const RESPAWN_STEPS: [f32; 9] = [0.0, 0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 
 
 /// The entry of `list` after (or before) the last one at or below `v`.
 fn next_in<T: PartialOrd + Copy>(list: &[T], v: T, dir: i32) -> T {
-    let i = list.iter().rposition(|&x| x <= v).unwrap_or(0) as i32;
+    // Below the list (a value from the command line): up is its first.
+    let Some(i) = list.iter().rposition(|&x| x <= v) else {
+        return if dir > 0 { list[0] } else { v };
+    };
+    let i = i as i32;
     let i = if dir > 0 || list[i as usize] == v { i + dir } else { i };
     list[i.clamp(0, list.len() as i32 - 1) as usize]
 }
@@ -549,12 +629,10 @@ fn thousands(n: usize) -> String {
 
 fn percent(v: f32) -> String {
     if v == 0.0 {
-        "OFF".into()
-    } else if v >= 0.01 {
-        format!("{}%", v * 100.0)
-    } else {
-        format!("{:.2}%", v * 100.0)
+        return "OFF".into();
     }
+    // To two places, so 0.3 reads 30%, not 30.000002%.
+    format!("{}%", (v as f64 * 10_000.0).round() / 100.0)
 }
 
 impl Knob {
@@ -618,7 +696,13 @@ impl Knob {
                 s.walkers = next_in(&WALKER_STEPS, s.walkers, dir).min(max_walkers);
                 return s.walkers != before;
             }
-            Knob::Crowd => s.crowd = !s.crowd,
+            // A restart: switched on mid-run, walkers stacked by a dish with
+            // no limit could never leave a full cell (the review, 2026-11-11,
+            // found 3,906 cells still over one 720 ticks later).
+            Knob::Crowd => {
+                s.crowd = !s.crowd;
+                return true;
+            }
             Knob::SensorAngle => s.sensor_angle = (s.sensor_angle + 2.5 * k * d).clamp(0.0, 180.0),
             Knob::Turn => s.turn = (s.turn + 2.5 * k * d).clamp(0.0, 180.0),
             Knob::Reach => s.reach = (s.reach + k * d).clamp(1.0, 120.0),
@@ -643,10 +727,22 @@ impl Knob {
     }
 }
 
+/// A switch on the command line: 1/on/true/yes or 0/off/false/no (until the
+/// review of 2026-11-11 anything but 0 or off meant on, so `crowd=false`
+/// turned the limit on).
+fn on_off(key: &str, v: &str) -> Result<bool, String> {
+    match v {
+        "1" | "on" | "true" | "yes" => Ok(true),
+        "0" | "off" | "false" | "no" => Ok(false),
+        _ => Err(format!("{key}={v}: 1 or 0 (on, off)")),
+    }
+}
+
 /// Sets a control from a `key=value` argument.
 fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
     let f = || v.parse::<f32>().map_err(|e| format!("{key}={v}: {e}"));
-    let b = || Ok::<bool, String>(v != "0" && v != "off");
+    let b = || on_off(key, v);
+    let pick = |names: &[&str]| names.iter().position(|&n| n == v).ok_or_else(|| format!("{key}={v}: one of {}", names.join(", ")));
     match key {
         "walkers" => s.walkers = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         "crowd" => s.crowd = b()?,
@@ -659,13 +755,13 @@ fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "respawn" => s.respawn = f()?,
         "food" => s.food = b()?,
         "smell" | "scent_offset" => s.smell = f()?,
-        "colour" | "color" => s.colour = if v == "grey" || v == "gray" { Colour::Grey } else { Colour::Amber },
-        "field" => s.field = if v == "walkers" || v == "count" { Field::Walkers } else { Field::Trail },
-        "curve" => s.curve = if v == "soft" { Curve::Soft } else { Curve::Game },
+        "colour" | "color" => s.colour = [Colour::Amber, Colour::Grey, Colour::Grey][pick(&["amber", "grey", "gray"])?],
+        "field" => s.field = [Field::Trail, Field::Walkers, Field::Walkers][pick(&["trail", "walkers", "count"])?],
+        "curve" => s.curve = [Curve::Game, Curve::Soft][pick(&["game", "soft"])?],
         "knee" => s.knee = f()?,
         "gamma" => s.gamma = f()?,
-        "ticks" => s.ticks = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
-        "start" => s.blob = v == "blob",
+        "ticks" => s.ticks = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.clamp(1, 32),
+        "start" => s.blob = pick(&["spread", "blob"])? == 1,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }
@@ -714,15 +810,24 @@ struct Hand {
     wipe: bool,
 }
 
-/// The shader, its layout and its seven pipelines: made once, kept across
+/// The shader, its layout and its nine pipelines: made once, kept across
 /// restarts.
 struct Shared {
     bgl: wgpu::BindGroupLayout,
-    /// sense, walk, trail, scent, histogram, top, draw.
+    /// sense, walk, trail, scent, histogram, top, draw, jump, land.
     pipes: Vec<wgpu::ComputePipeline>,
 }
 
-const BINDINGS: u32 = 17;
+const BINDINGS: u32 = 19;
+const SENSE: usize = 0;
+const WALK: usize = 1;
+const TRAIL: usize = 2;
+const SCENT: usize = 3;
+const HISTOGRAM: usize = 4;
+const TOP: usize = 5;
+const DRAW: usize = 6;
+const JUMP: usize = 7;
+const LAND: usize = 8;
 
 impl Shared {
     fn new(dev: &wgpu::Device) -> Self {
@@ -737,11 +842,11 @@ impl Shared {
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let mut entries = vec![entry(0, wgpu::BufferBindingType::Uniform)];
         for b in 1..BINDINGS {
-            entries.push(entry(b, if matches!(b, 8 | 9 | 16) { ro } else { rw }));
+            entries.push(entry(b, if matches!(b, 8 | 9 | 16 | 17) { ro } else { rw }));
         }
         let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("sandbox"), entries: &entries });
         let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("sandbox"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
-        let pipes = ["sense", "walk", "trail", "scent", "histogram", "top", "draw"]
+        let pipes = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land"]
             .iter()
             .map(|entry_point| {
                 dev.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -776,6 +881,8 @@ struct Engine {
     #[cfg_attr(not(test), allow(dead_code))]
     scent: [wgpu::Buffer; 2],
     lay: wgpu::Buffer,
+    pile: wgpu::Buffer,
+    reached: wgpu::Buffer,
     frame: wgpu::Buffer,
     hud: wgpu::Buffer,
     /// The CPU dish it started from: agar, piles, and the measures.
@@ -788,6 +895,10 @@ struct Engine {
     done: u64,
     /// Whether the crowd limit can hold (walkers at most half the agar).
     crowd_ok: bool,
+    /// From the last `write_params`: whether the jump passes run (respawn
+    /// or the pull on), and with the claim (`land`) too.
+    jumps: bool,
+    crowd: bool,
 }
 
 impl Engine {
@@ -821,32 +932,69 @@ impl Engine {
         let agar: Vec<u32> = d.agar.iter().map(|&a| a as u32).collect();
         let agar = buf("agar", &u32_bytes(&agar), storage);
         let lay = zeros("lay", cells as usize * 4);
+        let pile = zeros("pile", cells as usize * 4);
+        let mut reached = vec![0u32; MAX_PILES];
+        for (r, &hit) in reached.iter_mut().zip(&d.reached) {
+            *r = hit as u32;
+        }
+        let reached = buf("reached", &u32_bytes(&reached), storage);
         let trail = [zeros("trail0", cells as usize * 4), zeros("trail1", cells as usize * 4)];
         let scent = [zeros("scent0", cells as usize * 4), zeros("scent1", cells as usize * 4)];
-        let hist = zeros("hist", 256 * 4);
+        let hist = zeros("hist", 512 * 4);
         let frame = zeros("frame", cells as usize * 4);
         let hud = zeros("hud", cells as usize * 4);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] =
-                [&params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud];
+                [&params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
         };
         let groups = [group(true), group(false)];
-        let mut e = Engine { device: device.clone(), queue: queue.clone(), groups, params, walkers, state, occ, trail, scent, lay, frame, hud, dish: d, dropped: Vec::new(), n, cells, done: 0, crowd_ok };
+        let mut e = Engine {
+            device: device.clone(),
+            queue: queue.clone(),
+            groups,
+            params,
+            walkers,
+            state,
+            occ,
+            trail,
+            scent,
+            lay,
+            pile,
+            reached,
+            frame,
+            hud,
+            dish: d,
+            dropped: Vec::new(),
+            n,
+            cells,
+            done: 0,
+            crowd_ok,
+            jumps: false,
+            crowd: false,
+        };
         e.lay_food(s.food);
         e
     }
 
-    /// Writes the scent the piles lay: the dish's own if `food`, plus any
-    /// dropped with F (at full strength, as an unreached pile).
+    /// Writes the scent the piles lay at full strength, and which pile each
+    /// cell's food is: the dish's own if `food`, plus any dropped with F.
+    /// The scent pass lays `fed_scent` of it once a pile is reached (the
+    /// CPU's `lay_scent`); dish piles are marked even with `food` off, for
+    /// the measures. Piles sit 28 dish cells apart, so their discs never
+    /// overlap; dropped food that overlaps a pile takes its cells.
     fn lay_food(&mut self, food: bool) {
         let d = &self.dish;
-        let mut lay = if food { d.scent_laid() } else { vec![0.0; d.w * d.h] };
-        let r = d.p.pile_r * d.p.scale as f32;
+        let mut lay = vec![0.0f32; d.w * d.h];
+        let mut pile = vec![0u32; d.w * d.h];
+        let s = d.p.scale as f32;
+        let r = d.p.pile_r * s;
         let n = r.ceil() as i32;
-        for &(cx, cy) in &self.dropped {
+        let dish = d.piles.iter().map(|&(x, y)| (x * s, y * s, food));
+        let dropped = self.dropped.iter().map(|&(x, y)| (x, y, true));
+        for (pi, (cx, cy, lays)) in dish.chain(dropped).enumerate().take(MAX_PILES) {
             for dy in -n..=n {
                 for dx in -n..=n {
                     let (x, y) = (cx + dx as f32, cy + dy as f32);
@@ -855,12 +1003,21 @@ impl Engine {
                     }
                     let i = y as usize * d.w + x as usize;
                     if d.agar[i] {
-                        lay[i] += d.p.food_deposit;
+                        if lays {
+                            lay[i] += d.p.food_deposit;
+                        }
+                        pile[i] = pi as u32 + 1;
                     }
                 }
             }
         }
         self.queue.write_buffer(&self.lay, 0, &f32_bytes(&lay));
+        self.queue.write_buffer(&self.pile, 0, &u32_bytes(&pile));
+    }
+
+    /// Whether F can drop another pile.
+    fn can_drop(&self) -> bool {
+        self.dish.piles.len() + self.dropped.len() < MAX_PILES
     }
 
     /// Loads a CPU dish's state (walkers, trail, scent, the scent its piles
@@ -881,13 +1038,19 @@ impl Engine {
         let side = (d.steps % 2) as usize;
         self.queue.write_buffer(&self.trail[side], 0, &f32_bytes(&d.trail));
         self.queue.write_buffer(&self.scent[side], 0, &f32_bytes(&d.scent));
-        self.queue.write_buffer(&self.lay, 0, &f32_bytes(&d.scent_laid()));
         self.queue.write_buffer(&self.state, 0, &u32_bytes(&[d.steps as u32, 1f32.to_bits(), 0, 0]));
+        let mut reached = vec![0u32; MAX_PILES];
+        for (r, &hit) in reached.iter_mut().zip(&d.reached) {
+            *r = hit as u32;
+        }
+        self.queue.write_buffer(&self.reached, 0, &u32_bytes(&reached));
         self.done = d.steps;
         self.dish = d.clone();
+        self.dropped.clear();
+        self.lay_food(true);
     }
 
-    fn write_params(&self, s: &Settings, hand: Hand) {
+    fn write_params(&mut self, s: &Settings, hand: Hand) {
         let seed = s.seed;
         let (w, h) = (self.dish.w as u32, self.dish.h as u32);
         let crowd = (s.crowd && self.crowd_ok) as u32;
@@ -898,11 +1061,17 @@ impl Engine {
         let wipe = (hand.wipe && hand.at.is_some()) as u32;
         let t = &self.dish.p;
         let mut b = u32_bytes(&[w, h, self.n, crowd, stream(seed, DRAW_TURN), stream(seed, DRAW_BLOCKED), stream(seed, CLAIM_MOVE), stream(seed, DRAW_JUMP)]);
-        b.extend(f32_bytes(&[s.sensor_angle.to_radians(), s.turn.to_radians(), s.reach, s.smell, s.step, deposit, s.keep, t.scent_keep]));
+        // Food smelled at the reach when `smell` is 0, as `BigParams::scent_offset`.
+        let smell = if s.smell > 0.0 { s.smell } else { s.reach };
+        b.extend(f32_bytes(&[s.sensor_angle.to_radians(), s.turn.to_radians(), s.reach, smell, s.step, deposit, s.keep, t.scent_keep]));
         b.extend(f32_bytes(&[s.respawn, pull, bx, by, br, s.knee, s.gamma]));
         b.extend(u32_bytes(&[stream(seed, DRAW_PULL), wipe, (s.colour == Colour::Grey) as u32, (s.field == Field::Walkers) as u32, (s.curve == Curve::Soft) as u32]));
+        b.extend(f32_bytes(&[t.tube, t.fed_scent]));
+        b.extend(u32_bytes(&[0, 0]));
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.queue.write_buffer(&self.params, 0, &b);
+        self.jumps = s.respawn > 0.0 || pull > 0.0;
+        self.crowd = crowd > 0;
     }
 
     /// Records a frame: `ticks` ticks, then the drawing. With `stamps`
@@ -913,33 +1082,79 @@ impl Engine {
         let writes = |begin: Option<u32>, end: Option<u32>| {
             stamps.and_then(|qs| (begin.is_some() || end.is_some()).then_some(wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin, end_of_pass_write_index: end }))
         };
-        let sizes = [self.n, self.n, self.cells, self.cells];
+        let tick = self.tick_passes();
         for k in 0..ticks {
             let group = &self.groups[(self.done % 2) as usize];
-            for (p, &size) in sizes.iter().enumerate() {
-                let begin = (k == 0 && p == 0).then_some(0);
-                let end = (k + 1 == ticks && p == 3).then_some(1);
+            for (q, &(p, size)) in tick.iter().enumerate() {
+                let begin = (k == 0 && q == 0).then_some(0);
+                let end = (k + 1 == ticks && q + 1 == tick.len()).then_some(1);
                 let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes(begin, end) });
                 pass.set_pipeline(&shared.pipes[p]);
                 pass.set_bind_group(0, group, &[]);
-                pass.dispatch_workgroups(size.div_ceil(256), 1, 1);
+                pass.dispatch_workgroups(size, 1, 1);
             }
             self.done += 1;
         }
         let group = &self.groups[(self.done % 2) as usize];
-        let mut draw: Vec<(usize, u32)> = Vec::new();
-        if soft {
-            draw.push((4, self.cells.div_ceil(256)));
-            draw.push((5, 1));
-        }
-        draw.push((6, self.cells.div_ceil(256)));
-        for &(p, groups) in &draw {
-            let end = (p == 6).then_some(2);
+        for &(p, groups) in &self.draw_passes(soft) {
+            let end = (p == DRAW).then_some(2);
             let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes(None, end) });
             pass.set_pipeline(&shared.pipes[p]);
             pass.set_bind_group(0, group, &[]);
             pass.dispatch_workgroups(groups, 1, 1);
         }
+    }
+
+    /// A tick's passes and their workgroups: the jump passes only while
+    /// respawn or the pull is on, `land` only with the crowd limit.
+    fn tick_passes(&self) -> Vec<(usize, u32)> {
+        let (n, cells) = (self.n.div_ceil(256), self.cells.div_ceil(256));
+        let mut tick = vec![(SENSE, n), (WALK, n)];
+        if self.jumps {
+            tick.push((JUMP, n));
+            if self.crowd {
+                tick.push((LAND, n));
+            }
+        }
+        tick.extend([(TRAIL, cells), (SCENT, cells)]);
+        tick
+    }
+
+    /// The drawing's passes: the soft curve's histogram and reference first.
+    fn draw_passes(&self, soft: bool) -> Vec<(usize, u32)> {
+        let cells = self.cells.div_ceil(256);
+        let mut draw = Vec::new();
+        if soft {
+            draw.extend([(HISTOGRAM, cells), (TOP, 1)]);
+        }
+        draw.push((DRAW, cells));
+        draw
+    }
+
+    /// One tick and the drawing with every pass timed on its own (each
+    /// pass's start and end stamped), submitted and waited for: GPU ms a
+    /// pass, by name. It runs the tick, so the dish moves on by one.
+    fn profile(&mut self, shared: &Shared, soft: bool) -> Vec<(&'static str, f64)> {
+        const NAMES: [&str; 9] = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land"];
+        let tick = self.tick_passes();
+        let passes: Vec<(usize, u32, usize)> = tick.iter().map(|&(p, g)| (p, g, (self.done % 2) as usize)).chain(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, ((self.done + 1) % 2) as usize))).collect();
+        let count = 2 * passes.len() as u32;
+        let qs = self.device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("profile"), ty: wgpu::QueryType::Timestamp, count });
+        let resolve = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("profile"), size: count as u64 * 8, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        for (q, &(p, groups, side)) in passes.iter().enumerate() {
+            let writes = wgpu::ComputePassTimestampWrites { query_set: &qs, beginning_of_pass_write_index: Some(2 * q as u32), end_of_pass_write_index: Some(2 * q as u32 + 1) };
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: Some(writes) });
+            pass.set_pipeline(&shared.pipes[p]);
+            pass.set_bind_group(0, &self.groups[side], &[]);
+            pass.dispatch_workgroups(groups, 1, 1);
+        }
+        self.done += 1;
+        enc.resolve_query_set(&qs, 0..count, &resolve, 0);
+        self.queue.submit([enc.finish()]);
+        let t: Vec<u64> = read_back(&self.device, &self.queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
+        let period = self.queue.get_timestamp_period() as f64;
+        passes.iter().enumerate().map(|(q, &(p, ..))| (NAMES[p], t[2 * q + 1].saturating_sub(t[2 * q]) as f64 * period / 1e6)).collect()
     }
 
     /// Reads the dish back into the CPU dish and measures it.
@@ -948,6 +1163,12 @@ impl Engine {
         self.dish.trail = floats(&read_back(&self.device, &self.queue, &self.trail[side]));
         self.dish.walkers = floats(&read_back(&self.device, &self.queue, &self.walkers)).chunks_exact(4).map(|c| (c[0], c[1], c[2])).collect();
         self.dish.ticks = self.done;
+        // The GPU marks a pile from the trail a tick late (see `trail`), so
+        // the CPU marks any the last tick's trail reached, as it would.
+        let reached = read_back(&self.device, &self.queue, &self.reached);
+        for (r, c) in self.dish.reached.iter_mut().zip(reached.chunks_exact(4)) {
+            *r = u32::from_le_bytes(c.try_into().unwrap()) != 0;
+        }
         self.dish.update_reached();
         self.dish.measure()
     }
@@ -981,9 +1202,11 @@ struct Stamps {
     busy: bool,
     /// Nanoseconds a tick of the GPU's timestamp counter.
     period: f64,
-    /// Last reading: the ticks and the drawing, ms.
+    /// Smoothed readings, ms: the ticks and the drawing.
     sim_ms: f64,
     draw_ms: f64,
+    /// Every reading, for the screenshot hook's median.
+    all: Vec<(f64, f64)>,
 }
 
 impl Stamps {
@@ -991,7 +1214,7 @@ impl Stamps {
         let qs = device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("frame"), ty: wgpu::QueryType::Timestamp, count: 3 });
         let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("resolve"), size: 24, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
         let read = device.create_buffer(&wgpu::BufferDescriptor { label: Some("stamps"), size: 24, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        Stamps { qs, resolve, read, ready: Arc::new(AtomicBool::new(false)), busy: false, period: queue.get_timestamp_period() as f64, sim_ms: 0.0, draw_ms: 0.0 }
+        Stamps { qs, resolve, read, ready: Arc::new(AtomicBool::new(false)), busy: false, period: queue.get_timestamp_period() as f64, sim_ms: 0.0, draw_ms: 0.0, all: Vec::new() }
     }
 
     /// The query set to write this frame, if the last reading is in.
@@ -1025,9 +1248,26 @@ impl Stamps {
         self.ready.store(false, Ordering::Release);
         self.busy = false;
         let ms = |a: u64, b: u64| b.saturating_sub(a) as f64 * self.period / 1e6;
-        // Smoothed, so the number can be read.
-        self.sim_ms = 0.9 * self.sim_ms + 0.1 * ms(t[0], t[1]);
-        self.draw_ms = 0.9 * self.draw_ms + 0.1 * ms(t[1], t[2]);
+        let (sim, draw) = (ms(t[0], t[1]), ms(t[1], t[2]));
+        // Smoothed, so the panel's number can be read; seeded with the
+        // first reading (it started at 0 until the review of 2026-11-11, so
+        // early screenshot figures read low).
+        let a = if self.all.is_empty() { 1.0 } else { 0.1 };
+        self.sim_ms += a * (sim - self.sim_ms);
+        self.draw_ms += a * (draw - self.draw_ms);
+        if self.all.len() < 100_000 {
+            self.all.push((sim, draw));
+        }
+    }
+
+    /// The median reading so far: the ticks and the drawing, ms, and how
+    /// many readings.
+    fn median(&self) -> (f64, f64, usize) {
+        let mid = |mut v: Vec<f64>| {
+            v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            v.get(v.len() / 2).copied().unwrap_or(0.0)
+        };
+        (mid(self.all.iter().map(|r| r.0).collect()), mid(self.all.iter().map(|r| r.1).collect()), self.all.len())
     }
 }
 
@@ -1210,8 +1450,10 @@ impl App {
             KeyCode::KeyF => {
                 let food = self.s.food;
                 if let (Some(e), Some(at)) = (self.engine.as_mut(), self.hand.at) {
-                    e.dropped.push(at);
-                    e.lay_food(food);
+                    if e.can_drop() {
+                        e.dropped.push(at);
+                        e.lay_food(food);
+                    }
                 }
             }
             _ => return,
@@ -1245,11 +1487,14 @@ impl App {
         e.write_params(&self.s, self.hand);
         let soft = self.s.curve == Curve::Soft;
         let stamps = self.stamps.as_ref().and_then(|st| st.take().map(|_| st));
-        let wrote = stamps.is_some() && ticks > 0;
+        // pixels skips the closure when the window is hidden, so the
+        // stamps count as written only if it ran.
+        let mut wrote = false;
         let res = p.render_with(|enc, target, ctx| {
             e.record(shared, enc, ticks, soft, stamps.map(|st| &st.qs));
-            if wrote {
-                stamps.unwrap().resolve(enc);
+            if let Some(st) = stamps.filter(|_| ticks > 0) {
+                st.resolve(enc);
+                wrote = true;
             }
             enc.copy_buffer_to_texture(
                 wgpu::TexelCopyBufferInfo { buffer: &e.frame, layout: wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(e.dish.w as u32 * 4), rows_per_image: Some(e.dish.h as u32) } },
@@ -1274,7 +1519,10 @@ impl App {
             let path = std::env::temp_dir().join(format!("mouldgpu-screenshot-p{}.png", self.preset + 1));
             e.picture().save(&path).unwrap();
             println!("mouldgpu: wrote {}", path.display());
-            let st = self.stamps.as_ref().map_or("no timestamps".to_string(), |st| format!("GPU {:.3} ms a frame (ticks {:.3} + drawing {:.3}), smoothed", st.sim_ms + st.draw_ms, st.sim_ms, st.draw_ms));
+            let st = self.stamps.as_ref().map_or("no timestamps".to_string(), |st| {
+                let (sim, draw, n) = st.median();
+                format!("GPU {:.3} ms a frame (ticks {sim:.3} + drawing {draw:.3}), median of {n} frames timed", sim + draw)
+            });
             println!("mouldgpu: after {} frames, {} ticks: {st}; {:.1} frames a second", self.drawn, e.done, self.fps);
             event_loop.exit();
         }
@@ -1320,6 +1568,13 @@ impl ApplicationHandler for App {
         }
         let mut pixels = built.unwrap();
         pixels.set_scaling_mode(scaling_for(size, (w as usize, h as usize)));
+        // pixels 0.17 recomputes the drawing's scale (and the mouse's
+        // inverse) only on a resize, so a window opened smaller than the
+        // dish would draw it cropped until one came (independent review,
+        // 2026-11-11).
+        if let Err(err) = pixels.resize_surface(size.width, size.height) {
+            return self.fail(event_loop, format!("surface resize failed: {err}"));
+        }
         let info = pixels.adapter().get_info();
         self.adapter = info.name.clone();
         println!("mouldgpu: {} ({:?}), timestamps {}", info.name, info.backend, if timestamps { "yes" } else { "no" });
@@ -1541,6 +1796,19 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 write_gif(&path, shots, ms.max(20));
                 println!("wrote {path}");
             }
+            // Where a tick's time goes: every pass stamped on its own, the
+            // median of 11 ticks (after the measures, which they move on).
+            if timestamps {
+                let runs: Vec<Vec<(&str, f64)>> = (0..11).map(|_| e.profile(&shared, s.curve == Curve::Soft)).collect();
+                let parts: Vec<String> = (0..runs[0].len())
+                    .map(|q| {
+                        let mut v: Vec<f64> = runs.iter().map(|r| r[q].1).collect();
+                        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                        format!("{} {:.3}", runs[0][q].0, v[v.len() / 2])
+                    })
+                    .collect();
+                println!("GPU ms a pass, median of 11 ticks each submitted alone: {}", parts.join(", "));
+            }
         }
         pictures.push(pic);
     }
@@ -1569,11 +1837,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "scale" => scale = v.parse()?,
             "look" => look.dir = v.into(),
             "seconds" => look.seconds = v.parse()?,
-            "gif" => look.gif = v != "0",
-            "frames" => look.frames = v != "0",
+            "gif" => look.gif = on_off(k, v)?,
+            "frames" => look.frames = on_off(k, v)?,
             "every" => look.every = v.parse::<u64>()?.max(1),
             "down" => look.down = v.parse::<u32>()?.max(1),
-            "twice" => look.twice = v != "0",
+            "twice" => look.twice = on_off(k, v)?,
             "tag" => look.tag = v.into(),
             _ => set(&mut s, k, v)?,
         }
@@ -1649,6 +1917,12 @@ mod tests {
         assert_eq!(next_in(&WALKER_STEPS, 100_000, -1), 32_000);
         assert_eq!(next_in(&WALKER_STEPS, 150_000, -1), 100_000);
         assert_eq!(next_in(&RESPAWN_STEPS, 0.0, -1), 0.0);
+        // A value below the list (from the command line) goes up to its first.
+        assert_eq!(next_in(&WALKER_STEPS, 5_000, 1), 10_000);
+        assert_eq!(next_in(&WALKER_STEPS, 5_000, -1), 5_000);
+        assert_eq!((percent(0.3), percent(0.0001), percent(0.0)), ("30%".to_string(), "0.01%".to_string(), "OFF".to_string()));
+        // The limit restarts the dish (switched on mid-run it would jam).
+        assert!(Knob::Crowd.nudge(&mut s, 1, false, 8_000_000));
         assert_eq!(thousands(1_000_000), "1,000,000");
         assert_eq!(thousands(32_000), "32,000");
     }
@@ -1700,6 +1974,26 @@ mod tests {
         d / b.iter().map(|y| y.abs() as f64).sum::<f64>().max(1e-30)
     }
 
+    /// Runs `ticks` GPU ticks from the CPU dish `cpu`'s state and the same
+    /// on the CPU, and returns how far apart they end: (walkers that moved
+    /// or turned on the CPU, walkers off by more than 0.001 in x, y or
+    /// heading, the trail's L1 difference, the scent's).
+    fn twin(e: &mut Engine, shared: &Shared, s: &Settings, cpu: &mut BigDish, ticks: u32) -> (usize, usize, f64, f64) {
+        let before = cpu.walkers.clone();
+        e.inject(cpu);
+        run(e, shared, s, ticks, Hand::default());
+        for _ in 0..ticks {
+            cpu.tick();
+        }
+        let gpu = walkers_of(e);
+        let side = (e.done % 2) as usize;
+        let trail = floats(&read_back(&e.device, &e.queue, &e.trail[side]));
+        let scent = floats(&read_back(&e.device, &e.queue, &e.scent[side]));
+        let off = gpu.iter().zip(&cpu.walkers).filter(|(g, c)| (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3).count();
+        let moved = before.iter().zip(&cpu.walkers).filter(|(a, b)| a != b).count();
+        (moved, off, l1(&trail, &cpu.trail), l1(&scent, &cpu.scent))
+    }
+
     /// **The twin test** (GPU plan phase 3's gate). The fields are `f32`, so
     /// a GPU and the CPU drift apart over a run (different `cos`, `sin` and
     /// summing order), and the plan's fallback applies: one GPU tick from
@@ -1710,27 +2004,19 @@ mod tests {
     fn one_gpu_tick_matches_one_cpu_tick() {
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
-        // Presets 1 (one a cell, food), 3 (no limit) and 4 (Jenson's angles
-        // and reach, a million walkers in the sandbox).
-        for k in [0, 2, 3] {
-            let s = small(k);
+        // Presets 1 (one a cell, food), 3 (no limit), 4 (Jenson's angles
+        // and reach, a million walkers in the sandbox) and 5 (4 with
+        // respawn), and 1 with respawn (jumps that claim their cell).
+        let dishes = [("1", small(0)), ("3", small(2)), ("4", small(3)), ("5", small(4)), ("1 + respawn", Settings { respawn: 0.01, ..small(0) })];
+        for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             for _ in 0..40 {
                 cpu.tick();
             }
-            let before = cpu.walkers.clone();
-            e.inject(&cpu);
-            run(&mut e, &shared, &s, 1, Hand::default());
-            cpu.tick();
-            let gpu = walkers_of(&e);
-            let side = (e.done % 2) as usize;
-            let trail = floats(&read_back(&device, &queue, &e.trail[side]));
-            let scent = floats(&read_back(&device, &queue, &e.scent[side]));
-            let off = gpu.iter().zip(&cpu.walkers).filter(|(g, c)| (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3).count();
-            let (lt, ls) = (l1(&trail, &cpu.trail), l1(&scent, &cpu.scent));
-            let moved = before.iter().zip(&cpu.walkers).filter(|(a, b)| a != b).count();
-            eprintln!("preset {}: {} walkers, {moved} moved or turned, {off} off by more than 0.001; trail L1 {lt:.1e}, scent L1 {ls:.1e}", k + 1, gpu.len());
+            let n = cpu.walkers.len();
+            let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            eprintln!("preset {name}: {n} walkers, {moved} moved or turned, {off} off by more than 0.001; trail L1 {lt:.1e}, scent L1 {ls:.1e}");
             // On software Vulkan (2026-11-11) every walker agreed within
             // 0.001 (0.1% of them not to the bit: `cos` and `sin` round
             // differently), and the trail and scent agreed to the bit. The
@@ -1739,10 +2025,39 @@ mod tests {
             // off by one put 143-14,492 walkers off (0.6-58%) and the trail
             // 5e-4-8e-3 off; the blocked draw on the wrong stream put 52%
             // off on preset 1.
-            assert_eq!(moved, gpu.len(), "preset {}: every walker steps, turns or is blocked", k + 1);
-            assert!(off * 1000 <= gpu.len(), "preset {}: {off} of {} walkers off", k + 1, gpu.len());
-            assert!(lt <= 1e-4 && ls <= 1e-6, "preset {}: trail L1 {lt:.2e}, scent L1 {ls:.2e}", k + 1);
+            assert_eq!(moved, n, "preset {name}: every walker steps, turns or is blocked");
+            assert!(off * 1000 <= n, "preset {name}: {off} of {n} walkers off");
+            assert!(lt <= 1e-4 && ls <= 1e-6, "preset {name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}");
         }
+    }
+
+    /// Fed scent: a pile the tube reaches lays `fed_scent` of its scent from
+    /// the next tick, on the GPU as on the CPU. Two ticks from the state
+    /// just before a pile is first reached on the CPU.
+    #[test]
+    fn a_reached_pile_quietens_on_the_gpu_as_on_the_cpu() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = small(0);
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        let mut ticks = 0;
+        loop {
+            let mut next = cpu.clone();
+            next.tick();
+            if next.reached != cpu.reached {
+                break;
+            }
+            cpu = next;
+            ticks += 1;
+            assert!(ticks < 3000, "no pile reached in 100 s");
+        }
+        let was = cpu.reached.clone();
+        let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 2);
+        let gpu: Vec<bool> = read_back(&device, &queue, &e.reached).chunks_exact(4).take(cpu.reached.len()).map(|c| u32::from_le_bytes(c.try_into().unwrap()) != 0).collect();
+        eprintln!("a pile reached after {} ticks: {was:?} to {:?}; GPU {gpu:?}; {moved} moved, {off} off, trail L1 {lt:.1e}, scent L1 {ls:.1e}", ticks + 1, cpu.reached);
+        assert_eq!(gpu, cpu.reached, "the GPU marked the pile the CPU did");
+        assert!(off * 1000 <= cpu.walkers.len() && lt <= 1e-4 && ls <= 1e-6, "{off} off, trail L1 {lt:.2e}, scent L1 {ls:.2e}");
     }
 
     /// The same seed gives the same dish and picture twice, bit for bit,
@@ -1795,6 +2110,27 @@ mod tests {
         assert!(counted.iter().all(|&c| c <= 1), "two walkers in a cell");
     }
 
+    /// The soft curve's reference is the shown field's p99.9 to within a
+    /// bin (2^(1/8)), on a dish whose trail runs far above 2^16.
+    #[test]
+    fn the_soft_curves_reference_is_the_p999() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { laid: 2000.0, ..small(2) };
+        let s = Settings { curve: Curve::Soft, ..s };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        for _ in 0..30 {
+            run(&mut e, &shared, &s, s.ticks, Hand::default());
+        }
+        let top = f32::from_bits(u32::from_le_bytes(read_back(&device, &queue, &e.state)[4..8].try_into().unwrap()));
+        let mut lit: Vec<f32> = floats(&read_back(&device, &queue, &e.trail[(e.done % 2) as usize])).into_iter().filter(|&v| v > 0.0).collect();
+        lit.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let p999 = lit[lit.len() - (lit.len() / 1000).max(1)];
+        eprintln!("top {top}, p99.9 {p999}, ratio {:.3}", top / p999);
+        assert!(p999 > 65_536.0, "the dish should pass the old histogram's top: {p999}");
+        assert!(top >= p999 * 0.999 && top <= p999 * 1.1, "top {top} against p99.9 {p999}");
+    }
+
     #[test]
     fn controls_parse() {
         let mut s = preset(3);
@@ -1803,5 +2139,14 @@ mod tests {
         }
         assert_eq!((s.walkers, s.respawn, s.curve, s.colour, s.field, s.blob, s.crowd), (2_000_000, 0.03, Curve::Game, Colour::Amber, Field::Walkers, true, true));
         assert!(set(&mut s, "nonsense", "1").is_err());
+        // Switches and names are strict: `crowd=false` is off, a misspelt
+        // name is an error, and no frame has 0 ticks.
+        set(&mut s, "crowd", "false").unwrap();
+        assert!(!s.crowd);
+        for (k, v) in [("crowd", "maybe"), ("curve", "Soft"), ("colour", "red"), ("start", "packed")] {
+            assert!(set(&mut s, k, v).is_err(), "{k}={v}");
+        }
+        set(&mut s, "ticks", "0").unwrap();
+        assert_eq!(s.ticks, 1);
     }
 }
