@@ -59,6 +59,7 @@
 pub mod big;
 pub mod fever;
 pub mod larder;
+pub mod larder_ai;
 pub mod lesson;
 pub mod level;
 pub mod look;

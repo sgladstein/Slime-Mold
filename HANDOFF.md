@@ -159,6 +159,12 @@ Ask each again; none has an answer to assume.
    between worlds) are listed in
    [its report](Reports/larder-world-roadmap-2026-11-11.md).
 
+9. **The Larder player AI** ([`Reports/larder-ai-2026-11-11.md`](Reports/larder-ai-2026-11-11.md),
+   [page](wiki/rts/player-ai.md)). Plays the soldiers through the player's own
+   commands (every round a replay), sees what a player sees, one brain per
+   side; five styles. Watch it: `cargo run --release --bin larder -- 17 ai=lure`.
+   Built on the CPU field as a harness to port to the Larder world.
+
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
 with no engine, is in §5 of

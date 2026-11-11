@@ -1,0 +1,83 @@
+seed 1 beads t   2.0s  extent r50 73.6 r90 96.1
+seed 1 beads t  10.0s  extent r50 73.5 r90 96.0
+seed 1 beads t  20.0s  extent r50 73.5 r90 96.0
+seed 2 beads t   2.0s  extent r50 73.3 r90 95.9
+seed 2 beads t  10.0s  extent r50 73.3 r90 95.8
+seed 2 beads t  20.0s  extent r50 73.3 r90 95.8
+seed 3 beads t   2.0s  extent r50 73.5 r90 96.0
+seed 3 beads t  10.0s  extent r50 73.4 r90 95.9
+seed 3 beads t  20.0s  extent r50 73.4 r90 95.9
+seed 1 dropfast t   2.0s  extent r50 73.6 r90 97.5
+seed 1 dropfast t   2.0s  kinds k0 n 23898 on 1.000 r 73.5  k1 n 6102 on 0.999 r 73.9
+seed 1 dropfast t  10.0s  extent r50 73.9 r90 97.2
+seed 1 dropfast t  10.0s  kinds k0 n 23898 on 1.000 r 73.8  k1 n 6102 on 0.999 r 74.3
+seed 1 dropfast t  20.0s  extent r50 73.9 r90 97.0
+seed 1 dropfast t  20.0s  kinds k0 n 23898 on 1.000 r 73.8  k1 n 6102 on 0.998 r 74.2
+seed 2 dropfast t   2.0s  extent r50 73.6 r90 97.7
+seed 2 dropfast t   2.0s  kinds k0 n 24033 on 1.000 r 73.6  k1 n 5967 on 0.999 r 73.5
+seed 2 dropfast t  10.0s  extent r50 74.0 r90 97.4
+seed 2 dropfast t  10.0s  kinds k0 n 24033 on 1.000 r 74.1  k1 n 5967 on 0.997 r 73.5
+seed 2 dropfast t  20.0s  extent r50 74.0 r90 97.3
+seed 2 dropfast t  20.0s  kinds k0 n 24033 on 1.000 r 74.2  k1 n 5967 on 0.997 r 73.4
+seed 3 dropfast t   2.0s  extent r50 73.8 r90 97.4
+seed 3 dropfast t   2.0s  kinds k0 n 24080 on 1.000 r 73.7  k1 n 5920 on 0.998 r 74.1
+seed 3 dropfast t  10.0s  extent r50 73.9 r90 97.1
+seed 3 dropfast t  10.0s  kinds k0 n 24080 on 1.000 r 73.9  k1 n 5920 on 0.998 r 73.9
+seed 3 dropfast t  20.0s  extent r50 73.9 r90 97.1
+seed 3 dropfast t  20.0s  kinds k0 n 24080 on 1.000 r 74.0  k1 n 5920 on 0.997 r 73.9
+seed 1 droplets t   2.0s  extent r50 74.1 r90 97.5
+seed 1 droplets t  10.0s  extent r50 74.3 r90 97.2
+seed 1 droplets t  20.0s  extent r50 74.3 r90 97.2
+seed 2 droplets t   2.0s  extent r50 73.9 r90 97.6
+seed 2 droplets t  10.0s  extent r50 74.5 r90 97.5
+seed 2 droplets t  20.0s  extent r50 74.6 r90 97.5
+seed 3 droplets t   2.0s  extent r50 74.0 r90 97.6
+seed 3 droplets t  10.0s  extent r50 74.4 r90 97.4
+seed 3 droplets t  20.0s  extent r50 74.4 r90 97.3
+seed 1 dropscouts t   2.0s  extent r50 73.3 r90 97.2
+seed 1 dropscouts t   2.0s  kinds k0 n 23898 on 1.000 r 73.3  k1 n 6102 on 1.000 r 73.1
+seed 1 dropscouts t  10.0s  extent r50 72.6 r90 96.7
+seed 1 dropscouts t  10.0s  kinds k0 n 23898 on 1.000 r 73.6  k1 n 6102 on 1.000 r 70.5
+seed 1 dropscouts t  20.0s  extent r50 72.5 r90 96.4
+seed 1 dropscouts t  20.0s  kinds k0 n 23898 on 1.000 r 74.2  k1 n 6102 on 1.000 r 69.6
+seed 2 dropscouts t   2.0s  extent r50 73.4 r90 97.3
+seed 2 dropscouts t   2.0s  kinds k0 n 24033 on 1.000 r 73.7  k1 n 5967 on 1.000 r 72.7
+seed 2 dropscouts t  10.0s  extent r50 73.4 r90 96.8
+seed 2 dropscouts t  10.0s  kinds k0 n 24033 on 1.000 r 74.6  k1 n 5967 on 1.000 r 71.3
+seed 2 dropscouts t  20.0s  extent r50 73.2 r90 96.3
+seed 2 dropscouts t  20.0s  kinds k0 n 24033 on 1.000 r 74.7  k1 n 5967 on 1.000 r 70.2
+seed 3 dropscouts t   2.0s  extent r50 73.6 r90 97.2
+seed 3 dropscouts t   2.0s  kinds k0 n 24080 on 1.000 r 73.7  k1 n 5920 on 1.000 r 73.0
+seed 3 dropscouts t  10.0s  extent r50 73.2 r90 96.6
+seed 3 dropscouts t  10.0s  kinds k0 n 24080 on 1.000 r 74.1  k1 n 5920 on 1.000 r 71.0
+seed 3 dropscouts t  20.0s  extent r50 72.5 r90 96.4
+seed 3 dropscouts t  20.0s  kinds k0 n 24080 on 1.000 r 73.8  k1 n 5920 on 1.000 r 69.6
+seed 1 grazers t   2.0s  extent r50 74.0 r90 97.6
+seed 1 grazers t  10.0s  extent r50 74.3 r90 97.4
+seed 1 grazers t  20.0s  extent r50 74.5 r90 97.5
+seed 2 grazers t   2.0s  extent r50 73.6 r90 97.7
+seed 2 grazers t  10.0s  extent r50 74.3 r90 97.6
+seed 2 grazers t  20.0s  extent r50 74.6 r90 97.6
+seed 3 grazers t   2.0s  extent r50 73.9 r90 97.6
+seed 3 grazers t  10.0s  extent r50 74.4 r90 97.5
+seed 3 grazers t  20.0s  extent r50 74.4 r90 97.3
+seed 1 grazescouts t   2.0s  extent r50 73.2 r90 97.2
+seed 1 grazescouts t   2.0s  kinds k0 n 23898 on 1.000 r 73.2  k1 n 6102 on 1.000 r 73.4
+seed 1 grazescouts t  10.0s  extent r50 72.6 r90 96.9
+seed 1 grazescouts t  10.0s  kinds k0 n 23898 on 1.000 r 73.2  k1 n 6102 on 1.000 r 71.1
+seed 1 grazescouts t  20.0s  extent r50 72.1 r90 97.6
+seed 1 grazescouts t  20.0s  kinds k0 n 23898 on 1.000 r 73.4  k1 n 6102 on 1.000 r 68.8
+seed 2 grazescouts t   2.0s  extent r50 73.3 r90 97.3
+seed 2 grazescouts t   2.0s  kinds k0 n 24033 on 1.000 r 73.5  k1 n 5967 on 1.000 r 72.7
+seed 2 grazescouts t  10.0s  extent r50 73.3 r90 97.2
+seed 2 grazescouts t  10.0s  kinds k0 n 24033 on 1.000 r 74.4  k1 n 5967 on 1.000 r 71.1
+seed 2 grazescouts t  20.0s  extent r50 72.7 r90 98.1
+seed 2 grazescouts t  20.0s  kinds k0 n 24033 on 1.000 r 74.6  k1 n 5967 on 1.000 r 68.8
+seed 3 grazescouts t   2.0s  extent r50 73.5 r90 97.1
+seed 3 grazescouts t   2.0s  kinds k0 n 24080 on 1.000 r 73.6  k1 n 5920 on 1.000 r 73.0
+seed 3 grazescouts t  10.0s  extent r50 73.1 r90 96.9
+seed 3 grazescouts t  10.0s  kinds k0 n 24080 on 1.000 r 74.0  k1 n 5920 on 1.000 r 71.3
+seed 3 grazescouts t  20.0s  extent r50 72.8 r90 97.6
+seed 3 grazescouts t  20.0s  kinds k0 n 24080 on 1.000 r 74.3  k1 n 5920 on 1.000 r 69.8
+
+[exited with code 0]

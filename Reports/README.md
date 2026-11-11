@@ -236,6 +236,22 @@ move.
   alone moved no border on even dishes (seed 1); a 1.5x louder trail wins early and loses walkers by 16 s (6 of 8,
   p 0.29). Page, scripts and raw output in
   [`creatures-2026-11-11/`](creatures-2026-11-11/).
+- [spread-mix-2026-11-11.md](spread-mix-2026-11-11.md) — **looks, 3 seeds, no paired test: spread from one spot,
+  and mixed walkers in one mould.** Owner, 13:58Z: how far do the mould types spread from one spot, and what if
+  some walkers differ? Without food only explorers cross the dish (13.8-14.0k tube cells at 10 s); the network
+  curls into one ring (1.8-1.9k cells at 20 s); droplets hold. New `BigParams` mix (a share of walkers with their
+  own reach, angles, turn, step, deposit, one shared trail): the kinds sort themselves into parts, such as
+  outriders riding the wall, a splitter's core apart from its ring (3 of 3), a crawling knot, and grazing scouts
+  that haze over the dish (r90 299-303 against 192-199). Page, script and raw output in
+  [`spread-mix-2026-11-11/`](spread-mix-2026-11-11/).
+- [research-review-2026-11-11.md](research-review-2026-11-11.md) — **an independent review of the creature
+  research** (jenson-looks, creatures, spread-mix), asked for by the owner at 15:08Z with a big-picture brief. It
+  found the work tuned to the wrong operating point: no food, a fixed walker count, the dish wall as a hidden rail,
+  and no player verb. Species can't have their own settings, which blocks the ladder. The knife test cut before the
+  front arrived (void); the boost story contradicts the model; spread-mix's tube share was a unit slip (6%, not
+  0.4%). It gives six ranked directions with first experiments, and a list of biology that was ignored. The prompt,
+  the review verbatim, and the thread's response; scripts in
+  [`research-review-2026-11-11/`](research-review-2026-11-11/).
 
 ## Added with the move (2026-11-10)
 
@@ -286,6 +302,7 @@ move.
   points ending and telegraphed attacks before adding verbs. Reading only, no runs. Cards in `research/sources/`.
 - [growth-2026-11-11.md](growth-2026-11-11.md) — **Growth and starving on the big dish (Larder World W0)**: walkers eat, pay upkeep, divide and starve, in fixed slots paired by one keyed mask a step; on the GPU it matches the CPU exactly. Fed 96,358 against starved 428 alive at 30 s (8 of 8, p 0.0078); size nearly linear in food (1.9x a doubling); a walker lives about 3 s; CPU cost within noise. Open: tubes between point crystals may starve.
 - [mould-shape-2026-11-11.md](mould-shape-2026-11-11.md) — **What shapes the mould (owner's questions, 16:01-16:05Z)**: food sets the size, what walkers follow sets the shape. Grass and crystals in one world (seed 1): crystals alone give roads, grass that never regrows a boom and bust (dead by 40 s), regrowing grass a steady fine net, piles that only smell a coarse one; full grass swamps the crystals. Walker count matters only with the crowd limit: off, 32k-1M all fold into strands (0-1 loops at 30 s); on, 32k/100k/200k give 43-54/57-70/120-144 loops (8 of 8 each, p 0.0078, Holm). On crystals size follows intake (crystal area x bite), not charge; scratch `energy_flow` turns the hoard into 15-24% more walkers.
+- [larder-ai-2026-11-11.md](larder-ai-2026-11-11.md) — **Larder player AI**: plays through `Cmd`s only (every round a replay), reads a `View` of what a player sees, commands a `Side` (ready for a second soldier team); five styles on knobs plus idle and random. Held out (17-32), boom, lure and adapt beat idle and random 16/16 in both fields; turtle and rush lose to idle 16/16. Fixed: buying unarmed soldiers, bait while hunting. A harness to port to the world, not a balance result.
 - [larder-m3-2026-11-11.md](larder-m3-2026-11-11.md) — **Larder M3, full controls and soldiers that fight from range**: groups, scent view, replays to the same hash, a headless frame shot and bench. Firing from range, spread shots and a loose formation loosened the ladder: on held-out seeds no plan is best on 13+/16 (reader 8 fed, 10 lean; was 13 and 12), two pairs flip between fields but neither survives Holm. Desktop frame 7.2 ms mean, 9.6 p95 at 40 soldiers. Spores and a dormant crust were tried as mould answers and rejected.
 - [larder-world-roadmap-2026-11-11.md](larder-world-roadmap-2026-11-11.md) — **Larder World roadmap**, its three independent reviews (skeptic, expander, feasibility) and W1a (crystals that run dry, rock and wet terrain, a rectangular world on the big dish, CPU; cost within noise): the owner moved Larder into a persistent GPU world with energy crystals that run out and several mould species. Six gated phases (W0 growth on the GPU first), the thread split (GPU, creature, Camera and UI, Player AI), landing vs race starts, open questions. Walls the mould wears down (default health 400: a caged mould breaks out by 20-30 s; a passing tube never breaks one) and crystal charge that flows inside a crystal (default 0.01: share eaten 0.476 → 0.829, 12/12 seeds, p 0.0005); page `page-walls.html`. With growth (scratch): charge sets how long the mould lasts, not how big it gets (512 gives an idle mould 10-12 minutes on 512 × 320); any wall costs it about a tenth of its size at 60 s and a wall on its road is no better than a random one; walls now leak 0.9 of their scent (a sealed ring was ignored; leaky, it was bitten on 7 of 8 seeds). Crystals are hexagons (owner, 16:48Z).
 - [larder-m2-2026-11-11.md](larder-m2-2026-11-11.md) — **Larder M2, spending and the mould's answers** (buy soldiers, bait, turrets; hoard smell, hunger, drops): the gate fails on held-out seeds 17-32. No plan crosses over between a fed and a lean field; the reader beats every plan but the farmer in a fed field (13/16) and the baiter in a lean one (12/16). Ablations: hoard smell is what makes saving cost (off, fed reader -0.30 to 0.17), drops are what keep a lean mould alive (off, it starves 16/16), hunger barely acts. Game layer 0.053 ms a step at 40 soldiers.
