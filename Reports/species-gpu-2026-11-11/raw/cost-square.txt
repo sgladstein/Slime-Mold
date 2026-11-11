@@ -1,0 +1,12 @@
+== square round 1 (rows by workgroup tiles)
+species=2 convert=1.2: wall ms a frame of 2 ticks and the drawing, 300 frames: median 64.560, worst 99.053; GPU ms ticks 60.762, drawing 3.193
+species=2 convert=1.2 convert_r=8: wall ms a frame of 2 ticks and the drawing, 300 frames: median 117.966, worst 174.200; GPU ms ticks 114.837, drawing 3.108
+== square round 2 (rows by workgroup tiles)
+species=2 convert=1.2: wall ms a frame of 2 ticks and the drawing, 300 frames: median 63.325, worst 99.503; GPU ms ticks 59.356, drawing 3.122
+species=2 convert=1.2 convert_r=8: wall ms a frame of 2 ticks and the drawing, 300 frames: median 119.613, worst 196.538; GPU ms ticks 114.465, drawing 3.143
+== square round 3 (rows by workgroup tiles)
+species=2 convert=1.2: wall ms a frame of 2 ticks and the drawing, 300 frames: median 64.126, worst 95.707; GPU ms ticks 60.793, drawing 3.119
+species=2 convert=1.2 convert_r=8: wall ms a frame of 2 ticks and the drawing, 300 frames: median 119.691, worst 166.339; GPU ms ticks 113.784, drawing 3.103
+== the passes (seconds=2)
+species=2 convert=1.2: GPU ms a pass, median of 11 ticks each submitted alone: sense 4.968, walk 1.700, convert 1.371, trail 17.687, scent 3.949, draw 3.001
+species=2 convert=1.2 convert_r=8: GPU ms a pass, median of 11 ticks each submitted alone: sense 4.754, walk 1.886, rows 25.438, convert 4.958, trail 18.224, scent 6.201, draw 2.994
