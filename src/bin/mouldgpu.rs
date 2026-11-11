@@ -2440,6 +2440,13 @@ mod tests {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             assert!(e.grows, "{name}: growth on");
             let mut cpu = e.dish.clone();
+            // The GPU runs a few ticks of its own first, so a per-cell count
+            // the tick fails to clear reaches the twin tick (the inject
+            // writes the walkers and fields, not the counts). The grazing
+            // counts were cleared only with `graze_w` until 2026-11-11, and
+            // with grazing's weight 0 (the last dish but one) the grass L1 was
+            // 0.12 against the bound of 1e-4; cleared, it is 0.
+            run(&mut e, &shared, &s, 3, Hand::default());
             for _ in 0..40 {
                 cpu.tick();
             }

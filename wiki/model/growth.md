@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-11T18:30Z
+updated: 2026-11-11T19:50Z
 sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [BigParams::upkeep, BigParams::energy_flow, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
@@ -24,6 +24,10 @@ its size is nearly linear in the regrowth
 Growth off changes nothing. On the GPU it is three passes that match the
 CPU in a one-tick twin test and add 0.16 ms to a 1.82 ms GTX 1070 frame at
 100,000 walkers ([growth, *On the GPU*](../../Reports/growth-2026-11-11.md)).
+A fix after the merge: the GPU cleared its grass eater counts only when
+grazing steered, so with growth on and grazing's weight 0 it over-ate the
+grass; the twin test now runs the GPU a few ticks first, which catches it
+(grass L1 0.12 before, 0 after).
 On crystals the size stops near 20,000 whatever the charge: the crystals'
 area sets the intake and the charge only how long it lasts; grass under
 the crystals swamps them

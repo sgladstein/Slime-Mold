@@ -670,7 +670,12 @@ fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (i >= P.w * P.h) { return; }
     atomicStore(&claim[i], NONE);
     if (P.sick_steps > 0u) { atomicStore(&gdep[i], 0u); }
-    if (graze_w() != 0.0) { atomicStore(&gcount[i], 0u); }
+    // Cleared whenever the walk pass counts (`grazes`), not only with
+    // `graze_w`: with growth on and grazing's weight 0 the counts piled up
+    // tick on tick, so every walker that had ever stood on a cell ate its
+    // grass again (found 2026-11-11 reading for the species port; the
+    // one-tick twin started from fresh counts and could not see it).
+    if (grazes()) { atomicStore(&gcount[i], 0u); }
     // The counts, a block a species (and a class).
     let c = P.w * P.h;
     let m = nsp1();
