@@ -11,6 +11,8 @@ code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::st
 
 ## Now
 
+**Larder World (2026-11-11 14:06Z):** the owner moved Larder into a persistent world on the GPU big dish, with energy crystals that run out and several mould species; no more small-dish tuning. Roadmap: [`larder-world-roadmap-2026-11-11.md`](../../Reports/larder-world-roadmap-2026-11-11.md) (doc https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ). Below is the small-dish history it builds on.
+
 Brainstorm: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
 A squad shoots the mould; both want the same food; the player's larder is a
 pile the mould steals from. The owner chose a squad, solo, tests first, and
@@ -59,6 +61,10 @@ owner's playtest.
 
 ## Owner's word
 
+- 2026-11-11 14:09Z: also explore a race start, "both the player and the mold starting in one small area and then we're both trying to expand at the same time".
+- 2026-11-11 14:07Z: a player AI thread for automated testing; later "two soldier teams against multiple molds so in the future the AI could also play soldiers".
+- 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand. Several species sounds interesting. Put everything into the world version."
+- 2026-11-11 14:01Z: "You should also be moving your game into the big dish ... should become more of a world, and the food should probably become more something like energy crystals".
 - 2026-11-11 04:04Z (card): "Both": food stops arriving late in the round, and a 15-game-minute cap ends any stalemate on share of the map held.
 - 2026-11-11 03:38Z: "Start with 4 and can grow to 40. They should definitely die and be attacked by the slime. The round ends when the soldiers or slime are all dead?"
 - 2026-11-11 03:14Z: "Rts-style. When you finish your current task, let's develop a full detailed plan of how to build the demo".
