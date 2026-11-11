@@ -39,6 +39,7 @@ work; a thread working on one directly may change it.
 - [The field skirmish](rts/skirmish.md): v1 (habits, salt, lamp) set aside after play; v2, a tithe spent on beacons and spores: soft won 127/128; Strike and Fortify dethrone it, but brace (strike and fortify) wins every pairing.
 - [How RTS games are designed](rts/rts-craft.md): outside research (22 sources) and what it says about our demos: dominant strategies and unmanaged snowballs, fix the structure first.
 - [Larder, the mould as the enemy](rts/shooter.md): now Larder World (owner 11-11 14:06Z), a persistent GPU world with crystals and several species, phases W0-W5; before it, on the small dish: a held ring keeps the mould off your larder; priced, ring-forever never wins but ring-then-mow tops every seed: a ladder, not a cycle; M2 (spending, mould answers) still a ladder; M3 soldiers that fire from range loosened it (no plan best on 13+/16).
+- [The Larder player AI](rts/player-ai.md): plays soldiers through the player's commands, one brain per side; five styles; boom, lure, adapt beat idle and random 16/16 held out.
 - [Two Fevers](rts/two-fevers.md): playable in the browser, version 3 (call, seed, pinch): Trunk > Web > Raider, a ladder, and the leader at 1:30 keeps it; not yet played by hand.
 
 ## Method and owner

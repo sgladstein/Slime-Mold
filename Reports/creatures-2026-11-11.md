@@ -55,6 +55,18 @@ lost them, and ended with 0.34 of the walkers, the two bodies drawn apart
 with an empty band between them. Script:
 [`creatures-2026-11-11/fight.sh`](creatures-2026-11-11/fight.sh).
 
+**Correction (2026-11-11, after the [independent review](research-review-2026-11-11.md), C3).** The explanation above is
+wrong; the null result stands. With `species_avoid` 0 each species steers
+by its own field alone, and scaling a field by 1.5 doesn't change which
+sensor is strongest. So the boost cannot move species 0's tubes into the
+other half. It only moves the conversion bar: species 1 joins species 0
+when species 0's trail is over 0.8 of its own, and species 0 joins species
+1 only over 1.8. That favours species 0, and it still lost. Why it lost is
+open. Also (C6): "bodies stay bodies" in the *Summary* holds at 10 s. In
+the reviewer's 60 s rerun of grazing seed 1 the bodies kept merging (227,
+147, 108 and 79 at 5, 10, 20 and 60 s), and only 26 of 295 kept an
+unbroken track for 8 s.
+
 ## An edge in numbers (`species_share`), and hunting droplets
 
 `species_share` gives species 0 that share of the walkers, interleaved down

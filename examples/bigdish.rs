@@ -74,10 +74,24 @@
 //! `style=species` (each species in its own colour). With species the
 //! report adds `pure` (share of tube cells where one species lays 80% or
 //! more of the trail) and each species' share of all trail.
+//!
+//! Later keys (2026-11-11): `graze_weight= graze_eat= graze_regrow=`
+//! (grazing), `species_convert= species_convert_r= species_boost=
+//! species_share=` (conversion, a louder or more numerous species 0),
+//! `blocked_retry= blocked_deposit=`, `mix_share= mix_reach= mix_angle=
+//! mix_turn= mix_step= mix_deposit=` (mixed walkers; `style=kinds` draws
+//! each kind), and per-species settings `sN_field=` (`species_sets`; N the
+//! species, field one of sensor_angle, rotate_angle (degrees),
+//! sensor_offset, step, deposit, keep, crowd, blocked_deposit,
+//! graze_weight, explore_steps). The first `sN_` key copies the final
+//! global settings into a set per species, then changes that field. At the
+//! end a `firsts` line lists each pile as index:distance from the start
+//! (dish cells):radius fraction (1 at the wall):seconds to first reach
+//! (0 at the start, -1 never).
 
 use std::time::Instant;
 
-use slime_mould::mould::big::{BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE};
+use slime_mould::mould::big::{BigDish, BigParams, SpeciesSet, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE};
 use slime_mould::mould::{H, STEPS_PER_SECOND, W};
 
 fn preset(name: &str) -> BigParams {
@@ -411,8 +425,15 @@ fn main() {
     }
     let mut p = preset(&name);
     let name = tag.unwrap_or(name);
+    // Per-species keys (`s0_crowd=1 s1_sensor_angle=45`, `species_sets`)
+    // apply after every global key, to sets copied from the final globals.
+    let mut per_species: Vec<(usize, String, f32)> = Vec::new();
     for (k, v) in &overrides {
         let f = || v.parse::<f32>().unwrap_or_else(|_| panic!("{k}={v}: not a number"));
+        if let Some((sp, field)) = k.strip_prefix('s').and_then(|r| r.split_once('_')).and_then(|(n, fld)| Some((n.parse::<usize>().ok()?, fld))) {
+            per_species.push((sp, field.into(), f()));
+            continue;
+        }
         match k.as_str() {
             "walkers" => p.walkers = f() as usize,
             "keep" => p.keep = f(),
@@ -490,6 +511,18 @@ fn main() {
             "mix_turn" => p.mix_turn = f(),
             "mix_step" => p.mix_step = f(),
             "mix_deposit" => p.mix_deposit = f(),
+            "crystal_charge" => p.crystal_charge = f(),
+            "crystal_eat" => p.crystal_eat = f(),
+            "crystal_regrow" => p.crystal_regrow = f(),
+            "crystal_flow" => p.crystal_flow = f(),
+            "terrain_rock" => p.terrain_rock = f(),
+            "terrain_wet" => p.terrain_wet = f(),
+            "wet_step" => p.wet_step = f(),
+            "terrain_blob" => p.terrain_blob = f(),
+            "rect" => p.rect = f() != 0.0,
+            "wall_hp" => p.wall_hp = f(),
+            "wall_bite" => p.wall_bite = f(),
+            "wall_scent" => p.wall_scent = f(),
             "blocked_keep" => p.blocked_keep = f() != 0.0,
             "blocked_reset" => p.blocked_reset = f(),
             "blocked_retry" => p.blocked_retry = f() as u8,
@@ -516,6 +549,26 @@ fn main() {
             _ => panic!("unknown key {k}"),
         }
     }
+    if !per_species.is_empty() {
+        let n = per_species.iter().map(|&(sp, ..)| sp + 1).max().unwrap().max(p.species as usize);
+        p.species_sets = vec![SpeciesSet::from_params(&p); n];
+        for (sp, field, v) in &per_species {
+            let s = &mut p.species_sets[*sp];
+            match field.as_str() {
+                "sensor_angle" => s.sensor_angle = v.to_radians(),
+                "rotate_angle" => s.rotate_angle = v.to_radians(),
+                "sensor_offset" => s.sensor_offset = *v,
+                "step" => s.step = *v,
+                "deposit" => s.deposit = *v,
+                "keep" => s.keep = *v,
+                "crowd" => s.crowd = *v as u8,
+                "blocked_deposit" => s.blocked_deposit = *v,
+                "graze_weight" => s.graze_weight = *v,
+                "explore_steps" => s.explore_steps = *v as u16,
+                _ => panic!("unknown per-species key s{sp}_{field}"),
+            }
+        }
+    }
     // Output folders are made here, so a fresh clone needs no setup.
     for dir in [&gif, &frames, &look].into_iter().flatten() {
         std::fs::create_dir_all(dir).unwrap();
@@ -536,10 +589,18 @@ fn main() {
         let mut prev_lead: Vec<u8> = Vec::new();
         let mut stills: Vec<u64> = at.iter().map(|s| (s * STEPS_PER_SECOND as f32).round() as u64).collect();
         stills.sort_unstable();
+        // When each pile was first reached (tube on it), dish seconds; 0 for
+        // piles reached at the start (pile 0), -1 for never.
+        let mut first: Vec<f32> = d.reached.iter().map(|&r| if r { 0.0 } else { -1.0 }).collect();
         while d.ticks < ticks {
             let t0 = Instant::now();
             d.tick();
             spent += t0.elapsed().as_secs_f64();
+            for (f, &r) in first.iter_mut().zip(&d.reached) {
+                if *f < 0.0 && r {
+                    *f = d.seconds();
+                }
+            }
             if d.ticks == infect_tick {
                 d.infect(W as f32 / 2.0, H as f32 / 2.0, infect_r);
             }
@@ -609,7 +670,7 @@ fn main() {
             if d.ticks.is_multiple_of(report_every) || d.ticks == ticks {
                 let m = d.measure();
                 println!(
-                    "seed {seed} {name} t {:5.1}s  tube {:7.1}  loops {:4}  width {:.2}  reach {:6.1}  piles {}/{}  strays {:.3}  ms/tick {:.2}",
+                    "seed {seed} {name} t {:5.1}s  tube {:7.1}  loops {:4}  width {:.2}  reach {:6.1}  piles {}/{}  strays {:.3}  crystals {:.3}  ms/tick {:.2}",
                     m.seconds,
                     m.tube_area,
                     m.loops,
@@ -618,6 +679,7 @@ fn main() {
                     m.reached,
                     d.piles.len(),
                     m.strays,
+                    d.crystals_left(),
                     spent * 1e3 / d.ticks as f64
                 );
                 {
@@ -689,6 +751,64 @@ fn main() {
                         left / tot[0].max(1e-9),
                         changed as f32 / both.max(1) as f32
                     );
+                    {
+                        // Each species' own tube: cells where its trail is
+                        // over the tube cut times its deposit over the
+                        // global deposit (`species_sets`; the same walker
+                        // traffic whatever it lays), as area (dish cells) and
+                        // 4-connected pieces of 16 fine cells or more
+                        // (bodies, or a network's pieces), and its walkers.
+                        let n = d.species_trail.len();
+                        let mut walkers = vec![0usize; n];
+                        for &c in &d.spec {
+                            walkers[c as usize] += 1;
+                        }
+                        let s2 = (d.p.scale * d.p.scale) as f32;
+                        let mut parts = Vec::new();
+                        for (sp, f) in d.species_trail.iter().enumerate() {
+                            let cut = if d.p.species_sets.is_empty() { d.p.tube } else { d.p.tube * d.p.species_sets[sp].deposit / d.p.deposit.max(1e-9) };
+                            let on: Vec<bool> = f.iter().map(|&v| v > cut).collect();
+                            let area = on.iter().filter(|&&b| b).count();
+                            let mut seen = vec![false; on.len()];
+                            let mut pieces = 0usize;
+                            let mut stack = Vec::new();
+                            for start in 0..on.len() {
+                                if !on[start] || seen[start] {
+                                    continue;
+                                }
+                                seen[start] = true;
+                                stack.push(start);
+                                let mut size = 0usize;
+                                while let Some(i) = stack.pop() {
+                                    size += 1;
+                                    let (x, y) = (i % d.w, i / d.w);
+                                    let mut push = |j: usize| {
+                                        if on[j] && !seen[j] {
+                                            seen[j] = true;
+                                            stack.push(j);
+                                        }
+                                    };
+                                    if x > 0 {
+                                        push(i - 1);
+                                    }
+                                    if x + 1 < d.w {
+                                        push(i + 1);
+                                    }
+                                    if y > 0 {
+                                        push(i - d.w);
+                                    }
+                                    if y + 1 < d.h {
+                                        push(i + d.w);
+                                    }
+                                }
+                                if size >= 16 {
+                                    pieces += 1;
+                                }
+                            }
+                            parts.push(format!("s{sp} walkers {} area {:.1} pieces {}", walkers[sp], area as f32 / s2, pieces));
+                        }
+                        println!("seed {seed} {name} t {:5.1}s  own {}", m.seconds, parts.join("  "));
+                    }
                     if d.p.species_convert > 0.0 {
                         // Walkers of each species (conversion moves them).
                         let n = d.species_trail.len();
@@ -827,6 +947,25 @@ fn main() {
                     );
                 }
             }
+        }
+        {
+            // Each pile: distance from the start (the dish centre with
+            // `blob_r`, else pile 0) in dish cells, how far out it sits
+            // (0 at the centre, 1 at the dish wall: the ellipse's radius
+            // fraction), and when it was first reached.
+            let (cx, cy) = if d.p.blob_r > 0.0 { (W as f32 / 2.0, H as f32 / 2.0) } else { d.piles[0] };
+            let (rx, ry) = (W as f32 / 2.0 - 3.0, H as f32 / 2.0 - 3.0);
+            let parts: Vec<String> = d
+                .piles
+                .iter()
+                .zip(&first)
+                .enumerate()
+                .map(|(i, (&(x, y), &f))| {
+                    let rho = (((x - W as f32 / 2.0) / rx).powi(2) + ((y - H as f32 / 2.0) / ry).powi(2)).sqrt();
+                    format!("{i}:{:.0}:{:.2}:{:.1}", (x - cx).hypot(y - cy), rho, f)
+                })
+                .collect();
+            println!("seed {seed} {name} firsts {}", parts.join(" "));
         }
         println!("seed {seed} {name} hash={:016x}", d.hash());
         if let Some(dir) = &gif {

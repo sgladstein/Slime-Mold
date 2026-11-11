@@ -1,0 +1,37 @@
+# worldwall ring arm with growth and leaky walls (scratch 7260574), seeds 1-8, 90 s, walkers=5000 capacity=50000 upkeep=0.001 charge=512, wall_hp 400, wall_scent 0 / 0.5 / 0.9. Measure named first: bites on the ring and when the ringed crystal is first eaten.
+## ws0-s1-4
+worldwall scale 2 walkers 5000 seconds 90 wall_hp 400 wall_bite 1 crystal_flow 0.01 wall_scent 0 upkeep 0.001 capacity 50000 charge 512
+seed 1 ring   wall   504 drained 0.0795 of others  home left 0.802  ring pile bitten never  left 1.000  broken 41  wall bites 37742  alive every 15 s [3867, 8692, 14930, 16716, 17448, 17831]  hash 7ebcc6c6bf561559
+seed 2 ring   wall   502 drained 0.0646 of others  home left 0.793  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [7494, 9016, 10198, 11583, 11985, 12550]  hash 8181eff52dc14537
+seed 3 ring   wall   493 drained 0.0593 of others  home left 0.794  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [5942, 9361, 11011, 11526, 11975, 11908]  hash 36f82f30d2c74d89
+seed 4 ring   wall   492 drained 0.0564 of others  home left 0.794  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [4385, 9250, 10172, 12196, 13200, 13258]  hash e8a925a25a035b1f
+## ws0-s5-8
+worldwall scale 2 walkers 5000 seconds 90 wall_hp 400 wall_bite 1 crystal_flow 0.01 wall_scent 0 upkeep 0.001 capacity 50000 charge 512
+seed 5 ring   wall   497 drained 0.0708 of others  home left 0.795  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [6450, 11018, 13345, 13962, 14175, 14116]  hash b69a6bddd824db03
+seed 6 ring   wall   502 drained 0.0615 of others  home left 0.792  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [5317, 9369, 11587, 11844, 11889, 11981]  hash eee390b3491df7bd
+seed 7 ring   wall   505 drained 0.0669 of others  home left 0.794  ring pile bitten never  left 1.000  broken 0  wall bites 574  alive every 15 s [4081, 7451, 12900, 15534, 16565, 17956]  hash f03f75fb4ec0a575
+seed 8 ring   wall   500 drained 0.0957 of others  home left 0.792  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [9822, 13802, 16235, 17507, 19175, 19047]  hash 7cb9aa68810d842e
+## ws0.5-s1-4
+worldwall scale 2 walkers 5000 seconds 90 wall_hp 400 wall_bite 1 crystal_flow 0.01 wall_scent 0.5 upkeep 0.001 capacity 50000 charge 512
+seed 1 ring   wall   504 drained 0.0799 of others  home left 0.801  ring pile bitten never  left 1.000  broken 53  wall bites 39259  alive every 15 s [3965, 8144, 15603, 17116, 17825, 18056]  hash 6569aa7e8ebf738e
+seed 2 ring   wall   502 drained 0.0862 of others  home left 0.794  ring pile bitten never  left 1.000  broken 16  wall bites 24788  alive every 15 s [7379, 9557, 10850, 15890, 18147, 19750]  hash 2c9704064ce67549
+seed 3 ring   wall   493 drained 0.0574 of others  home left 0.794  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [5942, 9356, 11083, 11093, 11293, 11957]  hash 916151ba2bc4301e
+seed 4 ring   wall   492 drained 0.0575 of others  home left 0.794  ring pile bitten never  left 1.000  broken 20  wall bites 35370  alive every 15 s [4374, 9076, 10773, 12610, 12926, 12993]  hash 5b4d87adc72c7d55
+## ws0.5-s5-8
+worldwall scale 2 walkers 5000 seconds 90 wall_hp 400 wall_bite 1 crystal_flow 0.01 wall_scent 0.5 upkeep 0.001 capacity 50000 charge 512
+seed 5 ring   wall   497 drained 0.0734 of others  home left 0.795  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [6450, 10782, 13536, 14263, 15076, 15494]  hash 13e910f77dd3a3e9
+seed 6 ring   wall   502 drained 0.0620 of others  home left 0.792  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [5357, 9681, 11522, 11778, 11825, 12077]  hash 45a964d6bbac3e13
+seed 7 ring   wall   505 drained 0.0798 of others  home left 0.793  ring pile bitten never  left 1.000  broken 0  wall bites 723  alive every 15 s [4425, 11936, 15682, 16911, 17144, 17542]  hash 47fbeac0ba9aac93
+seed 8 ring   wall   500 drained 0.0960 of others  home left 0.792  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [9822, 13802, 16235, 17696, 19134, 19210]  hash a1d130f07b083077
+## ws0.9-s1-4
+worldwall scale 2 walkers 5000 seconds 90 wall_hp 400 wall_bite 1 crystal_flow 0.01 wall_scent 0.9 upkeep 0.001 capacity 50000 charge 512
+seed 1 ring   wall   504 drained 0.0779 of others  home left 0.802  ring pile bitten never  left 1.000  broken 19  wall bites 26822  alive every 15 s [3912, 8433, 12152, 15433, 19186, 19777]  hash 70c3269d80a57b9f
+seed 2 ring   wall   502 drained 0.0990 of others  home left 0.794  ring pile bitten 86.4s  left 0.995  broken 156  wall bites 84555  alive every 15 s [7403, 12792, 15847, 17811, 19276, 19857]  hash 44cf7181d39d7c24
+seed 3 ring   wall   493 drained 0.0627 of others  home left 0.794  ring pile bitten never  left 1.000  broken 152  wall bites 81143  alive every 15 s [5957, 10152, 11912, 12398, 12550, 12591]  hash 0e1ce09a991de640
+seed 4 ring   wall   492 drained 0.0594 of others  home left 0.794  ring pile bitten never  left 1.000  broken 26  wall bites 25499  alive every 15 s [4484, 9186, 10169, 11838, 14520, 15468]  hash 625a9c72d6a5baf9
+## ws0.9-s5-8
+worldwall scale 2 walkers 5000 seconds 90 wall_hp 400 wall_bite 1 crystal_flow 0.01 wall_scent 0.9 upkeep 0.001 capacity 50000 charge 512
+seed 5 ring   wall   497 drained 0.0791 of others  home left 0.795  ring pile bitten never  left 1.000  broken 0  wall bites 0  alive every 15 s [6427, 11071, 13440, 14641, 16910, 18980]  hash fa72b9681221dab3
+seed 6 ring   wall   502 drained 0.0608 of others  home left 0.792  ring pile bitten 86.6s  left 0.996  broken 156  wall bites 78588  alive every 15 s [5219, 8775, 11436, 11748, 12132, 12666]  hash 302d7745ec2bc493
+seed 7 ring   wall   505 drained 0.0682 of others  home left 0.794  ring pile bitten never  left 1.000  broken 0  wall bites 10620  alive every 15 s [4399, 10022, 12415, 14866, 16011, 16796]  hash f8da069fb5d591b1
+seed 8 ring   wall   500 drained 0.1025 of others  home left 0.792  ring pile bitten never  left 1.000  broken 158  wall bites 87434  alive every 15 s [9822, 13933, 16530, 19463, 20256, 20645]  hash 77179d1b7802300b

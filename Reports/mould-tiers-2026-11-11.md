@@ -240,6 +240,17 @@ it. No tier rides the wall.
   counter; Skittish is weak; spores cost nothing today and should
   probably cost food in the world.
 
+## With crystals, walls and per-species settings (merged 17:30Z)
+
+Main gained Larder World's crystals and walls (PR #64) and per-species
+settings (`species_sets`, PR #61) while this ran. In the merge: only
+ordinary walkers eat a crystal; a wall built over spores and the dead
+leaves them be (they hold no cell), and a spore cannot land on a wall; a
+spore lands under its own species' crowd limit. Seed 1 of the Sporer,
+struck Sporer, baited Sleeper and Swarmer arms gives the same life lines
+as before the merge, digit for digit; the default hash is unchanged. Test:
+`life_cycle_with_walls_and_crystals`.
+
 ## Files
 
 `mould-tiers-2026-11-11/`: `run.sh` (the five tests), `pairs.py`,

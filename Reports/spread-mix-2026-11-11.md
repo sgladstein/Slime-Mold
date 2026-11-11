@@ -79,6 +79,34 @@ uniform mesh. For a difficulty ladder:
 The next step is a paired test on a dish with food, to see whether these
 body plans change who gets to a crystal first and who keeps it.
 
+## Corrections (2026-11-11, after the [independent review](research-review-2026-11-11.md))
+
+The tables above are kept as first written. Corrections:
+- **Tube share (C2).** `tube_area` is in dish cells, so the network's
+  1832-1939 is 6.1-6.4% of the dish, not 0.4%.
+- **The dish wall is a rail.** Trail spreads only over agar, and a sensor
+  reads the wall as -1e6. In the reviewer's rerun of the plain network
+  (seed 1, 2 s), 5,204 walkers already ride the wall, and half the tube area
+  lies outside the ring. The soft picture, scaled to the trail's 99.9th
+  percentile (2155), cannot show wall trail of 17 or less. The `kinds`
+  pictures can, so plain and mixed pictures aren't comparable at the wall.
+  "One thin ring" is the bright trail only. Every "reaches the wall" result
+  here is partly this rail, and rock in the Larder world is not agar either.
+- **Outriders.** Most scouts form an inner ring (median 35-39 fine cells at
+  2 s, against the core's 58-62). The reviewer's rerun counted 18,591
+  walkers beyond 0.6 of the dish radius, against 8,351 plain, so at most
+  about 19% of scouts reach the wall. "Easy to cut" was a guess: no player
+  verb was tested.
+- **Splitter.** The ordinary walkers reach the wall on 2 of 3 seeds. On
+  seed 2 their median is 138 fine cells, well short of the wall.
+- **Roamer.** Its end state is everything on the wall.
+- **No control with the second kind alone** (`mix_share` 1). So "the kinds
+  sort themselves" can't yet be told apart from two populations each doing
+  what it does alone.
+- **No food.** With no food, a Jones network contracts and coarsens
+  (Jones 2010). The ring is that textbook behaviour, not a trait of this
+  mould.
+
 ## Commands
 
 ```
