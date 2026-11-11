@@ -1,0 +1,53 @@
+priced ring: round 480 game s, a game second = 15 steps, harvest 100/s from 3 held piles, 16 seeds
+
+== shot price 10
+  Idle         bank   10600  harvested   10600  spent      0  shots     0  mould ate  187789  larder left  18840  first bite  31.6
+  Random       bank    6710  harvested   11500  spent   4790  shots   479  mould ate  187070  larder left  18552  first bite  34.4
+  Ring         bank   31510  harvested   39500  spent   7990  shots   799  mould ate  179341  larder left      0  first bite 480.0
+  Mow          bank   32085  harvested   39147  spent   7270  shots   727  mould ate  163410  larder left  20096  first bite  31.6
+  RingMow      bank   48119  harvested   59652  spent  11580  shots  1158  mould ate  164032  larder left      0  first bite 480.0
+  RingThenMow  bank   50480  harvested   59533  spent   9100  shots   910  mould ate  164050  larder left      0  first bite 271.6
+  Idle         best on  0 seeds; it better than idle on 0 of 0 (p 1.0000); it better than random on 16 of 16 (p 0.0000)
+  Random       best on  0 seeds; it better than idle on 0 of 16 (p 0.0000); it better than random on 0 of 0 (p 1.0000)
+  Ring         best on  0 seeds; it better than idle on 16 of 16 (p 0.0000); it better than random on 16 of 16 (p 0.0000)
+  Mow          best on  0 seeds; it better than idle on 16 of 16 (p 0.0000); it better than random on 16 of 16 (p 0.0000)
+  RingMow      best on  0 seeds; it better than idle on 16 of 16 (p 0.0000); it better than random on 16 of 16 (p 0.0000)
+  RingThenMow  best on 16 seeds; it better than idle on 16 of 16 (p 0.0000); it better than random on 16 of 16 (p 0.0000)
+  ring v ring+mow: ring better than ring+mow on 0 of 16 (p 0.0000)
+  ring v mow: ring better than mow on 5 of 16 (p 0.2101)
+  ring v ring-then-mow: ring better than ring-then-mow on 0 of 16 (p 0.0000)
+
+== shot price 40
+  Idle         bank   10600  harvested   10600  spent      0  shots     0  mould ate  187789  larder left  18840  first bite  31.6
+  Random       bank      20  harvested   11500  spent  11480  shots   287  mould ate  187201  larder left  18552  first bite  34.4
+  Ring         bank    7540  harvested   39500  spent  31960  shots   799  mould ate  179341  larder left      0  first bite 480.0
+  Mow          bank   10392  harvested   39147  spent  29080  shots   727  mould ate  163410  larder left  20096  first bite  31.6
+  RingMow      bank   13559  harvested   59652  spent  46320  shots  1158  mould ate  164032  larder left      0  first bite 480.0
+  RingThenMow  bank   23420  harvested   59533  spent  36400  shots   910  mould ate  164050  larder left      0  first bite 271.6
+  Idle         best on  0 seeds; it better than idle on 0 of 0 (p 1.0000); it better than random on 16 of 16 (p 0.0000)
+  Random       best on  0 seeds; it better than idle on 0 of 16 (p 0.0000); it better than random on 0 of 0 (p 1.0000)
+  Ring         best on  0 seeds; it better than idle on 0 of 16 (p 0.0000); it better than random on 16 of 16 (p 0.0000)
+  Mow          best on  0 seeds; it better than idle on 7 of 16 (p 0.8036); it better than random on 16 of 16 (p 0.0000)
+  RingMow      best on  0 seeds; it better than idle on 16 of 16 (p 0.0000); it better than random on 16 of 16 (p 0.0000)
+  RingThenMow  best on 16 seeds; it better than idle on 16 of 16 (p 0.0000); it better than random on 16 of 16 (p 0.0000)
+  ring v ring+mow: ring better than ring+mow on 0 of 16 (p 0.0000)
+  ring v mow: ring better than mow on 0 of 16 (p 0.0000)
+  ring v ring-then-mow: ring better than ring-then-mow on 0 of 16 (p 0.0000)
+
+== shot price 120
+  Idle         bank   10600  harvested   10600  spent      0  shots     0  mould ate  187789  larder left  18840  first bite  31.6
+  Random       bank      60  harvested   11500  spent  11400  shots    95  mould ate  187399  larder left  18552  first bite  34.4
+  Ring         bank      60  harvested   19400  spent  19320  shots   161  mould ate  186273  larder left  13426  first bite  98.0
+  Mow          bank      60  harvested   15100  spent  15000  shots   125  mould ate  184540  larder left  19450  first bite  31.6
+  RingMow      bank      40  harvested   19500  spent  19440  shots   162  mould ate  185573  larder left  15140  first bite  78.0
+  RingThenMow  bank      40  harvested   19500  spent  19440  shots   162  mould ate  185573  larder left  15140  first bite  78.0
+  Idle         best on 16 seeds; it better than idle on 0 of 0 (p 1.0000); it better than random on 16 of 16 (p 0.0000)
+  Random       best on  0 seeds; it better than idle on 0 of 16 (p 0.0000); it better than random on 0 of 0 (p 1.0000)
+  Ring         best on  0 seeds; it better than idle on 0 of 16 (p 0.0000); it better than random on 6 of 14 (p 0.7905)
+  Mow          best on  0 seeds; it better than idle on 0 of 16 (p 0.0000); it better than random on 6 of 13 (p 1.0000)
+  RingMow      best on  0 seeds; it better than idle on 0 of 16 (p 0.0000); it better than random on 6 of 14 (p 0.7905)
+  RingThenMow  best on  0 seeds; it better than idle on 0 of 16 (p 0.0000); it better than random on 6 of 14 (p 0.7905)
+  ring v ring+mow: ring better than ring+mow on 6 of 12 (p 1.0000)
+  ring v mow: ring better than mow on 6 of 15 (p 0.6072)
+  ring v ring-then-mow: ring better than ring-then-mow on 6 of 12 (p 1.0000)
+(528.4 s)
