@@ -210,6 +210,12 @@ move.
   trail where they stand make about 180 still droplets. Chance turn more loops 8 of 8, area sensors fewer 8 of 8 at
   +50% cost. Jones and Adamatzky's crawling blob failed. Survey of 14 more open-source simulations, page, videos and
   raw output in [`outside-rules-2026-11-11/`](outside-rules-2026-11-11/).
+- [creatures-2026-11-11.md](creatures-2026-11-11.md) — **research with small tests, no game change: creatures that
+  move and fight.** Owner, overnight: "Keep exploring". New `BigParams` options, off by default: grazing (a regrowing
+  grass field walkers eat and lean toward) and species conversion. Grazing droplets crawl 6.5-7.6 cells per 2 s
+  against 0.7 (8 of 8, p 0.008) and stay bodies; two species roam among each other as one-colour cells. Conversion
+  alone moved no border on even dishes (seed 1). Page, script and raw output in
+  [`creatures-2026-11-11/`](creatures-2026-11-11/).
 
 ## Added with the move (2026-11-10)
 
