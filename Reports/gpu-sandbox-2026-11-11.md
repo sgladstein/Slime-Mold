@@ -344,7 +344,7 @@ window timings (not tried).
 - The owner's hands on it: the PC's window runs build 9d4a2d1, with the
   fixes.
 - The thread "Reproduce Jenson's missing mould looks" has reported
-  (`Reports/jenson-looks-2026-11-11.md`, in its own pull request): trunks from a dense start with slow respawn, contagion along the
+  ([`jenson-looks-2026-11-11.md`](jenson-looks-2026-11-11.md)): trunks from a dense start with slow respawn, contagion along the
   tubes, and trail-set turn and angle, all off by default in `BigParams`.
   Those come here as controls next, each with a twin test. Phase 3 also
   plans the tools as field writes.

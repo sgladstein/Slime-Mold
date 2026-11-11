@@ -1,0 +1,10 @@
+bigdish: preset gif-sick seeds [1] seconds 14 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 240, immune_steps: 6000, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 1: 1024 x 640, 1000000 walkers, 1 piles
+seed 1 gif-sick t   5.0s  tube  9256.3  loops   80  width 4.66  reach  187.3  piles 1/1  strays 0.000  ms/tick 146.40
+seed 1 gif-sick t   5.0s  sick 0.121  ever 0.121  front   34.3  far 0.006
+seed 1 gif-sick t  10.0s  tube  6741.4  loops   43  width 4.80  reach  177.9  piles 1/1  strays 0.000  ms/tick 144.16
+seed 1 gif-sick t  10.0s  sick 0.001  ever 1.000  front   99.9  far 1.000
+seed 1 gif-sick t  14.0s  tube  5612.6  loops   30  width 4.77  reach  169.3  piles 1/1  strays 0.000  ms/tick 142.18
+seed 1 gif-sick t  14.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 1 gif-sick hash=f0a419c39ceebe56

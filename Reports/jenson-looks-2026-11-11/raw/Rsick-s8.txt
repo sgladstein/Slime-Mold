@@ -1,0 +1,44 @@
+bigdish: preset Rsick-s8 seeds [8] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 240, immune_steps: 6000, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 8: 1024 x 640, 1000000 walkers, 1 piles
+seed 8 Rsick-s8 t   1.0s  tube 14470.2  loops  189  width 5.03  reach  192.1  piles 1/1  strays 0.000  ms/tick 146.07
+seed 8 Rsick-s8 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Rsick-s8 t   2.0s  tube 12284.8  loops  140  width 4.79  reach  191.1  piles 1/1  strays 0.000  ms/tick 144.68
+seed 8 Rsick-s8 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Rsick-s8 t   3.0s  tube 11071.6  loops  111  width 4.75  reach  190.6  piles 1/1  strays 0.000  ms/tick 148.18
+seed 8 Rsick-s8 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 8 Rsick-s8 t   4.0s  tube 10032.9  loops   91  width 4.70  reach  190.4  piles 1/1  strays 0.000  ms/tick 149.34
+seed 8 Rsick-s8 t   4.0s  sick 0.011  ever 0.011  front    9.1  far 0.000
+seed 8 Rsick-s8 t   5.0s  tube  9168.1  loops   77  width 4.64  reach  190.3  piles 1/1  strays 0.000  ms/tick 149.80
+seed 8 Rsick-s8 t   5.0s  sick 0.116  ever 0.116  front   34.8  far 0.007
+seed 8 Rsick-s8 t   6.0s  tube  8222.4  loops   65  width 4.37  reach  189.3  piles 1/1  strays 0.000  ms/tick 151.01
+seed 8 Rsick-s8 t   6.0s  sick 0.434  ever 0.444  front   60.1  far 0.279
+seed 8 Rsick-s8 t   7.0s  tube  7627.5  loops   62  width 4.26  reach  188.1  piles 1/1  strays 0.000  ms/tick 152.24
+seed 8 Rsick-s8 t   7.0s  sick 0.717  ever 0.835  front   85.9  far 0.821
+seed 8 Rsick-s8 t   8.0s  tube  7195.3  loops   54  width 4.43  reach  185.6  piles 1/1  strays 0.000  ms/tick 150.36
+seed 8 Rsick-s8 t   8.0s  sick 0.550  ever 0.999  front  103.4  far 1.000
+seed 8 Rsick-s8 t   9.0s  tube  6865.6  loops   46  width 4.67  reach  182.9  piles 1/1  strays 0.000  ms/tick 149.43
+seed 8 Rsick-s8 t   9.0s  sick 0.161  ever 1.000  front  101.9  far 1.000
+seed 8 Rsick-s8 t  10.0s  tube  6412.3  loops   39  width 4.75  reach  179.4  piles 1/1  strays 0.000  ms/tick 148.29
+seed 8 Rsick-s8 t  10.0s  sick 0.001  ever 1.000  front   98.3  far 1.000
+seed 8 Rsick-s8 t  11.0s  tube  6071.4  loops   35  width 4.78  reach  174.1  piles 1/1  strays 0.000  ms/tick 146.93
+seed 8 Rsick-s8 t  11.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 t  12.0s  tube  5704.3  loops   29  width 4.76  reach  173.8  piles 1/1  strays 0.000  ms/tick 145.39
+seed 8 Rsick-s8 t  12.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 t  13.0s  tube  5458.9  loops   27  width 4.69  reach  173.8  piles 1/1  strays 0.000  ms/tick 143.35
+seed 8 Rsick-s8 t  13.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 t  14.0s  tube  5296.4  loops   25  width 4.69  reach  174.1  piles 1/1  strays 0.000  ms/tick 142.27
+seed 8 Rsick-s8 t  14.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 t  15.0s  tube  5109.9  loops   23  width 4.67  reach  174.1  piles 1/1  strays 0.000  ms/tick 141.23
+seed 8 Rsick-s8 t  15.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 t  16.0s  tube  4979.8  loops   22  width 4.68  reach  174.6  piles 1/1  strays 0.000  ms/tick 140.99
+seed 8 Rsick-s8 t  16.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 t  17.0s  tube  4857.0  loops   21  width 4.61  reach  174.8  piles 1/1  strays 0.000  ms/tick 142.18
+seed 8 Rsick-s8 t  17.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 t  18.0s  tube  4829.2  loops   21  width 4.63  reach  175.3  piles 1/1  strays 0.000  ms/tick 143.25
+seed 8 Rsick-s8 t  18.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 t  19.0s  tube  4773.4  loops   21  width 4.63  reach  175.8  piles 1/1  strays 0.000  ms/tick 144.47
+seed 8 Rsick-s8 t  19.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 t  20.0s  tube  4711.0  loops   21  width 4.63  reach  176.3  piles 1/1  strays 0.000  ms/tick 145.45
+seed 8 Rsick-s8 t  20.0s  sick 0.000  ever 1.000  front    0.0  far 1.000
+seed 8 Rsick-s8 hash=4325349aa30e8800
