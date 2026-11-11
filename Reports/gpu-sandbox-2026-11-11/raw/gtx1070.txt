@@ -1,0 +1,68 @@
+GTX 1070 at Scott-Desktop, 2026-11-11 ~00:40Z, through Remote Control, main at 3ac5b20.
+cargo build --release --locked --bin mouldgpu: Finished in 31.67s.
+
+Headless: foreach ($p in 1..8) { .\target\release\mouldgpu.exe preset=$p look=target\sandbox-look seconds=10 twice=1 }
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 1.420, worst 2.181; GPU ms ticks 1.227, drawing 0.068
+dish at 10.0s: tube 12239.8  loops 192  width 4.60  reach 188.4  piles 7/7  strays 0.033
+wrote target\sandbox-look/p1-s1-010s.png
+same picture twice: yes
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 32000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 1.5999999 keep 0.9 respawn 0 food 1, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.881, worst 1.206; GPU ms ticks 0.696, drawing 0.068
+dish at 10.0s: tube 7290.4  loops 101  width 3.26  reach 185.6  piles 7/7  strays 0.033
+wrote target\sandbox-look/p2-s1-010s.png
+same picture twice: yes
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.986, worst 1.709; GPU ms ticks 0.813, drawing 0.057
+dish at 10.0s: tube 3318.6  loops 0  width 6.14  reach 174.3  piles 3/7  strays 0.000
+wrote target\sandbox-look/p3-s1-010s.png
+same picture twice: yes
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 1000000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 22.5 reach 18 laid 5 keep 0.9 respawn 0 food 0, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 8.002, worst 12.215; GPU ms ticks 7.690, drawing 0.180
+dish at 10.0s: tube 9538.6  loops 43  width 5.83  reach 196.1  piles 7/7  strays 0.000
+wrote target\sandbox-look/p4-s1-010s.png
+same picture twice: yes
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 1000000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 22.5 reach 18 laid 5 keep 0.9 respawn 0.01 food 0, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 9.835, worst 12.223; GPU ms ticks 9.512, drawing 0.161
+dish at 10.0s: tube 22782.1  loops 211  width 8.44  reach 195.1  piles 7/7  strays 0.014
+wrote target\sandbox-look/p5-s1-010s.png
+same picture twice: yes
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 1000000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 22.5 reach 18 laid 5 keep 0.9 respawn 0.01 food 0, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 9.828, worst 12.210; GPU ms ticks 9.516, drawing 0.156
+dish at 10.0s: tube 22782.1  loops 211  width 8.44  reach 195.1  piles 7/7  strays 0.014
+wrote target\sandbox-look/p6-s1-010s.png
+same picture twice: yes
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 4000000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 22.5 reach 18 laid 5 keep 0.9 respawn 0 food 0, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 30.068, worst 47.081; GPU ms ticks 29.815, drawing 0.179
+dish at 10.0s: tube 9258.9  loops 36  width 5.85  reach 192.0  piles 6/7  strays 0.000
+wrote target\sandbox-look/p7-s1-010s.png
+same picture twice: yes
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 4000000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 0, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 12.835, worst 47.254; GPU ms ticks 12.496, drawing 0.171
+dish at 10.0s: tube 2946.3  loops 1  width 5.90  reach 170.9  piles 2/7  strays 0.000
+wrote target\sandbox-look/p8-s1-010s.png
+same picture twice: yes
+
+Window: $env:MOULDGPU_SCREENSHOT_AFTER_FRAMES=600; foreach ($p in 1,4,5,7) { .\target\release\mouldgpu.exe preset=$p }
+mouldgpu: NVIDIA GeForce GTX 1070 (Vulkan), timestamps yes
+mouldgpu: wrote C:\Users\Scott\AppData\Local\Temp\mouldgpu-screenshot.png
+mouldgpu: after 600 frames, 1200 ticks: GPU 4.615 ms a frame (ticks 4.252 + drawing 0.363), smoothed; 58.8 frames a second
+mouldgpu: NVIDIA GeForce GTX 1070 (Vulkan), timestamps yes
+mouldgpu: wrote C:\Users\Scott\AppData\Local\Temp\mouldgpu-screenshot.png
+mouldgpu: after 600 frames, 1200 ticks: GPU 7.016 ms a frame (ticks 6.834 + drawing 0.181), smoothed; 60.2 frames a second
+mouldgpu: NVIDIA GeForce GTX 1070 (Vulkan), timestamps yes
+mouldgpu: wrote C:\Users\Scott\AppData\Local\Temp\mouldgpu-screenshot.png
+mouldgpu: after 600 frames, 1200 ticks: GPU 9.598 ms a frame (ticks 9.436 + drawing 0.162), smoothed; 60.4 frames a second
+mouldgpu: NVIDIA GeForce GTX 1070 (Vulkan), timestamps yes
+mouldgpu: wrote C:\Users\Scott\AppData\Local\Temp\mouldgpu-screenshot.png
+mouldgpu: after 600 frames, 1200 ticks: GPU 26.291 ms a frame (ticks 26.109 + drawing 0.183), smoothed; 37.2 frames a second
+
+Start-Process opened the window for the owner (preset 1) and left it running.

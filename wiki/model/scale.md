@@ -91,8 +91,11 @@ food, colour, trail or walker counts, the game's or a soft curve) and the
 comparison's dishes on keys 1-8 (the owner's ask, 00:06Z). The left mouse
 pulls walkers to it, the right wipes trail, F drops food. On a software
 GPU its dishes match the CPU's at 10 s (one a cell: 148 loops against 151;
-1M with respawn: 200 against 200), and a seed gives the same frame twice
-([report](../../Reports/gpu-sandbox-2026-11-11.md)).
+1M with respawn: 200 against 200), and a seed gives the same frame twice.
+On the GTX 1070 a frame of two ticks and the drawing takes 1.4 ms at
+100,000 walkers, 8-10 ms at 1,000,000 and 30 ms at 4,000,000; the drawing
+is 0.06-0.18 ms of it ([report](../../Reports/gpu-sandbox-2026-11-11.md),
+[page](https://claude.ai/artifact/1rdrxadVcNdxTmbxp2KJGy)).
 
 Three facts bind the design:
 
@@ -142,6 +145,7 @@ tool in phase 6. Every outside source has a card in
 | GPU step on the GTX 1070, nose rule, seed 1: ms a tick (median), 120 ticks a submit / 2 a submit | 32k 0.374 / 0.410; 100k 0.631 / 0.685; 1M, crowd 0, 1.537 / 1.760 (worst 6.09); frame of two ticks 0.82, 1.37, 3.52 ms | seed 1 | | [gpu plan, *GPU timing on the GTX 1070*](../../Reports/gpu-plan-2026-11-10.md) |
 | GPU dish vs CPU dish on the GTX 1070, 20 s, seed 1 | 32k: loops 66 / 68, width 3.48 / 3.48, strays 2.3% / 1.8%; 100k: loops 115 / 114, width 5.08 / 5.20, strays 2.0% / 1.9%; CPU 9.98 and 23.63 ms a tick on four threads | seed 1 | | same |
 | GPU sandbox vs CPU dish, software Vulkan, 10 s, seed 1, no food: loops sandbox / CPU | one a cell 148 / 151; no limit 0 / 0; 1M Jenson settings 43 / 42; with respawn 1% 200 / 200 (width 8.33 / 7.99) | seed 1 | | [gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md) |
+| GPU sandbox on the GTX 1070, a frame of two ticks and the drawing (median), seed 1 | 32k 0.88 ms; 100k 1.42 (4.6 in the vsynced window); 100k no limit 0.99; 1M Jenson settings 8.00; with respawn 9.84; 4M 30.07 (37 frames a second); drawing 0.06-0.18 | seed 1 | | [gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md) |
 | Big dish cost, ms a tick, one thread / four | today 0.54 / 0.53; nose 32k 11.3 / 6.7; nose 100k 21.6 / 20.2; steps 43.1 / 25.8; turn 71.1 / 31.7 | seed 1 | | same |
 | No one-a-cell limit vs the limit, 100k walkers, no food, spread start, loops at 10 s | 0 (0-2) vs 151.5 (144-160): fewer on 8 of 8, p 0.008, survives Bonferroni over 4 | 8 | yes | [jenson compare, *The tests*](../../Reports/jenson-compare-2026-11-10.md) |
 | Respawn 1% a step vs none, 1M walkers, no limit, sensor 45 / turn 22.5 / reach 18, loops at 10 s | 196 (187-208) vs 43.5 (38-52): more on 8 of 8, p 0.008, survives Bonferroni over 4; 166 vs 160 ms a tick on one core | 8 | yes | same |

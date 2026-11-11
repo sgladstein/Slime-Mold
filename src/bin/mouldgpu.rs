@@ -23,15 +23,17 @@
 //! control, `preset=N` picks a preset first, and `look=DIR` runs without a
 //! window for `seconds=` (default 10), then writes the last frame as a PNG,
 //! the engine's measures (`BigMeasure`) and the frame cost. `gif=1` also
-//! writes a GIF (a frame every `every=` frames, halved by `down=2`), and
+//! writes a GIF (a frame every `every=` frames, halved by `down=2`),
+//! `frames=1` full-size PNG frames every `every=` frames for a video, and
 //! `twice=1` runs it all again and says whether the pictures are the same
 //! bit for bit. Keys: `walkers= crowd=0|1 sensor_angle= turn= reach= step=
 //! laid= keep= respawn= food=0|1 smell= colour=amber|grey field=trail|walkers
 //! curve=game|soft knee= gamma= ticks= start=spread|blob seed= scale=`.
 //!
 //! `MOULDGPU_SCREENSHOT_AFTER_FRAMES=N` saves the window's frame, panel and
-//! all, as `mouldgpu-screenshot.png` in the temp folder after N frames and
-//! quits (the game has the same hook).
+//! all, as `mouldgpu-screenshot-pK.png` (K the preset) in the temp folder
+//! after N frames, prints the frame cost and quits (the game has the same
+//! hook).
 //!
 //! **One tick is the timing test's four compute passes** (`examples/gputime.rs`,
 //! whose shader this one extends; that file stays as it was measured on the
@@ -1232,7 +1234,7 @@ impl App {
         }
         self.drawn += 1;
         if self.shot_after == Some(self.drawn) {
-            let path = std::env::temp_dir().join("mouldgpu-screenshot.png");
+            let path = std::env::temp_dir().join(format!("mouldgpu-screenshot-p{}.png", self.preset + 1));
             e.picture().save(&path).unwrap();
             println!("mouldgpu: wrote {}", path.display());
             let st = self.stamps.as_ref().map_or("no timestamps".to_string(), |st| format!("GPU {:.3} ms a frame (ticks {:.3} + drawing {:.3}), smoothed", st.sim_ms + st.draw_ms, st.sim_ms, st.draw_ms));
@@ -1399,6 +1401,8 @@ struct Look {
     dir: String,
     seconds: f32,
     gif: bool,
+    /// Full-size PNG frames every `every` frames in `dir/tag/`, for a video encoder.
+    frames: bool,
     every: u64,
     down: u32,
     twice: bool,
@@ -1422,7 +1426,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
         let mut e = Engine::new(&device, &queue, &shared, s, scale);
         if round == 0 {
             println!(
-                "== {} walkers on {} x {} (crowd {}), sensor {} turn {} reach {} laid {} keep {} respawn {} food {}, seed {}",
+                "== {} walkers on {} x {} (crowd {}), sensor {} turn {} reach {} laid {} keep {} respawn {} food {}, drawn {:?} {:?} {:?}, seed {}",
                 e.n,
                 e.dish.w,
                 e.dish.h,
@@ -1434,6 +1438,9 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 s.keep,
                 s.respawn,
                 s.food as u8,
+                s.colour,
+                s.field,
+                s.curve,
                 s.seed
             );
         }
@@ -1460,8 +1467,15 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 let ms = |a: u64, b: u64| b.saturating_sub(a) as f64 * x.period / 1e6;
                 gpu.push((ms(t[0], t[1]), ms(t[1], t[2])));
             }
-            if look.gif && round == 0 && f % look.every == 0 {
-                shots.push(shrink(&e.picture(), look.down));
+            if round == 0 && f % look.every == 0 {
+                if look.gif {
+                    shots.push(shrink(&e.picture(), look.down));
+                }
+                if look.frames {
+                    let dir = format!("{}/{}", look.dir, look.tag);
+                    std::fs::create_dir_all(&dir).unwrap();
+                    e.picture().save(format!("{dir}/{:05}.png", f / look.every)).unwrap();
+                }
             }
         }
         let pic = e.picture();
@@ -1502,7 +1516,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut s = Settings::big_dish();
     let mut picked = 0usize;
     let mut scale = 4usize;
-    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, every: 6, down: 2, twice: false, tag: String::new() };
+    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new() };
     let args: Vec<String> = std::env::args().skip(1).collect();
     // The preset first, so the other keys change it.
     for arg in &args {
@@ -1519,6 +1533,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "look" => look.dir = v.into(),
             "seconds" => look.seconds = v.parse()?,
             "gif" => look.gif = v != "0",
+            "frames" => look.frames = v != "0",
             "every" => look.every = v.parse::<u64>()?.max(1),
             "down" => look.down = v.parse::<u32>()?.max(1),
             "twice" => look.twice = v != "0",
