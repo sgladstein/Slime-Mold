@@ -50,6 +50,16 @@ pub fn minimap_rect(world: (usize, usize), screen: (u32, u32)) -> Option<(u32, u
     Some((screen.0 - w - MINIMAP_MARGIN, screen.1 - h - MINIMAP_MARGIN, w, h))
 }
 
+/// The minimap fitted inside a box (the UI's frame for it), centred, the
+/// world's shape.
+pub fn minimap_in(world: (usize, usize), bx: (u32, u32, u32, u32)) -> (u32, u32, u32, u32) {
+    let (x, y, w, h) = bx;
+    let (ww, wh) = (world.0 as f32, world.1 as f32);
+    let k = (w as f32 / ww).min(h as f32 / wh);
+    let (mw, mh) = ((ww * k).floor().max(1.0) as u32, (wh * k).floor().max(1.0) as u32);
+    (x + (w - mw) / 2, y + (h - mh) / 2, mw, mh)
+}
+
 /// Which minimap pixel rectangle a screen point is on, as the world point
 /// under it.
 pub fn minimap_world(rect: (u32, u32, u32, u32), world: (usize, usize), at: (f32, f32)) -> Option<(f32, f32)> {
@@ -92,6 +102,9 @@ pub struct View {
     pub stride: u32,
     /// Whether the minimap is drawn (M toggles it in the sandbox).
     pub minimap: bool,
+    /// Where the UI wants it: a box it is fitted into (`minimap_in`);
+    /// `None` the bottom-right corner.
+    pub minimap_box: Option<(u32, u32, u32, u32)>,
     has_overlay: bool,
     has_vis: bool,
     n_marks: u32,
@@ -156,6 +169,7 @@ impl View {
             screen,
             stride,
             minimap: true,
+            minimap_box: None,
             has_overlay: false,
             has_vis: false,
             n_marks: 0,
@@ -294,7 +308,10 @@ impl View {
         if !self.minimap || cam.sees_all() {
             return None;
         }
-        minimap_rect(self.world, self.screen)
+        match self.minimap_box {
+            Some(b) => Some(minimap_in(self.world, b)),
+            None => minimap_rect(self.world, self.screen),
+        }
     }
 
     /// Records the passes for camera `cam` (after the engine's draw).
