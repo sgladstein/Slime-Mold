@@ -109,3 +109,21 @@ All runs below: `examples/worldwall.rs`, 512 × 320 (scale 2), 20k walkers, 23 c
 **Default `crystal_flow` 0.01.** Cost within noise: 7.8 ms a tick with and without (bigdish, 4 threads, 10 s). Pictures, seed 3 at 40 s: [no flow](larder-world-roadmap-2026-11-11/crystals/flow-off-s3-40s.png), [flow 0.01](larder-world-roadmap-2026-11-11/crystals/flow-on-s3-40s.png). Without growth this shows the mould can now reach the food; whether it then keeps growing is the GPU thread's rerun.
 
 **With growth** (the GPU thread's CPU growth on top of f292952, one seed, 16:03Z; raw in its W0 PR, `Reports/growth-2026-11-11/raw/crystals.txt`): same world, 5,000 walkers to start in 50,000 slots, upkeep 0.001, crystals that run dry. Flow 0: alive 1,454 / 934 / 106 / 1 at 5 / 10 / 20 / 60 s, 61.2% of the charge left. Flow 0.01: alive 2,297 / 2,400 / 515 / 20 at 5 / 10 / 20 / 60 s, 0.8% left. The mould now eats 99% of the crystals instead of 39% and peaks about 1.65 times higher, then starves at about 20 s because the food is gone. This world's whole charge feeds about 2,000 walkers for 15-20 s, so for "enough resources for a long game" the charge (or regrow) has to be sized against upkeep times the mould size wanted. That sizing is the first W1 job once growth merges.
+
+## Crystal sizing with growth, 2026-11-11
+
+The owner, 14:54Z: with crystals that run out the mould starts in one spot, there should be enough for a long game, and "if you do nothing, the slime should get much stronger than you and kill you". So: how much charge keeps an idle player's mould alive and growing for minutes? Scratch build: the GPU thread's CPU growth (65d914f) plus this branch's pile-total fix below. 512 × 320, 23 crystals that run dry, flow 0.01, 5,000 walkers to start in 50,000 slots, upkeep 0.001, no player. Raw: [after the fix](larder-world-roadmap-2026-11-11/growth-sizing/runs-after-fix.txt), [before](larder-world-roadmap-2026-11-11/growth-sizing/runs-before-fix.txt).
+
+| Charge a cell | Alive at 60 / 150 / 300 s | Charge left at 300 s | Seeds |
+|---|---|---|---|
+| 1 | 39 / 0 / 0 (dead by 120 s) | - | 1 |
+| 8 | 3,906 / 0 / 0 (dead by 150 s) | 20% (piles it never reached again) | 1 |
+| 64 | 13,599 / 12,539 / 141 (peak 19,327 at 90 s) | 0% by 210 s | 1 |
+| 512 | 13,981 / 18,907 / 21,015 and 18,221 / 22,075 / 24,106 | 65%, 55% | 2 |
+| 4,096 | 15,475 / 17,329 / 18,200 | 96% | 1 |
+
+- **Charge sets how long the mould lasts, not how big it gets.** On this world the mould reaches all 23 crystals by 30-90 s and levels off at 18,000-24,000 walkers whatever the charge. At 64 it booms and dies within 5 minutes. At 512 it is still growing slowly at 5 minutes with half the charge left, so about 10-12 minutes of food. Pictures: [64 at 150 s](larder-world-roadmap-2026-11-11/growth-sizing/c64-s1-150s.png) (crystals drained, thin net, shrinking), [512 at 300 s](larder-world-roadmap-2026-11-11/growth-sizing/c512-s1-300s.png).
+- **The mould hoards.** Mean walker energy climbs without limit at high charge (30 at 300 s at charge 512 and 4,096). About 40% of what it eats sits in walkers that cannot divide, because no cell beside them is free, while walkers born at the edges get half of a small surplus and starve within 2 s (about a million births and a million starvings in 5 minutes). The stored energy is a reserve: a walker holding 30 lives about 2 minutes without food. Whether that reserve should turn into growth (an energy cap, or sharing along the tubes) is a growth-rule question for the GPU thread.
+- **First number for the race: charge 512** on a world this size (a 10-12 minute mould if nobody fights it). The size of the world, not the charge, sets how strong the idle mould gets.
+
+**Bug found and fixed (a3aaccb):** pile totals were a running f32 sum. At charge 512 a pile holds about 180,000, and a 0.005 bite is below that number's f32 step (0.016), so the totals stood still: `crystal_left` read 1.000 at 180 s and the piles kept calling at full scent while the mould ate. They are now summed from the cells in f64 each step. Runs at charge 1, all the earlier measurements, were not affected (a pile of about 350 has a step of 3e-5). The charge 512 run before the fix was stopped and is not counted.
