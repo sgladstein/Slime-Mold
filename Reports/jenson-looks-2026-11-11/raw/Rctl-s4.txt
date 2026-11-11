@@ -1,0 +1,44 @@
+bigdish: preset Rctl-s4 seeds [4] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 240, immune_steps: 6000, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 4: 1024 x 640, 1000000 walkers, 1 piles
+seed 4 Rctl-s4 t   1.0s  tube 15006.0  loops  202  width 5.24  reach  192.8  piles 1/1  strays 0.000  ms/tick 150.07
+seed 4 Rctl-s4 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t   2.0s  tube 12601.0  loops  145  width 4.84  reach  190.8  piles 1/1  strays 0.000  ms/tick 148.56
+seed 4 Rctl-s4 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t   3.0s  tube 11345.8  loops  119  width 4.77  reach  187.9  piles 1/1  strays 0.000  ms/tick 146.97
+seed 4 Rctl-s4 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t   4.0s  tube 10348.8  loops   97  width 4.73  reach  186.3  piles 1/1  strays 0.000  ms/tick 147.38
+seed 4 Rctl-s4 t   4.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t   5.0s  tube  9607.4  loops   86  width 4.72  reach  184.7  piles 1/1  strays 0.000  ms/tick 148.04
+seed 4 Rctl-s4 t   5.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t   6.0s  tube  8997.5  loops   77  width 4.70  reach  181.7  piles 1/1  strays 0.000  ms/tick 148.71
+seed 4 Rctl-s4 t   6.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t   7.0s  tube  8403.1  loops   63  width 4.74  reach  181.0  piles 1/1  strays 0.000  ms/tick 148.74
+seed 4 Rctl-s4 t   7.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t   8.0s  tube  7907.5  loops   59  width 4.64  reach  180.5  piles 1/1  strays 0.000  ms/tick 147.85
+seed 4 Rctl-s4 t   8.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t   9.0s  tube  7505.2  loops   55  width 4.62  reach  180.8  piles 1/1  strays 0.000  ms/tick 146.53
+seed 4 Rctl-s4 t   9.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  10.0s  tube  7210.0  loops   52  width 4.65  reach  181.0  piles 1/1  strays 0.000  ms/tick 145.61
+seed 4 Rctl-s4 t  10.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  11.0s  tube  6939.4  loops   47  width 4.73  reach  181.0  piles 1/1  strays 0.000  ms/tick 144.82
+seed 4 Rctl-s4 t  11.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  12.0s  tube  6498.1  loops   39  width 4.79  reach  180.7  piles 1/1  strays 0.000  ms/tick 144.62
+seed 4 Rctl-s4 t  12.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  13.0s  tube  6150.5  loops   37  width 4.73  reach  180.8  piles 1/1  strays 0.000  ms/tick 144.36
+seed 4 Rctl-s4 t  13.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  14.0s  tube  5858.8  loops   29  width 4.77  reach  181.0  piles 1/1  strays 0.000  ms/tick 144.02
+seed 4 Rctl-s4 t  14.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  15.0s  tube  5617.3  loops   29  width 4.63  reach  181.5  piles 1/1  strays 0.000  ms/tick 143.59
+seed 4 Rctl-s4 t  15.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  16.0s  tube  5523.5  loops   28  width 4.66  reach  181.5  piles 1/1  strays 0.000  ms/tick 143.34
+seed 4 Rctl-s4 t  16.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  17.0s  tube  5403.8  loops   27  width 4.63  reach  181.8  piles 1/1  strays 0.000  ms/tick 143.33
+seed 4 Rctl-s4 t  17.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  18.0s  tube  5370.2  loops   26  width 4.65  reach  182.3  piles 1/1  strays 0.000  ms/tick 143.02
+seed 4 Rctl-s4 t  18.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  19.0s  tube  5368.7  loops   26  width 4.69  reach  182.6  piles 1/1  strays 0.000  ms/tick 143.01
+seed 4 Rctl-s4 t  19.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 t  20.0s  tube  5296.6  loops   25  width 4.71  reach  182.8  piles 1/1  strays 0.000  ms/tick 142.58
+seed 4 Rctl-s4 t  20.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Rctl-s4 hash=99d701172ac9e8d3

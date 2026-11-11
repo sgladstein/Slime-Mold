@@ -1,0 +1,10 @@
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 1000000 walkers on 1024 x 640 (crowd 0), sensor 45 turn 22.5 reach 18 laid 5 keep 0.9 respawn 0 food 0, drawn Grey Trail Soft, seed 1
+   looks: start Spread disc 180 haze 0; trail scale 0 reach [0.0, 1.0] angle [0.0, 1.0] turn [0.0, 1.0] step [0.0, 1.0]; cap 100 floor 0 wander 0
+   contagion: sick 60 immune 120 ticks, catch 0.5, germ 1 kept 0.9, sick speed 1 trail 3 reach 1 turn 1, seeded at 4 s r 40
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 10.147, worst 14.049; GPU ms ticks 9.689, drawing 0.293
+dish at 10.0s: tube 7886.1  loops 45  width 5.44  reach 178.1  piles 7/7  strays 0.000  sick 0.388
+sick every 0.5 s: 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.142 0.285 0.388 0.289 0.309 0.388 0.289 0.309 0.388 0.289 0.309 0.388
+wrote target\sandbox-looks\pics/p14-010s.png
+GPU ms a pass, median of 11 ticks each submitted alone: sense 2.368, walk 1.381, trail 0.226, scent 0.169, histogram 0.046, top 0.176, draw 0.064
+same picture twice: yes

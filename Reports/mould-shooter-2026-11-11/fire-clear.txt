@@ -1,0 +1,103 @@
+test 1, held fire: gun clear, food x1, 90 s, 16 seeds
+Idle:
+  seed  1: stolen   12241  ate   273777  walkers  6899  first bite    4.4  shots   0  loops@45  12  walkers@45  6899
+  seed  2: stolen   12248  ate   274603  walkers  6899  first bite    4.4  shots   0  loops@45  10  walkers@45  6900
+  seed  3: stolen   12277  ate   275948  walkers  6900  first bite    4.1  shots   0  loops@45  11  walkers@45  6900
+  seed  4: stolen   12310  ate   274444  walkers  6901  first bite    3.8  shots   0  loops@45  11  walkers@45  6901
+  seed  5: stolen   12273  ate   274249  walkers  6898  first bite    4.2  shots   0  loops@45  10  walkers@45  6902
+  seed  6: stolen   12295  ate   274790  walkers  6898  first bite    4.0  shots   0  loops@45  10  walkers@45  6900
+  seed  7: stolen   12345  ate   274522  walkers  6900  first bite    3.5  shots   0  loops@45   9  walkers@45  6901
+  seed  8: stolen   12268  ate   274076  walkers  6901  first bite    4.2  shots   0  loops@45  10  walkers@45  6901
+  seed  9: stolen   12223  ate   273756  walkers  6897  first bite    4.7  shots   0  loops@45  11  walkers@45  6901
+  seed 10: stolen   12258  ate   274734  walkers  6899  first bite    4.3  shots   0  loops@45  12  walkers@45  6902
+  seed 11: stolen   12240  ate   274339  walkers  6899  first bite    4.6  shots   0  loops@45   9  walkers@45  6899
+  seed 12: stolen   12263  ate   273187  walkers  6901  first bite    4.2  shots   0  loops@45  11  walkers@45  6901
+  seed 13: stolen   12281  ate   274392  walkers  6900  first bite    4.0  shots   0  loops@45  10  walkers@45  6897
+  seed 14: stolen   12268  ate   273910  walkers  6900  first bite    4.4  shots   0  loops@45   9  walkers@45  6900
+  seed 15: stolen   12293  ate   274983  walkers  6898  first bite    4.3  shots   0  loops@45   9  walkers@45  6900
+  seed 16: stolen   12323  ate   274564  walkers  6901  first bite    3.7  shots   0  loops@45  10  walkers@45  6901
+  median stolen 12273, ate 274444, walkers 6900, first bite 4.2 s, loops@45 10
+Aim:
+  seed  1: stolen   12251  ate   274107  walkers  6899  first bite    4.4  shots 341  loops@45  10  walkers@45  6903
+  seed  2: stolen   12248  ate   274445  walkers  6898  first bite    4.4  shots 341  loops@45  10  walkers@45  6902
+  seed  3: stolen   12298  ate   275977  walkers  6903  first bite    4.1  shots 343  loops@45  10  walkers@45  6901
+  seed  4: stolen   12312  ate   273787  walkers  6901  first bite    3.8  shots 344  loops@45  10  walkers@45  6900
+  seed  5: stolen   12261  ate   273885  walkers  6901  first bite    4.2  shots 342  loops@45  10  walkers@45  6901
+  seed  6: stolen   12309  ate   274960  walkers  6898  first bite    4.0  shots 343  loops@45  12  walkers@45  6902
+  seed  7: stolen   12338  ate   274471  walkers  6901  first bite    3.5  shots 344  loops@45  11  walkers@45  6902
+  seed  8: stolen   12275  ate   274054  walkers  6903  first bite    4.2  shots 342  loops@45   9  walkers@45  6901
+  seed  9: stolen   12216  ate   273752  walkers  6899  first bite    4.7  shots 340  loops@45  11  walkers@45  6901
+  seed 10: stolen   12266  ate   274777  walkers  6902  first bite    4.3  shots 342  loops@45  11  walkers@45  6905
+  seed 11: stolen   12251  ate   274140  walkers  6902  first bite    4.6  shots 342  loops@45  10  walkers@45  6903
+  seed 12: stolen   12271  ate   273688  walkers  6901  first bite    4.2  shots 342  loops@45  12  walkers@45  6904
+  seed 13: stolen   12280  ate   274186  walkers  6901  first bite    4.0  shots 343  loops@45   9  walkers@45  6899
+  seed 14: stolen   12268  ate   274514  walkers  6901  first bite    4.4  shots 341  loops@45   9  walkers@45  6901
+  seed 15: stolen   12285  ate   275007  walkers  6902  first bite    4.3  shots 342  loops@45  10  walkers@45  6900
+  seed 16: stolen   12336  ate   274720  walkers  6899  first bite    3.7  shots 343  loops@45  10  walkers@45  6901
+  median stolen 12275, ate 274445, walkers 6901, first bite 4.2 s, loops@45 10
+Near:
+  seed  1: stolen   12247  ate   273902  walkers  6901  first bite    4.4  shots 345  loops@45  12  walkers@45  6902
+  seed  2: stolen   12248  ate   274583  walkers  6901  first bite    4.4  shots 345  loops@45   9  walkers@45  6902
+  seed  3: stolen   12299  ate   275968  walkers  6900  first bite    4.1  shots 345  loops@45   9  walkers@45  6902
+  seed  4: stolen   12296  ate   274208  walkers  6901  first bite    3.8  shots 347  loops@45  10  walkers@45  6903
+  seed  5: stolen   12264  ate   274301  walkers  6906  first bite    4.2  shots 346  loops@45  10  walkers@45  6900
+  seed  6: stolen   12307  ate   274748  walkers  6902  first bite    4.0  shots 347  loops@45   9  walkers@45  6902
+  seed  7: stolen   12343  ate   274458  walkers  6903  first bite    3.5  shots 349  loops@45  12  walkers@45  6902
+  seed  8: stolen   12269  ate   274087  walkers  6903  first bite    4.2  shots 345  loops@45  10  walkers@45  6901
+  seed  9: stolen   12222  ate   273640  walkers  6901  first bite    4.7  shots 344  loops@45  10  walkers@45  6900
+  seed 10: stolen   12256  ate   274728  walkers  6903  first bite    4.3  shots 345  loops@45  11  walkers@45  6902
+  seed 11: stolen   12234  ate   273948  walkers  6903  first bite    4.6  shots 345  loops@45   9  walkers@45  6902
+  seed 12: stolen   12268  ate   273645  walkers  6901  first bite    4.2  shots 345  loops@45  11  walkers@45  6907
+  seed 13: stolen   12280  ate   274338  walkers  6901  first bite    4.0  shots 345  loops@45  11  walkers@45  6903
+  seed 14: stolen   12268  ate   274334  walkers  6904  first bite    4.4  shots 345  loops@45   9  walkers@45  6903
+  seed 15: stolen   12293  ate   275288  walkers  6902  first bite    4.3  shots 345  loops@45  10  walkers@45  6901
+  seed 16: stolen   12316  ate   274465  walkers  6903  first bite    3.7  shots 347  loops@45  10  walkers@45  6900
+  median stolen 12269, ate 274338, walkers 6902, first bite 4.2 s, loops@45 10
+Rand:
+  seed  1: stolen   12251  ate   274465  walkers  6903  first bite    4.4  shots 345  loops@45  11  walkers@45  6897
+  seed  2: stolen   12250  ate   274721  walkers  6899  first bite    4.4  shots 345  loops@45  10  walkers@45  6901
+  seed  3: stolen   12279  ate   275963  walkers  6904  first bite    4.1  shots 345  loops@45  12  walkers@45  6903
+  seed  4: stolen   12316  ate   274281  walkers  6902  first bite    3.8  shots 347  loops@45  10  walkers@45  6904
+  seed  5: stolen   12273  ate   274096  walkers  6904  first bite    4.3  shots 346  loops@45  12  walkers@45  6907
+  seed  6: stolen   12313  ate   274760  walkers  6895  first bite    4.0  shots 347  loops@45  10  walkers@45  6903
+  seed  7: stolen   12338  ate   274540  walkers  6901  first bite    3.5  shots 349  loops@45  10  walkers@45  6900
+  seed  8: stolen   12283  ate   274329  walkers  6897  first bite    4.3  shots 345  loops@45  10  walkers@45  6903
+  seed  9: stolen   12210  ate   273666  walkers  6902  first bite    4.7  shots 344  loops@45  11  walkers@45  6901
+  seed 10: stolen   12250  ate   275071  walkers  6900  first bite    4.4  shots 345  loops@45  11  walkers@45  6903
+  seed 11: stolen   12244  ate   273672  walkers  6900  first bite    4.4  shots 345  loops@45  10  walkers@45  6903
+  seed 12: stolen   12271  ate   273609  walkers  6903  first bite    4.2  shots 345  loops@45  10  walkers@45  6901
+  seed 13: stolen   12273  ate   274169  walkers  6902  first bite    4.0  shots 345  loops@45  13  walkers@45  6900
+  seed 14: stolen   12257  ate   274388  walkers  6903  first bite    4.3  shots 345  loops@45  11  walkers@45  6906
+  seed 15: stolen   12260  ate   274640  walkers  6898  first bite    4.4  shots 345  loops@45   9  walkers@45  6904
+  seed 16: stolen   12305  ate   274526  walkers  6903  first bite    3.8  shots 347  loops@45  12  walkers@45  6900
+  median stolen 12273, ate 274465, walkers 6902, first bite 4.3 s, loops@45 11
+Pile:
+  seed  1: stolen   12240  ate   273991  walkers  6908  first bite    4.4  shots 345  loops@45   8  walkers@45  6912
+  seed  2: stolen   12234  ate   274325  walkers  6906  first bite    4.4  shots 345  loops@45  11  walkers@45  6908
+  seed  3: stolen   12304  ate   275904  walkers  6907  first bite    4.1  shots 345  loops@45  11  walkers@45  6908
+  seed  4: stolen   12322  ate   274367  walkers  6903  first bite    3.8  shots 347  loops@45   9  walkers@45  6900
+  seed  5: stolen   12265  ate   274202  walkers  6907  first bite    4.2  shots 346  loops@45  10  walkers@45  6905
+  seed  6: stolen   12291  ate   274950  walkers  6909  first bite    4.0  shots 347  loops@45  11  walkers@45  6905
+  seed  7: stolen   12348  ate   274754  walkers  6908  first bite    3.5  shots 349  loops@45  10  walkers@45  6908
+  seed  8: stolen   12268  ate   274070  walkers  6907  first bite    4.2  shots 345  loops@45  10  walkers@45  6909
+  seed  9: stolen   12212  ate   273812  walkers  6907  first bite    4.7  shots 344  loops@45   9  walkers@45  6907
+  seed 10: stolen   12265  ate   274719  walkers  6907  first bite    4.3  shots 345  loops@45  12  walkers@45  6907
+  seed 11: stolen   12243  ate   274326  walkers  6905  first bite    4.6  shots 345  loops@45  11  walkers@45  6906
+  seed 12: stolen   12270  ate   273625  walkers  6908  first bite    4.2  shots 345  loops@45  13  walkers@45  6909
+  seed 13: stolen   12275  ate   274292  walkers  6905  first bite    4.0  shots 345  loops@45  11  walkers@45  6908
+  seed 14: stolen   12262  ate   274153  walkers  6903  first bite    4.4  shots 345  loops@45   7  walkers@45  6904
+  seed 15: stolen   12292  ate   274936  walkers  6906  first bite    4.3  shots 345  loops@45   8  walkers@45  6902
+  seed 16: stolen   12328  ate   274487  walkers  6910  first bite    3.7  shots 347  loops@45  13  walkers@45  6911
+  median stolen 12270, ate 274326, walkers 6907, first bite 4.2 s, loops@45 11
+stolen (lower is better for the squad):
+  aim better than idle on 7 of 16 (p 0.8036)
+  aim better than near on 7 of 16 (p 0.8036)
+  aim better than rand on 7 of 16 (p 0.8036)
+  near better than idle on 9 of 16 (p 0.8036)
+  rand better than idle on 8 of 16 (p 1.0000)
+  pile better than idle on 8 of 16 (p 1.0000)
+  pile better than aim on 11 of 16 (p 0.2101)
+mould ate, all dish (lower is better for the squad):
+  aim better than idle on 8 of 16 (p 1.0000)
+  aim better than rand on 7 of 16 (p 0.8036)
+(230.2 s)

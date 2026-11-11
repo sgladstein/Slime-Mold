@@ -1,0 +1,8 @@
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+   contagion: sick 120 immune 480 ticks, catch 0.5, germ 1 kept 0.9, sick speed 1 trail 3 reach 1 turn 1, seeded at 4 s r 40
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 1.904, worst 2.345; GPU ms ticks 1.692, drawing 0.078
+dish at 10.0s: tube 12846.6  loops 157  width 5.26  reach 188.6  piles 7/7  strays 0.010  sick 0.163
+sick every 0.5 s: 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.025 0.057 0.070 0.086 0.095 0.144 0.200 0.200 0.237 0.223 0.158 0.163
+wrote target\sandbox-looks\pics/p1-contagion-010s.png
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.326, walk 0.063, trail 0.219, scent 0.175, draw 0.075

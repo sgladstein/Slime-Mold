@@ -1,0 +1,61 @@
+# gputime on the owner's GTX 1070 (Scott-Desktop), 2026-11-11 ~00:00-00:05Z, run through
+# Remote Control at main 14618d8. Recovered verbatim from the session's
+# record by the independent review's follow-up (2026-11-11); the figures in
+# gpu-plan-2026-11-10.md, "The GPU timing on the GTX 1070", come from these.
+# The first try of the first command stopped writing the still (no
+# target/gputime-look folder); the folder was made and the command rerun.
+
+## Step 4 output, verbatim (`cargo run --release --locked --example gputime -- seconds=20 look=target/gputime-look`):
+    Finished `release` profile [optimized] target(s) in 0.31s
+     Running `target\release\examples\gputime.exe seconds=20 look=target/gputime-look`
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+timestamp queries: yes
+== 32000 walkers on 1024 x 640 (crowd 1), seed 1
+wall ms a tick over 19 rounds of 120: median 0.374, best 0.363, worst 0.427 (first round, warm-up: 0.589); a 60 Hz frame of two ticks 0.749 ms
+GPU ms a pass, one tick: sense 0.075, walk 0.016, trail 0.111, scent 0.119
+gpu dish at 20.0s: tube 5850.7  loops 66  width 3.48  reach 184.8  piles 7/7  strays 0.023
+wrote target/gputime-look/gpu-32000-s1-020s.png
+cpu dish at 20.0s: tube 6159.2  loops 68  width 3.48  reach 181.6  piles 7/7  strays 0.018  (9.98 ms a tick, 4 threads)
+== 100000 walkers on 1024 x 640 (crowd 1), seed 1
+wall ms a tick over 19 rounds of 120: median 0.631, best 0.606, worst 0.716 (first round, warm-up: 0.907); a 60 Hz frame of two ticks 1.263 ms
+GPU ms a pass, one tick: sense 0.290, walk 0.042, trail 0.111, scent 0.119
+gpu dish at 20.0s: tube 10633.8  loops 115  width 5.08  reach 186.8  piles 7/7  strays 0.020
+wrote target/gputime-look/gpu-100000-s1-020s.png
+cpu dish at 20.0s: tube 10655.9  loops 114  width 5.20  reach 187.4  piles 7/7  strays 0.019  (23.63 ms a tick, 4 threads)
+== 1000000 walkers on 1024 x 640 (crowd 0), seed 1
+wall ms a tick over 19 rounds of 120: median 1.537, best 1.264, worst 3.136 (first round, warm-up: 5.846); a 60 Hz frame of two ticks 3.073 ms
+GPU ms a pass, one tick: sense 0.705, walk 0.274, trail 0.110, scent 0.119
+gpu dish at 20.0s: tube 2673.8  loops 0  width 7.88  reach 158.4  piles 7/7  strays 0.000
+wrote target/gputime-look/gpu-1000000-s1-020s.png
+
+## Step 5 output with WGPU_BACKEND=vulkan, verbatim (I unset the variable afterwards):
+    Finished `release` profile [optimized] target(s) in 0.25s
+     Running `target\release\examples\gputime.exe walkers=100000,1000000 seconds=20 cpu=0`
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+timestamp queries: yes
+== 100000 walkers on 1024 x 640 (crowd 1), seed 1
+wall ms a tick over 19 rounds of 120: median 0.630, best 0.605, worst 0.732 (first round, warm-up: 0.979); a 60 Hz frame of two ticks 1.260 ms
+GPU ms a pass, one tick: sense 0.296, walk 0.041, trail 0.110, scent 0.120
+gpu dish at 20.0s: tube 10633.8  loops 115  width 5.08  reach 186.8  piles 7/7  strays 0.020
+== 1000000 walkers on 1024 x 640 (crowd 0), seed 1
+wall ms a tick over 19 rounds of 120: median 1.540, best 1.267, worst 3.142 (first round, warm-up: 4.883); a 60 Hz frame of two ticks 3.080 ms
+GPU ms a pass, one tick: sense 0.707, walk 0.271, trail 0.111, scent 0.119
+gpu dish at 20.0s: tube 2673.8  loops 0  width 7.88  reach 158.4  piles 7/7  strays 0.000
+
+## Output, verbatim (`cargo run --release --locked --example gputime -- walkers=32000,100000,1000000 seconds=10 batch=2 cpu=0`):
+    Finished `release` profile [optimized] target(s) in 0.25s
+     Running `target\release\examples\gputime.exe walkers=32000,100000,1000000 seconds=10 batch=2 cpu=0`
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+timestamp queries: yes
+== 32000 walkers on 1024 x 640 (crowd 1), seed 1
+wall ms a tick over 599 rounds of 2: median 0.410, best 0.390, worst 0.682 (first round, warm-up: 1.036); a 60 Hz frame of two ticks 0.819 ms
+GPU ms a pass, one tick: sense 0.082, walk 0.021, trail 0.111, scent 0.120
+gpu dish at 10.0s: tube 7526.7  loops 91  width 3.42  reach 186.7  piles 7/7  strays 0.009
+== 100000 walkers on 1024 x 640 (crowd 1), seed 1
+wall ms a tick over 599 rounds of 2: median 0.685, best 0.646, worst 0.909 (first round, warm-up: 1.147); a 60 Hz frame of two ticks 1.370 ms
+GPU ms a pass, one tick: sense 0.312, walk 0.050, trail 0.111, scent 0.120
+gpu dish at 10.0s: tube 12423.1  loops 158  width 4.92  reach 187.3  piles 7/7  strays 0.014
+== 1000000 walkers on 1024 x 640 (crowd 0), seed 1
+wall ms a tick over 599 rounds of 2: median 1.760, best 1.594, worst 6.094 (first round, warm-up: 6.441); a 60 Hz frame of two ticks 3.520 ms
+GPU ms a pass, one tick: sense 1.024, walk 0.288, trail 0.111, scent 0.120
+gpu dish at 10.0s: tube 4939.9  loops 1  width 8.04  reach 179.3  piles 7/7  strays 0.000

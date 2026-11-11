@@ -1,0 +1,32 @@
+bigdish: preset c2 seeds [1] seconds 14 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 60, immune_steps: 120, sick_catch: 0.5, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 3.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 1: 1024 x 640, 1000000 walkers, 1 piles
+seed 1 c2 t   1.0s  tube 14864.2  loops  198  width 5.14  reach  192.4  piles 1/1  strays 0.000  ms/tick 161.22
+seed 1 c2 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 1 c2 t   2.0s  tube 12336.9  loops  137  width 4.86  reach  191.4  piles 1/1  strays 0.000  ms/tick 150.83
+seed 1 c2 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 1 c2 t   3.0s  tube 10998.3  loops  111  width 4.74  reach  189.9  piles 1/1  strays 0.000  ms/tick 151.87
+seed 1 c2 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 1 c2 t   4.0s  tube 10111.8  loops   92  width 4.75  reach  189.1  piles 1/1  strays 0.000  ms/tick 148.35
+seed 1 c2 t   4.0s  sick 0.010  ever 0.010  front    9.4  far 0.000
+seed 1 c2 t   5.0s  tube  9962.3  loops   82  width 5.09  reach  187.3  piles 1/1  strays 0.000  ms/tick 147.44
+seed 1 c2 t   5.0s  sick 0.298  ever 0.426  front   62.6  far 0.257
+seed 1 c2 t   6.0s  tube  9652.7  loops   75  width 5.24  reach  185.6  piles 1/1  strays 0.000  ms/tick 148.56
+seed 1 c2 t   6.0s  sick 0.307  ever 1.000  front  107.9  far 1.000
+seed 1 c2 t   7.0s  tube  9129.4  loops   64  width 5.42  reach  183.3  piles 1/1  strays 0.000  ms/tick 147.51
+seed 1 c2 t   7.0s  sick 0.359  ever 1.000  front   99.0  far 1.000
+seed 1 c2 t   8.0s  tube  8317.3  loops   53  width 5.38  reach  180.4  piles 1/1  strays 0.000  ms/tick 147.66
+seed 1 c2 t   8.0s  sick 0.312  ever 1.000  front   90.2  far 1.000
+seed 1 c2 t   9.0s  tube  7726.0  loops   45  width 5.36  reach  178.2  piles 1/1  strays 0.000  ms/tick 146.73
+seed 1 c2 t   9.0s  sick 0.307  ever 1.000  front   96.7  far 1.000
+seed 1 c2 t  10.0s  tube  7303.4  loops   38  width 5.40  reach  175.5  piles 1/1  strays 0.000  ms/tick 145.67
+seed 1 c2 t  10.0s  sick 0.359  ever 1.000  front   93.6  far 1.000
+seed 1 c2 t  11.0s  tube  6840.9  loops   36  width 5.21  reach  173.7  piles 1/1  strays 0.000  ms/tick 145.55
+seed 1 c2 t  11.0s  sick 0.312  ever 1.000  front   91.9  far 1.000
+seed 1 c2 t  12.0s  tube  6689.1  loops   33  width 5.26  reach  172.5  piles 1/1  strays 0.000  ms/tick 144.73
+seed 1 c2 t  12.0s  sick 0.307  ever 1.000  front   90.7  far 1.000
+seed 1 c2 t  13.0s  tube  6575.9  loops   30  width 5.36  reach  171.8  piles 1/1  strays 0.000  ms/tick 144.40
+seed 1 c2 t  13.0s  sick 0.359  ever 1.000  front   89.3  far 1.000
+seed 1 c2 t  14.0s  tube  6238.1  loops   29  width 5.20  reach  171.1  piles 1/1  strays 0.000  ms/tick 144.37
+seed 1 c2 t  14.0s  sick 0.312  ever 1.000  front   89.8  far 1.000
+seed 1 c2 hash=a56aa48b212c345b

@@ -1,0 +1,6 @@
+adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== 100000 walkers on 1024 x 640 (crowd 1), sensor 45 turn 45 reach 9 laid 5 keep 0.9 respawn 0 food 1, drawn Amber Trail Game, seed 1
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 1.569, worst 4.750; GPU ms ticks 1.382, drawing 0.067
+dish at 10.0s: tube 12390.3  loops 171  width 4.90  reach 188.6  piles 7/7  strays 0.017
+wrote target\sandbox-looks\pics/main-p1-r3-010s.png
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.306, walk 0.050, trail 0.128, scent 0.162, draw 0.064

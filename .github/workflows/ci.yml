@@ -67,7 +67,16 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all-targets --release --locked -- -D warnings
+      # The GPU sandbox's twin tests (`src/bin/mouldgpu.rs`: one GPU tick
+      # against one CPU tick, the same seed twice, the crowd limit) run on
+      # Mesa's software Vulkan (lavapipe); the runner has no GPU. With
+      # MOULDGPU_TEST_GPU=1 a missing adapter fails them; elsewhere they
+      # skip. They take about 2 s on lavapipe (2026-11-11).
+      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
       - run: cargo test --release --locked
+        env:
+          MOULDGPU_TEST_GPU: "1"
+          WGPU_BACKEND: vulkan
 
   sound:
     name: sound device builds (organ)

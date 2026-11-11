@@ -11,31 +11,51 @@ code: [Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 
 ## Now
 
-A brainstorm, no runs and no code: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
-A squad shoots the mould; both sides need the same food. The lead shape,
-Larder, makes the player's stored food smell like any pile, so hoarding draws
-the mould (a size cost from the scent field), scores food shipped out over a
-fixed round, and makes a shot matter by holding a tube clear (an empty
-stretch is a cut while it stays empty) rather than by killing walkers, which
-the knife shows is weak. Four strategies (Fortress, Hunter, Farmer, Baiter)
-are meant to counter each other through the state each pushes the mould into
-(lean and tree-like, or fat and looped); that is a hypothesis. Three cheap
-tests on today's dish come first; v0 would be a browser build on today's dish.
+Brainstorm: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
+A squad shoots the mould; both want the same food; the player's larder is a
+pile the mould steals from. The owner chose a squad, solo, tests first, and
+ruled that a held ring of fire should stop all mould: after a snip fix it
+does (0 stolen, 16/16). **Priced** (every shot costs food, the larder runs
+dry, fronts slowed to arrive at about 32 s), ringing forever is never the
+best plan: once the larder is dry the ring guards nothing. But one plan,
+ring the larder while it has food then mow the eaters off the other piles,
+tops all 16 seeds at shot prices 10 and 40, and at 120 no shooting pays. It
+is a ladder with a timing choice, not counter-strategies, because the mould
+does not adapt to the squad. Three independent reviews are in the report's
+folder.
 
 ## Numbers
 
 | Measure | Result | Seeds | Paired | Source |
 |---|---|---|---|---|
-| None yet: a brainstorm. The facts it leans on are on [knife](../tools/knife.md) and in [dead-ends](../../Reports/dead-ends.md) (`Params::light_weight`) | | | | [report](../../Reports/mould-shooter-2026-11-11.md) |
+| Larder theft, ring held from 0 s (fixed snip), against idle | 0 against 12,301 | 16 | 16-0, p 0.00003 | [report, *Correction*](../../Reports/mould-shooter-2026-11-11.md) |
+| Priced ring, bank at the bell: ring then mow / ring all round / idle, shot price 40 | 23,420 / 7,540 / 10,600 | 16 | ring-then-mow best on 16/16; ring below idle 16/16 | [report, *The priced ring*](../../Reports/mould-shooter-2026-11-11.md) |
+| Larder theft, ring raised when mould is near (fixed snip), against idle | 12,225 against 12,301 | 16 | 15-1, p 0.0005 | [report, *Correction*](../../Reports/mould-shooter-2026-11-11.md) |
+| Larder theft, snips through the larder (fixed snip), against idle | 154 against 12,301 | 16 | 16-0, p 0.00003 | [report, *Correction*](../../Reports/mould-shooter-2026-11-11.md) |
+| Trail-only gun, any hand against idle | 12,269-12,275 | 16 | 7-9 of 16, p >= 0.80 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
+| First bite of the larder, smell 3 against 0.3 | 4.1 s against 4.6 s | 16 | 16-0, p 0.00003 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
+| Loops at 45 s, piles full against a quarter | 10 against 1 | 16 | 16-0, p 0.00003 | [report, *Results*](../../Reports/mould-shooter-2026-11-11.md) |
 
 ## Owner's word
 
+- 2026-11-11 03:38Z: "Start with 4 and can grow to 40. They should definitely die and be attacked by the slime. The round ends when the soldiers or slime are all dead?"
+- 2026-11-11 03:14Z: "Rts-style. When you finish your current task, let's develop a full detailed plan of how to build the demo".
+- 2026-11-11 03:03Z: "Yes." (to the priced-ring test).
+- 2026-11-11 01:50Z: "Shooting should be able to directly cut through a branch after a free seconds and holding a ring of fire should stop all mold from getting to the food".
+- 2026-11-11 00:30Z: "Squad, start just you against the mold, tests first" (and asked why a browser build, since the browser cannot run the GPU-scale game).
 - 2026-11-11 00:18Z: "brainstorm a demo where the slime mold is the enemy. The player is a soldier or unit of soldiers who can shoot the mold to destroy parts of it. The player needs food to upgrade, build defenses, etc. and the slime mold wants food to expand/survive, etc,"
+
+## Tried and rejected
+
+- A ring of cuts raised round a pile once the mould is near (a ring held from the start works): [`dead-ends.md`](../../Reports/dead-ends.md), Larder entry.
 
 ## Open
 
-- One soldier or a squad; solo or Versus (two squads, one mould); tests first or v0 first. Owner's call, in `HANDOFF.md`.
-- Test 1 (does held fire cut supply where a snip does not) decides whether shooting clears or must scorch.
+- Make the mould answer the squad so plans can counter each other: smell growing with the bank, starving mould fighting harder at a ring, drops that pull fronts away, layouts where the best piles differ.
+- The build plan (Claude Doc "Larder: build plan for the RTS demo", https://claude.ai/artifact/5ricncRubPz7WTBGJZFnHs): six milestones, M1 soldiers in the harness, M2 the mould answers back (gate: no plan best on 13 or more of 16 seeds), M3 first playable window, M4 economy, M5 polish, M6 GPU port after S4. Not built.
+- Stalemate: a ringed squad and a mould keeping one piece alive could last forever; a time cap or food running out is proposed, not ruled.
+- Re-run smell on a dish the mould takes 30 s or more to cross.
+- Versus (two squads, one mould) is set aside for now (owner, 00:30Z: solo first).
 
 ## Sources
 

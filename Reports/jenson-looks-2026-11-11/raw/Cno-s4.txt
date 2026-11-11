@@ -1,0 +1,32 @@
+bigdish: preset Cno-s4 seeds [4] seconds 7 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 1200, immune_steps: 2400, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 3.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 4: 1024 x 640, 1000000 walkers, 1 piles
+seed 4 Cno-s4 t   0.5s  tube 17641.7  loops  274  width 5.66  reach  193.6  piles 1/1  strays 0.001  ms/tick 153.39
+seed 4 Cno-s4 t   0.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Cno-s4 t   1.0s  tube 15006.0  loops  202  width 5.24  reach  192.8  piles 1/1  strays 0.000  ms/tick 154.90
+seed 4 Cno-s4 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Cno-s4 t   1.5s  tube 13500.1  loops  164  width 4.94  reach  192.1  piles 1/1  strays 0.000  ms/tick 151.84
+seed 4 Cno-s4 t   1.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Cno-s4 t   2.0s  tube 12601.0  loops  145  width 4.84  reach  190.8  piles 1/1  strays 0.000  ms/tick 152.76
+seed 4 Cno-s4 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Cno-s4 t   2.5s  tube 11929.9  loops  132  width 4.79  reach  189.8  piles 1/1  strays 0.000  ms/tick 153.39
+seed 4 Cno-s4 t   2.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Cno-s4 t   3.0s  tube 11345.8  loops  119  width 4.77  reach  187.9  piles 1/1  strays 0.000  ms/tick 153.28
+seed 4 Cno-s4 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Cno-s4 t   3.5s  tube 10887.8  loops  111  width 4.77  reach  187.1  piles 1/1  strays 0.000  ms/tick 150.70
+seed 4 Cno-s4 t   3.5s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 4 Cno-s4 t   4.0s  tube 10348.8  loops   97  width 4.73  reach  186.3  piles 1/1  strays 0.000  ms/tick 147.52
+seed 4 Cno-s4 t   4.0s  sick 0.009  ever 0.009  front    9.3  far 0.000
+seed 4 Cno-s4 t   4.5s  tube 10017.9  loops   93  width 4.75  reach  185.6  piles 1/1  strays 0.000  ms/tick 145.70
+seed 4 Cno-s4 t   4.5s  sick 0.051  ever 0.051  front   22.5  far 0.000
+seed 4 Cno-s4 t   5.0s  tube  9740.7  loops   86  width 4.79  reach  184.7  piles 1/1  strays 0.000  ms/tick 143.71
+seed 4 Cno-s4 t   5.0s  sick 0.127  ever 0.127  front   33.6  far 0.006
+seed 4 Cno-s4 t   5.5s  tube  9598.6  loops   80  width 4.89  reach  183.6  piles 1/1  strays 0.000  ms/tick 143.98
+seed 4 Cno-s4 t   5.5s  sick 0.223  ever 0.223  front   46.4  far 0.060
+seed 4 Cno-s4 t   6.0s  tube  9421.7  loops   76  width 4.94  reach  181.7  piles 1/1  strays 0.000  ms/tick 144.19
+seed 4 Cno-s4 t   6.0s  sick 0.428  ever 0.428  front   61.6  far 0.246
+seed 4 Cno-s4 t   6.5s  tube  9258.2  loops   66  width 5.10  reach  181.2  piles 1/1  strays 0.000  ms/tick 145.04
+seed 4 Cno-s4 t   6.5s  sick 0.653  ever 0.653  front   70.6  far 0.597
+seed 4 Cno-s4 t   7.0s  tube  8987.6  loops   60  width 5.14  reach  181.0  piles 1/1  strays 0.000  ms/tick 145.59
+seed 4 Cno-s4 t   7.0s  sick 0.810  ever 0.810  front   79.3  far 0.839
+seed 4 Cno-s4 hash=deff3fb718c824d1

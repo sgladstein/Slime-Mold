@@ -41,6 +41,10 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-11 03:38 | Larder squad: starts at 4 soldiers and can grow to 40; soldiers die, attacked by the mould; the round ends when every soldier or all the mould is dead | "Start with 4 and can grow to 40. They should definitely die and be attacked by the slime. The round ends when the soldiers or slime are all dead?" | [Larder](rts/shooter.md) |
+| 2026-11-11 03:14 | Larder (mould-as-enemy shooter) is controlled RTS-style: orders, drawn fire lines and rings, not twin-stick aiming; next, a full build plan | "Rts-style. When you finish your current task, let's develop a full detailed plan of how to build the demo" | [Larder](rts/shooter.md) |
+| 2026-11-11 01:50 | Shooting must cut a branch in seconds, and a held ring of fire must stop all mould reaching the food | "holding a ring of fire should stop all mold from getting to the food" | [Larder](rts/shooter.md) |
+| 2026-11-11 00:30 | Larder: a squad, solo against the mould, tests first; no browser build for the full game | "Squad, start just you against the mold, tests first" | [Larder](rts/shooter.md) |
 | 2026-11-10 22:32, card | The GPU mould aims for 100,000 walkers on 1024 x 640 (phase 2's gate), over 32,000 or stopping the GPU work | card ("100,000 walkers", on "Which scale should the GPU mould aim for?") | [scale](model/scale.md) |
 | 2026-11-10 22:06, card | Two Fevers version 3 (calls, fever by tube, pinch, foraging, starvation; [design](../Reports/two-fevers-2026-11-10/v3-design.md)), built after three cheap checks, after the owner found version 2 "overly simple" with the mould as "background" (21:52) | card ("Build it after the checks (recommended)") | [Two Fevers](rts/two-fevers.md) |
 | 2026-11-10 23:29 | The field skirmish's counterplay: explore changes to the model itself (the fed fight bonus, the head-count share, a cost of size) rather than more prices | On "The fix probably has to be in the model itself": "then lets explore this" | [field skirmish](rts/skirmish.md) |

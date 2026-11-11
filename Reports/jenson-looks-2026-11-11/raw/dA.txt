@@ -1,0 +1,9 @@
+bigdish: preset dA seeds [1] seconds 10 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: true, respawn: 0.0, blob_r: 45.0, haze: 0.3, sense_scale: 0.05, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [-0.9, 2.0], deposit_cap: 0, sense_floor: 4.0, sick_steps: 0, immune_steps: 0, sick_catch: 1.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 1: 1024 x 640, 1000000 walkers, 1 piles
+seed 1 dA t   2.0s  tube 26261.5  loops   57  width 18.90  reach  196.6  piles 1/1  strays 0.004  ms/tick 179.35
+seed 1 dA t   4.0s  tube 24565.9  loops   75  width 14.14  reach  196.6  piles 1/1  strays 0.006  ms/tick 178.87
+seed 1 dA t   6.0s  tube 23413.2  loops   67  width 12.07  reach  196.6  piles 1/1  strays 0.007  ms/tick 178.95
+seed 1 dA t   8.0s  tube 22562.9  loops   75  width 10.58  reach  196.6  piles 1/1  strays 0.009  ms/tick 177.87
+seed 1 dA t  10.0s  tube 21537.2  loops  132  width 8.07  reach  196.6  piles 1/1  strays 0.010  ms/tick 176.55
+seed 1 dA hash=a34a7be6af46ec48

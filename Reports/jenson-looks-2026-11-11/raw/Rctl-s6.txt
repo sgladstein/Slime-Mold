@@ -1,0 +1,44 @@
+bigdish: preset Rctl-s6 seeds [6] seconds 20 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 1000000, sensor_angle: 0.7853982, rotate_angle: 0.3926991, sensor_offset: 18.0, scent_offset: 36.0, step: 1.0, deposit: 0.5, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 0, scent_coarse: false, scent_keep: 0.97, food_deposit: 0.0, fed_scent: 0.15, piles: 1, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 100, sense_floor: 0.0, wander: 0.0, sick_steps: 240, immune_steps: 6000, sick_catch: 5.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 0.5, sick_turn: 2.0, sick_seed_r: 0.0, tube: 1.0, seed: 1 }
+== seed 6: 1024 x 640, 1000000 walkers, 1 piles
+seed 6 Rctl-s6 t   1.0s  tube 14785.3  loops  201  width 5.09  reach  192.4  piles 1/1  strays 0.000  ms/tick 155.13
+seed 6 Rctl-s6 t   1.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t   2.0s  tube 12606.4  loops  144  width 4.88  reach  190.9  piles 1/1  strays 0.000  ms/tick 152.54
+seed 6 Rctl-s6 t   2.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t   3.0s  tube 11156.7  loops  112  width 4.79  reach  189.9  piles 1/1  strays 0.000  ms/tick 150.40
+seed 6 Rctl-s6 t   3.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t   4.0s  tube 10005.9  loops   90  width 4.72  reach  188.5  piles 1/1  strays 0.000  ms/tick 149.87
+seed 6 Rctl-s6 t   4.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t   5.0s  tube  9303.6  loops   81  width 4.64  reach  187.4  piles 1/1  strays 0.000  ms/tick 150.21
+seed 6 Rctl-s6 t   5.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t   6.0s  tube  8775.0  loops   72  width 4.64  reach  186.4  piles 1/1  strays 0.000  ms/tick 148.99
+seed 6 Rctl-s6 t   6.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t   7.0s  tube  8296.5  loops   65  width 4.66  reach  185.1  piles 1/1  strays 0.000  ms/tick 148.74
+seed 6 Rctl-s6 t   7.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t   8.0s  tube  7883.8  loops   60  width 4.68  reach  184.1  piles 1/1  strays 0.000  ms/tick 148.57
+seed 6 Rctl-s6 t   8.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t   9.0s  tube  7614.5  loops   54  width 4.82  reach  183.1  piles 1/1  strays 0.000  ms/tick 147.00
+seed 6 Rctl-s6 t   9.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  10.0s  tube  7097.0  loops   46  width 4.77  reach  181.6  piles 1/1  strays 0.000  ms/tick 145.35
+seed 6 Rctl-s6 t  10.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  11.0s  tube  6625.4  loops   40  width 4.71  reach  180.6  piles 1/1  strays 0.000  ms/tick 145.12
+seed 6 Rctl-s6 t  11.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  12.0s  tube  6260.8  loops   37  width 4.66  reach  180.0  piles 1/1  strays 0.000  ms/tick 145.19
+seed 6 Rctl-s6 t  12.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  13.0s  tube  5984.7  loops   34  width 4.64  reach  180.3  piles 1/1  strays 0.000  ms/tick 143.83
+seed 6 Rctl-s6 t  13.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  14.0s  tube  5852.2  loops   34  width 4.65  reach  180.8  piles 1/1  strays 0.000  ms/tick 143.52
+seed 6 Rctl-s6 t  14.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  15.0s  tube  5720.9  loops   30  width 4.72  reach  181.4  piles 1/1  strays 0.000  ms/tick 142.94
+seed 6 Rctl-s6 t  15.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  16.0s  tube  5522.3  loops   29  width 4.69  reach  181.9  piles 1/1  strays 0.000  ms/tick 142.10
+seed 6 Rctl-s6 t  16.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  17.0s  tube  5332.6  loops   27  width 4.77  reach  182.5  piles 1/1  strays 0.000  ms/tick 140.44
+seed 6 Rctl-s6 t  17.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  18.0s  tube  4997.1  loops   23  width 4.67  reach  183.1  piles 1/1  strays 0.000  ms/tick 138.99
+seed 6 Rctl-s6 t  18.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  19.0s  tube  4845.4  loops   22  width 4.66  reach  183.6  piles 1/1  strays 0.000  ms/tick 137.67
+seed 6 Rctl-s6 t  19.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 t  20.0s  tube  4713.5  loops   21  width 4.64  reach  184.1  piles 1/1  strays 0.000  ms/tick 137.01
+seed 6 Rctl-s6 t  20.0s  sick 0.000  ever 0.000  front    0.0  far 0.000
+seed 6 Rctl-s6 hash=d534cae9b4e792e2

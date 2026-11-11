@@ -141,3 +141,31 @@ walls, food and a limit.
 - Not tried: feathery fronts into a haze, contagion, settings set by the
   trail a walker stands in (36 Points), a square-root deposit (Bleuje),
   area sensors (Lague), chance-weighted steering (MCPM).
+
+## Correction (2026-11-11, independent review)
+
+A fresh reviewer checked this report's numbers against its raw output and
+re-ran `analyze.py` (its tables reproduce exactly; the sign tests and the
+Bonferroni over 4 are right). What it found, kept here rather than
+rewriting the sections above:
+
+- **One seed, no raw:** the 12 angle / turn / reach arms ("47 at sensor 45 /
+  turn 22.5 / reach 18; 0-15 for the rest"), the two 4M arms (171 / 118 / 60
+  and 46 / 8) and "density matters little" are one seed each, with no raw
+  file kept. Read them as a screen, not findings. "Jenson's rule needs
+  other settings" picked the best of those 12 single-seed arms; it was
+  tested on 8 seeds only at 1M (43.5 loops), never at 100k.
+- **Costs:** the 20.3 and 14.1 ms a tick for the 100k arms came from an
+  unsaved four-thread run; the kept raw (`raw/crowd1-s1.txt`,
+  `raw/crowd0-s1.txt`, one thread) gives 25.91 and 18.67 ms.
+- **Loops are two different measures:** Jenson's are dark regions under a
+  brightness cut in a GIF frame; ours are holes of at least 16 fine cells
+  where the trail is under 1. "3-5 loops to 180-340" beside "164 at 10 s"
+  compares them as one scale; it is only a rough guide.
+- The haze figure (41% of Jenson's disc) reproduces on the original GIF's
+  last frame (42%), not on the saved JPEG (33%).
+
+The GPU sandbox's re-check of these dishes on 8 seeds is in
+[`gpu-sandbox-2026-11-11.md`](gpu-sandbox-2026-11-11.md), *Independent
+review*.
+

@@ -123,9 +123,12 @@ Ask each again; none has an answer to assume.
    [the RTS directions](wiki/rts/directions.md).
 
 8. **Larder, the mould-as-enemy shooter** ([`Reports/mould-shooter-2026-11-11.md`](Reports/mould-shooter-2026-11-11.md),
-   [page](wiki/rts/shooter.md)): one soldier or a squad; solo or Versus (two
-   squads, one mould); run its three cheap tests first or build v0 in the
-   browser first.
+   [page](wiki/rts/shooter.md)). Owner chose (11-11 00:30Z) a squad, solo,
+   tests first. After a snip fix, a ring of fire held from the start keeps
+   the mould off the larder (0 stolen, 16/16) and is now the dominant play.
+   Priced (shots cost food, larder runs dry, slowed fronts), ring-forever
+   never wins but ring-then-mow tops every seed: a ladder. Open: which
+   mould answer to add so plans can counter each other.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
