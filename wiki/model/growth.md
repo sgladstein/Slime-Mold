@@ -4,7 +4,7 @@ kind: mechanism
 status: open
 updated: 2026-11-11T17:10Z
 sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
-code: [BigParams::upkeep, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
+code: [BigParams::upkeep, BigParams::energy_flow, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
 
 # Growth and starving on the big dish
@@ -46,8 +46,8 @@ the crystals swamps them
 - Run-dry crystals: `crystal_flow` makes the whole disc reachable (one
   seed); for a mould left alone to keep growing, a crystal's yield has to
   rise with its charge (the Larder thread's rule).
-- `energy_flow` (scratch, this thread's branch): keep it for the
-  cut-a-tube lever? A cut has not been tested.
+- `BigParams::energy_flow` (off, CPU only): keep it for the cut-a-tube
+  lever? A cut has not been tested.
 
 ## Sources
 

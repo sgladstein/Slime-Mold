@@ -92,10 +92,12 @@ The Larder thread's sizing runs (PR #64,
 its command with `crystal_charge` 64, 512, 4096, 300 s) found the mould
 levelling off at 18-24k walkers whatever the charge while mean energy
 climbed to 26-30: walkers packed on the crystals can divide only into a
-free cell beside them, so they hoard. A scratch rule, `energy_flow` (cry-wt
-commit 116c0ec, on this thread's branch, not in the W0 PR), evens each
-cell's mean walker energy with its occupied eight neighbours after eating,
-a pair giving what the other takes. Raw: `growth-2026-11-11/raw/energy-flow.txt`.
+free cell beside them, so they hoard. A new rule, `BigParams::energy_flow` (CPU
+only, off; in the W0 change, test `energy_flow_keeps_and_evens`), evens
+each cell's mean walker energy with its occupied eight neighbours after
+eating, a pair giving what the other takes. The runs used the same rule in a
+scratch build: the Larder branch at f292952, growth (65d914f), the pile-sum
+fix (a3aaccb) and the rule (116c0ec). Raw: `growth-2026-11-11/raw/energy-flow.txt`.
 
 | Charge a cell | Alive at 300 s, as built / flow 0.05 | Mean energy at 300 s, as built / flow 0.05 |
 |---|---|---|
@@ -111,8 +113,8 @@ flow (0.12) evens energy below `birth_energy` and fewer walkers divide. For
 "if you do nothing, the slime should get much stronger than you" (owner,
 14:54Z), a crystal's yield has to grow with its charge (a bigger bite from a
 richer cell, or richer crystals covering more cells); that is the Larder
-thread's rule. `energy_flow` stays a scratch option: it would also make a
-cut tube starve the far side, which has not been tested.
+thread's rule. `energy_flow` stays off: it would also make a cut tube
+starve the far side, which has not been tested.
 
 ## Open
 

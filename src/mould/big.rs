@@ -289,8 +289,8 @@ pub struct BigParams {
     pub birth_cost: f32,
     pub starve: f32,
     pub capacity: usize,
-    /// Energy that flows through the mould (2026-11-11, scratch, after the
-    /// Larder thread's sizing runs; 0 is off). Each step after eating, the
+    /// Energy that flows through the mould (2026-11-11, after the Larder
+    /// thread's sizing runs; 0 is off, CPU only so far). Each step after eating, the
     /// walkers' mean energy on each cell evens out with the eight cells
     /// round it that hold walkers: a cell gains `energy_flow` x the sum of
     /// (neighbour mean - own mean), shared alike by its walkers. Pairs give
@@ -302,6 +302,13 @@ pub struct BigParams {
     /// lets a crystal's food reach the front through the tubes, so food
     /// can become size, and a cut tube starves what is beyond it. Stable
     /// up to 1/8 (eight neighbours, one walker a cell).
+    ///
+    /// Measured (Reports/mould-shape-2026-11-11.md, *On crystals*, seed 1,
+    /// 300 s): 0.05 turns the hoard into walkers (mean energy 0.66 against
+    /// 26-30; 24,206 / 22,515 alive against 21,015 / 18,200 at charge 512 /
+    /// 4096) but size still does not follow charge: the crystals' area sets
+    /// the intake. 0.12 evens energy below `birth_energy` and fewer divide
+    /// (20,782). Off by default: a cut tube's effect is untested.
     pub energy_flow: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
@@ -1538,13 +1545,13 @@ impl BigDish {
         let (w, h) = (self.w, self.h);
         let mut mean = vec![0f64; w * h];
         let mut cells = vec![usize::MAX; self.walkers.len()];
-        for k in 0..self.walkers.len() {
+        for (k, c) in cells.iter_mut().enumerate() {
             if !self.lives(k) {
                 continue;
             }
             let (x, y, _) = self.walkers[k];
             let i = self.cell(x, y).expect("walker inside the dish");
-            cells[k] = i;
+            *c = i;
             mean[i] += self.energy[k] as f64;
         }
         for (i, m) in mean.iter_mut().enumerate() {
@@ -2307,6 +2314,35 @@ mod tests {
         }
         assert!(d.eaten > 0.0, "the home crystal fed the mould");
         assert!(!BigDish::new(BigParams { graze_weight: 10.0, ..p }).grass.is_empty());
+    }
+
+    /// `energy_flow` keeps energy (pairs give what they take), evens it out
+    /// and leaves empty slots alone.
+    #[test]
+    fn energy_flow_keeps_and_evens() {
+        let p = BigParams { upkeep: 0.01, energy_flow: 0.1, capacity: 1200, ..small(1, 1) };
+        let mut d = BigDish::new(p);
+        for _ in 0..30 {
+            d.tick();
+        }
+        for k in 0..d.walkers.len() {
+            if d.lives(k) {
+                d.energy[k] = (k % 7) as f32 * 0.3;
+            }
+        }
+        let empty: Vec<f32> = (0..d.walkers.len()).filter(|&k| !d.lives(k)).map(|k| d.energy[k]).collect();
+        let spread = |d: &BigDish| {
+            let e: Vec<f64> = (0..d.walkers.len()).filter(|&k| d.lives(k)).map(|k| d.energy[k] as f64).collect();
+            let m = e.iter().sum::<f64>() / e.len() as f64;
+            (e.iter().sum::<f64>(), e.iter().map(|x| (x - m) * (x - m)).sum::<f64>())
+        };
+        let (sum0, var0) = spread(&d);
+        d.flow_energy();
+        let (sum1, var1) = spread(&d);
+        assert!((sum1 - sum0).abs() < 1e-3, "energy kept: {sum0} -> {sum1}");
+        assert!(var1 < 0.9 * var0, "energy evens out: {var0} -> {var1}");
+        let after: Vec<f32> = (0..d.walkers.len()).filter(|&k| !d.lives(k)).map(|k| d.energy[k]).collect();
+        assert_eq!(empty, after, "empty slots untouched");
     }
 
     /// With growth off nothing is kept for it: every slot lives.
