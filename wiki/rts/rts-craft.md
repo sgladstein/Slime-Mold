@@ -2,7 +2,7 @@
 title: How RTS games are designed (outside research)
 kind: design
 status: current
-updated: 2026-11-10
+updated: 2026-11-11
 sources: [Reports/rts-research-2026-11-10.md, research/sources/sirlin-balancing-2014.md, research/sources/johnson-water-finds-a-crack-2011.md, research/sources/browder-sc2-esport-2011.md, research/sources/shelley-design-by-playing-2007.md, research/sources/meier-interesting-decisions-2012.md, research/sources/leblanc-feedback-2009.md, research/sources/czarnecki-spinning-tops-2020.md, research/sources/alphastar-2019.md, research/sources/chung-on-coh-2017.md, research/sources/sahui-endgames-2010.md, research/sources/tooth-and-tail.md, research/sources/creeper-world-2025.md]
 ---
 
@@ -32,7 +32,10 @@ the structure: a cost that grows with size (Civilization IV's fix for its
 dominant strategy, in the mould's terms tube length or piles fed), one
 pull-back rule, a points ending instead of a wipe-out, attacks that travel
 and can be seen coming, then an exploiter search and a person's hands.
-These are proposals to test, not results.
+These are proposals to test, not results. On 2026-11-11 they became one
+design for the skirmish (supply lines, points from held ground, Call,
+Fortify and a counted-down Strike), with tests:
+[`skirmish-economy-sketch.md`](../../Reports/rts-research-2026-11-10/skirmish-economy-sketch.md).
 
 ## Numbers
 
@@ -43,6 +46,7 @@ These are proposals to test, not results.
 ## Owner's word
 
 - 2026-11-10 23:12Z: "Start a new thread that first just real-time strategy games in general. How they function? The general design philosophy behind them, especially the best ones. How people design and build them."
+- 2026-11-11 00:09Z: "What do you think about our resources/economy and options for the player to control/interact with the game"; 00:16Z, on the answer: "These all sound good".
 - 2026-11-10 23:12Z: "Then after it does that it reviews our demos and give [feedback] on them".
 
 ## Open
