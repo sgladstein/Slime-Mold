@@ -2757,9 +2757,12 @@ mod tests {
             })
             .expect("a clear way to the wall");
         shots.push(ShotIn { from: clear, to: (clear.0 + 30.0, clear.1), r: 2.0 });
-        // A unit beside the wall, so its smell reaches the wall's cells
-        // (it must not land there).
-        units.push(UnitIn { smell_r: 4.0, ..unit(clear, 0.0) });
+        // A unit on the first wall cell that shot meets, so its smell disc
+        // covers wall and agar (it must land only on the agar). One beside
+        // the clear cell missed a planted bug: the wall was out of reach.
+        let p = squad::path(w, h, clear, (clear.0 + 30.0, clear.1));
+        let wall = p.into_iter().find(|&i| !cpu.agar[i as usize]).unwrap() as usize;
+        units.push(UnitIn { smell_r: 4.0, ..unit(((wall % w) as f32 + 0.5, (wall / w) as f32 + 0.5), 0.0) });
         // The same shot twice: a walker in both strikes dies once, counted
         // for the first.
         shots.push(shots[0]);
