@@ -42,6 +42,12 @@ pub fn has_glyph(c: char) -> bool {
     upper == ' ' || glyph_for(upper) != BLANK
 }
 
+/// The 5x7 glyph of `c` (upper-cased), row by row, bit 4 the leftmost
+/// column: for drawing text on the GPU (`world::marks` packs it into a mark).
+pub fn glyph_rows(c: char) -> [u8; 7] {
+    glyph_for(c.to_ascii_uppercase())
+}
+
 fn glyph_for(c: char) -> Glyph {
     match c {
         'A' => [0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],

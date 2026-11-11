@@ -961,19 +961,29 @@ pub struct Stamps {
     pub busy: bool,
     /// Nanoseconds a tick of the GPU's timestamp counter.
     pub period: f64,
-    /// Smoothed readings, ms: the ticks and the drawing.
+    /// Smoothed readings, ms: the ticks, the drawing, and the camera's
+    /// view pass (with `view`, else 0).
     pub sim_ms: f64,
     pub draw_ms: f64,
+    pub view_ms: f64,
     /// Every reading, for the screenshot hook's median.
-    pub all: Vec<(f64, f64)>,
+    pub all: Vec<(f64, f64, f64)>,
+    /// A fourth stamp, at the view pass's end (`world::View::record`).
+    pub view: bool,
 }
 
 impl Stamps {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
-        let qs = device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("frame"), ty: wgpu::QueryType::Timestamp, count: 3 });
-        let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("resolve"), size: 24, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
-        let read = device.create_buffer(&wgpu::BufferDescriptor { label: Some("stamps"), size: 24, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        Stamps { qs, resolve, read, ready: Arc::new(AtomicBool::new(false)), busy: false, period: queue.get_timestamp_period() as f64, sim_ms: 0.0, draw_ms: 0.0, all: Vec::new() }
+        Self::with_view(device, queue, false)
+    }
+
+    /// With `view`, a fourth stamp (index 3) the view pass writes.
+    pub fn with_view(device: &wgpu::Device, queue: &wgpu::Queue, view: bool) -> Self {
+        let n = 3 + view as u32;
+        let qs = device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("frame"), ty: wgpu::QueryType::Timestamp, count: n });
+        let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("resolve"), size: n as u64 * 8, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+        let read = device.create_buffer(&wgpu::BufferDescriptor { label: Some("stamps"), size: n as u64 * 8, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        Stamps { qs, resolve, read, ready: Arc::new(AtomicBool::new(false)), busy: false, period: queue.get_timestamp_period() as f64, sim_ms: 0.0, draw_ms: 0.0, view_ms: 0.0, all: Vec::new(), view }
     }
 
     /// The query set to write this frame, if the last reading is in.
@@ -982,8 +992,9 @@ impl Stamps {
     }
 
     pub fn resolve(&self, enc: &mut wgpu::CommandEncoder) {
-        enc.resolve_query_set(&self.qs, 0..3, &self.resolve, 0);
-        enc.copy_buffer_to_buffer(&self.resolve, 0, &self.read, 0, 24);
+        let n = 3 + self.view as u32;
+        enc.resolve_query_set(&self.qs, 0..n, &self.resolve, 0);
+        enc.copy_buffer_to_buffer(&self.resolve, 0, &self.read, 0, n as u64 * 8);
     }
 
     /// After the submit: ask for the reading.
@@ -1008,25 +1019,27 @@ impl Stamps {
         self.busy = false;
         let ms = |a: u64, b: u64| b.saturating_sub(a) as f64 * self.period / 1e6;
         let (sim, draw) = (ms(t[0], t[1]), ms(t[1], t[2]));
+        let view = if self.view { ms(t[2], t[3]) } else { 0.0 };
         // Smoothed, so the panel's number can be read; seeded with the
         // first reading (it started at 0 until the review of 2026-11-11, so
         // early screenshot figures read low).
         let a = if self.all.is_empty() { 1.0 } else { 0.1 };
         self.sim_ms += a * (sim - self.sim_ms);
         self.draw_ms += a * (draw - self.draw_ms);
+        self.view_ms += a * (view - self.view_ms);
         if self.all.len() < 100_000 {
-            self.all.push((sim, draw));
+            self.all.push((sim, draw, view));
         }
     }
 
-    /// The median reading so far: the ticks and the drawing, ms, and how
-    /// many readings.
-    pub fn median(&self) -> (f64, f64, usize) {
+    /// The median reading so far: the ticks, the drawing and the view, ms,
+    /// and how many readings.
+    pub fn median(&self) -> (f64, f64, f64, usize) {
         let mid = |mut v: Vec<f64>| {
             v.sort_by(|a, b| a.partial_cmp(b).unwrap());
             v.get(v.len() / 2).copied().unwrap_or(0.0)
         };
-        (mid(self.all.iter().map(|r| r.0).collect()), mid(self.all.iter().map(|r| r.1).collect()), self.all.len())
+        (mid(self.all.iter().map(|r| r.0).collect()), mid(self.all.iter().map(|r| r.1).collect()), mid(self.all.iter().map(|r| r.2).collect()), self.all.len())
     }
 }
 

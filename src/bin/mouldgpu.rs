@@ -134,9 +134,11 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::*;
 use slime_mould::hud;
 use slime_mould::mould::STEPS_PER_SECOND;
+use slime_mould::world::controls::unit_marks;
+use slime_mould::world::{Button, Camera, Controls, Marks, UiCommand, Unit, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
-use winit::event::{ElementState, MouseButton, WindowEvent};
+use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
@@ -784,6 +786,15 @@ struct App {
     fps_clock: Instant,
     fps: f64,
     result: Result<(), String>,
+    /// The camera over the dish (a world bigger than the window scrolls),
+    /// the view pass that draws through it, and the RTS controls.
+    camera: Camera,
+    view: Option<View>,
+    controls: Controls,
+    /// Q: the stand-in squad, for trying the controls (no rules).
+    squad: Option<Squad>,
+    marks: Marks,
+    last_frame: Instant,
 }
 
 impl App {
@@ -815,7 +826,26 @@ impl App {
             fps_clock: Instant::now(),
             fps: 0.0,
             result: Ok(()),
+            camera: Camera::new((1024, 640), (1024, 640)),
+            view: None,
+            controls: {
+                let mut c = Controls::new(0);
+                c.arrows_pan = false;
+                c
+            },
+            squad: None,
+            marks: Marks::default(),
+            last_frame: Instant::now(),
         }
+    }
+
+    fn world(&self) -> (usize, usize) {
+        self.engine.as_ref().map_or((1, 1), |e| (e.dish.w, e.dish.h))
+    }
+
+    /// The minimap's rectangle on screen this frame, if drawn.
+    fn minimap(&self) -> Option<(u32, u32, u32, u32)> {
+        self.view.as_ref().and_then(|v| v.minimap_rect(&self.camera))
     }
 
     fn fail(&mut self, event_loop: &ActiveEventLoop, msg: String) {
@@ -831,6 +861,14 @@ impl App {
         let mut e = Engine::new(p.device(), p.queue(), shared, &self.s, self.scale);
         e.dropped = dropped;
         e.lay_food(self.s.food);
+        let world = (e.dish.w, e.dish.h);
+        if let Some(v) = self.view.as_mut() {
+            if v.world != world {
+                self.camera = Camera::new(world, v.screen);
+                self.squad = self.squad.take().map(|_| Squad::new(world, self.scale));
+            }
+            v.set_world(&e.frame, world);
+        }
         self.engine = Some(e);
         self.panel_dirty = true;
         if let Some(w) = &self.window {
@@ -858,16 +896,20 @@ impl App {
             lines.push((format!("{mark} {:<18} {}", k.label(), k.value(&self.s, crowd_ok)), colour));
         }
         let (done, ms) = self.engine.as_ref().map(|e| e.done).map_or((0, String::new()), |d| {
-            let ms = self.stamps.as_ref().map_or("GPU TIME N/A".to_string(), |st| format!("GPU {:.2} MS A FRAME (TICKS {:.2} + DRAWING {:.2})", st.sim_ms + st.draw_ms, st.sim_ms, st.draw_ms));
+            let ms = self.stamps.as_ref().map_or("GPU TIME N/A".to_string(), |st| format!("GPU {:.2} MS A FRAME (TICKS {:.2} + DRAWING {:.2} + VIEW {:.2})", st.sim_ms + st.draw_ms + st.view_ms, st.sim_ms, st.draw_ms, st.view_ms));
             (d, ms)
         });
         // Each line fits the 1024-cell dish at the crisp font's 12 px a
         // character (`the_bottom_lines_fit_the_dish`).
-        let mouse = if self.s.sick_on() {
-            "LEFT DROPS WALKERS  RIGHT WIPES  MIDDLE OR I INFECTS  F DROPS FOOD  ESC QUITS"
+        let mouse = if self.squad.is_some() {
+            "SQUAD: LEFT SELECTS  RIGHT ORDERS  F+DRAG BURNS  CTRL+1-9 GROUPS  Q ENDS"
+        } else if self.s.sick_on() {
+            "LEFT DROPS WALKERS  RIGHT WIPES  I INFECTS  F DROPS FOOD  ESC QUITS"
         } else {
             "LEFT DRAG DROPS WALKERS  RIGHT DRAG WIPES  F DROPS FOOD  ESC QUITS"
         };
+        let world = self.engine.as_ref().map_or((0, 0), |e| (e.dish.w, e.dish.h));
+        let camera = format!("WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  W WORLD {}X{}  Q SQUAD", self.camera.zoom, world.0, world.1);
         let bottom = vec![
             ("1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(), WHITE),
             ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(), WHITE),
@@ -875,12 +917,23 @@ impl App {
             ("CTRL+1 GRAZING DROPLETS  2 GRAZING SPECIES".to_string(), WHITE),
             ("ARROWS PICK AND CHANGE (SHIFT: MORE)  SPACE PAUSE  . STEP  R RESTART  N NEW SEED".to_string(), DIM),
             (mouse.to_string(), DIM),
+            (camera, DIM),
             (format!("{ms}  {:.0} FPS  {:.1} S  SEED {}{}", self.fps, done as f64 / STEPS_PER_SECOND as f64, self.s.seed, if self.paused { "  PAUSED" } else { "" }), WHITE),
         ];
         (lines, bottom)
     }
 
     fn key(&mut self, code: KeyCode, event_loop: &ActiveEventLoop) {
+        // With the squad out, the digits are its groups and the rest of
+        // the keys the controls do not use stay the sandbox's.
+        if let Some(sq) = self.squad.as_mut() {
+            let units = sq.units();
+            let digit = matches!(code, KeyCode::Digit1 | KeyCode::Digit2 | KeyCode::Digit3 | KeyCode::Digit4 | KeyCode::Digit5 | KeyCode::Digit6 | KeyCode::Digit7 | KeyCode::Digit8 | KeyCode::Digit9);
+            if digit {
+                self.controls.key(code, true, false, &units, &mut self.camera);
+                return;
+            }
+        }
         const DIGITS: [KeyCode; 10] = [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9, KeyCode::Digit0];
         // 1-9 and 0 are presets 1-10; Shift with 1-9 and 0 the ten after,
         // Ctrl with them the ten after that.
@@ -921,6 +974,31 @@ impl App {
                 self.restart();
             }
             KeyCode::KeyH => self.show_panel = !self.show_panel,
+            KeyCode::KeyM => {
+                if let Some(v) = self.view.as_mut() {
+                    v.minimap = !v.minimap;
+                }
+            }
+            KeyCode::KeyQ => {
+                self.squad = match self.squad {
+                    Some(_) => None,
+                    None => self.engine.as_ref().map(|e| Squad::new((e.dish.w, e.dish.h), self.scale)),
+                };
+                self.controls.selected.clear();
+            }
+            KeyCode::KeyW => {
+                // The world: today's 1024 x 640 dish, or twice as wide and
+                // high (2048 x 1280) with four times the walkers, bigger
+                // than a screen, to scroll.
+                let (scale, walkers) = if self.scale == 4 { (8, self.s.walkers * 4) } else { (4, (self.s.walkers / 4).max(10_000)) };
+                self.scale = scale;
+                self.s.walkers = walkers.min(self.max_walkers);
+                if let Some(e) = self.engine.as_mut() {
+                    e.dropped.clear();
+                }
+                self.restart();
+            }
+            KeyCode::KeyF if self.squad.is_some() => {}
             KeyCode::KeyF => {
                 let food = self.s.food;
                 if let (Some(e), Some(at)) = (self.engine.as_mut(), self.hand.at) {
@@ -944,20 +1022,41 @@ impl App {
             self.fps_clock = Instant::now();
             self.panel_dirty = true;
         }
+        let dt = self.last_frame.elapsed().as_secs_f32();
+        self.last_frame = Instant::now();
+        let before = (self.camera.x, self.camera.y, self.camera.zoom);
+        self.controls.update(&mut self.camera, dt);
+        if (self.camera.x, self.camera.y, self.camera.zoom) != before {
+            self.hand.at = self.controls.cursor.and_then(|c| self.camera.world_at(c));
+        }
         if self.panel_dirty {
+            // The panel is screen-space now (the view's overlay); the
+            // engine's own dish-sized `hud` stays empty.
             let (lines, bottom) = self.panel_lines();
-            if let Some(e) = &self.engine {
-                let img = panel(e.dish.w, e.dish.h, &lines, &bottom);
-                e.queue.write_buffer(&e.hud, 0, &img);
+            if let Some(v) = self.view.as_mut() {
+                let img = panel(v.screen.0 as usize, v.screen.1 as usize, &lines, &bottom);
+                v.set_overlay(Some(&img));
             }
             self.panel_dirty = false;
+        }
+        self.marks.clear();
+        if let Some(sq) = self.squad.as_mut() {
+            sq.step(if self.paused { 0.0 } else { dt });
+            let units = sq.units();
+            self.controls.prune(&units);
+            sq.marks(self.camera.zoom, &mut self.marks);
+            self.controls.marks(&units, &self.camera, sq.radius(), &mut self.marks);
+        }
+        if let Some(v) = self.view.as_mut() {
+            v.set_marks(&self.marks);
         }
         let ticks = if self.paused {
             std::mem::take(&mut self.step_once) as u32
         } else {
             self.s.ticks
         };
-        let (Some(p), Some(shared), Some(e)) = (&self.pixels, &self.shared, self.engine.as_mut()) else { return };
+        let (Some(p), Some(shared), Some(e), Some(view)) = (&self.pixels, &self.shared, self.engine.as_mut(), self.view.as_ref()) else { return };
+        let camera = self.camera;
         let mut hand = self.hand;
         hand.infect |= std::mem::take(&mut self.infect_once);
         e.write_params(&self.s, hand, ticks);
@@ -967,16 +1066,14 @@ impl App {
         // stamps count as written only if it ran.
         let mut wrote = false;
         let res = p.render_with(|enc, target, ctx| {
-            e.record(shared, enc, ticks, soft, stamps.map(|st| &st.qs));
-            if let Some(st) = stamps.filter(|_| ticks > 0) {
+            let timed = stamps.filter(|_| ticks > 0);
+            e.record(shared, enc, ticks, soft, timed.map(|st| &st.qs));
+            view.record(enc, &camera, timed.map(|st| (&st.qs, None, Some(3))));
+            if let Some(st) = timed {
                 st.resolve(enc);
                 wrote = true;
             }
-            enc.copy_buffer_to_texture(
-                wgpu::TexelCopyBufferInfo { buffer: &e.frame, layout: wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(e.dish.w as u32 * 4), rows_per_image: Some(e.dish.h as u32) } },
-                wgpu::TexelCopyTextureInfo { texture: &ctx.texture, mip_level: 0, origin: wgpu::Origin3d::ZERO, aspect: wgpu::TextureAspect::All },
-                ctx.texture_extent,
-            );
+            view.copy_to(enc, &ctx.texture);
             ctx.scaling_renderer.render(enc, target);
             Ok(())
         });
@@ -993,11 +1090,11 @@ impl App {
         self.drawn += 1;
         if self.shot_after == Some(self.drawn) {
             let path = std::env::temp_dir().join(format!("mouldgpu-screenshot-p{}.png", self.preset + 1));
-            e.picture().save(&path).unwrap();
+            view.picture().save(&path).unwrap();
             println!("mouldgpu: wrote {}", path.display());
             let st = self.stamps.as_ref().map_or("no timestamps".to_string(), |st| {
-                let (sim, draw, n) = st.median();
-                format!("GPU {:.3} ms a frame (ticks {sim:.3} + drawing {draw:.3}), median of {n} frames timed", sim + draw)
+                let (sim, draw, view, n) = st.median();
+                format!("GPU {:.3} ms a frame (ticks {sim:.3} + drawing {draw:.3} + view {view:.3}), median of {n} frames timed", sim + draw + view)
             });
             println!("mouldgpu: after {} frames, {} ticks: {st}; {:.1} frames a second", self.drawn, e.done, self.fps);
             event_loop.exit();
@@ -1005,11 +1102,129 @@ impl App {
     }
 }
 
-fn scaling_for(window: PhysicalSize<u32>, dish: (usize, usize)) -> ScalingMode {
-    if window.width as usize >= dish.0 && window.height as usize >= dish.1 {
-        ScalingMode::PixelPerfect
-    } else {
-        ScalingMode::Fill
+/// The window's first size: the dish if it fits in nine tenths of the
+/// screen, else that (a world bigger than the screen scrolls).
+fn first_size(world: (u32, u32), monitor: Option<PhysicalSize<u32>>) -> PhysicalSize<u32> {
+    let room = monitor.map_or((1600, 900), |m| (m.width * 9 / 10, m.height * 9 / 10));
+    PhysicalSize::new(world.0.min(room.0).max(320), world.1.min(room.1).max(240))
+}
+
+/// **The stand-in squad** (Q): markers that walk where they are told, so
+/// the camera's controls can be tried on the big dish before the Larder
+/// world's rules exist. No rules: they do not shoot, eat or die, and the
+/// mould does not see them. Team 0 is yours (white); team 1 (blue) stands
+/// still, to show that only your team can be selected.
+struct Squad {
+    /// Each unit: where it is, its team, where it is walking, and a burn
+    /// line it holds (drawn as the guide Larder draws).
+    units: Vec<StandIn>,
+    /// World cells a second.
+    speed: f32,
+    /// Fine cells a dish cell, for sizes.
+    scale: f32,
+}
+
+#[derive(Clone, Copy)]
+struct StandIn {
+    x: f32,
+    y: f32,
+    team: u8,
+    to: Option<(f32, f32)>,
+    burn: Option<((f32, f32), (f32, f32))>,
+}
+
+impl Squad {
+    fn new(world: (usize, usize), scale: usize) -> Self {
+        let (w, h) = (world.0 as f32, world.1 as f32);
+        let s = scale as f32;
+        let mut units = Vec::new();
+        for k in 0..12 {
+            let (i, j) = ((k % 4) as f32, (k / 4) as f32);
+            units.push(StandIn { x: w * 0.3 + i * 4.0 * s, y: h * 0.5 + j * 4.0 * s, team: 0, to: None, burn: None });
+        }
+        for k in 0..6 {
+            units.push(StandIn { x: w * 0.7 + (k % 3) as f32 * 4.0 * s, y: h * 0.4 + (k / 3) as f32 * 4.0 * s, team: 1, to: None, burn: None });
+        }
+        // Larder's soldier speed, about 12 dish cells a second.
+        Squad { units, speed: 12.0 * s, scale: s }
+    }
+
+    /// A unit's radius in world cells: about Larder's soldier, a dish cell.
+    fn radius(&self) -> f32 {
+        0.9 * self.scale
+    }
+
+    fn units(&self) -> Vec<Unit> {
+        self.units.iter().enumerate().map(|(id, u)| Unit { id, team: u.team, x: u.x, y: u.y, alive: true }).collect()
+    }
+
+    /// Spreads `ids` round `at` in a square, `gap` cells apart, so they do
+    /// not stack on one cell.
+    fn spread(ids: &[usize], at: (f32, f32), gap: f32) -> Vec<(usize, (f32, f32))> {
+        let side = (ids.len() as f32).sqrt().ceil().max(1.0) as usize;
+        ids.iter()
+            .enumerate()
+            .map(|(n, &k)| {
+                let (i, j) = ((n % side) as f32, (n / side) as f32);
+                let off = (side as f32 - 1.0) / 2.0;
+                (k, (at.0 + (i - off) * gap, at.1 + (j - off) * gap))
+            })
+            .collect()
+    }
+
+    fn command(&mut self, c: UiCommand) {
+        let gap = 4.0 * self.scale;
+        match c {
+            UiCommand::Order { units, at } => {
+                for (k, p) in Self::spread(&units, at, gap) {
+                    self.units[k].to = Some(p);
+                    self.units[k].burn = None;
+                }
+            }
+            UiCommand::Burn { units, from, to } => {
+                // Each takes a place along the line, a little behind it.
+                let n = units.len().max(1) as f32;
+                for (i, &k) in units.iter().enumerate() {
+                    let f = (i as f32 + 0.5) / n;
+                    self.units[k].to = Some((from.0 + (to.0 - from.0) * f, from.1 + (to.1 - from.1) * f));
+                    self.units[k].burn = Some((from, to));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn step(&mut self, dt: f32) {
+        let step = self.speed * dt.min(0.1);
+        for u in &mut self.units {
+            if let Some((tx, ty)) = u.to {
+                let (dx, dy) = (tx - u.x, ty - u.y);
+                let d = dx.hypot(dy);
+                if d <= step {
+                    (u.x, u.y) = (tx, ty);
+                    u.to = None;
+                } else {
+                    u.x += dx / d * step;
+                    u.y += dy / d * step;
+                }
+            }
+        }
+    }
+
+    fn marks(&self, zoom: f32, out: &mut Marks) {
+        for (id, u) in self.units.iter().enumerate() {
+            if let Some((a, b)) = u.burn {
+                out.line(a, b, 4.0, [255, 150, 60, 255]);
+            }
+            if let Some(to) = u.to {
+                out.line((u.x, u.y), to, 2.0, [255, 255, 255, 90]);
+            }
+            unit_marks(&Unit { id, team: u.team, x: u.x, y: u.y, alive: true }, self.radius(), 1.0, zoom, out);
+        }
+        // A world-space label, as a game would put a count beside a crystal.
+        if let Some(u) = self.units.iter().find(|u| u.team == 1) {
+            out.label((u.x, u.y), (-6.0, -26.0), "TEAM 2", 2.0, [110, 180, 255, 255]);
+        }
     }
 }
 
@@ -1019,8 +1234,9 @@ impl ApplicationHandler for App {
             return;
         }
         let p = big_params(&self.s, self.scale, false);
-        let (w, h) = (p.w() as u32, p.h() as u32);
-        let attributes = Window::default_attributes().with_title("Mould sandbox (GPU)").with_inner_size(PhysicalSize::new(w, h));
+        let world = (p.w() as u32, p.h() as u32);
+        let first = first_size(world, event_loop.primary_monitor().map(|m| m.size()));
+        let attributes = Window::default_attributes().with_title("Mould sandbox (GPU)").with_inner_size(first);
         let window = match event_loop.create_window(attributes) {
             Ok(w) => Arc::new(w),
             Err(err) => return self.fail(event_loop, format!("window creation failed: {err}")),
@@ -1028,7 +1244,10 @@ impl ApplicationHandler for App {
         // Look at the GPU first, to ask for timestamps if it has them.
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
         let probe = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).ok();
+        // The pixel buffer is the window's size, one pixel a screen pixel:
+        // the camera's view pass draws the dish into it at any zoom.
         let size = window.inner_size();
+        let (w, h) = (size.width.max(1), size.height.max(1));
         let options = wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, compatible_surface: None, force_fallback_adapter: false };
         let mut built = None;
         if let Some(a) = probe.as_ref().filter(|a| a.features().contains(wgpu::Features::TIMESTAMP_QUERY)) {
@@ -1043,7 +1262,7 @@ impl ApplicationHandler for App {
             };
         }
         let mut pixels = built.unwrap();
-        pixels.set_scaling_mode(scaling_for(size, (w as usize, h as usize)));
+        pixels.set_scaling_mode(ScalingMode::PixelPerfect);
         // pixels 0.17 recomputes the drawing's scale (and the mouse's
         // inverse) only on a resize, so a window opened smaller than the
         // dish would draw it cropped until one came (independent review,
@@ -1058,11 +1277,16 @@ impl ApplicationHandler for App {
         self.max_walkers = WALKER_STEPS.iter().copied().filter(|&n| n * 16 <= limit).max().unwrap_or(100_000);
         self.shared = Some(Shared::new(pixels.device()));
         if timestamps {
-            self.stamps = Some(Stamps::new(pixels.device(), pixels.queue()));
+            self.stamps = Some(Stamps::with_view(pixels.device(), pixels.queue(), true));
         }
         self.pixels = Some(pixels);
         self.window = Some(window);
         self.restart();
+        if let (Some(p), Some(e)) = (&self.pixels, &self.engine) {
+            let world = (e.dish.w, e.dish.h);
+            self.view = Some(View::new(p.device(), p.queue(), &e.frame, world, (w, h)));
+            self.camera = Camera::new(world, (w, h));
+        }
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
@@ -1071,20 +1295,28 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(size) => {
                 if size.width > 0 && size.height > 0 {
                     if let Some(p) = self.pixels.as_mut() {
-                        let dish = self.engine.as_ref().map_or((1, 1), |e| (e.dish.w, e.dish.h));
-                        p.set_scaling_mode(scaling_for(size, dish));
-                        if let Err(err) = p.resize_surface(size.width, size.height) {
-                            self.fail(event_loop, format!("surface resize failed: {err}"));
+                        let res = p.resize_buffer(size.width, size.height).map_err(|e| e.to_string()).and_then(|_| p.resize_surface(size.width, size.height).map_err(|e| e.to_string()));
+                        if let Err(err) = res {
+                            return self.fail(event_loop, format!("resize failed: {err}"));
                         }
                     }
+                    if let Some(v) = self.view.as_mut() {
+                        v.resize((size.width, size.height));
+                    }
+                    self.camera.resize((size.width, size.height));
+                    self.panel_dirty = true;
                 }
             }
             WindowEvent::ModifiersChanged(m) => {
                 self.shift = m.state().shift_key();
                 self.ctrl = m.state().control_key();
+                (self.controls.shift, self.controls.ctrl) = (self.shift, self.ctrl);
             }
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(code) = event.physical_key {
+                    if code == KeyCode::KeyF && self.squad.is_some() {
+                        self.controls.burn = event.state == ElementState::Pressed;
+                    }
                     let repeat_ok = matches!(code, KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::Period);
                     if event.state == ElementState::Pressed && (!event.repeat || repeat_ok) {
                         self.key(code, event_loop);
@@ -1092,21 +1324,63 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
-                self.hand.at = self.pixels.as_ref().and_then(|p| p.window_pos_to_pixel((position.x as f32, position.y as f32)).ok()).map(|(x, y)| (x as f32 + 0.5, y as f32 + 0.5));
+                // Screen pixels (the buffer is the window's size), then the
+                // world cell under them through the camera.
+                let at = (position.x as f32, position.y as f32);
+                let mm = self.minimap();
+                self.controls.moved(Some(at), &mut self.camera, mm);
+                self.hand.at = self.camera.world_at(at).filter(|_| mm.is_none_or(|r| slime_mould::world::view::minimap_world(r, self.world(), at).is_none()));
             }
-            WindowEvent::CursorLeft { .. } => self.hand.at = None,
-            WindowEvent::Focused(false) => {
-                self.hand.pull = false;
-                self.hand.wipe = false;
-                self.hand.infect = false;
+            WindowEvent::CursorLeft { .. } => {
+                self.hand.at = None;
+                self.controls.moved(None, &mut self.camera, None);
+            }
+            WindowEvent::Focused(focused) => {
+                self.controls.edge = focused;
+                if !focused {
+                    self.hand.pull = false;
+                    self.hand.wipe = false;
+                    self.hand.infect = false;
+                    self.controls.unfocus();
+                }
+            }
+            WindowEvent::MouseWheel { delta, .. } => {
+                let notches = match delta {
+                    MouseScrollDelta::LineDelta(_, y) => y.signum() as i32,
+                    MouseScrollDelta::PixelDelta(p) => (p.y / 40.0).round() as i32,
+                };
+                self.controls.wheel(notches, &mut self.camera);
+                self.panel_dirty = true;
             }
             WindowEvent::MouseInput { state, button, .. } => {
                 let down = state == ElementState::Pressed;
-                match button {
-                    MouseButton::Left => self.hand.pull = down,
-                    MouseButton::Right => self.hand.wipe = down,
-                    MouseButton::Middle => self.hand.infect = down,
-                    _ => {}
+                let mm = self.minimap();
+                let on_map = self.controls.cursor.zip(mm).is_some_and(|(c, r)| slime_mould::world::view::minimap_world(r, self.world(), c).is_some());
+                let b = match button {
+                    MouseButton::Left => Some(Button::Left),
+                    MouseButton::Right => Some(Button::Right),
+                    MouseButton::Middle => Some(Button::Middle),
+                    _ => None,
+                };
+                // The middle button pans, the minimap moves the camera, and
+                // with the squad out every button is the controls'; else the
+                // left and right are the sandbox's tools as before.
+                let to_controls = self.squad.is_some() || button == MouseButton::Middle || (on_map && down) || !down;
+                if let (Some(b), true) = (b, to_controls) {
+                    let units = self.squad.as_ref().map(|q| q.units()).unwrap_or_default();
+                    let cmds = self.controls.button(b, down, &units, &mut self.camera, mm);
+                    if let Some(sq) = self.squad.as_mut() {
+                        for c in cmds {
+                            sq.command(c);
+                        }
+                    }
+                }
+                if self.squad.is_none() && !(on_map && down) {
+                    match button {
+                        MouseButton::Left => self.hand.pull = down,
+                        MouseButton::Right => self.hand.wipe = down,
+                        _ => {}
+                    }
                 }
             }
             WindowEvent::RedrawRequested => self.frame(event_loop),
@@ -1161,6 +1435,13 @@ struct Look {
     down: u32,
     twice: bool,
     tag: String,
+    /// `view=WxH`: also draw the last frame through the camera onto a
+    /// screen that size (`cam=X,Y,ZOOM`, the world point at its middle;
+    /// default the dish's middle at zoom 1), with the stand-in squad if
+    /// `squad=1`, and time the view pass.
+    view: Option<(u32, u32)>,
+    cam: Option<(f32, f32, f32)>,
+    squad: bool,
 }
 
 /// The headless run: frames as the window would submit them (one frame of
@@ -1323,6 +1604,9 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 println!("GPU ms a pass, median of 11 ticks each submitted alone: {}", parts.join(", "));
             }
         }
+        if let (0, Some(screen)) = (round, look.view) {
+            view_shot(&device, &queue, &e, screen, look, timestamps);
+        }
         pictures.push(pic);
     }
     if look.twice {
@@ -1330,11 +1614,60 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
     }
 }
 
+/// The headless run's last frame through the camera (`view=WxH`), saved as
+/// `TAG-view.png`, with the view pass's GPU time (median of 21).
+fn view_shot(device: &wgpu::Device, queue: &wgpu::Queue, e: &Engine, screen: (u32, u32), look: &Look, timestamps: bool) {
+    let world = (e.dish.w, e.dish.h);
+    let mut view = View::new(device, queue, &e.frame, world, screen);
+    let mut cam = Camera::new(world, screen);
+    let (cx, cy, zoom) = look.cam.unwrap_or((world.0 as f32 / 2.0, world.1 as f32 / 2.0, cam.zoom));
+    cam.zoom_to(zoom, (0.0, 0.0));
+    cam.centre_on((cx, cy));
+    let mut marks = Marks::default();
+    if look.squad {
+        // The squad, three selected, one ordered off and two on a burn line,
+        // and a drag box under way: every mark the controls draw.
+        let mut sq = Squad::new(world, e.dish.p.scale);
+        let mut k = Controls::new(0);
+        sq.command(UiCommand::Order { units: vec![0], at: (sq.units[0].x + 60.0, sq.units[0].y - 40.0) });
+        let (a, b) = ((sq.units[4].x - 20.0, sq.units[4].y + 30.0), (sq.units[7].x + 30.0, sq.units[7].y + 30.0));
+        sq.command(UiCommand::Burn { units: vec![4, 5], from: a, to: b });
+        sq.step(0.5);
+        k.selected = vec![0, 4, 5];
+        let units = sq.units();
+        sq.marks(cam.zoom, &mut marks);
+        k.marks(&units, &cam, sq.radius(), &mut marks);
+    }
+    view.set_marks(&marks);
+    let (lines, bottom) = (vec![("CAMERA VIEW".to_string(), WHITE)], vec![(format!("ZOOM {:.2}  WORLD {} X {}", cam.zoom, world.0, world.1), DIM)]);
+    view.set_overlay(Some(&panel(screen.0 as usize, screen.1 as usize, &lines, &bottom)));
+    let mut times = Vec::new();
+    let qs = timestamps.then(|| device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("view"), ty: wgpu::QueryType::Timestamp, count: 2 }));
+    let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view stamps"), size: 16, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+    for _ in 0..21 {
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        view.record(&mut enc, &cam, qs.as_ref().map(|q| (q, Some(0), Some(1))));
+        if let Some(q) = &qs {
+            enc.resolve_query_set(q, 0..2, &resolve, 0);
+        }
+        queue.submit([enc.finish()]);
+        if qs.is_some() {
+            let t: Vec<u64> = read_back(device, queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
+            times.push(t[1].saturating_sub(t[0]) as f64 * queue.get_timestamp_period() as f64 / 1e6);
+        }
+    }
+    times.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let path = format!("{}/{}-view.png", look.dir, look.tag);
+    view.picture().save(&path).unwrap();
+    let ms = times.get(times.len() / 2).map_or("no timestamps".to_string(), |m| format!("GPU {m:.3} ms"));
+    println!("view {}x{} at zoom {:.2} on ({cx:.0}, {cy:.0}), {} marks: {ms} (median of {}); wrote {path}", screen.0, screen.1, cam.zoom, marks.len(), times.len());
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut s = Settings::big_dish();
     let mut picked = 0usize;
     let mut scale = 4usize;
-    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new() };
+    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new(), view: None, cam: None, squad: false };
     let args: Vec<String> = std::env::args().skip(1).collect();
     // The preset first, so the other keys change it.
     for arg in &args {
@@ -1356,6 +1689,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "down" => look.down = v.parse::<u32>()?.max(1),
             "twice" => look.twice = on_off(k, v)?,
             "tag" => look.tag = v.into(),
+            "view" => {
+                let (w, h) = v.split_once('x').ok_or("view=WxH")?;
+                look.view = Some((w.parse()?, h.parse()?));
+            }
+            "cam" => {
+                let p: Vec<f32> = v.split(',').map(|x| x.parse()).collect::<Result<_, _>>()?;
+                look.cam = Some((*p.first().ok_or("cam=X,Y,ZOOM")?, *p.get(1).ok_or("cam=X,Y,ZOOM")?, p.get(2).copied().unwrap_or(1.0)));
+            }
+            "squad" => look.squad = on_off(k, v)?,
             _ => set(&mut s, k, v)?,
         }
     }
