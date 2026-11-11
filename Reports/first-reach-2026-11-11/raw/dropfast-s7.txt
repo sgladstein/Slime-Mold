@@ -1,0 +1,26 @@
+seed 7 dropfast t  10.0s  tube  4756.3  loops    1  width 6.66  reach  120.1  piles 5/12  strays 0.003  ms/tick 11.51
+seed 7 dropfast t  10.0s  contrast 4.39
+seed 7 dropfast t  10.0s  extent r50 140.5 r90 195.1
+seed 7 dropfast t  10.0s  kinds k0 n 23921 on 1.000 r 139.3  k1 n 6079 on 0.987 r 146.5
+seed 7 dropfast t  20.0s  tube  4411.0  loops    0  width 6.69  reach  120.9  piles 5/12  strays 0.002  ms/tick 11.87
+seed 7 dropfast t  20.0s  contrast 3.97
+seed 7 dropfast t  20.0s  extent r50 139.3 r90 200.3
+seed 7 dropfast t  20.0s  kinds k0 n 23921 on 1.000 r 137.4  k1 n 6079 on 0.989 r 158.6
+seed 7 dropfast t  30.0s  tube  4249.9  loops    0  width 6.71  reach  121.5  piles 5/12  strays 0.003  ms/tick 11.69
+seed 7 dropfast t  30.0s  contrast 3.81
+seed 7 dropfast t  30.0s  extent r50 140.1 r90 203.8
+seed 7 dropfast t  30.0s  kinds k0 n 23921 on 1.000 r 136.6  k1 n 6079 on 0.985 r 166.4
+seed 7 dropfast t  40.0s  tube  4159.8  loops    0  width 6.77  reach  122.2  piles 7/12  strays 0.003  ms/tick 11.86
+seed 7 dropfast t  40.0s  contrast 3.67
+seed 7 dropfast t  40.0s  extent r50 141.2 r90 206.5
+seed 7 dropfast t  40.0s  kinds k0 n 23921 on 1.000 r 136.4  k1 n 6079 on 0.985 r 170.4
+seed 7 dropfast t  50.0s  tube  4121.5  loops    0  width 6.87  reach  122.3  piles 7/12  strays 0.003  ms/tick 11.98
+seed 7 dropfast t  50.0s  contrast 3.60
+seed 7 dropfast t  50.0s  extent r50 142.5 r90 208.7
+seed 7 dropfast t  50.0s  kinds k0 n 23921 on 1.000 r 136.4  k1 n 6079 on 0.984 r 173.5
+seed 7 dropfast t  60.0s  tube  4063.6  loops    0  width 6.88  reach  146.5  piles 7/12  strays 0.003  ms/tick 12.04
+seed 7 dropfast t  60.0s  contrast 3.51
+seed 7 dropfast t  60.0s  extent r50 143.5 r90 210.4
+seed 7 dropfast t  60.0s  kinds k0 n 23921 on 1.000 r 136.5  k1 n 6079 on 0.987 r 176.2
+seed 7 dropfast firsts 0:72:0.57:0.0 1:55:0.67:0.0 2:76:0.80:-1.0 3:50:0.50:0.0 4:113:0.91:-1.0 5:61:0.75:0.2 6:81:0.78:38.1 7:99:0.87:-1.0 8:51:0.53:0.0 9:83:0.67:-1.0 10:96:0.81:-1.0 11:81:0.81:30.4
+seed 7 dropfast hash=2be583c4d0e3bd15

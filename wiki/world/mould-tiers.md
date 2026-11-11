@@ -2,9 +2,9 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-11T21:10Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md]
-code: [BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate]
+updated: 2026-11-11T21:30Z
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md]
+code: [BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate]
 ---
 
 # The mould tiers (difficulty ladder)
@@ -32,6 +32,14 @@ The added three are built on the CPU big dish and each beat its control on
 8 of 8 seeds ([the life cycle](../model/life-cycle.md)); where they sit in
 the order is not set. A splitting or migrating tier is open.
 
+The Drifter's grazing is what makes it forage: on food piles it sends
+small droplets to far food, while the edge of its body moves about 10
+dish cells a minute. Adding 20% scouts to it reached more food on 10 of 16 seeds and
+less on none, a candidate step up the ladder
+([first reach](../../Reports/first-reach-2026-11-11.md)). Each species can
+now have its own settings on one dish (`species_sets`;
+[coexistence](../../Reports/species-sets-2026-11-11.md)).
+
 ## Open
 
 - The order of the added tiers, and which tiers reach the GPU first (after W0).
@@ -41,3 +49,5 @@ the order is not set. A splitting or migrating tier is open.
 
 - [larder-world-roadmap-2026-11-11.md](../../Reports/larder-world-roadmap-2026-11-11.md), *Mould progression*.
 - [mould-tiers-2026-11-11.md](../../Reports/mould-tiers-2026-11-11.md): Sporer, Sleeper, Swarmer.
+- [first-reach-2026-11-11.md](../../Reports/first-reach-2026-11-11.md): droplet moulds and mixes on food piles.
+- [species-sets-2026-11-11.md](../../Reports/species-sets-2026-11-11.md): per-species settings, two species on one dish.

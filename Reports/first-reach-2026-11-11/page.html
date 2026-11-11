@@ -1,0 +1,117 @@
+<title>Mould Food Reach</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the same dark lightbox as the earlier mould pages (spread-mix,
+   creatures); one dark theme so the black dishes sit flush, counts in mono
+   beside each picture, a small results table up top. */
+:root {
+  --bg: #0c0e0d; --panel: #151917; --line: #2a302d;
+  --fg: #e9ece9; --muted: #9ba49f; --amber: #ffbe5a; --teal: #6fd3d0; --red: #ff6b5e;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; }
+h2 { font-size: 24px; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header, section { display: grid; gap: 18px; min-width: 0; }
+section > p { color: var(--muted); }
+section > p strong, header p strong { color: var(--fg); }
+.strip { display: grid; gap: 10px; margin: 0; min-width: 0; }
+.strip img { width: 100%; max-width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+.times { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); font: 12px/1 var(--mono); color: var(--muted); }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 12px/1.3 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.up { color: var(--amber); }
+.flat { color: var(--muted); }
+.key { display: flex; gap: 18px; flex-wrap: wrap; font: 13px/1 var(--mono); color: var(--muted); }
+.key span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+code { font-family: var(--mono); font-size: 0.9em; color: var(--amber); }
+ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--muted); max-width: 72ch; }
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Big dish · 1024 × 640 · 16 paired seeds · 11 Nov 2026</span>
+  <h1>Who finds food first, and two species on one map</h1>
+  <p>Two tests for the mould ladder. First, which droplet moulds reach food that is away from where they start, out of 12 food piles. The piles the start disc already touches don't count, which leaves 2 to 7 a seed. Second, whether a droplet species and a network species, each with its own settings, can share one map.</p>
+  <p><strong>Grazing is what makes droplets forage.</strong> Grazers reached 49 of 77 far piles by 30 s, against 9 for still droplets, and more on 15 of 16 seeds. <strong>Scouts on top of grazers reach more again</strong>: 62 of 77, more on 10 seeds, fewer on none. These moulds are slow: the edge of a grazer's body moves about 10 cells a minute on a map 256 cells wide. Small droplets and scouts are what travel.</p>
+</header>
+
+<section>
+  <span class="eyebrow">1 · Who reaches food first</span>
+  <h2>Grazers send small droplets to far food</h2>
+  <p>30,000 droplet walkers start in a disc at the centre. A pile counts as reached once its trail passes the tube cut. Scored: far piles reached by 30 s, each arm against its base, sign test with Holm over 5 comparisons. I picked this measure after a flawed first run had already shown the direction. Seeds 9 to 16 were new, and they go the same way (grazers ahead on 8 of 8).</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Mould</th><th>Far piles by 30 s</th><th>By 60 s</th><th>Against its base (30 s)</th><th>Holm p</th></tr></thead>
+    <tbody>
+      <tr><td>Still droplets</td><td class="num">9 / 77</td><td class="num">10</td><td class="flat">base</td><td class="num"></td></tr>
+      <tr><td>Grazers</td><td class="num">49 / 77</td><td class="num">56</td><td class="up">more on 15 seeds, fewer on 0</td><td class="num">0.0003</td></tr>
+      <tr><td>Grazers + 20% scouts</td><td class="num">62 / 77</td><td class="num">72</td><td class="up">over grazers: more on 10, fewer on 0</td><td class="num">0.0078</td></tr>
+      <tr><td>Droplets + 20% fast</td><td class="num">19 / 77</td><td class="num">23</td><td class="up">more on 7, fewer on 0</td><td class="num">0.047</td></tr>
+      <tr><td>Scouts only</td><td class="num">3 / 77</td><td class="num">4</td><td class="flat">more on 1, fewer on 6</td><td class="num">0.25</td></tr>
+      <tr><td>Droplets + 20% scouts</td><td class="num">5 / 77</td><td class="num">6</td><td class="flat">more on 0, fewer on 3</td><td class="num">0.25</td></tr>
+    </tbody>
+  </table></div>
+
+  <figure class="strip"><img src="pics/droplets-s1.jpg" alt="Still droplets on seed 1 at 10, 30 and 60 s">
+    <div class="times"><span>10 s</span><span>30 s</span><span>60 s</span></div>
+    <figcaption><strong>Still droplets</strong><dl class="stats"><dt>seed 1, far piles</dt><dd>0 of 4 by 30 s, 0 by 60 s</dd><dt>outer edge (r90)</dt><dd>190 → 197 fine cells in 60 s</dd></dl><span>A still field of bodies. The bright discs are piles under the start; the dim ones were never reached.</span></figcaption></figure>
+  <figure class="strip"><img src="pics/dropfast-s1.jpg" alt="Droplets with 20% fast walkers on seed 1 at 10, 30 and 60 s">
+    <div class="times"><span>10 s</span><span>30 s</span><span>60 s</span></div>
+    <figcaption><strong>Droplets + 20% fast walkers</strong> (step 2x, lay 0.3x)<dl class="stats"><dt>seed 1, far piles</dt><dd>0 of 4 by 30 s, 0 by 60 s</dd><dt>16 seeds</dt><dd>19 of 77 by 30 s</dd></dl><span>Looks like still droplets; the gain shows on other seeds.</span></figcaption></figure>
+  <figure class="strip"><img src="pics/grazers-s1.jpg" alt="Grazing droplets on seed 1 at 10, 30 and 60 s">
+    <div class="times"><span>10 s</span><span>30 s</span><span>60 s</span></div>
+    <figcaption><strong>Grazers</strong><dl class="stats"><dt>seed 1, far piles</dt><dd>2 of 4 by 30 s, 3 by 60 s</dd><dt>median first reach</dt><dd>7.7 s (16 seeds)</dd></dl><span>Small droplets break off and walk to the far piles. The farthest reached was 113 cells out, near the wall.</span></figcaption></figure>
+  <figure class="strip"><img src="pics/grazescouts-s1.jpg" alt="Grazing droplets with 20% scouts on seed 1 at 10, 30 and 60 s">
+    <div class="times"><span>10 s</span><span>30 s</span><span>60 s</span></div>
+    <figcaption><strong>Grazers + 20% scouts</strong> (reach 3x, lay 0.3x)<dl class="stats"><dt>seed 1, far piles</dt><dd>3 of 4 by 30 s, 4 by 60 s</dd><dt>16 seeds</dt><dd>62 of 77 by 30 s, 72 by 60 s</dd></dl><span>The scouts haze out first, the droplets follow, and by 60 s the mould has gathered onto the food.</span></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">2 · Two species, each with its own settings</span>
+  <h2>A droplet species and a network species share the map</h2>
+  <p>New: each species can now have its own sensor angle and reach, turn, step, deposit, fade, crowding, grazing and exploring. Left half: the Drifter, 29,870 grazing droplets. Right half: a Sprawler, 1 million walkers of the Jenson network. Each avoids the other's trail. Measured: each species' own area together, over its area alone on the same seed.</p>
+  <div class="key"><span style="--c: var(--amber)">Drifter</span><span style="--c: var(--teal)">Sprawler</span></div>
+  <p><strong>They coexist on 8 of 8 seeds</strong>: each species' area together is within half to twice its area alone, at 30 s and at 60 s. The Drifter is untouched (0.99 to 1.02). The Sprawler varies from 0.65 to 1.90: on 3 seeds its tubes cross into the droplets' half. Beside the network the droplets end in fewer bodies (fewer on 8 of 8 seeds at 60 s). With avoidance as the only rule between them there is no fight yet.</p>
+  <figure class="strip" style="--n: 4"><img src="pics/coexist-s1.jpg" alt="Drifter and Sprawler together on seed 1 at 1, 5, 10 and 20 s">
+    <div class="times"><span>1 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Seed 1</strong><dl class="stats"><dt>Drifter, together / alone</dt><dd>1.02 at 30 s, 1.01 at 60 s</dd><dt>Sprawler, together / alone</dt><dd>0.75 at 30 s, 0.99 at 60 s</dd><dt>Drifter bodies at 60 s</dt><dd>40 / 44 (together / alone)</dd></dl><span>The network contracts from the border into its own half. The droplets merge slowly into fewer bodies.</span></figcaption></figure>
+  <figure class="strip" style="--n: 4"><img src="pics/coexist-s2.jpg" alt="Drifter and Sprawler together on seed 2 at 1, 5, 10 and 20 s">
+    <div class="times"><span>1 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Seed 2</strong><dl class="stats"><dt>Drifter, together / alone</dt><dd>1.01 at 30 s, 1.02 at 60 s</dd><dt>Sprawler, together / alone</dt><dd>0.87 at 30 s, 0.80 at 60 s</dd><dt>Drifter bodies at 60 s</dt><dd>47 / 49 (together / alone)</dd></dl><span>The same split. The network's mesh coarsens into a few big cells by 20 s.</span></figcaption></figure>
+  <figure class="strip" style="--n: 4"><img src="pics/coexist-s3.jpg" alt="Drifter and Sprawler together on seed 3 at 1, 5, 10 and 20 s">
+    <div class="times"><span>1 s</span><span>5 s</span><span>10 s</span><span>20 s</span></div>
+    <figcaption><strong>Seed 3</strong><dl class="stats"><dt>Drifter, together / alone</dt><dd>1.01 at 30 s, 1.01 at 60 s</dd><dt>Sprawler, together / alone</dt><dd>1.89 at 30 s, 1.87 at 60 s</dd><dt>Drifter bodies at 60 s</dt><dd>43 / 48 (together / alone)</dd></dl><span>Here the network sends tubes into the droplets' half, and its area ends 1.9 times its area alone. The droplets don't react.</span></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">3 · For the ladder</span>
+  <h2>A slow forager, and a step up from it</h2>
+  <ul>
+    <li><strong>Drifter (grazers):</strong> a still body that sends small droplets to food it smells. Its body barely moves, so the player can see where it will go next.</li>
+    <li><strong>Drifter with scouts:</strong> a faint haze runs ahead, then the droplets follow. It found 94% of far food in a minute. A candidate next rung.</li>
+    <li><strong>Scouts alone don't forage</strong>, and scouts on still droplets pull them into chains that reach less. The gain needs bodies that crawl and scouts that lead.</li>
+    <li>Not yet tested: crystals that run dry, growth from food (W0), and a fight between two species with different rules.</li>
+  </ul>
+</section>
+</div>

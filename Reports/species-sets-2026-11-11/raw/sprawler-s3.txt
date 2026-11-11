@@ -1,0 +1,25 @@
+seed 3 sprawler t  10.0s  tube  5417.4  loops   15  width 5.63  reach  195.4  piles 1/1  strays 0.001  ms/tick 195.99
+seed 3 sprawler t  10.0s  contrast 12.60
+seed 3 sprawler t  10.0s  pure 1.000  shares 0.000,1.000  left0 0.000  changed 0.000
+seed 3 sprawler t  10.0s  own s0 walkers 0 area 0.0 pieces 0  s1 walkers 1000130 area 5417.4 pieces 13
+seed 3 sprawler t  20.0s  tube  4772.4  loops   11  width 6.19  reach  196.0  piles 1/1  strays 0.001  ms/tick 192.58
+seed 3 sprawler t  20.0s  contrast 10.05
+seed 3 sprawler t  20.0s  pure 1.000  shares 0.000,1.000  left0 0.000  changed 0.000
+seed 3 sprawler t  20.0s  own s0 walkers 0 area 0.0 pieces 0  s1 walkers 1000130 area 4772.4 pieces 11
+seed 3 sprawler t  30.0s  tube  4639.1  loops   10  width 6.47  reach  196.4  piles 1/1  strays 0.001  ms/tick 204.86
+seed 3 sprawler t  30.0s  contrast 9.95
+seed 3 sprawler t  30.0s  pure 1.000  shares 0.000,1.000  left0 0.000  changed 0.000
+seed 3 sprawler t  30.0s  own s0 walkers 0 area 0.0 pieces 0  s1 walkers 1000130 area 4639.1 pieces 1
+seed 3 sprawler t  40.0s  tube  4551.6  loops    9  width 6.48  reach  196.2  piles 1/1  strays 0.001  ms/tick 199.82
+seed 3 sprawler t  40.0s  contrast 11.33
+seed 3 sprawler t  40.0s  pure 1.000  shares 0.000,1.000  left0 0.000  changed 0.000
+seed 3 sprawler t  40.0s  own s0 walkers 0 area 0.0 pieces 0  s1 walkers 1000130 area 4551.6 pieces 1
+seed 3 sprawler t  50.0s  tube  4409.0  loops    9  width 6.76  reach  196.6  piles 1/1  strays 0.000  ms/tick 196.80
+seed 3 sprawler t  50.0s  contrast 9.50
+seed 3 sprawler t  50.0s  pure 1.000  shares 0.000,1.000  left0 0.000  changed 0.000
+seed 3 sprawler t  50.0s  own s0 walkers 0 area 0.0 pieces 0  s1 walkers 1000130 area 4409.0 pieces 1
+seed 3 sprawler t  60.0s  tube  4084.4  loops    8  width 6.73  reach  196.6  piles 1/1  strays 0.000  ms/tick 194.12
+seed 3 sprawler t  60.0s  contrast 10.49
+seed 3 sprawler t  60.0s  pure 1.000  shares 0.000,1.000  left0 0.000  changed 0.000
+seed 3 sprawler t  60.0s  own s0 walkers 0 area 0.0 pieces 0  s1 walkers 1000130 area 4084.4 pieces 1
+seed 3 sprawler hash=61992e2b5c57d13f
