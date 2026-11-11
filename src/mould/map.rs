@@ -6,7 +6,8 @@
 //!   R is height, parked (owner, 20:06Z), so the loader ignores it; B is 0.
 //! - `<name>.txt`, one item a line, in the same 1024 x 640 cells:
 //!   `crystal x y r charge` (centre, radius, charge a cell), `mould x y`
-//!   (the mould's start), `landing x y` (the squad's), and
+//!   (a start of the mould's; a map may give several, and the walkers are
+//!   shared among them), `landing x y` (the squad's), and
 //!   `wall x0 y0 x1 y1 thick hp` (thick is the full width; soft rock is
 //!   written as walls, so the engine builds it as it builds player walls).
 //!   Blank lines and lines from `#` on are skipped.
@@ -51,7 +52,7 @@ pub struct Wall {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Items {
     pub crystals: Vec<Crystal>,
-    pub mould: Option<(f32, f32)>,
+    pub moulds: Vec<(f32, f32)>,
     pub landing: Option<(f32, f32)>,
     pub walls: Vec<Wall>,
 }
@@ -82,7 +83,7 @@ impl Items {
                 }
                 "mould" => {
                     want(2)?;
-                    it.mould = Some((v[0], v[1]));
+                    it.moulds.push((v[0], v[1]));
                 }
                 "landing" => {
                     want(2)?;
@@ -104,7 +105,7 @@ impl Items {
         for c in &self.crystals {
             out += &format!("crystal {} {} {} {}\n", c.x, c.y, c.r, c.charge);
         }
-        if let Some((x, y)) = self.mould {
+        for (x, y) in &self.moulds {
             out += &format!("mould {x} {y}\n");
         }
         if let Some((x, y)) = self.landing {
@@ -158,7 +159,7 @@ impl Map {
     /// A made world as a map, so a noise world can be kept, edited and
     /// loaded (`BigDish::with_map`): each map cell takes the rock and wet
     /// of the fine cell it falls in, the piles become crystals in their
-    /// order, and the mould's start is the dish's `home`. Taken before any
+    /// order, and the mould's starts are the dish's `homes`. Taken before any
     /// wall is built (walls are items, and built cells are not segments).
     pub fn of_dish(d: &BigDish) -> Map {
         assert!(d.wall.is_empty(), "a dish with no walls built");
@@ -167,7 +168,8 @@ impl Map {
         let ground = (0..MAP_W * MAP_H)
             .map(|c| {
                 let i = (c / MAP_W * s / 4) * d.w + c % MAP_W * s / 4;
-                if on(&d.rock, i) {
+                let soil = if d.soil.is_empty() { 0 } else { d.soil[i] << 4 };
+                soil | if on(&d.rock, i) {
                     G_ROCK
                 } else if on(&d.wet, i) {
                     G_WET
@@ -178,7 +180,7 @@ impl Map {
             .collect();
         let k = MAP_SCALE;
         let crystals = (0..d.piles.len()).map(|p| Crystal { x: d.piles[p].0 * k, y: d.piles[p].1 * k, r: d.pile_rs[p] * k, charge: d.pile_fill[p] }).collect();
-        let items = Items { crystals, mould: Some((d.home.0 * k, d.home.1 * k)), landing: d.landing.map(|(x, y)| (x * k, y * k)), walls: Vec::new() };
+        let items = Items { crystals, moulds: d.homes.iter().map(|&(x, y)| (x * k, y * k)).collect(), landing: d.landing.map(|(x, y)| (x * k, y * k)), walls: Vec::new() };
         Map { ground, items }
     }
 }
@@ -192,7 +194,7 @@ mod tests {
         let text = "# a test\ncrystal 512 600 12 384\nmould 512 590\n\nlanding 512 180  # the squad\nwall 100 100 200 120 8 400\n";
         let it = Items::parse(text).unwrap();
         assert_eq!(it.crystals, vec![Crystal { x: 512.0, y: 600.0, r: 12.0, charge: 384.0 }]);
-        assert_eq!((it.mould, it.landing), (Some((512.0, 590.0)), Some((512.0, 180.0))));
+        assert_eq!((it.moulds.clone(), it.landing), (vec![(512.0, 590.0)], Some((512.0, 180.0))));
         assert_eq!(it.walls, vec![Wall { a: (100.0, 100.0), b: (200.0, 120.0), thick: 8.0, hp: 400.0 }]);
         assert_eq!(Items::parse(&it.text()).unwrap(), it);
         assert!(Items::parse("crystal 1 2 3").unwrap_err().contains("takes 4"));
@@ -228,7 +230,7 @@ mod tests {
             // Through the text, as a saved map would be.
             let m = Map { items: Items::parse(&m.items.text()).unwrap(), ..m };
             let mut b = BigDish::with_map(race_params(7, scale, 1500), &m);
-            assert_eq!((a.piles.clone(), a.pile_rs.clone(), a.pile_fill.clone(), a.home), (b.piles.clone(), b.pile_rs.clone(), b.pile_fill.clone(), b.home));
+            assert_eq!((a.piles.clone(), a.pile_rs.clone(), a.pile_fill.clone(), a.homes.clone()), (b.piles.clone(), b.pile_rs.clone(), b.pile_fill.clone(), b.homes.clone()));
             assert!(a.rock == b.rock && a.wet == b.wet && a.agar == b.agar && a.scent_agar == b.scent_agar, "scale {scale}: ground");
             assert!(a.pile_of == b.pile_of && a.pile_full == b.pile_full, "scale {scale}: crystals");
             assert!(a.rock.iter().filter(|&&r| r).count() > a.w * a.h / 100, "rock to compare");
@@ -249,9 +251,9 @@ mod tests {
         let m = Map::load(&dir, "nest").unwrap();
         let p = race_params(1, 2, 3000);
         let d = BigDish::with_map(p.clone(), &m);
-        let (start, landing) = (m.items.mould.unwrap(), m.items.landing.unwrap());
+        let (start, landing) = (m.items.moulds[0], m.items.landing.unwrap());
         assert_eq!(d.piles.len(), m.items.crystals.len());
-        assert_eq!(d.home, Map::dish(start));
+        assert_eq!(d.homes, vec![Map::dish(start)]);
         assert_eq!(d.landing, Some(Map::dish(landing)));
         let near = |c: &Crystal| (c.x - start.0).hypot(c.y - start.1);
         let first = m.items.crystals.iter().min_by(|a, b| near(a).total_cmp(&near(b))).unwrap();
@@ -266,7 +268,7 @@ mod tests {
         // The blob sits on the start.
         let s = p.scale as f32;
         let (mx, my) = d.walkers.iter().take(3000).fold((0.0, 0.0), |a, w| (a.0 + w.0 / 3000.0, a.1 + w.1 / 3000.0));
-        assert!((mx / s - d.home.0).hypot(my / s - d.home.1) < 3.0, "blob at ({}, {}), home {:?}", mx / s, my / s, d.home);
+        assert!((mx / s - d.homes[0].0).hypot(my / s - d.homes[0].1) < 3.0, "blob at ({}, {}), home {:?}", mx / s, my / s, d.homes);
         // The Nest's 34 walls stand with 400 health.
         let walls = d.wall.iter().filter(|&&w| w).count();
         assert!(walls > 500, "{walls} wall cells");
@@ -284,6 +286,11 @@ mod tests {
             let want = |bit: u8| (0..d.w * d.h).filter(|&i| m.ground_fine(2, i % d.w, i / d.w) & bit != 0 && (bit == G_ROCK || d.agar[i] || d.wall[i])).count();
             assert_eq!(count(&d.rock), want(G_ROCK), "{name}: rock");
             assert_eq!(count(&d.wet), want(G_WET), "{name}: wet");
+            let soil = |k: u8| d.soil.iter().filter(|&&v| v == k).count();
+            let want_soil = |k: u8| (0..d.w * d.h).filter(|&i| m.ground_fine(2, i % d.w, i / d.w) >> 4 == k).count();
+            for k in 1..=3 {
+                assert_eq!(soil(k), want_soil(k), "{name}: soil {k}");
+            }
             rocks += count(&d.rock);
         }
         assert!(rocks > 0, "rock to compare");
@@ -291,6 +298,14 @@ mod tests {
         // not fit at the usual size and widens until all its walkers do.
         let fork = BigDish::with_map(race_params(1, 2, 5000), &Map::load(&dir, "fork").unwrap());
         assert_eq!(fork.alive.iter().filter(|&&a| a).count(), 5000);
+        // The Passes has two starts: half the walkers each, each blob on its own.
+        let m = Map::load(&dir, "passes").unwrap();
+        let d = BigDish::with_map(race_params(1, 2, 5000), &m);
+        assert_eq!(d.homes.len(), 2);
+        for &(hx, hy) in &d.homes {
+            let near = d.walkers.iter().zip(&d.alive).filter(|&(w, &a)| a && (w.0 / s - hx).hypot(w.1 / s - hy) < 40.0).count();
+            assert_eq!(near, 2500, "start ({hx}, {hy})");
+        }
     }
 
     /// Every map the maps thread has written loads, with crystals and
@@ -304,7 +319,7 @@ mod tests {
             if path.extension().is_some_and(|x| x == "txt") {
                 let name = path.file_stem().unwrap().to_str().unwrap().to_string();
                 let m = Map::load(&dir, &name).unwrap_or_else(|e| panic!("{e}"));
-                assert!(!m.items.crystals.is_empty() && m.items.mould.is_some() && m.items.landing.is_some(), "{name}");
+                assert!(!m.items.crystals.is_empty() && !m.items.moulds.is_empty() && m.items.landing.is_some(), "{name}");
                 n += 1;
             }
         }

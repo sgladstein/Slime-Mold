@@ -206,16 +206,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
             if t - shot >= every || shot < 0.0 {
                 shot = t;
                 picture(g, &format!("{dir}/{hand}-s{seed}-{:04.0}s.png", t));
-                // The counts that go beside the picture.
-                println!(
-                    "  {hand} seed {seed} at {t:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, killed {}, crystals left {:.3}",
-                    g.world.living(),
-                    g.soldiers.iter().filter(|s| s.alive).count(),
-                    g.bank,
-                    g.harvested,
-                    g.killed,
-                    g.world.crystals_left()
-                );
+                counts(g, hand, seed);
             }
         }
         match hand {
@@ -238,6 +229,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
     });
     if let Some((dir, _)) = look {
         picture(&g, &format!("{dir}/{hand}-s{seed}-end-{:04.0}s.png", g.time()));
+        counts(&g, hand, seed);
     }
     let ms = start.elapsed().as_secs_f64() * 1000.0 / g.world.ticks().max(1) as f64;
     let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / g.world.pile_full.iter().sum::<f32>().max(1.0);
@@ -392,6 +384,20 @@ fn wall_road(g: &mut Game<BigDish>) {
 /// The world as the engine draws it, with each live soldier as a white
 /// square and the larder as a yellow ring: marks for the reader, not the
 /// simulation.
+/// The counts that go beside a picture.
+fn counts(g: &Game<BigDish>, hand: &str, seed: u64) {
+    println!(
+        "  {hand} seed {seed} at {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, killed {}, crystals left {:.3}",
+        g.time(),
+        g.world.living(),
+        g.soldiers.iter().filter(|s| s.alive).count(),
+        g.bank,
+        g.harvested,
+        g.killed,
+        g.world.crystals_left()
+    );
+}
+
 fn picture(g: &Game<BigDish>, path: &str) {
     let mut img = g.world.image(1);
     let (w, h) = (img.width() as i32, img.height() as i32);

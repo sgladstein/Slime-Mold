@@ -806,9 +806,11 @@ pub struct BigDish {
     /// (`with_map`, ROADMAP WM1) gives each crystal its own.
     pub pile_rs: Vec<f32>,
     pub pile_fill: Vec<f32>,
-    /// Where the mould's blob starts and the squad lands, dish cells: pile
-    /// 0's centre and none, unless a map places them.
-    pub home: (f32, f32),
+    /// Where the mould's blobs start and the squad lands, dish cells: pile
+    /// 0's centre and none, unless a map places them. A map may give
+    /// several starts (the Passes' two rivals); the walkers are shared
+    /// among them, and pile 0 is the crystal nearest the first.
+    pub homes: Vec<(f32, f32)>,
     pub landing: Option<(f32, f32)>,
     /// Crystals (`crystal_charge` > 0), else empty: charge a fine cell,
     /// which pile owns it (index + 1, 0 none), each pile's charge left and
@@ -941,7 +943,9 @@ impl BigDish {
     /// with their health; and the mould's blob on its start. `p` still
     /// switches each system on: crystals need `crystal_charge` > 0 (the
     /// map's charges replace it), and the rest of `p` is the world's as
-    /// before. The map's soil waits for the maps thread's soil fields.
+    /// before. Soil kinds (G's high nibble) fill `soil`, which stays empty
+    /// on a map without any (WM3's rules act through `sand_keep` and the
+    /// rest; the GPU engine does not read soil yet).
     pub fn with_map(p: BigParams, m: &Map) -> Self {
         Self::build(p, Some(m))
     }
@@ -991,7 +995,7 @@ impl BigDish {
             reached: Vec::new(),
             pile_rs: Vec::new(),
             pile_fill: Vec::new(),
-            home: (0.0, 0.0),
+            homes: Vec::new(),
             landing: None,
             charge: Vec::new(),
             pile_of: Vec::new(),
@@ -1156,7 +1160,7 @@ impl BigDish {
         self.reached[0] = true;
         self.pile_rs = vec![r; self.piles.len()];
         self.pile_fill = vec![self.p.crystal_charge; self.piles.len()];
-        self.home = self.piles[0];
+        self.homes = vec![self.piles[0]];
     }
 
     /// A map's crystals as the piles, the one nearest the mould's start
@@ -1165,7 +1169,7 @@ impl BigDish {
     fn map_piles(&mut self, m: &Map) {
         let mut cs = m.items.crystals.clone();
         assert!(!cs.is_empty(), "a map needs a crystal");
-        let start = m.items.mould.unwrap_or((cs[0].x, cs[0].y));
+        let start = m.items.moulds.first().copied().unwrap_or((cs[0].x, cs[0].y));
         let d2 = |c: &map::Crystal| (c.x - start.0).hypot(c.y - start.1);
         let near = (0..cs.len()).min_by(|&a, &b| d2(&cs[a]).total_cmp(&d2(&cs[b]))).unwrap();
         let first = cs.remove(near);
@@ -1175,20 +1179,26 @@ impl BigDish {
         self.pile_fill = cs.iter().map(|c| if self.p.crystal_charge > 0.0 { c.charge } else { 0.0 }).collect();
         self.reached = vec![false; self.piles.len()];
         self.reached[0] = true;
-        self.home = Map::dish(start);
+        self.homes = if m.items.moulds.is_empty() { vec![Map::dish(start)] } else { m.items.moulds.iter().map(|&p| Map::dish(p)).collect() };
         self.landing = m.items.landing.map(Map::dish);
     }
 
     /// A map's ground: rock leaves the agar on the fine and scent grids,
-    /// wet lies on the agar (the map's cell at each cell's centre,
-    /// `Map::ground_fine`). The noise's `terrain_rock` and `terrain_wet`
-    /// are not read.
+    /// wet lies on the agar, and the soil kind is G's high nibble (the
+    /// map's cell at each cell's centre, `Map::ground_fine`). The noise's
+    /// `terrain_rock` and `terrain_wet` are not read.
     fn map_terrain(&mut self, m: &Map) {
         let (w, h, s) = (self.w, self.h, self.p.scale);
         self.rock = vec![false; w * h];
         self.wet = vec![false; w * h];
         for i in 0..w * h {
             let g = m.ground_fine(s, i % w, i / w);
+            if g >> 4 != 0 {
+                if self.soil.is_empty() {
+                    self.soil = vec![0; w * h];
+                }
+                self.soil[i] = g >> 4;
+            }
             if g & G_ROCK != 0 {
                 self.rock[i] = true;
                 self.agar[i] = false;
@@ -1545,23 +1555,30 @@ impl BigDish {
 
     fn place_walkers(&mut self) {
         let (seed, n, s) = (self.p.seed, self.p.walkers, self.p.scale as f32);
-        let (hx, hy) = (self.home.0 * s, self.home.1 * s);
-        // A blob as dense as today's inoculum: about 0.9 of the cells in it.
-        let r = (n as f32 / (0.9 * std::f32::consts::PI)).sqrt();
-        let (hx, hy, mut r) = if self.p.blob_r > 0.0 { (self.w as f32 / 2.0, self.h as f32 / 2.0, self.p.blob_r * s) } else { (hx, hy, r) };
+        let homes = self.homes.clone();
+        let m = homes.len().max(1);
         let mut k = 0u32;
-        let mut budget = 50 * n as u32 + 1000;
-        // A blob that cannot fit (a map's start near the rim or rock: the
-        // Fork's, 12 dish cells from the edge, took 3,752 of 5,000) widens
-        // by a quarter and goes on, up to the world's size. The first round
-        // is the one every dish had, so a blob that fits draws the same.
-        loop {
-            self.place_round(seed, n, hx, hy, r, &mut k, budget);
-            if self.walkers.len() >= n || !self.p.blob || r > self.w.max(self.h) as f32 {
-                break;
+        for (j, &(x, y)) in homes.iter().enumerate() {
+            // Each start an equal share, the first the remainder too.
+            let share = n / m + if j == 0 { n % m } else { 0 };
+            let target = self.walkers.len() + share;
+            // A blob as dense as today's inoculum: about 0.9 of the cells in it.
+            let r = (share as f32 / (0.9 * std::f32::consts::PI)).sqrt();
+            let (hx, hy, mut r) = if self.p.blob_r > 0.0 { (self.w as f32 / 2.0, self.h as f32 / 2.0, self.p.blob_r * s) } else { (x * s, y * s, r) };
+            let mut budget = k + 50 * share as u32 + 1000;
+            // A blob that cannot fit (a map's start near the rim or rock:
+            // the Fork's, 12 dish cells from the edge, took 3,752 of 5,000)
+            // widens by a quarter and goes on, up to the world's size. The
+            // first round is the one every dish had, so a blob that fits
+            // draws the same.
+            loop {
+                self.place_round(seed, target, hx, hy, r, &mut k, budget);
+                if self.walkers.len() >= target || !self.p.blob || r > self.w.max(self.h) as f32 {
+                    break;
+                }
+                r *= 1.25;
+                budget += 50 * share as u32 + 1000;
             }
-            r *= 1.25;
-            budget += 50 * n as u32 + 1000;
         }
     }
 

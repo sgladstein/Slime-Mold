@@ -3049,10 +3049,11 @@ mod tests {
     }
 
     /// A designed map (ROADMAP WM1) on the engine as on the CPU: the Fork
-    /// (rock, crystals of five sizes and four charges) and the Nest (34
-    /// walls with health, barren ground the loader leaves for now). The
-    /// same crystals, start and landing; a soldier banks the same food;
-    /// the moulds stay within 8% (the race world's own twin bound).
+    /// (rock, wet, crystals of five sizes and four charges) and the Nest
+    /// (34 walls with health). The same crystals, start and landing; a
+    /// soldier banks the same food; the moulds stay within 8% (the race
+    /// world's own twin bound). Soil is taken off both: the engine does not
+    /// read it yet.
     #[test]
     fn a_designed_map_plays_on_the_engine_as_on_the_cpu() {
         use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
@@ -3064,7 +3065,10 @@ mod tests {
         let (seed, scale, walkers) = (3, 2, 5_000);
         let rules = Rules { cap: 20.0, ..Rules::default() };
         for name in ["fork", "nest"] {
-            let m = Map::load(&dir, name).unwrap();
+            let mut m = Map::load(&dir, name).unwrap();
+            for g in m.ground.iter_mut() {
+                *g &= 0x0F;
+            }
             let mut cpu = Game::new(BigDish::with_map(race_params(seed, scale, walkers), &m), rules, seed);
             let mut gpu = Game::new(GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m), rules, seed);
             assert_eq!(gpu.world.crystals(), cpu.world.crystals(), "{name}: the same crystals and charge at the start");

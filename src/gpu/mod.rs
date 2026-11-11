@@ -761,6 +761,9 @@ impl Engine {
         let agar_cells = make(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
         let crowd_ok = s.walkers.max(s.capacity) <= agar_cells / 2;
         let d = make(big_params(s, scale, s.crowd && crowd_ok));
+        if d.soil.iter().any(|&k| k != 0) {
+            eprintln!("engine: soil is not on the GPU yet; this world's soil plays as plain ground");
+        }
         let dev = device;
         let cells = (d.w * d.h) as u32;
         let n = d.walkers.len() as u32;
