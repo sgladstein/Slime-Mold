@@ -501,7 +501,7 @@ impl Skirmish {
 
     /// Set a rule (`Rules::set`) or one of the model's numbers on both
     /// moulds at once: `fight`, `fight_fed`, `fight_unfed`, `upkeep`,
-    /// `upkeep_size`, `hold`, `hold_flip`. False if `name` is neither or
+    /// `upkeep_size`, `hold`, `hold_flip`, `supply`. False if `name` is neither or
     /// `value` is not a number.
     pub fn set(&mut self, name: &str, value: &str) -> bool {
         if self.rules.set(name, value) {
@@ -518,6 +518,8 @@ impl Skirmish {
                 "upkeep_size" => p.upkeep_size = v,
                 "hold" => p.hold = v,
                 "hold_flip" => p.hold_flip = v,
+                // 0 or less is no limit.
+                "supply" => p.supply = if v <= 0.0 { u16::MAX } else { v.min(65_534.0) as u16 },
                 _ => return false,
             }
         }
@@ -1197,6 +1199,31 @@ mod tests {
         run(&mut s, 5);
         assert!(s.dish.piles.iter().all(|p| p.held == 0));
         assert!(!s.set("no_such_rule", "1"));
+    }
+
+    #[test]
+    fn short_supply_lines_lose_more_walkers_at_the_same_front() {
+        // Two raiders meet; the same dish and the same dice, fought with and
+        // without a supply limit. Every walker that dies fed also dies
+        // unfed, so the limit can only add losses, and at a real front it
+        // adds some.
+        let mut s = Skirmish::new(3, [Some(Plan::Raid), Some(Plan::Raid)]);
+        let mut fronts = 0;
+        for _ in 0..40 {
+            run(&mut s, 1);
+            let foe = s.dish.rival.as_ref().unwrap().occ.clone();
+            let mut long = s.dish.clone();
+            let mut short = s.dish.clone();
+            short.params.supply = 5;
+            let (a, b) = (long.fight_losses(&foe), short.fight_losses(&foe));
+            assert!(a.iter().all(|k| b.contains(k)));
+            if b.len() > a.len() {
+                fronts += 1;
+            }
+        }
+        assert!(fronts > 0, "no front where the supply limit mattered");
+        assert!(s.set("supply", "40") && s.dish.params.supply == 40);
+        assert!(s.set("supply", "0") && s.dish.params.supply == u16::MAX);
     }
 
     #[test]

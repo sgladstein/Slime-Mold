@@ -379,6 +379,15 @@ pub struct Params {
     /// defence, not just match it.
     pub hold: f32,
     pub hold_flip: f32,
+    /// **Supply lines**: a walker fights as fed (`fight_fed`) only within
+    /// `supply` cells of tube from eaten food (`Dish::fed`); farther out it
+    /// fights as unfed. `u16::MAX`, as shipped, is no limit but the feeding
+    /// search's own (`feed_reach`, 70). A low value makes a mould that
+    /// reaches across the dish weak at its far front, and a compact one
+    /// strong but small (the RTS research thread's size cost,
+    /// `Reports/rts-research-2026-11-10/skirmish-economy-sketch.md`). Only
+    /// the fight's check reads it.
+    pub supply: u16,
     /// **Water and sleep** (2026-11-10, owner's pick "water and sleep
     /// first"; the depth report's items 1 and 2,
     /// `Reports/mould-game-2026-11-08/depth-2026-11-09/complexity.md`).
@@ -478,6 +487,7 @@ impl Default for Params {
             upkeep_size: 0.0,
             hold: 1.0,
             hold_flip: 2.0,
+            supply: u16::MAX,
             wet: false,
             wet_base: 0.5,
             wet_relax: 0.0005,
@@ -1856,7 +1866,9 @@ impl Dish {
             if n == 0 {
                 continue;
             }
-            let fed = if self.fed[i] != u16::MAX { self.params.fight_fed } else { self.params.fight_unfed };
+            // `fed` is u16::MAX off the fed tube, so with no supply limit
+            // this is the old test (fed tube at all).
+            let fed = if self.fed[i] < self.params.supply { self.params.fight_fed } else { self.params.fight_unfed };
             if self.rng.f32() < fight * n as f32 / 8.0 * fed {
                 out.push(k);
             }
