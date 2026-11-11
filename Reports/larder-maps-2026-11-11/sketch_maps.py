@@ -55,17 +55,18 @@ SOILS = {"plain": 0, "sand": 1, "clay": 2, "barren": 3}
 # map: name, the plan it is drawn for, rock polylines and discs, water
 # discs, soft rock, soil patches, crystals (x, y, radius, charge), mould
 # starts (x, y, radius, tier), landing. All in 1024 x 640 cells (the
-# Larder world's pile_r of 6 dish cells is 24 here); crystal radii were
-# doubled from version 1, whose 7-15 were under the engine's own pile. Version 1 (height-led) is in git
+# Larder world's pile_r of 6 dish cells is 24 here); crystal radii are
+# 3x version 1's (7-15 were under the engine's own pile; at 2x the maps
+# held 25-43% of the race world's crystal cells, Larder thread 21:32Z). Version 1 (height-led) is in git
 # history (PR #76).
 MAPS = [
  dict(name="rim", title="The Rim", plan="turtle (hold the gaps in the rim)",
       rock=[("ring", 512, 320, 200, 16, [(0, 14), (90, 10), (180, 14), (270, 10)])],
       wet=[("disc", 470, 360, 34)], soft=[],
       soil=[("disc", 512, 320, 184, "clay"), ("ring", 512, 320, 250, 30, "sand")],
-      crystals=[(460, 280, 28, 512), (575, 360, 28, 512), (560, 250, 24, 384),
-                (150, 120, 18, 256), (880, 120, 18, 256), (150, 520, 18, 256), (880, 520, 18, 256),
-                (512, 50, 18, 256), (512, 595, 18, 256), (60, 320, 16, 192), (970, 320, 16, 192)],
+      crystals=[(460, 280, 42, 512), (575, 360, 42, 512), (560, 250, 36, 384),
+                (150, 120, 27, 256), (880, 120, 27, 256), (150, 520, 27, 256), (880, 520, 27, 256),
+                (512, 50, 27, 256), (512, 595, 27, 256), (60, 320, 24, 192), (970, 320, 24, 192)],
       moulds=[(512, 320, 24, "Drifter or Sprawler")], landing=(90, 580)),
  dict(name="fork", title="The Fork", plan="lure (bait one fork, harvest the other)",
       rock=[("poly", [(440, 640), (440, 420), (200, 120)], 9), ("poly", [(584, 640), (584, 420), (824, 120)], 9),
@@ -73,9 +74,9 @@ MAPS = [
             ("poly", [(240, 40), (330, 160)], 8), ("poly", [(784, 40), (694, 160)], 8)],
       wet=[("disc", 260, 80, 30)], soft=[],
       soil=[("disc", 512, 600, 80, "clay")],
-      crystals=[(512, 600, 24, 384), (330, 300, 20, 384), (180, 60, 26, 512), (694, 300, 20, 384), (844, 60, 26, 512),
-                (512, 170, 18, 256), (470, 250, 14, 192), (560, 240, 14, 192), (120, 450, 16, 192), (900, 450, 16, 192)],
-      moulds=[(512, 590, 26, "Trunk")], landing=(512, 200)),
+      crystals=[(512, 600, 36, 384), (330, 300, 30, 384), (180, 60, 39, 512), (694, 300, 30, 384), (844, 60, 39, 512),
+                (512, 170, 27, 256), (470, 250, 21, 192), (560, 240, 21, 192), (120, 450, 24, 192), (900, 450, 24, 192)],
+      moulds=[(512, 590, 26, "Trunk")], landing=(512, 225)),
  dict(name="flats", title="The Flats", plan="boom (out-harvest a mould that cannot hold sand)",
       rock=[], wet=[], soft=[],
       soil=[("all", "sand"), ("disc", 760, 320, 60, "clay"), ("disc", 560, 140, 45, "clay"), ("disc", 560, 500, 45, "clay"),
@@ -85,8 +86,8 @@ MAPS = [
       rock=[("disc", 300, 140, 50), ("disc", 300, 500, 50)], wet=[("disc", 860, 120, 40), ("disc", 860, 520, 40)],
       soft=[("ring", 640, 320, 135, 8, [(200, 12)])],
       soil=[("disc", 640, 320, 128, "clay")],
-      crystals=[(600, 290, 30, 640), (690, 360, 30, 640), (180, 120, 16, 192), (180, 520, 16, 192),
-                (380, 320, 16, 192), (420, 90, 14, 160), (420, 560, 14, 160), (930, 120, 14, 160), (930, 540, 14, 160)],
+      crystals=[(600, 290, 45, 640), (690, 360, 45, 640), (180, 120, 24, 192), (180, 520, 24, 192),
+                (380, 320, 24, 192), (420, 90, 21, 160), (420, 560, 21, 160), (930, 120, 21, 160), (930, 540, 21, 160)],
       moulds=[(640, 320, 18, "Sleeper or Hunter")], landing=(130, 320)),
  dict(name="passes", title="The Passes", plan="adapt (set two moulds on each other)",
       rock=[("poly", [(220, 215), (1024, 215)], 9), ("poly", [(0, 215), (150, 215)], 9),
@@ -94,8 +95,8 @@ MAPS = [
       wet=[("disc", 380, 320, 36), ("disc", 700, 300, 30)],
       soft=[("poly", [(150, 215), (220, 215)], 6)],
       soil=[("rect", 0, 0, 1024, 206, "clay"), ("rect", 0, 434, 1024, 640, "sand")],
-      crystals=[(300, 100, 22, 384), (650, 90, 24, 512), (900, 150, 20, 384), (300, 540, 22, 384), (650, 560, 24, 512),
-                (900, 500, 20, 384), (200, 320, 16, 256), (560, 330, 18, 256), (820, 340, 18, 320)],
+      crystals=[(300, 100, 33, 384), (650, 90, 36, 512), (900, 150, 30, 384), (300, 540, 33, 384), (650, 560, 36, 512),
+                (900, 500, 30, 384), (200, 320, 24, 256), (560, 330, 27, 256), (820, 340, 27, 320)],
       moulds=[(860, 90, 26, "rival A (clay valley)"), (860, 570, 26, "rival B (sand valley)")], landing=(90, 320)),
 ]
 
@@ -128,11 +129,11 @@ def build(m):
         elif s_[0] == "ring": soil[np.abs(np.hypot(xx - s_[1], yy - s_[2]) - s_[3]) < s_[4]] = SOILS[s_[5]]
     if m["crystals"] == "scatter":
         rng = np.random.default_rng(42)
-        cs = [(760, 320, 24, 384), (560, 140, 18, 256), (560, 500, 18, 256), (330, 240, 18, 256), (880, 560, 18, 256)]
+        cs = [(760, 320, 36, 384), (560, 140, 27, 256), (560, 500, 27, 256), (330, 240, 27, 256), (880, 560, 27, 256)]
         while len(cs) < 32:
             x, y = int(rng.uniform(40, 984)), int(rng.uniform(40, 600))
             if all(math.hypot(x - a, y - b) > 70 for a, b, *_ in cs) and math.hypot(x - 110, y - 320) > 60:
-                cs.append((x, y, 12, 96))
+                cs.append((x, y, 18, 96))
         m["crystals"] = cs
     wet &= ~rock
     return h, rock, wet, soft, soil

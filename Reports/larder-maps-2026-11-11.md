@@ -108,7 +108,7 @@ Medians of 16 seeds. All the other results survive Holm (p 0.0005-0.007).
 
 ## Maps, version 2 (flat), 2026-11-11
 
-The five maps are redrawn flat (R, height, is 0), and the sketches now use colours close to the graphics thread's world look (soil, grey rock plateaus with a shadow, glossy water), with sand pale, clay red-brown and soft rock as thicket green. Crystal radii are doubled to the engine's pile size (the Larder world's `pile_r` of 6 dish cells is 24 in 1024 x 640 cells; version 1's 7-15 were under it). Spec, loader files and sketches: [`sketch_maps.py`](larder-maps-2026-11-11/sketch_maps.py), [`maps/`](larder-maps-2026-11-11/maps/), [`sketches/`](larder-maps-2026-11-11/sketches/).
+The five maps are redrawn flat (R, height, is 0), and the sketches now use colours close to the graphics thread's world look (soil, grey rock plateaus with a shadow, glossy water), with sand pale, clay red-brown and soft rock as thicket green. Crystal radii are 3x version 1's (the Larder world's `pile_r` of 6 dish cells is 24 in 1024 x 640 cells; version 1's 7-15 were under it, and at 2x the maps held 25-43% of the race world's 8,671 crystal cells at scale 2, as the Larder thread's loader found, 21:32Z). At 3x they hold about 4,900-8,400 cells, 56-97% of the race world's. Spec, loader files and sketches: [`sketch_maps.py`](larder-maps-2026-11-11/sketch_maps.py), [`maps/`](larder-maps-2026-11-11/maps/), [`sketches/`](larder-maps-2026-11-11/sketches/).
 
 | Map | Ground | Drawn for |
 | --- | --- | --- |
