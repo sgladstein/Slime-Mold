@@ -119,7 +119,7 @@ should have hexagonal outline, not circle."
    (it owns the firing rule and calls this). In the stand-in fight each
    soldier fires every 0.3 s at a random angle within 0.8 rad of its front,
    to full range 16 dish cells, against thickness over 60/255 read back
-   every 3 frames; the cut is 0.4 dish cells across the radius.
+   every 3 frames (too thick and too stale: see the 17:37Z section); the cut is 0.4 dish cells across the radius.
 3. **Crystals are hexagons.** The Larder world's simulation now makes each
    crystal's footprint a pointy-top hexagon of circumradius `pile_r` (PR
    #64, 6456f6b); `dish_crystals` draws the same hexagon in the sandbox. A
@@ -150,3 +150,39 @@ about a tenth of a 16.7 ms frame. Most of it is the per-pixel height samples
 400,000 walkers. Not yet tried: working each cell's height once a frame
 into a world-sized field, so a pixel reads one field instead of
 recomputing it.
+
+## Shots that flew through slime (owner, 17:37Z)
+
+The owner: "The report now says that the shots hit the first slime in the
+path, but from looking at the gif/video it doesn't always look like that."
+They were right. Two causes in the stand-in fight:
+
+1. **Slime to a shot was thickness over 60/255.** The view lays slime
+   colour over the ground by 1 - exp(-5 t), so a cell at 60 is already 70%
+   slime and one at 26 is 40%. Shots flew through every tube thinner than 60,
+   which on screen is most of the rim of each hole.
+2. **Thickness was read back every third frame**, so a tube that grew in
+   since could be missed.
+
+The deciding measure, named before the runs: shots whose drawn line crosses
+a cell that looks like slime this frame (thickness 26 or more, read back
+fresh), short of the shot's last cell. Shots whose muzzle is already in
+slime (soldiers standing in a tube) are counted apart: they hit at once, as
+they should. Seed 1, 120 shots each, lavapipe:
+
+| Slime from / read back | Stopped by mould | Crossed slime | From inside slime | Mean flight |
+|---|---|---|---|---|
+| 60 / every 3 frames (as shipped) | 60 | 98 | 22 | 90 cells |
+| 60 / every frame | 57 | 100 | 19 | 90 cells |
+| 26 / every 3 frames | 120 | 9 | 17 | 36 cells |
+| 26 / every frame (now) | 120 | 0 | 18 | 35 cells |
+
+The threshold is the cause; the stale read adds 9 crossings once it is
+fixed. Now 26 and every frame (the `HIT` constant in
+`examples/worldlook.rs`; `hit=` and `every=` set them). The fight video
+and the stills on the page are re-rendered with it. Every shot now ends in
+mould: the arc ahead of the squad has no clear line of 16 cells. Reading
+the look field back every frame is a 5 MB copy a frame for this world; a
+game would read back only the cells near soldiers. `first_hit` itself is
+unchanged: the caller's `mould` test decides what counts, so the Larder
+thread's caller should use the same visible threshold.

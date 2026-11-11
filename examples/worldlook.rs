@@ -49,6 +49,14 @@ struct Tracer {
 
 const FLASH: f32 = 0.07;
 const TRACER: f32 = 0.09;
+/// A cell is slime to a shot from this thickness byte up. The view lays the
+/// slime colour over the ground by 1 - exp(-5 t), t = byte / 255: about 40%
+/// at 26, where a cell starts to read as slime on screen. The first cut used
+/// 60 (70% cover), and the owner saw shots fly through the thinner tubes
+/// (2026-11-11 17:37Z).
+const HIT: u8 = 26;
+/// Thickness at which a cell looks like slime, for the audit of shots.
+const SEEN: u8 = 26;
 
 fn lowbias(mut v: u32) -> u32 {
     v ^= v >> 16;
@@ -62,12 +70,17 @@ fn main() {
     let mut out = String::from("worldlook");
     let (mut seconds, mut fight, mut seed, mut walkers) = (12.0f32, 3.0f32, 1u64, 400_000usize);
     let mut screen = (1280u32, 800u32);
+    // What counts as slime for a shot, on the look field's thickness byte,
+    // and how often the game reads it back. See the shot loop for why.
+    let (mut hit, mut every) = (HIT, 1u32);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
         match k {
             "out" => out = v.into(),
             "seconds" => seconds = v.parse().unwrap(),
             "fight" => fight = v.parse().unwrap(),
+            "hit" => hit = v.parse().unwrap(),
+            "every" => every = v.parse().unwrap(),
             "seed" => seed = v.parse().unwrap(),
             "walkers" => walkers = v.parse().unwrap(),
             "screen" => {
@@ -159,14 +172,20 @@ fn main() {
     gif_cam.zoom_to(2.0, (0.0, 0.0));
     gif_cam.centre_on((fx - 2.0 * sc, fy - 2.0 * sc));
     let mut gif = Vec::new();
-    let (mut fired, mut landed) = (0usize, 0usize);
+    let (mut fired, mut landed, mut through, mut inside, mut length) = (0usize, 0usize, 0usize, 0usize, 0f32);
+    // The audit: the true thickness this frame, for counting shots whose
+    // drawn line crosses a cell that looks like slime before it ends.
+    let mut seen: Vec<u8>;
     let dt = 1.0 / fps;
     let mut thick: Vec<u8> = Vec::new();
     let fight_frames = (fight * fps) as u32;
     for f in 0..fight_frames {
-        if f % 3 == 0 {
+        // The first cut read thickness back every third frame, so a shot
+        // could pass a tube that grew in since; now every frame by default.
+        if f % every == 0 {
             thick = read_back(&device, &queue, &e.look).chunks_exact(4).map(|c| c[0]).collect();
         }
+        seen = read_back(&device, &queue, &e.look).chunks_exact(4).map(|c| c[0]).collect();
         let mut hits = Vec::new();
         for (k, so) in squad.iter_mut().enumerate() {
             so.since += dt;
@@ -182,7 +201,7 @@ fn main() {
             let a = so.facing0 + ((rnd & 0xffff) as f32 / 65535.0 - 0.5) * 1.6;
             let muzzle = (so.x + a.cos() * 1.6 * 0.9 * sc, so.y + a.sin() * 1.6 * 0.9 * sc);
             let end = (so.x + a.cos() * range, so.y + a.sin() * range);
-            let shot = first_hit(w, h, muzzle, end, |i| thick[i] > 60, |i| !e.dish.agar[i] && !is_wall[i]);
+            let shot = first_hit(w, h, muzzle, end, |i| thick[i] >= hit, |i| !e.dish.agar[i] && !is_wall[i]);
             fired += 1;
             so.facing = a;
             so.since = 0.0;
@@ -195,6 +214,20 @@ fn main() {
                 Shot::Stopped(x, y) => (x, y),
                 Shot::Clear => end,
             };
+            // Crossed slime it should have stopped at: any cell short of
+            // its last cell that looks like slime this frame. A muzzle
+            // already in slime (a soldier standing in a tube) is counted
+            // apart: that shot rightly hits at once.
+            let back = (to.0 - a.cos(), to.1 - a.sin());
+            length += (muzzle.0 - to.0).hypot(muzzle.1 - to.1);
+            let mi = muzzle.1 as usize * w + muzzle.0 as usize;
+            if seen[mi] >= SEEN {
+                inside += 1;
+            } else if (muzzle.0 - to.0).hypot(muzzle.1 - to.1) > 1.0 {
+                if let Shot::Mould(..) = first_hit(w, h, muzzle, back, |i| seen[i] >= SEEN, |_| false) {
+                    through += 1;
+                }
+            }
             tracers.push(Tracer { from: muzzle, to, age: 0.0 });
         }
         e.set_hits(&hits);
@@ -213,7 +246,7 @@ fn main() {
             gif.push(gif_view.picture());
         }
     }
-    println!("fight {fight} s: {fired} shots, {landed} stopped by mould");
+    println!("fight {fight} s: {fired} shots, {landed} stopped by mould, {through} crossed slime, {inside} fired from inside slime, mean flight {:.1} cells (hit={hit} every={every})", length / fired.max(1) as f32);
     let ms = (2000.0 / fps).round() as u32;
     write_gif(&format!("{out}/fight.gif"), gif, ms);
 
