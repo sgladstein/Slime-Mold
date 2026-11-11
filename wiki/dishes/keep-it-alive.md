@@ -1,7 +1,7 @@
 ---
 title: Keep It Alive (the endless dish)
 kind: dish
-status: open
+status: paused
 updated: 2026-11-10
 sources: [Reports/mould-keep-alive-2026-11-10.md, Reports/mould-keep-alive-luck-2026-11-10.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md]
 code: [Win::Endless, ENDLESS_MIN, GAP_MAX, Dish::awake_at, Tools::water]

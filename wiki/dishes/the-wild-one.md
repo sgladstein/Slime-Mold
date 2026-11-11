@@ -1,7 +1,7 @@
 ---
 title: The Wild One (a rival mould)
 kind: dish
-status: open
+status: paused
 updated: 2026-11-10
 sources: [Reports/mould-wild-one-2026-11-10.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md]
 code: [Win::Rival, Dish::rival, Dish::food_share, Dish::ate, Dish::wild_ate, Params::fight, Params::table, WILD_START, WILD_REPEL]

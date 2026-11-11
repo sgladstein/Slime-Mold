@@ -1,7 +1,7 @@
 ---
 title: The knife (snip)
 kind: tool
-status: open
+status: paused
 updated: 2026-11-11
 sources: [Reports/mould-shooter-2026-11-11.md, Reports/mould-probe-2026-11-07.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md]
 code: [Tool::Snip, Tools::snips, Params::wound, Params::pieces, Ground::Wound]

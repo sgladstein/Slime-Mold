@@ -1,7 +1,7 @@
 ---
 title: Name of the subject
 kind: dish | tool | mechanism | look | method | prototype | design
-status: current | open | decided | retired
+status: current | open | decided | paused | retired
 updated: YYYY-MM-DD
 sources: [Reports/report-name.md, Reports/other-report.md]
 code: [Params::field, Dish::field, CONST_NAME]
