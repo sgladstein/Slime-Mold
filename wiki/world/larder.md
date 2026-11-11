@@ -2,9 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-11T19:45Z
+updated: 2026-11-11T20:00Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
+code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -17,30 +17,43 @@ world on the GPU big dish, energy crystals that run out, several mould
 species. Six gated phases, W0-W5
 ([roadmap](../../Reports/larder-world-roadmap-2026-11-11.md); live doc
 https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ), replacing M4-M6 below.
-**Done:** W1a, the world's fields on the CPU big dish (PR #64, below).
-**Next:** W1b, those fields on the GPU engine (after #63 and the GPU
-thread's W0), then W2, Larder in the world. The small-dish M3 window still
-waits on the owner's playtest.
+**Done:** W1a, the world's fields on the CPU big dish (PR #64); W1b, the
+same fields on the GPU engine; W2a, the squad's hooks (PR #74).
+**Next:** W2b, M3's rules on the world, with the map loader (WM1); then the
+window. Designed maps are now part of the plan (owner, 19:29Z; ROADMAP
+WM1-WM5). The small-dish M3 window still waits on the owner's playtest.
 
 ## Larder World so far
 
 **W1a** (PR #64): crystals that run dry or refill (`crystal_charge`,
 `crystal_eat`, `crystal_regrow`), rock and wet terrain, a rectangular world,
-and player walls (`build_wall`): scent and trail don't cross a wall, and with
-`wall_hp` set, mould pressing on a wall wears it down to slow rubble (owner,
-15:24Z: walls must not seal a crystal for good). All on the big dish, CPU,
-off by default. Wall health defaults to 400: a whole caged mould breaks out
+and player walls (`build_wall`) that mould pressing on wears down to slow
+rubble (owner, 15:24Z: walls must not seal a crystal for good). All on the
+big dish, CPU, off by default. Wall health defaults to 400: a whole caged mould breaks out
 in 20-30 s, while a passing tube never breaks a wall. Crystal charge flows
 inside a crystal (`crystal_flow` 0.01), so the mould eats whole crystals.
 With growth (scratch, no player), charge sets how long the mould lasts, not
-how big it gets. Charge 64 booms and dies within 5 minutes; charge 512 gives
-about 10-12 minutes of food on the 512 × 320 world, the first number for
-the race start
+how big it gets: charge 512 gives an idle mould about 10-12 minutes of
+food on the 512 × 320 world
 ([report](../../Reports/larder-world-roadmap-2026-11-11.md), *Crystal
 sizing with growth*).
 Walls leak 0.9 of their scent, so a walled crystal still calls and a growing
 mould gets through a ring in about 90 s; sealed, it walked past. Owner,
 16:48Z: crystals are hexagons, and gunfire hits the first mould in its path.
+
+**W1b**: the crystals, terrain and walls run on the GPU engine
+(`Engine::build_wall`), and one GPU tick matches one CPU tick on nine world dishes, with all 17
+planted bugs caught ([report, *W1b*](../../Reports/larder-world-roadmap-2026-11-11.md)).
+On the GTX 1070 the world adds 0.25 ms to the frame at 1024 × 640 (1.73 to
+2.11 ms). **W2**, Larder in the world, is planned in three steps: engine
+hooks, M3's rules as a game layer, then the window ([report, *W2
+plan*](../../Reports/larder-world-roadmap-2026-11-11.md)). **W2a** is
+built (`mould::squad`, `Engine::set_squad`): shots stop at the first
+cell that looks like slime (trail for 26/255) or at a wall, and strike a
+disc; soldiers lay smell; each unit reads its touch and its densest block
+in sight, and harvests crystal charge. One GPU frame equals the CPU's
+exactly. On the 1070, 8 to 40 units add 1.0-1.5 ms a frame, mostly the
+units pass running one thread a unit; W2b cuts it.
 
 ## Small-dish milestones (M1-M3)
 

@@ -789,7 +789,7 @@ pub struct BigDish {
     pub pile_full: Vec<f32>,
     /// The fine cells of every pile's crystal, pile by pile (a wall can
     /// take one out of its pile: its `pile_of` is then 0).
-    pile_cells: Vec<u32>,
+    pub pile_cells: Vec<u32>,
     pub took: Vec<f32>,
     pub eaten: f64,
     /// Terrain (`terrain_rock` or `terrain_wet` > 0), else empty: rock and
@@ -1025,6 +1025,33 @@ impl BigDish {
     /// Whether slot `k` holds a living walker (always, with growth off).
     pub fn lives(&self, k: usize) -> bool {
         self.alive.is_empty() || self.alive[k]
+    }
+
+    /// Walkers on each fine cell (the crowd count), for the Larder world's
+    /// squad reads (`squad`, W2a).
+    pub fn occupancy(&self) -> &[u16] {
+        &self.occ
+    }
+
+    /// Kills walker `k` as `strike` does (it leaves its cell; with growth
+    /// its slot is freed for births, and with life states, made here if
+    /// growth is off, it is dead): the
+    /// Larder world's shots (`squad::shots`, W2a). The caller checks that it
+    /// lives and holds a cell.
+    pub fn kill(&mut self, k: usize) {
+        if self.alive.is_empty() && self.life.is_empty() {
+            self.life = vec![LIFE_WALKER; self.walkers.len()];
+            self.life_t = vec![0; self.walkers.len()];
+        }
+        let (x, y, _) = self.walkers[k];
+        let i = self.cell(x, y).expect("walker inside the dish");
+        self.occ[i] -= 1;
+        if !self.alive.is_empty() {
+            self.alive[k] = false;
+        }
+        if !self.life.is_empty() {
+            self.life[k] = LIFE_DEAD;
+        }
     }
 
     fn cell(&self, x: f32, y: f32) -> Option<usize> {
@@ -1290,7 +1317,7 @@ impl BigDish {
     /// cells, its scent and where it counts as reached are all the
     /// hexagon, about 0.83 of the disc's area). With crystals off it is
     /// the disc it always was, so older dishes do not change.
-    fn in_pile(&self, dx: f32, dy: f32, r: f32) -> bool {
+    pub fn in_pile(&self, dx: f32, dy: f32, r: f32) -> bool {
         if self.p.crystal_charge > 0.0 {
             let ax = dx.abs();
             ax <= r * 0.866_025_4 && dy.abs() <= r - ax * 0.577_350_3

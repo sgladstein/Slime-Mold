@@ -37,8 +37,28 @@ struct Params {
     // step; a child takes slot k ^ (a keyed draw & `bmask`).
     birth_cost: f32, starve: f32, s_starve: u32, s_birth: u32,
     s_bclaim: u32, bmask: u32, _r0: u32, _r1: u32,
+    // The Larder World (W1b, 2026-11-11: `BigParams`' crystals, terrain and
+    // walls), off while `world` is 0. Its bits: CRYSTALS, WETS (wet ground,
+    // or rubble a broken wall leaves), WALLS (a wall has been built),
+    // TERRAIN (rock or wet ground to draw). `full` is `crystal_charge`;
+    // `npc` the crystal cells `pcell` lists; `hp` the walls' full health.
+    world: u32, npiles: u32, npc: u32, _w0: u32,
+    full: f32, eat: f32, flow: f32, regrow: f32,
+    wet_step: f32, bite: f32, wall_scent: f32, hp: f32,
+    // The squad (Larder World W2a, `Engine::set_squad`): this frame's units
+    // and shots in `SQ`, and the trail that looks like slime.
+    nunits: u32, nshots: u32, slime: f32, _s0: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
+// A pile's crystal: its run of `pcell` (`start`, `count`), and from the
+// last `pilesum` its cells still crystal, its charge and the share left
+// (the CPU's `crystal_left`; 1 for a pile with no crystal left to hold).
+struct Pile { start: u32, count: u32, cells: u32, _p: u32, sum: f32, left: f32, _a: f32, _b: f32 };
+// A wall being built (`Engine::build_wall`): the segment and its half
+// width in fine cells, the health it starts with, the box of cells the
+// `build` pass covers, whether it lets scent through, and how far a
+// walker inside looks for a free cell (`evict`).
+struct WallBuild { ax: f32, ay: f32, bx: f32, by: f32, r: f32, hp: f32, x0: u32, y0: u32, bw: u32, bh: u32, scent: u32, reach: u32 };
 
 @group(0) @binding(0) var<uniform> P: Params;
 @group(0) @binding(1) var<storage, read_write> S: State;
@@ -48,7 +68,8 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 @group(0) @binding(5) var<storage, read_write> occ: array<atomic<u32>>;
 @group(0) @binding(6) var<storage, read_write> claim: array<atomic<u32>>;
 @group(0) @binding(7) var<storage, read_write> dep: array<atomic<u32>>;
-@group(0) @binding(8) var<storage, read> agar: array<u32>;
+// Writable for the Larder World: a wall leaves the agar, rubble comes back.
+@group(0) @binding(8) var<storage, read_write> agar: array<u32>;
 @group(0) @binding(9) var<storage, read> lay: array<f32>;
 @group(0) @binding(10) var<storage, read_write> trail_in: array<f32>;
 @group(0) @binding(11) var<storage, read_write> trail_out: array<f32>;
@@ -90,10 +111,39 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // Growth: each slot's energy, below 0 for an empty slot (the CPU's `alive`
 // false). Read only while growth is on; one a slot.
 @group(0) @binding(32) var<storage, read_write> energy: array<f32>;
-// Each slot's food from crystals this tick (the CPU's `took`), added in
-// `life`: all 0 until a crystal pass writes it (the Larder World port, W1b),
-// which must write 0 for an empty slot, as the CPU does.
-@group(0) @binding(33) var<storage, read_write> took: array<f32>;
+// What each walker on a cell took from its crystal this tick (the CPU's
+// `took`: a cell's n living walkers take equal shares), written by the
+// Larder World's `eat` pass for crystal cells (0 elsewhere) and added to
+// energy in `life`. A cell, not a slot: `life` reads it where the walker
+// stands, and an empty slot never runs `life`.
+@group(0) @binding(33) var<storage, read_write> share: array<f32>;
+// The Larder World (W1b). `ground` a cell: its crystal's pile in the low
+// byte (index + 1, 0 none: the CPU's `pile_of`), and the bits below.
+// `charge` a crystal cell's charge, `health` a wall cell's; `bites` the
+// blocked walkers that hit a wall cell this tick; `pcell` lists
+// the crystal cells pile by pile, `piles` each pile's run and sums, and
+// `wstat` counts bites (0) and broken cells (1). `wb` is the wall a
+// `build` pass is building.
+@group(0) @binding(34) var<storage, read_write> ground: array<u32>;
+@group(0) @binding(35) var<storage, read_write> charge: array<f32>;
+@group(0) @binding(36) var<storage, read_write> health: array<f32>;
+@group(0) @binding(37) var<storage, read_write> bites: array<atomic<u32>>;
+@group(0) @binding(38) var<storage, read> pcell: array<u32>;
+@group(0) @binding(39) var<storage, read_write> piles: array<Pile>;
+@group(0) @binding(40) var<storage, read_write> wstat: array<atomic<u32>>;
+@group(0) @binding(41) var<storage, read> wb: WallBuild;
+// The squad (W2a; `src/mould/squad.rs` holds the CPU twins, the order of a
+// frame and the layout, `squad::pack`): units in and out, shots in and out,
+// and the cells each shot's line crosses. A unit's cell and its squared
+// radii are whole numbers, so both sides test the same integers. `kills`
+// counts the walkers each shot killed.
+struct SqUnit { x: u32, y: u32, touch2: u32, sight2: u32, take2: u32, take: f32, smell2: u32, smell: f32 };
+struct SqUnitOut { touching: u32, aim: u32, took: f32, _p: u32 };
+struct SqShot { start: u32, count: u32, r2: u32, _p: u32 };
+struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
+struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
+@group(0) @binding(42) var<storage, read_write> SQ: Squad;
+@group(0) @binding(43) var<storage, read_write> kills: array<atomic<u32>>;
 
 const NONE: u32 = 0xFFFFFFFFu;
 
@@ -115,9 +165,29 @@ fn growth() -> bool { if (OUTSIDE) { return P.upkeep > 0.0; } return false; }
 // Whether slot k holds a living walker (always, with growth off).
 fn lives(k: u32) -> bool { return !growth() || energy[k] >= 0.0; }
 // The walkers eat the grass with grazing or growth on (the CPU makes the
-// grass field for either).
-fn grazes() -> bool { return graze_w() != 0.0 || growth(); }
+// grass field for either), but not growth on crystals with grazing off:
+// the CPU makes no grass then, and here it would regrow from 0 and feed
+// the walkers (the world twin test: grass 306 after one tick).
+fn grazes() -> bool { return graze_w() != 0.0 || (growth() && !world(CRYSTALS)); }
 const TAU: f32 = 6.2831855;
+
+// The Larder World's switches (`P.world`) and a cell's `ground` bits.
+const CRYSTALS: u32 = 1u;
+const WETS: u32 = 2u;
+const WALLS: u32 = 4u;
+const TERRAIN: u32 = 8u;
+const PILE_BITS: u32 = 0xFFu;
+const WET: u32 = 0x100u;
+const WALL: u32 = 0x200u;
+const SCENT_WALL: u32 = 0x400u;
+const ROCK: u32 = 0x800u;
+fn world(b: u32) -> bool { return (P.world & b) != 0u; }
+// Whether scent spreads through cell j: agar, or a wall that lets it
+// through (`wall_scent` > 0; the CPU's `scent_agar` on the fine grid).
+fn open(j: u32) -> bool {
+    if (agar[j] != 0u) { return true; }
+    return world(WALLS) && (ground[j] & SCENT_WALL) != 0u;
+}
 
 fn lowbias32(v: u32) -> u32 {
     var x = v;
@@ -231,6 +301,9 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     var ex = false;
     if (explore() > 0u) { ex = explores(k); }
+    // Wet ground and rubble: a shorter step (`wet_step`), where the CPU
+    // takes it, after the size and before the trail-set settings.
+    if (world(WETS) && (ground[here] & WET) != 0u) { st *= P.wet_step; }
     if (P.ss > 0.0) {
         let v = min(trail_in[here] * P.ss, 1.0);
         so = so + P.om_a * pow0(v, P.om_e);
@@ -321,6 +394,12 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
         // chose, bar a reset with chance `breset` (the CPU's `blocked_keep`).
         var bh = unit(keyed(P.s_blocked, t, k)) * TAU;
         if (bkeep() != 0u && unit(keyed(P.s_keep, t, k)) >= P.breset) { bh = intent[k].z; }
+        // A walker a wall blocks bites the wall cell it tried to enter
+        // (the CPU's `bite_walls`; the `walls` pass applies the bites).
+        if (world(WALLS)) {
+            let tc = cell(intent[k].x, intent[k].y);
+            if (tc != NONE && (ground[tc] & WALL) != 0u) { atomicAdd(&bites[tc], 1u); }
+        }
         walkers[k] = vec4<f32>(wk.x, wk.y, bh, 0.0);
     }
     // Trail: a walker that moved lays it where it landed; with the capped
@@ -373,7 +452,7 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
     let n = f32(atomicLoad(&occ[i]));
-    let e = (energy[k] + min(grass[i] / n, P.graze_eat) + took[k]) - P.upkeep;
+    let e = (energy[k] + min(grass[i] / n, P.graze_eat) + share[i]) - P.upkeep;
     if (e > 0.0) { energy[k] = e; return; }
     if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
         atomicSub(&occ[i], 1u);
@@ -688,21 +767,29 @@ fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     if (i == 0u) { S.t = S.t + 1u; }
     let x = i % P.w; let y = i / P.w;
-    if (agar[i] == 0u || x == 0u || y == 0u || x + 1u == P.w || y + 1u == P.h) { scent_out[i] = 0.0; return; }
+    if (!open(i) || x == 0u || y == 0u || x + 1u == P.w || y + 1u == P.h) { scent_out[i] = 0.0; return; }
     var sum = 0.0; var n = 0.0;
     for (var dy = 0u; dy < 3u; dy++) {
         for (var dx = 0u; dx < 3u; dx++) {
             let j = (y + dy - 1u) * P.w + x + dx - 1u;
-            if (agar[j] != 0u) {
-                // A reached pile lays `fed` of its scent (the CPU's `fed_scent`).
+            if (open(j)) {
+                // A reached pile lays `fed` of its scent (the CPU's
+                // `fed_scent`), and a crystal its share left of that.
                 var l = lay[j];
-                if (l != 0.0 && pile[j] != 0u && atomicLoad(&reached[pile[j] - 1u]) != 0u) { l *= P.fed; }
+                let pj = pile[j];
+                if (l != 0.0 && pj != 0u) {
+                    if (atomicLoad(&reached[pj - 1u]) != 0u) { l *= P.fed; }
+                    if (world(CRYSTALS)) { l *= piles[pj - 1u].left; }
+                }
                 sum += scent_in[j] + l;
                 n += 1.0;
             }
         }
     }
-    scent_out[i] = sum / n * P.scent_keep;
+    var v = sum / n * P.scent_keep;
+    // A wall lets `wall_scent` of the scent spread into it stay.
+    if (world(WALLS) && (ground[i] & SCENT_WALL) != 0u) { v *= P.wall_scent; }
+    scent_out[i] = v;
 }
 
 // What a pixel is drawn from: the trail, or walkers a cell.
@@ -772,7 +859,23 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
     let g = bright(v);
     var c = vec3<f32>(0.0, 0.0, 0.0);
     if (agar[i] == 0u) {
-        if (P.colour == 0u) { c = vec3<f32>(8.0, 14.0, 18.0); }
+        if (P.colour == 0u) {
+            c = vec3<f32>(8.0, 14.0, 18.0);
+            // The Larder World as the CPU's `BigDish::image` draws it: a
+            // wall's brightness is its health (a worn wall dims toward the
+            // rock colour), rock apart from the world's edge.
+            if (P.world != 0u) {
+                let g = ground[i];
+                if ((g & WALL) != 0u) {
+                    var left = 1.0;
+                    if (P.hp > 0.0) { left = min(health[i] / P.hp, 1.0); }
+                    let a = 0.25 + 0.75 * max(left, 0.0);
+                    c = vec3<f32>(34.0 + 116.0 * a, 30.0 + 120.0 * a, 28.0 + 130.0 * a);
+                } else if ((g & ROCK) != 0u) {
+                    c = vec3<f32>(34.0, 30.0, 28.0);
+                }
+            }
+        }
     } else if (nsp() > 0u && P.field == 0u) {
         // Species: each field in its own colour through the same curve
         // (the soft curve's reference is the total's), the colours added
@@ -786,7 +889,14 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
     } else if (P.colour == 0u) {
         // The game's amber (`BigDish::image`): scent tints the ground.
         let sg = 1.0 - exp(-scent_in[i] / 60.0);
-        let base = vec3<f32>(12.0 + 30.0 * sg, 22.0 + 26.0 * sg, 26.0 + 10.0 * sg);
+        var base = vec3<f32>(12.0 + 30.0 * sg, 22.0 + 26.0 * sg, 26.0 + 10.0 * sg);
+        // The Larder World (`BigDish::image`): wet ground bluer; a
+        // crystal's glow is its charge, full bright cyan, drained ground
+        // again, with nothing drawn in between.
+        if (P.world != 0u) {
+            if ((ground[i] & WET) != 0u) { base = vec3<f32>(base.x * 0.7, base.y * 0.9, base.z + 16.0); }
+            if (world(CRYSTALS) && P.full > 0.0) { base += (vec3<f32>(140.0, 235.0, 255.0) - base) * (charge[i] / P.full); }
+        }
         c = base + (vec3<f32>(255.0, 190.0, 90.0) - base) * g;
     } else {
         c = vec3<f32>(255.0 * g);
@@ -807,4 +917,404 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
     c = hc + c * (1.0 - a);
     let q = vec3<u32>(clamp(c, vec3<f32>(0.0), vec3<f32>(255.0)));
     frame[i] = q.x | (q.y << 8u) | (q.z << 16u) | (255u << 24u);
+}
+
+// ---- The Larder World's passes (W1b, 2026-11-11) ----
+// The CPU's order in a fine step: the move (blocked walkers bite walls),
+// then eating, then conversion and jumps, then the trail and the scent.
+// Here: `walls` and the crystal passes run after `walk` and before
+// `convert` and the jumps, each only while the world has what it acts on.
+
+// The bites a wall cell took this tick, applied as the CPU's `bite_walls`
+// does (one `wall_bite` at a time); at 0 it turns to rubble: agar again,
+// wet, open to scent. A thread a cell; only dispatched once a wall exists.
+@compute @workgroup_size(256)
+fn walls(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    if (i >= P.w * P.h) { return; }
+    let n = atomicLoad(&bites[i]);
+    if (n == 0u) { return; }
+    atomicStore(&bites[i], 0u);
+    atomicAdd(&wstat[0], n);
+    var hp = health[i];
+    for (var q = 0u; q < n; q++) { hp -= P.bite; }
+    if (hp <= 0.0 && (ground[i] & WALL) != 0u) {
+        ground[i] = (ground[i] & ~(WALL | SCENT_WALL)) | WET;
+        agar[i] = 1u;
+        health[i] = 0.0;
+        atomicAdd(&wstat[1], 1u);
+    } else {
+        health[i] = hp;
+    }
+}
+
+// Eating (the CPU's `eat_crystals`): the n walkers on a crystal cell each
+// take min(`eat`, charge / n), from the charge as the pass began, one
+// after another floored at 0. A thread a listed crystal cell.
+@compute @workgroup_size(256)
+fn eat(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let q = gid.x;
+    if (q >= P.npc) { return; }
+    let i = pcell[q];
+    var t = 0.0;
+    let n = atomicLoad(&occ[i]);
+    if ((ground[i] & PILE_BITS) != 0u && n > 0u) {
+        var c = charge[i];
+        t = min(P.eat, c / f32(n));
+        if (t > 0.0) {
+            for (var m = 0u; m < n; m++) { c = max(c - t, 0.0); }
+            charge[i] = c;
+        }
+    }
+    share[i] = t;
+}
+
+// Each pile's charge and cells still crystal, summed in a workgroup (one a
+// pile): each thread a stride of the pile's run, then a tree. The CPU sums
+// in f64; this f32 tree is within a few parts in 10^7 of it. Also the
+// share left, for the scent.
+var<workgroup> psum: array<f32, 256>;
+var<workgroup> pcnt: array<u32, 256>;
+
+@compute @workgroup_size(256)
+fn pilesum(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
+    let p = wid.x;
+    let start = piles[p].start;
+    let count = piles[p].count;
+    var s = 0.0;
+    var c = 0u;
+    for (var q = li; q < count; q += 256u) {
+        let i = pcell[start + q];
+        if ((ground[i] & PILE_BITS) == p + 1u) {
+            s += charge[i];
+            c += 1u;
+        }
+    }
+    psum[li] = s;
+    pcnt[li] = c;
+    workgroupBarrier();
+    for (var k = 128u; k > 0u; k >>= 1u) {
+        if (li < k) {
+            psum[li] += psum[li + k];
+            pcnt[li] += pcnt[li + k];
+        }
+        workgroupBarrier();
+    }
+    if (li == 0u) {
+        let full = P.full * f32(pcnt[0]);
+        piles[p].sum = psum[0];
+        piles[p].cells = pcnt[0];
+        var left = 1.0;
+        if (full > 0.0) { left = max(psum[0] / full, 0.0); }
+        piles[p].left = left;
+    }
+}
+
+// Flow (`crystal_flow`): each crystal cell's charge relaxes toward its
+// pile's mean, then regrows (`crystal_regrow`) toward full, as the CPU's
+// `eat_crystals` does after the eating. A thread a listed crystal cell.
+@compute @workgroup_size(256)
+fn flow(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let q = gid.x;
+    if (q >= P.npc) { return; }
+    let i = pcell[q];
+    let p = ground[i] & PILE_BITS;
+    if (p == 0u) { return; }
+    var c = charge[i];
+    if (P.flow > 0.0) {
+        let mean = piles[p - 1u].sum / f32(piles[p - 1u].cells);
+        c += P.flow * (mean - c);
+    }
+    if (P.regrow > 0.0 && c < P.full) { c += P.regrow * (P.full - c); }
+    charge[i] = c;
+}
+
+// A wall (`Engine::build_wall`, the CPU's `build_wall`): the agar cells
+// whose centres lie within `wb.r` of the segment leave the agar and lose
+// their trail and charge (a crystal cell leaves its pile); scent cells
+// under it lose their scent and, unless the wall lets scent through,
+// close. A thread a cell of the wall's box.
+@compute @workgroup_size(256)
+fn build(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let q = gid.x;
+    if (q >= wb.bw * wb.bh) { return; }
+    let x = wb.x0 + q % wb.bw;
+    let y = wb.y0 + q / wb.bw;
+    if (x >= P.w || y >= P.h) { return; }
+    let i = y * P.w + x;
+    let px = f32(x) + 0.5;
+    let py = f32(y) + 0.5;
+    let dx = wb.bx - wb.ax;
+    let dy = wb.by - wb.ay;
+    let len2 = max(dx * dx + dy * dy, 1.0e-6);
+    let t = clamp(((px - wb.ax) * dx + (py - wb.ay) * dy) / len2, 0.0, 1.0);
+    let ex = px - wb.ax - t * dx;
+    let ey = py - wb.ay - t * dy;
+    if (sqrt(ex * ex + ey * ey) > wb.r) { return; }
+    let was_open = agar[i] != 0u || (ground[i] & SCENT_WALL) != 0u;
+    if (agar[i] != 0u) {
+        agar[i] = 0u;
+        var g = (ground[i] & ~PILE_BITS) | WALL;
+        if (wb.scent != 0u) { g |= SCENT_WALL; }
+        ground[i] = g;
+        health[i] = wb.hp;
+        charge[i] = 0.0;
+        trail_in[i] = 0.0;
+        trail_out[i] = 0.0;
+        let c = P.w * P.h;
+        for (var s = 0u; s < nsp(); s++) {
+            sp_in[s * c + i] = 0.0;
+            sp_out[s * c + i] = 0.0;
+        }
+    }
+    if (was_open) {
+        scent_in[i] = 0.0;
+        scent_out[i] = 0.0;
+    }
+}
+
+// A walker a new wall covers looks for the nearest free agar cell, ring by
+// ring out to `wb.reach`, in the CPU's order within a ring, and claims it
+// (lowest walker wins); `settle` moves the winners to its centre and
+// `unclaim` clears the claims. `Engine::build_wall` runs rounds until no
+// walker finds a cell, so walkers that lost one try the next; one with
+// nowhere free stays, as on the CPU. The CPU moves them one at a time in walker order, so the
+// cells they land on can differ.
+@compute @workgroup_size(256)
+fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    icell[k] = NONE;
+    let wk = walkers[k];
+    let here = cell(wk.x, wk.y);
+    if (here == NONE || agar[here] != 0u) { return; }
+    let cx = i32(wk.x);
+    let cy = i32(wk.y);
+    let reach = i32(wb.reach);
+    for (var d = 1; d <= reach; d++) {
+        for (var oy = -d; oy <= d; oy++) {
+            let edge = oy == -d || oy == d;
+            var ox = -d;
+            loop {
+                if (ox > d) { break; }
+                let nx = cx + ox;
+                let ny = cy + oy;
+                if (nx >= 0 && ny >= 0 && nx < i32(P.w) && ny < i32(P.h)) {
+                    let j = u32(ny) * P.w + u32(nx);
+                    if (agar[j] != 0u && (P.crowd == 0u || atomicLoad(&occ[j]) < P.crowd)) {
+                        if (P.crowd > 0u) { atomicMin(&claim[j], k); }
+                        icell[k] = j;
+                        // Walkers that found a cell this round (`build_wall`
+                        // runs rounds until none does).
+                        atomicAdd(&wstat[2], 1u);
+                        return;
+                    }
+                }
+                if (edge) { ox += 1; } else { ox += 2 * d; }
+            }
+        }
+    }
+}
+
+@compute @workgroup_size(256)
+fn settle(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    let j = icell[k];
+    if (j == NONE) { return; }
+    if (P.crowd > 0u && atomicLoad(&claim[j]) != k) { return; }
+    let wk = walkers[k];
+    atomicSub(&occ[cell(wk.x, wk.y)], 1u);
+    atomicAdd(&occ[j], 1u);
+    walkers[k] = vec4<f32>(f32(j % P.w) + 0.5, f32(j / P.w) + 0.5, wk.z, 0.0);
+    icell[k] = NONE;
+}
+
+@compute @workgroup_size(256)
+fn unclaim(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    if (i >= P.w * P.h) { return; }
+    atomicStore(&claim[i], NONE);
+}
+
+// ---------------------------------------------- the squad (Larder World W2a)
+// The CPU twins and the order of a frame: `src/mould/squad.rs`. Before the
+// frame's first tick: `shots`, then `strike` and `cut`, then `smell`; after
+// its last: `units` and `harvest`.
+
+// The largest r with r * r <= r2.
+fn isqrt(r2: u32) -> i32 {
+    var r = 0;
+    loop {
+        let n = r + 1;
+        if (u32(n * n) > r2) { break; }
+        r = n;
+    }
+    return r;
+}
+
+// Each shot walks its cells and stops at the first off the agar (a wall or
+// rock: no hit) or the first that looks like slime (the hit). The owner,
+// 2026-11-11 16:48Z: "Gun fire should hit the first slime in its path".
+@compute @workgroup_size(256)
+fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let q = gid.x;
+    if (q >= P.nshots) { return; }
+    let s = SQ.shots[q];
+    var hit = NONE;
+    for (var m = 0u; m < s.count; m++) {
+        let i = SQ.path[s.start + m];
+        if (agar[i] == 0u) { break; }
+        if (trail_in[i] >= P.slime) { hit = i; break; }
+    }
+    SQ.sout[q].hit = hit;
+}
+
+// Whether cell c is inside shot q's strike.
+fn struck(c: u32, q: u32) -> bool {
+    let hit = SQ.sout[q].hit;
+    if (hit == NONE) { return false; }
+    let dx = i32(c % P.w) - i32(hit % P.w);
+    let dy = i32(c / P.w) - i32(hit / P.w);
+    return u32(dx * dx + dy * dy) <= SQ.shots[q].r2;
+}
+
+// A living walker on a struck cell dies as a starving one does (`life`),
+// counted for the first shot that struck it. Growth must be on: an empty
+// slot is how a walker dies here.
+@compute @workgroup_size(256)
+fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let wk = walkers[k];
+    let c = cell(wk.x, wk.y);
+    for (var q = 0u; q < P.nshots; q++) {
+        if (struck(c, q)) {
+            atomicSub(&occ[c], 1u);
+            atomicStore(&claim[c], NONE);
+            energy[k] = -1.0;
+            atomicAdd(&kills[q], 1u);
+            return;
+        }
+    }
+}
+
+// A strike clears the trail on its cells: a workgroup a shot, a thread a
+// cell of the 15 x 15 box round its hit (radius 7 at most, `squad::R_MAX`),
+// so the pass costs the shots, not the world. Two shots clearing one cell
+// write the same 0.
+@compute @workgroup_size(256)
+fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
+    let q = wid.x;
+    let hit = SQ.sout[q].hit;
+    if (q >= P.nshots || hit == NONE || li >= 225u) { return; }
+    let x = i32(hit % P.w) + i32(li % 15u) - 7;
+    let y = i32(hit / P.w) + i32(li / 15u) - 7;
+    if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h)) { return; }
+    let i = u32(y) * P.w + u32(x);
+    if (struck(i, q)) { trail_in[i] = 0.0; }
+}
+
+// Each unit's smell on the agar cells of its disc. One thread, units in
+// order, so overlapping discs add up without a race.
+@compute @workgroup_size(1)
+fn smell(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x != 0u) { return; }
+    for (var u = 0u; u < P.nunits; u++) {
+        let un = SQ.units[u];
+        if (un.smell <= 0.0) { continue; }
+        let r = isqrt(un.smell2);
+        for (var dy = -r; dy <= r; dy++) {
+            for (var dx = -r; dx <= r; dx++) {
+                let x = i32(un.x) + dx;
+                let y = i32(un.y) + dy;
+                if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h) || u32(dx * dx + dy * dy) > un.smell2) { continue; }
+                let i = u32(y) * P.w + u32(x);
+                if (agar[i] != 0u) { scent_in[i] += un.smell; }
+            }
+        }
+    }
+}
+
+// Each unit's walkers within `touch`, and the 4 x 4 block with the most
+// walkers whose centre is within `sight` (ties to the first, row-major).
+@compute @workgroup_size(64)
+fn units(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let u = gid.x;
+    if (u >= P.nunits) { return; }
+    let un = SQ.units[u];
+    let cx = i32(un.x);
+    let cy = i32(un.y);
+    let w = i32(P.w);
+    let h = i32(P.h);
+    var touching = 0u;
+    let r = isqrt(un.touch2);
+    for (var dy = -r; dy <= r; dy++) {
+        for (var dx = -r; dx <= r; dx++) {
+            let x = cx + dx;
+            let y = cy + dy;
+            if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
+            touching += atomicLoad(&occ[u32(y * w + x)]);
+        }
+    }
+    let b = 4;
+    let nbw = (w + b - 1) / b;
+    let nbh = (h + b - 1) / b;
+    let rs = isqrt(un.sight2) + 2;
+    let by0 = max(cy - rs, 0) / b;
+    let by1 = min((cy + rs) / b, nbh - 1);
+    let bx0 = max(cx - rs, 0) / b;
+    let bx1 = min((cx + rs) / b, nbw - 1);
+    var best = 0u;
+    var bi = NONE;
+    for (var by = by0; by <= by1; by++) {
+        for (var bx = bx0; bx <= bx1; bx++) {
+            let mx = bx * b + b / 2 - cx;
+            let my = by * b + b / 2 - cy;
+            if (u32(mx * mx + my * my) > un.sight2) { continue; }
+            var n = 0u;
+            for (var y = by * b; y < min((by + 1) * b, h); y++) {
+                for (var x = bx * b; x < min((bx + 1) * b, w); x++) {
+                    n += atomicLoad(&occ[u32(y * w + x)]);
+                }
+            }
+            if (n > best) { best = n; bi = u32(by * nbw + bx); }
+        }
+    }
+    SQ.uout[u].touching = touching;
+    SQ.uout[u].aim = bi;
+}
+
+// The harvest: in unit order, each unit with `take` takes up to that much
+// charge from the crystal cells of its disc, cell by cell. One thread, so
+// two units on one crystal take in order.
+@compute @workgroup_size(1)
+fn harvest(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x != 0u) { return; }
+    for (var u = 0u; u < P.nunits; u++) {
+        let un = SQ.units[u];
+        var took = 0.0;
+        if (un.take > 0.0 && world(CRYSTALS)) {
+            var rem = un.take;
+            let r = isqrt(un.take2);
+            var done = false;
+            for (var dy = -r; dy <= r && !done; dy++) {
+                for (var dx = -r; dx <= r; dx++) {
+                    let x = i32(un.x) + dx;
+                    let y = i32(un.y) + dy;
+                    if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h) || u32(dx * dx + dy * dy) > un.take2) { continue; }
+                    let i = u32(y) * P.w + u32(x);
+                    let c = charge[i];
+                    if (c > 0.0) {
+                        let t = min(c, rem);
+                        charge[i] = c - t;
+                        rem = rem - t;
+                        if (rem <= 0.0) { done = true; break; }
+                    }
+                }
+            }
+            took = un.take - rem;
+        }
+        SQ.uout[u].took = took;
+    }
 }

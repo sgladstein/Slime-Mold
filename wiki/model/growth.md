@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-11T19:50Z
+updated: 2026-11-11T20:00Z
 sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [BigParams::upkeep, BigParams::energy_flow, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
