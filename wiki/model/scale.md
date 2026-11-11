@@ -239,6 +239,7 @@ polygons at once. Every outside source has a card in
 - Census readback and the economy on the GPU are not yet timed; the drawing is (0.07-0.29 ms a frame on the GTX 1070, sandbox).
 - Jenson's feathery fronts: seven mechanisms failed ([jenson looks](../../Reports/jenson-looks-2026-11-11.md)); explorers that turn into networkers one by one (`explore_spread`) grow radial feathery veins from a disc, one seed so far ([outside rules](../../Reports/outside-rules-2026-11-11.md)).
 - A creature that moves as a body: still droplets crawl once they graze a regrowing field ([creatures](../../Reports/creatures-2026-11-11.md)). What lets one body beat another is partly open: numbers win where two species are mixed (a 55% side ends with 75-88%), but sorted bodies hold their border against a louder trail or a denser side.
+- Tiers with a life cycle (spores, dormancy, an alarm the player's strike lays) and how each answers attack: [the life cycle](life-cycle.md).
 - Whether contagion can leave a lasting mark for play (see the contagion entry in [`dead-ends.md`](../../Reports/dead-ends.md)). The outside code was read on 2026-11-10; only PolyPhy, gpu-io (MIT) and Barradeau (public domain) may be reused.
 
 ## Sources

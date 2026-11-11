@@ -77,7 +77,7 @@
 
 use std::time::Instant;
 
-use slime_mould::mould::big::{BigDish, BigParams};
+use slime_mould::mould::big::{BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE};
 use slime_mould::mould::{H, STEPS_PER_SECOND, W};
 
 fn preset(name: &str) -> BigParams {
@@ -126,14 +126,19 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
         "grey" => d.trail.clone(),
         "count" => {
             let mut c = vec![0.0f32; d.w * d.h];
-            for &(x, y, _) in &d.walkers {
-                c[y as usize * d.w + x as usize] += 1.0;
+            for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+                if d.life.is_empty() || d.life[k] != LIFE_DEAD {
+                    c[y as usize * d.w + x as usize] += 1.0;
+                }
             }
             c
         }
-        "soft" | "sick" | "species" | "kinds" => d.trail.clone(),
-        _ => panic!("style={style}: amber, grey, count, soft, sick, species or kinds"),
+        "soft" | "sick" | "species" | "kinds" | "life" => d.trail.clone(),
+        _ => panic!("style={style}: amber, grey, count, soft, sick, species, kinds or life"),
     };
+    if style == "life" {
+        return life_picture(d, down);
+    }
     if style == "species" && !d.species_trail.is_empty() {
         return species_picture(d, down);
     }
@@ -177,6 +182,94 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
         }
     }
     img
+}
+
+/// The life cycle (`spore_rate`, `sleep_rate`, strikes): the trail in dim
+/// grey on the soft curve; where ordinary walkers stand in amber, dormant
+/// walkers in violet and spores in white, each as 1 - exp(-count / twice
+/// the mean count a cell of all living walkers) over the block; and the
+/// alarm in red, full at 10 x `wake_alarm` (or 10). All of it is data: walker
+/// counts and fields, no outline drawn. The dead are not drawn.
+fn life_picture(d: &BigDish, down: usize) -> image::RgbaImage {
+    let refv = pct(&d.trail, 0.999).max(1e-6);
+    let down = down.max(1);
+    let (iw, ih) = ((d.w / down) as u32, (d.h / down) as u32);
+    let mut c = [vec![0.0f32; (iw * ih) as usize], vec![0.0f32; (iw * ih) as usize], vec![0.0f32; (iw * ih) as usize]];
+    let mut living = 0usize;
+    for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+        let l = if d.life.is_empty() { 0 } else { d.life[k] };
+        if l == LIFE_DEAD {
+            continue;
+        }
+        living += 1;
+        let (px, py) = (x as usize / down, y as usize / down);
+        if px < iw as usize && py < ih as usize {
+            let slot = match l {
+                LIFE_SPORE => 2,
+                LIFE_DORMANT => 1,
+                _ => 0,
+            };
+            c[slot][py * iw as usize + px] += 1.0;
+        }
+    }
+    let cells = d.agar.iter().filter(|&&a| a).count().max(1) as f32;
+    let mean = (living as f32 / cells * (down * down) as f32).max(1e-3);
+    let aref = 10.0 * if d.p.wake_alarm > 0.0 { d.p.wake_alarm } else { 1.0 };
+    let mut img = image::RgbaImage::new(iw, ih);
+    for py in 0..ih {
+        for px in 0..iw {
+            let (mut v, mut al) = (0.0f32, 0.0f32);
+            for dy in 0..down {
+                for dx in 0..down {
+                    let i = (py as usize * down + dy) * d.w + px as usize * down + dx;
+                    v = v.max(d.trail[i]);
+                    if !d.alarm.is_empty() {
+                        al = al.max(d.alarm[i]);
+                    }
+                }
+            }
+            let g = 0.35 * (v / refv).clamp(0.0, 1.0).powf(0.6);
+            let i = (py * iw + px) as usize;
+            let [a, b, sp] = [0, 1, 2].map(|s| 1.0 - (-c[s][i] / (2.0 * mean)).exp());
+            let r = (al / aref).clamp(0.0, 1.0).sqrt();
+            let col = |ca: f32, cb: f32, cs: f32, cr: f32| (255.0 * g + ca * a + cb * b + cs * sp + cr * r).min(255.0) as u8;
+            img.put_pixel(px, py, image::Rgba([col(255.0, 140.0, 255.0, 200.0), col(170.0, 90.0, 255.0, 0.0), col(60.0, 255.0, 255.0, 0.0), 255]));
+        }
+    }
+    img
+}
+
+/// Tube bodies: 4-connected pieces of trail over the tube cut of at least
+/// `min` fine cells, and the size of the largest (fine cells).
+fn bodies(d: &BigDish, min: usize) -> (usize, usize) {
+    let (w, h) = (d.w, d.h);
+    let tube: Vec<bool> = d.trail.iter().zip(&d.agar).map(|(&v, &a)| a && v > d.p.tube).collect();
+    let mut seen = vec![false; w * h];
+    let (mut n, mut big) = (0usize, 0usize);
+    let mut stack = Vec::new();
+    for start in 0..w * h {
+        if seen[start] || !tube[start] {
+            continue;
+        }
+        seen[start] = true;
+        stack.push(start);
+        let mut size = 0usize;
+        while let Some(i) = stack.pop() {
+            size += 1;
+            let (x, y) = (i % w, i / w);
+            for (ok, j) in [(x > 0, i.wrapping_sub(1)), (x + 1 < w, i + 1), (y > 0, i.wrapping_sub(w)), (y + 1 < h, i + w)] {
+                if ok && tube[j] && !seen[j] {
+                    seen[j] = true;
+                    stack.push(j);
+                }
+            }
+        }
+        if size >= min {
+            n += 1;
+            big = big.max(size);
+        }
+    }
+    (n, big)
 }
 
 /// Mixed walkers (`mix_share`): the shared trail in dim grey on the soft
@@ -269,6 +362,15 @@ fn main() {
     let (mut style, mut knee) = ("amber".to_string(), 6.0f32);
     let mut at: Vec<f32> = Vec::new();
     let (mut infect, mut infect_r, mut cut, mut cut_x, mut cut_w) = (-1.0f32, 10.0f32, -1.0f32, 160.0f32, 2.0f32);
+    // The player's strike (`BigDish::strike`): at each of `strike=T1,T2` seconds,
+    // a disc of `strike_r` dish cells at (`strike_x`, `strike_y`) dish cells.
+    // A bait (`bait=T1,T2`): a shock of `strike_alarm` within `bait_r` dish
+    // cells of (`bait_x`, `bait_y`) that clears and kills nothing.
+    let (mut bait, mut bait_x, mut bait_y, mut bait_r) = (Vec::<f32>::new(), W as f32 / 2.0, H as f32 / 2.0, 20.0f32);
+    // Alarm reaches `strike_alarm_r` dish cells (0: twice `strike_r`).
+    let (mut strike, mut strike_x, mut strike_y, mut strike_r, mut strike_alarm, mut strike_alarm_r) = (Vec::<f32>::new(), W as f32 / 2.0, H as f32 / 2.0, 10.0f32, 50.0f32, 0.0f32);
+    // Print the life line (below) even with the life cycle off, for controls.
+    let mut lifeline = false;
     let mut overrides: Vec<(String, String)> = Vec::new();
     for arg in std::env::args().skip(1) {
         let (k, v) = arg.split_once('=').unwrap_or_else(|| panic!("expected key=value, got {arg}"));
@@ -292,7 +394,18 @@ fn main() {
             "cut" => cut = v.parse().unwrap(),
             "cut_x" => cut_x = v.parse().unwrap(),
             "cut_w" => cut_w = v.parse().unwrap(),
+            "strike" => strike = v.split(',').map(|s| s.parse().unwrap()).collect(),
+            "strike_x" => strike_x = v.parse().unwrap(),
+            "strike_y" => strike_y = v.parse().unwrap(),
+            "strike_r" => strike_r = v.parse().unwrap(),
+            "strike_alarm" => strike_alarm = v.parse().unwrap(),
+            "strike_alarm_r" => strike_alarm_r = v.parse().unwrap(),
+            "bait" => bait = v.split(',').map(|s| s.parse().unwrap()).collect(),
+            "bait_x" => bait_x = v.parse().unwrap(),
+            "bait_y" => bait_y = v.parse().unwrap(),
+            "bait_r" => bait_r = v.parse().unwrap(),
             "at" => at = v.split(',').map(|s| s.parse().unwrap()).collect(),
+            "lifeline" => lifeline = v != "0",
             _ => overrides.push((k.into(), v.into())),
         }
     }
@@ -381,6 +494,25 @@ fn main() {
             "blocked_reset" => p.blocked_reset = f(),
             "blocked_retry" => p.blocked_retry = f() as u8,
             "blocked_deposit" => p.blocked_deposit = f(),
+            "spore_rate" => p.spore_rate = f(),
+            "spore_scent" => p.spore_scent = f(),
+            "spore_alarm" => p.spore_alarm = f(),
+            "spore_burst" => p.spore_burst = f(),
+            "spore_steps" => p.spore_steps = f() as u16,
+            "spore_speed" => p.spore_speed = f(),
+            "spore_reach" => p.spore_reach = f(),
+            "spore_deposit" => p.spore_deposit = f(),
+            "spore_land" => p.spore_land = f(),
+            "spore_rest" => p.spore_rest = f() as u16,
+            "sleep_rate" => p.sleep_rate = f(),
+            "sleep_deposit" => p.sleep_deposit = f(),
+            "wake_scent" => p.wake_scent = f(),
+            "wake_alarm" => p.wake_alarm = f(),
+            "wake_steps" => p.wake_steps = f() as u16,
+            "sleep_rest" => p.sleep_rest = f() as u16,
+            "alarm_keep" => p.alarm_keep = f(),
+            "alarm_weight" => p.alarm_weight = f(),
+            "alarm_relay" => p.alarm_relay = f(),
             _ => panic!("unknown key {k}"),
         }
     }
@@ -410,6 +542,15 @@ fn main() {
             spent += t0.elapsed().as_secs_f64();
             if d.ticks == infect_tick {
                 d.infect(W as f32 / 2.0, H as f32 / 2.0, infect_r);
+            }
+            if bait.iter().any(|&t| to_tick(t) == d.ticks) {
+                d.strike(bait_x, bait_y, 0.0, strike_alarm, bait_r);
+                println!("seed {seed} {name} t {:5.1}s  bait at {bait_x},{bait_y} r {bait_r}", d.seconds());
+            }
+            if strike.iter().any(|&t| to_tick(t) == d.ticks) {
+                let ar = if strike_alarm_r > 0.0 { strike_alarm_r } else { 2.0 * strike_r };
+                let killed = d.strike(strike_x, strike_y, strike_r, strike_alarm, ar);
+                println!("seed {seed} {name} t {:5.1}s  strike at {strike_x},{strike_y} r {strike_r}: killed {killed}", d.seconds());
             }
             if d.ticks == cut_tick {
                 // The knife: clear trail and germ in a band across the dish.
@@ -567,6 +708,65 @@ fn main() {
                     dist.sort_by(|a, b| a.total_cmp(b));
                     let at = |q: f32| dist.get(((dist.len() as f32 * q) as usize).min(dist.len().saturating_sub(1))).copied().unwrap_or(0.0);
                     println!("seed {seed} {name} t {:5.1}s  extent r50 {:.1} r90 {:.1}", m.seconds, at(0.5), at(0.9));
+                }
+                if !d.life.is_empty() || lifeline {
+                    // Life cycle: walkers in each state; piles held (piles
+                    // with at least 20 grounded walkers within pile_r + 4
+                    // dish cells of the centre); tube bodies of at least 4
+                    // dish cells and the largest; the centre of the living
+                    // grounded walkers (dish cells); and `near`, grounded
+                    // living walkers within twice strike_r of the strike point.
+                    let [wk, sp, dor, dead] = d.life_counts();
+                    let s = d.p.scale as f32;
+                    let rr = (d.p.pile_r + 4.0) * s;
+                    let mut near = vec![0usize; d.piles.len()];
+                    let (mut sx, mut sy, mut n) = (0.0f64, 0.0f64, 0usize);
+                    for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+                        if !d.life.is_empty() && matches!(d.life[k], LIFE_SPORE | LIFE_DEAD) {
+                            continue;
+                        }
+                        sx += x as f64;
+                        sy += y as f64;
+                        n += 1;
+                        for (pi, &(px, py)) in d.piles.iter().enumerate() {
+                            if (x - px * s).hypot(y - py * s) <= rr {
+                                near[pi] += 1;
+                            }
+                        }
+                    }
+                    let held = near.iter().filter(|&&c| c >= 20).count();
+                    // Grounded living walkers within twice strike_r of the strike point.
+                    let near_strike = d
+                        .walkers
+                        .iter()
+                        .enumerate()
+                        .filter(|&(k, &(x, y, _))| (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (x / s - strike_x).hypot(y / s - strike_y) <= 2.0 * strike_r)
+                        .count();
+                    // `rim`: the share of them within 2 dish cells of the
+                    // agar's edge along a row or column (the review's wall
+                    // rail: a rule that sends walkers to ride the wall).
+                    let edge = 2 * d.p.scale as i64;
+                    let off = |x: i64, y: i64| x < 0 || y < 0 || x >= d.w as i64 || y >= d.h as i64 || !d.agar[y as usize * d.w + x as usize];
+                    let rim = d
+                        .walkers
+                        .iter()
+                        .enumerate()
+                        .filter(|&(k, &(x, y, _))| {
+                            let (x, y) = (x as i64, y as i64);
+                            (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (off(x - edge, y) || off(x + edge, y) || off(x, y - edge) || off(x, y + edge))
+                        })
+                        .count();
+                    let (nb, big) = bodies(&d, (4.0 * s * s) as usize);
+                    let n = n.max(1) as f64;
+                    println!(
+                        "seed {seed} {name} t {:5.1}s  life walk {wk} spore {sp} dormant {dor} dead {dead}  held {held}/{}  bodies {nb} big {:.0}  centre {:.1},{:.1}  near {near_strike}  rim {:.3}",
+                        m.seconds,
+                        d.piles.len(),
+                        big as f32 / (s * s),
+                        sx / n / s as f64,
+                        sy / n / s as f64,
+                        rim as f64 / n
+                    );
                 }
                 if !d.kind.is_empty() {
                     // Mixed walkers: for each kind, the share of its walkers
