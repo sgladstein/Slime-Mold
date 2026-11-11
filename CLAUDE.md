@@ -16,7 +16,8 @@ in `wiki/README.md`. Run `python3 wiki/lint.py --base=origin/main` before commit
 
 ## What the owner has ruled for this game
 
-All rulings, quoted and timed: `wiki/decisions.md`.
+All rulings, quoted and timed: `wiki/decisions.md` (standing) and
+`wiki/decisions-game.md` (per game).
 
 - **Fun over fidelity.** The goal is interesting simulations that can be
   turned into a game, not a realistic slime mould (2026-11-10). Biology and

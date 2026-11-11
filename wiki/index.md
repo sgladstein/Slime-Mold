@@ -25,27 +25,34 @@ work; a thread working on one directly may change it.
 
 - [Water and sleep](model/water-and-sleep.md): dry mould sleeps, water wakes it; Keep It Alive only.
 - [Sensor angle and reach](model/sensors.md): 45 obeys then freezes, 22.5 lives but ignores you; reach stays 9.
-- [The mould at scale](model/scale.md): the GPU plan, the 1024 x 640 big dish and GPU timing test; the GPU sandbox (phase 3, built) with species, droplets and grazing as controls; phase 4 starts as Larder World W0 (growth); why Jenson's clips look different (no limit, drawing, respawn); trunks from a dense start, contagion on the big dish, fronts still open.
-- [The life cycle and the mould's answer to attack](model/life-cycle.md): spores, sleep and an alarm; Sporer, Sleeper and Swarmer tiers each beat their control 8/8 and have a counter (starve, bait, kill zone); fleeing fails.
+- [The mould at scale](model/scale.md): the GPU plan; phases 1-3 done, fields stay f32, 1.37 ms a frame at 100k walkers on the 1070; phase 4 starts as Larder World W0.
+- [The GPU sandbox](model/gpu-sandbox.md): the big dish live on the GPU with every tested option as a control; matches the CPU; 1.45 ms a frame at 100k.
+- [Outside looks and creature rules](model/outside-looks.md): why Jenson's clips look different; trunks, contagion, species, explorers, grazing droplets; fronts still open.
+- [The life cycle and the answer to attack](model/life-cycle.md): spores, sleep and an alarm; Sporer, Sleeper and Swarmer each beat their control 8/8 and have a counter.
 
 ## Looks
 
 - [The simulation look](looks/simulation-look.md): the default; the mould drawn straight from trail, hunger and walkers; F7 the old tube look.
 - [Sound](looks/sound.md): on by default, S toggles; every sound a count off the dish; the owner has not listened yet.
 
-## Games in design
+## Larder World
+
+- [Larder World](world/larder.md): a squad against several mould species in a persistent GPU world with crystals; phases W0-W5; W1a fields done; the small-dish M1-M3 history.
+- [The Larder player AI](world/player-ai.md): plays soldiers through the player's commands, one brain per side; boom, lure, adapt beat idle and random 16/16.
+- [The mould tiers](world/mould-tiers.md): the difficulty ladder, Drifter to Mixes plus Sporer, Sleeper, Swarmer; each tier has a counter.
+
+## Other games in design
 
 - [The RTS directions](rts/directions.md): build phase; three demos, each with one strategy on top so far; the main line is now Larder World.
-- [The field skirmish](rts/skirmish.md): v1 (habits, salt, lamp) set aside after play; v2, a tithe spent on beacons and spores: soft won 127/128; Strike and Fortify dethrone it, but brace (strike and fortify) wins every pairing.
+- [The field skirmish](rts/skirmish.md): v2 budget skirmish; soft won 127/128; Strike and Fortify dethrone it, but brace then wins every pairing.
 - [How RTS games are designed](rts/rts-craft.md): outside research (22 sources) and what it says about our demos: dominant strategies and unmanaged snowballs, fix the structure first.
-- [Larder, the mould as the enemy](rts/shooter.md): now Larder World (owner 11-11 14:06Z), a persistent GPU world with crystals and several species, phases W0-W5; before it, on the small dish: a held ring keeps the mould off your larder; priced, ring-forever never wins but ring-then-mow tops every seed: a ladder, not a cycle; M2 (spending, mould answers) still a ladder; M3 soldiers that fire from range loosened it (no plan best on 13+/16).
-- [The Larder player AI](rts/player-ai.md): plays soldiers through the player's commands, one brain per side; five styles; boom, lure, adapt beat idle and random 16/16 held out.
 - [Two Fevers](rts/two-fevers.md): playable in the browser, version 3 (call, seed, pinch): Trunk > Web > Raider, a ladder, and the leader at 1:30 keeps it; not yet played by hand.
 
 ## Method and owner
 
 - [The census](method/census.md): scripted hands over paired seeds, sign tests, controls, seed counts.
-- [Decisions](decisions.md): the owner's rulings and decided choices, quoted with times.
+- [Decisions](decisions.md): the owner's standing rulings, quoted with times.
+- [Game decisions](decisions-game.md): the owner's decided choices about each game, quoted with times.
 
 ## Not yet written
 
