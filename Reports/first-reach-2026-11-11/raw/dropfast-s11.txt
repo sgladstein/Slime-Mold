@@ -1,0 +1,26 @@
+seed 11 dropfast t  10.0s  tube  4223.8  loops    3  width 7.11  reach  129.2  piles 8/12  strays 0.002  ms/tick 12.85
+seed 11 dropfast t  10.0s  contrast 3.55
+seed 11 dropfast t  10.0s  extent r50 150.8 r90 187.1
+seed 11 dropfast t  10.0s  kinds k0 n 24026 on 1.000 r 150.1  k1 n 5974 on 0.989 r 153.5
+seed 11 dropfast t  20.0s  tube  3950.3  loops    1  width 7.37  reach  129.5  piles 9/12  strays 0.002  ms/tick 12.92
+seed 11 dropfast t  20.0s  contrast 3.08
+seed 11 dropfast t  20.0s  extent r50 152.1 r90 188.6
+seed 11 dropfast t  20.0s  kinds k0 n 24026 on 1.000 r 151.0  k1 n 5974 on 0.987 r 156.0
+seed 11 dropfast t  30.0s  tube  3783.4  loops    0  width 7.33  reach  129.9  piles 9/12  strays 0.002  ms/tick 12.52
+seed 11 dropfast t  30.0s  contrast 2.78
+seed 11 dropfast t  30.0s  extent r50 154.2 r90 189.8
+seed 11 dropfast t  30.0s  kinds k0 n 24026 on 1.000 r 152.4  k1 n 5974 on 0.988 r 160.7
+seed 11 dropfast t  40.0s  tube  3687.9  loops    0  width 7.48  reach  130.2  piles 9/12  strays 0.002  ms/tick 12.61
+seed 11 dropfast t  40.0s  contrast 2.62
+seed 11 dropfast t  40.0s  extent r50 156.1 r90 191.2
+seed 11 dropfast t  40.0s  kinds k0 n 24026 on 1.000 r 153.8  k1 n 5974 on 0.987 r 163.7
+seed 11 dropfast t  50.0s  tube  3648.8  loops    0  width 7.55  reach  130.2  piles 9/12  strays 0.003  ms/tick 12.53
+seed 11 dropfast t  50.0s  contrast 2.56
+seed 11 dropfast t  50.0s  extent r50 156.9 r90 192.1
+seed 11 dropfast t  50.0s  kinds k0 n 24026 on 1.000 r 154.4  k1 n 5974 on 0.985 r 165.2
+seed 11 dropfast t  60.0s  tube  3615.6  loops    0  width 7.53  reach  130.2  piles 9/12  strays 0.003  ms/tick 12.54
+seed 11 dropfast t  60.0s  contrast 2.51
+seed 11 dropfast t  60.0s  extent r50 157.6 r90 192.9
+seed 11 dropfast t  60.0s  kinds k0 n 24026 on 1.000 r 155.2  k1 n 5974 on 0.985 r 165.6
+seed 11 dropfast firsts 0:72:0.57:0.0 1:46:0.59:0.0 2:84:0.68:-1.0 3:63:0.65:0.2 4:42:0.54:0.0 5:51:0.47:0.0 6:76:0.73:16.2 7:68:0.84:1.4 8:108:0.87:-1.0 9:20:0.19:0.0 10:47:0.38:0.0 11:75:0.85:-1.0
+seed 11 dropfast hash=87940c8f6e318d5b

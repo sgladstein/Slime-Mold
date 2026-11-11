@@ -1,0 +1,26 @@
+seed 13 dropscouts t  10.0s  tube  3949.9  loops    1  width 7.81  reach  132.2  piles 8/12  strays 0.002  ms/tick 12.89
+seed 13 dropscouts t  10.0s  contrast 3.04
+seed 13 dropscouts t  10.0s  extent r50 143.7 r90 186.5
+seed 13 dropscouts t  10.0s  kinds k0 n 23990 on 1.000 r 144.1  k1 n 6010 on 0.991 r 142.5
+seed 13 dropscouts t  20.0s  tube  3759.4  loops    1  width 7.88  reach  132.8  piles 8/12  strays 0.001  ms/tick 12.49
+seed 13 dropscouts t  20.0s  contrast 2.65
+seed 13 dropscouts t  20.0s  extent r50 144.4 r90 188.3
+seed 13 dropscouts t  20.0s  kinds k0 n 23990 on 1.000 r 144.7  k1 n 6010 on 0.994 r 143.3
+seed 13 dropscouts t  30.0s  tube  3682.3  loops    0  width 7.97  reach  133.2  piles 8/12  strays 0.001  ms/tick 12.31
+seed 13 dropscouts t  30.0s  contrast 2.50
+seed 13 dropscouts t  30.0s  extent r50 144.5 r90 190.0
+seed 13 dropscouts t  30.0s  kinds k0 n 23990 on 1.000 r 144.6  k1 n 6010 on 0.996 r 144.3
+seed 13 dropscouts t  40.0s  tube  3624.4  loops    0  width 8.03  reach  133.5  piles 8/12  strays 0.001  ms/tick 12.24
+seed 13 dropscouts t  40.0s  contrast 2.41
+seed 13 dropscouts t  40.0s  extent r50 144.3 r90 191.6
+seed 13 dropscouts t  40.0s  kinds k0 n 23990 on 1.000 r 144.4  k1 n 6010 on 0.996 r 143.8
+seed 13 dropscouts t  50.0s  tube  3574.9  loops    0  width 8.12  reach  133.7  piles 8/12  strays 0.001  ms/tick 12.22
+seed 13 dropscouts t  50.0s  contrast 2.32
+seed 13 dropscouts t  50.0s  extent r50 144.1 r90 192.9
+seed 13 dropscouts t  50.0s  kinds k0 n 23990 on 1.000 r 144.4  k1 n 6010 on 0.996 r 143.4
+seed 13 dropscouts t  60.0s  tube  3531.1  loops    0  width 8.05  reach  133.8  piles 8/12  strays 0.001  ms/tick 12.27
+seed 13 dropscouts t  60.0s  contrast 2.25
+seed 13 dropscouts t  60.0s  extent r50 144.1 r90 194.0
+seed 13 dropscouts t  60.0s  kinds k0 n 23990 on 1.000 r 144.6  k1 n 6010 on 0.995 r 142.2
+seed 13 dropscouts firsts 0:72:0.57:0.0 1:43:0.40:0.0 2:51:0.63:0.0 3:40:0.45:0.0 4:99:0.82:-1.0 5:66:0.75:0.6 6:59:0.51:0.2 7:94:0.80:-1.0 8:25:0.24:0.0 9:70:0.62:-1.0 10:55:0.53:0.0 11:87:0.78:-1.0
+seed 13 dropscouts hash=6565301270f2c2bf

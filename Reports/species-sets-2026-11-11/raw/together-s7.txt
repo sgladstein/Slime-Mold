@@ -1,0 +1,25 @@
+seed 7 together t  10.0s  tube 13155.9  loops   28  width 5.28  reach  192.0  piles 1/1  strays 0.001  ms/tick 184.44
+seed 7 together t  10.0s  contrast 21.58
+seed 7 together t  10.0s  pure 0.983  shares 0.306,0.694  left0 0.992  changed 0.000
+seed 7 together t  10.0s  own s0 walkers 29869 area 3005.4 pieces 93  s1 walkers 1000131 area 6514.0 pieces 9
+seed 7 together t  20.0s  tube 13019.0  loops   41  width 5.21  reach  194.6  piles 1/1  strays 0.001  ms/tick 185.47
+seed 7 together t  20.0s  contrast 25.93
+seed 7 together t  20.0s  pure 0.973  shares 0.306,0.694  left0 0.996  changed 0.112
+seed 7 together t  20.0s  own s0 walkers 29869 area 2860.9 pieces 70  s1 walkers 1000131 area 7289.4 pieces 7
+seed 7 together t  30.0s  tube 12843.7  loops   44  width 5.56  reach  192.6  piles 1/1  strays 0.000  ms/tick 188.79
+seed 7 together t  30.0s  contrast 24.58
+seed 7 together t  30.0s  pure 0.971  shares 0.306,0.694  left0 0.984  changed 0.097
+seed 7 together t  30.0s  own s0 walkers 29869 area 2847.0 pieces 64  s1 walkers 1000131 area 7195.1 pieces 4
+seed 7 together t  40.0s  tube 12550.4  loops   45  width 5.73  reach  191.0  piles 1/1  strays 0.000  ms/tick 189.32
+seed 7 together t  40.0s  contrast 20.79
+seed 7 together t  40.0s  pure 0.970  shares 0.306,0.694  left0 0.974  changed 0.105
+seed 7 together t  40.0s  own s0 walkers 29869 area 2799.8 pieces 57  s1 walkers 1000131 area 7057.4 pieces 6
+seed 7 together t  50.0s  tube 12365.7  loops   30  width 6.26  reach  189.8  piles 1/1  strays 0.000  ms/tick 190.05
+seed 7 together t  50.0s  contrast 14.27
+seed 7 together t  50.0s  pure 0.976  shares 0.306,0.694  left0 0.980  changed 0.083
+seed 7 together t  50.0s  own s0 walkers 29869 area 2724.5 pieces 49  s1 walkers 1000131 area 7500.6 pieces 1
+seed 7 together t  60.0s  tube 12217.6  loops   31  width 6.78  reach  193.3  piles 1/1  strays 0.000  ms/tick 188.80
+seed 7 together t  60.0s  contrast 9.13
+seed 7 together t  60.0s  pure 0.970  shares 0.306,0.694  left0 0.977  changed 0.056
+seed 7 together t  60.0s  own s0 walkers 29869 area 2668.5 pieces 41  s1 walkers 1000131 area 7786.3 pieces 2
+seed 7 together hash=dc41ebc013430079
