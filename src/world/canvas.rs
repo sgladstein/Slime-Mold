@@ -27,8 +27,15 @@ pub const SHADER: &str = include_str!("canvas.wgsl");
 const PRIM_WORDS: usize = 16;
 /// The most shapes a frame, and tile entries (a shape covers several
 /// tiles). Past either, shapes are dropped (the last-drawn first).
-pub const MAX_PRIMS: usize = 8192;
-pub const MAX_ITEMS: usize = 1 << 17;
+/// A frame's shapes past this many are dropped (a runaway, not a busy
+/// screen: the busiest page, the help over a full selection, is ~1,500).
+pub const MAX_PRIMS: usize = 1 << 16;
+/// The GPU buffers' first sizes; they grow when a frame needs more. (They
+/// once stayed fixed and a frame over the item budget kept each tile's
+/// first shapes, which are the panels, and dropped the text and menus on
+/// top: the review of 2026-11-11 caught it.)
+const FIRST_PRIMS: usize = 8192;
+const FIRST_ITEMS: usize = 1 << 17;
 pub const TILE: u32 = 16;
 /// The atlas, in texels a side.
 pub const ATLAS: u32 = 1024;
@@ -159,6 +166,10 @@ pub struct Atlas {
     slots: HashMap<Key, Option<Slot>>,
     shelf: (u32, u32, u32),
     pub dirty: bool,
+    /// Something did not fit: the canvas clears the atlas before the next
+    /// frame, which rasterizes what it uses again. (Without this a window
+    /// resized through many sizes filled it, and new text never showed.)
+    full: bool,
     fonts: [FontRef<'static>; 2],
 }
 
@@ -171,7 +182,20 @@ impl Default for Atlas {
 impl Atlas {
     pub fn new() -> Self {
         let fonts = [FontRef::try_from_slice(MEDIUM).expect("Inter Medium"), FontRef::try_from_slice(SEMIBOLD).expect("Inter SemiBold")];
-        Atlas { texels: vec![0; (ATLAS * ATLAS) as usize], slots: HashMap::new(), shelf: (1, 1, 0), dirty: true, fonts }
+        Atlas { texels: vec![0; (ATLAS * ATLAS) as usize], slots: HashMap::new(), shelf: (1, 1, 0), dirty: true, full: false, fonts }
+    }
+
+    /// Empties the atlas (everything is rasterized again on next use).
+    pub fn reset(&mut self) {
+        self.texels.fill(0);
+        self.slots.clear();
+        self.shelf = (1, 1, 0);
+        self.full = false;
+        self.dirty = true;
+    }
+
+    pub fn is_full(&self) -> bool {
+        self.full
     }
 
     fn font(&self, w: Weight) -> &FontRef<'static> {
@@ -183,6 +207,7 @@ impl Atlas {
         let (x, y, row) = self.shelf;
         let (x, y, row) = if x + w + 1 > ATLAS { (1, y + row + 1, 0) } else { (x, y, row) };
         if y + h + 1 > ATLAS {
+            self.full = true;
             return None;
         }
         self.shelf = (x + w + 1, y, row.max(h));
@@ -282,8 +307,12 @@ impl Canvas {
         Canvas { prims: Vec::new(), atlas: Atlas::new(), screen }
     }
 
+    /// Starts a frame (and empties the atlas if the last frame filled it).
     pub fn clear(&mut self) {
         self.prims.clear();
+        if self.atlas.full {
+            self.atlas.reset();
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -463,19 +492,6 @@ impl Canvas {
                 }
             }
         }
-        if items.len() > MAX_ITEMS {
-            // Too many tile entries: keep each tile's first shapes.
-            let mut kept = Vec::with_capacity(MAX_ITEMS);
-            let mut off = vec![0u32; n + 1];
-            let per = (MAX_ITEMS / n.max(1)).max(1);
-            for t in 0..n {
-                let a = offsets[t] as usize;
-                let b = (offsets[t + 1] as usize).min(a + per);
-                kept.extend_from_slice(&items[a..b]);
-                off[t + 1] = kept.len() as u32;
-            }
-            return (off, kept, (tx, ty));
-        }
         (offsets, items, (tx, ty))
     }
 
@@ -527,9 +543,9 @@ impl CanvasPass {
             pipe,
             bgl,
             params,
-            prims: storage(device, "canvas prims", (MAX_PRIMS * PRIM_WORDS * 4) as u64),
+            prims: storage(device, "canvas prims", (FIRST_PRIMS * PRIM_WORDS * 4) as u64),
             offsets: storage(device, "canvas offsets", 16),
-            items: storage(device, "canvas items", (MAX_ITEMS * 4) as u64),
+            items: storage(device, "canvas items", (FIRST_ITEMS * 4) as u64),
             atlas: storage(device, "canvas atlas", (ATLAS * ATLAS) as u64),
             group: None,
             tiles: (0, 0),
@@ -552,10 +568,18 @@ impl CanvasPass {
             self.group = None;
         }
         self.queue.write_buffer(&self.offsets, 0, &u32s(&offsets));
+        if self.items.size() < (items.len() * 4) as u64 {
+            self.items = storage(&self.device, "canvas items", (items.len() * 4).next_power_of_two() as u64);
+            self.group = None;
+        }
         if !items.is_empty() {
             self.queue.write_buffer(&self.items, 0, &u32s(&items));
         }
         let words = c.words();
+        if self.prims.size() < (words.len() * 4) as u64 {
+            self.prims = storage(&self.device, "canvas prims", (words.len() * 4).next_power_of_two() as u64);
+            self.group = None;
+        }
         if !words.is_empty() {
             self.queue.write_buffer(&self.prims, 0, &u32s(&words));
         }
@@ -633,6 +657,38 @@ mod tests {
         assert_eq!(tile(6), vec![1]);
         assert_eq!(tile(7), vec![1]);
         assert_eq!(tile(5), Vec::<u32>::new());
+    }
+
+    #[test]
+    fn a_full_atlas_is_emptied_for_the_next_frame() {
+        let mut c = Canvas::new((1920, 1080));
+        let text = "The quick brown fox jumps over the lazy dog 0123456789";
+        let mut px = 8.0;
+        while !c.atlas.is_full() && px < 400.0 {
+            c.text(Weight::Medium, px, (0.0, 100.0), Align::Left, text, [255; 4]);
+            px += 1.0;
+        }
+        assert!(c.atlas.is_full(), "never filled");
+        c.clear();
+        assert!(!c.atlas.is_full());
+        // Text draws again (its glyphs go back in).
+        let before = c.len();
+        c.text(Weight::Medium, 20.0, (0.0, 100.0), Align::Left, "Again", [255; 4]);
+        assert!(c.len() > before);
+    }
+
+    #[test]
+    fn every_shape_is_binned_however_many() {
+        // A full-screen modal under many shapes: no tile drops its top ones.
+        let mut c = Canvas::new((256, 256));
+        for _ in 0..3000 {
+            c.rrect(Rect::new(0.0, 0.0, 256.0, 256.0), 0.0, [0, 0, 0, 10]);
+        }
+        let (offsets, items, _) = c.bin();
+        assert_eq!(items.len(), 3000 * 256);
+        assert_eq!(*offsets.last().unwrap() as usize, items.len());
+        // Each tile's list ends with the last shape drawn.
+        assert_eq!(items[offsets[1] as usize - 1], 2999);
     }
 
     #[test]

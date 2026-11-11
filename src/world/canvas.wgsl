@@ -102,8 +102,9 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(workgroup_id) wg
                 }
             } else {
                 // A bar: colour left of the fill, colour2 right of it.
+                // The fill's end anti-aliased like the box's edges.
                 let edge = lo.x + (hi.x - lo.x) * f(b, 13u);
-                if (p.x > edge) { fill = col2; }
+                fill = mix(col2, col, clamp(edge - p.x + 0.5, 0.0, 1.0));
             }
             c = over(c, fill.rgb, fill.a * cover);
             // A border `bw` wide inside the edge, in word 12's colour.

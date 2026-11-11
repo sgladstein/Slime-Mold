@@ -1086,7 +1086,7 @@ impl App {
                     }
                 }
             }
-            KeyCode::Space => self.paused = !self.paused,
+            KeyCode::Space | KeyCode::KeyP | KeyCode::Pause => self.paused = !self.paused,
             KeyCode::Period => self.step_once = true,
             KeyCode::KeyR => self.restart(),
             KeyCode::KeyN => {
@@ -1190,8 +1190,12 @@ impl App {
         if let Some(c) = self.canvas.as_mut() {
             c.clear();
             if let Some(sq) = self.squad.as_ref() {
+                // What is under the cursor in the world (not behind a panel
+                // or the minimap), and where a placement would land
+                // (through the minimap when on it).
                 let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
-                let ghost = self.hud.targeting().and_then(|(id, _, from)| hover.map(|h| (id, h, from)));
+                let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
+                let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
                 let model = sq.model(&self.controls.selected, hover, ghost, self.paused);
                 self.hud.draw(&model, &self.controls, &self.camera, minimap, c, &mut self.marks);
                 self.camera.set_inset(self.hud.top, c.screen.1 as f32 - self.hud.bottom);
@@ -1869,7 +1873,8 @@ fn ui_state(state: &str, sq: &mut Squad, k: &mut Controls, cam: &mut Camera, vie
         canvas.clear();
         marks.clear();
         let hover = k.cursor.filter(|&p| !hud.over(p)).and_then(|p| cam.world_at(p));
-        let ghost = hud.targeting().and_then(|(id, _, from)| hover.map(|h| (id, h, from)));
+        let aim = k.cursor.and_then(|p| hud.aim(p, cam));
+        let ghost = hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
         let m = sq.model(&k.selected, hover, ghost, paused);
         hud.draw(&m, k, cam, minimap, canvas, marks);
         cam.set_inset(hud.top, canvas.screen.1 as f32 - hud.bottom);

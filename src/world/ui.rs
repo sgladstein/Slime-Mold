@@ -116,6 +116,8 @@ pub struct Command {
     pub on: bool,
     /// Cooling down: 1 just used, 0 ready.
     pub cooldown: f32,
+    /// The time left, in the button's middle while it cools ("7s").
+    pub wait: Option<String>,
     pub target: Target,
     /// The tooltip's body.
     pub about: String,
@@ -125,7 +127,7 @@ pub struct Command {
 
 impl Command {
     pub fn new(id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode) -> Self {
-        Command { id, slot, icon, name: name.into(), key, cost: None, cost_icon: Icon::Crystal, ready: true, on: false, cooldown: 0.0, target: Target::Instant, about: String::new(), why_not: None }
+        Command { id, slot, icon, name: name.into(), key, cost: None, cost_icon: Icon::Crystal, ready: true, on: false, cooldown: 0.0, wait: None, target: Target::Instant, about: String::new(), why_not: None }
     }
 }
 
@@ -181,8 +183,16 @@ pub struct Model {
     pub commands: Vec<Command>,
     /// Local units with nothing to do.
     pub idle: usize,
-    /// Whether the targeting ghost is somewhere the command can go.
+    /// Whether the targeting ghost is somewhere the command can go; a
+    /// placement where it cannot is refused (targeting stays) and
+    /// `ghost_note` says why.
     pub ghost_ok: bool,
+    /// Beside the cursor while placing: the cost of what is drawn so far,
+    /// or why it cannot go there.
+    pub ghost_note: Option<String>,
+    /// A small card by the cursor for what is under it (an enemy, the
+    /// mould), leaving the selection panel alone.
+    pub hover: Option<Info>,
     /// The round is over: a title and lines.
     pub end: Option<(String, Vec<String>)>,
     /// Extra lines for the controls page (key, what it does).
@@ -275,8 +285,17 @@ pub struct Hud {
     pub minimap_box: Option<(u32, u32, u32, u32)>,
     pub minimap: Option<(u32, u32, u32, u32)>,
     pub top: f32,
+    /// The world's size in cells, as last drawn (for the minimap).
+    world: (f32, f32),
     /// The end-of-round screen is up (its buttons take every click).
     end: bool,
+    /// Which buttons (left, right, middle) the UI took on their press: a
+    /// release is the UI's only when its press was, so a drag-box or a pan
+    /// that ends over a panel still ends in the controls.
+    took: [bool; 3],
+    /// The model's `ghost_ok` and `ghost_note`, as last drawn.
+    ghost_ok: bool,
+    ghost_note: Option<String>,
     started: Instant,
 }
 
@@ -288,7 +307,7 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, end: false, started: Instant::now() }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, started: Instant::now() }
     }
 
     /// The menu is open (the game should pause).
@@ -307,8 +326,30 @@ impl Hud {
     }
 
     /// Whether a screen point is on the UI (clicks there are the UI's).
+    /// Whether a screen point is on the UI, the minimap included (the
+    /// world behind them is not under the cursor).
     pub fn over(&self, p: (f32, f32)) -> bool {
-        self.menu.is_some() || self.end || self.hits.iter().any(|(r, _)| r.contains(p))
+        self.menu.is_some() || self.end || self.hits.iter().any(|(r, _)| r.contains(p)) || self.on_minimap(p).is_some()
+    }
+
+    /// The world point a screen point on the minimap stands for.
+    pub fn on_minimap(&self, p: (f32, f32)) -> Option<(f32, f32)> {
+        let mm = self.minimap?;
+        let w = self.world;
+        super::view::minimap_world(mm, (w.0 as usize, w.1 as usize), p)
+    }
+
+    /// Where a placement at screen point `p` goes in the world: through the
+    /// minimap when it is on it (the world behind the minimap is hidden),
+    /// none over a panel or off the world.
+    pub fn aim(&self, p: (f32, f32), cam: &Camera) -> Option<(f32, f32)> {
+        if let Some(w) = self.on_minimap(p) {
+            return Some(w);
+        }
+        if self.hit(p).is_some() {
+            return None;
+        }
+        cam.world_at(p)
     }
 
     fn hit(&self, p: (f32, f32)) -> Option<Hit> {
@@ -348,6 +389,63 @@ impl Hud {
     /// A mouse button. Returns whether the UI took it (then the controls
     /// should not see it) and what it gave the game.
     pub fn button(&mut self, b: Button, pressed: bool, cam: &Camera, shift: bool) -> (bool, Vec<HudEvent>) {
+        let k = match b {
+            Button::Left => 0,
+            Button::Right => 1,
+            Button::Middle => 2,
+        };
+        if pressed {
+            let (took, out) = self.button_inner(b, true, cam, shift);
+            self.took[k] = took;
+            return (took, out);
+        }
+        let took = std::mem::take(&mut self.took[k]);
+        // A line being laid ends where the button comes up, over a panel
+        // or not (on a panel it ends at the world edge under the cursor).
+        if let (Button::Left, Some(t)) = (b, self.targeting) {
+            if let (Target::Line { .. }, Some(from)) = (t.target, t.from) {
+                let mut out = Vec::new();
+                let p = self.hover.unwrap_or((0.0, 0.0));
+                let to = self.aim(p, cam).unwrap_or_else(|| {
+                    let w = cam.to_world(p);
+                    (w.0.clamp(0.0, cam.world.0 - 1.0), w.1.clamp(0.0, cam.world.1 - 1.0))
+                });
+                if self.refused(t.id) {
+                    self.targeting = Some(Targeting { from: None, ..t });
+                } else {
+                    out.push(HudEvent::Line { id: t.id, from, to });
+                    self.targeting = if shift { Some(Targeting { from: None, ..t }) } else { None };
+                }
+                return (true, out);
+            }
+        }
+        if !took {
+            self.pressed = None;
+            return (false, Vec::new());
+        }
+        let (_, out) = self.button_inner(b, false, cam, shift);
+        (true, out)
+    }
+
+    /// A placement where the ghost is red, or of a command no longer
+    /// ready: refused, with the reason as an alert; targeting stays.
+    fn refused(&mut self, id: u32) -> bool {
+        let cmd = self.commands.iter().find(|c| c.id == id).cloned();
+        let why = match cmd {
+            Some(c) if !c.ready => Some(c.why_not.unwrap_or_else(|| "Not ready".into())),
+            _ if !self.ghost_ok => Some(self.ghost_note.clone().unwrap_or_else(|| "It cannot go there".into())),
+            _ => None,
+        };
+        match why {
+            Some(w) => {
+                self.alert(&w, None, WARN);
+                true
+            }
+            None => false,
+        }
+    }
+
+    fn button_inner(&mut self, b: Button, pressed: bool, cam: &Camera, shift: bool) -> (bool, Vec<HudEvent>) {
         let mut out = Vec::new();
         let Some(p) = self.hover else { return (false, out) };
         let hit = self.hit(p);
@@ -374,15 +472,18 @@ impl Hud {
                 // A click on another button while targeting: that button.
                 self.targeting = None;
             } else if hit.is_none() {
+                // (Over the minimap too: a placement there lands on the
+                // world point the minimap shows.)
                 match (b, pressed) {
                     (Button::Right, true) => {
                         self.targeting = None;
                         return (true, out);
                     }
                     (Button::Left, true) => {
-                        if let Some(w) = cam.world_at(p) {
+                        if let Some(w) = self.aim(p, cam) {
                             match t.target {
                                 Target::Line { .. } => self.targeting = Some(Targeting { from: Some(w), ..t }),
+                                _ if self.refused(t.id) => {}
                                 _ => {
                                     out.push(HudEvent::Point { id: t.id, at: w });
                                     if !shift {
@@ -393,15 +494,7 @@ impl Hud {
                         }
                         return (true, out);
                     }
-                    (Button::Left, false) => {
-                        if let (Target::Line { .. }, Some(from)) = (t.target, t.from) {
-                            let to = cam.to_world(p);
-                            let to = (to.0.clamp(0.0, cam.world.0 - 1.0), to.1.clamp(0.0, cam.world.1 - 1.0));
-                            out.push(HudEvent::Line { id: t.id, from, to });
-                            self.targeting = if shift { Some(Targeting { from: None, ..t }) } else { None };
-                        }
-                        return (true, out);
-                    }
+                    (Button::Left, false) => return (true, out),
                     _ => return (b != Button::Middle, out),
                 }
             }
@@ -443,6 +536,10 @@ impl Hud {
         if !pressed {
             return (false, out);
         }
+        // The end screen takes every key (only its buttons act).
+        if self.end {
+            return (true, out);
+        }
         if code == KeyCode::Escape {
             if self.targeting.take().is_some() {
                 return (true, out);
@@ -463,11 +560,14 @@ impl Hud {
         if self.menu.is_some() {
             return (true, out);
         }
+        // Space is always the alerts' key (it once fell through to the
+        // sandbox's pause when no alert had a place, so what it did
+        // depended on state the player cannot see; P pauses).
         if code == KeyCode::Space {
             if let Some(at) = self.alerts.iter().rev().find_map(|a| a.at) {
                 cam.centre_on(at);
-                return (true, out);
             }
+            return (true, out);
         }
         if ctrl {
             return (false, out);
@@ -485,14 +585,21 @@ impl Hud {
     /// view).
     pub fn draw(&mut self, m: &Model, controls: &Controls, cam: &Camera, minimap: bool, c: &mut Canvas, world: &mut Marks) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        let s = (sh / 1080.0).clamp(0.7, 1.6);
+        // In steps of 0.05, so a window dragged through every size
+        // rasterizes a few sets of glyph sizes, not one a pixel.
+        let s = ((sh / 1080.0).clamp(0.7, 2.4) * 20.0).round() / 20.0;
         self.scale = s;
+        self.world = cam.world;
         self.hits.clear();
         self.commands = m.commands.clone();
+        self.ghost_ok = m.ghost_ok;
+        self.ghost_note = m.ghost_note.clone();
         if let Some(t) = self.targeting {
-            // The command may have gone (selection changed); keep it only
-            // while it is still on the card and ready.
-            let still = m.commands.iter().position(|k| k.id == t.id && k.ready);
+            // The command may have gone (selection changed); keep it while
+            // it is still on the card. (It once also had to stay ready, so
+            // a wall drag ended silently when energy dipped mid-drag; now
+            // the placement is refused with the reason instead.)
+            let still = m.commands.iter().position(|k| k.id == t.id);
             self.targeting = still.map(|index| Targeting { index, ..t });
         }
         let now = Instant::now();
@@ -514,7 +621,8 @@ impl Hud {
         self.minimap = None;
         if minimap {
             let ih = panel_h - 2.0 * pad;
-            let iw = (ih * cam.world.0 / cam.world.1).clamp(ih * 0.6, (360.0 * s).min(sw * 0.25));
+            // (min then max, not `clamp`, which panics in a narrow window.)
+            let iw = (ih * cam.world.0 / cam.world.1).min((360.0 * s).min(sw * 0.25)).max(ih * 0.6);
             let f = Rect::new(right - iw - 2.0 * pad, top_of, iw + 2.0 * pad, panel_h);
             let bx = ((f.x + pad).round() as u32, (f.y + pad).round() as u32, iw.round() as u32, ih.round() as u32);
             let mm = super::view::minimap_in((cam.world.0 as usize, cam.world.1 as usize), bx);
@@ -541,6 +649,9 @@ impl Hud {
         self.command_card(m, card, c, s);
         self.alerts_draw(c, world, s);
         self.ghost(m, cam, c, world, s);
+        if let (Some(h), Some(p), None) = (&m.hover, self.hover, self.targeting) {
+            self.hover_card(h, p, c, s);
+        }
         self.end = m.end.is_some();
         if let Some((title, lines)) = &m.end {
             self.end_screen(title, lines, c, s);
@@ -654,18 +765,25 @@ impl Hud {
             x += w + 8.0 * s;
         }
         for (g, members) in controls.groups.iter().enumerate() {
-            let alive = members.iter().filter(|k| m.selection.iter().any(|q| q.id == **k) || controls.selected.contains(k)).count().max(members.len());
+            // The controls prune the dead from groups every frame, so the
+            // members are the living.
             if members.is_empty() {
                 continue;
             }
             let label = format!("{}", g + 1);
-            let count = format!("{alive}");
-            let w = 18.0 * s + c.atlas.measure(Weight::SemiBold, 12.0 * s, &label) + c.atlas.measure(Weight::Medium, 11.0 * s, &count) + 6.0 * s;
+            let count = format!("{}", members.len());
+            // The group's key, then a soldier and how many.
+            let w = 9.0 * s + c.atlas.measure(Weight::SemiBold, 12.0 * s, &label) + 8.0 * s + 12.0 * s + 3.0 * s + c.atlas.measure(Weight::Medium, 11.5 * s, &count) + 10.0 * s;
             let chip = Rect::new(x, y, w, chip_h);
             let on = !controls.selected.is_empty() && controls.selected == *members;
             self.chip(chip, Hit::Group(g), on, c, s);
             let lw = c.text(Weight::SemiBold, 12.0 * s, (chip.x + 9.0 * s, chip.y + 16.5 * s), Align::Left, &label, if on { ACCENT } else { TEXT });
-            c.text(Weight::Medium, 11.0 * s, (chip.x + 15.0 * s + lw, chip.y + 16.5 * s), Align::Left, &count, MUTED);
+            let ix = chip.x + 17.0 * s + lw;
+            c.icon(Icon::Soldier, (ix, chip.y + 6.0 * s), 12.0 * s, MUTED);
+            c.text(Weight::Medium, 11.5 * s, (ix + 15.0 * s, chip.y + 16.5 * s), Align::Left, &count, MUTED);
+            if self.hover.is_some_and(|p| chip.contains(p)) {
+                self.tip_small(&format!("Group {}: {} soldiers. {} selects it, twice to look", g + 1, members.len(), g + 1), (chip.x, chip.y - 30.0 * s), c, s);
+            }
             x += w + 6.0 * s;
         }
 
@@ -689,8 +807,8 @@ impl Hud {
         let hw = c.text(Weight::SemiBold, 15.0 * s, (inner.x, inner.y + 14.0 * s), Align::Left, &head, TEXT);
         let sub = if hurt > 0 { format!("{:.0}% health on average, {hurt} hurt", mean * 100.0) } else { format!("{:.0}% health on average", mean * 100.0) };
         c.text(Weight::Medium, 12.5 * s, (inner.x + hw + 12.0 * s, inner.y + 14.0 * s), Align::Left, &sub, MUTED);
-        let cw = 46.0 * s;
-        let cgap = 6.0 * s;
+        let cw = 54.0 * s;
+        let cgap = 7.0 * s;
         let top = inner.y + 26.0 * s;
         let cols = ((inner.w + cgap) / (cw + cgap)).floor().max(1.0) as usize;
         let rows = ((inner.bottom() - top + cgap) / (cw + cgap)).floor().max(1.0) as usize;
@@ -710,10 +828,11 @@ impl Hud {
             let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
             c.panel(cell, 8.0 * s, t, b, 1.0, EDGE);
             let col = super::marks::team_colour(q.team);
-            c.icon(q.icon, (cell.x + (cw - 24.0 * s) / 2.0, cell.y + 6.0 * s), 24.0 * s, col);
-            c.bar(Rect::new(cell.x + 6.0 * s, cell.bottom() - 10.0 * s, cw - 12.0 * s, 4.0 * s), q.hp, health_colour(q.hp), TRACK);
+            c.icon(q.icon, (cell.x + 6.0 * s, cell.y + 7.0 * s), 26.0 * s, col);
+            c.bar(Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s), q.hp, health_colour(q.hp), TRACK);
             if let Some(b) = q.badge {
-                c.icon(b, (cell.right() - 15.0 * s, cell.y + 3.0 * s), 12.0 * s, MUTED);
+                // The weapon, big enough to read (it was 12 px).
+                c.icon(b, (cell.right() - 21.0 * s, cell.y + 5.0 * s), 17.0 * s, TEXT);
             }
             self.hits.push((cell, Hit::Card(q.id)));
         }
@@ -816,7 +935,7 @@ impl Hud {
             c.icon(cmd.icon, (b.x + (cell - ic) / 2.0, b.y + (cell - ic) / 2.0 - 2.0 * s), ic, alpha(if cmd.on { ACCENT } else { TEXT }, dim));
             // The hotkey, top left.
             if let Some(k) = key_name(cmd.key) {
-                c.text(Weight::SemiBold, 10.5 * s, (b.x + 6.0 * s, b.y + 13.0 * s), Align::Left, &k, alpha(MUTED, dim.max(0.6)));
+                c.text(Weight::SemiBold, 11.5 * s, (b.x + 6.0 * s, b.y + 14.0 * s), Align::Left, &k, alpha(TEXT, 0.72 * dim.max(0.6)));
             }
             if let Some(cost) = &cmd.cost {
                 let cw = c.atlas.measure(Weight::SemiBold, 10.5 * s, cost);
@@ -825,8 +944,12 @@ impl Hud {
                 c.icon(cmd.cost_icon, (cx - 12.0 * s, b.bottom() - 15.0 * s), 10.0 * s, alpha(ENERGY, dim.max(0.6)));
             }
             if cmd.cooldown > 0.0 {
-                c.rrect(b, 10.0 * s, [0, 0, 0, 110]);
-                c.ring(b.inset(3.0 * s), 8.0 * s, 2.5 * s, cmd.cooldown, alpha(ACCENT, 0.9));
+                // A dark wipe over the part still to go (a ring round the
+                // edge read as a broken border), and the time left.
+                c.ring(b, 10.0 * s, cell, cmd.cooldown.min(1.0), [0, 0, 0, 150]);
+                if let Some(wt) = &cmd.wait {
+                    c.text(Weight::SemiBold, 15.0 * s, (b.x + cell / 2.0, b.y + cell / 2.0 + 5.0 * s), Align::Centre, wt, TEXT);
+                }
             }
             self.hits.push((b, Hit::Command(k)));
             if hot {
@@ -844,7 +967,8 @@ impl Hud {
         let lines = c.wrap(Weight::Medium, px, w - 28.0 * s, &cmd.about);
         let why = if cmd.ready { None } else { cmd.why_not.clone() };
         let h = 18.0 * s + 22.0 * s + if cmd.about.is_empty() { 0.0 } else { lines.len() as f32 * 18.0 * s + 8.0 * s } + if why.is_some() { 20.0 * s } else { 0.0 } + 10.0 * s;
-        let x = (b.x + b.w / 2.0 - w / 2.0).clamp(8.0 * s, card.right() - w);
+        // Not `clamp`: it panics when the card is narrower than the tip.
+        let x = (b.x + b.w / 2.0 - w / 2.0).min(card.right() - w).max(8.0 * s);
         let r = Rect::new(x, card.y - h - 10.0 * s, w, h);
         c.shadow(r, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
         c.panel(r, 10.0 * s, [34, 40, 49, 248], [24, 29, 36, 250], 1.0, EDGE);
@@ -917,10 +1041,7 @@ impl Hud {
 
     fn ghost(&mut self, m: &Model, cam: &Camera, c: &mut Canvas, world: &mut Marks, s: f32) {
         let (Some(t), Some(p)) = (self.targeting, self.hover) else { return };
-        if self.hit(p).is_some() {
-            return;
-        }
-        let at = cam.to_world(p);
+        let Some(at) = self.aim(p, cam) else { return };
         let col = if m.ghost_ok { [96, 230, 150, 255] } else { [245, 96, 96, 255] };
         let fill = alpha(col, 0.28);
         match t.target {
@@ -951,8 +1072,41 @@ impl Hud {
             (Target::Line { .. }, Some(_)) => "release to lay",
             _ => "click to place",
         };
-        let text = format!("{name}: {how}, right-click to cancel");
+        let text = match &m.ghost_note {
+            Some(n) => format!("{name}: {n}"),
+            None => format!("{name}: {how}, right-click to cancel"),
+        };
         self.tip_small(&text, (p.0 + 18.0 * s, p.1 + 18.0 * s), c, s);
+    }
+
+    /// What is under the cursor, in a small card beside it: name, health
+    /// and a line of stats.
+    fn hover_card(&mut self, info: &Info, p: (f32, f32), c: &mut Canvas, s: f32) {
+        let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
+        let stats = info.stats.iter().map(|(l, v)| format!("{l} {v}")).collect::<Vec<_>>().join("  ·  ");
+        let w = (c.atlas.measure(Weight::SemiBold, 14.0 * s, &info.title).max(c.atlas.measure(Weight::Medium, 12.0 * s, &stats)).max(c.atlas.measure(Weight::Medium, 12.0 * s, &info.subtitle)) + 28.0 * s).max(200.0 * s);
+        let h = 22.0 * s + 18.0 * s + if info.hp.is_some() { 18.0 * s } else { 0.0 } + if stats.is_empty() { 0.0 } else { 18.0 * s } + 12.0 * s;
+        // Below right of the cursor, kept on the screen and off the panels.
+        let x = (p.0 + 20.0 * s).min(sw - w - 8.0 * s).max(8.0 * s);
+        let y = (p.1 + 20.0 * s).min(self.bottom - h - 8.0 * s).min(sh - h - 8.0 * s).max(self.top + 8.0 * s);
+        let r = Rect::new(x, y, w, h);
+        c.shadow(r, 10.0 * s, 14.0 * s, 3.0 * s, SHADOW);
+        c.panel(r, 10.0 * s, [34, 40, 49, 245], [24, 29, 36, 248], 1.0, alpha(info.colour, 0.5));
+        let mut ty = r.y + 22.0 * s;
+        c.icon(info.icon, (r.x + 12.0 * s, ty - 14.0 * s), 16.0 * s, info.colour);
+        c.text(Weight::SemiBold, 14.0 * s, (r.x + 34.0 * s, ty), Align::Left, &info.title, TEXT);
+        ty += 18.0 * s;
+        c.text_fit(Weight::Medium, 12.0 * s, (r.x + 14.0 * s, ty), Align::Left, &info.subtitle, w - 28.0 * s, MUTED);
+        if let Some((f, words)) = &info.hp {
+            ty += 18.0 * s;
+            let ww = c.atlas.measure(Weight::SemiBold, 12.0 * s, words);
+            c.bar(Rect::new(r.x + 14.0 * s, ty - 8.0 * s, w - 40.0 * s - ww, 6.0 * s), *f, health_colour(*f), TRACK);
+            c.text(Weight::SemiBold, 12.0 * s, (r.right() - 14.0 * s, ty), Align::Right, words, TEXT);
+        }
+        if !stats.is_empty() {
+            ty += 18.0 * s;
+            c.text_fit(Weight::Medium, 12.0 * s, (r.x + 14.0 * s, ty), Align::Left, &stats, w - 28.0 * s, MUTED);
+        }
     }
 
     fn modal(&mut self, w: f32, h: f32, c: &mut Canvas, s: f32) -> Rect {
@@ -1095,4 +1249,183 @@ pub fn key_name(k: KeyCode) -> Option<String> {
         _ => return None,
     };
     Some(s.into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const POINT: u32 = 1;
+    const WALL: u32 = 2;
+    const NOW: u32 = 3;
+
+    struct Rig {
+        hud: Hud,
+        c: Canvas,
+        cam: Camera,
+        k: Controls,
+        m: Model,
+        marks: Marks,
+    }
+
+    impl Rig {
+        fn new(screen: (u32, u32)) -> Self {
+            let m = Model {
+                commands: vec![
+                    Command { target: Target::Point { radius: 4.0 }, ..Command::new(POINT, (0, 0), Icon::Attack, "Point", KeyCode::KeyA) },
+                    Command { target: Target::Line { width: 2.0 }, ..Command::new(WALL, (2, 2), Icon::Wall, "Wall", KeyCode::KeyV) },
+                    Command::new(NOW, (0, 1), Icon::Stop, "Now", KeyCode::KeyS),
+                ],
+                ghost_ok: true,
+                ..Model::default()
+            };
+            let mut cam = Camera::new((2048, 1280), screen);
+            cam.zoom_to(2.0, (screen.0 as f32 / 2.0, screen.1 as f32 / 2.0));
+            let mut r = Rig { hud: Hud::new(), c: Canvas::new(screen), cam, k: Controls::new(0), m, marks: Marks::default() };
+            r.draw();
+            r
+        }
+
+        fn draw(&mut self) {
+            self.c.clear();
+            self.marks.clear();
+            self.hud.draw(&self.m, &self.k, &self.cam, true, &mut self.c, &mut self.marks);
+        }
+
+        fn centre(&self, id: u32) -> (f32, f32) {
+            let r = self.hud.command_rect(id).unwrap();
+            (r.x + r.w / 2.0, r.y + r.h / 2.0)
+        }
+
+        fn at(&mut self, p: (f32, f32)) {
+            self.hud.moved(Some(p));
+        }
+
+        fn click(&mut self, b: Button, pressed: bool) -> (bool, Vec<HudEvent>) {
+            self.hud.button(b, pressed, &self.cam, false)
+        }
+
+        fn key(&mut self, code: KeyCode) -> (bool, Vec<HudEvent>) {
+            self.hud.key(code, true, false, &mut self.cam)
+        }
+    }
+
+    const WORLD_SPOT: (f32, f32) = (700.0, 400.0);
+
+    #[test]
+    fn a_drag_or_pan_that_ends_over_a_panel_still_ends_in_the_controls() {
+        let mut r = Rig::new((1920, 1080));
+        for b in [Button::Left, Button::Middle, Button::Right] {
+            r.at(WORLD_SPOT);
+            assert!(!r.click(b, true).0, "{b:?} press on the world");
+            r.at(r.centre(NOW));
+            let (took, ev) = r.click(b, false);
+            assert!(!took && ev.is_empty(), "{b:?} release over a panel was swallowed");
+        }
+    }
+
+    #[test]
+    fn a_button_clicked_gives_its_command() {
+        let mut r = Rig::new((1920, 1080));
+        r.at(r.centre(NOW));
+        assert!(r.click(Button::Left, true).0);
+        assert_eq!(r.click(Button::Left, false), (true, vec![HudEvent::Command { id: NOW }]));
+    }
+
+    #[test]
+    fn a_wall_released_over_a_panel_is_still_laid() {
+        let mut r = Rig::new((1920, 1080));
+        r.key(KeyCode::KeyV);
+        r.draw();
+        r.at(WORLD_SPOT);
+        assert!(r.click(Button::Left, true).0);
+        assert!(r.hud.targeting().unwrap().2.is_some(), "the line's first end");
+        r.at(r.centre(NOW));
+        let (took, ev) = r.click(Button::Left, false);
+        assert!(took);
+        assert!(matches!(ev.as_slice(), [HudEvent::Line { id: WALL, .. }]), "{ev:?}");
+        assert!(r.hud.targeting().is_none());
+    }
+
+    #[test]
+    fn a_placement_on_the_minimap_lands_where_the_minimap_shows() {
+        let mut r = Rig::new((1920, 1080));
+        let mm = r.hud.minimap.expect("a minimap");
+        r.key(KeyCode::KeyA);
+        r.draw();
+        r.at((mm.0 as f32 + mm.2 as f32 / 2.0, mm.1 as f32 + mm.3 as f32 / 2.0));
+        let (took, ev) = r.click(Button::Left, true);
+        assert!(took);
+        let [HudEvent::Point { id: POINT, at }] = ev.as_slice() else { panic!("{ev:?}") };
+        assert!((at.0 - 1024.0).abs() < 8.0 && (at.1 - 640.0).abs() < 8.0, "{at:?}");
+    }
+
+    #[test]
+    fn a_red_ghost_is_refused_and_targeting_stays() {
+        let mut r = Rig::new((1920, 1080));
+        r.m.ghost_ok = false;
+        r.m.ghost_note = Some("too close".into());
+        r.key(KeyCode::KeyA);
+        r.draw();
+        r.at(WORLD_SPOT);
+        let (took, ev) = r.click(Button::Left, true);
+        assert!(took && ev.is_empty(), "{ev:?}");
+        assert!(r.hud.targeting().is_some());
+        assert!(r.hud.alerts.iter().any(|a| a.text == "too close"));
+    }
+
+    #[test]
+    fn the_end_screen_takes_every_key() {
+        let mut r = Rig::new((1920, 1080));
+        r.m.end = Some(("Over".into(), vec![]));
+        r.draw();
+        assert_eq!(r.key(KeyCode::KeyA), (true, vec![]));
+        assert_eq!(r.key(KeyCode::Escape), (true, vec![]));
+        assert!(!r.hud.menu_open() && r.hud.targeting().is_none());
+        // A click off its buttons does nothing either.
+        r.at(WORLD_SPOT);
+        assert_eq!(r.click(Button::Left, true), (true, vec![]));
+    }
+
+    #[test]
+    fn escape_walks_the_menu_pages() {
+        let mut r = Rig::new((1920, 1080));
+        assert_eq!(r.key(KeyCode::Escape).1, vec![HudEvent::Menu(MenuItem::Opened)]);
+        r.hud.show_help();
+        assert_eq!(r.key(KeyCode::Escape).1, vec![]);
+        assert!(r.hud.menu_open(), "help goes back to the main page");
+        assert_eq!(r.key(KeyCode::Escape).1, vec![HudEvent::Menu(MenuItem::Resume)]);
+        assert!(!r.hud.menu_open());
+        // With the menu open, hotkeys do nothing.
+        r.key(KeyCode::Escape);
+        assert_eq!(r.key(KeyCode::KeyS), (true, vec![]));
+    }
+
+    #[test]
+    fn space_is_always_the_alerts_key() {
+        let mut r = Rig::new((1920, 1080));
+        assert!(r.key(KeyCode::Space).0, "with no alert");
+        r.hud.alert("here", Some((100.0, 100.0)), WARN);
+        assert!(r.key(KeyCode::Space).0);
+    }
+
+    #[test]
+    fn a_tiny_window_draws_without_panicking() {
+        for screen in [(320, 200), (200, 120), (1, 1)] {
+            let mut r = Rig::new(screen);
+            if let Some(b) = r.hud.command_rect(NOW) {
+                r.at((b.x + 2.0, b.y + 2.0));
+            }
+            r.draw();
+        }
+    }
+
+    #[test]
+    fn the_scale_steps_so_resizing_reuses_glyphs() {
+        let mut r = Rig::new((1920, 1081));
+        assert_eq!(r.hud.scale, 1.0);
+        r.c.screen = (1920, 1123);
+        r.draw();
+        assert_eq!(r.hud.scale, 1.05);
+    }
 }
