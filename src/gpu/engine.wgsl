@@ -155,7 +155,7 @@ struct WallBuild { ax: f32, ay: f32, bx: f32, by: f32, r: f32, hp: f32, x0: u32,
 // radii are whole numbers, so both sides test the same integers. `kills`
 // counts the walkers each shot killed.
 struct SqUnit { x: u32, y: u32, touch2: u32, sight2: u32, take2: u32, take: f32, smell2: u32, smell: f32 };
-struct SqUnitOut { touching: u32, aim: u32, took: f32, _p: u32 };
+struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32 };
 struct SqShot { start: u32, count: u32, r2: u32, _p: u32 };
 struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
 struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
@@ -1436,6 +1436,7 @@ fn units(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     SQ.uout[u].touching = touching;
     SQ.uout[u].aim = bi;
+    SQ.uout[u].dense = best;
 }
 
 // The harvest: in unit order, each unit with `take` takes up to that much

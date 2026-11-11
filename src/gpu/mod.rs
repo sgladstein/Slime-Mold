@@ -26,6 +26,8 @@ use crate::mould::squad;
 use crate::mould::STEPS_PER_SECOND;
 use pixels::wgpu;
 
+pub mod larder_world;
+
 /// The engine's shader (it was the sandbox's `SHADER` constant).
 pub const SHADER: &str = include_str!("engine.wgsl");
 
@@ -1489,9 +1491,6 @@ impl Engine {
         self.queue.submit([enc.finish()]);
     }
 
-    /// The Larder World read back: each pile's charge and cells still
-    /// crystal (from the last tick's sum), and walls' bites and cells
-    /// broken so far.
     /// The squad's frame (Larder World W2a; `squad.rs` has the CPU twins and
     /// the order): the next `record` runs its shots, strikes and smell before
     /// its first tick, and its reads and harvest after its last. Shots need
@@ -1514,6 +1513,9 @@ impl Engine {
         squad::unpack(self.dish.w, &words, &kills, self.squad.0 as usize, self.squad.1 as usize)
     }
 
+    /// The Larder World read back: each pile's charge and cells still
+    /// crystal (from the last tick's sum), and walls' bites and cells
+    /// broken so far.
     pub fn world_counts(&self) -> (Vec<(f32, u32)>, u32, u32) {
         let piles = read_back(&self.device, &self.queue, &self.piles);
         let word = |b: &[u8], i: usize| u32::from_le_bytes(b[4 * i..4 * i + 4].try_into().unwrap());
