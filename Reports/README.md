@@ -177,6 +177,15 @@ move.
   engine moved into the library (`slime_mould::gpu`). In the sandbox (W, Q, M).
   Today's dish through the camera is pixel-identical; 0.3-0.4 ms a frame on
   the 1070 at 1920 x 1080.
+- [world-ui-2026-11-11.md](world-ui-2026-11-11.md) — **built: the game UI over the
+  Larder world** (`world::{canvas, ui, icons, demo}`): a GPU canvas pass (glass
+  panels, Inter text, line icons) and a rules-free HUD (`Model` in, `HudEvent`s
+  out): top bar, alerts, groups, selection with health, a command card with
+  costs and cooldowns, placement ghosts, enemy hover cards, menus. 0.09-0.10 ms
+  GPU in play on the 1070 (0.27 ms with the help page); a 480-pixel ring mark
+  had cost the view 0.7 ms, now lines (view 1.04 -> 0.295 ms). An independent review
+  found 9 input bugs and an overflow that dropped text; all fixed, 12 tests.
+  Page and pictures in [`world-ui-2026-11-11/`](world-ui-2026-11-11/).
 - [gpu-sandbox-2026-11-11.md](gpu-sandbox-2026-11-11.md) — **built: GPU plan phase 3's sandbox,
   `--bin mouldgpu`.** The big dish on the GPU, drawn live, with every option
   the Jenson comparison tested as a control and its dishes on keys 1-8 (the
