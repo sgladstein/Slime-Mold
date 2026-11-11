@@ -103,6 +103,40 @@ variance is not measured. Re-run the same questions, plus new ones on the
 new pages, when the wiki doubles (rule in `wiki/README.md`, *Growth*); if
 the tie holds then, shrink the wiki to the index, decisions and lint.
 
+## Success check, second run (2026-11-11, 21 pages)
+
+Run because the wiki had tripled (7 to 21 pages), after the owner asked
+whether the wiki helps or slows the work (15:19Z). The same 25 questions plus
+13 new ones on the pages added since (GPU, creatures, skirmish, Larder,
+Larder World, Two Fevers), keys written from the reports. Two arms only (the
+summaries arm lost 18-0 and 21-0 last time): **wiki** (main at 76f605d) and
+**reports** (the same copy with `wiki/` removed), one fresh agent each, then
+a blind scorer under shuffled labels that checked the repo where a 11-10 key
+line had gone stale (Q16, the open decisions; both arms graded right by the
+repo). Deciding measure, named before the run: wrong numbers quoted. Files:
+[`check-2026-11-11/`](llm-wiki-plan-2026-11-10/check-2026-11-11/scores.tsv)
+(`blind-key.txt` maps X/Y to arms; `usage.txt` the costs).
+
+| Arm | Correct | Partial | Wrong | Not found | Wrong numbers | Files read | Tokens | Time |
+|---|---|---|---|---|---|---|---|---|
+| wiki | 36 | 2 | 0 | 0 | 0 | 17 | 107,670 | 122 s |
+| reports | 35 | 3 | 0 | 0 | 0 | 19 | 123,797 | 169 s |
+
+Paired by question, wiki against reports is **3-2 with 33 ties (sign test
+p 1.0)**: the wiki answered Q4, Q32 and Q36 fully where the reports arm left
+a part out, the reports arm Q10 and Q13 where a page had dropped a detail.
+No wrong numbers either way. The wiki arm used 13% fewer tokens and 28% less
+time. One run an arm, so agent-to-agent variance is not measured.
+
+What it says. **The tie holds at three times the size**: the wiki makes
+lookups a little cheaper and faster but no more correct. This run does not
+count its upkeep, the cost the owner asked about: 50 of the 55 PRs merged
+since the wiki began touched it, about 2% of the lines changed (1.5k against
+61k in reports and 17k in code), plus each thread's reading of the page
+and index before editing. By the rule set on 11-10 ("if the tie holds then,
+shrink the wiki to the index, decisions and lint"), it has not yet paid for
+itself; the choice of how far to shrink is the owner's.
+
 ## Growth (owner, 17:24Z)
 
 "I agree with the plan, but note that this repo is brand new so it will grow

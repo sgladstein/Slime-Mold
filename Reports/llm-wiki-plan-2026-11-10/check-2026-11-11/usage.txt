@@ -1,0 +1,2 @@
+reports (X): subagent_tokens 123797 tool_uses 25 ms 168985 files 19
+wiki (Y): subagent_tokens 107670 tool_uses 19 ms 121691 files 17
