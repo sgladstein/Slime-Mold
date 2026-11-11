@@ -45,6 +45,43 @@ const DRAW_SIZE: u32 = 110;
 const DRAW_KEEP: u32 = 111;
 /// Claims in `blocked_retry` round r use CLAIM_RETRY + r.
 const CLAIM_RETRY: u32 = 112;
+const DRAW_MIX: u32 = 113;
+
+/// One species' settings (`BigParams::species_sets`): each field means
+/// what the `BigParams` field of the same name means, for that species'
+/// walkers (`keep` for its own trail field).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SpeciesSet {
+    pub sensor_angle: f32,
+    pub sensor_offset: f32,
+    pub rotate_angle: f32,
+    pub step: f32,
+    pub deposit: f32,
+    pub keep: f32,
+    pub crowd: u8,
+    pub blocked_deposit: f32,
+    pub graze_weight: f32,
+    pub explore_steps: u16,
+}
+
+impl SpeciesSet {
+    /// The global settings as a set: what every species uses when
+    /// `species_sets` is empty.
+    pub fn from_params(p: &BigParams) -> SpeciesSet {
+        SpeciesSet {
+            sensor_angle: p.sensor_angle,
+            sensor_offset: p.sensor_offset,
+            rotate_angle: p.rotate_angle,
+            step: p.step,
+            deposit: p.deposit,
+            keep: p.keep,
+            crowd: p.crowd,
+            blocked_deposit: p.blocked_deposit,
+            graze_weight: p.graze_weight,
+            explore_steps: p.explore_steps,
+        }
+    }
+}
 const DRAW_TERRAIN: u32 = 140;
 
 #[derive(Clone, Debug)]
@@ -188,9 +225,25 @@ pub struct BigParams {
     /// can take you, as in rock, paper, scissors. Walkers keep their species
     /// through respawn.
     pub species_convert: f32,
+    /// Conversion compares each species' trail summed over the
+    /// (2r+1) x (2r+1) square round the walker's cell (clipped at the dish
+    /// edge) instead of the cell alone (0 is the cell; added 2026-11-11 so a
+    /// bigger body takes a smaller one where they touch: at a contact the
+    /// side with more trail within r wins, and a small body is outweighed
+    /// across its whole width). Built from one summed-area table a species
+    /// each step (f64, so the sums are exact enough at 1M walkers).
+    pub species_convert_r: u32,
     /// Species 0 lays this many times the deposit (1 is even; added
     /// 2026-11-11 to give one side an edge in a fight).
     pub species_boost: f32,
+    /// Species 0's share of the walkers (0 is even, k % n). Otherwise
+    /// walker k is species 0 when (k x share) mod 1 + share >= 1, so the
+    /// shares interleave down the walker list, and the rest are species
+    /// 1 + k % (n - 1). With `species_zones` the bands stay equal, so
+    /// a bigger share is a *denser* side, not more ground (equal density on
+    /// wider ground would just be a bigger, equally strong territory).
+    /// Added 2026-11-11: an edge in numbers.
+    pub species_share: f32,
     /// Grazing (0 is off; added 2026-11-11 to make bodies roam, after
     /// Primordia's "Symbiosis" mode). A grass field starts at 1 on every agar
     /// cell; each step every walker eats `graze_eat` from its cell (not below
@@ -239,6 +292,36 @@ pub struct BigParams {
     /// u), u in [-1, 1] from a keyed draw on k alone, fixed for its life, so
     /// big walkers see and move far and small ones near.
     pub size_spread: f32,
+    /// Mixed walkers in one mould (added 2026-11-11, owner: "what if some of
+    /// the walkers had different properties than other ones?"). Walker k is
+    /// the second kind when unit(keyed(seed, 0, DRAW_MIX, k)) < `mix_share`
+    /// (0 is off: every walker is the first kind). Both kinds lay and read
+    /// the same trail; the second kind's sensor offset, sensor angle, turn
+    /// and step are the first kind's times `mix_reach`, `mix_angle`,
+    /// `mix_turn` and `mix_step`, and everything it lays (moving, blocked or
+    /// capped) is times `mix_deposit` (1 is the same). The kind is fixed for
+    /// the walker's life, through respawn. Scent is read at `scent_offset`
+    /// for both kinds: `mix_reach` does not make a walker smell farther.
+    pub mix_share: f32,
+    pub mix_reach: f32,
+    pub mix_angle: f32,
+    pub mix_turn: f32,
+    pub mix_step: f32,
+    pub mix_deposit: f32,
+    /// Each species' own settings (empty is off: every species uses the
+    /// global fields). Added 2026-11-11 after the independent review
+    /// (`Reports/research-review-2026-11-11.md`): with one global set, a
+    /// droplet species (crowd 1, wide sensors) and a network species (crowd
+    /// 0) could not share a dish, which the Larder World ladder needs. When
+    /// not empty it holds one `SpeciesSet` per species (`species` of them),
+    /// and a walker of species s uses `species_sets[s]` in place of the
+    /// global field of the same name; every other field stays global. A
+    /// walker that converts takes its new species' set from the next step.
+    /// The crowd rule counts every walker on a cell, whatever its species: a
+    /// walker of a species with crowd c may enter a cell only while it holds
+    /// fewer than c walkers of any species, and crowd 0 enters any cell.
+    /// Only walkers of a species with `graze_weight` not 0 eat grass.
+    pub species_sets: Vec<SpeciesSet>,
     /// Blocked walkers keep their heading (Jones and Adamatzky 2012, the
     /// amoeboid model) rather than drawing a new one, except with chance
     /// `blocked_reset` a step, when they draw one as today. False is today's
@@ -397,7 +480,9 @@ impl BigParams {
             species: 0,
             species_avoid: 1.0,
             species_convert: 0.0,
+            species_convert_r: 0,
             species_boost: 1.0,
+            species_share: 0.0,
             graze_weight: 0.0,
             graze_eat: 0.05,
             graze_regrow: 0.002,
@@ -410,6 +495,13 @@ impl BigParams {
             explore_spread: 0.0,
             explore_deposit: 0.05,
             size_spread: 0.0,
+            mix_share: 0.0,
+            mix_reach: 1.0,
+            mix_angle: 1.0,
+            mix_turn: 1.0,
+            mix_step: 1.0,
+            mix_deposit: 1.0,
+            species_sets: Vec::new(),
             blocked_keep: false,
             blocked_reset: 0.01,
             blocked_retry: 0,
@@ -492,6 +584,8 @@ pub struct BigDish {
     pub age: Vec<u16>,
     /// Each walker's species (`species` > 1), else empty. Starts k % n.
     pub spec: Vec<u8>,
+    /// Each walker's kind, 0 or 1 (`mix_share` > 0), else empty.
+    pub kind: Vec<u8>,
     /// Grass (`graze_weight` > 0) a cell, else empty.
     pub grass: Vec<f32>,
     /// Pile centres in dish cells, and whether the tube has reached each.
@@ -616,6 +710,10 @@ fn spread(agar: &[bool], from: &[f32], to: &mut [f32], w: usize, h: usize, keep:
 
 impl BigDish {
     pub fn new(p: BigParams) -> Self {
+        assert!(
+            p.species_sets.is_empty() || p.species_sets.len() >= p.species.max(1) as usize,
+            "species_sets needs one set per species"
+        );
         let (w, h) = (p.w(), p.h());
         let s = p.scale as f32;
         let ground = |w: usize, h: usize, m: f32| if p.rect { rect(w, h, m) } else { ellipse(w, h, m) };
@@ -643,6 +741,7 @@ impl BigDish {
             species_trail: Vec::new(),
             age: Vec::new(),
             spec: Vec::new(),
+            kind: Vec::new(),
             grass: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
@@ -667,16 +766,21 @@ impl BigDish {
         d.place_terrain();
         d.place_crystals();
         d.place_walkers();
-        if d.p.explore_steps > 0 {
+        if d.p.mix_share > 0.0 {
+            let (seed, share) = (d.p.seed, d.p.mix_share);
+            d.kind = (0..d.walkers.len()).map(|k| u8::from(unit(keyed(seed, 0, DRAW_MIX, k as u32)) < share)).collect();
+        }
+        if d.p.explore_steps > 0 || d.p.species_sets.iter().any(|s| s.explore_steps > 0) {
             d.age = vec![0; d.walkers.len()];
         }
-        if d.p.graze_weight != 0.0 {
+        if d.p.graze_weight != 0.0 || d.p.species_sets.iter().any(|s| s.graze_weight != 0.0) {
             d.grass = d.agar.iter().map(|&a| if a { 1.0 } else { 0.0 }).collect();
         }
         if d.p.species > 1 {
             d.species_trail = vec![vec![0.0; w * h]; d.p.species as usize];
             let n = d.p.species as usize;
-            d.spec = (0..d.walkers.len()).map(|k| (k % n) as u8).collect();
+            d.spec = (0..d.walkers.len()).map(|k| d.species_of(k) as u8).collect();
+            debug_assert!(d.spec.iter().all(|&s| (s as usize) < n));
         }
         if d.p.sick_steps > 0 {
             d.sick = vec![0; d.walkers.len()];
@@ -1072,15 +1176,18 @@ impl BigDish {
                 let (ang, dist) = (a * TAU, b.sqrt() * r);
                 (hx + ang.cos() * dist, hy + ang.sin() * dist)
             } else if self.p.species_zones && self.p.species > 1 {
-                // Walker number `len` (the next pushed) is species len % n.
+                // Walker number `len` (the next pushed) is species_of(len);
+                // bands are equal whatever the shares (see `species_share`).
                 let n = self.p.species as f32;
-                let sp = (self.walkers.len() % self.p.species as usize) as f32;
+                let sp = self.species_of(self.walkers.len()) as f32;
                 ((sp + a) / n * self.w as f32, b * self.h as f32)
             } else {
                 (a * self.w as f32, b * self.h as f32)
             };
             let Some(i) = self.cell(x, y) else { continue };
-            if !self.agar[i] || (self.p.crowd > 0 && self.occ[i] >= self.p.crowd as u16) {
+            // The crowd limit of the species this walker will be.
+            let crowd = if self.p.species_sets.is_empty() { self.p.crowd } else { self.p.species_sets[self.species_of(self.walkers.len())].crowd };
+            if !self.agar[i] || (crowd > 0 && self.occ[i] >= crowd as u16) {
                 continue;
             }
             self.occ[i] += 1;
@@ -1103,11 +1210,11 @@ impl BigDish {
 
     /// Trail at `so` and scent at `sso` along heading `a`: off the agar
     /// (by the trail sensor) reads as a wall.
-    fn sense(&self, x: f32, y: f32, a: f32, so: f32, sso: f32, sp: usize) -> f32 {
+    fn sense(&self, (x, y): (f32, f32), a: f32, so: f32, sso: f32, sp: usize, gw: f32) -> f32 {
         let (c, s) = (a.cos(), a.sin());
         match self.cell(x + c * so, y + s * so) {
             Some(i) if self.agar[i] => {
-                let g = if self.grass.is_empty() { 0.0 } else { self.p.graze_weight * self.grass[i] };
+                let g = if self.grass.is_empty() { 0.0 } else { gw * self.grass[i] };
                 self.trail_seen(i, sp) + self.scent_at(x + c * sso, y + s * sso) + g
             }
             _ => -1.0e6,
@@ -1150,6 +1257,7 @@ impl BigDish {
 
     /// Lay `amount` of trail on cell `j` for walker `k` (and its species).
     fn lay(&mut self, k: usize, j: usize, amount: f32) {
+        let amount = if !self.kind.is_empty() && self.kind[k] == 1 { amount * self.p.mix_deposit } else { amount };
         self.trail[j] += amount;
         if !self.species_trail.is_empty() {
             let sp = self.spec[k] as usize;
@@ -1159,14 +1267,36 @@ impl BigDish {
         }
     }
 
+    /// The settings species `sp` uses: its own (`species_sets`) or the
+    /// global fields.
+    fn set_of(&self, sp: usize) -> SpeciesSet {
+        if self.p.species_sets.is_empty() {
+            SpeciesSet::from_params(&self.p)
+        } else {
+            self.p.species_sets[sp]
+        }
+    }
+
+    /// Walker `k`'s species (0 with one species).
+    fn sp_of(&self, k: usize) -> usize {
+        if self.spec.is_empty() {
+            0
+        } else {
+            self.spec[k] as usize
+        }
+    }
+
     /// One fine step of the walkers: sense, turn, claim, move, deposit.
     fn move_walkers(&mut self) {
         let p = self.p.clone();
-        let (sa, ra, so, st, dep, crowd) = (p.sensor_angle, p.rotate_angle, p.sensor_offset, p.step, p.deposit, p.crowd);
+        let nsets = if p.species_sets.is_empty() { 1 } else { p.species_sets.len() };
+        let sets: Vec<SpeciesSet> = (0..nsets).map(|s| self.set_of(s)).collect();
+        let per = sets.len() > 1;
+        // Any species with a crowd limit makes claims this step.
+        let any_crowd = sets.iter().any(|s| s.crowd > 0);
         let respawn = p.respawn;
         let (ss, cap, contagion) = (p.sense_scale, p.deposit_cap, !self.sick.is_empty());
         let (sick_at, catch_c) = (p.immune_steps, p.sick_steps + p.immune_steps);
-        let sso = if p.scent_offset > 0.0 { p.scent_offset } else { so };
         let (seed, t) = (p.seed, self.steps);
         // (walker, from, to, x, y, heading); from == to for a move within a cell.
         let mut moves: Vec<(u32, u32, u32, f32, f32, f32, f32)> = Vec::with_capacity(self.walkers.len());
@@ -1176,10 +1306,19 @@ impl BigDish {
         let nsp = self.species_trail.len().max(1);
         for k in 0..self.walkers.len() {
             let sp = if nsp > 1 { self.spec[k] as usize } else { 0 };
+            let set = sets[if per { sp } else { 0 }];
+            let crowd = set.crowd;
             let (x, y, mut h) = self.walkers[k];
             let here = self.cell(x, y).expect("walker inside the dish");
             // Trail-dependent settings (`sense_scale`), read where it stands.
-            let (mut so, mut sa, mut ra, mut st) = (so, sa, ra, st);
+            let (mut so, mut sa, mut ra, mut st) = (set.sensor_offset, set.sensor_angle, set.rotate_angle, set.step);
+            let sso = if p.scent_offset > 0.0 { p.scent_offset } else { set.sensor_offset };
+            if !self.kind.is_empty() && self.kind[k] == 1 {
+                so *= p.mix_reach;
+                sa *= p.mix_angle;
+                ra *= p.mix_turn;
+                st *= p.mix_step;
+            }
             if p.size_spread > 0.0 {
                 let u = 2.0 * unit(keyed(seed, 0, DRAW_SIZE, k as u32)) - 1.0;
                 let sc = (p.size_spread * u).exp2();
@@ -1209,7 +1348,11 @@ impl BigDish {
                 }
             }
             if look {
-                let (mut f, mut fl, mut fr) = (self.sense(x, y, h, so, sso, sp), self.sense(x, y, h - sa, so, sso, sp), self.sense(x, y, h + sa, so, sso, sp));
+                let (mut f, mut fl, mut fr) = (
+                    self.sense((x, y), h, so, sso, sp, set.graze_weight),
+                    self.sense((x, y), h - sa, so, sso, sp, set.graze_weight),
+                    self.sense((x, y), h + sa, so, sso, sp, set.graze_weight),
+                );
                 if explorer {
                     // Toward the lowest reading; a wall stays a wall.
                     for v in [&mut f, &mut fl, &mut fr] {
@@ -1252,6 +1395,8 @@ impl BigDish {
         }
         for &(k, from, to, nx, ny, h, st) in &moves {
             let (i, j) = (from as usize, to as usize);
+            let set = sets[if per { self.sp_of(k as usize) } else { 0 }];
+            let (crowd, dep) = (set.crowd, set.deposit);
             let wins = i == j || crowd == 0 || self.claim[j] == keyed(seed, t, CLAIM_MOVE, k);
             if wins {
                 self.occ[i] -= 1;
@@ -1266,7 +1411,7 @@ impl BigDish {
                 blocked.push((k, h, st));
             }
         }
-        if crowd > 0 {
+        if any_crowd {
             for &(_, _, to, ..) in &moves {
                 self.claim[to as usize] = u32::MAX;
             }
@@ -1275,10 +1420,11 @@ impl BigDish {
         // again into cells emptied this step, so a packed crowd moving one
         // way moves together, as in Jones's random sequential update,
         // instead of only its front row moving.
-        for r in 0..if crowd > 0 { p.blocked_retry } else { 0 } {
+        for r in 0..if any_crowd { p.blocked_retry } else { 0 } {
             let mut tries: Vec<(u32, u32, u32, f32, f32, f32, f32)> = Vec::new();
             let mut still: Vec<(u32, f32, f32)> = Vec::new();
             for &(k, h, st) in &blocked {
+                let crowd = sets[if per { self.sp_of(k as usize) } else { 0 }].crowd;
                 let (x, y, _) = self.walkers[k as usize];
                 let here = self.cell(x, y).expect("walker inside the dish");
                 let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
@@ -1301,6 +1447,7 @@ impl BigDish {
                     self.occ[j] += 1;
                     self.walkers[k as usize] = (nx, ny, h);
                     if cap == 0 {
+                        let dep = sets[if per { self.sp_of(k as usize) } else { 0 }].deposit;
                         let sick = contagion && self.sick[k as usize] > sick_at;
                         let amount = if sick { dep * self.p.sick_trail } else { dep };
                         self.lay(k as usize, j, amount * self.explore_share(k as usize));
@@ -1316,11 +1463,15 @@ impl BigDish {
         }
         // Blocked: Jones's rule, stay put and pick a new heading; or
         // (`blocked_keep`) keep the heading it chose, bar a rare reset.
-        if p.blocked_deposit > 0.0 && cap == 0 {
+        if sets.iter().any(|s| s.blocked_deposit > 0.0) && cap == 0 {
             for &(k, ..) in &blocked {
+                let set = sets[if per { self.sp_of(k as usize) } else { 0 }];
+                if set.blocked_deposit <= 0.0 {
+                    continue;
+                }
                 let (x, y, _) = self.walkers[k as usize];
                 let i = self.cell(x, y).expect("walker inside the dish");
-                self.lay(k as usize, i, dep * p.blocked_deposit * self.explore_share(k as usize));
+                self.lay(k as usize, i, set.deposit * set.blocked_deposit * self.explore_share(k as usize));
             }
         }
         if !self.wall_health.is_empty() {
@@ -1339,6 +1490,7 @@ impl BigDish {
                 let n = self.occ[i].min(cap) as f32;
                 // Each of the n walkers on the cell lays its share of
                 // deposit * sqrt(n): sqrt(n) / n of a lone walker's.
+                let dep = sets[if per { self.sp_of(k) } else { 0 }].deposit;
                 let share = dep * n.sqrt() / self.occ[i] as f32;
                 let sick = contagion && self.sick[k] > sick_at;
                 let amount = if sick { share * sick_trail } else { share };
@@ -1360,6 +1512,9 @@ impl BigDish {
         }
         if !self.grass.is_empty() {
             for k in 0..self.walkers.len() {
+                if !p.species_sets.is_empty() && p.species_sets[self.sp_of(k)].graze_weight == 0.0 {
+                    continue;
+                }
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 self.grass[i] = (self.grass[i] - p.graze_eat).max(0.0);
@@ -1373,9 +1528,40 @@ impl BigDish {
         self.eat_crystals();
         if p.species_convert > 0.0 && !self.spec.is_empty() {
             let n = self.species_trail.len();
-            for k in 0..self.walkers.len() {
+            let (w, h, r) = (self.w, self.h, p.species_convert_r as usize);
+            // Summed-area tables, (w+1) x (h+1), when comparing squares.
+            let sat: Vec<Vec<f64>> = if r > 0 {
+                self.species_trail
+                    .iter()
+                    .map(|f| {
+                        let mut t = vec![0.0f64; (w + 1) * (h + 1)];
+                        for y in 0..h {
+                            let mut row = 0.0f64;
+                            for x in 0..w {
+                                row += f[y * w + x] as f64;
+                                t[(y + 1) * (w + 1) + x + 1] = t[y * (w + 1) + x + 1] + row;
+                            }
+                        }
+                        t
+                    })
+                    .collect()
+            } else {
+                Vec::new()
+            };
+            let weigh = |s: usize, cx: usize, cy: usize, i: usize| -> f64 {
+                if r == 0 {
+                    return self.species_trail[s][i] as f64;
+                }
+                let (x0, y0) = (cx.saturating_sub(r), cy.saturating_sub(r));
+                let (x1, y1) = ((cx + r + 1).min(w), (cy + r + 1).min(h));
+                let t = &sat[s];
+                t[y1 * (w + 1) + x1] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0] + t[y0 * (w + 1) + x0]
+            };
+            let mut next = self.spec.clone();
+            for (k, slot) in next.iter_mut().enumerate() {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
+                let (cx, cy) = (i % w, i / w);
                 let own = self.spec[k] as usize;
                 let mut best = own;
                 if p.species_cycle && n >= 3 {
@@ -1383,29 +1569,55 @@ impl BigDish {
                     best = (own + n - 1) % n;
                 } else {
                     for s in 0..n {
-                        if s != own && self.species_trail[s][i] > self.species_trail[best][i] {
+                        if s != own && weigh(s, cx, cy, i) > weigh(best, cx, cy, i) {
                             best = s;
                         }
                     }
                 }
-                if best != own && self.species_trail[best][i] > p.species_convert * self.species_trail[own][i] {
-                    self.spec[k] = best as u8;
+                // r 0 keeps the f32 product, so older runs keep their hashes.
+                let wins = if r == 0 {
+                    self.species_trail[best][i] > p.species_convert * self.species_trail[own][i]
+                } else {
+                    weigh(best, cx, cy, i) > p.species_convert as f64 * weigh(own, cx, cy, i)
+                };
+                if best != own && wins {
+                    *slot = best as u8;
                 }
             }
+            // Conversion reads only trails, so writing to a copy is the same
+            // as converting in place.
+            self.spec = next;
         }
         if respawn > 0.0 {
-            self.respawn_walkers(respawn, crowd);
+            self.respawn_walkers(respawn, &sets);
         }
     }
 
     /// The share of the deposit walker `k` lays: `explore_deposit` while it
     /// explores, else 1.
+    /// The species walker number `k` starts as (`species`, `species_share`).
+    fn species_of(&self, k: usize) -> usize {
+        let n = self.p.species.max(1) as usize;
+        let sh = self.p.species_share;
+        if sh <= 0.0 || n < 2 {
+            return k % n;
+        }
+        // Walker k is species 0 when floor((k+1) x sh) > floor(k x sh): an
+        // even spread with exactly the share over any long run.
+        let (a, b) = ((k as f64 * sh as f64).floor(), ((k + 1) as f64 * sh as f64).floor());
+        if b > a {
+            0
+        } else {
+            1 + k % (n - 1)
+        }
+    }
+
     /// Whether walker `k` is still an explorer (`explore_steps`, `explore_spread`).
     fn explores(&self, k: usize) -> bool {
         if self.age.is_empty() {
             return false;
         }
-        let mut n = self.p.explore_steps as f32;
+        let mut n = if self.p.species_sets.is_empty() { self.p.explore_steps } else { self.p.species_sets[self.sp_of(k)].explore_steps } as f32;
         if self.p.explore_spread > 0.0 {
             let u = unit(keyed(self.p.seed, 0, DRAW_SIZE, k as u32 | 0x8000_0000));
             n *= 1.0 + self.p.explore_spread * (2.0 * u - 1.0);
@@ -1423,7 +1635,7 @@ impl BigDish {
 
     /// `respawn`: each walker, by its own keyed draws, may jump to a random
     /// agar cell with a new heading; a jump onto rim or a full cell is lost.
-    fn respawn_walkers(&mut self, respawn: f32, crowd: u8) {
+    fn respawn_walkers(&mut self, respawn: f32, sets: &[SpeciesSet]) {
         let (seed, t) = (self.p.seed, self.steps);
         let (w, h) = (self.w as f32, self.h as f32);
         for k in 0..self.walkers.len() {
@@ -1434,6 +1646,7 @@ impl BigDish {
             let x = unit(keyed(seed, t, DRAW_RESPAWN, key + 1)) * w;
             let y = unit(keyed(seed, t, DRAW_RESPAWN, key + 2)) * h;
             let Some(j) = self.cell(x, y) else { continue };
+            let crowd = sets[if sets.len() > 1 { self.sp_of(k) } else { 0 }].crowd;
             if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) {
                 continue;
             }
@@ -1560,8 +1773,10 @@ impl BigDish {
                 // Each species' field spreads as the trail would; the trail
                 // is their sum (the spread is linear, so the same field).
                 for sp in 0..self.species_trail.len() {
+                    // Each species' own keep (`species_sets`), else the global.
+                    let own = if self.p.species_sets.is_empty() { self.p.keep } else { self.p.species_sets[sp].keep };
                     for pass in 0..self.p.trail_passes.max(1) {
-                        let keep = if pass == 0 { self.p.keep } else { 1.0 };
+                        let keep = if pass == 0 { own } else { 1.0 };
                         spread(&self.agar, &self.species_trail[sp], &mut self.scratch, self.w, self.h, keep, self.threads);
                         std::mem::swap(&mut self.species_trail[sp], &mut self.scratch);
                     }
@@ -1751,7 +1966,7 @@ impl BigDish {
         for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
-        for &c in &self.spec {
+        for &c in self.spec.iter().chain(&self.kind) {
             eat(c as u32);
         }
         for &c in self.sick.iter().chain(&self.age) {
@@ -1929,6 +2144,81 @@ mod tests {
         assert!(d.charge.is_empty() && d.rock.is_empty() && d.took.is_empty());
         assert!(d.sick.is_empty() && d.germ.is_empty());
         assert!(d.species_trail.is_empty() && d.age.is_empty());
+        assert!(d.kind.is_empty() && d.grass.is_empty() && d.p.species_sets.is_empty());
+    }
+
+    /// Species sets that copy the global fields change nothing: the same
+    /// dish, bit for bit, as the global fields alone.
+    #[test]
+    fn species_sets_equal_to_globals_change_nothing() {
+        for p in [
+            BigParams { species: 2, species_zones: true, ..small(2, 1) },
+            BigParams { species: 2, species_convert: 1.2, graze_weight: 10.0, explore_steps: 30, ..small(2, 1) },
+            BigParams { species: 2, blocked_keep: true, blocked_retry: 2, blocked_deposit: 1.0, keep: 0.93, ..small(2, 1) },
+            BigParams { species: 2, crowd: 0, deposit_cap: 4, ..small(2, 1) },
+        ] {
+            let same = SpeciesSet::from_params(&p);
+            let mut a = BigDish::new(p.clone());
+            let mut b = BigDish::new(BigParams { species_sets: vec![same; 2], ..p });
+            for _ in 0..40 {
+                a.tick();
+                b.tick();
+            }
+            assert_eq!(a.hash(), b.hash());
+        }
+    }
+
+    /// A droplet species (crowd 1, grazing, wide sensors) and a network
+    /// species (crowd 0, explorers first) on one dish: only the grazing
+    /// species eats grass, and only grazers' cells lose it.
+    #[test]
+    fn species_sets_differ_by_species() {
+        let base = BigParams { species: 2, species_zones: true, ..small(2, 1) };
+        let drop = SpeciesSet { crowd: 1, sensor_angle: 1.5, rotate_angle: 0.8, deposit: 5.0, keep: 0.93, blocked_deposit: 1.0, graze_weight: 10.0, explore_steps: 0, ..SpeciesSet::from_params(&base) };
+        let net = SpeciesSet { crowd: 0, keep: 0.6, graze_weight: 0.0, explore_steps: 20, ..SpeciesSet::from_params(&base) };
+        let mut d = BigDish::new(BigParams { species_sets: vec![drop, net], ..base });
+        assert!(!d.grass.is_empty() && !d.age.is_empty());
+        let mut been = vec![false; d.w * d.h];
+        for _ in 0..30 {
+            d.tick();
+            for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+                if d.spec[k] == 0 {
+                    been[d.cell(x, y).unwrap()] = true;
+                }
+            }
+        }
+        let eaten: Vec<usize> = (0..d.w * d.h).filter(|&i| d.agar[i] && d.grass[i] < 1.0).collect();
+        assert!(!eaten.is_empty());
+        assert!(eaten.iter().all(|&i| been[i]), "grass eaten where no grazer stood");
+        // No cell holds two walkers of the crowd-1 species.
+        let mut n0 = vec![0u16; d.w * d.h];
+        for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+            if d.spec[k] == 0 {
+                n0[d.cell(x, y).unwrap()] += 1;
+            }
+        }
+        assert!(n0.iter().all(|&n| n <= 1));
+    }
+
+    /// Each species' field decays at its own keep.
+    #[test]
+    fn species_keep_is_per_species() {
+        let base = BigParams { species: 2, ..small(2, 1) };
+        let a = SpeciesSet { deposit: 0.0, keep: 0.9, ..SpeciesSet::from_params(&base) };
+        let b = SpeciesSet { keep: 0.5, ..a };
+        let mut d = BigDish::new(BigParams { species_sets: vec![a, b], respawn: 0.0, ..base });
+        for i in 0..d.w * d.h {
+            if d.agar[i] {
+                d.species_trail[0][i] = 1.0;
+                d.species_trail[1][i] = 1.0;
+                d.trail[i] = 2.0;
+            }
+        }
+        let before: f32 = d.species_trail[0].iter().sum();
+        d.tick();
+        let (s0, s1): (f32, f32) = (d.species_trail[0].iter().sum(), d.species_trail[1].iter().sum());
+        assert!((s0 / before - 0.9).abs() < 0.01, "{}", s0 / before);
+        assert!((s1 / before - 0.5).abs() < 0.01, "{}", s1 / before);
     }
 
     /// The outside rules (2026-11-11) are keyed draws too: threads change
@@ -1940,8 +2230,16 @@ mod tests {
             BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
             BigParams { species: 3, species_cycle: true, species_convert: 1.0, ..small(2, 1) },
             BigParams { species: 2, species_convert: 1.5, species_boost: 1.5, graze_weight: 10.0, ..small(2, 1) },
+            BigParams { species: 2, species_zones: true, species_convert: 1.2, species_convert_r: 3, species_share: 0.6, ..small(2, 1) },
+            BigParams { mix_share: 0.3, mix_reach: 3.0, mix_angle: 0.5, mix_turn: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..small(2, 1) },
             BigParams { blocked_keep: true, blocked_reset: 0.1, blocked_retry: 3, blocked_deposit: 1.0, ..small(2, 1) },
             BigParams { explore_steps: 30, explore_spread: 1.0, ..small(2, 1) },
+            {
+                let base = BigParams { species: 2, species_zones: true, species_convert: 1.2, ..small(2, 1) };
+                let drop = SpeciesSet { crowd: 1, sensor_angle: 1.5, deposit: 5.0, blocked_deposit: 1.0, graze_weight: 10.0, ..SpeciesSet::from_params(&base) };
+                let net = SpeciesSet { crowd: 0, keep: 0.8, explore_steps: 20, ..SpeciesSet::from_params(&base) };
+                BigParams { species_sets: vec![drop, net], blocked_retry: 2, ..base }
+            },
         ] {
             let mut a = BigDish::new(p);
             let mut b = a.clone();

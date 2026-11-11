@@ -1,0 +1,964 @@
+# run.sh spread-drop and mix-drop, SECS=30, seeds 1-3, local (commit after 8282218 with extent line, droplet start blob_r 50).
+seed 1 beads t   2.0s  tube  4817.9  loops   15  width 11.45  reach  118.5  piles 1/1  strays 0.000  ms/tick 13.49
+seed 1 beads t   2.0s  contrast 3.63
+seed 1 beads t   2.0s  extent r50 153.4 r90 172.8
+seed 1 beads t   4.0s  tube  4545.2  loops   12  width 11.42  reach  117.7  piles 1/1  strays 0.000  ms/tick 13.92
+seed 1 beads t   4.0s  contrast 3.51
+seed 1 beads t   4.0s  extent r50 151.6 r90 171.0
+seed 1 beads t   6.0s  tube  4342.3  loops    9  width 11.36  reach  118.0  piles 1/1  strays 0.000  ms/tick 13.66
+seed 1 beads t   6.0s  contrast 3.41
+seed 1 beads t   6.0s  extent r50 150.0 r90 169.8
+seed 1 beads t   8.0s  tube  4181.9  loops    8  width 11.62  reach  118.2  piles 1/1  strays 0.000  ms/tick 14.01
+seed 1 beads t   8.0s  contrast 3.38
+seed 1 beads t   8.0s  extent r50 148.7 r90 169.2
+seed 1 beads t  10.0s  tube  4111.4  loops    8  width 11.54  reach  118.5  piles 1/1  strays 0.000  ms/tick 13.96
+seed 1 beads t  10.0s  contrast 3.37
+seed 1 beads t  10.0s  extent r50 147.8 r90 168.6
+seed 1 beads t  12.0s  tube  4019.6  loops    7  width 11.45  reach  118.2  piles 1/1  strays 0.000  ms/tick 13.97
+seed 1 beads t  12.0s  contrast 3.14
+seed 1 beads t  12.0s  extent r50 147.0 r90 168.0
+seed 1 beads t  14.0s  tube  3988.8  loops    7  width 11.66  reach  118.3  piles 1/1  strays 0.000  ms/tick 14.08
+seed 1 beads t  14.0s  contrast 3.09
+seed 1 beads t  14.0s  extent r50 146.2 r90 167.6
+seed 1 beads t  16.0s  tube  3944.1  loops    7  width 11.51  reach  118.3  piles 1/1  strays 0.000  ms/tick 14.05
+seed 1 beads t  16.0s  contrast 3.04
+seed 1 beads t  16.0s  extent r50 145.4 r90 167.3
+seed 1 beads t  18.0s  tube  3867.3  loops    6  width 11.57  reach  118.0  piles 1/1  strays 0.000  ms/tick 14.10
+seed 1 beads t  18.0s  contrast 2.81
+seed 1 beads t  18.0s  extent r50 144.6 r90 167.1
+seed 1 beads t  20.0s  tube  3860.3  loops    6  width 11.57  reach  118.1  piles 1/1  strays 0.000  ms/tick 14.12
+seed 1 beads t  20.0s  contrast 2.77
+seed 1 beads t  20.0s  extent r50 144.0 r90 166.9
+seed 1 beads t  22.0s  tube  3819.8  loops    6  width 11.71  reach  118.1  piles 1/1  strays 0.000  ms/tick 14.14
+seed 1 beads t  22.0s  contrast 2.71
+seed 1 beads t  22.0s  extent r50 143.3 r90 166.7
+seed 1 beads t  24.0s  tube  3783.6  loops    6  width 11.91  reach  118.0  piles 1/1  strays 0.000  ms/tick 14.08
+seed 1 beads t  24.0s  contrast 2.57
+seed 1 beads t  24.0s  extent r50 142.9 r90 166.6
+seed 1 beads t  26.0s  tube  3761.5  loops    6  width 11.89  reach  117.8  piles 1/1  strays 0.000  ms/tick 14.03
+seed 1 beads t  26.0s  contrast 2.49
+seed 1 beads t  26.0s  extent r50 142.5 r90 166.4
+seed 1 beads t  28.0s  tube  3732.3  loops    6  width 11.87  reach  117.8  piles 1/1  strays 0.000  ms/tick 13.99
+seed 1 beads t  28.0s  contrast 2.42
+seed 1 beads t  28.0s  extent r50 142.1 r90 166.3
+seed 1 beads t  30.0s  tube  3718.5  loops    7  width 11.88  reach  117.8  piles 1/1  strays 0.000  ms/tick 14.07
+seed 1 beads t  30.0s  contrast 2.41
+seed 1 beads t  30.0s  extent r50 142.0 r90 166.1
+seed 1 beads hash=88def83affe2e4e5
+seed 2 beads t   2.0s  tube  4719.9  loops   14  width 11.14  reach  117.5  piles 1/1  strays 0.000  ms/tick 12.18
+seed 2 beads t   2.0s  contrast 3.51
+seed 2 beads t   2.0s  extent r50 154.8 r90 171.8
+seed 2 beads t   4.0s  tube  4457.9  loops   13  width 10.91  reach  117.3  piles 1/1  strays 0.000  ms/tick 12.72
+seed 2 beads t   4.0s  contrast 3.46
+seed 2 beads t   4.0s  extent r50 153.4 r90 170.4
+seed 2 beads t   6.0s  tube  4117.1  loops    8  width 10.68  reach  117.5  piles 1/1  strays 0.000  ms/tick 12.56
+seed 2 beads t   6.0s  contrast 2.88
+seed 2 beads t   6.0s  extent r50 152.2 r90 169.6
+seed 2 beads t   8.0s  tube  3993.7  loops    6  width 11.05  reach  118.8  piles 1/1  strays 0.000  ms/tick 13.08
+seed 2 beads t   8.0s  contrast 2.65
+seed 2 beads t   8.0s  extent r50 151.2 r90 169.1
+seed 2 beads t  10.0s  tube  3941.5  loops    5  width 11.13  reach  117.9  piles 1/1  strays 0.000  ms/tick 13.53
+seed 2 beads t  10.0s  contrast 2.64
+seed 2 beads t  10.0s  extent r50 150.4 r90 168.7
+seed 2 beads t  12.0s  tube  3930.7  loops    6  width 11.26  reach  118.1  piles 1/1  strays 0.000  ms/tick 13.77
+seed 2 beads t  12.0s  contrast 2.66
+seed 2 beads t  12.0s  extent r50 149.7 r90 168.5
+seed 2 beads t  14.0s  tube  3912.8  loops    6  width 11.20  reach  118.3  piles 1/1  strays 0.000  ms/tick 13.77
+seed 2 beads t  14.0s  contrast 2.59
+seed 2 beads t  14.0s  extent r50 149.1 r90 168.2
+seed 2 beads t  16.0s  tube  3907.8  loops    5  width 10.88  reach  118.3  piles 1/1  strays 0.000  ms/tick 13.71
+seed 2 beads t  16.0s  contrast 2.54
+seed 2 beads t  16.0s  extent r50 148.8 r90 167.8
+seed 2 beads t  18.0s  tube  3919.8  loops    6  width 11.23  reach  118.8  piles 1/1  strays 0.000  ms/tick 13.67
+seed 2 beads t  18.0s  contrast 2.57
+seed 2 beads t  18.0s  extent r50 148.2 r90 167.3
+seed 2 beads t  20.0s  tube  3847.4  loops    5  width 11.50  reach  118.6  piles 1/1  strays 0.000  ms/tick 13.64
+seed 2 beads t  20.0s  contrast 2.48
+seed 2 beads t  20.0s  extent r50 147.8 r90 167.1
+seed 2 beads t  22.0s  tube  3867.1  loops    6  width 11.75  reach  118.6  piles 1/1  strays 0.000  ms/tick 13.64
+seed 2 beads t  22.0s  contrast 2.56
+seed 2 beads t  22.0s  extent r50 147.1 r90 166.8
+seed 2 beads t  24.0s  tube  3863.6  loops    6  width 12.01  reach  118.6  piles 1/1  strays 0.000  ms/tick 13.63
+seed 2 beads t  24.0s  contrast 2.54
+seed 2 beads t  24.0s  extent r50 146.4 r90 166.6
+seed 2 beads t  26.0s  tube  3822.0  loops    7  width 11.88  reach  118.6  piles 1/1  strays 0.000  ms/tick 13.71
+seed 2 beads t  26.0s  contrast 2.47
+seed 2 beads t  26.0s  extent r50 145.7 r90 166.4
+seed 2 beads t  28.0s  tube  3809.3  loops    6  width 11.99  reach  119.3  piles 1/1  strays 0.000  ms/tick 13.81
+seed 2 beads t  28.0s  contrast 2.48
+seed 2 beads t  28.0s  extent r50 144.9 r90 166.3
+seed 2 beads t  30.0s  tube  3787.2  loops    6  width 11.75  reach  118.6  piles 1/1  strays 0.000  ms/tick 13.90
+seed 2 beads t  30.0s  contrast 2.46
+seed 2 beads t  30.0s  extent r50 144.0 r90 166.1
+seed 2 beads hash=bc9488c755af22cc
+seed 3 beads t   2.0s  tube  4672.9  loops   13  width 11.11  reach  118.1  piles 1/1  strays 0.000  ms/tick 10.61
+seed 3 beads t   2.0s  contrast 3.47
+seed 3 beads t   2.0s  extent r50 155.1 r90 172.4
+seed 3 beads t   4.0s  tube  4350.4  loops   10  width 10.74  reach  118.0  piles 1/1  strays 0.000  ms/tick 11.02
+seed 3 beads t   4.0s  contrast 3.34
+seed 3 beads t   4.0s  extent r50 153.7 r90 171.0
+seed 3 beads t   6.0s  tube  4284.2  loops   10  width 10.95  reach  118.0  piles 1/1  strays 0.000  ms/tick 11.94
+seed 3 beads t   6.0s  contrast 3.33
+seed 3 beads t   6.0s  extent r50 152.2 r90 170.1
+seed 3 beads t   8.0s  tube  4198.2  loops    9  width 11.13  reach  117.8  piles 1/1  strays 0.000  ms/tick 12.75
+seed 3 beads t   8.0s  contrast 3.17
+seed 3 beads t   8.0s  extent r50 151.0 r90 169.6
+seed 3 beads t  10.0s  tube  4126.8  loops    8  width 11.00  reach  117.9  piles 1/1  strays 0.000  ms/tick 13.30
+seed 3 beads t  10.0s  contrast 3.06
+seed 3 beads t  10.0s  extent r50 149.9 r90 169.2
+seed 3 beads t  12.0s  tube  4054.9  loops    8  width 11.35  reach  118.0  piles 1/1  strays 0.000  ms/tick 13.67
+seed 3 beads t  12.0s  contrast 2.97
+seed 3 beads t  12.0s  extent r50 148.9 r90 168.7
+seed 3 beads t  14.0s  tube  3978.1  loops    8  width 11.09  reach  117.9  piles 1/1  strays 0.000  ms/tick 13.72
+seed 3 beads t  14.0s  contrast 2.74
+seed 3 beads t  14.0s  extent r50 148.0 r90 168.2
+seed 3 beads t  16.0s  tube  3885.4  loops    6  width 11.47  reach  118.0  piles 1/1  strays 0.000  ms/tick 13.96
+seed 3 beads t  16.0s  contrast 2.63
+seed 3 beads t  16.0s  extent r50 147.1 r90 167.6
+seed 3 beads t  18.0s  tube  3846.4  loops    6  width 11.77  reach  118.0  piles 1/1  strays 0.000  ms/tick 14.01
+seed 3 beads t  18.0s  contrast 2.60
+seed 3 beads t  18.0s  extent r50 146.2 r90 166.9
+seed 3 beads t  20.0s  tube  3795.9  loops    6  width 11.68  reach  118.0  piles 1/1  strays 0.000  ms/tick 14.13
+seed 3 beads t  20.0s  contrast 2.52
+seed 3 beads t  20.0s  extent r50 145.2 r90 166.4
+seed 3 beads t  22.0s  tube  3747.9  loops    5  width 11.63  reach  118.0  piles 1/1  strays 0.000  ms/tick 14.28
+seed 3 beads t  22.0s  contrast 2.41
+seed 3 beads t  22.0s  extent r50 144.4 r90 166.2
+seed 3 beads t  24.0s  tube  3720.2  loops    5  width 11.81  reach  118.0  piles 1/1  strays 0.000  ms/tick 14.33
+seed 3 beads t  24.0s  contrast 2.39
+seed 3 beads t  24.0s  extent r50 143.9 r90 166.1
+seed 3 beads t  26.0s  tube  3667.4  loops    5  width 11.50  reach  117.8  piles 1/1  strays 0.000  ms/tick 14.36
+seed 3 beads t  26.0s  contrast 2.27
+seed 3 beads t  26.0s  extent r50 143.3 r90 166.1
+seed 3 beads t  28.0s  tube  3635.0  loops    5  width 11.11  reach  117.8  piles 1/1  strays 0.000  ms/tick 14.37
+seed 3 beads t  28.0s  contrast 2.18
+seed 3 beads t  28.0s  extent r50 142.7 r90 166.1
+seed 3 beads t  30.0s  tube  3605.1  loops    4  width 11.32  reach  117.8  piles 1/1  strays 0.000  ms/tick 14.34
+seed 3 beads t  30.0s  contrast 2.09
+seed 3 beads t  30.0s  extent r50 142.3 r90 166.0
+seed 3 beads hash=d2c29749b6ac4c82
+seed 1 dropfast t   2.0s  tube  6037.9  loops   55  width 7.95  reach  121.4  piles 1/1  strays 0.001  ms/tick 10.81
+seed 1 dropfast t   2.0s  contrast 5.31
+seed 1 dropfast t   2.0s  extent r50 140.4 r90 184.9
+seed 1 dropfast t   2.0s  kinds k0 n 23898 on 1.000 r 140.3  k1 n 6102 on 0.994 r 141.1
+seed 1 dropfast t   4.0s  tube  5501.4  loops   18  width 7.24  reach  121.7  piles 1/1  strays 0.002  ms/tick 11.18
+seed 1 dropfast t   4.0s  contrast 5.12
+seed 1 dropfast t   4.0s  extent r50 140.1 r90 183.8
+seed 1 dropfast t   4.0s  kinds k0 n 23898 on 1.000 r 140.1  k1 n 6102 on 0.991 r 140.0
+seed 1 dropfast t   6.0s  tube  5219.2  loops    7  width 6.95  reach  121.4  piles 1/1  strays 0.002  ms/tick 11.47
+seed 1 dropfast t   6.0s  contrast 4.97
+seed 1 dropfast t   6.0s  extent r50 140.0 r90 183.3
+seed 1 dropfast t   6.0s  kinds k0 n 23898 on 1.000 r 140.0  k1 n 6102 on 0.990 r 139.9
+seed 1 dropfast t   8.0s  tube  5022.0  loops    3  width 6.85  reach  121.4  piles 1/1  strays 0.002  ms/tick 11.71
+seed 1 dropfast t   8.0s  contrast 4.78
+seed 1 dropfast t   8.0s  extent r50 139.9 r90 182.9
+seed 1 dropfast t   8.0s  kinds k0 n 23898 on 1.000 r 139.9  k1 n 6102 on 0.989 r 139.8
+seed 1 dropfast t  10.0s  tube  4871.5  loops    1  width 6.73  reach  121.4  piles 1/1  strays 0.002  ms/tick 12.10
+seed 1 dropfast t  10.0s  contrast 4.61
+seed 1 dropfast t  10.0s  extent r50 139.9 r90 182.7
+seed 1 dropfast t  10.0s  kinds k0 n 23898 on 1.000 r 139.9  k1 n 6102 on 0.989 r 140.2
+seed 1 dropfast t  12.0s  tube  4800.8  loops    0  width 6.79  reach  121.4  piles 1/1  strays 0.002  ms/tick 12.31
+seed 1 dropfast t  12.0s  contrast 4.50
+seed 1 dropfast t  12.0s  extent r50 140.0 r90 182.6
+seed 1 dropfast t  12.0s  kinds k0 n 23898 on 1.000 r 139.9  k1 n 6102 on 0.988 r 140.6
+seed 1 dropfast t  14.0s  tube  4704.2  loops    0  width 6.80  reach  121.6  piles 1/1  strays 0.002  ms/tick 12.39
+seed 1 dropfast t  14.0s  contrast 4.37
+seed 1 dropfast t  14.0s  extent r50 140.2 r90 182.5
+seed 1 dropfast t  14.0s  kinds k0 n 23898 on 1.000 r 140.0  k1 n 6102 on 0.989 r 141.3
+seed 1 dropfast t  16.0s  tube  4651.9  loops    0  width 6.84  reach  121.4  piles 1/1  strays 0.002  ms/tick 12.49
+seed 1 dropfast t  16.0s  contrast 4.30
+seed 1 dropfast t  16.0s  extent r50 140.2 r90 182.2
+seed 1 dropfast t  16.0s  kinds k0 n 23898 on 1.000 r 140.1  k1 n 6102 on 0.988 r 141.0
+seed 1 dropfast t  18.0s  tube  4603.1  loops    0  width 6.81  reach  121.2  piles 1/1  strays 0.002  ms/tick 12.51
+seed 1 dropfast t  18.0s  contrast 4.26
+seed 1 dropfast t  18.0s  extent r50 140.5 r90 182.1
+seed 1 dropfast t  18.0s  kinds k0 n 23898 on 1.000 r 140.3  k1 n 6102 on 0.990 r 141.8
+seed 1 dropfast t  20.0s  tube  4547.9  loops    0  width 6.82  reach  121.4  piles 1/1  strays 0.003  ms/tick 12.64
+seed 1 dropfast t  20.0s  contrast 4.22
+seed 1 dropfast t  20.0s  extent r50 140.8 r90 182.1
+seed 1 dropfast t  20.0s  kinds k0 n 23898 on 1.000 r 140.5  k1 n 6102 on 0.984 r 142.1
+seed 1 dropfast t  22.0s  tube  4498.6  loops    0  width 6.81  reach  121.1  piles 1/1  strays 0.003  ms/tick 12.65
+seed 1 dropfast t  22.0s  contrast 4.16
+seed 1 dropfast t  22.0s  extent r50 140.8 r90 182.0
+seed 1 dropfast t  22.0s  kinds k0 n 23898 on 1.000 r 140.6  k1 n 6102 on 0.986 r 141.5
+seed 1 dropfast t  24.0s  tube  4463.5  loops    0  width 6.83  reach  120.9  piles 1/1  strays 0.003  ms/tick 12.65
+seed 1 dropfast t  24.0s  contrast 4.10
+seed 1 dropfast t  24.0s  extent r50 141.0 r90 181.8
+seed 1 dropfast t  24.0s  kinds k0 n 23898 on 1.000 r 140.8  k1 n 6102 on 0.986 r 142.3
+seed 1 dropfast t  26.0s  tube  4416.2  loops    0  width 6.82  reach  121.1  piles 1/1  strays 0.003  ms/tick 12.71
+seed 1 dropfast t  26.0s  contrast 4.02
+seed 1 dropfast t  26.0s  extent r50 141.1 r90 181.8
+seed 1 dropfast t  26.0s  kinds k0 n 23898 on 1.000 r 140.9  k1 n 6102 on 0.988 r 141.6
+seed 1 dropfast t  28.0s  tube  4388.1  loops    0  width 6.91  reach  120.9  piles 1/1  strays 0.003  ms/tick 12.85
+seed 1 dropfast t  28.0s  contrast 4.03
+seed 1 dropfast t  28.0s  extent r50 141.3 r90 181.7
+seed 1 dropfast t  28.0s  kinds k0 n 23898 on 1.000 r 141.0  k1 n 6102 on 0.985 r 142.6
+seed 1 dropfast t  30.0s  tube  4360.0  loops    0  width 6.94  reach  120.7  piles 1/1  strays 0.003  ms/tick 12.98
+seed 1 dropfast t  30.0s  contrast 3.96
+seed 1 dropfast t  30.0s  extent r50 141.7 r90 181.6
+seed 1 dropfast t  30.0s  kinds k0 n 23898 on 1.000 r 141.3  k1 n 6102 on 0.988 r 143.2
+seed 1 dropfast hash=9d2107f4d7ab4081
+seed 2 dropfast t   2.0s  tube  6135.6  loops   51  width 8.16  reach  120.9  piles 1/1  strays 0.001  ms/tick 13.26
+seed 2 dropfast t   2.0s  contrast 5.45
+seed 2 dropfast t   2.0s  extent r50 142.9 r90 185.0
+seed 2 dropfast t   2.0s  kinds k0 n 24033 on 1.000 r 142.9  k1 n 5967 on 0.994 r 143.1
+seed 2 dropfast t   4.0s  tube  5561.6  loops   26  width 7.35  reach  121.1  piles 1/1  strays 0.002  ms/tick 12.48
+seed 2 dropfast t   4.0s  contrast 5.37
+seed 2 dropfast t   4.0s  extent r50 143.1 r90 183.7
+seed 2 dropfast t   4.0s  kinds k0 n 24033 on 1.000 r 143.0  k1 n 5967 on 0.991 r 143.3
+seed 2 dropfast t   6.0s  tube  5236.4  loops    7  width 6.89  reach  121.1  piles 1/1  strays 0.002  ms/tick 12.62
+seed 2 dropfast t   6.0s  contrast 5.09
+seed 2 dropfast t   6.0s  extent r50 142.8 r90 183.1
+seed 2 dropfast t   6.0s  kinds k0 n 24033 on 1.000 r 142.7  k1 n 5967 on 0.990 r 142.8
+seed 2 dropfast t   8.0s  tube  5053.0  loops    4  width 6.79  reach  120.8  piles 1/1  strays 0.002  ms/tick 13.11
+seed 2 dropfast t   8.0s  contrast 4.99
+seed 2 dropfast t   8.0s  extent r50 142.3 r90 182.3
+seed 2 dropfast t   8.0s  kinds k0 n 24033 on 1.000 r 142.5  k1 n 5967 on 0.988 r 141.8
+seed 2 dropfast t  10.0s  tube  4909.1  loops    3  width 6.68  reach  120.6  piles 1/1  strays 0.002  ms/tick 13.16
+seed 2 dropfast t  10.0s  contrast 4.78
+seed 2 dropfast t  10.0s  extent r50 141.9 r90 181.9
+seed 2 dropfast t  10.0s  kinds k0 n 24033 on 1.000 r 142.1  k1 n 5967 on 0.988 r 141.2
+seed 2 dropfast t  12.0s  tube  4795.9  loops    2  width 6.69  reach  120.1  piles 1/1  strays 0.002  ms/tick 13.34
+seed 2 dropfast t  12.0s  contrast 4.58
+seed 2 dropfast t  12.0s  extent r50 141.7 r90 181.5
+seed 2 dropfast t  12.0s  kinds k0 n 24033 on 1.000 r 142.0  k1 n 5967 on 0.989 r 140.7
+seed 2 dropfast t  14.0s  tube  4718.3  loops    2  width 6.76  reach  119.9  piles 1/1  strays 0.002  ms/tick 13.45
+seed 2 dropfast t  14.0s  contrast 4.51
+seed 2 dropfast t  14.0s  extent r50 141.7 r90 181.1
+seed 2 dropfast t  14.0s  kinds k0 n 24033 on 1.000 r 142.0  k1 n 5967 on 0.988 r 140.3
+seed 2 dropfast t  16.0s  tube  4644.1  loops    1  width 6.77  reach  119.6  piles 1/1  strays 0.002  ms/tick 13.55
+seed 2 dropfast t  16.0s  contrast 4.40
+seed 2 dropfast t  16.0s  extent r50 141.7 r90 180.8
+seed 2 dropfast t  16.0s  kinds k0 n 24033 on 1.000 r 141.9  k1 n 5967 on 0.988 r 140.6
+seed 2 dropfast t  18.0s  tube  4593.2  loops    1  width 6.76  reach  119.6  piles 1/1  strays 0.002  ms/tick 13.66
+seed 2 dropfast t  18.0s  contrast 4.32
+seed 2 dropfast t  18.0s  extent r50 141.6 r90 180.6
+seed 2 dropfast t  18.0s  kinds k0 n 24033 on 1.000 r 141.8  k1 n 5967 on 0.989 r 140.7
+seed 2 dropfast t  20.0s  tube  4556.9  loops    0  width 6.77  reach  119.6  piles 1/1  strays 0.002  ms/tick 13.76
+seed 2 dropfast t  20.0s  contrast 4.28
+seed 2 dropfast t  20.0s  extent r50 141.7 r90 180.4
+seed 2 dropfast t  20.0s  kinds k0 n 24033 on 1.000 r 141.7  k1 n 5967 on 0.988 r 141.6
+seed 2 dropfast t  22.0s  tube  4520.7  loops    0  width 6.77  reach  119.6  piles 1/1  strays 0.003  ms/tick 13.89
+seed 2 dropfast t  22.0s  contrast 4.24
+seed 2 dropfast t  22.0s  extent r50 141.5 r90 180.2
+seed 2 dropfast t  22.0s  kinds k0 n 24033 on 1.000 r 141.5  k1 n 5967 on 0.987 r 141.2
+seed 2 dropfast t  24.0s  tube  4465.0  loops    0  width 6.73  reach  119.6  piles 1/1  strays 0.003  ms/tick 14.00
+seed 2 dropfast t  24.0s  contrast 4.15
+seed 2 dropfast t  24.0s  extent r50 141.2 r90 180.1
+seed 2 dropfast t  24.0s  kinds k0 n 24033 on 1.000 r 141.3  k1 n 5967 on 0.985 r 140.3
+seed 2 dropfast t  26.0s  tube  4440.6  loops    1  width 6.81  reach  119.6  piles 1/1  strays 0.002  ms/tick 14.14
+seed 2 dropfast t  26.0s  contrast 4.13
+seed 2 dropfast t  26.0s  extent r50 141.0 r90 180.1
+seed 2 dropfast t  26.0s  kinds k0 n 24033 on 1.000 r 141.2  k1 n 5967 on 0.988 r 140.4
+seed 2 dropfast t  28.0s  tube  4413.4  loops    0  width 6.82  reach  119.3  piles 1/1  strays 0.002  ms/tick 14.09
+seed 2 dropfast t  28.0s  contrast 4.10
+seed 2 dropfast t  28.0s  extent r50 141.1 r90 179.9
+seed 2 dropfast t  28.0s  kinds k0 n 24033 on 1.000 r 141.1  k1 n 5967 on 0.988 r 140.8
+seed 2 dropfast t  30.0s  tube  4396.8  loops    0  width 6.80  reach  119.3  piles 1/1  strays 0.003  ms/tick 14.03
+seed 2 dropfast t  30.0s  contrast 4.08
+seed 2 dropfast t  30.0s  extent r50 140.9 r90 179.8
+seed 2 dropfast t  30.0s  kinds k0 n 24033 on 1.000 r 141.0  k1 n 5967 on 0.987 r 140.8
+seed 2 dropfast hash=4287bb9fc14f1421
+seed 3 dropfast t   2.0s  tube  6001.9  loops   45  width 7.79  reach  120.9  piles 1/1  strays 0.001  ms/tick 10.98
+seed 3 dropfast t   2.0s  contrast 5.31
+seed 3 dropfast t   2.0s  extent r50 141.8 r90 184.9
+seed 3 dropfast t   2.0s  kinds k0 n 24080 on 1.000 r 141.9  k1 n 5920 on 0.994 r 141.2
+seed 3 dropfast t   4.0s  tube  5435.6  loops   18  width 6.95  reach  120.6  piles 1/1  strays 0.002  ms/tick 11.91
+seed 3 dropfast t   4.0s  contrast 5.28
+seed 3 dropfast t   4.0s  extent r50 141.5 r90 183.9
+seed 3 dropfast t   4.0s  kinds k0 n 24080 on 1.000 r 141.6  k1 n 5920 on 0.991 r 140.7
+seed 3 dropfast t   6.0s  tube  5115.8  loops    7  width 6.67  reach  120.8  piles 1/1  strays 0.002  ms/tick 12.57
+seed 3 dropfast t   6.0s  contrast 4.98
+seed 3 dropfast t   6.0s  extent r50 141.1 r90 183.4
+seed 3 dropfast t   6.0s  kinds k0 n 24080 on 1.000 r 141.2  k1 n 5920 on 0.988 r 140.7
+seed 3 dropfast t   8.0s  tube  4968.4  loops    0  width 6.59  reach  120.2  piles 1/1  strays 0.002  ms/tick 12.82
+seed 3 dropfast t   8.0s  contrast 4.83
+seed 3 dropfast t   8.0s  extent r50 140.9 r90 183.1
+seed 3 dropfast t   8.0s  kinds k0 n 24080 on 1.000 r 140.9  k1 n 5920 on 0.988 r 140.9
+seed 3 dropfast t  10.0s  tube  4863.7  loops    0  width 6.58  reach  120.3  piles 1/1  strays 0.002  ms/tick 13.12
+seed 3 dropfast t  10.0s  contrast 4.69
+seed 3 dropfast t  10.0s  extent r50 141.0 r90 183.0
+seed 3 dropfast t  10.0s  kinds k0 n 24080 on 1.000 r 141.0  k1 n 5920 on 0.988 r 140.7
+seed 3 dropfast t  12.0s  tube  4778.4  loops    0  width 6.56  reach  120.1  piles 1/1  strays 0.003  ms/tick 13.33
+seed 3 dropfast t  12.0s  contrast 4.59
+seed 3 dropfast t  12.0s  extent r50 140.9 r90 182.7
+seed 3 dropfast t  12.0s  kinds k0 n 24080 on 1.000 r 140.9  k1 n 5920 on 0.987 r 140.8
+seed 3 dropfast t  14.0s  tube  4676.6  loops    0  width 6.49  reach  120.2  piles 1/1  strays 0.002  ms/tick 13.44
+seed 3 dropfast t  14.0s  contrast 4.48
+seed 3 dropfast t  14.0s  extent r50 140.7 r90 182.6
+seed 3 dropfast t  14.0s  kinds k0 n 24080 on 1.000 r 140.7  k1 n 5920 on 0.987 r 140.9
+seed 3 dropfast t  16.0s  tube  4593.0  loops    0  width 6.47  reach  119.8  piles 1/1  strays 0.003  ms/tick 13.75
+seed 3 dropfast t  16.0s  contrast 4.40
+seed 3 dropfast t  16.0s  extent r50 140.6 r90 182.3
+seed 3 dropfast t  16.0s  kinds k0 n 24080 on 1.000 r 140.6  k1 n 5920 on 0.986 r 140.7
+seed 3 dropfast t  18.0s  tube  4535.8  loops    0  width 6.51  reach  119.8  piles 1/1  strays 0.003  ms/tick 13.95
+seed 3 dropfast t  18.0s  contrast 4.33
+seed 3 dropfast t  18.0s  extent r50 140.6 r90 182.2
+seed 3 dropfast t  18.0s  kinds k0 n 24080 on 1.000 r 140.7  k1 n 5920 on 0.986 r 140.5
+seed 3 dropfast t  20.0s  tube  4493.9  loops    0  width 6.48  reach  119.8  piles 1/1  strays 0.003  ms/tick 13.83
+seed 3 dropfast t  20.0s  contrast 4.28
+seed 3 dropfast t  20.0s  extent r50 140.8 r90 182.1
+seed 3 dropfast t  20.0s  kinds k0 n 24080 on 1.000 r 140.7  k1 n 5920 on 0.984 r 141.2
+seed 3 dropfast t  22.0s  tube  4461.0  loops    0  width 6.51  reach  119.8  piles 1/1  strays 0.003  ms/tick 13.72
+seed 3 dropfast t  22.0s  contrast 4.23
+seed 3 dropfast t  22.0s  extent r50 141.0 r90 182.0
+seed 3 dropfast t  22.0s  kinds k0 n 24080 on 1.000 r 140.8  k1 n 5920 on 0.987 r 142.3
+seed 3 dropfast t  24.0s  tube  4439.8  loops    0  width 6.50  reach  119.7  piles 1/1  strays 0.003  ms/tick 13.67
+seed 3 dropfast t  24.0s  contrast 4.20
+seed 3 dropfast t  24.0s  extent r50 141.2 r90 182.0
+seed 3 dropfast t  24.0s  kinds k0 n 24080 on 1.000 r 141.0  k1 n 5920 on 0.984 r 141.9
+seed 3 dropfast t  26.0s  tube  4418.3  loops    0  width 6.56  reach  119.8  piles 1/1  strays 0.003  ms/tick 13.62
+seed 3 dropfast t  26.0s  contrast 4.14
+seed 3 dropfast t  26.0s  extent r50 141.4 r90 181.9
+seed 3 dropfast t  26.0s  kinds k0 n 24080 on 1.000 r 141.1  k1 n 5920 on 0.985 r 142.9
+seed 3 dropfast t  28.0s  tube  4409.2  loops    0  width 6.57  reach  119.7  piles 1/1  strays 0.004  ms/tick 13.59
+seed 3 dropfast t  28.0s  contrast 4.16
+seed 3 dropfast t  28.0s  extent r50 141.5 r90 181.8
+seed 3 dropfast t  28.0s  kinds k0 n 24080 on 1.000 r 141.2  k1 n 5920 on 0.982 r 142.7
+seed 3 dropfast t  30.0s  tube  4387.2  loops    0  width 6.59  reach  119.8  piles 1/1  strays 0.003  ms/tick 13.69
+seed 3 dropfast t  30.0s  contrast 4.10
+seed 3 dropfast t  30.0s  extent r50 141.6 r90 181.8
+seed 3 dropfast t  30.0s  kinds k0 n 24080 on 1.000 r 141.3  k1 n 5920 on 0.983 r 143.1
+seed 3 dropfast hash=8472beec17fcb473
+seed 1 droplets t   2.0s  tube  6222.8  loops   63  width 8.28  reach  121.6  piles 1/1  strays 0.000  ms/tick 12.51
+seed 1 droplets t   2.0s  contrast 5.26
+seed 1 droplets t   2.0s  extent r50 140.9 r90 184.6
+seed 1 droplets t   4.0s  tube  5593.8  loops   22  width 7.51  reach  121.1  piles 1/1  strays 0.000  ms/tick 12.45
+seed 1 droplets t   4.0s  contrast 4.92
+seed 1 droplets t   4.0s  extent r50 140.5 r90 183.3
+seed 1 droplets t   6.0s  tube  5300.9  loops   11  width 7.25  reach  121.2  piles 1/1  strays 0.000  ms/tick 12.70
+seed 1 droplets t   6.0s  contrast 4.62
+seed 1 droplets t   6.0s  extent r50 140.4 r90 182.5
+seed 1 droplets t   8.0s  tube  5133.1  loops    7  width 7.21  reach  121.2  piles 1/1  strays 0.000  ms/tick 12.83
+seed 1 droplets t   8.0s  contrast 4.35
+seed 1 droplets t   8.0s  extent r50 140.4 r90 182.2
+seed 1 droplets t  10.0s  tube  4992.4  loops    4  width 7.06  reach  121.2  piles 1/1  strays 0.000  ms/tick 13.14
+seed 1 droplets t  10.0s  contrast 4.17
+seed 1 droplets t  10.0s  extent r50 140.6 r90 181.8
+seed 1 droplets t  12.0s  tube  4870.0  loops    1  width 6.93  reach  121.2  piles 1/1  strays 0.000  ms/tick 13.42
+seed 1 droplets t  12.0s  contrast 3.99
+seed 1 droplets t  12.0s  extent r50 140.6 r90 181.5
+seed 1 droplets t  14.0s  tube  4757.8  loops    2  width 7.02  reach  121.5  piles 1/1  strays 0.000  ms/tick 13.48
+seed 1 droplets t  14.0s  contrast 3.85
+seed 1 droplets t  14.0s  extent r50 140.7 r90 181.2
+seed 1 droplets t  16.0s  tube  4680.5  loops    1  width 6.97  reach  121.2  piles 1/1  strays 0.000  ms/tick 13.55
+seed 1 droplets t  16.0s  contrast 3.72
+seed 1 droplets t  16.0s  extent r50 140.9 r90 181.1
+seed 1 droplets t  18.0s  tube  4612.4  loops    2  width 7.04  reach  121.0  piles 1/1  strays 0.000  ms/tick 13.69
+seed 1 droplets t  18.0s  contrast 3.63
+seed 1 droplets t  18.0s  extent r50 141.0 r90 180.9
+seed 1 droplets t  20.0s  tube  4571.4  loops    0  width 7.00  reach  121.1  piles 1/1  strays 0.000  ms/tick 13.78
+seed 1 droplets t  20.0s  contrast 3.58
+seed 1 droplets t  20.0s  extent r50 141.1 r90 180.8
+seed 1 droplets t  22.0s  tube  4532.4  loops    1  width 7.02  reach  121.2  piles 1/1  strays 0.000  ms/tick 13.90
+seed 1 droplets t  22.0s  contrast 3.53
+seed 1 droplets t  22.0s  extent r50 141.4 r90 180.7
+seed 1 droplets t  24.0s  tube  4509.6  loops    1  width 6.99  reach  120.9  piles 1/1  strays 0.000  ms/tick 13.93
+seed 1 droplets t  24.0s  contrast 3.49
+seed 1 droplets t  24.0s  extent r50 141.5 r90 180.5
+seed 1 droplets t  26.0s  tube  4463.9  loops    0  width 7.14  reach  121.1  piles 1/1  strays 0.000  ms/tick 13.93
+seed 1 droplets t  26.0s  contrast 3.40
+seed 1 droplets t  26.0s  extent r50 141.9 r90 180.4
+seed 1 droplets t  28.0s  tube  4433.9  loops    1  width 7.10  reach  120.9  piles 1/1  strays 0.000  ms/tick 13.94
+seed 1 droplets t  28.0s  contrast 3.36
+seed 1 droplets t  28.0s  extent r50 142.2 r90 180.2
+seed 1 droplets t  30.0s  tube  4412.6  loops    0  width 7.12  reach  120.9  piles 1/1  strays 0.000  ms/tick 13.95
+seed 1 droplets t  30.0s  contrast 3.34
+seed 1 droplets t  30.0s  extent r50 142.6 r90 180.3
+seed 1 droplets hash=7f52d4c741f5abc6
+seed 2 droplets t   2.0s  tube  6236.1  loops   53  width 8.46  reach  121.4  piles 1/1  strays 0.000  ms/tick 13.23
+seed 2 droplets t   2.0s  contrast 5.24
+seed 2 droplets t   2.0s  extent r50 141.7 r90 184.8
+seed 2 droplets t   4.0s  tube  5673.2  loops   27  width 7.51  reach  121.1  piles 1/1  strays 0.000  ms/tick 12.92
+seed 2 droplets t   4.0s  contrast 4.91
+seed 2 droplets t   4.0s  extent r50 141.7 r90 183.7
+seed 2 droplets t   6.0s  tube  5337.8  loops   11  width 7.29  reach  121.3  piles 1/1  strays 0.000  ms/tick 13.58
+seed 2 droplets t   6.0s  contrast 4.62
+seed 2 droplets t   6.0s  extent r50 141.9 r90 183.1
+seed 2 droplets t   8.0s  tube  5115.4  loops    8  width 7.17  reach  121.3  piles 1/1  strays 0.000  ms/tick 13.67
+seed 2 droplets t   8.0s  contrast 4.43
+seed 2 droplets t   8.0s  extent r50 141.5 r90 182.6
+seed 2 droplets t  10.0s  tube  4876.9  loops    2  width 7.00  reach  121.6  piles 1/1  strays 0.000  ms/tick 13.56
+seed 2 droplets t  10.0s  contrast 4.06
+seed 2 droplets t  10.0s  extent r50 141.1 r90 182.2
+seed 2 droplets t  12.0s  tube  4767.9  loops    0  width 7.04  reach  121.8  piles 1/1  strays 0.000  ms/tick 13.49
+seed 2 droplets t  12.0s  contrast 3.89
+seed 2 droplets t  12.0s  extent r50 140.8 r90 182.0
+seed 2 droplets t  14.0s  tube  4688.1  loops    0  width 6.98  reach  121.1  piles 1/1  strays 0.000  ms/tick 13.70
+seed 2 droplets t  14.0s  contrast 3.79
+seed 2 droplets t  14.0s  extent r50 140.8 r90 181.8
+seed 2 droplets t  16.0s  tube  4631.4  loops    0  width 7.01  reach  121.1  piles 1/1  strays 0.000  ms/tick 13.67
+seed 2 droplets t  16.0s  contrast 3.66
+seed 2 droplets t  16.0s  extent r50 140.8 r90 181.5
+seed 2 droplets t  18.0s  tube  4562.5  loops    1  width 6.95  reach  120.8  piles 1/1  strays 0.000  ms/tick 13.69
+seed 2 droplets t  18.0s  contrast 3.55
+seed 2 droplets t  18.0s  extent r50 140.7 r90 181.2
+seed 2 droplets t  20.0s  tube  4506.0  loops    0  width 6.98  reach  120.3  piles 1/1  strays 0.000  ms/tick 13.80
+seed 2 droplets t  20.0s  contrast 3.43
+seed 2 droplets t  20.0s  extent r50 140.8 r90 180.9
+seed 2 droplets t  22.0s  tube  4458.2  loops    0  width 6.98  reach  120.3  piles 1/1  strays 0.000  ms/tick 13.89
+seed 2 droplets t  22.0s  contrast 3.36
+seed 2 droplets t  22.0s  extent r50 140.9 r90 180.7
+seed 2 droplets t  24.0s  tube  4424.8  loops    0  width 7.00  reach  120.1  piles 1/1  strays 0.000  ms/tick 13.93
+seed 2 droplets t  24.0s  contrast 3.29
+seed 2 droplets t  24.0s  extent r50 140.9 r90 180.5
+seed 2 droplets t  26.0s  tube  4400.5  loops    0  width 7.02  reach  119.8  piles 1/1  strays 0.000  ms/tick 13.98
+seed 2 droplets t  26.0s  contrast 3.26
+seed 2 droplets t  26.0s  extent r50 140.8 r90 180.3
+seed 2 droplets t  28.0s  tube  4372.9  loops    0  width 7.05  reach  119.6  piles 1/1  strays 0.000  ms/tick 14.04
+seed 2 droplets t  28.0s  contrast 3.24
+seed 2 droplets t  28.0s  extent r50 140.7 r90 180.1
+seed 2 droplets t  30.0s  tube  4351.3  loops    0  width 7.09  reach  119.6  piles 1/1  strays 0.000  ms/tick 13.98
+seed 2 droplets t  30.0s  contrast 3.20
+seed 2 droplets t  30.0s  extent r50 140.9 r90 179.9
+seed 2 droplets hash=698be04cd5f57325
+seed 3 droplets t   2.0s  tube  6206.4  loops   54  width 8.20  reach  121.6  piles 1/1  strays 0.000  ms/tick 13.17
+seed 3 droplets t   2.0s  contrast 5.25
+seed 3 droplets t   2.0s  extent r50 140.6 r90 185.0
+seed 3 droplets t   4.0s  tube  5610.8  loops   27  width 7.19  reach  121.4  piles 1/1  strays 0.000  ms/tick 13.24
+seed 3 droplets t   4.0s  contrast 4.92
+seed 3 droplets t   4.0s  extent r50 140.5 r90 184.0
+seed 3 droplets t   6.0s  tube  5344.4  loops   10  width 7.00  reach  121.4  piles 1/1  strays 0.000  ms/tick 12.98
+seed 3 droplets t   6.0s  contrast 4.70
+seed 3 droplets t   6.0s  extent r50 140.2 r90 183.4
+seed 3 droplets t   8.0s  tube  5146.7  loops    4  width 6.85  reach  121.1  piles 1/1  strays 0.000  ms/tick 12.87
+seed 3 droplets t   8.0s  contrast 4.46
+seed 3 droplets t   8.0s  extent r50 140.3 r90 183.0
+seed 3 droplets t  10.0s  tube  4985.9  loops    0  width 6.82  reach  120.9  piles 1/1  strays 0.000  ms/tick 13.04
+seed 3 droplets t  10.0s  contrast 4.22
+seed 3 droplets t  10.0s  extent r50 140.6 r90 182.9
+seed 3 droplets t  12.0s  tube  4904.6  loops    1  width 6.82  reach  120.6  piles 1/1  strays 0.000  ms/tick 12.97
+seed 3 droplets t  12.0s  contrast 4.09
+seed 3 droplets t  12.0s  extent r50 140.6 r90 182.7
+seed 3 droplets t  14.0s  tube  4835.8  loops    0  width 6.85  reach  120.6  piles 1/1  strays 0.000  ms/tick 13.23
+seed 3 droplets t  14.0s  contrast 3.97
+seed 3 droplets t  14.0s  extent r50 140.6 r90 182.6
+seed 3 droplets t  16.0s  tube  4761.3  loops    2  width 6.85  reach  120.6  piles 1/1  strays 0.000  ms/tick 13.38
+seed 3 droplets t  16.0s  contrast 3.88
+seed 3 droplets t  16.0s  extent r50 140.6 r90 182.5
+seed 3 droplets t  18.0s  tube  4682.1  loops    0  width 6.89  reach  120.1  piles 1/1  strays 0.000  ms/tick 13.50
+seed 3 droplets t  18.0s  contrast 3.76
+seed 3 droplets t  18.0s  extent r50 140.7 r90 182.5
+seed 3 droplets t  20.0s  tube  4631.6  loops    1  width 6.97  reach  119.9  piles 1/1  strays 0.000  ms/tick 13.62
+seed 3 droplets t  20.0s  contrast 3.68
+seed 3 droplets t  20.0s  extent r50 141.0 r90 182.4
+seed 3 droplets t  22.0s  tube  4587.9  loops    1  width 7.01  reach  119.9  piles 1/1  strays 0.000  ms/tick 13.75
+seed 3 droplets t  22.0s  contrast 3.64
+seed 3 droplets t  22.0s  extent r50 141.2 r90 182.3
+seed 3 droplets t  24.0s  tube  4536.2  loops    0  width 6.98  reach  120.1  piles 1/1  strays 0.000  ms/tick 13.80
+seed 3 droplets t  24.0s  contrast 3.50
+seed 3 droplets t  24.0s  extent r50 141.4 r90 182.3
+seed 3 droplets t  26.0s  tube  4496.2  loops    0  width 6.98  reach  120.1  piles 1/1  strays 0.000  ms/tick 13.83
+seed 3 droplets t  26.0s  contrast 3.44
+seed 3 droplets t  26.0s  extent r50 141.8 r90 182.1
+seed 3 droplets t  28.0s  tube  4424.5  loops    0  width 7.04  reach  119.9  piles 1/1  strays 0.000  ms/tick 13.80
+seed 3 droplets t  28.0s  contrast 3.28
+seed 3 droplets t  28.0s  extent r50 141.8 r90 181.9
+seed 3 droplets t  30.0s  tube  4389.0  loops    0  width 7.07  reach  119.9  piles 1/1  strays 0.000  ms/tick 13.71
+seed 3 droplets t  30.0s  contrast 3.22
+seed 3 droplets t  30.0s  extent r50 142.1 r90 181.8
+seed 3 droplets hash=036adc999e8ee2b4
+seed 1 dropscouts t   2.0s  tube  6238.4  loops   38  width 11.43  reach  120.9  piles 1/1  strays 0.002  ms/tick 10.85
+seed 1 dropscouts t   2.0s  contrast 6.45
+seed 1 dropscouts t   2.0s  extent r50 140.1 r90 181.4
+seed 1 dropscouts t   2.0s  kinds k0 n 23898 on 1.000 r 140.0  k1 n 6102 on 0.991 r 141.0
+seed 1 dropscouts t   4.0s  tube  5246.8  loops   18  width 8.71  reach  121.1  piles 1/1  strays 0.002  ms/tick 12.09
+seed 1 dropscouts t   4.0s  contrast 5.56
+seed 1 dropscouts t   4.0s  extent r50 139.4 r90 179.8
+seed 1 dropscouts t   4.0s  kinds k0 n 23898 on 1.000 r 139.6  k1 n 6102 on 0.988 r 138.4
+seed 1 dropscouts t   6.0s  tube  4861.8  loops    6  width 8.21  reach  121.2  piles 1/1  strays 0.002  ms/tick 12.76
+seed 1 dropscouts t   6.0s  contrast 4.93
+seed 1 dropscouts t   6.0s  extent r50 140.0 r90 178.8
+seed 1 dropscouts t   6.0s  kinds k0 n 23898 on 1.000 r 140.0  k1 n 6102 on 0.988 r 139.5
+seed 1 dropscouts t   8.0s  tube  4674.6  loops    7  width 8.08  reach  120.9  piles 1/1  strays 0.002  ms/tick 13.06
+seed 1 dropscouts t   8.0s  contrast 4.64
+seed 1 dropscouts t   8.0s  extent r50 140.8 r90 178.2
+seed 1 dropscouts t   8.0s  kinds k0 n 23898 on 1.000 r 140.7  k1 n 6102 on 0.990 r 141.6
+seed 1 dropscouts t  10.0s  tube  4531.6  loops    3  width 7.91  reach  120.7  piles 1/1  strays 0.002  ms/tick 13.09
+seed 1 dropscouts t  10.0s  contrast 4.37
+seed 1 dropscouts t  10.0s  extent r50 141.5 r90 177.8
+seed 1 dropscouts t  10.0s  kinds k0 n 23898 on 1.000 r 141.4  k1 n 6102 on 0.988 r 142.3
+seed 1 dropscouts t  12.0s  tube  4434.0  loops    2  width 7.85  reach  120.4  piles 1/1  strays 0.002  ms/tick 13.10
+seed 1 dropscouts t  12.0s  contrast 4.22
+seed 1 dropscouts t  12.0s  extent r50 142.0 r90 177.6
+seed 1 dropscouts t  12.0s  kinds k0 n 23898 on 1.000 r 141.9  k1 n 6102 on 0.988 r 142.2
+seed 1 dropscouts t  14.0s  tube  4353.7  loops    2  width 7.85  reach  120.7  piles 1/1  strays 0.002  ms/tick 13.05
+seed 1 dropscouts t  14.0s  contrast 4.03
+seed 1 dropscouts t  14.0s  extent r50 141.9 r90 177.2
+seed 1 dropscouts t  14.0s  kinds k0 n 23898 on 1.000 r 142.2  k1 n 6102 on 0.990 r 140.8
+seed 1 dropscouts t  16.0s  tube  4303.8  loops    3  width 7.85  reach  120.4  piles 1/1  strays 0.002  ms/tick 13.02
+seed 1 dropscouts t  16.0s  contrast 3.91
+seed 1 dropscouts t  16.0s  extent r50 142.6 r90 177.0
+seed 1 dropscouts t  16.0s  kinds k0 n 23898 on 1.000 r 142.8  k1 n 6102 on 0.991 r 141.2
+seed 1 dropscouts t  18.0s  tube  4247.4  loops    3  width 7.81  reach  120.4  piles 1/1  strays 0.002  ms/tick 13.00
+seed 1 dropscouts t  18.0s  contrast 3.76
+seed 1 dropscouts t  18.0s  extent r50 142.9 r90 176.8
+seed 1 dropscouts t  18.0s  kinds k0 n 23898 on 1.000 r 143.2  k1 n 6102 on 0.990 r 141.7
+seed 1 dropscouts t  20.0s  tube  4182.7  loops    2  width 7.78  reach  120.2  piles 1/1  strays 0.002  ms/tick 12.99
+seed 1 dropscouts t  20.0s  contrast 3.64
+seed 1 dropscouts t  20.0s  extent r50 143.6 r90 176.6
+seed 1 dropscouts t  20.0s  kinds k0 n 23898 on 1.000 r 143.9  k1 n 6102 on 0.991 r 141.9
+seed 1 dropscouts t  22.0s  tube  4096.9  loops    0  width 7.85  reach  120.4  piles 1/1  strays 0.002  ms/tick 13.07
+seed 1 dropscouts t  22.0s  contrast 3.46
+seed 1 dropscouts t  22.0s  extent r50 144.0 r90 176.5
+seed 1 dropscouts t  22.0s  kinds k0 n 23898 on 1.000 r 144.5  k1 n 6102 on 0.989 r 141.3
+seed 1 dropscouts t  24.0s  tube  4082.0  loops    1  width 7.93  reach  121.2  piles 1/1  strays 0.002  ms/tick 13.10
+seed 1 dropscouts t  24.0s  contrast 3.41
+seed 1 dropscouts t  24.0s  extent r50 144.2 r90 176.3
+seed 1 dropscouts t  24.0s  kinds k0 n 23898 on 1.000 r 144.9  k1 n 6102 on 0.990 r 141.6
+seed 1 dropscouts t  26.0s  tube  4062.2  loops    1  width 7.97  reach  120.4  piles 1/1  strays 0.002  ms/tick 13.13
+seed 1 dropscouts t  26.0s  contrast 3.37
+seed 1 dropscouts t  26.0s  extent r50 144.6 r90 176.2
+seed 1 dropscouts t  26.0s  kinds k0 n 23898 on 1.000 r 145.1  k1 n 6102 on 0.991 r 141.9
+seed 1 dropscouts t  28.0s  tube  4038.2  loops    1  width 7.90  reach  120.4  piles 1/1  strays 0.002  ms/tick 13.14
+seed 1 dropscouts t  28.0s  contrast 3.31
+seed 1 dropscouts t  28.0s  extent r50 144.7 r90 176.0
+seed 1 dropscouts t  28.0s  kinds k0 n 23898 on 1.000 r 145.2  k1 n 6102 on 0.991 r 142.2
+seed 1 dropscouts t  30.0s  tube  4024.7  loops    0  width 7.97  reach  120.2  piles 1/1  strays 0.002  ms/tick 13.28
+seed 1 dropscouts t  30.0s  contrast 3.26
+seed 1 dropscouts t  30.0s  extent r50 144.8 r90 175.9
+seed 1 dropscouts t  30.0s  kinds k0 n 23898 on 1.000 r 145.3  k1 n 6102 on 0.993 r 142.6
+seed 1 dropscouts hash=183b141046293139
+seed 2 dropscouts t   2.0s  tube  6243.4  loops   30  width 11.18  reach  121.7  piles 1/1  strays 0.002  ms/tick 14.14
+seed 2 dropscouts t   2.0s  contrast 6.49
+seed 2 dropscouts t   2.0s  extent r50 142.5 r90 181.4
+seed 2 dropscouts t   2.0s  kinds k0 n 24033 on 1.000 r 142.0  k1 n 5967 on 0.991 r 144.6
+seed 2 dropscouts t   4.0s  tube  5159.5  loops   12  width 8.55  reach  120.6  piles 1/1  strays 0.002  ms/tick 13.77
+seed 2 dropscouts t   4.0s  contrast 5.19
+seed 2 dropscouts t   4.0s  extent r50 143.2 r90 179.3
+seed 2 dropscouts t   4.0s  kinds k0 n 24033 on 1.000 r 142.0  k1 n 5967 on 0.990 r 146.6
+seed 2 dropscouts t   6.0s  tube  4797.7  loops    6  width 8.01  reach  120.8  piles 1/1  strays 0.002  ms/tick 13.46
+seed 2 dropscouts t   6.0s  contrast 4.66
+seed 2 dropscouts t   6.0s  extent r50 143.8 r90 178.3
+seed 2 dropscouts t   6.0s  kinds k0 n 24033 on 1.000 r 142.5  k1 n 5967 on 0.989 r 148.0
+seed 2 dropscouts t   8.0s  tube  4617.0  loops    2  width 7.87  reach  120.3  piles 1/1  strays 0.002  ms/tick 13.79
+seed 2 dropscouts t   8.0s  contrast 4.39
+seed 2 dropscouts t   8.0s  extent r50 144.4 r90 177.7
+seed 2 dropscouts t   8.0s  kinds k0 n 24033 on 1.000 r 143.1  k1 n 5967 on 0.990 r 148.4
+seed 2 dropscouts t  10.0s  tube  4494.2  loops    1  width 7.82  reach  120.1  piles 1/1  strays 0.002  ms/tick 14.18
+seed 2 dropscouts t  10.0s  contrast 4.15
+seed 2 dropscouts t  10.0s  extent r50 145.0 r90 177.1
+seed 2 dropscouts t  10.0s  kinds k0 n 24033 on 1.000 r 143.7  k1 n 5967 on 0.989 r 148.9
+seed 2 dropscouts t  12.0s  tube  4386.8  loops    2  width 7.83  reach  120.1  piles 1/1  strays 0.002  ms/tick 14.15
+seed 2 dropscouts t  12.0s  contrast 3.98
+seed 2 dropscouts t  12.0s  extent r50 145.1 r90 176.5
+seed 2 dropscouts t  12.0s  kinds k0 n 24033 on 1.000 r 144.1  k1 n 5967 on 0.989 r 148.1
+seed 2 dropscouts t  14.0s  tube  4271.1  loops    1  width 7.84  reach  120.1  piles 1/1  strays 0.002  ms/tick 14.23
+seed 2 dropscouts t  14.0s  contrast 3.73
+seed 2 dropscouts t  14.0s  extent r50 145.5 r90 176.1
+seed 2 dropscouts t  14.0s  kinds k0 n 24033 on 1.000 r 144.4  k1 n 5967 on 0.992 r 148.5
+seed 2 dropscouts t  16.0s  tube  4217.7  loops    0  width 7.83  reach  119.8  piles 1/1  strays 0.002  ms/tick 14.32
+seed 2 dropscouts t  16.0s  contrast 3.63
+seed 2 dropscouts t  16.0s  extent r50 145.6 r90 175.6
+seed 2 dropscouts t  16.0s  kinds k0 n 24033 on 1.000 r 144.9  k1 n 5967 on 0.988 r 147.6
+seed 2 dropscouts t  18.0s  tube  4146.1  loops    0  width 7.80  reach  119.8  piles 1/1  strays 0.002  ms/tick 14.36
+seed 2 dropscouts t  18.0s  contrast 3.48
+seed 2 dropscouts t  18.0s  extent r50 145.8 r90 175.4
+seed 2 dropscouts t  18.0s  kinds k0 n 24033 on 1.000 r 145.3  k1 n 5967 on 0.991 r 147.1
+seed 2 dropscouts t  20.0s  tube  4081.9  loops    0  width 7.83  reach  119.8  piles 1/1  strays 0.002  ms/tick 14.35
+seed 2 dropscouts t  20.0s  contrast 3.35
+seed 2 dropscouts t  20.0s  extent r50 145.9 r90 175.2
+seed 2 dropscouts t  20.0s  kinds k0 n 24033 on 1.000 r 145.7  k1 n 5967 on 0.990 r 146.9
+seed 2 dropscouts t  22.0s  tube  4027.0  loops    0  width 7.81  reach  119.8  piles 1/1  strays 0.001  ms/tick 14.50
+seed 2 dropscouts t  22.0s  contrast 3.24
+seed 2 dropscouts t  22.0s  extent r50 146.5 r90 175.0
+seed 2 dropscouts t  22.0s  kinds k0 n 24033 on 1.000 r 146.3  k1 n 5967 on 0.994 r 146.9
+seed 2 dropscouts t  24.0s  tube  3970.2  loops    0  width 7.89  reach  119.8  piles 1/1  strays 0.001  ms/tick 14.59
+seed 2 dropscouts t  24.0s  contrast 3.13
+seed 2 dropscouts t  24.0s  extent r50 146.7 r90 174.9
+seed 2 dropscouts t  24.0s  kinds k0 n 24033 on 1.000 r 146.7  k1 n 5967 on 0.993 r 146.7
+seed 2 dropscouts t  26.0s  tube  3969.7  loops    0  width 7.82  reach  119.8  piles 1/1  strays 0.002  ms/tick 14.51
+seed 2 dropscouts t  26.0s  contrast 3.13
+seed 2 dropscouts t  26.0s  extent r50 146.7 r90 174.8
+seed 2 dropscouts t  26.0s  kinds k0 n 24033 on 1.000 r 146.8  k1 n 5967 on 0.990 r 146.4
+seed 2 dropscouts t  28.0s  tube  3943.1  loops    0  width 7.95  reach  120.1  piles 1/1  strays 0.001  ms/tick 14.48
+seed 2 dropscouts t  28.0s  contrast 3.07
+seed 2 dropscouts t  28.0s  extent r50 146.8 r90 174.7
+seed 2 dropscouts t  28.0s  kinds k0 n 24033 on 1.000 r 146.8  k1 n 5967 on 0.993 r 146.5
+seed 2 dropscouts t  30.0s  tube  3917.4  loops    0  width 7.98  reach  119.8  piles 1/1  strays 0.002  ms/tick 14.46
+seed 2 dropscouts t  30.0s  contrast 3.01
+seed 2 dropscouts t  30.0s  extent r50 146.7 r90 174.5
+seed 2 dropscouts t  30.0s  kinds k0 n 24033 on 1.000 r 147.0  k1 n 5967 on 0.992 r 146.0
+seed 2 dropscouts hash=6e2a78c9c02dbd98
+seed 3 dropscouts t   2.0s  tube  6096.2  loops   30  width 10.27  reach  121.2  piles 1/1  strays 0.002  ms/tick 12.90
+seed 3 dropscouts t   2.0s  contrast 6.38
+seed 3 dropscouts t   2.0s  extent r50 141.3 r90 182.1
+seed 3 dropscouts t   2.0s  kinds k0 n 24080 on 1.000 r 140.8  k1 n 5920 on 0.988 r 144.3
+seed 3 dropscouts t   4.0s  tube  5226.8  loops    9  width 8.24  reach  120.6  piles 1/1  strays 0.003  ms/tick 12.63
+seed 3 dropscouts t   4.0s  contrast 5.40
+seed 3 dropscouts t   4.0s  extent r50 141.6 r90 180.5
+seed 3 dropscouts t   4.0s  kinds k0 n 24080 on 1.000 r 141.5  k1 n 5920 on 0.985 r 142.2
+seed 3 dropscouts t   6.0s  tube  4867.2  loops    4  width 7.95  reach  120.0  piles 1/1  strays 0.003  ms/tick 13.04
+seed 3 dropscouts t   6.0s  contrast 4.87
+seed 3 dropscouts t   6.0s  extent r50 142.4 r90 179.5
+seed 3 dropscouts t   6.0s  kinds k0 n 24080 on 1.000 r 142.5  k1 n 5920 on 0.985 r 141.6
+seed 3 dropscouts t   8.0s  tube  4665.1  loops    3  width 7.70  reach  119.7  piles 1/1  strays 0.003  ms/tick 12.95
+seed 3 dropscouts t   8.0s  contrast 4.48
+seed 3 dropscouts t   8.0s  extent r50 143.2 r90 178.8
+seed 3 dropscouts t   8.0s  kinds k0 n 24080 on 1.000 r 143.3  k1 n 5920 on 0.986 r 142.9
+seed 3 dropscouts t  10.0s  tube  4538.0  loops    1  width 7.73  reach  119.8  piles 1/1  strays 0.002  ms/tick 13.16
+seed 3 dropscouts t  10.0s  contrast 4.29
+seed 3 dropscouts t  10.0s  extent r50 143.8 r90 178.5
+seed 3 dropscouts t  10.0s  kinds k0 n 24080 on 1.000 r 143.9  k1 n 5920 on 0.990 r 143.2
+seed 3 dropscouts t  12.0s  tube  4462.4  loops    2  width 7.67  reach  119.5  piles 1/1  strays 0.002  ms/tick 13.55
+seed 3 dropscouts t  12.0s  contrast 4.10
+seed 3 dropscouts t  12.0s  extent r50 144.0 r90 178.1
+seed 3 dropscouts t  12.0s  kinds k0 n 24080 on 1.000 r 144.1  k1 n 5920 on 0.989 r 143.7
+seed 3 dropscouts t  14.0s  tube  4409.2  loops    1  width 7.81  reach  119.5  piles 1/1  strays 0.002  ms/tick 13.70
+seed 3 dropscouts t  14.0s  contrast 3.98
+seed 3 dropscouts t  14.0s  extent r50 144.6 r90 177.8
+seed 3 dropscouts t  14.0s  kinds k0 n 24080 on 1.000 r 144.7  k1 n 5920 on 0.990 r 143.8
+seed 3 dropscouts t  16.0s  tube  4326.4  loops    1  width 7.74  reach  119.7  piles 1/1  strays 0.003  ms/tick 13.94
+seed 3 dropscouts t  16.0s  contrast 3.83
+seed 3 dropscouts t  16.0s  extent r50 145.0 r90 177.4
+seed 3 dropscouts t  16.0s  kinds k0 n 24080 on 1.000 r 145.0  k1 n 5920 on 0.987 r 145.0
+seed 3 dropscouts t  18.0s  tube  4272.2  loops    2  width 7.69  reach  119.5  piles 1/1  strays 0.002  ms/tick 14.13
+seed 3 dropscouts t  18.0s  contrast 3.72
+seed 3 dropscouts t  18.0s  extent r50 145.4 r90 177.1
+seed 3 dropscouts t  18.0s  kinds k0 n 24080 on 1.000 r 145.3  k1 n 5920 on 0.989 r 145.8
+seed 3 dropscouts t  20.0s  tube  4209.4  loops    0  width 7.56  reach  119.4  piles 1/1  strays 0.002  ms/tick 14.30
+seed 3 dropscouts t  20.0s  contrast 3.61
+seed 3 dropscouts t  20.0s  extent r50 145.7 r90 176.8
+seed 3 dropscouts t  20.0s  kinds k0 n 24080 on 1.000 r 145.5  k1 n 5920 on 0.990 r 146.3
+seed 3 dropscouts t  22.0s  tube  4157.4  loops    1  width 7.66  reach  119.4  piles 1/1  strays 0.002  ms/tick 14.38
+seed 3 dropscouts t  22.0s  contrast 3.52
+seed 3 dropscouts t  22.0s  extent r50 146.1 r90 176.5
+seed 3 dropscouts t  22.0s  kinds k0 n 24080 on 1.000 r 146.1  k1 n 5920 on 0.990 r 146.3
+seed 3 dropscouts t  24.0s  tube  4121.4  loops    0  width 7.71  reach  119.6  piles 1/1  strays 0.002  ms/tick 14.43
+seed 3 dropscouts t  24.0s  contrast 3.43
+seed 3 dropscouts t  24.0s  extent r50 146.5 r90 176.3
+seed 3 dropscouts t  24.0s  kinds k0 n 24080 on 1.000 r 146.3  k1 n 5920 on 0.991 r 147.3
+seed 3 dropscouts t  26.0s  tube  4091.2  loops    1  width 7.69  reach  119.9  piles 1/1  strays 0.002  ms/tick 14.50
+seed 3 dropscouts t  26.0s  contrast 3.37
+seed 3 dropscouts t  26.0s  extent r50 146.8 r90 176.0
+seed 3 dropscouts t  26.0s  kinds k0 n 24080 on 1.000 r 146.6  k1 n 5920 on 0.992 r 147.5
+seed 3 dropscouts t  28.0s  tube  4056.9  loops    0  width 7.78  reach  119.4  piles 1/1  strays 0.002  ms/tick 14.50
+seed 3 dropscouts t  28.0s  contrast 3.31
+seed 3 dropscouts t  28.0s  extent r50 147.0 r90 175.8
+seed 3 dropscouts t  28.0s  kinds k0 n 24080 on 1.000 r 146.8  k1 n 5920 on 0.991 r 148.2
+seed 3 dropscouts t  30.0s  tube  4017.8  loops    0  width 7.68  reach  119.4  piles 1/1  strays 0.002  ms/tick 14.53
+seed 3 dropscouts t  30.0s  contrast 3.21
+seed 3 dropscouts t  30.0s  extent r50 147.2 r90 175.5
+seed 3 dropscouts t  30.0s  kinds k0 n 24080 on 1.000 r 147.0  k1 n 5920 on 0.990 r 148.2
+seed 3 dropscouts hash=c6e80c6d9a21f084
+seed 1 grazers t   2.0s  tube  6397.9  loops   52  width 7.48  reach  125.6  piles 1/1  strays 0.000  ms/tick 15.23
+seed 1 grazers t   2.0s  contrast 6.11
+seed 1 grazers t   2.0s  extent r50 140.4 r90 185.0
+seed 1 grazers t   4.0s  tube  6025.9  loops   25  width 6.14  reach  132.3  piles 1/1  strays 0.000  ms/tick 14.90
+seed 1 grazers t   4.0s  contrast 6.32
+seed 1 grazers t   4.0s  extent r50 140.2 r90 185.5
+seed 1 grazers t   6.0s  tube  5694.8  loops   12  width 5.78  reach  136.4  piles 1/1  strays 0.000  ms/tick 14.70
+seed 1 grazers t   6.0s  contrast 6.13
+seed 1 grazers t   6.0s  extent r50 140.0 r90 186.9
+seed 1 grazers t   8.0s  tube  5548.9  loops    4  width 5.52  reach  142.1  piles 1/1  strays 0.000  ms/tick 14.52
+seed 1 grazers t   8.0s  contrast 5.90
+seed 1 grazers t   8.0s  extent r50 140.2 r90 188.6
+seed 1 grazers t  10.0s  tube  5377.2  loops    1  width 5.22  reach  145.1  piles 1/1  strays 0.000  ms/tick 14.07
+seed 1 grazers t  10.0s  contrast 5.71
+seed 1 grazers t  10.0s  extent r50 140.6 r90 190.3
+seed 1 grazers t  12.0s  tube  5394.4  loops    0  width 4.76  reach  152.3  piles 1/1  strays 0.000  ms/tick 13.69
+seed 1 grazers t  12.0s  contrast 5.91
+seed 1 grazers t  12.0s  extent r50 140.8 r90 191.4
+seed 1 grazers t  14.0s  tube  5297.1  loops    1  width 4.80  reach  157.5  piles 1/1  strays 0.000  ms/tick 13.54
+seed 1 grazers t  14.0s  contrast 5.71
+seed 1 grazers t  14.0s  extent r50 140.6 r90 192.1
+seed 1 grazers t  16.0s  tube  5323.6  loops    1  width 4.75  reach  161.3  piles 1/1  strays 0.001  ms/tick 13.58
+seed 1 grazers t  16.0s  contrast 5.94
+seed 1 grazers t  16.0s  extent r50 140.6 r90 192.5
+seed 1 grazers t  18.0s  tube  5217.8  loops    0  width 4.70  reach  165.3  piles 1/1  strays 0.000  ms/tick 13.28
+seed 1 grazers t  18.0s  contrast 5.65
+seed 1 grazers t  18.0s  extent r50 140.7 r90 192.7
+seed 1 grazers t  20.0s  tube  5148.4  loops    0  width 4.58  reach  172.9  piles 1/1  strays 0.000  ms/tick 13.02
+seed 1 grazers t  20.0s  contrast 5.64
+seed 1 grazers t  20.0s  extent r50 140.6 r90 194.6
+seed 1 grazers t  22.0s  tube  5051.1  loops    0  width 4.68  reach  179.2  piles 1/1  strays 0.001  ms/tick 12.79
+seed 1 grazers t  22.0s  contrast 5.37
+seed 1 grazers t  22.0s  extent r50 140.4 r90 196.0
+seed 1 grazers t  24.0s  tube  5038.9  loops    1  width 4.65  reach  184.7  piles 1/1  strays 0.001  ms/tick 12.59
+seed 1 grazers t  24.0s  contrast 5.32
+seed 1 grazers t  24.0s  extent r50 140.6 r90 195.6
+seed 1 grazers t  26.0s  tube  4968.2  loops    0  width 4.65  reach  190.0  piles 1/1  strays 0.000  ms/tick 12.41
+seed 1 grazers t  26.0s  contrast 5.13
+seed 1 grazers t  26.0s  extent r50 141.0 r90 196.3
+seed 1 grazers t  28.0s  tube  4925.4  loops    2  width 4.79  reach  195.7  piles 1/1  strays 0.001  ms/tick 12.29
+seed 1 grazers t  28.0s  contrast 5.01
+seed 1 grazers t  28.0s  extent r50 141.3 r90 197.9
+seed 1 grazers t  30.0s  tube  4890.4  loops    1  width 4.65  reach  194.5  piles 1/1  strays 0.001  ms/tick 12.24
+seed 1 grazers t  30.0s  contrast 4.96
+seed 1 grazers t  30.0s  extent r50 141.7 r90 199.2
+seed 1 grazers hash=a445cde0d175c654
+seed 2 grazers t   2.0s  tube  6584.4  loops   62  width 7.91  reach  125.6  piles 1/1  strays 0.000  ms/tick 13.87
+seed 2 grazers t   2.0s  contrast 6.30
+seed 2 grazers t   2.0s  extent r50 140.7 r90 185.1
+seed 2 grazers t   4.0s  tube  6041.7  loops   22  width 6.25  reach  132.7  piles 1/1  strays 0.000  ms/tick 14.23
+seed 2 grazers t   4.0s  contrast 6.38
+seed 2 grazers t   4.0s  extent r50 138.8 r90 185.5
+seed 2 grazers t   6.0s  tube  5744.4  loops    3  width 5.45  reach  139.4  piles 1/1  strays 0.000  ms/tick 13.75
+seed 2 grazers t   6.0s  contrast 6.53
+seed 2 grazers t   6.0s  extent r50 137.6 r90 186.8
+seed 2 grazers t   8.0s  tube  5585.8  loops    1  width 5.04  reach  146.6  piles 1/1  strays 0.000  ms/tick 13.46
+seed 2 grazers t   8.0s  contrast 6.31
+seed 2 grazers t   8.0s  extent r50 137.8 r90 188.7
+seed 2 grazers t  10.0s  tube  5460.0  loops    1  width 4.97  reach  153.8  piles 1/1  strays 0.000  ms/tick 13.17
+seed 2 grazers t  10.0s  contrast 6.08
+seed 2 grazers t  10.0s  extent r50 138.5 r90 189.6
+seed 2 grazers t  12.0s  tube  5384.7  loops    1  width 4.80  reach  159.1  piles 1/1  strays 0.000  ms/tick 12.95
+seed 2 grazers t  12.0s  contrast 6.10
+seed 2 grazers t  12.0s  extent r50 140.7 r90 190.6
+seed 2 grazers t  14.0s  tube  5350.6  loops    1  width 4.58  reach  165.6  piles 1/1  strays 0.000  ms/tick 12.71
+seed 2 grazers t  14.0s  contrast 6.14
+seed 2 grazers t  14.0s  extent r50 142.3 r90 191.9
+seed 2 grazers t  16.0s  tube  5326.8  loops    0  width 4.41  reach  171.4  piles 1/1  strays 0.000  ms/tick 12.62
+seed 2 grazers t  16.0s  contrast 6.08
+seed 2 grazers t  16.0s  extent r50 142.5 r90 192.7
+seed 2 grazers t  18.0s  tube  5300.2  loops    2  width 4.51  reach  178.0  piles 1/1  strays 0.001  ms/tick 12.71
+seed 2 grazers t  18.0s  contrast 6.19
+seed 2 grazers t  18.0s  extent r50 142.1 r90 193.3
+seed 2 grazers t  20.0s  tube  5247.5  loops    2  width 4.49  reach  183.5  piles 1/1  strays 0.000  ms/tick 12.64
+seed 2 grazers t  20.0s  contrast 5.94
+seed 2 grazers t  20.0s  extent r50 141.9 r90 194.3
+seed 2 grazers t  22.0s  tube  5297.6  loops    1  width 4.40  reach  190.2  piles 1/1  strays 0.001  ms/tick 12.56
+seed 2 grazers t  22.0s  contrast 6.18
+seed 2 grazers t  22.0s  extent r50 141.4 r90 195.1
+seed 2 grazers t  24.0s  tube  5175.9  loops    0  width 4.43  reach  194.2  piles 1/1  strays 0.001  ms/tick 12.50
+seed 2 grazers t  24.0s  contrast 5.86
+seed 2 grazers t  24.0s  extent r50 141.3 r90 195.8
+seed 2 grazers t  26.0s  tube  5162.6  loops    0  width 4.39  reach  195.9  piles 1/1  strays 0.001  ms/tick 12.33
+seed 2 grazers t  26.0s  contrast 5.92
+seed 2 grazers t  26.0s  extent r50 140.4 r90 196.9
+seed 2 grazers t  28.0s  tube  5141.0  loops    0  width 4.43  reach  193.1  piles 1/1  strays 0.001  ms/tick 12.19
+seed 2 grazers t  28.0s  contrast 5.75
+seed 2 grazers t  28.0s  extent r50 140.1 r90 197.1
+seed 2 grazers t  30.0s  tube  5227.5  loops    1  width 4.34  reach  191.9  piles 1/1  strays 0.001  ms/tick 12.08
+seed 2 grazers t  30.0s  contrast 6.27
+seed 2 grazers t  30.0s  extent r50 139.7 r90 197.7
+seed 2 grazers hash=9d6dff09444765a8
+seed 3 grazers t   2.0s  tube  6485.7  loops   58  width 7.89  reach  122.9  piles 1/1  strays 0.000  ms/tick 14.18
+seed 3 grazers t   2.0s  contrast 6.14
+seed 3 grazers t   2.0s  extent r50 141.8 r90 185.4
+seed 3 grazers t   4.0s  tube  6141.0  loops   24  width 6.22  reach  126.0  piles 1/1  strays 0.000  ms/tick 14.47
+seed 3 grazers t   4.0s  contrast 6.92
+seed 3 grazers t   4.0s  extent r50 141.7 r90 185.5
+seed 3 grazers t   6.0s  tube  5952.1  loops   10  width 5.48  reach  132.9  piles 1/1  strays 0.000  ms/tick 14.93
+seed 3 grazers t   6.0s  contrast 6.99
+seed 3 grazers t   6.0s  extent r50 141.9 r90 186.9
+seed 3 grazers t   8.0s  tube  5668.8  loops    8  width 5.28  reach  139.6  piles 1/1  strays 0.000  ms/tick 14.90
+seed 3 grazers t   8.0s  contrast 6.49
+seed 3 grazers t   8.0s  extent r50 142.0 r90 188.3
+seed 3 grazers t  10.0s  tube  5440.1  loops    1  width 5.01  reach  146.2  piles 1/1  strays 0.000  ms/tick 15.10
+seed 3 grazers t  10.0s  contrast 6.12
+seed 3 grazers t  10.0s  extent r50 142.1 r90 189.3
+seed 3 grazers t  12.0s  tube  5388.2  loops    2  width 4.87  reach  152.4  piles 1/1  strays 0.000  ms/tick 14.84
+seed 3 grazers t  12.0s  contrast 6.10
+seed 3 grazers t  12.0s  extent r50 142.3 r90 189.7
+seed 3 grazers t  14.0s  tube  5422.4  loops    1  width 4.60  reach  158.0  piles 1/1  strays 0.000  ms/tick 14.45
+seed 3 grazers t  14.0s  contrast 6.46
+seed 3 grazers t  14.0s  extent r50 142.6 r90 190.0
+seed 3 grazers t  16.0s  tube  5364.9  loops    3  width 4.47  reach  163.5  piles 1/1  strays 0.001  ms/tick 14.34
+seed 3 grazers t  16.0s  contrast 6.27
+seed 3 grazers t  16.0s  extent r50 142.2 r90 190.1
+seed 3 grazers t  18.0s  tube  5266.1  loops    3  width 4.43  reach  167.1  piles 1/1  strays 0.000  ms/tick 14.00
+seed 3 grazers t  18.0s  contrast 5.93
+seed 3 grazers t  18.0s  extent r50 141.5 r90 190.7
+seed 3 grazers t  20.0s  tube  5183.1  loops    0  width 4.53  reach  173.1  piles 1/1  strays 0.001  ms/tick 13.70
+seed 3 grazers t  20.0s  contrast 5.71
+seed 3 grazers t  20.0s  extent r50 141.4 r90 191.3
+seed 3 grazers t  22.0s  tube  5149.5  loops    0  width 4.62  reach  175.3  piles 1/1  strays 0.001  ms/tick 13.40
+seed 3 grazers t  22.0s  contrast 5.67
+seed 3 grazers t  22.0s  extent r50 141.4 r90 191.5
+seed 3 grazers t  24.0s  tube  5099.3  loops    1  width 4.48  reach  180.1  piles 1/1  strays 0.001  ms/tick 13.24
+seed 3 grazers t  24.0s  contrast 5.36
+seed 3 grazers t  24.0s  extent r50 141.6 r90 192.0
+seed 3 grazers t  26.0s  tube  5102.5  loops    0  width 4.43  reach  182.6  piles 1/1  strays 0.001  ms/tick 13.09
+seed 3 grazers t  26.0s  contrast 5.35
+seed 3 grazers t  26.0s  extent r50 141.9 r90 192.2
+seed 3 grazers t  28.0s  tube  5182.7  loops    0  width 4.49  reach  188.5  piles 1/1  strays 0.001  ms/tick 13.04
+seed 3 grazers t  28.0s  contrast 5.67
+seed 3 grazers t  28.0s  extent r50 142.4 r90 192.5
+seed 3 grazers t  30.0s  tube  5201.8  loops    3  width 4.33  reach  191.4  piles 1/1  strays 0.001  ms/tick 13.04
+seed 3 grazers t  30.0s  contrast 5.73
+seed 3 grazers t  30.0s  extent r50 142.6 r90 192.4
+seed 3 grazers hash=10fa45024e9cdad9
+seed 1 grazescouts t   2.0s  tube  7469.0  loops   49  width 12.75  reach  124.1  piles 1/1  strays 0.007  ms/tick 14.70
+seed 1 grazescouts t   2.0s  contrast 9.29
+seed 1 grazescouts t   2.0s  extent r50 140.1 r90 185.7
+seed 1 grazescouts t   2.0s  kinds k0 n 23898 on 1.000 r 140.1  k1 n 6102 on 0.968 r 140.5
+seed 1 grazescouts t   4.0s  tube  7673.9  loops   34  width 5.76  reach  135.2  piles 1/1  strays 0.022  ms/tick 15.22
+seed 1 grazescouts t   4.0s  contrast 12.59
+seed 1 grazescouts t   4.0s  extent r50 139.8 r90 195.9
+seed 1 grazescouts t   4.0s  kinds k0 n 23898 on 1.000 r 139.5  k1 n 6102 on 0.894 r 141.3
+seed 1 grazescouts t   6.0s  tube  7802.3  loops   35  width 4.45  reach  147.0  piles 1/1  strays 0.030  ms/tick 14.52
+seed 1 grazescouts t   6.0s  contrast 14.71
+seed 1 grazescouts t   6.0s  extent r50 140.3 r90 213.4
+seed 1 grazescouts t   6.0s  kinds k0 n 23898 on 1.000 r 139.7  k1 n 6102 on 0.855 r 142.7
+seed 1 grazescouts t   8.0s  tube  8144.2  loops   32  width 3.78  reach  165.0  piles 1/1  strays 0.037  ms/tick 14.03
+seed 1 grazescouts t   8.0s  contrast 16.98
+seed 1 grazescouts t   8.0s  extent r50 140.7 r90 229.2
+seed 1 grazescouts t   8.0s  kinds k0 n 23898 on 1.000 r 140.1  k1 n 6102 on 0.819 r 144.0
+seed 1 grazescouts t  10.0s  tube  8224.2  loops   23  width 3.50  reach  184.4  piles 1/1  strays 0.045  ms/tick 13.50
+seed 1 grazescouts t  10.0s  contrast 18.13
+seed 1 grazescouts t  10.0s  extent r50 141.9 r90 240.7
+seed 1 grazescouts t  10.0s  kinds k0 n 23898 on 0.999 r 140.7  k1 n 6102 on 0.783 r 148.7
+seed 1 grazescouts t  12.0s  tube  8454.2  loops   17  width 3.31  reach  195.1  piles 1/1  strays 0.046  ms/tick 13.34
+seed 1 grazescouts t  12.0s  contrast 19.52
+seed 1 grazescouts t  12.0s  extent r50 143.2 r90 259.3
+seed 1 grazescouts t  12.0s  kinds k0 n 23898 on 0.999 r 141.3  k1 n 6102 on 0.776 r 153.4
+seed 1 grazescouts t  14.0s  tube  8539.2  loops   22  width 3.28  reach  195.1  piles 1/1  strays 0.047  ms/tick 13.28
+seed 1 grazescouts t  14.0s  contrast 19.61
+seed 1 grazescouts t  14.0s  extent r50 144.1 r90 269.6
+seed 1 grazescouts t  14.0s  kinds k0 n 23898 on 0.999 r 142.0  k1 n 6102 on 0.772 r 157.2
+seed 1 grazescouts t  16.0s  tube  8717.7  loops   15  width 3.22  reach  194.7  piles 1/1  strays 0.051  ms/tick 13.37
+seed 1 grazescouts t  16.0s  contrast 20.51
+seed 1 grazescouts t  16.0s  extent r50 144.2 r90 281.0
+seed 1 grazescouts t  16.0s  kinds k0 n 23898 on 0.999 r 142.2  k1 n 6102 on 0.751 r 156.3
+seed 1 grazescouts t  18.0s  tube  8763.2  loops   14  width 3.17  reach  195.4  piles 1/1  strays 0.051  ms/tick 13.31
+seed 1 grazescouts t  18.0s  contrast 20.45
+seed 1 grazescouts t  18.0s  extent r50 144.3 r90 276.6
+seed 1 grazescouts t  18.0s  kinds k0 n 23898 on 0.999 r 142.4  k1 n 6102 on 0.754 r 158.1
+seed 1 grazescouts t  20.0s  tube  9033.6  loops   24  width 3.14  reach  195.6  piles 1/1  strays 0.049  ms/tick 13.42
+seed 1 grazescouts t  20.0s  contrast 21.58
+seed 1 grazescouts t  20.0s  extent r50 144.6 r90 283.8
+seed 1 grazescouts t  20.0s  kinds k0 n 23898 on 0.999 r 142.6  k1 n 6102 on 0.763 r 162.2
+seed 1 grazescouts t  22.0s  tube  8896.3  loops   18  width 3.07  reach  195.6  piles 1/1  strays 0.051  ms/tick 13.40
+seed 1 grazescouts t  22.0s  contrast 22.08
+seed 1 grazescouts t  22.0s  extent r50 144.7 r90 291.1
+seed 1 grazescouts t  22.0s  kinds k0 n 23898 on 0.999 r 142.4  k1 n 6102 on 0.755 r 160.2
+seed 1 grazescouts t  24.0s  tube  9021.9  loops   14  width 2.99  reach  194.8  piles 1/1  strays 0.051  ms/tick 13.24
+seed 1 grazescouts t  24.0s  contrast 22.14
+seed 1 grazescouts t  24.0s  extent r50 144.7 r90 294.4
+seed 1 grazescouts t  24.0s  kinds k0 n 23898 on 0.999 r 142.3  k1 n 6102 on 0.753 r 157.5
+seed 1 grazescouts t  26.0s  tube  9200.8  loops   18  width 3.03  reach  195.4  piles 1/1  strays 0.050  ms/tick 13.09
+seed 1 grazescouts t  26.0s  contrast 22.69
+seed 1 grazescouts t  26.0s  extent r50 144.8 r90 293.7
+seed 1 grazescouts t  26.0s  kinds k0 n 23898 on 0.999 r 143.0  k1 n 6102 on 0.758 r 157.7
+seed 1 grazescouts t  28.0s  tube  9196.6  loops   30  width 3.04  reach  195.3  piles 1/1  strays 0.049  ms/tick 12.93
+seed 1 grazescouts t  28.0s  contrast 22.55
+seed 1 grazescouts t  28.0s  extent r50 144.8 r90 295.0
+seed 1 grazescouts t  28.0s  kinds k0 n 23898 on 0.999 r 142.5  k1 n 6102 on 0.760 r 162.1
+seed 1 grazescouts t  30.0s  tube  9335.9  loops   26  width 3.05  reach  195.1  piles 1/1  strays 0.050  ms/tick 12.85
+seed 1 grazescouts t  30.0s  contrast 22.49
+seed 1 grazescouts t  30.0s  extent r50 145.0 r90 298.7
+seed 1 grazescouts t  30.0s  kinds k0 n 23898 on 0.999 r 142.6  k1 n 6102 on 0.757 r 162.1
+seed 1 grazescouts hash=03d43aed3db96999
+seed 2 grazescouts t   2.0s  tube  7463.0  loops   45  width 12.29  reach  123.9  piles 1/1  strays 0.007  ms/tick 13.40
+seed 2 grazescouts t   2.0s  contrast 9.22
+seed 2 grazescouts t   2.0s  extent r50 141.7 r90 186.2
+seed 2 grazescouts t   2.0s  kinds k0 n 24033 on 1.000 r 142.3  k1 n 5967 on 0.966 r 140.2
+seed 2 grazescouts t   4.0s  tube  7795.6  loops   46  width 6.01  reach  133.2  piles 1/1  strays 0.026  ms/tick 13.54
+seed 2 grazescouts t   4.0s  contrast 12.64
+seed 2 grazescouts t   4.0s  extent r50 140.8 r90 195.9
+seed 2 grazescouts t   4.0s  kinds k0 n 24033 on 1.000 r 141.5  k1 n 5967 on 0.867 r 138.4
+seed 2 grazescouts t   6.0s  tube  8100.6  loops   36  width 4.40  reach  148.8  piles 1/1  strays 0.031  ms/tick 14.23
+seed 2 grazescouts t   6.0s  contrast 15.66
+seed 2 grazescouts t   6.0s  extent r50 141.4 r90 214.8
+seed 2 grazescouts t   6.0s  kinds k0 n 24033 on 1.000 r 141.5  k1 n 5967 on 0.846 r 141.1
+seed 2 grazescouts t   8.0s  tube  8442.1  loops   33  width 3.84  reach  166.1  piles 1/1  strays 0.040  ms/tick 13.93
+seed 2 grazescouts t   8.0s  contrast 17.74
+seed 2 grazescouts t   8.0s  extent r50 141.0 r90 239.0
+seed 2 grazescouts t   8.0s  kinds k0 n 24033 on 1.000 r 140.6  k1 n 5967 on 0.798 r 144.8
+seed 2 grazescouts t  10.0s  tube  8605.8  loops   26  width 3.48  reach  182.7  piles 1/1  strays 0.046  ms/tick 13.42
+seed 2 grazescouts t  10.0s  contrast 18.73
+seed 2 grazescouts t  10.0s  extent r50 140.6 r90 251.9
+seed 2 grazescouts t  10.0s  kinds k0 n 24033 on 0.999 r 139.7  k1 n 5967 on 0.773 r 148.5
+seed 2 grazescouts t  12.0s  tube  8850.2  loops   37  width 3.31  reach  195.0  piles 1/1  strays 0.048  ms/tick 13.12
+seed 2 grazescouts t  12.0s  contrast 20.37
+seed 2 grazescouts t  12.0s  extent r50 140.4 r90 269.5
+seed 2 grazescouts t  12.0s  kinds k0 n 24033 on 0.999 r 139.1  k1 n 5967 on 0.761 r 153.0
+seed 2 grazescouts t  14.0s  tube  8901.8  loops   28  width 3.32  reach  195.5  piles 1/1  strays 0.048  ms/tick 13.29
+seed 2 grazescouts t  14.0s  contrast 20.90
+seed 2 grazescouts t  14.0s  extent r50 141.0 r90 277.6
+seed 2 grazescouts t  14.0s  kinds k0 n 24033 on 0.999 r 139.2  k1 n 5967 on 0.764 r 158.9
+seed 2 grazescouts t  16.0s  tube  8981.9  loops   24  width 3.10  reach  195.6  piles 1/1  strays 0.049  ms/tick 13.49
+seed 2 grazescouts t  16.0s  contrast 22.00
+seed 2 grazescouts t  16.0s  extent r50 141.0 r90 287.2
+seed 2 grazescouts t  16.0s  kinds k0 n 24033 on 0.999 r 139.1  k1 n 5967 on 0.759 r 162.4
+seed 2 grazescouts t  18.0s  tube  9066.3  loops   24  width 3.21  reach  196.1  piles 1/1  strays 0.052  ms/tick 13.62
+seed 2 grazescouts t  18.0s  contrast 21.52
+seed 2 grazescouts t  18.0s  extent r50 141.9 r90 283.7
+seed 2 grazescouts t  18.0s  kinds k0 n 24033 on 0.999 r 139.2  k1 n 5967 on 0.743 r 168.9
+seed 2 grazescouts t  20.0s  tube  9304.4  loops   43  width 3.10  reach  195.6  piles 1/1  strays 0.051  ms/tick 13.45
+seed 2 grazescouts t  20.0s  contrast 22.17
+seed 2 grazescouts t  20.0s  extent r50 142.5 r90 288.4
+seed 2 grazescouts t  20.0s  kinds k0 n 24033 on 0.999 r 139.5  k1 n 5967 on 0.747 r 173.9
+seed 2 grazescouts t  22.0s  tube  9471.3  loops   37  width 3.06  reach  195.2  piles 1/1  strays 0.051  ms/tick 13.37
+seed 2 grazescouts t  22.0s  contrast 22.37
+seed 2 grazescouts t  22.0s  extent r50 142.4 r90 290.9
+seed 2 grazescouts t  22.0s  kinds k0 n 24033 on 0.999 r 139.5  k1 n 5967 on 0.745 r 176.8
+seed 2 grazescouts t  24.0s  tube  9599.4  loops   26  width 3.12  reach  195.3  piles 1/1  strays 0.049  ms/tick 13.50
+seed 2 grazescouts t  24.0s  contrast 22.88
+seed 2 grazescouts t  24.0s  extent r50 142.9 r90 301.3
+seed 2 grazescouts t  24.0s  kinds k0 n 24033 on 0.999 r 139.7  k1 n 5967 on 0.756 r 174.1
+seed 2 grazescouts t  26.0s  tube  9536.9  loops   35  width 3.03  reach  195.8  piles 1/1  strays 0.053  ms/tick 13.49
+seed 2 grazescouts t  26.0s  contrast 23.22
+seed 2 grazescouts t  26.0s  extent r50 143.5 r90 301.1
+seed 2 grazescouts t  26.0s  kinds k0 n 24033 on 0.999 r 140.1  k1 n 5967 on 0.738 r 174.7
+seed 2 grazescouts t  28.0s  tube  9504.4  loops   30  width 3.00  reach  195.1  piles 1/1  strays 0.049  ms/tick 13.53
+seed 2 grazescouts t  28.0s  contrast 23.63
+seed 2 grazescouts t  28.0s  extent r50 143.2 r90 300.4
+seed 2 grazescouts t  28.0s  kinds k0 n 24033 on 0.999 r 140.0  k1 n 5967 on 0.759 r 180.1
+seed 2 grazescouts t  30.0s  tube  9534.8  loops   28  width 2.98  reach  195.4  piles 1/1  strays 0.051  ms/tick 13.48
+seed 2 grazescouts t  30.0s  contrast 24.08
+seed 2 grazescouts t  30.0s  extent r50 142.9 r90 303.1
+seed 2 grazescouts t  30.0s  kinds k0 n 24033 on 0.999 r 139.9  k1 n 5967 on 0.746 r 175.1
+seed 2 grazescouts hash=6b8b1e1dc7b6f09b
+seed 3 grazescouts t   2.0s  tube  7441.2  loops   45  width 11.46  reach  126.0  piles 1/1  strays 0.007  ms/tick 15.36
+seed 3 grazescouts t   2.0s  contrast 9.47
+seed 3 grazescouts t   2.0s  extent r50 141.0 r90 186.4
+seed 3 grazescouts t   2.0s  kinds k0 n 24080 on 1.000 r 141.3  k1 n 5920 on 0.962 r 139.9
+seed 3 grazescouts t   4.0s  tube  7727.1  loops   33  width 5.90  reach  134.6  piles 1/1  strays 0.022  ms/tick 15.84
+seed 3 grazescouts t   4.0s  contrast 12.39
+seed 3 grazescouts t   4.0s  extent r50 141.3 r90 193.8
+seed 3 grazescouts t   4.0s  kinds k0 n 24080 on 1.000 r 141.2  k1 n 5920 on 0.889 r 141.6
+seed 3 grazescouts t   6.0s  tube  7982.3  loops   31  width 4.47  reach  148.6  piles 1/1  strays 0.029  ms/tick 15.53
+seed 3 grazescouts t   6.0s  contrast 14.35
+seed 3 grazescouts t   6.0s  extent r50 141.6 r90 217.0
+seed 3 grazescouts t   6.0s  kinds k0 n 24080 on 1.000 r 141.2  k1 n 5920 on 0.855 r 144.5
+seed 3 grazescouts t   8.0s  tube  8440.6  loops   21  width 3.79  reach  167.8  piles 1/1  strays 0.039  ms/tick 15.19
+seed 3 grazescouts t   8.0s  contrast 17.01
+seed 3 grazescouts t   8.0s  extent r50 141.6 r90 241.3
+seed 3 grazescouts t   8.0s  kinds k0 n 24080 on 1.000 r 141.3  k1 n 5920 on 0.806 r 145.2
+seed 3 grazescouts t  10.0s  tube  8578.1  loops   24  width 3.57  reach  185.7  piles 1/1  strays 0.044  ms/tick 15.09
+seed 3 grazescouts t  10.0s  contrast 17.92
+seed 3 grazescouts t  10.0s  extent r50 142.0 r90 254.0
+seed 3 grazescouts t  10.0s  kinds k0 n 24080 on 0.999 r 141.6  k1 n 5920 on 0.780 r 146.8
+seed 3 grazescouts t  12.0s  tube  8846.6  loops   34  width 3.46  reach  195.3  piles 1/1  strays 0.047  ms/tick 14.63
+seed 3 grazescouts t  12.0s  contrast 19.10
+seed 3 grazescouts t  12.0s  extent r50 142.2 r90 263.1
+seed 3 grazescouts t  12.0s  kinds k0 n 24080 on 0.999 r 141.1  k1 n 5920 on 0.764 r 153.5
+seed 3 grazescouts t  14.0s  tube  9138.1  loops   25  width 3.49  reach  195.6  piles 1/1  strays 0.043  ms/tick 14.65
+seed 3 grazescouts t  14.0s  contrast 20.43
+seed 3 grazescouts t  14.0s  extent r50 143.1 r90 266.8
+seed 3 grazescouts t  14.0s  kinds k0 n 24080 on 1.000 r 140.9  k1 n 5920 on 0.783 r 156.6
+seed 3 grazescouts t  16.0s  tube  9051.2  loops   37  width 3.34  reach  195.1  piles 1/1  strays 0.049  ms/tick 14.49
+seed 3 grazescouts t  16.0s  contrast 20.22
+seed 3 grazescouts t  16.0s  extent r50 143.2 r90 274.7
+seed 3 grazescouts t  16.0s  kinds k0 n 24080 on 0.999 r 140.7  k1 n 5920 on 0.756 r 157.8
+seed 3 grazescouts t  18.0s  tube  9121.6  loops   30  width 3.19  reach  195.8  piles 1/1  strays 0.047  ms/tick 14.21
+seed 3 grazescouts t  18.0s  contrast 21.26
+seed 3 grazescouts t  18.0s  extent r50 144.5 r90 277.7
+seed 3 grazescouts t  18.0s  kinds k0 n 24080 on 0.999 r 141.2  k1 n 5920 on 0.763 r 161.7
+seed 3 grazescouts t  20.0s  tube  9227.2  loops   25  width 3.10  reach  195.9  piles 1/1  strays 0.050  ms/tick 14.38
+seed 3 grazescouts t  20.0s  contrast 21.54
+seed 3 grazescouts t  20.0s  extent r50 144.8 r90 288.0
+seed 3 grazescouts t  20.0s  kinds k0 n 24080 on 0.999 r 140.9  k1 n 5920 on 0.751 r 167.9
+seed 3 grazescouts t  22.0s  tube  9332.7  loops   26  width 3.13  reach  195.0  piles 1/1  strays 0.048  ms/tick 14.31
+seed 3 grazescouts t  22.0s  contrast 21.60
+seed 3 grazescouts t  22.0s  extent r50 144.9 r90 289.7
+seed 3 grazescouts t  22.0s  kinds k0 n 24080 on 0.999 r 140.6  k1 n 5920 on 0.759 r 170.3
+seed 3 grazescouts t  24.0s  tube  9608.8  loops   28  width 3.12  reach  196.4  piles 1/1  strays 0.048  ms/tick 14.10
+seed 3 grazescouts t  24.0s  contrast 21.98
+seed 3 grazescouts t  24.0s  extent r50 144.8 r90 295.0
+seed 3 grazescouts t  24.0s  kinds k0 n 24080 on 1.000 r 140.9  k1 n 5920 on 0.759 r 175.4
+seed 3 grazescouts t  26.0s  tube  9625.8  loops   15  width 3.02  reach  195.7  piles 1/1  strays 0.047  ms/tick 13.95
+seed 3 grazescouts t  26.0s  contrast 23.00
+seed 3 grazescouts t  26.0s  extent r50 143.5 r90 301.5
+seed 3 grazescouts t  26.0s  kinds k0 n 24080 on 0.999 r 140.1  k1 n 5920 on 0.767 r 181.3
+seed 3 grazescouts t  28.0s  tube  9770.8  loops   28  width 2.98  reach  196.1  piles 1/1  strays 0.050  ms/tick 13.79
+seed 3 grazescouts t  28.0s  contrast 23.08
+seed 3 grazescouts t  28.0s  extent r50 142.8 r90 301.9
+seed 3 grazescouts t  28.0s  kinds k0 n 24080 on 0.999 r 139.6  k1 n 5920 on 0.748 r 182.6
+seed 3 grazescouts t  30.0s  tube  9811.9  loops   30  width 3.07  reach  195.8  piles 1/1  strays 0.049  ms/tick 13.62
+seed 3 grazescouts t  30.0s  contrast 22.38
+seed 3 grazescouts t  30.0s  extent r50 142.2 r90 303.1
+seed 3 grazescouts t  30.0s  kinds k0 n 24080 on 0.999 r 139.2  k1 n 5920 on 0.755 r 178.0
+seed 3 grazescouts hash=6d3ec07911826447

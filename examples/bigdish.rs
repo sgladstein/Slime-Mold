@@ -74,10 +74,24 @@
 //! `style=species` (each species in its own colour). With species the
 //! report adds `pure` (share of tube cells where one species lays 80% or
 //! more of the trail) and each species' share of all trail.
+//!
+//! Later keys (2026-11-11): `graze_weight= graze_eat= graze_regrow=`
+//! (grazing), `species_convert= species_convert_r= species_boost=
+//! species_share=` (conversion, a louder or more numerous species 0),
+//! `blocked_retry= blocked_deposit=`, `mix_share= mix_reach= mix_angle=
+//! mix_turn= mix_step= mix_deposit=` (mixed walkers; `style=kinds` draws
+//! each kind), and per-species settings `sN_field=` (`species_sets`; N the
+//! species, field one of sensor_angle, rotate_angle (degrees),
+//! sensor_offset, step, deposit, keep, crowd, blocked_deposit,
+//! graze_weight, explore_steps). The first `sN_` key copies the final
+//! global settings into a set per species, then changes that field. At the
+//! end a `firsts` line lists each pile as index:distance from the start
+//! (dish cells):radius fraction (1 at the wall):seconds to first reach
+//! (0 at the start, -1 never).
 
 use std::time::Instant;
 
-use slime_mould::mould::big::{BigDish, BigParams};
+use slime_mould::mould::big::{BigDish, BigParams, SpeciesSet};
 use slime_mould::mould::{H, STEPS_PER_SECOND, W};
 
 fn preset(name: &str) -> BigParams {
@@ -131,11 +145,14 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
             }
             c
         }
-        "soft" | "sick" | "species" => d.trail.clone(),
-        _ => panic!("style={style}: amber, grey, count, soft or sick"),
+        "soft" | "sick" | "species" | "kinds" => d.trail.clone(),
+        _ => panic!("style={style}: amber, grey, count, soft, sick, species or kinds"),
     };
     if style == "species" && !d.species_trail.is_empty() {
         return species_picture(d, down);
+    }
+    if style == "kinds" {
+        return kinds_picture(d, down);
     }
     let soft = style == "soft" || style == "sick" || style == "species";
     // The soft curve's reference: the trail's 99.9th percentile over the agar.
@@ -171,6 +188,44 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
             }
             let g = (255.0 * (1.0 - (-v / knee).exp())).clamp(0.0, 255.0) as u8;
             img.put_pixel(px, py, image::Rgba([g, g, g, 255]));
+        }
+    }
+    img
+}
+
+/// Mixed walkers (`mix_share`): the shared trail in dim grey on the soft
+/// curve, and where the walkers of each kind stand, the first amber and the
+/// second teal, each as 1 - exp(-count / mean count a cell) over the block.
+/// Every colour is data: trail and walker counts, no outline drawn.
+fn kinds_picture(d: &BigDish, down: usize) -> image::RgbaImage {
+    let refv = pct(&d.trail, 0.999).max(1e-6);
+    let down = down.max(1);
+    let (iw, ih) = ((d.w / down) as u32, (d.h / down) as u32);
+    let mut c = [vec![0.0f32; (iw * ih) as usize], vec![0.0f32; (iw * ih) as usize]];
+    for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+        let (px, py) = (x as usize / down, y as usize / down);
+        if px < iw as usize && py < ih as usize {
+            let kd = if d.kind.is_empty() { 0 } else { d.kind[k] as usize };
+            c[kd][py * iw as usize + px] += 1.0;
+        }
+    }
+    let cells = d.agar.iter().filter(|&&a| a).count().max(1) as f32;
+    let mean = [0usize, 1].map(|kd| (c[kd].iter().sum::<f32>() / cells * (down * down) as f32).max(1e-3));
+    let mut img = image::RgbaImage::new(iw, ih);
+    for py in 0..ih {
+        for px in 0..iw {
+            let mut v = 0.0f32;
+            for dy in 0..down {
+                for dx in 0..down {
+                    v = v.max(d.trail[(py as usize * down + dy) * d.w + px as usize * down + dx]);
+                }
+            }
+            let g = 0.35 * (v / refv).clamp(0.0, 1.0).powf(0.6);
+            let i = (py * iw + px) as usize;
+            let a = 1.0 - (-c[0][i] / (2.0 * mean[0])).exp();
+            let b = 1.0 - (-c[1][i] / (2.0 * mean[1])).exp();
+            let col = |ca: f32, cb: f32| (255.0 * g + ca * a + cb * b).min(255.0) as u8;
+            img.put_pixel(px, py, image::Rgba([col(255.0, 60.0), col(170.0, 200.0), col(60.0, 220.0), 255]));
         }
     }
     img
@@ -257,8 +312,15 @@ fn main() {
     }
     let mut p = preset(&name);
     let name = tag.unwrap_or(name);
+    // Per-species keys (`s0_crowd=1 s1_sensor_angle=45`, `species_sets`)
+    // apply after every global key, to sets copied from the final globals.
+    let mut per_species: Vec<(usize, String, f32)> = Vec::new();
     for (k, v) in &overrides {
         let f = || v.parse::<f32>().unwrap_or_else(|_| panic!("{k}={v}: not a number"));
+        if let Some((sp, field)) = k.strip_prefix('s').and_then(|r| r.split_once('_')).and_then(|(n, fld)| Some((n.parse::<usize>().ok()?, fld))) {
+            per_species.push((sp, field.into(), f()));
+            continue;
+        }
         match k.as_str() {
             "walkers" => p.walkers = f() as usize,
             "keep" => p.keep = f(),
@@ -316,6 +378,8 @@ fn main() {
             "species_avoid" => p.species_avoid = f(),
             "species_convert" => p.species_convert = f(),
             "species_boost" => p.species_boost = f(),
+            "species_share" => p.species_share = f(),
+            "species_convert_r" => p.species_convert_r = f() as u32,
             "graze_weight" => p.graze_weight = f(),
             "graze_eat" => p.graze_eat = f(),
             "graze_regrow" => p.graze_regrow = f(),
@@ -328,6 +392,12 @@ fn main() {
             "explore_deposit" => p.explore_deposit = f(),
             "explore_spread" => p.explore_spread = f(),
             "size_spread" => p.size_spread = f(),
+            "mix_share" => p.mix_share = f(),
+            "mix_reach" => p.mix_reach = f(),
+            "mix_angle" => p.mix_angle = f(),
+            "mix_turn" => p.mix_turn = f(),
+            "mix_step" => p.mix_step = f(),
+            "mix_deposit" => p.mix_deposit = f(),
             "crystal_charge" => p.crystal_charge = f(),
             "crystal_eat" => p.crystal_eat = f(),
             "crystal_regrow" => p.crystal_regrow = f(),
@@ -345,6 +415,26 @@ fn main() {
             "blocked_retry" => p.blocked_retry = f() as u8,
             "blocked_deposit" => p.blocked_deposit = f(),
             _ => panic!("unknown key {k}"),
+        }
+    }
+    if !per_species.is_empty() {
+        let n = per_species.iter().map(|&(sp, ..)| sp + 1).max().unwrap().max(p.species as usize);
+        p.species_sets = vec![SpeciesSet::from_params(&p); n];
+        for (sp, field, v) in &per_species {
+            let s = &mut p.species_sets[*sp];
+            match field.as_str() {
+                "sensor_angle" => s.sensor_angle = v.to_radians(),
+                "rotate_angle" => s.rotate_angle = v.to_radians(),
+                "sensor_offset" => s.sensor_offset = *v,
+                "step" => s.step = *v,
+                "deposit" => s.deposit = *v,
+                "keep" => s.keep = *v,
+                "crowd" => s.crowd = *v as u8,
+                "blocked_deposit" => s.blocked_deposit = *v,
+                "graze_weight" => s.graze_weight = *v,
+                "explore_steps" => s.explore_steps = *v as u16,
+                _ => panic!("unknown per-species key s{sp}_{field}"),
+            }
         }
     }
     // Output folders are made here, so a fresh clone needs no setup.
@@ -367,10 +457,18 @@ fn main() {
         let mut prev_lead: Vec<u8> = Vec::new();
         let mut stills: Vec<u64> = at.iter().map(|s| (s * STEPS_PER_SECOND as f32).round() as u64).collect();
         stills.sort_unstable();
+        // When each pile was first reached (tube on it), dish seconds; 0 for
+        // piles reached at the start (pile 0), -1 for never.
+        let mut first: Vec<f32> = d.reached.iter().map(|&r| if r { 0.0 } else { -1.0 }).collect();
         while d.ticks < ticks {
             let t0 = Instant::now();
             d.tick();
             spent += t0.elapsed().as_secs_f64();
+            for (f, &r) in first.iter_mut().zip(&d.reached) {
+                if *f < 0.0 && r {
+                    *f = d.seconds();
+                }
+            }
             if d.ticks == infect_tick {
                 d.infect(W as f32 / 2.0, H as f32 / 2.0, infect_r);
             }
@@ -512,6 +610,64 @@ fn main() {
                         left / tot[0].max(1e-9),
                         changed as f32 / both.max(1) as f32
                     );
+                    {
+                        // Each species' own tube: cells where its trail is
+                        // over the tube cut times its deposit over the
+                        // global deposit (`species_sets`; the same walker
+                        // traffic whatever it lays), as area (dish cells) and
+                        // 4-connected pieces of 16 fine cells or more
+                        // (bodies, or a network's pieces), and its walkers.
+                        let n = d.species_trail.len();
+                        let mut walkers = vec![0usize; n];
+                        for &c in &d.spec {
+                            walkers[c as usize] += 1;
+                        }
+                        let s2 = (d.p.scale * d.p.scale) as f32;
+                        let mut parts = Vec::new();
+                        for (sp, f) in d.species_trail.iter().enumerate() {
+                            let cut = if d.p.species_sets.is_empty() { d.p.tube } else { d.p.tube * d.p.species_sets[sp].deposit / d.p.deposit.max(1e-9) };
+                            let on: Vec<bool> = f.iter().map(|&v| v > cut).collect();
+                            let area = on.iter().filter(|&&b| b).count();
+                            let mut seen = vec![false; on.len()];
+                            let mut pieces = 0usize;
+                            let mut stack = Vec::new();
+                            for start in 0..on.len() {
+                                if !on[start] || seen[start] {
+                                    continue;
+                                }
+                                seen[start] = true;
+                                stack.push(start);
+                                let mut size = 0usize;
+                                while let Some(i) = stack.pop() {
+                                    size += 1;
+                                    let (x, y) = (i % d.w, i / d.w);
+                                    let mut push = |j: usize| {
+                                        if on[j] && !seen[j] {
+                                            seen[j] = true;
+                                            stack.push(j);
+                                        }
+                                    };
+                                    if x > 0 {
+                                        push(i - 1);
+                                    }
+                                    if x + 1 < d.w {
+                                        push(i + 1);
+                                    }
+                                    if y > 0 {
+                                        push(i - d.w);
+                                    }
+                                    if y + 1 < d.h {
+                                        push(i + d.w);
+                                    }
+                                }
+                                if size >= 16 {
+                                    pieces += 1;
+                                }
+                            }
+                            parts.push(format!("s{sp} walkers {} area {:.1} pieces {}", walkers[sp], area as f32 / s2, pieces));
+                        }
+                        println!("seed {seed} {name} t {:5.1}s  own {}", m.seconds, parts.join("  "));
+                    }
                     if d.p.species_convert > 0.0 {
                         // Walkers of each species (conversion moves them).
                         let n = d.species_trail.len();
@@ -522,6 +678,39 @@ fn main() {
                         let w: Vec<String> = c.iter().map(|&v| format!("{:.3}", v as f32 / d.spec.len().max(1) as f32)).collect();
                         println!("seed {seed} {name} t {:5.1}s  walkers {}", m.seconds, w.join(","));
                     }
+                }
+                if d.p.blob {
+                    // Spread from one spot: the median and 90th-percentile
+                    // walker distance from the start centre, in fine cells.
+                    let (cx, cy) = if d.p.blob_r > 0.0 { (d.w as f32 / 2.0, d.h as f32 / 2.0) } else { (d.piles[0].0 * d.p.scale as f32, d.piles[0].1 * d.p.scale as f32) };
+                    let mut dist: Vec<f32> = d.walkers.iter().map(|&(x, y, _)| (x - cx).hypot(y - cy)).collect();
+                    dist.sort_by(|a, b| a.total_cmp(b));
+                    let at = |q: f32| dist.get(((dist.len() as f32 * q) as usize).min(dist.len().saturating_sub(1))).copied().unwrap_or(0.0);
+                    println!("seed {seed} {name} t {:5.1}s  extent r50 {:.1} r90 {:.1}", m.seconds, at(0.5), at(0.9));
+                }
+                if !d.kind.is_empty() {
+                    // Mixed walkers: for each kind, the share of its walkers
+                    // on tube cells (trail above `tube`) and their median
+                    // distance from the dish centre in fine cells.
+                    let (cx, cy) = (d.w as f32 / 2.0, d.h as f32 / 2.0);
+                    let mut parts = Vec::new();
+                    for kd in 0..2u8 {
+                        let mut on = 0usize;
+                        let mut dist: Vec<f32> = Vec::new();
+                        for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+                            if d.kind[k] != kd {
+                                continue;
+                            }
+                            if d.trail[y as usize * d.w + x as usize] > d.p.tube {
+                                on += 1;
+                            }
+                            dist.push((x - cx).hypot(y - cy));
+                        }
+                        dist.sort_by(|a, b| a.total_cmp(b));
+                        let n = dist.len().max(1);
+                        parts.push(format!("k{kd} n {} on {:.3} r {:.1}", dist.len(), on as f32 / n as f32, dist.get(n / 2).copied().unwrap_or(0.0)));
+                    }
+                    println!("seed {seed} {name} t {:5.1}s  kinds {}", m.seconds, parts.join("  "));
                 }
                 if !d.sick.is_empty() {
                     let s = d.p.scale as f32;
@@ -552,6 +741,25 @@ fn main() {
                     );
                 }
             }
+        }
+        {
+            // Each pile: distance from the start (the dish centre with
+            // `blob_r`, else pile 0) in dish cells, how far out it sits
+            // (0 at the centre, 1 at the dish wall: the ellipse's radius
+            // fraction), and when it was first reached.
+            let (cx, cy) = if d.p.blob_r > 0.0 { (W as f32 / 2.0, H as f32 / 2.0) } else { d.piles[0] };
+            let (rx, ry) = (W as f32 / 2.0 - 3.0, H as f32 / 2.0 - 3.0);
+            let parts: Vec<String> = d
+                .piles
+                .iter()
+                .zip(&first)
+                .enumerate()
+                .map(|(i, (&(x, y), &f))| {
+                    let rho = (((x - W as f32 / 2.0) / rx).powi(2) + ((y - H as f32 / 2.0) / ry).powi(2)).sqrt();
+                    format!("{i}:{:.0}:{:.2}:{:.1}", (x - cx).hypot(y - cy), rho, f)
+                })
+                .collect();
+            println!("seed {seed} {name} firsts {}", parts.join(" "));
         }
         println!("seed {seed} {name} hash={:016x}", d.hash());
         if let Some(dir) = &gif {

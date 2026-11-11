@@ -230,6 +230,22 @@ move.
   alone moved no border on even dishes (seed 1); a 1.5x louder trail wins early and loses walkers by 16 s (6 of 8,
   p 0.29). Page, scripts and raw output in
   [`creatures-2026-11-11/`](creatures-2026-11-11/).
+- [spread-mix-2026-11-11.md](spread-mix-2026-11-11.md) — **looks, 3 seeds, no paired test: spread from one spot,
+  and mixed walkers in one mould.** Owner, 13:58Z: how far do the mould types spread from one spot, and what if
+  some walkers differ? Without food only explorers cross the dish (13.8-14.0k tube cells at 10 s); the network
+  curls into one ring (1.8-1.9k cells at 20 s); droplets hold. New `BigParams` mix (a share of walkers with their
+  own reach, angles, turn, step, deposit, one shared trail): the kinds sort themselves into parts, such as
+  outriders riding the wall, a splitter's core apart from its ring (3 of 3), a crawling knot, and grazing scouts
+  that haze over the dish (r90 299-303 against 192-199). Page, script and raw output in
+  [`spread-mix-2026-11-11/`](spread-mix-2026-11-11/).
+- [research-review-2026-11-11.md](research-review-2026-11-11.md) — **an independent review of the creature
+  research** (jenson-looks, creatures, spread-mix), asked for by the owner at 15:08Z with a big-picture brief. It
+  found the work tuned to the wrong operating point: no food, a fixed walker count, the dish wall as a hidden rail,
+  and no player verb. Species can't have their own settings, which blocks the ladder. The knife test cut before the
+  front arrived (void); the boost story contradicts the model; spread-mix's tube share was a unit slip (6%, not
+  0.4%). It gives six ranked directions with first experiments, and a list of biology that was ignored. The prompt,
+  the review verbatim, and the thread's response; scripts in
+  [`research-review-2026-11-11/`](research-review-2026-11-11/).
 
 ## Added with the move (2026-11-10)
 

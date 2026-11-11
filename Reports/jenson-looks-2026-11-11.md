@@ -62,6 +62,15 @@ https://claude.ai/artifact/DqJxgjQGVgnwQNwbbzoGrg (source and pictures in
   straight-sided polygons with a haze at the rim: the start no longer
   matters, so no trunk.
 
+**Correction (2026-11-11, after the [independent review](research-review-2026-11-11.md), C1).** The knife bullet above
+is void: the test did not test a cut. `cut.sh` made the cut on the
+infection's tick (`infect=4 cut=4`), but the front reached the line only at
+5 s (`raw/Ccut-s1.txt`, front 33.1). In the reviewer's rerun, the band's
+tube had grown back within 6 ticks, so the cut had healed 0.95 s before the
+wave arrived, and there was no germ there yet to clear. Whether a cut stops
+the wave is untested; the test must cut as the front arrives. The numbers
+in *The tests* are what was run and stand as such.
+
 ## The rules added (all `BigParams` fields, off by default)
 
 With every new field at its default the dish hashes as before (checked on
