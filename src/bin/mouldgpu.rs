@@ -2459,6 +2459,12 @@ mod tests {
                 for k in 0..cpu.walkers.len() {
                     if cpu.alive[k] {
                         cpu.energy[k] = if k % 2 == 0 { 0.0 } else { 1.0 };
+                        // The starving set sick too, so a slot freed this
+                        // tick holds a sickness a child must not keep (the
+                        // sickness seeded at the start had gone by now).
+                        if k % 2 == 0 {
+                            cpu.sick[k] = 100;
+                        }
                     }
                 }
             }
