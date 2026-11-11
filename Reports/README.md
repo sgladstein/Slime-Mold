@@ -177,8 +177,8 @@ move.
   walls by health, crystals as six-faced cones by charge (`world::look` ground
   field), soldiers as the SVG sprite the owner picked in a blind A/B, shots that
   stop at the first slime (`first_hit`; at the visible 26/255, not 60, 98 of 120 shots crossed slime
-  before, 0 after), hexagonal crystals. View 1.8-2.0 ms on the
-  1070 at 1080p, against 0.3 ms without.
+  before, 0 after), hexagonal crystals. Bare ground as soil, rock and wet
+  ground shown. View 0.8-1.2 ms on the 1070 at 1080p (1.6-1.8 before the prep pass), against 0.3 ms without.
 - [world-camera-2026-11-11.md](world-camera-2026-11-11.md) — **built: the camera and UI
   for a world bigger than the screen** (`slime_mould::world`): pan, zoom at the
   cursor, minimap, GPU marks and Larder's controls as `UiCommand`s; the GPU

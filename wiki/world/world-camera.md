@@ -29,8 +29,11 @@ charge): height, light, gloss, a speck a walker. Shots (`Engine::set_hits`)
 stop at the first slime or rock on their line (`first_hit`) and cut there,
 leaving a fading burn. Soldiers are an SVG sprite (the owner's pick of a
 blind A/B, 16:48Z) with facing, team helmet and muzzle flash; crystals are
-hexagons, as in the simulation. On the 1070 at 1080p the view takes
-1.8-2.0 ms with the look against 0.3 ms without.
+hexagons, as in the simulation. Bare ground is soil with the engine's
+tints, rock and wet ground have their own look, and ground byte 3 holds
+elevation (left 0 until the simulation uses height). A `prep` pass works
+each shown cell's height once a frame: on the 1070 at 1080p the view takes
+0.8-1.2 ms with the look against 0.3 ms without.
 
 ## Owner's word
 

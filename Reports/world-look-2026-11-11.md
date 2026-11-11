@@ -186,3 +186,52 @@ the look field back every frame is a 5 MB copy a frame for this world; a
 game would read back only the cells near soldiers. `first_hit` itself is
 unchanged: the caller's `mould` test decides what counts, so the Larder
 thread's caller should use the same visible threshold.
+
+## Ground, rock and wet (owner, 19:29Z), and the prep pass
+
+The owner: "In the pictures that I have seen they are still just black
+background." True: the view had rock and wet colours, but the test world
+had neither, and bare agar was drawn in the engine's own flat near-black.
+
+- **Bare ground is soil**: a mid loam with the engine's tints (scent,
+  species, germ, grass) laid over it at 0.6 strength.
+- **Rock** is the dish's own terrain noise (`big::terrain_noise`, channel
+  0 under 0.22, blobs 12 dish cells): 205,231 fine cells taken off the
+  agar with `Engine::block`, so the mould really cannot enter. A flat
+  stone plateau 3 cells high, lit, with a cast shadow.
+- **Wet ground** (channel 1 under 0.22, 229,495 cells): glossy blue-green
+  water, with mould in it keeping its colour. The GPU engine does not slow
+  walkers on it yet, so in this test it is a preview, not the simulation.
+  The Larder world's engine ground word (PR #74) carries a WET bit that
+  will, and the view moves to that word when it lands.
+- **Elevation** has a home (ground byte 3, which the Larder thread
+  reserves in the engine's word too), and the view raises and lights the
+  land by it. Maps leave it 0 until the simulation uses height (no
+  drawn-only relief); the Larder thread proposes it as the first new
+  ground kind.
+
+**The prep pass.** A pixel of the look read 24 heights and 4 materials,
+each worked out from the fields. Now `prep` works out each shown cell
+once a frame (plus a 4-cell margin) and `base` reads them. Picture: at
+most 1/255 different at zoom 1/2/4. lavapipe, look on, zoom 1/2/4:
+33.4 / 32.7 / 33.0 -> 35.9 / 23.9 / 24.5 ms.
+
+On the GTX 1070, 1920 x 1080, six runs alternating the control (2598126,
+before the prep pass) with 6378ccf (prep pass and ground), view GPU ms,
+median of 21 each, look on at zoom 1 / 2 / 4:
+
+| Run | Commit | Look | Plain (z1) |
+|---|---|---|---|
+| 1 | control | 2.912 / 1.913 / 2.054 | 0.386 |
+| 2 | prep | 1.184 / 0.817 / 0.883 | 0.287 |
+| 3 | control | 1.814 / 1.633 / 1.726 | 0.298 |
+| 4 | prep | 1.670 / 1.290 / 1.513 | 0.370 |
+| 5 | control | 1.818 / 1.637 / 1.734 | 0.298 |
+| 6 | prep | 1.187 / 0.821 / 0.890 | 0.288 |
+
+The card has two speed states: runs 1 and 4 are slow (their plain view is
+0.37-0.39 ms against 0.29-0.30). In the matched fast runs (3, 5 against
+2, 6) the look falls from 1.81 / 1.63 / 1.73 to 1.19 / 0.82 / 0.89 ms:
+its extra over the plain view goes from about 1.4 to about 0.6-0.9 ms a
+frame. Prep is faster in all three pairs at every zoom; one seed and one
+place, so it is a timing, not a census.
