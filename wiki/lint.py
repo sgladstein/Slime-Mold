@@ -17,8 +17,10 @@ So is a note (.md) inside a report folder that cannot be reached by links
 from the folder's parent report or a wiki page, and a folder of notes with
 no parent; folders in `PRE_WIKI_FOLDERS` only warn.
 
-Warnings (print only): a page whose `updated` date is older than the last
-commit to one of its `sources`; a listed pre-wiki report still uncited.
+Warnings (print only): a page whose `updated` date (or UTC time, such as
+2026-11-11T15:30Z) is older than the last commit to one of its `sources`; a
+page that links a report its `sources` do not list; a listed pre-wiki report
+still uncited.
 
 Why a script and not an LLM pass: these checks are exact and cheap, so a
 session runs them before every wiki commit and spends its judgement on the
@@ -96,9 +98,12 @@ def sections(text):
 
 
 def last_commit_date(path):
+    """The last commit to `path` as a UTC `YYYY-MM-DDTHH:MMZ` string."""
     try:
         r = subprocess.run(
-            ["git", "log", "-1", "--format=%cs", "--", path],
+            ["git", "log", "-1", "--date=format-local:%Y-%m-%dT%H:%MZ",
+             "--format=%cd", "--", path],
+            env=dict(os.environ, TZ="UTC"),
             cwd=ROOT, capture_output=True, text=True, check=False)
         return r.stdout.strip() or None
     except OSError:
@@ -178,8 +183,23 @@ def main():
                 continue
             cited.add(sp)
             d = last_commit_date(sp)
-            if updated and d and d > updated:
-                warnings.append(f"{rel}: updated {updated}, but {s} changed {d}")
+            # `updated` may be a date or a UTC time (2026-11-11T15:30Z). A
+            # date compares by day, so a source changed later the same day
+            # does not warn; on a busy day write the time (added 2026-11-11,
+            # when ten reports a day made the day check miss same-day edits).
+            if updated and d and d[:len(updated)] > updated:
+                warnings.append(f"{rel}: updated {updated}, but {s} changed {d[:len(updated)]}")
+        # A report linked in the body but missing from `sources:` escapes
+        # the check above, so the page can go stale without a warning.
+        # decisions.md is a log of rulings whose links are pointers, not a
+        # summary of those reports, so it is left out.
+        srcs = {os.path.normpath(os.path.join(ROOT, s)) for s in fm.get("sources", []) or []}
+        for target in sorted(set(LINK.findall(body))) if not p.endswith("decisions.md") else []:
+            path = os.path.normpath(os.path.join(os.path.dirname(p), target.split("#", 1)[0]))
+            if os.path.dirname(path) == os.path.join(ROOT, "Reports") and path.endswith(".md") \
+                    and os.path.basename(path) not in NOT_SOURCES and path not in srcs \
+                    and os.path.exists(path):
+                warnings.append(f"{rel}: links {os.path.relpath(path, ROOT)} but `sources:` does not list it")
 
     for p in all_pages:
         if p in (index,):
