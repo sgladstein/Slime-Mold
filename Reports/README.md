@@ -171,6 +171,11 @@ move.
   step (new `BigParams::respawn`, off by default) held a fine mesh (loops at 10 s 43.5 to 196, 8 of 8) and gave
   Jenson's haze, for 4% more step time. Not reproduced: feathery fronts, trunks, contagion.
   Page, pictures, run.sh, analyze.py and raw output in [`jenson-compare-2026-11-10/`](jenson-compare-2026-11-10/).
+- [world-camera-2026-11-11.md](world-camera-2026-11-11.md) — **built: the camera and UI
+  for a world bigger than the screen** (`slime_mould::world`): pan, zoom at the
+  cursor, minimap, GPU marks and Larder's controls as `UiCommand`s; the GPU
+  engine moved into the library (`slime_mould::gpu`). In the sandbox (W, Q, M).
+  Today's dish through the camera is pixel-identical; not yet timed on the 1070.
 - [gpu-sandbox-2026-11-11.md](gpu-sandbox-2026-11-11.md) — **built: GPU plan phase 3's sandbox,
   `--bin mouldgpu`.** The big dish on the GPU, drawn live, with every option
   the Jenson comparison tested as a control and its dishes on keys 1-8 (the

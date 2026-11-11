@@ -46,3 +46,4 @@ if the link ever stops working. Newest last.
 | 11-11 | Grazing Mould Cells (droplets that crawl by grazing, two species of cells, conversion tries) | https://claude.ai/artifact/YYZJSPdm6VAb857m7WnJLR | `creatures-2026-11-11/` (page.html, `pics/`, graze.sh, drift.py, `raw/`) |
 | 11-11 | Larder M2 Census | https://claude.ai/artifact/1LKdbtQbsQJxv76ApxThRw | `larder-m2-2026-11-11/` (open `page.html`; pictures in `look/`) |
 | 11-11 | Larder M3 Window | https://claude.ai/artifact/CXSwsJbdxKyi2G5TnZhxZ4 | `larder-m3-2026-11-11/` (open `page.html`; pictures in `pics/`, made with `larder shot` from `pics/clear.txt`) |
+| 11-11 | Larder World Camera (pan, zoom, minimap, stand-in squad on a 2048 x 1280 world) | https://claude.ai/artifact/X4b5Nmwgkd11paVF8RS1mj | `world-camera-2026-11-11/` (open `page.html`; pictures from `mouldgpu look= view=1280x800 squad=1`) |

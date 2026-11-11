@@ -1561,6 +1561,11 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             }
         }
         let pic = e.picture();
+        // The same frame through the camera, before the profile below moves
+        // the dish on.
+        if let (0, Some(screen)) = (round, look.view) {
+            view_shot(&device, &queue, &e, screen, look, timestamps);
+        }
         if round == 0 {
             let median = |v: &mut Vec<f64>| {
                 v.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -1603,9 +1608,6 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     .collect();
                 println!("GPU ms a pass, median of 11 ticks each submitted alone: {}", parts.join(", "));
             }
-        }
-        if let (0, Some(screen)) = (round, look.view) {
-            view_shot(&device, &queue, &e, screen, look, timestamps);
         }
         pictures.push(pic);
     }
