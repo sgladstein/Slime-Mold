@@ -1,0 +1,83 @@
+<title>Grazing Mould Cells</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the same lightbox as the outside-rules page; single dark theme so
+   the black dishes sit flush, counts in mono beside each picture. */
+:root {
+  --bg: #0c0e0d; --panel: #151917; --line: #2a302d;
+  --fg: #e9ece9; --muted: #9ba49f; --amber: #ffbe5a; --vein: #cfe3dc; --red: #ff6b5e;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; }
+h2 { font-size: 24px; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header, section { display: grid; gap: 18px; }
+section > p { color: var(--muted); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+figure img, figure video { width: 100%; max-width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+code { font-family: var(--mono); font-size: 0.9em; color: var(--amber); }
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Big dish · 1024 × 640 · 11 Nov 2026, overnight</span>
+  <h1>Droplets that graze, and move</h1>
+  <p>The still droplets from the last page are 30,000 walkers, one per cell, packed into about 180 round bodies. Here they get one more field to work with: grass. Every cell starts with grass at 1. Each step, every walker eats 0.05 from its cell, and grass regrows by 0.002 × (1 − grass). A walker's sensors add 10 × grass to the trail they read. A body eats the ground under it bare and leans toward fresh ground, so it keeps moving.</p>
+</header>
+
+<section>
+  <span class="eyebrow">1 · Grazing</span>
+  <h2>The bodies crawl about ten times as far</h2>
+  <div class="pair">
+    <figure><video src="pics/grazing.mp4" poster="pics/grazing-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Grazing droplets, 0 to 12 s, walker counts</strong>
+      <dl class="stats"><dt>moved in 2 s</dt><dd>6.5-7.6 cells against 0.67-0.77 without grass</dd><dt>paired</dt><dd>more on 8 of 8 seeds, p 0.008</dd><dt>bodies</dt><dd>168-190 against 179-193, about 200 cells each</dd><dt>cost</dt><dd>12-15 ms a tick either way, one core</dd></dl></figcaption></figure>
+    <figure><img src="pics/grazing-paths.jpg" alt="Close-up: blue bodies, each with an olive smear where it has been over the last 4 seconds">
+      <figcaption><strong>Where the bodies were over 4 s (olive) and where they are now (blue)</strong><span>A close-up of the middle of the dish. Each body has a smear on one side: it has been moving.</span></figcaption></figure>
+  </div>
+  <p>Grass weight 30 pulls many walkers out of their bodies, and at 100 the bodies dissolve into a gas (seed 1). Weight 10 keeps them whole.</p>
+</section>
+
+<section>
+  <span class="eyebrow">2 · Two species</span>
+  <h2>Amber and teal cells roam among each other</h2>
+  <p>The same dish with two species, each laying and smelling its own trail and ignoring the other's (<code>species_avoid</code> 0). The cells stay one colour each: at 20 s, 91% of tube cells are 80% or more one species. Seed 1.</p>
+  <div class="pair">
+    <figure><video src="pics/two-species-grazing.mp4" poster="pics/two-species-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Two species of grazing droplets, 0 to 20 s</strong></figcaption></figure>
+    <figure><img src="pics/two-species-close.jpg" alt="Close-up of round amber and teal cells with faint tails">
+      <figcaption><strong>Close-up at 20 s</strong></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">3 · Fights</span>
+  <h2>Conversion alone doesn't move a border</h2>
+  <p>With <code>species_convert</code>, a walker joins another species when that species' trail on its cell outweighs its own by the factor set. With cyclic species, only the species that chases a walker can take it. All tests below are seed 1.</p>
+  <div class="pair">
+    <figure><img src="pics/convert-halves.jpg" alt="Amber left half and teal right half of a mesh with a straight border">
+      <figcaption><strong>Two halves of the 1M network, factor 1.2, no avoidance, 12 s</strong><span>Trail shares stayed 0.49-0.51 throughout. Attraction to the other side (avoidance −0.5) and a factor of 2 changed nothing. The sides meet only along a border where they are equal.</span></figcaption></figure>
+    <figure><img src="pics/rps-close.jpg" alt="A blurred mix of amber, teal and violet blobs">
+      <figcaption><strong>Three cyclic species of grazing droplets, 30 s</strong><span>The shares drifted only between 0.32 and 0.34, and the cells blurred into a mixed soup. Two species of droplets with factor 1.5 stayed at 0.50 each.</span></figcaption></figure>
+  </div>
+  <p>For a fight, one side needs an edge that the player can create: more walkers, food that grows a body, or a rule that lets a bigger body take a smaller one on contact. These dishes are even on purpose, so neither side has an edge.</p>
+</section>
+</div>
