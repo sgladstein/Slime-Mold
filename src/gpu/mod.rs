@@ -976,6 +976,15 @@ impl Engine {
         self.dish.measure()
     }
 
+    /// The living walkers now, with growth on (a read-back of the energy;
+    /// a dead slot holds -1). With growth off, every walker.
+    pub fn alive(&self) -> usize {
+        if !self.grows {
+            return self.n as usize;
+        }
+        floats(&read_back(&self.device, &self.queue, &self.energy)).iter().take(self.n as usize).filter(|&&v| v >= 0.0).count()
+    }
+
     /// The share of walkers sick now (counter over `immune`).
     pub fn sick_share(&self, s: &Settings) -> f64 {
         let c = read_back(&self.device, &self.queue, &self.sick);
