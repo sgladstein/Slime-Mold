@@ -2,7 +2,7 @@
 title: Outside looks and creature rules on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-11T21:00Z
+updated: 2026-11-11T22:00Z
 sources: [Reports/mould-shape-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/spread-mix-2026-11-11.md, Reports/research-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, research/sources/primordia.md, research/sources/reginato-2024.md]
 code: [BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigDish::infect, BigParams::chance_exp, BigParams::explore_spread, BigParams::graze_weight, BigParams::species_convert, BigParams::species_sets, SpeciesSet]
 ---
@@ -45,8 +45,9 @@ default; Jenson's later work respawns every 1,000 steps) held a fine mesh
 and gave Jenson's haze. Four times the walkers changed little. In the GPU
 sandbox's Jenson preset the count matters only with the limit
 ([mould shape](../../Reports/mould-shape-2026-11-11.md), 8 seeds, 30 s):
-without it 32,000 to 1,000,000 walkers all fold into strands (0-1 loops);
-with it 32,000, 100,000 and 200,000 give 43-54, 57-70 and 120-144 loops, a
+without it 32,000 to 2,000,000 walkers all fold into strands (0-1 loops);
+with it 32,000, 100,000 and 200,000 give 43-54, 57-70 and 120-144 loops (the
+GTX 1070 agrees: 46-53, 59-69, 122-144), a
 net thickening into a sheet with holes (the sandbox forces the limit off
 above half the agar). Every GPU
 port read (Bleuje, Lague, PolyPhy, gpu-io, Barradeau) drops the limit.
