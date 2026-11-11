@@ -3,7 +3,7 @@ title: The mould at scale (outside models and the GPU plan)
 kind: mechanism
 status: open
 updated: 2026-11-11
-sources: [Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md]
+sources: [Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/gpu-sandbox-2026-11-11.md, Reports/gpu-plan-2026-11-10.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md]
 code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn]
 ---
 
@@ -19,7 +19,7 @@ and no one-per-cell limit, and their network_2 clip grows from 3-5 loops to
 about 180-340 in nine seconds. Scale, not a better rule, is most of the gap,
 and the owner wants it for interesting play, not realism.
 
-**Phases 1 and 2 have run, and the step runs on the owner's GPU; the GPU sandbox (phase 3) is next.** The plan, revised after an independent review on
+**Phases 1 and 2 have run, the step runs on the owner's GPU, and phase 3's sandbox is built.** The plan, revised after an independent review on
 2026-11-10, has six gated phases:
 
 1. CPU foundations that test the port's riskiest assumptions at today's scale.
@@ -81,9 +81,18 @@ submitted one frame at a time, takes 0.82 ms at 32,000 walkers, 1.37 ms at
 100,000 and 3.52 ms at 1,000,000 (no crowd limit), against the phase 3 bar
 of 8 ms; the worst 1M frame was about 12 ms. The GPU dish matches the CPU's
 at 20 s (100k: 115 loops against 114) and runs 37 times as fast. Drawing,
-the census and the economy are not in those times. Next is phase 3, a
-sandbox with every option the Jenson comparison tested as a control
-(owner, 2026-11-11 00:06Z).
+the census and the economy are not in those times.
+
+**The GPU sandbox** (phase 3, 2026-11-11; `cargo run --release --bin
+mouldgpu`) runs that step live in a window, drawn on the GPU, with every
+option the Jenson comparison tested as a control (walkers to 8 million,
+the one-a-cell limit, angles, reach, step, trail laid and kept, respawn,
+food, colour, trail or walker counts, the game's or a soft curve) and the
+comparison's dishes on keys 1-8 (the owner's ask, 00:06Z). The left mouse
+pulls walkers to it, the right wipes trail, F drops food. On a software
+GPU its dishes match the CPU's at 10 s (one a cell: 148 loops against 151;
+1M with respawn: 200 against 200), and a seed gives the same frame twice
+([report](../../Reports/gpu-sandbox-2026-11-11.md)).
 
 Three facts bind the design:
 
@@ -132,6 +141,7 @@ tool in phase 6. Every outside source has a card in
 | GPU step vs CPU step, same seed, 10 s, software Vulkan (llvmpipe) | 32k: loops 90 / 92, width 3.40 / 3.41, strays 0.9% / 1.0%; 100k: loops 165 / 163, width 4.83 / 4.96, strays 1.8% / 1.5% | seed 1 | | [gpu plan, *GPU timing test*](../../Reports/gpu-plan-2026-11-10.md) |
 | GPU step on the GTX 1070, nose rule, seed 1: ms a tick (median), 120 ticks a submit / 2 a submit | 32k 0.374 / 0.410; 100k 0.631 / 0.685; 1M, crowd 0, 1.537 / 1.760 (worst 6.09); frame of two ticks 0.82, 1.37, 3.52 ms | seed 1 | | [gpu plan, *GPU timing on the GTX 1070*](../../Reports/gpu-plan-2026-11-10.md) |
 | GPU dish vs CPU dish on the GTX 1070, 20 s, seed 1 | 32k: loops 66 / 68, width 3.48 / 3.48, strays 2.3% / 1.8%; 100k: loops 115 / 114, width 5.08 / 5.20, strays 2.0% / 1.9%; CPU 9.98 and 23.63 ms a tick on four threads | seed 1 | | same |
+| GPU sandbox vs CPU dish, software Vulkan, 10 s, seed 1, no food: loops sandbox / CPU | one a cell 148 / 151; no limit 0 / 0; 1M Jenson settings 43 / 42; with respawn 1% 200 / 200 (width 8.33 / 7.99) | seed 1 | | [gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md) |
 | Big dish cost, ms a tick, one thread / four | today 0.54 / 0.53; nose 32k 11.3 / 6.7; nose 100k 21.6 / 20.2; steps 43.1 / 25.8; turn 71.1 / 31.7 | seed 1 | | same |
 | No one-a-cell limit vs the limit, 100k walkers, no food, spread start, loops at 10 s | 0 (0-2) vs 151.5 (144-160): fewer on 8 of 8, p 0.008, survives Bonferroni over 4 | 8 | yes | [jenson compare, *The tests*](../../Reports/jenson-compare-2026-11-10.md) |
 | Respawn 1% a step vs none, 1M walkers, no limit, sensor 45 / turn 22.5 / reach 18, loops at 10 s | 196 (187-208) vs 43.5 (38-52): more on 8 of 8, p 0.008, survives Bonferroni over 4; 166 vs 160 ms a tick on one core | 8 | yes | same |
@@ -170,5 +180,6 @@ tool in phase 6. Every outside source has a card in
 
 - [jenson-physarum-2026-11-10.md](../../Reports/jenson-physarum-2026-11-10.md), with the owner's PDF and GIFs in [its folder](../../Reports/jenson-physarum-2026-11-10/).
 - [jenson-compare-2026-11-10.md](../../Reports/jenson-compare-2026-11-10.md): the clips against the big dish, and how the outside versions build the step.
+- [gpu-sandbox-2026-11-11.md](../../Reports/gpu-sandbox-2026-11-11.md): the GPU sandbox, its controls and presets, and its check against the CPU dish.
 - [gpu-plan-2026-11-10.md](../../Reports/gpu-plan-2026-11-10.md) and its [independent review](../../Reports/gpu-plan-2026-11-10/review.md).
 - Source cards: [index](../../research/sources/README.md); [Jenson's post](../../research/sources/jenson-physarum-post.md), [36 Points](../../research/sources/jenson-36-points.md), [Jones 2010](../../research/sources/jones-2010.md), [MCPM](../../research/sources/mcpm-2022.md), [Bleuje](../../research/sources/bleuje-interactive-physarum.md), [Lague](../../research/sources/lague-slime-simulation.md), [PolyPhy](../../research/sources/polyphy.md).

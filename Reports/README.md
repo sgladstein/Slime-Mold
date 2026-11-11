@@ -160,6 +160,12 @@ move.
   step (new `BigParams::respawn`, off by default) held a fine mesh (loops at 10 s 43.5 to 196, 8 of 8) and gave
   Jenson's haze, for 4% more step time. Not reproduced: feathery fronts, trunks, contagion.
   Page, pictures, run.sh, analyze.py and raw output in [`jenson-compare-2026-11-10/`](jenson-compare-2026-11-10/).
+- [gpu-sandbox-2026-11-11.md](gpu-sandbox-2026-11-11.md) — **built: GPU plan phase 3's sandbox,
+  `--bin mouldgpu`.** The big dish on the GPU, drawn live, with every option
+  the Jenson comparison tested as a control and its dishes on keys 1-8 (the
+  owner's ask, 2026-11-11 00:06Z). On a software GPU its dishes match the
+  CPU's at 10 s, seed 1 (100k one a cell: 148 loops against 151; 1M with
+  respawn: 200 against 200), and the same seed gives the same frame twice.
 
 ## Added with the move (2026-11-10)
 
