@@ -50,6 +50,10 @@
 //! after N frames, prints the frame cost and quits (the game has the same
 //! hook).
 //!
+//! **The engine** (the shader, `Settings`, `Engine`) is the library's
+//! `slime_mould::gpu` since 2026-11-11, so a game can use it; this file is
+//! the sandbox's window, panel and presets, and the tests.
+//!
 //! **Tests on a GPU** (the twin test, phase 3's gate): one GPU tick from a
 //! CPU dish's state against one `BigDish::tick`, the same seed twice, and
 //! the crowd limit through jumps. They skip on a machine with no GPU unless
@@ -123,983 +127,21 @@
 //! the panel and the line at the bottom are the only things on screen that
 //! are not.
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
 use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
+use slime_mould::gpu::*;
 use slime_mould::hud;
-use slime_mould::mould::big::{BigDish, BigParams};
 use slime_mould::mould::STEPS_PER_SECOND;
+use slime_mould::world::controls::unit_marks;
+use slime_mould::world::{Button, Camera, Controls, Marks, UiCommand, Unit, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
-use winit::event::{ElementState, MouseButton, WindowEvent};
+use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
-
-const SHADER: &str = r#"
-struct Params {
-    w: u32, h: u32, n: u32, crowd: u32,
-    s_turn: u32, s_blocked: u32, s_claim: u32, s_jump: u32,
-    sa: f32, ra: f32, so: f32, sso: f32,
-    st: f32, deposit: f32, keep: f32, scent_keep: f32,
-    respawn: f32, pull: f32, bx: f32, by: f32,
-    br: f32, knee: f32, gamma: f32, s_pull: u32,
-    wipe: u32, colour: u32, field: u32, curve: u32,
-    tube: f32, fed: f32, cap: u32, s_wander: u32,
-    // Jenson's looks (`BigParams`, 2026-11-11): settings set by the trail a
-    // walker stands in (`sense_scale`, each `*_mod` as amp and exponent),
-    // the sensing floor and wander.
-    ss: f32, om_a: f32, om_e: f32, am_a: f32,
-    am_e: f32, tm_a: f32, tm_e: f32, sm_a: f32,
-    sm_e: f32, sfloor: f32, wander: f32, catch_at: f32,
-    // Contagion: off while `sick_steps` is 0. `infect` makes every walker
-    // within `ir` of (`ix`, `iy`) sick at the tick's start.
-    sick_steps: u32, immune: u32, infect: u32, _p0: u32,
-    sick_dep: f32, sick_keep: f32, sick_speed: f32, sick_trail: f32,
-    sick_reach: f32, sick_turn: f32, ix: f32, iy: f32,
-    ir: f32, _p1: f32, _p2: f32, _p3: f32,
-    // The outside rules (`BigParams` of PR #55, Reports/outside-rules-2026-11-11.md),
-    // all off at 0: species fields (`nsp`, 0 for none, else 2-4), cyclic
-    // species, explorers (`explore` steps), blocked walkers' deposit share
-    // and kept heading, the chance turn's power, size spread, area sensors.
-    nsp: u32, cycle: u32, explore: u32, s_size: u32,
-    avoid: f32, snext: f32, sprev: f32, edep: f32,
-    espread: f32, bshare: f32, bkeep: u32, breset: f32,
-    chance: f32, size_sp: f32, sensor_r: u32, s_chance: u32,
-    // PR #56: a walker joins a species whose trail at its cell outweighs
-    // its own `convert` times (0 off); grazing (`graze_w` 0 off). PR #58:
-    // species 0 lays `boost` times the deposit.
-    s_keep: u32, convert: f32, graze_w: f32, graze_eat: f32,
-    graze_regrow: f32, boost: f32, _q1: u32, _q2: u32,
-};
-struct State { t: u32, top: f32, _a: u32, _b: u32 };
-
-@group(0) @binding(0) var<uniform> P: Params;
-@group(0) @binding(1) var<storage, read_write> S: State;
-@group(0) @binding(2) var<storage, read_write> walkers: array<vec4<f32>>;
-@group(0) @binding(3) var<storage, read_write> intent: array<vec4<f32>>;
-@group(0) @binding(4) var<storage, read_write> icell: array<u32>;
-@group(0) @binding(5) var<storage, read_write> occ: array<atomic<u32>>;
-@group(0) @binding(6) var<storage, read_write> claim: array<atomic<u32>>;
-@group(0) @binding(7) var<storage, read_write> dep: array<atomic<u32>>;
-@group(0) @binding(8) var<storage, read> agar: array<u32>;
-@group(0) @binding(9) var<storage, read> lay: array<f32>;
-@group(0) @binding(10) var<storage, read_write> trail_in: array<f32>;
-@group(0) @binding(11) var<storage, read_write> trail_out: array<f32>;
-@group(0) @binding(12) var<storage, read_write> scent_in: array<f32>;
-@group(0) @binding(13) var<storage, read_write> scent_out: array<f32>;
-@group(0) @binding(14) var<storage, read_write> hist: array<atomic<u32>>;
-@group(0) @binding(15) var<storage, read_write> frame: array<u32>;
-@group(0) @binding(16) var<storage, read> hud: array<u32>;
-// Which pile a cell's food belongs to (index + 1, 0 for none), and whether
-// the tube has reached each pile (the CPU's `BigDish::reached`).
-@group(0) @binding(17) var<storage, read> pile: array<u32>;
-@group(0) @binding(18) var<storage, read_write> reached: array<atomic<u32>>;
-// Contagion (the CPU's `BigDish::sick` and `germ`): each walker's counter
-// (0 healthy, over `immune` sick, 1..=`immune` immune), sick walkers' trail
-// a cell (`sdep`, as `dep` counts the rest), sick walkers a cell for the
-// germ (`gdep`), and the germ field.
-@group(0) @binding(19) var<storage, read_write> sick: array<u32>;
-@group(0) @binding(20) var<storage, read_write> sdep: array<atomic<u32>>;
-@group(0) @binding(21) var<storage, read_write> gdep: array<atomic<u32>>;
-@group(0) @binding(22) var<storage, read_write> germ_in: array<f32>;
-@group(0) @binding(23) var<storage, read_write> germ_out: array<f32>;
-// The outside rules. `dep` and `sdep` hold a block of cells a species
-// (species s at s x cells); explorers count apart in `edep` (healthy, then
-// sick, a block each per species), and with `bshare` blocked walkers in
-// `bdep` (ordinary, then explorers). Each species' trail field ping-pongs
-// as the trail does (`sp_in`, `sp_out`), and each walker's age counts up
-// a step while explorers are on (the CPU's `BigDish::age`).
-@group(0) @binding(24) var<storage, read_write> edep: array<atomic<u32>>;
-@group(0) @binding(25) var<storage, read_write> bdep: array<atomic<u32>>;
-@group(0) @binding(26) var<storage, read_write> sp_in: array<f32>;
-@group(0) @binding(27) var<storage, read_write> sp_out: array<f32>;
-@group(0) @binding(28) var<storage, read_write> age: array<u32>;
-// PR #56: the grass a cell (1 on agar at the start; eaten and regrown in
-// place by the trail pass), walkers a cell after the move for the eating,
-// and each walker's species (k % n at the start; `convert` changes it).
-@group(0) @binding(29) var<storage, read_write> grass: array<f32>;
-@group(0) @binding(30) var<storage, read_write> gcount: array<atomic<u32>>;
-@group(0) @binding(31) var<storage, read_write> spec: array<u32>;
-
-const NONE: u32 = 0xFFFFFFFFu;
-
-// The outside rules' switches, read through these: the pipelines built with
-// OUTSIDE false (every outside rule off, which `Engine::write_params` picks
-// when none is on) compile the rules out. With them in, every pass paid for
-// their branches even when off: on the software GPU, 24% more GPU time a
-// frame on key 1 and 18% on key 4 (3 of 3 rounds each, 2026-11-11).
-override OUTSIDE: bool = true;
-fn nsp() -> u32 { if (OUTSIDE) { return P.nsp; } return 0u; }
-fn explore() -> u32 { if (OUTSIDE) { return P.explore; } return 0u; }
-fn bshare() -> f32 { if (OUTSIDE) { return P.bshare; } return 0.0; }
-fn bkeep() -> u32 { if (OUTSIDE) { return P.bkeep; } return 0u; }
-fn chance() -> f32 { if (OUTSIDE) { return P.chance; } return 0.0; }
-fn size_sp() -> f32 { if (OUTSIDE) { return P.size_sp; } return 0.0; }
-fn sensor_r() -> u32 { if (OUTSIDE) { return P.sensor_r; } return 0u; }
-fn graze_w() -> f32 { if (OUTSIDE) { return P.graze_w; } return 0.0; }
-const TAU: f32 = 6.2831855;
-
-fn lowbias32(v: u32) -> u32 {
-    var x = v;
-    x ^= x >> 16u; x *= 0x7FEB352Du; x ^= x >> 15u; x *= 0x846CA68Bu;
-    return x ^ (x >> 16u);
-}
-// The CPU's `keyed`, with the seed and use folded into `s` on the CPU.
-fn keyed(s: u32, t: u32, walker: u32) -> u32 {
-    return lowbias32(walker ^ lowbias32(lowbias32(s) ^ t));
-}
-fn unit(x: u32) -> f32 { return f32(x >> 8u) / 16777216.0; }
-
-fn cell(x: f32, y: f32) -> u32 {
-    if (x < 0.0 || y < 0.0) { return NONE; }
-    let cx = u32(x); let cy = u32(y);
-    if (cx >= P.w || cy >= P.h) { return NONE; }
-    return cy * P.w + cx;
-}
-fn scent_at(x: f32, y: f32) -> f32 {
-    let i = cell(x, y);
-    if (i == NONE) { return 0.0; }
-    return scent_in[i];
-}
-// Species fields in use: one block of cells each (one, the plain one, when
-// species are off).
-fn nsp1() -> u32 { return max(nsp(), 1u); }
-
-// The trail a walker of species `sp` reads at cell j: the trail, or its
-// own field weighed against the others' (the CPU's `trail_seen`, its
-// expressions in its order).
-fn seen(j: u32, sp: u32) -> f32 {
-    if (nsp() == 0u) { return trail_in[j]; }
-    let c = P.w * P.h;
-    let own = sp_in[sp * c + j];
-    if (P.cycle != 0u && nsp() >= 3u) {
-        let nx = sp_in[((sp + 1u) % nsp()) * c + j];
-        let pv = sp_in[((sp + nsp() - 1u) % nsp()) * c + j];
-        return own + P.snext * nx + P.sprev * pv - P.avoid * (trail_in[j] - own - nx - pv);
-    }
-    return (1.0 + P.avoid) * own - P.avoid * trail_in[j];
-}
-
-// One cell, or with `sensor_r` the sum over the agar cells of the square
-// around it, row by row as the CPU sums it (the centre decides the wall).
-fn trail_at(i: u32, sp: u32) -> f32 {
-    let r = sensor_r();
-    if (r == 0u) { return seen(i, sp); }
-    let x = i % P.w; let y = i / P.w;
-    var sum = 0.0;
-    for (var yy = y - min(y, r); yy < min(y + r + 1u, P.h); yy++) {
-        for (var xx = x - min(x, r); xx < min(x + r + 1u, P.w); xx++) {
-            let j = yy * P.w + xx;
-            if (agar[j] != 0u) { sum += seen(j, sp); }
-        }
-    }
-    return sum;
-}
-
-fn sense_at(x: f32, y: f32, a: f32, so: f32, sp: u32) -> f32 {
-    let c = cos(a); let s = sin(a);
-    let i = cell(x + c * so, y + s * so);
-    if (i == NONE || agar[i] == 0u) { return -1.0e6; }
-    var v = trail_at(i, sp) + scent_at(x + c * P.sso, y + s * P.sso);
-    // Grazing: fresh grass smells good (the CPU's `graze_weight`).
-    if (graze_w() != 0.0) { v += graze_w() * grass[i]; }
-    return v;
-}
-
-// Walker k's species: its own (`spec`, which conversion changes), or the
-// one plain field.
-fn species_of(k: u32) -> u32 {
-    if (nsp() == 0u) { return 0u; }
-    return spec[k];
-}
-
-// Whether walker k is still an explorer: younger than `explore` steps, or
-// with `espread` its own share of them, from a draw on k alone (the CPU's
-// `explores`).
-fn explores(k: u32) -> bool {
-    var n = f32(explore());
-    if (P.espread > 0.0) {
-        let u = unit(keyed(P.s_size, 0u, k | 0x80000000u));
-        n *= 1.0 + P.espread * (2.0 * u - 1.0);
-    }
-    return f32(age[k]) < n;
-}
-
-// v^e as the CPU's `powf` gives it at v = 0 (0, or 1 when e is 0); WGSL's
-// `pow` leaves 0 undefined.
-fn pow0(v: f32, e: f32) -> f32 {
-    if (v <= 0.0) { return select(0.0, 1.0, e == 0.0); }
-    return pow(v, e);
-}
-
-@compute @workgroup_size(256)
-fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let k = gid.x;
-    if (k >= P.n) { return; }
-    let t = S.t;
-    let wk = walkers[k];
-    var h = wk.z;
-    let here = cell(wk.x, wk.y);
-    // The CPU's `move_walkers` order: the walker's size, trail-set settings
-    // from the trail where it stands, then catching and the sick walker's
-    // changes.
-    let sp = species_of(k);
-    var so = P.so; var sa = P.sa; var ra = P.ra; var st = P.st;
-    if (size_sp() > 0.0) {
-        let sc = exp2(size_sp() * (2.0 * unit(keyed(P.s_size, 0u, k)) - 1.0));
-        so *= sc; st *= sc;
-    }
-    var ex = false;
-    if (explore() > 0u) { ex = explores(k); }
-    if (P.ss > 0.0) {
-        let v = min(trail_in[here] * P.ss, 1.0);
-        so = so + P.om_a * pow0(v, P.om_e);
-        sa = sa + P.am_a * pow0(v, P.am_e);
-        ra = ra + P.tm_a * pow0(v, P.tm_e);
-        st = max(st + P.sm_a * pow0(v, P.sm_e), 0.0);
-    }
-    if (P.sick_steps > 0u) {
-        var c = sick[k];
-        if (P.infect != 0u) {
-            let dx = wk.x - P.ix; let dy = wk.y - P.iy;
-            if (dx * dx + dy * dy <= P.ir * P.ir) { c = P.sick_steps + P.immune; }
-        }
-        if (c == 0u && germ_in[here] > P.catch_at) { c = P.sick_steps + P.immune; }
-        sick[k] = c;
-        if (c > P.immune) { st *= P.sick_speed; so *= P.sick_reach; ra *= P.sick_turn; }
-    }
-    var f = sense_at(wk.x, wk.y, h, so, sp);
-    var fl = sense_at(wk.x, wk.y, h - sa, so, sp);
-    var fr = sense_at(wk.x, wk.y, h + sa, so, sp);
-    // Explorers steer to the lowest reading; a wall stays a wall.
-    if (ex) {
-        if (f > -1.0e5) { f = -f; }
-        if (fl > -1.0e5) { fl = -fl; }
-        if (fr > -1.0e5) { fr = -fr; }
-    }
-    if (P.wander > 0.0 && unit(keyed(P.s_wander, t, k | 0x80000000u)) < P.wander) {
-        h = unit(keyed(P.s_wander, t, k | 0x40000000u)) * TAU;
-    } else if (P.sfloor > 0.0 && max(max(f, fl), fr) < P.sfloor) {
-        if ((keyed(P.s_wander, t, k) & 1u) == 0u) { h += ra; } else { h -= ra; }
-    } else if (chance() > 0.0) {
-        // The chance turn: a side by a draw, then toward it with chance
-        // g^e / (f^e + g^e), readings floored at 0 (the CPU's `chance_exp`).
-        let left = (keyed(P.s_chance, t, k) & 1u) == 0u;
-        let fe = pow0(max(f, 0.0), chance());
-        let ge = pow0(max(select(fr, fl, left), 0.0), chance());
-        var turn = 0.5;
-        if (fe + ge > 0.0) { turn = ge / (fe + ge); }
-        if (unit(keyed(P.s_chance, t, k | 0x80000000u)) < turn) {
-            if (left) { h -= ra; } else { h += ra; }
-        }
-    } else if (f > fl && f > fr) {
-    } else if (f < fl && f < fr) {
-        if ((keyed(P.s_turn, t, k) & 1u) == 0u) { h += ra; } else { h -= ra; }
-    } else if (fl < fr) {
-        h += ra;
-    } else if (fr < fl) {
-        h -= ra;
-    }
-    let nx = wk.x + cos(h) * st;
-    let ny = wk.y + sin(h) * st;
-    let there = cell(nx, ny);
-    var aim = NONE;
-    if (there != NONE) {
-        if (there == here) {
-            aim = there;
-        } else if (agar[there] != 0u && (P.crowd == 0u || atomicLoad(&occ[there]) < P.crowd)) {
-            aim = there;
-            if (P.crowd > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
-        }
-    }
-    intent[k] = vec4<f32>(nx, ny, h, 0.0);
-    icell[k] = aim;
-}
-
-@compute @workgroup_size(256)
-fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let k = gid.x;
-    if (k >= P.n) { return; }
-    let t = S.t;
-    let aim = icell[k];
-    let wk = walkers[k];
-    let here = cell(wk.x, wk.y);
-    var wins = false;
-    if (aim != NONE) {
-        wins = aim == here || P.crowd == 0u || atomicLoad(&claim[aim]) == keyed(P.s_claim, t, k);
-    }
-    var at = here;
-    if (wins) {
-        if (aim != here) {
-            atomicSub(&occ[here], 1u);
-            atomicAdd(&occ[aim], 1u);
-        }
-        walkers[k] = intent[k];
-        at = aim;
-    } else {
-        // Blocked: Jones's rule, a new heading; or (`bkeep`) the heading it
-        // chose, bar a reset with chance `breset` (the CPU's `blocked_keep`).
-        var bh = unit(keyed(P.s_blocked, t, k)) * TAU;
-        if (bkeep() != 0u && unit(keyed(P.s_keep, t, k)) >= P.breset) { bh = intent[k].z; }
-        walkers[k] = vec4<f32>(wk.x, wk.y, bh, 0.0);
-    }
-    // Trail: a walker that moved lays it where it landed; with the capped
-    // square-root deposit every walker counts where it stands after the
-    // move (`trail` shares the cell's deposit among them). Sick walkers and
-    // explorers are counted apart, for `sick_trail` and `edep`, each in its
-    // species' block; with `bshare` (and no cap) a blocked walker counts
-    // where it stands.
-    var ill = false;
-    if (P.sick_steps > 0u) { ill = sick[k] > P.immune; }
-    var ex = false;
-    if (explore() > 0u) { ex = explores(k); }
-    let c = P.w * P.h;
-    let o = species_of(k) * c + at;
-    // Grazing: every walker eats where it stands after the move.
-    if (graze_w() != 0.0) { atomicAdd(&gcount[at], 1u); }
-    if (P.cap > 0u || wins) {
-        if (ex) {
-            atomicAdd(&edep[o + select(0u, nsp1() * c, ill)], 1u);
-        } else if (ill) {
-            atomicAdd(&sdep[o], 1u);
-        } else {
-            atomicAdd(&dep[o], 1u);
-        }
-    } else if (bshare() > 0.0) {
-        atomicAdd(&bdep[o + select(0u, nsp1() * c, ex)], 1u);
-    }
-    // Sick walkers lay germ where they stand, then every counter falls by
-    // one (before any jump, as on the CPU).
-    if (P.sick_steps > 0u) {
-        if (ill) { atomicAdd(&gdep[at], 1u); }
-        let n = sick[k];
-        if (n > 0u) { sick[k] = n - 1u; }
-    }
-    // Ages count up after the deposit, before any jump, in the CPU's u16.
-    if (explore() > 0u) { age[k] = min(age[k] + 1u, 65535u); }
-}
-
-// Conversion (PR #56), after the move and its deposit, before any jump: a
-// walker joins the species with the most trail at its cell (with cyclic
-// species, only the previous one, which chases it) if that trail outweighs
-// its own `convert` times. The trail is the field after this tick's
-// deposit and before the spread, as the CPU reads it. Only dispatched with
-// species and `convert` on.
-@compute @workgroup_size(256)
-fn convert(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let k = gid.x;
-    if (k >= P.n) { return; }
-    let wk = walkers[k];
-    let i = cell(wk.x, wk.y);
-    let c = P.w * P.h;
-    var all = 0.0;
-    if (P.cap > 0u) { all = counted(i); }
-    let own = spec[k];
-    let ov = sp_in[own * c + i] + laid_by(own, i, all);
-    var best = own;
-    var bv = ov;
-    if (P.cycle != 0u && nsp() >= 3u) {
-        best = (own + nsp() - 1u) % nsp();
-        bv = sp_in[best * c + i] + laid_by(best, i, all);
-    } else {
-        for (var s = 0u; s < nsp(); s++) {
-            if (s != own) {
-                let v = sp_in[s * c + i] + laid_by(s, i, all);
-                if (v > bv) { best = s; bv = v; }
-            }
-        }
-    }
-    if (best != own && bv > P.convert * ov) { spec[k] = best; }
-}
-
-// Where walker k jumps this tick, if it does (w = 1): the pull (to a disc
-// at the mouse) first, then respawn (anywhere), each by its own keyed
-// draws; the heading by respawn's (the CPU's `respawn_walkers`).
-fn jump_of(k: u32, t: u32) -> vec4<f32> {
-    var at = vec2<f32>(0.0, 0.0);
-    if (P.pull > 0.0 && unit(keyed(P.s_pull, t, 4u * k)) < P.pull) {
-        let a = unit(keyed(P.s_pull, t, 4u * k + 1u)) * TAU;
-        let r = sqrt(unit(keyed(P.s_pull, t, 4u * k + 2u))) * P.br;
-        at = vec2<f32>(P.bx + cos(a) * r, P.by + sin(a) * r);
-    } else if (P.respawn > 0.0 && unit(keyed(P.s_jump, t, 4u * k)) < P.respawn) {
-        at = vec2<f32>(unit(keyed(P.s_jump, t, 4u * k + 1u)) * f32(P.w), unit(keyed(P.s_jump, t, 4u * k + 2u)) * f32(P.h));
-    } else {
-        return vec4<f32>(0.0, 0.0, 0.0, 0.0);
-    }
-    return vec4<f32>(at, unit(keyed(P.s_jump, t, 4u * k + 3u)) * TAU, 1.0);
-}
-
-// Jumps come after the move, as on the CPU: a walker steps (and lays its
-// trail where it stepped), then may jump. A jump off the agar is lost. With
-// no crowd limit it lands here; with one, it claims its cell (lowest walker
-// wins, the CPU's order) and `land` moves the winners. Only dispatched while
-// respawn or the pull is on.
-@compute @workgroup_size(256)
-fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let k = gid.x;
-    if (k >= P.n) { return; }
-    icell[k] = NONE;
-    let j = jump_of(k, S.t);
-    if (j.w == 0.0) { return; }
-    let to = cell(j.x, j.y);
-    if (to == NONE || agar[to] == 0u) { return; }
-    let wk = walkers[k];
-    let here = cell(wk.x, wk.y);
-    if (P.crowd == 0u) {
-        if (to != here) {
-            atomicSub(&occ[here], 1u);
-            atomicAdd(&occ[to], 1u);
-        }
-        walkers[k] = vec4<f32>(j.xyz, 0.0);
-        // A walker that jumps starts its life again (the CPU's respawn).
-        if (explore() > 0u) { age[k] = 0u; }
-        return;
-    }
-    // A cell claimed by a step this tick now holds its winner, so it is
-    // full and never claimed here: the claim's stale keys cannot win.
-    if (atomicLoad(&occ[to]) >= P.crowd) { return; }
-    atomicMin(&claim[to], k);
-    icell[k] = to;
-}
-
-@compute @workgroup_size(256)
-fn land(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let k = gid.x;
-    if (k >= P.n) { return; }
-    let to = icell[k];
-    if (to == NONE || atomicLoad(&claim[to]) != k) { return; }
-    let wk = walkers[k];
-    atomicSub(&occ[cell(wk.x, wk.y)], 1u);
-    atomicAdd(&occ[to], 1u);
-    walkers[k] = vec4<f32>(jump_of(k, S.t).xyz, 0.0);
-    if (explore() > 0u) { age[k] = 0u; }
-}
-
-// The cell's walkers that share a capped deposit: every species and class
-// (with the cap each walker counts where it stands). Integer counts, so
-// the sum is exact in any order.
-fn counted(j: u32) -> f32 {
-    let c = P.w * P.h;
-    let m = nsp1();
-    var n = 0.0;
-    for (var s = 0u; s < m; s++) {
-        let o = s * c + j;
-        n += f32(atomicLoad(&dep[o]));
-        if (P.sick_steps > 0u) { n += f32(atomicLoad(&sdep[o])); }
-        if (explore() > 0u) { n += f32(atomicLoad(&edep[o])) + f32(atomicLoad(&edep[o + m * c])); }
-    }
-    return n;
-}
-
-// The trail species s gets on cell j this tick: `deposit` a walker that
-// moved (the sick lay `sick_trail` times as much, explorers `edep` times),
-// with `bshare` that share of it a blocked walker, or with `cap` the CPU's
-// capped square-root deposit, deposit x sqrt(min(n, cap)) shared by the
-// cell's n walkers (`all`, from `counted`). With the outside rules off the
-// expressions are the looks build's, so its dishes run as they did.
-fn laid(s: u32, j: u32, all: f32) -> f32 {
-    let c = P.w * P.h;
-    let m = nsp1();
-    let o = s * c + j;
-    let a = f32(atomicLoad(&dep[o]));
-    if (P.cap == 0u && P.sick_steps == 0u && explore() == 0u && bshare() == 0.0) { return P.deposit * a; }
-    var b = 0.0;
-    if (P.sick_steps > 0u) { b = f32(atomicLoad(&sdep[o])); }
-    var w = a + P.sick_trail * b;
-    if (explore() > 0u) {
-        w += P.edep * (f32(atomicLoad(&edep[o])) + P.sick_trail * f32(atomicLoad(&edep[o + m * c])));
-    }
-    if (P.cap == 0u) {
-        var l = P.deposit * w;
-        if (bshare() > 0.0) {
-            l += P.deposit * bshare() * (f32(atomicLoad(&bdep[o])) + P.edep * f32(atomicLoad(&bdep[o + m * c])));
-        }
-        return l;
-    }
-    if (all == 0.0) { return 0.0; }
-    return P.deposit * sqrt(min(all, f32(P.cap))) / all * w;
-}
-
-// The trail species s lays on cell j this tick, with species 0's boost
-// (the CPU's `species_boost`, applied to each of its walkers' deposits).
-fn laid_by(s: u32, j: u32, all: f32) -> f32 {
-    let l = laid(s, j, all);
-    if (s == 0u) { return l * P.boost; }
-    return l;
-}
-
-@compute @workgroup_size(256)
-fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let i = gid.x;
-    let c = P.w * P.h;
-    if (i >= c) { return; }
-    // The germ spreads as the trail does, with its own keep.
-    let germs = P.sick_steps > 0u;
-    // A pile is reached once tube lies on it: the CPU marks it at the end
-    // of a tick from that tick's trail, which is this tick's `trail_in`, so
-    // the scent pass below lays this tick's food as the CPU's next tick does.
-    let pi = pile[i];
-    if (pi != 0u && trail_in[i] > P.tube) { atomicMax(&reached[pi - 1u], 1u); }
-    // Grazing: the walkers on the cell each eat `graze_eat` (floored at 0,
-    // one at a time, as the CPU does), then the grass regrows. In place:
-    // only the next tick's sense pass reads it.
-    if (graze_w() != 0.0 && agar[i] != 0u) {
-        var g = grass[i];
-        let eaters = atomicLoad(&gcount[i]);
-        for (var q = 0u; q < eaters && g > 0.0; q++) { g = max(g - P.graze_eat, 0.0); }
-        grass[i] = g + P.graze_regrow * (1.0 - g);
-    }
-    let x = i % P.w; let y = i / P.w;
-    var gone = agar[i] == 0u || x == 0u || y == 0u || x + 1u == P.w || y + 1u == P.h;
-    // The right mouse wipes trail and germ, as the looks report's knife.
-    if (!gone && P.wipe != 0u) {
-        let dx = f32(x) + 0.5 - P.bx; let dy = f32(y) + 0.5 - P.by;
-        gone = dx * dx + dy * dy <= P.br * P.br;
-    }
-    if (gone) {
-        trail_out[i] = 0.0;
-        if (germs) { germ_out[i] = 0.0; }
-        for (var s = 0u; s < nsp(); s++) { sp_out[s * c + i] = 0.0; }
-        return;
-    }
-    let capped = P.cap > 0u;
-    var gsum = 0.0; var n = 0.0;
-    if (nsp() == 0u) {
-        var sum = 0.0;
-        for (var dy = 0u; dy < 3u; dy++) {
-            for (var dx = 0u; dx < 3u; dx++) {
-                let j = (y + dy - 1u) * P.w + x + dx - 1u;
-                if (agar[j] != 0u) {
-                    var all = 0.0;
-                    if (capped) { all = counted(j); }
-                    sum += trail_in[j] + laid(0u, j, all);
-                    if (germs) { gsum += germ_in[j] + P.sick_dep * f32(atomicLoad(&gdep[j])); }
-                    n += 1.0;
-                }
-            }
-        }
-        trail_out[i] = sum / n * P.keep;
-    } else {
-        // Each species' field spreads as the trail would; the trail is
-        // their sum, in species order (the CPU's `tick`).
-        var sums = array<f32, 4>(0.0, 0.0, 0.0, 0.0);
-        for (var dy = 0u; dy < 3u; dy++) {
-            for (var dx = 0u; dx < 3u; dx++) {
-                let j = (y + dy - 1u) * P.w + x + dx - 1u;
-                if (agar[j] != 0u) {
-                    var all = 0.0;
-                    if (capped) { all = counted(j); }
-                    for (var s = 0u; s < nsp(); s++) { sums[s] += sp_in[s * c + j] + laid_by(s, j, all); }
-                    if (germs) { gsum += germ_in[j] + P.sick_dep * f32(atomicLoad(&gdep[j])); }
-                    n += 1.0;
-                }
-            }
-        }
-        var total = 0.0;
-        for (var s = 0u; s < nsp(); s++) {
-            let v = sums[s] / n * P.keep;
-            sp_out[s * c + i] = v;
-            total += v;
-        }
-        trail_out[i] = total;
-    }
-    if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
-}
-
-@compute @workgroup_size(256)
-fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let i = gid.x;
-    if (i >= P.w * P.h) { return; }
-    atomicStore(&claim[i], NONE);
-    if (P.sick_steps > 0u) { atomicStore(&gdep[i], 0u); }
-    if (graze_w() != 0.0) { atomicStore(&gcount[i], 0u); }
-    // The counts, a block a species (and a class).
-    let c = P.w * P.h;
-    let m = nsp1();
-    for (var s = 0u; s < m; s++) {
-        let o = s * c + i;
-        atomicStore(&dep[o], 0u);
-        if (P.sick_steps > 0u) { atomicStore(&sdep[o], 0u); }
-        if (explore() > 0u) { atomicStore(&edep[o], 0u); atomicStore(&edep[o + m * c], 0u); }
-        if (bshare() > 0.0) { atomicStore(&bdep[o], 0u); atomicStore(&bdep[o + m * c], 0u); }
-    }
-    if (i == 0u) { S.t = S.t + 1u; }
-    let x = i % P.w; let y = i / P.w;
-    if (agar[i] == 0u || x == 0u || y == 0u || x + 1u == P.w || y + 1u == P.h) { scent_out[i] = 0.0; return; }
-    var sum = 0.0; var n = 0.0;
-    for (var dy = 0u; dy < 3u; dy++) {
-        for (var dx = 0u; dx < 3u; dx++) {
-            let j = (y + dy - 1u) * P.w + x + dx - 1u;
-            if (agar[j] != 0u) {
-                // A reached pile lays `fed` of its scent (the CPU's `fed_scent`).
-                var l = lay[j];
-                if (l != 0.0 && pile[j] != 0u && atomicLoad(&reached[pile[j] - 1u]) != 0u) { l *= P.fed; }
-                sum += scent_in[j] + l;
-                n += 1.0;
-            }
-        }
-    }
-    scent_out[i] = sum / n * P.scent_keep;
-}
-
-// What a pixel is drawn from: the trail, or walkers a cell.
-fn shown(i: u32) -> f32 {
-    if (P.field == 1u) { return f32(atomicLoad(&occ[i])); }
-    return trail_in[i];
-}
-
-// The soft curve's reference, p99.9 of the shown field over cells above 0:
-// a 512-bin histogram of log2 (8 bins an octave from 2^-16 to 2^48), summed
-// in workgroup memory first so the global bins see one add a workgroup. (It
-// had 256 bins, to 2^16, until the review of 2026-11-11: a trail laid at
-// 2,000 passed that and 0.66% of cells clipped to full brightness.)
-const BINS: u32 = 512u;
-var<workgroup> local: array<atomic<u32>, 512>;
-
-@compute @workgroup_size(256)
-fn histogram(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
-    atomicStore(&local[li], 0u);
-    atomicStore(&local[li + 256u], 0u);
-    workgroupBarrier();
-    let i = gid.x;
-    if (i < P.w * P.h) {
-        let v = shown(i);
-        if (v > 0.0) {
-            let b = u32(clamp((log2(v) + 16.0) * 8.0, 0.0, f32(BINS - 1u)));
-            atomicAdd(&local[b], 1u);
-        }
-    }
-    workgroupBarrier();
-    for (var j = li; j < BINS; j += 256u) {
-        let c = atomicLoad(&local[j]);
-        if (c > 0u) { atomicAdd(&hist[j], c); }
-    }
-}
-
-@compute @workgroup_size(1)
-fn top() {
-    var total = 0u;
-    for (var j = 0u; j < BINS; j++) { total += atomicLoad(&hist[j]); }
-    let want = max(total / 1000u, 1u);
-    var seen = 0u;
-    var b = BINS;
-    loop {
-        if (b == 0u) { break; }
-        b -= 1u;
-        seen += atomicLoad(&hist[b]);
-        if (seen >= want) { break; }
-    }
-    // The bin's upper edge.
-    S.top = exp2((f32(b) + 1.0) / 8.0 - 16.0);
-    for (var j = 0u; j < BINS; j++) { atomicStore(&hist[j], 0u); }
-}
-
-// A value's brightness, 0 to 1, by the picked curve.
-fn bright(v: f32) -> f32 {
-    if (v <= 0.0) { return 0.0; }
-    if (P.curve == 0u) { return 1.0 - exp(-v / P.knee); }
-    return pow(clamp(v / S.top, 0.0, 1.0), P.gamma);
-}
-
-@compute @workgroup_size(256)
-fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let i = gid.x;
-    if (i >= P.w * P.h) { return; }
-    let v = shown(i);
-    let g = bright(v);
-    var c = vec3<f32>(0.0, 0.0, 0.0);
-    if (agar[i] == 0u) {
-        if (P.colour == 0u) { c = vec3<f32>(8.0, 14.0, 18.0); }
-    } else if (nsp() > 0u && P.field == 0u) {
-        // Species: each field in its own colour through the same curve
-        // (the soft curve's reference is the total's), the colours added
-        // (examples/bigdish.rs `style=species`), on the amber ground or black.
-        if (P.colour == 0u) {
-            let sg = 1.0 - exp(-scent_in[i] / 60.0);
-            c = vec3<f32>(12.0 + 30.0 * sg, 22.0 + 26.0 * sg, 26.0 + 10.0 * sg);
-        }
-        let cols = array<vec3<f32>, 4>(vec3<f32>(255.0, 170.0, 60.0), vec3<f32>(60.0, 200.0, 220.0), vec3<f32>(190.0, 110.0, 255.0), vec3<f32>(120.0, 230.0, 90.0));
-        for (var s = 0u; s < nsp(); s++) { c += cols[s] * bright(sp_in[s * P.w * P.h + i]); }
-    } else if (P.colour == 0u) {
-        // The game's amber (`BigDish::image`): scent tints the ground.
-        let sg = 1.0 - exp(-scent_in[i] / 60.0);
-        let base = vec3<f32>(12.0 + 30.0 * sg, 22.0 + 26.0 * sg, 26.0 + 10.0 * sg);
-        c = base + (vec3<f32>(255.0, 190.0, 90.0) - base) * g;
-    } else {
-        c = vec3<f32>(255.0 * g);
-    }
-    // Grazing: the grass in green under the mould, so the bare ground a
-    // body leaves behind shows.
-    if (graze_w() != 0.0 && agar[i] != 0u) { c += vec3<f32>(6.0, 30.0, 10.0) * grass[i]; }
-    // With contagion on, the germ in red, full at four times the catch
-    // level (the looks report's `style=sick`).
-    if (P.sick_steps > 0u && agar[i] != 0u) {
-        let gs = sqrt(clamp(germ_in[i] / (4.0 * max(P.catch_at, 1.0e-6)), 0.0, 1.0));
-        c = vec3<f32>(max(c.x, 255.0 * gs), c.y * (1.0 - 0.8 * gs), c.z * (1.0 - 0.8 * gs));
-    }
-    // The panel, premultiplied, over the dish.
-    let o = hud[i];
-    let a = f32(o >> 24u) / 255.0;
-    let hc = vec3<f32>(f32(o & 255u), f32((o >> 8u) & 255u), f32((o >> 16u) & 255u));
-    c = hc + c * (1.0 - a);
-    let q = vec3<u32>(clamp(c, vec3<f32>(0.0), vec3<f32>(255.0)));
-    frame[i] = q.x | (q.y << 8u) | (q.z << 16u) | (255u << 24u);
-}
-"#;
-
-/// The CPU's `keyed` stream key for a use (`mould::keyed`'s first line).
-fn stream(seed: u64, use_: u32) -> u32 {
-    (seed as u32) ^ ((seed >> 32) as u32) ^ use_.wrapping_mul(0x9E37_79B9)
-}
-
-// Draw uses, as in big.rs (106 is the CPU's respawn).
-const DRAW_TURN: u32 = 101;
-const DRAW_BLOCKED: u32 = 102;
-const CLAIM_MOVE: u32 = 103;
-const DRAW_JUMP: u32 = 106;
-const DRAW_PULL: u32 = 107;
-/// The sensing floor's and wander's draws (big.rs `DRAW_WANDER`).
-const DRAW_WANDER: u32 = 108;
-/// The outside rules' draws: the chance turn's, each walker's size and
-/// explorer stage, and the blocked walker's reset (big.rs).
-const DRAW_CHANCE: u32 = 109;
-const DRAW_SIZE: u32 = 110;
-const DRAW_KEEP: u32 = 111;
-
-/// Bytes in `Params` (84 words).
-const PARAMS_BYTES: usize = 336;
-
-/// Species the sandbox draws (a colour each, as `style=species`).
-const MAX_SPECIES: u8 = 4;
-
-/// Piles the GPU tracks (the dish's seven and food dropped with F); F does
-/// nothing once they are all used.
-const MAX_PILES: usize = 64;
-
-/// The share of walkers the pull moves a tick (0.2%: at 100,000 walkers, a
-/// quarter of them in about a second of holding).
-const PULL: f32 = 0.002;
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-enum Colour {
-    Amber,
-    Grey,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-enum Field {
-    Trail,
-    Walkers,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-enum Curve {
-    Game,
-    Soft,
-}
-
-/// Where the walkers start: spread over the dish, packed at home (today's
-/// inoculum), or a disc in the middle (`BigParams::blob_r`, the looks
-/// report's trunk start).
-#[derive(Clone, Copy, PartialEq, Debug)]
-enum Start {
-    Spread,
-    Home,
-    Disc,
-}
-
-/// Every control. Angles in degrees, distances in fine cells.
-#[derive(Clone, PartialEq, Debug)]
-struct Settings {
-    walkers: usize,
-    /// One walker a cell (crowd 1); dropped when there are more walkers than
-    /// half the agar cells.
-    crowd: bool,
-    sensor_angle: f32,
-    turn: f32,
-    reach: f32,
-    step: f32,
-    /// Trail laid a step by 100,000 walkers: the deposit is
-    /// `laid * 100,000 / walkers`.
-    laid: f32,
-    keep: f32,
-    respawn: f32,
-    /// The dish's seven piles (dropped food stays either way).
-    food: bool,
-    /// How far out food is smelled (`BigParams::scent_offset`).
-    smell: f32,
-    colour: Colour,
-    field: Field,
-    curve: Curve,
-    knee: f32,
-    gamma: f32,
-    /// Ticks a frame.
-    ticks: u32,
-    start: Start,
-    /// Jenson's looks (`Reports/jenson-looks-2026-11-11.md`, `BigParams`).
-    /// The disc start's radius, and the share of walkers spread over the
-    /// dish instead with a disc or home start (`haze`).
-    disc: f32,
-    haze: f32,
-    /// Settings set by the trail a walker stands in (36 Points):
-    /// s = min(trail x `trail_scale`, 1), 0 off; each setting is its base
-    /// plus amp x s^power, `[amp, power]` (angles in degrees).
-    trail_scale: f32,
-    reach_by: [f32; 2],
-    angle_by: [f32; 2],
-    turn_by: [f32; 2],
-    step_by: [f32; 2],
-    /// The capped square-root deposit (`deposit_cap`), 0 off.
-    cap: u16,
-    /// The sensing floor and wander (chance a look), 0 off.
-    floor: f32,
-    wander: f32,
-    /// Contagion, off when `sick` is 0: sick and immune for so many ticks,
-    /// caught in germ over `catch_at`; a sick walker lays `germ` a tick
-    /// (kept `germ_keep` a tick as it spreads) and moves, lays trail,
-    /// senses and turns so many times as much.
-    sick: u32,
-    immune: u32,
-    catch_at: f32,
-    germ: f32,
-    germ_keep: f32,
-    sick_speed: f32,
-    sick_trail: f32,
-    sick_reach: f32,
-    sick_turn: f32,
-    /// The walkers within `seed_r` of the middle fall sick `seed_at`
-    /// seconds in (0: at the start, `BigParams::sick_seed_r`).
-    seed_at: f32,
-    seed_r: f32,
-    /// The outside rules (`BigParams` of PR #55,
-    /// `Reports/outside-rules-2026-11-11.md`), off by default. Species
-    /// (0 or 1 is none, up to 4): walker k is species k % n, smelling its
-    /// own trail x (1 + `avoid`) less all trail x `avoid`; `zones` starts
-    /// each in its own band of a spread start; `cycle` (3 or more) weighs
-    /// the next species' trail by `next` and the previous one's by `prev`.
-    species: u8,
-    avoid: f32,
-    zones: bool,
-    cycle: bool,
-    next: f32,
-    prev: f32,
-    /// Explorers: a walker younger than `explore` ticks steers to the
-    /// lowest reading and lays `explorer_trail` of the deposit; with
-    /// `explore_spread` each walker's stage is 0-2x as long.
-    explore: u16,
-    explorer_trail: f32,
-    explore_spread: f32,
-    /// A blocked walker lays `blocked_lay` of the deposit where it stands
-    /// (not with the cap); with `blocked_keep` it keeps its heading, bar
-    /// a reset with chance `blocked_reset` a tick.
-    blocked_lay: f32,
-    blocked_keep: bool,
-    blocked_reset: f32,
-    /// The chance turn's power (MCPM), 0 off; each walker's size spread
-    /// (reach and step x 2^(spread x u)); the area sensors' radius.
-    chance: f32,
-    size_spread: f32,
-    sensor_r: u8,
-    /// PR #56 (`Reports/creatures-2026-11-11.md`): a walker joins a
-    /// species whose trail at its cell outweighs its own `convert` times
-    /// (0 off); grazing: grass starts at 1, each walker eats `graze_eat` a
-    /// tick from its cell, it regrows by `graze_regrow` x (1 - grass), and
-    /// a sensor adds `graze` x grass (0 off).
-    convert: f32,
-    graze: f32,
-    graze_eat: f32,
-    graze_regrow: f32,
-    /// PR #58: species 0 lays this many times the deposit (1 even).
-    boost: f32,
-    seed: u64,
-}
-
-impl Settings {
-    /// The phase 2 big dish: the `nose` rule at 100,000 walkers, food on,
-    /// the game's look (examples/bigdish.rs preset `dense`, spread start).
-    fn big_dish() -> Self {
-        let t = BigParams::today();
-        Settings {
-            walkers: 100_000,
-            crowd: true,
-            sensor_angle: t.sensor_angle.to_degrees(),
-            turn: t.rotate_angle.to_degrees(),
-            reach: t.sensor_offset,
-            step: t.step,
-            laid: t.deposit,
-            keep: t.keep,
-            respawn: 0.0,
-            food: true,
-            smell: t.sensor_offset * 4.0,
-            colour: Colour::Amber,
-            field: Field::Trail,
-            curve: Curve::Game,
-            knee: 6.0,
-            gamma: 0.6,
-            ticks: 2,
-            start: Start::Spread,
-            disc: 180.0,
-            haze: 0.0,
-            trail_scale: 0.0,
-            reach_by: [0.0, 1.0],
-            angle_by: [0.0, 1.0],
-            turn_by: [0.0, 1.0],
-            step_by: [0.0, 1.0],
-            cap: 0,
-            floor: 0.0,
-            wander: 0.0,
-            sick: 0,
-            immune: 480,
-            catch_at: 0.5,
-            germ: 1.0,
-            germ_keep: 0.9,
-            sick_speed: 1.0,
-            sick_trail: 1.0,
-            sick_reach: 1.0,
-            sick_turn: 1.0,
-            seed_at: 4.0,
-            seed_r: 40.0,
-            species: 0,
-            avoid: t.species_avoid,
-            zones: false,
-            cycle: false,
-            next: t.species_next,
-            prev: t.species_prev,
-            explore: 0,
-            explorer_trail: t.explore_deposit,
-            explore_spread: 0.0,
-            blocked_lay: 0.0,
-            blocked_keep: false,
-            blocked_reset: t.blocked_reset,
-            chance: 0.0,
-            size_spread: 0.0,
-            sensor_r: 0,
-            convert: t.species_convert,
-            graze: t.graze_weight,
-            graze_eat: t.graze_eat,
-            graze_regrow: t.graze_regrow,
-            boost: t.species_boost,
-            seed: 1,
-        }
-    }
-
-    /// Whether contagion is on.
-    fn sick_on(&self) -> bool {
-        self.sick > 0
-    }
-
-    /// Species fields the dish holds (0 for none).
-    fn fields(&self) -> u32 {
-        if self.species > 1 {
-            self.species.min(MAX_SPECIES) as u32
-        } else {
-            0
-        }
-    }
-}
 
 /// The presets: keys 1-8 the dishes of the 4x Mould page and the Jenson
 /// comparison; 9, 0 and Shift 1-5 the looks report's, Shift 6-0 the
@@ -1676,765 +718,6 @@ impl Knob {
     }
 }
 
-/// A switch on the command line: 1/on/true/yes or 0/off/false/no (until the
-/// review of 2026-11-11 anything but 0 or off meant on, so `crowd=false`
-/// turned the limit on).
-fn on_off(key: &str, v: &str) -> Result<bool, String> {
-    match v {
-        "1" | "on" | "true" | "yes" => Ok(true),
-        "0" | "off" | "false" | "no" => Ok(false),
-        _ => Err(format!("{key}={v}: 1 or 0 (on, off)")),
-    }
-}
-
-/// Sets a control from a `key=value` argument.
-fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
-    let f = || v.parse::<f32>().map_err(|e| format!("{key}={v}: {e}"));
-    let int = || v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"));
-    // `amp` or `amp:power`, as examples/bigdish.rs takes the `*_mod`s.
-    let pair = || -> Result<[f32; 2], String> {
-        let (a, e) = v.split_once(':').unwrap_or((v, "1"));
-        Ok([a.parse().map_err(|e| format!("{key}={v}: {e}"))?, e.parse().map_err(|e| format!("{key}={v}: {e}"))?])
-    };
-    let b = || on_off(key, v);
-    let pick = |names: &[&str]| names.iter().position(|&n| n == v).ok_or_else(|| format!("{key}={v}: one of {}", names.join(", ")));
-    match key {
-        "walkers" => s.walkers = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
-        "crowd" => s.crowd = b()?,
-        "sensor_angle" => s.sensor_angle = f()?,
-        "turn" | "rotate_angle" => s.turn = f()?,
-        "reach" | "sensor_offset" => s.reach = f()?,
-        "step" => s.step = f()?,
-        "laid" => s.laid = f()?,
-        "keep" => s.keep = f()?,
-        "respawn" => s.respawn = f()?,
-        "food" => s.food = b()?,
-        "smell" | "scent_offset" => s.smell = f()?,
-        "colour" | "color" => s.colour = [Colour::Amber, Colour::Grey, Colour::Grey][pick(&["amber", "grey", "gray"])?],
-        "field" => s.field = [Field::Trail, Field::Walkers, Field::Walkers][pick(&["trail", "walkers", "count"])?],
-        "curve" => s.curve = [Curve::Game, Curve::Soft][pick(&["game", "soft"])?],
-        "knee" => s.knee = f()?,
-        "gamma" => s.gamma = f()?,
-        "ticks" => s.ticks = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.clamp(1, 32),
-        "start" => s.start = [Start::Spread, Start::Home, Start::Home, Start::Disc][pick(&["spread", "blob", "home", "disc"])?],
-        "disc" => s.disc = f()?,
-        "haze" => s.haze = f()?,
-        "trail_scale" | "sense_scale" => s.trail_scale = f()?,
-        "reach_by" | "offset_mod" => s.reach_by = pair()?,
-        "angle_by" | "angle_mod" => s.angle_by = pair()?,
-        "turn_by" | "turn_mod" => s.turn_by = pair()?,
-        "step_by" | "step_mod" => s.step_by = pair()?,
-        "cap" | "deposit_cap" => s.cap = int()?.min(u16::MAX as u32) as u16,
-        "floor" | "sense_floor" => s.floor = f()?,
-        "wander" => s.wander = f()?,
-        "sick" | "sick_steps" => s.sick = int()?.min(30_000),
-        "immune" | "immune_steps" => s.immune = int()?.min(30_000),
-        "catch" | "sick_catch" => s.catch_at = f()?,
-        "germ" | "sick_deposit" => s.germ = f()?,
-        "germ_keep" | "sick_keep" => s.germ_keep = f()?,
-        "sick_speed" => s.sick_speed = f()?,
-        "sick_trail" => s.sick_trail = f()?,
-        "sick_reach" => s.sick_reach = f()?,
-        "sick_turn" => s.sick_turn = f()?,
-        "seed_at" => s.seed_at = f()?,
-        "seed_r" => s.seed_r = f()?,
-        // The outside rules, with the CPU's names too.
-        "species" => s.species = int()?.min(MAX_SPECIES as u32) as u8,
-        "avoid" | "species_avoid" => s.avoid = f()?,
-        "zones" | "species_zones" => s.zones = b()?,
-        "cycle" | "species_cycle" => s.cycle = b()?,
-        "next" | "species_next" => s.next = f()?,
-        "prev" | "species_prev" => s.prev = f()?,
-        "explore" | "explore_steps" => s.explore = int()?.min(u16::MAX as u32) as u16,
-        "explorer_trail" | "explore_deposit" => s.explorer_trail = f()?,
-        "explore_spread" => s.explore_spread = f()?,
-        "blocked_lay" | "blocked_deposit" => s.blocked_lay = f()?,
-        "blocked_keep" => s.blocked_keep = b()?,
-        "blocked_reset" => s.blocked_reset = f()?,
-        "chance" | "chance_exp" => s.chance = f()?,
-        "size_spread" => s.size_spread = f()?,
-        "sensor_r" => s.sensor_r = int()?.min(8) as u8,
-        "convert" | "species_convert" => s.convert = f()?,
-        "graze" | "graze_weight" => s.graze = f()?,
-        "graze_eat" => s.graze_eat = f()?,
-        "graze_regrow" => s.graze_regrow = f()?,
-        "boost" | "species_boost" => s.boost = f()?,
-        "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
-        _ => return Err(format!("unknown control {key}")),
-    }
-    Ok(())
-}
-
-/// The CPU dish a sandbox dish starts from (walkers, agar, piles).
-fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
-    let t = BigParams::today();
-    BigParams {
-        scale,
-        walkers: s.walkers,
-        sensor_angle: s.sensor_angle.to_radians(),
-        rotate_angle: s.turn.to_radians(),
-        sensor_offset: s.reach,
-        scent_offset: s.smell,
-        step: s.step,
-        deposit: s.laid * 100_000.0 / s.walkers.max(1) as f32,
-        keep: s.keep,
-        crowd: crowd as u8,
-        scent_coarse: false,
-        blob: s.start != Start::Spread,
-        respawn: s.respawn,
-        blob_r: if s.start == Start::Disc { s.disc / scale as f32 } else { 0.0 },
-        haze: if s.start == Start::Spread { 0.0 } else { s.haze },
-        sense_scale: s.trail_scale,
-        offset_mod: s.reach_by,
-        angle_mod: [s.angle_by[0].to_radians(), s.angle_by[1]],
-        turn_mod: [s.turn_by[0].to_radians(), s.turn_by[1]],
-        step_mod: s.step_by,
-        deposit_cap: s.cap,
-        sense_floor: s.floor,
-        wander: s.wander,
-        sick_steps: s.sick as u16,
-        immune_steps: s.immune as u16,
-        sick_catch: s.catch_at,
-        sick_deposit: s.germ,
-        sick_keep: s.germ_keep,
-        sick_speed: s.sick_speed,
-        sick_trail: s.sick_trail,
-        sick_reach: s.sick_reach,
-        sick_turn: s.sick_turn,
-        sick_seed_r: if s.seed_at <= 0.0 { s.seed_r / scale as f32 } else { 0.0 },
-        sensor_r: s.sensor_r,
-        species: s.fields() as u8,
-        species_avoid: s.avoid,
-        species_zones: s.zones,
-        chance_exp: s.chance,
-        species_cycle: s.cycle,
-        species_next: s.next,
-        species_prev: s.prev,
-        explore_steps: s.explore,
-        explore_deposit: s.explorer_trail,
-        explore_spread: s.explore_spread,
-        size_spread: s.size_spread,
-        blocked_keep: s.blocked_keep,
-        blocked_reset: s.blocked_reset,
-        blocked_deposit: s.blocked_lay,
-        species_convert: s.convert,
-        graze_weight: s.graze,
-        graze_eat: s.graze_eat,
-        graze_regrow: s.graze_regrow,
-        species_boost: s.boost,
-        seed: s.seed,
-        ..t
-    }
-}
-
-fn f32_bytes(v: &[f32]) -> Vec<u8> {
-    v.iter().flat_map(|x| x.to_le_bytes()).collect()
-}
-
-fn u32_bytes(v: &[u32]) -> Vec<u8> {
-    v.iter().flat_map(|x| x.to_le_bytes()).collect()
-}
-
-fn floats(bytes: &[u8]) -> Vec<f32> {
-    bytes.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect()
-}
-
-/// What the mouse is doing this frame, in fine cells.
-#[derive(Clone, Copy, Default)]
-struct Hand {
-    at: Option<(f32, f32)>,
-    pull: bool,
-    wipe: bool,
-    /// Make the walkers under the mouse sick (middle drag, or I once).
-    infect: bool,
-}
-
-/// The shader, its layout and its ten pipelines, twice: made once, kept
-/// across restarts.
-struct Shared {
-    bgl: wgpu::BindGroupLayout,
-    /// sense, walk, trail, scent, histogram, top, draw, jump, land, convert.
-    pipes: Vec<wgpu::ComputePipeline>,
-    /// The same with the outside rules compiled out (`OUTSIDE` false), for
-    /// a dish with all of them off.
-    plain: Vec<wgpu::ComputePipeline>,
-}
-
-const BINDINGS: u32 = 32;
-const SENSE: usize = 0;
-const WALK: usize = 1;
-const TRAIL: usize = 2;
-const SCENT: usize = 3;
-const HISTOGRAM: usize = 4;
-const TOP: usize = 5;
-const DRAW: usize = 6;
-const JUMP: usize = 7;
-const LAND: usize = 8;
-const CONVERT: usize = 9;
-
-impl Shared {
-    fn new(dev: &wgpu::Device) -> Self {
-        let module = dev.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("sandbox"), source: wgpu::ShaderSource::Wgsl(SHADER.into()) });
-        let entry = |binding: u32, ty: wgpu::BufferBindingType| wgpu::BindGroupLayoutEntry {
-            binding,
-            visibility: wgpu::ShaderStages::COMPUTE,
-            ty: wgpu::BindingType::Buffer { ty, has_dynamic_offset: false, min_binding_size: None },
-            count: None,
-        };
-        let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let ro = wgpu::BufferBindingType::Storage { read_only: true };
-        let mut entries = vec![entry(0, wgpu::BufferBindingType::Uniform)];
-        for b in 1..BINDINGS {
-            entries.push(entry(b, if matches!(b, 8 | 9 | 16 | 17) { ro } else { rw }));
-        }
-        let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("sandbox"), entries: &entries });
-        let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("sandbox"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
-        let build = |constants: &[(&str, f64)]| {
-            ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert"]
-                .iter()
-                .map(|entry_point| {
-                    dev.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                        label: Some(entry_point),
-                        layout: Some(&layout),
-                        module: &module,
-                        entry_point: Some(entry_point),
-                        compilation_options: wgpu::PipelineCompilationOptions { constants, ..Default::default() },
-                        cache: None,
-                    })
-                })
-                .collect()
-        };
-        Shared { bgl, pipes: build(&[]), plain: build(&[("OUTSIDE", 0.0)]) }
-    }
-}
-
-/// One dish on the GPU.
-struct Engine {
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    /// Bind groups for even and odd ticks (trail and scent swap).
-    groups: [wgpu::BindGroup; 2],
-    params: wgpu::Buffer,
-    walkers: wgpu::Buffer,
-    /// Kept for the twin tests' `inject` and checks (the sandbox itself
-    /// only binds them).
-    #[cfg_attr(not(test), allow(dead_code))]
-    state: wgpu::Buffer,
-    #[cfg_attr(not(test), allow(dead_code))]
-    occ: wgpu::Buffer,
-    trail: [wgpu::Buffer; 2],
-    #[cfg_attr(not(test), allow(dead_code))]
-    scent: [wgpu::Buffer; 2],
-    lay: wgpu::Buffer,
-    pile: wgpu::Buffer,
-    reached: wgpu::Buffer,
-    frame: wgpu::Buffer,
-    hud: wgpu::Buffer,
-    /// Contagion: each walker's counter, and the germ field.
-    sick: wgpu::Buffer,
-    #[cfg_attr(not(test), allow(dead_code))]
-    germ: [wgpu::Buffer; 2],
-    /// The outside rules: each species' trail field (a block of cells a
-    /// species, swapped as the trail is) and each walker's age.
-    #[cfg_attr(not(test), allow(dead_code))]
-    species: [wgpu::Buffer; 2],
-    age: wgpu::Buffer,
-    /// PR #56: grass a cell, and each walker's species.
-    #[cfg_attr(not(test), allow(dead_code))]
-    grass: wgpu::Buffer,
-    #[cfg_attr(not(test), allow(dead_code))]
-    spec: wgpu::Buffer,
-    /// From the last `write_params`: whether the conversion pass runs, and
-    /// whether any outside rule is on (else the plain pipelines run).
-    converts: bool,
-    outside: bool,
-    /// Species fields (0 for none), fixed for the dish's life.
-    nsp: u32,
-    /// Whether the last frame had explorers on (switching them on starts
-    /// every walker's stage again).
-    exploring: bool,
-    /// Whether the timed seeding (`Settings::seed_at`) has happened.
-    seeded: bool,
-    /// The CPU dish it started from: agar, piles, and the measures.
-    dish: BigDish,
-    /// Food dropped with F, in fine cells.
-    dropped: Vec<(f32, f32)>,
-    n: u32,
-    cells: u32,
-    /// Ticks run.
-    done: u64,
-    /// Whether the crowd limit can hold (walkers at most half the agar).
-    crowd_ok: bool,
-    /// From the last `write_params`: whether the jump passes run (respawn
-    /// or the pull on), and with the claim (`land`) too.
-    jumps: bool,
-    crowd: bool,
-}
-
-impl Engine {
-    fn new(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize) -> Self {
-        let agar_cells = BigDish::new(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
-        let crowd_ok = s.walkers <= agar_cells / 2;
-        let d = BigDish::new(big_params(s, scale, s.crowd && crowd_ok));
-        let dev = device;
-        let cells = (d.w * d.h) as u32;
-        let n = d.walkers.len() as u32;
-        let storage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC;
-        let buf = |label: &str, bytes: &[u8], usage: wgpu::BufferUsages| {
-            let b = dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.len().max(16) as u64, usage, mapped_at_creation: false });
-            queue.write_buffer(&b, 0, bytes);
-            b
-        };
-        let zeros = |label: &str, bytes: usize| dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.max(16) as u64, usage: storage, mapped_at_creation: false });
-        let params = buf("params", &[0u8; PARAMS_BYTES], wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST);
-        let state = buf("state", &u32_bytes(&[0, 1f32.to_bits(), 0, 0]), storage);
-        let flat: Vec<f32> = d.walkers.iter().flat_map(|&(x, y, h)| [x, y, h, 0.0]).collect();
-        let walkers = buf("walkers", &f32_bytes(&flat), storage);
-        let intent = zeros("intent", n as usize * 16);
-        let icell = zeros("icell", n as usize * 4);
-        let mut occ = vec![0u32; cells as usize];
-        for &(x, y, _) in &d.walkers {
-            occ[y as usize * d.w + x as usize] += 1;
-        }
-        let occ = buf("occ", &u32_bytes(&occ), storage);
-        let claim = buf("claim", &u32_bytes(&vec![u32::MAX; cells as usize]), storage);
-        // A block of counts a species (`dep`, `sdep`), two for explorers'
-        // and blocked walkers' classes (`edep`, `bdep`).
-        let nsp = s.fields();
-        let blocks = nsp.max(1) as usize;
-        let dep = zeros("dep", blocks * cells as usize * 4);
-        let agar: Vec<u32> = d.agar.iter().map(|&a| a as u32).collect();
-        let agar = buf("agar", &u32_bytes(&agar), storage);
-        let lay = zeros("lay", cells as usize * 4);
-        let pile = zeros("pile", cells as usize * 4);
-        let mut reached = vec![0u32; MAX_PILES];
-        for (r, &hit) in reached.iter_mut().zip(&d.reached) {
-            *r = hit as u32;
-        }
-        let reached = buf("reached", &u32_bytes(&reached), storage);
-        let trail = [zeros("trail0", cells as usize * 4), zeros("trail1", cells as usize * 4)];
-        let scent = [zeros("scent0", cells as usize * 4), zeros("scent1", cells as usize * 4)];
-        let hist = zeros("hist", 512 * 4);
-        let frame = zeros("frame", cells as usize * 4);
-        let hud = zeros("hud", cells as usize * 4);
-        // Contagion's buffers are always there (a u32 a walker and three
-        // fields), so it can be switched on as the dish runs.
-        let counters: Vec<u32> = if d.sick.is_empty() { vec![0; n as usize] } else { d.sick.iter().map(|&c| c as u32).collect() };
-        let sick = buf("sick", &u32_bytes(&counters), storage);
-        let sdep = zeros("sdep", blocks * cells as usize * 4);
-        let gdep = zeros("gdep", cells as usize * 4);
-        let germ = [zeros("germ0", cells as usize * 4), zeros("germ1", cells as usize * 4)];
-        let edep = zeros("edep", 2 * blocks * cells as usize * 4);
-        let bdep = zeros("bdep", 2 * blocks * cells as usize * 4);
-        let species = [zeros("species0", nsp as usize * cells as usize * 4), zeros("species1", nsp as usize * cells as usize * 4)];
-        let age = zeros("age", n as usize * 4);
-        // Grass starts full on the agar (the CPU's, made only with grazing
-        // on; here always, so grazing can be switched on as the dish runs);
-        // walker k starts as species k % n.
-        let full: Vec<f32> = d.agar.iter().map(|&a| a as u32 as f32).collect();
-        let grass = buf("grass", &f32_bytes(&full), storage);
-        let gcount = zeros("gcount", cells as usize * 4);
-        let specs: Vec<u32> = (0..n).map(|k| k % nsp.max(1)).collect();
-        let spec = buf("spec", &u32_bytes(&specs), storage);
-        let group = |even: bool| {
-            let (a, b) = if even { (0, 1) } else { (1, 0) };
-            let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
-                &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec,
-            ];
-            let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
-            dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
-        };
-        let groups = [group(true), group(false)];
-        let mut e = Engine {
-            device: device.clone(),
-            queue: queue.clone(),
-            groups,
-            params,
-            walkers,
-            state,
-            occ,
-            trail,
-            scent,
-            lay,
-            pile,
-            reached,
-            frame,
-            hud,
-            sick,
-            germ,
-            species,
-            age,
-            grass,
-            spec,
-            converts: false,
-            outside: false,
-            nsp,
-            exploring: s.explore > 0,
-            seeded: false,
-            dish: d,
-            dropped: Vec::new(),
-            n,
-            cells,
-            done: 0,
-            crowd_ok,
-            jumps: false,
-            crowd: false,
-        };
-        e.lay_food(s.food);
-        e
-    }
-
-    /// Writes the scent the piles lay at full strength, and which pile each
-    /// cell's food is: the dish's own if `food`, plus any dropped with F.
-    /// The scent pass lays `fed_scent` of it once a pile is reached (the
-    /// CPU's `lay_scent`); dish piles are marked even with `food` off, for
-    /// the measures. Piles sit 28 dish cells apart, so their discs never
-    /// overlap; dropped food that overlaps a pile takes its cells.
-    fn lay_food(&mut self, food: bool) {
-        let d = &self.dish;
-        let mut lay = vec![0.0f32; d.w * d.h];
-        let mut pile = vec![0u32; d.w * d.h];
-        let s = d.p.scale as f32;
-        let r = d.p.pile_r * s;
-        let n = r.ceil() as i32;
-        let dish = d.piles.iter().map(|&(x, y)| (x * s, y * s, food));
-        let dropped = self.dropped.iter().map(|&(x, y)| (x, y, true));
-        for (pi, (cx, cy, lays)) in dish.chain(dropped).enumerate().take(MAX_PILES) {
-            for dy in -n..=n {
-                for dx in -n..=n {
-                    let (x, y) = (cx + dx as f32, cy + dy as f32);
-                    if ((dx * dx + dy * dy) as f32) > r * r || x < 0.0 || y < 0.0 || x >= d.w as f32 || y >= d.h as f32 {
-                        continue;
-                    }
-                    let i = y as usize * d.w + x as usize;
-                    if d.agar[i] {
-                        if lays {
-                            lay[i] += d.p.food_deposit;
-                        }
-                        pile[i] = pi as u32 + 1;
-                    }
-                }
-            }
-        }
-        self.queue.write_buffer(&self.lay, 0, &f32_bytes(&lay));
-        self.queue.write_buffer(&self.pile, 0, &u32_bytes(&pile));
-    }
-
-    /// Whether F can drop another pile.
-    fn can_drop(&self) -> bool {
-        self.dish.piles.len() + self.dropped.len() < MAX_PILES
-    }
-
-    /// Loads a CPU dish's state (walkers, trail, scent, the scent its piles
-    /// lay, and its step for the keyed draws) in place of the GPU's, for the
-    /// twin test: one GPU tick from it should match one `BigDish::tick`.
-    /// The dish must have this engine's settings.
-    #[cfg(test)]
-    fn inject(&mut self, d: &BigDish) {
-        assert_eq!((d.w, d.h, d.walkers.len() as u32, d.sw, d.sh), (self.dish.w, self.dish.h, self.n, d.w, d.h), "a dish of this engine's size, on the fine scent grid");
-        let flat: Vec<f32> = d.walkers.iter().flat_map(|&(x, y, h)| [x, y, h, 0.0]).collect();
-        self.queue.write_buffer(&self.walkers, 0, &f32_bytes(&flat));
-        let mut occ = vec![0u32; self.cells as usize];
-        for &(x, y, _) in &d.walkers {
-            occ[y as usize * d.w + x as usize] += 1;
-        }
-        self.queue.write_buffer(&self.occ, 0, &u32_bytes(&occ));
-        // The tick's bind group reads side `done % 2`.
-        let side = (d.steps % 2) as usize;
-        self.queue.write_buffer(&self.trail[side], 0, &f32_bytes(&d.trail));
-        self.queue.write_buffer(&self.scent[side], 0, &f32_bytes(&d.scent));
-        self.queue.write_buffer(&self.state, 0, &u32_bytes(&[d.steps as u32, 1f32.to_bits(), 0, 0]));
-        let mut reached = vec![0u32; MAX_PILES];
-        for (r, &hit) in reached.iter_mut().zip(&d.reached) {
-            *r = hit as u32;
-        }
-        self.queue.write_buffer(&self.reached, 0, &u32_bytes(&reached));
-        let counters: Vec<u32> = if d.sick.is_empty() { vec![0; self.n as usize] } else { d.sick.iter().map(|&c| c as u32).collect() };
-        self.queue.write_buffer(&self.sick, 0, &u32_bytes(&counters));
-        let germ = if d.germ.is_empty() { vec![0.0; self.cells as usize] } else { d.germ.clone() };
-        self.queue.write_buffer(&self.germ[side], 0, &f32_bytes(&germ));
-        assert_eq!(d.species_trail.len(), self.nsp as usize, "a dish with this engine's species");
-        if self.nsp > 0 {
-            let fields: Vec<f32> = d.species_trail.iter().flatten().copied().collect();
-            self.queue.write_buffer(&self.species[side], 0, &f32_bytes(&fields));
-        }
-        let ages: Vec<u32> = if d.age.is_empty() { vec![0; self.n as usize] } else { d.age.iter().map(|&a| a as u32).collect() };
-        self.queue.write_buffer(&self.age, 0, &u32_bytes(&ages));
-        self.exploring = !d.age.is_empty();
-        let grass: Vec<f32> = if d.grass.is_empty() { d.agar.iter().map(|&a| a as u32 as f32).collect() } else { d.grass.clone() };
-        self.queue.write_buffer(&self.grass, 0, &f32_bytes(&grass));
-        let specs: Vec<u32> = if d.spec.is_empty() { (0..self.n).map(|k| k % self.nsp.max(1)).collect() } else { d.spec.iter().map(|&c| c as u32).collect() };
-        self.queue.write_buffer(&self.spec, 0, &u32_bytes(&specs));
-        self.done = d.steps;
-        self.dish = d.clone();
-        self.dropped.clear();
-        self.lay_food(true);
-    }
-
-    /// Writes the controls for the next frame of `ticks` ticks.
-    fn write_params(&mut self, s: &Settings, hand: Hand, ticks: u32) {
-        let seed = s.seed;
-        let (w, h) = (self.dish.w as u32, self.dish.h as u32);
-        let crowd = (s.crowd && self.crowd_ok) as u32;
-        let deposit = s.laid * 100_000.0 / self.n.max(1) as f32;
-        let (bx, by) = hand.at.unwrap_or((-1.0e6, -1.0e6));
-        let br = 6.0 * self.dish.p.scale as f32;
-        let pull = if hand.pull && hand.at.is_some() { PULL } else { 0.0 };
-        let wipe = (hand.wipe && hand.at.is_some()) as u32;
-        let t = &self.dish.p;
-        let mut b = u32_bytes(&[w, h, self.n, crowd, stream(seed, DRAW_TURN), stream(seed, DRAW_BLOCKED), stream(seed, CLAIM_MOVE), stream(seed, DRAW_JUMP)]);
-        // Food smelled at the reach when `smell` is 0, as `BigParams::scent_offset`.
-        let smell = if s.smell > 0.0 { s.smell } else { s.reach };
-        b.extend(f32_bytes(&[s.sensor_angle.to_radians(), s.turn.to_radians(), s.reach, smell, s.step, deposit, s.keep, t.scent_keep]));
-        b.extend(f32_bytes(&[s.respawn, pull, bx, by, br, s.knee, s.gamma]));
-        b.extend(u32_bytes(&[stream(seed, DRAW_PULL), wipe, (s.colour == Colour::Grey) as u32, (s.field == Field::Walkers) as u32, (s.curve == Curve::Soft) as u32]));
-        b.extend(f32_bytes(&[t.tube, t.fed_scent]));
-        b.extend(u32_bytes(&[s.cap as u32, stream(seed, DRAW_WANDER)]));
-        // The looks: angles in radians, as `BigParams`.
-        let (am, tm) = ([s.angle_by[0].to_radians(), s.angle_by[1]], [s.turn_by[0].to_radians(), s.turn_by[1]]);
-        b.extend(f32_bytes(&[s.trail_scale, s.reach_by[0], s.reach_by[1], am[0], am[1], tm[0], tm[1], s.step_by[0], s.step_by[1], s.floor, s.wander, s.catch_at]));
-        // Infect: the mouse's disc, or the middle once `seed_at` has come.
-        let (mut infect, mut ix, mut iy, mut ir) = (0u32, 0.0f32, 0.0f32, 0.0f32);
-        if let (true, Some((x, y))) = (hand.infect, hand.at) {
-            (infect, ix, iy, ir) = (1, x, y, br);
-        } else if s.sick_on() && s.seed_at > 0.0 && !self.seeded && ticks > 0 && self.done as f32 >= s.seed_at * STEPS_PER_SECOND as f32 {
-            (infect, ix, iy, ir) = (1, w as f32 / 2.0, h as f32 / 2.0, s.seed_r);
-            self.seeded = true;
-        }
-        b.extend(u32_bytes(&[s.sick, s.immune, infect, 0]));
-        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, 0.0, 0.0, 0.0]));
-        // The outside rules. Switching explorers on starts every walker's
-        // stage again, so the switch shows (ages are only counted while on).
-        if s.explore > 0 && !self.exploring {
-            self.queue.write_buffer(&self.age, 0, &vec![0u8; self.n as usize * 4]);
-        }
-        self.exploring = s.explore > 0;
-        b.extend(u32_bytes(&[self.nsp, s.cycle as u32, s.explore as u32, stream(seed, DRAW_SIZE)]));
-        b.extend(f32_bytes(&[s.avoid, s.next, s.prev, s.explorer_trail, s.explore_spread, s.blocked_lay]));
-        b.extend(u32_bytes(&[s.blocked_keep as u32]));
-        b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
-        b.extend(u32_bytes(&[s.sensor_r as u32, stream(seed, DRAW_CHANCE), stream(seed, DRAW_KEEP)]));
-        b.extend(f32_bytes(&[s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost]));
-        b.extend(u32_bytes(&[0, 0]));
-        debug_assert_eq!(b.len(), PARAMS_BYTES);
-        self.converts = s.convert > 0.0 && self.nsp > 0;
-        self.outside = self.nsp > 0 || s.explore > 0 || s.blocked_lay > 0.0 || s.blocked_keep || s.chance > 0.0 || s.size_spread > 0.0 || s.sensor_r > 0 || s.graze != 0.0;
-        self.queue.write_buffer(&self.params, 0, &b);
-        self.jumps = s.respawn > 0.0 || pull > 0.0;
-        self.crowd = crowd > 0;
-    }
-
-    /// Records a frame: `ticks` ticks, then the drawing. With `stamps`
-    /// (and at least one tick), GPU timestamps at the first tick's start
-    /// (0), the last tick's end (1) and the drawing's end (2).
-    fn record(&mut self, shared: &Shared, enc: &mut wgpu::CommandEncoder, ticks: u32, soft: bool, stamps: Option<&wgpu::QuerySet>) {
-        let stamps = if ticks > 0 { stamps } else { None };
-        let writes = |begin: Option<u32>, end: Option<u32>| {
-            stamps.and_then(|qs| (begin.is_some() || end.is_some()).then_some(wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin, end_of_pass_write_index: end }))
-        };
-        let tick = self.tick_passes();
-        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
-        for k in 0..ticks {
-            let group = &self.groups[(self.done % 2) as usize];
-            for (q, &(p, size)) in tick.iter().enumerate() {
-                let begin = (k == 0 && q == 0).then_some(0);
-                let end = (k + 1 == ticks && q + 1 == tick.len()).then_some(1);
-                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes(begin, end) });
-                pass.set_pipeline(&pipes[p]);
-                pass.set_bind_group(0, group, &[]);
-                pass.dispatch_workgroups(size, 1, 1);
-            }
-            self.done += 1;
-        }
-        let group = &self.groups[(self.done % 2) as usize];
-        for &(p, groups) in &self.draw_passes(soft) {
-            let end = (p == DRAW).then_some(2);
-            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes(None, end) });
-            pass.set_pipeline(&pipes[p]);
-            pass.set_bind_group(0, group, &[]);
-            pass.dispatch_workgroups(groups, 1, 1);
-        }
-    }
-
-    /// A tick's passes and their workgroups: conversion only with species
-    /// and `convert` on, the jump passes only while respawn or the pull is
-    /// on, `land` only with the crowd limit.
-    fn tick_passes(&self) -> Vec<(usize, u32)> {
-        let (n, cells) = (self.n.div_ceil(256), self.cells.div_ceil(256));
-        let mut tick = vec![(SENSE, n), (WALK, n)];
-        if self.converts {
-            tick.push((CONVERT, n));
-        }
-        if self.jumps {
-            tick.push((JUMP, n));
-            if self.crowd {
-                tick.push((LAND, n));
-            }
-        }
-        tick.extend([(TRAIL, cells), (SCENT, cells)]);
-        tick
-    }
-
-    /// The drawing's passes: the soft curve's histogram and reference first.
-    fn draw_passes(&self, soft: bool) -> Vec<(usize, u32)> {
-        let cells = self.cells.div_ceil(256);
-        let mut draw = Vec::new();
-        if soft {
-            draw.extend([(HISTOGRAM, cells), (TOP, 1)]);
-        }
-        draw.push((DRAW, cells));
-        draw
-    }
-
-    /// One tick and the drawing with every pass timed on its own (each
-    /// pass's start and end stamped), submitted and waited for: GPU ms a
-    /// pass, by name. It runs the tick, so the dish moves on by one.
-    fn profile(&mut self, shared: &Shared, soft: bool) -> Vec<(&'static str, f64)> {
-        const NAMES: [&str; 10] = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert"];
-        let tick = self.tick_passes();
-        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
-        let passes: Vec<(usize, u32, usize)> = tick.iter().map(|&(p, g)| (p, g, (self.done % 2) as usize)).chain(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, ((self.done + 1) % 2) as usize))).collect();
-        let count = 2 * passes.len() as u32;
-        let qs = self.device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("profile"), ty: wgpu::QueryType::Timestamp, count });
-        let resolve = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("profile"), size: count as u64 * 8, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
-        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-        for (q, &(p, groups, side)) in passes.iter().enumerate() {
-            let writes = wgpu::ComputePassTimestampWrites { query_set: &qs, beginning_of_pass_write_index: Some(2 * q as u32), end_of_pass_write_index: Some(2 * q as u32 + 1) };
-            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: Some(writes) });
-            pass.set_pipeline(&pipes[p]);
-            pass.set_bind_group(0, &self.groups[side], &[]);
-            pass.dispatch_workgroups(groups, 1, 1);
-        }
-        self.done += 1;
-        enc.resolve_query_set(&qs, 0..count, &resolve, 0);
-        self.queue.submit([enc.finish()]);
-        let t: Vec<u64> = read_back(&self.device, &self.queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
-        let period = self.queue.get_timestamp_period() as f64;
-        passes.iter().enumerate().map(|(q, &(p, ..))| (NAMES[p], t[2 * q + 1].saturating_sub(t[2 * q]) as f64 * period / 1e6)).collect()
-    }
-
-    /// Reads the dish back into the CPU dish and measures it.
-    fn measure(&mut self) -> slime_mould::mould::big::BigMeasure {
-        let side = (self.done % 2) as usize;
-        self.dish.trail = floats(&read_back(&self.device, &self.queue, &self.trail[side]));
-        self.dish.walkers = floats(&read_back(&self.device, &self.queue, &self.walkers)).chunks_exact(4).map(|c| (c[0], c[1], c[2])).collect();
-        self.dish.ticks = self.done;
-        // The GPU marks a pile from the trail a tick late (see `trail`), so
-        // the CPU marks any the last tick's trail reached, as it would.
-        let reached = read_back(&self.device, &self.queue, &self.reached);
-        for (r, c) in self.dish.reached.iter_mut().zip(reached.chunks_exact(4)) {
-            *r = u32::from_le_bytes(c.try_into().unwrap()) != 0;
-        }
-        self.dish.update_reached();
-        self.dish.measure()
-    }
-
-    /// The share of walkers sick now (counter over `immune`).
-    fn sick_share(&self, s: &Settings) -> f64 {
-        let c = read_back(&self.device, &self.queue, &self.sick);
-        let sick = c.chunks_exact(4).take(self.n as usize).filter(|b| u32::from_le_bytes((*b).try_into().unwrap()) > s.immune).count();
-        sick as f64 / self.n.max(1) as f64
-    }
-
-    fn picture(&self) -> image::RgbaImage {
-        let bytes = read_back(&self.device, &self.queue, &self.frame);
-        image::RgbaImage::from_raw(self.dish.w as u32, self.dish.h as u32, bytes).expect("frame size")
-    }
-}
-
-fn read_back(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer) -> Vec<u8> {
-    let size = src.size();
-    let staging = device.create_buffer(&wgpu::BufferDescriptor { label: Some("read back"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-    let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-    enc.copy_buffer_to_buffer(src, 0, &staging, 0, size);
-    queue.submit([enc.finish()]);
-    staging.map_async(wgpu::MapMode::Read, .., |r| r.expect("map"));
-    device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
-    let bytes = staging.get_mapped_range(..).to_vec();
-    staging.unmap();
-    bytes
-}
-
-/// GPU timestamps read back without stalling: resolved into `read` on a
-/// frame when it is free, mapped, and picked up on a later frame.
-struct Stamps {
-    qs: wgpu::QuerySet,
-    resolve: wgpu::Buffer,
-    read: wgpu::Buffer,
-    ready: Arc<AtomicBool>,
-    busy: bool,
-    /// Nanoseconds a tick of the GPU's timestamp counter.
-    period: f64,
-    /// Smoothed readings, ms: the ticks and the drawing.
-    sim_ms: f64,
-    draw_ms: f64,
-    /// Every reading, for the screenshot hook's median.
-    all: Vec<(f64, f64)>,
-}
-
-impl Stamps {
-    fn new(device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
-        let qs = device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("frame"), ty: wgpu::QueryType::Timestamp, count: 3 });
-        let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("resolve"), size: 24, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
-        let read = device.create_buffer(&wgpu::BufferDescriptor { label: Some("stamps"), size: 24, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        Stamps { qs, resolve, read, ready: Arc::new(AtomicBool::new(false)), busy: false, period: queue.get_timestamp_period() as f64, sim_ms: 0.0, draw_ms: 0.0, all: Vec::new() }
-    }
-
-    /// The query set to write this frame, if the last reading is in.
-    fn take(&self) -> Option<&wgpu::QuerySet> {
-        (!self.busy).then_some(&self.qs)
-    }
-
-    fn resolve(&self, enc: &mut wgpu::CommandEncoder) {
-        enc.resolve_query_set(&self.qs, 0..3, &self.resolve, 0);
-        enc.copy_buffer_to_buffer(&self.resolve, 0, &self.read, 0, 24);
-    }
-
-    /// After the submit: ask for the reading.
-    fn map(&mut self) {
-        let ready = Arc::clone(&self.ready);
-        self.read.map_async(wgpu::MapMode::Read, .., move |r| {
-            if r.is_ok() {
-                ready.store(true, Ordering::Release);
-            }
-        });
-        self.busy = true;
-    }
-
-    /// Picks up a reading if one has arrived.
-    fn poll(&mut self) {
-        if !self.busy || !self.ready.load(Ordering::Acquire) {
-            return;
-        }
-        let t: Vec<u64> = self.read.get_mapped_range(..).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
-        self.read.unmap();
-        self.ready.store(false, Ordering::Release);
-        self.busy = false;
-        let ms = |a: u64, b: u64| b.saturating_sub(a) as f64 * self.period / 1e6;
-        let (sim, draw) = (ms(t[0], t[1]), ms(t[1], t[2]));
-        // Smoothed, so the panel's number can be read; seeded with the
-        // first reading (it started at 0 until the review of 2026-11-11, so
-        // early screenshot figures read low).
-        let a = if self.all.is_empty() { 1.0 } else { 0.1 };
-        self.sim_ms += a * (sim - self.sim_ms);
-        self.draw_ms += a * (draw - self.draw_ms);
-        if self.all.len() < 100_000 {
-            self.all.push((sim, draw));
-        }
-    }
-
-    /// The median reading so far: the ticks and the drawing, ms, and how
-    /// many readings.
-    fn median(&self) -> (f64, f64, usize) {
-        let mid = |mut v: Vec<f64>| {
-            v.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            v.get(v.len() / 2).copied().unwrap_or(0.0)
-        };
-        (mid(self.all.iter().map(|r| r.0).collect()), mid(self.all.iter().map(|r| r.1).collect()), self.all.len())
-    }
-}
-
 /// The panel: premultiplied RGBA over the dish, dish-sized.
 fn panel(w: usize, h: usize, lines: &[(String, [u8; 4])], bottom: &[(String, [u8; 4])]) -> Vec<u8> {
     let mut img = vec![0u8; w * h * 4];
@@ -2503,6 +786,15 @@ struct App {
     fps_clock: Instant,
     fps: f64,
     result: Result<(), String>,
+    /// The camera over the dish (a world bigger than the window scrolls),
+    /// the view pass that draws through it, and the RTS controls.
+    camera: Camera,
+    view: Option<View>,
+    controls: Controls,
+    /// Q: the stand-in squad, for trying the controls (no rules).
+    squad: Option<Squad>,
+    marks: Marks,
+    last_frame: Instant,
 }
 
 impl App {
@@ -2534,7 +826,26 @@ impl App {
             fps_clock: Instant::now(),
             fps: 0.0,
             result: Ok(()),
+            camera: Camera::new((1024, 640), (1024, 640)),
+            view: None,
+            controls: {
+                let mut c = Controls::new(0);
+                c.arrows_pan = false;
+                c
+            },
+            squad: None,
+            marks: Marks::default(),
+            last_frame: Instant::now(),
         }
+    }
+
+    fn world(&self) -> (usize, usize) {
+        self.engine.as_ref().map_or((1, 1), |e| (e.dish.w, e.dish.h))
+    }
+
+    /// The minimap's rectangle on screen this frame, if drawn.
+    fn minimap(&self) -> Option<(u32, u32, u32, u32)> {
+        self.view.as_ref().and_then(|v| v.minimap_rect(&self.camera))
     }
 
     fn fail(&mut self, event_loop: &ActiveEventLoop, msg: String) {
@@ -2550,6 +861,14 @@ impl App {
         let mut e = Engine::new(p.device(), p.queue(), shared, &self.s, self.scale);
         e.dropped = dropped;
         e.lay_food(self.s.food);
+        let world = (e.dish.w, e.dish.h);
+        if let Some(v) = self.view.as_mut() {
+            if v.world != world {
+                self.camera = Camera::new(world, v.screen);
+                self.squad = self.squad.take().map(|_| Squad::new(world, self.scale));
+            }
+            v.set_world(&e.frame, world);
+        }
         self.engine = Some(e);
         self.panel_dirty = true;
         if let Some(w) = &self.window {
@@ -2577,16 +896,20 @@ impl App {
             lines.push((format!("{mark} {:<18} {}", k.label(), k.value(&self.s, crowd_ok)), colour));
         }
         let (done, ms) = self.engine.as_ref().map(|e| e.done).map_or((0, String::new()), |d| {
-            let ms = self.stamps.as_ref().map_or("GPU TIME N/A".to_string(), |st| format!("GPU {:.2} MS A FRAME (TICKS {:.2} + DRAWING {:.2})", st.sim_ms + st.draw_ms, st.sim_ms, st.draw_ms));
+            let ms = self.stamps.as_ref().map_or("GPU TIME N/A".to_string(), |st| format!("GPU {:.2} MS A FRAME (TICKS {:.2} + DRAWING {:.2} + VIEW {:.2})", st.sim_ms + st.draw_ms + st.view_ms, st.sim_ms, st.draw_ms, st.view_ms));
             (d, ms)
         });
         // Each line fits the 1024-cell dish at the crisp font's 12 px a
         // character (`the_bottom_lines_fit_the_dish`).
-        let mouse = if self.s.sick_on() {
-            "LEFT DROPS WALKERS  RIGHT WIPES  MIDDLE OR I INFECTS  F DROPS FOOD  ESC QUITS"
+        let mouse = if self.squad.is_some() {
+            "SQUAD: LEFT SELECTS  RIGHT ORDERS  F+DRAG BURNS  CTRL+1-9 GROUPS  Q ENDS"
+        } else if self.s.sick_on() {
+            "LEFT DROPS WALKERS  RIGHT WIPES  I INFECTS  F DROPS FOOD  ESC QUITS"
         } else {
             "LEFT DRAG DROPS WALKERS  RIGHT DRAG WIPES  F DROPS FOOD  ESC QUITS"
         };
+        let world = self.engine.as_ref().map_or((0, 0), |e| (e.dish.w, e.dish.h));
+        let camera = format!("WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  W WORLD {}X{}  Q SQUAD", self.camera.zoom, world.0, world.1);
         let bottom = vec![
             ("1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(), WHITE),
             ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(), WHITE),
@@ -2594,12 +917,23 @@ impl App {
             ("CTRL+1 GRAZING DROPLETS  2 GRAZING SPECIES".to_string(), WHITE),
             ("ARROWS PICK AND CHANGE (SHIFT: MORE)  SPACE PAUSE  . STEP  R RESTART  N NEW SEED".to_string(), DIM),
             (mouse.to_string(), DIM),
+            (camera, DIM),
             (format!("{ms}  {:.0} FPS  {:.1} S  SEED {}{}", self.fps, done as f64 / STEPS_PER_SECOND as f64, self.s.seed, if self.paused { "  PAUSED" } else { "" }), WHITE),
         ];
         (lines, bottom)
     }
 
     fn key(&mut self, code: KeyCode, event_loop: &ActiveEventLoop) {
+        // With the squad out, the digits are its groups and the rest of
+        // the keys the controls do not use stay the sandbox's.
+        if let Some(sq) = self.squad.as_mut() {
+            let units = sq.units();
+            let digit = matches!(code, KeyCode::Digit1 | KeyCode::Digit2 | KeyCode::Digit3 | KeyCode::Digit4 | KeyCode::Digit5 | KeyCode::Digit6 | KeyCode::Digit7 | KeyCode::Digit8 | KeyCode::Digit9);
+            if digit {
+                self.controls.key(code, true, false, &units, &mut self.camera);
+                return;
+            }
+        }
         const DIGITS: [KeyCode; 10] = [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9, KeyCode::Digit0];
         // 1-9 and 0 are presets 1-10; Shift with 1-9 and 0 the ten after,
         // Ctrl with them the ten after that.
@@ -2640,6 +974,31 @@ impl App {
                 self.restart();
             }
             KeyCode::KeyH => self.show_panel = !self.show_panel,
+            KeyCode::KeyM => {
+                if let Some(v) = self.view.as_mut() {
+                    v.minimap = !v.minimap;
+                }
+            }
+            KeyCode::KeyQ => {
+                self.squad = match self.squad {
+                    Some(_) => None,
+                    None => self.engine.as_ref().map(|e| Squad::new((e.dish.w, e.dish.h), self.scale)),
+                };
+                self.controls.selected.clear();
+            }
+            KeyCode::KeyW => {
+                // The world: today's 1024 x 640 dish, or twice as wide and
+                // high (2048 x 1280) with four times the walkers, bigger
+                // than a screen, to scroll.
+                let (scale, walkers) = if self.scale == 4 { (8, self.s.walkers * 4) } else { (4, (self.s.walkers / 4).max(10_000)) };
+                self.scale = scale;
+                self.s.walkers = walkers.min(self.max_walkers);
+                if let Some(e) = self.engine.as_mut() {
+                    e.dropped.clear();
+                }
+                self.restart();
+            }
+            KeyCode::KeyF if self.squad.is_some() => {}
             KeyCode::KeyF => {
                 let food = self.s.food;
                 if let (Some(e), Some(at)) = (self.engine.as_mut(), self.hand.at) {
@@ -2663,20 +1022,41 @@ impl App {
             self.fps_clock = Instant::now();
             self.panel_dirty = true;
         }
+        let dt = self.last_frame.elapsed().as_secs_f32();
+        self.last_frame = Instant::now();
+        let before = (self.camera.x, self.camera.y, self.camera.zoom);
+        self.controls.update(&mut self.camera, dt);
+        if (self.camera.x, self.camera.y, self.camera.zoom) != before {
+            self.hand.at = self.controls.cursor.and_then(|c| self.camera.world_at(c));
+        }
         if self.panel_dirty {
+            // The panel is screen-space now (the view's overlay); the
+            // engine's own dish-sized `hud` stays empty.
             let (lines, bottom) = self.panel_lines();
-            if let Some(e) = &self.engine {
-                let img = panel(e.dish.w, e.dish.h, &lines, &bottom);
-                e.queue.write_buffer(&e.hud, 0, &img);
+            if let Some(v) = self.view.as_mut() {
+                let img = panel(v.screen.0 as usize, v.screen.1 as usize, &lines, &bottom);
+                v.set_overlay(Some(&img));
             }
             self.panel_dirty = false;
+        }
+        self.marks.clear();
+        if let Some(sq) = self.squad.as_mut() {
+            sq.step(if self.paused { 0.0 } else { dt });
+            let units = sq.units();
+            self.controls.prune(&units);
+            sq.marks(self.camera.zoom, &mut self.marks);
+            self.controls.marks(&units, &self.camera, sq.radius(), &mut self.marks);
+        }
+        if let Some(v) = self.view.as_mut() {
+            v.set_marks(&self.marks);
         }
         let ticks = if self.paused {
             std::mem::take(&mut self.step_once) as u32
         } else {
             self.s.ticks
         };
-        let (Some(p), Some(shared), Some(e)) = (&self.pixels, &self.shared, self.engine.as_mut()) else { return };
+        let (Some(p), Some(shared), Some(e), Some(view)) = (&self.pixels, &self.shared, self.engine.as_mut(), self.view.as_ref()) else { return };
+        let camera = self.camera;
         let mut hand = self.hand;
         hand.infect |= std::mem::take(&mut self.infect_once);
         e.write_params(&self.s, hand, ticks);
@@ -2686,16 +1066,14 @@ impl App {
         // stamps count as written only if it ran.
         let mut wrote = false;
         let res = p.render_with(|enc, target, ctx| {
-            e.record(shared, enc, ticks, soft, stamps.map(|st| &st.qs));
-            if let Some(st) = stamps.filter(|_| ticks > 0) {
+            let timed = stamps.filter(|_| ticks > 0);
+            e.record(shared, enc, ticks, soft, timed.map(|st| &st.qs));
+            view.record(enc, &camera, timed.map(|st| (&st.qs, None, Some(3))));
+            if let Some(st) = timed {
                 st.resolve(enc);
                 wrote = true;
             }
-            enc.copy_buffer_to_texture(
-                wgpu::TexelCopyBufferInfo { buffer: &e.frame, layout: wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(e.dish.w as u32 * 4), rows_per_image: Some(e.dish.h as u32) } },
-                wgpu::TexelCopyTextureInfo { texture: &ctx.texture, mip_level: 0, origin: wgpu::Origin3d::ZERO, aspect: wgpu::TextureAspect::All },
-                ctx.texture_extent,
-            );
+            view.copy_to(enc, &ctx.texture);
             ctx.scaling_renderer.render(enc, target);
             Ok(())
         });
@@ -2712,11 +1090,11 @@ impl App {
         self.drawn += 1;
         if self.shot_after == Some(self.drawn) {
             let path = std::env::temp_dir().join(format!("mouldgpu-screenshot-p{}.png", self.preset + 1));
-            e.picture().save(&path).unwrap();
+            view.picture().save(&path).unwrap();
             println!("mouldgpu: wrote {}", path.display());
             let st = self.stamps.as_ref().map_or("no timestamps".to_string(), |st| {
-                let (sim, draw, n) = st.median();
-                format!("GPU {:.3} ms a frame (ticks {sim:.3} + drawing {draw:.3}), median of {n} frames timed", sim + draw)
+                let (sim, draw, view, n) = st.median();
+                format!("GPU {:.3} ms a frame (ticks {sim:.3} + drawing {draw:.3} + view {view:.3}), median of {n} frames timed", sim + draw + view)
             });
             println!("mouldgpu: after {} frames, {} ticks: {st}; {:.1} frames a second", self.drawn, e.done, self.fps);
             event_loop.exit();
@@ -2724,11 +1102,129 @@ impl App {
     }
 }
 
-fn scaling_for(window: PhysicalSize<u32>, dish: (usize, usize)) -> ScalingMode {
-    if window.width as usize >= dish.0 && window.height as usize >= dish.1 {
-        ScalingMode::PixelPerfect
-    } else {
-        ScalingMode::Fill
+/// The window's first size: the dish if it fits in nine tenths of the
+/// screen, else that (a world bigger than the screen scrolls).
+fn first_size(world: (u32, u32), monitor: Option<PhysicalSize<u32>>) -> PhysicalSize<u32> {
+    let room = monitor.map_or((1600, 900), |m| (m.width * 9 / 10, m.height * 9 / 10));
+    PhysicalSize::new(world.0.min(room.0).max(320), world.1.min(room.1).max(240))
+}
+
+/// **The stand-in squad** (Q): markers that walk where they are told, so
+/// the camera's controls can be tried on the big dish before the Larder
+/// world's rules exist. No rules: they do not shoot, eat or die, and the
+/// mould does not see them. Team 0 is yours (white); team 1 (blue) stands
+/// still, to show that only your team can be selected.
+struct Squad {
+    /// Each unit: where it is, its team, where it is walking, and a burn
+    /// line it holds (drawn as the guide Larder draws).
+    units: Vec<StandIn>,
+    /// World cells a second.
+    speed: f32,
+    /// Fine cells a dish cell, for sizes.
+    scale: f32,
+}
+
+#[derive(Clone, Copy)]
+struct StandIn {
+    x: f32,
+    y: f32,
+    team: u8,
+    to: Option<(f32, f32)>,
+    burn: Option<((f32, f32), (f32, f32))>,
+}
+
+impl Squad {
+    fn new(world: (usize, usize), scale: usize) -> Self {
+        let (w, h) = (world.0 as f32, world.1 as f32);
+        let s = scale as f32;
+        let mut units = Vec::new();
+        for k in 0..12 {
+            let (i, j) = ((k % 4) as f32, (k / 4) as f32);
+            units.push(StandIn { x: w * 0.3 + i * 4.0 * s, y: h * 0.5 + j * 4.0 * s, team: 0, to: None, burn: None });
+        }
+        for k in 0..6 {
+            units.push(StandIn { x: w * 0.7 + (k % 3) as f32 * 4.0 * s, y: h * 0.4 + (k / 3) as f32 * 4.0 * s, team: 1, to: None, burn: None });
+        }
+        // Larder's soldier speed, about 12 dish cells a second.
+        Squad { units, speed: 12.0 * s, scale: s }
+    }
+
+    /// A unit's radius in world cells: about Larder's soldier, a dish cell.
+    fn radius(&self) -> f32 {
+        0.9 * self.scale
+    }
+
+    fn units(&self) -> Vec<Unit> {
+        self.units.iter().enumerate().map(|(id, u)| Unit { id, team: u.team, x: u.x, y: u.y, alive: true }).collect()
+    }
+
+    /// Spreads `ids` round `at` in a square, `gap` cells apart, so they do
+    /// not stack on one cell.
+    fn spread(ids: &[usize], at: (f32, f32), gap: f32) -> Vec<(usize, (f32, f32))> {
+        let side = (ids.len() as f32).sqrt().ceil().max(1.0) as usize;
+        ids.iter()
+            .enumerate()
+            .map(|(n, &k)| {
+                let (i, j) = ((n % side) as f32, (n / side) as f32);
+                let off = (side as f32 - 1.0) / 2.0;
+                (k, (at.0 + (i - off) * gap, at.1 + (j - off) * gap))
+            })
+            .collect()
+    }
+
+    fn command(&mut self, c: UiCommand) {
+        let gap = 4.0 * self.scale;
+        match c {
+            UiCommand::Order { units, at } => {
+                for (k, p) in Self::spread(&units, at, gap) {
+                    self.units[k].to = Some(p);
+                    self.units[k].burn = None;
+                }
+            }
+            UiCommand::Burn { units, from, to } => {
+                // Each takes a place along the line, a little behind it.
+                let n = units.len().max(1) as f32;
+                for (i, &k) in units.iter().enumerate() {
+                    let f = (i as f32 + 0.5) / n;
+                    self.units[k].to = Some((from.0 + (to.0 - from.0) * f, from.1 + (to.1 - from.1) * f));
+                    self.units[k].burn = Some((from, to));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn step(&mut self, dt: f32) {
+        let step = self.speed * dt.min(0.1);
+        for u in &mut self.units {
+            if let Some((tx, ty)) = u.to {
+                let (dx, dy) = (tx - u.x, ty - u.y);
+                let d = dx.hypot(dy);
+                if d <= step {
+                    (u.x, u.y) = (tx, ty);
+                    u.to = None;
+                } else {
+                    u.x += dx / d * step;
+                    u.y += dy / d * step;
+                }
+            }
+        }
+    }
+
+    fn marks(&self, zoom: f32, out: &mut Marks) {
+        for (id, u) in self.units.iter().enumerate() {
+            if let Some((a, b)) = u.burn {
+                out.line(a, b, 4.0, [255, 150, 60, 255]);
+            }
+            if let Some(to) = u.to {
+                out.line((u.x, u.y), to, 2.0, [255, 255, 255, 90]);
+            }
+            unit_marks(&Unit { id, team: u.team, x: u.x, y: u.y, alive: true }, self.radius(), 1.0, zoom, out);
+        }
+        // A world-space label, as a game would put a count beside a crystal.
+        if let Some(u) = self.units.iter().find(|u| u.team == 1) {
+            out.label((u.x, u.y), (-6.0, -26.0), "TEAM 2", 2.0, [110, 180, 255, 255]);
+        }
     }
 }
 
@@ -2738,8 +1234,9 @@ impl ApplicationHandler for App {
             return;
         }
         let p = big_params(&self.s, self.scale, false);
-        let (w, h) = (p.w() as u32, p.h() as u32);
-        let attributes = Window::default_attributes().with_title("Mould sandbox (GPU)").with_inner_size(PhysicalSize::new(w, h));
+        let world = (p.w() as u32, p.h() as u32);
+        let first = first_size(world, event_loop.primary_monitor().map(|m| m.size()));
+        let attributes = Window::default_attributes().with_title("Mould sandbox (GPU)").with_inner_size(first);
         let window = match event_loop.create_window(attributes) {
             Ok(w) => Arc::new(w),
             Err(err) => return self.fail(event_loop, format!("window creation failed: {err}")),
@@ -2747,7 +1244,10 @@ impl ApplicationHandler for App {
         // Look at the GPU first, to ask for timestamps if it has them.
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
         let probe = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).ok();
+        // The pixel buffer is the window's size, one pixel a screen pixel:
+        // the camera's view pass draws the dish into it at any zoom.
         let size = window.inner_size();
+        let (w, h) = (size.width.max(1), size.height.max(1));
         let options = wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, compatible_surface: None, force_fallback_adapter: false };
         let mut built = None;
         if let Some(a) = probe.as_ref().filter(|a| a.features().contains(wgpu::Features::TIMESTAMP_QUERY)) {
@@ -2762,7 +1262,7 @@ impl ApplicationHandler for App {
             };
         }
         let mut pixels = built.unwrap();
-        pixels.set_scaling_mode(scaling_for(size, (w as usize, h as usize)));
+        pixels.set_scaling_mode(ScalingMode::PixelPerfect);
         // pixels 0.17 recomputes the drawing's scale (and the mouse's
         // inverse) only on a resize, so a window opened smaller than the
         // dish would draw it cropped until one came (independent review,
@@ -2777,11 +1277,16 @@ impl ApplicationHandler for App {
         self.max_walkers = WALKER_STEPS.iter().copied().filter(|&n| n * 16 <= limit).max().unwrap_or(100_000);
         self.shared = Some(Shared::new(pixels.device()));
         if timestamps {
-            self.stamps = Some(Stamps::new(pixels.device(), pixels.queue()));
+            self.stamps = Some(Stamps::with_view(pixels.device(), pixels.queue(), true));
         }
         self.pixels = Some(pixels);
         self.window = Some(window);
         self.restart();
+        if let (Some(p), Some(e)) = (&self.pixels, &self.engine) {
+            let world = (e.dish.w, e.dish.h);
+            self.view = Some(View::new(p.device(), p.queue(), &e.frame, world, (w, h)));
+            self.camera = Camera::new(world, (w, h));
+        }
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
@@ -2790,20 +1295,28 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(size) => {
                 if size.width > 0 && size.height > 0 {
                     if let Some(p) = self.pixels.as_mut() {
-                        let dish = self.engine.as_ref().map_or((1, 1), |e| (e.dish.w, e.dish.h));
-                        p.set_scaling_mode(scaling_for(size, dish));
-                        if let Err(err) = p.resize_surface(size.width, size.height) {
-                            self.fail(event_loop, format!("surface resize failed: {err}"));
+                        let res = p.resize_buffer(size.width, size.height).map_err(|e| e.to_string()).and_then(|_| p.resize_surface(size.width, size.height).map_err(|e| e.to_string()));
+                        if let Err(err) = res {
+                            return self.fail(event_loop, format!("resize failed: {err}"));
                         }
                     }
+                    if let Some(v) = self.view.as_mut() {
+                        v.resize((size.width, size.height));
+                    }
+                    self.camera.resize((size.width, size.height));
+                    self.panel_dirty = true;
                 }
             }
             WindowEvent::ModifiersChanged(m) => {
                 self.shift = m.state().shift_key();
                 self.ctrl = m.state().control_key();
+                (self.controls.shift, self.controls.ctrl) = (self.shift, self.ctrl);
             }
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(code) = event.physical_key {
+                    if code == KeyCode::KeyF && self.squad.is_some() {
+                        self.controls.burn = event.state == ElementState::Pressed;
+                    }
                     let repeat_ok = matches!(code, KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::Period);
                     if event.state == ElementState::Pressed && (!event.repeat || repeat_ok) {
                         self.key(code, event_loop);
@@ -2811,21 +1324,63 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
-                self.hand.at = self.pixels.as_ref().and_then(|p| p.window_pos_to_pixel((position.x as f32, position.y as f32)).ok()).map(|(x, y)| (x as f32 + 0.5, y as f32 + 0.5));
+                // Screen pixels (the buffer is the window's size), then the
+                // world cell under them through the camera.
+                let at = (position.x as f32, position.y as f32);
+                let mm = self.minimap();
+                self.controls.moved(Some(at), &mut self.camera, mm);
+                self.hand.at = self.camera.world_at(at).filter(|_| mm.is_none_or(|r| slime_mould::world::view::minimap_world(r, self.world(), at).is_none()));
             }
-            WindowEvent::CursorLeft { .. } => self.hand.at = None,
-            WindowEvent::Focused(false) => {
-                self.hand.pull = false;
-                self.hand.wipe = false;
-                self.hand.infect = false;
+            WindowEvent::CursorLeft { .. } => {
+                self.hand.at = None;
+                self.controls.moved(None, &mut self.camera, None);
+            }
+            WindowEvent::Focused(focused) => {
+                self.controls.edge = focused;
+                if !focused {
+                    self.hand.pull = false;
+                    self.hand.wipe = false;
+                    self.hand.infect = false;
+                    self.controls.unfocus();
+                }
+            }
+            WindowEvent::MouseWheel { delta, .. } => {
+                let notches = match delta {
+                    MouseScrollDelta::LineDelta(_, y) => y.signum() as i32,
+                    MouseScrollDelta::PixelDelta(p) => (p.y / 40.0).round() as i32,
+                };
+                self.controls.wheel(notches, &mut self.camera);
+                self.panel_dirty = true;
             }
             WindowEvent::MouseInput { state, button, .. } => {
                 let down = state == ElementState::Pressed;
-                match button {
-                    MouseButton::Left => self.hand.pull = down,
-                    MouseButton::Right => self.hand.wipe = down,
-                    MouseButton::Middle => self.hand.infect = down,
-                    _ => {}
+                let mm = self.minimap();
+                let on_map = self.controls.cursor.zip(mm).is_some_and(|(c, r)| slime_mould::world::view::minimap_world(r, self.world(), c).is_some());
+                let b = match button {
+                    MouseButton::Left => Some(Button::Left),
+                    MouseButton::Right => Some(Button::Right),
+                    MouseButton::Middle => Some(Button::Middle),
+                    _ => None,
+                };
+                // The middle button pans, the minimap moves the camera, and
+                // with the squad out every button is the controls'; else the
+                // left and right are the sandbox's tools as before.
+                let to_controls = self.squad.is_some() || button == MouseButton::Middle || (on_map && down) || !down;
+                if let (Some(b), true) = (b, to_controls) {
+                    let units = self.squad.as_ref().map(|q| q.units()).unwrap_or_default();
+                    let cmds = self.controls.button(b, down, &units, &mut self.camera, mm);
+                    if let Some(sq) = self.squad.as_mut() {
+                        for c in cmds {
+                            sq.command(c);
+                        }
+                    }
+                }
+                if self.squad.is_none() && !(on_map && down) {
+                    match button {
+                        MouseButton::Left => self.hand.pull = down,
+                        MouseButton::Right => self.hand.wipe = down,
+                        _ => {}
+                    }
                 }
             }
             WindowEvent::RedrawRequested => self.frame(event_loop),
@@ -2837,25 +1392,6 @@ impl ApplicationHandler for App {
         if let Some(window) = &self.window {
             window.request_redraw();
         }
-    }
-}
-
-fn block_on<F: std::future::Future>(f: F) -> F::Output {
-    use std::task::{Context, Poll, Wake, Waker};
-    struct Unpark(std::thread::Thread);
-    impl Wake for Unpark {
-        fn wake(self: Arc<Self>) {
-            self.0.unpark();
-        }
-    }
-    let waker = Waker::from(Arc::new(Unpark(std::thread::current())));
-    let mut cx = Context::from_waker(&waker);
-    let mut f = std::pin::pin!(f);
-    loop {
-        if let Poll::Ready(v) = f.as_mut().poll(&mut cx) {
-            return v;
-        }
-        std::thread::park();
     }
 }
 
@@ -2899,6 +1435,13 @@ struct Look {
     down: u32,
     twice: bool,
     tag: String,
+    /// `view=WxH`: also draw the last frame through the camera onto a
+    /// screen that size (`cam=X,Y,ZOOM`, the world point at its middle;
+    /// default the dish's middle at zoom 1), with the stand-in squad if
+    /// `squad=1`, and time the view pass.
+    view: Option<(u32, u32)>,
+    cam: Option<(f32, f32, f32)>,
+    squad: bool,
 }
 
 /// The headless run: frames as the window would submit them (one frame of
@@ -3018,6 +1561,11 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             }
         }
         let pic = e.picture();
+        // The same frame through the camera, before the profile below moves
+        // the dish on.
+        if let (0, Some(screen)) = (round, look.view) {
+            view_shot(&device, &queue, &e, screen, look, timestamps);
+        }
         if round == 0 {
             let median = |v: &mut Vec<f64>| {
                 v.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -3068,11 +1616,60 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
     }
 }
 
+/// The headless run's last frame through the camera (`view=WxH`), saved as
+/// `TAG-view.png`, with the view pass's GPU time (median of 21).
+fn view_shot(device: &wgpu::Device, queue: &wgpu::Queue, e: &Engine, screen: (u32, u32), look: &Look, timestamps: bool) {
+    let world = (e.dish.w, e.dish.h);
+    let mut view = View::new(device, queue, &e.frame, world, screen);
+    let mut cam = Camera::new(world, screen);
+    let (cx, cy, zoom) = look.cam.unwrap_or((world.0 as f32 / 2.0, world.1 as f32 / 2.0, cam.zoom));
+    cam.zoom_to(zoom, (0.0, 0.0));
+    cam.centre_on((cx, cy));
+    let mut marks = Marks::default();
+    if look.squad {
+        // The squad, three selected, one ordered off and two on a burn line,
+        // and a drag box under way: every mark the controls draw.
+        let mut sq = Squad::new(world, e.dish.p.scale);
+        let mut k = Controls::new(0);
+        sq.command(UiCommand::Order { units: vec![0], at: (sq.units[0].x + 60.0, sq.units[0].y - 40.0) });
+        let (a, b) = ((sq.units[4].x - 20.0, sq.units[4].y + 30.0), (sq.units[7].x + 30.0, sq.units[7].y + 30.0));
+        sq.command(UiCommand::Burn { units: vec![4, 5], from: a, to: b });
+        sq.step(0.5);
+        k.selected = vec![0, 4, 5];
+        let units = sq.units();
+        sq.marks(cam.zoom, &mut marks);
+        k.marks(&units, &cam, sq.radius(), &mut marks);
+    }
+    view.set_marks(&marks);
+    let (lines, bottom) = (vec![("CAMERA VIEW".to_string(), WHITE)], vec![(format!("ZOOM {:.2}  WORLD {} X {}", cam.zoom, world.0, world.1), DIM)]);
+    view.set_overlay(Some(&panel(screen.0 as usize, screen.1 as usize, &lines, &bottom)));
+    let mut times = Vec::new();
+    let qs = timestamps.then(|| device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("view"), ty: wgpu::QueryType::Timestamp, count: 2 }));
+    let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view stamps"), size: 16, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+    for _ in 0..21 {
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        view.record(&mut enc, &cam, qs.as_ref().map(|q| (q, Some(0), Some(1))));
+        if let Some(q) = &qs {
+            enc.resolve_query_set(q, 0..2, &resolve, 0);
+        }
+        queue.submit([enc.finish()]);
+        if qs.is_some() {
+            let t: Vec<u64> = read_back(device, queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
+            times.push(t[1].saturating_sub(t[0]) as f64 * queue.get_timestamp_period() as f64 / 1e6);
+        }
+    }
+    times.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let path = format!("{}/{}-view.png", look.dir, look.tag);
+    view.picture().save(&path).unwrap();
+    let ms = times.get(times.len() / 2).map_or("no timestamps".to_string(), |m| format!("GPU {m:.3} ms"));
+    println!("view {}x{} at zoom {:.2} on ({cx:.0}, {cy:.0}), {} marks: {ms} (median of {}); wrote {path}", screen.0, screen.1, cam.zoom, marks.len(), times.len());
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut s = Settings::big_dish();
     let mut picked = 0usize;
     let mut scale = 4usize;
-    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new() };
+    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new(), view: None, cam: None, squad: false };
     let args: Vec<String> = std::env::args().skip(1).collect();
     // The preset first, so the other keys change it.
     for arg in &args {
@@ -3094,6 +1691,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "down" => look.down = v.parse::<u32>()?.max(1),
             "twice" => look.twice = on_off(k, v)?,
             "tag" => look.tag = v.into(),
+            "view" => {
+                let (w, h) = v.split_once('x').ok_or("view=WxH")?;
+                look.view = Some((w.parse()?, h.parse()?));
+            }
+            "cam" => {
+                let p: Vec<f32> = v.split(',').map(|x| x.parse()).collect::<Result<_, _>>()?;
+                look.cam = Some((*p.first().ok_or("cam=X,Y,ZOOM")?, *p.get(1).ok_or("cam=X,Y,ZOOM")?, p.get(2).copied().unwrap_or(1.0)));
+            }
+            "squad" => look.squad = on_off(k, v)?,
             _ => set(&mut s, k, v)?,
         }
     }
@@ -3114,6 +1720,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use slime_mould::mould::big::{BigDish, BigParams};
 
     #[test]
     fn every_panel_character_can_be_drawn() {
