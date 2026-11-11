@@ -1,0 +1,26 @@
+seed 1 dropfast t  10.0s  tube  4294.6  loops    0  width 6.76  reach  130.3  piles 8/12  strays 0.003  ms/tick 13.78
+seed 1 dropfast t  10.0s  contrast 3.67
+seed 1 dropfast t  10.0s  extent r50 141.4 r90 200.8
+seed 1 dropfast t  10.0s  kinds k0 n 23898 on 1.000 r 140.7  k1 n 6102 on 0.987 r 144.6
+seed 1 dropfast t  20.0s  tube  4050.2  loops    0  width 6.99  reach  130.7  piles 8/12  strays 0.002  ms/tick 14.37
+seed 1 dropfast t  20.0s  contrast 3.32
+seed 1 dropfast t  20.0s  extent r50 142.2 r90 208.5
+seed 1 dropfast t  20.0s  kinds k0 n 23898 on 1.000 r 141.1  k1 n 6102 on 0.989 r 147.3
+seed 1 dropfast t  30.0s  tube  3914.8  loops    0  width 7.11  reach  131.1  piles 8/12  strays 0.002  ms/tick 14.44
+seed 1 dropfast t  30.0s  contrast 3.07
+seed 1 dropfast t  30.0s  extent r50 143.0 r90 212.6
+seed 1 dropfast t  30.0s  kinds k0 n 23898 on 1.000 r 141.7  k1 n 6102 on 0.989 r 150.1
+seed 1 dropfast t  40.0s  tube  3728.1  loops    0  width 7.26  reach  131.5  piles 8/12  strays 0.002  ms/tick 14.06
+seed 1 dropfast t  40.0s  contrast 2.72
+seed 1 dropfast t  40.0s  extent r50 144.0 r90 215.0
+seed 1 dropfast t  40.0s  kinds k0 n 23898 on 1.000 r 142.3  k1 n 6102 on 0.988 r 152.3
+seed 1 dropfast t  50.0s  tube  3665.2  loops    0  width 7.34  reach  131.9  piles 8/12  strays 0.003  ms/tick 13.77
+seed 1 dropfast t  50.0s  contrast 2.62
+seed 1 dropfast t  50.0s  extent r50 144.8 r90 216.6
+seed 1 dropfast t  50.0s  kinds k0 n 23898 on 1.000 r 142.8  k1 n 6102 on 0.986 r 154.9
+seed 1 dropfast t  60.0s  tube  3630.6  loops    0  width 7.43  reach  131.8  piles 8/12  strays 0.002  ms/tick 13.81
+seed 1 dropfast t  60.0s  contrast 2.57
+seed 1 dropfast t  60.0s  extent r50 145.8 r90 218.2
+seed 1 dropfast t  60.0s  kinds k0 n 23898 on 1.000 r 143.6  k1 n 6102 on 0.990 r 157.0
+seed 1 dropfast firsts 0:72:0.57:0.0 1:54:0.67:0.0 2:96:0.87:-1.0 3:94:0.88:-1.0 4:51:0.42:0.0 5:59:0.55:0.1 6:76:0.68:-1.0 7:13:0.11:0.0 8:99:0.80:-1.0 9:37:0.30:0.0 10:59:0.75:0.1 11:65:0.85:0.3
+seed 1 dropfast hash=384c97ee85d8af23

@@ -1,0 +1,20 @@
+--- t 30 s
+seed 1: Drifter 2821/2770 = 1.02; Sprawler 4082/5424 = 0.75; Drifter pieces 56 together, 53 alone; pure 0.999 left0 0.965 changed 0.006
+seed 2: Drifter 2802/2767 = 1.01; Sprawler 4542/5222 = 0.87; Drifter pieces 60 together, 65 alone; pure 0.999 left0 0.978 changed 0.008
+seed 3: Drifter 2792/2754 = 1.01; Sprawler 8769/4639 = 1.89; Drifter pieces 61 together, 65 alone; pure 0.969 left0 0.991 changed 0.093
+seed 4: Drifter 2812/2801 = 1.00; Sprawler 4052/5985 = 0.68; Drifter pieces 57 together, 61 alone; pure 1.000 left0 0.996 changed 0.007
+seed 5: Drifter 2836/2809 = 1.01; Sprawler 4384/4268 = 1.03; Drifter pieces 70 together, 59 alone; pure 0.999 left0 0.985 changed 0.012
+seed 6: Drifter 2789/2816 = 0.99; Sprawler 6803/4887 = 1.39; Drifter pieces 61 together, 58 alone; pure 0.973 left0 0.995 changed 0.097
+seed 7: Drifter 2847/2780 = 1.02; Sprawler 7195/5903 = 1.22; Drifter pieces 64 together, 63 alone; pure 0.971 left0 0.984 changed 0.097
+seed 8: Drifter 2819/2804 = 1.01; Sprawler 4676/5839 = 0.80; Drifter pieces 62 together, 66 alone; pure 0.998 left0 0.991 changed 0.017
+both within 0.5-2 on 8 of 8 seeds; Drifter pieces fewer together on 4, more on 4, sign p 1.0000
+--- t 60 s
+seed 1: Drifter 2665/2646 = 1.01; Sprawler 4191/4231 = 0.99; Drifter pieces 40 together, 44 alone; pure 0.997 left0 0.978 changed 0.010
+seed 2: Drifter 2705/2648 = 1.02; Sprawler 4033/5051 = 0.80; Drifter pieces 47 together, 49 alone; pure 0.997 left0 0.969 changed 0.013
+seed 3: Drifter 2660/2633 = 1.01; Sprawler 7638/4084 = 1.87; Drifter pieces 43 together, 48 alone; pure 0.963 left0 0.992 changed 0.086
+seed 4: Drifter 2682/2676 = 1.00; Sprawler 3913/5990 = 0.65; Drifter pieces 40 together, 44 alone; pure 0.999 left0 0.990 changed 0.004
+seed 5: Drifter 2678/2693 = 0.99; Sprawler 4181/3931 = 1.06; Drifter pieces 46 together, 50 alone; pure 0.999 left0 0.989 changed 0.006
+seed 6: Drifter 2679/2700 = 0.99; Sprawler 7497/3942 = 1.90; Drifter pieces 41 together, 53 alone; pure 0.980 left0 0.986 changed 0.055
+seed 7: Drifter 2668/2695 = 0.99; Sprawler 7786/4890 = 1.59; Drifter pieces 41 together, 52 alone; pure 0.970 left0 0.977 changed 0.056
+seed 8: Drifter 2670/2658 = 1.00; Sprawler 4513/5350 = 0.84; Drifter pieces 42 together, 45 alone; pure 0.995 left0 0.994 changed 0.015
+both within 0.5-2 on 8 of 8 seeds; Drifter pieces fewer together on 8, more on 0, sign p 0.0078

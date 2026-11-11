@@ -259,6 +259,21 @@ move.
   leaves 1858-2216 walkers at the strike against 2360-2971; a Swarmer loses 1144-4158 to fire against 614-3591:
   each 8 of 8, p 0.0078, survives Bonferroni. Fleeing (Skittish) fails, p 0.375. Alarm +31% a step on one core.
   Page, scripts and raw output in [`mould-tiers-2026-11-11/`](mould-tiers-2026-11-11/).
+- [first-reach-2026-11-11.md](first-reach-2026-11-11.md) — **a paired test, no game change: which droplet moulds
+  reach food first.** The crystal-mix test redesigned after the review (its start disc covered the crystals).
+  30,000 droplet walkers from a centred disc, 12 piles, 16 seeds; far piles reached by 30 s, Holm over 5. Grazers
+  49 of 77 against 9 for still droplets (more on 15 seeds, fewer on 0, Holm 0.0003); scouts on grazers 62 against
+  49 (10 and 0, Holm 0.0078); fast droplets 19 (7 and 0, Holm 0.047); scouts alone and scouts on droplets no gain.
+  The measure was named after the flawed run; fresh seeds 9-16 agree. Grazers' body edge moves about 10 dish
+  cells a minute. Page, scripts and raw output in [`first-reach-2026-11-11/`](first-reach-2026-11-11/).
+- [species-sets-2026-11-11.md](species-sets-2026-11-11.md) — **a paired test of per-species settings
+  (`BigParams::species_sets`, PR #61): a droplet species and a network species on one dish.** The review's
+  direction 2; the ladder needs species with their own rules. 29,870 grazing droplets (left) beside 1M network
+  walkers (right), avoidance 1, no food, 8 seeds, 60 s. Each species' own area together over alone is within
+  0.5-2 on 8 of 8 (Drifter 0.99-1.02, Sprawler 0.65-1.90; on 3 seeds the network's tubes cross into the droplets'
+  half). Secondary: fewer droplet bodies beside the network at 60 s, 8 of 8. No fight without a contact rule. The
+  second species adds about 10% a tick. Raw output and scripts in
+  [`species-sets-2026-11-11/`](species-sets-2026-11-11/); page in `first-reach-2026-11-11/`.
 
 ## Added with the move (2026-11-10)
 

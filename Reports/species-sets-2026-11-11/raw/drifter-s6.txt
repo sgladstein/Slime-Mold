@@ -1,0 +1,25 @@
+seed 6 drifter t  10.0s  tube  6664.8  loops    1  width 4.33  reach  121.1  piles 1/1  strays 0.001  ms/tick 19.50
+seed 6 drifter t  10.0s  contrast 8.84
+seed 6 drifter t  10.0s  pure 1.000  shares 1.000,0.000  left0 0.978  changed 0.000
+seed 6 drifter t  10.0s  own s0 walkers 29870 area 2951.4 pieces 89  s1 walkers 0 area 0.0 pieces 0
+seed 6 drifter t  20.0s  tube  5851.6  loops    1  width 4.39  reach  146.3  piles 1/1  strays 0.000  ms/tick 19.85
+seed 6 drifter t  20.0s  contrast 7.13
+seed 6 drifter t  20.0s  pure 1.000  shares 1.000,0.000  left0 0.973  changed 0.000
+seed 6 drifter t  20.0s  own s0 walkers 29870 area 2837.1 pieces 59  s1 walkers 0 area 0.0 pieces 0
+seed 6 drifter t  30.0s  tube  5783.9  loops    1  width 4.25  reach  169.5  piles 1/1  strays 0.001  ms/tick 20.08
+seed 6 drifter t  30.0s  contrast 7.09
+seed 6 drifter t  30.0s  pure 1.000  shares 1.000,0.000  left0 0.973  changed 0.000
+seed 6 drifter t  30.0s  own s0 walkers 29870 area 2816.3 pieces 58  s1 walkers 0 area 0.0 pieces 0
+seed 6 drifter t  40.0s  tube  5911.9  loops    1  width 3.90  reach  192.9  piles 1/1  strays 0.001  ms/tick 19.98
+seed 6 drifter t  40.0s  contrast 7.74
+seed 6 drifter t  40.0s  pure 1.000  shares 1.000,0.000  left0 0.970  changed 0.000
+seed 6 drifter t  40.0s  own s0 walkers 29870 area 2793.4 pieces 58  s1 walkers 0 area 0.0 pieces 0
+seed 6 drifter t  50.0s  tube  5637.1  loops    0  width 3.98  reach  195.1  piles 1/1  strays 0.001  ms/tick 19.70
+seed 6 drifter t  50.0s  contrast 7.35
+seed 6 drifter t  50.0s  pure 1.000  shares 1.000,0.000  left0 0.972  changed 0.000
+seed 6 drifter t  50.0s  own s0 walkers 29870 area 2723.8 pieces 56  s1 walkers 0 area 0.0 pieces 0
+seed 6 drifter t  60.0s  tube  5521.9  loops    0  width 3.90  reach  192.9  piles 1/1  strays 0.001  ms/tick 19.15
+seed 6 drifter t  60.0s  contrast 7.13
+seed 6 drifter t  60.0s  pure 1.000  shares 1.000,0.000  left0 0.967  changed 0.000
+seed 6 drifter t  60.0s  own s0 walkers 29870 area 2699.9 pieces 53  s1 walkers 0 area 0.0 pieces 0
+seed 6 drifter hash=3b96e45f61055785

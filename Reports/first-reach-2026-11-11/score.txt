@@ -1,0 +1,30 @@
+dropfast     seeds 16  reached by 30s: 0/4 2/4 4/6 1/5 1/5 1/5 0/7 1/6 1/4 0/5 2/5 1/5 1/4 0/4 2/5 2/3
+droplets     seeds 16  reached by 30s: 0/4 2/4 1/6 1/5 1/5 0/5 0/7 1/6 0/4 0/5 1/5 1/5 0/4 0/4 1/5 0/3
+dropscouts   seeds 16  reached by 30s: 0/4 0/4 1/6 1/5 1/5 0/5 0/7 0/6 0/4 0/5 1/5 1/5 0/4 0/4 0/5 0/3
+grazers      seeds 16  reached by 30s: 2/4 2/4 4/6 4/5 3/5 3/5 2/7 4/6 3/4 3/5 3/5 4/5 2/4 3/4 4/5 3/3
+grazescouts  seeds 16  reached by 30s: 3/4 3/4 4/6 4/5 4/5 3/5 5/7 6/6 4/4 4/5 4/5 5/5 2/4 4/4 4/5 3/3
+scoutsonly   seeds 16  reached by 30s: 0/4 0/4 1/6 0/5 0/5 1/5 0/7 0/6 0/4 0/5 1/5 0/5 0/4 0/4 0/5 0/3
+grazers - droplets: more on 15, fewer on 0, ties 1, total +40; p 0.0001, Holm 0.0003
+grazescouts - grazers: more on 10, fewer on 0, ties 6, total +13; p 0.0020, Holm 0.0078
+dropfast - droplets: more on 7, fewer on 0, ties 9, total +10; p 0.0156, Holm 0.0469
+scoutsonly - droplets: more on 1, fewer on 6, ties 9, total -6; p 0.1250, Holm 0.2500
+dropscouts - droplets: more on 0, fewer on 3, ties 13, total -4; p 0.2500, Holm 0.2500
+
+dropfast     seeds 16  reached by 60s: 0/4 3/4 4/6 1/5 1/5 2/5 2/7 1/6 1/4 0/5 2/5 1/5 1/4 0/4 2/5 2/3
+droplets     seeds 16  reached by 60s: 0/4 2/4 1/6 1/5 1/5 0/5 0/7 1/6 0/4 0/5 1/5 1/5 1/4 0/4 1/5 0/3
+dropscouts   seeds 16  reached by 60s: 0/4 0/4 1/6 1/5 1/5 0/5 0/7 0/6 1/4 0/5 1/5 1/5 0/4 0/4 0/5 0/3
+grazers      seeds 16  reached by 60s: 3/4 3/4 4/6 4/5 3/5 3/5 4/7 4/6 3/4 4/5 3/5 4/5 3/4 4/4 4/5 3/3
+grazescouts  seeds 16  reached by 60s: 4/4 4/4 5/6 4/5 5/5 4/5 6/7 6/6 4/4 5/5 5/5 5/5 4/4 4/4 4/5 3/3
+scoutsonly   seeds 16  reached by 60s: 0/4 0/4 2/6 0/5 0/5 1/5 0/7 0/6 0/4 0/5 1/5 0/5 0/4 0/4 0/5 0/3
+grazers - droplets: more on 16, fewer on 0, ties 0, total +46; p 0.0000, Holm 0.0002
+grazescouts - grazers: more on 12, fewer on 0, ties 4, total +16; p 0.0005, Holm 0.0020
+dropfast - droplets: more on 8, fewer on 0, ties 8, total +13; p 0.0078, Holm 0.0234
+scoutsonly - droplets: more on 2, fewer on 7, ties 7, total -6; p 0.1797, Holm 0.3594
+dropscouts - droplets: more on 1, fewer on 4, ties 11, total -4; p 0.3750, Holm 0.3750
+
+seeds 9-16 only (not in the flawed crystal run), 30 s:
+grazers - droplets: more on 8, fewer on 0, ties 0, total +22; p 0.0078, Holm 0.0391
+dropfast - droplets: more on 5, fewer on 0, ties 3, total +6; p 0.0625, Holm 0.2500
+grazescouts - grazers: more on 5, fewer on 0, ties 3, total +5; p 0.0625, Holm 0.1875
+scoutsonly - droplets: more on 0, fewer on 2, ties 6, total -2; p 0.5000, Holm 1.0000
+dropscouts - droplets: more on 0, fewer on 1, ties 7, total -1; p 1.0000, Holm 1.0000

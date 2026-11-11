@@ -1,0 +1,20 @@
+seed 7 droplets t  10.0s  tube  4776.2  loops    1  width 6.71  reach  120.7  piles 5/12  strays 0.000  ms/tick 13.94
+seed 7 droplets t  10.0s  contrast 3.98
+seed 7 droplets t  10.0s  extent r50 138.9 r90 192.1
+seed 7 droplets t  20.0s  tube  4391.9  loops    0  width 6.75  reach  120.6  piles 5/12  strays 0.000  ms/tick 13.72
+seed 7 droplets t  20.0s  contrast 3.33
+seed 7 droplets t  20.0s  extent r50 137.5 r90 196.2
+seed 7 droplets t  30.0s  tube  4248.0  loops    0  width 6.94  reach  121.1  piles 5/12  strays 0.000  ms/tick 13.73
+seed 7 droplets t  30.0s  contrast 3.10
+seed 7 droplets t  30.0s  extent r50 137.5 r90 199.6
+seed 7 droplets t  40.0s  tube  4146.8  loops    0  width 6.98  reach  121.5  piles 5/12  strays 0.000  ms/tick 13.76
+seed 7 droplets t  40.0s  contrast 2.88
+seed 7 droplets t  40.0s  extent r50 138.5 r90 201.7
+seed 7 droplets t  50.0s  tube  4039.6  loops    0  width 7.02  reach  121.9  piles 5/12  strays 0.000  ms/tick 13.74
+seed 7 droplets t  50.0s  contrast 2.71
+seed 7 droplets t  50.0s  extent r50 139.0 r90 203.8
+seed 7 droplets t  60.0s  tube  3964.4  loops    0  width 7.13  reach  122.2  piles 5/12  strays 0.000  ms/tick 13.59
+seed 7 droplets t  60.0s  contrast 2.56
+seed 7 droplets t  60.0s  extent r50 139.4 r90 205.7
+seed 7 droplets firsts 0:72:0.57:0.0 1:55:0.67:0.0 2:76:0.80:-1.0 3:50:0.50:0.0 4:113:0.91:-1.0 5:61:0.75:0.2 6:81:0.78:-1.0 7:99:0.87:-1.0 8:51:0.53:0.0 9:83:0.67:-1.0 10:96:0.81:-1.0 11:81:0.81:-1.0
+seed 7 droplets hash=41800632aa0b33df

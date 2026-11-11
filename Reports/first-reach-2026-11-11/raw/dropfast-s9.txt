@@ -1,0 +1,26 @@
+seed 9 dropfast t  10.0s  tube  4042.0  loops    0  width 6.98  reach  122.4  piles 8/12  strays 0.002  ms/tick 13.52
+seed 9 dropfast t  10.0s  contrast 3.18
+seed 9 dropfast t  10.0s  extent r50 145.9 r90 186.8
+seed 9 dropfast t  10.0s  kinds k0 n 23909 on 1.000 r 145.0  k1 n 6091 on 0.989 r 149.5
+seed 9 dropfast t  20.0s  tube  3871.4  loops    0  width 7.18  reach  122.4  piles 9/12  strays 0.003  ms/tick 13.60
+seed 9 dropfast t  20.0s  contrast 2.96
+seed 9 dropfast t  20.0s  extent r50 146.5 r90 189.0
+seed 9 dropfast t  20.0s  kinds k0 n 23909 on 1.000 r 145.0  k1 n 6091 on 0.987 r 152.6
+seed 9 dropfast t  30.0s  tube  3750.8  loops    0  width 7.48  reach  123.0  piles 9/12  strays 0.003  ms/tick 13.28
+seed 9 dropfast t  30.0s  contrast 2.75
+seed 9 dropfast t  30.0s  extent r50 147.1 r90 190.6
+seed 9 dropfast t  30.0s  kinds k0 n 23909 on 1.000 r 145.2  k1 n 6091 on 0.987 r 154.4
+seed 9 dropfast t  40.0s  tube  3703.1  loops    0  width 7.58  reach  142.1  piles 9/12  strays 0.002  ms/tick 13.13
+seed 9 dropfast t  40.0s  contrast 2.67
+seed 9 dropfast t  40.0s  extent r50 148.1 r90 192.1
+seed 9 dropfast t  40.0s  kinds k0 n 23909 on 1.000 r 145.8  k1 n 6091 on 0.989 r 157.3
+seed 9 dropfast t  50.0s  tube  3599.4  loops    0  width 7.64  reach  142.1  piles 9/12  strays 0.003  ms/tick 13.07
+seed 9 dropfast t  50.0s  contrast 2.46
+seed 9 dropfast t  50.0s  extent r50 149.1 r90 193.2
+seed 9 dropfast t  50.0s  kinds k0 n 23909 on 1.000 r 146.6  k1 n 6091 on 0.987 r 158.1
+seed 9 dropfast t  60.0s  tube  3583.2  loops    0  width 7.70  reach  142.6  piles 9/12  strays 0.002  ms/tick 13.22
+seed 9 dropfast t  60.0s  contrast 2.44
+seed 9 dropfast t  60.0s  extent r50 149.5 r90 194.1
+seed 9 dropfast t  60.0s  kinds k0 n 23909 on 1.000 r 147.0  k1 n 6091 on 0.989 r 158.7
+seed 9 dropfast firsts 0:72:0.57:0.0 1:66:0.86:0.4 2:77:0.85:-1.0 3:71:0.60:12.9 4:54:0.68:0.0 5:40:0.35:0.0 6:47:0.42:0.0 7:75:0.87:-1.0 8:40:0.39:0.0 9:7:0.06:0.0 10:96:0.88:-1.0 11:60:0.77:0.2
+seed 9 dropfast hash=8d9188997cfd7397

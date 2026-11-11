@@ -1,0 +1,26 @@
+seed 4 scoutsonly t  10.0s  tube  3362.4  loops    3  width 7.41  reach  126.3  piles 7/12  strays 0.005  ms/tick 13.50
+seed 4 scoutsonly t  10.0s  contrast 1.78
+seed 4 scoutsonly t  10.0s  extent r50 143.8 r90 195.6
+seed 4 scoutsonly t  10.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.995 r 143.8
+seed 4 scoutsonly t  20.0s  tube  3242.1  loops    4  width 7.26  reach  126.1  piles 7/12  strays 0.005  ms/tick 14.01
+seed 4 scoutsonly t  20.0s  contrast 1.59
+seed 4 scoutsonly t  20.0s  extent r50 142.7 r90 205.0
+seed 4 scoutsonly t  20.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.995 r 142.7
+seed 4 scoutsonly t  30.0s  tube  3213.7  loops    2  width 7.44  reach  126.2  piles 7/12  strays 0.007  ms/tick 14.25
+seed 4 scoutsonly t  30.0s  contrast 1.54
+seed 4 scoutsonly t  30.0s  extent r50 142.9 r90 211.6
+seed 4 scoutsonly t  30.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 142.9
+seed 4 scoutsonly t  40.0s  tube  3153.6  loops    3  width 7.26  reach  126.1  piles 7/12  strays 0.006  ms/tick 14.23
+seed 4 scoutsonly t  40.0s  contrast 1.46
+seed 4 scoutsonly t  40.0s  extent r50 143.2 r90 216.2
+seed 4 scoutsonly t  40.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.994 r 143.2
+seed 4 scoutsonly t  50.0s  tube  3112.9  loops    1  width 7.47  reach  126.2  piles 7/12  strays 0.007  ms/tick 14.10
+seed 4 scoutsonly t  50.0s  contrast 1.39
+seed 4 scoutsonly t  50.0s  extent r50 143.0 r90 219.3
+seed 4 scoutsonly t  50.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.993 r 143.0
+seed 4 scoutsonly t  60.0s  tube  3062.7  loops    0  width 7.45  reach  126.4  piles 7/12  strays 0.008  ms/tick 14.16
+seed 4 scoutsonly t  60.0s  contrast 1.33
+seed 4 scoutsonly t  60.0s  extent r50 143.6 r90 221.4
+seed 4 scoutsonly t  60.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.992 r 143.6
+seed 4 scoutsonly firsts 0:72:0.57:0.0 1:56:0.51:0.0 2:98:0.80:-1.0 3:83:0.80:-1.0 4:51:0.65:0.0 5:76:0.75:-1.0 6:32:0.36:0.0 7:114:0.91:-1.0 8:41:0.49:0.0 9:69:0.84:-1.0 10:61:0.78:0.3 11:64:0.72:0.5
+seed 4 scoutsonly hash=b61e583fd7b2ccda
