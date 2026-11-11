@@ -702,6 +702,8 @@ fn econ_main(seeds: &[u64], prices: &[f32]) {
         }
         // Who wins each seed, and each plan against idle and random.
         let mut wins = [0u32; PLANS.len()];
+        // Each seed's best plan (indexing across plans, so a range loop).
+        #[allow(clippy::needless_range_loop)]
         for k in 0..seeds.len() {
             let best = (0..PLANS.len())
                 .max_by(|&a, &b| res[a][k].bank.total_cmp(&res[b][k].bank))
