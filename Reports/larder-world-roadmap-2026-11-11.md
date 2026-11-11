@@ -127,3 +127,30 @@ The owner, 14:54Z: with crystals that run out the mould starts in one spot, ther
 - **First number for the race: charge 512** on a world this size (a 10-12 minute mould if nobody fights it). The size of the world, not the charge, sets how strong the idle mould gets.
 
 **Bug found and fixed (a3aaccb):** pile totals were a running f32 sum. At charge 512 a pile holds about 180,000, and a 0.005 bite is below that number's f32 step (0.016), so the totals stood still: `crystal_left` read 1.000 at 180 s and the piles kept calling at full scent while the mould ate. They are now summed from the cells in f64 each step. Runs at charge 1, all the earlier measurements, were not affected (a pile of about 350 has a step of 3e-5). The charge 512 run before the fix was stopped and is not counted.
+
+## Walls with a growing mould, 2026-11-11
+
+Scratch build with the GPU thread's growth (raw: [road, random, ring at 60 s](larder-world-roadmap-2026-11-11/walls/run8-growth.txt), [leaky rings at 90 s](larder-world-roadmap-2026-11-11/walls/run9-growth-ring-leak.txt)). `worldwall`, 512 × 320, charge 512, 5,000 walkers to start in 50,000 slots, upkeep 0.001, wall health 400, one wall at 5 s, 8 seeds. Deciding measure named first: walkers alive at 60 s, paired by seed.
+
+| Arm | Alive at 60 s, mean | Fewer than no wall | Sign test p |
+|---|---|---|---|
+| none | 16,075 | - | - |
+| road (60 × 3, ahead of the front toward the nearest crystals) | 14,674 | 7 of 8 | 0.070 |
+| random (same wall, keyed place) | 14,537 | 5 of 8 | 0.73 |
+| ring round the nearest unreached crystal | 13,859 | 6 of 8 | 0.29 |
+
+Road against random: fewer on 5 of 8 (p 0.73). None survive Holm over the four. So with growth, any wall costs the mould roughly a tenth of its size at 60 s, and a wall on its road is no better than one dropped at random. The growing mould does chew through: road walls were broken in places on 4 of 8 seeds (43-196 cells), random walls on 6 of 8. Picture, seed 1 at 60 s, none / road / random / ring: [growth-s1-60s](larder-world-roadmap-2026-11-11/walls/growth-s1-60s-none-road-random-ring.png).
+
+**A ringed crystal is ignored while walls stop scent.** The mould's tubes pass right beside the ring and never press on it: 0 bites on 6 of 8 seeds in 60 s. That is the owner's worry (15:24Z) in another form: a sealed crystal is safe because it is silent. With walls leaking scent, measured at 90 s with the measure named first (bites on the ring, and when the crystal inside is first eaten):
+
+| `wall_scent` | Ring bitten | Ring broken through in places | Crystal inside eaten |
+|---|---|---|---|
+| 0 (sealed) | 2 of 8 | 1 of 8 | 0 of 8 |
+| 0.5 | 4 of 8 | 3 of 8 | 0 of 8 |
+| 0.9 | 7 of 8 | 6 of 8 | 2 of 8 (86 s) |
+
+Bites at 0.9 against sealed: more on 6 of 7 untied seeds (p 0.125). Not significant at 8 seeds, but the trend is steady and it is what the owner asked for, so **`wall_scent` now defaults to 0.9**: a walled crystal still calls faintly, the mould gathers and gnaws, and it gets in after about a minute and a half of pressure.
+
+## Owner, 16:48Z (graphics thread)
+
+"Gun fire should hit the first slime in its path" and "The crystals should have hexagonal outline, not circle." Crystals are now pointy-top hexagons of circumradius `pile_r` in the simulation itself (`BigDish::in_pile`): the crystal's cells, its scent and where it counts as reached, about 0.83 of the disc's area, so every crystal holds about 17% less charge than in the runs above. Piles with crystals off keep their disc. The graphics thread writes `world::look::first_hit` (march the shot's line, stop at the first mould); the Larder world's firing rule will use it.

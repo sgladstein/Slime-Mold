@@ -73,6 +73,17 @@ code { font-size: 0.88em; }
   </section>
 
   <section>
+    <span class="tag">Walls, growing mould</span>
+    <h2>With a growing mould, a wall costs it about a tenth</h2>
+    <p>Same world with the mould that grows and starves, charge 512 a cell, one wall at 5 s, 8 seeds. Top left no wall, top right a wall across its road, bottom left the same wall dropped at random, bottom right a ring round the nearest crystal it had not reached. Seed 1 at 60 s.</p>
+    <figure>
+      <img src="walls/growth-s1-60s-none-road-random-ring.png" alt="Four views of seed 1 at 60 s: no wall, a road wall partly broken, a random wall, and a ringed crystal the mould's tube passes without touching.">
+      <figcaption>Walkers alive at 60 s, mean of 8 seeds: <b>no wall 16,075</b>, road 14,674 (fewer on 7 of 8), random 14,537 (5 of 8), ring 13,859 (6 of 8). A road wall is no better than a random one (5 of 8). The growing mould chewed through road walls in places on 4 of 8 seeds.</figcaption>
+    </figure>
+    <p>While walls blocked all scent, the mould walked past a ringed crystal as if it were not there. Walls now let 0.9 of the scent through, so a walled crystal still calls faintly. Over 90 s the ring was bitten on <b>2 / 4 / 7</b> seeds of 8 with no, half and most scent leaking, broken through in places on 1 / 3 / 6, and the crystal inside eaten on 0 / 0 / 2.</p>
+  </section>
+
+  <section>
     <span class="tag c">Crystals</span>
     <h2>A crystal drains as a whole</h2>
     <p>The GPU thread found that a growing mould starved with 61% of the crystal charge left, because it only ate the cells its tubes crossed. Charge now flows inside each crystal toward the eaten cells, so a tube that touches one edge drains the whole disc, and the whole disc dims together.</p>

@@ -332,11 +332,17 @@ pub struct BigParams {
     /// with walls that stop scent, a ring round a crystal hides it, and the
     /// mould never presses on the ring however weak it is (worldwall ring
     /// arm, 11-11: no bite and no broken cell in 35 s at health 30 or 300,
-    /// 2 seeds of 2 valid). Off for now: with 0.3 the mould still never
-    /// ate a ringed crystal or broke a cell (5 seeds, health 30 and 300),
-    /// and bit the ring 12 times against 9 sealed (seed 1). Today's
-    /// fixed-size mould does not press anywhere; test it again once it
-    /// grows (W0).
+    /// 2 seeds of 2 valid; a fixed-size mould presses nowhere).
+    ///
+    /// 0.9 (11-11, with the GPU thread's growth, scratch; 512 x 320, charge
+    /// 512, a health-400 ring round the nearest unreached crystal at 5 s,
+    /// 90 s, 8 seeds): the ring was bitten on 2 / 4 / 7 seeds of 8 at
+    /// 0 / 0.5 / 0.9, broken through in places on 1 / 3 / 6, and the
+    /// crystal inside eaten on 0 / 0 / 2 (both at 86 s). Bites, 0.9 against
+    /// sealed: more on 6 of 7 untied seeds (p 0.125); not significant, but
+    /// the trend is steady and the owner's ruling is that a walled crystal
+    /// must be reachable (15:24Z). Sealed, the mould walks past a ringed
+    /// crystal as if it were not there.
     pub wall_scent: f32,
     pub seed: u64,
 }
@@ -420,7 +426,7 @@ impl BigParams {
             rect: false,
             wall_hp: 400.0,
             wall_bite: 1.0,
-            wall_scent: 0.0,
+            wall_scent: 0.9,
             seed: 1,
         }
     }
@@ -928,7 +934,7 @@ impl BigDish {
             let (cx, cy) = (self.piles[pi].0 * s, self.piles[pi].1 * s);
             for dy in -n..=n {
                 for dx in -n..=n {
-                    if ((dx * dx + dy * dy) as f32) > r * r {
+                    if !self.in_pile(dx as f32, dy as f32, r) {
                         continue;
                     }
                     if let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) {
@@ -943,6 +949,23 @@ impl BigDish {
             }
         }
         self.pile_charge = self.pile_full.clone();
+    }
+
+    /// Whether the offset (`dx`, `dy`) from a pile's centre is inside it,
+    /// for a pile of radius `r` on whatever grid the caller uses. With
+    /// crystals on, a pile is a pointy-top hexagon of circumradius `r`
+    /// (the owner, 11-11 16:48Z: "The crystals should have hexagonal
+    /// outline, not circle"; the picture is the data, so the crystal's
+    /// cells, its scent and where it counts as reached are all the
+    /// hexagon, about 0.83 of the disc's area). With crystals off it is
+    /// the disc it always was, so older dishes do not change.
+    fn in_pile(&self, dx: f32, dy: f32, r: f32) -> bool {
+        if self.p.crystal_charge > 0.0 {
+            let ax = dx.abs();
+            ax <= r * 0.866_025_4 && dy.abs() <= r - ax * 0.577_350_3
+        } else {
+            dx * dx + dy * dy <= r * r
+        }
     }
 
     /// The share of a pile's crystal left (1 with crystals off).
@@ -1436,7 +1459,7 @@ impl BigDish {
             let (cx, cy) = (px * k, py * k);
             for dy in -n..=n {
                 for dx in -n..=n {
-                    if ((dx * dx + dy * dy) as f32) > r * r {
+                    if !self.in_pile(dx as f32, dy as f32, r) {
                         continue;
                     }
                     let (x, y) = (cx + dx as f32, cy + dy as f32);
@@ -1479,7 +1502,7 @@ impl BigDish {
             let (cx, cy) = (px * k, py * k);
             for dy in -n..=n {
                 for dx in -n..=n {
-                    if ((dx * dx + dy * dy) as f32) > r * r {
+                    if !self.in_pile(dx as f32, dy as f32, r) {
                         continue;
                     }
                     let (x, y) = (cx + dx as f32, cy + dy as f32);
@@ -1508,7 +1531,7 @@ impl BigDish {
             let (cx, cy) = (self.piles[pi].0 * s, self.piles[pi].1 * s);
             'pile: for dy in -n..=n {
                 for dx in -n..=n {
-                    if ((dx * dx + dy * dy) as f32) > r * r {
+                    if !self.in_pile(dx as f32, dy as f32, r) {
                         continue;
                     }
                     if let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) {
@@ -2064,6 +2087,24 @@ mod tests {
         assert!(s1 < 0.01, "flow evens it ({s1})");
         assert!((sum1 - flow.pile_charge[1]).abs() < 1e-3 * flow.pile_full[1], "the total is kept");
         assert!((flow.crystal_left(1) - 0.5).abs() < 0.05);
+    }
+
+    #[test]
+    fn crystals_are_hexagons() {
+        // Pointy-top, circumradius pile_r: the top vertex is in, the same
+        // distance out sideways is not (a flat side is at 0.87 r), and the
+        // area is the hexagon's, not the disc's.
+        let d = BigDish::new(BigParams { crystal_charge: 1.0, terrain_rock: 0.0, ..small(2, 2) });
+        let s = d.p.scale as f32;
+        let r = d.p.pile_r * s;
+        let (cx, cy) = (d.piles[1].0 * s, d.piles[1].1 * s);
+        let at = |x: f32, y: f32| d.pile_of[d.cell(x, y).unwrap()] == 2;
+        assert!(at(cx, cy - r + 1.0) && at(cx, cy + r - 1.0), "top and bottom vertices");
+        assert!(!at(cx + 0.95 * r, cy) && !at(cx - 0.95 * r, cy), "outside the flat sides");
+        assert!(at(cx + 0.8 * r, cy));
+        let cells = d.pile_of.iter().filter(|&&p| p == 2).count() as f32;
+        let hex = 2.598 * r * r;
+        assert!((cells - hex).abs() < 0.1 * hex, "{cells} cells against a hexagon's {hex}");
     }
 
     #[test]

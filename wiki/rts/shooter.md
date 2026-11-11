@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-11T16:35Z
+updated: 2026-11-11T16:51Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost]
 ---
@@ -42,6 +42,9 @@ about 10-12 minutes of food on the 512 × 320 world, the first number for
 the race start
 ([report](../../Reports/larder-world-roadmap-2026-11-11.md), *Crystal
 sizing with growth*).
+Walls leak 0.9 of their scent, so a walled crystal still calls and a growing
+mould gets through a ring in about 90 s; sealed, it walked past. Owner,
+16:48Z: crystals are hexagons, and gunfire hits the first mould in its path.
 
 Brainstorm: [`mould-shooter-2026-11-11.md`](../../Reports/mould-shooter-2026-11-11.md).
 A squad shoots the mould; both want the same food; the player's larder is a
