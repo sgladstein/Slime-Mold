@@ -177,6 +177,23 @@ pub struct BigParams {
     /// 2026-11-11 for the RTS direction: moulds that share one dish.
     pub species: u8,
     pub species_avoid: f32,
+    /// Conversion between species (0 is off; added 2026-11-11 for species
+    /// that fight over a border). Each step, after moving, a walker whose
+    /// cell holds more than `species_convert` times its own species' trail
+    /// of another species' trail joins that species (the largest other,
+    /// lowest index on ties). Values above 1 leave a margin, so a border
+    /// moves only where one side clearly outweighs the other. Walkers keep
+    /// their species through respawn.
+    pub species_convert: f32,
+    /// Grazing (0 is off; added 2026-11-11 to make bodies roam, after
+    /// Primordia's "Symbiosis" mode). A grass field starts at 1 on every agar
+    /// cell; each step every walker eats `graze_eat` from its cell (not below
+    /// 0) and grass regrows by `graze_regrow` x (1 - grass). A sensor adds
+    /// `graze_weight` x grass at the cell it reads, so a body eats the ground
+    /// under it bare and leans toward fresh ground.
+    pub graze_weight: f32,
+    pub graze_eat: f32,
+    pub graze_regrow: f32,
     /// With `species` > 1 and a spread start (`blob` false), species s
     /// starts in its own vertical band of the dish, s/n to (s+1)/n of the
     /// width (false: all mixed), so moulds begin as neighbours.
@@ -287,6 +304,10 @@ impl BigParams {
             sensor_r: 0,
             species: 0,
             species_avoid: 1.0,
+            species_convert: 0.0,
+            graze_weight: 0.0,
+            graze_eat: 0.05,
+            graze_regrow: 0.002,
             species_zones: false,
             chance_exp: 0.0,
             species_cycle: false,
@@ -364,6 +385,10 @@ pub struct BigDish {
     pub species_trail: Vec<Vec<f32>>,
     /// Each walker's age in fine steps (`explore_steps` > 0), else empty.
     pub age: Vec<u16>,
+    /// Each walker's species (`species` > 1), else empty. Starts k % n.
+    pub spec: Vec<u8>,
+    /// Grass (`graze_weight` > 0) a cell, else empty.
+    pub grass: Vec<f32>,
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
@@ -458,6 +483,8 @@ impl BigDish {
             germ: Vec::new(),
             species_trail: Vec::new(),
             age: Vec::new(),
+            spec: Vec::new(),
+            grass: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
             threads: 1,
@@ -468,8 +495,13 @@ impl BigDish {
         if d.p.explore_steps > 0 {
             d.age = vec![0; d.walkers.len()];
         }
+        if d.p.graze_weight != 0.0 {
+            d.grass = d.agar.iter().map(|&a| if a { 1.0 } else { 0.0 }).collect();
+        }
         if d.p.species > 1 {
             d.species_trail = vec![vec![0.0; w * h]; d.p.species as usize];
+            let n = d.p.species as usize;
+            d.spec = (0..d.walkers.len()).map(|k| (k % n) as u8).collect();
         }
         if d.p.sick_steps > 0 {
             d.sick = vec![0; d.walkers.len()];
@@ -581,7 +613,10 @@ impl BigDish {
     fn sense(&self, x: f32, y: f32, a: f32, so: f32, sso: f32, sp: usize) -> f32 {
         let (c, s) = (a.cos(), a.sin());
         match self.cell(x + c * so, y + s * so) {
-            Some(i) if self.agar[i] => self.trail_seen(i, sp) + self.scent_at(x + c * sso, y + s * sso),
+            Some(i) if self.agar[i] => {
+                let g = if self.grass.is_empty() { 0.0 } else { self.p.graze_weight * self.grass[i] };
+                self.trail_seen(i, sp) + self.scent_at(x + c * sso, y + s * sso) + g
+            }
             _ => -1.0e6,
         }
     }
@@ -624,8 +659,7 @@ impl BigDish {
     fn lay(&mut self, k: usize, j: usize, amount: f32) {
         self.trail[j] += amount;
         if !self.species_trail.is_empty() {
-            let n = self.species_trail.len();
-            self.species_trail[k % n][j] += amount;
+            self.species_trail[self.spec[k] as usize][j] += amount;
         }
     }
 
@@ -645,7 +679,7 @@ impl BigDish {
         let look = t.is_multiple_of(p.sense_every.max(1) as u64);
         let nsp = self.species_trail.len().max(1);
         for k in 0..self.walkers.len() {
-            let sp = k % nsp;
+            let sp = if nsp > 1 { self.spec[k] as usize } else { 0 };
             let (x, y, mut h) = self.walkers[k];
             let here = self.cell(x, y).expect("walker inside the dish");
             // Trail-dependent settings (`sense_scale`), read where it stands.
@@ -821,6 +855,35 @@ impl BigDish {
         }
         for a in self.age.iter_mut() {
             *a = a.saturating_add(1);
+        }
+        if !self.grass.is_empty() {
+            for k in 0..self.walkers.len() {
+                let (x, y, _) = self.walkers[k];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                self.grass[i] = (self.grass[i] - p.graze_eat).max(0.0);
+            }
+            for (g, &a) in self.grass.iter_mut().zip(&self.agar) {
+                if a {
+                    *g += p.graze_regrow * (1.0 - *g);
+                }
+            }
+        }
+        if p.species_convert > 0.0 && !self.spec.is_empty() {
+            let n = self.species_trail.len();
+            for k in 0..self.walkers.len() {
+                let (x, y, _) = self.walkers[k];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                let own = self.spec[k] as usize;
+                let mut best = own;
+                for s in 0..n {
+                    if s != own && self.species_trail[s][i] > self.species_trail[best][i] {
+                        best = s;
+                    }
+                }
+                if best != own && self.species_trail[best][i] > p.species_convert * self.species_trail[own][i] {
+                    self.spec[k] = best as u8;
+                }
+            }
         }
         if respawn > 0.0 {
             self.respawn_walkers(respawn, crowd);
@@ -1137,8 +1200,11 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(self.species_trail.iter().flatten()) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.grass).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
+        }
+        for &c in &self.spec {
+            eat(c as u32);
         }
         for &c in self.sick.iter().chain(&self.age) {
             eat(c as u32);
