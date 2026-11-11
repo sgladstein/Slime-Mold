@@ -1,0 +1,47 @@
+# rush-trace.rs (scratch, run as an example): four soldiers ordered to attack the core at 0 s on the
+# race world (scale 2, 5,000 walkers), 200 game s or until wiped. Args: seed, aim_min.
+# "none" = shots that found no slime on their line (they hit rock or a wall, or flew through).
+# Hit distance is from the shooter, fine cells, bins of 4 (the last bin 28+). Kills a shot 0..5+.
+
+## Before the fixes (soldiers only slid along an axis when blocked; no sight check)
+seed 1 aim_min 1: t 200 alive 4 shots 200 none 191 killed 13
+hit distance from shooter (fine cells, bins of 4): [1, 1, 0, 3, 0, 1, 2, 1]
+kills a shot (0..5+): [1, 4, 3, 1, 0, 0]
+seed 2 aim_min 1: t 128 alive 0 shots 200 none 104 killed 113
+hit distance from shooter (fine cells, bins of 4): [61, 8, 6, 4, 5, 3, 5, 4]
+kills a shot (0..5+): [29, 44, 10, 7, 3, 3]
+seed 1 aim_min 4: t 200 alive 4 shots 200 none 196 killed 5
+hit distance from shooter (fine cells, bins of 4): [3, 0, 0, 0, 1, 0, 0, 0]
+kills a shot (0..5+): [0, 3, 1, 0, 0, 0]
+seed 2 aim_min 4: t 158 alive 0 shots 199 none 2 killed 162
+hit distance from shooter (fine cells, bins of 4): [187, 10, 0, 0, 0, 0, 0, 0]
+kills a shot (0..5+): [110, 45, 24, 7, 7, 4]
+seed 1 aim_min 8: t 200 alive 4 shots 200 none 198 killed 2
+hit distance from shooter (fine cells, bins of 4): [1, 1, 0, 0, 0, 0, 0, 0]
+kills a shot (0..5+): [0, 2, 0, 0, 0, 0]
+seed 2 aim_min 8: t 200 alive 0 shots 73 none 0 killed 123
+hit distance from shooter (fine cells, bins of 4): [73, 0, 0, 0, 0, 0, 0, 0]
+kills a shot (0..5+): [33, 15, 9, 3, 2, 11]
+seed 1 aim_min 16: t 200 alive 4 shots 1 none 1 killed 0
+seed 2 aim_min 16: t 200 alive 0 shots 0 none 0 killed 0
+
+## The trace every 10 s, seed 1, aim_min 4, before the fixes (core at (113,160)):
+20s core (113,160) down None shots 9 none 7: (165,165) hp 99 t 0 d 12 aim Some((142, 178)) | (267,198) hp 100 t 0 d 1 aim Some((270, 174)) | (163,159) hp 99 t 0 d 12 aim Some((142, 178)) | (165,168) hp 100 t 0 d 12 aim Some((142, 178))
+80s core (113,160) down None shots 200 none 196: (162,160) hp 99 t 0 d 6 aim Some((150, 134)) | (267,198) hp 100 t 0 d 3 aim Some((278, 178)) | (163,156) hp 99 t 0 d 6 aim Some((150, 134)) | (164,164) hp 100 t 0 d 5 aim Some((142, 166))
+(three soldiers stand at x 162-165, behind rock, 50 cells short of the core; one at (267,198) never moves; the bank is empty at 80 s)
+
+## After: walking maps round rock and walls, and fire only along a clear line
+seed 1 aim_min 4: t 200 alive 1 shots 200 none 0 killed 1282
+hit distance from shooter (fine cells, bins of 4): [140, 42, 15, 2, 1, 0, 0, 0]
+kills a shot (0..5+): [26, 29, 32, 22, 17, 74]
+seed 2 aim_min 4: t 200 alive 2 shots 197 none 0 killed 1452
+hit distance from shooter (fine cells, bins of 4): [96, 32, 50, 16, 0, 2, 1, 0]
+kills a shot (0..5+): [11, 22, 30, 24, 22, 88]
+seed 2 aim_min 1: t 200 alive 2 shots 200 none 1 killed 1600
+hit distance from shooter (fine cells, bins of 4): [87, 34, 42, 20, 3, 3, 5, 5]
+kills a shot (0..5+): [3, 26, 22, 29, 33, 86]
+seed 2 aim_min 2: t 147 alive 0 shots 200 none 0 killed 1486
+hit distance from shooter (fine cells, bins of 4): [99, 40, 41, 12, 1, 3, 4, 0]
+kills a shot (0..5+): [11, 29, 22, 30, 24, 84]
+20s core (113,160) down None shots 19 none 0: (113,160) hp 84 t 0 d 16 aim Some((106, 150)) | (110,162) hp 74 t 6 d 16 aim Some((106, 150)) | (113,156) hp 51 t 0 d 16 aim Some((106, 150)) | (116,164) hp 60 t 0 d 16 aim Some((106, 150))
+(all four reach the core by 20 s; the core is never taken, because mould stays within 2 core radii of it)

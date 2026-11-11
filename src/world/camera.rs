@@ -35,6 +35,10 @@ pub struct Camera {
     pub y: f32,
     /// Screen pixels a world cell.
     pub zoom: f32,
+    /// Screen pixels at the top and bottom the UI covers (its bars and
+    /// panels): the view may scroll that far past the world's edge, so
+    /// the world's last rows can be brought out from under them.
+    pub inset: (f32, f32),
 }
 
 impl Camera {
@@ -42,7 +46,7 @@ impl Camera {
     /// than the screen (you scroll it), at the largest whole zoom that fits
     /// when it is smaller (a small dish fills the window as it always did).
     pub fn new(world: (usize, usize), screen: (u32, u32)) -> Self {
-        let mut c = Camera { world: (world.0 as f32, world.1 as f32), screen: (screen.0 as f32, screen.1 as f32), x: 0.0, y: 0.0, zoom: 1.0 };
+        let mut c = Camera { world: (world.0 as f32, world.1 as f32), screen: (screen.0 as f32, screen.1 as f32), x: 0.0, y: 0.0, zoom: 1.0, inset: (0.0, 0.0) };
         let fit = c.fit();
         c.zoom = if fit >= 1.0 { fit.floor().min(MAX_ZOOM) } else { 1.0 };
         c.centre_on((c.world.0 / 2.0, c.world.1 / 2.0));
@@ -51,7 +55,8 @@ impl Camera {
 
     /// The zoom at which the whole world just fits on the screen.
     pub fn fit(&self) -> f32 {
-        (self.screen.0 / self.world.0).min(self.screen.1 / self.world.1)
+        let h = (self.screen.1 - self.inset.0 - self.inset.1).max(1.0);
+        (self.screen.0 / self.world.0).min(h / self.world.1)
     }
 
     /// The smallest zoom allowed: the fit, or 1 if the world fits at 1.
@@ -89,7 +94,20 @@ impl Camera {
     pub fn clamp(&mut self) {
         let (w, h) = self.span();
         self.x = if w >= self.world.0 { (self.world.0 - w) / 2.0 } else { self.x.clamp(0.0, self.world.0 - w) };
-        self.y = if h >= self.world.1 { (self.world.1 - h) / 2.0 } else { self.y.clamp(0.0, self.world.1 - h) };
+        // Vertically, the band between the UI's insets is what must stay on
+        // the world (with no insets, the whole screen).
+        let (top, bottom) = (self.inset.0 / self.zoom, self.inset.1 / self.zoom);
+        let band = h - top - bottom;
+        self.y = if band >= self.world.1 { (self.world.1 - band) / 2.0 - top } else { self.y.clamp(-top, self.world.1 - h + bottom) };
+    }
+
+    /// The UI's insets changed (its panels' heights): keep the view legal.
+    pub fn set_inset(&mut self, top: f32, bottom: f32) {
+        if self.inset != (top, bottom) {
+            self.inset = (top, bottom);
+            self.zoom = self.zoom.max(self.min_zoom());
+            self.clamp();
+        }
     }
 
     pub fn centre_on(&mut self, w: (f32, f32)) {
@@ -233,6 +251,19 @@ mod tests {
             c.wheel(-1, (640.0, 400.0));
         }
         assert!((c.zoom - c.fit()).abs() < 1e-6 && c.sees_all(), "zoomed out to {}", c.zoom);
+    }
+
+    #[test]
+    fn an_inset_lets_the_world_bottom_come_out_from_under_the_panels() {
+        let mut c = Camera::new((2048, 1280), (1280, 800));
+        c.set_inset(50.0, 200.0);
+        c.centre_on((1024.0, 1280.0));
+        // The world's last row sits just above the bottom panel.
+        let (_, y) = c.to_screen((0.0, 1280.0));
+        assert!((y - 600.0).abs() < 0.5, "{y}");
+        c.centre_on((1024.0, 0.0));
+        let (_, y) = c.to_screen((0.0, 0.0));
+        assert!((y - 50.0).abs() < 0.5, "{y}");
     }
 
     #[test]

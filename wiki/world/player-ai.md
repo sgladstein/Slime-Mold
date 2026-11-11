@@ -2,7 +2,7 @@
 title: The Larder player AI
 kind: tool
 status: current
-updated: 2026-11-11T20:15Z
+updated: 2026-11-11T21:10Z
 sources: [Reports/larder-ai-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Brain, Style, Side, RandomHand, set_rule, Game::apply]
 ---
@@ -23,7 +23,7 @@ code: [Brain, Style, Side, RandomHand, set_rule, Game::apply]
 
 ## Open
 
-- Port `View` and `Side` to the Larder world when crystals and a second side land; add a team id to `Cmd` there ([roadmap](../../Reports/larder-world-roadmap-2026-11-11.md)).
+- Port `View` and `Side` to the Larder world's game layer (`larder_world::Game`, W2b: one squad, `Cmd` with `Wall`), then a second team: a team on each soldier, a home per team, and `Game::apply_as(team, cmd)` logging the team on the replay line ([roadmap](../../Reports/larder-world-roadmap-2026-11-11.md), *W2b*).
 - W1: how often the early leader wins with each opening and crystal rule, as a per-mould difficulty stat on the mould ladder (owner, 14:14Z and 14:54Z), not a gate.
 - An exploiter search over `Style` knobs against a rule change.
 

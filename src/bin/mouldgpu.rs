@@ -138,8 +138,9 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::*;
 use slime_mould::hud;
 use slime_mould::mould::STEPS_PER_SECOND;
-use slime_mould::world::controls::unit_marks;
-use slime_mould::world::{Button, Camera, Controls, Marks, UiCommand, Unit, View};
+use slime_mould::world::demo::Squad;
+use slime_mould::world::ui::{theme, MenuItem};
+use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
@@ -865,6 +866,12 @@ struct App {
     squad: Option<Squad>,
     marks: Marks,
     last_frame: Instant,
+    /// The game UI over the squad (`world::ui`), drawn by the canvas pass.
+    hud: Hud,
+    canvas: Option<Canvas>,
+    canvas_pass: Option<CanvasPass>,
+    /// Paused before the menu opened (the menu pauses; closing restores).
+    menu_paused: bool,
 }
 
 impl App {
@@ -907,6 +914,10 @@ impl App {
             squad: None,
             marks: Marks::default(),
             last_frame: Instant::now(),
+            hud: Hud::new(),
+            canvas: None,
+            canvas_pass: None,
+            menu_paused: false,
         }
     }
 
@@ -917,6 +928,44 @@ impl App {
     /// The minimap's rectangle on screen this frame, if drawn.
     fn minimap(&self) -> Option<(u32, u32, u32, u32)> {
         self.view.as_ref().and_then(|v| v.minimap_rect(&self.camera))
+    }
+
+    /// What the game UI gave: selection and menu events are the window's,
+    /// the rest the squad's commands.
+    fn hud_events(&mut self, events: Vec<HudEvent>, event_loop: &ActiveEventLoop) {
+        for ev in events {
+            let units = self.squad.as_ref().map(|q| q.units()).unwrap_or_default();
+            match ev {
+                HudEvent::SelectOnly(k) => self.controls.selected = vec![k],
+                HudEvent::Deselect(k) => self.controls.selected.retain(|&q| q != k),
+                HudEvent::Group(g) => self.controls.selected = self.controls.groups[g].iter().copied().filter(|k| units.iter().any(|u| u.id == *k && u.alive)).collect(),
+                HudEvent::Idle => {
+                    let after = self.controls.selected.first().copied();
+                    if let Some(k) = self.squad.as_ref().and_then(|q| q.next_idle(after).or_else(|| q.next_idle(None))) {
+                        self.controls.selected = vec![k];
+                        if let Some(u) = units.iter().find(|u| u.id == k) {
+                            self.camera.centre_on((u.x, u.y));
+                        }
+                    }
+                }
+                HudEvent::Menu(MenuItem::Opened) => {
+                    self.menu_paused = self.paused;
+                    self.paused = true;
+                }
+                HudEvent::Menu(MenuItem::Resume) => self.paused = self.menu_paused,
+                HudEvent::Menu(MenuItem::Restart) => {
+                    self.squad = self.engine.as_ref().map(|e| Squad::new((e.dish.w, e.dish.h), self.scale));
+                    self.controls.selected.clear();
+                    self.paused = self.menu_paused;
+                }
+                HudEvent::Menu(MenuItem::Quit) => event_loop.exit(),
+                other => {
+                    if let Some(sq) = self.squad.as_mut() {
+                        sq.hud(&other, &self.controls.selected);
+                    }
+                }
+            }
+        }
     }
 
     fn fail(&mut self, event_loop: &ActiveEventLoop, msg: String) {
@@ -1037,7 +1086,7 @@ impl App {
                     }
                 }
             }
-            KeyCode::Space => self.paused = !self.paused,
+            KeyCode::Space | KeyCode::KeyP | KeyCode::Pause => self.paused = !self.paused,
             KeyCode::Period => self.step_once = true,
             KeyCode::KeyR => self.restart(),
             KeyCode::KeyN => {
@@ -1056,6 +1105,11 @@ impl App {
                     None => self.engine.as_ref().map(|e| Squad::new((e.dish.w, e.dish.h), self.scale)),
                 };
                 self.controls.selected.clear();
+                self.hud.cancel_targeting();
+                self.camera.set_inset(0.0, 0.0);
+                if self.squad.is_some() {
+                    self.paused = false;
+                }
             }
             KeyCode::KeyW => {
                 // The world: today's 1024 x 640 dish, or twice as wide and
@@ -1106,10 +1160,16 @@ impl App {
         if self.panel_dirty {
             // The panel is screen-space now (the view's overlay); the
             // engine's own dish-sized `hud` stays empty.
+            // With the squad out the game UI replaces the panel.
             let (lines, bottom) = self.panel_lines();
+            let squad = self.squad.is_some();
             if let Some(v) = self.view.as_mut() {
-                let img = panel(v.screen.0 as usize, v.screen.1 as usize, &lines, &bottom);
-                v.set_overlay(Some(&img));
+                if squad {
+                    v.set_overlay(None);
+                } else {
+                    let img = panel(v.screen.0 as usize, v.screen.1 as usize, &lines, &bottom);
+                    v.set_overlay(Some(&img));
+                }
             }
             self.panel_dirty = false;
         }
@@ -1120,6 +1180,33 @@ impl App {
             self.controls.prune(&units);
             sq.marks(self.camera.zoom, &mut self.marks);
             self.controls.marks(&units, &self.camera, sq.radius(), &mut self.marks);
+            for n in sq.notes.drain(..) {
+                self.hud.alert(&n.text, n.at, if n.bad { theme::BAD } else { theme::GOOD });
+            }
+        }
+        // The game UI: drawn into the canvas (and its ghost and pings into
+        // the marks), and the camera told how much of the screen it covers.
+        let minimap = self.view.as_ref().is_some_and(|v| v.minimap) && !self.camera.sees_all();
+        if let Some(c) = self.canvas.as_mut() {
+            c.clear();
+            if let Some(sq) = self.squad.as_ref() {
+                // What is under the cursor in the world (not behind a panel
+                // or the minimap), and where a placement would land
+                // (through the minimap when on it).
+                let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
+                let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
+                let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
+                let model = sq.model(&self.controls.selected, hover, ghost, self.paused);
+                self.hud.draw(&model, &self.controls, &self.camera, minimap, c, &mut self.marks);
+                self.camera.set_inset(self.hud.top, c.screen.1 as f32 - self.hud.bottom);
+            }
+            let bx = if self.squad.is_some() { self.hud.minimap_box } else { None };
+            if let Some(v) = self.view.as_mut() {
+                v.minimap_box = bx;
+            }
+            if let Some(cp) = self.canvas_pass.as_mut() {
+                cp.upload(c);
+            }
         }
         if let Some(v) = self.view.as_mut() {
             v.set_marks(&self.marks);
@@ -1130,6 +1217,7 @@ impl App {
             self.s.ticks
         };
         let (Some(p), Some(shared), Some(e), Some(view)) = (&self.pixels, &self.shared, self.engine.as_mut(), self.view.as_ref()) else { return };
+        let mut canvas_pass = self.canvas_pass.as_mut();
         let camera = self.camera;
         let mut hand = self.hand;
         hand.infect |= std::mem::take(&mut self.infect_once);
@@ -1143,6 +1231,9 @@ impl App {
             let timed = stamps.filter(|_| ticks > 0);
             e.record(shared, enc, ticks, soft, timed.map(|st| &st.qs));
             view.record(enc, &camera, timed.map(|st| (&st.qs, None, Some(3))));
+            if let Some(cp) = canvas_pass.as_mut() {
+                cp.record(enc, &view.out, view.stride);
+            }
             if let Some(st) = timed {
                 st.resolve(enc);
                 wrote = true;
@@ -1181,125 +1272,6 @@ impl App {
 fn first_size(world: (u32, u32), monitor: Option<PhysicalSize<u32>>) -> PhysicalSize<u32> {
     let room = monitor.map_or((1600, 900), |m| (m.width * 9 / 10, m.height * 9 / 10));
     PhysicalSize::new(world.0.min(room.0).max(320), world.1.min(room.1).max(240))
-}
-
-/// **The stand-in squad** (Q): markers that walk where they are told, so
-/// the camera's controls can be tried on the big dish before the Larder
-/// world's rules exist. No rules: they do not shoot, eat or die, and the
-/// mould does not see them. Team 0 is yours (white); team 1 (blue) stands
-/// still, to show that only your team can be selected.
-struct Squad {
-    /// Each unit: where it is, its team, where it is walking, and a burn
-    /// line it holds (drawn as the guide Larder draws).
-    units: Vec<StandIn>,
-    /// World cells a second.
-    speed: f32,
-    /// Fine cells a dish cell, for sizes.
-    scale: f32,
-}
-
-#[derive(Clone, Copy)]
-struct StandIn {
-    x: f32,
-    y: f32,
-    team: u8,
-    to: Option<(f32, f32)>,
-    burn: Option<((f32, f32), (f32, f32))>,
-}
-
-impl Squad {
-    fn new(world: (usize, usize), scale: usize) -> Self {
-        let (w, h) = (world.0 as f32, world.1 as f32);
-        let s = scale as f32;
-        let mut units = Vec::new();
-        for k in 0..12 {
-            let (i, j) = ((k % 4) as f32, (k / 4) as f32);
-            units.push(StandIn { x: w * 0.3 + i * 4.0 * s, y: h * 0.5 + j * 4.0 * s, team: 0, to: None, burn: None });
-        }
-        for k in 0..6 {
-            units.push(StandIn { x: w * 0.7 + (k % 3) as f32 * 4.0 * s, y: h * 0.4 + (k / 3) as f32 * 4.0 * s, team: 1, to: None, burn: None });
-        }
-        // Larder's soldier speed, about 12 dish cells a second.
-        Squad { units, speed: 12.0 * s, scale: s }
-    }
-
-    /// A unit's radius in world cells: about Larder's soldier, a dish cell.
-    fn radius(&self) -> f32 {
-        0.9 * self.scale
-    }
-
-    fn units(&self) -> Vec<Unit> {
-        self.units.iter().enumerate().map(|(id, u)| Unit { id, team: u.team, x: u.x, y: u.y, alive: true }).collect()
-    }
-
-    /// Spreads `ids` round `at` in a square, `gap` cells apart, so they do
-    /// not stack on one cell.
-    fn spread(ids: &[usize], at: (f32, f32), gap: f32) -> Vec<(usize, (f32, f32))> {
-        let side = (ids.len() as f32).sqrt().ceil().max(1.0) as usize;
-        ids.iter()
-            .enumerate()
-            .map(|(n, &k)| {
-                let (i, j) = ((n % side) as f32, (n / side) as f32);
-                let off = (side as f32 - 1.0) / 2.0;
-                (k, (at.0 + (i - off) * gap, at.1 + (j - off) * gap))
-            })
-            .collect()
-    }
-
-    fn command(&mut self, c: UiCommand) {
-        let gap = 4.0 * self.scale;
-        match c {
-            UiCommand::Order { units, at } => {
-                for (k, p) in Self::spread(&units, at, gap) {
-                    self.units[k].to = Some(p);
-                    self.units[k].burn = None;
-                }
-            }
-            UiCommand::Burn { units, from, to } => {
-                // Each takes a place along the line, a little behind it.
-                let n = units.len().max(1) as f32;
-                for (i, &k) in units.iter().enumerate() {
-                    let f = (i as f32 + 0.5) / n;
-                    self.units[k].to = Some((from.0 + (to.0 - from.0) * f, from.1 + (to.1 - from.1) * f));
-                    self.units[k].burn = Some((from, to));
-                }
-            }
-            _ => {}
-        }
-    }
-
-    fn step(&mut self, dt: f32) {
-        let step = self.speed * dt.min(0.1);
-        for u in &mut self.units {
-            if let Some((tx, ty)) = u.to {
-                let (dx, dy) = (tx - u.x, ty - u.y);
-                let d = dx.hypot(dy);
-                if d <= step {
-                    (u.x, u.y) = (tx, ty);
-                    u.to = None;
-                } else {
-                    u.x += dx / d * step;
-                    u.y += dy / d * step;
-                }
-            }
-        }
-    }
-
-    fn marks(&self, zoom: f32, out: &mut Marks) {
-        for (id, u) in self.units.iter().enumerate() {
-            if let Some((a, b)) = u.burn {
-                out.line(a, b, 4.0, [255, 150, 60, 255]);
-            }
-            if let Some(to) = u.to {
-                out.line((u.x, u.y), to, 2.0, [255, 255, 255, 90]);
-            }
-            unit_marks(&Unit { id, team: u.team, x: u.x, y: u.y, alive: true }, self.radius(), 1.0, zoom, out);
-        }
-        // A world-space label, as a game would put a count beside a crystal.
-        if let Some(u) = self.units.iter().find(|u| u.team == 1) {
-            out.label((u.x, u.y), (-6.0, -26.0), "TEAM 2", 2.0, [110, 180, 255, 255]);
-        }
-    }
 }
 
 impl ApplicationHandler for App {
@@ -1360,6 +1332,8 @@ impl ApplicationHandler for App {
             let world = (e.dish.w, e.dish.h);
             self.view = Some(View::new(p.device(), p.queue(), &e.frame, world, (w, h)));
             self.camera = Camera::new(world, (w, h));
+            self.canvas = Some(Canvas::new((w, h)));
+            self.canvas_pass = Some(CanvasPass::new(p.device(), p.queue()));
         }
     }
 
@@ -1378,6 +1352,9 @@ impl ApplicationHandler for App {
                         v.resize((size.width, size.height));
                     }
                     self.camera.resize((size.width, size.height));
+                    if let Some(c) = self.canvas.as_mut() {
+                        c.screen = (size.width, size.height);
+                    }
                     self.panel_dirty = true;
                 }
             }
@@ -1388,8 +1365,16 @@ impl ApplicationHandler for App {
             }
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(code) = event.physical_key {
-                    if code == KeyCode::KeyF && self.squad.is_some() {
-                        self.controls.burn = event.state == ElementState::Pressed;
+                    // With the squad out the game UI has the keys first: its
+                    // command card's hotkeys, Esc for its menu, Space for
+                    // the newest alert. (F is its burn-line button, so the
+                    // controls' F+drag is not needed here.)
+                    if self.squad.is_some() && !event.repeat {
+                        let (took, events) = self.hud.key(code, event.state == ElementState::Pressed, self.ctrl, &mut self.camera);
+                        self.hud_events(events, event_loop);
+                        if took {
+                            return;
+                        }
                     }
                     let repeat_ok = matches!(code, KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::Period);
                     if event.state == ElementState::Pressed && (!event.repeat || repeat_ok) {
@@ -1402,11 +1387,13 @@ impl ApplicationHandler for App {
                 // world cell under them through the camera.
                 let at = (position.x as f32, position.y as f32);
                 let mm = self.minimap();
+                self.hud.moved(Some(at));
                 self.controls.moved(Some(at), &mut self.camera, mm);
                 self.hand.at = self.camera.world_at(at).filter(|_| mm.is_none_or(|r| slime_mould::world::view::minimap_world(r, self.world(), at).is_none()));
             }
             WindowEvent::CursorLeft { .. } => {
                 self.hand.at = None;
+                self.hud.moved(None);
                 self.controls.moved(None, &mut self.camera, None);
             }
             WindowEvent::Focused(focused) => {
@@ -1439,6 +1426,14 @@ impl ApplicationHandler for App {
                 // The middle button pans, the minimap moves the camera, and
                 // with the squad out every button is the controls'; else the
                 // left and right are the sandbox's tools as before.
+                // The game UI first: a click on a panel, or while placing.
+                if let (Some(b), true) = (b, self.squad.is_some()) {
+                    let (took, events) = self.hud.button(b, down, &self.camera, self.shift);
+                    self.hud_events(events, event_loop);
+                    if took {
+                        return;
+                    }
+                }
                 let to_controls = self.squad.is_some() || button == MouseButton::Middle || (on_map && down) || !down;
                 if let (Some(b), true) = (b, to_controls) {
                     let units = self.squad.as_ref().map(|q| q.units()).unwrap_or_default();
@@ -1516,6 +1511,10 @@ struct Look {
     view: Option<(u32, u32)>,
     cam: Option<(f32, f32, f32)>,
     squad: bool,
+    /// `ui=STATE` with `squad=1`: the game UI over the squad, in one of
+    /// the states the page shows (group, one, enemy, wall, turret, menu,
+    /// help, empty).
+    ui: String,
     /// `walls=AX,AY,BX,BY,WIDTH@SECONDS;...`: Larder World walls, in dish
     /// cells, each built (`Engine::build_wall`) before the first frame at or
     /// after its time.
@@ -1775,6 +1774,8 @@ fn view_shot(device: &wgpu::Device, queue: &wgpu::Queue, e: &Engine, screen: (u3
     cam.zoom_to(zoom, (0.0, 0.0));
     cam.centre_on((cx, cy));
     let mut marks = Marks::default();
+    let mut canvas = Canvas::new(screen);
+    let mut hud = Hud::new();
     if look.squad {
         // The squad, three selected, one ordered off and two on a burn line,
         // and a drag box under way: every mark the controls draw.
@@ -1785,40 +1786,164 @@ fn view_shot(device: &wgpu::Device, queue: &wgpu::Queue, e: &Engine, screen: (u3
         sq.command(UiCommand::Burn { units: vec![4, 5], from: a, to: b });
         sq.step(0.5);
         k.selected = vec![0, 4, 5];
+        if !look.ui.is_empty() {
+            ui_state(&look.ui, &mut sq, &mut k, &mut cam, &mut view, &mut canvas, &mut hud, &mut marks);
+            view.minimap_box = hud.minimap_box;
+        }
         let units = sq.units();
-        sq.marks(cam.zoom, &mut marks);
-        k.marks(&units, &cam, sq.radius(), &mut marks);
+        let mut squad_marks = Marks::default();
+        sq.marks(cam.zoom, &mut squad_marks);
+        k.marks(&units, &cam, sq.radius(), &mut squad_marks);
+        // The squad under the UI's ghost and pings.
+        squad_marks.list.append(&mut marks.list);
+        marks = squad_marks;
     }
     view.set_marks(&marks);
-    let (lines, bottom) = (vec![("CAMERA VIEW".to_string(), WHITE)], vec![(format!("ZOOM {:.2}  WORLD {} X {}", cam.zoom, world.0, world.1), DIM)]);
-    view.set_overlay(Some(&panel(screen.0 as usize, screen.1 as usize, &lines, &bottom)));
-    let mut times = Vec::new();
-    let qs = timestamps.then(|| device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("view"), ty: wgpu::QueryType::Timestamp, count: 2 }));
-    let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view stamps"), size: 16, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+    if look.ui.is_empty() {
+        let (lines, bottom) = (vec![("CAMERA VIEW".to_string(), WHITE)], vec![(format!("ZOOM {:.2}  WORLD {} X {}", cam.zoom, world.0, world.1), DIM)]);
+        view.set_overlay(Some(&panel(screen.0 as usize, screen.1 as usize, &lines, &bottom)));
+    }
+    let mut cp = CanvasPass::new(device, queue);
+    cp.upload(&mut canvas);
+    // The view and the UI timed apart (stamps 0-1 and 2-3), and the UI's
+    // CPU side (binning and upload, every frame in the game) on the clock.
+    let (mut times, mut ui_times, mut cpu_times) = (Vec::new(), Vec::new(), Vec::new());
+    let qs = timestamps.then(|| device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("view"), ty: wgpu::QueryType::Timestamp, count: 4 }));
+    let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view stamps"), size: 32, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
     for _ in 0..21 {
+        let t0 = Instant::now();
+        cp.upload(&mut canvas);
+        cpu_times.push(t0.elapsed().as_secs_f64() * 1e3);
         let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         view.record(&mut enc, &cam, qs.as_ref().map(|q| (q, Some(0), Some(1))));
+        cp.record_timed(&mut enc, &view.out, view.stride, qs.as_ref().map(|q| (q, Some(2), Some(3))));
         if let Some(q) = &qs {
-            enc.resolve_query_set(q, 0..2, &resolve, 0);
+            enc.resolve_query_set(q, 0..4, &resolve, 0);
         }
         queue.submit([enc.finish()]);
         if qs.is_some() {
             let t: Vec<u64> = read_back(device, queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
-            times.push(t[1].saturating_sub(t[0]) as f64 * queue.get_timestamp_period() as f64 / 1e6);
+            let period = queue.get_timestamp_period() as f64 / 1e6;
+            times.push(t[1].saturating_sub(t[0]) as f64 * period);
+            ui_times.push(t[3].saturating_sub(t[2]) as f64 * period);
         }
     }
-    times.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let median = |v: &mut Vec<f64>| {
+        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        v.get(v.len() / 2).copied()
+    };
     let path = format!("{}/{}-view.png", look.dir, look.tag);
     view.picture().save(&path).unwrap();
-    let ms = times.get(times.len() / 2).map_or("no timestamps".to_string(), |m| format!("GPU {m:.3} ms"));
-    println!("view {}x{} at zoom {:.2} on ({cx:.0}, {cy:.0}), {} marks: {ms} (median of {}); wrote {path}", screen.0, screen.1, cam.zoom, marks.len(), times.len());
+    let ms = match (median(&mut times), median(&mut ui_times)) {
+        (Some(v), Some(u)) => format!("GPU {v:.3} ms the view, {u:.3} ms the UI"),
+        _ => "no timestamps".to_string(),
+    };
+    let cpu = median(&mut cpu_times).unwrap_or(0.0);
+    println!("view {}x{} at zoom {:.2} on ({cx:.0}, {cy:.0}), {} marks, {} UI shapes: {ms}, CPU {cpu:.3} ms binning and uploading the UI (medians of 21); wrote {path}", screen.0, screen.1, cam.zoom, marks.len(), canvas.len());
+}
+
+/// The squad and its UI in one of the page's states (`ui=STATE`). The UI
+/// is drawn twice: once to lay it out (so a button's place is known for a
+/// hover), then for the picture.
+#[allow(clippy::too_many_arguments)]
+fn ui_state(state: &str, sq: &mut Squad, k: &mut Controls, cam: &mut Camera, view: &mut View, canvas: &mut Canvas, hud: &mut Hud, marks: &mut Marks) {
+    use slime_mould::world::demo::WALL_ID;
+    // A fight under way: two soldiers forward and hurt, one lost, a wall
+    // and a turret built, an upgrade researching.
+    k.selected.clear();
+    for (i, hp) in [(1usize, 38.0), (2, 71.0), (6, 22.0), (9, 0.0)] {
+        sq.units[i].hp = hp;
+    }
+    sq.lost = 1;
+    sq.energy = 1240.0;
+    sq.time = 254.0;
+    sq.armour = 1;
+    sq.research = Some(7.0);
+    let base = (sq.units[0].x, sq.units[0].y);
+    let s = sq.scale;
+    sq.turrets.push((base.0 - 10.0 * s, base.1 + 18.0 * s));
+    sq.walls.push(((base.0 + 30.0 * s, base.1 - 10.0 * s), (base.0 + 34.0 * s, base.1 + 22.0 * s)));
+    k.groups[0] = vec![0, 1, 2, 3, 4, 5];
+    k.groups[1] = vec![6, 7, 8];
+    k.groups[3] = vec![10, 11];
+    hud.alert("Soldier 7 is under fire", Some((sq.units[6].x, sq.units[6].y)), theme::BAD);
+    hud.alert("Soldier 10 was lost", Some((sq.units[9].x, sq.units[9].y)), theme::BAD);
+    let minimap = view.minimap && !cam.sees_all();
+    let draw = |sq: &Squad, k: &Controls, cam: &mut Camera, canvas: &mut Canvas, hud: &mut Hud, marks: &mut Marks, paused: bool| {
+        canvas.clear();
+        marks.clear();
+        let hover = k.cursor.filter(|&p| !hud.over(p)).and_then(|p| cam.world_at(p));
+        let aim = k.cursor.and_then(|p| hud.aim(p, cam));
+        let ghost = hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
+        let m = sq.model(&k.selected, hover, ghost, paused);
+        hud.draw(&m, k, cam, minimap, canvas, marks);
+        cam.set_inset(hud.top, canvas.screen.1 as f32 - hud.bottom);
+    };
+    let to_screen = |cam: &Camera, w: (f32, f32)| cam.to_screen(w);
+    match state {
+        "group" | "turret" | "wall" => k.selected = vec![0, 1, 2, 3, 4, 5, 6, 7],
+        "one" => k.selected = vec![1],
+        "enemy" | "menu" | "help" => k.selected = vec![0, 1, 2, 3],
+        _ => {}
+    }
+    draw(sq, k, cam, canvas, hud, marks, false);
+    match state {
+        "group" => {
+            // Hover the wall button: its tooltip.
+            if let Some(r) = hud.command_rect(WALL_ID) {
+                hud.moved(Some((r.x + r.w / 2.0, r.y + r.h / 2.0)));
+            }
+        }
+        "enemy" => {
+            let rival = sq.units.iter().position(|u| u.team == 1).unwrap();
+            let p = to_screen(cam, (sq.units[rival].x, sq.units[rival].y));
+            hud.moved(Some(p));
+            k.cursor = Some(p);
+        }
+        "wall" => {
+            hud.key(KeyCode::KeyV, true, false, cam);
+            let a = to_screen(cam, (base.0 + 50.0 * s, base.1 - 30.0 * s));
+            hud.moved(Some(a));
+            hud.button(Button::Left, true, cam, false);
+            let b = to_screen(cam, (base.0 + 70.0 * s, base.1 + 5.0 * s));
+            hud.moved(Some(b));
+            k.cursor = Some(b);
+        }
+        "turret" => {
+            hud.key(KeyCode::KeyT, true, false, cam);
+            // Over a soldier: red, it cannot go there.
+            let p = to_screen(cam, (sq.units[3].x, sq.units[3].y));
+            hud.moved(Some(p));
+            k.cursor = Some(p);
+        }
+        "attack" => {
+            hud.key(KeyCode::KeyA, true, false, cam);
+        }
+        "menu" => {
+            hud.key(KeyCode::Escape, true, false, cam);
+        }
+        "help" => hud.show_help(),
+        _ => {}
+    }
+    let paused = state == "menu" || state == "help";
+    draw(sq, k, cam, canvas, hud, marks, paused);
+    // The CPU cost of a frame's model and HUD layout, which the game pays
+    // every frame (median of 21; the last draw is the one shown).
+    let mut cpu = Vec::new();
+    for _ in 0..21 {
+        let t0 = Instant::now();
+        draw(sq, k, cam, canvas, hud, marks, paused);
+        cpu.push(t0.elapsed().as_secs_f64() * 1e3);
+    }
+    cpu.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    println!("ui {state}: CPU {:.3} ms the model and the HUD's layout (median of 21)", cpu[10]);
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut s = Settings::big_dish();
     let mut picked = 0usize;
     let mut scale = 4usize;
-    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new(), view: None, cam: None, squad: false, walls: Vec::new(), fire: 0 };
+    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new(), view: None, cam: None, squad: false, ui: String::new(), walls: Vec::new(), fire: 0 };
     let args: Vec<String> = std::env::args().skip(1).collect();
     // The preset first, so the other keys change it.
     for arg in &args {
@@ -1849,6 +1974,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 look.cam = Some((*p.first().ok_or("cam=X,Y,ZOOM")?, *p.get(1).ok_or("cam=X,Y,ZOOM")?, p.get(2).copied().unwrap_or(1.0)));
             }
             "squad" => look.squad = on_off(k, v)?,
+            "ui" => look.ui = v.into(),
             "fire" => look.fire = v.parse::<usize>()?.min(slime_mould::mould::squad::UNITS_MAX),
             "walls" => {
                 for w in v.split(';').filter(|w| !w.is_empty()) {
@@ -2801,7 +2927,7 @@ mod tests {
         );
         assert_eq!(gpu_out, cpu_out, "the squad's outputs");
         assert!(kills > 0 && walled > 0, "shots kill, and a wall stops one");
-        assert!(cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some(), "the unit in the mould is touched and aims");
+        assert!(cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some() && cpu_out.units[0].dense > 0, "the unit in the mould is touched and aims at walkers it counts");
         assert!(took[1] == 3000.0 && took[2] > 0.0 && took[2] < 3000.0 && took[3..].iter().any(|&t| t > 0.0), "units harvest; the second on a patch gets what the first left");
         // The world after the frame.
         let gpu = walkers_of(&e);
@@ -2873,5 +2999,52 @@ mod tests {
             assert!(moved_gpu == moved_cpu, "{name}: {moved_gpu} walkers moved, {moved_cpu} on the CPU");
             assert!(occ_off == 0 && crowded == 0, "{name}: {occ_off} counts off, {crowded} crowded");
         }
+    }
+
+    /// **The Larder game on the engine** (W2b, `gpu::larder_world`): the
+    /// same game on the GPU world and the CPU race world, from the same
+    /// seed. Both start alike (the race settings give the CPU's params); a
+    /// soldier clearing a crystal far from the mould banks the same food on
+    /// both, since no walker reaches it; and every 5 game seconds the mould
+    /// is within 8% of the CPU's size. The starting walkers starve at about
+    /// 17 s (start energy 0.5 at upkeep 0.001 a fine step) on both, so at
+    /// 20 s the count has just fallen by a third (5,234 to 3,120 on seed
+    /// 3, the GPU 3,220); at one engine tick a game tick, half the CPU's
+    /// fine steps, the fall would come at 33 s and miss the bound by far.
+    #[test]
+    fn the_larder_game_runs_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_world, Cmd, Game, Order, Rules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 20.0, ..Rules::default() };
+        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        assert_eq!(gpu.world.size(), cpu.world.size());
+        assert_eq!(gpu.world.crystals(), cpu.world.crystals(), "the same crystals and charge at the start");
+        assert_eq!(gpu.world.living(), cpu.world.living());
+        assert_eq!((gpu.larder, gpu.core), (cpu.larder, cpu.core));
+        // Soldier 0 clears the crystal nearest the larder (the larder's own).
+        let c = cpu.world.crystals().iter().map(|c| c.0).min_by(|a, b| (a.0 - cpu.larder.0).hypot(a.1 - cpu.larder.1).total_cmp(&(b.0 - cpu.larder.0).hypot(b.1 - cpu.larder.1))).unwrap();
+        for g in [&mut cpu.log, &mut gpu.log] {
+            g.clear();
+        }
+        assert!(cpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))) && gpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))));
+        let mut sizes = Vec::new();
+        while cpu.end.is_none() {
+            cpu.step();
+            gpu.step();
+            if cpu.world.ticks() % 75 == 0 {
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
+            }
+        }
+        eprintln!("game s, living CPU, GPU: {sizes:?}; banked {} / {}", cpu.harvested, gpu.harvested);
+        assert_eq!(gpu.world.ticks(), cpu.world.ticks(), "the same game ticks");
+        assert!(cpu.harvested > 0.0 && gpu.harvested == cpu.harvested, "banked {} on the GPU, {} on the CPU", gpu.harvested, cpu.harvested);
+        for &(t, a, b) in &sizes {
+            let (a, b) = (a as f64, b as f64);
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+        }
+        assert!(sizes.iter().any(|&(_, a, _)| a > walkers) && sizes.last().unwrap().1 < walkers, "the mould grew, then its first walkers starved: {sizes:?}");
     }
 }
