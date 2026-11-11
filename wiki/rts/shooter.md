@@ -38,6 +38,7 @@ folder.
 
 ## Owner's word
 
+- 2026-11-11 03:38Z: "Start with 4 and can grow to 40. They should definitely die and be attacked by the slime. The round ends when the soldiers or slime are all dead?"
 - 2026-11-11 03:14Z: "Rts-style. When you finish your current task, let's develop a full detailed plan of how to build the demo".
 - 2026-11-11 03:03Z: "Yes." (to the priced-ring test).
 - 2026-11-11 01:50Z: "Shooting should be able to directly cut through a branch after a free seconds and holding a ring of fire should stop all mold from getting to the food".
@@ -51,7 +52,8 @@ folder.
 ## Open
 
 - Make the mould answer the squad so plans can counter each other: smell growing with the bank, starving mould fighting harder at a ring, drops that pull fronts away, layouts where the best piles differ.
-- The control scheme: RTS-style orders (drawn fire lines and rings, clear a pile, free fire, a direct shot) proposed in the thread, not built.
+- The build plan (Claude Doc "Larder: build plan for the RTS demo", https://claude.ai/artifact/5ricncRubPz7WTBGJZFnHs): six milestones, M1 soldiers in the harness, M2 the mould answers back (gate: no plan best on 13 or more of 16 seeds), M3 first playable window, M4 economy, M5 polish, M6 GPU port after S4. Not built.
+- Stalemate: a ringed squad and a mould keeping one piece alive could last forever; a time cap or food running out is proposed, not ruled.
 - Re-run smell on a dish the mould takes 30 s or more to cross.
 - Versus (two squads, one mould) is set aside for now (owner, 00:30Z: solo first).
 
