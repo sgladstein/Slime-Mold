@@ -62,8 +62,10 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   (https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS) against any scripted
   plan. One plan, soft, beat the other eight in 127 of 128 games
   (https://claude.ai/artifact/33Voj1TERnjNSZfLwv3zRG), and the counterplay
-  rules of round 3 (a rally, a rising spore price) did not stop it; the left
-  mould, the player's, has an edge (14 of 16 mirror games).
+  rules of round 3 (a rally, a rising spore price) did not stop it, nor did
+  changes to the model (rounds 4-6). The page opens on desperate fights,
+  which ease the snowball; the sides are even since the piles moved half a
+  cell. Next: the economy sketch's food after 1:00 and Fortify.
 - [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
   (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
   for a neutral host and keep the ground they reach. The planner beats random

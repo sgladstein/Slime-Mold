@@ -2,7 +2,7 @@
 
 **Status: version 1 played by the owner and set aside; version 2 (the
 budget skirmish) playable at https://claude.ai/artifact/936ACBn8mJUkvFpb4iSnUS,
-not yet played by the owner.** The owner, 2026-11-10
+not yet played by the owner; it opens on desperate fights (round 5).** The owner, 2026-11-10
 20:33Z: "You can run these tests, especially if they are cheap and/or can be
 paralellized. But then lets focus on actually building playable demos". On
 the card at 20:42Z the owner chose "Both, in two threads": this one, and Two
@@ -28,8 +28,25 @@ built to use them, soft still lost no pairing in 720 games (124 of 144 games;
 9/16) hold it. Played on the same seeds and sides, the new rules moved soft's
 record against idle from 15 to 12 of 16 (share lower in 8 of 16 games, p 1)
 and against raid, centre and fort not at all. Pure defence with the rally
-lost to soft 16/16. See *Round 3*. The game also favours the left mould,
-yours on the page: in mirror games it won 14 of 16.
+lost to soft 16/16. See *Round 3*. The game also favoured the left mould,
+yours on the page: in mirror games it won 14 of 16 (fixed since, 2026-11-11:
+the piles sat half a cell off a mirror; see *Which side you play matters*).
+
+**Rounds 4-6 (changes to the model itself, 2026-11-11) did not change it
+either.** The owner asked to explore model changes (23:29Z). Over 3,136
+games on the fixed layout, against a control of the counterplay rules
+alone: a holder's bonus at piles made the snowball worse (wipe-outs 271
+against 235); supply lines (walkers far along their tube fight as unfed)
+changed nothing; upkeep that grows with size eased it most (wipe-outs 100,
+comebacks 79 against 48) but let doing nothing tie the best plans (idle
+took 10/16 off soft and keep); and desperate fights (starving walkers fight
+harder) eased it with the tools intact (wipe-outs 198, margins smaller,
+paired p 4e-5), so **the page now opens on desperate fights**. Under every
+rule set soft and its copy with a rally, keep, are the top two, and keep
+lost no pairing under six of the seven (all but size upkeep). About half
+the food is eaten by 1:00, so even with no snowball the side ahead then
+would win about 70% of games that reach the bell: a comeback needs food
+after 1:00, which is the economy sketch's next test. See *Rounds 4 to 6*.
 
 ## Version 1: habits, salt and the lamp
 
@@ -332,24 +349,153 @@ skirmish (`Rules::take_turns`): it costs nothing and measured no harm. The
 three centre-line piles stay on 128.0, one column right of centre. Rounds
 1-4 ran on the old layout, paired by side, so their comparisons stand.
 
+### Rounds 4 to 6: changing the model itself
+
+After round 3 the report said the fix "probably has to be in the model
+itself"; the owner (23:29Z): "then lets explore this". Five changes, each a
+`Params` field set on both moulds by `Skirmish::set` (the harness's
+`RULES`), all off by default with hashes unchanged (commits b360da0 and
+114d4d3):
+
+- **Holder's bonus** (`hold` 2, `hold_flip` 2): a pile is held by the
+  mould that ate there alone (`Pile::held`); the holder's eaters count
+  double in the head-count share until the other has twice as many there.
+- **Size upkeep** (`upkeep_size` 0.2): each walker's upkeep is the flat
+  upkeep x (1 + 0.2 x walkers / 1,000), so a mould of 5,000 pays double for
+  every walker.
+- **Desperate fights** (`fight_fed` 2, `fight_unfed` 0.5): the fight's
+  multipliers reversed, so walkers on tube no food reaches fight harder.
+  **Even fights** (1 and 1) was screened only.
+- **Supply lines** (`supply` 10, 20 or 40 cells): a walker fights as fed
+  only within that many cells of tube from eaten food, as the research
+  thread's [economy sketch](rts-research-2026-11-10/skirmish-economy-sketch.md)
+  proposes (its test 2, with its target: the side ahead at 1:00 wins under
+  70%).
+
+Every set ran on top of round 3's counterplay rules. **Frame cost:** none
+adds a pass over the dish. Supply and the fight multipliers change the
+comparison and the factor the fight already uses per walker at a front;
+size upkeep adds one multiply where upkeep is charged; the holder's bite a
+branch per pile bite and a pass over the 23 piles before the rival copies
+them.
+
+**Round 4, the screen** (old layout, seven plans, seeds 1-4 from both
+sides: 8 games a pairing, 168 a rule set; raw `raw/rr3-runner-1..4.txt`,
+`screen.py` output `raw/analysis-rr3.txt`). With the counterplay rules
+alone no plan took a majority off soft. Each change let one do so: hold
+(trade 6/8), even (keep 6/8, trade 5/8), desperate (trade 5/8), size
+(keep 5/8), and size with all three (keep 5/8). Under hold a majority cycle
+appeared at the top: soft > idle > trade > soft.
+
+**Rounds 5 and 6, full round robins** on the fixed layout: eight plans
+(idle, random, soft, raid, fort, trade, keep, ward), seeds 1-8, both sides,
+448 games a rule set, 3,136 in all. Raw: `raw/rr5-counter.txt` (the
+control, the counterplay rules alone, run on this box), `raw/rr4-runner-1..4.txt`
+(hold, size, desperate) and `raw/rr6-runner-1..4.txt` (supply), on runner
+threads. `screen.py` gives the records, `analyse.py` (one rule set at a
+time) the Holm tests over 28 pairings, and `compare.py` the game-by-game
+comparison with the control. The deciding measures, named before the run:
+does a plan beat soft, does a cycle survive Holm among plans that beat
+random, and how often does the side ahead at 1:00 win.
+
+| Rules (each on top of round 3's) | Ahead at 1:00 won | Comebacks | Wipe-outs | Close | Top two (pairings won-lost, mean share) | Soft and keep v idle | Cycles surviving Holm |
+|---|---|---|---|---|---|---|---|
+| Counterplay alone (control) | 389/437 (89%) | 48 | 235 | 145 | keep 7-0 (0.673), soft 5-2 (0.659) | 15/16, 15/16 | none |
+| Holder's bonus | 394/435 (91%) | 41 | 271 | 117 | keep 7-0 (0.689), soft 5-2 (0.682) | 16/16, 16/16 | idle > trade > raid; fort > ward > trade |
+| Size upkeep | 363/442 (82%) | 79 | 100 | 274 | soft 4-1 (0.594), keep 5-1 (0.588) | 6/16, 6/16 | none |
+| Desperate fights | 363/430 (84%) | 67 | 198 | 145 | keep 7-0 (0.661), soft 5-2 (0.640) | 16/16, 16/16 | none |
+| Supply 10 | 378/433 (87%) | 55 | 239 | 138 | keep 6-0 (0.677), soft 6-1 (0.672) | 16/16, 16/16 | fort > ward > trade |
+| Supply 20 | 378/432 (88%) | 54 | 228 | 147 | keep 6-0 (0.680), soft 6-0 (0.671) | 15/16, 15/16 | fort > ward > trade |
+| Supply 40 | 392/438 (89%) | 46 | 241 | 143 | keep 7-0 (0.665), soft 5-2 (0.659) | 14/16, 14/16 | fort > ward > trade |
+
+"Close" is a game the winner took with under 60% of the food. "Comebacks"
+are games the side behind at 1:00 won.
+
+**Paired against the control**, game by game (the same seed, plans and
+sides; `raw/compare-rr5-rr6.txt`). Each cell: games where only this rule
+set had it, against games where only the control did, and the sign test p.
+Holm over the 24 tests: size's four, and the wipe-outs and margins of hold
+and desperate fights, survive; hold's close games (p 0.004) and desperate
+fights' comebacks (p 0.05) do not.
+
+| Rules | Wipe-outs | Comebacks | Close | Margin smaller / larger |
+|---|---|---|---|---|
+| Holder's bonus | 65 / 29 (p 0.0003) | 28 / 35 (p 0.45) | 31 / 59 (p 0.004) | 185 / 262 (p 0.0003) |
+| Size upkeep | 2 / 137 (p 3e-38) | 67 / 36 (p 0.003) | 139 / 10 (p 3e-30) | 339 / 106 (p 2e-29) |
+| Desperate fights | 44 / 81 (p 0.001) | 52 / 33 (p 0.05) | 51 / 51 (p 1) | 268 / 180 (p 4e-5) |
+| Supply 10 | 36 / 32 (p 0.72) | 38 / 31 (p 0.47) | 36 / 43 (p 0.5) | 212 / 230 (p 0.42) |
+| Supply 20 | 33 / 40 (p 0.48) | 29 / 23 (p 0.49) | 35 / 33 (p 0.9) | 214 / 229 (p 0.51) |
+| Supply 40 | 42 / 36 (p 0.57) | 22 / 24 (p 0.88) | 32 / 34 (p 0.9) | 230 / 205 (p 0.25) |
+
+- **No change to the model dethrones the strike.** Under every rule set
+  the top two are keep and soft: beacons, then spores, on the rival's
+  thinnest pile, keep adding a rally where a spore lands on it. Keep lost no
+  pairing under the control, the holder's bonus, desperate fights or any
+  supply limit. The screen's upsets were noise at 8 games: trade against
+  soft went from 6/8 under the holder's bonus to 9/16 (p 0.8), and from
+  5/8 under desperate fights to 9/16. Keep and trade take a bare majority
+  off soft even under the control (10/16 and 9/16), so soft and keep are one
+  family, and no plan outside it beats either.
+- **Size upkeep eases the snowball most, and makes the tools matter
+  less.** It ended 100 games in a wipe-out against the control's 235 and
+  had the most close games (274 against 145) and comebacks (79 against 48).
+  But doing nothing caught up with the best plans: idle took 10 of 16 off
+  both soft and keep (p 0.45), where soft and keep had beaten idle 15/16
+  under the control, and they beat random 13/16 rather than 15/16. A mould
+  that buys walkers pays for every one of them every second, so a strike
+  earns little more than it costs. By the rule that every tool must deliver
+  something you can see, that is a measured harm, so size upkeep is not the
+  default.
+- **Desperate fights ease it and leave the tools intact.** Fewer
+  wipe-outs (198; paired 44 against 81, p 0.001), smaller margins (p 4e-5)
+  and more comebacks (67 against 48; paired p 0.05, which does not survive
+  Holm), while soft and keep still beat idle 16/16 and random 14/16. **The
+  page now opens on desperate fights.**
+- **The holder's bonus makes it worse:** more wipe-outs (271; paired 65
+  against 29, p 0.0003) and wider margins. Holding a pile is already what
+  the side ahead does, so the bonus is paid to the leader.
+- **Supply lines change nothing** at 10, 20 or 40 cells: every paired
+  measure has p of 0.25 or more, and the side ahead at 1:00 won 87-89%.
+  This fails the economy sketch's test 2 (target: under 70%). A spore's
+  walkers land on a pile and eat there, so they start their own fed tube;
+  a short supply weakens only long tubes, which are not where games are
+  decided (inferred, not traced). The first look (soft against trade, seed
+  3), where supply 20 turned soft's 0.585 at 1:00 into a tie, was not
+  typical.
+- **The 70% target is out of reach for any change to the fight.** About
+  half the food is eaten by 1:00 (46-47% in three traced games on seed 3:
+  soft v trade, keep v soft, idle v idle; `raw/trace-s3-*.txt`). Shuffling what happens after
+  1:00 between games, which removes any snowball, the side ahead at 1:00
+  would still win 67-70% of the games that reach the bell, under every rule
+  set; the real figures among those games run from 77% (size upkeep) and
+  83% (desperate fights) to 89% (the control; `compare.py`'s last table).
+  The snowball adds 10-20 points to a lead that is mostly banked already. A comeback needs food after 1:00: the sketch's longer
+  match with regrowing piles, or a score that is not food eaten.
+
 ## What would make the strategy deeper
 
-Tested and failed (round 3): a quick defensive rally, a rising spore price
-and a plan that trades blows. What is left is in the model itself:
+Tested and failed: prices and a defensive rally (round 3), and four changes
+to the model (rounds 4-6): the holder's bonus makes the snowball worse,
+supply lines do nothing, size upkeep eases it but lets doing nothing tie the
+best plans, and desperate fights ease it a little (now the page's default).
+Under all of them the strike on the thinnest pile wins. What is left:
 
-1. **Ease the snowball at the pile.** The fight rule and the head-count
-   share both reward the side that is already fed. Possible changes: even
-   fights (no fed bonus), a hold bonus (a pile feeds the mould that holds it
-   first until it is outnumbered two to one), or starving walkers that
-   fight harder. Each is a rule to sweep against the same round robin.
-2. **Make size cost something.** Upkeep per walker that grows with the
-   mould's size, so a big mould is slow to spend and a small one cheap to
-   run.
+1. **Food after 1:00.** About half the food is eaten by 1:00 and the bell
+   is at 2:30, so a lead at 1:00 is mostly banked; even with no snowball the
+   side ahead then would win about 70% of the games that reach the bell.
+   The economy sketch's longer match (4:00) with piles that regrow (faster
+   where nobody has eaten for 20 s), or a score from ground held over time,
+   is the next test: its test 3, with wipe-outs and comebacks as the
+   measures and this report's shuffled 70% as the floor to compare with.
+2. **An answer tied to the strike.** The sketch's Fortify against a strike
+   with a countdown both sides see (its test 1). At a pile both sides'
+   walkers already fight as fed, so Fortify must do more than make walkers
+   count as fed there: a lower death rate inside the ring, for example.
 3. ~~Fix the side edge~~: done, see *Which side you play matters*.
 4. **A person.** The plans are one-line rules. A player who reads the
    picture (where the rival is thin, where its spores sleep) may find
    answers the scripts did not; the round robins say only that no simple
-   rule beats soft.
+   rule beats soft and keep.
 
 ## Version 2's page
 
@@ -361,7 +507,9 @@ price and cooldown. Pick one and click a pile: a press lands on the live
 pile within 9 cells. Beside it: the food share, both sides' walkers, bank,
 tithe and habit, and a feed of what each side bought. You pick the rival's
 plan (any of the scripted ones, soft by default, with a line saying what it
-does) and the rules (counterplay, the default, or as first built). Pause
+does) and the rules: desperate fights (the default since round 5), size
+upkeep, the holder's bonus, the counterplay rules alone, or as first built.
+Each model change runs on top of the counterplay rules. Pause
 stops the clock and buying still works, so a player can plan a turn.
 
 Rings drawn over the dish show what is bought (gold yours, violet the
@@ -397,6 +545,16 @@ piles' worth of canvas arcs a drawn frame.
   dormant spores) and `front`. Four tests: the field is mirrored and even;
   the habit cycle closes; the tithe fills the bank and buying spends it; a
   beacon pulls only its own mould.
+- The model's levers for rounds 4-6, all `Params` and off by default with
+  hashes unchanged: `fight_fed` and `fight_unfed` (the fight's multipliers,
+  0.5 and 2), `upkeep_size`, `hold` and `hold_flip` (`Pile::held`,
+  `Pile::bite_held`), and `supply`. `Skirmish::set` sets a rule or one of
+  these on both moulds; three tests (the holder's bite, size upkeep, and a
+  short supply only adding losses at the same front).
+- Analysis scripts in `rts-skirmish-2026-11-10/`: `analyse.py` (one round
+  robin: sign tests, Holm, cycles), `screen.py` (several rule sets, tagged
+  lines: records, majority cycles, the snowball) and `compare.py` (rule sets
+  game by game against a control, and the shuffled null).
 - The harness's `duel SEED LEFT RIGHT` mode
   (`rts-design-2026-11-10/red-team/harness`), with `TRACE=1` (both sides
   every 10 s), `LOOK=DIR` (a still every 15 s) and `RULES="name=value ..."`.

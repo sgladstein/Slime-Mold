@@ -10,13 +10,21 @@ counts: games where only one of the two ended in a wipe-out, games where
 only one was a comeback, and games where the margin was smaller, each with
 a two-sided sign test p.
 
+Last, the snowball against a null: among games that reach the bell, how
+often the side ahead at 1:00 won, and how often it would if what happens
+after 1:00 were shuffled between games (no snowball at all). `BY_60`, the
+part of all the food eaten by 1:00, is from three traced games on seed 3
+(`raw/trace-s3-*.txt`: 0.46-0.47).
+
 Usage: compare.py CONTROL_TAG FILE...
 """
 import math
+import random
 import re
 import sys
 from collections import defaultdict
 
+BY_60 = 0.46
 LINE = re.compile(r"^(\w+) DUEL seed=(\d+) left=(\w+) right=(\w+) share=([\d.]+) at60=([\d.]+) .* t=(\d+)")
 
 
@@ -74,3 +82,15 @@ for tag in order:
     smaller = sum(1 for k in keys if a[k]["margin"] < c[k]["margin"])
     larger = sum(1 for k in keys if a[k]["margin"] > c[k]["margin"])
     print(f"    margin smaller under {tag} in {smaller}, larger in {larger}, p={sign_p(smaller, smaller + larger):.2g}")
+
+print("\nGames that reach the bell: the side ahead at 1:00 won, and would win with the rest of the game shuffled between games (200 shuffles):")
+rng = random.Random(1)
+for tag in order:
+    v = [(s, a) for s, a, t in games[tag].values() if t == 150 and a != 0.5]
+    real = sum((a > 0.5) == (s > 0.5) for s, a in v)
+    rest = [(s - BY_60 * a) / (1 - BY_60) for s, a in v]
+    won = 0
+    for _ in range(200):
+        rng.shuffle(rest)
+        won += sum((a > 0.5) == (BY_60 * a + (1 - BY_60) * x > 0.5) for (s, a), x in zip(v, rest))
+    print(f"  {tag:>10}: {real}/{len(v)} ({real / len(v):.0%}); shuffled {won / (200 * len(v)):.0%}")

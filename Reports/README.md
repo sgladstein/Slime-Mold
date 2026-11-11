@@ -115,8 +115,13 @@ move.
   scripted plans, 576 games on four runner threads: soft (beacons then spores on the rival's thinnest pile) beat all 8
   others, 127 of 128 games; no cycle among 36 pairings; 300 games ended in a wipe-out. A guard, a spore reach and
   sleeping spores did not stop it. Round 3 (a 5 s rally, a rising spore price, spores asleep abroad, plans trade, keep
-  and ward; 720 games): soft still lost no pairing, 124 of 144 games; the left mould wins 14 of 16 mirror games. v2 is
-  playable in the browser against any plan (pages *Mould Budget Skirmish* and *Budget Skirmish Strategies*).
+  and ward; 720 games): soft still lost no pairing, 124 of 144 games. The left mould's edge (14 of 16 mirror games) was
+  the piles sitting half a cell off a mirror, fixed. Rounds 4-6 (changes to the model, 3,136 games paired against the
+  control): a holder's bonus made the snowball worse, supply lines did nothing, size upkeep eased it most but let doing
+  nothing tie the best plans, and desperate fights (starving walkers fight harder) eased it with the tools intact and
+  are now the page's default; soft and keep stay on top under every rule. Half the food is gone by 1:00, so even with
+  no snowball the side ahead then would win about 70%. v2 is playable in the browser against any plan (pages *Mould
+  Budget Skirmish* and *Budget Skirmish Strategies*).
 
 - [jenson-physarum-2026-11-10.md](jenson-physarum-2026-11-10.md) — **research, no build: why Sage Jenson's physarum looks
   so much more alive than ours, what contagion is, and a survey of other slime mould simulations.** Same Jones rules as

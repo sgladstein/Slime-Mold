@@ -38,3 +38,12 @@ Paired against counter, game by game (only games both rule sets played):
      comeback: only under sup20 29, only under counter 23, p=0.49
         close: only under sup20 35, only under counter 33, p=0.9
     margin smaller under sup20 in 214, larger in 229, p=0.51
+
+Games that reach the bell: the side ahead at 1:00 won, and would win with the rest of the game shuffled between games (200 shuffles):
+     counter: 188/212 (89%); shuffled 70%
+        hold: 154/177 (87%); shuffled 68%
+        size: 268/347 (77%); shuffled 69%
+   desperate: 206/249 (83%); shuffled 69%
+       sup10: 169/207 (82%); shuffled 68%
+       sup40: 178/207 (86%); shuffled 67%
+       sup20: 187/218 (86%); shuffled 68%
