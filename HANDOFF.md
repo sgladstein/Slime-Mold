@@ -63,9 +63,12 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   plan. One plan, soft, beat the other eight in 127 of 128 games
   (https://claude.ai/artifact/33Voj1TERnjNSZfLwv3zRG), and the counterplay
   rules of round 3 (a rally, a rising spore price) did not stop it, nor did
-  changes to the model (rounds 4-6). The page opens on desperate fights,
-  which ease the snowball; the sides are even since the piles moved half a
-  cell. Next: the economy sketch's food after 1:00 and Fortify.
+  changes to the model (rounds 4-6), nor food after 1:00 (round 7b: the
+  side ahead at 1:00 still wins 80-85%). A strike counted down in view, with
+  a Fortify that kills attackers in its ring, does dethrone soft, but the
+  plan that strikes and fortifies (brace) then wins every pairing. The page
+  opens on Strike and Fortify. Next: Fortify's price and the economy
+  sketch's exploiter search against brace.
 - [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
   (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
   for a neutral host and keep the ground they reach. The planner beats random
