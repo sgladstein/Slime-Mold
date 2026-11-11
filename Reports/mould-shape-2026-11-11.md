@@ -54,24 +54,31 @@ at 32,000, 100,000, 300,000 and 1,000,000 walkers (10 s and 30 s; 1M seed 8
 cut off) before its C: drive filled up (`raw/gtx1070-sweep.txt`, copied by
 hand by the PC's session). The limit on, the limit off at 200,000 and every
 picture ran in the cloud on llvmpipe with the same code
-(`walker-sweep-cloud.sh`, `raw/cloud-sweep.txt`). With `crowd=1` the
+(`walker-sweep-cloud.sh`, `raw/cloud-sweep.txt`). Later the same day the
+1070 ran the rest: 1M seed 8 and 2,000,000 with the limit off, and the limit
+on at 32,000, 100,000 and 200,000 (`raw/gtx1070-sweep-2.txt`, lines sent
+verbatim by the PC's session). With `crowd=1` the
 sandbox forces the limit off above half the agar: 300,000 prints
 `(crowd 0)`, so the third limit-on arm is 200,000.
 
 | Walkers | Loops at 30 s, limit off (8 seeds) | Loops at 30 s, limit on (8 seeds) | Tube cells at 30 s, off / on |
 |---|---|---|---|
-| 32,000 | 0 (1070), 0 (cloud) | 43-54 | 1,138-1,926 / 6,948-7,612 |
-| 100,000 | 0 (1070), 0-1 (cloud) | 57-70 | 1,113-2,514 / 10,123-10,493 |
-| 200,000 | 0-1 (cloud) | 120-144 | 1,318-2,421 / 15,126-15,373 |
+| 32,000 | 0 (1070), 0 (cloud) | 43-54 (cloud), 46-53 (1070) | 1,138-1,926 / 6,948-7,612 |
+| 100,000 | 0 (1070), 0-1 (cloud) | 57-70 (cloud), 59-69 (1070) | 1,113-2,514 / 10,123-10,493 |
+| 200,000 | 0-1 (cloud) | 120-144 (cloud), 122-144 (1070) | 1,318-2,421 / 15,126-15,373 |
 | 300,000 | 0 (1070) | forced off | 842-1,623 |
-| 1,000,000 | 0 (1070, 7 seeds) | forced off | 1,063-1,810 |
+| 1,000,000 | 0 (1070) | forced off | 1,063-1,810 |
+| 2,000,000 | 0 (1070) | forced off | 1,115-1,845 (1070) |
 
 - Limit on against off: more loops on 8 of 8 seeds at 32k, 100k and 200k
   (sign test p 0.0078 each, cloud runs, same device). More walkers with the
   limit on: 100k over 32k and 200k over 100k on 8 of 8 (p 0.0078 each).
-  All five survive Holm (smallest adjusted p 0.039).
+  All five survive Holm (smallest adjusted p 0.039). On the 1070 alone the
+  limit on beats off on 8 of 8 seeds at 32k and at 100k too (p 0.0078
+  each), and its loop counts fall inside the cloud's ranges at all three
+  counts.
 - Without the limit, count changes nothing: 0-1 loops at every count from
-  32,000 to 1,000,000; the 1070 and the cloud agree. With it, count sets the
+  32,000 to 2,000,000; the 1070 and the cloud agree. With it, count sets the
   shape: a lacy net at 32,000, a denser one at 100,000, a sheet with holes
   at 200,000.
 - Why (inferred from the rule, not tested apart): with one walker a cell,
@@ -83,7 +90,9 @@ sandbox forces the limit off above half the agar: 300,000 prints
   The sandbox's big presets run above the forced-off line, which is why
   they come out as ropes.
 - Cost on the 1070, limit off, GPU ms for a frame of two ticks (seed 1,
-  30 s): 0.69 / 0.89 / 1.34 / 3.01 at 32k / 100k / 300k / 1M.
+  30 s): 0.69 / 0.89 / 1.34 / 3.01 / 5.73 at 32k / 100k / 300k / 1M / 2M;
+  limit on, 0.82 / 1.31 / 2.18 at 32k / 100k / 200k. The sense pass
+  carries most of the rise: 1.59 ms a tick at 2M against 0.76 at 1M.
 
 ## On crystals, size follows intake, not charge (one seed each)
 
