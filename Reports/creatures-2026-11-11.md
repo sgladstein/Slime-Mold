@@ -86,6 +86,10 @@ contact the side with more mould within r wins.
   same 0.55 against 0.5): gain -0.009 to +0.017 against -0.027 to +0.029,
   higher on 5 of 7 with one tie, p 0.45. Once sorted into one-colour
   bodies, the sides hold; droplets meet and part without taking each other.
+  Making the droplets blind to species (`species_avoid` -1, so bodies of
+  both colours merge freely) did not help: gain -0.020 to +0.047 against
+  -0.015 to +0.024, higher on 5 of 8, p 0.73
+  (`raw/hunt-blind.txt`).
 
 So numbers win where the species are mixed and nowhere else. Script:
 [`creatures-2026-11-11/hunt.sh`](creatures-2026-11-11/hunt.sh) (`ZONES=1`
