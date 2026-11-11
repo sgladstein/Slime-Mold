@@ -322,3 +322,70 @@ shots were not timed apart from the step.
 Next, if the owner agrees: re-run tests 1 and 2 on a dish where the mould
 needs 30 s or more to reach the larder (slowed walkers on today's CPU dish
 first, since the GPU dish has no economy yet).
+
+## Correction: the snip did not hold, and a ring held from the start stops all theft (2026-11-11, 01:50-02:10Z)
+
+Owner, 01:50Z: "Sound like your shooting is too weak. Shooting should be able
+to directly cut through a branch after a free seconds and holding a ring of
+fire should stop all mold from getting to the food." Then (01:51Z) "Have 1-3
+independent agents review your work" and (01:55Z) a game design review.
+
+**The bug.** A snip wounded only agar, so a snip fired again over an open
+wound did nothing, despite `heal_wounds` expecting "a later snip keeps it
+open longer". A ring held by repeated snips healed all at once 4 s after its
+first shots, and the mould poured in then (seed 1: 600 wound cells to 0.5 s
+... 4.0 s, 149 at 5.0 s, walkers inside from 5.0 s). Fixed in `stroke_dab`:
+a snip over a wound now keeps it open from that step. `cargo test` passes
+(101 tests). The fix touches every dish with snips, but only where two snips
+overlap within 4 s.
+
+**The field moved.** Between the first census and this one, the field's
+rival home moved half a cell to (215.5, 80) (another thread, addebdb). The
+merged harness looked for (216, 80) and panicked on main; the first census
+ran on the tree before the move. `LARDER` now reads `skirmish::HOMES[1]`.
+Numbers below are on the moved field with the fix.
+
+**Fortress (new hand `fort`): the whole ring of 14 held from 0 s**, five
+24-cell lines in turn, four shots a second, whether or not mould is near.
+16 seeds: **stolen 0 on every seed** (no bite in 90 s) against idle 12,301
+(16/16, p 0.00003); mould ate the rest of the field as before (274,660
+against 274,717). Raw: [`fort.txt`](mould-shooter-2026-11-11/fort.txt).
+
+**Test 1 rerun with the fix** ([`fire-snip-fixed.txt`](mould-shooter-2026-11-11/fire-snip-fixed.txt)),
+median stolen: idle 12,301; aimed ring raised when mould is near 12,225
+(15/16 lower, p 0.0005, 0.6%); blind ring 12,192 (13/16, p 0.021); random
+12,299 (9/16); **through the larder 154** (16/16, 98.7% saved). Aim against
+blind ring 9/16 (p 0.80): aiming adds nothing on the ring. On mould eaten
+over the whole dish, random fire beat aim 16/16 (272,275 against 274,713):
+shots anywhere cut the mould's whole economy.
+
+**What the reviews changed** (full text in [`reviews/`](mould-shooter-2026-11-11/reviews/)):
+
+- *The measure is capped* (write-up review): theft is about 12,200-12,300 in
+  every condition with any eaters, even the lean dish's few hundred walkers,
+  because a pile feeds at most `Params::table` walkers a step. So theft moves
+  only when the eaters go to zero. The earlier claim "the mould on a pile is
+  fed by that pile" is the picture (a self-fed island inside the late ring),
+  but the number is the table cap; both say the same for play: a late ring
+  does nothing, a ring before contact or fire on the eaters does everything.
+- *The ring was raised late*, not tested as a defence. The fort hand is that
+  control: **a ring up before the mould arrives stops all theft.**
+- 24 comparisons were printed in the first census, not 26; the Holm
+  conclusions stand. The smell test's fair reference is gain 0 (4.2 s), not
+  gain 0.3 (4.6 s): against no smell, smell 3 moves the first bite 4.2 s ->
+  4.1 s. The lean dish ate all its food in every run (86,250), so its end
+  walker count measures starvation; its loops at 45 s stand.
+- *The pile hand only culls*: a snip never wounds a pile's own cells, so on
+  the larder it kills walkers and clears trail but does not block.
+- *Design* (game design review): the ring is now the dominant play ("ring
+  the larder, sit"), Hunter and Baiter are empty while fronts do not travel,
+  and the economy has a dead state with no food to shoot. It proposes a ring
+  priced per cell per second, a larder that runs dry, slowed fronts, and the
+  mould given teeth from the model (engulfed soldiers become food, starving
+  mould fights harder, drops smelled before they land). Its test: scripted
+  plans (ring forever, ring then raid, raid only, farmer, random, idle) on a
+  priced ring with slowed walkers; pass if ring forever is not top.
+
+**Cost.** A 90 s run takes about 9-11 s on one core whatever the hand
+(287.6 s for 80 runs on four cores); shots were not timed apart from the
+step.

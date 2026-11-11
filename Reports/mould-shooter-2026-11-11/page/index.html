@@ -47,7 +47,16 @@ ul { margin: 0; padding-left: 1.2em; max-width: 65ch; display: grid; gap: 6px; }
   </header>
 
   <section>
-    <h2>Test 1. Does fire on the supply lines protect the larder?</h2>
+    <h2>Correction: a ring held from the start stops all theft</h2>
+    <p class="verdict">With the snip fixed, a ring of fire held from the first second kept every walker off the larder: 0 stolen on 16 of 16 seeds, against 12,301 with no shooting.</p>
+    <p>The first runs had a bug. Firing again on ground already wounded did nothing, so a ring held by repeated shots healed all at once 4 seconds after its first shots, and the mould poured in then. Now a shot over an open wound keeps it open. Rerun with the fix, a ring raised only once the mould is near still saves 0.6% (it bites at about 4 s, and once any walker eats, a pile's theft rate is capped), and firing at the mould on the larder saves 98.7% (154 stolen). Three independent reviews (code, write-up, game design) are in the repo; the design review finds the ring is now the dominant play and proposes pricing it by length and time.</p>
+    <div class="pics">
+      <figure><img src="fort.png" alt="Seed 1 at 30 s: a closed pentagon of wounds round the larder, with no mould inside"><figcaption><b>Ring held from 0 s (fixed snip)</b><span class="n">stolen 0 on 16 of 16 seeds · idle 12,301 median</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Test 1 (before the fix). Does fire on the supply lines protect the larder?</h2>
     <p class="verdict">No. A ring of fire round the larder cut theft by under 1%. Shooting the mould sitting on the larder cut it by 90%.</p>
     <p>The mould on the larder is fed by the larder itself, so cutting it off from the network starves nothing. Once the ring closes, a self-fed island inside keeps eating. A gun that only wipes trail, without killing, changed nothing at all, because the walkers lay it again at once.</p>
     <div class="pics">

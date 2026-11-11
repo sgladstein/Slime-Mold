@@ -1657,6 +1657,16 @@ impl Dish {
                             self.wounds.push((i, heal));
                             self.wound_until[i] = heal;
                             self.counts.wound_cells += 1;
+                        } else if self.ground[i] == Ground::Wound && self.wound_until[i] < heal {
+                            // A snip over an open wound keeps it open from
+                            // now, as `heal_wounds` expects ("a later snip
+                            // keeps it open longer"). Before 2026-11-11 only
+                            // agar was wounded, so re-firing on a wound did
+                            // nothing and a ring held by repeated snips
+                            // healed all at once 4 s after its first shots
+                            // (`examples/larderprobe.rs`, fort hand).
+                            self.wounds.push((i, heal));
+                            self.wound_until[i] = heal;
                         }
                     }
                 }

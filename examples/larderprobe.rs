@@ -21,7 +21,8 @@
 //! supply line in), **near** at a random spot on the same ring, along it,
 //! **rand** anywhere on the dish, **pile** straight through the larder at a
 //! random angle (at the mould eating it), and **idle**. `gun=snip` is the
-//! existing snip (kills walkers, clears trail, wounds the ground 4 s), so
+//! existing snip (kills walkers, clears trail, wounds the ground 4 s, but
+//! never a pile's own cells, so on the larder it only kills), so
 //! fire every quarter second holds a cut; `gun=clear` only zeroes trail on
 //! the line, every step, until the next shot. Deciding measure: food stolen
 //! from the larder by the end, paired by seed.
@@ -48,7 +49,13 @@ const NEAR: f32 = 50.0;
 /// The guard ring: cells from the larder's centre where shots land.
 const RING: f32 = 14.0;
 const RING_POINTS: usize = 96;
-const LARDER: (f32, f32) = (216.0, 80.0);
+/// The fortress ring as arcs: five 24-cell lines, one along each side of
+/// a pentagon round the ring of 14 (half a side is 10.2, inside the line's
+/// 12), close it.
+const FORT_ARCS: u64 = 5;
+/// The rival's home on the field (moved half a cell in on 11-11; it was
+/// (216, 80) for the first three tests).
+const LARDER: (f32, f32) = slime_mould::mould::skirmish::HOMES[1];
 const LINE: f32 = 24.0;
 const LEAN: f32 = 0.25;
 /// When loops are counted: before the field's food runs low.
@@ -77,6 +84,9 @@ enum Hand {
     /// Fire through the larder itself, at a random angle: at the mould
     /// eating it.
     Pile,
+    /// A fortress: the whole guard ring held from the first second, one of
+    /// `FORT_ARCS` arcs a shot in turn, whether or not mould is near.
+    Fort,
 }
 
 impl Hand {
@@ -86,6 +96,7 @@ impl Hand {
             "near" => Hand::Near,
             "rand" => Hand::Rand,
             "pile" => Hand::Pile,
+            "fort" => Hand::Fort,
             _ => Hand::Idle,
         }
     }
@@ -116,8 +127,8 @@ struct Out {
     walkers: usize,
     first_bite: Option<f32>,
     shots: u32,
-    loops90: usize,
-    walkers90: usize,
+    loops45: usize,
+    walkers45: usize,
 }
 
 fn larder_index(d: &Dish) -> usize {
@@ -170,9 +181,18 @@ fn on_agar(d: &Dish, x: f32, y: f32) -> bool {
 }
 
 /// The line the hand fires this second, if any: centre and unit direction.
-fn aim(d: &Dish, hand: Hand, rng: &mut Rng) -> Option<((f32, f32), (f32, f32))> {
+fn aim(d: &Dish, hand: Hand, every: u64, rng: &mut Rng) -> Option<((f32, f32), (f32, f32))> {
     if hand == Hand::Idle {
         return None;
+    }
+    if hand == Hand::Fort {
+        // Arc k of the ring, chosen by the shot count, fired along its chord.
+        let k = (d.t / every) % FORT_ARCS;
+        let a = (k as f32 + 0.5) / FORT_ARCS as f32 * std::f32::consts::TAU;
+        return Some((
+            (LARDER.0 + RING * a.cos(), LARDER.1 + RING * a.sin()),
+            (-a.sin(), a.cos()),
+        ));
     }
     let near: Vec<(f32, f32)> = d
         .walkers
@@ -222,7 +242,7 @@ fn aim(d: &Dish, hand: Hand, rng: &mut Rng) -> Option<((f32, f32), (f32, f32))> 
                 return Some((at, random_dir));
             }
         },
-        Hand::Idle => None,
+        Hand::Idle | Hand::Fort => None,
     }
 }
 
@@ -307,7 +327,7 @@ fn run(seed: u64, s: Setup, look: Option<&str>) -> Out {
     let mut held: Option<((f32, f32), (f32, f32))> = None;
     for t in 0..SECONDS * SPS {
         if t % s.every == 0 {
-            held = aim(&d, s.hand, &mut rng);
+            held = aim(&d, s.hand, s.every, &mut rng);
             if let Some(line) = held {
                 out.shots += 1;
                 if s.gun == Gun::Snip {
@@ -321,12 +341,25 @@ fn run(seed: u64, s: Setup, look: Option<&str>) -> Out {
             }
         }
         d.step();
+        if t % (SPS / 2) == 0 && t < 8 * SPS && std::env::var("DEBUG").is_ok() {
+            let wounds = d.ground.iter().filter(|g| **g == Ground::Wound).count();
+            let inside = d
+                .walkers
+                .iter()
+                .filter(|w| (w.x - LARDER.0).hypot(w.y - LARDER.1) < RING - 3.0)
+                .count();
+            eprintln!(
+                "t {:.1} s: wound cells {wounds}, walkers inside ring {inside}, larder eaters {}",
+                t as f32 / SPS as f32,
+                d.piles[li].eaters
+            );
+        }
         if out.first_bite.is_none() && d.piles[li].eaters > 0 {
             out.first_bite = Some(t as f32 / SPS as f32);
         }
         if t + 1 == LOOPS_AT * SPS {
-            out.loops90 = loops(&d);
-            out.walkers90 = d.walkers.len();
+            out.loops45 = loops(&d);
+            out.walkers45 = d.walkers.len();
         }
         if let Some(dir) = look {
             if (t + 1) % (10 * SPS) == 0 {
@@ -398,6 +431,7 @@ fn paired(name_a: &str, name_b: &str, a: &[f32], b: &[f32], low: bool) -> String
 }
 
 fn par<F: Fn(u64) -> Out + Sync>(seeds: &[u64], f: F) -> Vec<Out> {
+    assert!(!seeds.is_empty(), "no seeds");
     let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1);
     let mut out = vec![Out::default(); seeds.len()];
     std::thread::scope(|sc| {
@@ -436,8 +470,8 @@ fn show(name: &str, seeds: &[u64], o: &[Out]) {
             r.walkers,
             r.first_bite.map(|t| format!("{t:.1}")).unwrap_or("never".into()),
             r.shots,
-            r.loops90,
-            r.walkers90
+            r.loops45,
+            r.walkers45
         );
     }
     println!(
@@ -446,7 +480,7 @@ fn show(name: &str, seeds: &[u64], o: &[Out]) {
         median(o.iter().map(|r| r.ate).collect()),
         median(o.iter().map(|r| r.walkers as f32).collect()),
         median(o.iter().map(|r| r.first_bite.unwrap_or(SECONDS as f32)).collect()),
-        median(o.iter().map(|r| r.loops90 as f32).collect()),
+        median(o.iter().map(|r| r.loops45 as f32).collect()),
     );
 }
 
@@ -481,6 +515,33 @@ fn main() {
     }
     let t0 = std::time::Instant::now();
     match args.first().map(String::as_str) {
+        Some("fort") => {
+            println!("fortress: ring held from 0 s, {SECONDS} s, {} seeds", seeds.len());
+            let idle = par(&seeds, |sd| {
+                run(
+                    sd,
+                    Setup {
+                        hand: Hand::Idle,
+                        ..base
+                    },
+                    None,
+                )
+            });
+            let fort = par(&seeds, |sd| {
+                run(
+                    sd,
+                    Setup {
+                        hand: Hand::Fort,
+                        ..base
+                    },
+                    None,
+                )
+            });
+            show("Idle", &seeds, &idle);
+            show("Fort", &seeds, &fort);
+            let st = |o: &[Out]| o.iter().map(|r| r.stolen).collect::<Vec<_>>();
+            println!("stolen: {}", paired("fort", "idle", &st(&fort), &st(&idle), true));
+        }
         Some("fire") => {
             println!(
                 "test 1, held fire: gun {}, food x{food}, {SECONDS} s, {} seeds",
@@ -551,7 +612,7 @@ fn main() {
             show("fat aim", &seeds, &fat_aim);
             show("lean idle", &seeds, &lean_idle);
             show("lean aim", &seeds, &lean_aim);
-            let lp = |o: &[Out]| o.iter().map(|r| r.loops90 as f32).collect::<Vec<_>>();
+            let lp = |o: &[Out]| o.iter().map(|r| r.loops45 as f32).collect::<Vec<_>>();
             println!(
                 "loops at 45 s: {}",
                 paired("fat", "lean", &lp(&fat_idle), &lp(&lean_idle), false).replace("better than", "more loops than")
