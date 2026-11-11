@@ -70,7 +70,8 @@ these triggers rather than by a plan for its final size:
   forest floor) are added when their first page is.
 - **The success check** (`Reports/llm-wiki-plan-2026-11-10.md`) runs while the
   wiki is small, so its worth is known before it is big, and again after it
-  doubles.
+  doubles. Run 2 (2026-11-11, 21 pages): still a tie with reading the
+  reports (3-2, 33 ties; 13% fewer tokens), so its shrink rule applies.
 
 ## Workflows
 
