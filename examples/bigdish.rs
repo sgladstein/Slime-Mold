@@ -186,6 +186,10 @@ fn main() {
             _ => panic!("unknown key {k}"),
         }
     }
+    // Output folders are made here, so a fresh clone needs no setup.
+    for dir in [&gif, &frames, &look].into_iter().flatten() {
+        std::fs::create_dir_all(dir).unwrap();
+    }
     println!("bigdish: preset {name} seeds {seeds:?} seconds {seconds} threads {threads}");
     println!("params {p:?}");
     let ticks = (seconds * STEPS_PER_SECOND as f32).round() as u64;

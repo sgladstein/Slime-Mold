@@ -57,8 +57,8 @@ depends on is done, not when the band before it is finished.
 
 | # | Step | Owner | Waits on |
 | --- | --- | --- | --- |
-| S2 | GPU phase 2: offline 1024 x 640 with about 100k walkers, paired seeds; GPU timing test | GPU thread | offline dish **done 11-10** on the engine-only dish (economy left out under the owner's 20:55Z ruling): 32k and 100k walkers, videos and counts on the [4x Mould page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs). Timing test built (`examples/gputime.rs`: four wgpu compute passes a tick; on a software GPU its dish matches the CPU's, 165 loops against 163 at 100k). Waits on **the owner at Scott-Desktop with the Claude app open**, for the timing run on the GTX 1070 through Remote Control |
-| **Gate** | **The owner picks a target scale and look, or stops** | Scotttt | **decided 22:32Z** (card): 100,000 walkers on 1024 x 640; the GPU timing test still runs before phase 3 |
+| S2 | GPU phase 2: offline 1024 x 640 with about 100k walkers, paired seeds; GPU timing test | GPU thread | offline dish **done 11-10** on the engine-only dish (economy left out under the owner's 20:55Z ruling): 32k and 100k walkers, videos and counts on the [4x Mould page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs). Timing test built (`examples/gputime.rs`: four wgpu compute passes a tick; on a software GPU its dish matches the CPU's, 165 loops against 163 at 100k). **Timing done 11-11** on the GTX 1070 through Remote Control: 100k walkers take 1.37 ms for a frame of two ticks, 1M (no crowd limit) 3.52 ms, against the 8 ms bar; the GPU dish matches the CPU's (115 loops against 114 at 20 s) ([plan, *GPU timing on the GTX 1070*](Reports/gpu-plan-2026-11-10.md)) |
+| **Gate** | **The owner picks a target scale and look, or stops** | Scotttt | **decided 22:32Z** (card): 100,000 walkers on 1024 x 640; the GPU timing passed on 11-11, so the GPU goes ahead to S3. The owner asked (11-11 00:06Z) for every option the Jenson comparison tested as a sandbox control: that is S3 |
 
 The two branches after the gate:
 
@@ -174,8 +174,9 @@ decisions.
    6). Recommended: yes. Needed now, because it is third in the Pixel_Physics
    thread's order.
 5. **Listen to the Mould Sound page** (https://claude.ai/artifact/6GXBj1swj93DzdytbUjqvA) and say whether the levels are right.
-6. **Be at Scott-Desktop with the Claude app open** when S2's timing test is
-   ready; the GPU thread will ask.
+6. ~~**Be at Scott-Desktop with the Claude app open** when S2's timing test is
+   ready.~~ Done 11-11; the owner gave a standing OK (00:06Z) for tests on
+   that PC whenever it is reachable.
 7. **Integer or float** (decision 6), after S1 has measured it. Recommended:
    integer.
 8. **Upload Jones 2011** before S4.
