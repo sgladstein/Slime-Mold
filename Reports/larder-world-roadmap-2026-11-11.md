@@ -65,3 +65,12 @@ Test `crystals_run_dry_and_terrain_pairs`. The walker count is still fixed (grow
 First look, 512 × 320, 20k walkers, 23 crystals, seed 1 ([5 s](larder-world-roadmap-2026-11-11/w1a/big-w1-s1-005s.png), [60 s](larder-world-roadmap-2026-11-11/w1a/big-w1-s1-060s.png)). Crystal charge left at 20 s was 0.566 on seed 1 and 0.497 on seed 2, with eat 0.02 against a charge of 1 (too fast; to tune). Cost: 8.00 and 8.20 ms a tick with crystals and terrain on, against 7.59 and 8.34 off (2 seeds, 4 threads), which is within noise.
 
 **Owner, 14:54-14:55Z:** don't scale back. Test crystals that run out against crystals that refill. As a first thought, to be settled by playtest, run-out crystals go with the race and refilling ones with the landing. Walls first, the Sporer and Sleeper tiers and a player species are agreed. Use a CPU world for small tests and the 1070 for GPU work, in parallel. Added `crystal_regrow`: each fine step a crystal cell regains this share of what it is missing (0 = runs dry).
+
+## First wall test (W1a, fixed walker count), 2026-11-11
+
+`examples/worldwall.rs`: 512 × 320, 20k walkers, 23 finite crystals (charge 1, eat 0.005), the mould starting as a blob on the home crystal. At 5 s one 60 × 3 dish-cell wall goes in. The arms are `none`, `road` (across the line to the three nearest crystals, 6 cells ahead of the mould's front there) and `random` (keyed position and angle). The deciding measure, named before the run, was the charge drained from the non-home crystals by 30 s, paired by seed.
+
+- Run 1 ([raw](larder-world-roadmap-2026-11-11/walls/run1-wall-inside-body.txt)) put the road wall 12 cells from home, which is inside the 20k-walker blob. That was a placement error and is not counted.
+- Run 2 ([raw](larder-world-roadmap-2026-11-11/walls/run2-wall-at-front.txt)): the road wall drained less than none on 5 of 8 seeds (two-sided sign test p 0.73) and less than random on 6 of 8 (p 0.29). The differences run from -0.060 to +0.041 of the charge. **No effect.**
+
+Why: the walker count is fixed, so the mould's total eating rate is set by how many walkers stand on crystals, not by which crystals it reaches. A 60-cell wall is also simply walked around ([seed 1](larder-world-roadmap-2026-11-11/walls/run2-s1-road.png)). This says nothing yet about walls in play. It says the test needs W0's growth, where cutting the mould off from crystals should shrink it. Rerun when W0 merges, with the mould's walker count at 30 and 60 s as the measure.
