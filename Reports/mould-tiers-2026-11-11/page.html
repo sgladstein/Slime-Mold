@@ -1,0 +1,168 @@
+<title>Sporer, Sleeper, Swarmer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Same lightbox as the creatures page: one dark theme so the black dishes
+   sit flush, counts in mono beside each picture. */
+:root {
+  --bg: #0c0e0d; --panel: #151917; --line: #2a302d;
+  --fg: #e9ece9; --muted: #9ba49f; --amber: #ffbe5a; --violet: #c9a8ff; --red: #ff6b5e;
+  --display: "Instrument Sans", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; }
+h2 { font-size: 24px; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header, section { display: grid; gap: 18px; }
+section > p { color: var(--muted); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+figure img, figure video { width: 100%; max-width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+figcaption strong { color: var(--fg); font-weight: 600; }
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13px; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+code { font-family: var(--mono); font-size: 0.9em; color: var(--amber); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.key span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; min-width: 560px; }
+th, td { text-align: left; padding: 8px 14px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 12px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Big dish · 1024 × 640 · 20,000 walkers · 11 Nov 2026</span>
+  <h1>Three moulds that answer back</h1>
+  <p>Each walker now has a life: it can fly as a spore, lie dormant, or die. A new field, the alarm, is laid where the player strikes (a strike kills every walker in a disc, clears its trail and lays alarm out to twice its radius), and walkers can be set to run toward it or away. From that come three rungs for the Larder ladder. Each one has a body, a way it answers attack, and a counter the player can learn. Every test below was named before it ran: 8 paired seeds, and each of the first four wins on 8 of 8.</p>
+  <div class="key"><span style="--c: var(--amber)">ordinary walkers</span><span style="--c: var(--violet)">dormant</span><span style="--c: #fff">spores in flight</span><span style="--c: var(--red)">alarm</span><span style="--c: #555">trail</span></div>
+  <p style="color: var(--muted)">All of it is data: walker counts and fields, no outline drawn. Videos run at twice real time, seed 1.</p>
+</header>
+
+<section>
+  <span class="eyebrow">1 · Sporer</span>
+  <h2>It jumps to crystals it can't reach by growing</h2>
+  <p>A walker feeding on a pile sometimes fruits: it leaves its cell and flies. For the first half of the flight it goes straight and can't land, so it leaves home. Then it steers by scent and lands on the first free cell over food. The faint streaks are spore paths.</p>
+  <div class="pair">
+    <figure><video src="pics/sporer.mp4" poster="pics/sporer-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Sporer, <code>spore_rate</code> 1e-4, 0 to 20 s</strong>
+      <dl class="stats"><dt>piles held at 20 s</dt><dd>6-7 of 7 (median 7)</dd><dt>paired</dt><dd>more on 8 of 8, p 0.008</dd><dt>in the air</dt><dd>6-40 at a time (seed 1)</dd></dl></figcaption></figure>
+    <figure><video src="pics/plain.mp4" poster="pics/plain-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>The same body without spores</strong>
+      <dl class="stats"><dt>piles held at 20 s</dt><dd>3-5 of 7 (median 4)</dd></dl></figcaption></figure>
+  </div>
+  <p>It is too fast at this rate: it holds all 7 piles by 10 s on 6 of 8 seeds, and the owner's rule is that no mould takes the map in 10 s. The rate is the dial. Piles held, seeds 1-3:</p>
+  <div class="table-wrap"><table>
+    <tr><th><code>spore_rate</code></th><th>10 s</th><th>20 s</th><th>60 s</th></tr>
+    <tr><td>1e-4 (above)</td><td class="num">4, 7, 7</td><td class="num">7, 7, 7</td><td class="num">7, 7, 7</td></tr>
+    <tr><td>1e-5</td><td class="num">4, 6, 6</td><td class="num">4, 7, 6</td><td class="num">6, 7, 7</td></tr>
+    <tr><td>3e-6</td><td class="num">3, 6, 5</td><td class="num">3, 6, 5</td><td class="num">3, 6, 5</td></tr>
+    <tr><td>no spores</td><td class="num">3, 4, 5</td><td class="num">3, 4, 5</td><td class="num">3, 4, 5</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">2 · Hitting a Sporer</span>
+  <h2>Strike it and it scatters</h2>
+  <p>With <code>spore_burst</code>, a walker in alarm fruits too, food or no food. One strike at the body's left edge at 10 s.</p>
+  <div class="pair">
+    <figure><video src="pics/burst.mp4" poster="pics/burst-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Sporer that bursts when struck</strong>
+      <dl class="stats"><dt>piles held at 20 s</dt><dd>7 of 7 on all 8 seeds</dd><dt>paired</dt><dd>more on 8 of 8, p 0.008</dd><dt>spores 1 s after</dt><dd>1963-3804</dd><dt>left at the wound</dt><dd>66-736 walkers (8 of 8 fewer)</dd></dl></figcaption></figure>
+    <figure><video src="pics/struck.mp4" poster="pics/struck-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Struck the same way, no burst</strong>
+      <dl class="stats"><dt>piles held at 20 s</dt><dd>3-5 of 7</dd><dt>left at the wound</dt><dd>1171-2361 walkers</dd></dl></figcaption></figure>
+  </div>
+  <p>The counter is to starve a Sporer, not hit it: it fruits only where it feeds, and every strike spreads it. (Walkers left at the wound was looked at after the run, not named before it.)</p>
+</section>
+
+<section>
+  <span class="eyebrow">3 · Sleeper</span>
+  <h2>A crust that wakes in a wave, and can be baited</h2>
+  <p>Off food, walkers fall dormant: by 10 s, 99% of the body is a violet crust. Alarm wakes a dormant walker, and a waking walker adds alarm to its own cell, so the wake runs through the crust, across the whole body in about 2 s, and the woken mould rushes the wound. After 2 s awake it can sleep again, and a walker that just fell asleep is deaf to alarm for 5 s.</p>
+  <div class="pair">
+    <figure><video src="pics/sleeper.mp4" poster="pics/sleeper-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Strike on the right at 14 s, no bait</strong>
+      <dl class="stats"><dt>walkers at the strike 2 s later</dt><dd>2360-2971 (median 2736)</dd></dl></figcaption></figure>
+    <figure><video src="pics/bait.mp4" poster="pics/bait-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>A harmless shock on the left at 10 s, then the same strike</strong>
+      <dl class="stats"><dt>walkers at the strike 2 s later</dt><dd>1858-2216 (median 2030)</dd><dt>paired</dt><dd>fewer on 8 of 8, p 0.008</dd></dl>
+      <span>The bait wakes almost everyone (19,442 of 20,000 by 12 s); they fall back asleep by 14 s, and the strike lands on a deaf crust.</span></figcaption></figure>
+  </div>
+  <figure><img src="pics/sleeper-wave.jpg" alt="Four close-ups of a violet crust: whole at 10 s, then amber spreading from a red wound on the right at 14.5, 15 and 16 s">
+    <figcaption><strong>The wake wave, no bait: 10, 14.5, 15 and 16 s</strong><span>Amber is awake. The wake spreads from the wound across the crust; by 16 s the whole body is up.</span></figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">4 · Swarmer</span>
+  <h2>It walks into the fire</h2>
+  <p>Sensors add 3 × alarm to what they read, so the mould leans into a wound. 11 strikes, every half second from 10 to 15 s, at the same spot on the left edge.</p>
+  <div class="pair">
+    <figure><video src="pics/swarm.mp4" poster="pics/swarm-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Swarmer, <code>alarm_weight</code> +3</strong>
+      <dl class="stats"><dt>walkers killed</dt><dd>1144-4158 (median 1393)</dd><dt>paired</dt><dd>more on 8 of 8, p 0.008</dd></dl></figcaption></figure>
+    <figure><video src="pics/fire.mp4" poster="pics/fire-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>The same fire, no alarm weight</strong>
+      <dl class="stats"><dt>walkers killed</dt><dd>614-3591 (median 816)</dd></dl></figcaption></figure>
+  </div>
+  <p>A kill zone is the counter: hold fire on one spot and it keeps coming.</p>
+</section>
+
+<section>
+  <span class="eyebrow">5 · Skittish, rejected</span>
+  <h2>Fleeing the alarm doesn't break the body up</h2>
+  <div class="pair">
+    <figure><video src="pics/flee.mp4" poster="pics/flee-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Same fire, <code>alarm_weight</code> −10 (the poster is 20 s)</strong>
+      <dl class="stats"><dt>tube bodies at 20 s</dt><dd>1-5 (median 2) against 1-3</dd><dt>paired</dt><dd>4 more, 1 fewer, 3 ties, p 0.375</dd></dl></figcaption></figure>
+    <div style="display: grid; gap: 12px; align-content: start; color: var(--muted)">
+      <p>This is Jones and Adamatzky's light, which splits their blob. Here it opens a gap by the wound and scatters a few strands, but the fed arms hold the rest of the body to its piles, and the alarm spreads only a few cells a second. It stays an option, not a tier. A mould that splits or migrates as a body is still open.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">6 · Does it hold up</span>
+  <h2>Longer runs, other sizes, the wall, and the cost</h2>
+  <p>Seeds 1-3, measures named before the runs, no test.</p>
+  <dl class="stats">
+    <dt>Sporer, 2 minutes</dt><dd>7 of 7 piles at 60 and 120 s on all three, against 4-5</dd>
+    <dt>Sleeper, 2 minutes</dt><dd>15,498-18,782 of 20,000 still dormant at 120 s; holds 2-3 piles against 3-5</dd>
+    <dt>5,000 walkers</dt><dd>Sporer 0-6 piles against 0-2; a body that reaches no pile never feeds, so never fruits</dd>
+    <dt>80,000 walkers</dt><dd>7 of 7 at 10 s against 5-7: the plain body nearly covers the piles already</dd>
+    <dt>the wall</dt><dd>no tier rides it: 0-1.8% of walkers within 10 dish cells of the wall at 20 and 60 s (plain 0-0.8%; spread evenly, 18.8%)</dd>
+  </dl>
+  <div class="table-wrap"><table>
+    <tr><th>Frame cost, 100,000 walkers, one core</th><th>ms a step</th></tr>
+    <tr><td>off</td><td class="num">25.2-25.9</td></tr>
+    <tr><td>alarm field</td><td class="num">33.0-34.6 (+31%)</td></tr>
+    <tr><td>spores</td><td class="num">27.7-29.2</td></tr>
+    <tr><td>sleep (dormant walkers don't move)</td><td class="num">16.5-16.8</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">For the ladder</span>
+  <h2>Each tier and its counter</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Tier</th><th>Body</th><th>When attacked</th><th>The player's counter</th></tr>
+    <tr><td>Sporer</td><td>a network that seeds outposts on far crystals</td><td>sprays spores; the wound empties</td><td>starve it; don't hit it</td></tr>
+    <tr><td>Sleeper</td><td>a dormant crust that holds its ground</td><td>wakes in a wave and rushes the wound</td><td>bait it, then strike while it is deaf</td></tr>
+    <tr><td>Swarmer</td><td>an ordinary network</td><td>leans into the wound</td><td>a kill zone</td></tr>
+  </table></div>
+  <p style="color: var(--muted)">All rules are off by default on the CPU big dish, and each one's doc comment is the spec for the GPU port. Spores cost the mould nothing today; in the world they should probably cost food.</p>
+</section>
+</div>

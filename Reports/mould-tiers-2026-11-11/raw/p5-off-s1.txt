@@ -1,0 +1,26 @@
+== seed 1: 1024 x 640, 20000 walkers, 7 piles
+seed 1 p5-off t  10.0s  tube  2465.2  loops   20  width 4.92  reach  128.3  piles 4/7  strays 0.003  ms/tick 12.39
+seed 1 p5-off t  10.0s  contrast 2.05
+seed 1 p5-off t  10.0s  extent r50 113.9 r90 167.3
+seed 1 p5-off t  10.0s  life walk 20000 spore 0 dormant 0 dead 0  held 3/7  bodies 1 big 2463  centre 128.7,79.6  near 4763  rim 0.000
+seed 1 p5-off t  20.0s  tube  2224.2  loops    9  width 5.17  reach  140.7  piles 4/7  strays 0.001  ms/tick 12.27
+seed 1 p5-off t  20.0s  contrast 2.20
+seed 1 p5-off t  20.0s  extent r50 109.0 r90 181.4
+seed 1 p5-off t  20.0s  life walk 20000 spore 0 dormant 0 dead 0  held 3/7  bodies 2 big 2190  centre 129.3,79.6  near 4655  rim 0.000
+seed 1 p5-off t  30.0s  tube  2152.8  loops    9  width 5.18  reach  164.5  piles 4/7  strays 0.003  ms/tick 12.27
+seed 1 p5-off t  30.0s  contrast 2.25
+seed 1 p5-off t  30.0s  extent r50 106.7 r90 187.6
+seed 1 p5-off t  30.0s  life walk 20000 spore 0 dormant 0 dead 0  held 3/7  bodies 4 big 2086  centre 129.9,79.6  near 4240  rim 0.000
+seed 1 p5-off t  40.0s  tube  2112.4  loops    8  width 5.06  reach  180.6  piles 4/7  strays 0.008  ms/tick 12.41
+seed 1 p5-off t  40.0s  contrast 2.22
+seed 1 p5-off t  40.0s  extent r50 103.9 r90 192.7
+seed 1 p5-off t  40.0s  life walk 20000 spore 0 dormant 0 dead 0  held 3/7  bodies 2 big 2031  centre 130.5,79.5  near 4022  rim 0.000
+seed 1 p5-off t  50.0s  tube  2115.3  loops    7  width 5.14  reach  193.1  piles 4/7  strays 0.004  ms/tick 12.55
+seed 1 p5-off t  50.0s  contrast 2.29
+seed 1 p5-off t  50.0s  extent r50 102.7 r90 196.5
+seed 1 p5-off t  50.0s  life walk 20000 spore 0 dormant 0 dead 0  held 3/7  bodies 3 big 2011  centre 131.2,79.4  near 4282  rim 0.000
+seed 1 p5-off t  60.0s  tube  2066.1  loops    8  width 5.13  reach  193.0  piles 4/7  strays 0.013  ms/tick 12.68
+seed 1 p5-off t  60.0s  contrast 2.33
+seed 1 p5-off t  60.0s  extent r50 100.4 r90 198.9
+seed 1 p5-off t  60.0s  life walk 20000 spore 0 dormant 0 dead 0  held 3/7  bodies 2 big 2010  centre 131.6,79.4  near 4637  rim 0.000
+seed 1 p5-off hash=e4a11016e7278d89

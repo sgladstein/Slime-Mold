@@ -1,0 +1,18 @@
+== seed 1: 1024 x 640, 20000 walkers, 7 piles
+seed 1 nostreak t   5.0s  tube  2886.0  loops   34  width 4.69  reach  165.5  piles 6/7  strays 0.001  ms/tick 30.19
+seed 1 nostreak t   5.0s  contrast 1.91
+seed 1 nostreak t   5.0s  extent r50 114.7 r90 149.8
+seed 1 nostreak t   5.0s  life walk 19983 spore 17 dormant 0 dead 0  held 3/7  bodies 2 big 2876  centre 128.4,79.6  near 4740  rim 0.000/0.001
+seed 1 nostreak t  10.0s  tube  2519.9  loops   19  width 4.89  reach  165.7  piles 7/7  strays 0.001  ms/tick 28.12
+seed 1 nostreak t  10.0s  contrast 1.97
+seed 1 nostreak t  10.0s  extent r50 113.6 r90 167.2
+seed 1 nostreak t  10.0s  life walk 19971 spore 29 dormant 0 dead 0  held 4/7  bodies 3 big 2500  centre 128.7,79.6  near 4691  rim 0.000/0.001
+seed 1 nostreak t  15.0s  tube  2348.4  loops   13  width 5.07  reach  165.7  piles 7/7  strays 0.002  ms/tick 27.40
+seed 1 nostreak t  15.0s  contrast 2.07
+seed 1 nostreak t  15.0s  extent r50 110.8 r90 178.2
+seed 1 nostreak t  15.0s  life walk 19972 spore 28 dormant 0 dead 0  held 6/7  bodies 5 big 2320  centre 128.8,79.6  near 4633  rim 0.000/0.002
+seed 1 nostreak t  20.0s  tube  2269.0  loops   10  width 5.20  reach  166.9  piles 7/7  strays 0.003  ms/tick 27.22
+seed 1 nostreak t  20.0s  contrast 2.10
+seed 1 nostreak t  20.0s  extent r50 108.7 r90 185.1
+seed 1 nostreak t  20.0s  life walk 19960 spore 40 dormant 0 dead 0  held 7/7  bodies 5 big 2226  centre 129.0,79.6  near 4371  rim 0.000/0.002
+seed 1 nostreak hash=eafbf6de52dd2275

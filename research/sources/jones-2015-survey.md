@@ -8,7 +8,7 @@ url: https://arxiv.org/abs/1511.05774
 read: full, 2026-11-09 (Fig. 3 viewed)
 copy: ../../Reports/mould-game-2026-11-08/depth-2026-11-09/papers/jones-2015-applications-multi-agent-slime-mould-computing.pdf (+ .txt)
 licence: author's and publisher's copyright; private repo, reading only
-used-in: ../../Reports/mould-game-2026-11-08/depth-2026-11-09/sources-research.md, ../../Reports/gpu-plan-2026-11-10.md
+used-in: ../../Reports/mould-game-2026-11-08/depth-2026-11-09/sources-research.md, ../../Reports/gpu-plan-2026-11-10.md, ../../Reports/mould-tiers-2026-11-11.md
 ---
 
 # Jones 2015 survey: the model as a "virtual material"

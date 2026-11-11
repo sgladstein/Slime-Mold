@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-11T17:10Z
+updated: 2026-11-11T18:30Z
 sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [BigParams::upkeep, BigParams::energy_flow, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
@@ -48,6 +48,10 @@ the crystals swamps them
   rise with its charge (the Larder thread's rule).
 - `BigParams::energy_flow` (off, CPU only): keep it for the cut-a-tube
   lever? A cut has not been tested.
+- With [the life cycle](life-cycle.md) on, only ordinary walkers pay
+  upkeep, starve, divide and share energy; a spore or a dormant walker
+  keeps its energy until it lands or wakes, and a struck walker frees its
+  slot for a birth. Should sleeping cost upkeep? Untested in play.
 
 ## Sources
 

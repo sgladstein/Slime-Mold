@@ -1,0 +1,26 @@
+== seed 2: 1024 x 640, 20000 walkers, 7 piles
+seed 2 p5-1e5 t  10.0s  tube  2798.5  loops   26  width 4.11  reach  142.6  piles 7/7  strays 0.016  ms/tick 10.58
+seed 2 p5-1e5 t  10.0s  contrast 2.31
+seed 2 p5-1e5 t  10.0s  extent r50 106.9 r90 181.3
+seed 2 p5-1e5 t  10.0s  life walk 19992 spore 8 dormant 0 dead 0  held 6/7  bodies 2 big 2730  centre 127.1,78.8  near 5482  rim 0.000
+seed 2 p5-1e5 t  20.0s  tube  2529.1  loops   15  width 4.11  reach  143.6  piles 7/7  strays 0.012  ms/tick 9.92
+seed 2 p5-1e5 t  20.0s  contrast 2.51
+seed 2 p5-1e5 t  20.0s  extent r50 106.2 r90 203.4
+seed 2 p5-1e5 t  20.0s  life walk 19987 spore 13 dormant 0 dead 0  held 7/7  bodies 3 big 2479  centre 126.6,78.4  near 5064  rim 0.000
+seed 2 p5-1e5 t  30.0s  tube  2591.2  loops   15  width 3.90  reach  143.9  piles 7/7  strays 0.021  ms/tick 9.69
+seed 2 p5-1e5 t  30.0s  contrast 2.49
+seed 2 p5-1e5 t  30.0s  extent r50 103.5 r90 248.2
+seed 2 p5-1e5 t  30.0s  life walk 19987 spore 13 dormant 0 dead 0  held 7/7  bodies 2 big 2584  centre 126.8,77.9  near 4754  rim 0.000
+seed 2 p5-1e5 t  40.0s  tube  2728.3  loops   15  width 3.57  reach  144.3  piles 7/7  strays 0.029  ms/tick 9.60
+seed 2 p5-1e5 t  40.0s  contrast 2.51
+seed 2 p5-1e5 t  40.0s  extent r50 103.2 r90 256.1
+seed 2 p5-1e5 t  40.0s  life walk 19987 spore 13 dormant 0 dead 0  held 7/7  bodies 5 big 2622  centre 126.7,77.4  near 4912  rim 0.000
+seed 2 p5-1e5 t  50.0s  tube  2872.8  loops   16  width 3.46  reach  187.3  piles 7/7  strays 0.019  ms/tick 9.53
+seed 2 p5-1e5 t  50.0s  contrast 2.61
+seed 2 p5-1e5 t  50.0s  extent r50 104.3 r90 261.4
+seed 2 p5-1e5 t  50.0s  life walk 19983 spore 17 dormant 0 dead 0  held 7/7  bodies 7 big 2647  centre 127.0,77.1  near 5017  rim 0.000
+seed 2 p5-1e5 t  60.0s  tube  2939.5  loops   17  width 3.30  reach  190.2  piles 7/7  strays 0.022  ms/tick 9.53
+seed 2 p5-1e5 t  60.0s  contrast 2.64
+seed 2 p5-1e5 t  60.0s  extent r50 102.6 r90 268.1
+seed 2 p5-1e5 t  60.0s  life walk 19986 spore 14 dormant 0 dead 0  held 7/7  bodies 5 big 2807  centre 127.4,77.0  near 5229  rim 0.000
+seed 2 p5-1e5 hash=8353eac0bb362858
