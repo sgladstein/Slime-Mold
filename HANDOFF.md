@@ -16,7 +16,15 @@ reports ([`Reports/README.md`](Reports/README.md) indexes them all).
 
 ## Where the game stands
 
-`cargo run --release --bin mould` is the game. Everything on screen is the
+**Where the work is now (2026-11-11):** RTS-type games, and above all
+**Larder World** ([page](wiki/rts/shooter.md),
+[roadmap](Reports/larder-world-roadmap-2026-11-11.md)): a squad against
+several mould species in a persistent world on the GPU big dish, with
+energy crystals that drain (owner, 11-11 14:06Z: "Put everything into the
+world version"). The owner ruled the dishes below unlikely to be the true
+games (11-10 20:55Z), so they are kept and documented but not tuned further.
+
+`cargo run --release --bin mould` is the dish game. Everything on screen is the
 simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
 **Neither new dish has been played by the owner's hand yet.**
 
@@ -50,10 +58,19 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   against today's 3 ([page](https://claude.ai/artifact/WMfUwTj9Dfdwp9MCfy8MHs)).
   The owner picked 100,000 walkers (22:32Z). On the GTX 1070 (11-11) a frame
   of two ticks takes 1.37 ms at 100,000 walkers and 3.52 ms at 1,000,000,
-  against an 8 ms bar, and the GPU dish matches the CPU's. Phase 3 has
-  started: the GPU sandbox, `cargo run --release --bin mouldgpu`, with
-  every Jenson-comparison option as a control (owner, 11-11 00:06Z;
-  [report](Reports/gpu-sandbox-2026-11-11.md)).
+  against an 8 ms bar, and the GPU dish matches the CPU's. Phase 3 is
+  built: the GPU sandbox, `cargo run --release --bin mouldgpu`, with
+  every Jenson-comparison option as a control (owner, 11-11 00:06Z), and
+  the outside rules and creatures (species, explorers, droplets, grazing)
+  as controls too, twin-tested in CI
+  ([report](Reports/gpu-sandbox-2026-11-11.md)). Phase 4 starts as Larder
+  World's W0: births, upkeep and starving per walker on the GPU.
+- Mould tiers for the Larder ladder: [the life cycle](wiki/model/life-cycle.md)
+  (CPU big dish, off by default). Spores, dormancy and an alarm the
+  player's strike lays give a Sporer (starve it: struck, it scatters), a
+  Sleeper (bait it: after a wake it is deaf for 5 s) and a Swarmer (it
+  walks into a kill zone), each 8 of 8 paired seeds against its control.
+  A mould that flees attack did not split; a migrating tier is open.
 - How it is judged: [the census](wiki/method/census.md).
 - [The field skirmish](wiki/rts/skirmish.md): version 1 (habits, salt, the
   lamp) is playable (https://claude.ai/artifact/NDJJZJuabHpjMjLNBr45Lw) and
@@ -71,8 +88,10 @@ simulation; the owner's rulings are in [`wiki/decisions.md`](wiki/decisions.md).
   sketch's exploiter search against brace.
 - [Two Fevers](wiki/rts/two-fevers.md), a playable browser demo
   (https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a): two fevers fight
-  for a neutral host and keep the ground they reach. The planner beats random
-  clicks 16 of 16, but only by 0.537; version 2 awaits the owner's hand.
+  for a neutral host and keep the ground they reach. Version 3 (call, seed,
+  pinch) puts the mould at the centre; its three plans form a ladder (Trunk
+  over Web over Raider) and the leader at 1:30 keeps the lead in 26-32 of
+  32 games. No one has played version 3 by hand yet.
 
 ## Decisions the owner has not made
 
@@ -127,8 +146,13 @@ Ask each again; none has an answer to assume.
    tests first. After a snip fix, a ring of fire held from the start keeps
    the mould off the larder (0 stolen, 16/16) and is now the dominant play.
    Priced (shots cost food, larder runs dry, slowed fronts), ring-forever
-   never wins but ring-then-mow tops every seed: a ladder. Open: which
-   mould answer to add so plans can counter each other.
+   never wins but ring-then-mow tops every seed: a ladder. M2's mould
+   answers kept it a ladder; M3's soldiers firing from range loosened it (no
+   plan best on 13+ of 16). On 11-11 14:06Z the owner moved Larder into
+   Larder World (see the top of this page); the roadmap's open questions
+   (world size, how a world ends, allies or rivals, fog of war, what carries
+   between worlds) are listed in
+   [its report](Reports/larder-world-roadmap-2026-11-11.md).
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
@@ -139,6 +163,9 @@ with no engine, is in §5 of
 
 How these sit against the GPU plan, the Pixel_Physics ports and the RTS,
 with what each waits on and which thread owns it: [ROADMAP.md](ROADMAP.md).
+The live work is ROADMAP's Larder World band (W0-W5) and the RTS demos; the
+dish steps below are paused by the owner's 11-10 20:55Z ruling and kept
+for if those dishes come back.
 
 1. **Keep It Alive: give the player the choice that decides the hump.**
    Traced: the first pile landing on mostly-asleep mould decides it, by
