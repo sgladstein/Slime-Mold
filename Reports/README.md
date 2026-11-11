@@ -222,6 +222,9 @@ move.
 - [mould-shooter-2026-11-11.md](mould-shooter-2026-11-11.md) — **the mould as the enemy, a shooter brainstorm**
   (owner, 11-11 00:18Z). Lead shape Larder: a squad and the mould want the same food; stored food smells, so a
   hoard draws the mould; shots cut supply by holding a tube clear, not by kills (the knife is weak); four
-  strategies meant to counter through the mould's lean or fat state; three cheap tests first. No runs.
+  strategies meant to counter through the mould's lean or fat state. **Tests run** (`examples/larderprobe.rs`, 16
+  seeds): a held ring of fire round the larder saves 0.5% (16/16), firing on the mould eating it saves 90% (16/16):
+  a fed pile feeds its own eaters, so cuts only hurt mould with no food; a trail-only gun does nothing; smell and
+  lean-vs-fat show 16/16 but tiny effects, because the mould crosses today's dish in about 4 s.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

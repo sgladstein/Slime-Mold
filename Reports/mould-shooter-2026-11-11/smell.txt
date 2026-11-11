@@ -1,0 +1,80 @@
+test 2, larder smell: idle hand, 90 s, 16 seeds
+gain 0 (0 = plain pile):
+  seed  1: stolen   12241  ate   273777  walkers  6899  first bite    4.4  shots   0  loops@45  12  walkers@45  6899
+  seed  2: stolen   12248  ate   274603  walkers  6899  first bite    4.4  shots   0  loops@45  10  walkers@45  6900
+  seed  3: stolen   12277  ate   275948  walkers  6900  first bite    4.1  shots   0  loops@45  11  walkers@45  6900
+  seed  4: stolen   12310  ate   274444  walkers  6901  first bite    3.8  shots   0  loops@45  11  walkers@45  6901
+  seed  5: stolen   12273  ate   274249  walkers  6898  first bite    4.2  shots   0  loops@45  10  walkers@45  6902
+  seed  6: stolen   12295  ate   274790  walkers  6898  first bite    4.0  shots   0  loops@45  10  walkers@45  6900
+  seed  7: stolen   12345  ate   274522  walkers  6900  first bite    3.5  shots   0  loops@45   9  walkers@45  6901
+  seed  8: stolen   12268  ate   274076  walkers  6901  first bite    4.2  shots   0  loops@45  10  walkers@45  6901
+  seed  9: stolen   12223  ate   273756  walkers  6897  first bite    4.7  shots   0  loops@45  11  walkers@45  6901
+  seed 10: stolen   12258  ate   274734  walkers  6899  first bite    4.3  shots   0  loops@45  12  walkers@45  6902
+  seed 11: stolen   12240  ate   274339  walkers  6899  first bite    4.6  shots   0  loops@45   9  walkers@45  6899
+  seed 12: stolen   12263  ate   273187  walkers  6901  first bite    4.2  shots   0  loops@45  11  walkers@45  6901
+  seed 13: stolen   12281  ate   274392  walkers  6900  first bite    4.0  shots   0  loops@45  10  walkers@45  6897
+  seed 14: stolen   12268  ate   273910  walkers  6900  first bite    4.4  shots   0  loops@45   9  walkers@45  6900
+  seed 15: stolen   12293  ate   274983  walkers  6898  first bite    4.3  shots   0  loops@45   9  walkers@45  6900
+  seed 16: stolen   12323  ate   274564  walkers  6901  first bite    3.7  shots   0  loops@45  10  walkers@45  6901
+  median stolen 12273, ate 274444, walkers 6900, first bite 4.2 s, loops@45 10
+gain 0.3 (0 = plain pile):
+  seed  1: stolen   12221  ate   274191  walkers  6901  first bite    4.6  shots   0  loops@45  10  walkers@45  6897
+  seed  2: stolen   12139  ate   274817  walkers  6900  first bite    5.1  shots   0  loops@45  10  walkers@45  6899
+  seed  3: stolen   12235  ate   275933  walkers  6901  first bite    4.3  shots   0  loops@45  11  walkers@45  6905
+  seed  4: stolen   12285  ate   273745  walkers  6903  first bite    4.2  shots   0  loops@45  10  walkers@45  6899
+  seed  5: stolen   12210  ate   273661  walkers  6902  first bite    4.7  shots   0  loops@45  11  walkers@45  6901
+  seed  6: stolen   12248  ate   274349  walkers  6906  first bite    4.4  shots   0  loops@45  11  walkers@45  6905
+  seed  7: stolen   12331  ate   274606  walkers  6900  first bite    4.0  shots   0  loops@45  11  walkers@45  6901
+  seed  8: stolen   12218  ate   273921  walkers  6901  first bite    4.2  shots   0  loops@45  11  walkers@45  6902
+  seed  9: stolen   12160  ate   273573  walkers  6902  first bite    4.9  shots   0  loops@45  11  walkers@45  6903
+  seed 10: stolen   12175  ate   274359  walkers  6902  first bite    4.6  shots   0  loops@45  11  walkers@45  6901
+  seed 11: stolen   12173  ate   273519  walkers  6902  first bite    4.8  shots   0  loops@45  11  walkers@45  6901
+  seed 12: stolen   12222  ate   273404  walkers  6899  first bite    4.7  shots   0  loops@45  10  walkers@45  6900
+  seed 13: stolen   12218  ate   273994  walkers  6902  first bite    4.4  shots   0  loops@45  10  walkers@45  6902
+  seed 14: stolen   12230  ate   274385  walkers  6904  first bite    4.5  shots   0  loops@45  10  walkers@45  6900
+  seed 15: stolen   12212  ate   274481  walkers  6902  first bite    4.7  shots   0  loops@45  10  walkers@45  6900
+  seed 16: stolen   12247  ate   273930  walkers  6899  first bite    4.4  shots   0  loops@45  13  walkers@45  6899
+  median stolen 12221, ate 274191, walkers 6902, first bite 4.6 s, loops@45 11
+gain 1 (0 = plain pile):
+  seed  1: stolen   12247  ate   273810  walkers  6908  first bite    4.4  shots   0  loops@45  13  walkers@45  6908
+  seed  2: stolen   12254  ate   274042  walkers  6905  first bite    4.4  shots   0  loops@45   9  walkers@45  6906
+  seed  3: stolen   12306  ate   275696  walkers  6911  first bite    4.1  shots   0  loops@45  10  walkers@45  6903
+  seed  4: stolen   12324  ate   273362  walkers  6913  first bite    3.8  shots   0  loops@45  11  walkers@45  6920
+  seed  5: stolen   12289  ate   273190  walkers  6915  first bite    4.2  shots   0  loops@45  11  walkers@45  6907
+  seed  6: stolen   12307  ate   273792  walkers  6910  first bite    4.0  shots   0  loops@45  10  walkers@45  6908
+  seed  7: stolen   12357  ate   273396  walkers  6916  first bite    3.5  shots   0  loops@45  12  walkers@45  6914
+  seed  8: stolen   12280  ate   273101  walkers  6909  first bite    4.2  shots   0  loops@45  12  walkers@45  6904
+  seed  9: stolen   12229  ate   272966  walkers  6906  first bite    4.7  shots   0  loops@45   9  walkers@45  6903
+  seed 10: stolen   12272  ate   274453  walkers  6905  first bite    4.3  shots   0  loops@45  11  walkers@45  6913
+  seed 11: stolen   12243  ate   273352  walkers  6908  first bite    4.6  shots   0  loops@45  12  walkers@45  6908
+  seed 12: stolen   12275  ate   272973  walkers  6904  first bite    4.2  shots   0  loops@45  13  walkers@45  6919
+  seed 13: stolen   12286  ate   273351  walkers  6914  first bite    4.0  shots   0  loops@45  11  walkers@45  6911
+  seed 14: stolen   12265  ate   271699  walkers  6911  first bite    4.4  shots   0  loops@45  12  walkers@45  6905
+  seed 15: stolen   12292  ate   273592  walkers  6914  first bite    4.3  shots   0  loops@45  11  walkers@45  6905
+  seed 16: stolen   12332  ate   273976  walkers  6916  first bite    3.7  shots   0  loops@45  12  walkers@45  6910
+  median stolen 12286, ate 273396, walkers 6911, first bite 4.2 s, loops@45 11
+gain 3 (0 = plain pile):
+  seed  1: stolen   12286  ate   273045  walkers  6929  first bite    4.3  shots   0  loops@45  12  walkers@45  6929
+  seed  2: stolen   12291  ate   272436  walkers  6917  first bite    4.2  shots   0  loops@45  10  walkers@45  6882
+  seed  3: stolen   12307  ate   274882  walkers  6896  first bite    4.0  shots   0  loops@45  12  walkers@45  6928
+  seed  4: stolen   12356  ate   272495  walkers  6926  first bite    3.7  shots   0  loops@45  11  walkers@45  6908
+  seed  5: stolen   12321  ate   271474  walkers  6888  first bite    4.0  shots   0  loops@45  12  walkers@45  6916
+  seed  6: stolen   12338  ate   273178  walkers  6894  first bite    3.8  shots   0  loops@45  13  walkers@45  6932
+  seed  7: stolen   12402  ate   272112  walkers  6916  first bite    3.5  shots   0  loops@45  12  walkers@45  6929
+  seed  8: stolen   12307  ate   272807  walkers  6822  first bite    4.0  shots   0  loops@45  10  walkers@45  6919
+  seed  9: stolen   12264  ate   267872  walkers  6892  first bite    4.4  shots   0  loops@45  13  walkers@45  6885
+  seed 10: stolen   12287  ate   272707  walkers  6927  first bite    4.2  shots   0  loops@45  12  walkers@45  6903
+  seed 11: stolen   12303  ate   271250  walkers  6839  first bite    4.2  shots   0  loops@45  10  walkers@45  6904
+  seed 12: stolen   12295  ate   272055  walkers  6939  first bite    4.2  shots   0  loops@45  11  walkers@45  6929
+  seed 13: stolen   12316  ate   270344  walkers  6894  first bite    4.0  shots   0  loops@45  10  walkers@45  6898
+  seed 14: stolen   12297  ate   267254  walkers  6911  first bite    4.1  shots   0  loops@45  13  walkers@45  6824
+  seed 15: stolen   12301  ate   270437  walkers  6902  first bite    4.2  shots   0  loops@45  14  walkers@45  6813
+  seed 16: stolen   12380  ate   272726  walkers  6890  first bite    3.7  shots   0  loops@45  11  walkers@45  6918
+  median stolen 12307, ate 272436, walkers 6902, first bite 4.1 s, loops@45 12
+first bite (lower = reached sooner):
+  gain 3 better than gain 0.3 on 16 of 16 (p 0.0000)
+  gain 1 better than gain 0.3 on 15 of 16 (p 0.0005)
+  gain 3 better than gain 1 on 12 of 12 (p 0.0005)
+stolen (higher = the hoard drew more theft):
+  gain 3 better than gain 0.3 on 16 of 16 (p 0.0000)
+(183.7 s)
