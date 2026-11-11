@@ -1,0 +1,26 @@
+seed 11 grazescouts t  10.0s  tube  4724.5  loops    8  width 5.48  reach  139.9  piles 10/12  strays 0.006  ms/tick 12.55
+seed 11 grazescouts t  10.0s  contrast 5.49
+seed 11 grazescouts t  10.0s  extent r50 154.8 r90 212.7
+seed 11 grazescouts t  10.0s  kinds k0 n 24026 on 1.000 r 154.0  k1 n 5974 on 0.973 r 160.2
+seed 11 grazescouts t  20.0s  tube  4189.0  loops    2  width 5.51  reach  152.1  piles 11/12  strays 0.007  ms/tick 12.17
+seed 11 grazescouts t  20.0s  contrast 3.92
+seed 11 grazescouts t  20.0s  extent r50 160.0 r90 267.3
+seed 11 grazescouts t  20.0s  kinds k0 n 24026 on 0.999 r 156.6  k1 n 5974 on 0.968 r 179.2
+seed 11 grazescouts t  30.0s  tube  3942.8  loops    0  width 5.82  reach  158.2  piles 11/12  strays 0.004  ms/tick 12.04
+seed 11 grazescouts t  30.0s  contrast 3.18
+seed 11 grazescouts t  30.0s  extent r50 163.6 r90 277.2
+seed 11 grazescouts t  30.0s  kinds k0 n 24026 on 1.000 r 159.1  k1 n 5974 on 0.984 r 189.1
+seed 11 grazescouts t  40.0s  tube  3732.5  loops    0  width 6.28  reach  160.6  piles 12/12  strays 0.002  ms/tick 12.39
+seed 11 grazescouts t  40.0s  contrast 2.67
+seed 11 grazescouts t  40.0s  extent r50 166.6 r90 280.0
+seed 11 grazescouts t  40.0s  kinds k0 n 24026 on 1.000 r 161.7  k1 n 5974 on 0.990 r 196.2
+seed 11 grazescouts t  50.0s  tube  3658.9  loops    0  width 6.41  reach  172.3  piles 12/12  strays 0.003  ms/tick 12.45
+seed 11 grazescouts t  50.0s  contrast 2.47
+seed 11 grazescouts t  50.0s  extent r50 168.6 r90 282.3
+seed 11 grazescouts t  50.0s  kinds k0 n 24026 on 1.000 r 163.4  k1 n 5974 on 0.986 r 198.4
+seed 11 grazescouts t  60.0s  tube  3624.1  loops    1  width 6.58  reach  157.3  piles 12/12  strays 0.005  ms/tick 12.61
+seed 11 grazescouts t  60.0s  contrast 2.43
+seed 11 grazescouts t  60.0s  extent r50 168.5 r90 284.8
+seed 11 grazescouts t  60.0s  kinds k0 n 24026 on 1.000 r 163.5  k1 n 5974 on 0.976 r 197.6
+seed 11 grazescouts firsts 0:72:0.57:0.0 1:46:0.59:0.0 2:84:0.68:31.3 3:63:0.65:0.2 4:42:0.54:0.0 5:51:0.47:0.0 6:76:0.73:2.4 7:68:0.84:1.1 8:108:0.87:13.3 9:20:0.19:0.0 10:47:0.38:0.0 11:75:0.85:2.8
+seed 11 grazescouts hash=6569de5edd57a388

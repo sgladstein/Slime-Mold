@@ -8,6 +8,8 @@ Owner, 2026-11-11 19:29Z: "We will want maps though. That should be part of the 
 
 It is a plan only: no walker has run on these maps. The sketches are drawings of a map spec, made by [`sketch_maps.py`](larder-maps-2026-11-11/sketch_maps.py), which writes [`maps.json`](larder-maps-2026-11-11/maps.json) and the [sketches](larder-maps-2026-11-11/sketches/). WM1 (the map file and loader) belongs to the Larder thread, and WM4 (the ground's look) to the graphics thread. By their agreement, byte 3 of the ground word is height.
 
+> **2026-11-11 21:20Z: height is parked, and the maps are rebuilt flat.** The owner, 20:06Z: "Your map generation is heavily focused on heights. How much does height actually influence our slime mold behaviors? I am skeptical how much fun/complexity/strategy this adds to the game. You should also be starting from the improve solider and slime graphics work which already has added terrain to their map". Nothing below about height was measured. The ground kinds were then tested ([*Which ground the mould feels*](#which-ground-the-mould-feels-2026-11-11)), and the maps redrawn flat from rock, water, soil kinds and soft rock ([*Maps, version 2*](#maps-version-2-flat-2026-11-11)). The sections below are kept as written.
+
 ## The brief, stated from the model
 
 The world is a grid of cells. Walkers sense two fields ahead of them (their own trail, and scent given off by crystals), turn, step and lay trail. Trail and scent spread and fade. Walkers eat crystal charge, pay upkeep, divide when fed and die when starved. Some cells are rock (no walker enters), some are wet (a step there is halved), and some are walls with health that walkers bite down. Soldiers walk, shoot along a line that stops at the first slime, and harvest crystals.
@@ -77,6 +79,46 @@ A map that fails is redrawn, not tuned by hand: the spec is a list of shapes, so
 - `maps/<name>.txt` has one item a line, in 1024 × 640 cells: `crystal x y r charge`, `mould x y`, `landing x y`, and `wall x0 y0 x1 y1 thick hp`. Soft rock is written as wall lines (thick is the full width, hp 400, the player wall's default), so the engine's own `build_wall` draws it with health and leaky scent. The Nest's ring is 10-degree chords with the gap left out.
 
 The ground-word layout above is agreed. The loader resamples these files to the world's size, so 512 × 320 takes every other cell.
+
+## Which ground the mould feels, 2026-11-11
+
+Before any ground goes on a map, it has to change the mould. Harness: `examples/worldground.rs`. Ground kinds: `BigParams::sand_keep` (trail on sand x 0.8 each fine step), `clay_keep` (x 1.05), `barren_upkeep` (upkeep x 3, no births), all acting through `BigDish::soil` (one kind a fine cell; empty, the default, changes nothing, so every GPU twin is untouched). Wet ground (the step x 0.5, built in W1a) is the baseline: it is the kind of rule a slope would be.
+
+**World.** 512 x 320, 23 crystals of charge 512 eaten at 0.005, 5,000 walkers growing into 50,000 slots, upkeep 0.001, 60 s. A patch of keyed blobs covers 30% of the ground, clear of the crystals. The cells are the same in every arm of a seed, and only what the patch is changes: plain (control), wet, sand, clay or barren. 16 seeds. A first look at the default `crystal_eat` 0.05 ate 98-99% of the charge by 60 s and filled all 50,000 slots by 30 s in every arm, so size could not differ; it is not counted (the seed 1 picture at 60 s on the fed world is in `ground/look/`: the mould shuns sand and spreads onto clay even there).
+
+**Measures, named first**, each paired against plain with a two-sided sign test: the share of living walkers on the patch at 30 and 60 s; walkers alive at 60 s; crystal charge eaten by 60 s. 16 tests, Holm. Raw: [`ground/`](larder-maps-2026-11-11/ground/) (`run-q1..4.txt`, seeds in four parallel runs; a container restart cut the first runs, and the lost seeds were run again; seed 4 rerun alone gives the same hashes).
+
+| Ground | Share on the patch at 30 s (plain 0.108) | Alive at 60 s (plain 7,165) | Charge eaten (plain 0.025) |
+| --- | --- | --- | --- |
+| Wet (step x 0.5) | 0.154, up 15/16 | **4,044, down 16/16** | 0.015, down 16/16 |
+| Sand (trail fades) | **0.070, down 15/16** | **11,462, up 14/16** | 0.037, up 15/16 |
+| Clay (trail lasts) | 0.138, up 13/15 | 6,199, down 13/16 (p 0.021, not after Holm) | 0.018, down 15/16 |
+| Barren (upkeep x 3, no births) | 0.088, down 13/16 (p 0.021, not after Holm) | **3,603, down 15/16** | 0.014, down 15/16 |
+
+Medians of 16 seeds. All the other results survive Holm (p 0.0005-0.007).
+
+- **Every kind changes the mould, and in a way you can see** ([seed 4 at 60 s](larder-maps-2026-11-11/ground/look/): plain, wet, sand, clay, barren).
+- **Slow ground halves the mould.** Wet patches crowd walkers onto them (they stay longer), and the mould reaches fewer crystals: 16 of 16 seeds smaller. This corrects the guess in this thread's reply to the owner (20:08Z) that a speed rule would do little. A slope that slows would likely do the same. Flat wet ground already gives that effect without a height field, so height stays parked.
+- **Sand makes the mould bigger, not weaker.** Walkers leave sand quickly (share 0.108 to 0.070), but the whole mould grows by about 60% and eats about 50% more. Read: trail that fades stops walkers circling their own old roads, so they explore and find crystals sooner. This was not the brainstorm's prediction ("a fragile front to cut"). For maps, sand is fast-spreading ground, a racecourse for the mould.
+- **Clay traps the mould.** Walkers gather on it, and the mould eats less (15 of 16). Old roads hold walkers in place.
+- **Barren ground starves it.** It is half the size on 15 of 16 seeds. Walkers do not clearly avoid it; they die there.
+- Frame cost: one multiply a cell a fine step for sand and clay, one lookup a walker for barren. The ms a tick tracked walker count, not the soil (sand 7.1, plain 6.4, barren 5.7 ms; 1 thread each, 4 runs at once), so the pass itself is below what this harness resolves.
+
+**For maps:** wet ground and barren ground slow and starve the mould (a moat, a buffer zone); clay holds it where it is (a nest it is slow to leave); sand is where it spreads fastest. Each makes a different place on the map. Defaults stay as tested. All are off unless a map sets soil.
+
+## Maps, version 2 (flat), 2026-11-11
+
+The five maps are redrawn flat (R, height, is 0), and the sketches now use colours close to the graphics thread's world look (soil, grey rock plateaus with a shadow, glossy water), with sand pale, clay red-brown and soft rock as thicket green. Crystal radii are 3x version 1's (the Larder world's `pile_r` of 6 dish cells is 24 in 1024 x 640 cells; version 1's 7-15 were under it, and at 2x the maps held 25-43% of the race world's 8,671 crystal cells at scale 2, as the Larder thread's loader found, 21:32Z). At 3x they hold about 4,900-8,400 cells, 56-97% of the race world's. Spec, loader files and sketches: [`sketch_maps.py`](larder-maps-2026-11-11/sketch_maps.py), [`maps/`](larder-maps-2026-11-11/maps/), [`sketches/`](larder-maps-2026-11-11/sketches/).
+
+| Map | Ground | Drawn for |
+| --- | --- | --- |
+| The Rim (was The Basin) | A rock ring with four gaps round a clay floor (the mould holds it), a sand belt outside the gaps, a pool inside | Turtle: hold the gaps |
+| The Fork | Rock walls make a Y; clay at the mould's end; a pool in one fork | Lure |
+| The Flats | Sand everywhere, five clay islands | Boom |
+| The Nest | A soft-rock ring with one gap round clay and two rich crystals; rock outcrops and pools outside | Rush |
+| The Passes | Rock ranges with an open pass and a soft-rock gate; a clay valley and a sand valley, one rival in each | Adapt |
+
+The test changes two of version 1's guesses. Sand helps the mould spread, so on The Flats it is the mould's ground as well as the squad's, and The Flats now asks whether boom can still out-harvest a mould that spreads fast but holds only the clay. In The Passes, the sand rival is the fast one, and the clay rival the slow, entrenched one. Next: draw these with the graphics thread's look (agreed 20:29Z: sand, clay and barren become materials in `view.wgsl`'s `cell_mat`, keyed on ground bits 12-15) once its PR merges, and run the WM2 gate once the Larder thread's loader and W2b's harness are in.
 
 ## Sources
 
