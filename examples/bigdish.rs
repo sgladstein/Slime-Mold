@@ -316,6 +316,7 @@ fn main() {
             "species_avoid" => p.species_avoid = f(),
             "species_convert" => p.species_convert = f(),
             "species_boost" => p.species_boost = f(),
+            "species_share" => p.species_share = f(),
             "graze_weight" => p.graze_weight = f(),
             "graze_eat" => p.graze_eat = f(),
             "graze_regrow" => p.graze_regrow = f(),

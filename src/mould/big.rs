@@ -190,6 +190,14 @@ pub struct BigParams {
     /// Species 0 lays this many times the deposit (1 is even; added
     /// 2026-11-11 to give one side an edge in a fight).
     pub species_boost: f32,
+    /// Species 0's share of the walkers (0 is even, k % n). Otherwise
+    /// walker k is species 0 when (k x share) mod 1 + share >= 1, so the
+    /// shares interleave down the walker list, and the rest are k % (n - 1)
+    /// + 1 among themselves. With `species_zones` the bands stay equal, so
+    /// a bigger share is a *denser* side, not more ground (equal density on
+    /// wider ground would just be a bigger, equally strong territory).
+    /// Added 2026-11-11: an edge in numbers.
+    pub species_share: f32,
     /// Grazing (0 is off; added 2026-11-11 to make bodies roam, after
     /// Primordia's "Symbiosis" mode). A grass field starts at 1 on every agar
     /// cell; each step every walker eats `graze_eat` from its cell (not below
@@ -311,6 +319,7 @@ impl BigParams {
             species_avoid: 1.0,
             species_convert: 0.0,
             species_boost: 1.0,
+            species_share: 0.0,
             graze_weight: 0.0,
             graze_eat: 0.05,
             graze_regrow: 0.002,
@@ -507,7 +516,8 @@ impl BigDish {
         if d.p.species > 1 {
             d.species_trail = vec![vec![0.0; w * h]; d.p.species as usize];
             let n = d.p.species as usize;
-            d.spec = (0..d.walkers.len()).map(|k| (k % n) as u8).collect();
+            d.spec = (0..d.walkers.len()).map(|k| d.species_of(k) as u8).collect();
+            debug_assert!(d.spec.iter().all(|&s| (s as usize) < n));
         }
         if d.p.sick_steps > 0 {
             d.sick = vec![0; d.walkers.len()];
@@ -585,9 +595,10 @@ impl BigDish {
                 let (ang, dist) = (a * TAU, b.sqrt() * r);
                 (hx + ang.cos() * dist, hy + ang.sin() * dist)
             } else if self.p.species_zones && self.p.species > 1 {
-                // Walker number `len` (the next pushed) is species len % n.
+                // Walker number `len` (the next pushed) is species_of(len);
+                // bands are equal whatever the shares (see `species_share`).
                 let n = self.p.species as f32;
-                let sp = (self.walkers.len() % self.p.species as usize) as f32;
+                let sp = self.species_of(self.walkers.len()) as f32;
                 ((sp + a) / n * self.w as f32, b * self.h as f32)
             } else {
                 (a * self.w as f32, b * self.h as f32)
@@ -906,6 +917,23 @@ impl BigDish {
 
     /// The share of the deposit walker `k` lays: `explore_deposit` while it
     /// explores, else 1.
+    /// The species walker number `k` starts as (`species`, `species_share`).
+    fn species_of(&self, k: usize) -> usize {
+        let n = self.p.species.max(1) as usize;
+        let sh = self.p.species_share;
+        if sh <= 0.0 || n < 2 {
+            return k % n;
+        }
+        // Walker k is species 0 when floor((k+1) x sh) > floor(k x sh): an
+        // even spread with exactly the share over any long run.
+        let (a, b) = ((k as f64 * sh as f64).floor(), ((k + 1) as f64 * sh as f64).floor());
+        if b > a {
+            0
+        } else {
+            1 + k % (n - 1)
+        }
+    }
+
     /// Whether walker `k` is still an explorer (`explore_steps`, `explore_spread`).
     fn explores(&self, k: usize) -> bool {
         if self.age.is_empty() {
