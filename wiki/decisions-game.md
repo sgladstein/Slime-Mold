@@ -1,0 +1,62 @@
+---
+title: The owner's decided choices about the games
+kind: method
+status: current
+updated: 2026-11-11
+sources: [CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
+code: [Params::pieces]
+---
+
+# The owner's decided choices about the games
+
+Split from [decisions.md](decisions.md) on 2026-11-11 when it passed the
+12 KB cap; the standing rulings stay there. Newest first. Open decisions
+live only in [HANDOFF.md](../HANDOFF.md).
+
+## Decided choices
+
+| When | Decision | Owner's words | Pages |
+|---|---|---|---|
+| 2026-11-11 16:48 | Gunfire hits the first mould in its path, not a disc on a thick cell in range. Crystals are hexagons, not circles: in the simulation, so their cells, scent and reach are the hexagon (the picture is the data) | "Gun fire should hit the first slime in its path. This doesn't look good." ... "The crystals should have hexagonal outline, not circle." | [Larder](world/larder.md), [scale](model/scale.md) |
+| 2026-11-11 15:24 | Walls must not seal a crystal for good: the mould must be able to damage a wall or grow over it, with a big slowdown. Built as wall health (default 400): blocked walkers wear a wall down to slow rubble | "There should be a way for slime to damage walls or grow over it (but it has to be a significant slow down), otherwise walls can just fully surround crystals and the slime can do nothing." | [Larder](world/larder.md), [scale](model/scale.md) |
+| 2026-11-11 14:54 (14:55: "just my initial thought", to settle by playtest) | After the roadmap reviews: don't scale back; test crystals that run out against crystals that don't. Run-out crystals go with the race (the mould starts in one spot and must expand, enough for a long game, an idle player is overrun); a landing on a world mostly mould probably wants crystals that don't run out. Walls first, Sporer and Sleeper tiers, a player-owned species: agreed. A CPU world for small tests; GPU work on the GTX 1070 in parallel | "We can test both crystals that run out versus crystals that do not run out. We can find what works. This is not a reason to scale back development. None of these decisions are set in stone ... If you do nothing, the slime should get much stronger than you and kill you." ... "these all sound good to me." ... "We can have a CPU version for smaller tests." | [Larder](world/larder.md) |
+| 2026-11-11 14:09 | Larder World openings: besides landing in a world that is mostly mould, explore a race where the player and the mould both start in one small area and expand at once | "not against this. I think it's a good idea, but we should also explore or think about both the player and the mold starting in one small area and then we're both trying to expand at the same time just who could capture more ground at the beginning" | [Larder](world/larder.md) |
+| 2026-11-11 14:07 | A player AI thread for automated testing; later two soldier teams against several moulds, with the AI able to play soldiers | "maybe a player AI thread, for automated testing so you can keep developing I without me having to playtest everything. Also, it can be interesting to maybe have two soldier teams against multiple molds so in the future the AI could also play soldiers" | [Larder](world/larder.md), [player AI](world/player-ai.md) |
+| 2026-11-11 14:06 | Larder becomes a world on the big GPU dish: a longer persistent world, maybe a campaign; energy crystals that run out and force expansion; several mould species; all work goes to the world version (no more small-dish tuning); a camera and UI thread | "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand. Several species sounds interesting. Put everything into the world version." (14:01: "moving your game into the big dish ... should become more of a world, and the food should probably become more something like energy crystals"; 14:06: "We should do a camera UI thread too") | [Larder](world/larder.md) |
+| 2026-11-11 04:04 | Larder stalemates: both a late end to food drops and a 15-game-minute cap won on share of the map held | Card: "Both" (food stops arriving late in the round, and a cap at 15 minutes catches any stalemate left) | [Larder](world/larder.md) |
+| 2026-11-11 03:38 | Larder squad: starts at 4 soldiers and can grow to 40; soldiers die, attacked by the mould; the round ends when every soldier or all the mould is dead | "Start with 4 and can grow to 40. They should definitely die and be attacked by the slime. The round ends when the soldiers or slime are all dead?" | [Larder](world/larder.md) |
+| 2026-11-11 03:14 | Larder (mould-as-enemy shooter) is controlled RTS-style: orders, drawn fire lines and rings, not twin-stick aiming; next, a full build plan | "Rts-style. When you finish your current task, let's develop a full detailed plan of how to build the demo" | [Larder](world/larder.md) |
+| 2026-11-11 01:50 | Shooting must cut a branch in seconds, and a held ring of fire must stop all mould reaching the food | "holding a ring of fire should stop all mold from getting to the food" | [Larder](world/larder.md) |
+| 2026-11-11 00:30 | Larder: a squad, solo against the mould, tests first; no browser build for the full game | "Squad, start just you against the mold, tests first" | [Larder](world/larder.md) |
+| 2026-11-10 22:32, card | The GPU mould aims for 100,000 walkers on 1024 x 640 (phase 2's gate), over 32,000 or stopping the GPU work | card ("100,000 walkers", on "Which scale should the GPU mould aim for?") | [scale](model/scale.md) |
+| 2026-11-10 22:06, card | Two Fevers version 3 (calls, fever by tube, pinch, foraging, starvation; [design](../Reports/two-fevers-2026-11-10/v3-design.md)), built after three cheap checks, after the owner found version 2 "overly simple" with the mould as "background" (21:52) | card ("Build it after the checks (recommended)") | [Two Fevers](rts/two-fevers.md) |
+| 2026-11-10 23:29 | The field skirmish's counterplay: explore changes to the model itself (the fed fight bonus, the head-count share, a cost of size) rather than more prices | On "The fix probably has to be in the model itself": "then lets explore this" | [field skirmish](rts/skirmish.md) |
+| 2026-11-10 21:17 | The field skirmish's next version spends a bank: food into a bank, beacons, spores, costed habits; explore how it plays and whether one strategy wins | "This is an interesting direction. Brainstorm/explore how these tools/game plays out. What different strategies would different players use to win. How complex or interesting are the strategies? Does one strategy beat all the others?" | [field skirmish](rts/skirmish.md) |
+| 2026-11-10 21:14 | The field skirmish's first version (habits, salt, the lamp) set aside after play | "Overall, user input seems limited and doesn't lead to any complex stratgy" | [field skirmish](rts/skirmish.md) |
+| 2026-11-10 20:42, card | Build both RTS demos at once, in two threads: the field skirmish and Two Fevers | card ("Both, in two threads") | [RTS directions](rts/directions.md) |
+| 2026-11-10 20:33 | After the cheap, parallel tests already planned, build playable demos rather than more harness testing | "You can run these tests, especially if they are cheap and/or can be paralellized. But then lets focus on actually building playable demos" | [RTS directions](rts/directions.md) |
+| 2026-11-10 21:15, card | Two Fevers' next version: owned ground and one host-shaping trait together (after the owner found no strategy in version 1, 21:11) | card ("Both together") | [Two Fevers](rts/two-fevers.md) |
+| 2026-11-10 19:22 | Build sound for the game (HANDOFF decision 8), from Pixel_Physics's `src/audio/` | "yes to sound" | [Sound](looks/sound.md) |
+| 2026-11-10 18:56, card | Trace Keep It Alive's luck now rather than wait until the owner has played (HANDOFF decision 1; The Wild One's scoring half was already done in PR #6). The trace had been run meanwhile on that recommended option | card ("Trace it now") | [Keep It Alive](dishes/keep-it-alive.md), [luck report](../Reports/mould-keep-alive-luck-2026-11-10.md) |
+| 2026-11-10 17:54 | GPU runs go on the owner's home desktop, a GeForce GTX 1070 (the GPU Jenson used), which is not the machine they usually work at | "my home machine has a geforce 1070. Not sure if we can access it right now." ... "It is not the computer that I can currently working on though." | [scale](model/scale.md) |
+| 2026-11-10 17:52 | No on-screen readability probe for the RTS yet: still early planning | "readability can be solved, I think we are still in the early planning stages, so we don't need that yet." | [RTS brainstorm](../Reports/rts-design-2026-11-10/brainstorm/README.md) |
+| 2026-11-10 17:51, card | Run the wiki's success check first, then add the next pages (oats, salt, the lesson and puzzle dishes, sensors, the look) and ingest review 1 | card ("Both, check first") | [plan report, *Success check*](../Reports/llm-wiki-plan-2026-11-10.md) |
+| 2026-11-10 17:50 | Start the GPU plan; asked whether it needs more threads or whether to proceed alone (answer given: the plan's thread builds phases 1 and 2, the Pixel_Physics review thread the dish hash) | "How many threads do we need to start your plan or do you want to just proceed with the implementations yourself?" | [scale](model/scale.md) |
+| 2026-11-10 17:26 | `HANDOFF.md` stays the hand-written front page; its status section becomes one linked line per subject, and it keeps the open decisions and next steps | "Sure" (to that recommendation) | [HANDOFF](../HANDOFF.md) |
+| 2026-11-10 17:25 | The wiki lint stays in CI | "lint can stay in the CI for now." | [README](README.md) |
+| 2026-11-10 17:24 | Plan agreed; build the wiki to grow with the repo | "I agree with the plan, but note that this repo is brand new so it will grow significantly." | [README, *Growth*](README.md) |
+| 2026-11-10 16:49 | Build the wiki, starting with seven pages | "You can start with the first 7 pages, we can always revise once the review comes back" | [index](index.md) |
+| 2026-11-10 16:04, card | The first out-of-the-dish game is the forest floor seen from above (not side-on) | card | [real-world report, §5](../Reports/mould-real-world-2026-11-09.md) |
+| 2026-11-10 14:49 | The from-the-simulation look is the default; F7 keeps the tube look | "much better" | [HANDOFF](../HANDOFF.md) |
+| 2026-11-10 03:06 | Order for depth: the endless dish, then water and sleep (tools that work on each other through damp ground), then a wild second mould; later, if those play well, melting salt, spores, a rival the player steers, same-kind moulds joining | "Agreed" | [Keep It Alive](dishes/keep-it-alive.md), [water and sleep](model/water-and-sleep.md), [The Wild One](dishes/the-wild-one.md) |
+| 2026-11-10 03:00 | A rival mould that fights and steals | "Also wondering about having multiple molds that can fight or steal resources from each other" | [The Wild One](dishes/the-wild-one.md) |
+| 2026-11-10 02:58 | More depth, not more tools | "We also need to add complexity to the game. The tools are quite one dimensionally right now" | [water and sleep](model/water-and-sleep.md) |
+| 2026-11-10 02:57, card | The keep-it-alive endless dish first | card | [Keep It Alive](dishes/keep-it-alive.md) |
+| 2026-11-09, card | Keep 22.5 degrees and find it new goals (after the 22.5 vs 45 page); dishes now set their own angle | card ("Keep 22.5, new goals") | [sensors](model/sensors.md) |
+| 2026-11-08, card | Each piece of mould eats only the food it is joined to (`Params::pieces`) | "Yes, each piece eats its own food" | [the knife](tools/knife.md) |
+| 2026-11-08 | The mould game is the most promising of the eight demos; it needs instruction and a challenge | "the most promise so far" | [probe report](../Reports/mould-probe-2026-11-07.md) |
+
+
+## Sources
+
+- The thread and card quotes in each row; [decisions.md](decisions.md) for the standing rulings.
