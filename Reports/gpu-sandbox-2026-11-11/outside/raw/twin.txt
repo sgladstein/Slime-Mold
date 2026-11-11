@@ -1,0 +1,16 @@
+# MOULDGPU_TEST_GPU=1 cargo test --release --locked --bin mouldgpu the_outside_rules_match -- --nocapture (llvmpipe), 2026-11-11, at the commit that adds species_boost.
+two species in bands, species 0 boosted: 250000 walkers, 250000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 1.3e-13; 0 ages off, 0 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+three cyclic species: 250000 walkers, 250000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+four cyclic species: 250000 walkers, 250000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+explorers, spread, respawn: 250000 walkers, 250000 moved or turned, 0 off; trail L1 2.4e-8, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 167988 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+blocked lay and keep, one a cell: 25000 walkers, 8648 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+droplets: 7500 walkers, 7500 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+chance, size spread, area sensors: 250000 walkers, 250000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+species, explorers, cap, contagion: 250000 walkers, 250000 moved or turned, 0 off; trail L1 1.4e-8, scent L1 0.0e0, species L1 1.5e-8; 0 ages off, 217232 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+explorers, blocked lay, contagion, one a cell: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 16808 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+species, area sensors, one a cell: 25000 walkers, 6033 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+grazing droplets: 7500 walkers, 7500 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+two species of grazing droplets: 7500 walkers, 7500 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 0 joined another species, 0 species off; grass L1 0.0e0
+two species converting, species 0 boosted: 250000 walkers, 250000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 3319 joined another species, 0 species off; grass L1 0.0e0
+three cyclic species converting: 250000 walkers, 250000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, species L1 0.0e0; 0 ages off, 0 explorers; 3416 joined another species, 0 species off; grass L1 0.0e0
+converting, grazing, cap, explorers, respawn: 250000 walkers, 250000 moved or turned, 0 off; trail L1 1.8e-8, scent L1 0.0e0, species L1 1.8e-8; 0 ages off, 167988 explorers; 10927 joined another species, 0 species off; grass L1 0.0e0

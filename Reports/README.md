@@ -194,6 +194,19 @@ move.
   walkers off). Off, they cost 0.01 ms a frame on the GTX 1070; contagion
   0.3 ms at 100k; the 1M presets 3.9-9.8 ms. Videos, raw output and the
   1070's runs in [`gpu-sandbox-2026-11-11/looks/`](gpu-sandbox-2026-11-11/looks/).
+  (Corrected 11-11: to the bit on four of the six; within 1.1e-7 with the
+  cap.) *Outside rules as controls (11-11):* the outside rules and
+  creatures reports' rules (species with bands, cyclic species,
+  conversion and species 0's boost; explorers; blocked lay and keep; the
+  chance turn, size spread, area sensors; grazing) on a fourth panel page,
+  with seven presets (Shift+6-0, Ctrl+1-2). A third twin test matches every
+  walker, age and species on fifteen dishes, fields within 2.4e-8; all 16
+  planted bugs failed it. Seed 1 on the software GPU looks as the CPU's
+  reports do (droplets 182 bodies against 179-193; grazing droplets drift
+  7.62 cells in 2 s against 6.5-7.6). Compiled in but off they cost 18-24%
+  on llvmpipe, so they are compiled out when off (then within noise). The
+  1070's timing is pending. Videos and raw output in
+  [`gpu-sandbox-2026-11-11/outside/`](gpu-sandbox-2026-11-11/outside/).
 - [jenson-looks-2026-11-11.md](jenson-looks-2026-11-11.md) — **research with small tests, no game change: Jenson's
   three missing looks on the big dish.** Owner asked 00:06Z. New `BigParams` rules, all off by default: a centred
   starting disc and haze, 36 Points' trail-dependent settings, Bleuje's square-root deposit, a sensing floor, wander, and

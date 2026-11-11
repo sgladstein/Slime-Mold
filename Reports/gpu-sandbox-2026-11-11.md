@@ -393,6 +393,14 @@ most 0.1% of walkers and germ L1 1e-4). The same-seed test now also runs a
 looks and contagion dish with a mouse infection and compares the counters:
 the same twice.
 
+*Correction (2026-11-11, found while porting the outside rules):* "to the
+bit on all six" was wrong for the trail. Every walker, counter and the germ
+field match on all six, and the trail and scent match exactly on four; on
+the two dishes with the deposit cap the trail differs by L1 5.2e-8 (cap 50)
+and 1.1e-7 (cap 100, contagion, respawn). The GPU shares a cell's capped
+deposit in one product, where the CPU adds each walker's share in turn, so
+the sums round differently. Both are far inside the test's 1e-4 bound.
+
 Planted bugs: the angle's power read from the turn's put 7165 walkers off;
 the floor's random turn on another stream put 3046 off. The first test
 dishes caught both only weakly (trail scale 0.05 with equal powers: 171
@@ -486,6 +494,161 @@ the difference is inside the noise.
 - The same seed gave the same picture twice on all seven presets, on both
   GPUs.
 
+## The outside rules as controls (2026-11-11)
+
+The looks thread's next two reports judged rules from outside models as
+creatures for the RTS direction: [`outside-rules-2026-11-11.md`](outside-rules-2026-11-11.md)
+(PR #55) and [`creatures-2026-11-11.md`](creatures-2026-11-11.md) (PR #56).
+That thread passed them on for the sandbox, ranked by the owner's 04:11Z ask
+for "a creature for gameplay". Every rule they added to `BigParams` except
+`blocked_retry` now runs on the GPU, off by default, on a fourth panel page,
+OUTSIDE RULES:
+
+| Controls | What they do | The CPU's `BigParams` |
+| --- | --- | --- |
+| Species (off, 2-4); avoid others; start in bands | walker k starts as species k % n, each species with its own trail field, drawn in its own colour (amber, teal, violet, green); a walker smells its own trail x (1 + avoid) less all trail x avoid; with a spread start, each species starts in its own vertical band | `species`, `species_avoid`, `species_zones` |
+| Cyclic species; next species; previous species | with three or more, the next species' trail counts `next` (+0.6) and the previous one's `prev` (-1), the rest -avoid | `species_cycle`, `species_next`, `species_prev` |
+| Convert at | after its move, a walker joins the species with the most trail on its cell if that trail is over so many times its own (with cyclic species, only the previous species can take it) | `species_convert` |
+| Species 0 lays | species 0 lays that many times the deposit, into its own field and the trail (1 is even), to give one side an edge in a fight; from the looks thread's PR #58, a knob with no preset | `species_boost` |
+| Explore for; explorer trail; explore spread | a walker younger than that steers to the lowest reading and lays that share of the deposit (0.05); with spread 1 each walker's stage is 0-2x as long; a jump (respawn, or the left mouse) starts the stage again | `explore_steps`, `explore_deposit`, `explore_spread` |
+| Blocked lay; blocked keep aim; blocked reset | a blocked walker lays that share of the deposit where it stands (not with the cap), and keeps the heading it chose, bar a reset with that chance a tick | `blocked_deposit`, `blocked_keep`, `blocked_reset` |
+| Chance turn power | turn toward a side picked at random with chance g^e / (f^e + g^e) | `chance_exp` |
+| Size spread | each walker's reach and step x 2^(spread x u), u fixed for its life | `size_spread` |
+| Area sensor radius | a sensor sums the (2r+1)^2 square of cells | `sensor_r` |
+| Grazing; grass eaten a tick; grass regrows | grass starts at 1, each walker eats 0.05 from its cell a tick, it regrows by 0.002 x (1 - grass), and a sensor adds weight x grass; the grass is drawn as green ground under the mould, so a body's wake of bare ground shows | `graze_weight`, `graze_eat`, `graze_regrow` |
+
+Species and their bands restart the dish (a field each); everything else
+changes as the dish runs. Switching explorers on starts every walker's stage
+again, so the switch shows. `blocked_retry` is not ported: each retry round
+needs its own claim pass, and the report found it did not make a blob move.
+
+On the GPU each species' field ping-pongs as the trail does and the trail is
+their sum; the deposit counts a cell keep one block a species and count
+explorers and blocked walkers apart, so a cell's share is still one product
+in the trail pass. Ages, species and grass are one value a walker or cell.
+Conversion is its own pass (after the move, before jumps), run only with
+species and conversion on.
+
+Seven presets, on Shift+6 to Shift+0 and Ctrl+1 and 2:
+
+| Key | Preset | Settings |
+| --- | --- | --- |
+| Shift+6 | Two territories | key 4 (1M walkers, Jenson's settings) with two species started in halves, avoid 1 |
+| Shift+7 | Cyclic ribbons | key 4 with three cyclic species, sensor angle and turn 20 degrees, reach 32, step 2 |
+| Shift+8 | Explorer front | key 4 from a disc of 80 fine cells, explore for 900 ticks with spread 1 |
+| Shift+9 | Droplets | 30,000 walkers one a cell, laying 1.5 per 100,000 (5 each), sensor 90, turn 45, reach 9, keep 0.93, a disc of 480 fine cells, blocked lay 1; drawn by walkers a cell |
+| Shift+0 | Beads on strings | droplets with reach 27 |
+| Ctrl+1 | Grazing droplets | droplets with grazing 10 |
+| Ctrl+2 | Grazing species | grazing droplets in two species, avoid 0, drawn by trail in species colours |
+
+### Twin-tested
+
+A third twin test, `the_outside_rules_match_the_cpu_for_one_tick`, runs one
+GPU tick from a CPU dish's state against one `BigDish::tick` on fifteen
+dishes (512 x 320, a quarter of the walkers, warmed 40 ticks): two species
+in bands with species 0 boosted 1.5 times; three and four cyclic species; explorers with spread and respawn;
+blocked lay and keep one a cell; the droplets; chance turn, size spread and
+area sensors together; species, explorers, cap and contagion together;
+explorers, blocked lay and contagion one a cell; three species with area
+sensors one a cell; both grazing presets; two species converting with
+species 0 boosted 1.5 times (the CPU warms this one up unboosted: boosted,
+species 0 takes every walker within the 40 ticks and leaves nothing to
+convert); three cyclic species converting; and conversion, grazing, cap, explorers and
+respawn together. It also compares each species' field, every walker's age
+and species, and the grass (raw: `outside/raw/twin.txt`).
+
+Every walker, age and species agreed on all fifteen dishes, and the grass
+to the bit. The fields were exact on eleven. On the other four they differ
+by float rounding in the order a cell's shares are summed: trail L1 2.4e-8
+(explorers, spread, respawn), 1.4e-8 with species L1 1.5e-8 (species,
+explorers, cap, contagion), 1.8e-8 (conversion, grazing, cap, explorers,
+respawn), and species L1 1.3e-13 (the boosted bands). The bounds are the
+looks test's (walkers off by over 0.001 at most 1 in 1,000; trail L1 1e-4,
+scent L1 1e-6), plus species and grass L1 1e-4 and ages and species off at
+most 1 in 1,000. In the twin tick 3,319, 3,416 and 10,927 walkers joined
+another species on the three converting dishes, so the test exercised the
+convert pass rather than an idle one.
+
+Planted bugs, each run against the test (all failed it):
+
+| Planted bug | What the test saw |
+| --- | --- |
+| next and previous species swapped | 128,091 of 250,000 walkers off |
+| explorers' readings not negated | 44,727 walkers off |
+| the kept heading's draw on the blocked stream | 3,755 of 25,000 off |
+| a blocked explorer laying the full share | trail L1 3.3e-2 |
+| no age reset on a jump | 1,774 ages off |
+| the chance turn's sides swapped | 111,308 off |
+| the area square a row short | 2,424 off |
+| size on the sensor angle, not the reach | 16,464 off |
+| the avoidance's sign flipped | 3,946 off, trail L1 3.9e-4 |
+| the explorer stage's spread drawn on the size draw | 96,782 off |
+| conversion before the tick's deposit | 1,434 species off |
+| cyclic species joining the next species, not the previous | 31,458 species off |
+| grass regrowing before it is eaten | grass L1 0.119 (only on the conversion, grazing, cap dish) |
+| grass eaten where the walker stood, not where it landed | grass L1 4.1e-3 |
+| the boost on species 1, not 0 | trail L1 4.0e-2 |
+| no boost on a walker's own reading in the convert pass | 339 of 250,000 species off |
+
+The last one slipped through (11 species off, under the bound of 250) while
+the converting dish ran a boost of 1.1, the most that left walkers to
+convert after a boosted warm-up; warming up unboosted lets the twin tick run
+the full 1.5. It is caught by 339 against 250, so a smaller version of the
+same slip could pass.
+
+The same-seed test now also runs three cyclic species with explorers,
+respawn, the chance turn, size spread and area sensors, and two species of
+grazing droplets that keep their heading and convert, and compares ages,
+species and grass as well: the same twice.
+
+### What they look like
+
+Seed 1 on the cloud's software GPU (`outside/run.sh`, raw `outside/raw/`),
+looked at frame by frame before measuring. The pictures are on the page.
+
+| Preset | Run | What it showed | Counts, GPU | The CPU's (its report) |
+| --- | --- | --- | --- | --- |
+| Shift+6 Two territories | 20 s | two meshes, amber and teal, each holding its half, a dark border between | loops 27, width 5.67 | tube cells 80%+ one species 0.994-1.000, 8 seeds |
+| Shift+7 Cyclic ribbons | 10 s | three colours braided into ribbons that keep flowing round the dish | loops 93, width 7.93 | loops 97-125, 8 seeds: one seed under all eight, about a 1-in-9 chance if the two match |
+| Shift+8 Explorer front | 6 s | radial veins behind a feathery front at 2 s, as the CPU's frame, axis lines at the rim included; a mesh by 6 s | loops 134, width 4.13 | the frame at 2 s, seed 1 |
+| Shift+9 Droplets | 10 s | round droplets that hardly move | 182 bodies, median 203.5 cells, drift 0.64 cells in the last 2 s (p90 1.86) | 179-193 bodies of about 200 cells, drift 0.67-0.77, 8 seeds |
+| Shift+0 Beads on strings | 10 s | thin strings with a bead at each junction, coarsening | 37 beads, median 419 cells, loops 6 | seed 1 |
+| Ctrl+1 Grazing droplets | 10 s | droplets crawling off their bare ground, dark wakes in the green | 181 bodies, median 217 cells, drift 7.62 (p90 27.3) | 168-190 bodies, drift 6.5-7.6, 8 seeds |
+| Ctrl+2 Grazing species | 20 s | amber and teal cells roaming among each other, one colour each | loops 9 | 80%+ one species on 0.91 of tube cells, seed 1 |
+
+Bodies are from `outside/bodies.py`, the creatures report's `drift.py`
+on the sandbox's frames (patches over 30 cells, centres matched to the
+nearest 240 ticks later; raw `outside/raw/bodies.txt`). The beads' drift
+(25 cells) is not a speed: beads merge as the strings coarsen, so the
+nearest centre 2 s on is often another bead. One seed against the CPU's
+eight, so these say the presets look as their reports do, not that they
+match in spread; the twin test is the match.
+
+### What they cost
+
+On the cloud's software GPU (llvmpipe), which is not the 1070, GPU ms of
+ticks a frame (two ticks), seed 1:
+
+- **Off, the rules cost nothing measurable.** Compiled in and switched off
+  by the parameters, they cost 18-24%: key 1 32.4-32.6 against main's
+  26.1-26.8, key 4 88.2-90.3 against 74.4-76.3, three rounds each
+  (`outside/offcost.sh`, raw `offcost-llvmpipe.txt`). So the shader reads
+  them through a pipeline-overridable constant, `OUTSIDE`, and the sandbox
+  builds a second set of pipelines with it false, used whenever every
+  outside rule is off. Then key 1 is 25.7-26.5 against main's 25.2-25.7
+  and key 4 72.9-76.5 against 74.1-76.2 (raw `offcost-llvmpipe-plain.txt`).
+  The boost came after this timing; it is one multiply, in the species
+  code only, and was not re-timed.
+- **On**, against key 4's 74-76 at a million walkers: territories 123.0,
+  ribbons 151.9 (three species), explorer front 93.8. At 30,000 walkers:
+  droplets 25.8, beads 25.7, grazing droplets 28.9, grazing species 55.9.
+  Species cost most in the trail pass, which sums each species' field
+  (16.6 ms a tick for territories and 20.0 for grazing species, against 2.0
+  for key 4 and 6.1 for the droplets); explorers in sense and walk (23.9 and
+  16.1 against 18.5-20.2 and 11.6-13.5).
+- **The GTX 1070's timing is pending**: the PC's session is parked until
+  the owner next writes.
+
 ## Next
 
 - The owner's hands on it: the PC's window runs build b1f0383, with the
@@ -493,4 +656,9 @@ the difference is inside the noise.
 - *Done 2026-11-11:* the looks of
   [`jenson-looks-2026-11-11.md`](jenson-looks-2026-11-11.md) are controls,
   each twin-tested (*The looks as controls*, above).
+- *Done 2026-11-11:* the outside rules and creatures reports' rules are
+  controls, twin-tested (*The outside rules as controls*, above). Their
+  cost on the GTX 1070 is next, when the PC's session wakes; the PC's
+  window still runs b1f0383, without them.
+- The looks thread's `species_share` comes next, once it merges.
 - Phase 3 also plans the tools as field writes.

@@ -107,6 +107,17 @@
 //!   slower. Seeded at the dish's centre at `seed_at` seconds, or by hand.
 //!   Germ is drawn in red over the trail, full at four times `catch` (the
 //!   CPU's `style=sick`).
+//! - **The outside rules** (`BigParams` of PR #55,
+//!   Reports/outside-rules-2026-11-11.md), all off by default, each the
+//!   CPU's rule (the twin test `the_outside_rules_match_the_cpu_for_one_tick`):
+//!   species (up to four, each its own trail field and colour, smelling its
+//!   own trail against the others', started in bands or mixed; cyclic
+//!   species weigh the next and previous species apart); explorers (young
+//!   walkers steer to the lowest reading and lay a share of the deposit,
+//!   for a stage spread over the walkers; a jump starts it again); blocked
+//!   walkers that lay trail where they stand and keep their heading; the
+//!   chance turn, each walker's size, and area sensors. Blocked walkers'
+//!   retry rounds (`blocked_retry`) are not ported: they need a pass a round.
 //!
 //! Every control is drawn straight from the simulation (the owner's rule);
 //! the panel and the line at the bottom are the only things on screen that
@@ -149,6 +160,19 @@ struct Params {
     sick_dep: f32, sick_keep: f32, sick_speed: f32, sick_trail: f32,
     sick_reach: f32, sick_turn: f32, ix: f32, iy: f32,
     ir: f32, _p1: f32, _p2: f32, _p3: f32,
+    // The outside rules (`BigParams` of PR #55, Reports/outside-rules-2026-11-11.md),
+    // all off at 0: species fields (`nsp`, 0 for none, else 2-4), cyclic
+    // species, explorers (`explore` steps), blocked walkers' deposit share
+    // and kept heading, the chance turn's power, size spread, area sensors.
+    nsp: u32, cycle: u32, explore: u32, s_size: u32,
+    avoid: f32, snext: f32, sprev: f32, edep: f32,
+    espread: f32, bshare: f32, bkeep: u32, breset: f32,
+    chance: f32, size_sp: f32, sensor_r: u32, s_chance: u32,
+    // PR #56: a walker joins a species whose trail at its cell outweighs
+    // its own `convert` times (0 off); grazing (`graze_w` 0 off). PR #58:
+    // species 0 lays `boost` times the deposit.
+    s_keep: u32, convert: f32, graze_w: f32, graze_eat: f32,
+    graze_regrow: f32, boost: f32, _q1: u32, _q2: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 
@@ -182,8 +206,40 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 @group(0) @binding(21) var<storage, read_write> gdep: array<atomic<u32>>;
 @group(0) @binding(22) var<storage, read_write> germ_in: array<f32>;
 @group(0) @binding(23) var<storage, read_write> germ_out: array<f32>;
+// The outside rules. `dep` and `sdep` hold a block of cells a species
+// (species s at s x cells); explorers count apart in `edep` (healthy, then
+// sick, a block each per species), and with `bshare` blocked walkers in
+// `bdep` (ordinary, then explorers). Each species' trail field ping-pongs
+// as the trail does (`sp_in`, `sp_out`), and each walker's age counts up
+// a step while explorers are on (the CPU's `BigDish::age`).
+@group(0) @binding(24) var<storage, read_write> edep: array<atomic<u32>>;
+@group(0) @binding(25) var<storage, read_write> bdep: array<atomic<u32>>;
+@group(0) @binding(26) var<storage, read_write> sp_in: array<f32>;
+@group(0) @binding(27) var<storage, read_write> sp_out: array<f32>;
+@group(0) @binding(28) var<storage, read_write> age: array<u32>;
+// PR #56: the grass a cell (1 on agar at the start; eaten and regrown in
+// place by the trail pass), walkers a cell after the move for the eating,
+// and each walker's species (k % n at the start; `convert` changes it).
+@group(0) @binding(29) var<storage, read_write> grass: array<f32>;
+@group(0) @binding(30) var<storage, read_write> gcount: array<atomic<u32>>;
+@group(0) @binding(31) var<storage, read_write> spec: array<u32>;
 
 const NONE: u32 = 0xFFFFFFFFu;
+
+// The outside rules' switches, read through these: the pipelines built with
+// OUTSIDE false (every outside rule off, which `Engine::write_params` picks
+// when none is on) compile the rules out. With them in, every pass paid for
+// their branches even when off: on the software GPU, 24% more GPU time a
+// frame on key 1 and 18% on key 4 (3 of 3 rounds each, 2026-11-11).
+override OUTSIDE: bool = true;
+fn nsp() -> u32 { if (OUTSIDE) { return P.nsp; } return 0u; }
+fn explore() -> u32 { if (OUTSIDE) { return P.explore; } return 0u; }
+fn bshare() -> f32 { if (OUTSIDE) { return P.bshare; } return 0.0; }
+fn bkeep() -> u32 { if (OUTSIDE) { return P.bkeep; } return 0u; }
+fn chance() -> f32 { if (OUTSIDE) { return P.chance; } return 0.0; }
+fn size_sp() -> f32 { if (OUTSIDE) { return P.size_sp; } return 0.0; }
+fn sensor_r() -> u32 { if (OUTSIDE) { return P.sensor_r; } return 0u; }
+fn graze_w() -> f32 { if (OUTSIDE) { return P.graze_w; } return 0.0; }
 const TAU: f32 = 6.2831855;
 
 fn lowbias32(v: u32) -> u32 {
@@ -208,11 +264,68 @@ fn scent_at(x: f32, y: f32) -> f32 {
     if (i == NONE) { return 0.0; }
     return scent_in[i];
 }
-fn sense_at(x: f32, y: f32, a: f32, so: f32) -> f32 {
+// Species fields in use: one block of cells each (one, the plain one, when
+// species are off).
+fn nsp1() -> u32 { return max(nsp(), 1u); }
+
+// The trail a walker of species `sp` reads at cell j: the trail, or its
+// own field weighed against the others' (the CPU's `trail_seen`, its
+// expressions in its order).
+fn seen(j: u32, sp: u32) -> f32 {
+    if (nsp() == 0u) { return trail_in[j]; }
+    let c = P.w * P.h;
+    let own = sp_in[sp * c + j];
+    if (P.cycle != 0u && nsp() >= 3u) {
+        let nx = sp_in[((sp + 1u) % nsp()) * c + j];
+        let pv = sp_in[((sp + nsp() - 1u) % nsp()) * c + j];
+        return own + P.snext * nx + P.sprev * pv - P.avoid * (trail_in[j] - own - nx - pv);
+    }
+    return (1.0 + P.avoid) * own - P.avoid * trail_in[j];
+}
+
+// One cell, or with `sensor_r` the sum over the agar cells of the square
+// around it, row by row as the CPU sums it (the centre decides the wall).
+fn trail_at(i: u32, sp: u32) -> f32 {
+    let r = sensor_r();
+    if (r == 0u) { return seen(i, sp); }
+    let x = i % P.w; let y = i / P.w;
+    var sum = 0.0;
+    for (var yy = y - min(y, r); yy < min(y + r + 1u, P.h); yy++) {
+        for (var xx = x - min(x, r); xx < min(x + r + 1u, P.w); xx++) {
+            let j = yy * P.w + xx;
+            if (agar[j] != 0u) { sum += seen(j, sp); }
+        }
+    }
+    return sum;
+}
+
+fn sense_at(x: f32, y: f32, a: f32, so: f32, sp: u32) -> f32 {
     let c = cos(a); let s = sin(a);
     let i = cell(x + c * so, y + s * so);
     if (i == NONE || agar[i] == 0u) { return -1.0e6; }
-    return trail_in[i] + scent_at(x + c * P.sso, y + s * P.sso);
+    var v = trail_at(i, sp) + scent_at(x + c * P.sso, y + s * P.sso);
+    // Grazing: fresh grass smells good (the CPU's `graze_weight`).
+    if (graze_w() != 0.0) { v += graze_w() * grass[i]; }
+    return v;
+}
+
+// Walker k's species: its own (`spec`, which conversion changes), or the
+// one plain field.
+fn species_of(k: u32) -> u32 {
+    if (nsp() == 0u) { return 0u; }
+    return spec[k];
+}
+
+// Whether walker k is still an explorer: younger than `explore` steps, or
+// with `espread` its own share of them, from a draw on k alone (the CPU's
+// `explores`).
+fn explores(k: u32) -> bool {
+    var n = f32(explore());
+    if (P.espread > 0.0) {
+        let u = unit(keyed(P.s_size, 0u, k | 0x80000000u));
+        n *= 1.0 + P.espread * (2.0 * u - 1.0);
+    }
+    return f32(age[k]) < n;
 }
 
 // v^e as the CPU's `powf` gives it at v = 0 (0, or 1 when e is 0); WGSL's
@@ -230,9 +343,17 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     var h = wk.z;
     let here = cell(wk.x, wk.y);
-    // The CPU's `move_walkers` order: trail-set settings from the trail
-    // where the walker stands, then catching and the sick walker's changes.
+    // The CPU's `move_walkers` order: the walker's size, trail-set settings
+    // from the trail where it stands, then catching and the sick walker's
+    // changes.
+    let sp = species_of(k);
     var so = P.so; var sa = P.sa; var ra = P.ra; var st = P.st;
+    if (size_sp() > 0.0) {
+        let sc = exp2(size_sp() * (2.0 * unit(keyed(P.s_size, 0u, k)) - 1.0));
+        so *= sc; st *= sc;
+    }
+    var ex = false;
+    if (explore() > 0u) { ex = explores(k); }
     if (P.ss > 0.0) {
         let v = min(trail_in[here] * P.ss, 1.0);
         so = so + P.om_a * pow0(v, P.om_e);
@@ -250,13 +371,30 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         sick[k] = c;
         if (c > P.immune) { st *= P.sick_speed; so *= P.sick_reach; ra *= P.sick_turn; }
     }
-    let f = sense_at(wk.x, wk.y, h, so);
-    let fl = sense_at(wk.x, wk.y, h - sa, so);
-    let fr = sense_at(wk.x, wk.y, h + sa, so);
+    var f = sense_at(wk.x, wk.y, h, so, sp);
+    var fl = sense_at(wk.x, wk.y, h - sa, so, sp);
+    var fr = sense_at(wk.x, wk.y, h + sa, so, sp);
+    // Explorers steer to the lowest reading; a wall stays a wall.
+    if (ex) {
+        if (f > -1.0e5) { f = -f; }
+        if (fl > -1.0e5) { fl = -fl; }
+        if (fr > -1.0e5) { fr = -fr; }
+    }
     if (P.wander > 0.0 && unit(keyed(P.s_wander, t, k | 0x80000000u)) < P.wander) {
         h = unit(keyed(P.s_wander, t, k | 0x40000000u)) * TAU;
     } else if (P.sfloor > 0.0 && max(max(f, fl), fr) < P.sfloor) {
         if ((keyed(P.s_wander, t, k) & 1u) == 0u) { h += ra; } else { h -= ra; }
+    } else if (chance() > 0.0) {
+        // The chance turn: a side by a draw, then toward it with chance
+        // g^e / (f^e + g^e), readings floored at 0 (the CPU's `chance_exp`).
+        let left = (keyed(P.s_chance, t, k) & 1u) == 0u;
+        let fe = pow0(max(f, 0.0), chance());
+        let ge = pow0(max(select(fr, fl, left), 0.0), chance());
+        var turn = 0.5;
+        if (fe + ge > 0.0) { turn = ge / (fe + ge); }
+        if (unit(keyed(P.s_chance, t, k | 0x80000000u)) < turn) {
+            if (left) { h -= ra; } else { h += ra; }
+        }
     } else if (f > fl && f > fr) {
     } else if (f < fl && f < fr) {
         if ((keyed(P.s_turn, t, k) & 1u) == 0u) { h += ra; } else { h -= ra; }
@@ -302,24 +440,79 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
         walkers[k] = intent[k];
         at = aim;
     } else {
-        walkers[k] = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_blocked, t, k)) * TAU, 0.0);
+        // Blocked: Jones's rule, a new heading; or (`bkeep`) the heading it
+        // chose, bar a reset with chance `breset` (the CPU's `blocked_keep`).
+        var bh = unit(keyed(P.s_blocked, t, k)) * TAU;
+        if (bkeep() != 0u && unit(keyed(P.s_keep, t, k)) >= P.breset) { bh = intent[k].z; }
+        walkers[k] = vec4<f32>(wk.x, wk.y, bh, 0.0);
     }
     // Trail: a walker that moved lays it where it landed; with the capped
     // square-root deposit every walker counts where it stands after the
-    // move (`trail` shares the cell's deposit among them). Sick walkers are
-    // counted apart, for `sick_trail`.
+    // move (`trail` shares the cell's deposit among them). Sick walkers and
+    // explorers are counted apart, for `sick_trail` and `edep`, each in its
+    // species' block; with `bshare` (and no cap) a blocked walker counts
+    // where it stands.
     var ill = false;
     if (P.sick_steps > 0u) { ill = sick[k] > P.immune; }
+    var ex = false;
+    if (explore() > 0u) { ex = explores(k); }
+    let c = P.w * P.h;
+    let o = species_of(k) * c + at;
+    // Grazing: every walker eats where it stands after the move.
+    if (graze_w() != 0.0) { atomicAdd(&gcount[at], 1u); }
     if (P.cap > 0u || wins) {
-        if (ill) { atomicAdd(&sdep[at], 1u); } else { atomicAdd(&dep[at], 1u); }
+        if (ex) {
+            atomicAdd(&edep[o + select(0u, nsp1() * c, ill)], 1u);
+        } else if (ill) {
+            atomicAdd(&sdep[o], 1u);
+        } else {
+            atomicAdd(&dep[o], 1u);
+        }
+    } else if (bshare() > 0.0) {
+        atomicAdd(&bdep[o + select(0u, nsp1() * c, ex)], 1u);
     }
     // Sick walkers lay germ where they stand, then every counter falls by
     // one (before any jump, as on the CPU).
     if (P.sick_steps > 0u) {
         if (ill) { atomicAdd(&gdep[at], 1u); }
-        let c = sick[k];
-        if (c > 0u) { sick[k] = c - 1u; }
+        let n = sick[k];
+        if (n > 0u) { sick[k] = n - 1u; }
     }
+    // Ages count up after the deposit, before any jump, in the CPU's u16.
+    if (explore() > 0u) { age[k] = min(age[k] + 1u, 65535u); }
+}
+
+// Conversion (PR #56), after the move and its deposit, before any jump: a
+// walker joins the species with the most trail at its cell (with cyclic
+// species, only the previous one, which chases it) if that trail outweighs
+// its own `convert` times. The trail is the field after this tick's
+// deposit and before the spread, as the CPU reads it. Only dispatched with
+// species and `convert` on.
+@compute @workgroup_size(256)
+fn convert(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    let wk = walkers[k];
+    let i = cell(wk.x, wk.y);
+    let c = P.w * P.h;
+    var all = 0.0;
+    if (P.cap > 0u) { all = counted(i); }
+    let own = spec[k];
+    let ov = sp_in[own * c + i] + laid_by(own, i, all);
+    var best = own;
+    var bv = ov;
+    if (P.cycle != 0u && nsp() >= 3u) {
+        best = (own + nsp() - 1u) % nsp();
+        bv = sp_in[best * c + i] + laid_by(best, i, all);
+    } else {
+        for (var s = 0u; s < nsp(); s++) {
+            if (s != own) {
+                let v = sp_in[s * c + i] + laid_by(s, i, all);
+                if (v > bv) { best = s; bv = v; }
+            }
+        }
+    }
+    if (best != own && bv > P.convert * ov) { spec[k] = best; }
 }
 
 // Where walker k jumps this tick, if it does (w = 1): the pull (to a disc
@@ -361,6 +554,8 @@ fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
             atomicAdd(&occ[to], 1u);
         }
         walkers[k] = vec4<f32>(j.xyz, 0.0);
+        // A walker that jumps starts its life again (the CPU's respawn).
+        if (explore() > 0u) { age[k] = 0u; }
         return;
     }
     // A cell claimed by a step this tick now holds its winner, so it is
@@ -380,28 +575,67 @@ fn land(@builtin(global_invocation_id) gid: vec3<u32>) {
     atomicSub(&occ[cell(wk.x, wk.y)], 1u);
     atomicAdd(&occ[to], 1u);
     walkers[k] = vec4<f32>(jump_of(k, S.t).xyz, 0.0);
+    if (explore() > 0u) { age[k] = 0u; }
 }
 
-// The trail a cell gets this tick: `deposit` a walker that moved (the
-// sick lay `sick_trail` times as much), or with `cap` the CPU's capped
-// square-root deposit, deposit x sqrt(min(n, cap)) shared by the cell's n
-// walkers.
-fn laid(j: u32) -> f32 {
-    let a = f32(atomicLoad(&dep[j]));
-    if (P.cap == 0u && P.sick_steps == 0u) { return P.deposit * a; }
+// The cell's walkers that share a capped deposit: every species and class
+// (with the cap each walker counts where it stands). Integer counts, so
+// the sum is exact in any order.
+fn counted(j: u32) -> f32 {
+    let c = P.w * P.h;
+    let m = nsp1();
+    var n = 0.0;
+    for (var s = 0u; s < m; s++) {
+        let o = s * c + j;
+        n += f32(atomicLoad(&dep[o]));
+        if (P.sick_steps > 0u) { n += f32(atomicLoad(&sdep[o])); }
+        if (explore() > 0u) { n += f32(atomicLoad(&edep[o])) + f32(atomicLoad(&edep[o + m * c])); }
+    }
+    return n;
+}
+
+// The trail species s gets on cell j this tick: `deposit` a walker that
+// moved (the sick lay `sick_trail` times as much, explorers `edep` times),
+// with `bshare` that share of it a blocked walker, or with `cap` the CPU's
+// capped square-root deposit, deposit x sqrt(min(n, cap)) shared by the
+// cell's n walkers (`all`, from `counted`). With the outside rules off the
+// expressions are the looks build's, so its dishes run as they did.
+fn laid(s: u32, j: u32, all: f32) -> f32 {
+    let c = P.w * P.h;
+    let m = nsp1();
+    let o = s * c + j;
+    let a = f32(atomicLoad(&dep[o]));
+    if (P.cap == 0u && P.sick_steps == 0u && explore() == 0u && bshare() == 0.0) { return P.deposit * a; }
     var b = 0.0;
-    if (P.sick_steps > 0u) { b = f32(atomicLoad(&sdep[j])); }
-    let w = a + P.sick_trail * b;
-    if (P.cap == 0u) { return P.deposit * w; }
-    let n = a + b;
-    if (n == 0.0) { return 0.0; }
-    return P.deposit * sqrt(min(n, f32(P.cap))) / n * w;
+    if (P.sick_steps > 0u) { b = f32(atomicLoad(&sdep[o])); }
+    var w = a + P.sick_trail * b;
+    if (explore() > 0u) {
+        w += P.edep * (f32(atomicLoad(&edep[o])) + P.sick_trail * f32(atomicLoad(&edep[o + m * c])));
+    }
+    if (P.cap == 0u) {
+        var l = P.deposit * w;
+        if (bshare() > 0.0) {
+            l += P.deposit * bshare() * (f32(atomicLoad(&bdep[o])) + P.edep * f32(atomicLoad(&bdep[o + m * c])));
+        }
+        return l;
+    }
+    if (all == 0.0) { return 0.0; }
+    return P.deposit * sqrt(min(all, f32(P.cap))) / all * w;
+}
+
+// The trail species s lays on cell j this tick, with species 0's boost
+// (the CPU's `species_boost`, applied to each of its walkers' deposits).
+fn laid_by(s: u32, j: u32, all: f32) -> f32 {
+    let l = laid(s, j, all);
+    if (s == 0u) { return l * P.boost; }
+    return l;
 }
 
 @compute @workgroup_size(256)
 fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
-    if (i >= P.w * P.h) { return; }
+    let c = P.w * P.h;
+    if (i >= c) { return; }
     // The germ spreads as the trail does, with its own keep.
     let germs = P.sick_steps > 0u;
     // A pile is reached once tube lies on it: the CPU marks it at the end
@@ -409,6 +643,15 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     // the scent pass below lays this tick's food as the CPU's next tick does.
     let pi = pile[i];
     if (pi != 0u && trail_in[i] > P.tube) { atomicMax(&reached[pi - 1u], 1u); }
+    // Grazing: the walkers on the cell each eat `graze_eat` (floored at 0,
+    // one at a time, as the CPU does), then the grass regrows. In place:
+    // only the next tick's sense pass reads it.
+    if (graze_w() != 0.0 && agar[i] != 0u) {
+        var g = grass[i];
+        let eaters = atomicLoad(&gcount[i]);
+        for (var q = 0u; q < eaters && g > 0.0; q++) { g = max(g - P.graze_eat, 0.0); }
+        grass[i] = g + P.graze_regrow * (1.0 - g);
+    }
     let x = i % P.w; let y = i / P.w;
     var gone = agar[i] == 0u || x == 0u || y == 0u || x + 1u == P.w || y + 1u == P.h;
     // The right mouse wipes trail and germ, as the looks report's knife.
@@ -419,20 +662,50 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gone) {
         trail_out[i] = 0.0;
         if (germs) { germ_out[i] = 0.0; }
+        for (var s = 0u; s < nsp(); s++) { sp_out[s * c + i] = 0.0; }
         return;
     }
-    var sum = 0.0; var gsum = 0.0; var n = 0.0;
-    for (var dy = 0u; dy < 3u; dy++) {
-        for (var dx = 0u; dx < 3u; dx++) {
-            let j = (y + dy - 1u) * P.w + x + dx - 1u;
-            if (agar[j] != 0u) {
-                sum += trail_in[j] + laid(j);
-                if (germs) { gsum += germ_in[j] + P.sick_dep * f32(atomicLoad(&gdep[j])); }
-                n += 1.0;
+    let capped = P.cap > 0u;
+    var gsum = 0.0; var n = 0.0;
+    if (nsp() == 0u) {
+        var sum = 0.0;
+        for (var dy = 0u; dy < 3u; dy++) {
+            for (var dx = 0u; dx < 3u; dx++) {
+                let j = (y + dy - 1u) * P.w + x + dx - 1u;
+                if (agar[j] != 0u) {
+                    var all = 0.0;
+                    if (capped) { all = counted(j); }
+                    sum += trail_in[j] + laid(0u, j, all);
+                    if (germs) { gsum += germ_in[j] + P.sick_dep * f32(atomicLoad(&gdep[j])); }
+                    n += 1.0;
+                }
             }
         }
+        trail_out[i] = sum / n * P.keep;
+    } else {
+        // Each species' field spreads as the trail would; the trail is
+        // their sum, in species order (the CPU's `tick`).
+        var sums = array<f32, 4>(0.0, 0.0, 0.0, 0.0);
+        for (var dy = 0u; dy < 3u; dy++) {
+            for (var dx = 0u; dx < 3u; dx++) {
+                let j = (y + dy - 1u) * P.w + x + dx - 1u;
+                if (agar[j] != 0u) {
+                    var all = 0.0;
+                    if (capped) { all = counted(j); }
+                    for (var s = 0u; s < nsp(); s++) { sums[s] += sp_in[s * c + j] + laid_by(s, j, all); }
+                    if (germs) { gsum += germ_in[j] + P.sick_dep * f32(atomicLoad(&gdep[j])); }
+                    n += 1.0;
+                }
+            }
+        }
+        var total = 0.0;
+        for (var s = 0u; s < nsp(); s++) {
+            let v = sums[s] / n * P.keep;
+            sp_out[s * c + i] = v;
+            total += v;
+        }
+        trail_out[i] = total;
     }
-    trail_out[i] = sum / n * P.keep;
     if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
 }
 
@@ -440,11 +713,18 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h) { return; }
-    atomicStore(&dep[i], 0u);
     atomicStore(&claim[i], NONE);
-    if (P.sick_steps > 0u) {
-        atomicStore(&sdep[i], 0u);
-        atomicStore(&gdep[i], 0u);
+    if (P.sick_steps > 0u) { atomicStore(&gdep[i], 0u); }
+    if (graze_w() != 0.0) { atomicStore(&gcount[i], 0u); }
+    // The counts, a block a species (and a class).
+    let c = P.w * P.h;
+    let m = nsp1();
+    for (var s = 0u; s < m; s++) {
+        let o = s * c + i;
+        atomicStore(&dep[o], 0u);
+        if (P.sick_steps > 0u) { atomicStore(&sdep[o], 0u); }
+        if (explore() > 0u) { atomicStore(&edep[o], 0u); atomicStore(&edep[o + m * c], 0u); }
+        if (bshare() > 0.0) { atomicStore(&bdep[o], 0u); atomicStore(&bdep[o + m * c], 0u); }
     }
     if (i == 0u) { S.t = S.t + 1u; }
     let x = i % P.w; let y = i / P.w;
@@ -517,22 +797,32 @@ fn top() {
     for (var j = 0u; j < BINS; j++) { atomicStore(&hist[j], 0u); }
 }
 
+// A value's brightness, 0 to 1, by the picked curve.
+fn bright(v: f32) -> f32 {
+    if (v <= 0.0) { return 0.0; }
+    if (P.curve == 0u) { return 1.0 - exp(-v / P.knee); }
+    return pow(clamp(v / S.top, 0.0, 1.0), P.gamma);
+}
+
 @compute @workgroup_size(256)
 fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h) { return; }
     let v = shown(i);
-    var g = 0.0;
-    if (v > 0.0) {
-        if (P.curve == 0u) {
-            g = 1.0 - exp(-v / P.knee);
-        } else {
-            g = pow(clamp(v / S.top, 0.0, 1.0), P.gamma);
-        }
-    }
+    let g = bright(v);
     var c = vec3<f32>(0.0, 0.0, 0.0);
     if (agar[i] == 0u) {
         if (P.colour == 0u) { c = vec3<f32>(8.0, 14.0, 18.0); }
+    } else if (nsp() > 0u && P.field == 0u) {
+        // Species: each field in its own colour through the same curve
+        // (the soft curve's reference is the total's), the colours added
+        // (examples/bigdish.rs `style=species`), on the amber ground or black.
+        if (P.colour == 0u) {
+            let sg = 1.0 - exp(-scent_in[i] / 60.0);
+            c = vec3<f32>(12.0 + 30.0 * sg, 22.0 + 26.0 * sg, 26.0 + 10.0 * sg);
+        }
+        let cols = array<vec3<f32>, 4>(vec3<f32>(255.0, 170.0, 60.0), vec3<f32>(60.0, 200.0, 220.0), vec3<f32>(190.0, 110.0, 255.0), vec3<f32>(120.0, 230.0, 90.0));
+        for (var s = 0u; s < nsp(); s++) { c += cols[s] * bright(sp_in[s * P.w * P.h + i]); }
     } else if (P.colour == 0u) {
         // The game's amber (`BigDish::image`): scent tints the ground.
         let sg = 1.0 - exp(-scent_in[i] / 60.0);
@@ -541,6 +831,9 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
     } else {
         c = vec3<f32>(255.0 * g);
     }
+    // Grazing: the grass in green under the mould, so the bare ground a
+    // body leaves behind shows.
+    if (graze_w() != 0.0 && agar[i] != 0u) { c += vec3<f32>(6.0, 30.0, 10.0) * grass[i]; }
     // With contagion on, the germ in red, full at four times the catch
     // level (the looks report's `style=sick`).
     if (P.sick_steps > 0u && agar[i] != 0u) {
@@ -570,9 +863,17 @@ const DRAW_JUMP: u32 = 106;
 const DRAW_PULL: u32 = 107;
 /// The sensing floor's and wander's draws (big.rs `DRAW_WANDER`).
 const DRAW_WANDER: u32 = 108;
+/// The outside rules' draws: the chance turn's, each walker's size and
+/// explorer stage, and the blocked walker's reset (big.rs).
+const DRAW_CHANCE: u32 = 109;
+const DRAW_SIZE: u32 = 110;
+const DRAW_KEEP: u32 = 111;
 
-/// Bytes in `Params` (60 words).
-const PARAMS_BYTES: usize = 240;
+/// Bytes in `Params` (84 words).
+const PARAMS_BYTES: usize = 336;
+
+/// Species the sandbox draws (a colour each, as `style=species`).
+const MAX_SPECIES: u8 = 4;
 
 /// Piles the GPU tracks (the dish's seven and food dropped with F); F does
 /// nothing once they are all used.
@@ -673,6 +974,46 @@ struct Settings {
     /// seconds in (0: at the start, `BigParams::sick_seed_r`).
     seed_at: f32,
     seed_r: f32,
+    /// The outside rules (`BigParams` of PR #55,
+    /// `Reports/outside-rules-2026-11-11.md`), off by default. Species
+    /// (0 or 1 is none, up to 4): walker k is species k % n, smelling its
+    /// own trail x (1 + `avoid`) less all trail x `avoid`; `zones` starts
+    /// each in its own band of a spread start; `cycle` (3 or more) weighs
+    /// the next species' trail by `next` and the previous one's by `prev`.
+    species: u8,
+    avoid: f32,
+    zones: bool,
+    cycle: bool,
+    next: f32,
+    prev: f32,
+    /// Explorers: a walker younger than `explore` ticks steers to the
+    /// lowest reading and lays `explorer_trail` of the deposit; with
+    /// `explore_spread` each walker's stage is 0-2x as long.
+    explore: u16,
+    explorer_trail: f32,
+    explore_spread: f32,
+    /// A blocked walker lays `blocked_lay` of the deposit where it stands
+    /// (not with the cap); with `blocked_keep` it keeps its heading, bar
+    /// a reset with chance `blocked_reset` a tick.
+    blocked_lay: f32,
+    blocked_keep: bool,
+    blocked_reset: f32,
+    /// The chance turn's power (MCPM), 0 off; each walker's size spread
+    /// (reach and step x 2^(spread x u)); the area sensors' radius.
+    chance: f32,
+    size_spread: f32,
+    sensor_r: u8,
+    /// PR #56 (`Reports/creatures-2026-11-11.md`): a walker joins a
+    /// species whose trail at its cell outweighs its own `convert` times
+    /// (0 off); grazing: grass starts at 1, each walker eats `graze_eat` a
+    /// tick from its cell, it regrows by `graze_regrow` x (1 - grass), and
+    /// a sensor adds `graze` x grass (0 off).
+    convert: f32,
+    graze: f32,
+    graze_eat: f32,
+    graze_regrow: f32,
+    /// PR #58: species 0 lays this many times the deposit (1 even).
+    boost: f32,
     seed: u64,
 }
 
@@ -721,6 +1062,26 @@ impl Settings {
             sick_turn: 1.0,
             seed_at: 4.0,
             seed_r: 40.0,
+            species: 0,
+            avoid: t.species_avoid,
+            zones: false,
+            cycle: false,
+            next: t.species_next,
+            prev: t.species_prev,
+            explore: 0,
+            explorer_trail: t.explore_deposit,
+            explore_spread: 0.0,
+            blocked_lay: 0.0,
+            blocked_keep: false,
+            blocked_reset: t.blocked_reset,
+            chance: 0.0,
+            size_spread: 0.0,
+            sensor_r: 0,
+            convert: t.species_convert,
+            graze: t.graze_weight,
+            graze_eat: t.graze_eat,
+            graze_regrow: t.graze_regrow,
+            boost: t.species_boost,
             seed: 1,
         }
     }
@@ -729,11 +1090,21 @@ impl Settings {
     fn sick_on(&self) -> bool {
         self.sick > 0
     }
+
+    /// Species fields the dish holds (0 for none).
+    fn fields(&self) -> u32 {
+        if self.species > 1 {
+            self.species.min(MAX_SPECIES) as u32
+        } else {
+            0
+        }
+    }
 }
 
 /// The presets: keys 1-8 the dishes of the 4x Mould page and the Jenson
-/// comparison; 9, 0 and Shift 1-5 the looks report's (2026-11-11).
-const PRESETS: [&str; 15] = [
+/// comparison; 9, 0 and Shift 1-5 the looks report's, Shift 6-0 the
+/// outside rules report's, Ctrl 1-2 the creatures report's (2026-11-11).
+const PRESETS: [&str; 22] = [
     "BIG DISH (PHASE 2)",
     "32,000 WALKERS",
     "NO LIMIT, OUR NUMBERS",
@@ -749,6 +1120,13 @@ const PRESETS: [&str; 15] = [
     "EVEN POLYGONS",
     "ENDEMIC",
     "SICK ROPES",
+    "TWO TERRITORIES",
+    "CYCLIC RIBBONS",
+    "EXPLORER FRONT",
+    "DROPLETS",
+    "BEADS ON STRINGS",
+    "GRAZING DROPLETS",
+    "GRAZING SPECIES",
 ];
 
 /// The key a preset is on.
@@ -756,7 +1134,8 @@ fn preset_key(k: usize) -> String {
     match k {
         0..=8 => (k + 1).to_string(),
         9 => "0".into(),
-        _ => format!("SHIFT+{}", k - 9),
+        10..=19 => format!("SHIFT+{}", (k - 9) % 10),
+        _ => format!("CTRL+{}", (k - 19) % 10),
     }
 }
 
@@ -768,6 +1147,23 @@ fn preset(k: usize) -> Settings {
     let respawn = Settings { respawn: 0.01, ..jenson.clone() };
     let trunk = Settings { start: Start::Disc, disc: 180.0, haze: 0.3, respawn: 0.001, trail_scale: 0.02, step_by: [1.0, 1.0], ..jenson.clone() };
     let sick = Settings { cap: 100, seed_at: 4.0, seed_r: 40.0, ..jenson.clone() };
+    // The report's droplets: 30,000 walkers laying deposit 5 each (1.5 per
+    // 100,000), SA 90, RA 45, SO 9, keep 0.93, a disc of 120 dish cells,
+    // blocked walkers laying all of it; drawn by walkers a cell.
+    let droplets = Settings {
+        walkers: 30_000,
+        crowd: true,
+        laid: 1.5,
+        sensor_angle: 90.0,
+        turn: 45.0,
+        reach: 9.0,
+        keep: 0.93,
+        start: Start::Disc,
+        disc: 480.0,
+        blocked_lay: 1.0,
+        field: Field::Walkers,
+        ..jenson.clone()
+    };
     match k {
         0 => b,
         // The 4x Mould page's 32k dish laid today's deposit a walker.
@@ -799,7 +1195,29 @@ fn preset(k: usize) -> Settings {
         // Sick walkers sense half as far and turn twice as hard: the mesh
         // coarsens behind the wave (8 of 8 seeds at 9 s), then recovers.
         14 => Settings { sick: 240, immune: 6000, catch_at: 5.0, sick_reach: 0.5, sick_turn: 2.0, ..sick },
-        _ => panic!("preset {k}: 0-14"),
+        // The outside rules report's dishes (`run.sh` and its commands),
+        // on the comparison's Jenson settings at 1M unless said. Two
+        // species started in halves hold two territories, avoiding each
+        // other (border cells held 80%+ by one: 0.994-1.000, 8 of 8 seeds).
+        15 => Settings { species: 2, zones: true, ..jenson.clone() },
+        // Three cyclic species (own +1, next +0.6, previous -1) braid into
+        // ribbons that keep flowing (97-125 loops at 10 s).
+        16 => Settings { species: 3, cycle: true, sensor_angle: 20.0, turn: 20.0, reach: 32.0, step: 2.0, ..jenson.clone() },
+        // Explorers from a small disc (20 dish cells), each for 0-2x 900
+        // ticks: radial veins with a feathery front, best at about 2 s.
+        17 => Settings { start: Start::Disc, disc: 80.0, explore: 900, explore_spread: 1.0, ..jenson },
+        // Jones and Adamatzky's packed walkers, one a cell, laying trail
+        // where they stand when blocked: about 180 round droplets (seed 1).
+        18 => droplets,
+        // The same with a longer reach: beads on strings.
+        19 => Settings { reach: 27.0, ..droplets.clone() },
+        // The creatures report's: grazing (weight 10) makes the droplets
+        // crawl (centres moved 6.5-7.6 cells in 2 s against 0.67-0.77, 8 of
+        // 8 seeds); two species of them, not avoiding each other, roam as
+        // amber and teal cells (drawn by trail, in species colours).
+        20 => Settings { graze: 10.0, ..droplets.clone() },
+        21 => Settings { graze: 10.0, species: 2, avoid: 0.0, field: Field::Trail, ..droplets },
+        _ => panic!("preset {k}: 0-21"),
     }
 }
 
@@ -847,14 +1265,59 @@ enum Knob {
     SickTurn,
     SeedAt,
     SeedR,
+    // The outside rules page.
+    Species,
+    Avoid,
+    Zones,
+    Cycle,
+    Next,
+    Prev,
+    Explore,
+    ExplorerTrail,
+    ExploreSpread,
+    BlockedLay,
+    BlockedKeep,
+    BlockedReset,
+    Chance,
+    SizeSpread,
+    SensorR,
+    Convert,
+    Boost,
+    Graze,
+    GrazeEat,
+    GrazeRegrow,
 }
 
 const LOOKS: [Knob; 11] = [Knob::Disc, Knob::Haze, Knob::TrailScale, Knob::ReachBy, Knob::AngleBy, Knob::TurnBy, Knob::StepBy, Knob::TrailPower, Knob::Cap, Knob::Floor, Knob::Wander];
 const SICK: [Knob; 11] = [Knob::Sick, Knob::Immune, Knob::Catch, Knob::Germ, Knob::GermKeep, Knob::SickSpeed, Knob::SickTrail, Knob::SickReach, Knob::SickTurn, Knob::SeedAt, Knob::SeedR];
 
+const OUTSIDE: [Knob; 20] = [
+    Knob::Species,
+    Knob::Avoid,
+    Knob::Zones,
+    Knob::Cycle,
+    Knob::Next,
+    Knob::Prev,
+    Knob::Explore,
+    Knob::ExplorerTrail,
+    Knob::ExploreSpread,
+    Knob::BlockedLay,
+    Knob::BlockedKeep,
+    Knob::BlockedReset,
+    Knob::Chance,
+    Knob::SizeSpread,
+    Knob::SensorR,
+    Knob::Convert,
+    Knob::Boost,
+    Knob::Graze,
+    Knob::GrazeEat,
+    Knob::GrazeRegrow,
+];
+
 /// The panel's pages (Tab turns them): the first holds the comparison's
-/// controls, the others the looks report's (2026-11-11).
-const PAGES: [(&str, &[Knob]); 3] = [("MAIN", &KNOBS), ("LOOKS", &LOOKS), ("CONTAGION", &SICK)];
+/// controls, the others the looks report's and the outside rules
+/// report's (2026-11-11).
+const PAGES: [(&str, &[Knob]); 4] = [("MAIN", &KNOBS), ("LOOKS", &LOOKS), ("CONTAGION", &SICK), ("OUTSIDE RULES", &OUTSIDE)];
 
 const KNOBS: [Knob; 18] = [
     Knob::Walkers,
@@ -885,6 +1348,15 @@ const FLOOR_STEPS: [f32; 13] = [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 3.0, 3.5, 4.0, 5.
 const WANDER_STEPS: [f32; 7] = [0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3];
 /// Ticks sick or immune (120 a second); the sum stays inside the CPU's u16.
 const SICK_STEPS: [u32; 10] = [0, 30, 60, 120, 240, 480, 1200, 2400, 6000, 12000];
+/// Ticks an explorer explores (the report's front: 900).
+const EXPLORE_STEPS: [u16; 9] = [0, 30, 60, 120, 240, 480, 900, 1800, 3600];
+const RESET_STEPS: [f32; 8] = [0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0];
+/// The chance turn's power (the report's test: 4).
+const CHANCE_STEPS: [f32; 8] = [0.0, 0.5, 1.0, 1.5, 2.0, 4.0, 8.0, 16.0];
+/// Conversion's factor (the creatures report tried 1.2-2) and grazing's
+/// weight (10 crawls; 30 loses walkers; 100 a gas).
+const CONVERT_STEPS: [f32; 8] = [0.0, 1.0, 1.1, 1.2, 1.5, 2.0, 3.0, 5.0];
+const GRAZE_STEPS: [f32; 9] = [0.0, 1.0, 3.0, 5.0, 10.0, 20.0, 30.0, 50.0, 100.0];
 
 /// The entry of `list` after (or before) the last one at or below `v`.
 fn next_in<T: PartialOrd + Copy>(list: &[T], v: T, dir: i32) -> T {
@@ -968,6 +1440,26 @@ impl Knob {
             Knob::SickTurn => "SICK TURN",
             Knob::SeedAt => "SEEDED AT",
             Knob::SeedR => "SEED RADIUS",
+            Knob::Species => "SPECIES",
+            Knob::Avoid => "AVOID OTHERS",
+            Knob::Zones => "START IN BANDS",
+            Knob::Cycle => "CYCLIC SPECIES",
+            Knob::Next => "NEXT SPECIES",
+            Knob::Prev => "PREVIOUS SPECIES",
+            Knob::Explore => "EXPLORE FOR",
+            Knob::ExplorerTrail => "EXPLORER TRAIL",
+            Knob::ExploreSpread => "EXPLORE SPREAD",
+            Knob::BlockedLay => "BLOCKED LAY",
+            Knob::BlockedKeep => "BLOCKED KEEP AIM",
+            Knob::BlockedReset => "BLOCKED RESET",
+            Knob::Chance => "CHANCE TURN POWER",
+            Knob::SizeSpread => "SIZE SPREAD",
+            Knob::SensorR => "AREA SENSOR RADIUS",
+            Knob::Convert => "CONVERT AT",
+            Knob::Boost => "SPECIES 0 LAYS",
+            Knob::Graze => "GRAZING",
+            Knob::GrazeEat => "GRASS EATEN A TICK",
+            Knob::GrazeRegrow => "GRASS REGROWS",
         }
     }
 
@@ -1032,6 +1524,36 @@ impl Knob {
             Knob::SeedAt if s.seed_at <= 0.0 => "THE START".into(),
             Knob::SeedAt => format!("{:.0} S", s.seed_at),
             Knob::SeedR => format!("{:.0}", s.seed_r),
+            Knob::Species if s.fields() == 0 => "OFF".into(),
+            Knob::Species => s.fields().to_string(),
+            Knob::Avoid => format!("{:.2}", s.avoid),
+            Knob::Zones => on(s.zones),
+            Knob::Cycle if s.cycle && s.fields() < 3 => "ON (NEEDS 3)".into(),
+            Knob::Cycle => on(s.cycle),
+            Knob::Next => format!("{:+.1}", s.next),
+            Knob::Prev => format!("{:+.1}", s.prev),
+            Knob::Explore => secs(s.explore as u32),
+            Knob::ExplorerTrail => format!("{:.2}X", s.explorer_trail),
+            Knob::ExploreSpread if s.explore_spread == 0.0 => "OFF".into(),
+            Knob::ExploreSpread => format!("0-{:.1}X", 1.0 + s.explore_spread),
+            Knob::BlockedLay if s.blocked_lay == 0.0 => "OFF".into(),
+            Knob::BlockedLay if s.cap > 0 => "OFF (WITH THE CAP)".into(),
+            Knob::BlockedLay => format!("{:.2}X", s.blocked_lay),
+            Knob::BlockedKeep => on(s.blocked_keep),
+            Knob::BlockedReset => percent(s.blocked_reset),
+            Knob::Chance if s.chance == 0.0 => "OFF".into(),
+            Knob::Chance => format!("{}", s.chance),
+            Knob::SizeSpread if s.size_spread == 0.0 => "OFF".into(),
+            Knob::SizeSpread => format!("{:.1}", s.size_spread),
+            Knob::SensorR if s.sensor_r == 0 => "ONE CELL".into(),
+            Knob::SensorR => format!("{} ({} CELLS)", s.sensor_r, (2 * s.sensor_r as u32 + 1).pow(2)),
+            Knob::Convert if s.convert == 0.0 => "OFF".into(),
+            Knob::Convert => format!("{:.1}X OWN", s.convert),
+            Knob::Boost => format!("{:.2}X", s.boost),
+            Knob::Graze if s.graze == 0.0 => "OFF".into(),
+            Knob::Graze => format!("{}", s.graze),
+            Knob::GrazeEat => format!("{:.3}", s.graze_eat),
+            Knob::GrazeRegrow => format!("{:.4}", s.graze_regrow),
         }
     }
 
@@ -1077,7 +1599,7 @@ impl Knob {
             }
             // The start's own settings restart the dish only when used.
             Knob::Disc => {
-                s.disc = (s.disc + 10.0 * k * d).clamp(10.0, 320.0);
+                s.disc = (s.disc + 10.0 * k * d).clamp(10.0, 480.0);
                 return s.start == Start::Disc;
             }
             Knob::Haze => {
@@ -1117,6 +1639,38 @@ impl Knob {
                 s.seed_r = (s.seed_r + 4.0 * k * d).clamp(4.0, 320.0);
                 return s.seed_at == 0.0 && s.sick_on();
             }
+            // Species and their bands take a restart (a field each, and
+            // where they start).
+            Knob::Species => {
+                let before = s.fields();
+                s.species = (s.fields() as i32 + dir).clamp(0, MAX_SPECIES as i32) as u8;
+                if s.species == 1 {
+                    s.species = if dir > 0 { 2 } else { 0 };
+                }
+                return s.fields() != before;
+            }
+            Knob::Avoid => s.avoid = (s.avoid + 0.25 * k * d).clamp(-2.0, 4.0),
+            Knob::Zones => {
+                s.zones = !s.zones;
+                return s.fields() > 0 && s.start == Start::Spread;
+            }
+            Knob::Cycle => s.cycle = !s.cycle,
+            Knob::Next => s.next = (s.next + 0.1 * k * d).clamp(-3.0, 3.0),
+            Knob::Prev => s.prev = (s.prev + 0.1 * k * d).clamp(-3.0, 3.0),
+            Knob::Explore => s.explore = next_in(&EXPLORE_STEPS, s.explore, dir),
+            Knob::ExplorerTrail => s.explorer_trail = (s.explorer_trail + 0.05 * k * d).clamp(0.0, 2.0),
+            Knob::ExploreSpread => s.explore_spread = (s.explore_spread + 0.1 * k * d).clamp(0.0, 1.0),
+            Knob::BlockedLay => s.blocked_lay = (s.blocked_lay + 0.25 * k * d).clamp(0.0, 4.0),
+            Knob::BlockedKeep => s.blocked_keep = !s.blocked_keep,
+            Knob::BlockedReset => s.blocked_reset = next_in(&RESET_STEPS, s.blocked_reset, dir),
+            Knob::Chance => s.chance = next_in(&CHANCE_STEPS, s.chance, dir),
+            Knob::SizeSpread => s.size_spread = (s.size_spread + 0.1 * k * d).clamp(0.0, 2.0),
+            Knob::SensorR => s.sensor_r = (s.sensor_r as i32 + dir).clamp(0, 3) as u8,
+            Knob::Convert => s.convert = next_in(&CONVERT_STEPS, s.convert, dir),
+            Knob::Boost => s.boost = (s.boost + 0.1 * k * d).clamp(0.1, 4.0),
+            Knob::Graze => s.graze = next_in(&GRAZE_STEPS, s.graze, dir),
+            Knob::GrazeEat => s.graze_eat = mul(s.graze_eat, if big { 2.0 } else { 1.25 }).clamp(0.001, 1.0),
+            Knob::GrazeRegrow => s.graze_regrow = mul(s.graze_regrow, if big { 2.0 } else { 1.25 }).clamp(0.0001, 1.0),
         }
         false
     }
@@ -1184,6 +1738,27 @@ fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "sick_turn" => s.sick_turn = f()?,
         "seed_at" => s.seed_at = f()?,
         "seed_r" => s.seed_r = f()?,
+        // The outside rules, with the CPU's names too.
+        "species" => s.species = int()?.min(MAX_SPECIES as u32) as u8,
+        "avoid" | "species_avoid" => s.avoid = f()?,
+        "zones" | "species_zones" => s.zones = b()?,
+        "cycle" | "species_cycle" => s.cycle = b()?,
+        "next" | "species_next" => s.next = f()?,
+        "prev" | "species_prev" => s.prev = f()?,
+        "explore" | "explore_steps" => s.explore = int()?.min(u16::MAX as u32) as u16,
+        "explorer_trail" | "explore_deposit" => s.explorer_trail = f()?,
+        "explore_spread" => s.explore_spread = f()?,
+        "blocked_lay" | "blocked_deposit" => s.blocked_lay = f()?,
+        "blocked_keep" => s.blocked_keep = b()?,
+        "blocked_reset" => s.blocked_reset = f()?,
+        "chance" | "chance_exp" => s.chance = f()?,
+        "size_spread" => s.size_spread = f()?,
+        "sensor_r" => s.sensor_r = int()?.min(8) as u8,
+        "convert" | "species_convert" => s.convert = f()?,
+        "graze" | "graze_weight" => s.graze = f()?,
+        "graze_eat" => s.graze_eat = f()?,
+        "graze_regrow" => s.graze_regrow = f()?,
+        "boost" | "species_boost" => s.boost = f()?,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }
@@ -1227,6 +1802,26 @@ fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         sick_reach: s.sick_reach,
         sick_turn: s.sick_turn,
         sick_seed_r: if s.seed_at <= 0.0 { s.seed_r / scale as f32 } else { 0.0 },
+        sensor_r: s.sensor_r,
+        species: s.fields() as u8,
+        species_avoid: s.avoid,
+        species_zones: s.zones,
+        chance_exp: s.chance,
+        species_cycle: s.cycle,
+        species_next: s.next,
+        species_prev: s.prev,
+        explore_steps: s.explore,
+        explore_deposit: s.explorer_trail,
+        explore_spread: s.explore_spread,
+        size_spread: s.size_spread,
+        blocked_keep: s.blocked_keep,
+        blocked_reset: s.blocked_reset,
+        blocked_deposit: s.blocked_lay,
+        species_convert: s.convert,
+        graze_weight: s.graze,
+        graze_eat: s.graze_eat,
+        graze_regrow: s.graze_regrow,
+        species_boost: s.boost,
         seed: s.seed,
         ..t
     }
@@ -1254,15 +1849,18 @@ struct Hand {
     infect: bool,
 }
 
-/// The shader, its layout and its nine pipelines: made once, kept across
-/// restarts.
+/// The shader, its layout and its ten pipelines, twice: made once, kept
+/// across restarts.
 struct Shared {
     bgl: wgpu::BindGroupLayout,
-    /// sense, walk, trail, scent, histogram, top, draw, jump, land.
+    /// sense, walk, trail, scent, histogram, top, draw, jump, land, convert.
     pipes: Vec<wgpu::ComputePipeline>,
+    /// The same with the outside rules compiled out (`OUTSIDE` false), for
+    /// a dish with all of them off.
+    plain: Vec<wgpu::ComputePipeline>,
 }
 
-const BINDINGS: u32 = 24;
+const BINDINGS: u32 = 32;
 const SENSE: usize = 0;
 const WALK: usize = 1;
 const TRAIL: usize = 2;
@@ -1272,6 +1870,7 @@ const TOP: usize = 5;
 const DRAW: usize = 6;
 const JUMP: usize = 7;
 const LAND: usize = 8;
+const CONVERT: usize = 9;
 
 impl Shared {
     fn new(dev: &wgpu::Device) -> Self {
@@ -1290,20 +1889,22 @@ impl Shared {
         }
         let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("sandbox"), entries: &entries });
         let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("sandbox"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
-        let pipes = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land"]
-            .iter()
-            .map(|entry_point| {
-                dev.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                    label: Some(entry_point),
-                    layout: Some(&layout),
-                    module: &module,
-                    entry_point: Some(entry_point),
-                    compilation_options: Default::default(),
-                    cache: None,
+        let build = |constants: &[(&str, f64)]| {
+            ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert"]
+                .iter()
+                .map(|entry_point| {
+                    dev.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                        label: Some(entry_point),
+                        layout: Some(&layout),
+                        module: &module,
+                        entry_point: Some(entry_point),
+                        compilation_options: wgpu::PipelineCompilationOptions { constants, ..Default::default() },
+                        cache: None,
+                    })
                 })
-            })
-            .collect();
-        Shared { bgl, pipes }
+                .collect()
+        };
+        Shared { bgl, pipes: build(&[]), plain: build(&[("OUTSIDE", 0.0)]) }
     }
 }
 
@@ -1333,6 +1934,25 @@ struct Engine {
     sick: wgpu::Buffer,
     #[cfg_attr(not(test), allow(dead_code))]
     germ: [wgpu::Buffer; 2],
+    /// The outside rules: each species' trail field (a block of cells a
+    /// species, swapped as the trail is) and each walker's age.
+    #[cfg_attr(not(test), allow(dead_code))]
+    species: [wgpu::Buffer; 2],
+    age: wgpu::Buffer,
+    /// PR #56: grass a cell, and each walker's species.
+    #[cfg_attr(not(test), allow(dead_code))]
+    grass: wgpu::Buffer,
+    #[cfg_attr(not(test), allow(dead_code))]
+    spec: wgpu::Buffer,
+    /// From the last `write_params`: whether the conversion pass runs, and
+    /// whether any outside rule is on (else the plain pipelines run).
+    converts: bool,
+    outside: bool,
+    /// Species fields (0 for none), fixed for the dish's life.
+    nsp: u32,
+    /// Whether the last frame had explorers on (switching them on starts
+    /// every walker's stage again).
+    exploring: bool,
     /// Whether the timed seeding (`Settings::seed_at`) has happened.
     seeded: bool,
     /// The CPU dish it started from: agar, piles, and the measures.
@@ -1378,7 +1998,11 @@ impl Engine {
         }
         let occ = buf("occ", &u32_bytes(&occ), storage);
         let claim = buf("claim", &u32_bytes(&vec![u32::MAX; cells as usize]), storage);
-        let dep = zeros("dep", cells as usize * 4);
+        // A block of counts a species (`dep`, `sdep`), two for explorers'
+        // and blocked walkers' classes (`edep`, `bdep`).
+        let nsp = s.fields();
+        let blocks = nsp.max(1) as usize;
+        let dep = zeros("dep", blocks * cells as usize * 4);
         let agar: Vec<u32> = d.agar.iter().map(|&a| a as u32).collect();
         let agar = buf("agar", &u32_bytes(&agar), storage);
         let lay = zeros("lay", cells as usize * 4);
@@ -1397,13 +2021,26 @@ impl Engine {
         // fields), so it can be switched on as the dish runs.
         let counters: Vec<u32> = if d.sick.is_empty() { vec![0; n as usize] } else { d.sick.iter().map(|&c| c as u32).collect() };
         let sick = buf("sick", &u32_bytes(&counters), storage);
-        let sdep = zeros("sdep", cells as usize * 4);
+        let sdep = zeros("sdep", blocks * cells as usize * 4);
         let gdep = zeros("gdep", cells as usize * 4);
         let germ = [zeros("germ0", cells as usize * 4), zeros("germ1", cells as usize * 4)];
+        let edep = zeros("edep", 2 * blocks * cells as usize * 4);
+        let bdep = zeros("bdep", 2 * blocks * cells as usize * 4);
+        let species = [zeros("species0", nsp as usize * cells as usize * 4), zeros("species1", nsp as usize * cells as usize * 4)];
+        let age = zeros("age", n as usize * 4);
+        // Grass starts full on the agar (the CPU's, made only with grazing
+        // on; here always, so grazing can be switched on as the dish runs);
+        // walker k starts as species k % n.
+        let full: Vec<f32> = d.agar.iter().map(|&a| a as u32 as f32).collect();
+        let grass = buf("grass", &f32_bytes(&full), storage);
+        let gcount = zeros("gcount", cells as usize * 4);
+        let specs: Vec<u32> = (0..n).map(|k| k % nsp.max(1)).collect();
+        let spec = buf("spec", &u32_bytes(&specs), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
-                &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b],
+                &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
+                &species[b], &age, &grass, &gcount, &spec,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -1426,6 +2063,14 @@ impl Engine {
             hud,
             sick,
             germ,
+            species,
+            age,
+            grass,
+            spec,
+            converts: false,
+            outside: false,
+            nsp,
+            exploring: s.explore > 0,
             seeded: false,
             dish: d,
             dropped: Vec::new(),
@@ -1509,6 +2154,18 @@ impl Engine {
         self.queue.write_buffer(&self.sick, 0, &u32_bytes(&counters));
         let germ = if d.germ.is_empty() { vec![0.0; self.cells as usize] } else { d.germ.clone() };
         self.queue.write_buffer(&self.germ[side], 0, &f32_bytes(&germ));
+        assert_eq!(d.species_trail.len(), self.nsp as usize, "a dish with this engine's species");
+        if self.nsp > 0 {
+            let fields: Vec<f32> = d.species_trail.iter().flatten().copied().collect();
+            self.queue.write_buffer(&self.species[side], 0, &f32_bytes(&fields));
+        }
+        let ages: Vec<u32> = if d.age.is_empty() { vec![0; self.n as usize] } else { d.age.iter().map(|&a| a as u32).collect() };
+        self.queue.write_buffer(&self.age, 0, &u32_bytes(&ages));
+        self.exploring = !d.age.is_empty();
+        let grass: Vec<f32> = if d.grass.is_empty() { d.agar.iter().map(|&a| a as u32 as f32).collect() } else { d.grass.clone() };
+        self.queue.write_buffer(&self.grass, 0, &f32_bytes(&grass));
+        let specs: Vec<u32> = if d.spec.is_empty() { (0..self.n).map(|k| k % self.nsp.max(1)).collect() } else { d.spec.iter().map(|&c| c as u32).collect() };
+        self.queue.write_buffer(&self.spec, 0, &u32_bytes(&specs));
         self.done = d.steps;
         self.dish = d.clone();
         self.dropped.clear();
@@ -1547,7 +2204,22 @@ impl Engine {
         }
         b.extend(u32_bytes(&[s.sick, s.immune, infect, 0]));
         b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, 0.0, 0.0, 0.0]));
+        // The outside rules. Switching explorers on starts every walker's
+        // stage again, so the switch shows (ages are only counted while on).
+        if s.explore > 0 && !self.exploring {
+            self.queue.write_buffer(&self.age, 0, &vec![0u8; self.n as usize * 4]);
+        }
+        self.exploring = s.explore > 0;
+        b.extend(u32_bytes(&[self.nsp, s.cycle as u32, s.explore as u32, stream(seed, DRAW_SIZE)]));
+        b.extend(f32_bytes(&[s.avoid, s.next, s.prev, s.explorer_trail, s.explore_spread, s.blocked_lay]));
+        b.extend(u32_bytes(&[s.blocked_keep as u32]));
+        b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
+        b.extend(u32_bytes(&[s.sensor_r as u32, stream(seed, DRAW_CHANCE), stream(seed, DRAW_KEEP)]));
+        b.extend(f32_bytes(&[s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost]));
+        b.extend(u32_bytes(&[0, 0]));
         debug_assert_eq!(b.len(), PARAMS_BYTES);
+        self.converts = s.convert > 0.0 && self.nsp > 0;
+        self.outside = self.nsp > 0 || s.explore > 0 || s.blocked_lay > 0.0 || s.blocked_keep || s.chance > 0.0 || s.size_spread > 0.0 || s.sensor_r > 0 || s.graze != 0.0;
         self.queue.write_buffer(&self.params, 0, &b);
         self.jumps = s.respawn > 0.0 || pull > 0.0;
         self.crowd = crowd > 0;
@@ -1562,13 +2234,14 @@ impl Engine {
             stamps.and_then(|qs| (begin.is_some() || end.is_some()).then_some(wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin, end_of_pass_write_index: end }))
         };
         let tick = self.tick_passes();
+        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
         for k in 0..ticks {
             let group = &self.groups[(self.done % 2) as usize];
             for (q, &(p, size)) in tick.iter().enumerate() {
                 let begin = (k == 0 && q == 0).then_some(0);
                 let end = (k + 1 == ticks && q + 1 == tick.len()).then_some(1);
                 let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes(begin, end) });
-                pass.set_pipeline(&shared.pipes[p]);
+                pass.set_pipeline(&pipes[p]);
                 pass.set_bind_group(0, group, &[]);
                 pass.dispatch_workgroups(size, 1, 1);
             }
@@ -1578,17 +2251,21 @@ impl Engine {
         for &(p, groups) in &self.draw_passes(soft) {
             let end = (p == DRAW).then_some(2);
             let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes(None, end) });
-            pass.set_pipeline(&shared.pipes[p]);
+            pass.set_pipeline(&pipes[p]);
             pass.set_bind_group(0, group, &[]);
             pass.dispatch_workgroups(groups, 1, 1);
         }
     }
 
-    /// A tick's passes and their workgroups: the jump passes only while
-    /// respawn or the pull is on, `land` only with the crowd limit.
+    /// A tick's passes and their workgroups: conversion only with species
+    /// and `convert` on, the jump passes only while respawn or the pull is
+    /// on, `land` only with the crowd limit.
     fn tick_passes(&self) -> Vec<(usize, u32)> {
         let (n, cells) = (self.n.div_ceil(256), self.cells.div_ceil(256));
         let mut tick = vec![(SENSE, n), (WALK, n)];
+        if self.converts {
+            tick.push((CONVERT, n));
+        }
         if self.jumps {
             tick.push((JUMP, n));
             if self.crowd {
@@ -1614,8 +2291,9 @@ impl Engine {
     /// pass's start and end stamped), submitted and waited for: GPU ms a
     /// pass, by name. It runs the tick, so the dish moves on by one.
     fn profile(&mut self, shared: &Shared, soft: bool) -> Vec<(&'static str, f64)> {
-        const NAMES: [&str; 9] = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land"];
+        const NAMES: [&str; 10] = ["sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert"];
         let tick = self.tick_passes();
+        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
         let passes: Vec<(usize, u32, usize)> = tick.iter().map(|&(p, g)| (p, g, (self.done % 2) as usize)).chain(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, ((self.done + 1) % 2) as usize))).collect();
         let count = 2 * passes.len() as u32;
         let qs = self.device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("profile"), ty: wgpu::QueryType::Timestamp, count });
@@ -1624,7 +2302,7 @@ impl Engine {
         for (q, &(p, groups, side)) in passes.iter().enumerate() {
             let writes = wgpu::ComputePassTimestampWrites { query_set: &qs, beginning_of_pass_write_index: Some(2 * q as u32), end_of_pass_write_index: Some(2 * q as u32 + 1) };
             let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: Some(writes) });
-            pass.set_pipeline(&shared.pipes[p]);
+            pass.set_pipeline(&pipes[p]);
             pass.set_bind_group(0, &self.groups[side], &[]);
             pass.dispatch_workgroups(groups, 1, 1);
         }
@@ -1815,6 +2493,7 @@ struct App {
     show_panel: bool,
     panel_dirty: bool,
     shift: bool,
+    ctrl: bool,
     hand: Hand,
     frames: u64,
     /// Frames drawn since the window opened.
@@ -1847,6 +2526,7 @@ impl App {
             show_panel: true,
             panel_dirty: true,
             shift: false,
+            ctrl: false,
             hand: Hand::default(),
             frames: 0,
             drawn: 0,
@@ -1910,6 +2590,8 @@ impl App {
         let bottom = vec![
             ("1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(), WHITE),
             ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(), WHITE),
+            ("SHIFT+6 TERRITORIES  7 RIBBONS  8 EXPLORERS  9 DROPLETS  0 BEADS".to_string(), WHITE),
+            ("CTRL+1 GRAZING DROPLETS  2 GRAZING SPECIES".to_string(), WHITE),
             ("ARROWS PICK AND CHANGE (SHIFT: MORE)  SPACE PAUSE  . STEP  R RESTART  N NEW SEED".to_string(), DIM),
             (mouse.to_string(), DIM),
             (format!("{ms}  {:.0} FPS  {:.1} S  SEED {}{}", self.fps, done as f64 / STEPS_PER_SECOND as f64, self.s.seed, if self.paused { "  PAUSED" } else { "" }), WHITE),
@@ -1919,8 +2601,9 @@ impl App {
 
     fn key(&mut self, code: KeyCode, event_loop: &ActiveEventLoop) {
         const DIGITS: [KeyCode; 10] = [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9, KeyCode::Digit0];
-        // 1-9 and 0 are presets 1-10; Shift with 1-5 the five after.
-        let digit = DIGITS.iter().position(|&k| k == code).map(|k| if self.shift { k + 10 } else { k }).filter(|&k| k < PRESETS.len());
+        // 1-9 and 0 are presets 1-10; Shift with 1-9 and 0 the ten after,
+        // Ctrl with them the ten after that.
+        let digit = DIGITS.iter().position(|&k| k == code).map(|k| k + if self.ctrl { 20 } else if self.shift { 10 } else { 0 }).filter(|&k| k < PRESETS.len());
         if let Some(k) = digit {
             let seed = self.s.seed;
             self.preset = k;
@@ -2115,7 +2798,10 @@ impl ApplicationHandler for App {
                     }
                 }
             }
-            WindowEvent::ModifiersChanged(m) => self.shift = m.state().shift_key(),
+            WindowEvent::ModifiersChanged(m) => {
+                self.shift = m.state().shift_key();
+                self.ctrl = m.state().control_key();
+            }
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(code) = event.physical_key {
                     let repeat_ok = matches!(code, KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::Period);
@@ -2260,6 +2946,31 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 println!(
                     "   contagion: sick {} immune {} ticks, catch {}, germ {} kept {}, sick speed {} trail {} reach {} turn {}, seeded at {} s r {}",
                     s.sick, s.immune, s.catch_at, s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, s.seed_at, s.seed_r
+                );
+            }
+            if (s.fields(), s.explore, s.blocked_lay, s.blocked_keep, s.chance, s.size_spread, s.sensor_r, s.graze) != (0, 0, 0.0, false, 0.0, 0.0, 0, 0.0) {
+                println!(
+                    "   outside: species {} avoid {} zones {} cycle {} next {} prev {} convert {} boost {}; explore {} ticks, trail {} spread {}; blocked lay {} keep {} reset {}; chance {} size spread {} sensor r {}; graze {} eat {} regrow {}",
+                    s.fields(),
+                    s.avoid,
+                    s.zones as u8,
+                    s.cycle as u8,
+                    s.next,
+                    s.prev,
+                    s.convert,
+                    s.boost,
+                    s.explore,
+                    s.explorer_trail,
+                    s.explore_spread,
+                    s.blocked_lay,
+                    s.blocked_keep as u8,
+                    s.blocked_reset,
+                    s.chance,
+                    s.size_spread,
+                    s.sensor_r,
+                    s.graze,
+                    s.graze_eat,
+                    s.graze_regrow
                 );
             }
         }
@@ -2471,8 +3182,29 @@ mod tests {
         assert_eq!((preset(13).sick, preset(13).immune), (60, 120));
         let r = big_params(&preset(14), 4, false);
         assert_eq!((r.sick_steps, r.immune_steps, r.sick_catch, r.sick_reach, r.sick_turn, r.sick_trail), (240, 6000, 5.0, 0.5, 2.0, 1.0));
-        // Every preset has a key, and Shift+1-5 are the last five.
+        // The outside rules report's (`run.sh` and its commands, scale 4).
+        let t = big_params(&preset(15), 4, false);
+        assert_eq!((t.species, t.species_zones, t.species_avoid, t.blob, t.walkers), (2, true, 1.0, false, 1_000_000));
+        assert!((t.deposit - 0.5).abs() < 1e-6 && t.sensor_offset == 18.0);
+        let c = big_params(&preset(16), 4, false);
+        assert_eq!((c.species, c.species_cycle, c.species_next, c.species_prev, c.sensor_offset, c.step), (3, true, 0.6, -1.0, 32.0, 2.0));
+        assert!((c.sensor_angle.to_degrees() - 20.0).abs() < 1e-4 && (c.rotate_angle.to_degrees() - 20.0).abs() < 1e-4);
+        let x = big_params(&preset(17), 4, false);
+        assert_eq!((x.blob, x.blob_r, x.haze, x.explore_steps, x.explore_spread, x.explore_deposit), (true, 20.0, 0.0, 900, 1.0, 0.05));
+        let d = big_params(&preset(18), 4, true);
+        assert_eq!((d.walkers, d.crowd, d.sensor_offset, d.keep, d.blob_r, d.blocked_deposit, d.blocked_keep), (30_000, 1, 9.0, 0.93, 120.0, 1.0, false));
+        assert!((d.deposit - 5.0).abs() < 1e-4 && (d.sensor_angle.to_degrees() - 90.0).abs() < 1e-4 && (d.rotate_angle.to_degrees() - 45.0).abs() < 1e-4);
+        assert_eq!(big_params(&preset(19), 4, true).sensor_offset, 27.0);
+        // The creatures report's: grazing weight 10 on the droplets; two
+        // species with no avoidance, drawn by trail in species colours.
+        let g = big_params(&preset(20), 4, true);
+        assert_eq!((g.graze_weight, g.graze_eat, g.graze_regrow, g.species, g.blocked_deposit, g.walkers), (10.0, 0.05, 0.002, 0, 1.0, 30_000));
+        let g2 = big_params(&preset(21), 4, true);
+        assert_eq!((g2.graze_weight, g2.species, g2.species_avoid, g2.species_convert), (10.0, 2, 0.0, 0.0));
+        assert_eq!(preset(21).field, Field::Trail);
+        // Every preset has a key: 1-9 and 0, then Shift with 1-9 and 0.
         assert_eq!((preset_key(8), preset_key(9), preset_key(14)), ("9".to_string(), "0".to_string(), "SHIFT+5".to_string()));
+        assert_eq!((preset_key(15), preset_key(19), preset_key(20), preset_key(21)), ("SHIFT+6".to_string(), "SHIFT+0".to_string(), "CTRL+1".to_string(), "CTRL+2".to_string()));
     }
 
     #[test]
@@ -2491,6 +3223,12 @@ mod tests {
         // above, where `powf` and the GPU's `pow0` agree.
         assert!(s.sick + s.immune <= u16::MAX as u32 && s.catch_at > 0.0 && s.germ_keep < 1.0 && s.disc >= 10.0);
         assert!([s.reach_by[1], s.angle_by[1], s.turn_by[1], s.step_by[1]].iter().all(|&e| e >= 0.0));
+        // The outside rules: at most four species (a colour each), never one.
+        assert!(s.species <= MAX_SPECIES && s.species != 1 && s.sensor_r <= 3 && s.explorer_trail >= 0.0 && s.explore_spread <= 1.0 && s.chance >= 0.0 && s.boost >= 0.1);
+        let mut t = Settings::big_dish();
+        assert!(Knob::Species.nudge(&mut t, 1, false, 8_000_000) && t.fields() == 2, "species start at two, with a restart");
+        assert!(Knob::Species.nudge(&mut t, -1, false, 8_000_000) && t.fields() == 0);
+        assert!(!Knob::Zones.nudge(&mut t, 1, false, 8_000_000), "bands without species change nothing");
         assert_eq!(next_in(&WALKER_STEPS, 100_000, 1), 200_000);
         assert_eq!(next_in(&WALKER_STEPS, 100_000, -1), 32_000);
         assert_eq!(next_in(&WALKER_STEPS, 150_000, -1), 100_000);
@@ -2662,6 +3400,153 @@ mod tests {
         }
     }
 
+    /// The twin test for the outside rules (PRs #55, #56, #58, 2026-11-11): one
+    /// GPU tick from a warmed CPU dish against one `BigDish::tick` with each
+    /// rule on (species, cyclic species with a fourth weighed as an other,
+    /// explorers with their spread and respawn, blocked walkers laying and
+    /// keeping their heading, the chance turn, size spread, area sensors,
+    /// grazing, conversion, species 0's boost, and mixes with the cap and
+    /// contagion). Each
+    /// species' field, every walker's age and species, and the grass are
+    /// compared too. On software Vulkan (2026-11-11) every walker, age and
+    /// species agreed on all fifteen dishes, the grass to the bit, and the
+    /// fields to 2.4e-8 or better (exact on eleven). Sixteen planted bugs
+    /// each failed it. PR #58's: the boost on species 1 (trail L1 4.0e-2),
+    /// no boost on a walker's own reading in the convert pass (339 species
+    /// off; 11, under the bound, with the boost of 1.1 a boosted warm-up
+    /// allowed). PR #56's: conversion reading the field before the
+    /// tick's deposit (1,434 of 250,000 species off), cyclic species
+    /// joining the next not the previous (31,458), grass regrowing before
+    /// it is eaten (grass L1 0.12), grass eaten where the walker stood
+    /// before its move (4.1e-3). PR #55's: next and
+    /// previous species swapped (128,091 of 250,000 walkers off), the
+    /// explorers' readings not negated (44,727), the kept heading's draw on
+    /// the blocked stream (3,755 of 25,000), a blocked explorer laying the
+    /// full share (trail L1 3.3e-2), no age reset on a jump (1,774 ages
+    /// off), the chance turn's sides swapped (111,308), the area square a
+    /// row short (2,424), size on the angle not the reach (16,464), the
+    /// avoidance's sign (3,946), the stage's spread on the size draw (96,782).
+    #[test]
+    fn the_outside_rules_match_the_cpu_for_one_tick() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let j = small(3);
+        let one = small(0);
+        let sick = |s: Settings| Settings { sick: 60, immune: 60, catch_at: 0.2, sick_trail: 3.0, seed_at: 0.0, seed_r: 60.0, ..s };
+        let dishes = [
+            // PR #58's boost: species 0 lays 1.5 times as much.
+            ("two species in bands, species 0 boosted", Settings { species: 2, zones: true, avoid: 0.75, boost: 1.5, ..j.clone() }),
+            ("three cyclic species", Settings { species: 3, cycle: true, avoid: 0.5, sensor_angle: 20.0, turn: 20.0, reach: 32.0, step: 2.0, ..j.clone() }),
+            ("four cyclic species", Settings { species: 4, cycle: true, next: 0.4, prev: -0.8, ..j.clone() }),
+            ("explorers, spread, respawn", Settings { explore: 60, explore_spread: 1.0, explorer_trail: 0.1, respawn: 0.01, ..j.clone() }),
+            ("blocked lay and keep, one a cell", Settings { blocked_lay: 1.0, blocked_keep: true, blocked_reset: 0.1, ..one.clone() }),
+            ("droplets", small(18)),
+            ("chance, size spread, area sensors", Settings { chance: 2.0, size_spread: 1.0, sensor_r: 1, ..j.clone() }),
+            ("species, explorers, cap, contagion", sick(Settings { species: 2, explore: 60, explore_spread: 0.5, cap: 100, ..j.clone() })),
+            ("explorers, blocked lay, contagion, one a cell", sick(Settings { explore: 60, explore_spread: 1.0, blocked_lay: 0.5, ..one.clone() })),
+            ("species, area sensors, one a cell", Settings { species: 3, sensor_r: 2, blocked_keep: true, ..one }),
+            // PR #56: grazing and conversion.
+            ("grazing droplets", small(20)),
+            ("two species of grazing droplets", small(21)),
+            ("two species converting, species 0 boosted", Settings { species: 2, convert: 1.2, boost: 1.5, ..j.clone() }),
+            ("three cyclic species converting", Settings { species: 3, cycle: true, convert: 1.0, ..j.clone() }),
+            ("converting, grazing, cap, explorers, respawn", Settings { species: 2, convert: 1.5, graze: 10.0, cap: 100, explore: 60, explore_spread: 1.0, respawn: 0.01, ..j.clone() }),
+        ];
+        for (name, s) in dishes {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            // A converting dish warms up unboosted: boosted, species 0 takes
+            // every walker within the 40 ticks (boost 1.5 at convert 1.2, or
+            // 2 at 3, left none or one to convert), and a missing boost in
+            // the convert pass slipped through at a boost of 1.1 (11 species
+            // off, under the bound). The GPU has the boost all along; the
+            // twin tick is the CPU's first with it.
+            let boost = cpu.p.species_boost;
+            if s.convert > 0.0 {
+                cpu.p.species_boost = 1.0;
+            }
+            for _ in 0..40 {
+                cpu.tick();
+            }
+            cpu.p.species_boost = boost;
+            let n = cpu.walkers.len();
+            let before_age = cpu.age.clone();
+            let before_spec = cpu.spec.clone();
+            let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            let side = (e.done % 2) as usize;
+            let mut lsp = 0.0;
+            if e.nsp > 0 {
+                let fields: Vec<f32> = cpu.species_trail.iter().flatten().copied().collect();
+                lsp = l1(&floats(&read_back(&device, &queue, &e.species[side])), &fields);
+            }
+            let ages: Vec<u32> = read_back(&device, &queue, &e.age).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+            let ages_off = if cpu.age.is_empty() { 0 } else { ages.iter().zip(&cpu.age).filter(|(g, c)| **g != **c as u32).count() };
+            let specs: Vec<u32> = read_back(&device, &queue, &e.spec).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+            let (specs_off, joined) = if cpu.spec.is_empty() {
+                (0, 0)
+            } else {
+                (specs.iter().zip(&cpu.spec).filter(|(g, c)| **g != **c as u32).count(), before_spec.iter().zip(&cpu.spec).filter(|(a, b)| a != b).count())
+            };
+            let lg = if cpu.grass.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass) };
+            // Explorers at the tick's start, by the CPU's rule (the keyed
+            // draw rebuilt from `stream`, as the shader has it).
+            let low = |v: u32| {
+                let mut x = v;
+                x ^= x >> 16;
+                x = x.wrapping_mul(0x7FEB_352D);
+                x ^= x >> 15;
+                x = x.wrapping_mul(0x846C_A68B);
+                x ^ (x >> 16)
+            };
+            let stage = |k: usize| {
+                let u = (low(k as u32 | 0x8000_0000 ^ low(low(stream(s.seed, DRAW_SIZE)))) >> 8) as f32 / 16_777_216.0;
+                s.explore as f32 * if s.explore_spread > 0.0 { 1.0 + s.explore_spread * (2.0 * u - 1.0) } else { 1.0 }
+            };
+            let young = if s.explore > 0 { before_age.iter().enumerate().filter(|&(k, &a)| (a as f32) < stage(k)).count() } else { 0 };
+            eprintln!("{name}: {n} walkers, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, species L1 {lsp:.1e}; {ages_off} ages off, {young} explorers; {joined} joined another species, {specs_off} species off; grass L1 {lg:.1e}");
+            assert_eq!(cpu.species_trail.len(), e.nsp as usize, "{name}: the species fields");
+            // A blocked walker that keeps its heading stays as it was.
+            assert!(moved == n || (s.blocked_keep && moved > 0), "{name}: every walker steps, turns or is blocked");
+            assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
+            assert!(lt <= 1e-4 && ls <= 1e-6 && lsp <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, species L1 {lsp:.2e}");
+            assert!(ages_off * 1000 <= n, "{name}: {ages_off} ages off");
+            assert!(specs_off * 1000 <= n && lg <= 1e-4, "{name}: {specs_off} species off, grass L1 {lg:.2e}");
+            if s.convert > 0.0 {
+                assert!(joined > 0, "{name}: someone joins another species in the tick");
+            }
+            if s.graze != 0.0 {
+                assert!(cpu.grass.iter().any(|&g| g > 0.0 && g < 0.9), "{name}: grass eaten");
+            }
+            if s.explore > 0 {
+                assert!(young > 0 && young < n, "{name}: explorers and networkers both ({young} of {n})");
+            }
+        }
+    }
+
+    /// The plain pipelines (the outside rules compiled out) give the dish the
+    /// full ones give with every rule off, bit for bit. The full ones are
+    /// forced by keeping blocked headings with a reset every tick, which
+    /// keeps none.
+    #[test]
+    fn compiling_the_outside_rules_out_changes_nothing() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        for base in [small(0), small(4)] {
+            let forced = Settings { blocked_keep: true, blocked_reset: 1.0, ..base.clone() };
+            let mut seen = Vec::new();
+            for s in [&base, &forced] {
+                let mut e = Engine::new(&device, &queue, &shared, s, SCALE);
+                for _ in 0..10 {
+                    run(&mut e, &shared, s, s.ticks, Hand::default());
+                }
+                assert_eq!(e.outside, s.blocked_keep, "the pipelines picked");
+                let w: Vec<u32> = walkers_of(&e).iter().flat_map(|&(x, y, h)| [x.to_bits(), y.to_bits(), h.to_bits()]).collect();
+                seen.push((e.picture(), w));
+            }
+            assert!(seen[0] == seen[1], "the plain and full pipelines differ");
+        }
+    }
+
     /// Fed scent: a pile the tube reaches lays `fed_scent` of its scent from
     /// the next tick, on the GPU as on the CPU. Two ticks from the state
     /// just before a pile is first reached on the CPU.
@@ -2701,7 +3586,13 @@ mod tests {
         // Key 5, and the looks with contagion seeded by the mouse and by
         // the clock (`seed_at` 0.1 s).
         let looks = Settings { trail_scale: 0.02, turn_by: [-20.0, 1.0], floor: 0.25, wander: 0.01, cap: 100, sick: 60, immune: 120, seed_at: 0.1, ..small(9) };
-        for s in [small(4), looks] {
+        // The outside rules: cyclic species with explorers (their stage
+        // started again by respawn and the pull), the chance turn, size
+        // spread and area sensors; and two species of grazing droplets
+        // keeping their heading and converting.
+        let outside = Settings { respawn: 0.01, explore: 60, explore_spread: 1.0, chance: 2.0, size_spread: 0.5, sensor_r: 1, ..small(16) };
+        let droplets = Settings { blocked_keep: true, blocked_reset: 0.03, convert: 1.2, ..small(21) };
+        for s in [small(4), looks, outside, droplets] {
             let hand = |f: u32| Hand { at: Some((200.0 + 4.0 * f as f32, 150.0)), pull: f < 10, wipe: f >= 10, infect: f == 3 };
             let mut seen = Vec::new();
             for _ in 0..2 {
@@ -2709,13 +3600,16 @@ mod tests {
                 for f in 0..20 {
                     run(&mut e, &shared, &s, s.ticks, hand(f));
                 }
-                let sick: Vec<u8> = read_back(&device, &queue, &e.sick);
-                seen.push((e.picture(), walkers_of(&e), sick));
+                let mut counters: Vec<u8> = read_back(&device, &queue, &e.sick);
+                counters.extend(read_back(&device, &queue, &e.age));
+                counters.extend(read_back(&device, &queue, &e.spec));
+                counters.extend(read_back(&device, &queue, &e.grass));
+                seen.push((e.picture(), walkers_of(&e), counters));
             }
             let bits = |w: &[(f32, f32, f32)]| w.iter().flat_map(|&(x, y, h)| [x.to_bits(), y.to_bits(), h.to_bits()]).collect::<Vec<u32>>();
             assert!(seen[0].0 == seen[1].0, "the pictures differ");
             assert_eq!(bits(&seen[0].1), bits(&seen[1].1), "the walkers differ");
-            assert!(seen[0].2 == seen[1].2, "the sick differ");
+            assert!(seen[0].2 == seen[1].2, "the sick, ages, species or grass differ");
         }
     }
 
@@ -2781,6 +3675,17 @@ mod tests {
         }
         assert_eq!((s.start, s.haze, s.trail_scale, s.turn_by, s.step_by, s.cap, s.sick, s.catch_at), (Start::Disc, 0.3, 0.02, [-20.0, 1.0], [1.0, 1.0], 100, 120, 5.0));
         assert!(set(&mut s, "turn_mod", "-20:x").is_err());
+        // The outside rules' keys, by the CPU's names (examples/bigdish.rs).
+        for (k, v) in [("species", "3"), ("species_cycle", "1"), ("species_avoid", "0.5"), ("explore_steps", "900"), ("explore_spread", "1"), ("blocked_deposit", "1"), ("blocked_keep", "on"), ("chance_exp", "4"), ("size_spread", "0.6"), ("sensor_r", "1")] {
+            set(&mut s, k, v).unwrap();
+        }
+        assert_eq!((s.species, s.cycle, s.avoid, s.explore, s.explore_spread, s.blocked_lay, s.blocked_keep, s.chance, s.size_spread, s.sensor_r), (3, true, 0.5, 900, 1.0, 1.0, true, 4.0, 0.6, 1));
+        set(&mut s, "species", "9").unwrap();
+        assert_eq!(s.fields(), 4);
+        for (k, v) in [("species_convert", "1.5"), ("graze_weight", "10"), ("graze_eat", "0.1"), ("graze_regrow", "0.004"), ("species_boost", "1.5")] {
+            set(&mut s, k, v).unwrap();
+        }
+        assert_eq!((s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost), (1.5, 10.0, 0.1, 0.004, 1.5));
         assert!(set(&mut s, "nonsense", "1").is_err());
         // Switches and names are strict: `crowd=false` is off, a misspelt
         // name is an error, and no frame has 0 ticks.

@@ -1,0 +1,4 @@
+# python3 -I outside/bodies.py /tmp/mouldgpu-frames/pN 8 on the frames of run.sh (seed 1, llvmpipe), 2026-11-11; frames not kept.
+p19: 182 bodies, median size 203.5 drift over 30 frames: median 0.64 p90 1.86
+p20: 37 bodies, median size 419.0 drift over 30 frames: median 25.04 p90 90.6
+p21: 181 bodies, median size 217.0 drift over 30 frames: median 7.62 p90 27.34

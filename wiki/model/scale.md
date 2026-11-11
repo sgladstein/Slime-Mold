@@ -113,7 +113,20 @@ two panel pages and keys 9, 0 and Shift+1-5; a twin test matches them to
 the bit on six dishes. Off, they cost 0.01 ms a frame on the GTX 1070;
 contagion costs 0.3 ms at 100,000 walkers, and the contagion presets
 take 9.5-9.8 ms of GPU ticks a frame at a million ([report, *The looks as
-controls*](../../Reports/gpu-sandbox-2026-11-11.md)).
+controls*](../../Reports/gpu-sandbox-2026-11-11.md)). (Corrected 11-11: the
+looks' trail matched to the bit on four of the six dishes; on the two with
+the deposit cap it is within 1.1e-7, from the order the shares are summed.)
+The rules of the [outside rules](../../Reports/outside-rules-2026-11-11.md)
+and [creatures](../../Reports/creatures-2026-11-11.md) reports are sandbox
+controls too (11-11): species with bands, cyclic species and conversion,
+explorers, blocked walkers that lay and keep their heading, the chance
+turn, size spread, area sensors, grazing and species 0's boost, on a fourth panel page and
+keys Shift+6-0 and Ctrl+1-2 (territories, ribbons, explorer front,
+droplets, beads, grazing droplets, grazing species). A third twin test
+matches them on fifteen dishes (every walker, age and species; fields
+within 2.4e-8). `blocked_retry` is not ported. Compiled in but off they
+cost 18-24% on the software GPU, so the sandbox compiles them out when off
+([report, *The outside rules as controls*](../../Reports/gpu-sandbox-2026-11-11.md)).
 
 Three facts bind the design:
 
@@ -175,6 +188,8 @@ polygons at once. Every outside source has a card in
 | GPU sandbox vs CPU dish after the review's fixes, 10 s, spread start, software Vulkan and GTX 1070 | no measure (loops, width, tube, strays on five dishes) differs after Bonferroni over 20 a GPU; smallest p 0.013 (1070, 32k with food, more loops on 12 of 16); 1M respawn width CPU 7.70-8.01, software 7.83-8.00, 1070 7.82-8.12; 32k strays 0.8-1.8%, 0.5-1.4%, 0.8-1.7% | 8 (16 for 32k) | by seed | [gpu sandbox, *Independent review*](../../Reports/gpu-sandbox-2026-11-11.md) |
 | GPU sandbox on the GTX 1070 after the fixes, GPU ms a frame of two ticks + drawing, headless, seed 1 | 32k 0.82 + 0.07; 100k 1.39 + 0.07; 100k no limit 0.91 + 0.06; 1M Jenson settings 7.85 + 0.29; with respawn 9.68 + 0.27; 4M 29.79 + 0.29; 4M ours 12.57 + 0.28; sense pass a tick 2.51 ms at 1M (Jenson) against 3.72 at 4M (ours) | seed 1 | | same |
 | GPU sandbox looks on the GTX 1070, GPU ms a frame of two ticks + drawing, headless, seed 1 | looks off: key 1 1.385-1.394 against main 1.378-1.382 (3 rounds), key 4 no change; key 1 + contagion 1.69 + 0.08 (trail pass 0.13 -> 0.22 a tick); key 1 + trail-set 1.45; + floor and wander 1.40; at 1M: trunk ring 5.81, contagion wave 9.79, sweeping ring 5.99, long curves 3.86, even polygons 7.58, endemic 9.69, sick ropes 9.45, drawing 0.26-0.29 | seed 1 | | [gpu sandbox, *The looks as controls*](../../Reports/gpu-sandbox-2026-11-11.md) |
+| GPU sandbox outside rules, one GPU tick against one CPU tick, software Vulkan, 15 dishes | every walker, age and species agree; grass exact; fields exact on 11, else trail L1 1.4e-8 to 2.4e-8, species L1 1.3e-13 to 1.8e-8; 16 planted bugs all fail it | one tick | | [gpu sandbox, *The outside rules as controls*](../../Reports/gpu-sandbox-2026-11-11.md) |
+| GPU sandbox outside rules off, software Vulkan (not the 1070), GPU ms of ticks a frame, 3 rounds | compiled in: key 1 32.4-32.6 against main 26.1-26.8, key 4 88.2-90.3 against 74.4-76.3; compiled out when off: key 1 25.7-26.5 against 25.2-25.7, key 4 72.9-76.5 against 74.1-76.2 | seed 1 | | [gpu sandbox, *The outside rules as controls*](../../Reports/gpu-sandbox-2026-11-11.md) |
 | GPU clocks in the vsynced window, 100k, GTX 1070 | window median 1.80 + 0.08 ms with the clocks stepping 1594 to 797 MHz (memory 810 MHz) against headless 1.39 + 0.07 at 1936 MHz; 8 ticks a frame or 1M walkers hold 1936 MHz | seed 1 | | same |
 | Big dish cost, ms a tick, one thread / four | today 0.54 / 0.53; nose 32k 11.3 / 6.7; nose 100k 21.6 / 20.2; steps 43.1 / 25.8; turn 71.1 / 31.7 | seed 1 | | same |
 | No one-a-cell limit vs the limit, 100k walkers, no food, spread start, loops at 10 s | 0 (0-2) vs 151.5 (144-160): fewer on 8 of 8, p 0.008, survives Bonferroni over 4 | 8 | yes | [jenson compare, *The tests*](../../Reports/jenson-compare-2026-11-10.md) |
