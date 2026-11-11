@@ -2,7 +2,7 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-11T21:30Z
+updated: 2026-11-11T22:10Z
 sources: [Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/species-gpu-2026-11-11.md]
 code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost]
 ---
@@ -79,9 +79,10 @@ each species' own settings (`sN.FIELD`, so a droplet species and a network
 species can share a dish), as `set` keys of the sandbox and the engine, not
 yet on a panel page. A twin test matches them on 12 dishes, a growth dish
 checks that a child keeps its parent's kind, and 28 planted bugs are
-caught. Off they cost nothing measurable on the software GPU; the square
-of radius 8 costs about one trail pass a tick there
-([species on the GPU](../../Reports/species-gpu-2026-11-11.md)). The
+caught. On the GTX 1070 they cost nothing off; two species pay 0.05 ms a
+frame more, the second kind 0.12-0.19 ms, and the square of radius 8 1.3 ms
+of a 2.3 ms frame at 100,000 walkers
+([species on the GPU](../../Reports/species-gpu-2026-11-11.md), *Cost*). The
 tiers' life cycle is the next port.
 
 Three facts bind the design:

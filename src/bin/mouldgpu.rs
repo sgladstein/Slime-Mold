@@ -140,7 +140,7 @@ use slime_mould::hud;
 use slime_mould::mould::STEPS_PER_SECOND;
 use slime_mould::world::demo::Squad;
 use slime_mould::world::ui::{theme, MenuItem};
-use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, View};
+use slime_mould::world::{look, Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
@@ -872,6 +872,11 @@ struct App {
     canvas_pass: Option<CanvasPass>,
     /// Paused before the menu opened (the menu pauses; closing restores).
     menu_paused: bool,
+    /// L: the look (the world shaded from the simulation's fields, every
+    /// walker a speck, soldiers as sprites), on by default; off draws the
+    /// engine's frame as it is. Its ground field (agar and piles).
+    look: bool,
+    ground: Option<wgpu::Buffer>,
 }
 
 impl App {
@@ -913,6 +918,8 @@ impl App {
             },
             squad: None,
             marks: Marks::default(),
+            look: true,
+            ground: None,
             last_frame: Instant::now(),
             hud: Hud::new(),
             canvas: None,
@@ -990,10 +997,28 @@ impl App {
             v.set_world(&e.frame, world);
         }
         self.engine = Some(e);
+        self.ground = None;
+        self.apply_look();
         self.panel_dirty = true;
         if let Some(w) = &self.window {
             w.set_title(&format!("Mould sandbox (GPU): {}", PRESETS[self.preset].to_lowercase()));
         }
+    }
+
+    /// Binds the look to the view (or takes it off), from the engine's
+    /// fields and a ground field made from its dish.
+    fn apply_look(&mut self) {
+        let (Some(p), Some(e), Some(v)) = (&self.pixels, &self.engine, self.view.as_mut()) else { return };
+        if !self.look {
+            v.clear_look();
+            return;
+        }
+        let g = self.ground.get_or_insert_with(|| {
+            let crystal = look::dish_crystals(&e.dish);
+            let codes = look::ground(e.dish.w, e.dish.w * e.dish.h, &look::Fields { agar: &e.dish.agar, crystal: &crystal, ..Default::default() });
+            look::ground_buffer(p.device(), p.queue(), &codes)
+        });
+        v.set_look(&e.look, g, &e.walkers, e.n);
     }
 
     fn panel_lines(&self) -> (Lines, Lines) {
@@ -1029,7 +1054,7 @@ impl App {
             "LEFT DRAG DROPS WALKERS  RIGHT DRAG WIPES  F DROPS FOOD  ESC QUITS"
         };
         let world = self.engine.as_ref().map_or((0, 0), |e| (e.dish.w, e.dish.h));
-        let camera = format!("WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  W WORLD {}X{}  Q SQUAD", self.camera.zoom, world.0, world.1);
+        let camera = format!("WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  L LOOK  W WORLD {}X{}  Q SQUAD", self.camera.zoom, world.0, world.1);
         let bottom = vec![
             ("1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(), WHITE),
             ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(), WHITE),
@@ -1094,6 +1119,10 @@ impl App {
                 self.restart();
             }
             KeyCode::KeyH => self.show_panel = !self.show_panel,
+            KeyCode::KeyL => {
+                self.look = !self.look;
+                self.apply_look();
+            }
             KeyCode::KeyM => {
                 if let Some(v) = self.view.as_mut() {
                     v.minimap = !v.minimap;
@@ -1178,7 +1207,7 @@ impl App {
             sq.step(if self.paused { 0.0 } else { dt });
             let units = sq.units();
             self.controls.prune(&units);
-            sq.marks(self.camera.zoom, &mut self.marks);
+            sq.marks_with(self.camera.zoom, self.look, &mut self.marks);
             self.controls.marks(&units, &self.camera, sq.radius(), &mut self.marks);
             for n in sq.notes.drain(..) {
                 self.hud.alert(&n.text, n.at, if n.bad { theme::BAD } else { theme::GOOD });
@@ -1335,6 +1364,7 @@ impl ApplicationHandler for App {
             self.canvas = Some(Canvas::new((w, h)));
             self.canvas_pass = Some(CanvasPass::new(p.device(), p.queue()));
         }
+        self.apply_look();
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {

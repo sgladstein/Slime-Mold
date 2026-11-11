@@ -51,7 +51,8 @@ CPU's names too:
   class (moving, sick, explorer, blocked, capped).
 - Each species' set is in the uniform (`Params::sets`, four of them, 48
   bytes each; `PARAMS_BYTES` 432 to 672, the squad's words now at a fixed
-  offset 416). With sets on, the global explorer stage, blocked share and
+  offset 416; 688 once the world look's hits row, #69, came in after the
+  squad's). With sets on, the global explorer stage, blocked share and
   grazing weight are only switches (on if any species has one), and each
   walker reads its own species' values: reach, angles, step and scent reach
   in `sense`; crowd limit in `sense`, `walk`, `breed`, `born`, `jump` and
@@ -171,9 +172,37 @@ this reached it.
 
 ## Cost
 
+On the GTX 1070 (`cost.sh` run there by the PC's session, the GPU
+otherwise idle; base 6b907d8, main with W2b, against this branch at
+68e8bff; [`raw/cost-1070.txt`](species-gpu-2026-11-11/raw/cost-1070.txt)),
+the sandbox's default dish (100,000 walkers), a frame of two ticks,
+headless, 5 s a run, three rounds alternating. GPU ms of ticks a frame,
+the three rounds' range:
+
+| Pair | Without | With |
+|---|---|---|
+| plain dish, main against this branch | 1.47-1.53 | 1.47-1.48 |
+| two species, main against this branch | 2.08-2.09 | 2.13-2.14 |
+| two species, without and with own sets (equal to the globals) | 2.13-2.15 | 2.14 |
+| the outside rules forced on, the second kind off against on with multipliers of 1 | 1.47-1.48 | 1.59-1.60 |
+| the same, against the second kind with its multipliers | 1.47-1.48 | 1.67 |
+| two species converting, conversion by the cell against the square of radius 8 | 2.34-2.35 | 3.64-3.68 |
+
+- Off, the port costs nothing (plain dish). Two species pay 0.05 ms more
+  a frame (2%, higher on 3 of 3 rounds): the per-species lookups on the
+  outside path. Own sets cost nothing on top.
+- The second kind costs 0.12 ms with multipliers of 1 (its second block of
+  counts, which the trail pass reads) and 0.19 ms with them, which also
+  changes the dish. Forcing the outside rules on costs nothing measurable
+  here (1.47-1.48 against the mix-off dish's 1.47-1.48).
+- The square of radius 8 adds 1.3 ms a frame. Each tick alone, the rows
+  pass takes 0.36 ms and the convert pass's column sums 0.45 against 0.13
+  by the cell; the trail pass is 0.32 either way. That is about one and a
+  half trail passes a tick, a third of a 2.3 ms frame, so a world that uses
+  the square should keep it small or take the change below.
+
 On the software GPU (Mesa's llvmpipe, a CPU, so these are not GPU
-numbers; the GTX 1070's are to come): the sandbox's default dish, a frame
-of two ticks, headless, 5 s a run, three rounds alternating
+numbers), the same runs earlier
 ([`cost.sh`](species-gpu-2026-11-11/cost.sh)). GPU ms of ticks a frame:
 
 | Pair | Without | With |
@@ -202,10 +231,10 @@ the deposit counts, as the trail pass does. A first version summed the 17
 cells of each row from the fields one thread a cell and added 74-79 ms
 ([`raw/cost.txt`](species-gpu-2026-11-11/raw/cost.txt), *square*); the pass
 now loads a row's 256 cells and their margins into workgroup memory once.
-The convert pass sums the columns only at walkers' cells. If the 1070
-shows the square too dear for the world, the next step is to write the
-deposited trail once (rows) and let the trail pass read it, instead of
-both working it out.
+The convert pass sums the columns only at walkers' cells. The 1070 puts
+the square at 1.3 ms a frame (above); if a world needs it, the next step
+is to write the deposited trail once (rows) and let the trail pass read
+it, instead of both working it out.
 
 ## Files
 

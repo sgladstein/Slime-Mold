@@ -12,7 +12,8 @@
 # From the repo root. Output on the software GPU: raw/cost.txt (the first
 # part, run with the first version of the rows pass), raw/cost-mix.txt (the
 # mix's part), raw/cost-square.txt (the square again, after the rows pass
-# shared its work across a workgroup).
+# shared its work across a workgroup). On the GTX 1070, all of it in one
+# run (in PowerShell, by the PC's session): raw/cost-1070.txt.
 B=${BASE:?set BASE to mouldgpu built from main before the port}
 N=${NEW:-target/release/mouldgpu}
 D=${OUT:-/tmp/species-cost}

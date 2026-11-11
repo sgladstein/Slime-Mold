@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 4 4" width="512" height="512">
+ <defs>
+  <radialGradient id="helm" cx="-0.25" cy="-0.3" r="0.6" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="HELM_HI"/><stop offset="1" stop-color="HELM"/></radialGradient>
+  <radialGradient id="body" cx="-0.3" cy="-0.4" r="1.0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7b8458"/><stop offset="1" stop-color="#454a30"/></radialGradient>
+ </defs>
+ <ellipse cx="0.22" cy="0.3" rx="0.8" ry="0.85" fill="#000" opacity="0.35"/>
+ <rect x="-0.72" y="-0.42" width="0.42" height="0.84" rx="0.12" fill="#3a3d28" stroke="#22241a" stroke-width="0.04"/>
+ <ellipse cx="-0.08" cy="0" rx="0.38" ry="0.8" fill="url(#body)" stroke="#2a2d1d" stroke-width="0.05"/>
+ <path d="M -0.02 0.58 L 0.5 0.36" stroke="#5c6442" stroke-width="0.28" stroke-linecap="round"/>
+ <path d="M 0 -0.56 L 0.78 0.26" stroke="#5c6442" stroke-width="0.26" stroke-linecap="round"/>
+ <rect x="0.0" y="0.22" width="1.45" height="0.17" rx="0.05" fill="#2a2a2e" stroke="#111" stroke-width="0.03"/>
+ <rect x="0.45" y="0.36" width="0.14" height="0.22" fill="#1d1d20"/>
+ <circle cx="0.5" cy="0.36" r="0.1" fill="#c9a27a"/>
+ <circle cx="0.78" cy="0.26" r="0.1" fill="#c9a27a"/>
+ <circle cx="0.04" cy="0" r="0.36" fill="url(#helm)" stroke="#1f1f1f" stroke-width="0.05"/>
+ <path d="M -0.2 -0.18 A 0.3 0.3 0 0 1 0.25 -0.2" stroke="#fff" stroke-width="0.05" fill="none" opacity="0.5"/>
+ FLASH
+</svg>
