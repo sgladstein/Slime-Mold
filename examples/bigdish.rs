@@ -74,10 +74,21 @@
 //! `style=species` (each species in its own colour). With species the
 //! report adds `pure` (share of tube cells where one species lays 80% or
 //! more of the trail) and each species' share of all trail.
+//!
+//! Later keys (2026-11-11): `graze_weight= graze_eat= graze_regrow=`
+//! (grazing), `species_convert= species_convert_r= species_boost=
+//! species_share=` (conversion, a louder or more numerous species 0),
+//! `blocked_retry= blocked_deposit=`, `mix_share= mix_reach= mix_angle=
+//! mix_turn= mix_step= mix_deposit=` (mixed walkers; `style=kinds` draws
+//! each kind), and per-species settings `sN_field=` (`species_sets`; N the
+//! species, field one of sensor_angle, rotate_angle (degrees),
+//! sensor_offset, step, deposit, keep, crowd, blocked_deposit,
+//! graze_weight, explore_steps). The first `sN_` key copies the final
+//! global settings into a set per species, then changes that field.
 
 use std::time::Instant;
 
-use slime_mould::mould::big::{BigDish, BigParams};
+use slime_mould::mould::big::{BigDish, BigParams, SpeciesSet};
 use slime_mould::mould::{H, STEPS_PER_SECOND, W};
 
 fn preset(name: &str) -> BigParams {
@@ -298,8 +309,15 @@ fn main() {
     }
     let mut p = preset(&name);
     let name = tag.unwrap_or(name);
+    // Per-species keys (`s0_crowd=1 s1_sensor_angle=45`, `species_sets`)
+    // apply after every global key, to sets copied from the final globals.
+    let mut per_species: Vec<(usize, String, f32)> = Vec::new();
     for (k, v) in &overrides {
         let f = || v.parse::<f32>().unwrap_or_else(|_| panic!("{k}={v}: not a number"));
+        if let Some((sp, field)) = k.strip_prefix('s').and_then(|r| r.split_once('_')).and_then(|(n, fld)| Some((n.parse::<usize>().ok()?, fld))) {
+            per_species.push((sp, field.into(), f()));
+            continue;
+        }
         match k.as_str() {
             "walkers" => p.walkers = f() as usize,
             "keep" => p.keep = f(),
@@ -382,6 +400,26 @@ fn main() {
             "blocked_retry" => p.blocked_retry = f() as u8,
             "blocked_deposit" => p.blocked_deposit = f(),
             _ => panic!("unknown key {k}"),
+        }
+    }
+    if !per_species.is_empty() {
+        let n = per_species.iter().map(|&(sp, ..)| sp + 1).max().unwrap().max(p.species as usize);
+        p.species_sets = vec![SpeciesSet::from_params(&p); n];
+        for (sp, field, v) in &per_species {
+            let s = &mut p.species_sets[*sp];
+            match field.as_str() {
+                "sensor_angle" => s.sensor_angle = v.to_radians(),
+                "rotate_angle" => s.rotate_angle = v.to_radians(),
+                "sensor_offset" => s.sensor_offset = *v,
+                "step" => s.step = *v,
+                "deposit" => s.deposit = *v,
+                "keep" => s.keep = *v,
+                "crowd" => s.crowd = *v as u8,
+                "blocked_deposit" => s.blocked_deposit = *v,
+                "graze_weight" => s.graze_weight = *v,
+                "explore_steps" => s.explore_steps = *v as u16,
+                _ => panic!("unknown per-species key s{sp}_{field}"),
+            }
         }
     }
     // Output folders are made here, so a fresh clone needs no setup.
