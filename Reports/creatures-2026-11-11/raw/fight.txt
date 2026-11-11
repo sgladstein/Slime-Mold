@@ -1,0 +1,10 @@
+s5 A w0@16 0.489 (8s .498) | B 8s .521
+s5 B w0@16 0.571 | s6 A 0.518 (8s .521) B 0.521 (8s .496)
+s7 A 0.462 (8s .512) B 0.474 (8s .484)
+s8 A 0.486 (8s .517) B 0.509 (8s .483)
+s1 A 0.460 (8s .519) B 0.491 (8s .509)
+s2 A 0.453 (8s .491) B 0.450 (8s .480)
+s3 A 0.448 (8s .511) B 0.580 (8s .526)
+s4 A 0.517 (8s .513) B 0.474 (8s .469)
+SUMMARY species-0 walker share at 16 s, boost 1.5 vs 1.0 (convert 1.2): A .448-.518 (median .474) vs B .450-.580 (median .500); A lower 6/8, p .29 (fails). At 8 s A higher 6/8 (.491-.521 vs .469-.526). A fell from 8 to 16 s on 7/8.
+Note: the runner corrected seed 4 B left0 at 8 s to 1.000 (a typing slip in its relay).

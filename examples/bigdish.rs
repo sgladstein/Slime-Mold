@@ -315,6 +315,7 @@ fn main() {
             "species" => p.species = f() as u8,
             "species_avoid" => p.species_avoid = f(),
             "species_convert" => p.species_convert = f(),
+            "species_boost" => p.species_boost = f(),
             "graze_weight" => p.graze_weight = f(),
             "graze_eat" => p.graze_eat = f(),
             "graze_regrow" => p.graze_regrow = f(),
@@ -498,6 +499,16 @@ fn main() {
                         left / tot[0].max(1e-9),
                         changed as f32 / both.max(1) as f32
                     );
+                    if d.p.species_convert > 0.0 {
+                        // Walkers of each species (conversion moves them).
+                        let n = d.species_trail.len();
+                        let mut c = vec![0usize; n];
+                        for &sp in &d.spec {
+                            c[sp as usize] += 1;
+                        }
+                        let w: Vec<String> = c.iter().map(|&v| format!("{:.3}", v as f32 / d.spec.len().max(1) as f32)).collect();
+                        println!("seed {seed} {name} t {:5.1}s  walkers {}", m.seconds, w.join(","));
+                    }
                 }
                 if !d.sick.is_empty() {
                     let s = d.p.scale as f32;
