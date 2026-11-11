@@ -187,6 +187,9 @@ pub struct BigParams {
     /// can take you, as in rock, paper, scissors. Walkers keep their species
     /// through respawn.
     pub species_convert: f32,
+    /// Species 0 lays this many times the deposit (1 is even; added
+    /// 2026-11-11 to give one side an edge in a fight).
+    pub species_boost: f32,
     /// Grazing (0 is off; added 2026-11-11 to make bodies roam, after
     /// Primordia's "Symbiosis" mode). A grass field starts at 1 on every agar
     /// cell; each step every walker eats `graze_eat` from its cell (not below
@@ -307,6 +310,7 @@ impl BigParams {
             species: 0,
             species_avoid: 1.0,
             species_convert: 0.0,
+            species_boost: 1.0,
             graze_weight: 0.0,
             graze_eat: 0.05,
             graze_regrow: 0.002,
@@ -661,7 +665,10 @@ impl BigDish {
     fn lay(&mut self, k: usize, j: usize, amount: f32) {
         self.trail[j] += amount;
         if !self.species_trail.is_empty() {
-            self.species_trail[self.spec[k] as usize][j] += amount;
+            let sp = self.spec[k] as usize;
+            let a = if sp == 0 { amount * self.p.species_boost } else { amount };
+            self.trail[j] += a - amount;
+            self.species_trail[sp][j] += a;
         }
     }
 
