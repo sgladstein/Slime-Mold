@@ -43,6 +43,8 @@ const DRAW_WANDER: u32 = 108;
 const DRAW_CHANCE: u32 = 109;
 const DRAW_SIZE: u32 = 110;
 const DRAW_KEEP: u32 = 111;
+/// Claims in `blocked_retry` round r use CLAIM_RETRY + r.
+const CLAIM_RETRY: u32 = 112;
 
 #[derive(Clone, Debug)]
 pub struct BigParams {
@@ -203,6 +205,12 @@ pub struct BigParams {
     /// ordinary walker.
     pub explore_steps: u16,
     pub explore_deposit: f32,
+    /// Spread of the explorer stage (0 is off): walker k explores for
+    /// explore_steps x (1 + spread x (2u - 1)) steps, u in [0, 1) from a
+    /// keyed draw on k alone (`DRAW_SIZE` with the top bit set), so walkers
+    /// turn into networkers one by one rather than all at once. Those that
+    /// turn early build a network behind the explorers still pushing out.
+    pub explore_spread: f32,
     /// Per-walker size (Primordia's "Dendrites", MIT). 0 is off. Otherwise
     /// walker k's sensor offset and step are both multiplied by 2^(spread x
     /// u), u in [-1, 1] from a keyed draw on k alone, fixed for its life, so
@@ -214,6 +222,17 @@ pub struct BigParams {
     /// rule. Only matters with a crowd limit.
     pub blocked_keep: bool,
     pub blocked_reset: f32,
+    /// Retry rounds a step for blocked walkers (0 is today). In each round
+    /// every still-blocked walker tries the same step again into a cell
+    /// that is now below the crowd limit; ties go to the lowest keyed draw
+    /// (`CLAIM_RETRY` + round), as in the first claim. Losers stay blocked.
+    /// Only matters with a crowd limit.
+    pub blocked_retry: u8,
+    /// The share of the deposit a blocked walker lays where it stands (0 is
+    /// today: only a walker that moves lays trail). Packed walkers then
+    /// keep their own crowd smelling of trail, so a blob holds together
+    /// instead of its edge, the only part moving, drawing the crowd out.
+    pub blocked_deposit: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     pub seed: u64,
@@ -274,10 +293,13 @@ impl BigParams {
             species_next: 0.6,
             species_prev: -1.0,
             explore_steps: 0,
+            explore_spread: 0.0,
             explore_deposit: 0.05,
             size_spread: 0.0,
             blocked_keep: false,
             blocked_reset: 0.01,
+            blocked_retry: 0,
+            blocked_deposit: 0.0,
             tube: 1.0,
             seed: 1,
         }
@@ -617,8 +639,9 @@ impl BigDish {
         let sso = if p.scent_offset > 0.0 { p.scent_offset } else { so };
         let (seed, t) = (p.seed, self.steps);
         // (walker, from, to, x, y, heading); from == to for a move within a cell.
-        let mut moves: Vec<(u32, u32, u32, f32, f32, f32)> = Vec::with_capacity(self.walkers.len());
-        let mut blocked: Vec<(u32, f32)> = Vec::new();
+        let mut moves: Vec<(u32, u32, u32, f32, f32, f32, f32)> = Vec::with_capacity(self.walkers.len());
+        // (walker, heading, step) of each walker that could not move.
+        let mut blocked: Vec<(u32, f32, f32)> = Vec::new();
         let look = t.is_multiple_of(p.sense_every.max(1) as u64);
         let nsp = self.species_trail.len().max(1);
         for k in 0..self.walkers.len() {
@@ -633,7 +656,7 @@ impl BigDish {
                 so *= sc;
                 st *= sc;
             }
-            let explorer = !self.age.is_empty() && self.age[k] < p.explore_steps;
+            let explorer = self.explores(k);
             if ss > 0.0 {
                 let v = (self.trail[here] * ss).min(1.0);
                 let m = |b: f32, [amp, e]: [f32; 2]| b + amp * v.powf(e);
@@ -689,12 +712,12 @@ impl BigDish {
                         let key = keyed(seed, t, CLAIM_MOVE, k as u32);
                         self.claim[there] = self.claim[there].min(key);
                     }
-                    moves.push((k as u32, here as u32, there as u32, nx, ny, h));
+                    moves.push((k as u32, here as u32, there as u32, nx, ny, h, st));
                 }
-                _ => blocked.push((k as u32, h)),
+                _ => blocked.push((k as u32, h, st)),
             }
         }
-        for &(k, from, to, nx, ny, h) in &moves {
+        for &(k, from, to, nx, ny, h, st) in &moves {
             let (i, j) = (from as usize, to as usize);
             let wins = i == j || crowd == 0 || self.claim[j] == keyed(seed, t, CLAIM_MOVE, k);
             if wins {
@@ -707,7 +730,7 @@ impl BigDish {
                     self.lay(k as usize, j, amount * self.explore_share(k as usize));
                 }
             } else {
-                blocked.push((k, h));
+                blocked.push((k, h, st));
             }
         }
         if crowd > 0 {
@@ -715,9 +738,59 @@ impl BigDish {
                 self.claim[to as usize] = u32::MAX;
             }
         }
+        // Retry rounds (`blocked_retry`): a blocked walker tries its step
+        // again into cells emptied this step, so a packed crowd moving one
+        // way moves together, as in Jones's random sequential update,
+        // instead of only its front row moving.
+        for r in 0..if crowd > 0 { p.blocked_retry } else { 0 } {
+            let mut tries: Vec<(u32, u32, u32, f32, f32, f32, f32)> = Vec::new();
+            let mut still: Vec<(u32, f32, f32)> = Vec::new();
+            for &(k, h, st) in &blocked {
+                let (x, y, _) = self.walkers[k as usize];
+                let here = self.cell(x, y).expect("walker inside the dish");
+                let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
+                match self.cell(nx, ny) {
+                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 => {
+                        let key = keyed(seed, t, CLAIM_RETRY + r as u32, k);
+                        self.claim[there] = self.claim[there].min(key);
+                        tries.push((k, here as u32, there as u32, nx, ny, h, st));
+                    }
+                    _ => still.push((k, h, st)),
+                }
+            }
+            if tries.is_empty() {
+                break;
+            }
+            for &(k, from, to, nx, ny, h, st) in &tries {
+                let (i, j) = (from as usize, to as usize);
+                if self.claim[j] == keyed(seed, t, CLAIM_RETRY + r as u32, k) {
+                    self.occ[i] -= 1;
+                    self.occ[j] += 1;
+                    self.walkers[k as usize] = (nx, ny, h);
+                    if cap == 0 {
+                        let sick = contagion && self.sick[k as usize] > sick_at;
+                        let amount = if sick { dep * self.p.sick_trail } else { dep };
+                        self.lay(k as usize, j, amount * self.explore_share(k as usize));
+                    }
+                } else {
+                    still.push((k, h, st));
+                }
+            }
+            for &(_, _, to, ..) in &tries {
+                self.claim[to as usize] = u32::MAX;
+            }
+            blocked = still;
+        }
         // Blocked: Jones's rule, stay put and pick a new heading; or
         // (`blocked_keep`) keep the heading it chose, bar a rare reset.
-        for &(k, h) in &blocked {
+        if p.blocked_deposit > 0.0 && cap == 0 {
+            for &(k, ..) in &blocked {
+                let (x, y, _) = self.walkers[k as usize];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                self.lay(k as usize, i, dep * p.blocked_deposit * self.explore_share(k as usize));
+            }
+        }
+        for &(k, h, _) in &blocked {
             let keep = p.blocked_keep && unit(keyed(seed, t, DRAW_KEEP, k)) >= p.blocked_reset;
             self.walkers[k as usize].2 = if keep { h } else { unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU };
         }
@@ -756,8 +829,21 @@ impl BigDish {
 
     /// The share of the deposit walker `k` lays: `explore_deposit` while it
     /// explores, else 1.
+    /// Whether walker `k` is still an explorer (`explore_steps`, `explore_spread`).
+    fn explores(&self, k: usize) -> bool {
+        if self.age.is_empty() {
+            return false;
+        }
+        let mut n = self.p.explore_steps as f32;
+        if self.p.explore_spread > 0.0 {
+            let u = unit(keyed(self.p.seed, 0, DRAW_SIZE, k as u32 | 0x8000_0000));
+            n *= 1.0 + self.p.explore_spread * (2.0 * u - 1.0);
+        }
+        (self.age[k] as f32) < n
+    }
+
     fn explore_share(&self, k: usize) -> f32 {
-        if !self.age.is_empty() && self.age[k] < self.p.explore_steps {
+        if self.explores(k) {
             self.p.explore_deposit
         } else {
             1.0
@@ -1238,7 +1324,8 @@ mod tests {
             BigParams { sensor_r: 1, chance_exp: 4.0, size_spread: 0.6, ..small(2, 1) },
             BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
             BigParams { species: 3, species_cycle: true, ..small(2, 1) },
-            BigParams { blocked_keep: true, blocked_reset: 0.1, ..small(2, 1) },
+            BigParams { blocked_keep: true, blocked_reset: 0.1, blocked_retry: 3, blocked_deposit: 1.0, ..small(2, 1) },
+            BigParams { explore_steps: 30, explore_spread: 1.0, ..small(2, 1) },
         ] {
             let mut a = BigDish::new(p);
             let mut b = a.clone();

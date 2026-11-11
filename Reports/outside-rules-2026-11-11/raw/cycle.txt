@@ -1,0 +1,17 @@
+seed 1 cycle-A t  10.0s  tube 21134.6  loops   97  width 10.63  contrast 16.42 pure 0.503 changed 0.681
+seed 1 cycle-B t  10.0s  tube 14198.0  loops   35  width 5.24 contrast 36.34 pure 0.875 changed 0.745
+seed 2 cycle-A t  10.0s  tube 22106.2  loops  125  width  9.60 contrast 22.82 pure 0.509 changed 0.684
+seed 2 cycle-B t  10.0s  tube 16370.2  loops   38  width  5.64 contrast 23.28 pure 0.868 changed 0.845
+seed 3 cycle-A t  10.0s  tube 21225.6  loops  104  width 10.44 contrast 19.01 pure 0.481 changed 0.678
+seed 3 cycle-B t  10.0s  tube 17681.6  loops   49  width  5.59 contrast 22.45 pure 0.854 changed 0.808
+seed 4 cycle-A t  10.0s  tube 20929.2  loops  104  width  8.78 contrast 23.06 pure 0.499 changed 0.659
+seed 4 cycle-B t  10.0s  tube 18219.7  loops   63  width  6.30 contrast 22.28 pure 0.859 changed 0.768
+seed 5 cycle-A t  10.0s  tube 21930.5  loops  107  width 11.22 contrast 18.92 pure 0.523 changed 0.701
+seed 5 cycle-B t  10.0s  tube 15327.0  loops   22  width  5.25 contrast 29.40 pure 0.892 changed 0.807
+seed 6 cycle-A t  10.0s  tube 21300.8  loops  105  width 10.13 contrast 21.55 pure 0.515 changed 0.662
+seed 6 cycle-B t  10.0s  tube 16675.0  loops   35  width  5.72 contrast 29.65 pure 0.863 changed 0.794
+seed 7 cycle-A t  10.0s  tube 21272.2  loops  104  width  9.98 contrast 18.71 pure 0.462 changed 0.673
+seed 7 cycle-B t  10.0s  tube 15535.9  loops   41  width  6.46 contrast 23.07 pure 0.827 changed 0.789
+seed 8 cycle-A t  10.0s  tube 21247.6  loops   98  width 10.89 contrast 15.73 pure 0.480 changed 0.654
+seed 8 cycle-B t  10.0s  tube 13865.7  loops   31  width  5.92 contrast 30.18 pure 0.887 changed 0.819
+SUMMARY changed10 A(cyclic) .681 .684 .678 .659 .701 .662 .673 .654 ; B .745 .845 .808 .768 .807 .794 .789 .819 -> cyclic LOWER 8/8 p .0078 (opposite of prediction). pure A ~.50 vs B ~.86; loops A 97-125 vs B 22-63; ms 245 vs 215

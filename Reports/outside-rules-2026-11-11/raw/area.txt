@@ -1,0 +1,9 @@
+seed 1 area-A t  10.0s  tube  9420.0  loops   39  width 5.78  reach  196.4  piles 1/1  strays 0.000  ms/tick 299.43
+seed 1 area-A t  10.0s  contrast 9.60
+seed 1 area-B t  10.0s  tube  9640.9  loops   42  width 5.69  reach  194.8  piles 1/1  strays 0.000  ms/tick 206.90
+seed 1 area-B t  10.0s  contrast 9.57
+seed 2 area-A t  10.0s  tube  9608.0  loops   41  width 5.78  reach  190.7  piles 1/1  strays 0.000  ms/tick 293.39
+seed 2 area-A t  10.0s  contrast 8.94
+seed 2 area-B t  10.0s  tube 10125.6  loops   48  width 5.83  reach  191.0  piles 1/1  strays 0.000  ms/tick 195.39
+seed 2 area-B t  10.0s  contrast 8.51
+area loops10 A(sensor_r=1): 39 41 37 35 46 33 32 42 ; B(jones): 42 48 38 47 52 43 38 44 ; fewer 8/8 p .0078; ms 290 vs 190

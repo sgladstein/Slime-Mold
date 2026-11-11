@@ -321,9 +321,12 @@ fn main() {
             "species_prev" => p.species_prev = f(),
             "explore_steps" => p.explore_steps = f() as u16,
             "explore_deposit" => p.explore_deposit = f(),
+            "explore_spread" => p.explore_spread = f(),
             "size_spread" => p.size_spread = f(),
             "blocked_keep" => p.blocked_keep = f() != 0.0,
             "blocked_reset" => p.blocked_reset = f(),
+            "blocked_retry" => p.blocked_retry = f() as u8,
+            "blocked_deposit" => p.blocked_deposit = f(),
             _ => panic!("unknown key {k}"),
         }
     }
@@ -382,6 +385,8 @@ fn main() {
                 if stills.contains(&d.ticks) {
                     // One still a style when several are listed (style=amber,grey).
                     let secs = d.ticks / STEPS_PER_SECOND as u64;
+                    // Whole seconds as 005s; a still between seconds by its tick.
+                    let secs = if d.ticks.is_multiple_of(STEPS_PER_SECOND as u64) { format!("{secs:03}s") } else { format!("t{:06}", d.ticks) };
                     for st in style.split(',') {
                         if st == "raw" {
                             // The trail and walkers a cell as f32 little-endian, w x h each,
@@ -394,13 +399,13 @@ fn main() {
                             for v in d.trail.iter().chain(&count) {
                                 bytes.extend_from_slice(&v.to_le_bytes());
                             }
-                            std::fs::write(format!("{dir}/big-{name}-s{seed}-{secs:03}s.f32"), bytes).unwrap();
+                            std::fs::write(format!("{dir}/big-{name}-s{seed}-{secs}.f32"), bytes).unwrap();
                             continue;
                         }
                         let file = if style.contains(',') {
-                            format!("{dir}/big-{name}-s{seed}-{secs:03}s-{st}.png")
+                            format!("{dir}/big-{name}-s{seed}-{secs}-{st}.png")
                         } else {
-                            format!("{dir}/big-{name}-s{seed}-{secs:03}s.png")
+                            format!("{dir}/big-{name}-s{seed}-{secs}.png")
                         };
                         picture(&d, st, knee, 1).save(file).unwrap();
                     }

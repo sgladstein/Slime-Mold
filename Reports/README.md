@@ -190,6 +190,15 @@ move.
   along the tubes, coarsens the mesh while it passes (8 of 8 at 9 s) but leaves no mark by 20 s, and a knife cut does
   not stop it (4 of 8). Feathery fronts: seven mechanisms failed; any haze organises on its own. Page, pictures,
   videos, scripts and raw output in [`jenson-looks-2026-11-11/`](jenson-looks-2026-11-11/).
+- [outside-rules-2026-11-11.md](outside-rules-2026-11-11.md) — **research with small tests, no game change: outside
+  rules on the big dish, judged as creatures.** Owner asked 03:00Z (test Lague, species, MCPM, search wider) and 04:11Z
+  (a creature for play, not a pattern generator). New `BigParams` options, all off: area sensors, species with own
+  trails, zones, chance-weighted turn, cyclic species, explorers with a spread stage, size spread, blocked walkers that
+  keep heading, retry or lay trail. Rival species hold territories with a clean border (avoidance cleans it 8 of 8; own
+  trail alone keeps them home, 5 of 8). Explorer spread grows feathery radial veins from a disc. Packed walkers that lay
+  trail where they stand make about 180 still droplets. Chance turn more loops 8 of 8, area sensors fewer 8 of 8 at
+  +50% cost. Jones and Adamatzky's crawling blob failed. Survey of 14 more open-source simulations, page, videos and
+  raw output in [`outside-rules-2026-11-11/`](outside-rules-2026-11-11/).
 
 ## Added with the move (2026-11-10)
 
