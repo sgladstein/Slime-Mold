@@ -273,6 +273,12 @@ fn main() {
         sv.record(&mut enc, &cam, None);
         queue.submit([enc.finish()]);
         sv.picture().save(format!("{out}/soldiers-z{}.png", zoom as u32)).unwrap();
+        // The same ground with no soldiers, for comparing sprite art on it.
+        sv.set_marks(&Marks::default());
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        sv.record(&mut enc, &cam, None);
+        queue.submit([enc.finish()]);
+        sv.picture().save(format!("{out}/bare-z{}.png", zoom as u32)).unwrap();
     }
     println!("wrote {out}");
 }

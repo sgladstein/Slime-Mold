@@ -171,6 +171,12 @@ move.
   step (new `BigParams::respawn`, off by default) held a fine mesh (loops at 10 s 43.5 to 196, 8 of 8) and gave
   Jenson's haze, for 4% more step time. Not reproduced: feathery fronts, trunks, contagion.
   Page, pictures, run.sh, analyze.py and raw output in [`jenson-compare-2026-11-10/`](jenson-compare-2026-11-10/).
+- [world-look-2026-11-11.md](world-look-2026-11-11.md) — **built: the Larder world drawn
+  from the simulation**: mould height, gloss and colour from its thickness, every
+  walker a speck, shots that cut trail and leave a fading burn (`Engine::set_hits`),
+  walls by health, crystals as six-faced cones by charge (`world::look` ground
+  field), shader soldiers with facing and muzzle flash. View 2.2x the plain
+  view's time on the software GPU; 1070 timing pending. Soldier A/B (SVG vs shader).
 - [world-camera-2026-11-11.md](world-camera-2026-11-11.md) — **built: the camera and UI
   for a world bigger than the screen** (`slime_mould::world`): pan, zoom at the
   cursor, minimap, GPU marks and Larder's controls as `UiCommand`s; the GPU

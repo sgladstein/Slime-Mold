@@ -1,0 +1,121 @@
+<title>Larder World Look</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of figures, each picture with the numbers and fields that made it beside it. */
+:root {
+  --bg: #f3f1ea; --panel: #e8e4d6; --fg: #1d1f1a; --muted: #5d6052; --line: #cfc9b6;
+  --amber: #9a6a12; --teal: #1f7b80;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12140f; --panel: #1c1f18; --fg: #e9e6da; --muted: #a3a693; --line: #33372b;
+  --amber: #e2a845; --teal: #5cc3c4; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12140f; --panel: #1c1f18; --fg: #e9e6da; --muted: #a3a693; --line: #33372b;
+  --amber: #e2a845; --teal: #5cc3c4; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 44px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 700; }
+h2 { font-size: 24px; font-weight: 700; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 12px; }
+.status { font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: .02em; }
+section { display: grid; gap: 16px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 720px) { .pair, .trio { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 4px; background: #0b0f12; }
+figcaption { font-size: 13px; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 500; }
+.tag { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--amber); }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; min-width: 560px; width: 100%; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 500; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ab { background: var(--panel); border-radius: 6px; padding: 16px; display: grid; gap: 14px; }
+.abrow { display: grid; grid-template-columns: 64px 1fr 1fr; gap: 12px; align-items: center; }
+.abrow .z { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.abhead { font-family: var(--display); font-size: 22px; text-align: center; }
+@media (max-width: 560px) { .abrow { grid-template-columns: 1fr 1fr; } .abrow .z { grid-column: 1 / -1; } }
+ul { margin: 0; padding-left: 20px; max-width: 70ch; display: grid; gap: 6px; }
+code { font-family: var(--mono); font-size: 13px; }
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <span class="tag">Larder world · graphics · 11 Nov 2026</span>
+    <h1>The world drawn from the simulation</h1>
+    <p>Everything below is one 2048 × 1280 world with 400,000 walkers, 10 seconds in, seed 1, then 2 seconds of a squad firing into the mould. The mould's look comes from its own fields: thickness sets height, gloss and colour strength, every walker is a speck at its real position, and a shot cuts the trail in the engine and leaves a burn the size of what it destroyed. Walls stand as tall as their health, and crystals as tall as their charge. Soldiers are drawn in the shader, with no sprite.</p>
+    <p class="status">Rendered on the software GPU in the cloud. Timing on the GTX 1070 is waiting on free disk space on that PC.</p>
+  </header>
+
+  <section>
+    <h2>Before and after</h2>
+    <p>The same frame both ways. Left is the look on. Right is the view as it was: the engine's colour frame, nearest-sampled, with soldiers as discs.</p>
+    <div class="pair">
+      <figure><img src="look-z1.jpg" alt="Look on at zoom 1"><figcaption><b>Look, zoom 1.</b> One pixel a cell; walkers as specks, tube height as light and shadow.</figcaption></figure>
+      <figure><img src="plain-z1.jpg" alt="Look off at zoom 1"><figcaption><b>Before, zoom 1.</b></figcaption></figure>
+      <figure><img src="look-z2.jpg" alt="Look on at zoom 2"><figcaption><b>Look, zoom 2.</b> Cells blend smoothly; dark round marks are fresh shot burns.</figcaption></figure>
+      <figure><img src="plain-z2.jpg" alt="Look off at zoom 2"><figcaption><b>Before, zoom 2.</b></figcaption></figure>
+      <figure><img src="look-z4.jpg" alt="Look on at zoom 4"><figcaption><b>Look, zoom 4.</b> A tracer and muzzle flash on the shot leaving this frame.</figcaption></figure>
+      <figure><img src="plain-z4.jpg" alt="Look off at zoom 4"><figcaption><b>Before, zoom 4.</b> Blocky cells, discs for soldiers.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Shots that cut the mould</h2>
+    <div class="pair">
+      <figure><video src="fight.mp4" autoplay muted loop playsinline></video><figcaption><b>2 seconds of fire at zoom 2: 60 shots, 42 hit thick mould.</b> Each soldier fires every 0.3 s at a thick cell in range. The hit is a disc the engine wipes. The burn is the thickness it removed, glowing then charring as the engine fades it (half gone in about 0.75 s). The trail regrowing over the hole is the simulation healing it.</figcaption></figure>
+      <figure><img src="crystal-z3.jpg" alt="Crystal at zoom 3"><figcaption><b>A crystal at zoom 3.</b> Its height is charge × depth inside it, so it stands as a cone, cut into six faces that catch the light. Brightness and glow follow charge, so a draining crystal sinks and dims. Mould feeding on it lies over it in its own colour. This crystal is full: charge that drains lives in the Larder world's CPU dish and reaches this view once that is ported.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Which soldier reads better?</h2>
+    <p>Two ways to draw the same top-down rifleman over the same ground, at zoom 1, 2 and 4: one blue enemy, one idle, one firing. Which looks more like a soldier, and which sits better in the world?</p>
+    <div class="ab">
+      <div class="abrow"><span></span><div class="abhead">A</div><div class="abhead">B</div></div>
+      <div class="abrow"><span class="z">zoom 1</span><img src="soldier-a-z1.png" alt="A at zoom 1"><img src="soldier-b-z1.png" alt="B at zoom 1"></div>
+      <div class="abrow"><span class="z">zoom 2</span><img src="soldier-a-z2.png" alt="A at zoom 2"><img src="soldier-b-z2.png" alt="B at zoom 2"></div>
+      <div class="abrow"><span class="z">zoom 4</span><img src="soldier-a-z4.png" alt="A at zoom 4"><img src="soldier-b-z4.png" alt="B at zoom 4"></div>
+    </div>
+    <p>At zoom 1 a soldier is 14 pixels across, and neither reads as more than a dot with a gun. From zoom 2 both do.</p>
+  </section>
+
+  <section>
+    <h2>What draws what</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>On screen</th><th>Comes from</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Mould colour, height and gloss</td><td>Trail brightness a cell (the same number as the colour ramp)</td><td>engine look field, byte 0</td></tr>
+        <tr><td>Specks</td><td>Every walker at its real position, a speck each</td><td>engine walkers</td></tr>
+        <tr><td>Burns</td><td>Thickness a hit removed, fading in the engine</td><td>engine look field, byte 2</td></tr>
+        <tr><td>Ground tint</td><td>Scent, species, germ and grass, as the engine colours them</td><td>engine frame</td></tr>
+        <tr><td>Walls</td><td>Height and brightness from health</td><td>ground field, kind 3</td></tr>
+        <tr><td>Crystals</td><td>Height, glow and brightness from charge; shape from depth inside</td><td>ground field, kind 5</td></tr>
+        <tr><td>Rock, wet ground</td><td>Terrain kinds</td><td>ground field, kinds 2 and 1</td></tr>
+        <tr><td>Soldier pose</td><td>Position, facing, team, alive or dead</td><td>game marks</td></tr>
+        <tr><td>Tracer and flash</td><td>A shot's line and its timer (0.09 s, 0.07 s)</td><td>game marks</td></tr>
+      </tbody>
+    </table></div>
+    <p>The ground field (a kind and a value a cell) is what the Larder world fills from its own walls, health and crystal charge. In this test the walls are cells taken off the agar, so the mould really cannot cross them. The tall wall on the left has its health set by hand from full at the top to empty at the bottom, only to show the range.</p>
+  </section>
+
+  <section>
+    <h2>Cost and what is next</h2>
+    <ul>
+      <li>Frame cost of the view pass on the software GPU at 1280 × 800: 31.5, 33.3 and 31.5 ms with the look at zoom 1, 2 and 4, against 13.5, 14.8 and 15.5 ms without, so about 2.2 times. The software GPU is far slower than a real card. On the GTX 1070 the plain view was 0.33 ms at 1920 × 1080, and its look numbers come next, once its drive has room.</li>
+      <li>Walls wearing down, crystals draining and walkers starving come in as the Larder world and growth reach the GPU. The view already reads them.</li>
+      <li>Sandbox: <code>cargo run --release --bin mouldgpu</code>, then W for the big world, Q for a squad, and L to switch the look.</li>
+    </ul>
+  </section>
+</div>

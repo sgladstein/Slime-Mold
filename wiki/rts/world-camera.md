@@ -3,8 +3,8 @@ title: The world camera and UI
 kind: mechanism
 status: current
 updated: 2026-11-11
-sources: [Reports/world-camera-2026-11-11.md]
-code: [Camera::wheel, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS]
+sources: [Reports/world-camera-2026-11-11.md, Reports/world-look-2026-11-11.md]
+code: [Camera::wheel, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS]
 ---
 
 # The world camera and UI
@@ -21,6 +21,15 @@ It has no game rules. The GPU sandbox uses it: W gives a 2048 x 1280 world,
 Q a stand-in squad, M the minimap. Today's dish at zoom 1 comes out
 pixel-identical to the engine's own frame. On the GTX 1070 the view costs
 0.32-0.42 ms a frame at 1920 x 1080. Not yet played by the owner.
+
+**The look** (on by default, L in the sandbox; [world look](../../Reports/world-look-2026-11-11.md)):
+the view shades the world from the engine's look field (mould thickness,
+walkers, wounds) and a ground field (rock, walls by health, crystals by
+charge): height, light, gloss, a speck a walker. Shots (`Engine::set_hits`)
+cut trail and leave a fading burn; soldiers are shader figures with facing
+and a muzzle flash. About 2.2x the plain view's time on the software GPU;
+the 1070 cost is not yet measured. A blind soldier A/B (SVG against shader)
+is on the page, unanswered.
 
 ## Numbers
 
