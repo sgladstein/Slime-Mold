@@ -41,6 +41,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-11 04:04 | Larder stalemates: both a late end to food drops and a 15-game-minute cap won on share of the map held | Card: "Both" (food stops arriving late in the round, and a cap at 15 minutes catches any stalemate left) | [Larder](rts/shooter.md) |
 | 2026-11-11 03:38 | Larder squad: starts at 4 soldiers and can grow to 40; soldiers die, attacked by the mould; the round ends when every soldier or all the mould is dead | "Start with 4 and can grow to 40. They should definitely die and be attacked by the slime. The round ends when the soldiers or slime are all dead?" | [Larder](rts/shooter.md) |
 | 2026-11-11 03:14 | Larder (mould-as-enemy shooter) is controlled RTS-style: orders, drawn fire lines and rings, not twin-stick aiming; next, a full build plan | "Rts-style. When you finish your current task, let's develop a full detailed plan of how to build the demo" | [Larder](rts/shooter.md) |
 | 2026-11-11 01:50 | Shooting must cut a branch in seconds, and a held ring of fire must stop all mould reaching the food | "holding a ring of fire should stop all mold from getting to the food" | [Larder](rts/shooter.md) |
