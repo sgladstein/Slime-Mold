@@ -249,6 +249,7 @@ move.
   engines, AlphaStar, the spinning top), lessons for the mould, and feedback on both demos: soft and Trunk are
   dominant strategies and the snowball is unmanaged positive feedback; fix with a size cost, a pull-back rule, a
   points ending and telegraphed attacks before adding verbs. Reading only, no runs. Cards in `research/sources/`.
+- [larder-build-plan-2026-11-11.md](larder-build-plan-2026-11-11.md) — **Larder build plan for the RTS demo** (Claude Doc copy), three independent reviews and their prompts (`larder-build-plan-2026-11-11/reviews/`), and the plan revised after them: crossover gate in place of an impossible counter cycle, bait and turret, killable mould core, one ordered score.
 - [mould-shooter-2026-11-11.md](mould-shooter-2026-11-11.md) — **the mould as the enemy, a shooter brainstorm**
   (owner, 11-11 00:18Z). Lead shape Larder: a squad and the mould want the same food; stored food smells, so a
   hoard draws the mould; shots cut supply by holding a tube clear, not by kills (the knife is weak); four
