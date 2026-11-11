@@ -2739,6 +2739,9 @@ mod tests {
         let patch = |take: f32| UnitIn { take_r: 1.5, ..unit(pile(3), take) };
         let mut units = vec![unit(t, 0.0), patch(3000.0), patch(3000.0)];
         units.extend((5..10).map(|p| unit(pile(p), 100.0)));
+        // Units that see only a few blocks, so which block's centre is in
+        // sight decides where they aim.
+        units.extend((0..6).map(|q| UnitIn { sight: 2.5 + q as f32, ..unit((t.0 + 3.0 * q as f32 - 7.0, t.1 + 2.0), 0.0) }));
         // Shots from each crystal toward the thickest mould, and two across
         // the wall at x = 140 (fine cells), one of them from beside it.
         let mut shots: Vec<ShotIn> = (0..12).map(|p| ShotIn { from: pile(p), to: t, r: 3.0 }).collect();
@@ -2754,6 +2757,20 @@ mod tests {
             })
             .expect("a clear way to the wall");
         shots.push(ShotIn { from: clear, to: (clear.0 + 30.0, clear.1), r: 2.0 });
+        // A unit beside the wall, so its smell reaches the wall's cells
+        // (it must not land there).
+        units.push(UnitIn { smell_r: 4.0, ..unit(clear, 0.0) });
+        // The same shot twice: a walker in both strikes dies once, counted
+        // for the first.
+        shots.push(shots[0]);
+        // A shot from the cell of a walker that starved in the mould, so its
+        // strike covers an empty slot (which must stay out of the count).
+        let starved = (0..cpu.walkers.len())
+            .map(|k| (k, cpu.walkers[k]))
+            .find(|&(k, (x, y, _))| !cpu.lives(k) && cpu.trail[y as usize * w + x as usize] >= slime)
+            .expect("a slot that starved in the mould");
+        let (sx, sy, _) = starved.1;
+        shots.push(ShotIn { from: (sx, sy), to: t, r: 3.0 });
         let f = Frame { units, shots, slime };
         e.inject(&cpu);
         e.set_squad(&f);
@@ -2761,6 +2778,9 @@ mod tests {
         let cpu_out = squad::frame(&mut cpu, &f, 1);
         let gpu_out = e.squad_out();
         let kills: u32 = cpu_out.shots.iter().map(|q| q.killed).sum();
+        let n = f.shots.len();
+        assert_eq!(cpu_out.shots[n - 2].hit, cpu_out.shots[0].hit, "the repeated shot hits where the first did");
+        assert_eq!(cpu_out.shots[n - 2].killed, 0, "and kills nothing the first did not");
         let walled = f.shots.iter().zip(&cpu_out.shots).filter(|(q, o)| o.hit.is_none() && squad::path(w, h, q.from, q.to).iter().any(|&i| !cpu.agar[i as usize])).count();
         let took: Vec<f32> = cpu_out.units.iter().map(|u| u.took).collect();
         eprintln!(
