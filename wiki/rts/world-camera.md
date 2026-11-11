@@ -29,8 +29,8 @@ charge): height, light, gloss, a speck a walker. Shots (`Engine::set_hits`)
 stop at the first slime or rock on their line (`first_hit`) and cut there,
 leaving a fading burn. Soldiers are an SVG sprite (the owner's pick of a
 blind A/B, 16:48Z) with facing, team helmet and muzzle flash; crystals are
-hexagons, as in the simulation. About 2.2x the plain view's time on the
-software GPU; the 1070 cost is not yet measured.
+hexagons, as in the simulation. On the 1070 at 1080p the view takes
+1.8-2.0 ms with the look against 0.3 ms without.
 
 ## Numbers
 

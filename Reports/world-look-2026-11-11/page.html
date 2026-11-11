@@ -55,7 +55,7 @@ code { font-family: var(--mono); font-size: 13px; }
     <span class="tag">Larder world · graphics · 11 Nov 2026</span>
     <h1>The world drawn from the simulation</h1>
     <p>Everything below is one 2048 × 1280 world with 400,000 walkers, 10 seconds in, seed 1, then 4 seconds of a squad firing into the mould. The mould's look comes from its own fields: thickness sets height, gloss and colour strength, every walker is a speck at its real position, and a shot cuts the trail in the engine and leaves a burn the size of what it destroyed. Walls stand as tall as their health, and crystals as tall as their charge. Soldiers are drawn in the shader, with no sprite.</p>
-    <p class="status">Rendered on the software GPU in the cloud. Timing on the GTX 1070 is waiting on free disk space on that PC.</p>
+    <p class="status">Pictures rendered on the software GPU in the cloud; timed on the GTX 1070.</p>
   </header>
 
   <section>
@@ -111,7 +111,7 @@ code { font-family: var(--mono); font-size: 13px; }
   <section>
     <h2>Cost and what is next</h2>
     <ul>
-      <li>Frame cost of the view pass on the software GPU at 1280 × 800: 33.4, 32.7 and 33.0 ms with the look at zoom 1, 2 and 4, against 13.5, 13.3 and 15.2 ms without, so about 2.3 times. The software GPU is far slower than a real card. On the GTX 1070 the plain view was 0.33 ms at 1920 × 1080, and its look numbers come next, once its drive has room.</li>
+      <li>Frame cost of the view pass on the GTX 1070 at 1920 × 1080: 2.00, 1.84 and 1.82 ms with the look at zoom 1, 2 and 4, against 0.31, 0.30 and 0.30 ms without. That is about 1.6 ms more a frame, a tenth of a 60 fps frame. It can be cut by working each cell's height once a frame instead of once per pixel.</li>
       <li>Walls wearing down, crystals draining and walkers starving come in as the Larder world and growth reach the GPU. The view already reads them.</li>
       <li>Sandbox: <code>cargo run --release --bin mouldgpu</code>, then W for the big world, Q for a squad, and L to switch the look.</li>
     </ul>

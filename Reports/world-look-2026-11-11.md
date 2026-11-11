@@ -132,3 +132,21 @@ should have hexagonal outline, not circle."
 | Shots / stopped by mould | 120 / 63 |
 | View pass, look on, zoom 1 / 2 / 4 (lavapipe, median of 21) | 33.4 / 32.7 / 33.0 ms |
 | View pass, look off | 13.5 / 13.3 / 15.2 ms |
+
+## On the GTX 1070 (17:10Z)
+
+The same example on Scott-Desktop at 77f4788 (built on D:, since C: was full):
+`worldlook -- seconds=12 fight=4 screen=1920x1080`.
+
+| Measure | Result |
+|---|---|
+| Shots / stopped by mould | 120 / 55 |
+| View pass, look on, zoom 1 / 2 / 4, 1920 x 1080 (median of 21) | 1.999 / 1.835 / 1.819 ms |
+| View pass, look off | 0.309 / 0.302 / 0.303 ms |
+
+The look costs about 1.5-1.7 ms a frame more at 1080p, 6x the plain view,
+about a tenth of a 16.7 ms frame. Most of it is the per-pixel height samples
+(each a bilinear of four cells reading two fields) and the speck pass over
+400,000 walkers. Not yet tried: working each cell's height once a frame
+into a world-sized field, so a pixel reads one field instead of
+recomputing it.

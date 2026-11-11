@@ -176,8 +176,8 @@ move.
   walker a speck, shots that cut trail and leave a fading burn (`Engine::set_hits`),
   walls by health, crystals as six-faced cones by charge (`world::look` ground
   field), soldiers as the SVG sprite the owner picked in a blind A/B, shots that
-  stop at the first slime (`first_hit`), hexagonal crystals. View about 2.3x the
-  plain view's time on the software GPU; 1070 timing pending.
+  stop at the first slime (`first_hit`), hexagonal crystals. View 1.8-2.0 ms on the
+  1070 at 1080p, against 0.3 ms without.
 - [world-camera-2026-11-11.md](world-camera-2026-11-11.md) — **built: the camera and UI
   for a world bigger than the screen** (`slime_mould::world`): pan, zoom at the
   cursor, minimap, GPU marks and Larder's controls as `UiCommand`s; the GPU
