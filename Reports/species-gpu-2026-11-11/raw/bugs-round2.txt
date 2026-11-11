@@ -1,0 +1,94 @@
+== 0 the second kind's multipliers dropped: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (21878) panicked at src/bin/mouldgpu.rs:2748:13:
+hungry, mixed walkers, crowd limits by species: 4381 walkers, 0 lives, 6270 counts off of 15000
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (21879) panicked at src/bin/mouldgpu.rs:2418:17:
+mixed walkers: 75577 of 250000 walkers off
+== 1 the second kind smells farther too: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (21952) panicked at src/bin/mouldgpu.rs:2748:13:
+hungry, mixed walkers, crowd limits by species: 138 walkers, 0 lives, 256 counts off of 15000
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (21953) panicked at src/bin/mouldgpu.rs:2418:17:
+mixed walkers: 5539 of 250000 walkers off
+== 2 the second kind lays the full deposit: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (22024) panicked at src/bin/mouldgpu.rs:2749:13:
+hungry, mixed walkers, crowd limits by species: trail L1 1.83e-2, scent L1 0.00e0, energy L1 0.00e0, grass L1 0.00e0
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22025) panicked at src/bin/mouldgpu.rs:2456:13:
+mixed walkers: trail L1 1.81e-2, scent L1 0.00e0, species L1 0.00e0, grass L1 0.00e0
+== 3 the second kind's walkers counted in the first kind's block: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (22097) panicked at src/bin/mouldgpu.rs:2749:13:
+hungry, mixed walkers, crowd limits by species: trail L1 1.83e-2, scent L1 0.00e0, energy L1 0.00e0, grass L1 0.00e0
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22098) panicked at src/bin/mouldgpu.rs:2456:13:
+mixed walkers: trail L1 1.81e-2, scent L1 0.00e0, species L1 0.00e0, grass L1 0.00e0
+== 4 conversion forgets the kind: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22180) panicked at src/bin/mouldgpu.rs:2458:13:
+assertion `left == right` failed: own settings, mixed, converting over a square of 4: kinds off
+== 5 a child is the first kind: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (22323) panicked at src/bin/mouldgpu.rs:2751:13:
+assertion `left == right` failed: hungry, mixed walkers, crowd limits by species: kinds off
+== 6 the global crowd limit for every species: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (22395) panicked at src/bin/mouldgpu.rs:2748:13:
+hungry, mixed walkers, crowd limits by species: 3558 walkers, 2 lives, 3372 counts off of 15000
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22396) panicked at src/bin/mouldgpu.rs:2418:17:
+a droplet species and a network species: 4155 of 25000 walkers off
+== 7 the global keep for every species: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (22469) panicked at src/bin/mouldgpu.rs:2749:13:
+hungry, mixed walkers, crowd limits by species: trail L1 1.46e-2, scent L1 0.00e0, energy L1 0.00e0, grass L1 0.00e0
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22470) panicked at src/bin/mouldgpu.rs:2456:13:
+a droplet species and a network species: trail L1 7.46e-2, scent L1 0.00e0, species L1 7.69e-2, grass L1 0.00e0
+== 8 the global deposit for every species: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22544) panicked at src/bin/mouldgpu.rs:2456:13:
+a droplet species and a network species: trail L1 1.00e-1, scent L1 0.00e0, species L1 1.00e-1, grass L1 0.00e0
+== 9 the global grazing weight for every species: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (22617) panicked at src/bin/mouldgpu.rs:2748:13:
+hungry, mixed walkers, crowd limits by species: 40 walkers, 0 lives, 66 counts off of 15000
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22618) panicked at src/bin/mouldgpu.rs:2418:17:
+a droplet species and a network species: 69 of 25000 walkers off
+== 10 the global explorer stage for every species: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22691) panicked at src/bin/mouldgpu.rs:2418:17:
+a droplet species and a network species: 4642 of 25000 walkers off
+== 11 the global blocked share for every species: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22765) panicked at src/bin/mouldgpu.rs:2456:13:
+own settings, mixed, converting over a square of 4: trail L1 3.81e-2, scent L1 0.00e0, species L1 3.81e-2, grass L1 0.00e0
+== 12 the global scent reach for every species: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22839) panicked at src/bin/mouldgpu.rs:2418:17:
+own reach, step, deposit and keep, scent at the own reach, respawn: 8090 of 250000 walkers off
+== 13 a species' scent reach from the global reach: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22912) panicked at src/bin/mouldgpu.rs:2418:17:
+own reach, step, deposit and keep, scent at the own reach, respawn: 8090 of 250000 walkers off
+== 14 every species eats grass: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (22985) panicked at src/bin/mouldgpu.rs:2456:13:
+a droplet species and a network species: trail L1 5.69e-11, scent L1 0.00e0, species L1 5.80e-11, grass L1 6.23e-3
+== 15 growth on grass feeds only the grazing species: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (23058) panicked at src/bin/mouldgpu.rs:2749:13:
+hungry, mixed walkers, crowd limits by species: trail L1 0.00e0, scent L1 0.00e0, energy L1 3.54e-2, grass L1 3.62e-3
+== 16 the square's rows a cell short: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (23139) panicked at src/bin/mouldgpu.rs:2457:13:
+three cyclic species converting over a square of 2, cap: 0 ages, 2897 species off
+== 17 the square's columns a cell short: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (23223) panicked at src/bin/mouldgpu.rs:2457:13:
+three cyclic species converting over a square of 2, cap: 0 ages, 3099 species off
+== 18 conversion by the cell, not the square: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (23319) panicked at src/bin/mouldgpu.rs:2457:13:
+converting over a square of 3, bands: 0 ages, 253 species off
+== 19 the rows pass not run: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (23392) panicked at src/bin/mouldgpu.rs:2457:13:
+converting over a square of 3, bands: 0 ages, 518 species off
+== 20 the square's rows read before this tick's deposit: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (23528) panicked at src/bin/mouldgpu.rs:2457:13:
+three cyclic species converting over a square of 2, cap: 0 ages, 2640 species off
+== 21 a walker steps by the global crowd limit: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (23600) panicked at src/bin/mouldgpu.rs:2748:13:
+hungry, mixed walkers, crowd limits by species: 7507 walkers, 0 lives, 8836 counts off of 15000
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (23601) panicked at src/bin/mouldgpu.rs:2418:17:
+a droplet species and a network species: 11939 of 25000 walkers off
+== 22 a parent breeds by the global crowd limit: caught
+thread 'tests::growth_matches_the_cpu_for_one_tick' (23673) panicked at src/bin/mouldgpu.rs:2751:13:
+assertion `left == right` failed: hungry, mixed walkers, crowd limits by species: kinds off
+== 23 an unlimited jumper claims no cell beside limited ones: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (23749) panicked at src/bin/mouldgpu.rs:2453:17:
+crowd limits by species, heavy respawn: 30 jumpers off, 35 contested
+== 24 an unlimited jumper lands only if it wins the claim: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (23822) panicked at src/bin/mouldgpu.rs:2453:17:
+crowd limits by species, heavy respawn: 72 jumpers off, 35 contested
+== 25 the GPU starts every walker as species k % n and the first kind: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (23896) panicked at src/bin/mouldgpu.rs:2376:13:
+species 0 at 70%, converting: the species and kinds the GPU starts with

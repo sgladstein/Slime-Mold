@@ -2,8 +2,8 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-11T20:15Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md]
+updated: 2026-11-11T21:30Z
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/species-gpu-2026-11-11.md]
 code: [BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate]
 ---
 
@@ -34,10 +34,17 @@ the order is not set. A splitting or migrating tier is open.
 
 ## Open
 
-- The order of the added tiers, and which tiers reach the GPU first (after W0).
+- The order of the added tiers. On the GPU engine, species and
+  conversion came with the outside rules, and each species' own settings,
+  conversion over a square and a second kind followed (11-11, [species on
+  the GPU](../../Reports/species-gpu-2026-11-11.md)), so a rival pair can
+  pair a droplet species with a network one there. The life cycle (Sporer,
+  Sleeper, Swarmer) is next, after the tiers' re-test at the world's
+  operating point.
 - Each tier's counter tested with the player AI ([player AI](player-ai.md)) once Larder runs in the world.
 
 ## Sources
 
 - [larder-world-roadmap-2026-11-11.md](../../Reports/larder-world-roadmap-2026-11-11.md), *Mould progression*.
 - [mould-tiers-2026-11-11.md](../../Reports/mould-tiers-2026-11-11.md): Sporer, Sleeper, Swarmer.
+- [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species rules on the GPU engine.

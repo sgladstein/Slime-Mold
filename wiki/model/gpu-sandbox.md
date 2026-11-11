@@ -2,8 +2,8 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-11T19:15Z
-sources: [Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md]
+updated: 2026-11-11T21:30Z
+sources: [Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/species-gpu-2026-11-11.md]
 code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost]
 ---
 
@@ -15,8 +15,8 @@ code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost]
 GPU, with every option the Jenson comparison tested as a control (owner,
 2026-11-11 00:06Z), plus the looks, outside rules and creature rules as
 controls on later panel pages and keys. It matches the CPU dish on paired
-seeds (no measure differs after Bonferroni), and three twin tests in CI
-check one GPU tick against one CPU tick on software Vulkan. On the GTX 1070
+seeds (no measure differs after Bonferroni), and twin tests in CI check
+one GPU tick against one CPU tick on software Vulkan. On the GTX 1070
 a frame of two ticks and the drawing takes 1.45 ms at 100,000 walkers and
 8-10 ms at a million. Rules compiled in but off cost 18-24% on the software
 GPU, so they compile out when off. Detail below; tables in
@@ -72,6 +72,17 @@ On the GTX 1070 their presets take 1.0-1.8 ms of ticks a frame at 30,000
 walkers and 9.6-17.9 at a million (ribbons the dearest, from sensing).
 Growth and starving (GPU phase 4's first rule, Larder World W0) has [its
 own page](growth.md); it is a fifth panel page and keys Ctrl+3 and 4.
+The creature thread's species rules are on the GPU engine too (11-11,
+Larder World W3a): species 0's share (`share`), conversion weighed over a
+square (`convert_r`), a second kind of walker in one mould (`mix_*`) and
+each species' own settings (`sN.FIELD`, so a droplet species and a network
+species can share a dish), as `set` keys of the sandbox and the engine, not
+yet on a panel page. A twin test matches them on 12 dishes, a growth dish
+checks that a child keeps its parent's kind, and 28 planted bugs are
+caught. Off they cost nothing measurable on the software GPU; the square
+of radius 8 costs about one trail pass a tick there
+([species on the GPU](../../Reports/species-gpu-2026-11-11.md)). The
+tiers' life cycle is the next port.
 
 Three facts bind the design:
 
@@ -86,3 +97,4 @@ Three facts bind the design:
 ## Sources
 
 - [gpu-sandbox-2026-11-11.md](../../Reports/gpu-sandbox-2026-11-11.md): the sandbox, its controls and presets, the twin tests and timings.
+- [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species settings on the GPU, their twin test, planted bugs and cost.

@@ -21,7 +21,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use crate::mould::big::{BigDish, BigParams};
+use crate::mould::big::{BigDish, BigParams, SpeciesSet};
 use crate::mould::squad;
 use crate::mould::STEPS_PER_SECOND;
 use pixels::wgpu;
@@ -52,8 +52,11 @@ pub const DRAW_STARVE: u32 = 401;
 pub const DRAW_BIRTH: u32 = 402;
 pub const CLAIM_BIRTH: u32 = 403;
 
-/// Bytes in `Params` (104 words).
-pub const PARAMS_BYTES: usize = 432;
+/// Bytes in `Params` (168 words).
+pub const PARAMS_BYTES: usize = 672;
+/// Where the squad's four words sit in `Params` (`set_squad` writes them
+/// alone). Fixed: the species block (2026-11-11) comes after them.
+pub const SQUAD_AT: usize = 416;
 
 /// The Larder World's switches in `Params::world` (engine.wgsl).
 pub const WORLD_CRYSTALS: u32 = 1;
@@ -216,6 +219,27 @@ pub struct Settings {
     pub graze_regrow: f32,
     /// PR #58: species 0 lays this many times the deposit (1 even).
     pub boost: f32,
+    /// Species 0's share of the walkers (`BigParams::species_share`, 0
+    /// even), and conversion's square (`species_convert_r`: each species'
+    /// trail summed over the (2r+1)-square round the walker, 0 the cell).
+    /// The share is fixed for the dish's life (it places the walkers); the
+    /// radius is live.
+    pub species_share: f32,
+    pub convert_r: u32,
+    /// Mixed walkers (`BigParams::mix_*`): walker k is the second kind with
+    /// chance `mix_share` (fixed for the dish's life, as the slots are);
+    /// the second kind's reach, sensor angle, turn and step are times the
+    /// others, and what it lays times `mix_deposit`.
+    pub mix_share: f32,
+    pub mix_reach: f32,
+    pub mix_angle: f32,
+    pub mix_turn: f32,
+    pub mix_step: f32,
+    pub mix_deposit: f32,
+    /// Each species' own settings (`BigParams::species_sets`), set with
+    /// `s0.reach=40` and the like: a field left unset is the global one.
+    /// Only with two species or more; all unset is off.
+    pub sets: [SpeciesKnobs; MAX_SPECIES as usize],
     /// Growth (Larder World W0, `BigParams::upkeep`; 0 off): energy a
     /// walker pays a tick, what it starts with, what it divides at, what a
     /// division costs, the chance a tick that a walker at zero dies, and
@@ -314,6 +338,15 @@ impl Settings {
             graze_eat: t.graze_eat,
             graze_regrow: t.graze_regrow,
             boost: t.species_boost,
+            species_share: t.species_share,
+            convert_r: t.species_convert_r,
+            mix_share: t.mix_share,
+            mix_reach: t.mix_reach,
+            mix_angle: t.mix_angle,
+            mix_turn: t.mix_turn,
+            mix_step: t.mix_step,
+            mix_deposit: t.mix_deposit,
+            sets: [SpeciesKnobs::default(); MAX_SPECIES as usize],
             upkeep: t.upkeep,
             start_energy: t.start_energy,
             birth_energy: t.birth_energy,
@@ -350,6 +383,58 @@ impl Settings {
             0
         }
     }
+
+    /// Whether the species have their own settings (`sets`): two species
+    /// or more, and any field set.
+    pub fn per_species(&self) -> bool {
+        self.fields() > 0 && self.sets[..self.fields() as usize].iter().any(|k| *k != SpeciesKnobs::default())
+    }
+
+    /// Whether any walker explores: the global stage or a species' own.
+    pub fn explores(&self) -> bool {
+        self.explore > 0 || (self.per_species() && species_sets(self, true).iter().any(|t| t.explore_steps > 0))
+    }
+}
+
+/// One species' own settings (`Settings::sets`; `None` is the global
+/// field). Angles in degrees and `laid` per 100,000 walkers, as the
+/// globals.
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub struct SpeciesKnobs {
+    pub sensor_angle: Option<f32>,
+    pub turn: Option<f32>,
+    pub reach: Option<f32>,
+    pub step: Option<f32>,
+    pub laid: Option<f32>,
+    pub keep: Option<f32>,
+    pub crowd: Option<bool>,
+    pub blocked_lay: Option<f32>,
+    pub graze: Option<f32>,
+    pub explore: Option<u16>,
+}
+
+/// The CPU's `species_sets` from the settings: empty unless
+/// `per_species`; a species' crowd limit only where `crowd_ok`.
+pub fn species_sets(s: &Settings, crowd_ok: bool) -> Vec<SpeciesSet> {
+    if !s.per_species() {
+        return Vec::new();
+    }
+    let per = 100_000.0 / s.walkers.max(1) as f32;
+    s.sets[..s.fields() as usize]
+        .iter()
+        .map(|k| SpeciesSet {
+            sensor_angle: k.sensor_angle.unwrap_or(s.sensor_angle).to_radians(),
+            sensor_offset: k.reach.unwrap_or(s.reach),
+            rotate_angle: k.turn.unwrap_or(s.turn).to_radians(),
+            step: k.step.unwrap_or(s.step),
+            deposit: k.laid.unwrap_or(s.laid) * per,
+            keep: k.keep.unwrap_or(s.keep),
+            crowd: (k.crowd.unwrap_or(s.crowd) && crowd_ok) as u8,
+            blocked_deposit: k.blocked_lay.unwrap_or(s.blocked_lay),
+            graze_weight: k.graze.unwrap_or(s.graze),
+            explore_steps: k.explore.unwrap_or(s.explore),
+        })
+        .collect()
 }
 
 /// A switch on the command line: 1/on/true/yes or 0/off/false/no (until the
@@ -374,6 +459,24 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
     };
     let b = || on_off(key, v);
     let pick = |names: &[&str]| names.iter().position(|&n| n == v).ok_or_else(|| format!("{key}={v}: one of {}", names.join(", ")));
+    // A species' own setting: `s0.reach=40` (species 0 to 3).
+    if let Some((sp, field)) = key.split_once('.').and_then(|(a, f)| Some((a.strip_prefix('s')?.parse::<usize>().ok()?, f))) {
+        let k = s.sets.get_mut(sp).ok_or_else(|| format!("{key}: species 0 to {}", MAX_SPECIES - 1))?;
+        match field {
+            "sensor_angle" => k.sensor_angle = Some(f()?),
+            "turn" | "rotate_angle" => k.turn = Some(f()?),
+            "reach" | "sensor_offset" => k.reach = Some(f()?),
+            "step" => k.step = Some(f()?),
+            "laid" => k.laid = Some(f()?),
+            "keep" => k.keep = Some(f()?),
+            "crowd" => k.crowd = Some(b()?),
+            "blocked_lay" | "blocked_deposit" => k.blocked_lay = Some(f()?),
+            "graze" | "graze_weight" => k.graze = Some(f()?),
+            "explore" | "explore_steps" => k.explore = Some(int()?.min(u16::MAX as u32) as u16),
+            _ => return Err(format!("unknown species control {key}")),
+        }
+        return Ok(());
+    }
     match key {
         "walkers" => s.walkers = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         "crowd" => s.crowd = b()?,
@@ -435,6 +538,16 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "graze_eat" => s.graze_eat = f()?,
         "graze_regrow" => s.graze_regrow = f()?,
         "boost" | "species_boost" => s.boost = f()?,
+        "share" | "species_share" => s.species_share = f()?,
+        // At most 64: the rows pass keeps 64 cells either side of its
+        // piece of a row (engine.wgsl's `ROW_R`).
+        "convert_r" | "species_convert_r" => s.convert_r = int()?.min(64),
+        "mix_share" => s.mix_share = f()?,
+        "mix_reach" => s.mix_reach = f()?,
+        "mix_angle" => s.mix_angle = f()?,
+        "mix_turn" => s.mix_turn = f()?,
+        "mix_step" => s.mix_step = f()?,
+        "mix_deposit" => s.mix_deposit = f()?,
         "upkeep" => s.upkeep = f()?,
         "start_energy" => s.start_energy = f()?,
         "birth_energy" => s.birth_energy = f()?,
@@ -518,6 +631,17 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         graze_eat: s.graze_eat,
         graze_regrow: s.graze_regrow,
         species_boost: s.boost,
+        species_share: s.species_share,
+        species_convert_r: s.convert_r,
+        mix_share: s.mix_share,
+        mix_reach: s.mix_reach,
+        mix_angle: s.mix_angle,
+        mix_turn: s.mix_turn,
+        mix_step: s.mix_step,
+        mix_deposit: s.mix_deposit,
+        // With the global limit off the caller's `crowd` says nothing of
+        // whether one can hold; `Engine::new` passes its own.
+        species_sets: species_sets(s, crowd || !s.crowd),
         upkeep: s.upkeep,
         start_energy: s.start_energy,
         birth_energy: s.birth_energy,
@@ -607,9 +731,12 @@ pub const CUT: usize = 23;
 pub const SMELL: usize = 24;
 pub const UNITS: usize = 25;
 pub const HARVEST: usize = 26;
+/// Conversion's square (`species_convert_r`): each species' trail summed
+/// along each cell's row, before `convert`.
+pub const ROWS: usize = 27;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 27] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest",
+pub const PASSES: [&str; 28] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows",
 ];
 
 impl Shared {
@@ -716,9 +843,14 @@ pub struct Engine {
     /// From the last `write_params`: whether the conversion pass runs, and
     /// whether any outside rule is on (else the plain pipelines run).
     pub converts: bool,
+    pub boxes: bool,
     pub outside: bool,
     /// Species fields (0 for none), fixed for the dish's life.
     pub nsp: u32,
+    /// Walker kinds (`mix_share`): 2 with the mix on, else 1; fixed for the
+    /// dish's life. A walker's kind is bit 8 of its `spec` word, and the
+    /// counts hold a block of cells a species and kind.
+    pub kinds: u32,
     /// Whether the last frame had explorers on (switching them on starts
     /// every walker's stage again).
     pub exploring: bool,
@@ -738,13 +870,16 @@ pub struct Engine {
     /// or the pull on), and with the claim (`land`) too.
     pub jumps: bool,
     pub crowd: bool,
+    /// From the last `write_params`: whether the species have their own
+    /// settings (`Settings::per_species`).
+    pub per: bool,
 }
 
 impl Engine {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize) -> Self {
         let agar_cells = BigDish::new(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
         let crowd_ok = s.walkers.max(s.capacity) <= agar_cells / 2;
-        let d = BigDish::new(big_params(s, scale, s.crowd && crowd_ok));
+        let d = BigDish::new(BigParams { species_sets: species_sets(s, crowd_ok), ..big_params(s, scale, s.crowd && crowd_ok) });
         let dev = device;
         let cells = (d.w * d.h) as u32;
         let n = d.walkers.len() as u32;
@@ -763,10 +898,11 @@ impl Engine {
         let icell = zeros("icell", n as usize * 4);
         let occ = buf("occ", &u32_bytes(&occupancy(&d)), storage);
         let claim = buf("claim", &u32_bytes(&vec![u32::MAX; cells as usize]), storage);
-        // A block of counts a species (`dep`, `sdep`), two for explorers'
-        // and blocked walkers' classes (`edep`, `bdep`).
+        // A block of counts a species and kind (`dep`, `sdep`), two for
+        // explorers' and blocked walkers' classes (`edep`, `bdep`).
         let nsp = s.fields();
-        let blocks = nsp.max(1) as usize;
+        let kinds = if d.kind.is_empty() { 1 } else { 2 };
+        let blocks = nsp.max(1) as usize * kinds as usize;
         let dep = zeros("dep", blocks * cells as usize * 4);
         let agar: Vec<u32> = d.agar.iter().map(|&a| a as u32).collect();
         let agar = buf("agar", &u32_bytes(&agar), storage);
@@ -795,11 +931,10 @@ impl Engine {
         let age = zeros("age", n as usize * 4);
         // Grass starts full on the agar (the CPU's, made only with grazing
         // on; here always, so grazing can be switched on as the dish runs);
-        // walker k starts as species k % n.
+        // each walker's species and kind are the CPU dish's.
         let grass = buf("grass", &f32_bytes(&grass_of(&d)), storage);
         let gcount = zeros("gcount", cells as usize * 4);
-        let specs: Vec<u32> = (0..n).map(|k| k % nsp.max(1)).collect();
-        let spec = buf("spec", &u32_bytes(&specs), storage);
+        let spec = buf("spec", &u32_bytes(&spec_words(&d)), storage);
         let energy = buf("energy", &f32_bytes(&energies(&d)), storage);
         let share = zeros("share", cells as usize * 4);
         // The Larder World's fields, always there (a wall can go up on any
@@ -867,9 +1002,11 @@ impl Engine {
             squad: (0, 0, 0.0),
             squad_due: false,
             converts: false,
+            boxes: false,
             outside: false,
             nsp,
-            exploring: s.explore > 0,
+            kinds,
+            exploring: s.explores(),
             seeded: false,
             dish: d,
             dropped: Vec::new(),
@@ -879,6 +1016,7 @@ impl Engine {
             crowd_ok,
             jumps: false,
             crowd: false,
+            per: false,
         };
         e.lay_food(s.food);
         e
@@ -975,8 +1113,8 @@ impl Engine {
         self.queue.write_buffer(&self.bites, 0, &vec![0u8; self.cells as usize * 4]);
         self.queue.write_buffer(&self.wstat, 0, &[0u8; 16]);
         self.walled = !d.wall.is_empty();
-        let specs: Vec<u32> = if d.spec.is_empty() { (0..self.n).map(|k| k % self.nsp.max(1)).collect() } else { d.spec.iter().map(|&c| c as u32).collect() };
-        self.queue.write_buffer(&self.spec, 0, &u32_bytes(&specs));
+        assert_eq!(d.kind.is_empty(), self.kinds == 1, "a dish with this engine's mix");
+        self.queue.write_buffer(&self.spec, 0, &u32_bytes(&spec_words(d)));
         self.done = d.steps;
         self.dish = d.clone();
         self.dropped.clear();
@@ -1019,16 +1157,27 @@ impl Engine {
         b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, 0.0, 0.0, 0.0]));
         // The outside rules. Switching explorers on starts every walker's
         // stage again, so the switch shows (ages are only counted while on).
-        if s.explore > 0 && !self.exploring {
+        if s.explores() && !self.exploring {
             self.queue.write_buffer(&self.age, 0, &vec![0u8; self.n as usize * 4]);
         }
-        self.exploring = s.explore > 0;
-        b.extend(u32_bytes(&[self.nsp, s.cycle as u32, s.explore as u32, stream(seed, DRAW_SIZE)]));
-        b.extend(f32_bytes(&[s.avoid, s.next, s.prev, s.explorer_trail, s.explore_spread, s.blocked_lay]));
+        self.exploring = s.explores();
+        // Each species' own settings (`species_sets`). With them the global
+        // explorer stage, blocked share and grazing weight below are only
+        // switches (on if any species has one); each walker reads its own
+        // species' in the species block at the end.
+        let sets = species_sets(s, self.crowd_ok);
+        let any = |f: fn(&SpeciesSet) -> f32| sets.iter().map(f).find(|&v| v != 0.0).unwrap_or(0.0);
+        let (explore, blocked, graze) = if sets.is_empty() {
+            (s.explore as u32, s.blocked_lay, s.graze)
+        } else {
+            (sets.iter().map(|t| t.explore_steps as u32).max().unwrap_or(0), sets.iter().map(|t| t.blocked_deposit).fold(0.0, f32::max), any(|t| t.graze_weight))
+        };
+        b.extend(u32_bytes(&[self.nsp, s.cycle as u32, explore, stream(seed, DRAW_SIZE)]));
+        b.extend(f32_bytes(&[s.avoid, s.next, s.prev, s.explorer_trail, s.explore_spread, blocked]));
         b.extend(u32_bytes(&[s.blocked_keep as u32]));
         b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
         b.extend(u32_bytes(&[s.sensor_r as u32, stream(seed, DRAW_CHANCE), stream(seed, DRAW_KEEP)]));
-        b.extend(f32_bytes(&[s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost]));
+        b.extend(f32_bytes(&[s.convert, graze, s.graze_eat, s.graze_regrow, s.boost]));
         // Growth: its upkeep as the dish was made with (off stays off).
         let upkeep = if self.grows { s.upkeep.max(f32::MIN_POSITIVE) } else { 0.0 };
         b.extend(f32_bytes(&[upkeep, s.birth_energy, s.birth_cost, s.starve]));
@@ -1052,14 +1201,42 @@ impl Engine {
         }
         b.extend(u32_bytes(&[world, self.npiles, self.npc, 0]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
+        debug_assert_eq!(b.len(), SQUAD_AT);
         b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), 0]));
+        // The species block (2026-11-11): whether each species has its own
+        // settings, the walker kinds, conversion's square; the second
+        // kind's multipliers; then a set a species (`Set` in engine.wgsl),
+        // each with its scent reach as the CPU takes it (`scent_offset`, or
+        // the species' own sensor reach when that is 0).
+        b.extend(u32_bytes(&[!sets.is_empty() as u32, self.kinds, s.convert_r, 0]));
+        b.extend(f32_bytes(&[s.mix_reach, s.mix_angle, s.mix_turn, s.mix_step, s.mix_deposit, 0.0, 0.0, 0.0]));
+        for sp in 0..MAX_SPECIES as usize {
+            let Some(t) = sets.get(sp) else {
+                b.extend([0u8; 48]);
+                continue;
+            };
+            let sso = if s.smell > 0.0 { s.smell } else { t.sensor_offset };
+            b.extend(f32_bytes(&[t.sensor_angle, t.sensor_offset, t.rotate_angle, t.step, sso, t.deposit, t.keep, t.blocked_deposit, t.graze_weight]));
+            b.extend(u32_bytes(&[t.crowd as u32, t.explore_steps as u32, 0]));
+        }
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.converts = s.convert > 0.0 && self.nsp > 0;
-        self.outside = self.nsp > 0 || s.explore > 0 || s.blocked_lay > 0.0 || s.blocked_keep || s.chance > 0.0 || s.size_spread > 0.0 || s.sensor_r > 0 || s.graze != 0.0 || self.grows;
+        self.boxes = self.converts && s.convert_r > 0;
+        self.outside = self.nsp > 0
+            || self.kinds > 1
+            || s.explores()
+            || blocked > 0.0
+            || s.blocked_keep
+            || s.chance > 0.0
+            || s.size_spread > 0.0
+            || s.sensor_r > 0
+            || graze != 0.0
+            || self.grows;
         self.queue.write_buffer(&self.params, 0, &b);
         self.jumps = s.respawn > 0.0 || pull > 0.0;
-        self.crowd = crowd > 0;
+        self.crowd = crowd > 0 || sets.iter().any(|t| t.crowd > 0);
+        self.per = !sets.is_empty();
     }
 
     /// Records a frame: `ticks` ticks, then the drawing. With `stamps`
@@ -1143,11 +1320,19 @@ impl Engine {
             tick.extend([(LIFE, n), (BREED, n), (BORN, n)]);
         }
         if self.converts {
+            // Conversion's square: the rows' sums first (`rows`), the
+            // columns in `convert`.
+            if self.boxes {
+                // A workgroup a 256-cell piece of a row (engine.wgsl's
+                // `ROW_CHUNK`).
+                tick.push((ROWS, (self.dish.w as u32).div_ceil(256) * self.dish.h as u32));
+            }
             tick.push((CONVERT, n));
         }
         if self.jumps {
             tick.push((JUMP, n));
-            if self.crowd {
+            // With species' own settings every jump lands in `land`.
+            if self.crowd || self.per {
                 tick.push((LAND, n));
             }
         }
@@ -1289,6 +1474,21 @@ impl Engine {
         }
     }
 
+    /// Submits `passes` (pass, workgroups) on the current side, apart from
+    /// a tick (the tick count does not move): for tests of one pass.
+    pub fn run(&self, shared: &Shared, passes: &[(usize, u32)]) {
+        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
+        let group = &self.groups[(self.done % 2) as usize];
+        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("run") });
+        for &(p, groups) in passes {
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
+            pass.set_pipeline(&pipes[p]);
+            pass.set_bind_group(0, group, &[]);
+            pass.dispatch_workgroups(groups, 1, 1);
+        }
+        self.queue.submit([enc.finish()]);
+    }
+
     /// The Larder World read back: each pile's charge and cells still
     /// crystal (from the last tick's sum), and walls' bites and cells
     /// broken so far.
@@ -1304,7 +1504,7 @@ impl Engine {
         self.queue.write_buffer(&self.kills, 0, &[0u8; squad::SHOTS_MAX * 4]);
         self.squad = (nunits, nshots, f.slime);
         self.squad_due = true;
-        self.queue.write_buffer(&self.params, (PARAMS_BYTES - 16) as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), 0]));
+        self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), 0]));
     }
 
     /// The last squad frame's results (`set_squad`), read back.
@@ -1341,6 +1541,12 @@ pub fn occupancy(d: &BigDish) -> Vec<u32> {
 
 /// Each slot's energy as the GPU keeps it: -1 for an empty slot (0s with
 /// growth off, never read).
+/// Each slot's `spec` word: its species (0 with none), and with the mix on
+/// its kind in bit 8.
+pub fn spec_words(d: &BigDish) -> Vec<u32> {
+    (0..d.walkers.len()).map(|k| d.spec.get(k).map_or(0, |&c| c as u32) | d.kind.get(k).map_or(0, |&c| (c as u32) << 8)).collect()
+}
+
 pub fn energies(d: &BigDish) -> Vec<f32> {
     if d.energy.is_empty() {
         return vec![0.0; d.walkers.len()];
