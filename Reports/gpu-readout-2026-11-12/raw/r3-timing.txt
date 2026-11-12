@@ -74,7 +74,7 @@ larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walke
   frames with a step (300 of them), ms: frame p50 1.41 p95 1.79 max 9.95; ...; GPU tail  p50 0.55 p95 0.58 max 0.66
   t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2343, shots 24, killed 4
   (run 2) every frame p50 1.24 p95 2.65 max 13.32; frames with a step p50 1.40 p95 1.84 max 10.05; harvested 2343
-== i-l: the slime-enemy thread's benches (hand=idle map=fork), sent to that thread (j had the crowd limit off: 250000 slots over half the 143604 agar cells):
+== i-l: the slime-enemy thread's benches (hand=idle map=fork), sent to that thread (j had the crowd limit off: 250000 slots over half the Fork's 146258 agar cells):
   i. scale 2 walkers 5000 spread=0 passes=30: every frame p50 0.59 p95 1.35 max 3.19; frames with a step p50 1.29 p95 1.40 max 1.98; ticks 0.39 ms, drawing 0.06; mould 2704, shots 10, killed 5; 0.417 ms in all (trail 0.132, scent 0.119, sense 0.029, walk 0.016, units 0.014, harvest 0.005, draw 0.033)
   j. walkers=25000 upkeep=0.0002 (250000 slots) spread=0 passes=30: every frame p50 0.60 p95 1.40 max 3.11; frames with a step p50 1.36 p95 1.46 max 1.96; ticks 0.46, drawing 0.06; mould 24999, shots 4, killed 3; 0.483 ms in all (sense 0.051, walk 0.031, life 0.022, breed 0.021, born 0.011, trail 0.133, scent 0.119)
   k. scale=1 (256 x 160) spread=0 passes=30: every frame p50 0.58 p95 0.90 max 2.68; frames with a step p50 0.85 p95 0.94 max 1.76; ticks 0.11, drawing 0.03; mould 4801, shots 28, killed 205; 0.117 ms in all

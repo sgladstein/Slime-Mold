@@ -356,8 +356,8 @@ walk, eat, life, breed and born take, and sizing slots to twice the peak
 or dispatching over a compacted live count would save at most that. Not
 worth doing yet. Every bench here held the one-walker-a-cell limit, which
 the engine drops (`Engine::made`) when the slots pass half the agar: 50k,
-200k and 1M slots against 143,604, 574,431 and 2,297,735 agar cells at
-scales 2, 4 and 8.
+200k and 1M slots against the Fork's 146,258, 584,735 and 2,338,940 agar
+cells at scales 2, 4 and 8.
 
 **Why the game's step costs about 12 times the sandbox's frame.** Both run
 120 engine ticks a second: the game 15 steps of 8 ticks at scale 8, the
