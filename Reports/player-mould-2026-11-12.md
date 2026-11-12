@@ -233,12 +233,35 @@ What the numbers say:
    front and hold it (pictures), so conversion barely runs. This is the
    form probe's finding again: **the fight needs contact**.
 
+## Each side's walkers (after #119)
+
+The tech lead's review asked for a walker reserve before contact: in one
+shared pool of 50,000 slots a sown player mould reached 32,000, so a later
+fight could be won by filling the enemy's birth slots, which would mean
+nothing on the GPU, where the pool is a different size.
+`BigParams::species_cap` (empty is off, CPU only) caps each species' living
+walkers: a parent divides only while its species held fewer than its cap
+when the birth pass began. The garden gives each side half the slots,
+25,000, and a taken enemy core sets the enemy's cap to 0, so the core rule
+now stops the enemy's births and not the player's (before, the garden
+stopped none). Tests: `species_cap_holds_one_side`,
+`taken_core_stops_only_the_enemys_births`.
+
+Rerun on the same 32 seeds
+([`garden/census3-cap.txt`](player-mould-2026-11-12/garden/census3-cap.txt)):
+idle and farm are identical (neither side nears 25,000); sow2's mould ends
+at 21,987 against 23,023 uncapped, the enemy at 7,268 against 7,281. So
+the shared pool was not starving the enemy here; the cap matters once the
+moulds fight. Balance and share pairings are unchanged in direction and
+significance (sow2 vs farm balance 32/0; vs random 25/7, p 0.002).
+
 ## Not done, next
 
 - Contact: make the enemy seek the player's mould (`species_avoid` below 0,
   per side), so a big player mould is a threat it must answer, and see if
   the network-vs-dense trade then makes Road against Cut a choice.
-- A per-side walker reserve, so a big player mould cannot fill the enemy's
-  birth slots (the tech lead's point); stopping births by species.
+- The front (designer's review): how far each action (sowing behind the
+  front, shots, cutting the enemy's tube) moves the line in 20 s.
+- Garden shots lay craters once the crater PR (#113) lands.
 - Cut was never used by a planned hand; random cut 5,899 walkers and lost.
 - The GPU port, after the toolkit's and one body's rows.

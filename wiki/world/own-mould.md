@@ -4,7 +4,7 @@ kind: design
 status: open
 updated: 2026-11-12
 sources: [Reports/player-mould-2026-11-12.md, Reports/species-gpu-2026-11-11.md, Reports/species-sets-2026-11-11.md]
-code: [own_mould::Garden, World::tend, BigParams::species_convert_per, BigParams::species_convert, BigParams::species_convert_r, SpeciesSet]
+code: [BigParams::species_cap, own_mould::Garden, World::tend, BigParams::species_convert_per, BigParams::species_convert, BigParams::species_convert_r, SpeciesSet]
 ---
 
 # The player's own mould (gardeners)
@@ -33,7 +33,7 @@ is unchanged. On 32 seeds, sowing (Feed while walking to an unclaimed
 crystal and back) grows the player's mould 13 times farm's (32 of 32);
 feeding in one spot does nothing; farming alone starves it. The enemy is not
 smaller: the two blind species meet along one front and hold it
-([page](https://claude.ai/artifact/7Z4b4NB1JG1H7QEf9TrUer)).
+([page](https://claude.ai/artifact/7Z4b4NB1JG1H7QEf9TrUer)). Each side may hold at most half the slots (`species_cap`), and a taken enemy core stops only the enemy's births; on the same seeds that changed nothing yet (the sides never neared it).
 
 ## Owner's word
 
@@ -47,7 +47,7 @@ smaller: the two blind species meet along one front and hold it
 ## Open
 
 - Contact: make the enemy seek the player's mould (`species_avoid` below 0 for the enemy only), so a big player mould is a threat it must answer.
-- A per-side walker reserve, so a big player mould cannot fill the enemy's birth slots; births stopped by species.
+- The front: how far each action moves the line between the two moulds in 20 s.
 - Cut was never used by a planned hand.
 - The fight needs contact: with the species blind to each other, it is rare. Attraction (`species_avoid` below 0) brings it on and hands the dense form the economy too (4 seeds).
 - Crust and spore-flier forms need per-species life-cycle rates.

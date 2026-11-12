@@ -272,6 +272,16 @@ pub struct BigParams {
     /// 60 s, so deposit was a stat that won every fight). Off by default; CPU
     /// only, not yet on the GPU engine.
     pub species_convert_per: bool,
+    /// Most living walkers each species may hold (empty is off: every
+    /// species shares `capacity`). A parent of species s divides only while
+    /// s held fewer than `species_cap[s]` walkers when the birth pass began,
+    /// so a step's births can pass the cap by at most that step's parents
+    /// and no order decides who is born. Added 2026-11-12 for the player's
+    /// own mould (tech lead's review): with one shared pool a sown player
+    /// mould reached 32,000 of the 50,000 slots, so a later fight could be
+    /// won by filling the enemy's birth slots. A cap of 0 stops a species'
+    /// births (a taken core). CPU only.
+    pub species_cap: Vec<usize>,
     /// Species 0 lays this many times the deposit (1 is even; added
     /// 2026-11-11 to give one side an edge in a fight).
     pub species_boost: f32,
@@ -767,6 +777,7 @@ impl BigParams {
             species_convert: 0.0,
             species_convert_r: 0,
             species_convert_per: false,
+            species_cap: Vec::new(),
             species_boost: 1.0,
             species_share: 0.0,
             graze_weight: 0.0,
@@ -2521,10 +2532,29 @@ impl BigDish {
         const NEXT: [(f32, f32); 8] = [(1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (-1.0, 1.0), (-1.0, 0.0), (-1.0, -1.0), (0.0, -1.0), (1.0, -1.0)];
         // (parent, child slot, cell, x, y)
         let mut tries: Vec<(u32, u32, u32, f32, f32)> = Vec::new();
+        // Each species' living walkers as the pass begins (`species_cap`).
+        let held: Vec<usize> = if p.species_cap.is_empty() || self.spec.is_empty() {
+            Vec::new()
+        } else {
+            let mut h = vec![0usize; p.species_cap.len()];
+            for k in 0..n {
+                if self.lives(k) {
+                    if let Some(c) = h.get_mut(self.spec[k] as usize) {
+                        *c += 1;
+                    }
+                }
+            }
+            h
+        };
         for k in 0..n {
             let b = k ^ m;
             if !self.active(k) || self.energy[k] < p.birth_energy || b >= n || self.alive[b] {
                 continue;
+            }
+            if let Some(&c) = held.get(self.spec.get(k).copied().unwrap_or(0) as usize) {
+                if c >= p.species_cap[self.spec[k] as usize] {
+                    continue;
+                }
             }
             let (x, y, _) = self.walkers[k];
             let (dx, dy) = NEXT[(keyed(seed, t, DRAW_BIRTH, k as u32) % 8) as usize];
@@ -3671,6 +3701,30 @@ mod tests {
         let (_, per) = ones(true);
         assert!(raw * 10 < b, "raw trail: {raw} of {b} species-1 walkers left");
         assert!(per * 10 > 9 * b, "per deposit: {per} of {b} left");
+    }
+
+    /// `species_cap` holds a species near its cap while the other grows
+    /// on, and a cap of 0 stops that species' births.
+    #[test]
+    fn species_cap_holds_one_side() {
+        let grow = BigParams { walkers: 200, upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, species: 2, species_avoid: 0.0, ..small(2, 1) };
+        let run = |cap: Vec<usize>| {
+            let mut d = BigDish::new(BigParams { species_cap: cap, ..grow.clone() });
+            let start: Vec<usize> = (0..2).map(|s| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == s).count()).collect();
+            for _ in 0..200 {
+                d.tick();
+            }
+            let end: Vec<usize> = (0..2).map(|s| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == s).count()).collect();
+            (start, end, d.births)
+        };
+        let (start, free, _) = run(Vec::new());
+        assert!(free[0] > start[0] + 20 && free[1] > start[1] + 20, "both grow uncapped: {start:?} -> {free:?}");
+        let cap = start[0] + 10;
+        let (_, capped, _) = run(vec![cap, usize::MAX]);
+        assert!(capped[0] <= cap + 10, "species 0 held near {cap}: {capped:?}");
+        assert!(capped[1] > start[1] + 20, "species 1 grows on: {capped:?}");
+        let (_, stopped, _) = run(vec![0, 0]);
+        assert!(stopped[0] <= start[0] && stopped[1] <= start[1], "a cap of 0 stops births: {start:?} -> {stopped:?}");
     }
 
     /// The outside rules (2026-11-11) are keyed draws too: threads change
