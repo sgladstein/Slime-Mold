@@ -5,6 +5,7 @@
 //! cargo run --release --example larderworld -- census seeds=1-16 [scale=2 walkers=5000 hands=idle,random,farm,rush,wall cap=600 threads=4]
 //! cargo run --release --example larderworld -- look=DIR seeds=1 hands=farm [every=60]
 //! cargo run --release --example larderworld -- census map=fork ...
+//! cargo run --release --example larderworld -- census energy_flow=0.05 hunger_scent=8 ...   # one body
 //! ```
 //!
 //! The game is `mould::larder_world` on the CPU race world
@@ -47,8 +48,8 @@
 //!   boom, claim, late, fort, strike, with knobs after a colon
 //!   (`claim:claim_at=200+keep=4`). Each is also paired with farm, the
 //!   best scripted hand.
-use slime_mould::mould::big::BigDish;
-use slime_mould::mould::larder_world::{race_params, race_world, Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::big::{BigDish, BigParams};
+use slime_mould::mould::larder_world::{race_params, Cmd, End, Game, Order, Rules, Stance, World};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
 
@@ -85,6 +86,7 @@ fn main() {
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
     let mut rules = Rules::default();
     let mut map = None::<(String, Map)>;
+    let mut body = (0.0f32, 0.0f32);
     for a in std::env::args().skip(1) {
         if a == "census" {
             census = true;
@@ -108,6 +110,11 @@ fn main() {
             "strike" => rules.strike = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
             "seek" => rules.seek = v == "1",
+            // One body (2026-11-12, Reports/one-body-2026-11-12.md): food
+            // shared between touching walkers and hunger's pull on the
+            // scent, on the race world's mould (`BigParams`, 0 off).
+            "energy_flow" => body.0 = v.parse().unwrap(),
+            "hunger_scent" => body.1 = v.parse().unwrap(),
             "map" => {
                 let path = std::path::Path::new(v);
                 let dir = match path.parent() {
@@ -122,6 +129,10 @@ fn main() {
     }
     if let Some(c) = cap {
         rules.cap = c;
+    }
+    BODY.set(body).unwrap();
+    if body != (0.0, 0.0) {
+        println!("one body: energy_flow {} hunger_scent {}", body.0, body.1);
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     println!("larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; rules {rules:?}", rules.cap, rules.tps, seeds);
@@ -210,10 +221,15 @@ fn main() {
     }
 }
 
+/// `energy_flow=` and `hunger_scent=`, set once in `main`.
+static BODY: std::sync::OnceLock<(f32, f32)> = std::sync::OnceLock::new();
+
 fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>) -> Row {
+    let (energy_flow, hunger_scent) = *BODY.get().unwrap_or(&(0.0, 0.0));
+    let p = BigParams { energy_flow, hunger_scent, ..race_params(seed, scale, walkers) };
     let mut world = match map {
-        Some(m) => BigDish::with_map(race_params(seed, scale, walkers), m),
-        None => race_world(seed, scale, walkers),
+        Some(m) => BigDish::with_map(p, m),
+        None => BigDish::new(p),
     };
     world.threads = 1;
     let mut g = Game::new(world, rules, seed);
