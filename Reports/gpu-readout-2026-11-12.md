@@ -15,8 +15,9 @@ world's GPU game (`gpu::larder_world::GpuWorld`, the window's world):
 
 The coordinator gave this thread the first two (relayed 04:35Z, from the
 review's *New threads* section). This report covers what changed, the
-checks, and the measurements so far. The 1070's numbers wait for the
-owner's PC.
+checks, and the measurements; the GTX 1070's are in *On the GTX 1070*
+(the afternoon of 2026-11-12), with the squad's unit passes made parallel
+and a step spread over the frames until the next.
 
 ```
 cargo run --release --bin larder-world -- bench=20 hand=farm [scale=8 walkers=100000] [stamps=0]
@@ -117,7 +118,7 @@ the CPU mirror's `pile_full`, which builds the same walls.
 ## Measurements
 
 All on software Vulkan (llvmpipe, 4 cores), so the times are relative
-only; the 1070's are to come.
+only; the 1070's are in *On the GTX 1070* below.
 
 **The bench, before and after** (`bench=20 hand=farm`, the Fork, seed 1,
 scale 2, 5,000 walkers, 300 game steps at 60 frames a second; `main` at
@@ -282,6 +283,210 @@ the running step. The bench now plans on `settled_ticks` and settles at
 the end, and the ground's timed refresh waits for a frame between steps,
 up to a second late (a new wall still reads at once).
 
+## On the GTX 1070 (afternoon, 2026-11-12)
+
+The technical lead's asks (14:38Z, 14:53Z): explain why the game's step
+costs about 12 times the sandbox's 1.45 ms frame before optimising; give
+the units and shots passes more than one thread; put each pass beside its
+slot count, with a per-pass table at 5k, 20k and 100k walkers so the
+owner can choose a size; spread a step if the replay test passes.
+
+```
+cargo run --release --bin larder-world -- bench=20 hand=farm scale=8 walkers=100000 spread=0 passes=30 [squad1=1]
+cargo run --release --bin larder-world -- bench=20 hand=farm scale=8 walkers=100000            # spreading on
+MOULDGPU_TEST_GPU=1 cargo test --release --locked --bin mouldgpu the_adapters -- --ignored --nocapture
+```
+
+`passes=N` times every GPU pass of N more steps alone, in the step's order
+(`Engine::record_timed`); `squad1=1` runs the squad's three unit passes as
+they were on `main` in the same build (`smell1`, `units1`, `harvest1`,
+`Engine::squad_one`), so old and new are timed side by side; `settle=1`
+waits for each step at once. Every bench now prints a machine line first
+and last (free RAM, the GPU's memory and how busy it is, the other programs
+on it), since the first afternoon round overlapped another thread's
+campaign run with 0.5 GB of 8 free (every frame 3-5 times slower, one run
+dead for want of memory, nothing in the output to say so). The rounds
+before the owner freed memory at 15:28Z count only as "before memory was
+freed" (`raw/bench-1070.txt`, `raw/passes-before.txt`,
+`raw/passes-after.txt`); the tables below are round 3 (16:46Z, the PC
+quiet: no other heavy process, 2.1-2.4 GB free, the GPU 0% busy at each
+start) and round 4 (17:00Z, the harvest fix, the GPU 41% busy for a moment
+at its first start).
+
+**Every pass of a step** (the Fork, seed 1, farm hand, 20 game s; GPU ms a
+step, median of 30 steps; "old" is `squad1=1`, the passes on `main`;
+`raw/r3-timing.txt`, `raw/r4.txt`):
+
+| Pass (runs a step at 5k / 20k / 100k) | 5k old | 5k new | 20k old | 20k new | 100k old | 100k new |
+|---|---|---|---|---|---|---|
+| units (1) | 0.744 | 0.014 | 2.716 | 0.022 | 10.453 | 0.069 |
+| smell (1) | 0.264 | 0.014 | 1.007 | 0.023 | 3.884 | 0.053 |
+| harvest (1) | 0.093 | 0.064 | 0.263 | 0.158 | 0.777 | 0.415 |
+| trail (2 / 4 / 8) | 0.131 | 0.131 | 0.923 | 0.923 | 7.173 | 7.182 |
+| scent (2 / 4 / 8) | 0.118 | 0.118 | 0.823 | 0.824 | 6.341 | 6.349 |
+| sense (2 / 4 / 8) | 0.028 | 0.028 | 0.139 | 0.140 | 0.764 | 0.764 |
+| walk | 0.016 | 0.016 | 0.060 | 0.060 | 0.337 | 0.337 |
+| pilesum (4 / 8 / 16) | 0.021 | 0.021 | 0.097 | 0.097 | 0.646 | 0.647 |
+| life, breed, born, eat, flow | 0.041 | 0.042 | 0.155 | 0.154 | 1.097 | 1.098 |
+| draw (1) | 0.033 | 0.033 | 0.118 | 0.118 | 0.461 | 0.461 |
+| **in all** | **1.489** | **0.481** | **6.303** | **2.528** | **31.878** | **17.37** |
+| frames with a step, p50 ms, round 3 | 2.28 | 1.85 | 7.02 | 4.01 | 32.57 | 20.00 |
+| the same, round 4 (the harvest fix) | | 1.47 | | 3.86 | | 21.13 |
+
+Slots 50,000 / 200,000 / 1,000,000; living walkers at 20 s 2,690 / 5,241 /
+15,723 (from `walkers` at the start); harvested 1,953 / 2,345 / 2,100, the
+same old and new, on every run. The new column's passes are round 3's and
+its harvest round 4's. Its totals at 5k and 20k are round 4's (round 3's
+with the new harvest put in give 0.481 and 2.518); at 100k it is round 3's
+18.282 with the new harvest put in (less 1.329, plus 0.415), as round 4's
+100k run measured 18.705 with trail and scent about 5% slower than round
+3's in the same passes (trail 7.58 against 7.18; the step's ticks 18.08 ms
+against 16.75), which nothing in its machine lines explains (the GPU 5%
+busy at its start, the same programs on it). Round 3's frames ran its
+slower harvest (0.49, 0.80 and 1.33 ms a step).
+
+**Cost follows living walkers, not slots.** `sense` takes 0.014, 0.035 and
+0.096 ms a run at 50k, 200k and 1M slots: 2.5 and 6.9 times the 5k run,
+against 4 and 20 times the slots and 1.9 and 5.8 times the living
+walkers. Fitting `sense`'s run to slots and living walkers gives about
+0.02 ns a slot and 4.8 ns a living walker, so at 100k the slots are about a
+fifth of its run (0.02 of 0.096 ms). If the other walker passes split the
+same way, the slots cost about 0.4 ms of the 2.2 ms a step that sense,
+walk, eat, life, breed and born take, and sizing slots to twice the peak
+or dispatching over a compacted live count would save at most that. Not
+worth doing yet. Every bench here held the one-walker-a-cell limit, which
+the engine drops (`Engine::made`) when the slots pass half the agar: 50k,
+200k and 1M slots against the Fork's 146,258, 584,735 and 2,338,940 agar
+cells at scales 2, 4 and 8.
+
+**Why the game's step costs about 12 times the sandbox's frame.** Both run
+120 engine ticks a second: the game 15 steps of 8 ticks at scale 8, the
+sandbox (key 1, 100,000 walkers on 1024 x 640) 60 frames of 2. So:
+
+- 4x is ticks a frame: the game ran a step's 8 ticks in the frame it
+  started (16.75 ms of ticks, 0.95 of drawing) and the next three frames
+  idle; the sandbox runs 2 ticks a frame.
+- About 3x is the cost of a tick: 2.09 ms (16.75 / 8) against about 0.67
+  ((1.45 - 0.1) / 2). Trail and scent are 1.69 ms of it (0.898 + 0.794 a
+  run) on 2,621,440 cells, against the sandbox's 0.285 (0.128 + 0.157) on
+  655,360: four times the cells, and about 1.5 times a cell, as the game's
+  trail pass also cuts wounds and hits, marks reached piles, keeps craters
+  and soil. Its walker passes are cheaper, with 15.7k living walkers to the
+  sandbox's 100k (sense 0.096 ms a tick against 0.333).
+
+Spreading takes back the 4x; the 3x is the world's size.
+
+**The unit passes on a workgroup each, and a race only the 1070 showed.**
+On `main` the squad's three unit passes ran one thread: `units` looped
+over every unit's touch and sight boxes (10.45 ms a step at 100k), `smell`
+over every unit's disc (3.88), `harvest` over every take box (0.78). Now
+`units` has a workgroup a unit, its 256 threads summing the box and
+reducing the densest block in shared memory (ties to the lower index, as
+the CPU); `smell` and `shout` (the shots' alarm) are one workgroup of 256
+in which thread `tx + 16 ty` owns every cell whose x is `tx` and y `ty`
+mod 16 (`owned_from`), so discs that overlap add in the CPU's order with
+no barrier; `harvest` is one workgroup that loads a take box's row into
+shared memory (each cell by the thread its x picks, mod 256), lets thread 0
+take in the CPU's order, and writes back. The first version had each thread
+take a cell of a box by its place in that box, with a storage barrier
+between units. It passed every twin test on lavapipe, and on the 1070 the
+farm's game changed from run to run:
+
+| `scale=2` farm bench on the 1070 | harvested, two runs |
+|---|---|
+| `main`'s passes (`squad1=1`) | 1953, 1953 |
+| first version | 1478, 1785 |
+| first version, `settle=1` | 1783, 1784 |
+| `squad1=1 settle=1` | 1953, 1953 |
+| owned cells (this change), 6 runs incl. `settle=1` | 1953 every run |
+| `scale=4`: `squad1=1` / owned cells, 3 runs | 2345 / 2345 every run |
+
+Two threads meeting on a cell by different box places lost each other's
+adds, though a barrier stood between them; lavapipe runs a workgroup's
+threads in an order that hides it. Two planted bugs in the owned version
+(harvest walking a row backwards, `ty = li % 16`) fail the twin tests on
+lavapipe. Harvest's first owned version walked all 256 slots of each
+row's stretch on thread 0 (a take box is 25 cells wide): 0.493 ms a step
+at 5k against the old pass's 0.093; walking only the row's own cells
+(round 4) brought it to 0.064, 0.158 and 0.415, under the old pass at every
+size. A dead end records the shared-box version.
+
+**Spreading a step over the frames until the next** (`GpuWorld::spread`,
+`Engine::record_share`): the window records a step at `frame_start` in as
+many shares of its ticks as frames it lasts (4 at 60 frames a second); the
+first goes with the squad's start, one more each frame (`frame_more`), and
+the last carries the squad's end and the readout. Every share draws, so the
+mould moves every frame. The passes and their order are the whole step's:
+`a_step_in_shares_is_the_same_game` plays 150 steps in 1, 2 and 4 shares,
+with mid-step read-backs, and matches every log line and the final hash, on
+lavapipe and on the 1070. On the 1070, scale 8, 100k walkers, round 3:
+
+| | every frame p50 / p95 / max ms | frames with a step p50 / p95 |
+|---|---|---|
+| `spread=0` (round 3's harvest) | 0.77 / 20.39 / 44.62 | 20.00 / 20.47 |
+| spreading on, two runs | 5.50 / 6.62 / 47.37 and 5.48 / 6.62 / 50.36 | 5.73 / 5.93 |
+| scale 4, spreading on, two runs | 1.24 / 2.64 / 13.54 and 1.24 / 2.65 / 13.32 | 1.41 / 1.79 |
+
+W2c's gate, a frame under 10 ms p95 on the 1070, holds at 100k walkers
+with spreading: 6.62 ms. The worst frame of each run (32-35 ms, nearly
+all `prepare`, once a run) comes with or without spreading, not from the
+step. Two costs come with it. A command while a step is in shares finishes the step first
+(`Game::apply`), so that frame pays the step's remaining shares, as every
+step frame did before. And the scripted farm hand, which looks at the game
+every frame, sees it up to a step older: at scale 4 its buys land one step
+later (steps 16, 31, 46 against 15, 30, 45; the command logs differ only so,
+on lavapipe too), and it harvests 2343 against 2345. With the same
+commands the game is the same.
+
+**The twin tests on the 1070** (`MOULDGPU_TEST_GPU=1`, rounds 3 and 4,
+`raw/r3-tests-summary.txt`): 27 of `mouldgpu`'s twins pass and 2 fail,
+and `main` at 9f5e4a4 fails the same 2 with the same numbers, so neither
+comes from this change. `the_life_cycle_matches_the_cpu_for_four_ticks`
+fails on its first dish ("spores, one a cell"): 19 of 24,822 walkers off
+after four ticks (within its bound of 1 in 1,000), but trail L1 1.2e-4
+against 1e-6 (lavapipe: 0 off, trail 0). The fleeing-mould game twin
+kills 908 on the GPU against 765 on the CPU (bound 15%); the CPU without
+the alarm kills 1,488, so the alarm works on the 1070. The one-tick twins
+pass with their bounds unchanged: 0 walkers off on most dishes, 1 off on
+three (of 25,000 or 250,000), 44 of 25,000 on "heavy respawn" (35 limited
+walkers aimed at a cell an unlimited one took first, inside its bound),
+and the sealed wall dish bitten 4 times on the GPU against 0.
+
+Why (`the_adapters_maths_beside_the_cpus`, 2^20 inputs; `raw/r3-maths.txt`):
+
+| | GTX 1070: differ from the CPU's bits, worst | lavapipe |
+|---|---|---|
+| `cos`, `sin` | 91%, 1.1e-6 | 17%, 6e-8 (1 ulp) |
+| `sqrt` | 17%, 4.8e-7 | exact |
+| `exp`, `pow` | 82%, 45%; about 1 ulp | 87%, 66%; 1-2 ulp |
+| `a * b + c` | fused into one FMA every time | never fused |
+| a walker's step lands in another cell | 0 of 2^20 | 0 of 2^20 |
+
+So a tick is almost always the same; over many ticks the drift grows, as
+chaos does. Does it lean one way? `the_adapters_game_beside_the_cpus_over_seeds`
+(the race world, scale 2, an idle squad, 30 s, both engines): over 32
+seeds on the 1070, the GPU's trail is above the CPU's on 17, 15, 22, 18,
+17 and 13 seeds at 5-30 s (median ratio 0.995-1.011) and its mould larger
+on 15, 11, 11, 19, 12 and 15 (`raw/r3-drift32.txt`); the smallest p of the
+twelve is 0.05, and none survives Holm. Exact results across machines
+would need table maths for the trigonometry and the square root, and
+arithmetic no driver can fuse; only replays shared between machines or
+lockstep play need that, neither is planned, and HANDOFF's open decision 6
+now carries the cost. The
+integration thread's rule (2026-11-12): a PR that changes a shader or the
+GPU's `Params` or bindings runs the twins on the 1070 before it merges
+and quotes the machine line and the counts (the wiki's
+[GPU sandbox page](../wiki/model/gpu-sandbox.md), *Twins on the 1070*).
+
+**Left at 100k walkers:** trail and scent, 13.5 of the step's 17.4 ms.
+Fusing them into one pass, or the CPU's `substeps` 4 (half the ticks;
+the lead asked for a twin check of 4 against 8 before trading accuracy)
+would be next if a bigger world needs it; with spreading, 100k already
+runs at 5.5 ms a frame. The squad's `cut` pass writes `crater = max(...)`
+from workgroups whose cones may overlap without an atomic: a race of the
+same kind, not yet seen in a test (craters are on by default only in the
+garden; a twin with overlapping cones would show it).
+
 ## Files
 
 - `src/gpu/larder_world.rs`: the readout, `frame_start` and
@@ -296,8 +501,22 @@ up to a second late (a new wall still reads at once).
 - `src/bin/mouldgpu.rs`: the game twin test's mould grid check.
 - `examples/larderworld.rs`: `gpu=`, `compare`, `mann_whitney_p`.
 - `examples/campaign.rs`: `gpu=0|1|both`.
+- `src/gpu/engine.wgsl`, `src/gpu/mod.rs` (afternoon): `units` a
+  workgroup a unit, `smell`, `shout` and `harvest` on owned cells
+  (`owned_from`), the old passes as `smell1`, `units1`, `harvest1`
+  (`Engine::squad_one`), `record_share`, `record_timed`, `time_passes`;
+  `src/gpu/larder_world.rs`: `spread`, `frame_more`, `flush`, `profile`,
+  the shares test; `src/bin/larder-world.rs`: `passes=`, `settle=`,
+  `squad1=`, `spread=`, the machine line; `src/bin/mouldgpu.rs`: the wide
+  units in the squad twin, `the_adapters_maths_beside_the_cpus`,
+  `the_adapters_game_beside_the_cpus_over_seeds` (`DRIFT_SEEDS`).
 - [`gpu-readout-2026-11-12/`](gpu-readout-2026-11-12/): the bench patch
   for `main`, the census merge script (`merge.py`, for seed slices run
   apart), raw outputs (`raw/`: the bench pairs, the CPU census on `main`
   and after, the 32-seed census on both engines, the idle runs, the Rim
-  mission's four seeds, the split's bench pairs).
+  mission's four seeds, the split's bench pairs; from the 1070:
+  `bench-1070.txt`, `life-onebody-1070.txt`, `passes-before.txt`,
+  `passes-after.txt` and `diag-summary.txt` before memory was freed,
+  `fixed.txt` and `fixed-tests.txt` (the outcomes of the owned cells, times
+  unusable), `r3-timing.txt`, `r3-tests-summary.txt`, `r3-maths.txt`,
+  `r3-drift.txt`, `r3-drift32.txt` and `r4.txt`).

@@ -1,0 +1,14 @@
+payoff table: mean score (mould wiped / cap / squad wiped / overrun), seeds per cell
+                           drifter
+    idle    -0.326 (0/48/0/0) n48 
+  random    -1.317 (3/5/40/0) n48 
+    farm    +0.290 (0/48/0/0) n48 
+    wall    +0.249 (0/48/0/0) n48 
+    boom    +0.233 (0/48/0/0) n48 
+   claim    +0.524 (7/41/0/0) n48 
+    fort    +0.232 (0/48/0/0) n48 
+  strike    +0.626 (8/40/0/0) n48 
+
+best plan per tier (mean), and the hand best on the most seeds:
+    drifter: best by mean strike; best per seed {'strike': 20, 'claim': 18, 'farm': 7, 'wall': 3}
+

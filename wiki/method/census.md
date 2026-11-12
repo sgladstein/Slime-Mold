@@ -2,7 +2,7 @@
 title: The census (how a change is judged)
 kind: method
 status: current
-updated: 2026-11-12T17:30Z
+updated: 2026-11-12T17:45Z
 sources: [Reports/testing-practice-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/gpu-plan-2026-11-10.md, Reports/larder-m2-2026-11-11.md, Reports/gpu-sandbox-2026-11-11.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md, Reports/pixel-physics-review-2026-11-10.md]
 code: [mouldprobe, state_hash, every_dish_replays_bit_for_bit, Dish::step_cost, HJIT, HLAG, STOPAT, NOWATER, INVAR, WARDEN]
 ---
@@ -102,7 +102,10 @@ The same rules carry to the newer harnesses, with four additions:
   today's dishes unlikely to be the true games (2026-11-10 20:55Z). GPU code
   is checked by a twin test, one GPU tick from a CPU dish's state against one
   CPU tick, in CI on software Vulkan
-  ([gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md)).
+  ([gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md)), and on the GTX
+  1070 before a GPU PR merges; there the game-length twins drift from the
+  1070's own float maths, with no lean in trail or mould size over 32 seeds
+  ([report](../../Reports/gpu-readout-2026-11-12.md), *On the GTX 1070*).
 - **Both engines for the Larder world** (2026-11-12): twin ticks prove the
   code is the same, not that long games land on the same spread.
   `examples/larderworld.rs -- census gpu=both` plays each game on the CPU
