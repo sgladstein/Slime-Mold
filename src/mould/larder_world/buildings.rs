@@ -25,10 +25,12 @@
 //! frame takes at most `squad::UNITS_MAX` (64), so with 40 soldiers and the
 //! larder there is room for `BuildRules::max` (20) buildings.
 //!
-//! **Raised over time.** A building is placed as a ghost with `built` 0 to
-//! 1 and acts only once whole. Until the soldier controls thread's
-//! `Order::Build` lands (soldiers stand at a ghost and add to `built`),
-//! `BuildRules::raise` is 0 and a building is whole when placed. A ghost
+//! **Raised over time** (owner's card, 2026-11-12 04:41Z: "Soldiers build
+//! over time"). A building is placed as a ghost with `built` 0 to 1 and
+//! acts only once whole. Soldiers on `Order::Build` stand at it and add to
+//! `built` (`Game::build_turn`), `BuildRules::raise` seconds for a lone
+//! builder, builders adding up; an idle soldier in range takes up a ghost
+//! by itself. A ghost
 //! holds a tenth of its health and gains the rest as it rises, and the
 //! mould wears a ghost as it wears a building. A wall writes its cells into
 //! the world, at full health, when it is whole.
@@ -107,8 +109,13 @@ pub struct BuildRules {
     pub max: usize,
     /// No building within this of another, dish cells.
     pub gap: f32,
-    /// Seconds a lone builder takes to raise a building; 0 is whole when
-    /// placed (until the soldier controls thread's build orders land).
+    /// Seconds a lone builder takes to raise a building (a wall: per
+    /// `WALL_RAISE_LEN` dish cells of length); 0 is whole when placed.
+    /// 8 (2026-11-12, seeds 5-12, cap 900, against 0, the hands sending
+    /// their nearest soldier to raise what they place): every plan still
+    /// beats idle and random 8-0; turtle is lower on 7 of 8 (p 0.016),
+    /// guard and pumps on 7 (p 0.07), wall, ring and killzone even. The
+    /// cost falls on the turret plans, which had the edge on every tier.
     pub raise: f32,
     pub turret_cost: f32,
     pub turret_hp: f32,
@@ -155,7 +162,7 @@ impl Default for BuildRules {
         BuildRules {
             max: 40,
             gap: 2.5,
-            raise: 0.0,
+            raise: 8.0,
             turret_cost: 500.0,
             turret_hp: 300.0,
             turret_range: 15.0,
@@ -428,7 +435,9 @@ mod tests {
     use super::*;
 
     fn small(seed: u64) -> Game<BigDish> {
-        Game::new(race_world(seed, 1, 1_000), Rules { start_bank: 1e6, ..Rules::default() }, seed)
+        // Whole when placed: these tests are of what buildings do; raising
+        // them has its own tests (`BuildRules::raise` set in each).
+        Game::new(race_world(seed, 1, 1_000), Rules { start_bank: 1e6, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
     }
 
     /// A soldier at `at`, so a building there is in reach.
@@ -624,5 +633,84 @@ mod tests {
         assert!(Game::replay(&mut b, &text));
         assert_eq!(a.world.hash(), b.world.hash());
         assert_eq!(a.buildings, b.buildings);
+    }
+
+    #[test]
+    fn soldiers_raise_a_ghost_over_time_and_builders_add_up() {
+        let mut g = small(11);
+        g.rules.build.raise = 4.0;
+        let at = open_near(&g, (g.larder.0 + 6.0, g.larder.1));
+        assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+        assert!(!g.buildings[0].up(), "a ghost while it is raised");
+        let ghost = g.buildings[0].hp;
+        // One soldier sent: it walks there and raises it.
+        g.apply(Cmd::Order(0, Order::Build(0)));
+        for k in 1..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Move(g.larder.0 - 20.0, g.larder.1)));
+        }
+        let mut half = None;
+        for n in 0..(g.rules.tps * 30) {
+            g.step();
+            if half.is_none() && g.buildings[0].built >= 0.5 {
+                half = Some((n, g.buildings[0].hp));
+            }
+            if g.buildings[0].up() {
+                break;
+            }
+        }
+        let (_, hp_half) = half.expect("it rose past half");
+        assert!(hp_half > ghost && hp_half < g.buildings[0].max_hp, "half-built is weaker: {hp_half}");
+        assert!(g.buildings[0].up(), "a lone builder raises it in its time");
+        g.step();
+        assert_eq!(g.soldiers[0].order, Order::Hold, "then it holds");
+        // Two builders on the next: about twice as fast.
+        let time = |g: &mut Game<BigDish>, n: usize| {
+            let at2 = open_near(g, (g.larder.0, g.larder.1 + 8.0));
+            assert!(g.apply(Cmd::Build(Kind::Turret, at2)));
+            let b = g.buildings.len() - 1;
+            for k in 0..n {
+                g.soldiers[k].x = at2.0;
+                g.soldiers[k].y = at2.1;
+                g.apply(Cmd::Order(k, Order::Build(b)));
+            }
+            for k in n..g.soldiers.len() {
+                g.apply(Cmd::Order(k, Order::Move(g.larder.0 - 20.0, g.larder.1)));
+            }
+            let mut t = 0;
+            while !g.buildings[b].up() && t < 1000 {
+                g.step();
+                t += 1;
+            }
+            t
+        };
+        let mut a = small(12);
+        a.rules.build.raise = 4.0;
+        let mut b = small(12);
+        b.rules.build.raise = 4.0;
+        for g in [&mut a, &mut b] {
+            g.rules.build.gap = 0.0;
+        }
+        let (one, two) = (time(&mut a, 1), time(&mut b, 2));
+        assert!(two * 3 < one * 2, "two builders {two} ticks, one {one}");
+        let _ = g;
+    }
+
+    #[test]
+    fn an_idle_soldier_raises_a_ghost_in_range_and_a_wall_stands_only_when_whole() {
+        let mut g = small(13);
+        g.rules.build.raise = 2.0;
+        let (x, y) = g.larder;
+        assert!(g.apply(Cmd::Wall((x - 10.0, y - 5.0), (x - 10.0, y + 5.0))));
+        assert!(!g.world.wall.iter().any(|&w| w), "no wall cells while a ghost");
+        // Nobody ordered: the idle squad at the larder takes it up.
+        for _ in 0..(g.rules.tps * 20) {
+            g.step();
+            if g.buildings[0].up() {
+                break;
+            }
+        }
+        assert!(g.buildings[0].up(), "raised by the idle squad");
+        assert!(g.world.wall.iter().any(|&w| w), "its cells are in the world once whole");
+        assert_eq!(Cmd::parse(&Cmd::Order(2, Order::Build(7)).to_line()), Some(Cmd::Order(2, Order::Build(7))));
     }
 }

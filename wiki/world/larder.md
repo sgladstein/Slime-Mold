@@ -2,9 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T09:56Z
-sources: [Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Game::build, Game::raise, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
+updated: 2026-11-12T11:58Z
+sources: [Reports/soldier-controls-2026-11-12.md, Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
+code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -23,7 +23,7 @@ rules on the world, on the CPU and the engine; WM1, designed
 [maps](maps.md) loaded on both.
 **Playable:** `cargo run --release --bin larder-world -- map=fork` (W2c's first cut: the real rules on the GPU world, on a map). `mouldgpu`'s Q squad is the UI's stand-in, with no rules. **Smoke tests (CI, 2026-11-12):** `the_window_plays_every_mission` and `the_window_takes_every_command` play every mission file and `hand=every` (each command on the card pressed each game second) for 60 game seconds through `larder-world -- bench`, at scale 1 with the sound on tape, on CI's software Vulkan; a new mission file or card command is covered without a new test. Keep them green.
 **Next:** the frame time on the 1070 (`larder-world -- bench=SECS` measures it without a window; a game step now waits once, on one packed readout: [report](../../Reports/gpu-readout-2026-11-12.md); the window draws while the GPU runs a step). The census on both engines (`larderworld census gpu=both`, `campaign gpu=both`) finds no bias over 32 seeds and five hands; the Rim mission's leak on the GPU is open (3 of 4 seeds hold, against 4 of 4 on the CPU). The maps' soil plays on the GPU since 2026-11-12. A stalemate now scores the charge taken and the mould's size (score v2).
-**Buildings, built 2026-11-12** ([report](../../Reports/larder-buildings-2026-11-12.md), [page](https://claude.ai/artifact/Xutp7S9tyPoz4ghxhaCSrj)): turret, lure, pump, outpost and wall as one `Building` type, each a still unit of the squad frame (one pass on both engines, twin-tested; `squad::UNITS_MAX` 64 to 96). The window's build page is Q. Placed as ghosts that rise with `Game::raise` (the controls thread's builders); whole at once today. The census found guns at the crystals win the race world on every tier, and spending the same food on soldiers ties them: food does not bind, an economy question the Larder thread takes up. No scorcher (owner, 04:46Z); the siren waits on the toolkit's alarm burst.
+**Buildings, built 2026-11-12** ([report](../../Reports/larder-buildings-2026-11-12.md), [page](https://claude.ai/artifact/Xutp7S9tyPoz4ghxhaCSrj)): turret, lure, pump, outpost and wall as one `Building` type, each a still unit of the squad frame (one pass on both engines, twin-tested; `squad::UNITS_MAX` 64 to 96). The window's build page is Q. Placed as ghosts that soldiers raise (`Order::Build`, `BuildRules::raise` 8 s for a lone builder; idle soldiers in range take one up; [controls report](../../Reports/soldier-controls-2026-11-12.md)): the turret plans pay most for it. The census found guns at the crystals win the race world on every tier, and spending the same food on soldiers ties them: food does not bind, an economy question the Larder thread takes up. No scorcher (owner, 04:46Z); the siren waits on the toolkit's alarm burst.
 **Campaign (W5), designed and approved 2026-11-12 04:44Z, not built:** eight missions on the v2 maps, each one verb against one tier, shown to the player as a goal sentence and bar with one to three stars, with a no-soft-lock rule and a dead-time measure; only unlocked verbs carry between missions ([design](../../Reports/larder-campaign-2026-11-12.md)). The mission layer (`mould::campaign`) and missions 1-3 are built: `larder-world -- mission=1-landfall` plays one, and `examples/campaign.rs` is its census ([report, *The mission layer, built*](../../Reports/larder-campaign-2026-11-12.md)). Tuned on the plain mould (four seeds): the AI meets missions 1-3 in 2:31-2:48, 1:42-5:31 and 10:00-11:41, idle and random never; mission 3 does not yet need walls, and missions 2-3 are scored on both engines since the GPU world reads its mould grid (#101) ([report, *Missions 1-3 tuned*](../../Reports/larder-campaign-2026-11-12.md)). In the window the Rim mould trails out the north-east gap by 5:00 on seed 1 ([pictures](https://claude.ai/artifact/Pu2j5ComXhUPTAMv4MyMRJ)), yet the GPU census holds that seed (peak leak 0.050, inside the 5% allowance): the trail is 2-5% of the walkers spread thin (at most 3 in a 4 x 4 bin), so the goal line now says the share outside against the 5% allowed ([report, *What the player sees outside the Rim*](../../Reports/larder-campaign-2026-11-12.md)).
 
 ## Larder World so far
@@ -90,8 +90,28 @@ fire against 29 ([page](https://claude.ai/artifact/5wQ3xSk8pBN6uig1rxKd4R)),
 but as the default it failed the gate: random held the core, which the
 mould no longer defended, and wiped the mould on 12 of 16 seeds. Without
 it the gate holds on the race world (32 seeds), the Fork and the Rim, but
-strike beats every plan (farm 28-4) with food left unspent. Next, the hole
-from the toolkit's crater, then running costs. Off by default for other threads:
+strike beats every plan (farm 28-4) with food left unspent. **The hole
+from the crater** (PR 2, [report, *The hole under fire*](../../Reports/larder-world-roadmap-2026-11-11.md)):
+each hit lays the toolkit's crater on its strike disc for `Rules::crater`
+10 game seconds (CPU and GPU), where the trail keeps a tenth a step, and
+a walker standing in a crater still stops a shot. Four soldiers' fire
+leaves a hole of 60 dish cells after 20 s against 29 without it (8 of 8
+seeds), kills 741 walkers against 163, and the hole closes over about
+10 s once firing stops. The gate holds (race 32 seeds, the Fork, the
+Rim): every plan beats idle and random under Holm and strike no longer
+beats farm (20-12, n.s.); random wiped the mould on 7 of 32 race seeds
+against 2 without craters (p 0.06). On the second block (race 201-232)
+no plan beats random after Holm with craters (20-12 to 23-9), against
+farm's 25-7 without them, and random wiped the mould on 11 of 32 against
+5 (7 seeds only with craters): holes that don't refill let a careless
+squad clear and hold the core. At #122's build time (raise 8) the
+building hands still beat idle 32-0 and random 25-7 on race 5-36. Ruled 11-12 11:16-11:22Z: craters stay on,
+and core defence is the next PR, ahead of running costs. The round
+holes read as stamps to the designer and the graphics thread, so two look
+switches, both off, went on the page blind for the owner to pick from:
+`Rules::spread` (a smaller strike, scattered, at the same kills) and
+`BigParams::scorch_cone` (a soft-edged crater); neither moves the hole
+beyond chance. Next, core defence, then running costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)

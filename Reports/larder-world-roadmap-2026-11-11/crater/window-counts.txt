@@ -1,0 +1,45 @@
+larder-world look=DIR hand=rush at=5,7,9,11,13 crater=0 (the Fork, seed 1, 5,000 walkers, software Vulkan), at 189ab71
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+win/rush2-c0/fork-rush-005s-all.png
+win/rush2-c0/fork-rush-005s-near.png
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.245 ms a frame
+  t 5 s: mould 4999, soldiers 4, bank 2000, harvested 0, shots 2, killed 1, took 0%, crystals left 1.000
+win/rush2-c0/fork-rush-007s-all.png
+win/rush2-c0/fork-rush-007s-near.png
+  CPU: ground field 2.18 ms (once a game second), model and HUD 0.047 ms a frame
+  t 7 s: mould 4991, soldiers 4, bank 2000, harvested 0, shots 7, killed 9, took 0%, crystals left 1.000
+win/rush2-c0/fork-rush-009s-all.png
+win/rush2-c0/fork-rush-009s-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.040 ms a frame
+  t 9 s: mould 4865, soldiers 4, bank 2000, harvested 0, shots 15, killed 135, took 0%, crystals left 0.999
+win/rush2-c0/fork-rush-011s-all.png
+win/rush2-c0/fork-rush-011s-near.png
+  CPU: ground field 1.92 ms (once a game second), model and HUD 0.100 ms a frame
+  t 11 s: mould 4473, soldiers 4, bank 2000, harvested 0, shots 23, killed 579, took 0%, crystals left 0.999
+win/rush2-c0/fork-rush-013s-all.png
+win/rush2-c0/fork-rush-013s-near.png
+  CPU: ground field 2.01 ms (once a game second), model and HUD 0.046 ms a frame
+  t 13 s: mould 4376, soldiers 4, bank 2000, harvested 0, shots 31, killed 974, took 0%, crystals left 0.999
+
+crater=10
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+win/rush2-c10/fork-rush-005s-all.png
+win/rush2-c10/fork-rush-005s-near.png
+  CPU: ground field 1.86 ms (once a game second), model and HUD 0.043 ms a frame
+  t 5 s: mould 4999, soldiers 4, bank 2000, harvested 0, shots 2, killed 1, took 0%, crystals left 1.000
+win/rush2-c10/fork-rush-007s-all.png
+win/rush2-c10/fork-rush-007s-near.png
+  CPU: ground field 7.17 ms (once a game second), model and HUD 0.043 ms a frame
+  t 7 s: mould 4994, soldiers 4, bank 2000, harvested 0, shots 7, killed 6, took 0%, crystals left 1.000
+win/rush2-c10/fork-rush-009s-all.png
+win/rush2-c10/fork-rush-009s-near.png
+  CPU: ground field 1.82 ms (once a game second), model and HUD 0.038 ms a frame
+  t 9 s: mould 4871, soldiers 4, bank 2000, harvested 0, shots 15, killed 129, took 0%, crystals left 0.999
+win/rush2-c10/fork-rush-011s-all.png
+win/rush2-c10/fork-rush-011s-near.png
+  CPU: ground field 1.90 ms (once a game second), model and HUD 0.042 ms a frame
+  t 11 s: mould 4442, soldiers 4, bank 2000, harvested 0, shots 23, killed 598, took 0%, crystals left 0.999
+win/rush2-c10/fork-rush-013s-all.png
+win/rush2-c10/fork-rush-013s-near.png
+  CPU: ground field 1.98 ms (once a game second), model and HUD 0.044 ms a frame
+  t 13 s: mould 4219, soldiers 4, bank 1999, harvested 0, shots 31, killed 1098, took 0%, crystals left 0.999

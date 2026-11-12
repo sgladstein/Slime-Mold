@@ -396,6 +396,10 @@ impl World for GpuWorld {
         self.e.dish.p.food_deposit
     }
 
+    fn fine_steps(&self) -> u32 {
+        self.sub
+    }
+
     /// As of the last whole game second (`GRID_EVERY`): once asked for,
     /// the GPU sums the square into the readout once a game second; a
     /// first ask, or a new square, is read back once. The CPU world's grid
@@ -531,6 +535,9 @@ mod tests {
         }
         fn food_deposit(&self) -> f32 {
             self.g.food_deposit()
+        }
+        fn fine_steps(&self) -> u32 {
+            self.g.fine_steps()
         }
         fn hash(&self) -> u64 {
             self.g.hash()

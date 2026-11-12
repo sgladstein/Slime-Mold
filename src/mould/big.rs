@@ -233,6 +233,17 @@ pub struct BigParams {
     /// the germ's sickness burns energy, and a wave that runs along the
     /// tubes leaves them thinned where the walkers starve.
     pub sick_upkeep: f32,
+    /// A mould trait: a healthy walker catches the germ only where the
+    /// germ field is over `sick_catch` x `germ_resist` (1: today's). A
+    /// resistant mould takes a wave in its thick parts, where sick walkers
+    /// lay germ close together, and not along thin tubes, so it loses part
+    /// of its body and grows back. Why (2026-11-12, round 2): with tools
+    /// carried, plague was the best plan on all six tiers. Tried first and
+    /// dropped: amputation by steering (healthy walkers weigh the germ at
+    /// their sensors, -5 or -20, sick ones lay no trail) changed nothing,
+    /// because the wave crosses the body in a few seconds, faster than a
+    /// walker turns away (`Reports/dead-ends.md`).
+    pub germ_resist: f32,
     /// Area sensors (Lague's Slime-Simulation): a sensor reads the sum over
     /// the (2r+1) x (2r+1) square of agar cells centred where it points,
     /// not one cell. 0 is one cell (today's). The square's centre cell
@@ -272,6 +283,16 @@ pub struct BigParams {
     /// 60 s, so deposit was a stat that won every fight). Off by default; CPU
     /// only, not yet on the GPU engine.
     pub species_convert_per: bool,
+    /// Most living walkers each species may hold (empty is off: every
+    /// species shares `capacity`). A parent of species s divides only while
+    /// s held fewer than `species_cap[s]` walkers when the birth pass began,
+    /// so a step's births can pass the cap by at most that step's parents
+    /// and no order decides who is born. Added 2026-11-12 for the player's
+    /// own mould (tech lead's review): with one shared pool a sown player
+    /// mould reached 32,000 of the 50,000 slots, so a later fight could be
+    /// won by filling the enemy's birth slots. A cap of 0 stops a species'
+    /// births (a taken core). CPU only.
+    pub species_cap: Vec<usize>,
     /// Species 0 lays this many times the deposit (1 is even; added
     /// 2026-11-11 to give one side an edge in a fight).
     pub species_boost: f32,
@@ -664,14 +685,32 @@ pub struct BigParams {
     /// stops only the mould's trail from holding, so a blast's hole or a
     /// det cord's cut stays open instead of re-knitting in seconds (the
     /// knife's 4 s heal, `Reports/dead-ends.md`, `STORM_CUTS`).
+    /// 0.1 since 2026-11-12, when shots began to lay it (`Rules::crater`):
+    /// the hole under a squad's fire was +28 dish cells over no crater at
+    /// 0.1 and +19 at 0.5 (race world, 8 seeds, 8 of 8 larger each); the
+    /// toolkit thread's probes at 0.1 kept a blast's disc as empty at 20 s
+    /// and a det cord's cut cleaner (trail 67 against 137 at 20 s). Was 0.5.
     pub scorch_keep: f32,
     /// Fine steps of scorch at which a cell bites at full strength: below
     /// it the cut is `scorch_keep`'s scaled by steps left / `scorch_full`,
     /// so every crater fades out instead of stopping at once, and a writer
     /// sets both strength and length by the steps it writes (a blast's deep
     /// crater, a shot's faint stamp; the owner's "stamps that fade",
-    /// 2026-11-12 04:38Z, on the graphics thread's A/B).
+    /// 2026-11-12 04:38Z, on the graphics thread's A/B). 30 (one game
+    /// second at scale 2) since 2026-11-12: at 300 a shot's 10 s crater
+    /// bit at full strength only as it was laid (hole +15 against +19 at
+    /// 30), and a blast's 600 steps sit at full either way. Was 300.
     pub scorch_full: u16,
+    /// A shot's crater as a cone (Larder thread, 2026-11-12, a look switch
+    /// for the owner's A/B): a cell at squared distance d² from the hit
+    /// gets `steps - steps * d² / (r² + 1)` of the shot's steps instead of
+    /// all of them (whole numbers, so the GPU matches to the bit). With
+    /// `scorch_full` near a shot's steps the bite then falls from full in
+    /// the middle to little at the rim, so the hole's edge is a gradient
+    /// over a few cells instead of the one-cell drop the view lights as a
+    /// dark rim (graphics thread's render of the disc, 11-12 10:11Z).
+    /// Blasts (`scorch_disc`) keep their flat disc. Off by default.
+    pub scorch_cone: bool,
     /// A rectangular world, three dish cells in from the edge, instead of
     /// the dish's ellipse: a world, not a dish (owner, 11-11 14:01Z).
     pub rect: bool,
@@ -759,6 +798,7 @@ impl BigParams {
             sick_trail: 1.0,
             sick_reach: 1.0,
             sick_turn: 1.0,
+            germ_resist: 1.0,
             sick_seed_r: 0.0,
             sick_upkeep: 1.0,
             sensor_r: 0,
@@ -767,6 +807,7 @@ impl BigParams {
             species_convert: 0.0,
             species_convert_r: 0,
             species_convert_per: false,
+            species_cap: Vec::new(),
             species_boost: 1.0,
             species_share: 0.0,
             graze_weight: 0.0,
@@ -846,8 +887,9 @@ impl BigParams {
             sand_keep: 0.8,
             clay_keep: 1.05,
             barren_upkeep: 3.0,
-            scorch_keep: 0.5,
-            scorch_full: 300,
+            scorch_keep: 0.1,
+            scorch_full: 30,
+            scorch_cone: false,
             rect: false,
             wall_hp: 400.0,
             wall_bite: 1.0,
@@ -2014,7 +2056,7 @@ impl BigDish {
                 st = m(st, p.step_mod).max(0.0);
             }
             if contagion {
-                if self.sick[k] == 0 && self.germ[here] > p.sick_catch {
+                if self.sick[k] == 0 && self.germ[here] > p.sick_catch * p.germ_resist {
                     self.sick[k] = catch_c;
                 }
                 if self.sick[k] > sick_at {
@@ -2521,10 +2563,29 @@ impl BigDish {
         const NEXT: [(f32, f32); 8] = [(1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (-1.0, 1.0), (-1.0, 0.0), (-1.0, -1.0), (0.0, -1.0), (1.0, -1.0)];
         // (parent, child slot, cell, x, y)
         let mut tries: Vec<(u32, u32, u32, f32, f32)> = Vec::new();
+        // Each species' living walkers as the pass begins (`species_cap`).
+        let held: Vec<usize> = if p.species_cap.is_empty() || self.spec.is_empty() {
+            Vec::new()
+        } else {
+            let mut h = vec![0usize; p.species_cap.len()];
+            for k in 0..n {
+                if self.lives(k) {
+                    if let Some(c) = h.get_mut(self.spec[k] as usize) {
+                        *c += 1;
+                    }
+                }
+            }
+            h
+        };
         for k in 0..n {
             let b = k ^ m;
             if !self.active(k) || self.energy[k] < p.birth_energy || b >= n || self.alive[b] {
                 continue;
+            }
+            if let Some(&c) = held.get(self.spec.get(k).copied().unwrap_or(0) as usize) {
+                if c >= p.species_cap[self.spec[k] as usize] {
+                    continue;
+                }
             }
             let (x, y, _) = self.walkers[k];
             let (dx, dy) = NEXT[(keyed(seed, t, DRAW_BIRTH, k as u32) % 8) as usize];
@@ -3671,6 +3732,30 @@ mod tests {
         let (_, per) = ones(true);
         assert!(raw * 10 < b, "raw trail: {raw} of {b} species-1 walkers left");
         assert!(per * 10 > 9 * b, "per deposit: {per} of {b} left");
+    }
+
+    /// `species_cap` holds a species near its cap while the other grows
+    /// on, and a cap of 0 stops that species' births.
+    #[test]
+    fn species_cap_holds_one_side() {
+        let grow = BigParams { walkers: 200, upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, species: 2, species_avoid: 0.0, ..small(2, 1) };
+        let run = |cap: Vec<usize>| {
+            let mut d = BigDish::new(BigParams { species_cap: cap, ..grow.clone() });
+            let start: Vec<usize> = (0..2).map(|s| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == s).count()).collect();
+            for _ in 0..200 {
+                d.tick();
+            }
+            let end: Vec<usize> = (0..2).map(|s| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == s).count()).collect();
+            (start, end, d.births)
+        };
+        let (start, free, _) = run(Vec::new());
+        assert!(free[0] > start[0] + 20 && free[1] > start[1] + 20, "both grow uncapped: {start:?} -> {free:?}");
+        let cap = start[0] + 10;
+        let (_, capped, _) = run(vec![cap, usize::MAX]);
+        assert!(capped[0] <= cap + 10, "species 0 held near {cap}: {capped:?}");
+        assert!(capped[1] > start[1] + 20, "species 1 grows on: {capped:?}");
+        let (_, stopped, _) = run(vec![0, 0]);
+        assert!(stopped[0] <= start[0] && stopped[1] <= start[1], "a cap of 0 stops births: {start:?} -> {stopped:?}");
     }
 
     /// The outside rules (2026-11-11) are keyed draws too: threads change
