@@ -8,7 +8,9 @@
 //! (`map=` rim, fork, flats, nest, passes, or `noise` for the race world
 //! the censuses measured; `walkers=` and `scale=` as `larderworld`'s;
 //! `mission=1-landfall` plays a campaign mission: its map, rules and goal,
-//! `mould::campaign`, design `Reports/larder-campaign-2026-11-12.md`.)
+//! `mould::campaign`, design `Reports/larder-campaign-2026-11-12.md`; any
+//! other key is an engine setting over the race world's (and the
+//! mission's tier), `gpu::set`'s, such as `tier=sleeper`.)
 //!
 //! **Why a window of its own.** The owner played `mouldgpu`'s stand-in
 //! squad (Q) on 2026-11-11 and found soldiers that did not touch the
@@ -53,7 +55,10 @@
 //! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
-//! sounded like to an ear on the squad, to the last of those seconds.
+//! sounded like to an ear on the squad, to the last of those seconds;
+//! `holes=1` also times how long each hit's hole stays open.
+//! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]`
+//! times the window's frame without a window (`bench`).
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -63,7 +68,7 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
-use slime_mould::mould::campaign::{Mission, Tracker};
+use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
 use slime_mould::sound::synth::{VoiceBank, DEFAULT_MASTER};
@@ -110,6 +115,9 @@ struct Args {
     seed: u64,
     scale: usize,
     walkers: usize,
+    /// Engine settings over the race world's (`gpu::set` keys, such as
+    /// `tier=sleeper` or `alarm_keep=0.98`), in order.
+    keys: Vec<(String, String)>,
     /// A campaign mission (`Reports/larder-campaign-2026-11-12/missions/NAME.txt`):
     /// its map, rules and tier, and its goal on the HUD (`mould::campaign`).
     mission: Option<String>,
@@ -286,6 +294,10 @@ impl App {
             }
             None => None,
         };
+        // Engine keys last, over the race world's and the mission's tier.
+        for (k, v) in &a.keys {
+            slime_mould::gpu::set(&mut s, k, v)?;
+        }
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
         let world = match &map_name {
             Some(name) => {
@@ -314,6 +326,9 @@ impl App {
             v.set_world(&e.frame, size);
             v.set_look(&e.look, &ground, &e.walkers, e.n);
             v.set_alive(e.grows.then_some(&e.energy));
+            // The body's walkers a cell, from the start's living walkers
+            // (the look's `body`; a growing world has ten slots a walker).
+            v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
             // On the larder, at zoom 4 or the whole map if that is closer
             // (the minimap shows the rest).
             self.camera = Camera::new(size, v.screen);
@@ -524,6 +539,16 @@ impl App {
             self.looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
         }
         let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
+        // A step runs on the GPU while the window draws (2026-11-12): it
+        // begins below and finishes on a later frame, as soon as its results
+        // are in (paused too), or at once when the next step is due. The
+        // game's order is `step`'s, so a round replays the same (commands
+        // finish a running step first, `Game::apply`). Past a mission's
+        // verdict the census steps no more, so neither does this.
+        if g.in_flight() && g.step_ready() && !mission_over {
+            g.finish_step();
+            shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+        }
         if self.paused || g.end.is_some() || mission_over {
             self.owed = 0.0;
             return;
@@ -532,35 +557,33 @@ impl App {
         self.owed += dt.min(0.25) * if self.fast { 4.0 } else { 1.0 };
         let mut n = 0;
         while self.owed >= step && g.end.is_none() {
-            g.step();
-            self.owed -= step;
-            n += 1;
-            if let Some(l) = self.listener.as_mut() {
-                l.shots(&g.last_shots);
-            }
-            for s in &g.last_shots {
-                self.tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
-                if let Some(k) = g.soldiers.iter().position(|q| q.alive && (q.x - s.from.0).abs() < 1e-3 && (q.y - s.from.1).abs() < 1e-3) {
-                    self.looks[k].flash = FLASH;
-                    self.looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+            if g.in_flight() {
+                g.finish_step();
+                shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+                if g.end.is_some() {
+                    break;
                 }
             }
+            g.begin_step();
+            self.owed -= step;
+            n += 1;
             // Behind on frames (a slow one): drop the debt, not the pace.
             if n >= 8 {
                 self.owed = 0.0;
             }
         }
         self.steps += n;
-        // The mission follows the game once a game second. The GPU world has
-        // no mould grid yet (an occupancy read-back), so a goal that needs
-        // where the mould is shows no bar here; the CPU census has it.
+        // The mission follows the game once a game second, with the GPU
+        // world's mould grid (an occupancy read-back, PR #101).
         if let Some(tr) = self.mission.as_mut() {
-            let sec = g.world.ticks() / g.rules.tps as u64;
+            // Whole steps only (a step may still be running on the GPU).
+            let sec = g.settled_ticks() / g.rules.tps as u64;
             // A game that ended inside a game second (a wipe) still gives
             // the mission its verdict, so the end screen is the mission's.
             while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
                 self.mission_sec += 1;
-                if let Some(v) = tr.second(g, None, 1.0) {
+                let grid = g.world.mould_grid(BIN);
+                if let Some(v) = tr.second(g, grid.as_deref(), 1.0) {
                     let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
                     self.hud.alert(&tr.cause_line(), None, colour);
                 }
@@ -612,6 +635,16 @@ impl App {
         }
     }
 
+    /// Finishes a step still running on the GPU and keeps its shots'
+    /// marks (the headless pictures read whole steps).
+    fn settle(&mut self) {
+        let Some(g) = self.game.as_mut() else { return };
+        if g.in_flight() {
+            g.finish_step();
+            shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+        }
+    }
+
     /// Once a drawn frame, after the steps: what the round should sound
     /// like now, to an ear on `ear` (the camera's view). The listener only
     /// reads the game (`sound::world`), so this cannot change it.
@@ -647,7 +680,12 @@ impl App {
     fn refresh_ground(&mut self) {
         let (Some(g), Some(buf)) = (&self.game, &self.ground) else { return };
         let t = g.time();
-        if t - self.ground_at < GROUND_EVERY && g.walls == self.ground_walls {
+        // A step still running would make the read-back below wait for it
+        // (on llvmpipe the split's prepare p95 was 14.9 ms against 1.3 ms
+        // for whole steps, 2026-11-12), so the timed refresh waits for a
+        // frame between steps, up to a second late; a new wall reads at once.
+        let late = t - self.ground_at;
+        if (late < GROUND_EVERY || (g.in_flight() && late < 2.0 * GROUND_EVERY)) && g.walls == self.ground_walls {
             return;
         }
         let e = &g.world.e;
@@ -758,10 +796,7 @@ impl App {
             clock: format!("{} / {}", clock(t), clock(r.cap)),
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
             objective: Some(if let Some(tr) = &self.mission {
-                match tr.bar {
-                    Some(b) => format!("{} ({:.0}%)", tr.mission.says, 100.0 * b),
-                    None => tr.mission.says.clone(),
-                }
+                tr.progress_line()
             } else if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
             idle: g.soldiers.iter().filter(|s| s.alive && s.order == Order::Hold).count(),
             ..Model::default()
@@ -1301,7 +1336,7 @@ impl ApplicationHandler for App {
 /// shows, checkable where there is no screen (the cloud's software
 /// Vulkan). Hands: `rush` (all attack the core), `farm` (all harvest the
 /// crystal nearest the larder, buying soldiers from 1,200 food), `idle`.
-fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>) -> Result<(), String> {
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -1313,6 +1348,18 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     let mut voice_at = u64::MAX;
     let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
     let mut last_sec = u64::MAX;
+    // `hand=` a player AI style (boom, claim, late, fort, strike) plays
+    // through `larder_world_ai`, as the census does, so a campaign mission's
+    // pictures show the hands its numbers were set on.
+    let mut ai = match hand {
+        "rush" | "farm" => None,
+        _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
+    };
+    // Each hit: where, its tick, the body there the tick before, and the
+    // ticks it took to refill.
+    type Hole = ((f32, f32), u64, f32, Option<u64>);
+    let mut holes: Vec<Hole> = Vec::new();
+    let mut prev_lk: Vec<u8> = Vec::new();
     for &t in at {
         // A mission's verdict stops the steps, as the game's end does.
         while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
@@ -1320,9 +1367,53 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
             let sec = g.world.ticks() / g.rules.tps as u64;
             if sec != last_sec {
                 last_sec = sec;
-                plan(g, hand);
+                match ai.as_mut() {
+                    Some(h) => {
+                        h.play(g);
+                    }
+                    None => plan(g, hand),
+                }
             }
             app.step(step);
+            // Whole steps here (the window leaves a step running while it
+            // draws): the pictures, the holes and the tape read the game as
+            // they did before the step split.
+            app.settle();
+            // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:
+            // "maybe part of the issue is the slime/walkers move to fast").
+            // The drawn body (the view's `body`: trail x living walkers in
+            // the 5 x 5 round each cell) is averaged over each hit's strike
+            // disc, and a hole counts as refilled when that is back to 80% of
+            // the tick before the hit. A frame's readback a tick: slow.
+            if time_holes {
+                let g = app.game.as_ref().unwrap();
+                let (w, h) = (g.world.e.dish.w, g.world.e.dish.h);
+                let lk = read_back(&device, &queue, &g.world.e.look);
+                let body = |lk: &[u8], x: i32, y: i32| -> f32 {
+                    let cl = |x: i32, y: i32| (y.clamp(0, h as i32 - 1) as usize) * w + x.clamp(0, w as i32 - 1) as usize;
+                    let mut n = 0u32;
+                    for dy in -2..=2 { for dx in -2..=2 { n += lk[4 * cl(x + dx, y + dy) + 1] as u32; } }
+                    lk[4 * cl(x, y)] as f32 / 255.0 * (1.0 - (-(n as f32) / 6.0).exp())
+                };
+                let disc = |lk: &[u8], cx: f32, cy: f32, r: f32| -> f32 {
+                    let (mut sum, mut k) = (0.0, 0);
+                    let ri = r.ceil() as i32;
+                    for dy in -ri..=ri { for dx in -ri..=ri { if ((dx * dx + dy * dy) as f32) <= r * r { sum += body(lk, cx as i32 + dx, cy as i32 + dy); k += 1; } } }
+                    sum / k as f32
+                };
+                let tick = g.world.ticks();
+                let r = g.rules.strike * g.world.scale();
+                for t in app.tracers.iter().filter(|t| t.age == 0.0 && t.hit) {
+                    let before = if prev_lk.is_empty() { f32::NAN } else { disc(&prev_lk, t.to.0, t.to.1, r) };
+                    holes.push((t.to, tick, before, None::<u64>));
+                }
+                for hl in holes.iter_mut() {
+                    if hl.2.is_nan() { continue; }
+                    let v = disc(&lk, hl.0 .0, hl.0 .1, r);
+                    if hl.3.is_none() && tick > hl.1 && v >= 0.8 * hl.2.max(0.05) { hl.3 = Some(tick - hl.1); }
+                }
+                prev_lk = lk;
+            }
             if app.tape.is_some() {
                 let g = app.game.as_ref().unwrap();
                 let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
@@ -1339,6 +1430,13 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
                     println!("  voice t {sec:>3} s: mould {}, growth {:+.4}/s, hunger {:.2}, eating {:.5}/s, kills {:.0}/s, inhales {}", g.mould, s.growth, s.hunger, s.eating, s.kills_per_sec, s.inhales);
                 }
             }
+        }
+        if time_holes {
+            let done: Vec<u64> = holes.iter().filter_map(|h| h.3).collect();
+            let open = holes.iter().filter(|h| h.3.is_none()).count();
+            let mut d = done.clone(); d.sort();
+            let tps = app.game.as_ref().unwrap().rules.tps as f32;
+            if !d.is_empty() { println!("  holes: shots that hit {} refilled {} (still open {open}); ticks to 80%: median {} ({:.2} s), q25 {}, q75 {}, max {}", holes.len(), d.len(), d[d.len() / 2], d[d.len() / 2] as f32 / tps, d[d.len() / 4], d[3 * d.len() / 4], d[d.len() - 1]); }
         }
         let g = app.game.as_ref().unwrap();
         // The view on the fight: the squad's middle, or the larder.
@@ -1359,7 +1457,9 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
             view.record(&mut enc, &app.camera, None);
             cp.record(&mut enc, &view.out, view.stride);
             queue.submit([enc.finish()]);
-            let path = format!("{dir}/{}-{hand}-{:03}s-{tag}.png", app.name.replace('/', "_"), t as u32);
+            // Whole seconds keep their old names; a time between (a frame
+            // sequence) is named in milliseconds.
+            let path = if t.fract() == 0.0 { format!("{dir}/{}-{hand}-{:03}s-{tag}.png", app.name.replace('/', "_"), t as u32) } else { format!("{dir}/{}-{hand}-{:05}ms-{tag}.png", app.name.replace('/', "_"), (t * 1000.0) as u32) };
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
         }
@@ -1399,12 +1499,123 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     Ok(())
 }
 
-/// A GPU with the adapter's own limits (the engine binds 46 buffers).
+/// The last step's shots as tracers, and their soldiers' flashes and
+/// facing (before the next step walks them on).
+fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &mut [Look], listener: Option<&mut WorldListener>) {
+    if let Some(l) = listener {
+        l.shots(&g.last_shots);
+    }
+    for s in &g.last_shots {
+        tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
+        if let Some(k) = g.soldiers.iter().position(|q| q.alive && (q.x - s.from.0).abs() < 1e-3 && (q.y - s.from.1).abs() < 1e-3) {
+            looks[k].flash = FLASH;
+            looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+        }
+    }
+}
+
+/// **The window's frame time without a window** (`-- bench=SECS`,
+/// 2026-11-12): plays `secs` game seconds with `hand` at `fps` frames a
+/// real second, doing each frame what the window does (the game's steps
+/// through the same accumulator, the ground, marks and HUD, the view and
+/// canvas recorded and submitted), then waits for the GPU, as a present
+/// with vsync off would. So it can run over Remote Control on the GTX 1070
+/// with nobody at the screen. The W2c gate is a frame under 10 ms p95.
+/// Prints each frame's time and its parts (the game's steps, which wait on
+/// the GPU inside; preparing; recording; the GPU's tail), the step frames'
+/// alone, the read-backs and waits a step, and with timestamps the GPU's
+/// ms a step's ticks (`stamps=0` leaves them off). `grid=BIN` asks for the
+/// mould grid in squares of BIN dish cells every game step, as the
+/// campaign's goals do.
+fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps: bool, grid: usize) -> Result<(), String> {
+    let (device, queue) = gpu().ok_or("no GPU adapter")?;
+    let mut app = offscreen(args, screen, &device, &queue)?;
+    let stamped = stamps && device.features().contains(wgpu::Features::TIMESTAMP_QUERY);
+    if stamped {
+        app.game.as_mut().unwrap().world.stamps = Some(slime_mould::gpu::Stamps::new(&device, &queue));
+    }
+    let dt = 1.0 / fps;
+    let mut last_sec = u64::MAX;
+    // Each frame: total, step, prepare, record, GPU tail (ms); and whether
+    // the game stepped in it.
+    type Row = ([f64; 5], bool);
+    let mut rows: Vec<Row> = Vec::new();
+    let (reads0, steps0) = (slime_mould::gpu::reads(), app.steps);
+    let ms = |t: Instant| t.elapsed().as_secs_f64() * 1e3;
+    while app.game.as_ref().is_some_and(|g| g.time() < secs && g.end.is_none()) {
+        let t0 = Instant::now();
+        let g = app.game.as_mut().unwrap();
+        // Whole steps: the hand plans on the step that crossed the second
+        // once it has finished, as it did before the split (a step left
+        // running would hand it the last step's bank and crystals).
+        let sec = g.settled_ticks() / g.rules.tps as u64;
+        if sec != last_sec {
+            last_sec = sec;
+            plan(g, hand);
+        }
+        let before = app.steps;
+        app.step(dt);
+        if grid > 0 && app.steps > before {
+            // As the campaign's goals ask (2026-11-12): once a game step.
+            std::hint::black_box(app.game.as_ref().unwrap().world.mould_grid(grid));
+        }
+        let step = ms(t0);
+        let t1 = Instant::now();
+        app.prepare();
+        let prep = ms(t1);
+        let t2 = Instant::now();
+        let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("bench") });
+        view.record(&mut enc, &app.camera, None);
+        cp.record(&mut enc, &view.out, view.stride);
+        let index = queue.submit([enc.finish()]);
+        let rec = ms(t2);
+        let t3 = Instant::now();
+        device.poll(wgpu::PollType::Wait { submission_index: Some(index), timeout: None }).map_err(|e| format!("poll: {e}"))?;
+        rows.push(([ms(t0), step, prep, rec, ms(t3)], app.steps > before));
+    }
+    // The last step's results, so the counts below are the whole game's.
+    app.settle();
+    let g = app.game.as_ref().unwrap();
+    let steps = (app.steps - steps0).max(1);
+    let q = |pick: &dyn Fn(&Row) -> Option<f64>, at: f64| {
+        let mut v: Vec<f64> = rows.iter().filter_map(pick).collect();
+        v.sort_by(f64::total_cmp);
+        if v.is_empty() {
+            return 0.0;
+        }
+        v[((v.len() - 1) as f64 * at).round() as usize]
+    };
+    let line = |name: &str, i: usize, only_steps: bool| {
+        let pick = move |r: &Row| (!only_steps || r.1).then_some(r.0[i]);
+        format!("{name} p50 {:.2} p95 {:.2} max {:.2}", q(&pick, 0.5), q(&pick, 0.95), q(&pick, 1.0))
+    };
+    let e = &g.world.e;
+    let keys: String = app.args.keys.iter().map(|(k, v)| format!(" {k}={v}")).collect();
+    let keys = if grid > 0 { format!("{keys}; the mould grid in squares of {grid} each step") } else { keys };
+    println!("larder-world bench: {} seed {}, {} x {} cells, {} slots, scale {} walkers {}{keys}; hand {hand}, {:.0} game s at {fps} frames a second, screen {}x{}", app.name, app.args.seed, e.dish.w, e.dish.h, e.n, app.args.scale, app.args.walkers, g.time(), screen.0, screen.1);
+    println!("  {} frames, {} game steps; {:.2} read-backs a step, {:.2} waits a step ({:.2} ms a step waiting)", rows.len(), steps, (slime_mould::gpu::reads() - reads0) as f64 / steps as f64, g.world.waits as f64 / steps as f64, g.world.wait_ms / steps as f64);
+    for (only, tag) in [(false, "every frame"), (true, "frames with a step")] {
+        println!("  {tag} ({} of them), ms: {}; step {}; prepare {}; record {}; GPU tail {}", rows.iter().filter(|r| !only || r.1).count(), line("frame", 0, only), line("", 1, only), line("", 2, only), line("", 3, only), line("", 4, only));
+    }
+    if let Some(st) = &g.world.stamps {
+        let (sim, draw, _, n) = st.median();
+        println!("  GPU (timestamps, median of {n} steps): the step's ticks {sim:.2} ms, its drawing {draw:.2} ms");
+    } else {
+        println!("  GPU: no timestamps on this adapter");
+    }
+    println!("  t {:.0} s: mould {}, soldiers {}, harvested {:.0}, shots {}, killed {}{}", g.time(), g.mould, g.alive(), g.harvested, g.shots, g.killed, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+    Ok(())
+}
+
+/// A GPU with the adapter's own limits (the engine binds 46 buffers), and
+/// timestamps where it has them (`bench`).
 fn gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
     let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).ok()?;
     println!("larder-world: {}", adapter.get_info().name);
-    block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("larder-world"), required_limits: adapter.limits(), ..Default::default() })).ok()
+    let required_features = adapter.features() & wgpu::Features::TIMESTAMP_QUERY;
+    block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("larder-world"), required_features, required_limits: adapter.limits(), ..Default::default() })).ok()
 }
 
 /// The window's game, view and UI on a `screen`-sized picture with no
@@ -1449,8 +1660,10 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, mission: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
+    let (mut bench_secs, mut fps, mut stamps, mut grid) = (None::<f32>, 60.0f32, true, 0usize);
+    let mut holes = false;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -1464,15 +1677,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "sound" => wav = Some(v.to_string()),
             "voice" => args.voice = v != "0",
             "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
+            "bench" => bench_secs = Some(v.parse()?),
+            "fps" => fps = v.parse()?,
+            "stamps" => stamps = v != "0",
+            "grid" => grid = v.parse()?,
+            "holes" => holes = v != "0",
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
             }
-            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound)").into()),
+            // Any other key is an engine setting (`gpu::set`), checked here.
+            _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
+                Ok(()) => args.keys.push((k.to_string(), v.to_string())),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes; bench, fps, stamps, grid)").into()),
+            },
         }
     }
+    if let Some(secs) = bench_secs {
+        return Ok(bench(args, secs, &hand, fps, screen, stamps, grid)?);
+    }
     if let Some(dir) = look {
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref())?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
@@ -1493,7 +1718,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, mission: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -1519,7 +1744,7 @@ mod tests {
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, voice: false, mission: Some("1-landfall".into()) }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()) }, (640, 400), &device, &queue).unwrap();
         assert_eq!(app.name, "flats");
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();

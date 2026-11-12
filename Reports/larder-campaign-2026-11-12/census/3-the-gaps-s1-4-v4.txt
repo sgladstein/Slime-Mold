@@ -1,0 +1,68 @@
+mission 3-the-gaps (The gaps): "Keep the mould inside the Rim until 10:00", map rim, tier sprawler (not built: plain mould), seeds 1-4, scale 2, walkers 5000
+  idle s4: Cap 900s 0*
+  idle s1: Cap 900s 0*
+  idle s3: Cap 900s 0*
+  idle s2: Cap 900s 0*
+  random s1: Overrun 213s 0*
+  random s2: SquadWiped 252s 0*
+  random s4: SquadWiped 256s 0*
+  random s3: SquadWiped 366s 0*
+  boom s2: Goal 600s 2*
+  boom s1: Goal 701s 2*
+  boom s3: Goal 600s 2*
+  boom s4: Cap 900s 1*
+  claim s2: Goal 600s 2*
+  claim s3: Goal 600s 2*
+  claim s1: Goal 701s 2*
+  claim s4: Goal 600s 2*
+  late s3: Goal 600s 2*
+  late s2: Goal 600s 2*
+  late s1: Goal 701s 2*
+  late s4: Goal 600s 2*
+  fort s2: Goal 600s 2*
+  fort s3: Goal 600s 2*
+  fort s1: Goal 701s 2*
+  fort s4: Cap 900s 1*
+  strike s2: Goal 600s 2*
+  strike s1: Goal 701s 2*
+  strike s3: Goal 600s 2*
+  strike s4: Goal 600s 2*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most
+boom         1  Goal         701      2 1.00     0%     0%    0%    0%    0%                             0    0    7      700     20     13309   7782  0.000/0.058
+boom         2  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     20     13060   4356  0.000/0.047
+boom         3  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     20     13202   5414  0.000/0.038
+boom         4  Cap          900      1 0.63     0%     0%    0%    0%    0%                             0    0   17      900     20     11927   7236  0.000/0.159
+claim        1  Goal         701      2 1.00     0%     0%    0%    0%    0%                             0    0    7      700     12     11902  12500  0.000/0.058
+claim        2  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     13420   4621  0.000/0.047
+claim        3  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     13202   5330  0.000/0.038
+claim        4  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     11927   5541  0.000/0.047
+fort         1  Goal         701      2 1.00     0%     0%    0%    0%    0%                             0    0    7      700     20     13377   7557  0.000/0.058
+fort         2  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     20     12817   4139  0.000/0.043
+fort         3  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     20     13505   4584  0.000/0.038
+fort         4  Cap          900      1 0.98     0%     0%    0%    0%    0%                             0    0   16      900     20     11992   6271  0.000/0.141
+idle         1  Cap          900      0 0.07    66%    64%   63%   75%   59%                           136    0  122        0      4         0   1872  0.000/0.173
+idle         2  Cap          900      0 0.38    70%     0%   54%  100%   84%                           522    0  254        0      4         0    800  0.000/0.333
+idle         3  Cap          900      0 0.19    59%    58%   19%   79%   74%                           108    0  108        0      4         0   2080  0.000/0.170
+idle         4  Cap          900      0 0.33    59%     0%   40%   72%   91%                           112    0  112        0      4         0   2575  0.000/0.260
+late         1  Goal         701      2 1.00     0%     0%    0%    0%    0%                             0    0    7      700     28     11902   6177  0.000/0.058
+late         2  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     13420   4621  0.000/0.047
+late         3  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     13202   5330  0.000/0.038
+late         4  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     11927   5541  0.000/0.047
+random       1  Overrun      213      0 0.07     3%     2%    5%    0%    0%                             4    0  105        0      2       900   2408  0.000/0.196
+random       2  SquadWiped   252      0 0.22    10%     0%   18%    0%    0%                            12    0   61        0      0       600   2341  0.000/0.155
+random       3  SquadWiped   366      0 0.13     9%     1%   12%   14%    0%                            15    0   53        0      0       900   2895  0.000/0.206
+random       4  SquadWiped   256      0 0.13     6%     0%   11%    0%    0%                             6    0   37        0      0       900   2442  0.000/0.069
+strike       1  Goal         701      2 1.00     0%     0%    0%    0%    0%                             0    0    7      700     21     12038  28351  0.000/0.058
+strike       2  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     10     12178  16355  0.000/0.047
+strike       3  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     23     13353  20147  0.000/0.038
+strike       4  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     18     11858  17679  0.000/0.047
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  boom      3/4  stars 2  best 0.91  dead 0%  stuck 0 s  stall 17 s
+  claim     4/4  stars 2  best 1.00  dead 0%  stuck 0 s  stall 7 s
+  fort      3/4  stars 2  best 1.00  dead 0%  stuck 0 s  stall 16 s
+  idle      0/4  stars 0  best 0.24  dead 64%  stuck 0 s  stall 254 s
+  late      4/4  stars 2  best 1.00  dead 0%  stuck 0 s  stall 7 s
+  random    0/4  stars 0  best 0.14  dead 7%  stuck 0 s  stall 105 s
+  strike    4/4  stars 2  best 1.00  dead 0%  stuck 0 s  stall 7 s

@@ -1,0 +1,34 @@
+cutprobe race world scale 2 walkers 5000, grow 150 s, follow 90 s, 3 cuts a seed, seeds [2]
+arms: [("base", []), ("H", [("energy_flow", "0.05"), ("hunger_scent", "8")]), ("R", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("hunger_reach", "3")]), ("RT", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("hunger_reach", "3"), ("tether", "2"), ("tether_hold", "0.3"), ("tether_hunger", "0.6")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 2 grown | alive 6455 parts1% 4 lcs 0.72 lone 0.01 rms 49.3 | crystals eaten from 5 of 23
+cut base 2 0 at fine cell (68, 272)
+base 2 0 | 229 229 1 | 0.64 3.68 0.40 37.0 15.07 | 90 alive+fed 90 68.2 react 6 | 6455 7.82
+cut base 2 1 at fine cell (44, 120)
+base 2 1 | 208 208 1 | 0.26 4.10 0.36 35.1 14.48 | 90 alive+fed 90 86.5 react 4 | 6455 7.82
+cut base 2 2 at fine cell (160, 72)
+base 2 2 | 183 183 1 | 0.33 3.92 0.33 35.5 13.84 | 90 alive+fed 90 49.8 react 3 | 6455 7.82
+H 2 grown | alive 11901 parts1% 2 lcs 0.96 lone 0.01 rms 50.7 | crystals eaten from 7 of 23
+cut H 2 0 at fine cell (160, 72)
+H 2 0 | 398 398 1 | 0.56 3.93 0.31 35.7 11.84 | 90 alive+fed 90 37.6 react 4 | 11901 13.89
+cut H 2 1 at fine cell (68, 276)
+H 2 1 | 380 380 1 | 1.00 1.00 1.00 10.4 3.44 | 90 alive+fed 90 4.3 react 5 | 11901 13.89
+cut H 2 2 at fine cell (44, 120)
+H 2 2 | 374 374 1 | 0.42 4.59 0.38 34.4 12.56 | 90 alive+fed 90 67.9 react 4 | 11901 13.89
+R 2 grown | alive 0 parts1% 0 lcs 0.00 lone NaN rms 0.0 | crystals eaten from 1 of 23
+RT 2 grown | alive 1579 parts1% 1 lcs 0.93 lone 0.05 rms 16.3 | crystals eaten from 1 of 23
+
+summary (mean over cuts)
+base: cuts 3 n0 207 lcs20 0.41 frag 3.90 lcs 0.37 rms20 35.9 compact20 14.46 life 90 moved 68.2 fates {"alive+fed": 3}
+H: cuts 3 n0 384 lcs20 0.66 frag 3.18 lcs 0.56 rms20 26.8 compact20 9.28 life 90 moved 36.6 fates {"alive+fed": 3}
+  vs base: lcs20 better 2 worse 1, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 3 worse 0, p 0.2500
+R: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
+RT: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
