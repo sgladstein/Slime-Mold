@@ -2,9 +2,21 @@
 title: The player's own mould (gardeners)
 kind: design
 status: open
-updated: 2026-11-12T19:56Z
-sources: [Reports/player-mould-2026-11-12.md, Reports/species-gpu-2026-11-11.md, Reports/species-sets-2026-11-11.md]
-code: [BigParams::species_avoid_of, own_mould::Garden::cord, BigParams::species_cap, own_mould::Garden, World::tend, BigParams::species_convert_per, BigParams::species_convert, BigParams::species_convert_r, SpeciesSet]
+updated: 2026-11-12
+sources:
+  - Reports/player-mould-2026-11-12.md
+  - Reports/species-gpu-2026-11-11.md
+  - Reports/species-sets-2026-11-11.md
+code:
+  - BigParams::species_avoid_of
+  - BigParams::species_cap
+  - BigParams::species_convert
+  - BigParams::species_convert_per
+  - BigParams::species_convert_r
+  - SpeciesSet
+  - World::tend
+  - own_mould::Garden
+  - own_mould::Garden::cord
 ---
 
 # The player's own mould (gardeners)

@@ -2,9 +2,31 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12T17:45Z
-sources: [Reports/mould-tiers-campaign-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
-code: [BigParams::scar_keep, BigParams::scar_weight, BigDish::scar, BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier, Tier::core, Core]
+updated: 2026-11-12
+sources:
+  - Reports/first-reach-2026-11-11.md
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/life-gpu-2026-11-11.md
+  - Reports/mould-tiers-2026-11-11.md
+  - Reports/mould-tiers-campaign-2026-11-12.md
+  - Reports/mould-tiers-review-2026-11-11.md
+  - Reports/species-gpu-2026-11-11.md
+  - Reports/species-sets-2026-11-11.md
+code:
+  - BigDish::scar
+  - BigParams::alarm_weight
+  - BigParams::explore_spread
+  - BigParams::graze_weight
+  - BigParams::scar_keep
+  - BigParams::scar_weight
+  - BigParams::sleep_rate
+  - BigParams::species_convert
+  - BigParams::species_sets
+  - BigParams::spore_rate
+  - Core
+  - CoreKind::Regrow
+  - Tier
+  - Tier::core
 ---
 
 # The mould tiers (difficulty ladder)
@@ -38,13 +60,17 @@ Larder world's race the Swarmer and the Sleeper's bait hold on 8 of 8, the
 Sporer's edge is not significant
 ([report](../../Reports/mould-tiers-2026-11-11.md), *In the Larder world*).
 
-`Tier::core` (2026-11-12) is None for every tier: the game's core, which
-the whole body defends (`Rules::core_pull` 8). Headless is built.
+`Tier::core` (2026-11-12) gives the Sprawler no pull and the Grudge
+twice the plain pull (16); every other tier keeps the game's core, which
+the whole body defends (`Rules::core_pull` 8). Since the owner's ruling of
+2026-11-12 20:21Z every core is headless: holding a mould's home stops
+nothing, and only a wipe ends it.
 
 ## Open
 
-- Each tier's core: the Sprawler is Headless and the Grudge pulls at 16 (twice the plain mould's 8; `tiers::GRUDGE_PULL`); the Trunk's Regrow and the Drifter's Migrate wait for those kinds.
-- The census of the new tiers, re-run after shot craters (#113). Before craters (held-out 201-216): Grudge is the hardest (every plan lower than on plain, 16 of 16; random loses its squad 15 of 16); strike is the best plan on every tier, so the best plan does not change between tiers yet; the Sprawler now explores 200 steps (at 400 everything wiped it); the toolkit's blast plan wins every tier ([report](../../Reports/mould-tiers-campaign-2026-11-12.md), *The census*). The Drifter is the gentlest tier (idle never wiped). Wary, the scar read away, was removed: scattered fire herds it off every crystal and random wins (12 of 16; [dead ends](../../Reports/dead-ends.md)). Still to come: the census with craters and the core's pull, turrets (turtle, guard) against Grudge.
+- Each tier's core: all headless since 11-12 20:21Z (no king rule); the Sprawler pulls nothing and the Grudge pulls at 16 (twice the plain mould's 8; `tiers::GRUDGE_PULL`). `CoreKind::Regrow { starve_secs }` is built (2026-11-12, both engines): a fallen core grows back unless the mould eats nothing in the `starve_secs` after it falls. Under the no-king ruling the tiers thread is dropping the Trunk's Regrow and the Drifter's Migrate (20:53Z): with no core to take, the Trunk keeps its tube network as its identity.
+
+- The census of the new tiers, re-run after shot craters (#113). Before craters (held-out 201-216): Grudge is the hardest (every plan lower than on plain, 16 of 16; random loses its squad 15 of 16);
 - Candidate tiers from review 2 ([the reviews](../../Reports/mould-tiers-review-2026-11-11.md)), most promising first: supply lines (traffic-made arteries that carry food; cut one to starve the far end; the one body thread's shared food), clans that fuse or fight along a scar, a mould that learns the rhythm of fire, a pacemaker heartbeat, day and night light, a nomad that avoids its own slime, two foods. Each has a first experiment there.
 - The order of the added tiers. On the GPU engine, species and
   conversion came with the outside rules, and each species' own settings,

@@ -189,3 +189,15 @@ about even (farm 49.5k against 49.9k). Scores run a little lower with the
 rule on for most plans (ring 1-9, pumps 0-10, farm 3-7, wall 5-5, army
 3-7): walking round crystals costs time. Balance later, by the owner's
 rule; on by default since the owner asked for it.
+
+**The rule on both engines** (tech lead's ask after #153): to get CI green,
+#153 turned the rule off in three long GPU twins (flee, craters, core).
+There, seed 3's moulds parted by 9.7-12% once the squad moved. A short twin
+now checks the rule itself. `solid_crystals_hold_the_squad_alike_on_both_engines`
+runs race seed 3 with the squad holding fire and ordered onto the larder's
+crystal. Every soldier is at the same place on both engines, to the bit,
+for all 45 ticks. None stands on a solid crystal, and all four reach the
+rim. The planted copy (`the_crystal_twin_catches_an_engine_without_the_rule`)
+plays the GPU game without the rule, and the twin catches it at tick 1. So
+the rule acts the same on both engines. The long twins' drift is the
+mould's float drift amplified by a squad that stands elsewhere.

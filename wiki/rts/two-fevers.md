@@ -2,9 +2,19 @@
 title: Two Fevers (playable demo)
 kind: prototype
 status: open
-updated: 2026-11-11T15:40Z
-sources: [Reports/rts-research-2026-11-10.md, Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md]
-code: [Fevers, Rules, Hand, Player, field_piles, play_match]
+updated: 2026-11-11
+sources:
+  - Reports/rts-design-2026-11-10/brainstorm/README.md
+  - Reports/rts-design-2026-11-10/red-team/README.md
+  - Reports/rts-research-2026-11-10.md
+  - Reports/two-fevers-2026-11-10/README.md
+code:
+  - Fevers
+  - Hand
+  - Player
+  - Rules
+  - field_piles
+  - play_match
 ---
 
 # Two Fevers (playable demo)
