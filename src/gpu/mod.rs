@@ -922,9 +922,14 @@ pub const EGAIN: usize = 35;
 /// The living walkers counted into the wall counters' word 4
 /// (`Engine::record_count`), for the game's packed readout.
 pub const COUNT: usize = 36;
+/// The squad's unit passes on one thread, as before 2026-11-12
+/// (`Engine::squad_one`).
+pub const SMELL1: usize = 37;
+pub const UNITS1: usize = 38;
+pub const HARVEST1: usize = 39;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 37] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count",
+pub const PASSES: [&str; 40] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1",
 ];
 
 impl Shared {
@@ -1047,6 +1052,9 @@ pub struct Engine {
     pub kills: wgpu::Buffer,
     pub squad: (u32, u32, f32),
     pub squad_due: bool,
+    /// The squad's unit passes on one thread, as before 2026-11-12
+    /// (`smell1`, `units1`, `harvest1`), to compare the two on a GPU.
+    pub squad_one: bool,
     /// The mould grid's square, fine cells, that `record_count` sums (0:
     /// none), written with the params.
     pub grid: u32,
@@ -1253,6 +1261,7 @@ impl Engine {
             kills,
             squad: (0, 0, 0.0),
             squad_due: false,
+            squad_one: false,
             grid: 0,
             hits,
             n_hits: 0,
@@ -1613,7 +1622,7 @@ impl Engine {
                 }
             }
             if nunits > 0 {
-                out.push((SMELL, 1, s));
+                out.push((if self.squad_one { SMELL1 } else { SMELL }, 1, s));
             }
         }
         let tick = self.tick_passes();
@@ -1627,7 +1636,11 @@ impl Engine {
         let s = side(self.done);
         if due && nunits > 0 {
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
-            out.extend([(UNITS, nunits, s), (HARVEST, 1, s)]);
+            if self.squad_one {
+                out.extend([(UNITS1, squad::UNITS_MAX.div_ceil(64) as u32, s), (HARVEST1, 1, s)]);
+            } else {
+                out.extend([(UNITS, nunits, s), (HARVEST, 1, s)]);
+            }
         }
         out.extend(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, s)));
         (out, ticked)

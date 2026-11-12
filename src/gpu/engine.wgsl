@@ -1889,6 +1889,113 @@ fn harvest(@builtin(local_invocation_index) li: u32) {
     }
 }
 
+// The three unit passes as they were before 2026-11-12, one thread each
+// (`Engine::squad_one`): kept to compare the two on a GPU.
+// Each unit's smell on the agar cells of its disc. One thread, units in
+// order, so overlapping discs add up without a race.
+@compute @workgroup_size(1)
+fn smell1(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x != 0u) { return; }
+    for (var u = 0u; u < P.nunits; u++) {
+        let un = SQ.units[u];
+        if (un.smell <= 0.0) { continue; }
+        let r = isqrt(un.smell2);
+        for (var dy = -r; dy <= r; dy++) {
+            for (var dx = -r; dx <= r; dx++) {
+                let x = i32(un.x) + dx;
+                let y = i32(un.y) + dy;
+                if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h) || u32(dx * dx + dy * dy) > un.smell2) { continue; }
+                let i = u32(y) * P.w + u32(x);
+                if (agar[i] != 0u) { scent_in[i] += un.smell; }
+            }
+        }
+    }
+}
+
+// Each unit's walkers within `touch`, and the 4 x 4 block with the most
+// walkers whose centre is within `sight` (ties to the first, row-major).
+@compute @workgroup_size(64)
+fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let u = gid.x;
+    if (u >= P.nunits) { return; }
+    let un = SQ.units[u];
+    let cx = i32(un.x);
+    let cy = i32(un.y);
+    let w = i32(P.w);
+    let h = i32(P.h);
+    var touching = 0u;
+    let r = isqrt(un.touch2);
+    for (var dy = -r; dy <= r; dy++) {
+        for (var dx = -r; dx <= r; dx++) {
+            let x = cx + dx;
+            let y = cy + dy;
+            if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
+            touching += atomicLoad(&occ[u32(y * w + x)]);
+        }
+    }
+    let b = 4;
+    let nbw = (w + b - 1) / b;
+    let nbh = (h + b - 1) / b;
+    let rs = isqrt(un.sight2) + 2;
+    let by0 = max(cy - rs, 0) / b;
+    let by1 = min((cy + rs) / b, nbh - 1);
+    let bx0 = max(cx - rs, 0) / b;
+    let bx1 = min((cx + rs) / b, nbw - 1);
+    var best = 0u;
+    var bi = NONE;
+    for (var by = by0; by <= by1; by++) {
+        for (var bx = bx0; bx <= bx1; bx++) {
+            let mx = bx * b + b / 2 - cx;
+            let my = by * b + b / 2 - cy;
+            if (u32(mx * mx + my * my) > un.sight2) { continue; }
+            var n = 0u;
+            for (var y = by * b; y < min((by + 1) * b, h); y++) {
+                for (var x = bx * b; x < min((bx + 1) * b, w); x++) {
+                    n += atomicLoad(&occ[u32(y * w + x)]);
+                }
+            }
+            if (n > best) { best = n; bi = u32(by * nbw + bx); }
+        }
+    }
+    SQ.uout[u].touching = touching;
+    SQ.uout[u].aim = bi;
+    SQ.uout[u].dense = best;
+}
+
+// The harvest: in unit order, each unit with `take` takes up to that much
+// charge from the crystal cells of its disc, cell by cell. One thread, so
+// two units on one crystal take in order.
+@compute @workgroup_size(1)
+fn harvest1(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x != 0u) { return; }
+    for (var u = 0u; u < P.nunits; u++) {
+        let un = SQ.units[u];
+        var took = 0.0;
+        if (un.take > 0.0 && world(CRYSTALS)) {
+            var rem = un.take;
+            let r = isqrt(un.take2);
+            var done = false;
+            for (var dy = -r; dy <= r && !done; dy++) {
+                for (var dx = -r; dx <= r; dx++) {
+                    let x = i32(un.x) + dx;
+                    let y = i32(un.y) + dy;
+                    if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h) || u32(dx * dx + dy * dy) > un.take2) { continue; }
+                    let i = u32(y) * P.w + u32(x);
+                    let c = charge[i];
+                    if (c > 0.0) {
+                        let t = min(c, rem);
+                        charge[i] = c - t;
+                        rem = rem - t;
+                        if (rem <= 0.0) { done = true; break; }
+                    }
+                }
+            }
+            took = un.take - rem;
+        }
+        SQ.uout[u].took = took;
+    }
+}
+
 // ------------------------------------------- the life cycle (2026-11-11)
 // The CPU's `life_step`, after the move (and any wall bites) and before
 // eating: `fate` (timers, the walkers that fruit or fall dormant, the
