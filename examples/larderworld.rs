@@ -144,8 +144,11 @@ struct Row {
 const NEAR: f32 = 10.0;
 
 /// The mould's settings over the race world's, from the command line.
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Default)]
 struct Mould {
+    /// `keys=k:v+k:v`: tier keys (`mould::tiers::set_key`) set after the
+    /// tier, to try a candidate before it is one. CPU only.
+    keys: Vec<(String, String)>,
     /// A mould tier (`tier=swarmer`: the alarm that shots lay draws the
     /// mould to the fight). CPU only.
     tier: Option<Tier>,
@@ -215,6 +218,9 @@ impl Mould {
             p.scorch_keep = k;
         }
         p.scorch_cone |= self.scorch_cone;
+        for (k, v) in &self.keys {
+            slime_mould::mould::tiers::set_key(p, k, v).unwrap_or_else(|e| panic!("keys=: {e}"));
+        }
     }
 }
 
@@ -271,6 +277,7 @@ fn main() {
             "upkeep" => m.upkeep = Some(v.parse().unwrap()),
             "smell_r" => rules.smell_r = v.parse().unwrap(),
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
+            "keys" => m.keys = v.split('+').map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=k:v+k:v")).collect(),
             "flee" => m.flee = Some(v.parse().unwrap()),
             "flee_keep" => m.flee_keep = Some(v.parse().unwrap()),
             // `crater=S`: game seconds of crater each hit lays
@@ -360,14 +367,17 @@ fn main() {
         rules.cap,
         fnv(settings.as_bytes())
     );
-    assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");
+    if !m.keys.is_empty() {
+        println!("keys {:?}", m.keys);
+    }
+    assert!((m.tier.is_none() && m.keys.is_empty()) || engines == [false], "tier= and keys= play on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
     if let Some(dir) = look {
         assert!(engines == [false], "look= draws the CPU world only");
         std::fs::create_dir_all(&dir).expect("look dir");
         for &seed in &seeds {
             for hand in &hands {
-                let r = play(seed, scale, walkers, rules, m, hand, map, Some((&dir, every)), None);
+                let r = play(seed, scale, walkers, rules, &m, hand, map, Some((&dir, every)), None);
                 println!("{hand} seed {seed}: {} at {:.0} s, score {:+.3}", r.end, r.t, r.score);
             }
         }
@@ -402,7 +412,7 @@ fn main() {
                     if *on_gpu && dev.is_none() {
                         dev = Some(gpu());
                     }
-                    let r = play(*seed, scale, walkers, rules, m, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
+                    let r = play(*seed, scale, walkers, rules, &m, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
                     println!(
                         "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s{}",
                         if engines.len() > 1 { format!(" {}", engine_name(*on_gpu)) } else { String::new() },
@@ -587,7 +597,7 @@ fn report(hands: &[String], seeds: &[u64], get: &dyn Fn(u64, &str) -> Row) {
 /// One game: on the CPU big dish, or with `gpu` on the GPU engine
 /// (`GpuWorld`, the race world's settings and the same map).
 #[allow(clippy::too_many_arguments)]
-fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>, gpu: Option<&(wgpu::Device, wgpu::Queue)>) -> Row {
+fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>, gpu: Option<&(wgpu::Device, wgpu::Queue)>) -> Row {
     if let Some((device, queue)) = gpu {
         let mut s = race_settings(seed, scale, walkers);
         (s.alarm_keep, s.alarm_weight) = mould.alarm((s.alarm_keep, s.alarm_weight));

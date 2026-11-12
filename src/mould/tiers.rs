@@ -53,12 +53,12 @@ pub enum Tier {
     /// scatters spores (`spore_burst`). Counter: starve it, and don't
     /// strike it near untaken food.
     Sporer,
-    /// Habituation, the avoiding answer: a scar field remembers where the
-    /// mould was shot (the alarm, kept about 40 s) and it keeps away from
-    /// a place hurt again and again, long after the alarm has faded; shots
-    /// laid there move it a little (alarm weight -1). Counter: burn a road
-    /// clear once and it stays clear; but it will not come where you wait.
-    Wary,
+    // Wary (the scar read away, alarm -1, scar -0.5) was removed 11-12: it
+    // kept away from a spot shot again and again (8 of 8 seeds), but
+    // scattered fire herded it off every crystal, and random wiped it on 12
+    // of 16 held-out seeds, beating every plan; at scar -0.03 with craters,
+    // and with the core's pull 8, random still won 3 of 4 dev seeds.
+    // (`Reports/dead-ends.md`.)
     /// Habituation, the swarming answer: the same scar, read the other way,
     /// with the Swarmer's alarm: each shot at one place brings more of it
     /// back there (kills a strike rose 16 to 306 over 16 strikes, seed 1).
@@ -78,14 +78,13 @@ pub enum Tier {
 const SPORE: [(&str, &str); 4] = [("spore_scent", "1"), ("spore_reach", "36"), ("spore_land", "1"), ("spore_deposit", "0.2")];
 
 impl Tier {
-    pub const ALL: [Tier; 8] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Wary, Tier::Grudge];
+    pub const ALL: [Tier; 7] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge];
 
     pub fn name(self) -> &'static str {
         match self {
             Tier::Drifter => "drifter",
             Tier::Sprawler => "sprawler",
             Tier::Trunk => "trunk",
-            Tier::Wary => "wary",
             Tier::Grudge => "grudge",
             Tier::Sporer => "sporer",
             Tier::Sleeper => "sleeper",
@@ -106,7 +105,13 @@ impl Tier {
             // (graze_weight 10) was the first Drifter: grass fed it to the
             // 50,000-slot cap in 15 s, a flood, not a crawl. Step 0.6 held
             // 3 crystals in 60 s, too still to reach a squad.
-            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1")],
+            // Then (11-12, the campaign: on mission 2 it never left home) hunger
+            // 8 and reach 18: on dev seeds 1-4 an idle squad is touched at
+            // 210-544 s on 3 of 4 (never on any before; hunger 4, reach 14
+            // or 16 touched 1-2 of 4; keep 0.9 or hunger 16 grew it to the
+            // plain mould's size), with 3,700-12,900 walkers at 900 s
+            // against plain's 11,400-13,600.
+            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1"), ("hunger_scent", "8"), ("hunger_at", "1"), ("sensor_offset", "18")],
             // Explorers alone (keep 0.9, step 1) starved to 250 walkers by
             // 60 s and let go of every crystal; the faster step and longer
             // reach keep a mesh on 14 of 23. Explore 400 steps held about
@@ -149,9 +154,8 @@ impl Tier {
             Tier::Swarmer => vec![("alarm_keep", "0.98"), ("alarm_weight", "3")],
             // The scar: keep 0.9999 a fine step, gain 0.01 of the alarm, so
             // 16 strikes 2 s apart leave a peak of about 250 that halves in
-            // about 40 s; read at -0.5 / +0.5 beside trail and scent
+            // about 40 s; read at +0.5 beside trail and scent
             // (`Reports/mould-tiers-campaign-2026-11-12.md`, *Habituation*).
-            Tier::Wary => vec![("alarm_keep", "0.98"), ("alarm_weight", "-1"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "-0.5")],
             Tier::Grudge => vec![("alarm_keep", "0.98"), ("alarm_weight", "3"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "0.5")],
         }
     }
@@ -162,7 +166,20 @@ impl Tier {
     /// fills in its own (the Sprawler headless, the Grudge's pull) once the
     /// core-defence PR is in. Read once, by `Game::with_tier`.
     pub fn core(self) -> Option<super::larder_world::Core> {
-        None
+        use super::larder_world::{Core, CoreKind, Rules};
+        let plain = Core::of(&Rules::default());
+        match self {
+            // No core: births go on wherever a walker is fed, so only a
+            // wipe ends it, and a strike on its start takes nothing (the
+            // campaign's mission 3 contains it with walls). Dev seeds 1-4,
+            // craters on: strike +0.96 mean against farm +0.94 and wall
+            // +0.91, level; random lost its squad on 2.
+            Tier::Sprawler => Some(Core { kind: CoreKind::Headless, pull: 0.0, ..plain }),
+            // The whole body converges on soldiers at its core: random's
+            // squad wiped on 4 of 4 dev seeds (at 8 too).
+            Tier::Grudge => Some(Core { pull: GRUDGE_PULL, ..plain }),
+            _ => None,
+        }
     }
 
     /// Sets the tier's keys on CPU big-dish parameters (other fields are
@@ -189,8 +206,13 @@ impl Tier {
     }
 }
 
-/// The keys a tier may set, by their CPU names (angles in degrees).
-fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
+/// The Grudge's core pull: twice the plain mould's (`Rules::core_pull` 8).
+pub const GRUDGE_PULL: f32 = 16.0;
+
+/// The keys a tier may set, by their CPU names (angles in degrees). Public
+/// so a census can try a candidate's keys over a tier (`larderworld
+/// keys=`) before it becomes one.
+pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
     let f = || v.parse::<f32>().map_err(|e| format!("{key}={v}: {e}"));
     let n = || v.parse::<u16>().map_err(|e| format!("{key}={v}: {e}"));
     match key {
@@ -202,6 +224,11 @@ fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "keep" => p.keep = f()?,
         "blocked_deposit" => p.blocked_deposit = f()?,
         "explore_steps" => p.explore_steps = n()?,
+        // Food and the body (the one-body thread's switches, both engines).
+        "scent_offset" => p.scent_offset = f()?,
+        "energy_flow" => p.energy_flow = f()?,
+        "hunger_scent" => p.hunger_scent = f()?,
+        "hunger_at" => p.hunger_at = f()?,
         "explore_spread" => p.explore_spread = f()?,
         "explore_deposit" => p.explore_deposit = f()?,
         // The life cycle.
@@ -267,11 +294,18 @@ mod tests {
         assert!(on(Tier::Swarmer).alarm_weight > 0.0 && on(Tier::Swarmer).sleep_rate == 0.0);
         assert!((on(Tier::Drifter).sensor_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-6, "degrees become radians");
         assert!(on(Tier::Sprawler).explore_steps > 0 && on(Tier::Sprawler).explore_spread > 0.0);
-        assert!(on(Tier::Wary).scar_weight < 0.0 && on(Tier::Grudge).scar_weight > 0.0 && on(Tier::Grudge).alarm_weight > 0.0);
+        {
+            use crate::mould::larder_world::{Core, CoreKind, Rules};
+            let plain = Core::of(&Rules::default());
+            assert_eq!(Tier::Sprawler.core().map(|c| c.kind), Some(CoreKind::Headless));
+            assert!(Tier::Grudge.core().is_some_and(|c| c.kind == CoreKind::Fixed && c.pull > plain.pull));
+            assert!(Tier::Trunk.core().is_none() && Tier::Drifter.core().is_none());
+        }
+        assert!(on(Tier::Grudge).scar_weight > 0.0 && on(Tier::Grudge).alarm_weight > 0.0);
         assert!(on(Tier::Trunk).sensor_angle < BigParams::today().sensor_angle && on(Tier::Trunk).keep > BigParams::today().keep);
         // Every tier with an alarm rule keeps its alarm (a field that decays
         // in one step does nothing).
-        for t in [Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Wary, Tier::Grudge] {
+        for t in [Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge] {
             let p = on(t);
             assert!(p.alarm_keep > 0.5, "{}", t.name());
         }

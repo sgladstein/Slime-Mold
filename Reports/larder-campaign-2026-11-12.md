@@ -242,7 +242,7 @@ about 2:00. The first version (#130) also played First contact's strike to
 as `each_missions_plan_still_wins`, `#[ignore]`d. The wall plan is in the
 library (`campaign::wall_rim_gaps`).
 
-### The gaps on the CPU and the 1070 GPU world, 32 seeds (census v9)
+### The gaps and Landfall on the CPU and the 1070 GPU world, 32 seeds (census v9)
 
 The tech lead asked for missions 1-3 on both engines after core defence
 (#126). Run on the owner's GTX 1070 at main 9f5e4a4, `gpu=both`, seeds
@@ -265,6 +265,15 @@ on each engine (sign p 5e-10). One difference: the GPU world wipes a
 squad that did not wall a little sooner, claim 24-8 and random 19-5
 (paired, GPU earlier; sign p 0.007 each, both survive Holm over the three
 hands; idle 14-18, p 0.6). The median gap is 25 s for claim and under
-10 s for random, which does not change any verdict. Missions 1 and 2 ran
-out of memory on the PC partway (other GPU tests shared it) and are
-booked again.
+10 s for random, which does not change any verdict.
+
+Landfall, the same check (re-run at 7e3a7a3 after the first try ran out
+of memory on the shared PC; 20 min; raw file
+`...census/1-landfall-s1-32-v9-cpu-vs-gpu-1070.txt`): claim meets the goal
+32/32 on each engine, 3 stars, median 1:08 on both (the same second on 31
+seeds); idle 0/32 on each (the 30 s stuck backstop ends every round,
+median 0:58 / 1:08); random 0/32 on each (stuck 48, capped 15, one wiped;
+end times 12-11 paired, p 1). The engines agree on every seed here too.
+First contact was not re-run: its goal changes when the Drifter drifts,
+and it gets a smoke check then (owner's testing rule, 17:26Z: name the
+question, and anything over about an hour needs the owner's OK).

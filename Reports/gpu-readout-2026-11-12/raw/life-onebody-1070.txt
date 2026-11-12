@@ -1,0 +1,25 @@
+# GTX 1070 (Scott-Desktop), mouldgpu at 71ed0f9, 2026-11-12 ~14:45Z, over Remote Control. OUT=target\gpu-out.
+# Single runs. The life-cycle keys are Reports/life-gpu-2026-11-11/cost.sh's (forced, SPORER, SLEEPER, SWARMER).
+=== SECTION 3: the life cycle, the sandbox's default dish (100,000 walkers)
+== plain : mouldgpu.exe look=target\gpu-out seconds=5 tag=c
+wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.899, worst 6.273; GPU ms ticks 1.592, drawing 0.106
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.328, walk 0.067, trail 0.163, scent 0.176, draw 0.103
+== forced : mouldgpu.exe look=target\gpu-out seconds=5 tag=c blocked_keep=1 blocked_reset=1
+wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.883, worst 2.915; GPU ms ticks 1.604, drawing 0.106
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.316, walk 0.066, trail 0.194, scent 0.178, draw 0.104
+== sporer : mouldgpu.exe look=target\gpu-out seconds=5 tag=c spore_scent=1 spore_reach=36 spore_land=1 spore_deposit=0.2 spore_rate=0.00001 spore_burst=0.05 spore_alarm=1 alarm_keep=0.98
+wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.641, worst 3.717; GPU ms ticks 2.282, drawing 0.106
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.489, walk 0.068, fate 0.015, fly 0.007, alight 0.004, trail 0.296, scent 0.200, draw 0.104
+== sleeper : mouldgpu.exe look=target\gpu-out seconds=5 tag=c sleep_rate=0.01 sleep_deposit=0.3 wake_scent=1 wake_alarm=1 alarm_keep=0.98 alarm_relay=20 alarm_weight=3 sleep_rest=600 sleep_death=0.0001
+wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.960, worst 3.296; GPU ms ticks 1.612, drawing 0.106
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.053, walk 0.018, fate 0.152, fly 0.006, alight 0.003, trail 0.296, scent 0.201, draw 0.103
+== swarmer : mouldgpu.exe look=target\gpu-out seconds=5 tag=c alarm_keep=0.98 alarm_weight=3
+wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.196, worst 2.901; GPU ms ticks 1.915, drawing 0.106
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.415, walk 0.067, trail 0.243, scent 0.178, draw 0.103
+=== SECTION 4: one body (the one-body thread's command)
+== one body, flow on : mouldgpu.exe look=target\gpu-out seconds=10 scale=2 walkers=5000 capacity=50000 upkeep=0.001 piles=23 rect=1 crystal=512 energy_flow=0.05 hunger_scent=8
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 1.069, worst 2.622; GPU ms ticks 0.692, drawing 0.037
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.059, walk 0.019, eat 0.004, pilesum 0.005, flow 0.003, pilesum 0.004, esum 0.016, egain 0.054, life 0.025, breed 0.006, born 0.003, trail 0.062, scent 0.061, draw 0.034
+== one body, flow off : mouldgpu.exe look=target\gpu-out seconds=10 scale=2 walkers=5000 capacity=50000 upkeep=0.001 piles=23 rect=1 crystal=512 energy_flow=0 hunger_scent=0
+wall ms a frame of 2 ticks and the drawing, 600 frames: median 0.838, worst 2.490; GPU ms ticks 0.499, drawing 0.037
+GPU ms a pass, median of 11 ticks each submitted alone: sense 0.050, walk 0.018, eat 0.004, pilesum 0.004, flow 0.003, pilesum 0.004, life 0.016, breed 0.008, born 0.004, trail 0.061, scent 0.062, draw 0.034

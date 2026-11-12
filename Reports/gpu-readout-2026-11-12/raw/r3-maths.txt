@@ -1,0 +1,25 @@
+GTX 1070, worktree at 754246d, MOULDGPU_TEST_GPU=1, 2026-11-12 ~16:15Z (target\gpu-out\r3-maths.txt as sent; the last line is the runner's label).
+   Compiling slime-mould v0.1.0 (C:\Users\Scott\Code\Slime Mold GPU)
+    Finished `release` profile [optimized] target(s) in 28.66s
+     Running unittests src\bin\mouldgpu.rs (target\release\deps\mouldgpu-c3b7c72f82c3d876.exe)
+
+running 1 test
+adapter: NVIDIA GeForce GTX 1070 (Vulkan)
+        cos: 955522 of 1048576 differ from the CPU's bits, worst by 1.03e-6
+        sin: 957946 of 1048576 differ from the CPU's bits, worst by 1.09e-6
+        exp: 863672 of 1048576 differ from the CPU's bits, worst by 1.19e-7
+        pow: 471869 of 1048576 differ from the CPU's bits, worst by 1.19e-7
+       sqrt: 176827 of 1048576 differ from the CPU's bits, worst by 4.77e-7
+ x + cos*st: 37254 of 1048576 differ from the CPU's bits, worst by 6.10e-5
+ y + sin*st: 56930 of 1048576 differ from the CPU's bits, worst by 3.05e-5
+    a*b + c: 28941 of 1048576 differ from the CPU's bits, worst by 7.63e-6
+a step lands in another cell for 0 of 1048576; a*b + c matches the CPU's unfused result 1019635 times and the fused 1048576
+test tests::the_adapters_maths_beside_the_cpus ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 30 filtered out; finished in 2.81s
+
+(exit 0)
+
+lavapipe (cloud, same commit) for comparison:
+        cos: 182407 of 1048576 differ, worst 5.96e-8; sin 173069, 5.96e-8; exp 912143, 1.79e-7; pow 697156, 2.38e-7; sqrt 0; x + cos*st 1239, 3.05e-5; y + sin*st 1868, 3.05e-5; a*b + c 0
+        a step lands in another cell for 0 of 1048576; a*b + c matches the unfused result 1048576 times and the fused 1019635

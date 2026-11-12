@@ -1,0 +1,82 @@
+GTX 1070 (Scott-Desktop), round 3 timing, 2026-11-12 16:45:59-16:48:00Z, worktree C:\Users\Scott\Code\Slime Mold GPU, larder-world.exe built at bb08d9e (16:09:22Z).
+PC quiet by the runner's check: no campaign/mouldgpu/cargo/rustc/larder-world process, RAM 2.1-2.4 GB free of 8 (the owner's usual apps open).
+Every machine line ended with the same list of programs on the GPU, written [L] here (the runner checked by script):
+[L] = logioptionsplus_agent.exe, WinStore.App.exe, explorer.exe, TextInputHost.exe, chrome.exe, Malwarebytes.exe, ProtonVPN.Client.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, steamwebhelper.exe, ProtonDrive.exe, claude.exe, copilotapp.exe, copilotapphost.exe, msedgewebview2.exe, msedge.exe
+Run 2 of a pair repeats run 1's per-pass table to within 0.003 ms and its outcome exactly; the full text of both runs is in the thread's record; run 2's frame lines are kept here.
+
+== a. bench=20 hand=farm scale=2 walkers=5000 spread=0 passes=30  (run 1)
+larder-world machine at the start: RAM 2.3 GB free of 8.0; GPU memory 2302 MB in use of 8192, 0% busy; on the GPU too: [L]
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.03 ms a step waiting); steps finished once in 299, when the next was due 0
+  every frame (1200 of them), ms: frame p50 0.63 p95 2.70 max 31.12; step  p50 0.01 p95 0.46 max 11.33; prepare  p50 0.10 p95 0.15 max 3.05; record  p50 0.08 p95 0.14 max 1.40; GPU tail  p50 0.42 p95 1.82 max 30.41
+  frames with a step (300 of them), ms: frame p50 1.85 p95 2.83 max 31.12; step  p50 0.39 p95 0.57 max 11.33; prepare  p50 0.10 p95 0.15 max 0.69; record  p50 0.08 p95 0.12 max 1.35; GPU tail  p50 1.21 p95 2.15 max 30.41
+  GPU (timestamps, median of 300 steps): the step's ticks 0.39 ms, its drawing 0.49 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+  GPU a step, every pass timed alone (median of 30 steps): 0.910 ms in all
+    smell 1 0.014 | sense 2 0.028 | walk 2 0.016 | eat 2 0.008 | pilesum 4 0.021 | flow 2 0.006 | life 2 0.011 | breed 2 0.010 | born 2 0.007 | trail 2 0.131 | scent 2 0.118 | units 1 0.014 | harvest 1 0.493 | draw 1 0.033 | shots/strike/cut on 2 of 30 steps, 0.010/0.006/0.005 a run   (runs a step, ms a step)
+  machine at the end: RAM 2.1 GB free of 8.0; GPU memory 2504 MB in use of 8192, 0% busy; on the GPU too: [L]
+== a. (run 2): frames with a step p50 1.78 p95 2.72 max 12.33; every frame p50 0.60 p95 2.52 max 12.33; ticks 0.39, drawing 0.49; harvested 1953; 0.910 ms in all
+== b. bench=20 hand=farm scale=2 walkers=5000 spread=0 passes=30 squad1=1  (run 1)
+  every frame (1200 of them), ms: frame p50 0.59 p95 2.39 max 12.84; ...
+  frames with a step (300 of them), ms: frame p50 2.28 p95 2.47 max 12.84; step  p50 0.39 p95 0.45 max 10.94; prepare  p50 0.10 p95 0.13 max 0.65; record  p50 0.08 p95 0.10 max 0.78; GPU tail  p50 1.68 p95 1.85 max 1.91
+  GPU (timestamps, median of 300 steps): the step's ticks 0.39 ms, its drawing 0.82 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+  GPU a step, every pass timed alone (median of 30 steps): 1.489 ms in all
+    smell1 1 0.264 | sense 0.028 | walk 0.016 | eat 0.008 | pilesum 0.021 | flow 0.005 | life 0.011 | breed 0.010 | born 0.007 | trail 0.131 | scent 0.118 | units1 1 0.744 | harvest1 1 0.093 | draw 0.033
+== b. (run 2): frames with a step p50 2.27 p95 2.47 max 12.87; ticks 0.39, drawing 0.82; harvested 1953; 1.486 ms in all (units1 0.742, smell1 0.264, harvest1 0.092)
+== c. bench=20 hand=farm scale=4 walkers=20000 spread=0 passes=30  (run 1)
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  every frame (1200 of them), ms: frame p50 0.62 p95 5.27 max 10.40; ...
+  frames with a step (300 of them), ms: frame p50 4.01 p95 7.45 max 10.40; step  p50 0.64 p95 0.72 max 7.40; prepare  p50 0.10 p95 0.12 max 0.60; record  p50 0.08 p95 0.10 max 0.35; GPU tail  p50 3.16 p95 6.56 max 8.53
+  GPU (timestamps, median of 300 steps): the step's ticks 2.26 ms, its drawing 0.62 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+  GPU a step, every pass timed alone (median of 30 steps): 3.160 ms in all
+    smell 1 0.023 | sense 4 0.140 | walk 4 0.060 | eat 4 0.019 | pilesum 8 0.097 | flow 4 0.012 | life 4 0.055 | breed 4 0.047 | born 4 0.021 | trail 4 0.923 | scent 4 0.824 | units 1 0.022 | harvest 1 0.800 | draw 1 0.118
+== c. (run 2): frames with a step p50 4.02 p95 7.45 max 10.36; harvested 2345; 3.155 ms in all
+== d. bench=20 hand=farm scale=4 walkers=20000 spread=0 passes=30 squad1=1  (run 1)
+  every frame (1200 of them), ms: frame p50 0.63 p95 7.77 max 14.09; ...
+  frames with a step (300 of them), ms: frame p50 7.02 p95 8.54 max 14.09; step  p50 0.68 p95 0.77 max 7.52; ...; GPU tail  p50 6.15 p95 7.66 max 8.27
+  GPU (timestamps, median of 300 steps): the step's ticks 2.26 ms, its drawing 2.91 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+  GPU a step, every pass timed alone (median of 30 steps): 6.303 ms in all
+    smell1 1 1.007 | sense 0.139 | walk 0.060 | eat 0.019 | pilesum 0.097 | flow 0.012 | life 0.056 | breed 0.047 | born 0.021 | trail 0.923 | scent 0.823 | units1 1 2.716 | harvest1 1 0.263 | draw 0.118
+== d. (run 2): frames with a step p50 6.98 p95 8.88 max 39.99; harvested 2345; 6.307 ms in all
+== e. bench=20 hand=farm scale=8 walkers=100000 spread=0 passes=30  (run 1)
+larder-world machine at the start: RAM 2.2 GB free of 8.0; GPU memory 2302 MB in use of 8192, 0% busy; on the GPU too: [L]
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.05 ms a step waiting); steps finished once in 299, when the next was due 0
+  every frame (1200 of them), ms: frame p50 0.77 p95 20.39 max 44.62; step  p50 0.02 p95 1.24 max 18.98; prepare  p50 0.10 p95 0.14 max 32.52; record  p50 0.09 p95 0.15 max 1.33; GPU tail  p50 0.52 p95 18.94 max 43.25
+  frames with a step (300 of them), ms: frame p50 20.00 p95 20.47 max 44.62; step  p50 1.20 p95 1.36 max 18.98; prepare  p50 0.10 p95 0.13 max 0.68; record  p50 0.09 p95 0.11 max 0.29; GPU tail  p50 18.52 p95 19.02 max 43.25
+  GPU (timestamps, median of 300 steps): the step's ticks 16.75 ms, its drawing 0.95 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+  GPU a step, every pass timed alone (median of 30 steps): 18.282 ms in all
+    smell 1 0.053 | sense 8 0.764 (0.096 a run) | walk 8 0.337 (0.042) | eat 8 0.076 | pilesum 16 0.647 | flow 8 0.043 | life 8 0.344 (0.043) | breed 8 0.434 (0.054) | born 8 0.201 (0.025) | trail 8 7.182 (0.898) | scent 8 6.349 (0.794) | units 1 0.069 | harvest 1 1.329 | draw 1 0.461
+  machine at the end: RAM 2.2 GB free of 8.0; GPU memory 2568 MB in use of 8192, 0% busy; on the GPU too: [L]
+== e. (run 2): frames with a step p50 19.98 p95 20.43 max 21.96; every frame p50 0.76 p95 20.35 max 33.35; ticks 16.75, drawing 0.95; harvested 2100; 18.288 ms in all
+== f. bench=20 hand=farm scale=8 walkers=100000 spread=0 passes=30 squad1=1  (run 1)
+  every frame (1200 of them), ms: frame p50 0.78 p95 33.98 max 35.66; ...
+  frames with a step (300 of them), ms: frame p50 32.57 p95 34.11 max 34.30; step  p50 1.29 p95 1.39 max 3.85; ...; GPU tail  p50 31.04 p95 32.63 max 32.76
+  GPU (timestamps, median of 300 steps): the step's ticks 16.73 ms, its drawing 11.00 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+  GPU a step, every pass timed alone (median of 30 steps): 31.878 ms in all
+    smell1 1 3.884 | sense 0.764 | walk 0.337 | eat 0.075 | pilesum 0.646 | flow 0.043 | life 0.344 | breed 0.434 | born 0.201 | trail 7.173 | scent 6.341 | units1 1 10.453 | harvest1 1 0.777 | draw 0.461
+== f. (run 2): frames with a step p50 32.62 p95 34.11 max 39.96; ticks 16.73, drawing 11.06; harvested 2100; 31.876 ms in all (units1 10.410)
+== g. bench=20 hand=farm scale=8 walkers=100000  (spreading on; runs 1 and 2)
+  1200 frames, 300 game steps; 0.04 read-backs a step, 0.03 waits a step (0.50 ms a step waiting); steps finished once in 291, when the next was due 0
+  every frame (1200 of them), ms: frame p50 5.50 p95 6.62 max 47.37; step  p50 0.05 p95 1.39 max 15.54; prepare  p50 0.10 p95 0.13 max 34.52; record  p50 0.08 p95 0.12 max 0.54; GPU tail  p50 5.02 p95 6.34 max 6.65
+  frames with a step (300 of them), ms: frame p50 5.73 p95 5.93 max 36.63; step  p50 1.29 p95 1.51 max 3.84; prepare  p50 0.10 p95 0.17 max 34.52; ...; GPU tail  p50 4.21 p95 4.35 max 4.44
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+  (run 2) every frame p50 5.48 p95 6.62 max 50.36; frames with a step p50 5.71 p95 5.97 max 37.06; 0.51 ms a step waiting; harvested 2100
+== h. bench=20 hand=farm scale=4 walkers=20000  (spreading on; runs 1 and 2)
+  1200 frames, 300 game steps; 0.04 read-backs a step, 0.04 waits a step (0.13 ms a step waiting); steps finished once in 290, when the next was due 0
+  every frame (1200 of them), ms: frame p50 1.24 p95 2.64 max 13.54; ...
+  frames with a step (300 of them), ms: frame p50 1.41 p95 1.79 max 9.95; ...; GPU tail  p50 0.55 p95 0.58 max 0.66
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2343, shots 24, killed 4
+  (run 2) every frame p50 1.24 p95 2.65 max 13.32; frames with a step p50 1.40 p95 1.84 max 10.05; harvested 2343
+== i-l: the slime-enemy thread's benches (hand=idle map=fork), sent to that thread (j had the crowd limit off: 250000 slots over half the Fork's 146258 agar cells):
+  i. scale 2 walkers 5000 spread=0 passes=30: every frame p50 0.59 p95 1.35 max 3.19; frames with a step p50 1.29 p95 1.40 max 1.98; ticks 0.39 ms, drawing 0.06; mould 2704, shots 10, killed 5; 0.417 ms in all (trail 0.132, scent 0.119, sense 0.029, walk 0.016, units 0.014, harvest 0.005, draw 0.033)
+  j. walkers=25000 upkeep=0.0002 (250000 slots) spread=0 passes=30: every frame p50 0.60 p95 1.40 max 3.11; frames with a step p50 1.36 p95 1.46 max 1.96; ticks 0.46, drawing 0.06; mould 24999, shots 4, killed 3; 0.483 ms in all (sense 0.051, walk 0.031, life 0.022, breed 0.021, born 0.011, trail 0.133, scent 0.119)
+  k. scale=1 (256 x 160) spread=0 passes=30: every frame p50 0.58 p95 0.90 max 2.68; frames with a step p50 0.85 p95 0.94 max 1.76; ticks 0.11, drawing 0.03; mould 4801, shots 28, killed 205; 0.117 ms in all
+  l. the same with spreading on: i every frame p50 0.73 p95 1.00 max 3.17; j 0.77 / 1.00 / 3.09; k 0.57 / 0.89 / 2.66; outcomes as i-k
+16:48:00Z timing done; RAM 2.38 GB

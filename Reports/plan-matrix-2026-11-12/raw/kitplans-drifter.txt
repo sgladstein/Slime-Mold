@@ -1,0 +1,98 @@
+kitplans the race world, cap 600 s, seeds [201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216], tiers ["drifter"]; rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 0.0, hp: 100.0, drain: 1.0, touch: 1.5, smell: 0.5, smell_r: 2.0, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, core_pull: 8.0, cap: 600.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, build: BuildRules { max: 40, gap: 2.5, raise: 8.0, turret_cost: 500.0, turret_hp: 300.0, turret_range: 15.0, turret_every: 0.5, lure_cost: 300.0, lure_hp: 150.0, lure_smell: 8.0, lure_r: 6.0, lure_burn: 2.0, pump_cost: 500.0, pump_hp: 200.0, pump_rate: 5.0, pump_smell: 0.0, outpost_cost: 400.0, outpost_hp: 300.0, outpost_hoard: 0.25, touch: 2.0 }, overrun: 0.0, reserve: 0.0, seek: true, crater: 10.0, spread: 0.0 }; kit KitRules { reach: 24.0, blast_r: 6.0, blast_alarm: 50.0, crater_r: 7.0, crater_secs: 20.0, blast_price: 60.0, mine_r: 5.0, mine_trigger: 40, mine_price: 80.0, cord_r: 2.5, cord_every: 2.0, cord_price: 3.0, cord_max: 48.0, germ_r: 5.0, sick_secs: 6.0, immune_secs: 40.0, sick_upkeep: 60.0, sick_catch: 0.2, sick_deposit: 1.0, sick_keep: 0.9, germ_price: 300.0, gas_r: 12.0, gas_secs: 20.0, gas_death: 0.0, gas_price: 150.0, reek: 4.0, carry_max: 5, carry_each: 1, tool_weight: 50.0, restock_r: 6.0, alarm_keep: 0.95 }
+ drifter randkit seed 201: mould wiped at  288 s, score +1.820; soldiers 12, mould      0, harvested   4350, shots   597; uses [1, 3, 1, 2, 3, 4], tool kills [0, 0, 0, 0, 0, 0]; 5.61 ms a tick
+ drifter   quiet seed 201:         cap at  600 s, score +0.418; soldiers  8, mould    894, harvested  39214, shots     0; uses [0, 0, 0, 0, 4, 8], tool kills [0, 0, 0, 0, 0, 0]; 9.68 ms a tick
+ drifter    loud seed 201:         cap at  600 s, score +0.413; soldiers  8, mould    937, harvested  32074, shots    73; uses [0, 4, 0, 0, 0, 1], tool kills [0, 0, 0, 0, 0, 0]; 11.12 ms a tick
+ drifter randkit seed 202: mould wiped at  371 s, score +1.657; soldiers 11, mould      0, harvested   2850, shots   549; uses [3, 1, 0, 3, 3, 4], tool kills [0, 0, 0, 0, 0, 0]; 11.37 ms a tick
+ drifter   siege seed 201:         cap at  600 s, score +0.420; soldiers  8, mould    863, harvested  40764, shots   270; uses [0, 0, 10, 0, 0, 0], tool kills [0, 0, 18, 0, 0, 0]; 17.30 ms a tick
+ drifter   quiet seed 202:         cap at  600 s, score +0.264; soldiers  8, mould   3925, harvested  38014, shots     0; uses [0, 0, 0, 0, 10, 38], tool kills [0, 0, 0, 0, 0, 0]; 4.26 ms a tick
+ drifter    loud seed 202: mould wiped at  499 s, score +1.368; soldiers  8, mould      0, harvested  29725, shots   204; uses [26, 4, 0, 0, 0, 1], tool kills [1841, 0, 0, 0, 0, 0]; 13.37 ms a tick
+ drifter   siege seed 202:         cap at  600 s, score +0.370; soldiers  8, mould   1499, harvested  42664, shots   661; uses [0, 0, 13, 0, 0, 0], tool kills [0, 0, 394, 0, 0, 0]; 5.60 ms a tick
+ drifter  plague seed 201:         cap at  600 s, score +0.369; soldiers  8, mould   1603, harvested  39283, shots   222; uses [0, 0, 0, 1, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 26.77 ms a tick
+ drifter randkit seed 203:         cap at  600 s, score +0.165; soldiers  1, mould   3128, harvested   2100, shots   572; uses [1, 1, 4, 2, 1, 8], tool kills [0, 0, 0, 0, 0, 0]; 6.18 ms a tick
+ drifter    loud seed 203: mould wiped at  259 s, score +1.768; soldiers  8, mould      0, harvested  20350, shots    95; uses [19, 4, 0, 0, 0, 1], tool kills [1077, 0, 0, 0, 0, 0]; 10.40 ms a tick
+ drifter   quiet seed 203:         cap at  600 s, score +0.417; soldiers  8, mould    907, harvested  44314, shots     0; uses [0, 0, 0, 0, 2, 8], tool kills [0, 0, 0, 0, 0, 0]; 5.43 ms a tick
+ drifter randkit seed 204: squad wiped at  484 s, score -1.193; soldiers  0, mould   3644, harvested   2450, shots   658; uses [1, 2, 2, 2, 4, 2], tool kills [0, 0, 0, 0, 0, 0]; 4.46 ms a tick
+ drifter    loud seed 204: mould wiped at  213 s, score +1.845; soldiers  8, mould      0, harvested  16383, shots   234; uses [15, 4, 0, 0, 0, 1], tool kills [1037, 0, 0, 0, 0, 0]; 3.92 ms a tick
+ drifter   siege seed 203:         cap at  600 s, score +0.421; soldiers  8, mould    851, harvested  43964, shots   229; uses [0, 0, 7, 0, 0, 0], tool kills [0, 0, 20, 0, 0, 0]; 6.60 ms a tick
+ drifter  plague seed 202:         cap at  600 s, score +0.426; soldiers  8, mould    780, harvested  42297, shots   208; uses [0, 0, 0, 5, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 20.54 ms a tick
+ drifter   quiet seed 204:         cap at  600 s, score +0.321; soldiers  8, mould   2475, harvested  40964, shots     0; uses [0, 0, 0, 0, 14, 12], tool kills [0, 0, 0, 0, 0, 0]; 4.32 ms a tick
+ drifter  plague seed 203: mould wiped at  429 s, score +1.485; soldiers  8, mould      0, harvested  32982, shots    80; uses [0, 0, 0, 6, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 19.91 ms a tick
+ drifter randkit seed 205: squad wiped at  244 s, score -1.593; soldiers  0, mould   1745, harvested    250, shots   422; uses [0, 0, 1, 1, 4, 1], tool kills [0, 0, 0, 0, 0, 0]; 4.67 ms a tick
+ drifter   quiet seed 205:         cap at  600 s, score +0.291; soldiers  7, mould   3096, harvested  40314, shots     0; uses [0, 0, 0, 0, 18, 35], tool kills [0, 0, 0, 0, 0, 0]; 3.79 ms a tick
+ drifter    loud seed 205:         cap at  600 s, score +0.313; soldiers  8, mould   2512, harvested  35374, shots   759; uses [3, 4, 0, 0, 0, 1], tool kills [716, 0, 0, 0, 0, 0]; 5.06 ms a tick
+ drifter   siege seed 205:         cap at  600 s, score +0.368; soldiers  8, mould   1581, harvested  44064, shots   717; uses [0, 0, 13, 0, 0, 0], tool kills [0, 0, 23, 0, 0, 0]; 4.83 ms a tick
+ drifter   siege seed 204:         cap at  600 s, score +0.388; soldiers  8, mould   1329, harvested  41264, shots   561; uses [0, 0, 12, 0, 0, 0], tool kills [0, 0, 21, 0, 0, 0]; 13.07 ms a tick
+ drifter    loud seed 206: mould wiped at  268 s, score +1.753; soldiers  8, mould      0, harvested  16445, shots   153; uses [21, 4, 0, 0, 0, 1], tool kills [1477, 0, 0, 0, 0, 0]; 7.20 ms a tick
+ drifter   quiet seed 206:         cap at  600 s, score +0.412; soldiers  8, mould    954, harvested  35514, shots     0; uses [0, 0, 0, 0, 2, 8], tool kills [0, 0, 0, 0, 0, 0]; 6.67 ms a tick
+ drifter  plague seed 204:         cap at  600 s, score +0.365; soldiers  8, mould   1650, harvested  37344, shots   514; uses [0, 0, 0, 1, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 26.97 ms a tick
+ drifter  plague seed 205:         cap at  600 s, score +0.339; soldiers  8, mould   2055, harvested  40286, shots   748; uses [0, 0, 0, 1, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 22.38 ms a tick
+ drifter randkit seed 206:         cap at  600 s, score +0.427; soldiers  9, mould    179, harvested   2900, shots  1026; uses [2, 3, 5, 2, 2, 5], tool kills [0, 0, 0, 0, 0, 0]; 20.21 ms a tick
+ drifter    loud seed 207: mould wiped at  107 s, score +2.022; soldiers  8, mould      0, harvested  10150, shots    44; uses [8, 4, 0, 0, 0, 1], tool kills [1106, 0, 0, 0, 0, 0]; 5.56 ms a tick
+ drifter   quiet seed 207:         cap at  600 s, score +0.302; soldiers  8, mould   2911, harvested  38164, shots     0; uses [0, 0, 0, 0, 11, 33], tool kills [0, 0, 0, 0, 0, 0]; 3.48 ms a tick
+ drifter randkit seed 207: mould wiped at  417 s, score +1.780; soldiers 19, mould      0, harvested   9800, shots   765; uses [6, 3, 1, 4, 1, 13], tool kills [0, 0, 0, 0, 0, 0]; 12.11 ms a tick
+ drifter   siege seed 206:         cap at  600 s, score +0.423; soldiers  8, mould    824, harvested  39414, shots   191; uses [0, 0, 9, 0, 0, 0], tool kills [0, 0, 14, 0, 0, 0]; 16.53 ms a tick
+ drifter  plague seed 206: mould wiped at  558 s, score +1.270; soldiers  8, mould      0, harvested  30452, shots   276; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 19.21 ms a tick
+ drifter    loud seed 208: mould wiped at  122 s, score +1.997; soldiers  8, mould      0, harvested   9500, shots    57; uses [11, 4, 0, 0, 0, 1], tool kills [1087, 0, 0, 0, 0, 0]; 4.61 ms a tick
+ drifter   quiet seed 208:         cap at  600 s, score +0.423; soldiers  8, mould    821, harvested  44814, shots     0; uses [0, 0, 0, 0, 3, 8], tool kills [0, 0, 0, 0, 0, 0]; 5.76 ms a tick
+ drifter randkit seed 208: mould wiped at  551 s, score +1.432; soldiers 14, mould      0, harvested   8950, shots   894; uses [6, 2, 1, 4, 2, 10], tool kills [0, 0, 0, 0, 0, 0]; 8.31 ms a tick
+ drifter   siege seed 207:         cap at  600 s, score +0.429; soldiers  8, mould    759, harvested  46564, shots   221; uses [0, 0, 5, 0, 0, 0], tool kills [0, 0, 18, 0, 0, 0]; 13.11 ms a tick
+ drifter randkit seed 209: squad wiped at  362 s, score -1.397; soldiers  0, mould   1897, harvested   1200, shots   422; uses [3, 2, 0, 2, 3, 3], tool kills [0, 0, 0, 0, 0, 0]; 5.50 ms a tick
+ drifter   siege seed 208:         cap at  600 s, score +0.426; soldiers  8, mould    778, harvested  41514, shots   378; uses [0, 0, 14, 0, 0, 0], tool kills [0, 0, 16, 0, 0, 0]; 9.76 ms a tick
+ drifter    loud seed 209: mould wiped at  284 s, score +1.727; soldiers  8, mould      0, harvested  20600, shots   119; uses [23, 4, 0, 0, 0, 1], tool kills [1174, 0, 0, 0, 0, 0]; 10.32 ms a tick
+ drifter  plague seed 207:         cap at  600 s, score +0.485; soldiers  8, mould    100, harvested  42043, shots   154; uses [0, 0, 0, 11, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 22.93 ms a tick
+ drifter   quiet seed 209:         cap at  600 s, score +0.325; soldiers  8, mould   2417, harvested  42314, shots     0; uses [0, 0, 0, 0, 11, 23], tool kills [0, 0, 0, 0, 0, 0]; 5.02 ms a tick
+ drifter   siege seed 209:         cap at  600 s, score +0.367; soldiers  8, mould   1597, harvested  43614, shots   898; uses [0, 0, 14, 0, 0, 0], tool kills [0, 0, 58, 0, 0, 0]; 4.77 ms a tick
+ drifter    loud seed 210: mould wiped at  126 s, score +1.990; soldiers  8, mould      0, harvested  11450, shots    94; uses [11, 4, 0, 0, 0, 1], tool kills [1160, 0, 0, 0, 0, 0]; 5.22 ms a tick
+ drifter  plague seed 208:         cap at  600 s, score +0.466; soldiers  8, mould    307, harvested  40883, shots   285; uses [0, 0, 0, 11, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 19.74 ms a tick
+ drifter randkit seed 210: squad wiped at  430 s, score -1.283; soldiers  0, mould    575, harvested   1100, shots   352; uses [3, 0, 1, 2, 3, 4], tool kills [0, 0, 0, 0, 0, 0]; 9.81 ms a tick
+ drifter   quiet seed 210:         cap at  600 s, score +0.421; soldiers  8, mould    853, harvested  44164, shots     0; uses [0, 0, 0, 0, 7, 8], tool kills [0, 0, 0, 0, 0, 0]; 5.13 ms a tick
+ drifter randkit seed 211: mould wiped at  145 s, score +1.933; soldiers  7, mould      0, harvested   1500, shots   264; uses [0, 1, 1, 2, 2, 1], tool kills [0, 0, 0, 0, 0, 0]; 4.76 ms a tick
+ drifter    loud seed 211: mould wiped at  196 s, score +1.873; soldiers  8, mould      0, harvested  16150, shots   139; uses [15, 4, 0, 0, 0, 1], tool kills [1041, 0, 0, 0, 0, 0]; 4.00 ms a tick
+ drifter  plague seed 209: mould wiped at  557 s, score +1.272; soldiers  8, mould      0, harvested  38432, shots   344; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 19.93 ms a tick
+ drifter  plague seed 210: mould wiped at  373 s, score +1.578; soldiers  8, mould      0, harvested  28014, shots   130; uses [0, 0, 0, 8, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 16.47 ms a tick
+ drifter   quiet seed 211:         cap at  600 s, score +0.325; soldiers  8, mould   2365, harvested  41414, shots     0; uses [0, 0, 0, 0, 2, 8], tool kills [0, 0, 0, 0, 0, 0]; 5.32 ms a tick
+ drifter randkit seed 212: mould wiped at  265 s, score +1.833; soldiers 11, mould      0, harvested   5350, shots   520; uses [2, 3, 3, 6, 3, 2], tool kills [0, 0, 0, 0, 0, 0]; 5.47 ms a tick
+ drifter    loud seed 212: mould wiped at  205 s, score +1.858; soldiers  8, mould      0, harvested  16200, shots    84; uses [16, 4, 0, 0, 0, 1], tool kills [967, 0, 0, 0, 0, 0]; 6.40 ms a tick
+ drifter   siege seed 210:         cap at  600 s, score +0.427; soldiers  8, mould    774, harvested  44664, shots   152; uses [0, 0, 6, 0, 0, 0], tool kills [0, 0, 6, 0, 0, 0]; 17.46 ms a tick
+ drifter   siege seed 211:         cap at  600 s, score +0.329; soldiers  8, mould   2266, harvested  40814, shots    80; uses [0, 0, 2, 0, 0, 0], tool kills [0, 0, 2, 0, 0, 0]; 11.34 ms a tick
+ drifter   quiet seed 212:         cap at  600 s, score +0.418; soldiers  8, mould    901, harvested  43914, shots     0; uses [0, 0, 0, 0, 5, 8], tool kills [0, 0, 0, 0, 0, 0]; 6.31 ms a tick
+ drifter randkit seed 213: mould wiped at  160 s, score +1.908; soldiers  7, mould      0, harvested   1450, shots   143; uses [1, 2, 2, 1, 2, 2], tool kills [0, 0, 0, 0, 0, 0]; 5.38 ms a tick
+ drifter    loud seed 213: mould wiped at  172 s, score +1.913; soldiers  8, mould      0, harvested  15000, shots    61; uses [14, 4, 0, 0, 0, 1], tool kills [1133, 0, 0, 0, 0, 0]; 8.37 ms a tick
+ drifter  plague seed 211:         cap at  600 s, score +0.451; soldiers  8, mould    449, harvested  40382, shots   127; uses [0, 0, 0, 4, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 18.06 ms a tick
+ drifter   siege seed 212:         cap at  600 s, score +0.420; soldiers  8, mould    864, harvested  44564, shots   348; uses [0, 0, 16, 0, 0, 0], tool kills [0, 0, 23, 0, 0, 0]; 8.42 ms a tick
+ drifter   quiet seed 213:         cap at  600 s, score +0.426; soldiers  8, mould    798, harvested  47214, shots     0; uses [0, 0, 0, 0, 10, 8], tool kills [0, 0, 0, 0, 0, 0]; 4.42 ms a tick
+ drifter  plague seed 212: mould wiped at  450 s, score +1.450; soldiers  8, mould      0, harvested  32853, shots   147; uses [0, 0, 0, 8, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 18.50 ms a tick
+ drifter    loud seed 214: mould wiped at  302 s, score +1.697; soldiers  8, mould      0, harvested  22600, shots   192; uses [25, 4, 0, 0, 0, 1], tool kills [2586, 0, 0, 0, 0, 0]; 5.10 ms a tick
+ drifter   siege seed 213:         cap at  600 s, score +0.427; soldiers  8, mould    784, harvested  47364, shots    76; uses [0, 0, 8, 0, 0, 0], tool kills [0, 0, 9, 0, 0, 0]; 10.18 ms a tick
+ drifter   quiet seed 214:         cap at  600 s, score +0.249; soldiers  7, mould   3124, harvested  40464, shots     0; uses [0, 0, 0, 0, 16, 12], tool kills [0, 0, 0, 0, 0, 0]; 4.04 ms a tick
+ drifter  plague seed 213:         cap at  600 s, score +0.438; soldiers  8, mould    643, harvested  45660, shots   164; uses [0, 0, 0, 11, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 20.23 ms a tick
+ drifter randkit seed 214:         cap at  600 s, score +0.451; soldiers 25, mould    314, harvested   9350, shots  1311; uses [5, 6, 2, 3, 4, 10], tool kills [298, 0, 0, 0, 0, 0]; 18.00 ms a tick
+ drifter   siege seed 214:         cap at  600 s, score +0.338; soldiers  8, mould   2105, harvested  43514, shots   238; uses [0, 0, 12, 0, 0, 0], tool kills [0, 0, 16, 0, 0, 0]; 8.74 ms a tick
+ drifter    loud seed 215: mould wiped at  293 s, score +1.712; soldiers  8, mould      0, harvested  23228, shots   223; uses [22, 4, 0, 0, 0, 1], tool kills [1246, 0, 0, 0, 0, 0]; 4.65 ms a tick
+ drifter randkit seed 215:         cap at  600 s, score +0.124; soldiers  1, mould   5284, harvested   4600, shots  1491; uses [6, 1, 2, 1, 7, 5], tool kills [0, 0, 0, 0, 0, 0]; 4.44 ms a tick
+ drifter   quiet seed 215:         cap at  600 s, score +0.364; soldiers  8, mould   1675, harvested  48514, shots     0; uses [0, 0, 0, 0, 15, 13], tool kills [0, 0, 0, 0, 0, 0]; 3.38 ms a tick
+ drifter   siege seed 215:         cap at  600 s, score +0.338; soldiers  8, mould   2158, harvested  45414, shots   658; uses [0, 0, 17, 0, 0, 0], tool kills [0, 0, 18, 0, 0, 0]; 5.07 ms a tick
+ drifter    loud seed 216: mould wiped at  216 s, score +1.840; soldiers  8, mould      0, harvested  17450, shots    82; uses [14, 4, 0, 0, 0, 1], tool kills [1051, 0, 0, 0, 0, 0]; 6.17 ms a tick
+ drifter  plague seed 215: mould wiped at  415 s, score +1.508; soldiers  8, mould      0, harvested  32450, shots   279; uses [0, 0, 0, 8, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 16.92 ms a tick
+ drifter  plague seed 214:         cap at  600 s, score +0.298; soldiers  8, mould   2896, harvested  36501, shots    78; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 24.07 ms a tick
+ drifter   quiet seed 216:         cap at  600 s, score +0.422; soldiers  8, mould    846, harvested  45914, shots     0; uses [0, 0, 0, 0, 7, 8], tool kills [0, 0, 0, 0, 0, 0]; 6.57 ms a tick
+ drifter randkit seed 216: mould wiped at  504 s, score +1.385; soldiers  9, mould      0, harvested   3600, shots   509; uses [0, 1, 3, 5, 2, 6], tool kills [0, 0, 0, 0, 0, 0]; 19.58 ms a tick
+ drifter   siege seed 216:         cap at  600 s, score +0.429; soldiers  8, mould    748, harvested  45914, shots   265; uses [0, 0, 12, 0, 0, 0], tool kills [0, 0, 19, 0, 0, 0]; 6.88 ms a tick
+ drifter  plague seed 216:         cap at  600 s, score +0.492; soldiers  8, mould     32, harvested  42418, shots   115; uses [0, 0, 0, 8, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 19.77 ms a tick
+
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                        drifter
+ randkit   +0.591 (8/4/4)     
+    loud   +1.631 (14/2/0)     
+   quiet   +0.362 (0/16/0)     
+  plague   +0.793 (6/10/0)     
+   siege   +0.395 (0/16/0)     
+
+gate 1, paired by seed (higher / lower; sign test, Holm over 4):
+       drifter loud vs randkit: 13 / 3, p 0.0213
+      drifter quiet vs randkit: 6 / 10, p 0.4545
+     drifter plague vs randkit: 7 / 9, p 0.8036
+      drifter siege vs randkit: 6 / 10, p 0.4545
+
+gate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p, median paired difference):
+   drifter: best loud (+1.631); quiet 1/15 p 0.001 med -1.43, plague 1/15 p 0.001 med -0.71, siege 2/14 p 0.004 med -1.39

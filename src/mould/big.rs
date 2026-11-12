@@ -257,6 +257,14 @@ pub struct BigParams {
     /// 2026-11-11 for the RTS direction: moulds that share one dish.
     pub species: u8,
     pub species_avoid: f32,
+    /// Each species' own `species_avoid` (empty: all use the global).
+    /// Added 2026-11-12 for the player's own mould: the enemy drawn to the
+    /// player's mould (below 0) while the player's stays blind (0), so the
+    /// two meet where the enemy chooses. CPU only. Measured (32 seeds,
+    /// -1): with today's conversion the hunter converts on arrival and
+    /// feeds the player (net turning to the player 27-30 of 32), so the
+    /// garden leaves it off; see `Reports/dead-ends.md`.
+    pub species_avoid_of: Vec<f32>,
     /// Conversion between species (0 is off; added 2026-11-11 for species
     /// that fight over a border). Each step, after moving, a walker whose
     /// cell holds more than `species_convert` times its own species' trail
@@ -829,6 +837,7 @@ impl BigParams {
             sensor_r: 0,
             species: 0,
             species_avoid: 1.0,
+            species_avoid_of: Vec::new(),
             species_convert: 0.0,
             species_convert_r: 0,
             species_convert_per: false,
@@ -1911,7 +1920,7 @@ impl BigDish {
             if self.species_trail.is_empty() {
                 self.trail[j]
             } else {
-                let a = self.p.species_avoid;
+                let a = self.p.species_avoid_of.get(sp).copied().unwrap_or(self.p.species_avoid);
                 let n = self.species_trail.len();
                 if self.p.species_cycle && n >= 3 {
                     let (own, next, prev) = (self.species_trail[sp][j], self.species_trail[(sp + 1) % n][j], self.species_trail[(sp + n - 1) % n][j]);
