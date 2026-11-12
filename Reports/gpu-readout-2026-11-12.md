@@ -487,6 +487,49 @@ from workgroups whose cones may overlap without an atomic: a race of the
 same kind, not yet seen in a test (craters are on by default only in the
 garden; a twin with overlapping cones would show it).
 
+## Two GPU fixes after the 1070 work (evening, 2026-11-12)
+
+**The crowd limit held only on small worlds.** `Engine::made` dropped the
+one-walker-a-cell limit, without a word, when `max(walkers, capacity)`
+passed half the agar. The race worlds give 10 slots a walker, so above
+about 7,300 walkers at scale 2 (the Fork's 146,258 agar cells) the GPU
+played without the limit while the CPU census kept it: the slime-enemy
+thread's 25,000 walkers ran as ropes on the GPU and as a sheet with the
+limit held. Growth needs no room of its own, since with the limit on a
+birth into a full cell is refused on both engines (`born`; the CPU dish's
+births), so the limit now holds while the start walkers are at most half
+the agar (`gpu::crowd_holds`); `made` prints a warning when it drops, and
+the bench's first line names the crowd rule as played. The shipped
+settings held the limit before and after: on the noise world and the
+five maps, at 1,250 to 100,000 walkers on scales 1 to 8, the plain mould
+and every tier the GPU takes, the CPU's crowd and the GPU's agree
+(`the_cpu_census_and_the_gpu_world_play_the_same_crowd_rule`, no GPU
+needed; with the old rule planted it fails on the noise world at scale 2
+and 25,000 walkers). It costs nothing a step.
+
+**Overlapping cone craters raced.** `cut` wrote `crater[i] = max(crater[i],
+steps)` from a workgroup a shot. With the cone, two shots whose strikes
+share cells write different steps, and a read-modify-write across
+workgroups can keep the smaller: the kind of race that lost harvest's
+adds on the 1070 (*On the GTX 1070*). Binding 47 now holds the f32's bits
+in atomics; a non-negative float's bits sort as the float does, so `cut`
+takes `atomicMax`, exact in any order (the technical lead's fix). The
+squad frame twin had no cones about different hits that overlapped (0
+pairs); it gains two shots from slime cells three apart and asserts the
+overlap (1 pair). Planted on lavapipe, `atomicStore` (the last shot wins)
+puts 3 of 448 crater cells off, and `atomicMin` fails at once. The trail
+pass's countdown now loads and stores through atomics each tick once
+craters are on; its cost on the 1070 is to come.
+
+**Left, from the technical lead (17:16Z), none needed yet** with 100k
+walkers inside the frame budget: trail plus scent (13.5 of the step's
+17.4 ms at 100k) are diffusion and bound by memory, so in order of
+payoff, a 16 x 16 tile with a one-cell halo in shared memory (each cell
+read once, not nine times); scent on a grid of half the resolution (it is
+smooth, and steering reads only its slope; a rule change, so it would
+reset the censuses); both fields packed into one buffer read. Each needs
+its twins re-checked.
+
 ## Files
 
 - `src/gpu/larder_world.rs`: the readout, `frame_start` and
