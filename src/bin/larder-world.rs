@@ -64,7 +64,7 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
-use slime_mould::mould::campaign::{Mission, Tracker};
+use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
 use slime_mould::sound::synth::{VoiceBank, DEFAULT_MASTER};
@@ -564,7 +564,10 @@ impl App {
             // the mission its verdict, so the end screen is the mission's.
             while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
                 self.mission_sec += 1;
-                if let Some(v) = tr.second(g, None, 1.0) {
+                // None until the GPU world reads its mould grid back (the
+                // GPU thread's PR #101); then the positional goals fill here.
+                let grid = g.world.mould_grid(BIN);
+                if let Some(v) = tr.second(g, grid.as_deref(), 1.0) {
                     let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
                     self.hud.alert(&tr.cause_line(), None, colour);
                 }
@@ -763,6 +766,10 @@ impl App {
             objective: Some(if let Some(tr) = &self.mission {
                 match tr.bar {
                     Some(b) => format!("{} ({:.0}%)", tr.mission.says, 100.0 * b),
+                    // Said, not hidden (design review, 05:38Z): the GPU world
+                    // gives no mould grid yet, so a goal on where the mould
+                    // is has no bar in the window.
+                    None if tr.secs.iter().sum::<u32>() > 0 => format!("{} (progress not shown in this build yet)", tr.mission.says),
                     None => tr.mission.says.clone(),
                 }
             } else if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
