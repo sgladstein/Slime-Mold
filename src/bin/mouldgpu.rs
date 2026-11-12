@@ -3476,6 +3476,12 @@ mod tests {
             let p = squad::path(w, h, clear, (clear.0 + 30.0, clear.1));
             let wall = p.into_iter().find(|&i| !cpu.agar[i as usize]).unwrap() as usize;
             units.push(UnitIn { smell_r: 4.0, ..unit(((wall % w) as f32 + 0.5, (wall / w) as f32 + 0.5), 0.0) });
+            // Wide discs, as the soldiers' at scale 8 (2026-11-12, when the
+            // unit passes took a workgroup each): boxes of over 256 cells,
+            // so each thread takes several cells and blocks, and the harvest
+            // several pieces, stopping in one or taking all it reaches.
+            let wide = units.len();
+            units.extend([(13, 60.0), (14, 1.0e6)].map(|(p, take)| UnitIn { touch: 12.0, sight: 60.0, take_r: 12.0, smell_r: 12.0, ..unit(pile(p), take) }));
             // The same shot twice: a walker in both strikes dies once, counted
             // for the first.
             let again = shots.len();
@@ -3527,6 +3533,7 @@ mod tests {
             assert!(kills > 0 && walled > 0, "shots kill, and a wall stops one");
             assert!(cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some() && cpu_out.units[0].dense > 0, "the unit in the mould is touched and aims at walkers it counts");
             assert!(took[1] == 3000.0 && took[2] > 0.0 && took[2] < 3000.0 && took[3..].iter().any(|&t| t > 0.0), "units harvest; the second on a patch gets what the first left");
+            assert!(took[wide] == 60.0 && took[wide + 1] > 0.0 && took[wide + 1] < 1.0e6 && cpu_out.units[wide].target.is_some(), "the wide discs harvest, stopping when full or taking all they reach");
             // The world after the frame.
             let gpu = walkers_of(&e);
             let energy = floats(&read_back(&device, &queue, &e.energy));

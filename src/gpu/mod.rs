@@ -1626,7 +1626,8 @@ impl Engine {
         let ticked = start..out.len();
         let s = side(self.done);
         if due && nunits > 0 {
-            out.extend([(UNITS, squad::UNITS_MAX.div_ceil(64) as u32, s), (HARVEST, 1, s)]);
+            // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
+            out.extend([(UNITS, nunits, s), (HARVEST, 1, s)]);
         }
         out.extend(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, s)));
         (out, ticked)
