@@ -2,7 +2,7 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12T21:59Z
+updated: 2026-11-12T22:24Z
 sources: [Reports/mould-tiers-campaign-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
 code: [BigParams::scar_keep, BigParams::scar_weight, BigDish::scar, BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier, Tier::core, Core, CoreKind]
 ---
@@ -38,17 +38,15 @@ Larder world's race the Swarmer and the Sleeper's bait hold on 8 of 8, the
 Sporer's edge is not significant
 ([report](../../Reports/mould-tiers-2026-11-11.md), *In the Larder world*).
 
-`Tier::core` (2026-11-12) is None for every tier: the game's core, which
-the whole body defends (`Rules::core_pull` 8). Headless is built.
+`Tier::core` (2026-11-12) gives the Sprawler no pull and the Grudge
+twice the plain pull (16); every other tier keeps the game's core, which
+the whole body defends (`Rules::core_pull` 8). Since the owner's ruling of
+2026-11-12 20:21Z every core is headless: holding a mould's home stops
+nothing, and only a wipe ends it.
 
 ## Open
 
-- Each tier's core: the Sprawler is Headless and the Grudge pulls at 16 (twice the plain mould's 8; `tiers::GRUDGE_PULL`). The Trunk's
-  regrowing core (`CoreKind::Regrow`, PR #163: a fallen core grew back
-  unless the body starved) was taken out in PR 4 after the owner's
-  no-king ruling (2026-11-12 20:21Z, every mould headless); the tiers
-  thread confirmed no tier uses it ([dead end](../../Reports/dead-ends.md)).
-  The Drifter's migrating core waits on a core coming back.
+- Each tier's core: all headless since 11-12 20:21Z (no king rule); the Sprawler pulls nothing and the Grudge pulls at 16 (twice the plain mould's 8; `tiers::GRUDGE_PULL`). The Trunk's regrowing core (`CoreKind::Regrow`, PR #163: a fallen core grew back unless the body starved) was taken out in PR 4; the tiers thread dropped it and the Drifter's Migrate under the no-king ruling (20:53Z): with no core to take, the Trunk keeps its tube network as its identity ([dead end](../../Reports/dead-ends.md)).
 
 - The census of the new tiers, re-run after shot craters (#113). Before craters (held-out 201-216): Grudge is the hardest (every plan lower than on plain, 16 of 16; random loses its squad 15 of 16);
 - Candidate tiers from review 2 ([the reviews](../../Reports/mould-tiers-review-2026-11-11.md)), most promising first: supply lines (traffic-made arteries that carry food; cut one to starve the far end; the one body thread's shared food), clans that fuse or fight along a scar, a mould that learns the rhythm of fire, a pacemaker heartbeat, day and night light, a nomad that avoids its own slime, two foods. Each has a first experiment there.

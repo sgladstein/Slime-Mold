@@ -270,6 +270,7 @@ fn main() {
     let mut hands: Vec<String> = ["idle", "random", "farm", "rush", "wall"].iter().map(|s| s.to_string()).collect();
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
     let mut rules = Rules::default();
+    let mut mass = None::<f32>;
     let mut m = Mould::default();
     let mut map = None::<(String, Map)>;
     // The engines each game runs on: false the CPU big dish, true the GPU.
@@ -296,8 +297,14 @@ fn main() {
             "price" => rules.price = v.parse().unwrap(),
             "smell" => rules.smell = v.parse().unwrap(),
             // `drain=`: soldier health lost a second per touching walker
-            // (`Rules::drain`); a denser mould wants less a walker.
+            // (`Rules::drain`). A denser mould already counts less a
+            // walker through `Rules::mass` (below), so leave this at 1 for
+            // density.
             "drain" => rules.drain = v.parse().unwrap(),
+            // `mass=M`: one walker's fight weight (`Rules::mass`); by
+            // default it follows the start walkers a cell, as in the window
+            // (`Rules::mass_for`: 1 at 5,000 walkers on scale 2).
+            "mass" => mass = Some(v.parse().unwrap()),
             "upkeep" => m.upkeep = Some(v.parse().unwrap()),
             "smell_r" => rules.smell_r = v.parse().unwrap(),
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
@@ -364,6 +371,7 @@ fn main() {
     if let Some(c) = cap {
         rules.cap = c;
     }
+    rules.mass = mass.unwrap_or(Rules::mass_for(walkers, scale));
     if (m.energy_flow, m.hunger_scent) != (0.0, 0.0) || m.crystal_eat.is_some() {
         println!("one body: energy_flow {} hunger_scent {} crystal_eat {:?} flow_loss {}", m.energy_flow, m.hunger_scent, m.crystal_eat, m.flow_loss);
     }
