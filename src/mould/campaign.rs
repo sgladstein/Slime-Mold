@@ -26,7 +26,7 @@
 //! overrun checks fall back to what the game counts.
 
 use super::larder::End;
-use super::larder_world::{Game, Order, Rules, World};
+use super::larder_world::{Cmd, Game, Order, Rules, World};
 use super::map::MAP_SCALE;
 
 /// Grid bin for the positional checks, fine cells (as the player AI's eyes).
@@ -592,6 +592,43 @@ pub fn decided_at(bars: &[Option<f32>], final_stars: u8) -> usize {
     at
 }
 
+/// The Rim's gaps (rock ring radius 200 map cells round (512, 320), 16
+/// thick, gaps at 0, 90, 180, 270 degrees, half widths 14, 10, 14, 10:
+/// `sketch_maps.py`): soldier k walks to gap k's middle and walls its chord
+/// at the ring's centre line, 3 degrees past each edge, and stays to raise
+/// it. `walled[i]` turns true once gap i's wall is placed. Mission 3's own
+/// plan, for the census (`examples/campaign.rs` hand `gaps+STYLE`) and the
+/// smoke test that it still wins.
+pub fn wall_rim_gaps<W: World>(g: &mut Game<W>, walled: &mut [bool; 4]) {
+    const GAPS: [(f32, f32); 4] = [(0.0, 14.0), (90.0, 10.0), (180.0, 14.0), (270.0, 10.0)];
+    let f = g.world.scale() / MAP_SCALE;
+    let at = |deg: f32| {
+        let a = deg.to_radians();
+        ((512.0 + 200.0 * a.cos()) * f, (320.0 + 200.0 * a.sin()) * f)
+    };
+    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
+    for (i, &(deg, half)) in GAPS.iter().enumerate() {
+        if walled[i] {
+            continue;
+        }
+        let Some(&k) = live.get(i) else { return };
+        let mid = at(deg);
+        let s = g.soldiers[k];
+        if (s.x - mid.0).hypot(s.y - mid.1) < 3.0 * g.world.scale() {
+            // Placed walls rise only while a builder raises them (#122,
+            // `BuildRules::raise` 8 s a 10 dish cells): this soldier stays.
+            walled[i] = g.apply(Cmd::Wall(at(deg - half - 3.0), at(deg + half + 3.0)));
+            if walled[i] {
+                let b = g.buildings.len() - 1;
+                g.apply(Cmd::Order(k, Order::Build(b)));
+            }
+        } else if s.order != Order::Move(mid.0, mid.1) {
+            g.apply(Cmd::Order(k, Order::Move(mid.0, mid.1)));
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -811,5 +848,60 @@ mod tests {
         assert_eq!(decided_at(&bars, 2), 4);
         assert_eq!(decided_at(&bars[..4], 1), 3);
         assert_eq!(decided_at(&[Some(0.2), None, Some(0.3)], 0), 0);
+    }
+
+    /// **Each mission's plan still wins** (tech lead, 14:13Z): missions 1-3
+    /// rest on rules other threads own (walls, raise time, craters, the
+    /// core), so CI plays each one's best census hand on seed 1 at the
+    /// census's size and fails when it stops winning. The full census is
+    /// `examples/campaign.rs`; these are its v8 rows (seeds 1-8: Landfall
+    /// claim 8/8 by 2:48, First contact strike 8/8 by 6:19, The gaps
+    /// walling 24/24 at 10:00). The gaps stops at 3:00 with its bar at least
+    /// 0.25 (held from about 0:40), and claim without walls is checked
+    /// below 0.2 there, so the walls are what holds it.
+    #[test]
+    fn each_missions_plan_still_wins() {
+        use crate::mould::big::BigDish;
+        use crate::mould::larder_world::race_params;
+        use crate::mould::larder_world_ai::Hand;
+        use crate::mould::map::Map;
+        use crate::mould::tiers::Tier;
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let play = |name: &str, hand: &str, walls: bool, secs: f32| -> (Option<Verdict>, f32) {
+            let m = Mission::parse(&std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"))).unwrap()).unwrap();
+            let map = Map::load(&root.join("Reports/larder-maps-2026-11-11/maps"), &m.map).unwrap();
+            let mut p = race_params(1, 2, 5000);
+            if let Some(t) = m.tier.as_deref().and_then(Tier::from_name) {
+                t.apply(&mut p);
+            }
+            let mut g = Game::new(BigDish::with_map(p, &map), m.rules(Rules::default()), 1);
+            let mut tr = Tracker::new(m, &g);
+            let mut ai = Hand::named(hand, &g).unwrap();
+            let mut walled = [!walls; 4];
+            let v = follow(&mut g, &mut tr, secs, |g| {
+                if walled.iter().any(|w| !w) && g.time() < 120.0 {
+                    wall_rim_gaps(g, &mut walled);
+                } else {
+                    ai.play(g);
+                }
+            });
+            (v, tr.best)
+        };
+        // The four rounds side by side: 105 s on a 4-core box (140 one
+        // after another); First contact's 6:19 is the long pole.
+        let [m1, m2, walls, open] = std::thread::scope(|sc| {
+            let play = &play;
+            [
+                sc.spawn(move || play("1-landfall", "claim", false, 200.0)),
+                sc.spawn(move || play("2-first-contact", "strike", false, 420.0)),
+                sc.spawn(move || play("3-the-gaps", "claim", true, 180.0)),
+                sc.spawn(move || play("3-the-gaps", "claim", false, 180.0)),
+            ]
+            .map(|h| h.join().unwrap())
+        });
+        assert!(m1.0.is_some_and(|v| v.cause == Cause::Goal), "Landfall, claim: {:?}", m1.0);
+        assert!(m2.0.is_some_and(|v| v.cause == Cause::Goal), "First contact, strike: {:?}", m2.0);
+        assert!(walls.0.is_none() && walls.1 >= 0.25, "The gaps, walls: {:?} best {}", walls.0, walls.1);
+        assert!(open.1 < 0.2, "The gaps without walls held: best {}", open.1);
     }
 }
