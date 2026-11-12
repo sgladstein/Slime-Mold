@@ -1,27 +1,27 @@
 payoff table: mean score (mould wiped / cap / squad wiped / overrun), seeds per cell
                               none                   drifter                  sprawler                     trunk                      wary                    grudge
-    idle    -0.323 (0/16/0/0) n16     -0.137 (0/16/0/0) n16     -0.627 (0/11/5/0) n16     -0.270 (0/16/0/0) n16     -0.336 (0/8/0/0) n8      -0.327 (0/16/0/0) n16 
-  random    -0.332 (5/2/9/0) n16     +0.107 (1/13/2/0) n16     -0.203 (6/1/9/0) n16     +0.894 (9/5/2/0) n16     +1.658 (6/2/0/0) n8      -1.611 (0/1/15/0) n16 
-    farm    +0.228 (0/16/0/0) n16     +0.394 (0/16/0/0) n16     +0.711 (6/10/0/0) n16     +0.354 (1/15/0/0) n16     +0.343 (0/8/0/0) n8      +0.107 (0/16/0/0) n16 
-    wall    +0.226 (0/16/0/0) n16     +0.389 (0/16/0/0) n16     +0.540 (4/12/0/0) n16     +0.362 (1/15/0/0) n16     +0.428 (1/7/0/0) n8      +0.094 (0/16/0/0) n16 
-    boom    +0.220 (0/16/0/0) n16     +0.380 (0/16/0/0) n16     +0.605 (4/12/0/0) n16     +0.493 (2/14/0/0) n16     +0.202 (0/8/0/0) n8      +0.045 (0/16/0/0) n16 
-   claim    +0.381 (1/15/0/0) n16     +0.402 (0/16/0/0) n16     +0.669 (4/12/0/0) n16     +0.545 (2/14/0/0) n16     +0.557 (1/7/0/0) n8      +0.076 (0/16/0/0) n16 
-    fort    +0.216 (0/16/0/0) n16     +0.370 (0/16/0/0) n16     +0.456 (3/13/0/0) n16     +0.371 (1/15/0/0) n16     +0.219 (0/8/0/0) n8      +0.043 (0/16/0/0) n16 
-  strike    +1.243 (9/7/0/0) n16     +1.141 (6/10/0/0) n16     +0.857 (4/12/0/0) n16     +1.652 (12/4/0/0) n16     +0.455 (0/8/0/0) n8      +0.275 (0/16/0/0) n16 
+    idle    -0.323 (0/16/0/0) n16     -0.137 (0/16/0/0) n16     -0.627 (0/11/5/0) n16     -0.270 (0/16/0/0) n16     -0.342 (0/16/0/0) n16     -0.327 (0/16/0/0) n16 
+  random    -0.332 (5/2/9/0) n16     +0.107 (1/13/2/0) n16     -0.203 (6/1/9/0) n16     +0.894 (9/5/2/0) n16     +1.628 (12/4/0/0) n16     -1.611 (0/1/15/0) n16 
+    farm    +0.228 (0/16/0/0) n16     +0.394 (0/16/0/0) n16     +0.711 (6/10/0/0) n16     +0.354 (1/15/0/0) n16     +0.330 (0/16/0/0) n16     +0.107 (0/16/0/0) n16 
+    wall    +0.226 (0/16/0/0) n16     +0.389 (0/16/0/0) n16     +0.540 (4/12/0/0) n16     +0.362 (1/15/0/0) n16     +0.365 (1/15/0/0) n16     +0.094 (0/16/0/0) n16 
+    boom    +0.220 (0/16/0/0) n16     +0.380 (0/16/0/0) n16     +0.605 (4/12/0/0) n16     +0.493 (2/14/0/0) n16     +0.211 (0/16/0/0) n16     +0.045 (0/16/0/0) n16 
+   claim    +0.381 (1/15/0/0) n16     +0.402 (0/16/0/0) n16     +0.669 (4/12/0/0) n16     +0.545 (2/14/0/0) n16     +0.670 (3/13/0/0) n16     +0.076 (0/16/0/0) n16 
+    fort    +0.216 (0/16/0/0) n16     +0.370 (0/16/0/0) n16     +0.456 (3/13/0/0) n16     +0.371 (1/15/0/0) n16     +0.226 (0/16/0/0) n16     +0.043 (0/16/0/0) n16 
+  strike    +1.243 (9/7/0/0) n16     +1.141 (6/10/0/0) n16     +0.857 (4/12/0/0) n16     +1.652 (12/4/0/0) n16     +0.538 (1/15/0/0) n16     +0.275 (0/16/0/0) n16 
 
 best plan per tier (mean), and the hand best on the most seeds:
        none: best by mean strike; best per seed {'strike': 10, 'claim': 5, 'farm': 1}
     drifter: best by mean strike; best per seed {'strike': 16}
    sprawler: best by mean strike; best per seed {'strike': 12, 'farm': 2, 'claim': 2}
       trunk: best by mean strike; best per seed {'strike': 15, 'wall': 1}
-       wary: best by mean claim; best per seed {'strike': 6, 'wall': 1, 'claim': 1}
+       wary: best by mean claim; best per seed {'strike': 11, 'claim': 4, 'wall': 1}
      grudge: best by mean strike; best per seed {'strike': 11, 'farm': 3, 'wall': 1, 'claim': 1}
 
 C3, against the plain mould (paired by seed):
     drifter idle: ends 0 squad wiped of 16 (plain 0); end time median 900 s (plain 900); mould at the end median 2347 (plain 9989)
    sprawler idle: ends 5 squad wiped of 16 (plain 0); end time median 900 s (plain 900); mould at the end median 20136 (plain 9989)
       trunk idle: ends 0 squad wiped of 16 (plain 0); end time median 900 s (plain 900); mould at the end median 6166 (plain 9989)
-       wary idle: ends 0 squad wiped of 8 (plain 0); end time median 900 s (plain 900); mould at the end median 12430 (plain 8578)
+       wary idle: ends 0 squad wiped of 16 (plain 0); end time median 900 s (plain 900); mould at the end median 12430 (plain 9989)
      grudge idle: ends 0 squad wiped of 16 (plain 0); end time median 900 s (plain 900); mould at the end median 10193 (plain 9989)
 
 paired tests (higher / lower; sign test; Holm over all 142):
@@ -93,23 +93,23 @@ paired tests (higher / lower; sign test; Holm over all 142):
   C2 trunk boom vs best strike: 0 / 16, p 0.0000 holds
   C2 trunk claim vs best strike: 0 / 16, p 0.0000 holds
   C2 trunk fort vs best strike: 0 / 16, p 0.0000 holds
-  C1 wary farm vs idle: 8 / 0, p 0.0078
-  C1 wary farm vs random: 0 / 8, p 0.0078
-  C1 wary wall vs idle: 8 / 0, p 0.0078
-  C1 wary wall vs random: 0 / 8, p 0.0078
-  C1 wary boom vs idle: 8 / 0, p 0.0078
-  C1 wary boom vs random: 0 / 8, p 0.0078
-  C1 wary claim vs idle: 8 / 0, p 0.0078
-  C1 wary claim vs random: 2 / 6, p 0.2891
-  C1 wary fort vs idle: 8 / 0, p 0.0078
-  C1 wary fort vs random: 0 / 8, p 0.0078
-  C1 wary strike vs idle: 8 / 0, p 0.0078
-  C1 wary strike vs random: 1 / 7, p 0.0703
-  C2 wary farm vs best claim: 3 / 5, p 0.7266
-  C2 wary wall vs best claim: 3 / 5, p 0.7266
-  C2 wary boom vs best claim: 0 / 8, p 0.0078
-  C2 wary fort vs best claim: 0 / 8, p 0.0078
-  C2 wary strike vs best claim: 7 / 1, p 0.0703
+  C1 wary farm vs idle: 16 / 0, p 0.0000 holds
+  C1 wary farm vs random: 1 / 15, p 0.0005 holds
+  C1 wary wall vs idle: 16 / 0, p 0.0000 holds
+  C1 wary wall vs random: 0 / 16, p 0.0000 holds
+  C1 wary boom vs idle: 16 / 0, p 0.0000 holds
+  C1 wary boom vs random: 0 / 16, p 0.0000 holds
+  C1 wary claim vs idle: 16 / 0, p 0.0000 holds
+  C1 wary claim vs random: 4 / 12, p 0.0768
+  C1 wary fort vs idle: 16 / 0, p 0.0000 holds
+  C1 wary fort vs random: 0 / 16, p 0.0000 holds
+  C1 wary strike vs idle: 16 / 0, p 0.0000 holds
+  C1 wary strike vs random: 3 / 13, p 0.0213
+  C2 wary farm vs best claim: 3 / 13, p 0.0213
+  C2 wary wall vs best claim: 4 / 12, p 0.0768
+  C2 wary boom vs best claim: 0 / 16, p 0.0000 holds
+  C2 wary fort vs best claim: 0 / 16, p 0.0000 holds
+  C2 wary strike vs best claim: 12 / 4, p 0.0768
   C1 grudge farm vs idle: 16 / 0, p 0.0000 holds
   C1 grudge farm vs random: 16 / 0, p 0.0000 holds
   C1 grudge wall vs idle: 16 / 0, p 0.0000 holds
@@ -152,13 +152,13 @@ paired tests (higher / lower; sign test; Holm over all 142):
   C3 trunk fort score vs plain: 11 / 5, p 0.2101
   C3 trunk strike score vs plain: 12 / 4, p 0.0768
   C3 wary idle end time vs plain (later = easier): 0 / 0, p 1.0000
-  C3 wary random score vs plain: 8 / 0, p 0.0078
-  C3 wary farm score vs plain: 7 / 1, p 0.0703
-  C3 wary wall score vs plain: 7 / 1, p 0.0703
-  C3 wary boom score vs plain: 3 / 5, p 0.7266
-  C3 wary claim score vs plain: 7 / 1, p 0.0703
-  C3 wary fort score vs plain: 4 / 4, p 1.0000
-  C3 wary strike score vs plain: 4 / 4, p 1.0000
+  C3 wary random score vs plain: 15 / 1, p 0.0005 holds
+  C3 wary farm score vs plain: 14 / 2, p 0.0042
+  C3 wary wall score vs plain: 15 / 1, p 0.0005 holds
+  C3 wary boom score vs plain: 7 / 8, p 1.0000
+  C3 wary claim score vs plain: 14 / 2, p 0.0042
+  C3 wary fort score vs plain: 9 / 7, p 0.8036
+  C3 wary strike score vs plain: 6 / 10, p 0.4545
   C3 grudge idle end time vs plain (later = easier): 0 / 0, p 1.0000
   C3 grudge random score vs plain: 3 / 13, p 0.0213
   C3 grudge farm score vs plain: 0 / 16, p 0.0000 holds

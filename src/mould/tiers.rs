@@ -180,8 +180,10 @@ impl Tier {
     }
 }
 
-/// The keys a tier may set, by their CPU names (angles in degrees).
-fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
+/// The keys a tier may set, by their CPU names (angles in degrees). Public
+/// so a census can try a candidate's keys over a tier (`larderworld
+/// keys=`) before it becomes one.
+pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
     let f = || v.parse::<f32>().map_err(|e| format!("{key}={v}: {e}"));
     let n = || v.parse::<u16>().map_err(|e| format!("{key}={v}: {e}"));
     match key {
