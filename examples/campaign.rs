@@ -38,6 +38,11 @@ struct Row {
     /// The goal's count over the round (crystals clear, or the share of
     /// walkers outside a contain goal's region): its least and its most.
     count: (f32, f32),
+    /// Contain goals: the most 4x4-cell bins outside the region holding at
+    /// least 1, 4 and 16 walkers in any one second, and the seconds with
+    /// any bin of 4+ outside (what a player sees as mould out of the Rim).
+    out_bins: [u32; 3],
+    seen_out: u32,
 }
 
 fn main() {
@@ -88,10 +93,10 @@ fn main() {
     });
     let mut rows = rows.into_inner().unwrap();
     rows.sort_by(|a, b| a.hand.cmp(&b.hand).then(a.seed.cmp(&b.seed)));
-    println!("\nhand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most");
+    println!("\nhand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out");
     for r in &rows {
         println!(
-            "{:<9} {:>4}  {:<10} {:>5.0}  {:>5} {:>4.2}  {:>4.0}%  {:>4.0}% {:>4.0}% {:>4.0}% {:>4.0}%                          {:>4} {:>4} {:>4}    {:>5}  {:>5} {:>9.0} {:>6}  {:.3}/{:.3}",
+            "{:<9} {:>4}  {:<10} {:>5.0}  {:>5} {:>4.2}  {:>4.0}%  {:>4.0}% {:>4.0}% {:>4.0}% {:>4.0}%                          {:>4} {:>4} {:>4}    {:>5}  {:>5} {:>9.0} {:>6}  {:.3}/{:.3}  {}/{}/{} {}",
             r.hand,
             r.seed,
             r.cause,
@@ -111,7 +116,11 @@ fn main() {
             r.harvested,
             r.killed,
             r.count.0,
-            r.count.1
+            r.count.1,
+            r.out_bins[0],
+            r.out_bins[1],
+            r.out_bins[2],
+            r.seen_out
         );
     }
     println!("\nby hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall");
@@ -146,6 +155,7 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, wal
     let mut ai = larder_world_ai::Hand::named(hand, &g);
     let tps = g.rules.tps as u64;
     let mut count = (f32::INFINITY, f32::NEG_INFINITY);
+    let (mut out_bins, mut seen_out) = ([0u32; 3], 0u32);
     let v = loop {
         match hand {
             "random" => random_hand(&mut g),
@@ -158,6 +168,23 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, wal
             g.step();
         }
         let grid = g.world.mould_grid(BIN);
+        if let (Goal::Contain { rect, .. }, Some(gr)) = (&m.goal, grid.as_deref()) {
+            let fine = g.world.scale() / slime_mould::mould::map::MAP_SCALE;
+            let gw = g.world.size().0.div_ceil(BIN);
+            let mut n = [0u32; 3];
+            for (i, &c) in gr.iter().enumerate() {
+                let (px, py) = (((i % gw) * BIN) as f32 + BIN as f32 / 2.0, ((i / gw) * BIN) as f32 + BIN as f32 / 2.0);
+                if px < rect.0 * fine || px > rect.2 * fine || py < rect.1 * fine || py > rect.3 * fine {
+                    for (k, t) in [1, 4, 16].iter().enumerate() {
+                        n[k] += (c >= *t) as u32;
+                    }
+                }
+            }
+            for k in 0..3 {
+                out_bins[k] = out_bins[k].max(n[k]);
+            }
+            seen_out += (n[1] > 0) as u32;
+        }
         let v = tr.second(&g, grid.as_deref(), 1.0);
         if let Some(c) = tr.count {
             let c = if matches!(m.goal, Goal::Contain { .. }) { c as f32 / g.mould.max(1) as f32 } else { c as f32 };
@@ -185,6 +212,8 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, wal
         harvested: g.harvested,
         killed: g.killed,
         count,
+        out_bins,
+        seen_out,
     }
 }
 

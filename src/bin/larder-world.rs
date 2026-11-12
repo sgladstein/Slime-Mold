@@ -566,17 +566,14 @@ impl App {
             }
         }
         self.steps += n;
-        // The mission follows the game once a game second. The GPU world has
-        // no mould grid yet (an occupancy read-back), so a goal that needs
-        // where the mould is shows no bar here; the CPU census has it.
+        // The mission follows the game once a game second, with the GPU
+        // world's mould grid (an occupancy read-back, PR #101).
         if let Some(tr) = self.mission.as_mut() {
             let sec = g.world.ticks() / g.rules.tps as u64;
             // A game that ended inside a game second (a wipe) still gives
             // the mission its verdict, so the end screen is the mission's.
             while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
                 self.mission_sec += 1;
-                // None until the GPU world reads its mould grid back (the
-                // GPU thread's PR #101); then the positional goals fill here.
                 let grid = g.world.mould_grid(BIN);
                 if let Some(v) = tr.second(g, grid.as_deref(), 1.0) {
                     let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
@@ -775,14 +772,7 @@ impl App {
             clock: format!("{} / {}", clock(t), clock(r.cap)),
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
             objective: Some(if let Some(tr) = &self.mission {
-                match tr.bar {
-                    Some(b) => format!("{} ({:.0}%)", tr.mission.says, 100.0 * b),
-                    // Said, not hidden (design review, 05:38Z): the GPU world
-                    // gives no mould grid yet, so a goal on where the mould
-                    // is has no bar in the window.
-                    None if tr.secs.iter().sum::<u32>() > 0 => format!("{} (progress not shown in this build yet)", tr.mission.says),
-                    None => tr.mission.says.clone(),
-                }
+                tr.progress_line()
             } else if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
             idle: g.soldiers.iter().filter(|s| s.alive && s.order == Order::Hold).count(),
             ..Model::default()
