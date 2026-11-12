@@ -232,14 +232,17 @@ pub struct BigParams {
     /// the germ's sickness burns energy, and a wave that runs along the
     /// tubes leaves them thinned where the walkers starve.
     pub sick_upkeep: f32,
-    /// A walker not sick (healthy or immune) adds `germ_weight` x germ at
-    /// each sensor's cell; 0 is off (today's). Negative: the body pulls
-    /// away from a sick part, which is left behind to starve alone (with
-    /// `sick_trail` 0 its tubes fade too). The game designer's answer to
-    /// the toolkit's germ (2026-11-12 round 2: plague was the best plan on
-    /// all six tiers once tools took carry space): amputation, from the
-    /// model, rather than a weaker germ.
-    pub germ_weight: f32,
+    /// A mould trait: a healthy walker catches the germ only where the
+    /// germ field is over `sick_catch` x `germ_resist` (1: today's). A
+    /// resistant mould takes a wave in its thick parts, where sick walkers
+    /// lay germ close together, and not along thin tubes, so it loses part
+    /// of its body and grows back. Why (2026-11-12, round 2): with tools
+    /// carried, plague was the best plan on all six tiers. Tried first and
+    /// dropped: amputation by steering (healthy walkers weigh the germ at
+    /// their sensors, -5 or -20, sick ones lay no trail) changed nothing,
+    /// because the wave crosses the body in a few seconds, faster than a
+    /// walker turns away (`Reports/dead-ends.md`).
+    pub germ_resist: f32,
     /// Area sensors (Lague's Slime-Simulation): a sensor reads the sum over
     /// the (2r+1) x (2r+1) square of agar cells centred where it points,
     /// not one cell. 0 is one cell (today's). The square's centre cell
@@ -684,7 +687,7 @@ impl BigParams {
             sick_trail: 1.0,
             sick_reach: 1.0,
             sick_turn: 1.0,
-            germ_weight: 0.0,
+            germ_resist: 1.0,
             sick_seed_r: 0.0,
             sick_upkeep: 1.0,
             sensor_r: 0,
@@ -1866,7 +1869,7 @@ impl BigDish {
                 st = m(st, p.step_mod).max(0.0);
             }
             if contagion {
-                if self.sick[k] == 0 && self.germ[here] > p.sick_catch {
+                if self.sick[k] == 0 && self.germ[here] > p.sick_catch * p.germ_resist {
                     self.sick[k] = catch_c;
                 }
                 if self.sick[k] > sick_at {
@@ -1886,15 +1889,6 @@ impl BigDish {
                     for v in [&mut f, &mut fl, &mut fr] {
                         if *v > -1.0e5 {
                             *v = -*v;
-                        }
-                    }
-                }
-                if contagion && p.germ_weight != 0.0 && self.sick[k] <= sick_at {
-                    for (v, a) in [(&mut f, h), (&mut fl, h - sa), (&mut fr, h + sa)] {
-                        if *v > -1.0e5 {
-                            if let Some(i) = self.cell(x + a.cos() * so, y + a.sin() * so) {
-                                *v += p.germ_weight * self.germ[i];
-                            }
                         }
                     }
                 }

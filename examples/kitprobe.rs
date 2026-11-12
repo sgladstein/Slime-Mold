@@ -165,7 +165,9 @@ fn game(seed: u64, warm: f32) -> (Game<BigDish>, Kit) {
         g.apply(Cmd::Stance(k, Stance::HoldFire));
         g.soldiers[k].hp = 1e9;
     }
-    let mut kit = Kit::new(KitRules::default());
+    // Tool by tool: the tool, not the carry rule (that is kitplans' work),
+    // so tools come from the bank wherever a soldier stands.
+    let mut kit = Kit::new(KitRules { carry_max: 0, ..KitRules::default() });
     g.bank = 1e9;
     secs(&mut g, &mut kit, warm, |_, _| {});
     (g, kit)
@@ -191,9 +193,11 @@ fn run(test: &str, arm: &str, seed: u64, warm: f32, look: Option<&str>) -> Out {
     if let Ok(v) = std::env::var("FULL") {
         g.world.p.scorch_full = v.parse().unwrap();
     }
-    // Amputation (round 2): GERM_WEIGHT= and SICK_TRAIL= in the environment.
-    if let Ok(v) = std::env::var("GERM_WEIGHT") {
-        g.world.p.germ_weight = v.parse().unwrap();
+    // Germ resistance (round 2; amputation by steering, tried first, did
+    // nothing: see `BigParams::germ_resist`): GERM_RESIST= and SICK_TRAIL=
+    // in the environment.
+    if let Ok(v) = std::env::var("GERM_RESIST") {
+        g.world.p.germ_resist = v.parse().unwrap();
     }
     if let Ok(v) = std::env::var("SICK_TRAIL") {
         g.world.p.sick_trail = v.parse().unwrap();

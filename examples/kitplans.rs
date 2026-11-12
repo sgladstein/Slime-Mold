@@ -406,10 +406,10 @@ fn play(seed: u64, tier: &str, hand: &str, rules: Rules, kr: KitRules, map: Opti
     if let Some(t) = Tier::from_name(tier) {
         t.apply(&mut p);
     }
-    // Amputation (round 2), a mould trait tried on any tier: GERM_WEIGHT=
+    // Germ resistance (round 2), a mould trait tried on any tier: GERM_RESIST=
     // and SICK_TRAIL= in the environment.
-    if let Ok(v) = std::env::var("GERM_WEIGHT") {
-        p.germ_weight = v.parse().unwrap();
+    if let Ok(v) = std::env::var("GERM_RESIST") {
+        p.germ_resist = v.parse().unwrap();
     }
     if let Ok(v) = std::env::var("SICK_TRAIL") {
         p.sick_trail = v.parse().unwrap();

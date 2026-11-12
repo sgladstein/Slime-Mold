@@ -117,9 +117,13 @@ impl Default for KitRules {
             gas_death: 0.0,
             gas_price: 150.0,
             reek: 4.0,
-            carry_max: 0,
+            // Round 2 (2026-11-12): the runner holds 5 at 50 each. At 2 the
+            // loud plan fell to the farm hand's level on every tier (+0.18
+            // to +0.27) and plague led all of them; weight 100 or 50 made
+            // no difference (the cost is the trips home, not the carry).
+            carry_max: 5,
             carry_each: 1,
-            tool_weight: 100.0,
+            tool_weight: 50.0,
             restock_r: 6.0,
             alarm_keep: 0.95,
         }

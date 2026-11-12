@@ -9,3 +9,28 @@ kitplans the race world, cap 600 s, seeds [1, 2, 3, 4, 5, 6, 7, 8], tiers ["none
     none    farm seed  4:         cap at  600 s, score +0.245; soldiers  8, mould   4466, harvested  38964, shots  1790; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 6.01 ms a tick
     none  plague seed  2:         cap at  600 s, score +0.146; soldiers  8, mould   8400, harvested  34238, shots  2048; uses [0, 0, 0, 7, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 19.61 ms a tick
     none    loud seed  4: mould wiped at  478 s, score +1.403; soldiers  8, mould      0, harvested  28004, shots   516; uses [38, 4, 0, 0, 0, 1], tool kills [1321, 0, 0, 0, 0, 0]; 11.47 ms a tick
+    none    farm seed  5:         cap at  600 s, score +0.192; soldiers  8, mould   6279, harvested  37914, shots  2658; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 7.69 ms a tick
+    none  plague seed  3:         cap at  600 s, score +0.495; soldiers  8, mould     38, harvested  37314, shots   721; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 19.20 ms a tick
+    none    loud seed  5: mould wiped at  519 s, score +1.335; soldiers  8, mould      0, harvested  31624, shots  1198; uses [43, 4, 0, 0, 0, 1], tool kills [3364, 0, 0, 0, 0, 0]; 8.55 ms a tick
+    none    farm seed  6:         cap at  600 s, score +0.221; soldiers  8, mould   5294, harvested  42764, shots  1952; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 6.31 ms a tick
+    none    loud seed  6: mould wiped at  468 s, score +1.420; soldiers  8, mould      0, harvested  30101, shots   967; uses [39, 4, 0, 0, 0, 1], tool kills [2106, 0, 0, 0, 0, 0]; 8.17 ms a tick
+    none  plague seed  4:         cap at  600 s, score +0.223; soldiers  8, mould   5462, harvested  40406, shots  1900; uses [0, 0, 0, 5, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 20.72 ms a tick
+    none    farm seed  7:         cap at  600 s, score +0.161; soldiers  8, mould   7583, harvested  42214, shots  2211; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 7.33 ms a tick
+    none    loud seed  7:         cap at  600 s, score +0.308; soldiers  8, mould   2666, harvested  35524, shots  3027; uses [76, 4, 0, 0, 0, 1], tool kills [10850, 0, 0, 0, 0, 0]; 8.24 ms a tick
+    none  plague seed  5:         cap at  600 s, score +0.495; soldiers  8, mould      3, harvested  39730, shots  1068; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 21.50 ms a tick
+    none  plague seed  6:         cap at  600 s, score +0.483; soldiers  8, mould    135, harvested  40312, shots  1375; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 17.11 ms a tick
+    none    farm seed  8:         cap at  600 s, score +0.138; soldiers  8, mould   8539, harvested  29864, shots  2031; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 7.87 ms a tick
+    none    loud seed  8:         cap at  600 s, score +0.480; soldiers  8, mould    113, harvested  30474, shots  1555; uses [61, 4, 0, 0, 0, 1], tool kills [8956, 0, 0, 0, 0, 0]; 8.36 ms a tick
+    none  plague seed  7:         cap at  600 s, score +0.263; soldiers  8, mould   3659, harvested  40591, shots  2131; uses [0, 0, 0, 11, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 16.51 ms a tick
+    none  plague seed  8:         cap at  600 s, score +0.205; soldiers  8, mould   5477, harvested  35132, shots  2143; uses [0, 0, 0, 9, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 21.15 ms a tick
+
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                           none
+    farm   +0.203 (0/8/0)     
+    loud   +1.026 (5/3/0)     
+  plague   +0.473 (1/7/0)     
+
+gate 1, paired by seed (higher / lower; sign test, Holm over 0):
+
+gate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p):
+      none: best loud (+1.026); farm 1/7 p 0.070, plague 1/7 p 0.070
