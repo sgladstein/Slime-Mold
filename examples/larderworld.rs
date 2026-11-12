@@ -63,9 +63,11 @@ use pixels::wgpu;
 use slime_mould::gpu::block_on;
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::mould::big::BigDish;
-use slime_mould::mould::larder_world::{race_params, race_world, Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::big::BigParams;
+use slime_mould::mould::larder_world::{race_params, Cmd, End, Game, Order, Rules, Stance, World, FLEE_KEEP};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
+use slime_mould::mould::tiers::Tier;
 
 const RESERVE: f32 = 600.0;
 const FARM_MAX: usize = 8;
@@ -91,6 +93,59 @@ struct Row {
     /// The AI's mean and slowest think, microseconds.
     think_mean: f64,
     think_us: f64,
+    /// Does the mould come for the squad (owner's playtest, 2026-11-12:
+    /// "the slime mostly ignored my soldiers")? Living walkers within
+    /// `NEAR` dish cells of any live soldier, the mean over the game's
+    /// seconds while a soldier lives (CPU only: 0 on the GPU engine, which
+    /// reads no walkers back); and the first second a walker touches a
+    /// soldier (the cap if none ever does).
+    near: f64,
+    touch_at: f32,
+    /// Stuck seconds (design review, 2026-11-12: no soft lock): soldiers
+    /// alive, none fired or took food that second, and the bank cannot buy
+    /// a soldier. The owner's playtest hit this when shots cost food.
+    stuck: u32,
+}
+
+/// Dish cells round a soldier that count as near (`Row::near`): 10, two
+/// thirds of a soldier's range.
+const NEAR: f32 = 10.0;
+
+/// The mould's settings over the race world's, from the command line.
+#[derive(Clone, Copy, Default)]
+struct Mould {
+    /// A mould tier (`tier=swarmer`: the alarm that shots lay draws the
+    /// mould to the fight). CPU only.
+    tier: Option<Tier>,
+    /// The mould's turn from gunfire, opt-in (`larder_world::FLEE_KEEP`
+    /// and `FLEE_WEIGHT`): `flee=W` turns the alarm field on and reads it
+    /// at -W; `flee=0` (the default) leaves it off. Applied before `tier=`,
+    /// so a tier's own alarm keys win.
+    flee: Option<f32>,
+    /// `flee_keep=K`: the alarm field's keep a fine step for the plain
+    /// mould (`FLEE_KEEP`, 0.98); a tier's own keep wins.
+    flee_keep: Option<f32>,
+}
+
+impl Mould {
+    /// The alarm's keep and weight these settings give, from `(keep, weight)`.
+    fn alarm(&self, (keep, weight): (f32, f32)) -> (f32, f32) {
+        let (mut k, w) = match self.flee {
+            Some(w) if w <= 0.0 => (0.0, 0.0),
+            Some(w) => (FLEE_KEEP, -w),
+            None => (keep, weight),
+        };
+        if let Some(fk) = self.flee_keep.filter(|_| k > 0.0) {
+            k = fk;
+        }
+        (k, w)
+    }
+    fn apply(&self, p: &mut BigParams) {
+        (p.alarm_keep, p.alarm_weight) = self.alarm((p.alarm_keep, p.alarm_weight));
+        if let Some(t) = self.tier {
+            t.apply(p);
+        }
+    }
 }
 
 fn main() {
@@ -99,6 +154,7 @@ fn main() {
     let mut hands: Vec<String> = ["idle", "random", "farm", "rush", "wall"].iter().map(|s| s.to_string()).collect();
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
     let mut rules = Rules::default();
+    let mut m = Mould::default();
     let mut map = None::<(String, Map)>;
     // The engines each game runs on: false the CPU big dish, true the GPU.
     let mut engines = vec![false];
@@ -122,6 +178,11 @@ fn main() {
             "every" => every = v.parse().unwrap(),
             "aim_min" => rules.aim_min = v.parse().unwrap(),
             "price" => rules.price = v.parse().unwrap(),
+            "smell" => rules.smell = v.parse().unwrap(),
+            "smell_r" => rules.smell_r = v.parse().unwrap(),
+            "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
+            "flee" => m.flee = Some(v.parse().unwrap()),
+            "flee_keep" => m.flee_keep = Some(v.parse().unwrap()),
             "strike" => rules.strike = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
             "seek" => rules.seek = v == "1",
@@ -150,14 +211,23 @@ fn main() {
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
-    println!("larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; rules {rules:?}", rules.cap, rules.tps, seeds);
+    println!(
+        "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; tier {}; flee {}{}; rules {rules:?}",
+        rules.cap,
+        rules.tps,
+        seeds,
+        m.tier.map_or("none", |t| t.name()),
+        m.flee.map_or("0 (default)".to_string(), |w| w.to_string()),
+        m.flee_keep.map_or(String::new(), |k| format!(", keep {k}"))
+    );
+    assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
     if let Some(dir) = look {
         assert!(engines == [false], "look= draws the CPU world only");
         std::fs::create_dir_all(&dir).expect("look dir");
         for &seed in &seeds {
             for hand in &hands {
-                let r = play(seed, scale, walkers, rules, hand, map, Some((&dir, every)), None);
+                let r = play(seed, scale, walkers, rules, m, hand, map, Some((&dir, every)), None);
                 println!("{hand} seed {seed}: {} at {:.0} s, score {:+.3}", r.end, r.t, r.score);
             }
         }
@@ -192,11 +262,11 @@ fn main() {
                     if *on_gpu && dev.is_none() {
                         dev = Some(gpu());
                     }
-                    let r = play(*seed, scale, walkers, rules, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
+                    let r = play(*seed, scale, walkers, rules, m, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
                     println!(
-                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}",
+                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s",
                         if engines.len() > 1 { format!(" {}", engine_name(*on_gpu)) } else { String::new() },
-                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1
+                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck
                     );
                     out.lock().unwrap()[j] = r;
                 }
@@ -328,7 +398,11 @@ fn report(hands: &[String], seeds: &[u64], get: &dyn Fn(u64, &str) -> Row) {
         let rows: Vec<Row> = seeds.iter().map(|&s| get(s, h)).collect();
         let mean = rows.iter().map(|r| r.score).sum::<f32>() / rows.len() as f32;
         let ends = |b: &str| rows.iter().filter(|r| r.end == b).count();
-        println!("  {h:>6}: mean {mean:+.3}; mould wiped {}, cap {}, squad wiped {}", ends("mould wiped"), ends("cap"), ends("squad wiped"));
+        let near = rows.iter().map(|r| r.near).sum::<f64>() / rows.len() as f64;
+        let touch = rows.iter().map(|r| r.touch_at).sum::<f32>() / rows.len() as f32;
+        let stuck = rows.iter().map(|r| r.stuck as f32).sum::<f32>() / rows.len() as f32;
+        let stuck_games = rows.iter().filter(|r| r.stuck >= 60).count();
+        println!("  {h:>6}: mean {mean:+.3}; mould wiped {}, cap {}, squad wiped {}; near {near:.0} walkers, first touch {touch:.0} s; stuck {stuck:.0} s a game, {stuck_games} games stuck a minute or more", ends("mould wiped"), ends("cap"), ends("squad wiped"));
     }
     let mut tests = Vec::new();
     for h in hands.iter().filter(|h| *h != "idle" && *h != "random") {
@@ -373,26 +447,34 @@ fn report(hands: &[String], seeds: &[u64], get: &dyn Fn(u64, &str) -> Row) {
 /// One game: on the CPU big dish, or with `gpu` on the GPU engine
 /// (`GpuWorld`, the race world's settings and the same map).
 #[allow(clippy::too_many_arguments)]
-fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>, gpu: Option<&(wgpu::Device, wgpu::Queue)>) -> Row {
+fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>, gpu: Option<&(wgpu::Device, wgpu::Queue)>) -> Row {
     if let Some((device, queue)) = gpu {
-        let s = race_settings(seed, scale, walkers);
+        let mut s = race_settings(seed, scale, walkers);
+        (s.alarm_keep, s.alarm_weight) = mould.alarm((s.alarm_keep, s.alarm_weight));
         let world = match map {
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),
         };
-        return play_on(Game::new(world, rules, seed), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum());
+        return play_on(Game::new(world, rules, seed), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
     }
+    let mut p = race_params(seed, scale, walkers);
+    mould.apply(&mut p);
     let mut world = match map {
-        Some(m) => BigDish::with_map(race_params(seed, scale, walkers), m),
-        None => race_world(seed, scale, walkers),
+        Some(m) => BigDish::with_map(p, m),
+        None => BigDish::new(p),
     };
     world.threads = 1;
     let draw = |g: &Game<BigDish>, path: &str| {
         picture(g, path);
         counts(g, hand, seed);
     };
-    play_on(Game::new(world, rules, seed), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum())
+    let near = |d: &BigDish, live: &[(f32, f32)], r: f32| Some((0..d.walkers.len()).filter(|&k| d.lives(k) && live.iter().any(|&(x, y)| (d.walkers[k].0 - x).hypot(d.walkers[k].1 - y) <= r)).count());
+    play_on(Game::new(world, rules, seed), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
 }
+
+/// Living walkers within a radius (fine cells) of any of the points, where
+/// the world can count them (`Row::near`).
+type Near<'a, W> = &'a dyn Fn(&W, &[(f32, f32)], f32) -> Option<usize>;
 
 /// Pictures: the folder, game seconds between them, and what draws one.
 type Look<'a, W> = (&'a str, f32, &'a dyn Fn(&Game<W>, &str));
@@ -401,14 +483,27 @@ type Look<'a, W> = (&'a str, f32, &'a dyn Fn(&Game<W>, &str));
 /// picture every so many game seconds and at the end. `full` is the
 /// crystals' full charge (`pile_full`: the GPU world's from its CPU mirror,
 /// which builds the same walls).
-fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>>, full: &dyn Fn(&W) -> f32) -> Row {
+fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>>, full: &dyn Fn(&W) -> f32, near: Near<W>) -> Row {
     let start = std::time::Instant::now();
     let mut shot = -1.0f32;
     let mut farmed: Vec<usize> = Vec::new();
     let mut ai = larder_world_ai::Hand::named(hand, &g);
     let (mut think_us, mut think_sum, mut thinks) = (0.0f64, 0.0f64, 0u32);
+    let (mut near_sum, mut near_n, mut touch_at) = (0.0f64, 0u32, None::<f32>);
     let end = g.play(|g| {
         let t = g.time();
+        {
+            let live: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+            if !live.is_empty() {
+                if let Some(n) = near(&g.world, &live, NEAR * g.world.scale()) {
+                    near_sum += n as f64;
+                    near_n += 1;
+                }
+            }
+            if touch_at.is_none() && g.soldiers.iter().any(|s| s.alive && s.touching > 0) {
+                touch_at = Some(t);
+            }
+        }
         if let Some((dir, every, draw)) = look {
             if t - shot >= every || shot < 0.0 {
                 shot = t;
@@ -450,7 +545,7 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
         score1: g.score_w2b().expect("ended"),
         end: end.band().into(),
         t: match end {
-            End::SquadWiped(t) | End::MouldWiped(t) => t,
+            End::SquadWiped(t) | End::MouldWiped(t) | End::Overrun(t) => t,
             End::Cap(_) => g.rules.cap,
         },
         alive: g.alive(),
@@ -464,6 +559,12 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
         ms_tick: ms,
         think_mean: think_sum / thinks.max(1) as f64,
         think_us,
+        near: near_sum / near_n.max(1) as f64,
+        touch_at: touch_at.unwrap_or(g.rules.cap),
+        // Counted by the game since 2026-11-12 (`Game::stuck`), the same
+        // test the census ran here (it can count the round's last second,
+        // which the plan never saw).
+        stuck: g.stuck,
     }
 }
 

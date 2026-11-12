@@ -44,7 +44,7 @@ the merge order, are in *Larder World: shared rules and merge order*, below.
 | # | Step | Owner | Waits on | State |
 | --- | --- | --- | --- | --- |
 | L-I | The game's shared rules: one owner and one code path per mechanic, the merge order, the GPU `Params` queue | *Integrate the Larder game's shared rules* thread | nothing | **agreed 11-12** with every thread below, after the technical lead and game designer reviews found scorch designed in four places and lures, alarms, walls and depots in two or three each. `Engine` Params layout asserts are real in release builds since 11-12 |
-| L-F | The owner's playtest fixes (11-12 04:13Z): free shots, soldier scent as a rule, then a slower mould clock; shots that leave a lasting hole | *Make the Larder World fight feel alive* (Larder) thread | nothing | free shots and scent built, census on 16 held-out seeds running; the clock change is a census reset (below) |
+| L-F | The owner's playtest fixes (11-12 04:13Z): free shots, soldier scent as a rule; shots that leave a lasting hole | *Make the Larder World fight feel alive* (Larder) thread | nothing | PR #106: free shots and scent (0.5 over 2 dish cells); the gate holds on the race world (32 seeds), the Fork and the Rim, but strike beats every plan (28-4 over farm) and food does not bind. The mould turning from gunfire made the hole (102 dish cells against 29) but failed the gate (random wiped the mould on 12 of 16 by holding the core), so it is an opt-in; the slower clock was dropped too (both dead ends). Next, PR 2: the hole from the toolkit's crater on CPU and GPU, tested against random beside the hole; PR 3: the economy (running costs) |
 | L-O | One body: the mould holds together, and a cut-off piece starves | *Make the mould one cohesive body* thread | nothing | **CPU rules merged 11-12 (#103)**, all off ([report](Reports/one-body-2026-11-12.md), [page](https://claude.ai/artifact/E9MSpcgBj7F8jZX6i6LA5q)): `energy_flow` 0.05 + `hunger_scent` 8 is one body on more seeds and 2.5x the size; cut gaps refill in 2 s unless held. GPU port of those two (binding 46, `Params` row 848) twin-tested, PR open. Next: the owner's A/B answer, the Larder census with them on, a hunting hunk |
 | L-C | Soldier controls: order queue, attack-move, moving on from a dry crystal, the larder's rally point; then building over time and the larder as a depot | *Improve soldier controls and commands* thread | part 2 waits on buildings batch 1 (soldiers build over time: owner's card, 11-12) | part 1 built (branch `claude/project-thread-oldrb7`), census gate with moving-on on and off running |
 | L-B | Buildings: turret, lure, pump, wall and outpost as one `Building` type; then siren | *Add turrets, walls and other buildings* thread | the siren waits on the toolkit's burst list; no Scorcher (owner's card, 11-12 04:46Z) | batch 1 built on the CPU and twin-tested on software Vulkan; `UNITS_MAX` 64 to 96 with a cap test; census is a payoff table of plans by tier and map, turret-ring and turtle hands included |
@@ -117,7 +117,7 @@ order still holds: tools and feel are built in parallel (owner, 11-12
 | Walls | Larder's wall cells and rules (`wall_hp`, `wall_scent`, `wall_bite`); a wall is a building kind over them | Larder thread (rules), buildings thread (the kind) | |
 | Building anything | soldiers walk to a site and raise it over time (owner's card, 11-12 ~04:41Z) | soldier controls thread | every building kind |
 | Larder and outpost | one kind, a depot; the larder is the first. Hoard smell and stealing apply to every depot | buildings thread (kind), controls thread (select, buy, rally), Larder thread (hoard, steal) | |
-| The hole under fire | the shot rule (candidate: the alarm read at a negative weight); any per-cell closed ground is the crater field | Larder thread (the one body thread handed it over, 11-12 05:08Z) | graphics draws it |
+| The hole under fire | the shot rule; next, shots lay the toolkit's crater (`BigDish::scorch_disc`). The alarm read at -1 (`FLEE_WEIGHT`) is an opt-in: as a default it let random hold the core and win | Larder thread (the one body thread handed it over, 11-12 05:08Z) | graphics draws it |
 | Cohesion, hunger, cuts | `big.rs` on the CPU, then a GPU port | one body thread | det cord's siege relies on a cut piece starving; graphics draws cuts |
 | Shot look | drawn from the crater field and the walkers, no stamp (owner, 11-12 04:38Z) | graphics thread | sound |
 | Sound | reads `squad::FrameOut`, `HudEvent`s and the burst list; writes no rule | sound thread | |
@@ -148,7 +148,7 @@ every plan (game designer review).
 
 **Merge order on `src/mould/larder_world.rs` and `squad.rs`.**
 
-1. Larder thread: free shots, soldier scent
+1. Larder thread: free shots, soldier scent (PR #106)
 2. Controls part 1: order queue, attack-move, moving on (branch built 11-12)
 3. GPU thread: `Game::step` split into begin and finish halves (`step()`
    stays both, so callers, the census and replays run as now)
@@ -187,7 +187,14 @@ mould reads the alarm that shots already lay at a negative weight
 (`alarm_weight` -1, keep 0.98). On seed 1 that held a growing hole open
 under fire (110 dish cells, against 40 today) that refills once fire
 stops. It becomes a default only if a 16-seed hole test and the census
-agree. That is the local push the *Skittish* dead end saw near a wound, not
+agree. The 16-seed test agreed (11-12 05:10Z: 102 dish cells against 29
+after 20 s of fire, 16 of 16, refilled about 10 s after the last shot), but
+the census did not (06:20Z): random wiped the mould on 12 of 16 seeds by
+holding its core, since the mould no longer overran soldiers there, and the
+first touch on a squad came later. So it is an opt-in, and the next try is
+shots that lay the toolkit's crater, with the gate's random and idle rows
+run beside the hole. Any rule that keeps the mould off soldiers must keep it
+defending its core (game designer review, 06:20Z), for every tier. That is the local push the *Skittish* dead end saw near a wound, not
 the whole-body flight it was rejected for. Shots may still lay a little of
 the toolkit's crater later, with values in `Rules`.
 

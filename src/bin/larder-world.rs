@@ -619,7 +619,8 @@ impl App {
             }
             self.stolen = g.stolen;
         }
-        let broke = g.bank < g.rules.price;
+        // Only while shots cost food (`Rules::price`, 0 since 2026-11-12).
+        let broke = g.rules.price > 0.0 && g.bank < g.rules.price;
         if broke && !self.broke {
             self.hud.alert("Out of food: soldiers cannot fire", None, theme::BAD);
         }
@@ -835,7 +836,7 @@ impl App {
                     ("Carrying".into(), format!("{:.0} / {:.0}", s.carry, r.carry)),
                     ("Stance".into(), stance_name(s.stance).into()),
                     ("Range".into(), format!("{:.0} cells", r.range)),
-                    ("A shot".into(), format!("{:.0} food", r.price)),
+                    ("A shot".into(), if r.price > 0.0 { format!("{:.0} food", r.price) } else { format!("free, one every {:.1} s", r.shot_every) }),
                     ("Mould on it".into(), format!("{}", s.touching)),
                 ],
                 note: None,
@@ -894,7 +895,7 @@ impl App {
             Command { target: Target::Line { width: r.strike * sc }, ready: any, why_not: no_sel(), about: "Stand by a line and keep firing along it, so the mould cannot cross.".into(), ..Command::new(BURN, (0, 3), Icon::Burn, "Burn a line", KeyCode::KeyF) },
             Command { ready: any, on: stance == Some(Stance::HoldFire), why_not: no_sel(), about: "Do not shoot at all.".into(), ..Command::new(HOLD_FIRE, (1, 0), Icon::Close, "Hold fire", KeyCode::KeyZ) },
             Command { ready: any, on: stance == Some(Stance::Defend), why_not: no_sel(), about: format!("Shoot only mould touching the soldier, within {:.0} cells, or on the crystal it is harvesting. The default.", r.defend), ..Command::new(DEFEND, (1, 1), Icon::Eye, "Defend", KeyCode::KeyX) },
-            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells. Every shot costs {:.0} food.", r.range, r.price), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
+            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells.{}", r.range, if r.price > 0.0 { format!(" Every shot costs {:.0} food.", r.price) } else { String::new() }), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
             Command {
                 cost: Some(format!("{:.0}", r.soldier_cost)),
                 ready: g.bank >= r.soldier_cost && !full,
@@ -1104,6 +1105,7 @@ fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
     let title = match end {
         End::MouldWiped(t) => format!("The mould is wiped out at {}", clock(t)),
         End::SquadWiped(t) => format!("The squad is lost at {}", clock(t)),
+        End::Overrun(t) => format!("The mould overran the larder at {}", clock(t)),
         End::Cap(s) if s > 0.5 => "Time: you took more of the crystals than the mould".to_string(),
         End::Cap(s) if s < 0.5 => "Time: the mould took more of the crystals".to_string(),
         End::Cap(_) => "Time: an even race".to_string(),

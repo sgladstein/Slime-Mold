@@ -2,7 +2,7 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-12T06:00Z
+updated: 2026-11-12T07:05Z
 sources: [Reports/shot-damage-2026-11-12.md, Reports/soldier-controls-2026-11-12.md, Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Cmd::Queue, Cmd::Rally, Order::Fight, Game::seek, Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES, View::set_alive, View::set_body_density]
 ---
