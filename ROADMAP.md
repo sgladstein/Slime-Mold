@@ -46,13 +46,13 @@ the merge order, are in *Larder World: shared rules and merge order*, below.
 | L-I | The game's shared rules: one owner and one code path per mechanic, the merge order, the GPU `Params` queue | *Integrate the Larder game's shared rules* thread | nothing | **agreed 11-12** with every thread below, after the technical lead and game designer reviews found scorch designed in four places and lures, alarms, walls and depots in two or three each. `Engine` Params layout asserts are real in release builds since 11-12 |
 | L-F | The owner's playtest fixes (11-12 04:13Z): free shots, soldier scent as a rule, then a slower mould clock; shots that leave a lasting hole | *Make the Larder World fight feel alive* (Larder) thread | nothing | free shots and scent built, census on 16 held-out seeds running; the clock change is a census reset (below) |
 | L-O | One body: the mould holds together, and a cut-off piece starves | *Make the mould one cohesive body* thread | nothing | cut probe built; cohesion rules being tried on the CPU (a tether makes crawling hunks but splits the body). Then the GPU port, a page of cuts, and the owner's say before it goes on by default |
-| L-C | Soldier controls: order queue, attack-move, moving on from a dry crystal, the larder's rally point; then building over time and the larder as a depot | *Improve soldier controls and commands* thread | part 2 waits on the owner's card (who builds) | part 1 built (branch `claude/project-thread-oldrb7`), census gate with moving-on on and off running |
+| L-C | Soldier controls: order queue, attack-move, moving on from a dry crystal, the larder's rally point; then building over time and the larder as a depot | *Improve soldier controls and commands* thread | part 2 waits on buildings batch 1 (soldiers build over time: owner's card, 11-12) | part 1 built (branch `claude/project-thread-oldrb7`), census gate with moving-on on and off running |
 | L-B | Buildings: turret, lure, pump, wall and outpost as one `Building` type; then siren | *Add turrets, walls and other buildings* thread | the siren waits on the toolkit's burst list; no Scorcher (owner's card, 11-12 04:46Z) | batch 1 built on the CPU and twin-tested on software Vulkan; `UNITS_MAX` 64 to 96 with a cap test; census is a payoff table of plans by tier and map, turret-ring and turtle hands included |
 | L-K | Squad toolkit from the model: blast and crater, mine, det cord, germ, sleep gas, mask and reek | *Design squad tools from the mould's model* thread | nothing (owner picked "all six", 11-12 04:31Z) | CPU prototype built, off by default; next each tool against no tool on paired seeds, then the four plans by mould type; step 2 moves the tools into `squad::Frame`'s burst list on CPU and GPU |
 | L-S | Sound and hit feel driven by the simulation's counts | *Add sound and hit feel to Larder* thread | nothing | listener and voices built; wiring into the window, then the frame cost and a listening page |
 | L-G | The world's look: shot damage drawn from the simulation | *Improve soldier and slime graphics* thread | the crater field (L-K) | the owner turned down both drawn versions (11-12 04:38Z, "Both of those look like stamps"); next a hole that is real in the simulation, and slower walkers |
 | S-P | GPU performance and census: the game's frame time on the 1070, one read-back a step, the census on `GpuWorld` | *Port mould species and tiers to the GPU* thread | the owner's desktop for the 1070 timing | planned 11-12: a mapped readout buffer and a living-walker count pass; `Game::step` split into begin and finish halves with `step()` unchanged |
-| L-OM | The player's own mould species (approved 11-11 14:54Z) | *Design the player's own mould species* thread | the owner's pick of a shape | proposal up; a CPU probe of body forms fighting each other running |
+| L-OM | The player's own mould species (approved 11-11 14:54Z) | *Design the player's own mould species* thread | nothing (gardeners picked 11-12 04:45Z) | proposal up; a CPU probe of body forms fighting each other running |
 | L-CA | Campaign and onboarding: a goal the player can read, no soft lock, missions as map data | *Design the Larder campaign and onboarding* thread | the owner's approval | draft up; missions are data over the shared pieces |
 | L-AI | Player AI for Larder playtests (`src/mould/larder_ai.rs`, `src/mould/larder_world_ai.rs`, `examples/larderai.rs`, `larder -- SEED ai=STYLE`) | Player AI thread | nothing | **built 11-11** on the CPU field: [report](Reports/larder-ai-2026-11-11.md), [page](wiki/world/player-ai.md). Plays through `Cmd`s only, sees a `View`, one brain per `Side`; five styles; boom, lure and adapt beat idle and random 16/16 held out. **Ported to the Larder world 11-12** (`src/mould/larder_world_ai.rs`, hands in `examples/larderworld.rs`): [report](Reports/larder-world-ai-2026-11-12.md); boom, claim, late, fort beat the scripted farm 15-16/16 held out, strike wiped the mould once. Next: the tier counter tests (Sporer, Sleeper, Swarmer), `mould_grid` on the GPU world, two AI teams once a second side exists, exploiter search |
 
@@ -111,14 +111,21 @@ order still holds: tools and feel are built in parallel (owner, 11-12
 | Scorch | one crater field (a per-cell countdown; trail fades fast while it runs), CPU and GPU, binding 46; each writer gives its own strength and radius | squad toolkit thread | blasts and det cord write it; graphics draws it from the field; no Scorcher building (owner's card, 11-12 04:46Z) |
 | Buildings | one `Building` type (kind, position, health, build progress) and the still-unit slots | buildings thread | turret, lure, pump, wall, depot, siren |
 | Walls | Larder's wall cells and rules (`wall_hp`, `wall_scent`, `wall_bite`); a wall is a building kind over them | Larder thread (rules), buildings thread (the kind) | |
-| Building anything | soldiers walk to a site and raise it over time (pending the owner's card in the controls thread) | soldier controls thread | every building kind |
+| Building anything | soldiers walk to a site and raise it over time (owner's card, 11-12 ~04:41Z) | soldier controls thread | every building kind |
 | Larder and outpost | one kind, a depot; the larder is the first. Hoard smell and stealing apply to every depot | buildings thread (kind), controls thread (select, buy, rally), Larder thread (hoard, steal) | |
 | Cohesion, hunger, cuts | `big.rs` on the CPU, then a GPU port | one body thread | det cord's siege relies on a cut piece starving; graphics draws cuts |
 | Shot look | drawn from the crater field and the walkers, no stamp (owner, 11-12 04:38Z) | graphics thread | sound |
 | Sound | reads `squad::FrameOut`, `HudEvent`s and the burst list; writes no rule | sound thread | |
-| The player's own mould | if the owner picks it, a second `Side` in its own file with a thin hook in `larder_world.rs`; its cut, road and feed reuse the burst list, the squad frame's per-unit writes and the harvest path | player's own mould thread | |
+| The player's own mould | the gardeners shape (owner's card, 11-12 04:45Z): a second `Side` in its own file with a thin hook in `larder_world.rs`; its cut, road and feed reuse the burst list, the squad frame's per-unit writes and the harvest path | player's own mould thread | |
 | Missions | data over the shared pieces (map, tier, `Rules`, tools allowed); a new end condition is the Larder thread's (`End`, `Game::score`) | campaign and onboarding thread | |
 | GPU frame time | async read-backs in `gpu/mod.rs`; a change to `squad::FrameOut`'s shape is announced before it merges, since three threads read it | GPU thread | |
+
+**Overnight questions (owner, 11-12 04:48Z).** "I cannot answer any not
+questions tonight. When there is a question have the threads work together
+to come up with the best answer and move forward with it." For the Larder
+threads the integration thread settles a question with the game designer
+and technical lead reviews, records the answer and its reasons here, and
+the owner can reverse it in the morning.
 
 **Caps.** Buildings share `squad::UNITS_MAX` (64) with up to
 `Rules::max_squad` (40) soldiers, and the frame drops units past the cap
@@ -137,7 +144,7 @@ every plan (game designer review).
 5. Squad toolkit: the burst list, the crater field, the tools
 6. Controls part 2: building over time, the larder as a depot
 7. Buildings batch 2: siren (a burst), outpost (a depot)
-8. The player's own mould as a second side, if the owner picks it
+8. The player's own mould as a second side (gardeners)
 
 **Counts scale with density, not raw walkers.** The window and the census
 play 5,000 walkers today; the GPU was built for 100,000. A threshold
