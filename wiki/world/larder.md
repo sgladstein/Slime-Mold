@@ -2,9 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T01:00Z
+updated: 2026-11-12T02:00Z
 sources: [Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
+code: [View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -19,9 +19,10 @@ species. Six gated phases, W0-W5
 https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ), replacing M4-M6 below.
 **Done:** W1a, the world's fields on the CPU big dish (PR #64); W1b, the
 same fields on the GPU engine; W2a, the squad's hooks (PR #74); W2b, M3's
-rules on the world, on the CPU and the engine.
-**Next:** the map loader (WM1), then the window (W2c). Designed maps are now part of the plan (owner, 19:29Z; ROADMAP
-WM1-WM5). The small-dish M3 window still waits on the owner's playtest.
+rules on the world, on the CPU and the engine; WM1, designed
+[maps](maps.md) loaded on both.
+**Playable:** `cargo run --release --bin larder-world -- map=fork` (W2c's first cut: the real rules on the GPU world, on a map). `mouldgpu`'s Q squad is the UI's stand-in, with no rules.
+**Next:** soil on the GPU, and the frame time on the 1070.
 
 ## Larder World so far
 

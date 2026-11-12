@@ -99,6 +99,8 @@ pub struct CrystalView {
     /// Fine cells.
     pub at: (f32, f32),
     pub charge: f32,
+    /// Its radius, fine cells: a map's crystals differ (WM1).
+    pub r: f32,
     /// Walkers on it (within its radius and 2 dish cells) and near it
     /// (within `NEAR` dish cells); 0 when the world gives no grid.
     pub on: u32,
@@ -121,7 +123,6 @@ pub struct View {
     pub core_down: bool,
     pub units: Vec<UnitView>,
     pub crystals: Vec<CrystalView>,
-    pub crystal_r: f32,
     /// Walkers alive, as the screen's count shows.
     pub mould: usize,
     /// The mould grid: squares of `bin` fine cells, `cols` across.
@@ -153,20 +154,21 @@ impl View {
             core_down: g.core_down.is_some(),
             units,
             crystals: Vec::new(),
-            crystal_r: g.world.crystal_r(),
             mould: g.mould,
             grid,
             bin,
             cols,
         };
-        let cr = v.crystal_r;
         v.crystals = g
             .world
             .crystals()
             .into_iter()
             .enumerate()
             .filter(|c| c.1 .1 > 0.0)
-            .map(|(i, (at, charge))| CrystalView { i, at, charge, on: v.mass(at, cr + 2.0 * scale), near: v.mass(at, NEAR * scale) })
+            .map(|(i, (at, charge))| {
+                let r = g.world.crystal_r(i);
+                CrystalView { i, at, charge, r, on: v.mass(at, r + 2.0 * scale), near: v.mass(at, NEAR * scale) }
+            })
             .collect();
         v
     }

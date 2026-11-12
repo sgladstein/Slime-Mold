@@ -1,0 +1,1188 @@
+//! **Larder World, the window** (ROADMAP W2c): the Larder game
+//! (`mould::larder_world::Game`, W2b) on the GPU world
+//! (`gpu::larder_world::GpuWorld`), on a designed map (WM1), drawn with the
+//! world look (#69) and played with the world's camera, controls and UI
+//! (#63, #80).
+//!
+//! `cargo run --release --bin larder-world [-- map=fork seed=1]`
+//! (`map=` rim, fork, flats, nest, passes, or `noise` for the race world
+//! the censuses measured; `walkers=` and `scale=` as `larderworld`'s.)
+//!
+//! **Why a window of its own.** The owner played `mouldgpu`'s stand-in
+//! squad (Q) on 2026-11-11 and found soldiers that did not touch the
+//! slime and rivals that lost health by being near each other: that squad
+//! is the camera and UI thread's test of the controls, with no game rules
+//! (`world::demo`). This window runs the real rules, the ones the W2b
+//! census measured: shots are rays that stop at the first slime and kill
+//! the walkers they strike, soldiers harvest crystals and carry the charge
+//! to the larder, walls cost by length and the mould wears them, and the
+//! round ends at the cap, when either side is wiped, or sooner with the
+//! core taken. The sandbox keeps its stand-in for trying the controls.
+//!
+//! **One game, one world.** Every command goes through `Game::apply` (so
+//! the round can be replayed: Esc's menu or the end saves
+//! `larder-world-replay-MAP-SEED.txt`), and the game steps at its own
+//! 15 frames a game second through an accumulator, whatever the window's
+//! frame rate. What is drawn is the engine's own fields: the look shades
+//! the mould from its trail and walkers, the ground from the world's rock,
+//! wet, walls (dimming as the GPU wears them) and crystals (dimming as
+//! their charge goes), read back once a game second. A shot is drawn as
+//! its ray for a tenth of a second, from the soldier to the slime it hit,
+//! and leaves the wound the engine cut.
+//!
+//! **Controls.** Left click or drag selects; right click moves, or on a
+//! crystal harvests it. The command card (bottom right) has the rest, each
+//! with its key: A attack the core, S stop, G harvest, F burn a line,
+//! Z/X/C hold fire, defend, free fire, B buy a soldier, V lay a wall.
+//! P pauses, Tab runs four times faster, N starts the next map, M the
+//! minimap, Esc is the menu. Wheel zooms, the middle button, the arrows or
+//! the screen edge pan.
+//!
+//! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]`
+//! plays without a window and saves the window's picture at those game
+//! seconds (`headless`).
+
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::Instant;
+
+use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
+use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+use slime_mould::gpu::{block_on, read_back};
+use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::map::Map;
+use slime_mould::world::icons::Icon;
+use slime_mould::world::look::{self, Fields, Ground};
+use slime_mould::world::marks::team_colour;
+use slime_mould::world::ui::{theme, Card, Command, Ghost, Info, MenuItem, Model, Resource, Target};
+use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, View};
+use winit::application::ApplicationHandler;
+use winit::dpi::PhysicalSize;
+use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::{Window, WindowId};
+
+/// The designed maps (`Reports/larder-maps-2026-11-11.md`, v2), N's order.
+const MAPS: [&str; 5] = ["fork", "nest", "rim", "flats", "passes"];
+
+// Command ids (the HUD echoes them back).
+const ATTACK: u32 = 1;
+const STOP: u32 = 2;
+const HARVEST: u32 = 3;
+const BURN: u32 = 4;
+const HOLD_FIRE: u32 = 5;
+const DEFEND: u32 = 6;
+const FREE: u32 = 7;
+const BUY: u32 = 8;
+const WALL: u32 = 9;
+
+/// How long a shot's ray and its muzzle flash show, real seconds (the world
+/// look's fight: `examples/worldlook.rs`).
+const TRACER: f32 = 0.1;
+const FLASH: f32 = 0.07;
+/// Game seconds between read-backs of the crystals' and walls' cells for
+/// the ground the look shades.
+const GROUND_EVERY: f32 = 1.0;
+
+struct Args {
+    /// None: the race world from noise.
+    map: Option<String>,
+    seed: u64,
+    scale: usize,
+    walkers: usize,
+}
+
+/// A shot being drawn: its ray, whether it hit slime, and its age.
+struct Tracer {
+    from: (f32, f32),
+    to: (f32, f32),
+    hit: bool,
+    age: f32,
+}
+
+/// What the window keeps of each soldier beside the game: the way it
+/// faces, its muzzle flash, and whether it was alive last frame.
+#[derive(Clone, Copy)]
+struct Look {
+    facing: f32,
+    flash: f32,
+    at: (f32, f32),
+    alive: bool,
+}
+
+struct App {
+    args: Args,
+    window: Option<Arc<Window>>,
+    pixels: Option<Pixels<'static>>,
+    /// The window's GPU (pixels'), or the headless run's.
+    gpu: Option<(wgpu::Device, wgpu::Queue)>,
+    game: Option<Game<GpuWorld>>,
+    /// The map's name on the title and the replay's file name.
+    name: String,
+    /// Each crystal's charge at the start (for the hover's share left).
+    charge0: Vec<f32>,
+    view: Option<View>,
+    camera: Camera,
+    controls: Controls,
+    hud: Hud,
+    canvas: Option<Canvas>,
+    canvas_pass: Option<CanvasPass>,
+    marks: Marks,
+    /// The look's ground field (`look::ground`), refreshed once a game
+    /// second and when a wall goes up.
+    ground: Option<wgpu::Buffer>,
+    ground_at: f32,
+    ground_walls: u32,
+    looks: Vec<Look>,
+    tracers: Vec<Tracer>,
+    paused: bool,
+    menu_paused: bool,
+    fast: bool,
+    /// Game seconds owed to the game (the accumulator).
+    owed: f32,
+    last_frame: Instant,
+    shift: bool,
+    ctrl: bool,
+    /// Alerts already given: crystals dry, the core taken, the larder
+    /// robbed (game second), out of food.
+    dry: Vec<bool>,
+    core_told: bool,
+    robbed_at: Option<f32>,
+    stolen: f32,
+    broke: bool,
+    /// Bank samples (game second, bank) for the food rate.
+    bank_log: std::collections::VecDeque<(f32, f32)>,
+    /// Frame times (ms) since the last report, and when it was.
+    frame_ms: Vec<f32>,
+    steps: u32,
+    report_at: Instant,
+    saved: bool,
+    result: Result<(), String>,
+}
+
+impl App {
+    fn new(args: Args) -> Self {
+        App {
+            name: args.map.clone().unwrap_or_else(|| "noise".into()),
+            args,
+            window: None,
+            pixels: None,
+            gpu: None,
+            game: None,
+            charge0: Vec::new(),
+            view: None,
+            camera: Camera::new((512, 320), (1280, 800)),
+            controls: Controls::new(0),
+            hud: Hud::new(),
+            canvas: None,
+            canvas_pass: None,
+            marks: Marks::default(),
+            ground: None,
+            ground_at: 0.0,
+            ground_walls: 0,
+            looks: Vec::new(),
+            tracers: Vec::new(),
+            paused: false,
+            menu_paused: false,
+            fast: false,
+            owed: 0.0,
+            last_frame: Instant::now(),
+            shift: false,
+            ctrl: false,
+            dry: Vec::new(),
+            core_told: false,
+            robbed_at: None,
+            stolen: 0.0,
+            broke: false,
+            bank_log: Default::default(),
+            frame_ms: Vec::new(),
+            steps: 0,
+            report_at: Instant::now(),
+            saved: false,
+            result: Ok(()),
+        }
+    }
+
+    fn fail(&mut self, event_loop: &ActiveEventLoop, msg: String) {
+        eprintln!("larder-world: {msg}");
+        self.result = Err(msg);
+        event_loop.exit();
+    }
+
+    /// A new round on the map named in `args` (or the noise world).
+    fn start(&mut self) -> Result<(), String> {
+        self.save_replay();
+        let Some((device, queue)) = &self.gpu else { return Ok(()) };
+        let a = &self.args;
+        let s = race_settings(a.seed, a.scale, a.walkers);
+        let world = match &a.map {
+            Some(name) => {
+                let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+                let (dir, name) = match name.rsplit_once('/') {
+                    Some((d, n)) => (PathBuf::from(d), n.to_string()),
+                    None => (dir, name.clone()),
+                };
+                let m = Map::load(&dir, &name)?;
+                GpuWorld::with_map(device, queue, s, a.scale, &m)
+            }
+            None => GpuWorld::new(device, queue, s, a.scale),
+        };
+        let game = Game::new(world, Rules::default(), a.seed);
+        let e = &game.world.e;
+        let size = (e.dish.w, e.dish.h);
+        self.charge0 = game.world.crystals().iter().map(|c| c.1).collect();
+        self.dry = vec![false; self.charge0.len()];
+        let codes = ground_codes(&game, None, None);
+        let ground = look::ground_buffer(device, queue, &codes);
+        if let Some(v) = self.view.as_mut() {
+            v.set_world(&e.frame, size);
+            v.set_look(&e.look, &ground, &e.walkers, e.n);
+            v.set_alive(e.grows.then_some(&e.energy));
+            // On the larder, at zoom 4 or the whole map if that is closer
+            // (the minimap shows the rest).
+            self.camera = Camera::new(size, v.screen);
+            let z = self.camera.fit().max(4.0);
+            self.camera.zoom_to(z, self.camera.to_screen(self.camera.centre()));
+            self.camera.centre_on(game.larder);
+        }
+        self.ground = Some(ground);
+        (self.ground_at, self.ground_walls) = (0.0, 0);
+        self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
+        self.tracers.clear();
+        self.controls.selected.clear();
+        self.controls.groups = Default::default();
+        self.hud.cancel_targeting();
+        (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
+        self.bank_log.clear();
+        self.game = Some(game);
+        if let Some(w) = &self.window {
+            w.set_title(&format!("Larder World: {} (seed {})", title_case(&self.name), self.args.seed));
+        }
+        self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", title_case(&self.name)), None, theme::ACCENT);
+        Ok(())
+    }
+
+    /// The round's commands, to replay it (`Game::replay`).
+    fn save_replay(&mut self) {
+        let Some(g) = self.game.as_ref().filter(|g| !g.log.is_empty() && !self.saved) else { return };
+        let path = format!("larder-world-replay-{}-{}.txt", self.name.replace('/', "_"), self.args.seed);
+        match std::fs::write(&path, g.replay_text(self.args.seed)) {
+            Ok(()) => println!("larder-world: saved {path}"),
+            Err(e) => eprintln!("larder-world: {path}: {e}"),
+        }
+        self.saved = true;
+    }
+
+    fn units(&self) -> Vec<Unit> {
+        self.game.as_ref().map(|g| g.soldiers.iter().enumerate().map(|(id, s)| Unit { id, team: 0, x: s.x, y: s.y, alive: s.alive }).collect()).unwrap_or_default()
+    }
+
+    fn living(&self, ids: &[usize]) -> Vec<usize> {
+        let Some(g) = &self.game else { return Vec::new() };
+        ids.iter().copied().filter(|&k| g.soldiers.get(k).is_some_and(|s| s.alive)).collect()
+    }
+
+    fn order_all(&mut self, ids: &[usize], o: impl Fn(usize) -> Order) {
+        let ids = self.living(ids);
+        if let Some(g) = self.game.as_mut() {
+            for (n, k) in ids.into_iter().enumerate() {
+                g.apply(Cmd::Order(k, o(n)));
+            }
+        }
+    }
+
+    /// Right click: harvest a crystal under it, else walk there.
+    fn order_at(&mut self, ids: &[usize], at: (f32, f32)) {
+        let Some(g) = &self.game else { return };
+        let o = if g.crystal_at(at).is_some() { Order::Clear(at.0, at.1) } else { Order::Move(at.0, at.1) };
+        self.order_all(ids, |_| o);
+    }
+
+    /// A burn line shared out: each soldier keeps the whole line burning
+    /// (`Order::Burn`) from its own place along it.
+    fn burn(&mut self, ids: &[usize], from: (f32, f32), to: (f32, f32)) {
+        self.order_all(ids, |_| Order::Burn(from, to));
+    }
+
+    fn hud_events(&mut self, events: Vec<HudEvent>, event_loop: &ActiveEventLoop) {
+        for ev in events {
+            let sel = self.living(&self.controls.selected);
+            match ev {
+                HudEvent::SelectOnly(k) => self.controls.selected = vec![k],
+                HudEvent::Deselect(k) => self.controls.selected.retain(|&q| q != k),
+                HudEvent::Group(g) => self.controls.selected = self.living(&self.controls.groups[g].clone()),
+                HudEvent::Idle => {
+                    let after = self.controls.selected.first().copied();
+                    if let Some(k) = self.next_idle(after).or_else(|| self.next_idle(None)) {
+                        self.controls.selected = vec![k];
+                        if let Some(s) = self.game.as_ref().map(|g| g.soldiers[k]) {
+                            self.camera.centre_on((s.x, s.y));
+                        }
+                    }
+                }
+                HudEvent::Menu(MenuItem::Opened) => {
+                    self.menu_paused = self.paused;
+                    self.paused = true;
+                }
+                HudEvent::Menu(MenuItem::Resume) => self.paused = self.menu_paused,
+                HudEvent::Menu(MenuItem::Restart) => {
+                    if let Err(e) = self.start() {
+                        return self.fail(event_loop, e);
+                    }
+                    self.paused = false;
+                }
+                HudEvent::Menu(MenuItem::Quit) => {
+                    self.save_replay();
+                    event_loop.exit();
+                }
+                HudEvent::Command { id } => match id {
+                    ATTACK => self.order_all(&sel, |_| Order::Attack),
+                    STOP => self.order_all(&sel, |_| Order::Hold),
+                    HOLD_FIRE | DEFEND | FREE => {
+                        let st = match id {
+                            HOLD_FIRE => Stance::HoldFire,
+                            DEFEND => Stance::Defend,
+                            _ => Stance::Free,
+                        };
+                        if let Some(g) = self.game.as_mut() {
+                            for &k in &sel {
+                                g.apply(Cmd::Stance(k, st));
+                            }
+                        }
+                    }
+                    BUY => {
+                        if let Some(g) = self.game.as_mut() {
+                            if g.apply(Cmd::Buy) {
+                                let s = *g.soldiers.last().unwrap();
+                                self.hud.alert("A soldier has joined at the larder", Some((s.x, s.y)), theme::GOOD);
+                            }
+                        }
+                    }
+                    _ => {}
+                },
+                HudEvent::Point { id: HARVEST, at } => self.order_all(&sel, |_| Order::Clear(at.0, at.1)),
+                HudEvent::Line { id: BURN, from, to } => self.burn(&sel, from, to),
+                HudEvent::Line { id: WALL, from, to } => {
+                    if let Some(g) = self.game.as_mut() {
+                        let price = g.wall_price(from, to);
+                        if !g.apply(Cmd::Wall(from, to)) {
+                            let why = if g.bank < price { format!("A wall that long costs {price:.0} food") } else { "Both ends of a wall must be within a soldier's range".to_string() };
+                            self.hud.alert(&why, None, theme::WARN);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    fn next_idle(&self, after: Option<usize>) -> Option<usize> {
+        let g = self.game.as_ref()?;
+        let idle: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive && g.soldiers[k].order == Order::Hold).collect();
+        let start = after.and_then(|a| idle.iter().position(|&k| k > a)).unwrap_or(0);
+        idle.get(start).copied()
+    }
+
+    /// Steps the game for `dt` real seconds and keeps the window's notes
+    /// (facing, flashes, tracers, alerts).
+    fn step(&mut self, dt: f32) {
+        let Some(g) = self.game.as_mut() else { return };
+        for t in &mut self.tracers {
+            t.age += dt;
+        }
+        self.tracers.retain(|t| t.age < TRACER);
+        for l in &mut self.looks {
+            l.flash = (l.flash - dt).max(0.0);
+        }
+        // A bought soldier (by the card or a replay) joins the notes.
+        for s in &g.soldiers[self.looks.len()..] {
+            self.looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
+        }
+        if self.paused || g.end.is_some() {
+            self.owed = 0.0;
+            return;
+        }
+        let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+        self.owed += dt.min(0.25) * if self.fast { 4.0 } else { 1.0 };
+        let mut n = 0;
+        while self.owed >= step && g.end.is_none() {
+            g.step();
+            self.owed -= step;
+            n += 1;
+            for s in &g.last_shots {
+                self.tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
+                if let Some(k) = g.soldiers.iter().position(|q| q.alive && (q.x - s.from.0).abs() < 1e-3 && (q.y - s.from.1).abs() < 1e-3) {
+                    self.looks[k].flash = FLASH;
+                    self.looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+                }
+            }
+            // Behind on frames (a slow one): drop the debt, not the pace.
+            if n >= 8 {
+                self.owed = 0.0;
+            }
+        }
+        self.steps += n;
+        let t = g.time();
+        for (k, s) in g.soldiers.iter().enumerate() {
+            let l = &mut self.looks[k];
+            let (dx, dy) = (s.x - l.at.0, s.y - l.at.1);
+            if l.flash <= 0.0 && dx.hypot(dy) > 0.05 {
+                l.facing = dy.atan2(dx);
+            }
+            l.at = (s.x, s.y);
+            if l.alive && !s.alive {
+                self.hud.alert("A soldier has fallen", Some((s.x, s.y)), theme::BAD);
+            }
+            l.alive = s.alive;
+        }
+        for (i, (c, charge)) in g.world.crystals().into_iter().enumerate() {
+            if !self.dry[i] && charge <= 0.0 && self.charge0[i] > 0.0 {
+                self.dry[i] = true;
+                self.hud.alert(&format!("{} has run dry", crystal_name(i)), Some(c), theme::WARN);
+            }
+        }
+        if g.core_down.is_some() && !self.core_told {
+            self.core_told = true;
+            self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
+        }
+        if g.stolen > self.stolen {
+            if self.robbed_at.is_none_or(|r| t - r > 30.0) {
+                self.hud.alert("The mould is at the larder, eating the bank", Some(g.larder), theme::BAD);
+                self.robbed_at = Some(t);
+            }
+            self.stolen = g.stolen;
+        }
+        let broke = g.bank < g.rules.price;
+        if broke && !self.broke {
+            self.hud.alert("Out of food: soldiers cannot fire", None, theme::BAD);
+        }
+        self.broke = broke;
+        self.bank_log.push_back((t, g.bank));
+        while self.bank_log.front().is_some_and(|&(t0, _)| t - t0 > 10.0) {
+            self.bank_log.pop_front();
+        }
+        if let Some(end) = g.end {
+            println!("larder-world: {} on {} seed {}: {}; score {:+.3}", end.band(), self.name, self.args.seed, summary(g), g.score().unwrap_or(0.0));
+            self.save_replay();
+        }
+    }
+
+    /// The look's ground from the world's cells: once a game second (the
+    /// crystals drain, the walls wear), and at once when a wall goes up.
+    fn refresh_ground(&mut self) {
+        let (Some(g), Some(buf)) = (&self.game, &self.ground) else { return };
+        let t = g.time();
+        if t - self.ground_at < GROUND_EVERY && g.walls == self.ground_walls {
+            return;
+        }
+        let e = &g.world.e;
+        let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
+        let charge = floats(read_back(&e.device, &e.queue, &e.charge));
+        let health = e.dish.wall.iter().any(|&w| w).then(|| floats(read_back(&e.device, &e.queue, &e.health)));
+        let codes = ground_codes(g, Some(&charge), health.as_deref());
+        e.queue.write_buffer(buf, 0, &codes.iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
+        (self.ground_at, self.ground_walls) = (t, g.walls);
+    }
+
+    fn marks(&mut self) {
+        self.marks.clear();
+        let Some(g) = &self.game else { return };
+        let sc = g.world.scale();
+        let zoom = self.camera.zoom;
+        // The larder (the squad's base: bought soldiers stand there and
+        // carried food is banked there) and the core's ring (stand in it
+        // with no mould near for 5 s to take it). Game objects, not the
+        // simulation, so marks.
+        self.marks.rect(g.larder, (1.4 * sc, 1.4 * sc), [214, 196, 150, 255], true);
+        self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 140]);
+        let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
+        self.marks.ring(g.core, g.rules.core_r * sc, core);
+        for (k, s) in g.soldiers.iter().enumerate() {
+            if !s.alive {
+                continue;
+            }
+            if let Order::Burn(a, b) = s.order {
+                self.marks.line(a, b, 4.0, [255, 150, 60, 200]);
+            }
+            if self.controls.selected.contains(&k) {
+                let to = match s.order {
+                    Order::Move(x, y) => Some((x, y)),
+                    Order::Clear(x, y) => Some(if s.homing { g.larder } else { (x, y) }),
+                    Order::Attack => Some(g.core),
+                    _ => None,
+                };
+                if let Some(to) = to {
+                    let colour = if s.order == Order::Attack { [255, 110, 110, 120] } else { [255, 255, 255, 90] };
+                    self.marks.line((s.x, s.y), to, 2.0, colour);
+                }
+            }
+        }
+        for t in &self.tracers {
+            let a = (255.0 * (1.0 - t.age / TRACER)).clamp(0.0, 255.0) as u8;
+            self.marks.line(t.from, t.to, 0.0, if t.hit { [255, 236, 170, a] } else { [200, 200, 200, a / 2] });
+        }
+        // A soldier is drawn its touch wide (walkers that close drain it),
+        // and at least 8 pixels across the radius, so it reads at any zoom
+        // (at 0.9 dish cells, the stand-in's size, it was a 4-pixel dot at
+        // the whole map's zoom).
+        let r = (g.rules.touch * sc).max(8.0 / zoom);
+        for (k, s) in g.soldiers.iter().enumerate() {
+            let l = self.looks.get(k).copied().unwrap_or(Look { facing: 0.0, flash: 0.0, at: (s.x, s.y), alive: s.alive });
+            self.marks.soldier((s.x, s.y), r, l.facing, team_colour(0), l.flash / FLASH, s.alive);
+            if s.alive {
+                let below = (r * zoom).max(2.0) + 5.0;
+                self.marks.bar((s.x, s.y), below, (7.0, 1.0), s.hp / g.rules.hp, [90, 220, 110, 255], [70, 30, 30, 255]);
+                if s.carry > 0.0 {
+                    self.marks.bar((s.x, s.y), below + 3.0, (7.0, 0.8), s.carry / g.rules.carry, theme::ENERGY, [20, 40, 50, 255]);
+                }
+            }
+        }
+        let units = self.units();
+        self.controls.prune(&units);
+        self.controls.marks(&units, &self.camera, r, &mut self.marks);
+    }
+
+    fn model(&self, hover: Option<(f32, f32)>, ghost: Option<Ghost>) -> Model {
+        let Some(g) = &self.game else { return Model::default() };
+        let r = g.rules;
+        let sc = g.world.scale();
+        let sel = self.living(&self.controls.selected);
+        let t = g.time();
+        let clock = |t: f32| format!("{}:{:02}", t as u32 / 60, t as u32 % 60);
+        let rate = self.bank_log.front().filter(|f| t - f.0 >= 2.0).map(|&(t0, b0)| (g.bank - b0) / (t - t0));
+        let lost = g.soldiers.iter().filter(|s| !s.alive).count();
+        let share = g.share();
+        let mut m = Model {
+            resources: vec![
+                Resource { icon: Icon::Crystal, colour: theme::ENERGY, label: "Food: crystal charge carried home; soldiers, shots and walls cost it".into(), value: format!("{:.0}", g.bank), rate: rate.map(|v| format!("{v:+.0}/s")) },
+                Resource { icon: Icon::Soldier, colour: theme::TEXT, label: format!("Soldiers alive (at most {})", r.max_squad), value: format!("{}", g.alive()), rate: (lost > 0).then(|| format!("-{lost} lost")) },
+                Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: "The mould: walkers alive".into(), value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
+                Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Crystals held: yours, of those either side holds (the score at 15:00)".into(), value: format!("{:.0}%", share * 100.0), rate: None },
+            ],
+            clock: format!("{} / {}", clock(t), clock(r.cap)),
+            speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
+            objective: Some(if g.core_down.is_some() { "Core taken: wipe out the mould, or hold the crystals at 15:00".into() } else { "Take the mould's core, or hold more crystals than it at 15:00".into() }),
+            idle: g.soldiers.iter().filter(|s| s.alive && s.order == Order::Hold).count(),
+            ..Model::default()
+        };
+        m.selection = sel.iter().map(|&k| {
+            let s = g.soldiers[k];
+            let badge = match s.order {
+                Order::Hold => None,
+                Order::Move(..) => Some(Icon::Move),
+                Order::Clear(..) => Some(Icon::Crystal),
+                Order::Burn(..) => Some(Icon::Burn),
+                Order::Attack => Some(Icon::Attack),
+            };
+            Card { id: k, icon: Icon::Soldier, team: 0, hp: s.hp / r.hp, badge }
+        }).collect();
+        if sel.len() == 1 {
+            let k = sel[0];
+            let s = g.soldiers[k];
+            let doing = match s.order {
+                Order::Hold => "holding",
+                Order::Move(..) => "moving",
+                Order::Clear(..) if s.homing => "carrying charge home",
+                Order::Clear(..) => "harvesting a crystal",
+                Order::Burn(..) => "holding a burn line",
+                Order::Attack => "attacking the core",
+            };
+            m.info = Some(Info {
+                icon: Icon::Soldier,
+                colour: team_colour(0),
+                title: format!("Soldier {}", k + 1),
+                subtitle: format!("{doing}, {}", stance_name(s.stance)),
+                hp: Some((s.hp / r.hp, format!("{:.0} / {:.0}", s.hp, r.hp))),
+                stats: vec![
+                    ("Carrying".into(), format!("{:.0} / {:.0}", s.carry, r.carry)),
+                    ("Stance".into(), stance_name(s.stance).into()),
+                    ("Range".into(), format!("{:.0} cells", r.range)),
+                    ("A shot".into(), format!("{:.0} food", r.price)),
+                    ("Mould on it".into(), format!("{}", s.touching)),
+                ],
+                note: None,
+            });
+        }
+        // The hover card: a crystal or the larder under the cursor.
+        if let Some(p) = hover {
+            if (p.0 - g.larder.0).hypot(p.1 - g.larder.1) <= 3.0 * sc {
+                m.hover = Some(Info {
+                    icon: Icon::Hold,
+                    colour: [214, 196, 150, 255],
+                    title: "The larder".into(),
+                    subtitle: "your base".into(),
+                    hp: None,
+                    stats: vec![("Bank".into(), format!("{:.0}", g.bank)), ("Harvested".into(), format!("{:.0}", g.harvested)), ("Eaten by the mould".into(), format!("{:.0}", g.stolen))],
+                    note: Some("Harvesters bring charge here; bought soldiers stand here. Mould touching it eats the bank.".into()),
+                });
+            } else if let Some((i, c)) = g.crystal_at(p) {
+                let charge = g.world.crystals()[i].1;
+                let full = self.charge0.get(i).copied().unwrap_or(1.0).max(1.0);
+                m.hover = Some(Info {
+                    icon: Icon::Crystal,
+                    colour: theme::ENERGY,
+                    title: crystal_name(i),
+                    subtitle: format!("{:.0}% of its charge left", 100.0 * charge / full),
+                    hp: Some((charge / full, format!("{:.0} food", charge / r.charge))),
+                    stats: vec![("Size".into(), format!("{:.0} cells across", 2.0 * g.world.crystal_r(i) / sc))],
+                    note: Some(if (c.0 - g.core.0).hypot(c.1 - g.core.1) < 1.0 { "Where the mould grew from. Stand on it with no mould near for 5 s to take it.".into() } else { "Right-click with soldiers selected to harvest it and hold it.".into() }),
+                });
+            }
+        }
+        let any = !sel.is_empty();
+        let stance = sel.first().map(|&k| g.soldiers[k].stance).filter(|&f| sel.iter().all(|&k| g.soldiers[k].stance == f));
+        let need = |cost: f32| (g.bank < cost).then(|| format!("Need {:.0} more food", cost - g.bank));
+        let no_sel = || Some("Select soldiers first".to_string());
+        let full = g.alive() >= r.max_squad;
+        let mut cmds = vec![
+            Command { ready: any, why_not: no_sel(), about: format!("Walk onto the mould's core, firing freely. Stand on it with no mould near for {:.0} s and it can grow no more.", r.core_secs), ..Command::new(ATTACK, (0, 0), Icon::Attack, "Attack the core", KeyCode::KeyA) },
+            Command { ready: any, why_not: no_sel(), about: "Drop the order and stand still; still fires by its stance.".into(), ..Command::new(STOP, (0, 1), Icon::Stop, "Stop", KeyCode::KeyS) },
+            Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Go to a crystal, hold it, and carry its charge to the larder, {:.0} food a load. Right-click on a crystal does the same.", r.carry), ..Command::new(HARVEST, (0, 2), Icon::Crystal, "Harvest a crystal", KeyCode::KeyG) },
+            Command { target: Target::Line { width: r.strike * sc }, ready: any, why_not: no_sel(), about: "Stand by a line and keep firing along it, so the mould cannot cross.".into(), ..Command::new(BURN, (0, 3), Icon::Burn, "Burn a line", KeyCode::KeyF) },
+            Command { ready: any, on: stance == Some(Stance::HoldFire), why_not: no_sel(), about: "Do not shoot at all.".into(), ..Command::new(HOLD_FIRE, (1, 0), Icon::Close, "Hold fire", KeyCode::KeyZ) },
+            Command { ready: any, on: stance == Some(Stance::Defend), why_not: no_sel(), about: format!("Shoot only mould touching the soldier, within {:.0} cells, or on the crystal it is harvesting. The default.", r.defend), ..Command::new(DEFEND, (1, 1), Icon::Eye, "Defend", KeyCode::KeyX) },
+            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells. Every shot costs {:.0} food.", r.range, r.price), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
+            Command {
+                cost: Some(format!("{:.0}", r.soldier_cost)),
+                ready: g.bank >= r.soldier_cost && !full,
+                why_not: if full { Some(format!("The squad is at its most, {}", r.max_squad)) } else { need(r.soldier_cost) },
+                about: "A new soldier at the larder.".into(),
+                ..Command::new(BUY, (2, 0), Icon::Recruit, "Buy a soldier", KeyCode::KeyB)
+            },
+            Command {
+                target: Target::Line { width: r.wall_width * sc },
+                cost: Some(format!("{:.0}/cell", r.wall_cost)),
+                ready: g.bank >= r.wall_cost,
+                why_not: need(r.wall_cost),
+                about: "A wall the mould has to wear through, slowly. Both ends within a soldier's range; costs by its length.".into(),
+                ..Command::new(WALL, (2, 1), Icon::Wall, "Lay a wall", KeyCode::KeyV)
+            },
+        ];
+        for c in &mut cmds {
+            if c.ready {
+                c.why_not = None;
+            }
+        }
+        m.commands = cmds;
+        (m.ghost_ok, m.ghost_note) = match ghost {
+            Some((HARVEST, at, _)) => match g.crystal_at(at) {
+                Some((i, _)) => (true, Some(format!("harvest {}", crystal_name(i).to_lowercase()))),
+                None => (false, Some("not on a crystal".into())),
+            },
+            Some((WALL, at, Some(from))) => {
+                let price = g.wall_price(from, at);
+                if g.bank < price {
+                    (false, Some(format!("{price:.0} food, {:.0} short", price - g.bank)))
+                } else if !g.reachable(from) || !g.reachable(at) {
+                    (false, Some("both ends must be in a soldier's range".into()))
+                } else {
+                    (true, Some(format!("{price:.0} food, release to lay")))
+                }
+            }
+            Some((WALL, at, None)) if !g.reachable(at) => (false, Some("out of every soldier's range".into())),
+            _ => (true, None),
+        };
+        if let Some(end) = g.end {
+            m.end = Some(end_screen(end, g));
+        }
+        m.help = vec![
+            ("Right click".into(), "Move there; on a crystal, harvest it".into()),
+            ("P".into(), "Pause".into()),
+            ("Tab".into(), "Four times faster, or back".into()),
+            ("N".into(), "Start the next map".into()),
+        ];
+        m
+    }
+
+    fn frame(&mut self, event_loop: &ActiveEventLoop) {
+        let t0 = Instant::now();
+        let dt = self.last_frame.elapsed().as_secs_f32();
+        self.last_frame = Instant::now();
+        self.controls.update(&mut self.camera, dt);
+        self.step(dt);
+        self.prepare();
+        let (Some(p), Some(view)) = (&self.pixels, self.view.as_ref()) else { return };
+        let camera = self.camera;
+        let mut canvas_pass = self.canvas_pass.as_mut();
+        let res = p.render_with(|enc, target, ctx| {
+            view.record(enc, &camera, None);
+            if let Some(cp) = canvas_pass.as_mut() {
+                cp.record(enc, &view.out, view.stride);
+            }
+            view.copy_to(enc, &ctx.texture);
+            ctx.scaling_renderer.render(enc, target);
+            Ok(())
+        });
+        if let Err(err) = res {
+            return self.fail(event_loop, format!("render failed: {err}"));
+        }
+        self.frame_ms.push(t0.elapsed().as_secs_f32() * 1e3);
+        let since = self.report_at.elapsed().as_secs_f32();
+        if since >= 10.0 && !self.frame_ms.is_empty() {
+            // The frame's CPU time (the game's steps, their read-backs, the
+            // HUD and recording the view): the W2c gate is under 10 ms p95
+            // on the GTX 1070.
+            let mut ms = std::mem::take(&mut self.frame_ms);
+            ms.sort_by(f32::total_cmp);
+            let at = |q: f32| ms[((ms.len() - 1) as f32 * q).round() as usize];
+            println!("larder-world: {:.0} frames a second, frame p50 {:.2} ms p95 {:.2} ms max {:.2} ms; {:.1} game steps a second", ms.len() as f32 / since, at(0.5), at(0.95), at(1.0), self.steps as f32 / since);
+            self.steps = 0;
+            self.report_at = Instant::now();
+        }
+    }
+
+    /// The frame's ground, marks, HUD and canvas, ready to record.
+    fn prepare(&mut self) {
+        self.refresh_ground();
+        self.marks();
+        let minimap = self.view.as_ref().is_some_and(|v| v.minimap) && !self.camera.sees_all();
+        let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
+        let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
+        let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
+        let model = self.model(hover, ghost);
+        if let Some(c) = self.canvas.as_mut() {
+            c.clear();
+            self.hud.draw(&model, &self.controls, &self.camera, minimap, c, &mut self.marks);
+            self.camera.set_inset(self.hud.top, c.screen.1 as f32 - self.hud.bottom);
+            if let Some(cp) = self.canvas_pass.as_mut() {
+                cp.upload(c);
+            }
+        }
+        if let Some(v) = self.view.as_mut() {
+            v.minimap_box = self.hud.minimap_box;
+            v.set_marks(&self.marks);
+        }
+    }
+
+    fn key(&mut self, code: KeyCode, event_loop: &ActiveEventLoop) {
+        match code {
+            KeyCode::KeyP | KeyCode::Pause => self.paused = !self.paused,
+            KeyCode::Tab => self.fast = !self.fast,
+            KeyCode::KeyN => {
+                let next = self.args.map.as_deref().and_then(|m| MAPS.iter().position(|&n| n == m)).map_or(0, |i| (i + 1) % MAPS.len());
+                self.args.map = Some(MAPS[next].to_string());
+                self.name = MAPS[next].to_string();
+                if let Err(e) = self.start() {
+                    self.fail(event_loop, e);
+                }
+            }
+            KeyCode::KeyM => {
+                if let Some(v) = self.view.as_mut() {
+                    v.minimap = !v.minimap;
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// The look's ground field from the game's world: rock, wet and agar from
+/// the engine's CPU mirror; crystals from its own cells (`pile_of`, so
+/// each map crystal's size and shape is the one the mould eats); with
+/// `charge`, each crystal cell's share of its full charge; with `health`,
+/// each wall cell's share of its full health, and a wall the GPU has worn
+/// through drawn as rubble (the mirror keeps it a wall). Soil is left
+/// off: the engine plays it as plain ground until its port, and the
+/// picture is the data (the look can draw it, #84).
+fn ground_codes(g: &Game<GpuWorld>, charge: Option<&[f32]>, health: Option<&[f32]>) -> Vec<u32> {
+    let d = &g.world.e.dish;
+    let cells = d.w * d.h;
+    let pile = |i: usize| d.pile_of.get(i).copied().unwrap_or(0) as usize;
+    let charge_share: Vec<f32> = match charge {
+        Some(c) => (0..cells).map(|i| if pile(i) > 0 { c[i] / d.pile_fill.get(pile(i) - 1).copied().unwrap_or(d.p.crystal_charge).max(1e-6) } else { 0.0 }).collect(),
+        None => Vec::new(),
+    };
+    let broken = |i: usize| health.is_some_and(|h| d.wall.get(i).copied().unwrap_or(false) && h[i] <= 0.0);
+    let wall_share: Vec<f32> = match health {
+        Some(h) => (0..cells).map(|i| if d.wall.get(i).copied().unwrap_or(false) { let full = d.wall_health.get(i).copied().unwrap_or(f32::INFINITY); if full.is_finite() && full > 0.0 { h[i] / full } else { 1.0 } } else { 0.0 }).collect(),
+        None => Vec::new(),
+    };
+    let wall: Vec<bool> = (0..cells).map(|i| d.wall.get(i).copied().unwrap_or(false) && !broken(i)).collect();
+    let agar: Vec<bool> = (0..cells).map(|i| d.agar[i] || broken(i)).collect();
+    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[], soil: &[] });
+    for (i, c) in codes.iter_mut().enumerate() {
+        if broken(i) {
+            *c = look::code(Ground::Rubble, 0.0);
+        }
+    }
+    codes
+}
+
+fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
+    let clock = |t: f32| format!("{}:{:02}", t as u32 / 60, t as u32 % 60);
+    let title = match end {
+        End::MouldWiped(t) => format!("The mould is wiped out at {}", clock(t)),
+        End::SquadWiped(t) => format!("The squad is lost at {}", clock(t)),
+        End::Cap(s) if s > 0.5 => "Time: you hold more crystals".to_string(),
+        End::Cap(s) if s < 0.5 => "Time: the mould holds more crystals".to_string(),
+        End::Cap(_) => "Time: an even hold".to_string(),
+    };
+    let mut lines = Vec::new();
+    if let End::Cap(s) = end {
+        lines.push(format!("You held {:.0}% of the crystals either side held", s * 100.0));
+    }
+    lines.push(summary(g));
+    lines.push(format!("Score {:+.2} (a win is over 1, a loss under -1)", g.score().unwrap_or(0.0)));
+    (title, lines)
+}
+
+fn summary(g: &Game<GpuWorld>) -> String {
+    format!("{} soldiers left, {:.0} food harvested, {} walkers killed with {} shots, {} walls", g.alive(), g.harvested, thousands(g.killed as usize), g.shots, g.walls)
+}
+
+fn crystal_name(i: usize) -> String {
+    if i == 0 {
+        "The mould's home crystal".into()
+    } else {
+        format!("Crystal {i}")
+    }
+}
+
+fn stance_name(s: Stance) -> &'static str {
+    match s {
+        Stance::HoldFire => "hold fire",
+        Stance::Defend => "defend",
+        Stance::Free => "free fire",
+    }
+}
+
+fn title_case(s: &str) -> String {
+    let s = s.rsplit('/').next().unwrap_or(s);
+    let mut c = s.chars();
+    match c.next() {
+        Some(f) => format!("The {}{}", f.to_uppercase(), c.as_str()),
+        None => String::new(),
+    }
+}
+
+fn thousands(n: usize) -> String {
+    if n >= 10_000 {
+        format!("{:.1}k", n as f32 / 1000.0)
+    } else {
+        format!("{n}")
+    }
+}
+
+impl ApplicationHandler for App {
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        if self.window.is_some() {
+            return;
+        }
+        let room = event_loop.primary_monitor().map_or((1600, 900), |m| (m.size().width * 9 / 10, m.size().height * 9 / 10));
+        let first = PhysicalSize::new(room.0.clamp(640, 1600), room.1.clamp(480, 1000));
+        let attributes = Window::default_attributes().with_title("Larder World").with_inner_size(first);
+        let window = match event_loop.create_window(attributes) {
+            Ok(w) => Arc::new(w),
+            Err(err) => return self.fail(event_loop, format!("window creation failed: {err}")),
+        };
+        // The engine binds 46 buffers in a pass: ask for the adapter's own
+        // limits, not wgpu's defaults (8 storage buffers a stage).
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+        let options = wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, compatible_surface: None, force_fallback_adapter: false };
+        let Ok(adapter) = block_on(instance.request_adapter(&options)) else { return self.fail(event_loop, "no GPU adapter".into()) };
+        let size = window.inner_size();
+        let (w, h) = (size.width.max(1), size.height.max(1));
+        let desc = wgpu::DeviceDescriptor { label: Some("larder-world"), required_limits: adapter.limits(), ..Default::default() };
+        let mut pixels = match PixelsBuilder::new(w, h, SurfaceTexture::new(size.width, size.height, Arc::clone(&window))).request_adapter_options(options).device_descriptor(desc).build() {
+            Ok(p) => p,
+            Err(err) => return self.fail(event_loop, format!("pixels init failed: {err}")),
+        };
+        pixels.set_scaling_mode(ScalingMode::PixelPerfect);
+        // pixels 0.17 works out its scale only on a resize (mouldgpu).
+        if let Err(err) = pixels.resize_surface(size.width, size.height) {
+            return self.fail(event_loop, format!("surface resize failed: {err}"));
+        }
+        let info = pixels.adapter().get_info();
+        println!("larder-world: {} ({:?})", info.name, info.backend);
+        // A placeholder world frame until the round starts.
+        let frame = pixels.device().create_buffer(&wgpu::BufferDescriptor { label: Some("no world"), size: 16, usage: wgpu::BufferUsages::STORAGE, mapped_at_creation: false });
+        self.view = Some(View::new(pixels.device(), pixels.queue(), &frame, (1, 1), (w, h)));
+        self.canvas = Some(Canvas::new((w, h)));
+        self.canvas_pass = Some(CanvasPass::new(pixels.device(), pixels.queue()));
+        self.gpu = Some((pixels.device().clone(), pixels.queue().clone()));
+        self.pixels = Some(pixels);
+        self.window = Some(window);
+        if let Err(e) = self.start() {
+            self.fail(event_loop, e);
+        }
+    }
+
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
+        match event {
+            WindowEvent::CloseRequested => {
+                self.save_replay();
+                event_loop.exit();
+            }
+            WindowEvent::Resized(size) => {
+                if size.width > 0 && size.height > 0 {
+                    if let Some(p) = self.pixels.as_mut() {
+                        let res = p.resize_buffer(size.width, size.height).map_err(|e| e.to_string()).and_then(|_| p.resize_surface(size.width, size.height).map_err(|e| e.to_string()));
+                        if let Err(err) = res {
+                            return self.fail(event_loop, format!("resize failed: {err}"));
+                        }
+                    }
+                    if let Some(v) = self.view.as_mut() {
+                        v.resize((size.width, size.height));
+                    }
+                    self.camera.resize((size.width, size.height));
+                    if let Some(c) = self.canvas.as_mut() {
+                        c.screen = (size.width, size.height);
+                    }
+                }
+            }
+            WindowEvent::ModifiersChanged(m) => {
+                self.shift = m.state().shift_key();
+                self.ctrl = m.state().control_key();
+                (self.controls.shift, self.controls.ctrl) = (self.shift, self.ctrl);
+            }
+            WindowEvent::KeyboardInput { event, .. } => {
+                let PhysicalKey::Code(code) = event.physical_key else { return };
+                let pressed = event.state == ElementState::Pressed;
+                // The game UI first: its command keys, Esc for its menu,
+                // Space for the newest alert.
+                if !event.repeat {
+                    let (took, events) = self.hud.key(code, pressed, self.ctrl, &mut self.camera);
+                    self.hud_events(events, event_loop);
+                    if took {
+                        return;
+                    }
+                }
+                let units = self.units();
+                // The controls: arrows pan, digits are groups, F+drag a burn.
+                for c in self.controls.key(code, pressed, event.repeat, &units, &mut self.camera) {
+                    if let UiCommand::Key { code, .. } = c {
+                        self.key(code, event_loop);
+                    }
+                }
+            }
+            WindowEvent::CursorMoved { position, .. } => {
+                let at = (position.x as f32, position.y as f32);
+                let mm = self.view.as_ref().and_then(|v| v.minimap_rect(&self.camera));
+                self.hud.moved(Some(at));
+                self.controls.moved(Some(at), &mut self.camera, mm);
+            }
+            WindowEvent::CursorLeft { .. } => {
+                self.hud.moved(None);
+                self.controls.moved(None, &mut self.camera, None);
+            }
+            WindowEvent::Focused(focused) => {
+                self.controls.edge = focused;
+                if !focused {
+                    self.controls.unfocus();
+                }
+            }
+            WindowEvent::MouseWheel { delta, .. } => {
+                let notches = match delta {
+                    MouseScrollDelta::LineDelta(_, y) => y.signum() as i32,
+                    MouseScrollDelta::PixelDelta(p) => (p.y / 40.0).round() as i32,
+                };
+                self.controls.wheel(notches, &mut self.camera);
+            }
+            WindowEvent::MouseInput { state, button, .. } => {
+                let down = state == ElementState::Pressed;
+                let b = match button {
+                    MouseButton::Left => Button::Left,
+                    MouseButton::Right => Button::Right,
+                    MouseButton::Middle => Button::Middle,
+                    _ => return,
+                };
+                let (took, events) = self.hud.button(b, down, &self.camera, self.shift);
+                self.hud_events(events, event_loop);
+                if took {
+                    return;
+                }
+                let units = self.units();
+                let mm = self.view.as_ref().and_then(|v| v.minimap_rect(&self.camera));
+                for c in self.controls.button(b, down, &units, &mut self.camera, mm) {
+                    match c {
+                        UiCommand::Order { units, at } => self.order_at(&units, at),
+                        UiCommand::Burn { units, from, to } => self.burn(&units, from, to),
+                        _ => {}
+                    }
+                }
+            }
+            WindowEvent::RedrawRequested => self.frame(event_loop),
+            _ => {}
+        }
+    }
+
+    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+        if let Some(window) = &self.window {
+            window.request_redraw();
+        }
+    }
+}
+
+/// **No window** (`look=DIR`): the round played by a simple hand, with the
+/// window's whole picture (the look, marks and HUD) saved at the game
+/// seconds in `at`, and the counts beside each printed: what the window
+/// shows, checkable where there is no screen (the cloud's software
+/// Vulkan). Hands: `rush` (all attack the core), `farm` (all harvest the
+/// crystal nearest the larder, buying soldiers from 1,200 food), `idle`.
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -> Result<(), String> {
+    std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
+    let (device, queue) = gpu().ok_or("no GPU adapter")?;
+    let mut app = offscreen(args, screen, &device, &queue)?;
+    let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
+    let mut last_sec = u64::MAX;
+    for &t in at {
+        while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) {
+            let g = app.game.as_mut().unwrap();
+            let sec = g.world.ticks() / g.rules.tps as u64;
+            if sec != last_sec {
+                last_sec = sec;
+                plan(g, hand);
+            }
+            app.step(step);
+        }
+        let g = app.game.as_ref().unwrap();
+        // The view on the fight: the squad's middle, or the larder.
+        let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        let centre = if alive.is_empty() { g.larder } else { (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32) };
+        app.controls.selected = (0..g.soldiers.len()).collect();
+        for (zoom, tag) in [(app.camera.fit(), "all"), (6.0, "near")] {
+            app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
+            app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
+            app.prepare();
+            let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
+            let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("shot") });
+            view.record(&mut enc, &app.camera, None);
+            cp.record(&mut enc, &view.out, view.stride);
+            queue.submit([enc.finish()]);
+            let path = format!("{dir}/{}-{hand}-{:03}s-{tag}.png", app.name.replace('/', "_"), t as u32);
+            view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
+            println!("{path}");
+        }
+        let g = app.game.as_ref().unwrap();
+        let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / app.charge0.iter().sum::<f32>().max(1.0);
+        // The CPU work the window adds: the ground field (once a game
+        // second) and the model and HUD layout (every frame).
+        let cells = g.world.e.dish.w * g.world.e.dish.h;
+        let t0 = Instant::now();
+        let _ = ground_codes(g, Some(&vec![256.0; cells]), Some(&vec![100.0; cells]));
+        let ground_ms = t0.elapsed().as_secs_f64() * 1e3;
+        let t0 = Instant::now();
+        for _ in 0..20 {
+            let m = app.model(None, None);
+            app.canvas.as_mut().unwrap().clear();
+            app.hud.draw(&m, &app.controls, &app.camera, true, app.canvas.as_mut().unwrap(), &mut Marks::default());
+        }
+        println!("  CPU: ground field {ground_ms:.2} ms (once a game second), model and HUD {:.3} ms a frame", t0.elapsed().as_secs_f64() * 1e3 / 20.0);
+        let g = app.game.as_ref().unwrap();
+        println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, held {:.0}%, crystals left {:.3}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+    }
+    Ok(())
+}
+
+/// A GPU with the adapter's own limits (the engine binds 46 buffers).
+fn gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).ok()?;
+    println!("larder-world: {}", adapter.get_info().name);
+    block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("larder-world"), required_limits: adapter.limits(), ..Default::default() })).ok()
+}
+
+/// The window's game, view and UI on a `screen`-sized picture with no
+/// window, the round started.
+fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, queue: &wgpu::Queue) -> Result<App, String> {
+    let mut app = App::new(args);
+    let frame = device.create_buffer(&wgpu::BufferDescriptor { label: Some("no world"), size: 16, usage: wgpu::BufferUsages::STORAGE, mapped_at_creation: false });
+    app.view = Some(View::new(device, queue, &frame, (1, 1), screen));
+    app.canvas = Some(Canvas::new(screen));
+    app.canvas_pass = Some(CanvasPass::new(device, queue));
+    app.gpu = Some((device.clone(), queue.clone()));
+    app.start()?;
+    Ok(app)
+}
+
+/// The headless run's hand, once a game second.
+fn plan(g: &mut Game<GpuWorld>, hand: &str) {
+    if g.time() > 0.5 && hand == "farm" && g.bank >= 1200.0 {
+        g.apply(Cmd::Buy);
+    }
+    let cs = g.world.crystals();
+    let target = cs.iter().enumerate().skip(1).filter(|c| c.1 .1 > 0.0).map(|(_, c)| c.0).min_by(|a, b| (a.0 - g.larder.0).hypot(a.1 - g.larder.1).total_cmp(&(b.0 - g.larder.0).hypot(b.1 - g.larder.1)));
+    for k in 0..g.soldiers.len() {
+        // New soldiers, and harvesters of a crystal gone dry, take a new one.
+        let dry = match g.soldiers[k].order {
+            Order::Clear(x, y) => g.crystal_at((x, y)).is_none_or(|(i, _)| cs[i].1 <= 0.0),
+            _ => false,
+        };
+        if !g.soldiers[k].alive || (g.soldiers[k].order != Order::Hold && !dry) {
+            continue;
+        }
+        match (hand, target) {
+            ("rush", _) => {
+                g.apply(Cmd::Order(k, Order::Attack));
+            }
+            ("farm", Some(c)) => {
+                g.apply(Cmd::Order(k, Order::Clear(c.0, c.1)));
+            }
+            _ => {}
+        }
+    }
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 };
+    let (mut look, mut hand, mut at, mut screen) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32));
+    for a in std::env::args().skip(1) {
+        let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
+        match k {
+            "map" => args.map = (v != "noise").then(|| v.to_string()),
+            "seed" => args.seed = v.parse()?,
+            "scale" => args.scale = v.parse()?,
+            "walkers" => args.walkers = v.parse()?,
+            "look" => look = Some(v.to_string()),
+            "hand" => hand = v.to_string(),
+            "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
+            "screen" => {
+                let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
+                screen = (w.parse()?, h.parse()?);
+            }
+            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers; look, hand, at, screen)").into()),
+        }
+    }
+    if let Some(dir) = look {
+        return Ok(headless(args, &dir, &hand, &at, screen)?);
+    }
+    let event_loop = EventLoop::new()?;
+    event_loop.set_control_flow(ControlFlow::Poll);
+    let mut app = App::new(args);
+    event_loop.run_app(&mut app)?;
+    app.result.map_err(|e| e.into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The window plays the real game: soldiers sent at the core fire,
+    /// their shots kill walkers, the window draws each shot's ray, and the
+    /// engine leaves the look's wound where a shot cut (the squad's `cut`
+    /// pass; before W2c only the stand-in hits wrote it). Skips with no
+    /// GPU (CI); the cloud's software Vulkan runs it.
+    #[test]
+    fn the_window_plays_the_real_game() {
+        let Some((device, queue)) = gpu() else { return };
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 }, (640, 400), &device, &queue).unwrap();
+        let step = 1.0 / 15.0;
+        let mut rays = 0;
+        while app.game.as_ref().unwrap().time() < 12.0 {
+            plan(app.game.as_mut().unwrap(), "rush");
+            app.step(step);
+            rays += app.tracers.iter().filter(|t| t.age == 0.0).count();
+        }
+        let g = app.game.as_ref().unwrap();
+        assert!(g.shots > 0 && g.killed > 0, "shots {} killed {}", g.shots, g.killed);
+        assert_eq!(rays as u32, g.shots, "a ray drawn for every shot");
+        let look = read_back(&device, &queue, &g.world.e.look);
+        let wounded = look.chunks_exact(4).filter(|c| c[2] > 0).count();
+        assert!(wounded > 0, "no wound in the look after {} shots", g.shots);
+        app.prepare();
+        let m = app.model(None, None);
+        assert_eq!(m.commands.len(), 9);
+        assert!(m.end.is_none());
+    }
+}

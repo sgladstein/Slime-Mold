@@ -22,6 +22,7 @@ use super::{read_back, Curve, Engine, Hand, Settings, Shared, Start};
 use pixels::wgpu;
 use crate::mould::big::BigParams;
 use crate::mould::larder_world::{race_params, World};
+use crate::mould::map::Map;
 use crate::mould::squad::{Frame, FrameOut};
 
 /// The CPU race world's settings on the engine (`larder_world::race_params`).
@@ -82,6 +83,17 @@ impl GpuWorld {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, scale: usize) -> Self {
         let shared = Shared::new(device);
         let e = Engine::new(device, queue, &shared, &s, scale);
+        Self::of(e, shared, s, scale)
+    }
+
+    /// On a designed world (`Engine::with_map`, ROADMAP WM1).
+    pub fn with_map(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, scale: usize, m: &Map) -> Self {
+        let shared = Shared::new(device);
+        let e = Engine::with_map(device, queue, &shared, &s, scale, m);
+        Self::of(e, shared, s, scale)
+    }
+
+    fn of(e: Engine, shared: Shared, s: Settings, scale: usize) -> Self {
         let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new() };
         g.read_crystals();
         g
@@ -132,8 +144,13 @@ impl World for GpuWorld {
         self.crystals.clone()
     }
 
-    fn crystal_r(&self) -> f32 {
-        self.e.dish.p.pile_r * self.e.dish.p.scale as f32
+    fn crystal_r(&self, c: usize) -> f32 {
+        self.e.dish.pile_rs[c] * self.e.dish.p.scale as f32
+    }
+
+    fn landing(&self) -> Option<(f32, f32)> {
+        let s = self.e.dish.p.scale as f32;
+        self.e.dish.landing.map(|(x, y)| (x * s, y * s))
     }
 
     fn open(&self, x: f32, y: f32) -> bool {

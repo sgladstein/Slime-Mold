@@ -3639,4 +3639,59 @@ mod tests {
         }
         assert!(sizes.iter().any(|&(_, a, _)| a > walkers) && sizes.last().unwrap().1 < walkers, "the mould grew, then its first walkers starved: {sizes:?}");
     }
+
+    /// A designed map (ROADMAP WM1) on the engine as on the CPU: the Fork
+    /// (rock, wet, crystals of five sizes and four charges) and the Nest
+    /// (34 walls with health). The same crystals, start and landing; a
+    /// soldier banks the same food; the moulds stay within 8% (the race
+    /// world's own twin bound). Soil is taken off both: the engine does not
+    /// read it yet.
+    #[test]
+    fn a_designed_map_plays_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::big::BigDish;
+        use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World};
+        use slime_mould::mould::map::Map;
+        let Some((device, queue)) = test_gpu() else { return };
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 20.0, ..Rules::default() };
+        for name in ["fork", "nest"] {
+            let mut m = Map::load(&dir, name).unwrap();
+            for g in m.ground.iter_mut() {
+                *g &= 0x0F;
+            }
+            let mut cpu = Game::new(BigDish::with_map(race_params(seed, scale, walkers), &m), rules, seed);
+            let mut gpu = Game::new(GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m), rules, seed);
+            assert_eq!(gpu.world.crystals(), cpu.world.crystals(), "{name}: the same crystals and charge at the start");
+            let n = cpu.world.crystals().len();
+            assert!((0..n).all(|c| gpu.world.crystal_r(c) == cpu.world.crystal_r(c)), "{name}: radii");
+            assert!((0..n).any(|c| cpu.world.crystal_r(c) != cpu.world.crystal_r(0)), "{name}: crystals of more than one size");
+            assert_eq!(gpu.world.living(), cpu.world.living(), "{name}");
+            assert_eq!((gpu.larder, gpu.core), (cpu.larder, cpu.core), "{name}");
+            let k = scale as f32 / 4.0;
+            assert_eq!(cpu.larder, (m.items.landing.unwrap().0 * k, m.items.landing.unwrap().1 * k), "{name}: the squad lands on the map's landing");
+            let c = cpu.world.crystals().iter().map(|c| c.0).min_by(|a, b| (a.0 - cpu.larder.0).hypot(a.1 - cpu.larder.1).total_cmp(&(b.0 - cpu.larder.0).hypot(b.1 - cpu.larder.1))).unwrap();
+            assert!(cpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))) && gpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))));
+            let mut sizes = Vec::new();
+            while cpu.end.is_none() {
+                cpu.step();
+                gpu.step();
+                if cpu.world.ticks() % 75 == 0 {
+                    sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
+                }
+            }
+            eprintln!("{name}: game s, living CPU, GPU: {sizes:?}; banked {} / {}", cpu.harvested, gpu.harvested);
+            // Equal to f32 rounding: a partial load (a crystal running dry)
+            // is a sum of takes the GPU adds in another order.
+            assert!(cpu.harvested > 0.0 && (gpu.harvested - cpu.harvested).abs() <= 1e-3 * cpu.harvested, "{name}: banked {} on the GPU, {} on the CPU", gpu.harvested, cpu.harvested);
+            for &(t, a, b) in &sizes {
+                let (a, b) = (a as f64, b as f64);
+                assert!((a - b).abs() <= 0.08 * a, "{name}: mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+            }
+            let left = |w: &dyn World| w.crystals().iter().map(|c| c.1 as f64).sum::<f64>();
+            let (lc, lg) = (left(&cpu.world), left(&gpu.world));
+            assert!((lc - lg).abs() <= 0.02 * lc, "{name}: crystal charge left {lg} on the GPU, {lc} on the CPU");
+        }
+    }
 }

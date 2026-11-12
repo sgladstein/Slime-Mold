@@ -13,7 +13,9 @@ struct V {
     mx: u32, my: u32, mw: u32, mh: u32,
     // The look (`View::set_look`): 1 shades the world from the engine's
     // look and ground fields, with every walker a speck; 0 the frame only.
-    shade: u32, n_walk: u32, _l0: u32, _l1: u32,
+    // lives 1: `alive` holds each walker's energy, and a slot below 0 (empty
+    // or dead) draws no speck (`View::set_alive`).
+    shade: u32, n_walk: u32, lives: u32, _l1: u32,
     // The rectangle of cells `prep` works out (origin ox, oy; rw x rh):
     // the cells the screen shows and a margin of 4 for the slope, shadow
     // and blend samples.
@@ -49,6 +51,7 @@ struct V {
 // 1.8-2.0 ms against 0.3 ms plain on the GTX 1070 at 1080p.
 @group(0) @binding(12) var<storage, read_write> hcell: array<f32>;
 @group(0) @binding(13) var<storage, read_write> mcell: array<vec2<u32>>;
+@group(0) @binding(14) var<storage, read> alive: array<f32>;
 
 fn unpack(c: u32) -> vec3<f32> {
     return vec3<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u));
@@ -308,6 +311,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
 fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n_walk) { return; }
+    if (P.lives != 0u && alive[k] < 0.0) { return; }
     let w = walkers[k];
     if (!(w.x >= 0.0 && w.y >= 0.0 && w.x < f32(P.ww) && w.y < f32(P.wh))) { return; }
     let s = vec2<f32>((w.x - P.cx) * P.zoom, (w.y - P.cy) * P.zoom);

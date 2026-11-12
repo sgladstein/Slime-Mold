@@ -22,6 +22,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use crate::mould::big::{BigDish, BigParams, SpeciesSet, LIFE_DEAD};
+use crate::mould::map::Map;
 use crate::mould::squad;
 use crate::mould::STEPS_PER_SECOND;
 use pixels::wgpu;
@@ -948,6 +949,10 @@ pub struct Engine {
     pub npc: u32,
     pub npiles: u32,
     pub walled: bool,
+    /// The world bits the dish's own ground asks for (`ground_bits`): a
+    /// map's rock and wet with the noise's `terrain_rock` and `terrain_wet`
+    /// at 0.
+    pub ground_world: u32,
     /// From the last `write_params`: whether crystal charge flows or
     /// regrows (the flow pass and its first sum then run).
     pub flows: bool,
@@ -1008,9 +1013,21 @@ pub struct Engine {
 
 impl Engine {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize) -> Self {
-        let agar_cells = BigDish::new(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
+        Self::made(device, queue, shared, s, scale, BigDish::new)
+    }
+
+    /// The engine on a designed world (`BigDish::with_map`, ROADMAP WM1).
+    pub fn with_map(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize, m: &Map) -> Self {
+        Self::made(device, queue, shared, s, scale, |p| BigDish::with_map(p, m))
+    }
+
+    fn made(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> Self {
+        let agar_cells = make(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
         let crowd_ok = s.walkers.max(s.capacity) <= agar_cells / 2;
-        let d = BigDish::new(BigParams { species_sets: species_sets(s, crowd_ok), ..big_params(s, scale, s.crowd && crowd_ok) });
+        let d = make(BigParams { species_sets: species_sets(s, crowd_ok), ..big_params(s, scale, s.crowd && crowd_ok) });
+        if d.soil.iter().any(|&k| k != 0) {
+            eprintln!("engine: soil is not on the GPU yet; this world's soil plays as plain ground");
+        }
         let dev = device;
         let cells = (d.w * d.h) as u32;
         let n = d.walkers.len() as u32;
@@ -1134,6 +1151,7 @@ impl Engine {
             npc: wd.pcell.len() as u32,
             npiles: wd.npiles,
             walled: !d.wall.is_empty(),
+            ground_world: ground_bits(&d),
             flows: false,
             sq,
             kills,
@@ -1176,11 +1194,10 @@ impl Engine {
         let mut lay = vec![0.0f32; d.w * d.h];
         let mut pile = vec![0u32; d.w * d.h];
         let s = d.p.scale as f32;
-        let r = d.p.pile_r * s;
-        let n = r.ceil() as i32;
-        let dish = d.piles.iter().map(|&(x, y)| (x * s, y * s, food));
-        let dropped = self.dropped.iter().map(|&(x, y)| (x, y, true));
-        for (pi, (cx, cy, lays)) in dish.chain(dropped).enumerate().take(MAX_PILES) {
+        let dish = d.piles.iter().zip(&d.pile_rs).map(|(&(x, y), &r)| (x * s, y * s, r * s, food));
+        let dropped = self.dropped.iter().map(|&(x, y)| (x, y, d.p.pile_r * s, true));
+        for (pi, (cx, cy, r, lays)) in dish.chain(dropped).enumerate().take(MAX_PILES) {
+            let n = r.ceil() as i32;
             for dy in -n..=n {
                 for dx in -n..=n {
                     let (x, y) = (cx + dx as f32, cy + dy as f32);
@@ -1261,6 +1278,7 @@ impl Engine {
         self.queue.write_buffer(&self.bites, 0, &vec![0u8; self.cells as usize * 4]);
         self.queue.write_buffer(&self.wstat, 0, &[0u8; 16]);
         self.walled = !d.wall.is_empty();
+        self.ground_world = ground_bits(d);
         assert_eq!(d.kind.is_empty(), self.kinds == 1, "a dish with this engine's mix");
         self.queue.write_buffer(&self.spec, 0, &u32_bytes(&spec_words(d)));
         self.done = d.steps;
@@ -1347,6 +1365,7 @@ impl Engine {
         if t.terrain_rock > 0.0 || t.terrain_wet > 0.0 {
             world |= WORLD_TERRAIN;
         }
+        world |= self.ground_world;
         b.extend(u32_bytes(&[world, self.npiles, self.npc, 0]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
         debug_assert_eq!(b.len(), SQUAD_AT);
@@ -1602,7 +1621,7 @@ impl Engine {
             let (sums, ..) = self.world_counts();
             for (p, (sum, cells)) in sums.into_iter().enumerate() {
                 self.dish.pile_charge[p] = sum;
-                self.dish.pile_full[p] = self.dish.p.crystal_charge * cells as f32;
+                self.dish.pile_full[p] = self.dish.pile_fill[p] * cells as f32;
             }
         }
         // The GPU marks a pile from the trail a tick late (see `trail`), so
@@ -1831,6 +1850,14 @@ pub struct WorldData {
     pub npiles: u32,
 }
 
+/// The world bits a dish's ground needs drawn and run whatever its
+/// params: terrain if it has rock or wet, the wet pass if wet.
+pub fn ground_bits(d: &BigDish) -> u32 {
+    let wet = d.wet.iter().any(|&v| v);
+    let rock = d.rock.iter().any(|&v| v);
+    (if wet { WORLD_WETS } else { 0 }) | (if wet || rock { WORLD_TERRAIN } else { 0 })
+}
+
 pub fn world_data(d: &BigDish) -> WorldData {
     let cells = d.w * d.h;
     let on = |v: &[bool], i: usize| !v.is_empty() && v[i];
@@ -1879,6 +1906,7 @@ pub fn world_data(d: &BigDish) -> WorldData {
         }
         piles[p * 8 + 4] = d.pile_charge[p].to_bits();
         piles[p * 8 + 5] = d.crystal_left(p).to_bits();
+        piles[p * 8 + 6] = d.pile_fill[p].to_bits();
     }
     WorldData { ground, charge, health, pcell: d.pile_cells.clone(), piles, npiles: npiles as u32 }
 }
