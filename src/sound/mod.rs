@@ -29,6 +29,7 @@
 
 pub mod listen;
 pub mod synth;
+pub mod world;
 
 #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
 mod device;
@@ -128,10 +129,19 @@ pub enum GrainKind {
     Whoosh,
     /// The storm striking.
     Thud,
+    /// Larder World: a soldier's shot leaving the gun (`world`).
+    Crack,
+    /// Larder World: a shot striking slime, played by `SoundCmd::Impact`
+    /// with the walkers it killed as its weight (heavier, lower, longer).
+    Splat,
+    /// Larder World: the squad's pulse, quickening as the mould closes in.
+    Heart,
+    /// Larder World: a soldier hurt by the walkers on it.
+    Hurt,
 }
 
 impl GrainKind {
-    pub const ALL: [GrainKind; 10] = [
+    pub const ALL: [GrainKind; 14] = [
         GrainKind::Squelch,
         GrainKind::Slurp,
         GrainKind::Crackle,
@@ -142,6 +152,10 @@ impl GrainKind {
         GrainKind::Drip,
         GrainKind::Whoosh,
         GrainKind::Thud,
+        GrainKind::Crack,
+        GrainKind::Splat,
+        GrainKind::Heart,
+        GrainKind::Hurt,
     ];
 }
 
@@ -157,6 +171,8 @@ pub enum AlertKind {
     Bell,
     /// The last walker died.
     Died,
+    /// Larder World: one soldier fell (two low notes, short of `Died`).
+    Fallen,
 }
 
 /// What the game thread tells the voice bank. **Textures carry absolute
@@ -171,6 +187,10 @@ pub enum SoundCmd {
     /// with time constant `secs`.
     Burst { kind: GrainKind, rate: f32, secs: f32, pan: f32, spread: f32, gain: f32 },
     Alert { kind: AlertKind, weight: f32, pan: f32 },
+    /// A `GrainKind::Splat` shaped by `weight` (0 ..= 1): at 0 a light wet
+    /// tap, at 1 a heavy low slap about twice as long. Larder World's shot
+    /// sends the share of a big kill it made (`world::kill_weight`).
+    Impact { weight: f32, pan: f32, gain: f32, delay: f32 },
     /// The lamp's hum, where the lamp stands.
     Lamp { on: bool, pan: f32 },
     /// Fade every texture out (paused, a card up) or back in. One-shots
