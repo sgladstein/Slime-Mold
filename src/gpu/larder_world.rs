@@ -63,6 +63,8 @@ pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
         wall_hp: p.wall_hp,
         wall_bite: p.wall_bite,
         wall_scent: p.wall_scent,
+        alarm_keep: p.alarm_keep,
+        alarm_weight: p.alarm_weight,
         seed,
         ..Settings::big_dish()
     }

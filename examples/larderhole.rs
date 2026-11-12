@@ -26,7 +26,10 @@
 //! deepens pushes the hits back), kills, and the soldiers alive.
 //!
 //! **Arms** (the mould's settings; the rules stay the game's):
-//! - `base`: today's mould (no alarm field).
+//! - `base`: the race world's mould as it is (since 2026-11-12 it flees
+//!   gunfire, `larder_world::FLEE_WEIGHT`; the first run, 16 seeds, was
+//!   before that, when `base` had no alarm field).
+//! - `off`: no alarm field (the race world before 2026-11-12).
 //! - `flee:W[:K]`: the alarm field on (`alarm_keep` K, default 0.98, the
 //!   Swarmer's), read by the sensors at weight -W, so a hit's alarm
 //!   (`squad::SHOT_ALARM`, twice the strike's radius) is ground the mould
@@ -34,6 +37,8 @@
 //! - `swarm`: the Swarmer tier (alarm weight +3), the opposite pull.
 //! - `clock:N`: N fine steps a tick in place of the race world's 2 (a
 //!   slower or faster mould, as the graphics thread timed it).
+//! - `tier:NAME`: a mould tier (`mould::tiers`), after the parts before it:
+//!   `flee:1+tier:sporer` is the Sporer on a mould that flees gunfire.
 use slime_mould::mould::big::{BigDish, BigParams};
 use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
 use slime_mould::mould::tiers::Tier;
@@ -45,39 +50,64 @@ const STAND: f32 = 8.0;
 /// Walkers within 3 dish cells that count as body on the ray.
 const BODY: usize = 20;
 
+/// One arm: its parts, joined by `+` and applied in order
+/// (`flee:1+tier:sporer` is the Sporer on a mould that flees gunfire).
 #[derive(Clone, Debug)]
-enum Arm {
+struct Arm(Vec<Part>);
+
+#[derive(Clone, Debug)]
+enum Part {
     Base,
+    Off,
     Flee(f32, f32),
     Swarm,
     Clock(u32),
+    Tier(Tier),
 }
 
 impl Arm {
     fn parse(s: &str) -> Arm {
-        let mut it = s.split(':');
-        match it.next().unwrap() {
-            "base" => Arm::Base,
-            "flee" => {
-                let w = it.next().map_or(1.0, |v| v.parse().unwrap());
-                let k = it.next().map_or(0.98, |v| v.parse().unwrap());
-                Arm::Flee(w, k)
-            }
-            "swarm" => Arm::Swarm,
-            "clock" => Arm::Clock(it.next().unwrap().parse().unwrap()),
-            o => panic!("no arm {o}"),
-        }
+        Arm(s
+            .split('+')
+            .map(|s| {
+                let mut it = s.split(':');
+                match it.next().unwrap() {
+                    "base" => Part::Base,
+                    "off" => Part::Off,
+                    "flee" => {
+                        let w = it.next().map_or(1.0, |v| v.parse().unwrap());
+                        let k = it.next().map_or(0.98, |v| v.parse().unwrap());
+                        Part::Flee(w, k)
+                    }
+                    "swarm" => Part::Swarm,
+                    "clock" => Part::Clock(it.next().unwrap().parse().unwrap()),
+                    "tier" => {
+                        let n = it.next().unwrap();
+                        Part::Tier(Tier::from_name(n).unwrap_or_else(|| panic!("no tier {n}")))
+                    }
+                    o => panic!("no arm {o}"),
+                }
+            })
+            .collect())
     }
     fn apply(&self, p: &mut BigParams) {
-        match *self {
-            Arm::Base => {}
-            Arm::Flee(w, k) => {
-                p.alarm_keep = k;
-                p.alarm_weight = -w;
+        for part in &self.0 {
+            match *part {
+                Part::Base => {}
+                Part::Off => (p.alarm_keep, p.alarm_weight) = (0.0, 0.0),
+                Part::Flee(w, k) => {
+                    p.alarm_keep = k;
+                    p.alarm_weight = -w;
+                }
+                Part::Swarm => Tier::from_name("swarmer").unwrap().apply(p),
+                Part::Clock(n) => p.substeps = n as usize,
+                Part::Tier(t) => t.apply(p),
             }
-            Arm::Swarm => Tier::from_name("swarmer").unwrap().apply(p),
-            Arm::Clock(n) => p.substeps = n as usize,
         }
+    }
+    /// Only the alarm's pull changes: holding fire, it plays base's game.
+    fn alarm_only(&self) -> bool {
+        self.0.iter().all(|p| matches!(p, Part::Base | Part::Off | Part::Flee(..) | Part::Swarm))
     }
 }
 
@@ -106,8 +136,8 @@ fn main() {
     let mut seeds: Vec<u64> = (1..=8).collect();
     let (mut scale, mut walkers, mut threads) = (2usize, 5_000usize, 4usize);
     let (mut grow, mut fire, mut rest, mut squad) = (60.0f32, 20.0f32, 10.0f32, 4usize);
-    let mut arms = vec![Arm::Base, Arm::Flee(1.0, 0.98), Arm::Flee(3.0, 0.98)];
     let mut names: Vec<String> = vec!["base".into(), "flee:1".into(), "flee:3".into()];
+    let mut arms: Vec<Arm> = names.iter().map(|s| Arm::parse(s)).collect();
     let mut look = None::<String>;
     let mut rules = Rules::default();
     for a in std::env::args().skip(1) {
@@ -145,8 +175,8 @@ fn main() {
     // sensors add weight x 0; checked on seed 1), so an alarm arm's control
     // is base's, run once.
     let base = names.iter().position(|n| n == "base");
-    let hold_of = |a: usize| match (&arms[a], base) {
-        (Arm::Flee(..) | Arm::Swarm, Some(b)) => b,
+    let hold_of = |a: usize| match base {
+        Some(b) if arms[a].alarm_only() => b,
         _ => a,
     };
     let jobs: Vec<(u64, usize, bool)> = seeds.iter().flat_map(|&s| (0..arms.len()).flat_map(move |a| [(s, a, true), (s, a, false)])).filter(|&(_, a, f)| f || hold_of(a) == a).collect();
@@ -265,7 +295,10 @@ fn main() {
 /// stops after 6 dish cells with none). If a spot is off the open agar or
 /// already in the mould, the ray turns by 20 degrees at a time, either
 /// side. Returns the centre, the ray, and the spots (fine cells).
-fn place(g: &Game<BigDish>, n: usize) -> Option<((f32, f32), (f32, f32), Vec<(f32, f32)>)> {
+/// Where the squad stands: its centre, the ray (a unit vector) and the spots.
+type Line = ((f32, f32), (f32, f32), Vec<(f32, f32)>);
+
+fn place(g: &Game<BigDish>, n: usize) -> Option<Line> {
     let sc = g.world.scale();
     let d = &g.world;
     let live: Vec<(f32, f32)> = (0..d.walkers.len()).filter(|&k| d.lives(k)).map(|k| (d.walkers[k].0, d.walkers[k].1)).collect();
@@ -333,8 +366,7 @@ fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: 
             break;
         }
     }
-    for k in 0..g.soldiers.len() {
-        let s = &mut g.soldiers[k];
+    for (k, s) in g.soldiers.iter_mut().enumerate() {
         if k < n {
             s.x = spots[k].0;
             s.y = spots[k].1;
@@ -402,7 +434,7 @@ fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: 
                 hits += 1;
             }
         }
-        if tick % tps == 0 {
+        if tick.is_multiple_of(tps) {
             let b = bins(&g);
             secs.push(Sec {
                 hole: start.iter().zip(&b).filter(|(a, b)| **a > 0 && **b == 0).count(),
