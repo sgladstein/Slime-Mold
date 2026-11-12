@@ -7,7 +7,7 @@ from math import comb
 DIR = sys.argv[1]
 pat = re.compile(r'^\s*(\w+) seed\s+(\d+):\s+(.*?) at\s+(\d+) s, score ([+-][\d.]+); soldiers\s+(\d+), mould\s+(\d+)')
 stuck = re.compile(r'stuck (\d+) s')
-ORDER = ['none', 'sporer', 'sleeper', 'swarmer', 'drifter', 'sprawler', 'trunk', 'wary', 'grudge']
+ORDER = ['none', 'sporer', 'sleeper', 'swarmer', 'drifter', 'sprawler', 'trunk', 'grudge']  # wary ran (main/wary.txt) but the tiers thread dropped it (13:26Z, e359fac)
 d = {}
 for t in ORDER:
     f = f'{DIR}/{t}.txt'

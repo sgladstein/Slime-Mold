@@ -1,0 +1,1 @@
+The four first tiers ran on 3f.. (merge of 370d5d4); the rest on b1159549 (merge of e203c57). Same rows: strike and claim on plain seed 53 replay to the same line on both binaries (checked 12:20Z).
