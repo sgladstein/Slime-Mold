@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-12T17:15Z
+updated: 2026-11-12T20:50Z
 sources: [Reports/shot-damage-2026-11-12.md, CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
 code: [Params::pieces]
 ---
@@ -17,6 +17,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-12 20:21 | No king rule: every mould is headless. Births go on while the mould has food or crystal energy; holding its home stops nothing, so only a wipe or the cap ends a round (the home still pulls the body onto soldiers there). Owner will playtest the shapes (sheet, mesh, trunks) before one is picked | "remove the king rule. As long as the slime has food/crystal energy it can make walkers. Headless." ... "I will playtest the shapes. Not sure what it best from these." | [Larder](world/larder.md), [mould tiers](world/mould-tiers.md) |
 | 2026-11-12 04:38-04:39 | Shot impact is a real hole in the simulation, not a drawn hit: a squad's sustained fire carves a growing hole that does not refill while it lasts (first built as the mould turning from the shots' alarm, which failed the census gate; then shots that lay the crater, PR 2) | "Neither. Both of those look like stamps. Placed on the slime that fade." ... "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at" | [Larder](world/larder.md) |
 | 2026-11-12 04:46, card | No Scorcher building: scorch is only the crater that blasts, det cord and shots leave (the squad toolkit's crater field) | card ("Drop it, scorch is the crater") | [roadmap, *Larder World: shared rules and merge order*](../ROADMAP.md) |
 | 2026-11-12 04:45 | The player's own mould is a second species the soldiers grow (feed, lay roads for, cut), fighting the enemy mould by conversion; not a mould-only mode or a bought ally | Card: "Gardeners: soldiers grow it" | [Own mould](world/own-mould.md) |

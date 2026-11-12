@@ -75,6 +75,7 @@ code{font-family:var(--mono);font-size:12.5px}
 <div class="q">
 <h3>The question</h3>
 <p>Should taking the core stay an instant win for every mould? My suggestion: make headless the default, keep a king-type core as one tier's weakness, and turn on escalation so idle loses. I'd test it first, and only make it the default after you've played it.</p>
+<p><b>Your answer (20:21 UTC):</b> "remove the king rule. As long as the slime has food/crystal energy it can make walkers. Headless." Done for every mould, tiers included: holding its home stops nothing, and the home still pulls the body onto soldiers standing there. Over 8 race-world seeds on the census engine nothing wiped the mould in 15 minutes (the rush took the core in 34 of 64 games before); farm and the strike AI beat idle 8 of 8, the shortest game was 2:46. Escalation is not on yet.</p>
 </div>
 </section>
 
@@ -106,19 +107,21 @@ code{font-family:var(--mono);font-size:12.5px}
 <div class="q">
 <h3>The question</h3>
 <p>Which of these is closest to the creature you want: a mesh everywhere (B), a sheet with trunks (C), or a front that changes from sheet to mesh to trunks as it ages (D, and E once its edge can still reach food)? My suggestion: D as the base. It is the only one where the front, the middle and the supply lines each look different, and it costs no new rule. Then I'd add a gentler slow front so its edge fans out like E without starving.</p>
+<p><b>Your answer (20:21 UTC):</b> "I will playtest the shapes. Not sure what it best from these." Each one is now a key in the game; see below.</p>
 </div>
 </section>
 
 <section>
 <h2>How to try them yourself</h2>
-<p>On the desktop, in the repo: <code>cargo run --release --bin larder-world -- KEYS</code>, with these keys:</p>
+<p>Updated 12 Nov, 20:45 UTC, after your answers: every mould is now headless (no king rule), and each film is one key in the game. On the desktop, in the repo, after the PR merges: <code>cargo run --release --bin larder-world -- shape=d</code>, with the letter of the film.</p>
 <div class="tw"><table>
-<tr><th>Film</th><th>Keys</th></tr>
-<tr><td>B</td><td><code>walkers=25000 start=spread food=0 upkeep=0.00001 capacity=50000</code></td></tr>
-<tr><td>C</td><td><code>walkers=25000 upkeep=0.0002 capacity=50000</code></td></tr>
-<tr><td>D</td><td><code>walkers=25000 upkeep=0.0002 capacity=50000 sensor_angle=22.5 sensor_offset=5</code></td></tr>
-<tr><td>E</td><td><code>walkers=25000 upkeep=0.0002 capacity=50000 step=0.15 trail_scale=0.02 step_by=0.85:2</code></td></tr>
+<tr><th>Key</th><th>Shape</th><th>Idle squad on the Fork, now</th></tr>
+<tr><td><code>shape=a</code></td><td>Today: strands from food to food</td><td>alive at 4:00; 3,855 walkers</td></tr>
+<tr><td><code>shape=b</code></td><td>Mesh everywhere</td><td>wiped at 2:50 (was 0:47); 48,617 walkers</td></tr>
+<tr><td><code>shape=c</code></td><td>Sheet with trunks</td><td>alive at 4:00 (was wiped at 1:56); 13,406 walkers</td></tr>
+<tr><td><code>shape=d</code></td><td>Sheet, then mesh, then trunks</td><td>alive at 4:00; 16,140 walkers</td></tr>
+<tr><td><code>shape=e</code></td><td>Slow front</td><td>alive at 4:00; starves to 3,033 walkers</td></tr>
 </table></div>
-<p class="lede">The dense moulds kill the squad faster than today's, because damage still counts walkers rather than mould mass. That is the mass factor, which waits on your pick of a look. Sources and raw logs: <code>Reports/slime-questions-2026-11-12/</code> in the repo.</p>
+<p class="lede">A dense mould is the same body cut into more, smaller walkers, so each walker now hits soldiers, buildings and the larder for 5,000 divided by its walkers: a fifth as hard at 25,000. Before that, B and C wiped an idle squad in under two minutes because of the walker count, not the shape. <code>mass=1</code> plays the old way. Shots are unchanged. Logs: <code>Reports/slime-questions-2026-11-12/raw/shapes/</code> in the repo.</p>
 </section>
 </main>
