@@ -410,7 +410,7 @@ impl WorldListener {
             out.push(match end {
                 End::MouldWiped(_) => SoundCmd::Alert { kind: AlertKind::Bell, weight: 1.0, pan: 0.0 },
                 End::Cap(share) => SoundCmd::Alert { kind: AlertKind::Bell, weight: share.clamp(0.0, 1.0), pan: 0.0 },
-                End::SquadWiped(_) => SoundCmd::Alert { kind: AlertKind::Died, weight: 1.0, pan: 0.0 },
+                End::SquadWiped(_) | End::Overrun(_) => SoundCmd::Alert { kind: AlertKind::Died, weight: 1.0, pan: 0.0 },
             });
         }
         self.ended = g.end.is_some();

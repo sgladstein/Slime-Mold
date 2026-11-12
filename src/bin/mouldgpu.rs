@@ -3675,6 +3675,43 @@ mod tests {
         assert!(sizes.iter().any(|&(_, a, _)| a > walkers) && sizes.last().unwrap().1 < walkers, "the mould grew, then its first walkers starved: {sizes:?}");
     }
 
+    /// **The campaign's tiers on the engine** (`mould::tiers`, 2026-11-12):
+    /// the Drifter, Sprawler and Trunk are settings over rules both engines
+    /// run, so each plays the race world's game on the GPU as on the CPU,
+    /// within the race world's own 8% every 5 game seconds over 20 s.
+    #[test]
+    fn the_campaign_tiers_run_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::big::BigDish;
+        use slime_mould::mould::larder_world::{race_params, Game, Rules, World};
+        use slime_mould::mould::tiers::Tier;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 20.0, ..Rules::default() };
+        for t in [Tier::Drifter, Tier::Sprawler, Tier::Trunk] {
+            let mut p = race_params(seed, scale, walkers);
+            t.apply(&mut p);
+            let mut s = race_settings(seed, scale, walkers);
+            t.settings(&mut s).unwrap();
+            let mut cpu = Game::new(BigDish::new(p), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+            assert_eq!(gpu.world.living(), cpu.world.living(), "{}", t.name());
+            let mut sizes = Vec::new();
+            while cpu.end.is_none() {
+                cpu.step();
+                gpu.step();
+                if cpu.world.ticks() % 75 == 0 {
+                    sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
+                }
+            }
+            eprintln!("{}: game s, living CPU, GPU: {sizes:?}", t.name());
+            for &(at, a, b) in &sizes {
+                let (a, b) = (a as f64, b as f64);
+                assert!((a - b).abs() <= 0.08 * a, "{}: mould at {at} s: {b} walkers on the GPU, {a} on the CPU", t.name());
+            }
+        }
+    }
+
     /// A designed map (ROADMAP WM1) on the engine as on the CPU: the Fork
     /// (rock, wet, crystals of five sizes and four charges) and the Nest
     /// (34 walls with health). The same crystals, start and landing; a
