@@ -4,7 +4,7 @@ kind: look
 status: current
 updated: 2026-11-12
 sources: [Reports/mould-sound-2026-11-10.md, Reports/larder-sound-2026-11-12.md]
-code: [Listener::hear, VoiceBank, density, DEFAULT_MASTER, TEXTURE_RATE_CAP, LOUDNESS_LAW, WorldListener, kill_weight, FULL_KILL, SHOTS_VOICED]
+code: [Listener::hear, VoiceBank, density, DEFAULT_MASTER, TEXTURE_RATE_CAP, LOUDNESS_LAW, WorldListener, kill_weight, full_kill, FULL_KILL, SHOTS_VOICED]
 ---
 
 # Sound
@@ -23,8 +23,8 @@ game bit for bit. Levels are first guesses; the owner has not listened yet.
 **Larder World** has its own listener, `WorldListener`, on the same voice
 bank (2026-11-12, after the owner's playtest found shooting unsatisfying).
 A shot is a crack at the soldier and an impact at the hit whose weight is
-the walkers it killed (`kill_weight`, full at `FULL_KILL` = 80, the rush's
-90th centile), so a shot into a vein is a heavy low slap and a graze a tap;
+the walkers it killed (`kill_weight`, full at `FULL_KILL` = 80 at 5,000 walkers, the
+rush's 90th centile, scaled by density to the 0.3 power, `full_kill`), so a shot into a vein is a heavy low slap and a graze a tap;
 kills crackle, a pulse quickens as the mould nears the squad, hurt soldiers
 groan, and the economy answers (table and measurements in the
 [report](../../Reports/larder-sound-2026-11-12.md)). Placed by the camera's

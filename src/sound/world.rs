@@ -41,7 +41,23 @@ use super::{AlertKind, GrainKind, SoundCmd, TextureKind};
 /// At 30 (the first guess) 30 of the rush's 43 shots sounded at full
 /// weight, so the heavy shots were not told apart. Re-measure if the
 /// strike changes (`Rules::strike`, the graphics thread's per-walker wound).
+///
+/// It holds at that round's density, 5,000 walkers on the 256 x 160 dish
+/// cells (`REF_DENSITY`). A denser world kills more a shot, so the full
+/// weight grows with the round's starting walkers a dish cell
+/// (`full_kill`), or every shot of a big world would sound full (tech lead
+/// review of #96). Not in proportion: the same rush at 50,000 walkers
+/// killed 66 a shot on average (18 shots) against 35 at 5,000 (43 shots),
+/// 1.9 times for 10 times the walkers, so the full weight follows density
+/// to the power `DENSITY_LAW` (0.3). In proportion, all 18 of the 50,000
+/// rush's shots were light. The starting count, not the living one, so a
+/// mould thinned by the squad does sound thinner.
 pub const FULL_KILL: f32 = 80.0;
+/// Walkers a dish cell where `FULL_KILL` was measured.
+pub const REF_DENSITY: f32 = 5_000.0 / (256.0 * 160.0);
+/// How a shot's kills grow with density (fork seed 1, 5,000 and 50,000
+/// walkers: log 1.9 / log 10).
+pub const DENSITY_LAW: f32 = 0.3;
 /// Shots voiced a drawn frame; the rest still count in the kill crackle.
 /// The voice bank keeps four verb grains of a kind at once
 /// (`synth::PER_KIND_CAP`), so more would only steal from each other.
@@ -64,11 +80,21 @@ const BANK_GAP: f32 = 1.0;
 /// a crystal run dry), against 1 on screen.
 const ALERT_FLOOR: f32 = 0.7;
 
-/// How heavy a shot that killed `killed` walkers sounds, 0 ..= 1. Square
-/// root, so one kill is already heard (0.11), the rush's median (37) is
-/// 0.68 and a full vein is 1.
-pub fn kill_weight(killed: u32) -> f32 {
-    (killed as f32 / FULL_KILL).sqrt().min(1.0)
+/// How heavy a shot that killed `killed` walkers sounds, 0 ..= 1, when
+/// `full` kills is a full vein (`full_kill`). Square root, so at the
+/// reference density one kill is already heard (0.11), the rush's median
+/// (37) is 0.68 and a full vein is 1.
+pub fn kill_weight(killed: u32, full: f32) -> f32 {
+    (killed as f32 / full.max(1.0)).sqrt().min(1.0)
+}
+
+/// A full vein's kills in this round: `FULL_KILL` scaled by the starting
+/// walkers a dish cell against `REF_DENSITY`, to the power `DENSITY_LAW`.
+pub fn full_kill<W: World>(g: &Game<W>) -> f32 {
+    let (w, h) = g.world.size();
+    let sc = g.world.scale().max(1.0);
+    let dish_cells = (w as f32 / sc) * (h as f32 / sc);
+    FULL_KILL * (g.start_mould as f32 / dish_cells.max(1.0) / REF_DENSITY).max(1e-3).powf(DENSITY_LAW)
 }
 
 /// Where the listener stands: the camera's view, fine cells (the world's
@@ -123,6 +149,7 @@ pub struct WorldStats {
 
 pub struct WorldListener {
     ticks: u64,
+    full: f32,
     pending: Vec<Shot>,
     hp: Vec<f32>,
     alive: Vec<bool>,
@@ -147,6 +174,7 @@ impl WorldListener {
     pub fn new<W: World>(g: &Game<W>) -> Self {
         let mut l = WorldListener {
             ticks: 0,
+            full: FULL_KILL,
             pending: Vec::new(),
             hp: Vec::new(),
             alive: Vec::new(),
@@ -175,6 +203,7 @@ impl WorldListener {
     /// heard as one burst of every tally.
     fn rebaseline<W: World>(&mut self, g: &Game<W>) {
         self.ticks = g.world.ticks();
+        self.full = full_kill(g);
         self.pending.clear();
         self.hp = g.soldiers.iter().map(|s| s.hp).collect();
         self.alive = g.soldiers.iter().map(|s| s.alive).collect();
@@ -234,7 +263,7 @@ impl WorldListener {
             out.push(SoundCmd::Grain { kind: GrainKind::Crack, pan, gain: 0.4 * gain, delay });
             self.stats.voiced += 1;
             if let Some(h) = s.hit {
-                let w = kill_weight(s.killed);
+                let w = kill_weight(s.killed, self.full);
                 let (pan, gain) = ear.place(h);
                 // The flight: the farther it struck, the later it lands
                 // (a few hundredths of a second at most; the ear hears
@@ -395,6 +424,20 @@ mod tests {
     use super::*;
     use crate::mould::larder_world::{race_world, Cmd, Order, Rules};
 
+    fn kill_weight_ref(killed: u32) -> f32 {
+        kill_weight(killed, FULL_KILL)
+    }
+
+    #[test]
+    fn a_denser_world_needs_more_kills_for_a_full_shot() {
+        let g = small(1);
+        let base = full_kill(&g);
+        let mut dense = small(1);
+        dense.start_mould *= 10;
+        let ratio = full_kill(&dense) / base;
+        assert!((ratio - 10f32.powf(DENSITY_LAW)).abs() < 1e-3, "{base} vs {}", full_kill(&dense));
+    }
+
     fn small(seed: u64) -> Game<crate::mould::big::BigDish> {
         Game::new(race_world(seed, 1, 1_000), Rules::default(), seed)
     }
@@ -406,12 +449,12 @@ mod tests {
 
     #[test]
     fn a_heavier_kill_weighs_more_and_a_full_vein_is_full() {
-        assert_eq!(kill_weight(0), 0.0);
-        assert!(kill_weight(1) > 0.1 && kill_weight(1) < kill_weight(8));
-        assert!(kill_weight(37) > 0.6 && kill_weight(37) < 0.75, "the rush's median shot sits in the upper middle");
-        assert!(kill_weight(8) < kill_weight(20));
-        assert_eq!(kill_weight(FULL_KILL as u32), 1.0);
-        assert_eq!(kill_weight(500), 1.0);
+        assert_eq!(kill_weight_ref(0), 0.0);
+        assert!(kill_weight_ref(1) > 0.1 && kill_weight_ref(1) < kill_weight_ref(8));
+        assert!(kill_weight_ref(37) > 0.6 && kill_weight_ref(37) < 0.75, "the rush's median shot sits in the upper middle");
+        assert!(kill_weight_ref(8) < kill_weight_ref(20));
+        assert_eq!(kill_weight_ref(FULL_KILL as u32), 1.0);
+        assert_eq!(kill_weight_ref(500), 1.0);
     }
 
     #[test]
@@ -494,7 +537,7 @@ mod tests {
         let cracks = cmds.iter().filter(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Crack, .. })).count();
         assert_eq!(cracks, SHOTS_VOICED);
         let least = cmds.iter().filter_map(|c| if let SoundCmd::Impact { weight, .. } = c { Some(*weight) } else { None }).fold(1.0f32, f32::min);
-        assert!(least >= kill_weight(20 - SHOTS_VOICED as u32), "a light shot was voiced over a heavy one: {least}");
+        assert!(least >= kill_weight_ref(20 - SHOTS_VOICED as u32), "a light shot was voiced over a heavy one: {least}");
         assert_eq!(l.stats.kills, (0..20).sum::<u64>(), "every kill counts in the crackle");
     }
 

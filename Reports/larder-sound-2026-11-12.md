@@ -84,6 +84,32 @@ no GPU read-back: it reads `Game` fields the window already has
 (`GpuWorld::crystals` is a cached copy). The voice bank runs on the audio
 thread, as for the dish.
 
+## After the reviews (same day)
+
+**Density.** The tech lead review: `FULL_KILL` is a raw count, set at 5,000
+walkers; the GPU world will run 50,000-100,000. The same rush (fork, seed 1)
+at `walkers=50000`: 18 shots killed 1,192, 66 a shot against 35 at 5,000,
+so kills grow 1.9 times for 10 times the walkers. With the raw count, the
+50,000 rush would sound almost all heavy; scaled in proportion to density,
+all 18 shots were light. `full_kill` now scales `FULL_KILL` by the starting
+walkers a dish cell against `REF_DENSITY` to the power `DENSITY_LAW` = 0.3
+(log 1.9 / log 10): the 50,000 rush splits 9 light, 3 mid, 6 heavy, and
+5,000 is unchanged (11 / 10 / 22; the ladder renders sample for sample the
+same). One seed pair; re-measure when the Larder thread's density field
+lands, and write the scale from it.
+
+**Off screen.** The design review: sounds that tell you where to look must
+not fade with the camera. The larder robbed and a crystal run dry keep 70%
+of their level off screen (`ALERT_FLOOR`); a soldier falling and the core
+were at full level already.
+
+**Proposed, not built** (design review; wait for the owner's ears on the
+first cut): a voice for the mould as one body (a drone from its size, the
+alarm field and hunger, a cut-off piece with its own fainter voice once the
+one-body work lands); a cue when a shot clears its block, so late-game
+shots into a thinned mould do not sound like failing; turrets and blasts
+ducked under the shots the player orders.
+
 ## Open
 
 - The owner's ears: does a big kill feel big, is the pulse help or noise,

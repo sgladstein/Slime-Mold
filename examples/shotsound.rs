@@ -16,7 +16,7 @@
 
 use slime_mould::mould::larder_world::{race_world, Game, Rules, Shot};
 use slime_mould::sound::synth::VoiceBank;
-use slime_mould::sound::world::{kill_weight, Ear, WorldListener};
+use slime_mould::sound::world::{full_kill, kill_weight, Ear, WorldListener, REF_DENSITY};
 
 fn main() {
     let (mut out, mut kills, mut seed) = (String::from("ladder.wav"), vec![-1i32, 0, 1, 5, 15, 37, 56, 80], 1u64);
@@ -29,7 +29,13 @@ fn main() {
             _ => panic!("unknown argument {k} (out, kills, seed)"),
         }
     }
-    let g = Game::new(race_world(seed, 1, 1_000), Rules::default(), seed);
+    let mut g = Game::new(race_world(seed, 1, 1_000), Rules::default(), seed);
+    // The ladder is heard at the reference density (`REF_DENSITY`, where
+    // `FULL_KILL` was measured), whatever this small world's.
+    let (w, h) = slime_mould::mould::larder_world::World::size(&g.world);
+    let sc = slime_mould::mould::larder_world::World::scale(&g.world);
+    g.start_mould = (REF_DENSITY * (w as f32 / sc) * (h as f32 / sc)).round() as usize;
+    let full = full_kill(&g);
     let mut l = WorldListener::new(&g);
     let mut bank = VoiceBank::new(48_000, seed);
     let ear = Ear { centre: (100.0, 100.0), half: (80.0, 50.0) };
@@ -42,7 +48,7 @@ fn main() {
                 let hit = (k >= 0).then_some((100.0, 100.0));
                 l.shots(&[Shot { from: (40.0, 100.0), to: (110.0, 100.0), hit, killed: k.max(0) as u32 }]);
                 if i < kills.len() {
-                    println!("{:>4.1} s: {}", samples.len() as f32 / 2.0 / 48_000.0, if k < 0 { "stopped by rock: crack only".to_string() } else { format!("{k} killed, weight {:.2}", kill_weight(k as u32)) });
+                    println!("{:>4.1} s: {}", samples.len() as f32 / 2.0 / 48_000.0, if k < 0 { "stopped by rock: crack only".to_string() } else { format!("{k} killed, weight {:.2}", kill_weight(k as u32, full)) });
                 }
             }
             for c in l.hear(&g, ear, frame, false) {
