@@ -2,7 +2,7 @@
 title: The Larder player AI
 kind: tool
 status: current
-updated: 2026-11-12T17:50Z
+updated: 2026-11-12T20:41Z
 sources: [Reports/plan-matrix-2026-11-12.md, Reports/larder-world-tiers-2026-11-12.md, Reports/larder-world-ai-2026-11-12.md, Reports/larder-ai-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Brain, Style, Side, View, RandomHand, set_rule, Game::apply, mould_grid]
 ---

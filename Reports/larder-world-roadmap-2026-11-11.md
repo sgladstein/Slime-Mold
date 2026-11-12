@@ -606,7 +606,7 @@ The hole test on seeds 1-8 with the walker stop ([crater/hole-1-8-looks.txt](lar
 
 None of the looks changes the fight beyond chance, so the choice is the owner's eye. In the window (the Fork, seed 1, rush hand) the scattered holes come out as chains of small bites and the cone's as smaller holes with a soft shadow in place of the dark rim. In all three the fresh hole's inside is red-brown because the fight is on the Fork's clay disc; holes off the clay are grey-olive like a natural hole. The graphics thread rendered all three up close at zoom 6 and 16 (`/mnt/project-files/crater-ab/`). The page shows them blind as looks 1-3; the key is [crater/look-key.md](larder-world-roadmap-2026-11-11/crater/look-key.md), with the window's counts in [crater/look-window-counts.txt](larder-world-roadmap-2026-11-11/crater/look-window-counts.txt).
 
-**The looks in motion** (2026-11-12 14:40Z; the owner: "I need to see videos/gifs of the craters to tell"). The same three looks and the game without craters, rendered as clips: the Fork, seed 1, rush hand, every game tick from 7 to 19 s, from a still camera (the look mode's new `centre=X,Y`, so the view no longer pans with the squad or jumps to the larder when it dies). The four play in step on [Crater Looks in Motion](https://claude.ai/artifact/HzgDT3XPLX59Ba621tVH2H), with each frame's counts under its clip, at 1×, ½× or ¼×. These runs include the core's pull, so the squad dies at about 16 s (17-19 s with `core_pull=0`), and the last 3 s show each hole after the fire stops. Clips, posters and the runs' t lines are in [crater/clips/](larder-world-roadmap-2026-11-11/crater/clips/L2.txt); same key as the stills.
+**The looks in motion** (2026-11-12 14:40Z; the owner: "I need to see videos/gifs of the craters to tell"). The same three looks and the game without craters, rendered as clips: the Fork, seed 1, rush hand, every game tick from 7 to 19 s, from a still camera (the look mode's new `centre=X,Y`, so the view no longer pans with the squad or jumps to the larder when it dies). The four play in step on [Crater Looks in Motion](https://claude.ai/artifact/HzgDT3XPLX59Ba621tVH2H), with each frame's counts under its clip, at 1×, ½× or ¼×. These runs include the core's pull, so the squad dies at about 16 s (17-19 s with `core_pull=0`), and the last 3 s show each hole after the fire stops. Clips, posters and the runs' t lines are in [crater/clips/](larder-world-roadmap-2026-11-11/crater/clips/L2.txt); same key as the stills. The owner (14:41Z): "Why do the craters happen under the players feet. I think 3 is best, but I was more expecting soliders standing shooting into slime. Not running through slime leaving craters under their feet." The rush walks the squad into the body, and a shot stops at the first slime on its line, which inside the body is beside the soldier. So the page now leads with a `stand` hand (attack-move on the core: the squad stops where the mould comes in range and fires from there), 22-40 s from `centre=254,264`. Killed by 40 s: 449, 436 and 569 for looks 1-3, against 242 with no craters (one seed). Look 3, the cone, is the owner's pick.
 
 **The gate, first look** (race seeds 5-12, 15-minute games, crater 10; raw [crater/census-race-5-12.txt](larder-world-roadmap-2026-11-11/crater/census-race-5-12.txt)):
 - farm, wall and strike each beat idle and random 8-0, and all hold under Holm.
@@ -731,3 +731,86 @@ So the pull does no harm off the race world. Strike's dominance on the Fork is t
 At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad shoots the mould down, and it is no bigger than the CPU's own spread.
 
 **Pictures**: the hub on seed 204 at 40, 45, 50 and 60 s without and with the pull ([core/hub-s204-off-40s.jpg](larder-world-roadmap-2026-11-11/core/hub-s204-off-40s.jpg) to `-on-60s.jpg`), on the crater page.
+
+## Wading, and the cone crater by default (PR 3b), 2026-11-12
+
+**Why.** The owner, after the clips (14:41-14:43Z): look 3 is the pick, and "soldiers should be heavily slowed down if they try to run into the thick slime". Also "shouldn't be able to stand on top of the crystal", which the controls thread builds. Then (15:18Z): "Is there an option between 3 and no craters? 3 fills in too slow still".
+
+**What.**
+- **The cone crater is the race world's default** (`race_params`: `scorch_cone` on, `scorch_full` 150, `scorch_keep` 0; `race_settings` carries them to the GPU). The toolkit's blasts share `scorch_full` and `scorch_keep` and stay flat discs. `scorch_cone=0 scorch_full=30 scorch_keep=0.1` plays #113's flat disc.
+- **Wading** (`Rules::wade` 6): a soldier's step is `speed / (1 + (touching / wade)²)`. Two walkers touching leave it 90% of its speed, 6 leave half, and 12 a fifth (a rush meets 0 to 26 on race seeds 1-4). The count is the frame's touch read-back, the same on both engines, so the GPU needs nothing new. 0 is off. Test: `thick_slime_slows_a_soldier`.
+- **In play**: the page's *Wading* clips (the Fork, seed 1, rush) and its crater-time clips were rendered by a window build from before the cone reached the GPU's `race_settings`, so they show #113's flat crater, not the cone (found 11-12 17:03Z: that build's t lines match today's build with `scorch_cone=0 scorch_full=30 scorch_keep=0.1` to the digit, and differ from it without). The census above ran the CPU's `race_params`, which had the cone. The clips are being rendered again with the cone (17:05Z).
+
+**The crater's time** (the owner's 15:18Z ask): crater times of 10, 6 and 3 s are on the page, but as flat craters (see *In play*), so their kills are not look 3's. The cone at 10, 6, 3 and 1 s, and a scene where the squad fires into the thick ring on the core crystal, follow in the next PR. Both shorter times were being gated (runners 1-4, `crater=6` and `crater=3` at 90ca407) until the owner's testing rule stopped those runs (17:26Z: a census is not a gate for a look).
+
+**The gate** (90ca407, both seed blocks, seven hands, 15-minute games; raw [wade/](larder-world-roadmap-2026-11-11/wade/census-wade6-race-5-20.txt), runners 1-4, sha256 checked). Three arms: the new defaults (wade 6, cone), `wade=0` (cone only), and `wade=0` with the flat crater (#126's rules; its random wipes match #126's 2 and 3 exactly).
+
+| | race 5-36: wade 6, cone | wade 0, cone | wade 0, flat (#126) | race 201-232: wade 6, cone | wade 0, cone | wade 0, flat (#126) |
+| --- | --- | --- | --- | --- | --- | --- |
+| farm, wall, fort against random | 31-1, hold | 29-3, hold | 30-2, hold | 29-3, hold | 27-5, 27-5, 26-6, hold | 29-3, hold |
+| strike against random | 32-0, holds | 32-0, holds | 32-0, holds | 30-2, holds | 30-2, holds | 31-1, holds |
+| rush against random | 28-4, holds | 22-10, p 0.05 | 24-8, holds | 26-6, holds | 24-8, holds | 25-7, holds |
+| farm, wall, fort, strike against idle | 32-0, hold | 32-0, hold | 32-0, hold | 32-0, hold | 32-0, hold | 32-0, hold |
+| **random wipes the mould** | **1** | 3 | 2 | **3** | 5 | 3 |
+| random takes the core | 1 | 3 | 2 | 3 | 5 | 3 |
+| rush's squad wiped | 11 | 14 | 13 | 10 | 10 | 8 |
+
+- **Every plan beats random after Holm on both blocks** with the new defaults (Holm over 10), the rush included, which it did not on 5-36 with the cone alone.
+- **Random wipes the mould on 4 of 64** (5 at #126, 8 with the cone and no wading).
+- **The cone changes nothing beyond chance** (cone against flat, both at wade 0, Holm over 7): no hand's score moves on either block (every p 0.07 or more). It is a look, as the hole test said.
+- **Wading mostly slows random** (wade 6 against 0, Holm over 7): random kills fewer walkers on 5-36 (27 lower, 5 higher, median -524, p 0.0001, holds; 21-11 on 201-232, p 0.11) and scores lower there (22 lower, 9 higher, p 0.03, not under Holm). The rush kills more on 201-232 (24 higher, 7 lower, p 0.003, holds). No plan's score moves.
+- **Against #126** (wade 6 and cone against wade 0 and flat): random scores lower on both blocks (23 lower and 8 higher, p 0.01, not under Holm; 24 and 7, p 0.003, holds) and kills fewer on both (25-7 and 28-4 lower, hold). Farm leaves more mould on 5-36 (24 more, 8 less, p 0.007, holds), and no plan's score moves.
+- **Not met, as before**: strike beats farm 26-6 and 28-4 and every other plan (all hold), since food does not bind. That is PR 4's.
+
+**Cost.** Wading is one division a soldier a tick, on the CPU, from a count both engines already read back. The cone is the toolkit's crater mode, already timed: 0.03 ms a step on software Vulkan.
+
+## A core that grows back, and the crater's time in the cone, 2026-11-12
+
+**Why.** The tiers thread asked for the Trunk's core before the Drifter's migrating one (11-12): the game designer's "regrows unless the body is starved", the lesson of campaign mission 4 (cut, then starve). With `CoreKind::Fixed`, a squad that holds the core for 5 s ends the mould's births for good, and on the race world that is the only way any plan ends a game (integration, 17:10Z, from the one-body thread's review). The owner, on the crater clips (16:55Z): "show me 1 second. also in these videos they were mostly shooting at individuals so it was hard to evaluate until the end when they shot at the core of slime".
+
+**What.**
+- **`CoreKind::Regrow { starve_secs }`**: the core falls as a fixed one does, and births stop. If the mould eats anything from any crystal in the `starve_secs` after the fall, the core grows back when they are up: births restart and the hold clock starts again. If it eats nothing all that time it stays down for good. So taking the core alone doesn't stop a Trunk; taking it while the squad holds the crystals, or has cut the body off them, does.
+- **"Eats" is the whole body's** (`Game::mould_ate`: the crystals' charge gone less the squad's take), which both engines already read back. The core's own piece starving would need a per-region read-back on the GPU; the tiers thread chose the whole-body rule. With `BigParams::crystal_regrow` on, regrowth hides eating (off on every map so far).
+- **`World::stop_births` returns what it stopped** (the birth energy, or the Garden's cap) and `World::start_births` puts it back, on the CPU, the GPU world and the player's Garden. `CoreKind` is no longer `Eq` (it holds an `f32`).
+- **Off unless a tier sets it** (`Tier::core`); the tiers thread sets each tier's `starve_secs`. Census keys `regrow=S` and `core=fixed|headless` set the core over the tier's; a row adds `core grew back N`. The window's HUD says when the core is taken ("it grows back in N s unless the mould eats nothing till then") and when it grows back.
+- Test: `a_regrowing_core_grows_back_unless_the_mould_starves` (a fed mould's core grows back and births restart; a starved one's stays down).
+
+**Dev census** (b0538ae with the change, race seeds 1-6, five hands, 15-minute games, `regrow=30` against the fixed core; raw [regrow/](larder-world-roadmap-2026-11-11/regrow/census-regrow30-race-1-6.txt)). Only the rush takes the core on these seeds, on 4 of 6. Every other hand's scores are identical.
+
+| rush, seed | 1 | 2 | 3 | 4 | 5 | 6 |
+| --- | --- | --- | --- | --- | --- | --- |
+| fixed core: end, mould left | core fell 90 s, 12 left | fell 69 s, 2 left | never fell, 9,991 | fell 88 s, 19 left | squad wiped 288 s | fell 56 s, 5 left |
+| `regrow=30`: end, mould left | grew back 22 times, 2,745 | grew back 22 times, 2,378 | the same | grew back once, 18 | the same | grew back once, squad wiped 558 s |
+
+- Under the fixed core, a rush that takes the core has won in all but name: the mould dwindles to 2-19 walkers by the cap with no births. Under `regrow=30` the rush on seeds 1 and 2 sits on the core and takes it again about every 38 s while the mould keeps eating, and the mould ends at 2,400-2,700 walkers.
+- Rush scores lower on 3 of 6 (none higher, median -0.08, p 0.25) and kills more on 4 (p 0.13). Too few seeds to say more; the tiers thread tunes `starve_secs` per tier on its own census.
+
+**Does the core rule cause the stalemates?** (integration, 17:10Z, from the one-body thread's review: "a squad holding the core for 5 s ends the whole mould, and that is the only way any plan ends a game"; the owner has the question open.) `core=headless` against the fixed core, race seeds 5-20, seven hands, 15-minute games, d5323dc (which plays the PR 3b gate's seed-5 rows to the digit); raw [headless/](larder-world-roadmap-2026-11-11/headless/census-headless-race-5-20.txt), paired with the gate's [wade6 rows](larder-world-roadmap-2026-11-11/wade/census-wade6-race-5-20.txt). Measure named before the run: games each hand ends before the cap, paired by seed. Win rate and stalemate median given apart.
+
+| hand | mould wiped, fixed / headless | squad wiped | at the cap | mould left at the cap (median), fixed / headless | score, headless against fixed |
+| --- | --- | --- | --- | --- | --- |
+| idle | 0 / 0 | 0 / 0 | 16 / 16 | 10,457 / 10,457 | identical |
+| random | 1 / 1 | 14 / 13 | 1 / 2 | | 12 higher, 3 lower, p 0.04 |
+| farm | 0 / 0 | 0 / 0 | 16 / 16 | 3,620 / 3,870 | 1 higher, 9 lower, p 0.02 |
+| wall | 0 / 0 | 0 / 0 | 16 / 16 | 4,278 / 4,257 | 3 and 3 |
+| fort | 0 / 0 | 0 / 0 | 16 / 16 | 6,289 / 4,622 | 3 and 3 |
+| rush | 1 / 0 | 5 / 5 | 10 / 11 | 3,351 / 9,568 | 5 higher, 11 lower, p 0.21 |
+| strike | 4 / 1 | 0 / 0 | 12 / 15 | 1,736 / 1,866 | 3 higher, 13 lower, p 0.02 |
+
+- **The core rule is not why farm, wall and fort stalemate**: they reach the cap in 16 of 16 games with the core and without it. Idle does too.
+- **Without the core the player wins less**: the mould is wiped in 2 of 112 games against 6, and strike's 4 wins fall to 1. Strike and farm score lower, random higher (the core pull is off on a headless mould, so random's strays are not drawn in). None survives Holm over 7 (smallest p 0.02 against 0.007).
+- So dropping the rule takes away the one decisive end the plans have and gives none back. The stalemates come from no plan wiping 3,500-6,000 walkers and from idle never being punished, which is PR 4's (overrun, and soldiers that cost food). `Regrow` is the middle option if taking the core should matter less.
+
+**The crater's time in the cone.** A **volley** hand (`larder-world look=DIR hand=volley`): the squad of 9 stands off from the thick ring on the core crystal, burns a line across it from 22 to 34 s and stops, so the hole can be watched filling. Clips at 10, 6, 3 and 1 s and none (`crater/clips/V*`), the stand and rush clips re-rendered with the cone (T, R, W), on the page's first three sections.
+
+| crater | 10 s | 6 s | 4.5 s | 3 s | 1 s | none |
+| --- | --- | --- | --- | --- | --- | --- |
+| volley: walkers killed by 46 s | 923 | 768 | 604 | 541 | 418 | 309 |
+| stand at the edge: killed by 40 s | 486 | 525 | | 401 | 272 | 237 |
+| rush: killed by 19 s (squad wiped in each) | 1,289 | 1,335 | | 1,368 | 1,352 | 1,409 |
+
+- What the volley clips show: at 10 s the ring's front is cleared and pocked holes are still there 4 s after firing stops; at 6 s fewer holes are left; at 3 s the notch is small and closes in about 2 s; at 1 s it looks almost like no craters, even under fire.
+- The rush's kills don't follow the crater time: its squad is wiped inside the body in every clip, and llvmpipe runs in parallel are not bit-repeatable (two clips with the same settings killed 1,289 and 1,300).
+- **The owner picked 4.5 s** (17:29Z: "Can we do 4.5 s? I am thinking between the 3 and 6"), now `Rules::crater`'s default; its volley clip (`V45`) is on the page between 6 and 3 s. It lands on the tests and the clip: the 6 and 3 s gates were stopped under the owner's testing rule (17:26Z: build first, balance later; a census is not a gate for a look). The countdown is in fine steps, so any time works, not only whole seconds.
+
+**Cost.** One comparison a tick while a core is down, on the CPU; the eating sum is over the crystals the game already reads. Nothing on the GPU.

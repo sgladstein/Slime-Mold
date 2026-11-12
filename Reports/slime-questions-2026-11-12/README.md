@@ -28,3 +28,40 @@ films in `img/`, run scripts and logs in `raw/`).
   2:00) are new (`raw/front.sh`, `raw/*-dense.log`); `front-mesh.gif`,
   `front-sheet.gif` and `front-today.gif` are copies of the one-body page's
   `film-idle-all-pure-on`, `film-idle-all-dense-on` and `film-idle-all-B`.
+
+## The owner's answers (20:21Z), built
+
+"1) remove the king rule. As long as the slime has food/crystal energy it
+can make walkers. Headless. 2) I will playtest the shapes. Not sure what it
+best from these."
+
+- **Headless for every mould.** `Core::of` is `CoreKind::Headless`, so the
+  plain mould and every tier (the Grudge keeps its pull of 16, the Sprawler
+  its 0) make walkers while they have food; holding the home stops nothing.
+  The home keeps its pull (8): the pull was what stopped random walking into
+  the hub (random wiped the plain mould 11 of 32 with craters, 5 of 64 with
+  the pull), and it is a draw, not a weak spot. The window drops the core
+  ring and reads "Wipe out the mould, or out-harvest it and cut it down by
+  15:00".
+- **Smoke checks** (`raw/headless-smoke.txt`; `larderworld census
+  seeds=1-8 hands=idle,random,farm,rush,strike cap=900`, CPU race world,
+  10 min on 4 cores). The mould was wiped in 0 of 40 games (before: core
+  taken by rush 34 of 64, strike 12, random 5, in the census above). Idle
+  reaches the cap 8 of 8 (mean score -0.34); farm (+0.26) and the strike AI
+  (+0.33) beat idle and random 8-0 each (sign test p 0.008); strike beats
+  farm 8-0. Random loses its squad 7 of 8, the rush 4 of 8; the shortest
+  game ends at 2:46 (a rush squad wiped). Idle and farm stand still for 0 s.
+  Tuning notes, not vetoes: no hand wipes the mould in 15 minutes now, so
+  every game is a stalemate scored at the cap; the review's escalation
+  (`Rules::overrun`) and a mould that starves when its crystals are held
+  are the next levers.
+- **The shapes as keys** (`larder-world -- shape=a|b|c|d|e`, the films on
+  the page) and **walker mass** (`Rules::mass`, `Rules::mass_for`: a walker
+  hits for 5,000 / the start walkers at scale 2, so 0.2 at 25,000; the
+  window and the census harness follow the walkers by default, `mass=`
+  sets it). Idle squad on the Fork with both on (`raw/shapes/`, software
+  Vulkan): A alive at 4:00 (3,855 walkers); B wiped at 2:50, was 0:47
+  (48,617 walkers, the mesh never starves at upkeep 0.00001); C alive at
+  4:00, was wiped at 1:56 (29,137 at 1:00, 10,869 at 2:00, 13,406 at 4:00);
+  D alive at 4:00 (28,841, 14,733, 16,140); E alive at 4:00, but starves
+  to 3,033 by 2:00.

@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12T17:50Z
+updated: 2026-11-12T22:15Z
 sources: [Reports/rounds-2026-11-12.md, Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [squad::Burst, World::burst, Engine::burst, Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
 ---
@@ -21,7 +21,9 @@ the window (`larder-world`) E opens the tools page: blast, det cord and
 mine work; every soldier at the larder takes one tool, a selected one up
 to five. The crater a blast, cord
 or shot leaves (`BigDish::scorch_disc`; GPU binding 47 since #113, shared
-`scorch_keep` 0.1, `scorch_full` 30) is the one scorch in the game. Each tool
+`scorch_keep` and `scorch_full`: 0 and 150 in the race world since PR 3b's
+cone, were 0.1 and 30, which earlier `kitplans` tables used) is the one
+scorch in the game. Each tool
 shows in the mould; mines are weak and the det cord starves nothing until
 food flows ([report](../../Reports/squad-toolkit-2026-11-12.md)). Tools take
 carry space and come from the larder (`KitRules`: a runner holds 5 at 50

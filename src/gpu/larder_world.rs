@@ -84,6 +84,11 @@ pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
         energy_flow: p.energy_flow,
         hunger_scent: p.hunger_scent,
         hunger_at: p.hunger_at,
+        // The crater's shape, as the CPU's race world sets it (the cone,
+        // `race_params`).
+        scorch_keep: p.scorch_keep,
+        scorch_full: p.scorch_full,
+        scorch_cone: p.scorch_cone,
         seed,
         ..Settings::big_dish()
     }
@@ -509,8 +514,12 @@ impl World for GpuWorld {
         x >= 0.0 && y >= 0.0 && (x as usize) < d.w && (y as usize) < d.h && d.agar[y as usize * d.w + x as usize]
     }
 
-    fn stop_births(&mut self) {
-        self.s.birth_energy = f32::INFINITY;
+    fn stop_births(&mut self) -> f32 {
+        std::mem::replace(&mut self.s.birth_energy, f32::INFINITY)
+    }
+
+    fn start_births(&mut self, was: f32) {
+        self.s.birth_energy = was;
     }
 
     fn food_deposit(&self) -> f32 {
@@ -655,8 +664,11 @@ mod tests {
         fn open(&self, x: f32, y: f32) -> bool {
             self.g.open(x, y)
         }
-        fn stop_births(&mut self) {
+        fn stop_births(&mut self) -> f32 {
             self.g.stop_births()
+        }
+        fn start_births(&mut self, was: f32) {
+            self.g.start_births(was)
         }
         fn food_deposit(&self) -> f32 {
             self.g.food_deposit()
