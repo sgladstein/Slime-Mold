@@ -56,22 +56,7 @@ the merge order, are in *Larder World: shared rules and merge order*, below.
 | L-CA | Campaign and onboarding: a goal the player can read, no soft lock, missions as map data (row W5) | *Design the Larder campaign and onboarding* thread | nothing (owner approved 11-12 04:44Z) | design merged (#95); mission layer next. Its `larder_world.rs` asks (an overrun loss, a reserve recruit, a stuck measure) ride in the Larder thread's PR 1, off by default |
 | L-AI | Player AI for Larder playtests (`src/mould/larder_ai.rs`, `src/mould/larder_world_ai.rs`, `examples/larderai.rs`, `larder -- SEED ai=STYLE`) | Player AI thread | nothing | **built 11-11** on the CPU field: [report](Reports/larder-ai-2026-11-11.md), [page](wiki/world/player-ai.md). Plays through `Cmd`s only, sees a `View`, one brain per `Side`; five styles; boom, lure and adapt beat idle and random 16/16 held out. **Ported to the Larder world 11-12** (`src/mould/larder_world_ai.rs`, hands in `examples/larderworld.rs`): [report](Reports/larder-world-ai-2026-11-12.md); boom, claim, late, fort beat the scripted farm 15-16/16 held out, strike wiped the mould once. Next: the tier counter tests (Sporer, Sleeper, Swarmer), `mould_grid` on the GPU world, two AI teams once a second side exists, exploiter search |
 
-<<<<<<< HEAD
 ### Built and building: the scale and world steps
-=======
-### Next: waits on the owner
-
-| # | Step | Owner | Waits on |
-| --- | --- | --- | --- |
-| P | **Play Keep It Alive and The Wild One by hand** | Scotttt | nothing. This is the one step that unblocks most of the rest |
-| G1 | Keep It Alive: trace single games to find what sends one into the short or long hump. Measures only; the game does not change | Triage thread | **done 11-10**; owner picked "Trace it now" (card, 18:56Z): the first pile on mostly-asleep mould decides it ([report](Reports/mould-keep-alive-luck-2026-11-10.md)). Next: a 20 s landing preview, a game change |
-| G2 + R0 | **The Wild One's middle (seconds 30 to 150), done as Bloomfront Stage 0.** First separate which of lamp, snip and oats needs the aim; then give the wild mould a scripted hand on a mirrored dish | one thread, to be chosen | P for G2; the owner's say for R0 (HANDOFF decision 7, "wait or replace") |
-| G3 | The snip: make a cut-off piece visibly starve, or take it off The Wild One | Triage thread | P |
-| E6 | Keyed random draws and the dead-dish slowdown | Pixel_Physics thread | timing only: see *One census reset*, below; the keyed draw itself is built inside S1 (`keyed`, used only with `Params::all_at_once`, off by default) |
-| E7 | Sound for the game, from Pixel_Physics's `src/audio/` | Pixel_Physics thread | **built 11-10** (owner: "yes to sound", 19:22Z; [report](Reports/mould-sound-2026-11-10.md)). Next: the owner's ears on the Mould Sound page. **Larder World sound built 11-12** ([report](Reports/larder-sound-2026-11-12.md), [page](https://claude.ai/artifact/P4hk1fsSXQj3qXuwieffa7)): shots weigh the walkers they killed, a pulse as the mould nears; O toggles; levels await the owner's ears |
-
-### Then: the scale fork
->>>>>>> origin/main
 
 | # | Step | Owner | Waits on |
 | --- | --- | --- | --- |
@@ -252,7 +237,7 @@ still change it (11-11 15:17Z). Rows are as they stood.
 | G2 + R0 | **The Wild One's middle (seconds 30 to 150), done as Bloomfront Stage 0.** First separate which of lamp, snip and oats needs the aim; then give the wild mould a scripted hand on a mirrored dish | one thread, to be chosen | P for G2; the owner's say for R0 (HANDOFF decision 7, "wait or replace") |
 | G3 | The snip: make a cut-off piece visibly starve, or take it off The Wild One | Triage thread | P |
 | E6 | Keyed random draws and the dead-dish slowdown | Pixel_Physics thread | timing only: see *One census reset*, below; the keyed draw itself is built inside S1 (`keyed`, used only with `Params::all_at_once`, off by default) |
-| E7 | Sound for the game, from Pixel_Physics's `src/audio/` | Pixel_Physics thread | **built 11-10** (owner: "yes to sound", 19:22Z; [report](Reports/mould-sound-2026-11-10.md)). Next: the owner's ears on the Mould Sound page |
+| E7 | Sound for the game, from Pixel_Physics's `src/audio/` | Pixel_Physics thread | **built 11-10** (owner: "yes to sound", 19:22Z; [report](Reports/mould-sound-2026-11-10.md)). Next: the owner's ears on the Mould Sound page. **Larder World sound built 11-12** ([report](Reports/larder-sound-2026-11-12.md), [page](https://claude.ai/artifact/P4hk1fsSXQj3qXuwieffa7)): shots weigh the walkers they killed, a pulse as the mould nears; O toggles; levels await the owner's ears |
 | G4 | Star bars re-checked on 16 or more seeds | Triage thread | G1-G3; and S5 if the GPU goes ahead, because S5 re-derives the bars anyway |
 | R1-R2 | Bloomfront Stage 1 (spend to act; needs a currency first, since the food store sits at a median of 0, [brainstorm](Reports/rts-design-2026-11-10/brainstorm/README.md)) and Stage 2 (grow and sever) | RTS thread | R0's gate (equal hands 45-55%, sharp beats clumsy on 16 paired seeds); P (Stage 1's gate needs the owner's play); G3 (Stage 2's sever is the snip that bites) |
 | R3-R4 | Bloomfront Stages 3 and 4 | RTS thread | the scale fork; Stage 4's lockstep needs the integer simulation (HANDOFF decision 6) |
