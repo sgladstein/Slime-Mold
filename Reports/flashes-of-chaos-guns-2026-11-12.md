@@ -135,6 +135,26 @@ rate and slots, not food per shot (shots are free since the owner's playtest).
   1070 (today 8-40 units add 1.0-1.5 ms a frame).
 - Readability: a round leaves a mark in the mould that says which card did what.
 
+## What the reviewers added (2026-11-12 15:31Z)
+
+The game designer and technical lead agreed with the core idea and changed how
+to build it:
+
+- No third weapons system: the payload cards are the squad toolkit's tools
+  (blast, mine, det cord, germ, sleep gas, mask and reek, the crater). A round
+  compiles to entries in the toolkit's burst list plus `squad::ShotIn`, no
+  per-card WGSL, so a card is a Rust table row and the GPU, twins and sound get
+  it free. The integration thread owns the burst list; agree the shape first.
+- Loadouts per squad or unit type, set between missions or at the larder.
+- Cards are the campaign's unlocks, one per mission with a mission that
+  teaches it.
+- Caps: `SHOTS_MAX` and `MAX_HITS` are 256 a frame; split and multicast
+  multiply both, so choose and test the behaviour at the cap (drop oldest or
+  merge).
+- Testing: census each card against no card, random loadouts as the control,
+  a CPU search for dominant combos; two or three modifiers first.
+- Hold the GPU port until blast-carry's dominance is settled.
+
 ## Suggested first experiment
 
 1. CPU world: a round of up to four cards; payloads crater, bait, alarm, germ,
