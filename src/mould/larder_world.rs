@@ -49,7 +49,7 @@
 //! ticks.
 
 use super::big::{BigDish, BigParams, LIFE_DEAD};
-use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn};
+use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
 use super::Rng;
 
 /// The world under the game: what the rules need of it, and nothing else.
@@ -89,6 +89,12 @@ pub trait World {
     /// cheaply: the GPU world needs an occupancy read-back first.
     fn mould_grid(&self, _bin: usize) -> Option<Vec<u32>> {
         None
+    }
+    /// For each point (fine cells), the gassed sleeping walkers within `r`
+    /// (`BigDish::gassed_near`), which don't bite; 0 where the world has
+    /// no sleep gas (the GPU world, so far).
+    fn calm(&self, at: &[(f32, f32)], _r: f32) -> Vec<u32> {
+        vec![0; at.len()]
     }
 }
 
@@ -146,6 +152,10 @@ impl World for BigDish {
 
     fn hash(&self) -> u64 {
         BigDish::hash(self)
+    }
+
+    fn calm(&self, at: &[(f32, f32)], r: f32) -> Vec<u32> {
+        self.gassed_near(at, r)
     }
 
     fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
@@ -424,6 +434,10 @@ pub struct Soldier {
     pub aim: Option<(f32, f32)>,
     /// Walkers in the block it aims at.
     pub dense: u32,
+    /// Its smell, x `Rules::smell` (1). The squad toolkit's mask (0: the
+    /// mould can't smell it, to sneak to a crystal) and reek (over 1: a
+    /// decoy that pulls the mould off the harvesters), `mould::kit`.
+    pub smell: f32,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -560,6 +574,7 @@ impl<W: World> Game<W> {
             touching: 0,
             aim: None,
             dense: 0,
+            smell: 1.0,
         });
     }
 
@@ -845,7 +860,7 @@ impl<W: World> Game<W> {
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
                 smell_r: 2.0 * sc,
-                smell: self.world.food_deposit() * r.smell * r.frame_ticks as f32,
+                smell: self.world.food_deposit() * r.smell * s.smell * r.frame_ticks as f32,
             });
             who.push(Some(k));
             from.push(at_crystal);
@@ -868,6 +883,10 @@ impl<W: World> Game<W> {
         self.shots += f.shots.len() as u32;
         self.last_shots = f.shots.iter().zip(&out.shots).map(|(i, o)| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed }).collect();
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
+        // Gassed mould sleeps and does not bite (the squad toolkit's sleep
+        // gas): its walkers are taken off each unit's touch.
+        let calm = self.world.calm(&f.units.iter().map(|u| (u.x, u.y)).collect::<Vec<_>>(), r.touch * sc);
+        let out = FrameOut { units: out.units.iter().zip(&calm).map(|(u, &c)| UnitOut { touching: u.touching.saturating_sub(c), ..*u }).collect(), ..out };
         let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };
         for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
             if let Some(c) = *c {

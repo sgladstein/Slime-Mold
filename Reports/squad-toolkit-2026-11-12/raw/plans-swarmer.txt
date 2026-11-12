@@ -1,0 +1,20 @@
+ swarmer  random seed  1: squad wiped at  197 s, score -1.672; soldiers  0, mould   3239, harvested      0, shots   138; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 7.07 ms a tick
+ swarmer randkit seed  1: squad wiped at  162 s, score -1.730; soldiers  0, mould   3576, harvested    300, shots   108; uses [1, 1, 1, 2, 0, 1], tool kills [1, 0, 0, 0, 0, 0]; 9.07 ms a tick
+ swarmer    loud seed  1: mould wiped at  124 s, score +1.993; soldiers  8, mould      0, harvested   9300, shots   145; uses [24, 4, 0, 0, 0, 1], tool kills [1801, 0, 0, 0, 0, 0]; 7.49 ms a tick
+ swarmer    farm seed  1:         cap at  600 s, score +0.235; soldiers  8, mould   4729, harvested  38714, shots  1341; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 8.14 ms a tick
+ swarmer    idle seed  1: squad wiped at  540 s, score -1.099; soldiers  0, mould  11115, harvested      0, shots   199; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 11.12 ms a tick
+ swarmer   quiet seed  1:         cap at  600 s, score +0.033; soldiers  3, mould   8504, harvested  42014, shots     0; uses [0, 0, 0, 0, 196, 11], tool kills [0, 0, 0, 0, 0, 0]; 8.41 ms a tick
+ swarmer  random seed  2: squad wiped at  156 s, score -1.740; soldiers  0, mould   6582, harvested    300, shots   108; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 7.58 ms a tick
+ swarmer  plague seed  1: mould wiped at  328 s, score +1.653; soldiers  8, mould      0, harvested  27000, shots   260; uses [0, 0, 0, 5, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 20.68 ms a tick
+ swarmer randkit seed  2: squad wiped at  213 s, score -1.645; soldiers  0, mould  11170, harvested   1200, shots   143; uses [1, 1, 0, 0, 0, 2], tool kills [1, 0, 0, 0, 0, 0]; 8.42 ms a tick
+ swarmer   siege seed  1:         cap at  600 s, score +0.187; soldiers  6, mould   6727, harvested  36014, shots  1438; uses [0, 0, 30, 0, 0, 0], tool kills [0, 0, 758, 0, 0, 0]; 8.74 ms a tick
+ swarmer    loud seed  2: mould wiped at  118 s, score +2.003; soldiers  8, mould      0, harvested   6900, shots    89; uses [32, 4, 0, 0, 0, 1], tool kills [2641, 0, 0, 0, 0, 0]; 7.76 ms a tick
+ swarmer    idle seed  2:         cap at  600 s, score -0.359; soldiers  3, mould  12750, harvested      0, shots   199; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 12.19 ms a tick
+ swarmer    farm seed  2:         cap at  600 s, score +0.130; soldiers  8, mould   9471, harvested  34214, shots   980; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 9.44 ms a tick
+ swarmer   quiet seed  2:         cap at  600 s, score +0.078; soldiers  8, mould  12042, harvested  31814, shots     0; uses [0, 0, 0, 0, 137, 14], tool kills [0, 0, 0, 0, 0, 0]; 9.35 ms a tick
+ swarmer  random seed  3: squad wiped at  175 s, score -1.708; soldiers  0, mould   5671, harvested      0, shots   119; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 7.78 ms a tick
+ swarmer   siege seed  2:         cap at  600 s, score +0.131; soldiers  8, mould   9347, harvested  33314, shots   944; uses [0, 0, 30, 0, 0, 0], tool kills [0, 0, 72, 0, 0, 0]; 10.02 ms a tick
+ swarmer randkit seed  3: squad wiped at  254 s, score -1.577; soldiers  0, mould   3668, harvested      0, shots    56; uses [0, 3, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 13.41 ms a tick
+payoff (swarmer): idle -0.524 (0/6/2); random -1.710 (0/0/8); randkit -1.636 (0/0/8); farm +0.023 (0/7/1); loud +1.956 (8/0/0); quiet +0.127 (0/8/0); plague +0.924 (4/4/0); siege +0.002 (0/7/1)
+gate1: every plan vs random/randkit 8/0; vs idle 8/0 except farm 7/1, siege 7/1. None survives Holm over 15 at 8 seeds.
+gate2: best loud; every other 0/8 p 0.008
