@@ -1,0 +1,62 @@
+cutprobe race world scale 2 walkers 15000, grow 300 s, follow 40 s, 3 cuts a seed, seeds [1, 2, 3, 4, 5, 6, 7, 8]
+arms: [("base", [])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 1 grown | alive 10370 parts1% 2 lcs 0.98 lone 0.00 rms 62.4 | crystals eaten from 8 of 23
+cut base 1 0 at fine cell (264, 136)
+base 1 0 | 254 254 0 | 0.95 1.49 0.90 8.8 5.42 | 40 rejoin 2 18.3 react 13 | 10370 8.58
+cut base 1 1 at fine cell (324, 148)
+base 1 1 | 71 71 0 | 0.21 5.76 0.52 25.1 33.65 | 24 rejoin 2 35.3 react 5 | 10370 8.58
+cut base 1 2 at fine cell (392, 148)
+base 1 2 | 64 64 0 | 0.33 3.20 0.76 8.7 17.82 | 19 rejoin 2 4.2 react 6 | 10370 8.58
+base 2 grown | alive 12300 parts1% 1 lcs 0.99 lone 0.00 rms 55.3 | crystals eaten from 11 of 23
+cut base 2 0 at fine cell (64, 272)
+base 2 0 | 282 282 0 | 0.94 1.90 0.86 4.3 3.84 | 21 rejoin 2 2.1 react 25 | 12300 9.43
+cut base 2 1 at fine cell (44, 120)
+base 2 1 | 204 204 0 | 0.81 1.69 0.90 6.0 6.52 | 21 rejoin 2 2.9 react 31 | 12300 9.43
+cut base 2 2 at fine cell (156, 76)
+base 2 2 | 204 204 0 | 0.98 1.71 0.93 7.1 4.61 | 40 rejoin 2 12.9 react 13 | 12300 9.43
+base 3 grown | alive 10966 parts1% 1 lcs 0.97 lone 0.00 rms 47.9 | crystals eaten from 9 of 23
+cut base 3 0 at fine cell (176, 188)
+base 3 0 | 221 221 0 | 0.56 2.00 0.85 6.8 6.52 | 21 rejoin 2 6.4 react 30 | 10966 9.91
+cut base 3 1 at fine cell (64, 216)
+base 3 1 | 100 100 0 | 0.88 2.29 0.83 4.4 7.77 | 20 rejoin 2 1.0 react 8 | 10966 9.91
+cut base 3 2 at fine cell (116, 80)
+base 3 2 | 46 46 0 | 0.33 2.50 0.70 18.7 53.98 | 16 rejoin 2 27.4 react 2 | 10966 9.91
+base 4 grown | alive 7722 parts1% 3 lcs 0.63 lone 0.00 rms 55.7 | crystals eaten from 6 of 23
+cut base 4 0 at fine cell (368, 80)
+base 4 0 | 126 126 0 | 0.52 3.66 0.62 21.6 14.99 | 40 rejoin 2 31.6 react 5 | 7722 8.11
+cut base 4 1 at fine cell (188, 196)
+base 4 1 | 89 89 0 | 0.50 3.30 0.74 18.7 46.94 | 17 rejoin 2 6.1 react 4 | 7722 8.11
+cut base 4 2 at fine cell (148, 76)
+base 4 2 | 88 88 0 | 0.54 4.46 0.66 12.5 11.84 | 33 rejoin 2 21.3 react 4 | 7722 8.11
+base 5 grown | alive 8043 parts1% 2 lcs 0.88 lone 0.00 rms 80.4 | crystals eaten from 6 of 23
+cut base 5 0 at fine cell (96, 100)
+base 5 0 | 64 64 0 | 0.58 5.80 0.47 10.6 15.30 | 28 rejoin 2 17.4 react 13 | 8043 8.11
+cut base 5 1 at fine cell (304, 120)
+base 5 1 | 61 61 0 | 0.27 6.90 0.52 17.1 12.80 | 40 rejoin 2 14.7 react 2 | 8043 8.11
+cut base 5 2 at fine cell (36, 148)
+base 5 2 | 49 49 0 | 0.33 2.85 0.60 4.7 13.49 | 17 rejoin 2 11.6 react 14 | 8043 8.11
+base 6 grown | alive 7461 parts1% 1 lcs 0.99 lone 0.00 rms 47.8 | crystals eaten from 6 of 23
+cut base 6 0 at fine cell (180, 192)
+base 6 0 | 225 225 0 | 0.92 1.78 0.85 6.2 6.35 | 21 rejoin 2 29.8 react 24 | 7461 8.37
+cut base 6 1 at fine cell (76, 276)
+base 6 1 | 104 104 0 | 0.36 4.85 0.54 15.0 20.08 | 23 rejoin 2 26.6 react 6 | 7461 8.37
+cut base 6 2 at fine cell (60, 68)
+base 6 2 | 61 61 0 | 0.36 6.06 0.49 28.9 43.64 | 25 rejoin 2 29.0 react 2 | 7461 8.37
+base 7 grown | alive 9265 parts1% 2 lcs 0.92 lone 0.00 rms 65.9 | crystals eaten from 9 of 23
+cut base 7 0 at fine cell (280, 180)
+base 7 0 | 237 237 0 | 0.45 6.66 0.49 26.8 24.09 | 23 rejoin 2 37.7 react 6 | 9265 7.14
+cut base 7 1 at fine cell (344, 256)
+base 7 1 | 159 159 0 | 0.67 2.00 0.84 8.8 8.99 | 23 rejoin 2 7.8 react 21 | 9265 7.14
+cut base 7 2 at fine cell (452, 244)
+base 7 2 | 90 90 0 | 0.66 3.49 0.62 20.3 11.66 | 40 rejoin 2 31.1 react 5 | 9265 7.14
+base 8 grown | alive 9418 parts1% 1 lcs 0.97 lone 0.00 rms 61.0 | crystals eaten from 7 of 23
+cut base 8 0 at fine cell (52, 80)
+base 8 0 | 263 263 0 | 0.97 1.59 0.88 9.3 8.55 | 21 rejoin 2 56.5 react 24 | 9418 7.22
+cut base 8 1 at fine cell (248, 168)
+base 8 1 | 82 82 0 | 0.46 5.02 0.66 14.0 11.87 | 40 rejoin 2 6.1 react 18 | 9418 7.22
+cut base 8 2 at fine cell (352, 244)
+base 8 2 | 39 39 0 | 0.38 11.27 0.44 15.8 12.65 | 40 rejoin 2 35.0 react 1 | 9418 7.22
+
+summary (mean over cuts)
+base: cuts 24 n0 133 lcs20 0.58 frag 3.84 lcs 0.69 rms20 13.3 compact20 16.81 life 27 moved 19.7 fates {"rejoin": 24}
