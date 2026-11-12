@@ -223,6 +223,17 @@ seeds 5-12: turtle lower 7/8, guard and pumps 7/8, wall, ring and killzone
 even, farm and army unchanged. The full gate (seeds 5-36 and 201-232, two
 maps) is being re-run on the new baseline.
 
+**Baseline breaks, 11-12 evening: #164, #169 and #170.** Each of these
+changes what the hands can do or what ends a round, so census rows from
+either side of one don't compare. **#164** (cdccf127) makes every mould
+headless (no king rule). **#169** (a412af4) lets a soldier build
+anywhere, so the AI and census hands build differently (technical lead,
+22:42Z). **#170** is the economy (rations, hunger, overrun 20 s, Regrow
+removed); it is open now, and its merge commit goes here when it lands. No
+rerun is due for any of them. Under *build first, balance later* the next
+scheduled balance pass starts from main after #170, and older rows stay as
+history.
+
 **Census reset held: mould density (11-12 16:20Z, waits on the owner).**
 The one-body thread found that the owner's "specks" come from density.
 At today's 3-5% of open cells holding a walker the mould draws as beads,
