@@ -763,3 +763,38 @@ At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad 
 - **Not met, as before**: strike beats farm 26-6 and 28-4 and every other plan (all hold), since food does not bind. That is PR 4's.
 
 **Cost.** Wading is one division a soldier a tick, on the CPU, from a count both engines already read back. The cone is the toolkit's crater mode, already timed: 0.03 ms a step on software Vulkan.
+
+## A core that grows back, and the crater's time in the cone, 2026-11-12
+
+**Why.** The tiers thread asked for the Trunk's core before the Drifter's migrating one (11-12): the game designer's "regrows unless the body is starved", the lesson of campaign mission 4 (cut, then starve). With `CoreKind::Fixed`, a squad that holds the core for 5 s ends the mould's births for good, and on the race world that is the only way any plan ends a game (integration, 17:10Z, from the one-body thread's review). The owner, on the crater clips (16:55Z): "show me 1 second. also in these videos they were mostly shooting at individuals so it was hard to evaluate until the end when they shot at the core of slime".
+
+**What.**
+- **`CoreKind::Regrow { starve_secs }`**: the core falls as a fixed one does, and births stop. If the mould eats anything from any crystal in the `starve_secs` after the fall, the core grows back when they are up: births restart and the hold clock starts again. If it eats nothing all that time it stays down for good. So taking the core alone doesn't stop a Trunk; taking it while the squad holds the crystals, or has cut the body off them, does.
+- **"Eats" is the whole body's** (`Game::mould_ate`: the crystals' charge gone less the squad's take), which both engines already read back. The core's own piece starving would need a per-region read-back on the GPU; the tiers thread chose the whole-body rule. With `BigParams::crystal_regrow` on, regrowth hides eating (off on every map so far).
+- **`World::stop_births` returns what it stopped** (the birth energy, or the Garden's cap) and `World::start_births` puts it back, on the CPU, the GPU world and the player's Garden. `CoreKind` is no longer `Eq` (it holds an `f32`).
+- **Off unless a tier sets it** (`Tier::core`); the tiers thread sets each tier's `starve_secs`. Census keys `regrow=S` and `core=fixed|headless` set the core over the tier's; a row adds `core grew back N`. The window's HUD says when the core is taken ("it grows back in N s unless the mould eats nothing till then") and when it grows back.
+- Test: `a_regrowing_core_grows_back_unless_the_mould_starves` (a fed mould's core grows back and births restart; a starved one's stays down).
+
+**Dev census** (b0538ae with the change, race seeds 1-6, five hands, 15-minute games, `regrow=30` against the fixed core; raw `regrow/`). Only the rush takes the core on these seeds, on 4 of 6. Every other hand's scores are identical.
+
+| rush, seed | 1 | 2 | 3 | 4 | 5 | 6 |
+| --- | --- | --- | --- | --- | --- | --- |
+| fixed core: end, mould left | core fell 90 s, 12 left | fell 69 s, 2 left | never fell, 9,991 | fell 88 s, 19 left | squad wiped 288 s | fell 56 s, 5 left |
+| `regrow=30`: end, mould left | grew back 22 times, 2,745 | grew back 22 times, 2,378 | the same | grew back once, 18 | the same | grew back once, squad wiped 558 s |
+
+- Under the fixed core, a rush that takes the core has won in all but name: the mould dwindles to 2-19 walkers by the cap with no births. Under `regrow=30` the rush on seeds 1 and 2 sits on the core and takes it again about every 38 s while the mould keeps eating, and the mould ends at 2,400-2,700 walkers.
+- Rush scores lower on 3 of 6 (none higher, median -0.08, p 0.25) and kills more on 4 (p 0.13). Too few seeds to say more; the tiers thread tunes `starve_secs` per tier on its own census.
+
+**The crater's time in the cone.** A **volley** hand (`larder-world look=DIR hand=volley`): the squad of 9 stands off from the thick ring on the core crystal, burns a line across it from 22 to 34 s and stops, so the hole can be watched filling. Clips at 10, 6, 3 and 1 s and none (`crater/clips/V*`), the stand and rush clips re-rendered with the cone (T, R, W), on the page's first three sections.
+
+| crater | 10 s | 6 s | 3 s | 1 s | none |
+| --- | --- | --- | --- | --- | --- |
+| volley: walkers killed by 46 s | 923 | 768 | 541 | 418 | 309 |
+| stand at the edge: killed by 40 s | 486 | 525 | 401 | 272 | 237 |
+| rush: killed by 19 s (squad wiped in each) | 1,289 | 1,335 | 1,368 | 1,352 | 1,409 |
+
+- What the volley clips show: at 10 s the ring's front is cleared and pocked holes are still there 4 s after firing stops; at 6 s fewer holes are left; at 3 s the notch is small and closes in about 2 s; at 1 s it looks almost like no craters, even under fire.
+- The rush's kills don't follow the crater time: its squad is wiped inside the body in every clip, and llvmpipe runs in parallel are not bit-repeatable (two clips with the same settings killed 1,289 and 1,300).
+- The time waits on the owner's pick; 6 and 3 s are gated on the runners meanwhile, so either can be set without another wait.
+
+**Cost.** One comparison a tick while a core is down, on the CPU; the eating sum is over the crystals the game already reads. Nothing on the GPU.
