@@ -1,0 +1,63 @@
+kitprobe test=blast warm=60 seeds [1, 2, 3, 4, 5, 6, 7, 8]; kit KitRules { reach: 24.0, blast_r: 6.0, blast_alarm: 50.0, crater_r: 7.0, crater_secs: 20.0, blast_price: 60.0, mine_r: 5.0, mine_trigger: 40, mine_price: 80.0, cord_r: 2.5, cord_every: 2.0, cord_price: 3.0, cord_max: 48.0, germ_r: 5.0, sick_secs: 6.0, immune_secs: 40.0, sick_upkeep: 60.0, sick_catch: 0.2, sick_deposit: 1.0, sick_keep: 0.9, germ_price: 300.0, gas_r: 12.0, gas_secs: 20.0, gas_death: 0.0, gas_price: 150.0, reek: 4.0, carry_max: 0, carry_each: 1, tool_weight: 100.0, restock_r: 6.0, alarm_keep: 0.95 }
+     none seed  1: before 359, killed 0, in disc 2s 360, hole 2s 79, in disc 5s 369, hole 5s 69, in disc 10s 359, hole 10s 72, in disc 20s 368, hole 20s 69
+ nocrater seed  1: before 359, killed 359, in disc 2s 77, hole 2s 355, in disc 5s 115, hole 5s 321, in disc 10s 146, hole 10s 290, in disc 20s 193, hole 20s 243
+   crater seed  1: before 359, killed 359, in disc 2s 71, hole 2s 360, in disc 5s 87, hole 5s 343, in disc 10s 99, hole 10s 333, in disc 20s 108, hole 20s 323
+     none seed  2: before 338, killed 0, in disc 2s 343, hole 2s 94, in disc 5s 340, hole 5s 96, in disc 10s 334, hole 10s 104, in disc 20s 345, hole 20s 92
+ nocrater seed  2: before 338, killed 338, in disc 2s 64, hole 2s 368, in disc 5s 118, hole 5s 318, in disc 10s 152, hole 10s 285, in disc 20s 191, hole 20s 249
+   crater seed  2: before 338, killed 338, in disc 2s 85, hole 2s 352, in disc 5s 91, hole 5s 346, in disc 10s 91, hole 10s 344, in disc 20s 69, hole 20s 370
+     none seed  3: before 356, killed 0, in disc 2s 347, hole 2s 108, in disc 5s 360, hole 5s 99, in disc 10s 358, hole 10s 104, in disc 20s 364, hole 20s 99
+ nocrater seed  3: before 356, killed 356, in disc 2s 70, hole 2s 384, in disc 5s 115, hole 5s 341, in disc 10s 121, hole 10s 328, in disc 20s 178, hole 20s 269
+   crater seed  3: before 356, killed 356, in disc 2s 71, hole 2s 379, in disc 5s 73, hole 5s 374, in disc 10s 79, hole 10s 370, in disc 20s 36, hole 20s 414
+     none seed  4: before 337, killed 0, in disc 2s 335, hole 2s 102, in disc 5s 346, hole 5s 93, in disc 10s 341, hole 10s 95, in disc 20s 343, hole 20s 97
+ nocrater seed  4: before 337, killed 337, in disc 2s 119, hole 2s 315, in disc 5s 159, hole 5s 272, in disc 10s 201, hole 10s 234, in disc 20s 258, hole 20s 176
+   crater seed  4: before 337, killed 337, in disc 2s 107, hole 2s 323, in disc 5s 127, hole 5s 305, in disc 10s 122, hole 10s 310, in disc 20s 134, hole 20s 295
+     none seed  5: before 394, killed 0, in disc 2s 409, hole 2s 38, in disc 5s 397, hole 5s 45, in disc 10s 418, hole 10s 29, in disc 20s 414, hole 20s 29
+ nocrater seed  5: before 394, killed 394, in disc 2s 54, hole 2s 386, in disc 5s 137, hole 5s 306, in disc 10s 242, hole 10s 206, in disc 20s 292, hole 20s 145
+   crater seed  5: before 394, killed 394, in disc 2s 69, hole 2s 370, in disc 5s 79, hole 5s 364, in disc 10s 82, hole 10s 360, in disc 20s 81, hole 20s 365
+     none seed  6: before 402, killed 0, in disc 2s 399, hole 2s 55, in disc 5s 403, hole 5s 48, in disc 10s 392, hole 10s 64, in disc 20s 385, hole 20s 67
+ nocrater seed  6: before 402, killed 402, in disc 2s 112, hole 2s 333, in disc 5s 209, hole 5s 235, in disc 10s 270, hole 10s 180, in disc 20s 332, hole 20s 119
+   crater seed  6: before 402, killed 402, in disc 2s 111, hole 2s 327, in disc 5s 114, hole 5s 331, in disc 10s 123, hole 10s 322, in disc 20s 130, hole 20s 316
+     none seed  7: before 386, killed 0, in disc 2s 391, hole 2s 44, in disc 5s 394, hole 5s 47, in disc 10s 377, hole 10s 63, in disc 20s 394, hole 20s 45
+ nocrater seed  7: before 386, killed 386, in disc 2s 140, hole 2s 295, in disc 5s 239, hole 5s 201, in disc 10s 301, hole 10s 135, in disc 20s 356, hole 20s 78
+   crater seed  7: before 386, killed 386, in disc 2s 139, hole 2s 297, in disc 5s 162, hole 5s 271, in disc 10s 159, hole 10s 273, in disc 20s 187, hole 20s 247
+     none seed  8: before 381, killed 0, in disc 2s 377, hole 2s 66, in disc 5s 387, hole 5s 58, in disc 10s 380, hole 10s 70, in disc 20s 372, hole 20s 70
+ nocrater seed  8: before 381, killed 381, in disc 2s 44, hole 2s 396, in disc 5s 75, hole 5s 367, in disc 10s 71, hole 10s 371, in disc 20s 77, hole 20s 365
+   crater seed  8: before 381, killed 381, in disc 2s 68, hole 2s 373, in disc 5s 49, hole 5s 391, in disc 10s 32, hole 10s 410, in disc 20s 9, hole 20s 431
+(96 s)
+
+means:
+       none: before 369, killed 0, in disc 2s 370, hole 2s 73, in disc 5s 374, hole 5s 69, in disc 10s 370, hole 10s 75, in disc 20s 373, hole 20s 71
+   nocrater: before 369, killed 369, in disc 2s 85, hole 2s 354, in disc 5s 146, hole 5s 295, in disc 10s 188, hole 10s 254, in disc 20s 235, hole 20s 206
+     crater: before 369, killed 369, in disc 2s 90, hole 2s 348, in disc 5s 98, hole 5s 341, in disc 10s 98, hole 10s 340, in disc 20s 94, hole 20s 345
+
+pairs (higher / lower / tied, two-sided sign p):
+  nocrater vs none, before: 0 / 0 / 8, p 1.0000
+  nocrater vs none, killed: 8 / 0 / 0, p 0.0078
+  nocrater vs none, in disc 2s: 0 / 8 / 0, p 0.0078
+  nocrater vs none, hole 2s: 8 / 0 / 0, p 0.0078
+  nocrater vs none, in disc 5s: 0 / 8 / 0, p 0.0078
+  nocrater vs none, hole 5s: 8 / 0 / 0, p 0.0078
+  nocrater vs none, in disc 10s: 0 / 8 / 0, p 0.0078
+  nocrater vs none, hole 10s: 8 / 0 / 0, p 0.0078
+  nocrater vs none, in disc 20s: 0 / 8 / 0, p 0.0078
+  nocrater vs none, hole 20s: 8 / 0 / 0, p 0.0078
+  crater vs none, before: 0 / 0 / 8, p 1.0000
+  crater vs none, killed: 8 / 0 / 0, p 0.0078
+  crater vs none, in disc 2s: 0 / 8 / 0, p 0.0078
+  crater vs none, hole 2s: 8 / 0 / 0, p 0.0078
+  crater vs none, in disc 5s: 0 / 8 / 0, p 0.0078
+  crater vs none, hole 5s: 8 / 0 / 0, p 0.0078
+  crater vs none, in disc 10s: 0 / 8 / 0, p 0.0078
+  crater vs none, hole 10s: 8 / 0 / 0, p 0.0078
+  crater vs none, in disc 20s: 0 / 8 / 0, p 0.0078
+  crater vs none, hole 20s: 8 / 0 / 0, p 0.0078
+  crater vs nocrater, before: 0 / 0 / 8, p 1.0000
+  crater vs nocrater, killed: 0 / 0 / 8, p 1.0000
+  crater vs nocrater, in disc 2s: 4 / 4 / 0, p 1.0000
+  crater vs nocrater, hole 2s: 3 / 5 / 0, p 0.7266
+  crater vs nocrater, in disc 5s: 0 / 8 / 0, p 0.0078
+  crater vs nocrater, hole 5s: 8 / 0 / 0, p 0.0078
+  crater vs nocrater, in disc 10s: 0 / 8 / 0, p 0.0078
+  crater vs nocrater, hole 10s: 8 / 0 / 0, p 0.0078
+  crater vs nocrater, in disc 20s: 0 / 8 / 0, p 0.0078
+  crater vs nocrater, hole 20s: 8 / 0 / 0, p 0.0078

@@ -1,0 +1,32 @@
+larderhole race world, scale 2 walkers 5000, grow 60 s, fire 20 s, rest 10 s, squad 4, stand 8 dish cells past the edge, seeds [3]; rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 0.0, hp: 100.0, drain: 1.0, touch: 1.5, smell: 0.5, smell_r: 2.0, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, cap: 900.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, overrun: 0.0, reserve: 0.0, seek: true, crater: 10.0 }
+      base hold seed  3: placed true, at the start 130 cells 276 walkers in range; 5.48 ms a tick
+    hole    29 32 30 35 33 29 35 31 36 40 31 29 29 33 32 26 23 25 19 17 19 20 22 20 22 18 17 12 13 16
+    cells   134 132 138 127 133 140 144 142 152 144 150 153 153 143 155 159 159 164 171 175 173 171 181 177 181 183 185 203 207 204
+    walkers 282 287 302 295 294 304 302 301 325 320 330 337 333 330 351 374 382 385 393 421 428 435 449 456 473 474 504 520 552 549
+    hit at  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    hits    0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0
+    killed  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    alive   4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+      base fire seed  3: placed true, at the start 130 cells 276 walkers in range; 5.46 ms a tick
+    hole    33 38 44 58 54 73 75 73 65 63 56 75 63 66 58 63 75 81 69 86 91 76 64 62 53 45 51 48 37 31
+    cells   143 131 127 125 134 129 128 137 149 154 143 130 146 128 135 130 112 118 137 124 116 132 144 159 149 162 155 150 158 163
+    walkers 278 237 225 187 182 164 163 182 190 213 208 173 186 171 172 171 162 155 181 156 163 190 209 235 246 258 297 299 322 344
+    hit at  5.1 8.4 9.4 10.0 5.5 9.8 1.1 - 2.7 - 5.0 4.2 10.3 8.1 8.9 14.1 5.8 12.2 0.9 8.4 - - - - - - - - - -
+    hits    4/4 4/4 4/4 4/4 4/4 4/4 2/4 0/4 2/4 0/4 4/4 4/4 3/4 4/4 4/4 4/4 4/4 4/4 1/4 4/4 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0
+    killed  14 42 48 64 17 42 10 0 7 0 31 44 24 27 28 35 20 74 12 45 0 0 0 0 0 0 0 0 0 0
+    alive   4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 3 3 3
+  crater:0 fire seed  3: placed true, at the start 130 cells 276 walkers in range; 5.27 ms a tick
+    hole    35 32 44 43 42 35 42 37 32 33 34 35 31 37 32 33 29 29 31 28 36 30 22 27 25 24 23 23 23 21
+    cells   130 140 122 120 132 142 127 139 145 137 148 141 145 140 160 144 156 160 152 148 149 156 169 174 169 163 173 185 183 193
+    walkers 275 280 253 248 256 262 248 265 280 277 286 286 286 283 309 322 333 347 339 346 348 354 382 392 411 420 439 463 471 515
+    hit at  5.1 5.2 5.2 5.0 5.6 4.3 5.1 5.2 3.6 4.4 3.0 5.3 5.3 3.7 5.5 5.0 3.2 3.7 4.2 2.8 - - - - - - - - - -
+    hits    4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0
+    killed  14 7 8 8 7 5 4 9 4 9 5 10 6 4 8 9 5 4 7 5 0 0 0 0 0 0 0 0 0 0
+    alive   4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+
+median over seeds, hole in dish cells (fire / hold) at [5, 10, 20, 22, 25, 30] s after the squad is set down; firing stops at 20 s:
+        base: fire   54   63   86   76   53   31  | hold   33   40   17   20   22   16  | at 20 s the hole is 66% of the mould in range at the start; hits land 9.6 dish cells out in the last 5 s of fire; 5 s after the last shot 62% of the hole is left; 584 killed under fire; 3 of 4 soldiers alive at the end; 5.46 ms a tick
+    crater:0: fire   42   33   28   30   25   21  | hold   33   40   17   20   22   16  | at 20 s the hole is 22% of the mould in range at the start; hits land 3.8 dish cells out in the last 5 s of fire; 5 s after the last shot 89% of the hole is left; 138 killed under fire; 4 of 4 soldiers alive at the end; 5.27 ms a tick
+
+the hole at 20 s of fire against base, paired by seed (larger / smaller, ties left out; sign test, Holm over 1):
+    crater:0: 0 larger, 1 smaller, median difference -58 dish cells, p 1.0000

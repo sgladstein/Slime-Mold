@@ -62,7 +62,10 @@
 //! (`bench`), a mission's too; `hand=every` presses every command on the
 //! card each game second (`press_every`), and `sound=` (empty: no file)
 //! puts the round's sound on tape. The CI smoke tests play every mission
-//! and `hand=every` through it for 60 game seconds.
+//! and `hand=every` through it for 60 game seconds. `crater=S` sets how
+//! long a hit's crater lasts (`Rules::crater`, 10 game seconds; 0 is off);
+//! `aim=STRIKE,EVERY,SPREAD` sets the shot's strike, fire rate and aim
+//! spread (`Rules::spread`).
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -147,6 +150,14 @@ struct Args {
     /// The mould's voice at the start (`voice=0` turns it off; K in the
     /// window).
     voice: bool,
+    /// `crater=S`: game seconds of crater a hit lays (`Rules::crater`; 0
+    /// turns the hole under fire off, to compare).
+    crater: Option<f32>,
+    /// `aim=STRIKE,EVERY,SPREAD`: a shot's strike radius, game seconds
+    /// between one soldier's shots, and aim spread, dish cells
+    /// (`Rules::strike`, `shot_every`, `spread`): the look A/B of a
+    /// scattered smaller strike against the round one.
+    aim: Option<[f32; 3]>,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -337,7 +348,13 @@ impl App {
             }
             None => GpuWorld::new(device, queue, s, a.scale),
         };
-        let rules = mission.as_ref().map_or_else(Rules::default, |m| m.rules(Rules::default()));
+        let mut rules = mission.as_ref().map_or_else(Rules::default, |m| m.rules(Rules::default()));
+        if let Some(c) = a.crater {
+            rules.crater = c;
+        }
+        if let Some([strike, every, spread]) = a.aim {
+            (rules.strike, rules.shot_every, rules.spread) = (strike, every, spread);
+        }
         let game = Game::new(world, rules, a.seed);
         self.mission = mission.map(|m| Tracker::new(m, &game));
         self.mission_sec = 0;
@@ -426,6 +443,17 @@ impl App {
     fn order_at(&mut self, ids: &[usize], at: (f32, f32)) {
         let o = self.order_for(at);
         self.order_all(ids, |_| o);
+    }
+
+    /// The building just placed (the newest): the selected soldiers go to
+    /// raise it (Shift: after their orders). With none selected, idle
+    /// soldiers in range take it up by themselves (`Game::build_turn`).
+    fn builders(&mut self, sel: &[usize]) {
+        let Some(g) = &self.game else { return };
+        let Some(b) = g.buildings.len().checked_sub(1) else { return };
+        if g.buildings[b].built < 1.0 {
+            self.order_all(sel, |_| Order::Build(b));
+        }
     }
 
     /// What a point means as an order: harvest a crystal under it, else
@@ -559,8 +587,8 @@ impl App {
                         let kind = build_kind(id).unwrap();
                         if let Some(why) = g.build_blocked(kind, at) {
                             self.hud.alert(&format!("Can't build a {} there: {why}", kind.name()), None, theme::WARN);
-                        } else {
-                            g.apply(Cmd::Build(kind, at));
+                        } else if g.apply(Cmd::Build(kind, at)) {
+                            self.builders(&sel);
                         }
                     }
                 }
@@ -571,6 +599,8 @@ impl App {
                         if !g.apply(Cmd::Wall(from, to)) {
                             let why = if g.bank < price { format!("A wall that long costs {price:.0} food") } else { "Both ends of a wall must be within a soldier's range".to_string() };
                             self.hud.alert(&why, None, theme::WARN);
+                        } else {
+                            self.builders(&sel);
                         }
                     }
                 }
@@ -830,6 +860,7 @@ impl App {
                         Order::Clear(x, y) => Some((x, y)),
                         Order::Attack => Some(g.core),
                         Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
+                        Order::Build(b) => g.buildings.get(b).map(|b| b.at),
                         Order::Hold => None,
                     };
                     let Some(to) = to else { continue };
@@ -899,6 +930,7 @@ impl App {
                 Order::Hold => None,
                 Order::Move(..) => Some(Icon::Move),
                 Order::Fight(..) => Some(Icon::Attack),
+                Order::Build(..) => Some(Icon::Wall),
                 Order::Clear(..) => Some(Icon::Crystal),
                 Order::Burn(..) => Some(Icon::Burn),
                 Order::Attack => Some(Icon::Attack),
@@ -913,6 +945,16 @@ impl App {
                 Order::Move(..) => "moving",
                 Order::Fight(..) if s.dense > 0 => "fighting its way",
                 Order::Fight(..) => "attack-moving",
+                Order::Build(b) => match g.buildings.get(b) {
+                    Some(bd) => match bd.kind {
+                        Kind::Turret => "building a turret",
+                        Kind::Lure => "building a lure",
+                        Kind::Pump => "building a pump",
+                        Kind::Outpost => "building an outpost",
+                        Kind::Wall { .. } => "building a wall",
+                    },
+                    None => "building",
+                },
                 Order::Clear(..) if s.homing => "carrying charge home",
                 Order::Clear(..) => "harvesting a crystal",
                 Order::Burn(..) => "holding a burn line",
@@ -1089,6 +1131,7 @@ impl App {
         m.help = vec![
             ("Right click".into(), "Move there; on a crystal, harvest it".into()),
             ("Shift + order".into(), "Queue it after the soldiers' current orders".into()),
+            ("Place a building".into(), "The selected soldiers walk there and raise it; idle soldiers nearby help".into()),
             ("A, click".into(), "Attack-move there; on the core, attack it".into()),
             ("Click the larder".into(), "Select it: B buys, right click sets the rally point".into()),
             ("P".into(), "Pause".into()),
@@ -1891,7 +1934,7 @@ fn press_every(app: &mut App, sec: u64) -> Result<(), String> {
     Ok(())
 }
 
-/// A GPU with the adapter's own limits (the engine binds 46 buffers), and
+/// A GPU with the adapter's own limits (the engine binds 48 buffers), and
 /// timestamps where it has them (`bench`).
 fn gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
@@ -1977,7 +2020,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast) = (None::<f32>, 60.0f32, true, 0usize, false);
     let mut holes = false;
@@ -1989,6 +2032,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "scale" => args.scale = v.parse()?,
             "walkers" => args.walkers = v.parse()?,
             "mission" => args.mission = Some(v.to_string()),
+            "crater" => args.crater = Some(v.parse()?),
+            "aim" => {
+                let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
+                args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
+            }
             "look" => look = Some(v.to_string()),
             "hand" => hand = v.to_string(),
             "sound" => wav = Some(v.to_string()),
@@ -2007,7 +2055,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes; bench, fps, stamps, grid, fast)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater, aim; look, hand, at, screen, sound, holes; bench, fps, stamps, grid, fast)").into()),
             },
         }
     }
@@ -2038,7 +2086,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -2069,7 +2117,7 @@ mod tests {
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()) }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None }, (640, 400), &device, &queue).unwrap();
         assert_eq!(app.name, "flats");
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();
@@ -2112,7 +2160,7 @@ mod tests {
     /// 256 x 160 dish, 1,250 walkers): 5-9 s a round on software Vulkan,
     /// against 20-24 s at scale 2 (2026-11-12).
     fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
-        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from) };
+        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None };
         let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast };
         let t0 = Instant::now();
         let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
@@ -2165,7 +2213,7 @@ mod tests {
     #[test]
     fn a_shot_from_a_soldier_with_no_note_yet_draws() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None }, (320, 200), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None }, (320, 200), &device, &queue).unwrap();
         let g = app.game.as_mut().unwrap();
         let s = *g.soldiers.last().unwrap();
         g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0 }];

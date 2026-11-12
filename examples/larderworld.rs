@@ -153,6 +153,12 @@ struct Mould {
     /// `flee_keep=K`: the alarm field's keep a fine step for the plain
     /// mould (`FLEE_KEEP`, 0.98); a tier's own keep wins.
     flee_keep: Option<f32>,
+    /// `scorch_full=F` and `scorch_keep=K`: the crater's strength
+    /// (`BigParams::scorch_full`, `scorch_keep`), for `crater=S`.
+    scorch_full: Option<u16>,
+    scorch_keep: Option<f32>,
+    /// `scorch_cone=1`: a shot's crater as a cone (`BigParams::scorch_cone`).
+    scorch_cone: bool,
     /// One body (2026-11-12, Reports/one-body-2026-11-12.md):
     /// `energy_flow=` (food shared between touching walkers) and
     /// `hunger_scent=` (a hungry walker follows food harder), 0 off. Both
@@ -187,6 +193,13 @@ impl Mould {
         if let Some(t) = self.tier {
             t.apply(p);
         }
+        if let Some(f) = self.scorch_full {
+            p.scorch_full = f;
+        }
+        if let Some(k) = self.scorch_keep {
+            p.scorch_keep = k;
+        }
+        p.scorch_cone |= self.scorch_cone;
     }
 }
 
@@ -241,14 +254,24 @@ fn main() {
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             "flee" => m.flee = Some(v.parse().unwrap()),
             "flee_keep" => m.flee_keep = Some(v.parse().unwrap()),
+            // `crater=S`: game seconds of crater each hit lays
+            // (`Rules::crater`).
+            "crater" => rules.crater = v.parse().unwrap(),
+            "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
+            "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
+            "scorch_cone" => m.scorch_cone = v == "1",
             "energy_flow" => m.energy_flow = v.parse().unwrap(),
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "crystal_eat" => m.crystal_eat = Some(v.parse().unwrap()),
             "strike" => rules.strike = v.parse().unwrap(),
+            "shot_every" => rules.shot_every = v.parse().unwrap(),
+            // `spread=C`: aim spread, dish cells at the target (`Rules::spread`).
+            "spread" => rules.spread = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
             "pump_rate" => rules.build.pump_rate = v.parse().unwrap(),
             "pump_cost" => rules.build.pump_cost = v.parse().unwrap(),
             "pump_smell" => rules.build.pump_smell = v.parse().unwrap(),
+            "raise" => rules.build.raise = v.parse().unwrap(),
             "turret_cost" => rules.build.turret_cost = v.parse().unwrap(),
             "turret_every" => rules.build.turret_every = v.parse().unwrap(),
             "seek" => rules.seek = v == "1",
@@ -281,13 +304,17 @@ fn main() {
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
     println!(
-        "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; tier {}; flee {}{}; rules {rules:?}",
+        "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; tier {}; flee {}{}{}; rules {rules:?}",
         rules.cap,
         rules.tps,
         seeds,
         m.tier.map_or("none", |t| t.name()),
         m.flee.map_or("0 (default)".to_string(), |w| w.to_string()),
-        m.flee_keep.map_or(String::new(), |k| format!(", keep {k}"))
+        m.flee_keep.map_or(String::new(), |k| format!(", keep {k}")),
+        match (m.scorch_full, m.scorch_keep, m.scorch_cone) {
+            (None, None, false) => String::new(),
+            (f, k, c) => format!("; scorch full {f:?} keep {k:?} cone {c}"),
+        }
     );
     // The census's provenance (2026-11-12, game integration; the technical
     // lead found three harnesses' tables disagreeing overnight with no way
@@ -387,7 +414,7 @@ fn engine_name(on_gpu: bool) -> &'static str {
     }
 }
 
-/// A GPU device with the adapter's limits (the engine binds 46 buffers).
+/// A GPU device with the adapter's limits (the engine binds 48 buffers).
 fn gpu() -> (wgpu::Device, wgpu::Queue) {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
     let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");
@@ -651,7 +678,8 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
                 // rest farm (the first version tried once at 5 s, failed
                 // out of range, and the farm hand took the walker back:
                 // on seeds 1 and 3 no wall was ever built).
-                if g.walls == 0 && t >= 5.0 {
+                // Once: a wall placed (a ghost until raised) ends it.
+                if !g.buildings.iter().any(|b| matches!(b.kind, Kind::Wall { .. })) && t >= 5.0 {
                     wall_road(g);
                 }
                 farm_hand(g, &mut farmed);
@@ -795,8 +823,9 @@ fn farm_hand<W: World>(g: &mut Game<W>, farmed: &mut Vec<usize>) {
         if !s.alive {
             continue;
         }
-        // The wall hand's builder, until the wall stands.
-        if matches!(s.order, Order::Move(..)) && g.walls == 0 {
+        // The wall hand's builder, until the wall stands, and any soldier
+        // raising a building (`Order::Build`, sent by `send_builder`).
+        if (matches!(s.order, Order::Move(..)) && g.walls == 0) || matches!(s.order, Order::Build(_)) {
             continue;
         }
         if let Order::Clear(x, y) = s.order {
@@ -834,7 +863,26 @@ fn rush_hand<W: World>(g: &mut Game<W>) {
 /// A building of `kind` at `at`, if the bank holds its price over
 /// `RESERVE` (the farm hand's spare) and it can go there now.
 fn spare_build<W: World>(g: &mut Game<W>, kind: Kind, at: (f32, f32)) -> bool {
-    g.bank >= g.build_price(kind, at) + RESERVE && g.build_blocked(kind, at).is_none() && g.apply(Cmd::Build(kind, at))
+    let ok = g.bank >= g.build_price(kind, at) + RESERVE && g.build_blocked(kind, at).is_none() && g.apply(Cmd::Build(kind, at));
+    if ok {
+        send_builder(g);
+    }
+    ok
+}
+
+/// The newest building, if still a ghost (`BuildRules::raise` > 0): the
+/// nearest live soldier goes to raise it (`Order::Build`), as a player
+/// would send one; the farm hand leaves it be until it stands.
+fn send_builder<W: World>(g: &mut Game<W>) {
+    let Some(b) = g.buildings.len().checked_sub(1) else { return };
+    let bd = g.buildings[b];
+    if bd.built >= 1.0 {
+        return;
+    }
+    let d = |k: usize| (g.soldiers[k].x - bd.at.0).hypot(g.soldiers[k].y - bd.at.1);
+    if let Some(k) = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).min_by(|&a, &b| d(a).total_cmp(&d(b))) {
+        g.apply(Cmd::Order(k, Order::Build(b)));
+    }
 }
 
 /// An open cell within 3 dish cells of `p`, nearest first.
@@ -939,7 +987,9 @@ fn wall_road<W: World>(g: &mut Game<W>) {
     let d = dx.hypot(dy).max(1.0);
     let h = WALL_LEN * g.world.scale() / 2.0;
     let (a, b) = ((m.0 - dy / d * h, m.1 + dx / d * h), (m.0 + dy / d * h, m.1 - dx / d * h));
-    if !g.apply(Cmd::Wall(a, b)) {
+    if g.apply(Cmd::Wall(a, b)) {
+        send_builder(g);
+    } else {
         // Out of range: walk the first live soldier there (soldier 0 stands
         // on the point itself, the others round it) and try again next
         // second.
