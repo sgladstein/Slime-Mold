@@ -494,6 +494,15 @@ impl World for GpuWorld {
         self.s.birth_energy = was;
     }
 
+    /// Written to the GPU with the next step's params, as births are.
+    fn upkeep(&self) -> f32 {
+        self.s.upkeep
+    }
+
+    fn set_upkeep(&mut self, up: f32) {
+        self.s.upkeep = up;
+    }
+
     fn food_deposit(&self) -> f32 {
         self.e.dish.p.food_deposit
     }
@@ -638,6 +647,12 @@ mod tests {
         }
         fn start_births(&mut self, was: f32) {
             self.g.start_births(was)
+        }
+        fn upkeep(&self) -> f32 {
+            self.g.upkeep()
+        }
+        fn set_upkeep(&mut self, up: f32) {
+            self.g.set_upkeep(up)
         }
         fn food_deposit(&self) -> f32 {
             self.g.food_deposit()

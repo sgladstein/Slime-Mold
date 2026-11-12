@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T21:30Z
+updated: 2026-11-12T22:30Z
 sources: [Reports/soldier-controls-2026-11-12.md, Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Rules::crystal_solid, Game::standable, Game::rim, Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Engine::record_share, crowd_holds, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core, Rules::wade, race_params, CoreKind::Regrow, Game::mould_ate, World::start_births]
 ---
@@ -129,7 +129,7 @@ grows back*](../../Reports/larder-world-roadmap-2026-11-11.md)). The
 Drifter's migrating core comes later. The core rule is not what holds
 farm, wall and fort to the cap: without it (`core=headless`, race 5-20)
 they stalemate in 16 of 16 games as with it, and the player wins 2 of
-112 games instead of 6. **No king since 2026-11-12 20:21Z** (owner: "remove the king rule ... Headless"): `Core::of` is `Headless`, so every mould, tiers included, makes walkers while it has food, and holding its home stops nothing; the home keeps its pull (the Sprawler's is 0), and the window shows no core ring. A walker hits for `Rules::mass` (5,000 / the start walkers at scale 2; 1 by default), so a denser mould is the same body cut finer; the owner's shape playtest (`larder-world -- shape=a..e`) uses it ([report](../../Reports/slime-questions-2026-11-12/README.md)). Strike
+112 games instead of 6. **No king since 2026-11-12 20:21Z** (owner: "remove the king rule ... Headless"): `Core::of` is `Headless`, so every mould, tiers included, makes walkers while it has food, and holding its home stops nothing; the home keeps its pull (the Sprawler's is 0), and the window shows no core ring. A walker hits for `Rules::mass` (5,000 / the start walkers at scale 2; 1 by default), so a denser mould is the same body cut finer; the owner's shape playtest (`larder-world -- shape=a..e`) uses it ([report](../../Reports/slime-questions-2026-11-12/README.md)). **The broken mould** (2026-11-12, after the owner's D playtest): under 3% of its peak walkers its upkeep is 50 times (`Rules::broken`, `broken_starve`), so stragglers off food die within about 25 s instead of growing it back, and the window says so ([report, *Stragglers*](../../Reports/slime-questions-2026-11-12/README.md)). Strike
 still beats farm about 2 to 1 because food doesn't bind. **Wading, and
 the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
 *Wading, and the cone crater by default*](../../Reports/larder-world-roadmap-2026-11-11.md)):

@@ -65,3 +65,41 @@ best from these."
   4:00, was wiped at 1:56 (29,137 at 1:00, 10,869 at 2:00, 13,406 at 4:00);
   D alive at 4:00 (28,841, 14,733, 16,140); E alive at 4:00, but starves
   to 3,033 by 2:00.
+
+## The owner plays D and C (22:01-22:17Z)
+
+- **D:** "defeated mold d in 8:35, harvested 28k food, score of 2.43. First
+  try." ... "I just harvested crystals until i got 40 soliders and hunted
+  it down." The bots' 0-of-40 wipes (above) said nothing about a person.
+- **C:** "I defeated c in 5:51 with a score of 2.61. C is a better slime
+  than D".
+- Notes on D (22:06Z, relayed): fire from one spot barely hurts a big body
+  while walking in destroys it (the Larder thread owns the crater rule and
+  is on it); "after killing almost all the mold, having the kill the few
+  random stragglers spread across the map to win is annoying"; "There are
+  still clearly lone walkers moving around"; building from afar went to a
+  new thread.
+
+## Stragglers: the broken mould
+
+`examples/loneprobe.rs`: shape D on the CPU race world (scale 2), idle
+squad, 4 seeds; at 180 s a sweep kills every walker within twice a
+crystal's radius of one and all but 2% of the rest (the owner's endgame:
+crystals held, stragglers everywhere else), then follows the remnant to
+300 s.
+
+- **A lone walker's own upkeep** (`BigParams::lone_upkeep`, the one-body
+  dead end, re-tested because the front is now a sheet): the share of
+  lone walkers at 180 s is 1.0% off, 1.2% at 3x, 1.4% at 10x; 10x reaches
+  15.5 crystals by 180 s against 19.5 (fewer on 4 of 4). Rejected
+  (`raw/lone/lone-upkeep-d.txt`; its sweep lines are the first sweep,
+  which kept 2% of every walker, crystals too, and bred back to 3,000 in
+  5 s).
+- **The broken mould** (`Rules::broken` 0.03, `broken_starve` 50): under
+  3% of its peak walkers the mould's upkeep is 50 times, and given back
+  once it is over the line. After the sweep, without it the remnant
+  (187-304 walkers at +5 s) finds food and grows back to 9,751-23,807 by
+  300 s; with it the remnant is 90-135 at +5 s, 22-37 at +10 s, 3-10 at
+  +15 s and gone by +25-30 s, on 4 of 4 seeds (`raw/lone/broken-off-d.txt`,
+  `raw/lone/broken-on-d.txt`). A walker on a crystal still eats, so a
+  remnant left on food can breed the mould back over the line.

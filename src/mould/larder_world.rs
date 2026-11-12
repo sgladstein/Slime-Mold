@@ -105,6 +105,11 @@ pub trait World {
     /// A regrown core (`CoreKind::Regrow`): births again, with what
     /// `stop_births` returned.
     fn start_births(&mut self, was: f32);
+    /// The mould's upkeep a fine step (`BigParams::upkeep`; 0 with growth
+    /// off), and setting it: the broken mould (`Rules::broken`) starves its
+    /// stragglers by raising it, and gives it back when the mould recovers.
+    fn upkeep(&self) -> f32;
+    fn set_upkeep(&mut self, up: f32);
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
@@ -183,6 +188,14 @@ impl World for BigDish {
 
     fn start_births(&mut self, was: f32) {
         self.p.birth_energy = was;
+    }
+
+    fn upkeep(&self) -> f32 {
+        self.p.upkeep
+    }
+
+    fn set_upkeep(&mut self, up: f32) {
+        self.p.upkeep = up;
     }
 
     fn food_deposit(&self) -> f32 {
@@ -532,6 +545,20 @@ pub struct Rules {
     /// each one. Agreed with the Larder thread (11-12, reference density
     /// over density); first set by the owner's shape playtest (20:21Z).
     pub mass: f32,
+    /// The broken mould (owner, 2026-11-12 22:06-22:07Z, playing shape D:
+    /// "after killing almost all the mold, having the kill the few random
+    /// stragglers spread across the map to win is annoying"; "There are
+    /// still clearly lone walkers moving around"): once the mould falls
+    /// under `broken` times its peak walkers, its upkeep is `broken_starve`
+    /// times (`World::set_upkeep`), so its stragglers off food starve in a
+    /// second or two, while any on a crystal still eat and can breed it
+    /// back over the line, which gives the upkeep back. 0 is off. Why not a
+    /// lone walker's own upkeep (`BigParams::lone_upkeep`): at 25,000
+    /// walkers only about 1% are alone at any time, 3 and 10 times did not
+    /// lower that, and 10 cost the spread (15.5 crystals at 180 s against
+    /// 19.5, 4 of 4 seeds; `examples/loneprobe.rs`).
+    pub broken: f32,
+    pub broken_starve: f32,
 }
 
 impl Rules {
@@ -585,6 +612,8 @@ impl Default for Rules {
             spread: 0.0,
             crystal_solid: true,
             mass: 1.0,
+            broken: 0.03,
+            broken_starve: 50.0,
         }
     }
 }
@@ -858,6 +887,11 @@ pub struct Game<W: World> {
     pub last_shots: Vec<Shot>,
     /// Walkers alive at the last count (once a game second).
     pub mould: usize,
+    /// The most walkers the mould has had at a count (`Rules::broken`).
+    pub peak: usize,
+    /// When the mould broke (`Rules::broken`), and the upkeep it had then,
+    /// given back if it recovers; None while it is whole.
+    pub broken: Option<(u64, f32)>,
     /// Each crystal's charge at the start and the charge the squad took
     /// from it, so the cap's share can tell the mould's eating from ours.
     start_charge: Vec<f32>,
@@ -979,6 +1013,8 @@ impl<W: World> Game<W> {
             end: None,
             last_shots: Vec::new(),
             mould,
+            peak: mould,
+            broken: None,
             start_charge,
             taken,
             start_mould: mould,
@@ -1748,9 +1784,32 @@ impl<W: World> Game<W> {
         if now / r.tps as u64 != t / r.tps as u64 {
             self.mould = self.world.living();
             self.count_stuck();
+            self.check_broken();
         }
         self.campaign_rules(now - t);
         self.check_end();
+    }
+
+    /// Once a game second, at the count: the broken mould (`Rules::broken`).
+    fn check_broken(&mut self) {
+        let r = self.rules;
+        self.peak = self.peak.max(self.mould);
+        if r.broken <= 0.0 {
+            return;
+        }
+        let under = (self.mould as f32) < r.broken * self.peak as f32;
+        match (under, self.broken) {
+            (true, None) => {
+                let up = self.world.upkeep();
+                self.world.set_upkeep(up * r.broken_starve);
+                self.broken = Some((self.world.ticks(), up));
+            }
+            (false, Some((_, up))) => {
+                self.world.set_upkeep(up);
+                self.broken = None;
+            }
+            _ => {}
+        }
     }
 
     /// Once a game second: `Game::stuck`.
@@ -2162,6 +2221,28 @@ mod tests {
         assert_eq!(Game::new(race_world(1, 1, 1_000), r, 1).with_tier(None).core_rule, Core::of(&r));
     }
 
+    /// The broken mould (`Rules::broken`): under 3% of its peak, its upkeep
+    /// is 50 times, and it gets its upkeep back once it is over the line.
+    #[test]
+    fn a_broken_mould_starves_until_it_grows_back() {
+        let mut g = small(1);
+        let up = g.world.upkeep();
+        assert!(up > 0.0 && g.broken.is_none());
+        g.peak = g.mould * 100;
+        g.check_broken();
+        assert_eq!((g.broken.map(|b| b.1), g.world.upkeep()), (Some(up), up * g.rules.broken_starve));
+        g.check_broken();
+        assert_eq!(g.world.upkeep(), up * g.rules.broken_starve, "it starves once, not 50 x 50");
+        g.peak = g.mould;
+        g.check_broken();
+        assert_eq!((g.broken, g.world.upkeep()), (None, up));
+        let mut off = small(1);
+        off.rules.broken = 0.0;
+        off.peak = off.mould * 100;
+        off.check_broken();
+        assert_eq!((off.broken, off.world.upkeep()), (None, up));
+    }
+
     /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
     /// mould's home stops nothing, and births go on.
     #[test]
@@ -2405,6 +2486,12 @@ mod tests {
         }
         fn start_births(&mut self, was: f32) {
             World::start_births(&mut self.d, was)
+        }
+        fn upkeep(&self) -> f32 {
+            World::upkeep(&self.d)
+        }
+        fn set_upkeep(&mut self, up: f32) {
+            World::set_upkeep(&mut self.d, up)
         }
         fn food_deposit(&self) -> f32 {
             World::food_deposit(&self.d)

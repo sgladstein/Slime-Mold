@@ -509,6 +509,15 @@ impl World for Garden {
         }
     }
 
+    /// One upkeep feeds both species, so the broken mould (`Rules::broken`)
+    /// would starve the player's mould with the enemy's: the garden keeps
+    /// its upkeep (the rule does nothing here).
+    fn upkeep(&self) -> f32 {
+        self.dish.p.upkeep
+    }
+
+    fn set_upkeep(&mut self, _up: f32) {}
+
     fn food_deposit(&self) -> f32 {
         self.dish.p.food_deposit
     }
