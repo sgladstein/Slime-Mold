@@ -46,7 +46,7 @@ H3 was habituation in the biologist's sense (Physarum stops answering a repeated
 
 **Fresh seeds 9-16** (named before the run as H2's re-test, after seeing seeds 1-8; the same script, raw `raw/habit-9-16/`): Grudge 919-1,516 walkers at the spot (median 1,116) against the Swarmer's alarm without the scar at 192-1,115 (690), more on 8 of 8, p 0.008. H1 held again (Wary 20-109 against 140-1,213, fewer on 8 of 8). H3 went 5 against 3 (p 0.73), which confirms dropping it.
 
-**Cost.** One multiply-add a fine cell a fine step, only when on: *pending*.
+**Cost.** One multiply-add a fine cell a fine step, and one more read at each sensor, only when on. On the race world (`bigdish`, seed 1, 20 s, one thread, three runs each) the alarm alone costs 3.55-3.68 ms a tick and the alarm with the scar 4.02-4.12 ms, so the scar adds about 0.45 ms a tick (12%) on the CPU. The plain mould pays nothing: the field is not allocated.
 
 **On the GPU** the scar is one f32 a fine cell and three Params floats. The integration thread ruled (06:29Z) that it shares the toolkit's per-cell damage buffer (the crater's countdown in channel 0, the scar in channel 1), on the binding after 46, with its floats in a Params row appended at merge. The Wary and Grudge tiers refuse the GPU (`Tier::settings` names `scar_keep`) until then.
 
