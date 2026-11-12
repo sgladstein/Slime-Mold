@@ -4271,7 +4271,9 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
     /// deposit and decay the same way. Eight seeds of the race world with an
     /// idle squad on both engines; every 5 game s, the trail's total and the
     /// living walkers, and how many seeds have the GPU above the CPU (with a
-    /// two-sided sign test).
+    /// two-sided sign test). The 1070 at 8 seeds: no lean that survives
+    /// correction (trail below the CPU's on 7 of 8 at 30 s, p 0.07; lavapipe
+    /// 5 of 8), so `DRIFT_SEEDS=32` for the answer.
     #[test]
     #[ignore]
     fn the_adapters_game_beside_the_cpus_over_seeds() {
@@ -4295,7 +4297,9 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
         // A mark: game s, CPU trail, GPU trail, CPU living, GPU living.
         type Mark = (u64, f64, f64, usize, usize);
         let mut rows: Vec<Vec<Mark>> = Vec::new();
-        for seed in 1..=8u64 {
+        // `DRIFT_SEEDS=N` for more (the 1070 plays 8 in about 30 s).
+        let seeds = std::env::var("DRIFT_SEEDS").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(8);
+        for seed in 1..=seeds {
             let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
             let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
             let mut r = Vec::new();
