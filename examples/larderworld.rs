@@ -164,8 +164,11 @@ struct Mould {
     /// (`BigParams::scorch_full`, `scorch_keep`), for `crater=S`.
     scorch_full: Option<u16>,
     scorch_keep: Option<f32>,
-    /// `scorch_cone=1`: a shot's crater as a cone (`BigParams::scorch_cone`).
-    scorch_cone: bool,
+    /// `scorch_cone=1|0`: a shot's crater as a cone or a flat disc
+    /// (`BigParams::scorch_cone`; the race world's default is the cone since
+    /// 2026-11-12, so `scorch_cone=0 scorch_full=30 scorch_keep=0.1` plays
+    /// the flat disc #113 shipped).
+    scorch_cone: Option<bool>,
     /// One body (2026-11-12, Reports/one-body-2026-11-12.md):
     /// `energy_flow=` (food shared between touching walkers) and
     /// `hunger_scent=` (a hungry walker follows food harder), 0 off. Both
@@ -217,7 +220,9 @@ impl Mould {
         if let Some(k) = self.scorch_keep {
             p.scorch_keep = k;
         }
-        p.scorch_cone |= self.scorch_cone;
+        if let Some(c) = self.scorch_cone {
+            p.scorch_cone = c;
+        }
         for (k, v) in &self.keys {
             slime_mould::mould::tiers::set_key(p, k, v).unwrap_or_else(|e| panic!("keys=: {e}"));
         }
@@ -284,9 +289,12 @@ fn main() {
             // (`Rules::crater`).
             "crater" => rules.crater = v.parse().unwrap(),
             "core_pull" => rules.core_pull = v.parse().unwrap(),
+            // `wade=W`: walkers touching a soldier that halve its speed
+            // (`Rules::wade`; 0 is off).
+            "wade" => rules.wade = v.parse().unwrap(),
             "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
             "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
-            "scorch_cone" => m.scorch_cone = v == "1",
+            "scorch_cone" => m.scorch_cone = Some(v == "1"),
             "energy_flow" => m.energy_flow = v.parse().unwrap(),
             "flow_loss" => m.flow_loss = v.parse().unwrap(),
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
@@ -340,8 +348,8 @@ fn main() {
         m.flee.map_or("0 (default)".to_string(), |w| w.to_string()),
         m.flee_keep.map_or(String::new(), |k| format!(", keep {k}")),
         match (m.scorch_full, m.scorch_keep, m.scorch_cone) {
-            (None, None, false) => String::new(),
-            (f, k, c) => format!("; scorch full {f:?} keep {k:?} cone {c}"),
+            (None, None, None) => String::new(),
+            (f, k, c) => format!("; scorch full {f:?} keep {k:?} cone {c:?}"),
         }
     );
     // The census's provenance (2026-11-12, game integration; the technical
