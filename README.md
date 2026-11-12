@@ -6,6 +6,12 @@ few thousand walkers lay and follow a trail, and the tubes, loops and dead
 ends you see are that trail. Everything on screen is the simulation, nothing
 is drawn on top of it.
 
+**Licence: proprietary, all rights reserved** ([LICENSE](LICENSE)). The
+source is public to read, but it is not open source: copying, modifying,
+distributing or using it needs the copyright holder's written permission.
+Third-party crates and the bundled font keep their own licences
+([THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), [licenses/](licenses/)).
+
 ```
 cargo run --release --bin mould            # the game: lesson, challenge dishes, free dishes, the endless dish
 cargo run --release --bin mould -- 3       # free dish seed 3   (-- 0 the lesson, -- d2 challenge dish 2, -- wander the Wanderer)
