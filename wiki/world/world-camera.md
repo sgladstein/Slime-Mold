@@ -58,7 +58,10 @@ harvester moves on from a dry crystal to a safe one (`Rules::seek`, on;
 the census gate holds with it), and
 the larder is selectable with a rally point (`Cmd::Rally`); a double click
 selects every soldier on screen. A placed building is a ghost the selected
-soldiers walk to and raise (`Order::Build`).
+soldiers walk to and raise (`Order::Build`), anywhere on the map: with
+nobody selected the nearest free soldier walks out (`Cmd::Send`), and the
+ghost stays faint with a bar and the seconds left until it stands
+(owner, 2026-11-12 22:06Z; part 4 of the report).
 
 Over it sits a game UI with no game rules
 ([report](../../Reports/world-ui-2026-11-11.md)): a GPU canvas pass
