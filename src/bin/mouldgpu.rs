@@ -3840,8 +3840,12 @@ mod tests {
         let (seed, scale, walkers) = (3, 2, 5_000);
         // The flee alone: since 2026-11-12 shots lay craters by default,
         // which have their own twin (`a_squad_laying_craters_...`); with
-        // both, seed 3's moulds part by 13% at 25 s.
-        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
+        // both, seed 3's moulds part by 13% at 25 s. Solid crystals
+        // (`Rules::crystal_solid`, game layer only, the same on both
+        // engines) are off too: with them the squad starts off the larder's
+        // crystal and seed 3's moulds part by 9.7% at 25 s (1930 against
+        // 1760), past the race twin's 8%.
+        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, ..Rules::default() };
         let flee = || {
             let mut p = race_params(seed, scale, walkers);
             (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
