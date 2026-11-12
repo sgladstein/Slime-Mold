@@ -1,0 +1,10 @@
+== convert=1.0 convert_r=4 avoid=0
+   net vs heavy  A ahead on  2 of 4 (p 1.0000), median share 0.594, range 0.165-0.778; mean walkers 3219/2386, held 3.9/3.6, turned to 283/861
+== convert=1.05 convert_r=8 avoid=0
+   net vs heavy  A ahead on  3 of 4 (p 0.6250), median share 0.545, range 0.325-0.778; mean walkers 3439/2368, held 4.0/4.0, turned to 584/1225
+== convert=1.2 convert_r=4 avoid=-0.5
+   net vs heavy  A ahead on  1 of 4 (p 0.6250), median share 0.316, range 0.191-0.778; mean walkers 2151/3333, held 2.5/5.1, turned to 449/2077
+== convert=1.0 convert_r=8 avoid=-0.5
+   net vs heavy  A ahead on  1 of 4 (p 0.6250), median share 0.318, range 0.261-0.778; mean walkers 2206/3128, held 2.5/4.8, turned to 953/2366
+== convert=1.0 convert_r=4 avoid=-1
+   net vs heavy  A ahead on  1 of 4 (p 0.6250), median share 0.278, range 0.108-0.778; mean walkers 1984/3519, held 2.1/5.8, turned to 598/1958

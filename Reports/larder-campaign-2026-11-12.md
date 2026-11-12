@@ -121,6 +121,10 @@ Dead time on the planned hands is 0-9% (the landing's first seconds), idle's 64-
 Vulkan) playing each mission with the claim hand, seed 1, counts under each
 frame. Landfall met at 1:21 (3 stars, 12 soldiers, 3906 harvested). On the Rim
 a mould trail leaves through the north-east gap by 5:00 and reaches the
-larder; the window cannot score a contain goal until the GPU mould read-back
-(#101) lands, and the CPU census counts the same hand holding. Checking that
-gap is the first job once #101 merges.
+larder. The GPU census (GPU thread, `campaign gpu=both`, claim, seeds 1-4,
+after #101) holds seed 1 on the GPU too (peak share outside 0.050 at 696 s,
+against the CPU's 0.058 at 701 s), so the trail the player sees sits inside
+the 5% allowance. That is the problem: a leak must mean what the player sees
+(a trail out of a gap) before the window shows this bar. Seed 2 failed on
+the GPU (peak 0.168, Cap) where the CPU held; four seeds can't call a bias
+(sign p 0.63), so the 32-seed `gpu=both` run decides it.
