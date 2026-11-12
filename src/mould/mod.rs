@@ -69,6 +69,7 @@ pub mod level;
 pub mod look;
 pub mod map;
 pub mod organ;
+pub mod own_mould;
 pub mod play;
 pub mod render;
 pub mod skirmish;

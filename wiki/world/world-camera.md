@@ -2,9 +2,9 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-12T08:00Z
+updated: 2026-11-12T10:31Z
 sources: [Reports/shot-damage-2026-11-12.md, Reports/soldier-controls-2026-11-12.md, Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
-code: [Cmd::Queue, Cmd::Rally, Order::Fight, Game::seek, Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES, View::set_alive, View::set_body_density]
+code: [Cmd::Queue, Cmd::Rally, Order::Fight, Game::seek, Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES, View::set_alive, View::set_body_density, Marks::building]
 ---
 
 # The world camera and UI
@@ -52,7 +52,7 @@ shows as the hole it really makes, open about half a second
 ([shot damage](../../Reports/shot-damage-2026-11-12.md)). With growth, `View::set_alive` takes the walkers' energy so
 empty and dead slots draw no speck. Soldiers are an SVG sprite (the owner's
 pick of a blind A/B, 16:48Z) with facing, team helmet and muzzle flash;
-crystals are hexagons. Ground byte 3 holds elevation, left 0 until the
+crystals are hexagons. Buildings (turret, lure, pump, outpost) are sprites in the same style (`Marks::building`): they rise as they are built, darken as they are hurt and light their lamp only while working ([world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
 simulation uses height. One mark with a big box (a 480-pixel ring) cost the
 view 0.7 ms, since one workgroup walks a mark's whole box: draw big outlines
 as lines.

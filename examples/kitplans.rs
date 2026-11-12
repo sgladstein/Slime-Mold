@@ -336,7 +336,19 @@ fn sortie(g: &mut Game<BigDish>, kit: &mut Kit, st: &mut Plan, tool: fn((f32, f3
     let Some((a, _)) = densest(g) else { return false };
     let Some(k) = st.runner.filter(|&k| g.soldiers[k].alive).or_else(|| (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive && Some(k) != st.decoy)) else { return false };
     st.runner = Some(k);
+    // With the carry rule an empty runner fetches tools from the larder
+    // first (`play` restocks it there to `carry_max`).
+    if kit.rules.carry_max > 0 && kit.held(k) == 0 {
+        let l = g.larder;
+        if g.soldiers[k].order != Order::Move(l.0, l.1) {
+            g.apply(Cmd::Order(k, Order::Move(l.0, l.1)));
+        }
+        return false;
+    }
     if kit.use_tool(g, tool(a)) {
+        if kit.held(k) > 0 {
+            return true;
+        }
         st.runner = None;
         // Back to farming: the farm hand gives it a crystal again.
         g.apply(Cmd::Order(k, Order::Hold));
@@ -394,6 +406,14 @@ fn play(seed: u64, tier: &str, hand: &str, rules: Rules, kr: KitRules, map: Opti
     if let Some(t) = Tier::from_name(tier) {
         t.apply(&mut p);
     }
+    // Germ resistance (round 2), a mould trait tried on any tier: GERM_RESIST=
+    // and SICK_TRAIL= in the environment.
+    if let Ok(v) = std::env::var("GERM_RESIST") {
+        p.germ_resist = v.parse().unwrap();
+    }
+    if let Ok(v) = std::env::var("SICK_TRAIL") {
+        p.sick_trail = v.parse().unwrap();
+    }
     let mut world = match map {
         Some(m) => BigDish::with_map(p, m),
         None => BigDish::new(p),
@@ -410,6 +430,17 @@ fn play(seed: u64, tier: &str, hand: &str, rules: Rules, kr: KitRules, map: Opti
         let sec = g.world.ticks() / tps;
         if sec != last {
             last = sec;
+            // The carry rule: every soldier at the larder takes one tool,
+            // a runner as many as it may hold (the tools are paid for when
+            // used). Smell needs none.
+            if kit.rules.carry_max > 0 {
+                for k in 0..g.soldiers.len() {
+                    let n = if st.runner == Some(k) || st.decoy == Some(k) { kit.rules.carry_max } else { kit.rules.carry_each };
+                    if n > 0 {
+                        kit.restock(&mut g, k, n);
+                    }
+                }
+            }
             match hand {
                 "idle" => {}
                 "random" => random_hand(&mut g),
@@ -476,6 +507,10 @@ fn main() {
             "germ_price" => kr.germ_price = v.parse().unwrap(),
             "sick_upkeep" => kr.sick_upkeep = v.parse().unwrap(),
             "gas_price" => kr.gas_price = v.parse().unwrap(),
+            "sick_catch" => kr.sick_catch = v.parse().unwrap(),
+            "carry" => kr.carry_max = v.parse().unwrap(),
+            "carry_each" => kr.carry_each = v.parse().unwrap(),
+            "tool_weight" => kr.tool_weight = v.parse().unwrap(),
             "map" => {
                 let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
                 map = Some((v.to_string(), Map::load(&dir, v).unwrap_or_else(|e| panic!("{e}"))));
@@ -573,7 +608,10 @@ fn main() {
         println!("  {name:>28}: {w} / {l}, p {p:.4}{}", if holds[i] { ", holds" } else { "" });
     }
     // Gate 2: per tier, the best plan, and each other plan against it.
-    println!("\ngate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p):");
+    // The score jumps between bands (wipe, cap, squad lost), so a mean over
+    // a few seeds follows one or two band flips: each pair also carries the
+    // median paired difference (tech lead, 2026-11-12).
+    println!("\ngate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p, median paired difference):");
     for t in &tiers {
         let mean = |h: &str| seeds.iter().map(|&s| get(t, s, h).score).sum::<f32>() / seeds.len() as f32;
         let best = plans.iter().max_by(|a, b| mean(a).total_cmp(&mean(b))).unwrap();
@@ -582,6 +620,9 @@ fn main() {
             .filter(|h| h != &best)
             .map(|h| {
                 let (mut w, mut l) = (0, 0);
+                let mut d: Vec<f32> = seeds.iter().map(|&s| get(t, s, h).score - get(t, s, best).score).collect();
+                d.sort_by(f32::total_cmp);
+                let med = if d.len() % 2 == 1 { d[d.len() / 2] } else { (d[d.len() / 2 - 1] + d[d.len() / 2]) / 2.0 };
                 for &s in &seeds {
                     let (a, b) = (get(t, s, h).score, get(t, s, best).score);
                     if a > b {
@@ -590,7 +631,7 @@ fn main() {
                         l += 1;
                     }
                 }
-                format!("{h} {w}/{l} p {:.3}", sign_p(w, w + l))
+                format!("{h} {w}/{l} p {:.3} med {med:+.2}", sign_p(w, w + l))
             })
             .collect();
         println!("  {t:>8}: best {best} ({:+.3}); {}", mean(best), line.join(", "));
