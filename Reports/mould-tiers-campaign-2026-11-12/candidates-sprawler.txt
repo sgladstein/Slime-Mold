@@ -1,0 +1,6 @@
+# The Sprawler after the census (every plan wiped it): shorter exploring
+# so newborns, which start as explorers, feed before they leave.
+sprawler|tier=sprawler
+spr-e200|tier=sprawler explore_steps=200
+spr-e100|tier=sprawler explore_steps=100
+spr-e100k85|tier=sprawler explore_steps=100 keep=0.85

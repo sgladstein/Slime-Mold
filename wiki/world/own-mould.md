@@ -4,7 +4,7 @@ kind: design
 status: open
 updated: 2026-11-12
 sources: [Reports/player-mould-2026-11-12.md, Reports/species-gpu-2026-11-11.md, Reports/species-sets-2026-11-11.md]
-code: [BigParams::species_convert_per, BigParams::species_convert, BigParams::species_convert_r, SpeciesSet]
+code: [own_mould::Garden, World::tend, BigParams::species_convert_per, BigParams::species_convert, BigParams::species_convert_r, SpeciesSet]
 ---
 
 # The player's own mould (gardeners)
@@ -13,8 +13,7 @@ code: [BigParams::species_convert_per, BigParams::species_convert, BigParams::sp
 
 The owner chose **gardeners** (2026-11-12 04:45Z). The player owns a second
 species in the Larder world. The soldiers grow it: they feed it charge, lay
-its roads and cut it. It fights the enemy mould by conversion. Nothing is
-built into the game yet. A CPU probe (`examples/ownmould.rs`, no soldiers)
+its roads and cut it. It fights the enemy mould by conversion. A CPU probe (`examples/ownmould.rs`, no soldiers)
 put body forms against each other on a mirrored race world. The fast network
 out-eats crawling hunks (14 of 16 seeds; no other eating pairing is
 significant). Where bodies touch, though, the dense forms win every contact:
@@ -24,6 +23,17 @@ between eating and fighting, not a counter cycle
 [page](https://claude.ai/artifact/H4Pd9hmsLHGgjqEciuNBmE)). For the probe,
 conversion weighs each species' trail over its own deposit
 (`species_convert_per`, off by default, CPU only).
+
+**First CPU build** (`src/mould/own_mould.rs`, `examples/garden.rs`): a
+`Garden` world with the enemy as species 0 and the player's mould as
+species 3 (`OWN`) on the larder crystal; shots, smell and bites hit only
+the enemy; soldiers take a Road, Feed or Cut task worked in a disc of
+radius 3. Its only hook is `World::tend`, default 0, so the one-mould game
+is unchanged. On 32 seeds, sowing (Feed while walking to an unclaimed
+crystal and back) grows the player's mould 13 times farm's (32 of 32);
+feeding in one spot does nothing; farming alone starves it. The enemy is not
+smaller: the two blind species meet along one front and hold it
+([page](https://claude.ai/artifact/7Z4b4NB1JG1H7QEf9TrUer)).
 
 ## Owner's word
 
@@ -36,7 +46,9 @@ conversion weighs each species' trail over its own deposit
 
 ## Open
 
-- The first gardeners build on the CPU world, behind a switch: the player's mould on the larder crystal, shots and bite that tell species apart, Road, Feed and Cut. It goes in its own file with a thin hook in `larder_world` (agreed with the game integration thread).
+- Contact: make the enemy seek the player's mould (`species_avoid` below 0 for the enemy only), so a big player mould is a threat it must answer.
+- A per-side walker reserve, so a big player mould cannot fill the enemy's birth slots; births stopped by species.
+- Cut was never used by a planned hand.
 - The fight needs contact: with the species blind to each other, it is rare. Attraction (`species_avoid` below 0) brings it on and hands the dense form the economy too (4 seeds).
 - Crust and spore-flier forms need per-species life-cycle rates.
 - Rerun the forms with the one body thread's cohesion rules once they land.

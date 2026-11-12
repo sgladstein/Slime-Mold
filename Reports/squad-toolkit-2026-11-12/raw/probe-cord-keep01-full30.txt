@@ -1,0 +1,72 @@
+kitprobe test=cord warm=60 seeds [1, 2, 3, 4, 5, 6, 7, 8]; kit KitRules { reach: 24.0, blast_r: 6.0, blast_alarm: 50.0, crater_r: 7.0, crater_secs: 20.0, blast_price: 60.0, mine_r: 5.0, mine_trigger: 40, mine_price: 80.0, cord_r: 2.5, cord_every: 2.0, cord_price: 3.0, cord_max: 48.0, germ_r: 5.0, sick_secs: 6.0, immune_secs: 40.0, sick_upkeep: 60.0, sick_catch: 0.2, sick_deposit: 1.0, sick_keep: 0.9, germ_price: 300.0, gas_r: 12.0, gas_secs: 20.0, gas_death: 0.0, gas_price: 150.0, reek: 4.0, carry_max: 0, carry_each: 1, tool_weight: 100.0, restock_r: 6.0, alarm_keep: 0.95 }
+     none seed  1: line before 68, beyond before 259, killed 0, line 2s 90, beyond 2s 269, line 5s 98, beyond 5s 279, line 10s 87, beyond 10s 310, line 20s 103, beyond 20s 342, line 30s 95, beyond 30s 403
+ nocrater seed  1: line before 68, beyond before 259, killed 107, line 2s 90, beyond 2s 209, line 5s 186, beyond 5s 208, line 10s 221, beyond 10s 178, line 20s 218, beyond 20s 121, line 30s 231, beyond 30s 103
+     none seed  2: line before 91, beyond before 545, killed 0, line 2s 93, beyond 2s 569, line 5s 109, beyond 5s 616, line 10s 95, beyond 10s 689, line 20s 99, beyond 20s 852, line 30s 124, beyond 30s 1017
+   crater seed  1: line before 68, beyond before 259, killed 107, line 2s 0, beyond 2s 220, line 5s 1, beyond 5s 226, line 10s 2, beyond 10s 255, line 20s 62, beyond 20s 361, line 30s 261, beyond 30s 436
+ nocrater seed  2: line before 91, beyond before 545, killed 180, line 2s 89, beyond 2s 504, line 5s 93, beyond 5s 541, line 10s 107, beyond 10s 614, line 20s 101, beyond 20s 769, line 30s 116, beyond 30s 936
+   crater seed  2: line before 91, beyond before 545, killed 180, line 2s 1, beyond 2s 508, line 5s 1, beyond 5s 582, line 10s 2, beyond 10s 739, line 20s 85, beyond 20s 963, line 30s 144, beyond 30s 1138
+     none seed  3: line before 83, beyond before 603, killed 0, line 2s 73, beyond 2s 640, line 5s 96, beyond 5s 665, line 10s 79, beyond 10s 716, line 20s 78, beyond 20s 849, line 30s 79, beyond 30s 922
+ nocrater seed  3: line before 83, beyond before 603, killed 49, line 2s 68, beyond 2s 616, line 5s 84, beyond 5s 646, line 10s 91, beyond 10s 700, line 20s 99, beyond 20s 776, line 30s 99, beyond 30s 831
+     none seed  4: line before 123, beyond before 629, killed 0, line 2s 122, beyond 2s 668, line 5s 121, beyond 5s 729, line 10s 128, beyond 10s 852, line 20s 133, beyond 20s 1037, line 30s 128, beyond 30s 1193
+   crater seed  3: line before 83, beyond before 603, killed 49, line 2s 1, beyond 2s 634, line 5s 1, beyond 5s 698, line 10s 1, beyond 10s 815, line 20s 63, beyond 20s 1090, line 30s 120, beyond 30s 1376
+   crater seed  4: line before 123, beyond before 629, killed 59, line 2s 1, beyond 2s 655, line 5s 1, beyond 5s 732, line 10s 1, beyond 10s 845, line 20s 54, beyond 20s 1074, line 30s 146, beyond 30s 1237
+ nocrater seed  4: line before 123, beyond before 629, killed 59, line 2s 100, beyond 2s 654, line 5s 111, beyond 5s 710, line 10s 127, beyond 10s 822, line 20s 132, beyond 20s 1018, line 30s 154, beyond 30s 1172
+     none seed  5: line before 307, beyond before 169, killed 0, line 2s 306, beyond 2s 186, line 5s 259, beyond 5s 187, line 10s 300, beyond 10s 212, line 20s 303, beyond 20s 280, line 30s 269, beyond 30s 337
+ nocrater seed  5: line before 307, beyond before 169, killed 279, line 2s 252, beyond 2s 50, line 5s 275, beyond 5s 60, line 10s 336, beyond 10s 63, line 20s 311, beyond 20s 92, line 30s 292, beyond 30s 125
+   crater seed  5: line before 307, beyond before 169, killed 279, line 2s 3, beyond 2s 72, line 5s 3, beyond 5s 111, line 10s 3, beyond 10s 179, line 20s 171, beyond 20s 307, line 30s 309, beyond 30s 508
+     none seed  6: line before 97, beyond before 650, killed 0, line 2s 99, beyond 2s 700, line 5s 97, beyond 5s 747, line 10s 84, beyond 10s 873, line 20s 84, beyond 20s 1053, line 30s 94, beyond 30s 1110
+ nocrater seed  6: line before 97, beyond before 650, killed 76, line 2s 96, beyond 2s 676, line 5s 95, beyond 5s 714, line 10s 111, beyond 10s 815, line 20s 96, beyond 20s 1038, line 30s 92, beyond 30s 1233
+   crater seed  6: line before 97, beyond before 650, killed 76, line 2s 2, beyond 2s 693, line 5s 1, beyond 5s 759, line 10s 1, beyond 10s 886, line 20s 54, beyond 20s 1158, line 30s 84, beyond 30s 1327
+     none seed  7: line before 158, beyond before 90, killed 0, line 2s 160, beyond 2s 82, line 5s 144, beyond 5s 74, line 10s 137, beyond 10s 90, line 20s 132, beyond 20s 92, line 30s 123, beyond 30s 93
+ nocrater seed  7: line before 158, beyond before 90, killed 137, line 2s 100, beyond 2s 21, line 5s 123, beyond 5s 17, line 10s 106, beyond 10s 30, line 20s 135, beyond 20s 35, line 30s 155, beyond 30s 59
+     none seed  8: line before 59, beyond before 353, killed 0, line 2s 55, beyond 2s 368, line 5s 59, beyond 5s 401, line 10s 64, beyond 10s 457, line 20s 78, beyond 20s 548, line 30s 76, beyond 30s 653
+   crater seed  7: line before 158, beyond before 90, killed 137, line 2s 1, beyond 2s 19, line 5s 0, beyond 5s 16, line 10s 0, beyond 10s 14, line 20s 16, beyond 20s 18, line 30s 112, beyond 30s 29
+ nocrater seed  8: line before 59, beyond before 353, killed 163, line 2s 69, beyond 2s 303, line 5s 50, beyond 5s 332, line 10s 55, beyond 10s 377, line 20s 58, beyond 20s 477, line 30s 65, beyond 30s 588
+   crater seed  8: line before 59, beyond before 353, killed 163, line 2s 1, beyond 2s 301, line 5s 1, beyond 5s 313, line 10s 1, beyond 10s 348, line 20s 34, beyond 20s 459, line 30s 68, beyond 30s 558
+(115 s)
+
+means:
+       none: line before 123, beyond before 412, killed 0, line 2s 125, beyond 2s 435, line 5s 123, beyond 5s 462, line 10s 122, beyond 10s 525, line 20s 126, beyond 20s 632, line 30s 124, beyond 30s 716
+   nocrater: line before 123, beyond before 412, killed 131, line 2s 108, beyond 2s 379, line 5s 127, beyond 5s 404, line 10s 144, beyond 10s 450, line 20s 144, beyond 20s 541, line 30s 150, beyond 30s 631
+     crater: line before 123, beyond before 412, killed 131, line 2s 1, beyond 2s 388, line 5s 1, beyond 5s 430, line 10s 2, beyond 10s 510, line 20s 67, beyond 20s 679, line 30s 156, beyond 30s 826
+
+pairs (higher / lower / tied, two-sided sign p):
+  nocrater vs none, line before: 0 / 0 / 8, p 1.0000
+  nocrater vs none, beyond before: 0 / 0 / 8, p 1.0000
+  nocrater vs none, killed: 8 / 0 / 0, p 0.0078
+  nocrater vs none, line 2s: 2 / 6 / 0, p 0.2891
+  nocrater vs none, beyond 2s: 0 / 8 / 0, p 0.0078
+  nocrater vs none, line 5s: 2 / 6 / 0, p 0.2891
+  nocrater vs none, beyond 5s: 0 / 8 / 0, p 0.0078
+  nocrater vs none, line 10s: 5 / 3 / 0, p 0.7266
+  nocrater vs none, beyond 10s: 0 / 8 / 0, p 0.0078
+  nocrater vs none, line 20s: 6 / 2 / 0, p 0.2891
+  nocrater vs none, beyond 20s: 0 / 8 / 0, p 0.0078
+  nocrater vs none, line 30s: 5 / 3 / 0, p 0.7266
+  nocrater vs none, beyond 30s: 1 / 7 / 0, p 0.0703
+  crater vs none, line before: 0 / 0 / 8, p 1.0000
+  crater vs none, beyond before: 0 / 0 / 8, p 1.0000
+  crater vs none, killed: 8 / 0 / 0, p 0.0078
+  crater vs none, line 2s: 0 / 8 / 0, p 0.0078
+  crater vs none, beyond 2s: 0 / 8 / 0, p 0.0078
+  crater vs none, line 5s: 0 / 8 / 0, p 0.0078
+  crater vs none, beyond 5s: 3 / 5 / 0, p 0.7266
+  crater vs none, line 10s: 0 / 8 / 0, p 0.0078
+  crater vs none, beyond 10s: 3 / 5 / 0, p 0.7266
+  crater vs none, line 20s: 0 / 8 / 0, p 0.0078
+  crater vs none, beyond 20s: 6 / 2 / 0, p 0.2891
+  crater vs none, line 30s: 5 / 3 / 0, p 0.7266
+  crater vs none, beyond 30s: 6 / 2 / 0, p 0.2891
+  crater vs nocrater, line before: 0 / 0 / 8, p 1.0000
+  crater vs nocrater, beyond before: 0 / 0 / 8, p 1.0000
+  crater vs nocrater, killed: 0 / 0 / 8, p 1.0000
+  crater vs nocrater, line 2s: 0 / 8 / 0, p 0.0078
+  crater vs nocrater, beyond 2s: 6 / 2 / 0, p 0.2891
+  crater vs nocrater, line 5s: 0 / 8 / 0, p 0.0078
+  crater vs nocrater, beyond 5s: 6 / 2 / 0, p 0.2891
+  crater vs nocrater, line 10s: 0 / 8 / 0, p 0.0078
+  crater vs nocrater, beyond 10s: 6 / 2 / 0, p 0.2891
+  crater vs nocrater, line 20s: 0 / 8 / 0, p 0.0078
+  crater vs nocrater, beyond 20s: 6 / 2 / 0, p 0.2891
+  crater vs nocrater, line 30s: 5 / 3 / 0, p 0.7266
+  crater vs nocrater, beyond 30s: 6 / 2 / 0, p 0.2891

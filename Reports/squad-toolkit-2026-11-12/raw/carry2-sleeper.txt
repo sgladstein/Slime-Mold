@@ -1,0 +1,17 @@
+kitplans tiers=sleeper carry=2 threads=4 at 2b1fbf4 (runner B; per-game lines in the runner's thread replies)
+
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                        sleeper
+    idle   -0.225 (0/8/0)
+  random   -1.602 (0/0/8)
+ randkit   -1.605 (0/0/8)
+    farm   +0.262 (0/8/0)
+    loud   +0.265 (0/8/0)
+   quiet   +0.263 (0/8/0)
+  plague   +0.474 (0/8/0)
+   siege   +0.272 (0/8/0)
+
+gate 1: all 15 pairs 8 / 0, p 0.0078
+
+gate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p):
+   sleeper: best plague (+0.474); farm 0/8 p 0.008, loud 0/8 p 0.008, quiet 0/8 p 0.008, siege 0/8 p 0.008

@@ -1,0 +1,32 @@
+kitplans tiers=swarmer carry=2 threads=4 at 2b1fbf4 (runner A; per-game lines in the runner's thread replies)
+
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                        swarmer
+    idle   -0.524 (0/6/2)     
+  random   -1.701 (0/0/8)     
+ randkit   -1.364 (0/1/7)     
+    farm   +0.175 (0/8/0)     
+    loud   +0.181 (0/8/0)     
+   quiet   +0.151 (0/8/0)     
+  plague   +0.963 (4/4/0)     
+   siege   -0.199 (0/6/2)     
+
+gate 1, paired by seed (higher / lower; sign test, Holm over 15):
+          swarmer farm vs idle: 8 / 0, p 0.0078
+        swarmer farm vs random: 8 / 0, p 0.0078
+       swarmer farm vs randkit: 7 / 1, p 0.0703
+          swarmer loud vs idle: 8 / 0, p 0.0078
+        swarmer loud vs random: 8 / 0, p 0.0078
+       swarmer loud vs randkit: 7 / 1, p 0.0703
+         swarmer quiet vs idle: 8 / 0, p 0.0078
+       swarmer quiet vs random: 8 / 0, p 0.0078
+      swarmer quiet vs randkit: 7 / 1, p 0.0703
+        swarmer plague vs idle: 8 / 0, p 0.0078
+      swarmer plague vs random: 8 / 0, p 0.0078
+     swarmer plague vs randkit: 8 / 0, p 0.0078
+         swarmer siege vs idle: 6 / 2, p 0.2891
+       swarmer siege vs random: 8 / 0, p 0.0078
+      swarmer siege vs randkit: 7 / 1, p 0.0703
+
+gate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p):
+   swarmer: best plague (+0.963); farm 0/8 p 0.008, loud 0/8 p 0.008, quiet 0/8 p 0.008, siege 0/8 p 0.008

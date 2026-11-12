@@ -1,0 +1,92 @@
+bigdish: preset wary seeds [1] seconds 60 threads 1
+== seed 1: 512 x 320, 50000 walkers, 23 piles
+seed 1 wary t   5.0s  tube  2046.2  loops    0  width 4.55  reach  169.9  piles 22/23  strays 0.007  crystals 0.999  ms/tick 7.56
+seed 1 wary t   5.0s  alive 1740  energy 0.816  born 1442  starved 4702  grass -0.000
+seed 1 wary t   5.0s  contrast 4.94
+seed 1 wary t   5.0s  extent r50 143.9 r90 143.9
+seed 1 wary t   5.0s  life walk 1740 spore 0 dormant 0 dead 0  held 5/23  bodies 27 big 1502  centre 61.3,74.5  near 143  rim 0.020/0.123
+seed 1 wary t   5.0s  scar max 0.00 near 0
+seed 1 wary t  10.0s  strike at 73.85304,102.44031 r 8: killed 16
+seed 1 wary t  10.0s  tube  2717.0  loops    1  width 4.58  reach  183.2  piles 23/23  strays 0.006  crystals 0.999  ms/tick 7.11
+seed 1 wary t  10.0s  alive 2071  energy 1.197  born 3289  starved 6202  grass -0.000
+seed 1 wary t  10.0s  contrast 5.20
+seed 1 wary t  10.0s  extent r50 143.9 r90 143.9
+seed 1 wary t  10.0s  life walk 2071 spore 0 dormant 0 dead 0  held 7/23  bodies 26 big 1511  centre 64.0,71.7  near 101  rim 0.020/0.135
+seed 1 wary t  10.0s  scar max 0.00 near 0
+seed 1 wary t  12.0s  strike at 73.85304,102.44031 r 8: killed 6
+seed 1 wary t  14.0s  strike at 73.85304,102.44031 r 8: killed 6
+seed 1 wary t  15.0s  tube  3599.0  loops    2  width 5.11  reach  182.7  piles 23/23  strays 0.011  crystals 0.997  ms/tick 7.74
+seed 1 wary t  15.0s  alive 2950  energy 1.491  born 5875  starved 7897  grass -0.000
+seed 1 wary t  15.0s  contrast 4.92
+seed 1 wary t  15.0s  extent r50 143.9 r90 143.9
+seed 1 wary t  15.0s  life walk 2950 spore 0 dormant 0 dead 0  held 12/23  bodies 19 big 1783  centre 63.7,67.1  near 43  rim 0.023/0.180
+seed 1 wary t  15.0s  scar max 68.52 near 184559
+seed 1 wary t  16.0s  strike at 73.85304,102.44031 r 8: killed 7
+seed 1 wary t  18.0s  strike at 73.85304,102.44031 r 8: killed 7
+seed 1 wary t  20.0s  strike at 73.85304,102.44031 r 8: killed 5
+seed 1 wary t  20.0s  tube  4263.0  loops    3  width 5.44  reach  185.0  piles 23/23  strays 0.010  crystals 0.995  ms/tick 7.96
+seed 1 wary t  20.0s  alive 4368  energy 1.828  born 9714  starved 10299  grass -0.000
+seed 1 wary t  20.0s  contrast 4.49
+seed 1 wary t  20.0s  extent r50 143.9 r90 143.9
+seed 1 wary t  20.0s  life walk 4368 spore 0 dormant 0 dead 0  held 12/23  bodies 20 big 2689  centre 63.9,66.5  near 30  rim 0.051/0.260
+seed 1 wary t  20.0s  scar max 106.71 near 287296
+seed 1 wary t  22.0s  strike at 73.85304,102.44031 r 8: killed 7
+seed 1 wary t  24.0s  strike at 73.85304,102.44031 r 8: killed 4
+seed 1 wary t  25.0s  tube  4487.5  loops    6  width 5.98  reach  185.0  piles 23/23  strays 0.012  crystals 0.993  ms/tick 8.07
+seed 1 wary t  25.0s  alive 5061  energy 2.341  born 14183  starved 14064  grass -0.000
+seed 1 wary t  25.0s  contrast 4.43
+seed 1 wary t  25.0s  extent r50 143.9 r90 143.9
+seed 1 wary t  25.0s  life walk 5061 spore 0 dormant 0 dead 0  held 13/23  bodies 8 big 4374  centre 66.6,65.3  near 44  rim 0.070/0.287
+seed 1 wary t  25.0s  scar max 163.16 near 439364
+seed 1 wary t  26.0s  strike at 73.85304,102.44031 r 8: killed 6
+seed 1 wary t  28.0s  strike at 73.85304,102.44031 r 8: killed 1
+seed 1 wary t  30.0s  strike at 73.85304,102.44031 r 8: killed 4
+seed 1 wary t  30.0s  tube  4950.0  loops    4  width 6.04  reach  186.4  piles 23/23  strays 0.019  crystals 0.991  ms/tick 8.17
+seed 1 wary t  30.0s  alive 5810  energy 2.681  born 19680  starved 18801  grass -0.000
+seed 1 wary t  30.0s  contrast 4.43
+seed 1 wary t  30.0s  extent r50 143.9 r90 143.9
+seed 1 wary t  30.0s  life walk 5810 spore 0 dormant 0 dead 0  held 15/23  bodies 11 big 3672  centre 72.7,65.6  near 47  rim 0.071/0.307
+seed 1 wary t  30.0s  scar max 190.64 near 513281
+seed 1 wary t  32.0s  strike at 73.85304,102.44031 r 8: killed 8
+seed 1 wary t  34.0s  strike at 73.85304,102.44031 r 8: killed 7
+seed 1 wary t  35.0s  tube  5155.2  loops    8  width 6.52  reach  185.7  piles 23/23  strays 0.015  crystals 0.988  ms/tick 8.28
+seed 1 wary t  35.0s  alive 6592  energy 3.009  born 25991  starved 24315  grass -0.000
+seed 1 wary t  35.0s  contrast 4.14
+seed 1 wary t  35.0s  extent r50 143.9 r90 143.9
+seed 1 wary t  35.0s  life walk 6592 spore 0 dormant 0 dead 0  held 14/23  bodies 11 big 3642  centre 76.9,65.1  near 43  rim 0.061/0.321
+seed 1 wary t  35.0s  scar max 237.60 near 639790
+seed 1 wary t  36.0s  strike at 73.85304,102.44031 r 8: killed 2
+seed 1 wary t  38.0s  strike at 73.85304,102.44031 r 8: killed 4
+seed 1 wary t  40.0s  strike at 73.85304,102.44031 r 8: killed 1
+seed 1 wary t  40.0s  tube  5536.2  loops    7  width 6.33  reach  185.8  piles 23/23  strays 0.018  crystals 0.985  ms/tick 8.39
+seed 1 wary t  40.0s  alive 7372  energy 3.294  born 33276  starved 30813  grass -0.000
+seed 1 wary t  40.0s  contrast 4.17
+seed 1 wary t  40.0s  extent r50 139.7 r90 143.9
+seed 1 wary t  40.0s  life walk 7372 spore 0 dormant 0 dead 0  held 15/23  bodies 14 big 4164  centre 79.3,64.4  near 46  rim 0.062/0.319
+seed 1 wary t  40.0s  scar max 256.66 near 691039
+seed 1 wary t  45.0s  tube  5818.2  loops    7  width 6.08  reach  189.5  piles 23/23  strays 0.019  crystals 0.982  ms/tick 8.51
+seed 1 wary t  45.0s  alive 7979  energy 3.592  born 41293  starved 38223  grass -0.000
+seed 1 wary t  45.0s  contrast 4.24
+seed 1 wary t  45.0s  extent r50 115.1 r90 143.9
+seed 1 wary t  45.0s  life walk 7979 spore 0 dormant 0 dead 0  held 17/23  bodies 7 big 4334  centre 84.4,64.8  near 43  rim 0.066/0.318
+seed 1 wary t  45.0s  scar max 249.45 near 671603
+seed 1 wary t  50.0s  tube  6473.2  loops   11  width 6.47  reach  191.3  piles 23/23  strays 0.011  crystals 0.978  ms/tick 8.63
+seed 1 wary t  50.0s  alive 8746  energy 3.843  born 50056  starved 46219  grass -0.000
+seed 1 wary t  50.0s  contrast 4.13
+seed 1 wary t  50.0s  extent r50 102.0 r90 149.2
+seed 1 wary t  50.0s  life walk 8746 spore 0 dormant 0 dead 0  held 19/23  bodies 10 big 5414  centre 95.9,68.4  near 54  rim 0.066/0.298
+seed 1 wary t  50.0s  scar max 221.23 near 595643
+seed 1 wary t  55.0s  tube  6823.5  loops    6  width 6.50  reach  192.0  piles 23/23  strays 0.018  crystals 0.974  ms/tick 9.00
+seed 1 wary t  55.0s  alive 9211  energy 4.263  born 59263  starved 54961  grass -0.000
+seed 1 wary t  55.0s  contrast 4.17
+seed 1 wary t  55.0s  extent r50 95.5 r90 155.7
+seed 1 wary t  55.0s  life walk 9211 spore 0 dormant 0 dead 0  held 18/23  bodies 10 big 5522  centre 100.3,69.6  near 46  rim 0.067/0.305
+seed 1 wary t  55.0s  scar max 196.21 near 528274
+seed 1 wary t  60.0s  tube  6933.5  loops    4  width 6.64  reach  192.4  piles 23/23  strays 0.009  crystals 0.970  ms/tick 10.97
+seed 1 wary t  60.0s  alive 9478  energy 4.797  born 68697  starved 64128  grass -0.000
+seed 1 wary t  60.0s  contrast 4.09
+seed 1 wary t  60.0s  extent r50 93.6 r90 174.9
+seed 1 wary t  60.0s  life walk 9478 spore 0 dormant 0 dead 0  held 18/23  bodies 9 big 5512  centre 103.4,70.0  near 62  rim 0.060/0.310
+seed 1 wary t  60.0s  scar max 174.02 near 468525
+seed 1 wary firsts 0:0:0.57:0.0 1:73:0.67:1.0 2:52:0.93:0.3 3:164:0.87:3.1 4:46:0.88:0.3 5:122:0.42:2.3 6:67:0.98:0.7 7:126:0.55:2.2 8:85:0.11:1.9 9:35:0.54:0.1 10:171:0.80:3.8 11:35:0.30:0.7 12:102:0.75:1.3 13:96:0.85:1.4 14:184:1.01:5.8 15:72:0.80:1.1 16:149:0.89:2.4 17:128:0.66:2.7 18:108:0.61:1.9 19:41:0.90:0.2 20:77:1.23:3.4 21:28:0.52:0.0 22:71:0.33:1.6
+seed 1 wary hash=0060d24de0e4a754

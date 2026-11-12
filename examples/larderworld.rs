@@ -6,7 +6,15 @@
 //! cargo run --release --example larderworld -- look=DIR seeds=1 hands=farm [every=60]
 //! cargo run --release --example larderworld -- census map=fork ...
 //! cargo run --release --example larderworld -- census gpu=both seeds=1-32 threads=1 ...
+//! cargo run --release --example larderworld -- census energy_flow=0.05 hunger_scent=8 ...   # one body
 //! ```
+//!
+//! **The one census entry point** (2026-11-12, game integration): a
+//! game-level table that is compared with another thread's comes from this
+//! census, with hands, tiers, tools and missions added here as `hands=` or
+//! flags. Its first lines print `provenance:` (the commit, seeds, cap and a
+//! hash of every setting); quote that line beside the table. Tables from
+//! other harnesses are not comparable with these.
 //!
 //! **On the GPU engine** (`gpu=1`, or `gpu=both` for each game on both;
 //! 2026-11-12, the technical lead review): the same hands, seeds and rules
@@ -145,6 +153,12 @@ struct Mould {
     /// `flee_keep=K`: the alarm field's keep a fine step for the plain
     /// mould (`FLEE_KEEP`, 0.98); a tier's own keep wins.
     flee_keep: Option<f32>,
+    /// One body (2026-11-12, Reports/one-body-2026-11-12.md):
+    /// `energy_flow=` (food shared between touching walkers) and
+    /// `hunger_scent=` (a hungry walker follows food harder), 0 off. Both
+    /// engines.
+    energy_flow: f32,
+    hunger_scent: f32,
 }
 
 impl Mould {
@@ -162,10 +176,27 @@ impl Mould {
     }
     fn apply(&self, p: &mut BigParams) {
         (p.alarm_keep, p.alarm_weight) = self.alarm((p.alarm_keep, p.alarm_weight));
+        (p.energy_flow, p.hunger_scent) = (self.energy_flow, self.hunger_scent);
         if let Some(t) = self.tier {
             t.apply(p);
         }
     }
+}
+
+/// FNV-1a, 64 bits: a stable hash of the census's settings text.
+fn fnv(b: &[u8]) -> u64 {
+    b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &c| (h ^ c as u64).wrapping_mul(0x0000_0100_0000_01b3))
+}
+
+/// The commit the census ran on, with `+dirty` for uncommitted changes, or
+/// `unknown` outside a git checkout.
+fn commit() -> String {
+    let git = |args: &[&str]| std::process::Command::new("git").args(args).current_dir(env!("CARGO_MANIFEST_DIR")).output().ok().filter(|o| o.status.success());
+    let Some(head) = git(&["rev-parse", "--short=9", "HEAD"]) else {
+        return "unknown".into();
+    };
+    let dirty = git(&["status", "--porcelain", "--untracked-files=no"]).is_some_and(|o| !o.stdout.is_empty());
+    format!("{}{}", String::from_utf8_lossy(&head.stdout).trim(), if dirty { "+dirty" } else { "" })
 }
 
 fn main() {
@@ -203,6 +234,8 @@ fn main() {
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             "flee" => m.flee = Some(v.parse().unwrap()),
             "flee_keep" => m.flee_keep = Some(v.parse().unwrap()),
+            "energy_flow" => m.energy_flow = v.parse().unwrap(),
+            "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "strike" => rules.strike = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
             "pump_rate" => rules.build.pump_rate = v.parse().unwrap(),
@@ -235,6 +268,9 @@ fn main() {
     if let Some(c) = cap {
         rules.cap = c;
     }
+    if (m.energy_flow, m.hunger_scent) != (0.0, 0.0) {
+        println!("one body: energy_flow {} hunger_scent {}", m.energy_flow, m.hunger_scent);
+    }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
     println!(
@@ -245,6 +281,29 @@ fn main() {
         m.tier.map_or("none", |t| t.name()),
         m.flee.map_or("0 (default)".to_string(), |w| w.to_string()),
         m.flee_keep.map_or(String::new(), |k| format!(", keep {k}"))
+    );
+    // The census's provenance (2026-11-12, game integration; the technical
+    // lead found three harnesses' tables disagreeing overnight with no way
+    // to tell why): one line that names the commit, the seeds, the cap and
+    // a hash of every setting above, so a table quoted in a report can be
+    // matched to another run's, or shown not to match. FNV-1a over the
+    // settings' text, so it changes with any Rules field without a list to
+    // keep up to date.
+    let settings = format!(
+        "{world}|{scale}|{walkers}|{}|{}|{}|{:?}|{names}|{rules:?}",
+        m.tier.map_or("none", |t| t.name()),
+        m.flee.unwrap_or(0.0),
+        m.flee_keep.unwrap_or(0.0),
+        hands
+    );
+    println!(
+        "provenance: harness larderworld, commit {}, seeds {}-{} ({}), cap {} s, settings hash {:016x}",
+        commit(),
+        seeds.first().copied().unwrap_or(0),
+        seeds.last().copied().unwrap_or(0),
+        seeds.len(),
+        rules.cap,
+        fnv(settings.as_bytes())
     );
     assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
@@ -477,6 +536,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, han
     if let Some((device, queue)) = gpu {
         let mut s = race_settings(seed, scale, walkers);
         (s.alarm_keep, s.alarm_weight) = mould.alarm((s.alarm_keep, s.alarm_weight));
+        (s.energy_flow, s.hunger_scent) = (mould.energy_flow, mould.hunger_scent);
         let world = match map {
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),

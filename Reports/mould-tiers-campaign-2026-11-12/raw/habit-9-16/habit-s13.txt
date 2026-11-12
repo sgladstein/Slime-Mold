@@ -1,0 +1,92 @@
+bigdish: preset habit seeds [13] seconds 60 threads 1
+== seed 13: 512 x 320, 50000 walkers, 23 piles
+seed 13 habit t   5.0s  tube  3418.2  loops    0  width 4.23  reach  173.3  piles 22/23  strays 0.005  crystals 0.999  ms/tick 7.20
+seed 13 habit t   5.0s  alive 2077  energy 0.830  born 1369  starved 4292  grass -0.000
+seed 13 habit t   5.0s  contrast 3.73
+seed 13 habit t   5.0s  extent r50 143.9 r90 143.9
+seed 13 habit t   5.0s  life walk 2077 spore 0 dormant 0 dead 0  held 9/23  bodies 28 big 2305  centre 71.9,74.7  near 125  rim 0.024/0.411
+seed 13 habit t   5.0s  scar max 0.00 near 0
+seed 13 habit t  10.0s  strike at 30.601578,60.041 r 8: killed 73
+seed 13 habit t  10.0s  tube  4354.8  loops    1  width 5.12  reach  174.4  piles 22/23  strays 0.002  crystals 0.998  ms/tick 7.03
+seed 13 habit t  10.0s  alive 3147  energy 0.911  born 4074  starved 5854  grass -0.000
+seed 13 habit t  10.0s  contrast 3.37
+seed 13 habit t  10.0s  extent r50 143.9 r90 143.9
+seed 13 habit t  10.0s  life walk 3147 spore 0 dormant 0 dead 0  held 16/23  bodies 14 big 3802  centre 84.2,75.9  near 119  rim 0.035/0.351
+seed 13 habit t  10.0s  scar max 0.00 near 0
+seed 13 habit t  12.0s  strike at 30.601578,60.041 r 8: killed 58
+seed 13 habit t  14.0s  strike at 30.601578,60.041 r 8: killed 69
+seed 13 habit t  15.0s  tube  5092.2  loops    2  width 5.95  reach  175.8  piles 22/23  strays 0.007  crystals 0.996  ms/tick 7.98
+seed 13 habit t  15.0s  alive 4756  energy 1.160  born 8534  starved 8578  grass -0.000
+seed 13 habit t  15.0s  contrast 3.77
+seed 13 habit t  15.0s  extent r50 143.9 r90 143.9
+seed 13 habit t  15.0s  life walk 4756 spore 0 dormant 0 dead 0  held 17/23  bodies 6 big 4804  centre 99.7,80.6  near 135  rim 0.025/0.282
+seed 13 habit t  15.0s  scar max 68.52 near 184162
+seed 13 habit t  16.0s  strike at 30.601578,60.041 r 8: killed 79
+seed 13 habit t  18.0s  strike at 30.601578,60.041 r 8: killed 62
+seed 13 habit t  20.0s  strike at 30.601578,60.041 r 8: killed 52
+seed 13 habit t  20.0s  tube  5777.5  loops    0  width 6.96  reach  178.7  piles 22/23  strays 0.001  crystals 0.993  ms/tick 8.95
+seed 13 habit t  20.0s  alive 7400  energy 1.451  born 15950  starved 13157  grass -0.000
+seed 13 habit t  20.0s  contrast 3.66
+seed 13 habit t  20.0s  extent r50 143.9 r90 143.9
+seed 13 habit t  20.0s  life walk 7400 spore 0 dormant 0 dead 0  held 16/23  bodies 4 big 5394  centre 112.4,84.7  near 69  rim 0.018/0.233
+seed 13 habit t  20.0s  scar max 106.70 near 286664
+seed 13 habit t  22.0s  strike at 30.601578,60.041 r 8: killed 79
+seed 13 habit t  24.0s  strike at 30.601578,60.041 r 8: killed 84
+seed 13 habit t  25.0s  tube  6272.8  loops    6  width 7.14  reach  182.7  piles 22/23  strays 0.016  crystals 0.989  ms/tick 10.16
+seed 13 habit t  25.0s  alive 9085  energy 2.109  born 24821  starved 20180  grass -0.000
+seed 13 habit t  25.0s  contrast 3.83
+seed 13 habit t  25.0s  extent r50 143.9 r90 210.4
+seed 13 habit t  25.0s  life walk 9085 spore 0 dormant 0 dead 0  held 17/23  bodies 4 big 6232  centre 117.4,87.8  near 147  rim 0.018/0.222
+seed 13 habit t  25.0s  scar max 163.15 near 438406
+seed 13 habit t  26.0s  strike at 30.601578,60.041 r 8: killed 70
+seed 13 habit t  28.0s  strike at 30.601578,60.041 r 8: killed 72
+seed 13 habit t  30.0s  strike at 30.601578,60.041 r 8: killed 85
+seed 13 habit t  30.0s  tube  6654.5  loops    4  width 7.16  reach  183.2  piles 22/23  strays 0.013  crystals 0.984  ms/tick 11.05
+seed 13 habit t  30.0s  alive 9715  energy 2.847  born 34150  starved 28652  grass -0.000
+seed 13 habit t  30.0s  contrast 3.71
+seed 13 habit t  30.0s  extent r50 143.9 r90 243.9
+seed 13 habit t  30.0s  life walk 9715 spore 0 dormant 0 dead 0  held 19/23  bodies 4 big 6566  centre 118.6,87.6  near 99  rim 0.022/0.222
+seed 13 habit t  30.0s  scar max 190.63 near 512152
+seed 13 habit t  32.0s  strike at 30.601578,60.041 r 8: killed 76
+seed 13 habit t  34.0s  strike at 30.601578,60.041 r 8: killed 63
+seed 13 habit t  35.0s  tube  6564.5  loops    4  width 7.37  reach  182.7  piles 22/23  strays 0.008  crystals 0.979  ms/tick 11.63
+seed 13 habit t  35.0s  alive 9581  energy 3.731  born 43461  starved 37958  grass -0.000
+seed 13 habit t  35.0s  contrast 3.75
+seed 13 habit t  35.0s  extent r50 143.9 r90 255.6
+seed 13 habit t  35.0s  life walk 9581 spore 0 dormant 0 dead 0  held 18/23  bodies 4 big 6464  centre 118.6,88.9  near 127  rim 0.020/0.225
+seed 13 habit t  35.0s  scar max 237.59 near 638391
+seed 13 habit t  36.0s  strike at 30.601578,60.041 r 8: killed 65
+seed 13 habit t  38.0s  strike at 30.601578,60.041 r 8: killed 63
+seed 13 habit t  40.0s  strike at 30.601578,60.041 r 8: killed 53
+seed 13 habit t  40.0s  tube  6473.0  loops    9  width 6.98  reach  182.5  piles 22/23  strays 0.013  crystals 0.975  ms/tick 12.03
+seed 13 habit t  40.0s  alive 9530  energy 4.607  born 52660  starved 47027  grass -0.000
+seed 13 habit t  40.0s  contrast 3.80
+seed 13 habit t  40.0s  extent r50 143.9 r90 260.8
+seed 13 habit t  40.0s  life walk 9530 spore 0 dormant 0 dead 0  held 19/23  bodies 7 big 6364  centre 120.2,89.2  near 89  rim 0.019/0.221
+seed 13 habit t  40.0s  scar max 256.65 near 689518
+seed 13 habit t  45.0s  tube  6560.5  loops    7  width 7.00  reach  182.4  piles 22/23  strays 0.015  crystals 0.970  ms/tick 12.35
+seed 13 habit t  45.0s  alive 9770  energy 5.320  born 62120  starved 56247  grass -0.000
+seed 13 habit t  45.0s  contrast 3.75
+seed 13 habit t  45.0s  extent r50 143.9 r90 264.7
+seed 13 habit t  45.0s  life walk 9770 spore 0 dormant 0 dead 0  held 18/23  bodies 4 big 6137  centre 119.6,89.3  near 122  rim 0.018/0.226
+seed 13 habit t  45.0s  scar max 249.43 near 670124
+seed 13 habit t  50.0s  tube  6575.5  loops    7  width 7.17  reach  183.3  piles 22/23  strays 0.013  crystals 0.966  ms/tick 12.68
+seed 13 habit t  50.0s  alive 9931  energy 6.025  born 71768  starved 65734  grass -0.000
+seed 13 habit t  50.0s  contrast 3.90
+seed 13 habit t  50.0s  extent r50 143.3 r90 268.2
+seed 13 habit t  50.0s  life walk 9931 spore 0 dormant 0 dead 0  held 19/23  bodies 11 big 6409  centre 120.2,90.6  near 134  rim 0.018/0.221
+seed 13 habit t  50.0s  scar max 221.22 near 594332
+seed 13 habit t  55.0s  tube  6573.8  loops    3  width 7.26  reach  182.4  piles 22/23  strays 0.006  crystals 0.961  ms/tick 13.19
+seed 13 habit t  55.0s  alive 9902  energy 6.842  born 81209  starved 75204  grass -0.000
+seed 13 habit t  55.0s  contrast 3.74
+seed 13 habit t  55.0s  extent r50 135.7 r90 269.2
+seed 13 habit t  55.0s  life walk 9902 spore 0 dormant 0 dead 0  held 17/23  bodies 7 big 6026  centre 119.5,88.9  near 146  rim 0.019/0.225
+seed 13 habit t  55.0s  scar max 196.20 near 527112
+seed 13 habit t  60.0s  tube  6690.0  loops    8  width 7.02  reach  183.5  piles 22/23  strays 0.014  crystals 0.956  ms/tick 15.06
+seed 13 habit t  60.0s  alive 10020  energy 7.538  born 91037  starved 84914  grass -0.000
+seed 13 habit t  60.0s  contrast 3.74
+seed 13 habit t  60.0s  extent r50 130.8 r90 270.7
+seed 13 habit t  60.0s  life walk 10020 spore 0 dormant 0 dead 0  held 18/23  bodies 8 big 6528  centre 120.1,90.1  near 149  rim 0.021/0.223
+seed 13 habit t  60.0s  scar max 174.01 near 467494
+seed 13 habit firsts 0:0:0.57:0.0 1:38:0.40:0.1 2:70:0.63:0.4 3:60:1.01:0.3 4:101:0.45:0.8 5:33:0.82:0.0 6:124:0.75:2.5 7:129:0.51:1.8 8:76:0.89:1.4 9:163:0.80:2.3 10:93:0.24:0.6 11:140:0.62:2.9 12:39:0.53:0.1 13:36:0.78:0.1 14:71:1.17:0.5 15:94:0.81:1.9 16:59:0.19:0.3 17:47:0.95:0.1 18:174:0.86:3.3 19:119:0.85:1.1 20:70:1.17:0.4 21:183:1.16:-1.0 22:139:0.81:1.5
+seed 13 habit hash=5a71b0709b8d4052

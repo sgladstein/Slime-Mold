@@ -1,0 +1,11 @@
+kitplans tiers=swarmer hands=farm,loud,quiet,plague,siege carry=2 tool_weight=50 threads=4 at 2b1fbf4 (runner A)
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                        swarmer
+    farm   +0.184 (0/8/0)     
+    loud   +0.191 (0/8/0)     
+   quiet   +0.124 (0/8/0)     
+  plague   +1.093 (5/3/0)     
+   siege   -0.031 (0/7/1)     
+
+gate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p):
+   swarmer: best plague (+1.093); farm 0/8 p 0.008, loud 0/8 p 0.008, quiet 0/8 p 0.008, siege 0/8 p 0.008

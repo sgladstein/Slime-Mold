@@ -1,0 +1,92 @@
+bigdish: preset grudge seeds [13] seconds 60 threads 1
+== seed 13: 512 x 320, 50000 walkers, 23 piles
+seed 13 grudge t   5.0s  tube  3418.2  loops    0  width 4.23  reach  173.3  piles 22/23  strays 0.005  crystals 0.999  ms/tick 7.48
+seed 13 grudge t   5.0s  alive 2077  energy 0.830  born 1369  starved 4292  grass -0.000
+seed 13 grudge t   5.0s  contrast 3.73
+seed 13 grudge t   5.0s  extent r50 143.9 r90 143.9
+seed 13 grudge t   5.0s  life walk 2077 spore 0 dormant 0 dead 0  held 9/23  bodies 28 big 2305  centre 71.9,74.7  near 125  rim 0.024/0.411
+seed 13 grudge t   5.0s  scar max 0.00 near 0
+seed 13 grudge t  10.0s  strike at 30.601578,60.041 r 8: killed 73
+seed 13 grudge t  10.0s  tube  4354.8  loops    1  width 5.12  reach  174.4  piles 22/23  strays 0.002  crystals 0.998  ms/tick 7.32
+seed 13 grudge t  10.0s  alive 3147  energy 0.911  born 4074  starved 5854  grass -0.000
+seed 13 grudge t  10.0s  contrast 3.37
+seed 13 grudge t  10.0s  extent r50 143.9 r90 143.9
+seed 13 grudge t  10.0s  life walk 3147 spore 0 dormant 0 dead 0  held 16/23  bodies 14 big 3802  centre 84.2,75.9  near 119  rim 0.035/0.351
+seed 13 grudge t  10.0s  scar max 0.00 near 0
+seed 13 grudge t  12.0s  strike at 30.601578,60.041 r 8: killed 265
+seed 13 grudge t  14.0s  strike at 30.601578,60.041 r 8: killed 286
+seed 13 grudge t  15.0s  tube  4793.8  loops    2  width 5.84  reach  174.3  piles 22/23  strays 0.010  crystals 0.996  ms/tick 8.03
+seed 13 grudge t  15.0s  alive 4583  energy 1.130  born 8698  starved 8491  grass -0.000
+seed 13 grudge t  15.0s  contrast 3.59
+seed 13 grudge t  15.0s  extent r50 143.9 r90 143.9
+seed 13 grudge t  15.0s  life walk 4583 spore 0 dormant 0 dead 0  held 17/23  bodies 7 big 4327  centre 97.7,81.9  near 291  rim 0.024/0.286
+seed 13 grudge t  15.0s  scar max 68.52 near 184162
+seed 13 grudge t  16.0s  strike at 30.601578,60.041 r 8: killed 269
+seed 13 grudge t  18.0s  strike at 30.601578,60.041 r 8: killed 322
+seed 13 grudge t  20.0s  strike at 30.601578,60.041 r 8: killed 309
+seed 13 grudge t  20.0s  tube  5251.2  loops    4  width 6.39  reach  177.3  piles 22/23  strays 0.006  crystals 0.994  ms/tick 8.91
+seed 13 grudge t  20.0s  alive 6461  energy 1.443  born 15574  starved 12589  grass -0.000
+seed 13 grudge t  20.0s  contrast 3.83
+seed 13 grudge t  20.0s  extent r50 143.9 r90 143.9
+seed 13 grudge t  20.0s  life walk 6461 spore 0 dormant 0 dead 0  held 16/23  bodies 13 big 4731  centre 112.1,90.2  near 168  rim 0.024/0.229
+seed 13 grudge t  20.0s  scar max 106.70 near 286664
+seed 13 grudge t  22.0s  strike at 30.601578,60.041 r 8: killed 290
+seed 13 grudge t  24.0s  strike at 30.601578,60.041 r 8: killed 305
+seed 13 grudge t  25.0s  tube  6031.5  loops    5  width 7.01  reach  182.0  piles 22/23  strays 0.008  crystals 0.989  ms/tick 9.82
+seed 13 grudge t  25.0s  alive 8839  energy 1.919  born 24567  starved 18609  grass -0.000
+seed 13 grudge t  25.0s  contrast 3.87
+seed 13 grudge t  25.0s  extent r50 143.9 r90 205.7
+seed 13 grudge t  25.0s  life walk 8839 spore 0 dormant 0 dead 0  held 17/23  bodies 9 big 5462  centre 117.8,88.8  near 329  rim 0.018/0.216
+seed 13 grudge t  25.0s  scar max 163.15 near 438406
+seed 13 grudge t  26.0s  strike at 30.601578,60.041 r 8: killed 300
+seed 13 grudge t  28.0s  strike at 30.601578,60.041 r 8: killed 314
+seed 13 grudge t  30.0s  strike at 30.601578,60.041 r 8: killed 329
+seed 13 grudge t  30.0s  tube  6095.2  loops    7  width 7.01  reach  182.4  piles 23/23  strays 0.007  crystals 0.985  ms/tick 10.55
+seed 13 grudge t  30.0s  alive 9131  energy 2.753  born 33782  starved 26589  grass -0.000
+seed 13 grudge t  30.0s  contrast 3.80
+seed 13 grudge t  30.0s  extent r50 143.9 r90 237.4
+seed 13 grudge t  30.0s  life walk 9131 spore 0 dormant 0 dead 0  held 17/23  bodies 8 big 5672  centre 119.3,89.8  near 184  rim 0.021/0.212
+seed 13 grudge t  30.0s  scar max 190.63 near 512152
+seed 13 grudge t  32.0s  strike at 30.601578,60.041 r 8: killed 322
+seed 13 grudge t  34.0s  strike at 30.601578,60.041 r 8: killed 290
+seed 13 grudge t  35.0s  tube  6366.2  loops    3  width 7.11  reach  182.3  piles 23/23  strays 0.003  crystals 0.980  ms/tick 11.25
+seed 13 grudge t  35.0s  alive 9583  energy 3.457  born 43466  starved 35209  grass -0.000
+seed 13 grudge t  35.0s  contrast 3.83
+seed 13 grudge t  35.0s  extent r50 143.9 r90 254.8
+seed 13 grudge t  35.0s  life walk 9583 spore 0 dormant 0 dead 0  held 18/23  bodies 5 big 6009  centre 119.0,89.7  near 339  rim 0.022/0.219
+seed 13 grudge t  35.0s  scar max 237.59 near 638391
+seed 13 grudge t  36.0s  strike at 30.601578,60.041 r 8: killed 317
+seed 13 grudge t  38.0s  strike at 30.601578,60.041 r 8: killed 325
+seed 13 grudge t  40.0s  strike at 30.601578,60.041 r 8: killed 343
+seed 13 grudge t  40.0s  tube  6229.2  loops    9  width 7.12  reach  182.3  piles 23/23  strays 0.015  crystals 0.975  ms/tick 11.77
+seed 13 grudge t  40.0s  alive 9635  energy 4.231  born 53396  starved 44102  grass -0.000
+seed 13 grudge t  40.0s  contrast 3.82
+seed 13 grudge t  40.0s  extent r50 143.9 r90 259.6
+seed 13 grudge t  40.0s  life walk 9635 spore 0 dormant 0 dead 0  held 16/23  bodies 6 big 5867  centre 120.1,90.3  near 197  rim 0.023/0.215
+seed 13 grudge t  40.0s  scar max 256.65 near 689518
+seed 13 grudge t  45.0s  tube  6557.2  loops    6  width 7.38  reach  183.2  piles 23/23  strays 0.010  crystals 0.970  ms/tick 12.06
+seed 13 grudge t  45.0s  alive 10408  energy 4.784  born 63346  starved 53279  grass -0.000
+seed 13 grudge t  45.0s  contrast 3.83
+seed 13 grudge t  45.0s  extent r50 143.8 r90 263.9
+seed 13 grudge t  45.0s  life walk 10408 spore 0 dormant 0 dead 0  held 17/23  bodies 6 big 6180  centre 114.9,88.3  near 854  rim 0.020/0.217
+seed 13 grudge t  45.0s  scar max 249.43 near 670124
+seed 13 grudge t  50.0s  tube  6557.2  loops    9  width 7.24  reach  183.2  piles 23/23  strays 0.016  crystals 0.965  ms/tick 12.31
+seed 13 grudge t  50.0s  alive 10394  energy 5.685  born 73290  starved 63237  grass -0.000
+seed 13 grudge t  50.0s  contrast 3.82
+seed 13 grudge t  50.0s  extent r50 132.2 r90 266.5
+seed 13 grudge t  50.0s  life walk 10394 spore 0 dormant 0 dead 0  held 18/23  bodies 5 big 6150  centre 114.4,88.3  near 889  rim 0.022/0.214
+seed 13 grudge t  50.0s  scar max 221.22 near 594332
+seed 13 grudge t  55.0s  tube  6595.0  loops    7  width 7.38  reach  183.3  piles 23/23  strays 0.012  crystals 0.960  ms/tick 12.81
+seed 13 grudge t  55.0s  alive 10413  energy 6.561  born 83276  starved 73204  grass -0.000
+seed 13 grudge t  55.0s  contrast 3.92
+seed 13 grudge t  55.0s  extent r50 126.2 r90 268.6
+seed 13 grudge t  55.0s  life walk 10413 spore 0 dormant 0 dead 0  held 17/23  bodies 5 big 6521  centre 114.7,88.5  near 925  rim 0.019/0.209
+seed 13 grudge t  55.0s  scar max 196.20 near 527112
+seed 13 grudge t  60.0s  tube  6592.0  loops    8  width 7.31  reach  183.2  piles 23/23  strays 0.013  crystals 0.955  ms/tick 14.71
+seed 13 grudge t  60.0s  alive 10640  energy 7.284  born 93434  starved 83135  grass -0.000
+seed 13 grudge t  60.0s  contrast 4.00
+seed 13 grudge t  60.0s  extent r50 122.0 r90 269.5
+seed 13 grudge t  60.0s  life walk 10640 spore 0 dormant 0 dead 0  held 17/23  bodies 8 big 6338  centre 114.7,88.6  near 927  rim 0.019/0.207
+seed 13 grudge t  60.0s  scar max 174.01 near 467494
+seed 13 grudge firsts 0:0:0.57:0.0 1:38:0.40:0.1 2:70:0.63:0.4 3:60:1.01:0.3 4:101:0.45:0.8 5:33:0.82:0.0 6:124:0.75:2.5 7:129:0.51:1.8 8:76:0.89:1.4 9:163:0.80:2.3 10:93:0.24:0.6 11:140:0.62:2.9 12:39:0.53:0.1 13:36:0.78:0.1 14:71:1.17:0.5 15:94:0.81:1.9 16:59:0.19:0.3 17:47:0.95:0.1 18:174:0.86:3.3 19:119:0.85:1.1 20:70:1.17:0.4 21:183:1.16:27.7 22:139:0.81:1.5
+seed 13 grudge hash=4ee3e018171cec49
