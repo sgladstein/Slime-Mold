@@ -1,0 +1,125 @@
+mission 1-landfall (Landfall): "Grow your squad to 12 and harvest 3 crystals at once", map flats, tier drifter , seeds 1-8, scale 2, walkers 5000
+on the CPU
+  idle s2: Stuck 30s 0*
+  idle s5: Stuck 30s 0*
+  idle s3: Stuck 75s 0*
+  idle s1: Stuck 70s 0*
+  idle s7: Stuck 30s 0*
+  idle s6: Stuck 56s 0*
+  idle s4: Stuck 97s 0*
+  idle s8: Stuck 69s 0*
+  random s1: Stuck 216s 0*
+  random s2: Stuck 406s 0*
+  random s3: Stuck 764s 0*
+  random s5: Stuck 588s 0*
+  random s7: Stuck 249s 0*
+  boom s1: Goal 81s 3*
+  boom s2: Goal 82s 3*
+  boom s3: Goal 82s 3*
+  random s4: Cap 900s 0*
+  boom s4: Goal 82s 3*
+  boom s5: Goal 81s 3*
+  boom s6: Goal 82s 3*
+  boom s7: Goal 81s 3*
+  boom s8: Goal 80s 3*
+  claim s1: Goal 81s 3*
+  claim s2: Goal 82s 3*
+  random s8: Stuck 402s 0*
+  claim s3: Goal 82s 3*
+  claim s4: Goal 82s 3*
+  claim s5: Goal 81s 3*
+  claim s7: Goal 81s 3*
+  claim s6: Goal 82s 3*
+  claim s8: Goal 80s 3*
+  late s1: Goal 81s 3*
+  late s2: Goal 82s 3*
+  late s3: Goal 82s 3*
+  late s4: Goal 82s 3*
+  late s5: Goal 81s 3*
+  late s6: Goal 82s 3*
+  random s6: Stuck 685s 0*
+  late s8: Goal 80s 3*
+  late s7: Goal 81s 3*
+  fort s1: Goal 81s 3*
+  fort s2: Goal 82s 3*
+  fort s4: Goal 82s 3*
+  fort s3: Goal 82s 3*
+  fort s5: Goal 81s 3*
+  fort s8: Goal 80s 3*
+  fort s7: Goal 81s 3*
+  fort s6: Goal 82s 3*
+  strike s1: Goal 81s 3*
+  strike s2: Goal 82s 3*
+  strike s4: Goal 82s 3*
+  strike s3: Goal 82s 3*
+  strike s5: Goal 81s 3*
+  strike s8: Goal 80s 3*
+  strike s7: Goal 81s 3*
+  strike s6: Goal 82s 3*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out
+boom         1  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3906     14  4.000/11.000  0/0/0 0
+boom         2  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3898      6  4.000/11.000  0/0/0 0
+boom         3  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3894     18  4.000/11.000  0/0/0 0
+boom         4  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3888     10  4.000/11.000  0/0/0 0
+boom         5  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3901     19  4.000/11.000  0/0/0 0
+boom         6  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3886      9  4.000/11.000  0/0/0 0
+boom         7  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3902      9  4.000/11.000  0/0/0 0
+boom         8  Goal          80      3 1.00    10%    10%    0%    0%    0%                             8    1   14       79     12      3607     11  4.000/11.000  0/0/0 0
+claim        1  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3906     14  4.000/11.000  0/0/0 0
+claim        2  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3898      6  4.000/11.000  0/0/0 0
+claim        3  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3894     18  4.000/11.000  0/0/0 0
+claim        4  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3888     10  4.000/11.000  0/0/0 0
+claim        5  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3901     19  4.000/11.000  0/0/0 0
+claim        6  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3886      9  4.000/11.000  0/0/0 0
+claim        7  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3902      9  4.000/11.000  0/0/0 0
+claim        8  Goal          80      3 1.00    10%    10%    0%    0%    0%                             8    1   14       79     12      3607     11  4.000/11.000  0/0/0 0
+fort         1  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3906     14  4.000/11.000  0/0/0 0
+fort         2  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3898      6  4.000/11.000  0/0/0 0
+fort         3  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3894     18  4.000/11.000  0/0/0 0
+fort         4  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3888     10  4.000/11.000  0/0/0 0
+fort         5  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3901     19  4.000/11.000  0/0/0 0
+fort         6  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3886      9  4.000/11.000  0/0/0 0
+fort         7  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3902      9  4.000/11.000  0/0/0 0
+fort         8  Goal          80      3 1.00    10%    10%    0%    0%    0%                             8    1   14       79     12      3607     11  4.000/11.000  0/0/0 0
+idle         1  Stuck         70      0 0.00    94%    94%    0%    0%    0%                            30   30   16        0      4         0      4  0.000/0.000  0/0/0 0
+idle         2  Stuck         30      0 0.00   100%   100%    0%    0%    0%                            30   30   16        0      4         0      0  0.000/0.000  0/0/0 0
+idle         3  Stuck         75      0 0.00    95%    95%    0%    0%    0%                            30   30   16        0      4         0      5  0.000/0.000  0/0/0 0
+idle         4  Stuck         97      0 0.00    96%    96%    0%    0%    0%                            30   30   16        0      4         0      4  0.000/0.000  0/0/0 0
+idle         5  Stuck         30      0 0.00   100%   100%    0%    0%    0%                            30   30   16        0      4         0      0  0.000/0.000  0/0/0 0
+idle         6  Stuck         56      0 0.00    96%    96%    0%    0%    0%                            30   30   16        0      4         0      2  0.000/0.000  0/0/0 0
+idle         7  Stuck         30      0 0.00   100%   100%    0%    0%    0%                            30   30   16        0      4         0      0  0.000/0.000  0/0/0 0
+idle         8  Stuck         69      0 0.00    99%    99%    0%    0%    0%                            38   30   16        0      4         0      1  0.000/0.000  0/0/0 0
+late         1  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3906     14  4.000/11.000  0/0/0 0
+late         2  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3898      6  4.000/11.000  0/0/0 0
+late         3  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3894     18  4.000/11.000  0/0/0 0
+late         4  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3888     10  4.000/11.000  0/0/0 0
+late         5  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3901     19  4.000/11.000  0/0/0 0
+late         6  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3886      9  4.000/11.000  0/0/0 0
+late         7  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3902      9  4.000/11.000  0/0/0 0
+late         8  Goal          80      3 1.00    10%    10%    0%    0%    0%                             8    1   14       79     12      3607     11  4.000/11.000  0/0/0 0
+random       1  Stuck        216      0 0.00     4%     6%    2%    0%    0%                             3   30   35        0      2         0   2025  0.000/2.000  0/0/0 0
+random       2  Stuck        406      0 0.00     9%     2%    7%   38%    0%                            14   30  124        0      2         0   3249  0.000/2.000  0/0/0 0
+random       3  Stuck        764      0 0.00     6%     1%    4%    5%   22%                            20   30  155        0      2       900   6022  0.000/2.000  0/0/0 0
+random       4  Cap          900      0 0.38     3%     0%    1%    4%    6%                            12   24   96        0      1      4248   7928  0.000/3.000  0/0/0 0
+random       5  Stuck        588      0 0.00     8%     4%    5%   12%    0%                             8   30   95        0      2       972   3480  0.000/2.000  0/0/0 0
+random       6  Stuck        685      0 0.38     6%     0%    3%   11%    0%                             8   30   37        0      2      2335   5419  0.000/4.000  0/0/0 0
+random       7  Stuck        249      0 0.00     8%     0%   16%    0%    0%                            12   30   79        0      2       300   2196  0.000/2.000  0/0/0 0
+random       8  Stuck        402      0 0.00    12%     6%   16%    2%    0%                            20   30   31        0      2       300   3064  0.000/3.000  0/0/0 0
+strike       1  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3906     14  4.000/11.000  0/0/0 0
+strike       2  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3898      6  4.000/11.000  0/0/0 0
+strike       3  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3894     18  4.000/11.000  0/0/0 0
+strike       4  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3888     10  4.000/11.000  0/0/0 0
+strike       5  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3901     19  4.000/11.000  0/0/0 0
+strike       6  Goal          82      3 1.00    10%    10%    0%    0%    0%                             8    1   14       81     12      3886      9  4.000/11.000  0/0/0 0
+strike       7  Goal          81      3 1.00    10%    10%    0%    0%    0%                             8    1   14       80     12      3902      9  4.000/11.000  0/0/0 0
+strike       8  Goal          80      3 1.00    10%    10%    0%    0%    0%                             8    1   14       79     12      3607     11  4.000/11.000  0/0/0 0
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  boom      8/8  stars 3  best 1.00  dead 10%  stuck 1 s  stall 14 s
+  claim     8/8  stars 3  best 1.00  dead 10%  stuck 1 s  stall 14 s
+  fort      8/8  stars 3  best 1.00  dead 10%  stuck 1 s  stall 14 s
+  idle      0/8  stars 0  best 0.00  dead 97%  stuck 30 s  stall 16 s
+  late      8/8  stars 3  best 1.00  dead 10%  stuck 1 s  stall 14 s
+  random    0/8  stars 0  best 0.09  dead 7%  stuck 30 s  stall 155 s
+  strike    8/8  stars 3  best 1.00  dead 10%  stuck 1 s  stall 14 s

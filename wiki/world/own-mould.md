@@ -33,7 +33,7 @@ is unchanged. On 32 seeds, sowing (Feed while walking to an unclaimed
 crystal and back) grows the player's mould 13 times farm's (32 of 32);
 feeding in one spot does nothing; farming alone starves it. The enemy is not
 smaller: the two blind species meet along one front and hold it
-([page](https://claude.ai/artifact/7Z4b4NB1JG1H7QEf9TrUer)). Each side may hold at most half the slots (`species_cap`), and a taken enemy core stops only the enemy's births; on the same seeds that changed nothing yet (the sides never neared it).
+([page](https://claude.ai/artifact/7Z4b4NB1JG1H7QEf9TrUer)). Each side may hold at most half the slots (`species_cap`), and a taken enemy core stops only the enemy's births; on the same seeds that changed nothing yet (the sides never neared it). Shots lay craters as in the one-mould game. **The front** (32 seeds, two soldiers for 20 s where the moulds meet): a road past the front pushes the player's ground forward (+886 cells, 27/4), sowing thickens it (+609, 25/6), fire with craters burns the enemy's back (-396, 24/7); all three hold under Holm. Without craters fire took nothing.
 
 ## Owner's word
 
@@ -47,7 +47,8 @@ smaller: the two blind species meet along one front and hold it
 ## Open
 
 - Contact: make the enemy seek the player's mould (`species_avoid` below 0 for the enemy only), so a big player mould is a threat it must answer.
-- The front: how far each action moves the line between the two moulds in 20 s.
+- A front hand that picks road, sow or fire where the line is, judged against random and idle.
+- Cut's disc (radius 3) moves nothing visible.
 - Cut was never used by a planned hand.
 - The fight needs contact: with the species blind to each other, it is rare. Attraction (`species_avoid` below 0) brings it on and hands the dense form the economy too (4 seeds).
 - Crust and spore-flier forms need per-species life-cycle rates.

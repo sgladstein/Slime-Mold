@@ -180,3 +180,64 @@ count instead of its own. A wiped squad is a loss only when the Game says so
 caps an idle round at 1:00. The window also gave a recruit made inside a
 step no look until the next frame (an index panic); fixed. Missions 1-3 are
 re-run once shot craters (Larder PR 2) and the tiers land.
+
+### Missions 1-3 on the real tiers, with craters (census v6-v8)
+
+The tiers thread's #115 made `tier drifter` and `tier sprawler` real (until
+then they fell back to the plain mould), and the Larder thread's #113 turned
+shot craters on. Census: CPU, seeds 1-8, seven AI hands plus idle and random;
+raw files in `larder-campaign-2026-11-12/census/` (v6 and v7 before craters,
+v8 on main 71ed0f9 with craters). Deciding measure: goal met by a plan, and
+never by idle or random.
+
+| Mission | Hand | v6 (tiers) | v8 (tiers + craters) |
+|---|---|---|---|
+| 1 Landfall (Drifter) | boom, claim, late, fort, strike | 40/40, 3 stars | 40/40, 3 stars |
+| | idle, random | 0/16 | 0/16 |
+| 2 First contact, old goal (retake the west fork) | strike | 8/8 (by wiping the mould) | |
+| | the other six hands | 0/48, best 0.00 | |
+| 2 First contact, new goal (retake its home) | strike | | 8/8, 3 stars, 6:16-6:19 |
+| | boom, claim, late, fort; idle, random | | 0/48 |
+| 3 The gaps, 5% share rule (Sprawler) | every hand | 0/56, 46% outside | |
+| 3 The gaps, thick-mould rule | gaps+claim, gaps+boom, gaps+fort | 24/24 (v7) | 24/24, 2 stars, held at 10:00 |
+| | boom, claim, late, fort, strike; idle, random | 0/56 (v7) | 0/56 |
+
+Mission 2: the real Drifter never left its home crystal in 15:00 with any
+hand (seeds 1-4, crystals-reached column, v7), so "take back the west fork"
+could never start. The goal is now "Drive the mould off its home crystal and
+hold it for 60 s" (`retake 1 60 0`). Only strike meets it, by wiping the
+mould; holding the home crystal against a living Drifter happened in no
+round. A tutorial that only one plan passes is acceptable for the second
+mission; the designer's counter-push idea needs a mould that comes back,
+which the Drifter doesn't.
+
+Mission 3: the Sprawler leaves the Rim at once (46% of its walkers outside
+for every hand), so the 5% share could not hold. The goal now uses the
+thick-mould rule (`contain ... 600 1 16`: no 4 x 4 bin outside with 16+
+walkers, share off), which the design review preferred. A new census hand,
+`gaps+STYLE` (`examples/campaign.rs`), walls the four gaps at the start
+(one soldier each, raising what it places) and then plays STYLE: it holds
+24 of 24, and every hand that does not wall holds 0 of 56 (paired per seed,
+gaps+claim vs claim 8-0, sign p 0.008, and the same for boom and fort; all
+survive Holm over the three). So the mission now needs walls, the open item
+from the first census. The bank (2000) pays for three of the four walls; the
+west gap is left open on most seeds and the hold still comes, so the rule is
+not too strict.
+
+Two notes. #122 (soldiers raise buildings over time) made placed walls
+ghosts until a builder raises them: the first v8 run of the gaps hand placed
+walls and stood beside them, raised nothing, and lost its squad by 1:50 on
+8 of 8 (`...-v8-gaps-no-builder.txt`); the hand now gives the soldier
+`Order::Build`. The window's goal line says "thick mould outside in N
+places" for this rule.
+
+**Smoke test (tech lead, 14:13Z).** Mission 3's result rests on rules other
+threads own (wall health and bite, raise time, craters, core defence), so CI
+plays the fragile mission on seed 1 at census size
+(`campaign::tests::the_gaps_needs_walls_and_landfall_wins`, 11.8 s on four
+cores): Landfall claim meets its goal; The gaps with walls has no thick mould
+outside and its bar at 0.2+ at 2:20; without walls thick mould is outside by
+about 2:00. The first version (#130) also played First contact's strike to
+7:00 and took 105 s, too long for every PR (tech lead: under 30 s); it stays
+as `each_missions_plan_still_wins`, `#[ignore]`d. The wall plan is in the
+library (`campaign::wall_rim_gaps`).

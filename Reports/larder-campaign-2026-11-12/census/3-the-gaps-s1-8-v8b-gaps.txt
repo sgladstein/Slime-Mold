@@ -1,0 +1,57 @@
+mission 3-the-gaps (The gaps): "Keep the mould inside the Rim for 10:00", map rim, tier sprawler , seeds 1-8, scale 2, walkers 5000
+on the CPU
+  gaps+claim s2: Goal 600s 2*
+  gaps+claim s1: Goal 600s 2*
+  gaps+claim s3: Goal 600s 2*
+  gaps+claim s4: Goal 600s 2*
+  gaps+claim s5: Goal 600s 2*
+  gaps+claim s7: Goal 600s 2*
+  gaps+claim s6: Goal 600s 2*
+  gaps+claim s8: Goal 600s 2*
+  gaps+boom s1: Goal 600s 2*
+  gaps+boom s2: Goal 600s 2*
+  gaps+boom s3: Goal 600s 2*
+  gaps+boom s4: Goal 600s 2*
+  gaps+boom s5: Goal 600s 2*
+  gaps+boom s6: Goal 600s 2*
+  gaps+boom s7: Goal 600s 2*
+  gaps+boom s8: Goal 600s 2*
+  gaps+fort s2: Goal 600s 2*
+  gaps+fort s1: Goal 600s 2*
+  gaps+fort s3: Goal 600s 2*
+  gaps+fort s4: Goal 600s 2*
+  gaps+fort s5: Goal 600s 2*
+  gaps+fort s6: Goal 600s 2*
+  gaps+fort s7: Goal 600s 2*
+  gaps+fort s8: Goal 600s 2*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+gaps+boom    1  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     20     11140   7808  0.000/0.178  824/33/0 432  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+boom    2  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     20     11034   7083  0.000/0.188  829/38/0 443  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+boom    3  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     12      7328   5819  0.000/0.166  771/28/0 581  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+boom    4  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     20     11588   5815  0.000/0.177  827/27/0 273  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+boom    5  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     19      9478   7205  0.000/0.190  832/37/0 531  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+boom    6  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     20     11203   7291  0.000/0.168  788/25/0 341  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+boom    7  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     20      9898   6772  0.000/0.182  805/29/0 513  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+boom    8  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     20     11900   8129  0.000/0.179  849/31/0 389  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    1  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     22     11140   7812  0.000/0.178  824/33/0 432  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    2  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     20     11034   7083  0.000/0.188  829/38/0 443  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    3  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     12      7328   5819  0.000/0.166  771/28/0 581  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    4  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     28     11588   5802  0.000/0.177  827/27/0 280  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    5  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     19      9478   7205  0.000/0.190  832/37/0 531  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    6  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     20     10903   7684  0.000/0.168  788/25/0 340  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    7  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     21      9898   6775  0.000/0.182  805/29/0 513  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    8  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     22     11900   8036  0.000/0.179  849/31/0 403  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+fort    1  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     20     10933   6656  0.000/0.178  824/33/0 468  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+fort    2  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     18      9533   7090  0.000/0.188  829/38/0 444  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+fort    3  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     12      7132   5842  0.000/0.166  771/28/0 581  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+fort    4  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     20     11327   5644  0.000/0.177  827/27/0 282  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+fort    5  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     15      9779   7573  0.000/0.190  832/37/0 500  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+fort    6  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     15     11204   8639  0.000/0.168  788/25/0 354  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+fort    7  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     17      9379   6746  0.000/0.182  805/29/0 511  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+fort    8  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     19     11900   8395  0.000/0.179  849/31/0 388  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  gaps+boom 8/8  stars 2  best 1.00  dead 0%  stuck 5 s  stall 0 s
+  gaps+claim 8/8  stars 2  best 1.00  dead 0%  stuck 5 s  stall 0 s
+  gaps+fort 8/8  stars 2  best 1.00  dead 0%  stuck 5 s  stall 0 s

@@ -1,0 +1,70 @@
+larderworld tier Some(Sleeper) scale 2 walkers 5000 cap 900 s, tps 15, seeds [53, 54, 55, 56, 57, 58, 59, 60]; rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 10.0, hp: 100.0, drain: 1.0, touch: 1.5, smell: 0.5, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, cap: 900.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0 }
+random seed 53: squad wiped at   417 s, score -1.536; soldiers  0, mould   5017, bank      0, harvested    900, stolen     0, shots   150, killed    778, crystals left 0.965; 7.61 ms a tick, think 0 us mean, 0 at most
+  boom seed 53:         cap at   900 s, score +0.364; soldiers 20, mould   3350, bank  47980, harvested  56700, stolen     0, shots   432, killed   1018, crystals left 0.151; 12.32 ms a tick, think 181 us mean, 3953 at most
+ claim seed 53:         cap at   900 s, score +0.438; soldiers 28, mould   1602, bank  12640, harvested  55500, stolen     0, shots  1246, killed  17932, crystals left 0.160; 11.89 ms a tick, think 177 us mean, 358 at most
+  idle seed 53:         cap at   900 s, score -0.167; soldiers  4, mould   2817, bank   1980, harvested      0, stolen     0, shots     2, killed      1, crystals left 0.978; 27.22 ms a tick, think 0 us mean, 0 at most
+random seed 54: squad wiped at   331 s, score -1.633; soldiers  0, mould   2330, bank      9, harvested   2100, stolen     1, shots   129, killed    655, crystals left 0.946; 6.96 ms a tick, think 0 us mean, 0 at most
+  farm seed 53:         cap at   900 s, score +0.300; soldiers  8, mould   2832, bank  24330, harvested  24000, stolen     0, shots     7, killed     10, crystals left 0.630; 29.97 ms a tick, think 0 us mean, 0 at most
+strike seed 53:         cap at   900 s, score +0.500; soldiers 30, mould      7, bank  28580, harvested  46500, stolen     0, shots   672, killed   4143, crystals left 0.296; 18.90 ms a tick, think 179 us mean, 378 at most
+  boom seed 54:         cap at   900 s, score +0.447; soldiers 20, mould   1821, bank  47240, harvested  59700, stolen     0, shots   766, killed   2066, crystals left 0.119; 10.08 ms a tick, think 172 us mean, 246 at most
+ claim seed 54:         cap at   900 s, score +0.438; soldiers 28, mould   1269, bank  17680, harvested  54000, stolen     0, shots  1712, killed  10237, crystals left 0.191; 9.84 ms a tick, think 174 us mean, 369 at most
+  idle seed 54:         cap at   900 s, score +0.000; soldiers  4, mould   1826, bank   2000, harvested      0, stolen     0, shots     0, killed      0, crystals left 0.989; 28.15 ms a tick, think 0 us mean, 0 at most
+random seed 55: squad wiped at   210 s, score -1.767; soldiers  0, mould   3067, bank      0, harvested    900, stolen     0, shots   150, killed   1600, crystals left 0.976; 7.82 ms a tick, think 0 us mean, 0 at most
+  farm seed 54:         cap at   900 s, score +0.389; soldiers  8, mould   1826, bank  24380, harvested  24000, stolen     0, shots     2, killed      2, crystals left 0.641; 27.89 ms a tick, think 0 us mean, 0 at most
+strike seed 54:         cap at   900 s, score +0.357; soldiers 30, mould     37, bank  26470, harvested  43500, stolen     0, shots   623, killed   3663, crystals left 0.332; 18.90 ms a tick, think 181 us mean, 623 at most
+  idle seed 55:         cap at   900 s, score +0.000; soldiers  4, mould   1976, bank   2000, harvested      0, stolen     0, shots     0, killed      0, crystals left 0.989; 25.50 ms a tick, think 0 us mean, 0 at most
+  farm seed 55:         cap at   900 s, score +0.389; soldiers  8, mould   2010, bank  24330, harvested  24000, stolen     0, shots     7, killed      7, crystals left 0.641; 22.93 ms a tick, think 0 us mean, 0 at most
+  boom seed 55:         cap at   900 s, score +0.382; soldiers 20, mould   3744, bank  24390, harvested  44100, stolen     0, shots  1251, killed   4563, crystals left 0.316; 11.38 ms a tick, think 183 us mean, 366 at most
+ claim seed 55:         cap at   900 s, score +0.438; soldiers 28, mould    624, bank   9920, harvested  41400, stolen     0, shots  1508, killed   8476, crystals left 0.366; 11.34 ms a tick, think 185 us mean, 403 at most
+random seed 56: squad wiped at   222 s, score -1.753; soldiers  0, mould   1582, bank      1, harvested    900, stolen     9, shots   129, killed    648, crystals left 0.968; 6.93 ms a tick, think 0 us mean, 0 at most
+  boom seed 56:         cap at   900 s, score +0.450; soldiers 20, mould   1117, bank  46200, harvested  57300, stolen     0, shots   630, killed   1078, crystals left 0.149; 8.81 ms a tick, think 179 us mean, 295 at most
+strike seed 55:         cap at   900 s, score +0.500; soldiers 30, mould     13, bank  15780, harvested  37200, stolen     0, shots   902, killed   5847, crystals left 0.426; 19.76 ms a tick, think 185 us mean, 319 at most
+ claim seed 56:         cap at   900 s, score +0.500; soldiers 28, mould     80, bank  18840, harvested  51000, stolen     0, shots  1136, killed  11474, crystals left 0.231; 8.82 ms a tick, think 175 us mean, 740 at most
+  idle seed 56:         cap at   900 s, score +0.000; soldiers  4, mould   1297, bank   2000, harvested      0, stolen     0, shots     0, killed      0, crystals left 0.989; 25.66 ms a tick, think 0 us mean, 0 at most
+  farm seed 56:         cap at   900 s, score +0.389; soldiers  8, mould   1385, bank  24330, harvested  24000, stolen     0, shots     7, killed      7, crystals left 0.641; 24.60 ms a tick, think 0 us mean, 0 at most
+strike seed 56:         cap at   900 s, score +0.357; soldiers 30, mould     11, bank  28440, harvested  42600, stolen     0, shots   456, killed   3598, crystals left 0.346; 18.03 ms a tick, think 186 us mean, 328 at most
+random seed 57:         cap at   900 s, score -0.167; soldiers  1, mould   2976, bank      1, harvested    900, stolen     9, shots   169, killed    688, crystals left 0.950; 14.51 ms a tick, think 0 us mean, 0 at most
+  idle seed 57:         cap at   900 s, score -0.167; soldiers  4, mould   2993, bank   1940, harvested      0, stolen     0, shots     6, killed      3, crystals left 0.979; 24.02 ms a tick, think 0 us mean, 0 at most
+  boom seed 57:         cap at   900 s, score +0.409; soldiers 20, mould   2617, bank  49750, harvested  60600, stolen     0, shots   565, killed   1724, crystals left 0.094; 10.03 ms a tick, think 175 us mean, 437 at most
+ claim seed 57:         cap at   900 s, score +0.375; soldiers 28, mould    955, bank  13620, harvested  54300, stolen     0, shots  1388, killed  14903, crystals left 0.179; 9.48 ms a tick, think 178 us mean, 577 at most
+random seed 58: squad wiped at   199 s, score -1.779; soldiers  0, mould   4419, bank      9, harvested   1200, stolen     1, shots   199, killed    766, crystals left 0.977; 7.02 ms a tick, think 0 us mean, 0 at most
+  farm seed 57:         cap at   900 s, score +0.300; soldiers  8, mould   2961, bank  24160, harvested  24000, stolen     0, shots    24, killed     30, crystals left 0.632; 25.39 ms a tick, think 0 us mean, 0 at most
+strike seed 57:         cap at   900 s, score +0.500; soldiers 30, mould     21, bank  27580, harvested  46500, stolen     0, shots   732, killed   5421, crystals left 0.292; 17.56 ms a tick, think 179 us mean, 281 at most
+  boom seed 58:         cap at   900 s, score +0.342; soldiers 20, mould   4565, bank  20920, harvested  50100, stolen     0, shots  1798, killed   8394, crystals left 0.228; 9.88 ms a tick, think 180 us mean, 790 at most
+  idle seed 58:         cap at   900 s, score +0.000; soldiers  4, mould   1834, bank   1960, harvested      0, stolen     0, shots     4, killed      3, crystals left 0.989; 24.70 ms a tick, think 0 us mean, 0 at most
+ claim seed 58:         cap at   900 s, score +0.250; soldiers 12, mould   5055, bank   4600, harvested  49500, stolen     0, shots  1970, killed  19882, crystals left 0.245; 11.10 ms a tick, think 181 us mean, 278 at most
+random seed 59: squad wiped at   202 s, score -1.776; soldiers  0, mould   4866, bank      0, harvested   1200, stolen    10, shots   139, killed   1008, crystals left 0.962; 7.06 ms a tick, think 0 us mean, 0 at most
+  farm seed 58:         cap at   900 s, score +0.389; soldiers  8, mould   1789, bank  24290, harvested  24000, stolen     0, shots    11, killed     13, crystals left 0.641; 26.98 ms a tick, think 0 us mean, 0 at most
+strike seed 58:         cap at   900 s, score +0.500; soldiers 30, mould     15, bank  18690, harvested  43500, stolen     0, shots  1041, killed   7231, crystals left 0.327; 17.63 ms a tick, think 177 us mean, 796 at most
+  boom seed 59:         cap at   900 s, score +0.364; soldiers 20, mould   3527, bank  49530, harvested  58500, stolen     0, shots   457, killed    699, crystals left 0.115; 12.60 ms a tick, think 182 us mean, 350 at most
+ claim seed 59:         cap at   900 s, score +0.375; soldiers 28, mould   1522, bank  15820, harvested  58500, stolen     0, shots   948, killed  20247, crystals left 0.114; 13.45 ms a tick, think 185 us mean, 798 at most
+  idle seed 59:         cap at   900 s, score -0.300; soldiers  4, mould   5576, bank   2000, harvested      0, stolen     0, shots     0, killed      0, crystals left 0.963; 27.71 ms a tick, think 0 us mean, 0 at most
+  farm seed 59:         cap at   900 s, score +0.227; soldiers  8, mould   3794, bank  24210, harvested  24000, stolen     0, shots    19, killed     15, crystals left 0.620; 24.42 ms a tick, think 0 us mean, 0 at most
+strike seed 59:         cap at   900 s, score +0.500; soldiers 30, mould      9, bank  32050, harvested  49200, stolen     0, shots   515, killed   5247, crystals left 0.244; 18.53 ms a tick, think 182 us mean, 355 at most
+  farm seed 60:         cap at   900 s, score +0.227; soldiers  8, mould   4070, bank  24250, harvested  24000, stolen     0, shots    15, killed     11, crystals left 0.620; 14.82 ms a tick, think 0 us mean, 0 at most
+  idle seed 60:         cap at   900 s, score -0.250; soldiers  4, mould   4151, bank   2000, harvested      0, stolen     0, shots     0, killed      0, crystals left 0.968; 26.06 ms a tick, think 0 us mean, 0 at most
+  boom seed 60:         cap at   900 s, score +0.283; soldiers 20, mould   7181, bank  39190, harvested  53100, stolen     0, shots   871, killed   1893, crystals left 0.177; 11.28 ms a tick, think 187 us mean, 562 at most
+random seed 60:         cap at   900 s, score -0.333; soldiers  1, mould   6289, bank    100, harvested    300, stolen     0, shots    40, killed    373, crystals left 0.940; 23.61 ms a tick, think 0 us mean, 0 at most
+ claim seed 60:         cap at   900 s, score +0.333; soldiers 21, mould   1614, bank   7160, harvested  49800, stolen     0, shots  1464, killed  19808, crystals left 0.231; 10.82 ms a tick, think 184 us mean, 315 at most
+strike seed 60:         cap at   900 s, score +0.357; soldiers 30, mould     55, bank  21790, harvested  42600, stolen     0, shots   801, killed   5959, crystals left 0.349; 18.06 ms a tick, think 182 us mean, 582 at most
+
+by hand (mean score; ends):
+    idle: mean -0.110; mould wiped 0, cap 8, squad wiped 0
+  random: mean -1.343; mould wiped 0, cap 2, squad wiped 6
+    farm: mean +0.326; mould wiped 0, cap 8, squad wiped 0
+    boom: mean +0.380; mould wiped 0, cap 8, squad wiped 0
+   claim: mean +0.393; mould wiped 0, cap 8, squad wiped 0
+  strike: mean +0.446; mould wiped 0, cap 8, squad wiped 0
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 11):
+      farm vs idle: 8 higher, 0 lower, p 0.0078
+    farm vs random: 8 higher, 0 lower, p 0.0078
+      boom vs idle: 8 higher, 0 lower, p 0.0078
+    boom vs random: 8 higher, 0 lower, p 0.0078
+      boom vs farm: 6 higher, 2 lower, p 0.2891
+     claim vs idle: 8 higher, 0 lower, p 0.0078
+   claim vs random: 8 higher, 0 lower, p 0.0078
+     claim vs farm: 7 higher, 1 lower, p 0.0703
+    strike vs idle: 8 higher, 0 lower, p 0.0078
+  strike vs random: 8 higher, 0 lower, p 0.0078
+    strike vs farm: 6 higher, 2 lower, p 0.2891

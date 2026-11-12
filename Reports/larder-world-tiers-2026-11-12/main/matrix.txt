@@ -1,0 +1,39 @@
+seeds 53-60 (8); median score per plan; ends wiped/cap/lost; stuck = mean seconds stuck
+tier                 idle          random            farm            boom           claim            fort          strike
+none      -0.369 0/8/0     -1.397 0/2/6     +0.193 0/8/0     +0.218 1/7/0     +0.343 3/5/0     +0.221 1/7/0     +2.079 5/3/0    
+sporer    -0.407 0/8/0     -1.704 1/2/5     +0.001 0/8/0     +0.103 1/7/0     +0.169 1/7/0     +0.110 0/8/0     +0.086 1/7/0    
+sleeper   -0.161 0/8/0     -1.478 0/3/5     +0.304 0/8/0     +0.323 0/8/0     +0.483 0/8/0     +0.294 0/8/0     +0.494 0/8/0    
+swarmer   -0.380 0/6/2     -1.639 0/2/6     +0.153 0/8/0     +0.176 1/7/0     +0.249 1/7/0     +0.191 1/7/0     +2.181 6/2/0    
+drifter   -0.207 0/8/0     -0.725 0/4/4     +0.359 0/8/0     +0.428 0/8/0     +0.453 0/8/0     +0.423 0/8/0     +2.314 8/0/0    
+sprawler  -0.878 0/4/4     -1.602 1/1/6     +0.197 1/7/0     +0.095 1/7/0     +0.143 1/7/0     +0.080 1/7/0     +0.423 3/5/0    
+trunk     -0.258 0/8/0     +0.020 2/3/3     +0.318 0/8/0     +0.294 0/8/0     +0.362 2/6/0     +0.304 0/8/0     +2.208 7/1/0    
+grudge    -0.367 0/8/0     -1.700 0/2/6     +0.141 0/8/0     -0.009 0/8/0     -0.019 0/5/3     +0.000 0/8/0     +0.183 1/7/0    
+
+best plan per tier (best on N seeds; best vs runner-up by median, paired)
+none      best-on {'farm': 1, 'boom': 0, 'claim': 1, 'fort': 1, 'strike': 5}  top by median strike vs claim: 5-3 p 0.727
+sporer    best-on {'farm': 0, 'boom': 1, 'claim': 5, 'fort': 2, 'strike': 0}  top by median claim vs fort: 6-2 p 0.289
+sleeper   best-on {'farm': 0, 'boom': 0, 'claim': 0, 'fort': 0, 'strike': 8}  top by median strike vs claim: 8-0 p 0.008
+swarmer   best-on {'farm': 1, 'boom': 0, 'claim': 0, 'fort': 0, 'strike': 7}  top by median strike vs claim: 8-0 p 0.008
+drifter   best-on {'farm': 0, 'boom': 0, 'claim': 0, 'fort': 0, 'strike': 8}  top by median strike vs claim: 8-0 p 0.008
+sprawler  best-on {'farm': 3, 'boom': 0, 'claim': 0, 'fort': 0, 'strike': 5}  top by median strike vs farm: 5-3 p 0.727
+trunk     best-on {'farm': 0, 'boom': 0, 'claim': 1, 'fort': 0, 'strike': 7}  top by median strike vs claim: 7-1 p 0.070
+grudge    best-on {'farm': 2, 'boom': 0, 'claim': 0, 'fort': 1, 'strike': 5}  top by median strike vs farm: 5-3 p 0.727
+
+each plan against the same plan on plain (higher-lower, p)
+sporer    idle 0-8 p 0.008  random 3-5 p 0.727  farm 0-8 p 0.008  boom 0-8 p 0.008  claim 0-8 p 0.008  fort 2-6 p 0.289  strike 0-8 p 0.008
+sleeper   idle 8-0 p 0.008  random 4-4 p 1.000  farm 7-1 p 0.070  boom 7-1 p 0.070  claim 5-3 p 0.727  fort 7-1 p 0.070  strike 3-5 p 0.727
+swarmer   idle 2-5 p 0.453  random 1-7 p 0.070  farm 0-8 p 0.008  boom 4-4 p 1.000  claim 2-6 p 0.289  fort 0-7 p 0.016  strike 4-4 p 1.000
+drifter   idle 8-0 p 0.008  random 8-0 p 0.008  farm 7-1 p 0.070  boom 7-1 p 0.070  claim 5-3 p 0.727  fort 6-2 p 0.289  strike 6-2 p 0.289
+sprawler  idle 1-7 p 0.070  random 2-6 p 0.289  farm 4-4 p 1.000  boom 0-8 p 0.008  claim 0-8 p 0.008  fort 0-8 p 0.008  strike 1-7 p 0.070
+trunk     idle 8-0 p 0.008  random 8-0 p 0.008  farm 7-1 p 0.070  boom 6-2 p 0.289  claim 5-3 p 0.727  fort 5-3 p 0.727  strike 6-2 p 0.289
+grudge    idle 5-2 p 0.453  random 1-7 p 0.070  farm 1-7 p 0.070  boom 0-8 p 0.008  claim 0-8 p 0.008  fort 0-8 p 0.008  strike 0-8 p 0.008
+
+mean seconds stuck a game (dead time)
+none      idle 0  random 52  farm 0  boom 0  claim 0  fort 0  strike 0
+sporer    idle 0  random 5  farm 2  boom 0  claim 0  fort 0  strike 0
+sleeper   idle 0  random 309  farm 0  boom 0  claim 0  fort 0  strike 0
+swarmer   idle 0  random 159  farm 0  boom 0  claim 0  fort 0  strike 0
+drifter   idle 0  random 260  farm 0  boom 0  claim 0  fort 0  strike 0
+sprawler  idle 2  random 62  farm 0  boom 0  claim 0  fort 0  strike 1
+trunk     idle 0  random 70  farm 0  boom 0  claim 0  fort 0  strike 0
+grudge    idle 0  random 96  farm 0  boom 0  claim 0  fort 0  strike 0

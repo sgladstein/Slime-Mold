@@ -20,7 +20,7 @@ use pixels::wgpu;
 use slime_mould::gpu::block_on;
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::mould::big::BigDish;
-use slime_mould::mould::campaign::{decided_at, Goal, Mission, Tracker, BIN};
+use slime_mould::mould::campaign::{self, decided_at, Goal, Mission, Tracker, BIN};
 use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
@@ -53,6 +53,8 @@ struct Row {
     /// any bin of 4+ outside (what a player sees as mould out of the Rim).
     out_bins: [u32; 3],
     seen_out: u32,
+    /// Crystals the mould reached in the round (map order), as a bit set.
+    reached: u64,
 }
 
 fn main() {
@@ -128,10 +130,10 @@ fn main() {
     let mut rows = rows.into_inner().unwrap();
     rows.sort_by(|a, b| a.hand.cmp(&b.hand).then(a.seed.cmp(&b.seed)).then(a.gpu.cmp(&b.gpu)));
     let both = engines.len() > 1;
-    println!("\nhand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out");
+    println!("\nhand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached");
     for r in &rows {
         println!(
-            "{:<9} {:>4}{}  {:<10} {:>5.0}  {:>5} {:>4.2}  {:>4.0}%  {:>4.0}% {:>4.0}% {:>4.0}% {:>4.0}%                          {:>4} {:>4} {:>4}    {:>5}  {:>5} {:>9.0} {:>6}  {:.3}/{:.3}  {}/{}/{} {}",
+            "{:<9} {:>4}{}  {:<10} {:>5.0}  {:>5} {:>4.2}  {:>4.0}%  {:>4.0}% {:>4.0}% {:>4.0}% {:>4.0}%                          {:>4} {:>4} {:>4}    {:>5}  {:>5} {:>9.0} {:>6}  {:.3}/{:.3}  {}/{}/{} {}  {:?}",
             r.hand,
             r.seed,
             if both { if r.gpu { " GPU" } else { " CPU" } } else { "" },
@@ -156,7 +158,8 @@ fn main() {
             r.out_bins[0],
             r.out_bins[1],
             r.out_bins[2],
-            r.seen_out
+            r.seen_out,
+            (0..64).filter(|c| r.reached >> c & 1 == 1).collect::<Vec<_>>()
         );
     }
     println!("\nby hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall");
@@ -221,13 +224,21 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, wal
 
 fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu: bool) -> Row {
     let mut tr = Tracker::new(m.clone(), &g);
-    let mut ai = larder_world_ai::Hand::named(hand, &g);
+    // `gaps+STYLE`: the Rim's wall plan (one soldier walls each gap of the
+    // ring, then STYLE plays everyone); the mission 3 verb's own hand.
+    let (gaps, style) = match hand.strip_prefix("gaps+") {
+        Some(st) => (true, st),
+        None => (false, hand),
+    };
+    let mut ai = larder_world_ai::Hand::named(style, &g);
+    let mut walled = [false; 4];
     let tps = g.rules.tps as u64;
     let mut count = (f32::INFINITY, f32::NEG_INFINITY);
-    let (mut out_bins, mut seen_out) = ([0u32; 3], 0u32);
+    let (mut out_bins, mut seen_out, mut reached) = ([0u32; 3], 0u32, 0u64);
     let v = loop {
         match hand {
             "random" => random_hand(&mut g),
+            _ if gaps && walled.iter().any(|w| !w) && g.time() < 120.0 => campaign::wall_rim_gaps(&mut g, &mut walled),
             _ => {
                 ai.as_mut().unwrap_or_else(|| panic!("unknown hand {hand}")).play(&mut g);
             }
@@ -237,6 +248,22 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
             g.step();
         }
         let grid = g.world.mould_grid(BIN);
+        if let Some(gr) = grid.as_deref() {
+            let gw = g.world.size().0.div_ceil(BIN);
+            for (c, ((x, y), _)) in g.world.crystals().into_iter().enumerate().take(64) {
+                let r = g.world.crystal_r(c);
+                let (bx0, bx1) = (((x - r) / BIN as f32).max(0.0) as usize, ((x + r) / BIN as f32) as usize);
+                let (by0, by1) = (((y - r) / BIN as f32).max(0.0) as usize, ((y + r) / BIN as f32) as usize);
+                'c: for by in by0..=by1 {
+                    for bx in bx0..=bx1.min(gw - 1) {
+                        if gr.get(by * gw + bx).is_some_and(|&n| n > 0) {
+                            reached |= 1 << c;
+                            break 'c;
+                        }
+                    }
+                }
+            }
+        }
         if let (Goal::Contain { rect, .. }, Some(gr)) = (&m.goal, grid.as_deref()) {
             let fine = g.world.scale() / slime_mould::mould::map::MAP_SCALE;
             let gw = g.world.size().0.div_ceil(BIN);
@@ -284,6 +311,7 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
         count,
         out_bins,
         seen_out,
+        reached,
     }
 }
 
