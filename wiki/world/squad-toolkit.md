@@ -2,8 +2,8 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12T14:39Z
-sources: [Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
+updated: 2026-11-12T15:30Z
+sources: [Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
 ---
 
@@ -37,6 +37,14 @@ the Swarmer, Sporer and Sprawler, a tie on tier none and the Grudge (8 seeds,
 by the mean; not yet significant). Gas and the det cord are never best
 ([round 2](../../Reports/squad-toolkit-round2-2026-11-12.md)). Pictures and
 counts are on the [page](https://claude.ai/artifact/Vr6ysJedMVtEa6XXEA1pTC).
+
+Idea, not built (2026-11-12): **rounds**, after the ammo-card guns of
+Flashes of Chaos and Noita's wands. A soldier's or turret's shot becomes up to
+four cards in order (payloads such as crater, bait, alarm, germ, sleep, scar;
+modifiers such as pierce, scatter, quiet; triggers that read the mould, such as
+"when thick" or carried along the tubes), so the toolkit's tools ride on shots
+and the best loadout can vary by tier
+([research](../../Reports/flashes-of-chaos-guns-2026-11-12.md)).
 
 ## Owner's word
 
