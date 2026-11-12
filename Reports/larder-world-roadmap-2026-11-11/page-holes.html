@@ -1,0 +1,133 @@
+<title>Larder World Holes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* One reading column. Each row is one game moment played three ways (before, A, B) side by side, clips from the engine's own drawing, counts under each. Colours follow the world: mould amber, crystal cyan. */
+:root {
+  --bg: #f3f5f6; --fg: #182024; --muted: #56646b; --line: #d5dde0;
+  --panel: #ffffff; --amber: #a86a12; --cyan: #127a93; --win: #2f7d4a; --loss: #a8402c;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; --win: #7fd19a; --loss: #f0937e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; --win: #7fd19a; --loss: #f0937e; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1060px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.3rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+section { display: grid; gap: 14px; }
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; align-content: start; }
+figure video, figure img { width: 100%; border-radius: 4px; border: 1px solid var(--line); display: block; background: #111a1f; }
+.counts { font-size: 0.88rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.counts b { color: var(--fg); font-weight: 600; }
+.tag { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.tag.off { color: var(--muted); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.92rem; min-width: 620px; }
+th, td { text-align: left; padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.82rem; }
+td.w { color: var(--win); font-weight: 600; }
+td.l { color: var(--loss); font-weight: 600; }
+.note { font-size: 0.9rem; color: var(--muted); border-left: 2px solid var(--line); padding-left: 12px; }
+.ask { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 14px 16px; display: grid; gap: 6px; }
+.ask b { font-family: var(--display); }
+code { font-size: 0.88em; }
+@media (max-width: 760px) { .trio { grid-template-columns: 1fr; } }
+</style>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>Shots that carve a hole</h1>
+    <p class="lede">You asked for a group of soldiers firing on the slime to carve a bigger and bigger hole that doesn't refill while they shoot. Each hit already left an alarm on the ground around it, a field in the simulation that fades over a few seconds. Now the mould turns away from fresh alarm. Under steady fire the hole stays open and the hits push deeper. When the shooting stops, the alarm fades and the mould flows back within about ten seconds.</p>
+    <p class="lede">Each clip below is one game on the race world. The mould grows for 60 s. Then four soldiers (the white squares) are set down 8 cells from the mould's edge. They fire for 20 s, then stop. The clips run three frames per game second. There is nothing drawn on top except the soldiers and the clock.</p>
+  </header>
+
+  <section>
+    <h2>Seed 1</h2>
+    <div class="trio">
+      <figure><span class="tag off">before</span>
+        <video src="holes/before-s1.mp4" poster="holes/before-s1.jpg" autoplay muted loop playsinline aria-label="Seed 1 before: the mould closes over each hit at once"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>43 / 36 / 40</b> cells<br>5 s after the last shot: 39 · hits land 4.1 cells out · 163 walkers killed</div></figure>
+      <figure><span class="tag">A</span>
+        <video src="holes/A-s1.mp4" poster="holes/A-s1.jpg" autoplay muted loop playsinline aria-label="Seed 1, setting A"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>100 / 106 / 90</b> cells<br>5 s after the last shot: 42 · hits land 6.5 cells out · 150 killed</div></figure>
+      <figure><span class="tag">B</span>
+        <video src="holes/B-s1.mp4" poster="holes/B-s1.jpg" autoplay muted loop playsinline aria-label="Seed 1, setting B"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>123 / 129 / 129</b> cells<br>5 s after the last shot: 61 · hits land 10.8 cells out · 208 killed</div></figure>
+    </div>
+    <p class="counts">The squad's range held 139 cells of mould when it was set down. With the squad holding fire instead, the mould's own drift leaves 36 / 33 / 28.</p>
+  </section>
+
+  <section>
+    <h2>Seed 3</h2>
+    <div class="trio">
+      <figure><span class="tag off">before</span>
+        <video src="holes/before-s3.mp4" poster="holes/before-s3.jpg" autoplay muted loop playsinline aria-label="Seed 3 before"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>42 / 33 / 28</b> cells<br>5 s after the last shot: 25 · hits land 3.8 cells out · 138 killed</div></figure>
+      <figure><span class="tag">A</span>
+        <video src="holes/A-s3.mp4" poster="holes/A-s3.jpg" autoplay muted loop playsinline aria-label="Seed 3, setting A"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>103 / 113 / 124</b> cells<br>5 s after the last shot: 81 · hits land 8.3 cells out · 105 killed</div></figure>
+      <figure><span class="tag">B</span>
+        <video src="holes/B-s3.mp4" poster="holes/B-s3.jpg" autoplay muted loop playsinline aria-label="Seed 3, setting B"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>120 / 124 / 126</b> cells<br>5 s after the last shot: 93 · hits land 9.8 cells out · 114 killed</div></figure>
+    </div>
+    <p class="counts">130 cells of mould in range at the start; holding fire leaves 33 / 40 / 17. Here the squad stands on a crystal and fires across a tube.</p>
+  </section>
+
+  <section>
+    <div class="ask"><b>One question: A or B?</b><p>A and B differ only in how strongly the mould turns away from fresh alarm. One of them is in the game now. Which feels better under fire? You can also answer "neither" or "stronger still".</p></div>
+  </section>
+
+  <section>
+    <h2>Over 16 games</h2>
+    <p>Each row is the median over seeds 1-16, each played the same way as the clips. The hole counts cells within the squad's range that held mould when the squad was set down and are empty now. Against before, both A and B leave the larger hole at 20 s on 16 of 16 seeds (sign test p &lt; 0.0001). B's is larger than A's on 15 of 16 (p 0.0005).</p>
+    <div class="scroll"><table>
+      <tr><th></th><th>hole at 5 / 10 / 20 s of fire</th><th>share of the mould in range</th><th>hits land</th><th>2 / 5 / 10 s after the last shot</th><th>killed in 20 s</th></tr>
+      <tr><td>holding fire</td><td>26 / 28 / 27</td><td></td><td></td><td>30 / 27 / 29</td><td>0</td></tr>
+      <tr><td>before</td><td>33 / 33 / 29</td><td>26%</td><td>3.7 cells out</td><td>30 / 31 / 27</td><td>175</td></tr>
+      <tr><td>A</td><td class="w">86 / 101 / 102</td><td>77%</td><td>9.3 cells out</td><td>79 / 42 / 28</td><td>251</td></tr>
+      <tr><td>B</td><td class="w">100 / 124 / 126</td><td>93%</td><td>10.7 cells out</td><td>103 / 70 / 42</td><td>293</td></tr>
+    </table></div>
+    <p class="note">The hole stops growing after about 10 s because it has eaten most of what the squad can reach; a squad that walks forward keeps carving. On one seed of the 16 the squad stood behind a rock and fired only 7 shots, so no setting made a hole there. All 64 soldiers in each setting lived through the test.</p>
+  </section>
+
+  <section>
+    <h2>What else was tried</h2>
+    <div class="scroll"><table>
+      <tr><th>Idea</th><th>hole at 20 s (median, 16 seeds)</th><th>result</th></tr>
+      <tr><td>A slower mould (half the steps a game second)</td><td>44, against 37 holding fire</td><td class="l">no real change (12 of 16, p 0.08); the graphics thread's refill timing agreed</td></tr>
+      <tr><td>The mould rushes to fresh alarm (the Swarmer's pull)</td><td>66</td><td class="l">it overran the squads: 4 of 64 soldiers alive</td></tr>
+      <tr><td>A weaker turn, or alarm that fades faster</td><td>67-72</td><td>smaller holes, quicker refill</td></tr>
+      <tr><td>Alarm that fades slower</td><td>127</td><td>like B, but slower to refill</td></tr>
+    </table></div>
+    <p class="note">The Sleeper and Swarmer tiers keep their own pull toward alarm. The Sporer now also turns away: its hole grows to 128 cells and refills more slowly, 87% still open 5 s after the last shot.</p>
+  </section>
+
+  <section>
+    <h2>Free shots and the soldiers' scent</h2>
+    <p>These censuses are 16 full games (seeds 5-20, 15 minutes each) per hand, run before the hole change. Free shots took the rush from losing every game to reaching the clock on 15 of 16, with the mould cut from 5,000 walkers to under 600 on 12 of them. It never finishes the mould, probably because the last stragglers lay too little trail to stop a shot (not yet checked). Farm and wall still beat idle and random. A stronger soldier scent (4 times as strong, twice the reach) brought the first touch on farmers from 49 s to 27 s. It also made random play stronger, so farm and wall beat it only 12 times of 16. 32 seeds on the race world and two designed maps are running now with the hole change in.</p>
+    <div class="scroll"><table>
+      <tr><th>mean score (16 seeds)</th><th>shots cost 10 food (before)</th><th>free shots</th><th>free shots, scent 4</th></tr>
+      <tr><td>farm</td><td>+0.05</td><td>+0.21</td><td>+0.19</td></tr>
+      <tr><td>wall</td><td>+0.15</td><td>+0.23</td><td>+0.19</td></tr>
+      <tr><td>rush</td><td class="l">-1.87 (lost 16)</td><td>-0.13 (lost 1)</td><td>-0.23 (lost 2)</td></tr>
+      <tr><td>idle</td><td>-0.73</td><td>-0.33</td><td>-0.33</td></tr>
+      <tr><td>random</td><td>-1.33</td><td>-0.76</td><td>-0.44 (wiped the mould 3 times)</td></tr>
+      <tr><td>farm and wall beat random</td><td>16 and 16 of 16</td><td>14 and 14</td><td>12 and 12</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Cost</h2>
+    <p class="note">The alarm field is a 3 x 3 mean over the ground every step. On the CPU that adds about 2 ms to a 5.4 ms game tick. On the GPU it switches on the life passes the mould tiers use, which cost about 10 ms a tick on the cloud's software GPU at 100,000 walkers. The GTX 1070's figure is still open. Sources in the repo: <code>Reports/larder-world-roadmap-2026-11-11/holes/</code> (clips and their counts) and <code>playtest/</code> (the 16-seed runs and censuses).</p>
+  </section>
+</main>

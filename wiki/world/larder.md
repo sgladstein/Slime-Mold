@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T04:50Z
+updated: 2026-11-12T05:34Z
 sources: [Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
@@ -79,6 +79,18 @@ a stalemate scores the squad's share of the charge taken over the game
 16-0 under it, a carrier leaves a dry crystal and holds at the larder
 (`Rules::home_dry`), and the farm hand, which had stood on emptied
 crystals, now harvests twice the food and kills five times the walkers.
+**Playtest fixes** (2026-11-12, [report, *Playtest fixes*](../../Reports/larder-world-roadmap-2026-11-11.md)): after
+the owner's first playtest, shots are free (`Rules::price` 0, the fire
+rate the only limit), soldiers smell like prey (`Rules::smell` 0.5 over
+`smell_r` 2 dish cells), and the race world's mould turns from fresh
+gunfire: it reads the alarm the shots lay at weight -1 (keep 0.98,
+`larder_world::FLEE_WEIGHT`), so four soldiers firing 20 s carve a hole of
+102 dish cells that refills about 10 s after they stop, against 29 without
+it (16 of 16 seeds). The Sporer flees too; the Swarmer and the Sleeper keep
+their +3. A stronger turn (-3, hole 126) is on a blind A/B for the owner
+([page](https://claude.ai/artifact/5wQ3xSk8pBN6uig1rxKd4R)). Off by default
+for other threads: `Rules::overrun`, `Rules::reserve`, `Game::stuck`,
+`Game::density`.
 
 ## Small-dish milestones (M1-M3)
 
@@ -117,6 +129,8 @@ owner's playtest.
 
 ## Owner's word
 
+- 2026-11-12 04:39Z: "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at" (04:38Z, on two drawn hits: "Neither. Both of those look like stamps. Placed on the slime that fade. Maybe part of the issue is the slime/walkers move to fast.").
+- 2026-11-12 04:13Z (first playtest): the slime did not feel like one organism; shooting killed many walkers but "visually it didn't impact much"; "the slime mostly ignored my soldiers unless they walked into the slime"; "energy required for shooting isn't fun".
 - 2026-11-11 14:54Z (14:55: "just my initial thought", for playtests to settle): test crystals that run out against ones that don't. Run-out crystals go with the race (an idle player should be overrun), refilling ones probably with the landing. Walls first, the Sporer and Sleeper tiers and a player-owned species are agreed. A CPU world for small tests, and the 1070 for GPU work.
 - 2026-11-11 14:25Z: the mould tier ladder is agreed, and it grows as research finds new behaviours. Walls or weapons can come first.
 - 2026-11-11 14:14Z: the early leader's win rate is a per-mould difficulty, not a gate. There should be mould tiers from easy to hard, and player walls, upgrades and weapons, so strategy depends on the mix.

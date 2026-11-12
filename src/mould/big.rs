@@ -910,28 +910,39 @@ fn ellipse(w: usize, h: usize, margin: f32) -> Vec<bool> {
 
 /// The 3x3 mean over agar neighbours, times `keep`, for rows `y0..y1` of
 /// `to` (which holds just those rows). Today's `spread` without the lamp.
+///
+/// Branchless (2026-11-12, when the alarm became the plain mould's default
+/// and this ran on the whole race world every fine step): each neighbour
+/// adds its value times its agar mask (1 or 0) in the same order as the
+/// first version (`spread_rows_reference` in the tests), so the result is
+/// bit for bit the same: adding `0.0 * v` leaves a sum of fields that are
+/// never negative unchanged, and the GPU's diffuse (which sums in this
+/// order) stays an exact twin. Rows are sliced so the compiler can drop
+/// the bounds checks.
 fn spread_rows(agar: &[bool], from: &[f32], to: &mut [f32], w: usize, h: usize, keep: f32, y0: usize) {
     let rows = to.len() / w;
     for r in 0..rows {
         let y = y0 + r;
-        for x in 0..w {
-            let i = y * w + x;
-            let o = r * w + x;
-            if !agar[i] || x == 0 || y == 0 || x + 1 == w || y + 1 == h {
-                to[o] = 0.0;
-                continue;
-            }
-            let mut sum = 0.0;
-            let mut n = 0.0;
-            for row in [i - w, i, i + w] {
-                for j in [row - 1, row, row + 1] {
-                    if agar[j] {
-                        sum += from[j];
-                        n += 1.0;
-                    }
+        let out = &mut to[r * w..(r + 1) * w];
+        if y == 0 || y + 1 == h || w < 3 {
+            out.fill(0.0);
+            continue;
+        }
+        let (f0, a0) = (&from[(y - 1) * w..y * w], &agar[(y - 1) * w..y * w]);
+        let (f1, a1) = (&from[y * w..(y + 1) * w], &agar[y * w..(y + 1) * w]);
+        let (f2, a2) = (&from[(y + 1) * w..(y + 2) * w], &agar[(y + 1) * w..(y + 2) * w]);
+        out[0] = 0.0;
+        out[w - 1] = 0.0;
+        for x in 1..w - 1 {
+            let (mut sum, mut n) = (0.0f32, 0.0f32);
+            for (f, a) in [(f0, a0), (f1, a1), (f2, a2)] {
+                for k in [x - 1, x, x + 1] {
+                    let m = a[k] as u8 as f32;
+                    sum += f[k] * m;
+                    n += m;
                 }
             }
-            to[o] = sum / n * keep;
+            out[x] = if a1[x] { sum / n * keep } else { 0.0 };
         }
     }
 }
@@ -2883,6 +2894,70 @@ impl BigDish {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The first `spread_rows` (branches on each neighbour's agar), kept as
+    /// the reference the branchless one must match bit for bit.
+    fn spread_rows_reference(agar: &[bool], from: &[f32], to: &mut [f32], w: usize, h: usize, keep: f32, y0: usize) {
+        let rows = to.len() / w;
+        for r in 0..rows {
+            let y = y0 + r;
+            for x in 0..w {
+                let i = y * w + x;
+                let o = r * w + x;
+                if !agar[i] || x == 0 || y == 0 || x + 1 == w || y + 1 == h {
+                    to[o] = 0.0;
+                    continue;
+                }
+                let mut sum = 0.0;
+                let mut n = 0.0;
+                for row in [i - w, i, i + w] {
+                    for j in [row - 1, row, row + 1] {
+                        if agar[j] {
+                            sum += from[j];
+                            n += 1.0;
+                        }
+                    }
+                }
+                to[o] = sum / n * keep;
+            }
+        }
+    }
+
+    #[test]
+    fn the_branchless_spread_matches_the_first_one_bit_for_bit() {
+        // Random agar with holes (rock, walls), values on non-agar cells
+        // too (a wall built over alarm keeps its value for a step), zeros,
+        // tiny and large values, several bands.
+        let mut z = 0x9E37_79B9_7F4A_7C15u64;
+        let mut next = || {
+            z ^= z << 13;
+            z ^= z >> 7;
+            z ^= z << 17;
+            z
+        };
+        for &(w, h) in &[(3, 3), (5, 4), (37, 23), (128, 80)] {
+            let agar: Vec<bool> = (0..w * h).map(|_| next() % 5 != 0).collect();
+            let from: Vec<f32> = (0..w * h)
+                .map(|_| match next() % 4 {
+                    0 => 0.0,
+                    1 => (next() % 1000) as f32 * 1e-7,
+                    _ => (next() % 100_000) as f32 / 37.0,
+                })
+                .collect();
+            for &keep in &[0.98f32, 0.95, 1.0] {
+                let mut a = vec![1.0; w * h];
+                let mut b = vec![2.0; w * h];
+                spread_rows_reference(&agar, &from, &mut a, w, h, keep, 0);
+                spread_rows(&agar, &from, &mut b, w, h, keep, 0);
+                assert!(a.iter().zip(&b).all(|(x, y)| x.to_bits() == y.to_bits()), "{w}x{h} keep {keep}");
+                for threads in [2, 3, 7] {
+                    let mut c = vec![3.0; w * h];
+                    spread(&agar, &from, &mut c, w, h, keep, threads);
+                    assert!(a.iter().zip(&c).all(|(x, y)| x.to_bits() == y.to_bits()), "{w}x{h} keep {keep}, {threads} threads");
+                }
+            }
+        }
+    }
 
     #[test]
     fn respawn_keeps_walkers_and_the_crowd_rule() {
