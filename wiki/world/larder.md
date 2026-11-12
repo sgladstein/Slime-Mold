@@ -2,9 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-11T21:10Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
+updated: 2026-11-12T00:01Z
+sources: [Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
+code: [BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -44,7 +44,10 @@ mould gets through a ring in about 90 s; sealed, it walked past. Owner,
 **W1b**: the crystals, terrain and walls run on the GPU engine
 (`Engine::build_wall`), and one GPU tick matches one CPU tick on nine world dishes, with all 17
 planted bugs caught ([report, *W1b*](../../Reports/larder-world-roadmap-2026-11-11.md)).
-On the GTX 1070 the world adds 0.25 ms to the frame at 1024 × 640 (1.73 to
+(Fixed 11-11: a wall built on the GPU with growth on also moved the empty
+slots under it, putting cell counts off and closing cells; the wall twin
+test now has a growth dish, [species on the GPU, *A wall
+fix*](../../Reports/species-gpu-2026-11-11.md).) On the GTX 1070 the world adds 0.25 ms to the frame at 1024 × 640 (1.73 to
 2.11 ms). **W2**, Larder in the world, is planned in three steps: engine
 hooks, M3's rules as a game layer, then the window ([report, *W2
 plan*](../../Reports/larder-world-roadmap-2026-11-11.md)). **W2a** is
@@ -128,7 +131,7 @@ owner's playtest.
 
 ## Open
 
-- **Maps** (owner, 19:29Z: "We will want maps though. That should be part of the plan"): five paper maps, each drawn for a different winning style, and ground kinds ranked by the model term each changes ([plan](../../Reports/larder-maps-2026-11-11.md), [page](https://claude.ai/artifact/XPwkBkTAzsWq3Wg37pff7K)). The map files are written in the loader's format (PNG ground layers and item lists, agreed with the Larder thread). Height is parked (owner, 20:06Z: "I am skeptical how much fun/complexity/strategy this adds"); sand, clay and barren ground are tested first, and the maps are rebuilt on the graphics thread's terrain. No runs yet; maps wait on the map loader and the W2b harness.
+- **Maps** (owner, 19:29Z: "We will want maps though. That should be part of the plan"). Height is parked after the owner's 20:06Z challenge; ground is tested before it goes on a map. On 16 paired seeds every soil kind changes the mould: slow (wet) and barren ground halve it, sand makes it spread further, clay traps it (`BigParams::sand_keep`, `clay_keep`, `barren_upkeep`, off unless a map sets `BigDish::soil`). Five flat maps (Rim, Fork, Flats, Nest, Passes) wait on the map loader and the W2b harness ([report, *Which ground the mould feels*](../../Reports/larder-maps-2026-11-11.md), [page](https://claude.ai/artifact/XPwkBkTAzsWq3Wg37pff7K)).
 - Larder World, phase by phase, per the roadmap; the open questions there (world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds) are the owner's.
 - The M3 window stays playable (`cargo run --release --bin larder -- 17`). Hunger barely acts on the small dish and needs a lower bar or should go.
 
@@ -141,5 +144,6 @@ owner's playtest.
 
 - [larder-world-roadmap-2026-11-11.md](../../Reports/larder-world-roadmap-2026-11-11.md): the world plan, phases W0-W5 and their gates.
 - [larder-maps-2026-11-11.md](../../Reports/larder-maps-2026-11-11.md): maps and ground kinds (WM2, WM3), a plan.
+- [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species rules on the GPU, and a fix to walls built with growth on.
 - [mould-shooter-2026-11-11.md](../../Reports/mould-shooter-2026-11-11.md): the whole brainstorm.
 - [rts-research-2026-11-10.md](../../Reports/rts-research-2026-11-10.md) and the [Creeper World card](../../research/sources/creeper-world-2025.md): the nearest published game with a simulated enemy.

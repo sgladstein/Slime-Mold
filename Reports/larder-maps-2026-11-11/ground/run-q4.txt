@@ -1,0 +1,21 @@
+worldground seconds 60 cover 0.3 sand_keep 0.8 clay_keep 1.05 barren_upkeep 3
+seed 13 plain  patch 0.300 of agar  on-patch share 0.148 0.145  alive 13031 14326  eaten 0.0579  ms/tick 8.18  hash ee43b7bdc2074887
+seed 13 wet    patch 0.300 of agar  on-patch share 0.200 0.150  alive 5992 11585  eaten 0.0347  ms/tick 7.18  hash b157e47a920ef529
+seed 13 sand   patch 0.300 of agar  on-patch share 0.076 0.078  alive 11877 13624  eaten 0.0615  ms/tick 8.18  hash 4f827ebcc10a4680
+seed 13 clay   patch 0.300 of agar  on-patch share 0.205 0.198  alive 9882 12396  eaten 0.0425  ms/tick 7.55  hash 7d9449c655980635
+seed 13 barren patch 0.300 of agar  on-patch share 0.147 0.116  alive 4400 6462  eaten 0.0256  ms/tick 6.17  hash de824a5cc82f4491
+seed 14 plain  patch 0.300 of agar  on-patch share 0.091 0.091  alive 3649 5909  eaten 0.0185  ms/tick 6.18  hash c98f897f9eca2735
+seed 14 wet    patch 0.300 of agar  on-patch share 0.144 0.176  alive 1897 2124  eaten 0.0075  ms/tick 5.64  hash 816d700c1da1a69f
+seed 14 sand   patch 0.300 of agar  on-patch share 0.055 0.061  alive 6687 11938  eaten 0.0394  ms/tick 6.80  hash 627599dd034613be
+seed 14 clay   patch 0.300 of agar  on-patch share 0.130 0.119  alive 3084 4322  eaten 0.0136  ms/tick 5.76  hash b0b732803ac0b58a
+seed 14 barren patch 0.300 of agar  on-patch share 0.063 0.080  alive 2191 2973  eaten 0.0111  ms/tick 5.76  hash fd74ea82242f9750
+seed 15 plain  patch 0.300 of agar  on-patch share 0.224 0.188  alive 3743 5645  eaten 0.0172  ms/tick 5.42  hash 2e7161a724c192d2
+seed 15 wet    patch 0.300 of agar  on-patch share 0.337 0.332  alive 1841 1954  eaten 0.0077  ms/tick 4.64  hash 41b795373b955ddf
+seed 15 sand   patch 0.300 of agar  on-patch share 0.121 0.114  alive 6712 8877  eaten 0.0352  ms/tick 6.28  hash c508842efbec8009
+seed 15 clay   patch 0.300 of agar  on-patch share 0.317 0.295  alive 3060 4139  eaten 0.0139  ms/tick 5.63  hash 3fa5c734a7b47c20
+seed 15 barren patch 0.300 of agar  on-patch share 0.215 0.233  alive 1415 1427  eaten 0.0073  ms/tick 4.66  hash 382b1a70621f2063
+seed 16 plain  patch 0.300 of agar  on-patch share 0.063 0.101  alive 7106 16911  eaten 0.0411  ms/tick 7.18  hash 11270695e72d4fe3
+seed 16 wet    patch 0.300 of agar  on-patch share 0.106 0.101  alive 6329 11550  eaten 0.0333  ms/tick 6.78  hash 70fa36ea57cf3199
+seed 16 sand   patch 0.300 of agar  on-patch share 0.064 0.062  alive 13393 19775  eaten 0.0694  ms/tick 9.01  hash 62f52ae333878ff0
+seed 16 clay   patch 0.300 of agar  on-patch share 0.095 0.119  alive 8031 13541  eaten 0.0408  ms/tick 7.56  hash b281fff75e5c740b
+seed 16 barren patch 0.300 of agar  on-patch share 0.048 0.051  alive 5584 8359  eaten 0.0302  ms/tick 6.00  hash d64691806f586b0a

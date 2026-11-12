@@ -15,6 +15,13 @@ Page: https://claude.ai/artifact/EGJKqpbfE5Gh8nDToXHfMu (source and media in
 
 ## Summary
 
+*Note, 2026-11-11 evening:* the tests below show each rule does what it was
+built to do on a 20 s test dish; the counters named are proposals, not yet
+tested against random or idle play (review 1,
+[the reviews](mould-tiers-review-2026-11-11.md)). In the Larder world's
+race the Swarmer and the Sleeper's bait hold and the Sporer's edge does not;
+see *In the Larder world*, below.
+
 - **A life cycle for every walker.** Each walker is ordinary, a spore in
   flight, dormant, or dead, with a timer (`BigDish::life`, `life_t`). A
   new field, the **alarm**, is laid by the player's strike
@@ -106,9 +113,18 @@ chance a step to fruit where the alarm is over 1, on or off food. One
 strike at the body's left edge at 10 s (`alarm_keep` 0.98). **Deciding
 measure: piles held at 20 s.** 7 on all 8 seeds against 3-5: **higher on
 8 of 8, p 0.0078, survives.** 1963-3804 spores are in the air a second
-after the strike; the wound empties (66-736 grounded walkers within 16
+after the strike; the wound empties (66-736 grounded walkers within 20
 dish cells of it at 20 s against 1171-2361, fewer on 8 of 8, a measure
 picked after the run). The strike killed 678-2170.
+
+*Corrected after review 1 (2026-11-11, [the reviews](mould-tiers-review-2026-11-11.md)):*
+this test's struck arm has `spore_burst` but no `spore_rate`, so it is a
+mould that spores only when struck, not the T1 Sporer, and its control is
+the plain body struck; its strike was the bigdish default radius 10 (alarm
+out to 20), not 8. The reviewer's probe at `spore_rate` 1e-5 (3 seeds)
+points the same way: struck, the Sporer held 7, 7, 7 against 4, 7, 6
+unstruck. The world re-test (*In the Larder world*, below) tests the tier
+itself: struck, with its burst against without.
 
 ## Sleeper
 
@@ -235,7 +251,10 @@ it. No tier rides the wall.
 - **GPU** (owns births and upkeep): every field's doc comment in
   `BigParams` is written to port to WGSL: `spore_*`, `sleep_*`, `wake_*`,
   `alarm_*`, plus `BigDish::strike`. The keyed draws are `DRAW_FRUIT`,
-  `DRAW_SLEEP`, `DRAW_SPORE_H` and `CLAIM_LAND`.
+  `DRAW_SLEEP`, `DRAW_SPORE_H` and `CLAIM_LAND` (and, since the evening,
+  `DRAW_SLEEP_DIE` for `sleep_death`; `squad::shots` lays `SHOT_ALARM`
+  when the alarm field is on). Naming the GPU keys as the CPU's lets
+  `Tier::settings` work unchanged.
 - **Larder** (the ladder): Sporer, Sleeper and Swarmer, each with its
   counter; Skittish is weak; spores cost nothing today and should
   probably cost food in the world.
@@ -251,8 +270,99 @@ struck Sporer, baited Sleeper and Swarmer arms gives the same life lines
 as before the merge, digit for digit; the default hash is unchanged. Test:
 `life_cycle_with_walls_and_crystals`.
 
+## In the Larder world (2026-11-11, evening, after review 1)
+
+The owner, 20:12Z: "Also make sure you work is being integrated into the
+game". Review 1 ([the reviews](mould-tiers-review-2026-11-11.md)) found
+that every test above ran on a 20 s dish with a fixed walker count, and
+that the game's shots laid no alarm, so none of the three answers to attack
+could fire in Larder World. This section re-tests the tiers where the game
+runs, and records what changed to get them there.
+
+**What changed in the code.**
+- `src/mould/tiers.rs`: `Tier::{Sporer, Sleeper, Swarmer}`, each a list of
+  life-cycle keys (`Tier::keys`), set on the CPU dish by `Tier::apply` and on
+  the GPU engine's settings by `Tier::settings`, which goes through
+  `gpu::set` and refuses with the missing key until the GPU port lands
+  (today every tier). `examples/bigdish.rs` takes `tier=`, and
+  `strike_pile=N` / `bait_pile=N` aim at the crystal Nth nearest home.
+- `squad::shots`: with the alarm field on, a hit lays `SHOT_ALARM` (50, the
+  strike default) within twice its radius. Off by default, so the GPU twin
+  test is unchanged.
+- `BigParams::sleep_death` (the Sleeper tier sets 1e-4 a fine step): a
+  dormant walker can die, so a crust that is never fed fades. Two fixes
+  were tried first and removed (`dead-ends.md`, `sleep_upkeep`; seed-1
+  output in `world/raw-sweep-s1/`).
+
+**The world.** The race of the Larder roadmap's crystal sizing: 512 x 320,
+23 crystals of charge 512 that run dry, the mould starting as a blob of
+5,000 walkers on the home crystal in 50,000 slots, upkeep 0.001, births and
+starving on. Strikes are radius 8 dish cells on the home crystal, alarm 50
+out to 16. Looks first (`world/look.sh`, seed 1): in this world the plain
+mould sends thin tubes everywhere within 5 s but fattens on few crystals;
+the Sporer grows fat nodes on crystal after crystal; the Sleeper's whole
+body sleeps round its home crystal. Then 8 paired seeds (`world/run.sh`,
+deciding measures named in it before the run; `world/pairs.py`; raw in
+`world/raw/`), sign tests, Bonferroni over 4.
+
+| Test | Tier | Control | Paired | p |
+|---|---|---|---|---|
+| W1: walkers alive at 60 s | Sporer 7,239-20,120 (median 8,928) | plain 3,639-13,845 (7,848) | more on 7 of 8 | 0.070, not significant |
+| W2: crystals held at 40 s, one strike at 20 s | Sporer 11-22 (18) | Sporer, no burst, 7-22 (16) | more 4, fewer 2, 2 ties | 0.69 |
+| W3: walkers at the strike 2 s after it, bait 4 s before | Sleeper 321-531 (389) | no bait 1,223-1,571 (1,348) | fewer on 8 of 8 | 0.0078, survives |
+| W4: walkers killed by 10 follow-up strikes | Swarmer 893-1,975 (1,302) | plain with the alarm field 441-669 (525) | more on 8 of 8 | 0.0078, survives |
+
+Shown, not tested: the Sporer held 9-14 crystals at 10 s against the plain
+mould's 8-18 (no mould took the map in 10 s), and 18-22 at 60 s against
+11-23. Its strike launched 64-252 spores a second later against 2-13
+without the burst, but they did not turn into more crystals held. The
+Sleeper held 1-4 crystals at 60 s against 11-23, with 2,486-5,758 walkers
+alive (fewer than plain on 8 of 8), 1,115-1,838 of them dormant.
+
+**Reading.** The Swarmer and the Sleeper's bait carry into the world. The
+Sporer's edge does not: under growth and crystals that run dry, the plain
+mould already reaches every crystal with tubes, and the spread across
+seeds (3,639-13,845 alive at 60 s for plain) swamps a 1e-5 Sporer. Review 1
+saw the same on one seed. The Sleeper is a nest: it hardly leaves its home
+crystal, so it is a map feature or an early tier, not a mould that beats an
+idle player.
+
+**The Sleeper and the frozen world.** Review 1's probe (charge 8, so the
+crystals run dry within 2 minutes) found the Sleeper asleep and unchanged
+from 30 s to 90 s: dormant walkers paid nothing and never died, so the world
+could not end. The fixes, on the same world as the table:
+- Sleep paid half the upkeep: no freeze, but the crust starved within
+  seconds (223-725 dormant at 60 s) and the bait stopped working (fewer at
+  the strike on 3 of 8, more on 5; `world/raw-u0.5/`).
+- A tenth of the upkeep: the crust fell from 3,341-3,585 at 10 s to
+  417-1,221 by 30 s, and the bait turned against the player (more at the strike
+  on 7 of 8; `world/raw-u0.1/`, `world/sleep-cost.sh`). Walkers fall asleep
+  off food with little energy left, so any charge starves them.
+- A dormant walker dies with chance 1e-4 a fine step (`sleep_death`, a mean
+  of 42 s here): the bait holds (W3 above), and in the lean world
+  (`world/lean.sh`, charge 8, seeds 1-4, 120 s) the crust fades from
+  2,616-2,700 dormant at 30 s to 332-524 at 120 s, where with free sleep
+  5,262-7,078 walkers stay alive, 5,205-7,078 of them asleep, within 2% of
+  their count at 30 s.
+
+The free-sleep runs of the table's Sleeper arms are in
+`world/raw-free-sleep/` (W3 there: 315-541 against 1,540-1,896, fewer on 8
+of 8).
+
+**Not yet tested** (review 1's ranked list): the counters as plans against
+random and idle hands; strikes the size of a shot (`R_MAX` 7 fine cells; the
+reviewer's probe found one bullet still sets off the burst and the wake);
+sustained fire; 16 seeds with Wilcoxon and Holm. These want the player AI in
+the world (W2b).
+
+Videos (seed 1, `world/media.sh`): `pics/w-plain.mp4`, `w-sporer.mp4` (60 s),
+`w-sleeper.mp4`, `w-bait.mp4`, `w-swarm.mp4`, `w-fire.mp4` (30 s), on the page.
+
 ## Files
 
 `mould-tiers-2026-11-11/`: `run.sh` (the five tests), `pairs.py`,
 `cost.sh`, `robust.sh`, `pace.sh`, `media.sh` (seed-1 videos and stills),
-`page.html` and `pics/`, `raw/` (every run's output).
+`page.html` and `pics/`, `raw/` (every run's output). `world/`: `look.sh`,
+`run.sh`, `pairs.py`, `sleep-cost.sh`, `lean.sh`, `media.sh`, and the raw
+output of each (`raw/`, `raw-free-sleep/`, `raw-u0.5/`, `raw-u0.1/`,
+`raw-sweep-s1/` ([what it holds](mould-tiers-2026-11-11/world/raw-sweep-s1/README.md)), `lean/`).

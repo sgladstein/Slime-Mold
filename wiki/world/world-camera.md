@@ -3,8 +3,8 @@ title: The world camera and UI
 kind: mechanism
 status: current
 updated: 2026-11-11
-sources: [Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md]
-code: [Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model]
+sources: [Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md]
+code: [Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES]
 ---
 
 # The world camera and UI
@@ -33,8 +33,23 @@ draw big outlines as lines. The GPU sandbox shows it all: W gives a 2048 x
 1280 world, Q a stand-in squad (`world::demo::Squad`) that drives every
 panel. Not yet played by the owner.
 
+**The look** (on by default, L in the sandbox; [world look](../../Reports/world-look-2026-11-11.md)):
+the view shades the world from the engine's look field (mould thickness,
+walkers, wounds) and a ground field (rock, walls by health, crystals by
+charge): height, light, gloss, a speck a walker. Shots (`Engine::set_hits`)
+stop at the first slime or rock on their line (`first_hit`) and cut there,
+leaving a fading burn. Soldiers are an SVG sprite (the owner's pick of a
+blind A/B, 16:48Z) with facing, team helmet and muzzle flash; crystals are
+hexagons, as in the simulation. Bare ground is soil with the engine's
+tints, rock and wet ground have their own look, and ground byte 3 holds
+elevation (left 0 until the simulation uses height). A `prep` pass works
+each shown cell's height once a frame: on the 1070 at 1080p the view takes
+0.8-1.2 ms with the look against 0.3 ms without.
+
 ## Owner's word
 
+- 2026-11-11 16:48Z: "Solider A looks better" (the SVG sprite); "Gun fire should hit the first slime in its path"; "The crystals should have hexagonal outline, not circle."
+- 2026-11-11 17:37Z: "from looking at the gif/video it doesn't always look like that" (shots stopping at the first slime): the stand-in counted only thick tubes; now anything that looks like slime (26/255) stops a shot.
 - 2026-11-11 14:06Z: "We should do a camera UI thread too as you suggested".
 - 2026-11-11 20:16Z: "We need to know about solider health, numbers, ways to control them, eventually we will have different weapons, upgrades, build walls (and probably other things in the future), menus, enemy info"; "make it look modern and professional."
 - 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand."

@@ -1,0 +1,54 @@
+# cost.sh's runs on the GTX 1070 (Scott-Desktop), 2026-11-11 ~22:05Z, by the PC's session, the walker sweep finished
+# first so nothing else was on the GPU. BASE: 6b907d8 (main with W2b, the merge base of PR #82); NEW: 68e8bff (PR #82
+# with that main merged in). Built in worktrees under target\ with a shared CARGO_TARGET_DIR; the first NEW build was a
+# no-op (an exe byte-identical to BASE), so the crate was cleaned and rebuilt (BASE 9,012,224 bytes, NEW 9,040,384).
+# Commands as cost.sh, in PowerShell, from target\. Output verbatim.
+# adapter: NVIDIA GeForce GTX 1070 (Vulkan, DiscreteGpu, driver NVIDIA 582.66)
+== round 1
+plain base: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.785, worst 2.293; GPU ms ticks 1.527, drawing 0.069
+plain new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.724, worst 30.831; GPU ms ticks 1.476, drawing 0.068
+two species base: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.329, worst 2.678; GPU ms ticks 2.090, drawing 0.090
+two species new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.400, worst 2.706; GPU ms ticks 2.137, drawing 0.090
+own settings off: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.389, worst 2.852; GPU ms ticks 2.132, drawing 0.090
+own settings on: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.386, worst 2.752; GPU ms ticks 2.138, drawing 0.090
+mix off: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.700, worst 2.113; GPU ms ticks 1.477, drawing 0.068
+mix on: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.892, worst 2.183; GPU ms ticks 1.666, drawing 0.069
+square 0: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.640, worst 3.949; GPU ms ticks 2.342, drawing 0.090
+square 8: wall ms a frame of 2 ticks and the drawing, 300 frames: median 3.941, worst 4.604; GPU ms ticks 3.640, drawing 0.090
+== round 2
+plain base: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.697, worst 2.119; GPU ms ticks 1.477, drawing 0.068
+plain new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.705, worst 2.086; GPU ms ticks 1.477, drawing 0.068
+two species base: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.328, worst 2.844; GPU ms ticks 2.078, drawing 0.090
+two species new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.387, worst 2.723; GPU ms ticks 2.140, drawing 0.090
+own settings off: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.388, worst 2.694; GPU ms ticks 2.146, drawing 0.090
+own settings on: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.392, worst 2.751; GPU ms ticks 2.138, drawing 0.090
+mix off: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.701, worst 2.102; GPU ms ticks 1.474, drawing 0.068
+mix on: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.895, worst 2.220; GPU ms ticks 1.657, drawing 0.069
+square 0: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.623, worst 3.152; GPU ms ticks 2.346, drawing 0.090
+square 8: wall ms a frame of 2 ticks and the drawing, 300 frames: median 3.945, worst 4.621; GPU ms ticks 3.643, drawing 0.090
+== round 3
+plain base: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.696, worst 2.091; GPU ms ticks 1.466, drawing 0.068
+plain new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.696, worst 2.082; GPU ms ticks 1.471, drawing 0.068
+two species base: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.330, worst 2.843; GPU ms ticks 2.082, drawing 0.090
+two species new: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.390, worst 2.805; GPU ms ticks 2.130, drawing 0.090
+own settings off: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.400, worst 2.723; GPU ms ticks 2.139, drawing 0.090
+own settings on: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.388, worst 2.777; GPU ms ticks 2.143, drawing 0.090
+mix off: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.704, worst 2.085; GPU ms ticks 1.477, drawing 0.068
+mix on: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.888, worst 2.186; GPU ms ticks 1.663, drawing 0.069
+square 0: wall ms a frame of 2 ticks and the drawing, 300 frames: median 2.613, worst 3.062; GPU ms ticks 2.351, drawing 0.090
+square 8: wall ms a frame of 2 ticks and the drawing, 300 frames: median 4.004, worst 21.167; GPU ms ticks 3.675, drawing 0.090
+== mix round 1
+forced, mix off: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.701, worst 2.078; GPU ms ticks 1.475, drawing 0.068
+forced, mix of 1s: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.818, worst 2.194; GPU ms ticks 1.591, drawing 0.069
+forced, mix: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.895, worst 2.190; GPU ms ticks 1.673, drawing 0.069
+== mix round 2
+forced, mix off: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.750, worst 3.925; GPU ms ticks 1.481, drawing 0.068
+forced, mix of 1s: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.818, worst 2.212; GPU ms ticks 1.589, drawing 0.069
+forced, mix: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.901, worst 2.278; GPU ms ticks 1.672, drawing 0.069
+== mix round 3
+forced, mix off: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.722, worst 3.950; GPU ms ticks 1.474, drawing 0.069
+forced, mix of 1s: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.819, worst 2.214; GPU ms ticks 1.602, drawing 0.069
+forced, mix: wall ms a frame of 2 ticks and the drawing, 300 frames: median 1.898, worst 2.212; GPU ms ticks 1.670, drawing 0.069
+== passes
+square 0: GPU ms a pass, median of 11 ticks each submitted alone: sense 0.457, walk 0.089, convert 0.130, trail 0.319, scent 0.184, draw 0.087
+square 8: GPU ms a pass, median of 11 ticks each submitted alone: sense 0.442, walk 0.073, rows 0.363, convert 0.453, trail 0.319, scent 0.184, draw 0.087

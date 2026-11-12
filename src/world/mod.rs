@@ -9,6 +9,8 @@
 //!   screen-space overlay.
 //! - `marks`: what a game draws over the world (units, bars, buildings,
 //!   lines, labels), drawn on the GPU.
+//! - `look`: the ground field the view shades the world from (kind and
+//!   value a cell), beside the engine's own look field.
 //! - `controls`: box select, orders, burn lines, groups, minimap clicks.
 //! - `ui`: the game's panels (resources, selection, command card,
 //!   tooltips, alerts, menu), drawn by `canvas` (a GPU 2D pass with Inter
@@ -21,6 +23,7 @@ pub mod canvas;
 pub mod controls;
 pub mod demo;
 pub mod icons;
+pub mod look;
 pub mod marks;
 pub mod ui;
 pub mod view;

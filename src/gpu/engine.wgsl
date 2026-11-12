@@ -1,3 +1,11 @@
+// One species' own settings (`BigParams::species_sets`, `Params::sets`):
+// sensor angle and reach, turn and step, scent reach, deposit, keep,
+// blocked share, grazing weight, crowd limit and explorer stage.
+struct Set {
+    sa: f32, so: f32, ra: f32, st: f32,
+    sso: f32, deposit: f32, keep: f32, bdep: f32,
+    graze_w: f32, crowd: u32, explore: u32, _p: u32,
+};
 struct Params {
     w: u32, h: u32, n: u32, crowd: u32,
     s_turn: u32, s_blocked: u32, s_claim: u32, s_jump: u32,
@@ -48,6 +56,17 @@ struct Params {
     // The squad (Larder World W2a, `Engine::set_squad`): this frame's units
     // and shots in `SQ`, and the trail that looks like slime.
     nunits: u32, nshots: u32, slime: f32, _s0: u32,
+    // The look's hits (`Engine::set_hits`, the world look's stand-in fight).
+    nhits: u32, _h0: u32, _h1: u32, _h2: u32,
+    // The species block (2026-11-11, the creature thread's species on the
+    // GPU): whether each species uses its own `sets` entry (`per`), the
+    // walker kinds (`mix_share`: 2 with the mix on, a walker's kind in bit
+    // 8 of its `spec` word), conversion's square (`species_convert_r`), and
+    // the second kind's multipliers (`mix_*`).
+    per: u32, kinds: u32, conv_r: u32, _k0: u32,
+    mreach: f32, mangle: f32, mturn: f32, mstep: f32,
+    mdep: f32, _k1: f32, _k2: f32, _k3: f32,
+    sets: array<Set, 4>,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -144,6 +163,13 @@ struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
 struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
 @group(0) @binding(42) var<storage, read_write> SQ: Squad;
 @group(0) @binding(43) var<storage, read_write> kills: array<atomic<u32>>;
+// The look (2026-11-11, src/world/look in the view): shots that landed this
+// frame, `nhits` discs (x, y, r, _) in fine cells, which cut trail as the
+// right mouse's wipe does; and a u32 a cell the view shades the world from:
+// mould thickness (the trail's brightness), walkers on the cell, the wound
+// (the thickness a hit took away, fading), and the scent, a byte each.
+@group(0) @binding(44) var<storage, read> hits: array<vec4<f32>>;
+@group(0) @binding(45) var<storage, read_write> look: array<u32>;
 
 const NONE: u32 = 0xFFFFFFFFu;
 
@@ -162,6 +188,18 @@ fn size_sp() -> f32 { if (OUTSIDE) { return P.size_sp; } return 0.0; }
 fn sensor_r() -> u32 { if (OUTSIDE) { return P.sensor_r; } return 0u; }
 fn graze_w() -> f32 { if (OUTSIDE) { return P.graze_w; } return 0.0; }
 fn growth() -> bool { if (OUTSIDE) { return P.upkeep > 0.0; } return false; }
+fn per() -> bool { if (OUTSIDE) { return P.per != 0u; } return false; }
+fn mixes() -> bool { if (OUTSIDE) { return P.kinds > 1u; } return false; }
+fn conv_r() -> u32 { if (OUTSIDE) { return P.conv_r; } return 0u; }
+// A species' own settings where it has them (`per`), else the global ones.
+// With `per` the globals `explore`, `bshare` and `graze_w` are switches
+// only (on if any species has one).
+fn crowd_of(sp: u32) -> u32 { if (per()) { return P.sets[sp].crowd; } return P.crowd; }
+fn deposit_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].deposit; } return P.deposit; }
+fn keep_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].keep; } return P.keep; }
+fn bshare_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].bdep; } return bshare(); }
+fn graze_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].graze_w; } return graze_w(); }
+fn explore_of(sp: u32) -> u32 { if (per()) { return P.sets[sp].explore; } return explore(); }
 // Whether slot k holds a living walker (always, with growth off).
 fn lives(k: u32) -> bool { return !growth() || energy[k] >= 0.0; }
 // The walkers eat the grass with grazing or growth on (the CPU makes the
@@ -214,6 +252,9 @@ fn scent_at(x: f32, y: f32) -> f32 {
 // Species fields in use: one block of cells each (one, the plain one, when
 // species are off).
 fn nsp1() -> u32 { return max(nsp(), 1u); }
+// The count blocks: one a species and kind (kind 1's after kind 0's).
+fn nblk() -> u32 { return nsp1() * select(1u, 2u, mixes()); }
+fn blk(sp: u32, kd: u32) -> u32 { return kd * nsp1() + sp; }
 
 // The trail a walker of species `sp` reads at cell j: the trail, or its
 // own field weighed against the others' (the CPU's `trail_seen`, its
@@ -246,28 +287,44 @@ fn trail_at(i: u32, sp: u32) -> f32 {
     return sum;
 }
 
-fn sense_at(x: f32, y: f32, a: f32, so: f32, sp: u32) -> f32 {
+fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32) -> f32 {
     let c = cos(a); let s = sin(a);
     let i = cell(x + c * so, y + s * so);
     if (i == NONE || agar[i] == 0u) { return -1.0e6; }
-    var v = trail_at(i, sp) + scent_at(x + c * P.sso, y + s * P.sso);
-    // Grazing: fresh grass smells good (the CPU's `graze_weight`).
-    if (graze_w() != 0.0) { v += graze_w() * grass[i]; }
+    var v = trail_at(i, sp) + scent_at(x + c * sso, y + s * sso);
+    // Grazing: fresh grass smells good (the CPU's `graze_weight`, the
+    // walker's species' own with `per`).
+    if (gw != 0.0) { v += gw * grass[i]; }
     return v;
 }
 
-// Walker k's species: its own (`spec`, which conversion changes), or the
-// one plain field.
+// Walker k's species: its own (`spec`'s low byte, which conversion
+// changes), or the one plain field.
 fn species_of(k: u32) -> u32 {
     if (nsp() == 0u) { return 0u; }
-    return spec[k];
+    return spec[k] & 0xFFu;
+}
+
+// Walker k's kind (`mix_share`): 1 for the second kind, fixed for its life
+// and passed to its children.
+fn kind_of(k: u32) -> u32 {
+    if (!mixes()) { return 0u; }
+    return (spec[k] >> 8u) & 1u;
+}
+
+// Whether walker k eats grass: everyone, but with species' own settings
+// only a species that grazes, unless growth feeds on the grass (no
+// crystals), as the CPU's `eats`.
+fn eats(k: u32) -> bool {
+    if (!per()) { return true; }
+    return (growth() && !world(CRYSTALS)) || P.sets[species_of(k)].graze_w != 0.0;
 }
 
 // Whether walker k is still an explorer: younger than `explore` steps, or
 // with `espread` its own share of them, from a draw on k alone (the CPU's
 // `explores`).
 fn explores(k: u32) -> bool {
-    var n = f32(explore());
+    var n = f32(explore_of(species_of(k)));
     if (P.espread > 0.0) {
         let u = unit(keyed(P.s_size, 0u, k | 0x80000000u));
         n *= 1.0 + P.espread * (2.0 * u - 1.0);
@@ -294,7 +351,14 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     // from the trail where it stands, then catching and the sick walker's
     // changes.
     let sp = species_of(k);
-    var so = P.so; var sa = P.sa; var ra = P.ra; var st = P.st;
+    var so = P.so; var sa = P.sa; var ra = P.ra; var st = P.st; var sso = P.sso;
+    if (per()) {
+        let t = P.sets[sp];
+        so = t.so; sa = t.sa; ra = t.ra; st = t.st; sso = t.sso;
+    }
+    // The second kind (`mix_*`), before the size as on the CPU. Its scent
+    // reach stays: `mix_reach` does not make a walker smell farther.
+    if (kind_of(k) == 1u) { so *= P.mreach; sa *= P.mangle; ra *= P.mturn; st *= P.mstep; }
     if (size_sp() > 0.0) {
         let sc = exp2(size_sp() * (2.0 * unit(keyed(P.s_size, 0u, k)) - 1.0));
         so *= sc; st *= sc;
@@ -321,9 +385,10 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         sick[k] = c;
         if (c > P.immune) { st *= P.sick_speed; so *= P.sick_reach; ra *= P.sick_turn; }
     }
-    var f = sense_at(wk.x, wk.y, h, so, sp);
-    var fl = sense_at(wk.x, wk.y, h - sa, so, sp);
-    var fr = sense_at(wk.x, wk.y, h + sa, so, sp);
+    let gw = graze_of(sp);
+    var f = sense_at(wk.x, wk.y, h, so, sso, sp, gw);
+    var fl = sense_at(wk.x, wk.y, h - sa, so, sso, sp, gw);
+    var fr = sense_at(wk.x, wk.y, h + sa, so, sso, sp, gw);
     // Explorers steer to the lowest reading; a wall stays a wall.
     if (ex) {
         if (f > -1.0e5) { f = -f; }
@@ -360,9 +425,9 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (there != NONE) {
         if (there == here) {
             aim = there;
-        } else if (agar[there] != 0u && (P.crowd == 0u || atomicLoad(&occ[there]) < P.crowd)) {
+        } else if (agar[there] != 0u && (crowd_of(sp) == 0u || atomicLoad(&occ[there]) < crowd_of(sp))) {
             aim = there;
-            if (P.crowd > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
+            if (crowd_of(sp) > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
         }
     }
     intent[k] = vec4<f32>(nx, ny, h, 0.0);
@@ -379,7 +444,7 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
     let here = cell(wk.x, wk.y);
     var wins = false;
     if (aim != NONE) {
-        wins = aim == here || P.crowd == 0u || atomicLoad(&claim[aim]) == keyed(P.s_claim, t, k);
+        wins = aim == here || crowd_of(species_of(k)) == 0u || atomicLoad(&claim[aim]) == keyed(P.s_claim, t, k);
     }
     var at = here;
     if (wins) {
@@ -413,19 +478,20 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
     var ex = false;
     if (explore() > 0u) { ex = explores(k); }
     let c = P.w * P.h;
-    let o = species_of(k) * c + at;
-    // Grazing: every walker eats where it stands after the move.
-    if (grazes()) { atomicAdd(&gcount[at], 1u); }
+    let o = blk(species_of(k), kind_of(k)) * c + at;
+    // Grazing: every walker that eats (`eats`) eats where it stands after
+    // the move.
+    if (grazes() && eats(k)) { atomicAdd(&gcount[at], 1u); }
     if (P.cap > 0u || wins) {
         if (ex) {
-            atomicAdd(&edep[o + select(0u, nsp1() * c, ill)], 1u);
+            atomicAdd(&edep[o + select(0u, nblk() * c, ill)], 1u);
         } else if (ill) {
             atomicAdd(&sdep[o], 1u);
         } else {
             atomicAdd(&dep[o], 1u);
         }
     } else if (bshare() > 0.0) {
-        atomicAdd(&bdep[o + select(0u, nsp1() * c, ex)], 1u);
+        atomicAdd(&bdep[o + select(0u, nblk() * c, ex)], 1u);
     }
     // Sick walkers lay germ where they stand, then every counter falls by
     // one (before any jump, as on the CPU).
@@ -452,7 +518,9 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
     let n = f32(atomicLoad(&occ[i]));
-    let e = (energy[k] + min(grass[i] / n, P.graze_eat) + share[i]) - P.upkeep;
+    var g = 0.0;
+    if (eats(k)) { g = min(grass[i] / n, P.graze_eat); }
+    let e = (energy[k] + g + share[i]) - P.upkeep;
     if (e > 0.0) { energy[k] = e; return; }
     if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
         atomicSub(&occ[i], 1u);
@@ -491,8 +559,10 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (!lives(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
     let at = birth_spot(k, t);
     let j = cell(at.x, at.y);
-    if (j == NONE || agar[j] == 0u || (P.crowd > 0u && atomicLoad(&occ[j]) >= P.crowd)) { return; }
-    if (P.crowd > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }
+    // The parent's species' crowd limit (`crowd_of`).
+    let cr = crowd_of(species_of(k));
+    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr)) { return; }
+    if (cr > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }
     icell[k] = j;
 }
 
@@ -502,7 +572,7 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (k >= P.n) { return; }
     let j = icell[k];
     let t = S.t;
-    if (j == NONE || (P.crowd > 0u && atomicLoad(&claim[j]) != keyed(P.s_bclaim, t, k))) { return; }
+    if (j == NONE || (crowd_of(species_of(k)) > 0u && atomicLoad(&claim[j]) != keyed(P.s_bclaim, t, k))) { return; }
     let b = child_of(k, t);
     let half = max((energy[k] - P.birth_cost) * 0.5, 0.0);
     energy[k] = half;
@@ -512,7 +582,8 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     walkers[b] = vec4<f32>(at, unit(keyed(P.s_birth, t, k | 0x80000000u)) * TAU, 0.0);
     if (explore() > 0u) { age[b] = 0u; }
     if (P.sick_steps > 0u) { sick[b] = 0u; }
-    if (nsp() > 0u) { spec[b] = spec[k]; }
+    // The child is its parent's species and kind.
+    if (nsp() > 0u || mixes()) { spec[b] = spec[k]; }
 }
 
 // Conversion (PR #56), after the move and its deposit, before any jump: a
@@ -527,25 +598,84 @@ fn convert(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (k >= P.n || !lives(k)) { return; }
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
-    let c = P.w * P.h;
     var all = 0.0;
     if (P.cap > 0u) { all = counted(i); }
-    let own = spec[k];
-    let ov = sp_in[own * c + i] + laid_by(own, i, all);
+    let own = species_of(k);
+    let ov = weigh(own, i, all);
     var best = own;
     var bv = ov;
     if (P.cycle != 0u && nsp() >= 3u) {
         best = (own + nsp() - 1u) % nsp();
-        bv = sp_in[best * c + i] + laid_by(best, i, all);
+        bv = weigh(best, i, all);
     } else {
         for (var s = 0u; s < nsp(); s++) {
             if (s != own) {
-                let v = sp_in[s * c + i] + laid_by(s, i, all);
+                let v = weigh(s, i, all);
                 if (v > bv) { best = s; bv = v; }
             }
         }
     }
-    if (best != own && bv > P.convert * ov) { spec[k] = best; }
+    // The kind (bit 8) stays.
+    if (best != own && bv > P.convert * ov) { spec[k] = (spec[k] & 0xFFFFFF00u) | best; }
+}
+
+// Species s's trail as conversion weighs it at cell i: the cell's, after
+// this tick's deposit; or with `conv_r` the sum over the (2r+1)-square
+// round it, clipped at the dish's edge (the CPU's summed-area tables, in
+// f64 there; here the `rows` pass's row sums in `sp_out`, which the trail
+// pass overwrites after, summed down the column).
+fn weigh(s: u32, i: u32, all: f32) -> f32 {
+    let c = P.w * P.h;
+    let r = conv_r();
+    if (r == 0u) { return sp_in[s * c + i] + laid_by(s, i, all); }
+    let x = i % P.w; let y = i / P.w;
+    var sum = 0.0;
+    for (var yy = y - min(y, r); yy < min(y + r + 1u, P.h); yy++) { sum += sp_out[s * c + yy * P.w + x]; }
+    return sum;
+}
+
+// Conversion's square, first half: each species' trail after this tick's
+// deposit, summed along the cell's row over x - r to x + r (clipped), into
+// `sp_out`. Only dispatched with conversion on and `conv_r` above 0. A
+// workgroup takes 256 cells of one row (`ROW_CHUNK`): it works out each
+// cell's trail after the deposit once, for its cells and r either side,
+// into `tile`, then each cell sums its row from there. (A first version
+// had each cell work out all 2r + 1 of its row's values itself: at r 8 the
+// pass took longer than the rest of the tick, 136-142 ms of GPU ticks a
+// frame against 61-63 without the square on the software GPU.)
+const ROW_CHUNK: u32 = 256u;
+const ROW_R: u32 = 64u;
+var<workgroup> tile: array<f32, 1536>;
+@compute @workgroup_size(256)
+fn rows(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_id) li: vec3<u32>) {
+    let chunks = (P.w + ROW_CHUNK - 1u) / ROW_CHUNK;
+    let y = wg.x / chunks;
+    let x0 = (wg.x % chunks) * ROW_CHUNK;
+    let r = min(conv_r(), ROW_R);
+    let c = P.w * P.h;
+    // Cell x0 - r + q of the row in tile[4q + s], 0 off the dish.
+    for (var q = li.x; q < ROW_CHUNK + 2u * r; q += ROW_CHUNK) {
+        let gx = i32(x0 + q) - i32(r);
+        var all = 0.0;
+        let on = gx >= 0 && gx < i32(P.w) && y < P.h;
+        let j = y * P.w + u32(max(gx, 0));
+        if (on && P.cap > 0u) { all = counted(j); }
+        for (var s = 0u; s < 4u; s++) {
+            var v = 0.0;
+            if (on && s < nsp()) { v = sp_in[s * c + j] + laid_by(s, j, all); }
+            tile[4u * q + s] = v;
+        }
+    }
+    workgroupBarrier();
+    let x = x0 + li.x;
+    if (x >= P.w || y >= P.h) { return; }
+    let i = y * P.w + x;
+    var sums = array<f32, 4>(0.0, 0.0, 0.0, 0.0);
+    for (var xx = x - min(x, r); xx < min(x + r + 1u, P.w); xx++) {
+        let q = xx + r - x0;
+        for (var s = 0u; s < nsp(); s++) { sums[s] += tile[4u * q + s]; }
+    }
+    for (var s = 0u; s < nsp(); s++) { sp_out[s * c + i] = sums[s]; }
 }
 
 // Where walker k jumps this tick, if it does (w = 1): the pull (to a disc
@@ -582,7 +712,22 @@ fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (to == NONE || agar[to] == 0u) { return; }
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
-    if (P.crowd == 0u) {
+    let cr = crowd_of(species_of(k));
+    if (cr == 0u && per()) {
+        // With species' own crowd limits a walker of a species with none
+        // claims the cell it jumps to as well and lands in `land` with the
+        // limited ones (always dispatched with `per`), so a limited walker
+        // later in the CPU's walker order loses the cell to it, as on the
+        // CPU, while one earlier wins it and both land, as there; and every
+        // jump here reads the cells as the pass began, so none races
+        // another's move. (A first version moved them here: a limited
+        // walker could then read a cell before or after an unlimited one
+        // left it.)
+        atomicMin(&claim[to], k);
+        icell[k] = to;
+        return;
+    }
+    if (cr == 0u) {
         if (to != here) {
             atomicSub(&occ[here], 1u);
             atomicAdd(&occ[to], 1u);
@@ -594,7 +739,7 @@ fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     // A cell claimed by a step this tick now holds its winner, so it is
     // full and never claimed here: the claim's stale keys cannot win.
-    if (atomicLoad(&occ[to]) >= P.crowd) { return; }
+    if (atomicLoad(&occ[to]) >= cr) { return; }
     atomicMin(&claim[to], k);
     icell[k] = to;
 }
@@ -604,7 +749,8 @@ fn land(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n) { return; }
     let to = icell[k];
-    if (to == NONE || atomicLoad(&claim[to]) != k) { return; }
+    // A walker of a species with no crowd limit lands whatever the claim.
+    if (to == NONE || (crowd_of(species_of(k)) > 0u && atomicLoad(&claim[to]) != k)) { return; }
     let wk = walkers[k];
     atomicSub(&occ[cell(wk.x, wk.y)], 1u);
     atomicAdd(&occ[to], 1u);
@@ -617,7 +763,7 @@ fn land(@builtin(global_invocation_id) gid: vec3<u32>) {
 // the sum is exact in any order.
 fn counted(j: u32) -> f32 {
     let c = P.w * P.h;
-    let m = nsp1();
+    let m = nblk();
     var n = 0.0;
     for (var s = 0u; s < m; s++) {
         let o = s * c + j;
@@ -633,13 +779,22 @@ fn counted(j: u32) -> f32 {
 // with `bshare` that share of it a blocked walker, or with `cap` the CPU's
 // capped square-root deposit, deposit x sqrt(min(n, cap)) shared by the
 // cell's n walkers (`all`, from `counted`). With the outside rules off the
-// expressions are the looks build's, so its dishes run as they did.
+// expressions are the looks build's, so its dishes run as they did. The
+// deposit and blocked share are the species' own with `per`, and the
+// second kind's walkers (`mix_*`) lay `mdep` times as much.
 fn laid(s: u32, j: u32, all: f32) -> f32 {
+    var l = laid_kind(s, 0u, j, all);
+    if (mixes()) { l += P.mdep * laid_kind(s, 1u, j, all); }
+    return l;
+}
+
+fn laid_kind(s: u32, kd: u32, j: u32, all: f32) -> f32 {
     let c = P.w * P.h;
-    let m = nsp1();
-    let o = s * c + j;
+    let m = nblk();
+    let o = blk(s, kd) * c + j;
+    let dp = deposit_of(s);
     let a = f32(atomicLoad(&dep[o]));
-    if (P.cap == 0u && P.sick_steps == 0u && explore() == 0u && bshare() == 0.0) { return P.deposit * a; }
+    if (P.cap == 0u && P.sick_steps == 0u && explore() == 0u && bshare() == 0.0) { return dp * a; }
     var b = 0.0;
     if (P.sick_steps > 0u) { b = f32(atomicLoad(&sdep[o])); }
     var w = a + P.sick_trail * b;
@@ -647,14 +802,15 @@ fn laid(s: u32, j: u32, all: f32) -> f32 {
         w += P.edep * (f32(atomicLoad(&edep[o])) + P.sick_trail * f32(atomicLoad(&edep[o + m * c])));
     }
     if (P.cap == 0u) {
-        var l = P.deposit * w;
-        if (bshare() > 0.0) {
-            l += P.deposit * bshare() * (f32(atomicLoad(&bdep[o])) + P.edep * f32(atomicLoad(&bdep[o + m * c])));
+        var l = dp * w;
+        let bs = bshare_of(s);
+        if (bs > 0.0) {
+            l += dp * bs * (f32(atomicLoad(&bdep[o])) + P.edep * f32(atomicLoad(&bdep[o + m * c])));
         }
         return l;
     }
     if (all == 0.0) { return 0.0; }
-    return P.deposit * sqrt(min(all, f32(P.cap))) / all * w;
+    return dp * sqrt(min(all, f32(P.cap))) / all * w;
 }
 
 // The trail species s lays on cell j this tick, with species 0's boost
@@ -693,6 +849,20 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         let dx = f32(x) + 0.5 - P.bx; let dy = f32(y) + 0.5 - P.by;
         gone = dx * dx + dy * dy <= P.br * P.br;
     }
+    // Shots: a hit cuts as the wipe does, and the cell's wound takes the
+    // thickness it cut (what the shot destroyed, not a drawn splash). The
+    // wound fades about 0.8% a tick (half in about 0.75 s).
+    var wound = (look[i] >> 16u) & 255u;
+    wound -= min(wound, max(wound / 128u, 1u));
+    for (var q = 0u; q < P.nhits; q++) {
+        let hp = hits[q];
+        let dx = f32(x) + 0.5 - hp.x; let dy = f32(y) + 0.5 - hp.y;
+        if (agar[i] != 0u && dx * dx + dy * dy <= hp.z * hp.z) {
+            wound = max(wound, u32(bright(trail_in[i]) * 255.0));
+            gone = true;
+        }
+    }
+    look[i] = (look[i] & 0xFF00FFFFu) | (wound << 16u);
     if (gone) {
         trail_out[i] = 0.0;
         if (germs) { germ_out[i] = 0.0; }
@@ -734,7 +904,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         var total = 0.0;
         for (var s = 0u; s < nsp(); s++) {
-            let v = sums[s] / n * P.keep;
+            let v = sums[s] / n * keep_of(s);
             sp_out[s * c + i] = v;
             total += v;
         }
@@ -757,7 +927,7 @@ fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (grazes()) { atomicStore(&gcount[i], 0u); }
     // The counts, a block a species (and a class).
     let c = P.w * P.h;
-    let m = nsp1();
+    let m = nblk();
     for (var s = 0u; s < m; s++) {
         let o = s * c + i;
         atomicStore(&dep[o], 0u);
@@ -910,6 +1080,11 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
         let gs = sqrt(clamp(germ_in[i] / (4.0 * max(P.catch_at, 1.0e-6)), 0.0, 1.0));
         c = vec3<f32>(max(c.x, 255.0 * gs), c.y * (1.0 - 0.8 * gs), c.z * (1.0 - 0.8 * gs));
     }
+    // The look the view shades from (byte 2, the wound, is the trail pass's).
+    let thick = u32(clamp(g, 0.0, 1.0) * 255.0);
+    let crowd = min(atomicLoad(&occ[i]), 255u);
+    let smell = u32(clamp(1.0 - exp(-scent_in[i] / 60.0), 0.0, 1.0) * 255.0);
+    look[i] = thick | (crowd << 8u) | (look[i] & 0x00FF0000u) | (smell << 24u);
     // The panel, premultiplied, over the dish.
     let o = hud[i];
     let a = f32(o >> 24u) / 255.0;
@@ -1085,6 +1260,12 @@ fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n) { return; }
     icell[k] = NONE;
+    // Only a living walker, as the CPU's `build_wall`: an empty slot
+    // (growth) keeps a stale place and no count. (Before 2026-11-11 an
+    // empty slot under a new wall moved too, taking 1 from a count that did
+    // not hold it, which could wrap to 2^32 - 1 and close the cell for
+    // good, and adding a walker nobody was to the cell it found.)
+    if (!lives(k)) { return; }
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
     if (here == NONE || agar[here] != 0u) { return; }

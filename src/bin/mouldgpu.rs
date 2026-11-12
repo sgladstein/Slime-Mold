@@ -140,7 +140,7 @@ use slime_mould::hud;
 use slime_mould::mould::STEPS_PER_SECOND;
 use slime_mould::world::demo::Squad;
 use slime_mould::world::ui::{theme, MenuItem};
-use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, View};
+use slime_mould::world::{look, Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
@@ -872,6 +872,11 @@ struct App {
     canvas_pass: Option<CanvasPass>,
     /// Paused before the menu opened (the menu pauses; closing restores).
     menu_paused: bool,
+    /// L: the look (the world shaded from the simulation's fields, every
+    /// walker a speck, soldiers as sprites), on by default; off draws the
+    /// engine's frame as it is. Its ground field (agar and piles).
+    look: bool,
+    ground: Option<wgpu::Buffer>,
 }
 
 impl App {
@@ -913,6 +918,8 @@ impl App {
             },
             squad: None,
             marks: Marks::default(),
+            look: true,
+            ground: None,
             last_frame: Instant::now(),
             hud: Hud::new(),
             canvas: None,
@@ -990,10 +997,28 @@ impl App {
             v.set_world(&e.frame, world);
         }
         self.engine = Some(e);
+        self.ground = None;
+        self.apply_look();
         self.panel_dirty = true;
         if let Some(w) = &self.window {
             w.set_title(&format!("Mould sandbox (GPU): {}", PRESETS[self.preset].to_lowercase()));
         }
+    }
+
+    /// Binds the look to the view (or takes it off), from the engine's
+    /// fields and a ground field made from its dish.
+    fn apply_look(&mut self) {
+        let (Some(p), Some(e), Some(v)) = (&self.pixels, &self.engine, self.view.as_mut()) else { return };
+        if !self.look {
+            v.clear_look();
+            return;
+        }
+        let g = self.ground.get_or_insert_with(|| {
+            let crystal = look::dish_crystals(&e.dish);
+            let codes = look::ground(e.dish.w, e.dish.w * e.dish.h, &look::Fields { agar: &e.dish.agar, crystal: &crystal, ..Default::default() });
+            look::ground_buffer(p.device(), p.queue(), &codes)
+        });
+        v.set_look(&e.look, g, &e.walkers, e.n);
     }
 
     fn panel_lines(&self) -> (Lines, Lines) {
@@ -1029,7 +1054,7 @@ impl App {
             "LEFT DRAG DROPS WALKERS  RIGHT DRAG WIPES  F DROPS FOOD  ESC QUITS"
         };
         let world = self.engine.as_ref().map_or((0, 0), |e| (e.dish.w, e.dish.h));
-        let camera = format!("WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  W WORLD {}X{}  Q SQUAD", self.camera.zoom, world.0, world.1);
+        let camera = format!("WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  L LOOK  W WORLD {}X{}  Q SQUAD", self.camera.zoom, world.0, world.1);
         let bottom = vec![
             ("1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(), WHITE),
             ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(), WHITE),
@@ -1094,6 +1119,10 @@ impl App {
                 self.restart();
             }
             KeyCode::KeyH => self.show_panel = !self.show_panel,
+            KeyCode::KeyL => {
+                self.look = !self.look;
+                self.apply_look();
+            }
             KeyCode::KeyM => {
                 if let Some(v) = self.view.as_mut() {
                     v.minimap = !v.minimap;
@@ -1178,7 +1207,7 @@ impl App {
             sq.step(if self.paused { 0.0 } else { dt });
             let units = sq.units();
             self.controls.prune(&units);
-            sq.marks(self.camera.zoom, &mut self.marks);
+            sq.marks_with(self.camera.zoom, self.look, &mut self.marks);
             self.controls.marks(&units, &self.camera, sq.radius(), &mut self.marks);
             for n in sq.notes.drain(..) {
                 self.hud.alert(&n.text, n.at, if n.bad { theme::BAD } else { theme::GOOD });
@@ -1335,6 +1364,7 @@ impl ApplicationHandler for App {
             self.canvas = Some(Canvas::new((w, h)));
             self.canvas_pass = Some(CanvasPass::new(p.device(), p.queue()));
         }
+        self.apply_look();
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
@@ -1621,6 +1651,22 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     s.graze,
                     s.graze_eat,
                     s.graze_regrow
+                );
+            }
+            // The species settings (2026-11-11): the share, conversion's
+            // square, the second kind, and each species' own settings.
+            if s.species_share > 0.0 || s.convert_r > 0 || s.mix_share > 0.0 || s.per_species() {
+                println!(
+                    "   species: share {} convert r {}; mix share {} reach {} angle {} turn {} step {} deposit {}; own settings {:?}",
+                    s.species_share,
+                    s.convert_r,
+                    s.mix_share,
+                    s.mix_reach,
+                    s.mix_angle,
+                    s.mix_turn,
+                    s.mix_step,
+                    s.mix_deposit,
+                    &s.sets[..s.fields() as usize]
                 );
             }
         }
@@ -2190,6 +2236,20 @@ mod tests {
         floats(&read_back(&e.device, &e.queue, &e.walkers)).chunks_exact(4).map(|c| (c[0], c[1], c[2])).collect()
     }
 
+    /// The shader's `keyed` (the CPU's, with the seed and use folded into
+    /// `s` by `stream`).
+    fn keyed_as_the_gpu(s: u32, t: u32, walker: u32) -> u32 {
+        let low = |v: u32| {
+            let mut x = v;
+            x ^= x >> 16;
+            x = x.wrapping_mul(0x7FEB_352D);
+            x ^= x >> 15;
+            x = x.wrapping_mul(0x846C_A68B);
+            x ^ (x >> 16)
+        };
+        low(walker ^ low(low(s) ^ t))
+    }
+
     /// The sum of |a - b| over the sum of |b|.
     fn l1(a: &[f32], b: &[f32]) -> f64 {
         let d: f64 = a.iter().zip(b).map(|(x, y)| (x - y).abs() as f64).sum();
@@ -2429,6 +2489,203 @@ mod tests {
         }
     }
 
+    /// The twin test for the creature thread's species settings on the GPU
+    /// (2026-11-11): species 0's share of the walkers (`species_share`),
+    /// conversion over a square (`species_convert_r`), the second kind of
+    /// walker (`mix_*`), and each species' own settings (`species_sets`,
+    /// `s0.reach=40` and the like): a droplet species beside a network
+    /// species, own reach, step, deposit and keep, crowd limits that differ
+    /// by species through respawn. One GPU tick from a warmed CPU dish
+    /// against one `BigDish::tick`, as `the_outside_rules_match_the_cpu_for_one_tick`.
+    #[test]
+    fn the_species_settings_match_the_cpu_for_one_tick() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let j = small(3);
+        let one = Settings { species: 2, zones: true, ..small(0) };
+        let sick = |s: Settings| Settings { sick: 60, immune: 60, catch_at: 0.2, sick_trail: 3.0, seed_at: 0.0, seed_r: 60.0, ..s };
+        let mix = |s: Settings| Settings { mix_share: 0.3, mix_reach: 3.0, mix_angle: 0.5, mix_turn: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..s };
+        let with = |mut s: Settings, keys: &[(&str, &str)]| {
+            for (k, v) in keys {
+                set(&mut s, k, v).unwrap();
+            }
+            s
+        };
+        // The creature thread's droplet and network species (big.rs
+        // `species_sets_differ_by_species`, in the sandbox's units).
+        let (drop, net) = (
+            [("s0.crowd", "1"), ("s0.sensor_angle", "86"), ("s0.turn", "46"), ("s0.laid", "2"), ("s0.keep", "0.93"), ("s0.blocked_lay", "1"), ("s0.graze", "10")],
+            [("s1.crowd", "0"), ("s1.keep", "0.6"), ("s1.graze", "0"), ("s1.explore", "60")],
+        );
+        let dishes = [
+            ("species 0 at 70%, converting", Settings { species: 2, species_share: 0.7, convert: 1.2, ..j.clone() }),
+            ("converting over a square of 3, bands", Settings { species: 2, zones: true, convert: 1.2, convert_r: 3, ..j.clone() }),
+            ("hunting droplets converting over a square of 8 (the dead-end's dish)", Settings { avoid: -0.5, convert: 1.2, convert_r: 8, species_share: 0.55, ..one.clone() }),
+            ("three cyclic species converting over a square of 2, cap", Settings { species: 3, cycle: true, convert: 1.0, convert_r: 2, cap: 100, ..j.clone() }),
+            ("mixed walkers", mix(j.clone())),
+            ("mixed walkers, one a cell, blocked lay and keep", mix(Settings { species: 0, blocked_lay: 1.0, blocked_keep: true, ..one.clone() })),
+            ("mixed walkers, two species, cap, explorers, contagion", sick(mix(Settings { species: 2, explore: 60, explore_spread: 0.5, cap: 100, ..j.clone() }))),
+            // The network species explores first, with a spread so some
+            // still explore at the twin tick (with a stage of 20 every
+            // walker had finished it, and the stage taken from the global
+            // switch for both species went unseen).
+            ("a droplet species and a network species", with(Settings { explore_spread: 1.0, ..one.clone() }, &[&drop[..], &net[..]].concat())),
+            ("own reach, step, deposit and keep, scent at the own reach, respawn", with(Settings { species: 2, respawn: 0.01, smell: 0.0, ..j.clone() }, &[("s0.reach", "40"), ("s0.step", "2"), ("s1.laid", "3"), ("s1.keep", "0.8"), ("s1.sensor_angle", "30")])),
+            ("crowd limits by species, respawn", with(Settings { respawn: 0.01, ..one.clone() }, &[("s1.crowd", "0"), ("s1.step", "1.5")])),
+            // A third of the walkers jump a tick, so limited and unlimited
+            // jumpers often aim at one cell.
+            ("crowd limits by species, heavy respawn", with(Settings { respawn: 0.3, ..one.clone() }, &[("s1.crowd", "0")])),
+            ("own settings, mixed, converting over a square of 4", mix(with(Settings { convert: 1.2, convert_r: 4, ..one.clone() }, &drop))),
+        ];
+        for (name, s) in dishes {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            assert_eq!(e.dish.p.species_sets.is_empty(), !s.per_species(), "{name}: the sets reach the CPU dish");
+            assert_eq!(e.kinds, if s.mix_share > 0.0 { 2 } else { 1 }, "{name}: the kinds");
+            // The GPU starts with the CPU dish's species and kinds (the
+            // twin's inject writes them again, so this is the only check
+            // of where they start).
+            let start: Vec<u32> = read_back(&device, &queue, &e.spec).chunks_exact(4).take(e.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+            assert!(start == spec_words(&e.dish), "{name}: the species and kinds the GPU starts with");
+            let mut cpu = e.dish.clone();
+            // The warm-up does not convert: with it one species took every
+            // walker within the 40 ticks (species 0 at 70%). The twin tick
+            // is the CPU's first with conversion, on a mixed dish.
+            let convert = cpu.p.species_convert;
+            cpu.p.species_convert = 0.0;
+            for _ in 0..40 {
+                cpu.tick();
+            }
+            cpu.p.species_convert = convert;
+            let n = cpu.walkers.len();
+            let before_spec = cpu.spec.clone();
+            // Where each walker stands after the move and before any jump
+            // (the tick without respawn, which comes last), for the jumps'
+            // check below.
+            let mut still = cpu.clone();
+            still.p.respawn = 0.0;
+            still.tick();
+            let t = cpu.steps as u32;
+            let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            let side = (e.done % 2) as usize;
+            let mut lsp = 0.0;
+            if e.nsp > 0 {
+                let fields: Vec<f32> = cpu.species_trail.iter().flatten().copied().collect();
+                lsp = l1(&floats(&read_back(&device, &queue, &e.species[side])), &fields);
+            }
+            let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+            let ages_off = if cpu.age.is_empty() { 0 } else { u32s(&e.age).iter().zip(&cpu.age).filter(|(g, c)| **g != **c as u32).count() };
+            let words = u32s(&e.spec);
+            let specs_off = if cpu.spec.is_empty() { 0 } else { words.iter().zip(&cpu.spec).filter(|(g, c)| *g & 0xFF != **c as u32).count() };
+            let joined = before_spec.iter().zip(&cpu.spec).filter(|(a, b)| a != b).count();
+            // A walker's kind never changes, so every one must agree.
+            let kinds_off = if cpu.kind.is_empty() { words.iter().filter(|&&w| w >> 8 != 0).count() } else { words.iter().zip(&cpu.kind).filter(|(g, c)| *g >> 8 != **c as u32).count() };
+            let second = cpu.kind.iter().filter(|&&k| k == 1).count();
+            let share0 = cpu.spec.iter().filter(|&&c| c == 0).count();
+            let lg = if cpu.grass.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass) };
+            eprintln!(
+                "{name}: {n} walkers, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, species L1 {lsp:.1e}; {ages_off} ages off; {share0} of species 0, {joined} joined another species, {specs_off} species off; {second} of the second kind, {kinds_off} kinds off; grass L1 {lg:.1e}"
+            );
+            assert!(moved == n || (s.blocked_keep && moved > 0), "{name}: every walker steps, turns or is blocked");
+            if s.respawn < 0.1 {
+                assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
+            } else {
+                // Heavy respawn. The GPU reads every jump's cell as the
+                // jump pass began, where the CPU, jumping walkers in order,
+                // sees a cell an earlier jumper left as free: 44 of 25,000
+                // walkers off here (2026-11-11), as with one crowd limit for
+                // all. So the jumps are checked where that cannot happen:
+                // every walker whose jump lands in a cell no jumper left
+                // must agree, and among them a walker of the unlimited
+                // species and a limited one must aim at one cell, the
+                // unlimited one first in the CPU's order, for the claim
+                // rule to be seen.
+                let key = |k: u32, q: u32| (keyed_as_the_gpu(stream(s.seed, DRAW_JUMP), t, 4 * k + q) >> 8) as f32 / 16_777_216.0;
+                // The CPU's `cell` (private to big.rs).
+                let (w, h) = (still.w, still.h);
+                let cell = |x: f32, y: f32| (x >= 0.0 && y >= 0.0 && (x as usize) < w && (y as usize) < h).then(|| y as usize * w + x as usize);
+                let at = |k: usize| cell(key(k as u32, 1) * w as f32, key(k as u32, 2) * h as f32).filter(|&j| still.agar[j]);
+                let jumpers: Vec<usize> = (0..n).filter(|&k| key(k as u32, 0) < s.respawn).collect();
+                let left: std::collections::HashSet<usize> = jumpers.iter().map(|&k| cell(still.walkers[k].0, still.walkers[k].1).unwrap()).collect();
+                let clear: Vec<usize> = jumpers.iter().copied().filter(|&k| at(k).is_some_and(|j| !left.contains(&j))).collect();
+                let gpu = walkers_of(&e);
+                let clear_off = clear.iter().filter(|&&k| {
+                    let (g, c) = (gpu[k], cpu.walkers[k]);
+                    (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3
+                }).count();
+                let mut first: std::collections::HashMap<usize, usize> = std::collections::HashMap::new();
+                for &k in &clear {
+                    first.entry(at(k).unwrap()).or_insert(k);
+                }
+                let crowd_of = |k: usize| cpu.p.species_sets[still.spec[k] as usize].crowd;
+                let contested = clear.iter().filter(|&&k| {
+                    let f = first[&at(k).unwrap()];
+                    f != k && crowd_of(f) == 0 && crowd_of(k) > 0
+                }).count();
+                eprintln!("   {} jumped, {} into cells no jumper left: {clear_off} off; {contested} limited walkers aimed at a cell an unlimited one took first", jumpers.len(), clear.len());
+                assert!(clear_off == 0 && contested > 0, "{name}: {clear_off} jumpers off, {contested} contested");
+                assert!(off * 100 <= n, "{name}: {off} of {n} walkers off");
+            }
+            assert!(lt <= 1e-4 && ls <= 1e-6 && lsp <= 1e-4 && lg <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, species L1 {lsp:.2e}, grass L1 {lg:.2e}");
+            assert!(ages_off * 1000 <= n && specs_off * 1000 <= n, "{name}: {ages_off} ages, {specs_off} species off");
+            assert_eq!(kinds_off, 0, "{name}: kinds off");
+            if s.convert > 0.0 {
+                assert!(joined > 0, "{name}: someone joins another species in the tick");
+            }
+            if s.mix_share > 0.0 {
+                assert!(second * 5 > n && second * 2 < n, "{name}: {second} of {n} of the second kind");
+            }
+            if s.species_share > 0.0 {
+                let want = s.species_share * n as f32;
+                assert!((share0 as f32 - want).abs() < 0.2 * want, "{name}: {share0} of species 0, against {want}");
+            }
+        }
+    }
+
+    /// Conversion's square, its rows (the `rows` pass, a workgroup a
+    /// 256-cell piece of a row with its margins): each species' trail summed
+    /// over the 2r+1 cells of the row round every cell, against the CPU's
+    /// sums in f64. The twin test sees a piece's edge only where a walker
+    /// converts near one, so a tile loaded without its right margin passed
+    /// it (the species report's planted bugs, round 3).
+    #[test]
+    fn the_squares_rows_sum_every_cell_of_the_row() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let r = 8;
+        let s = Settings { species: 2, convert: 1.2, convert_r: r as u32, ..small(3) };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        for _ in 0..40 {
+            cpu.tick();
+        }
+        // A fresh engine: no deposit counted, so the rows hold the trail
+        // alone.
+        e.inject(&cpu);
+        e.write_params(&s, Hand::default(), 1);
+        let (w, h) = (cpu.w, cpu.h);
+        assert!(w > 256 + r, "a row in more than one piece");
+        e.run(&shared, &[(ROWS, (w as u32).div_ceil(256) * h as u32)]);
+        let side = (e.done % 2) as usize;
+        let got = floats(&read_back(&device, &queue, &e.species[1 - side]));
+        let (mut off, mut worst, mut edge) = (0, 0f64, 0f64);
+        for (sp, f) in cpu.species_trail.iter().enumerate() {
+            for y in 0..h {
+                for x in 0..w {
+                    let want: f64 = (x.saturating_sub(r)..(x + r + 1).min(w)).map(|xx| f[y * w + xx] as f64).sum();
+                    let d = (got[sp * w * h + y * w + x] as f64 - want).abs() / want.abs().max(1.0);
+                    worst = worst.max(d);
+                    if x % 256 + r >= 256 {
+                        edge = edge.max(want);
+                    }
+                    off += usize::from(d > 1e-5);
+                }
+            }
+        }
+        eprintln!("rows of {w} cells, radius {r}: {off} sums off by more than 1e-5, worst {worst:.1e}; trail summed by the cells beside a piece's edge up to {edge:.1}");
+        assert!(edge > 1.0, "trail at the pieces' edges");
+        assert!(off == 0, "{off} row sums off, worst {worst:.1e}");
+    }
+
     /// The plain pipelines (the outside rules compiled out) give the dish the
     /// full ones give with every rule off, bit for bit. The full ones are
     /// forced by keeping blocked headings with a reset every tick, which
@@ -2636,6 +2893,17 @@ mod tests {
             // the slot of a walker that died keeps no age, sickness or
             // species of the dead one's.
             ("hungry, dying beside breeding", Settings { starve: 1.0, capacity: 60_000, species: 2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..hungry(small(0)) }),
+            // The species settings (2026-11-11): children keep their
+            // parent's kind, and a parent breeds by its species' crowd
+            // limit (species 1 has none); species 1 does not graze, which
+            // growth on grass overrides (every walker eats).
+            ("hungry, mixed walkers, crowd limits by species", {
+                let mut s = Settings { species: 2, zones: true, mix_share: 0.3, mix_reach: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..hungry(small(0)) };
+                for (k, v) in [("s1.crowd", "0"), ("s1.graze", "0"), ("s0.keep", "0.93")] {
+                    set(&mut s, k, v).unwrap();
+                }
+                s
+            }),
         ];
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -2686,7 +2954,9 @@ mod tests {
             let le = l1(&energy.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>(), &want.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>());
             let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
             let ages_off = if cpu.age.is_empty() { 0 } else { u32s(&e.age).iter().zip(&cpu.age).filter(|(g, c)| **g != **c as u32).count() };
-            let specs_off = if cpu.spec.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.spec).filter(|(g, c)| **g != **c as u32).count() };
+            let specs_off = if cpu.spec.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.spec).filter(|(g, c)| *g & 0xFF != **c as u32).count() };
+            // A child is its parent's kind (`mix_share`, bit 8).
+            let kinds_off = if cpu.kind.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.kind).filter(|(g, c)| *g >> 8 != **c as u32).count() };
             let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick).iter().zip(&cpu.sick).filter(|(g, c)| **g != **c as u32).count() };
             let occ: Vec<u32> = read_back(&device, &queue, &e.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
             let occ_off = occ.iter().zip(occupancy(&cpu)).filter(|(g, c)| **g != *c).count();
@@ -2702,6 +2972,7 @@ mod tests {
             assert!(off * 1000 <= n && lives_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {off} walkers, {lives_off} lives, {occ_off} counts off of {n}");
             assert!(lt <= 1e-4 && ls <= 1e-6 && le <= 1e-4 && lg <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, energy L1 {le:.2e}, grass L1 {lg:.2e}");
             assert!((ages_off + specs_off + sick_off) * 1000 <= n, "{name}: {ages_off} ages, {specs_off} species, {sick_off} sick off");
+            assert_eq!(kinds_off, 0, "{name}: kinds off");
         }
     }
 
@@ -2959,10 +3230,16 @@ mod tests {
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
         let w = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
-        for (name, s) in [("one a cell", w.clone()), ("no limit", Settings { crowd: false, ..w.clone() }), ("sealed", Settings { wall_scent: 0.0, ..w })] {
+        // Growth on, hungry and without crystals, so walkers starve all over
+        // and empty slots keep stale places under the wall (before
+        // 2026-11-11 the GPU moved those too).
+        let hungry = Settings { crystal: 0.0, upkeep: 0.03, starve: 0.2, birth_energy: 0.6, graze: 10.0, graze_regrow: 0.0, capacity: 3 * w.walkers / 2, ..w.clone() };
+        for (name, s) in [("one a cell", w.clone()), ("no limit", Settings { crowd: false, ..w.clone() }), ("sealed", Settings { wall_scent: 0.0, ..w }), ("growth, empty slots under the wall", hungry)] {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
-            for _ in 0..40 {
+            // Long enough with growth for walkers to starve (a walker's
+            // energy lasts about 30 ticks at this upkeep).
+            for _ in 0..if s.upkeep > 0.0 { 150 } else { 40 } {
                 cpu.tick();
             }
             e.inject(&cpu);
@@ -2980,18 +3257,28 @@ mod tests {
             let walled: Vec<usize> = (0..cpu.agar.len()).filter(|&i| cpu.wall[i]).collect();
             let left_on = walled.iter().filter(|&&i| trail[i] != 0.0 || scent[i] != 0.0 || charge[i] != 0.0).count();
             let gpu = walkers_of(&e);
-            let inside = |ws: &[(f32, f32, f32)], ag: &[bool]| ws.iter().filter(|&&(x, y, _)| !ag[y as usize * cpu.w + x as usize]).count();
+            // Living slots only (growth); the empty ones keep stale places.
+            let living: Vec<bool> = (0..gpu.len()).map(|k| cpu.lives(k)).collect();
+            let empty_under = (0..gpu.len()).filter(|&k| !living[k] && !cpu.agar[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize]).count();
+            let inside = |ws: &[(f32, f32, f32)], ag: &[bool]| ws.iter().zip(&living).filter(|&(&(x, y, _), &l)| l && !ag[y as usize * cpu.w + x as usize]).count();
             let (gpu_inside, cpu_inside) = (inside(&gpu, &agar), inside(&cpu.walkers, &cpu.agar));
-            let moved_gpu = gpu.iter().zip(&e.dish.walkers).filter(|(a, b)| a != b).count();
-            let moved_cpu = cpu.walkers.iter().zip(&e.dish.walkers).filter(|(a, b)| a != b).count();
+            let moved = |ws: &[(f32, f32, f32)]| ws.iter().zip(&e.dish.walkers).zip(&living).filter(|&((a, b), &l)| l && a != b).count();
+            let (moved_gpu, moved_cpu) = (moved(&gpu), moved(&cpu.walkers));
+            let stale_moved = gpu.iter().zip(&cpu.walkers).zip(&living).filter(|&((a, b), &l)| !l && a != b).count();
             let occ = u32s(&e.occ);
             let mut want = vec![0u32; occ.len()];
-            for &(x, y, _) in &gpu {
-                want[y as usize * cpu.w + x as usize] += 1;
+            for (&(x, y, _), &l) in gpu.iter().zip(&living) {
+                if l {
+                    want[y as usize * cpu.w + x as usize] += 1;
+                }
             }
             let occ_off = occ.iter().zip(&want).filter(|(a, b)| a != b).count();
             let crowded = if s.crowd { occ.iter().filter(|&&c| c > 1).count() } else { 0 };
-            eprintln!("{name}: {cells} cells walled, {} walkers; {moved_cpu} moved out on the CPU, {moved_gpu} on the GPU; {cpu_inside} and {gpu_inside} left inside; {agar_off} agar and {ground_off} ground cells off, {left_on} walled cells with trail, scent or charge, {occ_off} counts off, {crowded} cells over the limit", gpu.len());
+            eprintln!("{name}: {cells} cells walled, {} walkers; {moved_cpu} moved out on the CPU, {moved_gpu} on the GPU; {cpu_inside} and {gpu_inside} left inside; {agar_off} agar and {ground_off} ground cells off, {left_on} walled cells with trail, scent or charge, {occ_off} counts off, {crowded} cells over the limit; {empty_under} empty slots under the wall, {stale_moved} of them moved", gpu.len());
+            if s.upkeep > 0.0 {
+                assert!(empty_under > 0, "{name}: empty slots under the wall");
+            }
+            assert_eq!(stale_moved, 0, "{name}: an empty slot moved");
             assert!(cells > 0 && moved_cpu > 0, "{name}: the wall covers walkers");
             assert!(agar_off == 0 && ground_off == 0 && left_on == 0, "{name}: {agar_off} agar, {ground_off} ground, {left_on} cells left on");
             assert_eq!(gpu.len(), cpu.walkers.len(), "{name}: no walker lost");

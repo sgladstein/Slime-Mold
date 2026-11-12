@@ -1,0 +1,83 @@
+seed 2 b-bullet t   1.0s  tube  4239.8  loops   89  width 6.00  reach  118.5  piles 5/7  strays 0.008  crystals 1.000  ms/tick 20.02
+seed 2 b-bullet t   1.0s  contrast 2.33
+seed 2 b-bullet t   1.0s  extent r50 110.8 r90 148.4
+seed 2 b-bullet t   1.0s  life walk 7385 spore 0 dormant 12615 dead 0  held 3/7  bodies 1 big 4215  centre 127.7,79.6  near 185  rim 0.000/0.000
+seed 2 b-bullet t   2.0s  tube  4022.8  loops   92  width 5.25  reach  116.9  piles 5/7  strays 0.012  crystals 1.000  ms/tick 20.32
+seed 2 b-bullet t   2.0s  contrast 2.92
+seed 2 b-bullet t   2.0s  extent r50 110.5 r90 148.3
+seed 2 b-bullet t   2.0s  life walk 3935 spore 0 dormant 16065 dead 0  held 3/7  bodies 1 big 4008  centre 127.7,79.6  near 190  rim 0.000/0.000
+seed 2 b-bullet t   3.0s  tube  3964.8  loops   93  width 4.96  reach  116.9  piles 5/7  strays 0.015  crystals 1.000  ms/tick 20.34
+seed 2 b-bullet t   3.0s  contrast 3.15
+seed 2 b-bullet t   3.0s  extent r50 110.6 r90 148.3
+seed 2 b-bullet t   3.0s  life walk 2889 spore 0 dormant 17111 dead 0  held 3/7  bodies 1 big 3954  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t   4.0s  tube  3965.4  loops   93  width 5.02  reach  116.9  piles 5/7  strays 0.012  crystals 1.000  ms/tick 21.40
+seed 2 b-bullet t   4.0s  contrast 3.25
+seed 2 b-bullet t   4.0s  extent r50 110.7 r90 148.3
+seed 2 b-bullet t   4.0s  life walk 2559 spore 0 dormant 17441 dead 0  held 3/7  bodies 1 big 3955  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t   5.0s  tube  3955.1  loops   94  width 4.94  reach  116.9  piles 5/7  strays 0.016  crystals 1.000  ms/tick 21.65
+seed 2 b-bullet t   5.0s  contrast 3.26
+seed 2 b-bullet t   5.0s  extent r50 110.6 r90 148.3
+seed 2 b-bullet t   5.0s  life walk 2447 spore 0 dormant 17553 dead 0  held 3/7  bodies 1 big 3944  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t   6.0s  tube  3958.9  loops   92  width 4.99  reach  116.9  piles 5/7  strays 0.013  crystals 1.000  ms/tick 21.86
+seed 2 b-bullet t   6.0s  contrast 3.29
+seed 2 b-bullet t   6.0s  extent r50 110.7 r90 148.3
+seed 2 b-bullet t   6.0s  life walk 2397 spore 0 dormant 17603 dead 0  held 3/7  bodies 1 big 3948  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t   7.0s  tube  3957.5  loops   93  width 4.97  reach  116.9  piles 5/7  strays 0.014  crystals 1.000  ms/tick 21.77
+seed 2 b-bullet t   7.0s  contrast 3.29
+seed 2 b-bullet t   7.0s  extent r50 110.8 r90 148.3
+seed 2 b-bullet t   7.0s  life walk 2364 spore 0 dormant 17636 dead 0  held 3/7  bodies 1 big 3947  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t   8.0s  tube  3954.8  loops   96  width 4.96  reach  116.9  piles 5/7  strays 0.016  crystals 1.000  ms/tick 21.98
+seed 2 b-bullet t   8.0s  contrast 3.28
+seed 2 b-bullet t   8.0s  extent r50 110.7 r90 148.3
+seed 2 b-bullet t   8.0s  life walk 2347 spore 0 dormant 17653 dead 0  held 3/7  bodies 1 big 3944  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t   9.0s  tube  3951.6  loops   96  width 4.94  reach  116.9  piles 5/7  strays 0.017  crystals 1.000  ms/tick 22.28
+seed 2 b-bullet t   9.0s  contrast 3.28
+seed 2 b-bullet t   9.0s  extent r50 110.8 r90 148.3
+seed 2 b-bullet t   9.0s  life walk 2336 spore 0 dormant 17664 dead 0  held 3/7  bodies 1 big 3940  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t  10.0s  tube  3957.0  loops   94  width 4.99  reach  116.9  piles 5/7  strays 0.014  crystals 1.000  ms/tick 22.48
+seed 2 b-bullet t  10.0s  contrast 3.26
+seed 2 b-bullet t  10.0s  extent r50 110.9 r90 148.3
+seed 2 b-bullet t  10.0s  life walk 2326 spore 0 dormant 17674 dead 0  held 3/7  bodies 1 big 3946  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t  11.0s  tube  3956.2  loops   94  width 4.97  reach  116.9  piles 5/7  strays 0.016  crystals 1.000  ms/tick 22.43
+seed 2 b-bullet t  11.0s  contrast 3.28
+seed 2 b-bullet t  11.0s  extent r50 110.9 r90 148.3
+seed 2 b-bullet t  11.0s  life walk 2315 spore 0 dormant 17685 dead 0  held 3/7  bodies 1 big 3944  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t  12.0s  tube  3956.4  loops   92  width 4.99  reach  116.9  piles 5/7  strays 0.014  crystals 1.000  ms/tick 22.19
+seed 2 b-bullet t  12.0s  contrast 3.26
+seed 2 b-bullet t  12.0s  extent r50 110.9 r90 148.3
+seed 2 b-bullet t  12.0s  life walk 2306 spore 0 dormant 17694 dead 0  held 3/7  bodies 1 big 3945  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t  13.0s  tube  3958.9  loops   92  width 5.02  reach  116.9  piles 5/7  strays 0.013  crystals 1.000  ms/tick 22.26
+seed 2 b-bullet t  13.0s  contrast 3.27
+seed 2 b-bullet t  13.0s  extent r50 110.9 r90 148.3
+seed 2 b-bullet t  13.0s  life walk 2297 spore 0 dormant 17703 dead 0  held 3/7  bodies 1 big 3948  centre 127.7,79.6  near 192  rim 0.000/0.000
+seed 2 b-bullet t  14.0s  strike at 161,80 r 1.75: killed 27
+seed 2 b-bullet t  14.0s  tube  3945.5  loops   94  width 4.95  reach  116.9  piles 5/7  strays 0.015  crystals 1.000  ms/tick 22.32
+seed 2 b-bullet t  14.0s  contrast 3.28
+seed 2 b-bullet t  14.0s  extent r50 111.0 r90 148.3
+seed 2 b-bullet t  14.0s  life walk 2290 spore 0 dormant 17683 dead 27  held 3/7  bodies 1 big 3934  centre 127.6,79.6  near 165  rim 0.000/0.000
+seed 2 b-bullet t  15.0s  tube  3859.4  loops   86  width 5.10  reach  116.9  piles 5/7  strays 0.016  crystals 1.000  ms/tick 22.50
+seed 2 b-bullet t  15.0s  contrast 2.98
+seed 2 b-bullet t  15.0s  extent r50 111.1 r90 147.5
+seed 2 b-bullet t  15.0s  life walk 7818 spore 0 dormant 12155 dead 27  held 3/7  bodies 1 big 3848  centre 127.6,79.6  near 534  rim 0.000/0.000
+seed 2 b-bullet t  16.0s  tube  3574.0  loops   70  width 4.90  reach  116.9  piles 5/7  strays 0.016  crystals 1.000  ms/tick 22.53
+seed 2 b-bullet t  16.0s  contrast 2.48
+seed 2 b-bullet t  16.0s  extent r50 110.9 r90 146.1
+seed 2 b-bullet t  16.0s  life walk 13337 spore 0 dormant 6636 dead 27  held 3/7  bodies 1 big 3556  centre 127.3,79.6  near 479  rim 0.000/0.000
+seed 2 b-bullet t  17.0s  tube  3473.4  loops   62  width 4.87  reach  116.9  piles 5/7  strays 0.013  crystals 1.000  ms/tick 22.74
+seed 2 b-bullet t  17.0s  contrast 2.19
+seed 2 b-bullet t  17.0s  extent r50 110.4 r90 145.3
+seed 2 b-bullet t  17.0s  life walk 15581 spore 0 dormant 4392 dead 27  held 3/7  bodies 1 big 3457  centre 127.1,79.6  near 486  rim 0.000/0.000
+seed 2 b-bullet t  18.0s  tube  3269.6  loops   55  width 4.84  reach  116.9  piles 5/7  strays 0.012  crystals 1.000  ms/tick 22.75
+seed 2 b-bullet t  18.0s  contrast 2.51
+seed 2 b-bullet t  18.0s  extent r50 109.6 r90 144.7
+seed 2 b-bullet t  18.0s  life walk 11940 spore 0 dormant 8033 dead 27  held 3/7  bodies 1 big 3255  centre 127.0,79.4  near 487  rim 0.000/0.000
+seed 2 b-bullet t  19.0s  tube  3098.8  loops   49  width 4.56  reach  116.9  piles 5/7  strays 0.014  crystals 1.000  ms/tick 22.89
+seed 2 b-bullet t  19.0s  contrast 2.95
+seed 2 b-bullet t  19.0s  extent r50 108.8 r90 144.2
+seed 2 b-bullet t  19.0s  life walk 7896 spore 0 dormant 12077 dead 27  held 3/7  bodies 2 big 3084  centre 127.0,79.3  near 490  rim 0.000/0.000
+seed 2 b-bullet t  20.0s  tube  2982.9  loops   49  width 4.22  reach  116.9  piles 5/7  strays 0.015  crystals 1.000  ms/tick 22.66
+seed 2 b-bullet t  20.0s  contrast 3.16
+seed 2 b-bullet t  20.0s  extent r50 108.5 r90 144.1
+seed 2 b-bullet t  20.0s  life walk 5115 spore 0 dormant 14858 dead 27  held 3/7  bodies 2 big 2962  centre 127.0,79.2  near 490  rim 0.000/0.000
+seed 2 b-bullet firsts 0:72:0.57:0.0 1:51:0.66:0.2 2:20:0.26:0.0 3:80:0.87:-1.0 4:70:0.58:-1.0 5:65:0.80:0.6 6:49:0.49:0.1
+seed 2 b-bullet hash=71e7f366d38fab76
