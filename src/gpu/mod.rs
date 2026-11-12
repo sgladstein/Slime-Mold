@@ -1390,7 +1390,13 @@ impl Engine {
         world |= self.ground_world;
         b.extend(u32_bytes(&[world, self.npiles, self.npc, self.grid]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
-        debug_assert_eq!(b.len(), SQUAD_AT);
+        // Real asserts, not debug ones (2026-11-12, game integration): six
+        // threads append rows here, CI and the census run release builds,
+        // and a row that slips moves every offset after it without a
+        // failing test. Three length checks a frame cost nothing measurable.
+        // New rows go after the soil row, in the merge order in ROADMAP.md
+        // ("Larder World: shared rules and merge order").
+        assert_eq!(b.len(), SQUAD_AT, "Params rows before the squad row moved");
         b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), squad::SHOT_ALARM.to_bits()]));
         b.extend(u32_bytes(&[self.n_hits, 0, 0, 0]));
         // The species block (2026-11-11): whether each species has its own
@@ -1424,13 +1430,13 @@ impl Engine {
         b.extend(u32_bytes(&[stream(seed, CLAIM_LAND), stream(seed, DRAW_SPORE_H), s.spore_steps as u32, s.spore_rest as u32, s.wake_steps as u32, s.sleep_rest as u32, stream(seed, DRAW_SLEEP_DIE), 0]));
         b.extend(f32_bytes(&[s.spore_rate, s.spore_scent, s.spore_alarm, s.spore_burst, s.step * s.spore_speed, s.spore_reach, s.spore_deposit, s.spore_land]));
         b.extend(f32_bytes(&[s.sleep_rate, s.sleep_deposit, s.wake_scent, s.wake_alarm, s.alarm_keep, s.alarm_weight, s.alarm_relay, s.sleep_death]));
-        debug_assert_eq!(b.len(), STRIKE_AT);
+        assert_eq!(b.len(), STRIKE_AT, "Params rows before the strike row moved");
         b.extend([0u8; 32]);
         // Soil (WM3, 2026-11-12): the dish's own rates, as the CPU reads
         // them from its `BigParams` (read only with `WORLD_SOIL`).
         b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, 0.0]));
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
-        debug_assert_eq!(b.len(), PARAMS_BYTES);
+        assert_eq!(b.len(), PARAMS_BYTES, "Params is not PARAMS_BYTES long");
         self.converts = s.convert > 0.0 && self.nsp > 0;
         self.boxes = self.converts && s.convert_r > 0;
         self.outside = self.nsp > 0
