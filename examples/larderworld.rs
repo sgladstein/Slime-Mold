@@ -800,14 +800,17 @@ fn wall_road<W: World>(g: &mut Game<W>) {
 /// The counts that go beside a picture.
 fn counts(g: &Game<BigDish>, hand: &str, seed: u64) {
     println!(
-        "  {hand} seed {seed} at {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, killed {}, crystals left {:.3}",
+        "  {hand} seed {seed} at {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, killed {}, crystals left {:.3}; buildings placed {}, standing {}, lost {}",
         g.time(),
         g.world.living(),
         g.soldiers.iter().filter(|s| s.alive).count(),
         g.bank,
         g.harvested,
         g.killed,
-        g.world.crystals_left()
+        g.world.crystals_left(),
+        g.buildings.len(),
+        g.standing(),
+        g.lost_buildings
     );
 }
 

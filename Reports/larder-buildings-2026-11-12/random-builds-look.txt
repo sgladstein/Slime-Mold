@@ -1,0 +1,7 @@
+larderworld seeds=S hands=random price=0 look=DIR every=100 (after the counts line gained building counts)
+  random seed 5 at 900 s: mould 14031, soldiers 1, bank 0, harvested 600, killed 2195, crystals left 0.903; buildings placed 4, standing 0, lost 0
+random seed 5: cap at 900 s, score -0.283
+  random seed 6 at 900 s: mould 9856, soldiers 1, bank 0, harvested 2400, killed 3833, crystals left 0.880; buildings placed 8, standing 2, lost 3
+random seed 6: cap at 900 s, score -0.137
+  random seed 7 at 206 s: mould 4452, soldiers 0, bank 0, harvested 900, killed 3382, crystals left 0.976; buildings placed 3, standing 2, lost 0
+random seed 7: squad wiped at 206 s, score -1.771
