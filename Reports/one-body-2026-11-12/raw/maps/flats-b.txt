@@ -1,0 +1,56 @@
+cutprobe race world scale 2 walkers 5000, grow 120 s, follow 60 s, 3 cuts a seed, seeds [1, 2, 3, 4, 5, 6]
+arms: [("base", []), ("H", [("energy_flow", "0.05"), ("hunger_scent", "8")]), ("Hr", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("hunger_reach", "3"), ("hunt_at", "0.3")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 1 grown | alive 4203 parts1% 3 lcs 0.62 lone 0.02 rms 41.3 | crystals eaten from 5 of 32
+H 1 grown | alive 9960 parts1% 1 lcs 0.99 lone 0.00 rms 45.0 | crystals eaten from 13 of 32
+Hr 1 grown | alive 4523 parts1% 2 lcs 0.92 lone 0.03 rms 31.4 | crystals eaten from 4 of 32
+cut Hr 1 0 at fine cell (300, 172)
+Hr 1 0 | 74 74 0 | 0.00 12.00 0.19 0.0 0.00 | 15 crystal 2 40.3 react 1 | 4523 7.39
+cut Hr 1 1 at fine cell (336, 108)
+Hr 1 1 | 60 61 0 | 0.05 7.90 0.21 35.5 26.85 | 41 crystal 2 95.6 react 2 | 4523 7.39
+base 2 grown | alive 3724 parts1% 2 lcs 0.85 lone 0.02 rms 41.3 | crystals eaten from 5 of 32
+H 2 grown | alive 10166 parts1% 2 lcs 0.96 lone 0.00 rms 45.4 | crystals eaten from 13 of 32
+Hr 2 grown | alive 4558 parts1% 2 lcs 0.92 lone 0.04 rms 31.5 | crystals eaten from 4 of 32
+cut Hr 2 0 at fine cell (296, 180)
+Hr 2 0 | 68 71 0 | 0.00 9.00 0.29 0.0 0.00 | 8 crystal 2 16.0 react 2 | 4558 7.94
+cut Hr 2 1 at fine cell (348, 212)
+Hr 2 1 | 47 47 0 | 0.14 9.89 0.27 42.9 46.94 | 36 crystal 2 83.6 react 2 | 4558 7.94
+cut Hr 2 2 at fine cell (324, 100)
+Hr 2 2 | 42 45 0 | 0.08 9.84 0.33 40.3 40.36 | 43 crystal 2 56.5 react 2 | 4558 7.94
+base 3 grown | alive 4490 parts1% 2 lcs 0.95 lone 0.02 rms 43.0 | crystals eaten from 6 of 32
+H 3 grown | alive 9994 parts1% 2 lcs 0.95 lone 0.01 rms 45.6 | crystals eaten from 12 of 32
+Hr 3 grown | alive 4781 parts1% 1 lcs 0.94 lone 0.03 rms 30.2 | crystals eaten from 4 of 32
+cut Hr 3 0 at fine cell (324, 108)
+Hr 3 0 | 56 56 0 | 0.07 9.96 0.14 36.8 27.47 | 44 crystal 2 35.6 react 2 | 4781 7.43
+cut Hr 3 1 at fine cell (284, 180)
+Hr 3 1 | 52 52 0 | 1.00 4.81 0.53 0.0 0.00 | 11 crystal 2 56.1 react 3 | 4781 7.43
+base 4 grown | alive 3709 parts1% 4 lcs 0.67 lone 0.02 rms 40.9 | crystals eaten from 5 of 32
+H 4 grown | alive 10286 parts1% 2 lcs 0.95 lone 0.00 rms 45.7 | crystals eaten from 12 of 32
+Hr 4 grown | alive 4668 parts1% 2 lcs 0.92 lone 0.03 rms 32.3 | crystals eaten from 4 of 32
+cut Hr 4 0 at fine cell (280, 172)
+Hr 4 0 | 60 60 0 | 1.00 3.70 0.77 0.0 0.00 | 15 crystal 2 76.2 react 2 | 4668 6.95
+cut Hr 4 1 at fine cell (328, 104)
+Hr 4 1 | 42 46 0 | 0.07 11.46 0.16 49.6 45.39 | 45 crystal 2 48.6 react 1 | 4668 6.95
+cut Hr 4 2 at fine cell (196, 152)
+Hr 4 2 | 6 22 0 | 0.00 2.33 0.54 0.0 0.00 | 15 crystal 2 14.9 react 1 | 4668 6.95
+base 5 grown | alive 4614 parts1% 1 lcs 0.96 lone 0.02 rms 40.3 | crystals eaten from 7 of 32
+H 5 grown | alive 9957 parts1% 2 lcs 0.95 lone 0.00 rms 45.2 | crystals eaten from 12 of 32
+Hr 5 grown | alive 4532 parts1% 1 lcs 0.92 lone 0.03 rms 31.0 | crystals eaten from 4 of 32
+cut Hr 5 0 at fine cell (292, 184)
+Hr 5 0 | 76 76 0 | 0.50 7.79 0.41 8.4 29.72 | 12 crystal 2 28.3 react 4 | 4532 6.77
+base 6 grown | alive 4494 parts1% 2 lcs 0.82 lone 0.02 rms 42.0 | crystals eaten from 8 of 32
+H 6 grown | alive 9924 parts1% 1 lcs 0.98 lone 0.00 rms 45.7 | crystals eaten from 13 of 32
+Hr 6 grown | alive 4628 parts1% 2 lcs 0.93 lone 0.03 rms 31.2 | crystals eaten from 4 of 32
+cut Hr 6 0 at fine cell (296, 168)
+Hr 6 0 | 50 50 0 | 0.33 6.94 0.48 18.3 53.05 | 17 crystal 2 27.3 react 3 | 4628 8.07
+
+summary (mean over cuts)
+base: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+H: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
+Hr: cuts 12 n0 53 lcs20 0.27 frag 7.97 lcs 0.36 rms20 19.3 compact20 22.48 life 25 moved 48.2 fates {"crystal": 12}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000

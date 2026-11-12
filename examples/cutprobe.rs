@@ -50,6 +50,7 @@
 #![allow(clippy::needless_range_loop, clippy::too_many_arguments)]
 use slime_mould::mould::big::{BigDish, BigParams};
 use slime_mould::mould::larder_world::race_params;
+use slime_mould::mould::map::Map;
 use std::collections::VecDeque;
 
 const TPS: u64 = 15;
@@ -317,9 +318,10 @@ fn choose_cuts(d: &BigDish, n: usize, cutw: f32) -> Vec<Cut> {
 /// (and clearing its trail). Centres hold the most walkers in their disc,
 /// 30 dish cells apart. A clean cut: whatever happens next is the piece's
 /// own doing.
-fn choose_rings(d: &BigDish, n: usize, r: f32, gap: f32, unfed: bool) -> Vec<Cut> {
+fn choose_rings(d: &BigDish, n: usize, r: f32, gap: f32, unfed: f32) -> Vec<Cut> {
     let (w, h, s) = (d.w, d.h, d.p.scale as f32);
-    let occ: Vec<bool> = d.occupancy().iter().map(|&o| o > 0).collect();
+    let counts = d.occupancy();
+    let occ: Vec<bool> = counts.iter().map(|&o| o > 0).collect();
     let body = dilate(&occ, w, h, d.p.scale);
     let home = {
         let (hx, hy) = d.homes[0];
@@ -335,18 +337,19 @@ fn choose_rings(d: &BigDish, n: usize, r: f32, gap: f32, unfed: bool) -> Vec<Cut
             }
             let rr = (r * s) as i64;
             let (mut c, mut food) = (0, false);
-            let rf = rr + 4 * d.p.scale as i64;
+            // With `unfed` (dish cells), no crystal that near the disc.
+            let margin = (unfed * s) as i64;
+            let rf = rr + margin;
             for dy in -rf..=rf {
                 for dx in -rf..=rf {
                     let (nx, ny) = (x as i64 + dx, y as i64 + dy);
-                    if nx >= 0 && ny >= 0 && (nx as usize) < w && (ny as usize) < h && dx * dx + dy * dy <= (rr + 4 * d.p.scale as i64).pow(2) {
+                    if nx >= 0 && ny >= 0 && (nx as usize) < w && (ny as usize) < h && dx * dx + dy * dy <= rf * rf {
                         let j = ny as usize * w + nx as usize;
-                        // With `unfed`, no crystal within 4 dish cells of the disc.
-                        if unfed && !d.charge.is_empty() && d.pile_of[j] > 0 && d.charge[j] > 0.0 {
+                        if unfed > 0.0 && !d.charge.is_empty() && d.pile_of[j] > 0 && d.charge[j] > 0.0 {
                             food = true;
                         }
                         if dx * dx + dy * dy <= rr * rr {
-                            c += d.occupancy()[j] as usize;
+                            c += counts[j] as usize;
                         }
                     }
                 }
@@ -693,7 +696,8 @@ fn sign_p(a: usize, b: usize) -> f64 {
 fn main() {
     let mut seeds: Vec<u64> = (1..=4).collect();
     let (mut scale, mut walkers, mut grow, mut after, mut ncuts, mut cutw, mut wound, mut ring) = (2usize, 5_000usize, 60u64, 120u64, 3usize, 3.0f32, 0u64, 0.0f32);
-    let (mut unfed, mut half, mut alone) = (false, false, false);
+    let (mut unfed, mut half, mut alone) = (0.0f32, false, false);
+    let mut map = None::<Map>;
     let mut arms: Vec<(String, Vec<(String, String)>)> = Vec::new();
     let (mut look, mut series) = (None::<String>, None::<std::fs::File>);
     for a in std::env::args().skip(1) {
@@ -711,7 +715,14 @@ fn main() {
             "cutw" => cutw = v.parse().unwrap(),
             "wound" => wound = v.parse().unwrap(),
             "ring" => ring = v.parse().unwrap(),
-            "unfed" => unfed = v == "1",
+            // 1: no crystal within 4 dish cells of the hunk; or the margin.
+            "unfed" => unfed = if v == "1" { 4.0 } else { v.parse().unwrap() },
+            // A designed map (Reports/larder-maps-2026-11-11/maps) on the
+            // race world's mould, as larderworld's `map=`.
+            "map" => {
+                let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+                map = Some(Map::load(&dir, v).unwrap_or_else(|e| panic!("{e}")));
+            }
             "half" => half = v == "1",
             "alone" => alone = v == "1",
             "look" => look = Some(v.into()),
@@ -749,7 +760,10 @@ fn main() {
             for (k, v) in kvs {
                 set(&mut p, k, v);
             }
-            let mut d = BigDish::new(p);
+            let mut d = match &map {
+                Some(m) => BigDish::with_map(p, m),
+                None => BigDish::new(p),
+            };
             d.threads = 4;
             let t0 = std::time::Instant::now();
             for _ in 0..grow * TPS {
