@@ -1322,6 +1322,13 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     let mut voice_at = u64::MAX;
     let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
     let mut last_sec = u64::MAX;
+    // `hand=` a player AI style (boom, claim, late, fort, strike) plays
+    // through `larder_world_ai`, as the census does, so a campaign mission's
+    // pictures show the hands its numbers were set on.
+    let mut ai = match hand {
+        "rush" | "farm" => None,
+        _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
+    };
     // Each hit: where, its tick, the body there the tick before, and the
     // ticks it took to refill.
     type Hole = ((f32, f32), u64, f32, Option<u64>);
@@ -1334,7 +1341,12 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
             let sec = g.world.ticks() / g.rules.tps as u64;
             if sec != last_sec {
                 last_sec = sec;
-                plan(g, hand);
+                match ai.as_mut() {
+                    Some(h) => {
+                        h.play(g);
+                    }
+                    None => plan(g, hand),
+                }
             }
             app.step(step);
             // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:

@@ -113,3 +113,14 @@ Dead time on the planned hands is 0-9% (the landing's first seconds), idle's 64-
 - Mission 1's 2:31-2:48 is under the design's 6-12 minutes; the AI acts at once, so a first-time player will be slower. Checked by hand once the owner plays it.
 
 **Changes from the reviews (05:38-05:43Z):** kills count as useful only while the mould is smaller than 30 s ago (firing at a mould that regrows is not progress); the stall measure above; the window says when it can't show a bar rather than hiding it; one test per goal kind on a small CPU world (clear and retake, contain, take, stuck, squad with crystals; 10 tests in all). `take`'s bar now starts from an even share: it showed 83% of a 60% goal at 0:00. On the race world an idle mould halves by itself in the first 40 s as walkers starve, so mission 4's `shrink` numbers must allow for that.
+
+### Pictures (page)
+
+[Campaign Missions 1-3](https://claude.ai/artifact/Pu2j5ComXhUPTAMv4MyMRJ), copy in
+`larder-campaign-2026-11-12/page/`: the game window (GPU world, software
+Vulkan) playing each mission with the claim hand, seed 1, counts under each
+frame. Landfall met at 1:21 (3 stars, 12 soldiers, 3906 harvested). On the Rim
+a mould trail leaves through the north-east gap by 5:00 and reaches the
+larder; the window cannot score a contain goal until the GPU mould read-back
+(#101) lands, and the CPU census counts the same hand holding. Checking that
+gap is the first job once #101 merges.
