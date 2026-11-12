@@ -104,6 +104,9 @@ pub struct UnitOut {
     pub target: Option<(f32, f32)>,
     /// Charge harvested.
     pub took: f32,
+    /// Walkers in that block, so a game can hold fire at a thin one
+    /// (`larder_world::Rules::aim_min`).
+    pub dense: u32,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -260,9 +263,10 @@ pub fn smell(d: &mut BigDish, units: &[UnitIn]) {
     }
 }
 
-/// Step 4's reads: each unit's walkers within `touch` and the block it
-/// aims at (the block index, row-major, `BIN` cells a side).
-pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>)> {
+/// Step 4's reads: each unit's walkers within `touch`, the block it aims
+/// at (the block index, row-major, `BIN` cells a side) and that block's
+/// walkers.
+pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
     let (w, h) = (d.w, d.h);
     let occ = d.occupancy();
     let (nbw, nbh) = (w.div_ceil(BIN) as i64, h.div_ceil(BIN) as i64);
@@ -293,7 +297,7 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>)> {
                     }
                 }
             }
-            (touching, best.1)
+            (touching, best.1, best.0)
         })
         .collect()
 }
@@ -341,7 +345,7 @@ pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
     let took = harvest(d, &f.units);
     let w = d.w;
     FrameOut {
-        units: reads.into_iter().zip(took).map(|((touching, b), took)| UnitOut { touching, target: b.map(|b| block_centre(w, b)), took }).collect(),
+        units: reads.into_iter().zip(took).map(|((touching, b, dense), took)| UnitOut { touching, target: b.map(|b| block_centre(w, b)), took, dense }).collect(),
         shots,
     }
 }
@@ -390,7 +394,7 @@ pub fn unpack(w: usize, words: &[u32], kills: &[u32], nunits: usize, nshots: usi
         units: (0..nunits)
             .map(|k| {
                 let o = &words[U_OUT + 4 * k..U_OUT + 4 * k + 4];
-                UnitOut { touching: o[0], target: (o[1] != NONE).then(|| block_centre(w, o[1] as usize)), took: f32::from_bits(o[2]) }
+                UnitOut { touching: o[0], target: (o[1] != NONE).then(|| block_centre(w, o[1] as usize)), took: f32::from_bits(o[2]), dense: o[3] }
             })
             .collect(),
         shots: (0..nshots)

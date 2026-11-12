@@ -1,0 +1,104 @@
+<title>Larder World UI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column; each UI state a full-width screenshot with its counts beside it in a strip. */
+:root {
+  --bg: #f3f5f7; --panel: #ffffff; --fg: #141a21; --muted: #5a6573; --line: #d9dee4;
+  --accent: #2d86c9; --good: #23935b; --bad: #c8463f;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1216; --panel: #171c22; --fg: #e8edf2; --muted: #93a0ae; --line: #2a323b;
+  --accent: #60beff; --good: #5fd895; --bad: #f07a72; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1216; --panel: #171c22; --fg: #e8edf2; --muted: #93a0ae; --line: #2a323b;
+  --accent: #60beff; --good: #5fd895; --bad: #f07a72; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 64px; display: grid; gap: 36px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 1.3rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); font-size: 1.05rem; }
+.head { display: grid; gap: 10px; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+section { display: grid; gap: 14px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+th, td { text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+td.n { text-align: right; } th.n { text-align: right; }
+.tw { overflow-x: auto; }
+figure { margin: 0; display: grid; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+figure img { width: 100%; height: auto; border-radius: 6px; display: block; }
+figcaption { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.88rem; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 600; }
+.shots { display: grid; gap: 22px; }
+ul { margin: 0; padding-left: 1.2em; max-width: 72ch; display: grid; gap: 6px; }
+code { font-size: 0.88em; }
+.ok { color: var(--good); } .no { color: var(--bad); }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <span class="label">Larder world · 11 Nov 2026</span>
+    <h1>A game UI over the mould</h1>
+    <p class="lede">Soldier health and numbers, orders, weapons, upgrades, walls and turrets, enemy info, alerts, groups, a menu and an end screen, drawn by one GPU pass over the world view. The squad is still the stand-in: no game rules yet. Try it with <code>cargo run --release --bin mouldgpu</code>, then W, then Q.</p>
+  </header>
+
+  <section>
+    <h2>What it costs a frame</h2>
+    <p>GTX 1070, medians of 21 frames, on the fixed build. The UI pass is the canvas alone; the view is the world, the minimap and the unit marks under it (0.332 ms with the squad and no UI).</p>
+    <div class="tw"><table>
+      <thead><tr><th>State</th><th>Screen</th><th class="n">UI shapes</th><th class="n">View, GPU ms</th><th class="n">UI pass, GPU ms</th><th class="n">HUD layout, CPU ms</th><th class="n">Bin and upload, CPU ms</th></tr></thead>
+      <tbody>
+        <tr><td>Group selected</td><td>1920 × 1080</td><td class="n">373</td><td class="n">0.294</td><td class="n">0.099</td><td class="n">0.081</td><td class="n">0.048</td></tr>
+        <tr><td>One soldier</td><td>1920 × 1080</td><td class="n">305</td><td class="n">0.295</td><td class="n">0.092</td><td class="n">0.062</td><td class="n">0.045</td></tr>
+        <tr><td>Enemy under cursor</td><td>1920 × 1080</td><td class="n">336</td><td class="n">0.295</td><td class="n">0.097</td><td class="n">0.068</td><td class="n">0.047</td></tr>
+        <tr><td>Laying a wall</td><td>1920 × 1080</td><td class="n">327</td><td class="n">0.295</td><td class="n">0.096</td><td class="n">0.060</td><td class="n">0.046</td></tr>
+        <tr><td>Placing a turret</td><td>1920 × 1080</td><td class="n">336</td><td class="n">0.295</td><td class="n">0.096</td><td class="n">0.061</td><td class="n">0.046</td></tr>
+        <tr><td>Menu open</td><td>1920 × 1080</td><td class="n">335</td><td class="n">0.295</td><td class="n">0.239</td><td class="n">0.061</td><td class="n">0.075</td></tr>
+        <tr><td>Controls page</td><td>1920 × 1080</td><td class="n">746</td><td class="n">0.295</td><td class="n">0.269</td><td class="n">0.147</td><td class="n">0.099</td></tr>
+        <tr><td>Group selected</td><td>2560 × 1440</td><td class="n">370</td><td class="n">0.423</td><td class="n">0.147</td><td class="n">0.081</td><td class="n">0.064</td></tr>
+        <tr><td>Controls page</td><td>2560 × 1440</td><td class="n">743</td><td class="n">0.423</td><td class="n">0.447</td><td class="n">0.148</td><td class="n">0.141</td></tr>
+      </tbody>
+    </table></div>
+    <p>In play the UI costs about 0.1 ms of GPU and 0.1 ms of CPU a frame. The paused menus cost more because the dim backdrop covers every tile. The same run found that one turret's range, drawn as a single 480-pixel ring mark, cost the view 0.7 ms (1.04 ms); drawn as 48 short line marks it is back to 0.295 ms.</p>
+  </section>
+
+  <section>
+    <h2>The states</h2>
+    <p>Headless renders at 1920 × 1080 of a staged fight: two soldiers forward and hurt, one lost, a wall and a turret built, armour 1 with the next level 7 s away, groups 1, 2 and 4, two alerts.</p>
+    <div class="shots">
+      <figure><img src="pics/group.jpg" alt="Eight soldiers selected with a tooltip over the wall button">
+        <figcaption><span><b>Group</b> 8 selected, 79% health on average, 2 hurt</span><span>Tooltip: Lay a wall, 2 energy a cell, V</span><span>Upgrade cooling down, 7 s left</span></figcaption></figure>
+      <figure><img src="pics/one.jpg" alt="One soldier selected, its detail panel">
+        <figcaption><span><b>One soldier</b> health bar and words, weapon, range, damage, stance, armour</span></figcaption></figure>
+      <figure><img src="pics/enemy.jpg" alt="A hover card by a rival soldier">
+        <figcaption><span><b>Enemy</b> hover card by the cursor: Rival soldier 13, 100 / 100, range 24 cells, damage 5 a second</span><span>The selection panel keeps the selection</span></figcaption></figure>
+      <figure><img src="pics/wall.jpg" alt="Laying a wall, green ghost line">
+        <figcaption><span><b>Wall</b> green ghost line; the cursor chip shows its cost before release</span></figcaption></figure>
+      <figure><img src="pics/turret.jpg" alt="Placing a turret over a soldier, red ghost">
+        <figcaption><span><b>Turret</b> red ghost over a soldier: "too close to a soldier or turret"; a click there is refused and placing stays on</span></figcaption></figure>
+      <figure><img src="pics/menu.jpg" alt="The pause menu">
+        <figcaption><span><b>Menu</b> Esc: Resume, Controls, Restart, Quit; the game pauses</span></figcaption></figure>
+      <figure><img src="pics/help.jpg" alt="The controls page">
+        <figcaption><span><b>Controls</b> standard keys, then the command card's hotkeys, then the game's own</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>The independent review</h2>
+    <p>An agent read the code and these pictures cold. It judged the approach sound and the look close to professional, and found input bugs a player would hit in the first minute. All of these are fixed, with 12 new tests:</p>
+    <ul>
+      <li>A drag-box, pan or minimap drag that ended over a panel stuck, because the panel swallowed the release.</li>
+      <li>A wall released over a panel was lost; placements on the minimap went to the world hidden behind it.</li>
+      <li>A red ghost still placed (the game then dropped it silently); now it is refused with the reason.</li>
+      <li>The end screen let hotkeys through; Space did different things depending on unseen state (P now pauses).</li>
+      <li>A busy frame kept each tile's first shapes and dropped text and menus; the glyph atlas could fill and text vanish for good.</li>
+      <li>Enemy info replaced the selection on hover; the cooldown ring read as a broken border; Hold and Defend shared an icon; the weapon badges were too small to read.</li>
+    </ul>
+    <p>Still open, from the review: command pages for when weapons and buildings outgrow the 4 × 3 card, selectable buildings, a production queue, Shift-queued moves and rally points, more bars in the info panel (shield, ammo, status), unit blips on the minimap, and a settings menu.</p>
+  </section>
+</div>

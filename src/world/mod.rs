@@ -9,16 +9,28 @@
 //!   screen-space overlay.
 //! - `marks`: what a game draws over the world (units, bars, buildings,
 //!   lines, labels), drawn on the GPU.
+//! - `look`: the ground field the view shades the world from (kind and
+//!   value a cell), beside the engine's own look field.
 //! - `controls`: box select, orders, burn lines, groups, minimap clicks.
+//! - `ui`: the game's panels (resources, selection, command card,
+//!   tooltips, alerts, menu), drawn by `canvas` (a GPU 2D pass with Inter
+//!   text and `icons`) over the view.
 //!
 //! Not built for wasm32 (the view is wgpu).
 
 pub mod camera;
+pub mod canvas;
 pub mod controls;
+pub mod demo;
+pub mod icons;
+pub mod look;
 pub mod marks;
+pub mod ui;
 pub mod view;
 
 pub use camera::Camera;
 pub use controls::{Button, Controls, UiCommand, Unit};
 pub use marks::{Mark, Marks, Shape};
+pub use canvas::{Canvas, CanvasPass};
+pub use ui::{Hud, HudEvent, Model};
 pub use view::View;

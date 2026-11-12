@@ -2,9 +2,9 @@
 title: Outside looks and creature rules on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-11T19:15Z
-sources: [Reports/mould-shape-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/spread-mix-2026-11-11.md, Reports/research-review-2026-11-11.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, research/sources/primordia.md, research/sources/reginato-2024.md]
-code: [BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigDish::infect, BigParams::chance_exp, BigParams::explore_spread, BigParams::graze_weight, BigParams::species_convert]
+updated: 2026-11-11T22:00Z
+sources: [Reports/mould-shape-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/spread-mix-2026-11-11.md, Reports/research-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, research/sources/primordia.md, research/sources/reginato-2024.md]
+code: [BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigDish::infect, BigParams::chance_exp, BigParams::explore_spread, BigParams::graze_weight, BigParams::species_convert, BigParams::species_sets, SpeciesSet]
 ---
 
 # Outside looks and creature rules on the big dish
@@ -19,7 +19,14 @@ contagion that runs along tubes, and the outside creature rules: species
 with bands, explorers, the chance-weighted turn (more loops), droplets that
 crawl once they graze, and kinds mixed in one mould that sort apart
 (`mix_share`; [spread-mix](../../Reports/spread-mix-2026-11-11.md)). Feathery fronts are still not reproduced, and every
-look so far was judged with no food and a fixed walker count. All are
+look so far was judged with a fixed walker count. On food piles, grazing is
+what makes droplets forage: grazers reached more far piles than still
+droplets on 15 of 16 seeds and fewer on none, and scouts added to grazers
+reached more on 10 of 16 and fewer on none ([first reach](../../Reports/first-reach-2026-11-11.md)).
+Species can now have their own settings (`species_sets`): a droplet species
+and a network species share one dish, each within half to twice its area
+alone on 8 of 8 seeds, with no fight between them
+([coexistence](../../Reports/species-sets-2026-11-11.md)). All are
 controls in the [GPU sandbox](gpu-sandbox.md); tiers built on them are in
 [the life cycle](life-cycle.md) and the [mould tiers](../world/mould-tiers.md).
 
@@ -38,8 +45,9 @@ default; Jenson's later work respawns every 1,000 steps) held a fine mesh
 and gave Jenson's haze. Four times the walkers changed little. In the GPU
 sandbox's Jenson preset the count matters only with the limit
 ([mould shape](../../Reports/mould-shape-2026-11-11.md), 8 seeds, 30 s):
-without it 32,000 to 1,000,000 walkers all fold into strands (0-1 loops);
-with it 32,000, 100,000 and 200,000 give 43-54, 57-70 and 120-144 loops, a
+without it 32,000 to 2,000,000 walkers all fold into strands (0-1 loops);
+with it 32,000, 100,000 and 200,000 give 43-54, 57-70 and 120-144 loops (the
+GTX 1070 agrees: 46-53, 59-69, 122-144), a
 net thickening into a sheet with holes (the sandbox forces the limit off
 above half the agar). Every GPU
 port read (Bleuje, Lague, PolyPhy, gpu-io, Barradeau) drops the limit.
@@ -61,7 +69,7 @@ polygons at once. Every outside source has a card in
 ## Open
 
 - Jenson's feathery fronts: seven mechanisms failed ([jenson looks](../../Reports/jenson-looks-2026-11-11.md)); explorers that turn into networkers one by one (`explore_spread`) grow radial feathery veins from a disc, one seed so far ([outside rules](../../Reports/outside-rules-2026-11-11.md)).
-- A creature that moves as a body: still droplets crawl once they graze a regrowing field ([creatures](../../Reports/creatures-2026-11-11.md)). What lets one body beat another is partly open: numbers win where two species are mixed (a 55% side ends with 75-88%), but sorted bodies hold their border against a denser side. With no avoidance two species don't sense each other, so they pass through each other and only conversion acts; per-species settings (needed for the ladder) don't exist yet ([review](../../Reports/research-review-2026-11-11.md)).
+- A creature that moves as a body: still droplets crawl once they graze a regrowing field ([creatures](../../Reports/creatures-2026-11-11.md)). What lets one body beat another is partly open: numbers win where two species are mixed (a 55% side ends with 75-88%), but sorted bodies hold their border against a denser side. With no avoidance two species don't sense each other, so they pass through each other and only conversion acts. Per-species settings now exist ([coexistence](../../Reports/species-sets-2026-11-11.md)); a fight between two species with different rules is untested.
 - How the creatures behave at the game's operating point. The independent [review](../../Reports/research-review-2026-11-11.md) found every look so far was judged with no food, a fixed walker count and runs of 20-30 s. The dish wall is also a rail that walkers ride. Its proposed bar for a creature: identity over time, self-propulsion, behaviour away from walls and at 0.25-4x the walkers, a 2-5 min run, and a play probe.
 - Tiers with a life cycle (spores, dormancy, an alarm the player's strike lays) and how each answers attack: [the life cycle](life-cycle.md).
 - Whether contagion can leave a lasting mark for play (see the contagion entry in [`dead-ends.md`](../../Reports/dead-ends.md)). The outside code was read on 2026-11-10; only PolyPhy, gpu-io (MIT) and Barradeau (public domain) may be reused.
@@ -71,6 +79,8 @@ polygons at once. Every outside source has a card in
 - [mould-shape-2026-11-11.md](../../Reports/mould-shape-2026-11-11.md): walker count with and without the crowd limit.
 - [spread-mix-2026-11-11.md](../../Reports/spread-mix-2026-11-11.md): spread from one spot, and mixed walkers in one mould.
 - [research-review-2026-11-11.md](../../Reports/research-review-2026-11-11.md): the independent review of the creature work.
+- [first-reach-2026-11-11.md](../../Reports/first-reach-2026-11-11.md): which droplet moulds and mixes reach food piles first.
+- [species-sets-2026-11-11.md](../../Reports/species-sets-2026-11-11.md): per-species settings, and a droplet species beside a network species.
 - [jenson-physarum-2026-11-10.md](../../Reports/jenson-physarum-2026-11-10.md), with the owner's PDF and GIFs in [its folder](../../Reports/jenson-physarum-2026-11-10/).
 - [jenson-compare-2026-11-10.md](../../Reports/jenson-compare-2026-11-10.md): the clips against the big dish, and how the outside versions build the step.
 - [jenson-looks-2026-11-11.md](../../Reports/jenson-looks-2026-11-11.md): trunks, contagion and fronts on the big dish; [page](https://claude.ai/artifact/DqJxgjQGVgnwQNwbbzoGrg).

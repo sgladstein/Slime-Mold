@@ -3,8 +3,8 @@ title: The mould tiers (difficulty ladder)
 kind: design
 status: open
 updated: 2026-11-12T00:10Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md]
-code: [BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier]
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md]
+code: [BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier]
 ---
 
 # The mould tiers (difficulty ladder)
@@ -39,10 +39,24 @@ so it suits an early tier or a map feature
 ([the life cycle](../model/life-cycle.md)). Their place in the order is not
 set; none is on the GPU yet.
 
+The Drifter's grazing is what makes it forage: on food piles it sends
+small droplets to far food, while the edge of its body moves about 10
+dish cells a minute. Adding 20% scouts to it reached more food on 10 of 16 seeds and
+less on none, a candidate step up the ladder
+([first reach](../../Reports/first-reach-2026-11-11.md)). Each species can
+now have its own settings on one dish (`species_sets`;
+[coexistence](../../Reports/species-sets-2026-11-11.md)).
+
 ## Open
 
 - Candidate tiers from review 2 ([the reviews](../../Reports/mould-tiers-review-2026-11-11.md)), most promising first: supply lines (traffic-made arteries that carry food; cut one to starve the far end), habituation (a mould that learns to ignore a repeated trick), clans that fuse or fight along a scar, a mould that learns the rhythm of fire, a pacemaker heartbeat, day and night light, a nomad that avoids its own slime, two foods. Each has a first experiment there.
-- The order of the added tiers, and which tiers reach the GPU first (after W0).
+- The order of the added tiers. On the GPU engine, species and
+  conversion came with the outside rules, and each species' own settings,
+  conversion over a square and a second kind followed (11-11, [species on
+  the GPU](../../Reports/species-gpu-2026-11-11.md)), so a rival pair can
+  pair a droplet species with a network one there. The life cycle (Sporer,
+  Sleeper, Swarmer) is next; the world re-test is done (`Tier` names its
+  keys).
 - Each tier's counter tested with the player AI ([player AI](player-ai.md)) once Larder runs in the world.
 
 ## Sources
@@ -50,3 +64,6 @@ set; none is on the GPU yet.
 - [larder-world-roadmap-2026-11-11.md](../../Reports/larder-world-roadmap-2026-11-11.md), *Mould progression*.
 - [mould-tiers-2026-11-11.md](../../Reports/mould-tiers-2026-11-11.md): Sporer, Sleeper, Swarmer; *In the Larder world*.
 - [mould-tiers-review-2026-11-11.md](../../Reports/mould-tiers-review-2026-11-11.md): two independent reviews and the response.
+- [first-reach-2026-11-11.md](../../Reports/first-reach-2026-11-11.md): droplet moulds and mixes on food piles.
+- [species-sets-2026-11-11.md](../../Reports/species-sets-2026-11-11.md): per-species settings, two species on one dish.
+- [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species rules on the GPU engine.

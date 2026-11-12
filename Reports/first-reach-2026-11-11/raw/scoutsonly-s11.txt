@@ -1,0 +1,26 @@
+seed 11 scoutsonly t  10.0s  tube  3333.7  loops    2  width 7.45  reach  129.4  piles 8/12  strays 0.006  ms/tick 13.80
+seed 11 scoutsonly t  10.0s  contrast 1.80
+seed 11 scoutsonly t  10.0s  extent r50 154.3 r90 187.1
+seed 11 scoutsonly t  10.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.994 r 154.3
+seed 11 scoutsonly t  20.0s  tube  3187.6  loops    1  width 7.95  reach  130.4  piles 8/12  strays 0.004  ms/tick 13.64
+seed 11 scoutsonly t  20.0s  contrast 1.55
+seed 11 scoutsonly t  20.0s  extent r50 153.0 r90 191.5
+seed 11 scoutsonly t  20.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.996 r 153.0
+seed 11 scoutsonly t  30.0s  tube  3147.2  loops    2  width 8.08  reach  130.7  piles 8/12  strays 0.004  ms/tick 13.85
+seed 11 scoutsonly t  30.0s  contrast 1.48
+seed 11 scoutsonly t  30.0s  extent r50 152.0 r90 194.0
+seed 11 scoutsonly t  30.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.996 r 152.0
+seed 11 scoutsonly t  40.0s  tube  3076.4  loops    2  width 8.09  reach  130.6  piles 8/12  strays 0.005  ms/tick 13.81
+seed 11 scoutsonly t  40.0s  contrast 1.35
+seed 11 scoutsonly t  40.0s  extent r50 150.9 r90 195.5
+seed 11 scoutsonly t  40.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.995 r 150.9
+seed 11 scoutsonly t  50.0s  tube  3038.4  loops    0  width 7.98  reach  130.6  piles 8/12  strays 0.005  ms/tick 13.74
+seed 11 scoutsonly t  50.0s  contrast 1.31
+seed 11 scoutsonly t  50.0s  extent r50 150.8 r90 196.5
+seed 11 scoutsonly t  50.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.995 r 150.8
+seed 11 scoutsonly t  60.0s  tube  2989.8  loops    1  width 7.98  reach  130.8  piles 8/12  strays 0.006  ms/tick 13.71
+seed 11 scoutsonly t  60.0s  contrast 1.26
+seed 11 scoutsonly t  60.0s  extent r50 149.6 r90 197.2
+seed 11 scoutsonly t  60.0s  kinds k0 n 0 on 0.000 r 0.0  k1 n 30000 on 0.994 r 149.6
+seed 11 scoutsonly firsts 0:72:0.57:0.0 1:46:0.59:0.0 2:84:0.68:-1.0 3:63:0.65:0.4 4:42:0.54:0.0 5:51:0.47:0.0 6:76:0.73:-1.0 7:68:0.84:2.5 8:108:0.87:-1.0 9:20:0.19:0.0 10:47:0.38:0.0 11:75:0.85:-1.0
+seed 11 scoutsonly hash=6114ed592dd11908

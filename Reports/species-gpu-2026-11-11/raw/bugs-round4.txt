@@ -1,0 +1,19 @@
+== 16 the square's rows a cell short: caught
+thread 'tests::the_squares_rows_sum_every_cell_of_the_row' (18224) panicked at src/bin/mouldgpu.rs:2530:9:
+241844 row sums off, worst 1.0e0
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (18223) panicked at src/bin/mouldgpu.rs:2473:13:
+three cyclic species converting over a square of 2, cap: 0 ages, 2897 species off
+== 17 the rows' tile a cell off: caught
+thread 'tests::the_squares_rows_sum_every_cell_of_the_row' (18452) panicked at src/bin/mouldgpu.rs:2530:9:
+252104 row sums off, worst 2.8e0
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (18451) panicked at src/bin/mouldgpu.rs:2473:13:
+three cyclic species converting over a square of 2, cap: 0 ages, 5255 species off
+== 18 the rows' tile loaded without its right margin: caught
+thread 'tests::the_squares_rows_sum_every_cell_of_the_row' (18578) panicked at src/bin/mouldgpu.rs:2530:9:
+4928 row sums off, worst 9.4e-1
+== 21 the rows pass not run: caught
+thread 'tests::the_species_settings_match_the_cpu_for_one_tick' (18722) panicked at src/bin/mouldgpu.rs:2473:13:
+converting over a square of 3, bands: 0 ages, 518 species off
+== 28 an empty slot under a new wall moves (the wall fix undone): caught
+thread 'tests::a_wall_builds_on_the_gpu_as_on_the_cpu' (18844) panicked at src/bin/mouldgpu.rs:3125:13:
+assertion `left == right` failed: growth, empty slots under the wall: an empty slot moved

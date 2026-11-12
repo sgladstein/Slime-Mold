@@ -1,0 +1,26 @@
+seed 3 dropfast t  10.0s  tube  4222.9  loops    0  width 6.82  reach  122.1  piles 8/12  strays 0.003  ms/tick 11.80
+seed 3 dropfast t  10.0s  contrast 3.56
+seed 3 dropfast t  10.0s  extent r50 146.6 r90 188.0
+seed 3 dropfast t  10.0s  kinds k0 n 24080 on 1.000 r 145.3  k1 n 5920 on 0.986 r 153.1
+seed 3 dropfast t  20.0s  tube  4002.5  loops    0  width 6.92  reach  122.8  piles 10/12  strays 0.003  ms/tick 12.65
+seed 3 dropfast t  20.0s  contrast 3.22
+seed 3 dropfast t  20.0s  extent r50 148.1 r90 190.4
+seed 3 dropfast t  20.0s  kinds k0 n 24080 on 1.000 r 146.2  k1 n 5920 on 0.985 r 158.9
+seed 3 dropfast t  30.0s  tube  3862.1  loops    0  width 7.09  reach  143.1  piles 10/12  strays 0.003  ms/tick 12.68
+seed 3 dropfast t  30.0s  contrast 2.96
+seed 3 dropfast t  30.0s  extent r50 150.0 r90 192.8
+seed 3 dropfast t  30.0s  kinds k0 n 24080 on 1.000 r 146.9  k1 n 5920 on 0.984 r 163.4
+seed 3 dropfast t  40.0s  tube  3808.1  loops    0  width 7.12  reach  134.0  piles 10/12  strays 0.003  ms/tick 12.77
+seed 3 dropfast t  40.0s  contrast 2.89
+seed 3 dropfast t  40.0s  extent r50 151.2 r90 194.3
+seed 3 dropfast t  40.0s  kinds k0 n 24080 on 1.000 r 147.1  k1 n 5920 on 0.986 r 167.8
+seed 3 dropfast t  50.0s  tube  3765.1  loops    0  width 7.20  reach  133.4  piles 10/12  strays 0.003  ms/tick 12.79
+seed 3 dropfast t  50.0s  contrast 2.83
+seed 3 dropfast t  50.0s  extent r50 151.9 r90 195.5
+seed 3 dropfast t  50.0s  kinds k0 n 24080 on 1.000 r 147.9  k1 n 5920 on 0.987 r 168.9
+seed 3 dropfast t  60.0s  tube  3757.0  loops    0  width 7.28  reach  134.3  piles 10/12  strays 0.003  ms/tick 12.86
+seed 3 dropfast t  60.0s  contrast 2.83
+seed 3 dropfast t  60.0s  extent r50 153.3 r90 196.7
+seed 3 dropfast t  60.0s  kinds k0 n 24080 on 1.000 r 148.6  k1 n 5920 on 0.983 r 170.6
+seed 3 dropfast firsts 0:72:0.57:0.0 1:49:0.50:0.0 2:73:0.64:9.2 3:72:0.77:18.1 4:71:0.74:17.6 5:54:0.57:0.0 6:67:0.87:1.0 7:95:0.77:-1.0 8:101:0.81:-1.0 9:45:0.37:0.0 10:44:0.51:0.0 11:14:0.15:0.0
+seed 3 dropfast hash=1e52c0354c35a65e
