@@ -233,15 +233,6 @@ places" for this rule.
 
 **Smoke test (tech lead, 14:13Z).** Mission 3's result rests on rules other
 threads own (wall health and bite, raise time, craters, core defence), so CI
-now plays each mission's best census hand on seed 1
-(`campaign::tests::each_missions_plan_still_wins`): Landfall claim met by
-3:20, First contact strike met by 7:00, The gaps walling with its bar at
-0.25+ by 3:00 and claim without walls under 0.2. The four rounds run side by
-side: 105 s on a 4-core box. The wall plan moved into the library
-(`campaign::wall_rim_gaps`) for it.
-
-**Smoke test (tech lead, 14:13Z).** Mission 3's result rests on rules other
-threads own (wall health and bite, raise time, craters, core defence), so CI
 plays the fragile mission on seed 1 at census size
 (`campaign::tests::the_gaps_needs_walls_and_landfall_wins`, 11.8 s on four
 cores): Landfall claim meets its goal; The gaps with walls has no thick mould
