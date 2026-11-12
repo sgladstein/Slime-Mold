@@ -1,0 +1,8 @@
+plain|
+drift-graze|sensor_angle=90 keep=0.93 blocked_deposit=1 graze_weight=10
+drift-lean|sensor_angle=90 keep=0.93 blocked_deposit=1 graze_weight=10 graze_eat=0.0005
+drift-drop|sensor_angle=90 keep=0.93 blocked_deposit=1
+sprawl-a|explore_steps=600 explore_spread=1
+sprawl-b|explore_steps=600 explore_spread=1 keep=0.8 step=1.5
+trunk-a|sensor_angle=22.5 sensor_offset=18 keep=0.95
+trunk-b|sensor_angle=22.5 sensor_offset=18 keep=0.95 crowd=0

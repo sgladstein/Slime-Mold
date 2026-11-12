@@ -1,0 +1,80 @@
+bigdish: preset swarm seeds [5] seconds 60 threads 1
+== seed 5: 512 x 320, 50000 walkers, 23 piles
+seed 5 swarm t   5.0s  tube  3100.8  loops    5  width 6.52  reach  188.0  piles 22/23  strays 0.003  crystals 0.999  ms/tick 7.26
+seed 5 swarm t   5.0s  alive 2640  energy 0.541  born 2097  starved 4457  grass -0.000
+seed 5 swarm t   5.0s  contrast 2.79
+seed 5 swarm t   5.0s  extent r50 143.9 r90 143.9
+seed 5 swarm t   5.0s  life walk 2640 spore 0 dormant 0 dead 0  held 12/23  bodies 9 big 2958  centre 60.0,79.5  near 153  rim 0.022/0.246
+seed 5 swarm t  10.0s  strike at 72.98866,109.18225 r 8: killed 35
+seed 5 swarm t  10.0s  tube  3421.5  loops    3  width 6.06  reach  192.8  piles 23/23  strays 0.002  crystals 0.998  ms/tick 6.99
+seed 5 swarm t  10.0s  alive 3304  energy 0.657  born 5435  starved 7096  grass -0.000
+seed 5 swarm t  10.0s  contrast 2.83
+seed 5 swarm t  10.0s  extent r50 143.9 r90 143.9
+seed 5 swarm t  10.0s  life walk 3304 spore 0 dormant 0 dead 0  held 13/23  bodies 16 big 3055  centre 80.6,83.5  near 106  rim 0.021/0.244
+seed 5 swarm t  12.0s  strike at 72.98866,109.18225 r 8: killed 102
+seed 5 swarm t  14.0s  strike at 72.98866,109.18225 r 8: killed 156
+seed 5 swarm t  15.0s  tube  5391.2  loops    5  width 5.80  reach  196.9  piles 23/23  strays 0.014  crystals 0.996  ms/tick 7.49
+seed 5 swarm t  15.0s  alive 5240  energy 0.885  born 10638  starved 10105  grass -0.000
+seed 5 swarm t  15.0s  contrast 3.01
+seed 5 swarm t  15.0s  extent r50 143.9 r90 143.9
+seed 5 swarm t  15.0s  life walk 5240 spore 0 dormant 0 dead 0  held 20/23  bodies 13 big 3337  centre 102.6,83.9  near 391  rim 0.047/0.272
+seed 5 swarm t  16.0s  strike at 72.98866,109.18225 r 8: killed 209
+seed 5 swarm t  18.0s  strike at 72.98866,109.18225 r 8: killed 263
+seed 5 swarm t  20.0s  strike at 72.98866,109.18225 r 8: killed 288
+seed 5 swarm t  20.0s  tube  6375.2  loops    4  width 6.38  reach  196.8  piles 23/23  strays 0.005  crystals 0.994  ms/tick 7.79
+seed 5 swarm t  20.0s  alive 6546  energy 1.111  born 17454  starved 14855  grass -0.000
+seed 5 swarm t  20.0s  contrast 2.76
+seed 5 swarm t  20.0s  extent r50 143.9 r90 143.9
+seed 5 swarm t  20.0s  life walk 6546 spore 0 dormant 0 dead 0  held 23/23  bodies 6 big 6305  centre 109.0,78.3  near 238  rim 0.057/0.296
+seed 5 swarm t  22.0s  strike at 72.98866,109.18225 r 8: killed 266
+seed 5 swarm t  24.0s  strike at 72.98866,109.18225 r 8: killed 273
+seed 5 swarm t  25.0s  tube  6824.8  loops   10  width 6.66  reach  197.0  piles 23/23  strays 0.008  crystals 0.991  ms/tick 8.00
+seed 5 swarm t  25.0s  alive 8226  energy 1.336  born 25971  starved 21153  grass -0.000
+seed 5 swarm t  25.0s  contrast 2.67
+seed 5 swarm t  25.0s  extent r50 143.9 r90 214.1
+seed 5 swarm t  25.0s  life walk 8226 spore 0 dormant 0 dead 0  held 23/23  bodies 5 big 5741  centre 116.5,74.5  near 462  rim 0.069/0.279
+seed 5 swarm t  26.0s  strike at 72.98866,109.18225 r 8: killed 247
+seed 5 swarm t  28.0s  strike at 72.98866,109.18225 r 8: killed 301
+seed 5 swarm t  30.0s  strike at 72.98866,109.18225 r 8: killed 291
+seed 5 swarm t  30.0s  tube  7038.8  loops   11  width 6.81  reach  196.9  piles 23/23  strays 0.013  crystals 0.987  ms/tick 8.29
+seed 5 swarm t  30.0s  alive 8976  energy 1.701  born 35335  starved 28928  grass -0.000
+seed 5 swarm t  30.0s  contrast 2.67
+seed 5 swarm t  30.0s  extent r50 143.9 r90 244.7
+seed 5 swarm t  30.0s  life walk 8976 spore 0 dormant 0 dead 0  held 23/23  bodies 3 big 7005  centre 119.8,74.1  near 210  rim 0.064/0.263
+seed 5 swarm t  32.0s  strike at 72.98866,109.18225 r 8: killed 273
+seed 5 swarm t  34.0s  strike at 72.98866,109.18225 r 8: killed 275
+seed 5 swarm t  35.0s  tube  7554.8  loops   11  width 7.20  reach  197.1  piles 23/23  strays 0.012  crystals 0.983  ms/tick 8.49
+seed 5 swarm t  35.0s  alive 9628  energy 2.066  born 45129  starved 37522  grass -0.000
+seed 5 swarm t  35.0s  contrast 2.68
+seed 5 swarm t  35.0s  extent r50 143.9 r90 269.7
+seed 5 swarm t  35.0s  life walk 9628 spore 0 dormant 0 dead 0  held 23/23  bodies 2 big 7517  centre 121.9,74.5  near 458  rim 0.057/0.256
+seed 5 swarm t  36.0s  strike at 72.98866,109.18225 r 8: killed 264
+seed 5 swarm t  38.0s  strike at 72.98866,109.18225 r 8: killed 275
+seed 5 swarm t  40.0s  strike at 72.98866,109.18225 r 8: killed 284
+seed 5 swarm t  40.0s  tube  7792.5  loops   10  width 7.04  reach  196.7  piles 23/23  strays 0.017  crystals 0.979  ms/tick 8.75
+seed 5 swarm t  40.0s  alive 10011  energy 2.424  born 55772  starved 46959  grass -0.000
+seed 5 swarm t  40.0s  contrast 2.66
+seed 5 swarm t  40.0s  extent r50 143.9 r90 278.5
+seed 5 swarm t  40.0s  life walk 10011 spore 0 dormant 0 dead 0  held 23/23  bodies 6 big 7673  centre 125.1,75.5  near 234  rim 0.052/0.246
+seed 5 swarm t  45.0s  tube  8169.0  loops   11  width 7.54  reach  197.3  piles 23/23  strays 0.016  crystals 0.974  ms/tick 8.97
+seed 5 swarm t  45.0s  alive 11273  energy 2.622  born 67290  starved 57215  grass -0.000
+seed 5 swarm t  45.0s  contrast 2.56
+seed 5 swarm t  45.0s  extent r50 143.9 r90 286.8
+seed 5 swarm t  45.0s  life walk 11273 spore 0 dormant 0 dead 0  held 23/23  bodies 2 big 8125  centre 124.3,78.8  near 797  rim 0.051/0.236
+seed 5 swarm t  50.0s  tube  8826.8  loops   13  width 8.11  reach  196.7  piles 23/23  strays 0.004  crystals 0.970  ms/tick 9.20
+seed 5 swarm t  50.0s  alive 12528  energy 2.838  born 80392  starved 69062  grass -0.000
+seed 5 swarm t  50.0s  contrast 2.67
+seed 5 swarm t  50.0s  extent r50 143.9 r90 300.4
+seed 5 swarm t  50.0s  life walk 12528 spore 0 dormant 0 dead 0  held 23/23  bodies 3 big 8778  centre 129.5,80.6  near 881  rim 0.044/0.225
+seed 5 swarm t  55.0s  tube  8976.5  loops   15  width 8.22  reach  197.4  piles 23/23  strays 0.009  crystals 0.964  ms/tick 9.51
+seed 5 swarm t  55.0s  alive 13513  energy 3.161  born 94635  starved 82320  grass -0.000
+seed 5 swarm t  55.0s  contrast 2.64
+seed 5 swarm t  55.0s  extent r50 143.9 r90 308.3
+seed 5 swarm t  55.0s  life walk 13513 spore 0 dormant 0 dead 0  held 23/23  bodies 4 big 8941  centre 134.1,82.2  near 979  rim 0.041/0.208
+seed 5 swarm t  60.0s  tube  9273.0  loops   13  width 8.32  reach  196.9  piles 23/23  strays 0.015  crystals 0.958  ms/tick 10.91
+seed 5 swarm t  60.0s  alive 14228  energy 3.550  born 109495  starved 96465  grass -0.000
+seed 5 swarm t  60.0s  contrast 2.61
+seed 5 swarm t  60.0s  extent r50 143.9 r90 314.6
+seed 5 swarm t  60.0s  life walk 14228 spore 0 dormant 0 dead 0  held 23/23  bodies 1 big 9247  centre 136.1,83.0  near 973  rim 0.041/0.211
+seed 5 swarm firsts 0:0:0.57:0.0 1:87:0.38:0.8 2:70:0.18:0.4 3:186:1.09:3.3 4:106:0.86:0.7 5:45:0.22:0.2 6:182:0.88:2.8 7:61:1.05:0.5 8:145:0.88:2.7 9:47:0.89:0.3 10:107:0.58:1.6 11:43:0.92:0.2 12:125:0.48:1.3 13:71:0.63:0.4 14:162:0.91:3.2 15:43:0.56:0.2 16:57:0.90:0.3 17:146:0.60:2.4 18:108:0.31:1.0 19:73:0.58:0.7 20:35:0.83:0.1 21:136:0.83:6.0 22:34:0.58:0.1
+seed 5 swarm hash=a3a080dca3c63b52
