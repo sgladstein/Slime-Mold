@@ -1,0 +1,1 @@
+payoff (sleeper): idle -0.225 (0/8/0); random -1.671; randkit -1.615; farm +0.274; loud +1.436 (6/2/0); quiet +0.268; plague +0.468 (0/8/0); siege +0.267
