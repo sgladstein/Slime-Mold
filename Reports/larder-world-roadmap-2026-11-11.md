@@ -452,3 +452,69 @@ Every one banked a little more food (farm higher on 10 of 10 under the last) but
 **Cost.** On software Vulkan, a game step costs the same with soil as without, within the 0.3-0.9 ms noise between rounds: Rim 14.52 against 14.82 ms, Passes 14.82 against 14.90 (scale 2, 5,000 walkers, three rounds). Soil adds a uniform branch and one read of a ground word each pass already binds. The 1070's figure is open, with the window's p95. The window's ground rebuild with soil drawn is 1.64-1.77 ms once a game second.
 
 **A fix that rode along.** The headless run's first "all" picture was zoomed past the world's edges. The camera's `fit` was read before the HUD had set its insets. It now prepares the frame first.
+
+## Playtest fixes: free shots, the soldiers' scent, and a hole under fire, 2026-11-12
+
+**Why.** The owner's first playtest of the window (11-12 04:13Z, relayed by the coordinator): "1) the slime didn't feel like one cohesive organism. 2) shooting the slime didn't feel satisfying. I know it was killing lots of individual walkers but visually it didn't impact much 3) the slime mostly ignored my soldiers unless they walked into the slime 4) energy required for shooting isn't fun. I ran out of energy and I had a bunch of soldiers but I couldn't fight the slime and I couldn't harvest crystal because the slime would just kill me." Point 1 went to the one body thread. On point 2 the owner turned down both of the graphics thread's drawn hits (04:38Z, "Both of those look like stamps... Maybe part of the issue is the slime/walkers move to fast") and set the bar (04:39Z): "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at."
+
+**What is built.**
+- **Free shots** (`Rules::price` 0, was 10): a soldier's fire rate (`shot_every`, 1 s) is the only limit. The window's texts drop the cost when it is 0. A price still comes out of the bank shot by shot (test).
+- **The soldiers' scent as rules** (`Rules::smell` 0.5 of a full pile's scent a step, `Rules::smell_r` 2 dish cells), with census switches `smell=` and `smell_r=`.
+- **The mould's turn from fresh gunfire, as an opt-in** (`larder_world::FLEE_KEEP` 0.98, `FLEE_WEIGHT` -1; the census's `flee=W` and `flee_keep=K`, the hole test's `flee:W[:K]`). Each hit already laid the alarm field (`squad::SHOT_ALARM` 50 out to twice the strike's radius) when a tier turned the field on; with the opt-in the plain mould has the field and its sensors read it at -W. It was the race world's default for a few hours and **failed the census gate** (below), so `race_params` does not set it.
+- **The hole test** (`examples/larderhole.rs`): the race world grows 60 s with the squad held at the larder (no drain), then a squad of 4 is set down in a line 8 dish cells past the body's edge on the ray from the core to the larder (turning 20 degrees at a time if a spot is off the open agar or in the mould), on Hold. It fires freely 20 s, then holds fire 10 s. The same seed is run holding fire throughout as the control (an alarm-only arm's control is base's, run once: no shot, no alarm, the same game to the bit, checked on seed 1). `look=DIR every=S` saves crops.
+- **For other threads**, all off by default so no census moves: `Game::density` (start walkers per open fine cell; integration thread), `Game::stuck` and `stuck_run` (the census's stuck test, counted by the game for the campaign's mission layer), `Rules::overrun` (`End::Overrun`, a loss: the mould holds the larder with the bank empty that many seconds) and `Rules::reserve` (a free soldier every that many seconds while under 2 live and the bank can't buy one, unless the mould holds the larder). Tests for each.
+
+**Deciding measures, named before the runs.** For the hole: the dish cells within the squad's range (15) of its centre that held a living walker when it was set down and hold none after 20 s of fire, each arm against the race world without the field, paired by seed, sign test, Holm over the arms. For the defaults: score v2 (`Game::score`), each plan against idle and random, paired by seed, sign test, Holm; the median paired difference beside each count (technical lead's review: 32 seeds and two designed maps before a default).
+
+**The hole under fire** (seeds 1-16; raw in [playtest/hole-1-16.txt](larder-world-roadmap-2026-11-11/playtest/hole-1-16.txt), run before the default changed, and [playtest/hole-1-16-default-sporer.txt](larder-world-roadmap-2026-11-11/playtest/hole-1-16-default-sporer.txt), after; [page](https://claude.ai/artifact/5wQ3xSk8pBN6uig1rxKd4R), clips in [holes/](larder-world-roadmap-2026-11-11/holes/)). Medians:
+
+| Mould | hole at 5 / 10 / 20 s of fire | share of the mould in range | hits land | hole 2 / 5 / 10 s after the last shot | killed | vs no field at 20 s |
+| --- | --- | --- | --- | --- | --- | --- |
+| holding fire (control) | 26 / 28 / 27 | | | 30 / 27 / 29 | 0 | |
+| no alarm field (before) | 33 / 33 / 29 | 26% | 3.7 dish cells out | 30 / 31 / 27 | 175 | |
+| flee 1, keep 0.98 (A) | 86 / 101 / 102 | 77% | 9.3 | 79 / 42 / 28 | 251 | 16 of 16 larger, +69 median, p < 0.0001, holds |
+| flee 3 (B) | 100 / 124 / 126 | 93% | 10.7 | 103 / 70 / 42 | 293 | 16 of 16; 15 of 16 larger than flee 1 (+16, p 0.0005) |
+| flee 1, keep 0.99 | 101 / 122 / 127 | 92% | 10.5 | 110 / 96 / 53 | 272 | 16 of 16 |
+| flee 0.3 | 64 / 67 / 72 | 55% | 7.7 | 58 / 33 / 31 | 212 | 15 of 16 |
+| flee 1, keep 0.95 | 67 / 74 / 67 | 50% | 7.6 | 41 / 34 / 26 | 228 | 16 of 16 |
+| the Swarmer's pull (+3) | 56 / 58 / 66 | 39% | 3.0 | 57 / 50 / 39 | 991 | 16 of 16, but 4 of 64 soldiers alive |
+| half the mould clock (no field) | 41 / 45 / 44 (control 37) | 39% | 3.7 | 42 / 40 / 43 | 186 | 12 of 16, +12, p 0.08 |
+
+Without the field, shooting leaves no more hole than holding fire: the hits land 3.7 dish cells out every second, at a rim that closes at once. With it, the hole opens within 5 s, the hits move out to 9-11 cells as it deepens, and it stops growing at about 10 s only because it has taken most of what the squad can reach. It refills in about 10 s once the shooting stops. On one seed (5) the squad stood behind rock and fired 7 shots in 20 s, so no arm made a hole there; it is in every median. Every soldier lived through every test except under the Swarmer's pull. The page put flee 1 against flee 3 to the owner as a blind A/B (key: A is flee 1, B is flee 3); the card was withdrawn when the flee failed the gate.
+
+**The tiers.** The Sleeper and the Swarmer set their own weight (+3), so the flee never changes them. The Sporer sets only the keep, so with the flee on it flees too: its hole at 20 s is 128 against 81 without the field (11 of 16 larger, p 0.21), and 87% of it is still open 5 s after the last shot (91% without the field: the Sporer's scatter already left a hole).
+
+**Rejected for the hole.** A slower mould clock: 3x slower moved the graphics thread's refill timing only from 0.53 to 0.73 s, and half the clock gained 12 of 16 here (p 0.08). The Swarmer's pull as the default: a slightly larger hole, but the mould overran 60 of 64 soldiers. The flee as the default: below. All three are in `Reports/dead-ends.md`.
+
+**The flee fails the census gate** (race seeds 5-20, 15-minute games, free shots; the flee on at ddd81c6 against off at a9eb09d, paired by seed; runner 1's raw files [census-flee-race-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-race-5-20.txt) and [census-5-20-free.txt](larder-world-roadmap-2026-11-11/playtest/census-5-20-free.txt), fort and strike local: [census-flee-race-5-36-fort-strike.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-race-5-36-fort-strike.txt), [census-noflee-race-5-20-fort-strike.txt](larder-world-roadmap-2026-11-11/playtest/census-noflee-race-5-20-fort-strike.txt)). Measures named before the run: each plan against idle and random (the gate), and for the game designer's review, first touch on the squad and walkers within 10 dish cells of it, flee on against off. Off → on:
+
+| hand | mean score | mould wiped / squad wiped | walkers near the squad (mean) | first touch (median) | killed (mean) |
+| --- | --- | --- | --- | --- | --- |
+| idle | -0.330 → -0.332 | 0 / 0 → 0 / 0 | 7 → 5 | 81 → 286 s | 2,440 → 833 |
+| random | -0.759 → **+1.348** | 2 / 10 → **12** / 1 | 125 → 107 | 20 → 24 s | 3,793 → 3,959 |
+| farm | +0.214 → +0.238 | 0 / 0 | 406 → 193 | 27 → 66 s | 19,014 → 10,147 |
+| wall | +0.225 → +0.245 | 0 / 0 | 348 → 212 | 39 → 43 s | 17,317 → 10,354 |
+| rush | -0.134 → -0.117 | 0 / 1 → 0 / 0 | 27 → 10 | 16 → 16 s | 3,797 → 4,365 |
+| fort | +0.206 → +0.155 | 0 / 0 | 22 → 20 | 26 → 39 s | 4,489 → 2,778 |
+| strike | +0.697 → +0.349 | 3 / 0 → 0 / 0 | 84 → 41 | 26 → 39 s | 22,776 → 12,213 |
+
+With the flee on, random beats farm, wall and rush 13-3 each (p 0.021); farm and wall still beat idle 16-0. Random's Attack orders send soldiers onto the core; a mould that turns from their fire no longer overruns them, they hold the core, and a mould without births starves (12 of its games end with the mould wiped by 900 s, most between 360 and 490 s, with only 1,000-2,000 walkers shot). The first touch comes later: farm 12 later and 2 earlier (median +36 s, p 0.013), idle +47 s, wall +15.5 s, rush 12-1 (p 0.003, survives Holm), fort and strike +16.5 s each (13-2, p 0.007, both survive); walkers near farm and wall fall on 14 of 16 (survive Holm), and farm and wall kill less on 16 of 16. Toggling the flee alone at the current code reproduces both censuses row for row (random, seeds 6-7). A stronger soldier scent does not save it: with scent 4 over 4 dish cells and the flee on, random wiped the mould on 13 of 16 ([census-flee-smell4-race-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-smell4-race-5-20.txt), runner 2). On the Rim with the flee on, random still lost (its squad wiped on 11 of 16, farm and wall over it 16-0, [census-flee-rim-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-rim-5-20.txt), runner 4), so the soft core depends on how open the map leaves it. So the flee answers the owner's point 2 by undoing point 3 and handing the game to random. It stays an opt-in. The game designer's review, on the core: any rule that keeps the mould off soldiers turns the core into a free win, so a later flee, or the Wary tier's habituation, must keep the mould defending its core (soldiers on the core smelling far stronger, or the alarm at the core pulling for every tier), tested against random first.
+
+**Next for the hole (PR 2).** Shots lay the squad toolkit's crater (`BigDish::scorch_disc`, the one crater writer): the cells a hit clears stay closed to the mould for a few seconds, so sustained fire digs in and the hole closes once firing stops, with no change to where the mould goes elsewhere. Its gate's random and idle rows run beside the hole and first-touch measures (technical lead's review), not after them.
+
+**Free shots and the scent** (seeds 5-20, 15-minute games, before the flee default; raw in [playtest/](larder-world-roadmap-2026-11-11/playtest/): `census-5-20-price10.txt` local, `census-5-20-free.txt` and `census-5-20-free-smell4.txt` from runners 1 and 2 at a9eb09d).
+
+| mean score v2 | shots at 10 food | free | free, scent 4 over 4 dish cells |
+| --- | --- | --- | --- |
+| farm | +0.048 | +0.214 | +0.191 |
+| wall | +0.152 | +0.225 | +0.191 |
+| rush | -1.874 (16 squad wiped) | -0.134 (15 at the cap, 1 wiped) | -0.231 |
+| idle | -0.729 | -0.330 | -0.327 |
+| random | -1.325 | -0.759 | -0.443 (3 mould wiped) |
+| farm / wall beat idle | 14 / 15 of 16 | 16 / 16 of 16 | 16 / 16 of 16 |
+| farm / wall beat random | 16 / 16 of 16 | 14 / 14 of 16 | 12 / 12 of 16 (p 0.077, not holding) |
+| farm: walkers within 10 dish cells, first touch (means) | 285, 49 s | 406, 49 s | 458, 27 s |
+
+Free shots take the rush from 16 losses to 15 games at the cap with the mould cut from 5,000 walkers to under 600 on 12 of them; it never wipes the mould, probably because the last stragglers lay too little trail to stop a shot (not yet checked). The gate holds. Scent 4 brings the mould to the squad sooner but makes random play stronger.
+
+**Cost** (of the opt-in). The alarm field is one 3 x 3 mean over the agar a fine step, and one more read at each sensor. On the CPU it first added 2.0 ms to a 5.4 ms game tick (farm seed 1, 120 s, one thread, three rounds each: 5.37/5.42/5.34 against 7.33/7.77/7.39 ms). The mean is now branchless (`spread_rows`: each neighbour adds its value times its agar mask, in the old order, so the result is bit for bit the old one; test `the_branchless_spread_matches_the_first_one_bit_for_bit`), which takes one pass on the race world's 512 x 320 grid from 0.65 to 0.24 ms on one thread (best of 30, interleaved); the germ's spread gets the same. On the GPU the field has its own switch (`alarm_on`), apart from the life states (`cyc`): the flee runs no `fate`, `fly` or `alight`, only the mean inside the scent pass, the sensor read and the one-workgroup `shout` on frames with shots, and the Larder World already runs the outside pipelines for growth. The life-gpu report's software-Vulkan run had the Swarmer (the alarm alone) at 38-39 ms a frame against 40 for the outside pipelines with every rule off; the GPU thread's one pair on the Larder World at 5,000 walkers was 15.16 ms a step without it and 15.64 with it. The GTX 1070's figure is open.

@@ -145,6 +145,14 @@ pub struct WorldStats {
     pub touching: u32,
     pub kills_per_sec: f32,
     pub stolen_per_sec: f32,
+    /// The mould's voice: inhales (flinches at gunfire), and its inputs
+    /// last frame: hunger 0 ..= 1, growth (share of the body a second,
+    /// births less starving, shots taken out), eating (share of the
+    /// crystals' charge a second).
+    pub inhales: u32,
+    pub hunger: f32,
+    pub growth: f32,
+    pub eating: f32,
 }
 
 pub struct WorldListener {
@@ -167,6 +175,17 @@ pub struct WorldListener {
     core_down: bool,
     ended: bool,
     beat: f32,
+    /// The mould's voice on (default) or off: K in the window, `voice=0`
+    /// headless, so the owner can hear the game with and without it.
+    pub voice: bool,
+    body_at: (u64, usize, u64),
+    natural: f32,
+    eat_rate: f32,
+    charge: f32,
+    carried: f32,
+    flinch: f32,
+    inhale_wait: f32,
+    kills_since: u64,
     pub stats: WorldStats,
 }
 
@@ -192,6 +211,15 @@ impl WorldListener {
             core_down: false,
             ended: false,
             beat: 0.0,
+            voice: true,
+            body_at: (0, 0, 0),
+            natural: 0.0,
+            eat_rate: 0.0,
+            charge: 0.0,
+            carried: 0.0,
+            flinch: 0.0,
+            inhale_wait: 0.0,
+            kills_since: 0,
             stats: WorldStats::default(),
         };
         l.rebaseline(g);
@@ -214,6 +242,11 @@ impl WorldListener {
         (self.bank_wait, self.banked) = (0.0, 0.0);
         self.dry = g.world.crystals().iter().map(|c| c.1 <= 0.0).collect();
         (self.core_down, self.ended, self.beat) = (g.core_down.is_some(), g.end.is_some(), 0.0);
+        self.body_at = (self.ticks, g.mould, self.stats.kills);
+        (self.natural, self.eat_rate, self.flinch, self.inhale_wait) = (0.0, 0.0, 0.0, 0.0);
+        self.charge = g.world.crystals().iter().map(|c| c.1).sum();
+        self.carried = g.soldiers.iter().map(|s| s.carry).sum::<f32>() + g.harvested;
+        self.kills_since = 0;
         self.stats.rebaselines += 1;
     }
 
@@ -414,8 +447,85 @@ impl WorldListener {
             });
         }
         self.ended = g.end.is_some();
+        self.body(g, ear, dt, killed, &mut out);
         self.ticks = ticks;
         out
+    }
+}
+
+/// The voice's breaths a second at rest (one every 4 s), and its sub
+/// tone's pitch, Hz.
+const BREATH: f32 = 0.25;
+const PITCH: f32 = 48.0;
+/// The share of the body a second, net of shots, at which growth or hunger
+/// is full. On fork seed 1 (every hand) the mould dies back from 5,000 to
+/// about 1,500 between 15 and 35 s (9-11% a second at worst: full hunger)
+/// and regrows at 1.2-1.6% a second (growth 0.6-0.8).
+const FULL_CHANGE: f32 = 0.02;
+/// The share of all crystals' charge eaten a second at which eating is
+/// full. Measured 0.00006 (the home crystal only) to 0.00014 (spread over
+/// more at 90 s); at the first guess, 0.002, the band never opened.
+const FULL_EAT: f32 = 0.0002;
+/// Kills a second, as a share of the body, that make the mould flinch.
+const FLINCH_AT: f32 = 0.004;
+
+impl WorldListener {
+    /// **The mould's voice**: one breathing drone for the whole body, from
+    /// counts the game already has (no read-back). Its level follows the
+    /// log of its walkers; its natural change (the walker count's change
+    /// with the walkers shot added back: births less starving) raises the
+    /// pitch as it grows and sags it, slows and roughens the breath as it
+    /// starves; its eating (the crystals' charge falling faster than the
+    /// squad takes it) opens its noise band; gunfire that kills a share of
+    /// it is a sharp inhale and a quicker breath while it settles. It sits
+    /// on the mould's home (`Game::core`), half-panned, and does not fade
+    /// off screen: it is the opponent, always there. Design call from the
+    /// designer thread's review of #96, built under the owner's overnight
+    /// rule (2026-11-12 04:48Z) for the owner to compare with K.
+    fn body<W: World>(&mut self, g: &Game<W>, ear: Ear, dt: f32, killed: u32, out: &mut Vec<SoundCmd>) {
+        let ticks = g.world.ticks();
+        let mould = g.mould as f32;
+        // Natural change, once the game's count moves (once a game second).
+        if g.mould != self.body_at.1 || ticks >= self.body_at.0 + 2 * g.rules.tps as u64 {
+            let secs = (ticks.saturating_sub(self.body_at.0)) as f32 / g.rules.tps.max(1) as f32;
+            if secs > 0.0 {
+                let shot = (self.stats.kills - self.body_at.2) as f32;
+                let rate = (mould - self.body_at.1 as f32 + shot) / secs / mould.max(100.0);
+                self.natural += (rate - self.natural) * (1.0 - (-secs / 4.0).exp());
+            }
+            self.body_at = (ticks, g.mould, self.stats.kills);
+        }
+        // Eating: the crystals' charge fell by more than the squad took.
+        let charge: f32 = g.world.crystals().iter().map(|c| c.1).sum();
+        let carried = g.soldiers.iter().map(|s| s.carry).sum::<f32>() + g.harvested;
+        let squad = (carried - self.carried).max(0.0) * g.rules.charge;
+        let eaten = ((self.charge - charge) - squad).max(0.0);
+        let total = self.charge.max(1.0);
+        (self.charge, self.carried) = (charge, carried);
+        let k = 1.0 - (-dt / 2.0).exp();
+        self.eat_rate += (eaten / dt / total - self.eat_rate) * k;
+        // Flinch: gunfire killing a share of the body.
+        self.flinch = (self.flinch - dt / 3.0).max(0.0);
+        self.inhale_wait -= dt;
+        let share = self.kill_rate / mould.max(100.0);
+        if killed > 0 && share > FLINCH_AT && self.inhale_wait <= 0.0 && self.voice && g.end.is_none() {
+            let (pan, _) = ear.place(g.core);
+            out.push(SoundCmd::Grain { kind: GrainKind::Whoosh, pan: pan * 0.5, gain: (0.25 + 0.25 * (share / FLINCH_AT / 4.0).min(1.0)), delay: 0.0 });
+            self.stats.inhales += 1;
+            self.inhale_wait = 2.5;
+            self.flinch = 1.0;
+        }
+        let hunger = (-self.natural / FULL_CHANGE).clamp(0.0, 1.0);
+        let growth = (self.natural / FULL_CHANGE).clamp(0.0, 1.0);
+        let eating = (self.eat_rate / FULL_EAT).clamp(0.0, 1.0);
+        (self.stats.hunger, self.stats.growth, self.stats.eating) = (hunger, self.natural, self.eat_rate);
+        let alive = g.mould > 0 && g.end.is_none();
+        let level = if self.voice && alive { 0.18 * ((1.0 + mould / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4) } else { 0.0 };
+        let pitch = PITCH * (1.0 + 0.12 * growth - 0.22 * hunger + 0.08 * self.flinch);
+        let breath = BREATH * (1.0 - 0.4 * hunger + 1.4 * self.flinch);
+        let rough = (0.15 + 0.7 * hunger + 0.3 * self.flinch).min(1.0);
+        let (pan, _) = ear.place(g.core);
+        out.push(SoundCmd::Body { level, pitch, breath, rough, bright: eating, pan });
     }
 }
 
@@ -500,6 +610,24 @@ mod tests {
         assert_eq!(stats.shots, shots as u64, "{stats:?}");
         assert_eq!(stats.kills, killed as u64, "{stats:?}");
         assert!(stats.impacts > 0 && stats.beats > 0, "{stats:?}");
+    }
+
+    /// The mould's voice is there while the mould lives, follows its size,
+    /// and K (`voice = false`) silences it and nothing else.
+    #[test]
+    fn the_mould_has_a_voice_and_k_turns_it_off() {
+        let body = |cmds: &[SoundCmd]| cmds.iter().find_map(|c| if let SoundCmd::Body { level, .. } = c { Some(*level) } else { None }).unwrap();
+        let mut g = small(2);
+        let mut l = WorldListener::new(&g);
+        let ear = whole(&g);
+        let on = body(&l.hear(&g, ear, 1.0 / 60.0, false));
+        assert!(on > 0.05, "a live mould is heard: {on}");
+        l.voice = false;
+        assert_eq!(body(&l.hear(&g, ear, 1.0 / 60.0, false)), 0.0);
+        l.voice = true;
+        g.mould = 50;
+        let small_body = body(&l.hear(&g, ear, 1.0 / 60.0, false));
+        assert!(small_body < on * 0.5, "a small mould is quieter: {small_body} vs {on}");
     }
 
     #[test]

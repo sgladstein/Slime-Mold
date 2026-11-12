@@ -2,9 +2,9 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-12T03:46Z
-sources: [Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
-code: [Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES, View::set_alive]
+updated: 2026-11-12T05:34Z
+sources: [Reports/soldier-controls-2026-11-12.md, Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
+code: [Cmd::Queue, Cmd::Rally, Order::Fight, Game::seek, Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES, View::set_alive]
 ---
 
 # The world camera and UI
@@ -12,12 +12,20 @@ code: [Camera::wheel, Camera::set_inset, View::record, Controls::button, UiComma
 ## Now
 
 A world bigger than the screen is seen through `slime_mould::world`: a
-camera that pans and zooms at the cursor (whole steps up to `MAX_ZOOM` 8,
+camera that pans and zooms at the cursor (whole steps up to `MAX_ZOOM` 24, raised from 8 after the owner's playtest,
 and below 1 down to the fit, each pixel the mean of its cells), a minimap
 from the same frame, marks drawn on the GPU (up to `MAX_MARKS` 2,048), and
 Larder's controls in world cells, given out as `UiCommand`s. On the GTX 1070
 the view costs 0.32-0.42 ms a frame at 1920 x 1080, and 0.8-1.2 ms with the
 look below.
+
+In `larder-world` the soldiers take RTS orders
+([report](../../Reports/soldier-controls-2026-11-12.md)): Shift queues any
+order (`Cmd::Queue`), A then a click attack-moves (`Order::Fight`), a
+harvester moves on from a dry crystal to a safe one (`Rules::seek`, on;
+the census gate holds with it), and
+the larder is selectable with a rally point (`Cmd::Rally`); a double click
+selects every soldier on screen.
 
 Over it sits a game UI with no game rules
 ([report](../../Reports/world-ui-2026-11-11.md)): a GPU canvas pass

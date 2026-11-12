@@ -1,0 +1,68 @@
+mission 2-first-contact (First contact): "Clear the west fork crystal and hold it for 60 s", map fork, tier drifter (not built: plain mould), seeds 1-4, scale 2, walkers 5000
+  idle s1: SquadWiped 296s 0*
+  idle s3: SquadWiped 300s 0*
+  idle s2: SquadWiped 320s 0*
+  idle s4: SquadWiped 414s 0*
+  random s4: Goal 89s 2*
+  random s1: Overrun 227s 0*
+  random s2: Overrun 211s 0*
+  random s3: SquadWiped 320s 0*
+  boom s2: Goal 107s 3*
+  boom s3: Goal 102s 3*
+  claim s2: Goal 107s 3*
+  claim s3: Goal 102s 3*
+  boom s1: Goal 274s 3*
+  boom s4: Goal 287s 3*
+  late s2: Goal 107s 3*
+  claim s1: Goal 304s 3*
+  late s3: Goal 102s 3*
+  claim s4: Goal 331s 3*
+  fort s2: Goal 107s 3*
+  late s1: Goal 304s 3*
+  fort s3: Goal 102s 3*
+  late s4: Goal 331s 3*
+  fort s1: Goal 274s 3*
+  strike s2: Goal 107s 3*
+  strike s3: Goal 102s 3*
+  fort s4: Goal 287s 3*
+  strike s1: Goal 304s 3*
+  strike s4: Goal 283s 3*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck  decided  alive harvested killed
+boom         1  Goal         274      3 1.00     0%     0%    0%    0%    0%                             0    0           273     20     15204    395
+boom         2  Goal         107      3 1.00     0%     0%    0%    0%    0%                             0    0           106     20      7844    186
+boom         3  Goal         102      3 1.00     0%     0%    0%    0%    0%                             0    0           101     20      7844    184
+boom         4  Goal         287      3 1.00     0%     0%    0%    0%    0%                             0    0           286     20     13704    307
+claim        1  Goal         304      3 1.00     0%     0%    0%    0%    0%                             0    0           303     28     16702    415
+claim        2  Goal         107      3 1.00     0%     0%    0%    0%    0%                             0    0           106     27      7844    185
+claim        3  Goal         102      3 1.00     0%     0%    0%    0%    0%                             0    0           101     26      7844    184
+claim        4  Goal         331      3 1.00     0%     0%    0%    0%    0%                             0    0           330     28     15203    400
+fort         1  Goal         274      3 1.00     0%     0%    0%    0%    0%                             0    0           273     20     15204    395
+fort         2  Goal         107      3 1.00     0%     0%    0%    0%    0%                             0    0           106     20      7844    186
+fort         3  Goal         102      3 1.00     0%     0%    0%    0%    0%                             0    0           101     20      7844    184
+fort         4  Goal         287      3 1.00     0%     0%    0%    0%    0%                             0    0           286     20     13704    307
+idle         1  SquadWiped   296      0 0.27     5%    11%    1%    0%    0%                             3    0             0      0         0   1748
+idle         2  SquadWiped   320      0 0.67     5%    13%    1%    0%    0%                            13    0            40      0         0   1867
+idle         3  SquadWiped   300      0 0.22     3%     7%    1%    0%    0%                             2    0             0      0         0   1921
+idle         4  SquadWiped   414      0 0.87     3%     8%    0%    2%    0%                             2    0           278      0         0   2108
+late         1  Goal         304      3 1.00     0%     0%    0%    0%    0%                             0    0           303     28     16702    415
+late         2  Goal         107      3 1.00     0%     0%    0%    0%    0%                             0    0           106     27      7844    185
+late         3  Goal         102      3 1.00     0%     0%    0%    0%    0%                             0    0           101     26      7844    184
+late         4  Goal         331      3 1.00     0%     0%    0%    0%    0%                             0    0           330     28     15203    400
+random       1  Overrun      227      0 0.27     1%     0%    2%    0%    0%                             1    0             0      1       600   2720
+random       2  Overrun      211      0 0.52     0%     0%    0%    0%    0%                             0    0            31      2         0   2374
+random       3  SquadWiped   320      0 0.22     2%     0%    4%    0%    0%                             5    0             0      0      1800   4102
+random       4  Goal          89      2 1.00     0%     0%    0%    0%    0%                             0    0            88      4       300   1184
+strike       1  Goal         304      3 1.00     0%     0%    0%    0%    0%                             0    0           303     30     16702    415
+strike       2  Goal         107      3 1.00     0%     0%    0%    0%    0%                             0    0           106     27      7844    185
+strike       3  Goal         102      3 1.00     0%     0%    0%    0%    0%                             0    0           101     26      7844    184
+strike       4  Goal         283      3 1.00     0%     0%    0%    0%    0%                             0    0           282     30     13704    349
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run
+  boom      4/4  stars 3  best 1.00  dead 0%  stuck 0 s
+  claim     4/4  stars 3  best 1.00  dead 0%  stuck 0 s
+  fort      4/4  stars 3  best 1.00  dead 0%  stuck 0 s
+  idle      0/4  stars 0  best 0.50  dead 4%  stuck 0 s
+  late      4/4  stars 3  best 1.00  dead 0%  stuck 0 s
+  random    1/4  stars 0  best 0.50  dead 1%  stuck 0 s
+  strike    4/4  stars 3  best 1.00  dead 0%  stuck 0 s

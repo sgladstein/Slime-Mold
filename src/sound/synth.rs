@@ -383,6 +383,30 @@ struct Texture {
     last_level: f32,
 }
 
+/// The mould's voice (`SoundCmd::Body`).
+#[derive(Clone, Copy)]
+struct BodyVoice {
+    level: Smoothed,
+    pitch: Smoothed,
+    breath: Smoothed,
+    rough: Smoothed,
+    bright: Smoothed,
+    pan: Smoothed,
+    phase: f32,
+    swell: f32,
+    duck: f32,
+    band: Biquad,
+    rough_lp: f32,
+    t: u32,
+}
+
+impl Default for BodyVoice {
+    fn default() -> Self {
+        let s = |v: f32| Smoothed { value: v, target: v };
+        BodyVoice { level: s(0.0), pitch: s(48.0), breath: s(0.25), rough: s(0.0), bright: s(0.0), pan: s(0.0), phase: 0.0, swell: 0.0, duck: 1.0, band: Biquad::default(), rough_lp: 0.5, t: 0 }
+    }
+}
+
 #[derive(Clone, Copy)]
 struct Burst {
     active: bool,
@@ -493,6 +517,7 @@ pub struct VoiceBank {
     room_am: f32,
     lamp: Smoothed,
     lamp_pan: f32,
+    body: BodyVoice,
     hush: Smoothed,
     master: Smoothed,
     k_fast: f32,
@@ -541,6 +566,7 @@ impl VoiceBank {
             room_am: 0.0,
             lamp: Smoothed::default(),
             lamp_pan: 0.0,
+            body: BodyVoice::default(),
             hush: Smoothed { value: 1.0, target: 1.0 },
             master: Smoothed { value: DEFAULT_MASTER * DEFAULT_MASTER, target: DEFAULT_MASTER * DEFAULT_MASTER },
             k_fast: coef(0.05, sr),
@@ -581,6 +607,17 @@ impl VoiceBank {
             SoundCmd::Alert { kind, weight, pan } => self.alert(kind, weight, pan),
             SoundCmd::Impact { weight, pan, gain, delay } => {
                 self.spawn_weighted(GrainKind::Splat, pan, gain, (delay.max(0.0) * self.sr) as u32, true, 255, Some(weight));
+                // A heavy hit ducks the mould's voice so it still punches.
+                self.body.duck = self.body.duck.min(1.0 - 0.6 * weight.clamp(0.0, 1.0));
+            }
+            SoundCmd::Body { level, pitch, breath, rough, bright, pan } => {
+                let b = &mut self.body;
+                b.level.target = level.clamp(0.0, 1.0);
+                b.pitch.target = pitch.clamp(20.0, 400.0);
+                b.breath.target = breath.clamp(0.02, 3.0);
+                b.rough.target = rough.clamp(0.0, 1.0);
+                b.bright.target = bright.clamp(0.0, 1.0);
+                b.pan.target = pan.clamp(-1.0, 1.0);
             }
             SoundCmd::Lamp { on, pan } => {
                 self.lamp.target = if on { 1.0 } else { 0.0 };
@@ -870,6 +907,40 @@ impl VoiceBank {
                 }
             }
 
+            // The mould's voice: a sub tone and its two partials under a band
+            // of noise, swelling with its breath, roughened by strain.
+            {
+                let (k_slow, k_mid) = (self.k_slow, self.k_mid);
+                let b = &mut self.body;
+                let level = b.level.step(k_slow, k_slow);
+                if level > 1e-4 || b.level.target > 0.0 {
+                    let pitch = b.pitch.step(k_slow, k_slow);
+                    let breath = b.breath.step(k_slow, k_slow);
+                    let rough = b.rough.step(k_slow, k_slow);
+                    let bright = b.bright.step(k_mid, k_slow);
+                    let pan = b.pan.step(k_slow, k_slow);
+                    b.duck += (1.0 - b.duck) * (1.0 / (0.3 * sr));
+                    b.swell = (b.swell + breath / sr) % 1.0;
+                    // In-breath shorter than out-breath: a skewed swell.
+                    let ph = b.swell;
+                    let sw = if ph < 0.4 { (ph / 0.4 * std::f32::consts::FRAC_PI_2).sin() } else { ((1.0 - ph) / 0.6 * std::f32::consts::FRAC_PI_2).sin() };
+                    let swell = 0.35 + 0.65 * sw * sw;
+                    b.phase = (b.phase + std::f32::consts::TAU * pitch / sr) % std::f32::consts::TAU;
+                    let tone = b.phase.sin() + 0.45 * (2.0 * b.phase + 0.3).sin() + 0.2 * (3.0 * b.phase + 0.7).sin();
+                    if b.t.is_multiple_of(64) {
+                        b.band.set(pitch * (5.0 + 10.0 * bright), 0.8, sr);
+                    }
+                    b.t = b.t.wrapping_add(1);
+                    let mut n = b.band.run(self.rng.bipolar() * 1.73);
+                    b.rough_lp += (self.rng.unit() - b.rough_lp) * 0.004;
+                    n *= 1.0 - rough + rough * 2.0 * b.rough_lp;
+                    let y = (0.55 * tone * (1.0 - 0.5 * rough) + (0.25 + 0.35 * bright + 0.3 * rough) * n * 0.25) * swell * level * b.duck * hush;
+                    let (gl, gr) = pan_gains(pan * 0.5);
+                    l += y * gl;
+                    r += y * gr;
+                }
+            }
+
             // Room tone: low air always, and the lamp's 120 Hz hum where the
             // lamp stands while it is lit.
             let lamp = self.lamp.step(self.k_mid, self.k_mid);
@@ -1029,6 +1100,27 @@ mod tests {
         let (heavy_len, heavy_rms) = hit(1.0);
         assert!(heavy_len > light_len * 1.3, "heavy {heavy_len} s vs light {light_len} s");
         assert!(heavy_rms > light_rms, "heavy {heavy_rms} vs light {light_rms}");
+    }
+
+    /// The mould's voice is heard, breathes (its loudness swells at the
+    /// breath rate), and a heavy hit ducks it.
+    #[test]
+    fn the_mould_voice_breathes_and_ducks_under_a_heavy_hit() {
+        let body = SoundCmd::Body { level: 0.3, pitch: 50.0, breath: 0.5, rough: 0.2, bright: 0.0, pan: 0.0 };
+        let mut b = VoiceBank::new(8_000, 21);
+        b.apply(body);
+        let x = render(&mut b, 6.0);
+        let window = |i: usize| rms(&x[i * 2 * 800..(i + 1) * 2 * 800]);
+        let quarters: Vec<f32> = (10..60).map(window).collect();
+        let (lo, hi) = quarters.iter().fold((f32::MAX, 0.0f32), |(a, c), &v| (a.min(v), c.max(v)));
+        assert!(hi > lo * 1.6, "no breath: tenth-second RMS {lo}..{hi}");
+        let mut quiet = VoiceBank::new(8_000, 21);
+        let room = rms(&render(&mut quiet, 1.0));
+        assert!(rms(&x) > room * 3.0, "voice {} vs room {room}", rms(&x));
+        b.apply(SoundCmd::Impact { weight: 1.0, pan: 0.0, gain: 0.0, delay: 0.0 });
+        assert!(b.body.duck < 0.5, "a heavy hit did not duck the voice");
+        render(&mut b, 1.5);
+        assert!(b.body.duck > 0.95, "the duck did not recover: {}", b.body.duck);
     }
 
     #[test]

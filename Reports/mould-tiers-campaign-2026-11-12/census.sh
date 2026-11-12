@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # The tier census: each new tier against the hands, on the race world under
-# the Larder rules of PR 1 (free shots, the flee alarm), held-out seeds.
+# the Larder rules of PR 1 (free shots; the flee from gunfire is opt-in, not
+# the default, since it failed the gate), held-out seeds. A first run at
+# 8ec3e81 had the flee on by default and is void (random beat every plan on
+# the Trunk, the Larder thread's flee failure).
 #   bash Reports/mould-tiers-campaign-2026-11-12/census.sh TIER [OUT] [SEEDS] [THREADS]
 # TIER is none (the plain mould), drifter, sprawler, trunk, wary or grudge.
 # From the repo root after cargo build --release --example larderworld.
@@ -19,4 +22,4 @@ set -u
 TIER=${1:?tier}; OUT=${2:-Reports/mould-tiers-campaign-2026-11-12/census}; SEEDS=${3:-201-216}; THREADS=${4:-4}
 mkdir -p "$OUT"
 T=""; [ "$TIER" != none ] && T="tier=$TIER"
-./target/release/examples/larderworld census seeds=$SEEDS threads=$THREADS hands=idle,random,farm,boom,claim,fort,strike $T > "$OUT/$TIER-$SEEDS.txt" 2>&1
+./target/release/examples/larderworld census seeds=$SEEDS threads=$THREADS hands=idle,random,farm,wall,boom,claim,fort,strike $T > "$OUT/$TIER-$SEEDS.txt" 2>&1

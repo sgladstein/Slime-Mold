@@ -3,7 +3,7 @@
 //! bigger hole that doesn't refill while being shot at").
 //!
 //! ```text
-//! cargo run --release --example larderhole -- seeds=1-8 arms=base,flee:1,flee:3 [grow=60 fire=20 rest=10 squad=4 look=DIR]
+//! cargo run --release --example larderhole -- seeds=1-8 arms=base,flee:1,flee:3 [grow=60 fire=20 rest=10 squad=4 look=DIR every=5]
 //! ```
 //!
 //! Each run is one Larder World game on the CPU race world
@@ -26,10 +26,10 @@
 //! deepens pushes the hits back), kills, and the soldiers alive.
 //!
 //! **Arms** (the mould's settings; the rules stay the game's):
-//! - `base`: the race world's mould as it is (since 2026-11-12 it flees
-//!   gunfire, `larder_world::FLEE_WEIGHT`; the first run, 16 seeds, was
-//!   before that, when `base` had no alarm field).
-//! - `off`: no alarm field (the race world before 2026-11-12).
+//! - `base`: the race world's mould as it is (no alarm field; for a few
+//!   hours on 2026-11-12 it fled gunfire by default, and
+//!   `playtest/hole-1-16-default-sporer.txt` was run then).
+//! - `off`: no alarm field.
 //! - `flee:W[:K]`: the alarm field on (`alarm_keep` K, default 0.98, the
 //!   Swarmer's), read by the sensors at weight -W, so a hit's alarm
 //!   (`squad::SHOT_ALARM`, twice the strike's radius) is ground the mould
@@ -139,6 +139,8 @@ fn main() {
     let mut names: Vec<String> = vec!["base".into(), "flee:1".into(), "flee:3".into()];
     let mut arms: Vec<Arm> = names.iter().map(|s| Arm::parse(s)).collect();
     let mut look = None::<String>;
+    // Seconds between pictures with `look`.
+    let mut every = 5.0f32;
     let mut rules = Rules::default();
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
@@ -159,6 +161,7 @@ fn main() {
             "strike" => rules.strike = v.parse().unwrap(),
             "shot_every" => rules.shot_every = v.parse().unwrap(),
             "look" => look = Some(v.into()),
+            "every" => every = v.parse().unwrap(),
             "arms" => {
                 names = v.split(',').map(String::from).collect();
                 arms = names.iter().map(|s| Arm::parse(s)).collect();
@@ -191,7 +194,7 @@ fn main() {
                 }
                 let (seed, a, shoot) = jobs[j];
                 let pics = look.as_deref().filter(|_| seed == seeds[0]).map(|d| (d, names[a].replace(':', "-")));
-                let r = run(seed, scale, walkers, rules, &arms[a], shoot, grow, fire, rest, squad, pics.as_ref().map(|(d, n)| (*d, n.as_str())));
+                let r = run(seed, scale, walkers, rules, &arms[a], shoot, grow, fire, rest, squad, pics.as_ref().map(|(d, n)| (*d, n.as_str(), every)));
                 let s = |f: &dyn Fn(&Sec) -> String| r.secs.iter().map(f).collect::<Vec<_>>().join(" ");
                 println!(
                     "{:>10} {} seed {seed:>2}: placed {}, at the start {} cells {} walkers in range; {:.2} ms a tick\n    hole    {}\n    cells   {}\n    walkers {}\n    hit at  {}\n    hits    {}\n    killed  {}\n    alive   {}",
@@ -339,7 +342,7 @@ fn place(g: &Game<BigDish>, n: usize) -> Option<Line> {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: bool, grow: f32, fire: f32, rest: f32, n: usize, look: Option<(&str, &str)>) -> Run {
+fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: bool, grow: f32, fire: f32, rest: f32, n: usize, look: Option<(&str, &str, f32)>) -> Run {
     let mut p = race_params(seed, scale, walkers);
     arm.apply(&mut p);
     let mut world = BigDish::new(p);
@@ -419,10 +422,10 @@ fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: 
             }
             ceased = true;
         }
-        if let Some((dir, name)) = look {
+        if let Some((dir, name, every)) = look {
             if el >= next_pic - 1e-3 {
-                crop(&g, centre, ray, &format!("{dir}/{name}-{}-s{seed}-{:02.0}s.png", if shoot { "fire" } else { "hold" }, el));
-                next_pic += 5.0;
+                crop(&g, centre, ray, &format!("{dir}/{name}-{}-s{seed}-{:04.1}s.png", if shoot { "fire" } else { "hold" }, el));
+                next_pic += every;
             }
         }
         g.step();
@@ -449,7 +452,7 @@ fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: 
             (hit_sum, hits, shots, killed0) = (0.0, 0, 0, g.killed);
         }
     }
-    if let Some((dir, name)) = look {
+    if let Some((dir, name, _)) = look {
         crop(&g, centre, ray, &format!("{dir}/{name}-{}-s{seed}-{:02.0}s.png", if shoot { "fire" } else { "hold" }, g.time() - t0));
     }
     // A run cut short (the squad wiped, the mould gone) repeats its last

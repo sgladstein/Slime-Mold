@@ -49,7 +49,7 @@
 //! ticks.
 
 use super::big::{BigDish, BigParams, LIFE_DEAD};
-use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn};
+use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
 use super::Rng;
 
 /// The world under the game: what the rules need of it, and nothing else.
@@ -89,6 +89,12 @@ pub trait World {
     /// cheaply: the GPU world needs an occupancy read-back first.
     fn mould_grid(&self, _bin: usize) -> Option<Vec<u32>> {
         None
+    }
+    /// For each point (fine cells), the gassed sleeping walkers within `r`
+    /// (`BigDish::gassed_near`), which don't bite; 0 where the world has
+    /// no sleep gas (the GPU world, so far).
+    fn calm(&self, at: &[(f32, f32)], _r: f32) -> Vec<u32> {
+        vec![0; at.len()]
     }
 }
 
@@ -148,6 +154,10 @@ impl World for BigDish {
         BigDish::hash(self)
     }
 
+    fn calm(&self, at: &[(f32, f32)], r: f32) -> Vec<u32> {
+        self.gassed_near(at, r)
+    }
+
     fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
         let (gw, gh) = (self.w.div_ceil(bin), self.h.div_ceil(bin));
         let mut out = vec![0u32; gw * gh];
@@ -170,32 +180,28 @@ pub fn race_world(seed: u64, scale: usize, walkers: usize) -> BigDish {
     BigDish::new(race_params(seed, scale, walkers))
 }
 
-/// The mould turns from fresh gunfire (2026-11-12): the alarm field is on
-/// (`alarm_keep` 0.98, the Swarmer's) and its sensors read it at weight -1,
-/// so the alarm each hit lays (`squad::SHOT_ALARM`, out to twice the
-/// strike's radius) is ground the mould backs away from while it is fresh.
-/// The owner, 04:39Z: "A group of soldiers shooting the slime should start
+/// The mould's turn from fresh gunfire, an opt-in (`flee=W` in the census
+/// and the hole test), not the race world's default. With the alarm field on
+/// (`alarm_keep` 0.98, the Swarmer's) and read at weight -1, the alarm each
+/// hit lays (`squad::SHOT_ALARM`, out to twice the strike's radius) is
+/// ground the mould backs away from while it is fresh. It answers the
+/// owner's 04:39Z bar ("A group of soldiers shooting the slime should start
 /// carving out a bigger and bigger hole that doesn't refill while being
-/// shot at". In the hole test (`examples/larderhole.rs`, 16 seeds, a squad
-/// of 4 firing 20 s from 8 dish cells off the body's edge) the hole at 20 s
-/// was 102 dish cells against 29 without it (16 of 16 larger, sign test p
-/// < 0.0001), 77% of the mould in range, with the hits pushed from 3.7 to
-/// 9.3 dish cells out; 5 s after the last shot 45% of it was left, and by
-/// 10 s it was back to holding fire's. Weight 3 or keep 0.99 opened more
-/// (126, 127) and refilled slower; 0.3 or keep 0.95 less (72, 67). A
-/// slower mould clock (half the fine steps a tick) did not (44 against 37,
-/// 12 of 16, p 0.08), as the graphics thread found timing refills. This is
-/// the local push the Skittish tier's flee (`Reports/dead-ends.md`,
-/// `alarm_weight` below 0) was rejected for: it moved only the walkers next
-/// to the wound, which is what a hole needs. Tiers that set their own
-/// weight (the Sleeper and Swarmer, +3) keep it; the Sporer flees too.
+/// shot at") in the hole test (`examples/larderhole.rs`, 16 seeds): 102
+/// dish cells after 20 s of four soldiers' fire against 29 without it. It
+/// was the default for a few hours on 2026-11-12 and failed the census gate
+/// (race seeds 5-20, free shots): random wiped the mould on 12 of 16 seeds
+/// (2 without it) and beat farm, wall and rush 13-3, because random's
+/// Attack orders hold the core once the mould no longer overruns soldiers
+/// there, and a mould without births starves; the first touch on a squad
+/// came later too (farm +36 s median). `Reports/dead-ends.md` has the
+/// condition: a flee that holds the core (or the mould's own crystals)
+/// could pass.
 pub const FLEE_KEEP: f32 = 0.98;
 pub const FLEE_WEIGHT: f32 = -1.0;
 
 pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
     BigParams {
-        alarm_keep: FLEE_KEEP,
-        alarm_weight: FLEE_WEIGHT,
         scale,
         substeps: scale,
         walkers,
@@ -292,6 +298,16 @@ pub struct Rules {
     /// With it on, a wiped squad is no loss while a recruit can still come.
     /// 0, the default, is off.
     pub reserve: f32,
+    /// A carrier back from a dry crystal with nothing queued walks on to
+    /// the nearest crystal with charge left (`Game::seek`), the mould's
+    /// home excepted, rather than holding at the larder (owner, 11-12
+    /// 04:22Z: better orders for harvesting). Only to a safe crystal
+    /// (`Game::seek`). On, for the window and the census alike (one game):
+    /// on seeds 5-20 the gate holds, farm 10 higher and 5 lower than with
+    /// it off (p 0.30), wall 4 and 11 (p 0.12). The first version (nearest
+    /// to the soldier, any crystal) cost wall 14 of 16 (p 0.004) and was
+    /// replaced (`Reports/dead-ends.md`).
+    pub seek: bool,
 }
 
 impl Default for Rules {
@@ -328,6 +344,7 @@ impl Default for Rules {
             home_dry: true,
             overrun: 0.0,
             reserve: 0.0,
+            seek: true,
         }
     }
 }
@@ -419,6 +436,12 @@ pub enum Cmd {
     Buy,
     /// A wall between two points, fine cells.
     Wall((f32, f32), (f32, f32)),
+    /// Shift + an order: soldier `k` does it after the ones it has
+    /// (`Soldier::queue`); a soldier holding starts it at once.
+    Queue(usize, Order),
+    /// The larder's rally point (`Game::rally`): what a bought soldier is
+    /// first ordered to do; `Order::Hold` clears it.
+    Rally(Order),
 }
 
 impl Cmd {
@@ -428,6 +451,8 @@ impl Cmd {
             Cmd::Stance(k, s) => super::larder::Cmd::Stance(k, s).to_line(),
             Cmd::Buy => "buy".into(),
             Cmd::Wall(a, b) => format!("wall {} {} {} {}", a.0, a.1, b.0, b.1),
+            Cmd::Queue(k, o) => format!("queue{}", &super::larder::Cmd::Order(k, o).to_line()["order".len()..]),
+            Cmd::Rally(o) => format!("rally{}", &super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
         }
     }
 
@@ -437,6 +462,18 @@ impl Cmd {
             let f = |i: usize| w.get(i).and_then(|v| v.parse::<f32>().ok());
             return Some(Cmd::Wall((f(1)?, f(2)?), (f(3)?, f(4)?)));
         }
+        if let Some(rest) = line.trim_start().strip_prefix("rally ") {
+            return match super::larder::Cmd::parse(&format!("order 0 {rest}"))? {
+                super::larder::Cmd::Order(_, o) => Some(Cmd::Rally(o)),
+                _ => None,
+            };
+        }
+        if let Some(rest) = line.trim_start().strip_prefix("queue ") {
+            return match super::larder::Cmd::parse(&format!("order {rest}"))? {
+                super::larder::Cmd::Order(k, o) => Some(Cmd::Queue(k, o)),
+                _ => None,
+            };
+        }
         match super::larder::Cmd::parse(line)? {
             super::larder::Cmd::Order(k, o) => Some(Cmd::Order(k, o)),
             super::larder::Cmd::Stance(k, s) => Some(Cmd::Stance(k, s)),
@@ -445,6 +482,9 @@ impl Cmd {
         }
     }
 }
+
+/// Orders a soldier can hold in its queue after the one it is doing.
+pub const QUEUE: usize = 8;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Soldier {
@@ -459,6 +499,10 @@ pub struct Soldier {
     /// Walking home from a crystal that ran dry (`Rules::home_dry`): once
     /// it banks, it holds at the larder instead of walking back for crumbs.
     pub dry: bool,
+    /// Orders to do after this one (Shift, `Cmd::Queue`), first
+    /// `queued` of them; fixed size so a soldier stays `Copy`.
+    pub queue: [Order; QUEUE],
+    pub queued: u8,
     pub alive: bool,
     /// Tick of its next shot.
     ready: u64,
@@ -469,6 +513,10 @@ pub struct Soldier {
     pub aim: Option<(f32, f32)>,
     /// Walkers in the block it aims at.
     pub dense: u32,
+    /// Its smell, x `Rules::smell` (1). The squad toolkit's mask (0: the
+    /// mould can't smell it, to sneak to a crystal) and reek (over 1: a
+    /// decoy that pulls the mould off the harvesters), `mould::kit`.
+    pub smell: f32,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -541,6 +589,9 @@ pub struct Game<W: World> {
     paths: Paths,
     pub rng: Rng,
     pub log: Vec<(u64, Cmd)>,
+    /// The larder's rally point: the order a bought soldier starts with
+    /// (`Cmd::Rally`; the window's right click with the larder selected).
+    pub rally: Order,
 }
 
 /// The squad's base on a world: the crystal farthest from the home one
@@ -607,6 +658,7 @@ impl<W: World> Game<W> {
             paths: Paths::default(),
             rng: Rng::new(seed ^ 0x001a_2de2_501d),
             log: Vec::new(),
+            rally: Order::Hold,
         };
         for k in 0..rules.squad {
             let a = k as f32 / rules.squad.max(1) as f32 * std::f32::consts::TAU;
@@ -632,12 +684,15 @@ impl<W: World> Game<W> {
             carry: 0.0,
             homing: false,
             dry: false,
+            queue: [Order::Hold; QUEUE],
+            queued: 0,
             alive: true,
             ready: 0,
             beat: 0,
             touching: 0,
             aim: None,
             dense: 0,
+            smell: 1.0,
         });
     }
 
@@ -661,7 +716,22 @@ impl<W: World> Game<W> {
             Cmd::Order(k, o) if k < self.soldiers.len() => {
                 self.soldiers[k].order = o;
                 self.soldiers[k].homing = false;
+                self.soldiers[k].queued = 0;
                 true
+            }
+            Cmd::Queue(k, o) if k < self.soldiers.len() => {
+                let s = &mut self.soldiers[k];
+                if s.order == Order::Hold && s.queued == 0 {
+                    s.order = o;
+                    s.homing = false;
+                    true
+                } else if (s.queued as usize) < QUEUE {
+                    s.queue[s.queued as usize] = o;
+                    s.queued += 1;
+                    true
+                } else {
+                    false
+                }
             }
             Cmd::Stance(k, st) if k < self.soldiers.len() => {
                 self.soldiers[k].stance = st;
@@ -669,6 +739,10 @@ impl<W: World> Game<W> {
             }
             Cmd::Buy => self.buy(),
             Cmd::Wall(a, b) => self.wall(a, b),
+            Cmd::Rally(o) => {
+                self.rally = o;
+                true
+            }
             _ => false,
         }
     }
@@ -681,6 +755,9 @@ impl<W: World> Game<W> {
         self.spent += self.rules.soldier_cost;
         let a = self.rng.f32() * std::f32::consts::TAU;
         self.add_soldier(a);
+        if let Some(s) = self.soldiers.last_mut() {
+            s.order = self.rally;
+        }
         true
     }
 
@@ -730,7 +807,7 @@ impl<W: World> Game<W> {
         };
         match s.order {
             Order::Hold => None,
-            Order::Move(x, y) => Some(off((x, y))),
+            Order::Move(x, y) | Order::Fight(x, y) => Some(off((x, y))),
             Order::Clear(x, y) => {
                 if s.homing {
                     Some(off(self.larder))
@@ -771,7 +848,7 @@ impl<W: World> Game<W> {
         let Some(g) = self.goal(k) else { return };
         let s = self.soldiers[k];
         let d = (g.0 - s.x).hypot(g.1 - s.y);
-        if d < 0.5 {
+        if d < 0.5 || self.engaged(k) {
             return;
         }
         let g = if self.clear_line((s.x, s.y), g) {
@@ -822,6 +899,73 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// An attack-moving soldier (`Order::Fight`) with mould it can shoot in
+    /// sight: it stands and fights instead of walking on.
+    fn engaged(&self, k: usize) -> bool {
+        let s = self.soldiers[k];
+        let Order::Fight(..) = s.order else { return false };
+        let Some(aim) = s.aim else { return false };
+        s.dense >= self.rules.aim_min && (aim.0 - s.x).hypot(aim.1 - s.y) <= self.rules.range * self.s() && self.clear_line((s.x, s.y), aim)
+    }
+
+    /// Soldier `k` takes the next order in its queue, if it has one.
+    fn next(&mut self, k: usize) -> bool {
+        let s = &mut self.soldiers[k];
+        if s.queued == 0 {
+            return false;
+        }
+        s.order = s.queue[0];
+        s.queue.copy_within(1.., 0);
+        s.queued -= 1;
+        s.homing = false;
+        true
+    }
+
+    /// The crystal a harvester from `skip` goes on to (`Rules::seek`), its
+    /// centre, fine cells; None sends it home to hold. Only a safe one: at
+    /// least a frame's harvest left, never the mould's home (crystal 0),
+    /// none the mould has eaten from (as `share` counts it), and none
+    /// nearer the core than the larder (the squad's side of the map). Of
+    /// those, the nearest the larder that no other soldier is harvesting,
+    /// else the nearest the larder. (The first version took the nearest to
+    /// the soldier and only preferred uneaten crystals: the wall hand
+    /// scored lower with it on 14 of 16 seeds, its farmers walking out past
+    /// its wall.)
+    pub fn seek(&self, k: usize, skip: Option<usize>) -> Option<(f32, f32)> {
+        let r = self.rules;
+        let ask = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
+        let (l, core) = (self.larder, self.core);
+        let d = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).hypot(a.1 - b.1);
+        let busy: Vec<usize> = self
+            .soldiers
+            .iter()
+            .enumerate()
+            .filter(|&(q, s)| q != k && s.alive)
+            .filter_map(|(_, s)| if let Order::Clear(x, y) = s.order { self.crystal_at((x, y)).map(|c| c.0) } else { None })
+            .collect();
+        self.world
+            .crystals()
+            .into_iter()
+            .enumerate()
+            .filter(|&(i, (c, charge))| i != 0 && Some(i) != skip && charge >= ask && d(c, l) < d(c, core))
+            .filter(|&(i, (_, charge))| self.start_charge[i] - charge - self.taken[i] <= 0.01 * self.start_charge[i])
+            .min_by(|a, b| busy.contains(&a.0).cmp(&busy.contains(&b.0)).then(d(a.1 .0, l).total_cmp(&d(b.1 .0, l))))
+            .map(|(_, (c, _))| c)
+    }
+
+    /// Soldier `k` is done with a crystal that ran dry (`skip`): its next
+    /// queued order, else (`Rules::seek`) the next crystal, else hold.
+    fn after_dry(&mut self, k: usize, skip: Option<usize>) {
+        if self.next(k) {
+            return;
+        }
+        let o = match self.rules.seek.then(|| self.seek(k, skip)).flatten() {
+            Some(c) => Order::Clear(c.0, c.1),
+            None => Order::Hold,
+        };
+        self.soldiers[k].order = o;
+    }
+
     /// Where soldier `k` fires this frame, if anywhere (fine cells).
     fn target(&mut self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
@@ -840,7 +984,7 @@ impl<W: World> Game<W> {
             return None;
         }
         let near = |p: (f32, f32), r: f32| (p.0 - aim.0).hypot(p.1 - aim.1) <= r;
-        let stance = if s.order == Order::Attack { Stance::Free } else { s.stance };
+        let stance = if matches!(s.order, Order::Attack | Order::Fight(..)) { Stance::Free } else { s.stance };
         match stance {
             Stance::HoldFire => None,
             Stance::Free => Some(aim),
@@ -876,6 +1020,18 @@ impl<W: World> Game<W> {
                 continue;
             }
             self.walk(k, dt);
+            // A move that has arrived starts the next queued order (with
+            // none queued it stays, as before: the window shows where).
+            if self.soldiers[k].queued > 0 {
+                let arrived = match self.soldiers[k].order {
+                    Order::Hold => true,
+                    Order::Move(..) | Order::Fight(..) => self.goal(k).is_none_or(|g| (g.0 - self.soldiers[k].x).hypot(g.1 - self.soldiers[k].y) <= 1.5 * sc),
+                    _ => false,
+                };
+                if arrived {
+                    self.next(k);
+                }
+            }
             let s = self.soldiers[k];
             // Harvest: at its crystal and not full, a clearing soldier takes;
             // full, it walks home; home, it banks.
@@ -890,7 +1046,8 @@ impl<W: World> Game<W> {
                         self.soldiers[k].homing = false;
                         if self.soldiers[k].dry {
                             self.soldiers[k].dry = false;
-                            self.soldiers[k].order = Order::Hold;
+                            let skip = self.crystal_at((x, y)).map(|c| c.0);
+                            self.after_dry(k, skip);
                         }
                     }
                 } else if s.carry >= r.carry {
@@ -923,7 +1080,7 @@ impl<W: World> Game<W> {
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
                 smell_r: r.smell_r * sc,
-                smell: self.world.food_deposit() * r.smell * r.frame_ticks as f32,
+                smell: self.world.food_deposit() * r.smell * s.smell * r.frame_ticks as f32,
             });
             who.push(Some(k));
             from.push(at_crystal);
@@ -946,7 +1103,12 @@ impl<W: World> Game<W> {
         self.shots += f.shots.len() as u32;
         self.last_shots = f.shots.iter().zip(&out.shots).map(|(i, o)| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed }).collect();
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
+        // Gassed mould sleeps and does not bite (the squad toolkit's sleep
+        // gas): its walkers are taken off each unit's touch.
+        let calm = self.world.calm(&f.units.iter().map(|u| (u.x, u.y)).collect::<Vec<_>>(), r.touch * sc);
+        let out = FrameOut { units: out.units.iter().zip(&calm).map(|(u, &c)| UnitOut { touching: u.touching.saturating_sub(c), ..*u }).collect(), ..out };
         let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };
+        let mut empty = Vec::new();
         for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
             if let Some(c) = *c {
                 self.taken[c] += u.took;
@@ -977,9 +1139,16 @@ impl<W: World> Game<W> {
                     // and a farm hand that skips dry crystals, the hand
                     // harvests twice the food (22,875 to 46,364 a game).
                     if let (true, Some(i)) = (r.home_dry, *c) {
-                        if u.took < 0.5 * ask.take && s.carry > 0.0 && left[i] < ask.take {
-                            s.homing = true;
-                            s.dry = true;
+                        if u.took < 0.5 * ask.take && left[i] < ask.take {
+                            if s.carry > 0.0 {
+                                s.homing = true;
+                                s.dry = true;
+                            } else if r.seek || s.queued > 0 {
+                                // Empty-handed at a dry crystal (sent to
+                                // one, or it ran dry on the first take):
+                                // on at once, nothing to bank.
+                                empty.push((k, i));
+                            }
                         }
                     }
                     if u.touching > 0 {
@@ -1001,6 +1170,9 @@ impl<W: World> Game<W> {
                     self.larder_touch = u.touching;
                 }
             }
+        }
+        for (k, i) in empty {
+            self.after_dry(k, Some(i));
         }
         self.check_core();
         let now = self.world.ticks();
@@ -1318,6 +1490,9 @@ mod tests {
         // empties it, walks home with what it took, banks it and holds
         // there, rather than wait for a full load or walk back for crumbs.
         let mut g = small(2);
+        // Holding there is the rule without `seek` (with it the soldier
+        // walks on: `a_harvester_at_a_dry_crystal_goes_on_to_the_next`).
+        g.rules.seek = false;
         let (k, c) = g.crystal_at(g.larder).unwrap();
         let d = &mut g.world;
         let s = d.p.scale as f32;
@@ -1528,5 +1703,98 @@ mod tests {
         assert_eq!(a.world.ticks(), b.world.ticks());
         assert_eq!(a.world.hash(), b.world.hash());
         assert_eq!(a.bank.to_bits(), b.bank.to_bits());
+    }
+
+    #[test]
+    fn queued_orders_run_in_turn_and_read_back_from_a_replay() {
+        let mut g = small(6);
+        let (x, y) = g.larder;
+        let (a, b) = ((x - 8.0, y), (x - 8.0, y - 8.0));
+        // Holding: a queued order starts at once; the next one waits.
+        assert!(g.apply(Cmd::Queue(0, Order::Move(a.0, a.1))));
+        assert!(g.apply(Cmd::Queue(0, Order::Fight(b.0, b.1))));
+        assert_eq!(g.soldiers[0].order, Order::Move(a.0, a.1));
+        assert_eq!(g.soldiers[0].queued, 1);
+        for _ in 0..(g.rules.tps * 10) {
+            g.step();
+        }
+        assert_eq!(g.soldiers[0].order, Order::Fight(b.0, b.1), "the move arrived and the queue moved on");
+        assert_eq!(g.soldiers[0].queued, 0);
+        // A plain order drops the queue.
+        g.apply(Cmd::Queue(0, Order::Move(a.0, a.1)));
+        g.apply(Cmd::Order(0, Order::Hold));
+        assert_eq!(g.soldiers[0].queued, 0);
+        g.apply(Cmd::Rally(Order::Clear(a.0, a.1)));
+        g.bank = 1e6;
+        assert!(g.apply(Cmd::Buy));
+        assert_eq!(g.soldiers.last().unwrap().order, Order::Clear(a.0, a.1), "a bought soldier takes the rally order");
+        for c in [Cmd::Rally(Order::Move(5.5, 6.0)), Cmd::Rally(Order::Hold), Cmd::Queue(3, Order::Fight(1.5, 2.25)), Cmd::Queue(1, Order::Clear(3.0, 4.0)), Cmd::Order(2, Order::Fight(7.0, 8.5))] {
+            assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
+        }
+    }
+
+    #[test]
+    fn a_harvester_at_a_dry_crystal_goes_on_to_the_next() {
+        let mut g = small(7);
+        g.rules.seek = true;
+        // Soldier 0 is sent to a crystal; then that crystal's charge reads
+        // as gone, so the next frame's take finds it dry.
+        let target = g.seek(0, None).expect("a crystal with charge");
+        let (i, _) = g.crystal_at(target).unwrap();
+        g.apply(Cmd::Order(0, Order::Clear(target.0, target.1)));
+        for _ in 0..(g.rules.tps * 60) {
+            g.step();
+            if g.soldiers[0].carry > 0.0 {
+                break;
+            }
+        }
+        assert!(g.soldiers[0].carry > 0.0, "it reached the crystal and took");
+        let d = &mut g.world;
+        for c in 0..d.charge.len() {
+            if d.pile_of[c] as usize == i + 1 {
+                d.charge[c] = 0.0;
+            }
+        }
+        d.pile_charge[i] = 0.0;
+        let mut went_home = false;
+        for _ in 0..(g.rules.tps * 90) {
+            g.step();
+            went_home |= g.soldiers[0].homing;
+            if let Order::Clear(x, y) = g.soldiers[0].order {
+                if g.crystal_at((x, y)).map(|c| c.0) != Some(i) {
+                    break;
+                }
+            }
+        }
+        assert!(went_home, "it banked what it had first");
+        let Order::Clear(x, y) = g.soldiers[0].order else { panic!("{:?}", g.soldiers[0].order) };
+        let next = g.crystal_at((x, y)).unwrap().0;
+        assert!(next != i && next != 0, "on to another crystal, not the mould's home: {next}");
+        // With the rule off it holds at the larder, as before.
+        let mut h = small(7);
+        h.rules.seek = false;
+        h.apply(Cmd::Order(0, Order::Clear(target.0, target.1)));
+        h.after_dry(0, Some(i));
+        assert_eq!(h.soldiers[0].order, Order::Hold);
+    }
+
+    #[test]
+    fn moving_on_skips_crystals_the_mould_ate_from_or_a_soldier_works() {
+        let mut g = small(8);
+        g.rules.seek = true;
+        let first = g.seek(0, None).expect("a safe crystal");
+        let (i, _) = g.crystal_at(first).unwrap();
+        // Another soldier harvesting it: soldier 0 takes another.
+        g.apply(Cmd::Order(1, Order::Clear(first.0, first.1)));
+        let other = g.seek(0, None).expect("a second safe crystal");
+        assert_ne!(other, first, "not the one soldier 1 works");
+        // The mould ate a tenth of it: never chosen, even with no one on it.
+        g.apply(Cmd::Order(1, Order::Hold));
+        g.world.pile_charge[i] *= 0.9;
+        let c = g.seek(0, None).expect("a safe crystal");
+        assert_ne!(g.crystal_at(c).unwrap().0, i, "not a crystal the mould ate from");
+        // Every pick is on the squad's side: nearer the larder than the core.
+        let d = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).hypot(a.1 - b.1);
+        assert!(d(c, g.larder) < d(c, g.core));
     }
 }

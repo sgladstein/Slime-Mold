@@ -3,9 +3,9 @@
 //! into plain `UiCommand`s in world cells. No game rules: the game says
 //! where its units are (`Unit`) and decides what each command does.
 //!
-//! - Left click a unit selects it; left drag a box selects the local team's
-//!   units in it (Shift adds to the selection); a click on empty ground
-//!   clears it.
+//! - Left click a unit selects it; a double click selects every local
+//!   unit on screen; left drag a box selects the local team's units in it
+//!   (Shift adds to the selection); a click on empty ground clears it.
 //! - Right click gives the selection an order at that point (`Order`); the
 //!   game decides whether it is a move, or clearing a pile or a crystal.
 //! - Hold F and left drag: a burn line (`Burn`).
@@ -95,11 +95,13 @@ pub struct Controls {
     arrows: [bool; 4],
     drag: Option<Drag>,
     last_group: Option<(usize, Instant)>,
+    /// The last click that picked a unit, for the double click.
+    last_pick: Option<(usize, Instant)>,
 }
 
 impl Controls {
     pub fn new(team: u8) -> Self {
-        Controls { team, selected: Vec::new(), groups: Default::default(), cursor: None, ctrl: false, shift: false, burn: false, arrows_pan: true, edge: true, arrows: [false; 4], drag: None, last_group: None }
+        Controls { team, selected: Vec::new(), groups: Default::default(), cursor: None, ctrl: false, shift: false, burn: false, arrows_pan: true, edge: true, arrows: [false; 4], drag: None, last_group: None, last_pick: None }
     }
 
     fn mine<'a>(&self, units: &'a [Unit]) -> impl Iterator<Item = &'a Unit> + 'a {
@@ -180,7 +182,21 @@ impl Controls {
                             let (x0, x1, y0, y1) = (a.0.min(z.0), a.0.max(z.0), a.1.min(z.1), a.1.max(z.1));
                             self.mine(units).filter(|u| u.x >= x0 && u.x <= x1 && u.y >= y0 && u.y <= y1).map(|u| u.id).collect()
                         } else {
-                            self.pick(units, cam, c).into_iter().collect()
+                            let k = self.pick(units, cam, c);
+                            let double = k.is_some() && self.last_pick.is_some_and(|(q, t)| Some(q) == k && t.elapsed() < DOUBLE);
+                            self.last_pick = if double { None } else { k.map(|k| (k, Instant::now())) };
+                            if double {
+                                // Every local unit on screen.
+                                self.mine(units)
+                                    .filter(|u| {
+                                        let s = cam.to_screen((u.x, u.y));
+                                        s.0 >= 0.0 && s.1 >= 0.0 && s.0 < cam.screen.0 && s.1 < cam.screen.1
+                                    })
+                                    .map(|u| u.id)
+                                    .collect()
+                            } else {
+                                k.into_iter().collect()
+                            }
                         };
                         if self.shift {
                             for k in picked {
@@ -369,9 +385,22 @@ mod tests {
             c.zoom_to(zoom, (0.0, 0.0));
             c.centre_on((140.0, 100.0));
             let s = c.to_screen((140.0, 100.0));
+            k.last_pick = None;
             click(&mut k, Button::Left, (s.0 + 6.0, s.1 - 5.0), &u, &mut c);
             assert_eq!(k.selected, vec![2], "zoom {zoom}");
         }
+        // A second click on the same unit soon after: all of ours on screen.
+        let s = c.to_screen((140.0, 100.0));
+        click(&mut k, Button::Left, s, &u, &mut c);
+        let mut on: Vec<usize> = u.iter().filter(|q| q.alive && q.team == 0).filter(|q| {
+            let p = c.to_screen((q.x, q.y));
+            p.0 >= 0.0 && p.1 >= 0.0 && p.0 < c.screen.0 && p.1 < c.screen.1
+        }).map(|q| q.id).collect();
+        on.sort();
+        let mut got = k.selected.clone();
+        got.sort();
+        assert!(got.len() > 1 && got == on, "{got:?} against {on:?}");
+        k.last_pick = None;
         // The other team's unit cannot be picked.
         let s = c.to_screen((120.0, 110.0));
         click(&mut k, Button::Left, s, &u, &mut c);
