@@ -1,0 +1,46 @@
+cutprobe race world scale 2 walkers 5000, grow 150 s, follow 90 s, 3 cuts a seed, seeds [4]
+arms: [("H", [("energy_flow", "0.05"), ("hunger_scent", "8")]), ("R", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("hunger_reach", "3"), ("hunt_at", "0.8")]), ("RT", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("hunger_reach", "3"), ("hunt_at", "0.8"), ("tether", "2"), ("tether_hold", "0.3")]), ("T", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("hunt_at", "0.8"), ("tether", "2"), ("tether_hold", "0.3")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+H 4 grown | alive 7698 parts1% 2 lcs 0.96 lone 0.01 rms 53.0 | crystals eaten from 4 of 23
+cut H 4 0 at fine cell (76, 252)
+H 4 0 | 278 278 0 | 0.54 3.48 0.48 28.3 10.27 | 90 crystal 2 34.8 react 3 | 7698 12.80
+cut H 4 1 at fine cell (196, 56)
+H 4 1 | 263 263 0 | 0.65 4.11 0.41 28.6 8.90 | 90 crystal 2 48.2 react 5 | 7698 12.80
+cut H 4 2 at fine cell (164, 272)
+H 4 2 | 122 122 0 | 0.07 2.98 0.14 68.2 30.95 | 90 crystal 2 55.4 react 5 | 7698 12.80
+R 4 grown | alive 5591 parts1% 2 lcs 0.92 lone 0.02 rms 51.5 | crystals eaten from 2 of 23
+cut R 4 0 at fine cell (76, 256)
+R 4 0 | 336 336 0 | 0.07 13.74 0.19 41.1 31.06 | 24 crystal 2 57.3 react 2 | 5591 11.65
+cut R 4 1 at fine cell (144, 264)
+R 4 1 | 92 92 0 | 0.11 3.44 0.12 74.6 37.59 | 90 crystal 2 43.4 react 3 | 5591 11.65
+cut R 4 2 at fine cell (236, 280)
+R 4 2 | 64 64 0 | 0.05 3.34 0.11 82.1 51.03 | 90 crystal 2 59.4 react 3 | 5591 11.65
+RT 4 grown | alive 5036 parts1% 1 lcs 0.95 lone 0.03 rms 42.1 | crystals eaten from 2 of 23
+cut RT 4 0 at fine cell (72, 256)
+RT 4 0 | 311 311 0 | 0.25 11.90 0.26 23.4 33.88 | 12 crystal 2 34.5 react 3 | 5036 12.13
+cut RT 4 1 at fine cell (164, 272)
+RT 4 1 | 59 59 0 | 0.13 5.03 0.12 68.6 46.37 | 90 crystal 2 42.7 react 6 | 5036 12.13
+cut RT 4 2 at fine cell (40, 196)
+RT 4 2 | 33 33 0 | 0.18 10.81 0.17 29.5 23.99 | 90 crystal 2 29.3 react 4 | 5036 12.13
+T 4 grown | alive 9329 parts1% 1 lcs 0.98 lone 0.01 rms 50.4 | crystals eaten from 5 of 23
+cut T 4 0 at fine cell (196, 56)
+T 4 0 | 343 343 0 | 0.80 1.86 0.80 23.7 8.74 | 90 crystal 2 9.5 react 9 | 9329 13.98
+cut T 4 1 at fine cell (80, 252)
+T 4 1 | 234 234 0 | 0.29 4.97 0.32 26.7 12.96 | 90 crystal 2 32.2 react 5 | 9329 13.98
+cut T 4 2 at fine cell (40, 200)
+T 4 2 | 127 127 0 | 0.10 5.23 0.29 32.6 16.43 | 90 crystal 2 35.7 react 3 | 9329 13.98
+
+summary (mean over cuts)
+H: cuts 3 n0 221 lcs20 0.42 frag 3.52 lcs 0.34 rms20 41.7 compact20 16.71 life 90 moved 46.1 fates {"crystal": 3}
+R: cuts 3 n0 164 lcs20 0.08 frag 6.84 lcs 0.14 rms20 65.9 compact20 39.89 life 68 moved 53.4 fates {"crystal": 3}
+  vs H: lcs20 better 0 worse 3, p 0.2500
+  vs H: life better 0 worse 1, p 1.0000
+  vs H: compact20 better 0 worse 3, p 0.2500
+RT: cuts 3 n0 134 lcs20 0.19 frag 9.25 lcs 0.18 rms20 40.5 compact20 34.74 life 64 moved 35.5 fates {"crystal": 3}
+  vs H: lcs20 better 1 worse 2, p 1.0000
+  vs H: life better 0 worse 1, p 1.0000
+  vs H: compact20 better 1 worse 2, p 1.0000
+T: cuts 3 n0 235 lcs20 0.40 frag 4.02 lcs 0.47 rms20 27.7 compact20 12.71 life 90 moved 25.8 fates {"crystal": 3}
+  vs H: lcs20 better 2 worse 1, p 1.0000
+  vs H: life better 0 worse 0, p 1.0000
+  vs H: compact20 better 2 worse 1, p 1.0000

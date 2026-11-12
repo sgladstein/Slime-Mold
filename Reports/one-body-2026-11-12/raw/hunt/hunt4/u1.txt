@@ -1,0 +1,42 @@
+cutprobe race world scale 2 walkers 5000, grow 150 s, follow 40 s, 3 cuts a seed, seeds [1]
+arms: [("T1h", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("tether", "1"), ("tether_hold", "0.5")]), ("Tbd", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("tether", "1"), ("tether_hold", "0.5"), ("blocked_deposit", "0.5")]), ("Tbp", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("tether", "1"), ("tether_hold", "0.5"), ("body_pull", "3"), ("body_lone", "4")]), ("Tbp10", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("tether", "1"), ("tether_hold", "0.5"), ("body_pull", "10"), ("body_lone", "4"), ("body_r", "3")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+T1h 1 grown | alive 10752 parts1% 6 lcs 0.60 lone 0.00 rms 70.0 | crystals eaten from 5 of 23
+cut T1h 1 0 at fine cell (60, 92)
+T1h 1 0 | 226 226 0 | 0.67 2.22 0.81 16.3 8.47 | 40 crystal 2 11.2 react 13 | 10752 12.42
+cut T1h 1 1 at fine cell (128, 84)
+T1h 1 1 | 70 70 0 | 0.09 4.85 0.30 37.3 22.48 | 40 crystal 2 12.0 react 11 | 10752 12.42
+cut T1h 1 2 at fine cell (252, 60)
+T1h 1 2 | 55 55 0 | 0.55 3.17 0.63 23.3 13.32 | 40 crystal 2 13.7 react 18 | 10752 12.42
+Tbd 1 grown | alive 10225 parts1% 6 lcs 0.71 lone 0.01 rms 68.6 | crystals eaten from 6 of 23
+cut Tbd 1 0 at fine cell (68, 88)
+Tbd 1 0 | 104 104 0 | 0.52 2.44 0.69 22.5 11.45 | 40 crystal 2 7.4 react 12 | 10225 12.08
+cut Tbd 1 1 at fine cell (40, 152)
+Tbd 1 1 | 68 68 0 | 0.31 2.98 0.62 22.0 13.81 | 40 crystal 2 27.5 react 7 | 10225 12.08
+Tbp 1 grown | alive 9681 parts1% 6 lcs 0.66 lone 0.01 rms 56.5 | crystals eaten from 4 of 23
+cut Tbp 1 0 at fine cell (72, 84)
+Tbp 1 0 | 215 215 0 | 0.80 2.10 0.78 16.4 7.87 | 40 crystal 2 1.9 react -1 | 9681 13.14
+cut Tbp 1 1 at fine cell (40, 160)
+Tbp 1 1 | 49 49 0 | 0.17 8.32 0.34 28.2 40.85 | 40 crystal 2 38.9 react 5 | 9681 13.14
+Tbp10 1 grown | alive 9332 parts1% 10 lcs 0.60 lone 0.01 rms 70.8 | crystals eaten from 3 of 23
+cut Tbp10 1 0 at fine cell (68, 84)
+Tbp10 1 0 | 231 231 0 | 0.67 2.46 0.79 21.8 12.06 | 40 crystal 2 9.1 react 8 | 9332 14.01
+cut Tbp10 1 1 at fine cell (36, 152)
+Tbp10 1 1 | 85 85 0 | 0.20 5.34 0.49 30.0 21.28 | 40 crystal 2 31.5 react 7 | 9332 14.01
+cut Tbp10 1 2 at fine cell (248, 48)
+Tbp10 1 2 | 26 26 0 | 0.35 8.07 0.33 16.2 13.95 | 40 crystal 2 18.5 react 9 | 9332 14.01
+
+summary (mean over cuts)
+T1h: cuts 3 n0 117 lcs20 0.43 frag 3.41 lcs 0.58 rms20 25.6 compact20 14.76 life 40 moved 12.3 fates {"crystal": 3}
+Tbd: cuts 2 n0 86 lcs20 0.41 frag 2.71 lcs 0.66 rms20 22.3 compact20 12.63 life 40 moved 17.5 fates {"crystal": 2}
+  vs T1h: lcs20 better 1 worse 1, p 1.0000
+  vs T1h: life better 0 worse 0, p 1.0000
+  vs T1h: compact20 better 1 worse 1, p 1.0000
+Tbp: cuts 2 n0 132 lcs20 0.48 frag 5.21 lcs 0.56 rms20 22.3 compact20 24.36 life 40 moved 20.4 fates {"crystal": 2}
+  vs T1h: lcs20 better 2 worse 0, p 0.5000
+  vs T1h: life better 0 worse 0, p 1.0000
+  vs T1h: compact20 better 1 worse 1, p 1.0000
+Tbp10: cuts 3 n0 114 lcs20 0.41 frag 5.29 lcs 0.54 rms20 22.7 compact20 15.76 life 40 moved 19.7 fates {"crystal": 3}
+  vs T1h: lcs20 better 2 worse 1, p 1.0000
+  vs T1h: life better 0 worse 0, p 1.0000
+  vs T1h: compact20 better 1 worse 2, p 1.0000

@@ -1,0 +1,22 @@
+cutprobe race world scale 2 walkers 5000, grow 300 s, follow 120 s, 0 cuts a seed, seeds [6]
+arms: [("base", []), ("F", [("energy_flow", "0.05")]), ("H", [("energy_flow", "0.05"), ("hunger_scent", "8")]), ("HL", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("lone_upkeep", "2")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 6 grown | alive 5544 parts1% 2 lcs 0.95 lone 0.01 rms 42.4 | crystals eaten from 4 of 23
+F 6 grown | alive 9490 parts1% 1 lcs 0.97 lone 0.01 rms 42.7 | crystals eaten from 5 of 23
+H 6 grown | alive 18928 parts1% 2 lcs 0.97 lone 0.00 rms 56.9 | crystals eaten from 10 of 23
+HL 6 grown | alive 19423 parts1% 2 lcs 0.93 lone 0.00 rms 64.4 | crystals eaten from 10 of 23
+
+summary (mean over cuts)
+base: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+F: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
+H: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
+HL: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
