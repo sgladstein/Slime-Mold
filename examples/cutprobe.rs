@@ -76,6 +76,8 @@ fn set(p: &mut BigParams, k: &str, v: &str) {
         "substeps" => p.substeps = f() as usize,
         "hunger_scent" => p.hunger_scent = f(),
         "hunger_at" => p.hunger_at = f(),
+        "hunger_reach" => p.hunger_reach = f(),
+        "hunt_at" => p.hunt_at = f(),
         "body_pull" => p.body_pull = f(),
         "body_r" => p.body_r = f() as u8,
         "body_lone" => p.body_lone = f(),
@@ -531,7 +533,7 @@ struct Run {
     react: f32,
 }
 
-fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, look: Option<(&str, String)>, series: &mut Option<std::fs::File>, key: &str) -> Run {
+fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone: bool, look: Option<(&str, String)>, series: &mut Option<std::fs::File>, key: &str) -> Run {
     let mut d = grown.clone();
     let (w, h) = (d.w, d.h);
     let mut cutm = vec![false; w * h];
@@ -549,8 +551,20 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, look: 
     let (lab, _) = label(&dilate(&occ, w, h, d.p.scale), w, h);
     let pl = lab[cut.tip];
     let mut tag: Vec<u8> = (0..d.walkers.len()).map(|k| if !d.lives(k) { 0 } else if pl > 0 && lab[cell_of(&d, k)] == pl { 1 } else { 2 }).collect();
+    // With `alone`, the rest of the mould is removed: the hunk has the world
+    // to itself, so whatever it reaches it found.
+    if alone {
+        for k in 0..d.walkers.len() {
+            if tag[k] == 2 && holds(&d, k) {
+                d.kill(k);
+                tag[k] = 0;
+            }
+        }
+    }
     let mut was: Vec<bool> = (0..d.walkers.len()).map(|k| d.lives(k)).collect();
     let mut grid = vec![0u8; w * h];
+    // Fed: some of its walkers stand on crystal with charge at the cut.
+    let fed0 = !d.charge.is_empty() && (0..d.walkers.len()).any(|k| tag[k] == 1 && holds(&d, k) && d.pile_of[cell_of(&d, k)] > 0 && d.charge[cell_of(&d, k)] > 0.0);
     let s0 = sample(&d, &tag, 0.0);
     let n0 = s0.n;
     let mut samples = vec![s0.clone()];
@@ -607,7 +621,8 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, look: 
             }
         }
     }
-    let fed = first_took > 0.0;
+    let _ = first_took;
+    let fed = fed0;
     let alive: Vec<&Sample> = samples.iter().filter(|s| s.n > 0).collect();
     let at = |t: f32| samples.iter().find(|s| s.t >= t).cloned().unwrap_or_default();
     let s20 = at(20.0);
@@ -678,7 +693,7 @@ fn sign_p(a: usize, b: usize) -> f64 {
 fn main() {
     let mut seeds: Vec<u64> = (1..=4).collect();
     let (mut scale, mut walkers, mut grow, mut after, mut ncuts, mut cutw, mut wound, mut ring) = (2usize, 5_000usize, 60u64, 120u64, 3usize, 3.0f32, 0u64, 0.0f32);
-    let (mut unfed, mut half) = (false, false);
+    let (mut unfed, mut half, mut alone) = (false, false, false);
     let mut arms: Vec<(String, Vec<(String, String)>)> = Vec::new();
     let (mut look, mut series) = (None::<String>, None::<std::fs::File>);
     for a in std::env::args().skip(1) {
@@ -698,6 +713,7 @@ fn main() {
             "ring" => ring = v.parse().unwrap(),
             "unfed" => unfed = v == "1",
             "half" => half = v == "1",
+            "alone" => alone = v == "1",
             "look" => look = Some(v.into()),
             "series" => {
                 let mut f = std::fs::File::create(v).expect("series file");
@@ -769,7 +785,7 @@ fn main() {
                 let key = format!("{name},{seed},{ci}");
                 let lk = look.as_ref().map(|dir| (dir.as_str(), format!("{name}-s{seed}-c{ci}")));
                 println!("cut {name} {seed} {ci} at fine cell ({}, {})", cut.tip % d.w, cut.tip / d.w);
-                let r = follow(&d, cut, after, wound, half, lk, &mut series, &key);
+                let r = follow(&d, cut, after, wound, half, alone, lk, &mut series, &key);
                 println!(
                     "{name} {seed} {ci} | {} {:.0} {} | {:.2} {:.2} {:.2} {:.1} {:.2} | {:.0} {} {:.0} {:.1} react {:.0} | {alive} {grow_ms:.2}",
                     r.n0, r.back, r.fed as u8, r.lcs20, r.frag_mean, r.lcs_mean, r.rms20, r.compact20, r.life, r.fate, r.fate_t, r.moved, r.react

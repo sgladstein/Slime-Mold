@@ -416,6 +416,16 @@ pub struct BigParams {
     /// `hunger_at`): a hungry walker follows food harder than a fed one.
     pub hunger_scent: f32,
     pub hunger_at: f32,
+    /// A starving walker (hunger `hunt_at` or more) smells further: its
+    /// scent sensors reach `scent_offset` x (1 + `hunger_reach` x hunger)
+    /// (0 is off). So a cut-off hunk with no food in reach widens its
+    /// search as it starves. (Applied at any hunger, `hunger_reach` 3 broke
+    /// the fed mould: walkers smelled past their own crystal and the mould
+    /// fell to 0-1,900 walkers at 150 s against H's 6,600-11,900.)
+    pub hunger_reach: f32,
+    /// The hunger at which a walker hunts (`hunger_reach`, and `tether`
+    /// when this is over 0); 0: every walker, at any hunger.
+    pub hunt_at: f32,
     /// **Body pull** (2026-11-12, the one-body thread; 0 is off). Owner,
     /// 04:13-04:18Z: the mould "didn't feel like one cohesive organism"; a
     /// cut-off part should "feel like a cut off hunk and not a bunch of
@@ -733,6 +743,8 @@ impl BigParams {
             energy_flow: 0.0,
             hunger_scent: 0.0,
             hunger_at: 1.0,
+            hunger_reach: 0.0,
+            hunt_at: 0.0,
             body_pull: 0.0,
             body_r: 2,
             body_lone: 0.0,
@@ -1876,7 +1888,13 @@ impl BigDish {
             }
             // Trail-dependent settings (`sense_scale`), read where it stands.
             let (mut so, mut sa, mut ra, mut st) = (set.sensor_offset, set.sensor_angle, set.rotate_angle, set.step);
-            let sso = if p.scent_offset > 0.0 { p.scent_offset } else { set.sensor_offset };
+            let mut sso = if p.scent_offset > 0.0 { p.scent_offset } else { set.sensor_offset };
+            if p.hunger_reach > 0.0 {
+                let g = self.hunger(k);
+                if g >= p.hunt_at {
+                    sso *= 1.0 + p.hunger_reach * g;
+                }
+            }
             if !self.kind.is_empty() && self.kind[k] == 1 {
                 so *= p.mix_reach;
                 sa *= p.mix_angle;
@@ -1913,7 +1931,7 @@ impl BigDish {
             }
             if look {
                 let sw = if p.hunger_scent > 0.0 && !self.energy.is_empty() {
-                    1.0 + p.hunger_scent * (1.0 - self.energy[k] / p.hunger_at).max(0.0)
+                    1.0 + p.hunger_scent * self.hunger(k)
                 } else {
                     1.0
                 };
@@ -1960,7 +1978,7 @@ impl BigDish {
             }
             let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
             match self.cell(nx, ny) {
-                Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16) && self.tethered(here, there)) => {
+                Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16) && self.tethered(k, here, there)) => {
                     if there != here && crowd > 0 {
                         let key = keyed(seed, t, CLAIM_MOVE, k as u32);
                         self.claim[there] = self.claim[there].min(key);
@@ -2006,7 +2024,7 @@ impl BigDish {
                 let here = self.cell(x, y).expect("walker inside the dish");
                 let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
                 match self.cell(nx, ny) {
-                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 && self.tethered(here, there) => {
+                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 && self.tethered(k as usize, here, there) => {
                         let key = keyed(seed, t, CLAIM_RETRY + r as u32, k);
                         self.claim[there] = self.claim[there].min(key);
                         tries.push((k, here as u32, there as u32, nx, ny, h, st));
@@ -2250,8 +2268,19 @@ impl BigDish {
         n
     }
 
-    fn tethered(&self, here: usize, there: usize) -> bool {
-        let t = self.p.tether as u32;
+    /// Walker `k`'s hunger, 0 (fed at `hunger_at` or more) to 1 (empty); 0
+    /// with growth off.
+    fn hunger(&self, k: usize) -> f32 {
+        if self.energy.is_empty() || self.p.hunger_at <= 0.0 {
+            return 0.0;
+        }
+        (1.0 - self.energy[k] / self.p.hunger_at).max(0.0)
+    }
+
+    fn tethered(&self, k: usize, here: usize, there: usize) -> bool {
+        // With `hunt_at` over 0 only hunting walkers are tethered: a fed
+        // body spreads as today, a starving hunk keeps together.
+        let t = if self.p.hunt_at > 0.0 && self.hunger(k) < self.p.hunt_at { 0 } else { self.p.tether as u32 };
         t == 0 || self.others_round(there, here) >= t.min(self.others_round(here, here))
     }
 
@@ -3453,6 +3482,7 @@ mod tests {
             BigParams { tether: 2, ..grow.clone() },
             BigParams { tether: 1, tether_hold: 0.3, ..grow.clone() },
             BigParams { lone_upkeep: 5.0, lone_r: 2, ..grow.clone() },
+            BigParams { hunger_reach: 3.0, hunt_at: 0.3, tether: 1, ..grow.clone() },
         ] {
             let mut a = BigDish::new(p);
             let mut b = a.clone();
