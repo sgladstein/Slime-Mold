@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T23:20Z
+updated: 2026-11-12
 sources:
   - Reports/gpu-readout-2026-11-12.md
   - Reports/larder-build-plan-2026-11-11.md
