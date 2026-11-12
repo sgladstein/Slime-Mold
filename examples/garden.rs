@@ -6,7 +6,23 @@
 //! ```text
 //! cargo run --release --example garden -- census seeds=1-32 [hands=idle,random,farm,road,feed,grow cap=300 walkers=2500 threads=4]
 //! cargo run --release --example garden -- look=DIR seeds=1 hands=road [every=60]
+//! cargo run --release --example garden -- front seeds=1-32 [at=150 arms=none,sow,shoot,road,cut look=DIR]
 //! ```
+//!
+//! **The front probe** (`front`, after the designer's review of #119: two
+//! moulds holding a line is an RTS front; does each action move it?): every
+//! arm plays `sow2` to `at` seconds, when the two moulds meet, then the
+//! squad farms and soldiers 0 and 1 take the arm's action for 40 s:
+//! **none** (back to the larder), **sow** (Feed at the front), **shoot**
+//! (Free fire at the front), **road** (Road 15 cells past the front, into
+//! the enemy), **cut** (Cut at the front: the player's own line should
+//! fall back, a check that the measure sees a move). The front is the
+//! player's cell (own trail over 1 and over the enemy's) nearest the
+//! enemy's core. **Deciding measure, named before the run:** the player's
+//! cells (own trail over 1 and over the enemy's) 20 s after the branch,
+//! less the none arm's on the same seed, sign test, Holm over the four
+//! arms and both measures; second measure the enemy's cells the same way.
+//! Printed at 20 and 40 s.
 //!
 //! **Deciding measure, named before the run:** the player's share of the
 //! crystal charge gone over the game, both of the player's eaters
@@ -88,6 +104,7 @@ fn opts() -> Opts {
             "threads" => o.threads = v.parse().unwrap(),
             "look" => o.look = Some(v.to_string()),
             "every" => o.every = v.parse().unwrap(),
+            "at" | "arms" => {}
             _ => panic!("unknown key {k}"),
         }
     }
@@ -359,8 +376,175 @@ fn sign_p(a: usize, b: usize) -> f64 {
     (2.0 * tail / 2f64.powi(n as i32)).min(1.0)
 }
 
+/// The player's and the enemy's cells: trail over 1 and over the other's.
+fn cells(g: &Game<Garden>) -> (usize, usize) {
+    let d = &g.world.dish;
+    let (mut own, mut enemy) = (0, 0);
+    for i in 0..d.w * d.h {
+        let o = d.species_trail[OWN as usize][i];
+        let e = d.trail[i] - o;
+        if o > 1.0 && o > e {
+            own += 1;
+        } else if e > 1.0 && e > o {
+            enemy += 1;
+        }
+    }
+    (own, enemy)
+}
+
+/// The player's cell nearest the enemy's core, and the point `past` cells
+/// beyond it towards the core.
+fn front_of(g: &Game<Garden>, past: f32) -> (f32, f32) {
+    let d = &g.world.dish;
+    let c = g.core;
+    let mut best = (f32::MAX, g.larder);
+    for i in 0..d.w * d.h {
+        let o = d.species_trail[OWN as usize][i];
+        if o > 1.0 && o > d.trail[i] - o && d.agar[i] {
+            let (x, y) = ((i % d.w) as f32 + 0.5, (i / d.w) as f32 + 0.5);
+            let r = (x - c.0).hypot(y - c.1);
+            if r < best.0 {
+                best = (r, (x, y));
+            }
+        }
+    }
+    let (r, (x, y)) = best;
+    if r == f32::MAX || r < 1.0 {
+        return (x, y);
+    }
+    let t = (past / r).min(1.0);
+    (x + (c.0 - x) * t, y + (c.1 - y) * t)
+}
+
+/// One arm of the front probe: (cells at the branch, at +20 s, at +40 s).
+fn front_arm(o: &Opts, seed: u64, arm: &str, at: f32) -> [(usize, usize); 3] {
+    let rules = Rules { cap: at + 41.0, ..Rules::default() };
+    let mut g = Game::new(garden_world(seed, 2, o.walkers, None), rules, seed);
+    let start_own = g.world.counts_by_side().0;
+    let mut h = Hand::default();
+    while g.end.is_none() && g.time() < at {
+        act("sow2", &mut g, &mut h, start_own);
+        g.step();
+    }
+    let mut out = [cells(&g); 3];
+    let to = front_of(&g, if arm == "road" { 15.0 } else { 0.0 });
+    for k in [0usize, 1] {
+        if k >= g.soldiers.len() || !g.soldiers[k].alive {
+            continue;
+        }
+        let (dest, task, stance) = match arm {
+            "none" => (g.larder, Task::None, Stance::Defend),
+            "sow" => (to, Task::Feed, Stance::Defend),
+            "shoot" => (to, Task::None, Stance::Free),
+            "road" => (to, Task::Road, Stance::Defend),
+            "cut" => (to, Task::Cut, Stance::Defend),
+            _ => panic!("unknown arm {arm}"),
+        };
+        g.apply(Cmd::Order(k, Order::Move(dest.0, dest.1)));
+        g.apply(Cmd::Stance(k, stance));
+        g.world.set_task(k, task);
+    }
+    let t0 = g.time();
+    let mut slot = 1;
+    while g.end.is_none() && slot < 3 {
+        farm(&mut g, &[0, 1]);
+        g.step();
+        if g.time() >= t0 + 20.0 * slot as f32 {
+            out[slot] = cells(&g);
+            if let (Some(dir), 1) = (&o.look, slot) {
+                std::fs::create_dir_all(dir).unwrap();
+                picture(&g).save(format!("{dir}/front-{arm}-s{seed}.png")).unwrap();
+            }
+            slot += 1;
+        }
+    }
+    for s in out.iter_mut().skip(slot) {
+        *s = cells(&g);
+    }
+    out
+}
+
+fn front(o: &Opts) {
+    let mut at = 150.0f32;
+    let mut arms: Vec<String> = ["none", "sow", "shoot", "road", "cut"].iter().map(|s| s.to_string()).collect();
+    for a in std::env::args().skip(1) {
+        if let Some(v) = a.strip_prefix("at=") {
+            at = v.parse().unwrap();
+        }
+        if let Some(v) = a.strip_prefix("arms=") {
+            arms = v.split(',').map(|s| s.to_string()).collect();
+        }
+    }
+    println!("front: branch at {at} s from sow2, arms {arms:?}, seeds {:?}", o.seeds);
+    let jobs: Vec<(usize, u64)> = (0..arms.len()).flat_map(|a| o.seeds.iter().map(move |&s| (a, s))).collect();
+    let next = AtomicUsize::new(0);
+    let res = Mutex::new(Vec::new());
+    std::thread::scope(|sc| {
+        for _ in 0..o.threads {
+            sc.spawn(|| loop {
+                let k = next.fetch_add(1, Ordering::SeqCst);
+                if k >= jobs.len() {
+                    break;
+                }
+                let (a, s) = jobs[k];
+                let out = front_arm(o, s, &arms[a], at);
+                println!("raw {} seed {}: {:?}", arms[a], s, out);
+                res.lock().unwrap().push((a, s, out));
+            });
+        }
+    });
+    let r = res.into_inner().unwrap();
+    let get = |a: usize, s: u64| r.iter().find(|x| x.0 == a && x.1 == s).map(|x| x.2).unwrap();
+    let Some(none) = arms.iter().position(|a| a == "none") else { return };
+    let n = o.seeds.len() as f64;
+    println!("\nsummary: mean cells (player / enemy) at the branch, +20 s, +40 s");
+    for (a, name) in arms.iter().enumerate() {
+        let m = |j: usize, side: usize| o.seeds.iter().map(|&s| { let c = get(a, s)[j]; if side == 0 { c.0 } else { c.1 } } as f64).sum::<f64>() / n;
+        println!("{name:>6}: {:.0} / {:.0}, {:.0} / {:.0}, {:.0} / {:.0}", m(0, 0), m(0, 1), m(1, 0), m(1, 1), m(2, 0), m(2, 1));
+    }
+    let mut tests = Vec::new();
+    for j in [1usize, 2] {
+        for side in [0usize, 1] {
+            for (a, name) in arms.iter().enumerate() {
+                if a == none {
+                    continue;
+                }
+                let mut d: Vec<f64> = o.seeds.iter().map(|&s| {
+                    let (x, y) = (get(a, s)[j], get(none, s)[j]);
+                    if side == 0 { x.0 as f64 - y.0 as f64 } else { x.1 as f64 - y.1 as f64 }
+                }).collect();
+                let hi = d.iter().filter(|&&v| v > 0.0).count();
+                let lo = d.iter().filter(|&&v| v < 0.0).count();
+                d.sort_by(|a, b| a.total_cmp(b));
+                let label = format!("+{}s {} cells {name} vs none", 20 * j, if side == 0 { "player" } else { "enemy" });
+                tests.push((label, hi, lo, sign_p(hi, lo), d[d.len() / 2], j == 1));
+            }
+        }
+    }
+    // Holm over the deciding family: the +20 s tests, both sides.
+    let mut fam: Vec<usize> = (0..tests.len()).filter(|&k| tests[k].5).collect();
+    fam.sort_by(|&a, &b| tests[a].3.total_cmp(&tests[b].3));
+    let m = fam.len();
+    let mut holm = vec![None; tests.len()];
+    let mut still = true;
+    for (rank, &k) in fam.iter().enumerate() {
+        still = still && tests[k].3 <= 0.05 / (m - rank) as f64;
+        holm[k] = Some(still);
+    }
+    println!("\npaired against none: higher / lower, p, median difference (Holm over the +20 s tests)");
+    for (k, t) in tests.iter().enumerate() {
+        let h = match holm[k] { Some(true) => "  holds under Holm", Some(false) => "", None => "  (not in the family)" };
+        println!("{:>34}  {:>2} / {:>2}  p {:.4}  median {:+.0}{h}", t.0, t.1, t.2, t.3, t.4);
+    }
+}
+
 fn main() {
     let o = opts();
+    // `look=` with `front` saves each arm 20 s after the branch.
+    if std::env::args().any(|a| a == "front") {
+        front(&o);
+        return;
+    }
     println!("garden: cap {} s, walkers {} a side, hands {:?}, seeds {:?}", o.cap, o.walkers, o.hands, o.seeds);
     if let Some(dir) = o.look.clone() {
         std::fs::create_dir_all(&dir).unwrap();
