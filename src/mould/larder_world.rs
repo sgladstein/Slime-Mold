@@ -243,6 +243,13 @@ pub struct Rules {
     /// food (M2), and walkers touching it take `steal` food a game second.
     pub hoard: f32,
     pub steal: f32,
+    /// A carrier whose crystal has run dry (the frame gave under half its
+    /// ask and the whole crystal holds less than one frame's ask) walks
+    /// home with what it has, banks it and holds there (`Soldier::dry`). On:
+    /// under score v2 (`Game::score`) farm and wall are even with it off
+    /// (2026-11-12). Under W2b's score it cost farm 10 of 10 (WM1), because
+    /// that score counted a crystal with crumbs left as held.
+    pub home_dry: bool,
 }
 
 impl Default for Rules {
@@ -275,6 +282,7 @@ impl Default for Rules {
             wall_width: 2.0,
             hoard: 1.0,
             steal: 1.0,
+            home_dry: true,
         }
     }
 }
@@ -403,6 +411,9 @@ pub struct Soldier {
     pub stance: Stance,
     pub carry: f32,
     pub homing: bool,
+    /// Walking home from a crystal that ran dry (`Rules::home_dry`): once
+    /// it banks, it holds at the larder instead of walking back for crumbs.
+    pub dry: bool,
     pub alive: bool,
     /// Tick of its next shot.
     ready: u64,
@@ -453,6 +464,11 @@ pub struct Game<W: World> {
     /// from it, so the cap's share can tell the mould's eating from ours.
     start_charge: Vec<f32>,
     taken: Vec<f32>,
+    /// Walkers at the start, for the stalemate's size term (`Game::score`).
+    pub start_mould: usize,
+    /// W2b's held share at the cap (`Game::share`), kept so a census can
+    /// print W2b's score beside v2's.
+    pub cap_held: Option<f32>,
     /// Walking round rock and walls (`Paths`).
     paths: Paths,
     pub rng: Rng,
@@ -508,6 +524,8 @@ impl<W: World> Game<W> {
             mould,
             start_charge,
             taken,
+            start_mould: mould,
+            cap_held: None,
             paths: Paths::default(),
             rng: Rng::new(seed ^ 0x001a_2de2_501d),
             log: Vec::new(),
@@ -535,6 +553,7 @@ impl<W: World> Game<W> {
             stance: Stance::Defend,
             carry: 0.0,
             homing: false,
+            dry: false,
             alive: true,
             ready: 0,
             beat: 0,
@@ -791,6 +810,10 @@ impl<W: World> Game<W> {
                         self.harvested += s.carry;
                         self.soldiers[k].carry = 0.0;
                         self.soldiers[k].homing = false;
+                        if self.soldiers[k].dry {
+                            self.soldiers[k].dry = false;
+                            self.soldiers[k].order = Order::Hold;
+                        }
                     }
                 } else if s.carry >= r.carry {
                     self.soldiers[k].homing = true;
@@ -845,7 +868,8 @@ impl<W: World> Game<W> {
         self.shots += f.shots.len() as u32;
         self.last_shots = f.shots.iter().zip(&out.shots).map(|(i, o)| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed }).collect();
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
-        for ((u, k), c) in out.units.iter().zip(&who).zip(&from) {
+        let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };
+        for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
             if let Some(c) = *c {
                 self.taken[c] += u.took;
             }
@@ -856,31 +880,30 @@ impl<W: World> Game<W> {
                     s.aim = u.target;
                     s.dense = u.dense;
                     s.carry += u.took / r.charge;
-                    // A carrier goes home only full, as in W2b and M3, so a
-                    // soldier whose crystal runs dry waits there with what it
-                    // has until it is ordered on (the window's "crystal ran
-                    // dry" alert says when). The maps found it (WM1): on the
-                    // v1 Fork a soldier emptied a crystal of 12,032 charge
-                    // (188 food) and stood there for a 300 load that never
-                    // came; on the v1 Nest the take dwindled as charge seeped
-                    // in from the crystal's edge (128 food). Four rules that
-                    // send it home were tried on race seeds 5-20 against
-                    // W2b's census, and each cost the planned hands. The frame
-                    // gave under half its ask: farm and wall lower on all 4
-                    // games of seeds 5-6 (farm seed 5, -0.136 against
-                    // -0.029). That, and the crystal can't fill the load: farm
-                    // lower on 15 of 16 (mean -0.204 against -0.027), wall on
-                    // 15, kills down a fifth. That, with a quarter-load floor:
-                    // farm even (14 of 16 the same), wall lower on 8 and
-                    // higher on none (-0.053 against -0.022). Half its ask
-                    // with the whole crystal under one frame's ask: farm lower
-                    // on 10 of 10, wall on 8 of 9 (-0.188 against -0.034).
-                    // Each sent soldiers home off crystals with crumbs left,
-                    // and back for more crumbs, and `share` counts a crystal
-                    // with any charge as held while a soldier stands on it.
-                    // A rule that keeps the hands' score needs `share` to
-                    // weigh a crystal by its charge, or the hands to re-order
-                    // a soldier as a player would (`Reports/dead-ends.md`).
+                    // A crystal run dry sends its carrier home with what it
+                    // has (`Rules::home_dry`, on): the frame gave under half
+                    // its ask and the whole crystal holds less than one
+                    // frame's ask (it never reaches 0 exactly: 0.8 charge
+                    // can stay on its cells). Once it banks it holds at the
+                    // larder (`Soldier::dry`) rather than walk back for
+                    // crumbs. Without it (W2b, M3) a carrier went home only
+                    // full: on the v1 Fork (WM1) a soldier emptied a crystal
+                    // of 12,032 charge (188 food) and stood there for a 300
+                    // load that never came. Four rules were tried under W2b's
+                    // score and each cost the planned hands (the narrowest,
+                    // this one: farm lower on 10 of 10), because that score
+                    // counted a crystal with crumbs left as held while a
+                    // soldier stood on it (`Reports/dead-ends.md`). Under
+                    // score v2 (`Game::score`, charge taken) it is even: farm
+                    // 5 higher and 8 lower of 16, wall 7 and 9. With the hold
+                    // and a farm hand that skips dry crystals, the hand
+                    // harvests twice the food (22,875 to 46,364 a game).
+                    if let (true, Some(i)) = (r.home_dry, *c) {
+                        if u.took < 0.5 * ask.take && s.carry > 0.0 && left[i] < ask.take {
+                            s.homing = true;
+                            s.dry = true;
+                        }
+                    }
                     if u.touching > 0 {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
@@ -935,18 +958,20 @@ impl<W: World> Game<W> {
         } else if self.mould == 0 {
             self.end = Some(End::MouldWiped(t));
         } else if t >= self.rules.cap {
-            self.end = Some(End::Cap(self.share()));
+            self.cap_held = Some(self.share());
+            self.end = Some(End::Cap(self.take_share()));
         }
     }
 
-    /// **Share of the crystals held**, for the cap: of the crystals with
-    /// charge left that either side holds, the fraction the squad holds. The
-    /// squad holds one with a soldier on it and no mould touching that
-    /// soldier; the mould holds the others it has eaten from (charge down
-    /// by more than 1% of its start beyond what the squad took) with no
-    /// soldier on it. One half when neither holds any. (The first version
-    /// gave the mould every crystal without a soldier, reached or not, so
-    /// an idle squad scored as if overrun from the first second.)
+    /// **Share of the crystals held**, the HUD's and W2b's score's: of the
+    /// crystals with charge left that either side holds, the fraction the
+    /// squad holds. The squad holds one with a soldier on it and no mould
+    /// touching that soldier; the mould holds the others it has eaten from
+    /// (charge down by more than 1% of its start beyond what the squad
+    /// took) with no soldier on it. One half when neither holds any. (The
+    /// first version gave the mould every crystal without a soldier,
+    /// reached or not, so an idle squad scored as if overrun from the first
+    /// second.)
     pub fn share(&self) -> f32 {
         let (mut ours, mut theirs) = (0, 0);
         for (i, (c, charge)) in self.world.crystals().into_iter().enumerate() {
@@ -969,8 +994,58 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// **Share of the crystals' charge taken** (score v2's stalemate): of
+    /// the charge gone from the crystals, the fraction the squad took, less
+    /// the food the mould stole from the larder (which counts as the
+    /// mould's). One half when nothing is gone. A sum over the whole game,
+    /// so it rewards holding early (the AI thread's census, 2026-11-12: read
+    /// at the cap, a style that grabbed crystals in the last 90 s tied one
+    /// that held from 10:00, 7-7) and gives nothing for guarding a crystal
+    /// with crumbs left (WM1: every rule that brought a carrier home from a
+    /// dry crystal cost the planned hands under `share`, which counts a
+    /// crystal with 0.8 charge left as one held). Weighing `share` by the
+    /// charge left was tried first and put farm below idle on race seed 5
+    /// (-0.265 against -0.232): harvesting empties the crystals you hold.
+    pub fn take_share(&self) -> f32 {
+        let cs = self.world.crystals();
+        let ours: f64 = self.taken.iter().map(|&t| t as f64).sum::<f64>();
+        let gone: f64 = cs.iter().enumerate().map(|(i, c)| (self.start_charge[i] - c.1).max(0.0) as f64).sum();
+        let mould = (gone - ours).max(0.0);
+        let stolen = (self.stolen * self.rules.charge) as f64;
+        let (ours, mould) = ((ours - stolen).max(0.0), mould + stolen);
+        if ours + mould <= 0.0 {
+            0.5
+        } else {
+            (ours / (ours + mould)) as f32
+        }
+    }
+
+    /// **One ordered number a round** (score v2, 2026-11-12). Wins and losses
+    /// are `End::score`'s bands. A stalemate at the cap, in (-0.5, 0.5), is
+    /// half the charge share (`take_share`), less a half, plus a size
+    /// term, `0.25 (1 - m) / (1 + m)` with `m` the walkers left over the
+    /// walkers at the start: +0.25 for a mould cut to nothing, 0 for one
+    /// the size it started, toward -0.25 as it grows. (W2b's stalemate was
+    /// the share at the cap alone, so a strike that took the core and left
+    /// 7 to 574 walkers scored as a farm that left 9,000: the AI thread's
+    /// census.)
     pub fn score(&self) -> Option<f32> {
-        self.end.map(|e| e.score(self.alive(), self.rules.cap))
+        self.end.map(|e| match e {
+            End::Cap(took) => {
+                let m = self.mould as f32 / self.start_mould.max(1) as f32;
+                0.5 * (took - 0.5) + 0.25 * (1.0 - m) / (1.0 + m)
+            }
+            _ => e.score(self.alive(), self.rules.cap),
+        })
+    }
+
+    /// W2b's score (the crystals held at the cap, no size term), so a
+    /// census can still be paired with W2b's and the AI's earlier ones.
+    pub fn score_w2b(&self) -> Option<f32> {
+        self.end.map(|e| match e {
+            End::Cap(_) => End::Cap(self.cap_held.unwrap_or(0.5)).score(self.alive(), self.rules.cap),
+            _ => e.score(self.alive(), self.rules.cap),
+        })
     }
 
     /// Run to the end, with `plan` called once a game second before the
@@ -1099,8 +1174,8 @@ mod tests {
             g.step();
         }
         assert!(g.harvested >= g.rules.carry, "banked {} in 30 s", g.harvested);
-        // Equal to f32 rounding: a carrier that walks home whenever its
-        // crystal runs low banks in many small loads.
+        // Equal to f32 rounding (with `Rules::home_dry` a carrier banks
+        // part loads).
         let books = g.rules.start_bank + g.harvested - g.spent - g.stolen;
         assert!((g.bank - books).abs() < 0.01, "bank {} books {books}", g.bank);
         // From the cells: the pile's total is summed a tick late (the next
@@ -1110,6 +1185,90 @@ mod tests {
         let gone = before - now as f32;
         let held = (g.harvested + g.soldiers[0].carry) * g.rules.charge;
         assert!(gone >= held * 0.999, "the crystal lost {gone}, the squad holds {held}");
+    }
+
+    #[test]
+    fn a_crystal_run_dry_sends_its_carrier_home_to_hold() {
+        // The v1 Fork's case (WM1): a crystal with less than a load in it,
+        // all within a soldier's reach (the v1 crystals were 3 dish cells
+        // across the radius, under the 4 a soldier takes from). Its soldier
+        // empties it, walks home with what it took, banks it and holds
+        // there, rather than wait for a full load or walk back for crumbs.
+        let mut g = small(2);
+        let (k, c) = g.crystal_at(g.larder).unwrap();
+        let d = &mut g.world;
+        let s = d.p.scale as f32;
+        let mut sum = 0.0;
+        for q in 0..d.pile_cells.len() {
+            let i = d.pile_cells[q] as usize;
+            if d.pile_of[i] as usize == k + 1 {
+                let (x, y) = ((i % d.w) as f32 + 0.5, (i / d.w) as f32 + 0.5);
+                d.charge[i] = if (x - c.0).hypot(y - c.1) <= 3.0 * s { 20.0 } else { 0.0 };
+                sum += d.charge[i];
+            }
+        }
+        d.pile_charge[k] = sum;
+        assert!(sum / g.rules.charge < 0.5 * g.rules.carry, "{sum} charge is not a short crystal");
+        g.apply(Cmd::Order(0, Order::Clear(c.0, c.1)));
+        g.apply(Cmd::Stance(0, Stance::HoldFire));
+        for _ in 0..(g.rules.tps * 30) {
+            g.step();
+        }
+        assert!(g.harvested >= 0.9 * sum / g.rules.charge, "banked {} of the crystal's {}, carrying {}", g.harvested, sum / g.rules.charge, g.soldiers[0].carry);
+        assert!(g.soldiers[0].carry < 1.0, "still carrying {}", g.soldiers[0].carry);
+        assert_eq!(g.soldiers[0].order, Order::Hold, "it holds at the larder");
+        // With the rule off it waits on the crystal with its part load (W2b).
+        let mut w = small(2);
+        w.rules.home_dry = false;
+        let d = &mut w.world;
+        for q in 0..d.pile_cells.len() {
+            let i = d.pile_cells[q] as usize;
+            if d.pile_of[i] as usize == k + 1 {
+                let (x, y) = ((i % d.w) as f32 + 0.5, (i / d.w) as f32 + 0.5);
+                d.charge[i] = if (x - c.0).hypot(y - c.1) <= 3.0 * s { 20.0 } else { 0.0 };
+            }
+        }
+        d.pile_charge[k] = sum;
+        w.apply(Cmd::Order(0, Order::Clear(c.0, c.1)));
+        w.apply(Cmd::Stance(0, Stance::HoldFire));
+        for _ in 0..(w.rules.tps * 30) {
+            w.step();
+        }
+        assert!(w.harvested == 0.0 && w.soldiers[0].carry > 0.5 * sum / w.rules.charge, "without the rule: banked {}, carrying {}", w.harvested, w.soldiers[0].carry);
+    }
+
+    #[test]
+    fn the_stalemate_scores_the_charge_taken_and_the_moulds_size() {
+        // Score v2: a harvesting squad takes a share of the charge gone that
+        // an idle one doesn't, and at one share a smaller mould scores
+        // higher, inside the stalemate band. W2b's score is kept beside it.
+        let mut idle = small(2);
+        let mut farm = small(2);
+        assert_eq!(farm.take_share(), 0.5, "nothing gone yet");
+        let c = farm.larder;
+        farm.apply(Cmd::Order(0, Order::Clear(c.0, c.1)));
+        farm.apply(Cmd::Stance(0, Stance::HoldFire));
+        for _ in 0..(farm.rules.tps * 20) {
+            idle.step();
+            farm.step();
+        }
+        let (i, f) = (idle.take_share(), farm.take_share());
+        assert!(i < 0.01, "the idle squad took {i} of the charge gone");
+        assert!(f > 0.2, "the harvesting squad took only {f}");
+        let start = farm.start_mould;
+        let score = |g: &mut Game<BigDish>, took: f32, mould: usize| {
+            g.end = Some(End::Cap(took));
+            g.mould = mould;
+            g.cap_held = Some(0.5);
+            g.score().unwrap()
+        };
+        let small_mould = score(&mut farm, 0.6, start / 4);
+        let same = score(&mut farm, 0.6, start);
+        let big_mould = score(&mut farm, 0.6, start * 3);
+        assert!(small_mould > same && same > big_mould, "{small_mould} {same} {big_mould}");
+        assert!((same - 0.05).abs() < 1e-6, "a mould its starting size adds nothing: {same}");
+        assert!(score(&mut farm, 1.0, 1) < 0.5 && score(&mut farm, 0.0, start * 1000) > -0.5, "inside the stalemate band");
+        assert_eq!(farm.score_w2b(), Some(0.0), "W2b's score is the held share less a half");
     }
 
     #[test]

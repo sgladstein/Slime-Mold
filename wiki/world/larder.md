@@ -2,9 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T02:00Z
+updated: 2026-11-12T03:15Z
 sources: [Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
+code: [Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -22,7 +22,7 @@ same fields on the GPU engine; W2a, the squad's hooks (PR #74); W2b, M3's
 rules on the world, on the CPU and the engine; WM1, designed
 [maps](maps.md) loaded on both.
 **Playable:** `cargo run --release --bin larder-world -- map=fork` (W2c's first cut: the real rules on the GPU world, on a map). `mouldgpu`'s Q squad is the UI's stand-in, with no rules.
-**Next:** soil on the GPU, and the frame time on the 1070.
+**Next:** soil on the GPU, and the frame time on the 1070. A stalemate now scores the charge taken and the mould's size (score v2).
 
 ## Larder World so far
 
@@ -72,6 +72,12 @@ On held-out seeds 5-20 idle and random lose on 16 of 16 and farm and wall
 beat both 16-0; no hand wipes the mould, a farm holds 27-64% of the
 contested crystals at the cap, one wall adds nothing over farming, and a
 rush kills about 900 walkers and then dies, within 36 s on 10 of 16 seeds.
+**Score v2** (2026-11-12, [report, *Score v2 and the dry crystal*](../../Reports/larder-world-roadmap-2026-11-11.md)):
+a stalemate scores the squad's share of the charge taken over the game
+(`Game::take_share`) and the mould's size against its start. The gate holds
+16-0 under it, a carrier leaves a dry crystal and holds at the larder
+(`Rules::home_dry`), and the farm hand, which had stood on emptied
+crystals, now harvests twice the food and kills five times the walkers.
 
 ## Small-dish milestones (M1-M3)
 
