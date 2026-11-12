@@ -852,14 +852,18 @@ mod tests {
 
     /// **Each mission's plan still wins** (tech lead, 14:13Z): missions 1-3
     /// rest on rules other threads own (walls, raise time, craters, the
-    /// core), so CI plays each one's best census hand on seed 1 at the
-    /// census's size and fails when it stops winning. The full census is
-    /// `examples/campaign.rs`; these are its v8 rows (seeds 1-8: Landfall
-    /// claim 8/8 by 2:48, First contact strike 8/8 by 6:19, The gaps
-    /// walling 24/24 at 10:00). The gaps stops at 3:00 with its bar at least
-    /// 0.25 (held from about 0:40), and claim without walls is checked
-    /// below 0.2 there, so the walls are what holds it.
+    /// core), so these play each one's best census hand on seed 1 at the
+    /// census's size. The full census is `examples/campaign.rs`; these are
+    /// its v8 rows (seeds 1-8: Landfall claim 8/8 by 2:48, First contact
+    /// strike 8/8 by 6:19, The gaps walling 24/24 at 10:00).
+    ///
+    /// CI runs the quick one (`the_gaps_needs_walls_and_landfall_wins`,
+    /// about 12 s: the tech lead's cap is 30 s with ten threads merging
+    /// through one queue); this full one, with First contact's 7:00 round,
+    /// took 105 s and is `#[ignore]`d: `cargo test --release --
+    /// --ignored each_missions_plan`.
     #[test]
+    #[ignore]
     fn each_missions_plan_still_wins() {
         use crate::mould::big::BigDish;
         use crate::mould::larder_world::race_params;
@@ -903,5 +907,61 @@ mod tests {
         assert!(m2.0.is_some_and(|v| v.cause == Cause::Goal), "First contact, strike: {:?}", m2.0);
         assert!(walls.0.is_none() && walls.1 >= 0.25, "The gaps, walls: {:?} best {}", walls.0, walls.1);
         assert!(open.1 < 0.2, "The gaps without walls held: best {}", open.1);
+    }
+
+
+    /// The quick CI check (11.8 s on 4 cores; seed 1, measured
+    /// 2026-11-12: walls standing by 0:50, bar 0.23 at 2:20 with no thick
+    /// mould outside; without walls thick mould is outside by 2:00 and the
+    /// bar is back to 0). The fragile mission is The gaps, which rests on
+    /// wall and raise rules; Landfall is cheap enough to keep.
+    #[test]
+    fn the_gaps_needs_walls_and_landfall_wins() {
+        use crate::mould::big::BigDish;
+        use crate::mould::larder_world::race_params;
+        use crate::mould::larder_world_ai::Hand;
+        use crate::mould::map::Map;
+        use crate::mould::tiers::Tier;
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        // A round to `secs`, or until `done` says it is decided.
+        let play = |name: &str, walls: bool, secs: f32, done: fn(&Tracker) -> bool| -> Tracker {
+            let m = Mission::parse(&std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"))).unwrap()).unwrap();
+            let map = Map::load(&root.join("Reports/larder-maps-2026-11-11/maps"), &m.map).unwrap();
+            let mut p = race_params(1, 2, 5000);
+            if let Some(t) = m.tier.as_deref().and_then(Tier::from_name) {
+                t.apply(&mut p);
+            }
+            let mut g = Game::new(BigDish::with_map(p, &map), m.rules(Rules::default()), 1);
+            let mut tr = Tracker::new(m, &g);
+            let mut ai = Hand::named("claim", &g).unwrap();
+            let mut walled = [!walls; 4];
+            let tps = g.rules.tps as u64;
+            while g.time() < secs && tr.verdict.is_none() && !done(&tr) {
+                if walled.iter().any(|w| !w) && g.time() < 120.0 {
+                    wall_rim_gaps(&mut g, &mut walled);
+                } else {
+                    ai.play(&mut g);
+                }
+                let s = g.world.ticks() / tps;
+                while g.world.ticks() / tps == s && g.end.is_none() {
+                    g.step();
+                }
+                let grid = g.world.mould_grid(BIN);
+                tr.second(&g, grid.as_deref(), 1.0);
+            }
+            tr
+        };
+        let [landfall, walls, open] = std::thread::scope(|sc| {
+            let play = &play;
+            [
+                sc.spawn(move || play("1-landfall", false, 200.0, |_| false)),
+                sc.spawn(move || play("3-the-gaps", true, 140.0, |_| false)),
+                sc.spawn(move || play("3-the-gaps", false, 140.0, |tr| tr.thick.is_some_and(|n| n > 0))),
+            ]
+            .map(|h| h.join().unwrap())
+        });
+        assert!(landfall.verdict.is_some_and(|v| v.cause == Cause::Goal), "Landfall, claim: {:?}", landfall.verdict);
+        assert!(walls.verdict.is_none() && walls.thick == Some(0) && walls.bar.unwrap_or(0.0) >= 0.2, "The gaps with walls: thick {:?} bar {:?}", walls.thick, walls.bar);
+        assert!(open.thick.is_some_and(|n| n > 0), "The gaps without walls kept thick mould in for 2:20: bar {:?}", open.bar);
     }
 }
