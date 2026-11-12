@@ -2,7 +2,7 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12T13:29Z
+updated: 2026-11-12T14:39Z
 sources: [Reports/mould-tiers-campaign-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
 code: [BigParams::scar_keep, BigParams::scar_weight, BigDish::scar, BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier, Tier::core, Core]
 ---
@@ -37,14 +37,8 @@ Larder world's race the Swarmer and the Sleeper's bait hold on 8 of 8, the
 Sporer's edge is not significant
 ([report](../../Reports/mould-tiers-2026-11-11.md), *In the Larder world*).
 
-A tier also says how its core behaves (`Tier::core`, 2026-11-12). None, for
-every tier today, keeps the game's own core: it falls when a squad holds it
-for `core_secs`, and the whole body comes for a squad within twice the core's
-radius (`Rules::core_pull` 8, a lure's strength), which cut random's mould
-wipes from 18 of 64 to 5 and put every plan over random on both seed blocks
-([report](../../Reports/larder-world-roadmap-2026-11-11.md), *Core
-defence*). `CoreKind::Headless` (no core to take) is built; Regrow and
-Migrate are not.
+`Tier::core` (2026-11-12) is None for every tier: the game's core, which
+the whole body defends (`Rules::core_pull` 8). Headless is built.
 
 ## Open
 

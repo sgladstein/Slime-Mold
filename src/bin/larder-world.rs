@@ -56,7 +56,9 @@
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
-//! `holes=1` also times how long each hit's hole stays open.
+//! `holes=1` also times how long each hit's hole stays open; `centre=X,Y`
+//! holds the near view on one place (world units, as the t lines' `squad
+//! at`), so a run of frames plays as a clip from a still camera.
 //! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]
 //! [sound=PATH] [fast=1]` times the window's frame without a window
 //! (`bench`), a mission's too; `hand=every` presses every command on the
@@ -1547,7 +1549,10 @@ impl ApplicationHandler for App {
 /// shows, checkable where there is no screen (the cloud's software
 /// Vulkan). Hands: `rush` (all attack the core), `farm` (all harvest the
 /// crystal nearest the larder, buying soldiers from 1,200 food), `idle`.
-fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool) -> Result<(), String> {
+// One more than clippy's seven: the look's options are plain values from
+// the command line, and a struct for them would only rename them.
+#[allow(clippy::too_many_arguments)]
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32)>) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -1650,9 +1655,14 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
             if !d.is_empty() { println!("  holes: shots that hit {} refilled {} (still open {open}); ticks to 80%: median {} ({:.2} s), q25 {}, q75 {}, max {}", holes.len(), d.len(), d[d.len() / 2], d[d.len() / 2] as f32 / tps, d[d.len() / 4], d[3 * d.len() / 4], d[d.len() - 1]); }
         }
         let g = app.game.as_ref().unwrap();
-        // The view on the fight: the squad's middle, or the larder.
+        // The view on the fight: the squad's middle, or the larder; or,
+        // with `centre=X,Y`, one place for every frame, so a run of frames
+        // plays as a clip from a still camera (the crater looks in motion,
+        // 2026-11-12: a camera on the squad pans as it walks and jumps to
+        // the larder when it dies).
         let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
-        let centre = if alive.is_empty() { g.larder } else { (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32) };
+        let squad = (!alive.is_empty()).then(|| (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32));
+        let centre = fixed.or(squad).unwrap_or(g.larder);
         app.controls.selected = (0..g.soldiers.len()).collect();
         // The HUD sets the camera's insets as it draws, and `fit` reads
         // them: without this the run's first "all" picture was zoomed in
@@ -1690,7 +1700,7 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
         }
         println!("  CPU: ground field {ground_ms:.2} ms (once a game second), model and HUD {:.3} ms a frame", t0.elapsed().as_secs_f64() * 1e3 / 20.0);
         let g = app.game.as_ref().unwrap();
-        println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+        println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())), squad.map_or(String::new(), |(x, y)| format!("; squad at {x:.1},{y:.1}")));
         for b in &g.buildings {
             println!("    {} at ({:.0}, {:.0}): hp {:.0} / {:.0}, built {:.1}, {}{}", b.kind.name(), b.at.0, b.at.1, b.hp, b.max_hp, b.built, if b.alive { "standing" } else { "worn down" }, if b.working { ", working" } else { "" });
         }
@@ -2041,6 +2051,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast) = (None::<f32>, 60.0f32, true, 0usize, false);
     let mut holes = false;
+    let mut centre = None;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -2066,6 +2077,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "grid" => grid = v.parse()?,
             "fast" => fast = v != "0",
             "holes" => holes = v != "0",
+            "centre" => {
+                let (x, y) = v.split_once(',').ok_or("centre=X,Y")?;
+                centre = Some((x.parse::<f32>()?, y.parse::<f32>()?));
+            }
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
@@ -2073,7 +2088,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater, aim, core_pull; look, hand, at, screen, sound, holes; bench, fps, stamps, grid, fast)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater, aim, core_pull; look, hand, at, screen, sound, holes, centre; bench, fps, stamps, grid, fast)").into()),
             },
         }
     }
@@ -2083,7 +2098,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     if let Some(dir) = look {
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
