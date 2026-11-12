@@ -741,7 +741,7 @@ At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad 
 - **Wading** (`Rules::wade` 6): a soldier's step is `speed / (1 + (touching / wade)²)`. Two walkers touching leave it 90% of its speed, 6 leave half, and 12 a fifth (a rush meets 0 to 26 on race seeds 1-4). The count is the frame's touch read-back, the same on both engines, so the GPU needs nothing new. 0 is off. Test: `thick_slime_slows_a_soldier`.
 - **In play**: the page's *Wading* clips (the Fork, seed 1, rush) and its crater-time clips were rendered by a window build from before the cone reached the GPU's `race_settings`, so they show #113's flat crater, not the cone (found 11-12 17:03Z: that build's t lines match today's build with `scorch_cone=0 scorch_full=30 scorch_keep=0.1` to the digit, and differ from it without). The census above ran the CPU's `race_params`, which had the cone. The clips are being rendered again with the cone (17:05Z).
 
-**The crater's time** (the owner's 15:18Z ask): crater times of 10, 6 and 3 s are on the page, but as flat craters (see *In play*), so their kills are not look 3's. The cone at 10, 6, 3 and 1 s, and a scene where the squad fires into the thick ring on the core crystal, follow in the next PR. Both shorter times are being gated (runners 1-4, `crater=6` and `crater=3` at 90ca407), so either can be set without another wait.
+**The crater's time** (the owner's 15:18Z ask): crater times of 10, 6 and 3 s are on the page, but as flat craters (see *In play*), so their kills are not look 3's. The cone at 10, 6, 3 and 1 s, and a scene where the squad fires into the thick ring on the core crystal, follow in the next PR. Both shorter times were being gated (runners 1-4, `crater=6` and `crater=3` at 90ca407) until the owner's testing rule stopped those runs (17:26Z: a census is not a gate for a look).
 
 **The gate** (90ca407, both seed blocks, seven hands, 15-minute games; raw [wade/](larder-world-roadmap-2026-11-11/wade/census-wade6-race-5-20.txt), runners 1-4, sha256 checked). Three arms: the new defaults (wade 6, cone), `wade=0` (cone only), and `wade=0` with the flat crater (#126's rules; its random wipes match #126's 2 and 3 exactly).
 
@@ -795,6 +795,6 @@ At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad 
 
 - What the volley clips show: at 10 s the ring's front is cleared and pocked holes are still there 4 s after firing stops; at 6 s fewer holes are left; at 3 s the notch is small and closes in about 2 s; at 1 s it looks almost like no craters, even under fire.
 - The rush's kills don't follow the crater time: its squad is wiped inside the body in every clip, and llvmpipe runs in parallel are not bit-repeatable (two clips with the same settings killed 1,289 and 1,300).
-- The time waits on the owner's pick; 6 and 3 s are gated on the runners meanwhile, so either can be set without another wait.
+- The time waits on the owner's pick, and lands on the tests and a clip: the 6 and 3 s gates were stopped under the owner's testing rule (17:26Z: build first, balance later; a census is not a gate for a look).
 
 **Cost.** One comparison a tick while a core is down, on the CPU; the eating sum is over the crystals the game already reads. Nothing on the GPU.
