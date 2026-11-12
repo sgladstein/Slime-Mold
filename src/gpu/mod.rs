@@ -112,8 +112,17 @@ pub const MAX_PILES: usize = 64;
 /// The wall counters' first bytes (`Engine::wstat`): bites, broken cells,
 /// the eviction's moves, the struck, the living walkers, three spare. The
 /// mould grid follows (`Engine::record_count`), room for squares down to a
-/// dish cell (`Engine::grid_max`).
+/// game cell or `GRID_MIN` dish cells, whichever is smaller
+/// (`Engine::grid_max`).
 pub const WSTAT_BYTES: usize = 32;
+
+/// The smallest mould grid square the wall counters have room for, in
+/// dish cells, where the scale is bigger: the campaign's and the player
+/// AI's squares of 4 (2026-11-12). Room down to a game cell (the scale) at
+/// scale 8 fitted 40,960 squares, not the 163,840 squares of 4 of its 2048
+/// x 1280 dish, so every ask there read all 10.5 MB of `occ` back.
+/// A smaller square still reads back (`GpuWorld::mould_grid`).
+pub const GRID_MIN: usize = 4;
 
 /// The share of walkers the pull moves a tick (0.2%: at 100,000 walkers, a
 /// quarter of them in about a second of holding).
@@ -1146,7 +1155,8 @@ impl Engine {
         // Bites, broken cells, the eviction's moves, the struck, and the
         // living walkers (`record_count`); three words spare; then the
         // mould grid, for squares down to a dish cell.
-        let grid_max = d.w.div_ceil(d.p.scale.max(1)) * d.h.div_ceil(d.p.scale.max(1));
+        let g = d.p.scale.clamp(1, GRID_MIN);
+        let grid_max = d.w.div_ceil(g) * d.h.div_ceil(g);
         let wstat = zeros("wstat", WSTAT_BYTES + 4 * grid_max);
         let wb = zeros("wall build", 48);
         let sq = zeros("squad", squad::WORDS * 4);

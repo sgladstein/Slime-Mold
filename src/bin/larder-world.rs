@@ -57,8 +57,8 @@
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
 //! `holes=1` also times how long each hit's hole stays open.
-//! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0]` times the
-//! window's frame without a window (`bench`).
+//! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]`
+//! times the window's frame without a window (`bench`).
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -585,6 +585,16 @@ impl App {
             self.looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
         }
         let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
+        // A step runs on the GPU while the window draws (2026-11-12): it
+        // begins below and finishes on a later frame, as soon as its results
+        // are in (paused too), or at once when the next step is due. The
+        // game's order is `step`'s, so a round replays the same (commands
+        // finish a running step first, `Game::apply`). Past a mission's
+        // verdict the census steps no more, so neither does this.
+        if g.in_flight() && g.step_ready() && !mission_over {
+            g.finish_step();
+            shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+        }
         if self.paused || g.end.is_some() || mission_over {
             self.owed = 0.0;
             return;
@@ -593,19 +603,16 @@ impl App {
         self.owed += dt.min(0.25) * if self.fast { 4.0 } else { 1.0 };
         let mut n = 0;
         while self.owed >= step && g.end.is_none() {
-            g.step();
-            self.owed -= step;
-            n += 1;
-            if let Some(l) = self.listener.as_mut() {
-                l.shots(&g.last_shots);
-            }
-            for s in &g.last_shots {
-                self.tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
-                if let Some(k) = g.soldiers.iter().position(|q| q.alive && (q.x - s.from.0).abs() < 1e-3 && (q.y - s.from.1).abs() < 1e-3) {
-                    self.looks[k].flash = FLASH;
-                    self.looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+            if g.in_flight() {
+                g.finish_step();
+                shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+                if g.end.is_some() {
+                    break;
                 }
             }
+            g.begin_step();
+            self.owed -= step;
+            n += 1;
             // Behind on frames (a slow one): drop the debt, not the pace.
             if n >= 8 {
                 self.owed = 0.0;
@@ -616,7 +623,8 @@ impl App {
         // no mould grid yet (an occupancy read-back), so a goal that needs
         // where the mould is shows no bar here; the CPU census has it.
         if let Some(tr) = self.mission.as_mut() {
-            let sec = g.world.ticks() / g.rules.tps as u64;
+            // Whole steps only (a step may still be running on the GPU).
+            let sec = g.settled_ticks() / g.rules.tps as u64;
             // A game that ended inside a game second (a wipe) still gives
             // the mission its verdict, so the end screen is the mission's.
             while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
@@ -675,6 +683,16 @@ impl App {
         }
     }
 
+    /// Finishes a step still running on the GPU and keeps its shots'
+    /// marks (the headless pictures read whole steps).
+    fn settle(&mut self) {
+        let Some(g) = self.game.as_mut() else { return };
+        if g.in_flight() {
+            g.finish_step();
+            shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+        }
+    }
+
     /// Once a drawn frame, after the steps: what the round should sound
     /// like now, to an ear on `ear` (the camera's view). The listener only
     /// reads the game (`sound::world`), so this cannot change it.
@@ -710,7 +728,12 @@ impl App {
     fn refresh_ground(&mut self) {
         let (Some(g), Some(buf)) = (&self.game, &self.ground) else { return };
         let t = g.time();
-        if t - self.ground_at < GROUND_EVERY && g.walls == self.ground_walls {
+        // A step still running would make the read-back below wait for it
+        // (on llvmpipe the split's prepare p95 was 14.9 ms against 1.3 ms
+        // for whole steps, 2026-11-12), so the timed refresh waits for a
+        // frame between steps, up to a second late; a new wall reads at once.
+        let late = t - self.ground_at;
+        if (late < GROUND_EVERY || (g.in_flight() && late < 2.0 * GROUND_EVERY)) && g.walls == self.ground_walls {
             return;
         }
         let e = &g.world.e;
@@ -1490,6 +1513,10 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
                 }
             }
             app.step(step);
+            // Whole steps here (the window leaves a step running while it
+            // draws): the pictures, the holes and the tape read the game as
+            // they did before the step split.
+            app.settle();
             // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:
             // "maybe part of the issue is the slime/walkers move to fast").
             // The drawn body (the view's `body`: trail x living walkers in
@@ -1616,6 +1643,21 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     Ok(())
 }
 
+/// The last step's shots as tracers, and their soldiers' flashes and
+/// facing (before the next step walks them on).
+fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &mut [Look], listener: Option<&mut WorldListener>) {
+    if let Some(l) = listener {
+        l.shots(&g.last_shots);
+    }
+    for s in &g.last_shots {
+        tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
+        if let Some(k) = g.soldiers.iter().position(|q| q.alive && (q.x - s.from.0).abs() < 1e-3 && (q.y - s.from.1).abs() < 1e-3) {
+            looks[k].flash = FLASH;
+            looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+        }
+    }
+}
+
 /// **The window's frame time without a window** (`-- bench=SECS`,
 /// 2026-11-12): plays `secs` game seconds with `hand` at `fps` frames a
 /// real second, doing each frame what the window does (the game's steps
@@ -1626,8 +1668,10 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
 /// Prints each frame's time and its parts (the game's steps, which wait on
 /// the GPU inside; preparing; recording; the GPU's tail), the step frames'
 /// alone, the read-backs and waits a step, and with timestamps the GPU's
-/// ms a step's ticks (`stamps=0` leaves them off).
-fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps: bool) -> Result<(), String> {
+/// ms a step's ticks (`stamps=0` leaves them off). `grid=BIN` asks for the
+/// mould grid in squares of BIN dish cells every game step, as the
+/// campaign's goals do.
+fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps: bool, grid: usize) -> Result<(), String> {
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
     let stamped = stamps && device.features().contains(wgpu::Features::TIMESTAMP_QUERY);
@@ -1645,13 +1689,20 @@ fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps
     while app.game.as_ref().is_some_and(|g| g.time() < secs && g.end.is_none()) {
         let t0 = Instant::now();
         let g = app.game.as_mut().unwrap();
-        let sec = g.world.ticks() / g.rules.tps as u64;
+        // Whole steps: the hand plans on the step that crossed the second
+        // once it has finished, as it did before the split (a step left
+        // running would hand it the last step's bank and crystals).
+        let sec = g.settled_ticks() / g.rules.tps as u64;
         if sec != last_sec {
             last_sec = sec;
             plan(g, hand);
         }
         let before = app.steps;
         app.step(dt);
+        if grid > 0 && app.steps > before {
+            // As the campaign's goals ask (2026-11-12): once a game step.
+            std::hint::black_box(app.game.as_ref().unwrap().world.mould_grid(grid));
+        }
         let step = ms(t0);
         let t1 = Instant::now();
         app.prepare();
@@ -1667,6 +1718,8 @@ fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps
         device.poll(wgpu::PollType::Wait { submission_index: Some(index), timeout: None }).map_err(|e| format!("poll: {e}"))?;
         rows.push(([ms(t0), step, prep, rec, ms(t3)], app.steps > before));
     }
+    // The last step's results, so the counts below are the whole game's.
+    app.settle();
     let g = app.game.as_ref().unwrap();
     let steps = (app.steps - steps0).max(1);
     let q = |pick: &dyn Fn(&Row) -> Option<f64>, at: f64| {
@@ -1683,6 +1736,7 @@ fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps
     };
     let e = &g.world.e;
     let keys: String = app.args.keys.iter().map(|(k, v)| format!(" {k}={v}")).collect();
+    let keys = if grid > 0 { format!("{keys}; the mould grid in squares of {grid} each step") } else { keys };
     println!("larder-world bench: {} seed {}, {} x {} cells, {} slots, scale {} walkers {}{keys}; hand {hand}, {:.0} game s at {fps} frames a second, screen {}x{}", app.name, app.args.seed, e.dish.w, e.dish.h, e.n, app.args.scale, app.args.walkers, g.time(), screen.0, screen.1);
     println!("  {} frames, {} game steps; {:.2} read-backs a step, {:.2} waits a step ({:.2} ms a step waiting)", rows.len(), steps, (slime_mould::gpu::reads() - reads0) as f64 / steps as f64, g.world.waits as f64 / steps as f64, g.world.wait_ms / steps as f64);
     for (only, tag) in [(false, "every frame"), (true, "frames with a step")] {
@@ -1786,7 +1840,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
-    let (mut bench_secs, mut fps, mut stamps) = (None::<f32>, 60.0f32, true);
+    let (mut bench_secs, mut fps, mut stamps, mut grid) = (None::<f32>, 60.0f32, true, 0usize);
     let mut holes = false;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
@@ -1804,6 +1858,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "bench" => bench_secs = Some(v.parse()?),
             "fps" => fps = v.parse()?,
             "stamps" => stamps = v != "0",
+            "grid" => grid = v.parse()?,
             "holes" => holes = v != "0",
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
@@ -1812,12 +1867,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes; bench, fps, stamps)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes; bench, fps, stamps, grid)").into()),
             },
         }
     }
     if let Some(secs) = bench_secs {
-        return Ok(bench(args, secs, &hand, fps, screen, stamps)?);
+        return Ok(bench(args, secs, &hand, fps, screen, stamps, grid)?);
     }
     if let Some(dir) = look {
         return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes)?);
