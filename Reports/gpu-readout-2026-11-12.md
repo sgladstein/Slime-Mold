@@ -521,6 +521,15 @@ puts 3 of 448 crater cells off, and `atomicMin` fails at once. The trail
 pass's countdown now loads and stores through atomics each tick once
 craters are on; its cost on the 1070 is to come.
 
+**Left, from the technical lead (17:16Z), none needed yet** with 100k
+walkers inside the frame budget: trail plus scent (13.5 of the step's
+17.4 ms at 100k) are diffusion and bound by memory, so in order of
+payoff, a 16 x 16 tile with a one-cell halo in shared memory (each cell
+read once, not nine times); scent on a grid of half the resolution (it is
+smooth, and steering reads only its slope; a rule change, so it would
+reset the censuses); both fields packed into one buffer read. Each needs
+its twins re-checked.
+
 ## Files
 
 - `src/gpu/larder_world.rs`: the readout, `frame_start` and
