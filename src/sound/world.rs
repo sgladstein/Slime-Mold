@@ -60,6 +60,9 @@ const PULSE_FLOOR: f32 = 0.05;
 /// at a time: the farm hand banked 325 times in two minutes (1,770 food),
 /// which chimed nearly three times a second, so banking is gathered.
 const BANK_GAP: f32 = 1.0;
+/// The least level of a where-to-look sound off screen (the larder robbed,
+/// a crystal run dry), against 1 on screen.
+const ALERT_FLOOR: f32 = 0.7;
 
 /// How heavy a shot that killed `killed` walkers sounds, 0 ..= 1. Square
 /// root, so one kill is already heard (0.11), the rush's median (37) is
@@ -333,7 +336,11 @@ impl WorldListener {
         let stolen = (g.stolen - self.stolen).max(0.0);
         self.stolen = g.stolen;
         self.steal_rate += (stolen / dt - self.steal_rate) * k;
+        // Alerts that tell the player where to look keep most of their level
+        // off screen (design review of #96): the larder robbed, a crystal
+        // dry. A soldier falling and the core are at full level already.
         let (larder_pan, larder_gain) = ear.place(g.larder);
+        let larder_gain = larder_gain.max(ALERT_FLOOR);
         let (rate, level) = density(self.steal_rate, 0.6, 30.0, 0.2);
         out.push(SoundCmd::Texture { kind: TextureKind::Feed, rate, level: level * larder_gain, pan: larder_pan, spread: 0.15 });
         self.stats.stolen_per_sec = self.steal_rate;
@@ -357,7 +364,7 @@ impl WorldListener {
         for (i, (c, charge)) in g.world.crystals().into_iter().enumerate() {
             if i < self.dry.len() && !self.dry[i] && charge <= 0.0 {
                 let (pan, gain) = ear.place(c);
-                out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan, gain: 0.4 * gain.max(0.5), delay: 0.0 });
+                out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan, gain: 0.4 * gain.max(ALERT_FLOOR), delay: 0.0 });
                 self.stats.dry += 1;
                 self.dry[i] = true;
             }
