@@ -48,9 +48,10 @@
 //!   (`claim:claim_at=200+keep=4`). Each is also paired with farm, the
 //!   best scripted hand.
 use slime_mould::mould::big::BigDish;
-use slime_mould::mould::larder_world::{race_params, race_world, Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{race_params, Cmd, End, Game, Order, Rules, Stance, World};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
+use slime_mould::mould::tiers::Tier;
 
 const RESERVE: f32 = 600.0;
 const FARM_MAX: usize = 8;
@@ -76,13 +77,27 @@ struct Row {
     /// The AI's mean and slowest think, microseconds.
     think_mean: f64,
     think_us: f64,
+    /// Does the mould come for the squad (owner's playtest, 2026-11-12:
+    /// "the slime mostly ignored my soldiers")? Living walkers within
+    /// `NEAR` dish cells of any live soldier, the mean over the game's
+    /// seconds while a soldier lives; and the first second a walker
+    /// touches a soldier (the cap if none ever does).
+    near: f64,
+    touch_at: f32,
 }
+
+/// Dish cells round a soldier that count as near (`Row::near`): 10, two
+/// thirds of a soldier's range.
+const NEAR: f32 = 10.0;
 
 fn main() {
     let mut seeds: Vec<u64> = (1..=4).collect();
     let (mut scale, mut walkers, mut threads, mut cap) = (2usize, 5_000usize, 4usize, None::<f32>);
     let mut hands: Vec<String> = ["idle", "random", "farm", "rush", "wall"].iter().map(|s| s.to_string()).collect();
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
+    // A mould tier on the world's mould (`tier=swarmer`: the alarm that
+    // shots lay draws the mould to the fight).
+    let mut tier = None::<Tier>;
     let mut rules = Rules::default();
     let mut map = None::<(String, Map)>;
     for a in std::env::args().skip(1) {
@@ -105,6 +120,9 @@ fn main() {
             "every" => every = v.parse().unwrap(),
             "aim_min" => rules.aim_min = v.parse().unwrap(),
             "price" => rules.price = v.parse().unwrap(),
+            "smell" => rules.smell = v.parse().unwrap(),
+            "smell_r" => rules.smell_r = v.parse().unwrap(),
+            "tier" => tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             "strike" => rules.strike = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
             "map" => {
@@ -123,13 +141,13 @@ fn main() {
         rules.cap = c;
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
-    println!("larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; rules {rules:?}", rules.cap, rules.tps, seeds);
+    println!("larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; tier {}; rules {rules:?}", rules.cap, rules.tps, seeds, tier.map_or("none", |t| t.name()));
     let map = map.as_ref().map(|(_, m)| m);
     if let Some(dir) = look {
         std::fs::create_dir_all(&dir).expect("look dir");
         for &seed in &seeds {
             for hand in &hands {
-                let r = play(seed, scale, walkers, rules, hand, map, Some((&dir, every)));
+                let r = play(seed, scale, walkers, rules, tier, hand, map, Some((&dir, every)));
                 println!("{hand} seed {seed}: {} at {:.0} s, score {:+.3}", r.end, r.t, r.score);
             }
         }
@@ -151,10 +169,10 @@ fn main() {
                     break;
                 }
                 let (seed, hand) = &jobs[j];
-                let r = play(*seed, scale, walkers, rules, hand, map, None);
+                let r = play(*seed, scale, walkers, rules, tier, hand, map, None);
                 println!(
-                    "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}",
-                    r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1
+                    "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s",
+                    r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at
                 );
                 out.lock().unwrap()[j] = r;
             });
@@ -167,7 +185,9 @@ fn main() {
         let rows: Vec<Row> = seeds.iter().map(|&s| get(s, h)).collect();
         let mean = rows.iter().map(|r| r.score).sum::<f32>() / rows.len() as f32;
         let ends = |b: &str| rows.iter().filter(|r| r.end == b).count();
-        println!("  {h:>6}: mean {mean:+.3}; mould wiped {}, cap {}, squad wiped {}", ends("mould wiped"), ends("cap"), ends("squad wiped"));
+        let near = rows.iter().map(|r| r.near).sum::<f64>() / rows.len() as f64;
+        let touch = rows.iter().map(|r| r.touch_at).sum::<f32>() / rows.len() as f32;
+        println!("  {h:>6}: mean {mean:+.3}; mould wiped {}, cap {}, squad wiped {}; near {near:.0} walkers, first touch {touch:.0} s", ends("mould wiped"), ends("cap"), ends("squad wiped"));
     }
     let mut tests = Vec::new();
     for h in hands.iter().filter(|h| *h != "idle" && *h != "random") {
@@ -209,10 +229,15 @@ fn main() {
     }
 }
 
-fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>) -> Row {
+#[allow(clippy::too_many_arguments)]
+fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, tier: Option<Tier>, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>) -> Row {
+    let mut p = race_params(seed, scale, walkers);
+    if let Some(t) = tier {
+        t.apply(&mut p);
+    }
     let mut world = match map {
-        Some(m) => BigDish::with_map(race_params(seed, scale, walkers), m),
-        None => race_world(seed, scale, walkers),
+        Some(m) => BigDish::with_map(p, m),
+        None => BigDish::new(p),
     };
     world.threads = 1;
     let mut g = Game::new(world, rules, seed);
@@ -221,8 +246,22 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
     let mut farmed: Vec<usize> = Vec::new();
     let mut ai = larder_world_ai::Hand::named(hand, &g);
     let (mut think_us, mut think_sum, mut thinks) = (0.0f64, 0.0f64, 0u32);
+    let (mut near_sum, mut near_n, mut touch_at) = (0.0f64, 0u32, None::<f32>);
     let end = g.play(|g| {
         let t = g.time();
+        {
+            let live: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+            if !live.is_empty() {
+                let r = NEAR * g.world.scale();
+                let d = &g.world;
+                let near = (0..d.walkers.len()).filter(|&k| d.lives(k) && live.iter().any(|&(x, y)| (d.walkers[k].0 - x).hypot(d.walkers[k].1 - y) <= r)).count();
+                near_sum += near as f64;
+                near_n += 1;
+            }
+            if touch_at.is_none() && g.soldiers.iter().any(|s| s.alive && s.touching > 0) {
+                touch_at = Some(t);
+            }
+        }
         if let Some((dir, every)) = look {
             if t - shot >= every || shot < 0.0 {
                 shot = t;
@@ -280,6 +319,8 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
         ms_tick: ms,
         think_mean: think_sum / thinks.max(1) as f64,
         think_us,
+        near: near_sum / near_n.max(1) as f64,
+        touch_at: touch_at.unwrap_or(g.rules.cap),
     }
 }
 

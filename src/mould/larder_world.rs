@@ -206,15 +206,21 @@ pub struct Rules {
     pub strike: f32,
     /// Game seconds between one soldier's shots.
     pub shot_every: f32,
-    /// Food a shot costs.
+    /// Food a shot costs. 0 since 2026-11-12: the owner's playtest (04:13Z)
+    /// ran the bank dry with soldiers left, who could then neither fight
+    /// nor harvest past the mould ("energy required for shooting isn't
+    /// fun"); a soldier's fire rate (`shot_every`) is the limit. Was 10
+    /// (M3's), against 30 food a second a harvester takes.
     pub price: f32,
     pub hp: f32,
     /// Health a walker touching a soldier takes a game second.
     pub drain: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
-    /// A soldier's scent, as a share of a full pile's.
+    /// A soldier's scent, as a share of a full pile's, laid on the agar
+    /// within `smell_r` dish cells of it.
     pub smell: f32,
+    pub smell_r: f32,
     /// Food a soldier takes from a crystal a game second, how much it can
     /// carry, and the charge one food is.
     pub harvest: f32,
@@ -261,11 +267,12 @@ impl Default for Rules {
             range: 15.0,
             strike: 2.5,
             shot_every: 1.0,
-            price: 10.0,
+            price: 0.0,
             hp: 100.0,
             drain: 1.0,
             touch: 1.5,
             smell: 0.5,
+            smell_r: 2.0,
             harvest: 30.0,
             carry: 300.0,
             charge: 64.0,
@@ -844,7 +851,7 @@ impl<W: World> Game<W> {
                 sight: r.range * sc,
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
-                smell_r: 2.0 * sc,
+                smell_r: r.smell_r * sc,
                 smell: self.world.food_deposit() * r.smell * r.frame_ticks as f32,
             });
             who.push(Some(k));
@@ -1273,7 +1280,10 @@ mod tests {
 
     #[test]
     fn soldiers_on_free_fire_kill_mould_and_pay_for_it() {
+        // Shots are free by default (2026-11-12); a price still comes out
+        // of the bank shot by shot.
         let mut g = small(3);
+        g.rules.price = 10.0;
         let core = g.core;
         for k in 0..4 {
             g.apply(Cmd::Order(k, Order::Attack));
@@ -1285,7 +1295,7 @@ mod tests {
             }
         }
         assert!(g.shots > 0 && g.killed > 0, "shots {} killed {}", g.shots, g.killed);
-        assert!((g.spent - g.shots as f32 * g.rules.price).abs() < 1e-3);
+        assert!(g.spent > 0.0 && (g.spent - g.shots as f32 * g.rules.price).abs() < 1e-3);
         let _ = core;
     }
 
