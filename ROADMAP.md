@@ -203,11 +203,15 @@ At today's 3-5% of open cells holding a walker the mould draws as beads,
 and at 15-20% it draws as smooth tubes. If the owner takes the dense mould,
 it lands as **one** PR in a slot the integration thread schedules between
 censuses, and every thread re-runs its baseline once afterwards. The rules
-then count mould mass, not walkers. The proposed names are
-`Rules::reference_density` (today's Fork density at 5k, a constant) and
-`Game::per_mass()` = `Game::density / reference_density` (1.0 today).
-Drain, a shot's kills, the larder steal and the score's mould size divide
-by it. The Larder thread owns the names. Route A (5x the walkers) or route
+then count mould mass, not walkers (agreed with the Larder thread,
+16:20Z): `Rules::reference_density` (0.0, off: every walker weighs 1) and
+`Game::walker_mass()` = reference_density / density, with `Game::mass(n)`.
+Drain and steal (larder_world.rs and buildings.rs) and `Rules::wade`
+multiply by it. The score's size term (a ratio), the touching tests and the
+calm subtraction stay as they are. `killed` stays a stat. The reset sets the
+constant in the same commit as the new baseline, because a Fork-at-5k
+constant is not 1.0 on other maps or at the GPU's 100k. Sound's touch curve
+belongs to the sound thread. Route A (5x the walkers) or route
 B (a coarser grid) is the owner's choice, with the GPU thread's frame cost
 for both on the card.
 
