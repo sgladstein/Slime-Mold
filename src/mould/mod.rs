@@ -57,6 +57,7 @@
 //! picker; a dish opens on a star from the one before.
 
 pub mod big;
+pub mod campaign;
 pub mod fever;
 pub mod larder;
 pub mod larder_ai;
