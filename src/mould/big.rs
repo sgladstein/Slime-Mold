@@ -256,6 +256,14 @@ pub struct BigParams {
     /// across its whole width). Built from one summed-area table a species
     /// each step (f64, so the sums are exact enough at 1M walkers).
     pub species_convert_r: u32,
+    /// Conversion weighs each species' trail divided by that species'
+    /// deposit (its own `SpeciesSet::deposit`, else the global), so it
+    /// counts walkers' presence rather than how much each lays (added
+    /// 2026-11-12 for the player's own mould: with raw trail, a form that
+    /// lays three times the deposit converted the race network whole within
+    /// 60 s, so deposit was a stat that won every fight). Off by default; CPU
+    /// only, not yet on the GPU engine.
+    pub species_convert_per: bool,
     /// Species 0 lays this many times the deposit (1 is even; added
     /// 2026-11-11 to give one side an edge in a fight).
     pub species_boost: f32,
@@ -655,6 +663,7 @@ impl BigParams {
             species_avoid: 1.0,
             species_convert: 0.0,
             species_convert_r: 0,
+            species_convert_per: false,
             species_boost: 1.0,
             species_share: 0.0,
             graze_weight: 0.0,
@@ -2067,14 +2076,16 @@ impl BigDish {
             } else {
                 Vec::new()
             };
+            // Each species' weight a unit of trail (`species_convert_per`).
+            let per: Vec<f64> = (0..n).map(|s| if p.species_convert_per { 1.0 / (self.set_of(s).deposit as f64).max(1e-9) } else { 1.0 }).collect();
             let weigh = |s: usize, cx: usize, cy: usize, i: usize| -> f64 {
                 if r == 0 {
-                    return self.species_trail[s][i] as f64;
+                    return self.species_trail[s][i] as f64 * per[s];
                 }
                 let (x0, y0) = (cx.saturating_sub(r), cy.saturating_sub(r));
                 let (x1, y1) = ((cx + r + 1).min(w), (cy + r + 1).min(h));
                 let t = &sat[s];
-                t[y1 * (w + 1) + x1] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0] + t[y0 * (w + 1) + x0]
+                (t[y1 * (w + 1) + x1] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0] + t[y0 * (w + 1) + x0]) * per[s]
             };
             let mut next = self.spec.clone();
             for (k, slot) in next.iter_mut().enumerate() {
@@ -2097,7 +2108,7 @@ impl BigDish {
                     }
                 }
                 // r 0 keeps the f32 product, so older runs keep their hashes.
-                let wins = if r == 0 {
+                let wins = if r == 0 && !p.species_convert_per {
                     self.species_trail[best][i] > p.species_convert * self.species_trail[own][i]
                 } else {
                     weigh(best, cx, cy, i) > p.species_convert as f64 * weigh(own, cx, cy, i)
@@ -3123,6 +3134,34 @@ mod tests {
         let (s0, s1): (f32, f32) = (d.species_trail[0].iter().sum(), d.species_trail[1].iter().sum());
         assert!((s0 / before - 0.9).abs() < 0.01, "{}", s0 / before);
         assert!((s1 / before - 0.5).abs() < 0.01, "{}", s1 / before);
+    }
+
+    /// `species_convert_per` weighs trail over each species' deposit: a
+    /// species laying three times as much no longer converts the other by
+    /// that alone (raw trail converts nearly every walker of the other).
+    #[test]
+    fn conversion_per_deposit_counts_presence() {
+        let ones = |per: bool| {
+            let base = BigParams { species: 2, species_convert: 1.2, species_convert_r: 2, species_avoid: 0.0, ..small(2, 1) };
+            let heavy = SpeciesSet { deposit: 3.0 * base.deposit, ..SpeciesSet::from_params(&base) };
+            let p = BigParams { species_sets: vec![heavy, SpeciesSet::from_params(&base)], species_convert_per: per, ..base };
+            let mut d = BigDish::new(p);
+            for i in 0..d.w * d.h {
+                if d.agar[i] {
+                    d.species_trail[0][i] = 3.0;
+                    d.species_trail[1][i] = 1.0;
+                    d.trail[i] = 4.0;
+                }
+            }
+            let n1 = |d: &BigDish| d.spec.iter().filter(|&&s| s == 1).count();
+            let before = n1(&d);
+            d.tick();
+            (before, n1(&d))
+        };
+        let (b, raw) = ones(false);
+        let (_, per) = ones(true);
+        assert!(raw * 10 < b, "raw trail: {raw} of {b} species-1 walkers left");
+        assert!(per * 10 > 9 * b, "per deposit: {per} of {b} left");
     }
 
     /// The outside rules (2026-11-11) are keyed draws too: threads change
