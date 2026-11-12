@@ -127,6 +127,15 @@ threads the integration thread settles a question with the game designer
 and technical lead reviews, records the answer and its reasons here, and
 the owner can reverse it in the morning.
 
+**Settled overnight.** The campaign keeps only unlocked verbs between
+missions, a mission ends at the 15:00 cap with a graded result in stars,
+the first mission teaches with first-time hints, and the persistent world
+stays a separate later mode. Settled 11-12 ~04:49Z by the game designer
+review with the campaign thread, with no technical objection from the
+technical lead. The reasons: carrying soldiers and food lets one bad
+mission ruin the next, and missions tuned on their own are easier to gate.
+The owner may reverse it.
+
 **Caps.** Buildings share `squad::UNITS_MAX` (64) with up to
 `Rules::max_squad` (40) soldiers, and the frame drops units past the cap
 silently. The buildings thread raises it to 96 (two workgroups for the
@@ -154,12 +163,11 @@ one density, walkers per open cell at the start (Larder thread, on
 `Game`), and a new count-based threshold is written as a multiple of it
 (technical lead review, 11-12).
 
-**The mould clock is a census reset.** The Larder thread's second PR
-slows the mould (fewer fine steps a game second; the owner found walkers
-too fast). Every thread's census baseline moves with it, so it lands
-between other threads' measurements with every baseline re-run in the
-same PR, and the integration thread tells each
-thread when it opens and merges.
+**No slower mould clock.** The Larder thread dropped it (11-12 04:49Z):
+the graphics thread timed a 3x slower clock and the hole still refilled in
+0.53 to 0.73 s, so it is not the lever, and census baselines stay put. A
+clock change would be a census reset: if one comes back, it re-runs every
+baseline in its own PR, between other threads' censuses.
 
 **Shot impact is a rule, through the crater field.** The owner turned down
 both drawn versions in the graphics thread's blind A/B (11-12 04:38Z:
@@ -167,10 +175,15 @@ both drawn versions in the graphics thread's blind A/B (11-12 04:38Z:
 Maybe part of the issue is the slime/walkers move to fast.") and set the
 bar at 04:39Z: "A group of soldiers shooting the slime should start carving
 out a bigger and bigger hole that doesn't refill while being shot at." So
-plain shots lay a small crater through the toolkit's field (`Rules` will
-carry the shot's strength and radius, set and measured by the Larder
-thread), and the measure is the hole's area under sustained fire, not
-its look.
+the hole is a rule, and its measure is the hole's area under sustained
+fire, not its look. The Larder thread's candidate needs no new field: the
+mould reads the alarm that shots already lay at a negative weight
+(`alarm_weight` -1, keep 0.98). On seed 1 that held a growing hole open
+under fire (110 dish cells, against 40 today) that refills once fire
+stops. It becomes a default only if a 16-seed hole test and the census
+agree. That is the local push the *Skittish* dead end saw near a wound, not
+the whole-body flight it was rejected for. Shots may still lay a little of
+the toolkit's crater later, with values in `Rules`.
 
 Sound and the graphics thread's look changes add no rule and merge
 whenever ready. The one body thread's CPU rules merge whenever ready; its GPU port waits for
