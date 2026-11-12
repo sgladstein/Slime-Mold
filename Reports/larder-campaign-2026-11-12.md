@@ -308,6 +308,15 @@ from `SHRINK_FROM` (60 s): the bar is the share of the mould cut away,
 which spreads the hands (strike 1.00, random 0.86, claim 0.33, idle 0.06).
 Random wipes the headless Drifter on 2 of 4 seeds; that is a tuning note
 for the Drifter (the tiers thread already calls it gentle), not a veto.
-`goal hold` stays in the mission format, tested, for a mould that comes
+Then the designer (22:58Z): with every mould headless a wipe means
+hunting the last stragglers, which the owner called tedious in the shape
+D playtest. The goal is now "Break the Drifter: cut it below a tenth of
+its size" (`shrink 0.1`), so the mission ends when the fight is won;
+strike's goal comes at or before its wipe, and the times above were not
+re-measured. On main after the Larder economy PR (#170: rations, the
+overrun on) strike no longer breaks the Drifter on seed 1: bar 0.51 at
+15:00, two soldiers left (the `#[ignore]`d plan test fails there for
+that reason, before and after this change). #174 doubles the bite next,
+so First contact is re-tuned after it lands rather than twice. `goal hold` stays in the mission format, tested, for a mould that comes
 back; `hold+STYLE` was dropped with no mission to use it. The `#[ignore]`d
 plan test now gives First contact's strike 9:00.

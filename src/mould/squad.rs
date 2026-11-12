@@ -493,6 +493,13 @@ pub const S_IN: usize = U_OUT + UNITS_MAX * 4;
 pub const S_OUT: usize = S_IN + SHOTS_MAX * 4;
 pub const PATH: usize = S_OUT + SHOTS_MAX * 4;
 pub const WORDS: usize = PATH + PATH_MAX;
+/// The gardeners' tend entries (`own_mould`; the GPU's `tend` pass), after
+/// the shots' cells: eight words each (fine cell x, y, the task, the disc's
+/// squared radius, Road's trail and Feed's charge a cell, two unused), at
+/// most one a unit. The buffer is `ALL` words.
+pub const TEND: usize = WORDS;
+pub const TEND_MAX: usize = UNITS_MAX;
+pub const ALL: usize = TEND + 8 * TEND_MAX;
 
 /// A frame as the GPU's squad buffer holds it (outputs zeroed), with its
 /// unit and shot counts.
