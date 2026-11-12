@@ -48,6 +48,14 @@ Plan agreed with integration at 19:59Z, built under the owner's 17:26Z testing r
   - Farm and wall end every game with all 8 soldiers, so they never starved.
   - The rush hand's 4 cap games sit at 0 soldiers with 411-491 food, which is over a soldier's price. The hand keeps a reserve and won't buy; a player could.
 
+**Smoke run under the headless default** (after #164 made every mould headless; race seeds 5-8, five hands, about 4 min; raw [smoke-headless-race-5-8.txt](larder-economy-2026-11-12/smoke-headless-race-5-8.txt)):
+- Idle starves in 4 of 4 games, at 522-597 s.
+- Farm reaches the cap in 4 of 4 with all 8 soldiers.
+- Strike reaches the cap in 2. On seed 7 the mould overran the larder at 778 s with the bank empty, and on seed 8 its 30 soldiers starved by 783 s. That is the player AI's 30-soldier army again, which it buys whatever it can feed.
+- Random loses all 4 (three squads wiped, one overrun) at 179-289 s.
+- The shortest game is the rush on seed 7 at 58 s. Its squad died in the body with 397 food still banked, so rations played no part. The rush hand walks into the body: on the PR 4 smoke runs before #164 it died at 43-110 s with or without rations.
+- No soft lock: farm and strike are stuck 0 and 3 s a game.
+
 **The regrowing core is taken out.** The owner ruled at 20:21Z: "remove the king rule. As long as the slime has food/crystal energy it can make walkers. Headless." The tiers thread confirmed at 21:00Z that no tier will use `CoreKind::Regrow`, so PR 4 removes it, along with `Game::mould_ate`, `World::start_births`, the census key `regrow=` and the window's "grew back" alert. It worked as built ([*A core that grows back*](larder-world-roadmap-2026-11-11.md) in the roadmap report), so it is recorded in `dead-ends.md` as dropped, not rejected, with what to restore if a core comes back. `core=fixed|headless` stays for tests.
 
 **Cost.** Per step on the CPU: one multiply and a subtraction, and a loop over the soldiers while hungry. Nothing on the GPU.
