@@ -4,7 +4,7 @@ with farm (sign test). Usage: python3 table.py census-*.txt"""
 import re, sys
 from math import comb
 
-PLANS = ["farm", "ring", "turtle", "killzone"]
+PLANS = ["farm", "ring", "turtle", "killzone", "guard", "army", "pumps"]
 
 def sign_p(w, l):
     n = w + l

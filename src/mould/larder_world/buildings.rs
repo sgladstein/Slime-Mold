@@ -138,6 +138,9 @@ pub struct BuildRules {
     pub pump_hp: f32,
     /// Food a second a pump draws from its crystal.
     pub pump_rate: f32,
+    /// A working pump's scent, as a multiple of a soldier's, over
+    /// `lure_r` (0: none beyond its crystal's own). The pump as bait.
+    pub pump_smell: f32,
     pub outpost_cost: f32,
     pub outpost_hp: f32,
     /// The outpost's bank smell as a share of the larder's (`Rules::hoard`).
@@ -165,6 +168,7 @@ impl Default for BuildRules {
             pump_cost: 500.0,
             pump_hp: 200.0,
             pump_rate: 5.0,
+            pump_smell: 0.0,
             outpost_cost: 400.0,
             outpost_hp: 300.0,
             outpost_hoard: 0.25,
@@ -355,6 +359,8 @@ impl<W: World> Game<W> {
                     if let Some(c) = bd.crystal {
                         u.take = b.pump_rate * dt * r.charge;
                         u.take_r = self.world.crystal_r(c).min(4.0 * sc);
+                        u.smell_r = b.lure_r * sc;
+                        u.smell = self.world.food_deposit() * r.smell * b.pump_smell * r.frame_ticks as f32;
                         crystal = Some(c);
                     }
                 }

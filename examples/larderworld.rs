@@ -50,6 +50,9 @@
 //! - **turtle**: farm, and a pump on each crystal a soldier is clearing
 //!   (the soldier is on it, so it is in reach) with a turret beside it, as
 //!   the bank allows over `RESERVE`.
+//! - **army**: farm, but every bank over `RESERVE` buys a soldier, up to
+//!   `Rules::max_squad`, and every soldier is on free fire: the hand that
+//!   spends what farm banks on guns that walk.
 //! - **pumps** and **guard**: the turtle's halves alone, pumps without
 //!   turrets, and a turret by each farmed crystal without pumps.
 //! - **killzone**: farm, and a lure `ZONE` dish cells from the larder on
@@ -130,6 +133,7 @@ fn main() {
             "home_dry" => rules.home_dry = v == "1",
             "pump_rate" => rules.build.pump_rate = v.parse().unwrap(),
             "pump_cost" => rules.build.pump_cost = v.parse().unwrap(),
+            "pump_smell" => rules.build.pump_smell = v.parse().unwrap(),
             "turret_cost" => rules.build.turret_cost = v.parse().unwrap(),
             "turret_every" => rules.build.turret_every = v.parse().unwrap(),
             "tier" => TIER.set(Tier::from_name(v).unwrap_or_else(|| panic!("unknown tier {v}"))).unwrap(),
@@ -198,7 +202,7 @@ fn main() {
     }
     let mut tests = Vec::new();
     for h in hands.iter().filter(|h| *h != "idle" && *h != "random") {
-        let scripted = ["farm", "rush", "wall", "ring", "turtle", "killzone", "pumps", "guard"].contains(&h.as_str());
+        let scripted = ["farm", "rush", "wall", "ring", "turtle", "killzone", "pumps", "guard", "army"].contains(&h.as_str());
         for base in ["idle", "random", "farm"] {
             if base == "farm" && scripted {
                 continue;
@@ -273,6 +277,21 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
             "turtle" => {
                 farm_hand(g, &mut farmed);
                 turtle_hand(g, true, true);
+            }
+            "army" => {
+                // Farm, but spend the bank on soldiers: up to the squad's
+                // most, on free fire (the fair foil for the turret hands,
+                // since farm stops at `FARM_MAX` and banks the rest).
+                while g.bank > g.rules.soldier_cost + RESERVE && g.alive() < g.rules.max_squad {
+                    if !g.apply(Cmd::Buy) {
+                        break;
+                    }
+                }
+                farm_hand(g, &mut farmed);
+                let idle: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive && g.soldiers[k].stance != Stance::Free).collect();
+                for k in idle {
+                    g.apply(Cmd::Stance(k, Stance::Free));
+                }
             }
             "pumps" => {
                 farm_hand(g, &mut farmed);
