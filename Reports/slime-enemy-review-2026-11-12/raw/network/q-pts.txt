@@ -1,0 +1,56 @@
+bigdish: preset pts seeds [1, 2] seconds 60 threads 2
+params BigParams { scale: 2, substeps: 2, walkers: 25000, sensor_angle: 0.3926991, rotate_angle: 0.7853982, sensor_offset: 9.0, scent_offset: 0.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: true, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 0, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.02, offset_mod: [0.0, 1.0], angle_mod: [0.3926991, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 0, sense_floor: 0.0, wander: 0.0, sick_steps: 0, immune_steps: 0, sick_catch: 1.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 1.0, sick_turn: 1.0, sick_seed_r: 0.0, sick_upkeep: 1.0, germ_resist: 1.0, sensor_r: 0, species: 0, species_avoid: 1.0, species_convert: 0.0, species_convert_r: 0, species_convert_per: false, species_cap: [], species_boost: 1.0, species_share: 0.0, graze_weight: 0.0, graze_eat: 0.05, graze_regrow: 0.002, species_zones: false, chance_exp: 0.0, species_cycle: false, species_next: 0.6, species_prev: -1.0, explore_steps: 0, explore_deposit: 0.05, explore_spread: 0.0, size_spread: 0.0, mix_share: 0.0, mix_reach: 1.0, mix_angle: 1.0, mix_turn: 1.0, mix_step: 1.0, mix_deposit: 1.0, species_sets: [], blocked_keep: false, blocked_reset: 0.01, blocked_retry: 0, blocked_deposit: 0.0, upkeep: 0.0, start_energy: 0.5, birth_energy: 1.0, birth_cost: 0.2, starve: 0.01, capacity: 0, energy_flow: 0.0, flow_loss: 0.0, hunger_scent: 0.0, hunger_at: 1.0, hunger_reach: 0.0, hunt_at: 0.0, body_pull: 0.0, body_r: 2, body_lone: 0.0, lone_step: 0.0, lone_floor: 0.25, tether: 0, tether_hold: 0.0, lone_upkeep: 1.0, lone_r: 1, spore_rate: 0.0, spore_scent: 0.0, spore_alarm: 0.0, spore_burst: 0.0, spore_steps: 240, spore_speed: 3.0, spore_reach: 0.0, spore_deposit: 0.0, spore_land: 0.0, spore_rest: 1200, sleep_rate: 0.0, sleep_deposit: 1.0, wake_scent: 1.0, wake_alarm: 1.0, wake_steps: 240, sleep_rest: 0, sleep_death: 0.0, gas_death: 0.0, alarm_keep: 0.0, alarm_weight: 0.0, alarm_relay: 0.0, scar_keep: 0.0, scar_gain: 0.0, scar_weight: 0.0, tube: 1.0, crystal_charge: 0.0, crystal_eat: 0.05, crystal_regrow: 0.0, crystal_flow: 0.01, terrain_rock: 0.0, terrain_wet: 0.0, wet_step: 0.5, terrain_blob: 12.0, sand_keep: 0.8, clay_keep: 1.05, barren_upkeep: 3.0, scorch_keep: 0.1, scorch_full: 30, scorch_cone: false, rect: false, wall_hp: 400.0, wall_bite: 1.0, wall_scent: 0.9, seed: 1 }
+== seed 1: 512 x 320, 25000 walkers, 1 piles
+seed 1 pts t   5.0s  tube 13217.8  loops   43  width 9.14  reach  196.5  piles 1/1  strays 0.007  crystals 1.000  ms/tick 9.41
+seed 1 pts t   5.0s  contrast 2.06
+seed 1 pts t  10.0s  tube 12070.2  loops   37  width 8.74  reach  196.5  piles 1/1  strays 0.011  crystals 1.000  ms/tick 9.21
+seed 1 pts t  10.0s  contrast 2.12
+seed 1 pts t  15.0s  tube 12175.5  loops   38  width 8.70  reach  196.5  piles 1/1  strays 0.011  crystals 1.000  ms/tick 9.17
+seed 1 pts t  15.0s  contrast 2.08
+seed 1 pts t  20.0s  tube 11130.5  loops   25  width 8.85  reach  196.5  piles 1/1  strays 0.013  crystals 1.000  ms/tick 9.06
+seed 1 pts t  20.0s  contrast 2.19
+seed 1 pts t  25.0s  tube 10701.5  loops   28  width 8.40  reach  196.5  piles 1/1  strays 0.015  crystals 1.000  ms/tick 9.01
+seed 1 pts t  25.0s  contrast 2.16
+seed 1 pts t  30.0s  tube 10404.2  loops   22  width 8.51  reach  196.5  piles 1/1  strays 0.014  crystals 1.000  ms/tick 9.03
+seed 1 pts t  30.0s  contrast 2.30
+seed 1 pts t  35.0s  tube 10313.2  loops   24  width 8.35  reach  196.5  piles 1/1  strays 0.016  crystals 1.000  ms/tick 9.05
+seed 1 pts t  35.0s  contrast 2.14
+seed 1 pts t  40.0s  tube 10056.0  loops   21  width 8.48  reach  196.5  piles 1/1  strays 0.013  crystals 1.000  ms/tick 9.03
+seed 1 pts t  40.0s  contrast 2.10
+seed 1 pts t  45.0s  tube  9963.8  loops   23  width 8.37  reach  196.5  piles 1/1  strays 0.016  crystals 1.000  ms/tick 9.04
+seed 1 pts t  45.0s  contrast 2.07
+seed 1 pts t  50.0s  tube  9922.2  loops   18  width 8.53  reach  196.5  piles 1/1  strays 0.016  crystals 1.000  ms/tick 9.04
+seed 1 pts t  50.0s  contrast 2.04
+seed 1 pts t  55.0s  tube  9853.0  loops   22  width 8.23  reach  196.5  piles 1/1  strays 0.023  crystals 1.000  ms/tick 9.00
+seed 1 pts t  55.0s  contrast 2.03
+seed 1 pts t  60.0s  tube  9771.8  loops   22  width 8.44  reach  196.5  piles 1/1  strays 0.019  crystals 1.000  ms/tick 8.97
+seed 1 pts t  60.0s  contrast 2.09
+seed 1 pts firsts 0:0:0.57:0.0
+seed 1 pts hash=181a0181e596a07d
+== seed 2: 512 x 320, 25000 walkers, 1 piles
+seed 2 pts t   5.0s  tube 12874.2  loops   38  width 8.94  reach  195.7  piles 1/1  strays 0.007  crystals 1.000  ms/tick 9.59
+seed 2 pts t   5.0s  contrast 2.08
+seed 2 pts t  10.0s  tube 12246.5  loops   38  width 9.13  reach  193.8  piles 1/1  strays 0.010  crystals 1.000  ms/tick 9.33
+seed 2 pts t  10.0s  contrast 2.12
+seed 2 pts t  15.0s  tube 11737.8  loops   31  width 8.68  reach  196.5  piles 1/1  strays 0.012  crystals 1.000  ms/tick 9.12
+seed 2 pts t  15.0s  contrast 2.24
+seed 2 pts t  20.0s  tube 11200.0  loops   29  width 8.26  reach  196.5  piles 1/1  strays 0.015  crystals 1.000  ms/tick 9.07
+seed 2 pts t  20.0s  contrast 2.12
+seed 2 pts t  25.0s  tube 11043.8  loops   30  width 8.34  reach  196.5  piles 1/1  strays 0.015  crystals 1.000  ms/tick 9.04
+seed 2 pts t  25.0s  contrast 2.19
+seed 2 pts t  30.0s  tube 10997.0  loops   30  width 8.19  reach  196.5  piles 1/1  strays 0.014  crystals 1.000  ms/tick 9.01
+seed 2 pts t  30.0s  contrast 2.12
+seed 2 pts t  35.0s  tube 10491.0  loops   30  width 8.18  reach  196.5  piles 1/1  strays 0.019  crystals 1.000  ms/tick 8.95
+seed 2 pts t  35.0s  contrast 2.07
+seed 2 pts t  40.0s  tube 10444.2  loops   22  width 8.42  reach  196.5  piles 1/1  strays 0.013  crystals 1.000  ms/tick 8.96
+seed 2 pts t  40.0s  contrast 2.18
+seed 2 pts t  45.0s  tube 10388.8  loops   28  width 8.36  reach  196.5  piles 1/1  strays 0.011  crystals 1.000  ms/tick 8.96
+seed 2 pts t  45.0s  contrast 2.13
+seed 2 pts t  50.0s  tube 10212.0  loops   23  width 8.40  reach  196.5  piles 1/1  strays 0.015  crystals 1.000  ms/tick 8.92
+seed 2 pts t  50.0s  contrast 2.19
+seed 2 pts t  55.0s  tube 10086.0  loops   27  width 8.45  reach  196.5  piles 1/1  strays 0.013  crystals 1.000  ms/tick 8.89
+seed 2 pts t  55.0s  contrast 2.09
+seed 2 pts t  60.0s  tube 10001.0  loops   19  width 8.55  reach  196.5  piles 1/1  strays 0.014  crystals 1.000  ms/tick 8.86
+seed 2 pts t  60.0s  contrast 2.13
+seed 2 pts firsts 0:0:0.57:0.0
+seed 2 pts hash=1d12c005610a410c

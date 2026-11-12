@@ -1,0 +1,29 @@
+bigdish: preset sa45 seeds [1] seconds 60 threads 1
+params BigParams { scale: 2, substeps: 2, walkers: 25000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, scent_offset: 0.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: true, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 0, pile_r: 6.0, blob: false, respawn: 0.0, blob_r: 0.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 0, sense_floor: 0.0, wander: 0.0, sick_steps: 0, immune_steps: 0, sick_catch: 1.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 1.0, sick_turn: 1.0, sick_seed_r: 0.0, sick_upkeep: 1.0, germ_resist: 1.0, sensor_r: 0, species: 0, species_avoid: 1.0, species_convert: 0.0, species_convert_r: 0, species_convert_per: false, species_cap: [], species_boost: 1.0, species_share: 0.0, graze_weight: 0.0, graze_eat: 0.05, graze_regrow: 0.002, species_zones: false, chance_exp: 0.0, species_cycle: false, species_next: 0.6, species_prev: -1.0, explore_steps: 0, explore_deposit: 0.05, explore_spread: 0.0, size_spread: 0.0, mix_share: 0.0, mix_reach: 1.0, mix_angle: 1.0, mix_turn: 1.0, mix_step: 1.0, mix_deposit: 1.0, species_sets: [], blocked_keep: false, blocked_reset: 0.01, blocked_retry: 0, blocked_deposit: 0.0, upkeep: 0.0, start_energy: 0.5, birth_energy: 1.0, birth_cost: 0.2, starve: 0.01, capacity: 0, energy_flow: 0.0, flow_loss: 0.0, hunger_scent: 0.0, hunger_at: 1.0, hunger_reach: 0.0, hunt_at: 0.0, body_pull: 0.0, body_r: 2, body_lone: 0.0, lone_step: 0.0, lone_floor: 0.25, tether: 0, tether_hold: 0.0, lone_upkeep: 1.0, lone_r: 1, spore_rate: 0.0, spore_scent: 0.0, spore_alarm: 0.0, spore_burst: 0.0, spore_steps: 240, spore_speed: 3.0, spore_reach: 0.0, spore_deposit: 0.0, spore_land: 0.0, spore_rest: 1200, sleep_rate: 0.0, sleep_deposit: 1.0, wake_scent: 1.0, wake_alarm: 1.0, wake_steps: 240, sleep_rest: 0, sleep_death: 0.0, gas_death: 0.0, alarm_keep: 0.0, alarm_weight: 0.0, alarm_relay: 0.0, scar_keep: 0.0, scar_gain: 0.0, scar_weight: 0.0, tube: 1.0, crystal_charge: 0.0, crystal_eat: 0.05, crystal_regrow: 0.0, crystal_flow: 0.01, terrain_rock: 0.0, terrain_wet: 0.0, wet_step: 0.5, terrain_blob: 12.0, sand_keep: 0.8, clay_keep: 1.05, barren_upkeep: 3.0, scorch_keep: 0.1, scorch_full: 30, scorch_cone: false, rect: false, wall_hp: 400.0, wall_bite: 1.0, wall_scent: 0.9, seed: 1 }
+== seed 1: 512 x 320, 25000 walkers, 1 piles
+seed 1 sa45 t   5.0s  tube 11350.0  loops   37  width 10.41  reach  180.2  piles 1/1  strays 0.009  crystals 1.000  ms/tick 7.21
+seed 1 sa45 t   5.0s  contrast 2.14
+seed 1 sa45 t  10.0s  tube 10120.2  loops   23  width 11.10  reach  178.0  piles 1/1  strays 0.030  crystals 1.000  ms/tick 7.08
+seed 1 sa45 t  10.0s  contrast 2.13
+seed 1 sa45 t  15.0s  tube  9245.2  loops   20  width 12.56  reach  176.4  piles 1/1  strays 0.024  crystals 1.000  ms/tick 7.01
+seed 1 sa45 t  15.0s  contrast 2.20
+seed 1 sa45 t  20.0s  tube  8580.8  loops   17  width 13.23  reach  173.5  piles 1/1  strays 0.034  crystals 1.000  ms/tick 6.92
+seed 1 sa45 t  20.0s  contrast 2.13
+seed 1 sa45 t  25.0s  tube  8342.0  loops   20  width 13.87  reach  171.4  piles 1/1  strays 0.031  crystals 1.000  ms/tick 6.80
+seed 1 sa45 t  25.0s  contrast 2.19
+seed 1 sa45 t  30.0s  tube  7840.8  loops   11  width 15.12  reach  168.5  piles 1/1  strays 0.035  crystals 1.000  ms/tick 6.77
+seed 1 sa45 t  30.0s  contrast 2.18
+seed 1 sa45 t  35.0s  tube  7831.2  loops   14  width 15.80  reach  167.5  piles 1/1  strays 0.031  crystals 1.000  ms/tick 6.71
+seed 1 sa45 t  35.0s  contrast 2.21
+seed 1 sa45 t  40.0s  tube  7688.2  loops   13  width 16.10  reach  166.0  piles 1/1  strays 0.031  crystals 1.000  ms/tick 6.71
+seed 1 sa45 t  40.0s  contrast 2.17
+seed 1 sa45 t  45.0s  tube  7601.5  loops   15  width 15.78  reach  165.4  piles 1/1  strays 0.034  crystals 1.000  ms/tick 6.71
+seed 1 sa45 t  45.0s  contrast 2.20
+seed 1 sa45 t  50.0s  tube  7582.2  loops   13  width 17.81  reach  164.0  piles 1/1  strays 0.032  crystals 1.000  ms/tick 6.69
+seed 1 sa45 t  50.0s  contrast 2.32
+seed 1 sa45 t  55.0s  tube  7445.2  loops   17  width 17.31  reach  163.9  piles 1/1  strays 0.028  crystals 1.000  ms/tick 6.67
+seed 1 sa45 t  55.0s  contrast 2.05
+seed 1 sa45 t  60.0s  tube  7355.8  loops   12  width 17.60  reach  162.5  piles 1/1  strays 0.037  crystals 1.000  ms/tick 6.67
+seed 1 sa45 t  60.0s  contrast 1.97
+seed 1 sa45 firsts 0:0:0.57:0.0
+seed 1 sa45 hash=0922869a70256a60
