@@ -1,0 +1,26 @@
+mission 3-the-gaps (The gaps): "Keep the mould inside the Rim until 10:00", map rim, tier sprawler (not built: plain mould), seeds 1-4, scale 2, walkers 5000
+on the CPU and the GPU engine
+campaign: GPU llvmpipe (LLVM 20.1.2, 256 bits)
+  claim s1: Goal 701s 2*
+  claim s2: Goal 600s 2*
+campaign: GPU llvmpipe (LLVM 20.1.2, 256 bits)
+  claim s1 GPU: Goal 696s 2*
+  claim s3: Goal 600s 2*
+  claim s2 GPU: Cap 900s 0*
+  claim s4: Goal 600s 2*
+  claim s3 GPU: Goal 600s 2*
+  claim s4 GPU: Goal 700s 2*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most
+claim        1 CPU  Goal         701      2 1.00     0%     0%    0%    0%    0%                             0    0    7      700     10     12108  14836  0.000/0.058
+claim        1 GPU  Goal         696      2 1.00     0%     0%    0%    0%    0%                             0    0    0      695     15     13494  13543  0.000/0.050
+claim        2 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     13422   4384  0.000/0.047
+claim        2 GPU  Cap          900      0 0.28     0%     0%    0%    0%    0%                             1    0   33        0      6     11620  11773  0.000/0.168
+claim        3 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     13203   5213  0.000/0.038
+claim        3 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     13502   5322  0.000/0.042
+claim        4 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    0    0      599     28     11927   5694  0.000/0.047
+claim        4 GPU  Goal         700      2 1.00     0%     0%    0%    0%    0%                             0    0    3      699     11     11401  10805  0.000/0.053
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  claim     CPU 4/4  stars 2  best 1.00  dead 0%  stuck 0 s  stall 7 s
+  claim     GPU 3/4  stars 2  best 0.82  dead 0%  stuck 0 s  stall 33 s

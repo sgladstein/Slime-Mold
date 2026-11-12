@@ -27,7 +27,8 @@ cargo test --release --locked --lib the_readout_matches -- --nocapture
 ## What changed
 
 **One packed readout a frame.** `GpuWorld` keeps one buffer of about
-8 KB (plus 2.5 KB with the mould grid) that the frame's own command
+8 KB (plus the mould grid when asked: 10 KB at scale 1 in squares of 4
+dish cells, 40 KB at scale 2) that the frame's own command
 buffer fills after its last pass: the squad's unit and shot outputs, each
 shot's kills, every pile's run and sums, and the wall counters. A frame
 then waits once, for that one submission, and creates no buffer. Before,
@@ -147,15 +148,156 @@ in 6 of 6 pairs (1,840 to 1,744, 3,036 to 2,919, 3,011 to 2,868, and
 +3% to +5.5% in the others). Six pairs from two seeds are not
 independent; the full census below decides whether it is a bias.
 
+**The two engines over 32 seeds: no bias** (`gpu=both seeds=1-32
+cap=120`, the five default hands, at 9c18a0a, 320 games;
+[`raw/census-both-s1-32-cap120.txt`](gpu-readout-2026-11-12/raw/census-both-s1-32-cap120.txt),
+summed by `merge.py`). Deciding measures, named before the run: each
+hand's score, CPU against GPU (Mann-Whitney two-sided, Holm over the five
+hands), and the mould at the end, GPU bigger or smaller by seed (sign
+test, Holm over five).
+
+| hand | median score CPU / GPU | median paired difference | Mann-Whitney p | mould: GPU bigger / smaller | sign p | median size ratio |
+|---|---|---|---|---|---|---|
+| idle | -0.214 / -0.210 | +0.003 | 0.82 | 14 / 18 | 0.60 | 0.975 |
+| random | +0.133 / +0.123 | -0.000 | 1.00 | 15 / 16 | 1.00 | 0.999 |
+| farm | +0.291 / +0.285 | +0.001 | 0.87 | 14 / 18 | 0.60 | 0.996 |
+| rush | -1.674 / -1.629 | +0.008 | 0.97 | 15 / 17 | 0.86 | 0.996 |
+| wall | +0.281 / +0.286 | +0.000 | 0.98 | 16 / 16 | 1.00 | 1.002 |
+
+Nothing survives Holm, and every plan-against-control sign test holds on
+both engines with the same verdicts (farm and wall over idle 32 to 0 on
+both; rush under random 0 to 32 on both). The idle mould alone, 60 s, 32
+seeds: at scale 2 the GPU's bigger in 19 and smaller in 13 (p 0.38,
+median ratio 1.018), at scale 1 15 and 12 (p 0.70, 1.000)
+([`raw/idle-both-*`](gpu-readout-2026-11-12/raw/)). So the first look's
+3-5% was six correlated pairs, not a rule difference, and the tech lead's
+bisection was not needed. The CPU census stands in for the GPU game on
+these hands.
+
+**One open case: the Rim mission** (the campaign thread saw the mould
+leak out of the Rim's north-east gap by 5:00 in the GPU window, seed 1,
+claim hand, where the CPU census held). `examples/campaign.rs -- mission=3-the-gaps
+hands=claim seeds=1-4 gpu=both` (the second PR's option,
+[`raw/rim-claim-both-s1-4.txt`](gpu-readout-2026-11-12/raw/rim-claim-both-s1-4.txt)):
+the CPU meets the goal on 4 of 4, the GPU on 3 of 4. On seed 1 both
+hold (GPU at 696 s with a peak leak of 0.050, CPU at 701 s, 0.058), so
+the census on the GPU holds where the window was seen to leak. Seed 2
+fails on the GPU (peak leak 0.168, capped at 900 s, 0 stars; the CPU held
+at 600 s). The GPU's peak leak is higher on 3 of 4 seeds (sign p 0.63):
+four seeds call nothing, and the campaign thread runs 32.
+
+## The step in halves, and the grid once a game second
+
+The second PR (the integration thread's queue: after the controls PR
+#102, before the buildings thread).
+
+**`Game::step` in halves.** `begin_step` is the squad's turn (walking,
+banking, aims and shots) and hands the frame to the world
+(`World::frame_start`, which may return without waiting); `finish_step`
+takes the frame's results (`World::frame_finish`, waiting only if they are
+not in) and does what they do: kills, harvest, touches, theft, the core,
+the end. `step` is the two in a row, so the census, the AI and the replay
+are unchanged. A command (`Game::apply`) finishes a running step first,
+so a round replays the same however the window splits it. The window
+begins a step and finishes it on a later frame as soon as its readout is
+in (`Game::step_ready`, a non-blocking poll), or at once when the next
+step is due, so it draws while the GPU runs the step. The squad toolkit's
+calm touch (#104: gassed walkers come off a unit's touch) is read in
+`finish_step`, after the frame, as `step` read it. The campaign's tracker
+in the window keys on `Game::settled_ticks` (a running step's start), so
+it reads whole steps, as the census does.
+
+**The mould grid once a game second** (the tech lead review's ask,
+2026-11-12, for the campaign's positional goals). At the campaign's
+squares of 4 dish cells the grid is 40 KB at scale 2, 160 KB at scale 4
+and 655 KB at scale 8; the first PR summed and copied it every step once
+asked. Now the GPU sums it on the frames that reach a whole game second
+(`GRID_EVERY`, 15 game ticks), and on the first frame after a new square.
+The CPU world's grid is the tick's own, so a goal read off it lands up to
+a second later on the GPU; the campaign reads it once a second anyway. The
+wall counters now have room for squares down to 4 dish cells at every
+scale (`GRID_MIN`): room down to a game cell at scale 8 fitted 40,960
+squares, not the 163,840 of the campaign's grid on the 2048 x 1280 dish,
+so every ask there would have read all 10.5 MB of `occ` back.
+
+**Checks.**
+
+- `a_step_in_halves_plays_as_a_whole_one`: 600 steps on a world that
+  holds each frame's results until asked, a third finished at once and
+  the rest when the next began, eight commands at five ticks (attacks, two
+  buys, a wall, a stance) and sleep gas on the mould at the first soldier
+  it touched: the same log, world hash, soldiers, bank, kills and shots as
+  `step`; a running step's `settled_ticks` is the tick it began on.
+- `a_replay_is_the_same_game_at_any_frame_rate` (the technical lead's ask
+  on the PR): rounds played through the window's pacing at 60 and 23
+  frames a second, with the same clicks at the same real times, land some
+  clicks on other ticks (14 against 15, 171 against 172), and each replays
+  in whole steps to its own world hash, bank and soldiers; the 60 fps log
+  played back through the window's pacing at 23 and 144 frames a second
+  gives the same log and hash. A command is stamped with the tick it lands
+  on, not the frame it was clicked in.
+- `the_readout_matches_the_read_backs` now checks the grid on the frames
+  that sum it (46 of 675: the first frame, then each game second) against
+  the cells read back, and that the grid is never a game second old.
+- The game twin test (`mouldgpu`) checks the GPU's grid against
+  `BigDish::mould_grid` itself: equal at the start (the same walkers), and
+  at 5, 10, 15 and 20 s 0.91, 0.90, 0.88 and 0.78 of the mould in the same
+  squares on both (bound 0.7; the engines' floats part, most at 20 s, just
+  after the first walkers starve).
+
+**Measurements** (llvmpipe in the cloud, so the split's ordering and
+costs, not GPU timing; the 1070 run is queued). `larder-world -- bench=20
+hand=farm stamps=0` (fork, seed 1, scale 2, 5,000 walkers, 300 steps in
+1,200 frames), main at a90c71e against the split, two pairs in turn
+(`raw/bench-split-pairs.txt`):
+
+| | main (whole steps) | split | split, `grid=4` every step |
+|---|---|---|---|
+| waits a step | 1.00 (14.8, 15.1 ms) | 0.00 (0.05 ms) | 0.00 (0.05 ms) |
+| step part, step frames, p50 ms | 15.26, 15.38 | 0.41, 0.39 | 0.43, 0.41 |
+| record part, step frames, p50 ms | 0.12, 0.12 | 15.27, 14.47 | 15.32, 14.84 |
+| frame p50, every frame, ms | 27.12, 27.38 | 27.48, 27.23 | 27.47, 27.28 |
+| frame p95, every frame, ms | 43.63, 44.06 | 44.07, 41.41 | 44.30, 42.78 |
+| prepare p95, every frame, ms | 0.24, 0.25 | 0.26, 0.24 | 0.27, 0.25 |
+| at 20 s: mould, harvested, shots, killed | 2701, 1953, 3, 4 | the same | the same |
+
+The step no longer waits: its 15 ms leave the step and land in the next
+submit (`record`), because llvmpipe runs compute on the CPU inside the
+submit, so the frame totals are equal here (a discrete GPU returns from
+the submit and runs the step while the window prepares and records the
+picture; that is what the 1070 bench measures). The game is the same one
+to the count. The grid in squares of 4 asked every step costs nothing
+measurable here (step-frame p50 within 0.7 ms either way, the pairs'
+own spread), and reads back once, on the first ask (20 read-backs in 300
+steps against 19 without it; the rest are the window's ground, once a game
+second). Summed once a game second, it copies 40 KB a second at scale 2,
+where the first PR copied 40 KB a step.
+
+Two bench fixes came out of the first pairs (`raw/bench-split-first.txt`):
+the split's rows printed mould 3170, as the bench planned on a step still
+running (the last step's bank and crystals) and printed before the last
+step finished (with both fixed it matches main to the count); and its step-frame prepare p95 was 14.9 ms against
+1.3 ms, the window's ground read-back (once a game second) waiting for
+the running step. The bench now plans on `settled_ticks` and settles at
+the end, and the ground's timed refresh waits for a frame between steps,
+up to a second late (a new wall still reads at once).
+
 ## Files
 
 - `src/gpu/larder_world.rs`: the readout, `frame_start` and
   `frame_finish`, the mould grid, the mirror's rubble, and the test.
 - `src/gpu/mod.rs`, `src/gpu/engine.wgsl`: `COUNT`, `record_count`,
   `grid`, `WSTAT_BYTES`, `reads`.
-- `src/bin/larder-world.rs`: `bench`.
+- `src/bin/larder-world.rs`: `bench` (`grid=BIN`), the window's step in
+  halves, `settle`, the ground's refresh between steps.
+- `src/mould/larder_world.rs`: `World::frame_start`, `frame_finish`,
+  `frame_ready`; `Game::begin_step`, `finish_step`, `step_ready`,
+  `settled_ticks`, and the halves test.
+- `src/bin/mouldgpu.rs`: the game twin test's mould grid check.
 - `examples/larderworld.rs`: `gpu=`, `compare`, `mann_whitney_p`.
+- `examples/campaign.rs`: `gpu=0|1|both`.
 - [`gpu-readout-2026-11-12/`](gpu-readout-2026-11-12/): the bench patch
   for `main`, the census merge script (`merge.py`, for seed slices run
   apart), raw outputs (`raw/`: the bench pairs, the CPU census on `main`
-  and after).
+  and after, the 32-seed census on both engines, the idle runs, the Rim
+  mission's four seeds, the split's bench pairs).

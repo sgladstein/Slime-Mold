@@ -2,7 +2,7 @@
 title: The census (how a change is judged)
 kind: method
 status: current
-updated: 2026-11-12T05:40Z
+updated: 2026-11-12T07:00Z
 sources: [Reports/gpu-readout-2026-11-12.md, Reports/gpu-plan-2026-11-10.md, Reports/larder-m2-2026-11-11.md, Reports/gpu-sandbox-2026-11-11.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md, Reports/pixel-physics-review-2026-11-10.md]
 code: [mouldprobe, state_hash, every_dish_replays_bit_for_bit, Dish::step_cost, HJIT, HLAG, STOPAT, NOWATER, INVAR, WARDEN]
 ---
@@ -98,7 +98,10 @@ The same rules carry to the newer harnesses, with four additions:
   and on the GPU engine and compares each hand's scores across the two
   (Mann-Whitney, Holm); a plan that wins on one and not the other means
   the CPU census no longer stands in for the game
-  ([report](../../Reports/gpu-readout-2026-11-12.md)).
+  ([report](../../Reports/gpu-readout-2026-11-12.md)). The first full run
+  (32 seeds, five hands, cap 120 s) found no score or size difference that
+  survives Holm. `examples/campaign.rs -- gpu=both` does the same for a
+  mission's rounds.
 
 ## Owner's word
 

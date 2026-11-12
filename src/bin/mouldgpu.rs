@@ -3650,8 +3650,11 @@ mod tests {
     /// seed. Both start alike (the race settings give the CPU's params); a
     /// soldier clearing a crystal far from the mould banks the same food on
     /// both, since no walker reaches it; and every 5 game seconds the mould
-    /// is within 8% of the CPU's size. The starting walkers starve at about
-    /// 17 s (start energy 0.5 at upkeep 0.001 a fine step) on both, so at
+    /// is within 8% of the CPU's size, and its mould grid (squares of 4
+    /// dish cells, summed on the GPU once a game second) holds at least 70%
+    /// of it in the CPU's squares, after the same grid at the start. The
+    /// starting walkers starve at about 17 s (start energy 0.5 at upkeep
+    /// 0.001 a fine step) on both, so at
     /// 20 s the count has just fallen by a third (5,234 to 3,120 on seed
     /// 3, the GPU 3,220); at one engine tick a game tick, half the CPU's
     /// fine steps, the fall would come at 33 s and miss the bound by far.
@@ -3668,21 +3671,30 @@ mod tests {
         assert_eq!(gpu.world.crystals(), cpu.world.crystals(), "the same crystals and charge at the start");
         assert_eq!(gpu.world.living(), cpu.world.living());
         assert_eq!((gpu.larder, gpu.core), (cpu.larder, cpu.core));
+        // The mould grid (the campaign's goals, the player AI): the same
+        // squares from the same walkers, then the GPU's once-a-second sum
+        // against the CPU's own (`GRID_EVERY`, 2026-11-12).
+        const BIN: usize = 4;
+        assert_eq!(gpu.world.mould_grid(BIN), cpu.world.mould_grid(BIN), "the same mould grid at the start");
         // Soldier 0 clears the crystal nearest the larder (the larder's own).
         let c = cpu.world.crystals().iter().map(|c| c.0).min_by(|a, b| (a.0 - cpu.larder.0).hypot(a.1 - cpu.larder.1).total_cmp(&(b.0 - cpu.larder.0).hypot(b.1 - cpu.larder.1))).unwrap();
         for g in [&mut cpu.log, &mut gpu.log] {
             g.clear();
         }
         assert!(cpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))) && gpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))));
-        let mut sizes = Vec::new();
+        let (mut sizes, mut overlaps) = (Vec::new(), Vec::new());
         while cpu.end.is_none() {
             cpu.step();
             gpu.step();
+            let (a, b) = (cpu.world.mould_grid(BIN).unwrap(), gpu.world.mould_grid(BIN).unwrap());
             if cpu.world.ticks() % 75 == 0 {
                 sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
+                // The share of the mould in the same squares on both.
+                let same: u32 = a.iter().zip(&b).map(|(x, y)| *x.min(y)).sum();
+                overlaps.push(same as f64 / a.iter().sum::<u32>().max(b.iter().sum::<u32>()).max(1) as f64);
             }
         }
-        eprintln!("game s, living CPU, GPU: {sizes:?}; banked {} / {}", cpu.harvested, gpu.harvested);
+        eprintln!("game s, living CPU, GPU: {sizes:?}; banked {} / {}; the grids' overlap {overlaps:.3?}", cpu.harvested, gpu.harvested);
         assert_eq!(gpu.world.ticks(), cpu.world.ticks(), "the same game ticks");
         assert!(cpu.harvested > 0.0 && gpu.harvested == cpu.harvested, "banked {} on the GPU, {} on the CPU", gpu.harvested, cpu.harvested);
         for &(t, a, b) in &sizes {
@@ -3690,6 +3702,9 @@ mod tests {
             assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
         assert!(sizes.iter().any(|&(_, a, _)| a > walkers) && sizes.last().unwrap().1 < walkers, "the mould grew, then its first walkers starved: {sizes:?}");
+        // 0.91, 0.90, 0.88 and 0.78 (2026-11-12): the two engines' floats
+        // part, and most at 20 s, just after the first walkers starve.
+        assert!(overlaps.iter().all(|&o| o >= 0.7), "the mould grids overlap: {overlaps:.3?}");
     }
 
     /// A squad firing into the race world's mould on the engine as on the
