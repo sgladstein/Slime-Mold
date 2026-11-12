@@ -79,6 +79,7 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::kit::{Kit, KitRules, Tool};
+use slime_mould::mould::rounds::{self, RoundRules, Rounds};
 use slime_mould::mould::larder_world::{Cmd, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
@@ -164,6 +165,25 @@ const FLASH: f32 = 0.07;
 /// the ground the look shades.
 const GROUND_EVERY: f32 = 1.0;
 
+/// The loadouts Y cycles through (`mould::rounds`): a name and its cards,
+/// left to right. The census's hand-written rounds
+/// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
+const LOADOUTS: [(&str, &str); 13] = [
+    ("plain", "none"),
+    ("blast", "blast"),
+    ("wide", "wide+blast"),
+    ("scatter", "scatter+blast"),
+    ("quiet", "quiet+blast"),
+    ("delay", "delay+blast"),
+    ("trap", "thick+wide+blast"),
+    ("shock", "scatter+blast+wide+blast"),
+    ("gas", "gas"),
+    ("lull", "quiet+gas+quiet+blast"),
+    ("germ", "germ"),
+    ("plague", "germ+delay+blast"),
+    ("ambush", "quiet+delay+wide+blast"),
+];
+
 struct Args {
     /// None: the race world from noise.
     map: Option<String>,
@@ -191,6 +211,9 @@ struct Args {
     /// lays (`Rules::core_pull`, the core defence; 0 turns it off, to
     /// compare). A tier's own core (`Tier::core`) wins.
     core_pull: Option<f32>,
+    /// `rounds=NAME` (or its cards, such as `thick+wide+blast`): the
+    /// squad's loadout at the start, an index into `LOADOUTS`.
+    round: usize,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -277,6 +300,10 @@ struct App {
     /// The squad toolkit (`mould::kit`) and whether the card shows its page
     /// (E). Tools are not in the game's replay (the kit is outside `Game`).
     kit: Kit,
+    /// The squad's round (`mould::rounds`, after Flashes of Chaos's ammo
+    /// cards; 2026-11-12): `rounds=` at the start, Y cycles `LOADOUTS`.
+    rounds: Rounds,
+    round: usize,
     tools_page: bool,
     /// The mission being played, and the last game second it followed.
     mission: Option<Tracker>,
@@ -298,6 +325,7 @@ impl App {
     fn new(args: Args) -> Self {
         App {
             name: args.map.clone().unwrap_or_else(|| "noise".into()),
+            round: args.round,
             args,
             window: None,
             pixels: None,
@@ -339,6 +367,7 @@ impl App {
             saved: false,
             build_page: false,
             kit: Kit::new(KitRules::default()),
+            rounds: Rounds::new(Vec::new(), RoundRules::default()),
             tools_page: false,
             mission: None,
             mission_sec: 0,
@@ -417,6 +446,7 @@ impl App {
         }
         let game = Game::new(world, rules, a.seed).with_tier(core_tier);
         self.kit = Kit::new(KitRules::default());
+        self.rounds = Rounds::new(rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(), RoundRules::default());
         self.mission = mission.map(|m| Tracker::new(m, &game));
         self.mission_sec = 0;
         let e = &game.world.e;
@@ -690,6 +720,7 @@ impl App {
         if g.in_flight() {
             g.finish_step();
             kit_between(&mut self.kit, g, &self.controls.selected);
+            self.rounds.after_step(g);
         }
         let k = &self.kit;
         let at = match t {
@@ -744,6 +775,7 @@ impl App {
         if g.in_flight() && g.step_ready() && !mission_over {
             g.finish_step();
             kit_between(&mut self.kit, g, &self.controls.selected);
+            self.rounds.after_step(g);
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
         } else if g.in_flight() {
@@ -766,6 +798,7 @@ impl App {
             if g.in_flight() {
                 g.finish_step();
                 kit_between(&mut self.kit, g, &self.controls.selected);
+                self.rounds.after_step(g);
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
                 if g.end.is_some() {
@@ -852,6 +885,10 @@ impl App {
         let Some(g) = self.game.as_mut() else { return };
         if g.in_flight() {
             g.finish_step();
+            // Rounds read the step's hits, so they cast here too (the
+            // headless looks settle every step). A step a command finishes
+            // (`Game::apply`) is not seen: its hits cast nothing.
+            self.rounds.after_step(g);
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
         }
     }
@@ -1363,6 +1400,27 @@ impl App {
                     self.fail(event_loop, e);
                 }
             }
+            KeyCode::KeyY => {
+                // The next loadout this world can cast (the GPU world has
+                // no gas or germ yet), kept for the next game too.
+                let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
+                    rounds::Card::Gas => g.world.has_gas(),
+                    rounds::Card::Germ => g.world.has_germ(),
+                    _ => true,
+                }));
+                let mut i = self.round;
+                for _ in 0..LOADOUTS.len() {
+                    i = (i + 1) % LOADOUTS.len();
+                    if ok(LOADOUTS[i].1) {
+                        break;
+                    }
+                }
+                self.round = i;
+                let (name, cards) = LOADOUTS[i];
+                self.rounds = Rounds::new(rounds::parse(cards).unwrap_or_default(), RoundRules::default());
+                let what = if cards == "none" { "Round: plain shots".to_string() } else { format!("Round: {name} ({}), recharge {:.1} s", cards.replace('+', ", "), rounds::recharge(&self.rounds.round, &self.rounds.rules)) };
+                self.hud.alert(&what, None, theme::ACCENT);
+            }
             KeyCode::KeyM => {
                 if let Some(v) = self.view.as_mut() {
                     v.minimap = !v.minimap;
@@ -1779,6 +1837,10 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
             if !d.is_empty() { println!("  holes: shots that hit {} refilled {} (still open {open}); ticks to 80%: median {} ({:.2} s), q25 {}, q75 {}, max {}", holes.len(), d.len(), d[d.len() / 2], d[d.len() / 2] as f32 / tps, d[d.len() / 4], d[3 * d.len() / 4], d[d.len() - 1]); }
         }
         let g = app.game.as_ref().unwrap();
+        let rd = &app.rounds;
+        if !rd.round.is_empty() {
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ {:?}), {} walkers killed, {:.0} food spent, {} skipped for food, {} not on this world, {} lodged", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.spent, rd.broke, rd.unsupported, rd.waiting());
+        }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames
         // plays as a clip from a still camera (the crater looks in motion,
@@ -2302,7 +2364,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, round: 0 };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -2324,6 +2386,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "look" => look = Some(v.to_string()),
             "hand" => hand = v.to_string(),
+            "rounds" => args.round = LOADOUTS.iter().position(|l| l.0 == v || l.1 == v).ok_or_else(|| format!("rounds=: one of {}", LOADOUTS.map(|l| l.0).join(", ")))?,
             "sound" => wav = Some(v.to_string()),
             "voice" => args.voice = v != "0",
             "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
@@ -2382,7 +2445,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, round: 0 }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -2416,7 +2479,7 @@ mod tests {
     #[test]
     fn the_window_uses_the_tools() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None }, (320, 200), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, round: 0 }, (320, 200), &device, &queue).unwrap();
         for _ in 0..10 {
             app.step(1.0 / 15.0);
         }
@@ -2446,7 +2509,7 @@ mod tests {
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None, round: 0 }, (640, 400), &device, &queue).unwrap();
         assert_eq!(app.name, "flats");
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();
@@ -2489,7 +2552,7 @@ mod tests {
     /// 256 x 160 dish, 1,250 walkers): 5-9 s a round on software Vulkan,
     /// against 20-24 s at scale 2 (2026-11-12).
     fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
-        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None };
+        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None, round: 0 };
         let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast, passes: 0, settle: false, squad1: false, spread: true };
         let t0 = Instant::now();
         let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
@@ -2542,7 +2605,7 @@ mod tests {
     #[test]
     fn a_shot_from_a_soldier_with_no_note_yet_draws() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None }, (320, 200), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, round: 0 }, (320, 200), &device, &queue).unwrap();
         let g = app.game.as_mut().unwrap();
         let s = *g.soldiers.last().unwrap();
         g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0 }];
