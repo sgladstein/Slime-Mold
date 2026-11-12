@@ -2,8 +2,8 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-12T03:46Z
-sources: [Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
+updated: 2026-11-12T04:40Z
+sources: [Reports/shot-damage-2026-11-12.md, Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES, View::set_alive]
 ---
 
@@ -37,8 +37,12 @@ view shades the world from the engine's look field (mould thickness,
 walkers, wounds) and a ground field (rock, walls by health, crystals by
 charge): height, light, gloss, a speck a walker. Shots (`Engine::set_hits`)
 stop at the first slime or rock on their line (`first_hit`) and cut there,
-leaving a fading burn; the game's own shots (the squad's `cut` pass) leave
-the same wound. With growth, `View::set_alive` takes the walkers' energy so
+leaving a fading burn. The game's own shots char the cells where the
+walkers they killed died (`strike`, `WOUND_DEATH`), and the drawn
+thickness counts the living walkers near each cell (`BODY_N`), since the
+trail alone hid a hit within a frame
+([shot damage](../../Reports/shot-damage-2026-11-12.md); a blind A/B
+awaits the owner's pick). With growth, `View::set_alive` takes the walkers' energy so
 empty and dead slots draw no speck. Soldiers are an SVG sprite (the owner's
 pick of a blind A/B, 16:48Z) with facing, team helmet and muzzle flash;
 crystals are hexagons. Ground byte 3 holds elevation, left 0 until the

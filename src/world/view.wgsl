@@ -133,8 +133,30 @@ const BARREN_RGB: vec3<f32> = vec3<f32>(78.0, 76.0, 72.0);
 // species, germ, grass tints) is laid over the soil.
 const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
 
+// The mould's thickness as drawn: the trail's brightness (the look's byte
+// 0) times how many living walkers are near (byte 1 summed over the 5 x 5
+// cells round it). The trail alone saturates (`bright` is 1 - exp(-v/knee))
+// and diffuses back over a cut within a frame or two, so before 2026-11-12
+// the body looked the same after shots killed 30% of its walkers (owner's
+// playtest, 04:13Z: "visually it didn't impact much"); with the walkers in
+// it, a patch they died in is thin until living ones come back. `BODY_N`
+// is the walkers in that window that make a body two-thirds thick: in a
+// rush on the fork map (5000 walkers) the median cell with trail of 0.5 or
+// more had 14 near it, the tenth percentile 4.
+const BODY_N: f32 = 6.0;
+
+fn body(ix: i32, iy: i32) -> f32 {
+    var n = 0u;
+    for (var dy = -2; dy <= 2; dy++) {
+        for (var dx = -2; dx <= 2; dx++) {
+            n += (look[cidx(ix + dx, iy + dy)] >> 8u) & 255u;
+        }
+    }
+    return byte(look[cidx(ix, iy)], 0u) * (1.0 - exp(-f32(n) / BODY_N));
+}
+
 // A cell's height in cells: off the world is rock.
-fn cell_height(ix: i32, iy: i32) -> f32 {
+fn cell_height(ix: i32, iy: i32, th: f32) -> f32 {
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) { return 3.0; }
     let i = cidx(ix, iy);
     let g = ground[i];
@@ -142,7 +164,7 @@ fn cell_height(ix: i32, iy: i32) -> f32 {
     let v = byte(g, 1u);
     // The land (byte 3, the map's elevation) under everything on it.
     let land = ELEV * byte(g, 3u);
-    var h = 4.0 * pow(byte(look[i], 0u), 0.65);
+    var h = 4.0 * pow(th, 0.65);
     if (kind == ROCK) { h = 3.0; }
     else if (kind == WET) { h = max(h - 0.3, 0.0); }
     else if (kind == WALL) { h = 0.6 + 2.6 * v; }
@@ -174,7 +196,7 @@ struct Mat { albedo: vec3<f32>, glow: vec3<f32>, gloss: f32, wound: f32, gem: f3
 // A cell's material: the engine's colour for agar (mould, scent, species,
 // germ, grass all in it), the ground kinds in their own colours, scaled by
 // their value where it is graded.
-fn cell_mat(ix: i32, iy: i32) -> Mat {
+fn cell_mat(ix: i32, iy: i32, th: f32) -> Mat {
     var m: Mat;
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) {
         m.albedo = vec3<f32>(52.0, 54.0, 60.0); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.wound = 0.0; m.gem = 0.0;
@@ -190,7 +212,6 @@ fn cell_mat(ix: i32, iy: i32) -> Mat {
     // The mould: the engine's colour carries the hue (species, germ); the
     // look carries it at full strength wherever there is mould, by the
     // thickness, so a thin film reads as slime, not as dim ground.
-    let th = byte(lk, 0u);
     let tint = max(c - AGAR_RGB, vec3<f32>(0.0));
     let hue = tint / max(max(tint.x, max(tint.y, tint.z)), 1.0) * 240.0;
     // Bare ground is soil by the land's elevation, with the engine's tints
@@ -258,8 +279,10 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gid.x >= P.rw || gid.y >= P.rh) { return; }
     let ix = P.ox + i32(gid.x); let iy = P.oy + i32(gid.y);
     let i = gid.y * P.rw + gid.x;
-    hcell[i] = cell_height(ix, iy);
-    mcell[i] = mat_pack(cell_mat(ix, iy));
+    // (`cidx` clamps, so `body` is safe off the world, where both ignore it.)
+    let th = body(ix, iy);
+    hcell[i] = cell_height(ix, iy, th);
+    mcell[i] = mat_pack(cell_mat(ix, iy, th));
 }
 
 fn mat_at(x: f32, y: f32) -> Mat {
@@ -279,7 +302,17 @@ fn mat_at(x: f32, y: f32) -> Mat {
 
 // The shaded colour at world point (x, y); `e` is the slope's sample step.
 fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
-    let m = mat_at(x, y);
+    var m = mat_at(x, y);
+    // The wound: the walkers a shot killed on this cell (`strike` in the
+    // engine), fading. It chars the surface rather than painting over it:
+    // ash in the albedo, matte, and lit like everything else, so mould
+    // flowing back over a hit shows its relief through the char. A fresh
+    // one glows like an ember. Until 2026-11-12 it was mixed in after the
+    // lighting, up to 92%, which read as a flat sticker (owner's playtest).
+    let wd = clamp(m.wound * 1.3, 0.0, 1.0);
+    m.albedo = mix(m.albedo, vec3<f32>(34.0, 24.0, 20.0), clamp(wd * 1.1, 0.0, 0.8));
+    m.gloss *= 1.0 - wd;
+    m.glow += vec3<f32>(255.0, 110.0, 30.0) * wd * wd * wd * 0.6;
     let h = height(x, y);
     let dx = height(x + e, y) - height(x - e, y);
     let dy = height(x, y + e) - height(x, y - e);
@@ -296,12 +329,6 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
     let spec = pow(max(dot(n, half_v), 0.0), 28.0) * m.gloss;
     var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec * 0.7 + m.glow;
-    // The wound: where a shot took mould away, the thickness it took, in
-    // raw red, fading as the engine fades it.
-    // A fresh wound glows like an ember and chars as it fades.
-    let wd = clamp(m.wound * 1.3, 0.0, 1.0);
-    let burn = mix(vec3<f32>(46.0, 22.0, 14.0), vec3<f32>(255.0, 120.0, 30.0), wd * wd);
-    c = mix(c, burn, clamp(wd * 1.6, 0.0, 0.92));
     return c;
 }
 
