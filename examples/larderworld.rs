@@ -35,8 +35,13 @@
 //!   across the line from the core to the larder, `WALL_AT` of the way to
 //!   the larder (the expander review: a wall across the leader's road
 //!   was the one tool measured to turn games).
+//! - Any other name is the player AI (`larder_world_ai::Style::named`):
+//!   boom, claim, late, fort, strike, with knobs after a colon
+//!   (`claim:claim_at=200+keep=4`). Each is also paired with farm, the
+//!   best scripted hand.
 use slime_mould::mould::big::BigDish;
 use slime_mould::mould::larder_world::{race_world, Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world_ai;
 
 const RESERVE: f32 = 600.0;
 const FARM_MAX: usize = 8;
@@ -57,6 +62,9 @@ struct Row {
     killed: u32,
     crystals_left: f32,
     ms_tick: f64,
+    /// The AI's mean and slowest think, microseconds.
+    think_mean: f64,
+    think_us: f64,
 }
 
 fn main() {
@@ -121,8 +129,8 @@ fn main() {
                 let (seed, hand) = &jobs[j];
                 let r = play(*seed, scale, walkers, rules, hand, None);
                 println!(
-                    "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick",
-                    r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick
+                    "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most",
+                    r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us
                 );
                 out.lock().unwrap()[j] = r;
             });
@@ -139,7 +147,11 @@ fn main() {
     }
     let mut tests = Vec::new();
     for h in hands.iter().filter(|h| *h != "idle" && *h != "random") {
-        for base in ["idle", "random"] {
+        let scripted = ["farm", "rush", "wall"].contains(&h.as_str());
+        for base in ["idle", "random", "farm"] {
+            if base == "farm" && scripted {
+                continue;
+            }
             if !hands.iter().any(|x| x == base) {
                 continue;
             }
@@ -180,6 +192,8 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, look:
     let start = std::time::Instant::now();
     let mut shot = -1.0f32;
     let mut farmed: Vec<usize> = Vec::new();
+    let mut ai = larder_world_ai::Hand::named(hand, &g);
+    let (mut think_us, mut think_sum, mut thinks) = (0.0f64, 0.0f64, 0u32);
     let end = g.play(|g| {
         let t = g.time();
         if let Some((dir, every)) = look {
@@ -203,7 +217,14 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, look:
                 }
                 farm_hand(g, &mut farmed);
             }
-            _ => panic!("unknown hand {hand}"),
+            _ => {
+                let t0 = std::time::Instant::now();
+                ai.as_mut().unwrap_or_else(|| panic!("unknown hand {hand}")).play(g);
+                let us = t0.elapsed().as_secs_f64() * 1e6;
+                think_us = think_us.max(us);
+                think_sum += us;
+                thinks += 1;
+            }
         }
     });
     if let Some((dir, _)) = look {
@@ -227,6 +248,8 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, look:
         killed: g.killed,
         crystals_left: left,
         ms_tick: ms,
+        think_mean: think_sum / thinks.max(1) as f64,
+        think_us,
     }
 }
 

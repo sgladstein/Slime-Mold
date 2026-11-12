@@ -77,6 +77,13 @@ pub trait World {
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     fn hash(&self) -> u64;
+    /// Walkers on each `bin` x `bin` square of fine cells, row by row (the
+    /// tube a player sees on screen, coarsened), for the player AI's eyes
+    /// (`larder_world_ai::View`). None where the world can't give it
+    /// cheaply: the GPU world needs an occupancy read-back first.
+    fn mould_grid(&self, _bin: usize) -> Option<Vec<u32>> {
+        None
+    }
 }
 
 impl World for BigDish {
@@ -128,6 +135,17 @@ impl World for BigDish {
 
     fn hash(&self) -> u64 {
         BigDish::hash(self)
+    }
+
+    fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
+        let (gw, gh) = (self.w.div_ceil(bin), self.h.div_ceil(bin));
+        let mut out = vec![0u32; gw * gh];
+        for (i, &n) in self.occupancy().iter().enumerate() {
+            if n > 0 {
+                out[(i / self.w / bin) * gw + (i % self.w) / bin] += n as u32;
+            }
+        }
+        Some(out)
     }
 }
 
