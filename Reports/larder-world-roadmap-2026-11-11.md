@@ -814,3 +814,49 @@ At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad 
 - **The owner picked 4.5 s** (17:29Z: "Can we do 4.5 s? I am thinking between the 3 and 6"), now `Rules::crater`'s default; its volley clip (`V45`) is on the page between 6 and 3 s. It lands on the tests and the clip: the 6 and 3 s gates were stopped under the owner's testing rule (17:26Z: build first, balance later; a census is not a gate for a look). The countdown is in fine steps, so any time works, not only whole seconds.
 
 **Cost.** One comparison a tick while a core is down, on the CPU; the eating sum is over the crystals the game already reads. Nothing on the GPU.
+
+## The economy: rations, and the overrun on (PR 4), 2026-11-12
+
+**Why.** Integration's findings from the one-body thread's slime-enemy review (17:10Z):
+- Idle survived 46 of 48 games, but the owner ruled on 11-11 that an idle player should lose ("if you do nothing, the slime should get much stronger than you and kill you").
+- Food didn't bind: farm, wall and fort ended with 83-85% of their harvest unspent.
+- Strike won by banking behind a 30-soldier army it never paid to keep.
+
+Plan agreed with integration at 19:59Z, built under the owner's 17:26Z testing rule (build first; the census answers a question and gates nothing).
+
+**What.**
+- **Rations** (`Rules::ration` 1): every live soldier eats 1 food a game second from the bank (`Game::eaten`). Farm's 8 soldiers eat 8 a second of the about 55 they bank; strike's 30 eat 30.
+- **Hunger** (`Rules::hunger` 1): while the bank can't pay, every soldier loses 1 hit point a second (a share for a part-paid step; `Game::hungry`), so a full-health soldier lasts 100 s of an empty bank.
+  - Hunger costs only hit points. A starving soldier walks, fires and harvests at full speed, so a farm that runs dry recovers when a carrier banks, and the need falls as the squad shrinks. Slowing hungry soldiers would spiral, since slower carriers bank less and so starve more (integration's check, 19:59Z).
+- **The overrun is on** (`Rules::overrun` 20 s; it had been a campaign switch): the round is lost once the mould has held the larder with the bank empty for 20 s.
+- The window tells the player once, each time the bank runs dry: "Out of food: the squad is starving (N food a second to feed it)". Soldiers' health falls where the player can see it.
+- Census keys `ration=`, `hunger=` and `overrun=`; each row ends with the food eaten.
+- Test: `rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes` (paid, half paid, recovery when food comes, death, off at 0). The books, stuck and pump tests now count rations.
+
+**Smoke runs** (race seeds 5-8, raw [economy/](larder-world-roadmap-2026-11-11/economy/smoke-ration1-race-5-8.txt)), choosing the ration:
+- **At 2**: idle starves by 340-350 s on all 4. But strike starves its 30 soldiers on 3 of 4 and fort on 1 of 4: an army would cost 4.5 times its price over a game.
+- **At 1**: idle starves by 570-600 s on all 4, and farm and fort hold to the cap. Strike wins 2, loses 1 and stalemates 1 (before rations it stalemated all 4). 1 is the default.
+- **The rush** dies in 43-110 s on these seeds with or without rations: the hand walks its squad into the body. Without rations, 2 of its 4 games then sat at 0 soldiers to the cap. With rations, the bank drops under a soldier's price and the game ends.
+
+**The census** (cd56a52, race seeds 5-20, seven hands, 15-minute games, about 30 min on this machine; raw [economy/](larder-world-roadmap-2026-11-11/economy/census-ration1-race-5-20.txt)). The question, named before the run: does idle lose, does food bind, and does strike stop dominating? The comparison column is the PR 3b gate (90ca407), which also had the 10 s crater, not 4.5 s, so it is a guide, not a pairing.
+
+| hand | ends, rations (mould wiped / squad wiped / cap) | PR 3b gate | harvest unspent at the end (median), rations / PR 3b |
+| --- | --- | --- | --- |
+| idle | 0 / 16 / 0, median 586 s | 0 / 0 / 16 | |
+| random | 0 / 14 / 0 (2 overrun) | 1 / 14 / 1 | 0% / 2% |
+| farm | 0 / 0 / 16 | 0 / 0 / 16 | 62% / 74% |
+| wall | 0 / 0 / 16 | 0 / 0 / 16 | 58% / 74% |
+| fort | 0 / 0 / 16 | 0 / 0 / 16 | 43% / 80% |
+| rush | 0 / 11 / 4, plus 1 overrun | 1 / 5 / 10 | |
+| strike | 6 / 3 / 7 | 4 / 0 / 12 | 17% / 64% |
+
+- **Idle loses, 16 of 16**: its squad starves at a median 586 s.
+- **Food binds more**: fort keeps 43% of its harvest unspent against 80%, and strike 17% against 64%. Farm and wall still bank over half, since 8 soldiers cost little; buildings and tools are their sinks.
+- **Strike no longer dominates**: it beats farm 12-4 (p 0.08, not under Holm; 26-6 at PR 3b, held). It is decisive in 9 of 16 games, 6 wins and 3 losses, where it was 4 wins and 12 stalemates. Its three losses are 30-soldier armies that starved on seeds with a thin harvest. The player AI buys to 30 regardless of what it can feed, which is a tuning note for the player AI thread.
+- Every plan but the rush beats idle and random 16-0 (all hold under Holm over 12). The rush loses to idle 4-12 and ties random 7-9.
+- **Smoke checks**:
+  - No game ends in under a minute; the shortest is a rush at 83 s.
+  - Farm and wall end every game with all 8 soldiers, so they never starved.
+  - The rush hand's 4 cap games sit at 0 soldiers with 411-491 food, which is over a soldier's price. The hand keeps a reserve and won't buy; a player could.
+
+**Cost.** Per step on the CPU: one multiply and a subtraction, and a loop over the soldiers while hungry. Nothing on the GPU.

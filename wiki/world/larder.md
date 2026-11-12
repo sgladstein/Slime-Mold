@@ -4,7 +4,7 @@ kind: design
 status: open
 updated: 2026-11-12T17:45Z
 sources: [Reports/soldier-controls-2026-11-12.md, Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Engine::record_share, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core, Rules::wade, race_params, CoreKind::Regrow, Game::mould_ate, World::start_births]
+code: [Rules::ration, Rules::hunger, Game::eaten, Game::hungry, Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Engine::record_share, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core, Rules::wade, race_params, CoreKind::Regrow, Game::mould_ate, World::start_births]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -140,8 +140,16 @@ walkers touching, a fifth with 12). Over both blocks random wipes the
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
 random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the
-owner's pick (17:29Z) from clips of the squad firing into the thick body. Next, running costs. Off by default for other threads:
-`Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
+owner's pick (17:29Z) from clips of the squad firing into the thick body. **The economy** (PR 4; [report, *The economy:
+rations, and the overrun on*](../../Reports/larder-world-roadmap-2026-11-11.md)):
+every soldier eats `Rules::ration` 1 food a second from the bank, and an
+unpaid bank costs each soldier `Rules::hunger` 1 hit point a second (hit
+points only, so a dry farm recovers); `Rules::overrun` 20 s is on. On race
+5-20 idle starves in all 16 games (median 586 s), fort keeps 43% of its
+harvest unspent (80% before) and strike 17% (64%), and strike beats farm
+12-4, not under Holm (26-6 before). Next, buildings' running costs and
+the player AI's feeding. Off by default for other threads:
+`Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)
 
