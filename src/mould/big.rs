@@ -233,6 +233,17 @@ pub struct BigParams {
     /// the germ's sickness burns energy, and a wave that runs along the
     /// tubes leaves them thinned where the walkers starve.
     pub sick_upkeep: f32,
+    /// A mould trait: a healthy walker catches the germ only where the
+    /// germ field is over `sick_catch` x `germ_resist` (1: today's). A
+    /// resistant mould takes a wave in its thick parts, where sick walkers
+    /// lay germ close together, and not along thin tubes, so it loses part
+    /// of its body and grows back. Why (2026-11-12, round 2): with tools
+    /// carried, plague was the best plan on all six tiers. Tried first and
+    /// dropped: amputation by steering (healthy walkers weigh the germ at
+    /// their sensors, -5 or -20, sick ones lay no trail) changed nothing,
+    /// because the wave crosses the body in a few seconds, faster than a
+    /// walker turns away (`Reports/dead-ends.md`).
+    pub germ_resist: f32,
     /// Area sensors (Lague's Slime-Simulation): a sensor reads the sum over
     /// the (2r+1) x (2r+1) square of agar cells centred where it points,
     /// not one cell. 0 is one cell (today's). The square's centre cell
@@ -759,6 +770,7 @@ impl BigParams {
             sick_trail: 1.0,
             sick_reach: 1.0,
             sick_turn: 1.0,
+            germ_resist: 1.0,
             sick_seed_r: 0.0,
             sick_upkeep: 1.0,
             sensor_r: 0,
@@ -2014,7 +2026,7 @@ impl BigDish {
                 st = m(st, p.step_mod).max(0.0);
             }
             if contagion {
-                if self.sick[k] == 0 && self.germ[here] > p.sick_catch {
+                if self.sick[k] == 0 && self.germ[here] > p.sick_catch * p.germ_resist {
                     self.sick[k] = catch_c;
                 }
                 if self.sick[k] > sick_at {

@@ -70,6 +70,20 @@ pub struct KitRules {
     pub gas_death: f32,
     pub gas_price: f32,
     pub reek: f32,
+    /// Tools a soldier can hold (0: no carry rule, tools come from the bank
+    /// wherever a soldier stands). With it on, a soldier takes tools at the
+    /// larder (`Kit::restock`, within `restock_r` dish cells), each takes
+    /// `tool_weight` of its carry (`Soldier::load`), and each use spends
+    /// one held by a soldier in reach. Why (2026-11-12, round 2): in round 1
+    /// a runner carried blasts to the mould's body without end and won
+    /// every tier; the game designer's first pick for a cost that comes
+    /// from the game rather than a price was carry, a trade between army
+    /// and economy.
+    pub carry_max: u32,
+    /// What a plan's other soldiers take at the larder (kitplans' hands).
+    pub carry_each: u32,
+    pub tool_weight: f32,
+    pub restock_r: f32,
     /// The alarm's keep, when a tool turns the alarm on.
     pub alarm_keep: f32,
 }
@@ -103,6 +117,14 @@ impl Default for KitRules {
             gas_death: 0.0,
             gas_price: 150.0,
             reek: 4.0,
+            // Round 2 (2026-11-12): the runner holds 5 at 50 each. At 2 the
+            // loud plan fell to the farm hand's level on every tier (+0.18
+            // to +0.27) and plague led all of them; weight 100 or 50 made
+            // no difference (the cost is the trips home, not the carry).
+            carry_max: 5,
+            carry_each: 1,
+            tool_weight: 50.0,
+            restock_r: 6.0,
             alarm_keep: 0.95,
         }
     }
@@ -155,6 +177,8 @@ pub struct Kit {
     pub spent: [f32; 6],
     pub killed: [usize; 6],
     pub gassed: usize,
+    /// Tools each soldier holds (the carry rule), by soldier index.
+    pub held: Vec<u32>,
 }
 
 impl Kit {
@@ -174,10 +198,46 @@ impl Kit {
         }
     }
 
-    /// Whether a living soldier is within `reach` of `p`.
+    /// Whether a living soldier is within `reach` of `p` (with the carry
+    /// rule, one holding a tool).
     pub fn in_reach(&self, g: &Game<BigDish>, p: (f32, f32)) -> bool {
+        self.user(g, p).is_some()
+    }
+
+    /// The nearest living soldier within reach of `p` that may use a tool.
+    fn user(&self, g: &Game<BigDish>, p: (f32, f32)) -> Option<usize> {
         let r = self.rules.reach * g.world.p.scale as f32;
-        g.soldiers.iter().any(|s| s.alive && (s.x - p.0).hypot(s.y - p.1) <= r)
+        (0..g.soldiers.len())
+            .filter(|&k| {
+                let s = g.soldiers[k];
+                s.alive && (s.x - p.0).hypot(s.y - p.1) <= r && (self.rules.carry_max == 0 || self.held(k) > 0)
+            })
+            .min_by(|&a, &b| {
+                let d = |k: usize| (g.soldiers[k].x - p.0).hypot(g.soldiers[k].y - p.1);
+                d(a).total_cmp(&d(b))
+            })
+    }
+
+    /// Tools soldier `k` holds.
+    pub fn held(&self, k: usize) -> u32 {
+        self.held.get(k).copied().unwrap_or(0)
+    }
+
+    /// Soldier `k` takes tools at the larder up to `n` held (and
+    /// `carry_max`); returns whether it is close enough. Nothing is paid
+    /// here: a tool is paid when used.
+    pub fn restock(&mut self, g: &mut Game<BigDish>, k: usize, n: u32) -> bool {
+        let s = g.soldiers[k];
+        let r = self.rules.restock_r * g.world.p.scale as f32;
+        if !s.alive || (s.x - g.larder.0).hypot(s.y - g.larder.1) > r {
+            return false;
+        }
+        if self.held.len() <= k {
+            self.held.resize(k + 1, 0);
+        }
+        self.held[k] = n.min(self.rules.carry_max).max(self.held[k]);
+        g.soldiers[k].load = self.held[k] as f32 * self.rules.tool_weight;
+        true
     }
 
     /// Uses a tool if the bank holds its price and a soldier is in reach
@@ -196,6 +256,16 @@ impl Kit {
         };
         if !ok {
             return false;
+        }
+        if self.rules.carry_max > 0 && !matches!(t, Tool::Smell(..)) {
+            let mid = match t {
+                Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) => p,
+                Tool::Cord(a, b) => ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0),
+                Tool::Smell(..) => unreachable!(),
+            };
+            let k = self.user(g, mid).expect("in reach");
+            self.held[k] -= 1;
+            g.soldiers[k].load = self.held[k] as f32 * self.rules.tool_weight;
         }
         g.bank -= price;
         g.spent += price;
