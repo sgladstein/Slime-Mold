@@ -3355,6 +3355,57 @@ mod tests {
     /// The frame is chosen so that every hook acts: shots that hit slime and
     /// kill, one that a wall stops, units in the mould and on crystals (two
     /// on one crystal, so the harvest's order shows), and smell.
+    /// **The squad frame at its cap** (2026-11-12, for the buildings:
+    /// 40 soldiers, the larder and up to 40 buildings are units). Before,
+    /// the frame held 64 units and the GPU's units pass ran one workgroup
+    /// of 64, so a unit past 64 was dropped silently. With `UNITS_MAX` units
+    /// spread over the mould and the crystals, every unit's outputs match
+    /// the CPU's exactly, and the last ones see, touch and harvest.
+    #[test]
+    fn the_squad_frame_holds_its_cap_on_the_gpu() {
+        use slime_mould::mould::squad::{self, Frame, UnitIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, ..small(0) };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        for _ in 0..60 {
+            cpu.tick();
+        }
+        let (w, h) = (cpu.w, cpu.h);
+        let k = SCALE as f32;
+        let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
+        let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+        let n = squad::UNITS_MAX;
+        // Every third unit on a crystal (harvesting), the rest round the
+        // thickest mould; the last on the mould itself.
+        let units: Vec<UnitIn> = (0..n)
+            .map(|i| {
+                let at = if i == n - 1 {
+                    t
+                } else if i % 3 == 0 {
+                    let p = cpu.piles[(i / 3) % cpu.piles.len()];
+                    (p.0 * k, p.1 * k)
+                } else {
+                    let a = i as f32 * 2.4;
+                    (t.0 + (6.0 + i as f32 * 0.3) * a.cos(), t.1 + (6.0 + i as f32 * 0.3) * a.sin())
+                };
+                UnitIn { x: at.0.clamp(0.0, w as f32 - 1.0), y: at.1.clamp(0.0, h as f32 - 1.0), touch: 3.0, sight: 30.0, take_r: 3.0, take: if i % 3 == 0 { 50.0 } else { 0.0 }, smell_r: 2.0, smell: 0.5 }
+            })
+            .collect();
+        let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee) };
+        e.inject(&cpu);
+        e.set_squad(&f);
+        run(&mut e, &shared, &s, 1, Hand::default());
+        let cpu_out = squad::frame(&mut cpu, &f, 1);
+        let gpu_out = e.squad_out();
+        assert_eq!(cpu_out.units.len(), n, "the CPU reads every unit");
+        let past: Vec<_> = cpu_out.units[64..].iter().collect();
+        eprintln!("squad cap: {n} units; past 64, {} touch, {} aim, {} took", past.iter().filter(|u| u.touching > 0).count(), past.iter().filter(|u| u.target.is_some()).count(), past.iter().filter(|u| u.took > 0.0).count());
+        assert_eq!(gpu_out, cpu_out, "every unit's outputs, the last 32 too");
+        assert!(cpu_out.units[n - 1].touching > 0 && past.iter().any(|u| u.took > 0.0) && past.iter().all(|u| u.target.is_some()), "units past 64 touch, aim and harvest");
+    }
+
     #[test]
     fn the_squad_matches_the_cpu_for_one_frame() {
         use slime_mould::mould::squad::{self, Frame, ShotIn, UnitIn};
@@ -3707,6 +3758,43 @@ mod tests {
         assert!(overlaps.iter().all(|&o| o >= 0.7), "the mould grids overlap: {overlaps:.3?}");
     }
 
+    /// **The campaign's tiers on the engine** (`mould::tiers`, 2026-11-12):
+    /// the Drifter, Sprawler and Trunk are settings over rules both engines
+    /// run, so each plays the race world's game on the GPU as on the CPU,
+    /// within the race world's own 8% every 5 game seconds over 20 s.
+    #[test]
+    fn the_campaign_tiers_run_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::big::BigDish;
+        use slime_mould::mould::larder_world::{race_params, Game, Rules, World};
+        use slime_mould::mould::tiers::Tier;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 20.0, ..Rules::default() };
+        for t in [Tier::Drifter, Tier::Sprawler, Tier::Trunk] {
+            let mut p = race_params(seed, scale, walkers);
+            t.apply(&mut p);
+            let mut s = race_settings(seed, scale, walkers);
+            t.settings(&mut s).unwrap();
+            let mut cpu = Game::new(BigDish::new(p), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+            assert_eq!(gpu.world.living(), cpu.world.living(), "{}", t.name());
+            let mut sizes = Vec::new();
+            while cpu.end.is_none() {
+                cpu.step();
+                gpu.step();
+                if cpu.world.ticks() % 75 == 0 {
+                    sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
+                }
+            }
+            eprintln!("{}: game s, living CPU, GPU: {sizes:?}", t.name());
+            for &(at, a, b) in &sizes {
+                let (a, b) = (a as f64, b as f64);
+                assert!((a - b).abs() <= 0.08 * a, "{}: mould at {at} s: {b} walkers on the GPU, {a} on the CPU", t.name());
+            }
+        }
+    }
+
     /// A squad firing into the race world's mould on the engine as on the
     /// CPU (2026-11-12) with the mould turning from fresh gunfire (the
     /// opt-in `larder_world::FLEE_KEEP` and `FLEE_WEIGHT`): every hit's
@@ -3757,6 +3845,76 @@ mod tests {
             assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the alarm changed the CPU's game");
+    }
+
+    /// **Buildings on the engine as on the CPU** (turret, lure, pump: units
+    /// that do not move in the squad frame, `larder_world::buildings`). A
+    /// pump on the larder's crystal banks the same food on both and a lure
+    /// burns the same, since no walker reaches them in 20 s; a turret by
+    /// the mould's core fires and kills on both, and the moulds stay within
+    /// the race world's 8%.
+    #[test]
+    fn buildings_play_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_world, Cmd, Game, Kind, Rules, Stance, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 20.0, start_bank: 1e6, ..Rules::default() };
+        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let near = |g: &Game<_>, p: (f32, f32)| -> (f32, f32) {
+            let w: &dyn World = &g.world;
+            for r in 0..80 {
+                for k in 0..16 {
+                    let a = k as f32 / 16.0 * std::f32::consts::TAU;
+                    let q = (p.0 + r as f32 * a.cos(), p.1 + r as f32 * a.sin());
+                    if w.open(q.0, q.1) {
+                        return q;
+                    }
+                }
+            }
+            panic!("no open cell near {p:?}")
+        };
+        let (_, crystal) = cpu.crystal_at(cpu.larder).expect("the larder's crystal");
+        // Just outside the blob (a turret inside it is worn away in its
+        // first frame) and within its range of it.
+        let occ = cpu.world.occupancy();
+        let w = cpu.world.w;
+        let empty = |p: (f32, f32)| (-6i64..=6).all(|dy| (-6i64..=6).all(|dx| occ.get((p.1 as i64 + dy) as usize * w + (p.0 as i64 + dx) as usize).is_none_or(|&n| n == 0)));
+        let turret = (1..60).map(|r| near(&cpu, (cpu.core.0 + r as f32 * 2.0, cpu.core.1))).find(|&p| empty(p)).expect("open ground past the blob");
+        eprintln!("turret {:.0} fine cells from the core", (turret.0 - cpu.core.0).hypot(turret.1 - cpu.core.1));
+        let lure = near(&cpu, (cpu.larder.0 + 16.0, cpu.larder.1 + 16.0));
+        cpu.place(turret, crystal, lure);
+        gpu.place(turret, crystal, lure);
+        trait Place {
+            fn place(&mut self, turret: (f32, f32), crystal: (f32, f32), lure: (f32, f32));
+        }
+        impl<W: World> Place for Game<W> {
+            fn place(&mut self, turret: (f32, f32), crystal: (f32, f32), lure: (f32, f32)) {
+                self.soldiers[0].x = turret.0;
+                self.soldiers[0].y = turret.1;
+                self.soldiers[0].stance = Stance::HoldFire;
+                assert!(self.apply(Cmd::Build(Kind::Turret, turret)), "turret");
+                assert!(self.apply(Cmd::Build(Kind::Pump, crystal)), "pump");
+                assert!(self.apply(Cmd::Build(Kind::Lure, lure)), "lure");
+            }
+        }
+        let mut sizes = Vec::new();
+        while cpu.end.is_none() {
+            cpu.step();
+            gpu.step();
+            if cpu.world.ticks() % 75 == 0 {
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
+            }
+        }
+        eprintln!("buildings: living CPU, GPU {sizes:?}; pumped {} / {}, lured {} / {}, shots {} / {}, killed {} / {}", cpu.pumped, gpu.pumped, cpu.lured, gpu.lured, cpu.shots, gpu.shots, cpu.killed, gpu.killed);
+        assert!(cpu.pumped > 0.0 && (gpu.pumped - cpu.pumped).abs() <= 1e-3 * cpu.pumped, "pumped {} on the GPU, {} on the CPU", gpu.pumped, cpu.pumped);
+        assert!(cpu.lured > 0.0 && gpu.lured == cpu.lured, "lured {} on the GPU, {} on the CPU", gpu.lured, cpu.lured);
+        assert!(cpu.killed > 0 && gpu.killed > 0, "the turret kills on both: {} / {}", cpu.killed, gpu.killed);
+        for &(t, a, b) in &sizes {
+            let (a, b) = (a as f64, b as f64);
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+        }
     }
 
     /// A designed map (ROADMAP WM1) on the engine as on the CPU: the Fork

@@ -48,6 +48,10 @@
 //! converts through `World::scale`. Time is game seconds of `Rules::tps`
 //! ticks.
 
+mod buildings;
+pub use buildings::{BuildRules, Building, Kind};
+use buildings::Who;
+
 use super::big::{BigDish, BigParams, LIFE_DEAD};
 use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
 use super::Rng;
@@ -111,6 +115,13 @@ pub trait World {
     /// no sleep gas (the GPU world, so far).
     fn calm(&self, at: &[(f32, f32)], _r: f32) -> Vec<u32> {
         vec![0; at.len()]
+    }
+    /// The player's own mould (`own_mould::Garden`): the soldiers' tasks,
+    /// once a frame before the frame's `ticks`, with the bank they may
+    /// spend; returns the food spent. Worlds with no player mould do
+    /// nothing.
+    fn tend(&mut self, _soldiers: &[Soldier], _bank: f32, _ticks: u32) -> f32 {
+        0.0
     }
 }
 
@@ -302,6 +313,8 @@ pub struct Rules {
     /// (2026-11-12). Under W2b's score it cost farm 10 of 10 (WM1), because
     /// that score counted a crystal with crumbs left as held.
     pub home_dry: bool,
+    /// Turrets, lures, pumps and walls (`buildings`).
+    pub build: BuildRules,
     /// **Larder overrun** (campaign thread, the owner's pick 2026-11-12
     /// 04:44Z): the round is lost (`End::Overrun`) once the mould has held
     /// the larder (a walker within its 3 dish cells) with the bank under 1
@@ -358,6 +371,7 @@ impl Default for Rules {
             hoard: 1.0,
             steal: 1.0,
             home_dry: true,
+            build: BuildRules::default(),
             overrun: 0.0,
             reserve: 0.0,
             seek: true,
@@ -442,16 +456,21 @@ fn downhill(w: usize, h: usize, map: &[u32], i: usize) -> usize {
     best
 }
 
-/// A player's command; `Game::apply` keeps the log. As M3's, with a wall in
-/// place of the turret and the bait. `Order::Clear` names a crystal by a
-/// point inside it.
+/// A player's command; `Game::apply` keeps the log. As M3's, with walls and
+/// buildings (`buildings`) in place of M3's turret and bait.
+/// `Order::Clear` names a crystal by a point inside it.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Cmd {
     Order(usize, Order),
     Stance(usize, Stance),
     Buy,
-    /// A wall between two points, fine cells.
+    /// A wall between two points, fine cells (`Cmd::Build` of a
+    /// `Kind::Wall`, kept so older replays and hands still load).
     Wall((f32, f32), (f32, f32)),
+    /// A building at a point, fine cells.
+    Build(Kind, (f32, f32)),
+    /// Switch building `k` (a lure) on or off.
+    Toggle(usize),
     /// Shift + an order: soldier `k` does it after the ones it has
     /// (`Soldier::queue`); a soldier holding starts it at once.
     Queue(usize, Order),
@@ -467,6 +486,9 @@ impl Cmd {
             Cmd::Stance(k, s) => super::larder::Cmd::Stance(k, s).to_line(),
             Cmd::Buy => "buy".into(),
             Cmd::Wall(a, b) => format!("wall {} {} {} {}", a.0, a.1, b.0, b.1),
+            Cmd::Build(Kind::Wall { to }, a) => format!("build wall {} {} {} {}", a.0, a.1, to.0, to.1),
+            Cmd::Build(k, a) => format!("build {} {} {}", k.name(), a.0, a.1),
+            Cmd::Toggle(k) => format!("toggle {k}"),
             Cmd::Queue(k, o) => format!("queue{}", &super::larder::Cmd::Order(k, o).to_line()["order".len()..]),
             Cmd::Rally(o) => format!("rally{}", &super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
         }
@@ -474,9 +496,22 @@ impl Cmd {
 
     pub fn parse(line: &str) -> Option<Cmd> {
         let w: Vec<&str> = line.split_whitespace().collect();
-        if *w.first()? == "wall" {
-            let f = |i: usize| w.get(i).and_then(|v| v.parse::<f32>().ok());
-            return Some(Cmd::Wall((f(1)?, f(2)?), (f(3)?, f(4)?)));
+        let f = |i: usize| w.get(i).and_then(|v| v.parse::<f32>().ok());
+        match *w.first()? {
+            "wall" => return Some(Cmd::Wall((f(1)?, f(2)?), (f(3)?, f(4)?))),
+            "toggle" => return Some(Cmd::Toggle(w.get(1)?.parse().ok()?)),
+            "build" => {
+                let kind = match *w.get(1)? {
+                    "turret" => Kind::Turret,
+                    "lure" => Kind::Lure,
+                    "pump" => Kind::Pump,
+                    "outpost" => Kind::Outpost,
+                    "wall" => Kind::Wall { to: (f(4)?, f(5)?) },
+                    _ => return None,
+                };
+                return Some(Cmd::Build(kind, (f(2)?, f(3)?)));
+            }
+            _ => {}
         }
         if let Some(rest) = line.trim_start().strip_prefix("rally ") {
             return match super::larder::Cmd::parse(&format!("order 0 {rest}"))? {
@@ -556,6 +591,14 @@ pub struct Game<W: World> {
     pub shots: u32,
     pub killed: u32,
     pub walls: u32,
+    /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
+    /// health lives in the world's cells, not here.
+    pub buildings: Vec<Building>,
+    /// Food burnt by lures, drawn by pumps, and buildings the mould wore
+    /// down.
+    pub lured: f32,
+    pub pumped: f32,
+    pub lost_buildings: u32,
     /// The squad's base, fine cells: where bought soldiers stand and carried
     /// food goes.
     pub larder: (f32, f32),
@@ -618,7 +661,7 @@ pub struct Game<W: World> {
 struct Flight {
     t: u64,
     f: Frame,
-    who: Vec<Option<usize>>,
+    who: Vec<Who>,
     from: Vec<Option<usize>>,
     out: Option<FrameOut>,
 }
@@ -665,6 +708,10 @@ impl<W: World> Game<W> {
             shots: 0,
             killed: 0,
             walls: 0,
+            buildings: Vec::new(),
+            lured: 0.0,
+            pumped: 0.0,
+            lost_buildings: 0,
             larder,
             core,
             core_down: None,
@@ -772,6 +819,8 @@ impl<W: World> Game<W> {
             }
             Cmd::Buy => self.buy(),
             Cmd::Wall(a, b) => self.wall(a, b),
+            Cmd::Build(kind, at) => self.build(kind, at),
+            Cmd::Toggle(k) => self.toggle(k),
             Cmd::Rally(o) => {
                 self.rally = o;
                 true
@@ -805,19 +854,18 @@ impl<W: World> Game<W> {
         ((a.0 - b.0).hypot(a.1 - b.1) / self.s()).max(1.0) * self.rules.wall_cost
     }
 
-    /// A wall, if both ends are within a soldier's range and it is paid for.
+    /// A wall, if both ends are within a soldier's range and it is paid for:
+    /// a building of `Kind::Wall` (`Game::build`).
     pub fn wall(&mut self, a: (f32, f32), b: (f32, f32)) -> bool {
-        let price = self.wall_price(a, b);
-        if self.bank < price || !self.reachable(a) || !self.reachable(b) {
-            return false;
-        }
-        self.bank -= price;
-        self.spent += price;
+        self.build(Kind::Wall { to: b }, a)
+    }
+
+    /// Write a wall's cells into the world (once it is whole).
+    fn wall_cells(&mut self, a: (f32, f32), b: (f32, f32)) {
         self.walls += 1;
         let s = self.s();
         self.world.build_wall((a.0 / s, a.1 / s), (b.0 / s, b.1 / s), self.rules.wall_width);
         self.paths.maps.clear();
-        true
     }
 
     /// The crystal a point is inside (or nearest, within its radius plus 2
@@ -1146,9 +1194,14 @@ impl<W: World> Game<W> {
                 smell_r: r.smell_r * sc,
                 smell: self.world.food_deposit() * r.smell * s.smell * r.frame_ticks as f32,
             });
-            who.push(Some(k));
+            who.push(Who::Soldier(k));
             from.push(at_crystal);
         }
+        // The player's own mould's gardeners (`own_mould`; nothing here
+        // unless the world has one).
+        let tended = self.world.tend(&self.soldiers, self.bank, r.frame_ticks);
+        self.bank -= tended;
+        self.spent += tended;
         // The larder: smells of the bank, and reads who touches it.
         units.push(UnitIn {
             x: self.larder.0,
@@ -1160,8 +1213,10 @@ impl<W: World> Game<W> {
             smell_r: 3.0 * sc,
             smell: self.world.food_deposit() * r.hoard * self.bank.max(0.0) / 10_000.0 * r.frame_ticks as f32,
         });
-        who.push(None);
+        who.push(Who::Larder);
         from.push(None);
+        // Turrets, lures and pumps: units that do not move (`buildings`).
+        self.building_units(&mut units, &mut shots, &mut who, &mut from, dt);
         let f = Frame { units, shots, slime: squad::slime_trail(6.0) };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, who, from, out });
@@ -1191,7 +1246,8 @@ impl<W: World> Game<W> {
                 self.taken[c] += u.took;
             }
             match *k {
-                Some(k) => {
+                Who::Building(b) => self.building_out(b, u, dt),
+                Who::Soldier(k) => {
                     let s = &mut self.soldiers[k];
                     s.touching = u.touching;
                     s.aim = u.target;
@@ -1240,7 +1296,7 @@ impl<W: World> Game<W> {
                         }
                     }
                 }
-                None => {
+                Who::Larder => {
                     let take = (r.steal * u.touching as f32 * dt).min(self.bank.max(0.0));
                     self.bank -= take;
                     self.stolen += take;

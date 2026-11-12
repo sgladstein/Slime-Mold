@@ -572,6 +572,27 @@ pub struct BigParams {
     pub alarm_keep: f32,
     pub alarm_weight: f32,
     pub alarm_relay: f32,
+    /// **Habituation** (off when `scar_keep` is 0; needs the alarm field;
+    /// added 2026-11-12 for the Larder ladder, review 2's "a mould that
+    /// learns": `Reports/mould-tiers-campaign-2026-11-12.md`). A scar field
+    /// on the fine grid remembers where the mould was hurt and how often:
+    /// each fine step, after the alarm spreads, every agar cell's scar
+    /// becomes scar x `scar_keep` + `scar_gain` x alarm. It does not
+    /// spread, so the memory stays where the hurt was. A sensor reads
+    /// `scar_weight` x scar beside the trail (under 0 the mould learns to
+    /// keep away from a place it was hit, over 0 to come back to it in
+    /// force). The alarm fades in about a second; the scar at keep 0.9999
+    /// lasts about 40 game seconds at the world's two fine steps a tick.
+    ///
+    /// Tried and removed: habituation proper (Physarum stops answering a
+    /// repeated harmless stimulus; Boisseau, Vogel and Dussutour 2016), the
+    /// alarm term divided by 1 + h x scar, so a mould scarred at a place
+    /// stops fleeing fire there. With the flee alarm (weight -1) it killed
+    /// more in the last 8 of 16 strikes on 7 of 8 seeds (p 0.07, not
+    /// significant), and helps only the player (`Reports/dead-ends.md`).
+    pub scar_keep: f32,
+    pub scar_gain: f32,
+    pub scar_weight: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
@@ -810,6 +831,9 @@ impl BigParams {
             alarm_keep: 0.0,
             alarm_weight: 0.0,
             alarm_relay: 0.0,
+            scar_keep: 0.0,
+            scar_gain: 0.0,
+            scar_weight: 0.0,
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
@@ -916,6 +940,8 @@ pub struct BigDish {
     pub life_t: Vec<u16>,
     /// The alarm field (`alarm_keep` > 0) on the fine grid, else empty.
     pub alarm: Vec<f32>,
+    /// The scar field (`scar_keep` > 0 with the alarm on), else empty.
+    pub scar: Vec<f32>,
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
@@ -1134,6 +1160,7 @@ impl BigDish {
             life: Vec::new(),
             life_t: Vec::new(),
             alarm: Vec::new(),
+            scar: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
             pile_rs: Vec::new(),
@@ -1209,6 +1236,9 @@ impl BigDish {
         }
         if d.p.alarm_keep > 0.0 {
             d.alarm = vec![0.0; w * h];
+            if d.p.scar_keep > 0.0 {
+                d.scar = vec![0.0; w * h];
+            }
         }
         if d.p.species > 1 {
             d.species_trail = vec![vec![0.0; w * h]; d.p.species as usize];
@@ -1787,7 +1817,13 @@ impl BigDish {
         match self.cell(x + c * so, y + s * so) {
             Some(i) if self.agar[i] => {
                 let g = if self.grass.is_empty() { 0.0 } else { gw * self.grass[i] };
-                let al = if self.alarm.is_empty() { 0.0 } else { self.p.alarm_weight * self.alarm[i] };
+                let al = if self.alarm.is_empty() {
+                    0.0
+                } else if self.scar.is_empty() {
+                    self.p.alarm_weight * self.alarm[i]
+                } else {
+                    self.p.alarm_weight * self.alarm[i] + self.p.scar_weight * self.scar[i]
+                };
                 let b = if body.is_empty() { 0.0 } else { bw * body[i] as f32 };
                 let sc = self.scent_at(x + c * sso, y + s * sso);
                 // sw 1 keeps the sum's order, so older runs keep their hashes.
@@ -2956,6 +2992,14 @@ impl BigDish {
             if !self.alarm.is_empty() {
                 spread(&self.agar, &self.alarm, &mut self.scratch, self.w, self.h, self.p.alarm_keep, self.threads);
                 std::mem::swap(&mut self.alarm, &mut self.scratch);
+                if !self.scar.is_empty() {
+                    let (keep, gain) = (self.p.scar_keep, self.p.scar_gain);
+                    for ((c, &a), &ag) in self.scar.iter_mut().zip(&self.alarm).zip(&self.agar) {
+                        if ag {
+                            *c = *c * keep + gain * a;
+                        }
+                    }
+                }
             }
             if !self.p.scent_coarse {
                 self.scent_step();
@@ -3137,7 +3181,7 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(self.species_trail.iter().flatten()) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.scar).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
         for &c in self.spec.iter().chain(&self.kind) {
@@ -3356,6 +3400,34 @@ mod tests {
 
     fn small(scale: usize, substeps: usize) -> BigParams {
         BigParams { scale, substeps, walkers: 600 * scale * scale, seed: 3, ..BigParams::today() }
+    }
+
+    /// The scar (habituation): struck again and again at one spot, a mould
+    /// that reads its scar below 0 keeps away from it after the alarm has
+    /// faded, one that reads it above 0 crowds it, against the same alarm
+    /// with no scar; and with the scar off nothing is allocated.
+    #[test]
+    fn a_scar_remembers_where_the_mould_was_hurt() {
+        // Struck at the home pile (where the plain mould feeds) or at the
+        // dish centre (where it does not go).
+        let near = |home: bool, scar_keep: f32, scar_weight: f32| {
+            let p = BigParams { alarm_keep: 0.95, scar_keep, scar_gain: 0.05, scar_weight, piles: 1, ..small(1, 1) };
+            let mut d = BigDish::new(p);
+            let (cx, cy) = if home { d.piles[0] } else { (d.w as f32 / 2.0, d.h as f32 / 2.0) };
+            for t in 0..400 {
+                if t % 20 == 0 && t < 200 {
+                    d.strike(cx, cy, 4.0, 50.0, 8.0);
+                }
+                d.tick();
+            }
+            assert_eq!(d.scar.is_empty(), scar_keep == 0.0);
+            assert!(d.alarm.iter().cloned().fold(0.0, f32::max) < 1.0, "the alarm has faded");
+            (0..d.walkers.len()).filter(|&k| d.lives(k) && (d.walkers[k].0 - cx).hypot(d.walkers[k].1 - cy) <= 12.0).count()
+        };
+        let (plain, wary) = (near(true, 0.0, 0.0), near(true, 0.9999, -2.0));
+        assert!(wary * 2 < plain, "wary {wary} against {plain} at home");
+        let (plain, grudge) = (near(false, 0.0, 0.0), near(false, 0.9999, 2.0));
+        assert!(grudge > plain + 20, "grudge {grudge} against {plain} at the centre");
     }
 
     /// Threads split the field passes by rows; the dish must not care.

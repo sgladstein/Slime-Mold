@@ -2,9 +2,9 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12T07:05Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
-code: [BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier]
+updated: 2026-11-12T07:55Z
+sources: [Reports/mould-tiers-campaign-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
+code: [BigParams::scar_keep, BigParams::scar_weight, BigDish::scar, BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier]
 ---
 
 # The mould tiers (difficulty ladder)
@@ -12,44 +12,35 @@ code: [BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spre
 ## Now
 
 Larder World's difficulty comes from which mould you face, not from tuning
-one mould (owner, 2026-11-11 14:14Z; ladder agreed 14:25Z). The ladder grows
-as the research threads find new behaviours, and each tier must have a
-counter the player can see work. The early leader's win rate is a per-mould
-difficulty stat, not a gate (14:14Z).
+one mould (owner, 2026-11-11 14:14Z; ladder agreed 14:25Z). Each tier must
+have a counter the player can see work; the early leader's win rate is a
+per-mould difficulty stat, not a gate (14:14Z). A tier is a set of keys,
+`mould::tiers::Tier`, which the game, the campaign's missions and the
+censuses ask for by name (`tier=drifter`).
 
 | Tier | Mould | Rule | What beats it |
 |---|---|---|---|
-| 1 | Drifter | grazing bodies that crawl (`graze_weight`) | any squad |
-| 2 | Sprawler | fast feathery fronts, thin tubes (`explore_spread`) | let it overreach, cut thin tubes, walls |
-| 3 | Trunk | thick cords that heal round a cut (dense start, W0 growth) | starve it, heavy weapons |
-| 4 | Hunter | hungry mould that drains soldiers | turrets, walls, bait |
-| 5 | Rival pair | two species fighting over borders | lure one into the other |
-| 6 | Converter | converts rivals where it outnumbers them (`species_convert`) | kill early, keep rivals apart |
-| 7 | Mixes | several of the above | adapt the build |
-| added | Sleeper | a nest: a dormant crust round its home crystal that wakes in a wave (`Tier::Sleeper`) | bait it, then strike (proposed) |
-| added | Swarmer | floods where it is hit (`Tier::Swarmer`, `alarm_weight` +3); a modifier any tier can carry | a kill zone (proposed) |
-| added | Sporer | fed walkers fly to new crystals (`Tier::Sporer`) | starve it, don't strike near untaken crystals (proposed) |
+| 1 | Drifter | round droplet bodies on crystals, crawling between them (`Tier::Drifter`) | any squad |
+| 2 | Sprawler | a fast thin mesh over the map (`Tier::Sprawler`, explorers for 200 steps) | walls; chasing loses |
+| 3 | Trunk | long straight cords round a few big bodies (`Tier::Trunk`) | starve it (needs shared food) |
+| 4-7 | Hunter, Rival pair, Converter, Mixes | not built | |
+| added | Sleeper, Swarmer, Sporer | the life cycle and the alarm ([the life cycle](../model/life-cycle.md)) | bait then strike; a kill zone; starve it |
+| added | Wary, Grudge | a scar field that remembers where it was shot (`BigParams::scar_keep`), read away or toward | Wary: burn a road once; Grudge: don't fire twice from one spot |
 
-The added three are on the CPU big dish, named for the game by
-`mould::tiers::Tier`, and the squad's shots lay the alarm they answer. In
-the Larder world's race (growth, crystals that run dry) the Swarmer and the
-Sleeper's bait hold on 8 of 8 seeds, but the Sporer's edge over the plain
-mould is not significant, and the Sleeper barely leaves its home crystal,
-so it suits an early tier or a map feature
-([the life cycle](../model/life-cycle.md)). Their place in the order is not
-set. All three run on the GPU too ([report](../../Reports/life-gpu-2026-11-11.md)).
-
-The Drifter's grazing is what makes it forage: on food piles it sends
-small droplets to far food, while the edge of its body moves about 10
-dish cells a minute. Adding 20% scouts to it reached more food on 10 of 16 seeds and
-less on none, a candidate step up the ladder
-([first reach](../../Reports/first-reach-2026-11-11.md)). Each species can
-now have its own settings on one dish (`species_sets`;
-[coexistence](../../Reports/species-sets-2026-11-11.md)).
+The Drifter, Sprawler and Trunk (2026-11-12) are settings over rules both
+engines run; the GPU keeps each within 2% of the CPU over 20 s. Wary keeps
+away from a spot shot again and again (fewer walkers there 20 s after the
+fire on 8 of 8 seeds); Grudge comes back to it in force (8 of 8 fresh seeds). The scar is
+CPU only until it shares the toolkit's damage buffer on the GPU
+([report](../../Reports/mould-tiers-campaign-2026-11-12.md)). In the
+Larder world's race the Swarmer and the Sleeper's bait hold on 8 of 8, the
+Sporer's edge is not significant
+([report](../../Reports/mould-tiers-2026-11-11.md), *In the Larder world*).
 
 ## Open
 
-- Candidate tiers from review 2 ([the reviews](../../Reports/mould-tiers-review-2026-11-11.md)), most promising first: supply lines (traffic-made arteries that carry food; cut one to starve the far end), habituation (a mould that learns to ignore a repeated trick), clans that fuse or fight along a scar, a mould that learns the rhythm of fire, a pacemaker heartbeat, day and night light, a nomad that avoids its own slime, two foods. Each has a first experiment there.
+- The census of the new tiers, re-run after shot craters (#113). Before craters (held-out 201-216): Grudge is the hardest (every plan lower than on plain, 16 of 16; random loses its squad 15 of 16); strike is the best plan on every tier, so the best plan does not change between tiers yet; the Sprawler now explores 200 steps (at 400 everything wiped it); the toolkit's blast plan wins every tier ([report](../../Reports/mould-tiers-campaign-2026-11-12.md), *The census*). Still to come: the Drifter, the rest of Wary, turrets (turtle, guard) against Grudge and Wary.
+- Candidate tiers from review 2 ([the reviews](../../Reports/mould-tiers-review-2026-11-11.md)), most promising first: supply lines (traffic-made arteries that carry food; cut one to starve the far end; the one body thread's shared food), clans that fuse or fight along a scar, a mould that learns the rhythm of fire, a pacemaker heartbeat, day and night light, a nomad that avoids its own slime, two foods. Each has a first experiment there.
 - The order of the added tiers. On the GPU engine, species and
   conversion came with the outside rules, and each species' own settings,
   conversion over a square and a second kind followed (11-11, [species on

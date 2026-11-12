@@ -37,6 +37,11 @@ pub enum Shape {
     /// `atan2(dy, dx)`), the team's colour, `extra` bits 0-7 the muzzle
     /// flash (0-255), bit 8 dead. Drawn and lit in the view's shader.
     Soldier = 7,
+    /// A top-down building `hw` across its footprint radius (world cells
+    /// with `WORLD`): kind `fill` (0 turret, 1 lure, 2 pump, 3 outpost),
+    /// `extra` bits 0-7 how built (0-255), 8-15 its health share, bit 16
+    /// working (its lamp lit). The sprite atlas's tiles 4-11.
+    Building = 8,
 }
 
 /// `hw` and `hh` are world cells (scaled by the zoom, at least 2 pixels)
@@ -180,6 +185,17 @@ impl Marks {
     pub fn soldier(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool) {
         let extra = (flash.clamp(0.0, 1.0) * 255.0).round() as u32 | if alive { 0 } else { 256 };
         self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, ..Mark::new(Shape::Soldier, at, (r, r), colour) });
+    }
+
+    /// A building of kind `kind` (0 turret, 1 lure, 2 pump, 3 outpost) at
+    /// `at`, footprint radius `r` world cells: `built` and `health` 0-1,
+    /// `working` lights its lamp. Everything it shows is the game's state:
+    /// it rises from its foot as it is built, darkens as it is hurt.
+    pub fn building(&mut self, at: (f32, f32), r: f32, kind: u32, built: f32, health: f32, working: bool) {
+        let b = (built.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let extra = b | h << 8 | (working as u32) << 16;
+        self.push(Mark { flags: WORLD | MINIMAP, fill: kind as f32, extra, ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
     }
 
     /// The words the view pass reads, `MARK_WORDS` a mark.

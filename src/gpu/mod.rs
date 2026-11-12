@@ -668,7 +668,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "alarm_relay" => s.alarm_relay = f()?,
         // A mould tier's keys at once (`mould::tiers::Tier`, as
         // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
-        "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of sporer, sleeper, swarmer"))?.settings(s)?,
+        "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of {}", crate::mould::tiers::Tier::ALL.map(|t| t.name()).join(", ")))?.settings(s)?,
         "upkeep" => s.upkeep = f()?,
         "start_energy" => s.start_energy = f()?,
         "birth_energy" => s.birth_energy = f()?,
@@ -1574,7 +1574,7 @@ impl Engine {
         }
         if due && nunits > 0 {
             // The squad's frame end: reads, then the harvest.
-            dispatch(enc, &self.groups[(self.done % 2) as usize], &[(UNITS, 1), (HARVEST, 1)]);
+            dispatch(enc, &self.groups[(self.done % 2) as usize], &[(UNITS, squad::UNITS_MAX.div_ceil(64) as u32), (HARVEST, 1)]);
         }
         let group = &self.groups[(self.done % 2) as usize];
         for &(p, groups) in &self.draw_passes(soft) {

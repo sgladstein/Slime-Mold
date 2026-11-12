@@ -9,6 +9,13 @@
 //! cargo run --release --example larderworld -- census energy_flow=0.05 hunger_scent=8 ...   # one body
 //! ```
 //!
+//! **The one census entry point** (2026-11-12, game integration): a
+//! game-level table that is compared with another thread's comes from this
+//! census, with hands, tiers, tools and missions added here as `hands=` or
+//! flags. Its first lines print `provenance:` (the commit, seeds, cap and a
+//! hash of every setting); quote that line beside the table. Tables from
+//! other harnesses are not comparable with these.
+//!
 //! **On the GPU engine** (`gpu=1`, or `gpu=both` for each game on both;
 //! 2026-11-12, the technical lead review): the same hands, seeds and rules
 //! on `gpu::larder_world::GpuWorld`, the engine the window plays. The two
@@ -56,6 +63,22 @@
 //!   across the line from the core to the larder, `WALL_AT` of the way to
 //!   the larder (the expander review: a wall across the leader's road
 //!   was the one tool measured to turn games).
+//! - **ring** (buildings, 2026-11-12; the design review's risk that free
+//!   shots and turrets bring back the held ring of fire): farm, and from
+//!   5 s a turret `RING` dish cells from the larder whenever the bank holds
+//!   a turret over `RESERVE`, round the larder, up to `RING_N`.
+//! - **turtle**: farm, and a pump on each crystal a soldier is clearing
+//!   (the soldier is on it, so it is in reach) with a turret beside it, as
+//!   the bank allows over `RESERVE`.
+//! - **army**: farm, but every bank over `RESERVE` buys a soldier, up to
+//!   `Rules::max_squad`, and every soldier is on free fire: the hand that
+//!   spends what farm banks on guns that walk.
+//! - **pumps** and **guard**: the turtle's halves alone, pumps without
+//!   turrets, and a turret by each farmed crystal without pumps.
+//! - **killzone**: farm, and a lure `ZONE` dish cells from the larder on
+//!   the road to the core with a turret either side of the road halfway
+//!   there, as the bank allows over `RESERVE`; the lure pulls the mould
+//!   into the turrets' fire.
 //! - Any other name is the player AI (`larder_world_ai::Style::named`):
 //!   boom, claim, late, fort, strike, with knobs after a colon
 //!   (`claim:claim_at=200+keep=4`). Each is also paired with farm, the
@@ -65,7 +88,7 @@ use slime_mould::gpu::block_on;
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::mould::big::BigDish;
 use slime_mould::mould::big::BigParams;
-use slime_mould::mould::larder_world::{race_params, Cmd, End, Game, Order, Rules, Stance, World, FLEE_KEEP};
+use slime_mould::mould::larder_world::{race_params, Cmd, End, Game, Kind, Order, Rules, Stance, World, FLEE_KEEP};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
@@ -74,6 +97,10 @@ const RESERVE: f32 = 600.0;
 const FARM_MAX: usize = 8;
 const WALL_LEN: f32 = 26.0;
 const WALL_AT: f32 = 0.6;
+
+const RING: f32 = 7.0;
+const RING_N: usize = 6;
+const ZONE: f32 = 13.0;
 
 #[derive(Clone, Default)]
 struct Row {
@@ -156,6 +183,22 @@ impl Mould {
     }
 }
 
+/// FNV-1a, 64 bits: a stable hash of the census's settings text.
+fn fnv(b: &[u8]) -> u64 {
+    b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &c| (h ^ c as u64).wrapping_mul(0x0000_0100_0000_01b3))
+}
+
+/// The commit the census ran on, with `+dirty` for uncommitted changes, or
+/// `unknown` outside a git checkout.
+fn commit() -> String {
+    let git = |args: &[&str]| std::process::Command::new("git").args(args).current_dir(env!("CARGO_MANIFEST_DIR")).output().ok().filter(|o| o.status.success());
+    let Some(head) = git(&["rev-parse", "--short=9", "HEAD"]) else {
+        return "unknown".into();
+    };
+    let dirty = git(&["status", "--porcelain", "--untracked-files=no"]).is_some_and(|o| !o.stdout.is_empty());
+    format!("{}{}", String::from_utf8_lossy(&head.stdout).trim(), if dirty { "+dirty" } else { "" })
+}
+
 fn main() {
     let mut seeds: Vec<u64> = (1..=4).collect();
     let (mut scale, mut walkers, mut threads, mut cap) = (2usize, 5_000usize, 4usize, None::<f32>);
@@ -195,6 +238,11 @@ fn main() {
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "strike" => rules.strike = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
+            "pump_rate" => rules.build.pump_rate = v.parse().unwrap(),
+            "pump_cost" => rules.build.pump_cost = v.parse().unwrap(),
+            "pump_smell" => rules.build.pump_smell = v.parse().unwrap(),
+            "turret_cost" => rules.build.turret_cost = v.parse().unwrap(),
+            "turret_every" => rules.build.turret_every = v.parse().unwrap(),
             "seek" => rules.seek = v == "1",
             "gpu" => {
                 engines = match v {
@@ -232,6 +280,29 @@ fn main() {
         m.tier.map_or("none", |t| t.name()),
         m.flee.map_or("0 (default)".to_string(), |w| w.to_string()),
         m.flee_keep.map_or(String::new(), |k| format!(", keep {k}"))
+    );
+    // The census's provenance (2026-11-12, game integration; the technical
+    // lead found three harnesses' tables disagreeing overnight with no way
+    // to tell why): one line that names the commit, the seeds, the cap and
+    // a hash of every setting above, so a table quoted in a report can be
+    // matched to another run's, or shown not to match. FNV-1a over the
+    // settings' text, so it changes with any Rules field without a list to
+    // keep up to date.
+    let settings = format!(
+        "{world}|{scale}|{walkers}|{}|{}|{}|{:?}|{names}|{rules:?}",
+        m.tier.map_or("none", |t| t.name()),
+        m.flee.unwrap_or(0.0),
+        m.flee_keep.unwrap_or(0.0),
+        hands
+    );
+    println!(
+        "provenance: harness larderworld, commit {}, seeds {}-{} ({}), cap {} s, settings hash {:016x}",
+        commit(),
+        seeds.first().copied().unwrap_or(0),
+        seeds.last().copied().unwrap_or(0),
+        seeds.len(),
+        rules.cap,
+        fnv(settings.as_bytes())
     );
     assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
@@ -419,7 +490,7 @@ fn report(hands: &[String], seeds: &[u64], get: &dyn Fn(u64, &str) -> Row) {
     }
     let mut tests = Vec::new();
     for h in hands.iter().filter(|h| *h != "idle" && *h != "random") {
-        let scripted = ["farm", "rush", "wall"].contains(&h.as_str());
+        let scripted = ["farm", "rush", "wall", "ring", "turtle", "killzone", "pumps", "guard", "army"].contains(&h.as_str());
         for base in ["idle", "random", "farm"] {
             if base == "farm" && scripted {
                 continue;
@@ -529,6 +600,41 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
             "random" => random_hand(g),
             "farm" => farm_hand(g, &mut farmed),
             "rush" => rush_hand(g),
+            "ring" => {
+                farm_hand(g, &mut farmed);
+                ring_hand(g);
+            }
+            "turtle" => {
+                farm_hand(g, &mut farmed);
+                turtle_hand(g, true, true);
+            }
+            "army" => {
+                // Farm, but spend the bank on soldiers: up to the squad's
+                // most, on free fire (the fair foil for the turret hands,
+                // since farm stops at `FARM_MAX` and banks the rest).
+                while g.bank > g.rules.soldier_cost + RESERVE && g.alive() < g.rules.max_squad {
+                    if !g.apply(Cmd::Buy) {
+                        break;
+                    }
+                }
+                farm_hand(g, &mut farmed);
+                let idle: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive && g.soldiers[k].stance != Stance::Free).collect();
+                for k in idle {
+                    g.apply(Cmd::Stance(k, Stance::Free));
+                }
+            }
+            "pumps" => {
+                farm_hand(g, &mut farmed);
+                turtle_hand(g, true, false);
+            }
+            "guard" => {
+                farm_hand(g, &mut farmed);
+                turtle_hand(g, false, true);
+            }
+            "killzone" => {
+                farm_hand(g, &mut farmed);
+                zone_hand(g);
+            }
             "wall" => {
                 // Until the wall stands, one soldier walks to it and the
                 // rest farm (the first version tried once at 5 s, failed
@@ -628,6 +734,29 @@ fn random_hand<W: World>(g: &mut Game<W>) {
         let l = 5.0 * g.world.scale();
         g.apply(Cmd::Wall((m.0 - l * b.cos(), m.1 - l * b.sin()), (m.0 + l * b.cos(), m.1 + l * b.sin())));
     }
+    // Buildings are in random's pool too (the technical lead, 11-12: a
+    // random hand that cannot place a turret is no control for the hands
+    // that do): a turret, lure or outpost somewhere in the chosen soldier's
+    // build reach, wherever it wanders (the core too), or a pump on a
+    // random crystal; and now and then a lure switched. Failed placements
+    // (no food, no ground) are simply lost, as a random click would be.
+    if g.rng.below(4) == 0 {
+        let s = g.soldiers[k];
+        let kind = [Kind::Turret, Kind::Lure, Kind::Pump, Kind::Outpost][g.rng.below(4) as usize];
+        let at = if kind == Kind::Pump {
+            let cs = g.world.crystals();
+            cs[g.rng.below(cs.len() as u32) as usize].0
+        } else {
+            let r = g.rules.build.touch * g.world.scale() * g.rng.f32();
+            let a = g.rng.f32() * std::f32::consts::TAU;
+            (s.x + r * a.cos(), s.y + r * a.sin())
+        };
+        g.apply(Cmd::Build(kind, at));
+    }
+    if !g.buildings.is_empty() && g.rng.below(8) == 0 {
+        let b = g.rng.below(g.buildings.len() as u32) as usize;
+        g.apply(Cmd::Toggle(b));
+    }
 }
 
 /// Crystals with charge, nearest the larder first (the core last of all).
@@ -691,6 +820,105 @@ fn rush_hand<W: World>(g: &mut Game<W>) {
     }
 }
 
+/// A building of `kind` at `at`, if the bank holds its price over
+/// `RESERVE` (the farm hand's spare) and it can go there now.
+fn spare_build<W: World>(g: &mut Game<W>, kind: Kind, at: (f32, f32)) -> bool {
+    g.bank >= g.build_price(kind, at) + RESERVE && g.build_blocked(kind, at).is_none() && g.apply(Cmd::Build(kind, at))
+}
+
+/// An open cell within 3 dish cells of `p`, nearest first.
+fn open_by<W: World>(g: &Game<W>, p: (f32, f32)) -> Option<(f32, f32)> {
+    let s = g.world.scale();
+    (0..=6).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
+        let a = k as f32 / 12.0 * std::f32::consts::TAU;
+        (p.0 + 0.5 * r as f32 * s * a.cos(), p.1 + 0.5 * r as f32 * s * a.sin())
+    }).find(|q| g.world.open(q.0, q.1))
+}
+
+fn alive_kind<W: World>(g: &Game<W>, kind: Kind) -> usize {
+    g.buildings.iter().filter(|b| b.alive && b.kind == kind).count()
+}
+
+fn ring_hand<W: World>(g: &mut Game<W>) {
+    if g.time() < 5.0 || alive_kind(g, Kind::Turret) >= RING_N {
+        return;
+    }
+    let s = g.world.scale();
+    let (c, l) = (g.core, g.larder);
+    let a0 = (c.1 - l.1).atan2(c.0 - l.0);
+    // The first faces the core, then alternately either side of it.
+    for i in 0..RING_N {
+        let k = (i as f32 / 2.0).ceil() * if i % 2 == 0 { 1.0 } else { -1.0 };
+        let a = a0 + k * std::f32::consts::TAU / RING_N as f32;
+        if let Some(at) = open_by(g, (l.0 + RING * s * a.cos(), l.1 + RING * s * a.sin())) {
+            if spare_build(g, Kind::Turret, at) {
+                return;
+            }
+        }
+    }
+}
+
+/// The turtle's two halves can be played alone: `pumps` (pumps, no
+/// turrets) and `guard` (a turret by each farmed crystal, no pumps).
+fn turtle_hand<W: World>(g: &mut Game<W>, pumps: bool, turrets: bool) {
+    let s = g.world.scale();
+    let sites: Vec<(f32, f32)> = g.soldiers.iter().filter(|q| q.alive).filter_map(|q| match q.order {
+        Order::Clear(x, y) => g.crystal_at((x, y)).map(|(_, c)| c),
+        _ => None,
+    }).collect();
+    for c in sites {
+        let pumped = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Pump && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 3.0 * s);
+        if pumps && !pumped {
+            if let Some(at) = open_by(g, c) {
+                if spare_build(g, Kind::Pump, at) {
+                    return;
+                }
+            }
+            continue;
+        }
+        let guarded = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Turret && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 6.0 * s);
+        if turrets && !guarded {
+            let (dx, dy) = (g.core.0 - c.0, g.core.1 - c.1);
+            let d = dx.hypot(dy).max(1.0);
+            if let Some(at) = open_by(g, (c.0 + dx / d * 4.0 * s, c.1 + dy / d * 4.0 * s)) {
+                if spare_build(g, Kind::Turret, at) {
+                    return;
+                }
+            }
+        }
+    }
+}
+
+fn zone_hand<W: World>(g: &mut Game<W>) {
+    if g.time() < 5.0 {
+        return;
+    }
+    let s = g.world.scale();
+    let (c, l) = (g.core, g.larder);
+    let (dx, dy) = (c.0 - l.0, c.1 - l.1);
+    let d = dx.hypot(dy).max(1.0);
+    let (ux, uy) = (dx / d, dy / d);
+    let half = 0.5 * ZONE * s;
+    let wants = [
+        (Kind::Turret, (l.0 + ux * half - uy * 4.0 * s, l.1 + uy * half + ux * 4.0 * s)),
+        (Kind::Turret, (l.0 + ux * half + uy * 4.0 * s, l.1 + uy * half - ux * 4.0 * s)),
+        (Kind::Lure, (l.0 + ux * ZONE * s, l.1 + uy * ZONE * s)),
+    ];
+    for (kind, p) in wants {
+        let have = g.buildings.iter().any(|b| b.alive && b.kind == kind && (b.at.0 - p.0).hypot(b.at.1 - p.1) < 3.0 * s);
+        if have {
+            continue;
+        }
+        if let Some(at) = open_by(g, p) {
+            if spare_build(g, kind, at) {
+                return;
+            }
+        }
+        // In order: the turrets before the lure.
+        return;
+    }
+}
+
 /// A wall across the core-to-larder line, `WALL_AT` of the way to the
 /// larder, built by sending soldier 0 there first if it is out of range.
 fn wall_road<W: World>(g: &mut Game<W>) {
@@ -721,14 +949,17 @@ fn wall_road<W: World>(g: &mut Game<W>) {
 /// The counts that go beside a picture.
 fn counts(g: &Game<BigDish>, hand: &str, seed: u64) {
     println!(
-        "  {hand} seed {seed} at {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, killed {}, crystals left {:.3}",
+        "  {hand} seed {seed} at {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, killed {}, crystals left {:.3}; buildings placed {}, standing {}, lost {}",
         g.time(),
         g.world.living(),
         g.soldiers.iter().filter(|s| s.alive).count(),
         g.bank,
         g.harvested,
         g.killed,
-        g.world.crystals_left()
+        g.world.crystals_left(),
+        g.buildings.len(),
+        g.standing(),
+        g.lost_buildings
     );
 }
 
