@@ -152,6 +152,11 @@ pub struct GpuWorld {
     /// GPU timestamps of each frame's ticks and drawing (`Stamps`: index 0
     /// to 1 the ticks, 1 to 2 the drawing), if the caller sets them.
     pub stamps: Option<Stamps>,
+    /// While Some, every pass of each frame with ticks is timed on its own
+    /// (`Engine::record_timed`), and the frame waits for its stamps: the
+    /// bench's `passes=N` (2026-11-12). A frame's passes in order, GPU ms
+    /// each.
+    pub profile: Option<Vec<Vec<(&'static str, f64)>>>,
     /// Frames whose results were not in when asked for, and the real ms
     /// spent waiting for them (`frame_finish`).
     pub waits: u64,
@@ -176,7 +181,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: None };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, waits: 0, wait_ms: 0.0 };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, waits: 0, wait_ms: 0.0 };
         g.read_now();
         g
     }
@@ -331,6 +336,14 @@ impl World for GpuWorld {
         let fresh = matches!(&self.grid, Some((b, _, _)) if *b == self.want.get());
         self.e.grid = self.grid_square(!fresh || t0 / GRID_EVERY != t1 / GRID_EVERY);
         self.e.write_params(&self.s, Hand::default(), n);
+        if n > 0 && self.profile.is_some() {
+            let t = self.e.record_timed(&self.shared, n, self.s.curve == Curve::Soft);
+            self.profile.as_mut().unwrap().push(t);
+            let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world readout") });
+            self.record_readout(&mut enc);
+            self.submit(enc);
+            return None;
+        }
         let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world") });
         let qs = self.stamps.as_ref().and_then(|st| st.take());
         self.e.record(&self.shared, &mut enc, n, self.s.curve == Curve::Soft, qs);
