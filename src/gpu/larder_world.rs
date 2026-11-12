@@ -750,4 +750,44 @@ mod tests {
             assert_eq!(format!("{gpu:?}"), format!("{cpu:?}"), "seed {seed} scale {scale}");
         }
     }
+
+    /// The CPU census's world (`race_params`, a tier's `apply`) and the GPU
+    /// world (`race_settings`, `Tier::settings`, `Engine::made`) play the
+    /// same crowd rule on every map, tier and scale the game ships, and on
+    /// the 25,000 walkers at scale 2 that dropped it on the GPU alone until
+    /// 2026-11-12 (`crowd_holds` counted the slots). No GPU needed.
+    #[test]
+    fn the_cpu_census_and_the_gpu_world_play_the_same_crowd_rule() {
+        use crate::gpu::{agar_cells, crowd_holds, wants_crowd};
+        use crate::mould::big::BigDish;
+        use std::path::Path;
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let maps: Vec<(&str, Option<Map>)> = std::iter::once(("the noise world", None)).chain(["fork", "nest", "rim", "flats", "passes"].into_iter().map(|n| (n, Some(Map::load(&dir, n).unwrap())))).collect();
+        let tiers: Vec<Option<Tier>> = std::iter::once(None).chain(Tier::ALL.iter().copied().map(Some)).collect();
+        let mut checked = 0;
+        for (scale, walkers) in [(1, 1250), (2, 5000), (2, 25000), (4, 20000), (8, 80000), (8, 100000)] {
+            for (name, m) in &maps {
+                let make = |q| match m {
+                    Some(m) => BigDish::with_map(q, m),
+                    None => BigDish::new(q),
+                };
+                let agar = agar_cells(&race_settings(1, scale, walkers), scale, make);
+                for &tier in &tiers {
+                    let mut p = race_params(1, scale, walkers);
+                    let mut s = race_settings(1, scale, walkers);
+                    if let Some(t) = tier {
+                        t.apply(&mut p);
+                        if t.settings(&mut s).is_err() {
+                            continue; // a tier the GPU world refuses never plays there
+                        }
+                    }
+                    let cpu = p.crowd > 0 || p.species_sets.iter().any(|t| t.crowd > 0);
+                    let gpu = wants_crowd(&s) && crowd_holds(s.walkers, agar);
+                    assert_eq!(cpu, gpu, "{name}, scale {scale}, {walkers} walkers ({} slots, {agar} agar), tier {:?}: the CPU's crowd {cpu}, the GPU's {gpu}", s.capacity, tier.map(|t| t.name()));
+                    checked += 1;
+                }
+            }
+        }
+        assert!(checked > 6 * 6 * 3, "only {checked} cases");
+    }
 }
