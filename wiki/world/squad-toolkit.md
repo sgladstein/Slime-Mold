@@ -39,7 +39,8 @@ this toolkit's burst list, not a new system. First census
 ([rounds](../../Reports/rounds-2026-11-12.md), `src/mould/rounds.rs`): the
 germ, on its own or as plague, beats no round 8/0 on plain, Swarmer and Sporer
 and the Sleeper ignores every round, so the best loadout does not yet vary by
-tier; next is a counter to the germ.
+tier. Germ resistance 10 on the Swarmer and Sporer cancels it (4 seeds), 3
+halves it: a per-mould dial.
 
 ## Owner's word
 

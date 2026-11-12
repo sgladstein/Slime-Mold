@@ -24,3 +24,7 @@ rounds census, race world, hand farm, cap 300 s, seeds [5, 6, 7, 8, 9, 10, 11, 1
  drifter                     rand seed  7:         cap at  300 s, score +0.376; soldiers  8, mould   1516; round wide+wide+quiet, casts [0, 0, 0], round kills 0 of 24, spent 0, broke 0, dropped 0; 4.42 ms a tick
  drifter                   plague seed  7:         cap at  300 s, score +0.379; soldiers  8, mould   1458; round germ+delay+blast, casts [9, 0, 11], round kills 0 of 23, spent 3840, broke 0, dropped 0; 12.33 ms a tick
  drifter                     none seed  8:         cap at  300 s, score +0.370; soldiers  8, mould   1613; round none, casts [0, 0, 0], round kills 0 of 120, spent 0, broke 0, dropped 0; 6.14 ms a tick
+ drifter                     germ seed  8:         cap at  300 s, score +0.436; soldiers  8, mould    642; round germ, casts [0, 0, 24], round kills 0 of 49, spent 7200, broke 0, dropped 0; 8.85 ms a tick
+ drifter                    blast seed  8:         cap at  300 s, score +0.367; soldiers  8, mould   1668; round blast, casts [40, 0, 0], round kills 68 of 176, spent 2400, broke 0, dropped 0; 15.29 ms a tick
+ drifter                      gas seed  8:         cap at  300 s, score +0.368; soldiers  8, mould   1648; round gas, casts [0, 47, 0], round kills 0 of 104, spent 7050, broke 0, dropped 0; 15.19 ms a tick
+KILLED at 28 of 64 runs to free cores (owner asked for smaller runs)

@@ -128,6 +128,12 @@ fn play(seed: u64, tier: &str, load: &str, hand: &str, rules: Rules, rr: RoundRu
     if let Some(t) = Tier::from_name(tier) {
         t.apply(&mut p);
     }
+    // Germ resistance as a mould trait (GERM_RESIST=, as in kitplans): the
+    // first census had germ and plague best on plain, Swarmer and Sporer,
+    // so a resistant tier is the counter to test.
+    if let Ok(v) = std::env::var("GERM_RESIST") {
+        p.germ_resist = v.parse().unwrap();
+    }
     let mut world = BigDish::new(p);
     world.threads = 1;
     let mut g = Game::new(world, rules, seed);
