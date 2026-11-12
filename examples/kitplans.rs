@@ -336,7 +336,19 @@ fn sortie(g: &mut Game<BigDish>, kit: &mut Kit, st: &mut Plan, tool: fn((f32, f3
     let Some((a, _)) = densest(g) else { return false };
     let Some(k) = st.runner.filter(|&k| g.soldiers[k].alive).or_else(|| (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive && Some(k) != st.decoy)) else { return false };
     st.runner = Some(k);
+    // With the carry rule an empty runner fetches tools from the larder
+    // first (`play` restocks it there to `carry_max`).
+    if kit.rules.carry_max > 0 && kit.held(k) == 0 {
+        let l = g.larder;
+        if g.soldiers[k].order != Order::Move(l.0, l.1) {
+            g.apply(Cmd::Order(k, Order::Move(l.0, l.1)));
+        }
+        return false;
+    }
     if kit.use_tool(g, tool(a)) {
+        if kit.held(k) > 0 {
+            return true;
+        }
         st.runner = None;
         // Back to farming: the farm hand gives it a crystal again.
         g.apply(Cmd::Order(k, Order::Hold));
@@ -410,6 +422,17 @@ fn play(seed: u64, tier: &str, hand: &str, rules: Rules, kr: KitRules, map: Opti
         let sec = g.world.ticks() / tps;
         if sec != last {
             last = sec;
+            // The carry rule: every soldier at the larder takes one tool,
+            // a runner as many as it may hold (the tools are paid for when
+            // used). Smell needs none.
+            if kit.rules.carry_max > 0 {
+                for k in 0..g.soldiers.len() {
+                    let n = if st.runner == Some(k) || st.decoy == Some(k) { kit.rules.carry_max } else { kit.rules.carry_each };
+                    if n > 0 {
+                        kit.restock(&mut g, k, n);
+                    }
+                }
+            }
             match hand {
                 "idle" => {}
                 "random" => random_hand(&mut g),
@@ -476,6 +499,9 @@ fn main() {
             "germ_price" => kr.germ_price = v.parse().unwrap(),
             "sick_upkeep" => kr.sick_upkeep = v.parse().unwrap(),
             "gas_price" => kr.gas_price = v.parse().unwrap(),
+            "carry" => kr.carry_max = v.parse().unwrap(),
+            "carry_each" => kr.carry_each = v.parse().unwrap(),
+            "tool_weight" => kr.tool_weight = v.parse().unwrap(),
             "map" => {
                 let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
                 map = Some((v.to_string(), Map::load(&dir, v).unwrap_or_else(|e| panic!("{e}"))));

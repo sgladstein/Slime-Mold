@@ -438,6 +438,9 @@ pub struct Soldier {
     /// mould can't smell it, to sneak to a crystal) and reek (over 1: a
     /// decoy that pulls the mould off the harvesters), `mould::kit`.
     pub smell: f32,
+    /// Carry taken up by tools it holds (`mould::kit`'s carry rule): a
+    /// soldier carrying blasts brings home less food. 0 by default.
+    pub load: f32,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -575,6 +578,7 @@ impl<W: World> Game<W> {
             aim: None,
             dense: 0,
             smell: 1.0,
+            load: 0.0,
         });
     }
 
@@ -830,11 +834,11 @@ impl<W: World> Game<W> {
                             self.soldiers[k].order = Order::Hold;
                         }
                     }
-                } else if s.carry >= r.carry {
+                } else if s.carry >= r.carry - s.load {
                     self.soldiers[k].homing = true;
                 } else if let Some((i, c)) = self.crystal_at((x, y)) {
                     if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + 1.0 * sc {
-                        take = (r.harvest * dt).min(r.carry - s.carry) * r.charge;
+                        take = (r.harvest * dt).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
                         at_crystal = Some(i);
                     }
                 }
