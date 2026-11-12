@@ -1109,7 +1109,8 @@ pub struct Engine {
     pub cells: u32,
     /// Ticks run.
     pub done: u64,
-    /// Whether the crowd limit can hold (walkers at most half the agar).
+    /// Whether the crowd limit can hold (`crowd_holds`: the start walkers
+    /// at most half the agar).
     pub crowd_ok: bool,
     /// From the last `write_params`: whether the jump passes run (respawn
     /// or the pull on), and with the claim (`land`) too.
@@ -1126,6 +1127,33 @@ pub struct Engine {
     pub alarmed: bool,
 }
 
+/// The agar cells of the dish `make` builds from `s` (one walker placed,
+/// so it costs a grid, not a mould).
+pub fn agar_cells(s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> usize {
+    make(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count()
+}
+
+/// Whether the one-walker-a-cell limit holds for `walkers` starting on a
+/// dish of `agar_cells`: each start walker needs a free cell, which the
+/// placement finds quickly while they are at most half the agar. Growth
+/// needs no room of its own: with the limit on, a birth into a full cell
+/// is refused (`born` here, `BigDish`'s births on the CPU), so the slots
+/// (`capacity`) can never all be filled. Until 2026-11-12 this counted the
+/// slots too (`walkers.max(capacity)`, since the growth port of 11-11),
+/// which dropped the limit without a word on every race world over about
+/// 7,300 walkers (the slots are 10 x walkers there) while the CPU census
+/// kept it: the slime-enemy thread's 25,000 walkers on the Fork ran as
+/// ropes on the GPU, a sheet with the limit held.
+pub fn crowd_holds(walkers: usize, agar_cells: usize) -> bool {
+    walkers <= agar_cells / 2
+}
+
+/// Whether `s` asks for a crowd limit anywhere: the dish's, or a species'
+/// own (`sN.crowd`).
+pub fn wants_crowd(s: &Settings) -> bool {
+    species_sets(s, true).iter().any(|t| t.crowd > 0) || s.crowd
+}
+
 impl Engine {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize) -> Self {
         Self::made(device, queue, shared, s, scale, BigDish::new)
@@ -1137,8 +1165,13 @@ impl Engine {
     }
 
     fn made(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> Self {
-        let agar_cells = make(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
-        let crowd_ok = s.walkers.max(s.capacity) <= agar_cells / 2;
+        let agar_cells = agar_cells(s, scale, &make);
+        let crowd_ok = crowd_holds(s.walkers, agar_cells);
+        if !crowd_ok && wants_crowd(s) {
+            // Loud, since the game it plays is not the one asked for (the
+            // slime-enemy thread found it silent, 2026-11-12).
+            eprintln!("gpu: the one-walker-a-cell limit is OFF: {} walkers start on {} agar cells, and it holds only up to half ({})", s.walkers, agar_cells, agar_cells / 2);
+        }
         let d = make(BigParams { species_sets: species_sets(s, crowd_ok), ..big_params(s, scale, s.crowd && crowd_ok) });
         let dev = device;
         let cells = (d.w * d.h) as u32;

@@ -1,0 +1,54 @@
+rounds census, race world, hand farm, cap 300 s, seeds [5, 6, 7, 8], tiers ["swarmer", "sporer"], loads ["none", "blast", "germ", "plague"]; round rules RoundRules { recharge: 2.0, payload_weight: 1.0, card_weight: 0.5, wide_weight: 1.0, wide: 1.6, scatter_n: 3, scatter_r: 0.6, scatter_d: 1.5, delay_secs: 3.0, thick_n: 40, thick_r: 5.0, thick_secs: 30.0, kit: KitRules { reach: 24.0, blast_r: 6.0, blast_alarm: 50.0, crater_r: 7.0, crater_secs: 20.0, blast_price: 60.0, mine_r: 5.0, mine_trigger: 40, mine_price: 80.0, cord_r: 2.5, cord_every: 2.0, cord_price: 3.0, cord_max: 48.0, germ_r: 5.0, sick_secs: 6.0, immune_secs: 40.0, sick_upkeep: 60.0, sick_catch: 0.2, sick_deposit: 1.0, sick_keep: 0.9, germ_price: 300.0, gas_r: 12.0, gas_secs: 20.0, gas_death: 0.0, gas_price: 150.0, reek: 4.0, carry_max: 5, carry_each: 1, tool_weight: 50.0, restock_r: 6.0, alarm_keep: 0.95 } }
+ swarmer                    blast seed  5:         cap at  300 s, score +0.261; soldiers  8, mould   4102; round blast, casts [197, 0, 0], round kills 1819 of 5007, spent 11820, broke 0, dropped 0; 5.19 ms a tick
+ swarmer                     none seed  5:         cap at  300 s, score +0.296; soldiers  8, mould   3171; round none, casts [0, 0, 0], round kills 0 of 1242, spent 0, broke 0, dropped 0; 5.42 ms a tick
+ swarmer                     none seed  6:         cap at  300 s, score +0.225; soldiers  8, mould   5537; round none, casts [0, 0, 0], round kills 0 of 2680, spent 0, broke 0, dropped 0; 4.57 ms a tick
+ swarmer                    blast seed  6:         cap at  300 s, score +0.253; soldiers  8, mould   4487; round blast, casts [183, 0, 0], round kills 1158 of 3558, spent 10980, broke 0, dropped 0; 4.42 ms a tick
+ swarmer                     germ seed  5:         cap at  300 s, score +0.264; soldiers  6, mould   4084; round germ, casts [0, 0, 88], round kills 0 of 1519, spent 26400, broke 148, dropped 0; 12.98 ms a tick
+ swarmer                   plague seed  5:         cap at  300 s, score +0.300; soldiers  8, mould   3038; round germ+delay+blast, casts [59, 0, 63], round kills 235 of 1503, spent 22440, broke 0, dropped 0; 14.00 ms a tick
+ swarmer                     none seed  7:         cap at  300 s, score +0.198; soldiers  8, mould   6410; round none, casts [0, 0, 0], round kills 0 of 3229, spent 0, broke 0, dropped 0; 5.40 ms a tick
+ swarmer                    blast seed  7:         cap at  300 s, score +0.221; soldiers  8, mould   5487; round blast, casts [186, 0, 0], round kills 563 of 2546, spent 11160, broke 0, dropped 0; 5.01 ms a tick
+ swarmer                   plague seed  6:         cap at  300 s, score +0.259; soldiers  7, mould   4309; round germ+delay+blast, casts [73, 0, 77], round kills 446 of 2134, spent 27480, broke 8, dropped 0; 10.60 ms a tick
+ swarmer                     germ seed  6:         cap at  300 s, score +0.268; soldiers  7, mould   3959; round germ, casts [0, 0, 91], round kills 0 of 1783, spent 27300, broke 163, dropped 0; 11.26 ms a tick
+ swarmer                     none seed  8:         cap at  300 s, score +0.173; soldiers  8, mould   7651; round none, casts [0, 0, 0], round kills 0 of 4844, spent 0, broke 0, dropped 0; 6.27 ms a tick
+ swarmer                    blast seed  8:         cap at  300 s, score +0.182; soldiers  8, mould   7187; round blast, casts [142, 0, 0], round kills 925 of 2993, spent 8520, broke 0, dropped 0; 6.89 ms a tick
+ swarmer                     germ seed  7:         cap at  300 s, score +0.186; soldiers  5, mould   7029; round germ, casts [0, 0, 89], round kills 0 of 2368, spent 26700, broke 176, dropped 0; 11.91 ms a tick
+ swarmer                   plague seed  7:         cap at  300 s, score +0.180; soldiers  6, mould   7499; round germ+delay+blast, casts [76, 0, 77], round kills 437 of 2271, spent 27660, broke 59, dropped 0; 12.34 ms a tick
+  sporer                     none seed  5:         cap at  300 s, score +0.205; soldiers  8, mould   6289; round none, casts [0, 0, 0], round kills 0 of 1042, spent 0, broke 0, dropped 0; 4.90 ms a tick
+  sporer                    blast seed  5:         cap at  300 s, score +0.146; soldiers  8, mould   9585; round blast, casts [396, 0, 0], round kills 1408 of 3238, spent 23760, broke 0, dropped 0; 5.55 ms a tick
+ swarmer                     germ seed  8:         cap at  300 s, score +0.168; soldiers  4, mould   7728; round germ, casts [0, 0, 69], round kills 0 of 2000, spent 20700, broke 112, dropped 0; 14.59 ms a tick
+ swarmer                   plague seed  8:         cap at  300 s, score +0.191; soldiers  7, mould   6648; round germ+delay+blast, casts [62, 0, 62], round kills 612 of 2747, spent 22320, broke 72, dropped 0; 14.40 ms a tick
+  sporer                    blast seed  6:         cap at  300 s, score +0.335; soldiers  8, mould   2297; round blast, casts [318, 0, 0], round kills 192 of 828, spent 19080, broke 0, dropped 0; 3.89 ms a tick
+  sporer                     none seed  6:         cap at  300 s, score +0.175; soldiers  8, mould   7338; round none, casts [0, 0, 0], round kills 0 of 1883, spent 0, broke 0, dropped 0; 4.95 ms a tick
+  sporer                   plague seed  5:         cap at  300 s, score +0.152; soldiers  8, mould   9567; round germ+delay+blast, casts [71, 0, 74], round kills 63 of 1180, spent 26460, broke 397, dropped 0; 13.72 ms a tick
+  sporer                     germ seed  5:         cap at  300 s, score +0.191; soldiers  8, mould   7089; round germ, casts [0, 0, 88], round kills 0 of 995, spent 26400, broke 429, dropped 0; 15.72 ms a tick
+  sporer                    blast seed  7:         cap at  300 s, score +0.175; soldiers  8, mould   7619; round blast, casts [366, 0, 0], round kills 1021 of 2557, spent 21960, broke 0, dropped 0; 5.07 ms a tick
+  sporer                     none seed  7:         cap at  300 s, score +0.148; soldiers  8, mould   8793; round none, casts [0, 0, 0], round kills 0 of 1938, spent 0, broke 0, dropped 0; 5.54 ms a tick
+  sporer                     germ seed  6:         cap at  300 s, score +0.189; soldiers  8, mould   7224; round germ, casts [0, 0, 93], round kills 0 of 1654, spent 27900, broke 771, dropped 0; 11.58 ms a tick
+  sporer                   plague seed  6:         cap at  300 s, score +0.269; soldiers  8, mould   3995; round germ+delay+blast, casts [76, 0, 79], round kills 49 of 1082, spent 28260, broke 443, dropped 0; 17.08 ms a tick
+  sporer                     none seed  8:         cap at  300 s, score +0.104; soldiers  8, mould  12372; round none, casts [0, 0, 0], round kills 0 of 3182, spent 0, broke 0, dropped 0; 6.33 ms a tick
+  sporer                    blast seed  8:         cap at  300 s, score +0.118; soldiers  8, mould  11399; round blast, casts [383, 0, 0], round kills 1955 of 4625, spent 22980, broke 56, dropped 0; 6.41 ms a tick
+  sporer                   plague seed  7:         cap at  300 s, score +0.173; soldiers  8, mould   7830; round germ+delay+blast, casts [75, 0, 79], round kills 182 of 2143, spent 28200, broke 567, dropped 0; 14.53 ms a tick
+  sporer                     germ seed  7:         cap at  300 s, score +0.183; soldiers  8, mould   7320; round germ, casts [0, 0, 94], round kills 0 of 1966, spent 28200, broke 713, dropped 0; 14.78 ms a tick
+  sporer                     germ seed  8:         cap at  300 s, score +0.136; soldiers  8, mould  10045; round germ, casts [0, 0, 77], round kills 0 of 2374, spent 23100, broke 798, dropped 0; 14.79 ms a tick
+  sporer                   plague seed  8:         cap at  300 s, score +0.119; soldiers  8, mould  11324; round germ+delay+blast, casts [64, 0, 64], round kills 336 of 3369, spent 23040, broke 788, dropped 0; 13.37 ms a tick
+
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                                      swarmer               sporer
+                    none  +0.223 ( 0/ 4/ 0)  +0.158 ( 0/ 4/ 0)
+                   blast  +0.229 ( 0/ 4/ 0)  +0.193 ( 0/ 4/ 0)
+                    germ  +0.222 ( 0/ 4/ 0)  +0.174 ( 0/ 4/ 0)
+                  plague  +0.233 ( 0/ 4/ 0)  +0.178 ( 0/ 4/ 0)
+
+readings 1-2, paired by seed (higher / lower; sign test, Holm over 6):
+                     swarmer blast vs none:  3 /  1, p 0.6250
+                      swarmer germ vs none:  1 /  3, p 0.6250
+                    swarmer plague vs none:  3 /  1, p 0.6250
+                      sporer blast vs none:  3 /  1, p 0.6250
+                       sporer germ vs none:  3 /  1, p 0.6250
+                     sporer plague vs none:  3 /  1, p 0.6250
+
+reading 3, per tier: the best loadout by mean, and each other against it (higher / lower, p):
+   swarmer: best plague (+0.233); none 1/3 p 0.625, blast 1/3 p 0.625, germ 2/2 p 1.000
+    sporer: best blast (+0.193); none 1/3 p 0.625, germ 3/1 p 0.625, plague 2/2 p 1.000
+
+rand's round by seed: ["quiet+wide", "scatter+blast+wide+delay", "wide+wide+quiet", "quiet+wide+blast"]

@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-12T17:34Z
+updated: 2026-11-12T21:46Z
 sources: [Reports/shot-damage-2026-11-12.md, CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Params::pieces]
 ---
