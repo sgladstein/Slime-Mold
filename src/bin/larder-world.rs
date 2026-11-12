@@ -2348,7 +2348,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, own: false }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -2379,7 +2379,7 @@ mod tests {
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None, own: false }, (640, 400), &device, &queue).unwrap();
         assert_eq!(app.name, "flats");
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();
@@ -2422,7 +2422,7 @@ mod tests {
     /// 256 x 160 dish, 1,250 walkers): 5-9 s a round on software Vulkan,
     /// against 20-24 s at scale 2 (2026-11-12).
     fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
-        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None };
+        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None, own: false };
         let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast, passes: 0, settle: false, squad1: false, spread: true };
         let t0 = Instant::now();
         let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
@@ -2469,13 +2469,30 @@ mod tests {
         assert!(!last.contains("buildings 0,"), "the pressed squad built: {last}");
     }
 
+    /// **The player's own mould in the window** (`own=1`, 2026-11-12):
+    /// every command on the card, Sow and Road with the rest, pressed every
+    /// game second for 60 game seconds, does not panic it, and the garden's
+    /// t line reports both moulds.
+    #[test]
+    fn the_window_plays_the_players_own_mould() {
+        let Some((device, queue)) = smoke_gpu() else { return };
+        let args = Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, own: true };
+        let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true };
+        let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("own=1: {e}"));
+        assert!(last.contains("t "), "{last}");
+        let app = offscreen(Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, own: true }, (320, 200), &device, &queue).unwrap();
+        let g = app.game.as_ref().unwrap();
+        assert_eq!(g.world.counts_by_side(), (625, 625));
+        assert_eq!(g.mould, 625, "the game's mould is the enemy's");
+    }
+
     /// A recruit's first shot in the same frame it joined (fast forward,
     /// or a slow frame holding several steps): its tracer and flash need a
     /// note, which `shot_marks` now makes itself.
     #[test]
     fn a_shot_from_a_soldier_with_no_note_yet_draws() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None }, (320, 200), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, own: false }, (320, 200), &device, &queue).unwrap();
         let g = app.game.as_mut().unwrap();
         let s = *g.soldiers.last().unwrap();
         g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0 }];
