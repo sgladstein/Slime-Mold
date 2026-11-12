@@ -504,14 +504,10 @@ impl World for Garden {
     }
 
     /// The enemy's births stop (its cap goes to 0); the player's mould
-    /// keeps growing. Gives back the cap it had.
-    fn stop_births(&mut self) -> f32 {
-        self.dish.p.species_cap.get_mut(0).map_or(0.0, |c| std::mem::replace(c, 0) as f32)
-    }
-
-    fn start_births(&mut self, was: f32) {
+    /// keeps growing.
+    fn stop_births(&mut self) {
         if let Some(c) = self.dish.p.species_cap.get_mut(0) {
-            *c = was as usize;
+            *c = 0;
         }
     }
 

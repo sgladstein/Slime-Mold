@@ -1,0 +1,61 @@
+mission 2x-counter (First contact): "Take back a crystal the mould has reached and hold it for 60 s", map fork, tier drifter , seeds 1-4, scale 2, walkers 5000
+on the CPU
+  idle s3: Cap 900s 0*
+  idle s2: Cap 900s 0*
+  idle s4: Cap 900s 0*
+  idle s1: Cap 900s 0*
+  random s1: Goal 602s 2*
+  random s2: Goal 600s 3*
+  random s3: Cap 900s 0*
+  random s4: Cap 900s 1*
+  claim s1: Cap 900s 0*
+  claim s2: Cap 900s 0*
+  claim s3: Cap 900s 0*
+  claim s4: Cap 900s 0*
+  strike s2: Goal 437s 2*
+  strike s1: Goal 446s 2*
+  strike s3: Goal 481s 2*
+  strike s4: Goal 439s 2*
+  hold+claim s2: Cap 900s 0*
+  hold+claim s1: Cap 900s 0*
+  hold+claim s3: Cap 900s 0*
+  hold+claim s4: Cap 900s 0*
+  hold+boom s2: Cap 900s 0*
+  hold+boom s1: Cap 900s 0*
+  hold+boom s3: Cap 900s 0*
+  hold+boom s4: Cap 900s 0*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+claim        1  Cap          900      0 0.00    17%     0%   18%   15%   27%                            14    0   24        0     28     22874  12896  0.000/0.000  0/0/0 0  [0]
+claim        2  Cap          900      0 0.00    12%     0%   15%   15%   10%                             8    0   24        0     28     23474  16931  0.000/0.000  0/0/0 0  [0]
+claim        3  Cap          900      0 0.00    20%     0%   23%   20%   27%                            15    0   24        0     28     22874  14566  0.000/0.000  0/0/0 0  [0]
+claim        4  Cap          900      0 0.00    17%     0%   22%   18%   19%                            13    0   25        0     28     23174  15407  0.000/0.000  0/0/0 0  [0]
+hold+boom    1  Cap          900      0 0.00    36%     0%   18%   21%   92%                           146    0   26        0     20     22874      0  0.000/0.000  0/0/0 0  [0]
+hold+boom    2  Cap          900      0 0.00    35%     0%   15%   20%   90%                           144    0   24        0     20     23474      0  0.000/0.000  0/0/0 0  [0]
+hold+boom    3  Cap          900      0 0.00    39%     0%   23%   26%   92%                           146    0   36        0     20     22874      0  0.000/0.000  0/0/0 0  [0]
+hold+boom    4  Cap          900      0 0.00    37%     0%   22%   22%   90%                           144    0   25        0     20     23174      0  0.000/0.000  0/0/0 0  [0]
+hold+claim    1  Cap          900      0 0.00    17%     0%   18%   15%   27%                            14    0   24        0     28     22874  12896  0.000/0.000  0/0/0 0  [0]
+hold+claim    2  Cap          900      0 0.00    12%     0%   15%   15%   10%                             8    0   24        0     28     23474  16931  0.000/0.000  0/0/0 0  [0]
+hold+claim    3  Cap          900      0 0.00    20%     0%   23%   20%   27%                            15    0   24        0     28     22874  14566  0.000/0.000  0/0/0 0  [0]
+hold+claim    4  Cap          900      0 0.00    17%     0%   22%   18%   19%                            13    0   25        0     28     23174  15407  0.000/0.000  0/0/0 0  [0]
+idle         1  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0   39        0      4         0      0  0.000/0.000  0/0/0 0  [0]
+idle         2  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0   67        0      4         0      0  0.000/0.000  0/0/0 0  [0]
+idle         3  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0   36        0      4         0      0  0.000/0.000  0/0/0 0  [0]
+idle         4  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0   47        0      4         0      0  0.000/0.000  0/0/0 0  [0]
+random       1  Goal         602      2 1.00     0%     0%    0%    0%    0%                             0    0   16      601     24     16388  41729  0.000/1.000  0/0/0 0  [0, 7]
+random       2  Goal         600      3 0.30     0%     0%    0%    0%    0%                             0    0   25      600     27     13950  43268  0.000/2.000  0/0/0 0  [0, 3, 8]
+random       3  Cap          900      0 0.00     0%     2%    0%    0%    0%                             1    0   16        0     35     25885  51163  0.000/0.000  0/0/0 0  [0]
+random       4  Cap          900      1 0.98     0%     3%    0%    0%    0%                             4   14   17      900     27     24569  51195  0.000/1.000  0/0/0 0  [0, 7]
+strike       1  Goal         446      2 0.00    10%     0%   18%    0%    0%                             8    0   24      446     30     18374  15582  0.000/0.000  0/0/0 0  [0]
+strike       2  Goal         437      2 0.07     8%     0%   15%    0%    0%                             8    0   24      437     30     18374  15258  0.000/1.000  0/0/0 0  [0, 7]
+strike       3  Goal         481      2 0.00    11%     0%   23%    0%    0%                             9    0   24      481     30     18974  20211  0.000/0.000  0/0/0 0  [0]
+strike       4  Goal         439      2 0.00    12%     0%   22%    0%    0%                             9    0   25      439     30     18374  15077  0.000/0.000  0/0/0 0  [0]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  claim     0/4  stars 0  best 0.00  dead 16%  stuck 0 s  stall 25 s
+  hold+boom 0/4  stars 0  best 0.00  dead 37%  stuck 0 s  stall 36 s
+  hold+claim 0/4  stars 0  best 0.00  dead 16%  stuck 0 s  stall 25 s
+  idle      0/4  stars 0  best 0.00  dead 100%  stuck 0 s  stall 67 s
+  random    2/4  stars 2  best 0.57  dead 0%  stuck 14 s  stall 25 s
+  strike    4/4  stars 2  best 0.02  dead 10%  stuck 0 s  stall 25 s
+1545 s

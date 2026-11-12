@@ -3,8 +3,17 @@ title: The simulation look (how the dish is drawn)
 kind: look
 status: current
 updated: 2026-11-10
-sources: [Reports/mould-probe-2026-11-07.md, Reports/mould-looks-2026-11-10.md, Reports/mould-review-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md]
-code: [field_mould, FIELD, Dish::looks_fed, Dish::wet, Walker::asleep]
+sources:
+  - Reports/mould-looks-2026-11-10.md
+  - Reports/mould-probe-2026-11-07.md
+  - Reports/mould-review-2026-11-10.md
+  - Reports/mould-review-thread-handoff-2026-11-10.md
+code:
+  - Dish::looks_fed
+  - Dish::wet
+  - FIELD
+  - Walker::asleep
+  - field_mould
 ---
 
 # The simulation look (how the dish is drawn)

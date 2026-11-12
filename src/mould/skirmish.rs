@@ -1480,8 +1480,20 @@ mod tests {
         s.sides[0].bank = SPORE_COST + BEACON_COST + HABIT_COST;
         s.sides[1].bank = SPORE_COST;
         let (mine, theirs) = (s.walkers(0), s.walkers(1));
-        assert!(s.act(0, Verb::Spore(20)));
-        assert!(s.act(1, Verb::Spore(20)));
+        // Pile 20 first, then any other pile: f32 sin, cos and exp come from
+        // the platform maths library (MSVC on Windows, glibc on Linux), so 40 s
+        // of dish drifts apart. On the GTX 1070 PC (main a94ac3f) the rival's
+        // spore found no free cell on pile 20 and `act` returned false. A
+        // failed spore places nothing and charges nothing, so trying the next
+        // pile is safe. Checking `can` first was not enough: every pile
+        // passes it here; the miss is in placing. The `libm` crate would make
+        // the CPU sim reproduce across machines if replays ever need it.
+        let order: Vec<usize> = std::iter::once(20).chain((0..s.dish.piles.len()).filter(|&i| i != 20)).collect();
+        let mine_at = order.iter().copied().find(|&i| s.act(0, Verb::Spore(i))).expect("no pile took my spore");
+        std::iter::once(mine_at)
+            .chain(order.iter().copied().filter(|&i| i != mine_at))
+            .find(|&i| s.act(1, Verb::Spore(i)))
+            .expect("no pile took the rival's spore");
         // A crowded pile takes fewer than the whole colony: the centre pile
         // at 0:40 on dish 2 took 60 of 150 once the moulds took turns.
         assert!(s.walkers(0) > mine + SPORE_WALKERS / 4 && s.walkers(0) <= mine + SPORE_WALKERS, "{} placed", s.walkers(0) - mine);
