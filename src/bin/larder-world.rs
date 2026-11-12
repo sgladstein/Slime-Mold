@@ -636,6 +636,11 @@ impl App {
             }
         }
         let t = g.time();
+        // A soldier the game made inside these steps (`Rules::reserve`'s
+        // free recruit) joins the notes too.
+        for s in &g.soldiers[self.looks.len()..] {
+            self.looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
+        }
         for (k, s) in g.soldiers.iter().enumerate() {
             let l = &mut self.looks[k];
             let (dx, dy) = (s.x - l.at.0, s.y - l.at.1);
@@ -1924,12 +1929,17 @@ mod tests {
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();
         assert!(app.model(None, None).objective.is_some_and(|o| o.starts_with("Grow your squad to")));
+        // An idle squad meets nothing by a 1:00 cap. (A rush on the core was
+        // lost by 2:00 until the mission's reserve recruit, Larder PR #106:
+        // its squad now keeps coming back, and an idle one fires on the
+        // mould that reaches it, so neither ends early.)
+        app.game.as_mut().unwrap().rules.cap = 60.0;
         let step = 1.0 / 15.0;
         while app.mission.as_ref().unwrap().verdict.is_none() && app.game.as_ref().unwrap().time() < 120.0 {
-            plan(app.game.as_mut().unwrap(), "rush");
             app.step(step);
         }
-        let v = app.mission.as_ref().unwrap().verdict.expect("the rush is lost by 2:00");
+        let v = app.mission.as_ref().unwrap().verdict.expect("lost at the 1:00 cap");
+        assert_eq!(v.cause, slime_mould::mould::campaign::Cause::Cap);
         assert_eq!(v.stars, 0);
         app.prepare();
         assert_eq!(app.model(None, None).end.map(|e| e.0).as_deref(), Some("Mission lost"));

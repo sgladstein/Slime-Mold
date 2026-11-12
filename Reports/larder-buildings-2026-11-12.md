@@ -167,3 +167,8 @@ on a seed: army 6, turtle 1, guard 1. Random does build: on seeds 5-7 it
 placed 4, 8 and 3 buildings and lost 0-3 of them (`random-builds-look.txt`),
 but it spends its food as it goes and its bank stays near 0, so it never
 holds the crystals.
+
+After main's #106 (free shots by default, soldier scent) the same gate
+plays to the digit as above (`census-gate-after-106.txt`). The Larder
+thread's #113 (shots dig craters, turret shots too, through the same
+frame) will move it; the payoff table is re-run after it lands.
