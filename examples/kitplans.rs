@@ -608,7 +608,10 @@ fn main() {
         println!("  {name:>28}: {w} / {l}, p {p:.4}{}", if holds[i] { ", holds" } else { "" });
     }
     // Gate 2: per tier, the best plan, and each other plan against it.
-    println!("\ngate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p):");
+    // The score jumps between bands (wipe, cap, squad lost), so a mean over
+    // a few seeds follows one or two band flips: each pair also carries the
+    // median paired difference (tech lead, 2026-11-12).
+    println!("\ngate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p, median paired difference):");
     for t in &tiers {
         let mean = |h: &str| seeds.iter().map(|&s| get(t, s, h).score).sum::<f32>() / seeds.len() as f32;
         let best = plans.iter().max_by(|a, b| mean(a).total_cmp(&mean(b))).unwrap();
@@ -617,6 +620,9 @@ fn main() {
             .filter(|h| h != &best)
             .map(|h| {
                 let (mut w, mut l) = (0, 0);
+                let mut d: Vec<f32> = seeds.iter().map(|&s| get(t, s, h).score - get(t, s, best).score).collect();
+                d.sort_by(f32::total_cmp);
+                let med = if d.len() % 2 == 1 { d[d.len() / 2] } else { (d[d.len() / 2 - 1] + d[d.len() / 2]) / 2.0 };
                 for &s in &seeds {
                     let (a, b) = (get(t, s, h).score, get(t, s, best).score);
                     if a > b {
@@ -625,7 +631,7 @@ fn main() {
                         l += 1;
                     }
                 }
-                format!("{h} {w}/{l} p {:.3}", sign_p(w, w + l))
+                format!("{h} {w}/{l} p {:.3} med {med:+.2}", sign_p(w, w + l))
             })
             .collect();
         println!("  {t:>8}: best {best} ({:+.3}); {}", mean(best), line.join(", "));
