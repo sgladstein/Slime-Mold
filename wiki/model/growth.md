@@ -2,9 +2,32 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-12T22:05Z
-sources: [Reports/one-body-2026-11-12.md, Reports/slime-enemy-review-2026-11-12.md, Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
-code: [BigParams::upkeep, BigParams::energy_flow, BigParams::hunger_scent, BigParams::lone_upkeep, BigParams::lone_step, BigParams::flow_loss, BigParams::tether, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
+updated: 2026-11-12
+sources:
+  - Reports/food-tubes-2026-11-11.md
+  - Reports/growth-2026-11-11.md
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/mould-shape-2026-11-11.md
+  - Reports/one-body-2026-11-12.md
+  - Reports/slime-enemy-review-2026-11-12.md
+code:
+  - BigDish::alive
+  - BigDish::energy
+  - BigParams::birth_cost
+  - BigParams::birth_energy
+  - BigParams::capacity
+  - BigParams::energy_flow
+  - BigParams::flow_loss
+  - BigParams::hunger_scent
+  - BigParams::lone_step
+  - BigParams::lone_upkeep
+  - BigParams::start_energy
+  - BigParams::starve
+  - BigParams::tether
+  - BigParams::upkeep
+  - CLAIM_BIRTH
+  - DRAW_BIRTH
+  - DRAW_STARVE
 ---
 
 # Growth and starving on the big dish

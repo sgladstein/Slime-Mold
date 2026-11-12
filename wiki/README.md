@@ -104,10 +104,15 @@ report only when the page does not answer.
 --base=origin/main` before pushing): with `--base` it fails a page whose
 source report the PR changed while the page did not change (ingest it, or
 bump `updated` once you have checked it is still true). It also fails on broken links, pages missing from the index,
-code symbols that no longer exist, required frontmatter missing, and an owner quote with no date. It warns when a
-page is older than one of its sources (by git date, or by UTC time when
-`updated` carries one, such as `2026-11-11T15:40Z`; use the time on a busy
-day, since a date misses a source changed later the same day), when a page
+code symbols that no longer exist, required frontmatter missing, and an owner quote with no date.
+
+**Frontmatter that merges** (2026-11-12, after green PRs waited a CI cycle
+each on frontmatter conflicts): `updated:` is a date, `YYYY-MM-DD`, never a
+time; `sources:` and `code:` are block lists, one `  - entry` a line,
+sorted, so two PRs adding entries land on different lines. Lint fails
+otherwise.
+ It warns when a
+page is older than one of its sources (by git date), when a page
 links a report its `sources:` do not list (so the age check cannot see it),
 and lists reports no page cites yet. Then read the warned pages for the part a script cannot do:
 a page whose Now a newer report overturned, or two pages that disagree.

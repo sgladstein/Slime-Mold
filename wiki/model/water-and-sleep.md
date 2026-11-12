@@ -3,8 +3,19 @@ title: Water and sleep
 kind: mechanism
 status: paused
 updated: 2026-11-10
-sources: [Reports/mould-keep-alive-2026-11-10.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-looks-2026-11-10.md]
-code: [Params::wet, Dish::wet, Params::crust_life, Params::water_r, Tool::Water, WATER_STOCK, WATER_REGROW_SECONDS]
+sources:
+  - Reports/mould-keep-alive-2026-11-10.md
+  - Reports/mould-looks-2026-11-10.md
+  - Reports/mould-review-2-2026-11-10.md
+  - Reports/mould-review-thread-handoff-2026-11-10.md
+code:
+  - Dish::wet
+  - Params::crust_life
+  - Params::water_r
+  - Params::wet
+  - Tool::Water
+  - WATER_REGROW_SECONDS
+  - WATER_STOCK
 ---
 
 # Water and sleep

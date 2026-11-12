@@ -3,8 +3,21 @@ title: Sound
 kind: look
 status: current
 updated: 2026-11-12
-sources: [Reports/mould-sound-2026-11-10.md, Reports/larder-sound-2026-11-12.md]
-code: [Listener::hear, VoiceBank, density, DEFAULT_MASTER, TEXTURE_RATE_CAP, LOUDNESS_LAW, WorldListener, kill_weight, full_kill, FULL_KILL, SHOTS_VOICED]
+sources:
+  - Reports/larder-sound-2026-11-12.md
+  - Reports/mould-sound-2026-11-10.md
+code:
+  - DEFAULT_MASTER
+  - FULL_KILL
+  - LOUDNESS_LAW
+  - Listener::hear
+  - SHOTS_VOICED
+  - TEXTURE_RATE_CAP
+  - VoiceBank
+  - WorldListener
+  - density
+  - full_kill
+  - kill_weight
 ---
 
 # Sound

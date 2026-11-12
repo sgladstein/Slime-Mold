@@ -3,8 +3,19 @@ title: The lamp
 kind: tool
 status: paused
 updated: 2026-11-10
-sources: [Reports/mould-probe-2026-11-07.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-looks-2026-11-10.md]
-code: [Params::push, Dish::push_light, Params::lamp_reach, LAMP_R, Params::light_weight, Params::light_fade]
+sources:
+  - Reports/mould-keep-alive-2026-11-10.md
+  - Reports/mould-looks-2026-11-10.md
+  - Reports/mould-probe-2026-11-07.md
+  - Reports/mould-review-2-2026-11-10.md
+  - Reports/mould-wild-one-2026-11-10.md
+code:
+  - Dish::push_light
+  - LAMP_R
+  - Params::lamp_reach
+  - Params::light_fade
+  - Params::light_weight
+  - Params::push
 ---
 
 # The lamp
