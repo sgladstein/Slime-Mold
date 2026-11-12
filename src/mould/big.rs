@@ -102,6 +102,7 @@ impl SpeciesSet {
     }
 }
 const DRAW_TERRAIN: u32 = 140;
+const DRAW_HOLD: u32 = 150;
 /// Soil kinds in `BigDish::soil` (`BigParams::sand_keep`).
 pub const SOIL_SAND: u8 = 1;
 pub const SOIL_CLAY: u8 = 2;
@@ -274,6 +275,14 @@ pub struct BigParams {
     /// across its whole width). Built from one summed-area table a species
     /// each step (f64, so the sums are exact enough at 1M walkers).
     pub species_convert_r: u32,
+    /// Conversion weighs each species' trail divided by that species'
+    /// deposit (its own `SpeciesSet::deposit`, else the global), so it
+    /// counts walkers' presence rather than how much each lays (added
+    /// 2026-11-12 for the player's own mould: with raw trail, a form that
+    /// lays three times the deposit converted the race network whole within
+    /// 60 s, so deposit was a stat that won every fight). Off by default; CPU
+    /// only, not yet on the GPU engine.
+    pub species_convert_per: bool,
     /// Species 0 lays this many times the deposit (1 is even; added
     /// 2026-11-11 to give one side an edge in a fight).
     pub species_boost: f32,
@@ -427,6 +436,59 @@ pub struct BigParams {
     /// the intake. 0.12 evens energy below `birth_energy` and fewer divide
     /// (20,782). Off by default: a cut tube's effect is untested.
     pub energy_flow: f32,
+    /// **Hunger** (2026-11-12, the one-body thread; 0 is off, needs growth).
+    /// A walker's scent reading is multiplied by 1 + `hunger_scent` x its
+    /// hunger, where hunger is 1 - energy / `hunger_at` (0 at or above
+    /// `hunger_at`): a hungry walker follows food harder than a fed one.
+    pub hunger_scent: f32,
+    pub hunger_at: f32,
+    /// A starving walker (hunger `hunt_at` or more) smells further: its
+    /// scent sensors reach `scent_offset` x (1 + `hunger_reach` x hunger)
+    /// (0 is off). So a cut-off hunk with no food in reach widens its
+    /// search as it starves. (Applied at any hunger, `hunger_reach` 3 broke
+    /// the fed mould: walkers smelled past their own crystal and the mould
+    /// fell to 0-1,900 walkers at 150 s against H's 6,600-11,900.)
+    pub hunger_reach: f32,
+    /// The hunger at which a walker hunts (`hunger_reach`, and `tether`
+    /// when this is over 0); 0: every walker, at any hunger.
+    pub hunt_at: f32,
+    /// **Body pull** (2026-11-12, the one-body thread; 0 is off). Owner,
+    /// 04:13-04:18Z: the mould "didn't feel like one cohesive organism"; a
+    /// cut-off part should "feel like a cut off hunk and not a bunch of
+    /// individuals". Each sensor also reads `body_pull` x the walkers in
+    /// the square of radius `body_r` fine cells round its point, counted as
+    /// the step began, scaled by the walker's own loneliness: 1 - n /
+    /// `body_lone`, with n the other walkers in the same square round its
+    /// own cell (1 when `body_lone` is 0). So a walker inside the mass
+    /// follows trail and scent as before, and a straggler is drawn back to
+    /// the crowd: streams of single walkers pull into a mass.
+    pub body_pull: f32,
+    pub body_r: u8,
+    pub body_lone: f32,
+    /// **Tether** (2026-11-12, the one-body thread; 0 is off). A walker may
+    /// step into another cell only if that cell has at least `tether`
+    /// other walkers among its eight neighbours (the mover not counted), or,
+    /// if it has fewer than `tether` others round its own cell, at least as
+    /// many as there: no walker steps away from the crowd it touches, so
+    /// the mould crawls as a connected mass and cannot thin into streams
+    /// of single walkers. A walker touching none moves freely and sticks to
+    /// the first walkers it meets. A walker that cannot step is blocked.
+    /// (A first try let any walker under `tether` move freely: the
+    /// stragglers kept the streams, and the crystals' lumps came apart.)
+    pub tether: u8,
+    /// With `tether`: the chance a walker holds still a step (a keyed draw),
+    /// and then movers count only the holders round a cell, so every
+    /// mover lands touching a walker that stays (0: everyone may move, and
+    /// counts everyone). Without it two touching walkers can step apart in
+    /// the same step, each counting the other where it stood.
+    pub tether_hold: f32,
+    /// Upkeep times this for a walker with no other walker on the eight
+    /// cells round it (1 is off; growth only): a walker cut off from the
+    /// body is not the organism, and it starves fast unless it eats.
+    pub lone_upkeep: f32,
+    /// The square's radius, fine cells, in which `lone_upkeep` looks for
+    /// another walker (1: the eight cells round it).
+    pub lone_r: u8,
     /// Life cycle (added 2026-11-11 for the Larder ladder's Sporer and
     /// Sleeper tiers, and for how a mould answers the player's attack,
     /// `BigDish::strike`). Each walker holds a life state and a timer
@@ -695,6 +757,7 @@ impl BigParams {
             species_avoid: 1.0,
             species_convert: 0.0,
             species_convert_r: 0,
+            species_convert_per: false,
             species_boost: 1.0,
             species_share: 0.0,
             graze_weight: 0.0,
@@ -727,6 +790,17 @@ impl BigParams {
             starve: 0.01,
             capacity: 0,
             energy_flow: 0.0,
+            hunger_scent: 0.0,
+            hunger_at: 1.0,
+            hunger_reach: 0.0,
+            hunt_at: 0.0,
+            body_pull: 0.0,
+            body_r: 2,
+            body_lone: 0.0,
+            tether: 0,
+            tether_hold: 0.0,
+            lone_upkeep: 1.0,
+            lone_r: 1,
             spore_rate: 0.0,
             spore_scent: 0.0,
             spore_alarm: 0.0,
@@ -902,6 +976,8 @@ pub struct BigDish {
     pub wall_hits: u64,
     /// Scent cells inside a wall (`wall_scent` > 0), else empty.
     pub scent_wall: Vec<bool>,
+    /// Holders a cell this step (`tether_hold`), else empty.
+    holds_n: Vec<u16>,
     /// Threads for the field passes. Each cell is computed from the last
     /// field alone, so the result does not depend on it.
     pub threads: usize,
@@ -958,28 +1034,39 @@ fn ellipse(w: usize, h: usize, margin: f32) -> Vec<bool> {
 
 /// The 3x3 mean over agar neighbours, times `keep`, for rows `y0..y1` of
 /// `to` (which holds just those rows). Today's `spread` without the lamp.
+///
+/// Branchless (2026-11-12, when the alarm became the plain mould's default
+/// and this ran on the whole race world every fine step): each neighbour
+/// adds its value times its agar mask (1 or 0) in the same order as the
+/// first version (`spread_rows_reference` in the tests), so the result is
+/// bit for bit the same: adding `0.0 * v` leaves a sum of fields that are
+/// never negative unchanged, and the GPU's diffuse (which sums in this
+/// order) stays an exact twin. Rows are sliced so the compiler can drop
+/// the bounds checks.
 fn spread_rows(agar: &[bool], from: &[f32], to: &mut [f32], w: usize, h: usize, keep: f32, y0: usize) {
     let rows = to.len() / w;
     for r in 0..rows {
         let y = y0 + r;
-        for x in 0..w {
-            let i = y * w + x;
-            let o = r * w + x;
-            if !agar[i] || x == 0 || y == 0 || x + 1 == w || y + 1 == h {
-                to[o] = 0.0;
-                continue;
-            }
-            let mut sum = 0.0;
-            let mut n = 0.0;
-            for row in [i - w, i, i + w] {
-                for j in [row - 1, row, row + 1] {
-                    if agar[j] {
-                        sum += from[j];
-                        n += 1.0;
-                    }
+        let out = &mut to[r * w..(r + 1) * w];
+        if y == 0 || y + 1 == h || w < 3 {
+            out.fill(0.0);
+            continue;
+        }
+        let (f0, a0) = (&from[(y - 1) * w..y * w], &agar[(y - 1) * w..y * w]);
+        let (f1, a1) = (&from[y * w..(y + 1) * w], &agar[y * w..(y + 1) * w]);
+        let (f2, a2) = (&from[(y + 1) * w..(y + 2) * w], &agar[(y + 1) * w..(y + 2) * w]);
+        out[0] = 0.0;
+        out[w - 1] = 0.0;
+        for x in 1..w - 1 {
+            let (mut sum, mut n) = (0.0f32, 0.0f32);
+            for (f, a) in [(f0, a0), (f1, a1), (f2, a2)] {
+                for k in [x - 1, x, x + 1] {
+                    let m = a[k] as u8 as f32;
+                    sum += f[k] * m;
+                    n += m;
                 }
             }
-            to[o] = sum / n * keep;
+            out[x] = if a1[x] { sum / n * keep } else { 0.0 };
         }
     }
 }
@@ -1082,6 +1169,7 @@ impl BigDish {
             broken: 0,
             wall_hits: 0,
             scent_wall: Vec::new(),
+            holds_n: Vec::new(),
             threads: 1,
             p,
         };
@@ -1702,13 +1790,21 @@ impl BigDish {
 
     /// Trail at `so` and scent at `sso` along heading `a`: off the agar
     /// (by the trail sensor) reads as a wall.
-    fn sense(&self, (x, y): (f32, f32), a: f32, so: f32, sso: f32, sp: usize, gw: f32) -> f32 {
+    /// `sw` weighs the scent (1, or more with `hunger_scent`); `body`, the
+    /// square sums of walkers as the step began (`body_pull`), with `bw`
+    /// their weight.
+    #[allow(clippy::too_many_arguments)]
+    fn sense(&self, (x, y): (f32, f32), a: f32, so: f32, sso: f32, sp: usize, gw: f32, sw: f32, body: &[u32], bw: f32) -> f32 {
         let (c, s) = (a.cos(), a.sin());
         match self.cell(x + c * so, y + s * so) {
             Some(i) if self.agar[i] => {
                 let g = if self.grass.is_empty() { 0.0 } else { gw * self.grass[i] };
                 let al = if self.alarm.is_empty() { 0.0 } else { self.p.alarm_weight * self.alarm[i] };
-                self.trail_seen(i, sp) + self.scent_at(x + c * sso, y + s * sso) + g + al
+                let b = if body.is_empty() { 0.0 } else { bw * body[i] as f32 };
+                let sc = self.scent_at(x + c * sso, y + s * sso);
+                // sw 1 keeps the sum's order, so older runs keep their hashes.
+                let sc = if sw == 1.0 { sc } else { sw * sc };
+                self.trail_seen(i, sp) + sc + g + al + b
             }
             _ => -1.0e6,
         }
@@ -1803,6 +1899,22 @@ impl BigDish {
         // cells as the pass began).
         let life_on = !self.life.is_empty();
         let (mut flying, mut sleeping, mut fruit, mut doze) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        // Body pull: walkers in each cell's square, as the step began.
+        let body = if p.body_pull > 0.0 && look { self.body_counts(p.body_r as usize) } else { Vec::new() };
+        // Tether's holders (`tether_hold`): who stays this step, and how
+        // many stay on each cell.
+        self.holds_n.clear();
+        let hold_on = p.tether > 0 && p.tether_hold > 0.0;
+        if hold_on {
+            self.holds_n.resize(self.w * self.h, 0);
+            for k in 0..self.walkers.len() {
+                if self.active(k) && unit(keyed(seed, t, DRAW_HOLD, k as u32)) < p.tether_hold {
+                    let (x, y, _) = self.walkers[k];
+                    let i = self.cell(x, y).expect("walker inside the dish");
+                    self.holds_n[i] += 1;
+                }
+            }
+        }
         for k in 0..self.walkers.len() {
             if !self.lives(k) {
                 continue;
@@ -1841,9 +1953,18 @@ impl BigDish {
                     }
                 }
             }
+            if hold_on && unit(keyed(seed, t, DRAW_HOLD, k as u32)) < p.tether_hold {
+                continue;
+            }
             // Trail-dependent settings (`sense_scale`), read where it stands.
             let (mut so, mut sa, mut ra, mut st) = (set.sensor_offset, set.sensor_angle, set.rotate_angle, set.step);
-            let sso = if p.scent_offset > 0.0 { p.scent_offset } else { set.sensor_offset };
+            let mut sso = if p.scent_offset > 0.0 { p.scent_offset } else { set.sensor_offset };
+            if p.hunger_reach > 0.0 {
+                let g = self.hunger(k);
+                if g >= p.hunt_at {
+                    sso *= 1.0 + p.hunger_reach * g;
+                }
+            }
             if !self.kind.is_empty() && self.kind[k] == 1 {
                 so *= p.mix_reach;
                 sa *= p.mix_angle;
@@ -1879,10 +2000,23 @@ impl BigDish {
                 }
             }
             if look {
+                let sw = if p.hunger_scent > 0.0 && !self.energy.is_empty() {
+                    1.0 + p.hunger_scent * self.hunger(k)
+                } else {
+                    1.0
+                };
+                let bw = if body.is_empty() {
+                    0.0
+                } else if p.body_lone > 0.0 {
+                    let near = body[here].saturating_sub(1) as f32;
+                    p.body_pull * (1.0 - near / p.body_lone).max(0.0)
+                } else {
+                    p.body_pull
+                };
                 let (mut f, mut fl, mut fr) = (
-                    self.sense((x, y), h, so, sso, sp, set.graze_weight),
-                    self.sense((x, y), h - sa, so, sso, sp, set.graze_weight),
-                    self.sense((x, y), h + sa, so, sso, sp, set.graze_weight),
+                    self.sense((x, y), h, so, sso, sp, set.graze_weight, sw, &body, bw),
+                    self.sense((x, y), h - sa, so, sso, sp, set.graze_weight, sw, &body, bw),
+                    self.sense((x, y), h + sa, so, sso, sp, set.graze_weight, sw, &body, bw),
                 );
                 if explorer {
                     // Toward the lowest reading; a wall stays a wall.
@@ -1914,7 +2048,7 @@ impl BigDish {
             }
             let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
             match self.cell(nx, ny) {
-                Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16)) => {
+                Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16) && self.tethered(k, here, there)) => {
                     if there != here && crowd > 0 {
                         let key = keyed(seed, t, CLAIM_MOVE, k as u32);
                         self.claim[there] = self.claim[there].min(key);
@@ -1960,7 +2094,7 @@ impl BigDish {
                 let here = self.cell(x, y).expect("walker inside the dish");
                 let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
                 match self.cell(nx, ny) {
-                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 => {
+                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 && self.tethered(k as usize, here, there) => {
                         let key = keyed(seed, t, CLAIM_RETRY + r as u32, k);
                         self.claim[there] = self.claim[there].min(key);
                         tries.push((k, here as u32, there as u32, nx, ny, h, st));
@@ -2117,14 +2251,16 @@ impl BigDish {
             } else {
                 Vec::new()
             };
+            // Each species' weight a unit of trail (`species_convert_per`).
+            let per: Vec<f64> = (0..n).map(|s| if p.species_convert_per { 1.0 / (self.set_of(s).deposit as f64).max(1e-9) } else { 1.0 }).collect();
             let weigh = |s: usize, cx: usize, cy: usize, i: usize| -> f64 {
                 if r == 0 {
-                    return self.species_trail[s][i] as f64;
+                    return self.species_trail[s][i] as f64 * per[s];
                 }
                 let (x0, y0) = (cx.saturating_sub(r), cy.saturating_sub(r));
                 let (x1, y1) = ((cx + r + 1).min(w), (cy + r + 1).min(h));
                 let t = &sat[s];
-                t[y1 * (w + 1) + x1] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0] + t[y0 * (w + 1) + x0]
+                (t[y1 * (w + 1) + x1] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0] + t[y0 * (w + 1) + x0]) * per[s]
             };
             let mut next = self.spec.clone();
             for (k, slot) in next.iter_mut().enumerate() {
@@ -2147,7 +2283,7 @@ impl BigDish {
                     }
                 }
                 // r 0 keeps the f32 product, so older runs keep their hashes.
-                let wins = if r == 0 {
+                let wins = if r == 0 && !p.species_convert_per {
                     self.species_trail[best][i] > p.species_convert * self.species_trail[own][i]
                 } else {
                     weigh(best, cx, cy, i) > p.species_convert as f64 * weigh(own, cx, cy, i)
@@ -2163,6 +2299,84 @@ impl BigDish {
         if respawn > 0.0 {
             self.respawn_walkers(respawn, &sets);
         }
+    }
+
+    /// Others (`occ`, less the mover on `here`) on the eight cells round
+    /// fine cell `i`, and whether `tether` lets a walker on `here` step to
+    /// `there`: always with `tether` 0, or when it is a straggler (under
+    /// `tether` others round `here`), else when `there` has `tether` or more
+    /// others round it.
+    fn others_round(&self, i: usize, here: usize) -> u32 {
+        let (w, h) = (self.w as i64, self.h as i64);
+        let (x, y) = ((i % self.w) as i64, (i / self.w) as i64);
+        let mut n = 0u32;
+        for dy in -1..=1 {
+            for dx in -1..=1 {
+                let (nx, ny) = (x + dx, y + dy);
+                if (dx, dy) == (0, 0) || nx < 0 || ny < 0 || nx >= w || ny >= h {
+                    continue;
+                }
+                let j = (ny * w + nx) as usize;
+                n += if self.holds_n.is_empty() { self.occ[j] as u32 - (j == here) as u32 } else { self.holds_n[j] as u32 };
+            }
+        }
+        n
+    }
+
+    /// Walkers in the square of radius `r` round fine cell `i`, less the
+    /// cell itself (`occ`).
+    fn occ_round(&self, i: usize, r: i64) -> u32 {
+        let (w, h) = (self.w as i64, self.h as i64);
+        let (x, y) = ((i % self.w) as i64, (i / self.w) as i64);
+        let mut n = 0u32;
+        for dy in -r..=r {
+            for dx in -r..=r {
+                let (nx, ny) = (x + dx, y + dy);
+                if (dx, dy) != (0, 0) && nx >= 0 && ny >= 0 && nx < w && ny < h {
+                    n += self.occ[(ny * w + nx) as usize] as u32;
+                }
+            }
+        }
+        n
+    }
+
+    /// Walker `k`'s hunger, 0 (fed at `hunger_at` or more) to 1 (empty); 0
+    /// with growth off.
+    fn hunger(&self, k: usize) -> f32 {
+        if self.energy.is_empty() || self.p.hunger_at <= 0.0 {
+            return 0.0;
+        }
+        (1.0 - self.energy[k] / self.p.hunger_at).max(0.0)
+    }
+
+    fn tethered(&self, k: usize, here: usize, there: usize) -> bool {
+        // With `hunt_at` over 0 only hunting walkers are tethered: a fed
+        // body spreads as today, a starving hunk keeps together.
+        let t = if self.p.hunt_at > 0.0 && self.hunger(k) < self.p.hunt_at { 0 } else { self.p.tether as u32 };
+        t == 0 || self.others_round(there, here) >= t.min(self.others_round(here, here))
+    }
+
+    /// Walkers (`occ`) in the square of radius `r` round each fine cell, by
+    /// a summed-area table: the body pull's reading (`body_pull`).
+    fn body_counts(&self, r: usize) -> Vec<u32> {
+        let (w, h) = (self.w, self.h);
+        let mut t = vec![0u32; (w + 1) * (h + 1)];
+        for y in 0..h {
+            let mut row = 0u32;
+            for x in 0..w {
+                row += self.occ[y * w + x] as u32;
+                t[(y + 1) * (w + 1) + x + 1] = t[y * (w + 1) + x + 1] + row;
+            }
+        }
+        let mut out = vec![0u32; w * h];
+        for y in 0..h {
+            let (y0, y1) = (y.saturating_sub(r), (y + r + 1).min(h));
+            for x in 0..w {
+                let (x0, x1) = (x.saturating_sub(r), (x + r + 1).min(w));
+                out[y * w + x] = t[y1 * (w + 1) + x1] + t[y0 * (w + 1) + x0] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0];
+            }
+        }
+        out
     }
 
     /// `energy_flow`: walkers' mean energy evens out between neighbouring
@@ -2246,13 +2460,20 @@ impl BigDish {
             // Its crystal take this step (`took`, Larder World) counts as
             // food like its grass share.
             let took = if self.took.is_empty() { 0.0 } else { self.took[k] };
-            let up = if self.soil.is_empty() {
+            let mut up = if self.soil.is_empty() {
                 p.upkeep
             } else {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 if self.soil[i] == SOIL_BARREN { p.upkeep * p.barren_upkeep } else { p.upkeep }
             };
+            if p.lone_upkeep != 1.0 {
+                let (x, y, _) = self.walkers[k];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                if self.occ_round(i, p.lone_r.max(1) as i64) == 0 {
+                    up *= p.lone_upkeep;
+                }
+            }
             let up = if !self.sick.is_empty() && self.sick[k] > p.immune_steps { up * p.sick_upkeep } else { up };
             let e = self.energy[k] + took - up;
             if e > 0.0 {
@@ -3059,6 +3280,70 @@ impl BigDish {
 mod tests {
     use super::*;
 
+    /// The first `spread_rows` (branches on each neighbour's agar), kept as
+    /// the reference the branchless one must match bit for bit.
+    fn spread_rows_reference(agar: &[bool], from: &[f32], to: &mut [f32], w: usize, h: usize, keep: f32, y0: usize) {
+        let rows = to.len() / w;
+        for r in 0..rows {
+            let y = y0 + r;
+            for x in 0..w {
+                let i = y * w + x;
+                let o = r * w + x;
+                if !agar[i] || x == 0 || y == 0 || x + 1 == w || y + 1 == h {
+                    to[o] = 0.0;
+                    continue;
+                }
+                let mut sum = 0.0;
+                let mut n = 0.0;
+                for row in [i - w, i, i + w] {
+                    for j in [row - 1, row, row + 1] {
+                        if agar[j] {
+                            sum += from[j];
+                            n += 1.0;
+                        }
+                    }
+                }
+                to[o] = sum / n * keep;
+            }
+        }
+    }
+
+    #[test]
+    fn the_branchless_spread_matches_the_first_one_bit_for_bit() {
+        // Random agar with holes (rock, walls), values on non-agar cells
+        // too (a wall built over alarm keeps its value for a step), zeros,
+        // tiny and large values, several bands.
+        let mut z = 0x9E37_79B9_7F4A_7C15u64;
+        let mut next = || {
+            z ^= z << 13;
+            z ^= z >> 7;
+            z ^= z << 17;
+            z
+        };
+        for &(w, h) in &[(3, 3), (5, 4), (37, 23), (128, 80)] {
+            let agar: Vec<bool> = (0..w * h).map(|_| next() % 5 != 0).collect();
+            let from: Vec<f32> = (0..w * h)
+                .map(|_| match next() % 4 {
+                    0 => 0.0,
+                    1 => (next() % 1000) as f32 * 1e-7,
+                    _ => (next() % 100_000) as f32 / 37.0,
+                })
+                .collect();
+            for &keep in &[0.98f32, 0.95, 1.0] {
+                let mut a = vec![1.0; w * h];
+                let mut b = vec![2.0; w * h];
+                spread_rows_reference(&agar, &from, &mut a, w, h, keep, 0);
+                spread_rows(&agar, &from, &mut b, w, h, keep, 0);
+                assert!(a.iter().zip(&b).all(|(x, y)| x.to_bits() == y.to_bits()), "{w}x{h} keep {keep}");
+                for threads in [2, 3, 7] {
+                    let mut c = vec![3.0; w * h];
+                    spread(&agar, &from, &mut c, w, h, keep, threads);
+                    assert!(a.iter().zip(&c).all(|(x, y)| x.to_bits() == y.to_bits()), "{w}x{h} keep {keep}, {threads} threads");
+                }
+            }
+        }
+    }
+
     #[test]
     fn respawn_keeps_walkers_and_the_crowd_rule() {
         let mut d = BigDish::new(BigParams { respawn: 0.2, blob: false, ..small(1, 1) });
@@ -3300,6 +3585,34 @@ mod tests {
         assert!((s1 / before - 0.5).abs() < 0.01, "{}", s1 / before);
     }
 
+    /// `species_convert_per` weighs trail over each species' deposit: a
+    /// species laying three times as much no longer converts the other by
+    /// that alone (raw trail converts nearly every walker of the other).
+    #[test]
+    fn conversion_per_deposit_counts_presence() {
+        let ones = |per: bool| {
+            let base = BigParams { species: 2, species_convert: 1.2, species_convert_r: 2, species_avoid: 0.0, ..small(2, 1) };
+            let heavy = SpeciesSet { deposit: 3.0 * base.deposit, ..SpeciesSet::from_params(&base) };
+            let p = BigParams { species_sets: vec![heavy, SpeciesSet::from_params(&base)], species_convert_per: per, ..base };
+            let mut d = BigDish::new(p);
+            for i in 0..d.w * d.h {
+                if d.agar[i] {
+                    d.species_trail[0][i] = 3.0;
+                    d.species_trail[1][i] = 1.0;
+                    d.trail[i] = 4.0;
+                }
+            }
+            let n1 = |d: &BigDish| d.spec.iter().filter(|&&s| s == 1).count();
+            let before = n1(&d);
+            d.tick();
+            (before, n1(&d))
+        };
+        let (b, raw) = ones(false);
+        let (_, per) = ones(true);
+        assert!(raw * 10 < b, "raw trail: {raw} of {b} species-1 walkers left");
+        assert!(per * 10 > 9 * b, "per deposit: {per} of {b} left");
+    }
+
     /// The outside rules (2026-11-11) are keyed draws too: threads change
     /// nothing, and the species fields add up to the shared trail.
     #[test]
@@ -3437,6 +3750,73 @@ mod tests {
         assert!(var1 < 0.9 * var0, "energy evens out: {var0} -> {var1}");
         let after: Vec<f32> = (0..d.walkers.len()).filter(|&k| !d.lives(k)).map(|k| d.energy[k]).collect();
         assert_eq!(empty, after, "empty slots untouched");
+    }
+
+    /// The one-body rules (hunger, body pull, tether, lone upkeep): threads
+    /// change nothing, the crowd limit holds, and each one changes the dish
+    /// (so it is wired in), while left at its default it changes nothing.
+    #[test]
+    fn one_body_rules_ignore_threads_and_act() {
+        let grow = BigParams { upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, ..small(2, 1) };
+        let base_hash = {
+            let mut d = BigDish::new(grow.clone());
+            for _ in 0..40 {
+                d.tick();
+            }
+            d.hash()
+        };
+        for p in [
+            BigParams { hunger_scent: 6.0, hunger_at: 1.0, energy_flow: 0.05, ..grow.clone() },
+            BigParams { body_pull: 3.0, body_r: 2, body_lone: 6.0, ..grow.clone() },
+            BigParams { tether: 2, ..grow.clone() },
+            BigParams { tether: 1, tether_hold: 0.3, ..grow.clone() },
+            BigParams { lone_upkeep: 5.0, lone_r: 2, ..grow.clone() },
+            BigParams { hunger_reach: 3.0, hunt_at: 0.3, tether: 1, ..grow.clone() },
+        ] {
+            let mut a = BigDish::new(p);
+            let mut b = a.clone();
+            b.threads = 3;
+            for _ in 0..40 {
+                a.tick();
+                b.tick();
+            }
+            assert_eq!(a.hash(), b.hash());
+            assert_ne!(a.hash(), base_hash, "the rule changes the dish: {:?}", (a.p.hunger_scent, a.p.body_pull, a.p.tether, a.p.lone_upkeep));
+            for (i, &n) in a.occupancy().iter().enumerate() {
+                assert!(n <= 1, "cell {i} holds {n}");
+            }
+        }
+    }
+
+    /// Tether with holders: a mover always lands touching a walker that
+    /// stays, so far fewer walkers lose touch with the crowd in a step than
+    /// without it (a holder can still be left alone when all round it move).
+    #[test]
+    fn tether_keeps_contact() {
+        let lost = |tether: u8| {
+            let mut d = BigDish::new(BigParams { tether, tether_hold: 0.5, walkers: 600, ..small(2, 1) });
+            for _ in 0..20 {
+                d.tick();
+            }
+            let mut lost = 0;
+            for _ in 0..20 {
+                let touch = |d: &BigDish| -> Vec<bool> {
+                    (0..d.walkers.len())
+                        .map(|k| {
+                            let (x, y, _) = d.walkers[k];
+                            d.occ_round(y as usize * d.w + x as usize, 1) > 0
+                        })
+                        .collect()
+                };
+                let before = touch(&d);
+                d.tick();
+                let after = touch(&d);
+                lost += before.iter().zip(&after).filter(|(b, a)| **b && !**a).count();
+            }
+            lost
+        };
+        let (on, off) = (lost(1), lost(0));
+        assert!(on * 2 < off, "lost touch: {on} tethered against {off} free");
     }
 
     /// With growth off nothing is kept for it: every slot lives.

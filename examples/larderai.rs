@@ -82,7 +82,7 @@ fn trace(g: &Game) {
         match s.order {
             Order::Clear(..) => clear += 1,
             Order::Burn(..) => burn += 1,
-            Order::Move(..) => walk += 1,
+            Order::Move(..) | Order::Fight(..) => walk += 1,
             Order::Attack => attack += 1,
             Order::Hold => hold += 1,
         }

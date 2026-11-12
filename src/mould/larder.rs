@@ -206,6 +206,10 @@ pub enum Order {
     Burn((f32, f32), (f32, f32)),
     /// Walk on the mould's core, firing freely.
     Attack,
+    /// Attack-move: walk to this point, stopping to fire freely at any
+    /// mould in sight on the way (the world game, `larder_world`; M3 plays
+    /// it as a move).
+    Fight(f32, f32),
 }
 
 /// **A player's command**, as the window gives it. Every command goes
@@ -231,6 +235,7 @@ impl Cmd {
                 Order::Clear(x, y) => format!("order {k} clear {x} {y}"),
                 Order::Burn(a, b) => format!("order {k} burn {} {} {} {}", a.0, a.1, b.0, b.1),
                 Order::Attack => format!("order {k} attack"),
+                Order::Fight(x, y) => format!("order {k} fight {x} {y}"),
             },
             Cmd::Stance(k, st) => format!(
                 "stance {k} {}",
@@ -261,6 +266,7 @@ impl Cmd {
                     "clear" => Order::Clear(f(3)?, f(4)?),
                     "burn" => Order::Burn((f(3)?, f(4)?), (f(5)?, f(6)?)),
                     "attack" => Order::Attack,
+                    "fight" => Order::Fight(f(3)?, f(4)?),
                     _ => return None,
                 },
             ),
@@ -306,6 +312,10 @@ pub enum End {
     MouldWiped(f32),
     /// The cap, with the squad's share of the held piles.
     Cap(f32),
+    /// The mould held the larder with the bank empty for
+    /// `larder_world::Rules::overrun` seconds, at game second `t` (Larder
+    /// World only, a campaign mission's switch; 2026-11-12).
+    Overrun(f32),
 }
 
 impl End {
@@ -317,7 +327,7 @@ impl End {
         match self {
             End::MouldWiped(t) => 1.0 + left as f32 / 40.0 + (cap - t) / cap,
             End::Cap(share) => share - 0.5,
-            End::SquadWiped(t) => -(1.0 + (cap - t) / cap),
+            End::SquadWiped(t) | End::Overrun(t) => -(1.0 + (cap - t) / cap),
         }
     }
 
@@ -326,6 +336,7 @@ impl End {
             End::MouldWiped(_) => "mould wiped",
             End::Cap(_) => "cap",
             End::SquadWiped(_) => "squad wiped",
+            End::Overrun(_) => "larder overrun",
         }
     }
 }
@@ -973,7 +984,7 @@ impl Game {
         }
         match s.order {
             Order::Hold => self.defend(k, here),
-            Order::Move(x, y) => {
+            Order::Move(x, y) | Order::Fight(x, y) => {
                 let o = slot(k);
                 self.walk(k, (x + o.0, y + o.1), 0.5);
                 self.defend(k, here);

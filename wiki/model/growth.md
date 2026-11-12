@@ -2,9 +2,9 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-12T03:46Z
-sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
-code: [BigParams::upkeep, BigParams::energy_flow, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
+updated: 2026-11-12T07:05Z
+sources: [Reports/one-body-2026-11-12.md, Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
+code: [BigParams::upkeep, BigParams::energy_flow, BigParams::hunger_scent, BigParams::lone_upkeep, BigParams::tether, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
 
 # Growth and starving on the big dish
@@ -54,8 +54,13 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
 - Run-dry crystals: `crystal_flow` makes the whole disc reachable (one
   seed); for a mould left alone to keep growing, a crystal's yield has to
   rise with its charge (the Larder thread's rule).
-- `BigParams::energy_flow` (off, CPU only): keep it for the cut-a-tube
-  lever? A cut has not been tested.
+- `BigParams::energy_flow` (off; on the GPU too since 11-12, `esum` and
+  `egain`, twin-tested): with `BigParams::hunger_scent`
+  8 it makes the race-world mould one body on more seeds (largest part
+  higher 8/8) and 2.5x its size; a cut gap refills in 1-2 s, so a cut-off
+  piece only starves while the gap is held
+  ([one body](../../Reports/one-body-2026-11-12.md)). On by default awaits
+  the owner's look.
 - Growth's numbers are per fine step, so the race start holds at the
   game's scale 2 but not on the 2048 x 1280 GPU world (scale 8): there it
   stays a knot at home, and with trail sensors 36 fine cells out it touches

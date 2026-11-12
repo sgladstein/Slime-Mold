@@ -1,0 +1,19 @@
+worldbuild: lure smell 8 (x a soldier's), radius 3 dish cells
+worldbuild: lure 0.35 of the way from the core to the larder, walkers within 8 dish cells, scale 2, walkers 5000, 60 s
+  seed 1 lure on : near the lure every 10 s [0, 2, 1, 2, 2, 5]; burnt 120 food; mould 1776
+  seed 1 lure off: near the lure every 10 s [1, 0, 0, 2, 1, 1]; burnt 0 food; mould 1803
+  seed 2 lure on : near the lure every 10 s [8, 7, 9, 19, 10, 6]; burnt 120 food; mould 2977
+  seed 2 lure off: near the lure every 10 s [2, 13, 7, 14, 14, 22]; burnt 0 food; mould 3537
+  seed 3 lure on : near the lure every 10 s [9, 23, 33, 68, 109, 168]; burnt 120 food; mould 2759
+  seed 3 lure off: near the lure every 10 s [7, 7, 11, 5, 10, 2]; burnt 0 food; mould 2369
+  seed 4 lure on : near the lure every 10 s [10, 21, 24, 36, 52, 28]; burnt 120 food; mould 1422
+  seed 4 lure off: near the lure every 10 s [9, 29, 18, 20, 35, 52]; burnt 0 food; mould 1551
+  seed 5 lure on : near the lure every 10 s [26, 54, 38, 55, 51, 54]; burnt 54 food; mould 2917
+  seed 5 lure off: near the lure every 10 s [29, 34, 35, 44, 49, 46]; burnt 0 food; mould 2991
+  seed 6 lure on : near the lure every 10 s [14, 43, 47, 50, 37, 40]; burnt 120 food; mould 2110
+  seed 6 lure off: near the lure every 10 s [4, 11, 12, 14, 4, 6]; burnt 0 food; mould 1948
+  seed 7 lure on : near the lure every 10 s [18, 38, 62, 57, 21, 0]; burnt 74 food; mould 3217
+  seed 7 lure off: near the lure every 10 s [1, 11, 30, 26, 29, 27]; burnt 0 food; mould 2820
+  seed 8 lure on : near the lure every 10 s [9, 22, 29, 8, 27, 35]; burnt 120 food; mould 2509
+  seed 8 lure off: near the lure every 10 s [0, 8, 8, 10, 21, 16]; burnt 0 food; mould 3091
+lure on against off at 60 s: more walkers near it on 5, fewer on 3 (two-sided sign test p 0.7266)

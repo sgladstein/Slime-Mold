@@ -87,3 +87,96 @@ Build order: (1) a mission layer over `larder_world::Game`, as data (a mission's
 - **Positional goals on the GPU:** missions 2 and 3 (clear a crystal, keep the mould in the Rim) read `World::mould_grid`, which the GPU world does not give yet (it needs an occupancy read-back). In the window their bar is not shown and they end only on the other causes; the CPU census measures them.
 - **Stuck** mirrors the Larder thread's census definition (a soldier alive, nothing done, a bank below a soldier's price) with a priced shot; with free shots a squad is never stuck. It will read `Game::stuck_run` once the Larder thread's PR lands, with `Rules::overrun` and `Rules::reserve` replacing this layer's overrun check.
 - **Mission 1's goal raised from 8 to 24 soldiers:** on the Flats the AI's boom style reached 8 soldiers by 1:28 on seeds 1 and 2 (three stars both), far under the design's 6-12 minutes. 24 is the next guess; the census sets it.
+
+## Missions 1-3 tuned by the census (2026-11-12)
+
+Four censuses (`examples/campaign.rs`, seeds 1-4; idle, random and the player AI's boom, claim, late, fort and strike; CPU big dish, scale 2, 5,000 walkers; the plain mould, since the Drifter and Sprawler are not built; raw in [`census/`](larder-campaign-2026-11-12/census/), v1 to v4). Four seeds is a tuning run, not a gate: no sign test is quoted.
+
+| Mission | Goal tried | What the census found | Now |
+| --- | --- | --- | --- |
+| 1 Landfall | 8 soldiers | Every AI style met it at 1:28 (3 stars) | — |
+| | 24 soldiers | No hand met it: the AI's styles stop at 20 (best 0.73-0.95) | — |
+| | 8 soldiers on 2 crystals at once (the design review's idea) | Every style at 1:28-1:29 | — |
+| | **12 soldiers on 3 crystals** | **Every AI style at 2:31-2:48, 3 stars (20 of 20); idle and random 0 of 8** | kept: short, as a first mission should be; retune once the Drifter is built |
+| 2 First contact | clear the west crystal 60 s | Idle's bar reached 0.22-0.87: the crystal was clear before the mould came | — |
+| | **retake** it (counts only once the mould has been on it) | **AI 20 of 20 at 1:42-5:31, 3 stars; idle 0 of 4 (best 0.03-0.87); random 1 of 4** | kept |
+| 3 The gaps | no walker outside the Rim for 10 min | No hand held it for a second (best 0.00-0.05) | — |
+| | at most 2% outside | 1 of 20 AI rounds; planned hands peaked at 3.8-5.8% outside, idle at 17-33% | — |
+| | **at most 5% outside** | **AI 18 of 20 at 10:00-11:41, 2 stars; idle and random 0 of 8** | kept |
+
+Dead time on the planned hands is 0-9% (the landing's first seconds), idle's 64-96%; no hand was ever stuck (free shots). The new stall measure (bar flat, mould not smaller than 30 s ago, nothing banked) runs 7-17 s at most on planned hands and 105-284 s on idle and random.
+
+**Open, by the design's own gate:**
+- **Mission 3 does not yet teach walls.** Boom, claim, late and strike, which build no walls, meet it as fort does, so gate item 3 (the verb's plan beats the plan without it) fails. It needs either a Sprawler that leaks through open gaps, or a smaller leak with walls in the plan; it is measured against the plain mould today.
+- Every number here was set on the plain mould and before the Larder thread's flee default (its PR 1: the mould turns from fresh gunfire, and a firing squad is far harder to overrun), so all three missions are re-run when that merges.
+- **The positional goals (missions 2 and 3) are CPU-only for now:** the window passes `World::mould_grid`, which the GPU world gives once the GPU thread's PR #101 merges; until then the window says "progress not shown in this build yet".
+- Mission 1's 2:31-2:48 is under the design's 6-12 minutes; the AI acts at once, so a first-time player will be slower. Checked by hand once the owner plays it.
+
+**Changes from the reviews (05:38-05:43Z):** kills count as useful only while the mould is smaller than 30 s ago (firing at a mould that regrows is not progress); the stall measure above; the window says when it can't show a bar rather than hiding it; one test per goal kind on a small CPU world (clear and retake, contain, take, stuck, squad with crystals; 10 tests in all). `take`'s bar now starts from an even share: it showed 83% of a 60% goal at 0:00. On the race world an idle mould halves by itself in the first 40 s as walkers starve, so mission 4's `shrink` numbers must allow for that.
+
+### Pictures (page)
+
+[Campaign Missions 1-3](https://claude.ai/artifact/Pu2j5ComXhUPTAMv4MyMRJ), copy in
+`larder-campaign-2026-11-12/page/`: the game window (GPU world, software
+Vulkan) playing each mission with the claim hand, seed 1, counts under each
+frame. Landfall met at 1:21 (3 stars, 12 soldiers, 3906 harvested). On the Rim
+a mould trail leaves through the north-east gap by 5:00 and reaches the
+larder. The GPU census (GPU thread, `campaign gpu=both`, claim, seeds 1-4,
+after #101) holds seed 1 on the GPU too (peak share outside 0.050 at 696 s,
+against the CPU's 0.058 at 701 s), so the trail the player sees sits inside
+the 5% allowance. That is the problem: a leak must mean what the player sees
+(a trail out of a gap) before the window shows this bar. Seed 2 failed on
+the GPU (peak 0.168, Cap) where the CPU held; four seeds can't call a bias
+(sign p 0.63), so the 32-seed `gpu=both` run decides it.
+
+### What the player sees outside the Rim (census v5)
+
+Question (design review, 06:26Z): on the Rim the window shows a mould trail
+out of the north-east gap by 5:00 while the goal counts as held; what does a
+leak have to mean for the bar and the picture to agree?
+
+Measure: each second, the 4 x 4-cell bins outside the Rim holding at least
+1, 4 and 16 walkers (`census/3-the-gaps-s1-4-v5.txt`, CPU, seeds 1-4,
+seven hands; the last columns), and the same in the GPU window on seed 1
+every 30 s (`census/3-the-gaps-claim-s1-gpu-window-bins.txt`, from a
+throwaway print in the window, not committed).
+
+| | bins >= 1 (most) | bins >= 4 (most) | bins >= 16 (most) | s with a bin of 4+ outside |
+|---|---|---|---|---|
+| planned hands that held (18 rounds) | 166-239 | 5-17 | 0 | 148-431 |
+| planned hands that hit the cap (2) | 231-269 | 83-85 | 38-42 | 673-869 |
+| idle (4) | 295-438 | 85-220 | 40-110 | 883-892 |
+| random (4, ended by 6:06) | 277-432 | 19-105 | 0-44 | 201-349 |
+| GPU window, claim, seed 1, 0:30-7:00 | 92-226 | 0-5 | 0 | |
+
+The trail in the picture is thin: in the window at 5:00, 153 walkers (2.4%)
+outside over 128 bins, at most 3 in any bin. The drawn body is trail times
+`1 - exp(-walkers in the 5 x 5 round / 6)`, so a few walkers on a strong trail
+draw a clear tendril. Nothing is wrong with the count; the goal allows 5% and
+the player is not told. No hand keeps every walker in (leak 0 held for no
+second, v1), so "no visible mould outside" can't be the goal on the plain
+mould. A dense body outside (a bin of 16+) separates the winners (0) from
+idle (40-110) as well as the share does.
+
+Change: the goal line now says the share outside against the allowance,
+for example "Keep the mould inside the Rim for 10:00 (50%; 2.4% outside, 5% allowed)"
+(`Tracker::progress_line`, used by the window); the sentence says "for", as
+the hold restarts when the share passes 5%. Whether a dense-body rule plays
+better than the share is for the Sprawler re-tune, where the mould moves
+differently.
+
+### Missions on the Game's own no-soft-lock rules (after Larder PR #106)
+
+The Larder thread's #106 put the design's no-soft-lock rules in the Game:
+`Rules::overrun` (the larder held with the bank under 1 for N s ends the
+round, `End::Overrun`), `Rules::reserve` (a free recruit every N s while
+fewer than two soldiers live and the bank can't buy one), and
+`Game::stuck_run`. A mission now turns on overrun 30 s and reserve 20 s
+(`campaign::OVERRUN_END`, `RESERVE`; a mission file can set `rule overrun`
+or `rule reserve`), and the tracker reads the Game's overrun end and stuck
+count instead of its own. A wiped squad is a loss only when the Game says so
+(no recruit can come). Seen in the window test: a rush on Landfall, lost by
+2:00 before, now keeps coming back and is not over by 6:40; the test now
+caps an idle round at 1:00. The window also gave a recruit made inside a
+step no look until the next frame (an index panic); fixed. Missions 1-3 are
+re-run once shot craters (Larder PR 2) and the tiers land.
