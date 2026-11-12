@@ -442,13 +442,13 @@ impl<W: World> Game<W> {
             self.pumped += food;
         }
         if up && bd.kind == Kind::Outpost && u.touching > 0 {
-            let take = (r.steal * u.touching as f32 * dt).min(self.bank.max(0.0));
+            let take = (r.steal * r.mass * u.touching as f32 * dt).min(self.bank.max(0.0));
             self.bank -= take;
             self.stolen += take;
         }
         let bd = &mut self.buildings[k];
         if u.touching > 0 {
-            bd.hp -= r.drain * u.touching as f32 * dt;
+            bd.hp -= r.drain * r.mass * u.touching as f32 * dt;
             if bd.hp <= 0.0 {
                 bd.hp = 0.0;
                 bd.alive = false;

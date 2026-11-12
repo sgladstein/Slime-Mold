@@ -2,8 +2,8 @@
 title: The Larder player AI
 kind: tool
 status: current
-updated: 2026-11-12T14:41Z
-sources: [Reports/larder-world-tiers-2026-11-12.md, Reports/larder-world-ai-2026-11-12.md, Reports/larder-ai-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
+updated: 2026-11-12T20:41Z
+sources: [Reports/plan-matrix-2026-11-12.md, Reports/larder-world-tiers-2026-11-12.md, Reports/larder-world-ai-2026-11-12.md, Reports/larder-ai-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Brain, Style, Side, View, RandomHand, set_rule, Game::apply, mould_grid]
 ---
 
@@ -15,7 +15,9 @@ The player AI plays Larder's soldier side for automated playtests. It gives only
 
 **On the Larder world** (`src/mould/larder_world_ai.rs`, [report](../../Reports/larder-world-ai-2026-11-12.md), [page](https://claude.ai/artifact/BuPV981PmqpXkDhxTnadzs)) it has five styles on knobs: boom, claim, late, fort and strike. It sees the mould through `World::mould_grid` (the CPU world bins its occupancy; the GPU world sums it on the GPU since #101). It skips crystals under one frame's ask, which the dry-crystal rule sends a carrier home from. On held-out seeds 21-36 of the CPU race world, every style beats idle and random on 16 of 16. Boom, claim, late and fort beat the scripted farm hand on 15 or 16 of 16. Strike is the gamble: it wiped the mould once and lost to farm on five seeds. (W2b's score; under score v2 strike beats farm 14-2 on seeds 5-20, [roadmap report](../../Reports/larder-world-roadmap-2026-11-11.md), *Score v2*).
 
-**Against the mould tiers** ([report](../../Reports/larder-world-tiers-2026-11-12.md), [page](https://claude.ai/artifact/T4S63gUxYWbJqJEQfviHDe)): on main before craters (seeds 53-60, eight tiers) the strike is the best plan on seven tiers, and it wipes the plain mould, the Swarmer, the Trunk and the Drifter on 5-8 of 8 seeds. The Sporer flips it: the strike takes the core but the spores have left, and claim is best. The Sporer, Grudge and Sprawler make every plan worse; the Sleeper, Drifter and Trunk are easier than plain. No AI plan is ever stuck more than 2 s a game. The matrix re-runs with `larderworld census … tier=NAME` and `Reports/larder-world-tiers-2026-11-12/matrix.py`.
+**Against the mould tiers, after core defence** ([report](../../Reports/plan-matrix-2026-11-12.md), [page](https://claude.ai/artifact/17cgbF9X4UdYMQANH91xVA)): on main after #126 (seeds 201-216, twelve plans including the toolkit's) the strike falls to +0.33 on the plain mould, level with claim and farm. It leads by median only on the Drifter, Sprawler and Trunk, never significantly; plague over farm on the Sporer (16-0) is the one cell that survives Holm. Random wipes the Drifter and Trunk on 7 and 5 of 16. No AI plan is stuck at all. `python3 scripts/plan_matrix.py run OUT seeds=… tiers=…` regenerates it; under the owner's testing rule (17:26Z) it runs only for a strategy question, with the runner time named first.
+
+**Before craters** ([report](../../Reports/larder-world-tiers-2026-11-12.md), [page](https://claude.ai/artifact/T4S63gUxYWbJqJEQfviHDe)): on main before craters (seeds 53-60, eight tiers) the strike is the best plan on seven tiers, and it wipes the plain mould, the Swarmer, the Trunk and the Drifter on 5-8 of 8 seeds. The Sporer flips it: the strike takes the core but the spores have left, and claim is best. The Sporer, Grudge and Sprawler make every plan worse; the Sleeper, Drifter and Trunk are easier than plain. No AI plan is ever stuck more than 2 s a game. The matrix re-runs with `larderworld census … tier=NAME` and `Reports/larder-world-tiers-2026-11-12/matrix.py`.
 
 The small-dish AI (`src/mould/larder_ai.rs`, [report](../../Reports/larder-ai-2026-11-11.md)) stays for the CPU field dish. Its results there are about the AI, not balance.
 
@@ -33,7 +35,7 @@ The small-dish AI (`src/mould/larder_ai.rs`, [report](../../Reports/larder-ai-20
 
 ## Open
 
-- Re-run the plan-by-tier matrix after shot craters (#113) and the Larder thread's core defence, with the toolkit and buildings hands, on fresh seeds from 301 and the held-out map Rim; once the GPU census exists, re-run it there once (tech-lead review, 04:40Z).
+- When a strategy question asks for it: the Swarmer column and the Grudge's toolkit rows, held-out seeds from 301 and the map Rim, and a buildings hand (turret ring); once the GPU census exists, once there (tech-lead review, 04:40Z).
 - A counter to the core rush: the strike is best on seven of eight tiers (the tiers thread's gate: on at most two).
 - New hands for the toolkit and buildings plans: turret ring first, then kill zone, turtle, plague, siege (design review, 04:35Z).
 - A second team: a team on each soldier, a home per team, and `Game::apply_as(team, cmd)`.
@@ -43,6 +45,7 @@ The small-dish AI (`src/mould/larder_ai.rs`, [report](../../Reports/larder-ai-20
 
 ## Sources
 
+- [plan-matrix-2026-11-12.md](../../Reports/plan-matrix-2026-11-12.md).
 - [larder-world-tiers-2026-11-12.md](../../Reports/larder-world-tiers-2026-11-12.md).
 - [larder-world-ai-2026-11-12.md](../../Reports/larder-world-ai-2026-11-12.md).
 - [larder-ai-2026-11-11.md](../../Reports/larder-ai-2026-11-11.md).

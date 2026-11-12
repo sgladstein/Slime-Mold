@@ -1,0 +1,93 @@
+rounds census, race world, hand farm, cap 300 s, seeds [5, 6, 7, 8, 9, 10, 11, 12], tiers ["sporer"], loads ["none", "blast", "gas", "germ", "trap", "lull", "plague", "rand"]; round rules RoundRules { recharge: 2.0, payload_weight: 1.0, card_weight: 0.5, wide_weight: 1.0, wide: 1.6, scatter_n: 3, scatter_r: 0.6, scatter_d: 1.5, delay_secs: 3.0, thick_n: 40, thick_r: 5.0, thick_secs: 30.0, kit: KitRules { reach: 24.0, blast_r: 6.0, blast_alarm: 50.0, crater_r: 7.0, crater_secs: 20.0, blast_price: 60.0, mine_r: 5.0, mine_trigger: 40, mine_price: 80.0, cord_r: 2.5, cord_every: 2.0, cord_price: 3.0, cord_max: 48.0, germ_r: 5.0, sick_secs: 6.0, immune_secs: 40.0, sick_upkeep: 60.0, sick_catch: 0.2, sick_deposit: 1.0, sick_keep: 0.9, germ_price: 300.0, gas_r: 12.0, gas_secs: 20.0, gas_death: 0.0, gas_price: 150.0, reek: 4.0, carry_max: 5, carry_each: 1, tool_weight: 50.0, restock_r: 6.0, alarm_keep: 0.95 } }
+  sporer                     none seed  5:         cap at  300 s, score +0.205; soldiers  8, mould   6289; round none, casts [0, 0, 0], round kills 0 of 1042, spent 0, broke 0, dropped 0; 4.71 ms a tick
+  sporer                      gas seed  5:         cap at  300 s, score +0.182; soldiers  8, mould   7718; round gas, casts [0, 178, 0], round kills 0 of 1007, spent 26700, broke 318, dropped 0; 5.33 ms a tick
+  sporer                    blast seed  5:         cap at  300 s, score +0.146; soldiers  8, mould   9585; round blast, casts [396, 0, 0], round kills 1408 of 3238, spent 23760, broke 0, dropped 0; 5.70 ms a tick
+  sporer                     trap seed  5:         cap at  300 s, score +0.180; soldiers  8, mould   7762; round thick+wide+blast, casts [216, 0, 0], round kills 399 of 1085, spent 12960, broke 0, dropped 0; 4.72 ms a tick
+  sporer                     lull seed  5:         cap at  300 s, score +0.171; soldiers  8, mould   8422; round quiet+gas+quiet+blast, casts [126, 128, 0], round kills 121 of 1302, spent 26760, broke 248, dropped 0; 4.99 ms a tick
+  sporer                     germ seed  5:         cap at  300 s, score +0.483; soldiers  8, mould    155; round germ, casts [0, 0, 88], round kills 0 of 224, spent 26400, broke 73, dropped 0; 13.90 ms a tick
+  sporer                     rand seed  5:         cap at  300 s, score +0.205; soldiers  8, mould   6289; round quiet+wide, casts [0, 0, 0], round kills 0 of 1042, spent 0, broke 0, dropped 0; 5.50 ms a tick
+  sporer                     none seed  6:         cap at  300 s, score +0.175; soldiers  8, mould   7338; round none, casts [0, 0, 0], round kills 0 of 1883, spent 0, broke 0, dropped 0; 4.83 ms a tick
+  sporer                    blast seed  6:         cap at  300 s, score +0.335; soldiers  8, mould   2297; round blast, casts [318, 0, 0], round kills 192 of 828, spent 19080, broke 0, dropped 0; 4.04 ms a tick
+  sporer                   plague seed  5:         cap at  300 s, score +0.477; soldiers  8, mould    200; round germ+delay+blast, casts [71, 0, 74], round kills 34 of 572, spent 26460, broke 206, dropped 0; 13.09 ms a tick
+  sporer                      gas seed  6:         cap at  300 s, score +0.278; soldiers  8, mould   3723; round gas, casts [0, 188, 0], round kills 0 of 734, spent 28200, broke 221, dropped 0; 4.18 ms a tick
+  sporer                     lull seed  6:         cap at  300 s, score +0.306; soldiers  8, mould   2973; round quiet+gas+quiet+blast, casts [133, 135, 0], round kills 97 of 940, spent 28230, broke 209, dropped 0; 3.71 ms a tick
+  sporer                     trap seed  6:         cap at  300 s, score +0.162; soldiers  8, mould   8633; round thick+wide+blast, casts [301, 0, 0], round kills 1343 of 2830, spent 18060, broke 0, dropped 0; 5.51 ms a tick
+  sporer                     rand seed  6:         cap at  300 s, score +0.281; soldiers  8, mould   3585; round scatter+blast+wide+delay, casts [279, 0, 0], round kills 174 of 1143, spent 16740, broke 0, dropped 0; 3.80 ms a tick
+  sporer                     germ seed  6:         cap at  300 s, score +0.485; soldiers  8, mould    109; round germ, casts [0, 0, 94], round kills 0 of 730, spent 28200, broke 459, dropped 0; 12.48 ms a tick
+  sporer                     none seed  7:         cap at  300 s, score +0.148; soldiers  8, mould   8793; round none, casts [0, 0, 0], round kills 0 of 1938, spent 0, broke 0, dropped 0; 5.96 ms a tick
+  sporer                    blast seed  7:         cap at  300 s, score +0.175; soldiers  8, mould   7619; round blast, casts [366, 0, 0], round kills 1021 of 2557, spent 21960, broke 0, dropped 0; 4.71 ms a tick
+  sporer                   plague seed  6:         cap at  300 s, score +0.450; soldiers  8, mould    524; round germ+delay+blast, casts [76, 0, 79], round kills 20 of 342, spent 28260, broke 81, dropped 0; 13.89 ms a tick
+  sporer                      gas seed  7:         cap at  300 s, score +0.207; soldiers  8, mould   6173; round gas, casts [0, 188, 0], round kills 0 of 1483, spent 28200, broke 459, dropped 0; 5.61 ms a tick
+  sporer                     trap seed  7:         cap at  300 s, score +0.175; soldiers  8, mould   7524; round thick+wide+blast, casts [287, 0, 0], round kills 1743 of 3303, spent 17220, broke 0, dropped 0; 5.33 ms a tick
+  sporer                     lull seed  7:         cap at  300 s, score +0.165; soldiers  8, mould   8482; round quiet+gas+quiet+blast, casts [133, 135, 0], round kills 359 of 2370, spent 28230, broke 336, dropped 0; 5.70 ms a tick
+  sporer                     germ seed  7:         cap at  300 s, score +0.408; soldiers  8, mould   1049; round germ, casts [0, 0, 93], round kills 0 of 366, spent 27900, broke 206, dropped 0; 9.80 ms a tick
+  sporer                     rand seed  7:         cap at  300 s, score +0.148; soldiers  8, mould   8793; round wide+wide+quiet, casts [0, 0, 0], round kills 0 of 1938, spent 0, broke 0, dropped 0; 5.48 ms a tick
+  sporer                     none seed  8:         cap at  300 s, score +0.104; soldiers  8, mould  12372; round none, casts [0, 0, 0], round kills 0 of 3182, spent 0, broke 0, dropped 0; 6.42 ms a tick
+  sporer                    blast seed  8:         cap at  300 s, score +0.118; soldiers  8, mould  11399; round blast, casts [383, 0, 0], round kills 1955 of 4625, spent 22980, broke 56, dropped 0; 6.07 ms a tick
+  sporer                      gas seed  8:         cap at  300 s, score +0.130; soldiers  8, mould  10389; round gas, casts [0, 154, 0], round kills 0 of 2509, spent 23100, broke 651, dropped 0; 6.26 ms a tick
+  sporer                   plague seed  7:         cap at  300 s, score +0.483; soldiers  8, mould    118; round germ+delay+blast, casts [77, 0, 78], round kills 8 of 418, spent 28020, broke 147, dropped 0; 14.98 ms a tick
+  sporer                     trap seed  8:         cap at  300 s, score +0.134; soldiers  8, mould  10075; round thick+wide+blast, casts [295, 0, 0], round kills 2213 of 4113, spent 17700, broke 0, dropped 0; 6.38 ms a tick
+  sporer                     lull seed  8:         cap at  300 s, score +0.115; soldiers  8, mould  11685; round quiet+gas+quiet+blast, casts [110, 110, 0], round kills 433 of 3869, spent 23100, broke 575, dropped 0; 6.88 ms a tick
+  sporer                     rand seed  8:         cap at  300 s, score +0.135; soldiers  8, mould   9980; round quiet+wide+blast, casts [290, 0, 0], round kills 2394 of 4504, spent 17400, broke 0, dropped 0; 6.90 ms a tick
+  sporer                     none seed  9:         cap at  300 s, score +0.201; soldiers  8, mould   6261; round none, casts [0, 0, 0], round kills 0 of 1192, spent 0, broke 0, dropped 0; 5.63 ms a tick
+  sporer                   plague seed  8:         cap at  300 s, score +0.471; soldiers  8, mould    154; round germ+delay+blast, casts [61, 0, 65], round kills 43 of 750, spent 23160, broke 321, dropped 0; 13.29 ms a tick
+  sporer                     germ seed  8:         cap at  300 s, score +0.275; soldiers  8, mould   3778; round germ, casts [0, 0, 77], round kills 0 of 551, spent 23100, broke 316, dropped 0; 16.74 ms a tick
+  sporer                    blast seed  9:         cap at  300 s, score +0.200; soldiers  8, mould   6252; round blast, casts [269, 0, 0], round kills 395 of 1181, spent 16140, broke 0, dropped 0; 5.27 ms a tick
+  sporer                      gas seed  9:         cap at  300 s, score +0.188; soldiers  8, mould   7058; round gas, casts [0, 184, 0], round kills 0 of 1188, spent 27600, broke 427, dropped 0; 5.28 ms a tick
+  sporer                     trap seed  9:         cap at  300 s, score +0.188; soldiers  8, mould   6914; round thick+wide+blast, casts [215, 0, 0], round kills 287 of 967, spent 12900, broke 0, dropped 0; 5.62 ms a tick
+  sporer                     lull seed  9:         cap at  300 s, score +0.210; soldiers  8, mould   6011; round quiet+gas+quiet+blast, casts [131, 133, 0], round kills 198 of 1474, spent 27810, broke 353, dropped 0; 5.19 ms a tick
+  sporer                     rand seed  9:         cap at  300 s, score +0.201; soldiers  8, mould   6237; round wide+blast, casts [249, 0, 0], round kills 710 of 1454, spent 14940, broke 0, dropped 0; 5.05 ms a tick
+  sporer                     none seed 10:         cap at  300 s, score +0.109; soldiers  8, mould  12572; round none, casts [0, 0, 0], round kills 0 of 3560, spent 0, broke 0, dropped 0; 5.71 ms a tick
+  sporer                    blast seed 10:         cap at  300 s, score +0.164; soldiers  8, mould   8505; round blast, casts [440, 0, 0], round kills 1767 of 4624, spent 26400, broke 56, dropped 0; 5.44 ms a tick
+  sporer                      gas seed 10:         cap at  300 s, score +0.135; soldiers  7, mould  10806; round gas, casts [0, 174, 0], round kills 0 of 2868, spent 26100, broke 758, dropped 0; 5.42 ms a tick
+  sporer                     germ seed  9:         cap at  300 s, score +0.400; soldiers  8, mould   1197; round germ, casts [0, 0, 91], round kills 0 of 209, spent 27300, broke 66, dropped 0; 19.21 ms a tick
+  sporer                     trap seed 10:         cap at  300 s, score +0.218; soldiers  8, mould   5567; round thick+wide+blast, casts [292, 0, 0], round kills 624 of 1868, spent 17520, broke 0, dropped 0; 5.22 ms a tick
+  sporer                   plague seed  9:         cap at  300 s, score +0.413; soldiers  8, mould    955; round germ+delay+blast, casts [76, 0, 76], round kills 12 of 418, spent 27360, broke 128, dropped 0; 19.49 ms a tick
+  sporer                     lull seed 10:         cap at  300 s, score +0.152; soldiers  7, mould   9575; round quiet+gas+quiet+blast, casts [125, 126, 0], round kills 479 of 3758, spent 26400, broke 601, dropped 0; 5.66 ms a tick
+  sporer                     rand seed 10:         cap at  300 s, score +0.109; soldiers  8, mould  12572; round wide, casts [0, 0, 0], round kills 0 of 3560, spent 0, broke 0, dropped 0; 6.36 ms a tick
+  sporer                     none seed 11:         cap at  300 s, score +0.145; soldiers  8, mould  10219; round none, casts [0, 0, 0], round kills 0 of 3164, spent 0, broke 0, dropped 0; 5.40 ms a tick
+  sporer                     germ seed 10:         cap at  300 s, score +0.487; soldiers  7, mould     94; round germ, casts [0, 0, 80], round kills 0 of 486, spent 24000, broke 285, dropped 0; 15.39 ms a tick
+  sporer                    blast seed 11:         cap at  300 s, score +0.164; soldiers  8, mould   8503; round blast, casts [409, 0, 0], round kills 2065 of 4686, spent 24540, broke 0, dropped 0; 5.32 ms a tick
+  sporer                      gas seed 11:         cap at  300 s, score +0.131; soldiers  7, mould  11439; round gas, casts [0, 192, 0], round kills 0 of 2780, spent 28800, broke 596, dropped 0; 6.42 ms a tick
+  sporer                   plague seed 10:         cap at  300 s, score +0.438; soldiers  8, mould    660; round germ+delay+blast, casts [69, 0, 70], round kills 25 of 631, spent 25140, broke 288, dropped 0; 14.64 ms a tick
+  sporer                     trap seed 11:         cap at  300 s, score +0.160; soldiers  8, mould   8792; round thick+wide+blast, casts [303, 0, 0], round kills 2076 of 4342, spent 18180, broke 0, dropped 0; 5.83 ms a tick
+  sporer                     lull seed 11:         cap at  300 s, score +0.128; soldiers  7, mould  11560; round quiet+gas+quiet+blast, casts [135, 136, 0], round kills 303 of 3181, spent 28500, broke 476, dropped 0; 6.02 ms a tick
+  sporer                     germ seed 11:         cap at  300 s, score +0.488; soldiers  8, mould    108; round germ, casts [0, 0, 96], round kills 0 of 223, spent 28800, broke 65, dropped 0; 14.43 ms a tick
+  sporer                     rand seed 11:         cap at  300 s, score +0.145; soldiers  8, mould  10219; round quiet+scatter+wide+delay, casts [0, 0, 0], round kills 0 of 3164, spent 0, broke 0, dropped 0; 5.17 ms a tick
+  sporer                     none seed 12:         cap at  300 s, score +0.230; soldiers  8, mould   5201; round none, casts [0, 0, 0], round kills 0 of 1414, spent 0, broke 0, dropped 0; 4.85 ms a tick
+  sporer                    blast seed 12:         cap at  300 s, score +0.258; soldiers  8, mould   4251; round blast, casts [435, 0, 0], round kills 426 of 1588, spent 26100, broke 0, dropped 0; 4.42 ms a tick
+  sporer                      gas seed 12:         cap at  300 s, score +0.300; soldiers  7, mould   3024; round gas, casts [0, 168, 0], round kills 0 of 955, spent 25200, broke 398, dropped 0; 4.82 ms a tick
+  sporer                   plague seed 11:         cap at  300 s, score +0.488; soldiers  8, mould     81; round germ+delay+blast, casts [76, 0, 78], round kills 11 of 360, spent 27960, broke 93, dropped 0; 13.53 ms a tick
+  sporer                     trap seed 12:         cap at  300 s, score +0.207; soldiers  8, mould   6076; round thick+wide+blast, casts [292, 0, 0], round kills 607 of 1570, spent 17520, broke 0, dropped 0; 4.88 ms a tick
+  sporer                     lull seed 12:         cap at  300 s, score +0.309; soldiers  8, mould   2819; round quiet+gas+quiet+blast, casts [127, 131, 0], round kills 107 of 1142, spent 27270, broke 295, dropped 0; 4.50 ms a tick
+  sporer                     rand seed 12:         cap at  300 s, score +0.258; soldiers  8, mould   4251; round blast, casts [435, 0, 0], round kills 426 of 1588, spent 26100, broke 0, dropped 0; 4.15 ms a tick
+  sporer                     germ seed 12:         cap at  300 s, score +0.492; soldiers  8, mould     62; round germ, casts [0, 0, 84], round kills 0 of 413, spent 25200, broke 210, dropped 0; 20.14 ms a tick
+  sporer                   plague seed 12:         cap at  300 s, score +0.491; soldiers  8, mould     76; round germ+delay+blast, casts [67, 0, 71], round kills 12 of 350, spent 25320, broke 109, dropped 0; 20.51 ms a tick
+
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                                       sporer
+                    none  +0.165 ( 0/ 8/ 0)
+                   blast  +0.195 ( 0/ 8/ 0)
+                     gas  +0.194 ( 0/ 8/ 0)
+                    germ  +0.440 ( 0/ 8/ 0)
+                    trap  +0.178 ( 0/ 8/ 0)
+                    lull  +0.195 ( 0/ 8/ 0)
+                  plague  +0.464 ( 0/ 8/ 0)
+                    rand  +0.185 ( 0/ 8/ 0)
+
+readings 1-2, paired by seed (higher / lower; sign test, Holm over 9):
+                      sporer blast vs none:  6 /  2, p 0.2891
+                        sporer gas vs none:  5 /  3, p 0.7266
+                       sporer germ vs none:  8 /  0, p 0.0078
+                       sporer trap vs none:  4 /  4, p 1.0000
+                       sporer trap vs rand:  3 /  5, p 0.7266
+                       sporer lull vs none:  6 /  2, p 0.2891
+                       sporer lull vs rand:  5 /  3, p 0.7266
+                     sporer plague vs none:  8 /  0, p 0.0078
+                     sporer plague vs rand:  8 /  0, p 0.0078
+
+reading 3, per tier: the best loadout by mean, and each other against it (higher / lower, p):
+    sporer: best plague (+0.464); none 0/8 p 0.008, blast 0/8 p 0.008, gas 0/8 p 0.008, germ 4/4 p 1.000, trap 0/8 p 0.008, lull 0/8 p 0.008, rand 0/8 p 0.008
+
+rand's round by seed: ["quiet+wide", "scatter+blast+wide+delay", "wide+wide+quiet", "quiet+wide+blast", "wide+blast", "wide", "quiet+scatter+wide+delay", "blast"]
+EXIT=0
