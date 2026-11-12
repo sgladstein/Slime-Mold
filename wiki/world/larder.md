@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T17:50Z
+updated: 2026-11-12T20:41Z
 sources: [Reports/soldier-controls-2026-11-12.md, Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Engine::record_share, crowd_holds, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core, Rules::wade, race_params, CoreKind::Regrow, Game::mould_ate, World::start_births]
 ---

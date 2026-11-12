@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12T20:19Z
+updated: 2026-11-12T20:41Z
 sources: [Reports/rounds-2026-11-12.md, Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Burst, Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
 ---
