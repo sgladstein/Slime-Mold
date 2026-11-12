@@ -26,10 +26,10 @@
 //! deepens pushes the hits back), kills, and the soldiers alive.
 //!
 //! **Arms** (the mould's settings; the rules stay the game's):
-//! - `base`: the race world's mould as it is (since 2026-11-12 it flees
-//!   gunfire, `larder_world::FLEE_WEIGHT`; the first run, 16 seeds, was
-//!   before that, when `base` had no alarm field).
-//! - `off`: no alarm field (the race world before 2026-11-12).
+//! - `base`: the race world's mould as it is (no alarm field; for a few
+//!   hours on 2026-11-12 it fled gunfire by default, and
+//!   `playtest/hole-1-16-default-sporer.txt` was run then).
+//! - `off`: no alarm field.
 //! - `flee:W[:K]`: the alarm field on (`alarm_keep` K, default 0.98, the
 //!   Swarmer's), read by the sensors at weight -W, so a hit's alarm
 //!   (`squad::SHOT_ALARM`, twice the strike's radius) is ground the mould

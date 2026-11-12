@@ -1514,11 +1514,8 @@ mod tests {
     }
 
     /// A campaign mission plays its own map and rules, shows its goal as the
-    /// objective, and ends on its own screen when the squad is lost. The
-    /// squad walks onto the mould's core holding its fire: a firing rush
-    /// (`Order::Attack`) died by 0:31 on seed 1 until the mould turned from
-    /// fresh gunfire (`FLEE_WEIGHT`, 2026-11-12); now four attackers live
-    /// past 2:00 there, so the test no longer relies on a rush losing.
+    /// objective, and ends on its own screen when the squad is lost (a rush
+    /// into the Flats' mould dies by 0:31 on seed 1).
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
@@ -1529,20 +1526,10 @@ mod tests {
         assert!(app.model(None, None).objective.is_some_and(|o| o.starts_with("Grow your squad to")));
         let step = 1.0 / 15.0;
         while app.mission.as_ref().unwrap().verdict.is_none() && app.game.as_ref().unwrap().time() < 120.0 {
-            let g = app.game.as_mut().unwrap();
-            let core = g.core;
-            for k in 0..g.soldiers.len() {
-                if g.soldiers[k].alive && g.soldiers[k].stance != Stance::HoldFire {
-                    g.apply(Cmd::Stance(k, Stance::HoldFire));
-                }
-                if g.soldiers[k].alive && g.soldiers[k].order != Order::Move(core.0, core.1) {
-                    g.apply(Cmd::Order(k, Order::Move(core.0, core.1)));
-                }
-            }
+            plan(app.game.as_mut().unwrap(), "rush");
             app.step(step);
         }
-        { let g = app.game.as_ref().unwrap(); eprintln!("mission at {:.1} s: alive {} of {}, end {:?}, killed {}, shots {}", g.time(), g.soldiers.iter().filter(|s| s.alive).count(), g.soldiers.len(), g.end, g.killed, g.shots); }
-        let v = app.mission.as_ref().unwrap().verdict.expect("the squad is lost by 2:00");
+        let v = app.mission.as_ref().unwrap().verdict.expect("the rush is lost by 2:00");
         assert_eq!(v.stars, 0);
         app.prepare();
         assert_eq!(app.model(None, None).end.map(|e| e.0).as_deref(), Some("Mission lost"));

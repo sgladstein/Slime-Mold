@@ -103,6 +103,7 @@ fn main() {
     // shots lay draws the mould to the fight).
     let mut tier = None::<Tier>;
     let mut flee = None::<f32>;
+    let mut flee_keep = None::<f32>;
     let mut rules = Rules::default();
     let mut map = None::<(String, Map)>;
     for a in std::env::args().skip(1) {
@@ -128,9 +129,14 @@ fn main() {
             "smell" => rules.smell = v.parse().unwrap(),
             "smell_r" => rules.smell_r = v.parse().unwrap(),
             "tier" => tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
-            // The mould's turn from gunfire (`larder_world::FLEE_WEIGHT`):
-            // `flee=0` turns the alarm field off, as before 2026-11-12.
+            // The mould's turn from gunfire, opt-in (`larder_world::FLEE_KEEP`
+            // and `FLEE_WEIGHT`): `flee=W` turns the alarm field on and reads
+            // it at -W; `flee=0` (the default) leaves it off. Applied before
+            // `tier=`, so a tier's own alarm keys win.
             "flee" => flee = Some(v.parse().unwrap()),
+            // `flee_keep=K`: the alarm field's keep a fine step for the
+            // plain mould (`FLEE_KEEP`, 0.98); a tier's own keep wins.
+            "flee_keep" => flee_keep = Some(v.parse().unwrap()),
             "strike" => rules.strike = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
             "seek" => rules.seek = v == "1",
@@ -151,19 +157,20 @@ fn main() {
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     println!(
-        "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; tier {}; flee {}; rules {rules:?}",
+        "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; tier {}; flee {}{}; rules {rules:?}",
         rules.cap,
         rules.tps,
         seeds,
         tier.map_or("none", |t| t.name()),
-        flee.map_or(format!("{} (default)", -slime_mould::mould::larder_world::FLEE_WEIGHT), |w| w.to_string())
+        flee.map_or("0 (default)".to_string(), |w| w.to_string()),
+        flee_keep.map_or(String::new(), |k| format!(", keep {k}"))
     );
     let map = map.as_ref().map(|(_, m)| m);
     if let Some(dir) = look {
         std::fs::create_dir_all(&dir).expect("look dir");
         for &seed in &seeds {
             for hand in &hands {
-                let r = play(seed, scale, walkers, rules, (tier, flee), hand, map, Some((&dir, every)));
+                let r = play(seed, scale, walkers, rules, (tier, flee, flee_keep), hand, map, Some((&dir, every)));
                 println!("{hand} seed {seed}: {} at {:.0} s, score {:+.3}", r.end, r.t, r.score);
             }
         }
@@ -185,7 +192,7 @@ fn main() {
                     break;
                 }
                 let (seed, hand) = &jobs[j];
-                let r = play(*seed, scale, walkers, rules, (tier, flee), hand, map, None);
+                let r = play(*seed, scale, walkers, rules, (tier, flee, flee_keep), hand, map, None);
                 println!(
                     "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s",
                     r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck
@@ -248,12 +255,15 @@ fn main() {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, (tier, flee): (Option<Tier>, Option<f32>), hand: &str, map: Option<&Map>, look: Option<(&str, f32)>) -> Row {
+fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, (tier, flee, flee_keep): (Option<Tier>, Option<f32>, Option<f32>), hand: &str, map: Option<&Map>, look: Option<(&str, f32)>) -> Row {
     let mut p = race_params(seed, scale, walkers);
     match flee {
         Some(w) if w <= 0.0 => (p.alarm_keep, p.alarm_weight) = (0.0, 0.0),
-        Some(w) => p.alarm_weight = -w,
+        Some(w) => (p.alarm_keep, p.alarm_weight) = (slime_mould::mould::larder_world::FLEE_KEEP, -w),
         None => {}
+    }
+    if let Some(k) = flee_keep.filter(|_| p.alarm_keep > 0.0) {
+        p.alarm_keep = k;
     }
     if let Some(t) = tier {
         t.apply(&mut p);

@@ -180,32 +180,28 @@ pub fn race_world(seed: u64, scale: usize, walkers: usize) -> BigDish {
     BigDish::new(race_params(seed, scale, walkers))
 }
 
-/// The mould turns from fresh gunfire (2026-11-12): the alarm field is on
-/// (`alarm_keep` 0.98, the Swarmer's) and its sensors read it at weight -1,
-/// so the alarm each hit lays (`squad::SHOT_ALARM`, out to twice the
-/// strike's radius) is ground the mould backs away from while it is fresh.
-/// The owner, 04:39Z: "A group of soldiers shooting the slime should start
+/// The mould's turn from fresh gunfire, an opt-in (`flee=W` in the census
+/// and the hole test), not the race world's default. With the alarm field on
+/// (`alarm_keep` 0.98, the Swarmer's) and read at weight -1, the alarm each
+/// hit lays (`squad::SHOT_ALARM`, out to twice the strike's radius) is
+/// ground the mould backs away from while it is fresh. It answers the
+/// owner's 04:39Z bar ("A group of soldiers shooting the slime should start
 /// carving out a bigger and bigger hole that doesn't refill while being
-/// shot at". In the hole test (`examples/larderhole.rs`, 16 seeds, a squad
-/// of 4 firing 20 s from 8 dish cells off the body's edge) the hole at 20 s
-/// was 102 dish cells against 29 without it (16 of 16 larger, sign test p
-/// < 0.0001), 77% of the mould in range, with the hits pushed from 3.7 to
-/// 9.3 dish cells out; 5 s after the last shot 45% of it was left, and by
-/// 10 s it was back to holding fire's. Weight 3 or keep 0.99 opened more
-/// (126, 127) and refilled slower; 0.3 or keep 0.95 less (72, 67). A
-/// slower mould clock (half the fine steps a tick) did not (44 against 37,
-/// 12 of 16, p 0.08), as the graphics thread found timing refills. This is
-/// the local push the Skittish tier's flee (`Reports/dead-ends.md`,
-/// `alarm_weight` below 0) was rejected for: it moved only the walkers next
-/// to the wound, which is what a hole needs. Tiers that set their own
-/// weight (the Sleeper and Swarmer, +3) keep it; the Sporer flees too.
+/// shot at") in the hole test (`examples/larderhole.rs`, 16 seeds): 102
+/// dish cells after 20 s of four soldiers' fire against 29 without it. It
+/// was the default for a few hours on 2026-11-12 and failed the census gate
+/// (race seeds 5-20, free shots): random wiped the mould on 12 of 16 seeds
+/// (2 without it) and beat farm, wall and rush 13-3, because random's
+/// Attack orders hold the core once the mould no longer overruns soldiers
+/// there, and a mould without births starves; the first touch on a squad
+/// came later too (farm +36 s median). `Reports/dead-ends.md` has the
+/// condition: a flee that holds the core (or the mould's own crystals)
+/// could pass.
 pub const FLEE_KEEP: f32 = 0.98;
 pub const FLEE_WEIGHT: f32 = -1.0;
 
 pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
     BigParams {
-        alarm_keep: FLEE_KEEP,
-        alarm_weight: FLEE_WEIGHT,
         scale,
         substeps: scale,
         walkers,

@@ -3509,8 +3509,8 @@ mod tests {
         use slime_mould::mould::squad;
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
-        // The Swarmer's pull (+3), and the race world's turn from gunfire
-        // (`larder_world::FLEE_WEIGHT`, -1, since 2026-11-12).
+        // The Swarmer's pull (+3), and the turn from gunfire
+        // (`larder_world::FLEE_WEIGHT`, -1, an opt-in since 2026-11-12).
         for weight in ["3", "-1"] {
         let mut s = small(0);
         Tier::Swarmer.settings(&mut s).unwrap();
@@ -3681,26 +3681,30 @@ mod tests {
     }
 
     /// A squad firing into the race world's mould on the engine as on the
-    /// CPU (2026-11-12): since the mould turns from fresh gunfire
-    /// (`larder_world::FLEE_WEIGHT`), every hit's alarm steers walkers on
-    /// both sides. The squad attacks the core from the start for 30 s; the
-    /// moulds stay within the race twin's 8% and the kills within 15%. With
-    /// the alarm off (as before the change) the CPU's mould differs from
-    /// its flee game, so the bound tests the rule and not only the growth.
+    /// CPU (2026-11-12) with the mould turning from fresh gunfire (the
+    /// opt-in `larder_world::FLEE_KEEP` and `FLEE_WEIGHT`): every hit's
+    /// alarm steers walkers on both sides. The squad attacks the core from
+    /// the start for 30 s; the moulds stay within the race twin's 8% and the
+    /// kills within 15%. Without the alarm (the race world's default) the
+    /// CPU's mould differs from its flee game, so the bound tests the rule
+    /// and not only the growth.
     #[test]
     fn a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu() {
         use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
-        use slime_mould::mould::larder_world::{race_params, race_world, Cmd, Game, Order, Rules, World};
+        use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World, FLEE_KEEP, FLEE_WEIGHT};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
         let rules = Rules { cap: 30.0, ..Rules::default() };
-        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
-        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
-        let mut off = {
+        let flee = || {
             let mut p = race_params(seed, scale, walkers);
-            (p.alarm_keep, p.alarm_weight) = (0.0, 0.0);
-            Game::new(slime_mould::mould::big::BigDish::new(p), rules, seed)
+            (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
+            p
         };
+        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(flee()), rules, seed);
+        let mut s = race_settings(seed, scale, walkers);
+        (s.alarm_keep, s.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         assert!(cpu.world.p.alarm_weight < 0.0 && gpu.world.s.alarm_weight < 0.0, "the race world flees gunfire on both");
         for g in [&mut cpu.log, &mut gpu.log, &mut off.log] {
             g.clear();
