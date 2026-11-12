@@ -1,0 +1,64 @@
+trunk randkit 5 -1.297 squad wiped
+trunk random 5 +0.238 cap
+trunk idle 5 -0.227 cap
+trunk farm 5 +0.321 cap
+trunk loud 5 +1.285 mould wiped
+trunk quiet 5 +0.270 cap
+trunk siege 5 +0.292 cap
+trunk random 6 +1.598 mould wiped
+trunk idle 6 -0.230 cap
+trunk randkit 6 +1.828 mould wiped
+trunk loud 6 +1.553 mould wiped
+trunk farm 6 +0.273 cap
+trunk quiet 6 +0.222 cap
+trunk siege 6 +0.374 cap
+trunk idle 7 -0.270 cap
+trunk random 7 -1.350 squad wiped
+trunk plague 5 +1.453 mould wiped
+trunk loud 7 +1.577 mould wiped
+trunk farm 7 +0.276 cap
+trunk quiet 7 +0.162 cap
+trunk plague 6 +1.503 mould wiped
+trunk idle 8 -0.231 cap
+trunk randkit 7 +1.782 mould wiped
+trunk siege 7 +0.282 cap
+trunk random 8 +0.232 cap
+trunk farm 8 +0.267 cap
+trunk quiet 8 +0.252 cap
+trunk loud 8 +1.220 mould wiped
+trunk siege 8 +0.263 cap
+trunk plague 7 +0.499 cap
+trunk idle 9 -0.225 cap
+trunk random 9 +0.308 cap
+trunk randkit 9 -1.225 squad wiped
+trunk farm 9 +0.233 cap
+trunk loud 9 +1.700 mould wiped
+trunk plague 8 +1.232 mould wiped
+trunk quiet 9 +0.264 cap
+trunk siege 9 +0.318 cap
+trunk randkit 8 +1.463 mould wiped
+trunk idle 10 -0.325 cap
+trunk random 10 -1.400 squad wiped
+trunk loud 10 +1.603 mould wiped
+trunk farm 10 +0.270 cap
+trunk quiet 10 +0.162 cap
+trunk siege 10 +0.308 cap
+trunk plague 9 +0.499 cap
+trunk plague 10 +1.582 mould wiped
+trunk random 11 +1.940 mould wiped
+trunk idle 11 -0.251 cap
+trunk randkit 11 +1.663 mould wiped
+trunk farm 11 +0.372 cap
+trunk loud 11 +1.593 mould wiped
+trunk quiet 11 +0.199 cap
+trunk randkit 10 +1.223 mould wiped
+trunk random 12 +1.692 mould wiped
+trunk siege 11 +0.377 cap
+trunk idle 12 -0.253 cap
+trunk loud 12 +1.722 mould wiped
+trunk farm 12 +0.276 cap
+trunk randkit 12 +1.313 mould wiped
+trunk quiet 12 +0.275 cap
+trunk plague 11 +1.487 mould wiped
+trunk siege 12 +0.310 cap
+trunk plague 12 +1.553 mould wiped

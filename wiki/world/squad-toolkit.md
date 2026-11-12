@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12T15:33Z
+updated: 2026-11-12T16:30Z
 sources: [Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
 ---
@@ -13,30 +13,20 @@ code: [Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParam
 
 Six tools for the Larder world's squad, each built on one term of the
 mould's model (`mould::kit`, CPU world only): blast, mine, det cord, germ,
-sleep gas, and mask or reek on a soldier's smell. The crater a blast or cord
-leaves (`BigDish::scorch_disc`, trail fades fast and fades out) is the one
-scorch in the game. With the crater a blast's hole holds 82 walkers at 10 s
-against 188 without, of 370 (8 of 8 seeds). Since the Larder thread's PR 2
-the crater is on the GPU too (binding 47) and the squad's shots lay it
-(`Rules::crater`, 10 game seconds a hit), with shared defaults
-`scorch_keep` 0.1 and `scorch_full` 30 (were 0.5 and 300; this thread's
-probes found blasts and the cord no worse:
-[report, *The hole under fire*](../../Reports/larder-world-roadmap-2026-11-11.md)). The germ kills about three
-quarters of the mould once sickness costs energy, while steering-only
-contagion does nothing. Sleep gas stops a crystal being eaten, and a blast
-nearby wakes most sleepers. Mines are weak, and the det cord starves nothing
-until food flows through the mould
-([report](../../Reports/squad-toolkit-2026-11-12.md), *Tool by tool*). Four
-plans built on them beat idle and random play on every tier (7-8 of 8), but
-the loud plan (a runner carrying blasts to the mould's body) is best on all
-four tiers, so the plans don't yet counter each other (*The four plans*).
-Round 2 made tools take carry space, fetched at the larder (`KitRules`
-default: a runner holds 5 at 50 carry each). Now the best plan changes with
-the tier: loud on the Sleeper, Trunk, Drifter and Wary, plague (the germ) on
-the Swarmer, Sporer and Sprawler, a tie on tier none and the Grudge (8 seeds,
-by the mean; not yet significant). Gas and the det cord are never best
-([round 2](../../Reports/squad-toolkit-round2-2026-11-12.md)). Pictures and
-counts are on the [page](https://claude.ai/artifact/Vr6ysJedMVtEa6XXEA1pTC).
+sleep gas, and mask or reek on a soldier's smell. The crater a blast, cord
+or shot leaves (`BigDish::scorch_disc`; GPU binding 47 since #113, shared
+`scorch_keep` 0.1, `scorch_full` 30) is the one scorch in the game. Each tool
+shows in the mould; mines are weak and the det cord starves nothing until
+food flows ([report](../../Reports/squad-toolkit-2026-11-12.md)). Tools take
+carry space and come from the larder (`KitRules`: a runner holds 5 at 50
+carry each). At 32 seeds on main, Holm over the table, the best plan changes
+with the tier: loud (blasts carried to the body) over plague (the germ) on
+the Drifter (30/2), plague over loud on the Sporer (30/2); by the mean
+plague also leads on none, Swarmer, Sprawler and Grudge, loud on Sleeper
+and Trunk. Random play beats or ties every plan on the Drifter and the Trunk
+(gate 1 fails there). Gas and the det cord are never best
+([round 2](../../Reports/squad-toolkit-round2-2026-11-12.md), *Confirmed at 32
+seeds*; [page](https://claude.ai/artifact/Vr6ysJedMVtEa6XXEA1pTC)).
 
 Idea, not built (2026-11-12): **rounds**, after the ammo-card guns of
 Flashes of Chaos and Noita's wands. A soldier's or turret's shot becomes up to
@@ -64,7 +54,8 @@ this toolkit's burst list, not a new system.
 
 ## Open
 
-- Confirm round 2 on main with shot craters on (#113), 16 seeds, nine tiers, and two maps.
+- Random play wipes the Drifter and the Trunk (gate 1 fails on them): a tier question.
+- Round 2 on a second map, and as `larderworld census` hands.
 - A tier where gas or the det cord is the best plan.
 - `germ_resist` as a tier key, if a campaign mould needs the germ answered.
 - The tools as `squad::Frame` bursts on the CPU and GPU, then in the window (step 2).

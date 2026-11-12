@@ -1,0 +1,112 @@
+kitplans the race world, cap 600 s, seeds [27, 28, 29, 30, 31, 32, 33, 34, 35, 36], tiers ["sleeper"]; rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 0.0, hp: 100.0, drain: 1.0, touch: 1.5, smell: 0.5, smell_r: 2.0, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, cap: 600.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, build: BuildRules { max: 40, gap: 2.5, raise: 8.0, turret_cost: 500.0, turret_hp: 300.0, turret_range: 15.0, turret_every: 0.5, lure_cost: 300.0, lure_hp: 150.0, lure_smell: 8.0, lure_r: 6.0, lure_burn: 2.0, pump_cost: 500.0, pump_hp: 200.0, pump_rate: 5.0, pump_smell: 0.0, outpost_cost: 400.0, outpost_hp: 300.0, outpost_hoard: 0.25, touch: 2.0 }, overrun: 0.0, reserve: 0.0, seek: true, crater: 10.0, spread: 0.0 }; kit KitRules { reach: 24.0, blast_r: 6.0, blast_alarm: 50.0, crater_r: 7.0, crater_secs: 20.0, blast_price: 60.0, mine_r: 5.0, mine_trigger: 40, mine_price: 80.0, cord_r: 2.5, cord_every: 2.0, cord_price: 3.0, cord_max: 48.0, germ_r: 5.0, sick_secs: 6.0, immune_secs: 40.0, sick_upkeep: 60.0, sick_catch: 0.2, sick_deposit: 1.0, sick_keep: 0.9, germ_price: 300.0, gas_r: 12.0, gas_secs: 20.0, gas_death: 0.0, gas_price: 150.0, reek: 4.0, carry_max: 5, carry_each: 1, tool_weight: 50.0, restock_r: 6.0, alarm_keep: 0.95 }
+ sleeper  random seed 27: squad wiped at  223 s, score -1.629; soldiers  0, mould   3402, harvested      0, shots   231; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 4.18 ms a tick
+ sleeper randkit seed 27: squad wiped at  253 s, score -1.578; soldiers  0, mould   5321, harvested    800, shots   375; uses [1, 0, 1, 2, 2, 2], tool kills [0, 0, 0, 0, 0, 0]; 5.07 ms a tick
+ sleeper    farm seed 27:         cap at  600 s, score +0.237; soldiers  8, mould   4975, harvested  37764, shots   512; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 6.06 ms a tick
+ sleeper    loud seed 27:         cap at  600 s, score +0.490; soldiers  8, mould     32, harvested  30424, shots   576; uses [42, 4, 0, 0, 0, 1], tool kills [7471, 0, 0, 0, 0, 0]; 5.39 ms a tick
+ sleeper   siege seed 27:         cap at  600 s, score +0.251; soldiers  8, mould   4417, harvested  36114, shots   398; uses [0, 0, 10, 0, 0, 0], tool kills [0, 0, 12, 0, 0, 0]; 6.09 ms a tick
+ sleeper   quiet seed 27:         cap at  600 s, score +0.186; soldiers  8, mould   4875, harvested  34414, shots     0; uses [0, 0, 0, 0, 20, 8], tool kills [0, 0, 0, 0, 0, 0]; 19.29 ms a tick
+ sleeper  random seed 28: squad wiped at  261 s, score -1.566; soldiers  0, mould   2733, harvested    750, shots   397; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 5.08 ms a tick
+ sleeper    idle seed 27:         cap at  600 s, score -0.240; soldiers  4, mould   4600, harvested      0, shots     8; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 23.88 ms a tick
+ sleeper randkit seed 28: squad wiped at  201 s, score -1.665; soldiers  0, mould   3922, harvested      0, shots   242; uses [2, 1, 0, 1, 1, 0], tool kills [0, 0, 0, 0, 0, 0]; 5.77 ms a tick
+ sleeper    farm seed 28:         cap at  600 s, score +0.248; soldiers  8, mould   4541, harvested  45964, shots   226; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 8.51 ms a tick
+ sleeper    loud seed 28: mould wiped at  553 s, score +1.278; soldiers  8, mould      0, harvested  35024, shots   202; uses [41, 4, 0, 0, 0, 1], tool kills [4302, 0, 0, 0, 0, 0]; 10.23 ms a tick
+ sleeper  plague seed 27:         cap at  600 s, score +0.493; soldiers  8, mould     72, harvested  37444, shots   136; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 29.04 ms a tick
+ sleeper    idle seed 28:         cap at  600 s, score -0.256; soldiers  4, mould   5243, harvested      0, shots     0; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 27.44 ms a tick
+ sleeper   siege seed 28:         cap at  600 s, score +0.280; soldiers  8, mould   3505, harvested  46714, shots   286; uses [0, 0, 13, 0, 0, 0], tool kills [0, 0, 13, 0, 0, 0]; 7.64 ms a tick
+ sleeper  random seed 29: squad wiped at  214 s, score -1.643; soldiers  0, mould   1368, harvested    750, shots   316; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 3.88 ms a tick
+ sleeper randkit seed 29: squad wiped at  152 s, score -1.746; soldiers  0, mould   2229, harvested    250, shots   188; uses [2, 2, 1, 1, 2, 1], tool kills [0, 0, 0, 0, 0, 0]; 5.67 ms a tick
+ sleeper    farm seed 29:         cap at  600 s, score +0.374; soldiers  8, mould   1578, harvested  44214, shots   384; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 6.64 ms a tick
+ sleeper    loud seed 29: mould wiped at  426 s, score +1.490; soldiers  8, mould      0, harvested  26100, shots   422; uses [39, 4, 0, 0, 0, 1], tool kills [4688, 0, 0, 0, 0, 0]; 6.42 ms a tick
+ sleeper   quiet seed 28:         cap at  600 s, score +0.224; soldiers  8, mould   5423, harvested  46264, shots     0; uses [0, 0, 0, 0, 6, 8], tool kills [0, 0, 0, 0, 0, 0]; 27.44 ms a tick
+ sleeper    idle seed 29:         cap at  600 s, score -0.155; soldiers  4, mould   2250, harvested      0, shots     1; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 24.02 ms a tick
+ sleeper  plague seed 28:         cap at  600 s, score +0.489; soldiers  8, mould    113, harvested  42812, shots    48; uses [0, 0, 0, 11, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 30.68 ms a tick
+ sleeper   siege seed 29:         cap at  600 s, score +0.369; soldiers  8, mould   1672, harvested  44914, shots   219; uses [0, 0, 11, 0, 0, 0], tool kills [0, 0, 19, 0, 0, 0]; 7.35 ms a tick
+ sleeper  random seed 30: squad wiped at  355 s, score -1.408; soldiers  0, mould   1416, harvested    750, shots   329; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 4.05 ms a tick
+ sleeper randkit seed 30: squad wiped at  322 s, score -1.464; soldiers  0, mould   2739, harvested   1700, shots   210; uses [5, 2, 3, 0, 2, 2], tool kills [1, 0, 0, 0, 0, 0]; 5.53 ms a tick
+ sleeper   quiet seed 29:         cap at  600 s, score +0.340; soldiers  8, mould   2233, harvested  43864, shots     0; uses [0, 0, 0, 0, 23, 8], tool kills [0, 0, 0, 0, 0, 0]; 21.61 ms a tick
+ sleeper    loud seed 30: mould wiped at  512 s, score +1.347; soldiers  8, mould      0, harvested  31324, shots   268; uses [40, 4, 0, 0, 0, 1], tool kills [5022, 0, 0, 0, 0, 0]; 6.47 ms a tick
+ sleeper  plague seed 29:         cap at  600 s, score +0.496; soldiers  8, mould     41, harvested  41382, shots   160; uses [0, 0, 0, 11, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 28.37 ms a tick
+ sleeper    farm seed 30:         cap at  600 s, score +0.344; soldiers  8, mould   2138, harvested  41914, shots    21; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 15.16 ms a tick
+ sleeper    idle seed 30:         cap at  600 s, score -0.150; soldiers  4, mould   2136, harvested      0, shots     0; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 28.33 ms a tick
+ sleeper   siege seed 30:         cap at  600 s, score +0.347; soldiers  8, mould   2091, harvested  41514, shots    18; uses [0, 0, 4, 0, 0, 0], tool kills [0, 0, 6, 0, 0, 0]; 13.42 ms a tick
+ sleeper  random seed 31: squad wiped at  354 s, score -1.411; soldiers  0, mould   3687, harvested   1750, shots   635; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 4.48 ms a tick
+ sleeper randkit seed 31: squad wiped at  194 s, score -1.676; soldiers  0, mould   2788, harvested    250, shots   228; uses [1, 1, 2, 0, 1, 3], tool kills [0, 0, 0, 0, 0, 0]; 4.66 ms a tick
+ sleeper   quiet seed 30:         cap at  600 s, score +0.345; soldiers  8, mould   2118, harvested  41914, shots     0; uses [0, 0, 0, 0, 7, 8], tool kills [0, 0, 0, 0, 0, 0]; 28.55 ms a tick
+ sleeper    farm seed 31:         cap at  600 s, score +0.308; soldiers  8, mould   2861, harvested  40764, shots   435; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 6.28 ms a tick
+ sleeper  plague seed 30:         cap at  600 s, score +0.495; soldiers  8, mould     51, harvested  37734, shots    60; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 28.57 ms a tick
+ sleeper    idle seed 31:         cap at  600 s, score -0.203; soldiers  4, mould   3428, harvested      0, shots     0; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 28.62 ms a tick
+ sleeper    loud seed 31:         cap at  600 s, score +0.492; soldiers  8, mould     45, harvested  32878, shots   376; uses [40, 4, 0, 0, 0, 1], tool kills [6979, 0, 0, 0, 0, 0]; 11.38 ms a tick
+ sleeper   siege seed 31:         cap at  600 s, score +0.257; soldiers  8, mould   4274, harvested  40364, shots   541; uses [0, 0, 16, 0, 0, 0], tool kills [0, 0, 23, 0, 0, 0]; 6.78 ms a tick
+ sleeper  random seed 32: squad wiped at  246 s, score -1.590; soldiers  0, mould   1779, harvested    750, shots   485; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 3.54 ms a tick
+ sleeper   quiet seed 31:         cap at  600 s, score +0.291; soldiers  8, mould   3300, harvested  41414, shots     0; uses [0, 0, 0, 0, 5, 8], tool kills [0, 0, 0, 0, 0, 0]; 28.08 ms a tick
+ sleeper randkit seed 32:         cap at  600 s, score +0.259; soldiers  6, mould   3151, harvested   7600, shots  1666; uses [2, 4, 3, 4, 5, 11], tool kills [0, 56, 1, 0, 0, 0]; 15.74 ms a tick
+ sleeper    idle seed 32:         cap at  600 s, score -0.193; soldiers  4, mould   3131, harvested      0, shots     0; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 26.25 ms a tick
+ sleeper  plague seed 31:         cap at  600 s, score +0.491; soldiers  8, mould     90, harvested  38668, shots    46; uses [0, 0, 0, 2, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 35.57 ms a tick
+ sleeper    farm seed 32:         cap at  600 s, score +0.317; soldiers  8, mould   2626, harvested  40514, shots   120; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 11.34 ms a tick
+ sleeper    loud seed 32:         cap at  600 s, score +0.495; soldiers  8, mould     31, harvested  33574, shots   203; uses [21, 4, 0, 0, 0, 1], tool kills [3665, 0, 0, 0, 0, 0]; 11.05 ms a tick
+ sleeper   siege seed 32:         cap at  600 s, score +0.305; soldiers  8, mould   2909, harvested  40814, shots   105; uses [0, 0, 6, 0, 0, 0], tool kills [0, 0, 6, 0, 0, 0]; 9.18 ms a tick
+ sleeper  random seed 33: squad wiped at  555 s, score -1.074; soldiers  0, mould   3339, harvested   6000, shots   891; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 3.97 ms a tick
+ sleeper randkit seed 33: squad wiped at  200 s, score -1.667; soldiers  0, mould   4376, harvested    300, shots   260; uses [1, 0, 1, 2, 2, 1], tool kills [0, 0, 0, 0, 0, 0]; 4.11 ms a tick
+ sleeper   quiet seed 32:         cap at  600 s, score +0.294; soldiers  8, mould   3207, harvested  41264, shots     0; uses [0, 0, 0, 0, 3, 15], tool kills [0, 0, 0, 0, 0, 0]; 20.63 ms a tick
+ sleeper  plague seed 32:         cap at  600 s, score +0.461; soldiers  8, mould    393, harvested  38152, shots   137; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 20.80 ms a tick
+ sleeper    loud seed 33:         cap at  600 s, score +0.496; soldiers  8, mould     14, harvested  31279, shots   635; uses [31, 4, 0, 0, 0, 1], tool kills [4864, 0, 0, 0, 0, 0]; 5.22 ms a tick
+ sleeper    farm seed 33:         cap at  600 s, score +0.298; soldiers  8, mould   3159, harvested  37264, shots    43; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 8.66 ms a tick
+ sleeper    idle seed 33:         cap at  600 s, score -0.158; soldiers  4, mould   2301, harvested      0, shots     0; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 25.17 ms a tick
+ sleeper   siege seed 33:         cap at  600 s, score +0.296; soldiers  8, mould   3215, harvested  37264, shots    32; uses [0, 0, 5, 0, 0, 0], tool kills [0, 0, 7, 0, 0, 0]; 11.43 ms a tick
+ sleeper  random seed 34: squad wiped at  288 s, score -1.520; soldiers  0, mould   2375, harvested    500, shots   336; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 3.82 ms a tick
+ sleeper   quiet seed 33:         cap at  600 s, score +0.299; soldiers  8, mould   3115, harvested  37314, shots     0; uses [0, 0, 0, 0, 8, 8], tool kills [0, 0, 0, 0, 0, 0]; 24.11 ms a tick
+ sleeper randkit seed 34: squad wiped at  312 s, score -1.481; soldiers  0, mould   4460, harvested    300, shots   275; uses [3, 2, 1, 1, 1, 4], tool kills [0, 0, 0, 0, 0, 0]; 11.55 ms a tick
+ sleeper  plague seed 33:         cap at  600 s, score +0.491; soldiers  8, mould     92, harvested  34250, shots    57; uses [0, 0, 0, 11, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 27.68 ms a tick
+ sleeper    farm seed 34:         cap at  600 s, score +0.214; soldiers  8, mould   5581, harvested  41914, shots   406; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 8.09 ms a tick
+ sleeper    loud seed 34:         cap at  600 s, score +0.496; soldiers  8, mould     12, harvested  34524, shots   318; uses [26, 4, 0, 0, 0, 1], tool kills [4592, 0, 0, 0, 0, 0]; 11.27 ms a tick
+ sleeper    idle seed 34:         cap at  600 s, score -0.278; soldiers  4, mould   6286, harvested      0, shots     0; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 27.90 ms a tick
+ sleeper   siege seed 34:         cap at  600 s, score +0.206; soldiers  8, mould   6009, harvested  41314, shots   405; uses [0, 0, 13, 0, 0, 0], tool kills [0, 0, 24, 0, 0, 0]; 8.44 ms a tick
+ sleeper  random seed 35:         cap at  600 s, score +0.185; soldiers  2, mould   3429, harvested   2500, shots   579; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 4.03 ms a tick
+ sleeper randkit seed 35: squad wiped at  375 s, score -1.376; soldiers  0, mould   1900, harvested   2650, shots   360; uses [1, 2, 2, 2, 7, 5], tool kills [0, 0, 0, 0, 0, 0]; 4.41 ms a tick
+ sleeper   quiet seed 34:         cap at  600 s, score +0.203; soldiers  8, mould   6094, harvested  42364, shots     0; uses [0, 0, 0, 0, 7, 20], tool kills [0, 0, 0, 0, 0, 0]; 28.23 ms a tick
+ sleeper    farm seed 35:         cap at  600 s, score +0.348; soldiers  8, mould   2053, harvested  42014, shots    76; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 10.00 ms a tick
+ sleeper    idle seed 35:         cap at  600 s, score -0.151; soldiers  4, mould   2159, harvested      0, shots     0; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 26.98 ms a tick
+ sleeper  plague seed 34:         cap at  600 s, score +0.491; soldiers  8, mould     87, harvested  38300, shots    92; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 33.66 ms a tick
+ sleeper    loud seed 35:         cap at  600 s, score +0.498; soldiers  8, mould      2, harvested  33356, shots   298; uses [34, 4, 0, 0, 0, 1], tool kills [3531, 0, 0, 0, 0, 0]; 15.00 ms a tick
+ sleeper   siege seed 35:         cap at  600 s, score +0.351; soldiers  8, mould   1989, harvested  40364, shots   137; uses [0, 0, 11, 0, 0, 0], tool kills [0, 0, 14, 0, 0, 0]; 9.16 ms a tick
+ sleeper  random seed 36: squad wiped at  406 s, score -1.324; soldiers  0, mould   3593, harvested   1750, shots   407; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 4.35 ms a tick
+ sleeper randkit seed 36: squad wiped at  286 s, score -1.523; soldiers  0, mould   2400, harvested    850, shots   340; uses [2, 4, 1, 2, 1, 1], tool kills [160, 0, 0, 0, 0, 0]; 14.43 ms a tick
+ sleeper   quiet seed 35:         cap at  600 s, score +0.343; soldiers  8, mould   2174, harvested  42014, shots     0; uses [0, 0, 0, 0, 1, 8], tool kills [0, 0, 0, 0, 0, 0]; 28.19 ms a tick
+ sleeper  plague seed 35:         cap at  600 s, score +0.490; soldiers  8, mould     91, harvested  37464, shots   104; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 26.29 ms a tick
+ sleeper    loud seed 36: mould wiped at  385 s, score +1.558; soldiers  8, mould      0, harvested  26679, shots   342; uses [36, 4, 0, 0, 0, 1], tool kills [4589, 0, 0, 0, 0, 0]; 5.79 ms a tick
+ sleeper    farm seed 36:         cap at  600 s, score +0.313; soldiers  8, mould   2713, harvested  44764, shots   289; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 12.18 ms a tick
+ sleeper    idle seed 36:         cap at  600 s, score -0.201; soldiers  4, mould   3359, harvested      0, shots     0; uses [0, 0, 0, 0, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 28.10 ms a tick
+ sleeper   siege seed 36:         cap at  600 s, score +0.303; soldiers  8, mould   2955, harvested  44214, shots   252; uses [0, 0, 7, 0, 0, 0], tool kills [0, 0, 18, 0, 0, 0]; 13.29 ms a tick
+ sleeper   quiet seed 36:         cap at  600 s, score +0.288; soldiers  8, mould   3362, harvested  45164, shots     0; uses [0, 0, 0, 0, 7, 8], tool kills [0, 0, 0, 0, 0, 0]; 25.66 ms a tick
+ sleeper  plague seed 36:         cap at  600 s, score +0.496; soldiers  8, mould     37, harvested  41872, shots   118; uses [0, 0, 0, 10, 0, 0], tool kills [0, 0, 0, 0, 0, 0]; 27.91 ms a tick
+
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                        sleeper
+    idle   -0.198 (0/10/0)     
+  random   -1.298 (0/1/9)     
+ randkit   -1.392 (0/1/9)     
+    farm   +0.300 (0/10/0)     
+    loud   +0.864 (4/6/0)     
+   quiet   +0.281 (0/10/0)     
+  plague   +0.489 (0/10/0)     
+   siege   +0.296 (0/10/0)     
+
+gate 1, paired by seed (higher / lower; sign test, Holm over 15):
+          sleeper farm vs idle: 10 / 0, p 0.0020, holds
+        sleeper farm vs random: 10 / 0, p 0.0020, holds
+       sleeper farm vs randkit: 10 / 0, p 0.0020, holds
+          sleeper loud vs idle: 10 / 0, p 0.0020, holds
+        sleeper loud vs random: 10 / 0, p 0.0020, holds
+       sleeper loud vs randkit: 10 / 0, p 0.0020, holds
+         sleeper quiet vs idle: 10 / 0, p 0.0020, holds
+       sleeper quiet vs random: 10 / 0, p 0.0020, holds
+      sleeper quiet vs randkit: 10 / 0, p 0.0020, holds
+        sleeper plague vs idle: 10 / 0, p 0.0020, holds
+      sleeper plague vs random: 10 / 0, p 0.0020, holds
+     sleeper plague vs randkit: 10 / 0, p 0.0020, holds
+         sleeper siege vs idle: 10 / 0, p 0.0020, holds
+       sleeper siege vs random: 10 / 0, p 0.0020, holds
+      sleeper siege vs randkit: 10 / 0, p 0.0020, holds
+
+gate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p, median paired difference):
+   sleeper: best loud (+0.864); farm 0/10 p 0.002 med -0.27, quiet 0/10 p 0.002 med -0.30, plague 1/9 p 0.021 med -0.02, siege 0/10 p 0.002 med -0.27

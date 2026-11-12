@@ -1,0 +1,64 @@
+sprawler random 29 -1.631 squad wiped
+sprawler randkit 29 -1.750 squad wiped
+sprawler farm 29 +0.197 cap
+sprawler idle 29 -0.340 cap
+sprawler loud 29 +1.458 mould wiped
+sprawler quiet 29 +0.116 cap
+sprawler idle 30 -1.297 squad wiped
+sprawler random 30 -1.060 squad wiped
+sprawler siege 29 +0.192 cap
+sprawler randkit 30 +0.310 cap
+sprawler farm 30 +0.228 cap
+sprawler plague 29 +1.673 mould wiped
+sprawler quiet 30 +0.056 cap
+sprawler loud 30 +0.495 cap
+sprawler siege 30 +0.227 cap
+sprawler random 31 +1.740 mould wiped
+sprawler idle 31 -1.071 squad wiped
+sprawler randkit 31 +1.560 mould wiped
+sprawler farm 31 +0.470 cap
+sprawler loud 31 +1.308 mould wiped
+sprawler plague 30 +1.482 mould wiped
+sprawler quiet 31 +0.053 cap
+sprawler siege 31 +0.342 cap
+sprawler random 32 +1.383 mould wiped
+sprawler farm 32 +0.329 cap
+sprawler idle 32 -0.418 cap
+sprawler plague 31 +1.428 mould wiped
+sprawler loud 32 +1.400 mould wiped
+sprawler quiet 32 +0.054 cap
+sprawler siege 32 +0.216 cap
+sprawler random 33 -1.605 squad wiped
+sprawler idle 33 -1.439 squad wiped
+sprawler randkit 32 +1.570 mould wiped
+sprawler farm 33 +0.099 cap
+sprawler loud 33 +0.129 cap
+sprawler plague 32 +1.428 mould wiped
+sprawler randkit 33 +1.560 mould wiped
+sprawler siege 33 +0.096 cap
+sprawler quiet 33 -0.053 cap
+sprawler random 34 -1.540 squad wiped
+sprawler randkit 34 -1.486 squad wiped
+sprawler plague 33 +1.542 mould wiped
+sprawler loud 34 +1.430 mould wiped
+sprawler farm 34 +0.153 cap
+sprawler idle 34 -0.404 cap
+sprawler quiet 34 +0.035 cap
+sprawler random 35 -1.592 squad wiped
+sprawler siege 34 +0.150 cap
+sprawler idle 35 -0.425 cap
+sprawler plague 34 +1.507 mould wiped
+sprawler farm 35 +0.137 cap
+sprawler loud 35 +0.127 cap
+sprawler quiet 35 +0.020 cap
+sprawler siege 35 +0.144 cap
+sprawler idle 36 -0.379 cap
+sprawler random 36 -1.154 squad wiped
+sprawler farm 36 +0.487 cap
+sprawler loud 36 +1.510 mould wiped
+sprawler plague 35 +1.347 mould wiped
+sprawler randkit 35 +0.447 cap
+sprawler siege 36 +0.487 cap
+sprawler quiet 36 +0.057 cap
+sprawler randkit 36 +1.663 mould wiped
+sprawler plague 36 +1.463 mould wiped

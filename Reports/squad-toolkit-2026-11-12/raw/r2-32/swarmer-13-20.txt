@@ -1,0 +1,64 @@
+swarmer randkit 13 -1.712 squad wiped
+swarmer random 13 -1.458 squad wiped
+swarmer farm 13 +0.092 cap
+swarmer loud 13 +0.082 cap
+swarmer quiet 13 +0.024 cap
+swarmer siege 13 +0.091 cap
+swarmer random 14 -1.550 squad wiped
+swarmer randkit 14 -1.652 squad wiped
+swarmer plague 13 +0.478 cap
+swarmer idle 14 -0.342 cap
+swarmer loud 14 +1.645 mould wiped
+swarmer quiet 14 +0.218 cap
+swarmer farm 14 +0.360 cap
+swarmer idle 13 -0.357 cap
+swarmer siege 14 +0.385 cap
+swarmer random 15 -1.360 squad wiped
+swarmer idle 15 -0.210 cap
+swarmer randkit 15 -1.527 squad wiped
+swarmer loud 15 +1.720 mould wiped
+swarmer farm 15 +0.242 cap
+swarmer quiet 15 +0.151 cap
+swarmer siege 15 +0.293 cap
+swarmer plague 14 +1.492 mould wiped
+swarmer randkit 16 -1.785 squad wiped
+swarmer random 16 -1.371 squad wiped
+swarmer farm 16 +0.171 cap
+swarmer loud 16 +0.261 cap
+swarmer idle 16 -0.396 cap
+swarmer quiet 16 +0.087 cap
+swarmer plague 15 +1.452 mould wiped
+swarmer siege 16 +0.171 cap
+swarmer randkit 17 -1.587 squad wiped
+swarmer random 17 -1.232 squad wiped
+swarmer plague 16 +1.708 mould wiped
+swarmer idle 17 -0.190 cap
+swarmer loud 17 +1.628 mould wiped
+swarmer farm 17 +0.265 cap
+swarmer quiet 17 +0.271 cap
+swarmer siege 17 +0.214 cap
+swarmer random 18 -1.406 squad wiped
+swarmer randkit 18 -1.563 squad wiped
+swarmer loud 18 +1.698 mould wiped
+swarmer farm 18 +0.256 cap
+swarmer idle 18 -0.350 cap
+swarmer quiet 18 +0.143 cap
+swarmer plague 17 +1.492 mould wiped
+swarmer siege 18 +0.255 cap
+swarmer random 19 -1.666 squad wiped
+swarmer randkit 19 -1.674 squad wiped
+swarmer farm 19 +0.159 cap
+swarmer loud 19 +0.211 cap
+swarmer idle 19 -0.335 cap
+swarmer quiet 19 +0.064 cap
+swarmer siege 19 +0.152 cap
+swarmer random 20 -1.660 squad wiped
+swarmer plague 18 +1.253 mould wiped
+swarmer randkit 20 -1.417 squad wiped
+swarmer idle 20 -0.370 cap
+swarmer loud 20 +1.690 mould wiped
+swarmer farm 20 +0.210 cap
+swarmer plague 19 +1.462 mould wiped
+swarmer quiet 20 +0.132 cap
+swarmer siege 20 +0.211 cap
+swarmer plague 20 +0.497 cap
