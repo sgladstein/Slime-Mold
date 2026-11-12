@@ -201,7 +201,7 @@ struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32 };
 // A shot's `r2` is its strike's, `ar2` its alarm's (`squad::SHOT_ALARM_R`).
 struct SqShot { start: u32, count: u32, r2: u32, ar2: u32 };
 struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
-struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
+struct Squad { units: array<SqUnit, 96>, uout: array<SqUnitOut, 96>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
 @group(0) @binding(42) var<storage, read_write> SQ: Squad;
 @group(0) @binding(43) var<storage, read_write> kills: array<atomic<u32>>;
 // The look (2026-11-11, src/world/look in the view): shots that landed this

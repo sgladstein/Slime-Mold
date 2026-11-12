@@ -38,7 +38,7 @@
 use super::big::{BigDish, LIFE_DEAD, LIFE_SPORE};
 
 /// Most units, shots and shot cells in one frame (the GPU's buffer sizes).
-pub const UNITS_MAX: usize = 64;
+pub const UNITS_MAX: usize = 96;
 pub const SHOTS_MAX: usize = 256;
 pub const PATH_MAX: usize = 16_384;
 /// The side of the blocks a unit aims at, in cells.

@@ -1596,7 +1596,7 @@ impl Engine {
         }
         if due && nunits > 0 {
             // The squad's frame end: reads, then the harvest.
-            dispatch(enc, &self.groups[(self.done % 2) as usize], &[(UNITS, 1), (HARVEST, 1)]);
+            dispatch(enc, &self.groups[(self.done % 2) as usize], &[(UNITS, squad::UNITS_MAX.div_ceil(64) as u32), (HARVEST, 1)]);
         }
         let group = &self.groups[(self.done % 2) as usize];
         for &(p, groups) in &self.draw_passes(soft) {
