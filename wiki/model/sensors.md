@@ -2,7 +2,7 @@
 title: Sensor angle and reach
 kind: mechanism
 status: current
-updated: 2026-11-12T20:50Z
+updated: 2026-11-12T22:05Z
 sources: [Reports/mould-review-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-probe-2026-11-07.md, handoff/project-memory/mould-depth-2026-11-09.md, Reports/slime-enemy-review-2026-11-12.md, Reports/slime-questions-2026-11-12/README.md]
 code: [Params::sensor_angle, Params::rotate_angle, Params::sensor_offset, Params::settle_seconds, Params::explore_angle, Dish::sensor_angle_now]
 ---
