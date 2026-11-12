@@ -230,3 +230,12 @@ walls and stood beside them, raised nothing, and lost its squad by 1:50 on
 8 of 8 (`...-v8-gaps-no-builder.txt`); the hand now gives the soldier
 `Order::Build`. The window's goal line says "thick mould outside in N
 places" for this rule.
+
+**Smoke test (tech lead, 14:13Z).** Mission 3's result rests on rules other
+threads own (wall health and bite, raise time, craters, core defence), so CI
+now plays each mission's best census hand on seed 1
+(`campaign::tests::each_missions_plan_still_wins`): Landfall claim met by
+3:20, First contact strike met by 7:00, The gaps walling with its bar at
+0.25+ by 3:00 and claim without walls under 0.2. The four rounds run side by
+side: 105 s on a 4-core box. The wall plan moved into the library
+(`campaign::wall_rim_gaps`) for it.

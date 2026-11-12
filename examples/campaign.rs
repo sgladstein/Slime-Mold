@@ -20,7 +20,7 @@ use pixels::wgpu;
 use slime_mould::gpu::block_on;
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::mould::big::BigDish;
-use slime_mould::mould::campaign::{decided_at, Goal, Mission, Tracker, BIN};
+use slime_mould::mould::campaign::{self, decided_at, Goal, Mission, Tracker, BIN};
 use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
@@ -238,7 +238,7 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
     let v = loop {
         match hand {
             "random" => random_hand(&mut g),
-            _ if gaps && walled.iter().any(|w| !w) && g.time() < 120.0 => gap_hand(&mut g, &mut walled),
+            _ if gaps && walled.iter().any(|w| !w) && g.time() < 120.0 => campaign::wall_rim_gaps(&mut g, &mut walled),
             _ => {
                 ai.as_mut().unwrap_or_else(|| panic!("unknown hand {hand}")).play(&mut g);
             }
@@ -317,39 +317,6 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
 
 /// The census's random hand (as `examples/larderworld.rs`): every 5 s one
 /// soldier gets a random order and stance; sometimes a buy or a wall.
-/// The Rim's gaps (rock ring radius 200 map cells round (512, 320), 16
-/// thick, gaps at 0, 90, 180, 270 degrees, half widths 14, 10, 14, 10:
-/// `sketch_maps.py`): soldier k walks to gap k's middle and walls its chord
-/// at the ring's centre line, 3 degrees past each edge.
-fn gap_hand<W: World>(g: &mut Game<W>, walled: &mut [bool; 4]) {
-    const GAPS: [(f32, f32); 4] = [(0.0, 14.0), (90.0, 10.0), (180.0, 14.0), (270.0, 10.0)];
-    let f = g.world.scale() / slime_mould::mould::map::MAP_SCALE;
-    let at = |deg: f32| {
-        let a = deg.to_radians();
-        ((512.0 + 200.0 * a.cos()) * f, (320.0 + 200.0 * a.sin()) * f)
-    };
-    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
-    for (i, &(deg, half)) in GAPS.iter().enumerate() {
-        if walled[i] {
-            continue;
-        }
-        let Some(&k) = live.get(i) else { return };
-        let mid = at(deg);
-        let s = g.soldiers[k];
-        if (s.x - mid.0).hypot(s.y - mid.1) < 3.0 * g.world.scale() {
-            // Placed walls rise only while a builder raises them (#122,
-            // `BuildRules::raise` 8 s a 10 dish cells): this soldier stays.
-            walled[i] = g.apply(Cmd::Wall(at(deg - half - 3.0), at(deg + half + 3.0)));
-            if walled[i] {
-                let b = g.buildings.len() - 1;
-                g.apply(Cmd::Order(k, Order::Build(b)));
-            }
-        } else if s.order != Order::Move(mid.0, mid.1) {
-            g.apply(Cmd::Order(k, Order::Move(mid.0, mid.1)));
-        }
-    }
-}
-
 fn random_hand<W: World>(g: &mut Game<W>) {
     if !(g.time() as u64).is_multiple_of(5) {
         return;
