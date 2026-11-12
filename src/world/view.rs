@@ -88,6 +88,8 @@ pub struct View {
     /// below 0 is empty or dead and draws no speck.
     alive: wgpu::Buffer,
     lives: bool,
+    /// Living walkers a cell for the look's body (0: the calibration's).
+    body_density: f32,
     /// The soldier sprites (`SPRITES`), RGBA a texel.
     atlas: wgpu::Buffer,
     /// Each shown cell's height and material, worked out once a frame by
@@ -164,6 +166,7 @@ impl View {
             specks,
             alive,
             lives: false,
+            body_density: 0.0,
             atlas,
             hcell,
             mcell,
@@ -251,6 +254,15 @@ impl View {
             None => (storage(&self.device, "alive", 16), false),
         };
         self.rebind();
+    }
+
+    /// The world's living walkers a cell (living walkers over its cells),
+    /// which sets how many walkers near a cell make the look's body thick
+    /// (`view.wgsl`, `body`). Leave it at 0 for the calibration's 5000 on
+    /// 512 x 320. The slot count would not do: a growing world has ten
+    /// slots a walker.
+    pub fn set_body_density(&mut self, walkers_per_cell: f32) {
+        self.body_density = walkers_per_cell.max(0.0);
     }
 
     /// Back to drawing the world frame as it is (the shading off).
@@ -347,7 +359,7 @@ impl View {
         for v in [cam.x, cam.y, cam.zoom, 0.0] {
             b.extend(v.to_le_bytes());
         }
-        for v in [mm.0, mm.1, mm.2, mm.3, self.shade as u32, self.n_walk, self.lives as u32, 0] {
+        for v in [mm.0, mm.1, mm.2, mm.3, self.shade as u32, self.n_walk, self.lives as u32, self.body_density.to_bits()] {
             b.extend(v.to_le_bytes());
         }
         // The shown cells and a margin: what `prep` works out.
