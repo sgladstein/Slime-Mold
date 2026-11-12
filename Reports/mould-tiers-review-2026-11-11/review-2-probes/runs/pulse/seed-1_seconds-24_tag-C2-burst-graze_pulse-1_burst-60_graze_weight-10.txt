@@ -1,0 +1,12 @@
+C2-burst-graze seed 1 t   2.0 alive 20000 meanx 128.3 p10 100.3 p50 127.7 p90 156.3 piles 6 fired 0 ms/tick 32.1
+C2-burst-graze seed 1 t   4.0 alive 20000 meanx 128.2 p10 97.9 p50 128.3 p90 165.3 piles 7 fired 0 ms/tick 35.2
+C2-burst-graze seed 1 t   6.0 alive 20000 meanx 128.0 p10 98.0 p50 127.4 p90 173.8 piles 7 fired 12336 ms/tick 37.0
+C2-burst-graze seed 1 t   8.0 alive 20000 meanx 127.5 p10 95.5 p50 126.0 p90 175.0 piles 7 fired 79 ms/tick 38.3
+C2-burst-graze seed 1 t  10.0 alive 20000 meanx 127.2 p10 88.8 p50 125.9 p90 175.8 piles 7 fired 0 ms/tick 39.5
+C2-burst-graze seed 1 t  12.0 alive 20000 meanx 126.7 p10 80.1 p50 124.5 p90 176.6 piles 7 fired 8828 ms/tick 40.1
+C2-burst-graze seed 1 t  14.0 alive 20000 meanx 126.4 p10 70.5 p50 124.6 p90 177.1 piles 7 fired 82 ms/tick 41.1
+C2-burst-graze seed 1 t  16.0 alive 20000 meanx 126.2 p10 61.8 p50 123.7 p90 177.8 piles 7 fired 0 ms/tick 41.6
+C2-burst-graze seed 1 t  18.0 alive 20000 meanx 125.8 p10 60.4 p50 122.1 p90 178.5 piles 7 fired 6222 ms/tick 40.7
+C2-burst-graze seed 1 t  20.0 alive 20000 meanx 125.7 p10 58.9 p50 121.8 p90 178.6 piles 7 fired 11 ms/tick 38.2
+C2-burst-graze seed 1 t  22.0 alive 20000 meanx 125.6 p10 58.4 p50 121.8 p90 179.2 piles 7 fired 0 ms/tick 36.1
+C2-burst-graze seed 1 t  24.0 alive 20000 meanx 125.4 p10 57.7 p50 120.6 p90 179.7 piles 7 fired 4478 ms/tick 34.3

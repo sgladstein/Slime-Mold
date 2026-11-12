@@ -1,0 +1,59 @@
+bigdish: preset sl-none seeds [1] seconds 60 threads 1
+params BigParams { scale: 4, substeps: 1, walkers: 20000, sensor_angle: 0.7853982, rotate_angle: 0.7853982, sensor_offset: 9.0, scent_offset: 36.0, step: 1.0, deposit: 5.0, keep: 0.9, trail_passes: 1, sense_every: 1, crowd: 1, scent_coarse: false, scent_keep: 0.97, food_deposit: 20.0, fed_scent: 0.15, piles: 7, pile_r: 6.0, blob: true, respawn: 0.0, blob_r: 40.0, haze: 0.0, sense_scale: 0.0, offset_mod: [0.0, 1.0], angle_mod: [0.0, 1.0], turn_mod: [0.0, 1.0], step_mod: [0.0, 1.0], deposit_cap: 0, sense_floor: 0.0, wander: 0.0, sick_steps: 0, immune_steps: 0, sick_catch: 1.0, sick_deposit: 1.0, sick_keep: 0.9, sick_speed: 1.0, sick_trail: 1.0, sick_reach: 1.0, sick_turn: 1.0, sick_seed_r: 0.0, sensor_r: 0, species: 0, species_avoid: 1.0, species_convert: 0.0, species_convert_r: 0, species_boost: 1.0, species_share: 0.0, graze_weight: 0.0, graze_eat: 0.05, graze_regrow: 0.002, species_zones: false, chance_exp: 0.0, species_cycle: false, species_next: 0.6, species_prev: -1.0, explore_steps: 0, explore_deposit: 0.05, explore_spread: 0.0, size_spread: 0.0, mix_share: 0.0, mix_reach: 1.0, mix_angle: 1.0, mix_turn: 1.0, mix_step: 1.0, mix_deposit: 1.0, species_sets: [], blocked_keep: false, blocked_reset: 0.01, blocked_retry: 0, blocked_deposit: 0.0, upkeep: 0.0, start_energy: 0.5, birth_energy: 1.0, birth_cost: 0.2, starve: 0.01, capacity: 0, energy_flow: 0.0, spore_rate: 0.0, spore_scent: 0.0, spore_alarm: 0.0, spore_burst: 0.0, spore_steps: 240, spore_speed: 3.0, spore_reach: 0.0, spore_deposit: 0.0, spore_land: 0.0, spore_rest: 1200, sleep_rate: 0.01, sleep_deposit: 0.3, wake_scent: 1.0, wake_alarm: 1.0, wake_steps: 240, sleep_rest: 600, alarm_keep: 0.98, alarm_weight: 3.0, alarm_relay: 20.0, tube: 1.0, crystal_charge: 0.0, crystal_eat: 0.05, crystal_regrow: 0.0, crystal_flow: 0.01, terrain_rock: 0.0, terrain_wet: 0.0, wet_step: 0.5, terrain_blob: 12.0, rect: false, wall_hp: 400.0, wall_bite: 1.0, wall_scent: 0.9, seed: 1 }
+== seed 1: 1024 x 640, 20000 walkers, 7 piles
+seed 1 sl-none t   2.0s  tube  3989.1  loops   93  width 5.29  reach  127.0  piles 4/7  strays 0.011  crystals 1.000  ms/tick 12.75
+seed 1 sl-none t   2.0s  contrast 2.72
+seed 1 sl-none t   2.0s  extent r50 112.9 r90 147.4
+seed 1 sl-none t   2.0s  life walk 2023 spore 0 dormant 17977 dead 0  held 2/7  bodies 2 big 3943  centre 128.1,79.9  near 4906  rim 0.000/0.000
+seed 1 sl-none t   4.0s  tube  3948.8  loops   94  width 5.12  reach  127.6  piles 4/7  strays 0.011  crystals 1.000  ms/tick 13.54
+seed 1 sl-none t   4.0s  contrast 3.04
+seed 1 sl-none t   4.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t   4.0s  life walk 392 spore 0 dormant 19608 dead 0  held 2/7  bodies 1 big 3925  centre 128.1,79.9  near 4915  rim 0.000/0.000
+seed 1 sl-none t   6.0s  tube  3942.4  loops   92  width 5.10  reach  127.3  piles 4/7  strays 0.011  crystals 1.000  ms/tick 14.11
+seed 1 sl-none t   6.0s  contrast 3.06
+seed 1 sl-none t   6.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t   6.0s  life walk 225 spore 0 dormant 19775 dead 0  held 2/7  bodies 2 big 3890  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t   8.0s  tube  3944.5  loops   92  width 5.10  reach  127.0  piles 4/7  strays 0.011  crystals 1.000  ms/tick 14.39
+seed 1 sl-none t   8.0s  contrast 3.06
+seed 1 sl-none t   8.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t   8.0s  life walk 196 spore 0 dormant 19804 dead 0  held 2/7  bodies 2 big 3891  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  10.0s  tube  3940.5  loops   92  width 5.10  reach  127.4  piles 4/7  strays 0.011  crystals 1.000  ms/tick 14.60
+seed 1 sl-none t  10.0s  contrast 3.07
+seed 1 sl-none t  10.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  10.0s  life walk 187 spore 0 dormant 19813 dead 0  held 2/7  bodies 2 big 3890  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  12.0s  tube  3945.3  loops   92  width 5.11  reach  127.4  piles 4/7  strays 0.011  crystals 1.000  ms/tick 14.68
+seed 1 sl-none t  12.0s  contrast 3.07
+seed 1 sl-none t  12.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  12.0s  life walk 184 spore 0 dormant 19816 dead 0  held 2/7  bodies 2 big 3892  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  14.0s  tube  3941.6  loops   92  width 5.10  reach  127.2  piles 4/7  strays 0.011  crystals 1.000  ms/tick 14.67
+seed 1 sl-none t  14.0s  contrast 3.06
+seed 1 sl-none t  14.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  14.0s  life walk 184 spore 0 dormant 19816 dead 0  held 2/7  bodies 2 big 3890  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  16.0s  tube  3941.2  loops   92  width 5.10  reach  127.2  piles 4/7  strays 0.011  crystals 1.000  ms/tick 14.67
+seed 1 sl-none t  16.0s  contrast 3.07
+seed 1 sl-none t  16.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  16.0s  life walk 181 spore 0 dormant 19819 dead 0  held 2/7  bodies 2 big 3890  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  18.0s  tube  3943.1  loops   92  width 5.10  reach  127.2  piles 4/7  strays 0.011  crystals 1.000  ms/tick 14.74
+seed 1 sl-none t  18.0s  contrast 3.07
+seed 1 sl-none t  18.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  18.0s  life walk 178 spore 0 dormant 19822 dead 0  held 2/7  bodies 2 big 3891  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  20.0s  tube  3942.6  loops   92  width 5.11  reach  127.4  piles 4/7  strays 0.011  crystals 1.000  ms/tick 14.79
+seed 1 sl-none t  20.0s  contrast 3.07
+seed 1 sl-none t  20.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  20.0s  life walk 178 spore 0 dormant 19822 dead 0  held 2/7  bodies 2 big 3892  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  22.0s  tube  3941.3  loops   92  width 5.11  reach  127.2  piles 4/7  strays 0.011  crystals 1.000  ms/tick 14.88
+seed 1 sl-none t  22.0s  contrast 3.06
+seed 1 sl-none t  22.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  22.0s  life walk 176 spore 0 dormant 19824 dead 0  held 2/7  bodies 1 big 3919  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  24.0s  tube  3941.4  loops   92  width 5.11  reach  127.2  piles 4/7  strays 0.011  crystals 1.000  ms/tick 15.04
+seed 1 sl-none t  24.0s  contrast 3.07
+seed 1 sl-none t  24.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  24.0s  life walk 174 spore 0 dormant 19826 dead 0  held 2/7  bodies 1 big 3918  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  26.0s  tube  3943.8  loops   92  width 5.11  reach  127.4  piles 4/7  strays 0.011  crystals 1.000  ms/tick 15.26
+seed 1 sl-none t  26.0s  contrast 3.06
+seed 1 sl-none t  26.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  26.0s  life walk 174 spore 0 dormant 19826 dead 0  held 2/7  bodies 1 big 3921  centre 128.1,79.9  near 4914  rim 0.000/0.000
+seed 1 sl-none t  28.0s  tube  3944.4  loops   92  width 5.11  reach  127.2  piles 4/7  strays 0.011  crystals 1.000  ms/tick 15.64
+seed 1 sl-none t  28.0s  contrast 3.07
+seed 1 sl-none t  28.0s  extent r50 112.8 r90 147.4
+seed 1 sl-none t  28.0s  life walk 171 spore 0 dormant 19829 dead 0  held 2/7  bodies 1 big 3921  centre 128.1,79.9  near 4914  rim 0.000/0.000

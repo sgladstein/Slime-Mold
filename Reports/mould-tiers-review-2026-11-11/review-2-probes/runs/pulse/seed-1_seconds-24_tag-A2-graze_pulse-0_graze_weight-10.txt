@@ -1,0 +1,12 @@
+A2-graze seed 1 t   2.0 alive 20000 meanx 128.3 p10 100.3 p50 127.7 p90 156.3 piles 6 fired 0 ms/tick 19.7
+A2-graze seed 1 t   4.0 alive 20000 meanx 128.2 p10 97.9 p50 128.3 p90 165.3 piles 7 fired 0 ms/tick 27.6
+A2-graze seed 1 t   6.0 alive 20000 meanx 128.2 p10 96.4 p50 128.2 p90 173.8 piles 7 fired 0 ms/tick 27.8
+A2-graze seed 1 t   8.0 alive 20000 meanx 128.1 p10 92.7 p50 126.6 p90 175.4 piles 7 fired 0 ms/tick 28.7
+A2-graze seed 1 t  10.0 alive 20000 meanx 127.8 p10 86.8 p50 126.7 p90 175.9 piles 7 fired 0 ms/tick 29.3
+A2-graze seed 1 t  12.0 alive 20000 meanx 127.7 p10 79.4 p50 126.2 p90 176.6 piles 7 fired 0 ms/tick 29.9
+A2-graze seed 1 t  14.0 alive 20000 meanx 127.4 p10 68.3 p50 125.5 p90 177.1 piles 7 fired 0 ms/tick 30.4
+A2-graze seed 1 t  16.0 alive 20000 meanx 127.0 p10 60.9 p50 124.6 p90 177.7 piles 7 fired 0 ms/tick 30.7
+A2-graze seed 1 t  18.0 alive 20000 meanx 126.7 p10 59.9 p50 123.9 p90 178.3 piles 7 fired 0 ms/tick 30.9
+A2-graze seed 1 t  20.0 alive 20000 meanx 126.4 p10 58.8 p50 122.6 p90 178.9 piles 7 fired 0 ms/tick 30.5
+A2-graze seed 1 t  22.0 alive 20000 meanx 126.2 p10 58.0 p50 122.9 p90 179.4 piles 7 fired 0 ms/tick 30.3
+A2-graze seed 1 t  24.0 alive 20000 meanx 126.0 p10 57.6 p50 122.6 p90 179.7 piles 7 fired 0 ms/tick 30.0
