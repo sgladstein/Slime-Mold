@@ -1,0 +1,27 @@
+larderworld map fork, tier plain (runner B, commit 879cd85; lure 2x over 3; stopped at the 30-min limit; compact: hand seed score)
+idle 5 -1.581 
+random 5 -1.370 
+ring 5 +0.362 
+farm 5 +0.362 
+turtle 5 +0.362 
+killzone 5 +0.362
+random 6 -1.382 
+idle 6 -0.223 
+farm 6 +0.356 
+ring 6 +0.354 
+turtle 6 +0.356 
+killzone 6 +0.354
+idle 7 -1.667 
+random 7 -1.571 
+ring 7 +0.344 
+turtle 7 +0.349 
+killzone 7 +0.344 
+farm 7 +0.340
+idle 8 -1.643 
+random 8 -1.494 
+farm 8 +0.356 
+ring 8 +0.354 
+turtle 8 +0.355 
+killzone 8 +0.354
+random 9 -1.634 
+idle 9 -1.164

@@ -161,6 +161,12 @@ impl Mission {
 
     /// The game's rules with this mission's keys set.
     pub fn rules(&self, mut r: Rules) -> Rules {
+        // No soft lock (design, owner's pick 04:44Z), now the Game's own
+        // rules (Larder PR #106): an overrun larder ends the mission, and a
+        // wiped or broke squad gets a free recruit. A mission file can
+        // still set either (0 turns it off).
+        r.overrun = OVERRUN_END;
+        r.reserve = RESERVE;
         for (k, v) in &self.rules {
             match k.as_str() {
                 "price" => r.price = *v,
@@ -169,6 +175,8 @@ impl Mission {
                 "soldier_cost" => r.soldier_cost = *v,
                 "cap" => r.cap = *v,
                 "smell" => r.smell = *v,
+                "overrun" => r.overrun = *v,
+                "reserve" => r.reserve = *v,
                 _ => unreachable!("parse checks the keys"),
             }
         }
@@ -176,12 +184,15 @@ impl Mission {
     }
 }
 
-const RULE_KEYS: [&str; 6] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell"];
+const RULE_KEYS: [&str; 8] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve"];
 
 /// Seconds from the design: a stuck or overrun run this long ends the
 /// mission; two stars need the goal before `TWO_STARS`.
 pub const STUCK_END: f32 = 30.0;
 pub const OVERRUN_END: f32 = 30.0;
+/// `Rules::reserve` for a mission: a free recruit every 20 game seconds
+/// while fewer than two soldiers live and the bank can't buy one.
+pub const RESERVE: f32 = 20.0;
 pub const TWO_STARS: f32 = 720.0;
 /// The arc's phase edges, game seconds (landing, contact, pressure, climax).
 pub const PHASES: [f32; 3] = [120.0, 360.0, 660.0];
@@ -194,9 +205,10 @@ pub enum Cause {
     /// The 15:00 cap (graded by the bar).
     Cap,
     SquadWiped,
-    /// Walkers on the larder with the bank empty for `OVERRUN_END`.
+    /// The Game's `End::Overrun`: walkers on the larder with the bank empty
+    /// for `Rules::overrun` (`OVERRUN_END` in a mission).
     Overrun,
-    /// No useful move for `STUCK_END` in a row.
+    /// `Game::stuck_run` reached `STUCK_END`.
     Stuck,
     /// The mould was wiped; the goal is met if the bar can still fill
     /// (every goal but `Squad`), else graded like the cap.
@@ -253,7 +265,6 @@ pub struct Tracker {
     pub longest_stall: u32,
     /// Walkers each game second, for "shrinking over 30 s".
     moulds: Vec<usize>,
-    overrun_run: u32,
     held: f32,
     /// Crystals the mould has been on (for `retake`).
     touched: Vec<bool>,
@@ -318,7 +329,6 @@ impl Tracker {
             stall_run: 0,
             longest_stall: 0,
             moulds: vec![],
-            overrun_run: 0,
             held: 0.0,
             touched: vec![],
             count: None,
@@ -428,35 +438,20 @@ impl Tracker {
         self.secs[phase] += 1;
         if useful {
             self.dead_run = 0;
-            self.stuck_run = 0;
         } else {
             self.dead[phase] += 1;
             self.dead_run += 1;
             self.longest_dead = self.longest_dead.max(self.dead_run);
-            // The Larder thread's census definition (examples/larderworld.rs,
-            // 04:49Z): a soldier alive, no shot, no food taken, and a bank
-            // below one soldier's price; here, as a dead second (no shot is
-            // no kill and no spend), and with a priced shot the owner's
-            // playtest could not afford. Free shots (`price` 0) mean a squad
-            // always has a move, so it is never stuck. To read the Game's own
-            // test once the Larder thread moves it there.
-            let broke = g.bank < r.soldier_cost && g.bank < r.price;
-            if alive > 0 && broke {
-                self.stuck[phase] += 1;
-                self.stuck_run += 1;
-                self.longest_stuck = self.longest_stuck.max(self.stuck_run);
-            } else {
-                self.stuck_run = 0;
-            }
         }
-
-        // Overrun: walkers on the larder with the bank empty.
-        let on_larder = grid.map(|gr| {
-            let (lx, ly) = g.larder;
-            let rad = r.core_r * g.world.scale();
-            walkers_where(gr, g.world.size(), |px, py| (px - lx).hypot(py - ly) <= rad)
-        });
-        self.overrun_run = if g.bank < 1.0 && on_larder.unwrap_or(0) > 0 { self.overrun_run + 1 } else { 0 };
+        // Stuck is the Game's own count since Larder PR #106 (`Game::stuck`:
+        // a soldier alive, no shot, no food taken, the bank below a
+        // soldier's price). Until then the tracker counted it here, as a
+        // dead second with the bank below both prices.
+        if g.stuck_run > 0 {
+            self.stuck[phase] += 1;
+        }
+        self.stuck_run = g.stuck_run;
+        self.longest_stuck = self.longest_stuck.max(self.stuck_run);
         self.last = snap(g, b);
 
         let met = b >= 1.0 && !matches!(self.mission.goal, Goal::Squad { .. } if alive == 0);
@@ -469,9 +464,11 @@ impl Tracker {
         let v = |cause, stars| Some(Verdict { cause, at: t, stars, best: self.best });
         self.verdict = if met {
             v(Cause::Goal, 1 + u8::from(t < TWO_STARS) + u8::from(bonus))
-        } else if alive == 0 || matches!(g.end, Some(End::SquadWiped(_))) {
+        } else if matches!(g.end, Some(End::SquadWiped(_))) {
+            // With the reserve on, an empty squad is no loss while a recruit
+            // can still come; the Game ends the round when none can.
             v(Cause::SquadWiped, 0)
-        } else if self.overrun_run as f32 >= OVERRUN_END {
+        } else if matches!(g.end, Some(End::Overrun(_))) {
             v(Cause::Overrun, 0)
         } else if self.stuck_run as f32 >= STUCK_END {
             v(Cause::Stuck, graded(self.best))

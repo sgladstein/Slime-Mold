@@ -67,7 +67,7 @@ use std::time::Instant;
 use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
-use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{Cmd, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
@@ -77,7 +77,7 @@ use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::team_colour;
-use slime_mould::world::ui::{theme, Card, Command, Ghost, Info, MenuItem, Model, Resource, Target};
+use slime_mould::world::ui::{theme, Card, Command, Ghost, Info, MenuItem, Model, Resource, Site, Target};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -100,6 +100,25 @@ const FREE: u32 = 7;
 const BUY: u32 = 8;
 const WALL: u32 = 9;
 const RALLY: u32 = 10;
+// The build page (Q): turret, lure, pump, outpost, the lures' switch, back.
+const BUILD_PAGE: u32 = 11;
+const TURRET: u32 = 12;
+const LURE: u32 = 13;
+const PUMP: u32 = 14;
+const OUTPOST: u32 = 15;
+const LURES: u32 = 16;
+const BACK: u32 = 17;
+
+/// The building a build-page command places.
+fn build_kind(id: u32) -> Option<Kind> {
+    match id {
+        TURRET => Some(Kind::Turret),
+        LURE => Some(Kind::Lure),
+        PUMP => Some(Kind::Pump),
+        OUTPOST => Some(Kind::Outpost),
+        _ => None,
+    }
+}
 
 /// How long a shot's ray and its muzzle flash show, real seconds (the world
 /// look's fight: `examples/worldlook.rs`).
@@ -198,6 +217,8 @@ struct App {
     steps: u32,
     report_at: Instant,
     saved: bool,
+    /// The command card shows the build page (Q).
+    build_page: bool,
     /// The mission being played, and the last game second it followed.
     mission: Option<Tracker>,
     mission_sec: u64,
@@ -255,6 +276,7 @@ impl App {
             steps: 0,
             report_at: Instant::now(),
             saved: false,
+            build_page: false,
             mission: None,
             mission_sec: 0,
             speaker: None,
@@ -482,6 +504,20 @@ impl App {
                             }
                         }
                     }
+                    BUILD_PAGE => self.build_page = true,
+                    BACK => self.build_page = false,
+                    LURES => {
+                        if let Some(g) = self.game.as_mut() {
+                            let lures: Vec<usize> = (0..g.buildings.len()).filter(|&k| g.buildings[k].alive && g.buildings[k].kind == Kind::Lure).collect();
+                            // All on if any is off, else all off.
+                            let on = lures.iter().any(|&k| !g.buildings[k].on);
+                            for k in lures {
+                                if g.buildings[k].on != on {
+                                    g.apply(Cmd::Toggle(k));
+                                }
+                            }
+                        }
+                    }
                     BUY => {
                         if let Some(g) = self.game.as_mut() {
                             if g.apply(Cmd::Buy) {
@@ -500,6 +536,16 @@ impl App {
                     let Some(g) = &self.game else { continue };
                     let on_core = (at.0 - g.core.0).hypot(at.1 - g.core.1) <= g.rules.core_r * g.world.scale() * 1.5;
                     self.order_all(&sel, |_| if on_core { Order::Attack } else { Order::Fight(at.0, at.1) });
+                }
+                HudEvent::Point { id, at } if build_kind(id).is_some() => {
+                    if let Some(g) = self.game.as_mut() {
+                        let kind = build_kind(id).unwrap();
+                        if let Some(why) = g.build_blocked(kind, at) {
+                            self.hud.alert(&format!("Can't build a {} there: {why}", kind.name()), None, theme::WARN);
+                        } else {
+                            g.apply(Cmd::Build(kind, at));
+                        }
+                    }
                 }
                 HudEvent::Line { id: BURN, from, to } => self.burn(&sel, from, to),
                 HudEvent::Line { id: WALL, from, to } => {
@@ -590,6 +636,11 @@ impl App {
             }
         }
         let t = g.time();
+        // A soldier the game made inside these steps (`Rules::reserve`'s
+        // free recruit) joins the notes too.
+        for s in &g.soldiers[self.looks.len()..] {
+            self.looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
+        }
         for (k, s) in g.soldiers.iter().enumerate() {
             let l = &mut self.looks[k];
             let (dx, dy) = (s.x - l.at.0, s.y - l.at.1);
@@ -719,6 +770,31 @@ impl App {
         }
         let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
         self.marks.ring(g.core, g.rules.core_r * sc, core);
+        // Buildings: plain marks until the graphics thread's sprites
+        // (`Model::buildings`). Their effects (a lure's scent, a pump's
+        // dimming crystal, a turret's hits) are the simulation's own fields.
+        for b in &g.buildings {
+            let Some(colour) = building_colour(b.kind) else { continue };
+            if !b.alive {
+                continue;
+            }
+            let half = g.rules.build.touch * sc * 0.7;
+            let alpha = if b.up() { 255 } else { 110 };
+            let c = [colour[0], colour[1], colour[2], alpha];
+            match b.kind {
+                Kind::Turret => self.marks.disc(b.at, half, c, true),
+                Kind::Lure => self.marks.disc(b.at, half * 0.8, if b.on { c } else { [120, 110, 100, alpha] }, true),
+                _ => self.marks.rect(b.at, (half, half), c, true),
+            }
+            if b.working && b.kind != Kind::Turret {
+                self.marks.ring(b.at, half * 1.6, [c[0], c[1], c[2], 140]);
+            }
+            let below = (half * zoom).max(2.0) + 5.0;
+            self.marks.bar(b.at, below, (7.0, 1.0), b.hp / b.max_hp.max(1.0), [90, 220, 110, 255], [70, 30, 30, 255]);
+            if !b.up() {
+                self.marks.bar(b.at, below + 3.0, (7.0, 0.8), b.built, [230, 230, 230, 255], [40, 40, 40, 255]);
+            }
+        }
         for (k, s) in g.soldiers.iter().enumerate() {
             if !s.alive {
                 continue;
@@ -918,12 +994,52 @@ impl App {
                 ..Command::new(RALLY, (2, 2), Icon::Move, "Rally point", KeyCode::KeyR)
             },
         ];
+        cmds.push(Command {
+            about: "Turrets, lures, pumps and outposts.".into(),
+            ..Command::new(BUILD_PAGE, (2, 2), Icon::Turret, "Build", KeyCode::KeyQ)
+        });
+        if self.build_page {
+            let b = r.build;
+            let lures = g.buildings.iter().filter(|q| q.alive && q.kind == Kind::Lure).count();
+            let room = g.standing() < b.max;
+            let place = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, cost: f32, about: String| Command {
+                target: Target::Point { radius: b.touch * sc },
+                cost: Some(format!("{cost:.0}")),
+                ready: g.bank >= cost && room,
+                why_not: if room { need(cost) } else { Some(format!("At most {} buildings", b.max)) },
+                about,
+                ..Command::new(id, slot, icon, name, key)
+            };
+            cmds = vec![
+                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
+                place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, format!("Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Burns {:.0} food a second while on.", b.lure_burn)),
+                place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("On a crystal: draws {:.0} food a second into the bank with no carriers. The mould smells the crystal.", b.pump_rate)),
+                place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
+                Command { ready: lures > 0, why_not: Some("No lures".into()), about: "Switch every lure on, or every lure off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures on/off", KeyCode::KeyJ) },
+                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
+            ];
+        }
         for c in &mut cmds {
             if c.ready {
                 c.why_not = None;
             }
         }
         m.commands = cmds;
+        m.buildings = g
+            .buildings
+            .iter()
+            .filter(|b| b.alive)
+            .map(|b| Site {
+                kind: b.kind.name(),
+                at: b.at,
+                to: if let Kind::Wall { to } = b.kind { Some(to) } else { None },
+                r: r.build.touch * sc,
+                hp: b.hp,
+                max_hp: b.max_hp,
+                built: b.built,
+                working: b.working,
+            })
+            .collect();
         (m.ghost_ok, m.ghost_note) = match ghost {
             Some((HARVEST, at, _)) => match g.crystal_at(at) {
                 Some((i, _)) => (true, Some(format!("harvest {}", crystal_name(i).to_lowercase()))),
@@ -940,6 +1056,13 @@ impl App {
                 }
             }
             Some((WALL, at, None)) if !g.reachable(at) => (false, Some("out of every soldier's range".into())),
+            Some((id, at, _)) if build_kind(id).is_some() => {
+                let kind = build_kind(id).unwrap();
+                match g.build_blocked(kind, at) {
+                    Some(why) => (false, Some(why.into())),
+                    None => (true, Some(format!("{:.0} food, click to build", g.build_price(kind, at)))),
+                }
+            }
             _ => (true, None),
         };
         if let Some(tr) = self.mission.as_ref().filter(|t| t.verdict.is_some()) {
@@ -955,6 +1078,7 @@ impl App {
             ("P".into(), "Pause".into()),
             ("Tab".into(), "Four times faster, or back".into()),
             ("N".into(), "Start the next map".into()),
+            ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
         ];
         m
     }
@@ -1129,6 +1253,17 @@ fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> (String, Vec<String>) {
 
 fn summary(g: &Game<GpuWorld>) -> String {
     format!("{} soldiers left, {:.0} food harvested, {} walkers killed with {} shots, {} walls", g.alive(), g.harvested, thousands(g.killed as usize), g.shots, g.walls)
+}
+
+/// A building's mark colour; None for walls, which the world draws.
+fn building_colour(k: Kind) -> Option<[u8; 4]> {
+    match k {
+        Kind::Turret => Some([150, 200, 255, 255]),
+        Kind::Lure => Some([255, 196, 90, 255]),
+        Kind::Pump => Some([90, 220, 230, 255]),
+        Kind::Outpost => Some([214, 196, 150, 255]),
+        Kind::Wall { .. } => None,
+    }
 }
 
 fn crystal_name(i: usize) -> String {
@@ -1480,6 +1615,12 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
         println!("  CPU: ground field {ground_ms:.2} ms (once a game second), model and HUD {:.3} ms a frame", t0.elapsed().as_secs_f64() * 1e3 / 20.0);
         let g = app.game.as_ref().unwrap();
         println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+        for b in &g.buildings {
+            println!("    {} at ({:.0}, {:.0}): hp {:.0} / {:.0}, built {:.1}, {}{}", b.kind.name(), b.at.0, b.at.1, b.hp, b.max_hp, b.built, if b.alive { "standing" } else { "worn down" }, if b.working { ", working" } else { "" });
+        }
+        if !g.buildings.is_empty() {
+            println!("    pumped {:.0} food, lures burnt {:.0}", g.pumped, g.lured);
+        }
     }
     if let (Some(path), Some((bank, tape))) = (wav, app.tape.as_ref()) {
         slime_mould::wav::write(Path::new(path), tape, 2, bank.sample_rate()).map_err(|e| format!("{path}: {e}"))?;
@@ -1633,6 +1774,40 @@ fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, queue: &wgpu
 
 /// The headless run's hand, once a game second.
 fn plan(g: &mut Game<GpuWorld>, hand: &str) {
+    // `build`: farm, with a pump on the larder's crystal, two turrets on
+    // the road to the core and a lure past them (the look at buildings).
+    if hand == "build" && g.time() > 1.0 {
+        let sc = g.world.scale();
+        let (c, l) = (g.core, g.larder);
+        let (dx, dy) = (c.0 - l.0, c.1 - l.1);
+        let d = dx.hypot(dy).max(1.0);
+        let (ux, uy) = (dx / d, dy / d);
+        let mut wants = vec![(Kind::Turret, (l.0 + ux * 7.0 * sc - uy * 4.0 * sc, l.1 + uy * 7.0 * sc + ux * 4.0 * sc)), (Kind::Turret, (l.0 + ux * 7.0 * sc + uy * 4.0 * sc, l.1 + uy * 7.0 * sc - ux * 4.0 * sc)), (Kind::Lure, (l.0 + ux * 13.0 * sc, l.1 + uy * 13.0 * sc))];
+        // The pump on the nearest big crystal (half the biggest's charge or
+        // more; the Fork's nearest is a small one a pump drains in 5 s).
+        let cs = g.world.crystals();
+        let big = cs.iter().map(|c| c.1).fold(0.0f32, f32::max) * 0.5;
+        if let Some(cc) = cs.iter().skip(1).filter(|c| c.1 >= big).map(|c| c.0).min_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1))) {
+            wants.insert(0, (Kind::Pump, cc));
+            // Soldier 0 harvests it, so the pump is in a soldier's reach.
+            if g.soldiers[0].alive && g.soldiers[0].order == Order::Hold {
+                g.apply(Cmd::Order(0, Order::Clear(cc.0, cc.1)));
+            }
+        }
+        for (kind, p) in wants {
+            if g.buildings.iter().any(|b| b.kind == kind && (b.at.0 - p.0).hypot(b.at.1 - p.1) < 3.0 * sc) {
+                continue;
+            }
+            let at = (0..=12).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
+                let a = k as f32 / 12.0 * std::f32::consts::TAU;
+                (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
+            }).find(|q| g.build_blocked(kind, *q).is_none());
+            if let Some(at) = at {
+                g.apply(Cmd::Build(kind, at));
+            }
+        }
+    }
+    let hand = if hand == "build" { "farm" } else { hand };
     if g.time() > 0.5 && hand == "farm" && g.bank >= 1200.0 {
         g.apply(Cmd::Buy);
     }
@@ -1734,8 +1909,13 @@ mod tests {
         assert!(wounded > 0, "no wound in the look after {} shots", g.shots);
         app.prepare();
         let m = app.model(None, None);
-        assert_eq!(m.commands.len(), 10, "the rally point is the tenth");
+        // The soldiers' nine, the rally point and the build page's key (Q).
+        assert_eq!(m.commands.len(), 11);
         assert!(m.end.is_none());
+        // The build page: turret, lure, pump, outpost, the lures' switch, back.
+        app.build_page = true;
+        let m = app.model(None, None);
+        assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Lure", "Pump", "Outpost", "Lures on/off", "Back"]);
     }
 
     /// A campaign mission plays its own map and rules, shows its goal as the
@@ -1749,12 +1929,17 @@ mod tests {
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();
         assert!(app.model(None, None).objective.is_some_and(|o| o.starts_with("Grow your squad to")));
+        // An idle squad meets nothing by a 1:00 cap. (A rush on the core was
+        // lost by 2:00 until the mission's reserve recruit, Larder PR #106:
+        // its squad now keeps coming back, and an idle one fires on the
+        // mould that reaches it, so neither ends early.)
+        app.game.as_mut().unwrap().rules.cap = 60.0;
         let step = 1.0 / 15.0;
         while app.mission.as_ref().unwrap().verdict.is_none() && app.game.as_ref().unwrap().time() < 120.0 {
-            plan(app.game.as_mut().unwrap(), "rush");
             app.step(step);
         }
-        let v = app.mission.as_ref().unwrap().verdict.expect("the rush is lost by 2:00");
+        let v = app.mission.as_ref().unwrap().verdict.expect("lost at the 1:00 cap");
+        assert_eq!(v.cause, slime_mould::mould::campaign::Cause::Cap);
         assert_eq!(v.stars, 0);
         app.prepare();
         assert_eq!(app.model(None, None).end.map(|e| e.0).as_deref(), Some("Mission lost"));

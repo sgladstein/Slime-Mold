@@ -164,3 +164,19 @@ for example "Keep the mould inside the Rim for 10:00 (50%; 2.4% outside, 5% allo
 the hold restarts when the share passes 5%. Whether a dense-body rule plays
 better than the share is for the Sprawler re-tune, where the mould moves
 differently.
+
+### Missions on the Game's own no-soft-lock rules (after Larder PR #106)
+
+The Larder thread's #106 put the design's no-soft-lock rules in the Game:
+`Rules::overrun` (the larder held with the bank under 1 for N s ends the
+round, `End::Overrun`), `Rules::reserve` (a free recruit every N s while
+fewer than two soldiers live and the bank can't buy one), and
+`Game::stuck_run`. A mission now turns on overrun 30 s and reserve 20 s
+(`campaign::OVERRUN_END`, `RESERVE`; a mission file can set `rule overrun`
+or `rule reserve`), and the tracker reads the Game's overrun end and stuck
+count instead of its own. A wiped squad is a loss only when the Game says so
+(no recruit can come). Seen in the window test: a rush on Landfall, lost by
+2:00 before, now keeps coming back and is not over by 6:40; the test now
+caps an idle round at 1:00. The window also gave a recruit made inside a
+step no look until the next frame (an index panic); fixed. Missions 1-3 are
+re-run once shot craters (Larder PR 2) and the tiers land.
