@@ -2720,7 +2720,7 @@ mod tests {
     /// The default mould is shape C, under the keys the command line gave.
     #[test]
     fn the_default_is_shape_c_under_given_keys() {
-        let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, wade: None };
+        let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None };
         default_shape(&mut args);
         assert_eq!(args.walkers, 25_000);
         let mut s = race_settings(1, 2, args.walkers);
