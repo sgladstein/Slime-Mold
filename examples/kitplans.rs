@@ -389,7 +389,7 @@ fn siege(g: &mut Game<BigDish>, kit: &mut Kit, st: &mut Plan) {
     }
 }
 
-fn play(seed: u64, tier: &str, hand: &str, rules: Rules, map: Option<&Map>, look: Option<&str>) -> Row {
+fn play(seed: u64, tier: &str, hand: &str, rules: Rules, kr: KitRules, map: Option<&Map>, look: Option<&str>) -> Row {
     let mut p = race_params(seed, 2, 5000);
     if let Some(t) = Tier::from_name(tier) {
         t.apply(&mut p);
@@ -400,7 +400,7 @@ fn play(seed: u64, tier: &str, hand: &str, rules: Rules, map: Option<&Map>, look
     };
     world.threads = 1;
     let mut g = Game::new(world, rules, seed);
-    let mut kit = Kit::new(KitRules::default());
+    let mut kit = Kit::new(kr);
     let mut st = Plan::default();
     let start = std::time::Instant::now();
     let tps = g.rules.tps as u64;
@@ -456,6 +456,7 @@ fn main() {
     let (mut threads, mut look) = (4usize, None::<String>);
     let mut rules = Rules { cap: 600.0, ..Rules::default() };
     let mut map = None::<(String, Map)>;
+    let mut kr = KitRules::default();
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
         match k {
@@ -469,6 +470,12 @@ fn main() {
             "cap" => rules.cap = v.parse().unwrap(),
             "price" => rules.price = v.parse().unwrap(),
             "look" => look = Some(v.into()),
+            "reach" => kr.reach = v.parse().unwrap(),
+            "blast_price" => kr.blast_price = v.parse().unwrap(),
+            "blast_r" => kr.blast_r = v.parse().unwrap(),
+            "germ_price" => kr.germ_price = v.parse().unwrap(),
+            "sick_upkeep" => kr.sick_upkeep = v.parse().unwrap(),
+            "gas_price" => kr.gas_price = v.parse().unwrap(),
             "map" => {
                 let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
                 map = Some((v.to_string(), Map::load(&dir, v).unwrap_or_else(|e| panic!("{e}"))));
@@ -480,7 +487,7 @@ fn main() {
         std::fs::create_dir_all(d).unwrap();
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
-    println!("kitplans {world}, cap {} s, seeds {seeds:?}, tiers {tiers:?}; rules {rules:?}; kit {:?}", rules.cap, KitRules::default());
+    println!("kitplans {world}, cap {} s, seeds {seeds:?}, tiers {tiers:?}; rules {rules:?}; kit {:?}", rules.cap, kr);
     let mapr = map.as_ref().map(|(_, m)| m);
     let mut jobs: Vec<(String, u64, String)> = Vec::new();
     for t in &tiers {
@@ -501,7 +508,7 @@ fn main() {
                 }
                 let (tier, seed, hand) = &jobs[j];
                 let lk = if *seed == seeds[0] { look.as_deref() } else { None };
-                let r = play(*seed, tier, hand, rules, mapr, lk);
+                let r = play(*seed, tier, hand, rules, kr, mapr, lk);
                 println!(
                     "{tier:>8} {hand:>7} seed {seed:>2}: {:>11} at {:>4.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, harvested {:>6.0}, shots {:>5}; uses {:?}, tool kills {:?}; {:.2} ms a tick",
                     r.end, r.t, r.score, r.alive, r.mould, r.harvested, r.shots, r.uses, r.killed, r.ms_tick

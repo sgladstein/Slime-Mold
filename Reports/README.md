@@ -384,5 +384,6 @@ move.
   satisfying"): a shot's impact weighs the walkers it killed (`FULL_KILL` 80, the rush's 90th centile), kill crackle, a pulse as
   the mould nears, hurt and fallen, the economy. Listener 2-3.5 us a frame, no new read-back. Then the mould's own voice (K): one breathing drone from its size,
   hunger, eating and gunfire. Page; levels await the owner's ears.
+- [squad-toolkit-2026-11-12.md](squad-toolkit-2026-11-12.md) — **the squad toolkit**: six tools from the mould's model on the CPU world (`mould::kit`): the crater keeps a blast's hole open (82 against 188 walkers back at 10 s, 8/8); the germ kills when sickness costs energy; gas stops eating and noise wakes it; mines weak; the det cord starves nothing without food flow. Four plans beat idle and random on every tier, but loud (blasts carried to the body) is best on all four: gate 2 fails; next a tier that answers a blast. Page and `raw/`.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

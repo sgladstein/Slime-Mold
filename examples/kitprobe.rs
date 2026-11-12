@@ -133,6 +133,27 @@ fn picture(g: &Game<BigDish>, kit: &Kit, path: &str) {
         put(x as i32, y as i32, [255, 220, 0, 255]);
     }
     img.save(path).expect("save");
+    // The walkers themselves, one dot a living walker (the graphics thread
+    // draws the slime's thickness from living walkers): a hole the trail
+    // picture blurs over shows here as empty ground.
+    let d = &g.world;
+    let mut occ = image::RgbaImage::from_pixel(d.w as u32, d.h as u32, image::Rgba([12, 16, 22, 255]));
+    for (i, &n) in d.occupancy().iter().enumerate() {
+        if !d.agar[i] {
+            occ.put_pixel((i % d.w) as u32, (i / d.w) as u32, image::Rgba([40, 34, 30, 255]));
+        } else if n > 0 {
+            occ.put_pixel((i % d.w) as u32, (i / d.w) as u32, image::Rgba([240, 190, 110, 255]));
+        }
+    }
+    if !d.scorch.is_empty() {
+        for (i, &c) in d.scorch.iter().enumerate() {
+            if c > 0 && d.occupancy()[i] == 0 && d.agar[i] {
+                let v = (30.0 + 50.0 * (c as f32 / d.p.scorch_full as f32).min(1.0)) as u8;
+                occ.put_pixel((i % d.w) as u32, (i / d.w) as u32, image::Rgba([v, 18, 14, 255]));
+            }
+        }
+    }
+    occ.save(path.replace(".png", "-occ.png")).expect("save");
 }
 
 fn game(seed: u64, warm: f32) -> (Game<BigDish>, Kit) {
