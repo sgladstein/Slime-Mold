@@ -823,6 +823,7 @@ fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
     let title = match end {
         End::MouldWiped(t) => format!("The mould is wiped out at {}", clock(t)),
         End::SquadWiped(t) => format!("The squad is lost at {}", clock(t)),
+        End::Overrun(t) => format!("The mould overran the larder at {}", clock(t)),
         End::Cap(s) if s > 0.5 => "Time: you took more of the crystals than the mould".to_string(),
         End::Cap(s) if s < 0.5 => "Time: the mould took more of the crystals".to_string(),
         End::Cap(_) => "Time: an even race".to_string(),

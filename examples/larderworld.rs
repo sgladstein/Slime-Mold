@@ -253,7 +253,6 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, tier: Option<Tier
     let mut ai = larder_world_ai::Hand::named(hand, &g);
     let (mut think_us, mut think_sum, mut thinks) = (0.0f64, 0.0f64, 0u32);
     let (mut near_sum, mut near_n, mut touch_at) = (0.0f64, 0u32, None::<f32>);
-    let (mut stuck, mut last_shots, mut last_taken) = (0u32, 0u32, 0.0f32);
     let end = g.play(|g| {
         let t = g.time();
         {
@@ -268,11 +267,6 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, tier: Option<Tier
             if touch_at.is_none() && g.soldiers.iter().any(|s| s.alive && s.touching > 0) {
                 touch_at = Some(t);
             }
-            let taken = g.harvested + g.soldiers.iter().map(|s| s.carry).sum::<f32>();
-            if !live.is_empty() && t > 0.0 && g.shots == last_shots && taken <= last_taken && g.bank < g.rules.soldier_cost {
-                stuck += 1;
-            }
-            (last_shots, last_taken) = (g.shots, taken);
         }
         if let Some((dir, every)) = look {
             if t - shot >= every || shot < 0.0 {
@@ -317,7 +311,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, tier: Option<Tier
         score1: g.score_w2b().expect("ended"),
         end: end.band().into(),
         t: match end {
-            End::SquadWiped(t) | End::MouldWiped(t) => t,
+            End::SquadWiped(t) | End::MouldWiped(t) | End::Overrun(t) => t,
             End::Cap(_) => g.rules.cap,
         },
         alive: g.alive(),
@@ -333,7 +327,10 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, tier: Option<Tier
         think_us,
         near: near_sum / near_n.max(1) as f64,
         touch_at: touch_at.unwrap_or(g.rules.cap),
-        stuck,
+        // Counted by the game since 2026-11-12 (`Game::stuck`), the same
+        // test the census ran here (it can count the round's last second,
+        // which the plan never saw).
+        stuck: g.stuck,
     }
 }
 
