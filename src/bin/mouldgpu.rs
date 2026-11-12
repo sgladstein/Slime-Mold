@@ -4170,4 +4170,94 @@ mod tests {
             assert!((lc - lg).abs() <= 0.02 * lc, "{name}: crystal charge left {lg} on the GPU, {lc} on the CPU");
         }
     }
+
+    /// A diagnostic, not a gate (`--ignored --nocapture`): the adapter's
+    /// float maths beside the CPU's, on the operations the walk and the
+    /// fields use. On 2026-11-12 the GTX 1070 left 19 of 24,822 walkers a
+    /// cell off the CPU's after four ticks of the life-cycle twin (lavapipe:
+    /// 0), and the one-seed game twins drifted 18% apart; this says which
+    /// operation differs and how often a walker's step lands in another
+    /// cell. `a * b + c` is compared with the CPU's unfused and fused
+    /// (`mul_add`) results, as a driver may contract it into one FMA.
+    #[test]
+    #[ignore]
+    fn the_adapters_maths_beside_the_cpus() {
+        let Some((device, queue)) = test_gpu() else { return };
+        const SRC: &str = "
+@group(0) @binding(0) var<storage, read> inp: array<f32>;
+@group(0) @binding(1) var<storage, read_write> outp: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) g: vec3<u32>) {
+    let i = g.x;
+    if (8u * i >= arrayLength(&inp)) { return; }
+    let x = inp[8u * i]; let y = inp[8u * i + 1u]; let h = inp[8u * i + 2u]; let st = inp[8u * i + 3u];
+    let v = inp[8u * i + 4u]; let a = inp[8u * i + 5u]; let b = inp[8u * i + 6u]; let c = inp[8u * i + 7u];
+    outp[8u * i] = cos(h);
+    outp[8u * i + 1u] = sin(h);
+    outp[8u * i + 2u] = exp(-v);
+    outp[8u * i + 3u] = pow(a, 0.7);
+    outp[8u * i + 4u] = sqrt(v);
+    outp[8u * i + 5u] = x + cos(h) * st;
+    outp[8u * i + 6u] = y + sin(h) * st;
+    outp[8u * i + 7u] = a * b + c;
+}";
+        let n = 1usize << 20;
+        let mut seed = 0x2545_F491_4F6C_DD1Du64;
+        let mut unit = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            (seed >> 40) as f32 / (1u64 << 24) as f32
+        };
+        let mut inp = Vec::with_capacity(8 * n);
+        for _ in 0..n {
+            // A walker's place on a 512 x 320 dish, a heading as the walk
+            // keeps it (turns add to it unwrapped), a step, a field value.
+            inp.extend([unit() * 512.0, unit() * 320.0, (unit() - 0.5) * 40.0, 0.5 + unit(), unit() * 20.0, unit(), unit() * 4.0, unit() * 64.0]);
+        }
+        use wgpu::util::DeviceExt;
+        let ib = device.create_buffer_init(&wgpu::util::BufferInitDescriptor { label: Some("maths in"), contents: &f32_bytes(&inp), usage: wgpu::BufferUsages::STORAGE });
+        let ob = device.create_buffer(&wgpu::BufferDescriptor { label: Some("maths out"), size: (inp.len() * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("maths"), source: wgpu::ShaderSource::Wgsl(SRC.into()) });
+        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some("maths"), layout: None, module: &module, entry_point: Some("main"), compilation_options: Default::default(), cache: None });
+        let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("maths"),
+            layout: &pipe.get_bind_group_layout(0),
+            entries: &[wgpu::BindGroupEntry { binding: 0, resource: ib.as_entire_binding() }, wgpu::BindGroupEntry { binding: 1, resource: ob.as_entire_binding() }],
+        });
+        let mut enc = device.create_command_encoder(&Default::default());
+        {
+            let mut pass = enc.begin_compute_pass(&Default::default());
+            pass.set_pipeline(&pipe);
+            pass.set_bind_group(0, &bg, &[]);
+            pass.dispatch_workgroups((n as u32).div_ceil(256), 1, 1);
+        }
+        queue.submit([enc.finish()]);
+        let out = floats(&read_back(&device, &queue, &ob));
+        let names = ["cos", "sin", "exp", "pow", "sqrt", "x + cos*st", "y + sin*st", "a*b + c"];
+        let mut diff = [0usize; 8];
+        let mut worst = [0f32; 8];
+        let (mut cells_off, mut fused_same, mut unfused_same) = (0usize, 0usize, 0usize);
+        for k in 0..n {
+            let q = &inp[8 * k..8 * k + 8];
+            let (x, y, h, st, v, a, b, c) = (q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);
+            let cpu = [h.cos(), h.sin(), (-v).exp(), a.powf(0.7), v.sqrt(), x + h.cos() * st, y + h.sin() * st, a * b + c];
+            let gpu = &out[8 * k..8 * k + 8];
+            for j in 0..8 {
+                if gpu[j].to_bits() != cpu[j].to_bits() {
+                    diff[j] += 1;
+                    worst[j] = worst[j].max((gpu[j] - cpu[j]).abs());
+                }
+            }
+            if gpu[5].floor() != cpu[5].floor() || gpu[6].floor() != cpu[6].floor() {
+                cells_off += 1;
+            }
+            fused_same += (gpu[7].to_bits() == a.mul_add(b, c).to_bits()) as usize;
+            unfused_same += (gpu[7].to_bits() == (a * b + c).to_bits()) as usize;
+        }
+        for j in 0..8 {
+            eprintln!("{:>11}: {} of {n} differ from the CPU's bits, worst by {:.2e}", names[j], diff[j], worst[j]);
+        }
+        eprintln!("a step lands in another cell for {cells_off} of {n}; a*b + c matches the CPU's unfused result {unfused_same} times and the fused {fused_same}");
+    }
 }
