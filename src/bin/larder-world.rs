@@ -73,6 +73,16 @@
 //! spread (`Rules::spread`); `core_pull=P` how strongly soldiers near the
 //! mould's core draw it (`Rules::core_pull`; 0 is off); `wade=W` how many
 //! walkers touching a soldier halve its speed (`Rules::wade`; 0 is off).
+//!
+//! **Shapes to playtest** (owner, 2026-11-12 20:21Z: "I will playtest the
+//! shapes"): `shape=a|b|c|d|e` plays one of the five films on the shapes
+//! page (`Reports/slime-questions-2026-11-12/`): A today's 5,000 walkers;
+//! B a mesh everywhere (25,000 scattered, no food scent); C a sheet with
+//! trunks (25,000 grown from home); D as C with 22.5-degree sensors 5
+//! cells out (sheet, then mesh, then trunks); E as C with a slow thin
+//! front. Put it first: keys after it change it. A walker's fight weight
+//! follows the walkers a cell (`Rules::mass`: 5,000 at scale 2 count 1
+//! each, so the dense shapes hurt like today's mould); `mass=M` sets it.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -184,6 +194,23 @@ struct Args {
     /// `wade=W`: walkers touching a soldier that halve its speed
     /// (`Rules::wade`; 0 turns the slowdown in thick slime off).
     wade: Option<f32>,
+    /// `mass=M`: one walker's fight weight (`Rules::mass`); None follows the
+    /// start walkers a cell (`Rules::mass_for`).
+    mass: Option<f32>,
+}
+
+/// The engine keys of a shape on the shapes page (`shape=`), with its start
+/// walkers. The films held one walker a cell with `capacity=50000`.
+fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'static str)])> {
+    const DENSE: [(&str, &str); 2] = [("upkeep", "0.0002"), ("capacity", "50000")];
+    Some(match name {
+        "a" => (5_000, &[]),
+        "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),
+        "c" => (25_000, &DENSE),
+        "d" => (25_000, &[DENSE[0], DENSE[1], ("sensor_angle", "22.5"), ("sensor_offset", "5")]),
+        "e" => (25_000, &[DENSE[0], DENSE[1], ("step", "0.15"), ("trail_scale", "0.02"), ("step_by", "0.85:2")]),
+        _ => return None,
+    })
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -382,6 +409,7 @@ impl App {
                 core_tier = Tier::from_name(v);
             }
         }
+        let walkers = s.walkers;
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
         let world = match &map_name {
             None if a.own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
@@ -403,6 +431,7 @@ impl App {
         if let Some(p) = a.core_pull {
             rules.core_pull = p;
         }
+        rules.mass = a.mass.unwrap_or(Rules::mass_for(walkers, a.scale));
         if let Some(w) = a.wade {
             rules.wade = w;
         }
@@ -895,8 +924,12 @@ impl App {
                 self.marks.ring((x, y), 1.2 * sc, [214, 196, 150, 160]);
             }
         }
-        let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
-        self.marks.ring(g.core, g.rules.core_r * sc, core);
+        // The core ring marks a home that can be taken, so a headless mould
+        // (the default since 11-12 20:21Z: no king) shows none.
+        if g.core_rule.kind != CoreKind::Headless {
+            let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
+            self.marks.ring(g.core, g.rules.core_r * sc, core);
+        }
         // Buildings: sprites in soldier A's style (`Marks::building`,
         // src/world/sprites/buildings.svg), drawn from the game's state:
         // rising as they are built, darkening as they are hurt, the lamp
@@ -1003,7 +1036,13 @@ impl App {
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
             objective: Some(if let Some(tr) = &self.mission {
                 tr.progress_line()
-            } else if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
+            } else if g.core_rule.kind == CoreKind::Headless {
+                "Wipe out the mould, or out-harvest it and cut it down by 15:00".into()
+            } else if g.core_down.is_some() {
+                "Core taken: wipe out the mould, or cut it down by 15:00".into()
+            } else {
+                "Take the mould's core, or out-harvest it and cut it down by 15:00".into()
+            }),
             idle: g.soldiers.iter().filter(|s| s.alive && s.order == Order::Hold).count(),
             ..Model::default()
         };
@@ -2349,7 +2388,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, own: false, wade: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -2370,6 +2409,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if args.own && args.map.as_deref() == Some("fork") {
                     args.map = None; // the default map gives way to the garden's race world
                 }
+            }
+            "mass" => args.mass = Some(v.parse()?),
+            "shape" => {
+                let (walkers, keys) = shape_keys(v).ok_or("shape=a|b|c|d|e (the shapes page's films)")?;
+                args.walkers = walkers;
+                args.keys.extend(keys.iter().map(|(k, v)| (k.to_string(), v.to_string())));
             }
             "wade" => args.wade = Some(v.parse()?),
             "aim" => {
@@ -2402,7 +2447,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater, aim, core_pull, wade; look, hand, at, screen, sound, holes, centre; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade; look, hand, at, screen, sound, holes, centre; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
@@ -2428,6 +2473,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use super::*;
 
+    /// Every shape on the shapes page (`shape=`) is engine keys the race
+    /// world takes, and only A is today's 5,000 walkers.
+    #[test]
+    fn every_shape_is_keys_the_engine_takes() {
+        for name in ["a", "b", "c", "d", "e"] {
+            let (walkers, keys) = shape_keys(name).unwrap();
+            let mut s = race_settings(1, 2, walkers);
+            for (k, v) in keys {
+                slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("shape {name}: {k}={v}: {e}"));
+            }
+            assert_eq!(walkers == 5_000, name == "a", "{name}");
+        }
+        assert!(shape_keys("f").is_none());
+        assert_eq!((Rules::mass_for(5_000, 2), Rules::mass_for(1_250, 1), Rules::mass_for(25_000, 2)), (1.0, 1.0, 0.2));
+    }
+
     /// The window plays the real game: soldiers sent at the core fire,
     /// their shots kill walkers, the window draws each shot's ray, and the
     /// engine leaves the look's wound where a shot cut (the squad's `cut`
@@ -2436,7 +2497,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, own: false, wade: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -2467,7 +2528,7 @@ mod tests {
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None, own: false, wade: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None }, (640, 400), &device, &queue).unwrap();
         assert_eq!(app.name, "flats");
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();
@@ -2510,7 +2571,7 @@ mod tests {
     /// 256 x 160 dish, 1,250 walkers): 5-9 s a round on software Vulkan,
     /// against 20-24 s at scale 2 (2026-11-12).
     fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
-        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None, own: false, wade: None };
+        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None };
         let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast, passes: 0, settle: false, squad1: false, spread: true };
         let t0 = Instant::now();
         let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
@@ -2564,11 +2625,11 @@ mod tests {
     #[test]
     fn the_window_plays_the_players_own_mould() {
         let Some((device, queue)) = smoke_gpu() else { return };
-        let args = Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, own: true, wade: None };
+        let args = Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None };
         let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true };
         let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("own=1: {e}"));
         assert!(last.contains("t "), "{last}");
-        let app = offscreen(Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, own: true, wade: None }, (320, 200), &device, &queue).unwrap();
+        let app = offscreen(Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None }, (320, 200), &device, &queue).unwrap();
         let g = app.game.as_ref().unwrap();
         assert_eq!(g.world.counts_by_side(), (625, 625));
         assert_eq!(g.mould, 625, "the game's mould is the enemy's");
@@ -2580,7 +2641,7 @@ mod tests {
     #[test]
     fn a_shot_from_a_soldier_with_no_note_yet_draws() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, own: false, wade: None }, (320, 200), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None }, (320, 200), &device, &queue).unwrap();
         let g = app.game.as_mut().unwrap();
         let s = *g.soldiers.last().unwrap();
         g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0 }];

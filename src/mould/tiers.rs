@@ -161,19 +161,21 @@ impl Tier {
     }
 
     /// The tier's core (`larder_world::Core`), or None for the plain
-    /// mould's (`Core::of(&rules)`: fixed, `Rules::core_secs`,
-    /// `Rules::core_pull`). Every tier is None for now; the tiers thread
-    /// fills in its own (the Sprawler headless, the Grudge's pull) once the
-    /// core-defence PR is in. Read once, by `Game::with_tier`.
+    /// mould's (`Core::of(&rules)`: headless, `Rules::core_pull`). Every
+    /// mould is headless since the owner's 2026-11-12 20:21Z ruling ("remove
+    /// the king rule ... Headless"), so the Sprawler differs only in pulling
+    /// nothing and the Grudge only in pulling harder. Read once, by
+    /// `Game::with_tier`.
     pub fn core(self) -> Option<super::larder_world::Core> {
         use super::larder_world::{Core, CoreKind, Rules};
         let plain = Core::of(&Rules::default());
         match self {
-            // No core: births go on wherever a walker is fed, so only a
-            // wipe ends it, and a strike on its start takes nothing (the
-            // campaign's mission 3 contains it with walls). Dev seeds 1-4,
-            // craters on: strike +0.96 mean against farm +0.94 and wall
-            // +0.91, level; random lost its squad on 2.
+            // No core and no pull: births go on wherever a walker is fed,
+            // so only a wipe ends it, and its start draws nothing onto a
+            // squad there (the campaign's mission 3 contains it with
+            // walls). Measured when the plain mould still had a fixed core:
+            // dev seeds 1-4, craters on: strike +0.96 mean against farm
+            // +0.94 and wall +0.91, level; random lost its squad on 2.
             Tier::Sprawler => Some(Core { kind: CoreKind::Headless, pull: 0.0, ..plain }),
             // The whole body converges on soldiers at its core: random's
             // squad wiped on 4 of 4 dev seeds (at 8 too).
@@ -298,7 +300,7 @@ mod tests {
             use crate::mould::larder_world::{Core, CoreKind, Rules};
             let plain = Core::of(&Rules::default());
             assert_eq!(Tier::Sprawler.core().map(|c| c.kind), Some(CoreKind::Headless));
-            assert!(Tier::Grudge.core().is_some_and(|c| c.kind == CoreKind::Fixed && c.pull > plain.pull));
+            assert!(Tier::Grudge.core().is_some_and(|c| c.kind == CoreKind::Headless && c.pull > plain.pull));
             assert!(Tier::Trunk.core().is_none() && Tier::Drifter.core().is_none());
         }
         assert!(on(Tier::Grudge).scar_weight > 0.0 && on(Tier::Grudge).alarm_weight > 0.0);
