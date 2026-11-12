@@ -2279,7 +2279,7 @@ fn hit(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A burst's crater: the longer of the cell's and the burst's, on agar,
     // as `scorch_disc` (its own radius: a kit blast's crater, 7 dish
     // cells, is wider than its kill, 6).
-    if (P.kcs > 0.0 && d2 <= P.kcr * P.kcr && agar[i] != 0u) { crater[i] = max(crater[i], P.kcs); }
+    if (P.kcs > 0.0 && d2 <= P.kcr * P.kcr && agar[i] != 0u) { atomicMax(&crater[i], bitcast<u32>(P.kcs)); }
 }
 
 // The strike's walkers: every living one within `kr` that holds a cell
