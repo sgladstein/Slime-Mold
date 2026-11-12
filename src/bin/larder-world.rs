@@ -44,7 +44,9 @@
 //! crackle, a pulse quickens as the mould closes on the squad, soldiers
 //! groan when hurt; all read off the game, so sound on and off play the
 //! same round. On by default where the build has a device; O turns it off
-//! and on.
+//! and on. The mould has a voice of its own, one breathing drone for the
+//! whole body (its size, hunger, eating, flinching at gunfire); K turns
+//! just that off and on, `voice=0` starts without it.
 //!
 //! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
@@ -103,6 +105,9 @@ struct Args {
     seed: u64,
     scale: usize,
     walkers: usize,
+    /// The mould's voice at the start (`voice=0` turns it off; K in the
+    /// window).
+    voice: bool,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -288,7 +293,11 @@ impl App {
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.bank_log.clear();
+        let voice = self.listener.as_ref().is_none_or(|l| l.voice);
         self.listener = Some(WorldListener::new(&game));
+        if let Some(l) = self.listener.as_mut() {
+            l.voice = voice && self.args.voice;
+        }
         self.game = Some(game);
         if let Some(w) = &self.window {
             w.set_title(&format!("Larder World: {} (seed {})", title_case(&self.name), self.args.seed));
@@ -845,6 +854,13 @@ impl App {
                     v.minimap = !v.minimap;
                 }
             }
+            KeyCode::KeyK => {
+                if let Some(l) = self.listener.as_mut() {
+                    l.voice = !l.voice;
+                    let what = if l.voice { "The mould's voice on" } else { "The mould's voice off" };
+                    self.hud.alert(what, None, theme::ACCENT);
+                }
+            }
             KeyCode::KeyO => {
                 self.sound_on = !self.sound_on;
                 if let Some(sp) = self.speaker.as_mut() {
@@ -1124,6 +1140,7 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     }
     // The recording's ear: on the squad, at the window's opening zoom.
     let span = app.camera.span();
+    let mut voice_at = u64::MAX;
     let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
     let mut last_sec = u64::MAX;
     for &t in at {
@@ -1141,6 +1158,15 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
                 let n = alive.len().max(1) as f32;
                 let centre = if alive.is_empty() { g.larder } else { (alive.iter().map(|p| p.0).sum::<f32>() / n, alive.iter().map(|p| p.1).sum::<f32>() / n) };
                 app.hear(step, Ear { centre, half: (span.0 / 2.0, span.1 / 2.0) });
+                // The mould's voice's inputs every 5 game seconds, beside
+                // the recording.
+                let g = app.game.as_ref().unwrap();
+                let sec = (g.time() + 1e-3) as u64;
+                if sec.is_multiple_of(5) && sec != voice_at {
+                    voice_at = sec;
+                    let s = app.listener.as_ref().unwrap().stats;
+                    println!("  voice t {sec:>3} s: mould {}, growth {:+.4}/s, hunger {:.2}, eating {:.5}/s, kills {:.0}/s, inhales {}", g.mould, s.growth, s.hunger, s.eating, s.kills_per_sec, s.inhales);
+                }
             }
         }
         let g = app.game.as_ref().unwrap();
@@ -1252,7 +1278,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
@@ -1264,12 +1290,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "look" => look = Some(v.to_string()),
             "hand" => hand = v.to_string(),
             "sound" => wav = Some(v.to_string()),
+            "voice" => args.voice = v != "0",
             "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
             }
-            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers; look, hand, at, screen, sound)").into()),
+            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers, voice; look, hand, at, screen, sound)").into()),
         }
     }
     if let Some(dir) = look {
@@ -1294,7 +1321,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
