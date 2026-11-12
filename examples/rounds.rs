@@ -152,13 +152,27 @@ fn play(seed: u64, tier: &str, load: &str, hand: &str, rules: Rules, rr: RoundRu
         }
         g.step();
         rd.after_step(&mut g);
-        // Frames for a GIF: every 5th step (a third of a game second) from
-        // 30 s to 90 s, at half size.
+        // Frames for a GIF: every 5th step (a third of a game second) for
+        // 60 game seconds from LOOK_FROM (default 30), full size, each
+        // living soldier marked by a white 3 x 3 square (a unit, not an
+        // effect: what the rounds did is only in the mould).
         if let Some(dir) = look {
             let t = g.time();
-            if (30.0..90.0).contains(&t) {
+            let from: f32 = std::env::var("LOOK_FROM").ok().and_then(|v| v.parse().ok()).unwrap_or(30.0);
+            if (from..from + 60.0).contains(&t) {
                 if frame.is_multiple_of(5) {
-                    g.world.image(2).save(format!("{dir}/{tier}-{load}-s{seed}-{frame:05}.png")).unwrap();
+                    let mut im = g.world.image(1);
+                    for s in g.soldiers.iter().filter(|s| s.alive) {
+                        for dy in -1i32..=1 {
+                            for dx in -1i32..=1 {
+                                let (x, y) = (s.x as i32 + dx, s.y as i32 + dy);
+                                if x >= 0 && y >= 0 && (x as u32) < im.width() && (y as u32) < im.height() {
+                                    im.put_pixel(x as u32, y as u32, image::Rgba([255, 255, 255, 255]));
+                                }
+                            }
+                        }
+                    }
+                    im.save(format!("{dir}/{tier}-{load}-s{seed}-{frame:05}.png")).unwrap();
                 }
                 frame += 1;
             }

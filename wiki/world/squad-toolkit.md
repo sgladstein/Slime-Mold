@@ -2,9 +2,9 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12T15:33Z
-sources: [Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
-code: [Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
+updated: 2026-11-12T17:20Z
+sources: [Reports/rounds-2026-11-12.md, Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
+code: [Burst, Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
 ---
 
 # The squad toolkit
@@ -38,14 +38,18 @@ by the mean; not yet significant). Gas and the det cord are never best
 ([round 2](../../Reports/squad-toolkit-round2-2026-11-12.md)). Pictures and
 counts are on the [page](https://claude.ai/artifact/Vr6ysJedMVtEa6XXEA1pTC).
 
-Idea, not built (2026-11-12): **rounds**, after the ammo-card guns of
+Built on the CPU (2026-11-12, owner: "Build it"): **rounds**, after the ammo-card guns of
 Flashes of Chaos and Noita's wands. A soldier's or turret's shot becomes up to
 four cards in order (payloads such as crater, bait, alarm, germ, sleep, scar;
 modifiers such as pierce, scatter, quiet; triggers that read the mould, such as
 "when thick" or carried along the tubes), so the toolkit's tools ride on shots
 and the best loadout can vary by tier
 ([research](../../Reports/flashes-of-chaos-guns-2026-11-12.md)); reviewers: compile rounds onto
-this toolkit's burst list, not a new system.
+this toolkit's burst list, not a new system. First census
+([rounds](../../Reports/rounds-2026-11-12.md), `src/mould/rounds.rs`): the
+germ, on its own or as plague, beats no round 8/0 on plain, Swarmer and Sporer
+and the Sleeper ignores every round, so the best loadout does not yet vary by
+tier; next is a counter to the germ.
 
 ## Owner's word
 

@@ -1,0 +1,92 @@
+rounds census, race world, hand farm, cap 300 s, seeds [5, 6, 7, 8, 9, 10, 11, 12], tiers ["sleeper"], loads ["none", "blast", "gas", "germ", "trap", "lull", "plague", "rand"]; round rules RoundRules { recharge: 2.0, payload_weight: 1.0, card_weight: 0.5, wide_weight: 1.0, wide: 1.6, scatter_n: 3, scatter_r: 0.6, scatter_d: 1.5, delay_secs: 3.0, thick_n: 40, thick_r: 5.0, thick_secs: 30.0, kit: KitRules { reach: 24.0, blast_r: 6.0, blast_alarm: 50.0, crater_r: 7.0, crater_secs: 20.0, blast_price: 60.0, mine_r: 5.0, mine_trigger: 40, mine_price: 80.0, cord_r: 2.5, cord_every: 2.0, cord_price: 3.0, cord_max: 48.0, germ_r: 5.0, sick_secs: 6.0, immune_secs: 40.0, sick_upkeep: 60.0, sick_catch: 0.2, sick_deposit: 1.0, sick_keep: 0.9, germ_price: 300.0, gas_r: 12.0, gas_secs: 20.0, gas_death: 0.0, gas_price: 150.0, reek: 4.0, carry_max: 5, carry_each: 1, tool_weight: 50.0, restock_r: 6.0, alarm_keep: 0.95 } }
+ sleeper                      gas seed  5:         cap at  300 s, score +0.308; soldiers  8, mould   2987; round gas, casts [0, 46, 0], round kills 0 of 418, spent 6900, broke 0, dropped 0; 5.46 ms a tick
+ sleeper                    blast seed  5:         cap at  300 s, score +0.309; soldiers  8, mould   2978; round blast, casts [16, 0, 0], round kills 17 of 46, spent 960, broke 0, dropped 0; 7.42 ms a tick
+ sleeper                     none seed  5:         cap at  300 s, score +0.309; soldiers  8, mould   2968; round none, casts [0, 0, 0], round kills 0 of 51, spent 0, broke 0, dropped 0; 11.58 ms a tick
+ sleeper                     lull seed  5:         cap at  300 s, score +0.308; soldiers  8, mould   2989; round quiet+gas+quiet+blast, casts [12, 16, 0], round kills 127 of 392, spent 3120, broke 0, dropped 0; 5.26 ms a tick
+ sleeper                     trap seed  5:         cap at  300 s, score +0.320; soldiers  8, mould   2690; round thick+wide+blast, casts [25, 0, 0], round kills 177 of 493, spent 1500, broke 0, dropped 0; 7.45 ms a tick
+ sleeper                     none seed  6:         cap at  300 s, score +0.245; soldiers  8, mould   4850; round none, casts [0, 0, 0], round kills 0 of 12, spent 0, broke 0, dropped 0; 8.97 ms a tick
+ sleeper                     rand seed  5:         cap at  300 s, score +0.309; soldiers  8, mould   2968; round quiet+wide, casts [0, 0, 0], round kills 0 of 51, spent 0, broke 0, dropped 0; 11.51 ms a tick
+ sleeper                     germ seed  5:         cap at  300 s, score +0.309; soldiers  8, mould   2971; round germ, casts [0, 0, 11], round kills 0 of 31, spent 3300, broke 0, dropped 0; 25.69 ms a tick
+ sleeper                   plague seed  5:         cap at  300 s, score +0.311; soldiers  8, mould   2919; round germ+delay+blast, casts [15, 0, 18], round kills 33 of 124, spent 6300, broke 0, dropped 0; 14.27 ms a tick
+ sleeper                    blast seed  6:         cap at  300 s, score +0.245; soldiers  8, mould   4846; round blast, casts [12, 0, 0], round kills 0 of 16, spent 720, broke 0, dropped 0; 8.60 ms a tick
+ sleeper                      gas seed  6:         cap at  300 s, score +0.245; soldiers  8, mould   4850; round gas, casts [0, 10, 0], round kills 0 of 10, spent 1500, broke 0, dropped 0; 9.06 ms a tick
+ sleeper                     trap seed  6:         cap at  300 s, score +0.244; soldiers  8, mould   4883; round thick+wide+blast, casts [11, 0, 0], round kills 2 of 15, spent 660, broke 0, dropped 0; 8.14 ms a tick
+ sleeper                     germ seed  6:         cap at  300 s, score +0.245; soldiers  8, mould   4848; round germ, casts [0, 0, 11], round kills 0 of 12, spent 3300, broke 0, dropped 0; 10.29 ms a tick
+ sleeper                     lull seed  6:         cap at  300 s, score +0.245; soldiers  8, mould   4850; round quiet+gas+quiet+blast, casts [3, 7, 0], round kills 0 of 10, spent 1230, broke 0, dropped 0; 9.04 ms a tick
+ sleeper                     rand seed  6:         cap at  300 s, score +0.245; soldiers  8, mould   4849; round scatter+blast+wide+delay, casts [10, 0, 0], round kills 6 of 29, spent 600, broke 0, dropped 0; 7.75 ms a tick
+ sleeper                     none seed  7:         cap at  300 s, score +0.231; soldiers  8, mould   5343; round none, casts [0, 0, 0], round kills 0 of 54, spent 0, broke 0, dropped 0; 5.99 ms a tick
+ sleeper                   plague seed  6:         cap at  300 s, score +0.245; soldiers  8, mould   4849; round germ+delay+blast, casts [4, 0, 7], round kills 1 of 14, spent 2340, broke 0, dropped 0; 9.39 ms a tick
+ sleeper                    blast seed  7:         cap at  300 s, score +0.225; soldiers  8, mould   5652; round blast, casts [33, 0, 0], round kills 15 of 67, spent 1980, broke 0, dropped 0; 6.14 ms a tick
+ sleeper                      gas seed  7:         cap at  300 s, score +0.229; soldiers  8, mould   5436; round gas, casts [0, 40, 0], round kills 0 of 57, spent 6000, broke 0, dropped 0; 5.11 ms a tick
+ sleeper                     trap seed  7:         cap at  300 s, score +0.231; soldiers  8, mould   5343; round thick+wide+blast, casts [36, 0, 0], round kills 2 of 121, spent 2160, broke 0, dropped 0; 5.89 ms a tick
+ sleeper                     lull seed  7:         cap at  300 s, score +0.228; soldiers  8, mould   5481; round quiet+gas+quiet+blast, casts [18, 23, 0], round kills 6 of 57, spent 4530, broke 0, dropped 0; 5.62 ms a tick
+ sleeper                     rand seed  7:         cap at  300 s, score +0.231; soldiers  8, mould   5343; round wide+wide+quiet, casts [0, 0, 0], round kills 0 of 54, spent 0, broke 0, dropped 0; 6.00 ms a tick
+ sleeper                     germ seed  7:         cap at  300 s, score +0.232; soldiers  8, mould   5308; round germ, casts [0, 0, 29], round kills 0 of 48, spent 8700, broke 0, dropped 0; 15.60 ms a tick
+ sleeper                     none seed  8:         cap at  300 s, score +0.192; soldiers  8, mould   7095; round none, casts [0, 0, 0], round kills 0 of 12, spent 0, broke 0, dropped 0; 9.00 ms a tick
+ sleeper                   plague seed  7:         cap at  300 s, score +0.228; soldiers  8, mould   5506; round germ+delay+blast, casts [21, 0, 24], round kills 10 of 119, spent 8460, broke 0, dropped 0; 14.96 ms a tick
+ sleeper                    blast seed  8:         cap at  300 s, score +0.205; soldiers  8, mould   6395; round blast, casts [15, 0, 0], round kills 16 of 42, spent 900, broke 0, dropped 0; 9.71 ms a tick
+ sleeper                      gas seed  8:         cap at  300 s, score +0.208; soldiers  8, mould   6239; round gas, casts [0, 18, 0], round kills 0 of 34, spent 2700, broke 0, dropped 0; 9.09 ms a tick
+ sleeper                     germ seed  8:         cap at  300 s, score +0.192; soldiers  8, mould   7095; round germ, casts [0, 0, 9], round kills 0 of 12, spent 2700, broke 0, dropped 0; 9.38 ms a tick
+ sleeper                     trap seed  8:         cap at  300 s, score +0.185; soldiers  8, mould   7476; round thick+wide+blast, casts [15, 0, 0], round kills 5 of 24, spent 900, broke 0, dropped 0; 8.09 ms a tick
+ sleeper                     lull seed  8:         cap at  300 s, score +0.204; soldiers  8, mould   6417; round quiet+gas+quiet+blast, casts [8, 10, 0], round kills 2 of 32, spent 1980, broke 0, dropped 0; 9.35 ms a tick
+ sleeper                     none seed  9:         cap at  300 s, score +0.213; soldiers  8, mould   6119; round none, casts [0, 0, 0], round kills 0 of 26, spent 0, broke 0, dropped 0; 8.34 ms a tick
+ sleeper                     rand seed  8:         cap at  300 s, score +0.203; soldiers  8, mould   6471; round quiet+wide+blast, casts [9, 0, 0], round kills 22 of 42, spent 540, broke 0, dropped 0; 10.63 ms a tick
+ sleeper                   plague seed  8:         cap at  300 s, score +0.202; soldiers  8, mould   6553; round germ+delay+blast, casts [7, 0, 8], round kills 2 of 29, spent 2820, broke 0, dropped 0; 14.98 ms a tick
+ sleeper                    blast seed  9:         cap at  300 s, score +0.234; soldiers  8, mould   5235; round blast, casts [10, 0, 0], round kills 4 of 17, spent 600, broke 0, dropped 0; 8.77 ms a tick
+ sleeper                      gas seed  9:         cap at  300 s, score +0.214; soldiers  8, mould   6082; round gas, casts [0, 28, 0], round kills 0 of 52, spent 4200, broke 0, dropped 0; 8.46 ms a tick
+ sleeper                     trap seed  9:         cap at  300 s, score +0.237; soldiers  8, mould   5128; round thick+wide+blast, casts [10, 0, 0], round kills 2 of 21, spent 600, broke 0, dropped 0; 7.46 ms a tick
+ sleeper                     lull seed  9:         cap at  300 s, score +0.237; soldiers  8, mould   5111; round quiet+gas+quiet+blast, casts [4, 8, 0], round kills 0 of 17, spent 1440, broke 0, dropped 0; 10.48 ms a tick
+ sleeper                   plague seed  9:         cap at  300 s, score +0.214; soldiers  8, mould   6104; round germ+delay+blast, casts [9, 0, 15], round kills 7 of 43, spent 5040, broke 0, dropped 0; 7.72 ms a tick
+ sleeper                     rand seed  9:         cap at  300 s, score +0.237; soldiers  8, mould   5129; round wide+blast, casts [9, 0, 0], round kills 7 of 21, spent 540, broke 0, dropped 0; 9.92 ms a tick
+ sleeper                     none seed 10:         cap at  300 s, score +0.265; soldiers  8, mould   4183; round none, casts [0, 0, 0], round kills 0 of 56, spent 0, broke 0, dropped 0; 6.18 ms a tick
+ sleeper                     germ seed  9:         cap at  300 s, score +0.213; soldiers  8, mould   6132; round germ, casts [0, 0, 19], round kills 0 of 28, spent 5700, broke 0, dropped 0; 19.62 ms a tick
+ sleeper                    blast seed 10:         cap at  300 s, score +0.264; soldiers  8, mould   4209; round blast, casts [31, 0, 0], round kills 19 of 69, spent 1860, broke 0, dropped 0; 5.61 ms a tick
+ sleeper                      gas seed 10:         cap at  300 s, score +0.266; soldiers  8, mould   4181; round gas, casts [0, 31, 0], round kills 0 of 56, spent 4650, broke 0, dropped 0; 5.36 ms a tick
+ sleeper                     trap seed 10:         cap at  300 s, score +0.265; soldiers  8, mould   4201; round thick+wide+blast, casts [26, 0, 0], round kills 8 of 65, spent 1560, broke 0, dropped 0; 5.84 ms a tick
+ sleeper                     lull seed 10:         cap at  300 s, score +0.265; soldiers  8, mould   4188; round quiet+gas+quiet+blast, casts [11, 15, 0], round kills 15 of 60, spent 2910, broke 0, dropped 0; 6.74 ms a tick
+ sleeper                   plague seed 10:         cap at  300 s, score +0.266; soldiers  8, mould   4164; round germ+delay+blast, casts [10, 0, 15], round kills 4 of 58, spent 5100, broke 0, dropped 0; 6.92 ms a tick
+ sleeper                     rand seed 10:         cap at  300 s, score +0.265; soldiers  8, mould   4183; round wide, casts [0, 0, 0], round kills 0 of 56, spent 0, broke 0, dropped 0; 6.09 ms a tick
+ sleeper                     none seed 11:         cap at  300 s, score +0.307; soldiers  8, mould   3033; round none, casts [0, 0, 0], round kills 0 of 30, spent 0, broke 0, dropped 0; 10.40 ms a tick
+ sleeper                    blast seed 11:         cap at  300 s, score +0.307; soldiers  8, mould   3025; round blast, casts [17, 0, 0], round kills 12 of 38, spent 1020, broke 0, dropped 0; 9.46 ms a tick
+ sleeper                     germ seed 10:         cap at  300 s, score +0.264; soldiers  8, mould   4225; round germ, casts [0, 0, 26], round kills 0 of 41, spent 7800, broke 0, dropped 0; 22.29 ms a tick
+ sleeper                      gas seed 11:         cap at  300 s, score +0.307; soldiers  8, mould   3026; round gas, casts [0, 21, 0], round kills 0 of 36, spent 3150, broke 0, dropped 0; 10.41 ms a tick
+ sleeper                     trap seed 11:         cap at  300 s, score +0.307; soldiers  8, mould   3032; round thick+wide+blast, casts [15, 0, 0], round kills 1 of 33, spent 900, broke 0, dropped 0; 7.65 ms a tick
+ sleeper                     germ seed 11:         cap at  300 s, score +0.307; soldiers  8, mould   3025; round germ, casts [0, 0, 15], round kills 0 of 24, spent 4500, broke 0, dropped 0; 11.32 ms a tick
+ sleeper                     lull seed 11:         cap at  300 s, score +0.307; soldiers  8, mould   3026; round quiet+gas+quiet+blast, casts [8, 10, 0], round kills 4 of 36, spent 1980, broke 0, dropped 0; 10.48 ms a tick
+ sleeper                   plague seed 11:         cap at  300 s, score +0.307; soldiers  8, mould   3027; round germ+delay+blast, casts [5, 0, 8], round kills 7 of 27, spent 2700, broke 0, dropped 0; 10.99 ms a tick
+ sleeper                     none seed 12:         cap at  300 s, score +0.244; soldiers  8, mould   4771; round none, casts [0, 0, 0], round kills 0 of 29, spent 0, broke 0, dropped 0; 7.88 ms a tick
+ sleeper                     rand seed 11:         cap at  300 s, score +0.307; soldiers  8, mould   3033; round quiet+scatter+wide+delay, casts [0, 0, 0], round kills 0 of 30, spent 0, broke 0, dropped 0; 10.48 ms a tick
+ sleeper                      gas seed 12:         cap at  300 s, score +0.249; soldiers  8, mould   4594; round gas, casts [0, 14, 0], round kills 0 of 35, spent 2100, broke 0, dropped 0; 8.15 ms a tick
+ sleeper                    blast seed 12:         cap at  300 s, score +0.243; soldiers  8, mould   4816; round blast, casts [13, 0, 0], round kills 5 of 33, spent 780, broke 0, dropped 0; 10.03 ms a tick
+ sleeper                     trap seed 12:         cap at  300 s, score +0.244; soldiers  8, mould   4795; round thick+wide+blast, casts [14, 0, 0], round kills 1 of 34, spent 840, broke 0, dropped 0; 7.00 ms a tick
+ sleeper                     lull seed 12:         cap at  300 s, score +0.226; soldiers  8, mould   5485; round quiet+gas+quiet+blast, casts [6, 10, 0], round kills 6 of 37, spent 1860, broke 0, dropped 0; 9.52 ms a tick
+ sleeper                     rand seed 12:         cap at  300 s, score +0.243; soldiers  8, mould   4816; round blast, casts [13, 0, 0], round kills 5 of 33, spent 780, broke 0, dropped 0; 9.85 ms a tick
+ sleeper                     germ seed 12:         cap at  300 s, score +0.245; soldiers  8, mould   4731; round germ, casts [0, 0, 10], round kills 0 of 25, spent 3000, broke 0, dropped 0; 30.20 ms a tick
+ sleeper                   plague seed 12:         cap at  300 s, score +0.227; soldiers  8, mould   5408; round germ+delay+blast, casts [6, 0, 9], round kills 7 of 29, spent 3060, broke 0, dropped 0; 27.20 ms a tick
+
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                                      sleeper
+                    none  +0.251 ( 0/ 8/ 0)
+                   blast  +0.254 ( 0/ 8/ 0)
+                     gas  +0.253 ( 0/ 8/ 0)
+                    germ  +0.251 ( 0/ 8/ 0)
+                    trap  +0.254 ( 0/ 8/ 0)
+                    lull  +0.253 ( 0/ 8/ 0)
+                  plague  +0.250 ( 0/ 8/ 0)
+                    rand  +0.255 ( 0/ 8/ 0)
+
+readings 1-2, paired by seed (higher / lower; sign test, Holm over 9):
+                     sleeper blast vs none:  4 /  4, p 1.0000
+                       sleeper gas vs none:  6 /  2, p 0.2891
+                      sleeper germ vs none:  4 /  3, p 1.0000
+                      sleeper trap vs none:  4 /  4, p 1.0000
+                      sleeper trap vs rand:  5 /  3, p 0.7266
+                      sleeper lull vs none:  4 /  4, p 1.0000
+                      sleeper lull vs rand:  3 /  5, p 0.7266
+                    sleeper plague vs none:  6 /  2, p 0.2891
+                    sleeper plague vs rand:  3 /  5, p 0.7266
+
+reading 3, per tier: the best loadout by mean, and each other against it (higher / lower, p):
+   sleeper: best rand (+0.255); none 1/3 p 0.625, blast 3/4 p 1.000, gas 4/4 p 1.000, germ 4/4 p 1.000, trap 5/3 p 0.727, lull 3/5 p 0.727, plague 3/5 p 0.727
+
+rand's round by seed: ["quiet+wide", "scatter+blast+wide+delay", "wide+wide+quiet", "quiet+wide+blast", "wide+blast", "wide", "quiet+scatter+wide+delay", "blast"]
