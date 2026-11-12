@@ -71,7 +71,13 @@ a present with vsync off would. It prints the frame time's p50, p95 and
 max, split into the game's steps (which wait on the GPU inside),
 preparing, recording and the GPU's tail, for every frame and for the
 frames with a step; the read-backs and waits a step; and with timestamps
-the GPU's ms for a step's ticks and its drawing.
+the GPU's ms for a step's ticks and its drawing. The window (and so the
+bench) now takes any engine setting as a key over the race world's
+(`gpu::set`: `tier=sleeper`, or `alarm_keep=0.98 alarm_weight=-1` for the
+hit avoidance the Larder thread is making the default; on software Vulkan
+at 5,000 walkers that pair moved the step frames' step p50 from 15.16 to
+15.64 ms, one pair; the tech lead review's +10 ms a tick at 100k is for the
+1070 run to check).
 
 **The census on the GPU** (`examples/larderworld.rs`, `gpu=1` or
 `gpu=both`). The hands are generic over the world, and `gpu=both` plays
