@@ -69,6 +69,12 @@ code{font-family:var(--mono);font-size:12.5px}
 <figure><img src="img/film-idle-near-dense.gif" alt="25,000 walkers, close on the squad" width="560" height="350"><figcaption><b>25,000 walkers, close</b></figcaption></figure>
 <figure><img src="img/film-idle-near-trail-base.gif" alt="Today with the trail drawn alone, close on the squad" width="560" height="350"><figcaption><b>Today, trail alone, close</b></figcaption></figure>
 </div>
+<h3>Closer to pure Jones: walkers scattered over the map at the start</h3>
+<div class="figs">
+<figure><img src="img/film-idle-all-pure.gif" alt="25,000 walkers scattered at the start with no food scent" width="600" height="372"><figcaption><b>Scattered, no food</b><span>(<code>walkers=25000 start=spread food=0 upkeep=0.00001</code>)</span><span>a mesh at 0:04, a few strands by 0:30</span><span>49,078 walkers at 2:00</span></figcaption></figure>
+<figure><img src="img/film-idle-all-mid.gif" alt="25,000 walkers scattered at the start with food scent" width="600" height="372"><figcaption><b>Scattered, with food</b><span>(<code>walkers=25000 start=spread upkeep=0.0002</code>)</span><span>squad dead at 0:26</span></figcaption></figure>
+</div>
+<p>Scattered at the start, our engine makes Jones's spread-out mesh within 4 seconds. Then it coarsens into a few thick strands within about 30 seconds: the game runs 30 simulation steps a game second, so its first minute is about 1,800 of Jones's frames. Food scent makes the strands sooner and runs them food to food.</p>
 <h3>Two ways to get that density: more walkers (A, above) or a coarser grid (B)</h3>
 <div class="figs">
 <figure><img src="img/film-idle-all-coarse.gif" alt="Today's 5,000 walkers on a grid half as fine each way" width="600" height="372"><figcaption><b>B: today's walkers, coarser grid</b><span>(<code>scale=1</code>: 256 × 160 cells instead of 512 × 320)</span><span>2,491 walkers at 1:00, 10,872 at 2:00, 991 at 4:00</span><span>squad alive</span></figcaption></figure>
