@@ -49,12 +49,12 @@ use std::time::Instant;
 use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
-use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{Cmd, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::map::Map;
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::team_colour;
-use slime_mould::world::ui::{theme, Card, Command, Ghost, Info, MenuItem, Model, Resource, Target};
+use slime_mould::world::ui::{theme, Card, Command, Ghost, Info, MenuItem, Model, Resource, Site, Target};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -76,6 +76,25 @@ const DEFEND: u32 = 6;
 const FREE: u32 = 7;
 const BUY: u32 = 8;
 const WALL: u32 = 9;
+// The build page (Q): turret, lure, pump, outpost, the lures' switch, back.
+const BUILD_PAGE: u32 = 10;
+const TURRET: u32 = 11;
+const LURE: u32 = 12;
+const PUMP: u32 = 13;
+const OUTPOST: u32 = 14;
+const LURES: u32 = 15;
+const BACK: u32 = 16;
+
+/// The building a build-page command places.
+fn build_kind(id: u32) -> Option<Kind> {
+    match id {
+        TURRET => Some(Kind::Turret),
+        LURE => Some(Kind::Lure),
+        PUMP => Some(Kind::Pump),
+        OUTPOST => Some(Kind::Outpost),
+        _ => None,
+    }
+}
 
 /// How long a shot's ray and its muzzle flash show, real seconds (the world
 /// look's fight: `examples/worldlook.rs`).
@@ -162,6 +181,8 @@ struct App {
     steps: u32,
     report_at: Instant,
     saved: bool,
+    /// The command card shows the build page (Q).
+    build_page: bool,
     result: Result<(), String>,
 }
 
@@ -205,6 +226,7 @@ impl App {
             steps: 0,
             report_at: Instant::now(),
             saved: false,
+            build_page: false,
             result: Ok(()),
         }
     }
@@ -357,6 +379,20 @@ impl App {
                             }
                         }
                     }
+                    BUILD_PAGE => self.build_page = true,
+                    BACK => self.build_page = false,
+                    LURES => {
+                        if let Some(g) = self.game.as_mut() {
+                            let lures: Vec<usize> = (0..g.buildings.len()).filter(|&k| g.buildings[k].alive && g.buildings[k].kind == Kind::Lure).collect();
+                            // All on if any is off, else all off.
+                            let on = lures.iter().any(|&k| !g.buildings[k].on);
+                            for k in lures {
+                                if g.buildings[k].on != on {
+                                    g.apply(Cmd::Toggle(k));
+                                }
+                            }
+                        }
+                    }
                     BUY => {
                         if let Some(g) = self.game.as_mut() {
                             if g.apply(Cmd::Buy) {
@@ -368,6 +404,16 @@ impl App {
                     _ => {}
                 },
                 HudEvent::Point { id: HARVEST, at } => self.order_all(&sel, |_| Order::Clear(at.0, at.1)),
+                HudEvent::Point { id, at } if build_kind(id).is_some() => {
+                    if let Some(g) = self.game.as_mut() {
+                        let kind = build_kind(id).unwrap();
+                        if let Some(why) = g.build_blocked(kind, at) {
+                            self.hud.alert(&format!("Can't build a {} there: {why}", kind.name()), None, theme::WARN);
+                        } else {
+                            g.apply(Cmd::Build(kind, at));
+                        }
+                    }
+                }
                 HudEvent::Line { id: BURN, from, to } => self.burn(&sel, from, to),
                 HudEvent::Line { id: WALL, from, to } => {
                     if let Some(g) = self.game.as_mut() {
@@ -504,6 +550,31 @@ impl App {
         self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 140]);
         let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
         self.marks.ring(g.core, g.rules.core_r * sc, core);
+        // Buildings: plain marks until the graphics thread's sprites
+        // (`Model::buildings`). Their effects (a lure's scent, a pump's
+        // dimming crystal, a turret's hits) are the simulation's own fields.
+        for b in &g.buildings {
+            let Some(colour) = building_colour(b.kind) else { continue };
+            if !b.alive {
+                continue;
+            }
+            let half = g.rules.build.touch * sc * 0.7;
+            let alpha = if b.up() { 255 } else { 110 };
+            let c = [colour[0], colour[1], colour[2], alpha];
+            match b.kind {
+                Kind::Turret => self.marks.disc(b.at, half, c, true),
+                Kind::Lure => self.marks.disc(b.at, half * 0.8, if b.on { c } else { [120, 110, 100, alpha] }, true),
+                _ => self.marks.rect(b.at, (half, half), c, true),
+            }
+            if b.working && b.kind != Kind::Turret {
+                self.marks.ring(b.at, half * 1.6, [c[0], c[1], c[2], 140]);
+            }
+            let below = (half * zoom).max(2.0) + 5.0;
+            self.marks.bar(b.at, below, (7.0, 1.0), b.hp / b.max_hp.max(1.0), [90, 220, 110, 255], [70, 30, 30, 255]);
+            if !b.up() {
+                self.marks.bar(b.at, below + 3.0, (7.0, 0.8), b.built, [230, 230, 230, 255], [40, 40, 40, 255]);
+            }
+        }
         for (k, s) in g.soldiers.iter().enumerate() {
             if !s.alive {
                 continue;
@@ -665,12 +736,52 @@ impl App {
                 ..Command::new(WALL, (2, 1), Icon::Wall, "Lay a wall", KeyCode::KeyV)
             },
         ];
+        cmds.push(Command {
+            about: "Turrets, lures, pumps and outposts.".into(),
+            ..Command::new(BUILD_PAGE, (2, 2), Icon::Turret, "Build", KeyCode::KeyQ)
+        });
+        if self.build_page {
+            let b = r.build;
+            let lures = g.buildings.iter().filter(|q| q.alive && q.kind == Kind::Lure).count();
+            let room = g.standing() < b.max;
+            let place = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, cost: f32, about: String| Command {
+                target: Target::Point { radius: b.touch * sc },
+                cost: Some(format!("{cost:.0}")),
+                ready: g.bank >= cost && room,
+                why_not: if room { need(cost) } else { Some(format!("At most {} buildings", b.max)) },
+                about,
+                ..Command::new(id, slot, icon, name, key)
+            };
+            cmds = vec![
+                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
+                place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, format!("Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Burns {:.0} food a second while on.", b.lure_burn)),
+                place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("On a crystal: draws {:.0} food a second into the bank with no carriers. The mould smells the crystal.", b.pump_rate)),
+                place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyO, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
+                Command { ready: lures > 0, why_not: Some("No lures".into()), about: "Switch every lure on, or every lure off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures on/off", KeyCode::KeyK) },
+                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
+            ];
+        }
         for c in &mut cmds {
             if c.ready {
                 c.why_not = None;
             }
         }
         m.commands = cmds;
+        m.buildings = g
+            .buildings
+            .iter()
+            .filter(|b| b.alive)
+            .map(|b| Site {
+                kind: b.kind.name(),
+                at: b.at,
+                to: if let Kind::Wall { to } = b.kind { Some(to) } else { None },
+                r: r.build.touch * sc,
+                hp: b.hp,
+                max_hp: b.max_hp,
+                built: b.built,
+                working: b.working,
+            })
+            .collect();
         (m.ghost_ok, m.ghost_note) = match ghost {
             Some((HARVEST, at, _)) => match g.crystal_at(at) {
                 Some((i, _)) => (true, Some(format!("harvest {}", crystal_name(i).to_lowercase()))),
@@ -687,6 +798,13 @@ impl App {
                 }
             }
             Some((WALL, at, None)) if !g.reachable(at) => (false, Some("out of every soldier's range".into())),
+            Some((id, at, _)) if build_kind(id).is_some() => {
+                let kind = build_kind(id).unwrap();
+                match g.build_blocked(kind, at) {
+                    Some(why) => (false, Some(why.into())),
+                    None => (true, Some(format!("{:.0} food, click to build", g.build_price(kind, at)))),
+                }
+            }
             _ => (true, None),
         };
         if let Some(end) = g.end {
@@ -697,6 +815,7 @@ impl App {
             ("P".into(), "Pause".into()),
             ("Tab".into(), "Four times faster, or back".into()),
             ("N".into(), "Start the next map".into()),
+            ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
         ];
         m
     }
@@ -838,6 +957,17 @@ fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
 
 fn summary(g: &Game<GpuWorld>) -> String {
     format!("{} soldiers left, {:.0} food harvested, {} walkers killed with {} shots, {} walls", g.alive(), g.harvested, thousands(g.killed as usize), g.shots, g.walls)
+}
+
+/// A building's mark colour; None for walls, which the world draws.
+fn building_colour(k: Kind) -> Option<[u8; 4]> {
+    match k {
+        Kind::Turret => Some([150, 200, 255, 255]),
+        Kind::Lure => Some([255, 196, 90, 255]),
+        Kind::Pump => Some([90, 220, 230, 255]),
+        Kind::Outpost => Some([214, 196, 150, 255]),
+        Kind::Wall { .. } => None,
+    }
 }
 
 fn crystal_name(i: usize) -> String {
