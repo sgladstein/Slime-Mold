@@ -8,19 +8,24 @@ detail, numbers and gates stay in each plan's own source, linked below.
 decisions are listed only there (wiki rule 5); this page points to them by
 number.
 
+**Refreshed 2026-11-12 ~04:50Z** by the game integration thread: the paused
+G, E and R bands (owner, 11-10 20:55Z: today's dishes are unlikely to be the
+real games; the direction is RTS-type games, now the Larder World) moved to
+*Archive* at the end, and the Larder World game threads got rows in *Now*.
+
 The goal behind every line: interesting simulations that can be turned into
 a game, not a realistic mould (owner, 2026-11-10 17:01Z). Fun over fidelity,
 everything on screen is the simulation, and an outcome is a spread
 ([`wiki/decisions.md`](wiki/decisions.md)).
 
-## The four plans
+## The plans
 
 | Track | Plan | Owning thread | Source |
 | --- | --- | --- | --- |
-| **G** Game fixes | Keep It Alive's luck, The Wild One's middle, the snip, star bars, the forest floor | *Triage the previous session's hand-off* | Hand-off triage doc (https://claude.ai/artifact/XWm6u7y1UR3cfp2XxkhC7w); [HANDOFF.md, *Next steps*](HANDOFF.md) |
-| **E** Engine checks and ports from Pixel_Physics | Dish hash, profiler, parallel draw, licence gates, keyed random draws, sound | *Review Pixel_Physics for reusable code* | Pixel_Physics review doc (https://claude.ai/artifact/Pe83NVdRMXhPvxeYoKASRu) |
+| **G** Game fixes *(paused, archived)* | Keep It Alive's luck, The Wild One's middle, the snip, star bars, the forest floor | *Triage the previous session's hand-off* | Hand-off triage doc (https://claude.ai/artifact/XWm6u7y1UR3cfp2XxkhC7w); [HANDOFF.md, *Next steps*](HANDOFF.md) |
+| **E** Engine checks and ports from Pixel_Physics *(done or paused, archived)* | Dish hash, profiler, parallel draw, licence gates, keyed random draws, sound | *Review Pixel_Physics for reusable code* | Pixel_Physics review doc (https://claude.ai/artifact/Pe83NVdRMXhPvxeYoKASRu) |
 | **S** Scale (GPU) | Six gated phases, from CPU foundations to new play at scale | *Research Sage Jenson's physarum work* | [`Reports/gpu-plan-2026-11-10.md`](Reports/gpu-plan-2026-11-10.md), [the mould at scale](wiki/model/scale.md) |
-| **R** RTS (Bloomfront) | Five gated stages, from two keepers on today's dish to online play | *Explore turning the simulation into an RTS* | [`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md) |
+| **R** RTS (Bloomfront) *(paused, archived)* | Five gated stages, from two keepers on today's dish to online play | *Explore turning the simulation into an RTS* | [`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md) |
 | **L** Larder World | Six gated phases (W0-W5): growth on the GPU, a world with crystals, Larder in the world, several species, persistence, campaign; designed maps (WM1-WM5, owner 11-11 19:29Z) run beside W2 | *Larder* thread, with the GPU, creature, *Camera and UI* and *Player AI* threads | [`Reports/larder-world-roadmap-2026-11-11.md`](Reports/larder-world-roadmap-2026-11-11.md) (doc https://claude.ai/artifact/1N2NHKefAzKxUMZcr3ktjJ); owner ruling 11-11 14:06Z |
 
 Thread names are the project's thread titles on claude.ai. When a thread is
@@ -28,34 +33,32 @@ closed, its track is unowned until a new thread takes it; say so in its row.
 
 ## The order
 
-Four bands. Work in a band can run in parallel; a band starts when what it
-depends on is done, not when the band before it is finished.
+Work in a band can run in parallel; a step starts when what it depends on
+is done.
 
-### Now: no owner input needed
+### Now: the Larder World game (11-12)
+
+Every row edits or reads the same game; who owns which shared piece, and
+the merge order, are in *Larder World: shared rules and merge order*, below.
 
 | # | Step | Owner | Waits on | State |
 | --- | --- | --- | --- | --- |
-| E1 | Dish hash and determinism test | Pixel_Physics thread | nothing | done: PR #14 (`Dish::state_hash`, `every_dish_replays_bit_for_bit`, `mouldprobe` prints `hash=`) |
-| S1 | GPU phase 1: frame profiler (also the review's E2), "GPU semantics" CPU arm, delayed-census arm, new rules off by default | GPU thread | E1 for the hash; owner go-ahead given 17:50Z | profiler done (PR #16: diffusion is 62% of the simulation, moving walkers 24%); arms measured on every dish: late census safe, fixed-point fields change play (fields stay `f32`), all-at-once move cuts seam fights (The Wild One's warden loses, p 0.0005); owner 20:55Z: today's dishes are not the true games, so gates use engine measures; scaling rule chosen 11-10 on 16 paired seeds (`mould::big`, `examples/bigdish.rs`): today's numbers in fine cells plus food smelled at today's reach; more steps a frame rejected. **Done** |
-| E4 | Release profile re-measured on `mouldprobe` and one CI run | Pixel_Physics thread | E1 | done: `codegen-units = 1` kept (about 0.45 ms a frame), thin LTO dropped (no gain); hashes unchanged |
+| L-I | The game's shared rules: one owner and one code path per mechanic, the merge order, the GPU `Params` queue | *Integrate the Larder game's shared rules* thread | nothing | **agreed 11-12** with every thread below, after the technical lead and game designer reviews found scorch designed in four places and lures, alarms, walls and depots in two or three each. `Engine` Params layout asserts are real in release builds since 11-12 |
+| L-F | The owner's playtest fixes (11-12 04:13Z): free shots, soldier scent as a rule, then a slower mould clock; shots that leave a lasting hole | *Make the Larder World fight feel alive* (Larder) thread | nothing | free shots and scent built, census on 16 held-out seeds running; the clock change is a census reset (below) |
+| L-O | One body: the mould holds together, and a cut-off piece starves | *Make the mould one cohesive body* thread | nothing | cut probe built; cohesion rules being tried on the CPU (a tether makes crawling hunks but splits the body). Then the GPU port, a page of cuts, and the owner's say before it goes on by default |
+| L-C | Soldier controls: order queue, attack-move, moving on from a dry crystal, the larder's rally point; then building over time and the larder as a depot | *Improve soldier controls and commands* thread | part 2 waits on buildings batch 1 (soldiers build over time: owner's card, 11-12) | part 1 built (branch `claude/project-thread-oldrb7`), census gate with moving-on on and off running |
+| L-B | Buildings: turret, lure, pump, wall and outpost as one `Building` type; then siren | *Add turrets, walls and other buildings* thread | the siren waits on the toolkit's burst list; no Scorcher (owner's card, 11-12 04:46Z) | batch 1 built on the CPU and twin-tested on software Vulkan; `UNITS_MAX` 64 to 96 with a cap test; census is a payoff table of plans by tier and map, turret-ring and turtle hands included |
+| L-K | Squad toolkit from the model: blast and crater, mine, det cord, germ, sleep gas, mask and reek | *Design squad tools from the mould's model* thread | nothing (owner picked "all six", 11-12 04:31Z) | CPU prototype built, off by default; next each tool against no tool on paired seeds, then the four plans by mould type; step 2 moves the tools into `squad::Frame`'s burst list on CPU and GPU |
+| L-S | Sound and hit feel driven by the simulation's counts | *Add sound and hit feel to Larder* thread | nothing | **merged 11-12 (#96)**: reads only `Game` fields, no read-back; the heavy-shot threshold scales with density to the power 0.3. Next: `Game::density`, then sounds for the toolkit's bursts. Also the mould's one-body voice (game designer's design, asked for by the coordinator) |
+| L-G | The world's look: shot damage drawn from the simulation | *Improve soldier and slime graphics* thread | the crater field (L-K) | the owner turned down both drawn versions (11-12 04:38Z, "Both of those look like stamps"); next a hole that is real in the simulation, and slower walkers |
+| S-P | GPU performance and census: the game's frame time on the 1070, one read-back a step, the census on `GpuWorld` | *Port mould species and tiers to the GPU* thread | the owner's desktop for the 1070 timing | planned 11-12: a mapped readout buffer and a living-walker count pass; `Game::step` split into begin and finish halves with `step()` unchanged |
+| L-OM | The player's own mould species (approved 11-11 14:54Z) | *Design the player's own mould species* thread | nothing (gardeners picked 11-12 04:45Z) | proposal up; a CPU probe of body forms fighting each other running |
+| L-CA | Campaign and onboarding: a goal the player can read, no soft lock, missions as map data (row W5) | *Design the Larder campaign and onboarding* thread | nothing (owner approved 11-12 04:44Z) | design merged (#95); mission layer next. Its `larder_world.rs` asks (an overrun loss, a reserve recruit, a stuck measure) ride in the Larder thread's PR 1, off by default |
 | L-AI | Player AI for Larder playtests (`src/mould/larder_ai.rs`, `src/mould/larder_world_ai.rs`, `examples/larderai.rs`, `larder -- SEED ai=STYLE`) | Player AI thread | nothing | **built 11-11** on the CPU field: [report](Reports/larder-ai-2026-11-11.md), [page](wiki/world/player-ai.md). Plays through `Cmd`s only, sees a `View`, one brain per `Side`; five styles; boom, lure and adapt beat idle and random 16/16 held out. **Ported to the Larder world 11-12** (`src/mould/larder_world_ai.rs`, hands in `examples/larderworld.rs`): [report](Reports/larder-world-ai-2026-11-12.md); boom, claim, late, fort beat the scripted farm 15-16/16 held out, strike wiped the mould once. Next: the tier counter tests (Sporer, Sleeper, Swarmer), `mould_grid` on the GPU world, two AI teams once a second side exists, exploiter search |
-| E5 | Licence and notices gates, the JetBrains Mono OFL notice, `crispfont.py` | Pixel_Physics thread | nothing; must land before any build leaves the owner's machine | done: `scripts/licensecheck.sh`, `scripts/notices.sh` + `THIRD-PARTY-NOTICES.txt`, `notices.yml`, `scripts/crispfont.py` |
-| R- | Bloomfront research (six brainstorm agents, then a red team, then a field retest and verb census) | RTS thread | nothing; design only | **done 11-10**: [red team](Reports/rts-design-2026-11-10/red-team/README.md), [field retest](Reports/rts-design-2026-11-10/field/README.md), [page](wiki/rts/directions.md). On The Wild One Taut fails and the counters are a ladder; on a 23-pile field Taut's pull wins and the counters cycle on one layout of two. Census: field salt passes on share; Wild One lamp moves share but not by 0.02. Later: the cycle holds on 1 layout of 10; salt overturns a 60 s lead on scatter. Now two demos (R-S, R-F) |
-| R-S | Field skirmish playable demo (`src/mould/skirmish.rs`, `web/`) | RTS thread | nothing | v1 done and set aside by the owner (21:14Z); **v2, the budget skirmish, in the harness 11-10**: [report](Reports/rts-skirmish-2026-11-10.md), [page](wiki/rts/skirmish.md). Soft beats all 8 other plans 127/128, no cycle. **v2 page live 11-10**; round 3's counterplay rules (rally, rising spore price) did not stop soft (124/144). **Rounds 4-6 done 11-11**: side edge fixed; model changes (holder's bonus, supply lines, size upkeep, desperate fights) do not dethrone soft and keep; desperate fights ease the snowball. **Rounds 7-7b done 11-11** (economy sketch tests 1, 3 and half of 4): food after 1:00 and a held-ground score leave the 1:00 leader winning 80-85%; regrowth cuts wipe-outs; a counted-down Strike with a Fortify that kills attackers dethrones soft, but brace (strike and fortify) wins every pairing; page opens on Strike and Fortify. Next: Fortify's price and the exploiter search against brace |
-| R-F | Two Fevers playable demo (`src/mould/fever.rs`, `fevers-web/`) | Two Fevers thread | nothing | **v3 done 11-10**: [report](Reports/two-fevers-2026-11-10/README.md), [page](wiki/rts/two-fevers.md), https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a. Calls, fever by tube, foraging, pinch. Plans form a ladder (trunk > web > raider), not a cycle; the leader keeps the lead; waits on the owner's hand |
+| L-T2 | New tiers for the campaign ladder: the Drifter, Sprawler and Trunk (missions 1, 3 and 4 need them), then habituation (a mould that learns to avoid or swarm your last tool) | *Build new mould tiers for the campaign* thread (started 11-12 05:10Z) | nothing | game designer review of #94: draft names only so far; `Tier` API and the tier census exist (L-T) |
+| L-PT | The morning playtest: one combined build on `main` and one page, "what changed, what to try" (each change, its key or command, its counts), so the owner plays the sum of the night's merges | integration thread | whatever has merged by about 11:00Z | planned (game designer review, 11-12) |
 
-### Next: waits on the owner
-
-| # | Step | Owner | Waits on |
-| --- | --- | --- | --- |
-| P | **Play Keep It Alive and The Wild One by hand** | Scotttt | nothing. This is the one step that unblocks most of the rest |
-| G1 | Keep It Alive: trace single games to find what sends one into the short or long hump. Measures only; the game does not change | Triage thread | **done 11-10**; owner picked "Trace it now" (card, 18:56Z): the first pile on mostly-asleep mould decides it ([report](Reports/mould-keep-alive-luck-2026-11-10.md)). Next: a 20 s landing preview, a game change |
-| G2 + R0 | **The Wild One's middle (seconds 30 to 150), done as Bloomfront Stage 0.** First separate which of lamp, snip and oats needs the aim; then give the wild mould a scripted hand on a mirrored dish | one thread, to be chosen | P for G2; the owner's say for R0 (HANDOFF decision 7, "wait or replace") |
-| G3 | The snip: make a cut-off piece visibly starve, or take it off The Wild One | Triage thread | P |
-| E6 | Keyed random draws and the dead-dish slowdown | Pixel_Physics thread | timing only: see *One census reset*, below; the keyed draw itself is built inside S1 (`keyed`, used only with `Params::all_at_once`, off by default) |
-| E7 | Sound for the game, from Pixel_Physics's `src/audio/` | Pixel_Physics thread | **built 11-10** (owner: "yes to sound", 19:22Z; [report](Reports/mould-sound-2026-11-10.md)). Next: the owner's ears on the Mould Sound page |
-
-### Then: the scale fork
+### Built and building: the scale and world steps
 
 | # | Step | Owner | Waits on |
 | --- | --- | --- | --- |
@@ -91,13 +94,159 @@ The two branches after the gate:
 
 | # | Step | Owner | Waits on |
 | --- | --- | --- | --- |
+| S6 | New play that only scale allows | GPU thread | S5 |
+
+## Larder World: shared rules and merge order
+
+Agreed 2026-11-12 ~04:40Z by the game integration thread with the seven
+threads that edit the Larder World game at once. The owner's standing
+order still holds: tools and feel are built in parallel (owner, 11-12
+04:35Z, "I want to work on tools and feel in parallel").
+
+**One owner per mechanic, one path through the code.**
+
+| Mechanic | One path | Owner | Users |
+| --- | --- | --- | --- |
+| Scent | `squad::UnitIn.smell` / `smell_r`: everything that smells is a unit in the squad frame | Larder thread (`Rules::smell`, the hoard) | soldiers; the lure (a still unit); mask and reek (per-soldier multipliers on `smell`) |
+| Harvest | `squad::UnitIn.take` / `take_r` | Larder thread (rule); controls thread (where harvesters go, moving on) | soldiers; the pump (a still unit) |
+| Shots | `squad::ShotIn`, `SHOT_ALARM` | Larder thread (free shots, whether a hit leaves a little crater) | soldiers; turrets |
+| Area effects | one list in `squad::Frame` (planned `bursts`: centre, radius, kill, alarm, crater, sleep, germ), CPU and GPU | squad toolkit thread | blast, mine, det cord (a line of bursts), sleep gas, germ; the Siren (a burst with only alarm); sound reads it |
+| Scorch | one crater field (a per-cell countdown; trail fades fast while it runs), CPU and GPU, binding 46; each writer gives its own strength and radius | squad toolkit thread | blasts and det cord write it; graphics draws it from the field; no Scorcher building (owner's card, 11-12 04:46Z) |
+| Buildings | one `Building` type (kind, position, health, build progress) and the still-unit slots | buildings thread | turret, lure, pump, wall, depot, siren |
+| Walls | Larder's wall cells and rules (`wall_hp`, `wall_scent`, `wall_bite`); a wall is a building kind over them | Larder thread (rules), buildings thread (the kind) | |
+| Building anything | soldiers walk to a site and raise it over time (owner's card, 11-12 ~04:41Z) | soldier controls thread | every building kind |
+| Larder and outpost | one kind, a depot; the larder is the first. Hoard smell and stealing apply to every depot | buildings thread (kind), controls thread (select, buy, rally), Larder thread (hoard, steal) | |
+| The hole under fire | the shot rule (candidate: the alarm read at a negative weight); any per-cell closed ground is the crater field | Larder thread (the one body thread handed it over, 11-12 05:08Z) | graphics draws it |
+| Cohesion, hunger, cuts | `big.rs` on the CPU, then a GPU port | one body thread | det cord's siege relies on a cut piece starving; graphics draws cuts |
+| Shot look | drawn from the crater field and the walkers, no stamp (owner, 11-12 04:38Z) | graphics thread | sound |
+| Sound | reads `squad::FrameOut`, `HudEvent`s and the burst list; writes no rule | sound thread | |
+| The player's own mould | the gardeners shape (owner's card, 11-12 04:45Z): a second `Side` in its own file with a thin hook in `larder_world.rs`; its cut, road and feed reuse the burst list, the squad frame's per-unit writes and the harvest path | player's own mould thread | |
+| Missions | data over the shared pieces (map, tier, `Rules`, tools allowed); a new end condition is the Larder thread's (`End`, `Game::score`) | campaign and onboarding thread | |
+| GPU frame time and read-backs | one mapped readout a step in `gpu/mod.rs`, which also carries `World::mould_grid` on `GpuWorld`; a change to `squad::FrameOut`'s shape is announced before it merges, since three threads read it | GPU thread | campaign positional goals, player AI |
+
+**Overnight questions (owner, 11-12 04:48Z).** "I cannot answer any not
+questions tonight. When there is a question have the threads work together
+to come up with the best answer and move forward with it." For the Larder
+threads the integration thread settles a question with the game designer
+and technical lead reviews, records the answer and its reasons here, and
+the owner can reverse it in the morning.
+
+**The campaign's carry-over is the owner's.** He approved the campaign
+plan and "carry unlocked verbs only" (card, 11-12 04:44Z). The details
+settled after it by the game designer review with the campaign thread
+(a mission ends at the 15:00 cap with a graded result in stars; the first
+mission teaches with first-time hints; the persistent world is a separate
+later mode) follow that ruling; the owner may change them.
+
+**Caps.** Buildings share `squad::UNITS_MAX` (64) with up to
+`Rules::max_squad` (40) soldiers, and the frame drops units past the cap
+silently. The buildings thread raises it to 96 (two workgroups for the
+units pass) with a test at the cap in its first PR. A turret-ring hand joins the buildings census gate, since free
+shots plus turrets could bring back the held ring of fire that once beat
+every plan (game designer review).
+
+**Merge order on `src/mould/larder_world.rs` and `squad.rs`.**
+
+1. Larder thread: free shots, soldier scent
+2. Controls part 1: order queue, attack-move, moving on (branch built 11-12)
+3. GPU thread: `Game::step` split into begin and finish halves (`step()`
+   stays both, so callers, the census and replays run as now)
+4. Buildings batch 1: the `Building` type, turret, lure, pump, wall as a kind
+5. Squad toolkit: the burst list, the crater field, the tools
+6. Controls part 2: building over time, the larder as a depot
+7. Buildings batch 2: siren (a burst), outpost (a depot)
+8. The player's own mould as a second side (gardeners)
+
+**Counts scale with density, not raw walkers.** The window and the census
+play 5,000 walkers today; the GPU was built for 100,000. A threshold
+written as a walker count (for example a look's walkers in a 5 x 5 window,
+or a sound's kills per shot) breaks at the larger scale. The game publishes
+one density, walkers per open cell at the start (Larder thread, on
+`Game`), and a new count-based threshold is written as a function of it,
+measured at two scales, not assumed in proportion (technical lead review,
+11-12). The sound thread found kills a shot grow about 1.9 times for 10
+times the walkers (35 at 5,000, 66 at 50,000, one rush), so its heavy-shot
+threshold scales with density to the power 0.3.
+
+**No slower mould clock.** The Larder thread dropped it (11-12 04:49Z):
+the graphics thread timed a 3x slower clock and the hole still refilled in
+0.53 to 0.73 s, so it is not the lever, and census baselines stay put. A
+clock change would be a census reset: if one comes back, it re-runs every
+baseline in its own PR, between other threads' censuses.
+
+**Shot impact is a rule, through the crater field.** The owner turned down
+both drawn versions in the graphics thread's blind A/B (11-12 04:38Z:
+"Neither. Both of those look like stamps. Placed on the slime that fade.
+Maybe part of the issue is the slime/walkers move to fast.") and set the
+bar at 04:39Z: "A group of soldiers shooting the slime should start carving
+out a bigger and bigger hole that doesn't refill while being shot at." So
+the hole is a rule, and its measure is the hole's area under sustained
+fire, not its look. The Larder thread's candidate needs no new field: the
+mould reads the alarm that shots already lay at a negative weight
+(`alarm_weight` -1, keep 0.98). On seed 1 that held a growing hole open
+under fire (110 dish cells, against 40 today) that refills once fire
+stops. It becomes a default only if a 16-seed hole test and the census
+agree. That is the local push the *Skittish* dead end saw near a wound, not
+the whole-body flight it was rejected for. Shots may still lay a little of
+the toolkit's crater later, with values in `Rules`.
+
+Sound and the graphics thread's look changes add no rule and merge
+whenever ready. The one body thread's CPU rules merge whenever ready; its GPU port waits for
+the toolkit's GPU rows. The order is a default, not a lock: a thread that
+is ready before an earlier one has a PR open tells the integration thread
+and goes. The second to merge merges `main` in and resolves its own side,
+never another thread's.
+
+**GPU engine.** New `Params` rows go after the soil row (848 bytes
+since #92) in merge order: the toolkit's crater and burst rows, then the one body
+port's. The next free binding is 46 (the toolkit's scorch countdown). New
+passes append after the last; whoever merges second renumbers. The GPU
+thread's readout buffer and living-walker pass add no `Params` row. The layout asserts in
+`Engine::write_params` run in release builds, so a slipped row fails every
+GPU test instead of moving every offset after it.
+
+## Keeping this page true
+
+- A thread that passes a gate, opens or merges a PR for a step, or changes
+  a step's owner updates its row here in the same PR.
+- An owner answer moves into [`wiki/decisions.md`](wiki/decisions.md) as
+  usual; then update the row it unblocks here.
+- The GPU go-ahead (17:50Z) and the owner's GPU (GTX 1070 on Scott-Desktop,
+  17:54Z) are recorded in `decisions.md`.
+- Each thread merges its own PRs once both CI jobs are green on the exact
+  head, with a merge commit (owner, 17:47Z). Any new report must be cited
+  from a wiki page in the same PR; `python3 wiki/lint.py` fails otherwise.
+
+## Archive: the paused bands (G, E, R)
+
+Moved here 2026-11-12. The owner stepped back from today's dishes and their
+tools (11-10 20:55Z); a thread that works on one of these directly may
+still change it (11-11 15:17Z). Rows are as they stood.
+
+| # | Step | Owner | Waits on | State |
+| --- | --- | --- | --- | --- |
+| S1 | GPU phase 1: frame profiler (also the review's E2), "GPU semantics" CPU arm, delayed-census arm, new rules off by default | GPU thread | E1 for the hash; owner go-ahead given 17:50Z | profiler done (PR #16: diffusion is 62% of the simulation, moving walkers 24%); arms measured on every dish: late census safe, fixed-point fields change play (fields stay `f32`), all-at-once move cuts seam fights (The Wild One's warden loses, p 0.0005); owner 20:55Z: today's dishes are not the true games, so gates use engine measures; scaling rule chosen 11-10 on 16 paired seeds (`mould::big`, `examples/bigdish.rs`): today's numbers in fine cells plus food smelled at today's reach; more steps a frame rejected. **Done** |
+| E1 | Dish hash and determinism test | Pixel_Physics thread | nothing | done: PR #14 (`Dish::state_hash`, `every_dish_replays_bit_for_bit`, `mouldprobe` prints `hash=`) |
+| E4 | Release profile re-measured on `mouldprobe` and one CI run | Pixel_Physics thread | E1 | done: `codegen-units = 1` kept (about 0.45 ms a frame), thin LTO dropped (no gain); hashes unchanged |
+| E5 | Licence and notices gates, the JetBrains Mono OFL notice, `crispfont.py` | Pixel_Physics thread | nothing; must land before any build leaves the owner's machine | done: `scripts/licensecheck.sh`, `scripts/notices.sh` + `THIRD-PARTY-NOTICES.txt`, `notices.yml`, `scripts/crispfont.py` |
+| R- | Bloomfront research (six brainstorm agents, then a red team, then a field retest and verb census) | RTS thread | nothing; design only | **done 11-10**: [red team](Reports/rts-design-2026-11-10/red-team/README.md), [field retest](Reports/rts-design-2026-11-10/field/README.md), [page](wiki/rts/directions.md). On The Wild One Taut fails and the counters are a ladder; on a 23-pile field Taut's pull wins and the counters cycle on one layout of two. Census: field salt passes on share; Wild One lamp moves share but not by 0.02. Later: the cycle holds on 1 layout of 10; salt overturns a 60 s lead on scatter. Now two demos (R-S, R-F) |
+| R-S | Field skirmish playable demo (`src/mould/skirmish.rs`, `web/`) | RTS thread | nothing | v1 done and set aside by the owner (21:14Z); **v2, the budget skirmish, in the harness 11-10**: [report](Reports/rts-skirmish-2026-11-10.md), [page](wiki/rts/skirmish.md). Soft beats all 8 other plans 127/128, no cycle. **v2 page live 11-10**; round 3's counterplay rules (rally, rising spore price) did not stop soft (124/144). **Rounds 4-6 done 11-11**: side edge fixed; model changes (holder's bonus, supply lines, size upkeep, desperate fights) do not dethrone soft and keep; desperate fights ease the snowball. **Rounds 7-7b done 11-11** (economy sketch tests 1, 3 and half of 4): food after 1:00 and a held-ground score leave the 1:00 leader winning 80-85%; regrowth cuts wipe-outs; a counted-down Strike with a Fortify that kills attackers dethrones soft, but brace (strike and fortify) wins every pairing; page opens on Strike and Fortify. Next: Fortify's price and the exploiter search against brace |
+| R-F | Two Fevers playable demo (`src/mould/fever.rs`, `fevers-web/`) | Two Fevers thread | nothing | **v3 done 11-10**: [report](Reports/two-fevers-2026-11-10/README.md), [page](wiki/rts/two-fevers.md), https://claude.ai/artifact/UMzPJmevoYJYmx8KRqG37a. Calls, fever by tube, foraging, pinch. Plans form a ladder (trunk > web > raider), not a cycle; the leader keeps the lead; waits on the owner's hand |
+
+| # | Step | Owner | Waits on |
+| --- | --- | --- | --- |
+| P | **Play Keep It Alive and The Wild One by hand** | Scotttt | nothing. This is the one step that unblocks most of the rest |
+| G1 | Keep It Alive: trace single games to find what sends one into the short or long hump. Measures only; the game does not change | Triage thread | **done 11-10**; owner picked "Trace it now" (card, 18:56Z): the first pile on mostly-asleep mould decides it ([report](Reports/mould-keep-alive-luck-2026-11-10.md)). Next: a 20 s landing preview, a game change |
+| G2 + R0 | **The Wild One's middle (seconds 30 to 150), done as Bloomfront Stage 0.** First separate which of lamp, snip and oats needs the aim; then give the wild mould a scripted hand on a mirrored dish | one thread, to be chosen | P for G2; the owner's say for R0 (HANDOFF decision 7, "wait or replace") |
+| G3 | The snip: make a cut-off piece visibly starve, or take it off The Wild One | Triage thread | P |
+| E6 | Keyed random draws and the dead-dish slowdown | Pixel_Physics thread | timing only: see *One census reset*, below; the keyed draw itself is built inside S1 (`keyed`, used only with `Params::all_at_once`, off by default) |
+| E7 | Sound for the game, from Pixel_Physics's `src/audio/` | Pixel_Physics thread | **built 11-10** (owner: "yes to sound", 19:22Z; [report](Reports/mould-sound-2026-11-10.md)). Next: the owner's ears on the Mould Sound page. **Larder World sound built 11-12** ([report](Reports/larder-sound-2026-11-12.md), [page](https://claude.ai/artifact/P4hk1fsSXQj3qXuwieffa7)): shots weigh the walkers they killed, a pulse as the mould nears; O toggles; levels await the owner's ears |
 | G4 | Star bars re-checked on 16 or more seeds | Triage thread | G1-G3; and S5 if the GPU goes ahead, because S5 re-derives the bars anyway |
 | R1-R2 | Bloomfront Stage 1 (spend to act; needs a currency first, since the food store sits at a median of 0, [brainstorm](Reports/rts-design-2026-11-10/brainstorm/README.md)) and Stage 2 (grow and sever) | RTS thread | R0's gate (equal hands 45-55%, sharp beats clumsy on 16 paired seeds); P (Stage 1's gate needs the owner's play); G3 (Stage 2's sever is the snip that bites) |
 | R3-R4 | Bloomfront Stages 3 and 4 | RTS thread | the scale fork; Stage 4's lockstep needs the integer simulation (HANDOFF decision 6) |
-| S6 | New play that only scale allows | GPU thread | S5 |
 | G6 | Later depth, in the owner's order: melting salt, spores, a rival the player steers, same-kind moulds joining | unowned | G1-G4 playing well |
 
-## Dependencies
+### Dependencies (G, E, R and S)
 
 ```mermaid
 flowchart LR
@@ -135,7 +284,7 @@ flowchart LR
 
 Yellow is the owner. A dotted arrow is "if the GPU goes ahead".
 
-## Where the plans touch each other
+### Where the plans touch each other
 
 These are the places two threads could step on each other or redo work.
 Each has a rule.
@@ -172,7 +321,7 @@ Each has a rule.
   ([`Reports/mould-real-world-2026-11-09.md`](Reports/mould-real-world-2026-11-09.md), §5;
   hand-off triage). No thread owns it yet.
 
-## What waits on the owner
+### What waits on the owner
 
 In the order that unblocks the most. The numbers are HANDOFF's open
 decisions.
@@ -201,15 +350,3 @@ decisions.
 9. **The scale gate** after S2.
 10. Low urgency, best answered after playing: retire F7 and grains or
     glints (decisions 2 and 3), food flow (4), the Organ and the Wanderer (5).
-
-## Keeping this page true
-
-- A thread that passes a gate, opens or merges a PR for a step, or changes
-  a step's owner updates its row here in the same PR.
-- An owner answer moves into [`wiki/decisions.md`](wiki/decisions.md) as
-  usual; then update the row it unblocks here.
-- The GPU go-ahead (17:50Z) and the owner's GPU (GTX 1070 on Scott-Desktop,
-  17:54Z) are recorded in `decisions.md`.
-- Each thread merges its own PRs once both CI jobs are green on the exact
-  head, with a merge commit (owner, 17:47Z). Any new report must be cited
-  from a wiki page in the same PR; `python3 wiki/lint.py` fails otherwise.
