@@ -2080,7 +2080,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use slime_mould::mould::big::{BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE};
+    use slime_mould::mould::big::{BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE, SOIL_BARREN, SOIL_CLAY, SOIL_SAND};
     use slime_mould::mould::tiers::Tier;
 
     #[test]
@@ -3200,9 +3200,10 @@ mod tests {
     /// a warmed CPU dish against one `BigDish::tick`, with crystals (equal
     /// shares, the flow inside a crystal, regrowing, hexagonal footprints
     /// and their scent by the share left), rock and wet ground, walls the
-    /// mould bites and breaks into rubble (leaky and sealed), and growth fed
-    /// by the crystals. The charge, each walker's take, the walls' health,
-    /// the agar and every cell's ground bits are compared too.
+    /// mould bites and breaks into rubble (leaky and sealed), growth fed by
+    /// the crystals, and soil (WM3, 2026-11-12: sand, clay and barren bands,
+    /// with one species and two). The charge, each walker's take, the
+    /// walls' health, the agar and every cell's ground bits are compared too.
     #[test]
     fn the_world_matches_the_cpu_for_one_tick() {
         let Some((device, queue)) = test_gpu() else { return };
@@ -3236,8 +3237,17 @@ mod tests {
                 }
             }
         };
+        // Soil in four bands across the dish, sand, clay, barren and plain,
+        // laid before the warm-up (the inject carries it to the GPU).
+        let soil: Build = |cpu, t| {
+            if t == 0 {
+                let w = cpu.w;
+                cpu.soil = (0..w * cpu.h).map(|i| [SOIL_SAND, SOIL_CLAY, SOIL_BARREN, 0][(i % w) * 4 / w]).collect();
+            }
+        };
         let none: Build = |_, _| {};
-        let dishes: [(&str, Settings, Build); 9] = [
+        let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
+        let dishes: [(&str, Settings, Build); 11] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3254,7 +3264,14 @@ mod tests {
             ("a cage round a packed start", Settings { wall_hp: 1000.0, walkers: 5_000, start: Start::Home, ..w(small(0)) }, cage),
             // Growth eating the crystals (the GPU thread's W0): the life
             // pass adds each walker's take.
-            ("growth on crystals", Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, wall_hp: 3.0, ..w(small(0)) }, walls),
+            ("growth on crystals", Settings { wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            // Soil: the trail's keep on sand and clay, barren upkeep and no
+            // births there; then with two species (each field x the keep).
+            ("soil bands, growth on crystals", grow(w(small(0))), soil),
+            // One a cell: with no limit a child lands on a crystal cell
+            // others share, and the take check (a cell's share against each
+            // living walker's take) counts the newborn, which took nothing.
+            ("soil bands, two species", Settings { species: 2, ..grow(w(small(0))) }, soil),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3263,10 +3280,21 @@ mod tests {
                 build(&mut cpu, t);
                 cpu.tick();
             }
+            // Soil: every walker fed to breed (birth energy 1), so children
+            // aim at barren cells, where none may land, as at the rest. (Not
+            // fed, no child was born in the tick, and a planted bug that let
+            // them land on barren ground passed.)
+            if !cpu.soil.is_empty() {
+                for k in 0..cpu.walkers.len() {
+                    if cpu.lives(k) {
+                        cpu.energy[k] = 2.0;
+                    }
+                }
+            }
             let n = cpu.walkers.len();
-            let (broken, bitten, eaten) = (cpu.broken, cpu.wall_hits, cpu.eaten);
+            let (broken, bitten, eaten, births) = (cpu.broken, cpu.wall_hits, cpu.eaten, cpu.births);
             let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
-            let (broken, bitten, eaten) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten);
+            let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
             let (lc, took_off, lh, agar_off, ground_off) = world_off(&e, &cpu);
             let (_, hits, gpu_broken) = e.world_counts();
             // Growth: what the walkers ate turned into energy; and no grass
@@ -3290,6 +3318,13 @@ mod tests {
             }
             if s.wet > 0.0 {
                 assert!(!cpu.wet.is_empty() && cpu.walkers.iter().any(|&(x, y, _)| cpu.wet[y as usize * cpu.w + x as usize]), "{name}: walkers on wet ground");
+            }
+            if !cpu.soil.is_empty() {
+                let on = |k: u8| (0..n).filter(|&q| cpu.lives(q) && cpu.soil[cpu.walkers[q].1 as usize * cpu.w + cpu.walkers[q].0 as usize] == k).count();
+                let kinds = [on(SOIL_SAND), on(SOIL_CLAY), on(SOIL_BARREN), on(0)];
+                eprintln!("{name}: living walkers on sand, clay, barren, plain {kinds:?}; {births} born in the tick");
+                assert!(kinds.iter().all(|&c| c > 0) && births > 0, "{name}: walkers on every kind of soil {kinds:?}, {births} born");
+                assert!(e.ground_world & WORLD_SOIL != 0, "{name}: soil on");
             }
             assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
             assert!(lt <= 1e-4 && ls <= 1e-6, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}");
@@ -3644,8 +3679,9 @@ mod tests {
     /// (rock, wet, crystals of five sizes and four charges) and the Nest
     /// (34 walls with health). The same crystals, start and landing; a
     /// soldier banks the same food; the moulds stay within 8% (the race
-    /// world's own twin bound). Soil is taken off both: the engine does not
-    /// read it yet.
+    /// world's own twin bound). With the maps' soil (WM3, 2026-11-12: the
+    /// Fork's and the Nest's clay, the Passes' and the Rim's sand and clay;
+    /// the engine read none before).
     #[test]
     fn a_designed_map_plays_on_the_engine_as_on_the_cpu() {
         use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
@@ -3656,13 +3692,12 @@ mod tests {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
         let (seed, scale, walkers) = (3, 2, 5_000);
         let rules = Rules { cap: 20.0, ..Rules::default() };
-        for name in ["fork", "nest"] {
-            let mut m = Map::load(&dir, name).unwrap();
-            for g in m.ground.iter_mut() {
-                *g &= 0x0F;
-            }
+        for name in ["fork", "nest", "passes", "rim"] {
+            let m = Map::load(&dir, name).unwrap();
             let mut cpu = Game::new(BigDish::with_map(race_params(seed, scale, walkers), &m), rules, seed);
             let mut gpu = Game::new(GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m), rules, seed);
+            assert!(cpu.world.soil.contains(&SOIL_CLAY) && gpu.world.e.ground_world & WORLD_SOIL != 0, "{name}: the map's clay on both");
+            assert!(name == "fork" || name == "nest" || cpu.world.soil.contains(&SOIL_SAND), "{name}: the map's sand");
             assert_eq!(gpu.world.crystals(), cpu.world.crystals(), "{name}: the same crystals and charge at the start");
             let n = cpu.world.crystals().len();
             assert!((0..n).all(|c| gpu.world.crystal_r(c) == cpu.world.crystal_r(c)), "{name}: radii");
