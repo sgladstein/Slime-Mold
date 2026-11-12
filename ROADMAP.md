@@ -148,6 +148,16 @@ default every thread measures against, and AI-strategy work. No thread holds
 its work for balance in another area
 ([rule](Reports/testing-practice-2026-11-12.md)).
 
+**Build first, balance later** (owner, 11-12 17:26Z; CLAUDE.md, #150). A
+census does not gate features, looks or controls, and balance never blocks
+work: a clash becomes a tuning note to whoever owns the numbers. A census is
+for strategy questions only (player AI, shared defaults, dominance before a
+milestone or playtest, mission difficulty, an owner question). Name the
+runner time first, and get the owner's OK for anything over about an hour.
+The rules below apply only when a census is warranted. The census-reset
+re-runs (#122, density) re-run only the baselines a strategy question still
+needs.
+
 **One census, two seed blocks** (11-12 ~10:10Z, with the technical lead).
 A game-level table compared across threads comes from `examples/larderworld
 census`, with hands, tiers, tools and missions added there as `hands=` or
