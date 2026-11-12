@@ -1936,7 +1936,14 @@ fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::Queue) -> R
         (None, true) => format!("{keys}; fast forward"),
         (None, false) => keys,
     };
-    println!("larder-world bench: {} seed {}, {} x {} cells, {} slots, scale {} walkers {}{keys}; hand {hand}, {:.0} game s at {fps} frames a second, screen {}x{}", app.name, app.args.seed, e.dish.w, e.dish.h, e.n, app.args.scale, app.args.walkers, g.time(), screen.0, screen.1);
+    // The crowd limit as played (`Engine::crowd`, after the run's params),
+    // so a bench says when the engine dropped it (`gpu::crowd_holds`).
+    let crowd = match (e.crowd, e.crowd_ok) {
+        (true, _) => "one walker a cell",
+        (false, true) => "no crowd limit",
+        (false, false) => "the crowd limit OFF (walkers over half the agar)",
+    };
+    println!("larder-world bench: {} seed {}, {} x {} cells, {} slots, {crowd}, scale {} walkers {}{keys}; hand {hand}, {:.0} game s at {fps} frames a second, screen {}x{}", app.name, app.args.seed, e.dish.w, e.dish.h, e.n, app.args.scale, app.args.walkers, g.time(), screen.0, screen.1);
     println!("  {} frames, {} game steps; {:.2} read-backs a step, {:.2} waits a step ({:.2} ms a step waiting); steps finished once in {}, when the next was due {}", rows.len(), steps, (slime_mould::gpu::reads() - reads0) as f64 / steps as f64, g.world.waits as f64 / steps as f64, g.world.wait_ms / steps as f64, app.finished.0, app.finished.1);
     for (only, tag) in [(false, "every frame"), (true, "frames with a step")] {
         println!("  {tag} ({} of them), ms: {}; step {}; prepare {}; record {}; GPU tail {}", rows.iter().filter(|r| !only || r.1).count(), line("frame", 0, only), line("", 1, only), line("", 2, only), line("", 3, only), line("", 4, only));
