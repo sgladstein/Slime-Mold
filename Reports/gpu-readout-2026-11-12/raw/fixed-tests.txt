@@ -1,0 +1,31 @@
+GTX 1070, commit 9261a06, 2026-11-12 ~15:25Z (target\gpu-out\fixed-tests.txt, as the Remote Control session sent it; the last line is its label).
+NOTE: run while another thread's campaign.exe (mission 3, 32 seeds, gpu=both) held the PC, 0.5 GB of 8 GB RAM free. Outcomes, not timing.
+
+   Compiling slime-mould v0.1.0 (C:\Users\Scott\Code\Slime Mold)
+    Finished `release` profile [optimized] target(s) in 27.36s
+     Running unittests src\bin\mouldgpu.rs (target\release\deps\mouldgpu-c3b7c72f82c3d876.exe)
+
+running 4 tests
+test tests::a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu ... FAILED
+test tests::a_squad_laying_craters_plays_on_the_engine_as_on_the_cpu ... ok
+test tests::the_squad_frame_holds_its_cap_on_the_gpu ... ok
+test tests::the_squad_matches_the_cpu_for_one_frame ... ok
+
+failures:
+
+---- tests::a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu stdout ----
+adapter: NVIDIA GeForce GTX 1070 (Vulkan)
+firing on the fleeing mould: game s, living CPU, GPU, CPU without the alarm: [(5, 5035, 5045, 5035), (10, 5131, 5126, 5131), (15, 5221, 5215, 5211), (20, 2746, 2530, 2805), (25, 1586, 1316, 1633), (30, 1288, 968, 1376)]; shots 75 / 75, killed 637 / 837 (without the alarm 838)
+
+thread 'tests::a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu' (24068) panicked at src\bin\mouldgpu.rs:3873:9:
+killed 837 on the GPU, 637 on the CPU
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 24 filtered out; finished in 20.23s
+
+error: test failed, to rerun pass `--bin mouldgpu`
+tests exit 101
