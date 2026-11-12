@@ -170,8 +170,32 @@ pub fn race_world(seed: u64, scale: usize, walkers: usize) -> BigDish {
     BigDish::new(race_params(seed, scale, walkers))
 }
 
+/// The mould turns from fresh gunfire (2026-11-12): the alarm field is on
+/// (`alarm_keep` 0.98, the Swarmer's) and its sensors read it at weight -1,
+/// so the alarm each hit lays (`squad::SHOT_ALARM`, out to twice the
+/// strike's radius) is ground the mould backs away from while it is fresh.
+/// The owner, 04:39Z: "A group of soldiers shooting the slime should start
+/// carving out a bigger and bigger hole that doesn't refill while being
+/// shot at". In the hole test (`examples/larderhole.rs`, 16 seeds, a squad
+/// of 4 firing 20 s from 8 dish cells off the body's edge) the hole at 20 s
+/// was 102 dish cells against 29 without it (16 of 16 larger, sign test p
+/// < 0.0001), 77% of the mould in range, with the hits pushed from 3.7 to
+/// 9.3 dish cells out; 5 s after the last shot 45% of it was left, and by
+/// 10 s it was back to holding fire's. Weight 3 or keep 0.99 opened more
+/// (126, 127) and refilled slower; 0.3 or keep 0.95 less (72, 67). A
+/// slower mould clock (half the fine steps a tick) did not (44 against 37,
+/// 12 of 16, p 0.08), as the graphics thread found timing refills. This is
+/// the local push the Skittish tier's flee (`Reports/dead-ends.md`,
+/// `alarm_weight` below 0) was rejected for: it moved only the walkers next
+/// to the wound, which is what a hole needs. Tiers that set their own
+/// weight (the Sleeper and Swarmer, +3) keep it; the Sporer flees too.
+pub const FLEE_KEEP: f32 = 0.98;
+pub const FLEE_WEIGHT: f32 = -1.0;
+
 pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
     BigParams {
+        alarm_keep: FLEE_KEEP,
+        alarm_weight: FLEE_WEIGHT,
         scale,
         substeps: scale,
         walkers,
@@ -206,15 +230,21 @@ pub struct Rules {
     pub strike: f32,
     /// Game seconds between one soldier's shots.
     pub shot_every: f32,
-    /// Food a shot costs.
+    /// Food a shot costs. 0 since 2026-11-12: the owner's playtest (04:13Z)
+    /// ran the bank dry with soldiers left, who could then neither fight
+    /// nor harvest past the mould ("energy required for shooting isn't
+    /// fun"); a soldier's fire rate (`shot_every`) is the limit. Was 10
+    /// (M3's), against 30 food a second a harvester takes.
     pub price: f32,
     pub hp: f32,
     /// Health a walker touching a soldier takes a game second.
     pub drain: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
-    /// A soldier's scent, as a share of a full pile's.
+    /// A soldier's scent, as a share of a full pile's, laid on the agar
+    /// within `smell_r` dish cells of it.
     pub smell: f32,
+    pub smell_r: f32,
     /// Food a soldier takes from a crystal a game second, how much it can
     /// carry, and the charge one food is.
     pub harvest: f32,
@@ -250,6 +280,18 @@ pub struct Rules {
     /// (2026-11-12). Under W2b's score it cost farm 10 of 10 (WM1), because
     /// that score counted a crystal with crumbs left as held.
     pub home_dry: bool,
+    /// **Larder overrun** (campaign thread, the owner's pick 2026-11-12
+    /// 04:44Z): the round is lost (`End::Overrun`) once the mould has held
+    /// the larder (a walker within its 3 dish cells) with the bank under 1
+    /// food for this many game seconds straight. 0, the default, is off; a
+    /// campaign mission turns it on.
+    pub overrun: f32,
+    /// **Reserve recruit** (the same pick): while fewer than 2 soldiers live
+    /// and the bank can't buy one, the larder makes a free soldier after
+    /// each this many game seconds of it, unless the mould holds the larder.
+    /// With it on, a wiped squad is no loss while a recruit can still come.
+    /// 0, the default, is off.
+    pub reserve: f32,
 }
 
 impl Default for Rules {
@@ -261,11 +303,12 @@ impl Default for Rules {
             range: 15.0,
             strike: 2.5,
             shot_every: 1.0,
-            price: 10.0,
+            price: 0.0,
             hp: 100.0,
             drain: 1.0,
             touch: 1.5,
             smell: 0.5,
+            smell_r: 2.0,
             harvest: 30.0,
             carry: 300.0,
             charge: 64.0,
@@ -283,6 +326,8 @@ impl Default for Rules {
             hoard: 1.0,
             steal: 1.0,
             home_dry: true,
+            overrun: 0.0,
+            reserve: 0.0,
         }
     }
 }
@@ -455,6 +500,23 @@ pub struct Game<W: World> {
     pub core_down: Option<u64>,
     core_clear: u64,
     pub first_touch: Option<f32>,
+    /// Walkers touching the larder at the last frame (it is held while any
+    /// do).
+    pub larder_touch: u32,
+    /// **Stuck seconds** (design review, 2026-11-12: no soft lock), counted
+    /// once a game second: a soldier alive, no shot fired and no food taken
+    /// (harvested plus carried did not rise) since the last count, and the
+    /// bank below a soldier's price. `stuck` is the round's total, `stuck_run`
+    /// the seconds in a row now (0 once a second isn't stuck). The census
+    /// (`examples/larderworld.rs`) counted this itself until 2026-11-12; the
+    /// campaign's mission layer reads it here.
+    pub stuck: u32,
+    pub stuck_run: u32,
+    stuck_mark: (u32, f32),
+    /// Ticks the larder has been held with the bank empty (`Rules::overrun`),
+    /// and ticks toward the next reserve recruit (`Rules::reserve`).
+    held_ticks: u64,
+    reserve_ticks: u64,
     pub end: Option<End>,
     /// The last frame's shots, for the window's tracers.
     pub last_shots: Vec<Shot>,
@@ -466,6 +528,12 @@ pub struct Game<W: World> {
     taken: Vec<f32>,
     /// Walkers at the start, for the stalemate's size term (`Game::score`).
     pub start_mould: usize,
+    /// Walkers per open fine cell at the start (`start_mould` over the cells
+    /// `World::open` holds). The unit for any threshold written as a walker
+    /// count, so it keeps its meaning from the CPU's 5,000 walkers to the
+    /// GPU's 100,000 (integration thread, 2026-11-12, from the technical
+    /// lead's review: counts like 6 or 80 walkers broke at GPU scale).
+    pub density: f32,
     /// W2b's held share at the cap (`Game::share`), kept so a census can
     /// print W2b's score beside v2's.
     pub cap_held: Option<f32>,
@@ -501,6 +569,9 @@ impl<W: World> Game<W> {
         let larder = world.landing().unwrap_or_else(|| far_crystal(&world));
         let core = world.crystals()[0].0;
         let mould = world.living();
+        let (w, h) = world.size();
+        let open = (0..w * h).filter(|&i| world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).count();
+        let density = mould as f32 / open.max(1) as f32;
         let start_charge: Vec<f32> = world.crystals().iter().map(|c| c.1).collect();
         let taken = vec![0.0; start_charge.len()];
         let mut g = Game {
@@ -519,12 +590,19 @@ impl<W: World> Game<W> {
             core_down: None,
             core_clear: 0,
             first_touch: None,
+            larder_touch: 0,
+            stuck: 0,
+            stuck_run: 0,
+            stuck_mark: (0, 0.0),
+            held_ticks: 0,
+            reserve_ticks: 0,
             end: None,
             last_shots: Vec::new(),
             mould,
             start_charge,
             taken,
             start_mould: mould,
+            density,
             cap_held: None,
             paths: Paths::default(),
             rng: Rng::new(seed ^ 0x001a_2de2_501d),
@@ -844,7 +922,7 @@ impl<W: World> Game<W> {
                 sight: r.range * sc,
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
-                smell_r: 2.0 * sc,
+                smell_r: r.smell_r * sc,
                 smell: self.world.food_deposit() * r.smell * r.frame_ticks as f32,
             });
             who.push(Some(k));
@@ -920,6 +998,7 @@ impl<W: World> Game<W> {
                     let take = (r.steal * u.touching as f32 * dt).min(self.bank.max(0.0));
                     self.bank -= take;
                     self.stolen += take;
+                    self.larder_touch = u.touching;
                 }
             }
         }
@@ -927,8 +1006,46 @@ impl<W: World> Game<W> {
         let now = self.world.ticks();
         if now / r.tps as u64 != t / r.tps as u64 {
             self.mould = self.world.living();
+            self.count_stuck();
         }
+        self.campaign_rules(now - t);
         self.check_end();
+    }
+
+    /// Once a game second: `Game::stuck`.
+    fn count_stuck(&mut self) {
+        let taken = self.harvested + self.soldiers.iter().map(|s| s.carry).sum::<f32>();
+        if self.alive() > 0 && self.shots == self.stuck_mark.0 && taken <= self.stuck_mark.1 && self.bank < self.rules.soldier_cost {
+            self.stuck += 1;
+            self.stuck_run += 1;
+        } else {
+            self.stuck_run = 0;
+        }
+        self.stuck_mark = (self.shots, taken);
+    }
+
+    /// `Rules::overrun` and `Rules::reserve`, each off at 0.
+    fn campaign_rules(&mut self, ticks: u64) {
+        let r = self.rules;
+        let held = self.larder_touch > 0;
+        if r.overrun > 0.0 {
+            self.held_ticks = if held && self.bank < 1.0 { self.held_ticks + ticks } else { 0 };
+            if self.held_ticks >= self.secs(r.overrun) && self.end.is_none() {
+                self.end = Some(End::Overrun(self.time()));
+            }
+        }
+        if r.reserve > 0.0 {
+            if self.alive() < 2 && self.bank < r.soldier_cost && !held {
+                self.reserve_ticks += ticks;
+                if self.reserve_ticks >= self.secs(r.reserve) {
+                    self.reserve_ticks = 0;
+                    let a = self.soldiers.len() as f32 * 2.399_963;
+                    self.add_soldier(a);
+                }
+            } else {
+                self.reserve_ticks = 0;
+            }
+        }
     }
 
     fn check_core(&mut self) {
@@ -952,8 +1069,14 @@ impl<W: World> Game<W> {
     }
 
     fn check_end(&mut self) {
+        if self.end.is_some() {
+            return;
+        }
         let t = self.time();
-        if self.alive() == 0 && self.bank < self.rules.soldier_cost {
+        // With the reserve on, a wiped squad waits for its recruit unless
+        // the mould holds the larder.
+        let recruit = self.rules.reserve > 0.0 && self.larder_touch == 0;
+        if self.alive() == 0 && self.bank < self.rules.soldier_cost && !recruit {
             self.end = Some(End::SquadWiped(t));
         } else if self.mould == 0 {
             self.end = Some(End::MouldWiped(t));
@@ -1272,8 +1395,86 @@ mod tests {
     }
 
     #[test]
+    fn stuck_seconds_count_a_squad_that_can_do_nothing() {
+        let mut g = small(1);
+        g.bank = 0.0;
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Stance(k, Stance::HoldFire));
+        }
+        for _ in 0..(g.rules.tps * 10) {
+            g.step();
+        }
+        assert!(g.stuck >= 9 && g.stuck_run == g.stuck, "stuck {} run {}", g.stuck, g.stuck_run);
+        // A bank that can buy a soldier is a way out.
+        g.bank = g.rules.soldier_cost;
+        for _ in 0..g.rules.tps {
+            g.step();
+        }
+        assert_eq!(g.stuck_run, 0);
+    }
+
+    #[test]
+    fn the_campaign_switches_are_off_by_default_and_do_what_they_say() {
+        let r = Rules::default();
+        assert!(r.overrun == 0.0 && r.reserve == 0.0);
+        // Overrun: the larder held with the bank empty for 2 s ends the round.
+        let mut g = small(1);
+        g.rules.overrun = 2.0;
+        g.bank = 0.0;
+        g.larder_touch = 3;
+        for _ in 0..29 {
+            g.campaign_rules(1);
+        }
+        assert!(g.end.is_none());
+        g.campaign_rules(1);
+        assert!(matches!(g.end, Some(End::Overrun(_))));
+        assert_eq!(g.end.unwrap().band(), "larder overrun");
+        assert!(g.end.unwrap().score(0, g.rules.cap) < -1.0, "an overrun is a loss");
+        // Reserve: a wiped squad with an empty bank waits, and the larder
+        // sends one soldier every 10 s until two stand.
+        let mut g = small(1);
+        g.rules.reserve = 10.0;
+        g.bank = 0.0;
+        for s in g.soldiers.iter_mut() {
+            s.alive = false;
+        }
+        for _ in 0..(g.rules.tps * 25) {
+            g.step();
+        }
+        assert!(g.end.is_none(), "{:?}", g.end);
+        assert_eq!(g.alive(), 2);
+        for _ in 0..(g.rules.tps * 15) {
+            g.step();
+        }
+        assert_eq!(g.alive(), 2, "two soldiers stand, so no more come");
+        // Without it the same squad has lost.
+        let mut g = small(1);
+        g.bank = 0.0;
+        for s in g.soldiers.iter_mut() {
+            s.alive = false;
+        }
+        g.step();
+        assert!(matches!(g.end, Some(End::SquadWiped(_))));
+    }
+
+    #[test]
+    fn density_holds_from_small_worlds_to_big_ones() {
+        // The same world at twice the scale has four times the open cells;
+        // with four times the walkers its density is the same.
+        let (a, b) = (small(1), Game::new(race_world(1, 2, 4_000), Rules::default(), 1));
+        assert!(a.density > 0.0 && a.start_mould == 1_000 && b.start_mould == 4_000);
+        assert!((b.density / a.density - 1.0).abs() < 0.05, "{} against {}", b.density, a.density);
+        let (w, h) = a.world.size();
+        let open = (0..w * h).filter(|&i| a.world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).count();
+        assert!(open < w * h, "rock and the rim are not open ground");
+    }
+
+    #[test]
     fn soldiers_on_free_fire_kill_mould_and_pay_for_it() {
+        // Shots are free by default (2026-11-12); a price still comes out
+        // of the bank shot by shot.
         let mut g = small(3);
+        g.rules.price = 10.0;
         let core = g.core;
         for k in 0..4 {
             g.apply(Cmd::Order(k, Order::Attack));
@@ -1285,7 +1486,7 @@ mod tests {
             }
         }
         assert!(g.shots > 0 && g.killed > 0, "shots {} killed {}", g.shots, g.killed);
-        assert!((g.spent - g.shots as f32 * g.rules.price).abs() < 1e-3);
+        assert!(g.spent > 0.0 && (g.spent - g.shots as f32 * g.rules.price).abs() < 1e-3);
         let _ = core;
     }
 

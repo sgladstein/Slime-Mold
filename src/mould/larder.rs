@@ -306,6 +306,10 @@ pub enum End {
     MouldWiped(f32),
     /// The cap, with the squad's share of the held piles.
     Cap(f32),
+    /// The mould held the larder with the bank empty for
+    /// `larder_world::Rules::overrun` seconds, at game second `t` (Larder
+    /// World only, a campaign mission's switch; 2026-11-12).
+    Overrun(f32),
 }
 
 impl End {
@@ -317,7 +321,7 @@ impl End {
         match self {
             End::MouldWiped(t) => 1.0 + left as f32 / 40.0 + (cap - t) / cap,
             End::Cap(share) => share - 0.5,
-            End::SquadWiped(t) => -(1.0 + (cap - t) / cap),
+            End::SquadWiped(t) | End::Overrun(t) => -(1.0 + (cap - t) / cap),
         }
     }
 
@@ -326,6 +330,7 @@ impl End {
             End::MouldWiped(_) => "mould wiped",
             End::Cap(_) => "cap",
             End::SquadWiped(_) => "squad wiped",
+            End::Overrun(_) => "larder overrun",
         }
     }
 }
