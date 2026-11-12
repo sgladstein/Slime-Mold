@@ -8,6 +8,7 @@ sources:
   - Reports/larder-build-plan-2026-11-11.md
   - Reports/larder-buildings-2026-11-12.md
   - Reports/larder-campaign-2026-11-12.md
+  - Reports/larder-economy-2026-11-12.md
   - Reports/larder-m1-2026-11-11.md
   - Reports/larder-m2-2026-11-11.md
   - Reports/larder-m3-2026-11-11.md
@@ -199,8 +200,7 @@ walkers touching, a fifth with 12; each counts `Rules::mass`). Over both blocks 
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
 random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the
-owner's pick (17:29Z) from clips of the squad firing into the thick body. **The economy** (PR 4; [report, *The economy:
-rations, and the overrun on*](../../Reports/larder-world-roadmap-2026-11-11.md)):
+owner's pick (17:29Z) from clips of the squad firing into the thick body. **The economy** (PR 4; [report](../../Reports/larder-economy-2026-11-12.md)):
 every soldier eats `Rules::ration` 1 food a second from the bank, and an
 unpaid bank costs each soldier `Rules::hunger` 1 hit point a second (hit
 points only, so starving soldiers still harvest and a dry farm recovers;
