@@ -3407,6 +3407,69 @@ mod tests {
         assert!(cpu_out.units[n - 1].touching > 0 && past.iter().any(|u| u.took > 0.0) && past.iter().all(|u| u.target.is_some()), "units past 64 touch, aim and harvest");
     }
 
+    /// **Solid crystals on both engines** (`Rules::crystal_solid`, the
+    /// tech lead's ask after #153 turned the rule off in the flee, crater and
+    /// core twins): the race world, seed 3, the squad holding fire and sent
+    /// onto the larder's crystal. Each tick for 3 game seconds (they reach
+    /// the rim in about 1) every soldier stands at the same place on both
+    /// engines, to the bit, and none stands on a solid crystal. `planted`
+    /// plays the GPU game without the rule, which the twin must catch.
+    fn crystal_twin(planted: bool) -> Result<usize, String> {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
+        let Some((device, queue)) = test_gpu() else { return Ok(0) };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 10.0, crater: 0.0, ..Rules::default() };
+        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+        let gpu_rules = Rules { crystal_solid: !planted, ..rules };
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), gpu_rules, seed);
+        let (i, c) = cpu.crystal_at(cpu.larder).expect("the larder sits on a crystal");
+        for k in 0..cpu.soldiers.len() {
+            assert!(cpu.apply(Cmd::Stance(k, Stance::HoldFire)) && gpu.apply(Cmd::Stance(k, Stance::HoldFire)));
+            assert!(cpu.apply(Cmd::Order(k, Order::Move(c.0, c.1))) && gpu.apply(Cmd::Order(k, Order::Move(c.0, c.1))));
+        }
+        let mut ticks = 0;
+        while ticks < 3 * rules.tps as usize {
+            cpu.step();
+            gpu.step();
+            ticks += 1;
+            for (k, (a, b)) in cpu.soldiers.iter().zip(&gpu.soldiers).enumerate() {
+                if (a.x.to_bits(), a.y.to_bits()) != (b.x.to_bits(), b.y.to_bits()) {
+                    return Err(format!("tick {ticks}: soldier {k} at {:?} on the CPU, {:?} on the GPU", (a.x, a.y), (b.x, b.y)));
+                }
+                // Judged by the CPU game's crystals (the rule's own ground).
+                for (name, s) in [("CPU", a), ("GPU", b)] {
+                    if !cpu.standable(s.x, s.y) {
+                        return Err(format!("tick {ticks}: soldier {k} on a crystal on the {name} at {:?}", (s.x, s.y)));
+                    }
+                }
+            }
+        }
+        // They got there: every soldier at the rim, not stuck on the way.
+        let rim = cpu.world.crystal_r(i) + 3.0 * scale as f32;
+        let near = cpu.soldiers.iter().filter(|s| (s.x - c.0).hypot(s.y - c.1) <= rim).count();
+        eprintln!("crystal twin: {ticks} ticks, {near} of {} soldiers within {rim} fine cells of the centre", cpu.soldiers.len());
+        if near < cpu.soldiers.len() {
+            return Err(format!("only {near} of {} soldiers reached the rim", cpu.soldiers.len()));
+        }
+        Ok(ticks)
+    }
+
+    #[test]
+    fn solid_crystals_hold_the_squad_alike_on_both_engines() {
+        let r = crystal_twin(false);
+        assert!(r.is_ok(), "{}", r.unwrap_err());
+    }
+
+    #[test]
+    fn the_crystal_twin_catches_an_engine_without_the_rule() {
+        let r = crystal_twin(true);
+        if test_gpu().is_some() {
+            assert!(r.is_err(), "the twin missed a GPU game that ignores solid crystals");
+            eprintln!("planted: {}", r.unwrap_err());
+        }
+    }
+
     #[test]
     fn the_squad_matches_the_cpu_for_one_frame() {
         use slime_mould::mould::squad::{self, Frame, ShotIn, UnitIn};
