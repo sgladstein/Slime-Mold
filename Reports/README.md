@@ -379,5 +379,8 @@ move.
   lean-vs-fat show 16/16 but tiny effects, because the mould crosses today's dish in about 4 s. **Correction:** a re-fired
   snip did not refresh its wound; fixed, a ring held from the start stops all theft (16/16); three reviews in `reviews/`.
   **Priced ring** (`econ`): ring-forever never best; ring-then-mow best on 16/16 at prices 10 and 40; a ladder.
+- [larder-sound-2026-11-12.md](larder-sound-2026-11-12.md) — Larder World sound after the owner's playtest ("shooting didn't feel
+  satisfying"): a shot's impact weighs the walkers it killed (`FULL_KILL` 80, the rush's 90th centile), kill crackle, a pulse as
+  the mould nears, hurt and fallen, the economy. Listener 2-3.5 us a frame, no new read-back. Page; levels await the owner's ears.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

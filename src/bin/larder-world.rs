@@ -38,9 +38,18 @@
 //! minimap, Esc is the menu. Wheel zooms, the middle button, the arrows or
 //! the screen edge pan.
 //!
-//! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]`
-//! plays without a window and saves the window's picture at those game
-//! seconds (`headless`).
+//! **Sound** (`slime_mould::sound::world`, 2026-11-12, after the owner's
+//! playtest: "shooting the slime didn't feel satisfying"): every shot
+//! cracks and strikes with a weight of the walkers it killed, kills
+//! crackle, a pulse quickens as the mould closes on the squad, soldiers
+//! groan when hurt; all read off the game, so sound on and off play the
+//! same round. On by default where the build has a device; O turns it off
+//! and on.
+//!
+//! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]
+//! [sound=FILE.wav]` plays without a window and saves the window's picture
+//! at those game seconds (`headless`), and with `sound=` what the round
+//! sounded like to an ear on the squad, to the last of those seconds.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -51,6 +60,9 @@ use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
 use slime_mould::mould::map::Map;
+use slime_mould::sound::synth::{VoiceBank, DEFAULT_MASTER};
+use slime_mould::sound::world::{Ear, WorldListener};
+use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::team_colour;
@@ -162,6 +174,16 @@ struct App {
     steps: u32,
     report_at: Instant,
     saved: bool,
+    /// The speaker (`slime_mould::sound`), or `None` where the build or the
+    /// machine has none: the window then plays silent.
+    speaker: Option<sound::Output>,
+    listener: Option<WorldListener>,
+    /// O turns sound off and on (on by default).
+    sound_on: bool,
+    /// The headless run's recording: its voice bank and samples.
+    tape: Option<(VoiceBank, Vec<f32>)>,
+    /// Listener time a frame, microseconds, since the last report.
+    hear_us: Vec<f32>,
     result: Result<(), String>,
 }
 
@@ -205,6 +227,11 @@ impl App {
             steps: 0,
             report_at: Instant::now(),
             saved: false,
+            speaker: None,
+            listener: None,
+            sound_on: true,
+            tape: None,
+            hear_us: Vec::new(),
             result: Ok(()),
         }
     }
@@ -261,6 +288,7 @@ impl App {
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.bank_log.clear();
+        self.listener = Some(WorldListener::new(&game));
         self.game = Some(game);
         if let Some(w) = &self.window {
             w.set_title(&format!("Larder World: {} (seed {})", title_case(&self.name), self.args.seed));
@@ -416,6 +444,9 @@ impl App {
             g.step();
             self.owed -= step;
             n += 1;
+            if let Some(l) = self.listener.as_mut() {
+                l.shots(&g.last_shots);
+            }
             for s in &g.last_shots {
                 self.tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
                 if let Some(k) = g.soldiers.iter().position(|q| q.alive && (q.x - s.from.0).abs() < 1e-3 && (q.y - s.from.1).abs() < 1e-3) {
@@ -472,6 +503,36 @@ impl App {
             println!("larder-world: {} on {} seed {}: {}; score {:+.3}", end.band(), self.name, self.args.seed, summary(g), g.score().unwrap_or(0.0));
             self.save_replay();
         }
+    }
+
+    /// Once a drawn frame, after the steps: what the round should sound
+    /// like now, to an ear on `ear` (the camera's view). The listener only
+    /// reads the game (`sound::world`), so this cannot change it.
+    fn hear(&mut self, dt: f32, ear: Ear) {
+        let (Some(g), Some(l)) = (self.game.as_ref(), self.listener.as_mut()) else { return };
+        if self.speaker.is_none() && self.tape.is_none() {
+            return;
+        }
+        let t0 = Instant::now();
+        let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
+        self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
+        if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
+            sp.send(cmds.iter().copied());
+        }
+        if let Some((bank, tape)) = self.tape.as_mut() {
+            for c in cmds {
+                bank.apply(c);
+            }
+            let mut buf = vec![0.0f32; (dt * bank.sample_rate() as f32).round() as usize * 2];
+            bank.render(&mut buf, 2);
+            tape.extend_from_slice(&buf);
+        }
+    }
+
+    /// The camera's view as the listener's ear.
+    fn ear(&self) -> Ear {
+        let (w, h) = self.camera.span();
+        Ear { centre: self.camera.centre(), half: (w / 2.0, h / 2.0) }
     }
 
     /// The look's ground from the world's cells: once a game second (the
@@ -707,6 +768,8 @@ impl App {
         self.last_frame = Instant::now();
         self.controls.update(&mut self.camera, dt);
         self.step(dt);
+        let ear = self.ear();
+        self.hear(dt, ear);
         self.prepare();
         let (Some(p), Some(view)) = (&self.pixels, self.view.as_ref()) else { return };
         let camera = self.camera;
@@ -733,6 +796,10 @@ impl App {
             ms.sort_by(f32::total_cmp);
             let at = |q: f32| ms[((ms.len() - 1) as f32 * q).round() as usize];
             println!("larder-world: {:.0} frames a second, frame p50 {:.2} ms p95 {:.2} ms max {:.2} ms; {:.1} game steps a second", ms.len() as f32 / since, at(0.5), at(0.95), at(1.0), self.steps as f32 / since);
+            if !self.hear_us.is_empty() {
+                let us = std::mem::take(&mut self.hear_us);
+                println!("larder-world: sound {}: listener mean {:.1} us max {:.1} us a frame", if self.sound_on { "on" } else { "off" }, us.iter().sum::<f32>() / us.len() as f32, us.iter().fold(0.0f32, |a, &b| a.max(b)));
+            }
             self.steps = 0;
             self.report_at = Instant::now();
         }
@@ -777,6 +844,18 @@ impl App {
                 if let Some(v) = self.view.as_mut() {
                     v.minimap = !v.minimap;
                 }
+            }
+            KeyCode::KeyO => {
+                self.sound_on = !self.sound_on;
+                if let Some(sp) = self.speaker.as_mut() {
+                    sp.send([SoundCmd::Master(if self.sound_on { DEFAULT_MASTER } else { 0.0 })]);
+                }
+                let what = match (self.speaker.is_some(), self.sound_on) {
+                    (false, _) => "No sound on this machine",
+                    (true, true) => "Sound on",
+                    (true, false) => "Sound off",
+                };
+                self.hud.alert(what, None, theme::ACCENT);
             }
             _ => {}
         }
@@ -912,6 +991,13 @@ impl ApplicationHandler for App {
         self.gpu = Some((pixels.device().clone(), pixels.queue().clone()));
         self.pixels = Some(pixels);
         self.window = Some(window);
+        self.speaker = match sound::Output::open(self.args.seed) {
+            Ok(o) => Some(o),
+            Err(e) => {
+                eprintln!("larder-world: no sound ({e}); playing silent");
+                None
+            }
+        };
         if let Err(e) = self.start() {
             self.fail(event_loop, e);
         }
@@ -1029,10 +1115,15 @@ impl ApplicationHandler for App {
 /// shows, checkable where there is no screen (the cloud's software
 /// Vulkan). Hands: `rush` (all attack the core), `farm` (all harvest the
 /// crystal nearest the larder, buying soldiers from 1,200 food), `idle`.
-fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -> Result<(), String> {
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
+    if wav.is_some() {
+        app.tape = Some((VoiceBank::new(48_000, app.args.seed), Vec::new()));
+    }
+    // The recording's ear: on the squad, at the window's opening zoom.
+    let span = app.camera.span();
     let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
     let mut last_sec = u64::MAX;
     for &t in at {
@@ -1044,6 +1135,13 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
                 plan(g, hand);
             }
             app.step(step);
+            if app.tape.is_some() {
+                let g = app.game.as_ref().unwrap();
+                let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+                let n = alive.len().max(1) as f32;
+                let centre = if alive.is_empty() { g.larder } else { (alive.iter().map(|p| p.0).sum::<f32>() / n, alive.iter().map(|p| p.1).sum::<f32>() / n) };
+                app.hear(step, Ear { centre, half: (span.0 / 2.0, span.1 / 2.0) });
+            }
         }
         let g = app.game.as_ref().unwrap();
         // The view on the fight: the squad's middle, or the larder.
@@ -1085,6 +1183,21 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
         println!("  CPU: ground field {ground_ms:.2} ms (once a game second), model and HUD {:.3} ms a frame", t0.elapsed().as_secs_f64() * 1e3 / 20.0);
         let g = app.game.as_ref().unwrap();
         println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+    }
+    if let (Some(path), Some((bank, tape))) = (wav, app.tape.as_ref()) {
+        slime_mould::wav::write(Path::new(path), tape, 2, bank.sample_rate()).map_err(|e| format!("{path}: {e}"))?;
+        let peak = tape.iter().fold(0.0f32, |m, v| m.max(v.abs()));
+        let rms = (tape.iter().map(|v| v * v).sum::<f32>() / tape.len().max(1) as f32).sqrt();
+        println!("{path}: {:.1} s, peak {:.3}, rms {:.4} ({:.1} dBFS)", tape.len() as f32 / 2.0 / bank.sample_rate() as f32, peak, rms, 20.0 * rms.max(1e-9).log10());
+        let s = app.listener.as_ref().map(|l| l.stats).unwrap_or_default();
+        println!(
+            "  heard: shots {} (voiced {}), impacts {} (light {} mid {} heavy {}), kills {}, beats {}, hurts {}, fallen {}, banked {}, bought {}, walls {}, dry {}, cores {}, endings {}",
+            s.shots, s.voiced, s.impacts, s.light, s.mid, s.heavy, s.kills, s.beats, s.hurts, s.fallen, s.banked, s.bought, s.walls, s.dry, s.cores, s.endings
+        );
+        let b = bank.stats;
+        println!("  played: grains {} (touch {} stolen {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.verb_grains, b.bursts, b.alerts, b.steals);
+        let us = &app.hear_us;
+        println!("  listener: mean {:.1} us, max {:.1} us a frame over {} frames", us.iter().sum::<f32>() / us.len().max(1) as f32, us.iter().fold(0.0f32, |a, &b| a.max(b)), us.len());
     }
     Ok(())
 }
@@ -1140,7 +1253,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 };
-    let (mut look, mut hand, mut at, mut screen) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32));
+    let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -1150,16 +1263,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "walkers" => args.walkers = v.parse()?,
             "look" => look = Some(v.to_string()),
             "hand" => hand = v.to_string(),
+            "sound" => wav = Some(v.to_string()),
             "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
             }
-            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers; look, hand, at, screen)").into()),
+            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers; look, hand, at, screen, sound)").into()),
         }
     }
     if let Some(dir) = look {
-        return Ok(headless(args, &dir, &hand, &at, screen)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref())?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
