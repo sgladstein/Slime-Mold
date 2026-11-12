@@ -437,8 +437,12 @@ pub struct Rules {
     /// **Larder overrun** (campaign thread, the owner's pick 2026-11-12
     /// 04:44Z): the round is lost (`End::Overrun`) once the mould has held
     /// the larder (a walker within its 3 dish cells) with the bank under 1
-    /// food for this many game seconds straight. 0, the default, is off; a
-    /// campaign mission turns it on.
+    /// food for this many game seconds straight. 0 is off. **20 s by
+    /// default since PR 4** (the economy; integration, 11-12 17:10Z: the
+    /// owner ruled on 11-11 that an idle player should lose, and idle
+    /// survived 46 of 48 games): with `Rules::ration` an idle squad's bank
+    /// runs dry, and a mould at the larder then takes the round. Before PR
+    /// 4 a campaign mission turned it on.
     pub overrun: f32,
     /// **Reserve recruit** (the same pick): while fewer than 2 soldiers live
     /// and the bank can't buy one, the larder makes a free soldier after
@@ -446,6 +450,25 @@ pub struct Rules {
     /// With it on, a wiped squad is no loss while a recruit can still come.
     /// 0, the default, is off.
     pub reserve: f32,
+    /// **Rations** (PR 4, the economy): food a game second each live
+    /// soldier eats from the bank (`Game::eaten`). Why: food didn't bind.
+    /// Farm, wall and fort ended 15-minute games with 83-85% of their
+    /// harvest unspent, and strike won by banking behind a 30-soldier army
+    /// it never paid to keep (integration, 11-12 17:10Z, from the one-body
+    /// thread's slime-enemy review). An army now costs its keep: farm's 8
+    /// soldiers eat 16 a second of the about 59 they bank, and 30 eat 60.
+    /// Paid each step; what the bank can't pay, the squad goes hungry for
+    /// (`Rules::hunger`). 0 is off.
+    pub ration: f32,
+    /// Hit points a game second every soldier loses while the bank can't
+    /// pay the rations (a share of it for a part-paid step; `Game::hungry`).
+    /// Hunger costs only hit points: a starving soldier walks, fires and
+    /// harvests at full speed, so a farm that runs dry recovers as soon as
+    /// a carrier banks, and the need falls as the squad shrinks. Slowing
+    /// hungry soldiers would spiral (slower carriers bank less, so starve
+    /// more; integration's check, 19:59Z). At 1 a full-health soldier
+    /// lasts 100 s of an empty bank.
+    pub hunger: f32,
     /// A carrier back from a dry crystal with nothing queued walks on to
     /// the nearest crystal with charge left (`Game::seek`), the mould's
     /// home excepted, rather than holding at the larder (owner, 11-12
@@ -535,8 +558,10 @@ impl Default for Rules {
             steal: 1.0,
             home_dry: true,
             build: BuildRules::default(),
-            overrun: 0.0,
+            overrun: 20.0,
             reserve: 0.0,
+            ration: 2.0,
+            hunger: 1.0,
             seek: true,
             crater: 4.5,
             spread: 0.0,
@@ -756,6 +781,11 @@ pub struct Game<W: World> {
     pub spent: f32,
     pub harvested: f32,
     pub stolen: f32,
+    /// Food the squad has eaten (`Rules::ration`).
+    pub eaten: f32,
+    /// The bank couldn't pay the last step's rations: the squad is losing
+    /// hit points (`Rules::hunger`).
+    pub hungry: bool,
     pub shots: u32,
     pub killed: u32,
     pub walls: u32,
@@ -900,6 +930,8 @@ impl<W: World> Game<W> {
             spent: 0.0,
             harvested: 0.0,
             stolen: 0.0,
+            eaten: 0.0,
+            hungry: false,
             shots: 0,
             killed: 0,
             walls: 0,
@@ -1612,8 +1644,37 @@ impl<W: World> Game<W> {
             self.mould = self.world.living();
             self.count_stuck();
         }
+        self.feed(dt);
         self.campaign_rules(now - t);
         self.check_end();
+    }
+
+    /// `Rules::ration` and `Rules::hunger`: every live soldier eats from
+    /// the bank; for what it can't pay, the squad loses hit points.
+    fn feed(&mut self, dt: f32) {
+        let r = self.rules;
+        let alive = self.alive();
+        self.hungry = false;
+        if r.ration <= 0.0 || alive == 0 {
+            return;
+        }
+        let need = r.ration * alive as f32 * dt;
+        let paid = need.min(self.bank.max(0.0));
+        self.bank -= paid;
+        self.eaten += paid;
+        let short = 1.0 - paid / need;
+        if short <= 1e-6 {
+            return;
+        }
+        self.hungry = true;
+        for s in self.soldiers.iter_mut().filter(|s| s.alive) {
+            s.hp -= r.hunger * short * dt;
+            if s.hp <= 0.0 {
+                s.alive = false;
+                s.hp = 0.0;
+                s.carry = 0.0;
+            }
+        }
     }
 
     /// Once a game second: `Game::stuck`.
@@ -2048,8 +2109,10 @@ mod tests {
         assert!(g.harvested >= g.rules.carry, "banked {} in 30 s", g.harvested);
         // Equal to f32 rounding (with `Rules::home_dry` a carrier banks
         // part loads).
-        let books = g.rules.start_bank + g.harvested - g.spent - g.stolen;
-        assert!((g.bank - books).abs() < 0.01, "bank {} books {books}", g.bank);
+        // Rations come off the bank every step, so the f32 rounding is
+        // a few hundredths over 30 s (0.03; 0.01 held before them).
+        let books = g.rules.start_bank + g.harvested - g.spent - g.stolen - g.eaten;
+        assert!((g.bank - books).abs() < 0.1, "bank {} books {books}", g.bank);
         // From the cells: the pile's total is summed a tick late (the next
         // tick's eating), and the frame's last take is after the ticks.
         let d = &g.world;
@@ -2393,6 +2456,8 @@ mod tests {
     #[test]
     fn stuck_seconds_count_a_squad_that_can_do_nothing() {
         let mut g = small(1);
+        // Rations off: they would eat the bank this test buys with.
+        g.rules.ration = 0.0;
         g.bank = 0.0;
         for k in 0..g.soldiers.len() {
             g.apply(Cmd::Stance(k, Stance::HoldFire));
@@ -2410,9 +2475,10 @@ mod tests {
     }
 
     #[test]
-    fn the_campaign_switches_are_off_by_default_and_do_what_they_say() {
+    fn the_campaign_switches_do_what_they_say() {
+        // The reserve is off by default; the overrun is on since PR 4.
         let r = Rules::default();
-        assert!(r.overrun == 0.0 && r.reserve == 0.0);
+        assert!(r.overrun == 20.0 && r.reserve == 0.0);
         // Overrun: the larder held with the bank empty for 2 s ends the round.
         let mut g = small(1);
         g.rules.overrun = 2.0;
@@ -2451,6 +2517,43 @@ mod tests {
         }
         g.step();
         assert!(matches!(g.end, Some(End::SquadWiped(_))));
+    }
+
+    #[test]
+    fn rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes() {
+        let mut g = small(1);
+        let n = g.alive() as f32;
+        assert!(n >= 1.0 && g.rules.ration == 2.0 && g.rules.hunger == 1.0);
+        let hp = g.soldiers[0].hp;
+        // Paid in full: the bank pays, nobody hungers.
+        g.bank = 3.0 * n;
+        g.feed(1.0);
+        assert!((g.bank - n).abs() < 1e-4 && (g.eaten - 2.0 * n).abs() < 1e-4 && !g.hungry);
+        assert_eq!(g.soldiers[0].hp, hp);
+        // Half paid: the bank empties and each soldier loses half of a
+        // second's hunger.
+        g.feed(1.0);
+        assert!(g.bank.abs() < 1e-4 && g.hungry);
+        assert!((g.soldiers[0].hp - (hp - 0.5)).abs() < 1e-4, "{}", g.soldiers[0].hp);
+        // A carrier banks: the squad eats again (no spiral: hunger costs
+        // only hit points, so harvesters keep their speed).
+        g.bank = 300.0;
+        g.feed(1.0);
+        assert!(!g.hungry && (g.soldiers[0].hp - (hp - 0.5)).abs() < 1e-4);
+        // Starved long enough, a soldier dies, and the need falls with the
+        // squad.
+        g.bank = 0.0;
+        g.feed(hp);
+        assert_eq!(g.alive(), 0);
+        assert!(!g.soldiers[0].alive && g.soldiers[0].carry == 0.0);
+        g.feed(1.0);
+        assert!(!g.hungry, "nobody left to feed");
+        // Off at 0.
+        let mut g = small(1);
+        g.rules.ration = 0.0;
+        g.bank = 0.0;
+        g.feed(10.0);
+        assert!(!g.hungry && g.eaten == 0.0);
     }
 
     #[test]

@@ -243,6 +243,8 @@ struct App {
     robbed_at: Option<f32>,
     stolen: f32,
     broke: bool,
+    /// `Game::hungry` last frame, to tell the player once when the squad starts starving.
+    hungry: bool,
     /// Bank samples (game second, bank) for the food rate.
     bank_log: std::collections::VecDeque<(f32, f32)>,
     /// Frame times (ms) since the last report, and when it was.
@@ -308,6 +310,7 @@ impl App {
             robbed_at: None,
             stolen: 0.0,
             broke: false,
+            hungry: false,
             bank_log: Default::default(),
             frame_ms: Vec::new(),
             steps: 0,
@@ -776,6 +779,11 @@ impl App {
             self.hud.alert("Out of food: soldiers cannot fire", None, theme::BAD);
         }
         self.broke = broke;
+        // Rations (`Rules::ration`): told once each time the bank runs dry.
+        if g.hungry && !self.hungry {
+            self.hud.alert(&format!("Out of food: the squad is starving ({:.0} food a second to feed it)", g.rules.ration * g.alive() as f32), Some(g.larder), theme::BAD);
+        }
+        self.hungry = g.hungry;
         self.bank_log.push_back((t, g.bank));
         while self.bank_log.front().is_some_and(|&(t0, _)| t - t0 > 10.0) {
             self.bank_log.pop_front();

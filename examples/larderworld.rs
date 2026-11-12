@@ -47,6 +47,9 @@
 //! `regrow=S` gives the mould a regrowing core (`CoreKind::Regrow`, starve
 //! window S seconds) and adds `core grew back N` to a row where it did;
 //! `core=headless` (or `fixed`) sets the core's kind.
+//! `ration=`, `hunger=` and `overrun=` set the economy's rules
+//! (`Rules::ration`, `Rules::hunger`, `Rules::overrun`; PR 4), and each row
+//! ends with the food the squad ate.
 //!
 //! **Hands** (fixed rules; settings named here):
 //! - **idle**: never gives an order. The soldiers stand at the larder on
@@ -117,6 +120,7 @@ struct Row {
     bank: f32,
     harvested: f32,
     stolen: f32,
+    eaten: f32,
     shots: u32,
     killed: u32,
     crystals_left: f32,
@@ -315,6 +319,9 @@ fn main() {
             // `crater=S`: game seconds of crater each hit lays
             // (`Rules::crater`).
             "crater" => rules.crater = v.parse().unwrap(),
+            "ration" => rules.ration = v.parse().unwrap(),
+            "hunger" => rules.hunger = v.parse().unwrap(),
+            "overrun" => rules.overrun = v.parse().unwrap(),
             "core_pull" => rules.core_pull = v.parse().unwrap(),
             "regrow" => m.regrow = Some(v.parse().unwrap()),
             "core" => {
@@ -457,9 +464,10 @@ fn main() {
                     }
                     let r = play(*seed, scale, walkers, rules, &m, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
                     println!(
-                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s{}",
+                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s{}; eaten {:.0}",
                         if engines.len() > 1 { format!(" {}", engine_name(*on_gpu)) } else { String::new() },
-                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck, r.core_at.map_or(String::new(), |t| format!(", core fell at {t:.0} s")) + &if r.core_regrows > 0 { format!(", core grew back {}", r.core_regrows) } else { String::new() }
+                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck, r.core_at.map_or(String::new(), |t| format!(", core fell at {t:.0} s")) + &if r.core_regrows > 0 { format!(", core grew back {}", r.core_regrows) } else { String::new() },
+                        r.eaten
                     );
                     out.lock().unwrap()[j] = r;
                 }
@@ -790,6 +798,7 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
         bank: g.bank,
         harvested: g.harvested,
         stolen: g.stolen,
+        eaten: g.eaten,
         shots: g.shots,
         killed: g.killed,
         crystals_left: left,
