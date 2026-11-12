@@ -81,7 +81,7 @@ use std::time::Instant;
 use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
-use slime_mould::mould::larder_world::{Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{Cmd, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
@@ -756,15 +756,7 @@ impl App {
         }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
-            let say = match g.core_rule.kind {
-                CoreKind::Regrow { starve_secs } => format!("The core is taken: it grows back in {starve_secs:.0} s unless the mould eats nothing till then"),
-                _ => "The core is taken: the mould can no longer grow".into(),
-            };
-            self.hud.alert(&say, Some(g.core), theme::GOOD);
-        } else if g.core_down.is_none() && self.core_told {
-            // A regrowing core (`CoreKind::Regrow`) the mould fed.
-            self.core_told = false;
-            self.hud.alert("The core grew back: the mould still eats. Keep it off the crystals", Some(g.core), theme::BAD);
+            self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
         }
         if g.stolen > self.stolen {
             if self.robbed_at.is_none_or(|r| t - r > 30.0) {

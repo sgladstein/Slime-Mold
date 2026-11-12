@@ -486,12 +486,8 @@ impl World for GpuWorld {
         x >= 0.0 && y >= 0.0 && (x as usize) < d.w && (y as usize) < d.h && d.agar[y as usize * d.w + x as usize]
     }
 
-    fn stop_births(&mut self) -> f32 {
-        std::mem::replace(&mut self.s.birth_energy, f32::INFINITY)
-    }
-
-    fn start_births(&mut self, was: f32) {
-        self.s.birth_energy = was;
+    fn stop_births(&mut self) {
+        self.s.birth_energy = f32::INFINITY;
     }
 
     fn food_deposit(&self) -> f32 {
@@ -633,11 +629,8 @@ mod tests {
         fn open(&self, x: f32, y: f32) -> bool {
             self.g.open(x, y)
         }
-        fn stop_births(&mut self) -> f32 {
+        fn stop_births(&mut self) {
             self.g.stop_births()
-        }
-        fn start_births(&mut self, was: f32) {
-            self.g.start_births(was)
         }
         fn food_deposit(&self) -> f32 {
             self.g.food_deposit()

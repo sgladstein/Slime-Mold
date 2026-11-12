@@ -98,13 +98,8 @@ pub trait World {
     }
     /// Open ground a soldier can stand on (agar: not rock, wall or rim).
     fn open(&self, x: f32, y: f32) -> bool;
-    /// The mould's core is taken: no more births. Returns what births
-    /// need, in the world's own terms (the birth energy, or the species
-    /// cap), for `start_births` to give back.
-    fn stop_births(&mut self) -> f32;
-    /// A regrown core (`CoreKind::Regrow`): births again, with what
-    /// `stop_births` returned.
-    fn start_births(&mut self, was: f32);
+    /// The mould's core is taken: no more births.
+    fn stop_births(&mut self);
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
@@ -177,12 +172,8 @@ impl World for BigDish {
         x >= 0.0 && y >= 0.0 && (x as usize) < self.w && (y as usize) < self.h && self.agar[y as usize * self.w + x as usize]
     }
 
-    fn stop_births(&mut self) -> f32 {
-        std::mem::replace(&mut self.p.birth_energy, f32::INFINITY)
-    }
-
-    fn start_births(&mut self, was: f32) {
-        self.p.birth_energy = was;
+    fn stop_births(&mut self) {
+        self.p.birth_energy = f32::INFINITY;
     }
 
     fn food_deposit(&self) -> f32 {
@@ -311,7 +302,7 @@ pub struct Core {
 }
 
 /// How a core falls (`Core`).
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CoreKind {
     /// Held clear for `Core::secs`, it falls for good: births stop.
     Fixed,
@@ -319,25 +310,14 @@ pub enum CoreKind {
     /// tiers thread's Sprawler). The Drifter's migrating core is to come:
     /// it needs to know where the body is on the GPU, which the GPU world
     /// can't read back cheaply yet.
-    Headless,
-    /// Falls as `Fixed` does, births stopping, and grows back unless the
-    /// body starves (the tiers thread's Trunk; the designer: "regrows
-    /// unless the body is starved", the lesson of campaign mission 4,
-    /// cut, then starve). If the mould eats anything from any crystal in
-    /// the `starve_secs` after the fall, the core grows back when they
-    /// are up: births restart and the hold clock starts again. If it eats
-    /// nothing all that time it stays down for good. So taking the core
-    /// alone doesn't stop the Trunk; taking it while the squad holds the
-    /// crystals, or has cut the body off them, does.
     ///
-    /// "Eats" is the whole body's: the crystals' charge gone less the
-    /// squad's take (`Game::mould_ate`), which both engines read back
-    /// already. The core's own piece starving, with the one-body thread's
-    /// distance-capped sharing, would need a per-region read-back on the
-    /// GPU; the tiers thread chose the whole-body rule (2026-11-12). With
-    /// `BigParams::crystal_regrow` on, regrowth hides eating, and a fed
-    /// mould can read as starved (off on every map so far).
-    Regrow { starve_secs: f32 },
+    /// A third kind, `Regrow { starve_secs }`, was built and merged in
+    /// PR #163 (the tiers thread's Trunk: the core falls, and grows back
+    /// unless the whole body eats nothing for `starve_secs`), then taken
+    /// out: the owner's no-king ruling (2026-11-12 20:21Z, "remove the
+    /// king rule ... Headless") left no tier to use it. Its code is in
+    /// #163's merge if a core comes back (`Reports/dead-ends.md`).
+    Headless,
 }
 
 impl Core {
@@ -809,20 +789,11 @@ pub struct Game<W: World> {
     pub larder: (f32, f32),
     /// The mould's home crystal, fine cells.
     pub core: (f32, f32),
-    /// The tick the core fell, while it is down (a regrown core,
-    /// `CoreKind::Regrow`, sets it back to None).
     pub core_down: Option<u64>,
     core_clear: u64,
     /// What the core is (`Core`): `Core::of(&rules)` unless a tier says
     /// otherwise (`with_tier`).
     pub core_rule: Core,
-    /// Times the core fell, and times it grew back (`CoreKind::Regrow`).
-    pub core_falls: u32,
-    pub core_regrows: u32,
-    /// A fallen regrowing core's starve window: the tick it ends, the
-    /// mould's eating when it began (`mould_ate`), and what the world's
-    /// births took (`World::stop_births`).
-    regrow: Option<(u64, f32, f32)>,
     pub first_touch: Option<f32>,
     /// Walkers touching the larder at the last frame (it is held while any
     /// do).
@@ -951,9 +922,6 @@ impl<W: World> Game<W> {
             core_down: None,
             core_clear: 0,
             core_rule: Core::of(&rules),
-            core_falls: 0,
-            core_regrows: 0,
-            regrow: None,
             first_touch: None,
             larder_touch: 0,
             stuck: 0,
@@ -1720,30 +1688,7 @@ impl<W: World> Game<W> {
         }
     }
 
-    /// Food the mould has eaten from the crystals so far: their charge
-    /// gone, less what the squad and its buildings took. A pump's draw is
-    /// in `taken` (`UnitOut::took`), so only walkers' bites count.
-    pub fn mould_ate(&self) -> f32 {
-        self.world.crystals().iter().enumerate().map(|(i, c)| self.start_charge[i] - c.1 - self.taken[i]).sum()
-    }
-
     fn check_core(&mut self) {
-        if let Some((until, ate, was)) = self.regrow {
-            // A crumb of float noise is not a meal: the charge is summed
-            // afresh each step (a thousandth of a percent of the start).
-            let full: f32 = self.start_charge.iter().sum();
-            if self.mould_ate() > ate + 1e-5 * full {
-                if self.world.ticks() >= until {
-                    self.world.start_births(was);
-                    (self.core_down, self.core_clear, self.regrow) = (None, 0, None);
-                    self.core_regrows += 1;
-                }
-            } else if self.world.ticks() >= until {
-                // Starved through the window: down for good.
-                self.regrow = None;
-            }
-            return;
-        }
         if self.core_down.is_some() || self.core_rule.kind == CoreKind::Headless {
             return;
         }
@@ -1755,13 +1700,8 @@ impl<W: World> Game<W> {
         if clear {
             self.core_clear += self.rules.frame_ticks as u64;
             if self.core_clear >= self.secs(self.core_rule.secs) {
-                let now = self.world.ticks();
-                self.core_down = Some(now);
-                self.core_falls += 1;
-                let was = self.world.stop_births();
-                if let CoreKind::Regrow { starve_secs } = self.core_rule.kind {
-                    self.regrow = Some((now + self.secs(starve_secs), self.mould_ate(), was));
-                }
+                self.core_down = Some(self.world.ticks());
+                self.world.stop_births();
             }
         } else {
             self.core_clear = 0;
@@ -2015,45 +1955,6 @@ mod tests {
         assert_eq!(hold(CoreKind::Headless), (false, true), "no core to hold");
     }
 
-    /// A regrowing core (`CoreKind::Regrow`) falls as a fixed one does,
-    /// births stopping; once its starve window is up it grows back if the
-    /// mould ate in it, births restarting, and stays down for good if the
-    /// mould ate nothing.
-    #[test]
-    fn a_regrowing_core_grows_back_unless_the_mould_starves() {
-        let fall = || {
-            let mut g = small(1);
-            g.core_rule.kind = CoreKind::Regrow { starve_secs: 5.0 };
-            for k in 0..g.soldiers.len() {
-                (g.soldiers[k].x, g.soldiers[k].y) = g.core;
-                (g.soldiers[k].touching, g.soldiers[k].aim) = (0, None);
-            }
-            for _ in 0..=g.secs(g.core_rule.secs) {
-                g.check_core();
-            }
-            assert!(g.core_down.is_some() && !g.world.p.birth_energy.is_finite(), "held: it falls and births stop");
-            g
-        };
-        let born = small(1).world.p.birth_energy;
-        // Fed: the game played on, the mould eating at its crystals.
-        let mut g = fall();
-        let (t0, ate) = (g.time(), g.mould_ate());
-        while g.time() < t0 + 5.5 {
-            g.step();
-        }
-        assert!(g.mould_ate() > ate, "the mould ate in the window");
-        assert_eq!((g.core_down, g.world.p.birth_energy, g.core_falls, g.core_regrows), (None, born, 1, 1), "fed: the core grew back");
-        // Starved: nothing eaten while the window runs, then down for
-        // good, even if the mould eats later.
-        let mut g = fall();
-        g.world.ticks += g.secs(5.0);
-        g.check_core();
-        g.world.pile_charge[0] *= 0.5;
-        g.world.ticks += g.secs(10.0);
-        g.check_core();
-        assert!(g.core_down.is_some() && !g.world.p.birth_energy.is_finite() && g.core_regrows == 0, "starved: it stays down");
-    }
-
     /// Wading (`Rules::wade`): with 6 walkers touching a soldier walks at
     /// half speed, with 12 at a fifth; open ground and `wade` 0 at full.
     #[test]
@@ -2276,11 +2177,8 @@ mod tests {
         fn open(&self, x: f32, y: f32) -> bool {
             World::open(&self.d, x, y)
         }
-        fn stop_births(&mut self) -> f32 {
+        fn stop_births(&mut self) {
             World::stop_births(&mut self.d)
-        }
-        fn start_births(&mut self, was: f32) {
-            World::start_births(&mut self.d, was)
         }
         fn food_deposit(&self) -> f32 {
             World::food_deposit(&self.d)

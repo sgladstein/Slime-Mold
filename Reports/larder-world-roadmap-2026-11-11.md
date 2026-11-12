@@ -859,4 +859,6 @@ Plan agreed with integration at 19:59Z, built under the owner's 17:26Z testing r
   - Farm and wall end every game with all 8 soldiers, so they never starved.
   - The rush hand's 4 cap games sit at 0 soldiers with 411-491 food, which is over a soldier's price. The hand keeps a reserve and won't buy; a player could.
 
+**The regrowing core is taken out.** The owner ruled at 20:21Z: "remove the king rule. As long as the slime has food/crystal energy it can make walkers. Headless." The tiers thread confirmed at 21:00Z that no tier will use `CoreKind::Regrow`, so PR 4 removes it, along with `Game::mould_ate`, `World::start_births`, the census key `regrow=` and the window's "grew back" alert. It worked as built (the section above), so it is recorded in `dead-ends.md` as dropped, not rejected, with what to restore if a core comes back. `core=fixed|headless` stays for tests.
+
 **Cost.** Per step on the CPU: one multiply and a subtraction, and a loop over the soldiers while hungry. Nothing on the GPU.
