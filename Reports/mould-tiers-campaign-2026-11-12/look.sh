@@ -4,11 +4,11 @@
 # 512 x 320, 23 crystals of charge 512 that run dry, rock and wet ground,
 # 5,000 walkers on the home crystal in 50,000 slots, upkeep 0.001).
 #   bash Reports/mould-tiers-campaign-2026-11-12/look.sh WORK [ARMS...]
-# Arms are NAME|ARGS lines in the ARMS file (default: arms.txt beside this).
+# ARMS=FILE picks the arms (candidates-1..3.txt, habit-look.txt); arms are NAME|ARGS lines in the ARMS file (default: arms.txt beside this).
 set -u
 WORK=${1:-/tmp/tiers-look}; mkdir -p "$WORK"
 ARMS=${ARMS:-$(dirname "$0")/arms.txt}
-BIN=./target/release/examples/bigdish
+BIN=${BIN:-./target/release/examples/bigdish}
 W="preset=today scale=2 substeps=2 scent_offset=36 scent_coarse=0 piles=23 rect=1 crystal_charge=512 crystal_eat=0.005 walkers=5000 capacity=50000 upkeep=0.001 crystal_regrow=0 terrain_rock=0.2 terrain_wet=0.2"
 SECS=${SECS:-60}; AT=${AT:-5,15,30,60}; SEED=${SEED:-1}; JOBS=${JOBS:-4}
 ONLY=${ONLY:-}

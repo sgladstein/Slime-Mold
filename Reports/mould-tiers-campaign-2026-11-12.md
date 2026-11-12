@@ -1,0 +1,65 @@
+# Mould tiers for the campaign: Drifter, Sprawler, Trunk, and a mould that remembers (2026-11-12)
+
+The campaign's missions 1-4 ([design](larder-campaign-2026-11-12.md)) need three tiers that were only names on the ladder: the Drifter (slow, grazing), the Sprawler (fast, thin) and the Trunk (thick, heals). After them came habituation, a mould that learns from where it is hurt (review 2's second candidate, [the reviews](mould-tiers-review-2026-11-11.md)). Asked for by the coordinator at 05:10Z, with the owner asleep (04:48Z: threads settle questions together). Thread: *Build new mould tiers for the campaign*.
+
+## Summary
+
+- **Three shapes, each told apart at a glance, on rules both engines already run.** `mould::tiers::Tier::{Drifter, Sprawler, Trunk}` are settings, not new rules. The **Drifter** is droplets: round bodies on crystals, crawling between them on faint threads (sensors 90 degrees apart, trail kept 0.93, a packed walker lays its trail). The **Sprawler** is explorers that run from trail before they join the network: a thin mesh over the whole map within 15 s, with about 1,100-1,600 walkers in it (seed 1). The **Trunk** is long straight cords (sensors 22.5 degrees apart reading 18 fine cells out, trail kept 0.95) round a few big bodies. Picked by eye from 15 candidates on seed 1 (`look.sh`, `candidates-*.txt`).
+- **The GPU runs them as the CPU does.** The race world's GPU settings with each tier give exactly the CPU's params (a test), and the Larder game on software Vulkan keeps each mould within 2% of the CPU's every 5 s over 20 s (`the_campaign_tiers_run_on_the_engine_as_on_the_cpu`). No new GPU row, no species slot.
+- **Habituation is a scar field** (`BigParams::scar_keep`, `scar_gain`, `scar_weight`; CPU, off by default): a per-cell memory of the alarm a hit lays, kept about 40 game seconds, read at the sensors. Two tiers read it opposite ways. **Wary** (weight -0.5) keeps away from where it was shot again and again: 20 s after the last of 16 strikes, 17-78 walkers at the spot against 149-1,466 with the same alarm and no scar, fewer on 8 of 8 seeds (p 0.008, holds over 3). **Grudge** (weight +0.5, with the Swarmer's alarm) comes back there in force: more on 7 of 8 (p 0.07), see *Habituation* for the fresh seeds.
+- **The census** (each tier against idle, random and seven plans, held-out seeds 201-216, under the Larder thread's PR 1 rules): see *The census*.
+
+## The three shapes
+
+World: the census world, `larder_world::race_params` at scale 2 (512 x 320, 23 crystals of charge 512 that run dry, rock and wet ground, 5,000 walkers on the home crystal in 50,000 slots, upkeep 0.001), run by `examples/bigdish.rs` (`look.sh`). Seed 1, 60 s. "Held" is crystals with 20 or more walkers on them; "bodies" is tube pieces of 4 dish cells or more.
+
+| Tier | Keys | Walkers at 15 / 30 / 60 s | Held at 15 / 30 / 60 s | Bodies at 60 s (largest, dish cells) |
+|---|---|---|---|---|
+| plain | (race world) | 2,851 / 5,896 / 9,290 | 10 / 16 / 19 | 12 (5,053) |
+| Drifter | `sensor_angle` 90, `keep` 0.93, `blocked_deposit` 1 | 1,534 / 3,602 / 4,701 | 4 / 6 / 9 | 13 (982) |
+| Sprawler | `explore_steps` 400, `explore_spread` 1, `keep` 0.8, `step` 1.5, `sensor_offset` 18 | 1,595 / 1,258 / 1,144 | 16 / 14 / 14 | 50 (193) |
+| Trunk | `sensor_angle` 22.5, `sensor_offset` 18, `keep` 0.95 | 1,706 / 2,113 / 3,342 | 9 / 17 / 17 | 8 (6,648) |
+
+What was tried and left (seed 1, `candidates-1.txt` to `candidates-3.txt`):
+
+- **Drifter.** The first try was the first-reach report's grazing droplets (`graze_weight` 10). With growth on, the grass is food: it filled all 50,000 slots by 15 s and covered a third of the map, a flood rather than a crawl. Grass that feeds little (`graze_eat` 0.0005) looked like plain droplets. A slower step (0.6) held 3 crystals at 60 s, too still to reach a squad. Shared food (`energy_flow` 0.05, the one body thread's rule, CPU only) made big crawling bodies (6,556 walkers at 60 s); a candidate once the GPU runs it.
+- **Sprawler.** Explorers alone (`explore_steps` 600, keep 0.9, step 1) spread wide and then starved, to 253 walkers and no crystal held at 60 s: explorers walk away from trail, so they leave food. A longer step and reach keep the mesh on 14 crystals with about 1,100 walkers. A higher explorer deposit (0.3-0.5) starved faster.
+- **Trunk.** Reach 27 with keep 0.97 drew the widest cords but stopped growing at about 1,900 walkers; no crowd limit (`crowd` 0) starved it to 1,000; two trail passes made the thickest cords and grew best (4,842 walkers at 60 s with `crystal_flow` 0.05), but the GPU has no `trail_passes`. The kept Trunk is the simplest that both engines run.
+
+The **Trunk's counter is a cut that starves the far piece**, which needs the one body thread's shared food (`energy_flow`). It said (05:19Z) a cut 4 dish cells wide refills within 2 game seconds on the race world, and that an unfed piece held apart starves in 20-35 s. The Trunk will set `energy_flow` once the GPU runs it.
+
+## Habituation: the scar
+
+**The rule** (`BigParams::scar_keep`, `scar_gain`, `scar_weight`, `BigDish::scar`; off by default; the default hash is unchanged). With the alarm field on, each fine step every agar cell's scar becomes scar x `scar_keep` + `scar_gain` x alarm, after the alarm spreads. The scar never spreads, so it stays where the hurt was. A sensor adds `scar_weight` x scar beside trail, scent and alarm. The tiers use keep 0.9999 and gain 0.01: 16 strikes 2 s apart leave a peak of about 250 that halves in about 40 s. The alarm itself fades in about a second. The picture (`bigdish style=life`) draws the scar in dim blue, so the memory is on screen as a field, not a mark.
+
+**Looks first** (`habit-look.txt`, seed 1): 16 strikes at the crystal nearest home, every 2 s from 10 s to 40 s. With the alarm read at -1 and no scar, the mould is back on the crystal by 55 s. Wary leaves it empty at 55 s and 70 s, under its scar. Grudge piles onto it, and each strike killed more than the last (16, then 50, 95 ... 306).
+
+**Paired test** (`habit.sh`, `habit.py`, seeds 1-8, measures named in the script before the run, Holm over 3; raw `raw/habit-1-8/`):
+
+| Test | Tier | Control | Paired | p |
+|---|---|---|---|---|
+| H1: walkers within 16 dish cells of the strike at 60 s | Wary 17-78 (median 45) | flee, no scar, 149-1,466 (807) | fewer on 8 of 8 | 0.008, holds |
+| H2: the same count | Grudge 947-1,571 (1,208) | Swarmer's alarm, no scar, 272-1,282 (942) | more on 7 of 8 | 0.07 |
+| H3: walkers killed by the last 8 strikes | the alarm term / (1 + scar) | flee | more on 7 of 8 | 0.07 |
+
+H3 was habituation in the biologist's sense (Physarum stops answering a repeated harmless stimulus; Boisseau, Vogel and Dussutour 2016): a scarred mould stops fleeing fire. It was not significant and it only helps the player, so `scar_habit` was removed (`dead-ends.md`). H2 is re-run on seeds 9-16, named here before that run: *pending*.
+
+**Cost.** One multiply-add a fine cell a fine step, only when on: *pending*.
+
+**On the GPU** the scar is one f32 a fine cell and three Params floats. The integration thread ruled (06:29Z) that it shares the toolkit's per-cell damage buffer (the crater's countdown in channel 0, the scar in channel 1), on the binding after 46, with its floats in a Params row appended at merge. The Wary and Grudge tiers refuse the GPU (`Tier::settings` names `scar_keep`) until then.
+
+## The census
+
+*Pending: the runners' rows, `census.sh` and `census.py`.*
+
+## Commands
+
+```
+bash Reports/mould-tiers-campaign-2026-11-12/look.sh WORK                          # the three tiers and plain, seed 1
+ARMS=Reports/mould-tiers-campaign-2026-11-12/candidates-1.txt bash .../look.sh WORK # the candidates
+bash Reports/mould-tiers-campaign-2026-11-12/habit.sh OUT && python3 .../habit.py OUT
+bash Reports/mould-tiers-campaign-2026-11-12/census.sh TIER OUT 201-204 4         # then census.py OUT
+cargo run --release --example bigdish -- tier=sprawler ...                          # any tier by name
+```
+
+Page: *pending*.
