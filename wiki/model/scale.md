@@ -2,8 +2,8 @@
 title: The mould at scale (the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-12T14:39Z
-sources: [Reports/gpu-plan-2026-11-10.md, Reports/larder-world-roadmap-2026-11-11.md]
+updated: 2026-11-12T17:15Z
+sources: [Reports/gpu-plan-2026-11-10.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/slime-enemy-review-2026-11-12.md]
 code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost, BigParams::crystal_charge, BigParams::crystal_regrow, BigParams::terrain_rock, BigParams::rect, BigDish::build_wall, BigParams::wall_hp, BigParams::wall_scent, BigParams::crystal_flow, BigDish::in_pile, BigParams::species_share, BigParams::species_convert_r, BigParams::mix_share]
 ---
 
@@ -26,6 +26,14 @@ creature rules do is on [outside looks and creatures](outside-looks.md).
 starving](growth.md) per walker, built on the CPU and the GPU and matched
 in CI, and the world's fields are on the [Larder](../world/larder.md) page. Tables: [the GPU plan
 report](../../Reports/gpu-plan-2026-11-10.md).
+
+**Density needs one walker a cell.** The GPU engine drops that rule when its
+slots pass half the agar, and the race world gives 10 slots a walker, so
+every race-world run above about 7,000 walkers ran without it and its
+walkers stacked into ropes; with `capacity` held to half the agar, 25,000
+walkers make a lasting mesh or one continuous sheet (11-12, one seed; [slime
+enemy review](../../Reports/slime-enemy-review-2026-11-12.md)). The GPU
+thread is making the check loud.
 
 ## The plan and phase 1
 

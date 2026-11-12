@@ -2,8 +2,8 @@
 title: Sensor angle and reach
 kind: mechanism
 status: current
-updated: 2026-11-10
-sources: [Reports/mould-review-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-probe-2026-11-07.md, handoff/project-memory/mould-depth-2026-11-09.md]
+updated: 2026-11-12T17:40Z
+sources: [Reports/mould-review-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-probe-2026-11-07.md, handoff/project-memory/mould-depth-2026-11-09.md, Reports/slime-enemy-review-2026-11-12.md, Reports/slime-questions-2026-11-12/README.md]
 code: [Params::sensor_angle, Params::rotate_angle, Params::sensor_offset, Params::settle_seconds, Params::explore_angle, Dish::sensor_angle_now]
 ---
 
@@ -23,6 +23,14 @@ sets the game's character**:
   lost in its rewiring. On the free dish every hand, doing nothing too,
   joined all the food by 55-58 s (6 seeds, 7 hands; [project-memory
   note](../../handoff/project-memory/mould-depth-2026-11-09.md)).
+
+On the big race world (25,000 walkers, one walker a cell, no food) 22.5
+degrees with `sensor_offset` 5 keeps a fine mesh: 51 loops from 30 s to 60 s
+against 12-13 at 45 degrees, tubes 7 cells wide against 17.6 (CPU, 2 seeds;
+[slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)). Not
+In the game look grown from the core on Fork (25,000 walkers) it goes from
+a sheet to a mesh near the core with trunks out to the crystals, then mostly
+trunks by 2:00 (one seed; [two questions page](../../Reports/slime-questions-2026-11-12/README.md)).
 
 Each dish sets its own angle (`level.rs` `sensor_deg`). **Explore, then
 settle** (`settle_seconds`, easing from `explore_angle` to `sensor_angle`)

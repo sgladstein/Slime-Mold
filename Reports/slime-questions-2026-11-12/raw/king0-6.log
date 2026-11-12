@@ -1,0 +1,181 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+/tmp/claude-0/qs/king0-6/noise-rush-004s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-004s-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.039 ms a frame
+  t 4 s: mould 5000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 403.2,204.9
+/tmp/claude-0/qs/king0-6/noise-rush-008s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-008s-near.png
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.040 ms a frame
+  t 8 s: mould 5063, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 325.0,191.5
+/tmp/claude-0/qs/king0-6/noise-rush-012s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-012s-near.png
+  CPU: ground field 1.75 ms (once a game second), model and HUD 0.038 ms a frame
+  t 12 s: mould 5117, soldiers 4, bank 2000, harvested 0, shots 9, killed 9, took 0%, crystals left 1.000; squad at 245.8,179.9
+/tmp/claude-0/qs/king0-6/noise-rush-016s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-016s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.039 ms a frame
+  t 16 s: mould 5090, soldiers 4, bank 2000, harvested 0, shots 23, killed 95, took 0%, crystals left 1.000; squad at 166.7,168.3
+/tmp/claude-0/qs/king0-6/noise-rush-020s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-020s-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.047 ms a frame
+  t 20 s: mould 2359, soldiers 4, bank 1998, harvested 0, shots 39, killed 828, took 0%, crystals left 1.000; squad at 113.1,160.5
+/tmp/claude-0/qs/king0-6/noise-rush-024s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-024s-near.png
+  CPU: ground field 1.99 ms (once a game second), model and HUD 0.050 ms a frame
+  t 24 s: mould 1231, soldiers 4, bank 1986, harvested 0, shots 55, killed 1125, took 0%, crystals left 1.000; squad at 113.1,160.5
+/tmp/claude-0/qs/king0-6/noise-rush-028s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-028s-near.png
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.038 ms a frame
+  t 28 s: mould 841, soldiers 4, bank 1984, harvested 0, shots 71, killed 1325, took 0%, crystals left 1.000; squad at 113.1,160.5
+/tmp/claude-0/qs/king0-6/noise-rush-032s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-032s-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.040 ms a frame
+  t 32 s: mould 709, soldiers 3, bank 1983, harvested 0, shots 87, killed 1455, took 0%, crystals left 1.000; squad at 113.0,162.1
+/tmp/claude-0/qs/king0-6/noise-rush-036s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-036s-near.png
+  CPU: ground field 1.62 ms (once a game second), model and HUD 0.040 ms a frame
+  t 36 s: mould 690, soldiers 3, bank 1982, harvested 0, shots 99, killed 1506, took 0%, crystals left 1.000; squad at 113.0,162.1
+/tmp/claude-0/qs/king0-6/noise-rush-040s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-040s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.038 ms a frame
+  t 40 s: mould 679, soldiers 2, bank 1982, harvested 0, shots 108, killed 1554, took 0%, crystals left 1.000; squad at 111.6,161.0
+/tmp/claude-0/qs/king0-6/noise-rush-044s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-044s-near.png
+  CPU: ground field 1.63 ms (once a game second), model and HUD 0.033 ms a frame
+  t 44 s: mould 679, soldiers 2, bank 1976, harvested 0, shots 116, killed 1590, took 0%, crystals left 1.000; squad at 111.6,161.0
+/tmp/claude-0/qs/king0-6/noise-rush-048s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-048s-near.png
+  CPU: ground field 1.63 ms (once a game second), model and HUD 0.039 ms a frame
+  t 48 s: mould 693, soldiers 2, bank 1972, harvested 0, shots 124, killed 1622, took 0%, crystals left 0.999; squad at 111.6,161.0
+/tmp/claude-0/qs/king0-6/noise-rush-052s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-052s-near.png
+  CPU: ground field 2.07 ms (once a game second), model and HUD 0.048 ms a frame
+  t 52 s: mould 702, soldiers 2, bank 1970, harvested 0, shots 132, killed 1648, took 0%, crystals left 0.999; squad at 111.6,161.0
+/tmp/claude-0/qs/king0-6/noise-rush-056s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-056s-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.038 ms a frame
+  t 56 s: mould 715, soldiers 2, bank 1968, harvested 0, shots 140, killed 1674, took 0%, crystals left 0.999; squad at 111.6,161.0
+/tmp/claude-0/qs/king0-6/noise-rush-060s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-060s-near.png
+  CPU: ground field 2.50 ms (once a game second), model and HUD 0.082 ms a frame
+  t 60 s: mould 751, soldiers 1, bank 1966, harvested 0, shots 145, killed 1691, took 0%, crystals left 0.999; squad at 112.8,160.0
+/tmp/claude-0/qs/king0-6/noise-rush-064s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-064s-near.png
+  CPU: ground field 1.72 ms (once a game second), model and HUD 0.057 ms a frame
+  t 64 s: mould 754, soldiers 1, bank 1964, harvested 0, shots 149, killed 1719, took 0%, crystals left 0.999; squad at 112.8,160.0
+/tmp/claude-0/qs/king0-6/noise-rush-068s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-068s-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.057 ms a frame
+  t 68 s: mould 765, soldiers 1, bank 1960, harvested 0, shots 153, killed 1742, took 0%, crystals left 0.999; squad at 112.8,160.0
+/tmp/claude-0/qs/king0-6/noise-rush-072s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-072s-near.png
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.055 ms a frame
+  t 72 s: mould 774, soldiers 1, bank 1960, harvested 0, shots 157, killed 1760, took 0%, crystals left 0.999; squad at 112.8,160.0
+/tmp/claude-0/qs/king0-6/noise-rush-076s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-076s-near.png
+  CPU: ground field 2.01 ms (once a game second), model and HUD 0.058 ms a frame
+  t 76 s: mould 777, soldiers 1, bank 1960, harvested 0, shots 161, killed 1785, took 0%, crystals left 0.999; squad at 112.8,160.0
+/tmp/claude-0/qs/king0-6/noise-rush-080s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-080s-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.052 ms a frame
+  t 80 s: mould 799, soldiers 1, bank 1957, harvested 0, shots 165, killed 1804, took 0%, crystals left 0.999; squad at 112.8,160.0
+/tmp/claude-0/qs/king0-6/noise-rush-084s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-084s-near.png
+  CPU: ground field 1.71 ms (once a game second), model and HUD 0.043 ms a frame
+  t 84 s: mould 860, soldiers 0, bank 1956, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-088s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-088s-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.046 ms a frame
+  t 88 s: mould 924, soldiers 0, bank 1956, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-092s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-092s-near.png
+  CPU: ground field 1.71 ms (once a game second), model and HUD 0.043 ms a frame
+  t 92 s: mould 991, soldiers 0, bank 1955, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-096s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-096s-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.044 ms a frame
+  t 96 s: mould 1046, soldiers 0, bank 1955, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-100s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-100s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.045 ms a frame
+  t 100 s: mould 1111, soldiers 0, bank 1953, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-104s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-104s-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.037 ms a frame
+  t 104 s: mould 1179, soldiers 0, bank 1952, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-108s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-108s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.038 ms a frame
+  t 108 s: mould 1250, soldiers 0, bank 1951, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-112s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-112s-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.044 ms a frame
+  t 112 s: mould 1290, soldiers 0, bank 1949, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-116s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-116s-near.png
+  CPU: ground field 2.20 ms (once a game second), model and HUD 0.059 ms a frame
+  t 116 s: mould 1346, soldiers 0, bank 1948, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-120s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-120s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.043 ms a frame
+  t 120 s: mould 1383, soldiers 0, bank 1947, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-124s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-124s-near.png
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.040 ms a frame
+  t 124 s: mould 1421, soldiers 0, bank 1947, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-128s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-128s-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.041 ms a frame
+  t 128 s: mould 1498, soldiers 0, bank 1947, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.999
+/tmp/claude-0/qs/king0-6/noise-rush-132s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-132s-near.png
+  CPU: ground field 1.62 ms (once a game second), model and HUD 0.042 ms a frame
+  t 132 s: mould 1569, soldiers 0, bank 1947, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-136s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-136s-near.png
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.037 ms a frame
+  t 136 s: mould 1657, soldiers 0, bank 1947, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-140s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-140s-near.png
+  CPU: ground field 1.82 ms (once a game second), model and HUD 0.038 ms a frame
+  t 140 s: mould 1725, soldiers 0, bank 1947, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-144s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-144s-near.png
+  CPU: ground field 1.75 ms (once a game second), model and HUD 0.046 ms a frame
+  t 144 s: mould 1814, soldiers 0, bank 1942, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-148s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-148s-near.png
+  CPU: ground field 2.42 ms (once a game second), model and HUD 0.065 ms a frame
+  t 148 s: mould 1887, soldiers 0, bank 1940, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-152s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-152s-near.png
+  CPU: ground field 1.72 ms (once a game second), model and HUD 0.042 ms a frame
+  t 152 s: mould 1990, soldiers 0, bank 1927, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-156s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-156s-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.042 ms a frame
+  t 156 s: mould 2059, soldiers 0, bank 1925, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-160s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-160s-near.png
+  CPU: ground field 2.10 ms (once a game second), model and HUD 0.045 ms a frame
+  t 160 s: mould 2156, soldiers 0, bank 1922, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-164s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-164s-near.png
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.039 ms a frame
+  t 164 s: mould 2241, soldiers 0, bank 1922, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-168s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-168s-near.png
+  CPU: ground field 2.37 ms (once a game second), model and HUD 0.040 ms a frame
+  t 168 s: mould 2357, soldiers 0, bank 1920, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.998
+/tmp/claude-0/qs/king0-6/noise-rush-172s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-172s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.042 ms a frame
+  t 172 s: mould 2447, soldiers 0, bank 1918, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.997
+/tmp/claude-0/qs/king0-6/noise-rush-176s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-176s-near.png
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.043 ms a frame
+  t 176 s: mould 2532, soldiers 0, bank 1918, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.997
+/tmp/claude-0/qs/king0-6/noise-rush-180s-all.png
+/tmp/claude-0/qs/king0-6/noise-rush-180s-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.043 ms a frame
+  t 180 s: mould 2599, soldiers 0, bank 1918, harvested 0, shots 166, killed 1810, took 0%, crystals left 0.997

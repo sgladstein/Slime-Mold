@@ -1,0 +1,7 @@
+random  n=48 ends={'squad wiped': 41, 'cap': 2, 'mould wiped': 5} median score -1.684 unspent/harvest 0.05
+farm    n=48 ends={'cap': 48} median score +0.282 unspent/harvest 0.83
+wall    n=48 ends={'cap': 48} median score +0.260 unspent/harvest 0.84
+rush    n=48 ends={'squad wiped': 18, 'cap': 29, 'mould wiped': 1} median score -0.341 unspent/harvest nan
+idle    n=48 ends={'cap': 46, 'squad wiped': 2} median score -0.351 unspent/harvest nan
+fort    n=48 ends={'cap': 48} median score +0.193 unspent/harvest 0.85
+strike  n=48 ends={'cap': 42, 'mould wiped': 6} median score +0.327 unspent/harvest 0.62
