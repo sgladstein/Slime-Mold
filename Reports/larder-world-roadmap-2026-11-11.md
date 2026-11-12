@@ -775,7 +775,7 @@ At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad 
 - **Off unless a tier sets it** (`Tier::core`); the tiers thread sets each tier's `starve_secs`. Census keys `regrow=S` and `core=fixed|headless` set the core over the tier's; a row adds `core grew back N`. The window's HUD says when the core is taken ("it grows back in N s unless the mould eats nothing till then") and when it grows back.
 - Test: `a_regrowing_core_grows_back_unless_the_mould_starves` (a fed mould's core grows back and births restart; a starved one's stays down).
 
-**Dev census** (b0538ae with the change, race seeds 1-6, five hands, 15-minute games, `regrow=30` against the fixed core; raw `regrow/`). Only the rush takes the core on these seeds, on 4 of 6. Every other hand's scores are identical.
+**Dev census** (b0538ae with the change, race seeds 1-6, five hands, 15-minute games, `regrow=30` against the fixed core; raw [regrow/](larder-world-roadmap-2026-11-11/regrow/census-regrow30-race-1-6.txt)). Only the rush takes the core on these seeds, on 4 of 6. Every other hand's scores are identical.
 
 | rush, seed | 1 | 2 | 3 | 4 | 5 | 6 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -784,6 +784,22 @@ At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad 
 
 - Under the fixed core, a rush that takes the core has won in all but name: the mould dwindles to 2-19 walkers by the cap with no births. Under `regrow=30` the rush on seeds 1 and 2 sits on the core and takes it again about every 38 s while the mould keeps eating, and the mould ends at 2,400-2,700 walkers.
 - Rush scores lower on 3 of 6 (none higher, median -0.08, p 0.25) and kills more on 4 (p 0.13). Too few seeds to say more; the tiers thread tunes `starve_secs` per tier on its own census.
+
+**Does the core rule cause the stalemates?** (integration, 17:10Z, from the one-body thread's review: "a squad holding the core for 5 s ends the whole mould, and that is the only way any plan ends a game"; the owner has the question open.) `core=headless` against the fixed core, race seeds 5-20, seven hands, 15-minute games, d5323dc (which plays the PR 3b gate's seed-5 rows to the digit); raw [headless/](larder-world-roadmap-2026-11-11/headless/census-headless-race-5-20.txt), paired with the gate's [wade6 rows](larder-world-roadmap-2026-11-11/wade/census-wade6-race-5-20.txt). Measure named before the run: games each hand ends before the cap, paired by seed. Win rate and stalemate median given apart.
+
+| hand | mould wiped, fixed / headless | squad wiped | at the cap | mould left at the cap (median), fixed / headless | score, headless against fixed |
+| --- | --- | --- | --- | --- | --- |
+| idle | 0 / 0 | 0 / 0 | 16 / 16 | 10,457 / 10,457 | identical |
+| random | 1 / 1 | 14 / 13 | 1 / 2 | | 12 higher, 3 lower, p 0.04 |
+| farm | 0 / 0 | 0 / 0 | 16 / 16 | 3,620 / 3,870 | 1 higher, 9 lower, p 0.02 |
+| wall | 0 / 0 | 0 / 0 | 16 / 16 | 4,278 / 4,257 | 3 and 3 |
+| fort | 0 / 0 | 0 / 0 | 16 / 16 | 6,289 / 4,622 | 3 and 3 |
+| rush | 1 / 0 | 5 / 5 | 10 / 11 | 3,351 / 9,568 | 5 higher, 11 lower, p 0.21 |
+| strike | 4 / 1 | 0 / 0 | 12 / 15 | 1,736 / 1,866 | 3 higher, 13 lower, p 0.02 |
+
+- **The core rule is not why farm, wall and fort stalemate**: they reach the cap in 16 of 16 games with the core and without it. Idle does too.
+- **Without the core the player wins less**: the mould is wiped in 2 of 112 games against 6, and strike's 4 wins fall to 1. Strike and farm score lower, random higher (the core pull is off on a headless mould, so random's strays are not drawn in). None survives Holm over 7 (smallest p 0.02 against 0.007).
+- So dropping the rule takes away the one decisive end the plans have and gives none back. The stalemates come from no plan wiping 3,500-6,000 walkers and from idle never being punished, which is PR 4's (overrun, and soldiers that cost food). `Regrow` is the middle option if taking the core should matter less.
 
 **The crater's time in the cone.** A **volley** hand (`larder-world look=DIR hand=volley`): the squad of 9 stands off from the thick ring on the core crystal, burns a line across it from 22 to 34 s and stops, so the hole can be watched filling. Clips at 10, 6, 3 and 1 s and none (`crater/clips/V*`), the stand and rush clips re-rendered with the cone (T, R, W), on the page's first three sections.
 

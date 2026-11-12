@@ -126,7 +126,10 @@ that fails loses its squad on 8 of 10 (201-232). The core is a `Core
 unless the mould eats nothing from any crystal in the `starve_secs` after
 it falls (`Game::mould_ate`, `World::start_births`; [report, *A core that
 grows back*](../../Reports/larder-world-roadmap-2026-11-11.md)). The
-Drifter's migrating core comes later. Strike
+Drifter's migrating core comes later. The core rule is not what holds
+farm, wall and fort to the cap: without it (`core=headless`, race 5-20)
+they stalemate in 16 of 16 games as with it, and the player wins 2 of
+112 games instead of 6. Strike
 still beats farm about 2 to 1 because food doesn't bind. **Wading, and
 the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
 *Wading, and the cone crater by default*](../../Reports/larder-world-roadmap-2026-11-11.md)):
