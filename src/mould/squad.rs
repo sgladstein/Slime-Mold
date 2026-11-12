@@ -10,7 +10,9 @@
 //! 1. Shots. Each shot walks its line (`path`) cell by cell on the trail
 //!    as the frame starts, and stops at the first cell that looks like
 //!    slime (trail `slime` or more: `slime_trail`, the drawn thickness
-//!    26/255) or at the first cell off the agar (a wall or rock). The owner,
+//!    26/255), at a cell under a crater that holds a living walker
+//!    (`Frame::crater`), or at the first cell off the agar (a wall or
+//!    rock). The owner,
 //!    2026-11-11 16:48Z: "Gun fire should hit the first slime in its
 //!    path". Every hit then strikes: the living walkers on cells within its
 //!    radius die (`BigDish::kill`; a walker in two shots' discs counts for
@@ -102,8 +104,10 @@ pub struct Frame {
     /// refill while being shot at". A shot stops at the first cell that
     /// reads as slime, so while the craters keep the trail under that, the
     /// next shots fly on into the body and the hole deepens; once fire
-    /// stops, the craters fade and the mould grows back. On the GPU the
-    /// `cut` pass lays it into the damage memory (binding 47).
+    /// stops, the craters fade and the mould grows back. A walker standing
+    /// in a crater still stops a shot (`shots`), so the hole never hides
+    /// the mould from the squad. On the GPU the `cut` pass lays it into the
+    /// damage memory (binding 47).
     pub crater: u16,
 }
 
@@ -203,7 +207,13 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16) -> Vec<
                 if !d.agar[i as usize] {
                     return NONE;
                 }
-                if d.trail[i as usize] >= slime {
+                // A crater holds no trail, so a walker standing in one is
+                // what the shot meets there. Without this, shots flew over
+                // walkers in the hole to the slime past it, while those
+                // walkers drained the squad: the rush hand's squad was
+                // wiped on 12 of 16 race seeds (1 of 16 without craters),
+                // and the GPU shots pass reads the same.
+                if d.trail[i as usize] >= slime || (!d.scorch.is_empty() && d.scorch[i as usize] > 0 && d.occupancy()[i as usize] > 0) {
                     return i;
                 }
             }
@@ -574,5 +584,46 @@ mod tests {
         let again = shots(&mut b, &[shot], slime, 0)[0].hit;
         let far = |h: Option<(f32, f32)>| h.map_or(f32::INFINITY, |(x, _)| x - at.0);
         assert!(far(next) > far(again), "crater {next:?} against none {again:?}");
+    }
+
+    /// A walker that wanders into a crater stops the next shot there, though
+    /// the cell holds no trail: the hole never hides the mould from the
+    /// squad (the rush's squad was wiped on 12 of 16 race seeds while shots
+    /// flew over walkers in the hole).
+    #[test]
+    fn a_walker_in_a_crater_stops_the_shot() {
+        let mut d = world();
+        let (w, h) = (d.w, d.h);
+        let slime = slime_trail(3.0);
+        let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
+        let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+        let line = path(w, h, at, (at.0 + 12.0, at.1));
+        let shot = ShotIn { from: at, to: (at.0 + 12.0, at.1), r: 2.0 };
+        shots(&mut d, &[shot], slime, 900);
+        // Tick until a living walker stands on a crater cell of the line
+        // before any slime on it, then shoot again.
+        let first = |d: &BigDish| -> Option<(usize, bool)> {
+            line.iter().map(|&i| i as usize).take_while(|&i| d.agar[i]).find_map(|i| {
+                if d.trail[i] >= slime {
+                    Some((i, false))
+                } else if d.scorch[i] > 0 && d.occupancy()[i] > 0 {
+                    Some((i, true))
+                } else {
+                    None
+                }
+            })
+        };
+        let mut found = None;
+        for _ in 0..200 {
+            d.tick();
+            if let Some((i, true)) = first(&d) {
+                found = Some(i);
+                break;
+            }
+        }
+        let i = found.expect("a walker steps into the crater on the line");
+        assert!(d.trail[i] < slime, "the cell holds no slime");
+        let hit = shots(&mut d, &[shot], slime, 900)[0].hit.expect("the shot meets the walker");
+        assert_eq!((hit.0 as usize, hit.1 as usize), (i % w, i / w), "it stops at the walker in the crater");
     }
 }

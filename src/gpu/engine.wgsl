@@ -1588,8 +1588,9 @@ fn isqrt(r2: u32) -> i32 {
 }
 
 // Each shot walks its cells and stops at the first off the agar (a wall or
-// rock: no hit) or the first that looks like slime (the hit). The owner,
-// 2026-11-11 16:48Z: "Gun fire should hit the first slime in its path".
+// rock: no hit) or the first that looks like slime (the hit), or a walker
+// in a crater (2026-11-12). The owner, 2026-11-11 16:48Z: "Gun fire should
+// hit the first slime in its path".
 @compute @workgroup_size(256)
 fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
     let q = gid.x;
@@ -1600,6 +1601,9 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
         let i = SQ.path[s.start + m];
         if (agar[i] == 0u) { break; }
         if (trail_in[i] >= P.slime) { hit = i; break; }
+        // A walker in a crater (which holds no trail) is what the shot
+        // meets there (`squad::shots`).
+        if (P.scorched != 0u && crater[i] > 0.0 && atomicLoad(&occ[i]) > 0u) { hit = i; break; }
     }
     SQ.sout[q].hit = hit;
 }
