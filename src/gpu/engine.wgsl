@@ -1547,22 +1547,10 @@ fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
             energy[k] = -1.0;
             if (cycles()) { spec[k] = (spec[k] & 0xFFFF01FFu) | (L_DEAD << 9u); }
             atomicAdd(&kills[q], 1u);
-            // The look's wound (byte 2, which the trail pass fades): each
-            // walker the strike killed chars the cell it died on, so the
-            // mark is where the mould died, not the strike's disc. Until
-            // 2026-11-12 the cut pass wrote the thickness it cut over the
-            // whole disc, which read as a round sticker on a body that had
-            // already flowed back (owner's playtest, 04:13Z). Walkers dying
-            // on one cell race on it and the picture may lose a death.
-            let had = (look[c] >> 16u) & 255u;
-            look[c] = (look[c] & 0xFF00FFFFu) | (min(had + WOUND_DEATH, 255u) << 16u);
             return;
         }
     }
 }
-
-// What one walker killed by a strike adds to its cell's wound (of 255).
-const WOUND_DEATH: u32 = 112u;
 
 // A strike clears the trail on its cells: a workgroup a shot, a thread a
 // cell of the 15 x 15 box round its hit (radius 7 at most, `squad::R_MAX`),
@@ -1578,8 +1566,14 @@ fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) l
     if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h)) { return; }
     let i = u32(y) * P.w + u32(x);
     if (struck(i, q)) {
-        // The wound is `strike`'s, a walker's death at a time; this pass
-        // wrote the thickness it cut over the disc until 2026-11-12.
+        // The look's wound (byte 2, which the trail pass fades): the
+        // thickness the strike cut, as a stand-in hit's (`set_hits`). The
+        // game's shots cut here, not in the trail pass, so without this
+        // the window showed the cut but no wound (W2c, 2026-11-12). Two
+        // strikes on one cell may race on it; only the picture differs.
+        let cut = u32(bright(trail_in[i]) * 255.0);
+        let had = (look[i] >> 16u) & 255u;
+        look[i] = (look[i] & 0xFF00FFFFu) | (max(had, cut) << 16u);
         trail_in[i] = 0.0;
     }
 }

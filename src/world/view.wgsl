@@ -302,17 +302,14 @@ fn mat_at(x: f32, y: f32) -> Mat {
 
 // The shaded colour at world point (x, y); `e` is the slope's sample step.
 fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
-    var m = mat_at(x, y);
-    // The wound: the walkers a shot killed on this cell (`strike` in the
-    // engine), fading. It chars the surface rather than painting over it:
-    // ash in the albedo, matte, and lit like everything else, so mould
-    // flowing back over a hit shows its relief through the char. A fresh
-    // one glows like an ember. Until 2026-11-12 it was mixed in after the
-    // lighting, up to 92%, which read as a flat sticker (owner's playtest).
-    let wd = clamp(m.wound * 1.3, 0.0, 1.0);
-    m.albedo = mix(m.albedo, vec3<f32>(34.0, 24.0, 20.0), clamp(wd * 1.1, 0.0, 0.8));
-    m.gloss *= 1.0 - wd;
-    m.glow += vec3<f32>(255.0, 110.0, 30.0) * wd * wd * wd * 0.6;
+    let m = mat_at(x, y);
+    // No wound is drawn (owner, 2026-11-12 04:38Z, on a blind A/B of the
+    // old ember burn and a char where walkers died: "Neither. Both of
+    // those look like stamps. Placed on the slime that fade"). A hit shows
+    // as what it is: the hole in the body (`body`, the living walkers),
+    // open until walkers flow back. The engine still keeps the wound byte
+    // (`cut`, `set_hits`); a lasting hole is a rule (Larder thread) that
+    // will come with its own field.
     let h = height(x, y);
     let dx = height(x + e, y) - height(x - e, y);
     let dy = height(x, y + e) - height(x, y - e);

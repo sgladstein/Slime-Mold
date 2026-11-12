@@ -23,7 +23,26 @@ The picture showed none of it, for three reasons:
   - It chars the surface (ash, matte, up to 80%), so the relief of mould flowing back over a hit shows through.
   - A fresh, dense one adds an ember glow (wd³).
 
-**Blind A/B.** The two videos run the same simulation, identical by `t` lines. The page is [`shot-damage-2026-11-12/`](shot-damage-2026-11-12/) and the key is off the page. The owner's pick will be recorded here.
+**Blind A/B.** The two videos run the same simulation, identical by `t` lines. The page is [`shot-damage-2026-11-12/`](shot-damage-2026-11-12/). The key: X was the candidate and Y was main.
+
+**The owner's answer** (04:38Z): "Neither. Both of those look like stamps. Placed on the slime that fade. Maybe part of the issue is the slime/walkers move to fast." Then (04:39Z): "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at."
+
+**What changed after that.**
+- No wound is drawn at all. The engine is back to main: the `cut` pass still writes the wound byte, and nothing draws it.
+- `body()` stays, so a hit shows as the real hole in the living body. `hole.mp4` is the same round with this change.
+
+**How long a hole stays open, by walker clock.** Run with `larder-world look=DIR hand=rush at=16 holes=1` (fork map, seed 1, 5000 walkers, 0-16 s).
+- Each hit's drawn body (trail × living walkers) is averaged over its strike disc, 5 fine cells across.
+- A hole counts as refilled once that average is back to 80% of the tick before the hit.
+- The clock was slowed with a scratch patch that ran fewer engine ticks a game tick. That patch is not committed. The Larder thread asked for a slower clock rather than a shorter stride, since the stride sets the network's shape.
+
+| Fine steps a game second | Holes refilled | Still open at 16 s | Median to 80% | q25 | q75 |
+|---|---|---|---|---|---|
+| 30 (now) | 38 of 42 | 4 | 0.53 s | 0.13 s | 0.73 s |
+| 15 | 34 of 42 | 8 | 0.47 s | 0.40 s | 0.93 s |
+| 10 | 18 of 32 | 14 | 0.73 s | 0.53 s | 0.80 s |
+
+Slowing the clock 3× barely lengthens a hole. Holes fill from the rim, by diffusion and by walkers stepping in. What the owner asked for (a hole that grows under sustained fire and doesn't refill) needs a rule: ground the mould avoids or can't enter after a hit. That rule is the Larder thread's, and the look will draw it from that rule's own field.
 
 **Not measured yet.**
 - The 1070 frame cost of `body()`: 25 look reads per shown cell in the prep pass.

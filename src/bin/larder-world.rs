@@ -40,7 +40,8 @@
 //!
 //! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]`
 //! plays without a window and saves the window's picture at those game
-//! seconds (`headless`).
+//! seconds (`headless`); `holes=1` also times how long each hit's hole
+//! stays open.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -1029,12 +1030,17 @@ impl ApplicationHandler for App {
 /// shows, checkable where there is no screen (the cloud's software
 /// Vulkan). Hands: `rush` (all attack the core), `farm` (all harvest the
 /// crystal nearest the larder, buying soldiers from 1,200 food), `idle`.
-fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -> Result<(), String> {
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), time_holes: bool) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
     let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
     let mut last_sec = u64::MAX;
+    // Each hit: where, its tick, the body there the tick before, and the
+    // ticks it took to refill.
+    type Hole = ((f32, f32), u64, f32, Option<u64>);
+    let mut holes: Vec<Hole> = Vec::new();
+    let mut prev_lk: Vec<u8> = Vec::new();
     for &t in at {
         while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) {
             let g = app.game.as_mut().unwrap();
@@ -1044,6 +1050,48 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
                 plan(g, hand);
             }
             app.step(step);
+            // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:
+            // "maybe part of the issue is the slime/walkers move to fast").
+            // The drawn body (the view's `body`: trail x living walkers in
+            // the 5 x 5 round each cell) is averaged over each hit's strike
+            // disc, and a hole counts as refilled when that is back to 80% of
+            // the tick before the hit. A frame's readback a tick: slow.
+            if time_holes {
+                let g = app.game.as_ref().unwrap();
+                let (w, h) = (g.world.e.dish.w, g.world.e.dish.h);
+                let lk = read_back(&device, &queue, &g.world.e.look);
+                let body = |lk: &[u8], x: i32, y: i32| -> f32 {
+                    let cl = |x: i32, y: i32| (y.clamp(0, h as i32 - 1) as usize) * w + x.clamp(0, w as i32 - 1) as usize;
+                    let mut n = 0u32;
+                    for dy in -2..=2 { for dx in -2..=2 { n += lk[4 * cl(x + dx, y + dy) + 1] as u32; } }
+                    lk[4 * cl(x, y)] as f32 / 255.0 * (1.0 - (-(n as f32) / 6.0).exp())
+                };
+                let disc = |lk: &[u8], cx: f32, cy: f32, r: f32| -> f32 {
+                    let (mut sum, mut k) = (0.0, 0);
+                    let ri = r.ceil() as i32;
+                    for dy in -ri..=ri { for dx in -ri..=ri { if ((dx * dx + dy * dy) as f32) <= r * r { sum += body(lk, cx as i32 + dx, cy as i32 + dy); k += 1; } } }
+                    sum / k as f32
+                };
+                let tick = g.world.ticks();
+                let r = g.rules.strike * g.world.scale();
+                for t in app.tracers.iter().filter(|t| t.age == 0.0 && t.hit) {
+                    let before = if prev_lk.is_empty() { f32::NAN } else { disc(&prev_lk, t.to.0, t.to.1, r) };
+                    holes.push((t.to, tick, before, None::<u64>));
+                }
+                for hl in holes.iter_mut() {
+                    if hl.2.is_nan() { continue; }
+                    let v = disc(&lk, hl.0 .0, hl.0 .1, r);
+                    if hl.3.is_none() && tick > hl.1 && v >= 0.8 * hl.2.max(0.05) { hl.3 = Some(tick - hl.1); }
+                }
+                prev_lk = lk;
+            }
+        }
+        if time_holes {
+            let done: Vec<u64> = holes.iter().filter_map(|h| h.3).collect();
+            let open = holes.iter().filter(|h| h.3.is_none()).count();
+            let mut d = done.clone(); d.sort();
+            let tps = app.game.as_ref().unwrap().rules.tps as f32;
+            if !d.is_empty() { println!("  holes: shots that hit {} refilled {} (still open {open}); ticks to 80%: median {} ({:.2} s), q25 {}, q75 {}, max {}", holes.len(), d.len(), d[d.len() / 2], d[d.len() / 2] as f32 / tps, d[d.len() / 4], d[3 * d.len() / 4], d[d.len() - 1]); }
         }
         let g = app.game.as_ref().unwrap();
         // The view on the fight: the squad's middle, or the larder.
@@ -1064,7 +1112,9 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
             view.record(&mut enc, &app.camera, None);
             cp.record(&mut enc, &view.out, view.stride);
             queue.submit([enc.finish()]);
-            let path = format!("{dir}/{}-{hand}-{:03}s-{tag}.png", app.name.replace('/', "_"), t as u32);
+            // Whole seconds keep their old names; a time between (a frame
+            // sequence) is named in milliseconds.
+            let path = if t.fract() == 0.0 { format!("{dir}/{}-{hand}-{:03}s-{tag}.png", app.name.replace('/', "_"), t as u32) } else { format!("{dir}/{}-{hand}-{:05}ms-{tag}.png", app.name.replace('/', "_"), (t * 1000.0) as u32) };
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
         }
@@ -1141,6 +1191,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 };
     let (mut look, mut hand, mut at, mut screen) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32));
+    let mut holes = false;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -1150,16 +1201,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "walkers" => args.walkers = v.parse()?,
             "look" => look = Some(v.to_string()),
             "hand" => hand = v.to_string(),
+            "holes" => holes = v != "0",
             "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
             }
-            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers; look, hand, at, screen)").into()),
+            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers; look, hand, at, screen, holes)").into()),
         }
     }
     if let Some(dir) = look {
-        return Ok(headless(args, &dir, &hand, &at, screen)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, holes)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

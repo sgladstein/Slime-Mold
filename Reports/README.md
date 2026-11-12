@@ -172,9 +172,10 @@ move.
   Jenson's haze, for 4% more step time. Not reproduced: feathery fronts, trunks, contagion.
   Page, pictures, run.sh, analyze.py and raw output in [`jenson-compare-2026-11-10/`](jenson-compare-2026-11-10/).
 - [shot-damage-2026-11-12.md](shot-damage-2026-11-12.md) — **why shots barely show on
-  the slime, and a candidate look (blind A/B)**: 42 shots killed 1456 walkers but the
-  trail's brightness saturates and the hole closes in about 0.2 s; candidate draws
-  thickness with the living walkers near and chars where walkers died.
+  the slime**: 42 shots killed 1456 walkers but the trail's brightness saturates; the
+  owner rejected both wound looks as stamps, so the view draws no wound and the
+  thickness counts living walkers; a hole stays open a median 0.5 s, and slowing the
+  walker clock 3x barely changes that (`larder-world holes=1`).
 - [world-look-2026-11-11.md](world-look-2026-11-11.md) — **built: the Larder world drawn
   from the simulation**: mould height, gloss and colour from its thickness, every
   walker a speck, shots that cut trail and leave a fading burn (`Engine::set_hits`),
