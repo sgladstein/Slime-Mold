@@ -364,6 +364,38 @@ the enemy a threat needs a rule where the attacker has an edge, such as
 conversion that favours the moving or the fed walker, or a hunter that
 attacks in mass rather than trickling in.
 
+## The front hand (built under the testing rule of 17:26Z)
+
+`garden` hand **front**: sow2 throughout (soldiers 0 and 1 sow the bank
+thin); once the moulds touch (a cell over 1 in both trails, read once a
+game second), soldiers 2 and 3 are a front team. Every 20 s they read the
+line (the player's cell nearest the enemy's core), count each side's cells
+within 12 dish cells, and pick: **fire** where the enemy holds more,
+**sow** where the player holds more and the bank is over 600, else a
+**road** 15 cells into the enemy. `GARDEN_TRACE=1` prints each pick. A
+first version sent sow2's own sowers to the front: fire won nearly every
+read, the bank piled up unspent (16,529 at 5:00, seed 1) and the player's
+mould ended at 6,129 against sow2's 17,062.
+
+Under the owner's new rule a census is not the gate; the feature lands on
+a GIF ([page](https://claude.ai/artifact/Rv4ZqMJ1hQDnJKiVcAXihx), source
+[`front-hand/`](player-mould-2026-11-12/front-hand/)) and smoke checks.
+One small strategy check, named before the run (runner time about 20 min):
+the moulds' balance at the cap, front against sow2, 8 seeds
+([`garden/census6-front.txt`](player-mould-2026-11-12/garden/census6-front.txt)).
+
+| Hand (8 seeds, 5:00) | Player's walkers | Enemy walkers | Soldiers at end |
+|---|---|---|---|
+| idle | 3,807 | 6,720 | 4.0 |
+| random | 15,494 | 12,157 | 0.5 |
+| sow2 | 21,332 | 7,888 | 8.0 |
+| front | 21,632 | 6,501 | 8.0 |
+
+Front against sow2: balance higher on 6 of 8 (p 0.29), enemy smaller on 6
+of 8 (mean -1,387). Front beats idle and random on balance 8 / 0. Smoke:
+every game ran to the cap, front lost no soldier, idle is last. A lean,
+not a result; a tuning note.
+
 ## Scale: what these numbers do and don't carry
 
 Every garden number is the CPU dish at scale 2 with 2,500 walkers a side,
@@ -380,8 +412,7 @@ lead's sizes; the final count is the owner's).
 
 - An attacker's edge, so a hunting enemy is a threat (above): conversion
   that favours the fed or massed walker.
-- A front hand: a planned player who reads where the line is and picks
-  road, sow or fire there, against random and idle.
+- The front hand's thresholds (12-cell read, 20 s, fire when the enemy holds more) are first guesses; tune by play.
 - Cut's reach (radius 3) is too small to see; one det cord takes about what fire does but does not hold.
 - Cut was never used by a planned hand; random cut 5,899 walkers and lost.
 - The GPU port, after the toolkit's and one body's rows.

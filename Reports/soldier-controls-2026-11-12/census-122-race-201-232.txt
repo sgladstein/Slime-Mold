@@ -1,0 +1,30 @@
+Runner A, a8669bd: larderworld census seeds=201-232 cap=900 hands=idle,random,farm,wall,ring,turtle,killzone,guard,pumps,army threads=4 (summary only; per-seed rows stayed on the runner)
+by hand (mean score; ends):
+    idle: mean -0.324; mould wiped 0, cap 32, squad wiped 0; near 2 walkers, first touch 342 s; stuck 0 s a game, 0 games stuck a minute or more
+  random: mean -0.897; mould wiped 6, cap 2, squad wiped 24; near 134 walkers, first touch 22 s; stuck 64 s a game, 5 games stuck a minute or more
+    farm: mean +0.231; mould wiped 0, cap 32, squad wiped 0; near 341 walkers, first touch 34 s; stuck 0 s a game, 0 games stuck a minute or more
+    wall: mean +0.251; mould wiped 1, cap 31, squad wiped 0; near 332 walkers, first touch 41 s; stuck 0 s a game, 0 games stuck a minute or more
+    ring: mean +0.255; mould wiped 0, cap 32, squad wiped 0; near 318 walkers, first touch 34 s; stuck 0 s a game, 0 games stuck a minute or more
+  turtle: mean +0.295; mould wiped 1, cap 31, squad wiped 0; near 295 walkers, first touch 45 s; stuck 0 s a game, 0 games stuck a minute or more
+  killzone: mean +0.231; mould wiped 0, cap 32, squad wiped 0; near 337 walkers, first touch 43 s; stuck 0 s a game, 0 games stuck a minute or more
+   guard: mean +0.290; mould wiped 1, cap 31, squad wiped 0; near 183 walkers, first touch 62 s; stuck 0 s a game, 0 games stuck a minute or more
+   pumps: mean +0.249; mould wiped 0, cap 32, squad wiped 0; near 295 walkers, first touch 42 s; stuck 0 s a game, 0 games stuck a minute or more
+    army: mean +0.424; mould wiped 1, cap 31, squad wiped 0; near 333 walkers, first touch 25 s; stuck 0 s a game, 0 games stuck a minute or more
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 16):
+      farm vs idle: 32 higher, 0 lower, p 0.0000, holds
+    farm vs random: 24 higher, 8 lower, p 0.0070, holds
+      wall vs idle: 32 higher, 0 lower, p 0.0000, holds
+    wall vs random: 25 higher, 7 lower, p 0.0021, holds
+      ring vs idle: 32 higher, 0 lower, p 0.0000, holds
+    ring vs random: 25 higher, 7 lower, p 0.0021, holds
+    turtle vs idle: 32 higher, 0 lower, p 0.0000, holds
+  turtle vs random: 24 higher, 8 lower, p 0.0070, holds
+  killzone vs idle: 32 higher, 0 lower, p 0.0000, holds
+  killzone vs random: 24 higher, 8 lower, p 0.0070, holds
+     guard vs idle: 32 higher, 0 lower, p 0.0000, holds
+   guard vs random: 24 higher, 8 lower, p 0.0070, holds
+     pumps vs idle: 32 higher, 0 lower, p 0.0000, holds
+   pumps vs random: 24 higher, 8 lower, p 0.0070, holds
+    army vs idle: 32 higher, 0 lower, p 0.0000, holds
+  army vs random: 26 higher, 6 lower, p 0.0005, holds

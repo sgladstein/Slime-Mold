@@ -6,6 +6,7 @@
 //! ```text
 //! cargo run --release --example garden -- census seeds=1-32 [hands=idle,random,farm,road,feed,grow cap=300 walkers=2500 threads=4]
 //! cargo run --release --example garden -- look=DIR seeds=1 hands=road [every=60]
+//! cargo run --release --example garden -- census seeds=1-8 hands=front,sow2   # GARDEN_TRACE=1 prints the front team's picks
 //! cargo run --release --example garden -- front seeds=1-32 [at=150 arms=none,sow,shoot,road,cut look=DIR]
 //! ```
 //!
@@ -58,6 +59,9 @@
 //!   after the first census: feeding in one disc piled charge faster than
 //!   the walkers there could eat it, while the random hand's scattered
 //!   feeding grew the player's mould to 4 times idle's.
+//! - **front**: sow2, and once the moulds touch soldiers 2 and 3 are a
+//!   front team that every 20 s fires, sows or lays a road where the line
+//!   is (see the hand's comment).
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 
@@ -173,6 +177,47 @@ struct Hand {
     /// The road hand's current target, and whether it is walking back.
     target: Option<(f32, f32)>,
     back: bool,
+    /// The front hand: whether the moulds have met, the next time it
+    /// reads the line, and what it chose last ("sow", "road", "fire").
+    met: bool,
+    next: f32,
+    pick: &'static str,
+}
+
+/// Whether the two moulds touch anywhere: a cell over 1 in both trails.
+fn touching(g: &Game<Garden>) -> bool {
+    let d = &g.world.dish;
+    (0..d.w * d.h).any(|i| {
+        let o = d.species_trail[OWN as usize][i];
+        o > 1.0 && d.trail[i] - o > 1.0
+    })
+}
+
+/// The player's and the enemy's cells within `r` of `at`.
+fn cells_near(g: &Game<Garden>, at: (f32, f32), r: f32) -> (usize, usize) {
+    let d = &g.world.dish;
+    let (mut own, mut enemy) = (0, 0);
+    let n = r.ceil() as i64;
+    for dy in -n..=n {
+        for dx in -n..=n {
+            if ((dx * dx + dy * dy) as f32) > r * r {
+                continue;
+            }
+            let (x, y) = (at.0 as i64 + dx, at.1 as i64 + dy);
+            if x < 0 || y < 0 || x >= d.w as i64 || y >= d.h as i64 {
+                continue;
+            }
+            let i = y as usize * d.w + x as usize;
+            let o = d.species_trail[OWN as usize][i];
+            let e = d.trail[i] - o;
+            if o > 1.0 && o > e {
+                own += 1;
+            } else if e > 1.0 && e > o {
+                enemy += 1;
+            }
+        }
+    }
+    (own, enemy)
 }
 
 fn act(name: &str, g: &mut Game<Garden>, h: &mut Hand, start_own: usize) {
@@ -244,7 +289,8 @@ fn act(name: &str, g: &mut Game<Garden>, h: &mut Hand, start_own: usize) {
             // nearest crystal no one is clearing and back, on Feed, so the
             // charge is sown thin along the way instead of piled in one disc.
             let sowers: &[usize] = if name == "sow2" { &[0, 1] } else { &[0] };
-            let free = farm(g, sowers);
+            // The front hand's team (soldiers 2 and 3) is left to it.
+            let free = farm(g, if h.met { &[0, 1, 2, 3] } else { sowers });
             for &k in sowers {
                 if k >= g.soldiers.len() || !g.soldiers[k].alive {
                     continue;
@@ -266,6 +312,48 @@ fn act(name: &str, g: &mut Game<Garden>, h: &mut Hand, start_own: usize) {
                         h.back = true;
                     }
                 }
+            }
+        }
+        "front" => {
+            // Sow2 throughout (soldiers 0 and 1 sow the bank thin, the
+            // economy); once the moulds touch, soldiers 2 and 3 are a front
+            // team: every 20 s they read the line where the player's mould
+            // is nearest the enemy's core and pick what the front probe
+            // found moves it: fire where the enemy holds more of the ground
+            // there (craters burn it back), sow where the player's holds it
+            // and the bank can pay, else lay a road 15 cells into the enemy.
+            // A first version moved sow2's own sowers to the front: fire won
+            // nearly every read, the bank piled up unspent (16,529 at 5:00,
+            // seed 1) and the player's mould ended at 6,129 against sow2's
+            // 17,062.
+            if !h.met && g.world.ticks().is_multiple_of(g.rules.tps as u64) && touching(g) {
+                h.met = true;
+                h.next = g.time();
+            }
+            act("sow2", g, h, start_own);
+            if !h.met || g.time() < h.next {
+                return;
+            }
+            h.next = g.time() + 20.0;
+            let sc = g.world.scale();
+            let at = front_of(g, 0.0);
+            let (own, enemy) = cells_near(g, at, 12.0 * sc);
+            h.pick = if enemy > own { "fire" } else if g.bank > RESERVE { "sow" } else { "road" };
+            let to = if h.pick == "road" { front_of(g, 15.0) } else { at };
+            let (task, stance) = match h.pick {
+                "fire" => (Task::None, Stance::Free),
+                "sow" => (Task::Feed, Stance::Defend),
+                _ => (Task::Road, Stance::Defend),
+            };
+            for k in [2usize, 3] {
+                if k < g.soldiers.len() && g.soldiers[k].alive {
+                    g.apply(Cmd::Order(k, Order::Move(to.0, to.1)));
+                    g.apply(Cmd::Stance(k, stance));
+                    g.world.set_task(k, task);
+                }
+            }
+            if std::env::var_os("GARDEN_TRACE").is_some() {
+                eprintln!("front t {:.0}: own {own} enemy {enemy} near the line, bank {:.0} -> {}", g.time(), g.bank, h.pick);
             }
         }
         "feed" => {
