@@ -156,6 +156,15 @@ impl Tier {
         }
     }
 
+    /// The tier's core (`larder_world::Core`), or None for the plain
+    /// mould's (`Core::of(&rules)`: fixed, `Rules::core_secs`,
+    /// `Rules::core_pull`). Every tier is None for now; the tiers thread
+    /// fills in its own (the Sprawler headless, the Grudge's pull) once the
+    /// core-defence PR is in. Read once, by `Game::with_tier`.
+    pub fn core(self) -> Option<super::larder_world::Core> {
+        None
+    }
+
     /// Sets the tier's keys on CPU big-dish parameters (other fields are
     /// left as they are).
     pub fn apply(self, p: &mut BigParams) {

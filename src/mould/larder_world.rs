@@ -254,6 +254,62 @@ pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
     }
 }
 
+/// What the mould's core is, and what it does while a squad holds it
+/// (core defence, PR 3, 2026-11-12; the shape is the tiers thread's, so
+/// each tier can say its own through `Tier::core`). A mould with no tier
+/// of its own gets `Core::of(&rules)`: fixed, `Rules::core_secs`,
+/// `Rules::core_pull`.
+///
+/// Why a pull: with craters on (#113) the random hand wiped the plain
+/// mould on 11 of 32 race seeds (201-232; 5 of 32 without craters) and no
+/// plan beat it after Holm. In the window (seed 204) its soldiers, sent
+/// one at a time on Attack, walk into the hub in the first minute and
+/// fire into the densest walkers, killing about 1,200 in 30 s, while the
+/// holes around them don't refill and the body never comes for them;
+/// farm and strike fight at the network's edge. With soldiers at the
+/// core smelling like a lure the hub closes over them. Over both seed
+/// blocks (race 5-36 and 201-232, 15-minute games, against the same code
+/// at pull 0): random took the core on 5 of 64 games (18 without) and
+/// wiped the mould on 5 (18 without); every plan beats random 29-3 or
+/// better on each block, all under Holm (201-232 had none without); farm,
+/// wall, fort and idle play the same within chance; strike, the planned
+/// core attack, still takes it on 12 (13 without) and scores higher on
+/// 45 of 64 (17 lower); and a rush that fails to take it loses its squad
+/// on 8 of the 10 failures on 201-232.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Core {
+    pub kind: CoreKind,
+    /// Game seconds a squad must hold the core with no walker touching it
+    /// before it falls.
+    pub secs: f32,
+    /// A soldier within twice `Rules::core_r` of the core lays this many
+    /// times its own scent over `BuildRules::lure_r` (a lure's reach): the
+    /// body is drawn onto a squad at its core through the scent it already
+    /// follows, nothing drawn. 0 is none.
+    pub pull: f32,
+}
+
+/// How a core falls (`Core`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CoreKind {
+    /// Held clear for `Core::secs`, it falls for good: births stop.
+    Fixed,
+    /// No core: nothing to hold, so only a wipe ends the mould (the
+    /// tiers thread's Sprawler). The Trunk's regrowing core and the
+    /// Drifter's migrating one are to come: both need births to restart
+    /// or move on both engines, and a migrating core needs to know where
+    /// the body is on the GPU, which the GPU world can't read back cheaply
+    /// yet.
+    Headless,
+}
+
+impl Core {
+    /// The core of a mould with no tier of its own.
+    pub fn of(r: &Rules) -> Core {
+        Core { kind: CoreKind::Fixed, secs: r.core_secs, pull: r.core_pull }
+    }
+}
+
 /// Every number in the game layer: M3's (`larder::Rules`) where the rule
 /// carried over, so a census can be read against M3's.
 #[derive(Clone, Copy, Debug)]
@@ -300,6 +356,15 @@ pub struct Rules {
     pub aim_min: u32,
     pub core_r: f32,
     pub core_secs: f32,
+    /// The core's pull (`Core::pull` for a mould with no tier of its own):
+    /// a soldier within twice `core_r` of the core smells like a lure,
+    /// this many times its own scent over `BuildRules::lure_r`, so the
+    /// body comes for a squad at its core. 0 is off. 8, a lure's own
+    /// strength (`BuildRules::lure_smell`), since 2026-11-12: on seeds
+    /// 201-208 pull 4 still let random take the core on 2 and pull 16 cut
+    /// strike's takes to 2 of 8, where 8 left random none and strike its
+    /// 3. See `Core` for the census.
+    pub core_pull: f32,
     /// The cap, game seconds (owner, 04:04Z: 15 minutes).
     pub cap: f32,
     pub start_bank: f32,
@@ -399,6 +464,7 @@ impl Default for Rules {
             aim_min: 1,
             core_r: 5.0,
             core_secs: 5.0,
+            core_pull: 8.0,
             cap: 900.0,
             start_bank: 2000.0,
             squad: 4,
@@ -649,6 +715,9 @@ pub struct Game<W: World> {
     pub core: (f32, f32),
     pub core_down: Option<u64>,
     core_clear: u64,
+    /// What the core is (`Core`): `Core::of(&rules)` unless a tier says
+    /// otherwise (`with_tier`).
+    pub core_rule: Core,
     pub first_touch: Option<f32>,
     /// Walkers touching the larder at the last frame (it is held while any
     /// do).
@@ -774,6 +843,7 @@ impl<W: World> Game<W> {
             core,
             core_down: None,
             core_clear: 0,
+            core_rule: Core::of(&rules),
             first_touch: None,
             larder_touch: 0,
             stuck: 0,
@@ -800,6 +870,15 @@ impl<W: World> Game<W> {
             g.add_soldier(a);
         }
         g
+    }
+
+    /// Gives the game a tier's core (`Tier::core`), read once here: None,
+    /// or a tier with no core of its own, keeps `Core::of(&rules)`.
+    pub fn with_tier(mut self, tier: Option<super::tiers::Tier>) -> Self {
+        if let Some(c) = tier.and_then(|t| t.core()) {
+            self.core_rule = c;
+        }
+        self
     }
 
     fn s(&self) -> f32 {
@@ -1321,6 +1400,8 @@ impl<W: World> Game<W> {
                     }
                 }
             }
+            let pull = self.core_rule.pull;
+            let pulls = pull > 0.0 && self.core_rule.kind != CoreKind::Headless && (s.x - self.core.0).hypot(s.y - self.core.1) <= 2.0 * r.core_r * sc;
             units.push(UnitIn {
                 x: s.x,
                 y: s.y,
@@ -1328,8 +1409,8 @@ impl<W: World> Game<W> {
                 sight: r.range * sc,
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
-                smell_r: r.smell_r * sc,
-                smell: self.world.food_deposit() * r.smell * s.smell * r.frame_ticks as f32,
+                smell_r: if pulls { r.build.lure_r.max(r.smell_r) * sc } else { r.smell_r * sc },
+                smell: self.world.food_deposit() * r.smell * s.smell * if pulls { pull.max(1.0) } else { 1.0 } * r.frame_ticks as f32,
             });
             who.push(Who::Soldier(k));
             from.push(at_crystal);
@@ -1494,7 +1575,7 @@ impl<W: World> Game<W> {
     }
 
     fn check_core(&mut self) {
-        if self.core_down.is_some() {
+        if self.core_down.is_some() || self.core_rule.kind == CoreKind::Headless {
             return;
         }
         let sc = self.s();
@@ -1504,7 +1585,7 @@ impl<W: World> Game<W> {
         let clear = on && self.soldiers.iter().filter(|s| s.alive && (s.x - self.core.0).hypot(s.y - self.core.1) <= r).all(|s| s.touching == 0 && s.aim.is_none_or(|a| (a.0 - self.core.0).hypot(a.1 - self.core.1) > 2.0 * r));
         if clear {
             self.core_clear += self.rules.frame_ticks as u64;
-            if self.core_clear >= self.secs(self.rules.core_secs) {
+            if self.core_clear >= self.secs(self.core_rule.secs) {
                 self.core_down = Some(self.world.ticks());
                 self.world.stop_births();
             }
@@ -1717,6 +1798,58 @@ mod tests {
         ] {
             assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
         }
+    }
+
+    /// The core's pull (`Core::pull`): a soldier within twice `core_r` of
+    /// the core lays `pull` times its scent over a lure's reach; one far
+    /// from it lays its own; a headless core pulls nothing.
+    #[test]
+    fn a_soldier_at_the_core_smells_like_a_lure() {
+        let units = |kind: CoreKind| {
+            let mut g = Game::new(race_world(1, 1, 1_000), Rules { core_pull: 8.0, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, 1);
+            g.core_rule.kind = kind;
+            let sc = g.s();
+            (g.soldiers[0].x, g.soldiers[0].y) = (g.core.0 + g.rules.core_r * sc, g.core.1);
+            g.begin_step();
+            let f = &g.flight.as_ref().expect("a frame in flight").f;
+            (f.units[0].smell, f.units[0].smell_r, f.units[1].smell, f.units[1].smell_r, g.rules, sc)
+        };
+        let (near, near_r, far, far_r, r, sc) = units(CoreKind::Fixed);
+        assert!(far > 0.0 && (near - 8.0 * far).abs() <= 1e-3 * near, "near the core {near}, far {far}");
+        assert_eq!((near_r, far_r), (r.build.lure_r * sc, r.smell_r * sc));
+        let (near, near_r, far, _, _, _) = units(CoreKind::Headless);
+        assert_eq!((near, near_r), (far, r.smell_r * sc), "a headless core pulls nothing");
+    }
+
+    /// A fixed core falls once held clear for `Core::secs` (births stop);
+    /// a headless one never does, so only a wipe ends that mould.
+    #[test]
+    fn a_held_core_falls_unless_the_mould_is_headless() {
+        let hold = |kind: CoreKind| {
+            let mut g = small(1);
+            g.core_rule.kind = kind;
+            for k in 0..g.soldiers.len() {
+                (g.soldiers[k].x, g.soldiers[k].y) = g.core;
+                (g.soldiers[k].touching, g.soldiers[k].aim) = (0, None);
+            }
+            for _ in 0..=g.secs(g.core_rule.secs) {
+                g.check_core();
+            }
+            (g.core_down.is_some(), g.world.p.birth_energy.is_finite())
+        };
+        assert_eq!(hold(CoreKind::Fixed), (true, false), "held 5 s: the core falls and births stop");
+        assert_eq!(hold(CoreKind::Headless), (false, true), "no core to hold");
+    }
+
+    /// A tier with no core of its own keeps the rules' (`Core::of`).
+    #[test]
+    fn a_tier_without_a_core_keeps_the_rules_core() {
+        let r = Rules { core_pull: 3.0, core_secs: 7.0, ..Rules::default() };
+        for t in super::super::tiers::Tier::ALL {
+            let g = Game::new(race_world(1, 1, 1_000), r, 1).with_tier(Some(t));
+            assert_eq!(g.core_rule, t.core().unwrap_or(Core { kind: CoreKind::Fixed, secs: 7.0, pull: 3.0 }), "{}", t.name());
+        }
+        assert_eq!(Game::new(race_world(1, 1, 1_000), r, 1).with_tier(None).core_rule, Core::of(&r));
     }
 
     #[test]
