@@ -35,8 +35,13 @@ pub const BIN: usize = 4;
 /// What fills the bar.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Goal {
-    /// Soldiers alive reach `n` (mission 1: harvest and hire).
-    Squad(usize),
+    /// Soldiers alive reach `n` while soldiers harvest at least `crystals`
+    /// different crystals (mission 1: harvest and hire). The crystals were
+    /// added after the design review of the first census (2026-11-12): a
+    /// squad size alone was met by 1:28 at 8 soldiers, and raising it to 24
+    /// only lengthened the game; harvesting two crystals at once takes the
+    /// squad out to where the mould is.
+    Squad { n: usize, crystals: usize },
     /// At least `need` of these crystals (map order) have no walker on them
     /// for `secs` game seconds in a row (missions 2, 5, 7).
     ///
@@ -86,7 +91,7 @@ pub struct Mission {
 impl Mission {
     /// One item a line; `#` starts a comment. Lines: `name WORDS`, `says
     /// WORDS`, `map NAME`, `tier NAME`, `verbs NAME...`, `rule KEY VALUE`,
-    /// `bonus lose N` | `bonus stolen F`, and one goal: `goal squad N`,
+    /// `bonus lose N` | `bonus stolen F`, and one goal: `goal squad N [K]`,
     /// `goal clear NEED SECS C...` (or `retake`: only crystals the mould has
     /// been on), `goal contain X0 Y0 X1 Y1 SECS LEAK`, `goal
     /// shrink F`, `goal take F`.
@@ -130,7 +135,8 @@ impl Mission {
                     let (k, v) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
                     let v = nums(v)?;
                     goal = Some(match (k, v.as_slice()) {
-                        ("squad", [x]) => Goal::Squad(*x as usize),
+                        ("squad", [x]) => Goal::Squad { n: *x as usize, crystals: 0 },
+                        ("squad", [x, k]) => Goal::Squad { n: *x as usize, crystals: *k as usize },
                         ("clear" | "retake", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs, retake: k == "retake" },
                         ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak },
                         ("shrink", [f]) => Goal::Shrink(*f),
@@ -239,6 +245,14 @@ pub struct Tracker {
     pub longest_dead: u32,
     pub stuck_run: u32,
     pub longest_stuck: u32,
+    /// Stalled seconds: the bar flat, the mould no smaller than 30 s ago,
+    /// nothing banked (the design review, 05:38Z: free shots make "stuck"
+    /// unreachable, but a squad can fire forever at a mould that regrows
+    /// while nothing moves; that is the owner's soft lock in a new form).
+    pub stall_run: u32,
+    pub longest_stall: u32,
+    /// Walkers each game second, for "shrinking over 30 s".
+    moulds: Vec<usize>,
     overrun_run: u32,
     held: f32,
     /// Crystals the mould has been on (for `retake`).
@@ -299,6 +313,9 @@ impl Tracker {
             longest_dead: 0,
             stuck_run: 0,
             longest_stuck: 0,
+            stall_run: 0,
+            longest_stall: 0,
+            moulds: vec![],
             overrun_run: 0,
             held: 0.0,
             touched: vec![],
@@ -318,15 +335,25 @@ impl Tracker {
         match &self.mission.goal {
             // From the squad the mission starts with, so an idle squad's bar is
             // 0, not the half a start of 4 of 8 would show (and grade a star).
-            Goal::Squad(n) => {
+            Goal::Squad { n, crystals } => {
                 let s0 = g.rules.squad.min(n.saturating_sub(1)) as f32;
-                Some(((g.alive() as f32 - s0) / (*n as f32 - s0)).clamp(0.0, 1.0))
+                let squad = ((g.alive() as f32 - s0) / (*n as f32 - s0)).clamp(0.0, 1.0);
+                if *crystals == 0 {
+                    return Some(squad);
+                }
+                let mut at: Vec<(i32, i32)> = g.soldiers.iter().filter(|s| s.alive).filter_map(|s| if let Order::Clear(x, y) = s.order { Some((x as i32, y as i32)) } else { None }).collect();
+                at.sort();
+                at.dedup();
+                self.count = Some(at.len() as u32);
+                Some(squad.min(at.len() as f32 / *crystals as f32).min(1.0))
             }
             Goal::Shrink(f) => {
                 let peak = self.peak.max(1) as f32;
                 Some(((peak - g.mould as f32) / (peak * (1.0 - f))).clamp(0.0, 1.0))
             }
-            Goal::Take(f) => Some((g.take_share() / f).min(1.0)),
+            // From an even share: `take_share` is 0.5 before any charge is
+            // gone, which as share / f showed 83% of a 60% goal at 0:00.
+            Goal::Take(f) => Some(((g.take_share() - 0.5) / (f - 0.5).max(1e-3)).clamp(0.0, 1.0)),
             Goal::Clear { crystals, need, secs, retake } => {
                 let grid = grid?;
                 let cs = g.world.crystals();
@@ -377,11 +404,21 @@ impl Tracker {
         let walked = g.soldiers.iter().enumerate().any(|(i, s)| {
             s.alive && !matches!(s.order, Order::Hold) && self.last.at.get(i).is_some_and(|&(x, y)| (s.x - x).hypot(s.y - y) > 0.1)
         });
-        let useful = g.harvested > self.last.harvested + 1e-3
-            || g.killed > self.last.killed
+        // Kills count only while the mould is smaller than 30 s ago: firing
+        // at a mould that regrows as fast is not progress (design review,
+        // 05:38Z).
+        self.moulds.push(g.mould);
+        let ago = self.moulds.len().saturating_sub(31);
+        let shrinking = g.mould < self.moulds[ago];
+        let banked = g.harvested > self.last.harvested + 1e-3;
+        let rising = b > self.last.bar + 1e-4;
+        self.stall_run = if rising || shrinking || banked { 0 } else { self.stall_run + 1 };
+        self.longest_stall = self.longest_stall.max(self.stall_run);
+        let useful = banked
+            || (g.killed > self.last.killed && shrinking)
             || g.spent > self.last.spent + 1e-3
             || g.walls > self.last.walls
-            || b > self.last.bar + 1e-4
+            || rising
             || walked;
         let phase = PHASES.iter().filter(|&&p| t >= p).count();
         self.secs[phase] += 1;
@@ -418,7 +455,7 @@ impl Tracker {
         self.overrun_run = if g.bank < 1.0 && on_larder.unwrap_or(0) > 0 { self.overrun_run + 1 } else { 0 };
         self.last = snap(g, b);
 
-        let met = b >= 1.0 && !matches!(self.mission.goal, Goal::Squad(_) if alive == 0);
+        let met = b >= 1.0 && !matches!(self.mission.goal, Goal::Squad { .. } if alive == 0);
         let bonus = match self.mission.bonus {
             Some(Bonus::LoseAtMost(n)) => self.lost <= n,
             Some(Bonus::StolenAtMost(f)) => g.stolen <= f,
@@ -437,7 +474,7 @@ impl Tracker {
         } else if matches!(g.end, Some(End::MouldWiped(_))) {
             // Only a squad goal can't be met by wiping the mould.
             match self.mission.goal {
-                Goal::Squad(_) => v(Cause::MouldWiped, graded(self.best)),
+                Goal::Squad { .. } => v(Cause::MouldWiped, graded(self.best)),
                 _ => v(Cause::Goal, 1 + u8::from(t < TWO_STARS) + u8::from(bonus)),
             }
         } else if t >= r.cap || matches!(g.end, Some(End::Cap(_))) {
@@ -521,7 +558,8 @@ mod tests {
     #[test]
     fn a_mission_file_parses_and_refuses_typos() {
         let m = Mission::parse(LANDFALL).unwrap();
-        assert_eq!(m.goal, Goal::Squad(8));
+        assert_eq!(m.goal, Goal::Squad { n: 8, crystals: 0 });
+        assert_eq!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal squad 8 2")).unwrap().goal, Goal::Squad { n: 8, crystals: 2 });
         assert_eq!(m.bonus, Some(Bonus::LoseAtMost(2)));
         assert_eq!(m.rules(Rules::default()).price, 0.0);
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal sqaud 8")).is_err());
@@ -593,6 +631,123 @@ mod tests {
         assert_eq!(v.cause, Cause::Goal, "{v:?}");
         assert!(v.stars >= 2 && v.at < 60.0, "{v:?}");
         assert!(tr.cause_line().starts_with("Goal met"));
+    }
+
+    /// Plays `secs` game seconds (or to the verdict) with `hand` called once
+    /// a second, the tracker following with the CPU world's mould grid.
+    fn follow(g: &mut Game<crate::mould::big::BigDish>, tr: &mut Tracker, secs: f32, mut hand: impl FnMut(&mut Game<crate::mould::big::BigDish>)) -> Option<Verdict> {
+        let tps = g.rules.tps as u64;
+        while g.time() < secs {
+            hand(g);
+            let s = g.world.ticks() / tps;
+            while g.world.ticks() / tps == s && g.end.is_none() {
+                g.step();
+            }
+            let grid = g.world.mould_grid(BIN);
+            if let Some(v) = tr.second(g, grid.as_deref(), 1.0) {
+                return Some(v);
+            }
+        }
+        None
+    }
+
+    fn mission(goal: &str) -> Mission {
+        Mission::parse(&LANDFALL.replace("goal squad 8", goal).replace("rule price 0\n", "")).unwrap()
+    }
+
+    fn small(rules: Rules) -> Game<crate::mould::big::BigDish> {
+        Game::new(race_world(1, 2, 2000), rules, 1)
+    }
+
+    /// The crystal nearest the larder (the mould starts on crystal 0, far
+    /// away) and the mould's home crystal.
+    fn near_and_home(g: &Game<crate::mould::big::BigDish>) -> (usize, usize) {
+        let cs = g.world.crystals();
+        let d = |c: &((f32, f32), f32)| (c.0 .0 - g.larder.0).hypot(c.0 .1 - g.larder.1);
+        let near = (0..cs.len()).min_by(|&a, &b| d(&cs[a]).total_cmp(&d(&cs[b]))).unwrap();
+        (near, 0)
+    }
+
+    /// `clear` fills on a crystal the mould has not reached; `retake` does
+    /// not count it until the mould has been on it, and the mould's own home
+    /// crystal is never clear for an idle squad.
+    #[test]
+    fn clear_and_retake() {
+        let mut g = small(Rules::default());
+        let (near, home) = near_and_home(&g);
+        let mut tr = Tracker::new(mission(&format!("goal clear 1 10 {near}")), &g);
+        let v = follow(&mut g, &mut tr, 30.0, |_| {}).expect("an untouched crystal is clear");
+        assert_eq!(v.cause, Cause::Goal);
+        assert_eq!(tr.count, Some(1));
+
+        let mut g = small(Rules::default());
+        let mut tr = Tracker::new(mission(&format!("goal retake 1 10 {near}")), &g);
+        assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none(), "retake: the mould was never there");
+        assert_eq!(tr.best, 0.0);
+
+        let mut g = small(Rules::default());
+        let mut tr = Tracker::new(mission(&format!("goal retake 1 10 {home}")), &g);
+        assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none());
+        assert_eq!(tr.best, 0.0, "the home crystal stays the mould's");
+    }
+
+    /// `contain` fills over the whole world and never in a corner; the leak
+    /// is a share of the walkers.
+    #[test]
+    fn contain_whole_world_and_corner() {
+        let mut g = small(Rules::default());
+        let mut tr = Tracker::new(mission("goal contain 0 0 1024 640 10 0"), &g);
+        let v = follow(&mut g, &mut tr, 30.0, |_| {}).expect("all inside the world");
+        assert_eq!(v.cause, Cause::Goal);
+        let mut g = small(Rules::default());
+        let mut tr = Tracker::new(mission("goal contain 0 0 8 8 10 0.02"), &g);
+        assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none());
+        assert_eq!(tr.best, 0.0);
+        assert!(tr.count.unwrap() > 1000, "walkers outside: {:?}", tr.count);
+    }
+
+    /// An idle squad takes no charge: `take` stays at 0 (its bar starts from
+    /// an even share). (`shrink` is not tested idle: on the race world the
+    /// mould halves by itself in the first 40 s as walkers starve, best 0.50;
+    /// mission 4's numbers must allow for that.)
+    #[test]
+    fn take_stays_empty_for_idle() {
+        let mut g = small(Rules::default());
+        let mut tr = Tracker::new(mission("goal take 0.6"), &g);
+        assert!(follow(&mut g, &mut tr, 40.0, |_| {}).is_none());
+        assert!(tr.best < 0.05, "best {}", tr.best);
+    }
+
+    /// A squad that has no food and pays for shots is stuck: after 30 s the
+    /// mission ends on Stuck (the owner's playtest, 04:13Z).
+    #[test]
+    fn a_broke_squad_is_stuck() {
+        let mut g = small(Rules { start_bank: 0.0, price: 10.0, ..Rules::default() });
+        let mut tr = Tracker::new(mission("goal take 0.6"), &g);
+        let v = follow(&mut g, &mut tr, 60.0, |_| {}).expect("stuck by 0:31");
+        assert_eq!(v.cause, Cause::Stuck, "{v:?}");
+        assert!(v.at <= 32.0, "{v:?}");
+        assert!(tr.cause_line().starts_with("No food"));
+    }
+
+    /// The squad goal with crystals: hired soldiers alone fill only the
+    /// squad half; sent to harvest two crystals, the bar fills.
+    #[test]
+    fn squad_and_crystals() {
+        let mut g = small(Rules { start_bank: 10_000.0, ..Rules::default() });
+        let mut tr = Tracker::new(mission("goal squad 6 2"), &g);
+        assert!(follow(&mut g, &mut tr, 10.0, |g| {
+            if g.alive() < 6 {
+                g.buy();
+            }
+        })
+        .is_none());
+        assert_eq!(tr.bar, Some(0.0), "no crystal harvested yet");
+        let cs: Vec<(f32, f32)> = g.world.crystals().iter().skip(1).take(2).map(|c| c.0).collect();
+        g.apply(crate::mould::larder_world::Cmd::Order(0, Order::Clear(cs[0].0, cs[0].1)));
+        g.apply(crate::mould::larder_world::Cmd::Order(1, Order::Clear(cs[1].0, cs[1].1)));
+        let v = follow(&mut g, &mut tr, 20.0, |_| {}).expect("six soldiers on two crystals");
+        assert_eq!(v.cause, Cause::Goal);
     }
 
     #[test]
