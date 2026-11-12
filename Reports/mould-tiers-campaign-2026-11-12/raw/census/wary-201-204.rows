@@ -1,0 +1,32 @@
+farm 201 +0.331 cap 900 8 2280
+wall 201 +0.461 cap 900 8 340
+random 201 +1.973 mould wiped 789 34 0
+idle 201 -0.307 cap 900 4 7928
+boom 201 +0.254 cap 900 20 4190
+claim 201 +0.440 cap 900 28 495
+fort 201 +0.323 cap 900 20 2433
+random 202 +1.734 mould wiped 757 23 0
+farm 202 +0.387 cap 900 8 1181
+wall 202 +0.224 cap 900 8 4815
+boom 202 +0.270 cap 900 20 3627
+strike 201 +1.779 mould wiped 874 30 0
+claim 202 +1.759 mould wiped 847 28 0
+fort 202 +0.270 cap 900 20 3627
+random 203 +2.056 mould wiped 445 22 0
+strike 202 +0.466 cap 900 30 271
+idle 202 -0.360 cap 900 4 12824
+farm 203 +0.198 cap 900 8 5971
+idle 203 -0.373 cap 900 4 14710
+wall 203 +0.201 cap 900 8 5690
+strike 203 +0.435 cap 900 30 583
+claim 203 +0.379 cap 900 28 1210
+boom 203 +0.174 cap 900 20 7003
+fort 203 +0.174 cap 900 20 7003
+farm 204 +0.188 cap 900 8 6243
+wall 204 +0.214 cap 900 8 5142
+random 204 +0.463 cap 900 37 4
+idle 204 -0.392 cap 900 4 18208
+boom 204 +0.198 cap 900 20 6010
+claim 204 +0.442 cap 900 28 396
+fort 204 +0.198 cap 900 20 6015
+strike 204 +0.468 cap 900 30 218

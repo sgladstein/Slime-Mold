@@ -1,0 +1,9 @@
+GTX 1070, worktree at 3b848b7, MOULDGPU_TEST_GPU=1 DRIFT_SEEDS=32, from 16:48:06Z (after the timing): cargo test --release --locked --bin mouldgpu the_adapters_game -- --ignored --nocapture
+(the 32 seed lines stay on the PC in target\gpu-out\r3-drift32.txt)
+at 5 s: GPU trail above the CPU's on 17 seeds, below on 15 (sign p 0.860; median ratio 1.0020); GPU mould larger on 15, smaller on 16 (p 1.000)
+at 10 s: GPU trail above the CPU's on 15 seeds, below on 17 (sign p 0.860; median ratio 0.9992); GPU mould larger on 11, smaller on 20 (p 0.150)
+at 15 s: GPU trail above the CPU's on 22 seeds, below on 10 (sign p 0.050; median ratio 1.0108); GPU mould larger on 11, smaller on 21 (p 0.110)
+at 20 s: GPU trail above the CPU's on 18 seeds, below on 14 (sign p 0.597; median ratio 1.0047); GPU mould larger on 19, smaller on 13 (p 0.377)
+at 25 s: GPU trail above the CPU's on 17 seeds, below on 15 (sign p 0.860; median ratio 1.0097); GPU mould larger on 12, smaller on 20 (p 0.215)
+at 30 s: GPU trail above the CPU's on 13 seeds, below on 19 (sign p 0.377; median ratio 0.9950); GPU mould larger on 15, smaller on 17 (p 0.860)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 31 filtered out; finished in 120.73s
