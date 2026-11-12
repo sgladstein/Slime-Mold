@@ -2,7 +2,7 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-12T17:20Z
+updated: 2026-11-12T19:55Z
 sources: [Reports/gpu-readout-2026-11-12.md, Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
 code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost, BigParams::spore_rate, BigParams::sleep_death, Engine::strike, Engine::record_share, Engine::squad_one, GpuWorld::spread]
 ---
@@ -130,7 +130,11 @@ library's 3. The two that fail, `the_life_cycle_matches_the_cpu_for_four_ticks`
 (908 killed against 765), fail the same way on `main` at 9f5e4a4: float
 drift, since the 1070's `sin`, `cos` and `sqrt` differ from the CPU's and
 its driver fuses `a * b + c`. A third failure, or other numbers in those
-two, is the PR's to explain. To see the drift itself:
+two, is the PR's to explain. Lavapipe hides races between workgroups that
+the 1070 shows, so a pass where two threads may meet on one cell gives
+each cell to one thread or takes an atomic (`cut`'s crater takes
+`atomicMax` on the f32's bits since 2026-11-12: [the readout
+report](../../Reports/gpu-readout-2026-11-12.md), *Two GPU fixes*). To see the drift itself:
 `cargo test --release --locked --bin mouldgpu the_adapters -- --ignored --nocapture`
 (the adapter's maths beside the CPU's, then the game over seeds; set
 `DRIFT_SEEDS=32` for 32). The numbers are in [the readout

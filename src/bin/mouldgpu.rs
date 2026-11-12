@@ -3498,6 +3498,23 @@ mod tests {
             // A radius that is not a whole number: its alarm's squared radius
             // (r2 of 5, 25) is not four times its strike's (r2 of 2.5, 6).
             shots.push(ShotIn { from: pile(12), to: t, r: 2.5 });
+            // Two shots from slime cells three apart, so each hits its own
+            // cell and their strikes share cells, where cone craters give
+            // different steps and the larger must stay (2026-11-12: the
+            // GPU's `cut` wrote max(crater, steps) from a workgroup a shot, a
+            // race; it takes atomicMax on the bits now).
+            let slimy = |x: usize, y: usize| x < w && y < h && cpu.agar[y * w + x] && cpu.trail[y * w + x] >= slime;
+            // Far from the unit in the thickest mould, whose walkers they
+            // would kill.
+            let far = |x: usize, y: usize| (x as f32 + 0.5 - t.0).hypot(y as f32 + 0.5 - t.1) > 45.0;
+            let near = (0..w * h)
+                .map(|i| (i % w, i / w))
+                .find(|&(x, y)| far(x, y) && slimy(x, y) && slimy(x + 3, y))
+                .expect("two slime cells three apart, away from the thickest");
+            shots.extend([0, 3].map(|dx| {
+                let from = ((near.0 + dx) as f32 + 0.5, near.1 as f32 + 0.5);
+                ShotIn { from, to: (from.0, from.1 + 10.0), r: 3.0 }
+            }));
             // With the life cycle, shots from slime beside spores in flight,
             // whose strikes cover them (they must be missed).
             if !cpu.life.is_empty() {
@@ -3569,6 +3586,18 @@ mod tests {
                 // A flat crater leaves one count on every cell; a cone, many.
                 let counts: std::collections::BTreeSet<u16> = cc.iter().copied().filter(|&v| v > 0).collect();
                 assert_eq!(counts.len() > 1, s.scorch_cone, "{name}: counts {counts:?}");
+                if s.scorch_cone {
+                    // Cones about different hits that share cells, where the
+                    // two give different steps and the larger must stay (the
+                    // GPU's `cut` takes it with atomicMax; a plain write raced).
+                    let hits: Vec<((f32, f32), f32)> = cpu_out.shots.iter().zip(&f.shots).filter_map(|(o, i)| o.hit.map(|h| (h, i.r))).collect();
+                    let overlaps = (0..hits.len())
+                        .flat_map(|a| (a + 1..hits.len()).map(move |b| (a, b)))
+                        .filter(|&(a, b)| hits[a].0 != hits[b].0 && (hits[a].0 .0 - hits[b].0 .0).hypot(hits[a].0 .1 - hits[b].0 .1) < hits[a].1 + hits[b].1)
+                        .count();
+                    eprintln!("squad craters, {name}: {overlaps} pairs of cones about different hits that overlap");
+                    assert!(overlaps > 0, "{name}: no overlapping cones to test the larger steps on");
+                }
             }
             if !before.is_empty() {
                 // Spores in a struck disc are missed, the dormant in one die.
