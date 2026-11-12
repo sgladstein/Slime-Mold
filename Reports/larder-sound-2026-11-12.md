@@ -103,17 +103,55 @@ not fade with the camera. The larder robbed and a crystal run dry keep 70%
 of their level off screen (`ALERT_FLOOR`); a soldier falling and the core
 were at full level already.
 
-**Proposed, not built** (design review; wait for the owner's ears on the
-first cut): a voice for the mould as one body (a drone from its size, the
-alarm field and hunger, a cut-off piece with its own fainter voice once the
-one-body work lands); a cue when a shot clears its block, so late-game
-shots into a thinned mould do not sound like failing; turrets and blasts
-ducked under the shots the player orders.
+**Proposed, not built** (design review): a cue when a shot clears its
+block, so late-game shots into a thinned mould do not sound like failing;
+turrets and blasts ducked under the shots the player orders.
+
+## The mould's voice (same night)
+
+The owner's first playtest note was that the mould "didn't feel like one
+cohesive organism", and every sound so far was the squad's or an event's.
+Built under the owner's overnight rule (04:48Z: "have the threads work
+together to come up with the best answer and move forward with it"), on the
+designer thread's call: one breathing drone for the whole body, never per
+walker, from counts the game already has (no read-back).
+
+| Input | Read from | Heard as |
+|---|---|---|
+| Size | `Game::mould` | level, log of the walkers (`0.18 x log10(1 + n/100) / log10(51)`) |
+| Natural change | `Game::mould`'s change a game second with the walkers shot added back (births less starving), smoothed over 4 s | growing: pitch up to +12%; starving (`FULL_CHANGE` 2%/s): pitch down 22%, breath 40% slower, rough |
+| Eating | the crystals' charge falling faster than the squad carries it (`FULL_EAT` 0.02%/s) | the noise band opens |
+| Gunfire | kills a second as a share of the body over 0.4% | a sharp inhale (at most every 2.5 s), the breath up to 2.4 times faster while it settles over 3 s |
+| Heavy hit | `SoundCmd::Impact`'s weight | the voice ducks up to 60%, back in 0.3 s |
+
+It sits on the mould's home, half-panned, and does not fade off screen.
+**K** turns it off and on in the window; `voice=0` starts without it. On by
+default (the standing rule: defaults on unless a measured harm or a stated
+uncertainty).
+
+**What it reads** (fork, seed 1, every hand): the mould dies back from
+5,000 to about 1,400-1,500 walkers between 15 and 45 s whatever the squad
+does (9-11% a second at worst, hunger 1.0 for 15 s), then regrows at
+1.2-1.6% a second (growth 0.6-0.8). So the voice's biggest event in a
+round's first minute is the body's own die-back, which the first cut did
+not sound at all. Eating ran 0.006-0.014% of the charge a second; at the
+first guess of `FULL_EAT` (0.2%) the band never opened, so it is 0.02%.
+The idle hand's few default-stance shots made 5 inhales in 90 s; the rush's
+volleys 3 (the 2.5 s gap holds them).
+
+**Level.** Alone in the first 10 s it is about -32 dBFS (the room is -59);
+the rest of the mix runs -27 to -29. The rush with and without it: -22.9
+and -23.6 dBFS. Listener 2.9-3.5 us a frame with it.
+
+**For pieces**, once the one-body thread lands a piece id: a fainter, higher
+copy a piece over about 200 walkers, a tear at the cut, at most 3-4 voices
+(the designer's plan; not built).
 
 ## Open
 
 - The owner's ears: does a big kill feel big, is the pulse help or noise,
-  are the shots' levels right against the rest (page above).
+  are the shots' levels right against the rest, and does the mould's voice
+  make it one creature (A/B on the page).
 - `FULL_KILL` depends on the strike (`Rules::strike`) and on how kills are
   counted; the graphics thread's per-walker wound and the Larder thread's
   free shots may move the distribution. Re-measure with

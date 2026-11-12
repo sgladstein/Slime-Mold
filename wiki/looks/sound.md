@@ -28,8 +28,11 @@ rush's 90th centile, scaled by density to the 0.3 power, `full_kill`), so a shot
 kills crackle, a pulse quickens as the mould nears the squad, hurt soldiers
 groan, and the economy answers (table and measurements in the
 [report](../../Reports/larder-sound-2026-11-12.md)). Placed by the camera's
-view, quieter off screen. O toggles it in `larder-world`; 2-3.5 us a frame,
-no new GPU read-back.
+view, quieter off screen. The mould has a
+voice of its own (`SoundCmd::Body`): one breathing drone for the whole
+body, from its size, its natural change (hunger and growth), its eating and
+gunfire. O toggles all sound in `larder-world`, K the voice; 2-3.5 us a
+frame, no new GPU read-back.
 
 
 ## Owner's word
@@ -49,7 +52,8 @@ no new GPU read-back.
 ## Open
 
 - The owner's ears on the [Larder Sound page](https://claude.ai/artifact/P4hk1fsSXQj3qXuwieffa7):
-  does a big kill feel big; is the pulse help or noise; shot levels.
+  does a big kill feel big; is the pulse help or noise; shot levels; does
+  the mould's voice make it one creature.
 - `FULL_KILL` follows the strike and the kill count; re-measure if either
   changes (the report says how).
 - The owner's ears on the [Mould Sound page](https://claude.ai/artifact/6GXBj1swj93DzdytbUjqvA):

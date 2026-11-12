@@ -193,6 +193,13 @@ pub enum SoundCmd {
     Impact { weight: f32, pan: f32, gain: f32, delay: f32 },
     /// The lamp's hum, where the lamp stands.
     Lamp { on: bool, pan: f32 },
+    /// Larder World: **the mould's own voice**, one breathing drone for the
+    /// whole body (`world::WorldListener`; design review of #96, the
+    /// owner's "not one cohesive organism"). Absolute targets, re-sent
+    /// every frame like a texture: `level` 0 ..= 1, `pitch` Hz of its sub
+    /// tone, `breath` swells a second, `rough` 0 ..= 1 (strain: hunger),
+    /// `bright` 0 ..= 1 (its noise band opens while it eats).
+    Body { level: f32, pitch: f32, breath: f32, rough: f32, bright: f32, pan: f32 },
     /// Fade every texture out (paused, a card up) or back in. One-shots
     /// still sound, so a tool used while paused still answers.
     Hush(bool),
