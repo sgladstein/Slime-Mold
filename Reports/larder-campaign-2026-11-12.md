@@ -241,3 +241,30 @@ about 2:00. The first version (#130) also played First contact's strike to
 7:00 and took 105 s, too long for every PR (tech lead: under 30 s); it stays
 as `each_missions_plan_still_wins`, `#[ignore]`d. The wall plan is in the
 library (`campaign::wall_rim_gaps`).
+
+### The gaps on the CPU and the 1070 GPU world, 32 seeds (census v9)
+
+The tech lead asked for missions 1-3 on both engines after core defence
+(#126). Run on the owner's GTX 1070 at main 9f5e4a4, `gpu=both`, seeds
+1-32, hands idle, random, claim and gaps+claim, 70 min wall time (other
+work shared the PC, so no timing is quoted). Raw file:
+`larder-campaign-2026-11-12/census/3-the-gaps-s1-32-v9-cpu-vs-gpu-1070.txt`.
+Deciding measure, named before the run: goal met per engine, and whether
+the engines agree seed by seed.
+
+| Hand | CPU met | GPU met | How the others end |
+|---|---|---|---|
+| gaps+claim | 32/32, 2 stars | 32/32, 2 stars | (held at 10:00 on every seed) |
+| claim | 0/32 | 0/32 | squad wiped, CPU median 10:42, GPU 10:17 |
+| random | 0/32 | 0/32 | squad wiped (2 stuck), median 3:01 / 2:54 |
+| idle | 0/32 | 0/32 | overrun, median 7:36 / 7:38 |
+
+The engines agree on every seed: walls hold 64 of 64 rounds, and no
+other hand holds any of 192. Walls against claim, paired per seed, 32-0
+on each engine (sign p 5e-10). One difference: the GPU world wipes a
+squad that did not wall a little sooner, claim 24-8 and random 19-5
+(paired, GPU earlier; sign p 0.007 each, both survive Holm over the three
+hands; idle 14-18, p 0.6). The median gap is 25 s for claim and under
+10 s for random, which does not change any verdict. Missions 1 and 2 ran
+out of memory on the PC partway (other GPU tests shared it) and are
+booked again.

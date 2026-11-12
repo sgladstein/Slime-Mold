@@ -1,0 +1,64 @@
+drifter randkit 21 +1.825 mould wiped
+drifter farm 21 +0.420 cap
+drifter loud 21 +1.907 mould wiped
+drifter idle 21 -0.129 cap
+drifter quiet 21 +0.330 cap
+drifter random 21 +0.428 cap
+drifter siege 21 +0.365 cap
+drifter random 22 +0.465 cap
+drifter idle 22 -0.244 cap
+drifter farm 22 +0.330 cap
+drifter randkit 22 +0.457 cap
+drifter loud 22 +1.447 mould wiped
+drifter quiet 22 +0.226 cap
+drifter siege 22 +0.315 cap
+drifter idle 23 -0.241 cap
+drifter plague 21 +0.431 cap
+drifter randkit 23 +1.923 mould wiped
+drifter random 23 +1.933 mould wiped
+drifter loud 23 +1.843 mould wiped
+drifter farm 23 +0.333 cap
+drifter quiet 23 +0.368 cap
+drifter idle 24 -0.197 cap
+drifter random 24 +0.344 cap
+drifter siege 23 +0.339 cap
+drifter plague 22 +0.362 cap
+drifter loud 24 +1.837 mould wiped
+drifter farm 24 +0.321 cap
+drifter randkit 24 +0.362 cap
+drifter quiet 24 +0.319 cap
+drifter plague 23 +0.479 cap
+drifter idle 25 -0.144 cap
+drifter random 25 +0.451 cap
+drifter siege 24 +0.375 cap
+drifter randkit 25 +1.488 mould wiped
+drifter loud 25 +1.685 mould wiped
+drifter farm 25 +0.334 cap
+drifter quiet 25 +0.330 cap
+drifter plague 24 +0.493 cap
+drifter siege 25 +0.371 cap
+drifter random 26 +1.715 mould wiped
+drifter idle 26 -0.141 cap
+drifter randkit 26 -1.532 squad wiped
+drifter loud 26 +1.763 mould wiped
+drifter farm 26 +0.299 cap
+drifter quiet 26 +0.366 cap
+drifter plague 25 +0.442 cap
+drifter siege 26 +0.295 cap
+drifter idle 27 -0.168 cap
+drifter random 27 +1.890 mould wiped
+drifter loud 27 +1.800 mould wiped
+drifter farm 27 +0.367 cap
+drifter quiet 27 +0.355 cap
+drifter randkit 27 +0.436 cap
+drifter siege 27 +0.333 cap
+drifter idle 28 -0.149 cap
+drifter plague 26 +0.295 cap
+drifter plague 27 +1.687 mould wiped
+drifter loud 28 +1.820 mould wiped
+drifter farm 28 +0.377 cap
+drifter random 28 +1.848 mould wiped
+drifter randkit 28 +0.429 cap
+drifter quiet 28 +0.336 cap
+drifter siege 28 +0.376 cap
+drifter plague 28 +0.363 cap

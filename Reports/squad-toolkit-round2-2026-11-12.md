@@ -120,9 +120,70 @@ soldiers): nothing measurable (loud 7-12 ms a tick, as in round 1).
 `germ_resist` is a multiply in the catch test. The germ pass is still 2-3x
 the tick while a wave runs.
 
+## Confirmed at 32 seeds, with shot craters (main 945e080)
+
+The tech lead's run (12:30Z): main after #113 (shots lay the crater, keep
+0.1, full 30), carry 5 at weight 50, 32 fresh seeds (5-36), eight tiers
+(none, Swarmer, Sleeper, Sporer, Sprawler, Trunk, Drifter, Grudge; Wary was
+removed by the tiers thread), with idle, random and randkit (random play with
+the tools) beside the five plans. Run on this container and four runner
+threads in 8-seed chunks. Raw lines `tier hand seed score end` in
+`squad-toolkit-2026-11-12/raw/r2-32/`; the table is
+`squad-toolkit-2026-11-12/r2-32-table.txt`, made by
+`squad-toolkit-2026-11-12/r2table.py`. This is the kitplans harness, not
+`larderworld census`.
+
+Deciding measure, named before the run: gate 2, the best plan by mean
+against each other plan, paired sign test, with Holm over all 152 pairs in
+the table (gate 1 and gate 2 together; at m 152 the first pair needs p under
+0.00033). Gate 1: each plan against idle, random and randkit.
+
+Mean score, with (mould wiped / cap / squad wiped):
+
+| Tier | loud | plague | farm | random | randkit | best | best vs the other of loud and plague |
+|---|---|---|---|---|---|---|---|
+| none | +0.86 (16/16/0) | **+1.34** (27/5/0) | +0.24 | -0.04 (7/12/13) | +0.44 (16/7/9) | plague | 24/8, p 0.007, med +0.37 |
+| Swarmer | +0.76 (11/21/0) | **+1.28** (26/6/0) | +0.20 | -1.47 (0/1/31) | -1.39 | plague | 22/10, p 0.05, med +0.61 |
+| Sleeper | **+0.87** (15/17/0) | +0.48 (0/32/0) | +0.27 | -1.20 | -1.27 | loud | 24/8, p 0.007, med +0.05 |
+| Sporer | +0.21 (3/29/0) | **+1.06** (19/13/0) | +0.12 | -1.43 | -0.52 | plague | **30/2, holds**, med +1.17 |
+| Sprawler | +0.93 (18/14/0) | **+1.37** (29/3/0) | +0.35 | -0.58 (8/2/22) | +0.10 (14/4/14) | plague | 25/7, p 0.002, med +0.15 |
+| Trunk | **+1.37** (28/4/0) | +1.16 (23/9/0) | +0.30 | +0.73 (17/9/6) | +0.51 (17/6/9) | loud | 22/10, p 0.05, med +0.09 |
+| Drifter | **+1.65** (29/3/0) | +0.50 (3/29/0) | +0.36 | +1.34 (21/11/0) | +1.01 (19/10/3) | loud | **30/2, holds**, med +1.32 |
+| Grudge | +1.13 (18/14/0) | **+1.46** (28/4/0) | +0.18 | -1.49 (0/1/31) | -1.48 | plague | 19/13, p 0.38, med +0.12 |
+
+Gate 2: the best plan still changes with the tier, and after Holm the split
+holds on two tiers, one each way: **loud beats plague on the Drifter (30/2)
+and plague beats loud on the Sporer (30/2)**. Everywhere the best plan beats
+farm, quiet and siege (31/1 or 32/0, all hold). On the other six tiers the
+loud-plague pair is 19/13 to 25/7 and does not survive the correction; the
+Sleeper's (24/8) has a median difference of only +0.05, a near tie. Against
+the 8-seed table, tier none and the Grudge went from ties to plague, and the
+Sleeper's loud lead shrank; Trunk, Drifter, Swarmer, Sporer and Sprawler
+kept their leader.
+
+Gate 1 fails on four tiers, and that is the main news. The plans beat idle
+everywhere (32/0), but random play wipes the mould often on tier none (7 of
+32; randkit 16), the Sprawler (8; randkit 14), the Trunk (17) and the Drifter
+(21). On the Drifter random beats farm, quiet, plague and siege (31/1 to
+26/6, all hold) and ties loud (18/14); on the Trunk loud and plague
+tie random (18/14, 16/16). So on those two tiers no plan beats random, and
+"a good dish is one a plan wins and random loses" is not met: the Drifter
+hunts the squad and the Trunk sends its mass down a few tubes, and wandering
+soldiers firing everywhere meet them anyway. That belongs to the tiers
+thread (sent), not to the tools. But 945e080 is before the core pull
+(#126, `Rules::core_pull` 8), the Larder thread's answer to random play
+parking on the core, and before the tiers thread's drifting Drifter (#133);
+with both, `larderworld census` has random wiping the Drifter 3 of 48. The
+Trunk and Drifter rows are being re-run on main (`raw/r2-32-main/`). On the Swarmer, Sleeper, Sporer and Grudge
+random and randkit are squad-wiped 27-31 of 32 and every plan beats them.
+
+Quiet (gas) and siege (det cord) are at the farm hand's level on every tier
+(+0.07 to +0.37, 0 wipes), as at 8 seeds.
+
 ## Next
 
-- Confirm on main after #113 (shot craters on), 16 seeds, the nine tiers.
-- Give quiet and siege a tier where they win (gas against a mould that
-  floods harvesters; the cord once food flows).
+- Give quiet and siege a goal where they win: quiet scored on the campaign
+  missions (2, 3 and 7 in `examples/campaign.rs`), siege against the one-body
+  Colony tier (cut where the far side has no crystal).
+- Random wipes the Drifter and the Trunk: the tiers thread's call.
 - Step 2: the tools as bursts writing binding 47's block 0 on the GPU.

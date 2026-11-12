@@ -129,6 +129,10 @@ struct Row {
     /// soldier (the cap if none ever does).
     near: f64,
     touch_at: f32,
+    /// The second the squad took the core (`Game::core_down`; births stop
+    /// then), if it did: the core-defence census (11-12) asks whether the
+    /// core falls, and when, as well as whether the mould is wiped.
+    core_at: Option<f32>,
     /// Stuck seconds (design review, 2026-11-12: no soft lock): soldiers
     /// alive, none fired or took food that second, and the bank cannot buy
     /// a soldier. The owner's playtest hit this when shots cost food.
@@ -169,6 +173,13 @@ struct Mould {
     /// world's 0.005 when unset); 0.004 holds the one-body mould near
     /// today's size (Reports/one-body-2026-11-12.md, *Matched size*).
     crystal_eat: Option<f32>,
+    /// `flow_loss=`: the share of shared food lost per hop
+    /// (`BigParams::flow_loss`), CPU only so far.
+    flow_loss: f32,
+    /// `upkeep=`: a walker's energy cost a step (the race world's 0.001
+    /// when unset); 0.0002 keeps about 25,000 walkers alive, the density
+    /// at which the mould stops looking like specks (one-body report).
+    upkeep: Option<f32>,
 }
 
 impl Mould {
@@ -187,8 +198,12 @@ impl Mould {
     fn apply(&self, p: &mut BigParams) {
         (p.alarm_keep, p.alarm_weight) = self.alarm((p.alarm_keep, p.alarm_weight));
         (p.energy_flow, p.hunger_scent) = (self.energy_flow, self.hunger_scent);
+        p.flow_loss = self.flow_loss;
         if let Some(e) = self.crystal_eat {
             p.crystal_eat = e;
+        }
+        if let Some(u) = self.upkeep {
+            p.upkeep = u;
         }
         if let Some(t) = self.tier {
             t.apply(p);
@@ -250,6 +265,10 @@ fn main() {
             "aim_min" => rules.aim_min = v.parse().unwrap(),
             "price" => rules.price = v.parse().unwrap(),
             "smell" => rules.smell = v.parse().unwrap(),
+            // `drain=`: soldier health lost a second per touching walker
+            // (`Rules::drain`); a denser mould wants less a walker.
+            "drain" => rules.drain = v.parse().unwrap(),
+            "upkeep" => m.upkeep = Some(v.parse().unwrap()),
             "smell_r" => rules.smell_r = v.parse().unwrap(),
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             "flee" => m.flee = Some(v.parse().unwrap()),
@@ -257,10 +276,12 @@ fn main() {
             // `crater=S`: game seconds of crater each hit lays
             // (`Rules::crater`).
             "crater" => rules.crater = v.parse().unwrap(),
+            "core_pull" => rules.core_pull = v.parse().unwrap(),
             "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
             "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
             "scorch_cone" => m.scorch_cone = v == "1",
             "energy_flow" => m.energy_flow = v.parse().unwrap(),
+            "flow_loss" => m.flow_loss = v.parse().unwrap(),
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "crystal_eat" => m.crystal_eat = Some(v.parse().unwrap()),
             "strike" => rules.strike = v.parse().unwrap(),
@@ -299,7 +320,7 @@ fn main() {
         rules.cap = c;
     }
     if (m.energy_flow, m.hunger_scent) != (0.0, 0.0) || m.crystal_eat.is_some() {
-        println!("one body: energy_flow {} hunger_scent {} crystal_eat {:?}", m.energy_flow, m.hunger_scent, m.crystal_eat);
+        println!("one body: energy_flow {} hunger_scent {} crystal_eat {:?} flow_loss {}", m.energy_flow, m.hunger_scent, m.crystal_eat, m.flow_loss);
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
@@ -383,9 +404,9 @@ fn main() {
                     }
                     let r = play(*seed, scale, walkers, rules, m, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
                     println!(
-                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s",
+                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s{}",
                         if engines.len() > 1 { format!(" {}", engine_name(*on_gpu)) } else { String::new() },
-                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck
+                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck, r.core_at.map_or(String::new(), |t| format!(", core fell at {t:.0} s"))
                     );
                     out.lock().unwrap()[j] = r;
                 }
@@ -571,14 +592,18 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, han
         let mut s = race_settings(seed, scale, walkers);
         (s.alarm_keep, s.alarm_weight) = mould.alarm((s.alarm_keep, s.alarm_weight));
         (s.energy_flow, s.hunger_scent) = (mould.energy_flow, mould.hunger_scent);
+        assert!(mould.flow_loss == 0.0, "flow_loss is CPU only so far");
         if let Some(e) = mould.crystal_eat {
             s.crystal_eat = e;
+        }
+        if let Some(u) = mould.upkeep {
+            s.upkeep = u;
         }
         let world = match map {
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),
         };
-        return play_on(Game::new(world, rules, seed), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
+        return play_on(Game::new(world, rules, seed).with_tier(mould.tier), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
     }
     let mut p = race_params(seed, scale, walkers);
     mould.apply(&mut p);
@@ -592,7 +617,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, han
         counts(g, hand, seed);
     };
     let near = |d: &BigDish, live: &[(f32, f32)], r: f32| Some((0..d.walkers.len()).filter(|&k| d.lives(k) && live.iter().any(|&(x, y)| (d.walkers[k].0 - x).hypot(d.walkers[k].1 - y) <= r)).count());
-    play_on(Game::new(world, rules, seed), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
+    play_on(Game::new(world, rules, seed).with_tier(mould.tier), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
 }
 
 /// Living walkers within a radius (fine cells) of any of the points, where
@@ -720,6 +745,7 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
         think_us,
         near: near_sum / near_n.max(1) as f64,
         touch_at: touch_at.unwrap_or(g.rules.cap),
+        core_at: g.core_down.map(|t| t as f32 / g.rules.tps as f32),
         // Counted by the game since 2026-11-12 (`Game::stuck`), the same
         // test the census ran here (it can count the round's last second,
         // which the plan never saw).
