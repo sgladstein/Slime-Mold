@@ -42,6 +42,8 @@ Copy of the roadmap doc, [Larder World: long-term roadmap](https://claude.ai/art
 | 6 | Converter | Converts rivals' walkers where it outnumbers them (`species_convert`, `species_cycle`) | Kill early, keep rivals apart |
 | 7 | Mixes | Several of the above | Adapt the build to the mix |
 
+*Added 2026-11-11 evening (mould tiers thread, [report](mould-tiers-2026-11-11.md), *In the Larder world*):* three more rungs on the CPU big dish, named for the game by `mould::tiers::Tier`; the squad's shots lay the alarm they answer. **Sleeper**, a nest round its home crystal that wakes in a wave (bait it, then strike); **Swarmer**, floods where it is hit (a kill zone; a modifier any tier can carry); **Sporer**, fed walkers fly to new crystals (starve it). In this world's race the Swarmer and the Sleeper's bait hold on 8 of 8 seeds; the Sporer's edge is not significant; the counters are untested against play. Not on the GPU yet.
+
 Player side: walls (a terrain field the mould can't enter), upgrades, new weapons (M4's burner and long gun); each tool answers a tier. The early leader's win rate (80-85% on the field skirmish) is a per-mould difficulty stat, not a gate (owner 14:14Z).
 
 ## Independent reviews (14:40Z)

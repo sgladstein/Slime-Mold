@@ -1,0 +1,48 @@
+== seed 1: 512 x 320, 50000 walkers, 23 piles
+seed 1 g-sporer t  10.0s  tube  3990.5  loops    2  width 4.58  reach  189.7  piles 23/23  strays 0.011  crystals 0.928  ms/tick 8.31
+seed 1 g-sporer t  10.0s  alive 1762  energy 0.328  born 3020  starved 6258  grass -0.000
+seed 1 g-sporer t  10.0s  contrast 3.73
+seed 1 g-sporer t  10.0s  extent r50 143.9 r90 143.9
+seed 1 g-sporer t  10.0s  life walk 1751 spore 11 dormant 0 dead 0  held 16/23  bodies 16 big 1520  centre 89.9,82.5  near 44  rim 0.002/0.025
+seed 1 g-sporer t  20.0s  tube  2525.8  loops    2  width 3.67  reach  183.4  piles 23/23  strays 0.018  crystals 0.894  ms/tick 7.98
+seed 1 g-sporer t  20.0s  alive 872  energy 0.405  born 3543  starved 7671  grass -0.000
+seed 1 g-sporer t  20.0s  contrast 3.30
+seed 1 g-sporer t  20.0s  extent r50 143.9 r90 143.9
+seed 1 g-sporer t  20.0s  life walk 867 spore 5 dormant 0 dead 0  held 11/23  bodies 25 big 1460  centre 114.3,97.7  near 57  rim 0.001/0.006
+seed 1 g-sporer t  30.0s  tube  2451.5  loops    1  width 3.73  reach  187.7  piles 23/23  strays 0.012  crystals 0.865  ms/tick 7.82
+seed 1 g-sporer t  30.0s  alive 816  energy 0.412  born 4053  starved 8237  grass -0.000
+seed 1 g-sporer t  30.0s  contrast 3.37
+seed 1 g-sporer t  30.0s  extent r50 143.9 r90 143.9
+seed 1 g-sporer t  30.0s  life walk 811 spore 5 dormant 0 dead 0  held 11/23  bodies 30 big 1148  centre 119.2,96.6  near 40  rim 0.001/0.018
+seed 1 g-sporer t  40.0s  tube  2355.5  loops    0  width 4.10  reach  172.7  piles 23/23  strays 0.019  crystals 0.836  ms/tick 7.71
+seed 1 g-sporer t  40.0s  alive 829  energy 0.450  born 4545  starved 8716  grass -0.000
+seed 1 g-sporer t  40.0s  contrast 3.02
+seed 1 g-sporer t  40.0s  extent r50 143.9 r90 143.9
+seed 1 g-sporer t  40.0s  life walk 819 spore 10 dormant 0 dead 0  held 10/23  bodies 16 big 1485  centre 112.1,94.4  near 38  rim 0.002/0.024
+seed 1 g-sporer t  50.0s  tube  2550.0  loops    0  width 4.28  reach  184.1  piles 23/23  strays 0.023  crystals 0.805  ms/tick 7.61
+seed 1 g-sporer t  50.0s  alive 884  energy 0.406  born 5120  starved 9236  grass -0.000
+seed 1 g-sporer t  50.0s  contrast 2.81
+seed 1 g-sporer t  50.0s  extent r50 143.9 r90 143.9
+seed 1 g-sporer t  50.0s  life walk 877 spore 7 dormant 0 dead 0  held 12/23  bodies 15 big 1712  centre 105.9,92.9  near 39  rim 0.000/0.015
+seed 1 g-sporer t  60.0s  tube  2547.5  loops    1  width 3.74  reach  198.4  piles 23/23  strays 0.020  crystals 0.775  ms/tick 7.54
+seed 1 g-sporer t  60.0s  alive 795  energy 0.406  born 5656  starved 9861  grass -0.000
+seed 1 g-sporer t  60.0s  contrast 3.16
+seed 1 g-sporer t  60.0s  extent r50 143.9 r90 143.9
+seed 1 g-sporer t  60.0s  life walk 789 spore 6 dormant 0 dead 0  held 10/23  bodies 22 big 1433  centre 104.0,94.0  near 42  rim 0.001/0.019
+seed 1 g-sporer t  70.0s  tube  2508.5  loops    0  width 4.03  reach  180.9  piles 23/23  strays 0.017  crystals 0.749  ms/tick 7.48
+seed 1 g-sporer t  70.0s  alive 781  energy 0.469  born 6051  starved 10270  grass -0.000
+seed 1 g-sporer t  70.0s  contrast 2.68
+seed 1 g-sporer t  70.0s  extent r50 143.9 r90 143.9
+seed 1 g-sporer t  70.0s  life walk 779 spore 2 dormant 0 dead 0  held 11/23  bodies 16 big 1414  centre 107.4,95.0  near 66  rim 0.001/0.019
+seed 1 g-sporer t  80.0s  tube  2543.2  loops    0  width 3.64  reach  185.1  piles 23/23  strays 0.027  crystals 0.722  ms/tick 7.45
+seed 1 g-sporer t  80.0s  alive 789  energy 0.448  born 6456  starved 10667  grass -0.000
+seed 1 g-sporer t  80.0s  contrast 2.81
+seed 1 g-sporer t  80.0s  extent r50 143.9 r90 143.9
+seed 1 g-sporer t  80.0s  life walk 783 spore 6 dormant 0 dead 0  held 11/23  bodies 20 big 1100  centre 104.3,93.0  near 31  rim 0.006/0.026
+seed 1 g-sporer t  90.0s  tube  3479.5  loops    1  width 4.83  reach  184.8  piles 23/23  strays 0.015  crystals 0.682  ms/tick 7.28
+seed 1 g-sporer t  90.0s  alive 1379  energy 0.467  born 7482  starved 11103  grass -0.000
+seed 1 g-sporer t  90.0s  contrast 3.12
+seed 1 g-sporer t  90.0s  extent r50 143.9 r90 143.9
+seed 1 g-sporer t  90.0s  life walk 1365 spore 14 dormant 0 dead 0  held 15/23  bodies 10 big 3349  centre 78.5,96.4  near 36  rim 0.001/0.045
+seed 1 g-sporer firsts 0:0:0.57:0.0 1:73:0.67:0.8 2:52:0.93:0.2 3:164:0.87:1.0 4:46:0.88:0.2 5:122:0.42:1.0 6:67:0.98:0.4 7:126:0.55:1.0 8:85:0.11:0.8 9:35:0.54:0.1 10:171:0.80:1.1 11:35:0.30:0.1 12:102:0.75:1.1 13:96:0.85:0.9 14:184:1.01:1.4 15:72:0.80:0.7 16:149:0.89:0.7 17:128:0.66:0.8 18:108:0.61:1.2 19:41:0.90:0.1 20:77:1.23:0.8 21:28:0.52:0.0 22:71:0.33:1.1
+seed 1 g-sporer hash=117ec90165078036

@@ -1,0 +1,12 @@
+A-none seed 2 t   2.0 alive 20000 meanx 127.5 p10 99.5 p50 126.1 p90 155.4 piles 5 fired 0 ms/tick 11.3
+A-none seed 2 t   4.0 alive 20000 meanx 127.3 p10 98.3 p50 125.8 p90 155.9 piles 5 fired 0 ms/tick 11.7
+A-none seed 2 t   6.0 alive 20000 meanx 127.3 p10 98.4 p50 125.8 p90 156.0 piles 5 fired 0 ms/tick 12.2
+A-none seed 2 t   8.0 alive 20000 meanx 127.2 p10 97.7 p50 125.7 p90 155.4 piles 5 fired 0 ms/tick 12.4
+A-none seed 2 t  10.0 alive 20000 meanx 127.0 p10 97.5 p50 125.6 p90 154.8 piles 5 fired 0 ms/tick 12.5
+A-none seed 2 t  12.0 alive 20000 meanx 126.9 p10 97.4 p50 125.5 p90 154.6 piles 5 fired 0 ms/tick 12.6
+A-none seed 2 t  14.0 alive 20000 meanx 126.8 p10 97.4 p50 125.5 p90 154.4 piles 5 fired 0 ms/tick 12.7
+A-none seed 2 t  16.0 alive 20000 meanx 126.6 p10 97.5 p50 125.3 p90 154.2 piles 5 fired 0 ms/tick 12.8
+A-none seed 2 t  18.0 alive 20000 meanx 126.5 p10 97.6 p50 125.3 p90 154.1 piles 5 fired 0 ms/tick 12.9
+A-none seed 2 t  20.0 alive 20000 meanx 126.4 p10 97.8 p50 125.2 p90 153.8 piles 5 fired 0 ms/tick 13.0
+A-none seed 2 t  22.0 alive 20000 meanx 126.3 p10 98.0 p50 125.1 p90 153.7 piles 5 fired 0 ms/tick 13.1
+A-none seed 2 t  24.0 alive 20000 meanx 126.2 p10 98.1 p50 125.1 p90 153.5 piles 5 fired 0 ms/tick 13.2

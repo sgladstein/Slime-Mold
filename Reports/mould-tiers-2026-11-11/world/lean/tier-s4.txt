@@ -1,0 +1,62 @@
+seed 4 tier t  10.0s  tube  1893.2  loops    0  width 10.58  reach   70.3  piles 14/23  strays 0.018  crystals 0.954  ms/tick 9.25
+seed 4 tier t  10.0s  alive 4297  energy 0.582  born 1583  starved 2286  grass -0.000
+seed 4 tier t  10.0s  contrast 1.52
+seed 4 tier t  10.0s  extent r50 143.9 r90 143.9
+seed 4 tier t  10.0s  life walk 1 spore 0 dormant 4296 dead 0  held 1/23  bodies 9 big 1623  centre 56.0,79.9  near 0  rim 0.000/0.000
+seed 4 tier t  20.0s  tube  1759.0  loops    0  width 11.12  reach   69.2  piles 14/23  strays 0.022  crystals 0.954  ms/tick 13.39
+seed 4 tier t  20.0s  alive 3383  energy 0.580  born 1584  starved 3201  grass -0.000
+seed 4 tier t  20.0s  contrast 1.58
+seed 4 tier t  20.0s  extent r50 143.9 r90 143.9
+seed 4 tier t  20.0s  life walk 0 spore 0 dormant 3383 dead 0  held 1/23  bodies 9 big 1546  centre 55.9,79.8  near 0  rim 0.000/0.000
+seed 4 tier t  30.0s  tube  1666.2  loops    0  width 11.15  reach   67.5  piles 14/23  strays 0.024  crystals 0.954  ms/tick 19.31
+seed 4 tier t  30.0s  alive 2700  energy 0.578  born 1584  starved 3884  grass -0.000
+seed 4 tier t  30.0s  contrast 1.70
+seed 4 tier t  30.0s  extent r50 143.9 r90 143.9
+seed 4 tier t  30.0s  life walk 0 spore 0 dormant 2700 dead 0  held 1/23  bodies 8 big 1495  centre 55.8,79.9  near 0  rim 0.000/0.000
+seed 4 tier t  40.0s  tube  1555.0  loops    0  width 11.41  reach   66.4  piles 14/23  strays 0.030  crystals 0.954  ms/tick 22.21
+seed 4 tier t  40.0s  alive 2117  energy 0.574  born 1584  starved 4467  grass -0.000
+seed 4 tier t  40.0s  contrast 1.77
+seed 4 tier t  40.0s  extent r50 143.9 r90 143.9
+seed 4 tier t  40.0s  life walk 0 spore 0 dormant 2117 dead 0  held 1/23  bodies 9 big 1424  centre 55.8,80.0  near 0  rim 0.000/0.000
+seed 4 tier t  50.0s  tube  1471.8  loops    0  width 11.80  reach   62.0  piles 14/23  strays 0.036  crystals 0.954  ms/tick 23.90
+seed 4 tier t  50.0s  alive 1660  energy 0.582  born 1584  starved 4924  grass -0.000
+seed 4 tier t  50.0s  contrast 1.84
+seed 4 tier t  50.0s  extent r50 143.9 r90 143.9
+seed 4 tier t  50.0s  life walk 0 spore 0 dormant 1660 dead 0  held 1/23  bodies 8 big 1384  centre 55.8,80.1  near 0  rim 0.000/0.000
+seed 4 tier t  60.0s  tube  1377.5  loops    1  width 12.58  reach   59.4  piles 14/23  strays 0.045  crystals 0.954  ms/tick 25.38
+seed 4 tier t  60.0s  alive 1308  energy 0.584  born 1584  starved 5276  grass -0.000
+seed 4 tier t  60.0s  contrast 1.84
+seed 4 tier t  60.0s  extent r50 143.9 r90 143.9
+seed 4 tier t  60.0s  life walk 0 spore 0 dormant 1308 dead 0  held 1/23  bodies 6 big 1322  centre 56.0,80.1  near 0  rim 0.000/0.000
+seed 4 tier t  70.0s  tube  1282.2  loops    2  width 11.17  reach   59.4  piles 14/23  strays 0.064  crystals 0.954  ms/tick 26.44
+seed 4 tier t  70.0s  alive 1026  energy 0.576  born 1584  starved 5558  grass -0.000
+seed 4 tier t  70.0s  contrast 1.89
+seed 4 tier t  70.0s  extent r50 143.9 r90 143.9
+seed 4 tier t  70.0s  life walk 0 spore 0 dormant 1026 dead 0  held 1/23  bodies 4 big 1248  centre 56.0,79.8  near 0  rim 0.000/0.000
+seed 4 tier t  80.0s  tube  1099.0  loops    6  width 7.06  reach   59.4  piles 14/23  strays 0.088  crystals 0.954  ms/tick 27.31
+seed 4 tier t  80.0s  alive 787  energy 0.548  born 1584  starved 5797  grass -0.000
+seed 4 tier t  80.0s  contrast 2.03
+seed 4 tier t  80.0s  extent r50 143.9 r90 143.9
+seed 4 tier t  80.0s  life walk 0 spore 0 dormant 787 dead 0  held 1/23  bodies 1 big 1082  centre 55.9,80.2  near 0  rim 0.000/0.000
+seed 4 tier t  90.0s  tube   921.5  loops   11  width 4.60  reach   59.4  piles 14/23  strays 0.096  crystals 0.954  ms/tick 27.95
+seed 4 tier t  90.0s  alive 623  energy 0.536  born 1584  starved 5961  grass -0.000
+seed 4 tier t  90.0s  contrast 2.11
+seed 4 tier t  90.0s  extent r50 143.9 r90 143.9
+seed 4 tier t  90.0s  life walk 0 spore 0 dormant 623 dead 0  held 1/23  bodies 2 big 876  centre 55.7,80.4  near 0  rim 0.000/0.000
+seed 4 tier t 100.0s  tube   732.8  loops    8  width 3.33  reach   59.4  piles 14/23  strays 0.127  crystals 0.954  ms/tick 28.45
+seed 4 tier t 100.0s  alive 505  energy 0.556  born 1584  starved 6079  grass -0.000
+seed 4 tier t 100.0s  contrast 2.15
+seed 4 tier t 100.0s  extent r50 143.9 r90 143.9
+seed 4 tier t 100.0s  life walk 0 spore 0 dormant 505 dead 0  held 1/23  bodies 10 big 529  centre 55.7,80.6  near 0  rim 0.000/0.000
+seed 4 tier t 110.0s  tube   526.2  loops    1  width 2.56  reach   59.4  piles 14/23  strays 0.189  crystals 0.954  ms/tick 28.92
+seed 4 tier t 110.0s  alive 412  energy 0.527  born 1584  starved 6172  grass -0.000
+seed 4 tier t 110.0s  contrast 1.98
+seed 4 tier t 110.0s  extent r50 143.9 r90 143.9
+seed 4 tier t 110.0s  life walk 0 spore 0 dormant 412 dead 0  held 1/23  bodies 12 big 294  centre 55.7,80.3  near 0  rim 0.000/0.000
+seed 4 tier t 120.0s  tube   355.0  loops    0  width 2.07  reach   21.7  piles 14/23  strays 0.292  crystals 0.954  ms/tick 29.29
+seed 4 tier t 120.0s  alive 332  energy 0.538  born 1584  starved 6252  grass -0.000
+seed 4 tier t 120.0s  contrast 2.08
+seed 4 tier t 120.0s  extent r50 143.9 r90 143.9
+seed 4 tier t 120.0s  life walk 0 spore 0 dormant 332 dead 0  held 1/23  bodies 16 big 123  centre 55.7,80.7  near 0  rim 0.000/0.000
+seed 4 tier firsts 0:0:0.57:0.0 1:32:0.51:0.1 2:169:0.80:-1.0 3:45:0.80:0.2 4:77:0.65:0.7 5:141:0.75:-1.0 6:58:0.36:0.3 7:43:0.91:0.2 8:70:1.15:0.4 9:98:0.49:1.7 10:75:0.84:1.1 11:99:0.78:1.4 12:124:0.72:-1.0 13:33:0.82:0.1 14:67:0.04:0.4 15:146:0.70:-1.0 16:62:0.80:0.3 17:181:1.10:-1.0 18:189:1.05:-1.0 19:158:0.74:-1.0 20:172:1.08:-1.0 21:124:0.42:-1.0 22:48:0.95:0.2
+seed 4 tier hash=d17a47cccd23d773

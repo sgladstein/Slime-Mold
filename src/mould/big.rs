@@ -57,6 +57,7 @@ const DRAW_FRUIT: u32 = 114;
 const DRAW_SLEEP: u32 = 115;
 const CLAIM_LAND: u32 = 116;
 const DRAW_SPORE_H: u32 = 117;
+const DRAW_SLEEP_DIE: u32 = 118;
 
 /// Life states (`BigParams::spore_rate` and below, `BigDish::life`).
 pub const LIFE_WALKER: u8 = 0;
@@ -473,6 +474,17 @@ pub struct BigParams {
     pub wake_alarm: f32,
     pub wake_steps: u16,
     pub sleep_rest: u16,
+    /// Each step a dormant walker dies with this chance (keyed,
+    /// `DRAW_SLEEP_DIE`): its cell is freed, and with growth on its slot
+    /// too; 0 (the default) keeps it for ever. A free crust never dies,
+    /// which froze a world whose crystals ran dry (review 1 of 2026-11-11:
+    /// the whole body asleep and unchanged from 30 s to 90 s). Paying
+    /// upkeep while asleep was tried first and lost the bait counter in the
+    /// world (`Reports/dead-ends.md`, `sleep_upkeep`): the crust starved in
+    /// seconds, since walkers fall asleep with little energy left. A death
+    /// chance keeps the crust whole through a bait's few seconds and lets an
+    /// unfed one fade over a minute or two.
+    pub sleep_death: f32,
     /// **Alarm** (off when `alarm_keep` is 0): a field on the fine grid that
     /// a strike lays (`BigDish::strike`) and a waking walker relays. Each
     /// fine step it gets one 3x3 mean over the agar times `alarm_keep`, as
@@ -673,6 +685,7 @@ impl BigParams {
             wake_alarm: 1.0,
             wake_steps: 240,
             sleep_rest: 0,
+            sleep_death: 0.0,
             alarm_keep: 0.0,
             alarm_weight: 0.0,
             alarm_relay: 0.0,
@@ -2131,6 +2144,16 @@ impl BigDish {
         for &k in sleeping {
             let (x, y, _) = self.walkers[k];
             let i = self.cell(x, y).expect("walker inside the dish");
+            if p.sleep_death > 0.0 && unit(keyed(seed, t, DRAW_SLEEP_DIE, k as u32)) < p.sleep_death {
+                self.occ[i] -= 1;
+                self.life[k] = LIFE_DEAD;
+                // With growth on, the slot is freed for a birth to reuse.
+                if !self.alive.is_empty() {
+                    self.alive[k] = false;
+                    self.starved += 1;
+                }
+                continue;
+            }
             if p.sleep_deposit > 0.0 {
                 self.lay(k, i, dep * p.sleep_deposit);
             }

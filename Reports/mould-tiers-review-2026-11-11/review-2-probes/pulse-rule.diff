@@ -1,0 +1,948 @@
+--- /tmp/review-2/repo/src/mould/big.rs	2026-11-11 20:19:17.909860068 +0000
++++ /tmp/review-2/scratch/src/big.rs	2026-11-11 20:35:29.087651359 +0000
+@@ -31,7 +31,7 @@
+ 
+ use std::f32::consts::TAU;
+ 
+-use super::{keyed, unit, H, STEPS_PER_SECOND, W};
++use crate::{keyed, unit, H, STEPS_PER_SECOND, W};
+ 
+ /// What a keyed draw is for here (`keyed`): its own streams, apart from the
+ /// game's.
+@@ -810,6 +810,30 @@
+     /// Threads for the field passes. Each cell is computed from the last
+     /// field alone, so the result does not depend on it.
+     pub threads: usize,
++    // Scratch prototype: relay pulses (not in the repo).
++    pub pulse: Vec<f32>,
++    pub pulse_ref: Vec<u16>,
++    pub pulse_burst: Vec<u16>,
++    pub pulse_h: Vec<f32>,
++    pub pz: Pulse,
++    pub fired: usize,
++}
++
++#[derive(Clone, Copy, Debug, Default)]
++pub struct Pulse {
++    pub keep: f32,
++    pub fire: f32,
++    pub relay: f32,
++    pub refr: u16,
++    pub burst: u16,
++    pub dir_r: f32,
++    /// Walkers on food (scent over this) fire on their own when not refractory (0: off).
++    pub pace_scent: f32,
++    /// Chance a step a walker on food fires on its own.
++    pub pace_rate: f32,
++    /// Weight of the pulse field in ordinary sensing (the swarm control).
++    pub weight: f32,
++    pub burst_dep: f32,
+ }
+ 
+ /// Agar inside a rectangle `margin` cells in from the edge (`rect`).
+@@ -956,6 +980,12 @@
+             wall_hits: 0,
+             scent_wall: Vec::new(),
+             threads: 1,
++            pulse: Vec::new(),
++            pulse_ref: Vec::new(),
++            pulse_burst: Vec::new(),
++            pulse_h: Vec::new(),
++            pz: Pulse::default(),
++            fired: 0,
+             p,
+         };
+         d.place_piles();
+@@ -1479,6 +1509,7 @@
+             Some(i) if self.agar[i] => {
+                 let g = if self.grass.is_empty() { 0.0 } else { gw * self.grass[i] };
+                 let al = if self.alarm.is_empty() { 0.0 } else { self.p.alarm_weight * self.alarm[i] };
++                let al = al + if self.pulse.is_empty() { 0.0 } else { self.pz.weight * self.pulse[i] };
+                 self.trail_seen(i, sp) + self.scent_at(x + c * sso, y + s * sso) + g + al
+             }
+             _ => -1.0e6,
+@@ -1649,7 +1680,9 @@
+                     ra *= p.sick_turn;
+                 }
+             }
+-            if look {
++            if !self.pulse_burst.is_empty() && self.pulse_burst[k] > 0 {
++                h = self.pulse_h[k];
++            } else if look {
+                 let (mut f, mut fl, mut fr) = (
+                     self.sense((x, y), h, so, sso, sp, set.graze_weight),
+                     self.sense((x, y), h - sa, so, sso, sp, set.graze_weight),
+@@ -1707,7 +1740,8 @@
+                 if cap == 0 {
+                     let sick = contagion && self.sick[k as usize] > sick_at;
+                     let amount = if sick { dep * self.p.sick_trail } else { dep };
+-                    self.lay(k as usize, j, amount * self.explore_share(k as usize));
++                    let bd = if !self.pulse_burst.is_empty() && self.pulse_burst[k as usize] > 0 { self.pz.burst_dep } else { 1.0 };
++                    self.lay(k as usize, j, amount * bd * self.explore_share(k as usize));
+                 }
+             } else {
+                 blocked.push((k, h, st));
+@@ -2433,9 +2467,76 @@
+ 
+     /// One tick: `substeps` fine steps of walkers and trail, and the scent
+     /// once (on today's grid) or each fine step (on the fine grid).
++    pub fn pulse_on(&mut self, pz: Pulse) {
++        let n = self.walkers.len();
++        self.pz = pz;
++        self.pulse = vec![0.0; self.w * self.h];
++        self.pulse_ref = vec![0; n];
++        self.pulse_burst = vec![0; n];
++        self.pulse_h = vec![0.0; n];
++    }
++
++    pub fn pulse_add(&mut self, x: f32, y: f32, r: f32, amount: f32) {
++        let n = r.ceil() as i64;
++        for dy in -n..=n {
++            for dx in -n..=n {
++                if (dx * dx + dy * dy) as f32 > r * r { continue; }
++                if let Some(i) = self.cell(x + dx as f32, y + dy as f32) {
++                    if self.agar[i] { self.pulse[i] += amount; }
++                }
++            }
++        }
++    }
++
++    /// Relay pulses: a walker not refractory fires when the pulse on its cell
++    /// (as the pass began) is over `fire`; it then faces the strongest of
++    /// eight readings `dir_r` cells out (the side the wave came from) and walks
++    /// that way for `burst` steps, and is deaf for `refr` steps. Fires add
++    /// `relay` to their cells after every decision.
++    fn pulse_step(&mut self) {
++        let pz = self.pz;
++        let (seed, t) = (self.p.seed, self.steps);
++        let mut fires = Vec::new();
++        for k in 0..self.walkers.len() {
++            if !self.lives(k) || (!self.life.is_empty() && self.life[k] != LIFE_WALKER) { continue; }
++            if self.pulse_burst[k] > 0 { self.pulse_burst[k] -= 1; }
++            if self.pulse_ref[k] > 0 { self.pulse_ref[k] -= 1; continue; }
++            let (x, y, _) = self.walkers[k];
++            let i = self.cell(x, y).expect("inside");
++            let own = pz.pace_scent > 0.0 && self.scent_at(x, y) > pz.pace_scent && unit(keyed(seed, t, 177, k as u32)) < pz.pace_rate;
++            if self.pulse[i] > pz.fire || own {
++                fires.push((k, i));
++            }
++        }
++        for &(k, _) in &fires {
++            let (x, y, _) = self.walkers[k];
++            let (mut best, mut bh) = (f32::MIN, 0.0f32);
++            for d in 0..8 {
++                let a = d as f32 * TAU / 8.0;
++                let v = match self.cell(x + a.cos() * pz.dir_r, y + a.sin() * pz.dir_r) {
++                    Some(j) if self.agar[j] => self.pulse[j],
++                    _ => -1.0,
++                };
++                if v > best { best = v; bh = a; }
++            }
++            self.pulse_h[k] = bh;
++            self.pulse_burst[k] = pz.burst;
++            self.pulse_ref[k] = pz.refr;
++        }
++        for &(_, i) in &fires {
++            self.pulse[i] += pz.relay;
++        }
++        self.fired += fires.len();
++        spread(&self.agar, &self.pulse, &mut self.scratch, self.w, self.h, pz.keep, self.threads);
++        std::mem::swap(&mut self.pulse, &mut self.scratch);
++    }
++
+     pub fn tick(&mut self) {
+         for _ in 0..self.p.substeps {
+             self.move_walkers();
++            if !self.pulse.is_empty() {
++                self.pulse_step();
++            }
+             if self.species_trail.is_empty() {
+                 for pass in 0..self.p.trail_passes.max(1) {
+                     let keep = if pass == 0 { self.p.keep } else { 1.0 };
+@@ -2671,786 +2772,3 @@
+     }
+ }
+ 
+-#[cfg(test)]
+-mod tests {
+-    use super::*;
+-
+-    #[test]
+-    fn respawn_keeps_walkers_and_the_crowd_rule() {
+-        let mut d = BigDish::new(BigParams { respawn: 0.2, blob: false, ..small(1, 1) });
+-        let n = d.walkers.len();
+-        let before = d.walkers.clone();
+-        for _ in 0..5 {
+-            d.tick();
+-        }
+-        assert_eq!(d.walkers.len(), n);
+-        let mut occ = vec![0u16; d.w * d.h];
+-        for &(x, y, _) in &d.walkers {
+-            let i = d.cell(x, y).unwrap();
+-            assert!(d.agar[i]);
+-            occ[i] += 1;
+-        }
+-        assert!(occ.iter().all(|&c| c <= 1));
+-        assert_eq!(occ, d.occ);
+-        // About a fifth of them jump each step: most end far from their start.
+-        let far = d.walkers.iter().zip(&before).filter(|(a, b)| (a.0 - b.0).hypot(a.1 - b.1) > 20.0).count();
+-        assert!(far > n / 2, "{far} of {n} moved far");
+-    }
+-
+-    fn small(scale: usize, substeps: usize) -> BigParams {
+-        BigParams { scale, substeps, walkers: 600 * scale * scale, seed: 3, ..BigParams::today() }
+-    }
+-
+-    /// Threads split the field passes by rows; the dish must not care.
+-    #[test]
+-    fn threads_change_nothing() {
+-        let mut a = BigDish::new(small(2, 2));
+-        let mut b = a.clone();
+-        b.threads = 4;
+-        for _ in 0..60 {
+-            a.tick();
+-            b.tick();
+-        }
+-        assert_eq!(a.hash(), b.hash());
+-        assert_eq!(a.hash(), {
+-            let mut c = BigDish::new(small(2, 2));
+-            for _ in 0..60 {
+-                c.tick();
+-            }
+-            c.hash()
+-        });
+-    }
+-
+-    /// With a crowd limit of 1 no cell ever holds two walkers, and no claim
+-    /// is left behind.
+-    #[test]
+-    fn one_walker_a_cell() {
+-        let mut d = BigDish::new(small(2, 2));
+-        for _ in 0..120 {
+-            d.tick();
+-            let mut seen = vec![0u8; d.w * d.h];
+-            for &(x, y, _) in &d.walkers {
+-                let i = d.cell(x, y).unwrap();
+-                assert!(d.agar[i]);
+-                seen[i] += 1;
+-                assert!(seen[i] == 1, "two walkers in one cell");
+-            }
+-            assert!(d.occ.iter().zip(&seen).all(|(&o, &s)| o == s as u16));
+-            assert!(d.claim.iter().all(|&c| c == u32::MAX));
+-        }
+-    }
+-
+-    /// The scaling options keep the dish deterministic whatever the threads.
+-    #[test]
+-    fn scaling_options_ignore_threads() {
+-        let p = BigParams { trail_passes: 2, sense_every: 2, scent_offset: 18.0, ..small(2, 2) };
+-        let mut a = BigDish::new(p);
+-        let mut b = a.clone();
+-        b.threads = 3;
+-        for _ in 0..40 {
+-            a.tick();
+-            b.tick();
+-        }
+-        assert_eq!(a.hash(), b.hash());
+-    }
+-
+-    /// A scent reach of 0 means the trail sensor's reach, bit for bit.
+-    #[test]
+-    fn scent_offset_zero_is_the_sensor_offset() {
+-        let p = small(2, 2);
+-        let mut a = BigDish::new(p.clone());
+-        let mut b = BigDish::new(BigParams { scent_offset: p.sensor_offset, ..p });
+-        for _ in 0..30 {
+-            a.tick();
+-            b.tick();
+-        }
+-        assert_eq!(a.hash(), b.hash());
+-    }
+-
+-    /// Between looks a walker keeps its heading; only a blocked walker,
+-    /// which stays put, draws a new one.
+-    #[test]
+-    fn walkers_walk_straight_between_looks() {
+-        // Spread start: a packed blob leaves most walkers blocked.
+-        let mut d = BigDish::new(BigParams { sense_every: 2, blob: false, ..small(2, 2) });
+-        for _ in 0..20 {
+-            d.tick();
+-        }
+-        assert_eq!(d.steps % 2, 0);
+-        d.steps += 1;
+-        let before = d.walkers.clone();
+-        d.move_walkers();
+-        let mut moved = 0;
+-        for (a, b) in before.iter().zip(&d.walkers) {
+-            if (a.0, a.1) != (b.0, b.1) {
+-                assert_eq!(a.2, b.2, "turned between looks");
+-                moved += 1;
+-            }
+-        }
+-        assert!(moved > before.len() / 2, "{moved} of {} moved", before.len());
+-    }
+-
+-    /// The 2026-11-11 options (Jenson's looks) keep the dish deterministic
+-    /// whatever the threads, and a sickness seeded in the middle spreads.
+-    #[test]
+-    fn jenson_options_ignore_threads_and_spread() {
+-        let p = BigParams {
+-            crowd: 0,
+-            blob_r: 20.0,
+-            haze: 0.3,
+-            sense_scale: 0.05,
+-            step_mod: [1.0, 1.0],
+-            turn_mod: [-0.2, 2.0],
+-            deposit_cap: 50,
+-            sense_floor: 0.5,
+-            wander: 0.01,
+-            sick_steps: 60,
+-            immune_steps: 60,
+-            sick_catch: 0.2,
+-            sick_reach: 0.5,
+-            sick_turn: 2.0,
+-            sick_trail: 3.0,
+-            sick_seed_r: 6.0,
+-            ..small(2, 1)
+-        };
+-        let mut a = BigDish::new(p);
+-        let seeded = a.sick.iter().filter(|&&c| c > 0).count();
+-        assert!(seeded > 0);
+-        let mut b = a.clone();
+-        b.threads = 3;
+-        let mut ever = vec![false; a.walkers.len()];
+-        for _ in 0..60 {
+-            a.tick();
+-            b.tick();
+-            for (e, &c) in ever.iter_mut().zip(&a.sick) {
+-                *e |= c > a.p.immune_steps;
+-            }
+-        }
+-        assert_eq!(a.hash(), b.hash());
+-        let caught = ever.iter().filter(|&&e| e).count();
+-        assert!(caught > 2 * seeded, "{caught} caught from {seeded} seeded");
+-    }
+-
+-    /// With every new option at its default the dish is today's, and the
+-    /// contagion state is not even allocated.
+-    #[test]
+-    fn new_options_default_off() {
+-        let d = BigDish::new(small(2, 2));
+-        assert!(d.charge.is_empty() && d.rock.is_empty() && d.took.is_empty());
+-        assert!(d.sick.is_empty() && d.germ.is_empty());
+-        assert!(d.species_trail.is_empty() && d.age.is_empty());
+-        assert!(d.kind.is_empty() && d.grass.is_empty() && d.p.species_sets.is_empty());
+-    }
+-
+-    /// Species sets that copy the global fields change nothing: the same
+-    /// dish, bit for bit, as the global fields alone.
+-    #[test]
+-    fn species_sets_equal_to_globals_change_nothing() {
+-        for p in [
+-            BigParams { species: 2, species_zones: true, ..small(2, 1) },
+-            BigParams { species: 2, species_convert: 1.2, graze_weight: 10.0, explore_steps: 30, ..small(2, 1) },
+-            BigParams { species: 2, blocked_keep: true, blocked_retry: 2, blocked_deposit: 1.0, keep: 0.93, ..small(2, 1) },
+-            BigParams { species: 2, crowd: 0, deposit_cap: 4, ..small(2, 1) },
+-        ] {
+-            let same = SpeciesSet::from_params(&p);
+-            let mut a = BigDish::new(p.clone());
+-            let mut b = BigDish::new(BigParams { species_sets: vec![same; 2], ..p });
+-            for _ in 0..40 {
+-                a.tick();
+-                b.tick();
+-            }
+-            assert_eq!(a.hash(), b.hash());
+-        }
+-    }
+-
+-    /// A droplet species (crowd 1, grazing, wide sensors) and a network
+-    /// species (crowd 0, explorers first) on one dish: only the grazing
+-    /// species eats grass, and only grazers' cells lose it.
+-    #[test]
+-    fn species_sets_differ_by_species() {
+-        let base = BigParams { species: 2, species_zones: true, ..small(2, 1) };
+-        let drop = SpeciesSet { crowd: 1, sensor_angle: 1.5, rotate_angle: 0.8, deposit: 5.0, keep: 0.93, blocked_deposit: 1.0, graze_weight: 10.0, explore_steps: 0, ..SpeciesSet::from_params(&base) };
+-        let net = SpeciesSet { crowd: 0, keep: 0.6, graze_weight: 0.0, explore_steps: 20, ..SpeciesSet::from_params(&base) };
+-        let mut d = BigDish::new(BigParams { species_sets: vec![drop, net], ..base });
+-        assert!(!d.grass.is_empty() && !d.age.is_empty());
+-        let mut been = vec![false; d.w * d.h];
+-        for _ in 0..30 {
+-            d.tick();
+-            for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+-                if d.spec[k] == 0 {
+-                    been[d.cell(x, y).unwrap()] = true;
+-                }
+-            }
+-        }
+-        let eaten: Vec<usize> = (0..d.w * d.h).filter(|&i| d.agar[i] && d.grass[i] < 1.0).collect();
+-        assert!(!eaten.is_empty());
+-        assert!(eaten.iter().all(|&i| been[i]), "grass eaten where no grazer stood");
+-        // No cell holds two walkers of the crowd-1 species.
+-        let mut n0 = vec![0u16; d.w * d.h];
+-        for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+-            if d.spec[k] == 0 {
+-                n0[d.cell(x, y).unwrap()] += 1;
+-            }
+-        }
+-        assert!(n0.iter().all(|&n| n <= 1));
+-    }
+-
+-    /// Each species' field decays at its own keep.
+-    #[test]
+-    fn species_keep_is_per_species() {
+-        let base = BigParams { species: 2, ..small(2, 1) };
+-        let a = SpeciesSet { deposit: 0.0, keep: 0.9, ..SpeciesSet::from_params(&base) };
+-        let b = SpeciesSet { keep: 0.5, ..a };
+-        let mut d = BigDish::new(BigParams { species_sets: vec![a, b], respawn: 0.0, ..base });
+-        for i in 0..d.w * d.h {
+-            if d.agar[i] {
+-                d.species_trail[0][i] = 1.0;
+-                d.species_trail[1][i] = 1.0;
+-                d.trail[i] = 2.0;
+-            }
+-        }
+-        let before: f32 = d.species_trail[0].iter().sum();
+-        d.tick();
+-        let (s0, s1): (f32, f32) = (d.species_trail[0].iter().sum(), d.species_trail[1].iter().sum());
+-        assert!((s0 / before - 0.9).abs() < 0.01, "{}", s0 / before);
+-        assert!((s1 / before - 0.5).abs() < 0.01, "{}", s1 / before);
+-    }
+-
+-    /// The outside rules (2026-11-11) are keyed draws too: threads change
+-    /// nothing, and the species fields add up to the shared trail.
+-    #[test]
+-    fn outside_rules_ignore_threads() {
+-        for p in [
+-            BigParams { sensor_r: 1, chance_exp: 4.0, size_spread: 0.6, ..small(2, 1) },
+-            BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
+-            BigParams { species: 3, species_cycle: true, species_convert: 1.0, ..small(2, 1) },
+-            BigParams { species: 2, species_convert: 1.5, species_boost: 1.5, graze_weight: 10.0, ..small(2, 1) },
+-            BigParams { species: 2, species_zones: true, species_convert: 1.2, species_convert_r: 3, species_share: 0.6, ..small(2, 1) },
+-            BigParams { mix_share: 0.3, mix_reach: 3.0, mix_angle: 0.5, mix_turn: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..small(2, 1) },
+-            BigParams { blocked_keep: true, blocked_reset: 0.1, blocked_retry: 3, blocked_deposit: 1.0, ..small(2, 1) },
+-            BigParams { explore_steps: 30, explore_spread: 1.0, ..small(2, 1) },
+-            {
+-                let base = BigParams { species: 2, species_zones: true, species_convert: 1.2, ..small(2, 1) };
+-                let drop = SpeciesSet { crowd: 1, sensor_angle: 1.5, deposit: 5.0, blocked_deposit: 1.0, graze_weight: 10.0, ..SpeciesSet::from_params(&base) };
+-                let net = SpeciesSet { crowd: 0, keep: 0.8, explore_steps: 20, ..SpeciesSet::from_params(&base) };
+-                BigParams { species_sets: vec![drop, net], blocked_retry: 2, ..base }
+-            },
+-        ] {
+-            let mut a = BigDish::new(p);
+-            let mut b = a.clone();
+-            b.threads = 3;
+-            for _ in 0..40 {
+-                a.tick();
+-                b.tick();
+-            }
+-            assert_eq!(a.hash(), b.hash());
+-            let n = a.p.species as usize;
+-            assert_eq!(a.species_trail.len(), if n > 1 { n } else { 0 });
+-            if n > 1 {
+-                for (i, &t) in a.trail.iter().enumerate() {
+-                    let sum: f32 = a.species_trail.iter().map(|f| f[i]).sum();
+-                    assert!((t - sum).abs() <= 1e-3 * t.abs().max(1.0), "cell {i}: {t} vs {sum}");
+-                }
+-            }
+-        }
+-    }
+-
+-    /// Growth (Larder World W0): threads change nothing, a cell's count is
+-    /// its living walkers, the crowd limit holds through births, and food
+-    /// decides the size: with the grass regrowing the mould outgrows its
+-    /// start, with none it eats the dish bare and dies down.
+-    #[test]
+-    fn growth_follows_food() {
+-        let grow = |regrow: f32| BigParams { upkeep: 0.01, capacity: 4 * 600, graze_weight: 10.0, graze_regrow: regrow, ..small(1, 1) };
+-        let mut a = BigDish::new(grow(0.002));
+-        let mut b = a.clone();
+-        b.threads = 3;
+-        let start = a.measure().alive;
+-        assert_eq!((start, a.walkers.len()), (600, 2400));
+-        let mut peak = 0;
+-        for _ in 0..600 {
+-            a.tick();
+-            b.tick();
+-            peak = peak.max(a.measure().alive);
+-        }
+-        assert_eq!(a.hash(), b.hash());
+-        let mut occ = vec![0u16; a.w * a.h];
+-        for k in 0..a.walkers.len() {
+-            if a.lives(k) {
+-                let (x, y, _) = a.walkers[k];
+-                let i = a.cell(x, y).unwrap();
+-                assert!(a.agar[i]);
+-                occ[i] += 1;
+-            }
+-        }
+-        assert!(occ.iter().all(|&c| c <= 1));
+-        assert_eq!(occ, a.occ);
+-        let fed = a.measure().alive;
+-        assert!(a.births > 0 && a.starved > 0 && fed > 2 * start, "fed: {fed} alive of {start}, peak {peak}");
+-        // The dish holds about 30,000 grass; 2,400 walkers burn 24 a step.
+-        let mut c = BigDish::new(grow(0.0));
+-        for _ in 0..3000 {
+-            c.tick();
+-        }
+-        let starved = c.measure().alive;
+-        assert!(starved < start / 2, "starved: {starved} alive of {start}");
+-    }
+-
+-    /// Growth on Larder's crystals: a walker's crystal take (`took`) is its
+-    /// food, so with no births and no starving the energy gained is the
+-    /// charge eaten less upkeep; an empty slot takes nothing; and with
+-    /// crystals on there is no grass unless `graze_weight` asks for it.
+-    #[test]
+-    fn growth_eats_crystals() {
+-        let upkeep = 1e-4;
+-        let p = BigParams { crystal_charge: 2.0, crystal_eat: 0.05, upkeep, birth_energy: 1e9, starve: 0.0, capacity: 1200, ..small(1, 1) };
+-        let mut d = BigDish::new(p.clone());
+-        assert!(d.grass.is_empty(), "no grass with crystals");
+-        // Park the empty slots on the home crystal, where a share is there
+-        // to take.
+-        let (px, py) = d.piles[0];
+-        for k in 600..1200 {
+-            d.walkers[k] = (px, py, 0.0);
+-        }
+-        let alive = d.measure().alive;
+-        assert_eq!(alive, 600);
+-        for _ in 0..20 {
+-            let (e0, eaten0): (f64, f64) = (d.energy.iter().map(|&e| e as f64).sum(), d.eaten);
+-            d.tick();
+-            let e1: f64 = d.energy.iter().map(|&e| e as f64).sum();
+-            let want = (d.eaten - eaten0) - upkeep as f64 * alive as f64;
+-            assert!((e1 - e0 - want).abs() < 1e-3, "gained {} against eaten less upkeep {want}", e1 - e0);
+-            assert!((600..1200).all(|k| d.took[k] == 0.0), "an empty slot took a share");
+-        }
+-        assert!(d.eaten > 0.0, "the home crystal fed the mould");
+-        assert!(!BigDish::new(BigParams { graze_weight: 10.0, ..p }).grass.is_empty());
+-    }
+-
+-    /// `energy_flow` keeps energy (pairs give what they take), evens it out
+-    /// and leaves empty slots alone.
+-    #[test]
+-    fn energy_flow_keeps_and_evens() {
+-        let p = BigParams { upkeep: 0.01, energy_flow: 0.1, capacity: 1200, ..small(1, 1) };
+-        let mut d = BigDish::new(p);
+-        for _ in 0..30 {
+-            d.tick();
+-        }
+-        for k in 0..d.walkers.len() {
+-            if d.lives(k) {
+-                d.energy[k] = (k % 7) as f32 * 0.3;
+-            }
+-        }
+-        let empty: Vec<f32> = (0..d.walkers.len()).filter(|&k| !d.lives(k)).map(|k| d.energy[k]).collect();
+-        let spread = |d: &BigDish| {
+-            let e: Vec<f64> = (0..d.walkers.len()).filter(|&k| d.lives(k)).map(|k| d.energy[k] as f64).collect();
+-            let m = e.iter().sum::<f64>() / e.len() as f64;
+-            (e.iter().sum::<f64>(), e.iter().map(|x| (x - m) * (x - m)).sum::<f64>())
+-        };
+-        let (sum0, var0) = spread(&d);
+-        d.flow_energy();
+-        let (sum1, var1) = spread(&d);
+-        assert!((sum1 - sum0).abs() < 1e-3, "energy kept: {sum0} -> {sum1}");
+-        assert!(var1 < 0.9 * var0, "energy evens out: {var0} -> {var1}");
+-        let after: Vec<f32> = (0..d.walkers.len()).filter(|&k| !d.lives(k)).map(|k| d.energy[k]).collect();
+-        assert_eq!(empty, after, "empty slots untouched");
+-    }
+-
+-    /// With growth off nothing is kept for it: every slot lives.
+-    #[test]
+-    fn growth_off_keeps_no_slots() {
+-        let d = BigDish::new(small(1, 1));
+-        assert!(d.alive.is_empty() && d.energy.is_empty() && d.grass.is_empty());
+-        assert_eq!(d.measure().alive, d.walkers.len());
+-    }
+-
+-    /// The life cycle (2026-11-11): threads change nothing; the crowd rule
+-    /// and `occ` hold with spores in flight, the dormant and the dead; spores
+-    /// leave, fly and land; the dormant do not move; a strike kills and
+-    /// frees cells; and with every rule off nothing is allocated.
+-    #[test]
+-    fn life_cycle_keeps_the_crowd_rule_and_ignores_threads() {
+-        let d = BigDish::new(small(2, 1));
+-        assert!(d.life.is_empty() && d.life_t.is_empty() && d.alarm.is_empty());
+-        for p in [
+-            BigParams { spore_rate: 0.01, spore_scent: -1.0, spore_steps: 20, spore_reach: 8.0, spore_land: 1.0, spore_deposit: 0.2, spore_rest: 10, ..small(2, 1) },
+-            BigParams { sleep_rate: 0.05, wake_scent: 50.0, alarm_keep: 0.95, alarm_relay: 20.0, wake_alarm: 1.0, alarm_weight: 2.0, sleep_rest: 10, wake_steps: 10, ..small(2, 1) },
+-            BigParams { spore_burst: 0.5, spore_alarm: 1.0, spore_steps: 20, alarm_keep: 0.98, alarm_weight: -5.0, ..small(2, 1) },
+-        ] {
+-            let mut a = BigDish::new(p);
+-            let mut b = a.clone();
+-            b.threads = 3;
+-            let mut flew = 0;
+-            let mut landed = 0;
+-            for t in 0..60 {
+-                if t == 20 {
+-                    let (x, y) = (a.walkers[0].0 / 2.0, a.walkers[0].1 / 2.0);
+-                    let ka = a.strike(x, y, 4.0, 30.0, 8.0);
+-                    let kb = b.strike(x, y, 4.0, 30.0, 8.0);
+-                    assert_eq!(ka, kb);
+-                    assert!(ka > 0, "the strike killed nothing");
+-                }
+-                let before = a.life.clone();
+-                let pos = a.walkers.clone();
+-                a.tick();
+-                b.tick();
+-                for k in 0..a.walkers.len() {
+-                    if before[k] == LIFE_DORMANT && a.life[k] == LIFE_DORMANT {
+-                        assert_eq!((pos[k].0, pos[k].1), (a.walkers[k].0, a.walkers[k].1), "a dormant walker moved");
+-                    }
+-                    if before[k] == LIFE_DEAD {
+-                        assert_eq!(a.life[k], LIFE_DEAD, "the dead came back");
+-                    }
+-                    flew += usize::from(before[k] != LIFE_SPORE && a.life[k] == LIFE_SPORE);
+-                    landed += usize::from(before[k] == LIFE_SPORE && a.life[k] == LIFE_WALKER);
+-                }
+-                let mut occ = vec![0u16; a.w * a.h];
+-                for (k, &(x, y, _)) in a.walkers.iter().enumerate() {
+-                    if matches!(a.life[k], LIFE_WALKER | LIFE_DORMANT) {
+-                        let i = a.cell(x, y).unwrap();
+-                        assert!(a.agar[i]);
+-                        occ[i] += 1;
+-                    }
+-                }
+-                assert_eq!(occ, a.occ);
+-                assert!(occ.iter().all(|&c| c <= 1));
+-                assert!(a.claim.iter().all(|&c| c == u32::MAX));
+-            }
+-            assert_eq!(a.hash(), b.hash());
+-            if a.p.spore_rate > 0.0 || a.p.spore_burst > 0.0 {
+-                assert!(flew > 0 && landed > 0, "{flew} flew, {landed} landed");
+-            }
+-            if a.p.sleep_rate > 0.0 {
+-                assert!(a.life_counts()[2] > 0, "nobody fell dormant");
+-            }
+-        }
+-    }
+-
+-    /// Growth with the life cycle (merged 2026-11-11): threads change
+-    /// nothing; `occ` counts the living ordinary and dormant walkers; a
+-    /// spore or a dormant walker keeps its energy (no upkeep, no grass); a
+-    /// strike frees its slots, so the dead count stays 0 and no living
+-    /// slot is dead; and births go on after it, some into struck slots.
+-    #[test]
+-    fn growth_with_the_life_cycle() {
+-        let p = BigParams {
+-            upkeep: 0.01,
+-            capacity: 4 * 600,
+-            graze_weight: 10.0,
+-            graze_regrow: 0.002,
+-            spore_rate: 0.01,
+-            spore_scent: -1.0,
+-            spore_steps: 20,
+-            spore_reach: 8.0,
+-            spore_land: 1.0,
+-            spore_rest: 10,
+-            sleep_rate: 0.05,
+-            wake_scent: 50.0,
+-            sleep_rest: 10,
+-            wake_steps: 10,
+-            ..small(1, 1)
+-        };
+-        let mut a = BigDish::new(p);
+-        let mut b = a.clone();
+-        b.threads = 3;
+-        let mut struck = Vec::new();
+-        let (mut paused, mut reused, mut births_after) = (0usize, 0usize, 0u64);
+-        for t in 0..300 {
+-            if t == 100 {
+-                let before: Vec<bool> = (0..a.walkers.len()).map(|k| a.lives(k)).collect();
+-                let (x, y) = (a.walkers[0].0, a.walkers[0].1);
+-                let ka = a.strike(x, y, 6.0, 0.0, 0.0);
+-                assert_eq!(ka, b.strike(x, y, 6.0, 0.0, 0.0));
+-                assert!(ka > 0, "the strike killed nothing");
+-                struck = (0..a.walkers.len()).filter(|&k| before[k] && !a.lives(k)).collect();
+-                assert_eq!(struck.len(), ka);
+-                births_after = a.births;
+-            }
+-            let (life, energy) = (a.life.clone(), a.energy.clone());
+-            a.tick();
+-            b.tick();
+-            for k in 0..a.walkers.len() {
+-                if a.lives(k) && matches!(life[k], LIFE_SPORE | LIFE_DORMANT) && a.life[k] == life[k] {
+-                    assert_eq!(a.energy[k], energy[k], "a spore or a sleeper paid upkeep or ate");
+-                    paused += 1;
+-                }
+-                assert!(!a.lives(k) || a.life[k] != LIFE_DEAD, "a living slot is dead");
+-            }
+-            let mut occ = vec![0u16; a.w * a.h];
+-            for (k, &(x, y, _)) in a.walkers.iter().enumerate() {
+-                if a.lives(k) && matches!(a.life[k], LIFE_WALKER | LIFE_DORMANT) {
+-                    let i = a.cell(x, y).unwrap();
+-                    assert!(a.agar[i]);
+-                    occ[i] += 1;
+-                }
+-            }
+-            assert_eq!(occ, a.occ);
+-            assert!(occ.iter().all(|&c| c <= 1));
+-        }
+-        reused += struck.iter().filter(|&&k| a.lives(k)).count();
+-        assert_eq!(a.hash(), b.hash());
+-        assert_eq!(a.life_counts()[3], 0);
+-        assert!(paused > 0, "no spore or sleeper was seen");
+-        assert!(a.births > births_after && reused > 0, "{} births after the strike, {reused} struck slots reused", a.births - births_after);
+-    }
+-
+-    /// The life cycle with Larder World's crystals and walls (merged
+-    /// 2026-11-11): a wall built over spores, sleepers and the dead keeps
+-    /// `occ` true, nobody lands on a wall, only ordinary walkers eat, and the
+-    /// eaten total still matches what left the piles.
+-    #[test]
+-    fn life_cycle_with_walls_and_crystals() {
+-        let p = BigParams {
+-            crystal_charge: 2.0,
+-            crystal_eat: 0.2,
+-            spore_rate: 0.02,
+-            spore_scent: -1.0,
+-            spore_steps: 20,
+-            spore_reach: 8.0,
+-            spore_land: 1.0,
+-            sleep_rate: 0.05,
+-            wake_scent: 50.0,
+-            alarm_keep: 0.95,
+-            alarm_relay: 20.0,
+-            sleep_rest: 10,
+-            wake_steps: 10,
+-            ..small(2, 2)
+-        };
+-        let mut d = BigDish::new(p);
+-        let full: f32 = d.pile_full.iter().sum();
+-        for t in 0..60 {
+-            if t == 15 {
+-                let (hx, hy) = d.piles[0];
+-                assert!(d.build_wall(hx - 3.0, hy - 10.0, hx - 3.0, hy + 10.0, 2.0) > 0);
+-            }
+-            if t == 25 {
+-                let (hx, hy) = d.piles[0];
+-                d.strike(hx, hy, 3.0, 30.0, 6.0);
+-            }
+-            d.tick();
+-            let mut occ = vec![0u16; d.w * d.h];
+-            for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
+-                if matches!(d.life[k], LIFE_WALKER | LIFE_DORMANT) {
+-                    let i = d.cell(x, y).unwrap();
+-                    assert!(d.agar[i], "a grounded walker on a wall or rim");
+-                    occ[i] += 1;
+-                }
+-                if !matches!(d.life[k], LIFE_WALKER) {
+-                    assert_eq!(d.took[k], 0.0, "only ordinary walkers eat");
+-                }
+-            }
+-            assert_eq!(occ, d.occ);
+-        }
+-        let counts = d.life_counts();
+-        assert!(counts[1] + counts[2] + counts[3] > 0, "{counts:?}");
+-        let gone = full - d.pile_charge.iter().sum::<f32>();
+-        assert!((gone as f64 - d.eaten).abs() < 1e-2 * full as f64);
+-    }
+-
+-    /// Crystals run dry: charge only falls, the eaten total matches what
+-    /// left the piles, and a drained pile lays less scent. Terrain is the
+-    /// same map at every scale and keeps rock off the piles.
+-    #[test]
+-    fn crystals_run_dry_and_terrain_pairs() {
+-        let p = BigParams { crystal_charge: 2.0, crystal_eat: 0.2, terrain_rock: 0.3, terrain_wet: 0.3, rect: true, ..small(2, 2) };
+-        let mut d = BigDish::new(p.clone());
+-        let full: f32 = d.pile_full.iter().sum();
+-        assert!(full > 0.0 && d.crystals_left() == 1.0);
+-        let mut last = 1.0;
+-        for _ in 0..60 {
+-            d.tick();
+-            let left = d.crystals_left();
+-            assert!(left <= last + 1e-6);
+-            last = left;
+-        }
+-        assert!(last < 1.0, "the home crystal is eaten");
+-        let gone = full - d.pile_charge.iter().sum::<f32>();
+-        assert!((gone as f64 - d.eaten).abs() < 1e-2 * full as f64);
+-        assert!(d.crystal_left(0) < 1.0);
+-        let mut t = BigDish::new(p.clone());
+-        t.threads = 4;
+-        let mut e = BigDish::new(p.clone());
+-        for _ in 0..10 {
+-            t.tick();
+-            e.tick();
+-        }
+-        assert_eq!(t.hash(), e.hash(), "threads change nothing");
+-        // The terrain map pairs across scales: rock at the same dish cells.
+-        let (a, b) = (BigDish::new(BigParams { scale: 1, substeps: 1, ..p.clone() }), BigDish::new(BigParams { scale: 2, ..p.clone() }));
+-        let mut same = 0;
+-        for y in 0..a.h {
+-            for x in 0..a.w {
+-                if a.rock[y * a.w + x] == b.rock[(2 * y) * b.w + 2 * x] {
+-                    same += 1;
+-                }
+-            }
+-        }
+-        assert!(same as f32 > 0.97 * (a.w * a.h) as f32);
+-        assert!(a.rock.iter().any(|&r| r) && a.wet.iter().any(|&w| w));
+-        // Crystals that refill end fuller than ones that run dry.
+-        let mut r = BigDish::new(BigParams { crystal_regrow: 0.05, ..p.clone() });
+-        let mut n = BigDish::new(p.clone());
+-        for _ in 0..60 {
+-            r.tick();
+-            n.tick();
+-        }
+-        assert!(r.crystals_left() > n.crystals_left());
+-        // A wall leaves the agar, clears its trail and moves walkers out.
+-        let mut d = BigDish::new(BigParams { crystal_charge: 0.0, terrain_rock: 0.0, terrain_wet: 0.0, wall_hp: 0.0, ..p.clone() });
+-        for _ in 0..20 {
+-            d.tick();
+-        }
+-        let (hx, hy) = d.piles[0];
+-        let n = d.build_wall(hx - 3.0, hy - 10.0, hx - 3.0, hy + 10.0, 2.0);
+-        assert!(n > 0);
+-        for (i, &wl) in d.wall.iter().enumerate() {
+-            if wl {
+-                assert!(!d.agar[i] && d.trail[i] == 0.0);
+-            }
+-        }
+-        let inside = d.walkers.iter().filter(|&&(x, y, _)| d.wall[y as usize * d.w + x as usize]).count();
+-        assert!(inside < 5, "{inside} walkers left inside the wall");
+-        for _ in 0..30 {
+-            d.tick();
+-        }
+-        for (i, &wl) in d.wall.iter().enumerate() {
+-            if wl {
+-                assert!(d.trail[i] == 0.0, "no trail enters a wall");
+-            }
+-        }
+-        assert_eq!(d.broken, 0, "walls without health never break");
+-        // With health, the crowd pressing on a wall wears it through.
+-        let mut b = BigDish::new(BigParams { crystal_charge: 0.0, terrain_rock: 0.0, terrain_wet: 0.0, wall_hp: 2.0, wall_bite: 1.0, ..p.clone() });
+-        for _ in 0..20 {
+-            b.tick();
+-        }
+-        let (hx, hy) = b.piles[0];
+-        b.build_wall(hx - 3.0, hy - 10.0, hx - 3.0, hy + 10.0, 2.0);
+-        for _ in 0..60 {
+-            b.tick();
+-        }
+-        assert!(b.broken > 0, "the mould breaks a weak wall");
+-        for (i, &wl) in b.wall.iter().enumerate() {
+-            if !wl && b.wall_health[i] == 0.0 && b.wet[i] {
+-                assert!(b.agar[i], "rubble is ground again");
+-            }
+-        }
+-        for &(px, py) in &a.piles {
+-            assert!(!a.rock[py as usize * a.w + px as usize]);
+-        }
+-    }
+-
+-    /// The same layout of piles at every scale, so arms pair.
+-    #[test]
+-    fn crystal_flow_keeps_the_total_and_evens_a_disc() {
+-        // Pile 1 with half its cells emptied by hand, and no eating: without
+-        // flow it stays half empty, with flow the cells even out and still
+-        // add up to the pile's charge.
+-        let p = BigParams { crystal_charge: 2.0, crystal_eat: 0.0, crystal_flow: 0.0, ..small(2, 2) };
+-        let spread = |d: &BigDish| {
+-            let cells: Vec<f32> = d.pile_cells.iter().filter(|&&i| d.pile_of[i as usize] == 2).map(|&i| d.charge[i as usize]).collect();
+-            let (lo, hi) = cells.iter().fold((f32::MAX, f32::MIN), |(lo, hi), &c| (lo.min(c), hi.max(c)));
+-            (hi - lo, cells.iter().sum::<f32>())
+-        };
+-        let half = |d: &mut BigDish| {
+-            let cells: Vec<u32> = d.pile_cells.iter().copied().filter(|&i| d.pile_of[i as usize] == 2).collect();
+-            for &i in &cells[..cells.len() / 2] {
+-                d.pile_charge[1] -= d.charge[i as usize];
+-                d.charge[i as usize] = 0.0;
+-            }
+-        };
+-        let mut still = BigDish::new(p.clone());
+-        let mut flow = BigDish::new(BigParams { crystal_flow: 0.2, ..p });
+-        half(&mut still);
+-        half(&mut flow);
+-        for _ in 0..30 {
+-            still.tick();
+-            flow.tick();
+-        }
+-        let ((s0, _), (s1, sum1)) = (spread(&still), spread(&flow));
+-        assert!(s0 > 1.9, "without flow the disc stays uneven ({s0})");
+-        assert!(s1 < 0.01, "flow evens it ({s1})");
+-        assert!((sum1 - flow.pile_charge[1]).abs() < 1e-3 * flow.pile_full[1], "the total is kept");
+-        assert!((flow.crystal_left(1) - 0.5).abs() < 0.05);
+-    }
+-
+-    #[test]
+-    fn crystals_are_hexagons() {
+-        // Pointy-top, circumradius pile_r: the top vertex is in, the same
+-        // distance out sideways is not (a flat side is at 0.87 r), and the
+-        // area is the hexagon's, not the disc's.
+-        let d = BigDish::new(BigParams { crystal_charge: 1.0, terrain_rock: 0.0, ..small(2, 2) });
+-        let s = d.p.scale as f32;
+-        let r = d.p.pile_r * s;
+-        let (cx, cy) = (d.piles[1].0 * s, d.piles[1].1 * s);
+-        let at = |x: f32, y: f32| d.pile_of[d.cell(x, y).unwrap()] == 2;
+-        assert!(at(cx, cy - r + 1.0) && at(cx, cy + r - 1.0), "top and bottom vertices");
+-        assert!(!at(cx + 0.95 * r, cy) && !at(cx - 0.95 * r, cy), "outside the flat sides");
+-        assert!(at(cx + 0.8 * r, cy));
+-        let cells = d.pile_of.iter().filter(|&&p| p == 2).count() as f32;
+-        let hex = 2.598 * r * r;
+-        assert!((cells - hex).abs() < 0.1 * hex, "{cells} cells against a hexagon's {hex}");
+-    }
+-
+-    #[test]
+-    fn deep_crystals_still_count_down() {
+-        // Charge 512 a cell: a pile holds far more than a bite's f32 step,
+-        // and its total must still fall as the walkers eat (a running f32
+-        // total stood still here).
+-        let mut d = BigDish::new(BigParams { crystal_charge: 512.0, crystal_eat: 0.005, ..small(2, 2) });
+-        let full: f64 = d.pile_full.iter().map(|&v| v as f64).sum();
+-        for _ in 0..60 {
+-            d.tick();
+-        }
+-        let gone = full - d.pile_charge.iter().map(|&v| v as f64).sum::<f64>();
+-        assert!(d.eaten > 0.0 && d.crystal_left(0) < 1.0);
+-        assert!((gone - d.eaten).abs() < 0.01 * d.eaten, "gone {gone} eaten {}", d.eaten);
+-    }
+-
+-    #[test]
+-    fn leaky_walls_let_a_little_scent_across() {
+-        // A ring round pile 1 (dish cells; the scent grid is today's).
+-        // Outside it, 3 cells past the ring on the far side from home, a
+-        // sealed ring leaves less scent than a leaky one, and the leaky
+-        // one less than no ring.
+-        let p = BigParams { walkers: 50, ..small(2, 2) };
+-        let at = |ring: Option<f32>| {
+-            let mut d = BigDish::new(BigParams { wall_scent: ring.unwrap_or(0.0), ..p.clone() });
+-            let ((hx, hy), (cx, cy)) = (d.piles[0], d.piles[1]);
+-            let r = d.p.pile_r + 3.0;
+-            if ring.is_some() {
+-                for q in 0..24 {
+-                    let (a0, a1) = (q as f32 / 24.0 * std::f32::consts::TAU, (q + 1) as f32 / 24.0 * std::f32::consts::TAU);
+-                    d.build_wall(cx + r * a0.cos(), cy + r * a0.sin(), cx + r * a1.cos(), cy + r * a1.sin(), 2.0);
+-                }
+-            }
+-            for _ in 0..200 {
+-                d.tick();
+-            }
+-            let a = (cy - hy).atan2(cx - hx);
+-            let (x, y) = (cx + (r + 3.0) * a.cos(), cy + (r + 3.0) * a.sin());
+-            d.scent[y as usize * d.sw + x as usize]
+-        };
+-        let (open, leaky, sealed) = (at(None), at(Some(0.3)), at(Some(0.0)));
+-        assert!(sealed < leaky && leaky < open, "sealed {sealed} leaky {leaky} open {open}");
+-    }
+-
+-    #[test]
+-    fn piles_pair_across_scales() {
+-        let a = BigDish::new(small(1, 1));
+-        let b = BigDish::new(small(4, 4));
+-        assert_eq!(a.piles, b.piles);
+-        assert!(a.piles.len() >= 5);
+-    }
+-
+-    /// On today's grid the network grows out from home and reaches food.
+-    #[test]
+-    fn the_mould_spreads_and_finds_food() {
+-        let mut d = BigDish::new(BigParams { seed: 2, ..BigParams::today() });
+-        for _ in 0..30 * STEPS_PER_SECOND {
+-            d.tick();
+-        }
+-        let m = d.measure();
+-        assert!(m.tube_area > 500.0, "{m:?}");
+-        assert!(m.reached >= 2, "{m:?}");
+-    }
+-}

@@ -41,9 +41,12 @@ bait-on|$B seconds=17 tier=sleeper bait=10 bait_pile=0 strike=14 strike_pile=0
 bait-off|$B seconds=17 tier=sleeper strike=14 strike_pile=0
 swarm-on|$B seconds=16 tier=swarmer $FIRE
 swarm-off|$B seconds=16 alarm_keep=0.98 $FIRE"
+# ONLY="sleeper bait-on bait-off" runs just those arms.
+ONLY=${ONLY:-}
 n=0
 for s in $SEEDS; do
   while IFS='|' read -r name args; do
+    [[ -n "$ONLY" && " $ONLY " != *" $name "* ]] && continue
     ( $BIN $args seeds=$s tag=$name 2>&1 < /dev/null | grep -E "^seed" ) > "$OUT/$name-s$s.txt" &
     n=$((n+1)); (( n % JOBS == 0 )) && wait
   done <<< "$LIST"

@@ -1,0 +1,18 @@
+seed 1 su0.5 t  10.0s  alive 1517  energy 0.876  born 3105  starved 6588  grass -0.000
+seed 1 su0.5 t  10.0s  life walk 1119 spore 0 dormant 398 dead 0  held 1/23  bodies 2 big 970  centre 61.9,81.1  near 0  rim 0.000/0.000
+seed 1 su0.5 t  20.0s  alive 1459  energy 1.724  born 5851  starved 9392  grass -0.000
+seed 1 su0.5 t  20.0s  life walk 1092 spore 0 dormant 367 dead 0  held 1/23  bodies 7 big 751  centre 61.0,79.8  near 1  rim 0.000/0.000
+seed 1 su0.5 t  30.0s  alive 1490  energy 2.504  born 8562  starved 12072  grass -0.000
+seed 1 su0.5 t  30.0s  life walk 1104 spore 0 dormant 386 dead 0  held 1/23  bodies 8 big 736  centre 60.7,79.8  near 0  rim 0.000/0.000
+seed 1 su0.5 t  40.0s  alive 1441  energy 3.407  born 11307  starved 14866  grass -0.000
+seed 1 su0.5 t  40.0s  life walk 1100 spore 0 dormant 341 dead 0  held 1/23  bodies 10 big 643  centre 60.8,80.0  near 1  rim 0.000/0.000
+seed 1 su0.5 t  50.0s  alive 1434  energy 4.250  born 14107  starved 17673  grass -0.000
+seed 1 su0.5 t  50.0s  life walk 1106 spore 0 dormant 328 dead 0  held 1/23  bodies 9 big 706  centre 60.9,80.2  near 4  rim 0.000/0.000
+seed 1 su0.5 t  60.0s  alive 1427  energy 5.127  born 16831  starved 20404  grass -0.000
+seed 1 su0.5 t  60.0s  life walk 1091 spore 0 dormant 336 dead 0  held 1/23  bodies 8 big 776  centre 60.6,80.0  near 0  rim 0.000/0.000
+seed 1 su0.5 t  70.0s  alive 1422  energy 5.969  born 19650  starved 23228  grass -0.000
+seed 1 su0.5 t  70.0s  life walk 1080 spore 0 dormant 342 dead 0  held 1/23  bodies 9 big 706  centre 61.4,80.5  near 4  rim 0.000/0.000
+seed 1 su0.5 t  80.0s  alive 1485  energy 6.516  born 22465  starved 25980  grass -0.000
+seed 1 su0.5 t  80.0s  life walk 1104 spore 0 dormant 381 dead 0  held 1/23  bodies 13 big 763  centre 60.5,80.7  near 1  rim 0.000/0.000
+seed 1 su0.5 t  90.0s  alive 1436  energy 7.557  born 25190  starved 28754  grass -0.000
+seed 1 su0.5 t  90.0s  life walk 1075 spore 0 dormant 361 dead 0  held 1/23  bodies 6 big 663  centre 60.0,79.9  near 0  rim 0.000/0.000

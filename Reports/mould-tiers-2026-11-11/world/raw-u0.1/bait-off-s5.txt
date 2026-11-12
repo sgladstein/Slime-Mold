@@ -1,0 +1,88 @@
+seed 5 bait-off t   1.0s  tube  2760.2  loops    0  width 7.45  reach  118.2  piles 13/23  strays 0.008  crystals 1.000  ms/tick 7.57
+seed 5 bait-off t   1.0s  alive 5150  energy 0.428  born 150  starved 0  grass -0.000
+seed 5 bait-off t   1.0s  contrast 3.82
+seed 5 bait-off t   1.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t   1.0s  life walk 2130 spore 0 dormant 3020 dead 0  held 7/23  bodies 9 big 2423  centre 56.8,80.4  near 3084  rim 0.000/0.000
+seed 5 bait-off t   2.0s  tube  2429.8  loops    6  width 6.94  reach  151.0  piles 20/23  strays 0.040  crystals 1.000  ms/tick 7.75
+seed 5 bait-off t   2.0s  alive 5172  energy 0.421  born 172  starved 0  grass -0.000
+seed 5 bait-off t   2.0s  contrast 4.11
+seed 5 bait-off t   2.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t   2.0s  life walk 1745 spore 0 dormant 3427 dead 0  held 2/23  bodies 10 big 1904  centre 57.1,80.7  near 3102  rim 0.000/0.000
+seed 5 bait-off t   3.0s  tube  2289.0  loops    0  width 8.36  reach  183.5  piles 21/23  strays 0.018  crystals 1.000  ms/tick 7.77
+seed 5 bait-off t   3.0s  alive 4933  energy 0.438  born 864  starved 931  grass -0.000
+seed 5 bait-off t   3.0s  contrast 2.48
+seed 5 bait-off t   3.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t   3.0s  life walk 1426 spore 0 dormant 3507 dead 0  held 1/23  bodies 9 big 1897  centre 57.2,80.5  near 2862  rim 0.000/0.000
+seed 5 bait-off t   4.0s  tube  2191.0  loops    0  width 8.29  reach  187.7  piles 21/23  strays 0.020  crystals 1.000  ms/tick 7.79
+seed 5 bait-off t   4.0s  alive 5116  energy 0.413  born 1257  starved 1141  grass -0.000
+seed 5 bait-off t   4.0s  contrast 3.32
+seed 5 bait-off t   4.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t   4.0s  life walk 1567 spore 0 dormant 3549 dead 0  held 1/23  bodies 15 big 1776  centre 57.4,80.4  near 3044  rim 0.000/0.000
+seed 5 bait-off t   5.0s  tube  2124.5  loops    1  width 9.08  reach  190.4  piles 22/23  strays 0.027  crystals 0.999  ms/tick 7.82
+seed 5 bait-off t   5.0s  alive 5077  energy 0.414  born 1481  starved 1404  grass -0.000
+seed 5 bait-off t   5.0s  contrast 2.88
+seed 5 bait-off t   5.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t   5.0s  life walk 1505 spore 0 dormant 3572 dead 0  held 1/23  bodies 13 big 1772  centre 57.4,80.4  near 3004  rim 0.000/0.000
+seed 5 bait-off t   6.0s  tube  2101.8  loops    1  width 9.52  reach  181.6  piles 22/23  strays 0.029  crystals 0.999  ms/tick 7.79
+seed 5 bait-off t   6.0s  alive 5050  energy 0.411  born 1837  starved 1787  grass -0.000
+seed 5 bait-off t   6.0s  contrast 2.73
+seed 5 bait-off t   6.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t   6.0s  life walk 1476 spore 0 dormant 3574 dead 0  held 1/23  bodies 11 big 1769  centre 57.5,80.4  near 2980  rim 0.000/0.000
+seed 5 bait-off t   7.0s  tube  2090.2  loops    0  width 10.13  reach  179.1  piles 22/23  strays 0.023  crystals 0.999  ms/tick 7.69
+seed 5 bait-off t   7.0s  alive 5020  energy 0.407  born 2226  starved 2206  grass -0.000
+seed 5 bait-off t   7.0s  contrast 2.65
+seed 5 bait-off t   7.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t   7.0s  life walk 1449 spore 0 dormant 3571 dead 0  held 1/23  bodies 9 big 1775  centre 57.4,80.4  near 2954  rim 0.000/0.000
+seed 5 bait-off t   8.0s  tube  2090.2  loops    1  width 9.81  reach  179.1  piles 22/23  strays 0.030  crystals 0.999  ms/tick 7.58
+seed 5 bait-off t   8.0s  alive 5044  energy 0.399  born 2577  starved 2533  grass -0.000
+seed 5 bait-off t   8.0s  contrast 2.78
+seed 5 bait-off t   8.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t   8.0s  life walk 1486 spore 0 dormant 3558 dead 0  held 1/23  bodies 10 big 1766  centre 57.4,80.3  near 2980  rim 0.000/0.000
+seed 5 bait-off t   9.0s  tube  2099.0  loops    2  width 9.92  reach  179.1  piles 22/23  strays 0.025  crystals 0.999  ms/tick 7.48
+seed 5 bait-off t   9.0s  alive 4997  energy 0.398  born 2900  starved 2903  grass -0.000
+seed 5 bait-off t   9.0s  contrast 2.64
+seed 5 bait-off t   9.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t   9.0s  life walk 1459 spore 0 dormant 3538 dead 0  held 1/23  bodies 10 big 1771  centre 57.4,80.3  near 2943  rim 0.000/0.000
+seed 5 bait-off t  10.0s  tube  2076.8  loops    1  width 9.81  reach  179.1  piles 22/23  strays 0.030  crystals 0.999  ms/tick 7.41
+seed 5 bait-off t  10.0s  alive 4957  energy 0.395  born 3258  starved 3301  grass -0.000
+seed 5 bait-off t  10.0s  contrast 2.60
+seed 5 bait-off t  10.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t  10.0s  life walk 1459 spore 0 dormant 3498 dead 0  held 1/23  bodies 10 big 1796  centre 57.4,80.2  near 2925  rim 0.000/0.000
+seed 5 bait-off t  11.0s  tube  2056.0  loops    1  width 10.27  reach  179.1  piles 22/23  strays 0.027  crystals 0.999  ms/tick 7.37
+seed 5 bait-off t  11.0s  alive 4924  energy 0.391  born 3624  starved 3700  grass -0.000
+seed 5 bait-off t  11.0s  contrast 2.58
+seed 5 bait-off t  11.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t  11.0s  life walk 1466 spore 0 dormant 3458 dead 0  held 1/23  bodies 9 big 1772  centre 57.4,80.1  near 2914  rim 0.000/0.000
+seed 5 bait-off t  12.0s  tube  2060.8  loops    1  width 10.16  reach  179.1  piles 22/23  strays 0.025  crystals 0.999  ms/tick 7.42
+seed 5 bait-off t  12.0s  alive 4861  energy 0.392  born 3942  starved 4081  grass -0.000
+seed 5 bait-off t  12.0s  contrast 2.64
+seed 5 bait-off t  12.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t  12.0s  life walk 1469 spore 0 dormant 3392 dead 0  held 1/23  bodies 9 big 1768  centre 57.4,80.0  near 2897  rim 0.000/0.000
+seed 5 bait-off t  13.0s  tube  2050.8  loops    0  width 10.36  reach  179.1  piles 22/23  strays 0.024  crystals 0.999  ms/tick 7.50
+seed 5 bait-off t  13.0s  alive 4760  energy 0.397  born 4278  starved 4518  grass -0.000
+seed 5 bait-off t  13.0s  contrast 2.52
+seed 5 bait-off t  13.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t  13.0s  life walk 1447 spore 0 dormant 3313 dead 0  held 1/23  bodies 9 big 1767  centre 57.4,79.9  near 2844  rim 0.000/0.000
+seed 5 bait-off t  14.0s  strike at 56.32,80 r 8: killed 748
+seed 5 bait-off t  14.0s  tube  1829.0  loops    1  width 8.34  reach  179.1  piles 22/23  strays 0.034  crystals 0.999  ms/tick 7.65
+seed 5 bait-off t  14.0s  alive 3895  energy 0.147  born 4638  starved 4995  grass -0.000
+seed 5 bait-off t  14.0s  contrast 2.11
+seed 5 bait-off t  14.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t  14.0s  life walk 698 spore 0 dormant 3197 dead 0  held 1/23  bodies 8 big 1560  centre 57.7,79.7  near 2047  rim 0.000/0.000
+seed 5 bait-off t  15.0s  tube  1922.8  loops    1  width 5.06  reach  179.1  piles 22/23  strays 0.059  crystals 0.999  ms/tick 7.94
+seed 5 bait-off t  15.0s  alive 1770  energy 0.101  born 4638  starved 7120  grass -0.000
+seed 5 bait-off t  15.0s  contrast 3.14
+seed 5 bait-off t  15.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t  15.0s  life walk 1351 spore 0 dormant 419 dead 0  held 4/23  bodies 13 big 1659  centre 60.1,80.8  near 960  rim 0.000/0.000
+seed 5 bait-off t  16.0s  tube  1170.8  loops    0  width 3.56  reach  179.1  piles 22/23  strays 0.171  crystals 0.999  ms/tick 8.26
+seed 5 bait-off t  16.0s  alive 832  energy 0.173  born 4639  starved 8059  grass -0.000
+seed 5 bait-off t  16.0s  contrast 3.83
+seed 5 bait-off t  16.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t  16.0s  life walk 251 spore 0 dormant 581 dead 0  held 2/23  bodies 14 big 608  centre 64.7,78.9  near 225  rim 0.000/0.000
+seed 5 bait-off t  17.0s  tube   888.0  loops    0  width 3.24  reach  179.1  piles 22/23  strays 0.220  crystals 0.999  ms/tick 8.50
+seed 5 bait-off t  17.0s  alive 705  energy 0.226  born 4639  starved 8186  grass -0.000
+seed 5 bait-off t  17.0s  contrast 3.24
+seed 5 bait-off t  17.0s  extent r50 143.9 r90 143.9
+seed 5 bait-off t  17.0s  life walk 119 spore 0 dormant 586 dead 0  held 1/23  bodies 20 big 291  centre 66.3,78.1  near 150  rim 0.000/0.000
+seed 5 bait-off firsts 0:0:0.57:0.0 1:87:0.38:1.0 2:70:0.18:0.4 3:186:1.09:4.1 4:106:0.86:0.8 5:45:0.22:0.2 6:182:0.88:2.5 7:61:1.05:0.4 8:145:0.88:-1.0 9:47:0.89:0.2 10:107:0.58:1.9 11:43:0.92:0.1 12:125:0.48:1.6 13:71:0.63:0.4 14:162:0.91:1.4 15:43:0.56:0.2 16:57:0.90:0.4 17:146:0.60:2.0 18:108:0.31:1.3 19:73:0.58:0.7 20:35:0.83:0.1 21:136:0.83:1.2 22:34:0.58:0.1
+seed 5 bait-off hash=533d97ab992b1f87

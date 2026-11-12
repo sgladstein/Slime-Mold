@@ -76,6 +76,13 @@ impl Tier {
                 ("alarm_relay", "20"),
                 ("alarm_weight", "3"),
                 ("sleep_rest", "600"),
+                // A dormant walker dies with chance 1e-4 a fine step (a mean
+                // of 10,000 steps, 42 s at the world's 2 substeps). A free
+                // crust never dies, so a world whose crystals ran dry froze
+                // (review 1, 2026-11-11); paying upkeep while asleep lost
+                // the bait counter in the world (`Reports/mould-tiers-2026-11-11.md`,
+                // *In the Larder world*).
+                ("sleep_death", "0.0001"),
             ],
             Tier::Swarmer => vec![("alarm_keep", "0.98"), ("alarm_weight", "3")],
         }
@@ -126,6 +133,7 @@ fn set_life(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "wake_alarm" => p.wake_alarm = f()?,
         "wake_steps" => p.wake_steps = n()?,
         "sleep_rest" => p.sleep_rest = n()?,
+        "sleep_death" => p.sleep_death = f()?,
         "alarm_keep" => p.alarm_keep = f()?,
         "alarm_weight" => p.alarm_weight = f()?,
         "alarm_relay" => p.alarm_relay = f()?,
@@ -177,6 +185,23 @@ mod tests {
         }
         assert!(d.life_counts()[2] > 0, "no walker fell asleep: {:?}", d.life_counts());
         assert_eq!(BigParams::today().sleep_rate, 0.0);
+    }
+
+    #[test]
+    fn a_crust_that_can_die_cannot_freeze_the_world() {
+        // Growth on, every walker off food falls asleep at once; no food
+        // wakes them (`wake_scent` out of reach).
+        let dormant_after = |sleep_death: f32| {
+            let p = BigParams { walkers: 400, capacity: 800, upkeep: 0.01, piles: 1, seed: 5, sleep_rate: 1.0, wake_scent: 1e9, sleep_death, ..BigParams::today() };
+            let mut d = crate::mould::big::BigDish::new(p);
+            for _ in 0..600 {
+                d.tick();
+            }
+            d.life_counts()[2]
+        };
+        let (free, dying) = (dormant_after(0.0), dormant_after(0.01));
+        assert!(free >= 20, "free sleepers live on: {free}");
+        assert!(dying * 4 < free, "sleepers that can die fade: {dying} against {free}");
     }
 
     #[cfg(not(target_arch = "wasm32"))]

@@ -1,0 +1,12 @@
+C4-burst240-dep4 seed 2 t   2.0 alive 20000 meanx 127.5 p10 99.5 p50 126.1 p90 155.4 piles 5 fired 0 ms/tick 15.0
+C4-burst240-dep4 seed 2 t   4.0 alive 20000 meanx 127.3 p10 98.3 p50 125.8 p90 155.9 piles 5 fired 0 ms/tick 15.8
+C4-burst240-dep4 seed 2 t   6.0 alive 20000 meanx 127.0 p10 99.5 p50 125.5 p90 155.9 piles 5 fired 18233 ms/tick 15.5
+C4-burst240-dep4 seed 2 t   8.0 alive 20000 meanx 126.8 p10 98.6 p50 125.8 p90 155.8 piles 6 fired 1659 ms/tick 15.3
+C4-burst240-dep4 seed 2 t  10.0 alive 20000 meanx 126.7 p10 98.3 p50 125.7 p90 155.1 piles 7 fired 0 ms/tick 15.6
+C4-burst240-dep4 seed 2 t  12.0 alive 20000 meanx 126.5 p10 98.6 p50 125.3 p90 154.7 piles 7 fired 18034 ms/tick 15.4
+C4-burst240-dep4 seed 2 t  14.0 alive 20000 meanx 126.3 p10 98.1 p50 125.2 p90 154.6 piles 7 fired 1469 ms/tick 15.2
+C4-burst240-dep4 seed 2 t  16.0 alive 20000 meanx 126.2 p10 97.3 p50 125.2 p90 154.0 piles 7 fired 0 ms/tick 15.3
+C4-burst240-dep4 seed 2 t  18.0 alive 20000 meanx 126.1 p10 97.5 p50 124.7 p90 154.2 piles 7 fired 19173 ms/tick 15.1
+C4-burst240-dep4 seed 2 t  20.0 alive 20000 meanx 125.8 p10 96.5 p50 124.7 p90 154.0 piles 7 fired 275 ms/tick 15.0
+C4-burst240-dep4 seed 2 t  22.0 alive 20000 meanx 125.6 p10 96.3 p50 124.7 p90 153.9 piles 7 fired 0 ms/tick 15.0
+C4-burst240-dep4 seed 2 t  24.0 alive 20000 meanx 125.6 p10 96.7 p50 124.4 p90 154.0 piles 7 fired 19056 ms/tick 14.9

@@ -258,7 +258,17 @@ move.
   player's strike lays). Sporer holds 6-7 of 7 piles against 3-5; struck, it scatters (7 of 7); a baited Sleeper
   leaves 1858-2216 walkers at the strike against 2360-2971; a Swarmer loses 1144-4158 to fire against 614-3591:
   each 8 of 8, p 0.0078, survives Bonferroni. Fleeing (Skittish) fails, p 0.375. Alarm +31% a step on one core.
-  Page, scripts and raw output in [`mould-tiers-2026-11-11/`](mould-tiers-2026-11-11/).
+  Page, scripts and raw output in [`mould-tiers-2026-11-11/`](mould-tiers-2026-11-11/). **Evening, *In the Larder
+  world*:** in the world's race (growth, 23 crystals that run dry, 8 paired seeds) the Swarmer (8 of 8) and the
+  Sleeper's bait (8 of 8) hold; the Sporer's edge does not (7 of 8, p 0.07). `mould::tiers::Tier` names the tiers
+  for the game; the squad's shots lay alarm; a dormant walker can die (`sleep_death`), so the Sleeper no longer
+  freezes a world whose crystals ran dry (sleep that cost upkeep lost the bait: a dead end).
+- [mould-tiers-review-2026-11-11.md](mould-tiers-review-2026-11-11.md) — **two independent reviews of the mould
+  tiers, at the owner's request (20:11Z), and the response.** Review 1: engineering sound, but the tests showed
+  rules, not counters, on a test dish; the game's shots laid no alarm; the Sleeper froze a lean world. Review 2:
+  eight candidate tiers ranked (supply lines, habituation, clans, anticipation, pacemaker, day and night, nomad, two
+  foods) and method changes. Both verbatim with their probes in
+  [`mould-tiers-review-2026-11-11/`](mould-tiers-review-2026-11-11/).
 
 ## Added with the move (2026-11-10)
 

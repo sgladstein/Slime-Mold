@@ -93,6 +93,15 @@
 //! (dish cells):radius fraction (1 at the wall):seconds to first reach
 //! (0 at the start, -1 never).
 //!
+//! The life cycle (2026-11-11, `wiki/model/life-cycle.md`): `spore_rate=
+//! spore_scent= spore_alarm= spore_burst= spore_steps= spore_speed=
+//! spore_reach= spore_deposit= spore_land= spore_rest=`, `sleep_rate=
+//! sleep_deposit= wake_scent= wake_alarm= wake_steps= sleep_rest=
+//! sleep_death=`, `alarm_keep= alarm_weight= alarm_relay=`;
+//! the player's `strike=T1,T2 strike_x= strike_y= strike_r= strike_alarm=
+//! strike_alarm_r=` and `bait=T1,T2 bait_x= bait_y= bait_r=`; `lifeline=1`
+//! prints the life line with the life cycle off; `style=life` draws it.
+//!
 //! `tier=sporer|sleeper|swarmer` sets a mould tier's life-cycle keys
 //! (`mould::tiers`); `strike_pile=N` and `bait_pile=N` aim the player's
 //! strike or bait at the food pile Nth nearest home (0: home).
@@ -573,6 +582,7 @@ fn main() {
             "wake_alarm" => p.wake_alarm = f(),
             "wake_steps" => p.wake_steps = f() as u16,
             "sleep_rest" => p.sleep_rest = f() as u16,
+            "sleep_death" => p.sleep_death = f(),
             "alarm_keep" => p.alarm_keep = f(),
             "alarm_weight" => p.alarm_weight = f(),
             "alarm_relay" => p.alarm_relay = f(),
