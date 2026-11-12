@@ -14,16 +14,30 @@
 //!
 //! The engine keeps a CPU mirror of its dish (`Engine::dish`), which the
 //! game reads for open ground (`World::open`): walls are built on both, so
-//! the mirror's agar follows them. A wall worn to rubble on the GPU stays a
-//! wall in the mirror; soldiers then walk round rubble they could cross,
-//! which only costs them a few steps.
+//! the mirror's agar follows them. A wall worn to rubble on the GPU is read
+//! back into the mirror when the readout's broken count moves (until
+//! 2026-11-12 it stayed a wall there, and soldiers walked round rubble).
+//!
+//! **One wait a step** (2026-11-12, the technical lead review): a frame's
+//! results come back in one packed buffer its own command buffer fills
+//! (`Readout`). Before, a step made four blocking read-backs, each on a new
+//! staging buffer (the squad's words, the kills, the piles, the wall
+//! counters), and once a game second two more of every slot's energy and
+//! `spec` for the mould's size (8 MB at 100k walkers' 1M slots), which the
+//! engine now counts itself (`Engine::record_count`). `frame_start` and
+//! `frame_finish` split a frame so a caller can draw while the GPU runs it.
 
-use super::{read_back, Curve, Engine, Hand, Settings, Shared, Start};
+use std::cell::Cell;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::time::Instant;
+
+use super::{read_back, Curve, Engine, Hand, Settings, Shared, Stamps, Start, MAX_PILES, WSTAT_BYTES};
 use pixels::wgpu;
 use crate::mould::big::BigParams;
 use crate::mould::larder_world::{race_params, World};
 use crate::mould::map::Map;
-use crate::mould::squad::{Frame, FrameOut};
+use crate::mould::squad::{self, Frame, FrameOut, SHOTS_MAX, UNITS_MAX};
 
 /// The CPU race world's settings on the engine (`larder_world::race_params`).
 pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
@@ -65,9 +79,45 @@ pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
         wall_scent: p.wall_scent,
         alarm_keep: p.alarm_keep,
         alarm_weight: p.alarm_weight,
+        energy_flow: p.energy_flow,
+        hunger_scent: p.hunger_scent,
+        hunger_at: p.hunger_at,
         seed,
         ..Settings::big_dish()
     }
+}
+
+// The readout's byte offsets: the squad's unit outputs (`squad::U_OUT`),
+// its shot outputs (`squad::S_OUT`), each shot's kills, every pile's run and
+// sums, the wall counters with the living walkers, then the mould grid.
+const RO_UNITS: u64 = 0;
+const RO_SHOTS: u64 = RO_UNITS + (UNITS_MAX * 16) as u64;
+const RO_KILLS: u64 = RO_SHOTS + (SHOTS_MAX * 16) as u64;
+const RO_PILES: u64 = RO_KILLS + (SHOTS_MAX * 4) as u64;
+const RO_WSTAT: u64 = RO_PILES + (MAX_PILES * 32) as u64;
+const RO_GRID: u64 = RO_WSTAT + WSTAT_BYTES as u64;
+
+/// A frame's results in one buffer that is used again each frame: about
+/// 8 KB and the mould grid's 2.5 KB (squares of 4 dish cells), copied
+/// after the frame's last pass in its own command buffer.
+struct Readout {
+    buf: wgpu::Buffer,
+    ready: Arc<AtomicBool>,
+    /// Copied into and asked for, not yet taken (`GpuWorld::frame_finish`).
+    busy: bool,
+    /// The submission that fills it, to wait for that one alone.
+    sub: Option<wgpu::SubmissionIndex>,
+}
+
+/// What a readout holds, unpacked.
+struct Read {
+    out: FrameOut,
+    /// Each pile's charge and cells still crystal.
+    sums: Vec<(f32, u32)>,
+    broken: u32,
+    living: u32,
+    /// The mould grid, if the frame summed one.
+    grid: Option<Vec<u32>>,
 }
 
 /// The engine as a Larder world.
@@ -77,8 +127,23 @@ pub struct GpuWorld {
     pub s: Settings,
     /// Engine ticks a game tick (the scale).
     sub: u32,
-    /// The crystals as of the last frame (read back once a frame).
+    /// The crystals and the living walkers as of the last frame's readout.
     crystals: Vec<((f32, f32), f32)>,
+    living: usize,
+    /// Wall cells broken as of the mirror's last agar read.
+    broken: u32,
+    ro: Readout,
+    /// The mould grid's square the game last asked for (`World::mould_grid`),
+    /// which each frame then sums on the GPU, and the last frame's grid.
+    want: Cell<usize>,
+    grid: Option<(usize, Vec<u32>)>,
+    /// GPU timestamps of each frame's ticks and drawing (`Stamps`: index 0
+    /// to 1 the ticks, 1 to 2 the drawing), if the caller sets them.
+    pub stamps: Option<Stamps>,
+    /// Frames whose results were not in when asked for, and the real ms
+    /// spent waiting for them (`frame_finish`).
+    pub waits: u64,
+    pub wait_ms: f64,
 }
 
 impl GpuWorld {
@@ -96,15 +161,169 @@ impl GpuWorld {
     }
 
     fn of(e: Engine, shared: Shared, s: Settings, scale: usize) -> Self {
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new() };
-        g.read_crystals();
+        let size = RO_GRID + 4 * e.grid_max() as u64;
+        let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, waits: 0, wait_ms: 0.0 };
+        g.read_now();
         g
     }
 
-    fn read_crystals(&mut self) {
+    /// The readout's copies into `enc`, after the frame's last pass.
+    fn record_readout(&self, enc: &mut wgpu::CommandEncoder) {
+        let e = &self.e;
+        self.e.record_count(&self.shared, enc);
+        let b = &self.ro.buf;
+        enc.copy_buffer_to_buffer(&e.sq, (squad::U_OUT * 4) as u64, b, RO_UNITS, RO_SHOTS - RO_UNITS);
+        enc.copy_buffer_to_buffer(&e.sq, (squad::S_OUT * 4) as u64, b, RO_SHOTS, RO_KILLS - RO_SHOTS);
+        enc.copy_buffer_to_buffer(&e.kills, 0, b, RO_KILLS, RO_PILES - RO_KILLS);
+        enc.copy_buffer_to_buffer(&e.piles, 0, b, RO_PILES, RO_WSTAT - RO_PILES);
+        let (gw, gh) = e.grid_size();
+        enc.copy_buffer_to_buffer(&e.wstat, 0, b, RO_WSTAT, (WSTAT_BYTES + 4 * gw * gh) as u64);
+    }
+
+    /// The square the next frame's grid sums: the one last asked for, if
+    /// the engine has room for it (else `mould_grid` reads it back).
+    fn grid_square(&self) -> u32 {
+        let g = self.want.get();
+        let (w, h) = (self.e.dish.w, self.e.dish.h);
+        if g > 0 && w.div_ceil(g) * h.div_ceil(g) <= self.e.grid_max() {
+            g as u32
+        } else {
+            0
+        }
+    }
+
+    /// The mould grid summed on the CPU from the cells' walkers read back
+    /// (`occ`), as `BigDish`'s: the first ask, before a frame has summed it.
+    fn grid_now(&self, bin: usize) -> Vec<u32> {
+        let (w, h) = (self.e.dish.w, self.e.dish.h);
+        let gw = w.div_ceil(bin);
+        let mut out = vec![0u32; gw * h.div_ceil(bin)];
+        for (i, b) in read_back(&self.e.device, &self.e.queue, &self.e.occ).chunks_exact(4).take(w * h).enumerate() {
+            let n = u32::from_le_bytes(b.try_into().unwrap());
+            if n > 0 {
+                out[(i / w / bin) * gw + (i % w) / bin] += n;
+            }
+        }
+        out
+    }
+
+    /// Submits `enc` and asks for the readout it fills.
+    fn submit(&mut self, enc: wgpu::CommandEncoder) {
+        assert!(!self.ro.busy, "a frame's readout is still out (frame_finish first)");
+        self.ro.sub = Some(self.e.queue.submit([enc.finish()]));
+        let ready = Arc::clone(&self.ro.ready);
+        self.ro.buf.map_async(wgpu::MapMode::Read, .., move |r| {
+            if r.is_ok() {
+                ready.store(true, Ordering::Release);
+            }
+        });
+        self.ro.busy = true;
+    }
+
+    /// Takes the readout, waiting for it if it is not in yet.
+    fn take(&mut self) -> Read {
+        assert!(self.ro.busy, "no frame running");
+        if !self.frame_ready() {
+            let t0 = Instant::now();
+            let index = self.ro.sub.take();
+            self.e.device.poll(wgpu::PollType::Wait { submission_index: index, timeout: None }).expect("poll");
+            self.waits += 1;
+            self.wait_ms += t0.elapsed().as_secs_f64() * 1e3;
+        }
+        assert!(self.ro.ready.load(Ordering::Acquire), "the readout mapped");
+        let words: Vec<u32> = self.ro.buf.get_mapped_range(..).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+        self.ro.buf.unmap();
+        self.ro.ready.store(false, Ordering::Release);
+        self.ro.busy = false;
+        self.ro.sub = None;
+        if let Some(st) = self.stamps.as_mut() {
+            st.poll();
+        }
+        let at = |o: u64| (o / 4) as usize;
+        // `squad::unpack` reads the outputs at their places in the squad's
+        // words; only those two blocks are filled.
+        let mut sq = vec![0u32; squad::PATH];
+        sq[squad::U_OUT..squad::S_IN].copy_from_slice(&words[at(RO_UNITS)..at(RO_SHOTS)]);
+        sq[squad::S_OUT..squad::PATH].copy_from_slice(&words[at(RO_SHOTS)..at(RO_KILLS)]);
+        let (nunits, nshots, _) = self.e.squad;
+        let out = squad::unpack(self.e.dish.w, &sq, &words[at(RO_KILLS)..at(RO_PILES)], nunits as usize, nshots as usize);
+        let piles = &words[at(RO_PILES)..at(RO_WSTAT)];
+        let sums = (0..self.e.npiles as usize).map(|p| (f32::from_bits(piles[p * 8 + 4]), piles[p * 8 + 2])).collect();
+        let st = &words[at(RO_WSTAT)..];
+        let (gw, gh) = self.e.grid_size();
+        let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
+        Read { out, sums, broken: st[1], living: st[4], grid }
+    }
+
+    /// Keeps a readout's world counts: the crystals, the living walkers,
+    /// and the mirror's open ground once more wall cells have broken.
+    fn keep(&mut self, r: &Read) {
         let k = self.e.dish.p.scale as f32;
-        let (sums, ..) = self.e.world_counts();
-        self.crystals = self.e.dish.piles.iter().zip(sums).map(|(&(x, y), (sum, _))| ((x * k, y * k), sum)).collect();
+        self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
+        self.living = r.living as usize;
+        if let Some(g) = &r.grid {
+            self.grid = Some((self.e.grid as usize, g.clone()));
+        }
+        if r.broken != self.broken {
+            // Rare (a cell turns to rubble once), so a read-back of its own.
+            let agar = read_back(&self.e.device, &self.e.queue, &self.e.agar);
+            for (a, b) in self.e.dish.agar.iter_mut().zip(agar.chunks_exact(4)) {
+                *a = u32::from_le_bytes(b.try_into().unwrap()) != 0;
+            }
+            self.broken = r.broken;
+        }
+    }
+
+    /// The readout now, outside a frame (the start, a wall built).
+    fn read_now(&mut self) {
+        // The count reads the walker count from the params, which the
+        // start has not written yet.
+        self.e.grid = self.grid_square();
+        self.e.write_params(&self.s, Hand::default(), 0);
+        let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("readout") });
+        self.record_readout(&mut enc);
+        self.submit(enc);
+        let r = self.take();
+        self.keep(&r);
+    }
+
+    /// Starts frame `f` (`World::frame`) and returns without waiting for
+    /// it: `frame_finish` gives its results. The world's counts stay those
+    /// of the last frame until then.
+    pub fn frame_start(&mut self, f: &Frame, ticks: u32) {
+        let n = ticks * self.sub;
+        self.e.set_squad(f);
+        self.e.grid = self.grid_square();
+        self.e.write_params(&self.s, Hand::default(), n);
+        let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world") });
+        let qs = self.stamps.as_ref().and_then(|st| st.take());
+        self.e.record(&self.shared, &mut enc, n, self.s.curve == Curve::Soft, qs);
+        let stamped = qs.is_some() && n > 0;
+        if stamped {
+            self.stamps.as_ref().unwrap().resolve(&mut enc);
+        }
+        self.record_readout(&mut enc);
+        self.submit(enc);
+        if stamped {
+            self.stamps.as_mut().unwrap().map();
+        }
+    }
+
+    /// Whether the running frame's results are in (`frame_finish` would
+    /// not wait), checking the GPU without blocking.
+    pub fn frame_ready(&self) -> bool {
+        let _ = self.e.device.poll(wgpu::PollType::Poll);
+        self.ro.ready.load(Ordering::Acquire)
+    }
+
+    /// The running frame's results (`frame_start`), waiting for them if
+    /// they are not in.
+    pub fn frame_finish(&mut self) -> FrameOut {
+        let r = self.take();
+        self.keep(&r);
+        r.out
     }
 }
 
@@ -122,24 +341,20 @@ impl World for GpuWorld {
     }
 
     fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut {
-        let n = ticks * self.sub;
-        self.e.set_squad(f);
-        self.e.write_params(&self.s, Hand::default(), n);
-        let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world") });
-        self.e.record(&self.shared, &mut enc, n, self.s.curve == Curve::Soft, None);
-        self.e.queue.submit([enc.finish()]);
-        let out = self.e.squad_out();
-        self.read_crystals();
-        out
+        self.frame_start(f, ticks);
+        self.frame_finish()
     }
 
     fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
         self.e.build_wall(&self.shared, &self.s, a.0, a.1, b.0, b.1, width);
         self.e.dish.build_wall(a.0, a.1, b.0, b.1, width);
+        // Evicted walkers can die, and the wall's cells are no longer open.
+        self.read_now();
     }
 
+    /// The living walkers at the last frame's end (its readout's count).
     fn living(&self) -> usize {
-        self.e.alive()
+        self.living
     }
 
     fn crystals(&self) -> Vec<((f32, f32), f32)> {
@@ -168,6 +383,17 @@ impl World for GpuWorld {
         self.e.dish.p.food_deposit
     }
 
+    /// As of the last frame's end: each frame sums the square last asked
+    /// for on the GPU, into the readout; a first ask, or a new square, is
+    /// read back once.
+    fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
+        self.want.set(bin);
+        match &self.grid {
+            Some((b, g)) if *b == bin => Some(g.clone()),
+            _ => Some(self.grid_now(bin)),
+        }
+    }
+
     /// The walkers, trail and energy read back, hashed (a replay's check;
     /// it waits for the GPU, so the game calls it only at the end).
     fn hash(&self) -> u64 {
@@ -191,6 +417,145 @@ pub fn engine_params(s: &Settings, scale: usize) -> BigParams {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::gpu::{block_on, reads};
+    use crate::mould::larder_world::{Cmd, Game, Order, Rules};
+    use crate::mould::tiers::Tier;
+
+    /// A GPU, or None (the test passes, saying so) where there is none; CI
+    /// sets `MOULDGPU_TEST_GPU=1` (Mesa's software Vulkan), so there a
+    /// missing GPU fails. As `mouldgpu`'s `test_gpu`.
+    fn test_gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
+        let required = std::env::var("MOULDGPU_TEST_GPU").is_ok_and(|v| v == "1");
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+        let adapter = match block_on(instance.request_adapter(&wgpu::RequestAdapterOptions::default())) {
+            Ok(a) => a,
+            Err(e) => {
+                assert!(!required, "MOULDGPU_TEST_GPU=1 but no GPU adapter: {e}");
+                eprintln!("no GPU adapter ({e}): skipped");
+                return None;
+            }
+        };
+        let desc = wgpu::DeviceDescriptor { label: Some("readout"), required_limits: adapter.limits(), ..Default::default() };
+        Some(block_on(adapter.request_device(&desc)).expect("device"))
+    }
+
+    /// The GPU world with every frame checked against the read-backs the
+    /// readout replaced (`Engine::squad_out`, `world_counts`, `alive`).
+    struct Checked {
+        g: GpuWorld,
+        /// The mould grid's square (the player AI's 4 dish cells).
+        bin: usize,
+        frames: u32,
+        hits: u32,
+        touched: u32,
+        dead: usize,
+    }
+
+    impl World for Checked {
+        fn size(&self) -> (usize, usize) {
+            self.g.size()
+        }
+        fn scale(&self) -> f32 {
+            self.g.scale()
+        }
+        fn ticks(&self) -> u64 {
+            self.g.ticks()
+        }
+        fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut {
+            let (r0, w0) = (reads(), self.g.waits);
+            let out = self.g.frame(f, ticks);
+            assert_eq!(reads(), r0, "frame {}: no read-back of its own", self.frames);
+            assert!(self.g.waits <= w0 + 1, "frame {}: one wait at most", self.frames);
+            assert_eq!(out, self.g.e.squad_out(), "frame {}: the squad's output", self.frames);
+            let k = self.g.scale();
+            let sums: Vec<((f32, f32), f32)> = self.g.e.dish.piles.iter().zip(self.g.e.world_counts().0).map(|(&(x, y), (sum, _))| ((x * k, y * k), sum)).collect();
+            assert_eq!(self.g.crystals(), sums, "frame {}: the crystals", self.frames);
+            assert_eq!(self.g.living(), self.g.e.alive(), "frame {}: the living walkers", self.frames);
+            let bin = self.bin;
+            assert_eq!(self.g.grid.as_ref().map(|g| g.0), Some(bin), "frame {}: the grid summed on the GPU", self.frames);
+            assert_eq!(self.g.mould_grid(bin), Some(self.g.grid_now(bin)), "frame {}: the mould grid", self.frames);
+            if self.g.e.cycles {
+                let (life, _) = self.g.e.life_of();
+                let (dead, living) = (life.iter().filter(|&&l| l == crate::mould::big::LIFE_DEAD).count(), self.g.living());
+                self.dead = self.dead.max(dead);
+                // With growth a dead slot's energy is -1, so `alive` skips
+                // it as the count does.
+                assert!(living + dead <= self.g.e.n as usize, "frame {}", self.frames);
+            }
+            self.frames += 1;
+            self.hits += out.shots.iter().filter(|s| s.killed > 0).count() as u32;
+            self.touched += out.units.iter().map(|u| u.touching).sum::<u32>();
+            out
+        }
+        fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
+            self.g.build_wall(a, b, width)
+        }
+        fn living(&self) -> usize {
+            self.g.living()
+        }
+        fn crystals(&self) -> Vec<((f32, f32), f32)> {
+            self.g.crystals()
+        }
+        fn crystal_r(&self, c: usize) -> f32 {
+            self.g.crystal_r(c)
+        }
+        fn landing(&self) -> Option<(f32, f32)> {
+            self.g.landing()
+        }
+        fn open(&self, x: f32, y: f32) -> bool {
+            self.g.open(x, y)
+        }
+        fn stop_births(&mut self) {
+            self.g.stop_births()
+        }
+        fn food_deposit(&self) -> f32 {
+            self.g.food_deposit()
+        }
+        fn hash(&self) -> u64 {
+            self.g.hash()
+        }
+        fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
+            self.g.mould_grid(bin)
+        }
+    }
+
+    /// **The packed readout gives what the four read-backs gave**
+    /// (2026-11-12): every frame's squad output, crystals and living walkers
+    /// equal `squad_out`, `world_counts` and `alive` read back after it, and
+    /// its mould grid the one summed from the cells read back, with no
+    /// read-back and at most one wait in the frame. A squad attacks
+    /// on a small race world (scale 1) until its shots kill and the mould
+    /// touches it, on the plain mould and on the Sleeper (the life cycle,
+    /// dying asleep), whose dead the count must leave out.
+    #[test]
+    fn the_readout_matches_the_read_backs() {
+        let Some((device, queue)) = test_gpu() else { return };
+        for tier in [None, Some(Tier::Sleeper)] {
+            let (seed, scale, walkers) = (5, 1, 2_000);
+            let mut s = race_settings(seed, scale, walkers);
+            if let Some(t) = tier {
+                t.settings(&mut s).unwrap();
+            }
+            let g = GpuWorld::new(&device, &queue, s, scale);
+            let bin = 4 * scale;
+            assert_eq!(g.mould_grid(bin), Some(g.grid_now(bin)), "the first ask is read back");
+            assert!(g.grid.is_none() && g.want.get() == bin);
+            let rules = Rules { cap: 45.0, ..Rules::default() };
+            assert_eq!(g.living(), g.e.alive(), "the count at the start");
+            let mut game = Game::new(Checked { g, bin, frames: 0, hits: 0, touched: 0, dead: 0 }, rules, seed);
+            for k in 0..game.soldiers.len() {
+                game.apply(Cmd::Order(k, Order::Attack));
+            }
+            while game.end.is_none() {
+                game.step();
+            }
+            let c = &game.world;
+            let name = tier.map_or("plain", |t| t.name());
+            eprintln!("{name}: {} frames, {} shots that killed, {} touches, {} waits ({:.1} ms), up to {} dead", c.frames, c.hits, c.touched, c.g.waits, c.g.wait_ms, c.dead);
+            assert!(c.frames > 100 && c.hits > 0 && c.touched > 0, "{name}: the squad fought ({} frames, {} hits, {} touches)", c.frames, c.hits, c.touched);
+            assert!(tier.is_none() || c.dead > 0, "{name}: walkers died asleep");
+        }
+    }
 
     /// The engine runs the CPU race world's mould: the same params, bar
     /// the fine steps a tick, which the GPU world makes up by running

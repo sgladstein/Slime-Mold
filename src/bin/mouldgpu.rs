@@ -3247,7 +3247,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 11] = [
+        let dishes: [(&str, Settings, Build); 12] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3272,6 +3272,11 @@ mod tests {
             // others share, and the take check (a cell's share against each
             // living walker's take) counts the newborn, which took nothing.
             ("soil bands, two species", Settings { species: 2, ..grow(w(small(0))) }, soil),
+            // One body (2026-11-12): energy evens out between neighbouring
+            // cells (`esum`, `egain`) and hungry walkers weigh the scent
+            // harder, at the one-body thread's lead (0.05, 8), over walls
+            // so some walkers are blocked and crowded.
+            ("one body: food shared, hunger", Settings { energy_flow: 0.05, hunger_scent: 8.0, hunger_at: 1.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3307,6 +3312,13 @@ mod tests {
             );
             assert!(le <= 1e-5 && lg <= 1e-6, "{name}: energy L1 {le:.2e}, grass {lg:.2e}");
             assert!(eaten > 0.0, "{name}: the mould eats in the tick");
+            // One body's sums are cleared for the next tick (a 1-tick twin
+            // cannot see a stale sum otherwise).
+            if s.energy_flow > 0.0 {
+                assert!(e.energy_flows, "{name}: one body's passes run");
+                let left = read_back(&device, &queue, &e.body).iter().filter(|&&b| b != 0).count();
+                assert_eq!(left, 0, "{name}: one body's sums left after the tick");
+            }
             // Walls that never break take no bites on the CPU (it keeps no
             // health for them); the GPU counts the bites on their infinite
             // health, which changes nothing.

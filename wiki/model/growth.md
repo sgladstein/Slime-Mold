@@ -54,7 +54,8 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
 - Run-dry crystals: `crystal_flow` makes the whole disc reachable (one
   seed); for a mould left alone to keep growing, a crystal's yield has to
   rise with its charge (the Larder thread's rule).
-- `BigParams::energy_flow` (off, CPU only): with `BigParams::hunger_scent`
+- `BigParams::energy_flow` (off; on the GPU too since 11-12, `esum` and
+  `egain`, twin-tested): with `BigParams::hunger_scent`
   8 it makes the race-world mould one body on more seeds (largest part
   higher 8/8) and 2.5x its size; a cut gap refills in 1-2 s, so a cut-off
   piece only starves while the gap is held
