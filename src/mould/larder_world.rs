@@ -2599,6 +2599,64 @@ mod tests {
         assert!(!g.hungry && g.eaten == 0.0);
     }
 
+    /// A starving squad can feed itself (the design review, 11-12 21:51Z:
+    /// a squad that slowly dies on an empty bank and can do nothing about
+    /// it is the playtest's soft lock again). Hunger costs only hit points,
+    /// so starving harvesters walk and take step for step as fed ones do,
+    /// and a carrier's trip home pays the rations again. A reserve recruit
+    /// on an empty bank comes in whole and can do the same.
+    #[test]
+    fn a_starving_squad_harvests_as_a_fed_one_and_feeds_itself() {
+        let sent = |hunger: f32| {
+            let mut g = small(7);
+            (g.rules.hunger, g.rules.overrun, g.bank) = (hunger, 0.0, 0.0);
+            let target = g.seek(0, None).expect("a crystal with charge");
+            for k in 0..g.soldiers.len() {
+                g.apply(Cmd::Order(k, Order::Clear(target.0, target.1)));
+            }
+            g
+        };
+        // Same rations, so the same bank; only the hunger differs.
+        let (mut fed, mut starving) = (sent(0.0), sent(1.0));
+        let at = |g: &Game<BigDish>| g.soldiers.iter().map(|s| (s.x, s.y, s.carry)).collect::<Vec<_>>();
+        let (mut hungry, mut ate_again) = (false, false);
+        for _ in 0..(starving.rules.tps * 60) {
+            fed.step();
+            starving.step();
+            if fed.alive() != starving.alive() {
+                break;
+            }
+            assert_eq!(at(&fed), at(&starving), "at {:.1} s", starving.time());
+            assert_eq!(fed.harvested, starving.harvested);
+            hungry |= starving.hungry;
+            ate_again |= hungry && !starving.hungry;
+        }
+        assert!(hungry && ate_again && starving.harvested > 0.0, "it starved, banked a load and ate again");
+        assert!(starving.soldiers.iter().zip(&fed.soldiers).any(|(s, f)| s.alive && s.hp < f.hp), "and the hunger showed on its health");
+        // The reserve: a wiped squad on an empty bank gets a recruit at full
+        // health, who harvests and pays its own ration.
+        let mut g = small(7);
+        (g.rules.reserve, g.rules.overrun, g.bank) = (10.0, 0.0, 0.0);
+        for s in g.soldiers.iter_mut() {
+            (s.alive, s.hp) = (false, 0.0);
+        }
+        while g.alive() == 0 && g.time() < 12.0 {
+            g.step();
+        }
+        assert!(g.end.is_none() && g.alive() == 1, "a recruit came");
+        let k = g.soldiers.iter().position(|s| s.alive).unwrap();
+        assert_eq!(g.soldiers[k].hp, g.rules.hp, "whole");
+        let target = g.seek(k, None).expect("a crystal with charge");
+        g.apply(Cmd::Order(k, Order::Clear(target.0, target.1)));
+        let t0 = g.time();
+        let mut fed_itself = false;
+        while g.time() < t0 + 60.0 && g.soldiers[k].alive {
+            g.step();
+            fed_itself |= g.bank > 0.0 && !g.hungry;
+        }
+        assert!(fed_itself && g.soldiers[k].alive, "the recruit banked food and ate");
+    }
+
     #[test]
     fn density_holds_from_small_worlds_to_big_ones() {
         // The same world at twice the scale has four times the open cells;

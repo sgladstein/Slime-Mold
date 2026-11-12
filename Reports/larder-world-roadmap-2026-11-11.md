@@ -832,6 +832,10 @@ Plan agreed with integration at 19:59Z, built under the owner's 17:26Z testing r
 - The window tells the player once, each time the bank runs dry: "Out of food: the squad is starving (N food a second to feed it)". Soldiers' health falls where the player can see it.
 - Census keys `ration=`, `hunger=` and `overrun=`; each row ends with the food eaten.
 - Test: `rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes` (paid, half paid, recovery when food comes, death, off at 0). The books, stuck and pump tests now count rations.
+- **The game designer's three checks** (21:51Z: a squad that slowly dies on an empty bank and can do nothing is the first playtest's soft lock again):
+  - *The drain shows.* The HUD's food rate was already the bank's net change, so it counts rations. Its tooltip now names what the squad eats a second, and when the bank is falling and would run dry within a minute the rate says when ("-6/s, dry in 40 s").
+  - *Starving soldiers can fix it.* `a_starving_squad_harvests_as_a_fed_one_and_feeds_itself`: two games on one seed, with the same rations and the hunger on or off, harvest step for step the same until a soldier dies, and the starving squad banks a load and eats again.
+  - *The reserve recruit isn't fed into starvation.* In the same test, a wiped squad on an empty bank gets its recruit at full health. The recruit walks to a crystal, banks food and eats within 60 s. A recruit on an empty bank has 100 s of health to make that trip.
 
 **Smoke runs** (race seeds 5-8, raw [economy/](larder-world-roadmap-2026-11-11/economy/smoke-ration1-race-5-8.txt)), choosing the ration:
 - **At 2**: idle starves by 340-350 s on all 4. But strike starves its 30 soldiers on 3 of 4 and fort on 1 of 4: an army would cost 4.5 times its price over a game.

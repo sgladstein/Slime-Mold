@@ -967,7 +967,20 @@ impl App {
         let took = g.take_share();
         let mut m = Model {
             resources: vec![
-                Resource { icon: Icon::Crystal, colour: theme::ENERGY, label: "Food: crystal charge carried home; soldiers, shots and walls cost it".into(), value: format!("{:.0}", g.bank), rate: rate.map(|v| format!("{v:+.0}/s")) },
+                // The rate is the bank's net change, so it counts the squad's rations
+                // (PR 4); when it is falling and the bank would be dry within a
+                // minute it says when (the design review, 11-12 21:51Z: show the
+                // drain before soldiers start losing health).
+                Resource {
+                    icon: Icon::Crystal,
+                    colour: theme::ENERGY,
+                    label: format!("Food: crystal charge carried home. The squad eats {:.0} a second; soldiers, shots and walls cost it", r.ration * g.alive() as f32),
+                    value: format!("{:.0}", g.bank),
+                    rate: rate.map(|v| match g.bank / -v {
+                        dry if v < 0.0 && dry < 60.0 => format!("{v:+.0}/s, dry in {dry:.0} s"),
+                        _ => format!("{v:+.0}/s"),
+                    }),
+                },
                 Resource { icon: Icon::Soldier, colour: theme::TEXT, label: format!("Soldiers alive (at most {})", r.max_squad), value: format!("{}", g.alive()), rate: (lost > 0).then(|| format!("-{lost} lost")) },
                 Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: "The mould: walkers alive".into(), value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
                 Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Your share of the charge gone from the crystals (with the mould's size, the score at 15:00)".into(), value: format!("{:.0}%", took * 100.0), rate: None },
