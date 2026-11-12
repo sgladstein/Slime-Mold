@@ -17,8 +17,8 @@
 //!    the first), and the trail there is cleared. Every shot reads the
 //!    trail before any strike, so shots in one frame don't see each other.
 //!    With the alarm field on (a mould tier, `mould::tiers`), a hit also
-//!    lays `SHOT_ALARM` within twice its radius (CPU only until the GPU
-//!    has the field).
+//!    lays `SHOT_ALARM` within twice its radius (on the GPU the `shout`
+//!    pass, shots in order).
 //! 2. Smell. Each soldier adds `smell` to the scent on the agar cells of
 //!    its disc, so the mould grows toward the squad (M3's rule).
 //! 3. The frame's ticks.
@@ -229,8 +229,10 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32) -> Vec<ShotOut> {
             // A hit is a strike, so with the alarm field on (the mould tiers,
             // `mould::tiers`) it lays the alarm the tiers answer: the Sporer
             // scatters, the Sleeper wakes, the Swarmer floods the place.
-            // Off by default (no alarm field), so the GPU twin is unchanged
-            // until the GPU has the field.
+            // Off by default (no alarm field). The GPU's `shout` pass lays
+            // it too (2026-11-12), shots in order; `pack` sends the radius
+            // squared as `r2` of SHOT_ALARM_R x r, since for a radius that
+            // is not whole that differs from four times the strike's.
             if !d.alarm.is_empty() {
                 for c in disc(w, h, hx, hy, r2(SHOT_ALARM_R * shots[q].r.min(R_MAX))) {
                     if d.agar[c] {
@@ -378,7 +380,8 @@ pub fn pack(w: usize, h: usize, f: &Frame) -> (Vec<u32>, u32, u32) {
     for (q, s) in shots.iter().enumerate() {
         let p = path(w, h, s.from, s.to);
         let p = &p[..p.len().min(PATH_MAX - cells.len())];
-        b[S_IN + 4 * q..S_IN + 4 * q + 3].copy_from_slice(&[cells.len() as u32, p.len() as u32, r2(s.r.min(R_MAX))]);
+        // The fourth word is the alarm's squared radius (`SHOT_ALARM_R`).
+        b[S_IN + 4 * q..S_IN + 4 * q + 4].copy_from_slice(&[cells.len() as u32, p.len() as u32, r2(s.r.min(R_MAX)), r2(SHOT_ALARM_R * s.r.min(R_MAX))]);
         cells.extend_from_slice(p);
     }
     for q in 0..SHOTS_MAX {

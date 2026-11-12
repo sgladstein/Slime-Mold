@@ -1,0 +1,205 @@
+== 0 the burst without its alarm threshold: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (635) panicked at src/bin/mouldgpu.rs:2845:13:
+a burst of spores after a strike: 22807 of 25000 walkers off
+== 1 fruiting under the scent threshold: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (736) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 1689 of 25000 walkers off
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (737) panicked at src/bin/mouldgpu.rs:3402:13:
+trail L1 1.06e-4, scent L1 1.08e-9, charge L1 1.18e-10
+== 2 fruit or doze with time left: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (896) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 202 of 25000 walkers off
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (897) panicked at src/bin/mouldgpu.rs:3418:17:
+assertion `left == right` failed: life states and timers
+== 3 dozing ignores the alarm: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (1026) panicked at src/bin/mouldgpu.rs:2845:13:
+dormancy, alarm and relays: 287 of 25000 walkers off
+== 4 fruit and doze share one draw: caught
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (1171) panicked at src/bin/mouldgpu.rs:3401:13:
+32 walkers off
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (1170) panicked at src/bin/mouldgpu.rs:2845:13:
+dormancy, alarm and relays: 1161 of 25000 walkers off
+== 5 a walker that fruits still senses: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (1263) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 93 of 25000 walkers off
+== 6 walkers don't smell the alarm: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (1377) panicked at src/bin/mouldgpu.rs:2845:13:
+dormancy, alarm and relays: 1185 of 25000 walkers off
+== 7 the dead's counters stand still: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (1502) panicked at src/bin/mouldgpu.rs:2850:13:
+both, cap, explorers, contagion: 1538 ages, 1522 sick counters off
+== 8 spores' timers count down twice: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (1587) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 2004 of 25000 walkers off
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (1588) panicked at src/bin/mouldgpu.rs:3418:17:
+assertion `left == right` failed: life states and timers
+== 9 a spore keeps its cell: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (1673) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 471 of 25000 walkers off
+== 10 a new spore keeps its heading: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (1759) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 873 of 25000 walkers off
+== 11 a dozing walker not counted dormant: MISSED
+== 12 the dormant lay nothing: caught
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (1942) panicked at src/bin/mouldgpu.rs:3402:13:
+trail L1 9.11e-2, scent L1 1.08e-9, charge L1 1.18e-10
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (1941) panicked at src/bin/mouldgpu.rs:2845:13:
+dormancy, alarm and relays: 525 of 25000 walkers off
+== 13 the alarm wakes with time left: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2047) panicked at src/bin/mouldgpu.rs:2845:13:
+dormancy, alarm and relays: 140 of 25000 walkers off
+== 14 a woken walker relays nothing: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2164) panicked at src/bin/mouldgpu.rs:2845:13:
+dormancy, alarm and relays: 194 of 25000 walkers off
+== 15 a woken walker idle this tick: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2272) panicked at src/bin/mouldgpu.rs:2846:13:
+both, growth on grass: trail 1.3e-4, scent 0.0e0, species 0.0e0, alarm 0.0e0
+== 16 a still-dormant walker counted awake: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2392) panicked at src/bin/mouldgpu.rs:2848:13:
+both, growth on crystals: energy 0.0e0, 0 lives, charge 8.8e-6
+== 17 the dormant's counters stand still: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2479) panicked at src/bin/mouldgpu.rs:2845:13:
+both, cap, explorers, contagion: 264 of 250000 walkers off
+== 18 fate forgets the kind: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2565) panicked at src/bin/mouldgpu.rs:2845:13:
+both, two species with their own crowd limits, mixed: 2499 of 25000 walkers off
+== 19 a new spore flies at once: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2651) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 938 of 25000 walkers off
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (2652) panicked at src/bin/mouldgpu.rs:3418:17:
+assertion `left == right` failed: life states and timers
+== 20 spores home all the way: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2737) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 2251 of 25000 walkers off
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (2738) panicked at src/bin/mouldgpu.rs:3383:13:
+assertion `left == right` failed: the squad's outputs
+== 21 spores turn away from the scent: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2823) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 1378 of 25000 walkers off
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (2824) panicked at src/bin/mouldgpu.rs:3401:13:
+18 walkers off
+== 22 spores fly at the walkers' step: caught
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (2909) panicked at src/bin/mouldgpu.rs:3401:13:
+120 walkers off
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2908) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 5914 of 25000 walkers off
+== 23 a spore at the edge keeps its heading: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (2995) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 103 of 25000 walkers off
+== 24 spores lay nothing: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (3081) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 916 of 25000 walkers off
+== 25 spores land only when their time is out: caught
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (3166) panicked at src/bin/mouldgpu.rs:3418:17:
+assertion `left == right` failed: life states and timers
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (3165) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 363 of 25000 walkers off
+== 26 spores land over the crowd limit: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (3250) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 408 of 25000 walkers off
+== 27 spores land by the global crowd limit: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (3336) panicked at src/bin/mouldgpu.rs:2845:13:
+a burst landing at once, two species with their own crowd limits: 74 of 25000 walkers off
+== 28 a spore still flying keeps its counters: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (3423) panicked at src/bin/mouldgpu.rs:2850:13:
+both, cap, explorers, contagion: 11820 ages, 4019 sick counters off
+== 29 every claimant lands: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (3513) panicked at src/bin/mouldgpu.rs:2845:13:
+a burst landing at once, two species with their own crowd limits: 36 of 25000 walkers off
+== 30 the landing claim left in place: MISSED
+== 31 only limited species claim a landing: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (3684) panicked at src/bin/mouldgpu.rs:2846:13:
+a burst landing at once, two species with their own crowd limits: trail 1.3e-4, scent 0.0e0, species 1.3e-4, alarm 0.0e0
+== 32 a landed spore does not rest: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (3790) panicked at src/bin/mouldgpu.rs:2847:13:
+spores, one a cell: 8 states, 823 timers, 8 counts off
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (3791) panicked at src/bin/mouldgpu.rs:3418:17:
+assertion `left == right` failed: life states and timers
+== 33 a landed spore idle this tick: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (3980) panicked at src/bin/mouldgpu.rs:2849:13:
+both, growth on grass: grass 2.5e-4, germ 0.0e0
+== 34 a woken or landed walker does not graze: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (4105) panicked at src/bin/mouldgpu.rs:2846:13:
+both, growth on grass: trail 1.5e-4, scent 0.0e0, species 0.0e0, alarm 0.0e0
+== 35 a woken or landed walker lays no germ: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (4193) panicked at src/bin/mouldgpu.rs:2849:13:
+both, cap, explorers, contagion: grass 0.0e0, germ 1.0e-2
+== 36 tally ages nobody: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (4279) panicked at src/bin/mouldgpu.rs:2845:13:
+both, cap, explorers, contagion: 321 of 250000 walkers off
+== 37 the dormant eat: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (4368) panicked at src/bin/mouldgpu.rs:2848:13:
+both, growth on crystals: energy 0.0e0, 0 lives, charge 9.2e-6
+== 38 the dormant out of the capped share: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (4502) panicked at src/bin/mouldgpu.rs:2845:13:
+both, cap, explorers, contagion: 3280 of 250000 walkers off
+== 39 the non-walkers pay upkeep: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (4612) panicked at src/bin/mouldgpu.rs:2845:13:
+both, growth on crystals: 97 of 37500 walkers off
+== 40 the dormant breed: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (4723) panicked at src/bin/mouldgpu.rs:2845:13:
+both, growth on crystals: 145 of 37500 walkers off
+== 41 a child takes its parent's timer: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (4833) panicked at src/bin/mouldgpu.rs:2847:13:
+both, growth on grass: 5 states, 48 timers, 10 counts off
+== 42 spores lay the full deposit: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (4941) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 3005 of 25000 walkers off
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (4942) panicked at src/bin/mouldgpu.rs:3402:13:
+trail L1 2.57e-3, scent L1 1.08e-9, charge L1 1.18e-10
+== 43 the dormant lay the spores' deposit: caught
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (5068) panicked at src/bin/mouldgpu.rs:3402:13:
+trail L1 9.11e-2, scent L1 1.08e-9, charge L1 1.18e-10
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (5067) panicked at src/bin/mouldgpu.rs:2845:13:
+dormancy, alarm and relays: 525 of 25000 walkers off
+== 44 the alarm does not spread: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (5181) panicked at src/bin/mouldgpu.rs:2845:13:
+a burst of spores after a strike: 96 of 25000 walkers off
+== 45 the relays add nothing: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (5289) panicked at src/bin/mouldgpu.rs:2845:13:
+dormancy, alarm and relays: 194 of 25000 walkers off
+== 46 the wake and dormant counts not cleared: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (5405) panicked at src/bin/mouldgpu.rs:2845:13:
+dormancy, alarm and relays: 72 of 25000 walkers off
+== 47 the spore and sleep lays not cleared: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (5520) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 483 of 25000 walkers off
+== 48 the strike spares the dormant: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (5641) panicked at src/bin/mouldgpu.rs:2813:13:
+dormancy, alarm and relays: after the strike 51 counts and 0 lives off, species L1 0.0e0
+== 49 the strike kills spores: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (5738) panicked at src/bin/mouldgpu.rs:2813:13:
+spores, one a cell: after the strike 12 counts and 0 lives off, species L1 0.0e0
+== 50 the strike's kill radius squared: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (5853) panicked at src/bin/mouldgpu.rs:2813:13:
+spores, one a cell: after the strike 53 counts and 0 lives off, species L1 0.0e0
+== 51 the strike leaves each species' trail: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (5970) panicked at src/bin/mouldgpu.rs:2813:13:
+a burst landing at once, two species with their own crowd limits: after the strike 0 counts and 0 lives off, species L1 1.2e-3
+== 52 the strike's alarm on walls too: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (6119) panicked at src/bin/mouldgpu.rs:2815:13:
+both, growth on crystals: after the strike trail L1 0.0e0, alarm L1 6.8e-3
+== 53 the struck keep their cells: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (6206) panicked at src/bin/mouldgpu.rs:2813:13:
+spores, one a cell: after the strike 62 counts and 0 lives off, species L1 0.0e0
+== 54 the struck keep their energy: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (6312) panicked at src/bin/mouldgpu.rs:2813:13:
+both, growth on crystals: after the strike 0 counts and 136 lives off, species L1 0.0e0
+== 55 shots kill spores: caught
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (6465) panicked at src/bin/mouldgpu.rs:3383:13:
+assertion `left == right` failed: the squad's outputs
+== 56 a shot walker not dead: caught
+thread 'tests::the_squad_matches_the_cpu_for_one_frame' (6601) panicked at src/bin/mouldgpu.rs:3418:17:
+assertion `left == right` failed: life states and timers
+== 57 a new wall moves spores and the dead: caught
+thread 'tests::a_wall_builds_on_the_gpu_as_on_the_cpu' (6713) panicked at src/bin/mouldgpu.rs:3509:13:
+assertion `left == right` failed: spores, dormant and the dead: an empty slot moved
+== 58 the life cycle off again after a strike: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (6973) panicked at src/bin/mouldgpu.rs:2845:13:
+skittish: alarm only, the states from the strike: 1976 of 25000 walkers off
+== 59 the new spore's heading from the fruit draw: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (7100) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 1028 of 25000 walkers off
+== 60 flight before fate: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (7265) panicked at src/bin/mouldgpu.rs:2845:13:
+spores, one a cell: 638 of 25000 walkers off

@@ -2,8 +2,8 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12T00:10Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md]
+updated: 2026-11-12T01:00Z
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
 code: [BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier]
 ---
 
@@ -37,7 +37,7 @@ Sleeper's bait hold on 8 of 8 seeds, but the Sporer's edge over the plain
 mould is not significant, and the Sleeper barely leaves its home crystal,
 so it suits an early tier or a map feature
 ([the life cycle](../model/life-cycle.md)). Their place in the order is not
-set; none is on the GPU yet.
+set. All three run on the GPU too ([report](../../Reports/life-gpu-2026-11-11.md)).
 
 The Drifter's grazing is what makes it forage: on food piles it sends
 small droplets to far food, while the edge of its body moves about 10
@@ -54,9 +54,10 @@ now have its own settings on one dish (`species_sets`;
   conversion came with the outside rules, and each species' own settings,
   conversion over a square and a second kind followed (11-11, [species on
   the GPU](../../Reports/species-gpu-2026-11-11.md)), so a rival pair can
-  pair a droplet species with a network one there. The life cycle (Sporer,
-  Sleeper, Swarmer) is next; the world re-test is done (`Tier` names its
-  keys).
+  pair a droplet species with a network one there, and the life cycle
+  (Sporer, Sleeper, Swarmer) followed (11-12).
+- The tiers in the GPU world game: `Tier::settings` on the world's
+  settings, the player's strike, the 1070's cost.
 - Each tier's counter tested with the player AI ([player AI](player-ai.md)) once Larder runs in the world.
 
 ## Sources
@@ -67,3 +68,4 @@ now have its own settings on one dish (`species_sets`;
 - [first-reach-2026-11-11.md](../../Reports/first-reach-2026-11-11.md): droplet moulds and mixes on food piles.
 - [species-sets-2026-11-11.md](../../Reports/species-sets-2026-11-11.md): per-species settings, two species on one dish.
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species rules on the GPU engine.
+- [life-gpu-2026-11-11.md](../../Reports/life-gpu-2026-11-11.md): the tiers' life cycle on the GPU engine.

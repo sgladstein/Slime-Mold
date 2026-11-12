@@ -1,0 +1,6 @@
+== 72 the dying's counters stand still: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (16402) panicked at src/bin/mouldgpu.rs:2873:13:
+dormancy, dying asleep, no limit, cap, explorers, contagion: 6962 ages, 820 sick counters off
+== 74 the dying counted dormant: caught
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (16502) panicked at src/bin/mouldgpu.rs:2869:13:
+dormancy, dying asleep, no limit, cap, explorers, contagion: trail 2.2e-4, scent 0.0e0, species 0.0e0, alarm 1.2e-9

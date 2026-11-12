@@ -1,10 +1,14 @@
 # Planted bugs for the GPU life cycle (2026-11-11): (name, file, the text,
 # what it becomes). bugs.sh plants each in turn and runs the life cycle's
-# twin test, the squad test and the wall test. Round 1 ran the first 60
-# against the first test (raw/bugs-round1.txt); round 2 runs all of these
-# against the strengthened one, on main after #82 (raw/bugs-round2.txt).
+# twin test, the squad test, the wall test and the alarm-alone test. Round
+# 1 ran the first 60 against the first test (raw/bugs-round1.txt); round 2
+# the first 61 against the strengthened one, on main after #82
+# (raw/bugs-round2.txt); round 3 all of them, the last ones in PR #85's two
+# rules (sleep_death, the shot alarm) and the alarm without the states,
+# against the final test, on main after #85 (raw/bugs-round3.txt).
 W = 'src/gpu/engine.wgsl'
 M = 'src/gpu/mod.rs'
+S = 'src/mould/squad.rs'
 B = [
     # sense: who fruits or dozes
     ("the burst without its alarm threshold", W,
@@ -106,7 +110,7 @@ B = [
     ("the alarm does not spread", W,
      "if (al) { germ_out[c + i] = asum / n * P.alarm_keep; }", "if (al) { germ_out[c + i] = germ_in[c + i] * P.alarm_keep; }"),
     ("the relays add nothing", M,
-     "s.alarm_keep, s.alarm_weight, s.alarm_relay, 0.0]", "s.alarm_keep, s.alarm_weight, 0.0, 0.0]"),
+     "s.alarm_keep, s.alarm_weight, s.alarm_relay, s.sleep_death]", "s.alarm_keep, s.alarm_weight, 0.0, s.sleep_death]"),
     ("the wake and dormant counts not cleared", W,
      "    if (cycles()) { atomicStore(&gdep[P.w * P.h + i], 0u); atomicStore(&gdep[2u * P.w * P.h + i], 0u); }\n", ""),
     ("the spore and sleep lays not cleared", W,
@@ -140,4 +144,39 @@ B = [
      "stream(seed, CLAIM_LAND), stream(seed, DRAW_SPORE_H)", "stream(seed, CLAIM_LAND), stream(seed, DRAW_FRUIT)"),
     ("flight before fate", M,
      "tick.extend([(FATE, n), (FLY, n), (ALIGHT, n)]);", "tick.extend([(FLY, n), (FATE, n), (ALIGHT, n)]);"),
+    # round 3: the alarm without the states (2026-11-12)
+    ("the alarm still needs the states", W,
+     "fn alarms() -> bool { if (OUTSIDE) { return P.alarm_on != 0u; } return false; }", "fn alarms() -> bool { if (OUTSIDE) { return P.cyc != 0u && P.alarm_on != 0u; } return false; }"),
+    ("the alarm alone on the plain pipelines", M,
+     "            || self.cycles\n            || self.alarmed;", "            || self.cycles;"),
+    # round 3: the shot alarm (squad::SHOT_ALARM, PR #85)
+    ("no shot alarm", M,
+     "                if self.alarmed {\n                    pre.push((SHOUT, 1));\n                }\n", ""),
+    ("the shot alarm on walls too", W,
+     "if (agar[i] != 0u) { germ_in[c + i] += P.shot_alarm; }", "germ_in[c + i] += P.shot_alarm;"),
+    ("the shot alarm within the strike's radius", W,
+     "let ar2 = SQ.shots[q].ar2;", "let ar2 = SQ.shots[q].r2;"),
+    ("the shot alarm's squared radius four times the strike's", S,
+     "r2(SHOT_ALARM_R * s.r.min(R_MAX))]);", "4 * r2(s.r.min(R_MAX))]);"),
+    ("the shot alarm's box a row short", W,
+     "for (var j = li; j < side * side; j += 256u) {", "for (var j = li; j < side * (side - 1u); j += 256u) {"),
+    ("shots' alarms without a barrier", W,
+     "        storageBarrier();\n    }\n}", "    }\n}"),
+    ("the shot alarm's size not sent", M,
+     "self.squad.2.to_bits(), squad::SHOT_ALARM.to_bits()]));", "self.squad.2.to_bits(), 0]));"),
+    # round 3: dying asleep (BigParams::sleep_death, PR #85)
+    ("the dying keep their cell", W,
+     "        atomicSub(&occ[here], 1u);\n        atomicStore(&claim[here], NONE);\n        st = L_DEAD;", "        atomicStore(&claim[here], NONE);\n        st = L_DEAD;"),
+    ("the dying keep their slot", W,
+     "            energy[k] = -1.0;\n            if (P.sick_steps > 0u && sick[k] > 0u) { sick[k] -= 1u; }", "            if (P.sick_steps > 0u && sick[k] > 0u) { sick[k] -= 1u; }"),
+    ("the dying's counters stand still", W,
+     "        } else {\n            tally(k);\n        }\n    } else if (st == L_DORMANT) {", "        }\n    } else if (st == L_DORMANT) {"),
+    ("the dying still lay", W,
+     "        st = L_DEAD;\n        if (growth()) {", "        st = L_DEAD;\n        atomicAdd(&bdep[blk(species_of(k), kind_of(k)) * c + here + 3u * nblk() * c], 1u);\n        if (growth()) {"),
+    ("the dying counted dormant", W,
+     "        st = L_DEAD;\n        if (growth()) {", "        st = L_DEAD;\n        atomicAdd(&gdep[2u * c + here], 1u);\n        if (growth()) {"),
+    ("dying by the dozing draw", M,
+     "stream(seed, DRAW_SLEEP_DIE), 0]));", "stream(seed, DRAW_SLEEP), 0]));"),
+    ("the dish made without sleep_death", M,
+     "        sleep_death: s.sleep_death,\n        alarm_keep: s.alarm_keep,", "        sleep_death: 0.0,\n        alarm_keep: s.alarm_keep,"),
 ]

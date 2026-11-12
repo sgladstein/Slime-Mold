@@ -2,8 +2,8 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T00:01Z
-sources: [Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
+updated: 2026-11-12T01:00Z
+sources: [Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
 
@@ -56,7 +56,8 @@ cell that looks like slime (trail for 26/255) or at a wall, and strike a
 disc; soldiers lay smell; each unit reads its touch and its densest block
 in sight, and harvests crystal charge. One GPU frame equals the CPU's
 exactly. On the 1070, 8 to 40 units add 1.0-1.5 ms a frame, mostly the
-units pass running one thread a unit; W2c cuts it.
+units pass running one thread a unit; W2c cuts it. A hit lays a tier's
+alarm on the GPU too ([life on the GPU](../../Reports/life-gpu-2026-11-11.md)).
 
 **W2b** (`mould::larder_world`, `gpu::larder_world`): M3's squad on the
 world. Soldiers harvest crystal charge and carry it home, buy, fire, build
@@ -144,6 +145,7 @@ owner's playtest.
 
 - [larder-world-roadmap-2026-11-11.md](../../Reports/larder-world-roadmap-2026-11-11.md): the world plan, phases W0-W5 and their gates.
 - [larder-maps-2026-11-11.md](../../Reports/larder-maps-2026-11-11.md): maps and ground kinds (WM2, WM3), a plan.
+- [life-gpu-2026-11-11.md](../../Reports/life-gpu-2026-11-11.md): the tiers' life cycle and the shots' alarm on the GPU.
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species rules on the GPU, and a fix to walls built with growth on.
 - [mould-shooter-2026-11-11.md](../../Reports/mould-shooter-2026-11-11.md): the whole brainstorm.
 - [rts-research-2026-11-10.md](../../Reports/rts-research-2026-11-10.md) and the [Creeper World card](../../research/sources/creeper-world-2025.md): the nearest published game with a simulated enemy.

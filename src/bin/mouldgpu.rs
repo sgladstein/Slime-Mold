@@ -1672,7 +1672,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             // The life cycle (2026-11-11).
             if s.spore_rate > 0.0 || s.spore_burst > 0.0 || s.sleep_rate > 0.0 || s.alarm_keep > 0.0 {
                 println!(
-                    "   life: spores rate {} over scent {} burst {} over alarm {}, {} steps at {}x, reach {} lay {} land over {} rest {}; dormant rate {} lay {} wake over scent {} or alarm {}, awake {} rest {}; alarm keep {} weight {} relay {}",
+                    "   life: spores rate {} over scent {} burst {} over alarm {}, {} steps at {}x, reach {} lay {} land over {} rest {}; dormant rate {} lay {} wake over scent {} or alarm {}, awake {} rest {} die {}; alarm keep {} weight {} relay {}",
                     s.spore_rate,
                     s.spore_scent,
                     s.spore_burst,
@@ -1689,6 +1689,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     s.wake_alarm,
                     s.wake_steps,
                     s.sleep_rest,
+                    s.sleep_death,
                     s.alarm_keep,
                     s.alarm_weight,
                     s.alarm_relay
@@ -2080,6 +2081,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use super::*;
     use slime_mould::mould::big::{BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE};
+    use slime_mould::mould::tiers::Tier;
 
     #[test]
     fn every_panel_character_can_be_drawn() {
@@ -2728,7 +2730,10 @@ mod tests {
     /// missed): four ticks, not two; the grass, the germ and a tight charge
     /// check; the strike's counts, lives and species fields checked before
     /// the tick re-injects them; a wall beside the strike on the crystal
-    /// dish; a burst that lands all at once.
+    /// dish; a burst that lands all at once. Then (2026-11-12, after the
+    /// tiers thread's PR #85) the three tiers as `Tier::settings` sets them,
+    /// dormant walkers that die asleep (`sleep_death`), and every field
+    /// within 1e-6 (the trail at 1e-4 missed a planted bug in round 2).
     #[test]
     fn the_life_cycle_matches_the_cpu_for_four_ticks() {
         const TICKS: u32 = 4;
@@ -2748,6 +2753,13 @@ mod tests {
         let both = [spores, sleep].concat();
         let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
         let mix = |s: Settings| Settings { mix_share: 0.3, mix_reach: 3.0, mix_angle: 0.5, mix_turn: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..s };
+        let tier = |t: Tier, mut s: Settings| {
+            t.settings(&mut s).unwrap();
+            s
+        };
+        let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
+        // Dormant walkers that die asleep, at 2% a tick so four ticks see it.
+        let dying = [sleep, &[("sleep_death", "0.02")]].concat();
         let dishes = [
             ("spores, one a cell", with(small(0), spores)),
             ("spores, no limit", with(small(3), spores)),
@@ -2760,10 +2772,21 @@ mod tests {
             ("dormancy, alarm and relays", with(small(0), sleep)),
             ("skittish: alarm only, the states from the strike", with(small(0), &[("alarm_keep", "0.98"), ("alarm_weight", "-10")])),
             ("both, two species with their own crowd limits, mixed", mix(with(Settings { species: 2, ..small(0) }, &[&both[..], &[("s1.crowd", "0"), ("s1.step", "1.5")]].concat()))),
-            ("both, growth on crystals", with(hungry(Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) }), &both)),
+            ("both, growth on crystals", with(hungry(crystals.clone()), &both)),
             ("both, growth on grass", with(hungry(Settings { graze: 10.0, ..small(0) }), &both)),
             ("both, cap, explorers, contagion", with(Settings { cap: 100, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..small(3) }, &both)),
             ("both, respawn", with(Settings { respawn: 0.01, ..small(0) }, &both)),
+            ("dormancy, dying asleep", with(small(0), &dying)),
+            // The dying's counters (explorers age, the sick count down), and
+            // with no crowd limit the capped share of a cell they leave to
+            // ordinary walkers (round 3 missed the dying counted dormant on
+            // the one-a-cell dish, where no walker shares their cell).
+            ("dormancy, dying asleep, no limit, cap, explorers, contagion", with(Settings { cap: 100, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..small(3) }, &dying)),
+            ("both, dying asleep, growth on grass", with(hungry(Settings { graze: 10.0, ..small(0) }), &[&both[..], &[("sleep_death", "0.02")]].concat())),
+            ("the Sporer (Tier::settings)", tier(Tier::Sporer, small(0))),
+            ("the Sleeper", tier(Tier::Sleeper, small(0))),
+            ("the Sleeper, growth on crystals", tier(Tier::Sleeper, hungry(crystals.clone()))),
+            ("the Swarmer", tier(Tier::Swarmer, small(0))),
         ];
         let u32s = |b: &wgpu::Buffer, n: usize| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
         for (name, s) in dishes {
@@ -2843,11 +2866,14 @@ mod tests {
                 "{name}: {n} slots, states before {before:?} (walkers, spores, dormant, dead), after {after:?}; struck {killed}; {moved} moved, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, species L1 {lsp:.1e}, alarm L1 {la:.1e} (alarm in all {alarm_sum:.0}); {life_off} states and {timer_off} timers off; {occ_off} counts off; energy L1 {le:.1e}, {lives_off} lives off, charge L1 {lc:.1e}, grass L1 {lg:.1e}, germ L1 {lgerm:.1e}; {ages_off} ages and {sick_off} sick counters off"
             );
             assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
-            assert!(lt <= 1e-4 && ls <= 1e-6 && lsp <= 1e-4 && la <= 1e-4, "{name}: trail {lt:.1e}, scent {ls:.1e}, species {lsp:.1e}, alarm {la:.1e}");
+            assert!(lt <= 1e-6 && ls <= 1e-6 && lsp <= 1e-6 && la <= 1e-6, "{name}: trail {lt:.1e}, scent {ls:.1e}, species {lsp:.1e}, alarm {la:.1e}");
             assert!(life_off * 1000 <= n && timer_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {life_off} states, {timer_off} timers, {occ_off} counts off");
             assert!(le <= 1e-3 && lives_off * 1000 <= n && lc <= 1e-6, "{name}: energy {le:.1e}, {lives_off} lives, charge {lc:.1e}");
-            assert!(lg <= 1e-6 && lgerm <= 1e-4, "{name}: grass {lg:.1e}, germ {lgerm:.1e}");
+            assert!(lg <= 1e-6 && lgerm <= 1e-6, "{name}: grass {lg:.1e}, germ {lgerm:.1e}");
             assert!(ages_off * 1000 <= n && sick_off * 1000 <= n, "{name}: {ages_off} ages, {sick_off} sick counters off");
+            if s.sleep_death >= 0.01 && s.upkeep == 0.0 {
+                assert!(after[3] > before[3], "{name}: dormant walkers die asleep: dead {} then {}", before[3], after[3]);
+            }
         }
     }
 
@@ -3291,7 +3317,16 @@ mod tests {
         // And with the life cycle (2026-11-11): shots miss spores in flight
         // and kill the dormant, and a struck walker is dead.
         let life = with_life(base.clone());
-        for (name, s) in [("plain", base), ("spores and dormancy", life)] {
+        // And the tiers (2026-11-12, PR #85's shot alarm): with the alarm
+        // field on, a hit lays `squad::SHOT_ALARM` within twice its radius.
+        // The Swarmer has the field and no states (no spores, no dormancy,
+        // no strike), the dish an alarm that needed the states missed.
+        let tier = |t: Tier, mut s: Settings| {
+            t.settings(&mut s).unwrap();
+            s
+        };
+        let (sleeper, swarmer) = (tier(Tier::Sleeper, base.clone()), tier(Tier::Swarmer, base.clone()));
+        for (name, s) in [("plain", base), ("spores and dormancy", life), ("the Sleeper", sleeper), ("the Swarmer, the alarm and no states", swarmer)] {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             for t in 0..60 {
@@ -3348,6 +3383,9 @@ mod tests {
                 .expect("a slot that starved in the mould");
             let (sx, sy, _) = starved.1;
             shots.push(ShotIn { from: (sx, sy), to: t, r: 3.0 });
+            // A radius that is not a whole number: its alarm's squared radius
+            // (r2 of 5, 25) is not four times its strike's (r2 of 2.5, 6).
+            shots.push(ShotIn { from: pile(12), to: t, r: 2.5 });
             // With the life cycle, shots from slime beside spores in flight,
             // whose strikes cover them (they must be missed).
             if !cpu.life.is_empty() {
@@ -3396,10 +3434,14 @@ mod tests {
             let lt = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
             let ls = l1(&floats(&read_back(&device, &queue, &e.scent[side])), &cpu.scent);
             let (lc, _, _, agar_off, ground_off) = world_off(&e, &cpu);
-            eprintln!("squad world, {name}: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}; {agar_off} agar and {ground_off} ground off");
+            // The alarm the shots laid, spread one tick (0 without the field).
+            let la = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
+            let alarm_sum: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
+            eprintln!("squad world, {name}: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}, alarm L1 {la:.1e} (in all {alarm_sum:.0}); {agar_off} agar and {ground_off} ground off");
             assert_eq!(lives_off, 0, "the same walkers die");
             assert!(off * 1000 <= cpu.walkers.len(), "{off} walkers off");
-            assert!(lt <= 1e-4 && ls <= 1e-6 && lc <= 1e-6, "trail L1 {lt:.2e}, scent L1 {ls:.2e}, charge L1 {lc:.2e}");
+            assert!(lt <= 1e-6 && ls <= 1e-6 && lc <= 1e-6 && la <= 1e-6, "trail L1 {lt:.2e}, scent L1 {ls:.2e}, charge L1 {lc:.2e}, alarm L1 {la:.2e}");
+            assert!(cpu.alarm.is_empty() || alarm_sum > 100.0 * squad::SHOT_ALARM as f64, "the shots lay the alarm: {alarm_sum:.0} in all");
             assert!(agar_off == 0 && ground_off == 0);
             if !before.is_empty() {
                 // Spores in a struck disc are missed, the dormant in one die.
@@ -3414,10 +3456,45 @@ mod tests {
                 let states_off = (0..before.len()).filter(|&k| st[k] != cpu.life[k] || tm[k] != cpu.life_t[k]).count();
                 let count = |l: u8| (0..before.len()).filter(|&k| cpu.lives(k) && before[k] == l).count();
                 eprintln!("squad life: {} spores, {} dormant at the frame; {missed} spores in a struck disc missed, {slept} dormant killed; {states_off} states or timers off", count(LIFE_SPORE), count(LIFE_DORMANT));
-                assert!(missed > 0 && slept > 0, "shots meet spores and the dormant");
+                assert!((missed > 0) == (s.spore_rate > 0.0) && slept > 0, "shots meet spores (if any fly) and the dormant");
                 assert_eq!(states_off, 0, "life states and timers");
             }
         }
+    }
+
+    /// The alarm field alone (the Swarmer's, 2026-11-12): no spores, no
+    /// dormancy and no strike, so no life states, and nothing else that
+    /// needs the outside pipelines. The field must still spread and the
+    /// walkers sense it, as on the CPU, which makes the field with the dish;
+    /// a squad shot's alarm (`squad::SHOT_ALARM`) lands on such a dish.
+    /// Alarm laid straight into the CPU's field round the thickest trail,
+    /// then four ticks on both.
+    #[test]
+    fn an_alarm_without_the_states_matches_the_cpu() {
+        use slime_mould::mould::squad;
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let mut s = small(0);
+        Tier::Swarmer.settings(&mut s).unwrap();
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        for _ in 0..30 {
+            cpu.tick();
+        }
+        let (w, h) = (cpu.w, cpu.h);
+        let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
+        for c in squad::disc(w, h, (thick % w) as i64, (thick / w) as i64, 400) {
+            if cpu.agar[c] {
+                cpu.alarm[c] += squad::SHOT_ALARM;
+            }
+        }
+        let laid: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
+        let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 4);
+        let la = l1(&e.alarm_of(), &cpu.alarm);
+        let left: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
+        eprintln!("the alarm alone: {} walkers, {moved} moved, {off} off; alarm laid {laid:.0}, {left:.0} after four ticks; trail L1 {lt:.1e}, scent L1 {ls:.1e}, alarm L1 {la:.1e}; states {}, outside pipelines {}", cpu.walkers.len(), e.cycles, e.outside);
+        assert!(cpu.life.is_empty() && !e.cycles && e.outside, "the field without the states, on the outside pipelines");
+        assert!(off == 0 && lt <= 1e-6 && ls <= 1e-6 && la <= 1e-6, "{off} walkers off; trail {lt:.1e}, scent {ls:.1e}, alarm {la:.1e}");
     }
 
     /// `s` with spores and dormancy on, both frequent: a spore every hundred

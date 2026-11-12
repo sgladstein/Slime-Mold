@@ -59,6 +59,7 @@ pub const DRAW_FRUIT: u32 = 114;
 pub const DRAW_SLEEP: u32 = 115;
 pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
+pub const DRAW_SLEEP_DIE: u32 = 118;
 
 /// Bytes in `Params` (208 words).
 pub const PARAMS_BYTES: usize = 832;
@@ -275,6 +276,7 @@ pub struct Settings {
     pub wake_alarm: f32,
     pub wake_steps: u16,
     pub sleep_rest: u16,
+    pub sleep_death: f32,
     pub alarm_keep: f32,
     pub alarm_weight: f32,
     pub alarm_relay: f32,
@@ -401,6 +403,7 @@ impl Settings {
             wake_alarm: t.wake_alarm,
             wake_steps: t.wake_steps,
             sleep_rest: t.sleep_rest,
+            sleep_death: t.sleep_death,
             alarm_keep: t.alarm_keep,
             alarm_weight: t.alarm_weight,
             alarm_relay: t.alarm_relay,
@@ -622,9 +625,13 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "wake_alarm" => s.wake_alarm = f()?,
         "wake_steps" => s.wake_steps = int()?.min(65535) as u16,
         "sleep_rest" => s.sleep_rest = int()?.min(65535) as u16,
+        "sleep_death" => s.sleep_death = f()?,
         "alarm_keep" => s.alarm_keep = f()?,
         "alarm_weight" => s.alarm_weight = f()?,
         "alarm_relay" => s.alarm_relay = f()?,
+        // A mould tier's keys at once (`mould::tiers::Tier`, as
+        // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
+        "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of sporer, sleeper, swarmer"))?.settings(s)?,
         "upkeep" => s.upkeep = f()?,
         "start_energy" => s.start_energy = f()?,
         "birth_energy" => s.birth_energy = f()?,
@@ -735,6 +742,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         wake_alarm: s.wake_alarm,
         wake_steps: s.wake_steps,
         sleep_rest: s.sleep_rest,
+        sleep_death: s.sleep_death,
         alarm_keep: s.alarm_keep,
         alarm_weight: s.alarm_weight,
         alarm_relay: s.alarm_relay,
@@ -841,9 +849,12 @@ pub const FLY: usize = 29;
 pub const ALIGHT: usize = 30;
 pub const HIT: usize = 31;
 pub const KILL: usize = 32;
+/// A squad shot's alarm (`squad::SHOT_ALARM`), after `cut`, with the alarm
+/// field on.
+pub const SHOUT: usize = 33;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 33] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill",
+pub const PASSES: [&str; 34] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout",
 ];
 
 impl Shared {
@@ -1339,7 +1350,7 @@ impl Engine {
         b.extend(u32_bytes(&[world, self.npiles, self.npc, 0]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
         debug_assert_eq!(b.len(), SQUAD_AT);
-        b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), 0]));
+        b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), squad::SHOT_ALARM.to_bits()]));
         b.extend(u32_bytes(&[self.n_hits, 0, 0, 0]));
         // The species block (2026-11-11): whether each species has its own
         // settings, the walker kinds, conversion's square; the second
@@ -1369,9 +1380,9 @@ impl Engine {
             self.alarmed = true;
         }
         b.extend(u32_bytes(&[self.cycles as u32, self.alarmed as u32, stream(seed, DRAW_FRUIT), stream(seed, DRAW_SLEEP)]));
-        b.extend(u32_bytes(&[stream(seed, CLAIM_LAND), stream(seed, DRAW_SPORE_H), s.spore_steps as u32, s.spore_rest as u32, s.wake_steps as u32, s.sleep_rest as u32, 0, 0]));
+        b.extend(u32_bytes(&[stream(seed, CLAIM_LAND), stream(seed, DRAW_SPORE_H), s.spore_steps as u32, s.spore_rest as u32, s.wake_steps as u32, s.sleep_rest as u32, stream(seed, DRAW_SLEEP_DIE), 0]));
         b.extend(f32_bytes(&[s.spore_rate, s.spore_scent, s.spore_alarm, s.spore_burst, s.step * s.spore_speed, s.spore_reach, s.spore_deposit, s.spore_land]));
-        b.extend(f32_bytes(&[s.sleep_rate, s.sleep_deposit, s.wake_scent, s.wake_alarm, s.alarm_keep, s.alarm_weight, s.alarm_relay, 0.0]));
+        b.extend(f32_bytes(&[s.sleep_rate, s.sleep_deposit, s.wake_scent, s.wake_alarm, s.alarm_keep, s.alarm_weight, s.alarm_relay, s.sleep_death]));
         debug_assert_eq!(b.len(), STRIKE_AT);
         b.extend([0u8; 32]);
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
@@ -1388,7 +1399,8 @@ impl Engine {
             || s.sensor_r > 0
             || graze != 0.0
             || self.grows
-            || self.cycles;
+            || self.cycles
+            || self.alarmed;
         self.queue.write_buffer(&self.params, 0, &b);
         self.jumps = s.respawn > 0.0 || pull > 0.0;
         self.crowd = crowd > 0 || sets.iter().any(|t| t.crowd > 0);
@@ -1445,6 +1457,9 @@ impl Engine {
             let mut pre = Vec::new();
             if nshots > 0 {
                 pre.extend([(SHOTS, nshots.div_ceil(256)), (STRIKE, self.n.div_ceil(256)), (CUT, nshots)]);
+                if self.alarmed {
+                    pre.push((SHOUT, 1));
+                }
             }
             if nunits > 0 {
                 pre.push((SMELL, 1));
@@ -1733,7 +1748,7 @@ impl Engine {
         self.queue.write_buffer(&self.kills, 0, &[0u8; squad::SHOTS_MAX * 4]);
         self.squad = (nunits, nshots, f.slime);
         self.squad_due = true;
-        self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), 0]));
+        self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), squad::SHOT_ALARM.to_bits()]));
     }
 
     /// The last squad frame's results (`set_squad`), read back.

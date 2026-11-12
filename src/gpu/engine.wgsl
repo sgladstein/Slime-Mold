@@ -54,8 +54,9 @@ struct Params {
     full: f32, eat: f32, flow: f32, regrow: f32,
     wet_step: f32, bite: f32, wall_scent: f32, hp: f32,
     // The squad (Larder World W2a, `Engine::set_squad`): this frame's units
-    // and shots in `SQ`, and the trail that looks like slime.
-    nunits: u32, nshots: u32, slime: f32, _s0: u32,
+    // and shots in `SQ`, the trail that looks like slime, and the alarm a
+    // hit lays with the alarm field on (`squad::SHOT_ALARM`).
+    nunits: u32, nshots: u32, slime: f32, shot_alarm: f32,
     // The look's hits (`Engine::set_hits`, the world look's stand-in fight).
     nhits: u32, _h0: u32, _h1: u32, _h2: u32,
     // The species block (2026-11-11, the creature thread's species on the
@@ -75,13 +76,14 @@ struct Params {
     // `spec` word (`LIFE_*` below); the alarm is the germ fields' second
     // block, its relays and the cells' dormant walkers `gdep`'s second and
     // third, and spores' and sleepers' deposits `bdep`'s third and fourth.
+    // `sleep_death` (PR #85) is a dormant walker's chance a tick of dying.
     cyc: u32, alarm_on: u32, s_fruit: u32, s_sleep: u32,
     s_land: u32, s_spore_h: u32, spore_steps: u32, spore_rest: u32,
-    wake_steps: u32, sleep_rest: u32, _l0: u32, _l1: u32,
+    wake_steps: u32, sleep_rest: u32, s_sleep_die: u32, _l1: u32,
     spore_rate: f32, spore_scent: f32, spore_alarm: f32, spore_burst: f32,
     spore_st: f32, spore_reach: f32, spore_dep: f32, spore_land: f32,
     sleep_rate: f32, sleep_dep: f32, wake_scent: f32, wake_alarm: f32,
-    alarm_keep: f32, alarm_w: f32, relay: f32, _l2: f32,
+    alarm_keep: f32, alarm_w: f32, relay: f32, sleep_death: f32,
     // A strike (`Engine::strike`, the CPU's `BigDish::strike`), in fine
     // cells: its centre, kill radius, alarm and alarm radius.
     kx: f32, ky: f32, kr: f32, kalarm: f32,
@@ -177,7 +179,8 @@ struct WallBuild { ax: f32, ay: f32, bx: f32, by: f32, r: f32, hp: f32, x0: u32,
 // counts the walkers each shot killed.
 struct SqUnit { x: u32, y: u32, touch2: u32, sight2: u32, take2: u32, take: f32, smell2: u32, smell: f32 };
 struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32 };
-struct SqShot { start: u32, count: u32, r2: u32, _p: u32 };
+// A shot's `r2` is its strike's, `ar2` its alarm's (`squad::SHOT_ALARM_R`).
+struct SqShot { start: u32, count: u32, r2: u32, ar2: u32 };
 struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
 struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
 @group(0) @binding(42) var<storage, read_write> SQ: Squad;
@@ -220,7 +223,12 @@ fn bshare_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].bdep; } return bsh
 fn graze_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].graze_w; } return graze_w(); }
 fn explore_of(sp: u32) -> u32 { if (per()) { return P.sets[sp].explore; } return explore(); }
 fn cycles() -> bool { if (OUTSIDE) { return P.cyc != 0u; } return false; }
-fn alarms() -> bool { if (OUTSIDE) { return P.cyc != 0u && P.alarm_on != 0u; } return false; }
+// The alarm field is on with `alarm_keep` over 0, with or without the
+// states, as the CPU makes it with the dish: an alarm-only dish (the
+// Swarmer) senses and spreads the alarm a shot lays. (It once also needed
+// the states, which only a strike or spores or dormancy switch on, so a
+// shot's alarm would have gone nowhere on such a dish.)
+fn alarms() -> bool { if (OUTSIDE) { return P.alarm_on != 0u; } return false; }
 
 // The life cycle's word in `spec`: bits 9-10 the state (the CPU's
 // `LIFE_WALKER` 0, `LIFE_SPORE` 1, `LIFE_DORMANT` 2, `LIFE_DEAD` 3), bits
@@ -1527,6 +1535,36 @@ fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) l
     if (struck(i, q)) { trail_in[i] = 0.0; }
 }
 
+// A hit lays the alarm (`squad::SHOT_ALARM`) on each agar cell within
+// `SHOT_ALARM_R` times its radius (`ar2`), as the CPU's `shots` does after
+// the cut, with the alarm field on. One workgroup, the shots in order and
+// a barrier after each, so two discs on one cell never race; a thread a
+// cell of the shot's box (29 x 29 at the widest, radius 14). The barrier
+// sits outside the branches, in the uniform loop over the shots.
+@compute @workgroup_size(256)
+fn shout(@builtin(local_invocation_index) li: u32) {
+    let c = P.w * P.h;
+    for (var q = 0u; q < P.nshots; q++) {
+        let hit = SQ.sout[q].hit;
+        if (hit != NONE) {
+            let ar2 = SQ.shots[q].ar2;
+            let r = isqrt(ar2);
+            let side = u32(2 * r + 1);
+            for (var j = li; j < side * side; j += 256u) {
+                let dx = i32(j % side) - r;
+                let dy = i32(j / side) - r;
+                let x = i32(hit % P.w) + dx;
+                let y = i32(hit / P.w) + dy;
+                if (x >= 0 && y >= 0 && x < i32(P.w) && y < i32(P.h) && u32(dx * dx + dy * dy) <= ar2) {
+                    let i = u32(y) * P.w + u32(x);
+                    if (agar[i] != 0u) { germ_in[c + i] += P.shot_alarm; }
+                }
+            }
+        }
+        storageBarrier();
+    }
+}
+
 // Each unit's smell on the agar cells of its disc. One thread, units in
 // order, so overlapping discs add up without a race.
 @compute @workgroup_size(1)
@@ -1703,6 +1741,22 @@ fn fate(@builtin(global_invocation_id) gid: vec3<u32>) {
         st = L_DORMANT;
         tm = P.sleep_rest;
         atomicAdd(&gdep[2u * c + here], 1u);
+    } else if (st == L_DORMANT && P.sleep_death > 0.0 && unit(keyed(P.s_sleep_die, S.t, k)) < P.sleep_death) {
+        // It dies where it lies (`BigParams::sleep_death`, the CPU's draw
+        // `DRAW_SLEEP_DIE`): its cell is freed, and its claim as a starving
+        // walker's is (`life`), so a birth can take it this tick; with
+        // growth its slot too. It lays nothing and is not counted dormant.
+        // Its sick counter counts down as every slot's does on the CPU; it
+        // ages only while its slot lives (without growth).
+        atomicSub(&occ[here], 1u);
+        atomicStore(&claim[here], NONE);
+        st = L_DEAD;
+        if (growth()) {
+            energy[k] = -1.0;
+            if (P.sick_steps > 0u && sick[k] > 0u) { sick[k] -= 1u; }
+        } else {
+            tally(k);
+        }
     } else if (st == L_DORMANT) {
         // It lays, then wakes on scent, or on alarm once its timer is out
         // (every wake decided from the alarm as the tick began; the relays

@@ -1,0 +1,45 @@
+== round 1
+plain base:     wall ms a frame of 2 ticks and the drawing, 300 frames: median 32.666, worst 45.371; GPU ms ticks 28.813, drawing 4.472
+plain new:      wall ms a frame of 2 ticks and the drawing, 300 frames: median 33.517, worst 47.432; GPU ms ticks 29.987, drawing 4.840
+forced base:    wall ms a frame of 2 ticks and the drawing, 300 frames: median 44.588, worst 80.420; GPU ms ticks 39.594, drawing 4.500
+forced new:     wall ms a frame of 2 ticks and the drawing, 300 frames: median 40.923, worst 62.090; GPU ms ticks 40.093, drawing 3.545
+spores:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.580, worst 64.955; GPU ms ticks 40.383, drawing 2.963
+dormancy:       wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.089, worst 69.237; GPU ms ticks 38.868, drawing 3.765
+both:           wall ms a frame of 2 ticks and the drawing, 300 frames: median 35.720, worst 78.075; GPU ms ticks 33.352, drawing 3.075
+both, dying:    wall ms a frame of 2 ticks and the drawing, 300 frames: median 40.014, worst 68.329; GPU ms ticks 35.647, drawing 3.036
+sporer:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.944, worst 78.800; GPU ms ticks 41.907, drawing 2.956
+sleeper:        wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.932, worst 70.862; GPU ms ticks 40.124, drawing 3.174
+swarmer:        wall ms a frame of 2 ticks and the drawing, 300 frames: median 41.033, worst 66.089; GPU ms ticks 38.943, drawing 3.036
+== round 2
+plain base:     wall ms a frame of 2 ticks and the drawing, 300 frames: median 32.073, worst 42.093; GPU ms ticks 26.719, drawing 4.881
+plain new:      wall ms a frame of 2 ticks and the drawing, 300 frames: median 33.440, worst 46.968; GPU ms ticks 28.292, drawing 4.860
+forced base:    wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.910, worst 58.234; GPU ms ticks 40.471, drawing 3.712
+forced new:     wall ms a frame of 2 ticks and the drawing, 300 frames: median 44.092, worst 65.641; GPU ms ticks 39.533, drawing 3.270
+spores:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 55.006, worst 81.399; GPU ms ticks 52.595, drawing 3.769
+dormancy:       wall ms a frame of 2 ticks and the drawing, 300 frames: median 40.733, worst 68.065; GPU ms ticks 36.504, drawing 3.235
+both:           wall ms a frame of 2 ticks and the drawing, 300 frames: median 40.123, worst 75.825; GPU ms ticks 37.414, drawing 3.184
+both, dying:    wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.020, worst 62.344; GPU ms ticks 38.538, drawing 3.821
+sporer:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.987, worst 70.230; GPU ms ticks 40.182, drawing 2.943
+sleeper:        wall ms a frame of 2 ticks and the drawing, 300 frames: median 48.016, worst 71.844; GPU ms ticks 44.068, drawing 3.486
+swarmer:        wall ms a frame of 2 ticks and the drawing, 300 frames: median 41.079, worst 63.389; GPU ms ticks 38.011, drawing 3.048
+== round 3
+plain base:     wall ms a frame of 2 ticks and the drawing, 300 frames: median 33.325, worst 57.127; GPU ms ticks 28.904, drawing 4.912
+plain new:      wall ms a frame of 2 ticks and the drawing, 300 frames: median 35.570, worst 44.583; GPU ms ticks 30.441, drawing 4.682
+forced base:    wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.596, worst 67.596; GPU ms ticks 39.326, drawing 3.870
+forced new:     wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.478, worst 67.719; GPU ms ticks 40.000, drawing 3.231
+spores:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 53.333, worst 78.667; GPU ms ticks 48.082, drawing 3.702
+dormancy:       wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.911, worst 64.468; GPU ms ticks 42.148, drawing 3.743
+both:           wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.188, worst 80.939; GPU ms ticks 39.779, drawing 3.015
+both, dying:    wall ms a frame of 2 ticks and the drawing, 300 frames: median 41.099, worst 75.409; GPU ms ticks 38.132, drawing 3.651
+sporer:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 46.103, worst 81.388; GPU ms ticks 41.700, drawing 2.947
+sleeper:        wall ms a frame of 2 ticks and the drawing, 300 frames: median 46.157, worst 88.902; GPU ms ticks 42.389, drawing 3.446
+swarmer:        wall ms a frame of 2 ticks and the drawing, 300 frames: median 41.181, worst 68.020; GPU ms ticks 37.699, drawing 3.132
+== passes
+forced: GPU ms a pass, median of 11 ticks each submitted alone: sense 4.108, walk 1.724, trail 10.784, scent 5.165, draw 3.953
+both:   GPU ms a pass, median of 11 ticks each submitted alone: sense 1.756, walk 0.719, fate 2.214, fly 0.260, alight 0.150, trail 8.476, scent 5.078, draw 4.916
+dying:  GPU ms a pass, median of 11 ticks each submitted alone: sense 1.502, walk 0.659, fate 1.610, fly 0.250, alight 0.180, trail 9.556, scent 4.672, draw 4.874
+== states at the end
+life: walkers, spores, dormant, dead [1019, 133, 98848, 0]
+life: walkers, spores, dormant, dead [1410, 166, 722, 97702]
+life: walkers, spores, dormant, dead [99962, 38, 0, 0]
+life: walkers, spores, dormant, dead [12093, 0, 83559, 4348]
