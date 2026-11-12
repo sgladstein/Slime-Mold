@@ -120,6 +120,10 @@ The five maps are redrawn flat (R, height, is 0), and the sketches now use colou
 
 The test changes two of version 1's guesses. Sand helps the mould spread, so on The Flats it is the mould's ground as well as the squad's, and The Flats now asks whether boom can still out-harvest a mould that spreads fast but holds only the clay. In The Passes, the sand rival is the fast one, and the clay rival the slow, entrenched one. Next: draw these with the graphics thread's look (agreed 20:29Z: sand, clay and barren become materials in `view.wgsl`'s `cell_mat`, keyed on ground bits 12-15) once its PR merges, and run the WM2 gate once the Larder thread's loader and W2b's harness are in.
 
+## Soil in the world look, 2026-11-11
+
+The graphics thread's look (PR #69, merged) now draws soil: `world::look::Fields::soil` puts the kind in the high nibble of the ground code's byte 0 (agreed with that thread, 21:49Z; the kind keeps the low nibble), and `view.wgsl`'s `cell_mat` draws sand pale, clay red-brown and barren ash-grey under the mould. The view WGSL validates with naga 29.0.4; unit test `soil_sits_in_the_high_nibble_of_the_kind_byte`. Pictures wait until the GPU engine itself acts on soil (the picture is the data: soil drawn on a GPU world that ignores it would be paint), which is the GPU port of `sand_keep`, `clay_keep` and `barren_upkeep`.
+
 ## Sources
 
 - [larder-world-roadmap-2026-11-11.md](larder-world-roadmap-2026-11-11.md): W1a/W1b fields, wall health, crystal sizing, the W2 plan.

@@ -1,0 +1,84 @@
+seed 1 b-baittop t   1.0s  tube  4154.0  loops   89  width 5.63  reach  127.1  piles 4/7  strays 0.009  crystals 1.000  ms/tick 14.81
+seed 1 b-baittop t   1.0s  contrast 2.23
+seed 1 b-baittop t   1.0s  extent r50 112.8 r90 147.6
+seed 1 b-baittop t   1.0s  life walk 6110 spore 0 dormant 13890 dead 0  held 2/7  bodies 1 big 4135  centre 128.1,79.9  near 2195  rim 0.000/0.000
+seed 1 b-baittop t   2.0s  tube  3989.1  loops   93  width 5.29  reach  127.0  piles 4/7  strays 0.011  crystals 1.000  ms/tick 15.36
+seed 1 b-baittop t   2.0s  contrast 2.72
+seed 1 b-baittop t   2.0s  extent r50 112.9 r90 147.4
+seed 1 b-baittop t   2.0s  life walk 2023 spore 0 dormant 17977 dead 0  held 2/7  bodies 2 big 3943  centre 128.1,79.9  near 2178  rim 0.000/0.000
+seed 1 b-baittop t   3.0s  tube  3953.3  loops   93  width 5.17  reach  127.5  piles 4/7  strays 0.011  crystals 1.000  ms/tick 15.11
+seed 1 b-baittop t   3.0s  contrast 2.96
+seed 1 b-baittop t   3.0s  extent r50 112.8 r90 147.4
+seed 1 b-baittop t   3.0s  life walk 757 spore 0 dormant 19243 dead 0  held 2/7  bodies 2 big 3910  centre 128.1,79.9  near 2174  rim 0.000/0.000
+seed 1 b-baittop t   4.0s  tube  3948.8  loops   94  width 5.12  reach  127.6  piles 4/7  strays 0.011  crystals 1.000  ms/tick 15.30
+seed 1 b-baittop t   4.0s  contrast 3.04
+seed 1 b-baittop t   4.0s  extent r50 112.8 r90 147.4
+seed 1 b-baittop t   4.0s  life walk 392 spore 0 dormant 19608 dead 0  held 2/7  bodies 1 big 3925  centre 128.1,79.9  near 2177  rim 0.000/0.000
+seed 1 b-baittop t   5.0s  tube  3939.0  loops   92  width 5.09  reach  127.2  piles 4/7  strays 0.011  crystals 1.000  ms/tick 15.33
+seed 1 b-baittop t   5.0s  contrast 3.06
+seed 1 b-baittop t   5.0s  extent r50 112.8 r90 147.4
+seed 1 b-baittop t   5.0s  life walk 271 spore 0 dormant 19729 dead 0  held 2/7  bodies 2 big 3889  centre 128.1,79.9  near 2179  rim 0.000/0.000
+seed 1 b-baittop t   6.0s  tube  3942.4  loops   92  width 5.10  reach  127.3  piles 4/7  strays 0.011  crystals 1.000  ms/tick 15.40
+seed 1 b-baittop t   6.0s  contrast 3.06
+seed 1 b-baittop t   6.0s  extent r50 112.8 r90 147.4
+seed 1 b-baittop t   6.0s  life walk 225 spore 0 dormant 19775 dead 0  held 2/7  bodies 2 big 3890  centre 128.1,79.9  near 2178  rim 0.000/0.000
+seed 1 b-baittop t   7.0s  tube  3943.2  loops   92  width 5.10  reach  127.3  piles 4/7  strays 0.011  crystals 1.000  ms/tick 16.18
+seed 1 b-baittop t   7.0s  contrast 3.07
+seed 1 b-baittop t   7.0s  extent r50 112.8 r90 147.4
+seed 1 b-baittop t   7.0s  life walk 207 spore 0 dormant 19793 dead 0  held 2/7  bodies 2 big 3901  centre 128.1,79.9  near 2183  rim 0.000/0.000
+seed 1 b-baittop t   8.0s  tube  3944.5  loops   92  width 5.10  reach  127.0  piles 4/7  strays 0.011  crystals 1.000  ms/tick 16.81
+seed 1 b-baittop t   8.0s  contrast 3.06
+seed 1 b-baittop t   8.0s  extent r50 112.8 r90 147.4
+seed 1 b-baittop t   8.0s  life walk 196 spore 0 dormant 19804 dead 0  held 2/7  bodies 2 big 3891  centre 128.1,79.9  near 2183  rim 0.000/0.000
+seed 1 b-baittop t   9.0s  tube  3945.6  loops   92  width 5.10  reach  127.1  piles 4/7  strays 0.011  crystals 1.000  ms/tick 17.35
+seed 1 b-baittop t   9.0s  contrast 3.06
+seed 1 b-baittop t   9.0s  extent r50 112.8 r90 147.4
+seed 1 b-baittop t   9.0s  life walk 191 spore 0 dormant 19809 dead 0  held 2/7  bodies 2 big 3893  centre 128.1,79.9  near 2193  rim 0.000/0.000
+seed 1 b-baittop t  10.0s  bait at 128,30 r 20
+seed 1 b-baittop t  10.0s  tube  3940.5  loops   92  width 5.10  reach  127.4  piles 4/7  strays 0.011  crystals 1.000  ms/tick 18.02
+seed 1 b-baittop t  10.0s  contrast 3.07
+seed 1 b-baittop t  10.0s  extent r50 112.8 r90 147.4
+seed 1 b-baittop t  10.0s  life walk 187 spore 0 dormant 19813 dead 0  held 2/7  bodies 2 big 3890  centre 128.1,79.9  near 2190  rim 0.000/0.000
+seed 1 b-baittop t  11.0s  tube  3840.2  loops   89  width 5.05  reach  127.3  piles 4/7  strays 0.010  crystals 1.000  ms/tick 18.33
+seed 1 b-baittop t  11.0s  contrast 2.72
+seed 1 b-baittop t  11.0s  extent r50 113.8 r90 147.3
+seed 1 b-baittop t  11.0s  life walk 7423 spore 0 dormant 12577 dead 0  held 2/7  bodies 1 big 3816  centre 128.1,79.7  near 2184  rim 0.000/0.000
+seed 1 b-baittop t  12.0s  tube  3608.0  loops   75  width 4.97  reach  127.4  piles 4/7  strays 0.010  crystals 1.000  ms/tick 18.81
+seed 1 b-baittop t  12.0s  contrast 2.21
+seed 1 b-baittop t  12.0s  extent r50 114.5 r90 147.2
+seed 1 b-baittop t  12.0s  life walk 15309 spore 0 dormant 4691 dead 0  held 2/7  bodies 1 big 3588  centre 128.1,79.8  near 2211  rim 0.000/0.000
+seed 1 b-baittop t  13.0s  tube  3263.1  loops   54  width 4.65  reach  126.8  piles 4/7  strays 0.009  crystals 1.000  ms/tick 19.52
+seed 1 b-baittop t  13.0s  contrast 1.94
+seed 1 b-baittop t  13.0s  extent r50 114.9 r90 146.1
+seed 1 b-baittop t  13.0s  life walk 16612 spore 0 dormant 3388 dead 0  held 2/7  bodies 2 big 3238  centre 128.1,80.0  near 2157  rim 0.000/0.000
+seed 1 b-baittop t  14.0s  strike at 161,80 r 8: killed 696
+seed 1 b-baittop t  14.0s  tube  3037.9  loops   49  width 4.27  reach  126.9  piles 4/7  strays 0.009  crystals 1.000  ms/tick 19.82
+seed 1 b-baittop t  14.0s  contrast 2.36
+seed 1 b-baittop t  14.0s  extent r50 115.0 r90 145.1
+seed 1 b-baittop t  14.0s  life walk 10199 spore 0 dormant 9105 dead 696  held 2/7  bodies 2 big 3013  centre 126.9,79.9  near 1384  rim 0.000/0.000
+seed 1 b-baittop t  15.0s  tube  2939.9  loops   46  width 4.13  reach  127.3  piles 4/7  strays 0.008  crystals 1.000  ms/tick 20.22
+seed 1 b-baittop t  15.0s  contrast 2.59
+seed 1 b-baittop t  15.0s  extent r50 115.2 r90 145.3
+seed 1 b-baittop t  15.0s  life walk 4873 spore 0 dormant 14431 dead 696  held 2/7  bodies 3 big 2901  centre 127.0,79.8  near 1870  rim 0.000/0.000
+seed 1 b-baittop t  16.0s  tube  2898.8  loops   48  width 4.08  reach  127.0  piles 4/7  strays 0.009  crystals 1.000  ms/tick 20.20
+seed 1 b-baittop t  16.0s  contrast 2.72
+seed 1 b-baittop t  16.0s  extent r50 115.1 r90 145.4
+seed 1 b-baittop t  16.0s  life walk 2204 spore 0 dormant 17100 dead 696  held 2/7  bodies 1 big 2875  centre 127.0,79.7  near 1835  rim 0.000/0.000
+seed 1 b-baittop t  17.0s  tube  2865.3  loops   46  width 4.06  reach  127.4  piles 4/7  strays 0.009  crystals 1.000  ms/tick 20.23
+seed 1 b-baittop t  17.0s  contrast 2.74
+seed 1 b-baittop t  17.0s  extent r50 115.1 r90 145.3
+seed 1 b-baittop t  17.0s  life walk 1059 spore 0 dormant 18245 dead 696  held 2/7  bodies 1 big 2844  centre 127.0,79.7  near 1786  rim 0.000/0.000
+seed 1 b-baittop t  18.0s  tube  2868.1  loops   47  width 4.04  reach  127.3  piles 4/7  strays 0.009  crystals 1.000  ms/tick 20.27
+seed 1 b-baittop t  18.0s  contrast 2.77
+seed 1 b-baittop t  18.0s  extent r50 115.1 r90 145.3
+seed 1 b-baittop t  18.0s  life walk 699 spore 0 dormant 18605 dead 696  held 2/7  bodies 1 big 2844  centre 127.0,79.7  near 1762  rim 0.000/0.000
+seed 1 b-baittop t  19.0s  tube  2856.6  loops   46  width 4.03  reach  127.2  piles 4/7  strays 0.009  crystals 1.000  ms/tick 20.23
+seed 1 b-baittop t  19.0s  contrast 2.77
+seed 1 b-baittop t  19.0s  extent r50 115.1 r90 145.3
+seed 1 b-baittop t  19.0s  life walk 586 spore 0 dormant 18718 dead 696  held 2/7  bodies 2 big 2760  centre 127.0,79.7  near 1755  rim 0.000/0.000
+seed 1 b-baittop t  20.0s  tube  2848.6  loops   46  width 4.02  reach  127.2  piles 4/7  strays 0.009  crystals 1.000  ms/tick 20.18
+seed 1 b-baittop t  20.0s  contrast 2.78
+seed 1 b-baittop t  20.0s  extent r50 115.1 r90 145.3
+seed 1 b-baittop t  20.0s  life walk 554 spore 0 dormant 18750 dead 696  held 2/7  bodies 2 big 2757  centre 127.0,79.7  near 1748  rim 0.000/0.000
+seed 1 b-baittop firsts 0:72:0.57:0.0 1:54:0.67:0.3 2:96:0.87:-1.0 3:94:0.88:-1.0 4:51:0.42:0.2 5:59:0.55:0.5 6:76:0.68:-1.0
+seed 1 b-baittop hash=4faf09e44e93a6e4

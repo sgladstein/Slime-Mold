@@ -1,0 +1,45 @@
+12c12
+< seed 1 t4-on t  10.0s  life walk 18887 spore 0 dormant 0 dead 1113  held 3/7  bodies 3 big 2312  centre 130.5,79.7  near 1156  rim 0.000/0.002
+---
+> seed 1 t4-on t  10.0s  life walk 18887 spore 0 dormant 0 dead 1113  held 3/7  bodies 3 big 2312  centre 130.5,79.7  near 1156
+16c16
+< seed 1 t4-on t  11.0s  life walk 18748 spore 0 dormant 0 dead 1252  held 3/7  bodies 1 big 2366  centre 130.6,79.6  near 2065  rim 0.000/0.002
+---
+> seed 1 t4-on t  11.0s  life walk 18748 spore 0 dormant 0 dead 1252  held 3/7  bodies 1 big 2366  centre 130.6,79.6  near 2065
+20c20
+< seed 1 t4-on t  12.0s  life walk 18605 spore 0 dormant 0 dead 1395  held 3/7  bodies 1 big 2310  centre 130.6,79.6  near 2586  rim 0.000/0.002
+---
+> seed 1 t4-on t  12.0s  life walk 18605 spore 0 dormant 0 dead 1395  held 3/7  bodies 1 big 2310  centre 130.6,79.6  near 2586
+24c24
+< seed 1 t4-on t  13.0s  life walk 18417 spore 0 dormant 0 dead 1583  held 3/7  bodies 1 big 2255  centre 130.8,79.6  near 2866  rim 0.000/0.002
+---
+> seed 1 t4-on t  13.0s  life walk 18417 spore 0 dormant 0 dead 1583  held 3/7  bodies 1 big 2255  centre 130.8,79.6  near 2866
+28c28
+< seed 1 t4-on t  14.0s  life walk 18236 spore 0 dormant 0 dead 1764  held 3/7  bodies 1 big 2203  centre 130.9,79.5  near 3068  rim 0.001/0.003
+---
+> seed 1 t4-on t  14.0s  life walk 18236 spore 0 dormant 0 dead 1764  held 3/7  bodies 1 big 2203  centre 130.9,79.5  near 3068
+32c32
+< seed 1 t4-on t  15.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 1 big 2148  centre 131.0,79.5  near 3262  rim 0.001/0.003
+---
+> seed 1 t4-on t  15.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 1 big 2148  centre 131.0,79.5  near 3262
+34c34
+< seed 1 t4-on t  16.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 2 big 2078  centre 130.9,79.5  near 3488  rim 0.000/0.004
+---
+> seed 1 t4-on t  16.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 2 big 2078  centre 130.9,79.5  near 3488
+36c36
+< seed 1 t4-on t  17.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 1 big 2094  centre 130.9,79.5  near 3555  rim 0.000/0.004
+---
+> seed 1 t4-on t  17.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 1 big 2094  centre 130.9,79.5  near 3555
+38c38
+< seed 1 t4-on t  18.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 2 big 2056  centre 130.9,79.5  near 3525  rim 0.000/0.003
+---
+> seed 1 t4-on t  18.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 2 big 2056  centre 130.9,79.5  near 3525
+40c40
+< seed 1 t4-on t  19.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 1 big 2080  centre 130.9,79.5  near 3480  rim 0.000/0.004
+---
+> seed 1 t4-on t  19.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 1 big 2080  centre 130.9,79.5  near 3480
+42,43c42
+< seed 1 t4-on t  20.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 1 big 2072  centre 131.0,79.5  near 3456  rim 0.000/0.004
+< seed 1 t4-on firsts 0:72:0.57:0.0 1:54:0.67:0.3 2:96:0.87:-1.0 3:94:0.88:-1.0 4:51:0.42:0.2 5:59:0.55:0.5 6:76:0.68:-1.0
+---
+> seed 1 t4-on t  20.0s  life walk 18104 spore 0 dormant 0 dead 1896  held 3/7  bodies 1 big 2072  centre 131.0,79.5  near 3456

@@ -2,9 +2,9 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-11T22:00Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md]
-code: [BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate]
+updated: 2026-11-12T00:10Z
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md]
+code: [BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier]
 ---
 
 # The mould tiers (difficulty ladder)
@@ -26,11 +26,18 @@ difficulty stat, not a gate (14:14Z).
 | 5 | Rival pair | two species fighting over borders | lure one into the other |
 | 6 | Converter | converts rivals where it outnumbers them (`species_convert`) | kill early, keep rivals apart |
 | 7 | Mixes | several of the above | adapt the build |
-| added | Sporer, Sleeper, Swarmer | spores, a dormant crust, walking into fire (`spore_rate`, `sleep_rate`, `alarm_weight`) | starve, bait then strike, a kill zone |
+| added | Sleeper | a nest: a dormant crust round its home crystal that wakes in a wave (`Tier::Sleeper`) | bait it, then strike (proposed) |
+| added | Swarmer | floods where it is hit (`Tier::Swarmer`, `alarm_weight` +3); a modifier any tier can carry | a kill zone (proposed) |
+| added | Sporer | fed walkers fly to new crystals (`Tier::Sporer`) | starve it, don't strike near untaken crystals (proposed) |
 
-The added three are built on the CPU big dish and each beat its control on
-8 of 8 seeds ([the life cycle](../model/life-cycle.md)); where they sit in
-the order is not set. A splitting or migrating tier is open.
+The added three are on the CPU big dish, named for the game by
+`mould::tiers::Tier`, and the squad's shots lay the alarm they answer. In
+the Larder world's race (growth, crystals that run dry) the Swarmer and the
+Sleeper's bait hold on 8 of 8 seeds, but the Sporer's edge over the plain
+mould is not significant, and the Sleeper barely leaves its home crystal,
+so it suits an early tier or a map feature
+([the life cycle](../model/life-cycle.md)). Their place in the order is not
+set; none is on the GPU yet.
 
 The Drifter's grazing is what makes it forage: on food piles it sends
 small droplets to far food, while the edge of its body moves about 10
@@ -42,19 +49,21 @@ now have its own settings on one dish (`species_sets`;
 
 ## Open
 
+- Candidate tiers from review 2 ([the reviews](../../Reports/mould-tiers-review-2026-11-11.md)), most promising first: supply lines (traffic-made arteries that carry food; cut one to starve the far end), habituation (a mould that learns to ignore a repeated trick), clans that fuse or fight along a scar, a mould that learns the rhythm of fire, a pacemaker heartbeat, day and night light, a nomad that avoids its own slime, two foods. Each has a first experiment there.
 - The order of the added tiers. On the GPU engine, species and
   conversion came with the outside rules, and each species' own settings,
   conversion over a square and a second kind followed (11-11, [species on
   the GPU](../../Reports/species-gpu-2026-11-11.md)), so a rival pair can
   pair a droplet species with a network one there. The life cycle (Sporer,
-  Sleeper, Swarmer) is next, after the tiers' re-test at the world's
-  operating point.
+  Sleeper, Swarmer) is next; the world re-test is done (`Tier` names its
+  keys).
 - Each tier's counter tested with the player AI ([player AI](player-ai.md)) once Larder runs in the world.
 
 ## Sources
 
 - [larder-world-roadmap-2026-11-11.md](../../Reports/larder-world-roadmap-2026-11-11.md), *Mould progression*.
-- [mould-tiers-2026-11-11.md](../../Reports/mould-tiers-2026-11-11.md): Sporer, Sleeper, Swarmer.
+- [mould-tiers-2026-11-11.md](../../Reports/mould-tiers-2026-11-11.md): Sporer, Sleeper, Swarmer; *In the Larder world*.
+- [mould-tiers-review-2026-11-11.md](../../Reports/mould-tiers-review-2026-11-11.md): two independent reviews and the response.
 - [first-reach-2026-11-11.md](../../Reports/first-reach-2026-11-11.md): droplet moulds and mixes on food piles.
 - [species-sets-2026-11-11.md](../../Reports/species-sets-2026-11-11.md): per-species settings, two species on one dish.
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species rules on the GPU engine.
