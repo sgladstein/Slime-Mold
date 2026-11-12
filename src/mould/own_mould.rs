@@ -28,10 +28,14 @@
 //!
 //! **Not yet** (each on the wiki page's Open list): the GPU world (the
 //! engine runs the species already; the squad frame's species test is the
-//! GPU thread's to port, after the toolkit's rows), a per-side walker
-//! reserve (both moulds share `capacity`), and the core rule: a taken
-//! enemy core stops every birth (`BigParams::birth_energy` is global), so
-//! `Garden::stop_births` stops none until births can be stopped by species.
+//! GPU thread's to port, after the toolkit's rows).
+//!
+//! **Each side's walkers** (2026-11-12, the tech lead's review of #119):
+//! each mould may hold at most half the slots (`BigParams::species_cap`),
+//! so a big player mould cannot win a fight by filling the enemy's birth
+//! slots (a sown mould reached 32,000 of 50,000 in the shared pool). A
+//! taken enemy core sets the enemy's cap to 0: its births stop, the
+//! player's go on.
 
 use super::big::{BigDish, BigParams, SpeciesSet, LIFE_DEAD, LIFE_SPORE};
 use super::larder_world::{race_params, race_world, Soldier, World};
@@ -113,6 +117,9 @@ pub fn garden_world(seed: u64, scale: usize, walkers: usize, sets: Option<(Speci
     p.species_convert = 1.2;
     p.species_convert_r = 4;
     p.species_convert_per = true;
+    // Half the slots a side; the unused species 1 and 2 hold none.
+    let half = p.capacity.max(p.walkers) / 2;
+    p.species_cap = (0..SPECIES).map(|s| if s == 0 || s == OWN { half } else { 0 }).collect();
     let base = SpeciesSet::from_params(&p);
     let (e, o) = sets.unwrap_or((base, base));
     p.species_sets = (0..SPECIES).map(|s| if s == OWN { o } else if s == 0 { e } else { base }).collect();
@@ -413,9 +420,13 @@ impl World for Garden {
         World::open(&self.dish, x, y)
     }
 
-    /// Births stop for every species at once (`birth_energy` is global), so
-    /// the garden keeps them: the core rule waits on births by species.
-    fn stop_births(&mut self) {}
+    /// The enemy's births stop (its cap goes to 0); the player's mould
+    /// keeps growing.
+    fn stop_births(&mut self) {
+        if let Some(c) = self.dish.p.species_cap.get_mut(0) {
+            *c = 0;
+        }
+    }
 
     fn food_deposit(&self) -> f32 {
         self.dish.p.food_deposit
@@ -465,6 +476,19 @@ mod tests {
         let d = &game.world.dish;
         let k = (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == OWN).map(|k| d.walkers[k]).map(|w| (w.0 - game.larder.0).hypot(w.1 - game.larder.1)).fold(0.0f32, f32::max);
         assert!(k < 40.0, "the player's mould starts by the larder: farthest {k}");
+    }
+
+    /// Each side holds half the slots, and a taken core stops only the
+    /// enemy's births.
+    #[test]
+    fn taken_core_stops_only_the_enemys_births() {
+        let mut g = garden();
+        let half = g.dish.walkers.len() / 2;
+        assert_eq!(g.dish.p.species_cap[0], half);
+        assert_eq!(g.dish.p.species_cap[OWN as usize], half);
+        g.stop_births();
+        assert_eq!(g.dish.p.species_cap[0], 0);
+        assert_eq!(g.dish.p.species_cap[OWN as usize], half);
     }
 
     /// A road lays the player's trail where the soldier stands; a cut kills

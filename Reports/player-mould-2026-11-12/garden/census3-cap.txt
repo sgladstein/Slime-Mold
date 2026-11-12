@@ -1,0 +1,192 @@
+garden: cap 300 s, walkers 2500 a side, hands ["idle", "random", "farm", "sow", "sow2"], seeds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
+raw idle seed 4: Out { share: 0.5602378792441928, own: 4831, enemy: 3453, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 3: Out { share: 0.5051723828558369, own: 4658, enemy: 6019, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 1: Out { share: 0.3534218188975999, own: 2737, enemy: 7121, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 2: Out { share: 0.2601012590981945, own: 3814, enemy: 10497, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 5: Out { share: 0.5649089478764366, own: 4718, enemy: 4551, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 6: Out { share: 0.4488484451817279, own: 3538, enemy: 4511, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 7: Out { share: 0.26477169921383664, own: 2858, enemy: 7746, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 8: Out { share: 0.21936898364141028, own: 3299, enemy: 9858, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 9: Out { share: 0.5450950843379917, own: 7253, enemy: 5067, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 10: Out { share: 0.2148464577812966, own: 2740, enemy: 10211, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 11: Out { share: 0.40724315459428617, own: 4113, enemy: 7560, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 12: Out { share: 0.41778028801193906, own: 3659, enemy: 5688, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 13: Out { share: 0.267121197674557, own: 1635, enemy: 8170, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 15: Out { share: 0.47959500618953277, own: 3534, enemy: 4682, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 14: Out { share: 0.7393396641706503, own: 7181, enemy: 2311, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 16: Out { share: 0.37724566725807684, own: 7111, enemy: 10085, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 17: Out { share: 0.3852521801872042, own: 1169, enemy: 2873, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 18: Out { share: 0.39382796560419997, own: 3181, enemy: 6499, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 19: Out { share: 0.2618494953242866, own: 3852, enemy: 7744, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 20: Out { share: 0.4341622709081375, own: 3497, enemy: 8696, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 21: Out { share: 0.5073927445127832, own: 3025, enemy: 2961, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 22: Out { share: 0.13198481186965585, own: 1286, enemy: 10814, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 23: Out { share: 0.5960815222563302, own: 6538, enemy: 4866, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 24: Out { share: 0.2667567259349058, own: 5209, enemy: 9194, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 25: Out { share: 0.334138467522073, own: 4284, enemy: 9509, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 26: Out { share: 0.1783238946329298, own: 3319, enemy: 9317, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 27: Out { share: 0.3369584690229551, own: 3735, enemy: 11017, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 28: Out { share: 0.4356943297285483, own: 2389, enemy: 2437, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 29: Out { share: 0.44210600297064806, own: 4667, enemy: 7051, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 30: Out { share: 0.4611395509863378, own: 2821, enemy: 4406, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 31: Out { share: 0.49635658935043364, own: 4121, enemy: 3740, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw idle seed 32: Out { share: 0.42767909703182033, own: 8461, enemy: 7753, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw random seed 1: Out { share: 0.7159121905431591, own: 12074, enemy: 14476, soldiers: 0, end: "cap", roads: 3525, fed: 3694.591, cut: 5897 }
+raw random seed 2: Out { share: 0.7162151328437949, own: 21421, enemy: 7752, soldiers: 2, end: "cap", roads: 3975, fed: 2420.0022, cut: 2866 }
+raw random seed 3: Out { share: 0.7257989812366596, own: 10562, enemy: 11294, soldiers: 1, end: "cap", roads: 2925, fed: 3898.559, cut: 9459 }
+raw random seed 4: Out { share: 0.8280010575702043, own: 25089, enemy: 6672, soldiers: 2, end: "cap", roads: 2700, fed: 4539.94, cut: 14178 }
+raw random seed 5: Out { share: 0.7439743013712785, own: 25076, enemy: 13280, soldiers: 0, end: "cap", roads: 2456, fed: 3191.955, cut: 6442 }
+raw random seed 6: Out { share: 0.8590474645597335, own: 19625, enemy: 5612, soldiers: 1, end: "cap", roads: 4875, fed: 2200.0156, cut: 8214 }
+raw random seed 7: Out { share: 0.6601185724853421, own: 11055, enemy: 14414, soldiers: 0, end: "cap", roads: 1408, fed: 2546.6611, cut: 3953 }
+raw random seed 9: Out { share: 0.7843584689551797, own: 21186, enemy: 13764, soldiers: 0, end: "cap", roads: 2250, fed: 3497.2698, cut: 4199 }
+raw random seed 8: Out { share: 0.4399332231926982, own: 8145, enemy: 17472, soldiers: 0, end: "cap", roads: 1425, fed: 1400.0051, cut: 2321 }
+raw random seed 10: Out { share: 0.7294367255626775, own: 9003, enemy: 8151, soldiers: 0, end: "cap", roads: 3150, fed: 2033.3578, cut: 2247 }
+raw random seed 11: Out { share: 0.7695907514609461, own: 16434, enemy: 12661, soldiers: 0, end: "cap", roads: 3075, fed: 3331.9465, cut: 5178 }
+raw random seed 12: Out { share: 0.7883203179203101, own: 25095, enemy: 16019, soldiers: 2, end: "cap", roads: 3225, fed: 4099.9004, cut: 10421 }
+raw random seed 14: Out { share: 0.7323293305362996, own: 25092, enemy: 7810, soldiers: 0, end: "squad wiped", roads: 1425, fed: 2599.9912, cut: 2983 }
+raw random seed 13: Out { share: 0.7993928103036609, own: 18218, enemy: 8904, soldiers: 0, end: "cap", roads: 3496, fed: 3699.924, cut: 5962 }
+raw random seed 15: Out { share: 0.7052275095051453, own: 12626, enemy: 12412, soldiers: 0, end: "squad wiped", roads: 2165, fed: 3799.9167, cut: 2507 }
+raw random seed 16: Out { share: 0.5857441551247788, own: 14525, enemy: 15878, soldiers: 0, end: "squad wiped", roads: 1200, fed: 2899.9712, cut: 730 }
+raw random seed 17: Out { share: 0.9259421351532166, own: 23020, enemy: 3616, soldiers: 4, end: "cap", roads: 4800, fed: 4199.9126, cut: 10652 }
+raw random seed 18: Out { share: 0.6296480514855499, own: 19480, enemy: 13666, soldiers: 1, end: "cap", roads: 3464, fed: 2599.9912, cut: 3795 }
+raw random seed 19: Out { share: 0.6845522011376933, own: 17726, enemy: 8875, soldiers: 2, end: "cap", roads: 1800, fed: 3199.9316, cut: 6414 }
+raw random seed 20: Out { share: 0.8270666041947546, own: 23000, enemy: 6818, soldiers: 4, end: "cap", roads: 3600, fed: 3499.938, cut: 8381 }
+raw random seed 22: Out { share: 0.4742626954179725, own: 6610, enemy: 17723, soldiers: 0, end: "cap", roads: 4973, fed: 1884.0199, cut: 4026 }
+raw random seed 21: Out { share: 0.865465803831136, own: 23404, enemy: 7669, soldiers: 1, end: "cap", roads: 2979, fed: 3629.2617, cut: 6199 }
+raw random seed 23: Out { share: 0.8721776318832712, own: 24984, enemy: 10110, soldiers: 1, end: "cap", roads: 3339, fed: 4988.0273, cut: 6422 }
+raw random seed 25: Out { share: 0.7127366279624369, own: 15591, enemy: 13280, soldiers: 0, end: "cap", roads: 1050, fed: 2260.012, cut: 5893 }
+raw random seed 24: Out { share: 0.7606210617707818, own: 24999, enemy: 11954, soldiers: 2, end: "cap", roads: 3000, fed: 4526.6147, cut: 8988 }
+raw random seed 26: Out { share: 0.7106318716147727, own: 20685, enemy: 7268, soldiers: 1, end: "cap", roads: 3825, fed: 2810.645, cut: 2695 }
+raw random seed 27: Out { share: 0.7774665553725263, own: 15984, enemy: 9752, soldiers: 1, end: "cap", roads: 4275, fed: 3983.9067, cut: 7765 }
+raw random seed 30: Out { share: 0.7648438036295235, own: 16337, enemy: 9690, soldiers: 0, end: "cap", roads: 4500, fed: 3738.5884, cut: 6353 }
+raw random seed 28: Out { share: 0.8671070254942227, own: 25567, enemy: 5905, soldiers: 2, end: "cap", roads: 2100, fed: 4699.97, cut: 3955 }
+raw random seed 29: Out { share: 0.6754268882779167, own: 15639, enemy: 11823, soldiers: 0, end: "cap", roads: 2814, fed: 2999.9668, cut: 3269 }
+raw farm seed 1: Out { share: 0.9456248607321761, own: 1227, enemy: 3521, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw random seed 31: Out { share: 0.8270315415379799, own: 19010, enemy: 10075, soldiers: 0, end: "cap", roads: 4125, fed: 3325.2803, cut: 10716 }
+raw random seed 32: Out { share: 0.7925956265116911, own: 18020, enemy: 10563, soldiers: 0, end: "cap", roads: 2850, fed: 3827.9163, cut: 6747 }
+raw farm seed 2: Out { share: 0.8755332549935566, own: 2489, enemy: 10999, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 3: Out { share: 0.9322215140506305, own: 1959, enemy: 7559, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 4: Out { share: 0.9458775407501188, own: 2129, enemy: 3893, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 5: Out { share: 0.9458897188105793, own: 1124, enemy: 4264, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 6: Out { share: 0.9689761332154926, own: 2353, enemy: 3507, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 7: Out { share: 0.9076356117052673, own: 995, enemy: 6267, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 8: Out { share: 0.9143752599069832, own: 2260, enemy: 6992, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 9: Out { share: 0.9485477525098958, own: 1131, enemy: 3905, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 10: Out { share: 0.9056333853008166, own: 1201, enemy: 7497, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 11: Out { share: 0.9163752477187196, own: 1090, enemy: 6503, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 12: Out { share: 0.947001188666332, own: 3882, enemy: 4623, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 13: Out { share: 0.9651643565540289, own: 1505, enemy: 1846, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 14: Out { share: 0.9683993794268928, own: 969, enemy: 1707, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 15: Out { share: 0.9716564032441234, own: 955, enemy: 2668, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 16: Out { share: 0.9287796037769438, own: 1612, enemy: 6079, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 17: Out { share: 0.958272747097607, own: 1051, enemy: 2877, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 18: Out { share: 0.9055976119727226, own: 1312, enemy: 7351, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 19: Out { share: 0.9380243113295139, own: 1036, enemy: 6833, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 20: Out { share: 0.9276055471980876, own: 1048, enemy: 3179, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 21: Out { share: 0.959320961569473, own: 2065, enemy: 2177, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 22: Out { share: 0.8895095233500562, own: 1136, enemy: 11270, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 23: Out { share: 0.9500505500386304, own: 5204, enemy: 4779, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 24: Out { share: 0.8862612443648347, own: 1180, enemy: 9213, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 25: Out { share: 0.9181668586920338, own: 703, enemy: 8266, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 26: Out { share: 0.9199045057241285, own: 3987, enemy: 9064, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 27: Out { share: 0.9760060711020446, own: 1177, enemy: 3027, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 29: Out { share: 0.9557229121856091, own: 1153, enemy: 4131, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 28: Out { share: 0.9519466024350763, own: 1300, enemy: 2405, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 31: Out { share: 0.9373229612167627, own: 1104, enemy: 4478, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 30: Out { share: 0.9624645052447836, own: 3650, enemy: 3292, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw farm seed 32: Out { share: 0.8976922416118679, own: 1160, enemy: 7650, soldiers: 8, end: "cap", roads: 0, fed: 0.0, cut: 0 }
+raw sow seed 1: Out { share: 0.9380065915346605, own: 18048, enemy: 8687, soldiers: 8, end: "cap", roads: 109, fed: 4583.9595, cut: 0 }
+raw sow seed 2: Out { share: 0.8802590395425515, own: 6786, enemy: 10681, soldiers: 8, end: "cap", roads: 80, fed: 5893.4526, cut: 0 }
+raw sow seed 3: Out { share: 0.9589428301739279, own: 25003, enemy: 8209, soldiers: 8, end: "cap", roads: 68, fed: 5909.4546, cut: 0 }
+raw sow seed 4: Out { share: 0.9742131313880258, own: 25235, enemy: 4226, soldiers: 8, end: "cap", roads: 80, fed: 5893.4526, cut: 0 }
+raw sow seed 5: Out { share: 0.9275889420502365, own: 11776, enemy: 8180, soldiers: 8, end: "cap", roads: 120, fed: 3530.601, cut: 0 }
+raw sow seed 6: Out { share: 0.9443811574354761, own: 15568, enemy: 8037, soldiers: 8, end: "cap", roads: 89, fed: 3997.2393, cut: 0 }
+raw sow seed 7: Out { share: 0.9562058163883738, own: 19845, enemy: 5601, soldiers: 8, end: "cap", roads: 82, fed: 5890.7856, cut: 0 }
+raw sow seed 8: Out { share: 0.8821131186748213, own: 11543, enemy: 8365, soldiers: 8, end: "cap", roads: 73, fed: 1776.0166, cut: 0 }
+raw sow seed 9: Out { share: 0.9597267732848386, own: 22399, enemy: 5086, soldiers: 8, end: "cap", roads: 106, fed: 5858.7817, cut: 0 }
+raw sow seed 10: Out { share: 0.9544991858293236, own: 20189, enemy: 6248, soldiers: 8, end: "cap", roads: 73, fed: 5248.0405, cut: 0 }
+raw sow seed 11: Out { share: 0.9632990087883965, own: 18494, enemy: 5476, soldiers: 8, end: "cap", roads: 85, fed: 5886.785, cut: 0 }
+raw sow seed 12: Out { share: 0.955849821374902, own: 25032, enemy: 6112, soldiers: 8, end: "cap", roads: 82, fed: 5890.7856, cut: 0 }
+raw sow seed 14: Out { share: 0.9789965061890183, own: 8415, enemy: 2480, soldiers: 8, end: "cap", roads: 88, fed: 5882.7847, cut: 0 }
+raw sow seed 13: Out { share: 0.9347765980963414, own: 13114, enemy: 8058, soldiers: 8, end: "cap", roads: 103, fed: 2104.0215, cut: 0 }
+raw sow seed 15: Out { share: 0.9532016822700381, own: 13490, enemy: 5510, soldiers: 8, end: "cap", roads: 75, fed: 4107.9014, cut: 0 }
+raw sow seed 16: Out { share: 0.9533173138483171, own: 21964, enemy: 7321, soldiers: 8, end: "cap", roads: 75, fed: 5900.12, cut: 0 }
+raw sow seed 17: Out { share: 0.9784557612725359, own: 25090, enemy: 3038, soldiers: 8, end: "cap", roads: 109, fed: 5854.7813, cut: 0 }
+raw sow seed 18: Out { share: 0.9528790985418064, own: 18038, enemy: 8085, soldiers: 8, end: "cap", roads: 100, fed: 5866.7827, cut: 0 }
+raw sow seed 19: Out { share: 0.9370659323942978, own: 24634, enemy: 8661, soldiers: 8, end: "cap", roads: 103, fed: 5442.731, cut: 0 }
+raw sow seed 20: Out { share: 0.9659460565526345, own: 18584, enemy: 5734, soldiers: 8, end: "cap", roads: 106, fed: 5858.7817, cut: 0 }
+raw sow seed 21: Out { share: 0.9266302632139374, own: 24586, enemy: 12236, soldiers: 8, end: "cap", roads: 126, fed: 4926.668, cut: 0 }
+raw sow seed 22: Out { share: 0.907020314527728, own: 21217, enemy: 13133, soldiers: 8, end: "cap", roads: 124, fed: 5300.047, cut: 0 }
+raw sow seed 23: Out { share: 0.9647016101433483, own: 25015, enemy: 5869, soldiers: 8, end: "cap", roads: 75, fed: 5900.12, cut: 0 }
+raw sow seed 24: Out { share: 0.8832241439167202, own: 15013, enemy: 10694, soldiers: 8, end: "cap", roads: 112, fed: 2248.0127, cut: 0 }
+raw sow seed 25: Out { share: 0.9315344954389498, own: 23424, enemy: 11664, soldiers: 8, end: "cap", roads: 87, fed: 5884.118, cut: 0 }
+raw sow seed 26: Out { share: 0.9335953207779513, own: 19987, enemy: 9502, soldiers: 8, end: "cap", roads: 78, fed: 5896.1196, cut: 0 }
+raw sow seed 27: Out { share: 0.9320273079331105, own: 1932, enemy: 4125, soldiers: 8, end: "cap", roads: 104, fed: 5861.4487, cut: 0 }
+raw sow seed 28: Out { share: 0.9728111510623177, own: 25343, enemy: 3118, soldiers: 8, end: "cap", roads: 78, fed: 5896.1196, cut: 0 }
+raw sow seed 29: Out { share: 0.9435164022746032, own: 22126, enemy: 9778, soldiers: 8, end: "cap", roads: 74, fed: 5901.4536, cut: 0 }
+raw sow seed 30: Out { share: 0.9664901681594328, own: 18596, enemy: 4432, soldiers: 8, end: "cap", roads: 101, fed: 5865.449, cut: 0 }
+raw sow seed 31: Out { share: 0.9429972340658889, own: 12992, enemy: 5979, soldiers: 8, end: "cap", roads: 94, fed: 2926.638, cut: 0 }
+raw sow seed 32: Out { share: 0.936353196607219, own: 12092, enemy: 6853, soldiers: 8, end: "cap", roads: 116, fed: 5845.447, cut: 0 }
+raw sow2 seed 1: Out { share: 0.952412637098095, own: 24508, enemy: 8065, soldiers: 8, end: "cap", roads: 382, fed: 8781.589, cut: 0 }
+raw sow2 seed 3: Out { share: 0.9505467603924418, own: 23571, enemy: 10017, soldiers: 8, end: "cap", roads: 360, fed: 11519.587, cut: 0 }
+raw sow2 seed 2: Out { share: 0.9123500127083303, own: 25081, enemy: 13121, soldiers: 8, end: "cap", roads: 298, fed: 11602.233, cut: 0 }
+raw sow2 seed 4: Out { share: 0.9721115040263034, own: 25143, enemy: 4909, soldiers: 8, end: "cap", roads: 302, fed: 11596.901, cut: 0 }
+raw sow2 seed 6: Out { share: 0.9707922381559377, own: 15076, enemy: 5295, soldiers: 8, end: "cap", roads: 318, fed: 6058.806, cut: 0 }
+raw sow2 seed 5: Out { share: 0.9310243780657852, own: 15356, enemy: 7251, soldiers: 8, end: "cap", roads: 380, fed: 6320.1714, cut: 0 }
+raw sow2 seed 7: Out { share: 0.9588531948756622, own: 25194, enemy: 5700, soldiers: 8, end: "cap", roads: 308, fed: 11588.903, cut: 0 }
+raw sow2 seed 8: Out { share: 0.9003351563483849, own: 17198, enemy: 10555, soldiers: 8, end: "cap", roads: 306, fed: 3881.2463, cut: 0 }
+raw sow2 seed 9: Out { share: 0.9576695406706559, own: 25062, enemy: 6352, soldiers: 8, end: "cap", roads: 352, fed: 11530.251, cut: 0 }
+raw sow2 seed 10: Out { share: 0.9618736811552985, own: 25071, enemy: 7253, soldiers: 8, end: "cap", roads: 318, fed: 11575.573, cut: 0 }
+raw sow2 seed 11: Out { share: 0.9522647052328465, own: 21917, enemy: 8131, soldiers: 8, end: "cap", roads: 320, fed: 11299.641, cut: 0 }
+raw sow2 seed 12: Out { share: 0.9273287489967273, own: 14889, enemy: 8716, soldiers: 8, end: "cap", roads: 310, fed: 5454.7324, cut: 0 }
+raw sow2 seed 13: Out { share: 0.9298660139655212, own: 14513, enemy: 7614, soldiers: 8, end: "cap", roads: 384, fed: 6445.52, cut: 0 }
+raw sow2 seed 15: Out { share: 0.9601806008948248, own: 25106, enemy: 5127, soldiers: 8, end: "cap", roads: 290, fed: 11612.897, cut: 0 }
+raw sow2 seed 14: Out { share: 0.9741961003008921, own: 17101, enemy: 2660, soldiers: 8, end: "cap", roads: 388, fed: 11482.263, cut: 0 }
+raw sow2 seed 16: Out { share: 0.9379256056327654, own: 23601, enemy: 9961, soldiers: 8, end: "cap", roads: 338, fed: 11548.913, cut: 0 }
+raw sow2 seed 17: Out { share: 0.9775238164637251, own: 25143, enemy: 4128, soldiers: 8, end: "cap", roads: 364, fed: 11514.255, cut: 0 }
+raw sow2 seed 18: Out { share: 0.9659565487555871, own: 24456, enemy: 5810, soldiers: 8, end: "cap", roads: 348, fed: 11535.583, cut: 0 }
+raw sow2 seed 19: Out { share: 0.9383149674637427, own: 25203, enemy: 7856, soldiers: 8, end: "cap", roads: 458, fed: 11388.952, cut: 0 }
+raw sow2 seed 20: Out { share: 0.9752395741510119, own: 24610, enemy: 3690, soldiers: 8, end: "cap", roads: 466, fed: 11378.288, cut: 0 }
+raw sow2 seed 21: Out { share: 0.9640465312943498, own: 25123, enemy: 6858, soldiers: 8, end: "cap", roads: 392, fed: 10690.456, cut: 0 }
+raw sow2 seed 22: Out { share: 0.90414962962409, own: 23890, enemy: 12615, soldiers: 8, end: "cap", roads: 390, fed: 11479.597, cut: 0 }
+raw sow2 seed 23: Out { share: 0.9695402243902387, own: 25049, enemy: 5109, soldiers: 8, end: "cap", roads: 366, fed: 11511.589, cut: 0 }
+raw sow2 seed 25: Out { share: 0.9488951170764977, own: 22686, enemy: 9177, soldiers: 8, end: "cap", roads: 314, fed: 11580.905, cut: 0 }
+raw sow2 seed 24: Out { share: 0.9379187778556989, own: 25007, enemy: 8825, soldiers: 8, end: "cap", roads: 360, fed: 11519.587, cut: 0 }
+raw sow2 seed 26: Out { share: 0.9053762337704208, own: 19261, enemy: 9290, soldiers: 8, end: "cap", roads: 424, fed: 11434.274, cut: 0 }
+raw sow2 seed 27: Out { share: 0.9650037081672128, own: 24136, enemy: 6711, soldiers: 8, end: "cap", roads: 436, fed: 11418.278, cut: 0 }
+raw sow2 seed 29: Out { share: 0.916781611037028, own: 15389, enemy: 7391, soldiers: 8, end: "cap", roads: 300, fed: 3577.265, cut: 0 }
+raw sow2 seed 28: Out { share: 0.9734236063702736, own: 25024, enemy: 2897, soldiers: 8, end: "cap", roads: 302, fed: 11596.901, cut: 0 }
+raw sow2 seed 30: Out { share: 0.9700069461288559, own: 22270, enemy: 3979, soldiers: 8, end: "cap", roads: 442, fed: 11410.28, cut: 0 }
+raw sow2 seed 31: Out { share: 0.9290371130030084, own: 18197, enemy: 7465, soldiers: 8, end: "cap", roads: 378, fed: 5245.3735, cut: 0 }
+raw sow2 seed 32: Out { share: 0.9327715043037257, own: 19760, enemy: 10046, soldiers: 8, end: "cap", roads: 380, fed: 11492.927, cut: 0 }
+
+summary: player's share of the charge eaten (squad + own mould), and walkers at the end
+   idle: median share 0.418 (0.132-0.739), mean own 4039 enemy 6763 soldiers 4.0, squad wiped 0; road frames 0, fed 0, cut 0
+ random: median share 0.761 (0.440-0.926), mean own 18290 enemy 10792 soldiers 0.8, squad wiped 3; road frames 3024, fed 3313, cut 5932
+   farm: median share 0.946 (0.876-0.976), mean own 1723 enemy 5369 soldiers 8.0, squad wiped 0; road frames 0, fed 0, cut 0
+    sow: median share 0.953 (0.880-0.979), mean own 18299 enemy 7224 soldiers 8.0, squad wiped 0; road frames 93, fed 5120, cut 0
+   sow2: median share 0.952 (0.900-0.978), mean own 21987 enemy 7268 soldiers 8.0, squad wiped 0; road frames 359, fed 10034, cut 0
+
+paired (hand vs control): seeds where the hand's share is higher / lower, p, median difference
+
+paired on the moulds' balance at the cap (player's walkers less the enemy's): higher / lower, p, median difference
+   idle vs random  2 / 30  p 0.0000  median diff -9132
+   idle vs farm   23 /  9  p 0.0201  median diff +1057
+ random vs idle   30 /  2  p 0.0000  median diff +11105
+ random vs farm   29 /  3  p 0.0000  median diff +11853
+   farm vs idle    9 / 23  p 0.0201  median diff -606
+   farm vs random  3 / 29  p 0.0000  median diff -10196
+    sow vs idle   32 /  0  p 0.0000  median diff +15749
+    sow vs random 20 / 12  p 0.2153  median diff +4272
+    sow vs farm   31 /  1  p 0.0000  median diff +15562
+   sow2 vs idle   32 /  0  p 0.0000  median diff +18643
+   sow2 vs random 25 /  7  p 0.0021  median diff +5066
+   sow2 vs farm   32 /  0  p 0.0000  median diff +19275
+   idle vs random  1 / 31  p 0.0000  median diff -0.362  (Holm)
+ random vs idle   31 /  1  p 0.0000  median diff +0.362  (Holm)
+   farm vs idle   32 /  0  p 0.0000  median diff +0.520  (Holm)
+   farm vs random 32 /  0  p 0.0000  median diff +0.198  (Holm)
+    sow vs idle   32 /  0  p 0.0000  median diff +0.556  (Holm)
+    sow vs random 32 /  0  p 0.0000  median diff +0.194  (Holm)
+   sow2 vs idle   32 /  0  p 0.0000  median diff +0.545  (Holm)
+   sow2 vs random 32 /  0  p 0.0000  median diff +0.195  (Holm)
