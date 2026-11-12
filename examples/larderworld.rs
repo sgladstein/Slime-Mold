@@ -50,6 +50,8 @@
 //! - **turtle**: farm, and a pump on each crystal a soldier is clearing
 //!   (the soldier is on it, so it is in reach) with a turret beside it, as
 //!   the bank allows over `RESERVE`.
+//! - **pumps** and **guard**: the turtle's halves alone, pumps without
+//!   turrets, and a turret by each farmed crystal without pumps.
 //! - **killzone**: farm, and a lure `ZONE` dish cells from the larder on
 //!   the road to the core with a turret either side of the road halfway
 //!   there, as the bank allows over `RESERVE`; the lure pulls the mould
@@ -126,6 +128,10 @@ fn main() {
             "price" => rules.price = v.parse().unwrap(),
             "strike" => rules.strike = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
+            "pump_rate" => rules.build.pump_rate = v.parse().unwrap(),
+            "pump_cost" => rules.build.pump_cost = v.parse().unwrap(),
+            "turret_cost" => rules.build.turret_cost = v.parse().unwrap(),
+            "turret_every" => rules.build.turret_every = v.parse().unwrap(),
             "tier" => TIER.set(Tier::from_name(v).unwrap_or_else(|| panic!("unknown tier {v}"))).unwrap(),
             "map" => {
                 let path = std::path::Path::new(v);
@@ -192,7 +198,7 @@ fn main() {
     }
     let mut tests = Vec::new();
     for h in hands.iter().filter(|h| *h != "idle" && *h != "random") {
-        let scripted = ["farm", "rush", "wall", "ring", "turtle", "killzone"].contains(&h.as_str());
+        let scripted = ["farm", "rush", "wall", "ring", "turtle", "killzone", "pumps", "guard"].contains(&h.as_str());
         for base in ["idle", "random", "farm"] {
             if base == "farm" && scripted {
                 continue;
@@ -266,7 +272,15 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
             }
             "turtle" => {
                 farm_hand(g, &mut farmed);
-                turtle_hand(g);
+                turtle_hand(g, true, true);
+            }
+            "pumps" => {
+                farm_hand(g, &mut farmed);
+                turtle_hand(g, true, false);
+            }
+            "guard" => {
+                farm_hand(g, &mut farmed);
+                turtle_hand(g, false, true);
             }
             "killzone" => {
                 farm_hand(g, &mut farmed);
@@ -467,15 +481,17 @@ fn ring_hand(g: &mut Game<BigDish>) {
     }
 }
 
-fn turtle_hand(g: &mut Game<BigDish>) {
+/// The turtle's two halves can be played alone: `pumps` (pumps, no
+/// turrets) and `guard` (a turret by each farmed crystal, no pumps).
+fn turtle_hand(g: &mut Game<BigDish>, pumps: bool, turrets: bool) {
     let s = g.world.scale();
     let sites: Vec<(f32, f32)> = g.soldiers.iter().filter(|q| q.alive).filter_map(|q| match q.order {
         Order::Clear(x, y) => g.crystal_at((x, y)).map(|(_, c)| c),
         _ => None,
     }).collect();
     for c in sites {
-        let pumped = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Pump && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 1.0);
-        if !pumped {
+        let pumped = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Pump && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 3.0 * s);
+        if pumps && !pumped {
             if let Some(at) = open_by(g, c) {
                 if spare_build(g, Kind::Pump, at) {
                     return;
@@ -484,7 +500,7 @@ fn turtle_hand(g: &mut Game<BigDish>) {
             continue;
         }
         let guarded = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Turret && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 6.0 * s);
-        if !guarded {
+        if turrets && !guarded {
             let (dx, dy) = (g.core.0 - c.0, g.core.1 - c.1);
             let d = dx.hypot(dy).max(1.0);
             if let Some(at) = open_by(g, (c.0 + dx / d * 4.0 * s, c.1 + dy / d * 4.0 * s)) {

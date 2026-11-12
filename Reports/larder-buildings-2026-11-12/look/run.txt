@@ -1,0 +1,27 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+Reports/larder-buildings-2026-11-12/look/fork-build-010s-all.png
+Reports/larder-buildings-2026-11-12/look/fork-build-010s-near.png
+  CPU: ground field 2.10 ms (once a game second), model and HUD 0.042 ms a frame
+  t 10 s: mould 5000, soldiers 5, bank 284, harvested 0, shots 0, killed 0, took 98%, crystals left 0.970
+    turret at (248, 126): hp 300 / 300, built 1.0, standing
+    turret at (264, 126): hp 300 / 300, built 1.0, standing
+    lure at (256, 138): hp 150 / 150, built 1.0, standing, working
+    pumped 0 food, lures burnt 16
+Reports/larder-buildings-2026-11-12/look/fork-build-040s-all.png
+Reports/larder-buildings-2026-11-12/look/fork-build-040s-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.032 ms a frame
+  t 40 s: mould 1415, soldiers 5, bank 304, harvested 980, shots 40, killed 21, took 94%, crystals left 0.956
+    turret at (248, 126): hp 300 / 300, built 1.0, standing
+    turret at (264, 126): hp 300 / 300, built 1.0, standing
+    lure at (256, 138): hp 150 / 150, built 1.0, standing, working
+    pump at (92, 30): hp 200 / 200, built 1.0, standing, working
+    pumped 95 food, lures burnt 76
+Reports/larder-buildings-2026-11-12/look/fork-build-090s-all.png
+Reports/larder-buildings-2026-11-12/look/fork-build-090s-near.png
+  CPU: ground field 1.66 ms (once a game second), model and HUD 0.042 ms a frame
+  t 90 s: mould 2340, soldiers 5, bank 234, harvested 1830, shots 122, killed 76, took 91%, crystals left 0.923
+    turret at (248, 126): hp 300 / 300, built 1.0, standing
+    turret at (264, 126): hp 300 / 300, built 1.0, standing
+    lure at (256, 138): hp 150 / 150, built 1.0, standing, working
+    pump at (92, 30): hp 197 / 200, built 1.0, standing, working
+    pumped 345 food, lures burnt 176
