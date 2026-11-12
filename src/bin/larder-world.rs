@@ -85,9 +85,11 @@
 //! takes, how it networks the crystals"): a round with no `shape=`,
 //! `walkers=` or `mission=` plays C, its keys under any given; `shape=a`
 //! plays today's 5,000 walkers. A mission keeps its own mould (the
-//! campaign thread's). A walker's fight weight
-//! follows the walkers a cell (`Rules::mass`: 5,000 at scale 2 count 1
-//! each, so the dense shapes hurt like today's mould); `mass=M` sets it.
+//! campaign thread's). A walker's weight on buildings, the larder and
+//! wading follows the walkers a cell (`Rules::mass`: 5,000 at scale 2
+//! count 1 each); `mass=M` sets it. Its bite on a soldier
+//! (`Rules::drain`, 2 a second) is whole at any count since 2026-11-12:
+//! the owner walked 40 soldiers into C's thickest part and lost none.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

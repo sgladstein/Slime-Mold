@@ -103,3 +103,64 @@ crystals held, stragglers everywhere else), then follows the remnant to
   +15 s and gone by +25-30 s, on 4 of 4 seeds (`raw/lone/broken-off-d.txt`,
   `raw/lone/broken-on-d.txt`). A walker on a crystal still eats, so a
   remnant left on food can breed the mould back over the line.
+- **Smoke** (8 race seeds, cap 15:00, today's 5,000 walkers, rule on,
+  `raw/lone/smoke-broken.txt`): idle never wins (farm and strike beat it
+  8-0, p 0.008), no game ends inside a minute (the soonest, a rush
+  squad wiped at 2:32), and no hand wipes the mould, so the rule never fires there; rush
+  stood stuck a minute in 1 game of 8 (2 before).
+- **On C**, the new default (`raw/lone/broken-on-c.txt`,
+  `raw/lone/broken-off-c.txt`): without the rule the remnant (151-207 at
+  +5 s) grows to 5,828 walkers on average by 300 s; with it, 63-96 at +5 s
+  and gone by +15-20 s, 4 of 4.
+
+## The owner's next answers (22:19-22:22Z)
+
+C is the default slime: "C is better how it looks, the shape it takes,
+how it networks the crystals". A round in the window with no `shape=`,
+`walkers=` or `mission=` plays C, its keys under any given; `shape=a`
+plays the old 5,000 walkers, and a mission keeps its own mould. On thick
+slime: "more. walking directly into the enemy should be very deadly"
+(against the quarter of 40 this thread proposed). A cut-the-network rule
+waits: "what is going on with the slime is unclear to the player ... I
+cannot tell if it is getting stronger by holding the crystals. Right now
+it is mostly moving around and I kill it." The broken mould: "no
+objections".
+
+## Thick slime: the bite
+
+The owner, 22:18Z, playing C: "I can walk my group of soliders into the
+thickest part of the slime and kill most of the slime and harvest the
+whole crystal without losing a single soldier (the whole game)".
+`examples/thickprobe.rs`: C on the CPU race world (scale 2), 40 soldiers
+held harmless at the larder while it grows for 240 s, then ordered on
+their default stance into its thickest part (the 13 x 13-cell block
+holding the most walkers that a soldier can stand on) and followed 60 s.
+Deciding measure: soldiers lost of 40, race seeds 1-4.
+
+| a walker's bite, health a second | lost of 40 (seeds 1-4) | mean |
+|---|---|---|
+| 0.2 (`drain` 1 x `mass` 0.2, the old rule) | 0, 0, 0, 0 | 0 |
+| 1.0 | 25, 0, 4, 18 | 11.8 |
+| **2.0 (the new default)** | 38, 15, 26, 35 | **28.5** |
+| 4.0 | 39, 39, 28, 38 | 36.0 |
+
+(`raw/thick/move-c.txt`, a plain move in.) An attack-move stops at the
+first slime and fires from its edge: at 2.0 it loses 8, 16, 0 and 17
+(mean 10.2), and at 20 a walker 31.8 (`raw/thick/fight-c.txt`), so how you
+go in now matters: walking into the middle costs most of the squad,
+fighting at the edge about a quarter. 2.0 loses more than the old
+rule on 4 of 4 seeds (sign test p 0.125, the floor for 4). The touching
+explains the old zero: a soldier there is touched on about a third of its
+frames, mostly by 1 to 4 walkers and by 20 or more on about 1%, and at
+0.2 a walker that never adds up to 100 health in 60 s. So the bite is
+whole at any walker count (`Rules::drain` 2, `Rules::mass` no longer
+shrinks it): a soldier on the edge of the slime lives, one in the middle
+dies in seconds. The old 5,000-walker mould (shape A, mass 1) bites twice
+what it did. Buildings keep 1 x mass (`BuildRules::drain`), since the ask
+was about soldiers. Smoke at the new bite (8 race seeds, cap 15:00, the old
+5,000 walkers where the bite doubled, `raw/thick/smoke-bite.txt`): idle
+never wins (farm and strike beat it 8-0, p 0.008), the soonest end is a
+squad wiped at 1:57, nothing stands stuck a minute, and strike now wipes
+the mould on 2 of 8 (0 before; a tuning note). The mould grew through all of it (about 35,000 at the
+order to 36,000-39,000 after), and holds more where the squad dies sooner.
+

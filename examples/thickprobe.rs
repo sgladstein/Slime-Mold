@@ -16,7 +16,9 @@
 //! ordered into the thickest part of the mould (the 13 x 13 fine-cell block
 //! holding the most walkers), as an attack-move (`order=fight`) or a plain
 //! move (`order=move`), with `Rules::drain` at each of `drain=` times its
-//! default, and followed for `for` game seconds.
+//! default, and followed for `for` game seconds. (The first runs, before
+//! the bite went to 2 a walker at any mass, multiplied 1 x mass 0.2:
+//! their x10 is today's default.)
 //!
 //! **Measures, named before the run:**
 //! - **deciding:** soldiers lost of `n` at the end, by drain, on seeds 1-4,
@@ -67,7 +69,7 @@ fn thickest(g: &Game<BigDish>) -> (f32, f32) {
             blocks.push((n, x, y));
         }
     }
-    blocks.sort_by(|a, b| b.0.cmp(&a.0));
+    blocks.sort_by_key(|b| std::cmp::Reverse(b.0));
     blocks.iter().map(|&(_, x, y)| (x as f32, y as f32)).find(|&(x, y)| g.standable(x, y)).unwrap_or(g.larder)
 }
 

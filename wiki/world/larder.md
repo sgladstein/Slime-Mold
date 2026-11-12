@@ -46,9 +46,11 @@ code:
   - Params::light_weight
   - Params::pieces
   - Params::wound
+  - Rules::broken
   - Rules::core_pull
   - Rules::crater
   - Rules::crystal_solid
+  - Rules::drain
   - Rules::home_dry
   - Rules::wade
   - Tier::core
@@ -194,7 +196,7 @@ the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
 the race world's crater is the cone (look 3; `scorch_cone`, full 150, keep
 0; the toolkit's blasts stay flat), and a soldier walks at
 `speed / (1 + (touching / wade)²)` (`Rules::wade` 6: half speed with 6
-walkers touching, a fifth with 12; each counts `Rules::mass`). Over both blocks random wipes the
+walkers touching, a fifth with 12; each counts `Rules::mass`). **A walker's bite on a soldier is 2 health a second at any walker count** since 2026-11-12 (`Rules::drain`; the owner: walking into the slime "should be very deadly"); was 1 x `mass`, which let 40 soldiers stand in C's thickest part and lose none in 60 s ([report, *Thick slime*](../../Reports/slime-questions-2026-11-12/README.md)); buildings keep 1 x `mass` (`BuildRules::drain`). Over both blocks random wipes the
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
 random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the

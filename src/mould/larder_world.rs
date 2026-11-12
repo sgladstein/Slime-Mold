@@ -458,7 +458,21 @@ pub struct Rules {
     /// (M3's), against 30 food a second a harvester takes.
     pub price: f32,
     pub hp: f32,
-    /// Health a walker touching a soldier takes a game second.
+    /// Health a walker touching a soldier takes a game second: its bite,
+    /// whatever the mould's walker count (`Rules::mass` does not shrink
+    /// it). 2 since 2026-11-12 (the owner, 22:18Z, playing shape C: "I can
+    /// walk my group of soliders into the thickest part of the slime and
+    /// kill most of the slime and harvest the whole crystal without losing
+    /// a single soldier"; 22:22Z: "walking directly into the enemy should
+    /// be very deadly"). Was 1 x `mass`, 0.2 a walker at C's 25,000: 40
+    /// soldiers walked into C's thickest part at 240 s lost none in 60 s
+    /// on race seeds 1-4 (`examples/thickprobe.rs`); at 2 a walker they
+    /// lose 26 to 35 of 40 (the report's *Thick slime*). A walker touches
+    /// a soldier on about a third of its frames there (most 1-4 walkers,
+    /// 20 or more on 1%), so a soldier on the edge lives and one in the
+    /// middle dies in seconds. Buildings keep their own
+    /// (`BuildRules::drain`). Today's 5,000-walker mould (shape A, mass 1)
+    /// bites twice what it did.
     pub drain: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
@@ -593,9 +607,12 @@ pub struct Rules {
     /// one, and a goal inside one moves to its rim (`Game::standable`,
     /// `Game::rim`). Shots still fly over crystals.
     pub crystal_solid: bool,
-    /// How much one walker counts in a fight: a walker touching a soldier,
-    /// a building or the larder does `mass` times `drain` (or `steal`), and
-    /// counts `mass` towards wading (`Rules::wade`).
+    /// How much one walker counts in a fight: a walker touching a building
+    /// or the larder does `mass` times `BuildRules::drain` (or `steal`),
+    /// and counts `mass` towards wading (`Rules::wade`). Not a soldier's
+    /// health: a walker's bite (`drain`) is whole at any count since
+    /// 2026-11-12, when shape C's 0.2 a walker let 40 soldiers stand in its
+    /// thickest part and lose none.
     /// 1 (the default) is today's 5,000-walker mould. A denser mould is
     /// the same body cut into more, smaller walkers, so it plays at
     /// 5,000 / its walkers at scale 2 (`Rules::mass_for`); without that the 25,000-walker
@@ -642,7 +659,7 @@ impl Default for Rules {
             shot_every: 1.0,
             price: 0.0,
             hp: 100.0,
-            drain: 1.0,
+            drain: 2.0,
             touch: 1.5,
             wade: 6.0,
             smell: 0.5,
@@ -1821,7 +1838,7 @@ impl<W: World> Game<W> {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
                         }
-                        s.hp -= r.drain * r.mass * u.touching as f32 * dt;
+                        s.hp -= r.drain * u.touching as f32 * dt;
                         if s.hp <= 0.0 {
                             s.alive = false;
                             s.hp = 0.0;

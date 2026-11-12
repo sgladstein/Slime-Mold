@@ -4006,7 +4006,10 @@ mod tests {
         // squad starts and stands, and seed 3's chaos then parts the moulds
         // past 8% (11-12 CI: 1992 GPU against 1788 CPU at 25 s with craters,
         // 1346 against 1505 at 30 s at the core).
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, ..Rules::default() };
+        // The old bite (1 a walker): at the game's 2 (2026-11-12) the squad
+        // dies by 20 s and the engines part on who died when, not on the
+        // craters this test is about.
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { crater: 0.0, ..rules }, seed);
@@ -4120,7 +4123,9 @@ mod tests {
         // squad starts and stands, and seed 3's chaos then parts the moulds
         // past 8% (11-12 CI: 1992 GPU against 1788 CPU at 25 s with craters,
         // 1346 against 1505 at 30 s at the core).
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, crystal_solid: false, ..Rules::default() };
+        // The old bite (1 a walker), as the craters twin: at 2 the squad
+        // dies by 20 s and the engines part on who died when.
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, crystal_solid: false, drain: 1.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { core_pull: 0.0, ..rules }, seed);
@@ -4171,7 +4176,9 @@ mod tests {
         use slime_mould::mould::larder_world::{race_world, Cmd, Game, Kind, Rules, Stance, World};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules { cap: 20.0, start_bank: 1e6, ..Rules::default() };
+        // The old bite (1 a walker): at the game's 2 the builder dies before
+        // the turret stands, and it never fires on either engine.
+        let rules = Rules { cap: 20.0, start_bank: 1e6, drain: 1.0, ..Rules::default() };
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let near = |g: &Game<_>, p: (f32, f32)| -> (f32, f32) {
