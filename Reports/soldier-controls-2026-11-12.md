@@ -201,3 +201,44 @@ rim. The planted copy (`the_crystal_twin_catches_an_engine_without_the_rule`)
 plays the GPU game without the rule, and the twin catches it at tick 1. So
 the rule acts the same on both engines. The long twins' drift is the
 mould's float drift amplified by a squad that stands elsewhere.
+
+## Part 4: build anywhere (2026-11-12 22:06Z)
+
+The owner's playtest note: "having to be near a the build location to build
+is annoying. If I try to build far away, it should let me and then the
+solider moves automatically to that location to build. There should be a
+faint building with a progress bar that fills in as it builds so I can tell
+how long until it is complete".
+
+- `BuildRules::anywhere` (on): a building may be placed anywhere on open
+  ground while any soldier lives. Off restores the old rule (within
+  `Rules::range` of a live soldier; both ends of a wall).
+- `Cmd::Send(b)` (`send B` in a replay), `Game::send`: the window sends it
+  when a build is ordered with no soldier selected. The nearest idle soldier
+  goes; if none is idle, the nearest one not already building, whose order
+  goes to the front of its queue so it returns to it.
+- `Game::raising` and `Game::raise_left`: the window's label beside each
+  ghost's bar, the seconds left at the rate it rises now, "on the way" while
+  its builders walk, "no builder" when nobody is sent. The bar spans the
+  building on screen (10-40 pixels each side). A wall ghost, which drew
+  nothing before it was whole, is a dashed line with the same bar.
+- The ghost is faint all over until it stands (view.wgsl: the unbuilt part
+  at 0.25, the risen part at 0.6). Builders of a building (not a wall) stand
+  at its edge, `BuildRules::touch` + 1 dish cells from it, so a lone builder
+  no longer hides it.
+
+Look: `larder-world look=DIR hand=far centre=253,166,14` (the Fork, seed
+1; `hand=far` orders a turret halfway to the core and a wall before it at
+2 s, both out of every soldier's range, with nobody selected). Turret built
+0.0, 0.2, 0.5, 0.7, 1.0 and wall 0.1, 0.3, 0.6, 0.8, 1.0 at 5, 7, 9, 11, 13
+s (one builder each, raise 8 s). Clip and page:
+`soldier-controls-2026-11-12/build-anywhere.gif`, `build-anywhere.html`;
+t lines in `build-anywhere-t-lines.txt`.
+
+Tests: `a_build_far_away_sends_a_soldier_who_then_goes_back_to_work`,
+`an_idle_soldier_is_sent_before_a_busy_one`; the range tests now set
+`anywhere` off for the old refusal. No census, under the owner's 17:26Z
+rule: placing anywhere changes what the AI and the census hands may choose
+(`build_blocked` no longer refuses far sites), to be weighed at the next
+balance pass. The cost per frame: one `raising` pass over the soldiers per
+ghost on screen.
