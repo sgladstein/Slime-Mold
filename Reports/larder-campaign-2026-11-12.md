@@ -87,3 +87,29 @@ Build order: (1) a mission layer over `larder_world::Game`, as data (a mission's
 - **Positional goals on the GPU:** missions 2 and 3 (clear a crystal, keep the mould in the Rim) read `World::mould_grid`, which the GPU world does not give yet (it needs an occupancy read-back). In the window their bar is not shown and they end only on the other causes; the CPU census measures them.
 - **Stuck** mirrors the Larder thread's census definition (a soldier alive, nothing done, a bank below a soldier's price) with a priced shot; with free shots a squad is never stuck. It will read `Game::stuck_run` once the Larder thread's PR lands, with `Rules::overrun` and `Rules::reserve` replacing this layer's overrun check.
 - **Mission 1's goal raised from 8 to 24 soldiers:** on the Flats the AI's boom style reached 8 soldiers by 1:28 on seeds 1 and 2 (three stars both), far under the design's 6-12 minutes. 24 is the next guess; the census sets it.
+
+## Missions 1-3 tuned by the census (2026-11-12)
+
+Four censuses (`examples/campaign.rs`, seeds 1-4; idle, random and the player AI's boom, claim, late, fort and strike; CPU big dish, scale 2, 5,000 walkers; the plain mould, since the Drifter and Sprawler are not built; raw in [`census/`](larder-campaign-2026-11-12/census/), v1 to v4). Four seeds is a tuning run, not a gate: no sign test is quoted.
+
+| Mission | Goal tried | What the census found | Now |
+| --- | --- | --- | --- |
+| 1 Landfall | 8 soldiers | Every AI style met it at 1:28 (3 stars) | — |
+| | 24 soldiers | No hand met it: the AI's styles stop at 20 (best 0.73-0.95) | — |
+| | 8 soldiers on 2 crystals at once (the design review's idea) | Every style at 1:28-1:29 | — |
+| | **12 soldiers on 3 crystals** | **Every AI style at 2:31-2:48, 3 stars (20 of 20); idle and random 0 of 8** | kept: short, as a first mission should be; retune once the Drifter is built |
+| 2 First contact | clear the west crystal 60 s | Idle's bar reached 0.22-0.87: the crystal was clear before the mould came | — |
+| | **retake** it (counts only once the mould has been on it) | **AI 20 of 20 at 1:42-5:31, 3 stars; idle 0 of 4 (best 0.03-0.87); random 1 of 4** | kept |
+| 3 The gaps | no walker outside the Rim for 10 min | No hand held it for a second (best 0.00-0.05) | — |
+| | at most 2% outside | 1 of 20 AI rounds; planned hands peaked at 3.8-5.8% outside, idle at 17-33% | — |
+| | **at most 5% outside** | **AI 18 of 20 at 10:00-11:41, 2 stars; idle and random 0 of 8** | kept |
+
+Dead time on the planned hands is 0-9% (the landing's first seconds), idle's 64-96%; no hand was ever stuck (free shots). The new stall measure (bar flat, mould not smaller than 30 s ago, nothing banked) runs 7-17 s at most on planned hands and 105-284 s on idle and random.
+
+**Open, by the design's own gate:**
+- **Mission 3 does not yet teach walls.** Boom, claim, late and strike, which build no walls, meet it as fort does, so gate item 3 (the verb's plan beats the plan without it) fails. It needs either a Sprawler that leaks through open gaps, or a smaller leak with walls in the plan; it is measured against the plain mould today.
+- Every number here was set on the plain mould and before the Larder thread's flee default (its PR 1: the mould turns from fresh gunfire, and a firing squad is far harder to overrun), so all three missions are re-run when that merges.
+- **The positional goals (missions 2 and 3) are CPU-only for now:** the window passes `World::mould_grid`, which the GPU world gives once the GPU thread's PR #101 merges; until then the window says "progress not shown in this build yet".
+- Mission 1's 2:31-2:48 is under the design's 6-12 minutes; the AI acts at once, so a first-time player will be slower. Checked by hand once the owner plays it.
+
+**Changes from the reviews (05:38-05:43Z):** kills count as useful only while the mould is smaller than 30 s ago (firing at a mould that regrows is not progress); the stall measure above; the window says when it can't show a bar rather than hiding it; one test per goal kind on a small CPU world (clear and retake, contain, take, stuck, squad with crystals; 10 tests in all). `take`'s bar now starts from an even share: it showed 83% of a 60% goal at 0:00. On the race world an idle mould halves by itself in the first 40 s as walkers starve, so mission 4's `shrink` numbers must allow for that.
