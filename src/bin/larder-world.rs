@@ -52,13 +52,15 @@
 //! whole body (its size, hunger, eating, flinching at gunfire); K turns
 //! just that off and on, `voice=0` starts without it.
 //!
-//! `-- look=DIR [hand=rush|stand|farm|idle] [at=5,30,60] [screen=1280x800]
+//! `-- look=DIR [hand=rush|stand|volley|farm|idle] [at=5,30,60] [screen=1280x800]
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
 //! `holes=1` also times how long each hit's hole stays open; `centre=X,Y`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
+//! `hand=volley` fires the squad into the thick body from 22 to 34 s,
+//! then holds fire and steps back (`volley`).
 //! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]
 //! [sound=PATH] [fast=1] [passes=N]` times the window's frame without a
 //! window (`bench`), a mission's too, and with `passes=` each GPU pass of
@@ -80,7 +82,7 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{garden_settings, race_settings, GpuWorld};
 use slime_mould::mould::own_mould::Task;
 use slime_mould::gpu::{block_on, read_back};
-use slime_mould::mould::larder_world::{Cmd, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
@@ -778,7 +780,15 @@ impl App {
         }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
-            self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
+            let say = match g.core_rule.kind {
+                CoreKind::Regrow { starve_secs } => format!("The core is taken: it grows back in {starve_secs:.0} s unless the mould eats nothing till then"),
+                _ => "The core is taken: the mould can no longer grow".into(),
+            };
+            self.hud.alert(&say, Some(g.core), theme::GOOD);
+        } else if g.core_down.is_none() && self.core_told {
+            // A regrowing core (`CoreKind::Regrow`) the mould fed.
+            self.core_told = false;
+            self.hud.alert("The core grew back: the mould still eats. Keep it off the crystals", Some(g.core), theme::BAD);
         }
         if g.stolen > self.stolen {
             if self.robbed_at.is_none_or(|r| t - r > 30.0) {
@@ -1632,7 +1642,7 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     // through `larder_world_ai`, as the census does, so a campaign mission's
     // pictures show the hands its numbers were set on.
     let mut ai = match hand {
-        "rush" | "farm" | "stand" => None,
+        "rush" | "farm" | "stand" | "volley" => None,
         _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
     };
     // Each hit: where, its tick, the body there the tick before, and the
@@ -2183,6 +2193,63 @@ fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, queue: &wgpu
 }
 
 /// The headless run's hand, once a game second.
+/// The look mode's `volley` hand (the owner, 11-12 16:55Z, on the crater
+/// clips: "in these videos they were mostly shooting at individuals so it
+/// was hard to evaluate until the end when they shot at the core of
+/// slime"). The squad spends its bank on soldiers in the first second and
+/// from 15 s walks to a point in range of the thick ring of mould on the
+/// core crystal (short of the core's pull). At `VOLLEY` it burns one
+/// line across the ring's near side (`Order::Burn`, the window's F), so
+/// every shot goes into the body, not at stray walkers; at `VOLLEY_STOP`
+/// it stops firing and steps back, so the clip shows the hole refilling
+/// with nobody shooting. (A first cut walked as `stand` does and burned a
+/// line 0.6 of the range ahead; on the Fork that line lay on thin
+/// tendrils, 48 kills in 12 s.)
+const VOLLEY: f32 = 22.0;
+const VOLLEY_STOP: f32 = 34.0;
+
+fn volley(g: &mut Game<GpuWorld>) {
+    let t = g.time();
+    let sc = g.world.scale();
+    let (dx, dy) = (g.core.0 - g.larder.0, g.core.1 - g.larder.1);
+    let d = dx.hypot(dy).max(1.0);
+    let u = (dx / d, dy / d);
+    // The line's middle just outside the core crystal, and where a
+    // burning soldier stands back from it (0.6 of its range).
+    let reach = g.world.crystal_r(0) + 2.0 * sc;
+    let m = (g.core.0 - u.0 * reach, g.core.1 - u.1 * reach);
+    let keep = 0.6 * g.rules.range * sc;
+    let stand = (m.0 - u.0 * keep, m.1 - u.1 * keep);
+    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
+    let burning = live.iter().any(|&k| matches!(g.soldiers[k].order, Order::Burn(..)));
+    if t < VOLLEY {
+        while t < 1.0 && g.bank >= g.rules.soldier_cost {
+            g.apply(Cmd::Buy);
+        }
+        // The starting disc of walkers fills the stem until it thins out
+        // (5,000 at 14 s, about 2,200 by 22 s): a squad sent at once died
+        // in it by 14 s. So it waits, then walks on its Defend stance.
+        for k in 0..g.soldiers.len() {
+            if t >= VOLLEY - 7.0 && g.soldiers[k].alive && g.soldiers[k].order == Order::Hold {
+                g.apply(Cmd::Order(k, Order::Move(stand.0, stand.1)));
+            }
+        }
+    } else if t < VOLLEY_STOP && !burning {
+        // Ten dish cells long, across the way to the core.
+        let half = 5.0 * sc;
+        let (a, b) = ((m.0 - u.1 * half, m.1 + u.0 * half), (m.0 + u.1 * half, m.1 - u.0 * half));
+        for &k in &live {
+            g.apply(Cmd::Order(k, Order::Burn(a, b)));
+        }
+    } else if t >= VOLLEY_STOP && burning {
+        let back = (stand.0 - u.0 * 8.0 * sc, stand.1 - u.1 * 8.0 * sc);
+        for &k in &live {
+            g.apply(Cmd::Stance(k, Stance::HoldFire));
+            g.apply(Cmd::Order(k, Order::Move(back.0, back.1)));
+        }
+    }
+}
+
 fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // `build`: farm, with a pump on the larder's crystal, two turrets on
     // the road to the core and a lure past them (the look at buildings).
@@ -2216,6 +2283,10 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
                 g.apply(Cmd::Build(kind, at));
             }
         }
+    }
+    if hand == "volley" {
+        volley(g);
+        return;
     }
     // `sow` (own=1): farm, and soldiers 0 and 1 walk from the larder to a
     // crystal and back sowing the player's own mould (Feed while the bank

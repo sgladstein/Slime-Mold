@@ -98,8 +98,13 @@ pub trait World {
     }
     /// Open ground a soldier can stand on (agar: not rock, wall or rim).
     fn open(&self, x: f32, y: f32) -> bool;
-    /// The mould's core is taken: no more births.
-    fn stop_births(&mut self);
+    /// The mould's core is taken: no more births. Returns what births
+    /// need, in the world's own terms (the birth energy, or the species
+    /// cap), for `start_births` to give back.
+    fn stop_births(&mut self) -> f32;
+    /// A regrown core (`CoreKind::Regrow`): births again, with what
+    /// `stop_births` returned.
+    fn start_births(&mut self, was: f32);
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
@@ -172,8 +177,12 @@ impl World for BigDish {
         x >= 0.0 && y >= 0.0 && (x as usize) < self.w && (y as usize) < self.h && self.agar[y as usize * self.w + x as usize]
     }
 
-    fn stop_births(&mut self) {
-        self.p.birth_energy = f32::INFINITY;
+    fn stop_births(&mut self) -> f32 {
+        std::mem::replace(&mut self.p.birth_energy, f32::INFINITY)
+    }
+
+    fn start_births(&mut self, was: f32) {
+        self.p.birth_energy = was;
     }
 
     fn food_deposit(&self) -> f32 {
@@ -302,17 +311,33 @@ pub struct Core {
 }
 
 /// How a core falls (`Core`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CoreKind {
     /// Held clear for `Core::secs`, it falls for good: births stop.
     Fixed,
     /// No core: nothing to hold, so only a wipe ends the mould (the
-    /// tiers thread's Sprawler). The Trunk's regrowing core and the
-    /// Drifter's migrating one are to come: both need births to restart
-    /// or move on both engines, and a migrating core needs to know where
-    /// the body is on the GPU, which the GPU world can't read back cheaply
-    /// yet.
+    /// tiers thread's Sprawler). The Drifter's migrating core is to come:
+    /// it needs to know where the body is on the GPU, which the GPU world
+    /// can't read back cheaply yet.
     Headless,
+    /// Falls as `Fixed` does, births stopping, and grows back unless the
+    /// body starves (the tiers thread's Trunk; the designer: "regrows
+    /// unless the body is starved", the lesson of campaign mission 4,
+    /// cut, then starve). If the mould eats anything from any crystal in
+    /// the `starve_secs` after the fall, the core grows back when they
+    /// are up: births restart and the hold clock starts again. If it eats
+    /// nothing all that time it stays down for good. So taking the core
+    /// alone doesn't stop the Trunk; taking it while the squad holds the
+    /// crystals, or has cut the body off them, does.
+    ///
+    /// "Eats" is the whole body's: the crystals' charge gone less the
+    /// squad's take (`Game::mould_ate`), which both engines read back
+    /// already. The core's own piece starving, with the one-body thread's
+    /// distance-capped sharing, would need a per-region read-back on the
+    /// GPU; the tiers thread chose the whole-body rule (2026-11-12). With
+    /// `BigParams::crystal_regrow` on, regrowth hides eating, and a fed
+    /// mould can read as starved (off on every map so far).
+    Regrow { starve_secs: f32 },
 }
 
 impl Core {
@@ -453,6 +478,17 @@ pub struct Rules {
     /// not a flee: the mould turning from gunfire made a bigger hole but
     /// let random hold the core (`Reports/dead-ends.md`); the crater
     /// changes only the struck cells.
+    ///
+    /// **4.5 s since 2026-11-12, the owner's pick** (17:29Z: "Can we do
+    /// 4.5 s? I am thinking between the 3 and 6"), after clips of the
+    /// cone crater (PR 3b) with the squad firing into the thick ring on
+    /// the core crystal (`larder-world hand=volley`): at 10 s the hole
+    /// was still pocked 4 s after the fire stopped (15:18Z: "3 fills in
+    /// too slow still", said of a flat-crater clip), at 3 s it closed in
+    /// about 2 s, at 1 s it looked like none. Set on the clips and the
+    /// tests, with no census (the owner's 17:26Z testing rule: a census
+    /// is not a gate for a look). Any time works, not just whole seconds:
+    /// the countdown is in fine steps (`World::fine_steps` a tick).
     pub crater: f32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
@@ -462,6 +498,12 @@ pub struct Rules {
     /// target reads as a round stamp; a smaller strike scattered over a
     /// wider patch at the same kills a second may read as gunfire.
     pub spread: f32,
+    /// Soldiers walk round a crystal with charge left, not over it (owner,
+    /// 11-12 14:43Z: "shouldn't be able to stand on top of the crystal"):
+    /// they harvest from its rim, bank at the rim of a larder that sits on
+    /// one, and a goal inside one moves to its rim (`Game::standable`,
+    /// `Game::rim`). Shots still fly over crystals.
+    pub crystal_solid: bool,
 }
 
 impl Default for Rules {
@@ -502,8 +544,9 @@ impl Default for Rules {
             overrun: 0.0,
             reserve: 0.0,
             seek: true,
-            crater: 10.0,
+            crater: 4.5,
             spread: 0.0,
+            crystal_solid: true,
         }
     }
 }
@@ -512,6 +555,10 @@ pub use super::larder::{End, Order, Stance};
 
 /// Game seconds between rebuilds of the walking maps.
 const PATHS_EVERY: f32 = 30.0;
+
+/// How far past a solid crystal's rim a soldier stands to harvest or
+/// bank, dish cells (`Rules::crystal_solid`).
+const RIM: f32 = 1.0;
 
 /// Walking maps: for each goal cell, every open cell's distance to it
 /// (`distance_map`), built when a soldier first needs it and dropped when a
@@ -736,11 +783,20 @@ pub struct Game<W: World> {
     pub larder: (f32, f32),
     /// The mould's home crystal, fine cells.
     pub core: (f32, f32),
+    /// The tick the core fell, while it is down (a regrown core,
+    /// `CoreKind::Regrow`, sets it back to None).
     pub core_down: Option<u64>,
     core_clear: u64,
     /// What the core is (`Core`): `Core::of(&rules)` unless a tier says
     /// otherwise (`with_tier`).
     pub core_rule: Core,
+    /// Times the core fell, and times it grew back (`CoreKind::Regrow`).
+    pub core_falls: u32,
+    pub core_regrows: u32,
+    /// A fallen regrowing core's starve window: the tick it ends, the
+    /// mould's eating when it began (`mould_ate`), and what the world's
+    /// births took (`World::stop_births`).
+    regrow: Option<(u64, f32, f32)>,
     pub first_touch: Option<f32>,
     /// Walkers touching the larder at the last frame (it is held while any
     /// do).
@@ -781,6 +837,11 @@ pub struct Game<W: World> {
     pub cap_held: Option<f32>,
     /// Walking round rock and walls (`Paths`).
     paths: Paths,
+    /// Crystals with charge left, centre and radius, fine cells: the ground
+    /// soldiers can't stand on (`Rules::crystal_solid`), kept each step.
+    solid: Vec<((f32, f32), f32)>,
+    /// Each crystal's charge at the start, for the shrinking solid disc.
+    crystal_full: Vec<f32>,
     pub rng: Rng,
     pub log: Vec<(u64, Cmd)>,
     /// The larder's rally point: the order a bought soldier starts with
@@ -867,6 +928,9 @@ impl<W: World> Game<W> {
             core_down: None,
             core_clear: 0,
             core_rule: Core::of(&rules),
+            core_falls: 0,
+            core_regrows: 0,
+            regrow: None,
             first_touch: None,
             larder_touch: 0,
             stuck: 0,
@@ -883,11 +947,15 @@ impl<W: World> Game<W> {
             density,
             cap_held: None,
             paths: Paths::default(),
+            solid: Vec::new(),
+            crystal_full: Vec::new(),
             rng: Rng::new(seed ^ 0x001a_2de2_501d),
             log: Vec::new(),
             flight: None,
             rally: Order::Hold,
         };
+        g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
+        g.solid = g.solid_now();
         for k in 0..rules.squad {
             let a = k as f32 / rules.squad.max(1) as f32 * std::f32::consts::TAU;
             g.add_soldier(a);
@@ -909,9 +977,13 @@ impl<W: World> Game<W> {
     }
 
     fn add_soldier(&mut self, a: f32) {
-        let r = 3.0 * self.s();
-        let (x, y) = (self.larder.0 + r * a.cos(), self.larder.1 + r * a.sin());
-        let (x, y) = if self.world.open(x, y) { (x, y) } else { self.larder };
+        // Round the larder, out past a crystal it sits on.
+        let sc = self.s();
+        let (x, y) = (0..30)
+            .map(|n| (3.0 + n as f32) * sc)
+            .map(|r| (self.larder.0 + r * a.cos(), self.larder.1 + r * a.sin()))
+            .find(|&(x, y)| self.standable(x, y))
+            .unwrap_or(self.larder);
         self.soldiers.push(Soldier {
             x,
             y,
@@ -1042,6 +1114,66 @@ impl<W: World> Game<W> {
     /// Where soldier `k` is walking to now, fine cells, if anywhere.
     fn goal(&self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
+        self.goal_raw(k).map(|g| self.rim(g, (s.x, s.y)))
+    }
+
+    fn solid_now(&self) -> Vec<((f32, f32), f32)> {
+        if !self.rules.crystal_solid {
+            return Vec::new();
+        }
+        // A disc holding the charge left: soldiers take from the rim
+        // (`squad`'s take disc reaches 4 dish cells in), so it shrinks as
+        // they eat in and they step in after it. A fixed disc left a
+        // crystal's middle out of reach once its rim was eaten.
+        let min = self.s();
+        self.world
+            .crystals()
+            .iter()
+            .enumerate()
+            .filter(|(_, c)| c.1 > 0.0)
+            .map(|(i, c)| {
+                let full = self.crystal_full.get(i).copied().unwrap_or(c.1).max(c.1);
+                (c.0, self.world.crystal_r(i) * (c.1 / full.max(1e-6)).sqrt())
+            })
+            .filter(|&(_, r)| r >= min)
+            .collect()
+    }
+
+    /// The crystal (charge left) whose disc holds `p`, if crystals are
+    /// solid (`Rules::crystal_solid`): its centre and radius.
+    fn solid_at(&self, p: (f32, f32)) -> Option<((f32, f32), f32)> {
+        self.solid.iter().copied().find(|&(c, r)| (c.0 - p.0).hypot(c.1 - p.1) < r)
+    }
+
+    /// How near `p` a soldier must stand to work at it, fine cells: `near`
+    /// dish cells, or from the rim if `p` is on a solid crystal (a larder,
+    /// outpost or ghost placed on one).
+    fn reach(&self, p: (f32, f32), near: f32) -> f32 {
+        let sc = self.s();
+        self.solid_at(p).map_or(near * sc, |(_, r)| (r + (RIM + 2.0) * sc).max(near * sc))
+    }
+
+    /// Ground a soldier may stand on: open, and not on a crystal with
+    /// charge left (`Rules::crystal_solid`).
+    pub fn standable(&self, x: f32, y: f32) -> bool {
+        self.world.open(x, y) && self.solid_at((x, y)).is_none()
+    }
+
+    /// `p`, or if it is on a solid crystal, the point just past that
+    /// crystal's rim on the side toward `from`.
+    pub fn rim(&self, p: (f32, f32), from: (f32, f32)) -> (f32, f32) {
+        let Some((c, r)) = self.solid_at(p) else { return p };
+        let (dx, dy) = (from.0 - c.0, from.1 - c.1);
+        let d = dx.hypot(dy);
+        let (ux, uy) = if d > 1e-3 { (dx / d, dy / d) } else { (1.0, 0.0) };
+        let out = r + RIM * self.s();
+        (c.0 + ux * out, c.1 + uy * out)
+    }
+
+    /// Where soldier `k`'s order points, before a crystal moves it to its
+    /// rim (`goal`).
+    fn goal_raw(&self, k: usize) -> Option<(f32, f32)> {
+        let s = self.soldiers[k];
         let sc = self.s();
         let off = |p: (f32, f32)| {
             let o = slot(k);
@@ -1075,6 +1207,13 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// Whether a soldier can walk straight from `a` to `b`: every cell on
+    /// the line standable (`standable`; `clear_line` is the line of fire).
+    fn walk_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
+        let (w, h) = self.world.size();
+        squad::path(w, h, a, b).into_iter().all(|i| self.standable((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
+    }
+
     /// Whether every cell on the line from `a` to `b` is open ground.
     pub fn clear_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
         let (w, h) = self.world.size();
@@ -1094,7 +1233,12 @@ impl<W: World> Game<W> {
         if d < 0.5 || self.engaged(k) {
             return;
         }
-        let g = if self.clear_line((s.x, s.y), g) {
+        // Caught on a crystal (a larder or ghost placed by one, a crystal
+        // grown back): straight out to its near rim first, over anything.
+        let caught = self.solid_at((s.x, s.y)).is_some();
+        let g = if caught {
+            self.rim((s.x, s.y), (s.x, s.y))
+        } else if self.walk_line((s.x, s.y), g) {
             g
         } else {
             let now = self.world.ticks();
@@ -1106,8 +1250,7 @@ impl<W: World> Game<W> {
             let (w, h) = self.world.size();
             let gi = cell(w, h, g);
             if !self.paths.maps.contains_key(&gi) {
-                let world = &self.world;
-                let map = distance_map(w, h, gi, |i| world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5));
+                let map = distance_map(w, h, gi, |i| self.standable((i % w) as f32 + 0.5, (i / w) as f32 + 0.5));
                 self.paths.maps.insert(gi, map);
             }
             let map = &self.paths.maps[&gi];
@@ -1134,11 +1277,12 @@ impl<W: World> Game<W> {
         };
         let step = (self.rules.speed * self.s() * dt * wade).min(d);
         let (nx, ny) = (s.x + dx / d * step, s.y + dy / d * step);
-        let to = if self.world.open(nx, ny) {
+        let ok = |x: f32, y: f32| if caught { self.world.open(x, y) } else { self.standable(x, y) };
+        let to = if ok(nx, ny) {
             Some((nx, ny))
-        } else if self.world.open(nx, s.y) {
+        } else if ok(nx, s.y) {
             Some((nx, s.y))
-        } else if self.world.open(s.x, ny) {
+        } else if ok(s.x, ny) {
             Some((s.x, ny))
         } else {
             None
@@ -1219,7 +1363,7 @@ impl<W: World> Game<W> {
             }
             Some(p) => {
                 let o = slot(k);
-                if (p.0 - s.x).hypot(p.1 - s.y) <= BUILD_REACH * sc + o.0.hypot(o.1) * sc {
+                if (p.0 - s.x).hypot(p.1 - s.y) <= self.reach(p, BUILD_REACH) + o.0.hypot(o.1) * sc {
                     let secs = self.raise_secs(b);
                     self.raise(b, if secs > 0.0 { dt / secs } else { 1.0 });
                 }
@@ -1356,6 +1500,7 @@ impl<W: World> Game<W> {
         if self.end.is_some() {
             return;
         }
+        self.solid = self.solid_now();
         let r = self.rules;
         let sc = self.s();
         let t = self.world.ticks();
@@ -1391,7 +1536,7 @@ impl<W: World> Game<W> {
             if let Order::Clear(x, y) = s.order {
                 if s.homing {
                     let home = self.drop_off((s.x, s.y));
-                    if (s.x - home.0).hypot(s.y - home.1) <= 3.0 * sc + 1.5 * (k as f32).sqrt() * sc {
+                    if (s.x - home.0).hypot(s.y - home.1) <= self.reach(home, 3.0) + 1.5 * (k as f32).sqrt() * sc {
                         self.bank += s.carry;
                         self.harvested += s.carry;
                         self.soldiers[k].carry = 0.0;
@@ -1405,7 +1550,9 @@ impl<W: World> Game<W> {
                 } else if s.carry >= r.carry - s.load {
                     self.soldiers[k].homing = true;
                 } else if let Some((i, c)) = self.crystal_at((x, y)) {
-                    if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + 1.0 * sc {
+                    // From its rim (`Rules::crystal_solid`), with the slot's room.
+                    let room = if self.rules.crystal_solid { RIM + 1.0 } else { 1.0 };
+                    if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + room * sc {
                         take = (r.harvest * dt).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
                         at_crystal = Some(i);
                     }
@@ -1604,7 +1751,30 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// Food the mould has eaten from the crystals so far: their charge
+    /// gone, less what the squad and its buildings took. A pump's draw is
+    /// in `taken` (`UnitOut::took`), so only walkers' bites count.
+    pub fn mould_ate(&self) -> f32 {
+        self.world.crystals().iter().enumerate().map(|(i, c)| self.start_charge[i] - c.1 - self.taken[i]).sum()
+    }
+
     fn check_core(&mut self) {
+        if let Some((until, ate, was)) = self.regrow {
+            // A crumb of float noise is not a meal: the charge is summed
+            // afresh each step (a thousandth of a percent of the start).
+            let full: f32 = self.start_charge.iter().sum();
+            if self.mould_ate() > ate + 1e-5 * full {
+                if self.world.ticks() >= until {
+                    self.world.start_births(was);
+                    (self.core_down, self.core_clear, self.regrow) = (None, 0, None);
+                    self.core_regrows += 1;
+                }
+            } else if self.world.ticks() >= until {
+                // Starved through the window: down for good.
+                self.regrow = None;
+            }
+            return;
+        }
         if self.core_down.is_some() || self.core_rule.kind == CoreKind::Headless {
             return;
         }
@@ -1616,8 +1786,13 @@ impl<W: World> Game<W> {
         if clear {
             self.core_clear += self.rules.frame_ticks as u64;
             if self.core_clear >= self.secs(self.core_rule.secs) {
-                self.core_down = Some(self.world.ticks());
-                self.world.stop_births();
+                let now = self.world.ticks();
+                self.core_down = Some(now);
+                self.core_falls += 1;
+                let was = self.world.stop_births();
+                if let CoreKind::Regrow { starve_secs } = self.core_rule.kind {
+                    self.regrow = Some((now + self.secs(starve_secs), self.mould_ate(), was));
+                }
             }
         } else {
             self.core_clear = 0;
@@ -1871,6 +2046,45 @@ mod tests {
         assert_eq!(hold(CoreKind::Headless), (false, true), "no core to hold");
     }
 
+    /// A regrowing core (`CoreKind::Regrow`) falls as a fixed one does,
+    /// births stopping; once its starve window is up it grows back if the
+    /// mould ate in it, births restarting, and stays down for good if the
+    /// mould ate nothing.
+    #[test]
+    fn a_regrowing_core_grows_back_unless_the_mould_starves() {
+        let fall = || {
+            let mut g = small(1);
+            g.core_rule.kind = CoreKind::Regrow { starve_secs: 5.0 };
+            for k in 0..g.soldiers.len() {
+                (g.soldiers[k].x, g.soldiers[k].y) = g.core;
+                (g.soldiers[k].touching, g.soldiers[k].aim) = (0, None);
+            }
+            for _ in 0..=g.secs(g.core_rule.secs) {
+                g.check_core();
+            }
+            assert!(g.core_down.is_some() && !g.world.p.birth_energy.is_finite(), "held: it falls and births stop");
+            g
+        };
+        let born = small(1).world.p.birth_energy;
+        // Fed: the game played on, the mould eating at its crystals.
+        let mut g = fall();
+        let (t0, ate) = (g.time(), g.mould_ate());
+        while g.time() < t0 + 5.5 {
+            g.step();
+        }
+        assert!(g.mould_ate() > ate, "the mould ate in the window");
+        assert_eq!((g.core_down, g.world.p.birth_energy, g.core_falls, g.core_regrows), (None, born, 1, 1), "fed: the core grew back");
+        // Starved: nothing eaten while the window runs, then down for
+        // good, even if the mould eats later.
+        let mut g = fall();
+        g.world.ticks += g.secs(5.0);
+        g.check_core();
+        g.world.pile_charge[0] *= 0.5;
+        g.world.ticks += g.secs(10.0);
+        g.check_core();
+        assert!(g.core_down.is_some() && !g.world.p.birth_energy.is_finite() && g.core_regrows == 0, "starved: it stays down");
+    }
+
     /// Wading (`Rules::wade`): with 6 walkers touching a soldier walks at
     /// half speed, with 12 at a fifth; open ground and `wade` 0 at full.
     #[test]
@@ -1942,6 +2156,44 @@ mod tests {
         let gone = before - now as f32;
         let held = (g.harvested + g.soldiers[0].carry) * g.rules.charge;
         assert!(gone >= held * 0.999, "the crystal lost {gone}, the squad holds {held}");
+    }
+
+    #[test]
+    fn soldiers_stand_round_a_crystal_not_on_it() {
+        // Owner, 11-12 14:43Z: soldiers "shouldn't be able to stand on top
+        // of the crystal". They start outside the larder's crystal, a move
+        // onto a crystal stops at its rim, and harvesters still bank.
+        let mut g = small(2);
+        let (_, c) = g.crystal_at(g.larder).unwrap();
+        let sc = g.s();
+        for s in &g.soldiers {
+            assert!(g.standable(s.x, s.y), "spawned on the crystal at {:?}", (s.x, s.y));
+        }
+        g.apply(Cmd::Stance(0, Stance::HoldFire));
+        g.apply(Cmd::Stance(1, Stance::HoldFire));
+        g.apply(Cmd::Order(0, Order::Move(c.0, c.1)));
+        g.apply(Cmd::Order(1, Order::Clear(c.0, c.1)));
+        for _ in 0..(g.rules.tps * 40) {
+            g.step();
+            for s in g.soldiers.iter().filter(|s| s.alive) {
+                assert!(g.solid_at((s.x, s.y)).is_none(), "a soldier on a crystal at {:?}", (s.x, s.y));
+            }
+        }
+        let s = g.soldiers[0];
+        let (_, r) = g.solid_at(c).expect("the crystal still has charge");
+        let d = (s.x - c.0).hypot(s.y - c.1);
+        assert!(d >= r && d <= r + 3.0 * sc, "the mover stands {d} from the centre, rim {r}");
+        assert!(g.harvested > 0.0, "nothing banked from the rim");
+        // With the rule off the mover walks onto the crystal's middle.
+        let mut w = small(2);
+        w.rules.crystal_solid = false;
+        w.apply(Cmd::Stance(0, Stance::HoldFire));
+        w.apply(Cmd::Order(0, Order::Move(c.0, c.1)));
+        for _ in 0..(w.rules.tps * 40) {
+            w.step();
+        }
+        let s = w.soldiers[0];
+        assert!((s.x - c.0).hypot(s.y - c.1) < 2.0 * sc, "off, it stands {} from the centre", (s.x - c.0).hypot(s.y - c.1));
     }
 
     #[test]
@@ -2091,8 +2343,11 @@ mod tests {
         fn open(&self, x: f32, y: f32) -> bool {
             World::open(&self.d, x, y)
         }
-        fn stop_births(&mut self) {
+        fn stop_births(&mut self) -> f32 {
             World::stop_births(&mut self.d)
+        }
+        fn start_births(&mut self, was: f32) {
+            World::start_births(&mut self.d, was)
         }
         fn food_deposit(&self) -> f32 {
             World::food_deposit(&self.d)
