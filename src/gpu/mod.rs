@@ -62,10 +62,10 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (208 words).
-pub const PARAMS_BYTES: usize = 832;
+/// Bytes in `Params` (212 words).
+pub const PARAMS_BYTES: usize = 848;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
-/// alone): the last.
+/// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
 /// Where the squad's four words sit in `Params` (`set_squad` writes them
 /// alone). Fixed: the look's hits row and the species block (2026-11-11)
@@ -77,13 +77,21 @@ pub const WORLD_CRYSTALS: u32 = 1;
 pub const WORLD_WETS: u32 = 2;
 pub const WORLD_WALLS: u32 = 4;
 pub const WORLD_TERRAIN: u32 = 8;
+/// The dish has soil (`BigDish::soil`, WM3): the trail, life and breed
+/// passes read a cell's kind from its ground word.
+pub const WORLD_SOIL: u32 = 16;
 /// A cell's `ground` bits (engine.wgsl): its crystal's pile (index + 1) in
-/// the low byte, then wet, wall, a wall that lets scent through, rock.
+/// the low byte, then wet, wall, a wall that lets scent through, rock, and
+/// the soil kind in bits 12-15 (the map's G byte is bits 8-15, so its high
+/// nibble lands there as it is). Agreed with the graphics thread
+/// (2026-11-11): mould-made ground takes bits 16-23, height 24-31.
 pub const GROUND_PILE: u32 = 0xFF;
 pub const GROUND_WET: u32 = 0x100;
 pub const GROUND_WALL: u32 = 0x200;
 pub const GROUND_SCENT_WALL: u32 = 0x400;
 pub const GROUND_ROCK: u32 = 0x800;
+pub const GROUND_SOIL: u32 = 0xF000;
+pub const GROUND_SOIL_SHIFT: u32 = 12;
 /// Rounds of `evict` a wall runs between checks, and at most: walkers that
 /// lost a free cell to another try the next nearest, until none finds one.
 /// (Four rounds in all left 24 of 178 covered walkers inside on the twin
@@ -1025,9 +1033,6 @@ impl Engine {
         let agar_cells = make(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
         let crowd_ok = s.walkers.max(s.capacity) <= agar_cells / 2;
         let d = make(BigParams { species_sets: species_sets(s, crowd_ok), ..big_params(s, scale, s.crowd && crowd_ok) });
-        if d.soil.iter().any(|&k| k != 0) {
-            eprintln!("engine: soil is not on the GPU yet; this world's soil plays as plain ground");
-        }
         let dev = device;
         let cells = (d.w * d.h) as u32;
         let n = d.walkers.len() as u32;
@@ -1404,6 +1409,9 @@ impl Engine {
         b.extend(f32_bytes(&[s.sleep_rate, s.sleep_deposit, s.wake_scent, s.wake_alarm, s.alarm_keep, s.alarm_weight, s.alarm_relay, s.sleep_death]));
         debug_assert_eq!(b.len(), STRIKE_AT);
         b.extend([0u8; 32]);
+        // Soil (WM3, 2026-11-12): the dish's own rates, as the CPU reads
+        // them from its `BigParams` (read only with `WORLD_SOIL`).
+        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, 0.0]));
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.converts = s.convert > 0.0 && self.nsp > 0;
@@ -1851,11 +1859,13 @@ pub struct WorldData {
 }
 
 /// The world bits a dish's ground needs drawn and run whatever its
-/// params: terrain if it has rock or wet, the wet pass if wet.
+/// params: terrain if it has rock or wet, the wet pass if wet, soil if any
+/// cell is sand, clay or barren.
 pub fn ground_bits(d: &BigDish) -> u32 {
     let wet = d.wet.iter().any(|&v| v);
     let rock = d.rock.iter().any(|&v| v);
-    (if wet { WORLD_WETS } else { 0 }) | (if wet || rock { WORLD_TERRAIN } else { 0 })
+    let soil = d.soil.iter().any(|&k| k != 0);
+    (if wet { WORLD_WETS } else { 0 }) | (if wet || rock { WORLD_TERRAIN } else { 0 }) | (if soil { WORLD_SOIL } else { 0 })
 }
 
 pub fn world_data(d: &BigDish) -> WorldData {
@@ -1871,6 +1881,9 @@ pub fn world_data(d: &BigDish) -> WorldData {
             }
             if on(&d.rock, i) {
                 g |= GROUND_ROCK;
+            }
+            if !d.soil.is_empty() {
+                g |= (d.soil[i] as u32) << GROUND_SOIL_SHIFT & GROUND_SOIL;
             }
             if on(&d.wall, i) {
                 g |= GROUND_WALL;

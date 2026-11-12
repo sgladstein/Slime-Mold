@@ -354,7 +354,7 @@ Agreed with the graphics thread (19:33Z): byte 3 (bits 24-31) of the engine's gr
 - `p` still switches each system on (`crystal_charge` > 0 for crystals). Height (R) is parked and not read.
 - `Map::of_dish` saves a made world as a map. `examples/larderworld.rs` takes `map=NAME` for a census or a look on a map.
 
-**On the GPU.** `Engine::with_map` and `GpuWorld::with_map` start the engine from the same dish. Each pile's full charge rides in its pile record: the shader's `Pile::full`, a spare word until now, feeds the glow, the share left and regrowth. The world bits for terrain and wet now also come from the dish's ground (`ground_bits`), so a map's rock and wet run with the noise settings at 0. Soil is not on the GPU yet. The engine says so when a world has any, and that port (WM3's GPU side) is next.
+**On the GPU.** `Engine::with_map` and `GpuWorld::with_map` start the engine from the same dish. Each pile's full charge rides in its pile record: the shader's `Pile::full`, a spare word until now, feeds the glow, the share left and regrowth. The world bits for terrain and wet now also come from the dish's ground (`ground_bits`), so a map's rock and wet run with the noise settings at 0. Soil is not on the GPU yet. The engine says so when a world has any, and that port (WM3's GPU side) is next (*done 11-12: Soil on the GPU, below*).
 
 **Gate (ROADMAP).** Both parts pass, with lavapipe standing in for the GPU here and in CI.
 - **A map loads the same on the CPU and the GPU.** `a_designed_map_plays_on_the_engine_as_on_the_cpu` plays the v2 Fork (rock, wet, ten crystals of five sizes) and the Nest (34 walls) for 20 game seconds on both, with soil taken off both. Crystals, radii, start and landing are equal. A soldier clearing the crystal nearest the landing banks 300 food on both. The moulds stay within 1% at every 5 s sample (Fork at 20 s: 2,639 on the CPU, 2,619 on the GPU; Nest: 4,109 and 4,128), and the charge left within 2%. The v1 Fork and Nest (smaller crystals) also passed.
@@ -393,7 +393,7 @@ Every one banked a little more food (farm higher on 10 of 10 under the last) but
 
 **Cost.** The window's own CPU work (the cloud's CPU): the model and HUD layout 0.03-0.05 ms a frame. The ground field is 3.9-6.1 ms once a game second, a hitch to cut (most of it is the crystals' depth). Each game step makes four small blocking read-backs (the squad's out, its kills, the pile sums, the wall counts), as the census does, plus the energy once a game second. The window prints its frame time every 10 s (p50, p95, max, steps a second). The gate's number, under 10 ms p95 on the GTX 1070, is not measured yet.
 
-**Not yet.** Soil plays as plain ground on the GPU, so the v2 maps' sand and clay do nothing in the window (the engine says so at start); that port is next. The view does not draw soil, and maps have no look of their own yet (WM4). The second rival on the Passes is the same species. Turrets, bait and the tiers are not in the world game. A soldier whose crystal runs dry waits there until it is ordered on (WM1's open bug; the alert says when).
+**Not yet.** Soil plays as plain ground on the GPU, so the v2 maps' sand and clay do nothing in the window (the engine says so at start); that port is next (*done 11-12, see Soil on the GPU below*). The view does not draw soil, and maps have no look of their own yet (WM4). The second rival on the Passes is the same species. Turrets, bait and the tiers are not in the world game. A soldier whose crystal runs dry waits there until it is ordered on (WM1's open bug; the alert says when).
 
 ## Score v2 and the dry crystal, 2026-11-12
 
@@ -424,3 +424,31 @@ Every one banked a little more food (farm higher on 10 of 10 under the last) but
 **The window's ground hitch.** The ground field now takes the crystals' depth worked out once a world (`look::crystal_depth`, from the graphics thread's #90, held in the window's `depth`). The once-a-game-second rebuild is down from 3.8-5.3 ms to 1.7-1.8 ms on the cloud CPU (headless, `hand=farm at=5`): Fork 3.79-3.88 to 1.67-1.68, Nest 5.28 to 1.82, Passes 3.88 to 1.76.
 
 **Cost.** `take_share` sums the crystal list. It runs once at the cap, and in the window once a frame for the HUD (23 crystals). The rule reads the crystal list once a squad frame, only while it is on.
+
+## Soil on the GPU (WM3's GPU side), 2026-11-12
+
+**Why.** The v2 maps' sand and clay played as plain ground in the window, because the engine read no soil (it said so at start). The maps thread measured each kind on the CPU big dish ([report](larder-maps-2026-11-11.md), *Which ground the mould feels*), and the census (`larderworld map=NAME`) already ran with them, so the window played different maps from the ones measured.
+
+**What is built.**
+- The soil kind (big.rs `SOIL_SAND` 1, `SOIL_CLAY` 2, `SOIL_BARREN` 3) is packed into bits 12-15 of the engine's ground word (`GROUND_SOIL`). That is where the map's G byte already puts it, and the slot was agreed with the graphics and maps threads on 11-11.
+- `WORLD_SOIL` (16) is set by `ground_bits` when any cell has soil. Without it, the passes read no soil.
+- One new row at the end of `Params` (832 to 848 bytes, after the strike row) carries `sand_keep`, `clay_keep` and `barren_upkeep`, taken from the dish's own `BigParams` as the CPU reads them.
+- The trail pass multiplies the trail by the cell's keep after the spread. With species, each species' field is multiplied too, and the trail is their sum times the keep, in the CPU's order.
+- The life pass charges `upkeep x barren_upkeep` on barren cells, and the breed pass skips a barren target.
+- The start-up warning is gone. The window passes the map's soil to the look (`Fields::soil`), which has drawn it since #84.
+
+**Deciding measure, named before the run.** One GPU tick from a warmed CPU dish matches one CPU tick within the world twin test's bounds, with soil on. The 20-second game twin stays within its 8% bound on maps with soil. A planted bug in each soil rule fails the test.
+
+**Results** (software Vulkan; raw in [soil/twin.txt](larder-world-roadmap-2026-11-11/soil/twin.txt) and [soil/runs.txt](larder-world-roadmap-2026-11-11/soil/runs.txt)).
+- **One tick.** `the_world_matches_the_cpu_for_one_tick` gains two dishes: sand, clay, barren and plain bands across the dish, with growth on crystals, run with one species and with two. Every living walker is fed to breed before the tick, so children aim at barren cells too; 1,925 and 2,076 were born in the tick. In both dishes 0 of 15,000 walkers are off, and the trail and energy L1 are 0.
+- **Planted bugs.** Each soil rule was broken one at a time in the shader, and each fails: sand's keep skipped (trail L1 1.5e-2, bound 1e-4), barren upkeep x 1 (energy L1 4.0e-3, bound 1e-5), births on barren (528 walkers off, energy L1 0.13). The test was first written without feeding the walkers; no child was born in the tick, so the third bug passed.
+- **The game twin** (`a_designed_map_plays_on_the_engine_as_on_the_cpu`) now plays the maps with their soil (it used to clear it), and adds the Passes and the Rim (sand and clay) to the Fork and the Nest (clay). Both sides bank 300 food on every map. At 20 s the moulds are Fork 2,642 on the CPU and 2,644 on the GPU, Nest 4,025 and 4,022, Passes 3,174 and 3,162, and Rim 4,756 and 4,658 (2.1%, the widest).
+
+**What it does in play** (one game, seed 1, farm hand, soil as drawn against the same map with soil cleared; [page](https://claude.ai/artifact/1ifC4Qrw6fXe5Aq7vVSRzZ), pictures in [soil/](larder-world-roadmap-2026-11-11/soil/)).
+- **The Rim.** The sand ring holds the mould in. With soil, the clay core carries a broad sheet, and only beaded strands cross the ring at the gates. By 60 s no tube runs to an outer crystal, and the mould is 5,477 walkers. Without soil, tubes cross the ring to the top and bottom crystals by 30 s, and the mould is 5,928 at 60 s.
+- **The Passes.** The clay lane's tube is smooth and wide. The sand lane's tube breaks into beads with a gap. Without soil, that lane forms a loop of two tubes.
+- The harvest and the take are the same in each pair (the farm hand works the outer crystals). This is a look, not a census: the maps' outcome counts are WM2's.
+
+**Cost.** On software Vulkan, a game step costs the same with soil as without, within the 0.3-0.9 ms noise between rounds: Rim 14.52 against 14.82 ms, Passes 14.82 against 14.90 (scale 2, 5,000 walkers, three rounds). Soil adds a uniform branch and one read of a ground word each pass already binds. The 1070's figure is open, with the window's p95. The window's ground rebuild with soil drawn is 1.64-1.77 ms once a game second.
+
+**A fix that rode along.** The headless run's first "all" picture was zoomed past the world's edges. The camera's `fit` was read before the HUD had set its insets. It now prepares the frame first.

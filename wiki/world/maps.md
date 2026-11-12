@@ -2,7 +2,7 @@
 title: Larder World maps
 kind: design
 status: open
-updated: 2026-11-12T03:15Z
+updated: 2026-11-12T03:40Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md]
 code: [Rules::home_dry, Map::load, Map::of_dish, BigDish::with_map, Engine::with_map, GpuWorld::with_map, World::landing, BigDish::pile_rs, BigDish::pile_fill, BigDish::homes, build_wall_hp, ground_bits]
 ---
@@ -11,7 +11,7 @@ code: [Rules::home_dry, Map::load, Map::of_dish, BigDish::with_map, Engine::with
 
 ## Now
 
-A Larder World can be a designed map, not only noise. The loader (ROADMAP WM1) reads `maps/<name>.png` (G byte: wet, rock, and the soil kind in the high nibble; R height is parked) and `maps/<name>.txt` (crystal, mould, landing and wall lines). `BigDish::with_map` builds the world with each crystal its own size and charge, the walkers shared among the `mould` starts, the larder on `landing`, and the walls at their own health. `GpuWorld::with_map` puts the same world on the engine. The gate passed: the Fork and the Nest play within 1% on the CPU and the GPU, and a saved noise world (`Map::of_dish`) loads back hash-identical ([report, *WM1*](../../Reports/larder-world-roadmap-2026-11-11.md)). Soil acts on the CPU only; the engine says so and plays it as plain ground until its port lands. `larderworld census map=NAME` runs W2b's hands on a map. The five designed maps (v2: Rim, Fork, Flats, Nest, Passes), each drawn for a different winning plan, are the maps thread's ([plan and v2](../../Reports/larder-maps-2026-11-11.md)). Their WM2 gate is next.
+A Larder World can be a designed map, not only noise. The loader (ROADMAP WM1) reads `maps/<name>.png` (G byte: wet, rock, and the soil kind in the high nibble; R height is parked) and `maps/<name>.txt` (crystal, mould, landing and wall lines). `BigDish::with_map` builds the world with each crystal its own size and charge, the walkers shared among the `mould` starts, the larder on `landing`, and the walls at their own health. `GpuWorld::with_map` puts the same world on the engine. The gate passed: the Fork and the Nest play within 1% on the CPU and the GPU, and a saved noise world (`Map::of_dish`) loads back hash-identical ([report, *WM1*](../../Reports/larder-world-roadmap-2026-11-11.md)). Soil plays on the engine too since 2026-11-12, and the window draws it: one GPU tick on soil bands matches the CPU's, and the four soil maps' game twin stays within 2.1% ([report, *Soil on the GPU*](../../Reports/larder-world-roadmap-2026-11-11.md)). In the window the Rim's sand ring holds the mould in its clay core, and the Passes' sand lane breaks its tube ([page](https://claude.ai/artifact/1ifC4Qrw6fXe5Aq7vVSRzZ)). `larderworld census map=NAME` runs W2b's hands on a map. The five designed maps (v2: Rim, Fork, Flats, Nest, Passes), each drawn for a different winning plan, are the maps thread's ([plan and v2](../../Reports/larder-maps-2026-11-11.md)). Their WM2 gate is next.
 
 ## Owner's word
 
@@ -24,7 +24,6 @@ A Larder World can be a designed map, not only noise. The loader (ROADMAP WM1) r
 
 ## Open
 
-- Soil on the GPU (WM3's GPU side), so v2 maps play the same in the window (W2c).
 - The WM2 gate on each map: idle and random lose, and the winning plan changes between maps.
 - Rival moulds as different species (the Passes' two starts are one species today).
 - Map look (WM4) and an editor (WM5).

@@ -788,10 +788,11 @@ impl App {
 /// each map crystal's size and shape is the one the mould eats); with
 /// `charge`, each crystal cell's share of its full charge; with `health`,
 /// each wall cell's share of its full health, and a wall the GPU has worn
-/// through drawn as rubble (the mirror keeps it a wall). Soil is left
-/// off: the engine plays it as plain ground until its port, and the
-/// picture is the data (the look can draw it, #84). `depth` is the
-/// crystals' depth (`App::depth`), worked out once a world.
+/// through drawn as rubble (the mirror keeps it a wall); and the map's
+/// soil, which the engine plays since 2026-11-12 (WM3: sand thins the
+/// trail, clay keeps it, barren ground starves and takes no births), so
+/// the look draws it (#84). `depth` is the crystals' depth
+/// (`App::depth`), worked out once a world.
 fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f32]>, health: Option<&[f32]>) -> Vec<u32> {
     let d = &g.world.e.dish;
     let cells = d.w * d.h;
@@ -807,7 +808,7 @@ fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f32]>, health
     };
     let wall: Vec<bool> = (0..cells).map(|i| d.wall.get(i).copied().unwrap_or(false) && !broken(i)).collect();
     let agar: Vec<bool> = (0..cells).map(|i| d.agar[i] || broken(i)).collect();
-    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[], soil: &[], depth });
+    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[], soil: &d.soil, depth });
     for (i, c) in codes.iter_mut().enumerate() {
         if broken(i) {
             *c = look::code(Ground::Rubble, 0.0);
@@ -1049,7 +1050,12 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
         let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
         let centre = if alive.is_empty() { g.larder } else { (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32) };
         app.controls.selected = (0..g.soldiers.len()).collect();
-        for (zoom, tag) in [(app.camera.fit(), "all"), (6.0, "near")] {
+        // The HUD sets the camera's insets as it draws, and `fit` reads
+        // them: without this the run's first "all" picture was zoomed in
+        // past the world's edges (fit with no insets).
+        app.prepare();
+        for tag in ["all", "near"] {
+            let zoom = if tag == "all" { app.camera.fit() } else { 6.0 };
             app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
             app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
             app.prepare();

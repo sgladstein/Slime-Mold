@@ -1,0 +1,36 @@
+# Soil on the GPU (WM3), 2026-11-12. Software Vulkan (llvmpipe) in the cloud;
+# not a timing of the GTX 1070.
+
+## Planted bugs, the_world_matches_the_cpu_for_one_tick (soil dishes)
+# Each a one-line change to engine.wgsl, run, then restored.
+sand keep never applied (soil_keep 1 on sand):  trail L1 1.51e-2 (bound 1e-4)  -> FAILED
+barren upkeep x 1 (not x 3):                    energy L1 4.02e-3 (bound 1e-5) -> FAILED
+births allowed on barren:                       528 walkers off, energy L1 1.29e-1 -> FAILED
+# Before the walkers were fed for the tick (energy 2 for every living walker),
+# no child was born in the twin tick and the third bug passed.
+
+## Step cost: GpuWorld, scale 2, 5,000 walkers, seed 1, 300 game steps after 30,
+## three rounds, soil as drawn against the same map with G & 0x0F (one-off
+## example, not kept). ms a game step:
+rim     soil  14.66 14.86 14.05   mean 14.52
+rim     none  14.40 15.31 14.75   mean 14.82
+passes  soil  15.13 14.76 14.56   mean 14.82
+passes  none  14.84 14.73 15.12   mean 14.90
+# Within run-to-run noise (0.3-0.9 ms between rounds). The 1070's figure is open.
+
+## Pictures: farm hand, seed 1, at 30 and 60 game seconds
+# cargo run --release --bin larder-world -- map=MAP look=DIR hand=farm at=30,60
+# (30 s pictures re-made after the headless zoom fix below; same counts.)
+# soil off: the same map's PNG with G & 0x0F (high nibble cleared), txt copied,
+#           run as map=DIR/NAME. Cropped to the world (156,36)-(1124,640).
+passes soil:  t 30 s: mould 2464, soldiers 10, bank 1107, harvested 1507, shots 0, killed 0, took 96%, crystals left 0.955
+passes soil:  t 60 s: mould 3885, soldiers 10, bank 1108, harvested 1508, shots 0, killed 0, took 88%, crystals left 0.951
+passes none:  t 30 s: mould 2289, soldiers 10, bank 1107, harvested 1507, shots 0, killed 0, took 97%, crystals left 0.955
+passes none:  t 60 s: mould 3963, soldiers 10, bank 1108, harvested 1508, shots 0, killed 0, took 88%, crystals left 0.951
+rim soil:     t 30 s: mould 4673, soldiers 11, bank 1065, harvested 1875, shots 1, killed 1, took 92%, crystals left 0.945
+rim soil:     t 60 s: mould 5477, soldiers 11, bank 1066, harvested 1876, shots 1, killed 1, took 84%, crystals left 0.940
+rim none:     t 30 s: mould 4862, soldiers 11, bank 1075, harvested 1875, shots 0, killed 0, took 92%, crystals left 0.945
+rim none:     t 60 s: mould 5928, soldiers 11, bank 1076, harvested 1876, shots 0, killed 0, took 83%, crystals left 0.939
+# Window CPU cost with soil drawn: ground field 1.64-1.77 ms once a game second
+# (1.67-1.68 before on the Fork), model and HUD 0.03-0.04 ms a frame.
+# Headless fix: the first "all" picture of a run was zoomed past the world's edges (camera fit read before the HUD set its insets); fixed in this change.

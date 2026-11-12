@@ -88,6 +88,10 @@ struct Params {
     // cells: its centre, kill radius, alarm and alarm radius.
     kx: f32, ky: f32, kr: f32, kalarm: f32,
     kar: f32, _l3: f32, _l4: f32, _l5: f32,
+    // Soil (WM3, 2026-11-12; `BigParams::sand_keep` and on), read with
+    // `world(SOIL)`: the trail on sand and on clay is x these after the
+    // spread, and on barren ground upkeep is x `barren_up`.
+    sand_keep: f32, clay_keep: f32, barren_up: f32, _s0: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -267,12 +271,30 @@ const CRYSTALS: u32 = 1u;
 const WETS: u32 = 2u;
 const WALLS: u32 = 4u;
 const TERRAIN: u32 = 8u;
+const SOIL: u32 = 16u;
 const PILE_BITS: u32 = 0xFFu;
 const WET: u32 = 0x100u;
 const WALL: u32 = 0x200u;
 const SCENT_WALL: u32 = 0x400u;
 const ROCK: u32 = 0x800u;
 fn world(b: u32) -> bool { return (P.world & b) != 0u; }
+// A cell's soil kind (the ground word's bits 12-15; big.rs `SOIL_SAND`
+// and on), 0 (plain) with the dish's soil off.
+const SOIL_SAND: u32 = 1u;
+const SOIL_CLAY: u32 = 2u;
+const SOIL_BARREN: u32 = 3u;
+fn soil(i: u32) -> u32 {
+    if (!world(SOIL)) { return 0u; }
+    return (ground[i] >> 12u) & 15u;
+}
+// What the trail on cell i keeps of its spread value (the CPU's `tick`
+// multiplies after the spread, and the trail after the species' sum).
+fn soil_keep(i: u32) -> f32 {
+    let k = soil(i);
+    if (k == SOIL_SAND) { return P.sand_keep; }
+    if (k == SOIL_CLAY) { return P.clay_keep; }
+    return 1.0;
+}
 // Whether scent spreads through cell j: agar, or a wall that lets it
 // through (`wall_scent` > 0; the CPU's `scent_agar` on the fine grid).
 fn open(j: u32) -> bool {
@@ -623,7 +645,10 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     let n = f32(atomicLoad(&occ[i]));
     var g = 0.0;
     if (eats(k)) { g = min(grass[i] / n, P.graze_eat); }
-    let e = (energy[k] + g + share[i]) - P.upkeep;
+    // Barren ground costs `barren_up` times the upkeep (WM3).
+    var up = P.upkeep;
+    if (soil(i) == SOIL_BARREN) { up = P.upkeep * P.barren_up; }
+    let e = (energy[k] + g + share[i]) - up;
     if (e > 0.0) { energy[k] = e; return; }
     if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
         atomicSub(&occ[i], 1u);
@@ -664,7 +689,8 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     let j = cell(at.x, at.y);
     // The parent's species' crowd limit (`crowd_of`).
     let cr = crowd_of(species_of(k));
-    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr)) { return; }
+    // No child lands on barren ground (WM3).
+    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN) { return; }
     if (cr > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }
     icell[k] = j;
 }
@@ -1010,7 +1036,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                 }
             }
         }
-        trail_out[i] = sum / n * P.keep;
+        trail_out[i] = sum / n * P.keep * soil_keep(i);
     } else {
         // Each species' field spreads as the trail would; the trail is
         // their sum, in species order (the CPU's `tick`).
@@ -1028,13 +1054,16 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                 }
             }
         }
+        // Soil after the sum, as the CPU: each field and the trail x the
+        // cell's keep.
+        let f = soil_keep(i);
         var total = 0.0;
         for (var s = 0u; s < nsp(); s++) {
             let v = sums[s] / n * keep_of(s);
-            sp_out[s * c + i] = v;
+            sp_out[s * c + i] = v * f;
             total += v;
         }
-        trail_out[i] = total;
+        trail_out[i] = total * f;
     }
     if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
     if (al) { germ_out[c + i] = asum / n * P.alarm_keep; }

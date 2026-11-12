@@ -1,0 +1,23 @@
+# MOULDGPU_TEST_GPU=1 cargo test --release --locked --bin mouldgpu the_world_matches_the_cpu_for_one_tick a_designed_map -- --nocapture (software Vulkan, llvmpipe), 2026-11-12
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+adapter: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+crystals: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 1.2e-9, charge L1 2.3e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 49.1 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+crystals at 1, no limit, regrowing: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 1.9e-9, charge L1 3.5e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 35.2 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+crystals at 1, no flow, no limit: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 2.6e-10, charge L1 0.0e0, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 27.5 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+rock and wet ground: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 1.2e-10, charge L1 2.0e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 128.6 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+walls that break, leaking scent: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 8.8e-10, charge L1 1.5e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 48.5 eaten; 11 bites and 4 cells broken on the CPU, 11 and 4 on the GPU; 0 takes, 0 agar and 0 ground cells off
+walls that never break, sealed: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 1.6e-9, charge L1 3.2e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 72.1 eaten; 0 bites and 0 cells broken on the CPU, 4 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+walls under a crowd, no limit: 25000 walkers, 25000 moved or turned, 0 off; trail L1 0.0e0, scent L1 2.7e-9, charge L1 3.1e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 71.9 eaten; 11 bites and 0 cells broken on the CPU, 11 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+a cage round a packed start: 5000 walkers, 5000 moved or turned, 0 off; trail L1 0.0e0, scent L1 0.0e0, charge L1 0.0e0, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 16.8 eaten; 53 bites and 0 cells broken on the CPU, 53 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+growth on crystals: 15000 walkers, 4646 moved or turned, 0 off; trail L1 0.0e0, scent L1 9.2e-10, charge L1 3.1e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 8.1 eaten; 1 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+soil bands, growth on crystals: 15000 walkers, 6174 moved or turned, 0 off; trail L1 0.0e0, scent L1 5.3e-10, charge L1 2.2e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 8.8 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+soil bands, growth on crystals: living walkers on sand, clay, barren, plain [1583, 2118, 850, 1623]; 1925 born in the tick
+soil bands, two species: 15000 walkers, 6295 moved or turned, 0 off; trail L1 0.0e0, scent L1 1.5e-9, charge L1 2.1e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 7.2 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+soil bands, two species: living walkers on sand, clay, barren, plain [1853, 1900, 863, 1679]; 2076 born in the tick
+test tests::the_world_matches_the_cpu_for_one_tick ... ok
+fork: game s, living CPU, GPU: [(5, 5000, 5000), (10, 4999, 4999), (15, 4991, 4988), (20, 2642, 2644)]; banked 300 / 300
+nest: game s, living CPU, GPU: [(5, 5116, 5119), (10, 5257, 5251), (15, 5384, 5366), (20, 4025, 4022)]; banked 300 / 300
+passes: game s, living CPU, GPU: [(5, 5041, 5041), (10, 5194, 5193), (15, 5454, 5430), (20, 3174, 3162)]; banked 300 / 300
+rim: game s, living CPU, GPU: [(5, 5240, 5221), (10, 5556, 5497), (15, 5849, 5765), (20, 4756, 4658)]; banked 300 / 300
+test tests::a_designed_map_plays_on_the_engine_as_on_the_cpu ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 21 filtered out; finished in 28.62s
