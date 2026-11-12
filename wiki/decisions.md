@@ -3,8 +3,16 @@ title: The owner's rulings and decided choices
 kind: method
 status: current
 updated: 2026-11-12
-sources: [Reports/testing-practice-2026-11-12.md, CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
-code: [Params::pieces]
+sources:
+  - CLAUDE.md
+  - HANDOFF.md
+  - Reports/mould-real-world-2026-11-09.md
+  - Reports/mould-review-thread-handoff-2026-11-10.md
+  - Reports/mould-sound-2026-11-10.md
+  - Reports/rts-design-2026-11-10.md
+  - Reports/testing-practice-2026-11-12.md
+code:
+  - Params::pieces
 ---
 
 # The owner's rulings and decided choices
