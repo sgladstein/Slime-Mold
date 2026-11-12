@@ -23,3 +23,5 @@ TIER=${1:?tier}; OUT=${2:-Reports/mould-tiers-campaign-2026-11-12/census}; SEEDS
 mkdir -p "$OUT"
 T=""; [ "$TIER" != none ] && T="tier=$TIER"
 ./target/release/examples/larderworld census seeds=$SEEDS threads=$THREADS hands=idle,random,farm,wall,boom,claim,fort,strike $T > "$OUT/$TIER-$SEEDS.txt" 2>&1
+# One short row a game for the runners' messages: hand seed score end time soldiers mould.
+grep ' seed ' "$OUT/$TIER-$SEEDS.txt" | sed -E 's/^ *([a-z:=+0-9_]+) seed +([0-9]+): +(.*) at +([0-9]+) s, score ([-+.0-9]+); soldiers +([0-9]+), mould +([0-9]+).*/\1 \2 \5 \3 \4 \6 \7/' > "$OUT/$TIER-$SEEDS.rows"
