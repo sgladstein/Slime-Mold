@@ -294,3 +294,18 @@ add up). The network flows round rock and along its edges, the wall costs
 the pile behind it 10 s (the mould goes round it; 57 wall bites, none
 broken), and every crystal is reached in under a minute. One seed: a
 picture of the behaviour, not a census.
+
+## Buildings (2026-11-12)
+
+The buildings thread put turrets, lures, pumps and outposts in the game (PR #112) and drew them as plain marks. They are now sprites in soldier A's style: `src/world/sprites/buildings.svg`, rendered by `render.js` into atlas tiles 4-11, each kind's body then its lamp. The atlas grows from 512 to 1536 x 160.
+
+`Marks::building` takes the kind, the footprint radius, how built it is, its health share and whether it works. The view's `building` draws:
+- the soldier's cast shadow;
+- the body, built from its foot up, with the unbuilt part at 30% as a ghost;
+- damage as grey and dark, up to 60% greyed and 50% darker at no health;
+- the lamp tile only while the building works and is whole.
+
+In `larder-world`, a lure that is switched off counts as not working. Walls stay ground.
+
+Pictures: `world-look-2026-11-11/buildings-*.png`. They come from `larder-world look=DIR hand=build` on the fork map, and the outpost and pump picture adds a scratch hand (bank topped up, an outpost and a pump placed), which is not committed. The 1070 frame cost is not timed: a building is a mark like a soldier, and its cost grows with its box on screen.
+

@@ -1,0 +1,84 @@
+<!-- The buildings (Larder World, PR #112's turret, lure, pump and outpost),
+     top-down, one unit = the footprint radius, in the soldier sprite's style
+     (flat shapes, soft gradients, dark outlines, olive and steel). Each kind
+     has its body and its lamp, which the view draws only while the building
+     works (`Site::working`: a turret firing, a lure laying scent, a pump
+     drawing charge, an outpost manned); `render.js` turns the layers into
+     the atlas. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 4 4" width="512" height="512">
+ <defs>
+  <radialGradient id="steel" cx="-0.4" cy="-0.5" r="1.4" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9aa0a4"/><stop offset="1" stop-color="#4c5256"/></radialGradient>
+  <radialGradient id="olive" cx="-0.3" cy="-0.4" r="0.9" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7b8458"/><stop offset="1" stop-color="#3f4429"/></radialGradient>
+  <radialGradient id="pad" cx="-0.4" cy="-0.5" r="1.5" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8a8274"/><stop offset="1" stop-color="#4e4840"/></radialGradient>
+  <radialGradient id="sand" cx="0.35" cy="0.3" r="0.8" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#c8b48a"/><stop offset="1" stop-color="#8a7656"/></radialGradient>
+  <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#fff6d0"/><stop offset="0.35" stop-color="#ffc040"/><stop offset="1" stop-color="#ff9020" stop-opacity="0"/></radialGradient>
+  <radialGradient id="bait" cx="0" cy="0" r="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#f4ffd8"/><stop offset="0.4" stop-color="#b8e05a"/><stop offset="1" stop-color="#7ab030" stop-opacity="0"/></radialGradient>
+  <radialGradient id="charge" cx="0" cy="0" r="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#eaffff"/><stop offset="0.4" stop-color="#5ce0e8"/><stop offset="1" stop-color="#20a0b0" stop-opacity="0"/></radialGradient>
+ </defs>
+
+ <!-- Turret: an octagonal concrete base, a round head with twin barrels toward +x. -->
+ <g id="turret">
+  <polygon points="0.42,-1 1,-0.42 1,0.42 0.42,1 -0.42,1 -1,0.42 -1,-0.42 -0.42,-1" fill="url(#pad)" stroke="#2a2622" stroke-width="0.06"/>
+  <rect x="0.2" y="-0.26" width="1.35" height="0.17" rx="0.05" fill="#2a2a2e" stroke="#111" stroke-width="0.03"/>
+  <rect x="0.2" y="0.09" width="1.35" height="0.17" rx="0.05" fill="#2a2a2e" stroke="#111" stroke-width="0.03"/>
+  <circle cx="0" cy="0" r="0.58" fill="url(#olive)" stroke="#23261a" stroke-width="0.06"/>
+  <rect x="-0.42" y="-0.16" width="0.3" height="0.32" rx="0.06" fill="#30331f"/>
+  <circle cx="0.18" cy="-0.22" r="0.09" fill="#3a3a3a" stroke="#111" stroke-width="0.02"/>
+ </g>
+ <g id="turret-lit">
+  <ellipse cx="1.72" cy="-0.17" rx="0.3" ry="0.16" fill="#ffb040"/>
+  <ellipse cx="1.72" cy="0.17" rx="0.3" ry="0.16" fill="#ffb040"/>
+  <ellipse cx="1.68" cy="0" rx="0.18" ry="0.24" fill="#fff8d8"/>
+  <circle cx="0.18" cy="-0.22" r="0.22" fill="url(#glow)"/>
+ </g>
+
+ <!-- Lure: a squat bait canister on three feet, a vented lid. -->
+ <g id="lure">
+  <circle cx="0.62" cy="0.55" r="0.16" fill="#3a3a3a" stroke="#151515" stroke-width="0.03"/>
+  <circle cx="-0.82" cy="0.18" r="0.16" fill="#3a3a3a" stroke="#151515" stroke-width="0.03"/>
+  <circle cx="0.2" cy="-0.82" r="0.16" fill="#3a3a3a" stroke="#151515" stroke-width="0.03"/>
+  <circle cx="0" cy="0" r="0.78" fill="url(#steel)" stroke="#23272a" stroke-width="0.06"/>
+  <circle cx="0" cy="0" r="0.52" fill="#5a6052" stroke="#2b2e26" stroke-width="0.04"/>
+  <path d="M -0.4 -0.16 H 0.4 M -0.44 0 H 0.44 M -0.4 0.16 H 0.4" stroke="#2b2e26" stroke-width="0.06" stroke-linecap="round"/>
+  <circle cx="0" cy="0" r="0.12" fill="#6e7a3a" stroke="#2b2e26" stroke-width="0.03"/>
+ </g>
+ <g id="lure-lit">
+  <circle cx="0" cy="0" r="0.62" fill="url(#bait)" opacity="0.85"/>
+  <circle cx="0" cy="0" r="0.12" fill="#f4ffd8"/>
+ </g>
+
+ <!-- Pump: a square pad, a derrick (crossed beams) and its head, a pipe toward +x. -->
+ <g id="pump">
+  <rect x="-0.86" y="-0.86" width="1.72" height="1.72" rx="0.12" fill="url(#pad)" stroke="#2a2622" stroke-width="0.06"/>
+  <rect x="0.3" y="-0.11" width="1.3" height="0.22" rx="0.08" fill="#4a5054" stroke="#1d2022" stroke-width="0.03"/>
+  <path d="M -0.66 -0.66 L 0.66 0.66 M -0.66 0.66 L 0.66 -0.66" stroke="#6b6250" stroke-width="0.14" stroke-linecap="round"/>
+  <rect x="-0.66" y="-0.66" width="1.32" height="1.32" fill="none" stroke="#5a5244" stroke-width="0.1"/>
+  <circle cx="0" cy="0" r="0.32" fill="url(#steel)" stroke="#1d2022" stroke-width="0.05"/>
+  <circle cx="0" cy="0" r="0.12" fill="#2a3a3e"/>
+ </g>
+ <g id="pump-lit">
+  <circle cx="0" cy="0" r="0.3" fill="url(#charge)"/>
+  <rect x="0.34" y="-0.06" width="1.22" height="0.12" rx="0.05" fill="#7ee8f0" opacity="0.8"/>
+ </g>
+
+ <!-- Outpost: a ring of sandbags round a square tent with a ridge. -->
+ <g id="outpost">
+  <g fill="url(#sand)" stroke="#4a3e2a" stroke-width="0.04">
+   <ellipse cx="0.95" cy="0" rx="0.13" ry="0.24"/>
+   <ellipse cx="0.67" cy="0.67" rx="0.13" ry="0.24" transform="rotate(45 0.67 0.67)"/>
+   <ellipse cx="0" cy="0.95" rx="0.24" ry="0.13"/>
+   <ellipse cx="-0.67" cy="0.67" rx="0.13" ry="0.24" transform="rotate(-45 -0.67 0.67)"/>
+   <ellipse cx="-0.95" cy="0" rx="0.13" ry="0.24"/>
+   <ellipse cx="-0.67" cy="-0.67" rx="0.13" ry="0.24" transform="rotate(45 -0.67 -0.67)"/>
+   <ellipse cx="0" cy="-0.95" rx="0.24" ry="0.13"/>
+   <ellipse cx="0.67" cy="-0.67" rx="0.13" ry="0.24" transform="rotate(-45 0.67 -0.67)"/>
+  </g>
+  <rect x="-0.52" y="-0.52" width="1.04" height="1.04" rx="0.06" fill="url(#olive)" stroke="#23261a" stroke-width="0.05"/>
+  <path d="M -0.52 -0.52 L 0.52 0.52" stroke="#2c3020" stroke-width="0.07"/>
+  <path d="M -0.52 0.52 L 0 0 " stroke="#8a9466" stroke-width="0.04" opacity="0.7"/>
+  <circle cx="0.62" cy="-0.38" r="0.07" fill="#3a3a3a"/>
+ </g>
+ <g id="outpost-lit">
+  <circle cx="0.62" cy="-0.38" r="0.24" fill="url(#glow)"/>
+ </g>
+</svg>
