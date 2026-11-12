@@ -1,0 +1,9 @@
+Tier counter census, written 2026-11-12 ~01:10Z before any tier run.
+World: CPU race world, scale 2, 5000 walkers, cap 900 s. Seeds 53-60 (never used). Hands idle, random, farm, boom, claim, strike.
+Tiers: none (plain), sporer, sleeper, swarmer (mould::tiers::Tier::apply on race_params).
+Deciding measures:
+ D1 (difficulty): for each tier, each AI style vs idle and vs random, paired by seed, sign test; a style "beats" the tier if 8/8 (p 0.0078).
+ D2 (difficulty number): per tier, median score of each hand, and the paired count of each style vs the same style on plain (tier makes it harder if lower on 7+/8, p 0.07; 8/8 = 0.0078).
+ D3 (counter signal): per tier, the paired difference strike - boom compared with the same difference on plain, sign test over 8 seeds. Prediction from the tiers' counters: Swarmer floods the place it is hit, so a strike (a kill zone at the core) gains on boom vs plain; Sleeper rushes a wound unless baited, so the unbaited strike loses ground vs plain.
+ Holm over every test in D1-D3 together.
+Only 8 seeds: a first look; a null is weak evidence.
