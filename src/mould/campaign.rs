@@ -187,6 +187,7 @@ impl Mission {
         // still set either (0 turns it off).
         r.overrun = OVERRUN_END;
         r.reserve = RESERVE;
+        r.drain = MISSION_DRAIN;
         for (k, v) in &self.rules {
             match k.as_str() {
                 "price" => r.price = *v,
@@ -197,6 +198,7 @@ impl Mission {
                 "smell" => r.smell = *v,
                 "overrun" => r.overrun = *v,
                 "reserve" => r.reserve = *v,
+                "drain" => r.drain = *v,
                 _ => unreachable!("parse checks the keys"),
             }
         }
@@ -204,7 +206,15 @@ impl Mission {
     }
 }
 
-const RULE_KEYS: [&str; 8] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve"];
+const RULE_KEYS: [&str; 9] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve", "drain"];
+
+/// A walker's bite on a soldier in a mission (`Rules::drain`) unless its
+/// file sets one (`rule drain N`): 1, the bite the missions were tuned on.
+/// Free play's went to 2 on 2026-11-12 (the owner: walking into the slime
+/// "should be very deadly"); at 2 the claim hand's walled squad on The gaps
+/// was wiped at 2:05, so the missions keep theirs until the campaign
+/// thread retunes them.
+pub const MISSION_DRAIN: f32 = 1.0;
 
 /// Seconds from the design: a stuck or overrun run this long ends the
 /// mission; two stars need the goal before `TWO_STARS`.

@@ -100,6 +100,11 @@ pub trait World {
     fn open(&self, x: f32, y: f32) -> bool;
     /// The mould's core is taken: no more births.
     fn stop_births(&mut self);
+    /// The mould's upkeep a fine step (`BigParams::upkeep`; 0 with growth
+    /// off), and setting it: the broken mould (`Rules::broken`) starves its
+    /// stragglers by raising it, and gives it back when the mould recovers.
+    fn upkeep(&self) -> f32;
+    fn set_upkeep(&mut self, up: f32);
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
@@ -202,6 +207,14 @@ impl World for BigDish {
 
     fn stop_births(&mut self) {
         self.p.birth_energy = f32::INFINITY;
+    }
+
+    fn upkeep(&self) -> f32 {
+        self.p.upkeep
+    }
+
+    fn set_upkeep(&mut self, up: f32) {
+        self.p.upkeep = up;
     }
 
     fn food_deposit(&self) -> f32 {
@@ -425,7 +438,21 @@ pub struct Rules {
     /// (M3's), against 30 food a second a harvester takes.
     pub price: f32,
     pub hp: f32,
-    /// Health a walker touching a soldier takes a game second.
+    /// Health a walker touching a soldier takes a game second: its bite,
+    /// whatever the mould's walker count (`Rules::mass` does not shrink
+    /// it). 2 since 2026-11-12 (the owner, 22:18Z, playing shape C: "I can
+    /// walk my group of soliders into the thickest part of the slime and
+    /// kill most of the slime and harvest the whole crystal without losing
+    /// a single soldier"; 22:22Z: "walking directly into the enemy should
+    /// be very deadly"). Was 1 x `mass`, 0.2 a walker at C's 25,000: 40
+    /// soldiers walked into C's thickest part at 240 s lost none in 60 s
+    /// on race seeds 1-4 (`examples/thickprobe.rs`); at 2 a walker they
+    /// lose 26 to 35 of 40 (the report's *Thick slime*). A walker touches
+    /// a soldier on about a third of its frames there (most 1-4 walkers,
+    /// 20 or more on 1%), so a soldier on the edge lives and one in the
+    /// middle dies in seconds. Buildings keep their own
+    /// (`BuildRules::drain`). Today's 5,000-walker mould (shape A, mass 1)
+    /// bites twice what it did.
     pub drain: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
@@ -577,15 +604,20 @@ pub struct Rules {
     /// the countdown is in fine steps (`World::fine_steps` a tick).
     pub crater: f32,
     /// How far into the slime a shot's blast is centred, in strike radii
-    /// (`squad::Frame::bite`): on along the shot's line from the first
+    /// (`squad::Frame::sink`): on along the shot's line from the first
     /// slime it meets, to the last slime within this many radii. 1 since
     /// 2026-11-12: the owner, playing shape D (22:06Z), found a squad
     /// standing off a large mass "barely seems to do damage, but if I move
     /// them into the mold, they destroy it easily", and said "Yes" (23:14Z)
     /// to centring the blast inside the slime. A blast centred on the
     /// body's edge spent about half its disc on open ground. 0 is the edge
-    /// hit as before (`bite=0` on the window and the example).
-    pub bite: f32,
+    /// hit as before (`sink=0` on the window and the example). On shape C
+    /// a squad standing still on free fire went from 12.6 kills a shot to
+    /// 20.3, walking in from 42.0 to 47.9
+    /// (`Reports/larder-shot-sink-2026-11-12.md`). Named sink, not bite
+    /// (its first name): the mould's bite is its damage to soldiers
+    /// (`drain`).
+    pub sink: f32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
     /// the target. 0 (the default) aims dead on and draws no random
@@ -600,9 +632,12 @@ pub struct Rules {
     /// one, and a goal inside one moves to its rim (`Game::standable`,
     /// `Game::rim`). Shots still fly over crystals.
     pub crystal_solid: bool,
-    /// How much one walker counts in a fight: a walker touching a soldier,
-    /// a building or the larder does `mass` times `drain` (or `steal`), and
-    /// counts `mass` towards wading (`Rules::wade`).
+    /// How much one walker counts in a fight: a walker touching a building
+    /// or the larder does `mass` times `BuildRules::drain` (or `steal`),
+    /// and counts `mass` towards wading (`Rules::wade`). Not a soldier's
+    /// health: a walker's bite (`drain`) is whole at any count since
+    /// 2026-11-12, when shape C's 0.2 a walker let 40 soldiers stand in its
+    /// thickest part and lose none.
     /// 1 (the default) is today's 5,000-walker mould. A denser mould is
     /// the same body cut into more, smaller walkers, so it plays at
     /// 5,000 / its walkers at scale 2 (`Rules::mass_for`); without that the 25,000-walker
@@ -613,6 +648,20 @@ pub struct Rules {
     /// each one. Agreed with the Larder thread (11-12, reference density
     /// over density); first set by the owner's shape playtest (20:21Z).
     pub mass: f32,
+    /// The broken mould (owner, 2026-11-12 22:06-22:07Z, playing shape D:
+    /// "after killing almost all the mold, having the kill the few random
+    /// stragglers spread across the map to win is annoying"; "There are
+    /// still clearly lone walkers moving around"): once the mould falls
+    /// under `broken` times its peak walkers, its upkeep is `broken_starve`
+    /// times (`World::set_upkeep`), so its stragglers off food starve in a
+    /// second or two, while any on a crystal still eat and can breed it
+    /// back over the line, which gives the upkeep back. 0 is off. Why not a
+    /// lone walker's own upkeep (`BigParams::lone_upkeep`): at 25,000
+    /// walkers only about 1% are alone at any time, 3 and 10 times did not
+    /// lower that, and 10 cost the spread (15.5 crystals at 180 s against
+    /// 19.5, 4 of 4 seeds; `examples/loneprobe.rs`).
+    pub broken: f32,
+    pub broken_starve: f32,
 }
 
 impl Rules {
@@ -635,7 +684,7 @@ impl Default for Rules {
             shot_every: 1.0,
             price: 0.0,
             hp: 100.0,
-            drain: 1.0,
+            drain: 2.0,
             touch: 1.5,
             wade: 6.0,
             smell: 0.5,
@@ -665,10 +714,12 @@ impl Default for Rules {
             hunger: 1.0,
             seek: true,
             crater: 4.5,
-            bite: 1.0,
+            sink: 1.0,
             spread: 0.0,
             crystal_solid: true,
             mass: 1.0,
+            broken: 0.03,
+            broken_starve: 50.0,
         }
     }
 }
@@ -945,6 +996,11 @@ pub struct Game<W: World> {
     pub last_shots: Vec<Shot>,
     /// Walkers alive at the last count (once a game second).
     pub mould: usize,
+    /// The most walkers the mould has had at a count (`Rules::broken`).
+    pub peak: usize,
+    /// When the mould broke (`Rules::broken`), and the upkeep it had then,
+    /// given back if it recovers; None while it is whole.
+    pub broken: Option<(u64, f32)>,
     /// Each crystal's charge at the start and the charge the squad took
     /// from it, so the cap's share can tell the mould's eating from ours.
     start_charge: Vec<f32>,
@@ -1065,6 +1121,8 @@ impl<W: World> Game<W> {
             end: None,
             last_shots: Vec::new(),
             mould,
+            peak: mould,
+            broken: None,
             start_charge,
             taken,
             start_mould: mould,
@@ -1822,7 +1880,7 @@ impl<W: World> Game<W> {
         // buildings thread's call, 11-12 07:46Z: one rule for every shot).
         self.building_units(&mut units, &mut shots, &mut who, &mut from, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
-        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, bite: r.bite };
+        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, who, from, out });
     }
@@ -1893,7 +1951,7 @@ impl<W: World> Game<W> {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
                         }
-                        s.hp -= r.drain * r.mass * u.touching as f32 * dt;
+                        s.hp -= r.drain * u.touching as f32 * dt;
                         if s.hp <= 0.0 {
                             s.alive = false;
                             s.hp = 0.0;
@@ -1917,10 +1975,33 @@ impl<W: World> Game<W> {
         if now / r.tps as u64 != t / r.tps as u64 {
             self.mould = self.world.living();
             self.count_stuck();
+            self.check_broken();
         }
         self.feed(dt);
         self.campaign_rules(now - t);
         self.check_end();
+    }
+
+    /// Once a game second, at the count: the broken mould (`Rules::broken`).
+    fn check_broken(&mut self) {
+        let r = self.rules;
+        self.peak = self.peak.max(self.mould);
+        if r.broken <= 0.0 {
+            return;
+        }
+        let under = (self.mould as f32) < r.broken * self.peak as f32;
+        match (under, self.broken) {
+            (true, None) => {
+                let up = self.world.upkeep();
+                self.world.set_upkeep(up * r.broken_starve);
+                self.broken = Some((self.world.ticks(), up));
+            }
+            (false, Some((_, up))) => {
+                self.world.set_upkeep(up);
+                self.broken = None;
+            }
+            _ => {}
+        }
     }
 
     /// `Rules::ration` and `Rules::hunger`: every live soldier eats from
@@ -2293,6 +2374,28 @@ mod tests {
         assert_eq!(Game::new(race_world(1, 1, 1_000), r, 1).with_tier(None).core_rule, Core::of(&r));
     }
 
+    /// The broken mould (`Rules::broken`): under 3% of its peak, its upkeep
+    /// is 50 times, and it gets its upkeep back once it is over the line.
+    #[test]
+    fn a_broken_mould_starves_until_it_grows_back() {
+        let mut g = small(1);
+        let up = g.world.upkeep();
+        assert!(up > 0.0 && g.broken.is_none());
+        g.peak = g.mould * 100;
+        g.check_broken();
+        assert_eq!((g.broken.map(|b| b.1), g.world.upkeep()), (Some(up), up * g.rules.broken_starve));
+        g.check_broken();
+        assert_eq!(g.world.upkeep(), up * g.rules.broken_starve, "it starves once, not 50 x 50");
+        g.peak = g.mould;
+        g.check_broken();
+        assert_eq!((g.broken, g.world.upkeep()), (None, up));
+        let mut off = small(1);
+        off.rules.broken = 0.0;
+        off.peak = off.mould * 100;
+        off.check_broken();
+        assert_eq!((off.broken, off.world.upkeep()), (None, up));
+    }
+
     /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
     /// mould's home stops nothing, and births go on.
     #[test]
@@ -2538,6 +2641,12 @@ mod tests {
         }
         fn stop_births(&mut self) {
             World::stop_births(&mut self.d)
+        }
+        fn upkeep(&self) -> f32 {
+            World::upkeep(&self.d)
+        }
+        fn set_upkeep(&mut self, up: f32) {
+            World::set_upkeep(&mut self.d, up)
         }
         fn food_deposit(&self) -> f32 {
             World::food_deposit(&self.d)

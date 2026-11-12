@@ -235,7 +235,7 @@ impl Garden {
     /// `squad::shots` for the garden: a shot stops at the first cell whose
     /// enemy trail looks like slime, so it flies over the player's mould,
     /// and strikes the enemy's walkers and trail only.
-    fn shots(&mut self, shots: &[ShotIn], slime: f32, crater: u16, bite: f32) -> Vec<ShotOut> {
+    fn shots(&mut self, shots: &[ShotIn], slime: f32, crater: u16, sink: f32) -> Vec<ShotOut> {
         let (w, h) = (self.dish.w, self.dish.h);
         let shots = &shots[..shots.len().min(SHOTS_MAX)];
         let mut used = 0;
@@ -255,8 +255,8 @@ impl Garden {
                         return NONE;
                     }
                     if stops(i as usize) {
-                        // The bite (`squad::bite`), on the enemy's slime.
-                        return squad::bite(w, cells, j, squad::bite_r2(bite, r2(s.r.min(R_MAX))), &self.dish.agar, stops);
+                        // The sink (`squad::sink`), on the enemy's slime.
+                        return squad::sink(w, cells, j, squad::sink_r2(sink, r2(s.r.min(R_MAX))), &self.dish.agar, stops);
                     }
                 }
                 NONE
@@ -453,7 +453,7 @@ impl World for Garden {
     /// enemy only; smell, ticks and harvest as the squad's. Counts what
     /// each side ate.
     fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut {
-        let shots = self.shots(&f.shots, f.slime, f.crater, f.bite);
+        let shots = self.shots(&f.shots, f.slime, f.crater, f.sink);
         squad::smell(&mut self.dish, &f.units);
         let mut was = Vec::new();
         for _ in 0..ticks {
@@ -532,6 +532,15 @@ impl World for Garden {
             *c = 0;
         }
     }
+
+    /// One upkeep feeds both species, so the broken mould (`Rules::broken`)
+    /// would starve the player's mould with the enemy's: the garden keeps
+    /// its upkeep (the rule does nothing here).
+    fn upkeep(&self) -> f32 {
+        self.dish.p.upkeep
+    }
+
+    fn set_upkeep(&mut self, _up: f32) {}
 
     fn food_deposit(&self) -> f32 {
         self.dish.p.food_deposit

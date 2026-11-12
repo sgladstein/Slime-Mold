@@ -61,9 +61,9 @@ struct Params {
     // The look's hits (`Engine::set_hits`, the world look's stand-in fight).
     // The player's own mould (`own_mould`, world bit GARDEN): its tend
     // entries this frame and where they start in `SQ.path` (`squad::TEND`).
-    // Then the shots' bite (`squad::Frame::bite`, squared; 0 off): a hit's
-    // blast sinks up to floor(`shot_bite` x its strike's r2) along its line.
-    nhits: u32, ntend: u32, tend_at: u32, shot_bite: f32,
+    // Then the shots' sink (`squad::Frame::sink`, squared; 0 off): a hit's
+    // blast sinks up to floor(`shot_sink` x its strike's r2) along its line.
+    nhits: u32, ntend: u32, tend_at: u32, shot_sink: f32,
     // The species block (2026-11-11, the creature thread's species on the
     // GPU): whether each species uses its own `sets` entry (`per`), the
     // walker kinds (`mix_share`: 2 with the mix on, a walker's kind in bit
@@ -1656,10 +1656,10 @@ fn stops(i: u32) -> bool {
 // Each shot walks its cells and stops at the first off the agar (a wall or
 // rock: no hit) or the first that looks like slime (the hit), or a walker
 // in a crater (2026-11-12). The owner, 2026-11-11 16:48Z: "Gun fire should
-// hit the first slime in its path". With the bite (`shot_bite`, 2026-11-12)
+// hit the first slime in its path". With the sink (`shot_sink`, 2026-11-12)
 // the blast then sinks in: on along the line while the cells are agar and
-// within the bite's reach of the first hit, to the last that stops a shot
-// (`squad::bite`).
+// within the sink's reach of the first hit, to the last that stops a shot
+// (`squad::sink`).
 @compute @workgroup_size(256)
 fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
     let q = gid.x;
@@ -1672,8 +1672,8 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (agar[i] == 0u) { break; }
         if (stops(i)) { hit = i; break; }
     }
-    if (hit != NONE && P.shot_bite > 0.0) {
-        let reach2 = u32(floor(P.shot_bite * f32(s.r2)));
+    if (hit != NONE && P.shot_sink > 0.0) {
+        let reach2 = u32(floor(P.shot_sink * f32(s.r2)));
         let hx = i32(hit % P.w);
         let hy = i32(hit / P.w);
         var deep = hit;

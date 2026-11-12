@@ -1,9 +1,9 @@
-<title>Shots That Bite In</title>
+<title>Shots That Sink In</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
 <style>
-/* The bite (Rules::bite, 2026-11-12): side-by-side clips of one fight with
+/* The sink (Rules::sink, 2026-11-12): side-by-side clips of one fight with
    the blast on the first slime (left) and sunk one strike radius in (right).
    Colours follow the world, as on the crater pages: mould amber, crystal cyan. */
 :root {
@@ -45,7 +45,7 @@ code { font-size: 0.9em; background: var(--panel); border: 1px solid var(--line)
 <main>
   <header>
     <span class="tag">Larder World · shape C · the Fork, seed 1</span>
-    <h1>Shots that bite into the slime</h1>
+    <h1>Shots that sink into the slime</h1>
     <p class="lede">You found that a squad standing in one spot barely dented a large mass, while walking in tore it up. A shot stopped at the first slime on its line and centred its blast there, on the body's edge, so about half of each blast landed on open ground. Now the blast sinks one strike radius further along the line, onto the last slime within that reach. Against a thin strand it stays on the strand. Each clip below is the same fight twice, the old rule on the left and the new one on the right, with the counts running above each side.</p>
   </header>
 
@@ -64,7 +64,7 @@ code { font-size: 0.9em; background: var(--panel); border: 1px solid var(--line)
 
   <section>
     <h2>Walking in</h2>
-    <p>The rush hand walks four soldiers into the body toward the core. Inside the slime the first slime is at their feet, so the old rule already hit slime all round; the bite adds a little.</p>
+    <p>The rush hand walks four soldiers into the body toward the core. Inside the slime the first slime is at their feet, so the old rule already hit slime all round; sinking adds a little.</p>
     <figure>
       <video src="rush.mp4" poster="rush.jpg" controls muted loop playsinline preload="metadata"></video>
     </figure>
@@ -77,7 +77,7 @@ code { font-size: 0.9em; background: var(--panel); border: 1px solid var(--line)
 
   <section>
     <h2>Burning a line into the ring</h2>
-    <p>The volley hand from the crater-time clips: the squad burns one line across the thick ring round the core crystal from 22 to 34 s. The crater already lets these shots fly deeper with each hit, so the bite changes little here.</p>
+    <p>The volley hand from the crater-time clips: the squad burns one line across the thick ring round the core crystal from 22 to 34 s. The crater already lets these shots fly deeper with each hit, so sinking changes little here.</p>
     <figure>
       <video src="volley.mp4" poster="volley.jpg" controls muted loop playsinline preload="metadata"></video>
     </figure>
@@ -99,7 +99,7 @@ code { font-size: 0.9em; background: var(--panel); border: 1px solid var(--line)
 
   <section>
     <h2>Try it</h2>
-    <p><code>cargo run --release --bin larder-world -- shape=c</code> has the bite on. Add <code>bite=0</code> for the old rule, or <code>bite=1.5</code> or <code>bite=2</code> to sink the blast deeper (in strike radii).</p>
-    <p class="note">Clips from <code>larder-world look=DIR map=fork shape=c hand=edge|rush|volley bite=0|1 centre=254,264</code> on software Vulkan (llvmpipe), frames every half game second played at twice game speed, cropped 640 x 600 at 330, 40. Counts from the game's own lines at each frame. The CPU and GPU agree on the bite to the bit (the one-frame twin test). Sources in the repo under <code>Reports/larder-shot-bite-2026-11-12/</code>.</p>
+    <p><code>cargo run --release --bin larder-world -- shape=c</code> sinks the blast. Add <code>sink=0</code> for the old rule, or <code>sink=1.5</code> or <code>sink=2</code> to sink the blast deeper (in strike radii).</p>
+    <p class="note">Clips from <code>larder-world look=DIR map=fork shape=c hand=edge|rush|volley sink=0|1 centre=254,264</code> on software Vulkan (llvmpipe), made before the key was renamed from <code>bite=</code>, frames every half game second played at twice game speed, cropped 640 x 600 at 330, 40. Counts from the game's own lines at each frame. The CPU and GPU agree on it to the bit (the one-frame twin test). Sources in the repo under <code>Reports/larder-shot-sink-2026-11-12/</code>.</p>
   </section>
 </main>

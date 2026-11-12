@@ -14,8 +14,8 @@
 //!    (`Frame::crater`), or at the first cell off the agar (a wall or
 //!    rock). The owner,
 //!    2026-11-11 16:48Z: "Gun fire should hit the first slime in its
-//!    path". With `Frame::bite` the blast then sinks in (`bite`): it is
-//!    centred on the last cell along the line, within the bite's reach of
+//!    path". With `Frame::sink` the blast then sinks in (`sink`): it is
+//!    centred on the last cell along the line, within the sink's reach of
 //!    that first one and before the agar ends, that still stops a shot.
 //!    Every hit then strikes: the living walkers on cells within its
 //!    radius die (`BigDish::kill`; a walker in two shots' discs counts for
@@ -113,7 +113,7 @@ pub struct Frame {
     /// damage memory (binding 47).
     pub crater: u16,
     /// How far past the first slime a shot's blast is centred, in strike
-    /// radii (`bite`; 0 centres it on the first slime cell, as before).
+    /// radii (`sink`; 0 centres it on the first slime cell, as before).
     /// Why (owner, 2026-11-12 22:06Z): "if I keep my group of soliders in
     /// one spot and have them fire on a large group of mold it barely seems
     /// to do damage, but if I move them into the mold, they destroy it
@@ -121,8 +121,8 @@ pub struct Frame {
     /// disc on the open ground in front of it; a squad inside the body
     /// strikes slime all round. Asked whether to centre the blast inside the
     /// slime (23:14Z): "Yes". On the GPU the `shots` pass sinks it the same
-    /// way, from `Params::shot_bite` (this squared).
-    pub bite: f32,
+    /// way, from `Params::shot_sink` (this squared).
+    pub sink: f32,
 }
 
 /// **A burst** (the squad toolkit, 2026-11-12): one area effect at a point,
@@ -293,17 +293,17 @@ pub fn path(w: usize, h: usize, from: (f32, f32), to: (f32, f32)) -> Vec<u32> {
     cells
 }
 
-/// The bite's squared reach in whole cells for a strike of squared radius
-/// `r2`: floor(bite² x r2) in f32, as the GPU's `shots` pass computes it
-/// from `Params::shot_bite` (bite², sent as f32), so both agree to the bit.
-pub fn bite_r2(bite: f32, r2: u32) -> u32 {
-    if bite <= 0.0 {
+/// The sink's squared reach in whole cells for a strike of squared radius
+/// `r2`: floor(sink² x r2) in f32, as the GPU's `shots` pass computes it
+/// from `Params::shot_sink` (sink², sent as f32), so both agree to the bit.
+pub fn sink_r2(sink: f32, r2: u32) -> u32 {
+    if sink <= 0.0 {
         return 0;
     }
-    (bite * bite * r2 as f32).floor() as u32
+    (sink * sink * r2 as f32).floor() as u32
 }
 
-/// **The bite** (`Frame::bite`): where a shot that first met slime at
+/// **The sink** (`Frame::sink`): where a shot that first met slime at
 /// `cells[j]` centres its blast. From there it looks on along its line, cell
 /// by cell, while the cells are on the agar and within `reach2` (squared,
 /// whole cells) of `cells[j]`, and takes the last one that `stops` (the
@@ -312,11 +312,11 @@ pub fn bite_r2(bite: f32, r2: u32) -> u32 {
 /// against a thin strand it stays on the strand: a blast centred on the
 /// empty ground past a strand would take less of it than one on its edge.
 /// Shape D, CPU, a squad standing 9 cells off the core (the probe in
-/// `Reports/larder-shot-bite-2026-11-12.md`): a reach of one strike radius
+/// `Reports/larder-shot-sink-2026-11-12.md`): a reach of one strike radius
 /// took 12-16 walkers a shot against 11-13 at the edge, and hits on fresh
 /// slime about twice as many (16-20 against 8-12); on shape A's thinner
 /// arms it made no difference.
-pub fn bite(w: usize, cells: &[u32], j: usize, reach2: u32, agar: &[bool], stops: impl Fn(usize) -> bool) -> u32 {
+pub fn sink(w: usize, cells: &[u32], j: usize, reach2: u32, agar: &[bool], stops: impl Fn(usize) -> bool) -> u32 {
     let hit = cells[j];
     if reach2 == 0 {
         return hit;
@@ -337,7 +337,7 @@ pub fn bite(w: usize, cells: &[u32], j: usize, reach2: u32, agar: &[bool], stops
 
 /// Step 1: the shots (see the module's comment). Returns each shot's hit
 /// and kills.
-pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, bite: f32) -> Vec<ShotOut> {
+pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f32) -> Vec<ShotOut> {
     let (w, h) = (d.w, d.h);
     let shots = &shots[..shots.len().min(SHOTS_MAX)];
     let mut used = 0;
@@ -359,7 +359,7 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, bite: f
                     return NONE;
                 }
                 if stops(i as usize) {
-                    return self::bite(w, cells, j, bite_r2(bite, r2(s.r.min(R_MAX))), &d.agar, stops);
+                    return self::sink(w, cells, j, sink_r2(sink, r2(s.r.min(R_MAX))), &d.agar, stops);
                 }
             }
             NONE
@@ -526,7 +526,7 @@ pub fn block_centre(w: usize, b: usize) -> (f32, f32) {
 
 /// A whole frame on the CPU: shots, smell, `ticks` ticks, reads, harvest.
 pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
-    let shots = shots(d, &f.shots, f.slime, f.crater, f.bite);
+    let shots = shots(d, &f.shots, f.slime, f.crater, f.sink);
     smell(d, &f.units);
     for _ in 0..ticks {
         d.tick();
@@ -771,11 +771,11 @@ mod tests {
         assert_eq!(d.scorch[hy as usize * w + hx as usize], 90, "all of them at the hit");
     }
 
-    /// The bite (`Frame::bite`): the blast is centred on the last slime
+    /// The sink (`Frame::sink`): the blast is centred on the last slime
     /// along the line within its reach of the first slime it met, and never
     /// past the agar. Against a strand it stays on the strand.
     #[test]
-    fn the_bite_sinks_the_blast_to_the_last_slime_within_its_reach() {
+    fn a_hit_sinks_its_blast_to_the_last_slime_within_reach() {
         let mut d = world();
         let (w, h) = (d.w, d.h);
         let slime = slime_trail(3.0);
@@ -789,22 +789,22 @@ mod tests {
         }
         let at = |x: usize| y * w + x;
         let shot = ShotIn { from: (x0 as f32 + 0.5, y as f32 + 0.5), to: (x0 as f32 + 29.5, y as f32 + 0.5), r: 3.0 };
-        let hit_x = |d: &BigDish, bite: f32| shots(&mut d.clone(), &[shot], slime, 0, bite)[0].hit.map(|(x, _)| x as usize);
+        let hit_x = |d: &BigDish, sink: f32| shots(&mut d.clone(), &[shot], slime, 0, sink)[0].hit.map(|(x, _)| x as usize);
         // A strand one cell wide at x0 + 10: the blast stays on it.
         d.trail[at(x0 + 10)] = 2.0 * slime;
         assert_eq!(hit_x(&d, 0.0), Some(x0 + 10));
         assert_eq!(hit_x(&d, 1.0), Some(x0 + 10), "the blast stays on a strand");
-        // Slime two and four cells on: the bite of one strike radius (r2 9)
-        // reaches the first, not the second; a bite of 1.5 (r2 20) both.
+        // Slime two and four cells on: the sink of one strike radius (r2 9)
+        // reaches the first, not the second; a sink of 1.5 (r2 20) both.
         d.trail[at(x0 + 12)] = 2.0 * slime;
         d.trail[at(x0 + 14)] = 2.0 * slime;
-        assert_eq!(hit_x(&d, 0.0), Some(x0 + 10), "no bite: the edge");
+        assert_eq!(hit_x(&d, 0.0), Some(x0 + 10), "no sink: the edge");
         assert_eq!(hit_x(&d, 1.0), Some(x0 + 12));
         assert_eq!(hit_x(&d, 1.5), Some(x0 + 14));
-        assert_eq!((bite_r2(1.0, 9), bite_r2(1.5, 9), bite_r2(0.0, 9), bite_r2(-1.0, 9)), (9, 20, 0, 0));
-        // A wall between stops the bite: the cells past it are not reached.
+        assert_eq!((sink_r2(1.0, 9), sink_r2(1.5, 9), sink_r2(0.0, 9), sink_r2(-1.0, 9)), (9, 20, 0, 0));
+        // A wall between stops the sink: the cells past it are not reached.
         d.agar[at(x0 + 11)] = false;
-        assert_eq!(hit_x(&d, 1.5), Some(x0 + 10), "the bite does not cross off the agar");
+        assert_eq!(hit_x(&d, 1.5), Some(x0 + 10), "the sink does not cross off the agar");
         d.agar[at(x0 + 11)] = true;
         // A thick body: the blast sinks one strike radius in.
         for x in x0 + 10..x0 + 30 {

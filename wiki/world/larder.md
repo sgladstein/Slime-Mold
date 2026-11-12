@@ -13,7 +13,7 @@ sources:
   - Reports/larder-m2-2026-11-11.md
   - Reports/larder-m3-2026-11-11.md
   - Reports/larder-maps-2026-11-11.md
-  - Reports/larder-shot-bite-2026-11-12.md
+  - Reports/larder-shot-sink-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/life-gpu-2026-11-11.md
   - Reports/mould-shooter-2026-11-11.md
@@ -51,13 +51,15 @@ code:
   - Params::light_weight
   - Params::pieces
   - Params::wound
-  - Rules::bite
+  - Rules::broken
   - Rules::core_pull
   - Rules::crater
   - Rules::crystal_solid
+  - Rules::drain
   - Rules::home_dry
   - Rules::hunger
   - Rules::ration
+  - Rules::sink
   - Rules::wade
   - Tier::core
   - Tracker
@@ -67,11 +69,11 @@ code:
   - larder_world::Game
   - race_params
   - race_settings
-  - squad::Frame::bite
   - squad::Frame::crater
+  - squad::Frame::sink
   - squad::UNITS_MAX
-  - squad::bite
   - squad::frame
+  - squad::sink
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -196,14 +198,14 @@ owner's no-king ruling (2026-11-12 20:21Z: "remove the king rule ...
 Headless"; [dead end](../../Reports/dead-ends.md)). The core rule is not what holds
 farm, wall and fort to the cap: without it (`core=headless`, race 5-20)
 they stalemate in 16 of 16 games as with it, and the player wins 2 of
-112 games instead of 6. **No king since 2026-11-12 20:21Z** (owner: "remove the king rule ... Headless"): `Core::of` is `Headless`, so every mould, tiers included, makes walkers while it has food, and holding its home stops nothing; the home keeps its pull (the Sprawler's is 0), and the window shows no core ring. A walker hits for `Rules::mass` (5,000 / the start walkers at scale 2; 1 by default), so a denser mould is the same body cut finer; the owner's shape playtest (`larder-world -- shape=a..e`) uses it ([report](../../Reports/slime-questions-2026-11-12/README.md)). Strike
+112 games instead of 6. **No king since 2026-11-12 20:21Z** (owner: "remove the king rule ... Headless"): `Core::of` is `Headless`, so every mould, tiers included, makes walkers while it has food, and holding its home stops nothing; the home keeps its pull (the Sprawler's is 0), and the window shows no core ring. A walker hits for `Rules::mass` (5,000 / the start walkers at scale 2; 1 by default), so a denser mould is the same body cut finer; the owner's shape playtest (`larder-world -- shape=a..e`) uses it ([report](../../Reports/slime-questions-2026-11-12/README.md)). **The broken mould** (2026-11-12, after the owner's D playtest): under 3% of its peak walkers its upkeep is 50 times (`Rules::broken`, `broken_starve`), so stragglers off food die within about 25 s instead of growing it back, and the window says so ([report, *Stragglers*](../../Reports/slime-questions-2026-11-12/README.md)). Strike
 still beats farm about 2 to 1 because food doesn't bind. **Wading, and
 the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
 *Wading, and the cone crater by default*](../../Reports/larder-world-roadmap-2026-11-11.md)):
 the race world's crater is the cone (look 3; `scorch_cone`, full 150, keep
 0; the toolkit's blasts stay flat), and a soldier walks at
 `speed / (1 + (touching / wade)²)` (`Rules::wade` 6: half speed with 6
-walkers touching, a fifth with 12; each counts `Rules::mass`). Over both blocks random wipes the
+walkers touching, a fifth with 12; each counts `Rules::mass`). **A walker's bite on a soldier is 2 health a second at any walker count** since 2026-11-12 (`Rules::drain`; the owner: walking into the slime "should be very deadly"); was 1 x `mass`, which let 40 soldiers stand in C's thickest part and lose none in 60 s ([report, *Thick slime*](../../Reports/slime-questions-2026-11-12/README.md)); buildings keep 1 x `mass` (`BuildRules::drain`). Over both blocks random wipes the
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
 random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the
@@ -217,12 +219,12 @@ and says when the bank runs dry inside a minute. `Rules::overrun` 20 s is on. On
 harvest unspent (80% before) and strike 17% (64%), and strike beats farm
 12-4, not under Holm (26-6 before). Next, buildings' running costs and
 the player AI's feeding. Off by default for other threads:
-`Rules::reserve`, `Game::stuck`, `Game::density`. **Shots bite in**
-([report](../../Reports/larder-shot-bite-2026-11-12.md), [page](https://claude.ai/artifact/4iJTF66gpSNoJxnLgUtyiG)):
+`Rules::reserve`, `Game::stuck`, `Game::density`. **Shots sink in**
+([report](../../Reports/larder-shot-sink-2026-11-12.md), [page](https://claude.ai/artifact/4iJTF66gpSNoJxnLgUtyiG)):
 a hit's blast is centred on the last slime along the shot's line within
-`Rules::bite` strike radii (1) of the first slime it met, not on that
+`Rules::sink` strike radii (1) of the first slime it met, not on that
 first cell, so fire from outside a body strikes slime all round, while
-against a strand it stays on the strand (`squad::bite`, both engines, to
+against a strand it stays on the strand (`squad::sink`, both engines, to
 the bit). The owner's 22:06Z playtest found a squad standing in one spot
 "barely" hurt a large mass that walking in destroyed; on shape C a squad
 standing still on free fire now kills 20.3 a shot (12.6 before), walking

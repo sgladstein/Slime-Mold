@@ -1083,8 +1083,8 @@ pub struct Engine {
     pub sq: wgpu::Buffer,
     pub kills: wgpu::Buffer,
     pub squad: (u32, u32, f32),
-    /// The squad frame's bite, squared (`squad::Frame::bite`; 0 off).
-    pub shot_bite: f32,
+    /// The squad frame's sink, squared (`squad::Frame::sink`; 0 off).
+    pub shot_sink: f32,
     pub squad_due: bool,
     /// The squad's unit passes on one thread, as before 2026-11-12
     /// (`smell1`, `units1`, `harvest1`), to compare the two on a GPU.
@@ -1340,7 +1340,7 @@ impl Engine {
             sq,
             kills,
             squad: (0, 0, 0.0),
-            shot_bite: 0.0,
+            shot_sink: 0.0,
             squad_due: false,
             squad_one: false,
             squad_on: false,
@@ -1567,7 +1567,7 @@ impl Engine {
         // ("Larder World: shared rules and merge order").
         assert_eq!(b.len(), SQUAD_AT, "Params rows before the squad row moved");
         b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), squad::SHOT_ALARM.to_bits()]));
-        b.extend(u32_bytes(&[self.n_hits, self.ntend, (squad::TEND - squad::PATH) as u32, self.shot_bite.to_bits()]));
+        b.extend(u32_bytes(&[self.n_hits, self.ntend, (squad::TEND - squad::PATH) as u32, self.shot_sink.to_bits()]));
         // The species block (2026-11-11): whether each species has its own
         // settings, the walker kinds, conversion's square; the second
         // kind's multipliers; then a set a species (`Set` in engine.wgsl),
@@ -2110,9 +2110,9 @@ impl Engine {
         self.squad = (nunits, nshots, f.slime);
         self.squad_due = true;
         self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), squad::SHOT_ALARM.to_bits()]));
-        // The bite squared, as `squad::bite_r2` multiplies it (0 off).
-        self.shot_bite = if f.bite > 0.0 { f.bite * f.bite } else { 0.0 };
-        self.queue.write_buffer(&self.params, SQUAD_AT as u64 + 28, &u32_bytes(&[self.shot_bite.to_bits()]));
+        // The sink squared, as `squad::sink_r2` multiplies it (0 off).
+        self.shot_sink = if f.sink > 0.0 { f.sink * f.sink } else { 0.0 };
+        self.queue.write_buffer(&self.params, SQUAD_AT as u64 + 28, &u32_bytes(&[self.shot_sink.to_bits()]));
         self.crater_steps = f.crater as u32;
         self.scorched |= f.crater > 0;
         self.queue.write_buffer(&self.params, CRATER_AT as u64 + 8, &u32_bytes(&[(f.crater as f32).to_bits(), self.crater_flags()]));
