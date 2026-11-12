@@ -770,25 +770,27 @@ impl App {
         }
         let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
         self.marks.ring(g.core, g.rules.core_r * sc, core);
-        // Buildings: plain marks until the graphics thread's sprites
-        // (`Model::buildings`). Their effects (a lure's scent, a pump's
-        // dimming crystal, a turret's hits) are the simulation's own fields.
+        // Buildings: sprites in soldier A's style (`Marks::building`,
+        // src/world/sprites/buildings.svg), drawn from the game's state:
+        // rising as they are built, darkening as they are hurt, the lamp
+        // lit while working. Their effects (a lure's scent, a pump's
+        // dimming crystal, a turret's hits) are the simulation's own fields;
+        // walls are ground. The bars stay as UI.
         for b in &g.buildings {
-            let Some(colour) = building_colour(b.kind) else { continue };
-            if !b.alive {
+            if !b.alive || building_colour(b.kind).is_none() {
                 continue;
             }
+            let kind = match b.kind {
+                Kind::Turret => 0,
+                Kind::Lure => 1,
+                Kind::Pump => 2,
+                Kind::Outpost => 3,
+                _ => continue,
+            };
             let half = g.rules.build.touch * sc * 0.7;
-            let alpha = if b.up() { 255 } else { 110 };
-            let c = [colour[0], colour[1], colour[2], alpha];
-            match b.kind {
-                Kind::Turret => self.marks.disc(b.at, half, c, true),
-                Kind::Lure => self.marks.disc(b.at, half * 0.8, if b.on { c } else { [120, 110, 100, alpha] }, true),
-                _ => self.marks.rect(b.at, (half, half), c, true),
-            }
-            if b.working && b.kind != Kind::Turret {
-                self.marks.ring(b.at, half * 1.6, [c[0], c[1], c[2], 140]);
-            }
+            // A lure switched off is not working.
+            let working = b.working && (b.kind != Kind::Lure || b.on);
+            self.marks.building(b.at, half, kind, if b.up() { 1.0 } else { b.built }, b.hp / b.max_hp.max(1.0), working);
             let below = (half * zoom).max(2.0) + 5.0;
             self.marks.bar(b.at, below, (7.0, 1.0), b.hp / b.max_hp.max(1.0), [90, 220, 110, 255], [70, 30, 30, 255]);
             if !b.up() {

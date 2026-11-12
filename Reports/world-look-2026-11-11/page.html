@@ -108,6 +108,17 @@ code { font-family: var(--mono); font-size: 13px; }
   </section>
 
   <section>
+    <h2>Buildings (2026-11-12)</h2>
+    <p>The turret, lure, pump and outpost are sprites in soldier A's style, drawn from <code>buildings.svg</code>. Only the game's state changes them. A building rises from its foot as it is built, with the rest a faint ghost. It darkens and greys as it loses health. Its lamp lights only while it works: a turret's muzzle while it fires, a lure's bait while it lays scent, a pump's charge while it draws, an outpost's light while it is manned. The health and build bars stay as part of the interface. Walls are still ground, and a lure's scent or a pump's dimming crystal still come from the simulation's own fields.</p>
+    <figure><img src="buildings-tiles.png" alt="The building sprites: turret, its lit muzzle, lure, lit bait, pump, lit charge, outpost, lit lamp"><figcaption><b>The tiles.</b> Each building, then its lamp: turret, lure, pump, outpost.</figcaption></figure>
+    <div class="pair">
+      <figure><img src="buildings-close.png" alt="Two turrets and a lit lure beside the squad, zoom 6 enlarged"><figcaption><b>Fork map, 10 s, the build hand.</b> Two turrets (not firing) and a lure laying scent, enlarged 3×.</figcaption></figure>
+      <figure><img src="buildings-z6.png" alt="Turrets, lure and an outpost at zoom 6"><figcaption><b>2.5 s, zoom 6.</b> An outpost (right, by the crystal), the two turrets and the lure.</figcaption></figure>
+    </div>
+    <p>Since the owner's answer on 2026-11-12 (04:38Z: "Neither. Both of those look like stamps"), the burns in the table below are no longer drawn. A hit shows as the hole it makes in the living body (see the Shot Damage page).</p>
+  </section>
+
+  <section>
     <h2>What draws what</h2>
     <div class="tablewrap"><table>
       <thead><tr><th>On screen</th><th>Comes from</th><th>Where</th></tr></thead>
