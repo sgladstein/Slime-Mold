@@ -278,8 +278,19 @@ pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
 /// What the mould's core is, and what it does while a squad holds it
 /// (core defence, PR 3, 2026-11-12; the shape is the tiers thread's, so
 /// each tier can say its own through `Tier::core`). A mould with no tier
-/// of its own gets `Core::of(&rules)`: fixed, `Rules::core_secs`,
-/// `Rules::core_pull`.
+/// of its own gets `Core::of(&rules)`: headless, with `Rules::core_pull`.
+///
+/// **No king by default** (owner, 2026-11-12 20:21Z: "remove the king rule.
+/// As long as the slime has food/crystal energy it can make walkers.
+/// Headless."). Before, a squad that held the core clear for 5 s stopped
+/// births on the whole map for good; in the 64-seed race census that was
+/// the only way any plan crippled the mould (rush took it 34 times, strike
+/// 12; farm, wall and fort reached the cap 64 of 64), so the best plan was
+/// always to walk at the core (slime-enemy review,
+/// `Reports/slime-enemy-review-2026-11-12.md`). `CoreKind::Fixed` stays
+/// for a tier that wants one fatal weak spot. The pull stays: the mould
+/// still closes over soldiers at its home, which is what kept random from
+/// walking into the hub (below).
 ///
 /// Why a pull: with craters on (#113) the random hand wiped the plain
 /// mould on 11 of 32 race seeds (201-232; 5 of 32 without craters) and no
@@ -306,7 +317,8 @@ pub struct Core {
     /// A soldier within twice `Rules::core_r` of the core lays this many
     /// times its own scent over `BuildRules::lure_r` (a lure's reach): the
     /// body is drawn onto a squad at its core through the scent it already
-    /// follows, nothing drawn. 0 is none.
+    /// follows, nothing drawn. 0 is none. A headless core pulls too (since
+    /// headless became the default); the Sprawler sets 0.
     pub pull: f32,
 }
 
@@ -315,10 +327,11 @@ pub struct Core {
 pub enum CoreKind {
     /// Held clear for `Core::secs`, it falls for good: births stop.
     Fixed,
-    /// No core: nothing to hold, so only a wipe ends the mould (the
-    /// tiers thread's Sprawler). The Drifter's migrating core is to come:
-    /// it needs to know where the body is on the GPU, which the GPU world
-    /// can't read back cheaply yet.
+    /// No core: nothing to hold, so only a wipe ends the mould; births go
+    /// on wherever a walker is fed. The default since 2026-11-12 20:21Z
+    /// (`Core::of`); first the tiers thread's Sprawler. The Drifter's
+    /// migrating core is to come: it needs to know where the body is on
+    /// the GPU, which the GPU world can't read back cheaply yet.
     Headless,
     /// Falls as `Fixed` does, births stopping, and grows back unless the
     /// body starves (the tiers thread's Trunk; the designer: "regrows
@@ -341,9 +354,10 @@ pub enum CoreKind {
 }
 
 impl Core {
-    /// The core of a mould with no tier of its own.
+    /// The core of a mould with no tier of its own: headless, so taking
+    /// its home stops nothing; it still pulls (`Core::pull`).
     pub fn of(r: &Rules) -> Core {
-        Core { kind: CoreKind::Fixed, secs: r.core_secs, pull: r.core_pull }
+        Core { kind: CoreKind::Headless, secs: r.core_secs, pull: r.core_pull }
     }
 }
 
@@ -382,7 +396,8 @@ pub struct Rules {
     /// body holds it to a fifth (12 touching, as a rush meets on race seeds
     /// 1-4, where touching runs 0 to 26). The read is the frame's touch
     /// count, the same on both engines, so the GPU needs nothing new. 0 is
-    /// off.
+    /// off. Touching walkers count `Rules::mass` each, so a denser mould
+    /// (the owner's 25,000-walker shapes, mass 0.2) needs 30 for half speed.
     pub wade: f32,
     /// A soldier's scent, as a share of a full pile's, laid on the agar
     /// within `smell_r` dish cells of it.
@@ -504,6 +519,28 @@ pub struct Rules {
     /// one, and a goal inside one moves to its rim (`Game::standable`,
     /// `Game::rim`). Shots still fly over crystals.
     pub crystal_solid: bool,
+    /// How much one walker counts in a fight: a walker touching a soldier,
+    /// a building or the larder does `mass` times `drain` (or `steal`), and
+    /// counts `mass` towards wading (`Rules::wade`).
+    /// 1 (the default) is today's 5,000-walker mould. A denser mould is
+    /// the same body cut into more, smaller walkers, so it plays at
+    /// 5,000 / its walkers at scale 2 (`Rules::mass_for`); without that the 25,000-walker
+    /// sheet, mesh and trunk shapes wiped an idle squad on the Fork in
+    /// 0:47 to 1:56 (`Reports/slime-questions-2026-11-12/`), which is the
+    /// walker count, not the shape. Shots are unchanged: a crater kills
+    /// the walkers in its cells, so a denser body already loses more to
+    /// each one. Agreed with the Larder thread (11-12, reference density
+    /// over density); first set by the owner's shape playtest (20:21Z).
+    pub mass: f32,
+}
+
+impl Rules {
+    /// The fight weight of one walker in a mould that starts with
+    /// `walkers` on a world of `scale` (`Rules::mass`): today's density,
+    /// 5,000 at scale 2 (1,250 at scale 1, 20,000 at 4), counts 1 each.
+    pub fn mass_for(walkers: usize, scale: usize) -> f32 {
+        (1_250 * scale * scale) as f32 / walkers.max(1) as f32
+    }
 }
 
 impl Default for Rules {
@@ -547,6 +584,7 @@ impl Default for Rules {
             crater: 4.5,
             spread: 0.0,
             crystal_solid: true,
+            mass: 1.0,
         }
     }
 }
@@ -1270,7 +1308,7 @@ impl<W: World> Game<W> {
         let d = dx.hypot(dy).max(1e-6);
         // Thick slime holds a soldier back (`Rules::wade`).
         let wade = if self.rules.wade > 0.0 {
-            let x = s.touching as f32 / self.rules.wade;
+            let x = s.touching as f32 * self.rules.mass / self.rules.wade;
             1.0 / (1.0 + x * x)
         } else {
             1.0
@@ -1578,7 +1616,7 @@ impl<W: World> Game<W> {
                 }
             }
             let pull = self.core_rule.pull;
-            let pulls = pull > 0.0 && self.core_rule.kind != CoreKind::Headless && (s.x - self.core.0).hypot(s.y - self.core.1) <= 2.0 * r.core_r * sc;
+            let pulls = pull > 0.0 && (s.x - self.core.0).hypot(s.y - self.core.1) <= 2.0 * r.core_r * sc;
             units.push(UnitIn {
                 x: s.x,
                 y: s.y,
@@ -1686,7 +1724,7 @@ impl<W: World> Game<W> {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
                         }
-                        s.hp -= r.drain * u.touching as f32 * dt;
+                        s.hp -= r.drain * r.mass * u.touching as f32 * dt;
                         if s.hp <= 0.0 {
                             s.alive = false;
                             s.hp = 0.0;
@@ -1695,7 +1733,7 @@ impl<W: World> Game<W> {
                     }
                 }
                 Who::Larder => {
-                    let take = (r.steal * u.touching as f32 * dt).min(self.bank.max(0.0));
+                    let take = (r.steal * r.mass * u.touching as f32 * dt).min(self.bank.max(0.0));
                     self.bank -= take;
                     self.stolen += take;
                     self.larder_touch = u.touching;
@@ -2007,23 +2045,26 @@ mod tests {
 
     /// The core's pull (`Core::pull`): a soldier within twice `core_r` of
     /// the core lays `pull` times its scent over a lure's reach; one far
-    /// from it lays its own; a headless core pulls nothing.
+    /// from it lays its own; a headless core pulls the same (the default
+    /// since 11-12 20:21Z), and a pull of 0 pulls nothing.
     #[test]
     fn a_soldier_at_the_core_smells_like_a_lure() {
-        let units = |kind: CoreKind| {
+        let units = |kind: CoreKind, pull: f32| {
             let mut g = Game::new(race_world(1, 1, 1_000), Rules { core_pull: 8.0, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, 1);
-            g.core_rule.kind = kind;
+            (g.core_rule.kind, g.core_rule.pull) = (kind, pull);
             let sc = g.s();
             (g.soldiers[0].x, g.soldiers[0].y) = (g.core.0 + g.rules.core_r * sc, g.core.1);
             g.begin_step();
             let f = &g.flight.as_ref().expect("a frame in flight").f;
             (f.units[0].smell, f.units[0].smell_r, f.units[1].smell, f.units[1].smell_r, g.rules, sc)
         };
-        let (near, near_r, far, far_r, r, sc) = units(CoreKind::Fixed);
-        assert!(far > 0.0 && (near - 8.0 * far).abs() <= 1e-3 * near, "near the core {near}, far {far}");
-        assert_eq!((near_r, far_r), (r.build.lure_r * sc, r.smell_r * sc));
-        let (near, near_r, far, _, _, _) = units(CoreKind::Headless);
-        assert_eq!((near, near_r), (far, r.smell_r * sc), "a headless core pulls nothing");
+        for kind in [CoreKind::Fixed, CoreKind::Headless] {
+            let (near, near_r, far, far_r, r, sc) = units(kind, 8.0);
+            assert!(far > 0.0 && (near - 8.0 * far).abs() <= 1e-3 * near, "{kind:?}: near the core {near}, far {far}");
+            assert_eq!((near_r, far_r), (r.build.lure_r * sc, r.smell_r * sc));
+        }
+        let (near, near_r, far, _, r, sc) = units(CoreKind::Headless, 0.0);
+        assert_eq!((near, near_r), (far, r.smell_r * sc), "a pull of 0 pulls nothing");
     }
 
     /// A fixed core falls once held clear for `Core::secs` (births stop);
@@ -2116,9 +2157,25 @@ mod tests {
         let r = Rules { core_pull: 3.0, core_secs: 7.0, ..Rules::default() };
         for t in super::super::tiers::Tier::ALL {
             let g = Game::new(race_world(1, 1, 1_000), r, 1).with_tier(Some(t));
-            assert_eq!(g.core_rule, t.core().unwrap_or(Core { kind: CoreKind::Fixed, secs: 7.0, pull: 3.0 }), "{}", t.name());
+            assert_eq!(g.core_rule, t.core().unwrap_or(Core { kind: CoreKind::Headless, secs: 7.0, pull: 3.0 }), "{}", t.name());
         }
         assert_eq!(Game::new(race_world(1, 1, 1_000), r, 1).with_tier(None).core_rule, Core::of(&r));
+    }
+
+    /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
+    /// mould's home stops nothing, and births go on.
+    #[test]
+    fn taking_the_plain_moulds_home_stops_nothing() {
+        let mut g = small(1);
+        assert_eq!(g.core_rule.kind, CoreKind::Headless);
+        for k in 0..g.soldiers.len() {
+            (g.soldiers[k].x, g.soldiers[k].y) = g.core;
+            (g.soldiers[k].touching, g.soldiers[k].aim) = (0, None);
+        }
+        for _ in 0..=g.secs(g.core_rule.secs) * 2 {
+            g.check_core();
+        }
+        assert!(g.core_down.is_none() && g.world.p.birth_energy.is_finite());
     }
 
     #[test]
