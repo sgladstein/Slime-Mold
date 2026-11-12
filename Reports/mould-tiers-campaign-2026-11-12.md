@@ -80,6 +80,24 @@ Mean score v2 (mould wiped / cap / squad wiped), 16 seeds a cell unless marked:
 
 The census (`raw/census/wary-*.rows`, all 16 held-out seeds) put Wary under the gate: random wiped it on 12 of 16 and beat farm, wall, boom and fort on 15-16 of 16 (holds); only claim (4/12) and strike (3/13) were close. Scattered fire scars every crystal it holds and herds it off them all, and it starves. On main with craters (dev seeds 1-4, `raw/wary/`, `larderworld keys=` over the tier): random wiped it on 2 of 4 at scar weight -0.5, -0.1 and -0.03, so the scar's strength is not the cause; with the Larder thread's core pull 8 (85b56fb, not yet merged) on 3 of 4, while against the plain mould random lost its squad on 4 of 4. It is the flee from gunfire's failure again (`dead-ends.md`), and Wary is gone from `Tier`. Grudge, with the same pull, wipes random's squad on 4 of 4 and every plan beats idle.
 
+## The Drifter drifts (11-12, after the merge)
+
+On mission 2 the Drifter never left its home crystal, so the player never met it (the campaign thread, through the designer). Idle squad, race world with craters, dev seeds 1-4 (`larderworld census hands=idle tier=drifter keys=...`, raw `raw/drifter2/`); the measure, named first, is when the mould first touches the idle squad (`touched at`), by about 660 s (the campaign's 11:00), with the mould still smaller than plain at 900 s:
+
+| Arm | Touched (s), seeds 1-4 | Walkers at 900 s |
+|---|---|---|
+| plain mould | 340, 185, 95, 40 | 11,400-13,600 |
+| Drifter at #115 | never on any | 900-5,700 |
+| + hunger 8 (`hunger_scent` 8, `hunger_at` 1) | never, never, never, 824 | 2,100-5,000 |
+| + reach 18 (`sensor_offset`) | never on any | 1,300-4,200 |
+| **+ hunger 8 and reach 18 (kept)** | never, 544, 210, 279 | 3,700-12,900 |
+| + hunger 4, reach 18 | never, 782, 284, never | 3,000-9,100 |
+| + hunger 8, reach 14 | never, never, never, 268 | 4,700-9,600 |
+| + hunger 8, reach 18, keep 0.9 | never, 137, 142, 94 | 12,700-15,300 |
+| + hunger 16, reach 18 | never, 91, 245, 131 | 11,100-13,900 |
+
+Hunger makes a walker that has eaten its crystal dry follow the scent (food and soldiers) harder, and the longer reach lets it smell the next one; neither alone moves it. The stronger arms reach the squad sooner but grow to the plain mould's size. The kept Drifter touches an idle squad on 3 of 4 by 9:04 at the latest; seed 1 never. Returning to a lost crystal within 2 minutes is not measured yet. On the GPU (software Vulkan) it stays within 8% of the CPU over 20 s (`the_campaign_tiers_run_on_the_engine_as_on_the_cpu`).
+
 ## Commands
 
 ```

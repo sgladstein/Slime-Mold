@@ -20,7 +20,7 @@ censuses ask for by name (`tier=drifter`).
 
 | Tier | Mould | Rule | What beats it |
 |---|---|---|---|
-| 1 | Drifter | round droplet bodies on crystals, crawling between them (`Tier::Drifter`) | any squad |
+| 1 | Drifter | round droplet bodies on crystals; hungry walkers follow food and soldiers off a dry crystal (`Tier::Drifter`, hunger 8, reach 18) | any squad |
 | 2 | Sprawler | a fast thin mesh over the map (`Tier::Sprawler`, explorers for 200 steps) | walls; chasing loses |
 | 3 | Trunk | long straight cords round a few big bodies (`Tier::Trunk`) | starve it (needs shared food) |
 | 4-7 | Hunter, Rival pair, Converter, Mixes | not built | |

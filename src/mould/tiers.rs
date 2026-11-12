@@ -105,7 +105,13 @@ impl Tier {
             // (graze_weight 10) was the first Drifter: grass fed it to the
             // 50,000-slot cap in 15 s, a flood, not a crawl. Step 0.6 held
             // 3 crystals in 60 s, too still to reach a squad.
-            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1")],
+            // Then (11-12, the campaign: on mission 2 it never left home) hunger
+            // 8 and reach 18: on dev seeds 1-4 an idle squad is touched at
+            // 210-544 s on 3 of 4 (never on any before; hunger 4, reach 14
+            // or 16 touched 1-2 of 4; keep 0.9 or hunger 16 grew it to the
+            // plain mould's size), with 3,700-12,900 walkers at 900 s
+            // against plain's 11,400-13,600.
+            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1"), ("hunger_scent", "8"), ("hunger_at", "1"), ("sensor_offset", "18")],
             // Explorers alone (keep 0.9, step 1) starved to 250 walkers by
             // 60 s and let go of every crystal; the faster step and longer
             // reach keep a mesh on 14 of 23. Explore 400 steps held about
@@ -193,6 +199,11 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "keep" => p.keep = f()?,
         "blocked_deposit" => p.blocked_deposit = f()?,
         "explore_steps" => p.explore_steps = n()?,
+        // Food and the body (the one-body thread's switches, both engines).
+        "scent_offset" => p.scent_offset = f()?,
+        "energy_flow" => p.energy_flow = f()?,
+        "hunger_scent" => p.hunger_scent = f()?,
+        "hunger_at" => p.hunger_at = f()?,
         "explore_spread" => p.explore_spread = f()?,
         "explore_deposit" => p.explore_deposit = f()?,
         // The life cycle.

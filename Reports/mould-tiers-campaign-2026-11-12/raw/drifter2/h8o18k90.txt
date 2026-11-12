@@ -1,0 +1,12 @@
+larderworld the race world, scale 2 walkers 5000 cap 900 s, tps 15, seeds [1, 2, 3, 4]; on the CPU; tier drifter; flee 0 (default); rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 0.0, hp: 100.0, drain: 1.0, touch: 1.5, smell: 0.5, smell_r: 2.0, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, cap: 900.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, build: BuildRules { max: 40, gap: 2.5, raise: 8.0, turret_cost: 500.0, turret_hp: 300.0, turret_range: 15.0, turret_every: 0.5, lure_cost: 300.0, lure_hp: 150.0, lure_smell: 8.0, lure_r: 6.0, lure_burn: 2.0, pump_cost: 500.0, pump_hp: 200.0, pump_rate: 5.0, pump_smell: 0.0, outpost_cost: 400.0, outpost_hp: 300.0, outpost_hoard: 0.25, touch: 2.0 }, overrun: 0.0, reserve: 0.0, seek: true, crater: 10.0, spread: 0.0 }
+provenance: harness larderworld, commit e359fac99+dirty, seeds 1-4 (4), cap 900 s, settings hash 8c659510cfd4f604
+keys [("hunger_scent", "8"), ("hunger_at", "1"), ("sensor_offset", "18"), ("keep", "0.9")]
+  idle seed  4:         cap at   900 s, score -0.359; soldiers  1, mould  12726, bank   1133, harvested      0, stolen   867, shots  1694, killed   5049, crystals left 0.891; 5.82 ms a tick, think 0 us mean, 0 at most; score1 -0.438; near 13, touched at 94 s, stuck 0 s
+  idle seed  2:         cap at   900 s, score -0.366; soldiers  1, mould  13687, bank    160, harvested      0, stolen  1840, shots  1723, killed   3450, crystals left 0.877; 6.30 ms a tick, think 0 us mean, 0 at most; score1 -0.444; near 7, touched at 137 s, stuck 1 s
+  idle seed  1:         cap at   900 s, score -0.369; soldiers  4, mould  14030, bank   2000, harvested      0, stolen     0, shots     7, killed      4, crystals left 0.867; 6.48 ms a tick, think 0 us mean, 0 at most; score1 -0.441; near 0, touched at 900 s, stuck 0 s
+  idle seed  3:         cap at   900 s, score -0.377; soldiers  3, mould  15331, bank   1976, harvested      0, stolen    24, shots  1209, killed   3741, crystals left 0.857; 7.21 ms a tick, think 0 us mean, 0 at most; score1 -0.452; near 12, touched at 142 s, stuck 0 s
+
+by hand (mean score; ends):
+    idle: mean -0.368; mould wiped 0, cap 4, squad wiped 0; near 8 walkers, first touch 318 s; stuck 0 s a game, 0 games stuck a minute or more
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 0):
