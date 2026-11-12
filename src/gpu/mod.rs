@@ -62,8 +62,11 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (212 words).
-pub const PARAMS_BYTES: usize = 848;
+/// Bytes in `Params` (216 words).
+pub const PARAMS_BYTES: usize = 864;
+/// Where one body's row sits in `Params` (2026-11-12, after the soil row:
+/// `energy_flow`, `hunger_scent`, `hunger_at`).
+pub const BODY_AT: usize = 848;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
@@ -325,6 +328,13 @@ pub struct Settings {
     pub wall_hp: f32,
     pub wall_bite: f32,
     pub wall_scent: f32,
+    /// One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
+    /// `hunger_at`; Reports/one-body-2026-11-12.md): walkers' energy evens
+    /// out between neighbouring cells, and a hungry walker follows the
+    /// scent harder. 0 off; both need growth.
+    pub energy_flow: f32,
+    pub hunger_scent: f32,
+    pub hunger_at: f32,
     pub seed: u64,
 }
 
@@ -441,6 +451,9 @@ impl Settings {
             wall_hp: t.wall_hp,
             wall_bite: t.wall_bite,
             wall_scent: t.wall_scent,
+            energy_flow: t.energy_flow,
+            hunger_scent: t.hunger_scent,
+            hunger_at: t.hunger_at,
             seed: 1,
         }
     }
@@ -667,6 +680,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "wall_hp" => s.wall_hp = f()?,
         "wall_bite" => s.wall_bite = f()?,
         "wall_scent" => s.wall_scent = f()?,
+        "energy_flow" => s.energy_flow = f()?,
+        "hunger_scent" => s.hunger_scent = f()?,
+        "hunger_at" => s.hunger_at = f()?,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }
@@ -780,6 +796,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         wall_hp: s.wall_hp,
         wall_bite: s.wall_bite,
         wall_scent: s.wall_scent,
+        energy_flow: s.energy_flow,
+        hunger_scent: s.hunger_scent,
+        hunger_at: s.hunger_at,
         seed: s.seed,
         ..t
     }
@@ -820,7 +839,7 @@ pub struct Shared {
     pub plain: Vec<wgpu::ComputePipeline>,
 }
 
-pub const BINDINGS: u32 = 46;
+pub const BINDINGS: u32 = 47;
 /// The most shot hits a frame (`Engine::set_hits`).
 pub const MAX_HITS: usize = 256;
 pub const SENSE: usize = 0;
@@ -867,12 +886,16 @@ pub const KILL: usize = 32;
 /// A squad shot's alarm (`squad::SHOT_ALARM`), after `cut`, with the alarm
 /// field on.
 pub const SHOUT: usize = 33;
+/// One body (`energy_flow`): each cell's energy and walkers summed, then
+/// each walker's gain, after eating and before `life`.
+pub const ESUM: usize = 34;
+pub const EGAIN: usize = 35;
 /// The living walkers counted into the wall counters' word 4
 /// (`Engine::record_count`), for the game's packed readout.
-pub const COUNT: usize = 34;
+pub const COUNT: usize = 36;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 35] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "count",
+pub const PASSES: [&str; 37] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count",
 ];
 
 impl Shared {
@@ -949,6 +972,11 @@ pub struct Engine {
     /// What each walker on a cell took from its crystal this tick (the
     /// CPU's `took`, a cell not a slot; growth's `life` adds it).
     pub share: wgpu::Buffer,
+    /// One body's sums (binding 46: energy in fixed point a cell, then
+    /// walkers a cell) and whether its passes run (growth and
+    /// `energy_flow` on).
+    pub body: wgpu::Buffer,
+    pub energy_flows: bool,
     /// The Larder World (engine.wgsl's bindings 34-41): ground bits, crystal
     /// charge, wall health, the bites walls took this tick, the crystal
     /// cells pile by pile, each pile's run and sums, the wall counters, and
@@ -1125,11 +1153,12 @@ impl Engine {
         let kills = zeros("kills", squad::SHOTS_MAX * 4);
         let hits = zeros("hits", MAX_HITS * 16);
         let look = zeros("look", cells as usize * 4);
+        let body = zeros("body", 2 * cells as usize * 4);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
                 &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look,
+                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look, &body,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -1161,6 +1190,8 @@ impl Engine {
             grows: !d.energy.is_empty(),
             energy,
             share,
+            body,
+            energy_flows: false,
             ground,
             charge,
             health,
@@ -1435,6 +1466,9 @@ impl Engine {
         // Soil (WM3, 2026-11-12): the dish's own rates, as the CPU reads
         // them from its `BigParams` (read only with `WORLD_SOIL`).
         b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, 0.0]));
+        assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
+        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, 0.0]));
+        self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
         assert_eq!(b.len(), PARAMS_BYTES, "Params is not PARAMS_BYTES long");
         self.converts = s.convert > 0.0 && self.nsp > 0;
@@ -1568,6 +1602,11 @@ impl Engine {
                 tick.extend([(PILESUM, self.npiles), (FLOW, pc)]);
             }
             tick.push((PILESUM, self.npiles));
+        }
+        // One body's flow, as the CPU's `flow_energy` after `eat_crystals`
+        // and before `live_and_die` (`life` clears its sums).
+        if self.energy_flows {
+            tick.extend([(ESUM, n), (EGAIN, n)]);
         }
         if self.grows {
             tick.extend([(LIFE, n), (BREED, n), (BORN, n)]);

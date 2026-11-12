@@ -37,7 +37,7 @@ and the kills) and `world_counts` (the piles and the wall counters).
 can draw while the GPU runs it; `frame` is the two in a row, as before.
 
 **The engine counts the living walkers** (`Engine::record_count`, the new
-`count` pass, number 34). `World::living` read every slot's energy and,
+`count` pass, number 36 after the one-body port took 34 and 35). `World::living` read every slot's energy and,
 with the life cycle on, every `spec` word back once a game second: at
 100,000 walkers' 1M slots, 8 MB through two more waits. The count pass
 adds one atomic per living walker (a slot alive and not dead, the CPU's
