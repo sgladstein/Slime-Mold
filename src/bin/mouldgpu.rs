@@ -4260,4 +4260,67 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
         }
         eprintln!("a step lands in another cell for {cells_off} of {n}; a*b + c matches the CPU's unfused result {unfused_same} times and the fused {fused_same}");
     }
+
+    /// A diagnostic, not a gate (`--ignored --nocapture`): whether the
+    /// adapter's game leans one way against the CPU's. The technical lead,
+    /// 2026-11-12: the campaign's 32-seed The gaps run had the 1070 end
+    /// unwalled games sooner on 24 of 32 seeds (p 0.007), and the fleeing
+    /// twin killed 908 on the GPU against 765 on the CPU; rounding noise
+    /// should change sign from seed to seed, while the 1070's always-fused
+    /// `a * b + c` (`the_adapters_maths_beside_the_cpus`) rounds every
+    /// deposit and decay the same way. Eight seeds of the race world with an
+    /// idle squad on both engines; every 5 game s, the trail's total and the
+    /// living walkers, and how many seeds have the GPU above the CPU (with a
+    /// two-sided sign test).
+    #[test]
+    #[ignore]
+    fn the_adapters_game_beside_the_cpus_over_seeds() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_params, Game, Rules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let sign_p = |a: usize, b: usize| -> f64 {
+            let n = a + b;
+            let k = a.min(b);
+            let (mut c, mut sum) = (1f64, 0f64);
+            for i in 0..=k {
+                if i > 0 {
+                    c *= (n - i + 1) as f64 / i as f64;
+                }
+                sum += c;
+            }
+            (2.0 * sum / 2f64.powi(n as i32)).min(1.0)
+        };
+        let (scale, walkers) = (2, 5_000);
+        let rules = Rules { cap: 30.0, ..Rules::default() };
+        // rows[seed] = (game s, CPU trail, GPU trail, CPU living, GPU living)
+        let mut rows: Vec<Vec<(u64, f64, f64, usize, usize)>> = Vec::new();
+        for seed in 1..=8u64 {
+            let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            let mut r = Vec::new();
+            while cpu.end.is_none() && gpu.end.is_none() {
+                cpu.step();
+                gpu.step();
+                if cpu.world.ticks() % 75 == 0 {
+                    let cells = cpu.world.trail.len();
+                    let side = (gpu.world.e.done % 2) as usize;
+                    let gt: f64 = floats(&read_back(&device, &queue, &gpu.world.e.trail[side]))[..cells].iter().map(|&v| v as f64).sum();
+                    let ct: f64 = cpu.world.trail.iter().map(|&v| v as f64).sum();
+                    r.push((cpu.world.ticks() / 15, ct, gt, cpu.world.living(), gpu.world.living()));
+                }
+            }
+            eprintln!("seed {seed}: game s, trail CPU, GPU, living CPU, GPU: {:?}", r.iter().map(|&(t, a, b, c, d)| (t, a.round(), b.round(), c, d)).collect::<Vec<_>>());
+            rows.push(r);
+        }
+        let marks = rows.iter().map(Vec::len).min().unwrap_or(0);
+        for m in 0..marks {
+            let t = rows[0][m].0;
+            let (tu, td) = (rows.iter().filter(|r| r[m].2 > r[m].1).count(), rows.iter().filter(|r| r[m].2 < r[m].1).count());
+            let (lu, ld) = (rows.iter().filter(|r| r[m].4 > r[m].3).count(), rows.iter().filter(|r| r[m].4 < r[m].3).count());
+            let ratio: Vec<f64> = rows.iter().map(|r| r[m].2 / r[m].1.max(1e-9)).collect();
+            let mut sorted = ratio.clone();
+            sorted.sort_by(f64::total_cmp);
+            eprintln!("at {t} s: GPU trail above the CPU's on {tu} seeds, below on {td} (sign p {:.3}; median ratio {:.4}); GPU mould larger on {lu}, smaller on {ld} (p {:.3})", sign_p(tu, td), sorted[sorted.len() / 2], sign_p(lu, ld));
+        }
+    }
 }
