@@ -52,7 +52,7 @@
 //! whole body (its size, hunger, eating, flinching at gunfire); K turns
 //! just that off and on, `voice=0` starts without it.
 //!
-//! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]
+//! `-- look=DIR [hand=rush|stand|farm|idle] [at=5,30,60] [screen=1280x800]
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
@@ -1568,7 +1568,7 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     // through `larder_world_ai`, as the census does, so a campaign mission's
     // pictures show the hands its numbers were set on.
     let mut ai = match hand {
-        "rush" | "farm" => None,
+        "rush" | "farm" | "stand" => None,
         _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
     };
     // Each hit: where, its tick, the body there the tick before, and the
@@ -2037,6 +2037,15 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
         match (hand, target) {
             ("rush", _) => {
                 g.apply(Cmd::Order(k, Order::Attack));
+            }
+            // Attack-move on the core: the squad stops where the mould comes
+            // in range and fires into it from there (the owner, 11-12
+            // 14:41Z, on the rush's clips: "I was more expecting soldiers
+            // standing shooting into slime. Not running through slime
+            // leaving craters under their feet").
+            ("stand", _) => {
+                let c = g.core;
+                g.apply(Cmd::Order(k, Order::Fight(c.0, c.1)));
             }
             ("farm", Some(c)) => {
                 g.apply(Cmd::Order(k, Order::Clear(c.0, c.1)));
