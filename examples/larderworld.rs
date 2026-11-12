@@ -23,7 +23,7 @@
 //! seed, each plan against idle and against random, two-sided sign test,
 //! Holm over every comparison made. Each row also prints `score1`, W2b's
 //! score (`Game::score_w2b`: the crystals counted at the cap), to pair with
-//! older censuses. `home_dry=1` turns on `Rules::home_dry`.
+//! older censuses. `home_dry=1` turns on `Rules::home_dry`. `seek=0` turns off `Rules::seek` (a harvester back from a dry crystal walks on to the next safe one).
 //!
 //! **Hands** (fixed rules; settings named here):
 //! - **idle**: never gives an order. The soldiers stand at the larder on
@@ -133,6 +133,7 @@ fn main() {
             "flee" => flee = Some(v.parse().unwrap()),
             "strike" => rules.strike = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
+            "seek" => rules.seek = v == "1",
             "map" => {
                 let path = std::path::Path::new(v);
                 let dir = match path.parent() {

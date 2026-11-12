@@ -10,12 +10,16 @@
 //! Zoom 1 and above snaps to whole steps (`ZOOMS`), so every cell is the
 //! same number of pixels across.
 
-/// The largest zoom: a cell 8 pixels across.
-pub const MAX_ZOOM: f32 = 8.0;
+/// The largest zoom: a cell 24 pixels across. It was 8 (a soldier about
+/// 24 pixels wide on the race world); the owner's first larder-world
+/// playtest found that too far out (11-12 04:42Z: "I want to be able to
+/// zoom in more too"). The look shades smoothly between cells, so close up
+/// the mould stays a field rather than turning into squares.
+pub const MAX_ZOOM: f32 = 24.0;
 
 /// Zoom levels the wheel steps through at 1 and above; below 1 each notch
 /// is a factor of `ZOOM_OUT`, down to the fit.
-pub const ZOOMS: [f32; 6] = [1.0, 2.0, 3.0, 4.0, 6.0, 8.0];
+pub const ZOOMS: [f32; 9] = [1.0, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0];
 pub const ZOOM_OUT: f32 = 1.25;
 
 /// How fast the edge scroll and the arrow keys pan, in screen pixels a
