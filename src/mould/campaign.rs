@@ -26,7 +26,7 @@
 //! overrun checks fall back to what the game counts.
 
 use super::larder::End;
-use super::larder_world::{Game, Order, Rules, World};
+use super::larder_world::{Cmd, Game, Order, Rules, World};
 use super::map::MAP_SCALE;
 
 /// Grid bin for the positional checks, fine cells (as the player AI's eyes).
@@ -54,7 +54,15 @@ pub enum Goal {
     /// `secs` game seconds in a row (mission 3: keep the mould in the Rim).
     /// With no leak allowed (the first census) no hand ever held the Rim for
     /// a second: a few walkers always stray.
-    Contain { rect: (f32, f32, f32, f32), secs: f32, leak: f32 },
+    ///
+    /// With `body` above 0 a leak is what the player sees instead: no 4 x 4
+    /// bin outside holds `body` walkers or more (thick mould; the drawn body
+    /// is trail times `1 - exp(-walkers near / 6)`, so a thin trail of 1-3 a
+    /// bin barely shows). The share must still be under `leak` (1 turns that
+    /// off). On the Sprawler (census v6) every hand had 46% outside; the
+    /// wall-the-gaps hand cut it to 17% with no thick bin (design review,
+    /// 07:22Z: pick between the two rules on the Sprawler's numbers).
+    Contain { rect: (f32, f32, f32, f32), secs: f32, leak: f32, body: u32 },
     /// Walkers fall to `frac` of their peak (mission 4: starve it).
     Shrink(f32),
     /// The squad's share of the charge taken reaches `frac` (mission 8).
@@ -138,7 +146,8 @@ impl Mission {
                         ("squad", [x]) => Goal::Squad { n: *x as usize, crystals: 0 },
                         ("squad", [x, k]) => Goal::Squad { n: *x as usize, crystals: *k as usize },
                         ("clear" | "retake", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs, retake: k == "retake" },
-                        ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak },
+                        ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: 0 },
+                        ("contain", [x0, y0, x1, y1, secs, leak, body]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: *body as u32 },
                         ("shrink", [f]) => Goal::Shrink(*f),
                         ("take", [f]) => Goal::Take(*f),
                         _ => return Err(err(format!("bad goal `{rest}`"))),
@@ -273,6 +282,8 @@ pub struct Tracker {
     pub count: Option<u32>,
     /// Contain goals: the share of the walkers outside the region now.
     pub outside: Option<f32>,
+    /// Contain goals with `body`: bins outside with thick mould now.
+    pub thick: Option<u32>,
     peak: usize,
     lost: usize,
     last: Snapshot,
@@ -333,6 +344,7 @@ impl Tracker {
             touched: vec![],
             count: None,
             outside: None,
+            thick: None,
             peak: g.mould.max(g.start_mould),
             lost: 0,
             last: snap(g, 0.0),
@@ -385,13 +397,21 @@ impl Tracker {
                 self.held = if clear >= *need { self.held + dt } else { 0.0 };
                 Some((self.held / secs).min(1.0))
             }
-            Goal::Contain { rect, secs, leak } => {
+            Goal::Contain { rect, secs, leak, body } => {
                 let grid = grid?;
                 let (x0, y0, x1, y1) = (rect.0 * fine, rect.1 * fine, rect.2 * fine, rect.3 * fine);
-                let out = walkers_where(grid, size, |px, py| px < x0 || px > x1 || py < y0 || py > y1);
+                let outside = |px: f32, py: f32| px < x0 || px > x1 || py < y0 || py > y1;
+                let out = walkers_where(grid, size, outside);
+                let gw = size.0.div_ceil(BIN);
+                let thick = if *body > 0 {
+                    grid.iter().enumerate().filter(|&(i, &n)| n >= *body && outside(((i % gw) * BIN) as f32 + BIN as f32 / 2.0, ((i / gw) * BIN) as f32 + BIN as f32 / 2.0)).count() as u32
+                } else {
+                    0
+                };
                 self.count = Some(out);
                 self.outside = Some(out as f32 / g.mould.max(1) as f32);
-                self.held = if out as f32 <= leak * g.mould.max(1) as f32 { self.held + dt } else { 0.0 };
+                self.thick = Some(thick);
+                self.held = if out as f32 <= leak * g.mould.max(1) as f32 && thick == 0 { self.held + dt } else { 0.0 };
                 Some((self.held / secs).min(1.0))
             }
         }
@@ -511,6 +531,10 @@ impl Tracker {
     pub fn progress_line(&self) -> String {
         let says = &self.mission.says;
         match (self.bar, &self.mission.goal, self.outside) {
+            (Some(b), Goal::Contain { body, .. }, _) if *body > 0 => match self.thick {
+                Some(0) | None => format!("{says} ({:.0}%)", 100.0 * b),
+                Some(n) => format!("{says} ({:.0}%; thick mould outside in {n} places)", 100.0 * b),
+            },
             (Some(b), Goal::Contain { leak, .. }, Some(o)) => format!("{says} ({:.0}%; {:.1}% outside, {:.0}% allowed)", 100.0 * b, 100.0 * o, 100.0 * leak),
             (Some(b), _, _) => format!("{says} ({:.0}%)", 100.0 * b),
             // Said, not hidden (design review, 05:38Z): a world with no
@@ -568,6 +592,43 @@ pub fn decided_at(bars: &[Option<f32>], final_stars: u8) -> usize {
     at
 }
 
+/// The Rim's gaps (rock ring radius 200 map cells round (512, 320), 16
+/// thick, gaps at 0, 90, 180, 270 degrees, half widths 14, 10, 14, 10:
+/// `sketch_maps.py`): soldier k walks to gap k's middle and walls its chord
+/// at the ring's centre line, 3 degrees past each edge, and stays to raise
+/// it. `walled[i]` turns true once gap i's wall is placed. Mission 3's own
+/// plan, for the census (`examples/campaign.rs` hand `gaps+STYLE`) and the
+/// smoke test that it still wins.
+pub fn wall_rim_gaps<W: World>(g: &mut Game<W>, walled: &mut [bool; 4]) {
+    const GAPS: [(f32, f32); 4] = [(0.0, 14.0), (90.0, 10.0), (180.0, 14.0), (270.0, 10.0)];
+    let f = g.world.scale() / MAP_SCALE;
+    let at = |deg: f32| {
+        let a = deg.to_radians();
+        ((512.0 + 200.0 * a.cos()) * f, (320.0 + 200.0 * a.sin()) * f)
+    };
+    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
+    for (i, &(deg, half)) in GAPS.iter().enumerate() {
+        if walled[i] {
+            continue;
+        }
+        let Some(&k) = live.get(i) else { return };
+        let mid = at(deg);
+        let s = g.soldiers[k];
+        if (s.x - mid.0).hypot(s.y - mid.1) < 3.0 * g.world.scale() {
+            // Placed walls rise only while a builder raises them (#122,
+            // `BuildRules::raise` 8 s a 10 dish cells): this soldier stays.
+            walled[i] = g.apply(Cmd::Wall(at(deg - half - 3.0), at(deg + half + 3.0)));
+            if walled[i] {
+                let b = g.buildings.len() - 1;
+                g.apply(Cmd::Order(k, Order::Build(b)));
+            }
+        } else if s.order != Order::Move(mid.0, mid.1) {
+            g.apply(Cmd::Order(k, Order::Move(mid.0, mid.1)));
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -589,6 +650,8 @@ mod tests {
         assert_eq!(c.goal, Goal::Clear { crystals: (1..=8).collect(), need: 6, secs: 60.0, retake: false });
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal retake 1 60 1")).unwrap();
         assert!(matches!(c.goal, Goal::Clear { retake: true, .. }));
+        let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60 1 16")).unwrap();
+        assert!(matches!(c.goal, Goal::Contain { body: 16, .. }));
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60")).is_err(), "contain needs its leak");
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 3 60 1 2")).is_err());
     }
@@ -727,6 +790,12 @@ mod tests {
         // The goal line says how much is outside against the allowance.
         let line = tr.progress_line();
         assert!(line.contains("% outside, 2% allowed"), "{line}");
+        // The thick-mould rule: share off (1), no bin outside with 16+.
+        let mut g = small(Rules::default());
+        let mut tr = Tracker::new(mission("goal contain 0 0 8 8 10 1 16"), &g);
+        assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none());
+        assert!(tr.thick.unwrap() > 0, "thick bins outside: {:?}", tr.thick);
+        assert!(tr.progress_line().contains("thick mould outside in"), "{}", tr.progress_line());
     }
 
     /// An idle squad takes no charge: `take` stays at 0 (its bar starts from
@@ -779,5 +848,120 @@ mod tests {
         assert_eq!(decided_at(&bars, 2), 4);
         assert_eq!(decided_at(&bars[..4], 1), 3);
         assert_eq!(decided_at(&[Some(0.2), None, Some(0.3)], 0), 0);
+    }
+
+    /// **Each mission's plan still wins** (tech lead, 14:13Z): missions 1-3
+    /// rest on rules other threads own (walls, raise time, craters, the
+    /// core), so these play each one's best census hand on seed 1 at the
+    /// census's size. The full census is `examples/campaign.rs`; these are
+    /// its v8 rows (seeds 1-8: Landfall claim 8/8 by 2:48, First contact
+    /// strike 8/8 by 6:19, The gaps walling 24/24 at 10:00).
+    ///
+    /// CI runs the quick one (`the_gaps_needs_walls_and_landfall_wins`,
+    /// about 12 s: the tech lead's cap is 30 s with ten threads merging
+    /// through one queue); this full one, with First contact's 7:00 round,
+    /// took 105 s and is `#[ignore]`d: `cargo test --release --
+    /// --ignored each_missions_plan`.
+    #[test]
+    #[ignore]
+    fn each_missions_plan_still_wins() {
+        use crate::mould::big::BigDish;
+        use crate::mould::larder_world::race_params;
+        use crate::mould::larder_world_ai::Hand;
+        use crate::mould::map::Map;
+        use crate::mould::tiers::Tier;
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let play = |name: &str, hand: &str, walls: bool, secs: f32| -> (Option<Verdict>, f32) {
+            let m = Mission::parse(&std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"))).unwrap()).unwrap();
+            let map = Map::load(&root.join("Reports/larder-maps-2026-11-11/maps"), &m.map).unwrap();
+            let mut p = race_params(1, 2, 5000);
+            if let Some(t) = m.tier.as_deref().and_then(Tier::from_name) {
+                t.apply(&mut p);
+            }
+            let mut g = Game::new(BigDish::with_map(p, &map), m.rules(Rules::default()), 1);
+            let mut tr = Tracker::new(m, &g);
+            let mut ai = Hand::named(hand, &g).unwrap();
+            let mut walled = [!walls; 4];
+            let v = follow(&mut g, &mut tr, secs, |g| {
+                if walled.iter().any(|w| !w) && g.time() < 120.0 {
+                    wall_rim_gaps(g, &mut walled);
+                } else {
+                    ai.play(g);
+                }
+            });
+            (v, tr.best)
+        };
+        // The four rounds side by side: 105 s on a 4-core box (140 one
+        // after another); First contact's 6:19 is the long pole.
+        let [m1, m2, walls, open] = std::thread::scope(|sc| {
+            let play = &play;
+            [
+                sc.spawn(move || play("1-landfall", "claim", false, 200.0)),
+                sc.spawn(move || play("2-first-contact", "strike", false, 420.0)),
+                sc.spawn(move || play("3-the-gaps", "claim", true, 180.0)),
+                sc.spawn(move || play("3-the-gaps", "claim", false, 180.0)),
+            ]
+            .map(|h| h.join().unwrap())
+        });
+        assert!(m1.0.is_some_and(|v| v.cause == Cause::Goal), "Landfall, claim: {:?}", m1.0);
+        assert!(m2.0.is_some_and(|v| v.cause == Cause::Goal), "First contact, strike: {:?}", m2.0);
+        assert!(walls.0.is_none() && walls.1 >= 0.25, "The gaps, walls: {:?} best {}", walls.0, walls.1);
+        assert!(open.1 < 0.2, "The gaps without walls held: best {}", open.1);
+    }
+
+
+    /// The quick CI check (11.8 s on 4 cores; seed 1, measured
+    /// 2026-11-12: walls standing by 0:50, bar 0.23 at 2:20 with no thick
+    /// mould outside; without walls thick mould is outside by 2:00 and the
+    /// bar is back to 0). The fragile mission is The gaps, which rests on
+    /// wall and raise rules; Landfall is cheap enough to keep.
+    #[test]
+    fn the_gaps_needs_walls_and_landfall_wins() {
+        use crate::mould::big::BigDish;
+        use crate::mould::larder_world::race_params;
+        use crate::mould::larder_world_ai::Hand;
+        use crate::mould::map::Map;
+        use crate::mould::tiers::Tier;
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        // A round to `secs`, or until `done` says it is decided.
+        let play = |name: &str, walls: bool, secs: f32, done: fn(&Tracker) -> bool| -> Tracker {
+            let m = Mission::parse(&std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"))).unwrap()).unwrap();
+            let map = Map::load(&root.join("Reports/larder-maps-2026-11-11/maps"), &m.map).unwrap();
+            let mut p = race_params(1, 2, 5000);
+            if let Some(t) = m.tier.as_deref().and_then(Tier::from_name) {
+                t.apply(&mut p);
+            }
+            let mut g = Game::new(BigDish::with_map(p, &map), m.rules(Rules::default()), 1);
+            let mut tr = Tracker::new(m, &g);
+            let mut ai = Hand::named("claim", &g).unwrap();
+            let mut walled = [!walls; 4];
+            let tps = g.rules.tps as u64;
+            while g.time() < secs && tr.verdict.is_none() && !done(&tr) {
+                if walled.iter().any(|w| !w) && g.time() < 120.0 {
+                    wall_rim_gaps(&mut g, &mut walled);
+                } else {
+                    ai.play(&mut g);
+                }
+                let s = g.world.ticks() / tps;
+                while g.world.ticks() / tps == s && g.end.is_none() {
+                    g.step();
+                }
+                let grid = g.world.mould_grid(BIN);
+                tr.second(&g, grid.as_deref(), 1.0);
+            }
+            tr
+        };
+        let [landfall, walls, open] = std::thread::scope(|sc| {
+            let play = &play;
+            [
+                sc.spawn(move || play("1-landfall", false, 200.0, |_| false)),
+                sc.spawn(move || play("3-the-gaps", true, 140.0, |_| false)),
+                sc.spawn(move || play("3-the-gaps", false, 140.0, |tr| tr.thick.is_some_and(|n| n > 0))),
+            ]
+            .map(|h| h.join().unwrap())
+        });
+        assert!(landfall.verdict.is_some_and(|v| v.cause == Cause::Goal), "Landfall, claim: {:?}", landfall.verdict);
+        assert!(walls.verdict.is_none() && walls.thick == Some(0) && walls.bar.unwrap_or(0.0) >= 0.2, "The gaps with walls: thick {:?} bar {:?}", walls.thick, walls.bar);
+        assert!(open.thick.is_some_and(|n| n > 0), "The gaps without walls kept thick mould in for 2:20: bar {:?}", open.bar);
     }
 }

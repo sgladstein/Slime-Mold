@@ -159,12 +159,19 @@ impl View {
             bin,
             cols,
         };
+        // A crystal under one frame's full ask is dry: the game sends its
+        // carrier home to hold (`Rules::home_dry`), so the brain neither
+        // farms nor claims it, and gives the holder a new crystal. (Under
+        // `> 0.0` a soldier went back for the 0.8 charge of crumbs a crystal
+        // keeps.)
+        let r = g.rules;
+        let dry = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
         v.crystals = g
             .world
             .crystals()
             .into_iter()
             .enumerate()
-            .filter(|c| c.1 .1 > 0.0)
+            .filter(|c| c.1 .1 >= dry)
             .map(|(i, (at, charge))| {
                 let r = g.world.crystal_r(i);
                 CrystalView { i, at, charge, r, on: v.mass(at, r + 2.0 * scale), near: v.mass(at, NEAR * scale) }

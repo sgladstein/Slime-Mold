@@ -12,3 +12,10 @@ mould and `body-*` is `energy_flow=0.05 hunger_scent=8`.
   container (4 cores).
 - `pair.py BASE,... BODY,...` pairs the two arms by hand and seed and checks
   the gate inside each arm.
+
+Later arms (10:30-13:00Z, this container, same commit plus the `crystal_eat=`
+key): `matched-5-20` (H, crystal_eat 0.004), `matched45-5-20` (0.0045),
+`f01h8-5-20` (energy_flow 0.01 + hunger_scent 8), `f05-5-20` (energy_flow
+0.05 alone) and `f01-5-20` (energy_flow 0.01 alone). Also the cutprobe
+whole-mould runs `size120.txt` (crystal_eat sweep, 120 s) and
+`shape300.txt` (8 seeds, 300 s).

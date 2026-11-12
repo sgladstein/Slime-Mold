@@ -168,6 +168,10 @@ struct Mould {
     /// engines.
     energy_flow: f32,
     hunger_scent: f32,
+    /// `crystal_eat=`: a walker's bite of crystal a fine step (the race
+    /// world's 0.005 when unset); 0.004 holds the one-body mould near
+    /// today's size (Reports/one-body-2026-11-12.md, *Matched size*).
+    crystal_eat: Option<f32>,
 }
 
 impl Mould {
@@ -186,6 +190,9 @@ impl Mould {
     fn apply(&self, p: &mut BigParams) {
         (p.alarm_keep, p.alarm_weight) = self.alarm((p.alarm_keep, p.alarm_weight));
         (p.energy_flow, p.hunger_scent) = (self.energy_flow, self.hunger_scent);
+        if let Some(e) = self.crystal_eat {
+            p.crystal_eat = e;
+        }
         if let Some(t) = self.tier {
             t.apply(p);
         }
@@ -262,6 +269,7 @@ fn main() {
             "scorch_cone" => m.scorch_cone = v == "1",
             "energy_flow" => m.energy_flow = v.parse().unwrap(),
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
+            "crystal_eat" => m.crystal_eat = Some(v.parse().unwrap()),
             "strike" => rules.strike = v.parse().unwrap(),
             "shot_every" => rules.shot_every = v.parse().unwrap(),
             // `spread=C`: aim spread, dish cells at the target (`Rules::spread`).
@@ -297,8 +305,8 @@ fn main() {
     if let Some(c) = cap {
         rules.cap = c;
     }
-    if (m.energy_flow, m.hunger_scent) != (0.0, 0.0) {
-        println!("one body: energy_flow {} hunger_scent {}", m.energy_flow, m.hunger_scent);
+    if (m.energy_flow, m.hunger_scent) != (0.0, 0.0) || m.crystal_eat.is_some() {
+        println!("one body: energy_flow {} hunger_scent {} crystal_eat {:?}", m.energy_flow, m.hunger_scent, m.crystal_eat);
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
@@ -573,6 +581,9 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, ha
         let mut s = race_settings(seed, scale, walkers);
         (s.alarm_keep, s.alarm_weight) = mould.alarm((s.alarm_keep, s.alarm_weight));
         (s.energy_flow, s.hunger_scent) = (mould.energy_flow, mould.hunger_scent);
+        if let Some(e) = mould.crystal_eat {
+            s.crystal_eat = e;
+        }
         let world = match map {
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),
