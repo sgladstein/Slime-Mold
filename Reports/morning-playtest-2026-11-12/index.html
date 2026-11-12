@@ -55,7 +55,7 @@ a{color:var(--accent-ink)}
 <header style="display:flex;flex-direction:column;gap:10px">
   <span class="lab">Larder World · morning playtest · 2026-11-12</span>
   <h1>What changed overnight, and what to try</h1>
-  <p class="lede">Twenty-nine pull requests merged between 04:30Z and 11:00Z (#93 to #122, all but #113). This is one build of main with all of them in. Below: the five things to play first, every change with its key and the counts its thread measured, and pictures from the combined build.</p>
+  <p class="lede">Twenty-nine pull requests merged between 04:30Z and 11:00Z (#93 to #122; #113 followed at 12:14Z). The checks below ran on a8669bd, before #113. Below: the five things to play first, every change with its key and the counts its thread measured, and pictures from the combined build.</p>
 </header>
 
 <section>
@@ -64,7 +64,7 @@ a{color:var(--accent-ink)}
     <div><span class="lab">Commit</span><span class="val">main a8669bd (#122)</span></div>
     <div><span class="lab">cargo test --release</span><span id="tests" class="val ok">291 passed, 0 failed</span></div>
     <div><span class="lab">Headless run</span><span id="look" class="val ok">look=DIR runs, rush and farm</span></div>
-    <div><span class="lab">Not in yet</span><span class="val warn">#113 shot craters (open)</span></div>
+    <div><span class="lab">Merged after the checks</span><span class="val">#113 shot craters (945e080)</span></div>
   </div>
 <pre>git pull
 cargo run --release --bin larder-world                       # the fork map, seed 1
@@ -72,9 +72,14 @@ cargo run --release --bin larder-world -- mission=1-landfall # a campaign missio
 </section>
 
 <section>
+  <h2>Your one open choice</h2>
+  <p>Pick a look for the hole under fire: three blind looks of the crater on clay and plain soil, on the <a href="https://claude.ai/artifact/AcRm3aeB97YLpWobtmABhs">Craters Under Fire</a> page (looks 1-3). The crater rule itself (#113) merged at 12:14Z with craters on; only the look is yours to pick.</p>
+</section>
+
+<section>
   <h2>Try these first</h2>
   <ol class="try">
-    <li><b>Shoot freely, and watch the mould come for you.</b> Shots cost no food now, and the mould smells soldiers and moves on them (#106). A hit leaves a real gap in the body that closes as walkers flow back, with no painted wound (#93). Your bar from last night, a hole that keeps growing under fire, is #113, which has not merged yet.</li>
+    <li><b>Shoot freely, and watch the mould come for you.</b> Shots cost no food now, and the mould smells soldiers and moves on them (#106). A hit leaves a real gap in the body that closes as walkers flow back, with no painted wound (#93). Your bar from last night, a hole that keeps growing under fire, is #113 (merged 12:14Z): sustained fire lays a crater, and the hole stays open while the squad keeps shooting.</li>
     <li><b>Build something with soldiers.</b> Select soldiers, press <kbd>Q</kbd>, then <kbd>T</kbd> turret, <kbd>L</kbd> lure, <kbd>U</kbd> pump or <kbd>I</kbd> outpost, and click. It appears as a ghost; the soldiers walk over and raise it in 8 s, and idle soldiers nearby help (#112, #118, #122). <kbd>J</kbd> turns the lures on and off. Harvesters bank at the nearest larder or outpost.</li>
     <li><b>Give orders like an RTS.</b> <kbd>Shift</kbd> queues orders, <kbd>A</kbd> then a click is attack-move, double-click selects everyone on screen, click the larder then right-click to set a rally point, and the wheel zooms in to 24 px a cell (#102).</li>
     <li><b>Listen.</b> Shots get heavier the more walkers they kill (#96), and the whole mould has one breathing voice that follows its size, hunger and flinching (#99). <kbd>O</kbd> toggles sound, <kbd>K</kbd> the voice.</li>
@@ -116,8 +121,8 @@ cargo run --release --bin larder-world -- mission=1-landfall # a campaign missio
   <tr><td class="n">#103 #121</td><td>One body on the CPU: hunger, body pull, tether, lone upkeep; the census with them on.</td><td>census <code>energy_flow=</code> <code>hunger_scent=</code></td><td class="c">All three one-body measures higher on 8 of 8 (p 0.008). With them on, farm and wall still win 16-0; the mould grows 2.8-2.9×. Align rejected.</td><td><span class="pill off">off</span></td></tr>
   <tr><td class="n">#104 #117</td><td>Squad toolkit: blast, mine, det cord, germ, sleep gas, smell; tools take carry space and restock at the larder.</td><td>CPU harness</td><td class="c">Blast crater: 82 walkers at 10 s against 188 without (8/8). With carry 5 the best plan changes by tier: loud on Sleeper, Trunk, Drifter, Wary; plague on Swarmer, Sporer, Sprawler.</td><td><span class="pill off">CPU only</span></td></tr>
   <tr><td class="n">#105 #119</td><td>Your own mould: two species fighting by conversion; gardeners grow a player mould.</td><td><code>examples/garden.rs</code></td><td class="c">Net beats hunk on 14 of 16 (p 0.004). Sowing grows 23,023 walkers against farm's 1,723, 32 of 32.</td><td><span class="pill off">CPU only</span></td></tr>
-  <tr class="grp"><td colspan="5">Not merged yet</td></tr>
-  <tr><td class="n">#113</td><td>Shots lay a crater: sustained fire carves a hole that does not refill while the squad keeps shooting.</td><td>Branch only (<code>crater=S</code>)</td><td class="c">Hole 60 cells against 29 without (8 of 8, p 0.008). Watch: random wiped the mould 7 of 32 against 2 (p 0.06). GPU +0.03 ms a step.</td><td><span class="pill opt">would be on</span></td></tr>
+  <tr class="grp"><td colspan="5">Merged after the morning build</td></tr>
+  <tr><td class="n">#113</td><td>Shots lay a crater: sustained fire carves a hole that does not refill while the squad keeps shooting.</td><td>Shoot a group of the mould for several seconds; <code>crater=0</code> turns it off</td><td class="c">Hole 60 cells against 29 without (8 of 8, p 0.008). GPU +0.03 ms a step. Watch: on seeds 201-232 random wiped the mould on 11 of 32 with craters and 5 without, so core defence is the Larder thread's next PR.</td><td><span class="pill on">on</span></td></tr>
   <tr class="grp"><td colspan="5">Plans and records</td></tr>
   <tr><td class="n">#94 #98 #100 #120</td><td>Shared rules and merge order, roadmap rows, one census entry point with a provenance line.</td><td>ROADMAP.md</td><td class="c">Random wiped 5 of 16 on seeds 201-216 against 2 of 32 on 5-36 (Fisher p 0.033), so the gate now plays both blocks.</td><td><span class="pill off">docs</span></td></tr>
   <tr><td class="n">#95</td><td>The approved campaign design: eight missions, goal bar and stars.</td><td>wiki</td><td class="c">Every number a first guess.</td><td><span class="pill off">docs</span></td></tr>
