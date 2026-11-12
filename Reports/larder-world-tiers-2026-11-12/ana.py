@@ -8,7 +8,7 @@ for t in T:
     for l in open(f'{DIR}/{t}.txt'):
         m=pat.match(l)
         if m: d[(t,m[1],int(m[2]))]=(float(m[5]),m[3],int(m[4]),int(m[6]),int(m[7]))
-S=range(53,61);H=['idle','random','farm','boom','claim','strike'];AI=['farm','boom','claim','strike']
+S=range(53,61);H=[h for h in ['idle','random','farm','boom','claim','fort','strike'] if ('none',h,53) in d];AI=[h for h in ['boom','claim','fort','strike'] if h in H]
 def sign(a,b):
     h=sum(x>y for x,y in zip(a,b));lo=sum(x<y for x,y in zip(a,b));n=h+lo
     if n==0: return h,lo,1.0
@@ -21,7 +21,7 @@ for t in T:
         v=sc(t,h);e=[d[(t,h,s)][1] for s in S]
         print(f'{t:8}{h:7} med {st.median(v):+.3f} mean {st.mean(v):+.3f} ends {sum("mould" in x for x in e)}/{sum("cap" in x for x in e)}/{sum("squad" in x for x in e)} mould med {st.median([d[(t,h,s)][4] for s in S])}')
 for t in T:
-    for h in ['boom','claim','strike']:
+    for h in AI:
         for c in ['idle','random']:
             tests.append((f'D1 {t} {h}>{c}',)+sign(sc(t,h),sc(t,c)))
 for t in T[1:]:
@@ -34,7 +34,7 @@ for t in T[1:]:
     print(t,'strike-boom',[f'{x:+.2f}' for x in td],'plain',[f'{x:+.2f}' for x in pd])
 # also style vs farm per tier
 for t in T:
-    for h in ['boom','claim','strike']:
+    for h in AI:
         tests.append((f'X {t} {h}>farm',)+sign(sc(t,h),sc(t,'farm')))
 n=len(tests);o=sorted(range(n),key=lambda i:tests[i][3]);adj=[0]*n;r=0
 for k,i in enumerate(o): r=max(r,min(1,(n-k)*tests[i][3]));adj[i]=r
@@ -42,5 +42,5 @@ print('Holm over',n)
 for i,tt in enumerate(tests): print(f'{tt[0]:34} {tt[1]}-{tt[2]} p {tt[3]:.4f} holm {adj[i]:.3f}')
 # best per seed
 for t in T:
-    b=[max(['boom','claim','strike'],key=lambda h:d[(t,h,s)][0]) for s in S]
+    b=[max(AI,key=lambda h:d[(t,h,s)][0]) for s in S]
     print(t,'best',{h:b.count(h) for h in set(b)})
