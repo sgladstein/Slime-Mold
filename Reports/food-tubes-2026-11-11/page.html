@@ -130,12 +130,34 @@ ul strong { color: var(--fg); }
 </section>
 
 <section>
+  <span class="eyebrow">GTX 1070 · 2048 × 1280 world · seed 1 · 12 game minutes</span>
+  <h2>In the big GPU world</h2>
+  <p>The world in your video runs on a grid four times finer than the game's own world. <strong>There the race numbers don't carry over.</strong> As they are, the mould stays a knot at home, which is the blob you saw before. Once its trail sensors reach as far across the world as on the game's grid, it explores everything and builds thick tubes between some crystals, but most of its paths stay faint. Pictures are at the same game times as the stills above. "Touched" means any trail reached the crystal; joined isn't counted on the GPU yet.</p>
+  <figure class="strip"><img src="pics/gpu-long8-s1.jpg" alt="The race numbers unchanged in the 2048 by 1280 GPU world at 43, 239 and 717 game seconds">
+    <div class="times"><span>43 s</span><span>239 s</span><span>717 s</span></div>
+    <figcaption><strong>Race numbers as they are</strong><dl class="stats"><dt>Crystals touched</dt><dd>6 of 22, all by 20 s</dd><dt>Ground covered</dt><dd>1.4%</dd></dl><span>A knot at home with short tubes to its nearest crystals.</span></figcaption></figure>
+  <figure class="strip"><img src="pics/gpu-long8reach-s1.jpg" alt="The race numbers with longer trail sensors in the GPU world at 43, 239 and 717 game seconds">
+    <div class="times"><span>43 s</span><span>239 s</span><span>717 s</span></div>
+    <figcaption><strong>Trail sensors reaching as far as on the game's grid</strong> (<code>reach</code> 36)<dl class="stats"><dt>Crystals touched</dt><dd>20 of 22</dd><dt>Ground covered</dt><dd>2.6%</dd></dl><span>Faint trails everywhere, and a chain of thick tubes across five crystals by about 3 game minutes.</span></figcaption></figure>
+  <div class="pair">
+    <figure>
+      <video src="gpu/long8reach-s1/spread.mp4" autoplay muted loop playsinline controls aria-label="The race start with longer trail sensors in the 2048 by 1280 GPU world, 12 game minutes"></video>
+      <figcaption><strong>Trail sensors reaching further, moving</strong><span>12 game minutes in 28 s.</span></figcaption>
+    </figure>
+    <figure>
+      <img src="pics/gpu-long8keep-s1.jpg" alt="Longer sensors and slower trail fade in the GPU world at 43, 239 and 717 game seconds" style="width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line)">
+      <figcaption><strong>Also slower trail fade</strong> (<code>keep</code> 0.974)<dl class="stats"><dt>Crystals touched</dt><dd>8 of 22</dd></dl><span>Thicker tubes, but they stay near home. With the other costs scaled down too it touched 8 and thinned out.</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
   <span class="eyebrow">For the game</span>
   <h2>Pace and the GPU world</h2>
   <ul>
     <li><strong>Pace in game time.</strong> The Larder game runs this world at 15 ticks a game second, and these runs at 120, so one second here is 8 game seconds. The haze touches every crystal in about a minute of game time. Half the crystals are joined by about two minutes, and it is still joining at twelve. The videos play at 24 game seconds a second.</li>
-    <li><strong>On the GPU world.</strong> The engine already runs this mould: <code>race_settings</code> gives it the race world's numbers, and the Larder game plays on it. The world video can start from those settings instead of the droplets.</li>
-    <li><strong>Not tested yet: the GPU world at its own, finer grid.</strong> There the race numbers sense trail a quarter as far in world terms, and the world video's own settings also smelled food a quarter as far. That may be why its packed start stayed a blob.</li>
+    <li><strong>On the GPU.</strong> The engine already runs this mould at the game's own grid: <code>race_settings</code> gives it the race world's numbers, and the Larder game plays on it, so the test above holds there.</li>
+    <li><strong>For the big world video</strong>, either run the mould at the game's grid and draw it larger, or keep the finer grid with the longer trail sensors and accept a sparser network. A fine-grid mould as well joined as the game's needs its own tuning.</li>
     <li><strong>Cost.</strong> No new rule runs each tick. The race world took 5.6 to 7.0 ms a tick on one core as it grew; the droplets took 6.1 to 6.2.</li>
   </ul>
 </section>

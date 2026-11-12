@@ -32,12 +32,9 @@ On crystals the size stops near 20,000 whatever the charge: the crystals'
 area sets the intake and the charge only how long it lasts; grass under
 the crystals swamps them
 ([mould shape](../../Reports/mould-shape-2026-11-11.md), *On crystals*).
-From a small blob on the home crystal (the Larder race start) the network
-with growth explores, then joins the crystals with tubes one after another:
-a median 19 of 22 on its main body at 60 s, against 2 for the food-reach
-droplets, 16 of 16 seeds. Without growth the small start still makes tubes
-(12-15 joined at 90 s against 11-21, 3 seeds, too few to separate); growth
-adds a mould that gets bigger and a finer mesh
+From a small blob on the home crystal (the race start) the network with
+growth explores, then joins crystals with tubes: a median 19 of 22 on its
+main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
 ([food tubes](../../Reports/food-tubes-2026-11-11.md)).
 
 ## Owner's word
@@ -59,6 +56,12 @@ adds a mould that gets bigger and a finer mesh
   rise with its charge (the Larder thread's rule).
 - `BigParams::energy_flow` (off, CPU only): keep it for the cut-a-tube
   lever? A cut has not been tested.
+- Growth's numbers are per fine step, so the race start holds at the
+  game's scale 2 but not on the 2048 x 1280 GPU world (scale 8): there it
+  stays a knot at home, and with trail sensors 36 fine cells out it touches
+  20 of 22 crystals in 12 game minutes but joins few with thick tubes (one
+  seed; [food tubes](../../Reports/food-tubes-2026-11-11.md), *For the GPU
+  world*). Without growth the small start still makes tubes (3 seeds).
 - With [the life cycle](life-cycle.md) on, only ordinary walkers pay
   upkeep, starve, divide and share energy; a spore or a dormant walker
   keeps its energy until it lands or wakes, and a struck walker frees its

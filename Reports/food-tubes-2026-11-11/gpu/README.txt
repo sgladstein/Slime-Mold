@@ -24,3 +24,10 @@ rect=1 smell=144 rock=0.2 wet=0.2 wall=0 ticks=16.
 Rounds 1-2 (seconds=90, every=1; pictures every 8 frames, 1.07 s):
 race8 and race8reach on seeds 1-2, race8keep and race8all on seed 1.
 ../pics/gpu-*-s1.jpg are pictures 5, 28 and 84 (5.3, 29.9, 89.6 s).
+Round 3 (seconds=720 every=8 down=4, 00:55-01:09Z, 184-200 s a run on the
+1070): long8, long8reach, long8keep and long8all on seed 1, the same keys
+as race8, race8reach, race8keep and race8all. Pictures every 64 frames
+(8.53 s); ../pics/gpu-long8*-s1.jpg are pictures 5, 28 and 84 (43, 239
+and 717 s, the census's 5, 30 and 90 s). The GIFs (3.1-3.5 MB, committed
+from the PC in 444ca5e) were converted to spread.mp4 here (3 pictures a
+second) and removed from the folder.

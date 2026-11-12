@@ -143,17 +143,49 @@ ms a tick (median at 30, 60 and 90 s, as it grows) and the droplets 6.1-6.2.
 
 ## For the GPU world
 
-The GPU engine already runs this mould: `gpu::larder_world::race_settings`
-gives the engine the race world's params, and `GpuWorld` runs `scale`
-engine ticks a game tick (a test keeps the two within 8% over 20 game
-seconds, W2b). So `examples/worldspread.rs` can start from
-`race_settings(seed, 2, 5000)` on a scale-2 engine instead of the
-droplets. Not tested here: the race params at the graphics thread's scale
-8, where trail sensors 9 fine cells out reach 1.1 dish cells instead of
-4.5. The graphics thread's own start (`Settings::big_dish()`, 20:07Z) also
-smelled food 36 fine cells out, 4.5 dish cells at scale 8 against the race
-world's 18. Either may be why its packed 150,000-walker start stayed a
-blob; neither is tested.
+The GPU engine already runs this mould at the game's scale:
+`gpu::larder_world::race_settings` gives the engine the race world's
+params, and `GpuWorld` runs `scale` engine ticks a game tick (a test keeps
+the two within 8% over 20 game seconds, W2b). At scale 2 the census above
+is the GPU's result too.
+
+**The graphics thread's 2048 x 1280 world is scale 8**, and there the
+same numbers are a different mould. Trail sensors 9 fine cells out reach
+1.1 dish cells instead of 4.5, and trail fade, deposit and upkeep are paid
+per fine step, 4 times as often per dish cell. Looks on the GTX 1070
+(`examples/worldspread.rs` through Remote Control, seed 1, 80,000 walkers
+on the home crystal, the race start's fill, growth on, 23 crystals, no
+wall; [`gpu/`](food-tubes-2026-11-11/gpu/)). A worldspread second is one
+game second at scale 8, so 720 s is the census's 90 s:
+
+| Run | Change from race_params | Crystals touched at 709 s (of 22) | Ground that looks like slime |
+|---|---|---|---|
+| `long8` | none | 6 (all by 20 s) | 1.4% |
+| `long8reach` | trail sensors 36 fine cells out (4.5 dish cells) | 20 | 2.6% |
+| `long8keep` | as reach, and keep 0.974 (fade per dish cell as at scale 2) | 8 | 2.8% |
+| `long8all` | as keep, and deposit, upkeep and eating / 4 | 8 | 1.2% |
+
+- **As they are, the race numbers barely set out at scale 8**: a knot at
+  home with short tubes to the six nearest crystals. That is the blob the
+  graphics thread saw (20:07Z), with or without growth.
+- **With the sensors reaching as far in world terms** (`reach=36`) it
+  explores the whole world in faint trails and touches 20 of 22 crystals,
+  and in one region it builds thick tubes from crystal to crystal, a chain
+  of five by 3 game minutes. Most of the paths it explores stay faint, so
+  it joins much less of the world than the race world at scale 2.
+- Slowing the fade (keep 0.974) gives thicker tubes that stay near home;
+  scaling the per-step costs as well gives loops round home that thin out.
+- "Touched" is worldspread's `reached` (pile 0 not counted here), not
+  `joined`; the GPU has no `joined` count yet. One seed each.
+- The first two rounds ran only 90 worldspread seconds (90 game seconds,
+  the census's 11 s), meant to match the CPU clock: an error in the brief,
+  kept as early pictures in `gpu/` (its `README.txt`).
+
+So for the world video: either run the mould at the game's scale 2 (the
+census's mould, drawn larger), or at scale 8 start from `race_settings`
+with `reach=36` and accept a sparser network. A scale-8 mould as joined
+as scale 2 needs its own tuning (the per-step scaling was tried once
+before and gave smooth blobs: dead-ends, preset `turn`).
 
 ## Limits
 
@@ -161,7 +193,8 @@ blob; neither is tested.
   at a time; the looks above split the start from growth on 3 seeds only.
 - `joined` counts a crystal on the main body. A crystal on a second,
   smaller piece of tube counts as not joined.
-- The CPU world at scale 2, not the GPU world at scale 8.
+- The census is the CPU world at scale 2; the GPU world at scale 8 has
+  four looks on one seed, not a census.
 
 ## Raw
 
@@ -175,4 +208,7 @@ blob; neither is tested.
   (`look6.sh` is growth against the small start).
 - `pics/` and `video/`: the page's pictures (`strip.py`) and videos (the
   census's seeds 1 and 2 again, `frames=` every 30 ticks, hashes as the
-  census).
+  census). `pics/gpu-*.jpg` are the GPU world's pictures.
+- [`gpu/`](food-tubes-2026-11-11/gpu/): the GPU world runs (run.txt and
+  spread.mp4 each, made from worldspread's GIFs; `README.txt` has the keys
+  and the clock).
