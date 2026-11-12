@@ -347,17 +347,25 @@ pub struct Rules {
     /// **The hole under fire**: game seconds of crater (`squad::Frame::
     /// crater`, the squad toolkit's scorch field) each hit lays on its
     /// strike's cells, so sustained fire carves a hole the mould can't
-    /// re-knit until the fire stops (owner, 11-12 04:39Z). 0 is off. 10:
-    /// on the race world, four soldiers firing for 20 s left a hole 28
-    /// dish cells larger than with none (8 of 8 seeds), shots flew about
-    /// 10 dish cells into the body instead of 4, and it closed about 5 s
-    /// after the last shot; 1 and 3 s gave +2 and +5. A strike (the toolkit's
-    /// `scorch_keep` 0.1, `scorch_full` 30) bites at full strength until the
-    /// last second. Gate on seeds 5-12: farm, wall and strike beat idle and
-    /// random 8-0, and strike no longer beats farm (3-5; 28-4 over 32 seeds
-    /// without craters). Why a crater and not a flee: the mould turning
-    /// from gunfire made a bigger hole but let random hold the core
-    /// (`Reports/dead-ends.md`); the crater changes only the struck cells.
+    /// re-knit until the fire stops (owner, 11-12 04:39Z). 0 is off. A
+    /// walker standing in a crater still stops a shot (`squad::shots`).
+    /// 10: on the race world (seeds 1-8), four soldiers firing for 20 s
+    /// left a median hole of 60 dish cells against 29 with none (8 of 8
+    /// larger), hits landed 5.3 dish cells out instead of 3.8, kills rose
+    /// from 163 to 741, and 79% of the hole was left 5 s after the last
+    /// shot; 1 and 3 s gave +2 and +5, 30 s less (kills halve once the
+    /// near rim is empty). A strike (the toolkit's `scorch_keep` 0.1,
+    /// `scorch_full` 30) bites at full strength until the last second.
+    /// Gate (race 5-36, the Fork and the Rim 5-20): farm, wall, fort and
+    /// strike beat idle 32-0 and random 24-8 or better, all under Holm;
+    /// strike no longer beats farm (20-12, p 0.22; 28-4 without craters).
+    /// Before the walker stop, shots flew over walkers in the holes and
+    /// the rush hand's squad was wiped on 22 of 32 seeds (9 with it, 7
+    /// without craters). Random wiped the mould on 7 of 32 race seeds
+    /// against 2 without craters (5-0 by seed, p 0.06). Why a crater and
+    /// not a flee: the mould turning from gunfire made a bigger hole but
+    /// let random hold the core (`Reports/dead-ends.md`); the crater
+    /// changes only the struck cells.
     pub crater: f32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of

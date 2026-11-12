@@ -578,7 +578,7 @@ Free shots take the rush from 16 losses to 15 games at the cap with the mould cu
 | **10 s (0.1, 30), the default** | **47 / 55 / 67** | **9.7** | **77%** | **791** | **8-0, +28, p 0.008, holds** |
 | 30 s (0.1, 30) | 47 / 55 / 50 | 10.0 | 98% | 431 | 6-2, +10, p 0.29 |
 
-- With the crater the hole grows under fire, and the hits land 10 dish cells from the squad instead of 4: without it the mould closes up to the squad as fast as it is shot.
+- With the crater the hole grows under fire, and the hits land 10 dish cells from the squad instead of 4: without it the mould closes up to the squad as fast as it is shot. (Before the walker stop, below; with it the hits land 5.3 dish cells out against 3.8, and the hole is 60 against 29.)
 - The hole closes over about 10 s once firing stops: at 30 s it is back to 30 cells, against 26 without.
 - Craters of 30 s make a smaller hole. Once the near rim is empty, more shots fly long, and kills halve.
 - Of 32 soldiers, 31 lived through the default arm (32 without craters).
@@ -610,7 +610,32 @@ None of the looks changes the fight beyond chance, so the choice is the owner's 
 - farm, wall and strike each beat idle and random 8-0, and all hold under Holm.
 - Random wiped no mould, and its squad was wiped on 4.
 - Strike no longer beats every plan: it loses to farm 3-5, against 28-4 on 32 seeds without craters, because farm and wall now dig into the mould around their crystals too.
-- The 32-seed gate (race 5-36, the Fork and the Rim, runners 1-4, at 189ab71) is below once it lands.
+- The 32-seed gate is below.
+
+**The first full gate, and the walker stop** (race 5-36, the Fork and the Rim 5-20, at 189ab71; raw `crater/*-first.txt`).
+- Every plan (farm, wall, fort, strike) beat idle 32-0 and random 24-8 to 26-6, all under Holm, and strike no longer beat farm (12-20, against 28-4 without craters).
+- But the rush hand flipped to losing: 8-24 against idle, its squad wiped on 22 of 32 seeds (7 without craters), and idle's squad was wiped on 7 (0 without).
+- The cause: a crater holds no trail, so a shot flew over the walkers standing in it and the mould closed on the squad from inside its own hole.
+- **The fix (db5640f)**: a cell under a crater that holds a living walker stops a shot, as slime does (`squad::shots`, the CPU's occupancy; the GPU's `shots` pass reads the occupancy atomically, gated by the crater flag). With it the rush hand's squad was wiped on 3 of seeds 5-20 ([crater/rush-5-20-walker-stop.txt](larder-world-roadmap-2026-11-11/crater/rush-5-20-walker-stop.txt)).
+- The hole test with the stop ([crater/hole-1-8-looks.txt](larder-world-roadmap-2026-11-11/crater/hole-1-8-looks.txt), arms `base` and `crater:0`): a median hole of 60 dish cells at 20 s of fire against 29 without craters (8 of 8 larger, median paired difference +9, p 0.008, holds), hits landing 5.3 dish cells out against 3.8, 741 killed against 163, all 32 soldiers alive. The stop costs depth (hits landed 9.7 out before it) but not the hole.
+
+**The gate at the walker stop** (db5640f, 15-minute games; raw [crater/census-stop-race-5-20.txt](larder-world-roadmap-2026-11-11/crater/census-stop-race-5-20.txt), [-21-36](larder-world-roadmap-2026-11-11/crater/census-stop-race-21-36.txt), [fork](larder-world-roadmap-2026-11-11/crater/census-stop-fork-5-20.txt), [rim](larder-world-roadmap-2026-11-11/crater/census-stop-rim-5-20.txt); runners 1-4, sha256 checked):
+
+| race 5-36 (32 seeds) | against idle | against random | ends |
+| --- | --- | --- | --- |
+| farm | 32-0, holds | 24-8, p 0.007, holds | 32 at the cap |
+| wall | 32-0, holds | 24-8, p 0.007, holds | 32 at the cap |
+| fort | 32-0, holds | 24-8, p 0.007, holds | 32 at the cap |
+| strike | 32-0, holds | 26-6, p 0.0005, holds | 28 at the cap, 4 moulds wiped |
+| rush | 20-12, p 0.22 | 17-15, p 0.86 | 9 squads wiped (22 at the first gate, 7 without craters), 1 mould wiped |
+| idle | | | 2 squads wiped (7 first, 0 without) |
+| random | | | 20 squads wiped, **7 moulds wiped** (3 first, 2 without) |
+
+- Plan against plan (Holm over 6): strike against farm 20-12 (p 0.22) and against wall 18-14 (p 0.60), so strike no longer beats every plan (28-4 against farm without craters); strike, farm and wall each beat fort 29-3 or more; farm and wall tie 15-16.
+- Random wiped the mould on 7 of 32 race seeds, against 2 without craters: by seed 5-0 (14, 17, 24, 28, 29 only with craters), p 0.06, not significant but the trend the designer warned of (a rule that weakens the mould's defence makes the core a free win). The plans still beat random 24-8 or better. The integration thread's standing gate reports random wiping the plain mould on 5 of 16 of seeds 201-216 without craters, so the race block 5-36 was the easy one for the mould.
+- **The Fork** (5-20): farm and wall beat idle and random 16-0 (hold); random wiped no mould; the rush and idle squads were wiped on 16 of 16 (15 each without craters).
+- **The Rim** (5-20): farm and wall beat idle and random 16-0 (hold); rush's squad was wiped on 16 of 16 (16 without); random wiped no mould and lost its squad on 14 (10 without).
+- So the crater ships on by default (`Rules::crater` 10).
 
 **Cost.** On software Vulkan the crater adds 0.03 ms a step (13.54/13.56 against 13.60/13.57 ms). The GTX 1070's figure is open.
 
