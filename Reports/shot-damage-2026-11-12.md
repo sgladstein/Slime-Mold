@@ -55,7 +55,21 @@ Slowing the clock 3× barely lengthens a hole. Holes fill from the rim, by diffu
 | 5 | main | 1.303 / 0.883 / 0.764 | 0.307 |
 | 6 | 32d8cd8 | 1.684 / 0.886 / 0.690 | 0.287 |
 
-Matched fast runs (3 against 2, 4, 6): +0.49 ms at zoom 1, +0.11 at zoom 2, +0.02 at zoom 4. Answer: the prep pass loads walker counts once into a 20 x 20 workgroup tile (the 16 x 16 cells and a 2-cell rim), so each cell sums from the tile; the picture is unchanged (the same frame differs only in the HUD's alert text). Its 1070 time is in the next section once run.
+Matched fast runs (3 against 2, 4, 6): +0.49 ms at zoom 1, +0.11 at zoom 2, +0.02 at zoom 4. Answer: the prep pass loads walker counts once into a 20 x 20 workgroup tile (the 16 x 16 cells and a 2-cell rim), so each cell sums from the tile; the picture is unchanged (the same frame differs only in the HUD's alert text). On the 1070, nine runs cycling main 19a8765, the tile 9c33c5c and 32d8cd8 (same settings):
+
+| Run | Build | Look z1 / z2 / z4 | Plain z1 |
+|---|---|---|---|
+| 1 | main | 1.190 / 0.767 / 0.669 | 0.287 |
+| 2 | tile | 1.451 / 0.823 / 0.672 | 0.287 |
+| 3 | 32d8cd8 | 2.425 / 0.993 / 0.783 | 0.301 (slow state) |
+| 4 | main | 1.190 / 0.767 / 0.669 | 0.288 |
+| 5 | tile | 1.452 / 0.823 / 0.672 | 0.287 |
+| 6 | 32d8cd8 | 1.681 / 0.882 / 0.687 | 0.287 |
+| 7 | main | 1.586 / 1.126 / 0.763 | 0.352 (slow state) |
+| 8 | tile | 1.455 / 0.829 / 0.677 | 0.287 |
+| 9 | 32d8cd8 | 1.683 / 0.883 / 0.689 | 0.287 |
+
+In the steady runs the tile adds +0.26 ms at zoom 1 (1.19 -> 1.45), +0.06 at zoom 2 and nothing at zoom 4. The 25-read version added +0.49 ms at zoom 1. The tile ships.
 
 **Density** (tech lead review, 04:48Z): `BODY_N` was calibrated at 5000 walkers on 512 x 320. It now scales with the world's living walkers a cell, which the game sets once from the start (`View::set_body_density`; 0 keeps the calibration). The slot count would not do: a growing world has ten slots a walker. Hole times at higher counts (`holes=1`, rush, 0-16 s): 50,000 walkers at scale 2, 18 hits, median 0.20 s; 100,000 at scale 4, 25 hits, 3 refilled and 22 still open at 16 s (the strike killed only 20 walkers there: a scale-4 strike is a smaller share of a cell, worth a look by the Larder thread).
 
