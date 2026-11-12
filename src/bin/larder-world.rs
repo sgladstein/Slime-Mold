@@ -83,9 +83,9 @@
 //! front. Put it first: keys after it change it. **C is the default**
 //! (owner, 2026-11-12 22:19Z: "C is better how it looks, the shape it
 //! takes, how it networks the crystals"): a round with no `shape=`,
-//! `walkers=` or `mission=` plays C, its keys under any given; `shape=a`
-//! plays today's 5,000 walkers. A mission keeps its own mould (the
-//! campaign thread's). A walker's weight on buildings, the larder and
+//! `walkers=`, `mission=` or `own=1` plays C, its keys under any given;
+//! `shape=a` plays today's 5,000 walkers. A mission and the own mould's
+//! garden keep their own mould. A walker's weight on buildings, the larder and
 //! wading follows the walkers a cell (`Rules::mass`: 5,000 at scale 2
 //! count 1 each); `mass=M` sets it. Its bite on a soldier
 //! (`Rules::drain`, 2 a second) is whole at any count since 2026-11-12:
@@ -2676,7 +2676,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
         }
     }
-    if !chosen && args.mission.is_none() {
+    // The own mould's garden (`own=1`, #165) keeps its own walkers, as a
+    // mission keeps its mould: its two species start at twice `walkers`.
+    if !chosen && args.mission.is_none() && !args.own {
         default_shape(&mut args);
     }
     if let Some(secs) = bench_secs {
@@ -2720,7 +2722,7 @@ mod tests {
     /// The default mould is shape C, under the keys the command line gave.
     #[test]
     fn the_default_is_shape_c_under_given_keys() {
-        let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, wade: None };
+        let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None };
         default_shape(&mut args);
         assert_eq!(args.walkers, 25_000);
         let mut s = race_settings(1, 2, args.walkers);
