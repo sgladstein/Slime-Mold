@@ -2,7 +2,7 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12T05:34Z
+updated: 2026-11-12T06:26Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
 code: [BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier]
 ---
@@ -28,7 +28,7 @@ difficulty stat, not a gate (14:14Z).
 | 7 | Mixes | several of the above | adapt the build |
 | added | Sleeper | a nest: a dormant crust round its home crystal that wakes in a wave (`Tier::Sleeper`) | bait it, then strike (proposed) |
 | added | Swarmer | floods where it is hit (`Tier::Swarmer`, `alarm_weight` +3); a modifier any tier can carry | a kill zone (proposed) |
-| added | Sporer | fed walkers fly to new crystals (`Tier::Sporer`); since 11-12 it also turns from gunfire, as the plain mould does | starve it, don't strike near untaken crystals (proposed) |
+| added | Sporer | fed walkers fly to new crystals (`Tier::Sporer`) | starve it, don't strike near untaken crystals (proposed) |
 
 The added three are on the CPU big dish, named for the game by
 `mould::tiers::Tier`, and the squad's shots lay the alarm they answer. In

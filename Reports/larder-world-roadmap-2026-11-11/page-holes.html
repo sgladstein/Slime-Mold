@@ -47,6 +47,7 @@ code { font-size: 0.88em; }
 <main>
   <header style="display:grid;gap:10px">
     <h1>Shots that carve a hole</h1>
+    <div class="ask"><b>Update, 11-12 06:25Z: neither A nor B ships</b><p>The turn-away rule behind both clips failed the full census. With it on, the random hand wiped the mould on 12 of 16 seeds, against 2 without it, and beat every real plan 13 to 3. Random keeps sending soldiers onto the mould's core. A mould that turns from gunfire no longer overruns them there, they hold the core, and with no births the mould starves. The mould also reached the squad later (farmers first touched 36 s later, median). So the game keeps today's small hole for now. The clips stay here as a record. The next try builds the hole from the toolkit's crater: the cells a shot clears stay closed for a few seconds, so steady fire digs in and the hole closes when firing stops. It will be tested against random alongside the hole itself.</p></div>
     <p class="lede">You asked for a group of soldiers firing on the slime to carve a bigger and bigger hole that doesn't refill while they shoot. Each hit already left an alarm on the ground around it, a field in the simulation that fades over a few seconds. Now the mould turns away from fresh alarm. Under steady fire the hole stays open and the hits push deeper. When the shooting stops, the alarm fades and the mould flows back within about ten seconds.</p>
     <p class="lede">Each clip below is one game on the race world. The mould grows for 60 s. Then four soldiers (the white squares) are set down 8 cells from the mould's edge. They fire for 20 s, then stop. The clips run three frames per game second. There is nothing drawn on top except the soldiers and the clock.</p>
   </header>
@@ -84,7 +85,7 @@ code { font-size: 0.88em; }
   </section>
 
   <section>
-    <div class="ask"><b>One question: A or B?</b><p>A and B differ only in how strongly the mould turns away from fresh alarm. One of them is in the game now. Which feels better under fire? You can also answer "neither" or "stronger still".</p></div>
+    <p class="note">A and B differ only in how strongly the mould turns away from fresh alarm. This was a question for you; it is withdrawn (see the update at the top).</p>
   </section>
 
   <section>
@@ -114,7 +115,7 @@ code { font-size: 0.88em; }
 
   <section>
     <h2>Free shots and the soldiers' scent</h2>
-    <p>These censuses are 16 full games (seeds 5-20, 15 minutes each) per hand, run before the hole change. Free shots took the rush from losing every game to reaching the clock on 15 of 16, with the mould cut from 5,000 walkers to under 600 on 12 of them. It never finishes the mould, probably because the last stragglers lay too little trail to stop a shot (not yet checked). Farm and wall still beat idle and random. A stronger soldier scent (4 times as strong, twice the reach) brought the first touch on farmers from 49 s to 27 s. It also made random play stronger, so farm and wall beat it only 12 times of 16. 32 seeds on the race world and two designed maps are running now with the hole change in.</p>
+    <p>These censuses are 16 full games (seeds 5-20, 15 minutes each) per hand, run before the hole change. Free shots took the rush from losing every game to reaching the clock on 15 of 16, with the mould cut from 5,000 walkers to under 600 on 12 of them. It never finishes the mould, probably because the last stragglers lay too little trail to stop a shot (not yet checked). Farm and wall still beat idle and random. A stronger soldier scent (4 times as strong, twice the reach) brought the first touch on farmers from 49 s to 27 s. It also made random play stronger, so farm and wall beat it only 12 times of 16. The 32-seed census with the hole change in is what found the random hand's win (update at the top).</p>
     <div class="scroll"><table>
       <tr><th>mean score (16 seeds)</th><th>shots cost 10 food (before)</th><th>free shots</th><th>free shots, scent 4</th></tr>
       <tr><td>farm</td><td>+0.05</td><td>+0.21</td><td>+0.19</td></tr>
@@ -128,6 +129,6 @@ code { font-size: 0.88em; }
 
   <section>
     <h2>Cost</h2>
-    <p class="note">The alarm field is a 3 x 3 mean over the ground every step. On the CPU that adds about 2 ms to a 5.4 ms game tick. On the GPU it switches on the life passes the mould tiers use, which cost about 10 ms a tick on the cloud's software GPU at 100,000 walkers. The GTX 1070's figure is still open. Sources in the repo: <code>Reports/larder-world-roadmap-2026-11-11/holes/</code> (clips and their counts) and <code>playtest/</code> (the 16-seed runs and censuses).</p>
+    <p class="note">The alarm field is a 3 x 3 mean over the ground every step. On the CPU that adds about 2 ms to a 5.4 ms game tick. On the GPU it runs no extra passes beyond a step of the scent pass and one small pass on frames with shots: on the cloud's software GPU, one paired run was 15.16 ms a step without it and 15.64 with it. (An earlier version of this page said it switched on the tiers' life passes; it does not.) The GTX 1070's figure is still open. Sources in the repo: <code>Reports/larder-world-roadmap-2026-11-11/holes/</code> (clips and their counts) and <code>playtest/</code> (the 16-seed runs and censuses).</p>
   </section>
 </main>

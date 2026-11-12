@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T05:34Z
+updated: 2026-11-12T06:26Z
 sources: [Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Tracker, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
@@ -81,16 +81,15 @@ a stalemate scores the squad's share of the charge taken over the game
 crystals, now harvests twice the food and kills five times the walkers.
 **Playtest fixes** (2026-11-12, [report, *Playtest fixes*](../../Reports/larder-world-roadmap-2026-11-11.md)): after
 the owner's first playtest, shots are free (`Rules::price` 0, the fire
-rate the only limit), soldiers smell like prey (`Rules::smell` 0.5 over
-`smell_r` 2 dish cells), and the race world's mould turns from fresh
-gunfire: it reads the alarm the shots lay at weight -1 (keep 0.98,
-`larder_world::FLEE_WEIGHT`), so four soldiers firing 20 s carve a hole of
-102 dish cells that refills about 10 s after they stop, against 29 without
-it (16 of 16 seeds). The Sporer flees too; the Swarmer and the Sleeper keep
-their +3. A stronger turn (-3, hole 126) is on a blind A/B for the owner
-([page](https://claude.ai/artifact/5wQ3xSk8pBN6uig1rxKd4R)). Off by default
-for other threads: `Rules::overrun`, `Rules::reserve`, `Game::stuck`,
-`Game::density`.
+rate the only limit), and soldiers smell like prey (`Rules::smell` 0.5 over
+`smell_r` 2 dish cells). A mould that turns from fresh gunfire (the alarm
+the shots lay read at -1, `larder_world::FLEE_WEIGHT`, an opt-in) carves
+the hole the owner asked for, 102 dish cells after 20 s of four soldiers'
+fire against 29 ([page](https://claude.ai/artifact/5wQ3xSk8pBN6uig1rxKd4R)),
+but as the default it failed the gate: random held the core, which the
+mould no longer defended, and wiped the mould on 12 of 16 seeds. Next, the
+hole from the toolkit's crater. Off by default for other threads:
+`Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)
 

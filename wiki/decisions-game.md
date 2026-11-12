@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-12T05:34Z
+updated: 2026-11-12T06:26Z
 sources: [CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
 code: [Params::pieces]
 ---
@@ -17,7 +17,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
-| 2026-11-12 04:38-04:39 | Shot impact is a real hole in the simulation, not a drawn hit: a squad's sustained fire carves a growing hole that does not refill while it lasts (built as the mould turning from the shots' alarm) | "Neither. Both of those look like stamps. Placed on the slime that fade." ... "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at" | [Larder](world/larder.md) |
+| 2026-11-12 04:38-04:39 | Shot impact is a real hole in the simulation, not a drawn hit: a squad's sustained fire carves a growing hole that does not refill while it lasts (first built as the mould turning from the shots' alarm, which failed the census gate; next, shots that lay the crater) | "Neither. Both of those look like stamps. Placed on the slime that fade." ... "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at" | [Larder](world/larder.md) |
 | 2026-11-12 04:46, card | No Scorcher building: scorch is only the crater that blasts, det cord and shots leave (the squad toolkit's crater field) | card ("Drop it, scorch is the crater") | [roadmap, *Larder World: shared rules and merge order*](../ROADMAP.md) |
 | 2026-11-12 04:44 | Larder World gets a campaign of missions (maps × mould tiers, one verb each, a goal bar and stars, a no-soft-lock rule, a dead-time measure); only unlocked verbs carry between missions, and the persistent world is its own mode after the campaign | Card "Approve the campaign plan, and what carries between missions?": "Approve; carry unlocked verbs only" | [Larder](world/larder.md) |
 | 2026-11-12 04:39 | Sustained fire should carve a growing hole that does not refill while it is under fire | "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at." | [Squad toolkit](world/squad-toolkit.md) |
