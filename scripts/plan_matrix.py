@@ -4,7 +4,8 @@
 One command runs every plan against every tier on the CPU race world and
 writes the matrix with the date and commit on it, so the question "do the
 strategies counter each other?" has one current answer (design review,
-2026-11-12 14:13Z). Re-run it after every rule PR.
+2026-11-12 14:13Z). Run it only when someone asks a strategy question, with
+the runner time named first (owner's testing rule, 17:26Z); it gates nothing.
 
     python3 scripts/plan_matrix.py run   OUT [seeds=201-216,5-20 tiers=... threads=4 cap=900]
     python3 scripts/plan_matrix.py table OUT        # the matrix from what has run
