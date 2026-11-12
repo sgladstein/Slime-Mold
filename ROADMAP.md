@@ -119,7 +119,7 @@ order still holds: tools and feel are built in parallel (owner, 11-12
 | Sound | reads `squad::FrameOut`, `HudEvent`s and the burst list; writes no rule | sound thread | |
 | The player's own mould | the gardeners shape (owner's card, 11-12 04:45Z): a second `Side` in its own file with a thin hook in `larder_world.rs`; its cut, road and feed reuse the burst list, the squad frame's per-unit writes and the harvest path | player's own mould thread | |
 | Missions | data over the shared pieces (map, tier, `Rules`, tools allowed); a new end condition is the Larder thread's (`End`, `Game::score`) | campaign and onboarding thread | |
-| GPU frame time | async read-backs in `gpu/mod.rs`; a change to `squad::FrameOut`'s shape is announced before it merges, since three threads read it | GPU thread | |
+| GPU frame time and read-backs | one mapped readout a step in `gpu/mod.rs`, which also carries `World::mould_grid` on `GpuWorld`; a change to `squad::FrameOut`'s shape is announced before it merges, since three threads read it | GPU thread | campaign positional goals, player AI |
 
 **Overnight questions (owner, 11-12 04:48Z).** "I cannot answer any not
 questions tonight. When there is a question have the threads work together
