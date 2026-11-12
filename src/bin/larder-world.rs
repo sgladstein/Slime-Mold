@@ -52,11 +52,11 @@
 //! whole body (its size, hunger, eating, flinching at gunfire); K turns
 //! just that off and on, `voice=0` starts without it.
 //!
-//! `-- look=DIR [hand=rush|stand|volley|farm|idle] [at=5,30,60] [screen=1280x800]
+//! `-- look=DIR [hand=rush|stand|volley|farm|far|idle] [at=5,30,60] [screen=1280x800]
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
-//! `holes=1` also times how long each hit's hole stays open; `centre=X,Y`
+//! `holes=1` also times how long each hit's hole stays open; `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
 //! `hand=volley` fires the squad into the thick body from 22 to 34 s,
@@ -548,13 +548,20 @@ impl App {
     }
 
     /// The building just placed (the newest): the selected soldiers go to
-    /// raise it (Shift: after their orders). With none selected, idle
-    /// soldiers in range take it up by themselves (`Game::build_turn`).
+    /// raise it (Shift: after their orders). With none selected, the
+    /// nearest free soldier walks there, however far (`Cmd::Send`; owner's
+    /// playtest 2026-11-12: a build ordered anywhere sends a soldier).
     fn builders(&mut self, sel: &[usize]) {
         let Some(g) = &self.game else { return };
         let Some(b) = g.buildings.len().checked_sub(1) else { return };
         if g.buildings[b].built < 1.0 {
-            self.order_all(sel, |_| Order::Build(b));
+            if self.living(sel).is_empty() {
+                if let Some(g) = self.game.as_mut() {
+                    g.apply(Cmd::Send(b));
+                }
+            } else {
+                self.order_all(sel, |_| Order::Build(b));
+            }
         }
     }
 
@@ -711,7 +718,7 @@ impl App {
                     if let Some(g) = self.game.as_mut() {
                         let price = g.wall_price(from, to);
                         if !g.apply(Cmd::Wall(from, to)) {
-                            let why = if g.bank < price { format!("A wall that long costs {price:.0} food") } else { "Both ends of a wall must be within a soldier's range".to_string() };
+                            let why = if g.bank < price { format!("A wall that long costs {price:.0} food") } else if let Some(why) = g.build_blocked(Kind::Wall { to }, from) { format!("Can't build a wall there: {why}") } else { "Can't build a wall there".to_string() };
                             self.hud.alert(&why, None, theme::WARN);
                         } else {
                             self.builders(&sel);
@@ -986,8 +993,37 @@ impl App {
         // lit while working. Their effects (a lure's scent, a pump's
         // dimming crystal, a turret's hits) are the simulation's own fields;
         // walls are ground. The bars stay as UI.
-        for b in &g.buildings {
-            if !b.alive || building_colour(b.kind).is_none() {
+        for (k, b) in g.buildings.iter().enumerate() {
+            if !b.alive {
+                continue;
+            }
+            // A ghost's progress (owner's playtest 2026-11-12: "a faint
+            // building with a progress bar that fills in as it builds so I
+            // can tell how long until it is complete"): the bar is
+            // `built`, and beside it the seconds left at the rate its
+            // builders raise it now (`Game::raise_left`), "on the way"
+            // while they walk, "no builder" when nobody is sent.
+            // The bar spans the building on screen (10-40 pixels each side).
+            let wide = (g.rules.build.touch * sc * zoom).clamp(10.0, 40.0);
+            let progress = |marks: &mut Marks, at: (f32, f32), below: f32| {
+                marks.bar(at, below, (wide, 2.0), b.built, [235, 235, 235, 255], [40, 40, 40, 220]);
+                let note = match (g.raise_left(k), g.raising(k)) {
+                    (Some(t), _) => format!("{}s", t.ceil() as u32),
+                    (None, (_, n)) if n > 0 => "on the way".into(),
+                    _ => "no builder".into(),
+                };
+                marks.label(at, (wide + 4.0, below - 5.0), &note, 1.5, [235, 235, 235, 230]);
+            };
+            if let Kind::Wall { to } = b.kind {
+                // A wall is ground once whole; until then a faint dashed
+                // line where it will stand, with its bar at the middle.
+                if !b.up() {
+                    self.marks.line(b.at, to, 3.0, [235, 220, 180, 170]);
+                    progress(&mut self.marks, ((b.at.0 + to.0) / 2.0, (b.at.1 + to.1) / 2.0), 6.0);
+                }
+                continue;
+            }
+            if building_colour(b.kind).is_none() {
                 continue;
             }
             let kind = match b.kind {
@@ -1004,7 +1040,7 @@ impl App {
             let below = (half * zoom).max(2.0) + 5.0;
             self.marks.bar(b.at, below, (7.0, 1.0), b.hp / b.max_hp.max(1.0), [90, 220, 110, 255], [70, 30, 30, 255]);
             if !b.up() {
-                self.marks.bar(b.at, below + 3.0, (7.0, 0.8), b.built, [230, 230, 230, 255], [40, 40, 40, 255]);
+                progress(&mut self.marks, b.at, below + 4.0);
             }
         }
         for (k, s) in g.soldiers.iter().enumerate() {
@@ -1318,18 +1354,19 @@ impl App {
                 let price = g.wall_price(from, at);
                 if g.bank < price {
                     (false, Some(format!("{price:.0} food, {:.0} short", price - g.bank)))
-                } else if !g.reachable(from) || !g.reachable(at) {
-                    (false, Some("both ends must be in a soldier's range".into()))
+                } else if let Some(why) = g.build_blocked(Kind::Wall { to: at }, from) {
+                    (false, Some(why.into()))
                 } else {
                     (true, Some(format!("{price:.0} food, release to lay")))
                 }
             }
-            Some((WALL, at, None)) if !g.reachable(at) => (false, Some("out of every soldier's range".into())),
+            Some((WALL, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => (false, Some("out of every soldier's range".into())),
             Some((id, at, _)) if build_kind(id).is_some() => {
                 let kind = build_kind(id).unwrap();
                 match g.build_blocked(kind, at) {
                     Some(why) => (false, Some(why.into())),
-                    None => (true, Some(format!("{:.0} food, click to build", g.build_price(kind, at)))),
+                    None if g.reachable(at) => (true, Some(format!("{:.0} food, click to build", g.build_price(kind, at)))),
+                    None => (true, Some(format!("{:.0} food, click: a soldier walks there", g.build_price(kind, at)))),
                 }
             }
             _ => (true, None),
@@ -1745,7 +1782,7 @@ impl ApplicationHandler for App {
 // One more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32)>) -> Result<(), String> {
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -1855,14 +1892,14 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
         // the larder when it dies).
         let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
         let squad = (!alive.is_empty()).then(|| (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32));
-        let centre = fixed.or(squad).unwrap_or(g.larder);
+        let centre = fixed.map(|f| (f.0, f.1)).or(squad).unwrap_or(g.larder);
         app.controls.selected = (0..g.soldiers.len()).collect();
         // The HUD sets the camera's insets as it draws, and `fit` reads
         // them: without this the run's first "all" picture was zoomed in
         // past the world's edges (fit with no insets).
         app.prepare();
         for tag in ["all", "near"] {
-            let zoom = if tag == "all" { app.camera.fit() } else { 6.0 };
+            let zoom = if tag == "all" { app.camera.fit() } else { fixed.map_or(6.0, |f| f.2) };
             app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
             app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
             app.prepare();
@@ -2404,7 +2441,32 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
         volley(g);
         return;
     }
-    let hand = if hand == "build" { "farm" } else { hand };
+    // `far`: farm, and at 2 s a turret ordered halfway to the core and a
+    // wall past it, both out of every soldier's range, with nobody
+    // selected (the window's `builders`: `Cmd::Send`), so the look shows
+    // a soldier walking out and the ghosts' bars and times filling.
+    if hand == "far" && g.time() > 2.0 && g.buildings.is_empty() {
+        let sc = g.world.scale();
+        let (c, l) = (g.core, g.larder);
+        let (ux, uy) = ((c.0 - l.0) / (c.0 - l.0).hypot(c.1 - l.1).max(1.0), (c.1 - l.1) / (c.0 - l.0).hypot(c.1 - l.1).max(1.0));
+        let mid = (l.0 + ux * 30.0 * sc, l.1 + uy * 30.0 * sc);
+        let near_open = |g: &Game<GpuWorld>, p: (f32, f32), kind: Kind| {
+            (0..=12).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
+                let a = k as f32 / 12.0 * std::f32::consts::TAU;
+                (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
+            }).find(|q| g.build_blocked(kind, *q).is_none())
+        };
+        if let Some(at) = near_open(g, mid, Kind::Turret) {
+            g.apply(Cmd::Build(Kind::Turret, at));
+            g.apply(Cmd::Send(g.buildings.len() - 1));
+        }
+        let w = (l.0 + ux * 24.0 * sc, l.1 + uy * 24.0 * sc);
+        let (a, b) = ((w.0 - uy * 4.0 * sc, w.1 + ux * 4.0 * sc), (w.0 + uy * 4.0 * sc, w.1 - ux * 4.0 * sc));
+        if g.apply(Cmd::Wall(a, b)) {
+            g.apply(Cmd::Send(g.buildings.len() - 1));
+        }
+    }
+    let hand = if hand == "build" || hand == "far" { "farm" } else { hand };
     if g.time() > 0.5 && hand == "farm" && g.bank >= 1200.0 {
         g.apply(Cmd::Buy);
     }
@@ -2484,8 +2546,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "spread" => spread = v != "0",
             "holes" => holes = v != "0",
             "centre" => {
-                let (x, y) = v.split_once(',').ok_or("centre=X,Y")?;
-                centre = Some((x.parse::<f32>()?, y.parse::<f32>()?));
+                // `centre=X,Y[,ZOOM]`: the near view's place and zoom (6).
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [x, y, zoom @ ..] = w.as_slice() else { return Err("centre=X,Y[,ZOOM]".into()) };
+                centre = Some((*x, *y, zoom.first().copied().unwrap_or(6.0)));
             }
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;

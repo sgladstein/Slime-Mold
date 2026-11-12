@@ -764,6 +764,11 @@ pub enum Cmd {
     /// The larder's rally point (`Game::rally`): what a bought soldier is
     /// first ordered to do; `Order::Hold` clears it.
     Rally(Order),
+    /// Send a builder to ghost `b` (`Game::send`): the nearest idle
+    /// soldier, else the nearest one not already building, which goes
+    /// back to its order once the building stands. What a build order with
+    /// no soldier selected does, so a ghost placed far away still rises.
+    Send(usize),
 }
 
 impl Cmd {
@@ -778,6 +783,7 @@ impl Cmd {
             Cmd::Toggle(k) => format!("toggle {k}"),
             Cmd::Queue(k, o) => format!("queue{}", &super::larder::Cmd::Order(k, o).to_line()["order".len()..]),
             Cmd::Rally(o) => format!("rally{}", &super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
+            Cmd::Send(b) => format!("send {b}"),
         }
     }
 
@@ -787,6 +793,7 @@ impl Cmd {
         match *w.first()? {
             "wall" => return Some(Cmd::Wall((f(1)?, f(2)?), (f(3)?, f(4)?))),
             "toggle" => return Some(Cmd::Toggle(w.get(1)?.parse().ok()?)),
+            "send" => return Some(Cmd::Send(w.get(1)?.parse().ok()?)),
             "build" => {
                 let kind = match *w.get(1)? {
                     "turret" => Kind::Turret,
@@ -1160,6 +1167,7 @@ impl<W: World> Game<W> {
             Cmd::Wall(a, b) => self.wall(a, b),
             Cmd::Build(kind, at) => self.build(kind, at),
             Cmd::Toggle(k) => self.toggle(k),
+            Cmd::Send(b) => self.send(b).is_some(),
             Cmd::Rally(o) => {
                 self.rally = o;
                 true
@@ -1288,7 +1296,26 @@ impl<W: World> Game<W> {
         match s.order {
             Order::Hold => None,
             Order::Move(x, y) | Order::Fight(x, y) => Some(off((x, y))),
-            Order::Build(b) => self.site(k, b).map(off),
+            Order::Build(b) => {
+                let p = self.site(k, b)?;
+                let q = off(p);
+                // A builder stands at the building's edge, not on it, so the
+                // rising ghost and its bar stay in sight (2026-11-12, the
+                // build-anywhere look: a lone builder hid its turret). Walls
+                // keep the point on the line nearest the soldier.
+                if matches!(self.buildings[b].kind, Kind::Wall { .. }) {
+                    return Some(q);
+                }
+                let edge = (self.rules.build.touch + 1.0) * sc;
+                let (dx, dy) = (q.0 - p.0, q.1 - p.1);
+                if dx.hypot(dy) >= edge {
+                    return Some(q);
+                }
+                let (fx, fy) = if dx.hypot(dy) > 1e-3 { (dx, dy) } else { (s.x - p.0, s.y - p.1) };
+                let d = fx.hypot(fy);
+                let (ux, uy) = if d > 1e-3 { (fx / d, fy / d) } else { (1.0, 0.0) };
+                Some((p.0 + ux * edge, p.1 + uy * edge))
+            }
             Order::Clear(x, y) => {
                 if s.homing {
                     Some(off(self.drop_off((s.x, s.y))))
@@ -1467,14 +1494,77 @@ impl<W: World> Game<W> {
                     self.soldiers[k].order = Order::Hold;
                 }
             }
-            Some(p) => {
-                let o = slot(k);
-                if (p.0 - s.x).hypot(p.1 - s.y) <= self.reach(p, BUILD_REACH) + o.0.hypot(o.1) * sc {
+            Some(_) => {
+                if self.at_site(k, b) {
                     let secs = self.raise_secs(b);
                     self.raise(b, if secs > 0.0 { dt / secs } else { 1.0 });
                 }
             }
         }
+    }
+
+    /// Soldier `k` is close enough to ghost `b` to raise it.
+    fn at_site(&self, k: usize, b: usize) -> bool {
+        let Some(p) = self.site(k, b) else { return false };
+        let s = self.soldiers[k];
+        let o = slot(k);
+        (p.0 - s.x).hypot(p.1 - s.y) <= self.reach(p, BUILD_REACH) + o.0.hypot(o.1) * self.s()
+    }
+
+    /// Ghost `b`'s builders: (raising it now, ordered to it in all). The
+    /// window's progress label reads it.
+    pub fn raising(&self, b: usize) -> (usize, usize) {
+        let mut n = (0, 0);
+        for (k, s) in self.soldiers.iter().enumerate() {
+            if s.alive && s.order == Order::Build(b) {
+                n.1 += 1;
+                n.0 += self.at_site(k, b) as usize;
+            }
+        }
+        n
+    }
+
+    /// Seconds until ghost `b` stands at the rate it rises now (builders
+    /// add up); None while nobody is raising it, or once it stands.
+    pub fn raise_left(&self, b: usize) -> Option<f32> {
+        let bd = self.buildings.get(b).filter(|bd| bd.alive && bd.built < 1.0)?;
+        let (now, _) = self.raising(b);
+        (now > 0).then(|| (1.0 - bd.built) * self.raise_secs(b) / now as f32)
+    }
+
+    /// Send a builder to ghost `b` (`Cmd::Send`): the nearest idle soldier
+    /// (holding, nothing queued), else the nearest live one not already
+    /// building, whose order goes to the front of its queue so it returns
+    /// to it (a full queue drops its last). The soldier sent, or None if
+    /// `b` is not a ghost or nobody can go.
+    ///
+    /// Why both: the owner's playtest (2026-11-12 22:06Z) asked that a
+    /// build ordered anywhere send a soldier there by itself. Idle
+    /// soldiers first so a harvest isn't broken when one is free; a busy
+    /// one second so the order is never silently dropped.
+    pub fn send(&mut self, b: usize) -> Option<usize> {
+        self.buildings.get(b).filter(|bd| bd.alive && bd.built < 1.0)?;
+        let at = self.buildings[b].at;
+        let d = |s: &Soldier| (s.x - at.0).hypot(s.y - at.1);
+        let pick = |idle: bool| {
+            (0..self.soldiers.len())
+                .filter(|&k| {
+                    let s = &self.soldiers[k];
+                    s.alive && !matches!(s.order, Order::Build(_)) && (!idle || (s.order == Order::Hold && s.queued == 0))
+                })
+                .min_by(|&x, &y| d(&self.soldiers[x]).total_cmp(&d(&self.soldiers[y])))
+        };
+        let k = pick(true).or_else(|| pick(false))?;
+        let s = &mut self.soldiers[k];
+        if s.order != Order::Hold {
+            let n = (s.queued as usize).min(QUEUE - 1);
+            s.queue.copy_within(0..n, 1);
+            s.queue[0] = s.order;
+            s.queued = n as u8 + 1;
+        }
+        s.order = Order::Build(b);
+        s.homing = false;
+        Some(k)
     }
 
     /// Soldier `k` takes the next order in its queue, if it has one.
@@ -2816,7 +2906,11 @@ mod tests {
         let mut g = small(4);
         let (x, y) = g.larder;
         let far = (g.core.0, g.core.1 + 30.0);
+        // With `BuildRules::anywhere` (the default) a far wall is a ghost a
+        // soldier walks to; the old rule wants both ends in range.
+        g.rules.build.anywhere = false;
         assert!(!g.apply(Cmd::Wall(far, (far.0, far.1 + 10.0))), "a wall far from every soldier");
+        g.rules.build.anywhere = true;
         let bank = g.bank;
         assert!(g.apply(Cmd::Wall((x - 10.0, y - 5.0), (x - 10.0, y + 5.0))));
         assert!((bank - g.bank - g.wall_price((x - 10.0, y - 5.0), (x - 10.0, y + 5.0))).abs() < 1e-3);
