@@ -1,0 +1,51 @@
+kitprobe test=germ warm=60 seeds [1, 2, 3, 4, 5, 6, 7, 8]; kit KitRules { reach: 24.0, blast_r: 6.0, blast_alarm: 50.0, crater_r: 7.0, crater_secs: 20.0, blast_price: 60.0, mine_r: 5.0, mine_trigger: 40, mine_price: 80.0, cord_r: 2.5, cord_every: 2.0, cord_price: 3.0, cord_max: 48.0, germ_r: 5.0, sick_secs: 6.0, immune_secs: 40.0, sick_upkeep: 60.0, sick_catch: 0.2, sick_deposit: 1.0, sick_keep: 0.9, germ_price: 300.0, gas_r: 12.0, gas_secs: 20.0, gas_death: 0.0, gas_price: 150.0, reek: 4.0, alarm_keep: 0.95 }
+     none seed  1: before 2007, living 5s 2145, living 10s 2275, living 30s 2767, living 60s 3560, ever sick 0
+     none seed  2: before 2899, living 5s 3088, living 10s 3289, living 30s 4086, living 60s 5331, ever sick 0
+    steer seed  1: before 2007, living 5s 2150, living 10s 2312, living 30s 2781, living 60s 3339, ever sick 4930
+     germ seed  1: before 2007, living 5s 1299, living 10s 881, living 30s 1011, living 60s 1223, ever sick 1729
+    steer seed  2: before 2899, living 5s 3083, living 10s 3270, living 30s 4077, living 60s 5332, ever sick 9776
+     none seed  3: before 2440, living 5s 2524, living 10s 2648, living 30s 3023, living 60s 3635, ever sick 0
+     germ seed  2: before 2899, living 5s 1819, living 10s 597, living 30s 268, living 60s 325, ever sick 3117
+    steer seed  3: before 2440, living 5s 2515, living 10s 2595, living 30s 2992, living 60s 3566, ever sick 6894
+     none seed  4: before 1866, living 5s 1983, living 10s 2109, living 30s 2474, living 60s 2638, ever sick 0
+    steer seed  4: before 1866, living 5s 1984, living 10s 2113, living 30s 2444, living 60s 2616, ever sick 4708
+     germ seed  3: before 2440, living 5s 1449, living 10s 509, living 30s 160, living 60s 224, ever sick 2642
+     none seed  5: before 2957, living 5s 3084, living 10s 3291, living 30s 3849, living 60s 4345, ever sick 0
+     germ seed  4: before 1866, living 5s 1407, living 10s 849, living 30s 901, living 60s 913, ever sick 1722
+     none seed  6: before 2233, living 5s 2346, living 10s 2445, living 30s 2769, living 60s 2774, ever sick 0
+    steer seed  5: before 2957, living 5s 3080, living 10s 3257, living 30s 3725, living 60s 4201, ever sick 7445
+     germ seed  5: before 2957, living 5s 1641, living 10s 779, living 30s 919, living 60s 1042, ever sick 2869
+    steer seed  6: before 2233, living 5s 2343, living 10s 2438, living 30s 2821, living 60s 3334, ever sick 5274
+     none seed  7: before 3402, living 5s 3640, living 10s 3863, living 30s 4885, living 60s 6923, ever sick 0
+     germ seed  6: before 2233, living 5s 1337, living 10s 826, living 30s 807, living 60s 1008, ever sick 2168
+    steer seed  7: before 3402, living 5s 3644, living 10s 3869, living 30s 4824, living 60s 6748, ever sick 11207
+     none seed  8: before 3416, living 5s 3684, living 10s 3970, living 30s 5149, living 60s 6736, ever sick 0
+     germ seed  7: before 3402, living 5s 2595, living 10s 1395, living 30s 1250, living 60s 1564, ever sick 3864
+    steer seed  8: before 3416, living 5s 3684, living 10s 3965, living 30s 5056, living 60s 6392, ever sick 11413
+     germ seed  8: before 3416, living 5s 2215, living 10s 1099, living 30s 1049, living 60s 1211, ever sick 3394
+(87 s)
+
+means:
+       none: before 2652, living 5s 2812, living 10s 2986, living 30s 3625, living 60s 4493, ever sick 0
+      steer: before 2652, living 5s 2810, living 10s 2977, living 30s 3590, living 60s 4441, ever sick 7706
+       germ: before 2652, living 5s 1720, living 10s 867, living 30s 796, living 60s 939, ever sick 2688
+
+pairs (higher / lower / tied, two-sided sign p):
+  steer vs none, before: 0 / 0 / 8, p 1.0000
+  steer vs none, living 5s: 3 / 4 / 1, p 1.0000
+  steer vs none, living 10s: 3 / 5 / 0, p 0.7266
+  steer vs none, living 30s: 2 / 6 / 0, p 0.2891
+  steer vs none, living 60s: 2 / 6 / 0, p 0.2891
+  steer vs none, ever sick: 8 / 0 / 0, p 0.0078
+  germ vs none, before: 0 / 0 / 8, p 1.0000
+  germ vs none, living 5s: 0 / 8 / 0, p 0.0078
+  germ vs none, living 10s: 0 / 8 / 0, p 0.0078
+  germ vs none, living 30s: 0 / 8 / 0, p 0.0078
+  germ vs none, living 60s: 0 / 8 / 0, p 0.0078
+  germ vs none, ever sick: 8 / 0 / 0, p 0.0078
+  germ vs steer, before: 0 / 0 / 8, p 1.0000
+  germ vs steer, living 5s: 0 / 8 / 0, p 0.0078
+  germ vs steer, living 10s: 0 / 8 / 0, p 0.0078
+  germ vs steer, living 30s: 0 / 8 / 0, p 0.0078
+  germ vs steer, living 60s: 0 / 8 / 0, p 0.0078
+  germ vs steer, ever sick: 0 / 8 / 0, p 0.0078
