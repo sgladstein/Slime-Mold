@@ -7,7 +7,7 @@ The campaign's missions 1-4 ([design](larder-campaign-2026-11-12.md)) need three
 - **Three shapes, each told apart at a glance, on rules both engines already run.** `mould::tiers::Tier::{Drifter, Sprawler, Trunk}` are settings, not new rules. The **Drifter** is droplets: round bodies on crystals, crawling between them on faint threads (sensors 90 degrees apart, trail kept 0.93, a packed walker lays its trail). The **Sprawler** is explorers that run from trail before they join the network: a thin mesh over the whole map within 15 s, with about 1,100-1,600 walkers in it (seed 1). The **Trunk** is long straight cords (sensors 22.5 degrees apart reading 18 fine cells out, trail kept 0.95) round a few big bodies. Picked by eye from 15 candidates on seed 1 (`look.sh`, `candidates-*.txt`).
 - **The GPU runs them as the CPU does.** The race world's GPU settings with each tier give exactly the CPU's params (a test), and the Larder game on software Vulkan keeps each mould within 2% of the CPU's every 5 s over 20 s (`the_campaign_tiers_run_on_the_engine_as_on_the_cpu`). No new GPU row, no species slot.
 - **Habituation is a scar field** (`BigParams::scar_keep`, `scar_gain`, `scar_weight`; CPU, off by default): a per-cell memory of the alarm a hit lays, kept about 40 game seconds, read at the sensors. Two tiers read it opposite ways. **Wary** (weight -0.5) keeps away from where it was shot again and again: 20 s after the last of 16 strikes, 17-78 walkers at the spot against 149-1,466 with the same alarm and no scar, fewer on 8 of 8 seeds (p 0.008, holds over 3). **Grudge** (weight +0.5, with the Swarmer's alarm) comes back there in force: more than the Swarmer without the scar on 7 of 8 seeds (p 0.07), then on 8 of 8 fresh seeds named before their run (919-1,516 against 192-1,115, p 0.008).
-- **The census** (each tier against idle, random and seven plans, held-out seeds 201-216, under the Larder thread's PR 1 rules): see *The census*.
+- **The census** (each tier against idle, random and seven plans, held-out seeds 201-216, at #106's rules: free shots, no flee, **before shot craters (#113), so these difficulty numbers are not final**). **Grudge is the hardest tier**: every plan scores lower against it than against the plain mould on 16 of 16 seeds (strike 14 of 16), and random loses its squad on 15 of 16 (9 on the plain mould). The **Trunk** is a little easier than plain under most plans and strike still wipes it (12 of 16). The **Sprawler** at 400 exploring steps was wiped by every plan and by random, so it now explores 200 (re-run in progress). Strike is the best plan on every tier, so the best plan does not change between tiers yet (the designer's bar fails). The toolkit's blast plan wins on all six tiers (8 of 8), and the scar does not answer it.
 
 ## The three shapes
 
@@ -52,7 +52,27 @@ H3 was habituation in the biologist's sense (Physarum stops answering a repeated
 
 ## The census
 
-*Pending: the runners' rows, `census.sh` and `census.py`.*
+**Rules.** The race world under #106 (free shots, soldiers' scent, the flee opt-in and off), held-out seeds 201-216, 900 s cap, hands idle, random and the seven plans (`census.sh`, Haiku runners at 62cd014; rows in `raw/census/`, tables from `census.py` in `raw/census/census-62cd014.txt`). **These numbers predate shot craters (#113, on by default once merged), which change how a squad digs in; the tiers' difficulty must be re-run on main after it, before the campaign treats them as final.** Measures named in `census.sh` before the run: C1 every plan beats idle and random, C2 the best plan by tier, C3 each tier against the plain mould, paired by seed, sign tests, Holm over all 117.
+
+Mean score v2 (mould wiped / cap / squad wiped), 16 seeds a cell unless marked:
+
+| Hand | plain | Sprawler (explore 400) | Trunk | Wary (8 seeds) | Grudge |
+|---|---|---|---|---|---|
+| idle | -0.32 (0/16/0) | -0.33 (0/13/3) | -0.27 (0/16/0) | -0.34 (0/8/0) | -0.33 (0/16/0) |
+| random | -0.33 (5/2/9) | +1.68 (14/2/0) | +0.89 (9/5/2) | +1.66 (6/2/0) | **-1.61 (0/1/15)** |
+| farm | +0.23 | +1.41 (14 wiped) | +0.35 | +0.34 | +0.11 |
+| wall | +0.23 | +1.46 (15) | +0.36 | +0.43 | +0.09 |
+| boom | +0.22 | +1.70 (12) | +0.49 | +0.20 | +0.05 |
+| claim | +0.38 | +2.10 (14) | +0.55 | +0.56 | +0.08 |
+| fort | +0.22 | +1.76 (13) | +0.37 | +0.22 | +0.04 |
+| strike | **+1.24** (9 wiped) | **+2.14** (14) | **+1.65** (12) | +0.46 | **+0.28** |
+
+- **C1.** Every plan beats idle on 16 of 16 on every tier. Against random it is mixed on the plain mould (11-12 of 16, n.s.), the Trunk (7-8 of 16 bar strike, 14 of 16) and the Sprawler (random beat farm 13 of 16, wiping the mould 14 times). On Grudge every plan beats random 16 of 16 (holds): random's scattered fire is what Grudge punishes, and it lost its squad on 15.
+- **C2.** Strike is best by mean on every tier but Wary (claim, on 8 seeds), best on 10-15 of 16 seeds. The best plan does not change between tiers: the designer's bar fails here, as it does for the toolkit's loud plan.
+- **C3.** Grudge is harder than plain for every plan: lower on 16 of 16 for farm, wall, boom, claim and fort, 14 of 16 for strike (all hold). The Trunk is easier under random (15 of 16), farm (14) and wall (13). The Sprawler at 400 was easier under every hand (15-16 of 16). An idle squad is never wiped by 900 s on any tier but the Sprawler (3 of 16), so **the Drifter's "reach an idle squad by 11:00" waits on its census rows**.
+- **Sprawler, fixed.** Newborns start as explorers (age 0) and walk off food, so at 400 the mesh starved. At 200 (cf62e8e), on dev seeds 1-4 random lost its squad on 2 and capped behind on 1, wall and strike won 4 of 4 and wiped it once each; on held-out 201-204 random lost its squad on 2 and every plan capped above idle. Its held-out re-run, the Drifter and the rest of Wary come in the follow-up.
+
+**The toolkit's blast plan** (`kitplans`, seeds 1-8, cap 600 s, tools carried without the toolkit's later carry limit; raw `raw/kit/kitplans-tiers-1-8.txt`): loud wipes the mould on 8 of 8 on all six tiers (+1.72 to +2.01), best against farm 8 of 8 each time. Grudge walks back into the blast spots and dies there; random's squad is wiped 8 of 8 against it. The toolkit is re-running all five new tiers with its carry rule.
 
 ## Commands
 
@@ -64,4 +84,4 @@ bash Reports/mould-tiers-campaign-2026-11-12/census.sh TIER OUT 201-204 4       
 cargo run --release --example bigdish -- tier=sprawler ...                          # any tier by name
 ```
 
-Page: *pending*.
+Page: *pending* (follow-up).

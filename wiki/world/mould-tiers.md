@@ -2,7 +2,7 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12T07:00Z
+updated: 2026-11-12T07:55Z
 sources: [Reports/mould-tiers-campaign-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
 code: [BigParams::scar_keep, BigParams::scar_weight, BigDish::scar, BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier]
 ---
@@ -21,7 +21,7 @@ censuses ask for by name (`tier=drifter`).
 | Tier | Mould | Rule | What beats it |
 |---|---|---|---|
 | 1 | Drifter | round droplet bodies on crystals, crawling between them (`Tier::Drifter`) | any squad |
-| 2 | Sprawler | a fast thin mesh over the map, few walkers (`Tier::Sprawler`, explorers) | walls; chasing loses |
+| 2 | Sprawler | a fast thin mesh over the map (`Tier::Sprawler`, explorers for 200 steps) | walls; chasing loses |
 | 3 | Trunk | long straight cords round a few big bodies (`Tier::Trunk`) | starve it (needs shared food) |
 | 4-7 | Hunter, Rival pair, Converter, Mixes | not built | |
 | added | Sleeper, Swarmer, Sporer | the life cycle and the alarm ([the life cycle](../model/life-cycle.md)) | bait then strike; a kill zone; starve it |
@@ -39,7 +39,7 @@ Sporer's edge is not significant
 
 ## Open
 
-- The census of the new tiers against every plan, and whether the best plan changes between tiers ([report](../../Reports/mould-tiers-campaign-2026-11-12.md), *The census*).
+- The census of the new tiers, re-run after shot craters (#113). Before craters (held-out 201-216): Grudge is the hardest (every plan lower than on plain, 16 of 16; random loses its squad 15 of 16); strike is the best plan on every tier, so the best plan does not change between tiers yet; the Sprawler now explores 200 steps (at 400 everything wiped it); the toolkit's blast plan wins every tier ([report](../../Reports/mould-tiers-campaign-2026-11-12.md), *The census*). Still to come: the Drifter, the rest of Wary, turrets (turtle, guard) against Grudge and Wary.
 - Candidate tiers from review 2 ([the reviews](../../Reports/mould-tiers-review-2026-11-11.md)), most promising first: supply lines (traffic-made arteries that carry food; cut one to starve the far end; the one body thread's shared food), clans that fuse or fight along a scar, a mould that learns the rhythm of fire, a pacemaker heartbeat, day and night light, a nomad that avoids its own slime, two foods. Each has a first experiment there.
 - The order of the added tiers. On the GPU engine, species and
   conversion came with the outside rules, and each species' own settings,
