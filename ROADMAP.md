@@ -139,10 +139,19 @@ every plan (game designer review).
 7. Buildings batch 2: siren (a burst), outpost (a depot)
 8. The player's own mould as a second side, if the owner picks it
 
+**Counts scale with density, not raw walkers.** The window and the census
+play 5,000 walkers today; the GPU was built for 100,000. A threshold
+written as a walker count (for example a look's walkers in a 5 x 5 window,
+or a sound's kills per shot) breaks at the larger scale. The game publishes
+one density, walkers per open cell at the start (Larder thread, on
+`Game`), and a new count-based threshold is written as a multiple of it
+(technical lead review, 11-12).
+
 **The mould clock is a census reset.** The Larder thread's second PR
 slows the mould (fewer fine steps a game second; the owner found walkers
 too fast). Every thread's census baseline moves with it, so it lands
-between other threads' measurements, and the integration thread tells each
+between other threads' measurements with every baseline re-run in the
+same PR, and the integration thread tells each
 thread when it opens and merges.
 
 **Shot impact is a rule, through the crater field.** The owner turned down
