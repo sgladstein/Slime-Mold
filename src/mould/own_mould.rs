@@ -476,6 +476,12 @@ impl World for Garden {
         self.dish.build_wall(a.0, a.1, b.0, b.1, width);
     }
 
+    /// On the shared dish, both sides alike (a blast doesn't ask whose
+    /// walker it is).
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+        squad::burst(&mut self.dish, b, k)
+    }
+
     /// The enemy's walkers: to the game, the mould.
     fn living(&self) -> usize {
         self.counts_by_side().1
@@ -498,10 +504,14 @@ impl World for Garden {
     }
 
     /// The enemy's births stop (its cap goes to 0); the player's mould
-    /// keeps growing.
-    fn stop_births(&mut self) {
+    /// keeps growing. Gives back the cap it had.
+    fn stop_births(&mut self) -> f32 {
+        self.dish.p.species_cap.get_mut(0).map_or(0.0, |c| std::mem::replace(c, 0) as f32)
+    }
+
+    fn start_births(&mut self, was: f32) {
         if let Some(c) = self.dish.p.species_cap.get_mut(0) {
-            *c = 0;
+            *c = was as usize;
         }
     }
 

@@ -86,9 +86,11 @@ struct Params {
     sleep_rate: f32, sleep_dep: f32, wake_scent: f32, wake_alarm: f32,
     alarm_keep: f32, alarm_w: f32, relay: f32, sleep_death: f32,
     // A strike (`Engine::strike`, the CPU's `BigDish::strike`), in fine
-    // cells: its centre, kill radius, alarm and alarm radius.
+    // cells: its centre, kill radius, alarm and alarm radius; with a
+    // toolkit burst (`Engine::burst`) also its crater's radius and fine
+    // steps (the CPU's `BigDish::scorch_disc`; 0 lays none).
     kx: f32, ky: f32, kr: f32, kalarm: f32,
-    kar: f32, _l3: f32, _l4: f32, _l5: f32,
+    kar: f32, kcr: f32, kcs: f32, _l5: f32,
     // Soil (WM3, 2026-11-12; `BigParams::sand_keep` and on), read with
     // `world(SOIL)`: the trail on sand and on clay is x these after the
     // spread, and on barren ground upkeep is x `barren_up`.
@@ -2274,6 +2276,10 @@ fn hit(@builtin(global_invocation_id) gid: vec3<u32>) {
         for (var s = 0u; s < P.nsp; s++) { sp_in[s * c + i] = 0.0; }
     }
     if (P.alarm_on != 0u && d2 <= P.kar * P.kar && agar[i] != 0u) { germ_in[c + i] += P.kalarm; }
+    // A burst's crater: the longer of the cell's and the burst's, on agar,
+    // as `scorch_disc` (its own radius: a kit blast's crater, 7 dish
+    // cells, is wider than its kill, 6).
+    if (P.kcs > 0.0 && d2 <= P.kcr * P.kcr && agar[i] != 0u) { atomicMax(&crater[i], bitcast<u32>(P.kcs)); }
 }
 
 // The strike's walkers: every living one within `kr` that holds a cell

@@ -98,8 +98,13 @@ pub trait World {
     }
     /// Open ground a soldier can stand on (agar: not rock, wall or rim).
     fn open(&self, x: f32, y: f32) -> bool;
-    /// The mould's core is taken: no more births.
-    fn stop_births(&mut self);
+    /// The mould's core is taken: no more births. Returns what births
+    /// need, in the world's own terms (the birth energy, or the species
+    /// cap), for `start_births` to give back.
+    fn stop_births(&mut self) -> f32;
+    /// A regrown core (`CoreKind::Regrow`): births again, with what
+    /// `stop_births` returned.
+    fn start_births(&mut self, was: f32);
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
@@ -125,6 +130,34 @@ pub trait World {
     /// nothing.
     fn tend(&mut self, _soldiers: &[Soldier], _bank: f32, _ticks: u32) -> f32 {
         0.0
+    }
+    /// A squad toolkit burst (`squad::Burst`), now, between frames: the
+    /// kill, clear, alarm and crater on every world; gas and germ only
+    /// where `has_gas` and `has_germ` say so (a world without them leaves
+    /// those parts out, and the toolkit doesn't sell them there).
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut;
+    /// Whether `burst`'s gas and germ parts work on this world.
+    fn has_gas(&self) -> bool {
+        false
+    }
+    fn has_germ(&self) -> bool {
+        false
+    }
+    /// Walkers holding a cell within `r` fine cells of `at` (fine cells),
+    /// for a mine's trigger. The default sums the mould grid's squares of
+    /// one dish cell whose centre is in reach (the GPU world's, from the
+    /// frame's readout); 0 with no grid.
+    fn walkers_in(&self, at: (f32, f32), r: f32) -> u32 {
+        let bin = (self.scale() as usize).max(1);
+        let Some(g) = self.mould_grid(bin) else { return 0 };
+        let (w, _) = self.size();
+        let gw = w.div_ceil(bin);
+        let b = bin as f32;
+        g.iter()
+            .enumerate()
+            .filter(|&(i, _)| ((((i % gw) as f32 + 0.5) * b - at.0).hypot((((i / gw) as f32 + 0.5) * b) - at.1)) <= r)
+            .map(|(_, &n)| n)
+            .sum()
     }
 }
 
@@ -172,8 +205,12 @@ impl World for BigDish {
         x >= 0.0 && y >= 0.0 && (x as usize) < self.w && (y as usize) < self.h && self.agar[y as usize * self.w + x as usize]
     }
 
-    fn stop_births(&mut self) {
-        self.p.birth_energy = f32::INFINITY;
+    fn stop_births(&mut self) -> f32 {
+        std::mem::replace(&mut self.p.birth_energy, f32::INFINITY)
+    }
+
+    fn start_births(&mut self, was: f32) {
+        self.p.birth_energy = was;
     }
 
     fn food_deposit(&self) -> f32 {
@@ -190,6 +227,39 @@ impl World for BigDish {
 
     fn calm(&self, at: &[(f32, f32)], r: f32) -> Vec<u32> {
         self.gassed_near(at, r)
+    }
+
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+        squad::burst(self, b, k)
+    }
+
+    fn has_gas(&self) -> bool {
+        true
+    }
+
+    fn has_germ(&self) -> bool {
+        true
+    }
+
+    /// Exact: the cells within `r` (the mine count `Kit::frame` used
+    /// before the toolkit ran on both worlds).
+    fn walkers_in(&self, at: (f32, f32), r: f32) -> u32 {
+        let occ = self.occupancy();
+        let n = r.ceil() as i64;
+        let mut c = 0u32;
+        for dy in -n..=n {
+            for dx in -n..=n {
+                if ((dx * dx + dy * dy) as f32) > r * r {
+                    continue;
+                }
+                let (cx, cy) = (at.0 as i64 + dx, at.1 as i64 + dy);
+                if cx < 0 || cy < 0 || cx as usize >= self.w || cy as usize >= self.h {
+                    continue;
+                }
+                c += occ[cy as usize * self.w + cx as usize] as u32;
+            }
+        }
+        c
     }
 
     fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
@@ -269,8 +339,19 @@ pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
 /// What the mould's core is, and what it does while a squad holds it
 /// (core defence, PR 3, 2026-11-12; the shape is the tiers thread's, so
 /// each tier can say its own through `Tier::core`). A mould with no tier
-/// of its own gets `Core::of(&rules)`: fixed, `Rules::core_secs`,
-/// `Rules::core_pull`.
+/// of its own gets `Core::of(&rules)`: headless, with `Rules::core_pull`.
+///
+/// **No king by default** (owner, 2026-11-12 20:21Z: "remove the king rule.
+/// As long as the slime has food/crystal energy it can make walkers.
+/// Headless."). Before, a squad that held the core clear for 5 s stopped
+/// births on the whole map for good; in the 64-seed race census that was
+/// the only way any plan crippled the mould (rush took it 34 times, strike
+/// 12; farm, wall and fort reached the cap 64 of 64), so the best plan was
+/// always to walk at the core (slime-enemy review,
+/// `Reports/slime-enemy-review-2026-11-12.md`). `CoreKind::Fixed` stays
+/// for a tier that wants one fatal weak spot. The pull stays: the mould
+/// still closes over soldiers at its home, which is what kept random from
+/// walking into the hub (below).
 ///
 /// Why a pull: with craters on (#113) the random hand wiped the plain
 /// mould on 11 of 32 race seeds (201-232; 5 of 32 without craters) and no
@@ -297,28 +378,47 @@ pub struct Core {
     /// A soldier within twice `Rules::core_r` of the core lays this many
     /// times its own scent over `BuildRules::lure_r` (a lure's reach): the
     /// body is drawn onto a squad at its core through the scent it already
-    /// follows, nothing drawn. 0 is none.
+    /// follows, nothing drawn. 0 is none. A headless core pulls too (since
+    /// headless became the default); the Sprawler sets 0.
     pub pull: f32,
 }
 
 /// How a core falls (`Core`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CoreKind {
     /// Held clear for `Core::secs`, it falls for good: births stop.
     Fixed,
-    /// No core: nothing to hold, so only a wipe ends the mould (the
-    /// tiers thread's Sprawler). The Trunk's regrowing core and the
-    /// Drifter's migrating one are to come: both need births to restart
-    /// or move on both engines, and a migrating core needs to know where
-    /// the body is on the GPU, which the GPU world can't read back cheaply
-    /// yet.
+    /// No core: nothing to hold, so only a wipe ends the mould; births go
+    /// on wherever a walker is fed. The default since 2026-11-12 20:21Z
+    /// (`Core::of`); first the tiers thread's Sprawler. The Drifter's
+    /// migrating core is to come: it needs to know where the body is on
+    /// the GPU, which the GPU world can't read back cheaply yet.
     Headless,
+    /// Falls as `Fixed` does, births stopping, and grows back unless the
+    /// body starves (the tiers thread's Trunk; the designer: "regrows
+    /// unless the body is starved", the lesson of campaign mission 4,
+    /// cut, then starve). If the mould eats anything from any crystal in
+    /// the `starve_secs` after the fall, the core grows back when they
+    /// are up: births restart and the hold clock starts again. If it eats
+    /// nothing all that time it stays down for good. So taking the core
+    /// alone doesn't stop the Trunk; taking it while the squad holds the
+    /// crystals, or has cut the body off them, does.
+    ///
+    /// "Eats" is the whole body's: the crystals' charge gone less the
+    /// squad's take (`Game::mould_ate`), which both engines read back
+    /// already. The core's own piece starving, with the one-body thread's
+    /// distance-capped sharing, would need a per-region read-back on the
+    /// GPU; the tiers thread chose the whole-body rule (2026-11-12). With
+    /// `BigParams::crystal_regrow` on, regrowth hides eating, and a fed
+    /// mould can read as starved (off on every map so far).
+    Regrow { starve_secs: f32 },
 }
 
 impl Core {
-    /// The core of a mould with no tier of its own.
+    /// The core of a mould with no tier of its own: headless, so taking
+    /// its home stops nothing; it still pulls (`Core::pull`).
     pub fn of(r: &Rules) -> Core {
-        Core { kind: CoreKind::Fixed, secs: r.core_secs, pull: r.core_pull }
+        Core { kind: CoreKind::Headless, secs: r.core_secs, pull: r.core_pull }
     }
 }
 
@@ -357,7 +457,8 @@ pub struct Rules {
     /// body holds it to a fifth (12 touching, as a rush meets on race seeds
     /// 1-4, where touching runs 0 to 26). The read is the frame's touch
     /// count, the same on both engines, so the GPU needs nothing new. 0 is
-    /// off.
+    /// off. Touching walkers count `Rules::mass` each, so a denser mould
+    /// (the owner's 25,000-walker shapes, mass 0.2) needs 30 for half speed.
     pub wade: f32,
     /// A soldier's scent, as a share of a full pile's, laid on the agar
     /// within `smell_r` dish cells of it.
@@ -453,6 +554,17 @@ pub struct Rules {
     /// not a flee: the mould turning from gunfire made a bigger hole but
     /// let random hold the core (`Reports/dead-ends.md`); the crater
     /// changes only the struck cells.
+    ///
+    /// **4.5 s since 2026-11-12, the owner's pick** (17:29Z: "Can we do
+    /// 4.5 s? I am thinking between the 3 and 6"), after clips of the
+    /// cone crater (PR 3b) with the squad firing into the thick ring on
+    /// the core crystal (`larder-world hand=volley`): at 10 s the hole
+    /// was still pocked 4 s after the fire stopped (15:18Z: "3 fills in
+    /// too slow still", said of a flat-crater clip), at 3 s it closed in
+    /// about 2 s, at 1 s it looked like none. Set on the clips and the
+    /// tests, with no census (the owner's 17:26Z testing rule: a census
+    /// is not a gate for a look). Any time works, not just whole seconds:
+    /// the countdown is in fine steps (`World::fine_steps` a tick).
     pub crater: f32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
@@ -468,6 +580,28 @@ pub struct Rules {
     /// one, and a goal inside one moves to its rim (`Game::standable`,
     /// `Game::rim`). Shots still fly over crystals.
     pub crystal_solid: bool,
+    /// How much one walker counts in a fight: a walker touching a soldier,
+    /// a building or the larder does `mass` times `drain` (or `steal`), and
+    /// counts `mass` towards wading (`Rules::wade`).
+    /// 1 (the default) is today's 5,000-walker mould. A denser mould is
+    /// the same body cut into more, smaller walkers, so it plays at
+    /// 5,000 / its walkers at scale 2 (`Rules::mass_for`); without that the 25,000-walker
+    /// sheet, mesh and trunk shapes wiped an idle squad on the Fork in
+    /// 0:47 to 1:56 (`Reports/slime-questions-2026-11-12/`), which is the
+    /// walker count, not the shape. Shots are unchanged: a crater kills
+    /// the walkers in its cells, so a denser body already loses more to
+    /// each one. Agreed with the Larder thread (11-12, reference density
+    /// over density); first set by the owner's shape playtest (20:21Z).
+    pub mass: f32,
+}
+
+impl Rules {
+    /// The fight weight of one walker in a mould that starts with
+    /// `walkers` on a world of `scale` (`Rules::mass`): today's density,
+    /// 5,000 at scale 2 (1,250 at scale 1, 20,000 at 4), counts 1 each.
+    pub fn mass_for(walkers: usize, scale: usize) -> f32 {
+        (1_250 * scale * scale) as f32 / walkers.max(1) as f32
+    }
 }
 
 impl Default for Rules {
@@ -508,9 +642,10 @@ impl Default for Rules {
             overrun: 0.0,
             reserve: 0.0,
             seek: true,
-            crater: 10.0,
+            crater: 4.5,
             spread: 0.0,
             crystal_solid: true,
+            mass: 1.0,
         }
     }
 }
@@ -747,11 +882,20 @@ pub struct Game<W: World> {
     pub larder: (f32, f32),
     /// The mould's home crystal, fine cells.
     pub core: (f32, f32),
+    /// The tick the core fell, while it is down (a regrown core,
+    /// `CoreKind::Regrow`, sets it back to None).
     pub core_down: Option<u64>,
     core_clear: u64,
     /// What the core is (`Core`): `Core::of(&rules)` unless a tier says
     /// otherwise (`with_tier`).
     pub core_rule: Core,
+    /// Times the core fell, and times it grew back (`CoreKind::Regrow`).
+    pub core_falls: u32,
+    pub core_regrows: u32,
+    /// A fallen regrowing core's starve window: the tick it ends, the
+    /// mould's eating when it began (`mould_ate`), and what the world's
+    /// births took (`World::stop_births`).
+    regrow: Option<(u64, f32, f32)>,
     pub first_touch: Option<f32>,
     /// Walkers touching the larder at the last frame (it is held while any
     /// do).
@@ -883,6 +1027,9 @@ impl<W: World> Game<W> {
             core_down: None,
             core_clear: 0,
             core_rule: Core::of(&rules),
+            core_falls: 0,
+            core_regrows: 0,
+            regrow: None,
             first_touch: None,
             larder_touch: 0,
             stuck: 0,
@@ -1222,7 +1369,7 @@ impl<W: World> Game<W> {
         let d = dx.hypot(dy).max(1e-6);
         // Thick slime holds a soldier back (`Rules::wade`).
         let wade = if self.rules.wade > 0.0 {
-            let x = s.touching as f32 / self.rules.wade;
+            let x = s.touching as f32 * self.rules.mass / self.rules.wade;
             1.0 / (1.0 + x * x)
         } else {
             1.0
@@ -1530,7 +1677,7 @@ impl<W: World> Game<W> {
                 }
             }
             let pull = self.core_rule.pull;
-            let pulls = pull > 0.0 && self.core_rule.kind != CoreKind::Headless && (s.x - self.core.0).hypot(s.y - self.core.1) <= 2.0 * r.core_r * sc;
+            let pulls = pull > 0.0 && (s.x - self.core.0).hypot(s.y - self.core.1) <= 2.0 * r.core_r * sc;
             units.push(UnitIn {
                 x: s.x,
                 y: s.y,
@@ -1638,7 +1785,7 @@ impl<W: World> Game<W> {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
                         }
-                        s.hp -= r.drain * u.touching as f32 * dt;
+                        s.hp -= r.drain * r.mass * u.touching as f32 * dt;
                         if s.hp <= 0.0 {
                             s.alive = false;
                             s.hp = 0.0;
@@ -1647,7 +1794,7 @@ impl<W: World> Game<W> {
                     }
                 }
                 Who::Larder => {
-                    let take = (r.steal * u.touching as f32 * dt).min(self.bank.max(0.0));
+                    let take = (r.steal * r.mass * u.touching as f32 * dt).min(self.bank.max(0.0));
                     self.bank -= take;
                     self.stolen += take;
                     self.larder_touch = u.touching;
@@ -1703,7 +1850,30 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// Food the mould has eaten from the crystals so far: their charge
+    /// gone, less what the squad and its buildings took. A pump's draw is
+    /// in `taken` (`UnitOut::took`), so only walkers' bites count.
+    pub fn mould_ate(&self) -> f32 {
+        self.world.crystals().iter().enumerate().map(|(i, c)| self.start_charge[i] - c.1 - self.taken[i]).sum()
+    }
+
     fn check_core(&mut self) {
+        if let Some((until, ate, was)) = self.regrow {
+            // A crumb of float noise is not a meal: the charge is summed
+            // afresh each step (a thousandth of a percent of the start).
+            let full: f32 = self.start_charge.iter().sum();
+            if self.mould_ate() > ate + 1e-5 * full {
+                if self.world.ticks() >= until {
+                    self.world.start_births(was);
+                    (self.core_down, self.core_clear, self.regrow) = (None, 0, None);
+                    self.core_regrows += 1;
+                }
+            } else if self.world.ticks() >= until {
+                // Starved through the window: down for good.
+                self.regrow = None;
+            }
+            return;
+        }
         if self.core_down.is_some() || self.core_rule.kind == CoreKind::Headless {
             return;
         }
@@ -1715,8 +1885,13 @@ impl<W: World> Game<W> {
         if clear {
             self.core_clear += self.rules.frame_ticks as u64;
             if self.core_clear >= self.secs(self.core_rule.secs) {
-                self.core_down = Some(self.world.ticks());
-                self.world.stop_births();
+                let now = self.world.ticks();
+                self.core_down = Some(now);
+                self.core_falls += 1;
+                let was = self.world.stop_births();
+                if let CoreKind::Regrow { starve_secs } = self.core_rule.kind {
+                    self.regrow = Some((now + self.secs(starve_secs), self.mould_ate(), was));
+                }
             }
         } else {
             self.core_clear = 0;
@@ -1931,23 +2106,26 @@ mod tests {
 
     /// The core's pull (`Core::pull`): a soldier within twice `core_r` of
     /// the core lays `pull` times its scent over a lure's reach; one far
-    /// from it lays its own; a headless core pulls nothing.
+    /// from it lays its own; a headless core pulls the same (the default
+    /// since 11-12 20:21Z), and a pull of 0 pulls nothing.
     #[test]
     fn a_soldier_at_the_core_smells_like_a_lure() {
-        let units = |kind: CoreKind| {
+        let units = |kind: CoreKind, pull: f32| {
             let mut g = Game::new(race_world(1, 1, 1_000), Rules { core_pull: 8.0, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, 1);
-            g.core_rule.kind = kind;
+            (g.core_rule.kind, g.core_rule.pull) = (kind, pull);
             let sc = g.s();
             (g.soldiers[0].x, g.soldiers[0].y) = (g.core.0 + g.rules.core_r * sc, g.core.1);
             g.begin_step();
             let f = &g.flight.as_ref().expect("a frame in flight").f;
             (f.units[0].smell, f.units[0].smell_r, f.units[1].smell, f.units[1].smell_r, g.rules, sc)
         };
-        let (near, near_r, far, far_r, r, sc) = units(CoreKind::Fixed);
-        assert!(far > 0.0 && (near - 8.0 * far).abs() <= 1e-3 * near, "near the core {near}, far {far}");
-        assert_eq!((near_r, far_r), (r.build.lure_r * sc, r.smell_r * sc));
-        let (near, near_r, far, _, _, _) = units(CoreKind::Headless);
-        assert_eq!((near, near_r), (far, r.smell_r * sc), "a headless core pulls nothing");
+        for kind in [CoreKind::Fixed, CoreKind::Headless] {
+            let (near, near_r, far, far_r, r, sc) = units(kind, 8.0);
+            assert!(far > 0.0 && (near - 8.0 * far).abs() <= 1e-3 * near, "{kind:?}: near the core {near}, far {far}");
+            assert_eq!((near_r, far_r), (r.build.lure_r * sc, r.smell_r * sc));
+        }
+        let (near, near_r, far, _, r, sc) = units(CoreKind::Headless, 0.0);
+        assert_eq!((near, near_r), (far, r.smell_r * sc), "a pull of 0 pulls nothing");
     }
 
     /// A fixed core falls once held clear for `Core::secs` (births stop);
@@ -1968,6 +2146,45 @@ mod tests {
         };
         assert_eq!(hold(CoreKind::Fixed), (true, false), "held 5 s: the core falls and births stop");
         assert_eq!(hold(CoreKind::Headless), (false, true), "no core to hold");
+    }
+
+    /// A regrowing core (`CoreKind::Regrow`) falls as a fixed one does,
+    /// births stopping; once its starve window is up it grows back if the
+    /// mould ate in it, births restarting, and stays down for good if the
+    /// mould ate nothing.
+    #[test]
+    fn a_regrowing_core_grows_back_unless_the_mould_starves() {
+        let fall = || {
+            let mut g = small(1);
+            g.core_rule.kind = CoreKind::Regrow { starve_secs: 5.0 };
+            for k in 0..g.soldiers.len() {
+                (g.soldiers[k].x, g.soldiers[k].y) = g.core;
+                (g.soldiers[k].touching, g.soldiers[k].aim) = (0, None);
+            }
+            for _ in 0..=g.secs(g.core_rule.secs) {
+                g.check_core();
+            }
+            assert!(g.core_down.is_some() && !g.world.p.birth_energy.is_finite(), "held: it falls and births stop");
+            g
+        };
+        let born = small(1).world.p.birth_energy;
+        // Fed: the game played on, the mould eating at its crystals.
+        let mut g = fall();
+        let (t0, ate) = (g.time(), g.mould_ate());
+        while g.time() < t0 + 5.5 {
+            g.step();
+        }
+        assert!(g.mould_ate() > ate, "the mould ate in the window");
+        assert_eq!((g.core_down, g.world.p.birth_energy, g.core_falls, g.core_regrows), (None, born, 1, 1), "fed: the core grew back");
+        // Starved: nothing eaten while the window runs, then down for
+        // good, even if the mould eats later.
+        let mut g = fall();
+        g.world.ticks += g.secs(5.0);
+        g.check_core();
+        g.world.pile_charge[0] *= 0.5;
+        g.world.ticks += g.secs(10.0);
+        g.check_core();
+        assert!(g.core_down.is_some() && !g.world.p.birth_energy.is_finite() && g.core_regrows == 0, "starved: it stays down");
     }
 
     /// Wading (`Rules::wade`): with 6 walkers touching a soldier walks at
@@ -2001,9 +2218,25 @@ mod tests {
         let r = Rules { core_pull: 3.0, core_secs: 7.0, ..Rules::default() };
         for t in super::super::tiers::Tier::ALL {
             let g = Game::new(race_world(1, 1, 1_000), r, 1).with_tier(Some(t));
-            assert_eq!(g.core_rule, t.core().unwrap_or(Core { kind: CoreKind::Fixed, secs: 7.0, pull: 3.0 }), "{}", t.name());
+            assert_eq!(g.core_rule, t.core().unwrap_or(Core { kind: CoreKind::Headless, secs: 7.0, pull: 3.0 }), "{}", t.name());
         }
         assert_eq!(Game::new(race_world(1, 1, 1_000), r, 1).with_tier(None).core_rule, Core::of(&r));
+    }
+
+    /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
+    /// mould's home stops nothing, and births go on.
+    #[test]
+    fn taking_the_plain_moulds_home_stops_nothing() {
+        let mut g = small(1);
+        assert_eq!(g.core_rule.kind, CoreKind::Headless);
+        for k in 0..g.soldiers.len() {
+            (g.soldiers[k].x, g.soldiers[k].y) = g.core;
+            (g.soldiers[k].touching, g.soldiers[k].aim) = (0, None);
+        }
+        for _ in 0..=g.secs(g.core_rule.secs) * 2 {
+            g.check_core();
+        }
+        assert!(g.core_down.is_none() && g.world.p.birth_energy.is_finite());
     }
 
     #[test]
@@ -2213,6 +2446,9 @@ mod tests {
             assert!(self.out.is_none(), "a wall built while a frame runs");
             World::build_wall(&mut self.d, a, b, width)
         }
+        fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+            World::burst(&mut self.d, b, k)
+        }
         fn living(&self) -> usize {
             World::living(&self.d)
         }
@@ -2228,8 +2464,11 @@ mod tests {
         fn open(&self, x: f32, y: f32) -> bool {
             World::open(&self.d, x, y)
         }
-        fn stop_births(&mut self) {
+        fn stop_births(&mut self) -> f32 {
             World::stop_births(&mut self.d)
+        }
+        fn start_births(&mut self, was: f32) {
+            World::start_births(&mut self.d, was)
         }
         fn food_deposit(&self) -> f32 {
             World::food_deposit(&self.d)

@@ -39,10 +39,13 @@ sets the game's character**:
 On the big race world (25,000 walkers, one walker a cell, no food) 22.5
 degrees with `sensor_offset` 5 keeps a fine mesh: 51 loops from 30 s to 60 s
 against 12-13 at 45 degrees, tubes 7 cells wide against 17.6 (CPU, 2 seeds;
-[slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)). Not
+[slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)).
 In the game look grown from the core on Fork (25,000 walkers) it goes from
 a sheet to a mesh near the core with trunks out to the crystals, then mostly
 trunks by 2:00 (one seed; [two questions page](../../Reports/slime-questions-2026-11-12/README.md)).
+Not a default: the owner playtests the shapes first (11-12 20:21Z);
+`larder-world -- shape=d` plays this one, with a walker's hit scaled to the
+density (`Rules::mass`).
 
 Each dish sets its own angle (`level.rs` `sensor_deg`). **Explore, then
 settle** (`settle_seconds`, easing from `explore_angle` to `sensor_angle`)
