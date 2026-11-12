@@ -1,0 +1,99 @@
+<title>Shot Damage A/B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the two videos side by side, the same numbers under both. */
+:root {
+  --bg: #f3f1ea; --panel: #e8e4d6; --fg: #1d1f1a; --muted: #5d6052; --line: #cfc9b6;
+  --amber: #9a6a12; --teal: #1f7b80;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12140f; --panel: #1c1f18; --fg: #e9e6da; --muted: #a3a693; --line: #33372b;
+  --amber: #e2a845; --teal: #5cc3c4; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12140f; --panel: #1c1f18; --fg: #e9e6da; --muted: #a3a693; --line: #33372b;
+  --amber: #e2a845; --teal: #5cc3c4; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 44px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 700; }
+h2 { font-size: 24px; font-weight: 700; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 12px; }
+.status { font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: .02em; }
+section { display: grid; gap: 16px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 720px) { .pair, .trio { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 4px; background: #0b0f12; }
+figcaption { font-size: 13px; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 500; }
+.tag { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--amber); }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; min-width: 560px; width: 100%; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 500; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ab { background: var(--panel); border-radius: 6px; padding: 16px; display: grid; gap: 14px; }
+.abrow { display: grid; grid-template-columns: 64px 1fr 1fr; gap: 12px; align-items: center; }
+.abrow .z { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.abhead { font-family: var(--display); font-size: 22px; text-align: center; }
+@media (max-width: 560px) { .abrow { grid-template-columns: 1fr 1fr; } .abrow .z { grid-column: 1 / -1; } }
+ul { margin: 0; padding-left: 20px; max-width: 70ch; display: grid; gap: 6px; }
+code { font-family: var(--mono); font-size: 13px; }
+</style>
+<div class="wrap">
+  <header class="lede">
+    <div class="status">Larder World · fork map · seed 1 · rush hand · 8 s to 16 s of game time · zoom 6</div>
+    <h1>Does the shot hurt?</h1>
+    <p>This is the same round with the same seed. Both videos run the same simulation, with the same shots and the same walkers killed. They differ only in how the slime's damage is drawn. Which one makes the shooting feel like it does something?</p>
+  </header>
+
+  <section class="ab">
+    <div class="pair">
+      <figure><div class="abhead">X</div><video src="x.mp4" controls loop muted playsinline autoplay></video></figure>
+      <figure><div class="abhead">Y</div><video src="y.mp4" controls loop muted playsinline autoplay></video></figure>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Same in both</th><th>at 8 s</th><th>at 16 s</th></tr></thead>
+      <tbody>
+        <tr><td>Shots fired (in total)</td><td class="num">11</td><td class="num">42</td></tr>
+        <tr><td>Walkers killed by shots (in total)</td><td class="num">30</td><td class="num">1,456</td></tr>
+        <tr><td>Walkers alive</td><td class="num">4,970</td><td class="num">4,360</td></tr>
+        <tr><td>Soldiers alive</td><td class="num">4</td><td class="num">2</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>After your answer: no stamp at all</h2>
+    <p>You picked neither, because both were stamps. The same round now draws no mark at all. A hit shows only as the hole it really makes in the living body, and walkers flow back into that hole within about half a second.</p>
+    <figure><video src="hole.mp4" controls loop muted playsinline autoplay></video><figcaption><b>Same seed and shots as above</b>: 42 shots, 1,456 walkers killed by 16 s, no wound drawn.</figcaption></figure>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Walker clock (fine steps a game second)</th><th>Median time a hole stays open</th><th>Holes still open at 16 s</th></tr></thead>
+      <tbody>
+        <tr><td>30 (now)</td><td class="num">0.53 s</td><td class="num">4 of 42</td></tr>
+        <tr><td>15</td><td class="num">0.47 s</td><td class="num">8 of 42</td></tr>
+        <tr><td>10</td><td class="num">0.73 s</td><td class="num">14 of 32</td></tr>
+      </tbody>
+    </table></div>
+    <p>Slowing the walkers barely helps, because holes fill from their rim. A hole that grows under fire and doesn't refill needs a rule: hit ground the mould avoids for a while. The Larder thread is testing that rule, and the picture will draw it from that ground.</p>
+  </section>
+
+  <section>
+    <h2>What the simulation does when a shot lands</h2>
+    <ul>
+      <li>A shot stops at the first slime on its line. Its strike kills about 35 walkers in a disc 5 cells across.</li>
+      <li>The hole lasts about 0.2 game seconds. Walkers flow back into it from all sides, and the trail fills the hole back in by diffusion.</li>
+      <li>The mould regrows. Shots killed 1,456 walkers between 8 s and 16 s, but the mould only lost 610.</li>
+    </ul>
+    <p>So a single hit is small and brief in the simulation itself. A picture can show it more clearly, but by the project's rule it can't invent damage that isn't there. Making hits last longer is a rule change, and that is being worked on in the Larder thread.</p>
+  </section>
+</div>

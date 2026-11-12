@@ -50,7 +50,8 @@ struct Params {
     // or rubble a broken wall leaves), WALLS (a wall has been built),
     // TERRAIN (rock or wet ground to draw). `full` is `crystal_charge`;
     // `npc` the crystal cells `pcell` lists; `hp` the walls' full health.
-    world: u32, npiles: u32, npc: u32, _w0: u32,
+    // `grid` is the mould grid's square, fine cells (`count`; 0 for none).
+    world: u32, npiles: u32, npc: u32, grid: u32,
     full: f32, eat: f32, flow: f32, regrow: f32,
     wet_step: f32, bite: f32, wall_scent: f32, hp: f32,
     // The squad (Larder World W2a, `Engine::set_squad`): this frame's units
@@ -88,6 +89,15 @@ struct Params {
     // cells: its centre, kill radius, alarm and alarm radius.
     kx: f32, ky: f32, kr: f32, kalarm: f32,
     kar: f32, _l3: f32, _l4: f32, _l5: f32,
+    // Soil (WM3, 2026-11-12; `BigParams::sand_keep` and on), read with
+    // `world(SOIL)`: the trail on sand and on clay is x these after the
+    // spread, and on barren ground upkeep is x `barren_up`.
+    sand_keep: f32, clay_keep: f32, barren_up: f32, _s0: f32,
+    // One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
+    // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
+    // energy evens out between neighbouring cells (`esum`, `egain`), and a
+    // hungry walker weighs the scent 1 + `hscent` x its hunger.
+    eflow: f32, hscent: f32, hat: f32, _b0: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -184,7 +194,7 @@ struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32 };
 // A shot's `r2` is its strike's, `ar2` its alarm's (`squad::SHOT_ALARM_R`).
 struct SqShot { start: u32, count: u32, r2: u32, ar2: u32 };
 struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
-struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
+struct Squad { units: array<SqUnit, 96>, uout: array<SqUnitOut, 96>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
 @group(0) @binding(42) var<storage, read_write> SQ: Squad;
 @group(0) @binding(43) var<storage, read_write> kills: array<atomic<u32>>;
 // The look (2026-11-11, src/world/look in the view): shots that landed this
@@ -194,6 +204,12 @@ struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: arra
 // (the thickness a hit took away, fading), and the scent, a byte each.
 @group(0) @binding(44) var<storage, read> hits: array<vec4<f32>>;
 @group(0) @binding(45) var<storage, read_write> look: array<u32>;
+// One body's sums (`energy_flow`): a cell's ordinary walkers' energy in
+// fixed point (x `ESCALE`) in the first block of cells, their count in the
+// second. Fixed point, so the sum does not depend on the order the walkers
+// add in; `life` clears each cell after `egain` has read it.
+@group(0) @binding(46) var<storage, read_write> body: array<atomic<u32>>;
+const ESCALE: f32 = 65536.0;
 
 const NONE: u32 = 0xFFFFFFFFu;
 
@@ -267,12 +283,30 @@ const CRYSTALS: u32 = 1u;
 const WETS: u32 = 2u;
 const WALLS: u32 = 4u;
 const TERRAIN: u32 = 8u;
+const SOIL: u32 = 16u;
 const PILE_BITS: u32 = 0xFFu;
 const WET: u32 = 0x100u;
 const WALL: u32 = 0x200u;
 const SCENT_WALL: u32 = 0x400u;
 const ROCK: u32 = 0x800u;
 fn world(b: u32) -> bool { return (P.world & b) != 0u; }
+// A cell's soil kind (the ground word's bits 12-15; big.rs `SOIL_SAND`
+// and on), 0 (plain) with the dish's soil off.
+const SOIL_SAND: u32 = 1u;
+const SOIL_CLAY: u32 = 2u;
+const SOIL_BARREN: u32 = 3u;
+fn soil(i: u32) -> u32 {
+    if (!world(SOIL)) { return 0u; }
+    return (ground[i] >> 12u) & 15u;
+}
+// What the trail on cell i keeps of its spread value (the CPU's `tick`
+// multiplies after the spread, and the trail after the species' sum).
+fn soil_keep(i: u32) -> f32 {
+    let k = soil(i);
+    if (k == SOIL_SAND) { return P.sand_keep; }
+    if (k == SOIL_CLAY) { return P.clay_keep; }
+    return 1.0;
+}
 // Whether scent spreads through cell j: agar, or a wall that lets it
 // through (`wall_scent` > 0; the CPU's `scent_agar` on the fine grid).
 fn open(j: u32) -> bool {
@@ -340,11 +374,12 @@ fn trail_at(i: u32, sp: u32) -> f32 {
     return sum;
 }
 
-fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32) -> f32 {
+fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32) -> f32 {
     let c = cos(a); let s = sin(a);
     let i = cell(x + c * so, y + s * so);
     if (i == NONE || agar[i] == 0u) { return -1.0e6; }
-    var v = trail_at(i, sp) + scent_at(x + c * sso, y + s * sso);
+    // `sw` is 1, or more for a hungry walker (`hunger_scent`); x 1 is exact.
+    var v = trail_at(i, sp) + sw * scent_at(x + c * sso, y + s * sso);
     // Grazing: fresh grass smells good (the CPU's `graze_weight`, the
     // walker's species' own with `per`).
     if (gw != 0.0) { v += gw * grass[i]; }
@@ -473,9 +508,13 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (c > P.immune) { st *= P.sick_speed; so *= P.sick_reach; ra *= P.sick_turn; }
     }
     let gw = graze_of(sp);
-    var f = sense_at(wk.x, wk.y, h, so, sso, sp, gw);
-    var fl = sense_at(wk.x, wk.y, h - sa, so, sso, sp, gw);
-    var fr = sense_at(wk.x, wk.y, h + sa, so, sso, sp, gw);
+    // Hunger (`hunger_scent`, the CPU's `hunger`): 1 - energy / `hunger_at`,
+    // floored at 0, from the energy as the tick began.
+    var sw = 1.0;
+    if (growth() && P.hscent > 0.0 && P.hat > 0.0) { sw = 1.0 + P.hscent * max(1.0 - energy[k] / P.hat, 0.0); }
+    var f = sense_at(wk.x, wk.y, h, so, sso, sp, gw, sw);
+    var fl = sense_at(wk.x, wk.y, h - sa, so, sso, sp, gw, sw);
+    var fr = sense_at(wk.x, wk.y, h + sa, so, sso, sp, gw, sw);
     // Explorers steer to the lowest reading; a wall stays a wall.
     if (ex) {
         if (f > -1.0e5) { f = -f; }
@@ -620,10 +659,16 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (k >= P.n || !ordinary(k)) { return; }
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
+    // One body's sums are read (`egain`); clear them for the next tick.
+    // Every cell `esum` added to holds an ordinary walker, which runs here.
+    if (P.eflow > 0.0) { atomicStore(&body[i], 0u); atomicStore(&body[P.w * P.h + i], 0u); }
     let n = f32(atomicLoad(&occ[i]));
     var g = 0.0;
     if (eats(k)) { g = min(grass[i] / n, P.graze_eat); }
-    let e = (energy[k] + g + share[i]) - P.upkeep;
+    // Barren ground costs `barren_up` times the upkeep (WM3).
+    var up = P.upkeep;
+    if (soil(i) == SOIL_BARREN) { up = P.upkeep * P.barren_up; }
+    let e = (energy[k] + g + share[i]) - up;
     if (e > 0.0) { energy[k] = e; return; }
     if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
         atomicSub(&occ[i], 1u);
@@ -633,6 +678,49 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
         energy[k] = 0.0;
     }
 }
+
+// One body (`energy_flow`, the CPU's `flow_energy`), after eating and
+// before `life`: `esum` adds each ordinary walker's energy and a count to
+// its cell; `egain` moves each walker's energy by `eflow` x the sum over
+// the eight cells round its own that hold walkers of (their mean - its
+// cell's mean), over its cell's count, floored at 0. Pairs give and take
+// alike, so energy is kept (to the fixed point's rounding). Only
+// dispatched with growth and `energy_flow` on.
+@compute @workgroup_size(256)
+fn esum(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !ordinary(k)) { return; }
+    let wk = walkers[k];
+    let i = cell(wk.x, wk.y);
+    atomicAdd(&body[i], u32(round(max(energy[k], 0.0) * ESCALE)));
+    atomicAdd(&body[P.w * P.h + i], 1u);
+}
+
+fn emean(i: u32) -> f32 {
+    return f32(atomicLoad(&body[i])) / ESCALE / f32(atomicLoad(&body[P.w * P.h + i]));
+}
+
+@compute @workgroup_size(256)
+fn egain(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !ordinary(k)) { return; }
+    let wk = walkers[k];
+    let i = cell(wk.x, wk.y);
+    let c = P.w * P.h;
+    let m = emean(i);
+    let x = i32(i % P.w); let y = i32(i / P.w);
+    var f = 0.0;
+    for (var q = 0u; q < 8u; q++) {
+        let d = NEIGH8[q];
+        let nx = x + d.x; let ny = y + d.y;
+        if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
+        let j = u32(ny) * P.w + u32(nx);
+        if (atomicLoad(&body[c + j]) > 0u) { f += emean(j) - m; }
+    }
+    energy[k] = max(energy[k] + P.eflow * f / f32(atomicLoad(&body[c + i])), 0.0);
+}
+// The CPU's order round a cell.
+const NEIGH8 = array<vec2<i32>, 8>(vec2(1, 0), vec2(1, 1), vec2(0, 1), vec2(-1, 1), vec2(-1, 0), vec2(-1, -1), vec2(0, -1), vec2(1, -1));
 
 // The slot a parent's child takes this tick: k xor one keyed mask, so each
 // empty slot has one parent.
@@ -664,7 +752,8 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     let j = cell(at.x, at.y);
     // The parent's species' crowd limit (`crowd_of`).
     let cr = crowd_of(species_of(k));
-    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr)) { return; }
+    // No child lands on barren ground (WM3).
+    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN) { return; }
     if (cr > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }
     icell[k] = j;
 }
@@ -1010,7 +1099,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                 }
             }
         }
-        trail_out[i] = sum / n * P.keep;
+        trail_out[i] = sum / n * P.keep * soil_keep(i);
     } else {
         // Each species' field spreads as the trail would; the trail is
         // their sum, in species order (the CPU's `tick`).
@@ -1028,13 +1117,16 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                 }
             }
         }
+        // Soil after the sum, as the CPU: each field and the trail x the
+        // cell's keep.
+        let f = soil_keep(i);
         var total = 0.0;
         for (var s = 0u; s < nsp(); s++) {
             let v = sums[s] / n * keep_of(s);
-            sp_out[s * c + i] = v;
+            sp_out[s * c + i] = v * f;
             total += v;
         }
-        trail_out[i] = total;
+        trail_out[i] = total * f;
     }
     if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
     if (al) { germ_out[c + i] = asum / n * P.alarm_keep; }
@@ -1919,4 +2011,29 @@ fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
     spec[k] = (w & 0xFFFF01FFu) | (L_DEAD << 9u);
     if (P.upkeep > 0.0) { energy[k] = -1.0; }
     atomicAdd(&wstat[3], 1u);
+}
+
+// The living walkers (the CPU's `living`: a slot alive, with growth, and
+// not dead) into `wstat[4]`, and with `grid` the mould grid (the CPU's
+// `mould_grid`: each `grid`-cell square's walkers holding a cell, its
+// `occ`) into `wstat[8..]`, row by row; `Engine::record_count` clears both
+// first and dispatches a thread for each slot and each cell. The game's
+// packed readout copies them, so neither costs a read-back of its own (the
+// count read the energy and `spec` back, 8 MB at 1M slots, until
+// 2026-11-12). Energy is below 0 only with growth on (an empty or dead
+// slot), and the state bits are 0 with the life cycle off. One atomic a
+// living walker: a workgroup's sum through shared memory cost 1.5 ms a
+// game step on software Vulkan (its barriers), this nothing measurable.
+@compute @workgroup_size(256)
+fn count(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k < P.n && energy[k] >= 0.0 && ((spec[k] >> 9u) & 3u) != L_DEAD) { atomicAdd(&wstat[4], 1u); }
+    let g = P.grid;
+    if (g > 0u && k < P.w * P.h) {
+        let o = atomicLoad(&occ[k]);
+        if (o > 0u) {
+            let gw = (P.w + g - 1u) / g;
+            atomicAdd(&wstat[8u + (k / P.w / g) * gw + (k % P.w) / g], o);
+        }
+    }
 }

@@ -354,7 +354,7 @@ Agreed with the graphics thread (19:33Z): byte 3 (bits 24-31) of the engine's gr
 - `p` still switches each system on (`crystal_charge` > 0 for crystals). Height (R) is parked and not read.
 - `Map::of_dish` saves a made world as a map. `examples/larderworld.rs` takes `map=NAME` for a census or a look on a map.
 
-**On the GPU.** `Engine::with_map` and `GpuWorld::with_map` start the engine from the same dish. Each pile's full charge rides in its pile record: the shader's `Pile::full`, a spare word until now, feeds the glow, the share left and regrowth. The world bits for terrain and wet now also come from the dish's ground (`ground_bits`), so a map's rock and wet run with the noise settings at 0. Soil is not on the GPU yet. The engine says so when a world has any, and that port (WM3's GPU side) is next.
+**On the GPU.** `Engine::with_map` and `GpuWorld::with_map` start the engine from the same dish. Each pile's full charge rides in its pile record: the shader's `Pile::full`, a spare word until now, feeds the glow, the share left and regrowth. The world bits for terrain and wet now also come from the dish's ground (`ground_bits`), so a map's rock and wet run with the noise settings at 0. Soil is not on the GPU yet. The engine says so when a world has any, and that port (WM3's GPU side) is next (*done 11-12: Soil on the GPU, below*).
 
 **Gate (ROADMAP).** Both parts pass, with lavapipe standing in for the GPU here and in CI.
 - **A map loads the same on the CPU and the GPU.** `a_designed_map_plays_on_the_engine_as_on_the_cpu` plays the v2 Fork (rock, wet, ten crystals of five sizes) and the Nest (34 walls) for 20 game seconds on both, with soil taken off both. Crystals, radii, start and landing are equal. A soldier clearing the crystal nearest the landing banks 300 food on both. The moulds stay within 1% at every 5 s sample (Fork at 20 s: 2,639 on the CPU, 2,619 on the GPU; Nest: 4,109 and 4,128), and the charge left within 2%. The v1 Fork and Nest (smaller crystals) also passed.
@@ -393,7 +393,7 @@ Every one banked a little more food (farm higher on 10 of 10 under the last) but
 
 **Cost.** The window's own CPU work (the cloud's CPU): the model and HUD layout 0.03-0.05 ms a frame. The ground field is 3.9-6.1 ms once a game second, a hitch to cut (most of it is the crystals' depth). Each game step makes four small blocking read-backs (the squad's out, its kills, the pile sums, the wall counts), as the census does, plus the energy once a game second. The window prints its frame time every 10 s (p50, p95, max, steps a second). The gate's number, under 10 ms p95 on the GTX 1070, is not measured yet.
 
-**Not yet.** Soil plays as plain ground on the GPU, so the v2 maps' sand and clay do nothing in the window (the engine says so at start); that port is next. The view does not draw soil, and maps have no look of their own yet (WM4). The second rival on the Passes is the same species. Turrets, bait and the tiers are not in the world game. A soldier whose crystal runs dry waits there until it is ordered on (WM1's open bug; the alert says when).
+**Not yet.** Soil plays as plain ground on the GPU, so the v2 maps' sand and clay do nothing in the window (the engine says so at start); that port is next (*done 11-12, see Soil on the GPU below*). The view does not draw soil, and maps have no look of their own yet (WM4). The second rival on the Passes is the same species. Turrets, bait and the tiers are not in the world game. A soldier whose crystal runs dry waits there until it is ordered on (WM1's open bug; the alert says when).
 
 ## Score v2 and the dry crystal, 2026-11-12
 
@@ -424,3 +424,117 @@ Every one banked a little more food (farm higher on 10 of 10 under the last) but
 **The window's ground hitch.** The ground field now takes the crystals' depth worked out once a world (`look::crystal_depth`, from the graphics thread's #90, held in the window's `depth`). The once-a-game-second rebuild is down from 3.8-5.3 ms to 1.7-1.8 ms on the cloud CPU (headless, `hand=farm at=5`): Fork 3.79-3.88 to 1.67-1.68, Nest 5.28 to 1.82, Passes 3.88 to 1.76.
 
 **Cost.** `take_share` sums the crystal list. It runs once at the cap, and in the window once a frame for the HUD (23 crystals). The rule reads the crystal list once a squad frame, only while it is on.
+
+## Soil on the GPU (WM3's GPU side), 2026-11-12
+
+**Why.** The v2 maps' sand and clay played as plain ground in the window, because the engine read no soil (it said so at start). The maps thread measured each kind on the CPU big dish ([report](larder-maps-2026-11-11.md), *Which ground the mould feels*), and the census (`larderworld map=NAME`) already ran with them, so the window played different maps from the ones measured.
+
+**What is built.**
+- The soil kind (big.rs `SOIL_SAND` 1, `SOIL_CLAY` 2, `SOIL_BARREN` 3) is packed into bits 12-15 of the engine's ground word (`GROUND_SOIL`). That is where the map's G byte already puts it, and the slot was agreed with the graphics and maps threads on 11-11.
+- `WORLD_SOIL` (16) is set by `ground_bits` when any cell has soil. Without it, the passes read no soil.
+- One new row at the end of `Params` (832 to 848 bytes, after the strike row) carries `sand_keep`, `clay_keep` and `barren_upkeep`, taken from the dish's own `BigParams` as the CPU reads them.
+- The trail pass multiplies the trail by the cell's keep after the spread. With species, each species' field is multiplied too, and the trail is their sum times the keep, in the CPU's order.
+- The life pass charges `upkeep x barren_upkeep` on barren cells, and the breed pass skips a barren target.
+- The start-up warning is gone. The window passes the map's soil to the look (`Fields::soil`), which has drawn it since #84.
+
+**Deciding measure, named before the run.** One GPU tick from a warmed CPU dish matches one CPU tick within the world twin test's bounds, with soil on. The 20-second game twin stays within its 8% bound on maps with soil. A planted bug in each soil rule fails the test.
+
+**Results** (software Vulkan; raw in [soil/twin.txt](larder-world-roadmap-2026-11-11/soil/twin.txt) and [soil/runs.txt](larder-world-roadmap-2026-11-11/soil/runs.txt)).
+- **One tick.** `the_world_matches_the_cpu_for_one_tick` gains two dishes: sand, clay, barren and plain bands across the dish, with growth on crystals, run with one species and with two. Every living walker is fed to breed before the tick, so children aim at barren cells too; 1,925 and 2,076 were born in the tick. In both dishes 0 of 15,000 walkers are off, and the trail and energy L1 are 0.
+- **Planted bugs.** Each soil rule was broken one at a time in the shader, and each fails: sand's keep skipped (trail L1 1.5e-2, bound 1e-4), barren upkeep x 1 (energy L1 4.0e-3, bound 1e-5), births on barren (528 walkers off, energy L1 0.13). The test was first written without feeding the walkers; no child was born in the tick, so the third bug passed.
+- **The game twin** (`a_designed_map_plays_on_the_engine_as_on_the_cpu`) now plays the maps with their soil (it used to clear it), and adds the Passes and the Rim (sand and clay) to the Fork and the Nest (clay). Both sides bank 300 food on every map. At 20 s the moulds are Fork 2,642 on the CPU and 2,644 on the GPU, Nest 4,025 and 4,022, Passes 3,174 and 3,162, and Rim 4,756 and 4,658 (2.1%, the widest).
+
+**What it does in play** (one game, seed 1, farm hand, soil as drawn against the same map with soil cleared; [page](https://claude.ai/artifact/1ifC4Qrw6fXe5Aq7vVSRzZ), pictures in [soil/](larder-world-roadmap-2026-11-11/soil/)).
+- **The Rim.** The sand ring holds the mould in. With soil, the clay core carries a broad sheet, and only beaded strands cross the ring at the gates. By 60 s no tube runs to an outer crystal, and the mould is 5,477 walkers. Without soil, tubes cross the ring to the top and bottom crystals by 30 s, and the mould is 5,928 at 60 s.
+- **The Passes.** The clay lane's tube is smooth and wide. The sand lane's tube breaks into beads with a gap. Without soil, that lane forms a loop of two tubes.
+- The harvest and the take are the same in each pair (the farm hand works the outer crystals). This is a look, not a census: the maps' outcome counts are WM2's.
+
+**Cost.** On software Vulkan, a game step costs the same with soil as without, within the 0.3-0.9 ms noise between rounds: Rim 14.52 against 14.82 ms, Passes 14.82 against 14.90 (scale 2, 5,000 walkers, three rounds). Soil adds a uniform branch and one read of a ground word each pass already binds. The 1070's figure is open, with the window's p95. The window's ground rebuild with soil drawn is 1.64-1.77 ms once a game second.
+
+**A fix that rode along.** The headless run's first "all" picture was zoomed past the world's edges. The camera's `fit` was read before the HUD had set its insets. It now prepares the frame first.
+
+## Playtest fixes: free shots, the soldiers' scent, and a hole under fire, 2026-11-12
+
+**Why.** The owner's first playtest of the window (11-12 04:13Z, relayed by the coordinator): "1) the slime didn't feel like one cohesive organism. 2) shooting the slime didn't feel satisfying. I know it was killing lots of individual walkers but visually it didn't impact much 3) the slime mostly ignored my soldiers unless they walked into the slime 4) energy required for shooting isn't fun. I ran out of energy and I had a bunch of soldiers but I couldn't fight the slime and I couldn't harvest crystal because the slime would just kill me." Point 1 went to the one body thread. On point 2 the owner turned down both of the graphics thread's drawn hits (04:38Z, "Both of those look like stamps... Maybe part of the issue is the slime/walkers move to fast") and set the bar (04:39Z): "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at."
+
+**What is built.**
+- **Free shots** (`Rules::price` 0, was 10): a soldier's fire rate (`shot_every`, 1 s) is the only limit. The window's texts drop the cost when it is 0. A price still comes out of the bank shot by shot (test).
+- **The soldiers' scent as rules** (`Rules::smell` 0.5 of a full pile's scent a step, `Rules::smell_r` 2 dish cells), with census switches `smell=` and `smell_r=`.
+- **The mould's turn from fresh gunfire, as an opt-in** (`larder_world::FLEE_KEEP` 0.98, `FLEE_WEIGHT` -1; the census's `flee=W` and `flee_keep=K`, the hole test's `flee:W[:K]`). Each hit already laid the alarm field (`squad::SHOT_ALARM` 50 out to twice the strike's radius) when a tier turned the field on; with the opt-in the plain mould has the field and its sensors read it at -W. It was the race world's default for a few hours and **failed the census gate** (below), so `race_params` does not set it.
+- **The hole test** (`examples/larderhole.rs`): the race world grows 60 s with the squad held at the larder (no drain), then a squad of 4 is set down in a line 8 dish cells past the body's edge on the ray from the core to the larder (turning 20 degrees at a time if a spot is off the open agar or in the mould), on Hold. It fires freely 20 s, then holds fire 10 s. The same seed is run holding fire throughout as the control (an alarm-only arm's control is base's, run once: no shot, no alarm, the same game to the bit, checked on seed 1). `look=DIR every=S` saves crops.
+- **For other threads**, all off by default so no census moves: `Game::density` (start walkers per open fine cell; integration thread), `Game::stuck` and `stuck_run` (the census's stuck test, counted by the game for the campaign's mission layer), `Rules::overrun` (`End::Overrun`, a loss: the mould holds the larder with the bank empty that many seconds) and `Rules::reserve` (a free soldier every that many seconds while under 2 live and the bank can't buy one, unless the mould holds the larder). Tests for each.
+
+**Deciding measures, named before the runs.** For the hole: the dish cells within the squad's range (15) of its centre that held a living walker when it was set down and hold none after 20 s of fire, each arm against the race world without the field, paired by seed, sign test, Holm over the arms. For the defaults: score v2 (`Game::score`), each plan against idle and random, paired by seed, sign test, Holm; the median paired difference beside each count (technical lead's review: 32 seeds and two designed maps before a default).
+
+**The hole under fire** (seeds 1-16; raw in [playtest/hole-1-16.txt](larder-world-roadmap-2026-11-11/playtest/hole-1-16.txt), run before the default changed, and [playtest/hole-1-16-default-sporer.txt](larder-world-roadmap-2026-11-11/playtest/hole-1-16-default-sporer.txt), after; [page](https://claude.ai/artifact/5wQ3xSk8pBN6uig1rxKd4R), clips in [holes/](larder-world-roadmap-2026-11-11/holes/)). Medians:
+
+| Mould | hole at 5 / 10 / 20 s of fire | share of the mould in range | hits land | hole 2 / 5 / 10 s after the last shot | killed | vs no field at 20 s |
+| --- | --- | --- | --- | --- | --- | --- |
+| holding fire (control) | 26 / 28 / 27 | | | 30 / 27 / 29 | 0 | |
+| no alarm field (before) | 33 / 33 / 29 | 26% | 3.7 dish cells out | 30 / 31 / 27 | 175 | |
+| flee 1, keep 0.98 (A) | 86 / 101 / 102 | 77% | 9.3 | 79 / 42 / 28 | 251 | 16 of 16 larger, +69 median, p < 0.0001, holds |
+| flee 3 (B) | 100 / 124 / 126 | 93% | 10.7 | 103 / 70 / 42 | 293 | 16 of 16; 15 of 16 larger than flee 1 (+16, p 0.0005) |
+| flee 1, keep 0.99 | 101 / 122 / 127 | 92% | 10.5 | 110 / 96 / 53 | 272 | 16 of 16 |
+| flee 0.3 | 64 / 67 / 72 | 55% | 7.7 | 58 / 33 / 31 | 212 | 15 of 16 |
+| flee 1, keep 0.95 | 67 / 74 / 67 | 50% | 7.6 | 41 / 34 / 26 | 228 | 16 of 16 |
+| the Swarmer's pull (+3) | 56 / 58 / 66 | 39% | 3.0 | 57 / 50 / 39 | 991 | 16 of 16, but 4 of 64 soldiers alive |
+| half the mould clock (no field) | 41 / 45 / 44 (control 37) | 39% | 3.7 | 42 / 40 / 43 | 186 | 12 of 16, +12, p 0.08 |
+
+Without the field, shooting leaves no more hole than holding fire: the hits land 3.7 dish cells out every second, at a rim that closes at once. With it, the hole opens within 5 s, the hits move out to 9-11 cells as it deepens, and it stops growing at about 10 s only because it has taken most of what the squad can reach. It refills in about 10 s once the shooting stops. On one seed (5) the squad stood behind rock and fired 7 shots in 20 s, so no arm made a hole there; it is in every median. Every soldier lived through every test except under the Swarmer's pull. The page put flee 1 against flee 3 to the owner as a blind A/B (key: A is flee 1, B is flee 3); the card was withdrawn when the flee failed the gate.
+
+**The tiers.** The Sleeper and the Swarmer set their own weight (+3), so the flee never changes them. The Sporer sets only the keep, so with the flee on it flees too: its hole at 20 s is 128 against 81 without the field (11 of 16 larger, p 0.21), and 87% of it is still open 5 s after the last shot (91% without the field: the Sporer's scatter already left a hole).
+
+**Rejected for the hole.** A slower mould clock: 3x slower moved the graphics thread's refill timing only from 0.53 to 0.73 s, and half the clock gained 12 of 16 here (p 0.08). The Swarmer's pull as the default: a slightly larger hole, but the mould overran 60 of 64 soldiers. The flee as the default: below. All three are in `Reports/dead-ends.md`.
+
+**The flee fails the census gate** (race seeds 5-20, 15-minute games, free shots; the flee on at ddd81c6 against off at a9eb09d, paired by seed; runner 1's raw files [census-flee-race-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-race-5-20.txt) and [census-5-20-free.txt](larder-world-roadmap-2026-11-11/playtest/census-5-20-free.txt), fort and strike local: [census-flee-race-5-36-fort-strike.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-race-5-36-fort-strike.txt), [census-noflee-race-5-20-fort-strike.txt](larder-world-roadmap-2026-11-11/playtest/census-noflee-race-5-20-fort-strike.txt)). Measures named before the run: each plan against idle and random (the gate), and for the game designer's review, first touch on the squad and walkers within 10 dish cells of it, flee on against off. Off → on:
+
+| hand | mean score | mould wiped / squad wiped | walkers near the squad (mean) | first touch (median) | killed (mean) |
+| --- | --- | --- | --- | --- | --- |
+| idle | -0.330 → -0.332 | 0 / 0 → 0 / 0 | 7 → 5 | 81 → 286 s | 2,440 → 833 |
+| random | -0.759 → **+1.348** | 2 / 10 → **12** / 1 | 125 → 107 | 20 → 24 s | 3,793 → 3,959 |
+| farm | +0.214 → +0.238 | 0 / 0 | 406 → 193 | 27 → 66 s | 19,014 → 10,147 |
+| wall | +0.225 → +0.245 | 0 / 0 | 348 → 212 | 39 → 43 s | 17,317 → 10,354 |
+| rush | -0.134 → -0.117 | 0 / 1 → 0 / 0 | 27 → 10 | 16 → 16 s | 3,797 → 4,365 |
+| fort | +0.206 → +0.155 | 0 / 0 | 22 → 20 | 26 → 39 s | 4,489 → 2,778 |
+| strike | +0.697 → +0.349 | 3 / 0 → 0 / 0 | 84 → 41 | 26 → 39 s | 22,776 → 12,213 |
+
+With the flee on, random beats farm, wall and rush 13-3 each (p 0.021); farm and wall still beat idle 16-0. Random's Attack orders send soldiers onto the core; a mould that turns from their fire no longer overruns them, they hold the core, and a mould without births starves (12 of its games end with the mould wiped by 900 s, most between 360 and 490 s, with only 1,000-2,000 walkers shot). The first touch comes later: farm 12 later and 2 earlier (median +36 s, p 0.013), idle +47 s, wall +15.5 s, rush 12-1 (p 0.003, survives Holm), fort and strike +16.5 s each (13-2, p 0.007, both survive); walkers near farm and wall fall on 14 of 16 (survive Holm), and farm and wall kill less on 16 of 16. Toggling the flee alone at the current code reproduces both censuses row for row (random, seeds 6-7). A stronger soldier scent does not save it: with scent 4 over 4 dish cells and the flee on, random wiped the mould on 13 of 16 ([census-flee-smell4-race-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-smell4-race-5-20.txt), runner 2). On the Rim with the flee on, random still lost (its squad wiped on 11 of 16, farm and wall over it 16-0, [census-flee-rim-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-rim-5-20.txt), runner 4), so the soft core depends on how open the map leaves it. So the flee answers the owner's point 2 by undoing point 3 and handing the game to random. It stays an opt-in. The game designer's review, on the core: any rule that keeps the mould off soldiers turns the core into a free win, so a later flee, or the Wary tier's habituation, must keep the mould defending its core (soldiers on the core smelling far stronger, or the alarm at the core pulling for every tier), tested against random first.
+
+**The gate on this PR's head** (f92175e: free shots, scent 0.5 over 2 dish cells, #102's seek, no flee; 15-minute games; raw files from runners 1-4 through git, fort and strike local: [census-gate-race-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-race-5-20.txt), [census-gate-race-21-36.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-race-21-36.txt), [census-gate-race-5-36-fort-strike.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-race-5-36-fort-strike.txt), [census-gate-fork-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-fork-5-20.txt), [census-gate-rim-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-rim-5-20.txt)). Measure named before the run: each plan against idle and random, paired by seed, sign test, Holm within each world; the median paired difference beside each count.
+
+| world, seeds | hand | mean score | ends | against idle | against random |
+| --- | --- | --- | --- | --- | --- |
+| race, 5-36 | farm | +0.223 | 32 at the cap | 32-0, +0.565 | 30-2, +1.749 |
+| | wall | +0.212 | 32 at the cap | 32-0, +0.552 | 30-2, +1.742 |
+| | fort | +0.202 | 32 at the cap | 32-0, +0.546 | 30-2, +1.734 |
+| | strike | +0.826 | 9 mould wiped | 32-0, +0.784 | 31-1, +1.920 |
+| | rush | -0.344 | 7 squad wiped | 24-8, +0.272 (p 0.007) | 28-4, +1.192 |
+| | idle | -0.342 | 32 at the cap | | |
+| | random | -1.123 | 25 squad wiped, 2 mould wiped | | |
+| Fork, 5-20 | farm / wall | +0.352 / +0.353 | 16 at the cap | 16-0 each, +1.955 / +1.957 | 16-0 each, +1.876 / +1.881 |
+| | rush | -1.756 | 15 squad wiped | 1-15 | 1-15 |
+| | idle / random | -1.498 / -1.423 | 15 squad wiped each | | |
+| Rim, 5-20 | farm / wall | +0.047 / +0.061 | 16 at the cap | 16-0 each, +0.347 / +0.358 | 16-0 each, +1.684 / +1.678 |
+| | rush | -1.530 | 16 squad wiped | 0-16 | 9-7 (p 0.80) |
+| | idle / random | -0.295 / -1.176 | 16 at the cap / 10 squad wiped | | |
+
+Every plan beats idle and random on all three worlds and survives Holm; the rush is the one hand that loses on the maps, as before. Two findings for the next PRs. Random wiped the mould on 2 of 32 race seeds (the tiers thread saw 2 of 4 on held-out seeds 201-204 at the same code, so about 4 in 36; with shots at 10 food it was 0 of 16). And strike dominates: it beats farm 28-4, wall 29-3 and fort 31-1 (each p < 0.0001), while every plan ends with 20,000-50,000 food in the bank, so food does not bind (the buildings census found the same with turrets: more guns at the crystals wins however they are bought). The economy is PR 3, running costs first (the game designer: everything alive eats), with a spend-everything hand as the fair comparison (technical lead).
+
+**Next for the hole (PR 2).** Shots lay the squad toolkit's crater (`BigDish::scorch_disc`, the one crater writer): the cells a hit clears stay closed to the mould for a few seconds, so sustained fire digs in and the hole closes once firing stops, with no change to where the mould goes elsewhere. Its gate's random and idle rows run beside the hole and first-touch measures (technical lead's review), not after them.
+
+**Free shots and the scent** (seeds 5-20, 15-minute games, before the flee default; raw in [playtest/](larder-world-roadmap-2026-11-11/playtest/): `census-5-20-price10.txt` local, `census-5-20-free.txt` and `census-5-20-free-smell4.txt` from runners 1 and 2 at a9eb09d).
+
+| mean score v2 | shots at 10 food | free | free, scent 4 over 4 dish cells |
+| --- | --- | --- | --- |
+| farm | +0.048 | +0.214 | +0.191 |
+| wall | +0.152 | +0.225 | +0.191 |
+| rush | -1.874 (16 squad wiped) | -0.134 (15 at the cap, 1 wiped) | -0.231 |
+| idle | -0.729 | -0.330 | -0.327 |
+| random | -1.325 | -0.759 | -0.443 (3 mould wiped) |
+| farm / wall beat idle | 14 / 15 of 16 | 16 / 16 of 16 | 16 / 16 of 16 |
+| farm / wall beat random | 16 / 16 of 16 | 14 / 14 of 16 | 12 / 12 of 16 (p 0.077, not holding) |
+| farm: walkers within 10 dish cells, first touch (means) | 285, 49 s | 406, 49 s | 458, 27 s |
+
+Free shots take the rush from 16 losses to 15 games at the cap with the mould cut from 5,000 walkers to under 600 on 12 of them; it never wipes the mould, probably because the last stragglers lay too little trail to stop a shot (not yet checked). The gate holds. Scent 4 brings the mould to the squad sooner but makes random play stronger.
+
+**Cost** (of the opt-in). The alarm field is one 3 x 3 mean over the agar a fine step, and one more read at each sensor. On the CPU it first added 2.0 ms to a 5.4 ms game tick (farm seed 1, 120 s, one thread, three rounds each: 5.37/5.42/5.34 against 7.33/7.77/7.39 ms). The mean is now branchless (`spread_rows`: each neighbour adds its value times its agar mask, in the old order, so the result is bit for bit the old one; test `the_branchless_spread_matches_the_first_one_bit_for_bit`), which takes one pass on the race world's 512 x 320 grid from 0.65 to 0.24 ms on one thread (best of 30, interleaved); the germ's spread gets the same. On the GPU the field has its own switch (`alarm_on`), apart from the life states (`cyc`): the flee runs no `fate`, `fly` or `alight`, only the mean inside the scent pass, the sensor read and the one-workgroup `shout` on frames with shots, and the Larder World already runs the outside pipelines for growth. The life-gpu report's software-Vulkan run had the Swarmer (the alarm alone) at 38-39 ms a frame against 40 for the outside pipelines with every rule off; the GPU thread's one pair on the Larder World at 5,000 walkers was 15.16 ms a step without it and 15.64 with it. The GTX 1070's figure is open.

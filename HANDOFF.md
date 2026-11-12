@@ -25,6 +25,8 @@ persistent world on the GPU big dish, with energy crystals that drain
 
 - [Larder World](wiki/world/larder.md): phases W0-W5; W1a's crystals, terrain and walls are on the CPU big dish; W0 [growth and starving](wiki/model/growth.md) is built on the CPU and the GPU (PR #73, after #63); next W1b, those fields on the GPU, then Larder in the world ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)).
 - [The mould tiers](wiki/world/mould-tiers.md): the difficulty ladder; Sporer, Sleeper and Swarmer built ([the life cycle](wiki/model/life-cycle.md)).
+- [The player's own mould](wiki/world/own-mould.md): gardeners (owner, 11-12): soldiers grow a second species that fights the enemy by conversion; a probe found forms trade eating for fighting; the CPU build is next.
+- [The squad toolkit](wiki/world/squad-toolkit.md): blast and its crater, mine, det cord, germ, sleep gas, smell, on the CPU world; each tool shows in the mould; plans beat idle and random, but blasts carried to the body win on every tier so far.
 - [The Larder player AI](wiki/world/player-ai.md): plays through the player's commands; `cargo run --release --bin larder -- 17 ai=lure`.
 - [The world camera and UI](wiki/world/world-camera.md): pan, zoom, minimap, GPU marks, Larder's controls and the game UI (`world::ui`: fill a `Model`, handle `HudEvent`s); the engine is `slime_mould::gpu`; sandbox W, Q, M; view 0.3-0.4 ms, UI 0.1 ms a frame on the 1070.
 - [The mould at scale](wiki/model/scale.md): GPU phases 1-3 done; phase 4 is W0. [The GPU sandbox](wiki/model/gpu-sandbox.md): `cargo run --release --bin mouldgpu`. [Outside looks and creature rules](wiki/model/outside-looks.md): species, droplets, trunks, contagion.
@@ -51,7 +53,7 @@ references stay right.
 5. **The Organ and the Wanderer:** keep, change or drop.
 6. **The GPU plan:** upload Jones 2011 before phase 4 (W0); hold the Pixel_Physics multi-core renderer port. ([page](wiki/model/scale.md))
 7. **Bloomfront's open questions** (fog of war from a held quantity; two keepers or three-to-four), now folded into Larder World's. ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md))
-8. **Larder World's open questions:** world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds. ([roadmap](Reports/larder-world-roadmap-2026-11-11.md))
+8. **Larder World's open questions:** world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds. ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)) For the campaign, how a mission ends and what carries (unlocked verbs only) are decided (owner, 11-12 04:44Z; [design](Reports/larder-campaign-2026-11-12.md)); world size, allies or rivals and fog stay open.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo

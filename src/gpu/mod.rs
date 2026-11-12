@@ -62,10 +62,13 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (208 words).
-pub const PARAMS_BYTES: usize = 832;
+/// Bytes in `Params` (216 words).
+pub const PARAMS_BYTES: usize = 864;
+/// Where one body's row sits in `Params` (2026-11-12, after the soil row:
+/// `energy_flow`, `hunger_scent`, `hunger_at`).
+pub const BODY_AT: usize = 848;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
-/// alone): the last.
+/// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
 /// Where the squad's four words sit in `Params` (`set_squad` writes them
 /// alone). Fixed: the look's hits row and the species block (2026-11-11)
@@ -77,13 +80,21 @@ pub const WORLD_CRYSTALS: u32 = 1;
 pub const WORLD_WETS: u32 = 2;
 pub const WORLD_WALLS: u32 = 4;
 pub const WORLD_TERRAIN: u32 = 8;
+/// The dish has soil (`BigDish::soil`, WM3): the trail, life and breed
+/// passes read a cell's kind from its ground word.
+pub const WORLD_SOIL: u32 = 16;
 /// A cell's `ground` bits (engine.wgsl): its crystal's pile (index + 1) in
-/// the low byte, then wet, wall, a wall that lets scent through, rock.
+/// the low byte, then wet, wall, a wall that lets scent through, rock, and
+/// the soil kind in bits 12-15 (the map's G byte is bits 8-15, so its high
+/// nibble lands there as it is). Agreed with the graphics thread
+/// (2026-11-11): mould-made ground takes bits 16-23, height 24-31.
 pub const GROUND_PILE: u32 = 0xFF;
 pub const GROUND_WET: u32 = 0x100;
 pub const GROUND_WALL: u32 = 0x200;
 pub const GROUND_SCENT_WALL: u32 = 0x400;
 pub const GROUND_ROCK: u32 = 0x800;
+pub const GROUND_SOIL: u32 = 0xF000;
+pub const GROUND_SOIL_SHIFT: u32 = 12;
 /// Rounds of `evict` a wall runs between checks, and at most: walkers that
 /// lost a free cell to another try the next nearest, until none finds one.
 /// (Four rounds in all left 24 of 178 covered walkers inside on the twin
@@ -97,6 +108,21 @@ pub const MAX_SPECIES: u8 = 4;
 /// Piles the GPU tracks (the dish's seven and food dropped with F); F does
 /// nothing once they are all used.
 pub const MAX_PILES: usize = 64;
+
+/// The wall counters' first bytes (`Engine::wstat`): bites, broken cells,
+/// the eviction's moves, the struck, the living walkers, three spare. The
+/// mould grid follows (`Engine::record_count`), room for squares down to a
+/// game cell or `GRID_MIN` dish cells, whichever is smaller
+/// (`Engine::grid_max`).
+pub const WSTAT_BYTES: usize = 32;
+
+/// The smallest mould grid square the wall counters have room for, in
+/// dish cells, where the scale is bigger: the campaign's and the player
+/// AI's squares of 4 (2026-11-12). Room down to a game cell (the scale) at
+/// scale 8 fitted 40,960 squares, not the 163,840 squares of 4 of its 2048
+/// x 1280 dish, so every ask there read all 10.5 MB of `occ` back.
+/// A smaller square still reads back (`GpuWorld::mould_grid`).
+pub const GRID_MIN: usize = 4;
 
 /// The share of walkers the pull moves a tick (0.2%: at 100,000 walkers, a
 /// quarter of them in about a second of holding).
@@ -311,6 +337,13 @@ pub struct Settings {
     pub wall_hp: f32,
     pub wall_bite: f32,
     pub wall_scent: f32,
+    /// One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
+    /// `hunger_at`; Reports/one-body-2026-11-12.md): walkers' energy evens
+    /// out between neighbouring cells, and a hungry walker follows the
+    /// scent harder. 0 off; both need growth.
+    pub energy_flow: f32,
+    pub hunger_scent: f32,
+    pub hunger_at: f32,
     pub seed: u64,
 }
 
@@ -427,6 +460,9 @@ impl Settings {
             wall_hp: t.wall_hp,
             wall_bite: t.wall_bite,
             wall_scent: t.wall_scent,
+            energy_flow: t.energy_flow,
+            hunger_scent: t.hunger_scent,
+            hunger_at: t.hunger_at,
             seed: 1,
         }
     }
@@ -653,6 +689,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "wall_hp" => s.wall_hp = f()?,
         "wall_bite" => s.wall_bite = f()?,
         "wall_scent" => s.wall_scent = f()?,
+        "energy_flow" => s.energy_flow = f()?,
+        "hunger_scent" => s.hunger_scent = f()?,
+        "hunger_at" => s.hunger_at = f()?,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }
@@ -766,6 +805,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         wall_hp: s.wall_hp,
         wall_bite: s.wall_bite,
         wall_scent: s.wall_scent,
+        energy_flow: s.energy_flow,
+        hunger_scent: s.hunger_scent,
+        hunger_at: s.hunger_at,
         seed: s.seed,
         ..t
     }
@@ -806,7 +848,7 @@ pub struct Shared {
     pub plain: Vec<wgpu::ComputePipeline>,
 }
 
-pub const BINDINGS: u32 = 46;
+pub const BINDINGS: u32 = 47;
 /// The most shot hits a frame (`Engine::set_hits`).
 pub const MAX_HITS: usize = 256;
 pub const SENSE: usize = 0;
@@ -853,9 +895,16 @@ pub const KILL: usize = 32;
 /// A squad shot's alarm (`squad::SHOT_ALARM`), after `cut`, with the alarm
 /// field on.
 pub const SHOUT: usize = 33;
+/// One body (`energy_flow`): each cell's energy and walkers summed, then
+/// each walker's gain, after eating and before `life`.
+pub const ESUM: usize = 34;
+pub const EGAIN: usize = 35;
+/// The living walkers counted into the wall counters' word 4
+/// (`Engine::record_count`), for the game's packed readout.
+pub const COUNT: usize = 36;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 34] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout",
+pub const PASSES: [&str; 37] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count",
 ];
 
 impl Shared {
@@ -932,6 +981,11 @@ pub struct Engine {
     /// What each walker on a cell took from its crystal this tick (the
     /// CPU's `took`, a cell not a slot; growth's `life` adds it).
     pub share: wgpu::Buffer,
+    /// One body's sums (binding 46: energy in fixed point a cell, then
+    /// walkers a cell) and whether its passes run (growth and
+    /// `energy_flow` on).
+    pub body: wgpu::Buffer,
+    pub energy_flows: bool,
     /// The Larder World (engine.wgsl's bindings 34-41): ground bits, crystal
     /// charge, wall health, the bites walls took this tick, the crystal
     /// cells pile by pile, each pile's run and sums, the wall counters, and
@@ -963,6 +1017,9 @@ pub struct Engine {
     pub kills: wgpu::Buffer,
     pub squad: (u32, u32, f32),
     pub squad_due: bool,
+    /// The mould grid's square, fine cells, that `record_count` sums (0:
+    /// none), written with the params.
+    pub grid: u32,
     /// This frame's shot hits (`set_hits`), and how many: the world look's
     /// stand-in fight (bindings 44, 45 after the Larder World's 32-43).
     pub hits: wgpu::Buffer,
@@ -1025,9 +1082,6 @@ impl Engine {
         let agar_cells = make(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
         let crowd_ok = s.walkers.max(s.capacity) <= agar_cells / 2;
         let d = make(BigParams { species_sets: species_sets(s, crowd_ok), ..big_params(s, scale, s.crowd && crowd_ok) });
-        if d.soil.iter().any(|&k| k != 0) {
-            eprintln!("engine: soil is not on the GPU yet; this world's soil plays as plain ground");
-        }
         let dev = device;
         let cells = (d.w * d.h) as u32;
         let n = d.walkers.len() as u32;
@@ -1098,17 +1152,23 @@ impl Engine {
         let bites = zeros("bites", cells as usize * 4);
         let pcell = buf("pcell", &u32_bytes(&wd.pcell), storage);
         let piles = buf("piles", &u32_bytes(&wd.piles), storage);
-        let wstat = zeros("wstat", 16);
+        // Bites, broken cells, the eviction's moves, the struck, and the
+        // living walkers (`record_count`); three words spare; then the
+        // mould grid, for squares down to a dish cell.
+        let g = d.p.scale.clamp(1, GRID_MIN);
+        let grid_max = d.w.div_ceil(g) * d.h.div_ceil(g);
+        let wstat = zeros("wstat", WSTAT_BYTES + 4 * grid_max);
         let wb = zeros("wall build", 48);
         let sq = zeros("squad", squad::WORDS * 4);
         let kills = zeros("kills", squad::SHOTS_MAX * 4);
         let hits = zeros("hits", MAX_HITS * 16);
         let look = zeros("look", cells as usize * 4);
+        let body = zeros("body", 2 * cells as usize * 4);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
                 &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look,
+                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look, &body,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -1140,6 +1200,8 @@ impl Engine {
             grows: !d.energy.is_empty(),
             energy,
             share,
+            body,
+            energy_flows: false,
             ground,
             charge,
             health,
@@ -1157,6 +1219,7 @@ impl Engine {
             kills,
             squad: (0, 0, 0.0),
             squad_due: false,
+            grid: 0,
             hits,
             n_hits: 0,
             look,
@@ -1366,9 +1429,15 @@ impl Engine {
             world |= WORLD_TERRAIN;
         }
         world |= self.ground_world;
-        b.extend(u32_bytes(&[world, self.npiles, self.npc, 0]));
+        b.extend(u32_bytes(&[world, self.npiles, self.npc, self.grid]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
-        debug_assert_eq!(b.len(), SQUAD_AT);
+        // Real asserts, not debug ones (2026-11-12, game integration): six
+        // threads append rows here, CI and the census run release builds,
+        // and a row that slips moves every offset after it without a
+        // failing test. Three length checks a frame cost nothing measurable.
+        // New rows go after the soil row, in the merge order in ROADMAP.md
+        // ("Larder World: shared rules and merge order").
+        assert_eq!(b.len(), SQUAD_AT, "Params rows before the squad row moved");
         b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), squad::SHOT_ALARM.to_bits()]));
         b.extend(u32_bytes(&[self.n_hits, 0, 0, 0]));
         // The species block (2026-11-11): whether each species has its own
@@ -1402,10 +1471,16 @@ impl Engine {
         b.extend(u32_bytes(&[stream(seed, CLAIM_LAND), stream(seed, DRAW_SPORE_H), s.spore_steps as u32, s.spore_rest as u32, s.wake_steps as u32, s.sleep_rest as u32, stream(seed, DRAW_SLEEP_DIE), 0]));
         b.extend(f32_bytes(&[s.spore_rate, s.spore_scent, s.spore_alarm, s.spore_burst, s.step * s.spore_speed, s.spore_reach, s.spore_deposit, s.spore_land]));
         b.extend(f32_bytes(&[s.sleep_rate, s.sleep_deposit, s.wake_scent, s.wake_alarm, s.alarm_keep, s.alarm_weight, s.alarm_relay, s.sleep_death]));
-        debug_assert_eq!(b.len(), STRIKE_AT);
+        assert_eq!(b.len(), STRIKE_AT, "Params rows before the strike row moved");
         b.extend([0u8; 32]);
+        // Soil (WM3, 2026-11-12): the dish's own rates, as the CPU reads
+        // them from its `BigParams` (read only with `WORLD_SOIL`).
+        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, 0.0]));
+        assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
+        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, 0.0]));
+        self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
-        debug_assert_eq!(b.len(), PARAMS_BYTES);
+        assert_eq!(b.len(), PARAMS_BYTES, "Params is not PARAMS_BYTES long");
         self.converts = s.convert > 0.0 && self.nsp > 0;
         self.boxes = self.converts && s.convert_r > 0;
         self.outside = self.nsp > 0
@@ -1499,7 +1574,7 @@ impl Engine {
         }
         if due && nunits > 0 {
             // The squad's frame end: reads, then the harvest.
-            dispatch(enc, &self.groups[(self.done % 2) as usize], &[(UNITS, 1), (HARVEST, 1)]);
+            dispatch(enc, &self.groups[(self.done % 2) as usize], &[(UNITS, squad::UNITS_MAX.div_ceil(64) as u32), (HARVEST, 1)]);
         }
         let group = &self.groups[(self.done % 2) as usize];
         for &(p, groups) in &self.draw_passes(soft) {
@@ -1537,6 +1612,11 @@ impl Engine {
                 tick.extend([(PILESUM, self.npiles), (FLOW, pc)]);
             }
             tick.push((PILESUM, self.npiles));
+        }
+        // One body's flow, as the CPU's `flow_energy` after `eat_crystals`
+        // and before `live_and_die` (`life` clears its sums).
+        if self.energy_flows {
+            tick.extend([(ESUM, n), (EGAIN, n)]);
         }
         if self.grows {
             tick.extend([(LIFE, n), (BREED, n), (BORN, n)]);
@@ -1755,6 +1835,43 @@ impl Engine {
         g[self.cells as usize..2 * self.cells as usize].to_vec()
     }
 
+    /// Counts the living walkers (the CPU's `living`: a slot alive and not
+    /// dead) into `wstat` word 4, and with `grid` set the mould grid (the
+    /// CPU's `World::mould_grid` of `grid`-cell squares) into the words
+    /// after `WSTAT_BYTES`, in `enc` after a frame's ticks: the game's mould
+    /// size and the AI's eyes with no read-back of their own (`GpuWorld`'s
+    /// readout copies them). Before 2026-11-12 the game read the whole
+    /// energy buffer and the `spec` words back once a game second for the
+    /// count (`alive`), 8 MB at 100k walkers' 1M slots, and the GPU world
+    /// had no grid. The params must be written (`write_params`) first.
+    pub fn record_count(&self, shared: &Shared, enc: &mut wgpu::CommandEncoder) {
+        let (gw, gh) = self.grid_size();
+        assert!(gw * gh <= self.grid_max(), "a mould grid square under a dish cell");
+        enc.clear_buffer(&self.wstat, 16, Some(4));
+        if gw * gh > 0 {
+            enc.clear_buffer(&self.wstat, WSTAT_BYTES as u64, Some(4 * (gw * gh) as u64));
+        }
+        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
+        let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("count"), timestamp_writes: None });
+        pass.set_pipeline(&pipes[COUNT]);
+        pass.set_bind_group(0, &self.groups[(self.done % 2) as usize], &[]);
+        let threads = if self.grid > 0 { self.n.max(self.cells) } else { self.n };
+        pass.dispatch_workgroups(threads.div_ceil(256), 1, 1);
+    }
+
+    /// The mould grid's columns and rows (`grid`; 0 x 0 with none).
+    pub fn grid_size(&self) -> (usize, usize) {
+        match self.grid as usize {
+            0 => (0, 0),
+            g => (self.dish.w.div_ceil(g), self.dish.h.div_ceil(g)),
+        }
+    }
+
+    /// The most squares the mould grid has room for (a dish cell each).
+    pub fn grid_max(&self) -> usize {
+        (self.wstat.size() as usize - WSTAT_BYTES) / 4
+    }
+
     /// The squad's frame (Larder World W2a; `squad.rs` has the CPU twins and
     /// the order): the next `record` runs its shots, strikes and smell before
     /// its first tick, and its reads and harvest after its last. Shots need
@@ -1851,11 +1968,13 @@ pub struct WorldData {
 }
 
 /// The world bits a dish's ground needs drawn and run whatever its
-/// params: terrain if it has rock or wet, the wet pass if wet.
+/// params: terrain if it has rock or wet, the wet pass if wet, soil if any
+/// cell is sand, clay or barren.
 pub fn ground_bits(d: &BigDish) -> u32 {
     let wet = d.wet.iter().any(|&v| v);
     let rock = d.rock.iter().any(|&v| v);
-    (if wet { WORLD_WETS } else { 0 }) | (if wet || rock { WORLD_TERRAIN } else { 0 })
+    let soil = d.soil.iter().any(|&k| k != 0);
+    (if wet { WORLD_WETS } else { 0 }) | (if wet || rock { WORLD_TERRAIN } else { 0 }) | (if soil { WORLD_SOIL } else { 0 })
 }
 
 pub fn world_data(d: &BigDish) -> WorldData {
@@ -1871,6 +1990,9 @@ pub fn world_data(d: &BigDish) -> WorldData {
             }
             if on(&d.rock, i) {
                 g |= GROUND_ROCK;
+            }
+            if !d.soil.is_empty() {
+                g |= (d.soil[i] as u32) << GROUND_SOIL_SHIFT & GROUND_SOIL;
             }
             if on(&d.wall, i) {
                 g |= GROUND_WALL;
@@ -1911,7 +2033,21 @@ pub fn world_data(d: &BigDish) -> WorldData {
     WorldData { ground, charge, health, pcell: d.pile_cells.clone(), piles, npiles: npiles as u32 }
 }
 
+thread_local! {
+    static READS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// Blocking read-backs this thread has made (`read_back`), so a run or a
+/// test can say how often it waited on the GPU (`larder-world -- bench`).
+pub fn reads() -> usize {
+    READS.with(|r| r.get())
+}
+
+/// `src` copied to a new staging buffer and waited for: it empties the
+/// GPU's queue, so the game's step reads through `GpuWorld`'s one packed
+/// readout instead (2026-11-12).
 pub fn read_back(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer) -> Vec<u8> {
+    READS.with(|r| r.set(r.get() + 1));
     let size = src.size();
     let staging = device.create_buffer(&wgpu::BufferDescriptor { label: Some("read back"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });

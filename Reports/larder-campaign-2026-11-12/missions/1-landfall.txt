@@ -1,0 +1,14 @@
+# Mission 1 (Reports/larder-campaign-2026-11-12.md): harvest and hire against the Drifter.
+# The bank starts empty so the first soldiers must be bought with harvested food.
+# Two crystals at once (design review, 05:38Z): squad size alone was met by 1:28 at 8
+# and only grew longer at 24. 8 on 2 crystals was met at 1:28-1:29 by every AI style
+# (census v3), so 12 on 3.
+name Landfall
+says Grow your squad to 12 and harvest 3 crystals at once
+map flats
+tier drifter
+verbs move harvest buy stance
+rule start_bank 0
+rule price 0
+bonus lose 1
+goal squad 12 3

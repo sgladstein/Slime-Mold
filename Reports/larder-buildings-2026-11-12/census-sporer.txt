@@ -1,0 +1,47 @@
+larderworld the race world, tier sporer, scale 2 walkers 5000 cap 900 s, tps 15, seeds [5..12] (runner B, commit 879cd85; lure 2x over 3; stopped at the 30-min limit)
+  farm seed  5:         cap at   900 s, score +0.023; soldiers  8, mould  12696, bank  16749, harvested  45314, stolen  7766, shots  4727, killed  29546, crystals left 0.220
+  ring seed  5:         cap at   900 s, score +0.084; soldiers  8, mould  13559, bank  27313, harvested  47114, stolen   602, shots 11837, killed  37586, crystals left 0.212
+random seed  5: squad wiped at   543 s, score -1.396; soldiers  0, mould  27348, bank      0, harvested   2700, stolen   700, shots  1362, killed   5129, crystals left 0.855
+  idle seed  5:         cap at   900 s, score -0.417; soldiers  2, mould  24948, bank   1507, harvested      0, stolen   494, shots  1486, killed  2641, crystals left 0.877
+random seed  6: squad wiped at   330 s, score -1.633; soldiers  0, mould  20339, bank      0, harvested   3600, stolen  1400, shots  1583, killed   4884, crystals left 0.898
+turtle seed  5:         cap at   900 s, score +0.374; soldiers  8, mould   1192, bank  13742, harvested  62311, stolen  1416, shots 19480, killed  50371, crystals left 0.033
+killzone seed  5:         cap at   900 s, score +0.079; soldiers  8, mould  14123, bank  17277, harvested  45914, stolen   666, shots  7086, killed  40787, crystals left 0.219
+idle 6 -0.395
+turtle 6 +0.264
+ring 6 +0.049
+farm 6 -0.066
+random 7 -1.673
+killzone 6 +0.059
+farm 7 +0.002
+idle 7 -0.385
+ring 7 +0.128
+turtle 7 +0.373
+random 8 -1.742
+killzone 7 +0.082
+farm 8 +0.064
+ring 8 +0.093
+idle 8 -0.429
+turtle 8 +1.224
+random 9 -1.579
+killzone 8 +0.091
+idle 9 -0.385
+farm 9 +0.038
+ring 9 +0.113
+turtle 9 +0.377
+random 10 -1.534
+killzone 9 +0.073
+idle 10 -0.415
+farm 10 +0.115
+turtle 10 +1.429
+ring 10 +0.085
+killzone 10 +0.119
+farm 11 +0.103
+idle 11 -0.405
+turtle 11 +1.512
+ring 11 +0.086
+ring 12 +0.099 
+farm 12 +0.094 
+idle 12 -0.395 
+turtle 12 +1.511 
+killzone 12 +0.106 
+random 12 -0.375
