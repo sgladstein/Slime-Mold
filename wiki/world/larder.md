@@ -2,9 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T13:30Z
+updated: 2026-11-12T14:55Z
 sources: [Reports/soldier-controls-2026-11-12.md, Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater]
+code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -111,7 +111,20 @@ holes read as stamps to the designer and the graphics thread, so two look
 switches, both off, went on the page blind for the owner to pick from:
 `Rules::spread` (a smaller strike, scattered, at the same kills) and
 `BigParams::scorch_cone` (a soft-edged crater); neither moves the hole
-beyond chance. Next, core defence, then running costs. Off by default for other threads:
+beyond chance. **The core fights back** (PR 3, [report, *Core
+defence*](../../Reports/larder-world-roadmap-2026-11-11.md)): a soldier
+within twice `core_r` of the core smells like a lure (`Rules::core_pull`
+8, a lure's strength, over `lure_r`), so the hub closes over a squad
+standing in it. Over both seed blocks random wiped the mould on 5 of 64
+games (18 without) and every plan beats random after Holm on both
+(201-232 had none without); farm, wall, fort and idle play the same
+within chance; strike still takes the core on 12 (13 without) and a rush
+that fails loses its squad on 8 of 10 (201-232). The core is a `Core
+{ kind, secs, pull }` a tier can set (`Tier::core`, read by
+`Game::with_tier`): `Fixed` or `Headless` (only a wipe ends it); the
+Trunk's regrowing and the Drifter's migrating cores come later. Strike
+still beats farm about 2 to 1 because food doesn't bind. Next, running
+costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)

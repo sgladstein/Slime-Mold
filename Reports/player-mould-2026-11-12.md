@@ -255,13 +255,58 @@ the shared pool was not starving the enemy here; the cap matters once the
 moulds fight. Balance and share pairings are unchanged in direction and
 significance (sow2 vs farm balance 32/0; vs random 25/7, p 0.002).
 
+## Craters in the garden (after #113)
+
+The garden's shots now lay the crater the one-mould game's do
+(`Frame::crater`, `Rules::crater` 10 s), and an enemy walker standing in a
+crater stops a shot. The crater fades every species' trail, the player's
+too; shots stop at enemy slime, so it lies on the enemy's side. Test:
+`shots_lay_the_crater_on_the_enemy`. Census rerun with craters
+([`garden/census4-crater.txt`](player-mould-2026-11-12/garden/census4-crater.txt)):
+sow2's mould 23,189 against the enemy's 6,971 (6,971 is the lowest enemy
+of any census); share 0.955; balance against farm 32/0, against random
+28/4. Idle is unchanged, as it never shoots.
+
+## The front: does each action move the line? (designer's review)
+
+Two moulds holding a line is an RTS front, so before making the enemy hunt,
+the designer asked how far each action moves it. `garden front`: every arm
+plays sow2 to 2:30, when the moulds meet, then the squad farms and soldiers
+0 and 1 act for 40 s at the player's cell nearest the enemy's core.
+
+**Deciding measure, named before the run:** the player's cells (own trail
+over 1 and over the enemy's) 20 s after the branch, less the none arm's on
+the same seed; second, the enemy's cells the same way. Sign test, Holm over
+the eight +20 s tests. 32 seeds (one seed ties every arm: both soldiers
+dead by 2:30).
+
+| Arm (two soldiers, 20 s) | Player's cells vs none | Enemy's cells vs none |
+|---|---|---|
+| sow (Feed at the front) | **+609, 25 / 6, holds** | -87, 13 / 18 |
+| shoot (Free fire at the front) | +267, 19 / 12 | **-396, 7 / 24, holds** |
+| road (Road 15 cells past the front) | **+886, 27 / 4, holds** | -255, 8 / 23, p 0.011 (just outside Holm) |
+| cut (Cut at the front, a check) | +122, 17 / 14 | +1, 16 / 15 |
+
+With craters ([`garden/front-crater.txt`](player-mould-2026-11-12/garden/front-crater.txt)).
+Means at the branch: player 23,000 cells, enemy 13,153. Each action moves
+the line its own way: **a road pushes the player's ground forward, sowing
+thickens it, and fire burns the enemy's back.** Without craters
+([`garden/front.txt`](player-mould-2026-11-12/garden/front.txt)) shooting
+took nothing (-37, 13 / 17): the crater is what makes fire hold ground.
+All three last to +40 s (with craters: road +755 player cells 29 / 2, sow
++1,191 26 / 5, fire -579 enemy cells 7 / 24). The cut check moved nothing: one
+soldier's disc of radius 3 is too small to see against 23,000 cells, so
+Cut needs a longer blade to matter. The moves are 2 to 4 per cent of the
+map in 20 s: visible at the tip where the soldiers stand (pictures on the
+page), not a sweep.
+
 ## Not done, next
 
 - Contact: make the enemy seek the player's mould (`species_avoid` below 0,
   per side), so a big player mould is a threat it must answer, and see if
   the network-vs-dense trade then makes Road against Cut a choice.
-- The front (designer's review): how far each action (sowing behind the
-  front, shots, cutting the enemy's tube) moves the line in 20 s.
-- Garden shots lay craters once the crater PR (#113) lands.
+- A front hand: a planned player who reads where the line is and picks
+  road, sow or fire there, against random and idle.
+- Cut's reach (radius 3) is too small to see.
 - Cut was never used by a planned hand; random cut 5,899 walkers and lost.
 - The GPU port, after the toolkit's and one body's rows.

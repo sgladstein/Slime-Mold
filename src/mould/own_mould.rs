@@ -184,10 +184,12 @@ impl Garden {
     /// `squad::shots` for the garden: a shot stops at the first cell whose
     /// enemy trail looks like slime, so it flies over the player's mould,
     /// and strikes the enemy's walkers and trail only.
-    fn shots(&mut self, shots: &[ShotIn], slime: f32) -> Vec<ShotOut> {
+    fn shots(&mut self, shots: &[ShotIn], slime: f32, crater: u16) -> Vec<ShotOut> {
         let (w, h) = (self.dish.w, self.dish.h);
         let shots = &shots[..shots.len().min(SHOTS_MAX)];
         let mut used = 0;
+        // Enemy walkers a cell, for the walker-in-a-crater stop.
+        let occ = if self.dish.scorch.is_empty() { Vec::new() } else { self.enemy_occ() };
         let hits: Vec<u32> = shots
             .iter()
             .map(|s| {
@@ -198,7 +200,9 @@ impl Garden {
                     if !self.dish.agar[i as usize] {
                         return NONE;
                     }
-                    if self.enemy_trail(i as usize) >= slime {
+                    // As `squad::shots`: an enemy walker standing in a
+                    // crater stops the shot though the crater holds no trail.
+                    if self.enemy_trail(i as usize) >= slime || (!occ.is_empty() && self.dish.scorch[i as usize] > 0 && occ[i as usize] > 0) {
                         return i;
                     }
                 }
@@ -240,6 +244,28 @@ impl Garden {
                     }
                 }
                 self.dish.trail[c] = own;
+            }
+            // The crater (`Frame::crater`), as `squad::shots` lays it. It
+            // fades every species' trail there, the player's too: the
+            // ground is burnt for both (shots stop at enemy slime, so it
+            // lies on the enemy's side).
+            if crater > 0 {
+                if self.dish.scorch.is_empty() {
+                    self.dish.scorch = vec![0; w * h];
+                }
+                let cone = self.dish.p.scorch_cone;
+                for c in disc(w, h, hx, hy, r2s[q]) {
+                    if self.dish.agar[c] {
+                        let steps = if cone {
+                            let (dx, dy) = ((c % w) as i64 - hx, (c / w) as i64 - hy);
+                            let c2 = crater as u32;
+                            (c2 - c2 * (dx * dx + dy * dy) as u32 / (r2s[q] + 1)) as u16
+                        } else {
+                            crater
+                        };
+                        self.dish.scorch[c] = self.dish.scorch[c].max(steps);
+                    }
+                }
             }
             if !self.dish.alarm.is_empty() {
                 for c in disc(w, h, hx, hy, r2(SHOT_ALARM_R * shots[q].r.min(R_MAX))) {
@@ -365,9 +391,7 @@ impl World for Garden {
         self.dish.ticks
     }
 
-    /// For rules timed in fine steps (`Rules::crater`). The garden's own
-    /// `shots` do not lay the crater yet (merged with the crater PR, #113,
-    /// 2026-11-12): `Frame::crater` is ignored here.
+    /// For rules timed in fine steps (`Rules::crater`).
     fn fine_steps(&self) -> u32 {
         self.dish.p.substeps as u32
     }
@@ -376,7 +400,7 @@ impl World for Garden {
     /// enemy only; smell, ticks and harvest as the squad's. Counts what
     /// each side ate.
     fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut {
-        let shots = self.shots(&f.shots, f.slime);
+        let shots = self.shots(&f.shots, f.slime, f.crater);
         squad::smell(&mut self.dish, &f.units);
         for _ in 0..ticks {
             self.dish.tick();
@@ -545,5 +569,26 @@ mod tests {
         assert!(game.soldiers.iter().all(|s| s.alive && s.hp == Rules::default().hp), "soldiers drained in their own mould");
         assert_eq!(game.killed, 0, "shots on the player's mould");
         assert!(game.world.counts_by_side().0 > start / 2);
+    }
+
+    /// A shot at the enemy lays the crater on its strike, as the one-mould
+    /// game's do, and a shot with crater 0 lays none.
+    #[test]
+    fn shots_lay_the_crater_on_the_enemy() {
+        let mut g = garden();
+        for _ in 0..30 {
+            g.dish.tick();
+        }
+        let w = g.dish.w;
+        let slime = squad::slime_trail(6.0);
+        let at = (0..w * g.dish.h).find(|&i| g.enemy_trail(i) >= slime && g.dish.species_trail[OWN as usize][i] < 0.1).expect("enemy slime");
+        let to = ((at % w) as f32 + 0.5, (at / w) as f32 + 0.5);
+        let shot = [ShotIn { from: to, to, r: 2.0 }];
+        let mut plain = g.clone();
+        let out = plain.shots(&shot, slime, 0);
+        assert!(out[0].hit.is_some(), "{out:?}");
+        assert!(plain.dish.scorch.is_empty(), "crater 0 lays none");
+        g.shots(&shot, slime, 40);
+        assert_eq!(g.dish.scorch[at], 40, "the crater on the strike");
     }
 }
