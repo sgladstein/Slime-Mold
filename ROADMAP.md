@@ -44,7 +44,7 @@ the merge order, are in *Larder World: shared rules and merge order*, below.
 | # | Step | Owner | Waits on | State |
 | --- | --- | --- | --- | --- |
 | L-I | The game's shared rules: one owner and one code path per mechanic, the merge order, the GPU `Params` queue | *Integrate the Larder game's shared rules* thread | nothing | **agreed 11-12** with every thread below, after the technical lead and game designer reviews found scorch designed in four places and lures, alarms, walls and depots in two or three each. `Engine` Params layout asserts are real in release builds since 11-12 |
-| L-F | The owner's playtest fixes (11-12 04:13Z): free shots, soldier scent as a rule, then a slower mould clock; shots that leave a lasting hole | *Make the Larder World fight feel alive* (Larder) thread | nothing | free shots and scent built, census on 16 held-out seeds running; the clock change is a census reset (below) |
+| L-F | The owner's playtest fixes (11-12 04:13Z): free shots, soldier scent as a rule; shots that leave a lasting hole | *Make the Larder World fight feel alive* (Larder) thread | nothing | built: free shots, scent (0.5 over 2 dish cells), and the mould turns from fresh gunfire (alarm at -1, keep 0.98): a four-soldier squad's hole after 20 s is 102 dish cells against 29 (16/16 seeds). The slower clock was dropped (dead end). Census on 32 seeds plus the Fork and the Rim, with fort and strike, before PR 1 merges; flee 1 against 3 is on a blind A/B for the owner |
 | L-O | One body: the mould holds together, and a cut-off piece starves | *Make the mould one cohesive body* thread | nothing | cut probe built; cohesion rules being tried on the CPU (a tether makes crawling hunks but splits the body). Then the GPU port, a page of cuts, and the owner's say before it goes on by default |
 | L-C | Soldier controls: order queue, attack-move, moving on from a dry crystal, the larder's rally point; then building over time and the larder as a depot | *Improve soldier controls and commands* thread | part 2 waits on buildings batch 1 (soldiers build over time: owner's card, 11-12) | part 1 built (branch `claude/project-thread-oldrb7`), census gate with moving-on on and off running |
 | L-B | Buildings: turret, lure, pump, wall and outpost as one `Building` type; then siren | *Add turrets, walls and other buildings* thread | the siren waits on the toolkit's burst list; no Scorcher (owner's card, 11-12 04:46Z) | batch 1 built on the CPU and twin-tested on software Vulkan; `UNITS_MAX` 64 to 96 with a cap test; census is a payoff table of plans by tier and map, turret-ring and turtle hands included |
@@ -116,7 +116,7 @@ order still holds: tools and feel are built in parallel (owner, 11-12
 | Walls | Larder's wall cells and rules (`wall_hp`, `wall_scent`, `wall_bite`); a wall is a building kind over them | Larder thread (rules), buildings thread (the kind) | |
 | Building anything | soldiers walk to a site and raise it over time (owner's card, 11-12 ~04:41Z) | soldier controls thread | every building kind |
 | Larder and outpost | one kind, a depot; the larder is the first. Hoard smell and stealing apply to every depot | buildings thread (kind), controls thread (select, buy, rally), Larder thread (hoard, steal) | |
-| The hole under fire | the shot rule (candidate: the alarm read at a negative weight); any per-cell closed ground is the crater field | Larder thread (the one body thread handed it over, 11-12 05:08Z) | graphics draws it |
+| The hole under fire | the shot rule: the mould reads the shots' alarm at a negative weight (`larder_world::FLEE_WEIGHT` -1, `FLEE_KEEP` 0.98 in `race_params`); any per-cell closed ground is the crater field | Larder thread (the one body thread handed it over, 11-12 05:08Z) | graphics draws it |
 | Cohesion, hunger, cuts | `big.rs` on the CPU, then a GPU port | one body thread | det cord's siege relies on a cut piece starving; graphics draws cuts |
 | Shot look | drawn from the crater field and the walkers, no stamp (owner, 11-12 04:38Z) | graphics thread | sound |
 | Sound | reads `squad::FrameOut`, `HudEvent`s and the burst list; writes no rule | sound thread | |
@@ -147,7 +147,7 @@ every plan (game designer review).
 
 **Merge order on `src/mould/larder_world.rs` and `squad.rs`.**
 
-1. Larder thread: free shots, soldier scent
+1. Larder thread: free shots, soldier scent, the flee from gunfire
 2. Controls part 1: order queue, attack-move, moving on (branch built 11-12)
 3. GPU thread: `Game::step` split into begin and finish halves (`step()`
    stays both, so callers, the census and replays run as now)
@@ -186,7 +186,10 @@ mould reads the alarm that shots already lay at a negative weight
 (`alarm_weight` -1, keep 0.98). On seed 1 that held a growing hole open
 under fire (110 dish cells, against 40 today) that refills once fire
 stops. It becomes a default only if a 16-seed hole test and the census
-agree. That is the local push the *Skittish* dead end saw near a wound, not
+agree. The 16-seed test agreed (11-12 05:10Z: 102 dish cells against 29
+after 20 s of fire, 16 of 16, refilled about 10 s after the last shot), so
+it is the default on the Larder thread's branch; the 32-seed census gates
+the merge. That is the local push the *Skittish* dead end saw near a wound, not
 the whole-body flight it was rejected for. Shots may still lay a little of
 the toolkit's crater later, with values in `Rules`.
 
