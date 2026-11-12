@@ -590,7 +590,7 @@ pub struct Game<W: World> {
 struct Flight {
     t: u64,
     f: Frame,
-    who: Vec<Option<usize>>,
+    who: Vec<Who>,
     from: Vec<Option<usize>>,
     out: Option<FrameOut>,
 }
