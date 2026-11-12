@@ -16,7 +16,10 @@ mould's model (`mould::kit`): blast, mine, det cord, germ, sleep gas, and
 mask or reek on a soldier's smell. Every tool comes down to bursts
 (`squad::Burst`) that a world applies (`World::burst`): blast, cord and mine
 run on the GPU world too (the engine's strike lays the crater), germ and gas
-on the CPU only so far. A mine's trigger scales with `Game::density`. The crater a blast, cord
+on the CPU only so far. A mine's trigger scales with `Game::density`. In
+the window (`larder-world`) E opens the tools page: blast, det cord and
+mine work; every soldier at the larder takes one tool, a selected one up
+to five. The crater a blast, cord
 or shot leaves (`BigDish::scorch_disc`; GPU binding 47 since #113, shared
 `scorch_keep` 0.1, `scorch_full` 30) is the one scorch in the game. Each tool
 shows in the mould; mines are weak and the det cord starves nothing until
@@ -61,7 +64,8 @@ this toolkit's burst list, not a new system.
 - Round 2 on a second map, and as `larderworld census` hands.
 - A tier where gas or the det cord is the best plan.
 - `germ_resist` as a tier key, if a campaign mould needs the germ answered.
-- Germ and gas on the GPU world (contagion's sick upkeep and the gas field), then the tools in the window.
+- Germ and gas on the GPU world (contagion's sick upkeep and the gas field), so the window's germ and gas buttons work.
+- The tools in the game's replay (the kit sits outside `Game`).
 - The det cord once food flows (the one-body thread's `energy_flow`).
 
 ## Sources
