@@ -129,6 +129,10 @@ struct Row {
     /// soldier (the cap if none ever does).
     near: f64,
     touch_at: f32,
+    /// The second the squad took the core (`Game::core_down`; births stop
+    /// then), if it did: the core-defence census (11-12) asks whether the
+    /// core falls, and when, as well as whether the mould is wiped.
+    core_at: Option<f32>,
     /// Stuck seconds (design review, 2026-11-12: no soft lock): soldiers
     /// alive, none fired or took food that second, and the bank cannot buy
     /// a soldier. The owner's playtest hit this when shots cost food.
@@ -272,6 +276,7 @@ fn main() {
             // `crater=S`: game seconds of crater each hit lays
             // (`Rules::crater`).
             "crater" => rules.crater = v.parse().unwrap(),
+            "core_pull" => rules.core_pull = v.parse().unwrap(),
             "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
             "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
             "scorch_cone" => m.scorch_cone = v == "1",
@@ -399,9 +404,9 @@ fn main() {
                     }
                     let r = play(*seed, scale, walkers, rules, m, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
                     println!(
-                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s",
+                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s{}",
                         if engines.len() > 1 { format!(" {}", engine_name(*on_gpu)) } else { String::new() },
-                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck
+                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck, r.core_at.map_or(String::new(), |t| format!(", core fell at {t:.0} s"))
                     );
                     out.lock().unwrap()[j] = r;
                 }
@@ -598,7 +603,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, han
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),
         };
-        return play_on(Game::new(world, rules, seed), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
+        return play_on(Game::new(world, rules, seed).with_tier(mould.tier), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
     }
     let mut p = race_params(seed, scale, walkers);
     mould.apply(&mut p);
@@ -612,7 +617,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, han
         counts(g, hand, seed);
     };
     let near = |d: &BigDish, live: &[(f32, f32)], r: f32| Some((0..d.walkers.len()).filter(|&k| d.lives(k) && live.iter().any(|&(x, y)| (d.walkers[k].0 - x).hypot(d.walkers[k].1 - y) <= r)).count());
-    play_on(Game::new(world, rules, seed), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
+    play_on(Game::new(world, rules, seed).with_tier(mould.tier), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
 }
 
 /// Living walkers within a radius (fine cells) of any of the points, where
@@ -740,6 +745,7 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
         think_us,
         near: near_sum / near_n.max(1) as f64,
         touch_at: touch_at.unwrap_or(g.rules.cap),
+        core_at: g.core_down.map(|t| t as f32 / g.rules.tps as f32),
         // Counted by the game since 2026-11-12 (`Game::stuck`), the same
         // test the census ran here (it can count the round's last second,
         // which the plan never saw).
