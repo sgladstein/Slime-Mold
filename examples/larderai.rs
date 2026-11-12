@@ -84,7 +84,7 @@ fn trace(g: &Game) {
             Order::Burn(..) => burn += 1,
             Order::Move(..) | Order::Fight(..) => walk += 1,
             Order::Attack => attack += 1,
-            Order::Hold => hold += 1,
+            Order::Hold | Order::Build(_) => hold += 1,
         }
         hp.push(s.hp as i32);
     }

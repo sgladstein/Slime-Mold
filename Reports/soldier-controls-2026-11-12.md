@@ -91,3 +91,49 @@ thread's `Building`/`Game::raise`), walls included; harvesters carry to the
 nearest depot once outposts exist. Not built from the proposal: right click
 on mould as attack-move (needs a mould read under the cursor on the GPU
 world) and a line formation for group moves.
+
+## Part 2: soldiers raise buildings (2026-11-12)
+
+The owner's card (04:41Z): "Soldiers build over time". On the buildings
+thread's shared `Building` (#112: a ghost at `built` 0 holds a tenth of its
+health and gains the rest as it rises; it acts only when whole; a wall's
+cells go into the world only then):
+
+- `Order::Build(b)`: the soldier walks beside the ghost (for a wall, to the
+  nearest point of its line) and, within 3 dish cells plus its sunflower
+  slot, raises it `dt / Game::raise_secs` a frame; builders add up. Once it
+  stands or is gone the soldier takes its next queued order, else holds.
+- `BuildRules::raise` 0 → **8** seconds for a lone builder; a wall takes 8
+  per 10 dish cells of length (`WALL_RAISE_LEN`), at least 8.
+- An idle soldier (holding, nothing queued) within its range takes up the
+  nearest ghost by itself (`Game::build_turn`), so a ghost placed by an
+  idle squad rises without another order.
+- The window sends the selected soldiers to raise what it places (Shift:
+  after their orders). Harvesters carry home to the nearest depot, the
+  larder or a standing outpost (`Game::drop_offs`).
+- The census hands send their nearest soldier to raise what they place
+  (`send_builder`), and the farm hand leaves a builder be. Without that the
+  first run (raise 8) broke the hands built for instant buildings: wall
+  fell to -0.309 and no longer beat idle (5-3), its hand placing a fresh
+  wall every second while the first was a ghost.
+
+Census, seeds 5-12, cap 900, main's defaults (free shots), raise 8 against
+0 (raw: `census-raise-8.txt`, `census-raise-0.txt`):
+
+| hand | mean, raise 0 | mean, raise 8 | 8 vs 0, paired |
+| --- | --- | --- | --- |
+| farm | +0.201 | +0.201 | 0-0 |
+| wall | +0.196 | +0.189 | 4-4 |
+| ring | +0.201 | +0.184 | 4-4 |
+| turtle | +0.325 | +0.236 | 0-7, p 0.016 |
+| killzone | +0.209 | +0.200 | 3-5 |
+| guard | +0.338 | +0.247 | 1-7, p 0.07 |
+| pumps | +0.240 | +0.200 | 1-7, p 0.07 |
+| army | +0.336 | +0.336 | 0-0 |
+
+Every plan beats idle and random 8-0 either way (all hold under Holm).
+The cost falls on the turret plans (turtle, guard, pumps), which the
+buildings census found best on every tier; army, the same food on
+soldiers, is now the top mean. Raising is labour and risk the player
+spends, as the owner chose; on by default. Turtle's loss is significant
+before correction only (8 comparisons: Bonferroni 0.006).
