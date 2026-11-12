@@ -84,6 +84,10 @@ pub struct View {
     ground: wgpu::Buffer,
     walkers: wgpu::Buffer,
     specks: wgpu::Buffer,
+    /// Each walker's energy, when the world grows (`set_alive`): a slot
+    /// below 0 is empty or dead and draws no speck.
+    alive: wgpu::Buffer,
+    lives: bool,
     /// The soldier sprites (`SPRITES`), RGBA a texel.
     atlas: wgpu::Buffer,
     /// Each shown cell's height and material, worked out once a frame by
@@ -127,7 +131,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -142,7 +146,8 @@ impl View {
         let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 4);
         let atlas = Self::atlas(device, queue);
         let (hcell, mcell) = Self::cell_buffers(device, screen);
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell]);
+        let alive = storage(device, "alive", 16);
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -157,6 +162,8 @@ impl View {
             ground,
             walkers,
             specks,
+            alive,
+            lives: false,
             atlas,
             hcell,
             mcell,
@@ -201,13 +208,13 @@ impl View {
         (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 8))
     }
 
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 14]) -> wgpu::BindGroup {
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 15]) -> wgpu::BindGroup {
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -229,6 +236,20 @@ impl View {
     /// restart (`set_world` drops them).
     pub fn set_look(&mut self, look: &wgpu::Buffer, ground: &wgpu::Buffer, walkers: &wgpu::Buffer, n_walk: u32) {
         (self.look, self.ground, self.walkers, self.n_walk, self.shade) = (look.clone(), ground.clone(), walkers.clone(), n_walk, true);
+        self.rebind();
+    }
+
+    /// With growth on, the walkers' energy buffer (an `f32` a slot, below 0
+    /// for an empty or dead slot), so the look draws specks for the living
+    /// only. Without it every slot is a speck: a growing world's empty
+    /// slots sit stacked at the dish's centre and its dead where they
+    /// died, so the Larder world drew a bright dot in the middle and the
+    /// ghosts of every walker its shots killed (W2c, 2026-11-12).
+    pub fn set_alive(&mut self, energy: Option<&wgpu::Buffer>) {
+        (self.alive, self.lives) = match energy {
+            Some(b) => (b.clone(), true),
+            None => (storage(&self.device, "alive", 16), false),
+        };
         self.rebind();
     }
 
@@ -326,7 +347,7 @@ impl View {
         for v in [cam.x, cam.y, cam.zoom, 0.0] {
             b.extend(v.to_le_bytes());
         }
-        for v in [mm.0, mm.1, mm.2, mm.3, self.shade as u32, self.n_walk, 0, 0] {
+        for v in [mm.0, mm.1, mm.2, mm.3, self.shade as u32, self.n_walk, self.lives as u32, 0] {
             b.extend(v.to_le_bytes());
         }
         // The shown cells and a margin: what `prep` works out.
