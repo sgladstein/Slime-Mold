@@ -1,0 +1,12 @@
+# Mission 2: fire and stances against the Drifter. Crystal 0 is the Fork's stem, the
+# mould's home (512, 600). Retargeted 2026-11-12 (census v7): the real Drifter (tiers
+# PR #115) never left its home crystal in 15:00 with any hand on seeds 1-4, so the old
+# goal (retake the west fork, crystal 1) could never start; only a wipe met it.
+name First contact
+says Take back a crystal the mould has reached and hold it for 60 s
+map fork
+tier drifter
+verbs move harvest buy stance fire
+rule price 0
+bonus lose 2
+goal hold 1 60 1 2 3 4 5 6 7 8 9

@@ -49,7 +49,14 @@ pub enum Goal {
     /// the first census (2026-11-12) found the Fork's west crystal "clear"
     /// from the start, so every hand, idle included (best 0.22-0.87), filled
     /// the bar before the mould arrived, and the mission taught nothing.
-    Clear { crystals: Vec<usize>, need: usize, secs: f32, retake: bool },
+    ///
+    /// With `guard` (`goal hold`, which is also `retake`) a crystal counts
+    /// only while a living soldier stands on it (within `GUARD` of its
+    /// radius): the Drifter drifts since tiers #133, and on the plain retake
+    /// random fire met First contact on 2 of 4 seeds by 2:49 (census v10),
+    /// chasing the mould off a crystal and walking away; holding means
+    /// standing there.
+    Clear { crystals: Vec<usize>, need: usize, secs: f32, retake: bool, guard: bool },
     /// At most `leak` of the walkers outside this rectangle (map cells) for
     /// `secs` game seconds in a row (mission 3: keep the mould in the Rim).
     /// With no leak allowed (the first census) no hand ever held the Rim for
@@ -101,7 +108,7 @@ impl Mission {
     /// WORDS`, `map NAME`, `tier NAME`, `verbs NAME...`, `rule KEY VALUE`,
     /// `bonus lose N` | `bonus stolen F`, and one goal: `goal squad N [K]`,
     /// `goal clear NEED SECS C...` (or `retake`: only crystals the mould has
-    /// been on), `goal contain X0 Y0 X1 Y1 SECS LEAK`, `goal
+    /// been on; `hold`: retake, and a soldier stands on it), `goal contain X0 Y0 X1 Y1 SECS LEAK`, `goal
     /// shrink F`, `goal take F`.
     pub fn parse(text: &str) -> Result<Mission, String> {
         let (mut name, mut says, mut map, mut tier, mut goal, mut verbs, mut bonus, mut rules) = (None, None, None, None, None, vec![], None, vec![]);
@@ -145,7 +152,7 @@ impl Mission {
                     goal = Some(match (k, v.as_slice()) {
                         ("squad", [x]) => Goal::Squad { n: *x as usize, crystals: 0 },
                         ("squad", [x, k]) => Goal::Squad { n: *x as usize, crystals: *k as usize },
-                        ("clear" | "retake", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs, retake: k == "retake" },
+                        ("clear" | "retake" | "hold", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs, retake: k != "clear", guard: k == "hold" },
                         ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: 0 },
                         ("contain", [x0, y0, x1, y1, secs, leak, body]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: *body as u32 },
                         ("shrink", [f]) => Goal::Shrink(*f),
@@ -199,6 +206,8 @@ const RULE_KEYS: [&str; 8] = ["price", "start_bank", "squad", "soldier_cost", "c
 /// mission; two stars need the goal before `TWO_STARS`.
 pub const STUCK_END: f32 = 30.0;
 pub const OVERRUN_END: f32 = 30.0;
+/// `hold`: a soldier within this many crystal radii holds the crystal.
+pub const GUARD: f32 = 1.5;
 /// `Rules::reserve` for a mission: a free recruit every 20 game seconds
 /// while fewer than two soldiers live and the bank can't buy one.
 pub const RESERVE: f32 = 20.0;
@@ -379,7 +388,7 @@ impl Tracker {
             // From an even share: `take_share` is 0.5 before any charge is
             // gone, which as share / f showed 83% of a 60% goal at 0:00.
             Goal::Take(f) => Some(((g.take_share() - 0.5) / (f - 0.5).max(1e-3)).clamp(0.0, 1.0)),
-            Goal::Clear { crystals, need, secs, retake } => {
+            Goal::Clear { crystals, need, secs, retake, guard } => {
                 let grid = grid?;
                 let cs = g.world.crystals();
                 self.touched.resize(cs.len(), false);
@@ -389,7 +398,7 @@ impl Tracker {
                     let on = walkers_where(grid, size, |px, py| (px - x).hypot(py - y) <= r);
                     if on > 0 {
                         self.touched[c] = true;
-                    } else if !retake || self.touched[c] {
+                    } else if (!retake || self.touched[c]) && (!guard || g.soldiers.iter().any(|s| s.alive && (s.x - x).hypot(s.y - y) <= r * GUARD)) {
                         clear += 1;
                     }
                 }
@@ -592,6 +601,32 @@ pub fn decided_at(bars: &[Option<f32>], final_stars: u8) -> usize {
     at
 }
 
+/// Mission 2's own plan, for the census (`examples/campaign.rs` hand
+/// `hold+STYLE`): once the mould has reached a crystal other than its home
+/// (`reached`, a bit a crystal), the whole squad attack-moves onto the one
+/// nearest the larder and stands there; until then STYLE plays (the
+/// function returns false). The Drifter drifts since tiers #133, and the
+/// AI styles harvest where the mould is not, so none of them ever stood on
+/// a crystal it had taken (census v10: `hold` met by strike's wipe only).
+pub fn hold_reached<W: World>(g: &mut Game<W>, reached: u64) -> bool {
+    let cs = g.world.crystals();
+    let (lx, ly) = g.larder;
+    let Some(c) = (1..cs.len().min(64)).filter(|&c| reached & (1 << c) != 0).min_by(|&a, &b| {
+        let d = |c: usize| (cs[c].0 .0 - lx).hypot(cs[c].0 .1 - ly);
+        d(a).total_cmp(&d(b))
+    }) else {
+        return false;
+    };
+    let (x, y) = cs[c].0;
+    for k in 0..g.soldiers.len() {
+        let s = &g.soldiers[k];
+        if s.alive && !matches!(s.order, Order::Fight(fx, fy) if fx == x && fy == y) {
+            g.apply(Cmd::Order(k, Order::Fight(x, y)));
+        }
+    }
+    true
+}
+
 /// The Rim's gaps (rock ring radius 200 map cells round (512, 320), 16
 /// thick, gaps at 0, 90, 180, 270 degrees, half widths 14, 10, 14, 10:
 /// `sketch_maps.py`): soldier k walks to gap k's middle and walls its chord
@@ -647,7 +682,9 @@ mod tests {
         assert!(Mission::parse(&LANDFALL.replace("rule price 0", "rule prise 0")).is_err());
         assert!(Mission::parse(&format!("{LANDFALL}goal take 0.6\n")).is_err());
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 6 60 1 2 3 4 5 6 7 8")).unwrap();
-        assert_eq!(c.goal, Goal::Clear { crystals: (1..=8).collect(), need: 6, secs: 60.0, retake: false });
+        assert_eq!(c.goal, Goal::Clear { crystals: (1..=8).collect(), need: 6, secs: 60.0, retake: false, guard: false });
+        let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal hold 1 60 1 2")).unwrap();
+        assert!(matches!(c.goal, Goal::Clear { retake: true, guard: true, .. }));
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal retake 1 60 1")).unwrap();
         assert!(matches!(c.goal, Goal::Clear { retake: true, .. }));
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60 1 16")).unwrap();
@@ -772,6 +809,36 @@ mod tests {
         let mut tr = Tracker::new(mission(&format!("goal retake 1 10 {home}")), &g);
         assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none());
         assert_eq!(tr.best, 0.0, "the home crystal stays the mould's");
+
+        // `hold`: a crystal counts only with a soldier on it. On a crystal
+        // the mould never reached (guard alone, retake off) the squad
+        // walked onto it fills the bar; walked the other way it does not.
+        let held = |g: &Game<crate::mould::big::BigDish>, near: usize| {
+            let mut m = mission(&format!("goal hold 1 20 {near}"));
+            if let Goal::Clear { retake, .. } = &mut m.goal {
+                *retake = false;
+            }
+            Tracker::new(m, g)
+        };
+        let mut g = small(Rules::default());
+        let (near, _) = near_and_home(&g);
+        let at = g.world.crystals()[near].0;
+        let mut tr = held(&g, near);
+        let v = follow(&mut g, &mut tr, 40.0, |g| {
+            for s in g.soldiers.iter_mut() {
+                s.order = Order::Move(at.0, at.1);
+            }
+        });
+        assert_eq!(v.map(|v| v.cause), Some(Cause::Goal), "a soldier on the crystal holds it");
+        let mut g = small(Rules::default());
+        let mut tr = held(&g, near);
+        // The larder is on that crystal: walk well clear of it.
+        let away = (at.0 - 120.0, at.1);
+        assert!(follow(&mut g, &mut tr, 40.0, |g| {
+            for s in g.soldiers.iter_mut() {
+                s.order = Order::Move(away.0, away.1);
+            }
+        }).is_none(), "nobody on it, not held: best {}", tr.best);
     }
 
     /// `contain` fills over the whole world and never in a corner; the leak
