@@ -1,0 +1,28 @@
+cutprobe race world scale 2 walkers 5000, grow 150 s, follow 60 s, 2 cuts a seed, seeds [3]
+arms: [("base", []), ("A", [("lone_upkeep", "5"), ("energy_flow", "0.05"), ("hunger_scent", "4")]), ("L3", [("lone_upkeep", "3"), ("energy_flow", "0.05"), ("hunger_scent", "4")]), ("H", [("energy_flow", "0.05"), ("hunger_scent", "8")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 3 grown | alive 3895 parts1% 2 lcs 0.62 lone 0.02 rms 39.8 | crystals eaten from 3 of 23
+base 3 0 | 161 161 0 | 0.73 2.79 0.67 9.5 10.19 | 23 rejoin 2 11.0 react 21 | 3895 8.64
+base 3 1 | 70 70 0 | 0.33 1.84 0.84 5.5 11.22 | 20 rejoin 2 5.2 react 9 | 3895 8.64
+A 3 grown | alive 1551 parts1% 2 lcs 0.93 lone 0.02 rms 19.3 | crystals eaten from 1 of 23
+L3 3 grown | alive 8983 parts1% 1 lcs 0.99 lone 0.01 rms 52.8 | crystals eaten from 5 of 23
+L3 3 0 | 351 351 0 | 0.85 1.62 0.84 11.4 3.71 | 60 rejoin 2 5.6 react 16 | 8983 14.37
+L3 3 1 | 128 128 0 | 0.69 6.20 0.57 23.4 11.90 | 60 rejoin 2 34.1 react 4 | 8983 14.37
+H 3 grown | alive 9582 parts1% 1 lcs 1.00 lone 0.00 rms 37.7 | crystals eaten from 5 of 23
+H 3 0 | 363 363 0 | 0.70 2.20 0.69 14.5 4.72 | 60 rejoin 2 11.6 react 6 | 9582 14.29
+H 3 1 | 152 152 0 | 0.93 1.48 0.89 8.2 3.41 | 60 rejoin 2 1.5 react -1 | 9582 14.29
+
+summary (mean over cuts)
+base: cuts 2 n0 116 lcs20 0.53 frag 2.32 lcs 0.76 rms20 7.5 compact20 10.70 life 22 moved 8.1 fates {"rejoin": 2}
+A: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
+L3: cuts 2 n0 240 lcs20 0.77 frag 3.91 lcs 0.70 rms20 17.4 compact20 7.81 life 60 moved 19.8 fates {"rejoin": 2}
+  vs base: lcs20 better 2 worse 0, p 0.5000
+  vs base: life better 2 worse 0, p 0.5000
+  vs base: compact20 better 1 worse 1, p 1.0000
+H: cuts 2 n0 258 lcs20 0.81 frag 1.84 lcs 0.79 rms20 11.4 compact20 4.06 life 60 moved 6.6 fates {"rejoin": 2}
+  vs base: lcs20 better 1 worse 1, p 1.0000
+  vs base: life better 2 worse 0, p 0.5000
+  vs base: compact20 better 2 worse 0, p 0.5000

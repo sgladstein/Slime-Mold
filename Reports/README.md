@@ -379,5 +379,6 @@ move.
   lean-vs-fat show 16/16 but tiny effects, because the mould crosses today's dish in about 4 s. **Correction:** a re-fired
   snip did not refresh its wound; fixed, a ring held from the start stops all theft (16/16); three reviews in `reviews/`.
   **Priced ring** (`econ`): ring-forever never best; ring-then-mow best on 16/16 at prices 10 and 40; a ladder.
+- [one-body-2026-11-12.md](one-body-2026-11-12.md) — **one body (owner's playtest, 11-12):** today's mould is lumps joined by single-file streams; food sharing + hunger (`energy_flow` 0.05 + `hunger_scent` 8) is one body on more seeds (largest part 0.97 against 0.88, higher 8/8) and 2.5x the size; any cut gap refills in 1-2 s; a hunk held apart stays one lump and starves. Page and raw runs in `one-body-2026-11-12/`.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.

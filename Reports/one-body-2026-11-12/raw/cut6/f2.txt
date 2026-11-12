@@ -1,0 +1,23 @@
+cutprobe race world scale 2 walkers 5000, grow 150 s, follow 90 s, 2 cuts a seed, seeds [2]
+arms: [("base", []), ("A", [("lone_upkeep", "5"), ("energy_flow", "0.05"), ("hunger_scent", "4")]), ("L3", [("lone_upkeep", "3"), ("energy_flow", "0.05"), ("hunger_scent", "4")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 2 grown | alive 6455 parts1% 4 lcs 0.72 lone 0.01 rms 49.3 | crystals eaten from 5 of 23
+base 2 0 | 435 435 1 | 1.00 1.00 1.00 8.9 1.40 | 90 rejoin+fed 2 2.7 react -1 | 6455 14.57
+base 2 1 | 424 424 1 | 1.00 1.00 1.00 7.5 1.35 | 90 rejoin+fed 2 5.1 react 11 | 6455 14.57
+A 2 grown | alive 3320 parts1% 1 lcs 0.98 lone 0.01 rms 24.6 | crystals eaten from 2 of 23
+A 2 0 | 435 435 1 | 0.99 1.00 0.98 11.6 1.83 | 90 rejoin+fed 2 6.0 react 18 | 3320 25.08
+A 2 1 | 107 107 1 | 0.53 4.65 0.62 26.4 18.51 | 39 rejoin+fed 2 53.3 react 4 | 3320 25.08
+L3 2 grown | alive 5968 parts1% 1 lcs 0.99 lone 0.01 rms 36.4 | crystals eaten from 3 of 23
+L3 2 0 | 441 441 1 | 1.00 1.00 1.00 7.6 1.23 | 90 rejoin+fed 2 2.4 react -1 | 5968 23.57
+L3 2 1 | 436 436 1 | 1.00 1.00 1.00 8.3 1.34 | 90 rejoin+fed 2 3.4 react 39 | 5968 23.57
+
+summary (mean over cuts)
+base: cuts 2 n0 430 lcs20 1.00 frag 1.00 lcs 1.00 rms20 8.2 compact20 1.37 life 90 moved 3.9 fates {"rejoin+fed": 2}
+A: cuts 2 n0 271 lcs20 0.76 frag 2.82 lcs 0.80 rms20 19.0 compact20 10.17 life 64 moved 29.6 fates {"rejoin+fed": 2}
+  vs base: lcs20 better 0 worse 2, p 0.5000
+  vs base: life better 0 worse 1, p 1.0000
+  vs base: compact20 better 0 worse 2, p 0.5000
+L3: cuts 2 n0 438 lcs20 1.00 frag 1.00 lcs 1.00 rms20 8.0 compact20 1.28 life 90 moved 2.9 fates {"rejoin+fed": 2}
+  vs base: lcs20 better 1 worse 1, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 2 worse 0, p 0.5000
