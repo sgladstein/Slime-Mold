@@ -172,3 +172,31 @@ After main's #106 (free shots by default, soldier scent) the same gate
 plays to the digit as above (`census-gate-after-106.txt`). The Larder
 thread's #113 (shots dig craters, turret shots too, through the same
 frame) will move it; the payoff table is re-run after it lands.
+
+## The payoff on the new baseline (craters, 8 s builds, core defence)
+
+After #113 (shots dig craters, turret shots too), #122 (buildings rise
+over 8 s with builders) and #126 (the mould defends its core), main at
+9f5e4a4, all nine hands, cap 900 s. Four runners and this thread ran the
+standing gate's seeds; seeds 217-224 were lost to a container restart and
+not re-run, since the owner's 17:26Z rule (build first, balance later)
+makes the census a strategy question, not a gate. Summaries from
+`gate.py` (raw files and provenance lines in `runs/`):
+
+| World (seeds) | idle | random | farm | ring | turtle | killzone | guard | pumps | army | best on a seed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| race 5-36 (32) | -0.396 | -1.431 | +0.274 | +0.284 | +0.318 | +0.267 | +0.319 | +0.324 | **+0.390** | army 22, guard 6, pumps 3, turtle 1 |
+| race 201-232 (24) | -0.320 | -1.276 | +0.295 | +0.297 | +0.335 | +0.288 | +0.335 | +0.323 | **+0.393** | army 13, guard 7, pumps 2, turtle 1 |
+| nest 5-12 (8) | -0.228 | -1.785 | -0.594 | **+0.045** | -0.111 | -1.629 | **+0.045** | +0.034 | -0.269 | ring 4, guard 3, army 1 |
+
+- Every plan beats idle and random on both race blocks (Holm holds;
+  random wipes the mould on 2 of 32 and 1 of 24).
+- **On the race world, buying soldiers now beats building.** Army beats
+  every building hand on 5-36 (guard 8-24, p 0.007; the rest 0-4 wins of
+  32) and all but guard on 201-232 (guard 8-15, p 0.21). Build time and
+  craters made turrets slower to pay back than soldiers.
+- **On the nest the order turns over.** Ring and guard are best, army
+  scores below idle (idle beats it on 2 of 8) and below ring and guard on
+  7 of 8 (p 0.07 each, not significant at 8 seeds), and the killzone squad
+  still dies. So the best plan does change with the map: soldiers in the
+  open, turrets in the nest's narrow ground.

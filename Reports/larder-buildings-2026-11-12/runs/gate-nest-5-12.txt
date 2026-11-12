@@ -1,0 +1,27 @@
+== nest-5-12: 8 seeds (5-12) from 2 files
+  provenance: harness larderworld, commit 9f5e4a402, seeds 5-12 (8), cap 900 s, settings hash 0871e14ee1c3fa75
+  provenance: harness larderworld, commit 9f5e4a402, seeds 11-12 (2), cap 900 s, settings hash 0871e14ee1c3fa75
+  mean: idle -0.228, random -1.785, farm -0.594, ring +0.045, turtle -0.111, killzone -1.629, guard +0.045, pumps +0.034, army -0.269
+  random wipes the mould on 0 of 8
+  best plan on a seed (ties dropped): farm 0, ring 4, turtle 0, killzone 0, guard 3, pumps 0, army 1
+  paired by seed, sign test, Holm over 20:
+        farm vs idle  :  4 higher,  4 lower, p 1.0000
+        farm vs random:  8 higher,  0 lower, p 0.0078
+        ring vs idle  :  8 higher,  0 lower, p 0.0078
+        ring vs random:  8 higher,  0 lower, p 0.0078
+      turtle vs idle  :  7 higher,  1 lower, p 0.0703
+      turtle vs random:  8 higher,  0 lower, p 0.0078
+    killzone vs idle  :  0 higher,  8 lower, p 0.0078
+    killzone vs random:  8 higher,  0 lower, p 0.0078
+       guard vs idle  :  8 higher,  0 lower, p 0.0078
+       guard vs random:  8 higher,  0 lower, p 0.0078
+       pumps vs idle  :  8 higher,  0 lower, p 0.0078
+       pumps vs random:  8 higher,  0 lower, p 0.0078
+        army vs idle  :  6 higher,  2 lower, p 0.2891
+        army vs random:  8 higher,  0 lower, p 0.0078
+        ring vs army  :  7 higher,  1 lower, p 0.0703
+      turtle vs army  :  5 higher,  3 lower, p 0.7266
+    killzone vs army  :  0 higher,  8 lower, p 0.0078
+       guard vs army  :  7 higher,  1 lower, p 0.0703
+       pumps vs army  :  5 higher,  3 lower, p 0.7266
+        farm vs army  :  2 higher,  6 lower, p 0.2891
