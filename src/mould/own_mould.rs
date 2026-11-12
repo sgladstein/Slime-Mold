@@ -235,7 +235,7 @@ impl Garden {
     /// `squad::shots` for the garden: a shot stops at the first cell whose
     /// enemy trail looks like slime, so it flies over the player's mould,
     /// and strikes the enemy's walkers and trail only.
-    fn shots(&mut self, shots: &[ShotIn], slime: f32, crater: u16) -> Vec<ShotOut> {
+    fn shots(&mut self, shots: &[ShotIn], slime: f32, crater: u16, bite: f32) -> Vec<ShotOut> {
         let (w, h) = (self.dish.w, self.dish.h);
         let shots = &shots[..shots.len().min(SHOTS_MAX)];
         let mut used = 0;
@@ -247,14 +247,16 @@ impl Garden {
                 let cells = path(w, h, s.from, s.to);
                 let cells = &cells[..cells.len().min(PATH_MAX - used)];
                 used += cells.len();
-                for &i in cells {
+                // As `squad::shots`: an enemy walker standing in a crater
+                // stops the shot though the crater holds no trail.
+                let stops = |i: usize| self.enemy_trail(i) >= slime || (!occ.is_empty() && self.dish.scorch[i] > 0 && occ[i] > 0);
+                for (j, &i) in cells.iter().enumerate() {
                     if !self.dish.agar[i as usize] {
                         return NONE;
                     }
-                    // As `squad::shots`: an enemy walker standing in a
-                    // crater stops the shot though the crater holds no trail.
-                    if self.enemy_trail(i as usize) >= slime || (!occ.is_empty() && self.dish.scorch[i as usize] > 0 && occ[i as usize] > 0) {
-                        return i;
+                    if stops(i as usize) {
+                        // The bite (`squad::bite`), on the enemy's slime.
+                        return squad::bite(w, cells, j, squad::bite_r2(bite, r2(s.r.min(R_MAX))), &self.dish.agar, stops);
                     }
                 }
                 NONE
@@ -451,7 +453,7 @@ impl World for Garden {
     /// enemy only; smell, ticks and harvest as the squad's. Counts what
     /// each side ate.
     fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut {
-        let shots = self.shots(&f.shots, f.slime, f.crater);
+        let shots = self.shots(&f.shots, f.slime, f.crater, f.bite);
         squad::smell(&mut self.dish, &f.units);
         let mut was = Vec::new();
         for _ in 0..ticks {
@@ -657,10 +659,10 @@ mod tests {
         let to = ((at % w) as f32 + 0.5, (at / w) as f32 + 0.5);
         let shot = [ShotIn { from: to, to, r: 2.0 }];
         let mut plain = g.clone();
-        let out = plain.shots(&shot, slime, 0);
+        let out = plain.shots(&shot, slime, 0, 0.0);
         assert!(out[0].hit.is_some(), "{out:?}");
         assert!(plain.dish.scorch.is_empty(), "crater 0 lays none");
-        g.shots(&shot, slime, 40);
+        g.shots(&shot, slime, 40, 0.0);
         assert_eq!(g.dish.scorch[at], 40, "the crater on the strike");
     }
 

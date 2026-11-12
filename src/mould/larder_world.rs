@@ -576,6 +576,16 @@ pub struct Rules {
     /// is not a gate for a look). Any time works, not just whole seconds:
     /// the countdown is in fine steps (`World::fine_steps` a tick).
     pub crater: f32,
+    /// How far into the slime a shot's blast is centred, in strike radii
+    /// (`squad::Frame::bite`): on along the shot's line from the first
+    /// slime it meets, to the last slime within this many radii. 1 since
+    /// 2026-11-12: the owner, playing shape D (22:06Z), found a squad
+    /// standing off a large mass "barely seems to do damage, but if I move
+    /// them into the mold, they destroy it easily", and said "Yes" (23:14Z)
+    /// to centring the blast inside the slime. A blast centred on the
+    /// body's edge spent about half its disc on open ground. 0 is the edge
+    /// hit as before (`bite=0` on the window and the example).
+    pub bite: f32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
     /// the target. 0 (the default) aims dead on and draws no random
@@ -655,6 +665,7 @@ impl Default for Rules {
             hunger: 1.0,
             seek: true,
             crater: 4.5,
+            bite: 1.0,
             spread: 0.0,
             crystal_solid: true,
             mass: 1.0,
@@ -1811,7 +1822,7 @@ impl<W: World> Game<W> {
         // buildings thread's call, 11-12 07:46Z: one rule for every shot).
         self.building_units(&mut units, &mut shots, &mut who, &mut from, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
-        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater };
+        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, bite: r.bite };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, who, from, out });
     }

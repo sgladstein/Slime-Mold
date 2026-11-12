@@ -61,7 +61,9 @@ struct Params {
     // The look's hits (`Engine::set_hits`, the world look's stand-in fight).
     // The player's own mould (`own_mould`, world bit GARDEN): its tend
     // entries this frame and where they start in `SQ.path` (`squad::TEND`).
-    nhits: u32, ntend: u32, tend_at: u32, _h2: u32,
+    // Then the shots' bite (`squad::Frame::bite`, squared; 0 off): a hit's
+    // blast sinks up to floor(`shot_bite` x its strike's r2) along its line.
+    nhits: u32, ntend: u32, tend_at: u32, shot_bite: f32,
     // The species block (2026-11-11, the creature thread's species on the
     // GPU): whether each species uses its own `sets` entry (`per`), the
     // walker kinds (`mix_share`: 2 with the mix on, a walker's kind in bit
@@ -1645,23 +1647,44 @@ fn isqrt(r2: u32) -> i32 {
     return r;
 }
 
+// Whether a shot stops at cell i: slime, or a walker in a crater (which
+// holds no trail; `squad::shots`).
+fn stops(i: u32) -> bool {
+    return enemy_trail(i) >= P.slime || ((P.scorched & 1u) != 0u && crater_at(i) > 0.0 && enemy_occ(i) > 0u);
+}
+
 // Each shot walks its cells and stops at the first off the agar (a wall or
 // rock: no hit) or the first that looks like slime (the hit), or a walker
 // in a crater (2026-11-12). The owner, 2026-11-11 16:48Z: "Gun fire should
-// hit the first slime in its path".
+// hit the first slime in its path". With the bite (`shot_bite`, 2026-11-12)
+// the blast then sinks in: on along the line while the cells are agar and
+// within the bite's reach of the first hit, to the last that stops a shot
+// (`squad::bite`).
 @compute @workgroup_size(256)
 fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
     let q = gid.x;
     if (q >= P.nshots) { return; }
     let s = SQ.shots[q];
     var hit = NONE;
-    for (var m = 0u; m < s.count; m++) {
+    var m = 0u;
+    for (; m < s.count; m++) {
         let i = SQ.path[s.start + m];
         if (agar[i] == 0u) { break; }
-        if (enemy_trail(i) >= P.slime) { hit = i; break; }
-        // A walker in a crater (which holds no trail) is what the shot
-        // meets there (`squad::shots`).
-        if ((P.scorched & 1u) != 0u && crater_at(i) > 0.0 && enemy_occ(i) > 0u) { hit = i; break; }
+        if (stops(i)) { hit = i; break; }
+    }
+    if (hit != NONE && P.shot_bite > 0.0) {
+        let reach2 = u32(floor(P.shot_bite * f32(s.r2)));
+        let hx = i32(hit % P.w);
+        let hy = i32(hit / P.w);
+        var deep = hit;
+        for (var n = m + 1u; n < s.count; n++) {
+            let c = SQ.path[s.start + n];
+            let dx = i32(c % P.w) - hx;
+            let dy = i32(c / P.w) - hy;
+            if (agar[c] == 0u || u32(dx * dx + dy * dy) > reach2) { break; }
+            if (stops(c)) { deep = c; }
+        }
+        hit = deep;
     }
     SQ.sout[q].hit = hit;
 }
