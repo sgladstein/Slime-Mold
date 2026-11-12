@@ -6,7 +6,9 @@
 //!
 //! `cargo run --release --bin larder-world [-- map=fork seed=1]`
 //! (`map=` rim, fork, flats, nest, passes, or `noise` for the race world
-//! the censuses measured; `walkers=` and `scale=` as `larderworld`'s.)
+//! the censuses measured; `walkers=` and `scale=` as `larderworld`'s;
+//! `mission=1-landfall` plays a campaign mission: its map, rules and goal,
+//! `mould::campaign`, design `Reports/larder-campaign-2026-11-12.md`.)
 //!
 //! **Why a window of its own.** The owner played `mouldgpu`'s stand-in
 //! squad (Q) on 2026-11-11 and found soldiers that did not touch the
@@ -50,7 +52,9 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::campaign::{Mission, Tracker};
 use slime_mould::mould::map::Map;
+use slime_mould::mould::tiers::Tier;
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::team_colour;
@@ -91,6 +95,9 @@ struct Args {
     seed: u64,
     scale: usize,
     walkers: usize,
+    /// A campaign mission (`Reports/larder-campaign-2026-11-12/missions/NAME.txt`):
+    /// its map, rules and tier, and its goal on the HUD (`mould::campaign`).
+    mission: Option<String>,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -162,6 +169,9 @@ struct App {
     steps: u32,
     report_at: Instant,
     saved: bool,
+    /// The mission being played, and the last game second it followed.
+    mission: Option<Tracker>,
+    mission_sec: u64,
     result: Result<(), String>,
 }
 
@@ -205,6 +215,8 @@ impl App {
             steps: 0,
             report_at: Instant::now(),
             saved: false,
+            mission: None,
+            mission_sec: 0,
             result: Ok(()),
         }
     }
@@ -220,8 +232,25 @@ impl App {
         self.save_replay();
         let Some((device, queue)) = &self.gpu else { return Ok(()) };
         let a = &self.args;
-        let s = race_settings(a.seed, a.scale, a.walkers);
-        let world = match &a.map {
+        let mut s = race_settings(a.seed, a.scale, a.walkers);
+        let mission = match &a.mission {
+            Some(name) => {
+                let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
+                let m = Mission::parse(&std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?)?;
+                // A ladder name not built yet (drifter, sprawler, trunk) plays
+                // the plain mould, and says so.
+                if let Some(t) = m.tier.as_deref() {
+                    match Tier::from_name(t) {
+                        Some(tier) => tier.settings(&mut s)?,
+                        None => eprintln!("larder-world: tier {t} is not built yet; the plain mould plays"),
+                    }
+                }
+                Some(m)
+            }
+            None => None,
+        };
+        let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
+        let world = match &map_name {
             Some(name) => {
                 let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
                 let (dir, name) = match name.rsplit_once('/') {
@@ -233,7 +262,10 @@ impl App {
             }
             None => GpuWorld::new(device, queue, s, a.scale),
         };
-        let game = Game::new(world, Rules::default(), a.seed);
+        let rules = mission.as_ref().map_or_else(Rules::default, |m| m.rules(Rules::default()));
+        let game = Game::new(world, rules, a.seed);
+        self.mission = mission.map(|m| Tracker::new(m, &game));
+        self.mission_sec = 0;
         let e = &game.world.e;
         let size = (e.dish.w, e.dish.h);
         self.charge0 = game.world.crystals().iter().map(|c| c.1).collect();
@@ -262,10 +294,16 @@ impl App {
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.bank_log.clear();
         self.game = Some(game);
+        if let Some(tr) = &self.mission {
+            self.name = tr.mission.map.clone();
+        }
         if let Some(w) = &self.window {
             w.set_title(&format!("Larder World: {} (seed {})", title_case(&self.name), self.args.seed));
         }
-        self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", title_case(&self.name)), None, theme::ACCENT);
+        match &self.mission {
+            Some(tr) => self.hud.alert(&format!("{}: {}", tr.mission.name, tr.mission.says), None, theme::ACCENT),
+            None => self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", title_case(&self.name)), None, theme::ACCENT),
+        }
         Ok(())
     }
 
@@ -405,7 +443,8 @@ impl App {
         for s in &g.soldiers[self.looks.len()..] {
             self.looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
         }
-        if self.paused || g.end.is_some() {
+        let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
+        if self.paused || g.end.is_some() || mission_over {
             self.owed = 0.0;
             return;
         }
@@ -429,6 +468,21 @@ impl App {
             }
         }
         self.steps += n;
+        // The mission follows the game once a game second. The GPU world has
+        // no mould grid yet (an occupancy read-back), so a goal that needs
+        // where the mould is shows no bar here; the CPU census has it.
+        if let Some(tr) = self.mission.as_mut() {
+            let sec = g.world.ticks() / g.rules.tps as u64;
+            // A game that ended inside a game second (a wipe) still gives
+            // the mission its verdict, so the end screen is the mission's.
+            while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
+                self.mission_sec += 1;
+                if let Some(v) = tr.second(g, None, 1.0) {
+                    let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
+                    self.hud.alert(&tr.cause_line(), None, colour);
+                }
+            }
+        }
         let t = g.time();
         for (k, s) in g.soldiers.iter().enumerate() {
             let l = &mut self.looks[k];
@@ -568,7 +622,12 @@ impl App {
             ],
             clock: format!("{} / {}", clock(t), clock(r.cap)),
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
-            objective: Some(if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
+            objective: Some(if let Some(tr) = &self.mission {
+                match tr.bar {
+                    Some(b) => format!("{} ({:.0}%)", tr.mission.says, 100.0 * b),
+                    None => tr.mission.says.clone(),
+                }
+            } else if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
             idle: g.soldiers.iter().filter(|s| s.alive && s.order == Order::Hold).count(),
             ..Model::default()
         };
@@ -689,7 +748,9 @@ impl App {
             Some((WALL, at, None)) if !g.reachable(at) => (false, Some("out of every soldier's range".into())),
             _ => (true, None),
         };
-        if let Some(end) = g.end {
+        if let Some(tr) = self.mission.as_ref().filter(|t| t.verdict.is_some()) {
+            m.end = Some(mission_screen(tr, g));
+        } else if let Some(end) = g.end {
             m.end = Some(end_screen(end, g));
         }
         m.help = vec![
@@ -834,6 +895,13 @@ fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
     lines.push(summary(g));
     lines.push(format!("Score {:+.2} (a win is over 1, a loss under -1)", g.score().unwrap_or(0.0)));
     (title, lines)
+}
+
+/// A mission's end: stars and the cause in the title, then what happened.
+fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> (String, Vec<String>) {
+    let v = tr.verdict.expect("a verdict");
+    let stars = if v.stars == 0 { "Mission lost".to_string() } else { format!("{}: {}", tr.mission.name, "*".repeat(v.stars as usize)) };
+    (stars, vec![tr.cause_line(), summary(g)])
 }
 
 fn summary(g: &Game<GpuWorld>) -> String {
@@ -1036,7 +1104,8 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
     let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
     let mut last_sec = u64::MAX;
     for &t in at {
-        while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) {
+        // A mission's verdict stops the steps, as the game's end does.
+        while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
             let g = app.game.as_mut().unwrap();
             let sec = g.world.ticks() / g.rules.tps as u64;
             if sec != last_sec {
@@ -1139,7 +1208,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, mission: None };
     let (mut look, mut hand, mut at, mut screen) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32));
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
@@ -1148,6 +1217,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "seed" => args.seed = v.parse()?,
             "scale" => args.scale = v.parse()?,
             "walkers" => args.walkers = v.parse()?,
+            "mission" => args.mission = Some(v.to_string()),
             "look" => look = Some(v.to_string()),
             "hand" => hand = v.to_string(),
             "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
@@ -1155,7 +1225,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
             }
-            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers; look, hand, at, screen)").into()),
+            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers, mission; look, hand, at, screen)").into()),
         }
     }
     if let Some(dir) = look {
@@ -1180,7 +1250,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, mission: None }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -1198,5 +1268,27 @@ mod tests {
         let m = app.model(None, None);
         assert_eq!(m.commands.len(), 9);
         assert!(m.end.is_none());
+    }
+
+    /// A campaign mission plays its own map and rules, shows its goal as the
+    /// objective, and ends on its own screen when the squad is lost (a rush
+    /// into the Flats' mould dies by 0:31 on seed 1).
+    #[test]
+    fn a_mission_shows_its_goal_and_its_end() {
+        let Some((device, queue)) = gpu() else { return };
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, mission: Some("1-landfall".into()) }, (640, 400), &device, &queue).unwrap();
+        assert_eq!(app.name, "flats");
+        assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
+        app.prepare();
+        assert!(app.model(None, None).objective.is_some_and(|o| o.starts_with("Grow your squad to 24 soldiers")));
+        let step = 1.0 / 15.0;
+        while app.mission.as_ref().unwrap().verdict.is_none() && app.game.as_ref().unwrap().time() < 120.0 {
+            plan(app.game.as_mut().unwrap(), "rush");
+            app.step(step);
+        }
+        let v = app.mission.as_ref().unwrap().verdict.expect("the rush is lost by 2:00");
+        assert_eq!(v.stars, 0);
+        app.prepare();
+        assert_eq!(app.model(None, None).end.map(|e| e.0).as_deref(), Some("Mission lost"));
     }
 }

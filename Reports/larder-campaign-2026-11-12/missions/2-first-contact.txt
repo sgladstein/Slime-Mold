@@ -1,0 +1,9 @@
+# Mission 2: fire and stances against the Drifter. Crystal 1 is the west fork (330, 300).
+name First contact
+says Clear the west fork crystal and hold it for 60 s
+map fork
+tier drifter
+verbs move harvest buy stance fire
+rule price 0
+bonus lose 2
+goal clear 1 60 1

@@ -1,0 +1,10 @@
+# Mission 3: walls against the Sprawler. The rock ring is radius 200 round (512, 320),
+# 16 thick (sketch_maps.py); the rectangle is its outer edge.
+name The gaps
+says Keep the mould inside the Rim until 10:00
+map rim
+tier sprawler
+verbs move harvest buy stance fire wall
+rule price 0
+bonus stolen 0
+goal contain 296 104 728 536 600
