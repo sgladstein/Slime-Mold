@@ -197,6 +197,28 @@ pub struct Model {
     pub end: Option<(String, Vec<String>)>,
     /// Extra lines for the controls page (key, what it does).
     pub help: Vec<(String, String)>,
+    /// The player's buildings, for whoever draws them (the window draws
+    /// plain marks now; the graphics thread's sprites read this).
+    pub buildings: Vec<Site>,
+}
+
+/// One building as the view sees it (`Model::buildings`).
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Site {
+    /// "turret", "lure", "pump", "outpost" or "wall".
+    pub kind: &'static str,
+    /// World cells; a wall's far end in `to`.
+    pub at: (f32, f32),
+    pub to: Option<(f32, f32)>,
+    /// Footprint radius, world cells.
+    pub r: f32,
+    pub hp: f32,
+    pub max_hp: f32,
+    /// 0 a ghost, 1 whole.
+    pub built: f32,
+    /// Doing its job this frame: a turret firing, a lure laying scent, a
+    /// pump drawing charge.
+    pub working: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -1,0 +1,15 @@
+larderworld the race world, tier plain, scale 2 walkers 5000 cap 900 s, tps 15, seeds [5, 6, 7, 8]; rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 0.0, hp: 100.0, drain: 1.0, touch: 1.5, smell: 0.5, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, cap: 900.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, build: BuildRules { max: 40, gap: 2.5, raise: 0.0, turret_cost: 500.0, turret_hp: 300.0, turret_range: 15.0, turret_every: 1.0, lure_cost: 300.0, lure_hp: 150.0, lure_smell: 8.0, lure_r: 6.0, lure_burn: 2.0, pump_cost: 500.0, pump_hp: 200.0, pump_rate: 5.0, pump_smell: 0.0, outpost_cost: 400.0, outpost_hp: 300.0, outpost_hoard: 0.25, touch: 2.0 } }
+ guard seed  5:         cap at   900 s, score +0.361; soldiers  8, mould   1655, bank  37210, harvested  56414, stolen     4, shots  7818, killed  26080, crystals left 0.127; 6.54 ms a tick, think 0 us mean, 0 at most; score1 +0.100
+turtle seed  5:         cap at   900 s, score +0.326; soldiers  8, mould   2366, bank  30242, harvested  61900, stolen     5, shots  6774, killed  22182, crystals left 0.042; 6.86 ms a tick, think 0 us mean, 0 at most; score1 -0.300
+ guard seed  6:         cap at   900 s, score +0.349; soldiers  8, mould   1838, bank  34509, harvested  54614, stolen     5, shots  7060, killed  24723, crystals left 0.135; 6.36 ms a tick, think 0 us mean, 0 at most; score1 -0.056
+turtle seed  6:         cap at   900 s, score +0.347; soldiers  8, mould   1904, bank  26661, harvested  59402, stolen     1, shots  5735, killed  18300, crystals left 0.077; 7.16 ms a tick, think 0 us mean, 0 at most; score1 -0.300
+ guard seed  7:         cap at   900 s, score +0.297; soldiers  8, mould   2671, bank  18868, harvested  54914, stolen    46, shots  8141, killed  52574, crystals left 0.116; 6.52 ms a tick, think 0 us mean, 0 at most; score1 -0.056
+turtle seed  7:         cap at   900 s, score +0.287; soldiers  8, mould   3031, bank   5557, harvested  58236, stolen    11, shots  6393, killed  30091, crystals left 0.065; 7.21 ms a tick, think 0 us mean, 0 at most; score1 -0.375
+ guard seed  8:         cap at   900 s, score +0.260; soldiers  8, mould   3579, bank  23914, harvested  47114, stolen     0, shots  6029, killed  28789, crystals left 0.212; 7.62 ms a tick, think 0 us mean, 0 at most; score1 -0.250
+turtle seed  8:         cap at   900 s, score +0.284; soldiers  6, mould   3100, bank    820, harvested  58472, stolen     0, shots  6112, killed  37277, crystals left 0.075; 7.65 ms a tick, think 0 us mean, 0 at most; score1 -0.333
+
+by hand (mean score; ends):
+   guard: mean +0.317; mould wiped 0, cap 4, squad wiped 0
+  turtle: mean +0.311; mould wiped 0, cap 4, squad wiped 0
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 0):
