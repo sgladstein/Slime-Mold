@@ -114,6 +114,7 @@ order still holds: tools and feel are built in parallel (owner, 11-12
 | Walls | Larder's wall cells and rules (`wall_hp`, `wall_scent`, `wall_bite`); a wall is a building kind over them | Larder thread (rules), buildings thread (the kind) | |
 | Building anything | soldiers walk to a site and raise it over time (owner's card, 11-12 ~04:41Z) | soldier controls thread | every building kind |
 | Larder and outpost | one kind, a depot; the larder is the first. Hoard smell and stealing apply to every depot | buildings thread (kind), controls thread (select, buy, rally), Larder thread (hoard, steal) | |
+| The hole under fire | the shot rule (candidate: the alarm read at a negative weight); any per-cell closed ground is the crater field | Larder thread (the one body thread handed it over, 11-12 05:08Z) | graphics draws it |
 | Cohesion, hunger, cuts | `big.rs` on the CPU, then a GPU port | one body thread | det cord's siege relies on a cut piece starving; graphics draws cuts |
 | Shot look | drawn from the crater field and the walkers, no stamp (owner, 11-12 04:38Z) | graphics thread | sound |
 | Sound | reads `squad::FrameOut`, `HudEvent`s and the burst list; writes no rule | sound thread | |
