@@ -3477,6 +3477,12 @@ mod tests {
             let p = squad::path(w, h, clear, (clear.0 + 30.0, clear.1));
             let wall = p.into_iter().find(|&i| !cpu.agar[i as usize]).unwrap() as usize;
             units.push(UnitIn { smell_r: 4.0, ..unit(((wall % w) as f32 + 0.5, (wall / w) as f32 + 0.5), 0.0) });
+            // Wide discs, as the soldiers' at scale 8 (2026-11-12, when the
+            // unit passes took a workgroup each): boxes of over 256 cells,
+            // so each thread takes several cells and blocks, and the harvest
+            // several pieces, stopping in one or taking all it reaches.
+            let wide = units.len();
+            units.extend([(13, 60.0), (14, 1.0e6)].map(|(p, take)| UnitIn { touch: 12.0, sight: 60.0, take_r: 12.0, smell_r: 12.0, ..unit(pile(p), take) }));
             // The same shot twice: a walker in both strikes dies once, counted
             // for the first.
             let again = shots.len();
@@ -3492,6 +3498,23 @@ mod tests {
             // A radius that is not a whole number: its alarm's squared radius
             // (r2 of 5, 25) is not four times its strike's (r2 of 2.5, 6).
             shots.push(ShotIn { from: pile(12), to: t, r: 2.5 });
+            // Two shots from slime cells three apart, so each hits its own
+            // cell and their strikes share cells, where cone craters give
+            // different steps and the larger must stay (2026-11-12: the
+            // GPU's `cut` wrote max(crater, steps) from a workgroup a shot, a
+            // race; it takes atomicMax on the bits now).
+            let slimy = |x: usize, y: usize| x < w && y < h && cpu.agar[y * w + x] && cpu.trail[y * w + x] >= slime;
+            // Far from the unit in the thickest mould, whose walkers they
+            // would kill.
+            let far = |x: usize, y: usize| (x as f32 + 0.5 - t.0).hypot(y as f32 + 0.5 - t.1) > 45.0;
+            let near = (0..w * h)
+                .map(|i| (i % w, i / w))
+                .find(|&(x, y)| far(x, y) && slimy(x, y) && slimy(x + 3, y))
+                .expect("two slime cells three apart, away from the thickest");
+            shots.extend([0, 3].map(|dx| {
+                let from = ((near.0 + dx) as f32 + 0.5, near.1 as f32 + 0.5);
+                ShotIn { from, to: (from.0, from.1 + 10.0), r: 3.0 }
+            }));
             // With the life cycle, shots from slime beside spores in flight,
             // whose strikes cover them (they must be missed).
             if !cpu.life.is_empty() {
@@ -3528,6 +3551,7 @@ mod tests {
             assert!(kills > 0 && walled > 0, "shots kill, and a wall stops one");
             assert!(cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some() && cpu_out.units[0].dense > 0, "the unit in the mould is touched and aims at walkers it counts");
             assert!(took[1] == 3000.0 && took[2] > 0.0 && took[2] < 3000.0 && took[3..].iter().any(|&t| t > 0.0), "units harvest; the second on a patch gets what the first left");
+            assert!(took[wide] == 60.0 && took[wide + 1] > 0.0 && took[wide + 1] < 1.0e6 && cpu_out.units[wide].target.is_some(), "the wide discs harvest, stopping when full or taking all they reach");
             // The world after the frame.
             let gpu = walkers_of(&e);
             let energy = floats(&read_back(&device, &queue, &e.energy));
@@ -3562,6 +3586,18 @@ mod tests {
                 // A flat crater leaves one count on every cell; a cone, many.
                 let counts: std::collections::BTreeSet<u16> = cc.iter().copied().filter(|&v| v > 0).collect();
                 assert_eq!(counts.len() > 1, s.scorch_cone, "{name}: counts {counts:?}");
+                if s.scorch_cone {
+                    // Cones about different hits that share cells, where the
+                    // two give different steps and the larger must stay (the
+                    // GPU's `cut` takes it with atomicMax; a plain write raced).
+                    let hits: Vec<((f32, f32), f32)> = cpu_out.shots.iter().zip(&f.shots).filter_map(|(o, i)| o.hit.map(|h| (h, i.r))).collect();
+                    let overlaps = (0..hits.len())
+                        .flat_map(|a| (a + 1..hits.len()).map(move |b| (a, b)))
+                        .filter(|&(a, b)| hits[a].0 != hits[b].0 && (hits[a].0 .0 - hits[b].0 .0).hypot(hits[a].0 .1 - hits[b].0 .1) < hits[a].1 + hits[b].1)
+                        .count();
+                    eprintln!("squad craters, {name}: {overlaps} pairs of cones about different hits that overlap");
+                    assert!(overlaps > 0, "{name}: no overlapping cones to test the larger steps on");
+                }
             }
             if !before.is_empty() {
                 // Spores in a struck disc are missed, the dormant in one die.
@@ -4162,6 +4198,164 @@ mod tests {
             let left = |w: &dyn World| w.crystals().iter().map(|c| c.1 as f64).sum::<f64>();
             let (lc, lg) = (left(&cpu.world), left(&gpu.world));
             assert!((lc - lg).abs() <= 0.02 * lc, "{name}: crystal charge left {lg} on the GPU, {lc} on the CPU");
+        }
+    }
+
+    /// A diagnostic, not a gate (`--ignored --nocapture`): the adapter's
+    /// float maths beside the CPU's, on the operations the walk and the
+    /// fields use. On 2026-11-12 the GTX 1070 left 19 of 24,822 walkers a
+    /// cell off the CPU's after four ticks of the life-cycle twin (lavapipe:
+    /// 0), and the one-seed game twins drifted 18% apart; this says which
+    /// operation differs and how often a walker's step lands in another
+    /// cell. `a * b + c` is compared with the CPU's unfused and fused
+    /// (`mul_add`) results, as a driver may contract it into one FMA.
+    #[test]
+    #[ignore]
+    fn the_adapters_maths_beside_the_cpus() {
+        let Some((device, queue)) = test_gpu() else { return };
+        const SRC: &str = "
+@group(0) @binding(0) var<storage, read> inp: array<f32>;
+@group(0) @binding(1) var<storage, read_write> outp: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) g: vec3<u32>) {
+    let i = g.x;
+    if (8u * i >= arrayLength(&inp)) { return; }
+    let x = inp[8u * i]; let y = inp[8u * i + 1u]; let h = inp[8u * i + 2u]; let st = inp[8u * i + 3u];
+    let v = inp[8u * i + 4u]; let a = inp[8u * i + 5u]; let b = inp[8u * i + 6u]; let c = inp[8u * i + 7u];
+    outp[8u * i] = cos(h);
+    outp[8u * i + 1u] = sin(h);
+    outp[8u * i + 2u] = exp(-v);
+    outp[8u * i + 3u] = pow(a, 0.7);
+    outp[8u * i + 4u] = sqrt(v);
+    outp[8u * i + 5u] = x + cos(h) * st;
+    outp[8u * i + 6u] = y + sin(h) * st;
+    outp[8u * i + 7u] = a * b + c;
+}";
+        let n = 1usize << 20;
+        let mut seed = 0x2545_F491_4F6C_DD1Du64;
+        let mut unit = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            (seed >> 40) as f32 / (1u64 << 24) as f32
+        };
+        let mut inp = Vec::with_capacity(8 * n);
+        for _ in 0..n {
+            // A walker's place on a 512 x 320 dish, a heading as the walk
+            // keeps it (turns add to it unwrapped), a step, a field value.
+            inp.extend([unit() * 512.0, unit() * 320.0, (unit() - 0.5) * 40.0, 0.5 + unit(), unit() * 20.0, unit(), unit() * 4.0, unit() * 64.0]);
+        }
+        use wgpu::util::DeviceExt;
+        let ib = device.create_buffer_init(&wgpu::util::BufferInitDescriptor { label: Some("maths in"), contents: &f32_bytes(&inp), usage: wgpu::BufferUsages::STORAGE });
+        let ob = device.create_buffer(&wgpu::BufferDescriptor { label: Some("maths out"), size: (inp.len() * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("maths"), source: wgpu::ShaderSource::Wgsl(SRC.into()) });
+        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some("maths"), layout: None, module: &module, entry_point: Some("main"), compilation_options: Default::default(), cache: None });
+        let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("maths"),
+            layout: &pipe.get_bind_group_layout(0),
+            entries: &[wgpu::BindGroupEntry { binding: 0, resource: ib.as_entire_binding() }, wgpu::BindGroupEntry { binding: 1, resource: ob.as_entire_binding() }],
+        });
+        let mut enc = device.create_command_encoder(&Default::default());
+        {
+            let mut pass = enc.begin_compute_pass(&Default::default());
+            pass.set_pipeline(&pipe);
+            pass.set_bind_group(0, &bg, &[]);
+            pass.dispatch_workgroups((n as u32).div_ceil(256), 1, 1);
+        }
+        queue.submit([enc.finish()]);
+        let out = floats(&read_back(&device, &queue, &ob));
+        let names = ["cos", "sin", "exp", "pow", "sqrt", "x + cos*st", "y + sin*st", "a*b + c"];
+        let mut diff = [0usize; 8];
+        let mut worst = [0f32; 8];
+        let (mut cells_off, mut fused_same, mut unfused_same) = (0usize, 0usize, 0usize);
+        for k in 0..n {
+            let q = &inp[8 * k..8 * k + 8];
+            let (x, y, h, st, v, a, b, c) = (q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);
+            let cpu = [h.cos(), h.sin(), (-v).exp(), a.powf(0.7), v.sqrt(), x + h.cos() * st, y + h.sin() * st, a * b + c];
+            let gpu = &out[8 * k..8 * k + 8];
+            for j in 0..8 {
+                if gpu[j].to_bits() != cpu[j].to_bits() {
+                    diff[j] += 1;
+                    worst[j] = worst[j].max((gpu[j] - cpu[j]).abs());
+                }
+            }
+            if gpu[5].floor() != cpu[5].floor() || gpu[6].floor() != cpu[6].floor() {
+                cells_off += 1;
+            }
+            fused_same += (gpu[7].to_bits() == a.mul_add(b, c).to_bits()) as usize;
+            unfused_same += (gpu[7].to_bits() == (a * b + c).to_bits()) as usize;
+        }
+        for j in 0..8 {
+            eprintln!("{:>11}: {} of {n} differ from the CPU's bits, worst by {:.2e}", names[j], diff[j], worst[j]);
+        }
+        eprintln!("a step lands in another cell for {cells_off} of {n}; a*b + c matches the CPU's unfused result {unfused_same} times and the fused {fused_same}");
+    }
+
+    /// A diagnostic, not a gate (`--ignored --nocapture`): whether the
+    /// adapter's game leans one way against the CPU's. The technical lead,
+    /// 2026-11-12: the campaign's 32-seed The gaps run had the 1070 end
+    /// unwalled games sooner on 24 of 32 seeds (p 0.007), and the fleeing
+    /// twin killed 908 on the GPU against 765 on the CPU; rounding noise
+    /// should change sign from seed to seed, while the 1070's always-fused
+    /// `a * b + c` (`the_adapters_maths_beside_the_cpus`) rounds every
+    /// deposit and decay the same way. Eight seeds of the race world with an
+    /// idle squad on both engines; every 5 game s, the trail's total and the
+    /// living walkers, and how many seeds have the GPU above the CPU (with a
+    /// two-sided sign test). The 1070 at 8 seeds: no lean that survives
+    /// correction (trail below the CPU's on 7 of 8 at 30 s, p 0.07; lavapipe
+    /// 5 of 8), so `DRIFT_SEEDS=32` for the answer.
+    #[test]
+    #[ignore]
+    fn the_adapters_game_beside_the_cpus_over_seeds() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_params, Game, Rules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let sign_p = |a: usize, b: usize| -> f64 {
+            let n = a + b;
+            let k = a.min(b);
+            let (mut c, mut sum) = (1f64, 0f64);
+            for i in 0..=k {
+                if i > 0 {
+                    c *= (n - i + 1) as f64 / i as f64;
+                }
+                sum += c;
+            }
+            (2.0 * sum / 2f64.powi(n as i32)).min(1.0)
+        };
+        let (scale, walkers) = (2, 5_000);
+        let rules = Rules { cap: 30.0, ..Rules::default() };
+        // A mark: game s, CPU trail, GPU trail, CPU living, GPU living.
+        type Mark = (u64, f64, f64, usize, usize);
+        let mut rows: Vec<Vec<Mark>> = Vec::new();
+        // `DRIFT_SEEDS=N` for more (the 1070 plays 8 in about 30 s).
+        let seeds = std::env::var("DRIFT_SEEDS").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(8);
+        for seed in 1..=seeds {
+            let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            let mut r = Vec::new();
+            while cpu.end.is_none() && gpu.end.is_none() {
+                cpu.step();
+                gpu.step();
+                if cpu.world.ticks() % 75 == 0 {
+                    let cells = cpu.world.trail.len();
+                    let side = (gpu.world.e.done % 2) as usize;
+                    let gt: f64 = floats(&read_back(&device, &queue, &gpu.world.e.trail[side]))[..cells].iter().map(|&v| v as f64).sum();
+                    let ct: f64 = cpu.world.trail.iter().map(|&v| v as f64).sum();
+                    r.push((cpu.world.ticks() / 15, ct, gt, cpu.world.living(), gpu.world.living()));
+                }
+            }
+            eprintln!("seed {seed}: game s, trail CPU, GPU, living CPU, GPU: {:?}", r.iter().map(|&(t, a, b, c, d)| (t, a.round(), b.round(), c, d)).collect::<Vec<_>>());
+            rows.push(r);
+        }
+        let marks = rows.iter().map(Vec::len).min().unwrap_or(0);
+        for m in 0..marks {
+            let t = rows[0][m].0;
+            let (tu, td) = (rows.iter().filter(|r| r[m].2 > r[m].1).count(), rows.iter().filter(|r| r[m].2 < r[m].1).count());
+            let (lu, ld) = (rows.iter().filter(|r| r[m].4 > r[m].3).count(), rows.iter().filter(|r| r[m].4 < r[m].3).count());
+            let ratio: Vec<f64> = rows.iter().map(|r| r[m].2 / r[m].1.max(1e-9)).collect();
+            let mut sorted = ratio.clone();
+            sorted.sort_by(f64::total_cmp);
+            eprintln!("at {t} s: GPU trail above the CPU's on {tu} seeds, below on {td} (sign p {:.3}; median ratio {:.4}); GPU mould larger on {lu}, smaller on {ld} (p {:.3})", sign_p(tu, td), sorted[sorted.len() / 2], sign_p(lu, ld));
         }
     }
 }

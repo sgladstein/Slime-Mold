@@ -1,0 +1,16 @@
+GTX 1070, worktree at cc18cb9, MOULDGPU_TEST_GPU=1, 2026-11-12 ~16:50Z: cargo test --release --locked --bin mouldgpu the_adapters_game -- --ignored --nocapture
+seed 1: game s, trail CPU, GPU, living CPU, GPU: [(5, 57591.0, 56916.0, 5054, 5052), (10, 52483.0, 54678.0, 5175, 5173), (15, 49642.0, 52614.0, 5274, 5276), (20, 54696.0, 55435.0, 2937, 2934), (25, 38053.0, 37550.0, 1921, 1850), (30, 34970.0, 34603.0, 1734, 1674)]
+seed 2: game s, trail CPU, GPU, living CPU, GPU: [(5, 47367.0, 48740.0, 5062, 5059), (10, 43256.0, 42729.0, 5160, 5166), (15, 37422.0, 37781.0, 5242, 5252), (20, 45163.0, 46363.0, 2970, 2995), (25, 35788.0, 34993.0, 2111, 2084), (30, 35316.0, 33723.0, 2074, 2035)]
+seed 3: game s, trail CPU, GPU, living CPU, GPU: [(5, 50549.0, 51151.0, 5035, 5045), (10, 49819.0, 49431.0, 5131, 5126), (15, 51375.0, 50922.0, 5234, 5230), (20, 56436.0, 54711.0, 3120, 3138), (25, 42371.0, 39818.0, 2324, 2362), (30, 38081.0, 37386.0, 2264, 2276)]
+seed 4: game s, trail CPU, GPU, living CPU, GPU: [(5, 64558.0, 66359.0, 5004, 5005), (10, 64932.0, 66323.0, 5032, 5025), (15, 67176.0, 65546.0, 5074, 5060), (20, 62784.0, 61193.0, 2825, 2836), (25, 41919.0, 42399.0, 1694, 1704), (30, 38682.0, 38488.0, 1497, 1513)]
+seed 5: game s, trail CPU, GPU, living CPU, GPU: [(5, 56010.0, 56564.0, 5049, 5045), (10, 56801.0, 56122.0, 5185, 5180), (15, 59278.0, 61116.0, 5348, 5336), (20, 60104.0, 61935.0, 3319, 3376), (25, 49765.0, 48813.0, 2510, 2479), (30, 50324.0, 49534.0, 2455, 2445)]
+seed 6: game s, trail CPU, GPU, living CPU, GPU: [(5, 34833.0, 35393.0, 5014, 5020), (10, 34614.0, 32840.0, 5117, 5107), (15, 38246.0, 35528.0, 5211, 5187), (20, 44101.0, 44114.0, 3018, 2891), (25, 34772.0, 33125.0, 2146, 2011), (30, 36085.0, 33199.0, 2073, 1929)]
+seed 7: game s, trail CPU, GPU, living CPU, GPU: [(5, 46830.0, 46479.0, 5015, 5027), (10, 44836.0, 48420.0, 5122, 5156), (15, 44987.0, 46301.0, 5264, 5305), (20, 51351.0, 52444.0, 3110, 3186), (25, 38759.0, 41487.0, 2181, 2329), (30, 36810.0, 40948.0, 2113, 2335)]
+seed 8: game s, trail CPU, GPU, living CPU, GPU: [(5, 54676.0, 53679.0, 5054, 5051), (10, 50747.0, 49140.0, 5157, 5165), (15, 50075.0, 50251.0, 5274, 5262), (20, 57315.0, 54928.0, 3123, 3096), (25, 41904.0, 38460.0, 2372, 2260), (30, 40545.0, 35089.0, 2402, 2285)]
+at 5 s: GPU trail above the CPU's on 5 seeds, below on 3 (sign p 0.727; median ratio 1.0119); GPU mould larger on 4, smaller on 4 (p 1.000)
+at 10 s: GPU trail above the CPU's on 3 seeds, below on 5 (sign p 0.727; median ratio 0.9922); GPU mould larger on 3, smaller on 5 (p 0.727)
+at 15 s: GPU trail above the CPU's on 5 seeds, below on 3 (sign p 0.727; median ratio 1.0096); GPU mould larger on 3, smaller on 5 (p 0.727)
+at 20 s: GPU trail above the CPU's on 5 seeds, below on 3 (sign p 0.727; median ratio 1.0135); GPU mould larger on 5, smaller on 3 (p 0.727)
+at 25 s: GPU trail above the CPU's on 2 seeds, below on 6 (sign p 0.289; median ratio 0.9809); GPU mould larger on 3, smaller on 5 (p 0.727)
+at 30 s: GPU trail above the CPU's on 1 seeds, below on 7 (sign p 0.070; median ratio 0.9843); GPU mould larger on 3, smaller on 5 (p 0.727)
+test result: ok. 1 passed; 28.56s

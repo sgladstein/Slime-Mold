@@ -939,9 +939,14 @@ pub const EGAIN: usize = 35;
 /// The living walkers counted into the wall counters' word 4
 /// (`Engine::record_count`), for the game's packed readout.
 pub const COUNT: usize = 36;
+/// The squad's unit passes on one thread, as before 2026-11-12
+/// (`Engine::squad_one`).
+pub const SMELL1: usize = 37;
+pub const UNITS1: usize = 38;
+pub const HARVEST1: usize = 39;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 37] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count",
+pub const PASSES: [&str; 40] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1",
 ];
 
 impl Shared {
@@ -1064,6 +1069,12 @@ pub struct Engine {
     pub kills: wgpu::Buffer,
     pub squad: (u32, u32, f32),
     pub squad_due: bool,
+    /// The squad's unit passes on one thread, as before 2026-11-12
+    /// (`smell1`, `units1`, `harvest1`), to compare the two on a GPU.
+    pub squad_one: bool,
+    /// The squad frame a share opened and the last share will close
+    /// (`record_share`).
+    squad_on: bool,
     /// The mould grid's square, fine cells, that `record_count` sums (0:
     /// none), written with the params.
     pub grid: u32,
@@ -1098,7 +1109,8 @@ pub struct Engine {
     pub cells: u32,
     /// Ticks run.
     pub done: u64,
-    /// Whether the crowd limit can hold (walkers at most half the agar).
+    /// Whether the crowd limit can hold (`crowd_holds`: the start walkers
+    /// at most half the agar).
     pub crowd_ok: bool,
     /// From the last `write_params`: whether the jump passes run (respawn
     /// or the pull on), and with the claim (`land`) too.
@@ -1115,6 +1127,33 @@ pub struct Engine {
     pub alarmed: bool,
 }
 
+/// The agar cells of the dish `make` builds from `s` (one walker placed,
+/// so it costs a grid, not a mould).
+pub fn agar_cells(s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> usize {
+    make(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count()
+}
+
+/// Whether the one-walker-a-cell limit holds for `walkers` starting on a
+/// dish of `agar_cells`: each start walker needs a free cell, which the
+/// placement finds quickly while they are at most half the agar. Growth
+/// needs no room of its own: with the limit on, a birth into a full cell
+/// is refused (`born` here, `BigDish`'s births on the CPU), so the slots
+/// (`capacity`) can never all be filled. Until 2026-11-12 this counted the
+/// slots too (`walkers.max(capacity)`, since the growth port of 11-11),
+/// which dropped the limit without a word on every race world over about
+/// 7,300 walkers (the slots are 10 x walkers there) while the CPU census
+/// kept it: the slime-enemy thread's 25,000 walkers on the Fork ran as
+/// ropes on the GPU, a sheet with the limit held.
+pub fn crowd_holds(walkers: usize, agar_cells: usize) -> bool {
+    walkers <= agar_cells / 2
+}
+
+/// Whether `s` asks for a crowd limit anywhere: the dish's, or a species'
+/// own (`sN.crowd`).
+pub fn wants_crowd(s: &Settings) -> bool {
+    species_sets(s, true).iter().any(|t| t.crowd > 0) || s.crowd
+}
+
 impl Engine {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize) -> Self {
         Self::made(device, queue, shared, s, scale, BigDish::new)
@@ -1126,8 +1165,13 @@ impl Engine {
     }
 
     fn made(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> Self {
-        let agar_cells = make(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count();
-        let crowd_ok = s.walkers.max(s.capacity) <= agar_cells / 2;
+        let agar_cells = agar_cells(s, scale, &make);
+        let crowd_ok = crowd_holds(s.walkers, agar_cells);
+        if !crowd_ok && wants_crowd(s) {
+            // Loud, since the game it plays is not the one asked for (the
+            // slime-enemy thread found it silent, 2026-11-12).
+            eprintln!("gpu: the one-walker-a-cell limit is OFF: {} walkers start on {} agar cells, and it holds only up to half ({})", s.walkers, agar_cells, agar_cells / 2);
+        }
         let d = make(BigParams { species_sets: species_sets(s, crowd_ok), ..big_params(s, scale, s.crowd && crowd_ok) });
         let dev = device;
         let cells = (d.w * d.h) as u32;
@@ -1270,6 +1314,8 @@ impl Engine {
             kills,
             squad: (0, 0, 0.0),
             squad_due: false,
+            squad_one: false,
+            squad_on: false,
             grid: 0,
             hits,
             n_hits: 0,
@@ -1586,61 +1632,92 @@ impl Engine {
     /// (and at least one tick), GPU timestamps at the first tick's start
     /// (0), the last tick's end (1) and the drawing's end (2).
     pub fn record(&mut self, shared: &Shared, enc: &mut wgpu::CommandEncoder, ticks: u32, soft: bool, stamps: Option<&wgpu::QuerySet>) {
+        self.record_share(shared, enc, ticks, (true, true), soft, stamps);
+    }
+
+    /// A share of a frame (`GpuWorld::spread`, 2026-11-12): with `open`
+    /// the squad's start, then `ticks` ticks, with `close` the squad's
+    /// end, then the drawing. A frame recorded in shares, the first open
+    /// and the last closed, runs the same passes in the same order as
+    /// `record` (bar the drawing, which every share ends with); stamps as
+    /// `record`'s.
+    pub fn record_share(&mut self, shared: &Shared, enc: &mut wgpu::CommandEncoder, ticks: u32, (open, close): (bool, bool), soft: bool, stamps: Option<&wgpu::QuerySet>) {
         let stamps = if ticks > 0 { stamps } else { None };
-        let writes = |begin: Option<u32>, end: Option<u32>| {
-            stamps.and_then(|qs| (begin.is_some() || end.is_some()).then_some(wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin, end_of_pass_write_index: end }))
-        };
-        let tick = self.tick_passes();
+        let (passes, ticked) = self.frame_passes(ticks, soft, open, close);
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
+        for (q, &(p, groups, side)) in passes.iter().enumerate() {
+            let begin = (q == ticked.start).then_some(0);
+            let end = if q + 1 == ticked.end {
+                Some(1)
+            } else {
+                (p == DRAW).then_some(2)
+            };
+            let writes = stamps.and_then(|qs| (begin.is_some() || end.is_some()).then_some(wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin, end_of_pass_write_index: end }));
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes });
+            pass.set_pipeline(&pipes[p]);
+            pass.set_bind_group(0, &self.groups[side], &[]);
+            pass.dispatch_workgroups(groups, 1, 1);
+        }
+    }
+
+    /// The frame `record` records, with every pass timed on its own,
+    /// submitted and waited for (so for measuring only, 2026-11-12): GPU ms
+    /// a pass, by name, in order. The frame runs: the dish moves on.
+    pub fn record_timed(&mut self, shared: &Shared, ticks: u32, soft: bool) -> Vec<(&'static str, f64)> {
+        let (passes, _) = self.frame_passes(ticks, soft, true, true);
+        self.time_passes(shared, &passes)
+    }
+
+    /// A frame's passes in order, each with its workgroups and the side of
+    /// the bind group it reads: the squad's start if one is due (shots,
+    /// their strikes, then the smell, on the trail and scent the first
+    /// tick reads: `squad.rs`'s frame), `ticks` ticks, the squad's end
+    /// (the reads, then the harvest), then the drawing; and where the
+    /// ticks' passes are in it. Moves `done` on by `ticks`; `open` takes
+    /// the squad's frame and its start, `close` its end (a frame in
+    /// shares, `record_share`).
+    fn frame_passes(&mut self, ticks: u32, soft: bool, open: bool, close: bool) -> (Vec<(usize, u32, usize)>, std::ops::Range<usize>) {
         let (nunits, nshots, _) = self.squad;
-        let due = std::mem::take(&mut self.squad_due);
-        let dispatch = |enc: &mut wgpu::CommandEncoder, group: &wgpu::BindGroup, passes: &[(usize, u32)]| {
-            for &(p, groups) in passes {
-                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
-                pass.set_pipeline(&pipes[p]);
-                pass.set_bind_group(0, group, &[]);
-                pass.dispatch_workgroups(groups, 1, 1);
-            }
-        };
-        if due {
-            // The squad's frame start (`squad.rs`): shots, their strikes,
-            // then the smell, on the trail and scent the first tick reads.
-            let mut pre = Vec::new();
+        if open {
+            self.squad_on = std::mem::take(&mut self.squad_due);
+        }
+        let due = self.squad_on;
+        let side = |done: u64| (done % 2) as usize;
+        let mut out = Vec::new();
+        if open && due {
+            let s = side(self.done);
             if nshots > 0 {
-                pre.extend([(SHOTS, nshots.div_ceil(256)), (STRIKE, self.n.div_ceil(256)), (CUT, nshots)]);
+                out.extend([(SHOTS, nshots.div_ceil(256), s), (STRIKE, self.n.div_ceil(256), s), (CUT, nshots, s)]);
                 if self.alarmed {
-                    pre.push((SHOUT, 1));
+                    out.push((SHOUT, 1, s));
                 }
             }
             if nunits > 0 {
-                pre.push((SMELL, 1));
+                out.push((if self.squad_one { SMELL1 } else { SMELL }, 1, s));
             }
-            dispatch(enc, &self.groups[(self.done % 2) as usize], &pre);
         }
-        for k in 0..ticks {
-            let group = &self.groups[(self.done % 2) as usize];
-            for (q, &(p, size)) in tick.iter().enumerate() {
-                let begin = (k == 0 && q == 0).then_some(0);
-                let end = (k + 1 == ticks && q + 1 == tick.len()).then_some(1);
-                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes(begin, end) });
-                pass.set_pipeline(&pipes[p]);
-                pass.set_bind_group(0, group, &[]);
-                pass.dispatch_workgroups(size, 1, 1);
-            }
+        let tick = self.tick_passes();
+        let start = out.len();
+        for _ in 0..ticks {
+            let s = side(self.done);
+            out.extend(tick.iter().map(|&(p, g)| (p, g, s)));
             self.done += 1;
         }
-        if due && nunits > 0 {
-            // The squad's frame end: reads, then the harvest.
-            dispatch(enc, &self.groups[(self.done % 2) as usize], &[(UNITS, squad::UNITS_MAX.div_ceil(64) as u32), (HARVEST, 1)]);
+        let ticked = start..out.len();
+        let s = side(self.done);
+        if close && due && nunits > 0 {
+            // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
+            if self.squad_one {
+                out.extend([(UNITS1, squad::UNITS_MAX.div_ceil(64) as u32, s), (HARVEST1, 1, s)]);
+            } else {
+                out.extend([(UNITS, nunits, s), (HARVEST, 1, s)]);
+            }
         }
-        let group = &self.groups[(self.done % 2) as usize];
-        for &(p, groups) in &self.draw_passes(soft) {
-            let end = (p == DRAW).then_some(2);
-            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes(None, end) });
-            pass.set_pipeline(&pipes[p]);
-            pass.set_bind_group(0, group, &[]);
-            pass.dispatch_workgroups(groups, 1, 1);
+        if close {
+            self.squad_on = false;
         }
+        out.extend(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, s)));
+        (out, ticked)
     }
 
     /// A tick's passes and their workgroups: conversion only with species
@@ -1715,8 +1792,15 @@ impl Engine {
     /// pass, by name. It runs the tick, so the dish moves on by one.
     pub fn profile(&mut self, shared: &Shared, soft: bool) -> Vec<(&'static str, f64)> {
         let tick = self.tick_passes();
-        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
         let passes: Vec<(usize, u32, usize)> = tick.iter().map(|&(p, g)| (p, g, (self.done % 2) as usize)).chain(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, ((self.done + 1) % 2) as usize))).collect();
+        self.done += 1;
+        self.time_passes(shared, &passes)
+    }
+
+    /// `passes` (pass, workgroups, side), each stamped at its start and
+    /// end, submitted and waited for: GPU ms a pass, by name.
+    fn time_passes(&self, shared: &Shared, passes: &[(usize, u32, usize)]) -> Vec<(&'static str, f64)> {
+        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
         let count = 2 * passes.len() as u32;
         let qs = self.device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("profile"), ty: wgpu::QueryType::Timestamp, count });
         let resolve = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("profile"), size: count as u64 * 8, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
@@ -1728,7 +1812,6 @@ impl Engine {
             pass.set_bind_group(0, &self.groups[side], &[]);
             pass.dispatch_workgroups(groups, 1, 1);
         }
-        self.done += 1;
         enc.resolve_query_set(&qs, 0..count, &resolve, 0);
         self.queue.submit([enc.finish()]);
         let t: Vec<u64> = read_back(&self.device, &self.queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();

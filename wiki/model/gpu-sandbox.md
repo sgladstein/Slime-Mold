@@ -2,9 +2,9 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-12T01:00Z
-sources: [Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
-code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost, BigParams::spore_rate, BigParams::sleep_death, Engine::strike]
+updated: 2026-11-12T19:55Z
+sources: [Reports/gpu-readout-2026-11-12.md, Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
+code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost, BigParams::spore_rate, BigParams::sleep_death, Engine::strike, Engine::record_share, Engine::squad_one, GpuWorld::spread]
 ---
 
 # The GPU sandbox (phase 3)
@@ -16,7 +16,10 @@ GPU, with every option the Jenson comparison tested as a control (owner,
 2026-11-11 00:06Z), plus the looks, outside rules and creature rules as
 controls on later panel pages and keys. It matches the CPU dish on paired
 seeds (no measure differs after Bonferroni), and twin tests in CI check
-one GPU tick against one CPU tick on software Vulkan. On the GTX 1070
+one GPU tick against one CPU tick on software Vulkan; a PR that changes
+the GPU code runs them on the GTX 1070 too (*Twins on the 1070*, below),
+where 27 of 29 pass and the two game-length twins drift from the 1070's
+own float maths, with no lean over 32 seeds. On the GTX 1070
 a frame of two ticks and the drawing takes 1.45 ms at 100,000 walkers and
 8-10 ms at a million. Rules compiled in but off cost 18-24% on the software
 GPU, so they compile out when off. Detail below; tables in
@@ -100,7 +103,46 @@ Three facts bind the design:
   Vulkan; with the fields `f32` (fixed point changed play, below), the twin
   test is one tick from a CPU state, not the same bits over a run.
 
+## Twins on the 1070
+
+The integration thread's rule (2026-11-12 15:55Z, from the technical
+lead's review): a PR that changes a shader (`src/gpu/*.wgsl`) or the GPU's
+`Params` or bindings runs the twin tests on the GTX 1070 before it merges,
+when the PC is free under its booking file
+(`/mnt/project-files/scott-desktop/booking.md`), and its body quotes the
+bench's machine line and the pass and fail counts. With the PC busy or off
+it may merge saying "1070 twin pending". The twins also run before any
+owner playtest build, and a twin that fails on the 1070 but passes on
+lavapipe keeps its rule from becoming a default until the failure is
+understood. In the PR's own worktree on the PC, in PowerShell:
+
+```
+$env:MOULDGPU_TEST_GPU="1"
+cargo run --release --bin larder-world -- bench=20 hand=farm    # the machine line, first
+cargo test --release --locked --bin mouldgpu
+cargo test --release --locked --lib gpu::
+```
+
+On `main` after the speed work, 27 of `mouldgpu`'s 29 twins pass and the
+library's 3. The two that fail, `the_life_cycle_matches_the_cpu_for_four_ticks`
+(spores, trail 1.2e-4) and
+`a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu`
+(908 killed against 765), fail the same way on `main` at 9f5e4a4: float
+drift, since the 1070's `sin`, `cos` and `sqrt` differ from the CPU's and
+its driver fuses `a * b + c`. A third failure, or other numbers in those
+two, is the PR's to explain. Lavapipe hides races between workgroups that
+the 1070 shows, so a pass where two threads may meet on one cell gives
+each cell to one thread or takes an atomic (`cut`'s crater takes
+`atomicMax` on the f32's bits since 2026-11-12: [the readout
+report](../../Reports/gpu-readout-2026-11-12.md), *Two GPU fixes*). To see the drift itself:
+`cargo test --release --locked --bin mouldgpu the_adapters -- --ignored --nocapture`
+(the adapter's maths beside the CPU's, then the game over seeds; set
+`DRIFT_SEEDS=32` for 32). The numbers are in [the readout
+report](../../Reports/gpu-readout-2026-11-12.md), *On the GTX 1070*.
+
 ## Sources
+
+- [gpu-readout-2026-11-12.md](../../Reports/gpu-readout-2026-11-12.md): *On the GTX 1070*, the game's passes, the twins and the maths on the 1070.
 
 - [gpu-sandbox-2026-11-11.md](../../Reports/gpu-sandbox-2026-11-11.md): the sandbox, its controls and presets, the twin tests and timings.
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species settings on the GPU, their twin test, planted bugs and cost.
