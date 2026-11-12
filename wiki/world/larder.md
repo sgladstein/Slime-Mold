@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T07:40Z
+updated: 2026-11-12T07:50Z
 sources: [Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Game::build, Game::raise, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
@@ -24,7 +24,7 @@ rules on the world, on the CPU and the engine; WM1, designed
 **Playable:** `cargo run --release --bin larder-world -- map=fork` (W2c's first cut: the real rules on the GPU world, on a map). `mouldgpu`'s Q squad is the UI's stand-in, with no rules.
 **Next:** the frame time on the 1070 (`larder-world -- bench=SECS` measures it without a window; a game step now waits once, on one packed readout: [report](../../Reports/gpu-readout-2026-11-12.md); the window draws while the GPU runs a step). The census on both engines (`larderworld census gpu=both`, `campaign gpu=both`) finds no bias over 32 seeds and five hands; the Rim mission's leak on the GPU is open (3 of 4 seeds hold, against 4 of 4 on the CPU). The maps' soil plays on the GPU since 2026-11-12. A stalemate now scores the charge taken and the mould's size (score v2).
 **Buildings, built 2026-11-12** ([report](../../Reports/larder-buildings-2026-11-12.md), [page](https://claude.ai/artifact/Xutp7S9tyPoz4ghxhaCSrj)): turret, lure, pump, outpost and wall as one `Building` type, each a still unit of the squad frame (one pass on both engines, twin-tested; `squad::UNITS_MAX` 64 to 96). The window's build page is Q. Placed as ghosts that rise with `Game::raise` (the controls thread's builders); whole at once today. The census found guns at the crystals win the race world on every tier, and spending the same food on soldiers ties them: food does not bind, an economy question the Larder thread takes up. No scorcher (owner, 04:46Z); the siren waits on the toolkit's alarm burst.
-**Campaign (W5), designed and approved 2026-11-12 04:44Z, not built:** eight missions on the v2 maps, each one verb against one tier, shown to the player as a goal sentence and bar with one to three stars, with a no-soft-lock rule and a dead-time measure; only unlocked verbs carry between missions ([design](../../Reports/larder-campaign-2026-11-12.md)). The mission layer (`mould::campaign`) and missions 1-3 are built: `larder-world -- mission=1-landfall` plays one, and `examples/campaign.rs` is its census ([report, *The mission layer, built*](../../Reports/larder-campaign-2026-11-12.md)). Tuned on the plain mould (four seeds): the AI meets missions 1-3 in 2:31-2:48, 1:42-5:31 and 10:00-11:41, idle and random never; mission 3 does not yet need walls, and missions 2-3 are scored on both engines since the GPU world reads its mould grid (#101) ([report, *Missions 1-3 tuned*](../../Reports/larder-campaign-2026-11-12.md)). In the window the Rim mould trails out the north-east gap by 5:00 on seed 1 ([pictures](https://claude.ai/artifact/Pu2j5ComXhUPTAMv4MyMRJ)), yet the GPU census holds that seed (peak leak 0.050, inside the 5% allowance): a leak must mean what the player sees before the window shows the bar.
+**Campaign (W5), designed and approved 2026-11-12 04:44Z, not built:** eight missions on the v2 maps, each one verb against one tier, shown to the player as a goal sentence and bar with one to three stars, with a no-soft-lock rule and a dead-time measure; only unlocked verbs carry between missions ([design](../../Reports/larder-campaign-2026-11-12.md)). The mission layer (`mould::campaign`) and missions 1-3 are built: `larder-world -- mission=1-landfall` plays one, and `examples/campaign.rs` is its census ([report, *The mission layer, built*](../../Reports/larder-campaign-2026-11-12.md)). Tuned on the plain mould (four seeds): the AI meets missions 1-3 in 2:31-2:48, 1:42-5:31 and 10:00-11:41, idle and random never; mission 3 does not yet need walls, and missions 2-3 are scored on both engines since the GPU world reads its mould grid (#101) ([report, *Missions 1-3 tuned*](../../Reports/larder-campaign-2026-11-12.md)). In the window the Rim mould trails out the north-east gap by 5:00 on seed 1 ([pictures](https://claude.ai/artifact/Pu2j5ComXhUPTAMv4MyMRJ)), yet the GPU census holds that seed (peak leak 0.050, inside the 5% allowance): the trail is 2-5% of the walkers spread thin (at most 3 in a 4 x 4 bin), so the goal line now says the share outside against the 5% allowed ([report, *What the player sees outside the Rim*](../../Reports/larder-campaign-2026-11-12.md)).
 
 ## Larder World so far
 
@@ -80,6 +80,19 @@ a stalemate scores the squad's share of the charge taken over the game
 16-0 under it, a carrier leaves a dry crystal and holds at the larder
 (`Rules::home_dry`), and the farm hand, which had stood on emptied
 crystals, now harvests twice the food and kills five times the walkers.
+**Playtest fixes** (2026-11-12, [report, *Playtest fixes*](../../Reports/larder-world-roadmap-2026-11-11.md)): after
+the owner's first playtest, shots are free (`Rules::price` 0, the fire
+rate the only limit), and soldiers smell like prey (`Rules::smell` 0.5 over
+`smell_r` 2 dish cells). A mould that turns from fresh gunfire (the alarm
+the shots lay read at -1, `larder_world::FLEE_WEIGHT`, an opt-in) carves
+the hole the owner asked for, 102 dish cells after 20 s of four soldiers'
+fire against 29 ([page](https://claude.ai/artifact/5wQ3xSk8pBN6uig1rxKd4R)),
+but as the default it failed the gate: random held the core, which the
+mould no longer defended, and wiped the mould on 12 of 16 seeds. Without
+it the gate holds on the race world (32 seeds), the Fork and the Rim, but
+strike beats every plan (farm 28-4) with food left unspent. Next, the hole
+from the toolkit's crater, then running costs. Off by default for other threads:
+`Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)
 
@@ -118,6 +131,8 @@ owner's playtest.
 
 ## Owner's word
 
+- 2026-11-12 04:39Z: "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at" (04:38Z, on two drawn hits: "Neither. Both of those look like stamps. Placed on the slime that fade. Maybe part of the issue is the slime/walkers move to fast.").
+- 2026-11-12 04:13Z (first playtest): the slime did not feel like one organism; shooting killed many walkers but "visually it didn't impact much"; "the slime mostly ignored my soldiers unless they walked into the slime"; "energy required for shooting isn't fun".
 - 2026-11-11 14:54Z (14:55: "just my initial thought", for playtests to settle): test crystals that run out against ones that don't. Run-out crystals go with the race (an idle player should be overrun), refilling ones probably with the landing. Walls first, the Sporer and Sleeper tiers and a player-owned species are agreed. A CPU world for small tests, and the 1070 for GPU work.
 - 2026-11-11 14:25Z: the mould tier ladder is agreed, and it grows as research finds new behaviours. Walls or weapons can come first.
 - 2026-11-11 14:14Z: the early leader's win rate is a per-mould difficulty, not a gate. There should be mould tiers from easy to hard, and player walls, upgrades and weapons, so strategy depends on the mix.

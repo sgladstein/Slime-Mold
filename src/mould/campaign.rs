@@ -260,6 +260,8 @@ pub struct Tracker {
     /// The goal's count this second, for the HUD and the census: crystals
     /// clear, or walkers outside the region.
     pub count: Option<u32>,
+    /// Contain goals: the share of the walkers outside the region now.
+    pub outside: Option<f32>,
     peak: usize,
     lost: usize,
     last: Snapshot,
@@ -320,6 +322,7 @@ impl Tracker {
             held: 0.0,
             touched: vec![],
             count: None,
+            outside: None,
             peak: g.mould.max(g.start_mould),
             lost: 0,
             last: snap(g, 0.0),
@@ -377,6 +380,7 @@ impl Tracker {
                 let (x0, y0, x1, y1) = (rect.0 * fine, rect.1 * fine, rect.2 * fine, rect.3 * fine);
                 let out = walkers_where(grid, size, |px, py| px < x0 || px > x1 || py < y0 || py > y1);
                 self.count = Some(out);
+                self.outside = Some(out as f32 / g.mould.max(1) as f32);
                 self.held = if out as f32 <= leak * g.mould.max(1) as f32 { self.held + dt } else { 0.0 };
                 Some((self.held / secs).min(1.0))
             }
@@ -498,6 +502,25 @@ impl Tracker {
             && (0..4).all(|p| self.secs[p] == 0 || (self.dead[p] as f32) < 0.25 * self.secs[p] as f32)
             && self.longest_dead < 45
             && (self.longest_stuck as f32) < STUCK_END
+    }
+
+    /// The goal line the player reads: the mission's sentence and its bar,
+    /// and for a contain goal the share outside now against the allowance.
+    /// The window's picture shows the mould's trail outside the Rim long
+    /// before the share passes the allowance (a winning hand keeps 2-5% of
+    /// its walkers outside, thinly, over 100-240 4 x 4 bins with 1-3 walkers
+    /// each, census v5): said on screen, the player sees why the bar still
+    /// holds (design review, 06:26Z: the bar and the picture must agree).
+    pub fn progress_line(&self) -> String {
+        let says = &self.mission.says;
+        match (self.bar, &self.mission.goal, self.outside) {
+            (Some(b), Goal::Contain { leak, .. }, Some(o)) => format!("{says} ({:.0}%; {:.1}% outside, {:.0}% allowed)", 100.0 * b, 100.0 * o, 100.0 * leak),
+            (Some(b), _, _) => format!("{says} ({:.0}%)", 100.0 * b),
+            // Said, not hidden (design review, 05:38Z): a world with no
+            // mould grid gives a goal on where the mould is no bar.
+            (None, _, _) if self.secs.iter().sum::<u32>() > 0 => format!("{says} (progress not shown in this build yet)"),
+            (None, _, _) => says.clone(),
+        }
     }
 
     /// The line a lost or capped mission ends on.
@@ -704,6 +727,9 @@ mod tests {
         assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none());
         assert_eq!(tr.best, 0.0);
         assert!(tr.count.unwrap() > 1000, "walkers outside: {:?}", tr.count);
+        // The goal line says how much is outside against the allowance.
+        let line = tr.progress_line();
+        assert!(line.contains("% outside, 2% allowed"), "{line}");
     }
 
     /// An idle squad takes no charge: `take` stays at 0 (its bar starts from
