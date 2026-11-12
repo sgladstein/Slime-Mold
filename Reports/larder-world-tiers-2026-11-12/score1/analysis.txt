@@ -1,0 +1,90 @@
+medians / means, ends (wiped/cap/lost), median mould at end
+none    idle    med -0.475 mean -0.813 ends 0/5/3 mould med 11372.5
+none    random  med -1.732 mean -1.577 ends 0/1/7 mould med 5421.0
+none    farm    med +0.017 mean +0.034 ends 0/8/0 mould med 6758.0
+none    boom    med +0.222 mean +0.419 ends 1/7/0 mould med 5935.5
+none    claim   med +0.258 mean +0.638 ends 2/6/0 mould med 4415.0
+none    strike  med +0.257 mean +0.631 ends 2/6/0 mould med 9.5
+sporer  idle    med -1.312 mean -1.059 ends 0/3/5 mould med 21956.5
+sporer  random  med -1.781 mean -1.600 ends 0/1/7 mould med 11204.5
+sporer  farm    med -0.323 mean -0.222 ends 0/8/0 mould med 14964.0
+sporer  boom    med -0.069 mean -0.072 ends 0/8/0 mould med 9389.5
+sporer  claim   med +0.066 mean -0.009 ends 0/8/0 mould med 9207.5
+sporer  strike  med -0.264 mean -0.225 ends 0/8/0 mould med 15312.5
+sleeper idle    med -0.084 mean -0.111 ends 0/8/0 mould med 2396.5
+sleeper random  med -1.693 mean -1.343 ends 0/2/6 mould med 3743.0
+sleeper farm    med +0.345 mean +0.326 ends 0/8/0 mould med 2421.0
+sleeper boom    med +0.373 mean +0.380 ends 0/8/0 mould med 3438.5
+sleeper claim   med +0.406 mean +0.393 ends 0/8/0 mould med 1395.5
+sleeper strike  med +0.500 mean +0.446 ends 0/8/0 mould med 14.0
+swarmer idle    med -0.437 mean -0.669 ends 0/6/2 mould med 13157.5
+swarmer random  med -1.772 mean -1.447 ends 0/2/6 mould med 6050.5
+swarmer farm    med -0.031 mean -0.013 ends 0/8/0 mould med 7555.5
+swarmer boom    med +0.100 mean +0.379 ends 1/7/0 mould med 5371.5
+swarmer claim   med +0.077 mean +0.339 ends 1/7/0 mould med 7707.0
+swarmer strike  med +0.183 mean +0.545 ends 2/6/0 mould med 4.0
+sporer strike-boom ['-0.33', '+0.13', '+0.02', '-0.24', '-0.35', '+0.00', '-0.46', '+0.00'] plain ['-0.02', '+0.19', '+0.25', '+0.05', '+1.63', '-0.17', '-0.15', '-0.07']
+sleeper strike-boom ['+0.14', '-0.09', '+0.12', '-0.09', '+0.09', '+0.16', '+0.14', '+0.07'] plain ['-0.02', '+0.19', '+0.25', '+0.05', '+1.63', '-0.17', '-0.15', '-0.07']
+swarmer strike-boom ['+0.10', '+0.16', '+0.25', '+1.96', '-0.08', '-0.21', '-0.58', '-0.28'] plain ['-0.02', '+0.19', '+0.25', '+0.05', '+1.63', '-0.17', '-0.15', '-0.07']
+Holm over 57
+D1 none boom>idle                  8-0 p 0.0078 holm 0.445
+D1 none boom>random                8-0 p 0.0078 holm 0.445
+D1 none claim>idle                 8-0 p 0.0078 holm 0.445
+D1 none claim>random               8-0 p 0.0078 holm 0.445
+D1 none strike>idle                8-0 p 0.0078 holm 0.445
+D1 none strike>random              8-0 p 0.0078 holm 0.445
+D1 sporer boom>idle                8-0 p 0.0078 holm 0.445
+D1 sporer boom>random              8-0 p 0.0078 holm 0.445
+D1 sporer claim>idle               8-0 p 0.0078 holm 0.445
+D1 sporer claim>random             8-0 p 0.0078 holm 0.445
+D1 sporer strike>idle              8-0 p 0.0078 holm 0.445
+D1 sporer strike>random            8-0 p 0.0078 holm 0.445
+D1 sleeper boom>idle               8-0 p 0.0078 holm 0.445
+D1 sleeper boom>random             8-0 p 0.0078 holm 0.445
+D1 sleeper claim>idle              8-0 p 0.0078 holm 0.445
+D1 sleeper claim>random            8-0 p 0.0078 holm 0.445
+D1 sleeper strike>idle             8-0 p 0.0078 holm 0.445
+D1 sleeper strike>random           8-0 p 0.0078 holm 0.445
+D1 swarmer boom>idle               8-0 p 0.0078 holm 0.445
+D1 swarmer boom>random             8-0 p 0.0078 holm 0.445
+D1 swarmer claim>idle              8-0 p 0.0078 holm 0.445
+D1 swarmer claim>random            8-0 p 0.0078 holm 0.445
+D1 swarmer strike>idle             8-0 p 0.0078 holm 0.445
+D1 swarmer strike>random           8-0 p 0.0078 holm 0.445
+D2 sporer idle vs plain            1-7 p 0.0703 holm 1.000
+D2 sporer random vs plain          2-6 p 0.2891 holm 1.000
+D2 sporer farm vs plain            1-7 p 0.0703 holm 1.000
+D2 sporer boom vs plain            1-7 p 0.0703 holm 1.000
+D2 sporer claim vs plain           1-7 p 0.0703 holm 1.000
+D2 sporer strike vs plain          0-8 p 0.0078 holm 0.445
+D2 sleeper idle vs plain           8-0 p 0.0078 holm 0.445
+D2 sleeper random vs plain         7-1 p 0.0703 holm 1.000
+D2 sleeper farm vs plain           8-0 p 0.0078 holm 0.445
+D2 sleeper boom vs plain           7-1 p 0.0703 holm 1.000
+D2 sleeper claim vs plain          6-2 p 0.2891 holm 1.000
+D2 sleeper strike vs plain         5-3 p 0.7266 holm 1.000
+D2 swarmer idle vs plain           4-2 p 0.6875 holm 1.000
+D2 swarmer random vs plain         3-5 p 0.7266 holm 1.000
+D2 swarmer farm vs plain           2-6 p 0.2891 holm 1.000
+D2 swarmer boom vs plain           3-5 p 0.7266 holm 1.000
+D2 swarmer claim vs plain          2-6 p 0.2891 holm 1.000
+D2 swarmer strike vs plain         2-6 p 0.2891 holm 1.000
+D3 sporer (strike-boom) vs plain   2-6 p 0.2891 holm 1.000
+D3 sleeper (strike-boom) vs plain  4-4 p 1.0000 holm 1.000
+D3 swarmer (strike-boom) vs plain  2-5 p 0.4531 holm 1.000
+X none boom>farm                   7-1 p 0.0703 holm 1.000
+X none claim>farm                  8-0 p 0.0078 holm 0.445
+X none strike>farm                 5-3 p 0.7266 holm 1.000
+X sporer boom>farm                 6-2 p 0.2891 holm 1.000
+X sporer claim>farm                6-2 p 0.2891 holm 1.000
+X sporer strike>farm               4-4 p 1.0000 holm 1.000
+X sleeper boom>farm                6-2 p 0.2891 holm 1.000
+X sleeper claim>farm               7-1 p 0.0703 holm 1.000
+X sleeper strike>farm              6-2 p 0.2891 holm 1.000
+X swarmer boom>farm                5-3 p 0.7266 holm 1.000
+X swarmer claim>farm               6-2 p 0.2891 holm 1.000
+X swarmer strike>farm              5-3 p 0.7266 holm 1.000
+none best {'claim': 2, 'boom': 3, 'strike': 3}
+sporer best {'claim': 5, 'boom': 2, 'strike': 1}
+sleeper best {'claim': 1, 'boom': 1, 'strike': 6}
+swarmer best {'claim': 1, 'boom': 3, 'strike': 4}

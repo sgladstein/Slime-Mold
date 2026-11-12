@@ -1,0 +1,7 @@
+Confirmation run, written 2026-11-12 ~07:20Z before any run, after the score v2 census on seeds 53-60.
+Code: branch claude/project-thread-wikxfm at 440e0f2 (score v2, PR #91 head f2a75e6, plus the AI skipping dry crystals).
+World: CPU race world, scale 2, 5000 walkers, cap 900 s. Fresh seeds 61-76 (never used). Hands boom, strike. Tiers none, sporer.
+The claim from seeds 53-60: the Sporer flips the best style (strike best on plain 6/8, boom best on Sporer 6/8).
+ C1: on plain, strike scores above boom (sign test over 16 seeds).
+ C2: per seed, (strike - boom) on plain is above (strike - boom) on the Sporer (sign test over 16 seeds).
+ Holm over the two.
