@@ -2,8 +2,8 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T03:46Z
-sources: [Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
+updated: 2026-11-12T04:50Z
+sources: [Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
 
@@ -23,6 +23,7 @@ rules on the world, on the CPU and the engine; WM1, designed
 [maps](maps.md) loaded on both.
 **Playable:** `cargo run --release --bin larder-world -- map=fork` (W2c's first cut: the real rules on the GPU world, on a map). `mouldgpu`'s Q squad is the UI's stand-in, with no rules.
 **Next:** the frame time on the 1070. The maps' soil plays on the GPU since 2026-11-12. A stalemate now scores the charge taken and the mould's size (score v2).
+**Campaign (W5), designed and approved 2026-11-12 04:44Z, not built:** eight missions on the v2 maps, each one verb against one tier, shown to the player as a goal sentence and bar with one to three stars, with a no-soft-lock rule and a dead-time measure; only unlocked verbs carry between missions ([design](../../Reports/larder-campaign-2026-11-12.md)).
 
 ## Larder World so far
 
@@ -140,7 +141,7 @@ owner's playtest.
 ## Open
 
 - **Maps** (owner, 19:29Z: "We will want maps though. That should be part of the plan"). Height is parked after the owner's 20:06Z challenge; ground is tested before it goes on a map. On 16 paired seeds every soil kind changes the mould: slow (wet) and barren ground halve it, sand makes it spread further, clay traps it (`BigParams::sand_keep`, `clay_keep`, `barren_upkeep`, off unless a map sets `BigDish::soil`). Five flat maps (Rim, Fork, Flats, Nest, Passes) wait on the map loader and the W2b harness ([report, *Which ground the mould feels*](../../Reports/larder-maps-2026-11-11.md), [page](https://claude.ai/artifact/XPwkBkTAzsWq3Wg37pff7K)).
-- Larder World, phase by phase, per the roadmap; the open questions there (world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds) are the owner's.
+- Larder World, phase by phase, per the roadmap; the open questions there (world size, whether two soldier teams are allies or rivals, fog of war) are the owner's; how a campaign mission ends and what carries are decided (11-12 04:44Z).
 - The M3 window stays playable (`cargo run --release --bin larder -- 17`). Hunger barely acts on the small dish and needs a lower bar or should go.
 
 - Make the mould answer the squad so plans can counter each other: smell growing with the bank, starving mould fighting harder at a ring, drops that pull fronts away, layouts where the best piles differ.
@@ -150,6 +151,7 @@ owner's playtest.
 
 ## Sources
 
+- [larder-campaign-2026-11-12.md](../../Reports/larder-campaign-2026-11-12.md): the campaign's design (W5): missions, goal bar and stars, pacing, no soft lock, dead time.
 - [larder-world-roadmap-2026-11-11.md](../../Reports/larder-world-roadmap-2026-11-11.md): the world plan, phases W0-W5 and their gates.
 - [larder-maps-2026-11-11.md](../../Reports/larder-maps-2026-11-11.md): maps and ground kinds (WM2, WM3), a plan.
 - [life-gpu-2026-11-11.md](../../Reports/life-gpu-2026-11-11.md): the tiers' life cycle and the shots' alarm on the GPU.

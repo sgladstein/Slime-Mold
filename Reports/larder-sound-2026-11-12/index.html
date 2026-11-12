@@ -1,0 +1,115 @@
+<title>Larder Sound</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&display=swap">
+<style>
+/* Layout: the Mould Sound page's plates, one per recording: sound, loudness trace and counts side by side, with the game's picture where there is one. Dark agar on purpose: the game's own look. */
+:root{
+  --agar:#14140f; --plate:#1d1d16; --rim:#34342a; --ink:#e9e6d2; --dim:#a3a08a;
+  --mould:#e8c547; --tone:#8fc7b8; --mark:#c97b5a;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+body{background:var(--agar);color:var(--ink);font:15px/1.6 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+main{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{font:700 2.4rem/1.1 var(--display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 span{color:var(--mould)}
+h2{font:500 1.25rem/1.25 var(--display);margin:0;text-wrap:balance}
+p{margin:0;max-width:65ch}
+.lede{display:flex;flex-direction:column;gap:12px;color:var(--dim)}
+.lede strong{color:var(--ink);font-weight:500}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px 24px;font-size:.9rem}
+.legend div{display:flex;gap:10px;align-items:baseline;min-width:0}
+.legend b{font:600 .72rem/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mould);min-width:7.5em}
+.legend span{color:var(--dim)}
+.plate{background:var(--plate);border:1px solid var(--rim);border-radius:10px;padding:20px;display:grid;grid-template-columns:1fr 250px;gap:16px 24px}
+.plate>*{min-width:0}
+.plate .head{grid-column:1/-1;display:flex;flex-direction:column;gap:6px}
+.plate .what{color:var(--dim);font-size:.92rem}
+.plate figure{grid-column:1/-1;margin:0;display:flex;flex-direction:column;gap:6px}
+.plate figure img{width:100%;border-radius:6px;border:1px solid var(--rim);display:block}
+audio{width:100%;height:40px}
+canvas{width:100%;height:64px;display:block;cursor:pointer}
+.trace{display:flex;flex-direction:column;gap:10px}
+.cap{font:400 .72rem/1.4 var(--mono);color:var(--dim)}
+dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:3px 12px;font:400 .8rem/1.5 var(--mono);align-content:start}
+dt{color:var(--dim)} dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.played{grid-column:1/-1;font:400 .74rem/1.5 var(--mono);color:var(--dim);border-top:1px solid var(--rim);padding-top:10px}
+.ask{border-left:3px solid var(--mould);padding:4px 0 4px 16px;display:flex;flex-direction:column;gap:8px}
+.ask ol{margin:0;padding-left:1.2em;color:var(--dim)} .ask li{margin:2px 0}
+.foot{font:400 .78rem/1.6 var(--mono);color:var(--dim)}
+@media (max-width:640px){.plate{grid-template-columns:1fr}h1{font-size:1.9rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<main>
+  <header class="lede">
+    <h1>Larder World, <span>heard</span></h1>
+    <p><strong>A shot now sounds as big as what it killed.</strong> Each shot is a crack where the soldier stands and an impact where it struck. The impact's weight is the walkers that shot killed, so a shot into a thick vein is a heavy, low, long slap and a graze is a light tap. Every walker killed is also one pop in the kill crackle.</p>
+    <p>Everything here is a count the game already has; nothing is played for the ear alone. These were rendered offline by the code the window runs. Headphones help: sounds sit left or right of the screen where they happen, and quieter the farther off screen they are.</p>
+  </header>
+  <section class="legend" aria-label="What each sound is">
+    <div><b>Shot</b><span>a bright crack at the soldier</span></div>
+    <div><b>Impact</b><span>a wet slap at the hit; heavier, lower and longer with more walkers killed</span></div>
+    <div><b>Kills</b><span>dry pops, one a walker killed, where they died</span></div>
+    <div><b>Pulse</b><span>a heartbeat, faster and louder as the mould nears the squad</span></div>
+    <div><b>On you</b><span>wet squelching, the walkers touching soldiers</span></div>
+    <div><b>Hurt</b><span>a rough groan as a soldier loses health</span></div>
+    <div><b>Fallen</b><span>two low bell notes</span></div>
+    <div><b>Larder</b><span>slurping while the mould eats the bank</span></div>
+    <div><b>Banked</b><span>a marimba note, higher as the bank fills</span></div>
+    <div><b>Bought, wall</b><span>a thunk (a wall adds grit)</span></div>
+    <div><b>Dry, core</b><span>a knock; the core taken is a thud and a bell</span></div>
+    <div><b>Mould voice</b><span>one breathing drone for the whole body: louder as it grows, strained as it starves, an inhale when shot (K toggles)</span></div>
+  </section>
+  <div id="plates" style="display:flex;flex-direction:column;gap:20px"></div>
+  <section class="ask">
+    <h2>What I need from your ears</h2>
+    <ol>
+      <li>The shot ladder: does a big kill feel like a big hit, and is the step from light to heavy enough?</li>
+      <li>The rush: does the pulse help you feel the mould closing in, or does it get in the way?</li>
+      <li>Levels: are the shots too loud or too quiet against the rest?</li>
+      <li>The mould's voice (A and B): does it make the mould feel like one creature, or is it a drone you'd rather lose? K turns it off in the game.</li>
+      <li>On the PC, press O in Larder World to turn sound off and on.</li>
+    </ol>
+  </section>
+  <p class="foot">Listener cost: 2.1&ndash;3.5 &micro;s mean a frame, worst 83 &micro;s (cloud CPU, four runs); it reads only what the game already has, with no new GPU read-back. Sound on and off play the same round (the world hash test). Recordings 48 kHz stereo, 128 kbps MP3. Source: Reports/larder-sound-2026-11-12/.</p>
+</main>
+<script>
+const CLIPS = [{"id": "shot-ladder", "title": "One shot a second, killing more each time", "what": "The game's listener fed one shot a second with a set kill count, nothing else running. The first is stopped by rock (a crack, no impact); then 0, 1, 5, 15, 37, 56 and 80 walkers killed. 37 is a rush's median shot; 80 is the heaviest it fired.", "marks": [[0, "rock"], [1, "0"], [2, "1"], [3, "5"], [4, "15"], [5, "37"], [6, "56"], [7, "80"]], "loud": [-34.5, -55.8, -58.7, -58.7, -33.0, -53.5, -58.1, -58.5, -26.6, -46.4, -57.6, -58.4, -24.8, -42.1, -44.4, -46.7, -22.1, -39.0, -44.6, -48.5, -19.7, -34.5, -38.5, -43.0, -17.6, -34.0, -39.2, -44.0, -15.3, -31.6, -36.8, -40.6, -38.9, -38.6, -45.3, -43.7], "counts": [["Weight at 1 kill", "0.11"], ["Weight at 5", "0.25"], ["Weight at 15", "0.43"], ["Weight at 37", "0.68"], ["Weight at 80", "1.00"], ["Loudness, 0 to 80 killed", "+18 dB"], ["Low end (<200 Hz), 0 to 80", "11% to 79%"]], "played": "8 cracks, 7 impacts (light 3, mid 1, heavy 3), kill crackle 194 walkers", "img": null}, {"id": "rush-fork-s1", "title": "Rush: four soldiers attack the core", "what": "Fork, seed 1, the rush hand, first 40 s, heard from above the squad at the window's opening zoom. They shoot into the mould's trunk, it closes on them, they are hurt and all four fall by 40 s. Rendered before the mould's voice existed.", "marks": [[12, "picture"]], "loud": [-58.7, -59.2, -58.8, -59.0, -58.7, -59.1, -59.1, -58.4, -58.2, -58.3, -59.1, -58.7, -58.2, -58.9, -58.0, -58.7, -58.7, -58.8, -25.4, -31.9, -44.7, -21.8, -22.2, -26.6, -35.2, -26.8, -23.5, -25.4, -24.5, -32.9, -19.8, -21.4, -20.3, -21.6, -18.3, -14.9, -18.6, -19.2, -14.7, -14.1, -15.4, -18.9, -14.4, -13.5, -14.5, -18.9, -14.0, -15.1, -15.6, -19.3, -16.3, -16.8, -17.0, -19.7, -14.6, -15.7, -16.6, -19.7, -16.4, -15.3, -17.6, -21.3, -15.9, -15.5, -13.8, -16.8, -16.3, -17.2, -17.7, -20.2, -22.6, -25.2, -27.7, -29.9, -32.3, -34.8, -34.9, -36.0, -41.6, -39.5, -38.7, -47.5, -50.1, -37.5, -53.0, -38.5, -37.8, -54.9, -41.7, -42.3, -56.1, -57.2, -58.8, -59.2, -41.8, -43.7, -37.3, -56.1, -36.6, -52.8, -58.4, -38.2, -56.5, -58.7, -58.6, -59.1, -59.2, -58.7, -58.1, -58.3, -58.3, -58.7, -58.2, -59.5, -58.9, -58.2, -59.0, -58.8, -39.9, -49.0, -39.5, -55.1, -58.9, -58.7, -58.7, -40.4, -46.7, -58.6, -58.7, -58.4, -58.9, -58.3, -58.8, -58.4, -59.2, -58.7, -58.6, -58.5, -36.3, -34.2, -49.0, -58.3, -58.5, -58.5, -58.8, -58.7, -41.5, -48.0, -58.2, -58.3, -58.4, -59.0, -41.9, -47.8, -35.5, -53.6, -58.8, -58.5, -59.5, -58.4], "counts": [["Shots", "43"], ["Walkers killed", "1494"], ["Impacts light / mid / heavy", "11 / 10 / 22"], ["Pulse beats", "28"], ["Groans (hurt)", "42"], ["Soldiers fallen", "4"]], "played": "grains 2,798 (kill crackle 1,562, mould on soldiers 1,024, larder 28), verb grains 184, alerts 4. Peak 0.93, -21.9 dBFS", "img": "rush-fork-s1-12s.jpg", "imgcap": "12 s: the squad in the trunk; the dark holes are its shots' wounds"}, {"id": "farm-fork-s1", "title": "Farm: harvest and buy", "what": "Fork, seed 1, the farm hand, first 60 s: soldiers carry crystal home and buy more. The mould barely reaches them, so this is the economy's sound with a few light shots. Rendered before the mould's voice existed.", "marks": [[30, "picture"]], "loud": [-58.7, -59.2, -58.8, -59.0, -25.1, -47.6, -57.9, -58.3, -24.9, -45.2, -58.1, -58.1, -25.0, -47.5, -57.7, -59.4, -58.5, -59.0, -58.1, -58.8, -58.7, -59.4, -59.0, -58.3, -59.3, -31.8, -25.5, -30.8, -37.0, -43.1, -25.9, -28.8, -34.9, -41.1, -47.1, -52.4, -56.3, -58.6, -58.6, -59.0, -59.3, -58.5, -58.6, -58.3, -59.2, -58.6, -59.5, -58.7, -59.2, -58.8, -58.8, -31.4, -25.9, -25.5, -29.9, -39.7, -23.6, -23.6, -32.0, -38.8, -17.5, -24.1, -30.2, -36.6, -25.1, -25.5, -28.6, -35.2, -25.0, -27.3, -28.0, -34.0, -40.2, -31.9, -26.0, -32.4, -38.6, -44.7, -25.5, -30.8, -37.1, -43.1, -26.3, -29.2, -35.3, -41.5, -28.0, -27.6, -33.6, -39.8, -34.8, -25.6, -32.0, -38.2, -44.4, -25.7, -30.4, -36.6, -42.7, -26.6, -28.8, -34.9, -41.1, -28.9, -27.0, -33.3, -39.4, -45.5, -25.3, -31.6, -37.9, -43.9, -25.9, -30.0, -36.2, -42.3, -27.0, -28.4, -34.4, -40.7, -30.1, -26.5, -32.8, -39.0, -45.0, -25.4, -31.2, -37.4, -43.6, -26.1, -29.6, -35.7, -41.9, -27.4, -28.0, -34.0, -40.2, -31.9, -26.0, -32.4, -38.6, -44.8, -25.5, -30.8, -37.0, -43.1, -26.3, -29.2, -35.3, -41.5, -28.0, -27.6, -33.6, -39.8, -34.8, -25.6, -32.0, -38.2, -44.3, -25.7, -30.4, -36.6, -42.7, -26.6, -28.8, -34.9, -41.0, -28.9, -27.0, -33.3, -39.4, -45.4, -25.2, -31.5, -37.9, -43.9, -25.9, -30.0, -36.2, -42.3, -27.0, -28.4, -34.4, -40.7, -30.1, -26.5, -32.8, -39.0, -45.0, -25.4, -31.2, -37.4, -43.5, -26.1, -29.6, -35.8, -41.9, -27.4, -28.0, -34.0, -40.2, -31.9, -26.0, -32.4, -38.6, -44.7, -25.5, -30.8, -37.0, -43.1, -26.3, -29.2, -35.3, -41.4, -28.0, -27.6, -33.6, -39.8, -34.8, -25.6, -32.0, -38.2, -44.3, -25.7, -30.4, -36.6, -42.7, -26.6, -28.8, -34.9, -41.0, -28.9, -27.0, -33.3, -39.4, -45.5, -25.3, -31.6, -37.9, -43.9], "counts": [["Shots", "9"], ["Walkers killed", "2"], ["Impacts light / mid / heavy", "7 / 0 / 0"], ["Banking chimes", "46"], ["Soldiers bought", "7"], ["Crystal run dry", "1"], ["Pulse beats", "4"]], "played": "grains 34, verb grains 30, alerts 46. Peak 0.74, -29.5 dBFS", "img": "farm-fork-s1-30s.jpg", "imgcap": "30 s: carriers on the crystal by the larder"}, {"id": "idle-voice-fork-s1", "title": "The mould's voice: a round left alone", "what": "Fork, seed 1, no orders, 90 s, with the mould's voice. The soldiers' default stance still fires a few light shots. Listen for the body: quiet breathing at the start, strained and slow as it dies back from 5,000 to about 1,400 walkers (15 to 45 s), then steadier and higher as it regrows to 2,300.", "marks": [[15, "die-back"], [50, "regrowth"]], "loud": [-46.9, -39.9, -35.5, -32.7, -30.6, -29.6, -29.2, -29.2, -29.7, -30.5, -31.6, -32.9, -34.3, -35.8, -37.2, -37.8, -37.7, -36.0, -33.7, -31.6, -30.1, -29.1, -28.8, -29.0, -29.5, -30.3, -31.5, -32.7, -34.3, -35.6, -37.1, -37.8, -37.8, -36.1, -33.8, -31.6, -30.1, -29.1, -28.8, -28.9, -29.6, -30.3, -31.4, -32.7, -34.2, -35.6, -37.0, -38.0, -37.7, -36.2, -30.2, -31.1, -25.9, -29.1, -29.0, -29.1, -29.5, -26.9, -29.5, -23.8, -29.2, -35.1, -20.5, -26.4, -33.5, -22.6, -23.5, -28.5, -28.8, -22.3, -22.7, -22.5, -18.7, -23.5, -17.7, -23.2, -22.2, -24.0, -19.7, -23.9, -28.9, -29.8, -30.9, -31.8, -28.1, -29.0, -33.6, -26.7, -24.9, -25.4, -29.6, -28.0, -28.3, -27.4, -26.6, -25.9, -25.4, -24.1, -24.5, -25.6, -23.5, -26.4, -26.0, -27.6, -28.0, -28.9, -29.6, -30.5, -31.5, -32.4, -33.3, -33.8, -34.6, -34.9, -34.8, -34.1, -29.0, -29.6, -25.6, -22.9, -24.6, -26.2, -26.4, -26.1, -26.0, -25.9, -26.1, -26.4, -26.8, -27.3, -27.7, -28.5, -29.3, -28.9, -29.9, -32.0, -25.1, -30.8, -34.3, -22.9, -29.0, -33.8, -32.6, -31.0, -29.7, -28.6, -27.5, -26.8, -26.6, -26.6, -26.8, -27.2, -27.8, -28.6, -29.4, -30.4, -31.4, -32.6, -33.8, -28.8, -30.9, -35.4, -26.4, -32.3, -22.8, -24.0, -32.1, -32.0, -32.7, -34.0, -36.2, -37.8, -39.7, -39.9, -38.7, -35.7, -32.9, -31.0, -29.8, -29.0, -26.9, -28.9, -31.2, -26.6, -28.2, -23.9, -23.8, -35.2, -25.7, -24.3, -27.1, -37.3, -29.1, -33.7, -24.7, -26.6, -25.2, -28.9, -40.9, -27.2, -32.5, -28.4, -29.3, -33.3, -26.1, -26.1, -22.7, -24.9, -27.4, -23.4, -26.2, -24.5, -28.7, -21.6, -24.5, -22.6, -27.6, -23.0, -25.8, -35.6, -40.0, -41.8, -30.7, -32.6, -37.1, -26.7, -32.9, -32.8, -27.0, -32.7, -33.1, -30.0, -32.5, -26.4, -34.8, -29.7, -35.4, -26.0, -25.6, -26.2, -32.1, -26.4, -28.1, -30.4, -23.0, -22.9, -31.4, -33.6, -31.5, -32.9, -38.2, -24.0, -23.5, -22.6, -24.8, -32.6, -34.4, -30.7, -33.0, -25.3, -32.5, -31.4, -34.9, -37.4, -25.6, -29.7, -30.8, -31.4, -23.4, -25.6, -24.0, -28.2, -20.4, -25.7, -22.6, -32.4, -24.9, -31.7, -31.8, -32.9, -29.0, -32.0, -26.7, -29.9, -34.8, -24.8, -24.1, -25.6, -24.7, -31.2, -26.5, -22.6, -24.8, -32.0, -33.2, -34.5, -35.9, -37.3, -38.8, -39.8, -40.4, -28.9, -36.6, -24.4, -29.8, -27.2, -22.8, -28.7, -21.2, -26.7, -28.8, -34.1, -35.5, -37.0, -38.4, -39.7, -40.3, -39.8, -38.0, -35.9, -29.8, -30.8, -24.5, -28.6, -31.4, -23.8, -23.1, -24.4, -28.6, -26.1, -21.7, -34.2, -21.5, -23.1, -21.3, -26.3, -25.1, -32.2, -31.3, -31.0, -31.2, -31.5, -32.3, -33.3, -34.6, -31.4, -35.1, -39.0, -24.6, -32.1, -37.2, -27.0, -22.8, -24.1, -26.1, -25.0, -28.7, -31.6, -24.6, -25.5], "counts": [["Walkers at 0 / 30 / 90 s", "5,000 / 1,542 / 2,345"], ["Hunger at 20-30 s", "1.00"], ["Hunger at 40 s", "0.73"], ["Growth at 60-90 s", "+1.2 to 1.5%/s"], ["Inhales (flinches)", "5"], ["Shots / kills", "93 / 83"]], "played": "voice level from log(walkers), pitch 48 Hz sagging to 37 when starving and up to 54 growing, a breath every 4 s (6.7 s starving). Listener 3.5 us a frame", "img": null}, {"id": "rush-voice-fork-s1", "title": "Rush with the mould's voice (A)", "what": "The rush from above, 60 s, with the voice: the body inhales and breathes faster as the volley hits it (3 inhales), and heavy hits duck it. Compare with B.", "marks": [[10, "volley"]], "loud": [-46.9, -39.9, -35.5, -32.7, -30.6, -29.6, -29.2, -29.2, -29.7, -30.5, -31.6, -32.9, -34.3, -35.8, -37.2, -37.8, -37.7, -36.0, -24.6, -28.5, -30.2, -21.9, -21.0, -24.9, -29.4, -25.2, -22.8, -24.9, -23.7, -32.5, -20.0, -20.8, -20.5, -21.2, -18.2, -15.5, -18.8, -19.4, -14.8, -13.8, -16.4, -18.6, -14.3, -13.7, -14.4, -19.8, -14.0, -13.1, -15.8, -20.5, -16.0, -16.2, -17.2, -19.7, -14.4, -15.4, -16.0, -20.2, -15.4, -16.0, -17.6, -19.7, -15.4, -14.2, -14.1, -16.5, -16.6, -17.1, -17.6, -20.1, -22.6, -25.1, -26.8, -26.6, -25.3, -24.0, -24.1, -24.3, -24.2, -24.1, -24.5, -24.8, -25.3, -25.7, -26.2, -27.0, -27.9, -28.5, -29.5, -30.7, -31.6, -32.1, -33.3, -34.1, -34.4, -33.5, -34.0, -33.0, -31.5, -30.3, -29.0, -27.8, -27.0, -26.3, -25.9, -25.9, -25.9, -26.0, -26.0, -26.4, -27.2, -27.6, -28.4, -29.2, -29.8, -30.8, -30.6, -30.8, -31.0, -34.1, -34.7, -35.0, -34.8, -34.0, -31.2, -29.8, -30.3, -28.9, -28.1, -27.2, -26.5, -26.1, -25.7, -25.4, -25.2, -26.0, -27.3, -29.1, -30.7, -32.1, -33.5, -34.3, -35.6, -37.9, -38.7, -37.0, -37.6, -36.0, -34.4, -32.8, -31.1, -30.5, -30.9, -30.9, -31.4, -31.9, -32.7, -33.7, -35.2, -36.5, -37.7, -38.9, -39.8, -40.0, -38.9, -37.0, -32.3, -33.2, -32.1, -31.2, -30.7, -30.8, -31.1, -31.3, -32.3, -31.3, -32.8, -36.2, -37.6, -38.9, -39.6, -35.7, -39.6, -37.6, -35.7, -33.7, -32.2, -31.7, -30.9, -31.3, -32.1, -31.6, -33.7, -35.1, -36.3, -37.7, -39.1, -40.0, -40.3, -39.5, -37.2, -35.1, -33.3, -32.2, -31.4, -31.4, -31.7, -32.3, -33.4, -34.7, -34.2, -37.1, -39.3, -36.8, -40.7, -40.4, -38.4, -36.2, -32.8, -33.0, -32.2, -32.2, -32.3, -32.8, -32.8, -33.8, -34.4, -33.8, -37.5, -40.4, -41.7, -41.0, -39.1, -34.4, -35.0, -33.4, -32.6, -32.6, -32.7, -32.9], "counts": [["Shots / kills", "43 / 1,494"], ["Inhales", "3"], ["Level", "-22.9 dBFS"]], "played": "same round as B, sample for sample, but for the voice", "img": null}, {"id": "rush-novoice-fork-s1", "title": "Rush without it (B)", "what": "The same round with the voice off (K in the game, voice=0 headless).", "marks": [[10, "volley"]], "loud": [-58.7, -59.2, -58.8, -59.0, -58.7, -59.1, -59.1, -58.4, -58.2, -58.3, -59.1, -58.7, -58.2, -58.9, -58.0, -58.7, -58.7, -58.8, -25.4, -31.9, -44.7, -21.8, -22.2, -26.6, -35.2, -26.8, -23.5, -25.4, -24.5, -32.9, -19.8, -21.4, -20.3, -21.6, -18.3, -14.9, -18.6, -19.2, -14.7, -14.1, -15.4, -18.9, -14.4, -13.5, -14.5, -18.9, -14.0, -15.1, -15.6, -19.3, -16.3, -16.8, -17.0, -19.7, -14.6, -15.7, -16.6, -19.7, -16.4, -15.3, -17.6, -21.3, -15.9, -15.5, -13.8, -16.8, -16.3, -17.2, -17.7, -20.2, -22.6, -25.2, -27.7, -29.9, -32.3, -34.8, -34.9, -36.0, -41.6, -39.5, -38.7, -47.5, -50.1, -37.5, -53.0, -38.5, -37.8, -54.9, -41.7, -42.3, -56.1, -57.2, -58.8, -59.2, -41.8, -43.7, -37.3, -56.1, -36.6, -52.8, -58.4, -38.2, -56.5, -58.7, -58.6, -59.1, -59.2, -58.7, -58.1, -58.3, -58.3, -58.7, -58.2, -59.5, -58.9, -58.2, -59.0, -58.8, -39.9, -49.0, -39.5, -55.1, -58.9, -58.7, -58.7, -40.4, -46.7, -58.6, -58.7, -58.4, -58.9, -58.3, -58.8, -58.4, -59.2, -58.7, -58.6, -58.5, -36.3, -34.2, -49.0, -58.3, -58.5, -58.5, -58.8, -58.7, -41.5, -48.0, -58.2, -58.3, -58.4, -59.0, -41.9, -47.8, -35.5, -53.6, -58.8, -58.5, -59.5, -58.4, -58.9, -43.5, -54.9, -58.8, -59.3, -58.5, -58.6, -36.4, -49.3, -58.4, -41.2, -41.3, -57.8, -58.7, -36.4, -38.4, -35.8, -45.2, -57.9, -39.8, -50.9, -38.9, -53.7, -58.6, -57.4, -58.9, -40.3, -42.8, -57.5, -58.6, -58.6, -39.1, -38.3, -44.7, -57.6, -59.4, -58.4, -58.8, -58.6, -58.6, -58.9, -58.9, -58.7, -58.8, -58.7, -59.0, -58.6, -59.4, -58.8, -58.3, -39.1, -46.2, -58.6, -58.6, -41.7, -51.2, -58.5, -58.5, -58.5, -58.7, -35.4, -33.9, -54.2, -41.6, -49.7, -58.7, -35.0, -53.8, -36.8, -36.6, -36.7, -36.1, -54.7, -59.5, -58.6, -58.3, -59.0, -58.6, -58.2, -35.3], "counts": [["Shots / kills", "43 / 1,494"], ["Level", "-23.6 dBFS"]], "played": "the first cut", "img": null}];
+const host = document.getElementById('plates');
+const css = getComputedStyle(document.documentElement);
+const col = n => css.getPropertyValue(n).trim();
+for (const c of CLIPS) {
+  const el = document.createElement('article');
+  el.className = 'plate';
+  const secs = c.loud.length / 4;
+  el.innerHTML = `<div class="head"><h2></h2><p class="what"></p></div>
+    <div class="trace"><audio controls preload="metadata" src="${c.id}.mp3"></audio><canvas aria-label="Loudness trace; click to play from there"></canvas><div class="cap">loudness, quarter seconds, -60 to 0 dBFS &middot; ${secs.toFixed(0)} s</div></div>
+    <dl></dl>` + (c.img ? `<figure><img alt="" src="${c.img}"><figcaption class="cap"></figcaption></figure>` : '') + `<div class="played"></div>`;
+  el.querySelector('h2').textContent = c.title;
+  el.querySelector('.what').textContent = c.what;
+  if (c.img) { el.querySelector('img').alt = c.imgcap; el.querySelector('figcaption').textContent = c.imgcap; }
+  const dl = el.querySelector('dl');
+  for (const [k, v] of c.counts) { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; dl.append(dt, dd); }
+  el.querySelector('.played').textContent = 'Played: ' + c.played;
+  host.append(el);
+  const cv = el.querySelector('canvas'), au = el.querySelector('audio');
+  const draw = () => {
+    const w = cv.clientWidth, h = cv.clientHeight, dpr = window.devicePixelRatio || 1;
+    cv.width = w * dpr; cv.height = h * dpr;
+    const g = cv.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, w, h);
+    const y = db => h - 4 - (Math.max(-60, db) + 60) / 60 * (h - 8);
+    g.strokeStyle = col('--rim'); g.lineWidth = 1;
+    for (const db of [-40, -20]) { g.beginPath(); g.moveTo(0, y(db) + .5); g.lineTo(w, y(db) + .5); g.stroke(); }
+    g.fillStyle = col('--mould'); g.globalAlpha = .22; g.beginPath(); g.moveTo(0, h);
+    c.loud.forEach((v, i) => g.lineTo(i / (c.loud.length - 1) * w, y(v))); g.lineTo(w, h); g.fill();
+    g.globalAlpha = 1; g.strokeStyle = col('--mould'); g.lineWidth = 1.25; g.beginPath();
+    c.loud.forEach((v, i) => { const x = i / (c.loud.length - 1) * w; i ? g.lineTo(x, y(v)) : g.moveTo(x, y(v)); }); g.stroke();
+    g.font = '10px ' + col('--mono'); g.textBaseline = 'top';
+    for (const [t, label] of c.marks) { const x = t / secs * w; g.fillStyle = col('--mark'); g.fillRect(x, 0, 1, h); g.fillText(label, Math.min(x + 3, w - 40), 2); }
+    if (au.currentTime > 0) { const x = au.currentTime / secs * w; g.fillStyle = col('--tone'); g.fillRect(x - .5, 0, 2, h); }
+  };
+  draw(); window.addEventListener('resize', draw); au.addEventListener('timeupdate', draw);
+  cv.addEventListener('click', e => { const r = cv.getBoundingClientRect(); au.currentTime = (e.clientX - r.left) / r.width * secs; au.play().catch(() => {}); });
+}
+</script>
