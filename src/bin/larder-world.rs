@@ -80,9 +80,16 @@
 //! B a mesh everywhere (25,000 scattered, no food scent); C a sheet with
 //! trunks (25,000 grown from home); D as C with 22.5-degree sensors 5
 //! cells out (sheet, then mesh, then trunks); E as C with a slow thin
-//! front. Put it first: keys after it change it. A walker's fight weight
-//! follows the walkers a cell (`Rules::mass`: 5,000 at scale 2 count 1
-//! each, so the dense shapes hurt like today's mould); `mass=M` sets it.
+//! front. Put it first: keys after it change it. **C is the default**
+//! (owner, 2026-11-12 22:19Z: "C is better how it looks, the shape it
+//! takes, how it networks the crystals"): a round with no `shape=`,
+//! `walkers=` or `mission=` plays C, its keys under any given; `shape=a`
+//! plays today's 5,000 walkers. A mission keeps its own mould (the
+//! campaign thread's). A walker's weight on buildings, the larder and
+//! wading follows the walkers a cell (`Rules::mass`: 5,000 at scale 2
+//! count 1 each); `mass=M` sets it. Its bite on a soldier
+//! (`Rules::drain`, 2 a second) is whole at any count since 2026-11-12:
+//! the owner walked 40 soldiers into C's thickest part and lost none.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -238,6 +245,20 @@ fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'static st
     })
 }
 
+/// The mould a round plays when nothing picks one (owner, 2026-11-12
+/// 22:19Z, after playing D and C: "C is better how it looks, the shape it
+/// takes, how it networks the crystals").
+const DEFAULT_SHAPE: &str = "c";
+
+/// Shape C's walkers and keys, under any engine keys given (theirs come
+/// after, so they win).
+fn default_shape(args: &mut Args) {
+    let (walkers, keys) = shape_keys(DEFAULT_SHAPE).expect("the default shape is on the shapes page");
+    args.walkers = walkers;
+    let given = std::mem::take(&mut args.keys);
+    args.keys = keys.iter().map(|(k, v)| (k.to_string(), v.to_string())).chain(given).collect();
+}
+
 /// A shot being drawn: its ray, whether it hit slime, and its age.
 struct Tracer {
     from: (f32, f32),
@@ -304,6 +325,8 @@ struct App {
     /// robbed (game second), out of food.
     dry: Vec<bool>,
     core_told: bool,
+    /// The broken mould (`Rules::broken`) told.
+    broken_told: bool,
     robbed_at: Option<f32>,
     stolen: f32,
     broke: bool,
@@ -375,6 +398,7 @@ impl App {
             larder_sel: false,
             dry: Vec::new(),
             core_told: false,
+            broken_told: false,
             robbed_at: None,
             stolen: 0.0,
             broke: false,
@@ -505,6 +529,7 @@ impl App {
         self.controls.groups = Default::default();
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
+        self.broken_told = false;
         self.bank_log.clear();
         let voice = self.listener.as_ref().is_none_or(|l| l.voice);
         self.listener = Some(WorldListener::new(&game));
@@ -897,6 +922,14 @@ impl App {
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
             self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
+        }
+        if g.broken.is_some() != self.broken_told {
+            self.broken_told = g.broken.is_some();
+            if self.broken_told {
+                self.hud.alert("The mould is broken: its stragglers starve unless they reach a crystal", None, theme::GOOD);
+            } else {
+                self.hud.alert("The mould is growing back from a crystal", None, theme::BAD);
+            }
         }
         if g.stolen > self.stolen {
             if self.robbed_at.is_none_or(|r| t - r > 30.0) {
@@ -2577,13 +2610,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut holes = false;
     let mut centre = None;
+    // Whether the command line picks the mould (`shape=`, `walkers=`); if
+    // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
+    let mut chosen = false;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
             "map" => args.map = (v != "noise").then(|| v.to_string()),
             "seed" => args.seed = v.parse()?,
             "scale" => args.scale = v.parse()?,
-            "walkers" => args.walkers = v.parse()?,
+            "walkers" => {
+                args.walkers = v.parse()?;
+                chosen = true;
+            }
             "mission" => args.mission = Some(v.to_string()),
             "crater" => args.crater = Some(v.parse()?),
             "core_pull" => args.core_pull = Some(v.parse()?),
@@ -2595,6 +2634,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "mass" => args.mass = Some(v.parse()?),
             "shape" => {
+                chosen = true;
                 let (walkers, keys) = shape_keys(v).ok_or("shape=a|b|c|d|e (the shapes page's films)")?;
                 args.walkers = walkers;
                 args.keys.extend(keys.iter().map(|(k, v)| (k.to_string(), v.to_string())));
@@ -2636,6 +2676,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
         }
     }
+    if !chosen && args.mission.is_none() {
+        default_shape(&mut args);
+    }
     if let Some(secs) = bench_secs {
         println!("larder-world machine at the start: {}", machine());
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
@@ -2672,6 +2715,20 @@ mod tests {
         }
         assert!(shape_keys("f").is_none());
         assert_eq!((Rules::mass_for(5_000, 2), Rules::mass_for(1_250, 1), Rules::mass_for(25_000, 2)), (1.0, 1.0, 0.2));
+    }
+
+    /// The default mould is shape C, under the keys the command line gave.
+    #[test]
+    fn the_default_is_shape_c_under_given_keys() {
+        let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, wade: None };
+        default_shape(&mut args);
+        assert_eq!(args.walkers, 25_000);
+        let mut s = race_settings(1, 2, args.walkers);
+        for (k, v) in &args.keys {
+            slime_mould::gpu::set(&mut s, k, v).unwrap();
+        }
+        assert_eq!(args.keys.first().map(|k| k.0.as_str()), Some("upkeep"));
+        assert_eq!(args.keys.last(), Some(&("upkeep".to_string(), "0.001".to_string())));
     }
 
     /// The window plays the real game: soldiers sent at the core fire,
