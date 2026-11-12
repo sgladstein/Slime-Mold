@@ -151,6 +151,11 @@ seeds 201-216 against 2 of 32 of seeds 5-36 (Fisher p 0.033), so a gate
 passed on one block can fail on the other. The window's own loop is in CI
 since #116 (`the_window_plays_every_mission`,
 `the_window_takes_every_command`); every thread keeps both green.
+Every census also reports **win rate and the stalemate median separately**,
+not only score v2's mean, which mixes wins and stalemates (one-body review,
+11-12 17:10Z): farm, wall and fort hit the 15-min cap in 144 of 144 games of
+the 48-seed core census. Any dense-mould census sets GPU `capacity` to at
+most half the agar, or the engine silently drops one-walker-a-cell.
 
 **Caps.** Buildings share `squad::UNITS_MAX` (64) with up to
 `Rules::max_squad` (40) soldiers, and the frame drops units past the cap
