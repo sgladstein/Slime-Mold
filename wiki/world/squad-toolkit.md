@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12T16:30Z
+updated: 2026-11-12T16:44Z
 sources: [Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
 ---
@@ -15,7 +15,11 @@ Six tools for the Larder world's squad, each built on one term of the
 mould's model (`mould::kit`, CPU world only): blast, mine, det cord, germ,
 sleep gas, and mask or reek on a soldier's smell. The crater a blast, cord
 or shot leaves (`BigDish::scorch_disc`; GPU binding 47 since #113, shared
-`scorch_keep` 0.1, `scorch_full` 30) is the one scorch in the game. Each tool
+`scorch_keep` and `scorch_full`) is the one scorch in the game. The race
+world's are 0 and 150 since PR 3b, the cone the owner picked for shots
+(were 0.1 and 30): a blast's disc stays flat but now holds no trail and
+fades over its last 150 fine steps. `kitplans` builds on `race_params`, so
+the toolkit's tables before PR 3b were measured at 0.1 and 30. Each tool
 shows in the mould; mines are weak and the det cord starves nothing until
 food flows ([report](../../Reports/squad-toolkit-2026-11-12.md)). Tools take
 carry space and come from the larder (`KitRules`: a runner holds 5 at 50

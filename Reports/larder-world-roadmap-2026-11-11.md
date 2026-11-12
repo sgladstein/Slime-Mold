@@ -731,3 +731,35 @@ So the pull does no harm off the race world. Strike's dominance on the Fork is t
 At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad shoots the mould down, and it is no bigger than the CPU's own spread.
 
 **Pictures**: the hub on seed 204 at 40, 45, 50 and 60 s without and with the pull ([core/hub-s204-off-40s.jpg](larder-world-roadmap-2026-11-11/core/hub-s204-off-40s.jpg) to `-on-60s.jpg`), on the crater page.
+
+## Wading, and the cone crater by default (PR 3b), 2026-11-12
+
+**Why.** The owner, after the clips (14:41-14:43Z): look 3 is the pick, and "soldiers should be heavily slowed down if they try to run into the thick slime". Also "shouldn't be able to stand on top of the crystal", which the controls thread builds. Then (15:18Z): "Is there an option between 3 and no craters? 3 fills in too slow still".
+
+**What.**
+- **The cone crater is the race world's default** (`race_params`: `scorch_cone` on, `scorch_full` 150, `scorch_keep` 0; `race_settings` carries them to the GPU). The toolkit's blasts share `scorch_full` and `scorch_keep` and stay flat discs. `scorch_cone=0 scorch_full=30 scorch_keep=0.1` plays #113's flat disc.
+- **Wading** (`Rules::wade` 6): a soldier's step is `speed / (1 + (touching / wade)²)`. Two walkers touching leave it 90% of its speed, 6 leave half, and 12 a fifth (a rush meets 0 to 26 on race seeds 1-4). The count is the frame's touch read-back, the same on both engines, so the GPU needs nothing new. 0 is off. Test: `thick_slime_slows_a_soldier`.
+- **In play** (the Fork, seed 1, rush, [the page's *Wading* clips](https://claude.ai/artifact/HzgDT3XPLX59Ba621tVH2H)): the wading rush reaches y 287 by 16 s where it reached 300 by 12 s. It dies inside the body, and its craters merge into a trench.
+
+**The crater's time** (the owner's 15:18Z ask; clips at the top of the page): look 3 with `Rules::crater` 10 s (today), 6 s and 3 s, against no craters, in two scenes. Standing fire, 22-40 s, killed 450, 572, 454 and 237. The rush, 7-21 s, killed 1,322, 1,257, 1,296 and 1,409. One seed each, so the kills are for scale only. At 3 s most of the trench is gone 3 s after the fire stops. The owner's pick is open; both shorter times are being gated (runners 1-4, `crater=6` and `crater=3` at 90ca407), so either can be set without another wait.
+
+**The gate** (90ca407, both seed blocks, seven hands, 15-minute games; raw [wade/](larder-world-roadmap-2026-11-11/wade/census-wade6-race-5-20.txt), runners 1-4, sha256 checked). Three arms: the new defaults (wade 6, cone), `wade=0` (cone only), and `wade=0` with the flat crater (#126's rules; its random wipes match #126's 2 and 3 exactly).
+
+| | race 5-36: wade 6, cone | wade 0, cone | wade 0, flat (#126) | race 201-232: wade 6, cone | wade 0, cone | wade 0, flat (#126) |
+| --- | --- | --- | --- | --- | --- | --- |
+| farm, wall, fort against random | 31-1, hold | 29-3, hold | 30-2, hold | 29-3, hold | 27-5, 27-5, 26-6, hold | 29-3, hold |
+| strike against random | 32-0, holds | 32-0, holds | 32-0, holds | 30-2, holds | 30-2, holds | 31-1, holds |
+| rush against random | 28-4, holds | 22-10, p 0.05 | 24-8, holds | 26-6, holds | 24-8, holds | 25-7, holds |
+| farm, wall, fort, strike against idle | 32-0, hold | 32-0, hold | 32-0, hold | 32-0, hold | 32-0, hold | 32-0, hold |
+| **random wipes the mould** | **1** | 3 | 2 | **3** | 5 | 3 |
+| random takes the core | 1 | 3 | 2 | 3 | 5 | 3 |
+| rush's squad wiped | 11 | 14 | 13 | 10 | 10 | 8 |
+
+- **Every plan beats random after Holm on both blocks** with the new defaults (Holm over 10), the rush included, which it did not on 5-36 with the cone alone.
+- **Random wipes the mould on 4 of 64** (5 at #126, 8 with the cone and no wading).
+- **The cone changes nothing beyond chance** (cone against flat, both at wade 0, Holm over 7): no hand's score moves on either block (every p 0.07 or more). It is a look, as the hole test said.
+- **Wading mostly slows random** (wade 6 against 0, Holm over 7): random kills fewer walkers on 5-36 (27 lower, 5 higher, median -524, p 0.0001, holds; 21-11 on 201-232, p 0.11) and scores lower there (22 lower, 9 higher, p 0.03, not under Holm). The rush kills more on 201-232 (24 higher, 7 lower, p 0.003, holds). No plan's score moves.
+- **Against #126** (wade 6 and cone against wade 0 and flat): random scores lower on both blocks (23 lower and 8 higher, p 0.01, not under Holm; 24 and 7, p 0.003, holds) and kills fewer on both (25-7 and 28-4 lower, hold). Farm leaves more mould on 5-36 (24 more, 8 less, p 0.007, holds), and no plan's score moves.
+- **Not met, as before**: strike beats farm 26-6 and 28-4 and every other plan (all hold), since food does not bind. That is PR 4's.
+
+**Cost.** Wading is one division a soldier a tick, on the CPU, from a count both engines already read back. The cone is the toolkit's crater mode, already timed: 0.03 ms a step on software Vulkan.

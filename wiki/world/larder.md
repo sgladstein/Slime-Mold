@@ -2,9 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T16:45Z
+updated: 2026-11-12T16:44Z
 sources: [Reports/soldier-controls-2026-11-12.md, Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core]
+code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core, Rules::wade, race_params]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -123,8 +123,17 @@ that fails loses its squad on 8 of 10 (201-232). The core is a `Core
 { kind, secs, pull }` a tier can set (`Tier::core`, read by
 `Game::with_tier`): `Fixed` or `Headless` (only a wipe ends it); the
 Trunk's regrowing and the Drifter's migrating cores come later. Strike
-still beats farm about 2 to 1 because food doesn't bind. Next, running
-costs. Off by default for other threads:
+still beats farm about 2 to 1 because food doesn't bind. **Wading, and
+the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
+*Wading, and the cone crater by default*](../../Reports/larder-world-roadmap-2026-11-11.md)):
+the race world's crater is the cone (look 3; `scorch_cone`, full 150, keep
+0; the toolkit's blasts stay flat), and a soldier walks at
+`speed / (1 + (touching / wade)²)` (`Rules::wade` 6: half speed with 6
+walkers touching, a fifth with 12). Over both blocks random wipes the
+mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
+random after Holm; the cone moves no score, and wading mostly slows
+random's killing. The crater's time (10 s, or 6 or 3) waits on the
+owner's pick. Next, running costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)
