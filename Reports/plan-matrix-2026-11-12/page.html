@@ -1,0 +1,73 @@
+<title>Plans Against Mould Tiers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the matrix first, then each game as a strip of frames with its counts beside it. */
+:root {
+  --bg: #f3f5f4; --fg: #17201d; --muted: #5a6762; --line: #d3dbd8; --panel: #ffffff;
+  --mould: #a0670f; --best: #e7f0ec; --best-fg: #0f5a44;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1513; --fg: #e3ebe7; --muted: #94a39d; --line: #26312d; --panel: #161e1b;
+  --mould: #e0a84a; --best: #18302a; --best-fg: #8fe0c4; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1513; --fg: #e3ebe7; --muted: #94a39d; --line: #26312d; --panel: #161e1b;
+  --mould: #e0a84a; --best: #18302a; --best-fg: #8fe0c4; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1040px; margin: 0 auto; display: grid; gap: 32px; }
+h1 { font-size: 1.7rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.15rem; margin: 0 0 6px; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+ul { margin: 0; padding-left: 1.2em; max-width: 68ch; display: grid; gap: 6px; }
+.lede { color: var(--muted); }
+.game { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+.frames { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
+figure img { width: 100%; height: auto; display: block; border-radius: 3px; }
+figcaption { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.counts { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.counts b { color: var(--mould); font-weight: 500; }
+.key { font-size: 13px; color: var(--muted); }
+.tbl { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; padding-left: 0; }
+th { color: var(--muted); font-weight: 500; }
+td small { display: block; color: var(--muted); font-size: 11px; }
+td.best { background: var(--best); color: var(--best-fg); font-weight: 500; }
+td.best small { color: var(--best-fg); }
+td.note { text-align: left; color: var(--muted); font-family: var(--sans); white-space: normal; min-width: 14ch; }
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>Which plan beats which mould, after core defence</h1>
+    <p class="lede">Twelve plans against seven mould types on the Larder race world, seeds 201-216, main at 0249934 (after #126). Core defence took away the strike's lead on the plain mould. Only one cell is a clear winner: plague against the Sporer.</p>
+    <p class="key">Each cell is the median score, with the ends below it: mould wiped / time cap / squad wiped. A win scores above 1; a stalemate at the cap scores about −0.4 to +0.5. The number after each mould is how many paired seeds it has: the run was stopped early, so the Sleeper has 11, the Grudge 14 with no toolkit rows, and the Swarmer did not run. A shaded cell beats the runner-up after a Holm correction over all 125 tests; every other column is a tie. The last six columns come from the toolkit harness (kitplans) on the same world and seeds.</p>
+  </header>
+  <section class="tbl">
+    <h2>The matrix</h2>
+    <table>
+      <tr><th>Mould</th><th>idle</th><th>random</th><th>farm</th><th>boom</th><th>claim</th><th>fort</th><th>strike</th><th>randkit</th><th>loud</th><th>quiet</th><th>plague</th><th>siege</th><th style="text-align:left">Leader over runner-up</th></tr>
+      <tr><td>plain (16)</td><td>−0.32<small>0/16/0</small></td><td>−1.66<small>0/2/14</small></td><td>+0.31<small>0/16/0</small></td><td>+0.20<small>0/16/0</small></td><td>+0.32<small>3/13/0</small></td><td>+0.21<small>0/16/0</small></td><td>+0.33<small>4/12/0</small></td><td>−1.15<small>4/3/9</small></td><td>+1.47<small>10/6/0</small></td><td>+0.15<small>0/16/0</small></td><td>+1.45<small>16/0/0</small></td><td>+0.24<small>0/16/0</small></td><td class="note">loud over plague 6-10, tie</td></tr>
+<tr><td>Sporer (16)</td><td>−0.41<small>0/15/1</small></td><td>−1.73<small>0/2/14</small></td><td>+0.21<small>0/16/0</small></td><td>+0.12<small>0/16/0</small></td><td>+0.14<small>0/16/0</small></td><td>+0.11<small>0/16/0</small></td><td>+0.10<small>0/16/0</small></td><td>+0.95<small>8/2/6</small></td><td>+0.15<small>6/10/0</small></td><td>+0.09<small>0/16/0</small></td><td class=best>+1.36<small>10/6/0</small></td><td>+0.13<small>0/16/0</small></td><td class="note">plague over farm 16-0, median +1.14, Holm p 0.004</td></tr>
+<tr><td>Sleeper (11)</td><td>−0.17<small>0/11/0</small></td><td>−1.77<small>0/2/9</small></td><td>+0.32<small>0/11/0</small></td><td>+0.33<small>0/11/0</small></td><td>+0.49<small>0/11/0</small></td><td>+0.33<small>0/11/0</small></td><td>+0.49<small>0/11/0</small></td><td>−1.58<small>0/0/11</small></td><td>+1.22<small>7/4/0</small></td><td>+0.34<small>0/11/0</small></td><td>+0.49<small>0/11/0</small></td><td>+0.34<small>0/11/0</small></td><td class="note">loud over strike 10-1, +0.72, p 0.26, tie</td></tr>
+<tr><td>Drifter (16)</td><td>−0.15<small>0/16/0</small></td><td>+0.29<small>7/4/5</small></td><td>+0.42<small>0/16/0</small></td><td>+0.38<small>0/16/0</small></td><td>+1.84<small>14/2/0</small></td><td>+0.38<small>0/16/0</small></td><td>+2.30<small>13/3/0</small></td><td>+0.92<small>8/4/4</small></td><td>+1.80<small>14/2/0</small></td><td>+0.39<small>0/16/0</small></td><td>+0.48<small>6/10/0</small></td><td>+0.42<small>0/16/0</small></td><td class="note">strike over claim 13-3, +0.47, p 0.45, tie</td></tr>
+<tr><td>Sprawler (16)</td><td>−0.76<small>0/8/8</small></td><td>−1.77<small>0/1/15</small></td><td>+0.46<small>7/9/0</small></td><td>+0.10<small>4/12/0</small></td><td>+0.21<small>5/11/0</small></td><td>+0.10<small>5/11/0</small></td><td>+1.97<small>9/7/0</small></td><td>−0.36<small>6/2/8</small></td><td>+1.39<small>11/5/0</small></td><td>+0.09<small>0/16/0</small></td><td>+1.50<small>16/0/0</small></td><td>+0.24<small>2/14/0</small></td><td class="note">strike over plague 9-7, +0.53, p 1, tie</td></tr>
+<tr><td>Trunk (16)</td><td>−0.28<small>0/16/0</small></td><td>−0.67<small>5/3/8</small></td><td>+0.33<small>1/15/0</small></td><td>+0.26<small>2/14/0</small></td><td>+1.79<small>9/7/0</small></td><td>+0.27<small>2/14/0</small></td><td>+2.20<small>13/3/0</small></td><td>+0.49<small>7/6/3</small></td><td>+1.54<small>16/0/0</small></td><td>+0.25<small>0/16/0</small></td><td>+1.40<small>14/2/0</small></td><td>+0.30<small>0/16/0</small></td><td class="note">strike over claim 13-3, +0.37, p 0.45, tie</td></tr>
+<tr><td>Grudge (14)</td><td>−0.33<small>0/14/0</small></td><td>−1.75<small>0/2/12</small></td><td>+0.15<small>0/14/0</small></td><td>+0.11<small>0/14/0</small></td><td>+0.13<small>0/14/0</small></td><td>+0.11<small>0/14/0</small></td><td>+0.16<small>1/13/0</small></td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td class="note">strike over farm 8-6, +0.01, p 1, tie</td></tr>
+<tr><td>Swarmer</td><td class="note" colspan="13">not run</td></tr>
+    </table>
+  </section>
+  <section style="display:grid;gap:8px">
+    <h2>What it says</h2>
+    <ul>
+      <li><b>The core rush no longer wins on the plain mould.</b> Before craters it scored +2.08 and wiped it on 5 of 8 seeds. Now it scores +0.33 and wipes 4 of 16, level with claim and farm.</li>
+      <li><b>The strike still leads by median on three moulds,</b> the Drifter, the Sprawler and the Trunk, but no lead survives the correction.</li>
+      <li><b>The toolkit plans lead elsewhere.</b> Loud leads on plain and the Sleeper; plague wipes plain and the Sprawler on 16 of 16, and beats farm on the Sporer on 16 of 16.</li>
+      <li><b>The Drifter and the Trunk are too soft.</b> Random fire wipes them on 7 and 5 of 16 seeds, and no other mould.</li>
+      <li><b>No AI plan ever stalls:</b> 0 s stuck on every mould.</li>
+    </ul>
+  </section>
+</main>
