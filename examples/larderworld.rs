@@ -151,6 +151,7 @@ fn main() {
             "pump_rate" => rules.build.pump_rate = v.parse().unwrap(),
             "pump_cost" => rules.build.pump_cost = v.parse().unwrap(),
             "pump_smell" => rules.build.pump_smell = v.parse().unwrap(),
+            "raise" => rules.build.raise = v.parse().unwrap(),
             "turret_cost" => rules.build.turret_cost = v.parse().unwrap(),
             "turret_every" => rules.build.turret_every = v.parse().unwrap(),
             "tier" => TIER.set(Tier::from_name(v).unwrap_or_else(|| panic!("unknown tier {v}"))).unwrap(),

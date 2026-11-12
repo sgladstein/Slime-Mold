@@ -625,4 +625,83 @@ mod tests {
         assert_eq!(a.world.hash(), b.world.hash());
         assert_eq!(a.buildings, b.buildings);
     }
+
+    #[test]
+    fn soldiers_raise_a_ghost_over_time_and_builders_add_up() {
+        let mut g = small(11);
+        g.rules.build.raise = 4.0;
+        let at = open_near(&g, (g.larder.0 + 6.0, g.larder.1));
+        assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+        assert!(!g.buildings[0].up(), "a ghost while it is raised");
+        let ghost = g.buildings[0].hp;
+        // One soldier sent: it walks there and raises it.
+        g.apply(Cmd::Order(0, Order::Build(0)));
+        for k in 1..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Move(g.larder.0 - 20.0, g.larder.1)));
+        }
+        let mut half = None;
+        for n in 0..(g.rules.tps * 30) {
+            g.step();
+            if half.is_none() && g.buildings[0].built >= 0.5 {
+                half = Some((n, g.buildings[0].hp));
+            }
+            if g.buildings[0].up() {
+                break;
+            }
+        }
+        let (_, hp_half) = half.expect("it rose past half");
+        assert!(hp_half > ghost && hp_half < g.buildings[0].max_hp, "half-built is weaker: {hp_half}");
+        assert!(g.buildings[0].up(), "a lone builder raises it in its time");
+        g.step();
+        assert_eq!(g.soldiers[0].order, Order::Hold, "then it holds");
+        // Two builders on the next: about twice as fast.
+        let time = |g: &mut Game<BigDish>, n: usize| {
+            let at2 = open_near(g, (g.larder.0, g.larder.1 + 8.0));
+            assert!(g.apply(Cmd::Build(Kind::Turret, at2)));
+            let b = g.buildings.len() - 1;
+            for k in 0..n {
+                g.soldiers[k].x = at2.0;
+                g.soldiers[k].y = at2.1;
+                g.apply(Cmd::Order(k, Order::Build(b)));
+            }
+            for k in n..g.soldiers.len() {
+                g.apply(Cmd::Order(k, Order::Move(g.larder.0 - 20.0, g.larder.1)));
+            }
+            let mut t = 0;
+            while !g.buildings[b].up() && t < 1000 {
+                g.step();
+                t += 1;
+            }
+            t
+        };
+        let mut a = small(12);
+        a.rules.build.raise = 4.0;
+        let mut b = small(12);
+        b.rules.build.raise = 4.0;
+        for g in [&mut a, &mut b] {
+            g.rules.build.gap = 0.0;
+        }
+        let (one, two) = (time(&mut a, 1), time(&mut b, 2));
+        assert!(two * 3 < one * 2, "two builders {two} ticks, one {one}");
+        let _ = g;
+    }
+
+    #[test]
+    fn an_idle_soldier_raises_a_ghost_in_range_and_a_wall_stands_only_when_whole() {
+        let mut g = small(13);
+        g.rules.build.raise = 2.0;
+        let (x, y) = g.larder;
+        assert!(g.apply(Cmd::Wall((x - 10.0, y - 5.0), (x - 10.0, y + 5.0))));
+        assert!(!g.world.wall.iter().any(|&w| w), "no wall cells while a ghost");
+        // Nobody ordered: the idle squad at the larder takes it up.
+        for _ in 0..(g.rules.tps * 20) {
+            g.step();
+            if g.buildings[0].up() {
+                break;
+            }
+        }
+        assert!(g.buildings[0].up(), "raised by the idle squad");
+        assert!(g.world.wall.iter().any(|&w| w), "its cells are in the world once whole");
+        assert_eq!(Cmd::parse(&Cmd::Order(2, Order::Build(7)).to_line()), Some(Cmd::Order(2, Order::Build(7))));
+    }
 }
