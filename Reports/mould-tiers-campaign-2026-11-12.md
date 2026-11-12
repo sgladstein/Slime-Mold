@@ -76,6 +76,10 @@ Mean score v2 (mould wiped / cap / squad wiped), 16 seeds a cell unless marked:
 
 **The toolkit's blast plan** (`kitplans`, seeds 1-8, cap 600 s, tools carried without the toolkit's later carry limit; raw `raw/kit/kitplans-tiers-1-8.txt`): loud wipes the mould on 8 of 8 on all six tiers (+1.72 to +2.01), best against farm 8 of 8 each time. Grudge walks back into the blast spots and dies there; random's squad is wiped 8 of 8 against it. The toolkit is re-running all five new tiers with its carry rule.
 
+## Wary is removed (11-12, after the merge)
+
+The census (`raw/census/wary-*.rows`, all 16 held-out seeds) put Wary under the gate: random wiped it on 12 of 16 and beat farm, wall, boom and fort on 15-16 of 16 (holds); only claim (4/12) and strike (3/13) were close. Scattered fire scars every crystal it holds and herds it off them all, and it starves. On main with craters (dev seeds 1-4, `raw/wary/`, `larderworld keys=` over the tier): random wiped it on 2 of 4 at scar weight -0.5, -0.1 and -0.03, so the scar's strength is not the cause; with the Larder thread's core pull 8 (85b56fb, not yet merged) on 3 of 4, while against the plain mould random lost its squad on 4 of 4. It is the flee from gunfire's failure again (`dead-ends.md`), and Wary is gone from `Tier`. Grudge, with the same pull, wipes random's squad on 4 of 4 and every plan beats idle.
+
 ## Commands
 
 ```

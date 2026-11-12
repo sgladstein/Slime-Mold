@@ -53,12 +53,12 @@ pub enum Tier {
     /// scatters spores (`spore_burst`). Counter: starve it, and don't
     /// strike it near untaken food.
     Sporer,
-    /// Habituation, the avoiding answer: a scar field remembers where the
-    /// mould was shot (the alarm, kept about 40 s) and it keeps away from
-    /// a place hurt again and again, long after the alarm has faded; shots
-    /// laid there move it a little (alarm weight -1). Counter: burn a road
-    /// clear once and it stays clear; but it will not come where you wait.
-    Wary,
+    // Wary (the scar read away, alarm -1, scar -0.5) was removed 11-12: it
+    // kept away from a spot shot again and again (8 of 8 seeds), but
+    // scattered fire herded it off every crystal, and random wiped it on 12
+    // of 16 held-out seeds, beating every plan; at scar -0.03 with craters,
+    // and with the core's pull 8, random still won 3 of 4 dev seeds.
+    // (`Reports/dead-ends.md`.)
     /// Habituation, the swarming answer: the same scar, read the other way,
     /// with the Swarmer's alarm: each shot at one place brings more of it
     /// back there (kills a strike rose 16 to 306 over 16 strikes, seed 1).
@@ -78,14 +78,13 @@ pub enum Tier {
 const SPORE: [(&str, &str); 4] = [("spore_scent", "1"), ("spore_reach", "36"), ("spore_land", "1"), ("spore_deposit", "0.2")];
 
 impl Tier {
-    pub const ALL: [Tier; 8] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Wary, Tier::Grudge];
+    pub const ALL: [Tier; 7] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge];
 
     pub fn name(self) -> &'static str {
         match self {
             Tier::Drifter => "drifter",
             Tier::Sprawler => "sprawler",
             Tier::Trunk => "trunk",
-            Tier::Wary => "wary",
             Tier::Grudge => "grudge",
             Tier::Sporer => "sporer",
             Tier::Sleeper => "sleeper",
@@ -149,9 +148,8 @@ impl Tier {
             Tier::Swarmer => vec![("alarm_keep", "0.98"), ("alarm_weight", "3")],
             // The scar: keep 0.9999 a fine step, gain 0.01 of the alarm, so
             // 16 strikes 2 s apart leave a peak of about 250 that halves in
-            // about 40 s; read at -0.5 / +0.5 beside trail and scent
+            // about 40 s; read at +0.5 beside trail and scent
             // (`Reports/mould-tiers-campaign-2026-11-12.md`, *Habituation*).
-            Tier::Wary => vec![("alarm_keep", "0.98"), ("alarm_weight", "-1"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "-0.5")],
             Tier::Grudge => vec![("alarm_keep", "0.98"), ("alarm_weight", "3"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "0.5")],
         }
     }
@@ -260,11 +258,11 @@ mod tests {
         assert!(on(Tier::Swarmer).alarm_weight > 0.0 && on(Tier::Swarmer).sleep_rate == 0.0);
         assert!((on(Tier::Drifter).sensor_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-6, "degrees become radians");
         assert!(on(Tier::Sprawler).explore_steps > 0 && on(Tier::Sprawler).explore_spread > 0.0);
-        assert!(on(Tier::Wary).scar_weight < 0.0 && on(Tier::Grudge).scar_weight > 0.0 && on(Tier::Grudge).alarm_weight > 0.0);
+        assert!(on(Tier::Grudge).scar_weight > 0.0 && on(Tier::Grudge).alarm_weight > 0.0);
         assert!(on(Tier::Trunk).sensor_angle < BigParams::today().sensor_angle && on(Tier::Trunk).keep > BigParams::today().keep);
         // Every tier with an alarm rule keeps its alarm (a field that decays
         // in one step does nothing).
-        for t in [Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Wary, Tier::Grudge] {
+        for t in [Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge] {
             let p = on(t);
             assert!(p.alarm_keep > 0.5, "{}", t.name());
         }
