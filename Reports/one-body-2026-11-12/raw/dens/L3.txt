@@ -1,0 +1,7 @@
+cutprobe race world scale 2 walkers 20000, grow 180 s, follow 120 s, 0 cuts a seed, seeds [1]
+arms: [("L3", [("lone_upkeep", "3"), ("energy_flow", "0.05"), ("hunger_scent", "4")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+L3 1 grown | alive 10717 parts1% 1 lcs 0.98 lone 0.01 rms 38.4 | crystals eaten from 6 of 23
+
+summary (mean over cuts)
+L3: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}

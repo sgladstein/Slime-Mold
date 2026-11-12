@@ -53,7 +53,8 @@
 //! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
-//! sounded like to an ear on the squad, to the last of those seconds.
+//! sounded like to an ear on the squad, to the last of those seconds;
+//! `holes=1` also times how long each hit's hole stays open.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -63,7 +64,7 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
-use slime_mould::mould::campaign::{Mission, Tracker};
+use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
 use slime_mould::sound::synth::{VoiceBank, DEFAULT_MASTER};
@@ -314,6 +315,9 @@ impl App {
             v.set_world(&e.frame, size);
             v.set_look(&e.look, &ground, &e.walkers, e.n);
             v.set_alive(e.grows.then_some(&e.energy));
+            // The body's walkers a cell, from the start's living walkers
+            // (the look's `body`; a growing world has ten slots a walker).
+            v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
             // On the larder, at zoom 4 or the whole map if that is closer
             // (the minimap shows the rest).
             self.camera = Camera::new(size, v.screen);
@@ -560,7 +564,10 @@ impl App {
             // the mission its verdict, so the end screen is the mission's.
             while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
                 self.mission_sec += 1;
-                if let Some(v) = tr.second(g, None, 1.0) {
+                // None until the GPU world reads its mould grid back (the
+                // GPU thread's PR #101); then the positional goals fill here.
+                let grid = g.world.mould_grid(BIN);
+                if let Some(v) = tr.second(g, grid.as_deref(), 1.0) {
                     let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
                     self.hud.alert(&tr.cause_line(), None, colour);
                 }
@@ -760,6 +767,10 @@ impl App {
             objective: Some(if let Some(tr) = &self.mission {
                 match tr.bar {
                     Some(b) => format!("{} ({:.0}%)", tr.mission.says, 100.0 * b),
+                    // Said, not hidden (design review, 05:38Z): the GPU world
+                    // gives no mould grid yet, so a goal on where the mould
+                    // is has no bar in the window.
+                    None if tr.secs.iter().sum::<u32>() > 0 => format!("{} (progress not shown in this build yet)", tr.mission.says),
                     None => tr.mission.says.clone(),
                 }
             } else if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
@@ -1301,7 +1312,7 @@ impl ApplicationHandler for App {
 /// shows, checkable where there is no screen (the cloud's software
 /// Vulkan). Hands: `rush` (all attack the core), `farm` (all harvest the
 /// crystal nearest the larder, buying soldiers from 1,200 food), `idle`.
-fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>) -> Result<(), String> {
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -1313,6 +1324,11 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     let mut voice_at = u64::MAX;
     let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
     let mut last_sec = u64::MAX;
+    // Each hit: where, its tick, the body there the tick before, and the
+    // ticks it took to refill.
+    type Hole = ((f32, f32), u64, f32, Option<u64>);
+    let mut holes: Vec<Hole> = Vec::new();
+    let mut prev_lk: Vec<u8> = Vec::new();
     for &t in at {
         // A mission's verdict stops the steps, as the game's end does.
         while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
@@ -1323,6 +1339,41 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
                 plan(g, hand);
             }
             app.step(step);
+            // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:
+            // "maybe part of the issue is the slime/walkers move to fast").
+            // The drawn body (the view's `body`: trail x living walkers in
+            // the 5 x 5 round each cell) is averaged over each hit's strike
+            // disc, and a hole counts as refilled when that is back to 80% of
+            // the tick before the hit. A frame's readback a tick: slow.
+            if time_holes {
+                let g = app.game.as_ref().unwrap();
+                let (w, h) = (g.world.e.dish.w, g.world.e.dish.h);
+                let lk = read_back(&device, &queue, &g.world.e.look);
+                let body = |lk: &[u8], x: i32, y: i32| -> f32 {
+                    let cl = |x: i32, y: i32| (y.clamp(0, h as i32 - 1) as usize) * w + x.clamp(0, w as i32 - 1) as usize;
+                    let mut n = 0u32;
+                    for dy in -2..=2 { for dx in -2..=2 { n += lk[4 * cl(x + dx, y + dy) + 1] as u32; } }
+                    lk[4 * cl(x, y)] as f32 / 255.0 * (1.0 - (-(n as f32) / 6.0).exp())
+                };
+                let disc = |lk: &[u8], cx: f32, cy: f32, r: f32| -> f32 {
+                    let (mut sum, mut k) = (0.0, 0);
+                    let ri = r.ceil() as i32;
+                    for dy in -ri..=ri { for dx in -ri..=ri { if ((dx * dx + dy * dy) as f32) <= r * r { sum += body(lk, cx as i32 + dx, cy as i32 + dy); k += 1; } } }
+                    sum / k as f32
+                };
+                let tick = g.world.ticks();
+                let r = g.rules.strike * g.world.scale();
+                for t in app.tracers.iter().filter(|t| t.age == 0.0 && t.hit) {
+                    let before = if prev_lk.is_empty() { f32::NAN } else { disc(&prev_lk, t.to.0, t.to.1, r) };
+                    holes.push((t.to, tick, before, None::<u64>));
+                }
+                for hl in holes.iter_mut() {
+                    if hl.2.is_nan() { continue; }
+                    let v = disc(&lk, hl.0 .0, hl.0 .1, r);
+                    if hl.3.is_none() && tick > hl.1 && v >= 0.8 * hl.2.max(0.05) { hl.3 = Some(tick - hl.1); }
+                }
+                prev_lk = lk;
+            }
             if app.tape.is_some() {
                 let g = app.game.as_ref().unwrap();
                 let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
@@ -1339,6 +1390,13 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
                     println!("  voice t {sec:>3} s: mould {}, growth {:+.4}/s, hunger {:.2}, eating {:.5}/s, kills {:.0}/s, inhales {}", g.mould, s.growth, s.hunger, s.eating, s.kills_per_sec, s.inhales);
                 }
             }
+        }
+        if time_holes {
+            let done: Vec<u64> = holes.iter().filter_map(|h| h.3).collect();
+            let open = holes.iter().filter(|h| h.3.is_none()).count();
+            let mut d = done.clone(); d.sort();
+            let tps = app.game.as_ref().unwrap().rules.tps as f32;
+            if !d.is_empty() { println!("  holes: shots that hit {} refilled {} (still open {open}); ticks to 80%: median {} ({:.2} s), q25 {}, q75 {}, max {}", holes.len(), d.len(), d[d.len() / 2], d[d.len() / 2] as f32 / tps, d[d.len() / 4], d[3 * d.len() / 4], d[d.len() - 1]); }
         }
         let g = app.game.as_ref().unwrap();
         // The view on the fight: the squad's middle, or the larder.
@@ -1359,7 +1417,9 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
             view.record(&mut enc, &app.camera, None);
             cp.record(&mut enc, &view.out, view.stride);
             queue.submit([enc.finish()]);
-            let path = format!("{dir}/{}-{hand}-{:03}s-{tag}.png", app.name.replace('/', "_"), t as u32);
+            // Whole seconds keep their old names; a time between (a frame
+            // sequence) is named in milliseconds.
+            let path = if t.fract() == 0.0 { format!("{dir}/{}-{hand}-{:03}s-{tag}.png", app.name.replace('/', "_"), t as u32) } else { format!("{dir}/{}-{hand}-{:05}ms-{tag}.png", app.name.replace('/', "_"), (t * 1000.0) as u32) };
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
         }
@@ -1451,6 +1511,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, mission: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
+    let mut holes = false;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -1464,15 +1525,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "sound" => wav = Some(v.to_string()),
             "voice" => args.voice = v != "0",
             "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
+            "holes" => holes = v != "0",
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
             }
-            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound)").into()),
+            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes)").into()),
         }
     }
     if let Some(dir) = look {
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref())?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

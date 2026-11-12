@@ -1,6 +1,8 @@
 # Mission 3: walls against the Sprawler. The rock ring is radius 200 round (512, 320),
-# 16 thick (sketch_maps.py); the rectangle is its outer edge. Leak: at most 2% of
-# the walkers outside (with none allowed, no hand held it for a second).
+# 16 thick (sketch_maps.py); the rectangle is its outer edge. Leak: at most 5% of
+# the walkers outside (with none allowed, no hand held it for a second; at 2% one hand
+# of 28 rounds did, census v3, where the planned hands peaked at 3.8-5.8% outside and
+# idle at 17-33%).
 name The gaps
 says Keep the mould inside the Rim until 10:00
 map rim
@@ -8,4 +10,4 @@ tier sprawler
 verbs move harvest buy stance fire wall
 rule price 0
 bonus stolen 0
-goal contain 296 104 728 536 600 0.02
+goal contain 296 104 728 536 600 0.05
