@@ -53,7 +53,7 @@ the merge order, are in *Larder World: shared rules and merge order*, below.
 | L-G | The world's look: shot damage drawn from the simulation | *Improve soldier and slime graphics* thread | the crater field (L-K) | the owner turned down both drawn versions (11-12 04:38Z, "Both of those look like stamps"); next a hole that is real in the simulation, and slower walkers |
 | S-P | GPU performance and census: the game's frame time on the 1070, one read-back a step, the census on `GpuWorld` | *Port mould species and tiers to the GPU* thread | the owner's desktop for the 1070 timing | planned 11-12: a mapped readout buffer and a living-walker count pass; `Game::step` split into begin and finish halves with `step()` unchanged |
 | L-OM | The player's own mould species (approved 11-11 14:54Z) | *Design the player's own mould species* thread | nothing (gardeners picked 11-12 04:45Z) | proposal up; a CPU probe of body forms fighting each other running |
-| L-CA | Campaign and onboarding: a goal the player can read, no soft lock, missions as map data | *Design the Larder campaign and onboarding* thread | the owner's approval | draft up; missions are data over the shared pieces |
+| L-CA | Campaign and onboarding: a goal the player can read, no soft lock, missions as map data (row W5) | *Design the Larder campaign and onboarding* thread | nothing (owner approved 11-12 04:44Z) | design merged (#95); mission layer next. Its `larder_world.rs` asks (an overrun loss, a reserve recruit, a stuck measure) ride in the Larder thread's PR 1, off by default |
 | L-AI | Player AI for Larder playtests (`src/mould/larder_ai.rs`, `src/mould/larder_world_ai.rs`, `examples/larderai.rs`, `larder -- SEED ai=STYLE`) | Player AI thread | nothing | **built 11-11** on the CPU field: [report](Reports/larder-ai-2026-11-11.md), [page](wiki/world/player-ai.md). Plays through `Cmd`s only, sees a `View`, one brain per `Side`; five styles; boom, lure and adapt beat idle and random 16/16 held out. **Ported to the Larder world 11-12** (`src/mould/larder_world_ai.rs`, hands in `examples/larderworld.rs`): [report](Reports/larder-world-ai-2026-11-12.md); boom, claim, late, fort beat the scripted farm 15-16/16 held out, strike wiped the mould once. Next: the tier counter tests (Sporer, Sleeper, Swarmer), `mould_grid` on the GPU world, two AI teams once a second side exists, exploiter search |
 
 ### Built and building: the scale and world steps
@@ -77,6 +77,7 @@ the merge order, are in *Larder World: shared rules and merge order*, below.
 | WM3 | Maps: ground kinds the simulation uses, beyond rock, wet ground and rubble. Brainstormed from the model (what walkers and fields can respond to: step speed, how fast trail and scent fade or spread, where walkers may lay trail, food that grows back, ground the mould changes as it passes), not from the demo tools. Each kind is a field, twin-tested on CPU and GPU, and kept only if it changes a measured outcome and can be seen | *Design Larder world maps* thread; GPU side with the Larder thread | Ranked 11-11 ([plan](Reports/larder-maps-2026-11-11.md)). **Height parked** (owner, 20:06Z: "How much does height actually influence our slime mold behaviors? I am skeptical how much fun/complexity/strategy this adds"): the first step is sand, clay and barren ground, which act on the mould's strong terms, on paired seeds with wet ground as the speed baseline (maps thread, CPU big dish, off while no soil is set); then rebuild the maps on the graphics thread's terrain (#69). Ground word: soil kind in bits 12-15, mould-made ground 16-23, byte 3 reserved for height and left 0. **GPU side built 11-12** ([report, *Soil on the GPU*](Reports/larder-world-roadmap-2026-11-11.md), [page](https://claude.ai/artifact/1ifC4Qrw6fXe5Aq7vVSRzZ)): the engine reads the kind from the ground word and plays the CPU's three rules. One tick on soil bands matches the CPU to the bit, and the four soil maps' game twin stays within 2.1%. In the window the Rim's sand ring now holds the mould in its clay core. No step cost on software Vulkan |
 | WM4 | Maps: the ground's look, drawn from the ground's fields (the picture is the data). #69 gives rock, wet ground, walls and crystals height and light; open agar is still dark because nothing is stored there but trail and scent, so WM3's fields are what the open ground can show | graphics thread | #69, WM3 |
 | WM5 | Maps: an editor in the window (paint ground kinds, place crystals and starts, save, play) | to be chosen | WM1, W2c. Later: W4's persistent world and W5's campaign are made of these maps |
+| W5 | Larder World campaign: eight missions on the v2 maps, one verb against one tier each; a mission layer over `larder_world::Game` (goal bar, stars, lose causes, reserve recruit, hints) as data in the map files | *Design the Larder campaign and onboarding* thread, with the Larder and integration threads | **Design approved 11-12 04:44Z** ([design](Reports/larder-campaign-2026-11-12.md)). Next: the mission layer, then missions 1-3 (Flats, Fork, Rim), gated per mission (idle and random lose; the verb's plan beats the plan without it; dead time under 15%). Missions 4-8 wait on one body, the buildings, and the Drifter, Sprawler and Trunk as built tiers |
 
 The two branches after the gate:
 
@@ -127,14 +128,12 @@ threads the integration thread settles a question with the game designer
 and technical lead reviews, records the answer and its reasons here, and
 the owner can reverse it in the morning.
 
-**Settled overnight.** The campaign keeps only unlocked verbs between
-missions, a mission ends at the 15:00 cap with a graded result in stars,
-the first mission teaches with first-time hints, and the persistent world
-stays a separate later mode. Settled 11-12 ~04:49Z by the game designer
-review with the campaign thread, with no technical objection from the
-technical lead. The reasons: carrying soldiers and food lets one bad
-mission ruin the next, and missions tuned on their own are easier to gate.
-The owner may reverse it.
+**The campaign's carry-over is the owner's.** He approved the campaign
+plan and "carry unlocked verbs only" (card, 11-12 04:44Z). The details
+settled after it by the game designer review with the campaign thread
+(a mission ends at the 15:00 cap with a graded result in stars; the first
+mission teaches with first-time hints; the persistent world is a separate
+later mode) follow that ruling; the owner may change them.
 
 **Caps.** Buildings share `squad::UNITS_MAX` (64) with up to
 `Rules::max_squad` (40) soldiers, and the frame drops units past the cap
