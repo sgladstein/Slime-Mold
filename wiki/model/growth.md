@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-12T05:50Z
+updated: 2026-11-12T06:40Z
 sources: [Reports/one-body-2026-11-12.md, Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
 code: [BigParams::upkeep, BigParams::energy_flow, BigParams::hunger_scent, BigParams::lone_upkeep, BigParams::tether, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
@@ -54,7 +54,8 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
 - Run-dry crystals: `crystal_flow` makes the whole disc reachable (one
   seed); for a mould left alone to keep growing, a crystal's yield has to
   rise with its charge (the Larder thread's rule).
-- `BigParams::energy_flow` (off, CPU only): with `BigParams::hunger_scent`
+- `BigParams::energy_flow` (off; on the GPU too since 11-12, `esum` and
+  `egain`, twin-tested): with `BigParams::hunger_scent`
   8 it makes the race-world mould one body on more seeds (largest part
   higher 8/8) and 2.5x its size; a cut gap refills in 1-2 s, so a cut-off
   piece only starves while the gap is held

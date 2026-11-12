@@ -45,7 +45,7 @@ the merge order, are in *Larder World: shared rules and merge order*, below.
 | --- | --- | --- | --- | --- |
 | L-I | The game's shared rules: one owner and one code path per mechanic, the merge order, the GPU `Params` queue | *Integrate the Larder game's shared rules* thread | nothing | **agreed 11-12** with every thread below, after the technical lead and game designer reviews found scorch designed in four places and lures, alarms, walls and depots in two or three each. `Engine` Params layout asserts are real in release builds since 11-12 |
 | L-F | The owner's playtest fixes (11-12 04:13Z): free shots, soldier scent as a rule, then a slower mould clock; shots that leave a lasting hole | *Make the Larder World fight feel alive* (Larder) thread | nothing | free shots and scent built, census on 16 held-out seeds running; the clock change is a census reset (below) |
-| L-O | One body: the mould holds together, and a cut-off piece starves | *Make the mould one cohesive body* thread | nothing | cut probe built; cohesion rules being tried on the CPU (a tether makes crawling hunks but splits the body). Then the GPU port, a page of cuts, and the owner's say before it goes on by default |
+| L-O | One body: the mould holds together, and a cut-off piece starves | *Make the mould one cohesive body* thread | nothing | **CPU rules merged 11-12 (#103)**, all off ([report](Reports/one-body-2026-11-12.md), [page](https://claude.ai/artifact/E9MSpcgBj7F8jZX6i6LA5q)): `energy_flow` 0.05 + `hunger_scent` 8 is one body on more seeds and 2.5x the size; cut gaps refill in 2 s unless held. GPU port of those two (binding 46, `Params` row 848) twin-tested, PR open. Next: the owner's A/B answer, the Larder census with them on, a hunting hunk |
 | L-C | Soldier controls: order queue, attack-move, moving on from a dry crystal, the larder's rally point; then building over time and the larder as a depot | *Improve soldier controls and commands* thread | part 2 waits on buildings batch 1 (soldiers build over time: owner's card, 11-12) | part 1 built (branch `claude/project-thread-oldrb7`), census gate with moving-on on and off running |
 | L-B | Buildings: turret, lure, pump, wall and outpost as one `Building` type; then siren | *Add turrets, walls and other buildings* thread | the siren waits on the toolkit's burst list; no Scorcher (owner's card, 11-12 04:46Z) | batch 1 built on the CPU and twin-tested on software Vulkan; `UNITS_MAX` 64 to 96 with a cap test; census is a payoff table of plans by tier and map, turret-ring and turtle hands included |
 | L-K | Squad toolkit from the model: blast and crater, mine, det cord, germ, sleep gas, mask and reek | *Design squad tools from the mould's model* thread | nothing (owner picked "all six", 11-12 04:31Z) | **CPU prototype built and measured 11-12** ([report](Reports/squad-toolkit-2026-11-12.md), [page](https://claude.ai/artifact/Vr6ysJedMVtEa6XXEA1pTC), [wiki](wiki/world/squad-toolkit.md)), off by default: the crater keeps a blast's hole open (8/8), the germ kills once sickness costs energy, gas stops eating and noise wakes it, mines weak, the det cord waits on food flow. Four plans beat idle and random on every tier, but loud (blasts carried to the body) is best on all four: the counter gate fails until a tier answers a blast (L-T2's habituation). Next: step 2, the tools as `squad::Frame` bursts on CPU and GPU, then the plans census again on 16 seeds and two maps |
@@ -191,15 +191,17 @@ the whole-body flight it was rejected for. Shots may still lay a little of
 the toolkit's crater later, with values in `Rules`.
 
 Sound and the graphics thread's look changes add no rule and merge
-whenever ready. The one body thread's CPU rules merge whenever ready; its GPU port waits for
-the toolkit's GPU rows. The order is a default, not a lock: a thread that
+whenever ready. The one body thread's CPU rules merged (#103); its GPU port went first
+(agreed with the integration thread 11-12 06:06Z). The order is a default, not a lock: a thread that
 is ready before an earlier one has a PR open tells the integration thread
 and goes. The second to merge merges `main` in and resolves its own side,
 never another thread's.
 
 **GPU engine.** New `Params` rows go after the soil row (848 bytes
-since #92) in merge order: the toolkit's crater and burst rows, then the one body
-port's. The next free binding is 46 (the toolkit's scorch countdown). New
+since #92) in merge order: the one body row (`BODY_AT` 848, so 864 bytes), then the
+toolkit's crater and burst rows. The one body port holds binding 46 (energy
+sums and counts in one buffer); the next free binding is 47 (the toolkit's
+scorch countdown). New
 passes append after the last; whoever merges second renumbers. The GPU
 thread's readout buffer and living-walker pass add no `Params` row. The layout asserts in
 `Engine::write_params` run in release builds, so a slipped row fails every
