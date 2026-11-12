@@ -1,0 +1,38 @@
+seed 1 net t   5.0s  tube  4181.9  loops   55  width 4.74  reach  171.8  piles 9/12  strays 0.011  crystals 1.000  ms/tick 12.62
+seed 1 net t   5.0s  contrast 2.28
+seed 1 net t   5.0s  extent r50 143.9 r90 202.8
+seed 1 net t  10.0s  tube  3672.2  loops   44  width 4.62  reach  171.6  piles 9/12  strays 0.026  crystals 1.000  ms/tick 13.04
+seed 1 net t  10.0s  contrast 2.37
+seed 1 net t  10.0s  extent r50 145.8 r90 206.9
+seed 1 net t  15.0s  tube  3372.8  loops   39  width 4.64  reach  171.6  piles 9/12  strays 0.023  crystals 1.000  ms/tick 13.23
+seed 1 net t  15.0s  contrast 2.48
+seed 1 net t  15.0s  extent r50 144.3 r90 208.9
+seed 1 net t  20.0s  tube  3242.1  loops   33  width 4.59  reach  171.8  piles 9/12  strays 0.030  crystals 1.000  ms/tick 13.22
+seed 1 net t  20.0s  contrast 2.54
+seed 1 net t  20.0s  extent r50 141.3 r90 210.7
+seed 1 net t  25.0s  tube  3115.6  loops   27  width 4.66  reach  171.8  piles 9/12  strays 0.035  crystals 1.000  ms/tick 13.36
+seed 1 net t  25.0s  contrast 2.58
+seed 1 net t  25.0s  extent r50 140.1 r90 212.3
+seed 1 net t  30.0s  tube  3072.8  loops   29  width 4.82  reach  171.8  piles 9/12  strays 0.026  crystals 1.000  ms/tick 13.50
+seed 1 net t  30.0s  contrast 2.60
+seed 1 net t  30.0s  extent r50 138.3 r90 213.9
+seed 1 net t  35.0s  tube  2956.3  loops   29  width 4.70  reach  171.8  piles 9/12  strays 0.036  crystals 1.000  ms/tick 13.64
+seed 1 net t  35.0s  contrast 2.57
+seed 1 net t  35.0s  extent r50 136.6 r90 215.2
+seed 1 net t  40.0s  tube  2938.9  loops   31  width 4.75  reach  171.8  piles 9/12  strays 0.033  crystals 1.000  ms/tick 13.70
+seed 1 net t  40.0s  contrast 2.64
+seed 1 net t  40.0s  extent r50 135.4 r90 216.5
+seed 1 net t  45.0s  tube  2931.7  loops   29  width 4.97  reach  171.8  piles 9/12  strays 0.030  crystals 1.000  ms/tick 13.74
+seed 1 net t  45.0s  contrast 2.67
+seed 1 net t  45.0s  extent r50 134.3 r90 217.9
+seed 1 net t  50.0s  tube  2810.4  loops   24  width 4.86  reach  171.8  piles 9/12  strays 0.032  crystals 1.000  ms/tick 13.79
+seed 1 net t  50.0s  contrast 2.77
+seed 1 net t  50.0s  extent r50 133.8 r90 218.8
+seed 1 net t  55.0s  tube  2755.5  loops   24  width 4.83  reach  171.8  piles 9/12  strays 0.034  crystals 1.000  ms/tick 13.82
+seed 1 net t  55.0s  contrast 2.77
+seed 1 net t  55.0s  extent r50 133.1 r90 219.8
+seed 1 net t  60.0s  tube  2753.4  loops   25  width 4.81  reach  171.8  piles 9/12  strays 0.037  crystals 1.000  ms/tick 13.82
+seed 1 net t  60.0s  contrast 2.64
+seed 1 net t  60.0s  extent r50 132.4 r90 220.6
+seed 1 net firsts 0:72:0.57:0.0 1:54:0.67:0.0 2:96:0.87:-1.0 3:94:0.88:-1.0 4:51:0.42:0.0 5:59:0.55:0.1 6:76:0.68:-1.0 7:13:0.11:0.0 8:99:0.80:1.5 9:37:0.30:0.0 10:59:0.75:0.1 11:65:0.85:0.3
+seed 1 net hash=8bb5be9787854a1a

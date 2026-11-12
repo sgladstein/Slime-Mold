@@ -1,0 +1,74 @@
+seed 14 droplets t   5.0s  tube  6915.2  loops    1  width 7.00  reach  185.7  piles 23/23  strays 0.001  crystals 0.997  ms/tick 6.69
+seed 14 droplets t   5.0s  joined 5,11 body 1141.2
+seed 14 droplets t   5.0s  contrast 12.79
+seed 14 droplets t   5.0s  extent r50 104.1 r90 172.1
+seed 14 droplets t  10.0s  tube  6477.2  loops    2  width 7.22  reach  179.2  piles 23/23  strays 0.002  crystals 0.994  ms/tick 6.30
+seed 14 droplets t  10.0s  joined 1,12,20 body 1137.5
+seed 14 droplets t  10.0s  contrast 11.69
+seed 14 droplets t  10.0s  extent r50 103.9 r90 175.6
+seed 14 droplets t  15.0s  tube  6270.0  loops    1  width 7.64  reach  193.1  piles 23/23  strays 0.001  crystals 0.990  ms/tick 6.12
+seed 14 droplets t  15.0s  joined 1,12 body 1134.2
+seed 14 droplets t  15.0s  contrast 11.37
+seed 14 droplets t  15.0s  extent r50 102.2 r90 167.4
+seed 14 droplets t  20.0s  tube  5502.5  loops    0  width 7.95  reach  200.1  piles 23/23  strays 0.001  crystals 0.986  ms/tick 6.05
+seed 14 droplets t  20.0s  joined 1,12 body 990.2
+seed 14 droplets t  20.0s  contrast 7.35
+seed 14 droplets t  20.0s  extent r50 100.4 r90 175.7
+seed 14 droplets t  25.0s  tube  5781.0  loops    1  width 7.74  reach  188.2  piles 23/23  strays 0.001  crystals 0.983  ms/tick 6.00
+seed 14 droplets t  25.0s  joined 1,12 body 971.8
+seed 14 droplets t  25.0s  contrast 9.19
+seed 14 droplets t  25.0s  extent r50 100.7 r90 170.7
+seed 14 droplets t  30.0s  tube  5652.2  loops    0  width 7.59  reach  184.7  piles 23/23  strays 0.001  crystals 0.980  ms/tick 6.07
+seed 14 droplets t  30.0s  joined 1,12 body 985.0
+seed 14 droplets t  30.0s  contrast 8.81
+seed 14 droplets t  30.0s  extent r50 100.1 r90 167.3
+seed 14 droplets t  35.0s  tube  5364.5  loops    0  width 8.24  reach  191.3  piles 23/23  strays 0.001  crystals 0.976  ms/tick 6.15
+seed 14 droplets t  35.0s  joined 1,12 body 1133.5
+seed 14 droplets t  35.0s  contrast 7.57
+seed 14 droplets t  35.0s  extent r50 101.5 r90 166.5
+seed 14 droplets t  40.0s  tube  5544.0  loops    0  width 7.30  reach  196.2  piles 23/23  strays 0.001  crystals 0.973  ms/tick 6.19
+seed 14 droplets t  40.0s  joined 1,12 body 1042.5
+seed 14 droplets t  40.0s  contrast 8.52
+seed 14 droplets t  40.0s  extent r50 101.6 r90 168.6
+seed 14 droplets t  45.0s  tube  5020.2  loops    0  width 7.72  reach  191.0  piles 23/23  strays 0.002  crystals 0.970  ms/tick 6.24
+seed 14 droplets t  45.0s  joined 1,12 body 994.5
+seed 14 droplets t  45.0s  contrast 5.94
+seed 14 droplets t  45.0s  extent r50 101.0 r90 166.6
+seed 14 droplets t  50.0s  tube  5499.8  loops    1  width 7.04  reach  188.3  piles 23/23  strays 0.001  crystals 0.967  ms/tick 6.26
+seed 14 droplets t  50.0s  joined 1,12 body 1020.8
+seed 14 droplets t  50.0s  contrast 8.77
+seed 14 droplets t  50.0s  extent r50 101.4 r90 166.1
+seed 14 droplets t  55.0s  tube  5084.8  loops    0  width 7.31  reach  195.7  piles 23/23  strays 0.002  crystals 0.964  ms/tick 6.30
+seed 14 droplets t  55.0s  joined 1,12 body 1105.5
+seed 14 droplets t  55.0s  contrast 6.33
+seed 14 droplets t  55.0s  extent r50 101.7 r90 165.6
+seed 14 droplets t  60.0s  tube  5182.0  loops    2  width 7.55  reach  188.5  piles 23/23  strays 0.001  crystals 0.961  ms/tick 6.33
+seed 14 droplets t  60.0s  joined 1,12,20 body 1082.8
+seed 14 droplets t  60.0s  contrast 7.08
+seed 14 droplets t  60.0s  extent r50 102.6 r90 166.2
+seed 14 droplets t  65.0s  tube  5244.2  loops    1  width 8.17  reach  191.1  piles 23/23  strays 0.001  crystals 0.957  ms/tick 6.29
+seed 14 droplets t  65.0s  joined 1,12 body 1027.0
+seed 14 droplets t  65.0s  contrast 7.36
+seed 14 droplets t  65.0s  extent r50 101.9 r90 169.2
+seed 14 droplets t  70.0s  tube  5332.0  loops    1  width 7.22  reach  186.5  piles 23/23  strays 0.001  crystals 0.954  ms/tick 6.25
+seed 14 droplets t  70.0s  joined 1,12 body 1020.8
+seed 14 droplets t  70.0s  contrast 7.88
+seed 14 droplets t  70.0s  extent r50 101.4 r90 174.4
+seed 14 droplets t  75.0s  tube  5441.8  loops    1  width 7.12  reach  181.1  piles 23/23  strays 0.001  crystals 0.951  ms/tick 6.22
+seed 14 droplets t  75.0s  joined 1,12 body 1059.0
+seed 14 droplets t  75.0s  contrast 9.14
+seed 14 droplets t  75.0s  extent r50 100.7 r90 174.6
+seed 14 droplets t  80.0s  tube  5580.2  loops    0  width 7.08  reach  193.2  piles 23/23  strays 0.001  crystals 0.948  ms/tick 6.19
+seed 14 droplets t  80.0s  joined 1,12 body 1045.0
+seed 14 droplets t  80.0s  contrast 10.49
+seed 14 droplets t  80.0s  extent r50 100.3 r90 175.1
+seed 14 droplets t  85.0s  tube  5818.5  loops    2  width 6.86  reach  194.3  piles 23/23  strays 0.001  crystals 0.945  ms/tick 6.16
+seed 14 droplets t  85.0s  joined 13,14,17 body 1095.0
+seed 14 droplets t  85.0s  contrast 11.61
+seed 14 droplets t  85.0s  extent r50 99.5 r90 175.8
+seed 14 droplets t  90.0s  tube  5309.8  loops    0  width 6.99  reach  202.0  piles 23/23  strays 0.001  crystals 0.942  ms/tick 6.14
+seed 14 droplets t  90.0s  joined 0,1,12,20 body 1424.0
+seed 14 droplets t  90.0s  contrast 8.97
+seed 14 droplets t  90.0s  extent r50 99.4 r90 173.5
+seed 14 droplets firsts 0:72:0.57:0.0 1:33:0.33:0.0 2:51:0.59:0.0 3:61:0.77:0.0 4:118:0.99:2.4 5:15:0.19:0.0 6:104:0.84:0.6 7:88:0.95:0.2 8:108:1.02:1.3 9:89:0.94:0.1 10:119:1.13:2.3 11:49:0.45:0.0 12:52:0.64:0.0 13:58:0.72:0.0 14:85:0.85:0.2 15:106:0.87:0.6 16:89:0.77:0.1 17:52:0.53:0.0 18:123:1.16:2.4 19:60:0.49:0.0 20:63:0.57:0.0 21:101:0.91:0.3 22:90:0.96:0.2
+seed 14 droplets hash=6f563823b3dca3c8

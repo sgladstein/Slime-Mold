@@ -1,0 +1,31 @@
+adapter: NVIDIA GeForce GTX 1070
+open ground: 2304595 cells (179189 rock, 259428 wet)
+t    0 s: piles reached 1 of 23, open ground covered 0.0%, wall bites 0, wall cells broken 0
+t   20 s: piles reached 8 of 23, open ground covered 2.9%, wall bites 0, wall cells broken 0
+t   41 s: piles reached 8 of 23, open ground covered 2.8%, wall bites 0, wall cells broken 0
+t   61 s: piles reached 8 of 23, open ground covered 2.6%, wall bites 0, wall cells broken 0
+t   81 s: piles reached 9 of 23, open ground covered 2.8%, wall bites 0, wall cells broken 0
+pile 0 at (56, 80), 0 dish cells from home: reached at 0 s
+pile 1 at (109, 30), 73 dish cells from home: reached at never
+pile 2 at (45, 29), 52 dish cells from home: reached at 2 s
+pile 3 at (216, 40), 164 dish cells from home: reached at never
+pile 4 at (45, 124), 46 dish cells from home: reached at 2 s
+pile 5 at (178, 69), 122 dish cells from home: reached at never
+pile 6 at (68, 146), 67 dish cells from home: reached at 4 s
+pile 7 at (180, 108), 126 dish cells from home: reached at never
+pile 8 at (141, 81), 85 dish cells from home: reached at never
+pile 9 at (78, 53), 35 dish cells from home: reached at 1 s
+pile 10 at (227, 80), 171 dish cells from home: reached at never
+pile 11 at (91, 79), 35 dish cells from home: reached at 73 s
+pile 12 at (141, 23), 102 dish cells from home: reached at never
+pile 13 at (127, 145), 96 dish cells from home: reached at never
+pile 14 at (236, 119), 184 dish cells from home: reached at never
+pile 15 at (98, 139), 72 dish cells from home: reached at 4 s
+pile 16 at (195, 135), 149 dish cells from home: reached at never
+pile 17 at (178, 40), 128 dish cells from home: reached at never
+pile 18 at (156, 124), 108 dish cells from home: reached at never
+pile 19 at (20, 60), 41 dish cells from home: reached at 2 s
+pile 20 at (14, 144), 77 dish cells from home: reached at never
+pile 21 at (74, 102), 28 dish cells from home: reached at 1 s
+pile 22 at (123, 55), 71 dish cells from home: reached at never
+wrote Reports/food-tubes-2026-11-11/gpu/race8keep-s1

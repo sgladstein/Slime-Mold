@@ -1,0 +1,92 @@
+seed 3 race t   5.0s  tube  2542.8  loops    2  width 6.14  reach  102.1  piles 12/23  strays 0.021  crystals 0.999  ms/tick 5.98
+seed 3 race t   5.0s  joined 0,1,6,12,17,18,19,21 body 1956.0
+seed 3 race t   5.0s  alive 2384  energy 0.600  born 1905  starved 4521  grass -0.000
+seed 3 race t   5.0s  contrast 3.40
+seed 3 race t   5.0s  extent r50 143.9 r90 143.9
+seed 3 race t  10.0s  tube  2570.0  loops    1  width 5.87  reach  168.7  piles 14/23  strays 0.004  crystals 0.998  ms/tick 6.25
+seed 3 race t  10.0s  joined 0,1,6,12,14,15,17,18,21 body 2263.8
+seed 3 race t  10.0s  alive 2847  energy 0.934  born 4641  starved 6794  grass -0.000
+seed 3 race t  10.0s  contrast 3.69
+seed 3 race t  10.0s  extent r50 143.9 r90 143.9
+seed 3 race t  15.0s  tube  2813.8  loops    1  width 5.88  reach  184.5  piles 23/23  strays 0.010  crystals 0.997  ms/tick 6.08
+seed 3 race t  15.0s  joined 0,1,6,12,14,15,17,18,19,21 body 2581.0
+seed 3 race t  15.0s  alive 3541  energy 1.503  born 7973  starved 9432  grass -0.000
+seed 3 race t  15.0s  contrast 4.50
+seed 3 race t  15.0s  extent r50 143.9 r90 143.9
+seed 3 race t  20.0s  tube  3088.2  loops    1  width 5.79  reach  182.1  piles 23/23  strays 0.010  crystals 0.995  ms/tick 6.00
+seed 3 race t  20.0s  joined 0,1,6,12,17,18,19,21 body 2419.8
+seed 3 race t  20.0s  alive 4097  energy 2.101  born 11830  starved 12733  grass -0.000
+seed 3 race t  20.0s  contrast 4.57
+seed 3 race t  20.0s  extent r50 143.9 r90 143.9
+seed 3 race t  25.0s  tube  3368.5  loops    1  width 6.09  reach  182.3  piles 23/23  strays 0.017  crystals 0.993  ms/tick 5.99
+seed 3 race t  25.0s  joined 0,1,6,8,12,14,15,17,18,19,21 body 3016.2
+seed 3 race t  25.0s  alive 4548  energy 2.703  born 15925  starved 16377  grass -0.000
+seed 3 race t  25.0s  contrast 4.30
+seed 3 race t  25.0s  extent r50 143.9 r90 143.9
+seed 3 race t  30.0s  tube  3966.2  loops    5  width 6.05  reach  182.6  piles 23/23  strays 0.022  crystals 0.990  ms/tick 6.01
+seed 3 race t  30.0s  joined 0,1,6,8,12,14,15,17,18,19,21 body 3333.2
+seed 3 race t  30.0s  alive 5599  energy 2.930  born 21200  starved 20601  grass -0.000
+seed 3 race t  30.0s  contrast 4.48
+seed 3 race t  30.0s  extent r50 143.9 r90 143.9
+seed 3 race t  35.0s  tube  4254.0  loops    3  width 5.86  reach  182.7  piles 23/23  strays 0.009  crystals 0.988  ms/tick 6.09
+seed 3 race t  35.0s  joined 0,1,6,8,12,14,15,17,18,19,21 body 3531.5
+seed 3 race t  35.0s  alive 6130  energy 3.381  born 27082  starved 25952  grass -0.000
+seed 3 race t  35.0s  contrast 4.51
+seed 3 race t  35.0s  extent r50 143.9 r90 143.9
+seed 3 race t  40.0s  tube  4593.5  loops    6  width 6.08  reach  183.2  piles 23/23  strays 0.008  crystals 0.985  ms/tick 6.15
+seed 3 race t  40.0s  joined 0,1,6,8,12,14,15,17,18,19,21 body 3587.2
+seed 3 race t  40.0s  alive 6613  energy 3.880  born 33438  starved 31825  grass -0.000
+seed 3 race t  40.0s  contrast 4.75
+seed 3 race t  40.0s  extent r50 113.4 r90 143.9
+seed 3 race t  45.0s  tube  4375.8  loops    4  width 6.35  reach  184.3  piles 23/23  strays 0.014  crystals 0.981  ms/tick 6.14
+seed 3 race t  45.0s  joined 0,1,6,8,12,14,15,17,18,19,21 body 3842.8
+seed 3 race t  45.0s  alive 6804  energy 4.555  born 39930  starved 38126  grass -0.000
+seed 3 race t  45.0s  contrast 4.61
+seed 3 race t  45.0s  extent r50 107.1 r90 143.9
+seed 3 race t  50.0s  tube  4680.0  loops    4  width 6.48  reach  183.6  piles 23/23  strays 0.016  crystals 0.978  ms/tick 6.17
+seed 3 race t  50.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 4104.2
+seed 3 race t  50.0s  alive 7151  energy 5.087  born 46682  starved 44531  grass -0.000
+seed 3 race t  50.0s  contrast 4.55
+seed 3 race t  50.0s  extent r50 103.8 r90 143.9
+seed 3 race t  55.0s  tube  4766.0  loops    3  width 6.92  reach  181.5  piles 23/23  strays 0.009  crystals 0.975  ms/tick 6.19
+seed 3 race t  55.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 4248.2
+seed 3 race t  55.0s  alive 7933  energy 5.340  born 54443  starved 51510  grass -0.000
+seed 3 race t  55.0s  contrast 4.30
+seed 3 race t  55.0s  extent r50 101.4 r90 143.9
+seed 3 race t  60.0s  tube  5012.8  loops    3  width 7.02  reach  183.8  piles 23/23  strays 0.011  crystals 0.971  ms/tick 6.26
+seed 3 race t  60.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 4435.5
+seed 3 race t  60.0s  alive 8533  energy 5.761  born 62774  starved 59241  grass -0.000
+seed 3 race t  60.0s  contrast 4.44
+seed 3 race t  60.0s  extent r50 100.2 r90 143.9
+seed 3 race t  65.0s  tube  5236.5  loops    5  width 7.03  reach  184.2  piles 23/23  strays 0.010  crystals 0.967  ms/tick 6.35
+seed 3 race t  65.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 4701.5
+seed 3 race t  65.0s  alive 8685  energy 6.459  born 71254  starved 67569  grass -0.000
+seed 3 race t  65.0s  contrast 4.46
+seed 3 race t  65.0s  extent r50 99.1 r90 143.9
+seed 3 race t  70.0s  tube  5391.0  loops    7  width 7.16  reach  182.2  piles 23/23  strays 0.012  crystals 0.962  ms/tick 6.43
+seed 3 race t  70.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 4814.0
+seed 3 race t  70.0s  alive 9918  energy 6.409  born 80808  starved 75890  grass -0.000
+seed 3 race t  70.0s  contrast 4.17
+seed 3 race t  70.0s  extent r50 97.9 r90 143.9
+seed 3 race t  75.0s  tube  5722.0  loops   11  width 7.22  reach  184.6  piles 23/23  strays 0.019  crystals 0.958  ms/tick 6.53
+seed 3 race t  75.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5096.0
+seed 3 race t  75.0s  alive 10370  energy 6.823  born 91216  starved 85846  grass -0.000
+seed 3 race t  75.0s  contrast 4.37
+seed 3 race t  75.0s  extent r50 95.9 r90 143.9
+seed 3 race t  80.0s  tube  5689.2  loops   15  width 7.14  reach  182.8  piles 23/23  strays 0.015  crystals 0.953  ms/tick 6.60
+seed 3 race t  80.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5173.0
+seed 3 race t  80.0s  alive 10660  energy 7.261  born 102262  starved 96602  grass -0.000
+seed 3 race t  80.0s  contrast 4.14
+seed 3 race t  80.0s  extent r50 94.8 r90 143.9
+seed 3 race t  85.0s  tube  5518.0  loops    8  width 7.22  reach  183.9  piles 23/23  strays 0.021  crystals 0.948  ms/tick 6.71
+seed 3 race t  85.0s  joined 0,1,3,6,8,10,12,14,15,17,18,19,21 body 4992.0
+seed 3 race t  85.0s  alive 10424  energy 8.067  born 113084  starved 107660  grass -0.000
+seed 3 race t  85.0s  contrast 4.21
+seed 3 race t  85.0s  extent r50 94.1 r90 136.4
+seed 3 race t  90.0s  tube  5644.0  loops   11  width 6.97  reach  183.9  piles 23/23  strays 0.026  crystals 0.944  ms/tick 6.79
+seed 3 race t  90.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5052.2
+seed 3 race t  90.0s  alive 10739  energy 8.441  born 124166  starved 118427  grass -0.000
+seed 3 race t  90.0s  contrast 4.18
+seed 3 race t  90.0s  extent r50 93.7 r90 130.6
+seed 3 race firsts 0:0:0.57:0.0 1:46:0.50:0.2 2:143:0.64:11.5 3:133:0.77:9.2 4:175:1.09:12.4 5:188:1.01:10.8 6:64:1.00:0.5 7:181:0.95:12.2 8:50:0.74:0.2 9:117:0.57:11.7 10:101:0.87:2.1 11:166:0.77:11.0 12:29:0.81:0.0 13:116:0.37:12.3 14:59:0.51:0.4 15:62:0.15:0.7 16:145:0.90:11.9 17:28:0.35:0.0 18:47:0.91:0.2 19:63:1.09:0.4 20:166:1.02:9.5 21:35:0.82:0.1 22:123:0.90:12.8
+seed 3 race hash=051200531975498f

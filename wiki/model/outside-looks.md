@@ -2,8 +2,8 @@
 title: Outside looks and creature rules on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-11T22:00Z
-sources: [Reports/mould-shape-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/spread-mix-2026-11-11.md, Reports/research-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, research/sources/primordia.md, research/sources/reginato-2024.md]
+updated: 2026-11-12T01:11Z
+sources: [Reports/mould-shape-2026-11-11.md, Reports/jenson-physarum-2026-11-10.md, Reports/jenson-compare-2026-11-10.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/spread-mix-2026-11-11.md, Reports/research-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/food-tubes-2026-11-11.md, research/sources/jenson-physarum-post.md, research/sources/jones-2010.md, research/sources/mcpm-2022.md, research/sources/jenson-36-points.md, research/sources/bleuje-interactive-physarum.md, research/sources/lague-slime-simulation.md, research/sources/polyphy.md, research/sources/primordia.md, research/sources/reginato-2024.md]
 code: [BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigDish::infect, BigParams::chance_exp, BigParams::explore_spread, BigParams::graze_weight, BigParams::species_convert, BigParams::species_sets, SpeciesSet]
 ---
 
@@ -23,6 +23,12 @@ look so far was judged with a fixed walker count. On food piles, grazing is
 what makes droplets forage: grazers reached more far piles than still
 droplets on 15 of 16 seeds and fewer on none, and scouts added to grazers
 reached more on 10 of 16 and fewer on none ([first reach](../../Reports/first-reach-2026-11-11.md)).
+Droplets touch food but don't join it: on the Larder race world they held a
+median 2 of 22 crystals on their main body at 60 s, against 19 for the race
+start's network with growth, 16 of 16 seeds; their bodies have no growth and
+grazing pushes them on, so on a world they come out as waves
+([food tubes](../../Reports/food-tubes-2026-11-11.md)). Use the network with
+growth where food should end up joined by tubes.
 Species can now have their own settings (`species_sets`): a droplet species
 and a network species share one dish, each within half to twice its area
 alone on 8 of 8 seeds, with no fight between them
@@ -81,6 +87,7 @@ polygons at once. Every outside source has a card in
 - [research-review-2026-11-11.md](../../Reports/research-review-2026-11-11.md): the independent review of the creature work.
 - [first-reach-2026-11-11.md](../../Reports/first-reach-2026-11-11.md): which droplet moulds and mixes reach food piles first.
 - [species-sets-2026-11-11.md](../../Reports/species-sets-2026-11-11.md): per-species settings, and a droplet species beside a network species.
+- [food-tubes-2026-11-11.md](../../Reports/food-tubes-2026-11-11.md): why the food-reach droplets come out as waves, and the network with growth that joins food.
 - [jenson-physarum-2026-11-10.md](../../Reports/jenson-physarum-2026-11-10.md), with the owner's PDF and GIFs in [its folder](../../Reports/jenson-physarum-2026-11-10/).
 - [jenson-compare-2026-11-10.md](../../Reports/jenson-compare-2026-11-10.md): the clips against the big dish, and how the outside versions build the step.
 - [jenson-looks-2026-11-11.md](../../Reports/jenson-looks-2026-11-11.md): trunks, contagion and fronts on the big dish; [page](https://claude.ai/artifact/DqJxgjQGVgnwQNwbbzoGrg).

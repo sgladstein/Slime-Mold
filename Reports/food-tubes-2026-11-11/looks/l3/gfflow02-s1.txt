@@ -1,0 +1,92 @@
+seed 1 gfflow02 t   5.0s  tube  1042.3  loops   10  width 3.87  reach  103.2  piles 4/12  strays 0.050  crystals 0.977  ms/tick 25.76
+seed 1 gfflow02 t   5.0s  joined 7,9,11 body 1040.7
+seed 1 gfflow02 t   5.0s  alive 10704  energy 7.551  born 7704  starved 0  grass -0.000
+seed 1 gfflow02 t   5.0s  contrast 3.78
+seed 1 gfflow02 t   5.0s  extent r50 0.7 r90 47.2
+seed 1 gfflow02 t  10.0s  tube  1216.3  loops   18  width 4.21  reach  105.4  piles 4/12  strays 0.060  crystals 0.939  ms/tick 29.39
+seed 1 gfflow02 t  10.0s  joined 7,9,11 body 1215.5
+seed 1 gfflow02 t  10.0s  alive 15321  energy 13.673  born 12889  starved 568  grass -0.000
+seed 1 gfflow02 t  10.0s  contrast 3.78
+seed 1 gfflow02 t  10.0s  extent r50 0.7 r90 129.1
+seed 1 gfflow02 t  15.0s  tube  1465.0  loops   24  width 4.55  reach  107.1  piles 4/12  strays 0.060  crystals 0.902  ms/tick 31.16
+seed 1 gfflow02 t  15.0s  joined 7,9,11 body 1465.0
+seed 1 gfflow02 t  15.0s  alive 19910  energy 16.921  born 17726  starved 816  grass -0.000
+seed 1 gfflow02 t  15.0s  contrast 3.94
+seed 1 gfflow02 t  15.0s  extent r50 0.7 r90 160.9
+seed 1 gfflow02 t  20.0s  tube  1719.9  loops   33  width 4.80  reach  109.1  piles 4/12  strays 0.063  crystals 0.864  ms/tick 32.98
+seed 1 gfflow02 t  20.0s  joined 7,9,11 body 1718.5
+seed 1 gfflow02 t  20.0s  alive 24368  energy 19.000  born 22349  starved 981  grass -0.000
+seed 1 gfflow02 t  20.0s  contrast 3.44
+seed 1 gfflow02 t  20.0s  extent r50 0.7 r90 185.8
+seed 1 gfflow02 t  25.0s  tube  1964.1  loops   26  width 5.08  reach  111.6  piles 4/12  strays 0.070  crystals 0.827  ms/tick 34.24
+seed 1 gfflow02 t  25.0s  joined 7,9,11 body 1963.2
+seed 1 gfflow02 t  25.0s  alive 28562  energy 20.580  born 26741  starved 1179  grass -0.000
+seed 1 gfflow02 t  25.0s  contrast 3.39
+seed 1 gfflow02 t  25.0s  extent r50 0.7 r90 222.1
+seed 1 gfflow02 t  30.0s  tube  2298.1  loops   35  width 5.17  reach  112.4  piles 4/12  strays 0.079  crystals 0.788  ms/tick 35.65
+seed 1 gfflow02 t  30.0s  joined 0,7,9,11 body 2297.3
+seed 1 gfflow02 t  30.0s  alive 33533  energy 21.305  born 31920  starved 1387  grass -0.000
+seed 1 gfflow02 t  30.0s  contrast 3.53
+seed 1 gfflow02 t  30.0s  extent r50 0.7 r90 242.8
+seed 1 gfflow02 t  35.0s  tube  2923.3  loops   45  width 5.50  reach  113.2  piles 5/12  strays 0.074  crystals 0.736  ms/tick 37.27
+seed 1 gfflow02 t  35.0s  joined 0,6,7,9,11 body 2921.9
+seed 1 gfflow02 t  35.0s  alive 42927  energy 20.637  born 41502  starved 1575  grass -0.000
+seed 1 gfflow02 t  35.0s  contrast 3.57
+seed 1 gfflow02 t  35.0s  extent r50 41.7 r90 279.8
+seed 1 gfflow02 t  40.0s  tube  3624.2  loops   37  width 6.28  reach  128.2  piles 6/12  strays 0.054  crystals 0.703  ms/tick 39.03
+seed 1 gfflow02 t  40.0s  joined 0,4,6,7,9,11 body 3622.8
+seed 1 gfflow02 t  40.0s  alive 52818  energy 18.731  born 51560  starved 1742  grass -0.000
+seed 1 gfflow02 t  40.0s  contrast 3.42
+seed 1 gfflow02 t  40.0s  extent r50 96.0 r90 290.4
+seed 1 gfflow02 t  45.0s  tube  4170.9  loops   62  width 6.39  reach  131.3  piles 6/12  strays 0.059  crystals 0.665  ms/tick 40.58
+seed 1 gfflow02 t  45.0s  joined 0,4,6,7,9,11 body 4170.2
+seed 1 gfflow02 t  45.0s  alive 62261  energy 17.728  born 61174  starved 1913  grass -0.000
+seed 1 gfflow02 t  45.0s  contrast 3.26
+seed 1 gfflow02 t  45.0s  extent r50 144.2 r90 296.7
+seed 1 gfflow02 t  50.0s  tube  4701.7  loops   52  width 6.91  reach  132.7  piles 6/12  strays 0.051  crystals 0.628  ms/tick 41.86
+seed 1 gfflow02 t  50.0s  joined 0,4,6,7,9,11 body 4699.0
+seed 1 gfflow02 t  50.0s  alive 70602  energy 17.220  born 69683  starved 2081  grass -0.000
+seed 1 gfflow02 t  50.0s  contrast 3.22
+seed 1 gfflow02 t  50.0s  extent r50 180.8 r90 301.6
+seed 1 gfflow02 t  55.0s  tube  5173.9  loops   55  width 7.43  reach  134.2  piles 6/12  strays 0.048  crystals 0.590  ms/tick 41.47
+seed 1 gfflow02 t  55.0s  joined 0,4,6,7,9,11 body 5173.8
+seed 1 gfflow02 t  55.0s  alive 77857  energy 17.026  born 77126  starved 2269  grass -0.000
+seed 1 gfflow02 t  55.0s  contrast 3.08
+seed 1 gfflow02 t  55.0s  extent r50 199.6 r90 305.4
+seed 1 gfflow02 t  60.0s  tube  5598.3  loops   26  width 11.75  reach  134.2  piles 6/12  strays 0.018  crystals 0.553  ms/tick 41.36
+seed 1 gfflow02 t  60.0s  joined 0,4,6,7,9,11 body 5598.2
+seed 1 gfflow02 t  60.0s  alive 79983  energy 17.941  born 79453  starved 2470  grass -0.000
+seed 1 gfflow02 t  60.0s  contrast 2.72
+seed 1 gfflow02 t  60.0s  extent r50 204.2 r90 306.6
+seed 1 gfflow02 t  65.0s  tube  5774.2  loops   12  width 13.28  reach  147.5  piles 6/12  strays 0.009  crystals 0.520  ms/tick 40.86
+seed 1 gfflow02 t  65.0s  joined 0,4,6,7,9,11 body 5745.8
+seed 1 gfflow02 t  65.0s  alive 79993  energy 19.104  born 79585  starved 2592  grass -0.000
+seed 1 gfflow02 t  65.0s  contrast 2.43
+seed 1 gfflow02 t  65.0s  extent r50 204.6 r90 306.9
+seed 1 gfflow02 t  70.0s  tube  5916.9  loops    7  width 13.33  reach  161.5  piles 7/12  strays 0.004  crystals 0.505  ms/tick 40.88
+seed 1 gfflow02 t  70.0s  joined 0,3,4,6,7,9,11 body 5905.2
+seed 1 gfflow02 t  70.0s  alive 79995  energy 19.486  born 79660  starved 2665  grass -0.000
+seed 1 gfflow02 t  70.0s  contrast 2.18
+seed 1 gfflow02 t  70.0s  extent r50 204.9 r90 307.2
+seed 1 gfflow02 t  75.0s  tube  5979.2  loops    1  width 15.22  reach  164.2  piles 7/12  strays 0.000  crystals 0.500  ms/tick 42.25
+seed 1 gfflow02 t  75.0s  joined 0,4,6,7,9,11 body 5924.5
+seed 1 gfflow02 t  75.0s  alive 79996  energy 19.409  born 79759  starved 2763  grass -0.000
+seed 1 gfflow02 t  75.0s  contrast 2.15
+seed 1 gfflow02 t  75.0s  extent r50 205.0 r90 307.1
+seed 1 gfflow02 t  80.0s  tube  5995.5  loops    0  width 15.47  reach  164.5  piles 7/12  strays 0.000  crystals 0.499  ms/tick 43.31
+seed 1 gfflow02 t  80.0s  joined 0,3,4,6,7,9,11 body 5995.5
+seed 1 gfflow02 t  80.0s  alive 80000  energy 19.124  born 79811  starved 2811  grass -0.000
+seed 1 gfflow02 t  80.0s  contrast 2.08
+seed 1 gfflow02 t  80.0s  extent r50 205.0 r90 307.0
+seed 1 gfflow02 t  85.0s  tube  5978.4  loops    0  width 15.28  reach  171.1  piles 7/12  strays 0.000  crystals 0.499  ms/tick 44.37
+seed 1 gfflow02 t  85.0s  joined 0,3,4,6,7,9,11 body 5925.6
+seed 1 gfflow02 t  85.0s  alive 80000  energy 18.849  born 79854  starved 2854  grass -0.000
+seed 1 gfflow02 t  85.0s  contrast 2.11
+seed 1 gfflow02 t  85.0s  extent r50 205.0 r90 306.9
+seed 1 gfflow02 t  90.0s  tube  6002.5  loops    0  width 15.19  reach  177.7  piles 7/12  strays 0.000  crystals 0.498  ms/tick 45.22
+seed 1 gfflow02 t  90.0s  joined 0,3,4,6,7,9,11 body 5979.2
+seed 1 gfflow02 t  90.0s  alive 79999  energy 18.583  born 79878  starved 2879  grass -0.000
+seed 1 gfflow02 t  90.0s  contrast 2.10
+seed 1 gfflow02 t  90.0s  extent r50 205.0 r90 306.8
+seed 1 gfflow02 firsts 0:72:0.57:0.0 1:54:0.67:-1.0 2:96:0.87:-1.0 3:94:0.88:67.0 4:51:0.42:37.0 5:59:0.55:-1.0 6:76:0.68:31.3 7:13:0.11:0.0 8:99:0.80:-1.0 9:37:0.30:0.6 10:59:0.75:-1.0 11:65:0.85:1.5
+seed 1 gfflow02 hash=fc1bea015044fc79

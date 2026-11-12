@@ -7,8 +7,17 @@
 //! is the comparison.
 //!
 //! `cargo run --release --example worldspread -- out=DIR [seconds=90]
-//! [seed=1] [walkers=400000] [rock=0.22] [wet=0.22] [wall=1] [any GPU
-//! setting, such as upkeep=0.01 capacity=400000 crystal=2]`
+//! [seed=1] [walkers=400000] [rock=0.22] [wet=0.22] [wall=1] [every=1] [down=2]
+//! [any GPU setting, such as upkeep=0.01 capacity=400000 crystal=2]`
+//!
+//! A second here is 120 engine ticks whatever `ticks` is (`ticks` only
+//! batches them into frames). At this world's scale 8 that is one game
+//! second of `larder_world` (8 engine ticks a game tick, 15 a second); a
+//! `bigdish` second on the scale-2 race world is 8 game seconds. `every=S`
+//! keeps one GIF picture every S seconds (food tubes, 2026-11-12: a
+//! 720 s run at every=8 is 90 pictures, as a 90 s run at every=1).
+//! `down=N` shrinks each picture N times (default 2: 1024 x 640; 4 gives
+//! 512 x 320 and a GIF about a quarter the size).
 //!
 //! Prints, every 5 s, the piles reached and the share of open ground the
 //! mould covers (look thickness 26/255 or more: where it reads as slime),
@@ -28,6 +37,10 @@ fn main() {
     let mut out = String::from("worldspread");
     let (mut seconds, mut seed, mut walkers) = (90.0f32, 1u64, 400_000usize);
     let (mut rock, mut wet, mut wall) = (0.22f32, 0.22f32, true);
+    // Seconds between GIF pictures (whole seconds of the loop below).
+    let mut every = 1u32;
+    // Times smaller than the world, each GIF picture.
+    let mut down = 2u32;
     let mut extra: Vec<(String, String)> = Vec::new();
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
@@ -39,6 +52,8 @@ fn main() {
             "rock" => rock = v.parse().unwrap(),
             "wet" => wet = v.parse().unwrap(),
             "wall" => wall = v != "0",
+            "every" => every = v.parse::<u32>().unwrap().max(1),
+            "down" => down = v.parse::<u32>().unwrap().max(1),
             // Anything else is a GPU setting (`gpu::set`: growth, crystals).
             _ => extra.push((k.to_string(), v.to_string())),
         }
@@ -127,11 +142,14 @@ fn main() {
             let (_, bites, broken) = e.world_counts();
             println!("t {t:>4.0} s: piles reached {} of {}, open ground covered {:.1}%, wall bites {bites}, wall cells broken {broken}", r.iter().take(piles.len()).filter(|&&v| v != 0).count(), piles.len(), 100.0 * covered as f64 / open as f64);
         }
+        if !(f / fps.round() as u32).is_multiple_of(every) {
+            continue;
+        }
         let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         view.record(&mut enc, &cam, None);
         queue.submit([enc.finish()]);
         let pic = view.picture();
-        gif.push(image::imageops::resize(&pic, w as u32 / 2, h as u32 / 2, image::imageops::FilterType::Triangle));
+        gif.push(image::imageops::resize(&pic, w as u32 / down, h as u32 / down, image::imageops::FilterType::Triangle));
     }
     for (k, (fr, p)) in first.iter().zip(&piles).enumerate() {
         println!("pile {k} at ({:.0}, {:.0}), {:.0} dish cells from home: reached at {}", p.0, p.1, (p.0 - home.0).hypot(p.1 - home.1), if fr.is_nan() { "never".to_string() } else { format!("{fr:.0} s") });

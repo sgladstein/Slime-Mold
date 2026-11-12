@@ -1,0 +1,92 @@
+seed 3 big t   5.0s  tube  4577.2  loops    4  width 9.40  reach  105.2  piles 12/23  strays 0.015  crystals 0.997  ms/tick 11.75
+seed 3 big t   5.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 4534.5
+seed 3 big t   5.0s  alive 8961  energy 0.774  born 8105  starved 24144  grass -0.000
+seed 3 big t   5.0s  contrast 3.25
+seed 3 big t   5.0s  extent r50 143.9 r90 143.9
+seed 3 big t  10.0s  tube  4817.0  loops    5  width 9.96  reach  105.9  piles 12/23  strays 0.015  crystals 0.993  ms/tick 11.61
+seed 3 big t  10.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 4808.8
+seed 3 big t  10.0s  alive 9394  energy 1.348  born 18149  starved 33755  grass -0.000
+seed 3 big t  10.0s  contrast 3.66
+seed 3 big t  10.0s  extent r50 143.9 r90 143.9
+seed 3 big t  15.0s  tube  5133.2  loops   10  width 10.43  reach  108.9  piles 12/23  strays 0.020  crystals 0.988  ms/tick 11.21
+seed 3 big t  15.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5127.5
+seed 3 big t  15.0s  alive 10494  energy 1.953  born 29058  starved 43564  grass -0.000
+seed 3 big t  15.0s  contrast 3.53
+seed 3 big t  15.0s  extent r50 143.9 r90 143.9
+seed 3 big t  20.0s  tube  5195.8  loops    7  width 10.60  reach  108.6  piles 12/23  strays 0.017  crystals 0.983  ms/tick 11.25
+seed 3 big t  20.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5194.0
+seed 3 big t  20.0s  alive 10789  energy 2.671  born 40113  starved 54324  grass -0.000
+seed 3 big t  20.0s  contrast 3.43
+seed 3 big t  20.0s  extent r50 143.9 r90 143.9
+seed 3 big t  25.0s  tube  5175.8  loops   11  width 10.13  reach  109.0  piles 12/23  strays 0.019  crystals 0.978  ms/tick 11.54
+seed 3 big t  25.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5162.5
+seed 3 big t  25.0s  alive 10757  energy 3.445  born 51178  starved 65421  grass -0.000
+seed 3 big t  25.0s  contrast 3.57
+seed 3 big t  25.0s  extent r50 143.9 r90 143.9
+seed 3 big t  30.0s  tube  5091.8  loops    9  width 10.16  reach  108.9  piles 12/23  strays 0.016  crystals 0.973  ms/tick 11.53
+seed 3 big t  30.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5067.0
+seed 3 big t  30.0s  alive 10856  energy 4.163  born 62454  starved 76598  grass -0.000
+seed 3 big t  30.0s  contrast 3.52
+seed 3 big t  30.0s  extent r50 143.9 r90 143.9
+seed 3 big t  35.0s  tube  5232.8  loops    7  width 10.45  reach  109.6  piles 12/23  strays 0.015  crystals 0.968  ms/tick 11.64
+seed 3 big t  35.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5224.5
+seed 3 big t  35.0s  alive 10985  energy 4.849  born 73820  starved 87835  grass -0.000
+seed 3 big t  35.0s  contrast 3.52
+seed 3 big t  35.0s  extent r50 143.9 r90 143.9
+seed 3 big t  40.0s  tube  5343.0  loops   11  width 10.46  reach  109.3  piles 12/23  strays 0.018  crystals 0.963  ms/tick 11.77
+seed 3 big t  40.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5339.8
+seed 3 big t  40.0s  alive 11252  energy 5.425  born 85566  starved 99314  grass -0.000
+seed 3 big t  40.0s  contrast 3.54
+seed 3 big t  40.0s  extent r50 143.9 r90 143.9
+seed 3 big t  45.0s  tube  5362.5  loops   10  width 9.75  reach  109.2  piles 12/23  strays 0.025  crystals 0.958  ms/tick 11.75
+seed 3 big t  45.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5343.8
+seed 3 big t  45.0s  alive 11220  energy 6.131  born 97322  starved 111102  grass -0.000
+seed 3 big t  45.0s  contrast 3.51
+seed 3 big t  45.0s  extent r50 143.9 r90 143.9
+seed 3 big t  50.0s  tube  5337.2  loops   13  width 10.41  reach  109.9  piles 12/23  strays 0.014  crystals 0.953  ms/tick 11.85
+seed 3 big t  50.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5324.2
+seed 3 big t  50.0s  alive 11404  energy 6.704  born 109125  starved 122721  grass -0.000
+seed 3 big t  50.0s  contrast 3.54
+seed 3 big t  50.0s  extent r50 143.9 r90 143.9
+seed 3 big t  55.0s  tube  5261.2  loops   11  width 9.97  reach  110.3  piles 12/23  strays 0.023  crystals 0.948  ms/tick 11.94
+seed 3 big t  55.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5251.8
+seed 3 big t  55.0s  alive 11301  energy 7.447  born 121018  starved 134717  grass -0.000
+seed 3 big t  55.0s  contrast 3.40
+seed 3 big t  55.0s  extent r50 143.9 r90 143.9
+seed 3 big t  60.0s  tube  5283.2  loops   10  width 9.82  reach  109.9  piles 12/23  strays 0.019  crystals 0.943  ms/tick 12.03
+seed 3 big t  60.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5262.5
+seed 3 big t  60.0s  alive 11390  energy 8.059  born 132938  starved 146548  grass -0.000
+seed 3 big t  60.0s  contrast 3.49
+seed 3 big t  60.0s  extent r50 143.9 r90 143.9
+seed 3 big t  65.0s  tube  5135.8  loops   10  width 10.31  reach  109.9  piles 12/23  strays 0.028  crystals 0.938  ms/tick 12.11
+seed 3 big t  65.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5124.0
+seed 3 big t  65.0s  alive 11233  energy 8.852  born 144700  starved 158467  grass -0.000
+seed 3 big t  65.0s  contrast 3.45
+seed 3 big t  65.0s  extent r50 143.9 r90 143.9
+seed 3 big t  70.0s  tube  5264.5  loops   11  width 9.99  reach  109.6  piles 12/23  strays 0.017  crystals 0.933  ms/tick 12.08
+seed 3 big t  70.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5245.8
+seed 3 big t  70.0s  alive 11433  energy 9.364  born 156639  starved 170206  grass -0.000
+seed 3 big t  70.0s  contrast 3.52
+seed 3 big t  70.0s  extent r50 132.3 r90 143.9
+seed 3 big t  75.0s  tube  5385.8  loops   14  width 10.26  reach  109.0  piles 12/23  strays 0.021  crystals 0.928  ms/tick 12.03
+seed 3 big t  75.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5380.8
+seed 3 big t  75.0s  alive 11451  energy 10.002  born 168663  starved 182212  grass -0.000
+seed 3 big t  75.0s  contrast 3.75
+seed 3 big t  75.0s  extent r50 115.4 r90 143.9
+seed 3 big t  80.0s  tube  5383.8  loops   10  width 10.71  reach  109.6  piles 12/23  strays 0.016  crystals 0.923  ms/tick 12.09
+seed 3 big t  80.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5376.2
+seed 3 big t  80.0s  alive 11489  energy 10.627  born 180737  starved 194248  grass -0.000
+seed 3 big t  80.0s  contrast 3.51
+seed 3 big t  80.0s  extent r50 112.5 r90 143.9
+seed 3 big t  85.0s  tube  5261.2  loops   15  width 9.96  reach  109.9  piles 12/23  strays 0.023  crystals 0.917  ms/tick 12.12
+seed 3 big t  85.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5243.5
+seed 3 big t  85.0s  alive 11457  energy 11.315  born 192698  starved 206241  grass -0.000
+seed 3 big t  85.0s  contrast 3.49
+seed 3 big t  85.0s  extent r50 110.6 r90 143.9
+seed 3 big t  90.0s  tube  5281.8  loops   12  width 9.89  reach  110.6  piles 12/23  strays 0.021  crystals 0.912  ms/tick 12.07
+seed 3 big t  90.0s  joined 0,1,6,8,10,12,14,15,17,18,19,21 body 5244.8
+seed 3 big t  90.0s  alive 11539  energy 11.877  born 204874  starved 218335  grass -0.000
+seed 3 big t  90.0s  contrast 3.45
+seed 3 big t  90.0s  extent r50 108.9 r90 143.9
+seed 3 big firsts 0:0:0.57:0.0 1:46:0.50:0.0 2:143:0.64:-1.0 3:133:0.77:-1.0 4:175:1.09:-1.0 5:188:1.01:-1.0 6:64:1.00:0.1 7:181:0.95:-1.0 8:50:0.74:0.0 9:117:0.57:-1.0 10:101:0.87:1.6 11:166:0.77:-1.0 12:29:0.81:0.0 13:116:0.37:-1.0 14:59:0.51:0.1 15:62:0.15:0.1 16:145:0.90:-1.0 17:28:0.35:0.0 18:47:0.91:0.0 19:63:1.09:0.1 20:166:1.02:-1.0 21:35:0.82:0.0 22:123:0.90:-1.0
+seed 3 big hash=53fb93dada10dfca

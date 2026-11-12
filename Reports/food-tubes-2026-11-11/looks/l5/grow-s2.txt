@@ -1,0 +1,12 @@
+seed 2 grow t   5.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22 body 7312.5
+seed 2 grow t   5.0s  alive 9317  energy 0.712  born 7769  starved 5952  grass -0.000
+seed 2 grow t  10.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,21,22 body 8100.8
+seed 2 grow t  10.0s  alive 12983  energy 1.085  born 21093  starved 15610  grass -0.000
+seed 2 grow t  15.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22 body 9034.2
+seed 2 grow t  15.0s  alive 15807  energy 1.562  born 37311  starved 29004  grass -0.000
+seed 2 grow t  20.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,21,22 body 9185.2
+seed 2 grow t  20.0s  alive 17419  energy 2.147  born 55089  starved 45170  grass -0.000
+seed 2 grow t  25.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22 body 10112.2
+seed 2 grow t  25.0s  alive 18997  energy 2.720  born 74272  starved 62775  grass -0.000
+seed 2 grow t  30.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22 body 10260.8
+seed 2 grow t  30.0s  alive 19758  energy 3.338  born 94398  starved 82140  grass -0.000

@@ -1,0 +1,74 @@
+seed 1 growexpflow t   5.0s  tube  7229.0  loops   93  width 2.02  reach  193.7  piles 12/12  strays 0.423  crystals 0.960  ms/tick 33.49
+seed 1 growexpflow t   5.0s  alive 46946  energy 2.779  born 43946  starved 0  grass -0.000
+seed 1 growexpflow t   5.0s  contrast 3.88
+seed 1 growexpflow t   5.0s  extent r50 88.9 r90 286.7
+seed 1 growexpflow t  10.0s  tube 14319.2  loops  220  width 4.22  reach  193.9  piles 12/12  strays 0.014  crystals 0.819  ms/tick 54.75
+seed 1 growexpflow t  10.0s  alive 80000  energy 7.539  born 77000  starved 0  grass -0.000
+seed 1 growexpflow t  10.0s  contrast 2.68
+seed 1 growexpflow t  10.0s  extent r50 244.7 r90 386.4
+seed 1 growexpflow t  15.0s  tube 11043.3  loops  142  width 4.35  reach  194.8  piles 12/12  strays 0.025  crystals 0.670  ms/tick 54.05
+seed 1 growexpflow t  15.0s  alive 79971  energy 13.898  born 77318  starved 347  grass -0.000
+seed 1 growexpflow t  15.0s  contrast 2.71
+seed 1 growexpflow t  15.0s  extent r50 245.1 r90 386.2
+seed 1 growexpflow t  20.0s  tube 11593.4  loops  143  width 4.11  reach  195.6  piles 12/12  strays 0.018  crystals 0.520  ms/tick 53.34
+seed 1 growexpflow t  20.0s  alive 79996  energy 20.252  born 78702  starved 1706  grass -0.000
+seed 1 growexpflow t  20.0s  contrast 2.85
+seed 1 growexpflow t  20.0s  extent r50 244.9 r90 384.3
+seed 1 growexpflow t  25.0s  tube 10397.3  loops  120  width 4.39  reach  194.0  piles 12/12  strays 0.019  crystals 0.371  ms/tick 51.40
+seed 1 growexpflow t  25.0s  alive 80000  energy 26.592  born 78721  starved 1721  grass -0.000
+seed 1 growexpflow t  25.0s  contrast 2.81
+seed 1 growexpflow t  25.0s  extent r50 245.1 r90 382.8
+seed 1 growexpflow t  30.0s  tube  9465.4  loops   88  width 4.60  reach  195.0  piles 12/12  strays 0.017  crystals 0.222  ms/tick 49.84
+seed 1 growexpflow t  30.0s  alive 80000  energy 32.924  born 78721  starved 1721  grass -0.000
+seed 1 growexpflow t  30.0s  contrast 2.89
+seed 1 growexpflow t  30.0s  extent r50 245.7 r90 382.6
+seed 1 growexpflow t  35.0s  tube  9158.2  loops   76  width 4.84  reach  195.4  piles 12/12  strays 0.012  crystals 0.077  ms/tick 49.48
+seed 1 growexpflow t  35.0s  alive 80000  energy 39.111  born 78722  starved 1722  grass -0.000
+seed 1 growexpflow t  35.0s  contrast 2.70
+seed 1 growexpflow t  35.0s  extent r50 245.6 r90 381.6
+seed 1 growexpflow t  40.0s  tube  8978.1  loops   49  width 5.67  reach  195.2  piles 12/12  strays 0.000  crystals 0.004  ms/tick 48.31
+seed 1 growexpflow t  40.0s  alive 80000  energy 42.039  born 78722  starved 1722  grass -0.000
+seed 1 growexpflow t  40.0s  contrast 2.12
+seed 1 growexpflow t  40.0s  extent r50 244.4 r90 381.7
+seed 1 growexpflow t  45.0s  tube  8576.8  loops   40  width 5.97  reach  195.6  piles 12/12  strays 0.000  crystals 0.000  ms/tick 46.74
+seed 1 growexpflow t  45.0s  alive 80000  energy 41.934  born 78722  starved 1722  grass -0.000
+seed 1 growexpflow t  45.0s  contrast 2.13
+seed 1 growexpflow t  45.0s  extent r50 243.3 r90 379.7
+seed 1 growexpflow t  50.0s  tube  8334.4  loops   37  width 6.19  reach  195.4  piles 12/12  strays 0.000  crystals 0.000  ms/tick 45.48
+seed 1 growexpflow t  50.0s  alive 80000  energy 41.634  born 78722  starved 1722  grass -0.000
+seed 1 growexpflow t  50.0s  contrast 2.13
+seed 1 growexpflow t  50.0s  extent r50 242.7 r90 377.8
+seed 1 growexpflow t  55.0s  tube  8112.4  loops   32  width 6.35  reach  195.6  piles 12/12  strays 0.000  crystals 0.000  ms/tick 45.40
+seed 1 growexpflow t  55.0s  alive 80000  energy 41.334  born 78722  starved 1722  grass -0.000
+seed 1 growexpflow t  55.0s  contrast 2.12
+seed 1 growexpflow t  55.0s  extent r50 241.9 r90 376.5
+seed 1 growexpflow t  60.0s  tube  7975.2  loops   27  width 6.50  reach  192.6  piles 12/12  strays 0.000  crystals 0.000  ms/tick 46.32
+seed 1 growexpflow t  60.0s  alive 80000  energy 41.034  born 78722  starved 1722  grass -0.000
+seed 1 growexpflow t  60.0s  contrast 2.13
+seed 1 growexpflow t  60.0s  extent r50 240.9 r90 375.7
+seed 1 growexpflow t  65.0s  tube  7883.8  loops   27  width 6.48  reach  189.4  piles 12/12  strays 0.000  crystals 0.000  ms/tick 49.88
+seed 1 growexpflow t  65.0s  alive 80000  energy 40.735  born 78722  starved 1722  grass -0.000
+seed 1 growexpflow t  65.0s  contrast 2.12
+seed 1 growexpflow t  65.0s  extent r50 239.9 r90 375.0
+seed 1 growexpflow t  70.0s  tube  7721.4  loops   22  width 6.72  reach  185.9  piles 12/12  strays 0.000  crystals 0.000  ms/tick 51.43
+seed 1 growexpflow t  70.0s  alive 80000  energy 40.434  born 78723  starved 1723  grass -0.000
+seed 1 growexpflow t  70.0s  contrast 2.15
+seed 1 growexpflow t  70.0s  extent r50 238.9 r90 374.8
+seed 1 growexpflow t  75.0s  tube  7671.2  loops   23  width 6.88  reach  182.6  piles 12/12  strays 0.000  crystals 0.000  ms/tick 52.23
+seed 1 growexpflow t  75.0s  alive 80000  energy 40.134  born 78723  starved 1723  grass -0.000
+seed 1 growexpflow t  75.0s  contrast 2.10
+seed 1 growexpflow t  75.0s  extent r50 238.0 r90 374.1
+seed 1 growexpflow t  80.0s  tube  7577.4  loops   22  width 7.04  reach  179.4  piles 12/12  strays 0.000  crystals 0.000  ms/tick 53.04
+seed 1 growexpflow t  80.0s  alive 80000  energy 39.835  born 78723  starved 1723  grass -0.000
+seed 1 growexpflow t  80.0s  contrast 2.12
+seed 1 growexpflow t  80.0s  extent r50 237.1 r90 373.6
+seed 1 growexpflow t  85.0s  tube  7475.2  loops   20  width 7.17  reach  178.8  piles 12/12  strays 0.000  crystals 0.000  ms/tick 53.81
+seed 1 growexpflow t  85.0s  alive 80000  energy 39.535  born 78723  starved 1723  grass -0.000
+seed 1 growexpflow t  85.0s  contrast 2.13
+seed 1 growexpflow t  85.0s  extent r50 236.1 r90 372.8
+seed 1 growexpflow t  90.0s  tube  7422.0  loops   20  width 7.35  reach  178.6  piles 12/12  strays 0.000  crystals 0.000  ms/tick 54.43
+seed 1 growexpflow t  90.0s  alive 80000  energy 39.235  born 78723  starved 1723  grass -0.000
+seed 1 growexpflow t  90.0s  contrast 2.17
+seed 1 growexpflow t  90.0s  extent r50 235.3 r90 372.5
+seed 1 growexpflow firsts 0:72:0.57:0.0 1:54:0.67:1.3 2:96:0.87:2.9 3:94:0.88:3.0 4:51:0.42:1.3 5:59:0.55:1.5 6:76:0.68:2.1 7:13:0.11:0.1 8:99:0.80:3.0 9:37:0.30:0.6 10:59:0.75:1.4 11:65:0.85:1.9
+seed 1 growexpflow hash=1aae6bed323b3203

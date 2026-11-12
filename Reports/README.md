@@ -301,6 +301,15 @@ move.
   half). Secondary: fewer droplet bodies beside the network at 60 s, 8 of 8. No fight without a contact rule. The
   second species adds about 10% a tick. Raw output and scripts in
   [`species-sets-2026-11-11/`](species-sets-2026-11-11/); page in `first-reach-2026-11-11/`.
+- [food-tubes-2026-11-11.md](food-tubes-2026-11-11.md) — **a paired test, no game change: why the food-reach
+  droplets come out as waves, and the mould that joins food with tubes.** Owner, 21:36Z: the food-reach walkers
+  "reach the crystals but never ... connect a network to them". They are droplets: round bodies, no growth,
+  pushed on by grazing. The Larder race start (network rules, W0 growth, 5,000 walkers on the home crystal)
+  joined more crystals to its main body at 60 s on 16 of 16 seeds (median 19 of 22 against 2, p 0.00003). New
+  `joined=1` line in `examples/bigdish.rs`. Looks: growth against the small start, explorers, energy flow. On the
+  2048 x 1280 GPU world (scale 8, GTX 1070, one seed, 12 game minutes) the same numbers stay a knot at home (6 of 22
+  crystals touched); with trail sensors 36 fine cells out, 20 touched but few joined by thick tubes. `worldspread`
+  gains `every=` and `down=`. Page, scripts, raw output and videos in [`food-tubes-2026-11-11/`](food-tubes-2026-11-11/).
 
 ## Added with the move (2026-11-10)
 

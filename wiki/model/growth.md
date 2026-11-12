@@ -2,8 +2,8 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-12T01:10Z
-sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
+updated: 2026-11-12T01:11Z
+sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
 code: [BigParams::upkeep, BigParams::energy_flow, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
 
@@ -32,6 +32,10 @@ On crystals the size stops near 20,000 whatever the charge: the crystals'
 area sets the intake and the charge only how long it lasts; grass under
 the crystals swamps them
 ([mould shape](../../Reports/mould-shape-2026-11-11.md), *On crystals*).
+From a small blob on the home crystal (the race start) the network with
+growth explores, then joins crystals with tubes: a median 19 of 22 on its
+main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
+([food tubes](../../Reports/food-tubes-2026-11-11.md)).
 
 ## Owner's word
 
@@ -52,6 +56,12 @@ the crystals swamps them
   rise with its charge (the Larder thread's rule).
 - `BigParams::energy_flow` (off, CPU only): keep it for the cut-a-tube
   lever? A cut has not been tested.
+- Growth's numbers are per fine step, so the race start holds at the
+  game's scale 2 but not on the 2048 x 1280 GPU world (scale 8): there it
+  stays a knot at home, and with trail sensors 36 fine cells out it touches
+  20 of 22 crystals in 12 game minutes but joins few with thick tubes (one
+  seed; [food tubes](../../Reports/food-tubes-2026-11-11.md), *For the GPU
+  world*). Without growth the small start still makes tubes (3 seeds).
 - With [the life cycle](life-cycle.md) on, only ordinary walkers pay
   upkeep, starve, divide and share energy; a spore or a dormant walker
   keeps its energy until it lands or wakes, and a struck walker frees its
@@ -62,3 +72,4 @@ the crystals swamps them
 - [growth](../../Reports/growth-2026-11-11.md), all sections.
 - [mould shape](../../Reports/mould-shape-2026-11-11.md), grass and crystals, size on crystals.
 - [Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md), W0.
+- [food tubes](../../Reports/food-tubes-2026-11-11.md): the race start joins crystals with tubes.

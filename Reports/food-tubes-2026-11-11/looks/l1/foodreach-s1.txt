@@ -1,0 +1,38 @@
+seed 1 foodreach t   5.0s  tube  5161.1  loops    7  width 5.64  reach  129.4  piles 9/12  strays 0.000  crystals 1.000  ms/tick 14.88
+seed 1 foodreach t   5.0s  contrast 5.68
+seed 1 foodreach t   5.0s  extent r50 141.7 r90 199.2
+seed 1 foodreach t  10.0s  tube  4572.1  loops    0  width 5.52  reach  135.9  piles 9/12  strays 0.000  crystals 1.000  ms/tick 14.24
+seed 1 foodreach t  10.0s  contrast 4.17
+seed 1 foodreach t  10.0s  extent r50 141.8 r90 210.3
+seed 1 foodreach t  15.0s  tube  4233.6  loops    0  width 6.17  reach  142.1  piles 10/12  strays 0.000  crystals 1.000  ms/tick 13.92
+seed 1 foodreach t  15.0s  contrast 3.25
+seed 1 foodreach t  15.0s  extent r50 142.4 r90 216.6
+seed 1 foodreach t  20.0s  tube  4168.7  loops    0  width 6.20  reach  150.2  piles 10/12  strays 0.000  crystals 1.000  ms/tick 13.49
+seed 1 foodreach t  20.0s  contrast 3.12
+seed 1 foodreach t  20.0s  extent r50 143.2 r90 219.8
+seed 1 foodreach t  25.0s  tube  3962.4  loops    0  width 6.42  reach  157.1  piles 10/12  strays 0.000  crystals 1.000  ms/tick 13.49
+seed 1 foodreach t  25.0s  contrast 2.66
+seed 1 foodreach t  25.0s  extent r50 142.5 r90 223.2
+seed 1 foodreach t  30.0s  tube  3877.1  loops    0  width 6.69  reach  158.1  piles 10/12  strays 0.000  crystals 1.000  ms/tick 13.45
+seed 1 foodreach t  30.0s  contrast 2.48
+seed 1 foodreach t  30.0s  extent r50 142.9 r90 226.6
+seed 1 foodreach t  35.0s  tube  3837.3  loops    0  width 6.60  reach  164.9  piles 10/12  strays 0.000  crystals 1.000  ms/tick 13.54
+seed 1 foodreach t  35.0s  contrast 2.42
+seed 1 foodreach t  35.0s  extent r50 143.1 r90 228.3
+seed 1 foodreach t  40.0s  tube  3803.3  loops    1  width 6.55  reach  170.9  piles 10/12  strays 0.000  crystals 1.000  ms/tick 13.46
+seed 1 foodreach t  40.0s  contrast 2.33
+seed 1 foodreach t  40.0s  extent r50 142.8 r90 228.7
+seed 1 foodreach t  45.0s  tube  3798.2  loops    2  width 6.78  reach  170.6  piles 10/12  strays 0.000  crystals 1.000  ms/tick 13.42
+seed 1 foodreach t  45.0s  contrast 2.34
+seed 1 foodreach t  45.0s  extent r50 142.6 r90 229.9
+seed 1 foodreach t  50.0s  tube  3723.4  loops    0  width 6.99  reach  173.7  piles 10/12  strays 0.000  crystals 1.000  ms/tick 13.37
+seed 1 foodreach t  50.0s  contrast 2.19
+seed 1 foodreach t  50.0s  extent r50 142.8 r90 232.5
+seed 1 foodreach t  55.0s  tube  3697.9  loops    0  width 6.89  reach  173.7  piles 10/12  strays 0.000  crystals 1.000  ms/tick 13.27
+seed 1 foodreach t  55.0s  contrast 2.15
+seed 1 foodreach t  55.0s  extent r50 143.6 r90 233.0
+seed 1 foodreach t  60.0s  tube  3739.2  loops    0  width 6.57  reach  173.7  piles 11/12  strays 0.000  crystals 1.000  ms/tick 13.17
+seed 1 foodreach t  60.0s  contrast 2.21
+seed 1 foodreach t  60.0s  extent r50 143.9 r90 234.3
+seed 1 foodreach firsts 0:72:0.57:0.0 1:54:0.67:0.0 2:96:0.87:58.2 3:94:0.88:10.2 4:51:0.42:0.0 5:59:0.55:0.1 6:76:0.68:3.3 7:13:0.11:0.0 8:99:0.80:-1.0 9:37:0.30:0.0 10:59:0.75:0.1 11:65:0.85:0.4
+seed 1 foodreach hash=521561973fc14ae7

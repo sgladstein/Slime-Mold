@@ -1,0 +1,74 @@
+seed 1 bignogrow t   5.0s  tube  9173.5  loops    7  width 10.65  reach  150.4  piles 21/23  strays 0.027  crystals 0.997  ms/tick 10.26
+seed 1 bignogrow t   5.0s  joined 0,1,2,4,6,8,9,11,12,13,15,18,19,20,21,22 body 8803.8
+seed 1 bignogrow t   5.0s  contrast 4.31
+seed 1 bignogrow t   5.0s  extent r50 67.9 r90 99.7
+seed 1 bignogrow t  10.0s  tube  9458.2  loops    8  width 10.77  reach  175.0  piles 22/23  strays 0.016  crystals 0.994  ms/tick 9.97
+seed 1 bignogrow t  10.0s  joined 0,1,2,4,5,6,8,9,11,12,13,15,17,19,20,21,22 body 8948.8
+seed 1 bignogrow t  10.0s  contrast 3.90
+seed 1 bignogrow t  10.0s  extent r50 68.6 r90 117.2
+seed 1 bignogrow t  15.0s  tube  9419.0  loops    4  width 11.30  reach  184.0  piles 23/23  strays 0.016  crystals 0.990  ms/tick 10.29
+seed 1 bignogrow t  15.0s  joined 0,1,2,4,5,6,8,9,11,12,13,15,17,18,19,20,21,22 body 9230.5
+seed 1 bignogrow t  15.0s  contrast 3.77
+seed 1 bignogrow t  15.0s  extent r50 68.8 r90 125.4
+seed 1 bignogrow t  20.0s  tube  9583.8  loops    1  width 11.65  reach  181.4  piles 23/23  strays 0.011  crystals 0.986  ms/tick 10.65
+seed 1 bignogrow t  20.0s  joined 0,1,2,4,5,6,8,9,11,12,13,15,17,19,20,21,22 body 9365.5
+seed 1 bignogrow t  20.0s  contrast 3.80
+seed 1 bignogrow t  20.0s  extent r50 68.7 r90 129.2
+seed 1 bignogrow t  25.0s  tube  9671.0  loops    3  width 11.33  reach  181.5  piles 23/23  strays 0.013  crystals 0.983  ms/tick 10.86
+seed 1 bignogrow t  25.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9603.8
+seed 1 bignogrow t  25.0s  contrast 3.82
+seed 1 bignogrow t  25.0s  extent r50 68.8 r90 131.0
+seed 1 bignogrow t  30.0s  tube  9869.8  loops    3  width 10.78  reach  185.4  piles 23/23  strays 0.010  crystals 0.979  ms/tick 10.71
+seed 1 bignogrow t  30.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9625.5
+seed 1 bignogrow t  30.0s  contrast 3.88
+seed 1 bignogrow t  30.0s  extent r50 69.0 r90 133.1
+seed 1 bignogrow t  35.0s  tube  9995.0  loops    3  width 10.53  reach  184.3  piles 23/23  strays 0.010  crystals 0.975  ms/tick 10.61
+seed 1 bignogrow t  35.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9727.5
+seed 1 bignogrow t  35.0s  contrast 3.90
+seed 1 bignogrow t  35.0s  extent r50 69.5 r90 134.8
+seed 1 bignogrow t  40.0s  tube  9856.0  loops    2  width 10.65  reach  183.3  piles 23/23  strays 0.017  crystals 0.971  ms/tick 10.53
+seed 1 bignogrow t  40.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9565.2
+seed 1 bignogrow t  40.0s  contrast 3.75
+seed 1 bignogrow t  40.0s  extent r50 70.0 r90 135.9
+seed 1 bignogrow t  45.0s  tube 10013.2  loops    2  width 10.79  reach  184.7  piles 23/23  strays 0.011  crystals 0.967  ms/tick 10.55
+seed 1 bignogrow t  45.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9655.2
+seed 1 bignogrow t  45.0s  contrast 3.86
+seed 1 bignogrow t  45.0s  extent r50 70.8 r90 137.2
+seed 1 bignogrow t  50.0s  tube 10002.5  loops    4  width 10.53  reach  184.0  piles 23/23  strays 0.016  crystals 0.963  ms/tick 10.50
+seed 1 bignogrow t  50.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9733.5
+seed 1 bignogrow t  50.0s  contrast 3.92
+seed 1 bignogrow t  50.0s  extent r50 71.5 r90 138.1
+seed 1 bignogrow t  55.0s  tube 10143.0  loops    4  width 10.45  reach  184.0  piles 23/23  strays 0.012  crystals 0.959  ms/tick 10.43
+seed 1 bignogrow t  55.0s  joined 0,1,2,3,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 10096.5
+seed 1 bignogrow t  55.0s  contrast 3.96
+seed 1 bignogrow t  55.0s  extent r50 72.3 r90 139.6
+seed 1 bignogrow t  60.0s  tube  9905.5  loops    5  width 10.76  reach  185.4  piles 23/23  strays 0.006  crystals 0.955  ms/tick 10.38
+seed 1 bignogrow t  60.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9748.8
+seed 1 bignogrow t  60.0s  contrast 4.03
+seed 1 bignogrow t  60.0s  extent r50 73.3 r90 141.1
+seed 1 bignogrow t  65.0s  tube  9825.0  loops    2  width 10.82  reach  184.4  piles 23/23  strays 0.011  crystals 0.951  ms/tick 10.36
+seed 1 bignogrow t  65.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9654.5
+seed 1 bignogrow t  65.0s  contrast 3.90
+seed 1 bignogrow t  65.0s  extent r50 73.7 r90 142.6
+seed 1 bignogrow t  70.0s  tube  9914.0  loops    5  width 10.75  reach  187.0  piles 23/23  strays 0.008  crystals 0.947  ms/tick 10.32
+seed 1 bignogrow t  70.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9709.5
+seed 1 bignogrow t  70.0s  contrast 3.97
+seed 1 bignogrow t  70.0s  extent r50 74.2 r90 144.0
+seed 1 bignogrow t  75.0s  tube 10006.0  loops    5  width 10.75  reach  188.2  piles 23/23  strays 0.008  crystals 0.942  ms/tick 10.28
+seed 1 bignogrow t  75.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9824.8
+seed 1 bignogrow t  75.0s  contrast 4.00
+seed 1 bignogrow t  75.0s  extent r50 74.5 r90 145.2
+seed 1 bignogrow t  80.0s  tube  9894.8  loops    5  width 10.90  reach  184.8  piles 23/23  strays 0.011  crystals 0.938  ms/tick 10.25
+seed 1 bignogrow t  80.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9761.8
+seed 1 bignogrow t  80.0s  contrast 3.96
+seed 1 bignogrow t  80.0s  extent r50 75.0 r90 145.7
+seed 1 bignogrow t  85.0s  tube  9870.8  loops    4  width 10.96  reach  185.5  piles 23/23  strays 0.011  crystals 0.934  ms/tick 10.27
+seed 1 bignogrow t  85.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9675.5
+seed 1 bignogrow t  85.0s  contrast 3.88
+seed 1 bignogrow t  85.0s  extent r50 75.3 r90 146.2
+seed 1 bignogrow t  90.0s  tube  9921.5  loops    1  width 11.33  reach  184.2  piles 23/23  strays 0.013  crystals 0.929  ms/tick 10.29
+seed 1 bignogrow t  90.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,20,21,22 body 9733.0
+seed 1 bignogrow t  90.0s  contrast 3.86
+seed 1 bignogrow t  90.0s  extent r50 75.7 r90 146.6
+seed 1 bignogrow firsts 0:0:0.57:0.0 1:73:0.67:0.2 2:52:0.93:0.0 3:164:0.87:3.8 4:46:0.88:0.0 5:122:0.42:0.9 6:67:0.98:0.1 7:126:0.55:1.2 8:85:0.11:0.5 9:35:0.54:0.0 10:171:0.80:6.2 11:35:0.30:0.0 12:102:0.75:0.5 13:96:0.85:0.5 14:184:1.01:14.7 15:72:0.80:0.2 16:149:0.89:1.4 17:128:0.66:0.9 18:108:0.61:1.0 19:41:0.90:0.0 20:77:1.23:0.2 21:28:0.52:0.0 22:71:0.33:0.2
+seed 1 bignogrow hash=f16282ce33f9c6bf
