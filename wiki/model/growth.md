@@ -2,8 +2,8 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-12T17:25Z
-sources: [Reports/one-body-2026-11-12.md, Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
+updated: 2026-11-12T17:27Z
+sources: [Reports/one-body-2026-11-12.md, Reports/slime-enemy-review-2026-11-12.md, Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
 code: [BigParams::upkeep, BigParams::energy_flow, BigParams::hunger_scent, BigParams::lone_upkeep, BigParams::lone_step, BigParams::flow_loss, BigParams::tether, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
 
@@ -65,6 +65,9 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   hold it together (dead end). In the Larder census (race 16 seeds) H keeps the
   planned gate (farm, wall beat idle and random) but rush stops winning and
   every hand scores lower; kept off by default for the owner's call.
+  The one-body page's 25,000-walker films ran with one walker a cell off
+  (corrected 11-12 17:10Z); the 5,000-walker game and the CPU numbers here
+  are unaffected ([slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)).
 - Growth's numbers are per fine step, so the race start holds at the
   game's scale 2 but not on the 2048 x 1280 GPU world (scale 8): there it
   stays a knot at home, and with trail sensors 36 fine cells out it touches
