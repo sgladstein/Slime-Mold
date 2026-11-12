@@ -1,0 +1,50 @@
+GTX 1070, commit 9261a06, 2026-11-12 15:23-15:27Z (target\gpu-out\fixed.txt as sent; "==" and "(exit)" lines are the runner's labels).
+NOTE: TIMES UNUSABLE. Another thread's campaign.exe (mission=3-the-gaps seeds=1-32 gpu=both) started at 15:23:39Z with these runs; 0.5 GB of 8 GB RAM free; run a1 died for want of memory. Use the outcome lines only.
+
+commit 9261a06d1c954916fff1857cd53619fab5f328e4
+== a. target\release\larder-world.exe bench=20 hand=farm scale=2 walkers=5000  (run 1)
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+memory allocation of 163840 bytes failed
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+(exit -1073740791)
+== a. (run 2)
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.03 ms a step waiting); steps finished once in 299, when the next was due 0
+  every frame (1200 of them), ms: frame p50 3.34 p95 5.05 max 14.84; step  p50 0.03 p95 0.56 max 11.59; prepare  p50 0.15 p95 0.20 max 6.30; record  p50 0.13 p95 0.17 max 2.10; GPU tail  p50 3.03 p95 4.09 max 13.23
+  frames with a step (300 of them), ms: frame p50 4.30 p95 5.24 max 14.84; step  p50 0.52 p95 0.62 max 11.59; prepare  p50 0.13 p95 0.17 max 0.80; record  p50 0.10 p95 0.13 max 1.42; GPU tail  p50 3.50 p95 4.45 max 5.22
+  GPU (timestamps, median of 300 steps): the step's ticks 0.40 ms, its drawing 0.50 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+== a. (run 3)
+  every frame (1200 of them), ms: frame p50 3.28 p95 5.19 max 57.56; ...
+  frames with a step (300 of them), ms: frame p50 4.28 p95 5.39 max 36.29; ...
+  GPU (timestamps, median of 300 steps): the step's ticks 0.40 ms, its drawing 0.50 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+== b. bench=20 hand=farm scale=2 walkers=5000 settle=1  (run 1)
+  1200 frames, 300 game steps; 0.07 read-backs a step, 1.00 waits a step (3.25 ms a step waiting); steps finished once in 0, when the next was due 0
+  frames with a step (300 of them), ms: frame p50 6.85 p95 10.73 max 20.74; ...
+  GPU (timestamps, median of 300 steps): the step's ticks 0.40 ms, its drawing 0.50 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+== c. bench=20 hand=farm scale=4 walkers=20000  (run 1)
+  frames with a step (300 of them), ms: frame p50 6.18 p95 9.54 max 11.02; ...
+  GPU (timestamps, median of 300 steps): the step's ticks 2.32 ms, its drawing 0.63 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+== c. (run 2)
+  frames with a step (300 of them), ms: frame p50 5.01 p95 8.79 max 23.87; ...
+  GPU (timestamps, median of 300 steps): the step's ticks 2.32 ms, its drawing 0.63 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+== d. bench=20 hand=farm scale=2 walkers=5000 passes=30
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+  GPU a step, every pass timed alone (median of 30 steps): 0.933 ms in all
+    smell 0.014, sense 0.031, walk 0.017, eat 0.008, pilesum 0.022, flow 0.006, life 0.012, breed 0.011, born 0.008,
+    trail 0.133, scent 0.121, units 0.014, harvest 0.508, draw 0.033 (ms a step)
+== e. bench=20 hand=farm scale=4 walkers=20000 passes=30
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+  GPU a step, every pass timed alone (median of 30 steps): 3.239 ms in all
+    smell 0.024, sense 0.144, walk 0.061, eat 0.020, pilesum 0.099, flow 0.012, life 0.057, breed 0.047, born 0.022,
+    trail 0.944, scent 0.842, units 0.023, harvest 0.823, draw 0.118
+== f. bench=20 hand=farm scale=8 walkers=100000 passes=30
+  frames with a step (300 of them), ms: frame p50 21.28 p95 32.31 max 50.44; ...
+  GPU (timestamps, median of 300 steps): the step's ticks 17.00 ms, its drawing 0.96 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+  GPU a step, every pass timed alone (median of 30 steps): 18.516 ms in all
+    smell 0.054, sense 0.779, walk 0.344, eat 0.078, pilesum 0.665, flow 0.046, life 0.349, breed 0.440, born 0.204,
+    trail 7.274, scent 6.423, units 0.070, harvest 1.349, draw 0.455

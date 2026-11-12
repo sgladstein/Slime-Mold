@@ -60,8 +60,9 @@
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
 //! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]
-//! [sound=PATH] [fast=1]` times the window's frame without a window
-//! (`bench`), a mission's too; `hand=every` presses every command on the
+//! [sound=PATH] [fast=1] [passes=N]` times the window's frame without a
+//! window (`bench`), a mission's too, and with `passes=` each GPU pass of
+//! N more game steps; `hand=every` presses every command on the
 //! card each game second (`press_every`), and `sound=` (empty: no file)
 //! puts the round's sound on tape. The CI smoke tests play every mission
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
@@ -217,6 +218,10 @@ struct App {
     paused: bool,
     menu_paused: bool,
     fast: bool,
+    /// Each step's GPU ticks spread over the frames until the next step is
+    /// due (`GpuWorld::spread`, 2026-11-12); `spread=0` records them all on
+    /// the step's frame, as before.
+    spread: bool,
     /// Game seconds owed to the game (the accumulator).
     owed: f32,
     last_frame: Instant,
@@ -237,6 +242,9 @@ struct App {
     /// Frame times (ms) since the last report, and when it was.
     frame_ms: Vec<f32>,
     steps: u32,
+    /// Steps finished on a frame once their results were in, and those
+    /// finished only when the next step was due (the bench prints both).
+    finished: (u32, u32),
     report_at: Instant,
     saved: bool,
     /// The command card shows the build page (Q).
@@ -283,6 +291,7 @@ impl App {
             paused: false,
             menu_paused: false,
             fast: false,
+            spread: true,
             owed: 0.0,
             last_frame: Instant::now(),
             shift: false,
@@ -296,6 +305,7 @@ impl App {
             bank_log: Default::default(),
             frame_ms: Vec::new(),
             steps: 0,
+            finished: (0, 0),
             report_at: Instant::now(),
             saved: false,
             build_page: false,
@@ -658,18 +668,28 @@ impl App {
         // verdict the census steps no more, so neither does this.
         if g.in_flight() && g.step_ready() && !mission_over {
             g.finish_step();
+            self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+        } else if g.in_flight() {
+            // Its next share of ticks (`GpuWorld::spread`).
+            g.world.frame_more();
         }
         if self.paused || g.end.is_some() || mission_over {
             self.owed = 0.0;
             return;
         }
         let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
-        self.owed += dt.min(0.25) * if self.fast { 4.0 } else { 1.0 };
+        let pace = dt.min(0.25) * if self.fast { 4.0 } else { 1.0 };
+        self.owed += pace;
+        // The frames a step lasts at this pace, which its ticks spread over
+        // (at 60 frames a second and 15 steps, 4: at scale 8, 2 engine
+        // ticks a frame).
+        g.world.spread = if self.spread { ((step / pace.max(1e-4)).floor() as u32).max(1) } else { 1 };
         let mut n = 0;
         while self.owed >= step && g.end.is_none() {
             if g.in_flight() {
                 g.finish_step();
+                self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
                 if g.end.is_some() {
                     break;
@@ -1768,6 +1788,17 @@ struct Bench {
     sound: Option<String>,
     /// `fast=1`: the window's fast forward, four game steps a step's time.
     fast: bool,
+    /// `passes=N`: after the timed run, N more game steps with every GPU
+    /// pass timed on its own (`GpuWorld::profile`), as a table a pass.
+    passes: u32,
+    /// `settle=1`: each step finished on the frame it began, as the census
+    /// plays (`Game::step`), so the hand's plans never wait on the GPU.
+    settle: bool,
+    /// `squad1=1`: the squad's unit passes on one thread, as before
+    /// 2026-11-12 (`Engine::squad_one`).
+    squad1: bool,
+    /// `spread=0`: each step's ticks all on the step's frame (`App::spread`).
+    spread: bool,
 }
 
 /// **The window's frame time without a window** (`-- bench=SECS`,
@@ -1785,8 +1816,12 @@ struct Bench {
 /// campaign's goals do. `hand=` is `rush`, `farm`, a player AI style
 /// (`larder_world_ai`: boom, claim, late, fort, strike), or `every`
 /// (`press_every`). A mission's verdict ends the run as the game's end
-/// does, and a few frames of the end screen follow, untimed. Returns the
-/// last line it prints (the round at its end), for the smoke test.
+/// does, and a few frames of the end screen follow, untimed. With
+/// `passes=N` (and timestamps), N more game steps follow, each pass of each
+/// stamped alone and waited for, printed as a table: the GPU ms a step of
+/// each pass (all its runs in the step), median over the N steps. Returns
+/// the last line of the timed run (the round at its end), for the smoke
+/// test.
 fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<String, String> {
     let (secs, hand, fps, screen, grid) = (b.secs, b.hand.as_str(), b.fps, b.screen, b.grid);
     let mut app = offscreen(args, screen, device, queue)?;
@@ -1798,6 +1833,8 @@ fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::Queue) -> R
         app.tape = Some((VoiceBank::new(48_000, app.args.seed), Vec::new()));
     }
     app.fast = b.fast;
+    app.spread = b.spread;
+    app.game.as_mut().unwrap().world.e.squad_one = b.squad1;
     let mut ai = match hand {
         "rush" | "farm" | "every" => None,
         _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
@@ -1859,6 +1896,9 @@ fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::Queue) -> R
         }
         let before = app.steps;
         app.step(dt);
+        if b.settle {
+            app.settle();
+        }
         if grid > 0 && app.steps > before {
             // As the campaign's goals ask (2026-11-12): once a game step.
             std::hint::black_box(app.game.as_ref().unwrap().world.mould_grid(grid));
@@ -1897,13 +1937,17 @@ fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::Queue) -> R
         (None, false) => keys,
     };
     println!("larder-world bench: {} seed {}, {} x {} cells, {} slots, scale {} walkers {}{keys}; hand {hand}, {:.0} game s at {fps} frames a second, screen {}x{}", app.name, app.args.seed, e.dish.w, e.dish.h, e.n, app.args.scale, app.args.walkers, g.time(), screen.0, screen.1);
-    println!("  {} frames, {} game steps; {:.2} read-backs a step, {:.2} waits a step ({:.2} ms a step waiting)", rows.len(), steps, (slime_mould::gpu::reads() - reads0) as f64 / steps as f64, g.world.waits as f64 / steps as f64, g.world.wait_ms / steps as f64);
+    println!("  {} frames, {} game steps; {:.2} read-backs a step, {:.2} waits a step ({:.2} ms a step waiting); steps finished once in {}, when the next was due {}", rows.len(), steps, (slime_mould::gpu::reads() - reads0) as f64 / steps as f64, g.world.waits as f64 / steps as f64, g.world.wait_ms / steps as f64, app.finished.0, app.finished.1);
     for (only, tag) in [(false, "every frame"), (true, "frames with a step")] {
         println!("  {tag} ({} of them), ms: {}; step {}; prepare {}; record {}; GPU tail {}", rows.iter().filter(|r| !only || r.1).count(), line("frame", 0, only), line("", 1, only), line("", 2, only), line("", 3, only), line("", 4, only));
     }
     if let Some(st) = &g.world.stamps {
         let (sim, draw, _, n) = st.median();
-        println!("  GPU (timestamps, median of {n} steps): the step's ticks {sim:.2} ms, its drawing {draw:.2} ms");
+        if n > 0 {
+            println!("  GPU (timestamps, median of {n} steps): the step's ticks {sim:.2} ms, its drawing {draw:.2} ms");
+        } else {
+            println!("  GPU: no step timestamps, as each step ran in shares (spread=0 for them)");
+        }
     } else {
         println!("  GPU: no timestamps on this adapter");
     }
@@ -1918,7 +1962,48 @@ fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::Queue) -> R
     let verdict = app.mission.as_ref().and_then(|m| m.verdict).map_or(String::new(), |v| format!(", mission: {} star{} ({:?})", v.stars, if v.stars == 1 { "" } else { "s" }, v.cause));
     let last = format!("  t {:.0} s: mould {}, soldiers {}, buildings {}, harvested {:.0}, shots {}, killed {}{}{verdict}", g.time(), g.mould, g.alive(), g.buildings.len(), g.harvested, g.shots, g.killed, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
     println!("{last}");
+    if b.passes > 0 && stamped && !over(&app) {
+        print_passes(&mut app, b.passes, dt);
+    }
     Ok(last)
+}
+
+/// The bench's `passes=N`: `n` more game steps with every GPU pass timed
+/// alone, then a line a pass in the step's order: its runs a step, and the
+/// median over the steps of its GPU ms a step (all its runs) and a run.
+fn print_passes(app: &mut App, n: u32, dt: f32) {
+    app.game.as_mut().unwrap().world.profile = Some(Vec::new());
+    let goal = app.steps + n;
+    while app.steps < goal && app.game.as_ref().is_some_and(|g| g.end.is_none()) {
+        app.step(dt);
+    }
+    app.settle();
+    let steps = app.game.as_mut().unwrap().world.profile.take().unwrap_or_default();
+    let mut names: Vec<&str> = Vec::new();
+    for s in &steps {
+        for &(p, _) in s {
+            if !names.contains(&p) {
+                names.push(p);
+            }
+        }
+    }
+    let median = |mut v: Vec<f64>| {
+        v.sort_by(f64::total_cmp);
+        v.get(v.len() / 2).copied().unwrap_or(0.0)
+    };
+    let total = median(steps.iter().map(|s| s.iter().map(|p| p.1).sum()).collect());
+    println!("  GPU a step, every pass timed alone (median of {} steps): {total:.3} ms in all", steps.len());
+    for name in names {
+        // A pass that runs only on some steps (shots) shows how many; its
+        // ms a step is still the median over all of them.
+        let counts: Vec<usize> = steps.iter().map(|s| s.iter().filter(|p| p.0 == name).count()).collect();
+        let runs = counts.iter().copied().max().unwrap_or(0);
+        let some = counts.iter().filter(|&&c| c > 0).count();
+        let sum = median(steps.iter().map(|s| s.iter().filter(|p| p.0 == name).map(|p| p.1).sum::<f64>().max(0.0)).collect());
+        let one = median(steps.iter().flat_map(|s| s.iter().filter(|p| p.0 == name).map(|p| p.1)).collect());
+        let on = if some < steps.len() { format!(", on {some} of {} steps", steps.len()) } else { String::new() };
+        println!("    {name:<10} {runs:>3} a step  {sum:>7.3} ms a step  {one:>7.3} ms a run  {:>5.1}%{on}", 100.0 * sum / total.max(1e-9));
+    }
 }
 
 /// `hand=every`, the smoke test's hand (2026-11-12): once a game second,
@@ -1961,12 +2046,71 @@ fn press_every(app: &mut App, sec: u64) -> Result<(), String> {
     Ok(())
 }
 
+/// The machine a bench runs on, as it starts and ends: free memory, the
+/// GPU's memory in use and how busy it is, and the other programs on it
+/// (from `nvidia-smi`, where there is one), so a slow run shows why in its
+/// own output. Asked for by the technical lead on 2026-11-12, after a
+/// round of 1070 timings overlapped a campaign run on the owner's PC with
+/// 0.5 GB of 8 free: every frame's median went from 0.6 ms to 2-3 ms and
+/// one run died for want of memory, with nothing in its output to say so.
+fn machine() -> String {
+    let run = |cmd: &str, args: &[&str]| {
+        let out = std::process::Command::new(cmd).args(args).output().ok().filter(|o| o.status.success())?;
+        Some(String::from_utf8_lossy(&out.stdout).trim().to_string())
+    };
+    let gb = |kb: f64| kb / 1024.0 / 1024.0;
+    let ram = if cfg!(windows) {
+        run("powershell", &["-NoProfile", "-Command", "$o = Get-CimInstance Win32_OperatingSystem; \"$($o.FreePhysicalMemory) $($o.TotalVisibleMemorySize)\""])
+    } else {
+        std::fs::read_to_string("/proc/meminfo").ok().map(|m| {
+            let kb = |key: &str| m.lines().find(|l| l.starts_with(key)).and_then(|l| l.split_whitespace().nth(1)).unwrap_or("0").to_string();
+            format!("{} {}", kb("MemAvailable:"), kb("MemTotal:"))
+        })
+    };
+    let ram = ram
+        .and_then(|r| {
+            let mut v = r.split_whitespace().map(|x| x.parse::<f64>().ok());
+            Some(format!("RAM {:.1} GB free of {:.1}", gb(v.next()??), gb(v.next()??)))
+        })
+        .unwrap_or_else(|| "RAM unknown".into());
+    let gpu = run("nvidia-smi", &["--query-gpu=memory.used,memory.total,utilization.gpu", "--format=csv,noheader,nounits"])
+        .and_then(|l| {
+            let v: Vec<&str> = l.lines().next()?.split(',').map(str::trim).collect();
+            Some(format!("GPU memory {} MB in use of {}, {}% busy", v.first()?, v.get(1)?, v.get(2)?))
+        })
+        .unwrap_or_else(|| "GPU memory and use unknown (no nvidia-smi)".into());
+    // The process table: `| GPU GI CI PID Type Name... Memory |`, names
+    // cut to the file name, this bench left out.
+    let me = std::env::current_exe().ok().and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string())).unwrap_or_default();
+    let mut others: Vec<String> = Vec::new();
+    let table = run("nvidia-smi", &[]);
+    if let Some(t) = &table {
+        for l in t.lines().skip_while(|l| !l.contains("Processes:")) {
+            let w: Vec<&str> = l.trim_matches(|c: char| c == '|' || c.is_whitespace()).split_whitespace().collect();
+            if w.len() >= 7 && w[3].parse::<u32>().is_ok() {
+                let name = w[5..w.len() - 1].join(" ");
+                let name = name.rsplit(['\\', '/']).next().unwrap_or(&name).to_string();
+                if name != me && !others.contains(&name) {
+                    others.push(name);
+                }
+            }
+        }
+    }
+    let others = match (&table, others.is_empty()) {
+        (None, _) => "no list of the GPU's programs".to_string(),
+        (Some(_), true) => "no other programs on the GPU".to_string(),
+        (Some(_), false) => format!("on the GPU too: {}", others.join(", ")),
+    };
+    format!("{ram}; {gpu}; {others}")
+}
+
 /// A GPU with the adapter's own limits (the engine binds 48 buffers), and
 /// timestamps where it has them (`bench`).
 fn gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
     let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).ok()?;
-    println!("larder-world: {}", adapter.get_info().name);
+    let info = adapter.get_info();
+    println!("larder-world: {} ({:?})", info.name, info.backend);
     let required_features = adapter.features() & wgpu::Features::TIMESTAMP_QUERY;
     block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("larder-world"), required_features, required_limits: adapter.limits(), ..Default::default() })).ok()
 }
@@ -2049,7 +2193,8 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
-    let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast) = (None::<f32>, 60.0f32, true, 0usize, false);
+    let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
+    let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut holes = false;
     let mut centre = None;
     for a in std::env::args().skip(1) {
@@ -2076,6 +2221,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "stamps" => stamps = v != "0",
             "grid" => grid = v.parse()?,
             "fast" => fast = v != "0",
+            "passes" => passes = v.parse()?,
+            "settle" => settle = v != "0",
+            "squad1" => squad1 = v != "0",
+            "spread" => spread = v != "0",
             "holes" => holes = v != "0",
             "centre" => {
                 let (x, y) = v.split_once(',').ok_or("centre=X,Y")?;
@@ -2088,13 +2237,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater, aim, core_pull; look, hand, at, screen, sound, holes, centre; bench, fps, stamps, grid, fast)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater, aim, core_pull; look, hand, at, screen, sound, holes, centre; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
     if let Some(secs) = bench_secs {
+        println!("larder-world machine at the start: {}", machine());
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
-        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast }, &device, &queue)?;
+        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread }, &device, &queue)?;
+        println!("  machine at the end: {}", machine());
         return Ok(());
     }
     if let Some(dir) = look {
@@ -2103,6 +2254,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = App::new(args);
+    app.spread = spread;
     event_loop.run_app(&mut app)?;
     app.result.map_err(|e| e.into())
 }
@@ -2194,7 +2346,7 @@ mod tests {
     /// against 20-24 s at scale 2 (2026-11-12).
     fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
         let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None };
-        let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast };
+        let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast, passes: 0, settle: false, squad1: false, spread: true };
         let t0 = Instant::now();
         let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
         eprintln!("smoke {mission:?} {hand}{}: {last} ({:.1} s)", if fast { " fast" } else { "" }, t0.elapsed().as_secs_f32());

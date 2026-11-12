@@ -1,0 +1,26 @@
+GTX 1070, round 3 (2026-11-12 15:45-16:15Z), MOULDGPU_TEST_GPU=1, worktree C:\Users\Scott\Code\Slime Mold GPU. Tests (outcomes) ran alongside another thread's campaign.exe.
+Raw files stay on the PC: target\gpu-out\r3-tests.txt, r3-mouldgpu-nocapture-bb08d9e.txt, r3-mouldgpu-nocapture-9f5e4a4.txt.
+
+bb08d9e (this branch merged with main 9f5e4a4):
+  cargo test --release --locked --bin mouldgpu: 27 passed; 2 failed; 1 ignored (twin_gap_over_seeds_is_chaos); 151 s
+  cargo test --release --locked --lib gpu::     3 passed (incl. a_step_in_shares_is_the_same_game); 58 s
+9f5e4a4 (main, before this branch): mouldgpu 27 passed; 2 failed; 1 ignored -- the same two, the same numbers.
+
+Failures (identical on both commits):
+  a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu: killed 908 on the GPU, 765 on the CPU
+    firing on the fleeing mould: game s, living CPU, GPU, CPU without the alarm: [(5, 5035, 5045, 5035), (10, 5131, 5126, 5131), (15, 5221, 5215, 5211), (20, 2728, 2523, 2804), (25, 1518, 1294, 1322), (30, 1184, 942, 862)]; shots 76 / 75, killed 765 / 908 (without the alarm 1488)
+  the_life_cycle_matches_the_cpu_for_four_ticks: spores, one a cell: trail 1.2e-4, scent 4.6e-8, species 0.0e0, alarm 0.0e0
+    spores, one a cell: 25000 slots, ...; 24822 moved, 19 off; trail L1 1.2e-4, scent L1 4.6e-8, ...; 1 states and 3 timers off; 21 counts off; ...
+    (lavapipe, same dish: 0 off, trail L1 0.0e0, 0 states, 0 timers, 0 counts off)
+
+Passing twins with walkers off on the 1070 (all others 0 off):
+  a pile reached after 1 ticks: 25000 moved, 1 off, trail L1 2.9e-5
+  two species in bands, species 0 boosted: 250000 moved or turned, 1 off
+  three cyclic species: 250000 moved or turned, 1 off; trail L1 2.8e-7
+  crowd limits by species, heavy respawn: 25000 moved or turned, 44 off (35 limited walkers aimed at a cell an unlimited one took first)
+  walls that never break, sealed: 0 bites on the CPU, 4 on the GPU
+Game twins that pass on the 1070:
+  attacking the core with the pull: killed 1509 / 1606 (without the pull 1224)
+  firing with craters: killed 1224 / 1205 (without craters 838)
+  buildings: shots 23 / 23, killed 444 / 502
+Branch-only differences from main in the summary lines: the squad lines' touching/took gain the two wide units the branch's test adds; charge L1 2.5e-10 vs 2.6e-10.

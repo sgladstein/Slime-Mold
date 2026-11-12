@@ -1702,38 +1702,248 @@ fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) l
 
 // A hit lays the alarm (`squad::SHOT_ALARM`) on each agar cell within
 // `SHOT_ALARM_R` times its radius (`ar2`), as the CPU's `shots` does after
-// the cut, with the alarm field on. One workgroup, the shots in order and
-// a barrier after each, so two discs on one cell never race; a thread a
-// cell of the shot's box (29 x 29 at the widest, radius 14). The barrier
-// sits outside the branches, in the uniform loop over the shots.
+// the cut, with the alarm field on. One workgroup, the shots in order, and
+// each cell always added to by the same thread (`owned_from`), so two
+// discs on one cell add in the CPU's order and never race.
+// Until 2026-11-12 a thread took a cell of the shot's box by its place in
+// the box, with a storage barrier after each shot; on the GTX 1070 threads
+// that met on a cell that way lost each other's adds (the smell and harvest
+// passes below, written the same way, changed the farm's game from run to
+// run there), though llvmpipe hid it.
 @compute @workgroup_size(256)
 fn shout(@builtin(local_invocation_index) li: u32) {
     let c = P.w * P.h;
+    let tx = i32(li % 16u);
+    let ty = i32(li / 16u);
     for (var q = 0u; q < P.nshots; q++) {
         let hit = SQ.sout[q].hit;
-        if (hit != NONE) {
-            let ar2 = SQ.shots[q].ar2;
-            let r = isqrt(ar2);
-            let side = u32(2 * r + 1);
-            for (var j = li; j < side * side; j += 256u) {
-                let dx = i32(j % side) - r;
-                let dy = i32(j / side) - r;
-                let x = i32(hit % P.w) + dx;
-                let y = i32(hit / P.w) + dy;
+        if (hit == NONE) { continue; }
+        let ar2 = SQ.shots[q].ar2;
+        let r = isqrt(ar2);
+        let hx = i32(hit % P.w);
+        let hy = i32(hit / P.w);
+        for (var y = owned_from(hy - r, ty); y <= hy + r; y += 16) {
+            for (var x = owned_from(hx - r, tx); x <= hx + r; x += 16) {
+                let dx = x - hx;
+                let dy = y - hy;
                 if (x >= 0 && y >= 0 && x < i32(P.w) && y < i32(P.h) && u32(dx * dx + dy * dy) <= ar2) {
                     let i = u32(y) * P.w + u32(x);
                     if (agar[i] != 0u) { germ_in[c + i] += P.shot_alarm; }
                 }
             }
         }
-        storageBarrier();
     }
 }
 
+// The first whole number at or after `lo` that is `t` mod 16: a thread's
+// first row or column in a box, when thread `tx + 16 ty` owns every cell
+// whose x is `tx` mod 16 and y is `ty` mod 16. A pass that adds to cells
+// from many discs in one workgroup goes through its own cells only, so a
+// cell is read and written by one thread, in order, and needs no barrier.
+fn owned_from(lo: i32, t: i32) -> i32 {
+    return lo + ((t - lo) % 16 + 16) % 16;
+}
+
+// The squad's three unit passes (`smell`, `units`, `harvest`) each ran on
+// one thread until 2026-11-12, a unit's whole disc or sight walked alone:
+// at scale 8 a unit's sight is about 3,700 blocks of 16 cells, and on the
+// GTX 1070 the `units` pass alone took 10.4 ms of a 100k step's 31.7 ms,
+// `smell` 3.9 ms and `harvest` 0.8 ms (`bench passes=N`). Now the threads of
+// a workgroup share the cells; each result is the same as the one
+// thread's, bit for bit (the squad twin tests in `mouldgpu`). A cell that
+// several units' discs add to or take from is always one thread's
+// (`owned_from`, and the harvest's columns): the first version shared
+// them out by place in each disc's box with a storage barrier between
+// units, which llvmpipe ran right and the 1070 did not (the farm's 20 s
+// harvest at scale 2 came out 1,478 to 1,785 against 1,953, run to run).
+// The one-thread passes are kept (`smell1`, `units1`, `harvest1`,
+// `Engine::squad_one`) to compare on a GPU.
+
+// Each unit's smell on the agar cells of its disc. One workgroup, the units
+// in order; each thread adds to its own cells of each disc (`owned_from`),
+// so overlapping discs add up in the CPU's order without a race.
+@compute @workgroup_size(256)
+fn smell(@builtin(local_invocation_index) li: u32) {
+    let tx = i32(li % 16u);
+    let ty = i32(li / 16u);
+    for (var u = 0u; u < P.nunits; u++) {
+        let un = SQ.units[u];
+        if (un.smell <= 0.0) { continue; }
+        let r = isqrt(un.smell2);
+        let cx = i32(un.x);
+        let cy = i32(un.y);
+        for (var y = owned_from(cy - r, ty); y <= cy + r; y += 16) {
+            for (var x = owned_from(cx - r, tx); x <= cx + r; x += 16) {
+                let dx = x - cx;
+                let dy = y - cy;
+                if (x >= 0 && y >= 0 && x < i32(P.w) && y < i32(P.h) && u32(dx * dx + dy * dy) <= un.smell2) {
+                    let i = u32(y) * P.w + u32(x);
+                    if (agar[i] != 0u) { scent_in[i] += un.smell; }
+                }
+            }
+        }
+    }
+}
+
+var<workgroup> rsum: array<u32, 256>;
+var<workgroup> rbest: array<u32, 256>;
+var<workgroup> rbi: array<u32, 256>;
+
+// Each unit's walkers within `touch`, and the 4 x 4 block with the most
+// walkers whose centre is within `sight` (ties to the first, row-major). A
+// workgroup a unit: each thread takes every 256th cell of the touch disc's
+// box and every 256th block of the sight's, in row-major order (so its own
+// best is its first), then the threads reduce: the sums add, and the best
+// block is the most walkers, ties to the lower index, as one thread
+// walking them in order keeps.
+@compute @workgroup_size(256)
+fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
+    let u = wid.x;
+    if (u >= P.nunits) { return; }
+    let un = SQ.units[u];
+    let cx = i32(un.x);
+    let cy = i32(un.y);
+    let w = i32(P.w);
+    let h = i32(P.h);
+    var touching = 0u;
+    let r = isqrt(un.touch2);
+    let side = u32(2 * r + 1);
+    for (var j = li; j < side * side; j += 256u) {
+        let dx = i32(j % side) - r;
+        let dy = i32(j / side) - r;
+        let x = cx + dx;
+        let y = cy + dy;
+        if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
+        touching += atomicLoad(&occ[u32(y * w + x)]);
+    }
+    let b = 4;
+    let nbw = (w + b - 1) / b;
+    let nbh = (h + b - 1) / b;
+    let rs = isqrt(un.sight2) + 2;
+    let by0 = max(cy - rs, 0) / b;
+    let by1 = min((cy + rs) / b, nbh - 1);
+    let bx0 = max(cx - rs, 0) / b;
+    let bx1 = min((cx + rs) / b, nbw - 1);
+    var best = 0u;
+    var bi = NONE;
+    if (by1 >= by0 && bx1 >= bx0) {
+        let bw = u32(bx1 - bx0 + 1);
+        let nb = bw * u32(by1 - by0 + 1);
+        for (var j = li; j < nb; j += 256u) {
+            let bx = bx0 + i32(j % bw);
+            let by = by0 + i32(j / bw);
+            let mx = bx * b + b / 2 - cx;
+            let my = by * b + b / 2 - cy;
+            if (u32(mx * mx + my * my) > un.sight2) { continue; }
+            var n = 0u;
+            for (var y = by * b; y < min((by + 1) * b, h); y++) {
+                for (var x = bx * b; x < min((bx + 1) * b, w); x++) {
+                    n += atomicLoad(&occ[u32(y * w + x)]);
+                }
+            }
+            if (n > best) { best = n; bi = u32(by * nbw + bx); }
+        }
+    }
+    rsum[li] = touching;
+    rbest[li] = best;
+    rbi[li] = bi;
+    workgroupBarrier();
+    for (var s = 128u; s > 0u; s = s >> 1u) {
+        if (li < s) {
+            rsum[li] += rsum[li + s];
+            let ob = rbest[li + s];
+            let oi = rbi[li + s];
+            if (ob > rbest[li] || (ob == rbest[li] && oi < rbi[li])) {
+                rbest[li] = ob;
+                rbi[li] = oi;
+            }
+        }
+        workgroupBarrier();
+    }
+    if (li == 0u) {
+        SQ.uout[u].touching = rsum[0];
+        SQ.uout[u].aim = rbi[0];
+        SQ.uout[u].dense = rbest[0];
+    }
+}
+
+var<workgroup> hc: array<f32, 256>;
+var<workgroup> hrem: f32;
+var<workgroup> hpieces: u32;
+
+// The harvest: in unit order, each unit with `take` takes up to that much
+// charge from the crystal cells of its disc, cell by cell (row-major), as
+// the CPU does. One workgroup, the units in order, and a disc's box in
+// pieces of a row each (256 cells of it at most): the threads load the
+// piece, thread 0 takes from it in order, the threads write back what it
+// took, and the unit stops at the piece that filled it. A cell is always
+// loaded and written by the thread whose number is its x mod 256, so two
+// units on one crystal take in order, the second seeing what the first
+// left, without a race.
+@compute @workgroup_size(256)
+fn harvest(@builtin(local_invocation_index) li: u32) {
+    for (var u = 0u; u < P.nunits; u++) {
+        let un = SQ.units[u];
+        let on = un.take > 0.0 && world(CRYSTALS);
+        let r = isqrt(un.take2);
+        let side = u32(2 * r + 1);
+        let segs = (side + 255u) / 256u;
+        let cx = i32(un.x);
+        let cy = i32(un.y);
+        if (li == 0u) {
+            hrem = un.take;
+            hpieces = select(0u, side * segs, on);
+        }
+        let pieces = workgroupUniformLoad(&hpieces);
+        for (var q = 0u; q < pieces; q++) {
+            // Piece q: row q / segs of the box, its 256-cell stretch q % segs;
+            // this thread's cell of it, k along, is the one whose x is li
+            // mod 256.
+            let y = cy - r + i32(q / segs);
+            let xs = cx - r + 256 * i32(q % segs);
+            let x = xs + ((i32(li) - xs) % 256 + 256) % 256;
+            let k = u32(x - xs);
+            let dx = x - cx;
+            let dy = y - cy;
+            var i = NONE;
+            var c = 0.0;
+            if (x <= cx + r && x >= 0 && y >= 0 && x < i32(P.w) && y < i32(P.h) && u32(dx * dx + dy * dy) <= un.take2) {
+                i = u32(y) * P.w + u32(x);
+                c = charge[i];
+            }
+            hc[k] = c;
+            workgroupBarrier();
+            // Only the stretch's own cells (a box narrower than 256 leaves
+            // the rest at 0): over all 256 the pass took 0.49 ms a step at
+            // 5k walkers on the 1070, against 0.09 for the one-thread pass
+            // (harvest1), and 1.33 against 0.77 at 100k (2026-11-12).
+            let n = u32(min(256, cx + r - xs + 1));
+            if (li == 0u) {
+                var rem = hrem;
+                for (var j = 0u; j < n && rem > 0.0; j++) {
+                    let cj = hc[j];
+                    if (cj > 0.0) {
+                        let t = min(cj, rem);
+                        hc[j] = cj - t;
+                        rem = rem - t;
+                    }
+                }
+                hrem = rem;
+            }
+            workgroupBarrier();
+            if (i != NONE && c > 0.0) { charge[i] = hc[k]; }
+            if (workgroupUniformLoad(&hrem) <= 0.0) { break; }
+        }
+        if (li == 0u) { SQ.uout[u].took = select(0.0, un.take - hrem, on); }
+    }
+}
+
+// The three unit passes as they were before 2026-11-12, one thread each
+// (`Engine::squad_one`): kept to compare the two on a GPU.
 // Each unit's smell on the agar cells of its disc. One thread, units in
 // order, so overlapping discs add up without a race.
 @compute @workgroup_size(1)
-fn smell(@builtin(global_invocation_id) gid: vec3<u32>) {
+fn smell1(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gid.x != 0u) { return; }
     for (var u = 0u; u < P.nunits; u++) {
         let un = SQ.units[u];
@@ -1754,7 +1964,7 @@ fn smell(@builtin(global_invocation_id) gid: vec3<u32>) {
 // Each unit's walkers within `touch`, and the 4 x 4 block with the most
 // walkers whose centre is within `sight` (ties to the first, row-major).
 @compute @workgroup_size(64)
-fn units(@builtin(global_invocation_id) gid: vec3<u32>) {
+fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
     let u = gid.x;
     if (u >= P.nunits) { return; }
     let un = SQ.units[u];
@@ -1805,7 +2015,7 @@ fn units(@builtin(global_invocation_id) gid: vec3<u32>) {
 // charge from the crystal cells of its disc, cell by cell. One thread, so
 // two units on one crystal take in order.
 @compute @workgroup_size(1)
-fn harvest(@builtin(global_invocation_id) gid: vec3<u32>) {
+fn harvest1(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gid.x != 0u) { return; }
     for (var u = 0u; u < P.nunits; u++) {
         let un = SQ.units[u];

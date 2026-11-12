@@ -1,0 +1,21 @@
+# GTX 1070 (Scott-Desktop, Vulkan), at 02b9de3 (the diagnostics), 2026-11-12 ~15:35Z, over Remote Control.
+# The "t 20 s" and "steps finished" lines of each run (the full frame lines are in the Remote Control session's message; unchanged in kind from passes-after.txt).
+# bench=20 hand=farm, the Fork, seed 1.
+a. scale=2 walkers=5000 (run 1): steps finished once in 299, when the next was due 0;  t 20 s: mould 2690, soldiers 10, buildings 0, harvested 1478, shots 2, killed 1
+a. scale=2 walkers=5000 (run 2): steps finished once in 299, when the next was due 0;  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1785, shots 2, killed 1
+b. scale=2 walkers=5000 squad1=1 (run 1): once in 299, due 0;  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+b. scale=2 walkers=5000 squad1=1 (run 2): once in 299, due 0;  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+c. scale=2 walkers=5000 settle=1 (run 1): 1.00 waits a step;  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1783, shots 2, killed 1
+c. scale=2 walkers=5000 settle=1 (run 2): 1.00 waits a step;  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1784, shots 2, killed 1
+d. scale=2 walkers=5000 settle=1 squad1=1 (run 1):  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+d. scale=2 walkers=5000 settle=1 squad1=1 (run 2):  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+e. scale=4 walkers=20000 settle=1:  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2221, shots 24, killed 4
+f. scale=4 walkers=20000 settle=1 squad1=1:  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+
+# MOULDGPU_TEST_GPU=1 cargo test --release --locked --bin mouldgpu squad -- --test-threads=1 (adapter: NVIDIA GeForce GTX 1070 (Vulkan))
+test tests::a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu ... FAILED
+test tests::a_squad_laying_craters_plays_on_the_engine_as_on_the_cpu ... ok
+test tests::the_squad_frame_holds_its_cap_on_the_gpu ... ok
+test tests::the_squad_matches_the_cpu_for_one_frame ... ok
+firing on the fleeing mould: game s, living CPU, GPU, CPU without the alarm: [(5, 5035, 5045, 5035), (10, 5131, 5126, 5131), (15, 5221, 5215, 5211), (20, 2746, 2530, 2805), (25, 1586, 1316, 1633), (30, 1288, 968, 1376)]; shots 75 / 75, killed 637 / 837 (without the alarm 838)
+panicked at src\bin\mouldgpu.rs:3873:9: killed 837 on the GPU, 637 on the CPU

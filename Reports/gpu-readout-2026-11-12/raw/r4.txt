@@ -1,0 +1,45 @@
+GTX 1070, round 4, worktree at 60593c0 (the harvest fix), 2026-11-12 17:00:09-17:00:27Z timing, then tests with MOULDGPU_TEST_GPU=1.
+Conditions: no campaign/mouldgpu/cargo/rustc/larder-world process; RAM 2.02 GB free at the pre-check; the first bench's start line shows the GPU 41% busy for a moment (later lines 5-7%). [L] = round 3's list plus StartMenuExperienceHost.exe.
+== target\release\larder-world.exe bench=20 hand=farm scale=2 walkers=5000 spread=0 passes=30
+larder-world machine at the start: RAM 2.0 GB free of 8.0; GPU memory 2634 MB in use of 8192, 41% busy; on the GPU too: [L]
+  frames with a step (300 of them), ms: frame p50 1.47 p95 2.45 max 12.66; step  p50 0.41 p95 1.07 max 11.61; prepare  p50 0.10 p95 0.17 max 0.79; record  p50 0.09 p95 0.17 max 1.65; GPU tail  p50 0.84 p95 1.22 max 2.07
+  GPU (timestamps, median of 300 steps): the step's ticks 0.39 ms, its drawing 0.11 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+  GPU a step, every pass timed alone (median of 30 steps): 0.481 ms in all
+    smell        1 a step    0.014 ms a step    0.014 ms a run    2.9%
+    trail        2 a step    0.131 ms a step    0.066 ms a run   27.3%
+    units        1 a step    0.014 ms a step    0.014 ms a run    2.8%
+    harvest      1 a step    0.064 ms a step    0.064 ms a run   13.4%
+  machine at the end: RAM 1.8 GB free of 8.0; GPU memory 2836 MB in use of 8192, 6% busy; on the GPU too: [L]
+== target\release\larder-world.exe bench=20 hand=farm scale=4 walkers=20000 spread=0 passes=30
+larder-world machine at the start: RAM 2.0 GB free of 8.0; GPU memory 2634 MB in use of 8192, 7% busy; on the GPU too: [L]
+  frames with a step (300 of them), ms: frame p50 3.86 p95 5.39 max 11.22; step  p50 0.71 p95 1.49 max 8.17; prepare  p50 0.10 p95 0.17 max 0.71; record  p50 0.09 p95 0.16 max 0.36; GPU tail  p50 2.89 p95 3.82 max 4.56
+  GPU (timestamps, median of 300 steps): the step's ticks 2.29 ms, its drawing 0.24 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+  GPU a step, every pass timed alone (median of 30 steps): 2.528 ms in all
+    smell        1 a step    0.023 ms a step    0.023 ms a run    0.9%
+    trail        4 a step    0.925 ms a step    0.231 ms a run   36.6%
+    units        1 a step    0.023 ms a step    0.023 ms a run    0.9%
+    harvest      1 a step    0.158 ms a step    0.158 ms a run    6.3%
+  machine at the end: RAM 1.8 GB free of 8.0; GPU memory 2836 MB in use of 8192, 6% busy; on the GPU too: [L]
+== target\release\larder-world.exe bench=20 hand=farm scale=8 walkers=100000 spread=0 passes=30
+larder-world machine at the start: RAM 2.0 GB free of 8.0; GPU memory 2634 MB in use of 8192, 5% busy; on the GPU too: [L]
+  frames with a step (300 of them), ms: frame p50 21.13 p95 22.29 max 25.06; step  p50 1.27 p95 2.20 max 4.92; prepare  p50 0.10 p95 0.16 max 1.65; record  p50 0.09 p95 0.13 max 1.00; GPU tail  p50 19.52 p95 20.51 max 21.69
+  GPU (timestamps, median of 300 steps): the step's ticks 18.08 ms, its drawing 0.73 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+  GPU a step, every pass timed alone (median of 30 steps): 18.705 ms in all
+    smell        1 a step    0.053 ms a step    0.053 ms a run    0.3%
+    trail        8 a step    7.576 ms a step    0.901 ms a run   40.5%
+    units        1 a step    0.069 ms a step    0.069 ms a run    0.4%
+    harvest      1 a step    0.415 ms a step    0.415 ms a run    2.2%
+  machine at the end: RAM 1.8 GB free of 8.0; GPU memory 2903 MB in use of 8192, 5% busy; on the GPU too: [L]
+(the runner sent these rows of each per-pass table; the full tables stay on the PC in target\gpu-out\r4-timing.txt)
+
+cargo test --release --locked --bin mouldgpu:
+thread 'tests::a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu' (18724) panicked at src\bin\mouldgpu.rs:3873:9:
+killed 908 on the GPU, 765 on the CPU
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (26108) panicked at src\bin\mouldgpu.rs:2869:13:
+spores, one a cell: trail 1.2e-4, scent 4.6e-8, species 0.0e0, alarm 0.0e0
+test result: FAILED. 27 passed; 2 failed; 3 ignored; 0 measured; 0 filtered out; finished in 54.77s
+cargo test --release --locked --lib gpu:::
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 273 filtered out; finished in 3.01s

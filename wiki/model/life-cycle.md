@@ -2,7 +2,7 @@
 title: The life cycle and the mould's answer to attack (Sporer, Sleeper, Swarmer)
 kind: mechanism
 status: open
-updated: 2026-11-12T14:39Z
+updated: 2026-11-12T17:20Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/life-gpu-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, research/sources/jones-adamatzky-2012.md, research/sources/jones-2015-survey.md]
 code: [BigParams::spore_rate, BigParams::spore_scent, BigParams::spore_burst, BigParams::spore_alarm, BigParams::spore_steps, BigParams::spore_speed, BigParams::spore_reach, BigParams::spore_deposit, BigParams::spore_land, BigParams::spore_rest, BigParams::sleep_rate, BigParams::sleep_deposit, BigParams::wake_scent, BigParams::wake_alarm, BigParams::wake_steps, BigParams::sleep_rest, BigParams::sleep_death, BigParams::alarm_keep, BigParams::alarm_weight, BigParams::alarm_relay, BigDish::strike, BigDish::life, BigDish::life_t, BigDish::alarm, BigDish::life_counts, LIFE_SPORE, LIFE_DORMANT, LIFE_DEAD, Tier, SHOT_ALARM, Engine::strike, Engine::life_of, Engine::alarm_of, shout]
 ---
@@ -57,7 +57,7 @@ costs +31% a step on one core. Tables: [the report](../../Reports/mould-tiers-20
 
 - The counters as plans against random and idle hands, with shot-sized and sustained fire, in the world (W2b, with the player AI); [the reviews](../../Reports/mould-tiers-review-2026-11-11.md).
 - Life-cycle fields per species, for mixes; species conversion still takes dormant walkers and spores.
-- The GPU port's cost on the GTX 1070 (the software GPU's is in [the GPU report](../../Reports/life-gpu-2026-11-11.md), *Cost*), and the tiers on the panel.
+- The tiers on the panel. (On the GTX 1070 each tier adds at most 0.74 ms a frame at 100,000 walkers, the Sporer the most: [the GPU report](../../Reports/life-gpu-2026-11-11.md), *On the GTX 1070*.)
 - With [growth](growth.md) on, spores and the dormant pay no upkeep (the dormant die at `sleep_death` instead) and the struck free their slots.
 - A tier that splits or migrates as a body.
 - A Sporer that matters in the world: fruiting set off by a crystal running low, with a visible delay, and spores that carry energy (review 1).

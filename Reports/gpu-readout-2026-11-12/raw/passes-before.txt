@@ -1,0 +1,153 @@
+# GTX 1070 (Scott-Desktop), at 9779e0e (bench passes=N, the old one-thread unit passes), 2026-11-12 ~15:00Z, over Remote Control.
+# Each command twice in turn. "==" and "(exit)" lines are labels.
+commit 9779e0ea9b4def7d879104780e93240f203a585f
+== target\release\larder-world.exe bench=20 hand=farm scale=2 walkers=5000 passes=30  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.02 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.61 p95 2.54 max 12.37; step  p50 0.01 p95 0.41 max 10.48; prepare  p50 0.10 p95 0.12 max 2.61; record  p50 0.08 p95 0.10 max 1.37; GPU tail  p50 0.41 p95 1.88 max 2.11
+  frames with a step (300 of them), ms: frame p50 2.32 p95 2.62 max 12.37; step  p50 0.39 p95 0.45 max 10.48; prepare  p50 0.10 p95 0.12 max 0.60; record  p50 0.08 p95 0.10 max 1.27; GPU tail  p50 1.73 p95 2.01 max 2.11
+  GPU (timestamps, median of 300 steps): the step's ticks 0.39 ms, its drawing 0.87 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+  GPU a step, every pass timed alone (median of 30 steps): 1.480 ms in all
+    smell        1 a step    0.262 ms a step    0.262 ms a run   17.7%
+    sense        2 a step    0.028 ms a step    0.014 ms a run    1.9%
+    walk         2 a step    0.016 ms a step    0.008 ms a run    1.1%
+    eat          2 a step    0.008 ms a step    0.004 ms a run    0.5%
+    pilesum      4 a step    0.021 ms a step    0.005 ms a run    1.4%
+    flow         2 a step    0.005 ms a step    0.003 ms a run    0.4%
+    life         2 a step    0.011 ms a step    0.006 ms a run    0.8%
+    breed        2 a step    0.010 ms a step    0.005 ms a run    0.7%
+    born         2 a step    0.008 ms a step    0.004 ms a run    0.5%
+    trail        2 a step    0.131 ms a step    0.065 ms a run    8.8%
+    scent        2 a step    0.117 ms a step    0.059 ms a run    7.9%
+    units        1 a step    0.739 ms a step    0.739 ms a run   49.9%
+    harvest      1 a step    0.092 ms a step    0.092 ms a run    6.2%
+    draw         1 a step    0.032 ms a step    0.032 ms a run    2.2%
+    shots        0 a step   -0.000 ms a step    0.010 ms a run   -0.0%
+    strike       0 a step   -0.000 ms a step    0.006 ms a run   -0.0%
+    cut          0 a step   -0.000 ms a step    0.005 ms a run   -0.0%
+(exit 0)
+== target\release\larder-world.exe bench=20 hand=farm scale=2 walkers=5000 passes=30  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.02 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.59 p95 2.38 max 12.72; step  p50 0.01 p95 0.40 max 10.78; prepare  p50 0.10 p95 0.12 max 2.51; record  p50 0.08 p95 0.10 max 1.39; GPU tail  p50 0.40 p95 1.76 max 1.89
+  frames with a step (300 of them), ms: frame p50 2.26 p95 2.44 max 12.72; step  p50 0.38 p95 0.45 max 10.78; prepare  p50 0.10 p95 0.12 max 0.59; record  p50 0.08 p95 0.10 max 1.39; GPU tail  p50 1.68 p95 1.85 max 1.89
+  GPU (timestamps, median of 300 steps): the step's ticks 0.39 ms, its drawing 0.82 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+  GPU a step, every pass timed alone (median of 30 steps): 1.481 ms in all
+    smell        1 a step    0.262 ms a step    0.262 ms a run   17.7%
+    sense        2 a step    0.028 ms a step    0.014 ms a run    1.9%
+    walk         2 a step    0.016 ms a step    0.008 ms a run    1.1%
+    eat          2 a step    0.008 ms a step    0.004 ms a run    0.5%
+    pilesum      4 a step    0.021 ms a step    0.005 ms a run    1.4%
+    flow         2 a step    0.005 ms a step    0.003 ms a run    0.4%
+    life         2 a step    0.012 ms a step    0.006 ms a run    0.8%
+    breed        2 a step    0.010 ms a step    0.005 ms a run    0.7%
+    born         2 a step    0.007 ms a step    0.004 ms a run    0.5%
+    trail        2 a step    0.131 ms a step    0.065 ms a run    8.9%
+    scent        2 a step    0.118 ms a step    0.059 ms a run    7.9%
+    units        1 a step    0.739 ms a step    0.739 ms a run   49.9%
+    harvest      1 a step    0.092 ms a step    0.092 ms a run    6.2%
+    draw         1 a step    0.033 ms a step    0.033 ms a run    2.2%
+    shots        0 a step   -0.000 ms a step    0.009 ms a run   -0.0%
+    strike       0 a step   -0.000 ms a step    0.006 ms a run   -0.0%
+    cut          0 a step   -0.000 ms a step    0.005 ms a run   -0.0%
+(exit 0)
+== target\release\larder-world.exe bench=20 hand=farm scale=4 walkers=20000 passes=30  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.04 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.62 p95 7.67 max 13.24; step  p50 0.02 p95 0.67 max 6.69; prepare  p50 0.10 p95 0.12 max 9.51; record  p50 0.08 p95 0.11 max 1.36; GPU tail  p50 0.42 p95 6.54 max 8.22
+  frames with a step (300 of them), ms: frame p50 6.95 p95 8.45 max 13.24; step  p50 0.65 p95 0.72 max 6.69; prepare  p50 0.10 p95 0.11 max 0.63; record  p50 0.09 p95 0.10 max 0.23; GPU tail  p50 6.11 p95 7.61 max 8.22
+  GPU (timestamps, median of 300 steps): the step's ticks 2.25 ms, its drawing 2.89 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+  GPU a step, every pass timed alone (median of 30 steps): 6.275 ms in all
+    smell        1 a step    1.000 ms a step    1.000 ms a run   15.9%
+    sense        4 a step    0.140 ms a step    0.035 ms a run    2.2%
+    walk         4 a step    0.059 ms a step    0.015 ms a run    0.9%
+    eat          4 a step    0.019 ms a step    0.005 ms a run    0.3%
+    pilesum      8 a step    0.098 ms a step    0.013 ms a run    1.6%
+    flow         4 a step    0.012 ms a step    0.003 ms a run    0.2%
+    life         4 a step    0.055 ms a step    0.014 ms a run    0.9%
+    breed        4 a step    0.046 ms a step    0.011 ms a run    0.7%
+    born         4 a step    0.021 ms a step    0.005 ms a run    0.3%
+    trail        4 a step    0.919 ms a step    0.230 ms a run   14.6%
+    scent        4 a step    0.821 ms a step    0.205 ms a run   13.1%
+    units        1 a step    2.710 ms a step    2.710 ms a run   43.2%
+    harvest      1 a step    0.262 ms a step    0.262 ms a run    4.2%
+    draw         1 a step    0.117 ms a step    0.117 ms a run    1.9%
+(exit 0)
+== target\release\larder-world.exe bench=20 hand=farm scale=4 walkers=20000 passes=30  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.03 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.62 p95 7.67 max 13.70; step  p50 0.01 p95 0.68 max 7.14; prepare  p50 0.10 p95 0.12 max 9.07; record  p50 0.08 p95 0.11 max 1.36; GPU tail  p50 0.42 p95 6.56 max 8.21
+  frames with a step (300 of them), ms: frame p50 6.95 p95 8.47 max 13.70; step  p50 0.65 p95 0.73 max 7.14; prepare  p50 0.10 p95 0.12 max 0.82; record  p50 0.09 p95 0.10 max 0.32; GPU tail  p50 6.10 p95 7.61 max 8.21
+  GPU (timestamps, median of 300 steps): the step's ticks 2.25 ms, its drawing 2.89 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+  GPU a step, every pass timed alone (median of 30 steps): 6.269 ms in all
+    smell        1 a step    1.001 ms a step    1.001 ms a run   16.0%
+    sense        4 a step    0.139 ms a step    0.035 ms a run    2.2%
+    walk         4 a step    0.059 ms a step    0.015 ms a run    0.9%
+    eat          4 a step    0.019 ms a step    0.005 ms a run    0.3%
+    pilesum      8 a step    0.098 ms a step    0.012 ms a run    1.6%
+    flow         4 a step    0.012 ms a step    0.003 ms a run    0.2%
+    life         4 a step    0.056 ms a step    0.014 ms a run    0.9%
+    breed        4 a step    0.046 ms a step    0.012 ms a run    0.7%
+    born         4 a step    0.020 ms a step    0.005 ms a run    0.3%
+    trail        4 a step    0.919 ms a step    0.230 ms a run   14.7%
+    scent        4 a step    0.820 ms a step    0.205 ms a run   13.1%
+    units        1 a step    2.711 ms a step    2.711 ms a run   43.2%
+    harvest      1 a step    0.261 ms a step    0.261 ms a run    4.2%
+    draw         1 a step    0.117 ms a step    0.117 ms a run    1.9%
+(exit 0)
+== target\release\larder-world.exe bench=20 hand=farm scale=8 walkers=100000 passes=30  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.07 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.77 p95 33.64 max 34.00; step  p50 0.02 p95 1.21 max 3.44; prepare  p50 0.10 p95 0.13 max 31.42; record  p50 0.09 p95 0.14 max 1.33; GPU tail  p50 0.52 p95 32.23 max 32.59
+  frames with a step (300 of them), ms: frame p50 32.33 p95 33.84 max 34.00; step  p50 1.19 p95 1.29 max 3.44; prepare  p50 0.10 p95 0.12 max 0.72; record  p50 0.09 p95 0.11 max 0.28; GPU tail  p50 30.90 p95 32.45 max 32.59
+  GPU (timestamps, median of 300 steps): the step's ticks 16.66 ms, its drawing 10.92 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+  GPU a step, every pass timed alone (median of 30 steps): 31.714 ms in all
+    smell        1 a step    3.859 ms a step    3.859 ms a run   12.2%
+    sense        8 a step    0.762 ms a step    0.095 ms a run    2.4%
+    walk         8 a step    0.339 ms a step    0.042 ms a run    1.1%
+    eat          8 a step    0.076 ms a step    0.010 ms a run    0.2%
+    pilesum     16 a step    0.642 ms a step    0.048 ms a run    2.0%
+    flow         8 a step    0.041 ms a step    0.005 ms a run    0.1%
+    life         8 a step    0.340 ms a step    0.042 ms a run    1.1%
+    breed        8 a step    0.431 ms a step    0.054 ms a run    1.4%
+    born         8 a step    0.199 ms a step    0.025 ms a run    0.6%
+    trail        8 a step    7.169 ms a step    0.896 ms a run   22.6%
+    scent        8 a step    6.295 ms a step    0.787 ms a run   19.8%
+    units        1 a step   10.360 ms a step   10.360 ms a run   32.7%
+    harvest      1 a step    0.772 ms a step    0.772 ms a run    2.4%
+    draw         1 a step    0.458 ms a step    0.458 ms a run    1.4%
+(exit 0)
+== target\release\larder-world.exe bench=20 hand=farm scale=8 walkers=100000 passes=30  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.05 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.80 p95 33.77 max 72.69; step  p50 0.02 p95 1.23 max 16.11; prepare  p50 0.10 p95 0.20 max 69.01; record  p50 0.09 p95 0.18 max 2.36; GPU tail  p50 0.52 p95 32.33 max 38.32
+  frames with a step (300 of them), ms: frame p50 32.31 p95 34.00 max 47.87; step  p50 1.19 p95 1.52 max 16.11; prepare  p50 0.10 p95 0.16 max 0.61; record  p50 0.09 p95 0.13 max 0.70; GPU tail  p50 30.89 p95 32.47 max 38.32
+  GPU (timestamps, median of 300 steps): the step's ticks 16.67 ms, its drawing 10.93 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+  GPU a step, every pass timed alone (median of 30 steps): 31.713 ms in all
+    smell        1 a step    3.860 ms a step    3.860 ms a run   12.2%
+    sense        8 a step    0.761 ms a step    0.095 ms a run    2.4%
+    walk         8 a step    0.339 ms a step    0.042 ms a run    1.1%
+    eat          8 a step    0.076 ms a step    0.010 ms a run    0.2%
+    pilesum     16 a step    0.642 ms a step    0.047 ms a run    2.0%
+    flow         8 a step    0.041 ms a step    0.005 ms a run    0.1%
+    life         8 a step    0.340 ms a step    0.042 ms a run    1.1%
+    breed        8 a step    0.430 ms a step    0.054 ms a run    1.4%
+    born         8 a step    0.198 ms a step    0.025 ms a run    0.6%
+    trail        8 a step    7.168 ms a step    0.896 ms a run   22.6%
+    scent        8 a step    6.295 ms a step    0.787 ms a run   19.8%
+    units        1 a step   10.385 ms a step   10.385 ms a run   32.7%
+    harvest      1 a step    0.772 ms a step    0.772 ms a run    2.4%
+    draw         1 a step    0.458 ms a step    0.458 ms a run    1.4%
+(exit 0)

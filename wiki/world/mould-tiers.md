@@ -2,7 +2,7 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12T14:39Z
+updated: 2026-11-12T17:35Z
 sources: [Reports/mould-tiers-campaign-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
 code: [BigParams::scar_keep, BigParams::scar_weight, BigDish::scar, BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier, Tier::core, Core]
 ---
@@ -54,7 +54,9 @@ the whole body defends (`Rules::core_pull` 8). Headless is built.
   pair a droplet species with a network one there, and the life cycle
   (Sporer, Sleeper, Swarmer) followed (11-12).
 - The tiers in the GPU world game: `Tier::settings` on the world's
-  settings, the player's strike, the 1070's cost.
+  settings, the player's strike. (On the GTX 1070 each tier's life cycle
+  adds at most 0.74 ms a frame at 100,000 walkers: [life cycle on the
+  GPU](../../Reports/life-gpu-2026-11-11.md), *On the GTX 1070*.)
 - Each tier's counter tested with the player AI ([player AI](player-ai.md)) once Larder runs in the world.
 
 ## Sources
