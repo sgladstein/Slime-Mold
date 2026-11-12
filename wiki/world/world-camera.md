@@ -2,9 +2,9 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-11
-sources: [Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md]
-code: [Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES]
+updated: 2026-11-12T00:30Z
+sources: [Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
+code: [Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES, View::set_alive]
 ---
 
 # The world camera and UI
@@ -30,15 +30,19 @@ scroll out from under the panels. In play it costs about 0.1 ms of GPU and
 0.1 ms of CPU a frame on the 1070. A single mark with a big box (a 480-pixel
 ring) cost the view 0.7 ms, since one workgroup walks a mark's whole box;
 draw big outlines as lines. The GPU sandbox shows it all: W gives a 2048 x
-1280 world, Q a stand-in squad (`world::demo::Squad`) that drives every
-panel. Not yet played by the owner.
+1280 world, Q a stand-in squad (`world::demo::Squad`, no game rules) that
+drives every panel. The game itself is `cargo run --release --bin
+larder-world` (W2c, [report](../../Reports/larder-world-roadmap-2026-11-11.md)):
+the Larder rules on the GPU world, through the same camera, UI and look.
 
 **The look** (on by default, L in the sandbox; [world look](../../Reports/world-look-2026-11-11.md)):
 the view shades the world from the engine's look field (mould thickness,
 walkers, wounds) and a ground field (rock, walls by health, crystals by
 charge): height, light, gloss, a speck a walker. Shots (`Engine::set_hits`)
 stop at the first slime or rock on their line (`first_hit`) and cut there,
-leaving a fading burn. Soldiers are an SVG sprite (the owner's pick of a
+leaving a fading burn; the game's own shots (the squad's `cut` pass) leave
+the same wound. With growth, `View::set_alive` takes the walkers' energy so
+empty and dead slots draw no speck. Soldiers are an SVG sprite (the owner's pick of a
 blind A/B, 16:48Z) with facing, team helmet and muzzle flash; crystals are
 hexagons, as in the simulation. Bare ground is soil with the engine's
 tints, rock and wet ground have their own look, and ground byte 3 holds

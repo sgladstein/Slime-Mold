@@ -9,6 +9,7 @@ is drawn on top of it.
 ```
 cargo run --release --bin mould            # the game: lesson, challenge dishes, free dishes, the endless dish
 cargo run --release --bin mould -- 3       # free dish seed 3   (-- 0 the lesson, -- d2 challenge dish 2, -- wander the Wanderer)
+cargo run --release --bin larder-world     # Larder World: the squad against the mould on the GPU, on a designed map (-- map=nest)
 cargo run --release --bin organ            # side prototype: the network plays a rhythm
 ```
 
@@ -48,7 +49,7 @@ code at build time.
 | `src/world/` | the world view: camera, minimap, marks, controls; the game UI (`ui.rs` HUD, `canvas.rs`/`canvas.wgsl` its GPU pass, `icons.rs`) and the stand-in squad that drives it (`demo.rs`) |
 | `assets/fonts/` | Inter Medium and SemiBold (SIL OFL, `OFL.txt`; from the Debian fonts-inter package), embedded by `canvas.rs` |
 | `src/bin/mould.rs`, `src/bin/organ.rs` | the windows (winit + pixels only) |
-| `src/bin/mouldgpu.rs`, `src/bin/larder.rs` | the GPU sandbox's window, panel and presets; the Larder window |
+| `src/bin/mouldgpu.rs`, `src/bin/larder.rs`, `src/bin/larder-world.rs` | the GPU sandbox's window, panel and presets; the Larder window (M3's small dish); the Larder World game on the GPU world and a map |
 | `src/hud.rs`, `src/hud_crisp.rs`, `src/wav.rs` | copied from Pixel_Physics: font and WAV writer |
 | `examples/` | the tools, below |
 | `wiki/` | what is true now, one page per dish, tool and mechanism, each citing its reports: [wiki/index.md](wiki/index.md) |

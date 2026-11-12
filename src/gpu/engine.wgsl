@@ -1397,7 +1397,17 @@ fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) l
     let y = i32(hit / P.w) + i32(li / 15u) - 7;
     if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h)) { return; }
     let i = u32(y) * P.w + u32(x);
-    if (struck(i, q)) { trail_in[i] = 0.0; }
+    if (struck(i, q)) {
+        // The look's wound (byte 2, which the trail pass fades): the
+        // thickness the strike cut, as a stand-in hit's (`set_hits`). The
+        // game's shots cut here, not in the trail pass, so without this
+        // the window showed the cut but no wound (W2c, 2026-11-12). Two
+        // strikes on one cell may race on it; only the picture differs.
+        let cut = u32(bright(trail_in[i]) * 255.0);
+        let had = (look[i] >> 16u) & 255u;
+        look[i] = (look[i] & 0xFF00FFFFu) | (max(had, cut) << 16u);
+        trail_in[i] = 0.0;
+    }
 }
 
 // Each unit's smell on the agar cells of its disc. One thread, units in
