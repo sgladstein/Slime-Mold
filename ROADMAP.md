@@ -229,12 +229,12 @@ either side of one don't compare. **#164** (cdccf127) makes every mould
 headless (no king rule). **#169** (a412af4) lets a soldier build
 anywhere, so the AI and census hands build differently (technical lead,
 22:42Z). **#170** (670ca9b, 22:58Z) is the economy (rations, hunger, overrun
-20 s, Regrow removed). **#174** (23:05Z) doubles a walker's bite on a
+20 s, Regrow removed). **#174** (e425fed, 23:05Z) doubles a walker's bite on a
 soldier at 5,000 walkers (`Rules::drain` 2 at any count, buildings keep 1 x
 mass), adds the broken mould (`Rules::broken`) and makes the window's
 mould shape C (25,000 walkers; the census harness stays at 5,000). No
 rerun is due for any of them. Under *build first,
-balance later* the next scheduled balance pass starts from 670ca9b or
+balance later* the next scheduled balance pass starts from e425fed or
 later, and older rows stay as history.
 
 **Census reset held: mould density (11-12 16:20Z; the owner took the
