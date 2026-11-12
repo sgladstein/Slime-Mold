@@ -1528,10 +1528,18 @@ mod tests {
     }
 
     /// A world that gives a frame's results only when asked for them, as
-    /// the GPU world does, to test the step's halves on the CPU.
+    /// the GPU world does, to test the step's halves on the CPU. Its
+    /// results are in on every third poll (`frame_ready`), so a paced
+    /// window finishes some steps when ready and the rest when the next
+    /// is due.
     struct Later {
         d: BigDish,
         out: Option<FrameOut>,
+        polls: std::cell::Cell<u32>,
+    }
+
+    fn later(seed: u64) -> Game<Later> {
+        Game::new(Later { d: race_world(seed, 1, 1_000), out: None, polls: Default::default() }, Rules::default(), seed)
     }
 
     impl World for Later {
@@ -1554,6 +1562,10 @@ mod tests {
         }
         fn frame_finish(&mut self) -> FrameOut {
             self.out.take().expect("a frame running")
+        }
+        fn frame_ready(&self) -> bool {
+            self.polls.set(self.polls.get() + 1);
+            self.polls.get().is_multiple_of(3)
         }
         fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
             assert!(self.out.is_none(), "a wall built while a frame runs");
@@ -1602,7 +1614,7 @@ mod tests {
     fn a_step_in_halves_plays_as_a_whole_one() {
         let seed = 5;
         let mut a = small(seed);
-        let mut b = Game::new(Later { d: race_world(seed, 1, 1_000), out: None }, Rules::default(), seed);
+        let mut b = later(seed);
         let tps = a.rules.tps as u64;
         let (x, y) = a.larder;
         // Commands at game ticks: attack, buy, a wall, free fire, a buy.
@@ -1653,6 +1665,103 @@ mod tests {
         assert_eq!(format!("{:?}", a.soldiers), format!("{:?}", b.soldiers));
         assert_eq!((a.bank, a.killed, a.shots, a.harvested, a.walls, a.mould), (b.bank, b.killed, b.shots, b.harvested, b.walls, b.mould));
         assert!(a.killed > 0 && a.walls == 1 && a.soldiers.len() > 4, "the commands acted: killed {}, walls {}, soldiers {}", a.killed, a.walls, a.soldiers.len());
+    }
+
+    /// The window's pacing (`App::step` in `larder-world`) for `secs` game
+    /// seconds at `fps` frames a real second: each frame owes game time, a
+    /// running step finishes once its results are in or when the next step
+    /// is due, then the next begins. `click(g, from, to)` is the input of the
+    /// frame from real second `from` to `to` (the window's clicks); `due(g)`
+    /// runs just before each step begins (a paced replay's commands). Ends
+    /// on whole steps.
+    fn paced(g: &mut Game<Later>, fps: f32, secs: f32, mut click: impl FnMut(&mut Game<Later>, f32, f32), mut due: impl FnMut(&mut Game<Later>)) {
+        let (dt, step) = (1.0 / fps, g.rules.frame_ticks as f32 / g.rules.tps as f32);
+        let end = (secs * g.rules.tps as f32) as u64;
+        let (mut owed, mut frame) = (0.0f32, 0u32);
+        while g.world.ticks() < end && g.end.is_none() {
+            click(g, frame as f32 * dt, (frame + 1) as f32 * dt);
+            if g.in_flight() && g.step_ready() {
+                g.finish_step();
+            }
+            owed += dt;
+            while owed >= step && g.world.ticks() < end && g.end.is_none() {
+                g.finish_step();
+                due(g);
+                g.begin_step();
+                owed -= step;
+            }
+            frame += 1;
+        }
+        g.finish_step();
+        due(g);
+    }
+
+    /// **A replay is the same game at any frame rate** (the technical lead's
+    /// ask on the step split, 2026-11-12): a command is logged at the game
+    /// tick it lands on, not the frame it was clicked in. Rounds played
+    /// through the window's pacing at 60 and 23 frames a second, with the
+    /// same clicks at the same real times, each replay (`Game::replay`, whole
+    /// steps) to their own world hash, bank and soldiers; and the 60 fps log
+    /// played back through the window's pacing at 23 and 144 frames a second
+    /// gives that hash too.
+    #[test]
+    fn a_replay_is_the_same_game_at_any_frame_rate() {
+        let seed = 7;
+        let probe = small(seed);
+        let (x, y) = probe.larder;
+        let clicks = [
+            (1.0, vec![Cmd::Order(0, Order::Attack), Cmd::Order(1, Order::Attack)]),
+            (2.71, vec![Cmd::Buy]),
+            (4.33, vec![Cmd::Wall((x - 8.0, y - 4.0), (x - 8.0, y + 4.0))]),
+            (6.1, vec![Cmd::Stance(2, Stance::Free), Cmd::Order(2, Order::Attack)]),
+            (11.47, vec![Cmd::Buy, Cmd::Order(3, Order::Attack)]),
+        ];
+        let secs = 20.0;
+        let record = |fps: f32| {
+            let mut g = later(seed);
+            paced(&mut g, fps, secs, |g, from, to| {
+                for (_, cs) in clicks.iter().filter(|(t, _)| *t >= from && *t < to) {
+                    for &c in cs {
+                        g.apply(c);
+                    }
+                }
+            }, |_| {});
+            g
+        };
+        let same = |a: &Game<Later>, b_hash: u64, b_bank: f32, b_soldiers: &str, what: &str| {
+            assert_eq!(a.world.hash(), b_hash, "{what}: the world hash");
+            assert_eq!(a.bank.to_bits(), b_bank.to_bits(), "{what}: the bank");
+            assert_eq!(format!("{:?}", a.soldiers), b_soldiers, "{what}: the soldiers");
+        };
+        let mut ticks = Vec::new();
+        for fps in [60.0, 23.0] {
+            let a = record(fps);
+            assert_eq!(a.log.len(), 8, "{fps} fps: every click logged ({:?}, ended {:?})", a.log, a.end.map(|e| e.band()));
+            assert!(a.walls == 1 && a.soldiers.len() > 4, "{fps} fps: the clicks acted");
+            ticks.push(a.log.iter().map(|l| l.0).collect::<Vec<u64>>());
+            let mut b = small(seed);
+            assert!(Game::replay(&mut b, &a.replay_text(seed)));
+            assert_eq!(a.world.ticks(), b.world.ticks(), "{fps} fps: the replay's end");
+            same(&a, b.world.hash(), b.bank, &format!("{:?}", b.soldiers), &format!("recorded at {fps} fps, replayed in whole steps"));
+            if fps == 60.0 {
+                for back in [23.0, 144.0] {
+                    let mut c = later(seed);
+                    let mut next = 0;
+                    paced(&mut c, back, secs, |_, _, _| {}, |g| {
+                        while next < a.log.len() && a.log[next].0 == g.world.ticks() {
+                            g.apply(a.log[next].1);
+                            next += 1;
+                        }
+                    });
+                    assert_eq!(next, a.log.len(), "played back at {back} fps: every command");
+                    assert_eq!(c.log, a.log, "played back at {back} fps: the same log");
+                    same(&c, a.world.hash(), a.bank, &format!("{:?}", a.soldiers), &format!("played back at {back} fps"));
+                }
+            }
+        }
+        // 60 fps: [15, 15, 40, 64, 91, 91, 172, 172]; 23 fps: 14 and 171
+        // for the first and last clicks (2026-11-12).
+        assert_ne!(ticks[0], ticks[1], "the pacing put some clicks on other ticks");
     }
 
     #[test]

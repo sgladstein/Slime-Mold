@@ -228,6 +228,14 @@ so every ask there would have read all 10.5 MB of `occ` back.
   buys, a wall, a stance) and sleep gas on the mould at the first soldier
   it touched: the same log, world hash, soldiers, bank, kills and shots as
   `step`; a running step's `settled_ticks` is the tick it began on.
+- `a_replay_is_the_same_game_at_any_frame_rate` (the technical lead's ask
+  on the PR): rounds played through the window's pacing at 60 and 23
+  frames a second, with the same clicks at the same real times, land some
+  clicks on other ticks (14 against 15, 171 against 172), and each replays
+  in whole steps to its own world hash, bank and soldiers; the 60 fps log
+  played back through the window's pacing at 23 and 144 frames a second
+  gives the same log and hash. A command is stamped with the tick it lands
+  on, not the frame it was clicked in.
 - `the_readout_matches_the_read_backs` now checks the grid on the frames
   that sum it (46 of 675: the first frame, then each game second) against
   the cells read back, and that the grid is never a game second old.
