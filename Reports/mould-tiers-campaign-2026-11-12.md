@@ -98,6 +98,13 @@ On mission 2 the Drifter never left its home crystal, so the player never met it
 
 Hunger makes a walker that has eaten its crystal dry follow the scent (food and soldiers) harder, and the longer reach lets it smell the next one; neither alone moves it. The stronger arms reach the squad sooner but grow to the plain mould's size. The kept Drifter touches an idle squad on 3 of 4 by 9:04 at the latest; seed 1 never. Returning to a lost crystal within 2 minutes is not measured yet. On the GPU (software Vulkan) it stays within 8% of the CPU over 20 s (`the_campaign_tiers_run_on_the_engine_as_on_the_cpu`).
 
+## Records at 702c59b, with craters (11-12)
+
+These are records, not a gate. Under the owner's rule (PR #150, *build first, balance later*), a census does not hold a merge. Random's wipe count is a target for later tuning. Rows: `raw/census/drifter-v2-702c59b/` and `raw/census/trunk-702c59b/`, with census.py output in `summary.txt`.
+
+- **Drifter** (seeds 5-36 and 201-216, n 48). Random wipes the mould on 3 and loses its squad on 40. Strike (+0.63) and claim (+0.52) lead, every plan beats idle and random, and strike is best on 20 seeds and claim on 18. Seeds 217-232 were not run.
+- **Trunk** (seeds 201-224, n 24). Random wipes the mould on **9 of 24**, which is above the designer's target of about 3 in 32. Strike (+1.75, wipes 18) and claim (+1.24, wipes 14) are far ahead. The Trunk's core falls and nothing regrows, so a lucky shot ends it. The Regrow core is the fix and has its own PR. Seeds 225-232 were not run.
+
 ## Commands
 
 ```
