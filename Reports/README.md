@@ -391,5 +391,6 @@ move.
   the mould nears, hurt and fallen, the economy. Listener 2-3.5 us a frame, no new read-back. Then the mould's own voice (K): one breathing drone from its size,
   hunger, eating and gunfire. Page; levels await the owner's ears.
 - [squad-toolkit-2026-11-12.md](squad-toolkit-2026-11-12.md) — **the squad toolkit**: six tools from the mould's model on the CPU world (`mould::kit`): the crater keeps a blast's hole open (82 against 188 walkers back at 10 s, 8/8); the germ kills when sickness costs energy; gas stops eating and noise wakes it; mines weak; the det cord starves nothing without food flow. Four plans beat idle and random on every tier, but loud (blasts carried to the body) is best on all four: gate 2 fails; next a tier that answers a blast. Page and `raw/`.
+- [one-body-2026-11-12.md](one-body-2026-11-12.md) — **one body (owner's playtest, 11-12):** today's mould is lumps joined by single-file streams; food sharing + hunger (`energy_flow` 0.05 + `hunger_scent` 8) is one body on more seeds (largest part 0.97 against 0.88, higher 8/8) and 2.5x the size; any cut gap refills in 1-2 s; a hunk held apart stays one lump and starves. Page and raw runs in `one-body-2026-11-12/`.
 - [pages.md](pages.md) — every Artifact page made for the game, and where its source is kept.
 - [dead-ends.md](dead-ends.md) — the mould's tried-and-reverted mechanisms.
