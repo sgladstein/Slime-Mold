@@ -61,6 +61,18 @@ code{font-family:var(--mono);font-size:12.5px}
 </section>
 
 <section>
+<h2>A new rule against the specks: lone step</h2>
+<p class="lede">Added 15:30Z. A walker with fewer than 3 others within 2 cells of it moves at down to half speed, so the front of a moving piece waits for the rest. These are the same Fork round and idle squad as above. Labels are shown here because this tests a rule, not a look choice.</p>
+<div class="figs">
+<figure><img src="img/film-idle-all-L.gif" alt="Lone step alone on the Fork map, 4 minutes" width="600" height="372"><figcaption><b>Lone step</b><span>5,928 walkers at 4:00</span><span>4 soldiers alive</span></figcaption></figure>
+<figure><img src="img/film-idle-all-H_L.gif" alt="Lone step with sharing and hunger on the Fork map, 4 minutes" width="600" height="372"><figcaption><b>Lone step + sharing + hunger</b><span>13,062 walkers at 4:00</span><span>4 soldiers alive</span></figcaption></figure>
+<figure><img src="img/film-idle-near-L.gif" alt="Lone step, close on the squad" width="560" height="350"><figcaption><b>Lone step, close</b></figcaption></figure>
+<figure><img src="img/film-idle-near-H_L.gif" alt="Lone step with sharing and hunger, close on the squad" width="560" height="350"><figcaption><b>Lone step + sharing + hunger, close</b></figcaption></figure>
+</div>
+<p>The tubes along the walls come out thicker and smoother. But the mould's leading edge in open ground is still loose clumps, because the walkers out front are alone by definition. Measured on the CPU, a cut piece crossing open ground holds together better (largest part at 20 s 0.72 against 0.46 on Fork), but the whole mould spreads slower: 5,600 walkers at 5 minutes against 7,700, on 4.5 crystals against 6.3. To try it: add <code>lone_step=3 lone_floor=0.5 lone_r=2</code> to the command above.</p>
+</section>
+
+<section>
 <h2>What a cut does</h2>
 <p>I ringed off a hunk of the body away from any crystal: every walker on a ring 4 dish cells wide was killed and its trail cleared.</p>
 <div class="films">

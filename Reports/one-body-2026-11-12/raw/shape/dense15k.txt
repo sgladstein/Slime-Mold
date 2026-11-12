@@ -1,0 +1,26 @@
+cutprobe race world scale 2 walkers 15000, grow 300 s, follow 120 s, 0 cuts a seed, seeds [1, 2, 3, 4, 5, 6, 7, 8]
+arms: [("base15k", []), ("H15k", [("energy_flow", "0.05"), ("hunger_scent", "8")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base15k 1 grown | alive 10370 parts1% 2 lcs 0.98 lone 0.00 rms 62.4 | crystals eaten from 8 of 23
+H15k 1 grown | alive 24351 parts1% 1 lcs 0.99 lone 0.00 rms 69.2 | crystals eaten from 14 of 23
+base15k 2 grown | alive 12300 parts1% 1 lcs 0.99 lone 0.00 rms 55.3 | crystals eaten from 11 of 23
+H15k 2 grown | alive 27116 parts1% 1 lcs 1.00 lone 0.00 rms 68.4 | crystals eaten from 15 of 23
+base15k 3 grown | alive 10966 parts1% 1 lcs 0.97 lone 0.00 rms 47.9 | crystals eaten from 9 of 23
+H15k 3 grown | alive 20181 parts1% 2 lcs 0.95 lone 0.00 rms 53.6 | crystals eaten from 11 of 23
+base15k 4 grown | alive 7722 parts1% 3 lcs 0.63 lone 0.00 rms 55.7 | crystals eaten from 6 of 23
+H15k 4 grown | alive 21735 parts1% 1 lcs 1.00 lone 0.00 rms 62.6 | crystals eaten from 13 of 23
+base15k 5 grown | alive 8043 parts1% 2 lcs 0.88 lone 0.00 rms 80.4 | crystals eaten from 6 of 23
+H15k 5 grown | alive 26698 parts1% 1 lcs 1.00 lone 0.00 rms 68.0 | crystals eaten from 14 of 23
+base15k 6 grown | alive 7461 parts1% 1 lcs 0.99 lone 0.00 rms 47.8 | crystals eaten from 6 of 23
+H15k 6 grown | alive 18076 parts1% 2 lcs 0.96 lone 0.00 rms 58.0 | crystals eaten from 10 of 23
+base15k 7 grown | alive 9265 parts1% 2 lcs 0.92 lone 0.00 rms 65.9 | crystals eaten from 9 of 23
+H15k 7 grown | alive 22063 parts1% 1 lcs 0.99 lone 0.00 rms 63.0 | crystals eaten from 11 of 23
+base15k 8 grown | alive 9418 parts1% 1 lcs 0.97 lone 0.00 rms 61.0 | crystals eaten from 7 of 23
+H15k 8 grown | alive 26441 parts1% 2 lcs 0.99 lone 0.00 rms 66.7 | crystals eaten from 16 of 23
+
+summary (mean over cuts)
+base15k: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+H15k: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base15k: lcs20 better 0 worse 0, p 1.0000
+  vs base15k: life better 0 worse 0, p 1.0000
+  vs base15k: compact20 better 0 worse 0, p 1.0000

@@ -59,6 +59,7 @@ fn set(p: &mut BigParams, k: &str, v: &str) {
     let f = || v.parse::<f32>().unwrap_or_else(|_| panic!("{k}={v}"));
     match k {
         "energy_flow" => p.energy_flow = f(),
+        "flow_loss" => p.flow_loss = f(),
         "blocked_keep" => p.blocked_keep = f() != 0.0,
         "blocked_reset" => p.blocked_reset = f(),
         "blocked_retry" => p.blocked_retry = f() as u8,
@@ -85,6 +86,8 @@ fn set(p: &mut BigParams, k: &str, v: &str) {
         "body_pull" => p.body_pull = f(),
         "body_r" => p.body_r = f() as u8,
         "body_lone" => p.body_lone = f(),
+        "lone_step" => p.lone_step = f(),
+        "lone_floor" => p.lone_floor = f(),
         "tether" => p.tether = f() as u8,
         "lone_upkeep" => p.lone_upkeep = f(),
         "lone_r" => p.lone_r = f() as u8,
