@@ -1,0 +1,37 @@
+# seeds 1-4 (building); ./target/release/examples/larderworld census seeds=1-4 ...
+larderworld scale 2 walkers 5000 cap 900 s, tps 15, seeds [1, 2, 3, 4]; rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 10.0, hp: 100.0, drain: 1.0, touch: 1.5, smell: 0.5, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, cap: 900.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0 }
+claim:claim_group=4+claim_free=1+claims=3 seed  1:         cap at   900 s, score +0.000; soldiers  6, mould   7628, bank     10, harvested  31200, stolen     0, shots  2519, killed   3425, crystals left 0.476; 6.23 ms a tick, think 5218 us at most
+strike:strike_army=24 seed  1:         cap at   900 s, score -0.333; soldiers  1, mould   7570, bank     10, harvested  34200, stolen     0, shots  2579, killed   6545, crystals left 0.444; 6.88 ms a tick, think 404 us at most
+claim:claim_at=600 seed  1:         cap at   900 s, score +0.115; soldiers  9, mould   5350, bank     10, harvested  36000, stolen     0, shots  2879, killed   7282, crystals left 0.432; 7.17 ms a tick, think 324 us at most
+  fort seed  1:         cap at   900 s, score +0.206; soldiers 12, mould   5953, bank  10059, harvested  36000, stolen     1, shots  2282, killed   3402, crystals left 0.430; 7.52 ms a tick, think 1853 us at most
+boom:buy_to=20+farm=20 seed  1:         cap at   900 s, score +0.318; soldiers 20, mould   4505, bank  13469, harvested  53400, stolen     1, shots  3513, killed   5041, crystals left 0.181; 6.67 ms a tick, think 384 us at most
+strike:strike_at=500 seed  1:         cap at   900 s, score -0.333; soldiers  1, mould   7168, bank      0, harvested  36000, stolen    30, shots  2757, killed   7019, crystals left 0.427; 7.38 ms a tick, think 637 us at most
+claim:claim_group=4+claim_free=1+claims=3 seed  2:         cap at   900 s, score -0.088; soldiers 12, mould  11213, bank      0, harvested  29700, stolen     0, shots  2370, killed   3260, crystals left 0.465; 7.28 ms a tick, think 304 us at most
+  fort seed  2:         cap at   900 s, score -0.024; soldiers 12, mould  10414, bank  13310, harvested  31500, stolen     0, shots  1667, killed   2568, crystals left 0.451; 7.95 ms a tick, think 1939 us at most
+strike:strike_at=500 seed  2: squad wiped at   749 s, score -1.168; soldiers  0, mould   9807, bank      0, harvested  33000, stolen     0, shots  2460, killed   6174, crystals left 0.455; 7.00 ms a tick, think 254 us at most
+claim:claim_at=600 seed  2:         cap at   900 s, score +0.033; soldiers 18, mould   8104, bank      0, harvested  33000, stolen    10, shots  2619, killed   4716, crystals left 0.443; 7.26 ms a tick, think 391 us at most
+strike:strike_army=24 seed  2:         cap at   900 s, score -0.500; soldiers  1, mould   9193, bank      0, harvested  32400, stolen     0, shots  2320, killed   6371, crystals left 0.446; 7.35 ms a tick, think 497 us at most
+boom:buy_to=20+farm=20 seed  2:         cap at   900 s, score +0.119; soldiers 20, mould   9232, bank   5100, harvested  39600, stolen     0, shots  3010, killed   4887, crystals left 0.341; 7.43 ms a tick, think 382 us at most
+claim:claim_at=600 seed  3:         cap at   900 s, score +0.033; soldiers 22, mould   7919, bank      0, harvested  36300, stolen     0, shots  2470, killed   7822, crystals left 0.409; 7.92 ms a tick, think 734 us at most
+claim:claim_group=4+claim_free=1+claims=3 seed  3:         cap at   900 s, score +0.062; soldiers 20, mould   6864, bank      0, harvested  32400, stolen     0, shots  2640, killed   3818, crystals left 0.453; 8.67 ms a tick, think 643 us at most
+strike:strike_army=24 seed  3: squad wiped at   754 s, score -1.162; soldiers  0, mould   6916, bank      0, harvested  34800, stolen     0, shots  2560, killed   7153, crystals left 0.439; 8.84 ms a tick, think 303 us at most
+  fort seed  3:         cap at   900 s, score +0.100; soldiers 12, mould   8933, bank  26580, harvested  36300, stolen     0, shots   596, killed    919, crystals left 0.404; 9.82 ms a tick, think 1940 us at most
+claim:claim_group=4+claim_free=1+claims=3 seed  4:         cap at   900 s, score +0.143; soldiers 16, mould   6170, bank      0, harvested  31500, stolen     0, shots  2550, killed   2555, crystals left 0.484; 6.17 ms a tick, think 544 us at most
+strike:strike_at=500 seed  3:         cap at   900 s, score -0.500; soldiers  1, mould   7528, bank      0, harvested  36300, stolen     0, shots  2670, killed   7766, crystals left 0.410; 7.95 ms a tick, think 350 us at most
+  fort seed  4:         cap at   900 s, score +0.167; soldiers 12, mould   5938, bank  21359, harvested  37500, stolen     1, shots  1238, killed   1870, crystals left 0.413; 6.94 ms a tick, think 1749 us at most
+boom:buy_to=20+farm=20 seed  3:         cap at   900 s, score +0.262; soldiers 20, mould   5690, bank  20250, harvested  47700, stolen     0, shots  2265, killed   3699, crystals left 0.258; 8.86 ms a tick, think 570 us at most
+strike:strike_at=500 seed  4: squad wiped at   672 s, score -1.253; soldiers  0, mould   4062, bank      9, harvested  34800, stolen     1, shots  2559, killed   6640, crystals left 0.468; 6.60 ms a tick, think 397 us at most
+strike:strike_army=24 seed  4:         cap at   900 s, score +0.115; soldiers 19, mould    402, bank      0, harvested  34200, stolen    20, shots  2538, killed   5249, crystals left 0.489; 5.06 ms a tick, think 296 us at most
+claim:claim_at=600 seed  4:         cap at   900 s, score +0.143; soldiers 20, mould   6291, bank      0, harvested  36300, stolen     0, shots  3030, killed   4591, crystals left 0.430; 6.94 ms a tick, think 550 us at most
+boom:buy_to=20+farm=20 seed  4:         cap at   900 s, score +0.289; soldiers 20, mould   4160, bank   2240, harvested  50100, stolen     0, shots  4306, killed   8220, crystals left 0.238; 6.26 ms a tick, think 407 us at most
+
+by hand (mean score; ends):
+    fort: mean +0.112; mould wiped 0, cap 4, squad wiped 0
+  claim:claim_group=4+claim_free=1+claims=3: mean +0.029; mould wiped 0, cap 4, squad wiped 0
+  claim:claim_at=600: mean +0.081; mould wiped 0, cap 4, squad wiped 0
+  strike:strike_army=24: mean -0.470; mould wiped 0, cap 3, squad wiped 1
+  strike:strike_at=500: mean -0.814; mould wiped 0, cap 2, squad wiped 2
+  boom:buy_to=20+farm=20: mean +0.247; mould wiped 0, cap 4, squad wiped 0
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 0):
+done
