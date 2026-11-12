@@ -129,3 +129,116 @@ to about 0.3). Four seeds each: direction only. Raw:
   change every form; the matrix should be rerun when they land.
 - Pictures: [`player-mould-2026-11-12/pics/`](player-mould-2026-11-12/pics/),
   seed 2 at 0:01, 1:30 and 3:00 for each pairing, counts in `looks.txt`.
+
+---
+
+# Gardeners in the Larder world: the first CPU build (2026-11-12)
+
+The build the owner's card chose, on the CPU world, behind its own world
+type so the one-mould game is untouched.
+
+```
+cargo build --release --example garden
+./target/release/examples/garden census seeds=1-32 hands=idle,random,farm,feed,sow,sow2 threads=4
+./target/release/examples/garden look=DIR seeds=1 hands=farm,sow2 every=150
+```
+
+## What was built
+
+- **`src/mould/own_mould.rs`**: `Garden`, a `larder_world::World` that holds
+  two species on one `BigDish`. The enemy is species 0 and starts on
+  crystal 0. The player's mould is species 3 (`OWN`, the slot agreed with
+  the integration thread: enemy 0, new tiers 1 and 2, player 3) and starts
+  on the crystal farthest from it, which is also the squad's landing (the
+  larder). 2,500 walkers a side, growth on, blind to each other
+  (`species_avoid` 0), conversion 1.2 over radius 4, `species_convert_per`
+  on.
+- **Shots, smell and bite tell species apart**: a shot stops at the first
+  enemy slime and kills only enemy walkers; soldiers read and are bitten by
+  the enemy only. The player's mould is harmless to the squad.
+- **Tasks** (one a soldier, worked in a disc of radius 3 around it):
+  **Road** lays the player's species trail (30 a second), **Feed** spends
+  the bank (20 a second, while it lasts) as crystal charge spread thin on
+  the disc's ground, **Cut** kills the player's walkers in the disc and
+  clears its trail.
+- **The hook in `larder_world.rs`**: one trait method,
+  `World::tend(soldiers, bank, ticks) -> spent`, default 0, called once a
+  frame before the larder unit. Every existing world keeps the default, so
+  the one-mould census is unchanged (all `larder_world` tests pass).
+- Tests: `the_garden_starts_two_moulds`,
+  `tasks_act_on_the_players_mould_only`,
+  `soldiers_leave_the_players_mould_alone`.
+
+**Frame cost**: one 300 s game (4,500 frames, one thread) takes 68 s
+farming and 118 s sowing on seed 1, 15 and 26 ms a frame. The gap is the
+player's mould (1,227 against 24,508 walkers at the end), not `tend`, which
+touches 8 discs of 29 cells.
+
+## The hands
+
+- **idle** gives no orders. **random** gives one random soldier a random
+  move and a random task every 5 s.
+- **farm**: the scripted farm, soldier k clears the k-th nearest crystal,
+  no tasks.
+- **road**, **feed**, **grow** (first census): farm, plus soldier 0 roads
+  the player's mould to an unclaimed crystal, feeds it standing on the
+  larder, or both.
+- **sow**, **sow2** (second census): farm, plus soldier 0 (and 1) walks
+  from the larder to the nearest unclaimed crystal and back on Feed while
+  the bank is over 600 (else Road), so the charge lands thin along a path.
+
+## Measures, named before each run
+
+1. The player's **share** of the crystal charge gone: the squad's harvest,
+   plus the player's mould's part of what the moulds ate (split by their
+   walkers' `took`).
+2. Added before the second census, after the first showed that the share is
+   the squad's harvest whatever the gardeners do: the **balance**, the
+   player's walkers less the enemy's at the 300 s cap.
+
+Pairs by seed against idle, random and farm, two-sided sign test, Holm
+over every comparison.
+
+## Results (32 seeds, second census)
+
+| Hand | Median share | Player's walkers | Enemy walkers | Balance vs farm (higher / lower) | Share vs farm |
+|---|---|---|---|---|---|
+| idle | 0.418 | 4,038 | 6,762 | 23 / 9 | 0 / 32 |
+| random | 0.761 | 18,700 | 10,876 | 29 / 3 | 0 / 32 |
+| farm | 0.946 | 1,723 | 5,369 | n/a | n/a |
+| feed | 0.936 | 2,052 | 5,864 | 18 / 14, p 0.60 | 13 / 19, p 0.38 |
+| sow | 0.953 | 18,629 | 7,211 | **31 / 1** | 21 / 11, p 0.11 |
+| sow2 | 0.952 | 23,023 | 7,281 | **32 / 0** | 23 / 9, p 0.02 |
+
+Walkers are means at the cap. Every planned hand beats idle and random on
+share 32/32 (Holm). Raw:
+[`garden/census1.txt`](player-mould-2026-11-12/garden/census1.txt) (first
+census: road, feed and grow, each within 0.005 of farm on share; random
+and farm moved a little in the second census, after the hands' code
+changed between the runs; idle is identical), [`garden/census2.txt`](player-mould-2026-11-12/garden/census2.txt).
+
+What the numbers say:
+
+1. **Gardening grows the player's mould, and you can see it.** Sowing
+   thinly along a walk gives 13 times farm's mould (32 of 32 seeds for
+   sow2), and the player's species holds half the map by 2:30 on seed 1.
+   Feeding in one spot does nothing (18 / 14): the disc piles charge faster
+   than the walkers there eat it. Farming alone starves the player's mould
+   (1,723, under idle's 4,038), because the squad clears its crystals.
+2. **The player's mould doesn't beat the enemy.** The enemy is *bigger*
+   under sowing than under farming (fewer on only 5 and 4 of 32 seeds),
+   since the squad shot it less while two soldiers sowed. The share gain is
+   small (sow2 23 / 9, p 0.02, not inside Holm over these comparisons).
+   With the species blind to each other, the two bodies meet along one
+   front and hold it (pictures), so conversion barely runs. This is the
+   form probe's finding again: **the fight needs contact**.
+
+## Not done, next
+
+- Contact: make the enemy seek the player's mould (`species_avoid` below 0,
+  per side), so a big player mould is a threat it must answer, and see if
+  the network-vs-dense trade then makes Road against Cut a choice.
+- A per-side walker reserve, so a big player mould cannot fill the enemy's
+  birth slots (the tech lead's point); stopping births by species.
+- Cut was never used by a planned hand; random cut 5,899 walkers and lost.
+- The GPU port, after the toolkit's and one body's rows.
