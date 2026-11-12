@@ -210,6 +210,9 @@ pub enum Order {
     /// mould in sight on the way (the world game, `larder_world`; M3 plays
     /// it as a move).
     Fight(f32, f32),
+    /// Walk to building `k`'s site and raise it (the world game's
+    /// `larder_world::buildings`; M3 has no buildings and holds).
+    Build(usize),
 }
 
 /// **A player's command**, as the window gives it. Every command goes
@@ -236,6 +239,7 @@ impl Cmd {
                 Order::Burn(a, b) => format!("order {k} burn {} {} {} {}", a.0, a.1, b.0, b.1),
                 Order::Attack => format!("order {k} attack"),
                 Order::Fight(x, y) => format!("order {k} fight {x} {y}"),
+                Order::Build(b) => format!("order {k} build {b}"),
             },
             Cmd::Stance(k, st) => format!(
                 "stance {k} {}",
@@ -267,6 +271,7 @@ impl Cmd {
                     "burn" => Order::Burn((f(3)?, f(4)?), (f(5)?, f(6)?)),
                     "attack" => Order::Attack,
                     "fight" => Order::Fight(f(3)?, f(4)?),
+                    "build" => Order::Build(w.get(3)?.parse().ok()?),
                     _ => return None,
                 },
             ),
@@ -983,7 +988,7 @@ impl Game {
             return;
         }
         match s.order {
-            Order::Hold => self.defend(k, here),
+            Order::Hold | Order::Build(_) => self.defend(k, here),
             Order::Move(x, y) | Order::Fight(x, y) => {
                 let o = slot(k);
                 self.walk(k, (x + o.0, y + o.1), 0.5);

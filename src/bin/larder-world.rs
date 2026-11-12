@@ -445,6 +445,17 @@ impl App {
         self.order_all(ids, |_| o);
     }
 
+    /// The building just placed (the newest): the selected soldiers go to
+    /// raise it (Shift: after their orders). With none selected, idle
+    /// soldiers in range take it up by themselves (`Game::build_turn`).
+    fn builders(&mut self, sel: &[usize]) {
+        let Some(g) = &self.game else { return };
+        let Some(b) = g.buildings.len().checked_sub(1) else { return };
+        if g.buildings[b].built < 1.0 {
+            self.order_all(sel, |_| Order::Build(b));
+        }
+    }
+
     /// What a point means as an order: harvest a crystal under it, else
     /// walk there.
     fn order_for(&self, at: (f32, f32)) -> Order {
@@ -576,8 +587,8 @@ impl App {
                         let kind = build_kind(id).unwrap();
                         if let Some(why) = g.build_blocked(kind, at) {
                             self.hud.alert(&format!("Can't build a {} there: {why}", kind.name()), None, theme::WARN);
-                        } else {
-                            g.apply(Cmd::Build(kind, at));
+                        } else if g.apply(Cmd::Build(kind, at)) {
+                            self.builders(&sel);
                         }
                     }
                 }
@@ -588,6 +599,8 @@ impl App {
                         if !g.apply(Cmd::Wall(from, to)) {
                             let why = if g.bank < price { format!("A wall that long costs {price:.0} food") } else { "Both ends of a wall must be within a soldier's range".to_string() };
                             self.hud.alert(&why, None, theme::WARN);
+                        } else {
+                            self.builders(&sel);
                         }
                     }
                 }
@@ -847,6 +860,7 @@ impl App {
                         Order::Clear(x, y) => Some((x, y)),
                         Order::Attack => Some(g.core),
                         Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
+                        Order::Build(b) => g.buildings.get(b).map(|b| b.at),
                         Order::Hold => None,
                     };
                     let Some(to) = to else { continue };
@@ -916,6 +930,7 @@ impl App {
                 Order::Hold => None,
                 Order::Move(..) => Some(Icon::Move),
                 Order::Fight(..) => Some(Icon::Attack),
+                Order::Build(..) => Some(Icon::Wall),
                 Order::Clear(..) => Some(Icon::Crystal),
                 Order::Burn(..) => Some(Icon::Burn),
                 Order::Attack => Some(Icon::Attack),
@@ -930,6 +945,16 @@ impl App {
                 Order::Move(..) => "moving",
                 Order::Fight(..) if s.dense > 0 => "fighting its way",
                 Order::Fight(..) => "attack-moving",
+                Order::Build(b) => match g.buildings.get(b) {
+                    Some(bd) => match bd.kind {
+                        Kind::Turret => "building a turret",
+                        Kind::Lure => "building a lure",
+                        Kind::Pump => "building a pump",
+                        Kind::Outpost => "building an outpost",
+                        Kind::Wall { .. } => "building a wall",
+                    },
+                    None => "building",
+                },
                 Order::Clear(..) if s.homing => "carrying charge home",
                 Order::Clear(..) => "harvesting a crystal",
                 Order::Burn(..) => "holding a burn line",
@@ -1106,6 +1131,7 @@ impl App {
         m.help = vec![
             ("Right click".into(), "Move there; on a crystal, harvest it".into()),
             ("Shift + order".into(), "Queue it after the soldiers' current orders".into()),
+            ("Place a building".into(), "The selected soldiers walk there and raise it; idle soldiers nearby help".into()),
             ("A, click".into(), "Attack-move there; on the core, attack it".into()),
             ("Click the larder".into(), "Select it: B buys, right click sets the rally point".into()),
             ("P".into(), "Pause".into()),

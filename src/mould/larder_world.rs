@@ -717,6 +717,21 @@ pub fn far_crystal(world: &impl World) -> (f32, f32) {
     cs.iter().map(|c| c.0).max_by(|a, b| (a.0 - home.0).hypot(a.1 - home.1).total_cmp(&(b.0 - home.0).hypot(b.1 - home.1))).unwrap_or(home)
 }
 
+/// A builder raises from this near its site, dish cells (plus its slot
+/// in the squad's sunflower, as a harvester at a crystal).
+const BUILD_REACH: f32 = 3.0;
+
+/// A wall's raise time counts once per this many dish cells of length.
+pub const WALL_RAISE_LEN: f32 = 10.0;
+
+/// The point of the segment `a`-`b` nearest `p`.
+fn nearest_on(a: (f32, f32), b: (f32, f32), p: (f32, f32)) -> (f32, f32) {
+    let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+    let l2 = dx * dx + dy * dy;
+    let t = if l2 > 0.0 { (((p.0 - a.0) * dx + (p.1 - a.1) * dy) / l2).clamp(0.0, 1.0) } else { 0.0 };
+    (a.0 + dx * t, a.1 + dy * t)
+}
+
 /// Soldier `k`'s place round the point it was sent to, dish cells (M3's
 /// sunflower: a squad sent to one point spreads instead of stacking).
 fn slot(k: usize) -> (f32, f32) {
@@ -933,9 +948,10 @@ impl<W: World> Game<W> {
         match s.order {
             Order::Hold => None,
             Order::Move(x, y) | Order::Fight(x, y) => Some(off((x, y))),
+            Order::Build(b) => self.site(k, b).map(off),
             Order::Clear(x, y) => {
                 if s.homing {
-                    Some(off(self.larder))
+                    Some(off(self.drop_off((s.x, s.y))))
                 } else {
                     self.crystal_at((x, y)).map(|(_, c)| off(c))
                 }
@@ -1031,6 +1047,75 @@ impl<W: World> Game<W> {
         let Order::Fight(..) = s.order else { return false };
         let Some(aim) = s.aim else { return false };
         s.dense >= self.rules.aim_min && (aim.0 - s.x).hypot(aim.1 - s.y) <= self.rules.range * self.s() && self.clear_line((s.x, s.y), aim)
+    }
+
+    /// The depot a carrier at `p` walks home to: the nearest of the larder
+    /// and the standing outposts (`Game::drop_offs`).
+    fn drop_off(&self, p: (f32, f32)) -> (f32, f32) {
+        let d = |a: (f32, f32)| (a.0 - p.0).hypot(a.1 - p.1);
+        self.drop_offs().into_iter().min_by(|a, b| d(*a).total_cmp(&d(*b))).unwrap_or(self.larder)
+    }
+
+    /// Where soldier `k` stands to raise building `b` (fine cells): beside
+    /// it, or for a wall the nearest point of its line; None once it stands
+    /// or is gone.
+    fn site(&self, k: usize, b: usize) -> Option<(f32, f32)> {
+        let bd = self.buildings.get(b).filter(|bd| bd.alive && bd.built < 1.0)?;
+        let s = self.soldiers[k];
+        Some(match bd.kind {
+            Kind::Wall { to } => nearest_on(bd.at, to, (s.x, s.y)),
+            _ => bd.at,
+        })
+    }
+
+    /// Seconds a lone builder takes to raise building `b`
+    /// (`BuildRules::raise`; a wall a raise per `WALL_RAISE_LEN` dish cells
+    /// of its length, at least one).
+    pub fn raise_secs(&self, b: usize) -> f32 {
+        let bd = self.buildings[b];
+        let r = self.rules.build.raise;
+        match bd.kind {
+            Kind::Wall { to } => r * ((bd.at.0 - to.0).hypot(bd.at.1 - to.1) / self.s() / WALL_RAISE_LEN).max(1.0),
+            _ => r,
+        }
+    }
+
+    /// A builder's turn (`Order::Build`): within reach of its site it
+    /// raises the building `dt / raise_secs` (builders add up); once the
+    /// building stands or is gone it takes its next order, else holds. And
+    /// an idle soldier (holding with nothing queued) takes the nearest
+    /// ghost within its range, so a ghost placed by an idle squad rises
+    /// without another order (the census hands lay buildings with
+    /// `Cmd::Build` alone).
+    fn build_turn(&mut self, k: usize, dt: f32) {
+        let s = self.soldiers[k];
+        let sc = self.s();
+        if s.order == Order::Hold && s.queued == 0 {
+            let reach = self.rules.range * sc;
+            let near = (0..self.buildings.len())
+                .filter_map(|b| self.site(k, b).map(|p| (b, (p.0 - s.x).hypot(p.1 - s.y))))
+                .filter(|&(_, d)| d <= reach)
+                .min_by(|a, b| a.1.total_cmp(&b.1));
+            if let Some((b, _)) = near {
+                self.soldiers[k].order = Order::Build(b);
+            }
+            return;
+        }
+        let Order::Build(b) = s.order else { return };
+        match self.site(k, b) {
+            None => {
+                if !self.next(k) {
+                    self.soldiers[k].order = Order::Hold;
+                }
+            }
+            Some(p) => {
+                let o = slot(k);
+                if (p.0 - s.x).hypot(p.1 - s.y) <= BUILD_REACH * sc + o.0.hypot(o.1) * sc {
+                    let secs = self.raise_secs(b);
+                    self.raise(b, if secs > 0.0 { dt / secs } else { 1.0 });
+                }
+            }
+        }
     }
 
     /// Soldier `k` takes the next order in its queue, if it has one.
@@ -1188,6 +1273,7 @@ impl<W: World> Game<W> {
                     self.next(k);
                 }
             }
+            self.build_turn(k, dt);
             let s = self.soldiers[k];
             // Harvest: at its crystal and not full, a clearing soldier takes;
             // full, it walks home; home, it banks.
@@ -1195,7 +1281,8 @@ impl<W: World> Game<W> {
             let mut at_crystal = None;
             if let Order::Clear(x, y) = s.order {
                 if s.homing {
-                    if (s.x - self.larder.0).hypot(s.y - self.larder.1) <= 3.0 * sc + 1.5 * (k as f32).sqrt() * sc {
+                    let home = self.drop_off((s.x, s.y));
+                    if (s.x - home.0).hypot(s.y - home.1) <= 3.0 * sc + 1.5 * (k as f32).sqrt() * sc {
                         self.bank += s.carry;
                         self.harvested += s.carry;
                         self.soldiers[k].carry = 0.0;
@@ -1589,7 +1676,8 @@ mod tests {
     use super::*;
 
     fn small(seed: u64) -> Game<BigDish> {
-        Game::new(race_world(seed, 1, 1_000), Rules::default(), seed)
+        // Buildings whole when placed (raising has its own tests).
+        Game::new(race_world(seed, 1, 1_000), Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
     }
 
     #[test]
@@ -1767,7 +1855,8 @@ mod tests {
     }
 
     fn later(seed: u64) -> Game<Later> {
-        Game::new(Later { d: race_world(seed, 1, 1_000), out: None, polls: Default::default() }, Rules::default(), seed)
+        // As `small`'s rules (buildings whole when placed).
+        Game::new(Later { d: race_world(seed, 1, 1_000), out: None, polls: Default::default() }, Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
     }
 
     impl World for Later {
