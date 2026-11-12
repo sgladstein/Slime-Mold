@@ -3521,8 +3521,12 @@ mod tests {
         use slime_mould::mould::squad;
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
+        // The Swarmer's pull (+3), and the turn from gunfire
+        // (`larder_world::FLEE_WEIGHT`, -1, an opt-in since 2026-11-12).
+        for weight in ["3", "-1"] {
         let mut s = small(0);
         Tier::Swarmer.settings(&mut s).unwrap();
+        set(&mut s, "alarm_weight", weight).unwrap();
         let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
         let mut cpu = e.dish.clone();
         for _ in 0..30 {
@@ -3539,9 +3543,10 @@ mod tests {
         let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 4);
         let la = l1(&e.alarm_of(), &cpu.alarm);
         let left: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
-        eprintln!("the alarm alone: {} walkers, {moved} moved, {off} off; alarm laid {laid:.0}, {left:.0} after four ticks; trail L1 {lt:.1e}, scent L1 {ls:.1e}, alarm L1 {la:.1e}; states {}, outside pipelines {}", cpu.walkers.len(), e.cycles, e.outside);
+        eprintln!("the alarm alone, weight {weight}: {} walkers, {moved} moved, {off} off; alarm laid {laid:.0}, {left:.0} after four ticks; trail L1 {lt:.1e}, scent L1 {ls:.1e}, alarm L1 {la:.1e}; states {}, outside pipelines {}", cpu.walkers.len(), e.cycles, e.outside);
         assert!(cpu.life.is_empty() && !e.cycles && e.outside, "the field without the states, on the outside pipelines");
-        assert!(off == 0 && lt <= 1e-6 && ls <= 1e-6 && la <= 1e-6, "{off} walkers off; trail {lt:.1e}, scent {ls:.1e}, alarm {la:.1e}");
+        assert!(off == 0 && lt <= 1e-6 && ls <= 1e-6 && la <= 1e-6, "weight {weight}: {off} walkers off; trail {lt:.1e}, scent {ls:.1e}, alarm {la:.1e}");
+        }
     }
 
     /// `s` with spores and dormancy on, both frequent: a spore every hundred
@@ -3645,8 +3650,11 @@ mod tests {
     /// seed. Both start alike (the race settings give the CPU's params); a
     /// soldier clearing a crystal far from the mould banks the same food on
     /// both, since no walker reaches it; and every 5 game seconds the mould
-    /// is within 8% of the CPU's size. The starting walkers starve at about
-    /// 17 s (start energy 0.5 at upkeep 0.001 a fine step) on both, so at
+    /// is within 8% of the CPU's size, and its mould grid (squares of 4
+    /// dish cells, summed on the GPU once a game second) holds at least 70%
+    /// of it in the CPU's squares, after the same grid at the start. The
+    /// starting walkers starve at about 17 s (start energy 0.5 at upkeep
+    /// 0.001 a fine step) on both, so at
     /// 20 s the count has just fallen by a third (5,234 to 3,120 on seed
     /// 3, the GPU 3,220); at one engine tick a game tick, half the CPU's
     /// fine steps, the fall would come at 33 s and miss the bound by far.
@@ -3663,21 +3671,30 @@ mod tests {
         assert_eq!(gpu.world.crystals(), cpu.world.crystals(), "the same crystals and charge at the start");
         assert_eq!(gpu.world.living(), cpu.world.living());
         assert_eq!((gpu.larder, gpu.core), (cpu.larder, cpu.core));
+        // The mould grid (the campaign's goals, the player AI): the same
+        // squares from the same walkers, then the GPU's once-a-second sum
+        // against the CPU's own (`GRID_EVERY`, 2026-11-12).
+        const BIN: usize = 4;
+        assert_eq!(gpu.world.mould_grid(BIN), cpu.world.mould_grid(BIN), "the same mould grid at the start");
         // Soldier 0 clears the crystal nearest the larder (the larder's own).
         let c = cpu.world.crystals().iter().map(|c| c.0).min_by(|a, b| (a.0 - cpu.larder.0).hypot(a.1 - cpu.larder.1).total_cmp(&(b.0 - cpu.larder.0).hypot(b.1 - cpu.larder.1))).unwrap();
         for g in [&mut cpu.log, &mut gpu.log] {
             g.clear();
         }
         assert!(cpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))) && gpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))));
-        let mut sizes = Vec::new();
+        let (mut sizes, mut overlaps) = (Vec::new(), Vec::new());
         while cpu.end.is_none() {
             cpu.step();
             gpu.step();
+            let (a, b) = (cpu.world.mould_grid(BIN).unwrap(), gpu.world.mould_grid(BIN).unwrap());
             if cpu.world.ticks() % 75 == 0 {
                 sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
+                // The share of the mould in the same squares on both.
+                let same: u32 = a.iter().zip(&b).map(|(x, y)| *x.min(y)).sum();
+                overlaps.push(same as f64 / a.iter().sum::<u32>().max(b.iter().sum::<u32>()).max(1) as f64);
             }
         }
-        eprintln!("game s, living CPU, GPU: {sizes:?}; banked {} / {}", cpu.harvested, gpu.harvested);
+        eprintln!("game s, living CPU, GPU: {sizes:?}; banked {} / {}; the grids' overlap {overlaps:.3?}", cpu.harvested, gpu.harvested);
         assert_eq!(gpu.world.ticks(), cpu.world.ticks(), "the same game ticks");
         assert!(cpu.harvested > 0.0 && gpu.harvested == cpu.harvested, "banked {} on the GPU, {} on the CPU", gpu.harvested, cpu.harvested);
         for &(t, a, b) in &sizes {
@@ -3685,6 +3702,61 @@ mod tests {
             assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
         assert!(sizes.iter().any(|&(_, a, _)| a > walkers) && sizes.last().unwrap().1 < walkers, "the mould grew, then its first walkers starved: {sizes:?}");
+        // 0.91, 0.90, 0.88 and 0.78 (2026-11-12): the two engines' floats
+        // part, and most at 20 s, just after the first walkers starve.
+        assert!(overlaps.iter().all(|&o| o >= 0.7), "the mould grids overlap: {overlaps:.3?}");
+    }
+
+    /// A squad firing into the race world's mould on the engine as on the
+    /// CPU (2026-11-12) with the mould turning from fresh gunfire (the
+    /// opt-in `larder_world::FLEE_KEEP` and `FLEE_WEIGHT`): every hit's
+    /// alarm steers walkers on both sides. The squad attacks the core from
+    /// the start for 30 s; the moulds stay within the race twin's 8% and the
+    /// kills within 15%. Without the alarm (the race world's default) the
+    /// CPU's mould differs from its flee game, so the bound tests the rule
+    /// and not only the growth.
+    #[test]
+    fn a_squad_firing_on_the_fleeing_mould_plays_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World, FLEE_KEEP, FLEE_WEIGHT};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 30.0, ..Rules::default() };
+        let flee = || {
+            let mut p = race_params(seed, scale, walkers);
+            (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
+            p
+        };
+        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(flee()), rules, seed);
+        let mut s = race_settings(seed, scale, walkers);
+        (s.alarm_keep, s.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+        assert!(cpu.world.p.alarm_weight < 0.0 && gpu.world.s.alarm_weight < 0.0, "the race world flees gunfire on both");
+        for g in [&mut cpu.log, &mut gpu.log, &mut off.log] {
+            g.clear();
+        }
+        for k in 0..cpu.soldiers.len() {
+            assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)) && off.apply(Cmd::Order(k, Order::Attack)));
+        }
+        let mut sizes = Vec::new();
+        while cpu.end.is_none() {
+            cpu.step();
+            gpu.step();
+            off.step();
+            if cpu.world.ticks() % 75 == 0 {
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living(), off.world.living()));
+            }
+        }
+        eprintln!("firing on the fleeing mould: game s, living CPU, GPU, CPU without the alarm: {sizes:?}; shots {} / {}, killed {} / {} (without the alarm {})", cpu.shots, gpu.shots, cpu.killed, gpu.killed, off.killed);
+        assert!(cpu.shots > 20 && gpu.shots > 20, "the squad fired: {} / {}", cpu.shots, gpu.shots);
+        let (a, b) = (cpu.killed as f64, gpu.killed as f64);
+        assert!(a > 0.0 && (a - b).abs() <= 0.15 * a, "killed {b} on the GPU, {a} on the CPU");
+        for &(t, a, b, _) in &sizes {
+            let (a, b) = (a as f64, b as f64);
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+        }
+        assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the alarm changed the CPU's game");
     }
 
     /// A designed map (ROADMAP WM1) on the engine as on the CPU: the Fork

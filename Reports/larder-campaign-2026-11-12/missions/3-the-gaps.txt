@@ -4,7 +4,7 @@
 # of 28 rounds did, census v3, where the planned hands peaked at 3.8-5.8% outside and
 # idle at 17-33%).
 name The gaps
-says Keep the mould inside the Rim until 10:00
+says Keep the mould inside the Rim for 10:00
 map rim
 tier sprawler
 verbs move harvest buy stance fire wall

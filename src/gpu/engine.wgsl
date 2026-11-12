@@ -50,7 +50,8 @@ struct Params {
     // or rubble a broken wall leaves), WALLS (a wall has been built),
     // TERRAIN (rock or wet ground to draw). `full` is `crystal_charge`;
     // `npc` the crystal cells `pcell` lists; `hp` the walls' full health.
-    world: u32, npiles: u32, npc: u32, _w0: u32,
+    // `grid` is the mould grid's square, fine cells (`count`; 0 for none).
+    world: u32, npiles: u32, npc: u32, grid: u32,
     full: f32, eat: f32, flow: f32, regrow: f32,
     wet_step: f32, bite: f32, wall_scent: f32, hp: f32,
     // The squad (Larder World W2a, `Engine::set_squad`): this frame's units
@@ -2010,4 +2011,29 @@ fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
     spec[k] = (w & 0xFFFF01FFu) | (L_DEAD << 9u);
     if (P.upkeep > 0.0) { energy[k] = -1.0; }
     atomicAdd(&wstat[3], 1u);
+}
+
+// The living walkers (the CPU's `living`: a slot alive, with growth, and
+// not dead) into `wstat[4]`, and with `grid` the mould grid (the CPU's
+// `mould_grid`: each `grid`-cell square's walkers holding a cell, its
+// `occ`) into `wstat[8..]`, row by row; `Engine::record_count` clears both
+// first and dispatches a thread for each slot and each cell. The game's
+// packed readout copies them, so neither costs a read-back of its own (the
+// count read the energy and `spec` back, 8 MB at 1M slots, until
+// 2026-11-12). Energy is below 0 only with growth on (an empty or dead
+// slot), and the state bits are 0 with the life cycle off. One atomic a
+// living walker: a workgroup's sum through shared memory cost 1.5 ms a
+// game step on software Vulkan (its barriers), this nothing measurable.
+@compute @workgroup_size(256)
+fn count(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k < P.n && energy[k] >= 0.0 && ((spec[k] >> 9u) & 3u) != L_DEAD) { atomicAdd(&wstat[4], 1u); }
+    let g = P.grid;
+    if (g > 0u && k < P.w * P.h) {
+        let o = atomicLoad(&occ[k]);
+        if (o > 0u) {
+            let gw = (P.w + g - 1u) / g;
+            atomicAdd(&wstat[8u + (k / P.w / g) * gw + (k % P.w) / g], o);
+        }
+    }
 }

@@ -113,3 +113,54 @@ Dead time on the planned hands is 0-9% (the landing's first seconds), idle's 64-
 - Mission 1's 2:31-2:48 is under the design's 6-12 minutes; the AI acts at once, so a first-time player will be slower. Checked by hand once the owner plays it.
 
 **Changes from the reviews (05:38-05:43Z):** kills count as useful only while the mould is smaller than 30 s ago (firing at a mould that regrows is not progress); the stall measure above; the window says when it can't show a bar rather than hiding it; one test per goal kind on a small CPU world (clear and retake, contain, take, stuck, squad with crystals; 10 tests in all). `take`'s bar now starts from an even share: it showed 83% of a 60% goal at 0:00. On the race world an idle mould halves by itself in the first 40 s as walkers starve, so mission 4's `shrink` numbers must allow for that.
+
+### Pictures (page)
+
+[Campaign Missions 1-3](https://claude.ai/artifact/Pu2j5ComXhUPTAMv4MyMRJ), copy in
+`larder-campaign-2026-11-12/page/`: the game window (GPU world, software
+Vulkan) playing each mission with the claim hand, seed 1, counts under each
+frame. Landfall met at 1:21 (3 stars, 12 soldiers, 3906 harvested). On the Rim
+a mould trail leaves through the north-east gap by 5:00 and reaches the
+larder. The GPU census (GPU thread, `campaign gpu=both`, claim, seeds 1-4,
+after #101) holds seed 1 on the GPU too (peak share outside 0.050 at 696 s,
+against the CPU's 0.058 at 701 s), so the trail the player sees sits inside
+the 5% allowance. That is the problem: a leak must mean what the player sees
+(a trail out of a gap) before the window shows this bar. Seed 2 failed on
+the GPU (peak 0.168, Cap) where the CPU held; four seeds can't call a bias
+(sign p 0.63), so the 32-seed `gpu=both` run decides it.
+
+### What the player sees outside the Rim (census v5)
+
+Question (design review, 06:26Z): on the Rim the window shows a mould trail
+out of the north-east gap by 5:00 while the goal counts as held; what does a
+leak have to mean for the bar and the picture to agree?
+
+Measure: each second, the 4 x 4-cell bins outside the Rim holding at least
+1, 4 and 16 walkers (`census/3-the-gaps-s1-4-v5.txt`, CPU, seeds 1-4,
+seven hands; the last columns), and the same in the GPU window on seed 1
+every 30 s (`census/3-the-gaps-claim-s1-gpu-window-bins.txt`, from a
+throwaway print in the window, not committed).
+
+| | bins >= 1 (most) | bins >= 4 (most) | bins >= 16 (most) | s with a bin of 4+ outside |
+|---|---|---|---|---|
+| planned hands that held (18 rounds) | 166-239 | 5-17 | 0 | 148-431 |
+| planned hands that hit the cap (2) | 231-269 | 83-85 | 38-42 | 673-869 |
+| idle (4) | 295-438 | 85-220 | 40-110 | 883-892 |
+| random (4, ended by 6:06) | 277-432 | 19-105 | 0-44 | 201-349 |
+| GPU window, claim, seed 1, 0:30-7:00 | 92-226 | 0-5 | 0 | |
+
+The trail in the picture is thin: in the window at 5:00, 153 walkers (2.4%)
+outside over 128 bins, at most 3 in any bin. The drawn body is trail times
+`1 - exp(-walkers in the 5 x 5 round / 6)`, so a few walkers on a strong trail
+draw a clear tendril. Nothing is wrong with the count; the goal allows 5% and
+the player is not told. No hand keeps every walker in (leak 0 held for no
+second, v1), so "no visible mould outside" can't be the goal on the plain
+mould. A dense body outside (a bin of 16+) separates the winners (0) from
+idle (40-110) as well as the share does.
+
+Change: the goal line now says the share outside against the allowance,
+for example "Keep the mould inside the Rim for 10:00 (50%; 2.4% outside, 5% allowed)"
+(`Tracker::progress_line`, used by the window); the sentence says "for", as
+the hold restarts when the share passes 5%. Whether a dense-body rule plays
+better than the share is for the Sprawler re-tune, where the mould moves
+differently.

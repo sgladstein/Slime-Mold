@@ -1,0 +1,86 @@
+larderworld the race world, scale 1 walkers 1250 cap 60 s, tps 15, seeds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]; on the CPU and the GPU engine; rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 10.0, hp: 100.0, drain: 1.0, touch: 1.5, smell: 0.5, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, cap: 60.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true }
+larderworld: GPU llvmpipe (LLVM 20.1.2, 256 bits)
+  idle seed  2 the CPU:         cap at    60 s, score -0.249; soldiers  4, mould   1236, bank   1689, harvested      0, stolen     1, shots    31, killed     13, crystals left 0.999; 1.09 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+larderworld: GPU llvmpipe (LLVM 20.1.2, 256 bits)
+  idle seed  1 the CPU:         cap at    60 s, score -0.201; soldiers  4, mould    838, bank   1307, harvested      0, stolen     3, shots    69, killed     40, crystals left 0.999; 1.26 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  3 the CPU:         cap at    60 s, score -0.255; soldiers  4, mould   1296, bank   1790, harvested      0, stolen     0, shots    21, killed     19, crystals left 0.999; 1.10 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+larderworld: GPU llvmpipe (LLVM 20.1.2, 256 bits)
+  idle seed  2 the GPU engine:         cap at    60 s, score -0.249; soldiers  4, mould   1236, bank   1689, harvested      0, stolen     1, shots    31, killed     13, crystals left 0.999; 6.13 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  1 the GPU engine:         cap at    60 s, score -0.204; soldiers  4, mould    861, bank   1327, harvested      0, stolen     3, shots    67, killed     38, crystals left 0.999; 7.39 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  3 the GPU engine:         cap at    60 s, score -0.255; soldiers  4, mould   1299, bank   1660, harvested      0, stolen     0, shots    34, killed     21, crystals left 0.999; 4.95 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  4 the CPU:         cap at    60 s, score -0.231; soldiers  4, mould   1076, bank   1319, harvested      0, stolen     1, shots    68, killed     48, crystals left 0.999; 1.37 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  5 the CPU:         cap at    60 s, score -0.283; soldiers  4, mould   1629, bank   1739, harvested      0, stolen     1, shots    26, killed     15, crystals left 0.999; 1.21 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  6 the CPU:         cap at    60 s, score -0.229; soldiers  4, mould   1058, bank   1486, harvested      0, stolen     4, shots    51, killed     55, crystals left 0.999; 0.90 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  4 the GPU engine:         cap at    60 s, score -0.230; soldiers  4, mould   1069, bank   1319, harvested      0, stolen     1, shots    68, killed     48, crystals left 0.999; 6.25 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  7 the CPU:         cap at    60 s, score -0.245; soldiers  4, mould   1202, bank   1164, harvested      0, stolen     6, shots    83, killed     62, crystals left 0.999; 1.13 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  5 the GPU engine:         cap at    60 s, score -0.282; soldiers  4, mould   1612, bank   1669, harvested      0, stolen     1, shots    33, killed     19, crystals left 0.999; 6.81 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  6 the GPU engine:         cap at    60 s, score -0.233; soldiers  4, mould   1091, bank   1505, harvested      0, stolen     5, shots    49, killed     49, crystals left 0.999; 6.19 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  8 the CPU:         cap at    60 s, score -0.257; soldiers  4, mould   1325, bank   1429, harvested      0, stolen     1, shots    57, killed     44, crystals left 0.999; 1.16 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  9 the CPU:         cap at    60 s, score -0.244; soldiers  4, mould   1189, bank   1428, harvested      0, stolen     2, shots    57, killed     31, crystals left 0.999; 1.16 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  7 the GPU engine:         cap at    60 s, score -0.244; soldiers  4, mould   1195, bank   1093, harvested      0, stolen     7, shots    90, killed     64, crystals left 0.999; 6.53 ms a tick, think 0 us mean, 0 at most; score1 +0.000
+  idle seed  8 the GPU engine:         cap at    60 s, score -0.259; soldiers  4, mould   1346, bank   1490, harvested      0, stolen     0, shots    51, killed     46, crystals left 0.999; 6.68 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 10 the CPU:         cap at    60 s, score -0.255; soldiers  4, mould   1305, bank   1589, harvested      0, stolen     1, shots    41, killed     24, crystals left 0.999; 1.26 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 11 the CPU:         cap at    60 s, score -0.251; soldiers  4, mould   1264, bank   1550, harvested      0, stolen     0, shots    45, killed     40, crystals left 0.999; 0.95 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed  9 the GPU engine:         cap at    60 s, score -0.243; soldiers  4, mould   1184, bank   1428, harvested      0, stolen     2, shots    57, killed     31, crystals left 0.999; 7.33 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 12 the CPU:         cap at    60 s, score -0.253; soldiers  4, mould   1284, bank   1115, harvested      0, stolen     5, shots    88, killed     79, crystals left 0.999; 1.26 ms a tick, think 0 us mean, 0 at most; score1 +0.000
+  idle seed 10 the GPU engine:         cap at    60 s, score -0.253; soldiers  4, mould   1279, bank   1709, harvested      0, stolen     1, shots    29, killed     19, crystals left 0.999; 6.67 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 13 the CPU:         cap at    60 s, score -0.248; soldiers  4, mould   1227, bank   1458, harvested      0, stolen     2, shots    54, killed     38, crystals left 0.999; 1.13 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 11 the GPU engine:         cap at    60 s, score -0.254; soldiers  4, mould   1294, bank   1610, harvested      0, stolen     0, shots    39, killed     39, crystals left 0.999; 7.26 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 12 the GPU engine:         cap at    60 s, score -0.254; soldiers  4, mould   1293, bank   1115, harvested      0, stolen     5, shots    88, killed     79, crystals left 0.999; 5.84 ms a tick, think 0 us mean, 0 at most; score1 +0.000
+  idle seed 14 the CPU:         cap at    60 s, score -0.252; soldiers  4, mould   1273, bank   1095, harvested      0, stolen     5, shots    90, killed     63, crystals left 0.999; 1.53 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 15 the CPU:         cap at    60 s, score -0.240; soldiers  4, mould   1151, bank    613, harvested      0, stolen     7, shots   138, killed    115, crystals left 0.999; 2.87 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 13 the GPU engine:         cap at    60 s, score -0.248; soldiers  4, mould   1227, bank   1458, harvested      0, stolen     2, shots    54, killed     38, crystals left 0.999; 6.55 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 14 the GPU engine:         cap at    60 s, score -0.252; soldiers  4, mould   1273, bank   1095, harvested      0, stolen     5, shots    90, killed     63, crystals left 0.999; 5.36 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 16 the CPU:         cap at    60 s, score -0.239; soldiers  4, mould   1144, bank   1510, harvested      0, stolen     0, shots    49, killed     29, crystals left 0.999; 1.03 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 17 the CPU:         cap at    60 s, score -0.254; soldiers  4, mould   1288, bank   1145, harvested      0, stolen     5, shots    85, killed     56, crystals left 0.999; 1.08 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 16 the GPU engine:         cap at    60 s, score -0.240; soldiers  4, mould   1151, bank   1377, harvested      0, stolen     3, shots    62, killed     42, crystals left 0.999; 5.54 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 15 the GPU engine:         cap at    60 s, score -0.240; soldiers  4, mould   1151, bank    613, harvested      0, stolen     7, shots   138, killed    115, crystals left 0.999; 7.66 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 18 the CPU:         cap at    60 s, score -0.248; soldiers  4, mould   1231, bank   1245, harvested      0, stolen     5, shots    75, killed     56, crystals left 0.999; 0.80 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 19 the CPU:         cap at    60 s, score -0.278; soldiers  4, mould   1559, bank   1800, harvested      0, stolen     0, shots    20, killed     10, crystals left 0.999; 1.07 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 17 the GPU engine:         cap at    60 s, score -0.253; soldiers  4, mould   1284, bank   1117, harvested      0, stolen     3, shots    88, killed     55, crystals left 0.999; 7.13 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 20 the CPU:         cap at    60 s, score -0.255; soldiers  4, mould   1302, bank   1590, harvested      0, stolen     0, shots    41, killed     25, crystals left 0.999; 0.94 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 18 the GPU engine:         cap at    60 s, score -0.246; soldiers  4, mould   1214, bank   1206, harvested      0, stolen     4, shots    79, killed     59, crystals left 0.999; 6.71 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 19 the GPU engine:         cap at    60 s, score -0.278; soldiers  4, mould   1563, bank   1830, harvested      0, stolen     0, shots    17, killed     10, crystals left 0.999; 5.92 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 21 the CPU:         cap at    60 s, score -0.255; soldiers  4, mould   1302, bank   1205, harvested      0, stolen     5, shots    79, killed     54, crystals left 0.999; 1.09 ms a tick, think 0 us mean, 0 at most; score1 +0.000
+  idle seed 22 the CPU:         cap at    60 s, score -0.270; soldiers  4, mould   1472, bank   1670, harvested      0, stolen     0, shots    33, killed     20, crystals left 0.999; 1.30 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 20 the GPU engine:         cap at    60 s, score -0.255; soldiers  4, mould   1302, bank   1590, harvested      0, stolen     0, shots    41, killed     25, crystals left 0.999; 7.99 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 21 the GPU engine:         cap at    60 s, score -0.255; soldiers  4, mould   1300, bank   1205, harvested      0, stolen     5, shots    79, killed     54, crystals left 0.999; 4.99 ms a tick, think 0 us mean, 0 at most; score1 +0.000
+  idle seed 23 the CPU:         cap at    60 s, score -0.261; soldiers  4, mould   1367, bank   2000, harvested      0, stolen     0, shots     0, killed      0, crystals left 0.999; 1.93 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 24 the CPU:         cap at    60 s, score -0.263; soldiers  4, mould   1385, bank   1419, harvested      0, stolen     1, shots    58, killed     37, crystals left 0.999; 1.55 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 22 the GPU engine:         cap at    60 s, score -0.269; soldiers  4, mould   1453, bank   1580, harvested      0, stolen     0, shots    42, killed     23, crystals left 0.999; 6.58 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 25 the CPU:         cap at    60 s, score -0.274; soldiers  4, mould   1521, bank   1609, harvested      0, stolen     1, shots    39, killed     23, crystals left 0.999; 0.99 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 23 the GPU engine:         cap at    60 s, score -0.261; soldiers  4, mould   1369, bank   2000, harvested      0, stolen     0, shots     0, killed      0, crystals left 0.999; 6.50 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 26 the CPU:         cap at    60 s, score -0.262; soldiers  4, mould   1377, bank   1618, harvested      0, stolen     2, shots    38, killed     21, crystals left 0.999; 0.94 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 24 the GPU engine:         cap at    60 s, score -0.263; soldiers  4, mould   1384, bank   1498, harvested      0, stolen     2, shots    50, killed     31, crystals left 0.999; 6.72 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 27 the CPU:         cap at    60 s, score -0.248; soldiers  4, mould   1232, bank   1085, harvested      0, stolen     5, shots    91, killed     60, crystals left 0.999; 1.13 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 25 the GPU engine:         cap at    60 s, score -0.275; soldiers  4, mould   1523, bank   1599, harvested      0, stolen     1, shots    40, killed     25, crystals left 0.999; 6.66 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 28 the CPU:         cap at    60 s, score -0.233; soldiers  4, mould   1088, bank   1174, harvested      0, stolen     6, shots    82, killed     61, crystals left 0.999; 1.18 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 26 the GPU engine:         cap at    60 s, score -0.261; soldiers  4, mould   1366, bank   1619, harvested      0, stolen     1, shots    38, killed     23, crystals left 0.999; 7.16 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 29 the CPU:         cap at    60 s, score -0.265; soldiers  4, mould   1406, bank    784, harvested      0, stolen     6, shots   121, killed     78, crystals left 0.999; 1.17 ms a tick, think 0 us mean, 0 at most; score1 +0.000
+  idle seed 27 the GPU engine:         cap at    60 s, score -0.249; soldiers  4, mould   1245, bank    967, harvested      0, stolen     3, shots   103, killed     59, crystals left 0.999; 5.76 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 30 the CPU:         cap at    60 s, score -0.236; soldiers  4, mould   1120, bank   1890, harvested      0, stolen     0, shots    11, killed      6, crystals left 0.999; 1.12 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 28 the GPU engine:         cap at    60 s, score -0.234; soldiers  4, mould   1096, bank   1307, harvested      0, stolen     3, shots    69, killed     47, crystals left 0.999; 6.64 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 31 the CPU:         cap at    60 s, score -0.254; soldiers  4, mould   1292, bank   1780, harvested      0, stolen     0, shots    22, killed     15, crystals left 0.999; 1.03 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 29 the GPU engine:         cap at    60 s, score -0.262; soldiers  4, mould   1377, bank    804, harvested      0, stolen     6, shots   119, killed     75, crystals left 0.999; 6.96 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 30 the GPU engine:         cap at    60 s, score -0.238; soldiers  4, mould   1138, bank   1920, harvested      0, stolen     0, shots     8, killed      5, crystals left 0.999; 5.91 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 32 the CPU:         cap at    60 s, score -0.260; soldiers  4, mould   1351, bank   1480, harvested      0, stolen     0, shots    52, killed     34, crystals left 0.999; 1.14 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 31 the GPU engine:         cap at    60 s, score -0.255; soldiers  4, mould   1301, bank   1780, harvested      0, stolen     0, shots    22, killed     15, crystals left 0.999; 6.62 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+  idle seed 32 the GPU engine:         cap at    60 s, score -0.262; soldiers  4, mould   1373, bank   1649, harvested      0, stolen     1, shots    35, killed     19, crystals left 0.999; 4.74 ms a tick, think 0 us mean, 0 at most; score1 +0.500
+
+==== on the CPU ====
+
+by hand (mean score; ends):
+    idle: mean -0.252; mould wiped 0, cap 32, squad wiped 0
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 0):
+
+==== on the GPU engine ====
+
+by hand (mean score; ends):
+    idle: mean -0.252; mould wiped 0, cap 32, squad wiped 0
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 0):
+
+CPU against GPU, by hand (score: median CPU, median GPU, median GPU - CPU by seed; Mann-Whitney two-sided, Holm over 1):
+              idle: CPU -0.254, GPU -0.254, difference +0.000; p 0.9786
+  ends, CPU / GPU: mould wiped 0 / 0, cap 32 / 32, squad wiped 0 / 0

@@ -2,8 +2,8 @@
 title: The life cycle and the mould's answer to attack (Sporer, Sleeper, Swarmer)
 kind: mechanism
 status: open
-updated: 2026-11-12T01:00Z
-sources: [Reports/life-gpu-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, research/sources/jones-adamatzky-2012.md, research/sources/jones-2015-survey.md]
+updated: 2026-11-12T07:05Z
+sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/life-gpu-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, research/sources/jones-adamatzky-2012.md, research/sources/jones-2015-survey.md]
 code: [BigParams::spore_rate, BigParams::spore_scent, BigParams::spore_burst, BigParams::spore_alarm, BigParams::spore_steps, BigParams::spore_speed, BigParams::spore_reach, BigParams::spore_deposit, BigParams::spore_land, BigParams::spore_rest, BigParams::sleep_rate, BigParams::sleep_deposit, BigParams::wake_scent, BigParams::wake_alarm, BigParams::wake_steps, BigParams::sleep_rest, BigParams::sleep_death, BigParams::alarm_keep, BigParams::alarm_weight, BigParams::alarm_relay, BigDish::strike, BigDish::life, BigDish::life_t, BigDish::alarm, BigDish::life_counts, LIFE_SPORE, LIFE_DORMANT, LIFE_DEAD, Tier, SHOT_ALARM, Engine::strike, Engine::life_of, Engine::alarm_of, shout]
 ---
 
@@ -33,7 +33,10 @@ test*).
   8 of 8 on the test dish, but in the world its edge is not significant.
 
 The counters (bait, kill zone, starve) are proposals, not yet tested
-against random play. Fleeing the alarm did not split the body. The alarm
+against random play. Fleeing the alarm did not split the body. It holds a
+hole open under a squad's fire, but as the Larder race world's default it
+let random hold the undefended core and win (2026-11-12,
+[Larder](../world/larder.md)), so it is an opt-in. The alarm
 costs +31% a step on one core. Tables: [the report](../../Reports/mould-tiers-2026-11-11.md),
 *Summary* and *In the Larder world*.
 

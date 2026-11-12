@@ -1,0 +1,42 @@
+larderhole race world, scale 2 walkers 5000, grow 60 s, fire 20 s, rest 10 s, squad 4, stand 8 dish cells past the edge, seeds [1]; rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 0.0, hp: 100.0, drain: 1.0, touch: 1.5, smell: 0.5, smell_r: 2.0, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, cap: 900.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, overrun: 0.0, reserve: 0.0 }
+       off fire seed  1: placed true, at the start 139 cells 290 walkers in range; 16.01 ms a tick
+    hole    30 36 38 42 43 49 42 36 35 36 40 36 40 42 37 39 43 37 45 40 38 40 42 36 39 35 33 31 33 22
+    cells   137 140 137 138 131 126 140 143 138 142 133 142 141 138 142 148 137 155 126 131 132 137 139 141 145 147 152 150 149 153
+    walkers 286 292 298 309 299 290 291 293 291 296 284 286 292 293 304 305 295 316 306 298 299 306 307 320 328 329 336 341 342 346
+    hit at  5.1 5.9 4.7 5.0 5.2 6.1 5.3 5.1 4.6 4.4 4.6 4.9 4.5 4.7 5.0 4.6 4.2 4.2 3.3 4.4 - - - - - - - - - -
+    hits    4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0
+    killed  7 13 7 5 7 6 7 14 7 9 9 9 7 8 4 6 6 9 14 9 0 0 0 0 0 0 0 0 0 0
+    alive   4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+      base hold seed  1: placed true, at the start 139 cells 290 walkers in range; 18.17 ms a tick
+    hole    40 31 33 35 36 35 29 30 36 33 28 27 29 26 27 28 27 30 28 28 26 30 27 27 30 24 27 32 30 26
+    cells   135 140 151 141 139 145 156 153 148 164 151 153 157 148 153 160 163 157 154 161 158 157 151 166 151 160 161 153 152 159
+    walkers 290 303 331 336 342 352 353 351 355 378 367 375 379 372 374 381 376 382 364 381 382 377 371 383 373 381 363 356 365 377
+    hit at  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    hits    0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0
+    killed  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    alive   4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+    flee:3 fire seed  1: placed true, at the start 139 cells 290 walkers in range; 20.27 ms a tick
+    hole    51 75 96 111 123 124 134 131 134 129 135 132 133 130 130 136 128 135 130 129 121 99 86 73 61 51 40 44 38 38
+    cells   126 103 74 61 41 41 12 10 17 17 12 20 24 28 12 10 33 29 21 22 51 84 127 132 161 169 185 176 187 186
+    walkers 262 217 143 99 72 61 12 11 17 17 14 22 25 35 18 10 35 31 23 22 52 93 148 173 230 293 347 364 386 422
+    hit at  5.1 7.8 9.7 10.8 11.9 12.5 10.9 12.7 12.3 10.2 12.9 12.5 13.2 4.7 8.4 11.8 12.7 10.4 6.6 12.4 - - - - - - - - - -
+    hits    4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0
+    killed  7 7 14 6 14 14 15 11 13 13 14 15 15 10 3 8 5 12 5 7 0 0 0 0 0 0 0 0 0 0
+    alive   4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+      base fire seed  1: placed true, at the start 139 cells 290 walkers in range; 21.67 ms a tick
+    hole    42 59 67 82 100 100 110 103 95 106 109 109 112 109 103 107 109 108 104 90 76 62 59 53 42 34 29 24 28 23
+    cells   126 131 122 108 94 95 86 84 95 81 75 74 78 89 99 89 98 92 96 103 123 159 172 188 197 211 211 214 203 198
+    walkers 273 256 218 174 142 136 130 111 129 101 103 102 96 117 136 125 132 118 118 144 183 260 304 339 369 398 421 449 459 472
+    hit at  5.1 7.5 8.9 10.0 10.6 9.5 12.2 12.3 4.9 9.7 7.6 11.4 6.8 6.4 6.7 8.4 10.3 7.0 3.6 3.3 - - - - - - - - - -
+    hits    4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0 0/0
+    killed  7 8 8 11 4 7 16 14 3 5 10 8 6 7 9 7 2 6 6 6 0 0 0 0 0 0 0 0 0 0
+    alive   4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+
+median over seeds, hole in dish cells (fire / hold) at [5, 10, 20, 22, 25, 30] s after the squad is set down; firing stops at 20 s:
+        base: fire  100  106   90   62   42   23  | hold   36   33   28   30   30   26  | at 20 s the hole is 65% of the mould in range at the start; hits land 6.5 dish cells out in the last 5 s of fire; 5 s after the last shot 47% of the hole is left; 150 killed under fire; 4 of 4 soldiers alive at the end; 21.67 ms a tick
+         off: fire   43   36   40   40   39   22  | hold   36   33   28   30   30   26  | at 20 s the hole is 29% of the mould in range at the start; hits land 4.1 dish cells out in the last 5 s of fire; 5 s after the last shot 98% of the hole is left; 163 killed under fire; 4 of 4 soldiers alive at the end; 16.01 ms a tick
+      flee:3: fire  123  129  129   99   61   38  | hold   36   33   28   30   30   26  | at 20 s the hole is 93% of the mould in range at the start; hits land 10.8 dish cells out in the last 5 s of fire; 5 s after the last shot 47% of the hole is left; 208 killed under fire; 4 of 4 soldiers alive at the end; 20.27 ms a tick
+
+the hole at 20 s of fire against base, paired by seed (larger / smaller, ties left out; sign test, Holm over 2):
+         off: 0 larger, 1 smaller, median difference -50 dish cells, p 1.0000
+      flee:3: 1 larger, 0 smaller, median difference +39 dish cells, p 1.0000
