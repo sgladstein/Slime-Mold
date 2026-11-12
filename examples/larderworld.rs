@@ -4,12 +4,16 @@
 //! ```text
 //! cargo run --release --example larderworld -- census seeds=1-16 [scale=2 walkers=5000 hands=idle,random,farm,rush,wall cap=600 threads=4]
 //! cargo run --release --example larderworld -- look=DIR seeds=1 hands=farm [every=60]
+//! cargo run --release --example larderworld -- census map=fork ...
 //! ```
 //!
 //! The game is `mould::larder_world` on the CPU race world
 //! (`larder_world::race_world`): 23 crystals that run dry, rock, wet
 //! ground, and a growing mould that starts as a blob on the home crystal
-//! with the squad of 4 on the crystal farthest from it.
+//! with the squad of 4 on the crystal farthest from it. With `map=NAME`
+//! (a map in `Reports/larder-maps-2026-11-11/maps`, or `map=DIR/NAME`) it
+//! is that designed map instead (`BigDish::with_map`, ROADMAP WM1), on the
+//! race world's mould settings; the seed then varies the mould, not the map.
 //!
 //! **Deciding measure, named before the run:** M3's one ordered number a
 //! round (`End::score`: a squad win beats a stalemate at the cap beats the
@@ -40,8 +44,9 @@
 //!   (`claim:claim_at=200+keep=4`). Each is also paired with farm, the
 //!   best scripted hand.
 use slime_mould::mould::big::BigDish;
-use slime_mould::mould::larder_world::{race_world, Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{race_params, race_world, Cmd, End, Game, Order, Rules, Stance, World};
 use slime_mould::mould::larder_world_ai;
+use slime_mould::mould::map::Map;
 
 const RESERVE: f32 = 600.0;
 const FARM_MAX: usize = 8;
@@ -73,6 +78,7 @@ fn main() {
     let mut hands: Vec<String> = ["idle", "random", "farm", "rush", "wall"].iter().map(|s| s.to_string()).collect();
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
     let mut rules = Rules::default();
+    let mut map = None::<(String, Map)>;
     for a in std::env::args().skip(1) {
         if a == "census" {
             census = true;
@@ -94,18 +100,29 @@ fn main() {
             "aim_min" => rules.aim_min = v.parse().unwrap(),
             "price" => rules.price = v.parse().unwrap(),
             "strike" => rules.strike = v.parse().unwrap(),
+            "map" => {
+                let path = std::path::Path::new(v);
+                let dir = match path.parent() {
+                    Some(d) if !d.as_os_str().is_empty() => d.to_path_buf(),
+                    _ => std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps"),
+                };
+                let name = path.file_name().unwrap().to_str().unwrap().to_string();
+                map = Some((name.clone(), Map::load(&dir, &name).unwrap_or_else(|e| panic!("{e}"))));
+            }
             _ => panic!("unknown {k}"),
         }
     }
     if let Some(c) = cap {
         rules.cap = c;
     }
-    println!("larderworld scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; rules {rules:?}", rules.cap, rules.tps, seeds);
+    let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
+    println!("larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; rules {rules:?}", rules.cap, rules.tps, seeds);
+    let map = map.as_ref().map(|(_, m)| m);
     if let Some(dir) = look {
         std::fs::create_dir_all(&dir).expect("look dir");
         for &seed in &seeds {
             for hand in &hands {
-                let r = play(seed, scale, walkers, rules, hand, Some((&dir, every)));
+                let r = play(seed, scale, walkers, rules, hand, map, Some((&dir, every)));
                 println!("{hand} seed {seed}: {} at {:.0} s, score {:+.3}", r.end, r.t, r.score);
             }
         }
@@ -127,7 +144,7 @@ fn main() {
                     break;
                 }
                 let (seed, hand) = &jobs[j];
-                let r = play(*seed, scale, walkers, rules, hand, None);
+                let r = play(*seed, scale, walkers, rules, hand, map, None);
                 println!(
                     "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most",
                     r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us
@@ -185,8 +202,11 @@ fn main() {
     }
 }
 
-fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, look: Option<(&str, f32)>) -> Row {
-    let mut world = race_world(seed, scale, walkers);
+fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>) -> Row {
+    let mut world = match map {
+        Some(m) => BigDish::with_map(race_params(seed, scale, walkers), m),
+        None => race_world(seed, scale, walkers),
+    };
     world.threads = 1;
     let mut g = Game::new(world, rules, seed);
     let start = std::time::Instant::now();
@@ -200,6 +220,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, look:
             if t - shot >= every || shot < 0.0 {
                 shot = t;
                 picture(g, &format!("{dir}/{hand}-s{seed}-{:04.0}s.png", t));
+                counts(g, hand, seed);
             }
         }
         match hand {
@@ -229,6 +250,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, look:
     });
     if let Some((dir, _)) = look {
         picture(&g, &format!("{dir}/{hand}-s{seed}-end-{:04.0}s.png", g.time()));
+        counts(&g, hand, seed);
     }
     let ms = start.elapsed().as_secs_f64() * 1000.0 / g.world.ticks().max(1) as f64;
     let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / g.world.pile_full.iter().sum::<f32>().max(1.0);
@@ -385,6 +407,20 @@ fn wall_road(g: &mut Game<BigDish>) {
 /// The world as the engine draws it, with each live soldier as a white
 /// square and the larder as a yellow ring: marks for the reader, not the
 /// simulation.
+/// The counts that go beside a picture.
+fn counts(g: &Game<BigDish>, hand: &str, seed: u64) {
+    println!(
+        "  {hand} seed {seed} at {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, killed {}, crystals left {:.3}",
+        g.time(),
+        g.world.living(),
+        g.soldiers.iter().filter(|s| s.alive).count(),
+        g.bank,
+        g.harvested,
+        g.killed,
+        g.world.crystals_left()
+    );
+}
+
 fn picture(g: &Game<BigDish>, path: &str) {
     let mut img = g.world.image(1);
     let (w, h) = (img.width() as i32, img.height() as i32);

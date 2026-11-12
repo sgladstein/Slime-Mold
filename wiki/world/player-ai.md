@@ -2,7 +2,7 @@
 title: The Larder player AI
 kind: tool
 status: current
-updated: 2026-11-12T00:50Z
+updated: 2026-11-12T01:10Z
 sources: [Reports/larder-world-ai-2026-11-12.md, Reports/larder-ai-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Brain, Style, Side, RandomHand, set_rule, Game::apply, mould_grid]
 ---
@@ -34,6 +34,7 @@ The small-dish AI (`src/mould/larder_ai.rs`, [report](../../Reports/larder-ai-20
 - A second team: a team on each soldier, a home per team, and `Game::apply_as(team, cmd)`.
 - W1: how often the early leader wins with each opening and crystal rule, as a per-mould difficulty stat (owner, 14:14Z and 14:54Z).
 - An exploiter search over `Style` knobs against a rule change.
+- On a map (WM1) crystals differ in size and the larder has its own place: read `World::crystal_r(c)` and `World::landing()`, not one radius and the farthest crystal ([roadmap](../../Reports/larder-world-roadmap-2026-11-11.md), *WM1*).
 
 ## Sources
 

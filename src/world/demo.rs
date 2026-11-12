@@ -444,7 +444,7 @@ impl Squad {
             ],
             clock: format!("{}:{:02}", t / 60, t % 60),
             speed: paused.then(|| "Paused".to_string()),
-            objective: Some("Stand-in squad: try the controls (no game rules yet)".into()),
+            objective: Some("Stand-in squad, no game rules: the game is cargo run --release --bin larder-world".into()),
             idle: self.units.iter().filter(|u| u.team == 0 && u.hp > 0.0 && u.to.is_none() && u.burn.is_none() && !u.hold).count(),
             ..Model::default()
         };

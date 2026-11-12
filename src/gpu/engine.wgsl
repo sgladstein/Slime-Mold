@@ -72,7 +72,9 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
 // last `pilesum` its cells still crystal, its charge and the share left
 // (the CPU's `crystal_left`; 1 for a pile with no crystal left to hold).
-struct Pile { start: u32, count: u32, cells: u32, _p: u32, sum: f32, left: f32, _a: f32, _b: f32 };
+// `full` is the pile's charge a full cell (`BigDish::pile_fill`: a map
+// gives each crystal its own, else every pile's is `crystal_charge`).
+struct Pile { start: u32, count: u32, cells: u32, _p: u32, sum: f32, left: f32, full: f32, _b: f32 };
 // A wall being built (`Engine::build_wall`): the segment and its half
 // width in fine cells, the health it starts with, the box of cells the
 // `build` pass covers, whether it lets scent through, and how far a
@@ -1065,7 +1067,8 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
         // again, with nothing drawn in between.
         if (P.world != 0u) {
             if ((ground[i] & WET) != 0u) { base = vec3<f32>(base.x * 0.7, base.y * 0.9, base.z + 16.0); }
-            if (world(CRYSTALS) && P.full > 0.0) { base += (vec3<f32>(140.0, 235.0, 255.0) - base) * (charge[i] / P.full); }
+            let pg = ground[i] & PILE_BITS;
+            if (world(CRYSTALS) && pg != 0u && piles[pg - 1u].full > 0.0) { base += (vec3<f32>(140.0, 235.0, 255.0) - base) * (charge[i] / piles[pg - 1u].full); }
         }
         c = base + (vec3<f32>(255.0, 190.0, 90.0) - base) * g;
     } else {
@@ -1176,7 +1179,7 @@ fn pilesum(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_inde
         workgroupBarrier();
     }
     if (li == 0u) {
-        let full = P.full * f32(pcnt[0]);
+        let full = piles[p].full * f32(pcnt[0]);
         piles[p].sum = psum[0];
         piles[p].cells = pcnt[0];
         var left = 1.0;
@@ -1200,7 +1203,8 @@ fn flow(@builtin(global_invocation_id) gid: vec3<u32>) {
         let mean = piles[p - 1u].sum / f32(piles[p - 1u].cells);
         c += P.flow * (mean - c);
     }
-    if (P.regrow > 0.0 && c < P.full) { c += P.regrow * (P.full - c); }
+    let full = piles[p - 1u].full;
+    if (P.regrow > 0.0 && c < full) { c += P.regrow * (full - c); }
     charge[i] = c;
 }
 
@@ -1393,7 +1397,17 @@ fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) l
     let y = i32(hit / P.w) + i32(li / 15u) - 7;
     if (x < 0 || y < 0 || x >= i32(P.w) || y >= i32(P.h)) { return; }
     let i = u32(y) * P.w + u32(x);
-    if (struck(i, q)) { trail_in[i] = 0.0; }
+    if (struck(i, q)) {
+        // The look's wound (byte 2, which the trail pass fades): the
+        // thickness the strike cut, as a stand-in hit's (`set_hits`). The
+        // game's shots cut here, not in the trail pass, so without this
+        // the window showed the cut but no wound (W2c, 2026-11-12). Two
+        // strikes on one cell may race on it; only the picture differs.
+        let cut = u32(bright(trail_in[i]) * 255.0);
+        let had = (look[i] >> 16u) & 255u;
+        look[i] = (look[i] & 0xFF00FFFFu) | (max(had, cut) << 16u);
+        trail_in[i] = 0.0;
+    }
 }
 
 // Each unit's smell on the agar cells of its disc. One thread, units in
