@@ -111,16 +111,12 @@ pub struct Garden {
 /// `walkers` each; both the race mould's settings unless `sets` names
 /// them (enemy, player). Conversion over a square of 4 by presence.
 pub fn garden_world(seed: u64, scale: usize, walkers: usize, sets: Option<(SpeciesSet, SpeciesSet)>) -> Garden {
-    let mut m = Map::of_dish(&race_world(seed, scale, walkers));
-    let home = m.items.crystals[0];
-    let far = *m.items.crystals.iter().max_by(|a, b| (a.x - home.x).hypot(a.y - home.y).total_cmp(&(b.x - home.x).hypot(b.y - home.y))).expect("a crystal");
-    m.items.moulds = vec![(home.x, home.y), (far.x, far.y)];
-    m.items.landing = Some((far.x, far.y));
+    let m = garden_map(seed, scale, walkers);
     let mut p: BigParams = race_params(seed, scale, 2 * walkers);
     p.species = SPECIES;
     p.species_avoid = 0.0;
-    p.species_convert = 1.2;
-    p.species_convert_r = 4;
+    p.species_convert = CONVERT;
+    p.species_convert_r = CONVERT_R;
     p.species_convert_per = true;
     // Half the slots a side; the unused species 1 and 2 hold none.
     let half = p.capacity.max(p.walkers) / 2;
@@ -128,14 +124,38 @@ pub fn garden_world(seed: u64, scale: usize, walkers: usize, sets: Option<(Speci
     let base = SpeciesSet::from_params(&p);
     let (e, o) = sets.unwrap_or((base, base));
     p.species_sets = (0..SPECIES).map(|s| if s == OWN { o } else if s == 0 { e } else { base }).collect();
-    let mut dish = BigDish::with_map(p, &m);
-    // The map's starts share the walkers in order (`place_walkers`): the
-    // first home's are the enemy's, the second's the player's.
+    let dish = garden_dish(p, &m, walkers);
+    Garden { dish, tasks: Vec::new(), tend: Tend::default(), roads: 0, fed: 0.0, cut: 0, own_ate: 0.0, enemy_ate: 0.0, turned_own: 0, turned_enemy: 0 }
+}
+
+/// Conversion between the two moulds: a walker joins the other side where
+/// its trail over a square of `CONVERT_R` outweighs its own `CONVERT` times.
+pub const CONVERT: f32 = 1.2;
+pub const CONVERT_R: u32 = 4;
+
+/// The garden's map: the race world of `seed` with the enemy on its home
+/// crystal and the player's mould on the crystal farthest from it, where the
+/// larder lands. Both engines start from it (`garden_dish`).
+pub fn garden_map(seed: u64, scale: usize, walkers: usize) -> Map {
+    let mut m = Map::of_dish(&race_world(seed, scale, walkers));
+    let home = m.items.crystals[0];
+    let far = *m.items.crystals.iter().max_by(|a, b| (a.x - home.x).hypot(a.y - home.y).total_cmp(&(b.x - home.x).hypot(b.y - home.y))).expect("a crystal");
+    m.items.moulds = vec![(home.x, home.y), (far.x, far.y)];
+    m.items.landing = Some((far.x, far.y));
+    m
+}
+
+/// The garden's dish on `m` with params `p` (the CPU's own, or the GPU's
+/// from its settings, `gpu::Engine::made_with`): the map's starts share the
+/// walkers in order (`place_walkers`), so the first `walkers` are the
+/// enemy's (species 0), the rest the player's (`OWN`).
+pub fn garden_dish(p: BigParams, m: &Map, walkers: usize) -> BigDish {
+    let mut dish = BigDish::with_map(p, m);
     let n = dish.walkers.len();
     for k in 0..n {
         dish.spec[k] = if k < walkers { 0 } else { OWN };
     }
-    Garden { dish, tasks: Vec::new(), tend: Tend::default(), roads: 0, fed: 0.0, cut: 0, own_ate: 0.0, enemy_ate: 0.0, turned_own: 0, turned_enemy: 0 }
+    dish
 }
 
 impl Garden {
@@ -510,6 +530,15 @@ impl World for Garden {
             *c = 0;
         }
     }
+
+    /// One upkeep feeds both species, so the broken mould (`Rules::broken`)
+    /// would starve the player's mould with the enemy's: the garden keeps
+    /// its upkeep (the rule does nothing here).
+    fn upkeep(&self) -> f32 {
+        self.dish.p.upkeep
+    }
+
+    fn set_upkeep(&mut self, _up: f32) {}
 
     fn food_deposit(&self) -> f32 {
         self.dish.p.food_deposit

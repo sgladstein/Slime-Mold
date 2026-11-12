@@ -1,0 +1,12 @@
+loneprobe shape d, seeds [1, 2, 3, 4], lone [1.0], lone_r 1, sweep at 180 s keeping 0.02, until 300 s; broken 0.03 starve_x 50; idle squad, CPU race world scale 2, 25,000 walkers
+seed  3 lone    1: 30s 27625 lone 0.004 reached 7; 60s 30244 lone 0.008 reached 9; 90s 17961 lone 0.027 reached 11; 120s 22410 lone 0.018 reached 12; 150s 26700 lone 0.016 reached 15; 180s 28465 lone 0.013 reached 15
+    sweep: 28465 walkers, 15 crystals reached; clear 1.0 s; after: +5s 90 (0.93) +10s 25 (1.00) +15s 5 (1.00) +20s 1 (1.00) +25s 1 (1.00); end 0
+seed  4 lone    1: 30s 27105 lone 0.008 reached 7; 60s 31427 lone 0.007 reached 11; 90s 21911 lone 0.020 reached 14; 120s 29288 lone 0.014 reached 16; 150s 36265 lone 0.011 reached 18; 180s 40664 lone 0.011 reached 20
+    sweep: 40664 walkers, 20 crystals reached; clear 1.0 s; after: +5s 133 (0.83) +10s 37 (1.00) +15s 10 (1.00) +20s 4 (1.00) +25s 2 (1.00); end 0
+seed  2 lone    1: 30s 27131 lone 0.011 reached 8; 60s 31935 lone 0.010 reached 12; 90s 22944 lone 0.025 reached 17; 120s 31560 lone 0.014 reached 20; 150s 40519 lone 0.011 reached 22; 180s 46802 lone 0.010 reached 22
+    sweep: 46802 walkers, 22 crystals reached; clear 1.0 s; after: +5s 135 (0.89) +10s 32 (0.88) +15s 8 (1.00) +20s 2 (1.00) +25s 0 (0.00); end 0
+seed  1 lone    1: 30s 27517 lone 0.012 reached 8; 60s 31377 lone 0.009 reached 10; 90s 22325 lone 0.021 reached 16; 120s 30300 lone 0.012 reached 17; 150s 37396 lone 0.008 reached 20; 180s 42824 lone 0.008 reached 21
+    sweep: 42824 walkers, 21 crystals reached; clear 1.0 s; after: +5s 118 (0.80) +10s 22 (0.91) +15s 3 (1.00) +20s 1 (1.00) +25s 0 (0.00); end 0
+
+summary (paired by seed against lone 1):
+  lone    1: walkers at sweep 39689, lone share 0.010, crystals reached 19.5 (fewer 0, more 0 than lone 1); cleared 4/4 in 1.0 s mean; walkers at 300 s 0

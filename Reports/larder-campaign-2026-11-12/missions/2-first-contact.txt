@@ -9,11 +9,15 @@
 # itself: wipe the mould out. The bar is the share cut from its peak after the first
 # minute (`shrink 0`): strike 4/4 at 7:17-8:01, random 2/4 (a tuning note for the
 # Drifter, not a veto), claim best 0.33, idle 0.06 (census v11, before #164 merged).
+# Then 0.1, not 0 (designer, 22:58Z): with headless moulds a wipe means hunting the
+# last stragglers, which the owner called tedious in the shape D playtest; the
+# mission ends when the fight is won. A bar of b on `shrink 0` is the mould at 1-b of
+# its peak, so the v11 rounds that reached 0.9 meet it (random's best was 0.86 mean).
 name First contact
-says Wipe out the Drifter
+says Break the Drifter: cut it below a tenth of its size
 map fork
 tier drifter
 verbs move harvest buy stance fire
 rule price 0
 bonus lose 2
-goal shrink 0
+goal shrink 0.1
