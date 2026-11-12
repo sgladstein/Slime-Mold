@@ -240,7 +240,86 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
             let f = rng.range(55.0, 95.0);
             Spec { len: 0.25, attack: 0.001, noise: 0.35, noise_tau: 0.03, band: 300.0, q: 0.7, sine: 0.9, sine_tau: 0.08, freq: f, drop: 1.5, ..base }
         }
+        // A shot: a bright, very short crack over a small low punch, so it
+        // reads as a gun and not as the mould's own wet sounds.
+        GrainKind::Crack => Spec {
+            len: 0.09,
+            attack: 0.0003,
+            noise: 0.7,
+            noise_tau: rng.range(0.003, 0.005),
+            band: rng.range(2500.0, 3800.0),
+            q: 0.7,
+            band_end: 0.5,
+            sine: 0.45,
+            sine_tau: 0.018,
+            freq: rng.range(140.0, 180.0),
+            freq_end: 0.7,
+            drop: 2.0,
+            ..base
+        },
+        // A shot striking slime: a wet, rough, low slap (weight in
+        // `weighted`).
+        GrainKind::Splat => Spec {
+            len: 0.12,
+            attack: 0.001,
+            noise: 0.45,
+            noise_tau: rng.range(0.018, 0.03),
+            band: rng.range(500.0, 900.0),
+            q: 0.9,
+            band_end: 0.6,
+            rough: 0.5,
+            sine: 0.6,
+            sine_tau: 0.04,
+            freq: rng.range(115.0, 145.0),
+            freq_end: 0.6,
+            drop: 1.0,
+        },
+        // A heartbeat: a low soft sine thump.
+        GrainKind::Heart => Spec {
+            len: 0.22,
+            attack: 0.004,
+            noise: 0.12,
+            noise_tau: 0.01,
+            band: 220.0,
+            q: 0.8,
+            sine: 0.9,
+            sine_tau: 0.06,
+            freq: rng.range(52.0, 58.0),
+            freq_end: 0.8,
+            ..base
+        },
+        // A soldier hurt: a short, rough, falling mid groan.
+        GrainKind::Hurt => Spec {
+            len: 0.16,
+            attack: 0.003,
+            noise: 0.35,
+            noise_tau: 0.05,
+            band: rng.range(500.0, 800.0),
+            q: 2.0,
+            band_end: 0.6,
+            rough: 0.6,
+            sine: 0.3,
+            sine_tau: 0.06,
+            freq: rng.range(220.0, 260.0),
+            freq_end: 0.7,
+            ..base
+        },
     }
+}
+
+/// A recipe shaped by `weight` (0 ..= 1), for `SoundCmd::Impact`: lower,
+/// longer and fuller as it grows, so the walkers a shot killed are heard
+/// in its body, not only its loudness (loudness alone the ear reads as
+/// nearer, not bigger).
+fn weighted(mut s: Spec, weight: f32) -> Spec {
+    let w = weight.clamp(0.0, 1.0);
+    s.freq *= 1.0 - 0.45 * w;
+    s.band *= 1.0 - 0.4 * w;
+    s.len *= 1.0 + 1.2 * w;
+    s.noise_tau *= 1.0 + 1.0 * w;
+    s.sine_tau *= 1.0 + 1.5 * w;
+    s.sine *= 1.0 + 0.6 * w;
+    s
 }
 
 #[derive(Clone, Copy, Default)]
@@ -500,6 +579,9 @@ impl VoiceBank {
                 }
             }
             SoundCmd::Alert { kind, weight, pan } => self.alert(kind, weight, pan),
+            SoundCmd::Impact { weight, pan, gain, delay } => {
+                self.spawn_weighted(GrainKind::Splat, pan, gain, (delay.max(0.0) * self.sr) as u32, true, 255, Some(weight));
+            }
             SoundCmd::Lamp { on, pan } => {
                 self.lamp.target = if on { 1.0 } else { 0.0 };
                 self.lamp_pan = pan;
@@ -515,6 +597,12 @@ impl VoiceBank {
     /// Start a grain, stealing the quietest if the pool is full. `tag` is
     /// the texture index (255 = not a texture), kept for its counter.
     fn spawn(&mut self, kind: GrainKind, pan: f32, gain: f32, wait: u32, from_verb: bool, tag: u8) {
+        self.spawn_weighted(kind, pan, gain, wait, from_verb, tag, None);
+    }
+
+    /// `spawn`, with the recipe shaped by `weight` when given (`weighted`).
+    #[allow(clippy::too_many_arguments)]
+    fn spawn_weighted(&mut self, kind: GrainKind, pan: f32, gain: f32, wait: u32, from_verb: bool, tag: u8, weight: Option<f32>) {
         if gain <= 1e-5 {
             return;
         }
@@ -533,6 +621,10 @@ impl VoiceBank {
             }
         };
         let s = recipe(kind, &mut self.rng);
+        let s = match weight {
+            Some(w) => weighted(s, w),
+            None => s,
+        };
         let sr = self.sr;
         let (gl, gr) = pan_gains(pan);
         let mut band = Biquad::default();
@@ -598,6 +690,10 @@ impl VoiceBank {
                 for (j, f) in [392.0, 493.88, 587.33].iter().enumerate().take(n.max(1)) {
                     notes[j] = (*f, 0.18 * j as f32, if n == 0 { 0.08 } else { 0.18 }, true);
                 }
+            }
+            AlertKind::Fallen => {
+                notes[0] = (146.8, 0.0, 0.16, true);
+                notes[1] = (110.0, 0.22, 0.16, true);
             }
             AlertKind::Died => {
                 notes[0] = (196.0, 0.0, 0.25, true);
@@ -917,6 +1013,24 @@ mod tests {
         assert!(b.textures[0].habit > 0.95, "a change should wake it, habit {}", b.textures[0].habit);
     }
 
+    /// Larder World's hit: a shot that killed many is a longer, fuller
+    /// sound than one that killed few, not only a louder one.
+    #[test]
+    fn a_heavier_impact_rings_longer_and_fuller() {
+        let hit = |weight: f32| {
+            let mut b = VoiceBank::new(48_000, 13);
+            b.apply(SoundCmd::Impact { weight, pan: 0.0, gain: 0.5, delay: 0.0 });
+            let x = render(&mut b, 0.6);
+            let peak = x.iter().fold(0.0f32, |m, v| m.max(v.abs()));
+            let tail = x.iter().rposition(|v| v.abs() > peak * 0.1).unwrap_or(0);
+            (tail as f32 / 2.0 / 48_000.0, rms(&x[..9_600]))
+        };
+        let (light_len, light_rms) = hit(0.0);
+        let (heavy_len, heavy_rms) = hit(1.0);
+        assert!(heavy_len > light_len * 1.3, "heavy {heavy_len} s vs light {light_len} s");
+        assert!(heavy_rms > light_rms, "heavy {heavy_rms} vs light {light_rms}");
+    }
+
     #[test]
     fn every_recipe_and_alert_makes_a_finite_bounded_sound() {
         for kind in GrainKind::ALL {
@@ -926,7 +1040,7 @@ mod tests {
             assert!(x.iter().all(|v| v.is_finite() && v.abs() <= 1.0), "{kind:?}");
             assert!(rms(&x) > 0.0005, "{kind:?} made no sound");
         }
-        for kind in [AlertKind::Joined, AlertKind::Bell, AlertKind::Died] {
+        for kind in [AlertKind::Joined, AlertKind::Bell, AlertKind::Died, AlertKind::Fallen] {
             for w in [0.0, 0.5, 1.0] {
                 let mut b = VoiceBank::new(48_000, 12);
                 b.apply(SoundCmd::Alert { kind, weight: w, pan: 0.0 });
