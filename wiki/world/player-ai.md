@@ -2,7 +2,7 @@
 title: The Larder player AI
 kind: tool
 status: current
-updated: 2026-11-12T01:10Z
+updated: 2026-11-12T03:15Z
 sources: [Reports/larder-world-ai-2026-11-12.md, Reports/larder-ai-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Brain, Style, Side, RandomHand, set_rule, Game::apply, mould_grid]
 ---
@@ -13,7 +13,7 @@ code: [Brain, Style, Side, RandomHand, set_rule, Game::apply, mould_grid]
 
 The player AI plays Larder's soldier side for automated playtests. It gives only the player's commands (`Cmd` through `Game::apply`), so every AI round is a replay. It reads only what a player sees (a `View`), and it commands a `Side`, so a second soldier team later is a second brain.
 
-**On the Larder world** (`src/mould/larder_world_ai.rs`, [report](../../Reports/larder-world-ai-2026-11-12.md), [page](https://claude.ai/artifact/BuPV981PmqpXkDhxTnadzs)) it has five styles on knobs: boom, claim, late, fort and strike. It sees the mould through `World::mould_grid`, which the CPU world gives and the GPU world does not yet. On held-out seeds 21-36 of the CPU race world, every style beats idle and random on 16 of 16. Boom, claim, late and fort beat the scripted farm hand on 15 or 16 of 16. Strike is the gamble: it wiped the mould once and lost to farm on five seeds. The best style per seed is split, and no paired difference among the styles survives a correction. Late ties claim, because the share is counted only at the cap; that is a question for the score rule.
+**On the Larder world** (`src/mould/larder_world_ai.rs`, [report](../../Reports/larder-world-ai-2026-11-12.md), [page](https://claude.ai/artifact/BuPV981PmqpXkDhxTnadzs)) it has five styles on knobs: boom, claim, late, fort and strike. It sees the mould through `World::mould_grid`, which the CPU world gives and the GPU world does not yet. On held-out seeds 21-36 of the CPU race world, every style beats idle and random on 16 of 16. Boom, claim, late and fort beat the scripted farm hand on 15 or 16 of 16. Strike is the gamble: it wiped the mould once and lost to farm on five seeds. The best style per seed is split, and no paired difference among the styles survives a correction. Those results are under W2b's score. Under score v2 (2026-11-12: the charge taken over the game and the mould's size; [roadmap report](../../Reports/larder-world-roadmap-2026-11-11.md), *Score v2 and the dry crystal*), on seeds 5-20 strike beats farm 14-2 (8-8 before) and claim and late tie 8-8.
 
 The small-dish AI (`src/mould/larder_ai.rs`, [report](../../Reports/larder-ai-2026-11-11.md)) stays for the CPU field dish. Its results there are about the AI, not balance.
 
@@ -29,6 +29,7 @@ The small-dish AI (`src/mould/larder_ai.rs`, [report](../../Reports/larder-ai-20
 
 ## Open
 
+- Re-run the styles under score v2 on seeds 21-36, with the fixed farm hand as the bar (it now harvests twice the food).
 - The tier counter tests: each mould tier (Sporer, Sleeper, Swarmer) against these styles, idle and random, with knobs for the counters the styles lack (asked by the creature-rules thread, 2026-11-12 00:17Z).
 - `mould_grid` on the GPU world (an occupancy read-back).
 - A second team: a team on each soldier, a home per team, and `Game::apply_as(team, cmd)`.

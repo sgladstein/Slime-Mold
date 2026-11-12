@@ -15,11 +15,15 @@
 //! is that designed map instead (`BigDish::with_map`, ROADMAP WM1), on the
 //! race world's mould settings; the seed then varies the mould, not the map.
 //!
-//! **Deciding measure, named before the run:** M3's one ordered number a
-//! round (`End::score`: a squad win beats a stalemate at the cap beats the
-//! squad's loss; inside each band, sooner and more soldiers left is
-//! better), paired by seed, each plan against idle and against random,
-//! two-sided sign test, Holm over every comparison made.
+//! **Deciding measure, named before the run:** the game's one ordered
+//! number a round (`Game::score`, v2 since 2026-11-12: a squad win beats a
+//! stalemate at the cap beats the squad's loss; a win or loss is sooner and
+//! more soldiers left; a stalemate is the squad's share of the charge taken
+//! from the crystals and the mould's size against its start), paired by
+//! seed, each plan against idle and against random, two-sided sign test,
+//! Holm over every comparison made. Each row also prints `score1`, W2b's
+//! score (`Game::score_w2b`: the crystals counted at the cap), to pair with
+//! older censuses. `home_dry=1` turns on `Rules::home_dry`.
 //!
 //! **Hands** (fixed rules; settings named here):
 //! - **idle**: never gives an order. The soldiers stand at the larder on
@@ -55,7 +59,9 @@ const WALL_AT: f32 = 0.6;
 
 #[derive(Clone, Default)]
 struct Row {
+    /// Score v2 (`Game::score`) and W2b's (`Game::score_w2b`).
     score: f32,
+    score1: f32,
     end: String,
     t: f32,
     alive: usize,
@@ -100,6 +106,7 @@ fn main() {
             "aim_min" => rules.aim_min = v.parse().unwrap(),
             "price" => rules.price = v.parse().unwrap(),
             "strike" => rules.strike = v.parse().unwrap(),
+            "home_dry" => rules.home_dry = v == "1",
             "map" => {
                 let path = std::path::Path::new(v);
                 let dir = match path.parent() {
@@ -146,8 +153,8 @@ fn main() {
                 let (seed, hand) = &jobs[j];
                 let r = play(*seed, scale, walkers, rules, hand, map, None);
                 println!(
-                    "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most",
-                    r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us
+                    "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}",
+                    r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1
                 );
                 out.lock().unwrap()[j] = r;
             });
@@ -255,7 +262,8 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
     let ms = start.elapsed().as_secs_f64() * 1000.0 / g.world.ticks().max(1) as f64;
     let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / g.world.pile_full.iter().sum::<f32>().max(1.0);
     Row {
-        score: end.score(g.alive(), g.rules.cap),
+        score: g.score().expect("ended"),
+        score1: g.score_w2b().expect("ended"),
         end: end.band().into(),
         t: match end {
             End::SquadWiped(t) | End::MouldWiped(t) => t,
@@ -326,7 +334,11 @@ fn random_hand(g: &mut Game<BigDish>) {
 /// Crystals with charge, nearest the larder first (the core last of all).
 fn by_distance(g: &Game<BigDish>) -> Vec<(f32, f32)> {
     let l = g.larder;
-    let mut cs: Vec<(f32, f32)> = g.world.crystals().iter().filter(|c| c.1 > 0.0).map(|c| c.0).filter(|c| *c != g.core).collect();
+    // A crystal under one frame's full ask is dry: the soldier the game
+    // sent home from it (`Rules::home_dry`) is not sent back for crumbs.
+    let r = g.rules;
+    let dry = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
+    let mut cs: Vec<(f32, f32)> = g.world.crystals().iter().filter(|c| c.1 >= dry).map(|c| c.0).filter(|c| *c != g.core).collect();
     cs.sort_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1)));
     cs
 }

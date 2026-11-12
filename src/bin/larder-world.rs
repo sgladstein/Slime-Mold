@@ -134,6 +134,10 @@ struct App {
     ground: Option<wgpu::Buffer>,
     ground_at: f32,
     ground_walls: u32,
+    /// Each crystal cell's depth in its crystal (`look::crystal_depth`),
+    /// worked out once a world: the crystals keep their cells, and the
+    /// depth was most of each ground rebuild (3.9-6.1 ms on the cloud CPU).
+    depth: Vec<u8>,
     looks: Vec<Look>,
     tracers: Vec<Tracer>,
     paused: bool,
@@ -181,6 +185,7 @@ impl App {
             ground: None,
             ground_at: 0.0,
             ground_walls: 0,
+            depth: Vec::new(),
             looks: Vec::new(),
             tracers: Vec::new(),
             paused: false,
@@ -233,7 +238,8 @@ impl App {
         let size = (e.dish.w, e.dish.h);
         self.charge0 = game.world.crystals().iter().map(|c| c.1).collect();
         self.dry = vec![false; self.charge0.len()];
-        let codes = ground_codes(&game, None, None);
+        self.depth = look::crystal_depth(e.dish.w, e.dish.w * e.dish.h, &e.dish.pile_of);
+        let codes = ground_codes(&game, &self.depth, None, None);
         let ground = look::ground_buffer(device, queue, &codes);
         if let Some(v) = self.view.as_mut() {
             v.set_world(&e.frame, size);
@@ -480,7 +486,7 @@ impl App {
         let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
         let charge = floats(read_back(&e.device, &e.queue, &e.charge));
         let health = e.dish.wall.iter().any(|&w| w).then(|| floats(read_back(&e.device, &e.queue, &e.health)));
-        let codes = ground_codes(g, Some(&charge), health.as_deref());
+        let codes = ground_codes(g, &self.depth, Some(&charge), health.as_deref());
         e.queue.write_buffer(buf, 0, &codes.iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
         (self.ground_at, self.ground_walls) = (t, g.walls);
     }
@@ -552,17 +558,17 @@ impl App {
         let clock = |t: f32| format!("{}:{:02}", t as u32 / 60, t as u32 % 60);
         let rate = self.bank_log.front().filter(|f| t - f.0 >= 2.0).map(|&(t0, b0)| (g.bank - b0) / (t - t0));
         let lost = g.soldiers.iter().filter(|s| !s.alive).count();
-        let share = g.share();
+        let took = g.take_share();
         let mut m = Model {
             resources: vec![
                 Resource { icon: Icon::Crystal, colour: theme::ENERGY, label: "Food: crystal charge carried home; soldiers, shots and walls cost it".into(), value: format!("{:.0}", g.bank), rate: rate.map(|v| format!("{v:+.0}/s")) },
                 Resource { icon: Icon::Soldier, colour: theme::TEXT, label: format!("Soldiers alive (at most {})", r.max_squad), value: format!("{}", g.alive()), rate: (lost > 0).then(|| format!("-{lost} lost")) },
                 Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: "The mould: walkers alive".into(), value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
-                Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Crystals held: yours, of those either side holds (the score at 15:00)".into(), value: format!("{:.0}%", share * 100.0), rate: None },
+                Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Your share of the charge gone from the crystals (with the mould's size, the score at 15:00)".into(), value: format!("{:.0}%", took * 100.0), rate: None },
             ],
             clock: format!("{} / {}", clock(t), clock(r.cap)),
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
-            objective: Some(if g.core_down.is_some() { "Core taken: wipe out the mould, or hold the crystals at 15:00".into() } else { "Take the mould's core, or hold more crystals than it at 15:00".into() }),
+            objective: Some(if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
             idle: g.soldiers.iter().filter(|s| s.alive && s.order == Order::Hold).count(),
             ..Model::default()
         };
@@ -784,8 +790,9 @@ impl App {
 /// each wall cell's share of its full health, and a wall the GPU has worn
 /// through drawn as rubble (the mirror keeps it a wall). Soil is left
 /// off: the engine plays it as plain ground until its port, and the
-/// picture is the data (the look can draw it, #84).
-fn ground_codes(g: &Game<GpuWorld>, charge: Option<&[f32]>, health: Option<&[f32]>) -> Vec<u32> {
+/// picture is the data (the look can draw it, #84). `depth` is the
+/// crystals' depth (`App::depth`), worked out once a world.
+fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f32]>, health: Option<&[f32]>) -> Vec<u32> {
     let d = &g.world.e.dish;
     let cells = d.w * d.h;
     let pile = |i: usize| d.pile_of.get(i).copied().unwrap_or(0) as usize;
@@ -800,7 +807,7 @@ fn ground_codes(g: &Game<GpuWorld>, charge: Option<&[f32]>, health: Option<&[f32
     };
     let wall: Vec<bool> = (0..cells).map(|i| d.wall.get(i).copied().unwrap_or(false) && !broken(i)).collect();
     let agar: Vec<bool> = (0..cells).map(|i| d.agar[i] || broken(i)).collect();
-    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[], soil: &[], depth: &[] });
+    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[], soil: &[], depth });
     for (i, c) in codes.iter_mut().enumerate() {
         if broken(i) {
             *c = look::code(Ground::Rubble, 0.0);
@@ -814,13 +821,14 @@ fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
     let title = match end {
         End::MouldWiped(t) => format!("The mould is wiped out at {}", clock(t)),
         End::SquadWiped(t) => format!("The squad is lost at {}", clock(t)),
-        End::Cap(s) if s > 0.5 => "Time: you hold more crystals".to_string(),
-        End::Cap(s) if s < 0.5 => "Time: the mould holds more crystals".to_string(),
-        End::Cap(_) => "Time: an even hold".to_string(),
+        End::Cap(s) if s > 0.5 => "Time: you took more of the crystals than the mould".to_string(),
+        End::Cap(s) if s < 0.5 => "Time: the mould took more of the crystals".to_string(),
+        End::Cap(_) => "Time: an even race".to_string(),
     };
     let mut lines = Vec::new();
     if let End::Cap(s) = end {
-        lines.push(format!("You held {:.0}% of the crystals either side held", s * 100.0));
+        let m = g.mould as f32 / g.start_mould.max(1) as f32;
+        lines.push(format!("You took {:.0}% of the charge gone from the crystals; the mould is {} walkers, {m:.1} times its start", s * 100.0, thousands(g.mould)));
     }
     lines.push(summary(g));
     lines.push(format!("Score {:+.2} (a win is over 1, a loss under -1)", g.score().unwrap_or(0.0)));
@@ -1060,7 +1068,7 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
         // second) and the model and HUD layout (every frame).
         let cells = g.world.e.dish.w * g.world.e.dish.h;
         let t0 = Instant::now();
-        let _ = ground_codes(g, Some(&vec![256.0; cells]), Some(&vec![100.0; cells]));
+        let _ = ground_codes(g, &app.depth, Some(&vec![256.0; cells]), Some(&vec![100.0; cells]));
         let ground_ms = t0.elapsed().as_secs_f64() * 1e3;
         let t0 = Instant::now();
         for _ in 0..20 {
@@ -1070,7 +1078,7 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
         }
         println!("  CPU: ground field {ground_ms:.2} ms (once a game second), model and HUD {:.3} ms a frame", t0.elapsed().as_secs_f64() * 1e3 / 20.0);
         let g = app.game.as_ref().unwrap();
-        println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, held {:.0}%, crystals left {:.3}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+        println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
     }
     Ok(())
 }
