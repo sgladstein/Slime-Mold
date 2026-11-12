@@ -1,0 +1,55 @@
+garden: cap 300 s, walkers 2500 a side, hunt 0, hands ["idle", "random", "sow2", "front"], seeds [1, 2, 3, 4, 5, 6, 7, 8]
+raw idle seed 3: Out { share: 0.5051723828558369, own: 4658, enemy: 6019, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0, turned: (4, 3) }
+raw idle seed 1: Out { share: 0.3534218188975999, own: 2737, enemy: 7121, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0, turned: (1649, 3136) }
+raw idle seed 2: Out { share: 0.2601012590981945, own: 3814, enemy: 10497, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0, turned: (1746, 1049) }
+raw idle seed 4: Out { share: 0.5602378792441928, own: 4831, enemy: 3453, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0, turned: (670, 997) }
+raw idle seed 5: Out { share: 0.5649089478764366, own: 4718, enemy: 4551, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0, turned: (2347, 3537) }
+raw idle seed 6: Out { share: 0.4488484451817279, own: 3538, enemy: 4511, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0, turned: (931, 540) }
+raw idle seed 7: Out { share: 0.26477169921383664, own: 2858, enemy: 7746, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0, turned: (3699, 4411) }
+raw idle seed 8: Out { share: 0.21936898364141028, own: 3299, enemy: 9858, soldiers: 4, end: "cap", roads: 0, fed: 0.0, cut: 0, turned: (4715, 6120) }
+raw random seed 1: Out { share: 0.8410972244593156, own: 20615, enemy: 9394, soldiers: 0, end: "cap", roads: 3450, fed: 4185.244, cut: 7174, turned: (29884, 26661) }
+raw random seed 3: Out { share: 0.6189672616043068, own: 7740, enemy: 15104, soldiers: 0, end: "squad wiped", roads: 2550, fed: 3199.935, cut: 1493, turned: (6936, 6899) }
+raw random seed 2: Out { share: 0.6877112795213381, own: 16898, enemy: 14814, soldiers: 2, end: "cap", roads: 4275, fed: 3419.9412, cut: 2495, turned: (18051, 17681) }
+raw random seed 4: Out { share: 0.7910081417431284, own: 22713, enemy: 12748, soldiers: 0, end: "cap", roads: 2100, fed: 4445.2617, cut: 9112, turned: (24203, 28603) }
+raw random seed 5: Out { share: 0.6993218958940819, own: 22674, enemy: 10315, soldiers: 0, end: "cap", roads: 1650, fed: 2369.3386, cut: 2160, turned: (23737, 24833) }
+raw random seed 6: Out { share: 0.8080739011625099, own: 16071, enemy: 6410, soldiers: 2, end: "cap", roads: 4383, fed: 2100.0217, cut: 9111, turned: (19961, 19216) }
+raw random seed 7: Out { share: 0.6284150126109622, own: 9036, enemy: 11271, soldiers: 0, end: "cap", roads: 1275, fed: 2000.0234, cut: 2855, turned: (20873, 20710) }
+raw sow2 seed 1: Out { share: 0.9477345188632489, own: 17062, enemy: 6161, soldiers: 8, end: "cap", roads: 382, fed: 7638.999, cut: 0, turned: (18506, 19177) }
+raw random seed 8: Out { share: 0.42183474566206675, own: 8206, enemy: 17200, soldiers: 0, end: "cap", roads: 1350, fed: 1218.6663, cut: 1848, turned: (8616, 7284) }
+raw sow2 seed 2: Out { share: 0.9124853795286263, own: 25091, enemy: 12801, soldiers: 8, end: "cap", roads: 298, fed: 11602.233, cut: 0, turned: (5682, 4578) }
+raw sow2 seed 3: Out { share: 0.950449384798656, own: 23294, enemy: 10288, soldiers: 8, end: "cap", roads: 360, fed: 11519.587, cut: 0, turned: (689, 821) }
+raw sow2 seed 4: Out { share: 0.9727271524669304, own: 25406, enemy: 4020, soldiers: 8, end: "cap", roads: 302, fed: 11596.901, cut: 0, turned: (1126, 1458) }
+raw sow2 seed 5: Out { share: 0.9464196872903385, own: 20960, enemy: 6633, soldiers: 8, end: "cap", roads: 380, fed: 7683.0044, cut: 0, turned: (16117, 20252) }
+raw sow2 seed 6: Out { share: 0.968984014249278, own: 14970, enemy: 6787, soldiers: 8, end: "cap", roads: 318, fed: 6841.5684, cut: 0, turned: (10647, 12435) }
+raw sow2 seed 7: Out { share: 0.9550895796880465, own: 25287, enemy: 6595, soldiers: 8, end: "cap", roads: 308, fed: 11588.903, cut: 0, turned: (6147, 6405) }
+raw front seed 1: Out { share: 0.9735397341855235, own: 21667, enemy: 4116, soldiers: 8, end: "cap", roads: 2852, fed: 12996.56, cut: 0, turned: (6612, 7251) }
+raw sow2 seed 8: Out { share: 0.906755206904081, own: 18584, enemy: 9818, soldiers: 8, end: "cap", roads: 306, fed: 4319.9272, cut: 0, turned: (16703, 18225) }
+raw front seed 2: Out { share: 0.9025750480247624, own: 15549, enemy: 9706, soldiers: 8, end: "cap", roads: 1560, fed: 13759.04, cut: 0, turned: (16810, 17325) }
+raw front seed 3: Out { share: 0.9472591179574873, own: 22651, enemy: 8723, soldiers: 8, end: "cap", roads: 360, fed: 16598.504, cut: 0, turned: (1153, 385) }
+raw front seed 4: Out { share: 0.978540089284502, own: 25064, enemy: 2860, soldiers: 8, end: "cap", roads: 636, fed: 14350.8955, cut: 0, turned: (9084, 10597) }
+raw front seed 5: Out { share: 0.9579091106305441, own: 23994, enemy: 4229, soldiers: 8, end: "cap", roads: 2372, fed: 12836.599, cut: 0, turned: (9105, 9854) }
+raw front seed 6: Out { share: 0.9622952947023125, own: 19896, enemy: 4780, soldiers: 8, end: "cap", roads: 1086, fed: 13351.14, cut: 0, turned: (5718, 7591) }
+raw front seed 7: Out { share: 0.9295620583110483, own: 25063, enemy: 7552, soldiers: 8, end: "cap", roads: 1784, fed: 13620.407, cut: 0, turned: (8715, 10846) }
+raw front seed 8: Out { share: 0.9178796234312057, own: 19168, enemy: 10042, soldiers: 8, end: "cap", roads: 1220, fed: 12772.614, cut: 0, turned: (23037, 22683) }
+
+summary: player's share of the charge eaten (squad + own mould), and walkers at the end
+   idle: median share 0.449 (0.219-0.565), mean own 3807 enemy 6720 soldiers 4.0, squad wiped 0; road frames 0, fed 0, cut 0; turned to own 1970, to enemy 2474
+ random: median share 0.699 (0.422-0.841), mean own 15494 enemy 12157 soldiers 0.5, squad wiped 1; road frames 2629, fed 2867, cut 4531; turned to own 19033, to enemy 18986
+   sow2: median share 0.950 (0.907-0.973), mean own 21332 enemy 7888 soldiers 8.0, squad wiped 0; road frames 332, fed 9099, cut 0; turned to own 9452, to enemy 10419
+  front: median share 0.958 (0.903-0.979), mean own 21632 enemy 6501 soldiers 8.0, squad wiped 0; road frames 1484, fed 13786, cut 0; turned to own 10029, to enemy 10816
+
+paired (hand vs control): seeds where the hand's share is higher / lower, p, median difference
+
+paired on the moulds' balance at the cap (player's walkers less the enemy's): higher / lower, p, median difference
+   idle vs random  2 /  6  p 0.2891  median diff -8587
+ random vs idle    6 /  2  p 0.2891  median diff +8767
+   sow2 vs idle    8 /  0  p 0.0078  median diff +15325
+   sow2 vs random  6 /  2  p 0.2891  median diff +11421
+  front vs idle    8 /  0  p 0.0078  median diff +19598
+  front vs random  8 /  0  p 0.0078  median diff +12239
+   idle vs random  0 /  8  p 0.0078  median diff -0.231  (Holm)
+ random vs idle    8 /  0  p 0.0078  median diff +0.359  (Holm)
+   sow2 vs idle    8 /  0  p 0.0078  median diff +0.594  (Holm)
+   sow2 vs random  8 /  0  p 0.0078  median diff +0.247  (Holm)
+  front vs idle    8 /  0  p 0.0078  median diff +0.620  (Holm)
+  front vs random  8 /  0  p 0.0078  median diff +0.259  (Holm)

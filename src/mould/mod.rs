@@ -72,6 +72,7 @@ pub mod organ;
 pub mod own_mould;
 pub mod play;
 pub mod render;
+pub mod rounds;
 pub mod skirmish;
 pub mod squad;
 pub mod tiers;
