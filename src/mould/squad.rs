@@ -16,6 +16,9 @@
 //!    radius die (`BigDish::kill`; a walker in two shots' discs counts for
 //!    the first), and the trail there is cleared. Every shot reads the
 //!    trail before any strike, so shots in one frame don't see each other.
+//!    With the alarm field on (a mould tier, `mould::tiers`), a hit also
+//!    lays `SHOT_ALARM` within twice its radius (CPU only until the GPU
+//!    has the field).
 //! 2. Smell. Each soldier adds `smell` to the scent on the agar cells of
 //!    its disc, so the mould grows toward the squad (M3's rule).
 //! 3. The frame's ticks.
@@ -49,6 +52,12 @@ pub const R_MAX: f32 = 7.0;
 /// 60/255 let 98 of 120 shots fly through visible slime).
 pub const SLIME_LOOK: f32 = 26.0 / 255.0;
 const NONE: u32 = u32::MAX;
+/// The alarm a hit lays on each agar cell within `SHOT_ALARM_R` times its
+/// radius, when the alarm field is on: `examples/bigdish.rs`'s strike
+/// default (`strike_alarm=50`, reaching twice the strike's radius), the
+/// one the tiers were measured with (`Reports/mould-tiers-2026-11-11.md`).
+pub const SHOT_ALARM: f32 = 50.0;
+pub const SHOT_ALARM_R: f32 = 2.0;
 
 /// The trail that the game curve draws at `SLIME_LOOK` (`1 - exp(-v /
 /// knee)`, the GPU's `bright` with `curve` 0).
@@ -216,6 +225,18 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32) -> Vec<ShotOut> {
             let (hx, hy) = ((hits[q] as usize % w) as i64, (hits[q] as usize / w) as i64);
             for c in disc(w, h, hx, hy, r2s[q]) {
                 d.trail[c] = 0.0;
+            }
+            // A hit is a strike, so with the alarm field on (the mould tiers,
+            // `mould::tiers`) it lays the alarm the tiers answer: the Sporer
+            // scatters, the Sleeper wakes, the Swarmer floods the place.
+            // Off by default (no alarm field), so the GPU twin is unchanged
+            // until the GPU has the field.
+            if !d.alarm.is_empty() {
+                for c in disc(w, h, hx, hy, r2(SHOT_ALARM_R * shots[q].r.min(R_MAX))) {
+                    if d.agar[c] {
+                        d.alarm[c] += SHOT_ALARM;
+                    }
+                }
             }
         }
     }
@@ -464,5 +485,29 @@ mod tests {
         for i in disc(w, h, hx, hy, r2(3.0)) {
             assert_eq!(d.trail[i], 0.0, "the strike clears the trail");
         }
+        assert!(d.alarm.is_empty(), "no alarm field unless a tier turns it on");
+    }
+
+    #[test]
+    fn with_the_alarm_on_a_hit_lays_it_for_the_tiers() {
+        let mut d = world();
+        let (w, h) = (d.w, d.h);
+        // The Swarmer's field, turned on mid-game as `BigDish::new` would.
+        d.p.alarm_keep = 0.98;
+        d.alarm = vec![0.0; w * h];
+        let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
+        let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+        // A shot that starts on slime hits its first cell.
+        let out = shots(&mut d, &[ShotIn { from: at, to: (at.0 + 5.0, at.1), r: 3.0 }], slime_trail(3.0));
+        let hit = out[0].hit.expect("it starts on slime");
+        let (hx, hy) = (hit.0 as i64, hit.1 as i64);
+        let near: Vec<usize> = disc(w, h, hx, hy, r2(SHOT_ALARM_R * 3.0)).collect();
+        for &i in &near {
+            assert_eq!(d.alarm[i], if d.agar[i] { SHOT_ALARM } else { 0.0 });
+        }
+        let total: f32 = d.alarm.iter().sum();
+        let laid: f32 = near.iter().map(|&i| d.alarm[i]).sum();
+        assert_eq!(total, laid, "alarm only within twice the radius");
+        assert!(laid > 0.0);
     }
 }

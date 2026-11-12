@@ -121,6 +121,14 @@ const ELEV: f32 = 5.0;
 // Bare ground: damp low loam to dry high soil, by elevation.
 const SOIL_LOW: vec3<f32> = vec3<f32>(30.0, 34.0, 28.0);
 const SOIL_HIGH: vec3<f32> = vec3<f32>(84.0, 74.0, 58.0);
+// Soil kinds (byte 0's high nibble, `look::Fields::soil`; the mould's
+// `BigDish::soil`, Larder World maps): each changes the mould (sand: its
+// trail fades, and it spreads further; clay: its trail lasts, and it is
+// trapped; barren: no births, upkeep x 3; Reports/larder-maps-2026-11-11.md,
+// *Which ground the mould feels*), so each reads as its own ground.
+const SAND_RGB: vec3<f32> = vec3<f32>(150.0, 134.0, 92.0);
+const CLAY_RGB: vec3<f32> = vec3<f32>(104.0, 54.0, 38.0);
+const BARREN_RGB: vec3<f32> = vec3<f32>(78.0, 76.0, 72.0);
 // The engine's colour for bare agar; what it adds above this (scent,
 // species, germ, grass tints) is laid over the soil.
 const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
@@ -130,7 +138,7 @@ fn cell_height(ix: i32, iy: i32) -> f32 {
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) { return 3.0; }
     let i = cidx(ix, iy);
     let g = ground[i];
-    let kind = g & 255u;
+    let kind = g & 15u;
     let v = byte(g, 1u);
     // The land (byte 3, the map's elevation) under everything on it.
     let land = ELEV * byte(g, 3u);
@@ -174,7 +182,7 @@ fn cell_mat(ix: i32, iy: i32) -> Mat {
     }
     let i = cidx(ix, iy);
     let g = ground[i];
-    let kind = g & 255u;
+    let kind = g & 15u;
     let v = byte(g, 1u);
     let lk = look[i];
     var c = unpack(world[i]);
@@ -189,7 +197,10 @@ fn cell_mat(ix: i32, iy: i32) -> Mat {
     // over it; before 2026-11-11 19:29Z it was the engine's flat near-black.
     // Flat land (elevation 0, every map until the simulation uses height)
     // is the middle of the range.
-    let soil = mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * byte(g, 3u)) + tint * 0.6;
+    var base = mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * byte(g, 3u));
+    let sk = (g >> 4u) & 15u;
+    if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
+    let soil = base + tint * 0.6;
     m.albedo = mix(soil, hue * (0.55 + 0.45 * th), clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
     m.glow = vec3<f32>(0.0);
     m.gloss = 0.08 + 0.7 * sqrt(th);

@@ -53,6 +53,39 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 </header>
 
 <section>
+  <span class="eyebrow">0 · In the game's world · added 11 Nov, evening</span>
+  <h2>In the Larder world, two of the three still work</h2>
+  <p>The tests further down ran on a test dish: a fixed number of walkers, no food economy, 20 seconds. Here the three moulds are re-run where the game runs. The world is 512 × 320 with 23 crystals that run dry. The mould starts as 5,000 walkers on its home crystal, then grows and starves. Strikes land on the home crystal. Every count is from 8 paired seeds, with the deciding measure named before the run. The videos are seed 1, at four times real time.</p>
+  <p>Three things changed to get the moulds into the game. Each tier now has a name the game can ask for. The squad's shots now lay the alarm the tiers react to (before, they laid none, so no reaction could fire). And a sleeping walker can now die. Free sleep froze a world whose crystals ran dry: the whole body asleep and unchanged for good.</p>
+  <div class="pair">
+    <figure><video src="pics/w-swarm.mp4" poster="pics/w-swarm-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Swarmer under fire: 11 strikes, 10 to 15 s</strong>
+      <dl class="stats"><dt>killed by strikes 2-11</dt><dd>893-1,975 (median 1,302)</dd><dt>paired</dt><dd>more on 8 of 8, p 0.008</dd></dl></figcaption></figure>
+    <figure><video src="pics/w-fire.mp4" poster="pics/w-fire-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Plain mould, same fire</strong>
+      <dl class="stats"><dt>killed by strikes 2-11</dt><dd>441-669 (median 525)</dd></dl></figcaption></figure>
+  </div>
+  <div class="pair">
+    <figure><video src="pics/w-sleeper.mp4" poster="pics/w-sleeper-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Sleeper, struck at 14 s: the crust wakes and rushes the wound</strong>
+      <dl class="stats"><dt>at the strike 2 s after</dt><dd>1,223-1,571 (median 1,348)</dd></dl></figcaption></figure>
+    <figure><video src="pics/w-bait.mp4" poster="pics/w-bait-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Sleeper, baited at 10 s, struck at 14 s: the crust is deaf</strong>
+      <dl class="stats"><dt>at the strike 2 s after</dt><dd>321-531 (median 389)</dd><dt>paired</dt><dd>fewer on 8 of 8, p 0.008</dd></dl></figcaption></figure>
+  </div>
+  <p>In this world the Sleeper hardly leaves its home crystal. At 60 s it holds 1-4 crystals, against 11-23 for the plain mould. It is a nest, better as an early rung or a guard on a map than as a mould that outgrows an idle player.</p>
+  <div class="pair">
+    <figure><video src="pics/w-sporer.mp4" poster="pics/w-sporer-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Sporer, 0 to 60 s</strong>
+      <dl class="stats"><dt>walkers at 60 s</dt><dd>7,239-20,120 (median 8,928)</dd><dt>paired</dt><dd>more on 7 of 8, p 0.07, not significant</dd><dt>crystals held, 10 s</dt><dd>9-14 of 23</dd><dt>crystals held, 60 s</dt><dd>18-22 of 23</dd></dl></figcaption></figure>
+    <figure><video src="pics/w-plain.mp4" poster="pics/w-plain-poster.jpg" autoplay muted loop playsinline></video>
+      <figcaption><strong>Plain mould, 0 to 60 s</strong>
+      <dl class="stats"><dt>walkers at 60 s</dt><dd>3,639-13,845 (median 7,848)</dd><dt>crystals held, 10 s</dt><dd>8-18 of 23</dd><dt>crystals held, 60 s</dt><dd>11-23 of 23</dd></dl></figcaption></figure>
+  </div>
+  <p>The Sporer's edge shrinks in the world. The plain mould already sends tubes to every crystal within seconds, and plain runs vary more from seed to seed than the Sporer adds. Striking it launched 64-252 spores, against 2-13 without the burst, but that won it no extra crystals (more on 4 of 8, fewer on 2). The counters named below (starve, bait, kill zone) are still proposals: none has yet been tested against a random player.</p>
+</section>
+
+<section>
   <span class="eyebrow">1 · Sporer</span>
   <h2>It jumps to crystals it can't reach by growing</h2>
   <p>A walker feeding on a pile sometimes fruits: it leaves its cell and flies. For the first half of the flight it goes straight and can't land, so it leaves home. Then it steers by scent and lands on the first free cell over food. The faint streaks are spore paths.</p>

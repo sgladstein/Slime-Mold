@@ -782,7 +782,9 @@ impl App {
 /// each map crystal's size and shape is the one the mould eats); with
 /// `charge`, each crystal cell's share of its full charge; with `health`,
 /// each wall cell's share of its full health, and a wall the GPU has worn
-/// through drawn as rubble (the mirror keeps it a wall).
+/// through drawn as rubble (the mirror keeps it a wall). Soil is left
+/// off: the engine plays it as plain ground until its port, and the
+/// picture is the data (the look can draw it, #84).
 fn ground_codes(g: &Game<GpuWorld>, charge: Option<&[f32]>, health: Option<&[f32]>) -> Vec<u32> {
     let d = &g.world.e.dish;
     let cells = d.w * d.h;
@@ -798,7 +800,7 @@ fn ground_codes(g: &Game<GpuWorld>, charge: Option<&[f32]>, health: Option<&[f32
     };
     let wall: Vec<bool> = (0..cells).map(|i| d.wall.get(i).copied().unwrap_or(false) && !broken(i)).collect();
     let agar: Vec<bool> = (0..cells).map(|i| d.agar[i] || broken(i)).collect();
-    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[] });
+    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[], soil: &[] });
     for (i, c) in codes.iter_mut().enumerate() {
         if broken(i) {
             *c = look::code(Ground::Rubble, 0.0);

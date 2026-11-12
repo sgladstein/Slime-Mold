@@ -1,0 +1,10 @@
+C-burstL seed 1 t   2.0 alive 20000 meanx 128.3 p10 100.8 p50 128.2 p90 155.8 piles 4 fired 0 ms/tick 33.2
+C-burstL seed 1 t   4.0 alive 20000 meanx 128.4 p10 101.6 p50 128.5 p90 155.4 piles 4 fired 0 ms/tick 36.5
+C-burstL seed 1 t   6.0 alive 20000 meanx 128.3 p10 101.7 p50 128.2 p90 154.9 piles 4 fired 18473 ms/tick 35.7
+C-burstL seed 1 t   8.0 alive 20000 meanx 128.3 p10 101.3 p50 128.3 p90 154.4 piles 4 fired 1463 ms/tick 36.6
+C-burstL seed 1 t  10.0 alive 20000 meanx 128.3 p10 101.4 p50 128.5 p90 153.8 piles 4 fired 0 ms/tick 37.1
+C-burstL seed 1 t  12.0 alive 20000 meanx 128.2 p10 101.2 p50 128.2 p90 153.1 piles 4 fired 18546 ms/tick 37.0
+C-burstL seed 1 t  14.0 alive 20000 meanx 128.1 p10 101.0 p50 128.3 p90 153.1 piles 4 fired 1177 ms/tick 37.0
+C-burstL seed 1 t  16.0 alive 20000 meanx 128.3 p10 100.7 p50 128.7 p90 153.6 piles 4 fired 0 ms/tick 36.8
+C-burstL seed 1 t  18.0 alive 20000 meanx 128.1 p10 100.7 p50 128.1 p90 153.8 piles 4 fired 18189 ms/tick 36.4
+C-burstL seed 1 t  20.0 alive 20000 meanx 128.0 p10 100.7 p50 127.8 p90 154.4 piles 4 fired 1703 ms/tick 36.3
