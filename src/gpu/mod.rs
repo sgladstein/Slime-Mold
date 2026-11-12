@@ -106,6 +106,12 @@ pub const MAX_SPECIES: u8 = 4;
 /// nothing once they are all used.
 pub const MAX_PILES: usize = 64;
 
+/// The wall counters' first bytes (`Engine::wstat`): bites, broken cells,
+/// the eviction's moves, the struck, the living walkers, three spare. The
+/// mould grid follows (`Engine::record_count`), room for squares down to a
+/// dish cell (`Engine::grid_max`).
+pub const WSTAT_BYTES: usize = 32;
+
 /// The share of walkers the pull moves a tick (0.2%: at 100,000 walkers, a
 /// quarter of them in about a second of holding).
 pub const PULL: f32 = 0.002;
@@ -861,9 +867,12 @@ pub const KILL: usize = 32;
 /// A squad shot's alarm (`squad::SHOT_ALARM`), after `cut`, with the alarm
 /// field on.
 pub const SHOUT: usize = 33;
+/// The living walkers counted into the wall counters' word 4
+/// (`Engine::record_count`), for the game's packed readout.
+pub const COUNT: usize = 34;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 34] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout",
+pub const PASSES: [&str; 35] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "count",
 ];
 
 impl Shared {
@@ -971,6 +980,9 @@ pub struct Engine {
     pub kills: wgpu::Buffer,
     pub squad: (u32, u32, f32),
     pub squad_due: bool,
+    /// The mould grid's square, fine cells, that `record_count` sums (0:
+    /// none), written with the params.
+    pub grid: u32,
     /// This frame's shot hits (`set_hits`), and how many: the world look's
     /// stand-in fight (bindings 44, 45 after the Larder World's 32-43).
     pub hits: wgpu::Buffer,
@@ -1103,7 +1115,11 @@ impl Engine {
         let bites = zeros("bites", cells as usize * 4);
         let pcell = buf("pcell", &u32_bytes(&wd.pcell), storage);
         let piles = buf("piles", &u32_bytes(&wd.piles), storage);
-        let wstat = zeros("wstat", 16);
+        // Bites, broken cells, the eviction's moves, the struck, and the
+        // living walkers (`record_count`); three words spare; then the
+        // mould grid, for squares down to a dish cell.
+        let grid_max = d.w.div_ceil(d.p.scale.max(1)) * d.h.div_ceil(d.p.scale.max(1));
+        let wstat = zeros("wstat", WSTAT_BYTES + 4 * grid_max);
         let wb = zeros("wall build", 48);
         let sq = zeros("squad", squad::WORDS * 4);
         let kills = zeros("kills", squad::SHOTS_MAX * 4);
@@ -1162,6 +1178,7 @@ impl Engine {
             kills,
             squad: (0, 0, 0.0),
             squad_due: false,
+            grid: 0,
             hits,
             n_hits: 0,
             look,
@@ -1371,7 +1388,7 @@ impl Engine {
             world |= WORLD_TERRAIN;
         }
         world |= self.ground_world;
-        b.extend(u32_bytes(&[world, self.npiles, self.npc, 0]));
+        b.extend(u32_bytes(&[world, self.npiles, self.npc, self.grid]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
         debug_assert_eq!(b.len(), SQUAD_AT);
         b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), squad::SHOT_ALARM.to_bits()]));
@@ -1763,6 +1780,43 @@ impl Engine {
         g[self.cells as usize..2 * self.cells as usize].to_vec()
     }
 
+    /// Counts the living walkers (the CPU's `living`: a slot alive and not
+    /// dead) into `wstat` word 4, and with `grid` set the mould grid (the
+    /// CPU's `World::mould_grid` of `grid`-cell squares) into the words
+    /// after `WSTAT_BYTES`, in `enc` after a frame's ticks: the game's mould
+    /// size and the AI's eyes with no read-back of their own (`GpuWorld`'s
+    /// readout copies them). Before 2026-11-12 the game read the whole
+    /// energy buffer and the `spec` words back once a game second for the
+    /// count (`alive`), 8 MB at 100k walkers' 1M slots, and the GPU world
+    /// had no grid. The params must be written (`write_params`) first.
+    pub fn record_count(&self, shared: &Shared, enc: &mut wgpu::CommandEncoder) {
+        let (gw, gh) = self.grid_size();
+        assert!(gw * gh <= self.grid_max(), "a mould grid square under a dish cell");
+        enc.clear_buffer(&self.wstat, 16, Some(4));
+        if gw * gh > 0 {
+            enc.clear_buffer(&self.wstat, WSTAT_BYTES as u64, Some(4 * (gw * gh) as u64));
+        }
+        let pipes = if self.outside { &shared.pipes } else { &shared.plain };
+        let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("count"), timestamp_writes: None });
+        pass.set_pipeline(&pipes[COUNT]);
+        pass.set_bind_group(0, &self.groups[(self.done % 2) as usize], &[]);
+        let threads = if self.grid > 0 { self.n.max(self.cells) } else { self.n };
+        pass.dispatch_workgroups(threads.div_ceil(256), 1, 1);
+    }
+
+    /// The mould grid's columns and rows (`grid`; 0 x 0 with none).
+    pub fn grid_size(&self) -> (usize, usize) {
+        match self.grid as usize {
+            0 => (0, 0),
+            g => (self.dish.w.div_ceil(g), self.dish.h.div_ceil(g)),
+        }
+    }
+
+    /// The most squares the mould grid has room for (a dish cell each).
+    pub fn grid_max(&self) -> usize {
+        (self.wstat.size() as usize - WSTAT_BYTES) / 4
+    }
+
     /// The squad's frame (Larder World W2a; `squad.rs` has the CPU twins and
     /// the order): the next `record` runs its shots, strikes and smell before
     /// its first tick, and its reads and harvest after its last. Shots need
@@ -1924,7 +1978,21 @@ pub fn world_data(d: &BigDish) -> WorldData {
     WorldData { ground, charge, health, pcell: d.pile_cells.clone(), piles, npiles: npiles as u32 }
 }
 
+thread_local! {
+    static READS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// Blocking read-backs this thread has made (`read_back`), so a run or a
+/// test can say how often it waited on the GPU (`larder-world -- bench`).
+pub fn reads() -> usize {
+    READS.with(|r| r.get())
+}
+
+/// `src` copied to a new staging buffer and waited for: it empties the
+/// GPU's queue, so the game's step reads through `GpuWorld`'s one packed
+/// readout instead (2026-11-12).
 pub fn read_back(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer) -> Vec<u8> {
+    READS.with(|r| r.set(r.get() + 1));
     let size = src.size();
     let staging = device.create_buffer(&wgpu::BufferDescriptor { label: Some("read back"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
