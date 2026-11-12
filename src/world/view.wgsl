@@ -441,7 +441,7 @@ fn cover(sd: f32, aa: f32) -> f32 { return clamp(0.5 - sd / aa, 0.0, 1.0); }
 
 // One texel of the atlas, premultiplied.
 fn texel(x: i32, y: i32) -> vec4<f32> {
-    let c = atlas[u32(clamp(y, 0, 159)) * 1536u + u32(clamp(x, 0, 1535))];
+    let c = atlas[u32(clamp(y, 0, 159)) * 1792u + u32(clamp(x, 0, 1791))];
     let a = f32(c >> 24u) / 255.0;
     return vec4<f32>(unpack(c) * a, a);
 }
@@ -505,18 +505,19 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
     return vec4<f32>(out.xyz / out.w, out.w);
 }
 
-// A building (`Marks::building`, the sprite atlas's tiles 4-11, drawn from
+// A building (`Marks::building`, the sprite atlas's tiles 4-13, drawn from
 // src/world/sprites/buildings.svg in soldier A's style), with the soldier's
 // cast shadow. What changes on it is the game's state, nothing else: it
 // rises from its foot as it is built (the unbuilt part a faint ghost), it
 // darkens and greys as its health goes, and its lamp is lit only while it
-// works (a turret firing, a lure laying scent, a pump drawing charge).
+// works (a turret firing, a lure laying scent, a pump drawing charge, a
+// siren on the frame it calls).
 fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
     let p = d / r;
     let small = r < 12.0;
-    let k = 4u + 2u * min(kind, 3u);
+    let k = 4u + 2u * min(kind, 4u);
     var body = sprite(k, p, small);
     // Built from the foot (screen down) up: above the line, a ghost.
     let up = p.y >= 1.1 - 2.2 * built;
