@@ -84,6 +84,10 @@ struct Row {
     /// touches a soldier (the cap if none ever does).
     near: f64,
     touch_at: f32,
+    /// Stuck seconds (design review, 2026-11-12: no soft lock): soldiers
+    /// alive, none fired or took food that second, and the bank cannot buy
+    /// a soldier. The owner's playtest hit this when shots cost food.
+    stuck: u32,
 }
 
 /// Dish cells round a soldier that count as near (`Row::near`): 10, two
@@ -171,8 +175,8 @@ fn main() {
                 let (seed, hand) = &jobs[j];
                 let r = play(*seed, scale, walkers, rules, tier, hand, map, None);
                 println!(
-                    "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s",
-                    r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at
+                    "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s",
+                    r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck
                 );
                 out.lock().unwrap()[j] = r;
             });
@@ -187,7 +191,9 @@ fn main() {
         let ends = |b: &str| rows.iter().filter(|r| r.end == b).count();
         let near = rows.iter().map(|r| r.near).sum::<f64>() / rows.len() as f64;
         let touch = rows.iter().map(|r| r.touch_at).sum::<f32>() / rows.len() as f32;
-        println!("  {h:>6}: mean {mean:+.3}; mould wiped {}, cap {}, squad wiped {}; near {near:.0} walkers, first touch {touch:.0} s", ends("mould wiped"), ends("cap"), ends("squad wiped"));
+        let stuck = rows.iter().map(|r| r.stuck as f32).sum::<f32>() / rows.len() as f32;
+        let stuck_games = rows.iter().filter(|r| r.stuck >= 60).count();
+        println!("  {h:>6}: mean {mean:+.3}; mould wiped {}, cap {}, squad wiped {}; near {near:.0} walkers, first touch {touch:.0} s; stuck {stuck:.0} s a game, {stuck_games} games stuck a minute or more", ends("mould wiped"), ends("cap"), ends("squad wiped"));
     }
     let mut tests = Vec::new();
     for h in hands.iter().filter(|h| *h != "idle" && *h != "random") {
@@ -247,6 +253,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, tier: Option<Tier
     let mut ai = larder_world_ai::Hand::named(hand, &g);
     let (mut think_us, mut think_sum, mut thinks) = (0.0f64, 0.0f64, 0u32);
     let (mut near_sum, mut near_n, mut touch_at) = (0.0f64, 0u32, None::<f32>);
+    let (mut stuck, mut last_shots, mut last_taken) = (0u32, 0u32, 0.0f32);
     let end = g.play(|g| {
         let t = g.time();
         {
@@ -261,6 +268,11 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, tier: Option<Tier
             if touch_at.is_none() && g.soldiers.iter().any(|s| s.alive && s.touching > 0) {
                 touch_at = Some(t);
             }
+            let taken = g.harvested + g.soldiers.iter().map(|s| s.carry).sum::<f32>();
+            if !live.is_empty() && t > 0.0 && g.shots == last_shots && taken <= last_taken && g.bank < g.rules.soldier_cost {
+                stuck += 1;
+            }
+            (last_shots, last_taken) = (g.shots, taken);
         }
         if let Some((dir, every)) = look {
             if t - shot >= every || shot < 0.0 {
@@ -321,6 +333,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, tier: Option<Tier
         think_us,
         near: near_sum / near_n.max(1) as f64,
         touch_at: touch_at.unwrap_or(g.rules.cap),
+        stuck,
     }
 }
 
