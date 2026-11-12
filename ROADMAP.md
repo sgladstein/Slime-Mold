@@ -228,11 +228,10 @@ changes what the hands can do or what ends a round, so census rows from
 either side of one don't compare. **#164** (cdccf127) makes every mould
 headless (no king rule). **#169** (a412af4) lets a soldier build
 anywhere, so the AI and census hands build differently (technical lead,
-22:42Z). **#170** is the economy (rations, hunger, overrun 20 s, Regrow
-removed); it is open now, and its merge commit goes here when it lands. No
-rerun is due for any of them. Under *build first, balance later* the next
-scheduled balance pass starts from main after #170, and older rows stay as
-history.
+22:42Z). **#170** (670ca9b, 22:58Z) is the economy (rations, hunger, overrun
+20 s, Regrow removed). No rerun is due for any of them. Under *build first,
+balance later* the next scheduled balance pass starts from 670ca9b or
+later, and older rows stay as history.
 
 **Census reset held: mould density (11-12 16:20Z, waits on the owner).**
 The one-body thread found that the owner's "specks" come from density.
