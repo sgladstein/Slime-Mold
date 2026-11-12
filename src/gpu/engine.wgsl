@@ -67,6 +67,25 @@ struct Params {
     mreach: f32, mangle: f32, mturn: f32, mstep: f32,
     mdep: f32, _k1: f32, _k2: f32, _k3: f32,
     sets: array<Set, 4>,
+    // The life cycle (2026-11-11, `BigParams::spore_rate` and below: the
+    // tiers' Sporer, Sleeper and Swarmer, Reports/mould-tiers-2026-11-11.md).
+    // `cyc` is on once any of its rules is or a strike has landed (the
+    // CPU's `life` states, allocated then and kept); `alarm_on` with the
+    // alarm field (`alarm_keep` > 0). A walker's state and timer are in its
+    // `spec` word (`LIFE_*` below); the alarm is the germ fields' second
+    // block, its relays and the cells' dormant walkers `gdep`'s second and
+    // third, and spores' and sleepers' deposits `bdep`'s third and fourth.
+    cyc: u32, alarm_on: u32, s_fruit: u32, s_sleep: u32,
+    s_land: u32, s_spore_h: u32, spore_steps: u32, spore_rest: u32,
+    wake_steps: u32, sleep_rest: u32, _l0: u32, _l1: u32,
+    spore_rate: f32, spore_scent: f32, spore_alarm: f32, spore_burst: f32,
+    spore_st: f32, spore_reach: f32, spore_dep: f32, spore_land: f32,
+    sleep_rate: f32, sleep_dep: f32, wake_scent: f32, wake_alarm: f32,
+    alarm_keep: f32, alarm_w: f32, relay: f32, _l2: f32,
+    // A strike (`Engine::strike`, the CPU's `BigDish::strike`), in fine
+    // cells: its centre, kill radius, alarm and alarm radius.
+    kx: f32, ky: f32, kr: f32, kalarm: f32,
+    kar: f32, _l3: f32, _l4: f32, _l5: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -200,6 +219,30 @@ fn keep_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].keep; } return P.kee
 fn bshare_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].bdep; } return bshare(); }
 fn graze_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].graze_w; } return graze_w(); }
 fn explore_of(sp: u32) -> u32 { if (per()) { return P.sets[sp].explore; } return explore(); }
+fn cycles() -> bool { if (OUTSIDE) { return P.cyc != 0u; } return false; }
+fn alarms() -> bool { if (OUTSIDE) { return P.cyc != 0u && P.alarm_on != 0u; } return false; }
+
+// The life cycle's word in `spec`: bits 9-10 the state (the CPU's
+// `LIFE_WALKER` 0, `LIFE_SPORE` 1, `LIFE_DORMANT` 2, `LIFE_DEAD` 3), bits
+// 16-31 the timer (`life_t`), and two marks for this tick: `FRUIT`, set by
+// `sense` for a walker that fruits and kept by `fate` on the new spore
+// until `fly` (which it skips: it flies from the next tick), and `DOZE`,
+// set by `sense` for one that falls dormant, cleared by `fate`.
+const L_WALKER: u32 = 0u;
+const L_SPORE: u32 = 1u;
+const L_DORMANT: u32 = 2u;
+const L_DEAD: u32 = 3u;
+const FRUIT: u32 = 0x800u;
+const DOZE: u32 = 0x1000u;
+fn state(k: u32) -> u32 { if (!cycles()) { return L_WALKER; } return (spec[k] >> 9u) & 3u; }
+// An ordinary walker (the CPU's `active`): living, and not a spore,
+// dormant or dead.
+fn ordinary(k: u32) -> bool { return lives(k) && state(k) == L_WALKER; }
+// The alarm on cell i (0 with no alarm field).
+fn alarm_at(i: u32) -> f32 {
+    if (!alarms() || i == NONE) { return 0.0; }
+    return germ_in[P.w * P.h + i];
+}
 // Whether slot k holds a living walker (always, with growth off).
 fn lives(k: u32) -> bool { return !growth() || energy[k] >= 0.0; }
 // The walkers eat the grass with grazing or growth on (the CPU makes the
@@ -295,6 +338,9 @@ fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32) -> f32 
     // Grazing: fresh grass smells good (the CPU's `graze_weight`, the
     // walker's species' own with `per`).
     if (gw != 0.0) { v += gw * grass[i]; }
+    // The alarm (`alarm_weight`): over 0 the mould swarms to a wound,
+    // under 0 it flees one.
+    if (alarms()) { v += P.alarm_w * alarm_at(i); }
     return v;
 }
 
@@ -347,6 +393,40 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     var h = wk.z;
     let here = cell(wk.x, wk.y);
+    // Infect reaches every living walker, as the CPU's `infect` before the
+    // tick, whatever its life state.
+    if (P.sick_steps > 0u && P.infect != 0u) {
+        let dx = wk.x - P.ix; let dy = wk.y - P.iy;
+        if (dx * dx + dy * dy <= P.ir * P.ir) { sick[k] = P.sick_steps + P.immune; }
+    }
+    // The life cycle, before anything else the walker does, as the CPU's
+    // move loop: spores, the dormant and the dead do not sense or move
+    // (`fate` and `fly` take them); an ordinary walker with its timer at 0
+    // may fruit (scent over `spore_scent`, plus `spore_burst` over
+    // `spore_alarm` of alarm) or else fall dormant (under `wake_scent` and
+    // `wake_alarm`), from the fields as the pass began, and then neither
+    // senses nor moves this tick.
+    if (cycles()) {
+        let w = spec[k];
+        if (((w >> 9u) & 3u) != L_WALKER) { icell[k] = NONE; return; }
+        if ((w >> 16u) == 0u) {
+            let al = alarm_at(here);
+            let sc = scent_at(wk.x, wk.y);
+            var ch = 0.0;
+            if (sc > P.spore_scent) { ch = P.spore_rate; }
+            if (P.spore_burst > 0.0 && al > P.spore_alarm) { ch += P.spore_burst; }
+            if (ch > 0.0 && unit(keyed(P.s_fruit, t, k)) < ch) {
+                spec[k] = w | FRUIT;
+                icell[k] = NONE;
+                return;
+            }
+            if (P.sleep_rate > 0.0 && sc < P.wake_scent && al < P.wake_alarm && unit(keyed(P.s_sleep, t, k)) < P.sleep_rate) {
+                spec[k] = w | DOZE;
+                icell[k] = NONE;
+                return;
+            }
+        }
+    }
     // The CPU's `move_walkers` order: the walker's size, trail-set settings
     // from the trail where it stands, then catching and the sick walker's
     // changes.
@@ -376,11 +456,8 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         st = max(st + P.sm_a * pow0(v, P.sm_e), 0.0);
     }
     if (P.sick_steps > 0u) {
+        // (Infect was applied above.)
         var c = sick[k];
-        if (P.infect != 0u) {
-            let dx = wk.x - P.ix; let dy = wk.y - P.iy;
-            if (dx * dx + dy * dy <= P.ir * P.ir) { c = P.sick_steps + P.immune; }
-        }
         if (c == 0u && germ_in[here] > P.catch_at) { c = P.sick_steps + P.immune; }
         sick[k] = c;
         if (c > P.immune) { st *= P.sick_speed; so *= P.sick_reach; ra *= P.sick_turn; }
@@ -438,6 +515,20 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n || !lives(k)) { return; }
+    // Walkers that do not move this tick (the life cycle): no step, claim,
+    // deposit or grazing. The dead and those that fruit or fall dormant
+    // count their counters down here, as the CPU counts every walker's;
+    // the dormant and spores count theirs in `fate` and `alight`, after
+    // they may wake or land (an ordinary walker then is sick, an explorer,
+    // by the counters before the count).
+    if (cycles()) {
+        let w = spec[k];
+        let st = (w >> 9u) & 3u;
+        if (st != L_WALKER || (w & (FRUIT | DOZE)) != 0u) {
+            if (st == L_WALKER || st == L_DEAD) { tally(k); }
+            return;
+        }
+    }
     let t = S.t;
     let aim = icell[k];
     let wk = walkers[k];
@@ -514,7 +605,9 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
-    if (k >= P.n || !lives(k)) { return; }
+    // Only ordinary walkers eat, pay upkeep and starve: a spore or a
+    // dormant walker keeps its energy (the CPU's `live_and_die`).
+    if (k >= P.n || !ordinary(k)) { return; }
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
     let n = f32(atomicLoad(&occ[i]));
@@ -556,7 +649,7 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     icell[k] = NONE;
     let t = S.t;
     let b = child_of(k, t);
-    if (!lives(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
+    if (!ordinary(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
     let at = birth_spot(k, t);
     let j = cell(at.x, at.y);
     // The parent's species' crowd limit (`crowd_of`).
@@ -582,8 +675,9 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     walkers[b] = vec4<f32>(at, unit(keyed(P.s_birth, t, k | 0x80000000u)) * TAU, 0.0);
     if (explore() > 0u) { age[b] = 0u; }
     if (P.sick_steps > 0u) { sick[b] = 0u; }
-    // The child is its parent's species and kind.
-    if (nsp() > 0u || mixes()) { spec[b] = spec[k]; }
+    // The child is its parent's species and kind, and an ordinary walker
+    // with its timer at 0.
+    if (nsp() > 0u || mixes() || cycles()) { spec[b] = spec[k] & 0x1FFu; }
 }
 
 // Conversion (PR #56), after the move and its deposit, before any jump: a
@@ -705,7 +799,8 @@ fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n) { return; }
     icell[k] = NONE;
-    if (!lives(k)) { return; }
+    // Only ordinary walkers jump (the CPU's `respawn_walkers`).
+    if (!ordinary(k)) { return; }
     let j = jump_of(k, S.t);
     if (j.w == 0.0) { return; }
     let to = cell(j.x, j.y);
@@ -771,6 +866,8 @@ fn counted(j: u32) -> f32 {
         if (P.sick_steps > 0u) { n += f32(atomicLoad(&sdep[o])); }
         if (explore() > 0u) { n += f32(atomicLoad(&edep[o])) + f32(atomicLoad(&edep[o + m * c])); }
     }
+    // The cell's dormant walkers: the CPU shares by `occ`, which holds them.
+    if (cycles()) { n += f32(atomicLoad(&gdep[2u * c + j])); }
     return n;
 }
 
@@ -789,6 +886,19 @@ fn laid(s: u32, j: u32, all: f32) -> f32 {
 }
 
 fn laid_kind(s: u32, kd: u32, j: u32, all: f32) -> f32 {
+    var l = moved_kind(s, kd, j, all);
+    // The life cycle: a spore lays `spore_dep` of the global deposit where
+    // it flew to, a dormant walker `sleep_dep` where it lies (the CPU's
+    // `life_step`, through `lay`).
+    if (cycles()) {
+        let c = P.w * P.h;
+        let o = blk(s, kd) * c + j + 2u * nblk() * c;
+        l += P.deposit * (P.spore_dep * f32(atomicLoad(&bdep[o])) + P.sleep_dep * f32(atomicLoad(&bdep[o + nblk() * c])));
+    }
+    return l;
+}
+
+fn moved_kind(s: u32, kd: u32, j: u32, all: f32) -> f32 {
     let c = P.w * P.h;
     let m = nblk();
     let o = blk(s, kd) * c + j;
@@ -826,8 +936,11 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     let c = P.w * P.h;
     if (i >= c) { return; }
-    // The germ spreads as the trail does, with its own keep.
+    // The germ spreads as the trail does, with its own keep; so does the
+    // alarm (the germ fields' second block), with each waking walker's
+    // relay laid first (the CPU adds them in `life_step`, before the spread).
     let germs = P.sick_steps > 0u;
+    let al = alarms();
     // A pile is reached once tube lies on it: the CPU marks it at the end
     // of a tick from that tick's trail, which is this tick's `trail_in`, so
     // the scent pass below lays this tick's food as the CPU's next tick does.
@@ -866,11 +979,12 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gone) {
         trail_out[i] = 0.0;
         if (germs) { germ_out[i] = 0.0; }
+        if (al) { germ_out[c + i] = 0.0; }
         for (var s = 0u; s < nsp(); s++) { sp_out[s * c + i] = 0.0; }
         return;
     }
     let capped = P.cap > 0u;
-    var gsum = 0.0; var n = 0.0;
+    var gsum = 0.0; var asum = 0.0; var n = 0.0;
     if (nsp() == 0u) {
         var sum = 0.0;
         for (var dy = 0u; dy < 3u; dy++) {
@@ -881,6 +995,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                     if (capped) { all = counted(j); }
                     sum += trail_in[j] + laid(0u, j, all);
                     if (germs) { gsum += germ_in[j] + P.sick_dep * f32(atomicLoad(&gdep[j])); }
+                    if (al) { asum += germ_in[c + j] + P.relay * f32(atomicLoad(&gdep[c + j])); }
                     n += 1.0;
                 }
             }
@@ -898,6 +1013,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                     if (capped) { all = counted(j); }
                     for (var s = 0u; s < nsp(); s++) { sums[s] += sp_in[s * c + j] + laid_by(s, j, all); }
                     if (germs) { gsum += germ_in[j] + P.sick_dep * f32(atomicLoad(&gdep[j])); }
+                    if (al) { asum += germ_in[c + j] + P.relay * f32(atomicLoad(&gdep[c + j])); }
                     n += 1.0;
                 }
             }
@@ -911,6 +1027,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         trail_out[i] = total;
     }
     if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
+    if (al) { germ_out[c + i] = asum / n * P.alarm_keep; }
 }
 
 @compute @workgroup_size(256)
@@ -919,6 +1036,7 @@ fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (i >= P.w * P.h) { return; }
     atomicStore(&claim[i], NONE);
     if (P.sick_steps > 0u) { atomicStore(&gdep[i], 0u); }
+    if (cycles()) { atomicStore(&gdep[P.w * P.h + i], 0u); atomicStore(&gdep[2u * P.w * P.h + i], 0u); }
     // Cleared whenever the walk pass counts (`grazes`), not only with
     // `graze_w`: with growth on and grazing's weight 0 the counts piled up
     // tick on tick, so every walker that had ever stood on a cell ate its
@@ -934,6 +1052,7 @@ fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (P.sick_steps > 0u) { atomicStore(&sdep[o], 0u); }
         if (explore() > 0u) { atomicStore(&edep[o], 0u); atomicStore(&edep[o + m * c], 0u); }
         if (bshare() > 0.0) { atomicStore(&bdep[o], 0u); atomicStore(&bdep[o + m * c], 0u); }
+        if (cycles()) { atomicStore(&bdep[o + 2u * m * c], 0u); atomicStore(&bdep[o + 3u * m * c], 0u); }
     }
     if (i == 0u) { S.t = S.t + 1u; }
     let x = i % P.w; let y = i / P.w;
@@ -1133,11 +1252,15 @@ fn eat(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = pcell[q];
     var t = 0.0;
     let n = atomicLoad(&occ[i]);
+    // With the life cycle a dormant walker counts in n, as on the CPU, but
+    // takes nothing (only ordinary walkers eat).
+    var eaters = n;
+    if (cycles()) { eaters = n - atomicLoad(&gdep[2u * P.w * P.h + i]); }
     if ((ground[i] & PILE_BITS) != 0u && n > 0u) {
         var c = charge[i];
         t = min(P.eat, c / f32(n));
         if (t > 0.0) {
-            for (var m = 0u; m < n; m++) { c = max(c - t, 0.0); }
+            for (var m = 0u; m < eaters; m++) { c = max(c - t, 0.0); }
             charge[i] = c;
         }
     }
@@ -1264,8 +1387,11 @@ fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
     // (growth) keeps a stale place and no count. (Before 2026-11-11 an
     // empty slot under a new wall moved too, taking 1 from a count that did
     // not hold it, which could wrap to 2^32 - 1 and close the cell for
-    // good, and adding a walker nobody was to the cell it found.)
+    // good, and adding a walker nobody was to the cell it found.) Spores
+    // and the dead hold no cell (the life cycle).
     if (!lives(k)) { return; }
+    let st = (spec[k] >> 9u) & 3u;
+    if (P.cyc != 0u && (st == L_SPORE || st == L_DEAD)) { return; }
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
     if (here == NONE || agar[here] != 0u) { return; }
@@ -1367,6 +1493,10 @@ fn struck(c: u32, q: u32) -> bool {
 fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n || !lives(k)) { return; }
+    // Spores in flight and the dead are missed (`squad::shots`); a struck
+    // walker is dead as well as gone (the CPU's `kill`).
+    let st = state(k);
+    if (st == L_SPORE || st == L_DEAD) { return; }
     let wk = walkers[k];
     let c = cell(wk.x, wk.y);
     for (var q = 0u; q < P.nshots; q++) {
@@ -1374,6 +1504,7 @@ fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
             atomicSub(&occ[c], 1u);
             atomicStore(&claim[c], NONE);
             energy[k] = -1.0;
+            if (cycles()) { spec[k] = (spec[k] & 0xFFFF01FFu) | (L_DEAD << 9u); }
             atomicAdd(&kills[q], 1u);
             return;
         }
@@ -1499,4 +1630,225 @@ fn harvest(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         SQ.uout[u].took = took;
     }
+}
+
+// ------------------------------------------- the life cycle (2026-11-11)
+// The CPU's `life_step`, after the move (and any wall bites) and before
+// eating: `fate` (timers, the walkers that fruit or fall dormant, the
+// dormant that lay and wake), `fly` (spores steer, fly, lay and claim a
+// landing) and `alight` (the winners land). The
+// strike (`Engine::strike`, the CPU's `BigDish::strike`) is `hit` and
+// `kill`, on their own between ticks.
+
+// A walker's counters after the tick's deposit (the CPU counts every
+// walker's sick counter down and every living one's age up).
+fn tally(k: u32) {
+    if (P.sick_steps > 0u) {
+        let n = sick[k];
+        if (n > 0u) { sick[k] = n - 1u; }
+    }
+    if (explore() > 0u) { age[k] = min(age[k] + 1u, 65535u); }
+}
+
+// What a walker that became an ordinary one after the move (it woke or
+// landed) does where it stands, as an ordinary walker does in `walk`: it
+// counts for the capped deposit, grazes, and lays germ if sick. (Without
+// the cap it lays no trail: on the CPU only a walker that moved does.)
+fn now_active(k: u32, at: u32, ill: bool, ex: bool) {
+    let c = P.w * P.h;
+    let o = blk(species_of(k), kind_of(k)) * c + at;
+    if (grazes() && eats(k)) { atomicAdd(&gcount[at], 1u); }
+    if (P.cap > 0u) {
+        if (ex) {
+            atomicAdd(&edep[o + select(0u, nblk() * c, ill)], 1u);
+        } else if (ill) {
+            atomicAdd(&sdep[o], 1u);
+        } else {
+            atomicAdd(&dep[o], 1u);
+        }
+    }
+    if (P.sick_steps > 0u && ill) { atomicAdd(&gdep[at], 1u); }
+}
+
+fn ill_of(k: u32) -> bool { return P.sick_steps > 0u && sick[k] > P.immune; }
+fn ex_of(k: u32) -> bool { return explore() > 0u && explores(k); }
+
+@compute @workgroup_size(256)
+fn fate(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    let w = spec[k];
+    var st = (w >> 9u) & 3u;
+    var tm = w >> 16u;
+    // Every ordinary or dormant slot's timer counts down, an empty one's
+    // too, as on the CPU (a birth sets it to 0).
+    if (st == L_WALKER || st == L_DORMANT) { tm = max(tm, 1u) - 1u; }
+    if (!lives(k)) {
+        spec[k] = (w & 0xFFFFu) | (tm << 16u);
+        return;
+    }
+    let wk = walkers[k];
+    let here = cell(wk.x, wk.y);
+    let c = P.w * P.h;
+    var mark = 0u;
+    if ((w & FRUIT) != 0u) {
+        // It leaves its cell and takes a new heading; it flies from the
+        // next tick.
+        atomicSub(&occ[here], 1u);
+        st = L_SPORE;
+        tm = P.spore_steps;
+        mark = FRUIT;
+        walkers[k] = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, S.t, k)) * TAU, 0.0);
+    } else if ((w & DOZE) != 0u) {
+        st = L_DORMANT;
+        tm = P.sleep_rest;
+        atomicAdd(&gdep[2u * c + here], 1u);
+    } else if (st == L_DORMANT) {
+        // It lays, then wakes on scent, or on alarm once its timer is out
+        // (every wake decided from the alarm as the tick began; the relays
+        // add to it in `trail`).
+        atomicAdd(&bdep[blk(species_of(k), kind_of(k)) * c + here + 3u * nblk() * c], 1u);
+        let ill = ill_of(k);
+        let ex = ex_of(k);
+        if (scent_at(wk.x, wk.y) > P.wake_scent || (alarm_at(here) > P.wake_alarm && tm == 0u)) {
+            st = L_WALKER;
+            tm = P.wake_steps;
+            if (alarms()) { atomicAdd(&gdep[c + here], 1u); }
+            now_active(k, here, ill, ex);
+        } else {
+            atomicAdd(&gdep[2u * c + here], 1u);
+        }
+        tally(k);
+    }
+    spec[k] = (w & 0x1FFu) | (st << 9u) | mark | (min(tm, 65535u) << 16u);
+}
+
+// What a spore's sensor reads: the scent `spore_reach` out, a wall or the
+// dish's edge -1e6.
+fn spore_sense(x: f32, y: f32, a: f32) -> f32 {
+    let i = cell(x + cos(a) * P.spore_reach, y + sin(a) * P.spore_reach);
+    if (i == NONE || agar[i] == 0u) { return -1.0e6; }
+    return scent_in[i];
+}
+
+@compute @workgroup_size(256)
+fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    icell[k] = NONE;
+    if (!lives(k)) { return; }
+    let w = spec[k];
+    if (((w >> 9u) & 3u) != L_SPORE) { return; }
+    if ((w & FRUIT) != 0u) { spec[k] = w & ~FRUIT; return; }
+    let t = S.t;
+    let wk = walkers[k];
+    var h = wk.z;
+    // T, before this tick's count: the first half of the flight straight,
+    // the second steering by scent; at 0 it drifts straight.
+    let tt = w >> 16u;
+    let homing = tt > 0u && tt <= P.spore_steps / 2u;
+    if (P.spore_reach > 0.0 && homing) {
+        let f = spore_sense(wk.x, wk.y, h);
+        let fl = spore_sense(wk.x, wk.y, h - P.sa);
+        let fr = spore_sense(wk.x, wk.y, h + P.sa);
+        if (f > fl && f > fr) {
+        } else if (f < fl && f < fr) {
+            if ((keyed(P.s_spore_h, t, k | 0x80000000u) & 1u) == 0u) { h += P.ra; } else { h -= P.ra; }
+        } else if (fl < fr) {
+            h += P.ra;
+        } else if (fr < fl) {
+            h -= P.ra;
+        }
+    }
+    // It flies `spore_speed` x `step` ignoring the crowd, or, off the agar,
+    // stays with a new heading.
+    let nx = wk.x + cos(h) * P.spore_st;
+    let ny = wk.y + sin(h) * P.spore_st;
+    let j = cell(nx, ny);
+    var at = vec4<f32>(nx, ny, h, 0.0);
+    if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, 0.0); }
+    walkers[k] = at;
+    let i = cell(at.x, at.y);
+    let c = P.w * P.h;
+    atomicAdd(&bdep[blk(species_of(k), kind_of(k)) * c + i + 2u * nblk() * c], 1u);
+    let t2 = max(tt, 1u) - 1u;
+    spec[k] = (w & 0xFFFFu) | (t2 << 16u);
+    // It lands with its timer out, or homing over `spore_land` of scent:
+    // on agar under its species' crowd limit, the lowest keyed claim
+    // winning (`CLAIM_LAND`), in `alight`. Every lander claims, as on the
+    // CPU, a species without a limit too: its claim can beat a limited
+    // species' spore to the cell, though it lands either way. (Claiming
+    // only under a limit, the first version, let both land where species
+    // with their own limits met: 13 walkers and 21 counts off in a burst
+    // that lands at once.)
+    let lands = t2 == 0u || (homing && P.spore_land > 0.0 && scent_at(at.x, at.y) > P.spore_land);
+    let cr = crowd_of(species_of(k));
+    if (lands && agar[i] != 0u && (cr == 0u || atomicLoad(&occ[i]) < cr)) {
+        atomicMin(&claim[i], keyed(P.s_land, t, k));
+        icell[k] = i;
+        return;
+    }
+    tally(k);
+}
+
+@compute @workgroup_size(256)
+fn alight(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n) { return; }
+    let i = icell[k];
+    if (i == NONE) { return; }
+    let cr = crowd_of(species_of(k));
+    let ill = ill_of(k);
+    let ex = ex_of(k);
+    let key = keyed(P.s_land, S.t, k);
+    let won = atomicLoad(&claim[i]) == key;
+    if (cr == 0u || won) {
+        // The lowest claim clears the cell's: a loser reads the winner's
+        // key or none, so loses either way, and the passes after meet fresh
+        // claims. A spore of a species without a limit lands either way.
+        if (won) { atomicStore(&claim[i], NONE); }
+        atomicAdd(&occ[i], 1u);
+        spec[k] = (spec[k] & 0x1FFu) | (min(P.spore_rest, 65535u) << 16u);
+        now_active(k, i, ill, ex);
+    }
+    tally(k);
+}
+
+// The strike's cells: within `kr` its trail (each species' too) is
+// cleared, within `kar` `kalarm` is added to the alarm on agar. As the
+// CPU, the struck cells hold the points at whole-cell offsets (dx, dy)
+// from the centre, by dx^2 + dy^2.
+@compute @workgroup_size(256)
+fn hit(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    let c = P.w * P.h;
+    if (i >= c) { return; }
+    let dx = f32(i32(i % P.w) - i32(P.kx));
+    let dy = f32(i32(i / P.w) - i32(P.ky));
+    let d2 = dx * dx + dy * dy;
+    if (P.kr > 0.0 && d2 <= P.kr * P.kr) {
+        trail_in[i] = 0.0;
+        for (var s = 0u; s < P.nsp; s++) { sp_in[s * c + i] = 0.0; }
+    }
+    if (P.alarm_on != 0u && d2 <= P.kar * P.kar && agar[i] != 0u) { germ_in[c + i] += P.kalarm; }
+}
+
+// The strike's walkers: every living one within `kr` that holds a cell
+// dies (spores in flight are missed); with growth its slot is freed.
+@compute @workgroup_size(256)
+fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || P.kr <= 0.0) { return; }
+    if (P.upkeep > 0.0 && energy[k] < 0.0) { return; }
+    let w = spec[k];
+    let st = (w >> 9u) & 3u;
+    if (st == L_SPORE || st == L_DEAD) { return; }
+    let wk = walkers[k];
+    let dx = wk.x - P.kx;
+    let dy = wk.y - P.ky;
+    if (sqrt(dx * dx + dy * dy) > P.kr) { return; }
+    atomicSub(&occ[cell(wk.x, wk.y)], 1u);
+    spec[k] = (w & 0xFFFF01FFu) | (L_DEAD << 9u);
+    if (P.upkeep > 0.0) { energy[k] = -1.0; }
+    atomicAdd(&wstat[3], 1u);
 }
