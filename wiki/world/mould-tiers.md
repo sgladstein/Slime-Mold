@@ -30,7 +30,7 @@ censuses ask for by name (`tier=drifter`).
 The Drifter, Sprawler and Trunk (2026-11-12) are settings over rules both
 engines run; the GPU keeps each within 2% of the CPU over 20 s. Wary keeps
 away from a spot shot again and again (fewer walkers there 20 s after the
-fire on 8 of 8 seeds); Grudge comes back to it, 7 of 8 so far. The scar is
+fire on 8 of 8 seeds); Grudge comes back to it in force (8 of 8 fresh seeds). The scar is
 CPU only until it shares the toolkit's damage buffer on the GPU
 ([report](../../Reports/mould-tiers-campaign-2026-11-12.md)). In the
 Larder world's race the Swarmer and the Sleeper's bait hold on 8 of 8, the

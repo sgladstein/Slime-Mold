@@ -1,0 +1,80 @@
+bigdish: preset flee seeds [11] seconds 60 threads 1
+== seed 11: 512 x 320, 50000 walkers, 23 piles
+seed 11 flee t   5.0s  tube  3111.5  loops    4  width 4.84  reach  185.0  piles 23/23  strays 0.005  crystals 0.999  ms/tick 7.81
+seed 11 flee t   5.0s  alive 1941  energy 0.818  born 1322  starved 4381  grass -0.000
+seed 11 flee t   5.0s  contrast 4.17
+seed 11 flee t   5.0s  extent r50 143.9 r90 143.9
+seed 11 flee t   5.0s  life walk 1941 spore 0 dormant 0 dead 0  held 11/23  bodies 12 big 2720  centre 69.4,79.2  near 237  rim 0.019/0.154
+seed 11 flee t  10.0s  strike at 39.876724,53.28865 r 8: killed 63
+seed 11 flee t  10.0s  tube  3887.0  loops    3  width 5.65  reach  179.9  piles 23/23  strays 0.005  crystals 0.998  ms/tick 9.99
+seed 11 flee t  10.0s  alive 2775  energy 1.007  born 3726  starved 5888  grass -0.000
+seed 11 flee t  10.0s  contrast 4.49
+seed 11 flee t  10.0s  extent r50 143.9 r90 143.9
+seed 11 flee t  10.0s  life walk 2775 spore 0 dormant 0 dead 0  held 16/23  bodies 4 big 3440  centre 86.7,85.2  near 220  rim 0.025/0.156
+seed 11 flee t  12.0s  strike at 39.876724,53.28865 r 8: killed 45
+seed 11 flee t  14.0s  strike at 39.876724,53.28865 r 8: killed 55
+seed 11 flee t  15.0s  tube  4653.8  loops    3  width 6.59  reach  181.6  piles 23/23  strays 0.004  crystals 0.997  ms/tick 12.62
+seed 11 flee t  15.0s  alive 4478  energy 1.110  born 7891  starved 8250  grass -0.000
+seed 11 flee t  15.0s  contrast 3.69
+seed 11 flee t  15.0s  extent r50 143.9 r90 143.9
+seed 11 flee t  15.0s  life walk 4478 spore 0 dormant 0 dead 0  held 15/23  bodies 7 big 4514  centre 106.5,88.3  near 219  rim 0.042/0.192
+seed 11 flee t  16.0s  strike at 39.876724,53.28865 r 8: killed 59
+seed 11 flee t  18.0s  strike at 39.876724,53.28865 r 8: killed 100
+seed 11 flee t  20.0s  strike at 39.876724,53.28865 r 8: killed 51
+seed 11 flee t  20.0s  tube  4772.2  loops    1  width 6.72  reach  183.7  piles 23/23  strays 0.005  crystals 0.995  ms/tick 14.69
+seed 11 flee t  20.0s  alive 5272  energy 1.431  born 13194  starved 12549  grass -0.000
+seed 11 flee t  20.0s  contrast 3.72
+seed 11 flee t  20.0s  extent r50 143.9 r90 143.9
+seed 11 flee t  20.0s  life walk 5272 spore 0 dormant 0 dead 0  held 16/23  bodies 11 big 4196  centre 109.6,87.9  near 205  rim 0.045/0.207
+seed 11 flee t  22.0s  strike at 39.876724,53.28865 r 8: killed 55
+seed 11 flee t  24.0s  strike at 39.876724,53.28865 r 8: killed 56
+seed 11 flee t  25.0s  tube  4970.0  loops    3  width 7.02  reach  184.8  piles 23/23  strays 0.003  crystals 0.992  ms/tick 16.26
+seed 11 flee t  25.0s  alive 5531  energy 1.868  born 18459  starved 17444  grass -0.000
+seed 11 flee t  25.0s  contrast 3.74
+seed 11 flee t  25.0s  extent r50 143.9 r90 158.5
+seed 11 flee t  25.0s  life walk 5531 spore 0 dormant 0 dead 0  held 15/23  bodies 3 big 4726  centre 112.1,90.7  near 201  rim 0.039/0.213
+seed 11 flee t  26.0s  strike at 39.876724,53.28865 r 8: killed 61
+seed 11 flee t  28.0s  strike at 39.876724,53.28865 r 8: killed 41
+seed 11 flee t  30.0s  strike at 39.876724,53.28865 r 8: killed 93
+seed 11 flee t  30.0s  tube  5638.8  loops    3  width 7.01  reach  186.5  piles 23/23  strays 0.007  crystals 0.990  ms/tick 16.13
+seed 11 flee t  30.0s  alive 6251  energy 2.203  born 24560  starved 22630  grass -0.000
+seed 11 flee t  30.0s  contrast 3.85
+seed 11 flee t  30.0s  extent r50 143.9 r90 216.7
+seed 11 flee t  30.0s  life walk 6251 spore 0 dormant 0 dead 0  held 20/23  bodies 3 big 4523  centre 122.5,94.1  near 189  rim 0.033/0.216
+seed 11 flee t  32.0s  strike at 39.876724,53.28865 r 8: killed 38
+seed 11 flee t  34.0s  strike at 39.876724,53.28865 r 8: killed 62
+seed 11 flee t  35.0s  tube  5653.2  loops    3  width 6.89  reach  187.4  piles 23/23  strays 0.004  crystals 0.987  ms/tick 15.52
+seed 11 flee t  35.0s  alive 6453  energy 2.686  born 30892  starved 28660  grass -0.000
+seed 11 flee t  35.0s  contrast 3.89
+seed 11 flee t  35.0s  extent r50 143.9 r90 228.6
+seed 11 flee t  35.0s  life walk 6453 spore 0 dormant 0 dead 0  held 16/23  bodies 9 big 4607  centre 122.7,94.9  near 204  rim 0.039/0.234
+seed 11 flee t  36.0s  strike at 39.876724,53.28865 r 8: killed 48
+seed 11 flee t  38.0s  strike at 39.876724,53.28865 r 8: killed 90
+seed 11 flee t  40.0s  strike at 39.876724,53.28865 r 8: killed 100
+seed 11 flee t  40.0s  tube  5750.2  loops    6  width 6.54  reach  186.9  piles 23/23  strays 0.013  crystals 0.984  ms/tick 14.98
+seed 11 flee t  40.0s  alive 6552  energy 3.186  born 37296  starved 34727  grass -0.000
+seed 11 flee t  40.0s  contrast 3.93
+seed 11 flee t  40.0s  extent r50 143.9 r90 234.9
+seed 11 flee t  40.0s  life walk 6552 spore 0 dormant 0 dead 0  held 17/23  bodies 8 big 4338  centre 124.2,95.6  near 210  rim 0.034/0.220
+seed 11 flee t  45.0s  tube  5768.0  loops    3  width 6.97  reach  187.0  piles 23/23  strays 0.006  crystals 0.982  ms/tick 14.54
+seed 11 flee t  45.0s  alive 6782  energy 3.607  born 43884  starved 41085  grass -0.000
+seed 11 flee t  45.0s  contrast 3.73
+seed 11 flee t  45.0s  extent r50 143.9 r90 244.2
+seed 11 flee t  45.0s  life walk 6782 spore 0 dormant 0 dead 0  held 19/23  bodies 6 big 5662  centre 124.1,93.8  near 316  rim 0.037/0.220
+seed 11 flee t  50.0s  tube  5805.2  loops    7  width 6.82  reach  185.0  piles 23/23  strays 0.012  crystals 0.979  ms/tick 14.19
+seed 11 flee t  50.0s  alive 6723  energy 4.148  born 50515  starved 47775  grass -0.000
+seed 11 flee t  50.0s  contrast 3.84
+seed 11 flee t  50.0s  extent r50 143.9 r90 251.2
+seed 11 flee t  50.0s  life walk 6723 spore 0 dormant 0 dead 0  held 17/23  bodies 9 big 4742  centre 121.8,93.7  near 314  rim 0.034/0.231
+seed 11 flee t  55.0s  tube  5887.8  loops    5  width 6.94  reach  185.8  piles 23/23  strays 0.017  crystals 0.976  ms/tick 14.09
+seed 11 flee t  55.0s  alive 7246  energy 4.347  born 57674  starved 54411  grass -0.000
+seed 11 flee t  55.0s  contrast 3.57
+seed 11 flee t  55.0s  extent r50 143.9 r90 271.7
+seed 11 flee t  55.0s  life walk 7246 spore 0 dormant 0 dead 0  held 17/23  bodies 6 big 5684  centre 123.3,92.8  near 337  rim 0.034/0.223
+seed 11 flee t  60.0s  tube  6443.5  loops    7  width 7.46  reach  186.6  piles 23/23  strays 0.011  crystals 0.973  ms/tick 14.97
+seed 11 flee t  60.0s  alive 8476  energy 4.207  born 66262  starved 61769  grass -0.000
+seed 11 flee t  60.0s  contrast 3.46
+seed 11 flee t  60.0s  extent r50 143.9 r90 277.2
+seed 11 flee t  60.0s  life walk 8476 spore 0 dormant 0 dead 0  held 19/23  bodies 4 big 6379  centre 125.1,87.4  near 401  rim 0.035/0.236
+seed 11 flee firsts 0:0:0.57:0.0 1:88:0.59:0.9 2:156:0.68:2.3 3:48:0.95:0.3 4:63:1.05:0.4 5:126:0.65:2.2 6:87:0.54:1.2 7:183:0.92:2.6 8:120:0.47:1.4 9:40:0.73:0.1 10:185:1.08:3.2 11:78:0.84:0.6 12:185:0.93:4.0 13:37:0.87:0.1 14:168:0.93:3.6 15:89:0.19:1.0 16:118:0.38:1.9 17:80:0.90:0.9 18:44:0.50:0.2 19:151:0.85:1.9 20:54:0.48:0.3 21:31:0.79:0.1 22:48:0.19:0.2
+seed 11 flee hash=cbab4db1121a1ec1
