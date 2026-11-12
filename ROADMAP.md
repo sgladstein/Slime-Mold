@@ -139,6 +139,15 @@ settled after it by the game designer review with the campaign thread
 mission teaches with first-time hints; the persistent world is a separate
 later mode) follow that ruling; the owner may change them.
 
+**Build first, balance later (owner's card, 11-12 17:26Z).** The gates in
+this file that read "every plan beats random after Holm" are no longer entry
+gates for a feature, a look or a controls fix: those land on tests plus a GIF
+or a playable build, and a census clash becomes a tuning note to the owner of
+the numbers. The two-block census below still gates a change to a shared
+default every thread measures against, and AI-strategy work. No thread holds
+its work for balance in another area
+([rule](Reports/testing-practice-2026-11-12.md)).
+
 **One census, two seed blocks** (11-12 ~10:10Z, with the technical lead).
 A game-level table compared across threads comes from `examples/larderworld
 census`, with hands, tiers, tools and missions added there as `hands=` or
