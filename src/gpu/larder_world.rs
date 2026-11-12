@@ -84,6 +84,11 @@ pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
         energy_flow: p.energy_flow,
         hunger_scent: p.hunger_scent,
         hunger_at: p.hunger_at,
+        // The crater's shape, as the CPU's race world sets it (the cone,
+        // `race_params`).
+        scorch_keep: p.scorch_keep,
+        scorch_full: p.scorch_full,
+        scorch_cone: p.scorch_cone,
         seed,
         ..Settings::big_dish()
     }
