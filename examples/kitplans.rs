@@ -406,6 +406,14 @@ fn play(seed: u64, tier: &str, hand: &str, rules: Rules, kr: KitRules, map: Opti
     if let Some(t) = Tier::from_name(tier) {
         t.apply(&mut p);
     }
+    // Amputation (round 2), a mould trait tried on any tier: GERM_WEIGHT=
+    // and SICK_TRAIL= in the environment.
+    if let Ok(v) = std::env::var("GERM_WEIGHT") {
+        p.germ_weight = v.parse().unwrap();
+    }
+    if let Ok(v) = std::env::var("SICK_TRAIL") {
+        p.sick_trail = v.parse().unwrap();
+    }
     let mut world = match map {
         Some(m) => BigDish::with_map(p, m),
         None => BigDish::new(p),
@@ -499,6 +507,7 @@ fn main() {
             "germ_price" => kr.germ_price = v.parse().unwrap(),
             "sick_upkeep" => kr.sick_upkeep = v.parse().unwrap(),
             "gas_price" => kr.gas_price = v.parse().unwrap(),
+            "sick_catch" => kr.sick_catch = v.parse().unwrap(),
             "carry" => kr.carry_max = v.parse().unwrap(),
             "carry_each" => kr.carry_each = v.parse().unwrap(),
             "tool_weight" => kr.tool_weight = v.parse().unwrap(),

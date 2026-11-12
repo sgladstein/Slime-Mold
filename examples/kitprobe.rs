@@ -182,6 +182,25 @@ fn stand_near(g: &mut Game<BigDish>, p: (f32, f32)) {
 
 fn run(test: &str, arm: &str, seed: u64, warm: f32, look: Option<&str>) -> Out {
     let (mut g, mut kit) = game(seed, warm);
+    // The crater's strength and fade, for the Larder thread's shot
+    // craters (keep 0.1, full 30 asked 2026-11-12): KEEP= and FULL= in the
+    // environment.
+    if let Ok(v) = std::env::var("KEEP") {
+        g.world.p.scorch_keep = v.parse().unwrap();
+    }
+    if let Ok(v) = std::env::var("FULL") {
+        g.world.p.scorch_full = v.parse().unwrap();
+    }
+    // Amputation (round 2): GERM_WEIGHT= and SICK_TRAIL= in the environment.
+    if let Ok(v) = std::env::var("GERM_WEIGHT") {
+        g.world.p.germ_weight = v.parse().unwrap();
+    }
+    if let Ok(v) = std::env::var("SICK_TRAIL") {
+        g.world.p.sick_trail = v.parse().unwrap();
+    }
+    if let Ok(v) = std::env::var("SICK_CATCH") {
+        kit.rules.sick_catch = v.parse().unwrap();
+    }
     let s = g.world.p.scale as f32;
     let mut o = Out::default();
     let snap = |g: &Game<BigDish>, kit: &Kit, tag: &str| {
