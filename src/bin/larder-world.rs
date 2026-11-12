@@ -98,6 +98,7 @@ const DEFEND: u32 = 6;
 const FREE: u32 = 7;
 const BUY: u32 = 8;
 const WALL: u32 = 9;
+const RALLY: u32 = 10;
 
 /// How long a shot's ray and its muzzle flash show, real seconds (the world
 /// look's fight: `examples/worldlook.rs`).
@@ -179,6 +180,9 @@ struct App {
     last_frame: Instant,
     shift: bool,
     ctrl: bool,
+    /// The larder is selected (a click on it with no soldier picked): its
+    /// card shows, and right click sets its rally point.
+    larder_sel: bool,
     /// Alerts already given: crystals dry, the core taken, the larder
     /// robbed (game second), out of food.
     dry: Vec<bool>,
@@ -239,6 +243,7 @@ impl App {
             last_frame: Instant::now(),
             shift: false,
             ctrl: false,
+            larder_sel: false,
             dry: Vec::new(),
             core_told: false,
             robbed_at: None,
@@ -375,20 +380,48 @@ impl App {
         ids.iter().copied().filter(|&k| g.soldiers.get(k).is_some_and(|s| s.alive)).collect()
     }
 
+    /// An order to each soldier; with Shift held, queued after what each
+    /// is doing (`Cmd::Queue`) instead.
     fn order_all(&mut self, ids: &[usize], o: impl Fn(usize) -> Order) {
         let ids = self.living(ids);
+        let queue = self.shift;
         if let Some(g) = self.game.as_mut() {
             for (n, k) in ids.into_iter().enumerate() {
-                g.apply(Cmd::Order(k, o(n)));
+                g.apply(if queue { Cmd::Queue(k, o(n)) } else { Cmd::Order(k, o(n)) });
             }
         }
     }
 
     /// Right click: harvest a crystal under it, else walk there.
     fn order_at(&mut self, ids: &[usize], at: (f32, f32)) {
-        let Some(g) = &self.game else { return };
-        let o = if g.crystal_at(at).is_some() { Order::Clear(at.0, at.1) } else { Order::Move(at.0, at.1) };
+        let o = self.order_for(at);
         self.order_all(ids, |_| o);
+    }
+
+    /// What a point means as an order: harvest a crystal under it, else
+    /// walk there.
+    fn order_for(&self, at: (f32, f32)) -> Order {
+        match &self.game {
+            Some(g) if g.crystal_at(at).is_some() => Order::Clear(at.0, at.1),
+            _ => Order::Move(at.0, at.1),
+        }
+    }
+
+    /// The larder's rally point at `at` (`Cmd::Rally`).
+    fn rally(&mut self, at: (f32, f32)) {
+        let o = self.order_for(at);
+        if let Some(g) = self.game.as_mut() {
+            g.apply(Cmd::Rally(o));
+        }
+    }
+
+    /// A click on the world picked no soldier: the larder, if it is under
+    /// the click.
+    fn on_larder(&self, at: Option<(f32, f32)>) -> bool {
+        match (&self.game, at) {
+            (Some(g), Some(p)) => (p.0 - g.larder.0).hypot(p.1 - g.larder.1) <= 3.0 * g.world.scale(),
+            _ => false,
+        }
     }
 
     /// A burn line shared out: each soldier keeps the whole line burning
@@ -401,7 +434,10 @@ impl App {
         for ev in events {
             let sel = self.living(&self.controls.selected);
             match ev {
-                HudEvent::SelectOnly(k) => self.controls.selected = vec![k],
+                HudEvent::SelectOnly(k) => {
+                    self.controls.selected = vec![k];
+                    self.larder_sel = false;
+                }
                 HudEvent::Deselect(k) => self.controls.selected.retain(|&q| q != k),
                 HudEvent::Group(g) => self.controls.selected = self.living(&self.controls.groups[g].clone()),
                 HudEvent::Idle => {
@@ -429,7 +465,6 @@ impl App {
                     event_loop.exit();
                 }
                 HudEvent::Command { id } => match id {
-                    ATTACK => self.order_all(&sel, |_| Order::Attack),
                     STOP => self.order_all(&sel, |_| Order::Hold),
                     HOLD_FIRE | DEFEND | FREE => {
                         let st = match id {
@@ -454,6 +489,14 @@ impl App {
                     _ => {}
                 },
                 HudEvent::Point { id: HARVEST, at } => self.order_all(&sel, |_| Order::Clear(at.0, at.1)),
+                HudEvent::Point { id: RALLY, at } => self.rally(at),
+                // A then click: on the core's ring, attack the core; else
+                // attack-move there.
+                HudEvent::Point { id: ATTACK, at } => {
+                    let Some(g) = &self.game else { continue };
+                    let on_core = (at.0 - g.core.0).hypot(at.1 - g.core.1) <= g.rules.core_r * g.world.scale() * 1.5;
+                    self.order_all(&sel, |_| if on_core { Order::Attack } else { Order::Fight(at.0, at.1) });
+                }
                 HudEvent::Line { id: BURN, from, to } => self.burn(&sel, from, to),
                 HudEvent::Line { id: WALL, from, to } => {
                     if let Some(g) = self.game.as_mut() {
@@ -637,6 +680,15 @@ impl App {
         // simulation, so marks.
         self.marks.rect(g.larder, (1.4 * sc, 1.4 * sc), [214, 196, 150, 255], true);
         self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 140]);
+        if self.larder_sel {
+            self.marks.ring(g.larder, 3.6 * sc, [255, 255, 255, 200]);
+        }
+        if let Order::Move(x, y) | Order::Clear(x, y) = g.rally {
+            if self.larder_sel || !self.controls.selected.is_empty() {
+                self.marks.line(g.larder, (x, y), 2.0, [214, 196, 150, 110]);
+                self.marks.ring((x, y), 1.2 * sc, [214, 196, 150, 160]);
+            }
+        }
         let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
         self.marks.ring(g.core, g.rules.core_r * sc, core);
         for (k, s) in g.soldiers.iter().enumerate() {
@@ -647,15 +699,27 @@ impl App {
                 self.marks.line(a, b, 4.0, [255, 150, 60, 200]);
             }
             if self.controls.selected.contains(&k) {
-                let to = match s.order {
-                    Order::Move(x, y) => Some((x, y)),
-                    Order::Clear(x, y) => Some(if s.homing { g.larder } else { (x, y) }),
-                    Order::Attack => Some(g.core),
-                    _ => None,
-                };
-                if let Some(to) = to {
-                    let colour = if s.order == Order::Attack { [255, 110, 110, 120] } else { [255, 255, 255, 90] };
-                    self.marks.line((s.x, s.y), to, 2.0, colour);
+                // The order, then the queue (Shift) as a chain of lines,
+                // fainter down the queue; red for fighting, white else.
+                let mut from = (s.x, s.y);
+                let orders = std::iter::once(s.order).chain(s.queue[..s.queued as usize].iter().copied());
+                for (n, o) in orders.enumerate() {
+                    let to = match o {
+                        Order::Move(x, y) | Order::Fight(x, y) => Some((x, y)),
+                        Order::Clear(..) if n == 0 && s.homing => Some(g.larder),
+                        Order::Clear(x, y) => Some((x, y)),
+                        Order::Attack => Some(g.core),
+                        Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
+                        Order::Hold => None,
+                    };
+                    let Some(to) = to else { continue };
+                    let a = if n == 0 { 120 } else { 80 };
+                    let colour = if matches!(o, Order::Attack | Order::Fight(..)) { [255, 110, 110, a] } else { [255, 255, 255, a - 30] };
+                    self.marks.line(from, to, 2.0, colour);
+                    if n > 0 {
+                        self.marks.ring(to, 1.0 * sc, colour);
+                    }
+                    from = to;
                 }
             }
         }
@@ -717,6 +781,7 @@ impl App {
             let badge = match s.order {
                 Order::Hold => None,
                 Order::Move(..) => Some(Icon::Move),
+                Order::Fight(..) => Some(Icon::Attack),
                 Order::Clear(..) => Some(Icon::Crystal),
                 Order::Burn(..) => Some(Icon::Burn),
                 Order::Attack => Some(Icon::Attack),
@@ -729,6 +794,8 @@ impl App {
             let doing = match s.order {
                 Order::Hold => "holding",
                 Order::Move(..) => "moving",
+                Order::Fight(..) if s.dense > 0 => "fighting its way",
+                Order::Fight(..) => "attack-moving",
                 Order::Clear(..) if s.homing => "carrying charge home",
                 Order::Clear(..) => "harvesting a crystal",
                 Order::Burn(..) => "holding a burn line",
@@ -748,6 +815,21 @@ impl App {
                     ("Mould on it".into(), format!("{}", s.touching)),
                 ],
                 note: None,
+            });
+        }
+        if self.larder_sel && sel.is_empty() {
+            m.info = Some(Info {
+                icon: Icon::Hold,
+                colour: [214, 196, 150, 255],
+                title: "The larder".into(),
+                subtitle: match g.rally {
+                    Order::Clear(..) => "new soldiers go to harvest".into(),
+                    Order::Move(..) => "new soldiers go to the rally point".into(),
+                    _ => "new soldiers wait here".into(),
+                },
+                hp: None,
+                stats: vec![("Bank".into(), format!("{:.0}", g.bank)), ("Harvested".into(), format!("{:.0}", g.harvested)), ("Eaten by the mould".into(), format!("{:.0}", g.stolen)), ("Soldiers".into(), format!("{} / {}", g.alive(), r.max_squad))],
+                note: Some("B buys a soldier. Right-click sets where new soldiers go; on a crystal they start harvesting it.".into()),
             });
         }
         // The hover card: a crystal or the larder under the cursor.
@@ -782,7 +864,7 @@ impl App {
         let no_sel = || Some("Select soldiers first".to_string());
         let full = g.alive() >= r.max_squad;
         let mut cmds = vec![
-            Command { ready: any, why_not: no_sel(), about: format!("Walk onto the mould's core, firing freely. Stand on it with no mould near for {:.0} s and it can grow no more.", r.core_secs), ..Command::new(ATTACK, (0, 0), Icon::Attack, "Attack the core", KeyCode::KeyA) },
+            Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Walk there, stopping to fire freely at any mould in reach on the way. Click the core to attack it: stand on it with no mould near for {:.0} s and it can grow no more. Shift queues it.", r.core_secs), ..Command::new(ATTACK, (0, 0), Icon::Attack, "Attack-move", KeyCode::KeyA) },
             Command { ready: any, why_not: no_sel(), about: "Drop the order and stand still; still fires by its stance.".into(), ..Command::new(STOP, (0, 1), Icon::Stop, "Stop", KeyCode::KeyS) },
             Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Go to a crystal, hold it, and carry its charge to the larder, {:.0} food a load. Right-click on a crystal does the same.", r.carry), ..Command::new(HARVEST, (0, 2), Icon::Crystal, "Harvest a crystal", KeyCode::KeyG) },
             Command { target: Target::Line { width: r.strike * sc }, ready: any, why_not: no_sel(), about: "Stand by a line and keep firing along it, so the mould cannot cross.".into(), ..Command::new(BURN, (0, 3), Icon::Burn, "Burn a line", KeyCode::KeyF) },
@@ -803,6 +885,12 @@ impl App {
                 why_not: need(r.wall_cost),
                 about: "A wall the mould has to wear through, slowly. Both ends within a soldier's range; costs by its length.".into(),
                 ..Command::new(WALL, (2, 1), Icon::Wall, "Lay a wall", KeyCode::KeyV)
+            },
+            Command {
+                target: Target::Point { radius: 2.0 * sc },
+                ready: true,
+                about: "Where bought soldiers go: on a crystal they start harvesting it, elsewhere they walk there. Also: select the larder and right-click.".into(),
+                ..Command::new(RALLY, (2, 2), Icon::Move, "Rally point", KeyCode::KeyR)
             },
         ];
         for c in &mut cmds {
@@ -836,6 +924,9 @@ impl App {
         }
         m.help = vec![
             ("Right click".into(), "Move there; on a crystal, harvest it".into()),
+            ("Shift + order".into(), "Queue it after the soldiers' current orders".into()),
+            ("A, click".into(), "Attack-move there; on the core, attack it".into()),
+            ("Click the larder".into(), "Select it: B buys, right click sets the rally point".into()),
             ("P".into(), "Pause".into()),
             ("Tab".into(), "Four times faster, or back".into()),
             ("N".into(), "Start the next map".into()),
@@ -1184,10 +1275,19 @@ impl ApplicationHandler for App {
                 }
                 let units = self.units();
                 let mm = self.view.as_ref().and_then(|v| v.minimap_rect(&self.camera));
+                let point = self.controls.cursor.and_then(|c| self.camera.world_at(c));
+                // The larder selected and no soldier: right click sets its
+                // rally point (the controls give no order without a unit).
+                if b == Button::Right && down && self.larder_sel && self.living(&self.controls.selected).is_empty() {
+                    if let Some(at) = point {
+                        self.rally(at);
+                    }
+                }
                 for c in self.controls.button(b, down, &units, &mut self.camera, mm) {
                     match c {
                         UiCommand::Order { units, at } => self.order_at(&units, at),
                         UiCommand::Burn { units, from, to } => self.burn(&units, from, to),
+                        UiCommand::Select(picked) => self.larder_sel = picked.is_empty() && self.on_larder(point),
                         _ => {}
                     }
                 }
@@ -1513,7 +1613,7 @@ mod tests {
         assert!(wounded > 0, "no wound in the look after {} shots", g.shots);
         app.prepare();
         let m = app.model(None, None);
-        assert_eq!(m.commands.len(), 9);
+        assert_eq!(m.commands.len(), 10, "the rally point is the tenth");
         assert!(m.end.is_none());
     }
 
