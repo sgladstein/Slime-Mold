@@ -170,7 +170,11 @@ tie random (18/14, 16/16). So on those two tiers no plan beats random, and
 "a good dish is one a plan wins and random loses" is not met: the Drifter
 hunts the squad and the Trunk sends its mass down a few tubes, and wandering
 soldiers firing everywhere meet them anyway. That belongs to the tiers
-thread (sent), not to the tools. On the Swarmer, Sleeper, Sporer and Grudge
+thread (sent), not to the tools. But 945e080 is before the core pull
+(#126, `Rules::core_pull` 8), the Larder thread's answer to random play
+parking on the core, and before the tiers thread's drifting Drifter (#133);
+with both, `larderworld census` has random wiping the Drifter 3 of 48. The
+Trunk and Drifter rows are being re-run on main (`raw/r2-32-main/`). On the Swarmer, Sleeper, Sporer and Grudge
 random and randkit are squad-wiped 27-31 of 32 and every plan beats them.
 
 Quiet (gas) and siege (det cord) are at the farm hand's level on every tier

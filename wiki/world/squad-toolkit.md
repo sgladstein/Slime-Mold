@@ -24,7 +24,7 @@ with the tier: loud (blasts carried to the body) over plague (the germ) on
 the Drifter (30/2), plague over loud on the Sporer (30/2); by the mean
 plague also leads on none, Swarmer, Sprawler and Grudge, loud on Sleeper
 and Trunk. Random play beats or ties every plan on the Drifter and the Trunk
-(gate 1 fails there). Gas and the det cord are never best
+(gate 1 fails there, before the core pull of #126; re-run on main pending). Gas and the det cord are never best
 ([round 2](../../Reports/squad-toolkit-round2-2026-11-12.md), *Confirmed at 32
 seeds*; [page](https://claude.ai/artifact/Vr6ysJedMVtEa6XXEA1pTC)).
 
@@ -54,7 +54,7 @@ this toolkit's burst list, not a new system.
 
 ## Open
 
-- Random play wipes the Drifter and the Trunk (gate 1 fails on them): a tier question.
+- Random play wipes the Drifter and the Trunk at 945e080 (gate 1 fails): re-run on main with the core pull (#126) and the new Drifter (#133).
 - Round 2 on a second map, and as `larderworld census` hands.
 - A tier where gas or the det cord is the best plan.
 - `germ_resist` as a tier key, if a campaign mould needs the germ answered.
