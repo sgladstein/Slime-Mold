@@ -1,0 +1,64 @@
+swarmer random 21 -1.684 squad wiped
+swarmer randkit 21 -1.459 squad wiped
+swarmer idle 21 -0.389 cap
+swarmer farm 21 +0.137 cap
+swarmer loud 21 +0.485 cap
+swarmer quiet 21 +0.061 cap
+swarmer random 22 -1.653 squad wiped
+swarmer randkit 22 -1.646 squad wiped
+swarmer siege 21 +0.128 cap
+swarmer idle 22 -0.359 cap
+swarmer farm 22 +0.099 cap
+swarmer loud 22 +0.148 cap
+swarmer plague 21 +1.565 mould wiped
+swarmer quiet 22 +0.079 cap
+swarmer siege 22 +0.099 cap
+swarmer random 23 -1.533 squad wiped
+swarmer idle 23 -0.340 cap
+swarmer randkit 23 -1.620 squad wiped
+swarmer farm 23 +0.194 cap
+swarmer quiet 23 +0.221 cap
+swarmer loud 23 +0.309 cap
+swarmer siege 23 +0.230 cap
+swarmer plague 22 +0.342 cap
+swarmer random 24 -1.717 squad wiped
+swarmer randkit 24 -1.657 squad wiped
+swarmer farm 24 +0.163 cap
+swarmer loud 24 +0.313 cap
+swarmer idle 24 -0.329 cap
+swarmer plague 23 +1.445 mould wiped
+swarmer quiet 24 +0.148 cap
+swarmer random 25 -1.645 squad wiped
+swarmer siege 24 +0.180 cap
+swarmer randkit 25 -1.528 squad wiped
+swarmer loud 25 +0.213 cap
+swarmer farm 25 +0.124 cap
+swarmer idle 25 -0.346 cap
+swarmer quiet 25 +0.093 cap
+swarmer siege 25 +0.141 cap
+swarmer plague 24 +0.495 cap
+swarmer randkit 26 -1.602 squad wiped
+swarmer random 26 -1.090 squad wiped
+swarmer idle 26 -0.373 cap
+swarmer plague 25 +1.500 mould wiped
+swarmer farm 26 +0.195 cap
+swarmer quiet 26 +0.143 cap
+swarmer loud 26 +0.278 cap
+swarmer random 27 -1.645 squad wiped
+swarmer randkit 27 -1.638 squad wiped
+swarmer siege 26 +0.156 cap
+swarmer loud 27 +0.354 cap
+swarmer farm 27 +0.270 cap
+swarmer idle 27 -0.323 cap
+swarmer quiet 27 +0.125 cap
+swarmer siege 27 +0.213 cap
+swarmer plague 26 +1.415 mould wiped
+swarmer random 28 -1.430 squad wiped
+swarmer randkit 28 -1.745 squad wiped
+swarmer plague 27 +1.630 mould wiped
+swarmer idle 28 -0.222 cap
+swarmer loud 28 +1.465 mould wiped
+swarmer farm 28 +0.242 cap
+swarmer quiet 28 +0.244 cap
+swarmer siege 28 +0.219 cap
+swarmer plague 28 +1.442 mould wiped

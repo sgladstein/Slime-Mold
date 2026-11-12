@@ -1,0 +1,234 @@
+
+none: 32 seeds (5-36)
+      idle mean -0.332 median -0.343 (0/32/0)
+    random mean -0.036 median +0.088 (7/12/13)
+   randkit mean +0.435 median +0.814 (16/7/9)
+      farm mean +0.239 median +0.244 (0/32/0)
+      loud mean +0.859 median +0.854 (16/16/0)
+     quiet mean +0.143 median +0.143 (0/32/0)
+    plague mean +1.337 median +1.497 (27/5/0)
+     siege mean +0.229 median +0.235 (0/32/0)
+
+swarmer: 32 seeds (5-36)
+      idle mean -0.323 median -0.335 (0/32/0)
+    random mean -1.470 median -1.548 (0/1/31)
+   randkit mean -1.391 median -1.601 (2/0/30)
+      farm mean +0.199 median +0.200 (0/32/0)
+      loud mean +0.762 median +0.404 (11/21/0)
+     quiet mean +0.143 median +0.143 (0/32/0)
+    plague mean +1.278 median +1.444 (26/6/0)
+     siege mean +0.193 median +0.202 (0/32/0)
+
+sleeper: 32 seeds (5-36)
+      idle mean -0.215 median -0.227 (0/32/0)
+    random mean -1.203 median -1.430 (0/5/27)
+   randkit mean -1.274 median -1.516 (0/4/28)
+      farm mean +0.274 median +0.276 (0/32/0)
+      loud mean +0.874 median +0.498 (15/17/0)
+     quiet mean +0.270 median +0.277 (0/32/0)
+    plague mean +0.484 median +0.489 (0/32/0)
+     siege mean +0.278 median +0.288 (0/32/0)
+
+sporer: 32 seeds (5-36)
+      idle mean -0.375 median -0.387 (0/32/0)
+    random mean -1.426 median -1.494 (0/1/31)
+   randkit mean -0.515 median -1.443 (7/5/20)
+      farm mean +0.116 median +0.113 (0/32/0)
+      loud mean +0.214 median +0.093 (3/29/0)
+     quiet mean +0.076 median +0.071 (0/32/0)
+    plague mean +1.059 median +1.302 (19/13/0)
+     siege mean +0.121 median +0.121 (0/32/0)
+
+sprawler: 32 seeds (5-36)
+      idle mean -0.672 median -0.412 (0/21/11)
+    random mean -0.575 median -1.377 (8/2/22)
+   randkit mean +0.095 median +0.386 (14/4/14)
+      farm mean +0.351 median +0.204 (3/29/0)
+      loud mean +0.929 median +1.366 (18/14/0)
+     quiet mean +0.074 median +0.051 (0/32/0)
+    plague mean +1.369 median +1.428 (29/3/0)
+     siege mean +0.284 median +0.216 (1/31/0)
+
+trunk: 32 seeds (5-36)
+      idle mean -0.255 median -0.256 (0/32/0)
+    random mean +0.734 median +1.485 (17/9/6)
+   randkit mean +0.513 median +1.268 (17/6/9)
+      farm mean +0.300 median +0.288 (0/32/0)
+      loud mean +1.367 median +1.558 (28/4/0)
+     quiet mean +0.235 median +0.239 (0/32/0)
+    plague mean +1.162 median +1.345 (23/9/0)
+     siege mean +0.309 median +0.314 (0/32/0)
+
+drifter: 32 seeds (5-36)
+      idle mean -0.166 median -0.165 (0/32/0)
+    random mean +1.341 median +1.750 (21/11/0)
+   randkit mean +1.007 median +1.520 (19/10/3)
+      farm mean +0.364 median +0.367 (0/32/0)
+      loud mean +1.650 median +1.792 (29/3/0)
+     quiet mean +0.337 median +0.330 (0/32/0)
+    plague mean +0.500 median +0.428 (3/29/0)
+     siege mean +0.367 median +0.368 (0/32/0)
+
+grudge: 32 seeds (5-36)
+      idle mean -0.326 median -0.335 (0/32/0)
+    random mean -1.494 median -1.582 (0/1/31)
+   randkit mean -1.480 median -1.614 (0/2/30)
+      farm mean +0.177 median +0.173 (0/32/0)
+      loud mean +1.133 median +1.565 (18/14/0)
+     quiet mean +0.143 median +0.143 (0/32/0)
+    plague mean +1.455 median +1.573 (28/4/0)
+     siege mean +0.176 median +0.174 (0/32/0)
+
+pairs (higher / lower, sign p, median paired difference; Holm over all 152):
+      none gate 1                 farm vs idle: 32 / 0, p 4.7e-10, med +0.568  holds
+      none gate 1                 farm vs random: 22 / 10, p 0.05, med +0.156
+      none gate 1                 farm vs randkit: 13 / 19, p 0.38, med -0.484
+      none gate 1                 loud vs idle: 32 / 0, p 4.7e-10, med +1.192  holds
+      none gate 1                 loud vs random: 25 / 7, p 0.0021, med +1.227
+      none gate 1                 loud vs randkit: 18 / 14, p 0.6, med +0.163
+      none gate 1                 quiet vs idle: 32 / 0, p 4.7e-10, med +0.479  holds
+      none gate 1                 quiet vs random: 17 / 15, p 0.86, med +0.054
+      none gate 1                 quiet vs randkit: 12 / 20, p 0.22, med -0.583
+      none gate 1                 plague vs idle: 32 / 0, p 4.7e-10, med +1.808  holds
+      none gate 1                 plague vs random: 25 / 7, p 0.0021, med +1.452
+      none gate 1                 plague vs randkit: 22 / 10, p 0.05, med +0.204
+      none gate 1                 siege vs idle: 32 / 0, p 4.7e-10, med +0.571  holds
+      none gate 1                 siege vs random: 21 / 11, p 0.11, med +0.152
+      none gate 1                 siege vs randkit: 13 / 19, p 0.38, med -0.506
+      none gate 2 (best plague)   plague vs farm: 32 / 0, p 4.7e-10, med +1.220  holds
+      none gate 2 (best plague)   plague vs loud: 24 / 8, p 0.007, med +0.367
+      none gate 2 (best plague)   plague vs quiet: 32 / 0, p 4.7e-10, med +1.305  holds
+      none gate 2 (best plague)   plague vs siege: 32 / 0, p 4.7e-10, med +1.230  holds
+   swarmer gate 1                 farm vs idle: 32 / 0, p 4.7e-10, med +0.524  holds
+   swarmer gate 1                 farm vs random: 32 / 0, p 4.7e-10, med +1.736  holds
+   swarmer gate 1                 farm vs randkit: 30 / 2, p 2.5e-07, med +1.800  holds
+   swarmer gate 1                 loud vs idle: 32 / 0, p 4.7e-10, med +0.694  holds
+   swarmer gate 1                 loud vs random: 32 / 0, p 4.7e-10, med +1.954  holds
+   swarmer gate 1                 loud vs randkit: 30 / 2, p 2.5e-07, med +1.948  holds
+   swarmer gate 1                 quiet vs idle: 32 / 0, p 4.7e-10, med +0.460  holds
+   swarmer gate 1                 quiet vs random: 32 / 0, p 4.7e-10, med +1.702  holds
+   swarmer gate 1                 quiet vs randkit: 30 / 2, p 2.5e-07, med +1.737  holds
+   swarmer gate 1                 plague vs idle: 32 / 0, p 4.7e-10, med +1.762  holds
+   swarmer gate 1                 plague vs random: 32 / 0, p 4.7e-10, med +2.912  holds
+   swarmer gate 1                 plague vs randkit: 31 / 1, p 1.5e-08, med +3.021  holds
+   swarmer gate 1                 siege vs idle: 32 / 0, p 4.7e-10, med +0.506  holds
+   swarmer gate 1                 siege vs random: 32 / 0, p 4.7e-10, med +1.730  holds
+   swarmer gate 1                 siege vs randkit: 30 / 2, p 2.5e-07, med +1.802  holds
+   swarmer gate 2 (best plague)   plague vs farm: 32 / 0, p 4.7e-10, med +1.215  holds
+   swarmer gate 2 (best plague)   plague vs loud: 22 / 10, p 0.05, med +0.606
+   swarmer gate 2 (best plague)   plague vs quiet: 32 / 0, p 4.7e-10, med +1.274  holds
+   swarmer gate 2 (best plague)   plague vs siege: 32 / 0, p 4.7e-10, med +1.230  holds
+   sleeper gate 1                 farm vs idle: 32 / 0, p 4.7e-10, med +0.491  holds
+   sleeper gate 1                 farm vs random: 31 / 1, p 1.5e-08, med +1.727  holds
+   sleeper gate 1                 farm vs randkit: 29 / 3, p 2.6e-06, med +1.797  holds
+   sleeper gate 1                 loud vs idle: 32 / 0, p 4.7e-10, med +0.762  holds
+   sleeper gate 1                 loud vs random: 32 / 0, p 4.7e-10, med +2.096  holds
+   sleeper gate 1                 loud vs randkit: 30 / 2, p 2.5e-07, med +2.166  holds
+   sleeper gate 1                 quiet vs idle: 32 / 0, p 4.7e-10, med +0.486  holds
+   sleeper gate 1                 quiet vs random: 31 / 1, p 1.5e-08, med +1.720  holds
+   sleeper gate 1                 quiet vs randkit: 29 / 3, p 2.6e-06, med +1.801  holds
+   sleeper gate 1                 plague vs idle: 32 / 0, p 4.7e-10, med +0.696  holds
+   sleeper gate 1                 plague vs random: 32 / 0, p 4.7e-10, med +1.904  holds
+   sleeper gate 1                 plague vs randkit: 31 / 1, p 1.5e-08, med +2.006  holds
+   sleeper gate 1                 siege vs idle: 32 / 0, p 4.7e-10, med +0.495  holds
+   sleeper gate 1                 siege vs random: 31 / 1, p 1.5e-08, med +1.708  holds
+   sleeper gate 1                 siege vs randkit: 29 / 3, p 2.6e-06, med +1.808  holds
+   sleeper gate 2 (best loud)     loud vs farm: 32 / 0, p 4.7e-10, med +0.277  holds
+   sleeper gate 2 (best loud)     loud vs quiet: 32 / 0, p 4.7e-10, med +0.298  holds
+   sleeper gate 2 (best loud)     loud vs plague: 24 / 8, p 0.007, med +0.052
+   sleeper gate 2 (best loud)     loud vs siege: 32 / 0, p 4.7e-10, med +0.287  holds
+    sporer gate 1                 farm vs idle: 32 / 0, p 4.7e-10, med +0.487  holds
+    sporer gate 1                 farm vs random: 32 / 0, p 4.7e-10, med +1.593  holds
+    sporer gate 1                 farm vs randkit: 20 / 12, p 0.22, med +1.560
+    sporer gate 1                 loud vs idle: 32 / 0, p 4.7e-10, med +0.480  holds
+    sporer gate 1                 loud vs random: 32 / 0, p 4.7e-10, med +1.590  holds
+    sporer gate 1                 loud vs randkit: 22 / 10, p 0.05, med +1.530
+    sporer gate 1                 quiet vs idle: 32 / 0, p 4.7e-10, med +0.450  holds
+    sporer gate 1                 quiet vs random: 32 / 0, p 4.7e-10, med +1.555  holds
+    sporer gate 1                 quiet vs randkit: 20 / 12, p 0.22, med +1.514
+    sporer gate 1                 plague vs idle: 32 / 0, p 4.7e-10, med +1.688  holds
+    sporer gate 1                 plague vs random: 32 / 0, p 4.7e-10, med +2.790  holds
+    sporer gate 1                 plague vs randkit: 24 / 8, p 0.007, med +2.068
+    sporer gate 1                 siege vs idle: 32 / 0, p 4.7e-10, med +0.500  holds
+    sporer gate 1                 siege vs random: 32 / 0, p 4.7e-10, med +1.611  holds
+    sporer gate 1                 siege vs randkit: 20 / 12, p 0.22, med +1.567
+    sporer gate 2 (best plague)   plague vs farm: 32 / 0, p 4.7e-10, med +1.141  holds
+    sporer gate 2 (best plague)   plague vs loud: 30 / 2, p 2.5e-07, med +1.174  holds
+    sporer gate 2 (best plague)   plague vs quiet: 32 / 0, p 4.7e-10, med +1.190  holds
+    sporer gate 2 (best plague)   plague vs siege: 32 / 0, p 4.7e-10, med +1.124  holds
+  sprawler gate 1                 farm vs idle: 32 / 0, p 4.7e-10, med +0.869  holds
+  sprawler gate 1                 farm vs random: 23 / 9, p 0.02, med +1.639
+  sprawler gate 1                 farm vs randkit: 15 / 17, p 0.86, med -0.063
+  sprawler gate 1                 loud vs idle: 32 / 0, p 4.7e-10, med +1.763  holds
+  sprawler gate 1                 loud vs random: 25 / 7, p 0.0021, med +1.732
+  sprawler gate 1                 loud vs randkit: 17 / 15, p 0.86, med +0.598
+  sprawler gate 1                 quiet vs idle: 32 / 0, p 4.7e-10, med +0.472  holds
+  sprawler gate 1                 quiet vs random: 22 / 10, p 0.05, med +1.431
+  sprawler gate 1                 quiet vs randkit: 14 / 18, p 0.6, med -0.303
+  sprawler gate 1                 plague vs idle: 32 / 0, p 4.7e-10, med +1.845  holds
+  sprawler gate 1                 plague vs random: 25 / 7, p 0.0021, med +2.670
+  sprawler gate 1                 plague vs randkit: 18 / 14, p 0.6, med +1.195
+  sprawler gate 1                 siege vs idle: 32 / 0, p 4.7e-10, med +0.663  holds
+  sprawler gate 1                 siege vs random: 23 / 9, p 0.02, med +1.637
+  sprawler gate 1                 siege vs randkit: 15 / 17, p 0.86, med -0.067
+  sprawler gate 2 (best plague)   plague vs farm: 32 / 0, p 4.7e-10, med +1.163  holds
+  sprawler gate 2 (best plague)   plague vs loud: 25 / 7, p 0.0021, med +0.146
+  sprawler gate 2 (best plague)   plague vs quiet: 32 / 0, p 4.7e-10, med +1.373  holds
+  sprawler gate 2 (best plague)   plague vs siege: 32 / 0, p 4.7e-10, med +1.195  holds
+     trunk gate 1                 farm vs idle: 32 / 0, p 4.7e-10, med +0.548  holds
+     trunk gate 1                 farm vs random: 9 / 23, p 0.02, med -1.103
+     trunk gate 1                 farm vs randkit: 11 / 21, p 0.11, med -0.978
+     trunk gate 1                 loud vs idle: 32 / 0, p 4.7e-10, med +1.776  holds
+     trunk gate 1                 loud vs random: 18 / 14, p 0.6, med +0.032
+     trunk gate 1                 loud vs randkit: 19 / 13, p 0.38, med +0.330
+     trunk gate 1                 quiet vs idle: 32 / 0, p 4.7e-10, med +0.486  holds
+     trunk gate 1                 quiet vs random: 9 / 23, p 0.02, med -1.152
+     trunk gate 1                 quiet vs randkit: 10 / 22, p 0.05, med -1.050
+     trunk gate 1                 plague vs idle: 32 / 0, p 4.7e-10, med +1.608  holds
+     trunk gate 1                 plague vs random: 16 / 16, p 1, med +0.016
+     trunk gate 1                 plague vs randkit: 18 / 14, p 0.6, med +0.100
+     trunk gate 1                 siege vs idle: 32 / 0, p 4.7e-10, med +0.559  holds
+     trunk gate 1                 siege vs random: 10 / 22, p 0.05, med -1.105
+     trunk gate 1                 siege vs randkit: 11 / 21, p 0.11, med -0.957
+     trunk gate 2 (best loud)     loud vs farm: 31 / 1, p 1.5e-08, med +1.212  holds
+     trunk gate 2 (best loud)     loud vs quiet: 32 / 0, p 4.7e-10, med +1.275  holds
+     trunk gate 2 (best loud)     loud vs plague: 22 / 10, p 0.05, med +0.094
+     trunk gate 2 (best loud)     loud vs siege: 31 / 1, p 1.5e-08, med +1.208  holds
+   drifter gate 1                 farm vs idle: 32 / 0, p 4.7e-10, med +0.537  holds
+   drifter gate 1                 farm vs random: 1 / 31, p 1.5e-08, med -1.405  holds
+   drifter gate 1                 farm vs randkit: 4 / 28, p 1.9e-05, med -1.164  holds
+   drifter gate 1                 loud vs idle: 32 / 0, p 4.7e-10, med +1.919  holds
+   drifter gate 1                 loud vs random: 18 / 14, p 0.6, med +0.071
+   drifter gate 1                 loud vs randkit: 24 / 8, p 0.007, med +0.215
+   drifter gate 1                 quiet vs idle: 32 / 0, p 4.7e-10, med +0.498  holds
+   drifter gate 1                 quiet vs random: 1 / 31, p 1.5e-08, med -1.426  holds
+   drifter gate 1                 quiet vs randkit: 4 / 28, p 1.9e-05, med -1.153  holds
+   drifter gate 1                 plague vs idle: 32 / 0, p 4.7e-10, med +0.587  holds
+   drifter gate 1                 plague vs random: 6 / 26, p 0.00054, med -1.296  holds
+   drifter gate 1                 plague vs randkit: 8 / 24, p 0.007, med -1.048
+   drifter gate 1                 siege vs idle: 32 / 0, p 4.7e-10, med +0.526  holds
+   drifter gate 1                 siege vs random: 2 / 30, p 2.5e-07, med -1.402  holds
+   drifter gate 1                 siege vs randkit: 5 / 27, p 0.00011, med -1.130  holds
+   drifter gate 2 (best loud)     loud vs farm: 31 / 1, p 1.5e-08, med +1.431  holds
+   drifter gate 2 (best loud)     loud vs quiet: 30 / 1, p 3e-08, med +1.439  holds
+   drifter gate 2 (best loud)     loud vs plague: 30 / 2, p 2.5e-07, med +1.315  holds
+   drifter gate 2 (best loud)     loud vs siege: 30 / 2, p 2.5e-07, med +1.413  holds
+    grudge gate 1                 farm vs idle: 32 / 0, p 4.7e-10, med +0.507  holds
+    grudge gate 1                 farm vs random: 31 / 1, p 1.5e-08, med +1.760  holds
+    grudge gate 1                 farm vs randkit: 30 / 2, p 2.5e-07, med +1.777  holds
+    grudge gate 1                 loud vs idle: 32 / 0, p 4.7e-10, med +1.891  holds
+    grudge gate 1                 loud vs random: 32 / 0, p 4.7e-10, med +2.881  holds
+    grudge gate 1                 loud vs randkit: 31 / 1, p 1.5e-08, med +2.977  holds
+    grudge gate 1                 quiet vs idle: 32 / 0, p 4.7e-10, med +0.468  holds
+    grudge gate 1                 quiet vs random: 32 / 0, p 4.7e-10, med +1.727  holds
+    grudge gate 1                 quiet vs randkit: 30 / 2, p 2.5e-07, med +1.726  holds
+    grudge gate 1                 plague vs idle: 32 / 0, p 4.7e-10, med +1.917  holds
+    grudge gate 1                 plague vs random: 32 / 0, p 4.7e-10, med +3.043  holds
+    grudge gate 1                 plague vs randkit: 32 / 0, p 4.7e-10, med +3.191  holds
+    grudge gate 1                 siege vs idle: 32 / 0, p 4.7e-10, med +0.514  holds
+    grudge gate 1                 siege vs random: 31 / 1, p 1.5e-08, med +1.756  holds
+    grudge gate 1                 siege vs randkit: 30 / 2, p 2.5e-07, med +1.760  holds
+    grudge gate 2 (best plague)   plague vs farm: 32 / 0, p 4.7e-10, med +1.405  holds
+    grudge gate 2 (best plague)   plague vs loud: 19 / 13, p 0.38, med +0.120
+    grudge gate 2 (best plague)   plague vs quiet: 32 / 0, p 4.7e-10, med +1.449  holds
+    grudge gate 2 (best plague)   plague vs siege: 32 / 0, p 4.7e-10, med +1.430  holds

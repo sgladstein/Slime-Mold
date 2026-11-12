@@ -1,0 +1,530 @@
+mission 3-the-gaps (The gaps): "Keep the mould inside the Rim for 10:00", map rim, tier sprawler , seeds 1-32, scale 2, walkers 5000
+on the CPU and the GPU engine
+campaign: GPU NVIDIA GeForce GTX 1070
+campaign: GPU NVIDIA GeForce GTX 1070
+  idle s1 GPU: Overrun 432s 0*
+  idle s2 GPU: Overrun 456s 0*
+  idle s3 GPU: Overrun 420s 0*
+  idle s2: Overrun 419s 0*
+campaign: GPU NVIDIA GeForce GTX 1070
+  idle s3: Overrun 441s 0*
+  idle s4 GPU: Overrun 426s 0*
+  idle s1: Overrun 594s 0*
+  idle s4: Overrun 409s 0*
+  idle s5 GPU: Overrun 415s 0*
+  idle s6 GPU: Overrun 409s 0*
+  idle s7 GPU: Overrun 673s 0*
+  idle s6: Overrun 457s 0*
+campaign: GPU NVIDIA GeForce GTX 1070
+  idle s5: Overrun 526s 0*
+  idle s8 GPU: Overrun 433s 0*
+  idle s9 GPU: Overrun 447s 0*
+  idle s7: Overrun 579s 0*
+  idle s8: Overrun 483s 0*
+  idle s10 GPU: Overrun 551s 0*
+  idle s11 GPU: Overrun 404s 0*
+  idle s9: Overrun 486s 0*
+  idle s12 GPU: Overrun 423s 0*
+  idle s10: Overrun 506s 0*
+  idle s13 GPU: Overrun 411s 0*
+  idle s11: Overrun 549s 0*
+  idle s12: Overrun 493s 0*
+  idle s13: Overrun 416s 0*
+  idle s14 GPU: Overrun 485s 0*
+  idle s14: Overrun 502s 0*
+  idle s15 GPU: Overrun 422s 0*
+  idle s15: Overrun 475s 0*
+  idle s16 GPU: Overrun 430s 0*
+  idle s16: Overrun 466s 0*
+  idle s17 GPU: Overrun 443s 0*
+  idle s17: Overrun 417s 0*
+  idle s18 GPU: Overrun 550s 0*
+  idle s19 GPU: Overrun 461s 0*
+  idle s18: Overrun 401s 0*
+  idle s19: Overrun 412s 0*
+  idle s20 GPU: Overrun 466s 0*
+  idle s21 GPU: Overrun 489s 0*
+  idle s20: Overrun 401s 0*
+  idle s21: Overrun 419s 0*
+  idle s22: Overrun 428s 0*
+  idle s23: Overrun 408s 0*
+  idle s22 GPU: Overrun 471s 0*
+  idle s23 GPU: Overrun 536s 0*
+  idle s24: Overrun 430s 0*
+  idle s24 GPU: Overrun 493s 0*
+  idle s25 GPU: Overrun 482s 0*
+  idle s25: Overrun 508s 0*
+  idle s26 GPU: Overrun 404s 0*
+  idle s26: Overrun 469s 0*
+  idle s27 GPU: Overrun 478s 0*
+  idle s27: Overrun 440s 0*
+  idle s28: Overrun 468s 0*
+  idle s28 GPU: Overrun 482s 0*
+  idle s29 GPU: Overrun 477s 0*
+  idle s29: Overrun 475s 0*
+  idle s30: Overrun 409s 0*
+  idle s30 GPU: Overrun 427s 0*
+  idle s31: Overrun 404s 0*
+  idle s31 GPU: Overrun 545s 0*
+  idle s32 GPU: Overrun 494s 0*
+  random s1 GPU: SquadWiped 263s 0*
+  idle s32: Overrun 456s 0*
+  random s1: SquadWiped 263s 0*
+  random s2: SquadWiped 232s 0*
+  random s2 GPU: SquadWiped 181s 0*
+  random s3 GPU: Stuck 221s 0*
+  random s3: Stuck 220s 0*
+  random s4 GPU: SquadWiped 215s 0*
+  random s4: SquadWiped 225s 0*
+  random s5 GPU: SquadWiped 169s 0*
+  random s5: SquadWiped 196s 0*
+  random s6 GPU: SquadWiped 142s 0*
+  random s6: SquadWiped 142s 0*
+  random s7: SquadWiped 146s 0*
+  random s7 GPU: SquadWiped 164s 0*
+  random s8 GPU: SquadWiped 137s 0*
+  random s8: SquadWiped 138s 0*
+  random s9 GPU: SquadWiped 176s 0*
+  random s10 GPU: SquadWiped 139s 0*
+  random s10: SquadWiped 139s 0*
+  random s9: SquadWiped 185s 0*
+  random s12: SquadWiped 119s 0*
+  random s11 GPU: SquadWiped 160s 0*
+  random s12 GPU: SquadWiped 119s 0*
+  random s11: SquadWiped 161s 0*
+  random s13 GPU: SquadWiped 184s 0*
+  random s14 GPU: SquadWiped 168s 0*
+  random s14: SquadWiped 173s 0*
+  random s13: SquadWiped 184s 0*
+  random s15 GPU: SquadWiped 144s 0*
+  random s16 GPU: SquadWiped 172s 0*
+  random s15: SquadWiped 213s 0*
+  random s16: SquadWiped 173s 0*
+  random s17: SquadWiped 158s 0*
+  random s17 GPU: SquadWiped 148s 0*
+  random s18 GPU: SquadWiped 170s 0*
+  random s19 GPU: SquadWiped 213s 0*
+  random s20 GPU: SquadWiped 138s 0*
+  random s18: SquadWiped 178s 0*
+  random s21 GPU: SquadWiped 135s 0*
+  random s19: SquadWiped 215s 0*
+  random s20: SquadWiped 163s 0*
+  random s22 GPU: SquadWiped 151s 0*
+  random s21: SquadWiped 135s 0*
+  random s23 GPU: SquadWiped 185s 0*
+  random s22: SquadWiped 151s 0*
+  random s24 GPU: SquadWiped 197s 0*
+  random s23: SquadWiped 168s 0*
+  random s25 GPU: SquadWiped 186s 0*
+  random s24: SquadWiped 197s 0*
+  random s26 GPU: SquadWiped 241s 0*
+  random s27 GPU: SquadWiped 219s 0*
+  random s25: SquadWiped 190s 0*
+  random s28 GPU: SquadWiped 117s 0*
+  random s28: SquadWiped 119s 0*
+  random s26: SquadWiped 240s 0*
+  random s29 GPU: SquadWiped 176s 0*
+  random s27: SquadWiped 220s 0*
+  random s30 GPU: SquadWiped 189s 0*
+  random s31 GPU: SquadWiped 189s 0*
+  random s29: SquadWiped 203s 0*
+  random s32 GPU: SquadWiped 214s 0*
+  random s30: SquadWiped 207s 0*
+  random s31: SquadWiped 191s 0*
+  random s32: SquadWiped 141s 0*
+  claim s1 GPU: SquadWiped 615s 0*
+  claim s2 GPU: SquadWiped 616s 0*
+  claim s3 GPU: SquadWiped 634s 0*
+  claim s1: SquadWiped 657s 0*
+  claim s2: SquadWiped 689s 0*
+  claim s4 GPU: SquadWiped 628s 0*
+  claim s3: SquadWiped 621s 0*
+  claim s5 GPU: SquadWiped 615s 0*
+  claim s6 GPU: SquadWiped 649s 0*
+  claim s4: SquadWiped 733s 0*
+  claim s7 GPU: SquadWiped 612s 0*
+  claim s5: SquadWiped 698s 0*
+  claim s6: SquadWiped 645s 0*
+  claim s8 GPU: SquadWiped 642s 0*
+  claim s7: SquadWiped 616s 0*
+  claim s9 GPU: SquadWiped 543s 0*
+  claim s10 GPU: SquadWiped 613s 0*
+  claim s8: SquadWiped 676s 0*
+  claim s9: SquadWiped 574s 0*
+  claim s11 GPU: SquadWiped 638s 0*
+  claim s12 GPU: SquadWiped 618s 0*
+  claim s10: SquadWiped 640s 0*
+  claim s13 GPU: SquadWiped 614s 0*
+  claim s11: SquadWiped 675s 0*
+  claim s12: SquadWiped 629s 0*
+  claim s14 GPU: SquadWiped 674s 0*
+  claim s13: SquadWiped 647s 0*
+  claim s15 GPU: SquadWiped 612s 0*
+  claim s14: SquadWiped 682s 0*
+  claim s15: SquadWiped 613s 0*
+  claim s16 GPU: SquadWiped 681s 0*
+  claim s16: SquadWiped 683s 0*
+  claim s17 GPU: SquadWiped 670s 0*
+  claim s18 GPU: SquadWiped 629s 0*
+  claim s17: SquadWiped 798s 0*
+  claim s18: SquadWiped 612s 0*
+  claim s19: SquadWiped 617s 0*
+  claim s20 GPU: SquadWiped 577s 0*
+  claim s19 GPU: SquadWiped 729s 0*
+  claim s21 GPU: SquadWiped 655s 0*
+  claim s20: SquadWiped 612s 0*
+  claim s22 GPU: SquadWiped 585s 0*
+  claim s23 GPU: SquadWiped 613s 0*
+  claim s21: SquadWiped 685s 0*
+  claim s22: SquadWiped 629s 0*
+  claim s24 GPU: SquadWiped 616s 0*
+  claim s25 GPU: SquadWiped 618s 0*
+  claim s23: SquadWiped 661s 0*
+  claim s26 GPU: SquadWiped 768s 0*
+  claim s24: SquadWiped 707s 0*
+  claim s25: SquadWiped 646s 0*
+  claim s27 GPU: SquadWiped 594s 0*
+  claim s28 GPU: SquadWiped 704s 0*
+  claim s26: SquadWiped 697s 0*
+  claim s29 GPU: SquadWiped 614s 0*
+  claim s27: SquadWiped 617s 0*
+  claim s30 GPU: SquadWiped 602s 0*
+  claim s28: SquadWiped 614s 0*
+  claim s31 GPU: SquadWiped 613s 0*
+  claim s29: SquadWiped 611s 0*
+  claim s32 GPU: SquadWiped 632s 0*
+  claim s30: SquadWiped 616s 0*
+  gaps+claim s1 GPU: Goal 600s 2*
+  claim s31: SquadWiped 614s 0*
+  claim s32: SquadWiped 575s 0*
+  gaps+claim s2 GPU: Goal 600s 2*
+  gaps+claim s1: Goal 600s 2*
+  gaps+claim s3 GPU: Goal 600s 2*
+  gaps+claim s2: Goal 600s 2*
+  gaps+claim s4 GPU: Goal 600s 2*
+  gaps+claim s5 GPU: Goal 600s 2*
+  gaps+claim s3: Goal 600s 2*
+  gaps+claim s4: Goal 600s 2*
+  gaps+claim s6 GPU: Goal 600s 2*
+  gaps+claim s5: Goal 600s 2*
+  gaps+claim s7 GPU: Goal 600s 2*
+  gaps+claim s6: Goal 600s 2*
+  gaps+claim s8 GPU: Goal 600s 2*
+  gaps+claim s7: Goal 600s 2*
+  gaps+claim s9 GPU: Goal 600s 2*
+  gaps+claim s10 GPU: Goal 600s 2*
+  gaps+claim s8: Goal 600s 2*
+  gaps+claim s9: Goal 600s 2*
+  gaps+claim s11 GPU: Goal 600s 2*
+  gaps+claim s10: Goal 600s 2*
+  gaps+claim s12 GPU: Goal 600s 2*
+  gaps+claim s13 GPU: Goal 600s 2*
+  gaps+claim s11: Goal 600s 2*
+  gaps+claim s12: Goal 600s 2*
+  gaps+claim s14 GPU: Goal 600s 2*
+  gaps+claim s13: Goal 600s 2*
+  gaps+claim s15 GPU: Goal 600s 2*
+  gaps+claim s16 GPU: Goal 600s 2*
+  gaps+claim s14: Goal 600s 2*
+  gaps+claim s17 GPU: Goal 600s 2*
+  gaps+claim s15: Goal 600s 2*
+  gaps+claim s16: Goal 600s 2*
+  gaps+claim s18 GPU: Goal 600s 2*
+  gaps+claim s19 GPU: Goal 600s 2*
+  gaps+claim s17: Goal 600s 2*
+  gaps+claim s20 GPU: Goal 600s 2*
+  gaps+claim s18: Goal 600s 2*
+  gaps+claim s19: Goal 600s 2*
+  gaps+claim s21 GPU: Goal 600s 2*
+  gaps+claim s22 GPU: Goal 600s 2*
+  gaps+claim s20: Goal 600s 2*
+  gaps+claim s23 GPU: Goal 600s 2*
+  gaps+claim s21: Goal 600s 2*
+  gaps+claim s22: Goal 600s 2*
+  gaps+claim s24 GPU: Goal 600s 2*
+  gaps+claim s25 GPU: Goal 600s 2*
+  gaps+claim s23: Goal 600s 2*
+  gaps+claim s26 GPU: Goal 600s 2*
+  gaps+claim s24: Goal 600s 2*
+  gaps+claim s25: Goal 600s 2*
+  gaps+claim s27 GPU: Goal 600s 2*
+  gaps+claim s28 GPU: Goal 600s 2*
+  gaps+claim s26: Goal 600s 2*
+  gaps+claim s29 GPU: Goal 600s 2*
+  gaps+claim s27: Goal 600s 2*
+  gaps+claim s30 GPU: Goal 600s 2*
+  gaps+claim s28: Goal 600s 2*
+  gaps+claim s31 GPU: Goal 600s 2*
+  gaps+claim s29: Goal 600s 2*
+  gaps+claim s32 GPU: Goal 600s 2*
+  gaps+claim s30: Goal 600s 2*
+  gaps+claim s31: Goal 600s 2*
+  gaps+claim s32: Goal 600s 2*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+claim        1 CPU  SquadWiped   657      0 0.18    30%     0%   24%   46%    0%                            20    6  136        0      0      3300   7003  0.000/0.461  2129/455/82 653  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        1 GPU  SquadWiped   615      0 0.18    33%     1%   20%   60%    0%                            31    1   78        0      0      4500   7637  0.000/0.455  1981/456/82 611  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        2 CPU  SquadWiped   689      0 0.20    36%     0%   45%   41%   48%                            25    3  190        0      0      3000   7427  0.000/0.459  2060/466/81 687  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        2 GPU  SquadWiped   616      0 0.19    18%     1%   14%   30%    0%                            27    1  151        0      0      3300   7669  0.000/0.455  2034/454/82 611  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        3 CPU  SquadWiped   621      0 0.20    40%     0%   34%   65%    0%                            71    3   76        0      0      4200   7400  0.000/0.457  1997/458/81 615  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        3 GPU  SquadWiped   634      0 0.13    32%     3%   35%   43%    0%                            25    1  102        0      0      3300   7282  0.000/0.461  2066/478/81 629  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        4 CPU  SquadWiped   733      0 0.14    38%     7%   50%   49%    8%                            32    3  252        0      0      4200   8392  0.000/0.457  2097/459/82 732  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        4 GPU  SquadWiped   628      0 0.15    26%     5%   19%   41%    0%                            28    1  143        0      0      3300   8220  0.000/0.459  2017/460/80 625  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        5 CPU  SquadWiped   698      0 0.15    21%     1%   20%   27%   46%                            22    1  154        0      0      4200   8011  0.000/0.464  2059/460/85 694  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        5 GPU  SquadWiped   615      0 0.16    30%     0%   35%   38%    0%                            22    3  124        0      0      3600   6815  0.000/0.459  2052/466/84 611  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        6 CPU  SquadWiped   645      0 0.19    27%     1%   27%   39%    0%                            29    1  194        0      0      3600   7834  0.000/0.456  2001/457/82 639  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        6 GPU  SquadWiped   649      0 0.16    27%     1%   31%   35%    0%                            27    3  165        0      0      3300   6949  0.000/0.459  2044/463/81 647  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        7 CPU  SquadWiped   616      0 0.16    37%     2%   24%   65%    0%                            61    1  191        0      0      3600   7168  0.000/0.456  2054/461/78 611  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        7 GPU  SquadWiped   612      0 0.19    30%     1%   11%   62%    0%                            50    1  110        0      0      3600   7626  0.000/0.455  2000/459/81 608  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        8 CPU  SquadWiped   676      0 0.20    26%     0%   25%   37%   29%                            20    1  132        0      0      3900   8341  0.000/0.460  2113/463/85 673  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        8 GPU  SquadWiped   642      0 0.19    33%     1%   37%   42%    0%                            29    2  171        0      0      3900   7561  0.000/0.458  2019/451/83 637  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        9 CPU  SquadWiped   574      0 0.15    13%     3%   14%   18%    0%                            10    1  104        0      0      3600   6840  0.000/0.461  2056/454/86 571  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        9 GPU  SquadWiped   543      0 0.20    43%     0%   42%   72%    0%                            73    1  124        0      0      3600   6536  0.000/0.451  1957/469/78 541  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       10 CPU  SquadWiped   640      0 0.18    44%     1%   40%   67%    0%                            47    7  112        0      0      4200   7319  0.000/0.454  2005/460/79 637  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       10 GPU  SquadWiped   613      0 0.14    35%     7%   22%   62%    0%                            41    2   86        0      0      3600   7305  0.000/0.459  2044/460/80 608  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       11 CPU  SquadWiped   675      0 0.16    39%     7%   38%   53%   29%                            26    2  100        0      0      3300   7042  0.000/0.462  2080/472/83 672  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       11 GPU  SquadWiped   638      0 0.13    27%     3%   24%   39%    0%                            57    0  140        0      0      4200   6316  0.000/0.459  2065/457/80 634  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       12 CPU  SquadWiped   629      0 0.17    36%     0%   38%   49%    0%                            42    5  143        0      0      3300   6928  0.000/0.458  2033/451/80 626  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       12 GPU  SquadWiped   618      0 0.20    32%     0%   15%   63%    0%                            64    0  105        0      0      4200   8083  0.000/0.454  2026/457/82 615  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       13 CPU  SquadWiped   647      0 0.16    43%     1%   58%   48%    0%                            39    0  219        0      0      3300   7351  0.000/0.459  2066/462/87 644  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       13 GPU  SquadWiped   614      0 0.17    42%     0%   54%   50%    0%                            26    1  159        0      0      3300   7066  0.000/0.459  2041/472/80 609  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       14 CPU  SquadWiped   682      0 0.22    27%     0%   28%   37%   17%                            18    4  178        0      0      3900   7222  0.000/0.459  2052/457/87 679  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       14 GPU  SquadWiped   674      0 0.15    42%     7%   53%   45%   73%                            31    5  207        0      0      3300   6954  0.000/0.461  2116/470/89 669  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       15 CPU  SquadWiped   613      0 0.18    42%     0%   45%   58%    0%                            46    1   88        0      0      4500   7290  0.000/0.459  1983/453/84 612  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       15 GPU  SquadWiped   612      0 0.18    43%     0%   40%   67%    0%                            67    1  117        0      0      4200   7135  0.000/0.453  1994/448/81 609  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       16 CPU  SquadWiped   683      0 0.14    31%     5%   28%   44%   33%                            26    2  150        0      0      3000   7715  0.000/0.459  2093/467/80 680  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       16 GPU  SquadWiped   681      0 0.14    31%     1%   30%   46%    9%                            40    1  221        0      0      3000   7435  0.000/0.458  2074/464/81 679  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       17 CPU  SquadWiped   798      0 0.17    32%     0%   30%   48%   28%                            25    4  135        0      0      3600   7768  0.000/0.459  2082/474/85 797  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       17 GPU  SquadWiped   670      0 0.14    33%     5%   33%   45%   36%                            29    3  177        0      0      3000   7072  0.000/0.459  2069/464/79 665  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       18 CPU  SquadWiped   612      0 0.12    40%     3%   38%   61%    0%                            50    3   93        0      0      3300   6611  0.000/0.458  2027/458/83 607  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       18 GPU  SquadWiped   629      0 0.18    34%     1%   49%   36%    0%                            18    5  179        0      0      3600   7203  0.000/0.456  2040/453/79 627  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       19 CPU  SquadWiped   617      0 0.16    28%     0%   18%   50%    0%                            70    0  162        0      0      4500   8817  0.000/0.453  2013/457/85 613  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       19 GPU  SquadWiped   729      0 0.18    28%     0%   37%   33%   29%                            26    2  179        0      0      3900   9426  0.000/0.461  2068/478/85 724  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       20 CPU  SquadWiped   612      0 0.17    32%     3%   15%   60%    0%                            33    2  134        0      0      3900   7126  0.000/0.455  1984/464/84 605  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       20 GPU  SquadWiped   577      0 0.17    46%     4%   58%   55%    0%                            31    2  132        0      0      3300   6020  0.000/0.458  2054/456/83 574  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       21 CPU  SquadWiped   685      0 0.20    40%     0%   49%   49%   27%                            32    1  126        0      0      3300   7543  0.000/0.461  2070/468/81 681  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       21 GPU  SquadWiped   655      0 0.16    29%     7%   25%   41%    0%                            34    4  178        0      0      3300   7343  0.000/0.455  2031/457/84 651  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       22 CPU  SquadWiped   629      0 0.20    32%     0%   12%   64%    0%                            36    5   70        0      0      4200   7361  0.000/0.454  2002/453/79 623  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       22 GPU  SquadWiped   585      0 0.14    33%     3%   52%   28%    0%                            24    0  164        0      0      3600   6886  0.000/0.457  2015/456/82 582  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       23 CPU  SquadWiped   661      0 0.13    46%     5%   58%   52%  100%                            36    5  184        0      0      3300   6666  0.000/0.460  2027/458/84 657  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       23 GPU  SquadWiped   613      0 0.20    34%     0%   18%   64%    0%                            46    3  132        0      0      4200   7099  0.000/0.460  2016/454/80 611  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       24 CPU  SquadWiped   707      0 0.18    30%     1%   36%   37%   31%                            20    1  191        0      0      3300   7972  0.000/0.459  2028/466/82 703  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       24 GPU  SquadWiped   616      0 0.18    31%     1%   20%   56%    0%                            48    0   95        0      0      3900   7973  0.000/0.454  2006/450/81 611  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       25 CPU  SquadWiped   646      0 0.17    39%     3%   52%   43%    0%                            44    3  169        0      0      3000   7193  0.000/0.458  2033/461/83 642  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       25 GPU  SquadWiped   618      0 0.15    35%     3%   22%   61%    0%                            39    1  127        0      0      4500   8241  0.000/0.452  1980/458/78 614  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       26 CPU  SquadWiped   697      0 0.18    28%     5%   34%   31%   38%                            18    3  186        0      0      3300   7590  0.000/0.463  2080/463/86 692  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       26 GPU  SquadWiped   768      0 0.19    37%     2%   22%   42%   92%                            40   12  135        0      0      3900   8546  0.000/0.454  2020/463/83 766  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       27 CPU  SquadWiped   617      0 0.16    50%     3%   62%   62%    0%                            47    3  118        0      0      3300   6494  0.000/0.461  2058/462/80 615  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       27 GPU  SquadWiped   594      0 0.18    28%     1%   13%   57%    0%                            39    1  120        0      0      4200   7253  0.000/0.456  1995/452/80 590  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       28 CPU  SquadWiped   614      0 0.17    46%     2%   45%   68%    0%                            32    1   99        0      0      3600   7062  0.000/0.452  2006/468/80 612  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       28 GPU  SquadWiped   704      0 0.14    37%     0%   11%   64%   91%                            35    9  101        0      0      4200   8156  0.000/0.456  2004/457/81 701  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       29 CPU  SquadWiped   611      0 0.19    39%     0%   26%   70%    0%                            39    1  153        0      0      3600   6724  0.000/0.454  2000/457/83 606  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       29 GPU  SquadWiped   614      0 0.14    41%     9%   28%   68%    0%                            68    2   68        0      0      4200   6789  0.000/0.453  2016/451/81 608  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       30 CPU  SquadWiped   616      0 0.19    38%     0%   32%   61%    0%                            33    0  107        0      0      3900   7528  0.000/0.456  1986/457/80 611  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       30 GPU  SquadWiped   602      0 0.14    12%     0%   12%   19%    0%                            13    4  169        0      0      4200   6819  0.000/0.457  2033/461/82 598  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       31 CPU  SquadWiped   614      0 0.14    45%     3%   52%   58%    0%                            74    2   74        0      0      4500   7109  0.000/0.455  2033/464/80 609  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       31 GPU  SquadWiped   613      0 0.13    40%     2%   43%   55%    0%                            43    2  199        0      0      3600   7247  0.000/0.456  1997/452/82 607  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       32 CPU  SquadWiped   575      0 0.17    35%     0%   32%   56%    0%                            23    4  189        0      0      3300   6506  0.000/0.454  2040/467/80 569  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim       32 GPU  SquadWiped   632      0 0.17    35%     2%   41%   45%    0%                            32    5  211        0      0      3600   6947  0.000/0.455  2049/466/82 628  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    1 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     22     11700   6897  0.000/0.178  850/33/0 361  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    1 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    7    0      599     16      9900   7183  0.000/0.174  825/36/0 492  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    2 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    4    0      599     16      9000   7338  0.000/0.178  819/35/0 438  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    2 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     11      6600   5010  0.000/0.185  884/37/0 595  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    3 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    6    0      599     12      7500   5852  0.000/0.166  771/28/0 518  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    3 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     22     10800   7038  0.000/0.184  843/37/0 399  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    4 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     19     10800   7252  0.000/0.177  827/27/0 443  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    4 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     20      9900   5643  0.000/0.190  872/42/0 437  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    5 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     22     10500   6433  0.000/0.190  826/35/0 432  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    5 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     25     10800   5471  0.000/0.192  862/39/0 323  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    6 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     20      9900   6411  0.000/0.168  788/25/0 352  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    6 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     17     10200   7459  0.000/0.178  828/32/0 413  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    7 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     22     11700   6641  0.000/0.186  810/35/0 351  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    7 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     24     10800   7052  0.000/0.178  828/26/0 346  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    8 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     19     10500   7522  0.000/0.179  824/33/0 424  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    8 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     23     10500   5832  0.000/0.169  826/39/0 357  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    9 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    4    0      599     20     10800   7328  0.000/0.184  843/37/0 417  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    9 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     12      7200   6602  0.000/0.180  835/44/0 567  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   10 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     14      9900   8348  0.000/0.177  842/33/0 466  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   10 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     21     10800   7456  0.000/0.172  806/27/0 397  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   11 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    6    0      599     15      8700   6963  0.000/0.195  836/38/0 496  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   11 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     25     11400   6367  0.000/0.177  883/35/0 394  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   12 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    6    0      599     16      9600   6643  0.000/0.179  841/38/0 545  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   12 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     25     11100   5913  0.000/0.180  830/39/0 326  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   13 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     23     11400   6966  0.000/0.180  820/34/0 428  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   13 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     26     11100   5540  0.000/0.182  806/30/0 338  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   14 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     11      8100   7523  0.000/0.172  802/36/0 504  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   14 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     23     10500   6038  0.000/0.189  863/34/0 327  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   15 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     18     10500   7431  0.000/0.172  802/27/0 411  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   15 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     23     11700   7371  0.000/0.190  851/40/0 375  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   16 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     17     10500   7760  0.000/0.182  822/31/0 374  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   16 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     26     11100   5503  0.000/0.178  785/28/0 317  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   17 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     20     10500   7898  0.000/0.182  835/35/0 358  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   17 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     12      8700   7905  0.000/0.182  882/29/0 497  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   18 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     16     10800   8128  0.000/0.187  850/35/0 434  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   18 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    8    0      599     16     10500   7307  0.000/0.176  767/30/0 440  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   19 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     18      9900   7506  0.000/0.179  791/36/0 410  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   19 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599      8      6300   6218  0.000/0.176  855/32/0 576  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   20 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     10      8700   7929  0.000/0.173  830/35/0 519  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   20 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     22     11400   7118  0.000/0.183  864/31/0 385  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   21 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     17     11700   8073  0.000/0.171  808/37/0 328  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   21 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    4    0      599     13     10200   8173  0.000/0.179  828/37/0 486  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   22 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     15     10200   7772  0.000/0.178  870/48/0 429  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   22 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     14      8100   7100  0.000/0.182  852/33/0 510  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   23 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     20      9900   6715  0.000/0.192  834/38/0 441  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   23 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     18     11100   7637  0.000/0.177  817/35/0 430  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   24 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     24     10500   6113  0.000/0.189  861/32/0 305  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   24 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     15      9300   8058  0.000/0.183  826/38/0 471  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   25 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     24     12000   6883  0.000/0.179  801/27/0 337  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   25 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     24     11700   6723  0.000/0.175  819/29/0 398  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   26 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     20     11400   7953  0.000/0.188  829/35/0 400  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   26 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     14      9600   7285  0.000/0.181  797/30/0 492  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   27 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     23     10200   5953  0.000/0.183  819/36/0 298  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   27 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    5    0      599     21     10800   6706  0.000/0.176  812/36/0 464  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   28 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     13      9900   8708  0.000/0.182  803/32/0 401  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   28 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     18     10200   7508  0.000/0.183  818/39/0 371  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   29 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     18     10500   7689  0.000/0.173  789/26/0 324  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   29 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     14     11100   8629  0.000/0.172  803/33/0 400  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   30 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     21     11400   7483  0.000/0.177  819/38/0 438  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   30 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    2    0      599     20     10500   6533  0.000/0.180  834/36/0 351  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   31 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    4    0      599     12      9000   8238  0.000/0.182  836/35/0 487  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   31 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    3    0      599     14      8400   6038  0.000/0.174  830/31/0 562  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   32 CPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    4    0      599     24     10500   5955  0.000/0.179  824/34/0 306  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim   32 GPU  Goal         600      2 1.00     0%     0%    0%    0%    0%                             0    1    0      599     25     11700   6699  0.000/0.168  820/36/0 298  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         1 CPU  Overrun      594      0 0.12    75%    28%   94%   80%    0%                           200    6  199        0      1         0   4819  0.000/0.482  2241/517/82 590  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         1 GPU  Overrun      432      0 0.16    73%    22%   99%   70%    0%                           236    4  236        0      1         0   3756  0.000/0.472  2187/484/77 429  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         2 CPU  Overrun      419      0 0.15    75%    22%   95%  100%    0%                           156    5  156        0      1         0   3650  0.000/0.474  2181/497/78 415  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         2 GPU  Overrun      456      0 0.16    72%    16%   95%   86%    0%                           213    3  213        0      1         0   4057  0.000/0.476  2164/500/79 452  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         3 CPU  Overrun      441      0 0.22    67%     0%   92%   92%    0%                           193    3  193        0      1         0   3855  0.000/0.477  2241/514/76 436  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         3 GPU  Overrun      420      0 0.14    74%    18%   99%   82%    0%                           125    3  125        0      1         0   3735  0.000/0.483  2254/522/80 415  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         4 CPU  Overrun      409      0 0.16    75%    17%   98%  100%    0%                           192    5  192        0      1         0   3697  0.000/0.501  2390/566/78 407  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         4 GPU  Overrun      426      0 0.12    72%    24%   98%   66%    0%                           218    2  217        0      1         0   3940  0.000/0.473  2152/492/83 424  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         5 CPU  Overrun      526      0 0.17    72%    10%   89%   91%    0%                           176    4  176        0      1         0   4487  0.000/0.486  2234/525/78 521  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         5 GPU  Overrun      415      0 0.15    76%    21%   98%   96%    0%                           167    3  167        0      1         0   3727  0.000/0.480  2238/527/79 410  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         6 CPU  Overrun      457      0 0.18    70%     2%   93%   98%    0%                           198    3  198        0      1         0   3882  0.000/0.490  2323/533/80 452  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         6 GPU  Overrun      409      0 0.17    75%    15%   99%  100%    0%                           205    4  205        0      1         0   3582  0.000/0.494  2322/550/82 404  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         7 CPU  Overrun      579      0 0.16    70%     8%   88%   84%    0%                           162    5  162        0      1         0   4590  0.000/0.492  2295/567/84 574  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         7 GPU  Overrun      673      0 0.12    76%    33%   93%   79%   80%                           200    5  200        0      1         0   5488  0.000/0.486  2308/538/83 669  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         8 CPU  Overrun      483      0 0.15    78%    16%  100%   96%    0%                           267    7  267        0      1         0   3994  0.000/0.508  2401/582/81 480  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         8 GPU  Overrun      433      0 0.13    73%    24%   93%   85%    0%                           166    3  166        0      1         0   3785  0.000/0.476  2204/509/82 426  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         9 CPU  Overrun      486      0 0.16    71%    17%   97%   73%    0%                           236    5  234        0      1         0   4145  0.000/0.475  2172/496/84 482  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         9 GPU  Overrun      447      0 0.19    72%     3%  100%   89%    0%                           210    2  201        0      1         0   3854  0.000/0.474  2211/495/83 445  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        10 CPU  Overrun      506      0 0.16    74%    18%   99%   79%    0%                           227    3  227        0      1         0   4187  0.000/0.481  2261/521/78 502  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        10 GPU  Overrun      551      0 0.13    73%    25%   89%   82%    0%                           217    3  217        0      1         0   4615  0.000/0.479  2251/532/81 546  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        11 CPU  Overrun      549      0 0.16    72%    11%   92%   85%    0%                           186    4  186        0      1         0   4522  0.000/0.494  2333/548/79 546  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        11 GPU  Overrun      404      0 0.17    69%    13%   97%   67%    0%                           213    4  201        0      1         0   3563  0.000/0.479  2253/501/75 397  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        12 CPU  Overrun      493      0 0.17    71%    15%   96%   75%    0%                           140    3  137        0      1         0   4021  0.000/0.478  2201/511/76 487  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        12 GPU  Overrun      423      0 0.13    74%    23%   94%   95%    0%                           182    2  182        0      1         0   3829  0.000/0.474  2175/491/77 419  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        13 CPU  Overrun      416      0 0.17    73%    12%   98%  100%    0%                           191    8  191        0      1         0   3635  0.000/0.483  2261/529/76 411  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        13 GPU  Overrun      411      0 0.15    71%    24%   90%   90%    0%                           200    4  200        0      1         0   3615  0.000/0.481  2237/512/77 407  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        14 CPU  Overrun      502      0 0.14    73%    14%   93%   88%    0%                           215    3  215        0      1         0   4334  0.000/0.476  2225/516/77 500  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        14 GPU  Overrun      485      0 0.14    73%    15%  100%   75%    0%                           196    5  195        0      1         0   4120  0.000/0.478  2259/511/80 481  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        15 CPU  Overrun      475      0 0.17    70%    12%   95%   79%    0%                           205    5  205        0      1         0   4023  0.000/0.477  2224/525/80 473  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        15 GPU  Overrun      422      0 0.14    75%    16%  100%   91%    0%                           221    3  221        0      1         0   3591  0.000/0.482  2242/516/75 419  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        16 CPU  Overrun      466      0 0.15    74%    20%   95%   86%    0%                           206    3  206        0      1         0   3799  0.000/0.483  2225/533/75 463  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        16 GPU  Overrun      430      0 0.14    71%    24%   94%   68%    0%                           210    2  210        0      1         0   3827  0.000/0.473  2172/494/76 429  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        17 CPU  Overrun      417      0 0.17    70%    13%   92%   97%    0%                           173    5  173        0      1         0   3688  0.000/0.475  2188/501/81 416  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        17 GPU  Overrun      443      0 0.18    66%     8%   92%   76%    0%                           140    5  140        0      1         0   3778  0.000/0.475  2187/507/79 438  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        18 CPU  Overrun      401      0 0.15    68%    17%   97%   53%    0%                           198    2  198        0      1         0   3566  0.000/0.474  2166/485/77 398  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        18 GPU  Overrun      550      0 0.14    75%    24%   98%   79%    0%                           228    2  228        0      1         0   4674  0.000/0.479  2229/509/83 545  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        19 CPU  Overrun      412      0 0.17    72%    11%  100%   81%    0%                           286    6  286        0      1         0   3613  0.000/0.475  2150/502/77 408  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        19 GPU  Overrun      461      0 0.13    71%    18%   92%   83%    0%                           187    4  184        0      1         0   3993  0.000/0.476  2184/504/83 457  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        20 CPU  Overrun      401      0 0.18    72%     4%  100%  100%    0%                           283    7  231        0      1         0   3540  0.000/0.489  2258/533/83 395  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        20 GPU  Overrun      466      0 0.15    71%    10%  100%   75%    0%                           244    4  244        0      1         0   3927  0.000/0.481  2283/524/77 463  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        21 CPU  Overrun      419      0 0.15    77%    22%  100%   98%    0%                           198    2  198        0      1         0   3743  0.000/0.481  2240/524/79 414  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        21 GPU  Overrun      489      0 0.20    69%     0%   95%   84%    0%                           168    4  168        0      1         0   4219  0.000/0.476  2207/501/75 482  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        22 CPU  Overrun      428      0 0.17    70%     7%   96%   87%    0%                           225    2  225        0      1         0   3663  0.000/0.475  2222/481/76 421  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        22 GPU  Overrun      471      0 0.18    66%     5%   95%   68%    0%                           170    3  170        0      1         0   3988  0.000/0.471  2169/488/82 467  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        23 CPU  Overrun      408      0 0.17    72%    12%   99%   88%    0%                           165    3  165        0      1         0   3739  0.000/0.474  2196/499/79 404  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        23 GPU  Overrun      536      0 0.14    71%     7%   94%   84%    0%                           179    5  179        0      1         0   4609  0.000/0.502  2415/562/85 532  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        24 CPU  Overrun      430      0 0.17    71%    13%   97%   80%    0%                           108    2  108        0      1         0   3732  0.000/0.477  2249/512/78 425  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        24 GPU  Overrun      493      0 0.16    71%    16%   92%   81%    0%                           181    3  180        0      1         0   4262  0.000/0.485  2223/509/80 488  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        25 CPU  Overrun      508      0 0.14    74%    22%  100%   75%    0%                           273    4  273        0      1         0   4190  0.000/0.478  2246/514/80 505  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        25 GPU  Overrun      482      0 0.15    65%    13%   88%   71%    0%                           139    3  139        0      1         0   4101  0.000/0.476  2154/494/81 478  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        26 CPU  Overrun      469      0 0.17    73%    13%   98%   83%    0%                           223    4  223        0      1         0   3997  0.000/0.478  2258/508/77 466  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        26 GPU  Overrun      404      0 0.16    73%    18%   96%  100%    0%                           184    3  184        0      1         0   3539  0.000/0.484  2263/509/78 401  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        27 CPU  Overrun      440      0 0.14    71%    20%   94%   79%    0%                           203    3  203        0      1         0   3762  0.000/0.476  2199/500/74 439  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        27 GPU  Overrun      478      0 0.20    72%     0%   98%   90%    0%                           166    6  163        0      1         0   3987  0.000/0.488  2321/553/81 474  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        28 CPU  Overrun      468      0 0.16    74%    13%   99%   85%    0%                           169    4  169        0      1         0   4172  0.000/0.473  2160/494/80 467  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        28 GPU  Overrun      482      0 0.14    74%    18%   92%   93%    0%                           197    5  197        0      1         0   3965  0.000/0.496  2333/539/80 479  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        29 CPU  Overrun      475      0 0.21    63%     0%   90%   71%    0%                           164    3  164        0      1         0   3910  0.000/0.484  2241/509/79 469  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        29 GPU  Overrun      477      0 0.15    70%    22%   90%   76%    0%                           195    4  195        0      1         0   4113  0.000/0.477  2211/518/85 471  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        30 CPU  Overrun      409      0 0.17    70%    13%   96%   82%    0%                           221    2  221        0      1         0   3561  0.000/0.474  2220/494/82 404  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        30 GPU  Overrun      427      0 0.17    69%    13%   92%   82%    0%                           218    3  217        0      1         0   3818  0.000/0.471  2150/487/78 423  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        31 CPU  Overrun      404      0 0.14    68%    16%   95%   58%    0%                           179    4  179        0      1         0   3704  0.000/0.477  2216/499/76 399  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        31 GPU  Overrun      545      0 0.17    73%     8%   98%   82%    0%                           150    3  150        0      1         0   4602  0.000/0.487  2316/544/81 539  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        32 CPU  Overrun      456      0 0.15    68%    16%   96%   62%    0%                           186    2  168        0      1         0   4025  0.000/0.471  2181/496/81 450  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle        32 GPU  Overrun      494      0 0.12    71%    18%   88%   89%    0%                           204    5  204        0      1         0   4154  0.000/0.480  2256/539/81 490  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       1 CPU  SquadWiped   263      0 0.12    21%     0%   39%    0%    0%                            39    5  170        0      0       900   2689  0.000/0.451  2050/439/64 261  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       1 GPU  SquadWiped   263      0 0.16    22%     0%   39%    0%    0%                            39   10  150        0      0       900   2824  0.000/0.448  2009/429/58 258  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       2 CPU  SquadWiped   232      0 0.18    17%     1%   35%    0%    0%                            24    6  111        0      0         0   2600  0.000/0.387  1854/338/32 227  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       2 GPU  SquadWiped   181      0 0.19    12%     0%   35%    0%    0%                            19    3   65        0      0         0   2466  0.000/0.319  1435/202/24 176  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       3 CPU  Stuck        220      0 0.17     2%     2%    2%    0%    0%                             2   30  113        0      1       300   2737  0.000/0.413  1883/365/38 214  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       3 GPU  Stuck        221      0 0.19     1%     0%    3%    0%    0%                             1   30   90        0      1       300   2934  0.000/0.358  1703/276/25 215  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       4 CPU  SquadWiped   225      0 0.16    15%     0%   32%    0%    0%                            14    7   64        0      0       600   2998  0.000/0.413  1889/353/45 223  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       4 GPU  SquadWiped   215      0 0.25    17%     0%   37%    0%    0%                            26   11   58        0      0       300   2678  0.000/0.381  1743/301/26 213  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       5 CPU  SquadWiped   196      0 0.26     1%     0%    3%    0%    0%                             1   11   37        0      0       600   3117  0.000/0.341  1572/237/24 193  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       5 GPU  SquadWiped   169      0 0.28     0%     0%    0%    0%    0%                             0    5    0        0      0       300   2820  0.000/0.256  1317/130/0 167  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       6 CPU  SquadWiped   142      0 0.18     6%     1%   35%    0%    0%                             7   20   30        0      0         0   2009  0.000/0.406  1922/339/19 134  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       6 GPU  SquadWiped   142      0 0.15     7%     2%   35%    0%    0%                             7   20   41        0      0         0   2078  0.000/0.376  1748/278/23 138  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       7 CPU  SquadWiped   146      0 0.18     5%     4%   11%    0%    0%                             4    4   31        0      0         0   2711  0.000/0.358  1562/259/23 143  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       7 GPU  SquadWiped   164      0 0.17     5%     6%    4%    0%    0%                             4    3   59        0      0         0   2473  0.000/0.374  1633/277/35 159  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       8 CPU  SquadWiped   138      0 0.20     4%     0%   32%    0%    0%                             5    2   18        0      0         0   1968  0.000/0.301  1450/179/8 135  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       8 GPU  SquadWiped   137      0 0.16     7%     3%   32%    0%    0%                             5    2   39        0      0         0   1928  0.000/0.332  1525/229/17 131  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       9 CPU  SquadWiped   185      0 0.18    10%     0%   27%    0%    0%                             7    0   68        0      0       900   2826  0.000/0.392  1689/314/47 181  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       9 GPU  SquadWiped   176      0 0.16     8%     1%   24%    0%    0%                             7    3   48        0      0      1200   2974  0.000/0.384  1651/295/44 175  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      10 CPU  SquadWiped   139      0 0.22     0%     0%    0%    0%    0%                             0    0    1        0      0       300   2778  0.000/0.274  1384/157/1 136  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      10 GPU  SquadWiped   139      0 0.17     1%     0%    5%    0%    0%                             1    0   22        0      0       300   2721  0.000/0.340  1611/233/14 135  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      11 CPU  SquadWiped   161      0 0.19     4%     3%    5%    0%    0%                             4    5   45        0      0         0   1947  0.000/0.380  1733/307/25 158  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      11 GPU  SquadWiped   160      0 0.18     3%     3%    5%    0%    0%                             2    5   43        0      0         0   1867  0.000/0.342  1570/251/24 156  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      12 CPU  SquadWiped   119      0 0.14     1%     1%    0%    0%    0%                             1    3   21        0      0         0   2264  0.000/0.306  1389/181/17 114  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      12 GPU  SquadWiped   119      0 0.17     1%     1%    0%    0%    0%                             1    2    3        0      0         0   2252  0.000/0.292  1470/172/2 114  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      13 CPU  SquadWiped   184      0 0.15     3%     0%    9%    0%    0%                             3    5   45        0      0         0   2267  0.000/0.403  1813/344/39 180  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      13 GPU  SquadWiped   184      0 0.18     8%     0%   22%    0%    0%                            12    5   52        0      0         0   2357  0.000/0.377  1706/295/27 180  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      14 CPU  SquadWiped   173      0 0.17     9%     0%   28%    0%    0%                             8    8   59        0      0       300   2563  0.000/0.400  1789/336/43 169  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      14 GPU  SquadWiped   168      0 0.18     7%     0%   22%    0%    0%                             4    8   49        0      0       300   2483  0.000/0.397  1764/331/40 165  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      15 CPU  SquadWiped   213      0 0.20    11%     0%   24%    0%    0%                             9    8   87        0      0         0   2449  0.000/0.420  1959/363/47 210  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      15 GPU  SquadWiped   144      0 0.19     1%     1%    4%    0%    0%                             1    5   22        0      0         0   2229  0.000/0.321  1539/209/11 141  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      16 CPU  SquadWiped   173      0 0.16    23%     7%   59%    0%    0%                            13    6   70        0      0       600   2512  0.000/0.398  1735/319/36 170  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      16 GPU  SquadWiped   172      0 0.16    23%     7%   60%    0%    0%                            13    4   70        0      0       600   2561  0.000/0.404  1822/326/43 170  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      17 CPU  SquadWiped   158      0 0.19     6%     0%   25%    0%    0%                             5    5   45        0      0       300   2994  0.000/0.339  1596/237/19 157  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      17 GPU  SquadWiped   148      0 0.18     2%     0%   10%    0%    0%                             3    0   31        0      0       300   2810  0.000/0.321  1476/221/16 144  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      18 CPU  SquadWiped   178      0 0.17     1%     0%    2%    0%    0%                             1    4   53        0      0       600   2822  0.000/0.327  1546/234/21 173  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      18 GPU  SquadWiped   170      0 0.19     5%     0%   18%    0%    0%                             3    5   51        0      0       600   2804  0.000/0.310  1453/204/24 164  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      19 CPU  SquadWiped   215      0 0.24    15%     0%   34%    0%    0%                            20   15   56        0      0       900   2737  0.000/0.397  1763/314/44 211  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      19 GPU  SquadWiped   213      0 0.21    16%     0%   37%    0%    0%                            21   15   74        0      0       900   2548  0.000/0.351  1603/242/27 208  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      20 CPU  SquadWiped   163      0 0.19    11%     1%   38%    0%    0%                            16    7   52        0      0       300   2929  0.000/0.381  1610/294/43 157  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      20 GPU  SquadWiped   138      0 0.14     5%     3%   20%    0%    0%                             4   12   40        0      0       300   2803  0.000/0.343  1546/229/20 136  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      21 CPU  SquadWiped   135      0 0.18     1%     0%    6%    0%    0%                             1    4   15        0      0         0   1862  0.000/0.334  1568/208/16 130  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      21 GPU  SquadWiped   135      0 0.11     4%     3%    6%    0%    0%                             2    4   35        0      0         0   1944  0.000/0.345  1589/226/22 129  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      22 CPU  SquadWiped   151      0 0.23     0%     0%    0%    0%    0%                             0   16    2        0      0         0   1845  0.000/0.271  1415/164/1 146  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      22 GPU  SquadWiped   151      0 0.18     5%     0%   25%    0%    0%                             7   14   32        0      0         0   1987  0.000/0.333  1549/232/18 147  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      23 CPU  SquadWiped   168      0 0.19     8%     0%   27%    0%    0%                             9    5   36        0      0      1200   3268  0.000/0.386  1689/304/38 162  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      23 GPU  SquadWiped   185      0 0.17     1%     0%    3%    0%    0%                             1    0   53        0      0      1200   4147  0.000/0.391  1713/314/43 182  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      24 CPU  SquadWiped   197      0 0.14     1%     0%    3%    0%    0%                             1    2   63        0      0       600   2910  0.000/0.327  1515/231/29 191  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      24 GPU  SquadWiped   197      0 0.14     3%     0%    6%    0%    0%                             3    2   63        0      0       600   2925  0.000/0.347  1589/250/24 192  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      25 CPU  SquadWiped   190      0 0.17    14%     0%   38%    0%    0%                            14    8   85        0      0         0   2418  0.000/0.443  1906/418/59 186  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      25 GPU  SquadWiped   186      0 0.15    14%     0%   40%    0%    0%                            14    7   82        0      0         0   2425  0.000/0.454  1990/421/59 183  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      26 CPU  SquadWiped   240      0 0.20    11%     0%   22%    0%    0%                            24    2  105        0      0      1200   3589  0.000/0.449  1929/418/69 237  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      26 GPU  SquadWiped   241      0 0.18    11%     0%   22%    0%    0%                            24    2  108        0      0      1200   3653  0.000/0.441  1998/413/62 238  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      27 CPU  SquadWiped   220      0 0.22     4%     0%    8%    0%    0%                             6    5   58        0      0       900   2872  0.000/0.389  1693/307/33 218  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      27 GPU  SquadWiped   219      0 0.22     2%     0%    5%    0%    0%                             4    5   57        0      0       900   3169  0.000/0.385  1682/302/38 214  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      28 CPU  SquadWiped   119      0 0.16     5%     5%    0%    0%    0%                             4    1    9        0      0         0   2430  0.000/0.289  1341/172/8 118  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      28 GPU  SquadWiped   117      0 0.16     1%     1%    0%    0%    0%                             1    1   11        0      0         0   2385  0.000/0.283  1357/156/10 114  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      29 CPU  SquadWiped   203      0 0.19     0%     0%    1%    0%    0%                             1    5   62        0      0       600   3324  0.000/0.394  1710/304/39 197  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      29 GPU  SquadWiped   176      0 0.16     3%     0%   11%    0%    0%                             3    1   73        0      0       300   3071  0.000/0.326  1470/235/27 170  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      30 CPU  SquadWiped   207      0 0.19    11%     0%   25%    0%    0%                            14    3   84        0      0       300   2988  0.000/0.428  1932/390/44 204  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      30 GPU  SquadWiped   189      0 0.16     3%     2%    6%    0%    0%                             2    4   89        0      0       300   2818  0.000/0.418  1876/354/47 184  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      31 CPU  SquadWiped   191      0 0.14    18%     3%   42%    0%    0%                            10    4   97        0      0       900   2160  0.000/0.401  1703/330/51 186  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      31 GPU  SquadWiped   189      0 0.16    16%     3%   39%    0%    0%                            10    3   83        0      0       900   2181  0.000/0.389  1724/305/41 183  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      32 CPU  SquadWiped   141      0 0.13     3%     2%    9%    0%    0%                             3    5   41        0      0       600   3437  0.000/0.326  1484/208/22 135  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random      32 GPU  SquadWiped   214      0 0.20    28%     0%   62%    0%    0%                            56   12   74        0      0       600   3909  0.000/0.404  1834/354/39 210  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  claim     CPU 0/32  stars 0  best 0.17  dead 35%  stuck 7 s  stall 252 s
+  claim     GPU 0/32  stars 0  best 0.16  dead 33%  stuck 12 s  stall 221 s
+  gaps+claim CPU 32/32  stars 2  best 1.00  dead 0%  stuck 6 s  stall 0 s
+  gaps+claim GPU 32/32  stars 2  best 1.00  dead 0%  stuck 8 s  stall 0 s
+  idle      CPU 0/32  stars 0  best 0.16  dead 72%  stuck 8 s  stall 286 s
+  idle      GPU 0/32  stars 0  best 0.15  dead 72%  stuck 6 s  stall 244 s
+  random    CPU 0/32  stars 0  best 0.18  dead 8%  stuck 30 s  stall 170 s
+  random    GPU 0/32  stars 0  best 0.18  dead 8%  stuck 30 s  stall 150 s

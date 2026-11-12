@@ -40,6 +40,73 @@ code{font-family:var(--mono);font-size:12.5px}
 </section>
 
 <section>
+<h2>Films in the game's own look</h2>
+<p class="lede">Added 14:55Z, after you saw specks. These are the Larder World window's own pictures (the GPU engine and its shading, on the Fork map, recorded without a window), one frame every 2 game seconds, played at 8x. One rule set is today's and the other is sharing + hunger. A and B are drawn at random per pair, and the key is in the repo, not on this page.</p>
+<h3>Idle squad, whole map, 4 minutes</h3>
+<div class="figs">
+<figure><img src="img/film-idle-all-A.gif" alt="Mould A grows over the Fork map for 4 minutes" width="600" height="372"><figcaption><b>A</b><span>14,073 walkers at 4:00</span><span>all 4 soldiers dead</span></figcaption></figure>
+<figure><img src="img/film-idle-all-B.gif" alt="Mould B grows over the Fork map for 4 minutes" width="600" height="372"><figcaption><b>B</b><span>3,855 walkers at 4:00</span><span>4 soldiers alive</span></figcaption></figure>
+</div>
+<h3>The same rounds, close in on the squad</h3>
+<div class="figs">
+<figure><img src="img/film-idle-near-A.gif" alt="Mould A reaching the squad, close view" width="560" height="350"><figcaption><b>A</b><span>14,073 walkers at 4:00</span></figcaption></figure>
+<figure><img src="img/film-idle-near-B.gif" alt="Mould B reaching the squad, close view" width="560" height="350"><figcaption><b>B</b><span>3,855 walkers at 4:00</span></figcaption></figure>
+</div>
+<h3>Rush hand (the squad attacks the core), until the squad falls</h3>
+<div class="figs">
+<figure><img src="img/film-rush-all-A.gif" alt="Mould A against a rushing squad" width="600" height="372"><figcaption><b>A</b><span>squad wiped at 2:43</span><span>4,694 walkers</span><span>1,545 killed by shots</span></figcaption></figure>
+<figure><img src="img/film-rush-all-B.gif" alt="Mould B against a rushing squad" width="600" height="372"><figcaption><b>B</b><span>squad wiped at 2:22</span><span>7,061 walkers</span><span>1,508 killed by shots</span></figcaption></figure>
+</div>
+<p>In both, the mould reaches out as broken dotted lines: clumps of walkers strung along a trail, not one sheet. That is the "specks" you saw, and neither rule set removes it. Sharing + hunger fills the trunks and the crystals more, but its far edges are just as dotted. To play it yourself on the desktop: <code>cargo run --release --bin larder-world -- energy_flow=0.05 hunger_scent=8</code>; leave the two keys off for today's rules.</p>
+</section>
+
+<section>
+<h2>Correction: the one-walker-a-cell rule was off in every 25,000-walker film</h2>
+<p class="lede">Added 17:10Z, from the deep review. The engine quietly turns off "one walker a cell" when a world has room for more walkers than half its cells, and the race world gives each walker 10 slots. So the 25,000-walker films below ran without the rule, and walkers piled on top of each other into ropes. Your 5,000-walker game keeps the rule. These two films are the same rounds with the rule held on (<code>capacity=50000</code>).</p>
+<div class="figs">
+<figure><img src="img/film-idle-all-pure-on.gif" alt="25,000 walkers scattered at the start, one walker a cell" width="600" height="372"><figcaption><b>Scattered, no food, rule on</b><span>(<code>walkers=25000 start=spread food=0 upkeep=0.00001 capacity=50000</code>)</span><span>a fine mesh at 0:04 that is still a mesh at 0:46</span><span>30,402 walkers at 0:30</span><span>squad wiped at 0:47</span></figcaption></figure>
+<figure><img src="img/film-idle-all-dense-on.gif" alt="25,000 walkers grown from the core, one walker a cell" width="600" height="372"><figcaption><b>From the core, rule on</b><span>(<code>walkers=25000 upkeep=0.0002 capacity=50000</code>)</span><span>one continuous sheet, 28,768 walkers at 1:00</span><span>12,290 at 1:30, then a network of tubes</span><span>squad wiped at 1:56</span></figcaption></figure>
+</div>
+<p>With the rule on there are no specks in either film. Scattered, the mould keeps a spread-out mesh that coarsens slowly instead of collapsing into strands. From the core, it grows as one sheet with trunks out to the crystals, like a real plasmodium's fan. At about 1:25 the starting walkers run out of their starting food all at once (0.5 energy at 0.0002 a step lasts about 83 s), and what is left is a network of continuous tubes between the crystals. So the strands and most of the specks in the dense films above were our bug, not Jones's rules. The fix and the next tests are in the doc's <b>How we get there</b> tab.</p>
+</section>
+
+<section>
+<h2>Why Jones's and Jenson's moulds don't speck: density</h2>
+<p class="lede">Added 16:40Z, after your question. These are the same Fork round and idle squad, with today's rules except where noted.</p>
+<div class="figs">
+<figure><img src="img/film-idle-all-dense.gif" alt="25,000 walkers with little starving on the Fork map" width="600" height="372"><figcaption><b>25,000 walkers, little starving</b><span>(<code>walkers=25000 upkeep=0.0002</code>)</span><span>one-walker rule off</span><span>30,575 walkers at 1:00</span><span>squad dead at 1:18</span></figcaption></figure>
+<figure><img src="img/film-idle-all-trail-base.gif" alt="Today's mould with the trail drawn alone" width="600" height="372"><figcaption><b>Today, trail drawn alone</b><span>(the walker term taken out of the picture)</span><span>3,855 walkers at 4:00</span></figcaption></figure>
+<figure><img src="img/film-idle-near-dense.gif" alt="25,000 walkers, close on the squad" width="560" height="350"><figcaption><b>25,000 walkers, close</b></figcaption></figure>
+<figure><img src="img/film-idle-near-trail-base.gif" alt="Today with the trail drawn alone, close on the squad" width="560" height="350"><figcaption><b>Today, trail alone, close</b></figcaption></figure>
+</div>
+<h3>Closer to pure Jones: walkers scattered over the map at the start</h3>
+<div class="figs">
+<figure><img src="img/film-idle-all-pure.gif" alt="25,000 walkers scattered at the start with no food scent" width="600" height="372"><figcaption><b>Scattered, no food</b><span>(<code>walkers=25000 start=spread food=0 upkeep=0.00001</code>)</span><span>a mesh at 0:04, a few strands by 0:30</span><span>one-walker rule off (see the correction above)</span><span>49,078 walkers at 2:00</span></figcaption></figure>
+<figure><img src="img/film-idle-all-mid.gif" alt="25,000 walkers scattered at the start with food scent" width="600" height="372"><figcaption><b>Scattered, with food</b><span>(<code>walkers=25000 start=spread upkeep=0.0002</code>)</span><span>one-walker rule off</span><span>squad dead at 0:26</span></figcaption></figure>
+</div>
+<p><b>Corrected 17:10Z:</b> these films ran with the one-walker-a-cell rule off; with it on, the mesh lasts (see the correction above). Scattered at the start, our engine makes Jones's spread-out mesh within 4 seconds. Then it coarsens into a few thick strands within about 30 seconds: the game runs 30 simulation steps a game second, so its first minute is about 1,800 of Jones's frames. Food scent makes the strands sooner and runs them food to food.</p>
+<h3>Two ways to get that density: more walkers (A, above) or a coarser grid (B)</h3>
+<div class="figs">
+<figure><img src="img/film-idle-all-coarse.gif" alt="Today's 5,000 walkers on a grid half as fine each way" width="600" height="372"><figcaption><b>B: today's walkers, coarser grid</b><span>(<code>scale=1</code>: 256 × 160 cells instead of 512 × 320)</span><span>2,491 walkers at 1:00, 10,872 at 2:00, 991 at 4:00</span><span>squad alive</span></figcaption></figure>
+<figure><img src="img/film-idle-near-coarse.gif" alt="Coarser grid, close on the squad" width="560" height="350"><figcaption><b>B, close</b></figcaption></figure>
+</div>
+<p>B is just as smooth but blockier close up, and its size swings hard. The game's rules weren't rescaled for the coarser grid, so the squad's shots cut it back from 10,872 to 991. Both need the rules rescaled before they can be compared fairly.</p>
+<p>At Jones-like density (about 15-20% of cells holding a walker, against today's 3-5%), the mould is smooth continuous tubes with no specks. Drawing the trail alone at today's density still shows beads, so the picture isn't the cause: the trail itself is beaded when walkers are this sparse. The cost: that mould killed the idle squad in 78 s. The game's damage, kills and drain all count walkers, so they would have to be scaled down per walker to keep today's difficulty.</p>
+</section>
+
+<section>
+<h2>A new rule against the specks: lone step</h2>
+<p class="lede">Added 15:30Z. A walker with fewer than 3 others within 2 cells of it moves at down to half speed, so the front of a moving piece waits for the rest. These are the same Fork round and idle squad as above. Labels are shown here because this tests a rule, not a look choice.</p>
+<div class="figs">
+<figure><img src="img/film-idle-all-L.gif" alt="Lone step alone on the Fork map, 4 minutes" width="600" height="372"><figcaption><b>Lone step</b><span>5,928 walkers at 4:00</span><span>4 soldiers alive</span></figcaption></figure>
+<figure><img src="img/film-idle-all-H_L.gif" alt="Lone step with sharing and hunger on the Fork map, 4 minutes" width="600" height="372"><figcaption><b>Lone step + sharing + hunger</b><span>13,062 walkers at 4:00</span><span>4 soldiers alive</span></figcaption></figure>
+<figure><img src="img/film-idle-near-L.gif" alt="Lone step, close on the squad" width="560" height="350"><figcaption><b>Lone step, close</b></figcaption></figure>
+<figure><img src="img/film-idle-near-H_L.gif" alt="Lone step with sharing and hunger, close on the squad" width="560" height="350"><figcaption><b>Lone step + sharing + hunger, close</b></figcaption></figure>
+</div>
+<p>The tubes along the walls come out thicker and smoother. But the mould's leading edge in open ground is still loose clumps, because the walkers out front are alone by definition. Measured on the CPU, a cut piece crossing open ground holds together better (largest part at 20 s 0.72 against 0.46 on Fork), but the whole mould spreads slower: 5,600 walkers at 5 minutes against 7,700, on 4.5 crystals against 6.3. To try it: add <code>lone_step=3 lone_floor=0.5 lone_r=2</code> to the command above.</p>
+</section>
+
+<section>
 <h2>What a cut does</h2>
 <p>I ringed off a hunk of the body away from any crystal: every walker on a ring 4 dish cells wide was killed and its trail cleared.</p>
 <div class="films">
