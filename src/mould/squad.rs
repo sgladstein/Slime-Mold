@@ -94,6 +94,17 @@ pub struct Frame {
     pub shots: Vec<ShotIn>,
     /// The trail that counts as slime (`slime_trail`).
     pub slime: f32,
+    /// Fine steps of crater each hit lays on the agar cells of its strike
+    /// disc (`BigDish::scorch_disc`'s field: the trail there is cut each
+    /// fine step while it lasts, `BigParams::scorch_keep`). 0 lays none.
+    /// Why (owner, 2026-11-12 04:39Z): "A group of soldiers shooting the
+    /// slime should start carving out a bigger and bigger hole that doesn't
+    /// refill while being shot at". A shot stops at the first cell that
+    /// reads as slime, so while the craters keep the trail under that, the
+    /// next shots fly on into the body and the hole deepens; once fire
+    /// stops, the craters fade and the mould grows back. On the GPU the
+    /// `cut` pass lays it into the damage memory (binding 47).
+    pub crater: u16,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -178,7 +189,7 @@ pub fn path(w: usize, h: usize, from: (f32, f32), to: (f32, f32)) -> Vec<u32> {
 
 /// Step 1: the shots (see the module's comment). Returns each shot's hit
 /// and kills.
-pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32) -> Vec<ShotOut> {
+pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16) -> Vec<ShotOut> {
     let (w, h) = (d.w, d.h);
     let shots = &shots[..shots.len().min(SHOTS_MAX)];
     let mut used = 0;
@@ -225,6 +236,18 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32) -> Vec<ShotOut> {
             let (hx, hy) = ((hits[q] as usize % w) as i64, (hits[q] as usize / w) as i64);
             for c in disc(w, h, hx, hy, r2s[q]) {
                 d.trail[c] = 0.0;
+            }
+            // The crater (`Frame::crater`) on the same whole cells as the
+            // strike, so a GPU twin can match it to the bit.
+            if crater > 0 {
+                if d.scorch.is_empty() {
+                    d.scorch = vec![0; w * h];
+                }
+                for c in disc(w, h, hx, hy, r2s[q]) {
+                    if d.agar[c] {
+                        d.scorch[c] = d.scorch[c].max(crater);
+                    }
+                }
             }
             // A hit is a strike, so with the alarm field on (the mould tiers,
             // `mould::tiers`) it lays the alarm the tiers answer: the Sporer
@@ -338,7 +361,7 @@ pub fn block_centre(w: usize, b: usize) -> (f32, f32) {
 
 /// A whole frame on the CPU: shots, smell, `ticks` ticks, reads, harvest.
 pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
-    let shots = shots(d, &f.shots, f.slime);
+    let shots = shots(d, &f.shots, f.slime, f.crater);
     smell(d, &f.units);
     for _ in 0..ticks {
         d.tick();
@@ -479,7 +502,7 @@ mod tests {
         let cells = path(w, h, from, (tx, ty));
         let first = cells.iter().map(|&i| i as usize).take_while(|&i| d.agar[i]).find(|&i| d.trail[i] >= slime).expect("the line reaches slime");
         assert_ne!(first, thick, "this line meets thinner slime first");
-        let out = shots(&mut d, &[ShotIn { from, to: (tx, ty), r: 3.0 }], slime);
+        let out = shots(&mut d, &[ShotIn { from, to: (tx, ty), r: 3.0 }], slime, 0);
         let hit = out[0].hit.expect("the line reaches slime");
         assert_eq!(((first % w) as f32 + 0.5, (first / w) as f32 + 0.5), hit);
         assert!(out[0].killed > 0, "walkers die where it hits");
@@ -501,7 +524,7 @@ mod tests {
         let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
         let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
         // A shot that starts on slime hits its first cell.
-        let out = shots(&mut d, &[ShotIn { from: at, to: (at.0 + 5.0, at.1), r: 3.0 }], slime_trail(3.0));
+        let out = shots(&mut d, &[ShotIn { from: at, to: (at.0 + 5.0, at.1), r: 3.0 }], slime_trail(3.0), 0);
         let hit = out[0].hit.expect("it starts on slime");
         let (hx, hy) = (hit.0 as i64, hit.1 as i64);
         let near: Vec<usize> = disc(w, h, hx, hy, r2(SHOT_ALARM_R * 3.0)).collect();
@@ -512,5 +535,44 @@ mod tests {
         let laid: f32 = near.iter().map(|&i| d.alarm[i]).sum();
         assert_eq!(total, laid, "alarm only within twice the radius");
         assert!(laid > 0.0);
+    }
+
+    #[test]
+    fn a_hit_lays_its_crater_on_the_strikes_cells_and_the_next_shot_flies_on() {
+        let mut d = world();
+        let (w, h) = (d.w, d.h);
+        let slime = slime_trail(3.0);
+        let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
+        let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+        let shot = ShotIn { from: at, to: (at.0 + 12.0, at.1), r: 2.0 };
+        // Without a crater no field appears.
+        let mut plain = d.clone();
+        shots(&mut plain, &[shot], slime, 0);
+        assert!(plain.scorch.is_empty(), "crater 0 lays none");
+        let out = shots(&mut d, &[shot], slime, 90);
+        let hit = out[0].hit.expect("it starts on slime");
+        let (hx, hy) = (hit.0 as i64, hit.1 as i64);
+        let cells: Vec<usize> = disc(w, h, hx, hy, r2(2.0)).collect();
+        for i in 0..w * h {
+            let want = if cells.contains(&i) && d.agar[i] { 90 } else { 0 };
+            assert_eq!(d.scorch[i], want, "cell {i}");
+        }
+        // A longer crater keeps the longer; a shorter one does not cut it.
+        shots(&mut d, &[shot], slime, 30);
+        assert!(cells.iter().all(|&i| !d.agar[i] || d.scorch[i] == 90));
+        // With the struck cells' trail held under slime, a second shot down
+        // the same line lands farther on: the hole deepens.
+        let mut a = d.clone();
+        for _ in 0..4 {
+            a.tick();
+        }
+        let next = shots(&mut a, &[shot], slime, 90)[0].hit;
+        let mut b = plain.clone();
+        for _ in 0..4 {
+            b.tick();
+        }
+        let again = shots(&mut b, &[shot], slime, 0)[0].hit;
+        let far = |h: Option<(f32, f32)>| h.map_or(f32::INFINITY, |(x, _)| x - at.0);
+        assert!(far(next) > far(again), "crater {next:?} against none {again:?}");
     }
 }

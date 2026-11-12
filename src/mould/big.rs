@@ -643,13 +643,21 @@ pub struct BigParams {
     /// stops only the mould's trail from holding, so a blast's hole or a
     /// det cord's cut stays open instead of re-knitting in seconds (the
     /// knife's 4 s heal, `Reports/dead-ends.md`, `STORM_CUTS`).
+    /// 0.1 since 2026-11-12, when shots began to lay it (`Rules::crater`):
+    /// the hole under a squad's fire was +28 dish cells over no crater at
+    /// 0.1 and +19 at 0.5 (race world, 8 seeds, 8 of 8 larger each); the
+    /// toolkit thread's probes at 0.1 kept a blast's disc as empty at 20 s
+    /// and a det cord's cut cleaner (trail 67 against 137 at 20 s). Was 0.5.
     pub scorch_keep: f32,
     /// Fine steps of scorch at which a cell bites at full strength: below
     /// it the cut is `scorch_keep`'s scaled by steps left / `scorch_full`,
     /// so every crater fades out instead of stopping at once, and a writer
     /// sets both strength and length by the steps it writes (a blast's deep
     /// crater, a shot's faint stamp; the owner's "stamps that fade",
-    /// 2026-11-12 04:38Z, on the graphics thread's A/B).
+    /// 2026-11-12 04:38Z, on the graphics thread's A/B). 30 (one game
+    /// second at scale 2) since 2026-11-12: at 300 a shot's 10 s crater
+    /// bit at full strength only as it was laid (hole +15 against +19 at
+    /// 30), and a blast's 600 steps sit at full either way. Was 300.
     pub scorch_full: u16,
     /// A rectangular world, three dish cells in from the edge, instead of
     /// the dish's ellipse: a world, not a dish (owner, 11-11 14:01Z).
@@ -822,8 +830,8 @@ impl BigParams {
             sand_keep: 0.8,
             clay_keep: 1.05,
             barren_upkeep: 3.0,
-            scorch_keep: 0.5,
-            scorch_full: 300,
+            scorch_keep: 0.1,
+            scorch_full: 30,
             rect: false,
             wall_hp: 400.0,
             wall_bite: 1.0,

@@ -98,6 +98,9 @@ pub trait World {
     fn stop_births(&mut self);
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
+    /// Fine steps a tick (`BigParams::substeps`), for rules timed in
+    /// fine-step fields (`Rules::crater`).
+    fn fine_steps(&self) -> u32;
     fn hash(&self) -> u64;
     /// Walkers on each `bin` x `bin` square of fine cells, row by row (the
     /// tube a player sees on screen, coarsened), for the player AI's eyes
@@ -164,6 +167,10 @@ impl World for BigDish {
 
     fn food_deposit(&self) -> f32 {
         self.p.food_deposit
+    }
+
+    fn fine_steps(&self) -> u32 {
+        self.p.substeps as u32
     }
 
     fn hash(&self) -> u64 {
@@ -324,6 +331,21 @@ pub struct Rules {
     /// to the soldier, any crystal) cost wall 14 of 16 (p 0.004) and was
     /// replaced (`Reports/dead-ends.md`).
     pub seek: bool,
+    /// **The hole under fire**: game seconds of crater (`squad::Frame::
+    /// crater`, the squad toolkit's scorch field) each hit lays on its
+    /// strike's cells, so sustained fire carves a hole the mould can't
+    /// re-knit until the fire stops (owner, 11-12 04:39Z). 0 is off. 10:
+    /// on the race world, four soldiers firing for 20 s left a hole 28
+    /// dish cells larger than with none (8 of 8 seeds), shots flew about
+    /// 10 dish cells into the body instead of 4, and it closed about 5 s
+    /// after the last shot; 1 and 3 s gave +2 and +5. A strike (the toolkit's
+    /// `scorch_keep` 0.1, `scorch_full` 30) bites at full strength until the
+    /// last second. Gate on seeds 5-12: farm, wall and strike beat idle and
+    /// random 8-0, and strike no longer beats farm (3-5; 28-4 over 32 seeds
+    /// without craters). Why a crater and not a flee: the mould turning
+    /// from gunfire made a bigger hole but let random hold the core
+    /// (`Reports/dead-ends.md`); the crater changes only the struck cells.
+    pub crater: f32,
 }
 
 impl Default for Rules {
@@ -361,6 +383,7 @@ impl Default for Rules {
             overrun: 0.0,
             reserve: 0.0,
             seek: true,
+            crater: 10.0,
         }
     }
 }
@@ -1162,7 +1185,8 @@ impl<W: World> Game<W> {
         });
         who.push(None);
         from.push(None);
-        let f = Frame { units, shots, slime: squad::slime_trail(6.0) };
+        let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
+        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, who, from, out });
     }
@@ -1710,6 +1734,9 @@ mod tests {
         }
         fn food_deposit(&self) -> f32 {
             World::food_deposit(&self.d)
+        }
+        fn fine_steps(&self) -> u32 {
+            World::fine_steps(&self.d)
         }
         fn hash(&self) -> u64 {
             World::hash(&self.d)

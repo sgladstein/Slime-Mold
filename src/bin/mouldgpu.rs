@@ -1728,7 +1728,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     .collect();
                 let shots: Vec<ShotIn> = if e.grows { units.iter().zip(&aims).filter_map(|(u, a)| a.map(|to| ShotIn { from: (u.x, u.y), to, r: 3.0 })).collect() } else { Vec::new() };
                 fired += shots.len() as u64;
-                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee) });
+                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee), crater: 0 });
             }
             // GPU time on every tenth frame (the read back waits).
             let stamp = st.as_ref().filter(|_| f % 10 == 5);
@@ -3373,7 +3373,11 @@ mod tests {
             s
         };
         let (sleeper, swarmer) = (tier(Tier::Sleeper, base.clone()), tier(Tier::Swarmer, base.clone()));
-        for (name, s) in [("plain", base), ("spores and dormancy", life), ("the Sleeper", sleeper), ("the Swarmer, the alarm and no states", swarmer)] {
+        // And shots that lay the crater (`Frame::crater`, 2026-11-12): 20
+        // fine steps, under `scorch_full` (30), so the cut fades with the
+        // steps left; the frame's tick then cuts the trail under it.
+        let cases = [("plain", base.clone(), 0), ("spores and dormancy", life, 0), ("the Sleeper", sleeper, 0), ("the Swarmer, the alarm and no states", swarmer, 0), ("plain, shots that lay craters", base, 20)];
+        for (name, s, crater) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             for t in 0..60 {
@@ -3447,7 +3451,7 @@ mod tests {
                     .collect();
                 shots.extend(beside.into_iter().map(|from| ShotIn { from, to: t, r: 4.0 }));
             }
-            let f = Frame { units, shots, slime };
+            let f = Frame { units, shots, slime, crater };
             e.inject(&cpu);
             e.set_squad(&f);
             run(&mut e, &shared, &s, 1, Hand::default());
@@ -3490,6 +3494,17 @@ mod tests {
             assert!(lt <= 1e-6 && ls <= 1e-6 && lc <= 1e-6 && la <= 1e-6, "trail L1 {lt:.2e}, scent L1 {ls:.2e}, charge L1 {lc:.2e}, alarm L1 {la:.2e}");
             assert!(cpu.alarm.is_empty() || alarm_sum > 100.0 * squad::SHOT_ALARM as f64, "the shots lay the alarm: {alarm_sum:.0} in all");
             assert!(agar_off == 0 && ground_off == 0);
+            // The craters the hits laid, counted down through the tick, to
+            // the step (none without them).
+            let (gc, cc) = (e.crater_of(), cpu.scorch.clone());
+            if crater == 0 {
+                assert!(cc.is_empty() && gc.iter().all(|&v| v == 0.0), "{name}: no crater unless shots lay one");
+            } else {
+                let off = (0..w * h).filter(|&i| gc[i] != cc[i] as f32).count();
+                let laid = cc.iter().filter(|&&v| v > 0).count();
+                eprintln!("squad craters, {name}: {laid} cells under a crater, {off} off");
+                assert!(laid > 50 && off == 0, "{name}: {laid} crater cells, {off} off");
+            }
             if !before.is_empty() {
                 // Spores in a struck disc are missed, the dormant in one die.
                 let struck = |k: usize| {
@@ -3721,7 +3736,10 @@ mod tests {
         use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World, FLEE_KEEP, FLEE_WEIGHT};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules { cap: 30.0, ..Rules::default() };
+        // The flee alone: since 2026-11-12 shots lay craters by default,
+        // which have their own twin (`a_squad_laying_craters_...`); with
+        // both, seed 3's moulds part by 13% at 25 s.
+        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
         let flee = || {
             let mut p = race_params(seed, scale, walkers);
             (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
@@ -3757,6 +3775,51 @@ mod tests {
             assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the alarm changed the CPU's game");
+    }
+
+    /// **Shots that lay the crater** (`Rules::crater`, 2026-11-12, the
+    /// owner's hole under fire) on the engine as on the CPU: the race world,
+    /// seed 3, the squad sent to attack from the start for 30 s with 10 s
+    /// craters. The moulds stay within the race twin's 8% and the kills
+    /// within 15%, as the flee's twin; and the crater changes the CPU's game
+    /// (a frame twin holds the field itself to the step:
+    /// `the_squad_matches_the_cpu_for_one_frame`).
+    #[test]
+    fn a_squad_laying_craters_plays_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 30.0, crater: 10.0, ..Rules::default() };
+        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { crater: 0.0, ..rules }, seed);
+        for g in [&mut cpu.log, &mut gpu.log, &mut off.log] {
+            g.clear();
+        }
+        for k in 0..cpu.soldiers.len() {
+            assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)) && off.apply(Cmd::Order(k, Order::Attack)));
+        }
+        let mut sizes = Vec::new();
+        while cpu.end.is_none() {
+            cpu.step();
+            gpu.step();
+            off.step();
+            if cpu.world.ticks() % 75 == 0 {
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living(), off.world.living()));
+            }
+        }
+        let (laid_cpu, laid_gpu) = (cpu.world.scorch.iter().filter(|&&v| v > 0).count(), gpu.world.e.crater_of().iter().filter(|&&v| v > 0.0).count());
+        eprintln!("firing with craters: game s, living CPU, GPU, CPU without craters: {sizes:?}; shots {} / {}, killed {} / {} (without craters {}); cells under a crater at the end {laid_cpu} / {laid_gpu}", cpu.shots, gpu.shots, cpu.killed, gpu.killed, off.killed);
+        assert!(cpu.shots > 20 && gpu.shots > 20, "the squad fired: {} / {}", cpu.shots, gpu.shots);
+        assert!(laid_cpu > 0 && laid_gpu > 0, "craters on both");
+        let (a, b) = (cpu.killed as f64, gpu.killed as f64);
+        assert!(a > 0.0 && (a - b).abs() <= 0.15 * a, "killed {b} on the GPU, {a} on the CPU");
+        for &(t, a, b, _) in &sizes {
+            let (a, b) = (a as f64, b as f64);
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+        }
+        assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the craters changed the CPU's game");
     }
 
     /// A designed map (ROADMAP WM1) on the engine as on the CPU: the Fork

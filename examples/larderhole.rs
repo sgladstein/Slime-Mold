@@ -39,6 +39,11 @@
 //!   slower or faster mould, as the graphics thread timed it).
 //! - `tier:NAME`: a mould tier (`mould::tiers`), after the parts before it:
 //!   `flee:1+tier:sporer` is the Sporer on a mould that flees gunfire.
+//! - `crater:S[:F[:K]]`: each hit lays S game seconds of crater on its
+//!   strike's cells (`Rules::crater`, the squad toolkit's scorch field),
+//!   biting at full strength for its last F fine steps
+//!   (`BigParams::scorch_full`, default 30) and keeping K of the trail a
+//!   fine step there (`scorch_keep`, default 0.1).
 use slime_mould::mould::big::{BigDish, BigParams};
 use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
 use slime_mould::mould::tiers::Tier;
@@ -63,6 +68,7 @@ enum Part {
     Swarm,
     Clock(u32),
     Tier(Tier),
+    Crater(f32, Option<u16>, Option<f32>),
 }
 
 impl Arm {
@@ -81,6 +87,7 @@ impl Arm {
                     }
                     "swarm" => Part::Swarm,
                     "clock" => Part::Clock(it.next().unwrap().parse().unwrap()),
+                    "crater" => Part::Crater(it.next().unwrap().parse().unwrap(), it.next().map(|v| v.parse().unwrap()), it.next().map(|v| v.parse().unwrap())),
                     "tier" => {
                         let n = it.next().unwrap();
                         Part::Tier(Tier::from_name(n).unwrap_or_else(|| panic!("no tier {n}")))
@@ -102,12 +109,30 @@ impl Arm {
                 Part::Swarm => Tier::from_name("swarmer").unwrap().apply(p),
                 Part::Clock(n) => p.substeps = n as usize,
                 Part::Tier(t) => t.apply(p),
+                Part::Crater(_, f, k) => {
+                    if let Some(f) = f {
+                        p.scorch_full = f;
+                    }
+                    if let Some(k) = k {
+                        p.scorch_keep = k;
+                    }
+                }
             }
         }
     }
-    /// Only the alarm's pull changes: holding fire, it plays base's game.
+    /// The game's rules for this arm.
+    fn rules(&self, mut r: Rules) -> Rules {
+        for part in &self.0 {
+            if let Part::Crater(s, ..) = *part {
+                r.crater = s;
+            }
+        }
+        r
+    }
+    /// Only what a hit does changes (the alarm's pull, the crater):
+    /// holding fire, it plays base's game.
     fn alarm_only(&self) -> bool {
-        self.0.iter().all(|p| matches!(p, Part::Base | Part::Off | Part::Flee(..) | Part::Swarm))
+        self.0.iter().all(|p| matches!(p, Part::Base | Part::Off | Part::Flee(..) | Part::Swarm | Part::Crater(..)))
     }
 }
 
@@ -345,6 +370,7 @@ fn place(g: &Game<BigDish>, n: usize) -> Option<Line> {
 fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: bool, grow: f32, fire: f32, rest: f32, n: usize, look: Option<(&str, &str, f32)>) -> Run {
     let mut p = race_params(seed, scale, walkers);
     arm.apply(&mut p);
+    let rules = arm.rules(rules);
     let mut world = BigDish::new(p);
     world.threads = 1;
     let mut g = Game::new(world, rules, seed);

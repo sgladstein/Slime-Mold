@@ -58,7 +58,9 @@
 //! sounded like to an ear on the squad, to the last of those seconds;
 //! `holes=1` also times how long each hit's hole stays open.
 //! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]`
-//! times the window's frame without a window (`bench`).
+//! times the window's frame without a window (`bench`). `crater=S` sets
+//! how long a hit's crater lasts (`Rules::crater`, 10 game seconds; 0 is
+//! off).
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -124,6 +126,9 @@ struct Args {
     /// The mould's voice at the start (`voice=0` turns it off; K in the
     /// window).
     voice: bool,
+    /// `crater=S`: game seconds of crater a hit lays (`Rules::crater`; 0
+    /// turns the hole under fire off, to compare).
+    crater: Option<f32>,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -311,7 +316,10 @@ impl App {
             }
             None => GpuWorld::new(device, queue, s, a.scale),
         };
-        let rules = mission.as_ref().map_or_else(Rules::default, |m| m.rules(Rules::default()));
+        let mut rules = mission.as_ref().map_or_else(Rules::default, |m| m.rules(Rules::default()));
+        if let Some(c) = a.crater {
+            rules.crater = c;
+        }
         let game = Game::new(world, rules, a.seed);
         self.mission = mission.map(|m| Tracker::new(m, &game));
         self.mission_sec = 0;
@@ -1608,7 +1616,7 @@ fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps
     Ok(())
 }
 
-/// A GPU with the adapter's own limits (the engine binds 46 buffers), and
+/// A GPU with the adapter's own limits (the engine binds 48 buffers), and
 /// timestamps where it has them (`bench`).
 fn gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
@@ -1660,7 +1668,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid) = (None::<f32>, 60.0f32, true, 0usize);
     let mut holes = false;
@@ -1672,6 +1680,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "scale" => args.scale = v.parse()?,
             "walkers" => args.walkers = v.parse()?,
             "mission" => args.mission = Some(v.to_string()),
+            "crater" => args.crater = Some(v.parse()?),
             "look" => look = Some(v.to_string()),
             "hand" => hand = v.to_string(),
             "sound" => wav = Some(v.to_string()),
@@ -1689,7 +1698,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes; bench, fps, stamps, grid)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater; look, hand, at, screen, sound, holes; bench, fps, stamps, grid)").into()),
             },
         }
     }
@@ -1718,7 +1727,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -1744,7 +1753,7 @@ mod tests {
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()) }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None }, (640, 400), &device, &queue).unwrap();
         assert_eq!(app.name, "flats");
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();

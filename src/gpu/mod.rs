@@ -62,11 +62,16 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (216 words).
-pub const PARAMS_BYTES: usize = 864;
+/// Bytes in `Params` (220 words).
+pub const PARAMS_BYTES: usize = 880;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`).
 pub const BODY_AT: usize = 848;
+/// Where the crater's row sits in `Params` (2026-11-12, after one body's:
+/// `scorch_keep`, `scorch_full`, the steps a shot's crater lasts, and
+/// whether the crater counts down at all). `set_squad` writes its last two
+/// words alone, as it does the squad's.
+pub const CRATER_AT: usize = 864;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
@@ -848,7 +853,7 @@ pub struct Shared {
     pub plain: Vec<wgpu::ComputePipeline>,
 }
 
-pub const BINDINGS: u32 = 47;
+pub const BINDINGS: u32 = 48;
 /// The most shot hits a frame (`Engine::set_hits`).
 pub const MAX_HITS: usize = 256;
 pub const SENSE: usize = 0;
@@ -986,6 +991,16 @@ pub struct Engine {
     /// `energy_flow` on).
     pub body: wgpu::Buffer,
     pub energy_flows: bool,
+    /// The damage memory (binding 47, the squad toolkit's layout): the
+    /// crater countdown a cell in fine steps (whole numbers in f32; the
+    /// CPU's `BigDish::scorch`), then the tiers thread's scar, unused so
+    /// far. `scorched` once any crater was laid: from then on the trail
+    /// pass counts it down and cuts the trail under it, as the CPU's
+    /// `tick` does once `scorch` is made. `crater` is the steps a shot's
+    /// crater lasts this frame (`squad::Frame::crater`).
+    pub crater: wgpu::Buffer,
+    pub crater_steps: u32,
+    pub scorched: bool,
     /// The Larder World (engine.wgsl's bindings 34-41): ground bits, crystal
     /// charge, wall health, the bites walls took this tick, the crystal
     /// cells pile by pile, each pile's run and sums, the wall counters, and
@@ -1164,11 +1179,12 @@ impl Engine {
         let hits = zeros("hits", MAX_HITS * 16);
         let look = zeros("look", cells as usize * 4);
         let body = zeros("body", 2 * cells as usize * 4);
+        let crater = zeros("crater", 2 * cells as usize * 4);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
                 &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look, &body,
+                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look, &body, &crater,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -1202,6 +1218,9 @@ impl Engine {
             share,
             body,
             energy_flows: false,
+            crater,
+            crater_steps: 0,
+            scorched: false,
             ground,
             charge,
             health,
@@ -1478,6 +1497,9 @@ impl Engine {
         b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, 0.0]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
         b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, 0.0]));
+        assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");
+        b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
+        b.extend(u32_bytes(&[self.scorched as u32]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
         assert_eq!(b.len(), PARAMS_BYTES, "Params is not PARAMS_BYTES long");
@@ -1830,6 +1852,13 @@ impl Engine {
     }
 
     /// The alarm field now (zeros without one).
+    /// The crater countdown a cell (the damage memory's first block), read
+    /// back: the CPU's `BigDish::scorch`.
+    pub fn crater_of(&self) -> Vec<f32> {
+        let g = floats(&read_back(&self.device, &self.queue, &self.crater));
+        g[..self.cells as usize].to_vec()
+    }
+
     pub fn alarm_of(&self) -> Vec<f32> {
         let g = floats(&read_back(&self.device, &self.queue, &self.germ[(self.done % 2) as usize]));
         g[self.cells as usize..2 * self.cells as usize].to_vec()
@@ -1885,6 +1914,9 @@ impl Engine {
         self.squad = (nunits, nshots, f.slime);
         self.squad_due = true;
         self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), squad::SHOT_ALARM.to_bits()]));
+        self.crater_steps = f.crater as u32;
+        self.scorched |= f.crater > 0;
+        self.queue.write_buffer(&self.params, CRATER_AT as u64 + 8, &u32_bytes(&[(f.crater as f32).to_bits(), self.scorched as u32]));
     }
 
     /// The last squad frame's results (`set_squad`), read back.

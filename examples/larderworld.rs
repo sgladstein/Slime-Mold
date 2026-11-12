@@ -125,6 +125,10 @@ struct Mould {
     /// `flee_keep=K`: the alarm field's keep a fine step for the plain
     /// mould (`FLEE_KEEP`, 0.98); a tier's own keep wins.
     flee_keep: Option<f32>,
+    /// `scorch_full=F` and `scorch_keep=K`: the crater's strength
+    /// (`BigParams::scorch_full`, `scorch_keep`), for `crater=S`.
+    scorch_full: Option<u16>,
+    scorch_keep: Option<f32>,
 }
 
 impl Mould {
@@ -144,6 +148,12 @@ impl Mould {
         (p.alarm_keep, p.alarm_weight) = self.alarm((p.alarm_keep, p.alarm_weight));
         if let Some(t) = self.tier {
             t.apply(p);
+        }
+        if let Some(f) = self.scorch_full {
+            p.scorch_full = f;
+        }
+        if let Some(k) = self.scorch_keep {
+            p.scorch_keep = k;
         }
     }
 }
@@ -183,6 +193,11 @@ fn main() {
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             "flee" => m.flee = Some(v.parse().unwrap()),
             "flee_keep" => m.flee_keep = Some(v.parse().unwrap()),
+            // `crater=S`: game seconds of crater each hit lays
+            // (`Rules::crater`).
+            "crater" => rules.crater = v.parse().unwrap(),
+            "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
+            "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
             "strike" => rules.strike = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
             "seek" => rules.seek = v == "1",
@@ -212,13 +227,17 @@ fn main() {
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
     println!(
-        "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; tier {}; flee {}{}; rules {rules:?}",
+        "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; tier {}; flee {}{}{}; rules {rules:?}",
         rules.cap,
         rules.tps,
         seeds,
         m.tier.map_or("none", |t| t.name()),
         m.flee.map_or("0 (default)".to_string(), |w| w.to_string()),
-        m.flee_keep.map_or(String::new(), |k| format!(", keep {k}"))
+        m.flee_keep.map_or(String::new(), |k| format!(", keep {k}")),
+        match (m.scorch_full, m.scorch_keep) {
+            (None, None) => String::new(),
+            (f, k) => format!("; scorch full {f:?} keep {k:?}"),
+        }
     );
     assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
@@ -295,7 +314,7 @@ fn engine_name(on_gpu: bool) -> &'static str {
     }
 }
 
-/// A GPU device with the adapter's limits (the engine binds 46 buffers).
+/// A GPU device with the adapter's limits (the engine binds 48 buffers).
 fn gpu() -> (wgpu::Device, wgpu::Queue) {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
     let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");

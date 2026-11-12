@@ -98,6 +98,13 @@ struct Params {
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
     // hungry walker weighs the scent 1 + `hscent` x its hunger.
     eflow: f32, hscent: f32, hat: f32, _b0: f32,
+    // The crater (2026-11-12, `BigParams::scorch_keep`, `scorch_full`;
+    // `squad::Frame::crater`): while a cell's countdown runs, its trail is
+    // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
+    // the spread and the soil, and the countdown drops by one, once
+    // `scorched` (the CPU's `tick` once `scorch` is made). A shot's hit sets
+    // the countdown on its struck agar cells to at least `crater`.
+    scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -209,6 +216,11 @@ struct Squad { units: array<SqUnit, 64>, uout: array<SqUnitOut, 64>, shots: arra
 // second. Fixed point, so the sum does not depend on the order the walkers
 // add in; `life` clears each cell after `egain` has read it.
 @group(0) @binding(46) var<storage, read_write> body: array<atomic<u32>>;
+// The damage memory (the squad toolkit's layout, 2026-11-12): the crater
+// countdown a cell in fine steps, whole numbers in f32 (the CPU's u16
+// `BigDish::scorch`), in the first block; the tiers thread's scar in the
+// second, unused so far.
+@group(0) @binding(47) var<storage, read_write> crater: array<f32>;
 const ESCALE: f32 = 65536.0;
 
 const NONE: u32 = 0xFFFFFFFFu;
@@ -1080,6 +1092,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (germs) { germ_out[i] = 0.0; }
         if (al) { germ_out[c + i] = 0.0; }
         for (var s = 0u; s < nsp(); s++) { sp_out[s * c + i] = 0.0; }
+        if (P.scorched != 0u && crater[i] > 0.0) { crater[i] -= 1.0; }
         return;
     }
     let capped = P.cap > 0u;
@@ -1130,6 +1143,16 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
     if (al) { germ_out[c + i] = asum / n * P.alarm_keep; }
+    // The crater, after the soil, on the trail and each species' field.
+    if (P.scorched != 0u) {
+        let left = crater[i];
+        if (left > 0.0) {
+            let f = 1.0 - (1.0 - P.scorch_keep) * min(left / P.scorch_full, 1.0);
+            trail_out[i] *= f;
+            for (var s = 0u; s < nsp(); s++) { sp_out[s * c + i] *= f; }
+            crater[i] = left - 1.0;
+        }
+    }
 }
 
 @compute @workgroup_size(256)
@@ -1638,6 +1661,10 @@ fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) l
         let had = (look[i] >> 16u) & 255u;
         look[i] = (look[i] & 0xFF00FFFFu) | (max(had, cut) << 16u);
         trail_in[i] = 0.0;
+        // The crater (`squad::Frame::crater`) on the struck agar cells, the
+        // longer of the two. Every shot in a frame writes the same steps,
+        // so two discs on one cell write the same value.
+        if (P.crater > 0.0 && agar[i] != 0u) { crater[i] = max(crater[i], P.crater); }
     }
 }
 
