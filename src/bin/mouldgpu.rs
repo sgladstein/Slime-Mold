@@ -4292,8 +4292,9 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
         };
         let (scale, walkers) = (2, 5_000);
         let rules = Rules { cap: 30.0, ..Rules::default() };
-        // rows[seed] = (game s, CPU trail, GPU trail, CPU living, GPU living)
-        let mut rows: Vec<Vec<(u64, f64, f64, usize, usize)>> = Vec::new();
+        // A mark: game s, CPU trail, GPU trail, CPU living, GPU living.
+        type Mark = (u64, f64, f64, usize, usize);
+        let mut rows: Vec<Vec<Mark>> = Vec::new();
         for seed in 1..=8u64 {
             let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
             let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
