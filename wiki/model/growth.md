@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-12T07:05Z
+updated: 2026-11-12T10:20Z
 sources: [Reports/one-body-2026-11-12.md, Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
 code: [BigParams::upkeep, BigParams::energy_flow, BigParams::hunger_scent, BigParams::lone_upkeep, BigParams::tether, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
@@ -60,7 +60,11 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   higher 8/8) and 2.5x its size; a cut gap refills in 1-2 s, so a cut-off
   piece only starves while the gap is held
   ([one body](../../Reports/one-body-2026-11-12.md)). On by default awaits
-  the owner's look.
+  the owner's look. On the designed maps a cut-off hunk alone still finds
+  a crystal in about 2 s but arrives as a stream; aligning headings did not
+  hold it together (dead end). In the Larder census (race 16 seeds) H keeps the
+  planned gate (farm, wall beat idle and random) but rush stops winning and
+  every hand scores lower; kept off by default for the owner's call.
 - Growth's numbers are per fine step, so the race start holds at the
   game's scale 2 but not on the 2048 x 1280 GPU world (scale 8): there it
   stays a knot at home, and with trail sensors 36 fine cells out it touches
