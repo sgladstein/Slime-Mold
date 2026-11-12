@@ -1,10 +1,11 @@
-import re,math,statistics as st
+import re,math,sys,statistics as st
+DIR=sys.argv[1]
 from math import comb
 T=['none','sporer','sleeper','swarmer']
 d={}
 pat=re.compile(r'^\s*(\w+) seed (\d+):\s+(.*?) at\s+(\d+) s, score ([+-][\d.]+); soldiers\s+(\d+), mould\s+(\d+)')
 for t in T:
-    for l in open(f'/tmp/claude-0/aiw/tiers/{t}.txt'):
+    for l in open(f'{DIR}/{t}.txt'):
         m=pat.match(l)
         if m: d[(t,m[1],int(m[2]))]=(float(m[5]),m[3],int(m[4]),int(m[6]),int(m[7]))
 S=range(53,61);H=['idle','random','farm','boom','claim','strike'];AI=['farm','boom','claim','strike']
