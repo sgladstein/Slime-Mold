@@ -8,6 +8,7 @@ sources:
   - Reports/larder-build-plan-2026-11-11.md
   - Reports/larder-buildings-2026-11-12.md
   - Reports/larder-campaign-2026-11-12.md
+  - Reports/larder-economy-2026-11-12.md
   - Reports/larder-m1-2026-11-11.md
   - Reports/larder-m2-2026-11-11.md
   - Reports/larder-m3-2026-11-11.md
@@ -25,7 +26,6 @@ code:
   - Cmd::Send
   - Core
   - CoreKind
-  - CoreKind::Regrow
   - Dish::fire
   - Dish::step_cost
   - Engine::record_count
@@ -34,7 +34,8 @@ code:
   - Game::begin_step
   - Game::build
   - Game::drop_offs
-  - Game::mould_ate
+  - Game::eaten
+  - Game::hungry
   - Game::raise
   - Game::raise_left
   - Game::raise_secs
@@ -53,11 +54,12 @@ code:
   - Rules::crater
   - Rules::crystal_solid
   - Rules::home_dry
+  - Rules::hunger
+  - Rules::ration
   - Rules::wade
   - Tier::core
   - Tracker
   - View::set_alive
-  - World::start_births
   - crowd_holds
   - distance_map
   - larder_world::Game
@@ -182,12 +184,12 @@ games (18 without) and every plan beats random after Holm on both
 within chance; strike still takes the core on 12 (13 without) and a rush
 that fails loses its squad on 8 of 10 (201-232). The core is a `Core
 { kind, secs, pull }` a tier can set (`Tier::core`, read by
-`Game::with_tier`): `Fixed`, `Headless` (only a wipe ends it) or
-`Regrow { starve_secs }`, built for the Trunk: a fallen core grows back
-unless the mould eats nothing from any crystal in the `starve_secs` after
-it falls (`Game::mould_ate`, `World::start_births`; [report, *A core that
-grows back*](../../Reports/larder-world-roadmap-2026-11-11.md)). The
-Drifter's migrating core comes later. The core rule is not what holds
+`Game::with_tier`): `Fixed` or `Headless` (only a wipe ends it). A
+third kind, `Regrow { starve_secs }` (a fallen core grew back unless the
+body starved; [report, *A core that grows back*](../../Reports/larder-world-roadmap-2026-11-11.md)),
+was built for the Trunk in PR #163 and taken out in PR 4 after the
+owner's no-king ruling (2026-11-12 20:21Z: "remove the king rule ...
+Headless"; [dead end](../../Reports/dead-ends.md)). The core rule is not what holds
 farm, wall and fort to the cap: without it (`core=headless`, race 5-20)
 they stalemate in 16 of 16 games as with it, and the player wins 2 of
 112 games instead of 6. **No king since 2026-11-12 20:21Z** (owner: "remove the king rule ... Headless"): `Core::of` is `Headless`, so every mould, tiers included, makes walkers while it has food, and holding its home stops nothing; the home keeps its pull (the Sprawler's is 0), and the window shows no core ring. A walker hits for `Rules::mass` (5,000 / the start walkers at scale 2; 1 by default), so a denser mould is the same body cut finer; the owner's shape playtest (`larder-world -- shape=a..e`) uses it ([report](../../Reports/slime-questions-2026-11-12/README.md)). Strike
@@ -201,8 +203,17 @@ walkers touching, a fifth with 12; each counts `Rules::mass`). Over both blocks 
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
 random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the
-owner's pick (17:29Z) from clips of the squad firing into the thick body. Next, running costs. Off by default for other threads:
-`Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
+owner's pick (17:29Z) from clips of the squad firing into the thick body. **The economy** (PR 4; [report](../../Reports/larder-economy-2026-11-12.md)):
+every soldier eats `Rules::ration` 1 food a second from the bank, and an
+unpaid bank costs each soldier `Rules::hunger` 1 hit point a second (hit
+points only, so starving soldiers still harvest and a dry farm recovers;
+a reserve recruit comes in whole); the HUD's food rate counts the rations
+and says when the bank runs dry inside a minute. `Rules::overrun` 20 s is on. On race
+5-20 idle starves in all 16 games (median 586 s), fort keeps 43% of its
+harvest unspent (80% before) and strike 17% (64%), and strike beats farm
+12-4, not under Holm (26-6 before). Next, buildings' running costs and
+the player AI's feeding. Off by default for other threads:
+`Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)
 

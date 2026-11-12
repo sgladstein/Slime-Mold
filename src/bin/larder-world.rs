@@ -295,6 +295,8 @@ struct App {
     robbed_at: Option<f32>,
     stolen: f32,
     broke: bool,
+    /// `Game::hungry` last frame, to tell the player once when the squad starts starving.
+    hungry: bool,
     /// Bank samples (game second, bank) for the food rate.
     bank_log: std::collections::VecDeque<(f32, f32)>,
     /// Frame times (ms) since the last report, and when it was.
@@ -364,6 +366,7 @@ impl App {
             robbed_at: None,
             stolen: 0.0,
             broke: false,
+            hungry: false,
             bank_log: Default::default(),
             frame_ms: Vec::new(),
             steps: 0,
@@ -866,15 +869,7 @@ impl App {
         }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
-            let say = match g.core_rule.kind {
-                CoreKind::Regrow { starve_secs } => format!("The core is taken: it grows back in {starve_secs:.0} s unless the mould eats nothing till then"),
-                _ => "The core is taken: the mould can no longer grow".into(),
-            };
-            self.hud.alert(&say, Some(g.core), theme::GOOD);
-        } else if g.core_down.is_none() && self.core_told {
-            // A regrowing core (`CoreKind::Regrow`) the mould fed.
-            self.core_told = false;
-            self.hud.alert("The core grew back: the mould still eats. Keep it off the crystals", Some(g.core), theme::BAD);
+            self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
         }
         if g.stolen > self.stolen {
             if self.robbed_at.is_none_or(|r| t - r > 30.0) {
@@ -889,6 +884,11 @@ impl App {
             self.hud.alert("Out of food: soldiers cannot fire", None, theme::BAD);
         }
         self.broke = broke;
+        // Rations (`Rules::ration`): told once each time the bank runs dry.
+        if g.hungry && !self.hungry {
+            self.hud.alert(&format!("Out of food: the squad is starving ({:.0} food a second to feed it)", g.rules.ration * g.alive() as f32), Some(g.larder), theme::BAD);
+        }
+        self.hungry = g.hungry;
         self.bank_log.push_back((t, g.bank));
         while self.bank_log.front().is_some_and(|&(t0, _)| t - t0 > 10.0) {
             self.bank_log.pop_front();
@@ -1113,7 +1113,20 @@ impl App {
         let took = g.take_share();
         let mut m = Model {
             resources: vec![
-                Resource { icon: Icon::Crystal, colour: theme::ENERGY, label: "Food: crystal charge carried home; soldiers, shots and walls cost it".into(), value: format!("{:.0}", g.bank), rate: rate.map(|v| format!("{v:+.0}/s")) },
+                // The rate is the bank's net change, so it counts the squad's rations
+                // (PR 4); when it is falling and the bank would be dry within a
+                // minute it says when (the design review, 11-12 21:51Z: show the
+                // drain before soldiers start losing health).
+                Resource {
+                    icon: Icon::Crystal,
+                    colour: theme::ENERGY,
+                    label: format!("Food: crystal charge carried home. The squad eats {:.0} a second; soldiers, shots and walls cost it", r.ration * g.alive() as f32),
+                    value: format!("{:.0}", g.bank),
+                    rate: rate.map(|v| match g.bank / -v {
+                        dry if v < 0.0 && dry < 60.0 => format!("{v:+.0}/s, dry in {dry:.0} s"),
+                        _ => format!("{v:+.0}/s"),
+                    }),
+                },
                 Resource { icon: Icon::Soldier, colour: theme::TEXT, label: format!("Soldiers alive (at most {})", r.max_squad), value: format!("{}", g.alive()), rate: (lost > 0).then(|| format!("-{lost} lost")) },
                 Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: "The mould: walkers alive".into(), value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
                 Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Your share of the charge gone from the crystals (with the mould's size, the score at 15:00)".into(), value: format!("{:.0}%", took * 100.0), rate: None },

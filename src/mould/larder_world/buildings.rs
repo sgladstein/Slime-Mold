@@ -574,7 +574,8 @@ mod tests {
         }
         let want = 10.0 * g.rules.build.pump_rate;
         assert!((g.pumped - want).abs() < 0.05 * want, "pumped {} in 10 s", g.pumped);
-        assert!(g.bank > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
+        // The squad's rations (`Rules::ration`) come out of the same bank.
+        assert!(g.bank + g.eaten > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
         assert!(g.take_share() > 0.5, "the pump's take is the squad's");
     }
 
