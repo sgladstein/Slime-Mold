@@ -238,7 +238,10 @@ impl App {
             }
             None => GpuWorld::new(device, queue, s, a.scale),
         };
-        let game = Game::new(world, Rules::default(), a.seed);
+        // A harvester moves on from a dry crystal by itself in play
+        // (`Rules::seek`, off for the census hands, which measured worse
+        // with it).
+        let game = Game::new(world, Rules { seek: true, ..Rules::default() }, a.seed);
         let e = &game.world.e;
         let size = (e.dish.w, e.dish.h);
         self.charge0 = game.world.crystals().iter().map(|c| c.1).collect();
@@ -1296,7 +1299,7 @@ mod tests {
         assert!(wounded > 0, "no wound in the look after {} shots", g.shots);
         app.prepare();
         let m = app.model(None, None);
-        assert_eq!(m.commands.len(), 9);
+        assert_eq!(m.commands.len(), 10, "the rally point is the tenth");
         assert!(m.end.is_none());
     }
 }

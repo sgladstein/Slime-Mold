@@ -252,8 +252,12 @@ pub struct Rules {
     pub home_dry: bool,
     /// A carrier back from a dry crystal with nothing queued walks on to
     /// the nearest crystal with charge left (`Game::seek`), the mould's
-    /// home excepted, rather than holding at the larder. Owner, 11-12
-    /// 04:22Z: harvest orders should not need re-giving.
+    /// home excepted, rather than holding at the larder (owner, 11-12
+    /// 04:22Z: better orders for harvesting). Off here, on in the window
+    /// (`larder-world`): on the census (seeds 5-20, cap 900) the gate holds
+    /// either way, farm is even (8 higher, 7 lower) but wall is lower on
+    /// 14 of 16 (p 0.004), its farmers walking on past its wall, so the
+    /// scripted hands and the player AI keep the measured hold.
     pub seek: bool,
 }
 
@@ -288,7 +292,7 @@ impl Default for Rules {
             hoard: 1.0,
             steal: 1.0,
             home_dry: true,
-            seek: true,
+            seek: false,
         }
     }
 }
@@ -1504,6 +1508,7 @@ mod tests {
     #[test]
     fn a_harvester_at_a_dry_crystal_goes_on_to_the_next() {
         let mut g = small(7);
+        g.rules.seek = true;
         // Soldier 0 is sent to a crystal; then that crystal's charge reads
         // as gone, so the next frame's take finds it dry.
         let target = g.seek(0, None).expect("a crystal with charge");
