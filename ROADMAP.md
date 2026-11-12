@@ -223,17 +223,26 @@ seeds 5-12: turtle lower 7/8, guard and pumps 7/8, wall, ring and killzone
 even, farm and army unchanged. The full gate (seeds 5-36 and 201-232, two
 maps) is being re-run on the new baseline.
 
-**Baseline breaks, 11-12 evening: #164, #169 and #170.** Each of these
+**Baseline breaks, 11-12 evening: #164, #169, #170 and #174.** Each of these
 changes what the hands can do or what ends a round, so census rows from
 either side of one don't compare. **#164** (cdccf127) makes every mould
 headless (no king rule). **#169** (a412af4) lets a soldier build
 anywhere, so the AI and census hands build differently (technical lead,
 22:42Z). **#170** (670ca9b, 22:58Z) is the economy (rations, hunger, overrun
-20 s, Regrow removed). No rerun is due for any of them. Under *build first,
+20 s, Regrow removed). **#174** (23:05Z) doubles a walker's bite on a
+soldier at 5,000 walkers (`Rules::drain` 2 at any count, buildings keep 1 x
+mass), adds the broken mould (`Rules::broken`) and makes the window's
+mould shape C (25,000 walkers; the census harness stays at 5,000). No
+rerun is due for any of them. Under *build first,
 balance later* the next scheduled balance pass starts from 670ca9b or
 later, and older rows stay as history.
 
-**Census reset held: mould density (11-12 16:20Z, waits on the owner).**
+**Census reset held: mould density (11-12 16:20Z; the owner took the
+dense mould for play, 22:19Z).** The window plays shape C, 25,000 walkers
+(route A), since #174; the census harness's reset below still waits for
+its slot. One change from the plan: a walker's bite on a soldier no
+longer counts mass (#174, the owner: walking in "should be very deadly";
+at 0.2 a walker 40 soldiers in C's thickest part lost none).
 The one-body thread found that the owner's "specks" come from density.
 At today's 3-5% of open cells holding a walker the mould draws as beads,
 and at 15-20% it draws as smooth tubes. If the owner takes the dense mould,

@@ -118,7 +118,13 @@ crystals held, stragglers everywhere else), then follows the remnant to
 C is the default slime: "C is better how it looks, the shape it takes,
 how it networks the crystals". A round in the window with no `shape=`,
 `walkers=` or `mission=` plays C, its keys under any given; `shape=a`
-plays the old 5,000 walkers, and a mission keeps its own mould. On thick
+plays the old 5,000 walkers, and a mission keeps its own mould. At the
+default scale (2) on Fork the engine keeps its crowd limit (the bench
+prints "one walker a cell", not the over-half-the-agar warning). The window
+runs only on the GPU; on the CPU world the probes' 25,000-47,000 walkers
+cost about 11 ms a tick on one core (`loneprobe`, 54,000 ticks in 581 s),
+against 3-5 ms at 5,000 (the smoke). The 1070's frame cost for A, C and D
+is booked after the PC's held jobs. On thick
 slime: "more. walking directly into the enemy should be very deadly"
 (against the quarter of 40 this thread proposed). A cut-the-network rule
 waits: "what is going on with the slime is unclear to the player ... I
@@ -157,7 +163,10 @@ whole at any walker count (`Rules::drain` 2, `Rules::mass` no longer
 shrinks it): a soldier on the edge of the slime lives, one in the middle
 dies in seconds. The old 5,000-walker mould (shape A, mass 1) bites twice
 what it did. Buildings keep 1 x mass (`BuildRules::drain`), since the ask
-was about soldiers. Smoke at the new bite (8 race seeds, cap 15:00, the old
+was about soldiers. Missions keep the bite they were tuned on, 1 a walker
+(`campaign::MISSION_DRAIN`; a mission file's `rule drain N` sets its own):
+at 2 the claim hand's walled squad on The gaps was wiped at 2:05, so the
+campaign thread retunes them. Smoke at the new bite (8 race seeds, cap 15:00, the old
 5,000 walkers where the bite doubled, `raw/thick/smoke-bite.txt`): idle
 never wins (farm and strike beat it 8-0, p 0.008), the soonest end is a
 squad wiped at 1:57, nothing stands stuck a minute, and strike now wipes
