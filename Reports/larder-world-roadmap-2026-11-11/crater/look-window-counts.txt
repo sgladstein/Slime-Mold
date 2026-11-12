@@ -72,3 +72,46 @@ win/rush3-cone/fork-rush-013s-all.png
 win/rush3-cone/fork-rush-013s-near.png
   CPU: ground field 1.72 ms (once a game second), model and HUD 0.045 ms a frame
   t 13 s: mould 4367, soldiers 4, bank 2000, harvested 0, shots 31, killed 961, took 0%, crystals left 0.999
+
+== noise-aim (map=noise)
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+win/noise-aim/noise-rush-020s-all.png
+win/noise-aim/noise-rush-020s-near.png
+  CPU: ground field 1.63 ms (once a game second), model and HUD 0.041 ms a frame
+  t 20 s: mould 2645, soldiers 4, bank 2000, harvested 0, shots 46, killed 471, took 0%, crystals left 1.000
+win/noise-aim/noise-rush-023s-all.png
+win/noise-aim/noise-rush-023s-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.039 ms a frame
+  t 23 s: mould 1573, soldiers 4, bank 2000, harvested 0, shots 72, killed 774, took 0%, crystals left 1.000
+win/noise-aim/noise-rush-026s-all.png
+win/noise-aim/noise-rush-026s-near.png
+  CPU: ground field 1.71 ms (once a game second), model and HUD 0.033 ms a frame
+  t 26 s: mould 1057, soldiers 4, bank 2000, harvested 0, shots 97, killed 929, took 0%, crystals left 1.000
+== noise-c10 (map=noise)
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+win/noise-c10/noise-rush-020s-all.png
+win/noise-c10/noise-rush-020s-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.040 ms a frame
+  t 20 s: mould 2557, soldiers 4, bank 2000, harvested 0, shots 23, killed 537, took 0%, crystals left 1.000
+win/noise-c10/noise-rush-023s-all.png
+win/noise-c10/noise-rush-023s-near.png
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.040 ms a frame
+  t 23 s: mould 1481, soldiers 4, bank 2000, harvested 0, shots 35, killed 815, took 0%, crystals left 1.000
+win/noise-c10/noise-rush-026s-all.png
+win/noise-c10/noise-rush-026s-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.034 ms a frame
+  t 26 s: mould 923, soldiers 4, bank 2000, harvested 0, shots 47, killed 1017, took 0%, crystals left 1.000
+== noise-cone (map=noise)
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+win/noise-cone/noise-rush-020s-all.png
+win/noise-cone/noise-rush-020s-near.png
+  CPU: ground field 2.42 ms (once a game second), model and HUD 0.057 ms a frame
+  t 20 s: mould 2615, soldiers 4, bank 2000, harvested 0, shots 23, killed 482, took 0%, crystals left 1.000
+win/noise-cone/noise-rush-023s-all.png
+win/noise-cone/noise-rush-023s-near.png
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.040 ms a frame
+  t 23 s: mould 1514, soldiers 4, bank 2000, harvested 0, shots 35, killed 794, took 0%, crystals left 1.000
+win/noise-cone/noise-rush-026s-all.png
+win/noise-cone/noise-rush-026s-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.032 ms a frame
+  t 26 s: mould 1005, soldiers 4, bank 2000, harvested 0, shots 47, killed 946, took 0%, crystals left 1.000

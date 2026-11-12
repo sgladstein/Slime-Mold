@@ -18,3 +18,7 @@ larder-world look=DIR hand=rush at=5,7,9,11,13 scorch_cone=1 scorch_full=150 sco
 ```
 
 Frames are the `near` view cropped to (250, 110)-(900, 510).
+
+The plain-soil frames (`soil-N-TTs.jpg`) use the same key, from the race
+world with no map ground (`map=noise`), seed 1, rush hand,
+`at=20,23,26`, the `near` view cropped to (330, 150)-(980, 550).
