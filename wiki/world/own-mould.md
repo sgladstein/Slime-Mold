@@ -2,9 +2,9 @@
 title: The player's own mould (gardeners)
 kind: design
 status: open
-updated: 2026-11-12
+updated: 2026-11-12T17:18Z
 sources: [Reports/player-mould-2026-11-12.md, Reports/species-gpu-2026-11-11.md, Reports/species-sets-2026-11-11.md]
-code: [BigParams::species_cap, own_mould::Garden, World::tend, BigParams::species_convert_per, BigParams::species_convert, BigParams::species_convert_r, SpeciesSet]
+code: [BigParams::species_avoid_of, own_mould::Garden::cord, BigParams::species_cap, own_mould::Garden, World::tend, BigParams::species_convert_per, BigParams::species_convert, BigParams::species_convert_r, SpeciesSet]
 ---
 
 # The player's own mould (gardeners)
@@ -33,7 +33,7 @@ is unchanged. On 32 seeds, sowing (Feed while walking to an unclaimed
 crystal and back) grows the player's mould 13 times farm's (32 of 32);
 feeding in one spot does nothing; farming alone starves it. The enemy is not
 smaller: the two blind species meet along one front and hold it
-([page](https://claude.ai/artifact/7Z4b4NB1JG1H7QEf9TrUer)). Each side may hold at most half the slots (`species_cap`), and a taken enemy core stops only the enemy's births; on the same seeds that changed nothing yet (the sides never neared it). Shots lay craters as in the one-mould game. **The front** (32 seeds, two soldiers for 20 s where the moulds meet): a road past the front pushes the player's ground forward (+886 cells, 27/4), sowing thickens it (+609, 25/6), fire with craters burns the enemy's back (-396, 24/7); all three hold under Holm. Without craters fire took nothing.
+([page](https://claude.ai/artifact/7Z4b4NB1JG1H7QEf9TrUer)). Each side may hold at most half the slots (`species_cap`), and a taken enemy core stops only the enemy's births; on the same seeds that changed nothing yet (the sides never neared it). Shots lay craters as in the one-mould game. **The front** (32 seeds, two soldiers for 20 s where the moulds meet): a road past the front pushes the player's ground forward (+886 cells, 27/4), sowing thickens it (+609, 25/6), fire with craters burns the enemy's back (-396, 24/7); all three hold under Holm. Without craters fire took nothing. One det cord (the toolkit's, `Garden::cord`, 16 cells across the line) takes about what 20 s of fire does at first (-289 enemy cells) but does not hold (10/21, p 0.07). **An enemy that hunts the player's mould feeds it** (`species_avoid_of`, CPU, off): about 7,000 walkers change sides each way in a sown game already, and with the pull net turning flips to the player under every hand (27/3, 30/2, 29/3); so the fight is not short of contact but symmetric, and hunting needs an attacker's edge to be a threat. All of this is 2,500 walkers a side on the CPU dish; only the direction should carry to the GPU.
 
 ## Owner's word
 
@@ -42,15 +42,15 @@ smaller: the two blind species meet along one front and hold it
 
 ## Tried and rejected
 
+- An enemy drawn to the player's trail as its threat: it converts on arrival and feeds the player ([`dead-ends.md`](../../Reports/dead-ends.md), the enemy hunting the player's mould).
 - Conversion on raw trail between forms that lay different amounts: deposit won every fight ([`dead-ends.md`](../../Reports/dead-ends.md), species conversion on raw trail).
 
 ## Open
 
-- Contact: make the enemy seek the player's mould (`species_avoid` below 0 for the enemy only), so a big player mould is a threat it must answer.
+- An attacker's edge in conversion (the fed or massed walker wins), so a hunting enemy is a threat.
 - A front hand that picks road, sow or fire where the line is, judged against random and idle.
 - Cut's disc (radius 3) moves nothing visible.
 - Cut was never used by a planned hand.
-- The fight needs contact: with the species blind to each other, it is rare. Attraction (`species_avoid` below 0) brings it on and hands the dense form the economy too (4 seeds).
 - Crust and spore-flier forms need per-species life-cycle rates.
 - Rerun the forms with the one body thread's cohesion rules once they land.
 

@@ -230,8 +230,11 @@ What the numbers say:
    since the squad shot it less while two soldiers sowed. The share gain is
    small (sow2 23 / 9, p 0.02, not inside Holm over these comparisons).
    With the species blind to each other, the two bodies meet along one
-   front and hold it (pictures), so conversion barely runs. This is the
-   form probe's finding again: **the fight needs contact**.
+   front and hold it (pictures). *Corrected after #132:* conversion does
+   run there, and hard: counted per walker, a sown game turns about 7,200
+   enemy walkers to the player and 7,900 back (32 seeds, hunt 0 below), a
+   churn that nets to nearly nothing. So the fight is not missing contact;
+   it is symmetric where the bodies touch.
 
 ## Each side's walkers (after #119)
 
@@ -300,13 +303,85 @@ Cut needs a longer blade to matter. The moves are 2 to 4 per cent of the
 map in 20 s: visible at the tip where the soldiers stand (pictures on the
 page), not a sweep.
 
+## Cut as the toolkit's det cord (designer's order)
+
+`Garden::cord` lays the squad toolkit's det cord (`KitRules`: a blast of
+radius 2.5 dish cells every 2, a crater on each, alarm) on the garden, and
+it hits both moulds alike (test `a_cord_cuts_both_moulds`). The front
+probe's **cord** arm: once soldier 0 is within reach of the line, one cord
+16 dish cells long, square to the way to the enemy's core and 6 past the
+player's front, paid from the bank (48).
+
+**Deciding measure, named before the run:** the enemy's cells 20 s after
+the branch, cord less none, paired; second, the player's cells. Shoot
+reruns beside it as the reference, identical to the earlier run seed for
+seed. 32 seeds ([`garden/front-cord.txt`](player-mould-2026-11-12/garden/front-cord.txt);
+seeds 28-32 of the cord arm in
+[`garden/front-cord-tail.txt`](player-mould-2026-11-12/garden/front-cord-tail.txt),
+as the first run hit its time limit).
+
+| Arm | Enemy's cells vs none, +20 s | +40 s | Player's cells vs none, +20 s |
+|---|---|---|---|
+| cord (one, 16 long) | -289, 10 / 21, p 0.07 | -236, 11 / 20, p 0.15 | +357, 20 / 11, p 0.15 |
+| shoot (two soldiers, 20 s) | **-354, 7 / 24, p 0.003** | **-667, 7 / 24, p 0.003** | +331, 19 / 12, p 0.28 |
+
+Cord against shoot on the enemy at +20 s: 17 / 14, p 0.72. **One cord takes
+about what 20 s of fire does at first, but does not hold**, and the
+ground grows back by +40 s, where fire's keeps widening. It killed few
+walkers (0, 53, 0 and 132 on seeds 1-4): at 2,500 walkers a side the line
+is thin, so the cord works by wiping trail and laying craters, not by
+killing. It cost the player's mould nothing seen, as it lands past the
+player's front. As the cut tool it is no better than the gun here; it
+needs a mould whose line is dense, or a cord that severs a supply tube.
+
+## The enemy hunts the player's mould (designer's order)
+
+`BigParams::species_avoid_of` (CPU only, empty is off) gives one species
+its own trail-avoid weight; `hunt=H` sets the enemy's to -H, so it turns
+toward the player's trail. The garden now counts every walker that
+changes side (`Garden::turned_own`, `turned_enemy`).
+
+**Deciding measure, named before the run:** the enemy's walkers at the cap,
+hunt 1 against hunt 0, paired per seed; second, net turned (to the player
+less to the enemy). Hands idle, farm and sow2, 32 seeds
+([`garden/census5-turned-hunt0.txt`](player-mould-2026-11-12/garden/census5-turned-hunt0.txt),
+[`garden/census5-turned-hunt1.txt`](player-mould-2026-11-12/garden/census5-turned-hunt1.txt)).
+Holm over the twelve tests.
+
+| Hand | Enemy walkers, hunt 1 lower | Player's walkers, hunt 1 higher | Net turned to the player, hunt 1 higher | Mean net turned, hunt 0 → 1 |
+|---|---|---|---|---|
+| idle | 20 / 10, p 0.10 | 22 / 8, p 0.016 | **27 / 3, holds** | -332 → +1,209 |
+| farm | 23 / 9, p 0.020 | **29 / 3, holds** | **30 / 2, holds** | +236 → +1,181 |
+| sow2 | 20 / 12, p 0.22 | 20 / 11, p 0.15 | **29 / 3, holds** | -751 → +626 |
+
+**A hunting enemy feeds the player.** Walking into the player's trail, the
+enemy's walkers are outnumbered where they arrive and convert, so net
+turning flips to the player's side under every hand; sow2's end share does
+not move (16 / 16), as the gain is small against 23,000 walkers. With
+this conversion rule (a walker joins a species whose trail outweighs its own 1.2 to 1 nearby) attraction is
+not a threat the player must answer; it is a gift. Hunt stays off. Making
+the enemy a threat needs a rule where the attacker has an edge, such as
+conversion that favours the moving or the fed walker, or a hunter that
+attacks in mass rather than trickling in.
+
+## Scale: what these numbers do and don't carry
+
+Every garden number is the CPU dish at scale 2 with 2,500 walkers a side,
+on a 50,000-slot pool. Cells, radii and walker counts will not carry to the
+GPU dish: there the mould is many times denser, so a disc or cord of the
+same radius meets far more walkers, and a front that is 2-4 % of the map
+here may be a different share there. What should carry is the direction
+and the ranking (road pushes, sow thickens, fire burns back; a hunting
+enemy is fed to the player under this conversion rule). The GPU port will
+be measured at 20,000 walkers in all (10,000 a side) and at 5,000 (tech
+lead's sizes; the final count is the owner's).
+
 ## Not done, next
 
-- Contact: make the enemy seek the player's mould (`species_avoid` below 0,
-  per side), so a big player mould is a threat it must answer, and see if
-  the network-vs-dense trade then makes Road against Cut a choice.
+- An attacker's edge, so a hunting enemy is a threat (above): conversion
+  that favours the fed or massed walker.
 - A front hand: a planned player who reads where the line is and picks
   road, sow or fire there, against random and idle.
-- Cut's reach (radius 3) is too small to see.
+- Cut's reach (radius 3) is too small to see; one det cord takes about what fire does but does not hold.
 - Cut was never used by a planned hand; random cut 5,899 walkers and lost.
 - The GPU port, after the toolkit's and one body's rows.
