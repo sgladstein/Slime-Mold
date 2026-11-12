@@ -29,6 +29,7 @@ section { display: grid; gap: 14px; }
 .strip { display: grid; grid-template-columns: 7.5rem repeat(4, 1fr); gap: 8px; align-items: start; }
 .strip .lab { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 4px; }
 .strip .lab.on { color: var(--amber); }
+.strip3 { grid-template-columns: 7.5rem repeat(3, 1fr); }
 figure { margin: 0; display: grid; gap: 6px; min-width: 0; align-content: start; }
 figure video, figure img { width: 100%; border-radius: 4px; border: 1px solid var(--line); display: block; background: #111a1f; }
 .counts { font-size: 0.88rem; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -74,6 +75,34 @@ code { font-size: 0.88em; }
       <figure><img src="crater/window-crater-13s.jpg" alt="13 s, craters"><div class="counts">13 s · <b>1,098</b> killed · mould 4,219</div></figure>
     </div>
     <p class="note">Each crater is the round disc a hit strikes, so a fresh hole starts round. Near a crystal, the bare ground inside the hole shows red-brown: that's the soil tinted by the crystal's scent, the same colour the ground has there with no mould on it. I also tried a ragged edge, with fewer crater steps toward a disc's rim and a random share per cell. It made the holes smaller but no less round, because the trail's spread smooths away anything a single cell does. So it isn't in. If these still read as stamps to you, that's the thing to tell me.</p>
+  </section>
+
+  <section>
+    <h2>Three ways the hole could look</h2>
+    <p>The game designer and the graphics thread both read the round holes above as stamps, so here are three versions of the same rule side by side. Each one is still the simulation, with nothing painted on. One is the crater as it ships. One fires a smaller strike more often, with each shot's aim scattered a little, so a hole is many small bites. One lays the crater strongest in the middle of each strike and weaker toward its edge, and leaves no trail inside, so the edge is soft and the inside drains to bare ground. Which is which is left off this page. The last two are switches and are off until you pick one.</p>
+    <p>It's the same game as above, the rush hand on the Fork, seed 1, with the window's pictures taken at 9, 11 and 13 game seconds.</p>
+    <div class="strip strip3">
+      <span class="lab on">look 1</span>
+      <figure><img src="crater/look-1-09s.jpg" alt="Look 1 at 9 s"><div class="counts">9 s · <b>57</b> killed · 30 shots · mould 4,943</div></figure>
+      <figure><img src="crater/look-1-11s.jpg" alt="Look 1 at 11 s"><div class="counts">11 s · <b>462</b> killed · 47 shots · mould 4,582</div></figure>
+      <figure><img src="crater/look-1-13s.jpg" alt="Look 1 at 13 s"><div class="counts">13 s · <b>765</b> killed · 63 shots · mould 4,542</div></figure>
+      <span class="lab on">look 2</span>
+      <figure><img src="crater/look-2-09s.jpg" alt="Look 2 at 9 s"><div class="counts">9 s · <b>129</b> killed · 15 shots · mould 4,871</div></figure>
+      <figure><img src="crater/look-2-11s.jpg" alt="Look 2 at 11 s"><div class="counts">11 s · <b>581</b> killed · 23 shots · mould 4,461</div></figure>
+      <figure><img src="crater/look-2-13s.jpg" alt="Look 2 at 13 s"><div class="counts">13 s · <b>970</b> killed · 31 shots · mould 4,347</div></figure>
+      <span class="lab on">look 3</span>
+      <figure><img src="crater/look-3-09s.jpg" alt="Look 3 at 9 s"><div class="counts">9 s · <b>138</b> killed · 15 shots · mould 4,862</div></figure>
+      <figure><img src="crater/look-3-11s.jpg" alt="Look 3 at 11 s"><div class="counts">11 s · <b>587</b> killed · 23 shots · mould 4,458</div></figure>
+      <figure><img src="crater/look-3-13s.jpg" alt="Look 3 at 13 s"><div class="counts">13 s · <b>961</b> killed · 31 shots · mould 4,367</div></figure>
+    </div>
+    <div class="scroll"><table>
+      <tr><th></th><th>hole at 5 / 10 / 20 s of fire</th><th>hits land from the squad</th><th>5 s after the last shot</th><th>killed in 20 s</th><th>soldiers alive</th></tr>
+      <tr><td>look 1</td><td>45 / 50 / 56</td><td>5.8 cells</td><td>69% left</td><td>723</td><td>31 of 32</td></tr>
+      <tr><td>look 2</td><td>48 / 50 / 60</td><td>5.3 cells</td><td>79% left</td><td>741</td><td>32 of 32</td></tr>
+      <tr><td>look 3</td><td>48 / 52 / 54</td><td>6.1 cells</td><td>74% left</td><td>702</td><td>32 of 32</td></tr>
+    </table></div>
+    <p class="note">These are medians over the 8 hole-test games (seeds 1-8, as in the table further down), played with the rule that a walker standing in a crater stops a shot. Paired seed by seed, none of the three differs from another by more than chance at 20 s, so the choice is about the look, not the fight. With no craters the hole is 29 cells. The scattered version's fire rate was set so it kills about as many walkers a second as the crater that ships. Without that, a smaller strike fired more often killed 30% more.</p>
+    <div class="ask"><b>Which hole looks most like soldiers cutting into a living body?</b><span>Tell me 1, 2 or 3, or "none of them". The graphics thread is also rendering all three up close at two zoom levels, and those will go here when they're done.</span></div>
   </section>
 
   <section>

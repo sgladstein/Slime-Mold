@@ -149,6 +149,8 @@ struct Mould {
     /// (`BigParams::scorch_full`, `scorch_keep`), for `crater=S`.
     scorch_full: Option<u16>,
     scorch_keep: Option<f32>,
+    /// `scorch_cone=1`: a shot's crater as a cone (`BigParams::scorch_cone`).
+    scorch_cone: bool,
 }
 
 impl Mould {
@@ -175,6 +177,7 @@ impl Mould {
         if let Some(k) = self.scorch_keep {
             p.scorch_keep = k;
         }
+        p.scorch_cone |= self.scorch_cone;
     }
 }
 
@@ -218,7 +221,11 @@ fn main() {
             "crater" => rules.crater = v.parse().unwrap(),
             "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
             "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
+            "scorch_cone" => m.scorch_cone = v == "1",
             "strike" => rules.strike = v.parse().unwrap(),
+            "shot_every" => rules.shot_every = v.parse().unwrap(),
+            // `spread=C`: aim spread, dish cells at the target (`Rules::spread`).
+            "spread" => rules.spread = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
             "pump_rate" => rules.build.pump_rate = v.parse().unwrap(),
             "pump_cost" => rules.build.pump_cost = v.parse().unwrap(),
@@ -259,9 +266,9 @@ fn main() {
         m.tier.map_or("none", |t| t.name()),
         m.flee.map_or("0 (default)".to_string(), |w| w.to_string()),
         m.flee_keep.map_or(String::new(), |k| format!(", keep {k}")),
-        match (m.scorch_full, m.scorch_keep) {
-            (None, None) => String::new(),
-            (f, k) => format!("; scorch full {f:?} keep {k:?}"),
+        match (m.scorch_full, m.scorch_keep, m.scorch_cone) {
+            (None, None, false) => String::new(),
+            (f, k, c) => format!("; scorch full {f:?} keep {k:?} cone {c}"),
         }
     );
     assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");

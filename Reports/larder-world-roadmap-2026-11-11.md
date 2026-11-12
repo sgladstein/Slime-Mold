@@ -589,6 +589,23 @@ Free shots take the rush from 16 losses to 15 games at the cap with the mould cu
 - The window shows each crater's hole as the strike's round disc. Near a crystal, the bare soil inside is tinted red-brown by the crystal's scent (the look's soil colour, not a drawn mark).
 - **A ragged edge was tried and dropped.** Each cell got fewer steps toward the disc's rim, and a hashed share of them (the same whole numbers on both engines; the GPU took the longest crater a cell was given with an atomic max). In the window the holes came out smaller but no less round, because the trail's spread smooths cell-scale noise away. An edge irregular at the disc's own scale (a strike shape that isn't a disc) was not tried.
 
+**Three looks for the owner, blind** (2026-11-12, after the game designer and the graphics thread read the round holes as stamps). The graphics thread's render named three causes, all from the rule's shape: every hole is the strike's same disc; `scorch_keep` 0.1 at full count drops the trail across one cell at the disc's edge, which the lighting draws as a dark rim; and the inside reads as a third flat colour. Two switches were added, both off by default, so the owner can pick from pictures:
+- **`Rules::spread`** (dish cells at the target): each shot's line turns by a uniform angle that moves its aim up to that far either side. It draws a random number only when it is above 0, so default games are unchanged (the replay test passes). With a strike of 1.5 instead of 2.5, the fire rate was matched to the shipped crater's kills: one shot every 0.36 s killed 966 in 20 s against 741, 0.5 s killed 583 and 0.44 s killed 723 ([crater/hole-1-8-aim-rate.txt](larder-world-roadmap-2026-11-11/crater/hole-1-8-aim-rate.txt)). The hole is a union of offset bites, irregular at the disc's own scale, which is the re-test condition of the ragged-edge dead end.
+- **`BigParams::scorch_cone`**: a shot lays `steps - steps * d² / (r² + 1)` on a cell at squared distance d² from the hit, in whole numbers on both engines (the GPU frame twin matches it to the bit). With `scorch_full` 150 the bite falls from full in the middle to little at the rim, and with `scorch_keep` 0 the inside holds no trail. Blasts keep their flat disc. The GPU reads it from bit 1 of the crater row's flag word, so no binding or Params row moved.
+
+The hole test on seeds 1-8 with the walker stop ([crater/hole-1-8-looks.txt](larder-world-roadmap-2026-11-11/crater/hole-1-8-looks.txt)), medians:
+
+| look | hole at 5 / 10 / 20 s of fire | hits land | 5 s after the last shot | killed in 20 s | at 20 s against the shipped crater |
+| --- | --- | --- | --- | --- | --- |
+| shipped crater (strike 2.5, a shot a second) | 48 / 50 / 60 | 5.3 | 79% | 741 | |
+| scattered (strike 1.5, a shot every 0.44 s, spread 2.5) | 45 / 50 / 56 | 5.8 | 69% | 723 | 4 larger, 3 smaller, +4, p 1 |
+| cone (`scorch_full` 150, `scorch_keep` 0) | 48 / 52 / 54 | 6.1 | 74% | 702 | 2 larger, 5 smaller, -3, p 0.45 |
+| cone (`scorch_full` 300, keep 0) | 41 / 47 / 51 | 5.8 | 85% | 692 | 3-5, -3, p 0.73 |
+| cone (`scorch_full` 300, keep 0.1) | 42 / 45 / 50 | 5.9 | 73% | 700 | 0-7, -4, p 0.016 (not under Holm over 6) |
+| no crater | 42 / 33 / 29 | 3.8 | 98% | 163 | 0-8, -9, p 0.008, holds |
+
+None of the looks changes the fight beyond chance, so the choice is the owner's eye. In the window (the Fork, seed 1, rush hand) the scattered holes come out as chains of small bites and the cone's as smaller holes with a soft shadow in place of the dark rim. In all three the fresh hole's inside is red-brown, which goes to grey soil as it ages, so the keep of 0 did not change that colour; the graphics thread is rendering all three up close. The page shows them blind as looks 1-3; the key is [crater/look-key.md](larder-world-roadmap-2026-11-11/crater/look-key.md), with the window's counts in [crater/look-window-counts.txt](larder-world-roadmap-2026-11-11/crater/look-window-counts.txt).
+
 **The gate, first look** (race seeds 5-12, 15-minute games, crater 10; raw [crater/census-race-5-12.txt](larder-world-roadmap-2026-11-11/crater/census-race-5-12.txt)):
 - farm, wall and strike each beat idle and random 8-0, and all hold under Holm.
 - Random wiped no mould, and its squad was wiped on 4.

@@ -249,13 +249,23 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16) -> Vec<
             }
             // The crater (`Frame::crater`) on the same whole cells as the
             // strike, so a GPU twin can match it to the bit.
+            // With `BigParams::scorch_cone` each cell gets fewer steps by its
+            // squared distance from the hit, as the GPU's `cut` does.
             if crater > 0 {
                 if d.scorch.is_empty() {
                     d.scorch = vec![0; w * h];
                 }
+                let cone = d.p.scorch_cone;
                 for c in disc(w, h, hx, hy, r2s[q]) {
                     if d.agar[c] {
-                        d.scorch[c] = d.scorch[c].max(crater);
+                        let steps = if cone {
+                            let (dx, dy) = ((c % w) as i64 - hx, (c / w) as i64 - hy);
+                            let c2 = crater as u32;
+                            (c2 - c2 * (dx * dx + dy * dy) as u32 / (r2s[q] + 1)) as u16
+                        } else {
+                            crater
+                        };
+                        d.scorch[c] = d.scorch[c].max(steps);
                     }
                 }
             }
@@ -584,6 +594,29 @@ mod tests {
         let again = shots(&mut b, &[shot], slime, 0)[0].hit;
         let far = |h: Option<(f32, f32)>| h.map_or(f32::INFINITY, |(x, _)| x - at.0);
         assert!(far(next) > far(again), "crater {next:?} against none {again:?}");
+    }
+
+    /// With the cone (`BigParams::scorch_cone`) a struck cell gets the
+    /// shot's steps less a share by its squared distance from the hit: all
+    /// of them at the hit, fewer toward the rim, and none off the disc.
+    #[test]
+    fn a_cone_crater_lays_fewer_steps_toward_the_rim() {
+        let mut d = world();
+        d.p.scorch_cone = true;
+        let (w, h) = (d.w, d.h);
+        let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
+        let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+        let shot = ShotIn { from: at, to: (at.0 + 12.0, at.1), r: 2.0 };
+        let out = shots(&mut d, &[shot], slime_trail(3.0), 90);
+        let (hx, hy) = out[0].hit.map(|(x, y)| (x as i64, y as i64)).expect("it starts on slime");
+        let r2 = r2(2.0);
+        let cells: Vec<usize> = disc(w, h, hx, hy, r2).collect();
+        for i in 0..w * h {
+            let (dx, dy) = ((i % w) as i64 - hx, (i / w) as i64 - hy);
+            let want = if cells.contains(&i) && d.agar[i] { 90 - 90 * (dx * dx + dy * dy) as u16 / (r2 as u16 + 1) } else { 0 };
+            assert_eq!(d.scorch[i], want, "cell {i}");
+        }
+        assert_eq!(d.scorch[hy as usize * w + hx as usize], 90, "all of them at the hit");
     }
 
     /// A walker that wanders into a crater stops the next shot there, though

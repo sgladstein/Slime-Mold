@@ -102,8 +102,9 @@ struct Params {
     // `squad::Frame::crater`): while a cell's countdown runs, its trail is
     // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
     // the spread and the soil, and the countdown drops by one, once
-    // `scorched` (the CPU's `tick` once `scorch` is made). A shot's hit sets
-    // the countdown on its struck agar cells to at least `crater`.
+    // `scorched` (flag bit 0; the CPU's `tick` once `scorch` is made). A
+    // shot's hit sets the countdown on its struck agar cells to at least
+    // `crater`, or with the cone (bit 1) fewer steps toward the rim.
     scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
@@ -1092,7 +1093,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (germs) { germ_out[i] = 0.0; }
         if (al) { germ_out[c + i] = 0.0; }
         for (var s = 0u; s < nsp(); s++) { sp_out[s * c + i] = 0.0; }
-        if (P.scorched != 0u && crater[i] > 0.0) { crater[i] -= 1.0; }
+        if ((P.scorched & 1u) != 0u && crater[i] > 0.0) { crater[i] -= 1.0; }
         return;
     }
     let capped = P.cap > 0u;
@@ -1144,7 +1145,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
     if (al) { germ_out[c + i] = asum / n * P.alarm_keep; }
     // The crater, after the soil, on the trail and each species' field.
-    if (P.scorched != 0u) {
+    if ((P.scorched & 1u) != 0u) {
         let left = crater[i];
         if (left > 0.0) {
             let f = 1.0 - (1.0 - P.scorch_keep) * min(left / P.scorch_full, 1.0);
@@ -1603,7 +1604,7 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (trail_in[i] >= P.slime) { hit = i; break; }
         // A walker in a crater (which holds no trail) is what the shot
         // meets there (`squad::shots`).
-        if (P.scorched != 0u && crater[i] > 0.0 && atomicLoad(&occ[i]) > 0u) { hit = i; break; }
+        if ((P.scorched & 1u) != 0u && crater[i] > 0.0 && atomicLoad(&occ[i]) > 0u) { hit = i; break; }
     }
     SQ.sout[q].hit = hit;
 }
@@ -1668,7 +1669,19 @@ fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) l
         // The crater (`squad::Frame::crater`) on the struck agar cells, the
         // longer of the two. Every shot in a frame writes the same steps,
         // so two discs on one cell write the same value.
-        if (P.crater > 0.0 && agar[i] != 0u) { crater[i] = max(crater[i], P.crater); }
+        // With the cone (flag bit 1, `BigParams::scorch_cone`) a cell gets
+        // fewer steps by its squared distance from the hit, in whole
+        // numbers as the CPU's `shots` computes them.
+        if (P.crater > 0.0 && agar[i] != 0u) {
+            var steps = P.crater;
+            if ((P.scorched & 2u) != 0u) {
+                let dx = x - i32(hit % P.w);
+                let dy = y - i32(hit / P.w);
+                let c = u32(P.crater);
+                steps = f32(c - c * u32(dx * dx + dy * dy) / (SQ.shots[q].r2 + 1u));
+            }
+            crater[i] = max(crater[i], steps);
+        }
     }
 }
 

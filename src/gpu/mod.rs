@@ -349,6 +349,12 @@ pub struct Settings {
     pub energy_flow: f32,
     pub hunger_scent: f32,
     pub hunger_at: f32,
+    /// The crater's cut, length of full bite and cone (`BigParams::
+    /// scorch_keep`, `scorch_full`, `scorch_cone`), for the look A/B of a
+    /// shot's hole (`larder-world scorch_cone=1 ...`).
+    pub scorch_keep: f32,
+    pub scorch_full: u16,
+    pub scorch_cone: bool,
     pub seed: u64,
 }
 
@@ -468,6 +474,9 @@ impl Settings {
             energy_flow: t.energy_flow,
             hunger_scent: t.hunger_scent,
             hunger_at: t.hunger_at,
+            scorch_keep: t.scorch_keep,
+            scorch_full: t.scorch_full,
+            scorch_cone: t.scorch_cone,
             seed: 1,
         }
     }
@@ -697,6 +706,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "energy_flow" => s.energy_flow = f()?,
         "hunger_scent" => s.hunger_scent = f()?,
         "hunger_at" => s.hunger_at = f()?,
+        "scorch_keep" => s.scorch_keep = f()?,
+        "scorch_full" => s.scorch_full = int()?.clamp(1, 65535) as u16,
+        "scorch_cone" => s.scorch_cone = b()?,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }
@@ -813,6 +825,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         energy_flow: s.energy_flow,
         hunger_scent: s.hunger_scent,
         hunger_at: s.hunger_at,
+        scorch_keep: s.scorch_keep,
+        scorch_full: s.scorch_full,
+        scorch_cone: s.scorch_cone,
         seed: s.seed,
         ..t
     }
@@ -1499,7 +1514,7 @@ impl Engine {
         b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, 0.0]));
         assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
-        b.extend(u32_bytes(&[self.scorched as u32]));
+        b.extend(u32_bytes(&[self.crater_flags()]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
         assert_eq!(b.len(), PARAMS_BYTES, "Params is not PARAMS_BYTES long");
@@ -1916,10 +1931,17 @@ impl Engine {
         self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), squad::SHOT_ALARM.to_bits()]));
         self.crater_steps = f.crater as u32;
         self.scorched |= f.crater > 0;
-        self.queue.write_buffer(&self.params, CRATER_AT as u64 + 8, &u32_bytes(&[(f.crater as f32).to_bits(), self.scorched as u32]));
+        self.queue.write_buffer(&self.params, CRATER_AT as u64 + 8, &u32_bytes(&[(f.crater as f32).to_bits(), self.crater_flags()]));
     }
 
     /// The last squad frame's results (`set_squad`), read back.
+    /// The crater row's flag word: bit 0 `scorched` (the trail pass counts
+    /// down and cuts from then on), bit 1 the cone (`BigParams::
+    /// scorch_cone`, read by the `cut` pass).
+    fn crater_flags(&self) -> u32 {
+        self.scorched as u32 | (self.dish.p.scorch_cone as u32) << 1
+    }
+
     pub fn squad_out(&self) -> squad::FrameOut {
         let words: Vec<u32> = read_back(&self.device, &self.queue, &self.sq).chunks_exact(4).take(squad::PATH).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
         let kills: Vec<u32> = read_back(&self.device, &self.queue, &self.kills).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();

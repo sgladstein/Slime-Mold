@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T09:53Z
+updated: 2026-11-12T10:25Z
 sources: [Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Rules::crater, squad::Frame::crater, Game::build, Game::raise, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
@@ -96,8 +96,12 @@ each hit lays the toolkit's crater on its strike disc for `Rules::crater`
 10 game seconds (CPU and GPU), where the trail keeps a tenth a step, so
 four soldiers' fire carves a hole 28 dish cells larger than without it
 after 20 s (8 of 8 seeds), the hits reach 9.7 dish cells in instead of
-3.8, and the hole closes over about 10 s once firing stops. Next, running
-costs. Off by default for other threads:
+3.8, and the hole closes over about 10 s once firing stops. The round
+holes read as stamps to the designer and the graphics thread, so two look
+switches, both off, went on the page blind for the owner to pick from:
+`Rules::spread` (a smaller strike, scattered, at the same kills) and
+`BigParams::scorch_cone` (a soft-edged crater); neither moves the hole
+beyond chance. Next, running costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)

@@ -659,6 +659,16 @@ pub struct BigParams {
     /// bit at full strength only as it was laid (hole +15 against +19 at
     /// 30), and a blast's 600 steps sit at full either way. Was 300.
     pub scorch_full: u16,
+    /// A shot's crater as a cone (Larder thread, 2026-11-12, a look switch
+    /// for the owner's A/B): a cell at squared distance d² from the hit
+    /// gets `steps - steps * d² / (r² + 1)` of the shot's steps instead of
+    /// all of them (whole numbers, so the GPU matches to the bit). With
+    /// `scorch_full` near a shot's steps the bite then falls from full in
+    /// the middle to little at the rim, so the hole's edge is a gradient
+    /// over a few cells instead of the one-cell drop the view lights as a
+    /// dark rim (graphics thread's render of the disc, 11-12 10:11Z).
+    /// Blasts (`scorch_disc`) keep their flat disc. Off by default.
+    pub scorch_cone: bool,
     /// A rectangular world, three dish cells in from the edge, instead of
     /// the dish's ellipse: a world, not a dish (owner, 11-11 14:01Z).
     pub rect: bool,
@@ -832,6 +842,7 @@ impl BigParams {
             barren_upkeep: 3.0,
             scorch_keep: 0.1,
             scorch_full: 30,
+            scorch_cone: false,
             rect: false,
             wall_hp: 400.0,
             wall_bite: 1.0,

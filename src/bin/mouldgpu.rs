@@ -3427,7 +3427,10 @@ mod tests {
         // And shots that lay the crater (`Frame::crater`, 2026-11-12): 20
         // fine steps, under `scorch_full` (30), so the cut fades with the
         // steps left; the frame's tick then cuts the trail under it.
-        let cases = [("plain", base.clone(), 0), ("spores and dormancy", life, 0), ("the Sleeper", sleeper, 0), ("the Swarmer, the alarm and no states", swarmer, 0), ("plain, shots that lay craters", base, 20)];
+        // And the cone (`BigParams::scorch_cone`, the look A/B): fewer steps
+        // toward the strike's rim, the same whole numbers on both.
+        let cone = Settings { scorch_cone: true, ..base.clone() };
+        let cases = [("plain", base.clone(), 0), ("spores and dormancy", life, 0), ("the Sleeper", sleeper, 0), ("the Swarmer, the alarm and no states", swarmer, 0), ("plain, shots that lay craters", base, 20), ("plain, cone craters", cone, 20)];
         for (name, s, crater) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
@@ -3555,6 +3558,9 @@ mod tests {
                 let laid = cc.iter().filter(|&&v| v > 0).count();
                 eprintln!("squad craters, {name}: {laid} cells under a crater, {off} off");
                 assert!(laid > 50 && off == 0, "{name}: {laid} crater cells, {off} off");
+                // A flat crater leaves one count on every cell; a cone, many.
+                let counts: std::collections::BTreeSet<u16> = cc.iter().copied().filter(|&v| v > 0).collect();
+                assert_eq!(counts.len() > 1, s.scorch_cone, "{name}: counts {counts:?}");
             }
             if !before.is_empty() {
                 // Spores in a struck disc are missed, the dormant in one die.
