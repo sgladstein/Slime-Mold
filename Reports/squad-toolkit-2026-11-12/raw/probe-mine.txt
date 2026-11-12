@@ -1,0 +1,32 @@
+kitprobe test=mine warm=60 seeds [1, 2, 3, 4, 5, 6, 7, 8]; kit KitRules { reach: 24.0, blast_r: 6.0, blast_alarm: 50.0, crater_r: 7.0, crater_secs: 20.0, blast_price: 60.0, mine_r: 5.0, mine_trigger: 40, mine_price: 80.0, cord_r: 2.5, cord_every: 2.0, cord_price: 3.0, cord_max: 48.0, germ_r: 5.0, sick_secs: 6.0, immune_secs: 40.0, sick_upkeep: 60.0, sick_catch: 0.2, sick_deposit: 1.0, sick_keep: 0.9, germ_price: 300.0, gas_r: 12.0, gas_secs: 20.0, gas_death: 0.0, gas_price: 150.0, reek: 4.0, alarm_keep: 0.95 }
+     none seed  1: mines 0, near larder 20s 544, near larder 60s 692, near larder 120s 743, gone off 0, killed 0, stolen 14381, living 5495
+    mines seed  2: mines 4, near larder 20s 1, near larder 60s 2, near larder 120s 16, gone off 0, killed 0, stolen 243, living 7474
+     none seed  2: mines 0, near larder 20s 1, near larder 60s 2, near larder 120s 16, gone off 0, killed 0, stolen 243, living 7474
+    mines seed  1: mines 4, near larder 20s 384, near larder 60s 662, near larder 120s 739, gone off 4, killed 292, stolen 14243, living 4957
+     none seed  3: mines 0, near larder 20s 4, near larder 60s 1, near larder 120s 6, gone off 0, killed 0, stolen 5, living 5237
+     none seed  4: mines 0, near larder 20s 506, near larder 60s 645, near larder 120s 672, gone off 0, killed 0, stolen 14649, living 2815
+    mines seed  3: mines 4, near larder 20s 4, near larder 60s 1, near larder 120s 6, gone off 0, killed 0, stolen 5, living 5237
+     none seed  6: mines 0, near larder 20s 508, near larder 60s 643, near larder 120s 662, gone off 0, killed 0, stolen 14834, living 3122
+     none seed  5: mines 0, near larder 20s 498, near larder 60s 668, near larder 120s 701, gone off 0, killed 0, stolen 14306, living 4305
+    mines seed  4: mines 4, near larder 20s 406, near larder 60s 618, near larder 120s 676, gone off 4, killed 271, stolen 14633, living 2879
+    mines seed  5: mines 4, near larder 20s 370, near larder 60s 676, near larder 120s 721, gone off 4, killed 235, stolen 14250, living 5567
+     none seed  7: mines 0, near larder 20s 648, near larder 60s 679, near larder 120s 726, gone off 0, killed 0, stolen 16670, living 9020
+    mines seed  6: mines 4, near larder 20s 348, near larder 60s 639, near larder 120s 654, gone off 4, killed 279, stolen 14790, living 4918
+     none seed  8: mines 0, near larder 20s 549, near larder 60s 717, near larder 120s 783, gone off 0, killed 0, stolen 13816, living 8066
+    mines seed  7: mines 4, near larder 20s 510, near larder 60s 672, near larder 120s 696, gone off 4, killed 411, stolen 16648, living 8030
+    mines seed  8: mines 4, near larder 20s 408, near larder 60s 661, near larder 120s 756, gone off 4, killed 276, stolen 13091, living 8427
+(100 s)
+
+means:
+       none: mines 0, near larder 20s 407, near larder 60s 506, near larder 120s 539, gone off 0, killed 0, stolen 11113, living 5692
+      mines: mines 4, near larder 20s 304, near larder 60s 491, near larder 120s 533, gone off 3, killed 220, stolen 10988, living 5936
+
+pairs (higher / lower / tied, two-sided sign p):
+  mines vs none, mines: 8 / 0 / 0, p 0.0078
+  mines vs none, near larder 20s: 0 / 6 / 2, p 0.0312
+  mines vs none, near larder 60s: 1 / 5 / 2, p 0.2188
+  mines vs none, near larder 120s: 2 / 4 / 2, p 0.6875
+  mines vs none, gone off: 6 / 0 / 2, p 0.0312
+  mines vs none, killed: 6 / 0 / 2, p 0.0312
+  mines vs none, stolen: 0 / 6 / 2, p 0.0312
+  mines vs none, living: 4 / 2 / 2, p 0.6875

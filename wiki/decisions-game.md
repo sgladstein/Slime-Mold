@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-12T04:50Z
+updated: 2026-11-12T06:00Z
 sources: [Reports/shot-damage-2026-11-12.md, CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
 code: [Params::pieces]
 ---
@@ -17,7 +17,11 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
-| 2026-11-12 04:38 | A shot leaves no drawn mark on the slime: both the ember burn and a char where walkers died were rejected as stamps. Sustained fire should carve a growing hole that doesn't refill while it is shot at (a rule, Larder thread) | "Neither. Both of those look like stamps. Placed on the slime that fade. Maybe part of the issue is the slime/walkers move to fast." ... "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at" | [World camera](world/world-camera.md) |
+| 2026-11-12 04:46, card | No Scorcher building: scorch is only the crater that blasts, det cord and shots leave (the squad toolkit's crater field) | card ("Drop it, scorch is the crater") | [roadmap, *Larder World: shared rules and merge order*](../ROADMAP.md) |
+| 2026-11-12 04:44 | Larder World gets a campaign of missions (maps × mould tiers, one verb each, a goal bar and stars, a no-soft-lock rule, a dead-time measure); only unlocked verbs carry between missions, and the persistent world is its own mode after the campaign | Card "Approve the campaign plan, and what carries between missions?": "Approve; carry unlocked verbs only" | [Larder](world/larder.md) |
+| 2026-11-12 04:39 | Sustained fire should carve a growing hole that does not refill while it is under fire | "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at." | [Squad toolkit](world/squad-toolkit.md) |
+| 2026-11-12 04:38 | A shot leaves no drawn mark on the slime: both the ember burn and a char where walkers died were rejected as stamps. The view draws no wound; the hole shows from the living walkers | "Neither. Both of those look like stamps. Placed on the slime that fade. Maybe part of the issue is the slime/walkers move to fast." | [World camera](world/world-camera.md) |
+| 2026-11-12 04:31 | Build all six squad tools together (blast, mine, det cord, germ, sleep gas, mask/reek), from the mould's model; explosions and mines added by the owner (04:25) | Card: "All six together"; 04:25: "yes and maybe explosions, mines, etc." | [Squad toolkit](world/squad-toolkit.md) |
 | 2026-11-11 20:06 | Map ground starts from the graphics thread's terrain, not height; height is parked unless a test shows it matters. The maps thread may build on the graphics work (20:09Z) | "Your map generation is heavily focused on heights. How much does height actually influence our slime mold behaviors? I am skeptical how much fun/complexity/strategy this adds to the game. You should also be starting from the improve solider and slime graphics work which already has added terrain to their map" ... "You can improve upon their work too." | [Larder](world/larder.md) |
 | 2026-11-11 19:29 | Larder World gets designed maps: a real world with ground the simulation uses, not a black background; a Maps track (WM1-WM5) on the roadmap | "Right now, the world is a black background. Is it part of the roadmap to build an actual world?" ... "We will want maps though. That should be part of the plan" | [Larder](world/larder.md) |
 | 2026-11-11 16:48 | Soldiers are drawn as an SVG sprite (A in the blind A/B), not the shader-drawn figure | "Solider A looks better" | [World camera](world/world-camera.md) |
