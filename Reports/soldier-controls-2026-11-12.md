@@ -61,10 +61,28 @@ The gate holds both ways (farm and wall beat idle 14-15/16 and random 16/16,
 all hold under Holm). Wall's loss survives a Bonferroni correction over the
 two comparisons; the mould ends bigger on most of its seeds with seek on
 (inferred: its farmers walk on past its wall instead of holding behind it).
-So `Rules::seek` is **off** in `Rules::default` (the census hands and the
-player AI keep the measured hold) and **on in the window**, where the
-owner's playtest found the hold made soldiers stand idle. Re-test when the
-hands plan with it, or walls are raised by soldiers (part 2).
+That first version was not kept. Two reviews (the game designer and the
+technical lead, 05:25Z) objected to the split it led to (on in the window,
+off for the hands): the census would no longer measure the game played.
+
+### The safe version, one default
+
+`Game::seek` now picks only a safe crystal: a frame's harvest left, not the
+mould's home, none the mould has eaten from, none nearer the core than the
+larder; of those the nearest the larder that no other soldier works, else
+the nearest the larder; none safe sends the soldier home to hold. Same
+census with it on (`census-seek-safe.txt`), against off:
+
+| hand | mean score, safe on | mean score, off | on vs off, paired |
+| --- | --- | --- | --- |
+| farm | +0.217 | +0.048 | 10 higher, 5 lower, p 0.30 |
+| wall | +0.052 | +0.152 | 4 higher, 11 lower, p 0.12 |
+
+The gate holds (farm 16/16 over idle and random, wall 15/16, all hold
+under Holm). Neither difference is significant, so under "defaults on" it
+is **on** for every hand and the window alike. Wall still leans lower (its
+mean drops 0.10; it lost the squad on 2 seeds, against 1): re-test it when
+soldiers raise the wall (part 2) or the hands plan with moving on.
 
 ## Next
 

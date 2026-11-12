@@ -22,8 +22,8 @@ look below.
 In `larder-world` the soldiers take RTS orders
 ([report](../../Reports/soldier-controls-2026-11-12.md)): Shift queues any
 order (`Cmd::Queue`), A then a click attack-moves (`Order::Fight`), a
-harvester moves on from a dry crystal (`Rules::seek`, on in the window,
-off for the census hands, where wall scored lower with it 14 of 16), and
+harvester moves on from a dry crystal to a safe one (`Rules::seek`, on;
+the census gate holds with it), and
 the larder is selectable with a rally point (`Cmd::Rally`); a double click
 selects every soldier on screen.
 

@@ -253,11 +253,12 @@ pub struct Rules {
     /// A carrier back from a dry crystal with nothing queued walks on to
     /// the nearest crystal with charge left (`Game::seek`), the mould's
     /// home excepted, rather than holding at the larder (owner, 11-12
-    /// 04:22Z: better orders for harvesting). Off here, on in the window
-    /// (`larder-world`): on the census (seeds 5-20, cap 900) the gate holds
-    /// either way, farm is even (8 higher, 7 lower) but wall is lower on
-    /// 14 of 16 (p 0.004), its farmers walking on past its wall, so the
-    /// scripted hands and the player AI keep the measured hold.
+    /// 04:22Z: better orders for harvesting). Only to a safe crystal
+    /// (`Game::seek`). On, for the window and the census alike (one game):
+    /// on seeds 5-20 the gate holds, farm 10 higher and 5 lower than with
+    /// it off (p 0.30), wall 4 and 11 (p 0.12). The first version (nearest
+    /// to the soldier, any crystal) cost wall 14 of 16 (p 0.004) and was
+    /// replaced (`Reports/dead-ends.md`).
     pub seek: bool,
 }
 
@@ -292,7 +293,7 @@ impl Default for Rules {
             hoard: 1.0,
             steal: 1.0,
             home_dry: true,
-            seek: false,
+            seek: true,
         }
     }
 }
@@ -831,25 +832,36 @@ impl<W: World> Game<W> {
         true
     }
 
-    /// The crystal a harvester from `skip` goes on to (`Rules::seek`): the
-    /// nearest to soldier `k` with at least a frame's harvest left, one the
-    /// mould has not eaten from first (as `share` counts it), never the
-    /// mould's home (crystal 0). Its centre, fine cells.
+    /// The crystal a harvester from `skip` goes on to (`Rules::seek`), its
+    /// centre, fine cells; None sends it home to hold. Only a safe one: at
+    /// least a frame's harvest left, never the mould's home (crystal 0),
+    /// none the mould has eaten from (as `share` counts it), and none
+    /// nearer the core than the larder (the squad's side of the map). Of
+    /// those, the nearest the larder that no other soldier is harvesting,
+    /// else the nearest the larder. (The first version took the nearest to
+    /// the soldier and only preferred uneaten crystals: the wall hand
+    /// scored lower with it on 14 of 16 seeds, its farmers walking out past
+    /// its wall.)
     pub fn seek(&self, k: usize, skip: Option<usize>) -> Option<(f32, f32)> {
-        let s = self.soldiers[k];
         let r = self.rules;
         let ask = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
+        let (l, core) = (self.larder, self.core);
+        let d = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).hypot(a.1 - b.1);
+        let busy: Vec<usize> = self
+            .soldiers
+            .iter()
+            .enumerate()
+            .filter(|&(q, s)| q != k && s.alive)
+            .filter_map(|(_, s)| if let Order::Clear(x, y) = s.order { self.crystal_at((x, y)).map(|c| c.0) } else { None })
+            .collect();
         self.world
             .crystals()
             .into_iter()
             .enumerate()
-            .filter(|&(i, (_, charge))| i != 0 && Some(i) != skip && charge >= ask)
-            .map(|(i, (c, charge))| {
-                let eaten = self.start_charge[i] - charge - self.taken[i] > 0.01 * self.start_charge[i];
-                (eaten, (c.0 - s.x).hypot(c.1 - s.y), c)
-            })
-            .min_by(|a, b| a.0.cmp(&b.0).then(a.1.total_cmp(&b.1)))
-            .map(|t| t.2)
+            .filter(|&(i, (c, charge))| i != 0 && Some(i) != skip && charge >= ask && d(c, l) < d(c, core))
+            .filter(|&(i, (_, charge))| self.start_charge[i] - charge - self.taken[i] <= 0.01 * self.start_charge[i])
+            .min_by(|a, b| busy.contains(&a.0).cmp(&busy.contains(&b.0)).then(d(a.1 .0, l).total_cmp(&d(b.1 .0, l))))
+            .map(|(_, (c, _))| c)
     }
 
     /// Soldier `k` is done with a crystal that ran dry (`skip`): its next
@@ -1548,5 +1560,25 @@ mod tests {
         h.apply(Cmd::Order(0, Order::Clear(target.0, target.1)));
         h.after_dry(0, Some(i));
         assert_eq!(h.soldiers[0].order, Order::Hold);
+    }
+
+    #[test]
+    fn moving_on_skips_crystals_the_mould_ate_from_or_a_soldier_works() {
+        let mut g = small(8);
+        g.rules.seek = true;
+        let first = g.seek(0, None).expect("a safe crystal");
+        let (i, _) = g.crystal_at(first).unwrap();
+        // Another soldier harvesting it: soldier 0 takes another.
+        g.apply(Cmd::Order(1, Order::Clear(first.0, first.1)));
+        let other = g.seek(0, None).expect("a second safe crystal");
+        assert_ne!(other, first, "not the one soldier 1 works");
+        // The mould ate a tenth of it: never chosen, even with no one on it.
+        g.apply(Cmd::Order(1, Order::Hold));
+        g.world.pile_charge[i] *= 0.9;
+        let c = g.seek(0, None).expect("a safe crystal");
+        assert_ne!(g.crystal_at(c).unwrap().0, i, "not a crystal the mould ate from");
+        // Every pick is on the squad's side: nearer the larder than the core.
+        let d = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).hypot(a.1 - b.1);
+        assert!(d(c, g.larder) < d(c, g.core));
     }
 }
