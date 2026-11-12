@@ -8,6 +8,13 @@
 //! cargo run --release --example larderworld -- census gpu=both seeds=1-32 threads=1 ...
 //! ```
 //!
+//! **The one census entry point** (2026-11-12, game integration): a
+//! game-level table that is compared with another thread's comes from this
+//! census, with hands, tiers, tools and missions added here as `hands=` or
+//! flags. Its first lines print `provenance:` (the commit, seeds, cap and a
+//! hash of every setting); quote that line beside the table. Tables from
+//! other harnesses are not comparable with these.
+//!
 //! **On the GPU engine** (`gpu=1`, or `gpu=both` for each game on both;
 //! 2026-11-12, the technical lead review): the same hands, seeds and rules
 //! on `gpu::larder_world::GpuWorld`, the engine the window plays. The two
@@ -168,6 +175,22 @@ impl Mould {
     }
 }
 
+/// FNV-1a, 64 bits: a stable hash of the census's settings text.
+fn fnv(b: &[u8]) -> u64 {
+    b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &c| (h ^ c as u64).wrapping_mul(0x0000_0100_0000_01b3))
+}
+
+/// The commit the census ran on, with `+dirty` for uncommitted changes, or
+/// `unknown` outside a git checkout.
+fn commit() -> String {
+    let git = |args: &[&str]| std::process::Command::new("git").args(args).current_dir(env!("CARGO_MANIFEST_DIR")).output().ok().filter(|o| o.status.success());
+    let Some(head) = git(&["rev-parse", "--short=9", "HEAD"]) else {
+        return "unknown".into();
+    };
+    let dirty = git(&["status", "--porcelain", "--untracked-files=no"]).is_some_and(|o| !o.stdout.is_empty());
+    format!("{}{}", String::from_utf8_lossy(&head.stdout).trim(), if dirty { "+dirty" } else { "" })
+}
+
 fn main() {
     let mut seeds: Vec<u64> = (1..=4).collect();
     let (mut scale, mut walkers, mut threads, mut cap) = (2usize, 5_000usize, 4usize, None::<f32>);
@@ -244,6 +267,29 @@ fn main() {
         m.tier.map_or("none", |t| t.name()),
         m.flee.map_or("0 (default)".to_string(), |w| w.to_string()),
         m.flee_keep.map_or(String::new(), |k| format!(", keep {k}"))
+    );
+    // The census's provenance (2026-11-12, game integration; the technical
+    // lead found three harnesses' tables disagreeing overnight with no way
+    // to tell why): one line that names the commit, the seeds, the cap and
+    // a hash of every setting above, so a table quoted in a report can be
+    // matched to another run's, or shown not to match. FNV-1a over the
+    // settings' text, so it changes with any Rules field without a list to
+    // keep up to date.
+    let settings = format!(
+        "{world}|{scale}|{walkers}|{}|{}|{}|{:?}|{names}|{rules:?}",
+        m.tier.map_or("none", |t| t.name()),
+        m.flee.unwrap_or(0.0),
+        m.flee_keep.unwrap_or(0.0),
+        hands
+    );
+    println!(
+        "provenance: harness larderworld, commit {}, seeds {}-{} ({}), cap {} s, settings hash {:016x}",
+        commit(),
+        seeds.first().copied().unwrap_or(0),
+        seeds.last().copied().unwrap_or(0),
+        seeds.len(),
+        rules.cap,
+        fnv(settings.as_bytes())
     );
     assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
