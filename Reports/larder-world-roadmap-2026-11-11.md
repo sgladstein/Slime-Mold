@@ -635,7 +635,31 @@ None of the looks changes the fight beyond chance, so the choice is the owner's 
 - Random wiped the mould on 7 of 32 race seeds, against 2 without craters: by seed 5-0 (14, 17, 24, 28, 29 only with craters), p 0.06, not significant but the trend the designer warned of (a rule that weakens the mould's defence makes the core a free win). The plans still beat random 24-8 or better. The integration thread's standing gate reports random wiping the plain mould on 5 of 16 of seeds 201-216 without craters, so the race block 5-36 was the easy one for the mould.
 - **The Fork** (5-20): farm and wall beat idle and random 16-0 (hold); random wiped no mould; the rush and idle squads were wiped on 16 of 16 (15 each without craters).
 - **The Rim** (5-20): farm and wall beat idle and random 16-0 (hold); rush's squad was wiped on 16 of 16 (16 without); random wiped no mould and lost its squad on 14 (10 without).
-- So the crater ships on by default (`Rules::crater` 10).
+- So the crater ships on by default (`Rules::crater` 10), with the second block below as its watch item.
+
+**The second seed block: with craters, no plan beats random after Holm** (race 201-232, at 3849a6a, `BuildRules::raise` 0, before #122; raw [crater/census-crater-race-201-208.txt](larder-world-roadmap-2026-11-11/crater/census-crater-race-201-208.txt), [-209-216](larder-world-roadmap-2026-11-11/crater/census-crater-race-209-216.txt), [-217-224](larder-world-roadmap-2026-11-11/crater/census-crater-race-217-224.txt), [-225-232](larder-world-roadmap-2026-11-11/crater/census-crater-race-225-232.txt), and the no-crater control `crater=0` for idle, random and farm, [crater/census-nocrater-race-201-208.txt](larder-world-roadmap-2026-11-11/crater/census-nocrater-race-201-208.txt), [-209-216](larder-world-roadmap-2026-11-11/crater/census-nocrater-race-209-216.txt), [-217-224](larder-world-roadmap-2026-11-11/crater/census-nocrater-race-217-224.txt), [-225-232](larder-world-roadmap-2026-11-11/crater/census-nocrater-race-225-232.txt); runners 1-4, sha256 checked):
+
+| race 201-232 (32 seeds) | against idle | against random | ends |
+| --- | --- | --- | --- |
+| farm | 32-0, holds | 21-11, p 0.11 | 32 at the cap |
+| wall | 32-0, holds | 21-11, p 0.11 | 32 at the cap |
+| fort | 32-0, holds | 20-12, p 0.22 | 31 at the cap, 1 mould wiped |
+| strike | 32-0, holds | 23-9, p 0.02 (not under Holm over 10) | 28 at the cap, 4 moulds wiped |
+| rush | 22-10, p 0.05 | 12-20, p 0.22 | 8 squads wiped, 2 moulds wiped |
+| random | | | 14 squads wiped, **11 moulds wiped**, 7 at the cap |
+| farm, no craters | 32-0, holds | **25-7, p 0.002, holds** | 32 at the cap |
+| random, no craters | | | 20 squads wiped, 5 moulds wiped, 7 at the cap |
+
+- On 5-36 every plan beat random 24-8 or better under Holm. On 201-232 every plan still beats random on count, but none survives the correction. Without craters farm beats random 25-7 and holds, so the craters cost the gate's margin over random on this block.
+- Random plays a coin flip: it wipes the mould (between 248 and 846 s, scoring 1.3 to 1.9) or loses its squad (scoring about -1.5). Every seed on which random beats a plan is one of its mould wipes; the plans never go for the core (strike wipes it on 4).
+- Craters cause most of those wipes: 7 seeds are wiped only with craters (201, 203, 204, 205, 208, 214, 223) and 1 only without (218), p 0.07. Paired on and off, the craters raise random's score on 27 of 32 seeds (p 0.0001, holds) and farm's on 26 (p 0.0005, holds). Holes that don't refill let a squad clear the core and hold it for `core_secs`, so births stop.
+- Both blocks' wipe counts: 5-36, 7 of 32 with craters and 2 without; 201-232, 11 with and 5 without.
+- Ruling (integration thread with both reviewers, 11-12 11:16-11:17Z): merge with craters on, since the owner asked for this hole and the condition (random beating a plan on count) was not met; core defence is the next PR. Its bar (the game designer): a deliberate core-attack hand beats random on win rate and mean score; random's core wipes fall to about 1 in 10; a failed core attack costs the squad, so it loses to farm and wall where it misses; and the core depends on the tier. The technical lead's gate for it: every plan over random after Holm on both blocks.
+
+**The building hands at #122's build time** (99c5e29, main through #123, `BuildRules::raise` 8; raw [crater/census-raise8-race-5-20.txt](larder-world-roadmap-2026-11-11/crater/census-raise8-race-5-20.txt), [-21-28](larder-world-roadmap-2026-11-11/crater/census-raise8-race-21-28.txt), [-29-36](larder-world-roadmap-2026-11-11/crater/census-raise8-race-29-36.txt), [fork](larder-world-roadmap-2026-11-11/crater/census-raise8-fork-5-20.txt), [rim](larder-world-roadmap-2026-11-11/crater/census-raise8-rim-5-20.txt); this thread and runners 1-4, sha256 checked). #122 is a census reset, and the gate above ran at raise 0, so the hands that build (wall, fort, and random, which builds at random) were re-run beside farm and idle:
+- Race 5-36: farm, wall and fort each beat idle 32-0 and random 25-7 (p 0.002), all under Holm over 6. Random wiped the mould on 7 of 32 seeds, as at raise 0.
+- Farm and idle build nothing and play the same games to the digit. Wall scores a little lower than at raise 0 (lower on 22 of 32 seeds, median -0.016, p 0.016, not under Holm over 5) and fort a little higher (22-10, p 0.05). Wall no longer beats fort by as much (21-11, p 0.11, against 29-3); farm beats fort 27-4.
+- The Fork and the Rim (5-20): farm and wall beat idle and random 16-0 (hold). Random wiped no mould on either and lost its squad on all 16 on both.
 
 **Cost.** On software Vulkan the crater adds 0.03 ms a step (13.54/13.56 against 13.60/13.57 ms). The GTX 1070's figure is open.
 

@@ -56,7 +56,7 @@ code { font-size: 0.88em; }
   <header style="display:grid;gap:10px">
     <h1>Craters under fire</h1>
     <p class="lede">You asked for a group of soldiers firing on the slime to carve a bigger and bigger hole that doesn't refill while they shoot. Now each hit leaves a crater in the simulation. For 10 game seconds, the cells it struck keep only a tenth of their trail each step, so the mould can't refill them. The next shots fly over the empty hole into the body behind it, so steady fire digs in. A walker that wanders into a crater still stops a shot, so the mould can't hide in its own hole. When the shooting stops, the craters run out and the mould grows back over about 10 seconds. Nothing is drawn on top. The hole you see is the trail that isn't there.</p>
-    <p class="lede">The earlier try, where the mould turned away from gunfire, made a bigger hole. It also let the random player win by parking on the mould's core, so it stays off. The crater doesn't change where the mould goes anywhere else. The full census says it holds: every plan beats idle and random play on 32 race-world seeds, the Fork and the Rim. The one number to watch is random wiping the mould on 7 of 32 race seeds, against 2 without craters.</p>
+    <p class="lede">The earlier try, where the mould turned away from gunfire, made a bigger hole. It also let the random player win by parking on the mould's core, so it stays off. The crater doesn't change where the mould goes anywhere else. The full census says it holds: every plan beats idle and random play on 32 race-world seeds, the Fork and the Rim. On a second set of 32 race seeds the margin over random play is gone, though: random wiped the mould on 11 of them, against 5 without craters. The craters stay on, and the mould defending its core is the next change.</p>
   </header>
 
   <section>
@@ -174,6 +174,24 @@ code { font-size: 0.88em; }
   </section>
 
   <section>
-    <p class="counts">Raw counts: <code>crater/clips-s1.txt</code>, <code>crater/clips-s3.txt</code>, <code>crater/window-counts.txt</code>, <code>crater/hole-1-8-full30-keep01.txt</code>, <code>crater/hole-1-8-keep05-full300.txt</code>, <code>crater/census-race-5-12.txt</code>, <code>crater/census-stop-*.txt</code>, <code>crater/hole-1-8-looks.txt</code>, <code>crater/hole-1-8-aim-rate.txt</code> in the repo's <code>Reports/larder-world-roadmap-2026-11-11/</code>. Code: PR #113.</p>
+    <h2>A second set of 32 seeds</h2>
+    <p>The same census on race-world seeds 201-232, with a control run on the same seeds without craters for idle, random and farm.</p>
+    <div class="scroll"><table>
+      <tr><th>hand</th><th>ends</th><th>against idle</th><th>against random</th></tr>
+      <tr><td>farm</td><td>32 at the cap</td><td class="w">32-0</td><td>21-11</td></tr>
+      <tr><td>wall</td><td>32 at the cap</td><td class="w">32-0</td><td>21-11</td></tr>
+      <tr><td>fort</td><td>31 at the cap, 1 mould wiped</td><td class="w">32-0</td><td>20-12</td></tr>
+      <tr><td>strike</td><td>28 at the cap, 4 moulds wiped</td><td class="w">32-0</td><td>23-9</td></tr>
+      <tr><td>rush</td><td>22 at the cap, 8 squads wiped, 2 moulds wiped</td><td>22-10</td><td>12-20</td></tr>
+      <tr><td>random</td><td>7 at the cap, 14 squads wiped, <b>11 moulds wiped</b></td><td></td><td></td></tr>
+      <tr><td>farm, no craters</td><td>32 at the cap</td><td class="w">32-0</td><td class="w">25-7</td></tr>
+      <tr><td>random, no craters</td><td>7 at the cap, 20 squads wiped, 5 moulds wiped</td><td></td><td></td></tr>
+    </table></div>
+    <p class="note">Every plan still beats idle, and still beats random on more seeds than it loses, but none of those wins against random holds after the correction. Without craters, farm's does (25-7). Random either kills the mould or loses its squad. It wins on exactly the seeds where it kills the mould, and the plans never try for the core. Seven seeds lose the mould only with craters, and one only without. A hole that doesn't refill lets a careless squad clear the core and sit on it until the mould stops growing. So the craters stay on, and the next change makes the mould defend its core: soldiers holding it should draw the whole body in, so that an aimed core attack is a high-risk play that can win, and a careless one usually costs the squad.</p>
+    <p class="note">Both tables ran before soldiers took 8 seconds to raise a building (merged since). Re-run at that build time, farm, wall and fort still beat idle 32-0 and random 25-7 on seeds 5-36, and 16-0 on the Fork and the Rim; random wiped the mould on the same 7 of 32.</p>
+  </section>
+
+  <section>
+    <p class="counts">Raw counts: <code>crater/clips-s1.txt</code>, <code>crater/clips-s3.txt</code>, <code>crater/window-counts.txt</code>, <code>crater/hole-1-8-full30-keep01.txt</code>, <code>crater/hole-1-8-keep05-full300.txt</code>, <code>crater/census-race-5-12.txt</code>, <code>crater/census-stop-*.txt</code>, <code>crater/census-crater-race-2*.txt</code>, <code>crater/census-nocrater-race-2*.txt</code>, <code>crater/hole-1-8-looks.txt</code>, <code>crater/hole-1-8-aim-rate.txt</code> in the repo's <code>Reports/larder-world-roadmap-2026-11-11/</code>. Code: PR #113.</p>
   </section>
 </main>

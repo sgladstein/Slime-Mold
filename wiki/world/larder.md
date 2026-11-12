@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T11:06Z
+updated: 2026-11-12T11:58Z
 sources: [Reports/soldier-controls-2026-11-12.md, Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater]
 ---
@@ -100,12 +100,18 @@ seeds), kills 741 walkers against 163, and the hole closes over about
 10 s once firing stops. The gate holds (race 32 seeds, the Fork, the
 Rim): every plan beats idle and random under Holm and strike no longer
 beats farm (20-12, n.s.); random wiped the mould on 7 of 32 race seeds
-against 2 without craters (p 0.06), the number to watch. The round
+against 2 without craters (p 0.06). On the second block (race 201-232)
+no plan beats random after Holm with craters (20-12 to 23-9), against
+farm's 25-7 without them, and random wiped the mould on 11 of 32 against
+5 (7 seeds only with craters): holes that don't refill let a careless
+squad clear and hold the core. At #122's build time (raise 8) the
+building hands still beat idle 32-0 and random 25-7 on race 5-36. Ruled 11-12 11:16-11:22Z: craters stay on,
+and core defence is the next PR, ahead of running costs. The round
 holes read as stamps to the designer and the graphics thread, so two look
 switches, both off, went on the page blind for the owner to pick from:
 `Rules::spread` (a smaller strike, scattered, at the same kills) and
 `BigParams::scorch_cone` (a soft-edged crater); neither moves the hole
-beyond chance. Next, running costs. Off by default for other threads:
+beyond chance. Next, core defence, then running costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)
