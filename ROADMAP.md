@@ -56,7 +56,7 @@ the merge order, are in *Larder World: shared rules and merge order*, below.
 | L-CA | Campaign and onboarding: a goal the player can read, no soft lock, missions as map data (row W5) | *Design the Larder campaign and onboarding* thread | nothing (owner approved 11-12 04:44Z) | design merged (#95); mission layer next. Its `larder_world.rs` asks (an overrun loss, a reserve recruit, a stuck measure) ride in the Larder thread's PR 1, off by default |
 | L-AI | Player AI for Larder playtests (`src/mould/larder_ai.rs`, `src/mould/larder_world_ai.rs`, `examples/larderai.rs`, `larder -- SEED ai=STYLE`) | Player AI thread | nothing | **built 11-11** on the CPU field: [report](Reports/larder-ai-2026-11-11.md), [page](wiki/world/player-ai.md). Plays through `Cmd`s only, sees a `View`, one brain per `Side`; five styles; boom, lure and adapt beat idle and random 16/16 held out. **Ported to the Larder world 11-12** (`src/mould/larder_world_ai.rs`, hands in `examples/larderworld.rs`): [report](Reports/larder-world-ai-2026-11-12.md); boom, claim, late, fort beat the scripted farm 15-16/16 held out, strike wiped the mould once. Next: the tier counter tests (Sporer, Sleeper, Swarmer), `mould_grid` on the GPU world, two AI teams once a second side exists, exploiter search |
 | L-T2 | New tiers for the campaign ladder: the Drifter, Sprawler and Trunk (missions 1, 3 and 4 need them), then habituation (a mould that learns to avoid or swarm your last tool) | *Build new mould tiers for the campaign* thread (started 11-12 05:10Z) | nothing | **Built 11-12** ([report](Reports/mould-tiers-campaign-2026-11-12.md), [wiki](wiki/world/mould-tiers.md)): `Tier::{Drifter, Sprawler, Trunk}` on CPU and GPU (GPU within 2%), `Tier::{Wary, Grudge}` on the scar field (CPU, off by default; 8/8 seeds each). Pre-crater census: Grudge hardest, strike best on every tier. Next: census on main after #113, Drifter and Wary rows, turtle and guard against Grudge, the scar's GPU port (binding 47 block 1, Params after 880) |
-| L-PT | The morning playtest: one combined build on `main` and one page, "what changed, what to try" (each change, its key or command, its counts), so the owner plays the sum of the night's merges | integration thread | whatever has merged by about 11:00Z | planned (game designer review, 11-12) |
+| L-PT | The morning playtest: one combined build on `main` and one page, "what changed, what to try" (each change, its key or command, its counts), so the owner plays the sum of the night's merges | integration thread | whatever has merged by about 11:00Z | done 11-12 11:10Z on a8669bd: [page](https://claude.ai/artifact/4aEKu43Wg4EMmTZen4oVo4), `Reports/morning-playtest-2026-11-12/` |
 
 ### Built and building: the scale and world steps
 
@@ -112,7 +112,7 @@ order still holds: tools and feel are built in parallel (owner, 11-12
 | Harvest | `squad::UnitIn.take` / `take_r` | Larder thread (rule); controls thread (where harvesters go, moving on) | soldiers; the pump (a still unit) |
 | Shots | `squad::ShotIn`, `SHOT_ALARM`, `squad::Frame::crater` | Larder thread (free shots; each hit lays the crater, PR 2) | soldiers; turrets (their hits lay it too, through the same frame) |
 | Area effects | one list in `squad::Frame` (planned `bursts`: centre, radius, kill, alarm, crater, sleep, germ), CPU and GPU | squad toolkit thread | blast, mine, det cord (a line of bursts), sleep gas, germ; the Siren (a burst with only alarm); sound reads it |
-| Scorch | one crater field (a per-cell countdown; trail fades fast while it runs; `scorch_keep` 0.1, `scorch_full` 30 since PR 2), CPU and GPU (binding 47, `CRATER_AT` 864, laid by the `cut` pass); each writer gives its own strength and radius | squad toolkit thread | shots write it (Larder thread, PR 2, `Rules::crater` 10 s); blasts and det cord next; graphics draws it from the field; no Scorcher building (owner's card, 11-12 04:46Z) |
+| Scorch | one crater field (a per-cell countdown; trail fades fast while it runs; `scorch_keep` 0.1, `scorch_full` 30 since PR 2), CPU and GPU (binding 47, one body took 46; `CRATER_AT` 864, laid by the `cut` pass); each writer gives its own strength and radius | squad toolkit thread | shots write it (Larder thread, PR 2, `Rules::crater` 10 s); blasts and det cord next; graphics draws it from the field; no Scorcher building (owner's card, 11-12 04:46Z) |
 | Buildings | one `Building` type (kind, position, health, build progress) and the still-unit slots | buildings thread | turret, lure, pump, wall, depot, siren |
 | Walls | Larder's wall cells and rules (`wall_hp`, `wall_scent`, `wall_bite`); a wall is a building kind over them | Larder thread (rules), buildings thread (the kind) | |
 | Building anything | soldiers walk to a site and raise it over time (owner's card, 11-12 ~04:41Z) | soldier controls thread | every building kind |
@@ -187,6 +187,15 @@ the graphics thread timed a 3x slower clock and the hole still refilled in
 0.53 to 0.73 s, so it is not the lever, and census baselines stay put. A
 clock change would be a census reset: if one comes back, it re-runs every
 baseline in its own PR, between other threads' censuses.
+
+**Census reset: #122 (a8669bd, 11-12 11:00Z).** Soldiers now raise
+buildings over time (`BuildRules::raise` 8 s; it was 0, buildings whole
+when placed), the census hands send a builder, and carriers bank at the
+nearest depot. Every census row from before a8669bd predates this and is
+not comparable with rows after it. The buildings thread's first look at
+seeds 5-12: turtle lower 7/8, guard and pumps 7/8, wall, ring and killzone
+even, farm and army unchanged. The full gate (seeds 5-36 and 201-232, two
+maps) is being re-run on the new baseline.
 
 **Shot impact is a rule, through the crater field.** The owner turned down
 both drawn versions in the graphics thread's blind A/B (11-12 04:38Z:
