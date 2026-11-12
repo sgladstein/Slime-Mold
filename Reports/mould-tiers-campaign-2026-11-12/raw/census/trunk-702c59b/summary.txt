@@ -1,0 +1,14 @@
+payoff table: mean score (mould wiped / cap / squad wiped / overrun), seeds per cell
+                             trunk
+    idle    -0.243 (0/24/0/0) n24 
+  random    -0.138 (9/4/11/0) n24 
+    farm    +0.426 (2/22/0/0) n24 
+    wall    +0.379 (1/23/0/0) n24 
+    boom    +0.411 (2/22/0/0) n24 
+   claim    +1.237 (14/10/0/0) n24 
+    fort    +0.413 (2/22/0/0) n24 
+  strike    +1.751 (18/6/0/0) n24 
+
+best plan per tier (mean), and the hand best on the most seeds:
+      trunk: best by mean strike; best per seed {'strike': 18, 'claim': 5, 'farm': 1}
+

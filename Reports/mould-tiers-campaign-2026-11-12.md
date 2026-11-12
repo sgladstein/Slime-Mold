@@ -52,7 +52,7 @@ H3 was habituation in the biologist's sense (Physarum stops answering a repeated
 
 ## The census
 
-**Rules.** The race world under #106 (free shots, soldiers' scent, the flee opt-in and off), held-out seeds 201-216, 900 s cap, hands idle, random and the seven plans (`census.sh`, Haiku runners at 62cd014; rows in `raw/census/`, tables from `census.py` in `raw/census/census-62cd014.txt`). **These numbers predate shot craters (#113, on by default once merged), which change how a squad digs in; the tiers' difficulty must be re-run on main after it, before the campaign treats them as final.** Measures named in `census.sh` before the run: C1 every plan beats idle and random, C2 the best plan by tier, C3 each tier against the plain mould, paired by seed, sign tests, Holm over all 117.
+**Rules.** The race world under #106 (free shots, soldiers' scent, the flee opt-in and off), held-out seeds 201-216, 900 s cap, hands idle, random and the seven plans (`census.sh`, Haiku runners at 62cd014; rows in `raw/census/`, tables from `census.py` in `raw/census/census-62cd014.txt`). **These numbers predate shot craters (#113, on by default once merged), which change how a squad digs in; the tiers' difficulty must be re-run on main after it, before the campaign treats them as final.** **Same game as the Larder gate**: `census.sh` runs `larderworld census` (race_params, Rules defaults with seek on, score v2), and this build reproduces the gate's own `census-5-20-free.txt` random rows for seeds 5-8 to the second. The plain mould's plans-over-random (11-12 of 16) differ from the gate's (28-31 of 32) by seed block: random wiped the mould on 5 of 16 here and 2 of 32 there. The toolkit's table (`kitplans`) is a different harness with tool plans and no strike, so its plan ranking answers another question. Measures named in `census.sh` before the run: C1 every plan beats idle and random, C2 the best plan by tier, C3 each tier against the plain mould, paired by seed, sign tests, Holm over all 117.
 
 Mean score v2 (mould wiped / cap / squad wiped), 16 seeds a cell unless marked:
 
@@ -70,9 +70,40 @@ Mean score v2 (mould wiped / cap / squad wiped), 16 seeds a cell unless marked:
 - **C1.** Every plan beats idle on 16 of 16 on every tier. Against random it is mixed on the plain mould (11-12 of 16, n.s.), the Trunk (7-8 of 16 bar strike, 14 of 16) and the Sprawler (random beat farm 13 of 16, wiping the mould 14 times). On Grudge every plan beats random 16 of 16 (holds): random's scattered fire is what Grudge punishes, and it lost its squad on 15.
 - **C2.** Strike is best by mean on every tier but Wary (claim, on 8 seeds), best on 10-15 of 16 seeds. The best plan does not change between tiers: the designer's bar fails here, as it does for the toolkit's loud plan.
 - **C3.** Grudge is harder than plain for every plan: lower on 16 of 16 for farm, wall, boom, claim and fort, 14 of 16 for strike (all hold). The Trunk is easier under random (15 of 16), farm (14) and wall (13). The Sprawler at 400 was easier under every hand (15-16 of 16). An idle squad is never wiped by 900 s on any tier but the Sprawler (3 of 16), so **the Drifter's "reach an idle squad by 11:00" waits on its census rows**.
-- **Sprawler, fixed.** Newborns start as explorers (age 0) and walk off food, so at 400 the mesh starved. At 200 (cf62e8e), on dev seeds 1-4 random lost its squad on 2 and capped behind on 1, wall and strike won 4 of 4 and wiped it once each; on held-out 201-204 random lost its squad on 2 and every plan capped above idle. Its held-out re-run, the Drifter and the rest of Wary come in the follow-up.
+- **Sprawler, fixed.** Newborns start as explorers (age 0) and walk off food, so at 400 the mesh starved. At 200 (cf62e8e), on dev seeds 1-4 random lost its squad on 2 and capped behind on 1, wall and strike won 4 of 4 and wiped it once each; on held-out 201-204 random lost its squad on 2 and every plan capped above idle. On held-out 201-216 at 200 (`raw/census/sprawler-v2-cf62e8e/`): random loses its squad on 9 of 16 (0 at 400) and idle on 5; plans wipe it on 3-6 of 16 and cap above idle on the rest; strike is still best on 12.
+
+**The Drifter** (held-out 201-216, `raw/census/drifter-*.rows`; `census-drifter-sprawler2.txt`): the gentlest tier. Idle is never wiped by 900 s; every plan but strike caps at +0.37 to +0.40, and strike wipes it on 6 of 16 and is best on all 16. It does not yet reach an idle squad by the campaign's 11:00.
 
 **The toolkit's blast plan** (`kitplans`, seeds 1-8, cap 600 s, tools carried without the toolkit's later carry limit; raw `raw/kit/kitplans-tiers-1-8.txt`): loud wipes the mould on 8 of 8 on all six tiers (+1.72 to +2.01), best against farm 8 of 8 each time. Grudge walks back into the blast spots and dies there; random's squad is wiped 8 of 8 against it. The toolkit is re-running all five new tiers with its carry rule.
+
+## Wary is removed (11-12, after the merge)
+
+The census (`raw/census/wary-*.rows`, all 16 held-out seeds) put Wary under the gate: random wiped it on 12 of 16 and beat farm, wall, boom and fort on 15-16 of 16 (holds); only claim (4/12) and strike (3/13) were close. Scattered fire scars every crystal it holds and herds it off them all, and it starves. On main with craters (dev seeds 1-4, `raw/wary/`, `larderworld keys=` over the tier): random wiped it on 2 of 4 at scar weight -0.5, -0.1 and -0.03, so the scar's strength is not the cause; with the Larder thread's core pull 8 (85b56fb, not yet merged) on 3 of 4, while against the plain mould random lost its squad on 4 of 4. It is the flee from gunfire's failure again (`dead-ends.md`), and Wary is gone from `Tier`. Grudge, with the same pull, wipes random's squad on 4 of 4 and every plan beats idle.
+
+## The Drifter drifts (11-12, after the merge)
+
+On mission 2 the Drifter never left its home crystal, so the player never met it (the campaign thread, through the designer). Idle squad, race world with craters, dev seeds 1-4 (`larderworld census hands=idle tier=drifter keys=...`, raw `raw/drifter2/`); the measure, named first, is when the mould first touches the idle squad (`touched at`), by about 660 s (the campaign's 11:00), with the mould still smaller than plain at 900 s:
+
+| Arm | Touched (s), seeds 1-4 | Walkers at 900 s |
+|---|---|---|
+| plain mould | 340, 185, 95, 40 | 11,400-13,600 |
+| Drifter at #115 | never on any | 900-5,700 |
+| + hunger 8 (`hunger_scent` 8, `hunger_at` 1) | never, never, never, 824 | 2,100-5,000 |
+| + reach 18 (`sensor_offset`) | never on any | 1,300-4,200 |
+| **+ hunger 8 and reach 18 (kept)** | never, 544, 210, 279 | 3,700-12,900 |
+| + hunger 4, reach 18 | never, 782, 284, never | 3,000-9,100 |
+| + hunger 8, reach 14 | never, never, never, 268 | 4,700-9,600 |
+| + hunger 8, reach 18, keep 0.9 | never, 137, 142, 94 | 12,700-15,300 |
+| + hunger 16, reach 18 | never, 91, 245, 131 | 11,100-13,900 |
+
+Hunger makes a walker that has eaten its crystal dry follow the scent (food and soldiers) harder, and the longer reach lets it smell the next one; neither alone moves it. The stronger arms reach the squad sooner but grow to the plain mould's size. The kept Drifter touches an idle squad on 3 of 4 by 9:04 at the latest; seed 1 never. Returning to a lost crystal within 2 minutes is not measured yet. On the GPU (software Vulkan) it stays within 8% of the CPU over 20 s (`the_campaign_tiers_run_on_the_engine_as_on_the_cpu`).
+
+## Records at 702c59b, with craters (11-12)
+
+These are records, not a gate. Under the owner's rule (PR #150, *build first, balance later*), a census does not hold a merge. Random's wipe count is a target for later tuning. Rows: `raw/census/drifter-v2-702c59b/` and `raw/census/trunk-702c59b/`, with census.py output in `summary.txt`.
+
+- **Drifter** (seeds 5-36 and 201-216, n 48). Random wipes the mould on 3 and loses its squad on 40. Strike (+0.63) and claim (+0.52) lead, every plan beats idle and random, and strike is best on 20 seeds and claim on 18. Seeds 217-232 were not run.
+- **Trunk** (seeds 201-224, n 24). Random wipes the mould on **9 of 24**, which is above the designer's target of about 3 in 32. Strike (+1.75, wipes 18) and claim (+1.24, wipes 14) are far ahead. The Trunk's core falls and nothing regrows, so a lucky shot ends it. The Regrow core is the fix and has its own PR. Seeds 225-232 were not run.
 
 ## Commands
 
