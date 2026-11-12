@@ -161,6 +161,13 @@ pub struct BuildRules {
     /// (2026-11-12, the owner: walking into the slime "should be very
     /// deadly"); buildings were not part of that ask.
     pub drain: f32,
+    /// A building may be placed anywhere, not only within a soldier's
+    /// range (`Rules::range`): the window sends the selected soldiers, or
+    /// with none selected the nearest free one (`Cmd::Send`), to walk
+    /// there and raise it. Owner's playtest, 2026-11-12 22:06Z: "having
+    /// to be near the build location to build is annoying". Off is the
+    /// old rule, for replays and census hands that relied on it.
+    pub anywhere: bool,
 }
 
 impl Default for BuildRules {
@@ -187,6 +194,7 @@ impl Default for BuildRules {
             outpost_hoard: 0.25,
             touch: 2.0,
             drain: 1.0,
+            anywhere: true,
         }
     }
 }
@@ -226,11 +234,15 @@ impl<W: World> Game<W> {
         if self.bank < self.build_price(kind, at) {
             return Some("not enough food");
         }
-        if !self.reachable(at) {
+        if self.rules.build.anywhere {
+            if !self.soldiers.iter().any(|s| s.alive) {
+                return Some("no soldier to build it");
+            }
+        } else if !self.reachable(at) {
             return Some("no soldier in range");
         }
         if let Kind::Wall { to } = kind {
-            return (!self.reachable(to)).then_some("no soldier in range");
+            return (!self.rules.build.anywhere && !self.reachable(to)).then_some("no soldier in range");
         }
         if !self.world.open(at.0, at.1) {
             return Some("not open ground");
@@ -478,7 +490,10 @@ mod tests {
     fn a_building_needs_a_soldier_near_food_and_room() {
         let mut g = small(1);
         let far = open_near(&g, g.core);
+        assert_eq!(g.build_blocked(Kind::Turret, far), None, "anywhere: a soldier walks there");
+        g.rules.build.anywhere = false;
         assert_eq!(g.build_blocked(Kind::Turret, far), Some("no soldier in range"));
+        g.rules.build.anywhere = true;
         let at = open_near(&g, (g.larder.0 + 8.0, g.larder.1));
         let bank = g.bank;
         assert!(g.apply(Cmd::Build(Kind::Turret, at)));
@@ -566,7 +581,8 @@ mod tests {
         }
         let want = 10.0 * g.rules.build.pump_rate;
         assert!((g.pumped - want).abs() < 0.05 * want, "pumped {} in 10 s", g.pumped);
-        assert!(g.bank > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
+        // The squad's rations (`Rules::ration`) come out of the same bank.
+        assert!(g.bank + g.eaten > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
         assert!(g.take_share() > 0.5, "the pump's take is the squad's");
     }
 
@@ -719,5 +735,56 @@ mod tests {
         assert!(g.buildings[0].up(), "raised by the idle squad");
         assert!(g.world.wall.iter().any(|&w| w), "its cells are in the world once whole");
         assert_eq!(Cmd::parse(&Cmd::Order(2, Order::Build(7)).to_line()), Some(Cmd::Order(2, Order::Build(7))));
+    }
+
+    #[test]
+    fn a_build_far_away_sends_a_soldier_who_then_goes_back_to_work() {
+        let mut g = small(14);
+        g.rules.build.raise = 2.0;
+        // Every soldier busy: walking away from the site.
+        let (x, y) = g.larder;
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Move(x - 6.0, y)));
+        }
+        let far = open_near(&g, ((x + g.core.0) / 2.0, (y + g.core.1) / 2.0));
+        assert!(!g.reachable(far), "the site is out of every soldier's range");
+        assert!(g.apply(Cmd::Build(Kind::Turret, far)));
+        assert_eq!(g.raising(0), (0, 0));
+        assert_eq!(g.raise_left(0), None, "nobody raising it yet");
+        assert_eq!(Cmd::parse(&Cmd::Send(0).to_line()), Some(Cmd::Send(0)));
+        assert!(g.apply(Cmd::Send(0)));
+        let k = (0..g.soldiers.len()).find(|&k| g.soldiers[k].order == Order::Build(0)).expect("one soldier sent");
+        assert_eq!(g.raising(0), (0, 1), "on the way");
+        assert_eq!((g.soldiers[k].queued, g.soldiers[k].queue[0]), (1, Order::Move(x - 6.0, y)), "its walk is kept for after");
+        let mut seen = None;
+        for _ in 0..(g.rules.tps * 120) {
+            g.step();
+            if seen.is_none() {
+                seen = g.raise_left(0);
+            }
+            if g.buildings[0].up() {
+                break;
+            }
+        }
+        let left = seen.expect("a time left showed while it rose");
+        assert!(left > 0.0 && left <= 2.0, "{left}");
+        assert!(g.buildings[0].up(), "it walked there and raised it");
+        g.step();
+        assert_eq!(g.soldiers[k].order, Order::Move(x - 6.0, y), "then back to its order");
+        assert!(!g.apply(Cmd::Send(0)), "nothing to send to once it stands");
+    }
+
+    #[test]
+    fn an_idle_soldier_is_sent_before_a_busy_one() {
+        let mut g = small(15);
+        g.rules.build.raise = 2.0;
+        let (x, y) = g.larder;
+        for k in 1..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Move(x - 6.0, y)));
+        }
+        let at = open_near(&g, (x + 8.0, y));
+        assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+        assert_eq!(g.send(0), Some(0), "soldier 0 is the only idle one");
+        assert_eq!(g.soldiers[0].queued, 0, "an idle soldier has nothing to go back to");
     }
 }

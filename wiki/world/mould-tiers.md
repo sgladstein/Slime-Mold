@@ -24,7 +24,7 @@ code:
   - BigParams::species_sets
   - BigParams::spore_rate
   - Core
-  - CoreKind::Regrow
+  - CoreKind
   - Tier
   - Tier::core
 ---
@@ -68,7 +68,7 @@ nothing, and only a wipe ends it.
 
 ## Open
 
-- Each tier's core: all headless since 11-12 20:21Z (no king rule); the Sprawler pulls nothing and the Grudge pulls at 16 (twice the plain mould's 8; `tiers::GRUDGE_PULL`). `CoreKind::Regrow { starve_secs }` is built (2026-11-12, both engines): a fallen core grows back unless the mould eats nothing in the `starve_secs` after it falls. Under the no-king ruling the tiers thread is dropping the Trunk's Regrow and the Drifter's Migrate (20:53Z): with no core to take, the Trunk keeps its tube network as its identity.
+- Each tier's core: all headless since 11-12 20:21Z (no king rule); the Sprawler pulls nothing and the Grudge pulls at 16 (twice the plain mould's 8; `tiers::GRUDGE_PULL`). The Trunk's regrowing core (`CoreKind::Regrow`, PR #163: a fallen core grew back unless the body starved) was taken out in PR 4; the tiers thread dropped it and the Drifter's Migrate under the no-king ruling (20:53Z): with no core to take, the Trunk keeps its tube network as its identity ([dead end](../../Reports/dead-ends.md)).
 
 - The census of the new tiers, re-run after shot craters (#113). Before craters (held-out 201-216): Grudge is the hardest (every plan lower than on plain, 16 of 16; random loses its squad 15 of 16);
 - Candidate tiers from review 2 ([the reviews](../../Reports/mould-tiers-review-2026-11-11.md)), most promising first: supply lines (traffic-made arteries that carry food; cut one to starve the far end; the one body thread's shared food), clans that fuse or fight along a scar, a mould that learns the rhythm of fire, a pacemaker heartbeat, day and night light, a nomad that avoids its own slime, two foods. Each has a first experiment there.
