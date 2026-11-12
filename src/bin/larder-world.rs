@@ -6,7 +6,9 @@
 //!
 //! `cargo run --release --bin larder-world [-- map=fork seed=1]`
 //! (`map=` rim, fork, flats, nest, passes, or `noise` for the race world
-//! the censuses measured; `walkers=` and `scale=` as `larderworld`'s.)
+//! the censuses measured; `walkers=` and `scale=` as `larderworld`'s;
+//! `mission=1-landfall` plays a campaign mission: its map, rules and goal,
+//! `mould::campaign`, design `Reports/larder-campaign-2026-11-12.md`.)
 //!
 //! **Why a window of its own.** The owner played `mouldgpu`'s stand-in
 //! squad (Q) on 2026-11-11 and found soldiers that did not touch the
@@ -38,9 +40,20 @@
 //! minimap, Esc is the menu. Wheel zooms, the middle button, the arrows or
 //! the screen edge pan.
 //!
-//! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]`
-//! plays without a window and saves the window's picture at those game
-//! seconds (`headless`).
+//! **Sound** (`slime_mould::sound::world`, 2026-11-12, after the owner's
+//! playtest: "shooting the slime didn't feel satisfying"): every shot
+//! cracks and strikes with a weight of the walkers it killed, kills
+//! crackle, a pulse quickens as the mould closes on the squad, soldiers
+//! groan when hurt; all read off the game, so sound on and off play the
+//! same round. On by default where the build has a device; O turns it off
+//! and on. The mould has a voice of its own, one breathing drone for the
+//! whole body (its size, hunger, eating, flinching at gunfire); K turns
+//! just that off and on, `voice=0` starts without it.
+//!
+//! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]
+//! [sound=FILE.wav]` plays without a window and saves the window's picture
+//! at those game seconds (`headless`), and with `sound=` what the round
+//! sounded like to an ear on the squad, to the last of those seconds.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -50,7 +63,12 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::larder_world::{Cmd, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::campaign::{Mission, Tracker};
 use slime_mould::mould::map::Map;
+use slime_mould::mould::tiers::Tier;
+use slime_mould::sound::synth::{VoiceBank, DEFAULT_MASTER};
+use slime_mould::sound::world::{Ear, WorldListener};
+use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::team_colour;
@@ -110,6 +128,12 @@ struct Args {
     seed: u64,
     scale: usize,
     walkers: usize,
+    /// A campaign mission (`Reports/larder-campaign-2026-11-12/missions/NAME.txt`):
+    /// its map, rules and tier, and its goal on the HUD (`mould::campaign`).
+    mission: Option<String>,
+    /// The mould's voice at the start (`voice=0` turns it off; K in the
+    /// window).
+    voice: bool,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -183,6 +207,19 @@ struct App {
     saved: bool,
     /// The command card shows the build page (Q).
     build_page: bool,
+    /// The mission being played, and the last game second it followed.
+    mission: Option<Tracker>,
+    mission_sec: u64,
+    /// The speaker (`slime_mould::sound`), or `None` where the build or the
+    /// machine has none: the window then plays silent.
+    speaker: Option<sound::Output>,
+    listener: Option<WorldListener>,
+    /// O turns sound off and on (on by default).
+    sound_on: bool,
+    /// The headless run's recording: its voice bank and samples.
+    tape: Option<(VoiceBank, Vec<f32>)>,
+    /// Listener time a frame, microseconds, since the last report.
+    hear_us: Vec<f32>,
     result: Result<(), String>,
 }
 
@@ -227,6 +264,13 @@ impl App {
             report_at: Instant::now(),
             saved: false,
             build_page: false,
+            mission: None,
+            mission_sec: 0,
+            speaker: None,
+            listener: None,
+            sound_on: true,
+            tape: None,
+            hear_us: Vec::new(),
             result: Ok(()),
         }
     }
@@ -242,8 +286,25 @@ impl App {
         self.save_replay();
         let Some((device, queue)) = &self.gpu else { return Ok(()) };
         let a = &self.args;
-        let s = race_settings(a.seed, a.scale, a.walkers);
-        let world = match &a.map {
+        let mut s = race_settings(a.seed, a.scale, a.walkers);
+        let mission = match &a.mission {
+            Some(name) => {
+                let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
+                let m = Mission::parse(&std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?)?;
+                // A ladder name not built yet (drifter, sprawler, trunk) plays
+                // the plain mould, and says so.
+                if let Some(t) = m.tier.as_deref() {
+                    match Tier::from_name(t) {
+                        Some(tier) => tier.settings(&mut s)?,
+                        None => eprintln!("larder-world: tier {t} is not built yet; the plain mould plays"),
+                    }
+                }
+                Some(m)
+            }
+            None => None,
+        };
+        let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
+        let world = match &map_name {
             Some(name) => {
                 let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
                 let (dir, name) = match name.rsplit_once('/') {
@@ -255,7 +316,10 @@ impl App {
             }
             None => GpuWorld::new(device, queue, s, a.scale),
         };
-        let game = Game::new(world, Rules::default(), a.seed);
+        let rules = mission.as_ref().map_or_else(Rules::default, |m| m.rules(Rules::default()));
+        let game = Game::new(world, rules, a.seed);
+        self.mission = mission.map(|m| Tracker::new(m, &game));
+        self.mission_sec = 0;
         let e = &game.world.e;
         let size = (e.dish.w, e.dish.h);
         self.charge0 = game.world.crystals().iter().map(|c| c.1).collect();
@@ -283,11 +347,22 @@ impl App {
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.bank_log.clear();
+        let voice = self.listener.as_ref().is_none_or(|l| l.voice);
+        self.listener = Some(WorldListener::new(&game));
+        if let Some(l) = self.listener.as_mut() {
+            l.voice = voice && self.args.voice;
+        }
         self.game = Some(game);
+        if let Some(tr) = &self.mission {
+            self.name = tr.mission.map.clone();
+        }
         if let Some(w) = &self.window {
             w.set_title(&format!("Larder World: {} (seed {})", title_case(&self.name), self.args.seed));
         }
-        self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", title_case(&self.name)), None, theme::ACCENT);
+        match &self.mission {
+            Some(tr) => self.hud.alert(&format!("{}: {}", tr.mission.name, tr.mission.says), None, theme::ACCENT),
+            None => self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", title_case(&self.name)), None, theme::ACCENT),
+        }
         Ok(())
     }
 
@@ -451,7 +526,8 @@ impl App {
         for s in &g.soldiers[self.looks.len()..] {
             self.looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
         }
-        if self.paused || g.end.is_some() {
+        let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
+        if self.paused || g.end.is_some() || mission_over {
             self.owed = 0.0;
             return;
         }
@@ -462,6 +538,9 @@ impl App {
             g.step();
             self.owed -= step;
             n += 1;
+            if let Some(l) = self.listener.as_mut() {
+                l.shots(&g.last_shots);
+            }
             for s in &g.last_shots {
                 self.tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
                 if let Some(k) = g.soldiers.iter().position(|q| q.alive && (q.x - s.from.0).abs() < 1e-3 && (q.y - s.from.1).abs() < 1e-3) {
@@ -475,6 +554,21 @@ impl App {
             }
         }
         self.steps += n;
+        // The mission follows the game once a game second. The GPU world has
+        // no mould grid yet (an occupancy read-back), so a goal that needs
+        // where the mould is shows no bar here; the CPU census has it.
+        if let Some(tr) = self.mission.as_mut() {
+            let sec = g.world.ticks() / g.rules.tps as u64;
+            // A game that ended inside a game second (a wipe) still gives
+            // the mission its verdict, so the end screen is the mission's.
+            while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
+                self.mission_sec += 1;
+                if let Some(v) = tr.second(g, None, 1.0) {
+                    let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
+                    self.hud.alert(&tr.cause_line(), None, colour);
+                }
+            }
+        }
         let t = g.time();
         for (k, s) in g.soldiers.iter().enumerate() {
             let l = &mut self.looks[k];
@@ -518,6 +612,36 @@ impl App {
             println!("larder-world: {} on {} seed {}: {}; score {:+.3}", end.band(), self.name, self.args.seed, summary(g), g.score().unwrap_or(0.0));
             self.save_replay();
         }
+    }
+
+    /// Once a drawn frame, after the steps: what the round should sound
+    /// like now, to an ear on `ear` (the camera's view). The listener only
+    /// reads the game (`sound::world`), so this cannot change it.
+    fn hear(&mut self, dt: f32, ear: Ear) {
+        let (Some(g), Some(l)) = (self.game.as_ref(), self.listener.as_mut()) else { return };
+        if self.speaker.is_none() && self.tape.is_none() {
+            return;
+        }
+        let t0 = Instant::now();
+        let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
+        self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
+        if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
+            sp.send(cmds.iter().copied());
+        }
+        if let Some((bank, tape)) = self.tape.as_mut() {
+            for c in cmds {
+                bank.apply(c);
+            }
+            let mut buf = vec![0.0f32; (dt * bank.sample_rate() as f32).round() as usize * 2];
+            bank.render(&mut buf, 2);
+            tape.extend_from_slice(&buf);
+        }
+    }
+
+    /// The camera's view as the listener's ear.
+    fn ear(&self) -> Ear {
+        let (w, h) = self.camera.span();
+        Ear { centre: self.camera.centre(), half: (w / 2.0, h / 2.0) }
     }
 
     /// The look's ground from the world's cells: once a game second (the
@@ -639,7 +763,12 @@ impl App {
             ],
             clock: format!("{} / {}", clock(t), clock(r.cap)),
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
-            objective: Some(if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
+            objective: Some(if let Some(tr) = &self.mission {
+                match tr.bar {
+                    Some(b) => format!("{} ({:.0}%)", tr.mission.says, 100.0 * b),
+                    None => tr.mission.says.clone(),
+                }
+            } else if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
             idle: g.soldiers.iter().filter(|s| s.alive && s.order == Order::Hold).count(),
             ..Model::default()
         };
@@ -756,8 +885,8 @@ impl App {
                 place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
                 place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, format!("Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Burns {:.0} food a second while on.", b.lure_burn)),
                 place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("On a crystal: draws {:.0} food a second into the bank with no carriers. The mould smells the crystal.", b.pump_rate)),
-                place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyO, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
-                Command { ready: lures > 0, why_not: Some("No lures".into()), about: "Switch every lure on, or every lure off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures on/off", KeyCode::KeyK) },
+                place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
+                Command { ready: lures > 0, why_not: Some("No lures".into()), about: "Switch every lure on, or every lure off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures on/off", KeyCode::KeyJ) },
                 Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
             ];
         }
@@ -807,7 +936,9 @@ impl App {
             }
             _ => (true, None),
         };
-        if let Some(end) = g.end {
+        if let Some(tr) = self.mission.as_ref().filter(|t| t.verdict.is_some()) {
+            m.end = Some(mission_screen(tr, g));
+        } else if let Some(end) = g.end {
             m.end = Some(end_screen(end, g));
         }
         m.help = vec![
@@ -826,6 +957,8 @@ impl App {
         self.last_frame = Instant::now();
         self.controls.update(&mut self.camera, dt);
         self.step(dt);
+        let ear = self.ear();
+        self.hear(dt, ear);
         self.prepare();
         let (Some(p), Some(view)) = (&self.pixels, self.view.as_ref()) else { return };
         let camera = self.camera;
@@ -852,6 +985,10 @@ impl App {
             ms.sort_by(f32::total_cmp);
             let at = |q: f32| ms[((ms.len() - 1) as f32 * q).round() as usize];
             println!("larder-world: {:.0} frames a second, frame p50 {:.2} ms p95 {:.2} ms max {:.2} ms; {:.1} game steps a second", ms.len() as f32 / since, at(0.5), at(0.95), at(1.0), self.steps as f32 / since);
+            if !self.hear_us.is_empty() {
+                let us = std::mem::take(&mut self.hear_us);
+                println!("larder-world: sound {}: listener mean {:.1} us max {:.1} us a frame", if self.sound_on { "on" } else { "off" }, us.iter().sum::<f32>() / us.len() as f32, us.iter().fold(0.0f32, |a, &b| a.max(b)));
+            }
             self.steps = 0;
             self.report_at = Instant::now();
         }
@@ -896,6 +1033,25 @@ impl App {
                 if let Some(v) = self.view.as_mut() {
                     v.minimap = !v.minimap;
                 }
+            }
+            KeyCode::KeyK => {
+                if let Some(l) = self.listener.as_mut() {
+                    l.voice = !l.voice;
+                    let what = if l.voice { "The mould's voice on" } else { "The mould's voice off" };
+                    self.hud.alert(what, None, theme::ACCENT);
+                }
+            }
+            KeyCode::KeyO => {
+                self.sound_on = !self.sound_on;
+                if let Some(sp) = self.speaker.as_mut() {
+                    sp.send([SoundCmd::Master(if self.sound_on { DEFAULT_MASTER } else { 0.0 })]);
+                }
+                let what = match (self.speaker.is_some(), self.sound_on) {
+                    (false, _) => "No sound on this machine",
+                    (true, true) => "Sound on",
+                    (true, false) => "Sound off",
+                };
+                self.hud.alert(what, None, theme::ACCENT);
             }
             _ => {}
         }
@@ -953,6 +1109,13 @@ fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
     lines.push(summary(g));
     lines.push(format!("Score {:+.2} (a win is over 1, a loss under -1)", g.score().unwrap_or(0.0)));
     (title, lines)
+}
+
+/// A mission's end: stars and the cause in the title, then what happened.
+fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> (String, Vec<String>) {
+    let v = tr.verdict.expect("a verdict");
+    let stars = if v.stars == 0 { "Mission lost".to_string() } else { format!("{}: {}", tr.mission.name, "*".repeat(v.stars as usize)) };
+    (stars, vec![tr.cause_line(), summary(g)])
 }
 
 fn summary(g: &Game<GpuWorld>) -> String {
@@ -1042,6 +1205,13 @@ impl ApplicationHandler for App {
         self.gpu = Some((pixels.device().clone(), pixels.queue().clone()));
         self.pixels = Some(pixels);
         self.window = Some(window);
+        self.speaker = match sound::Output::open(self.args.seed) {
+            Ok(o) => Some(o),
+            Err(e) => {
+                eprintln!("larder-world: no sound ({e}); playing silent");
+                None
+            }
+        };
         if let Err(e) = self.start() {
             self.fail(event_loop, e);
         }
@@ -1159,14 +1329,21 @@ impl ApplicationHandler for App {
 /// shows, checkable where there is no screen (the cloud's software
 /// Vulkan). Hands: `rush` (all attack the core), `farm` (all harvest the
 /// crystal nearest the larder, buying soldiers from 1,200 food), `idle`.
-fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -> Result<(), String> {
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
+    if wav.is_some() {
+        app.tape = Some((VoiceBank::new(48_000, app.args.seed), Vec::new()));
+    }
+    // The recording's ear: on the squad, at the window's opening zoom.
+    let span = app.camera.span();
+    let mut voice_at = u64::MAX;
     let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
     let mut last_sec = u64::MAX;
     for &t in at {
-        while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) {
+        // A mission's verdict stops the steps, as the game's end does.
+        while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
             let g = app.game.as_mut().unwrap();
             let sec = g.world.ticks() / g.rules.tps as u64;
             if sec != last_sec {
@@ -1174,6 +1351,22 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
                 plan(g, hand);
             }
             app.step(step);
+            if app.tape.is_some() {
+                let g = app.game.as_ref().unwrap();
+                let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+                let n = alive.len().max(1) as f32;
+                let centre = if alive.is_empty() { g.larder } else { (alive.iter().map(|p| p.0).sum::<f32>() / n, alive.iter().map(|p| p.1).sum::<f32>() / n) };
+                app.hear(step, Ear { centre, half: (span.0 / 2.0, span.1 / 2.0) });
+                // The mould's voice's inputs every 5 game seconds, beside
+                // the recording.
+                let g = app.game.as_ref().unwrap();
+                let sec = (g.time() + 1e-3) as u64;
+                if sec.is_multiple_of(5) && sec != voice_at {
+                    voice_at = sec;
+                    let s = app.listener.as_ref().unwrap().stats;
+                    println!("  voice t {sec:>3} s: mould {}, growth {:+.4}/s, hunger {:.2}, eating {:.5}/s, kills {:.0}/s, inhales {}", g.mould, s.growth, s.hunger, s.eating, s.kills_per_sec, s.inhales);
+                }
+            }
         }
         let g = app.game.as_ref().unwrap();
         // The view on the fight: the squad's middle, or the larder.
@@ -1221,6 +1414,21 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
         if !g.buildings.is_empty() {
             println!("    pumped {:.0} food, lures burnt {:.0}", g.pumped, g.lured);
         }
+    }
+    if let (Some(path), Some((bank, tape))) = (wav, app.tape.as_ref()) {
+        slime_mould::wav::write(Path::new(path), tape, 2, bank.sample_rate()).map_err(|e| format!("{path}: {e}"))?;
+        let peak = tape.iter().fold(0.0f32, |m, v| m.max(v.abs()));
+        let rms = (tape.iter().map(|v| v * v).sum::<f32>() / tape.len().max(1) as f32).sqrt();
+        println!("{path}: {:.1} s, peak {:.3}, rms {:.4} ({:.1} dBFS)", tape.len() as f32 / 2.0 / bank.sample_rate() as f32, peak, rms, 20.0 * rms.max(1e-9).log10());
+        let s = app.listener.as_ref().map(|l| l.stats).unwrap_or_default();
+        println!(
+            "  heard: shots {} (voiced {}), impacts {} (light {} mid {} heavy {}), kills {}, beats {}, hurts {}, fallen {}, banked {}, bought {}, walls {}, dry {}, cores {}, endings {}",
+            s.shots, s.voiced, s.impacts, s.light, s.mid, s.heavy, s.kills, s.beats, s.hurts, s.fallen, s.banked, s.bought, s.walls, s.dry, s.cores, s.endings
+        );
+        let b = bank.stats;
+        println!("  played: grains {} (touch {} stolen {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.verb_grains, b.bursts, b.alerts, b.steals);
+        let us = &app.hear_us;
+        println!("  listener: mean {:.1} us, max {:.1} us a frame over {} frames", us.iter().sum::<f32>() / us.len().max(1) as f32, us.iter().fold(0.0f32, |a, &b| a.max(b)), us.len());
     }
     Ok(())
 }
@@ -1309,8 +1517,8 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 };
-    let (mut look, mut hand, mut at, mut screen) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32));
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, mission: None };
+    let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -1318,18 +1526,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "seed" => args.seed = v.parse()?,
             "scale" => args.scale = v.parse()?,
             "walkers" => args.walkers = v.parse()?,
+            "mission" => args.mission = Some(v.to_string()),
             "look" => look = Some(v.to_string()),
             "hand" => hand = v.to_string(),
+            "sound" => wav = Some(v.to_string()),
+            "voice" => args.voice = v != "0",
             "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
             }
-            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers; look, hand, at, screen)").into()),
+            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound)").into()),
         }
     }
     if let Some(dir) = look {
-        return Ok(headless(args, &dir, &hand, &at, screen)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref())?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
@@ -1350,7 +1561,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000 }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, mission: None }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -1366,7 +1577,34 @@ mod tests {
         assert!(wounded > 0, "no wound in the look after {} shots", g.shots);
         app.prepare();
         let m = app.model(None, None);
-        assert_eq!(m.commands.len(), 9);
+        // The soldiers' nine and the build page's key (Q).
+        assert_eq!(m.commands.len(), 10);
         assert!(m.end.is_none());
+        // The build page: turret, lure, pump, outpost, the lures' switch, back.
+        app.build_page = true;
+        let m = app.model(None, None);
+        assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Lure", "Pump", "Outpost", "Lures on/off", "Back"]);
+    }
+
+    /// A campaign mission plays its own map and rules, shows its goal as the
+    /// objective, and ends on its own screen when the squad is lost (a rush
+    /// into the Flats' mould dies by 0:31 on seed 1).
+    #[test]
+    fn a_mission_shows_its_goal_and_its_end() {
+        let Some((device, queue)) = gpu() else { return };
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, voice: false, mission: Some("1-landfall".into()) }, (640, 400), &device, &queue).unwrap();
+        assert_eq!(app.name, "flats");
+        assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
+        app.prepare();
+        assert!(app.model(None, None).objective.is_some_and(|o| o.starts_with("Grow your squad to")));
+        let step = 1.0 / 15.0;
+        while app.mission.as_ref().unwrap().verdict.is_none() && app.game.as_ref().unwrap().time() < 120.0 {
+            plan(app.game.as_mut().unwrap(), "rush");
+            app.step(step);
+        }
+        let v = app.mission.as_ref().unwrap().verdict.expect("the rush is lost by 2:00");
+        assert_eq!(v.stars, 0);
+        app.prepare();
+        assert_eq!(app.model(None, None).end.map(|e| e.0).as_deref(), Some("Mission lost"));
     }
 }
