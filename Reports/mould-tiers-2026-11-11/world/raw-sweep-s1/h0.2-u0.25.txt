@@ -1,0 +1,12 @@
+seed 1 h0.2-u0.25 t  10.0s  alive 2720  energy 0.898  born 4609  starved 6889  grass -0.000
+seed 1 h0.2-u0.25 t  10.0s  life walk 2247 spore 0 dormant 473 dead 0  held 4/23  bodies 21 big 1792  centre 56.2,75.6  near 7  rim 0.000/0.000
+seed 1 h0.2-u0.25 t  20.0s  alive 2876  energy 2.039  born 9072  starved 11196  grass -0.000
+seed 1 h0.2-u0.25 t  20.0s  life walk 2378 spore 0 dormant 498 dead 0  held 9/23  bodies 14 big 1660  centre 60.6,76.0  near 29  rim 0.000/0.000
+seed 1 h0.2-u0.25 t  30.0s  alive 3013  energy 2.983  born 13996  starved 15983  grass -0.000
+seed 1 h0.2-u0.25 t  30.0s  life walk 2493 spore 0 dormant 520 dead 0  held 10/23  bodies 11 big 1814  centre 61.9,76.1  near 38  rim 0.000/0.000
+seed 1 h0.2-u0.25 t  40.0s  alive 3046  energy 3.960  born 18831  starved 20785  grass -0.000
+seed 1 h0.2-u0.25 t  40.0s  life walk 2476 spore 0 dormant 570 dead 0  held 7/23  bodies 12 big 1747  centre 59.7,74.7  near 41  rim 0.000/0.002
+seed 1 h0.2-u0.25 t  50.0s  alive 3007  energy 5.050  born 23579  starved 25572  grass -0.000
+seed 1 h0.2-u0.25 t  50.0s  life walk 2505 spore 0 dormant 502 dead 0  held 10/23  bodies 12 big 1612  centre 59.5,74.8  near 43  rim 0.000/0.001
+seed 1 h0.2-u0.25 t  60.0s  alive 3031  energy 6.027  born 28389  starved 30358  grass -0.000
+seed 1 h0.2-u0.25 t  60.0s  life walk 2503 spore 0 dormant 528 dead 0  held 6/23  bodies 22 big 1706  centre 58.8,75.3  near 30  rim 0.000/0.000

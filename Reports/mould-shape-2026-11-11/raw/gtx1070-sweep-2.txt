@@ -1,0 +1,81 @@
+# Walker-count sweep on the GTX 1070 (Scott-Desktop), second part, 2026-11-11 ~21:45-22:05Z: the arms the first part
+# (gtx1070-sweep.txt) did not reach. Commit b1f0383, mouldgpu rebuilt there (the exe on the PC was newer than the commit).
+# Lines sent verbatim by the PC's session from target\walker-sweep (recreated: the first part's files were gone by then).
+# Command (PowerShell, from the repo root), S = 1..8, 10 s and 30 s separate runs:
+#   .\target\release\mouldgpu.exe preset=3 crowd=C walkers=N seed=S seconds=10|30 look=target\walker-sweep\pics tag=crowdC-N-sS
+# Arms: crowd 0 at 1,000,000 (seed 8 only) and 2,000,000; crowd 1 at 32,000, 100,000 and 200,000.
+# Headers: crowd=1 at 32k, 100k and 200k print "(crowd 1)"; 2M prints "(crowd 0)". 66 files, no panics.
+
+crowd0-1000000-s8-10s: dish at 10.0s: tube 3336.3  loops 1  width 5.63  reach 174.5  piles 7/7  strays 0.000
+crowd0-1000000-s8-30s: dish at 30.0s: tube 1323.7  loops 0  width 5.97  reach 175.0  piles 7/7  strays 0.000
+crowd0-2000000-s1-10s: dish at 10.0s: tube 4176.2  loops 0  width 5.68  reach 176.0  piles 7/7  strays 0.000
+crowd0-2000000-s1-30s: dish at 30.0s: tube 1845.2  loops 0  width 6.40  reach 175.2  piles 7/7  strays 0.000
+crowd0-2000000-s2-10s: dish at 10.0s: tube 3202.6  loops 1  width 5.62  reach 160.8  piles 7/7  strays 0.000
+crowd0-2000000-s2-30s: dish at 30.0s: tube 1530.9  loops 0  width 6.82  reach 119.7  piles 7/7  strays 0.000
+crowd0-2000000-s3-10s: dish at 10.0s: tube 3608.9  loops 1  width 5.46  reach 172.3  piles 7/7  strays 0.000
+crowd0-2000000-s3-30s: dish at 30.0s: tube 1242.8  loops 0  width 6.55  reach 126.9  piles 7/7  strays 0.000
+crowd0-2000000-s4-10s: dish at 10.0s: tube 3571.8  loops 1  width 5.69  reach 171.3  piles 7/7  strays 0.000
+crowd0-2000000-s4-30s: dish at 30.0s: tube 1115.4  loops 0  width 5.89  reach 150.9  piles 7/7  strays 0.000
+crowd0-2000000-s5-10s: dish at 10.0s: tube 3388.0  loops 1  width 5.67  reach 179.1  piles 7/7  strays 0.000
+crowd0-2000000-s5-30s: dish at 30.0s: tube 1354.7  loops 0  width 7.08  reach 178.8  piles 7/7  strays 0.000
+crowd0-2000000-s6-10s: dish at 10.0s: tube 3823.2  loops 2  width 5.50  reach 166.7  piles 7/7  strays 0.000
+crowd0-2000000-s6-30s: dish at 30.0s: tube 1292.7  loops 0  width 6.31  reach 154.9  piles 7/7  strays 0.000
+crowd0-2000000-s7-10s: dish at 10.0s: tube 2956.4  loops 1  width 6.06  reach 170.6  piles 7/7  strays 0.000
+crowd0-2000000-s7-30s: dish at 30.0s: tube 1774.2  loops 0  width 6.45  reach 168.2  piles 7/7  strays 0.000
+crowd0-2000000-s8-10s: dish at 10.0s: tube 3050.1  loops 0  width 5.52  reach 170.6  piles 7/7  strays 0.000
+crowd0-2000000-s8-30s: dish at 30.0s: tube 1691.6  loops 0  width 6.43  reach 130.7  piles 7/7  strays 0.000
+crowd1-32000-s1-10s: dish at 10.0s: tube 10662.3  loops 111  width 5.00  reach 186.9  piles 7/7  strays 0.000
+crowd1-32000-s1-30s: dish at 30.0s: tube 7525.4  loops 53  width 5.03  reach 184.1  piles 7/7  strays 0.000
+crowd1-32000-s2-10s: dish at 10.0s: tube 10541.5  loops 104  width 5.05  reach 187.6  piles 7/7  strays 0.000
+crowd1-32000-s2-30s: dish at 30.0s: tube 7217.9  loops 46  width 5.01  reach 181.8  piles 7/7  strays 0.000
+crowd1-32000-s3-10s: dish at 10.0s: tube 10885.6  loops 115  width 5.03  reach 186.4  piles 7/7  strays 0.000
+crowd1-32000-s3-30s: dish at 30.0s: tube 7378.8  loops 49  width 5.01  reach 182.2  piles 7/7  strays 0.000
+crowd1-32000-s4-10s: dish at 10.0s: tube 10579.6  loops 105  width 5.06  reach 186.3  piles 7/7  strays 0.000
+crowd1-32000-s4-30s: dish at 30.0s: tube 7313.7  loops 47  width 4.99  reach 178.9  piles 7/7  strays 0.000
+crowd1-32000-s5-10s: dish at 10.0s: tube 10717.4  loops 110  width 5.05  reach 188.4  piles 7/7  strays 0.000
+crowd1-32000-s5-30s: dish at 30.0s: tube 7357.7  loops 49  width 5.00  reach 181.1  piles 7/7  strays 0.000
+crowd1-32000-s6-10s: dish at 10.0s: tube 10776.1  loops 115  width 5.02  reach 185.0  piles 7/7  strays 0.000
+crowd1-32000-s6-30s: dish at 30.0s: tube 7360.5  loops 48  width 5.08  reach 179.1  piles 7/7  strays 0.000
+crowd1-32000-s7-10s: dish at 10.0s: tube 10639.8  loops 108  width 4.99  reach 187.8  piles 7/7  strays 0.000
+crowd1-32000-s7-30s: dish at 30.0s: tube 7282.8  loops 48  width 5.07  reach 178.3  piles 7/7  strays 0.000
+crowd1-32000-s8-10s: dish at 10.0s: tube 10661.7  loops 109  width 4.95  reach 186.5  piles 7/7  strays 0.000
+crowd1-32000-s8-30s: dish at 30.0s: tube 7355.3  loops 50  width 5.03  reach 181.7  piles 7/7  strays 0.000
+crowd1-100000-s1-10s: dish at 10.0s: tube 12646.6  loops 150  width 5.22  reach 187.8  piles 7/7  strays 0.000
+crowd1-100000-s1-30s: dish at 30.0s: tube 10356.3  loops 65  width 6.26  reach 182.9  piles 7/7  strays 0.000
+crowd1-100000-s2-10s: dish at 10.0s: tube 12756.1  loops 158  width 5.13  reach 189.1  piles 7/7  strays 0.000
+crowd1-100000-s2-30s: dish at 30.0s: tube 10374.2  loops 67  width 6.20  reach 186.1  piles 7/7  strays 0.000
+crowd1-100000-s3-10s: dish at 10.0s: tube 12828.3  loops 161  width 5.17  reach 189.3  piles 7/7  strays 0.000
+crowd1-100000-s3-30s: dish at 30.0s: tube 10491.6  loops 69  width 6.17  reach 185.6  piles 7/7  strays 0.000
+crowd1-100000-s4-10s: dish at 10.0s: tube 12729.8  loops 153  width 5.23  reach 190.1  piles 7/7  strays 0.000
+crowd1-100000-s4-30s: dish at 30.0s: tube 10165.1  loops 60  width 6.41  reach 184.6  piles 7/7  strays 0.000
+crowd1-100000-s5-10s: dish at 10.0s: tube 12712.8  loops 155  width 5.20  reach 187.3  piles 7/7  strays 0.000
+crowd1-100000-s5-30s: dish at 30.0s: tube 10456.8  loops 68  width 6.12  reach 184.2  piles 7/7  strays 0.000
+crowd1-100000-s6-10s: dish at 10.0s: tube 12670.8  loops 153  width 5.22  reach 189.1  piles 7/7  strays 0.000
+crowd1-100000-s6-30s: dish at 30.0s: tube 10254.4  loops 61  width 6.23  reach 186.2  piles 7/7  strays 0.000
+crowd1-100000-s7-10s: dish at 10.0s: tube 12694.6  loops 151  width 5.19  reach 190.9  piles 7/7  strays 0.000
+crowd1-100000-s7-30s: dish at 30.0s: tube 10287.2  loops 66  width 6.26  reach 185.4  piles 7/7  strays 0.000
+crowd1-100000-s8-10s: dish at 10.0s: tube 12645.6  loops 150  width 5.24  reach 188.9  piles 7/7  strays 0.000
+crowd1-100000-s8-30s: dish at 30.0s: tube 10211.3  loops 59  width 6.35  reach 184.6  piles 7/7  strays 0.000
+crowd1-200000-s1-10s: dish at 10.0s: tube 16785.9  loops 138  width 7.56  reach 190.6  piles 7/7  strays 0.006
+crowd1-200000-s1-30s: dish at 30.0s: tube 15278.1  loops 144  width 7.04  reach 188.4  piles 7/7  strays 0.024
+crowd1-200000-s2-10s: dish at 10.0s: tube 16832.1  loops 151  width 7.26  reach 190.8  piles 7/7  strays 0.008
+crowd1-200000-s2-30s: dish at 30.0s: tube 15441.2  loops 134  width 7.46  reach 189.4  piles 7/7  strays 0.020
+crowd1-200000-s3-10s: dish at 10.0s: tube 16724.1  loops 155  width 7.28  reach 190.8  piles 7/7  strays 0.009
+crowd1-200000-s3-30s: dish at 30.0s: tube 15346.8  loops 125  width 7.43  reach 188.6  piles 7/7  strays 0.019
+crowd1-200000-s4-10s: dish at 10.0s: tube 16734.9  loops 139  width 7.55  reach 190.8  piles 7/7  strays 0.007
+crowd1-200000-s4-30s: dish at 30.0s: tube 15298.0  loops 122  width 7.44  reach 189.1  piles 7/7  strays 0.020
+crowd1-200000-s5-10s: dish at 10.0s: tube 16810.1  loops 150  width 7.45  reach 190.8  piles 7/7  strays 0.008
+crowd1-200000-s5-30s: dish at 30.0s: tube 15317.6  loops 132  width 7.35  reach 188.4  piles 7/7  strays 0.021
+crowd1-200000-s6-10s: dish at 10.0s: tube 16848.6  loops 140  width 7.60  reach 191.3  piles 7/7  strays 0.007
+crowd1-200000-s6-30s: dish at 30.0s: tube 15204.5  loops 137  width 7.09  reach 189.1  piles 7/7  strays 0.024
+crowd1-200000-s7-10s: dish at 10.0s: tube 16829.2  loops 142  width 7.61  reach 191.1  piles 7/7  strays 0.006
+crowd1-200000-s7-30s: dish at 30.0s: tube 15273.2  loops 135  width 7.36  reach 188.1  piles 7/7  strays 0.021
+crowd1-200000-s8-10s: dish at 10.0s: tube 16813.2  loops 141  width 7.59  reach 190.8  piles 7/7  strays 0.007
+crowd1-200000-s8-30s: dish at 30.0s: tube 15416.2  loops 128  width 7.42  reach 188.3  piles 7/7  strays 0.019
+
+# Seed 1 timing, as summarised by the PC's session (wall ms median/worst a frame of 2 ticks and the drawing; GPU ms
+# ticks; sense and walk passes, GPU ms a pass). Trail, scent and draw were flat: 0.133-0.134, 0.156-0.159, 0.054-0.056.
+# crowd0 2M:   10 s 6.788/23.926, ticks 6.596, sense 2.070 walk 0.575; 30 s 5.949/23.892, ticks 5.731, sense 1.590 walk 0.505
+# crowd1 32k:  10 s 1.073/1.399, ticks 0.861, sense 0.093 walk 0.024; 30 s 1.049/21.704, ticks 0.818, sense 0.079 walk 0.018
+# crowd1 100k: 10 s 1.641/2.072, ticks 1.424, sense 0.320 walk 0.056; 30 s 1.551/13.324, ticks 1.307, sense 0.276 walk 0.043
+# crowd1 200k: 10 s 2.542/3.280, ticks 2.303, sense 0.722 walk 0.091; 30 s 2.424/3.185, ticks 2.176, sense 0.678 walk 0.077

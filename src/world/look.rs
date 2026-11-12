@@ -6,6 +6,10 @@
 //! the mould wears it and a crystal shrinks and dims as it drains: the
 //! picture is the data (owner, 2026-11-09/10), not art laid on top.
 //!
+//! Byte 0's high nibble is the soil kind (`Fields::soil`, 2026-11-11, the
+//! maps thread): sand, clay and barren ground each change the mould, so
+//! each is its own ground in the picture. The kind is byte 0's low nibble.
+//!
 //! Byte 2 is depth: how far a crystal cell is inside its crystal, 0 at
 //! the rim to 255 at the deepest cell (the shape, so a crystal stands as
 //! a cone its charge tall; `ground` works it out).
@@ -56,6 +60,10 @@ pub struct Fields<'a> {
     pub charge_share: &'a [f32],
     /// The land's elevation a cell, 0-255 (empty: flat).
     pub elev: &'a [u8],
+    /// The soil kind a cell (`BigDish::soil`: 1 sand, 2 clay, 3 barren; empty
+    /// or 0 plain), in byte 0's high nibble: the view draws each kind as its
+    /// own ground under the mould.
+    pub soil: &'a [u8],
 }
 
 /// The ground field for a `w`-wide world of `cells` cells. Off the agar
@@ -79,7 +87,7 @@ pub fn ground(w: usize, cells: usize, f: &Fields) -> Vec<u32> {
         })
         .collect();
     for (i, (c, d)) in g.iter_mut().zip(depth).enumerate() {
-        *c |= (d as u32) << 16 | (f.elev.get(i).copied().unwrap_or(0) as u32) << 24;
+        *c |= (d as u32) << 16 | (f.elev.get(i).copied().unwrap_or(0) as u32) << 24 | ((f.soil.get(i).copied().unwrap_or(0) & 15) as u32) << 4;
     }
     g
 }
@@ -200,6 +208,15 @@ fn crystal_depth(w: usize, cells: usize, crystal: &[u16]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn soil_sits_in_the_high_nibble_of_the_kind_byte() {
+        let soil = [0u8, 1, 2, 3];
+        let wet = [false, false, false, true];
+        let g = ground(4, 4, &Fields { soil: &soil, wet: &wet, ..Default::default() });
+        assert_eq!(g, vec![0, 1 << 4, 2 << 4, 1 | 255 << 8 | 3 << 4]);
+        assert!(g.iter().all(|c| c & 15 <= Ground::Crystal as u32), "the kind stays in the low nibble");
+    }
 
     #[test]
     fn kinds_and_values_pack_into_the_low_bytes() {

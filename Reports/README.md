@@ -275,7 +275,17 @@ move.
   player's strike lays). Sporer holds 6-7 of 7 piles against 3-5; struck, it scatters (7 of 7); a baited Sleeper
   leaves 1858-2216 walkers at the strike against 2360-2971; a Swarmer loses 1144-4158 to fire against 614-3591:
   each 8 of 8, p 0.0078, survives Bonferroni. Fleeing (Skittish) fails, p 0.375. Alarm +31% a step on one core.
-  Page, scripts and raw output in [`mould-tiers-2026-11-11/`](mould-tiers-2026-11-11/).
+  Page, scripts and raw output in [`mould-tiers-2026-11-11/`](mould-tiers-2026-11-11/). **Evening, *In the Larder
+  world*:** in the world's race (growth, 23 crystals that run dry, 8 paired seeds) the Swarmer (8 of 8) and the
+  Sleeper's bait (8 of 8) hold; the Sporer's edge does not (7 of 8, p 0.07). `mould::tiers::Tier` names the tiers
+  for the game; the squad's shots lay alarm; a dormant walker can die (`sleep_death`), so the Sleeper no longer
+  freezes a world whose crystals ran dry (sleep that cost upkeep lost the bait: a dead end).
+- [mould-tiers-review-2026-11-11.md](mould-tiers-review-2026-11-11.md) — **two independent reviews of the mould
+  tiers, at the owner's request (20:11Z), and the response.** Review 1: engineering sound, but the tests showed
+  rules, not counters, on a test dish; the game's shots laid no alarm; the Sleeper froze a lean world. Review 2:
+  eight candidate tiers ranked (supply lines, habituation, clans, anticipation, pacemaker, day and night, nomad, two
+  foods) and method changes. Both verbatim with their probes in
+  [`mould-tiers-review-2026-11-11/`](mould-tiers-review-2026-11-11/).
 - [first-reach-2026-11-11.md](first-reach-2026-11-11.md) — **a paired test, no game change: which droplet moulds
   reach food first.** The crystal-mix test redesigned after the review (its start disc covered the crystals).
   30,000 droplet walkers from a centred disc, 12 piles, 16 seeds; far piles reached by 30 s, Holm over 5. Grazers
@@ -347,6 +357,7 @@ move.
   dominant strategies and the snowball is unmanaged positive feedback; fix with a size cost, a pull-back rule, a
   points ending and telegraphed attacks before adding verbs. Reading only, no runs. Cards in `research/sources/`.
 - [growth-2026-11-11.md](growth-2026-11-11.md) — **Growth and starving on the big dish (Larder World W0)**: walkers eat, pay upkeep, divide and starve, in fixed slots paired by one keyed mask a step; on the GPU it matches the CPU exactly. Fed 96,358 against starved 428 alive at 30 s (8 of 8, p 0.0078); size nearly linear in food (1.9x a doubling); a walker lives about 3 s; CPU cost within noise. Open: tubes between point crystals may starve.
+- [species-gpu-2026-11-11.md](species-gpu-2026-11-11.md) — **The species rules on the GPU (Larder World W3a)**: species 0's share, conversion over a square, a second kind of walker in one mould and each species' own settings on `gpu::Engine`, off by default. One GPU tick matches one CPU tick on 12 dishes and a growth dish (every kind exact), every row sum of the square matches the CPU's, and all 28 planted bugs are caught (27 of 28 before the row check). Off they cost nothing measurable on the software GPU; the square of radius 8 costs about a trail pass a tick there (rows 24-25 ms against trail 18). A W1b fix: a wall built with growth on moved the empty slots under it (195 under a test wall, 349 counts off; now 0). The 1070's timing is to come. Scripts and raw output in [`species-gpu-2026-11-11/`](species-gpu-2026-11-11/).
 - [mould-shape-2026-11-11.md](mould-shape-2026-11-11.md) — **What shapes the mould (owner's questions, 16:01-16:05Z)**: food sets the size, what walkers follow sets the shape. Grass and crystals in one world (seed 1): crystals alone give roads, grass that never regrows a boom and bust (dead by 40 s), regrowing grass a steady fine net, piles that only smell a coarse one; full grass swamps the crystals. Walker count matters only with the crowd limit: off, 32k-1M all fold into strands (0-1 loops at 30 s); on, 32k/100k/200k give 43-54/57-70/120-144 loops (8 of 8 each, p 0.0078, Holm). On crystals size follows intake (crystal area x bite), not charge; scratch `energy_flow` turns the hoard into 15-24% more walkers.
 - [larder-ai-2026-11-11.md](larder-ai-2026-11-11.md) — **Larder player AI**: plays through `Cmd`s only (every round a replay), reads a `View` of what a player sees, commands a `Side` (ready for a second soldier team); five styles on knobs plus idle and random. Held out (17-32), boom, lure and adapt beat idle and random 16/16 in both fields; turtle and rush lose to idle 16/16. Fixed: buying unarmed soldiers, bait while hunting. A harness to port to the world, not a balance result.
 - [larder-m3-2026-11-11.md](larder-m3-2026-11-11.md) — **Larder M3, full controls and soldiers that fight from range**: groups, scent view, replays to the same hash, a headless frame shot and bench. Firing from range, spread shots and a loose formation loosened the ladder: on held-out seeds no plan is best on 13+/16 (reader 8 fed, 10 lean; was 13 and 12), two pairs flip between fields but neither survives Holm. Desktop frame 7.2 ms mean, 9.6 p95 at 40 soldiers. Spores and a dormant crust were tried as mould answers and rejected.

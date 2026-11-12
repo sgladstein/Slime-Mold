@@ -51,8 +51,9 @@ default; Jenson's later work respawns every 1,000 steps) held a fine mesh
 and gave Jenson's haze. Four times the walkers changed little. In the GPU
 sandbox's Jenson preset the count matters only with the limit
 ([mould shape](../../Reports/mould-shape-2026-11-11.md), 8 seeds, 30 s):
-without it 32,000 to 1,000,000 walkers all fold into strands (0-1 loops);
-with it 32,000, 100,000 and 200,000 give 43-54, 57-70 and 120-144 loops, a
+without it 32,000 to 2,000,000 walkers all fold into strands (0-1 loops);
+with it 32,000, 100,000 and 200,000 give 43-54, 57-70 and 120-144 loops (the
+GTX 1070 agrees: 46-53, 59-69, 122-144), a
 net thickening into a sheet with holes (the sandbox forces the limit off
 above half the agar). Every GPU
 port read (Bleuje, Lague, PolyPhy, gpu-io, Barradeau) drops the limit.

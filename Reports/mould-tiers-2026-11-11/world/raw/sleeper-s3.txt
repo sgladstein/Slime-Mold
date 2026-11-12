@@ -1,0 +1,302 @@
+seed 3 sleeper t   1.0s  tube  2474.0  loops    3  width 7.89  reach   67.4  piles 11/23  strays 0.014  crystals 1.000  ms/tick 7.83
+seed 3 sleeper t   1.0s  alive 5117  energy 0.432  born 161  starved 44  grass -0.000
+seed 3 sleeper t   1.0s  contrast 3.78
+seed 3 sleeper t   1.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t   1.0s  life walk 2287 spore 0 dormant 2830 dead 0  held 5/23  bodies 11 big 2085  centre 56.4,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t   2.0s  tube  2274.0  loops    6  width 6.57  reach   66.2  piles 11/23  strays 0.046  crystals 1.000  ms/tick 8.01
+seed 3 sleeper t   2.0s  alive 5094  energy 0.437  born 210  starved 116  grass -0.000
+seed 3 sleeper t   2.0s  contrast 3.70
+seed 3 sleeper t   2.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t   2.0s  life walk 2005 spore 0 dormant 3089 dead 0  held 3/23  bodies 14 big 1946  centre 56.6,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t   3.0s  tube  2222.8  loops    0  width 8.45  reach   65.0  piles 11/23  strays 0.013  crystals 1.000  ms/tick 8.30
+seed 3 sleeper t   3.0s  alive 4705  energy 0.481  born 920  starved 1215  grass -0.000
+seed 3 sleeper t   3.0s  contrast 2.28
+seed 3 sleeper t   3.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t   3.0s  life walk 1585 spore 0 dormant 3120 dead 0  held 3/23  bodies 13 big 1991  centre 56.8,79.9  near 2  rim 0.000/0.000
+seed 3 sleeper t   4.0s  tube  2128.2  loops    3  width 8.08  reach   62.0  piles 11/23  strays 0.031  crystals 1.000  ms/tick 8.70
+seed 3 sleeper t   4.0s  alive 4823  energy 0.468  born 1333  starved 1510  grass -0.000
+seed 3 sleeper t   4.0s  contrast 3.08
+seed 3 sleeper t   4.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t   4.0s  life walk 1704 spore 0 dormant 3119 dead 0  held 3/23  bodies 13 big 1766  centre 56.9,80.0  near 1  rim 0.000/0.000
+seed 3 sleeper t   5.0s  tube  2120.2  loops    2  width 8.82  reach   62.3  piles 11/23  strays 0.028  crystals 0.999  ms/tick 8.87
+seed 3 sleeper t   5.0s  alive 4736  energy 0.487  born 1568  starved 1832  grass -0.000
+seed 3 sleeper t   5.0s  contrast 2.92
+seed 3 sleeper t   5.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t   5.0s  life walk 1650 spore 0 dormant 3086 dead 0  held 2/23  bodies 12 big 1793  centre 57.1,80.0  near 0  rim 0.000/0.000
+seed 3 sleeper t   6.0s  tube  2093.5  loops    2  width 8.81  reach   61.2  piles 11/23  strays 0.023  crystals 0.999  ms/tick 9.09
+seed 3 sleeper t   6.0s  alive 4640  energy 0.505  born 1928  starved 2288  grass -0.000
+seed 3 sleeper t   6.0s  contrast 2.68
+seed 3 sleeper t   6.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t   6.0s  life walk 1583 spore 0 dormant 3057 dead 0  held 2/23  bodies 11 big 1640  centre 57.1,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t   7.0s  tube  2053.2  loops    1  width 9.45  reach   64.5  piles 11/23  strays 0.020  crystals 0.999  ms/tick 9.11
+seed 3 sleeper t   7.0s  alive 4558  energy 0.519  born 2342  starved 2784  grass -0.000
+seed 3 sleeper t   7.0s  contrast 2.53
+seed 3 sleeper t   7.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t   7.0s  life walk 1556 spore 0 dormant 3002 dead 0  held 2/23  bodies 10 big 1634  centre 57.2,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t   8.0s  tube  2019.2  loops    2  width 9.59  reach   65.9  piles 11/23  strays 0.018  crystals 0.999  ms/tick 9.10
+seed 3 sleeper t   8.0s  alive 4507  energy 0.528  born 2710  starved 3203  grass -0.000
+seed 3 sleeper t   8.0s  contrast 2.60
+seed 3 sleeper t   8.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t   8.0s  life walk 1572 spore 0 dormant 2935 dead 0  held 2/23  bodies 12 big 1628  centre 57.2,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t   9.0s  tube  2031.8  loops    1  width 9.33  reach   63.5  piles 11/23  strays 0.019  crystals 0.999  ms/tick 9.08
+seed 3 sleeper t   9.0s  alive 4438  energy 0.543  born 3026  starved 3588  grass -0.000
+seed 3 sleeper t   9.0s  contrast 2.57
+seed 3 sleeper t   9.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t   9.0s  life walk 1572 spore 0 dormant 2866 dead 0  held 2/23  bodies 11 big 1636  centre 57.2,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t  10.0s  tube  2028.5  loops    1  width 9.11  reach   63.0  piles 11/23  strays 0.018  crystals 0.999  ms/tick 9.11
+seed 3 sleeper t  10.0s  alive 4353  energy 0.561  born 3365  starved 4012  grass -0.000
+seed 3 sleeper t  10.0s  contrast 2.55
+seed 3 sleeper t  10.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  10.0s  life walk 1545 spore 0 dormant 2808 dead 0  held 2/23  bodies 14 big 1617  centre 57.2,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t  11.0s  tube  1988.2  loops    1  width 9.26  reach   65.4  piles 11/23  strays 0.029  crystals 0.999  ms/tick 9.13
+seed 3 sleeper t  11.0s  alive 4273  energy 0.578  born 3732  starved 4459  grass -0.000
+seed 3 sleeper t  11.0s  contrast 2.43
+seed 3 sleeper t  11.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  11.0s  life walk 1533 spore 0 dormant 2740 dead 0  held 2/23  bodies 11 big 1602  centre 57.2,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t  12.0s  tube  1991.8  loops    1  width 9.56  reach   61.7  piles 11/23  strays 0.018  crystals 0.999  ms/tick 9.18
+seed 3 sleeper t  12.0s  alive 4200  energy 0.594  born 4106  starved 4906  grass -0.000
+seed 3 sleeper t  12.0s  contrast 2.37
+seed 3 sleeper t  12.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  12.0s  life walk 1510 spore 0 dormant 2690 dead 0  held 2/23  bodies 11 big 1616  centre 57.2,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  13.0s  tube  1990.5  loops    1  width 9.89  reach   65.7  piles 11/23  strays 0.018  crystals 0.999  ms/tick 9.27
+seed 3 sleeper t  13.0s  alive 4154  energy 0.609  born 4441  starved 5287  grass -0.000
+seed 3 sleeper t  13.0s  contrast 2.47
+seed 3 sleeper t  13.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  13.0s  life walk 1514 spore 0 dormant 2640 dead 0  held 2/23  bodies 11 big 1619  centre 57.2,79.7  near 0  rim 0.000/0.000
+seed 3 sleeper t  14.0s  tube  1964.8  loops    1  width 9.51  reach   70.1  piles 11/23  strays 0.019  crystals 0.998  ms/tick 9.42
+seed 3 sleeper t  14.0s  alive 4091  energy 0.626  born 4783  starved 5692  grass -0.000
+seed 3 sleeper t  14.0s  contrast 2.34
+seed 3 sleeper t  14.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  14.0s  life walk 1506 spore 0 dormant 2585 dead 0  held 2/23  bodies 10 big 1603  centre 57.1,79.8  near 1  rim 0.000/0.000
+seed 3 sleeper t  15.0s  tube  1967.2  loops    0  width 9.90  reach   62.9  piles 11/23  strays 0.015  crystals 0.998  ms/tick 9.63
+seed 3 sleeper t  15.0s  alive 4050  energy 0.640  born 5141  starved 6091  grass -0.000
+seed 3 sleeper t  15.0s  contrast 2.39
+seed 3 sleeper t  15.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  15.0s  life walk 1509 spore 0 dormant 2541 dead 0  held 2/23  bodies 10 big 1599  centre 57.1,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  16.0s  tube  1945.5  loops    1  width 9.66  reach   64.1  piles 11/23  strays 0.026  crystals 0.998  ms/tick 9.94
+seed 3 sleeper t  16.0s  alive 3985  energy 0.659  born 5480  starved 6495  grass -0.000
+seed 3 sleeper t  16.0s  contrast 2.29
+seed 3 sleeper t  16.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  16.0s  life walk 1503 spore 0 dormant 2482 dead 0  held 2/23  bodies 11 big 1590  centre 57.0,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  17.0s  tube  1935.5  loops    0  width 10.13  reach   66.1  piles 11/23  strays 0.017  crystals 0.998  ms/tick 10.38
+seed 3 sleeper t  17.0s  alive 3915  energy 0.679  born 5824  starved 6909  grass -0.000
+seed 3 sleeper t  17.0s  contrast 2.24
+seed 3 sleeper t  17.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  17.0s  life walk 1494 spore 0 dormant 2421 dead 0  held 2/23  bodies 9 big 1589  centre 57.1,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  18.0s  tube  1917.0  loops    1  width 9.59  reach   61.7  piles 11/23  strays 0.027  crystals 0.998  ms/tick 11.03
+seed 3 sleeper t  18.0s  alive 3859  energy 0.699  born 6158  starved 7299  grass -0.000
+seed 3 sleeper t  18.0s  contrast 2.20
+seed 3 sleeper t  18.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  18.0s  life walk 1482 spore 0 dormant 2377 dead 0  held 2/23  bodies 8 big 1585  centre 57.1,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  19.0s  tube  1915.8  loops    1  width 9.98  reach   64.5  piles 11/23  strays 0.021  crystals 0.998  ms/tick 12.06
+seed 3 sleeper t  19.0s  alive 3831  energy 0.714  born 6496  starved 7665  grass -0.000
+seed 3 sleeper t  19.0s  contrast 2.31
+seed 3 sleeper t  19.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  19.0s  life walk 1496 spore 0 dormant 2335 dead 0  held 2/23  bodies 8 big 1592  centre 57.0,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  20.0s  tube  1894.2  loops    1  width 10.24  reach   61.7  piles 11/23  strays 0.024  crystals 0.998  ms/tick 12.98
+seed 3 sleeper t  20.0s  alive 3771  energy 0.738  born 6824  starved 8053  grass -0.000
+seed 3 sleeper t  20.0s  contrast 2.28
+seed 3 sleeper t  20.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  20.0s  life walk 1477 spore 0 dormant 2294 dead 0  held 2/23  bodies 8 big 1581  centre 57.0,79.7  near 0  rim 0.000/0.000
+seed 3 sleeper t  21.0s  tube  1882.5  loops    3  width 9.60  reach   61.7  piles 11/23  strays 0.029  crystals 0.998  ms/tick 13.86
+seed 3 sleeper t  21.0s  alive 3715  energy 0.760  born 7180  starved 8465  grass -0.000
+seed 3 sleeper t  21.0s  contrast 2.22
+seed 3 sleeper t  21.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  21.0s  life walk 1457 spore 0 dormant 2258 dead 0  held 2/23  bodies 8 big 1572  centre 57.0,79.8  near 1  rim 0.000/0.000
+seed 3 sleeper t  22.0s  tube  1862.2  loops    3  width 8.92  reach   68.4  piles 11/23  strays 0.031  crystals 0.998  ms/tick 14.64
+seed 3 sleeper t  22.0s  alive 3659  energy 0.783  born 7506  starved 8847  grass -0.000
+seed 3 sleeper t  22.0s  contrast 2.24
+seed 3 sleeper t  22.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  22.0s  life walk 1454 spore 0 dormant 2205 dead 0  held 2/23  bodies 9 big 1555  centre 57.0,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  23.0s  tube  1854.5  loops    1  width 9.65  reach   61.7  piles 11/23  strays 0.019  crystals 0.998  ms/tick 15.34
+seed 3 sleeper t  23.0s  alive 3583  energy 0.809  born 7847  starved 9264  grass -0.000
+seed 3 sleeper t  23.0s  contrast 2.24
+seed 3 sleeper t  23.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  23.0s  life walk 1449 spore 0 dormant 2134 dead 0  held 2/23  bodies 7 big 1560  centre 57.0,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  24.0s  tube  1858.2  loops    4  width 9.58  reach   61.7  piles 11/23  strays 0.027  crystals 0.997  ms/tick 15.98
+seed 3 sleeper t  24.0s  alive 3568  energy 0.826  born 8197  starved 9629  grass -0.000
+seed 3 sleeper t  24.0s  contrast 2.32
+seed 3 sleeper t  24.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  24.0s  life walk 1471 spore 0 dormant 2097 dead 0  held 2/23  bodies 7 big 1565  centre 56.9,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  25.0s  tube  1844.2  loops    2  width 10.05  reach   61.7  piles 11/23  strays 0.023  crystals 0.997  ms/tick 16.56
+seed 3 sleeper t  25.0s  alive 3525  energy 0.851  born 8512  starved 9987  grass -0.000
+seed 3 sleeper t  25.0s  contrast 2.34
+seed 3 sleeper t  25.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  25.0s  life walk 1458 spore 0 dormant 2067 dead 0  held 2/23  bodies 7 big 1565  centre 56.8,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  26.0s  tube  1845.2  loops    1  width 10.37  reach   61.7  piles 11/23  strays 0.020  crystals 0.997  ms/tick 17.10
+seed 3 sleeper t  26.0s  alive 3480  energy 0.877  born 8851  starved 10371  grass -0.000
+seed 3 sleeper t  26.0s  contrast 2.25
+seed 3 sleeper t  26.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  26.0s  life walk 1448 spore 0 dormant 2032 dead 0  held 2/23  bodies 7 big 1576  centre 56.8,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  27.0s  tube  1817.0  loops    2  width 9.96  reach   61.7  piles 11/23  strays 0.023  crystals 0.997  ms/tick 17.61
+seed 3 sleeper t  27.0s  alive 3450  energy 0.898  born 9206  starved 10756  grass -0.000
+seed 3 sleeper t  27.0s  contrast 2.30
+seed 3 sleeper t  27.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  27.0s  life walk 1453 spore 0 dormant 1997 dead 0  held 2/23  bodies 7 big 1554  centre 56.6,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  28.0s  tube  1824.5  loops    2  width 9.84  reach   61.7  piles 11/23  strays 0.028  crystals 0.997  ms/tick 18.10
+seed 3 sleeper t  28.0s  alive 3427  energy 0.919  born 9553  starved 11126  grass -0.000
+seed 3 sleeper t  28.0s  contrast 2.30
+seed 3 sleeper t  28.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  28.0s  life walk 1452 spore 0 dormant 1975 dead 0  held 2/23  bodies 7 big 1562  centre 56.7,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t  29.0s  tube  1814.2  loops    3  width 9.41  reach   61.7  piles 11/23  strays 0.031  crystals 0.997  ms/tick 18.55
+seed 3 sleeper t  29.0s  alive 3384  energy 0.947  born 9872  starved 11488  grass -0.000
+seed 3 sleeper t  29.0s  contrast 2.34
+seed 3 sleeper t  29.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  29.0s  life walk 1431 spore 0 dormant 1953 dead 0  held 2/23  bodies 7 big 1556  centre 56.6,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t  30.0s  tube  1806.2  loops    2  width 9.66  reach   61.7  piles 11/23  strays 0.022  crystals 0.997  ms/tick 18.96
+seed 3 sleeper t  30.0s  alive 3380  energy 0.963  born 10217  starved 11837  grass -0.000
+seed 3 sleeper t  30.0s  contrast 2.34
+seed 3 sleeper t  30.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  30.0s  life walk 1446 spore 0 dormant 1934 dead 0  held 2/23  bodies 7 big 1552  centre 56.6,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t  31.0s  tube  1805.5  loops    0  width 9.92  reach   61.7  piles 11/23  strays 0.020  crystals 0.997  ms/tick 19.34
+seed 3 sleeper t  31.0s  alive 3348  energy 0.990  born 10534  starved 12186  grass -0.000
+seed 3 sleeper t  31.0s  contrast 2.33
+seed 3 sleeper t  31.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  31.0s  life walk 1437 spore 0 dormant 1911 dead 0  held 2/23  bodies 7 big 1565  centre 56.5,79.9  near 0  rim 0.000/0.000
+seed 3 sleeper t  32.0s  tube  1770.2  loops    3  width 9.49  reach   65.1  piles 11/23  strays 0.030  crystals 0.997  ms/tick 19.69
+seed 3 sleeper t  32.0s  alive 3310  energy 1.016  born 10863  starved 12553  grass -0.000
+seed 3 sleeper t  32.0s  contrast 2.36
+seed 3 sleeper t  32.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  32.0s  life walk 1438 spore 0 dormant 1872 dead 0  held 2/23  bodies 7 big 1534  centre 56.5,79.8  near 0  rim 0.000/0.000
+seed 3 sleeper t  33.0s  tube  1783.0  loops    5  width 9.20  reach   66.3  piles 11/23  strays 0.030  crystals 0.997  ms/tick 20.03
+seed 3 sleeper t  33.0s  alive 3267  energy 1.046  born 11206  starved 12939  grass -0.000
+seed 3 sleeper t  33.0s  contrast 2.35
+seed 3 sleeper t  33.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  33.0s  life walk 1429 spore 0 dormant 1838 dead 0  held 2/23  bodies 8 big 1548  centre 56.3,79.7  near 0  rim 0.000/0.000
+seed 3 sleeper t  34.0s  tube  1766.2  loops    2  width 9.38  reach   61.7  piles 11/23  strays 0.034  crystals 0.996  ms/tick 20.34
+seed 3 sleeper t  34.0s  alive 3250  energy 1.072  born 11532  starved 13282  grass -0.000
+seed 3 sleeper t  34.0s  contrast 2.38
+seed 3 sleeper t  34.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  34.0s  life walk 1436 spore 0 dormant 1814 dead 0  held 1/23  bodies 8 big 1535  centre 56.3,79.7  near 0  rim 0.000/0.000
+seed 3 sleeper t  35.0s  tube  1748.5  loops    1  width 9.46  reach   66.9  piles 11/23  strays 0.030  crystals 0.996  ms/tick 20.63
+seed 3 sleeper t  35.0s  alive 3229  energy 1.097  born 11855  starved 13626  grass -0.000
+seed 3 sleeper t  35.0s  contrast 2.36
+seed 3 sleeper t  35.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  35.0s  life walk 1441 spore 0 dormant 1788 dead 0  held 1/23  bodies 7 big 1522  centre 56.3,79.7  near 0  rim 0.000/0.000
+seed 3 sleeper t  36.0s  tube  1736.0  loops    0  width 10.38  reach   64.6  piles 11/23  strays 0.023  crystals 0.996  ms/tick 20.92
+seed 3 sleeper t  36.0s  alive 3184  energy 1.134  born 12184  starved 14000  grass -0.000
+seed 3 sleeper t  36.0s  contrast 2.39
+seed 3 sleeper t  36.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  36.0s  life walk 1412 spore 0 dormant 1772 dead 0  held 1/23  bodies 7 big 1522  centre 56.2,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper t  37.0s  tube  1738.5  loops    1  width 9.89  reach   61.7  piles 11/23  strays 0.025  crystals 0.996  ms/tick 21.20
+seed 3 sleeper t  37.0s  alive 3158  energy 1.163  born 12507  starved 14349  grass -0.000
+seed 3 sleeper t  37.0s  contrast 2.41
+seed 3 sleeper t  37.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  37.0s  life walk 1415 spore 0 dormant 1743 dead 0  held 1/23  bodies 7 big 1529  centre 56.1,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper t  38.0s  tube  1715.0  loops    2  width 9.76  reach   62.2  piles 11/23  strays 0.031  crystals 0.996  ms/tick 21.45
+seed 3 sleeper t  38.0s  alive 3120  energy 1.198  born 12829  starved 14709  grass -0.000
+seed 3 sleeper t  38.0s  contrast 2.49
+seed 3 sleeper t  38.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  38.0s  life walk 1405 spore 0 dormant 1715 dead 0  held 1/23  bodies 7 big 1509  centre 56.1,79.7  near 0  rim 0.000/0.000
+seed 3 sleeper t  39.0s  tube  1695.2  loops    0  width 9.90  reach   61.7  piles 11/23  strays 0.025  crystals 0.996  ms/tick 21.69
+seed 3 sleeper t  39.0s  alive 3103  energy 1.225  born 13142  starved 15039  grass -0.000
+seed 3 sleeper t  39.0s  contrast 2.31
+seed 3 sleeper t  39.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  39.0s  life walk 1416 spore 0 dormant 1687 dead 0  held 1/23  bodies 7 big 1498  centre 56.1,79.7  near 0  rim 0.000/0.000
+seed 3 sleeper t  40.0s  tube  1696.0  loops    0  width 10.07  reach   59.5  piles 11/23  strays 0.023  crystals 0.996  ms/tick 21.93
+seed 3 sleeper t  40.0s  alive 3065  energy 1.261  born 13470  starved 15405  grass -0.000
+seed 3 sleeper t  40.0s  contrast 2.32
+seed 3 sleeper t  40.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  40.0s  life walk 1404 spore 0 dormant 1661 dead 0  held 1/23  bodies 8 big 1500  centre 56.0,79.7  near 0  rim 0.000/0.000
+seed 3 sleeper t  41.0s  tube  1691.2  loops    2  width 10.31  reach   59.5  piles 11/23  strays 0.027  crystals 0.996  ms/tick 22.17
+seed 3 sleeper t  41.0s  alive 3051  energy 1.287  born 13806  starved 15755  grass -0.000
+seed 3 sleeper t  41.0s  contrast 2.34
+seed 3 sleeper t  41.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  41.0s  life walk 1412 spore 0 dormant 1639 dead 0  held 1/23  bodies 8 big 1498  centre 55.9,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper t  42.0s  tube  1677.8  loops    2  width 9.68  reach   59.5  piles 11/23  strays 0.036  crystals 0.996  ms/tick 22.37
+seed 3 sleeper t  42.0s  alive 3024  energy 1.318  born 14143  starved 16119  grass -0.000
+seed 3 sleeper t  42.0s  contrast 2.48
+seed 3 sleeper t  42.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  42.0s  life walk 1407 spore 0 dormant 1617 dead 0  held 1/23  bodies 7 big 1488  centre 55.9,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper t  43.0s  tube  1663.2  loops    1  width 9.80  reach   59.5  piles 11/23  strays 0.037  crystals 0.996  ms/tick 22.58
+seed 3 sleeper t  43.0s  alive 3023  energy 1.340  born 14473  starved 16450  grass -0.000
+seed 3 sleeper t  43.0s  contrast 2.43
+seed 3 sleeper t  43.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  43.0s  life walk 1426 spore 0 dormant 1597 dead 0  held 1/23  bodies 7 big 1484  centre 55.9,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper t  44.0s  tube  1668.2  loops    2  width 10.11  reach   59.5  piles 11/23  strays 0.028  crystals 0.995  ms/tick 22.76
+seed 3 sleeper t  44.0s  alive 2970  energy 1.388  born 14775  starved 16805  grass -0.000
+seed 3 sleeper t  44.0s  contrast 2.49
+seed 3 sleeper t  44.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  44.0s  life walk 1398 spore 0 dormant 1572 dead 0  held 1/23  bodies 7 big 1499  centre 55.8,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper t  45.0s  tube  1659.0  loops    2  width 9.90  reach   59.5  piles 11/23  strays 0.033  crystals 0.995  ms/tick 22.96
+seed 3 sleeper t  45.0s  alive 2952  energy 1.419  born 15117  starved 17165  grass -0.000
+seed 3 sleeper t  45.0s  contrast 2.37
+seed 3 sleeper t  45.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  45.0s  life walk 1396 spore 0 dormant 1556 dead 0  held 1/23  bodies 7 big 1486  centre 55.8,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper t  46.0s  tube  1653.8  loops    2  width 10.21  reach   59.5  piles 11/23  strays 0.028  crystals 0.995  ms/tick 23.12
+seed 3 sleeper t  46.0s  alive 2939  energy 1.450  born 15437  starved 17498  grass -0.000
+seed 3 sleeper t  46.0s  contrast 2.50
+seed 3 sleeper t  46.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  46.0s  life walk 1401 spore 0 dormant 1538 dead 0  held 1/23  bodies 7 big 1484  centre 55.8,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper t  47.0s  tube  1622.8  loops    0  width 10.42  reach   59.5  piles 11/23  strays 0.023  crystals 0.995  ms/tick 23.29
+seed 3 sleeper t  47.0s  alive 2906  energy 1.488  born 15770  starved 17864  grass -0.000
+seed 3 sleeper t  47.0s  contrast 2.40
+seed 3 sleeper t  47.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  47.0s  life walk 1391 spore 0 dormant 1515 dead 0  held 1/23  bodies 8 big 1451  centre 55.7,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  48.0s  tube  1611.5  loops    0  width 10.50  reach   59.5  piles 11/23  strays 0.022  crystals 0.995  ms/tick 23.45
+seed 3 sleeper t  48.0s  alive 2887  energy 1.520  born 16091  starved 18204  grass -0.000
+seed 3 sleeper t  48.0s  contrast 2.45
+seed 3 sleeper t  48.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  48.0s  life walk 1392 spore 0 dormant 1495 dead 0  held 1/23  bodies 8 big 1449  centre 55.8,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  49.0s  tube  1601.8  loops    2  width 9.68  reach   59.5  piles 11/23  strays 0.031  crystals 0.995  ms/tick 23.60
+seed 3 sleeper t  49.0s  alive 2852  energy 1.565  born 16391  starved 18539  grass -0.000
+seed 3 sleeper t  49.0s  contrast 2.45
+seed 3 sleeper t  49.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  49.0s  life walk 1375 spore 0 dormant 1477 dead 0  held 1/23  bodies 7 big 1428  centre 55.7,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  50.0s  tube  1556.8  loops    1  width 9.58  reach   59.5  piles 11/23  strays 0.050  crystals 0.995  ms/tick 23.74
+seed 3 sleeper t  50.0s  alive 2824  energy 1.606  born 16689  starved 18865  grass -0.000
+seed 3 sleeper t  50.0s  contrast 2.42
+seed 3 sleeper t  50.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  50.0s  life walk 1372 spore 0 dormant 1452 dead 0  held 1/23  bodies 7 big 1392  centre 55.7,79.4  near 0  rim 0.000/0.000
+seed 3 sleeper t  51.0s  tube  1560.8  loops    1  width 10.30  reach   59.5  piles 11/23  strays 0.028  crystals 0.995  ms/tick 23.88
+seed 3 sleeper t  51.0s  alive 2797  energy 1.645  born 17037  starved 19240  grass -0.000
+seed 3 sleeper t  51.0s  contrast 2.59
+seed 3 sleeper t  51.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  51.0s  life walk 1368 spore 0 dormant 1429 dead 0  held 1/23  bodies 8 big 1403  centre 55.8,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  52.0s  tube  1547.0  loops    0  width 10.58  reach   59.5  piles 11/23  strays 0.024  crystals 0.995  ms/tick 24.03
+seed 3 sleeper t  52.0s  alive 2802  energy 1.663  born 17377  starved 19575  grass -0.000
+seed 3 sleeper t  52.0s  contrast 2.51
+seed 3 sleeper t  52.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  52.0s  life walk 1394 spore 0 dormant 1408 dead 0  held 1/23  bodies 7 big 1399  centre 55.6,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  53.0s  tube  1543.8  loops    1  width 10.41  reach   59.5  piles 11/23  strays 0.027  crystals 0.995  ms/tick 24.17
+seed 3 sleeper t  53.0s  alive 2771  energy 1.708  born 17669  starved 19898  grass -0.000
+seed 3 sleeper t  53.0s  contrast 2.54
+seed 3 sleeper t  53.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  53.0s  life walk 1379 spore 0 dormant 1392 dead 0  held 1/23  bodies 7 big 1399  centre 55.5,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  54.0s  tube  1533.5  loops    1  width 9.93  reach   59.5  piles 11/23  strays 0.026  crystals 0.994  ms/tick 24.30
+seed 3 sleeper t  54.0s  alive 2783  energy 1.725  born 17999  starved 20216  grass -0.000
+seed 3 sleeper t  54.0s  contrast 2.69
+seed 3 sleeper t  54.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  54.0s  life walk 1396 spore 0 dormant 1387 dead 0  held 1/23  bodies 8 big 1396  centre 55.6,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  55.0s  tube  1515.0  loops    1  width 9.81  reach   60.3  piles 11/23  strays 0.028  crystals 0.994  ms/tick 24.41
+seed 3 sleeper t  55.0s  alive 2739  energy 1.780  born 18306  starved 20567  grass -0.000
+seed 3 sleeper t  55.0s  contrast 2.69
+seed 3 sleeper t  55.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  55.0s  life walk 1375 spore 0 dormant 1364 dead 0  held 1/23  bodies 7 big 1386  centre 55.6,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  56.0s  tube  1510.5  loops    1  width 9.40  reach   59.5  piles 11/23  strays 0.028  crystals 0.994  ms/tick 24.53
+seed 3 sleeper t  56.0s  alive 2708  energy 1.829  born 18625  starved 20917  grass -0.000
+seed 3 sleeper t  56.0s  contrast 2.62
+seed 3 sleeper t  56.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  56.0s  life walk 1369 spore 0 dormant 1339 dead 0  held 1/23  bodies 8 big 1379  centre 55.6,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  57.0s  tube  1496.5  loops    1  width 9.41  reach   59.3  piles 11/23  strays 0.036  crystals 0.994  ms/tick 24.64
+seed 3 sleeper t  57.0s  alive 2691  energy 1.867  born 18955  starved 21264  grass -0.000
+seed 3 sleeper t  57.0s  contrast 2.69
+seed 3 sleeper t  57.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  57.0s  life walk 1373 spore 0 dormant 1318 dead 0  held 1/23  bodies 7 big 1368  centre 55.6,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  58.0s  tube  1491.8  loops    1  width 10.03  reach   59.3  piles 11/23  strays 0.025  crystals 0.994  ms/tick 24.77
+seed 3 sleeper t  58.0s  alive 2666  energy 1.914  born 19276  starved 21610  grass -0.000
+seed 3 sleeper t  58.0s  contrast 2.68
+seed 3 sleeper t  58.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  58.0s  life walk 1367 spore 0 dormant 1299 dead 0  held 1/23  bodies 7 big 1371  centre 55.6,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper t  59.0s  tube  1478.8  loops    1  width 9.81  reach   59.3  piles 11/23  strays 0.027  crystals 0.994  ms/tick 24.87
+seed 3 sleeper t  59.0s  alive 2657  energy 1.948  born 19600  starved 21943  grass -0.000
+seed 3 sleeper t  59.0s  contrast 2.70
+seed 3 sleeper t  59.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  59.0s  life walk 1375 spore 0 dormant 1282 dead 0  held 1/23  bodies 7 big 1360  centre 55.6,79.5  near 0  rim 0.000/0.000
+seed 3 sleeper t  60.0s  tube  1477.0  loops    0  width 10.00  reach   59.3  piles 11/23  strays 0.024  crystals 0.994  ms/tick 24.98
+seed 3 sleeper t  60.0s  alive 2634  energy 1.992  born 19894  starved 22260  grass -0.000
+seed 3 sleeper t  60.0s  contrast 2.73
+seed 3 sleeper t  60.0s  extent r50 143.9 r90 143.9
+seed 3 sleeper t  60.0s  life walk 1383 spore 0 dormant 1251 dead 0  held 1/23  bodies 7 big 1353  centre 55.7,79.6  near 0  rim 0.000/0.000
+seed 3 sleeper firsts 0:0:0.57:0.0 1:46:0.50:0.2 2:143:0.64:-1.0 3:133:0.77:-1.0 4:175:1.09:-1.0 5:188:1.01:-1.0 6:64:1.00:0.4 7:181:0.95:-1.0 8:50:0.74:0.2 9:117:0.57:-1.0 10:101:0.87:-1.0 11:166:0.77:-1.0 12:29:0.81:0.0 13:116:0.37:-1.0 14:59:0.51:0.3 15:62:0.15:0.3 16:145:0.90:-1.0 17:28:0.35:0.0 18:47:0.91:0.2 19:63:1.09:0.3 20:166:1.02:-1.0 21:35:0.82:0.1 22:123:0.90:-1.0
+seed 3 sleeper hash=caad0b411c983090

@@ -1,0 +1,15 @@
+== mix round 1
+forced, mix off:     wall ms a frame of 2 ticks and the drawing, 300 frames: median 43.695, worst 58.325; GPU ms ticks 41.186, drawing 3.039
+forced, mix of 1s:   wall ms a frame of 2 ticks and the drawing, 300 frames: median 39.355, worst 63.090; GPU ms ticks 37.442, drawing 2.251
+forced, mix:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 45.672, worst 76.377; GPU ms ticks 43.683, drawing 2.697
+== mix round 2
+forced, mix off:     wall ms a frame of 2 ticks and the drawing, 300 frames: median 39.106, worst 64.868; GPU ms ticks 35.034, drawing 2.343
+forced, mix of 1s:   wall ms a frame of 2 ticks and the drawing, 300 frames: median 41.176, worst 62.134; GPU ms ticks 38.538, drawing 2.509
+forced, mix:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 42.191, worst 66.127; GPU ms ticks 38.964, drawing 2.243
+== mix round 3
+forced, mix off:     wall ms a frame of 2 ticks and the drawing, 300 frames: median 42.639, worst 73.329; GPU ms ticks 39.865, drawing 2.566
+forced, mix of 1s:   wall ms a frame of 2 ticks and the drawing, 300 frames: median 38.727, worst 74.252; GPU ms ticks 35.810, drawing 2.209
+forced, mix:         wall ms a frame of 2 ticks and the drawing, 300 frames: median 39.605, worst 70.945; GPU ms ticks 37.512, drawing 2.267
+== passes
+square 0: GPU ms a pass, median of 11 ticks each submitted alone: sense 6.002, walk 2.830, convert 2.468, trail 19.496, scent 5.318, draw 4.109
+square 8: GPU ms a pass, median of 11 ticks each submitted alone: sense 4.586, walk 1.507, rows 23.961, convert 3.410, trail 18.007, scent 3.924, draw 3.017

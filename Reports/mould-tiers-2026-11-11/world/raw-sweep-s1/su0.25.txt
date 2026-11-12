@@ -1,0 +1,18 @@
+seed 1 su0.25 t  10.0s  alive 1815  energy 0.672  born 3318  starved 6503  grass -0.000
+seed 1 su0.25 t  10.0s  life walk 1358 spore 0 dormant 457 dead 0  held 1/23  bodies 13 big 986  centre 60.4,80.1  near 5  rim 0.000/0.000
+seed 1 su0.25 t  20.0s  alive 1496  energy 1.546  born 6061  starved 9565  grass -0.000
+seed 1 su0.25 t  20.0s  life walk 1088 spore 0 dormant 408 dead 0  held 1/23  bodies 10 big 589  centre 62.7,80.1  near 7  rim 0.000/0.000
+seed 1 su0.25 t  30.0s  alive 1498  energy 2.497  born 8591  starved 12093  grass -0.000
+seed 1 su0.25 t  30.0s  life walk 1065 spore 0 dormant 433 dead 0  held 1/23  bodies 8 big 604  centre 62.3,80.8  near 4  rim 0.000/0.000
+seed 1 su0.25 t  40.0s  alive 1468  energy 3.496  born 11123  starved 14655  grass -0.000
+seed 1 su0.25 t  40.0s  life walk 1098 spore 0 dormant 370 dead 0  held 1/23  bodies 6 big 714  centre 60.8,80.3  near 2  rim 0.000/0.000
+seed 1 su0.25 t  50.0s  alive 1516  energy 4.243  born 13778  starved 17262  grass -0.000
+seed 1 su0.25 t  50.0s  life walk 1127 spore 0 dormant 389 dead 0  held 1/23  bodies 7 big 725  centre 61.0,80.7  near 1  rim 0.000/0.000
+seed 1 su0.25 t  60.0s  alive 1557  energy 4.989  born 16386  starved 19829  grass -0.000
+seed 1 su0.25 t  60.0s  life walk 1123 spore 0 dormant 434 dead 0  held 1/23  bodies 9 big 730  centre 60.6,80.3  near 2  rim 0.000/0.000
+seed 1 su0.25 t  70.0s  alive 1649  energy 5.615  born 19084  starved 22435  grass -0.000
+seed 1 su0.25 t  70.0s  life walk 1252 spore 0 dormant 397 dead 0  held 2/23  bodies 6 big 650  centre 57.5,78.8  near 3  rim 0.000/0.000
+seed 1 su0.25 t  80.0s  alive 2504  energy 4.935  born 23162  starved 25658  grass -0.000
+seed 1 su0.25 t  80.0s  life walk 1943 spore 0 dormant 561 dead 0  held 2/23  bodies 9 big 766  centre 47.9,72.8  near 1  rim 0.000/0.000
+seed 1 su0.25 t  90.0s  alive 2297  energy 7.039  born 26982  starved 29685  grass -0.000
+seed 1 su0.25 t  90.0s  life walk 1872 spore 0 dormant 425 dead 0  held 2/23  bodies 9 big 957  centre 46.7,72.4  near 3  rim 0.000/0.000

@@ -95,10 +95,24 @@
 //! `joined=1` adds a line at each report: the piles on the mould's main
 //! body (the largest 4-connected piece of tube) and that body's area in
 //! dish cells (`joined`, 2026-11-11).
+//!
+//! The life cycle (2026-11-11, `wiki/model/life-cycle.md`): `spore_rate=
+//! spore_scent= spore_alarm= spore_burst= spore_steps= spore_speed=
+//! spore_reach= spore_deposit= spore_land= spore_rest=`, `sleep_rate=
+//! sleep_deposit= wake_scent= wake_alarm= wake_steps= sleep_rest=
+//! sleep_death=`, `alarm_keep= alarm_weight= alarm_relay=`;
+//! the player's `strike=T1,T2 strike_x= strike_y= strike_r= strike_alarm=
+//! strike_alarm_r=` and `bait=T1,T2 bait_x= bait_y= bait_r=`; `lifeline=1`
+//! prints the life line with the life cycle off; `style=life` draws it.
+//!
+//! `tier=sporer|sleeper|swarmer` sets a mould tier's life-cycle keys
+//! (`mould::tiers`); `strike_pile=N` and `bait_pile=N` aim the player's
+//! strike or bait at the food pile Nth nearest home (0: home).
 
 use std::time::Instant;
 
 use slime_mould::mould::big::{BigDish, BigParams, SpeciesSet, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE};
+use slime_mould::mould::tiers::Tier;
 use slime_mould::mould::{H, STEPS_PER_SECOND, W};
 
 fn preset(name: &str) -> BigParams {
@@ -447,12 +461,20 @@ fn main() {
     // A bait (`bait=T1,T2`): a shock of `strike_alarm` within `bait_r` dish
     // cells of (`bait_x`, `bait_y`) that clears and kills nothing.
     let (mut bait, mut bait_x, mut bait_y, mut bait_r) = (Vec::<f32>::new(), W as f32 / 2.0, H as f32 / 2.0, 20.0f32);
+    // `strike_pile=N` / `bait_pile=N` aim at the food pile Nth nearest home
+    // instead (0 is home; the world's crystals sit on piles, so a player
+    // shoots where the mould feeds).
+    let (mut strike_pile, mut bait_pile) = (None::<usize>, None::<usize>);
     // Alarm reaches `strike_alarm_r` dish cells (0: twice `strike_r`).
     let (mut strike, mut strike_x, mut strike_y, mut strike_r, mut strike_alarm, mut strike_alarm_r) = (Vec::<f32>::new(), W as f32 / 2.0, H as f32 / 2.0, 10.0f32, 50.0f32, 0.0f32);
     // Print the life line (below) even with the life cycle off, for controls.
     let mut lifeline = false;
     // Print the joined line (see `joined`).
     let mut joined_line = false;
+    // `tier=sporer|sleeper|swarmer` (`mould::tiers`): the tier's keys, set
+    // after the preset and before every other key, so `tier=sporer
+    // spore_rate=0.0001` tries a faster Sporer.
+    let mut tier = None::<Tier>;
     let mut overrides: Vec<(String, String)> = Vec::new();
     for arg in std::env::args().skip(1) {
         let (k, v) = arg.split_once('=').unwrap_or_else(|| panic!("expected key=value, got {arg}"));
@@ -489,10 +511,16 @@ fn main() {
             "bait_r" => bait_r = v.parse().unwrap(),
             "at" => at = v.split(',').map(|s| s.parse().unwrap()).collect(),
             "lifeline" => lifeline = v != "0",
+            "tier" => tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("tier={v}: one of sporer, sleeper, swarmer"))),
+            "strike_pile" => strike_pile = Some(v.parse().unwrap()),
+            "bait_pile" => bait_pile = Some(v.parse().unwrap()),
             _ => overrides.push((k.into(), v.into())),
         }
     }
     let mut p = preset(&name);
+    if let Some(t) = tier {
+        t.apply(&mut p);
+    }
     let name = tag.unwrap_or(name);
     // Per-species keys (`s0_crowd=1 s1_sensor_angle=45`, `species_sets`)
     // apply after every global key, to sets copied from the final globals.
@@ -619,6 +647,7 @@ fn main() {
             "wake_alarm" => p.wake_alarm = f(),
             "wake_steps" => p.wake_steps = f() as u16,
             "sleep_rest" => p.sleep_rest = f() as u16,
+            "sleep_death" => p.sleep_death = f(),
             "alarm_keep" => p.alarm_keep = f(),
             "alarm_weight" => p.alarm_weight = f(),
             "alarm_relay" => p.alarm_relay = f(),
@@ -657,6 +686,13 @@ fn main() {
         let mut d = BigDish::new(BigParams { seed, ..p.clone() });
         d.threads = threads;
         println!("== seed {seed}: {} x {}, {} walkers, {} piles", d.w, d.h, d.walkers.len(), d.piles.len());
+        // Piles by distance from home (pile 0), so `strike_pile=1` is the
+        // nearest crystal to the start on every seed.
+        let mut by_home: Vec<(f32, f32)> = d.piles.clone();
+        let home = d.piles[0];
+        by_home.sort_by(|a, b| (a.0 - home.0).hypot(a.1 - home.1).total_cmp(&(b.0 - home.0).hypot(b.1 - home.1)));
+        let (strike_x, strike_y) = strike_pile.map_or((strike_x, strike_y), |n| by_home[n]);
+        let (bait_x, bait_y) = bait_pile.map_or((bait_x, bait_y), |n| by_home[n]);
         let mut shots = Vec::new();
         let mut spent = 0.0f64;
         let to_tick = |t: f32| if t < 0.0 { u64::MAX } else { (t * STEPS_PER_SECOND as f32).round() as u64 };
