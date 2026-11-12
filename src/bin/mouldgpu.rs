@@ -3916,6 +3916,54 @@ mod tests {
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the craters changed the CPU's game");
     }
 
+    /// **The core's pull** (`Core::pull`, core defence, 2026-11-12) on the
+    /// engine as on the CPU: the race world, seed 3, the squad sent to
+    /// attack the core from the start for 30 s with the pull at 8. The
+    /// pull is the soldiers' own scent, laid by the squad frame on both
+    /// engines, so no new GPU row: the moulds stay within the race twin's
+    /// 8% (or 100 walkers, once few are left) and the kills within 15%,
+    /// and the pull changes the CPU's game.
+    #[test]
+    fn a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 30.0, core_pull: 8.0, ..Rules::default() };
+        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { core_pull: 0.0, ..rules }, seed);
+        for g in [&mut cpu.log, &mut gpu.log, &mut off.log] {
+            g.clear();
+        }
+        for k in 0..cpu.soldiers.len() {
+            assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)) && off.apply(Cmd::Order(k, Order::Attack)));
+        }
+        let (mut sizes, mut pulled) = (Vec::new(), 0u32);
+        while cpu.end.is_none() {
+            cpu.step();
+            gpu.step();
+            off.step();
+            let sc = cpu.world.scale();
+            pulled += cpu.soldiers.iter().any(|s| s.alive && (s.x - cpu.core.0).hypot(s.y - cpu.core.1) <= 2.0 * cpu.rules.core_r * sc) as u32;
+            if cpu.world.ticks() % 75 == 0 {
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living(), off.world.living()));
+            }
+        }
+        eprintln!("attacking the core with the pull: game s, living CPU, GPU, CPU without the pull: {sizes:?}; ticks a soldier pulled {pulled}; shots {} / {}, killed {} / {} (without the pull {}), soldiers left {} / {} ({})", cpu.shots, gpu.shots, cpu.killed, gpu.killed, off.killed, cpu.alive(), gpu.alive(), off.alive());
+        assert!(pulled > 0, "a soldier reached the core");
+        let (a, b) = (cpu.killed as f64, gpu.killed as f64);
+        assert!(a > 0.0 && (a - b).abs() <= 0.15 * a, "killed {b} on the GPU, {a} on the CPU");
+        // 8%, or 100 walkers once the pulled mould is under 1,250: by 30 s
+        // the drawn hub has fed the squad's fire down to 730 walkers on the
+        // CPU and 815 on the GPU (seed 3), 11% apart on kills 1.2% apart.
+        for &(t, a, b, _) in &sizes {
+            let (a, b) = (a as f64, b as f64);
+            assert!((a - b).abs() <= (0.08 * a).max(100.0), "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+        }
+        assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the pull changed the CPU's game");
+    }
+
     /// **Buildings on the engine as on the CPU** (turret, lure, pump: units
     /// that do not move in the squad frame, `larder_world::buildings`). A
     /// pump on the larder's crystal banks the same food on both and a lure

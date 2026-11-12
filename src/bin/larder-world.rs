@@ -65,7 +65,8 @@
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
 //! long a hit's crater lasts (`Rules::crater`, 10 game seconds; 0 is off);
 //! `aim=STRIKE,EVERY,SPREAD` sets the shot's strike, fire rate and aim
-//! spread (`Rules::spread`).
+//! spread (`Rules::spread`); `core_pull=P` how strongly soldiers near the
+//! mould's core draw it (`Rules::core_pull`; 0 is off).
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -158,6 +159,10 @@ struct Args {
     /// (`Rules::strike`, `shot_every`, `spread`): the look A/B of a
     /// scattered smaller strike against the round one.
     aim: Option<[f32; 3]>,
+    /// `core_pull=P`: how many times its own scent a soldier near the core
+    /// lays (`Rules::core_pull`, the core defence; 0 turns it off, to
+    /// compare). A tier's own core (`Tier::core`) wins.
+    core_pull: Option<f32>,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -315,6 +320,9 @@ impl App {
         let Some((device, queue)) = &self.gpu else { return Ok(()) };
         let a = &self.args;
         let mut s = race_settings(a.seed, a.scale, a.walkers);
+        // The tier whose core the game plays (`Tier::core`, read by
+        // `Game::with_tier`): the mission's, or a `tier=` key's (the last).
+        let mut core_tier = None;
         let mission = match &a.mission {
             Some(name) => {
                 let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
@@ -323,7 +331,10 @@ impl App {
                 // the plain mould, and says so.
                 if let Some(t) = m.tier.as_deref() {
                     match Tier::from_name(t) {
-                        Some(tier) => tier.settings(&mut s)?,
+                        Some(tier) => {
+                            tier.settings(&mut s)?;
+                            core_tier = Some(tier);
+                        }
                         None => eprintln!("larder-world: tier {t} is not built yet; the plain mould plays"),
                     }
                 }
@@ -334,6 +345,9 @@ impl App {
         // Engine keys last, over the race world's and the mission's tier.
         for (k, v) in &a.keys {
             slime_mould::gpu::set(&mut s, k, v)?;
+            if k == "tier" {
+                core_tier = Tier::from_name(v);
+            }
         }
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
         let world = match &map_name {
@@ -352,10 +366,13 @@ impl App {
         if let Some(c) = a.crater {
             rules.crater = c;
         }
+        if let Some(p) = a.core_pull {
+            rules.core_pull = p;
+        }
         if let Some([strike, every, spread]) = a.aim {
             (rules.strike, rules.shot_every, rules.spread) = (strike, every, spread);
         }
-        let game = Game::new(world, rules, a.seed);
+        let game = Game::new(world, rules, a.seed).with_tier(core_tier);
         self.mission = mission.map(|m| Tracker::new(m, &game));
         self.mission_sec = 0;
         let e = &game.world.e;
@@ -2020,7 +2037,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast) = (None::<f32>, 60.0f32, true, 0usize, false);
     let mut holes = false;
@@ -2033,6 +2050,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "walkers" => args.walkers = v.parse()?,
             "mission" => args.mission = Some(v.to_string()),
             "crater" => args.crater = Some(v.parse()?),
+            "core_pull" => args.core_pull = Some(v.parse()?),
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
@@ -2055,7 +2073,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater, aim; look, hand, at, screen, sound, holes; bench, fps, stamps, grid, fast)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater, aim, core_pull; look, hand, at, screen, sound, holes; bench, fps, stamps, grid, fast)").into()),
             },
         }
     }
@@ -2086,7 +2104,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -2117,7 +2135,7 @@ mod tests {
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None }, (640, 400), &device, &queue).unwrap();
         assert_eq!(app.name, "flats");
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();
@@ -2160,7 +2178,7 @@ mod tests {
     /// 256 x 160 dish, 1,250 walkers): 5-9 s a round on software Vulkan,
     /// against 20-24 s at scale 2 (2026-11-12).
     fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
-        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None };
+        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None };
         let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast };
         let t0 = Instant::now();
         let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
@@ -2213,7 +2231,7 @@ mod tests {
     #[test]
     fn a_shot_from_a_soldier_with_no_note_yet_draws() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None }, (320, 200), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None }, (320, 200), &device, &queue).unwrap();
         let g = app.game.as_mut().unwrap();
         let s = *g.soldiers.last().unwrap();
         g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0 }];

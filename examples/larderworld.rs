@@ -254,6 +254,7 @@ fn main() {
             // `crater=S`: game seconds of crater each hit lays
             // (`Rules::crater`).
             "crater" => rules.crater = v.parse().unwrap(),
+            "core_pull" => rules.core_pull = v.parse().unwrap(),
             "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
             "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
             "scorch_cone" => m.scorch_cone = v == "1",
@@ -571,7 +572,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, han
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),
         };
-        return play_on(Game::new(world, rules, seed), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
+        return play_on(Game::new(world, rules, seed).with_tier(mould.tier), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
     }
     let mut p = race_params(seed, scale, walkers);
     mould.apply(&mut p);
@@ -585,7 +586,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, han
         counts(g, hand, seed);
     };
     let near = |d: &BigDish, live: &[(f32, f32)], r: f32| Some((0..d.walkers.len()).filter(|&k| d.lives(k) && live.iter().any(|&(x, y)| (d.walkers[k].0 - x).hypot(d.walkers[k].1 - y) <= r)).count());
-    play_on(Game::new(world, rules, seed), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
+    play_on(Game::new(world, rules, seed).with_tier(mould.tier), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
 }
 
 /// Living walkers within a radius (fine cells) of any of the points, where
