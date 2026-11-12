@@ -51,7 +51,7 @@ references stay right.
 5. **The Organ and the Wanderer:** keep, change or drop.
 6. **The GPU plan:** upload Jones 2011 before phase 4 (W0); hold the Pixel_Physics multi-core renderer port. ([page](wiki/model/scale.md))
 7. **Bloomfront's open questions** (fog of war from a held quantity; two keepers or three-to-four), now folded into Larder World's. ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md))
-8. **Larder World's open questions:** world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds. ([roadmap](Reports/larder-world-roadmap-2026-11-11.md))
+8. **Larder World's open questions:** world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds. ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)) For the campaign, how a mission ends and what carries (unlocked verbs only) are decided (owner, 11-12 04:44Z; [design](Reports/larder-campaign-2026-11-12.md)); world size, allies or rivals and fog stay open.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo
