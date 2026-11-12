@@ -1,0 +1,94 @@
+mission 1-landfall (Landfall): "Grow your squad to 12 and harvest 3 crystals at once", map flats, tier drifter , seeds 1-32, scale 2, walkers 5000
+on the CPU and the GPU engine
+campaign: GPU NVIDIA GeForce GTX 1070
+campaign: GPU NVIDIA GeForce GTX 1070
+  idle s2: Stuck 30s 0*
+  idle s1 GPU: Stuck 50s 0*
+  idle s2 GPU: Stuck 80s 0*
+  idle s3 GPU: Stuck 58s 0*
+  idle s4 GPU: Stuck 72s 0*
+  idle s1: Stuck 70s 0*
+campaign: GPU NVIDIA GeForce GTX 1070
+  idle s3: Stuck 66s 0*
+  idle s5: Stuck 30s 0*
+  idle s5 GPU: Stuck 65s 0*
+  idle s7: Stuck 30s 0*
+  idle s6 GPU: Stuck 83s 0*
+  idle s7 GPU: Stuck 60s 0*
+  idle s4: Stuck 97s 0*
+  idle s6: Stuck 56s 0*
+  idle s8 GPU: Stuck 52s 0*
+campaign: GPU NVIDIA GeForce GTX 1070
+  idle s9 GPU: Stuck 30s 0*
+  idle s8: Stuck 69s 0*
+  idle s10 GPU: Stuck 102s 0*
+  idle s10: Stuck 55s 0*
+  idle s9: Stuck 74s 0*
+  idle s12: Stuck 30s 0*
+  idle s11 GPU: Stuck 142s 0*
+  idle s12 GPU: Stuck 30s 0*
+  idle s11: Stuck 55s 0*
+  idle s13: Stuck 30s 0*
+  idle s13 GPU: Stuck 65s 0*
+  idle s14 GPU: Stuck 47s 0*
+  idle s15 GPU: Stuck 71s 0*
+  idle s16 GPU: Stuck 30s 0*
+  idle s16: Stuck 30s 0*
+  idle s17 GPU: Stuck 72s 0*
+  idle s14: Stuck 69s 0*
+  idle s18 GPU: Stuck 53s 0*
+  idle s15: Stuck 98s 0*
+  idle s18: Stuck 54s 0*
+  idle s17: Stuck 71s 0*
+  idle s20 GPU: Stuck 53s 0*
+  idle s19 GPU: Stuck 80s 0*
+  idle s20: Stuck 30s 0*
+  idle s21 GPU: Stuck 30s 0*
+  idle s22 GPU: Stuck 77s 0*
+  idle s23: Stuck 30s 0*
+  idle s19: Stuck 113s 0*
+  idle s23 GPU: Stuck 75s 0*
+  idle s22: Stuck 62s 0*
+  idle s24 GPU: Stuck 55s 0*
+  idle s21: Stuck 81s 0*
+  idle s25: Stuck 30s 0*
+  idle s25 GPU: Stuck 76s 0*
+  idle s26 GPU: Stuck 76s 0*
+  idle s27 GPU: Stuck 30s 0*
+  idle s24: Stuck 77s 0*
+  idle s27: Stuck 54s 0*
+  idle s28 GPU: Stuck 57s 0*
+  idle s28: Stuck 56s 0*
+  idle s29 GPU: Stuck 101s 0*
+  idle s26: Stuck 92s 0*
+  idle s30 GPU: Stuck 74s 0*
+  idle s31 GPU: Stuck 101s 0*
+  idle s29: Stuck 75s 0*
+  idle s31: Stuck 59s 0*
+  idle s32 GPU: Stuck 75s 0*
+  idle s32: Stuck 57s 0*
+  idle s30: Stuck 103s 0*
+  random s2 GPU: Stuck 402s 0*
+  random s1 GPU: Cap 900s 0*
+  random s3 GPU: Cap 900s 0*
+  random s2: Stuck 403s 0*
+  random s4 GPU: Cap 900s 0*
+  random s3: Stuck 766s 0*
+  random s5 GPU: Stuck 588s 0*
+  random s1: Cap 900s 0*
+  random s6 GPU: Cap 900s 0*
+  random s5: Stuck 588s 0*
+  random s4: Cap 900s 0*
+  random s7 GPU: Cap 900s 0*
+  random s8 GPU: Stuck 481s 0*
+  random s9: Stuck 354s 0*
+  random s7: Cap 900s 0*
+  random s9 GPU: Stuck 350s 0*
+  random s8: Stuck 540s 0*
+  random s6: Cap 900s 0*
+  random s10 GPU: Stuck 820s 0*
+  random s11 GPU: Stuck 127s 0*
+  random s11: Stuck 122s 0*
+  random s10: Stuck 271s 0*
+memory allocation of 1400000 bytes failed
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

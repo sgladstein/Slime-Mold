@@ -1,0 +1,10 @@
+mission 2-first-contact (First contact): "Drive the mould off its home crystal and hold it for 60 s", map fork, tier drifter , seeds 1-32, scale 2, walkers 5000
+on the CPU and the GPU engine
+campaign: GPU NVIDIA GeForce GTX 1070
+campaign: GPU NVIDIA GeForce GTX 1070
+  idle s2 GPU: Cap 900s 0*
+  idle s1 GPU: Cap 900s 0*
+memory allocation of 1400000 bytes failed
+memory allocation of 1400000 bytes failed
+skipping backtrace printing to avoid potential recursion
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
