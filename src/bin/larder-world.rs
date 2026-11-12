@@ -52,13 +52,15 @@
 //! whole body (its size, hunger, eating, flinching at gunfire); K turns
 //! just that off and on, `voice=0` starts without it.
 //!
-//! `-- look=DIR [hand=rush|farm|idle] [at=5,30,60] [screen=1280x800]
+//! `-- look=DIR [hand=rush|stand|volley|farm|idle] [at=5,30,60] [screen=1280x800]
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
 //! `holes=1` also times how long each hit's hole stays open; `centre=X,Y`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
+//! `hand=volley` fires the squad into the thick body from 22 to 34 s,
+//! then holds fire and steps back (`volley`).
 //! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]
 //! [sound=PATH] [fast=1] [passes=N]` times the window's frame without a
 //! window (`bench`), a mission's too, and with `passes=` each GPU pass of
@@ -69,7 +71,18 @@
 //! long a hit's crater lasts (`Rules::crater`, 10 game seconds; 0 is off);
 //! `aim=STRIKE,EVERY,SPREAD` sets the shot's strike, fire rate and aim
 //! spread (`Rules::spread`); `core_pull=P` how strongly soldiers near the
-//! mould's core draw it (`Rules::core_pull`; 0 is off).
+//! mould's core draw it (`Rules::core_pull`; 0 is off); `wade=W` how many
+//! walkers touching a soldier halve its speed (`Rules::wade`; 0 is off).
+//!
+//! **Shapes to playtest** (owner, 2026-11-12 20:21Z: "I will playtest the
+//! shapes"): `shape=a|b|c|d|e` plays one of the five films on the shapes
+//! page (`Reports/slime-questions-2026-11-12/`): A today's 5,000 walkers;
+//! B a mesh everywhere (25,000 scattered, no food scent); C a sheet with
+//! trunks (25,000 grown from home); D as C with 22.5-degree sensors 5
+//! cells out (sheet, then mesh, then trunks); E as C with a slow thin
+//! front. Put it first: keys after it change it. A walker's fight weight
+//! follows the walkers a cell (`Rules::mass`: 5,000 at scale 2 count 1
+//! each, so the dense shapes hurt like today's mould); `mass=M` sets it.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -79,7 +92,7 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::kit::{Kit, KitRules, Tool};
-use slime_mould::mould::larder_world::{Cmd, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
@@ -191,6 +204,26 @@ struct Args {
     /// lays (`Rules::core_pull`, the core defence; 0 turns it off, to
     /// compare). A tier's own core (`Tier::core`) wins.
     core_pull: Option<f32>,
+    /// `wade=W`: walkers touching a soldier that halve its speed
+    /// (`Rules::wade`; 0 turns the slowdown in thick slime off).
+    wade: Option<f32>,
+    /// `mass=M`: one walker's fight weight (`Rules::mass`); None follows the
+    /// start walkers a cell (`Rules::mass_for`).
+    mass: Option<f32>,
+}
+
+/// The engine keys of a shape on the shapes page (`shape=`), with its start
+/// walkers. The films held one walker a cell with `capacity=50000`.
+fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'static str)])> {
+    const DENSE: [(&str, &str); 2] = [("upkeep", "0.0002"), ("capacity", "50000")];
+    Some(match name {
+        "a" => (5_000, &[]),
+        "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),
+        "c" => (25_000, &DENSE),
+        "d" => (25_000, &[DENSE[0], DENSE[1], ("sensor_angle", "22.5"), ("sensor_offset", "5")]),
+        "e" => (25_000, &[DENSE[0], DENSE[1], ("step", "0.15"), ("trail_scale", "0.02"), ("step_by", "0.85:2")]),
+        _ => return None,
+    })
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -392,6 +425,7 @@ impl App {
                 core_tier = Tier::from_name(v);
             }
         }
+        let walkers = s.walkers;
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
         let world = match &map_name {
             Some(name) => {
@@ -411,6 +445,10 @@ impl App {
         }
         if let Some(p) = a.core_pull {
             rules.core_pull = p;
+        }
+        rules.mass = a.mass.unwrap_or(Rules::mass_for(walkers, a.scale));
+        if let Some(w) = a.wade {
+            rules.wade = w;
         }
         if let Some([strike, every, spread]) = a.aim {
             (rules.strike, rules.shot_every, rules.spread) = (strike, every, spread);
@@ -821,7 +859,15 @@ impl App {
         }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
-            self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
+            let say = match g.core_rule.kind {
+                CoreKind::Regrow { starve_secs } => format!("The core is taken: it grows back in {starve_secs:.0} s unless the mould eats nothing till then"),
+                _ => "The core is taken: the mould can no longer grow".into(),
+            };
+            self.hud.alert(&say, Some(g.core), theme::GOOD);
+        } else if g.core_down.is_none() && self.core_told {
+            // A regrowing core (`CoreKind::Regrow`) the mould fed.
+            self.core_told = false;
+            self.hud.alert("The core grew back: the mould still eats. Keep it off the crystals", Some(g.core), theme::BAD);
         }
         if g.stolen > self.stolen {
             if self.robbed_at.is_none_or(|r| t - r > 30.0) {
@@ -928,8 +974,12 @@ impl App {
                 self.marks.ring((x, y), 1.2 * sc, [214, 196, 150, 160]);
             }
         }
-        let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
-        self.marks.ring(g.core, g.rules.core_r * sc, core);
+        // The core ring marks a home that can be taken, so a headless mould
+        // (the default since 11-12 20:21Z: no king) shows none.
+        if g.core_rule.kind != CoreKind::Headless {
+            let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
+            self.marks.ring(g.core, g.rules.core_r * sc, core);
+        }
         // Buildings: sprites in soldier A's style (`Marks::building`,
         // src/world/sprites/buildings.svg), drawn from the game's state:
         // rising as they are built, darkening as they are hurt, the lamp
@@ -1036,7 +1086,13 @@ impl App {
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
             objective: Some(if let Some(tr) = &self.mission {
                 tr.progress_line()
-            } else if g.core_down.is_some() { "Core taken: wipe out the mould, or cut it down by 15:00".into() } else { "Take the mould's core, or out-harvest it and cut it down by 15:00".into() }),
+            } else if g.core_rule.kind == CoreKind::Headless {
+                "Wipe out the mould, or out-harvest it and cut it down by 15:00".into()
+            } else if g.core_down.is_some() {
+                "Core taken: wipe out the mould, or cut it down by 15:00".into()
+            } else {
+                "Take the mould's core, or out-harvest it and cut it down by 15:00".into()
+            }),
             idle: g.soldiers.iter().filter(|s| s.alive && s.order == Order::Hold).count(),
             ..Model::default()
         };
@@ -1692,7 +1748,7 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     // through `larder_world_ai`, as the census does, so a campaign mission's
     // pictures show the hands its numbers were set on.
     let mut ai = match hand {
-        "rush" | "farm" => None,
+        "rush" | "farm" | "stand" | "volley" => None,
         _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
     };
     // Each hit: where, its tick, the body there the tick before, and the
@@ -2240,6 +2296,63 @@ fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, queue: &wgpu
 }
 
 /// The headless run's hand, once a game second.
+/// The look mode's `volley` hand (the owner, 11-12 16:55Z, on the crater
+/// clips: "in these videos they were mostly shooting at individuals so it
+/// was hard to evaluate until the end when they shot at the core of
+/// slime"). The squad spends its bank on soldiers in the first second and
+/// from 15 s walks to a point in range of the thick ring of mould on the
+/// core crystal (short of the core's pull). At `VOLLEY` it burns one
+/// line across the ring's near side (`Order::Burn`, the window's F), so
+/// every shot goes into the body, not at stray walkers; at `VOLLEY_STOP`
+/// it stops firing and steps back, so the clip shows the hole refilling
+/// with nobody shooting. (A first cut walked as `stand` does and burned a
+/// line 0.6 of the range ahead; on the Fork that line lay on thin
+/// tendrils, 48 kills in 12 s.)
+const VOLLEY: f32 = 22.0;
+const VOLLEY_STOP: f32 = 34.0;
+
+fn volley(g: &mut Game<GpuWorld>) {
+    let t = g.time();
+    let sc = g.world.scale();
+    let (dx, dy) = (g.core.0 - g.larder.0, g.core.1 - g.larder.1);
+    let d = dx.hypot(dy).max(1.0);
+    let u = (dx / d, dy / d);
+    // The line's middle just outside the core crystal, and where a
+    // burning soldier stands back from it (0.6 of its range).
+    let reach = g.world.crystal_r(0) + 2.0 * sc;
+    let m = (g.core.0 - u.0 * reach, g.core.1 - u.1 * reach);
+    let keep = 0.6 * g.rules.range * sc;
+    let stand = (m.0 - u.0 * keep, m.1 - u.1 * keep);
+    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
+    let burning = live.iter().any(|&k| matches!(g.soldiers[k].order, Order::Burn(..)));
+    if t < VOLLEY {
+        while t < 1.0 && g.bank >= g.rules.soldier_cost {
+            g.apply(Cmd::Buy);
+        }
+        // The starting disc of walkers fills the stem until it thins out
+        // (5,000 at 14 s, about 2,200 by 22 s): a squad sent at once died
+        // in it by 14 s. So it waits, then walks on its Defend stance.
+        for k in 0..g.soldiers.len() {
+            if t >= VOLLEY - 7.0 && g.soldiers[k].alive && g.soldiers[k].order == Order::Hold {
+                g.apply(Cmd::Order(k, Order::Move(stand.0, stand.1)));
+            }
+        }
+    } else if t < VOLLEY_STOP && !burning {
+        // Ten dish cells long, across the way to the core.
+        let half = 5.0 * sc;
+        let (a, b) = ((m.0 - u.1 * half, m.1 + u.0 * half), (m.0 + u.1 * half, m.1 - u.0 * half));
+        for &k in &live {
+            g.apply(Cmd::Order(k, Order::Burn(a, b)));
+        }
+    } else if t >= VOLLEY_STOP && burning {
+        let back = (stand.0 - u.0 * 8.0 * sc, stand.1 - u.1 * 8.0 * sc);
+        for &k in &live {
+            g.apply(Cmd::Stance(k, Stance::HoldFire));
+            g.apply(Cmd::Order(k, Order::Move(back.0, back.1)));
+        }
+    }
+}
+
 fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // `build`: farm, with a pump on the larder's crystal, two turrets on
     // the road to the core and a lure past them (the look at buildings).
@@ -2274,6 +2387,10 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             }
         }
     }
+    if hand == "volley" {
+        volley(g);
+        return;
+    }
     let hand = if hand == "build" { "farm" } else { hand };
     if g.time() > 0.5 && hand == "farm" && g.bank >= 1200.0 {
         g.apply(Cmd::Buy);
@@ -2293,6 +2410,15 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             ("rush", _) => {
                 g.apply(Cmd::Order(k, Order::Attack));
             }
+            // Attack-move on the core: the squad stops where the mould comes
+            // in range and fires into it from there (the owner, 11-12
+            // 14:41Z, on the rush's clips: "I was more expecting soldiers
+            // standing shooting into slime. Not running through slime
+            // leaving craters under their feet").
+            ("stand", _) => {
+                let c = g.core;
+                g.apply(Cmd::Order(k, Order::Fight(c.0, c.1)));
+            }
             ("farm", Some(c)) => {
                 g.apply(Cmd::Order(k, Order::Clear(c.0, c.1)));
             }
@@ -2302,7 +2428,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, wade: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -2318,6 +2444,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "mission" => args.mission = Some(v.to_string()),
             "crater" => args.crater = Some(v.parse()?),
             "core_pull" => args.core_pull = Some(v.parse()?),
+            "mass" => args.mass = Some(v.parse()?),
+            "shape" => {
+                let (walkers, keys) = shape_keys(v).ok_or("shape=a|b|c|d|e (the shapes page's films)")?;
+                args.walkers = walkers;
+                args.keys.extend(keys.iter().map(|(k, v)| (k.to_string(), v.to_string())));
+            }
+            "wade" => args.wade = Some(v.parse()?),
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
@@ -2348,7 +2481,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission, crater, aim, core_pull; look, hand, at, screen, sound, holes, centre; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade; look, hand, at, screen, sound, holes, centre; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
@@ -2374,6 +2507,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use super::*;
 
+    /// Every shape on the shapes page (`shape=`) is engine keys the race
+    /// world takes, and only A is today's 5,000 walkers.
+    #[test]
+    fn every_shape_is_keys_the_engine_takes() {
+        for name in ["a", "b", "c", "d", "e"] {
+            let (walkers, keys) = shape_keys(name).unwrap();
+            let mut s = race_settings(1, 2, walkers);
+            for (k, v) in keys {
+                slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("shape {name}: {k}={v}: {e}"));
+            }
+            assert_eq!(walkers == 5_000, name == "a", "{name}");
+        }
+        assert!(shape_keys("f").is_none());
+        assert_eq!((Rules::mass_for(5_000, 2), Rules::mass_for(1_250, 1), Rules::mass_for(25_000, 2)), (1.0, 1.0, 0.2));
+    }
+
     /// The window plays the real game: soldiers sent at the core fire,
     /// their shots kill walkers, the window draws each shot's ray, and the
     /// engine leaves the look's wound where a shot cut (the squad's `cut`
@@ -2382,7 +2531,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, wade: None }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -2416,7 +2565,7 @@ mod tests {
     #[test]
     fn the_window_uses_the_tools() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None }, (320, 200), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, wade: None }, (320, 200), &device, &queue).unwrap();
         for _ in 0..10 {
             app.step(1.0 / 15.0);
         }
@@ -2446,7 +2595,7 @@ mod tests {
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None, mass: None, wade: None }, (640, 400), &device, &queue).unwrap();
         assert_eq!(app.name, "flats");
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();
@@ -2489,7 +2638,7 @@ mod tests {
     /// 256 x 160 dish, 1,250 walkers): 5-9 s a round on software Vulkan,
     /// against 20-24 s at scale 2 (2026-11-12).
     fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
-        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None };
+        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None, mass: None, wade: None };
         let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast, passes: 0, settle: false, squad1: false, spread: true };
         let t0 = Instant::now();
         let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
@@ -2542,7 +2691,7 @@ mod tests {
     #[test]
     fn a_shot_from_a_soldier_with_no_note_yet_draws() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None }, (320, 200), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, wade: None }, (320, 200), &device, &queue).unwrap();
         let g = app.game.as_mut().unwrap();
         let s = *g.soldiers.last().unwrap();
         g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0 }];

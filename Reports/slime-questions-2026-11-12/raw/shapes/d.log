@@ -1,0 +1,29 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/headless/shapes/d/fork-idle-030s-all.png
+/tmp/claude-0/headless/shapes/d/fork-idle-030s-near.png
+  CPU: ground field 1.39 ms (once a game second), model and HUD 0.030 ms a frame
+  t 30 s: mould 25546, soldiers 4, bank 1966, harvested 0, shots 111, killed 828, took 0%, crystals left 0.997; squad at 256.0,112.5
+/tmp/claude-0/headless/shapes/d/fork-idle-060s-all.png
+/tmp/claude-0/headless/shapes/d/fork-idle-060s-near.png
+  CPU: ground field 0.93 ms (once a game second), model and HUD 0.028 ms a frame
+  t 60 s: mould 28841, soldiers 4, bank 1954, harvested 0, shots 220, killed 1202, took 0%, crystals left 0.991; squad at 256.0,112.5
+/tmp/claude-0/headless/shapes/d/fork-idle-090s-all.png
+/tmp/claude-0/headless/shapes/d/fork-idle-090s-near.png
+  CPU: ground field 0.94 ms (once a game second), model and HUD 0.028 ms a frame
+  t 90 s: mould 14525, soldiers 4, bank 1949, harvested 0, shots 322, killed 1491, took 0%, crystals left 0.983; squad at 256.0,112.5
+/tmp/claude-0/headless/shapes/d/fork-idle-120s-all.png
+/tmp/claude-0/headless/shapes/d/fork-idle-120s-near.png
+  CPU: ground field 0.84 ms (once a game second), model and HUD 0.032 ms a frame
+  t 120 s: mould 14733, soldiers 4, bank 1946, harvested 0, shots 417, killed 1658, took 0%, crystals left 0.973; squad at 256.0,112.5
+/tmp/claude-0/headless/shapes/d/fork-idle-150s-all.png
+/tmp/claude-0/headless/shapes/d/fork-idle-150s-near.png
+  CPU: ground field 1.00 ms (once a game second), model and HUD 0.036 ms a frame
+  t 150 s: mould 16098, soldiers 4, bank 1941, harvested 0, shots 516, killed 1856, took 0%, crystals left 0.964; squad at 256.0,112.5
+/tmp/claude-0/headless/shapes/d/fork-idle-180s-all.png
+/tmp/claude-0/headless/shapes/d/fork-idle-180s-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.068 ms a frame
+  t 180 s: mould 16318, soldiers 4, bank 1935, harvested 0, shots 619, killed 2059, took 0%, crystals left 0.954; squad at 256.0,112.5
+/tmp/claude-0/headless/shapes/d/fork-idle-240s-all.png
+/tmp/claude-0/headless/shapes/d/fork-idle-240s-near.png
+  CPU: ground field 0.88 ms (once a game second), model and HUD 0.029 ms a frame
+  t 240 s: mould 16140, soldiers 4, bank 1929, harvested 0, shots 811, killed 2375, took 0%, crystals left 0.935; squad at 256.0,112.5
