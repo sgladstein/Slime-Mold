@@ -44,6 +44,7 @@ work; a thread working on one directly may change it.
 - [The player's own mould](world/own-mould.md): gardeners (owner, 11-12); soldiers grow a second species that fights the enemy by conversion; forms trade eating for fighting.
 - [The mould tiers](world/mould-tiers.md): the difficulty ladder, Drifter to Mixes plus Sporer, Sleeper, Swarmer; each tier has a counter.
 - [The world camera and UI](world/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls and the game UI over a world bigger than the screen; view 0.3-0.4 ms, UI 0.1 ms on the 1070.
+- [The squad toolkit](world/squad-toolkit.md): six tools from the mould's model (blast and crater, mine, det cord, germ, sleep gas, smell); the loud plan wins every tier so far.
 
 ## Other games in design
 

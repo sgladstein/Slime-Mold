@@ -225,6 +225,13 @@ pub struct BigParams {
     pub sick_reach: f32,
     pub sick_turn: f32,
     pub sick_seed_r: f32,
+    /// A sick walker's upkeep is x this (1: sickness costs nothing). The
+    /// squad toolkit's germ (`mould::kit`, 2026-11-12): contagion that only
+    /// changed steering left no mark by 20 s (`Reports/dead-ends.md`, the
+    /// contagion entry: "re-test when sickness changes trail or food"), so
+    /// the germ's sickness burns energy, and a wave that runs along the
+    /// tubes leaves them thinned where the walkers starve.
+    pub sick_upkeep: f32,
     /// Area sensors (Lague's Slime-Simulation): a sensor reads the sum over
     /// the (2r+1) x (2r+1) square of agar cells centred where it points,
     /// not one cell. 0 is one cell (today's). The square's centre cell
@@ -498,6 +505,9 @@ pub struct BigParams {
     /// chance keeps the crust whole through a bait's few seconds and lets an
     /// unfed one fade over a minute or two.
     pub sleep_death: f32,
+    /// A gassed walker (`BigDish::gas`, the squad toolkit's sleep gas)
+    /// dies with this chance each step while its gas lasts (0 the default).
+    pub gas_death: f32,
     /// **Alarm** (off when `alarm_keep` is 0): a field on the fine grid that
     /// a strike lays (`BigDish::strike`) and a waking walker relays. Each
     /// fine step it gets one 3x3 mean over the agar times `alarm_keep`, as
@@ -570,6 +580,23 @@ pub struct BigParams {
     pub sand_keep: f32,
     pub clay_keep: f32,
     pub barren_upkeep: f32,
+    /// Trail on a scorched cell (`BigDish::scorch_disc`, a blast's crater in
+    /// the squad toolkit) is x this after each fine step's spread while the
+    /// scorch lasts. Why a timed field and not a soil kind: a crater must
+    /// fade back to the map's own ground, and the map's soil stays as drawn.
+    /// Why scorch at all (owner, 2026-11-12 04:25Z: "do we need scortch when
+    /// we have walls?"): a wall stops walkers, soldiers and shots; a crater
+    /// stops only the mould's trail from holding, so a blast's hole or a
+    /// det cord's cut stays open instead of re-knitting in seconds (the
+    /// knife's 4 s heal, `Reports/dead-ends.md`, `STORM_CUTS`).
+    pub scorch_keep: f32,
+    /// Fine steps of scorch at which a cell bites at full strength: below
+    /// it the cut is `scorch_keep`'s scaled by steps left / `scorch_full`,
+    /// so every crater fades out instead of stopping at once, and a writer
+    /// sets both strength and length by the steps it writes (a blast's deep
+    /// crater, a shot's faint stamp; the owner's "stamps that fade",
+    /// 2026-11-12 04:38Z, on the graphics thread's A/B).
+    pub scorch_full: u16,
     /// A rectangular world, three dish cells in from the edge, instead of
     /// the dish's ellipse: a world, not a dish (owner, 11-11 14:01Z).
     pub rect: bool,
@@ -658,6 +685,7 @@ impl BigParams {
             sick_reach: 1.0,
             sick_turn: 1.0,
             sick_seed_r: 0.0,
+            sick_upkeep: 1.0,
             sensor_r: 0,
             species: 0,
             species_avoid: 1.0,
@@ -713,6 +741,7 @@ impl BigParams {
             wake_steps: 240,
             sleep_rest: 0,
             sleep_death: 0.0,
+            gas_death: 0.0,
             alarm_keep: 0.0,
             alarm_weight: 0.0,
             alarm_relay: 0.0,
@@ -728,6 +757,8 @@ impl BigParams {
             sand_keep: 0.8,
             clay_keep: 1.05,
             barren_upkeep: 3.0,
+            scorch_keep: 0.5,
+            scorch_full: 300,
             rect: false,
             wall_hp: 400.0,
             wall_bite: 1.0,
@@ -852,6 +883,11 @@ pub struct BigDish {
     pub wet: Vec<bool>,
     /// Soil kind a fine cell (`BigParams::sand_keep`), else empty.
     pub soil: Vec<u8>,
+    /// Fine steps of scorch left a fine cell (`scorch_disc`), else empty.
+    pub scorch: Vec<u16>,
+    /// Fine steps of gas left a walker (`gas`), else empty: while over 0 a
+    /// dormant walker is not woken by scent, only by alarm.
+    pub gassed: Vec<u16>,
     /// Walls the player built (`build_wall`), a fine cell; empty until the
     /// first. A wall is ground the mould cannot enter, the same channel as
     /// the rim and rock.
@@ -1036,6 +1072,8 @@ impl BigDish {
             rock: Vec::new(),
             wet: Vec::new(),
             soil: Vec::new(),
+            scorch: Vec::new(),
+            gassed: Vec::new(),
             wall: Vec::new(),
             wall_health: Vec::new(),
             broken: 0,
@@ -2214,6 +2252,7 @@ impl BigDish {
                 let i = self.cell(x, y).expect("walker inside the dish");
                 if self.soil[i] == SOIL_BARREN { p.upkeep * p.barren_upkeep } else { p.upkeep }
             };
+            let up = if !self.sick.is_empty() && self.sick[k] > p.immune_steps { up * p.sick_upkeep } else { up };
             let e = self.energy[k] + took - up;
             if e > 0.0 {
                 self.energy[k] = e;
@@ -2272,6 +2311,9 @@ impl BigDish {
             if !self.sick.is_empty() {
                 self.sick[b] = 0;
             }
+            if !self.gassed.is_empty() {
+                self.gassed[b] = 0;
+            }
             if !self.spec.is_empty() {
                 self.spec[b] = self.spec[k];
             }
@@ -2328,7 +2370,9 @@ impl BigDish {
         for &k in sleeping {
             let (x, y, _) = self.walkers[k];
             let i = self.cell(x, y).expect("walker inside the dish");
-            if p.sleep_death > 0.0 && unit(keyed(seed, t, DRAW_SLEEP_DIE, k as u32)) < p.sleep_death {
+            let gas = !self.gassed.is_empty() && self.gassed[k] > 0;
+            let death = if gas { p.gas_death.max(p.sleep_death) } else { p.sleep_death };
+            if death > 0.0 && unit(keyed(seed, t, DRAW_SLEEP_DIE, k as u32)) < death {
                 self.occ[i] -= 1;
                 self.life[k] = LIFE_DEAD;
                 // With growth on, the slot is freed for a birth to reuse.
@@ -2342,9 +2386,12 @@ impl BigDish {
                 self.lay(k, i, dep * p.sleep_deposit);
             }
             let alarm = if self.alarm.is_empty() { 0.0 } else { self.alarm[i] };
-            if self.scent_at(x, y) > p.wake_scent || (alarm > p.wake_alarm && self.life_t[k] == 0) {
+            if (!gas && self.scent_at(x, y) > p.wake_scent) || (alarm > p.wake_alarm && self.life_t[k] == 0) {
                 woke.push((k, i));
             }
+        }
+        for g in self.gassed.iter_mut() {
+            *g = g.saturating_sub(1);
         }
         for &(k, i) in &woke {
             self.life[k] = LIFE_WALKER;
@@ -2678,6 +2725,20 @@ impl BigDish {
                     }
                 }
             }
+            if !self.scorch.is_empty() {
+                let (cut, full) = (1.0 - self.p.scorch_keep, self.p.scorch_full.max(1) as f32);
+                let scorch = &mut self.scorch;
+                for f in std::iter::once(&mut self.trail).chain(self.species_trail.iter_mut()) {
+                    for (v, &c) in f.iter_mut().zip(scorch.iter()) {
+                        if c > 0 {
+                            *v *= 1.0 - cut * (c as f32 / full).min(1.0);
+                        }
+                    }
+                }
+                for c in scorch.iter_mut() {
+                    *c = c.saturating_sub(1);
+                }
+            }
             if !self.germ.is_empty() {
                 spread(&self.agar, &self.germ, &mut self.scratch, self.w, self.h, self.p.sick_keep, self.threads);
                 std::mem::swap(&mut self.germ, &mut self.scratch);
@@ -2887,7 +2948,109 @@ impl BigDish {
         for v in &self.alarm {
             eat(v.to_bits());
         }
+        for &c in self.scorch.iter().chain(&self.gassed) {
+            eat(c as u32);
+        }
         h
+    }
+
+    /// Turns on the life cycle's states (as a strike does), so walkers can be
+    /// put to sleep or killed by the squad's tools. Does nothing if on.
+    pub fn enable_life(&mut self) {
+        if self.life.is_empty() {
+            self.life = vec![LIFE_WALKER; self.walkers.len()];
+            self.life_t = vec![0; self.walkers.len()];
+        }
+    }
+
+    /// Turns on the alarm field with `keep` (if it is off), so blasts lay
+    /// alarm and gunfire can wake gassed walkers. `alarm_weight` is left as
+    /// it is: at 0 the alarm steers nothing, it only wakes.
+    pub fn enable_alarm(&mut self, keep: f32) {
+        if self.alarm.is_empty() {
+            self.alarm = vec![0.0; self.w * self.h];
+            self.p.alarm_keep = keep;
+        }
+    }
+
+    /// Turns on contagion with the current `sick_*` settings (`sick_steps`
+    /// must be over 0); nobody is sick until `infect`.
+    pub fn enable_contagion(&mut self) {
+        assert!(self.p.sick_steps > 0, "contagion needs sick_steps");
+        if self.sick.is_empty() {
+            self.sick = vec![0; self.walkers.len()];
+            self.germ = vec![0.0; self.w * self.h];
+        }
+    }
+
+    /// Scorches the agar within `r` fine cells of (`x`, `y`, fine cells) for
+    /// `steps` fine steps (`BigParams::scorch_keep`, fading over the last
+    /// `scorch_full`); a cell keeps the longer of its scorch and this one.
+    /// The one crater writer: blasts, det cord and (Larder thread) shots.
+    /// Returns cells scorched.
+    pub fn scorch_disc(&mut self, x: f32, y: f32, r: f32, steps: u16) -> usize {
+        if self.scorch.is_empty() {
+            self.scorch = vec![0; self.w * self.h];
+        }
+        let n = r.ceil() as i64;
+        let mut c = 0;
+        for dy in -n..=n {
+            for dx in -n..=n {
+                if (dx * dx + dy * dy) as f32 > r * r {
+                    continue;
+                }
+                let Some(i) = self.cell(x + dx as f32, y + dy as f32) else { continue };
+                if self.agar[i] {
+                    self.scorch[i] = self.scorch[i].max(steps);
+                    c += 1;
+                }
+            }
+        }
+        c
+    }
+
+    /// **Sleep gas** (the squad toolkit): every ordinary walker within `r`
+    /// fine cells of (`x`, `y`, fine cells) falls dormant at once and stays
+    /// deaf to scent for `steps` fine steps; alarm still wakes it (its
+    /// timer is set to 0), so gunfire or a blast nearby ends the gas.
+    /// Returns walkers gassed.
+    pub fn gas(&mut self, x: f32, y: f32, r: f32, steps: u16) -> usize {
+        self.enable_life();
+        if self.gassed.is_empty() {
+            self.gassed = vec![0; self.walkers.len()];
+        }
+        let mut n = 0;
+        for k in 0..self.walkers.len() {
+            let (wx, wy, _) = self.walkers[k];
+            if self.lives(k) && matches!(self.life[k], LIFE_WALKER | LIFE_DORMANT) && (wx - x).hypot(wy - y) <= r {
+                self.life[k] = LIFE_DORMANT;
+                self.life_t[k] = 0;
+                self.gassed[k] = steps;
+                n += 1;
+            }
+        }
+        n
+    }
+
+    /// For each point (fine cells), the gassed dormant walkers within `r`
+    /// of it: the sleeping mould that does not bite a soldier.
+    pub fn gassed_near(&self, at: &[(f32, f32)], r: f32) -> Vec<u32> {
+        let mut out = vec![0; at.len()];
+        if self.gassed.is_empty() {
+            return out;
+        }
+        for k in 0..self.walkers.len() {
+            if self.gassed[k] == 0 || !self.lives(k) || self.life[k] != LIFE_DORMANT {
+                continue;
+            }
+            let (wx, wy, _) = self.walkers[k];
+            for (o, &(x, y)) in out.iter_mut().zip(at) {
+                if (wx - x).hypot(wy - y) <= r {
+                    *o += 1;
+                }
+            }
+        }
+        out
     }
 }
 
