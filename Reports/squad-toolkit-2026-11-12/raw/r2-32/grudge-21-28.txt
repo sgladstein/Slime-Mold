@@ -1,0 +1,64 @@
+grudge random 21 -1.612 squad wiped
+grudge idle 21 -0.389 cap
+grudge farm 21 +0.156 cap
+grudge loud 21 +0.242 cap
+grudge randkit 21 +0.333 cap
+grudge quiet 21 +0.061 cap
+grudge random 22 -1.652 squad wiped
+grudge siege 21 +0.167 cap
+grudge randkit 22 -1.650 squad wiped
+grudge plague 21 +1.627 mould wiped
+grudge farm 22 +0.073 cap
+grudge loud 22 +0.251 cap
+grudge idle 22 -0.358 cap
+grudge quiet 22 +0.079 cap
+grudge random 23 -1.410 squad wiped
+grudge idle 23 -0.304 cap
+grudge randkit 23 -1.668 squad wiped
+grudge siege 22 +0.108 cap
+grudge loud 23 +1.568 mould wiped
+grudge quiet 23 +0.221 cap
+grudge farm 23 +0.229 cap
+grudge plague 22 +1.557 mould wiped
+grudge random 24 -1.690 squad wiped
+grudge randkit 24 -1.647 squad wiped
+grudge siege 23 +0.200 cap
+grudge plague 23 +1.637 mould wiped
+grudge farm 24 +0.181 cap
+grudge idle 24 -0.304 cap
+grudge quiet 24 +0.148 cap
+grudge loud 24 +0.334 cap
+grudge random 25 -1.664 squad wiped
+grudge randkit 25 -1.611 squad wiped
+grudge siege 24 +0.210 cap
+grudge loud 25 +1.767 mould wiped
+grudge plague 24 +1.637 mould wiped
+grudge farm 25 +0.128 cap
+grudge quiet 25 +0.093 cap
+grudge idle 25 -0.391 cap
+grudge siege 25 +0.135 cap
+grudge plague 25 +1.642 mould wiped
+grudge randkit 26 -1.603 squad wiped
+grudge random 26 -1.180 squad wiped
+grudge idle 26 -0.368 cap
+grudge farm 26 +0.107 cap
+grudge quiet 26 +0.143 cap
+grudge siege 26 +0.085 cap
+grudge loud 26 +0.322 cap
+grudge random 27 -1.633 squad wiped
+grudge randkit 27 -1.583 squad wiped
+grudge idle 27 -0.360 cap
+grudge farm 27 +0.185 cap
+grudge quiet 27 +0.125 cap
+grudge plague 27 +1.982 mould wiped
+grudge loud 27 +1.247 mould wiped
+grudge random 28 -1.431 squad wiped
+grudge siege 27 +0.154 cap
+grudge randkit 28 -1.746 squad wiped
+grudge plague 26 +0.495 cap
+grudge idle 28 -0.232 cap
+grudge quiet 28 +0.244 cap
+grudge loud 28 +1.678 mould wiped
+grudge farm 28 +0.205 cap
+grudge plague 28 +1.768 mould wiped
+grudge siege 28 +0.221 cap

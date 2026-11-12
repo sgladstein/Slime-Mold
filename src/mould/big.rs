@@ -446,6 +446,18 @@ pub struct BigParams {
     /// the intake. 0.12 evens energy below `birth_energy` and fewer divide
     /// (20,782). Off by default: a cut tube's effect is untested.
     pub energy_flow: f32,
+    /// **Lossy flow** (2026-11-12, the one-body thread; 0 is off). The share
+    /// of the energy each `energy_flow` transfer loses on the way: the cell
+    /// giving pays the full amount, the cell taking gets `1 - flow_loss` of
+    /// it. Food then reaches k cells from a crystal at about
+    /// `(1 - flow_loss)^k` of the rate it would, so sharing has a reach.
+    /// Why: with lossless sharing at 0.05 the whole mould's energy evens
+    /// out, so taking or cutting off its crystals starves it everywhere at
+    /// once (random's attacks wiped it on 9 of 16 race seeds at today's
+    /// size, Reports/one-body-2026-11-12.md, *Matched size*). With a reach,
+    /// a cut far arm starves while the fed core lives, and each cut is
+    /// seen to pay off.
+    pub flow_loss: f32,
     /// **Hunger** (2026-11-12, the one-body thread; 0 is off, needs growth).
     /// A walker's scent reading is multiplied by 1 + `hunger_scent` x its
     /// hunger, where hunger is 1 - energy / `hunger_at` (0 at or above
@@ -475,6 +487,19 @@ pub struct BigParams {
     pub body_pull: f32,
     pub body_r: u8,
     pub body_lone: f32,
+    /// **Lone step** (2026-11-12, the one-body thread; 0 is off). A walker
+    /// with fewer than `lone_step` other walkers in the square of radius
+    /// `body_r` round its cell moves slower: its step is scaled by
+    /// n / `lone_step`, but never under `lone_floor`. So the front of a moving
+    /// hunk waits for the rest, and a hunk crosses ground as a lump rather
+    /// than as a stream. Why: a hunk cut off food reaches a crystal within
+    /// about 2 s, but as a stream (largest part 0.27-0.58 at 20 s on the
+    /// designed maps), and pulling stragglers toward the crowd (`body_pull`
+    /// 2-5) or aligning headings (dead-ends) did not hold it together.
+    /// Reads the same walker counts as `body_pull`, which the GPU's
+    /// occupancy also holds.
+    pub lone_step: f32,
+    pub lone_floor: f32,
     /// **Tether** (2026-11-12, the one-body thread; 0 is off). A walker may
     /// step into another cell only if that cell has at least `tether`
     /// other walkers among its eight neighbours (the mover not counted), or,
@@ -840,6 +865,7 @@ impl BigParams {
             starve: 0.01,
             capacity: 0,
             energy_flow: 0.0,
+            flow_loss: 0.0,
             hunger_scent: 0.0,
             hunger_at: 1.0,
             hunger_reach: 0.0,
@@ -847,6 +873,8 @@ impl BigParams {
             body_pull: 0.0,
             body_r: 2,
             body_lone: 0.0,
+            lone_step: 0.0,
+            lone_floor: 0.25,
             tether: 0,
             tether_hold: 0.0,
             lone_upkeep: 1.0,
@@ -1966,7 +1994,7 @@ impl BigDish {
         let life_on = !self.life.is_empty();
         let (mut flying, mut sleeping, mut fruit, mut doze) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
         // Body pull: walkers in each cell's square, as the step began.
-        let body = if p.body_pull > 0.0 && look { self.body_counts(p.body_r as usize) } else { Vec::new() };
+        let body = if (p.body_pull > 0.0 && look) || p.lone_step > 0.0 { self.body_counts(p.body_r as usize) } else { Vec::new() };
         // Tether's holders (`tether_hold`): who stays this step, and how
         // many stay on each cell.
         self.holds_n.clear();
@@ -2111,6 +2139,10 @@ impl BigDish {
                 } else if fr < fl {
                     h -= ra;
                 }
+            }
+            if p.lone_step > 0.0 && !body.is_empty() {
+                let near = body[here].saturating_sub(1) as f32;
+                st *= (near / p.lone_step).clamp(p.lone_floor.min(1.0), 1.0);
             }
             let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
             match self.cell(nx, ny) {
@@ -2454,6 +2486,7 @@ impl BigDish {
     /// sharers rather than `occ`.
     fn flow_energy(&mut self) {
         let d = self.p.energy_flow as f64;
+        let keep = 1.0 - (self.p.flow_loss as f64).clamp(0.0, 1.0);
         let (w, h) = (self.w, self.h);
         let mut mean = vec![0f64; w * h];
         let mut n = vec![0u32; w * h];
@@ -2488,7 +2521,9 @@ impl BigDish {
                     }
                     let j = ny as usize * w + nx as usize;
                     if n[j] > 0 {
-                        f += mean[j] - mean[i];
+                        let df = mean[j] - mean[i];
+                        // Lossy: what this cell takes arrives short.
+                        f += if df > 0.0 { df * keep } else { df };
                     }
                 }
                 gain[i] = d * f / n[i] as f64;

@@ -71,17 +71,21 @@ Matched fast runs (3 against 2, 4, 6): +0.49 ms at zoom 1, +0.11 at zoom 2, +0.0
 
 In the steady runs the tile adds +0.26 ms at zoom 1 (1.19 -> 1.45), +0.06 at zoom 2 and nothing at zoom 4. The 25-read version added +0.49 ms at zoom 1. The tile ships.
 
-*Possibly inflated (owner, 2026-11-12 15:28Z):* the PC was low on memory during today's runs. Every run above was a paired, alternating run on the same machine, so the differences between builds should hold better than the absolute ms. Re-timed on the 1070 at 15:49Z, with memory free. These were nine runs cycling base 19a8765, the tile 9c33c5c and main 9f5e4a4 (`worldlook seconds=4`, view GPU ms, median of 21). Two things differ from the runs above:
-- They used the example's default screen, not 1920 x 1080, so the absolute times are about half of those above.
-- Other GPU programs were running (a campaign and census binaries, 80-85% GPU use), so compare these runs only with each other.
+*Checked (owner, 2026-11-12 15:28Z):* the PC was low on memory during today's earlier runs. Re-timed on the 1070 at 17:10Z, through the PC runner under the booking rule. The PC was idle (GPU 0%, about 2.5 GB RAM free) and nothing else was running. These were nine runs cycling base 19a8765, the tile 9c33c5c and main 7e3a7a3 (`worldlook seconds=4 screen=1920x1080`, view GPU ms, median of 21). An earlier re-time at 15:49Z ran while other programs held the GPU at 80-85%, so it does not count.
 
-| Build | Look z1 / z2 / z4 (runs 1, 2, 3) | Plain z1 |
-|---|---|---|
-| base | 0.579 / 0.401 / 0.383; 0.579 / 0.402 / 0.385; 0.579 / 0.402 / 0.385 | 0.163-0.164 |
-| tile | 0.715 / 0.433 / 0.388; 0.715 / 0.432 / 0.387; 0.784 / 0.473 / 0.399 | 0.163-0.169 |
-| main | 0.715 / 0.432 / 0.386; 0.717 / 0.433 / 0.388; 0.715 / 0.432 / 0.387 | 0.163-0.164 |
+| Run | Build | Look z1 / z2 / z4 | Plain z1 |
+|---|---|---|---|
+| 1 | base | 1.252 / 0.836 / 0.737 | 0.296 |
+| 2 | tile | 1.440 / 0.813 / 0.660 | 0.285 |
+| 3 | main | 1.443 / 0.819 / 0.665 | 0.286 |
+| 4 | base | 1.186 / 0.763 / 0.662 | 0.286 |
+| 5 | tile | 1.447 / 0.818 / 0.665 | 0.286 |
+| 6 | main | 1.444 / 0.819 / 0.665 | 0.286 |
+| 7 | base | 1.187 / 0.763 / 0.663 | 0.287 |
+| 8 | tile | 1.444 / 0.816 / 0.663 | 0.286 |
+| 9 | main | 1.441 / 0.816 / 0.663 | 0.285 |
 
-The tile costs +0.14 ms at zoom 1 (0.579 -> 0.715, 3 of 3 runs), +0.03 at zoom 2 and nothing at zoom 4. Main, which has the building sprites, matches the tile. In proportion this is the earlier result again: +23% at zoom 1 here, against +22% at 1080p above. So the low memory did not change the conclusion.
+In the steady runs (base 2 and 3), the tile adds +0.26 ms at zoom 1 (1.187 -> 1.444), +0.05 at zoom 2 and nothing at zoom 4: the same as the table above. So low memory had not inflated the earlier numbers. Main, which also draws the building sprites (#118), matches the tile to within 0.005 ms.
 
 **Density** (tech lead review, 04:48Z): `BODY_N` was calibrated at 5000 walkers on 512 x 320. It now scales with the world's living walkers a cell, which the game sets once from the start (`View::set_body_density`; 0 keeps the calibration). The slot count would not do: a growing world has ten slots a walker. Hole times at higher counts (`holes=1`, rush, 0-16 s): 50,000 walkers at scale 2, 18 hits, median 0.20 s; 100,000 at scale 4, 25 hits, 3 refilled and 22 still open at 16 s (the strike killed only 20 walkers there: a scale-4 strike is a smaller share of a cell, worth a look by the Larder thread).
 
