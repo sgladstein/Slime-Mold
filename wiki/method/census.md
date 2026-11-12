@@ -2,8 +2,8 @@
 title: The census (how a change is judged)
 kind: method
 status: current
-updated: 2026-11-11T19:15Z
-sources: [Reports/gpu-plan-2026-11-10.md, Reports/larder-m2-2026-11-11.md, Reports/gpu-sandbox-2026-11-11.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md, Reports/pixel-physics-review-2026-11-10.md]
+updated: 2026-11-12T05:40Z
+sources: [Reports/gpu-readout-2026-11-12.md, Reports/gpu-plan-2026-11-10.md, Reports/larder-m2-2026-11-11.md, Reports/gpu-sandbox-2026-11-11.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md, Reports/pixel-physics-review-2026-11-10.md]
 code: [mouldprobe, state_hash, every_dish_replays_bit_for_bit, Dish::step_cost, HJIT, HLAG, STOPAT, NOWATER, INVAR, WARDEN]
 ---
 
@@ -79,7 +79,7 @@ hand, scale 4 (same report, *The frame, split*).
 
 ## Beyond the dish probe
 
-The same rules carry to the newer harnesses, with three additions:
+The same rules carry to the newer harnesses, with four additions:
 
 - **Held-out seeds.** Larder's censuses tune on seeds 1-16 and report seeds
   17-32, so a plan is not judged on the seeds it was tuned on
@@ -92,6 +92,13 @@ The same rules carry to the newer harnesses, with three additions:
   is checked by a twin test, one GPU tick from a CPU dish's state against one
   CPU tick, in CI on software Vulkan
   ([gpu sandbox](../../Reports/gpu-sandbox-2026-11-11.md)).
+- **Both engines for the Larder world** (2026-11-12): twin ticks prove the
+  code is the same, not that long games land on the same spread.
+  `examples/larderworld.rs -- census gpu=both` plays each game on the CPU
+  and on the GPU engine and compares each hand's scores across the two
+  (Mann-Whitney, Holm); a plan that wins on one and not the other means
+  the CPU census no longer stands in for the game
+  ([report](../../Reports/gpu-readout-2026-11-12.md)).
 
 ## Owner's word
 

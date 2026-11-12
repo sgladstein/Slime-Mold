@@ -8,7 +8,9 @@
 //! (`map=` rim, fork, flats, nest, passes, or `noise` for the race world
 //! the censuses measured; `walkers=` and `scale=` as `larderworld`'s;
 //! `mission=1-landfall` plays a campaign mission: its map, rules and goal,
-//! `mould::campaign`, design `Reports/larder-campaign-2026-11-12.md`.)
+//! `mould::campaign`, design `Reports/larder-campaign-2026-11-12.md`; any
+//! other key is an engine setting over the race world's (and the
+//! mission's tier), `gpu::set`'s, such as `tier=sleeper`.)
 //!
 //! **Why a window of its own.** The owner played `mouldgpu`'s stand-in
 //! squad (Q) on 2026-11-11 and found soldiers that did not touch the
@@ -55,6 +57,8 @@
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
 //! `holes=1` also times how long each hit's hole stays open.
+//! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0]` times the
+//! window's frame without a window (`bench`).
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -111,6 +115,9 @@ struct Args {
     seed: u64,
     scale: usize,
     walkers: usize,
+    /// Engine settings over the race world's (`gpu::set` keys, such as
+    /// `tier=sleeper` or `alarm_keep=0.98`), in order.
+    keys: Vec<(String, String)>,
     /// A campaign mission (`Reports/larder-campaign-2026-11-12/missions/NAME.txt`):
     /// its map, rules and tier, and its goal on the HUD (`mould::campaign`).
     mission: Option<String>,
@@ -287,6 +294,10 @@ impl App {
             }
             None => None,
         };
+        // Engine keys last, over the race world's and the mission's tier.
+        for (k, v) in &a.keys {
+            slime_mould::gpu::set(&mut s, k, v)?;
+        }
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
         let world = match &map_name {
             Some(name) => {
@@ -1457,12 +1468,96 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     Ok(())
 }
 
-/// A GPU with the adapter's own limits (the engine binds 46 buffers).
+/// **The window's frame time without a window** (`-- bench=SECS`,
+/// 2026-11-12): plays `secs` game seconds with `hand` at `fps` frames a
+/// real second, doing each frame what the window does (the game's steps
+/// through the same accumulator, the ground, marks and HUD, the view and
+/// canvas recorded and submitted), then waits for the GPU, as a present
+/// with vsync off would. So it can run over Remote Control on the GTX 1070
+/// with nobody at the screen. The W2c gate is a frame under 10 ms p95.
+/// Prints each frame's time and its parts (the game's steps, which wait on
+/// the GPU inside; preparing; recording; the GPU's tail), the step frames'
+/// alone, the read-backs and waits a step, and with timestamps the GPU's
+/// ms a step's ticks (`stamps=0` leaves them off).
+fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps: bool) -> Result<(), String> {
+    let (device, queue) = gpu().ok_or("no GPU adapter")?;
+    let mut app = offscreen(args, screen, &device, &queue)?;
+    let stamped = stamps && device.features().contains(wgpu::Features::TIMESTAMP_QUERY);
+    if stamped {
+        app.game.as_mut().unwrap().world.stamps = Some(slime_mould::gpu::Stamps::new(&device, &queue));
+    }
+    let dt = 1.0 / fps;
+    let mut last_sec = u64::MAX;
+    // Each frame: total, step, prepare, record, GPU tail (ms); and whether
+    // the game stepped in it.
+    type Row = ([f64; 5], bool);
+    let mut rows: Vec<Row> = Vec::new();
+    let (reads0, steps0) = (slime_mould::gpu::reads(), app.steps);
+    let ms = |t: Instant| t.elapsed().as_secs_f64() * 1e3;
+    while app.game.as_ref().is_some_and(|g| g.time() < secs && g.end.is_none()) {
+        let t0 = Instant::now();
+        let g = app.game.as_mut().unwrap();
+        let sec = g.world.ticks() / g.rules.tps as u64;
+        if sec != last_sec {
+            last_sec = sec;
+            plan(g, hand);
+        }
+        let before = app.steps;
+        app.step(dt);
+        let step = ms(t0);
+        let t1 = Instant::now();
+        app.prepare();
+        let prep = ms(t1);
+        let t2 = Instant::now();
+        let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("bench") });
+        view.record(&mut enc, &app.camera, None);
+        cp.record(&mut enc, &view.out, view.stride);
+        let index = queue.submit([enc.finish()]);
+        let rec = ms(t2);
+        let t3 = Instant::now();
+        device.poll(wgpu::PollType::Wait { submission_index: Some(index), timeout: None }).map_err(|e| format!("poll: {e}"))?;
+        rows.push(([ms(t0), step, prep, rec, ms(t3)], app.steps > before));
+    }
+    let g = app.game.as_ref().unwrap();
+    let steps = (app.steps - steps0).max(1);
+    let q = |pick: &dyn Fn(&Row) -> Option<f64>, at: f64| {
+        let mut v: Vec<f64> = rows.iter().filter_map(pick).collect();
+        v.sort_by(f64::total_cmp);
+        if v.is_empty() {
+            return 0.0;
+        }
+        v[((v.len() - 1) as f64 * at).round() as usize]
+    };
+    let line = |name: &str, i: usize, only_steps: bool| {
+        let pick = move |r: &Row| (!only_steps || r.1).then_some(r.0[i]);
+        format!("{name} p50 {:.2} p95 {:.2} max {:.2}", q(&pick, 0.5), q(&pick, 0.95), q(&pick, 1.0))
+    };
+    let e = &g.world.e;
+    let keys: String = app.args.keys.iter().map(|(k, v)| format!(" {k}={v}")).collect();
+    println!("larder-world bench: {} seed {}, {} x {} cells, {} slots, scale {} walkers {}{keys}; hand {hand}, {:.0} game s at {fps} frames a second, screen {}x{}", app.name, app.args.seed, e.dish.w, e.dish.h, e.n, app.args.scale, app.args.walkers, g.time(), screen.0, screen.1);
+    println!("  {} frames, {} game steps; {:.2} read-backs a step, {:.2} waits a step ({:.2} ms a step waiting)", rows.len(), steps, (slime_mould::gpu::reads() - reads0) as f64 / steps as f64, g.world.waits as f64 / steps as f64, g.world.wait_ms / steps as f64);
+    for (only, tag) in [(false, "every frame"), (true, "frames with a step")] {
+        println!("  {tag} ({} of them), ms: {}; step {}; prepare {}; record {}; GPU tail {}", rows.iter().filter(|r| !only || r.1).count(), line("frame", 0, only), line("", 1, only), line("", 2, only), line("", 3, only), line("", 4, only));
+    }
+    if let Some(st) = &g.world.stamps {
+        let (sim, draw, _, n) = st.median();
+        println!("  GPU (timestamps, median of {n} steps): the step's ticks {sim:.2} ms, its drawing {draw:.2} ms");
+    } else {
+        println!("  GPU: no timestamps on this adapter");
+    }
+    println!("  t {:.0} s: mould {}, soldiers {}, harvested {:.0}, shots {}, killed {}{}", g.time(), g.mould, g.alive(), g.harvested, g.shots, g.killed, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+    Ok(())
+}
+
+/// A GPU with the adapter's own limits (the engine binds 46 buffers), and
+/// timestamps where it has them (`bench`).
 fn gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
     let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).ok()?;
     println!("larder-world: {}", adapter.get_info().name);
-    block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("larder-world"), required_limits: adapter.limits(), ..Default::default() })).ok()
+    let required_features = adapter.features() & wgpu::Features::TIMESTAMP_QUERY;
+    block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("larder-world"), required_features, required_limits: adapter.limits(), ..Default::default() })).ok()
 }
 
 /// The window's game, view and UI on a `screen`-sized picture with no
@@ -1507,8 +1602,9 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, mission: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
+    let (mut bench_secs, mut fps, mut stamps) = (None::<f32>, 60.0f32, true);
     let mut holes = false;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
@@ -1523,13 +1619,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "sound" => wav = Some(v.to_string()),
             "voice" => args.voice = v != "0",
             "at" => at = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
+            "bench" => bench_secs = Some(v.parse()?),
+            "fps" => fps = v.parse()?,
+            "stamps" => stamps = v != "0",
             "holes" => holes = v != "0",
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
             }
-            _ => return Err(format!("unknown key {k} (map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes)").into()),
+            // Any other key is an engine setting (`gpu::set`), checked here.
+            _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
+                Ok(()) => args.keys.push((k.to_string(), v.to_string())),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes; bench, fps, stamps)").into()),
+            },
         }
+    }
+    if let Some(secs) = bench_secs {
+        return Ok(bench(args, secs, &hand, fps, screen, stamps)?);
     }
     if let Some(dir) = look {
         return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes)?);
@@ -1553,7 +1659,7 @@ mod tests {
     #[test]
     fn the_window_plays_the_real_game() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, mission: None }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None }, (640, 400), &device, &queue).unwrap();
         let step = 1.0 / 15.0;
         let mut rays = 0;
         while app.game.as_ref().unwrap().time() < 12.0 {
@@ -1579,7 +1685,7 @@ mod tests {
     #[test]
     fn a_mission_shows_its_goal_and_its_end() {
         let Some((device, queue)) = gpu() else { return };
-        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, voice: false, mission: Some("1-landfall".into()) }, (640, 400), &device, &queue).unwrap();
+        let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()) }, (640, 400), &device, &queue).unwrap();
         assert_eq!(app.name, "flats");
         assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
         app.prepare();
