@@ -76,7 +76,8 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
-use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+use slime_mould::gpu::larder_world::{garden_settings, race_settings, GpuWorld};
+use slime_mould::mould::own_mould::Task;
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::larder_world::{Cmd, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
@@ -119,6 +120,10 @@ const PUMP: u32 = 14;
 const OUTPOST: u32 = 15;
 const LURES: u32 = 16;
 const BACK: u32 = 17;
+// The player's own mould (`own=1`): the selected soldiers sow it (Feed as
+// they walk) or lay its road.
+const SOW: u32 = 18;
+const ROAD: u32 = 19;
 
 /// The building a build-page command places.
 fn build_kind(id: u32) -> Option<Kind> {
@@ -166,6 +171,13 @@ struct Args {
     /// lays (`Rules::core_pull`, the core defence; 0 turns it off, to
     /// compare). A tier's own core (`Tier::core`) wins.
     core_pull: Option<f32>,
+    /// `own=1`: the player's own mould (`own_mould`, the gardeners, owner's
+    /// card 2026-11-12 04:45Z) on the race world: a second mould, green, on
+    /// the larder's crystal, which the soldiers sow and lay roads for
+    /// (Sow E, Road Y) and which fights the enemy's by conversion. Shots fly
+    /// over it. The GPU world's `garden`; its walkers share one birth pool
+    /// with the enemy's until each side's cap is on the GPU.
+    own: bool,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -331,7 +343,10 @@ impl App {
         self.save_replay();
         let Some((device, queue)) = &self.gpu else { return Ok(()) };
         let a = &self.args;
-        let mut s = race_settings(a.seed, a.scale, a.walkers);
+        let mut s = if a.own { garden_settings(a.seed, a.scale, a.walkers) } else { race_settings(a.seed, a.scale, a.walkers) };
+        if a.own && (a.mission.is_some() || a.map.is_some()) {
+            return Err("own=1 plays on the race world: give map=noise and no mission".into());
+        }
         // The tier whose core the game plays (`Tier::core`, read by
         // `Game::with_tier`): the mission's, or a `tier=` key's (the last).
         let mut core_tier = None;
@@ -363,6 +378,7 @@ impl App {
         }
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
         let world = match &map_name {
+            None if a.own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
             Some(name) => {
                 let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
                 let (dir, name) = match name.rsplit_once('/') {
@@ -575,6 +591,17 @@ impl App {
                         if let Some(g) = self.game.as_mut() {
                             for &k in &sel {
                                 g.apply(Cmd::Stance(k, st));
+                            }
+                        }
+                    }
+                    SOW | ROAD => {
+                        // A toggle on the selected soldiers: on for all unless
+                        // all already do it, then off.
+                        let t = if id == SOW { Task::Feed } else { Task::Road };
+                        if let Some(gd) = self.game.as_mut().and_then(|g| g.world.garden.as_mut()) {
+                            let on = !sel.iter().all(|&k| gd.tasks.get(k) == Some(&t));
+                            for &k in &sel {
+                                gd.set_task(k, if on { t } else { Task::None });
                             }
                         }
                     }
@@ -952,7 +979,7 @@ impl App {
             resources: vec![
                 Resource { icon: Icon::Crystal, colour: theme::ENERGY, label: "Food: crystal charge carried home; soldiers, shots and walls cost it".into(), value: format!("{:.0}", g.bank), rate: rate.map(|v| format!("{v:+.0}/s")) },
                 Resource { icon: Icon::Soldier, colour: theme::TEXT, label: format!("Soldiers alive (at most {})", r.max_squad), value: format!("{}", g.alive()), rate: (lost > 0).then(|| format!("-{lost} lost")) },
-                Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: "The mould: walkers alive".into(), value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
+                Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: if g.world.garden.is_some() { "The enemy mould: walkers alive".into() } else { "The mould: walkers alive".into() }, value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
                 Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Your share of the charge gone from the crystals (with the mould's size, the score at 15:00)".into(), value: format!("{:.0}%", took * 100.0), rate: None },
             ],
             clock: format!("{} / {}", clock(t), clock(r.cap)),
@@ -1091,6 +1118,11 @@ impl App {
                 ..Command::new(RALLY, (2, 2), Icon::Move, "Rally point", KeyCode::KeyR)
             },
         ];
+        if let Some(gd) = &g.world.garden {
+            let all = |t: Task| any && sel.iter().all(|&k| gd.tasks.get(k) == Some(&t));
+            cmds.push(Command { ready: any, on: all(Task::Feed), why_not: no_sel(), about: format!("Sow your own mould (green): while on, the soldier spends {:.0} food a second from the bank, spread as charge where it walks, which your mould eats and grows on. Walk it where you want the mould to go. Press again to stop.", gd.tend.feed), ..Command::new(SOW, (1, 3), Icon::Crystal, "Sow your mould", KeyCode::KeyE) });
+            cmds.push(Command { ready: any, on: all(Task::Road), why_not: no_sel(), about: "Lay a road of your mould's trail where the soldier walks, free: your mould follows it. Lead it to food or into the enemy, where it converts the enemy's slime it outweighs. Press again to stop.".into(), ..Command::new(ROAD, (2, 3), Icon::Move, "Lay a road", KeyCode::KeyY) });
+        }
         cmds.push(Command {
             about: "Turrets, lures, pumps and outposts.".into(),
             ..Command::new(BUILD_PAGE, (2, 2), Icon::Turret, "Build", KeyCode::KeyQ)
@@ -1120,6 +1152,11 @@ impl App {
             if c.ready {
                 c.why_not = None;
             }
+        }
+        if g.world.garden.is_some() {
+            // The player's own mould beside the enemy's, in its colour.
+            let own = g.world.counts_by_side().0;
+            m.resources.insert(3, Resource { icon: Icon::Mould, colour: [120, 230, 90, 255], label: "Your own mould (green): walkers alive. Sow it (E) and lay its roads (Y); it converts enemy slime it outweighs".into(), value: thousands(own), rate: None });
         }
         m.commands = cmds;
         m.buildings = g
@@ -1720,6 +1757,9 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
         }
         println!("  CPU: ground field {ground_ms:.2} ms (once a game second), model and HUD {:.3} ms a frame", t0.elapsed().as_secs_f64() * 1e3 / 20.0);
         let g = app.game.as_ref().unwrap();
+        if g.world.garden.is_some() {
+            println!("  t {:.0} s: own mould {} (green), enemy {}", g.time(), g.world.counts_by_side().0, g.mould);
+        }
         println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())), squad.map_or(String::new(), |(x, y)| format!("; squad at {x:.1},{y:.1}")));
         for b in &g.buildings {
             println!("    {} at ({:.0}, {:.0}): hp {:.0} / {:.0}, built {:.1}, {}{}", b.kind.name(), b.at.0, b.at.1, b.hp, b.max_hp, b.built, if b.alive { "standing" } else { "worn down" }, if b.working { ", working" } else { "" });
@@ -2170,7 +2210,31 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             }
         }
     }
-    let hand = if hand == "build" { "farm" } else { hand };
+    // `sow` (own=1): farm, and soldiers 0 and 1 walk from the larder to a
+    // crystal and back sowing the player's own mould (Feed while the bank
+    // is over 600, else Road): `examples/garden.rs`'s sow2.
+    let sowers: &[usize] = if hand == "sow" && g.world.garden.is_some() { &[0, 1] } else { &[] };
+    if !sowers.is_empty() {
+        let sc = g.world.scale();
+        let cs: Vec<(f32, f32)> = g.world.crystals().iter().skip(1).filter(|c| c.1 > 0.0).map(|c| c.0).filter(|&c| c != g.core && c != g.larder).collect();
+        for &k in sowers {
+            if k >= g.soldiers.len() || !g.soldiers[k].alive {
+                continue;
+            }
+            let t = if g.bank > 600.0 { Task::Feed } else { Task::Road };
+            g.world.garden.as_mut().unwrap().set_task(k, t);
+            if g.soldiers[k].order == Order::Hold {
+                let so = g.soldiers[k];
+                let home = (so.x - g.larder.0).hypot(so.y - g.larder.1) < 4.0 * sc;
+                let to = if home { cs.get(k % cs.len().max(1)).copied().unwrap_or(g.larder) } else { g.larder };
+                g.apply(Cmd::Order(k, Order::Move(to.0, to.1)));
+            }
+        }
+    }
+    let hand = match hand {
+        "build" | "sow" => "farm",
+        h => h,
+    };
     if g.time() > 0.5 && hand == "farm" && g.bank >= 1200.0 {
         g.apply(Cmd::Buy);
     }
@@ -2182,7 +2246,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             Order::Clear(x, y) => g.crystal_at((x, y)).is_none_or(|(i, _)| cs[i].1 <= 0.0),
             _ => false,
         };
-        if !g.soldiers[k].alive || (g.soldiers[k].order != Order::Hold && !dry) {
+        if sowers.contains(&k) || !g.soldiers[k].alive || (g.soldiers[k].order != Order::Hold && !dry) {
             continue;
         }
         match (hand, target) {
@@ -2198,7 +2262,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, own: false };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -2214,6 +2278,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "mission" => args.mission = Some(v.to_string()),
             "crater" => args.crater = Some(v.parse()?),
             "core_pull" => args.core_pull = Some(v.parse()?),
+            "own" => {
+                args.own = v != "0";
+                if args.own && args.map.as_deref() == Some("fork") {
+                    args.map = None; // the default map gives way to the garden's race world
+                }
+            }
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
