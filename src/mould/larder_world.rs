@@ -1611,7 +1611,8 @@ mod tests {
     use super::*;
 
     fn small(seed: u64) -> Game<BigDish> {
-        Game::new(race_world(seed, 1, 1_000), Rules::default(), seed)
+        // Buildings whole when placed (raising has its own tests).
+        Game::new(race_world(seed, 1, 1_000), Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
     }
 
     #[test]
@@ -1789,7 +1790,8 @@ mod tests {
     }
 
     fn later(seed: u64) -> Game<Later> {
-        Game::new(Later { d: race_world(seed, 1, 1_000), out: None, polls: Default::default() }, Rules::default(), seed)
+        // As `small`'s rules (buildings whole when placed).
+        Game::new(Later { d: race_world(seed, 1, 1_000), out: None, polls: Default::default() }, Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
     }
 
     impl World for Later {

@@ -25,10 +25,12 @@
 //! frame takes at most `squad::UNITS_MAX` (64), so with 40 soldiers and the
 //! larder there is room for `BuildRules::max` (20) buildings.
 //!
-//! **Raised over time.** A building is placed as a ghost with `built` 0 to
-//! 1 and acts only once whole. Until the soldier controls thread's
-//! `Order::Build` lands (soldiers stand at a ghost and add to `built`),
-//! `BuildRules::raise` is 0 and a building is whole when placed. A ghost
+//! **Raised over time** (owner's card, 2026-11-12 04:41Z: "Soldiers build
+//! over time"). A building is placed as a ghost with `built` 0 to 1 and
+//! acts only once whole. Soldiers on `Order::Build` stand at it and add to
+//! `built` (`Game::build_turn`), `BuildRules::raise` seconds for a lone
+//! builder, builders adding up; an idle soldier in range takes up a ghost
+//! by itself. A ghost
 //! holds a tenth of its health and gains the rest as it rises, and the
 //! mould wears a ghost as it wears a building. A wall writes its cells into
 //! the world, at full health, when it is whole.
@@ -107,8 +109,13 @@ pub struct BuildRules {
     pub max: usize,
     /// No building within this of another, dish cells.
     pub gap: f32,
-    /// Seconds a lone builder takes to raise a building; 0 is whole when
-    /// placed (until the soldier controls thread's build orders land).
+    /// Seconds a lone builder takes to raise a building (a wall: per
+    /// `WALL_RAISE_LEN` dish cells of length); 0 is whole when placed.
+    /// 8 (2026-11-12, seeds 5-12, cap 900, against 0, the hands sending
+    /// their nearest soldier to raise what they place): every plan still
+    /// beats idle and random 8-0; turtle is lower on 7 of 8 (p 0.016),
+    /// guard and pumps on 7 (p 0.07), wall, ring and killzone even. The
+    /// cost falls on the turret plans, which had the edge on every tier.
     pub raise: f32,
     pub turret_cost: f32,
     pub turret_hp: f32,
@@ -155,7 +162,7 @@ impl Default for BuildRules {
         BuildRules {
             max: 40,
             gap: 2.5,
-            raise: 0.0,
+            raise: 8.0,
             turret_cost: 500.0,
             turret_hp: 300.0,
             turret_range: 15.0,
@@ -428,7 +435,9 @@ mod tests {
     use super::*;
 
     fn small(seed: u64) -> Game<BigDish> {
-        Game::new(race_world(seed, 1, 1_000), Rules { start_bank: 1e6, ..Rules::default() }, seed)
+        // Whole when placed: these tests are of what buildings do; raising
+        // them has its own tests (`BuildRules::raise` set in each).
+        Game::new(race_world(seed, 1, 1_000), Rules { start_bank: 1e6, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
     }
 
     /// A soldier at `at`, so a building there is in reach.

@@ -1098,6 +1098,7 @@ impl App {
         m.help = vec![
             ("Right click".into(), "Move there; on a crystal, harvest it".into()),
             ("Shift + order".into(), "Queue it after the soldiers' current orders".into()),
+            ("Place a building".into(), "The selected soldiers walk there and raise it; idle soldiers nearby help".into()),
             ("A, click".into(), "Attack-move there; on the core, attack it".into()),
             ("Click the larder".into(), "Select it: B buys, right click sets the rally point".into()),
             ("P".into(), "Pause".into()),
