@@ -1055,6 +1055,9 @@ pub struct Engine {
     /// The squad's unit passes on one thread, as before 2026-11-12
     /// (`smell1`, `units1`, `harvest1`), to compare the two on a GPU.
     pub squad_one: bool,
+    /// The squad frame a share opened and the last share will close
+    /// (`record_share`).
+    squad_on: bool,
     /// The mould grid's square, fine cells, that `record_count` sums (0:
     /// none), written with the params.
     pub grid: u32,
@@ -1262,6 +1265,7 @@ impl Engine {
             squad: (0, 0, 0.0),
             squad_due: false,
             squad_one: false,
+            squad_on: false,
             grid: 0,
             hits,
             n_hits: 0,
@@ -1575,8 +1579,18 @@ impl Engine {
     /// (and at least one tick), GPU timestamps at the first tick's start
     /// (0), the last tick's end (1) and the drawing's end (2).
     pub fn record(&mut self, shared: &Shared, enc: &mut wgpu::CommandEncoder, ticks: u32, soft: bool, stamps: Option<&wgpu::QuerySet>) {
+        self.record_share(shared, enc, ticks, (true, true), soft, stamps);
+    }
+
+    /// A share of a frame (`GpuWorld::spread`, 2026-11-12): with `open`
+    /// the squad's start, then `ticks` ticks, with `close` the squad's
+    /// end, then the drawing. A frame recorded in shares, the first open
+    /// and the last closed, runs the same passes in the same order as
+    /// `record` (bar the drawing, which every share ends with); stamps as
+    /// `record`'s.
+    pub fn record_share(&mut self, shared: &Shared, enc: &mut wgpu::CommandEncoder, ticks: u32, (open, close): (bool, bool), soft: bool, stamps: Option<&wgpu::QuerySet>) {
         let stamps = if ticks > 0 { stamps } else { None };
-        let (passes, ticked) = self.frame_passes(ticks, soft);
+        let (passes, ticked) = self.frame_passes(ticks, soft, open, close);
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
         for (q, &(p, groups, side)) in passes.iter().enumerate() {
             let begin = (q == ticked.start).then_some(0);
@@ -1597,7 +1611,7 @@ impl Engine {
     /// submitted and waited for (so for measuring only, 2026-11-12): GPU ms
     /// a pass, by name, in order. The frame runs: the dish moves on.
     pub fn record_timed(&mut self, shared: &Shared, ticks: u32, soft: bool) -> Vec<(&'static str, f64)> {
-        let (passes, _) = self.frame_passes(ticks, soft);
+        let (passes, _) = self.frame_passes(ticks, soft, true, true);
         self.time_passes(shared, &passes)
     }
 
@@ -1606,14 +1620,18 @@ impl Engine {
     /// their strikes, then the smell, on the trail and scent the first
     /// tick reads: `squad.rs`'s frame), `ticks` ticks, the squad's end
     /// (the reads, then the harvest), then the drawing; and where the
-    /// ticks' passes are in it. Moves `done` on by `ticks` and takes the
-    /// squad's frame.
-    fn frame_passes(&mut self, ticks: u32, soft: bool) -> (Vec<(usize, u32, usize)>, std::ops::Range<usize>) {
+    /// ticks' passes are in it. Moves `done` on by `ticks`; `open` takes
+    /// the squad's frame and its start, `close` its end (a frame in
+    /// shares, `record_share`).
+    fn frame_passes(&mut self, ticks: u32, soft: bool, open: bool, close: bool) -> (Vec<(usize, u32, usize)>, std::ops::Range<usize>) {
         let (nunits, nshots, _) = self.squad;
-        let due = std::mem::take(&mut self.squad_due);
+        if open {
+            self.squad_on = std::mem::take(&mut self.squad_due);
+        }
+        let due = self.squad_on;
         let side = |done: u64| (done % 2) as usize;
         let mut out = Vec::new();
-        if due {
+        if open && due {
             let s = side(self.done);
             if nshots > 0 {
                 out.extend([(SHOTS, nshots.div_ceil(256), s), (STRIKE, self.n.div_ceil(256), s), (CUT, nshots, s)]);
@@ -1634,13 +1652,16 @@ impl Engine {
         }
         let ticked = start..out.len();
         let s = side(self.done);
-        if due && nunits > 0 {
+        if close && due && nunits > 0 {
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
             if self.squad_one {
                 out.extend([(UNITS1, squad::UNITS_MAX.div_ceil(64) as u32, s), (HARVEST1, 1, s)]);
             } else {
                 out.extend([(UNITS, nunits, s), (HARVEST, 1, s)]);
             }
+        }
+        if close {
+            self.squad_on = false;
         }
         out.extend(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, s)));
         (out, ticked)
