@@ -800,7 +800,7 @@ fn ground_codes(g: &Game<GpuWorld>, charge: Option<&[f32]>, health: Option<&[f32
     };
     let wall: Vec<bool> = (0..cells).map(|i| d.wall.get(i).copied().unwrap_or(false) && !broken(i)).collect();
     let agar: Vec<bool> = (0..cells).map(|i| d.agar[i] || broken(i)).collect();
-    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[], soil: &[] });
+    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[], soil: &[], depth: &[] });
     for (i, c) in codes.iter_mut().enumerate() {
         if broken(i) {
             *c = look::code(Ground::Rubble, 0.0);
