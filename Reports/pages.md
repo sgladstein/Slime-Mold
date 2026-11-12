@@ -69,4 +69,5 @@ if the link ever stops working. Newest last.
 | 11-12 | Campaign Missions 1-3 (game-window frames of Landfall, First contact and The gaps played by the claim AI, counts and census beside each) | https://claude.ai/artifact/Pu2j5ComXhUPTAMv4MyMRJ | `larder-campaign-2026-11-12/page/` (open `index.html`; frames from `larder-world look=DIR mission=NAME hand=claim`) |
 =======
 | 11-12 | Mould Body Forms (the player's own mould: two forms on a mirrored race world; who eats, who wins contact; seed 5 at 3:00) | https://claude.ai/artifact/H4Pd9hmsLHGgjqEciuNBmE | `player-mould-2026-11-12/` (open `page.html`; `pics/` from `ownmould look=DIR`, `raw/`) |
+| 11-12 | Gardeners First Build (the player's mould grown by soldiers: farm vs two sowers on seed 1 at 2:30 and 5:00; 32-seed table) | https://claude.ai/artifact/7Z4b4NB1JG1H7QEf9TrUer | `player-mould-2026-11-12/` (open `garden-page.html`; `garden/` from `garden look=DIR`, census raw) |
 >>>>>>> origin/main

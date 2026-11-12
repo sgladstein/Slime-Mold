@@ -112,6 +112,13 @@ pub trait World {
     fn calm(&self, at: &[(f32, f32)], _r: f32) -> Vec<u32> {
         vec![0; at.len()]
     }
+    /// The player's own mould (`own_mould::Garden`): the soldiers' tasks,
+    /// once a frame before the frame's `ticks`, with the bank they may
+    /// spend; returns the food spent. Worlds with no player mould do
+    /// nothing.
+    fn tend(&mut self, _soldiers: &[Soldier], _bank: f32, _ticks: u32) -> f32 {
+        0.0
+    }
 }
 
 impl World for BigDish {
@@ -1149,6 +1156,11 @@ impl<W: World> Game<W> {
             who.push(Some(k));
             from.push(at_crystal);
         }
+        // The player's own mould's gardeners (`own_mould`; nothing here
+        // unless the world has one).
+        let tended = self.world.tend(&self.soldiers, self.bank, r.frame_ticks);
+        self.bank -= tended;
+        self.spent += tended;
         // The larder: smells of the bank, and reads who touches it.
         units.push(UnitIn {
             x: self.larder.0,
