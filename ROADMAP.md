@@ -139,6 +139,19 @@ settled after it by the game designer review with the campaign thread
 mission teaches with first-time hints; the persistent world is a separate
 later mode) follow that ruling; the owner may change them.
 
+**One census, two seed blocks** (11-12 ~10:10Z, with the technical lead).
+A game-level table compared across threads comes from `examples/larderworld
+census`, with hands, tiers, tools and missions added there as `hands=` or
+flags; it prints a `provenance:` line (commit, seeds, cap, a hash of every
+setting) to quote beside the table. Tables from another harness (the
+toolkit's `kitplans`) say so and are not compared with it. The standing
+gate plays two disjoint seed blocks, 5-36 and 201-232, and reports random's
+wipe count beside the score: random wiped the plain mould on 5 of 16 of
+seeds 201-216 against 2 of 32 of seeds 5-36 (Fisher p 0.033), so a gate
+passed on one block can fail on the other. The window's own loop is in CI
+since #116 (`the_window_plays_every_mission`,
+`the_window_takes_every_command`); every thread keeps both green.
+
 **Caps.** Buildings share `squad::UNITS_MAX` (64) with up to
 `Rules::max_squad` (40) soldiers, and the frame drops units past the cap
 silently. The buildings thread raises it to 96 (two workgroups for the
