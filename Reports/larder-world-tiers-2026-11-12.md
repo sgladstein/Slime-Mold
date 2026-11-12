@@ -1,5 +1,7 @@
 # Mould tiers against the player AI: the plan-by-tier matrix (2026-11-12)
 
+**Pre-#113.** This matrix predates shot craters (#113) and core defence (#126), and both hit the strike directly. Don't balance off it. The re-run on main after #126 will use seed blocks 5-36 and 201-232, add the toolkit hands, apply Holm over the whole matrix, and call a cell "best" only when it beats the runner-up significantly.
+
 The tier counter tests the creature-rules thread handed over after PR #85: each mould tier against the world player AI's styles ([larder-world-ai-2026-11-12.md](larder-world-ai-2026-11-12.md)), idle and random, on the CPU race world. It grew into the plan-by-tier matrix the design review asked for (07:31Z): which plan is best against which mould. Raw output and scripts are in [larder-world-tiers-2026-11-12/](larder-world-tiers-2026-11-12/). Pictures, with the counts beside them, are on the [Artifact page](https://claude.ai/artifact/T4S63gUxYWbJqJEQfviHDe). Its source is archived in `larder-world-tiers-2026-11-12/page.html` (see [pages.md](pages.md)).
 
 The rules moved three times while this ran, so there are three runs. Only the last is today's game. It is still from before #113's shot craters.
