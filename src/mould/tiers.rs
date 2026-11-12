@@ -109,8 +109,13 @@ impl Tier {
             Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1")],
             // Explorers alone (keep 0.9, step 1) starved to 250 walkers by
             // 60 s and let go of every crystal; the faster step and longer
-            // reach keep a mesh on 14 of 23.
-            Tier::Sprawler => vec![("explore_steps", "400"), ("explore_spread", "1"), ("keep", "0.8"), ("step", "1.5"), ("sensor_offset", "18")],
+            // reach keep a mesh on 14 of 23. Explore 400 steps held about
+            // 1,100 walkers, and in the census (seeds 201-216) every plan
+            // and random wiped it, idle survived: newborns start as
+            // explorers (age 0) and leave food before they eat. At 200 it
+            // holds 17 crystals on seeds 1 and 2, and on dev seeds 1-4
+            // random lost the squad 2 of 4 while wall and strike won 4 of 4.
+            Tier::Sprawler => vec![("explore_steps", "200"), ("explore_spread", "1"), ("keep", "0.8"), ("step", "1.5"), ("sensor_offset", "18")],
             // Reach 27 with keep 0.97 drew the widest cords but stopped
             // growing at about 1,900 walkers; crowd 0 starved (1,000); two
             // trail passes thicken them further but the GPU has no such key.
