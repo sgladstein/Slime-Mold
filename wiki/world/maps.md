@@ -2,7 +2,7 @@
 title: Larder World maps
 kind: design
 status: open
-updated: 2026-11-11T22:00Z
+updated: 2026-11-12T01:00Z
 sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md]
 code: [Map::load, Map::of_dish, BigDish::with_map, Engine::with_map, GpuWorld::with_map, World::landing, BigDish::pile_rs, BigDish::pile_fill, BigDish::homes, build_wall_hp, ground_bits]
 ---
@@ -20,11 +20,12 @@ A Larder World can be a designed map, not only noise. The loader (ROADMAP WM1) r
 
 ## Tried and rejected
 
-- A harvester walking home whenever its frame's take fell under half: it banked the same food, but scored lower on 4 of 4 games because soldiers were off their crystals at the cap ([dead end](../../Reports/dead-ends.md)). The kept rule also needs the whole crystal to hold less than the rest of a load.
+- Four rules that send a harvester home with what it carries when its crystal runs dry (WM1): under half its ask alone, with "the crystal can't fill the load", with a quarter-load floor, and with "the crystal holds under one frame's ask". Each cost the farm or wall hand at the cap (the narrowest: farm lower on 10 of 10), because soldiers left crystals with crumbs left, which the score counts as held ([dead end](../../Reports/dead-ends.md)). A carrier still goes home only when full.
 
 ## Open
 
 - Soil on the GPU (WM3's GPU side), so v2 maps play the same in the window (W2c).
+- A soldier whose crystal runs dry waits there for a full load until it is ordered on. A fix that keeps the planned hands' score needs the share weighted by charge left, or hands that re-order.
 - The WM2 gate on each map: idle and random lose, and the winning plan changes between maps.
 - Rival moulds as different species (the Passes' two starts are one species today).
 - Map look (WM4) and an editor (WM5).

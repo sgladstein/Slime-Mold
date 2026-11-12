@@ -827,8 +827,7 @@ impl<W: World> Game<W> {
         self.shots += f.shots.len() as u32;
         self.last_shots = f.shots.iter().zip(&out.shots).map(|(i, o)| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed }).collect();
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
-        let left: Vec<f32> = self.world.crystals().iter().map(|c| c.1).collect();
-        for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
+        for ((u, k), c) in out.units.iter().zip(&who).zip(&from) {
             if let Some(c) = *c {
                 self.taken[c] += u.took;
             }
@@ -839,28 +838,31 @@ impl<W: World> Game<W> {
                     s.aim = u.target;
                     s.dense = u.dense;
                     s.carry += u.took / r.charge;
-                    // A crystal running dry sends its carrier home with what
-                    // it has: the frame gave less than half its ask, and the
-                    // whole crystal holds less than the rest of a load.
-                    // (Without this, on the Fork map (WM1) a soldier emptied
-                    // a small crystal, 12,032 charge or 188 food, and waited
-                    // there for a full 300 load that never came; on the Nest
-                    // the take dwindled toward 0 as charge flowed in from
-                    // the crystal's edge, so `took == 0` never fired either,
-                    // and it sat at 128 food. The race world's crystals
-                    // never ran dry under one soldier, so W2b never met it.
-                    // M3 has the same rule and the same gap. Going home on
-                    // the short take alone was tried: on race seeds 5 and 6
-                    // the farm and wall hands banked the same food but
-                    // scored lower on all 4 games, -0.136 against -0.029 on
-                    // farm seed 5, because soldiers walked home whenever the
-                    // cells in reach ran low and were off their crystals at
-                    // the cap.)
-                    if let Some(i) = *c {
-                        if u.took < 0.5 * ask.take && s.carry > 0.0 && left[i] < (r.carry - s.carry) * r.charge {
-                            s.homing = true;
-                        }
-                    }
+                    // A carrier goes home only full, as in W2b and M3, so a
+                    // soldier whose crystal runs dry waits there with what it
+                    // has until it is ordered on (the window's "crystal ran
+                    // dry" alert says when). The maps found it (WM1): on the
+                    // v1 Fork a soldier emptied a crystal of 12,032 charge
+                    // (188 food) and stood there for a 300 load that never
+                    // came; on the v1 Nest the take dwindled as charge seeped
+                    // in from the crystal's edge (128 food). Four rules that
+                    // send it home were tried on race seeds 5-20 against
+                    // W2b's census, and each cost the planned hands. The frame
+                    // gave under half its ask: farm and wall lower on all 4
+                    // games of seeds 5-6 (farm seed 5, -0.136 against
+                    // -0.029). That, and the crystal can't fill the load: farm
+                    // lower on 15 of 16 (mean -0.204 against -0.027), wall on
+                    // 15, kills down a fifth. That, with a quarter-load floor:
+                    // farm even (14 of 16 the same), wall lower on 8 and
+                    // higher on none (-0.053 against -0.022). Half its ask
+                    // with the whole crystal under one frame's ask: farm lower
+                    // on 10 of 10, wall on 8 of 9 (-0.188 against -0.034).
+                    // Each sent soldiers home off crystals with crumbs left,
+                    // and back for more crumbs, and `share` counts a crystal
+                    // with any charge as held while a soldier stands on it.
+                    // A rule that keeps the hands' score needs `share` to
+                    // weigh a crystal by its charge, or the hands to re-order
+                    // a soldier as a player would (`Reports/dead-ends.md`).
                     if u.touching > 0 {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
