@@ -2,9 +2,27 @@
 title: The RTS directions
 kind: design
 status: open
-updated: 2026-11-11T15:40Z
-sources: [Reports/rts-research-2026-11-10.md, Reports/two-fevers-2026-11-10/README.md, Reports/rts-design-2026-11-10.md, Reports/rts-design-2026-11-10/brainstorm/README.md, Reports/rts-design-2026-11-10/red-team/README.md, Reports/rts-design-2026-11-10/field/README.md, Reports/rts-skirmish-2026-11-10.md]
-code: [Dish::rival, Dish::store, Dish::tithe, Dish::food_share, Pile::bite, Params::fed_scent, Params::flow, Params::foe_repel, Params::pieces, Params::wound, Params::table]
+updated: 2026-11-11
+sources:
+  - Reports/rts-design-2026-11-10.md
+  - Reports/rts-design-2026-11-10/brainstorm/README.md
+  - Reports/rts-design-2026-11-10/field/README.md
+  - Reports/rts-design-2026-11-10/red-team/README.md
+  - Reports/rts-research-2026-11-10.md
+  - Reports/rts-skirmish-2026-11-10.md
+  - Reports/two-fevers-2026-11-10/README.md
+code:
+  - Dish::food_share
+  - Dish::rival
+  - Dish::store
+  - Dish::tithe
+  - Params::fed_scent
+  - Params::flow
+  - Params::foe_repel
+  - Params::pieces
+  - Params::table
+  - Params::wound
+  - Pile::bite
 ---
 
 # The RTS directions

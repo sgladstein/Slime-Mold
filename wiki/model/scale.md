@@ -2,9 +2,62 @@
 title: The mould at scale (the GPU plan)
 kind: mechanism
 status: open
-updated: 2026-11-12T17:26Z
-sources: [Reports/gpu-plan-2026-11-10.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/slime-enemy-review-2026-11-12.md]
-code: [W, H, STEPS_PER_FRAME, FED_EVERY, INOCULUM, WILD_START, Dish::step_cost, STEP_PASSES, Params::census_every, Params::census_lag, Params::all_at_once, Params::fixed_point, keyed, BigDish, BigParams, BigMeasure, BigParams::respawn, BigParams::blob_r, BigParams::haze, BigParams::sense_scale, BigParams::deposit_cap, BigParams::sense_floor, BigParams::wander, BigParams::sick_steps, BigDish::infect, BigParams::sensor_r, BigParams::species, BigParams::species_cycle, BigParams::chance_exp, BigParams::explore_steps, BigParams::explore_spread, BigParams::size_spread, BigParams::blocked_keep, BigParams::blocked_retry, BigParams::blocked_deposit, BigParams::graze_weight, BigParams::species_convert, BigParams::species_boost, BigParams::crystal_charge, BigParams::crystal_regrow, BigParams::terrain_rock, BigParams::rect, BigDish::build_wall, BigParams::wall_hp, BigParams::wall_scent, BigParams::crystal_flow, BigDish::in_pile, BigParams::species_share, BigParams::species_convert_r, BigParams::mix_share]
+updated: 2026-11-12
+sources:
+  - Reports/gpu-plan-2026-11-10.md
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/slime-enemy-review-2026-11-12.md
+code:
+  - BigDish
+  - BigDish::build_wall
+  - BigDish::in_pile
+  - BigDish::infect
+  - BigMeasure
+  - BigParams
+  - BigParams::blob_r
+  - BigParams::blocked_deposit
+  - BigParams::blocked_keep
+  - BigParams::blocked_retry
+  - BigParams::chance_exp
+  - BigParams::crystal_charge
+  - BigParams::crystal_flow
+  - BigParams::crystal_regrow
+  - BigParams::deposit_cap
+  - BigParams::explore_spread
+  - BigParams::explore_steps
+  - BigParams::graze_weight
+  - BigParams::haze
+  - BigParams::mix_share
+  - BigParams::rect
+  - BigParams::respawn
+  - BigParams::sense_floor
+  - BigParams::sense_scale
+  - BigParams::sensor_r
+  - BigParams::sick_steps
+  - BigParams::size_spread
+  - BigParams::species
+  - BigParams::species_boost
+  - BigParams::species_convert
+  - BigParams::species_convert_r
+  - BigParams::species_cycle
+  - BigParams::species_share
+  - BigParams::terrain_rock
+  - BigParams::wall_hp
+  - BigParams::wall_scent
+  - BigParams::wander
+  - Dish::step_cost
+  - FED_EVERY
+  - H
+  - INOCULUM
+  - Params::all_at_once
+  - Params::census_every
+  - Params::census_lag
+  - Params::fixed_point
+  - STEPS_PER_FRAME
+  - STEP_PASSES
+  - W
+  - WILD_START
+  - keyed
 ---
 
 # The mould at scale (the GPU plan)

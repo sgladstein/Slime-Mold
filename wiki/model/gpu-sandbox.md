@@ -2,9 +2,25 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-12T19:55Z
-sources: [Reports/gpu-readout-2026-11-12.md, Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
-code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost, BigParams::spore_rate, BigParams::sleep_death, Engine::strike, Engine::record_share, Engine::squad_one, GpuWorld::spread]
+updated: 2026-11-12
+sources:
+  - Reports/creatures-2026-11-11.md
+  - Reports/gpu-readout-2026-11-12.md
+  - Reports/gpu-sandbox-2026-11-11.md
+  - Reports/jenson-looks-2026-11-11.md
+  - Reports/life-gpu-2026-11-11.md
+  - Reports/outside-rules-2026-11-11.md
+  - Reports/species-gpu-2026-11-11.md
+code:
+  - BigParams::graze_weight
+  - BigParams::sleep_death
+  - BigParams::species
+  - BigParams::species_boost
+  - BigParams::spore_rate
+  - Engine::record_share
+  - Engine::squad_one
+  - Engine::strike
+  - GpuWorld::spread
 ---
 
 # The GPU sandbox (phase 3)
