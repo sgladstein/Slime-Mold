@@ -2019,6 +2019,64 @@ fn press_every(app: &mut App, sec: u64) -> Result<(), String> {
     Ok(())
 }
 
+/// The machine a bench runs on, as it starts and ends: free memory, the
+/// GPU's memory in use and how busy it is, and the other programs on it
+/// (from `nvidia-smi`, where there is one), so a slow run shows why in its
+/// own output. Asked for by the technical lead on 2026-11-12, after a
+/// round of 1070 timings overlapped a campaign run on the owner's PC with
+/// 0.5 GB of 8 free: every frame's median went from 0.6 ms to 2-3 ms and
+/// one run died for want of memory, with nothing in its output to say so.
+fn machine() -> String {
+    let run = |cmd: &str, args: &[&str]| {
+        let out = std::process::Command::new(cmd).args(args).output().ok().filter(|o| o.status.success())?;
+        Some(String::from_utf8_lossy(&out.stdout).trim().to_string())
+    };
+    let gb = |kb: f64| kb / 1024.0 / 1024.0;
+    let ram = if cfg!(windows) {
+        run("powershell", &["-NoProfile", "-Command", "$o = Get-CimInstance Win32_OperatingSystem; \"$($o.FreePhysicalMemory) $($o.TotalVisibleMemorySize)\""])
+    } else {
+        std::fs::read_to_string("/proc/meminfo").ok().map(|m| {
+            let kb = |key: &str| m.lines().find(|l| l.starts_with(key)).and_then(|l| l.split_whitespace().nth(1)).unwrap_or("0").to_string();
+            format!("{} {}", kb("MemAvailable:"), kb("MemTotal:"))
+        })
+    };
+    let ram = ram
+        .and_then(|r| {
+            let mut v = r.split_whitespace().map(|x| x.parse::<f64>().ok());
+            Some(format!("RAM {:.1} GB free of {:.1}", gb(v.next()??), gb(v.next()??)))
+        })
+        .unwrap_or_else(|| "RAM unknown".into());
+    let gpu = run("nvidia-smi", &["--query-gpu=memory.used,memory.total,utilization.gpu", "--format=csv,noheader,nounits"])
+        .and_then(|l| {
+            let v: Vec<&str> = l.lines().next()?.split(',').map(str::trim).collect();
+            Some(format!("GPU memory {} MB in use of {}, {}% busy", v.first()?, v.get(1)?, v.get(2)?))
+        })
+        .unwrap_or_else(|| "GPU memory and use unknown (no nvidia-smi)".into());
+    // The process table: `| GPU GI CI PID Type Name... Memory |`, names
+    // cut to the file name, this bench left out.
+    let me = std::env::current_exe().ok().and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string())).unwrap_or_default();
+    let mut others: Vec<String> = Vec::new();
+    let table = run("nvidia-smi", &[]);
+    if let Some(t) = &table {
+        for l in t.lines().skip_while(|l| !l.contains("Processes:")) {
+            let w: Vec<&str> = l.trim_matches(|c: char| c == '|' || c.is_whitespace()).split_whitespace().collect();
+            if w.len() >= 7 && w[3].parse::<u32>().is_ok() {
+                let name = w[5..w.len() - 1].join(" ");
+                let name = name.rsplit(['\\', '/']).next().unwrap_or(&name).to_string();
+                if name != me && !others.contains(&name) {
+                    others.push(name);
+                }
+            }
+        }
+    }
+    let others = match (&table, others.is_empty()) {
+        (None, _) => "no list of the GPU's programs".to_string(),
+        (Some(_), true) => "no other programs on the GPU".to_string(),
+        (Some(_), false) => format!("on the GPU too: {}", others.join(", ")),
+    };
+    format!("{ram}; {gpu}; {others}")
+}
+
 /// A GPU with the adapter's own limits (the engine binds 48 buffers), and
 /// timestamps where it has them (`bench`).
 fn gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
@@ -2151,8 +2209,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     if let Some(secs) = bench_secs {
+        println!("larder-world machine at the start: {}", machine());
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread }, &device, &queue)?;
+        println!("  machine at the end: {}", machine());
         return Ok(());
     }
     if let Some(dir) = look {
