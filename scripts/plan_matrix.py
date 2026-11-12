@@ -116,8 +116,16 @@ def table(out):
     tiers = [t for t in TIERS if any(k[0] == t for k in d)]
     hands = [h for h in WORLD_HANDS + KIT_HANDS if any(k[1] == h for k in d)]
     seeds = sorted({k[2] for k in d})
-    full = lambda t, h: all((t, h, s) in d for s in seeds)
-    sc = lambda t, h: [d[(t, h, s)][0] for s in seeds]
+    # A stopped run leaves a tier short of seeds. Each tier is paired on the
+    # seeds every hand it has data for has finished; a harness with no rows
+    # on that tier shows as missing. The tier's seed count is in its row.
+    tseeds = {}
+    for t in tiers:
+        got = [{k[2] for k in d if k[0] == t and k[1] == h} for h in hands]
+        got = [g for g in got if g]
+        tseeds[t] = sorted(set.intersection(*got)) if got else []
+    full = lambda t, h: bool(tseeds[t]) and all((t, h, s) in d for s in tseeds[t])
+    sc = lambda t, h: [d[(t, h, s)][0] for s in tseeds[t]]
     plans = [h for h in hands if h not in CONTROLS]
     # The test family, Holm over all of it.
     tests = []
@@ -152,7 +160,7 @@ def table(out):
     L.append(f'# Plan-by-tier matrix\n')
     L.append(f'Made {datetime.datetime.now(datetime.timezone.utc):%Y-%m-%d %H:%MZ} from commit `{commit[:9]}` by `scripts/plan_matrix.py`; seeds {spans(seeds)} ({len(seeds)}). Raw output in `raw/`.\n')
     L.append(f'Provenance: `{prov[:300]}…`\n')
-    L.append('Each cell: median `Game::score` (v2), then the ends (mould wiped / cap / squad wiped). A win is above 1; a stalemate at the cap is about −0.4 to +0.5. **Bold** is the best plan by median when it beats the runner-up after Holm over the whole matrix; otherwise the column is a tie.\n')
+    L.append('The number after each tier is how many paired seeds it has; a stopped run leaves some short. Each cell: median `Game::score` (v2), then the ends (mould wiped / cap / squad wiped). A win is above 1; a stalemate at the cap is about −0.4 to +0.5. **Bold** is the best plan by median when it beats the runner-up after Holm over the whole matrix; otherwise the column is a tie.\n')
     L.append('| Tier | ' + ' | '.join(hands) + ' | Best |')
     L.append('| --- | ' + ' | '.join('---' for _ in hands) + ' | --- |')
     for t in tiers:
@@ -163,15 +171,15 @@ def table(out):
             if not full(t, h):
                 cells.append('–')
                 continue
-            e = [d[(t, h, s)][1] for s in seeds]
+            e = [d[(t, h, s)][1] for s in tseeds[t]]
             c = f'{st.median(sc(t, h)):+.2f} {sum("mould" in x for x in e)}/{sum("cap" in x for x in e)}/{sum("squad" in x for x in e)}'
             cells.append(f'**{c}**' if sig and h == a else c)
         if a is None:
             verdict = '–'
         else:
             hi, lo, p = raw[(t, a, b)]
-            verdict = f'{a} over {b} {hi}-{lo}, median +{diff:.2f}, Holm p {adj[(t, a, b)]:.3f}' + ('' if sig else ' (tie)')
-        L.append(f'| {t} | ' + ' | '.join(cells) + f' | {verdict} |')
+            verdict = f'{a} over {b} {hi}-{lo}, median {diff:+.2f}, Holm p {adj[(t, a, b)]:.3f}' + ('' if sig else ' (tie)')
+        L.append(f'| {t} ({len(tseeds[t])}) | ' + ' | '.join(cells) + f' | {verdict} |')
     L.append('\n## Each plan against idle and random (higher-lower, Holm p)\n')
     L.append('| Tier | ' + ' | '.join(plans) + ' |')
     L.append('| --- | ' + ' | '.join('---' for _ in plans) + ' |')
@@ -182,7 +190,7 @@ def table(out):
             row.append(', '.join(parts) or '–')
         L.append(f'| {t} | ' + ' | '.join(row) + ' |')
     L.append('\n## Random\'s mould wipes per tier\n')
-    L.append(', '.join(f'{t} {sum("mould" in d[(t, "random", s)][1] for s in seeds)}' for t in tiers if full(t, 'random')) + f' (of {len(seeds)})')
+    L.append(', '.join(f'{t} {sum("mould" in d[(t, "random", s)][1] for s in tseeds[t])}/{len(tseeds[t])}' for t in tiers if full(t, 'random')))
     L.append(f'\n{m} tests in the Holm family.')
     open(f'{out}/matrix.md', 'w').write('\n'.join(L) + '\n')
     print('\n'.join(L))
