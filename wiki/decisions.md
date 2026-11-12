@@ -2,8 +2,8 @@
 title: The owner's rulings and decided choices
 kind: method
 status: current
-updated: 2026-11-11
-sources: [CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
+updated: 2026-11-12
+sources: [Reports/testing-practice-2026-11-12.md, CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
 code: [Params::pieces]
 ---
 
@@ -23,6 +23,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Ruling | Owner's words | Source |
 |---|---|---|---|
+| 2026-11-12 17:26, card | Build first, balance later: a feature or look lands when it works and can be seen; a census is not its gate. Balance never blocks looks or features (retune the numbers; never hold one area for balance in another). A census only answers a strategy question (player AI, a shared default, dominance before a milestone or playtest, mission difficulty, an owner question), named with its runner time, under about an hour without the owner's OK | "It seems like for every feature we build we run lots of tests for balance to see if it beats random. Sometimes this is hours of testing." ... "We were developing bad looking slimes because more runners killed the player too easily (instead of rebalancing)." (17:00); card "Adopt as written" | [review](../Reports/testing-practice-2026-11-12.md) |
 | 2026-11-11 15:28, card | After the second success check tied the wiki with the reports (3-2, 33 ties), shrink the wiki to short pages with no Numbers tables: keep the index, decisions, lint and short Now pages that link the reports; the numbers stay in the reports | card ("Short pages, no numbers tables") | [plan report, *Success check, second run*](../Reports/llm-wiki-plan-2026-11-10.md) |
 | 2026-11-11 15:16-15:17 | The wiki upkeep suggestions are all agreed: a `world/` folder for Larder World, a mould-tier page, split oversized pages, a `paused` status for the old dish and tool pages, a slimmer HANDOFF, one-sentence index lines. Page size is capped in bytes (12 KB a page, 2 KB a Now), not 300 lines, after the owner asked whether 300 was right. Paused pages may still be changed by a thread working on them directly | "agreed to everything, but first, is 300 lines a good limit or too small?"; "if an agent is directly working on these, then they can change them though" | [README](README.md) |
 | 2026-11-11 04:11 | Lean on published knowledge of what these simulations' parameters do instead of rediscovering it by sweeps; judge a new rule by whether it makes a creature for play, not by whether it makes a new organic pattern | "There's a lot of information out there about these types of simulations and what the parameters do, so we don't necessarily need to ReDiscover everything ourselves. Also at some point this just becomes an organic pattern generator and not really slime mold. Not that the point of what we're doing is also to generate slime mold, but it generates some sort of creature for gameplay and not just random organic patterns" | [outside rules](../Reports/outside-rules-2026-11-11.md), [scale](model/scale.md) |

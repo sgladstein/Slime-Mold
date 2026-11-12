@@ -28,6 +28,14 @@ All rulings, quoted and timed: `wiki/decisions.md` (standing) and
 - **An outcome is a spread, not a yes/no; every tool must deliver something
   you can see.**
 - **Defaults on** unless there is a measured harm or a stated uncertainty.
+- **Build first, balance later** (2026-11-12 17:26Z; [rule](Reports/testing-practice-2026-11-12.md)).
+  A feature or look lands when it works and can be seen (tests plus a GIF or
+  a playable build); a census is not its gate. **Balance never blocks looks
+  or features**: retune the numbers instead, and never hold one area's work
+  for balance in another. A census only answers a strategy question (player
+  AI, a shared default every thread measures against, dominance before a
+  milestone or playtest, mission difficulty, an owner question); name it and
+  its runner time first, under about an hour without the owner's OK.
 - **Brainstorms start from the model**, not from the demo's tools (lamp,
   oats, salt, knife, water), which were built for the herding puzzle
   (2026-11-10). Describe the simulation neutrally in a brainstorm brief.
@@ -53,8 +61,10 @@ All rulings, quoted and timed: `wiki/decisions.md` (standing) and
 2. Name the deciding measure before a run. Compare paired seeds, quote
    differences as paired counts with a sign-test p, and say which survive a
    multiple-comparison correction.
-3. Random and idle hands are the controls: a good dish is one a plan wins
-   and random loses.
+3. Every feature gets cheap smoke checks: idle doesn't win, the game doesn't
+   end in under a minute, nothing soft-locks. Random and idle hands are the
+   controls when a census does run; a result there is a tuning note, not a
+   veto.
 4. Quote the frame cost of anything that runs every step.
 5. Before retrying an idea, grep `Reports/dead-ends.md` for the mechanism.
 

@@ -37,6 +37,7 @@
 //! taken enemy core sets the enemy's cap to 0: its births stop, the
 //! player's go on.
 
+use super::kit::KitRules;
 use super::big::{BigDish, BigParams, SpeciesSet, LIFE_DEAD, LIFE_SPORE};
 use super::larder_world::{race_params, race_world, Soldier, World};
 use super::map::Map;
@@ -99,6 +100,10 @@ pub struct Garden {
     pub cut: u32,
     pub own_ate: f64,
     pub enemy_ate: f64,
+    /// Walkers converted to the player's mould and to the enemy (alive
+    /// before and after a tick, species changed), over the game.
+    pub turned_own: u64,
+    pub turned_enemy: u64,
 }
 
 /// The race world of `seed` with the enemy on its home crystal and the
@@ -130,10 +135,36 @@ pub fn garden_world(seed: u64, scale: usize, walkers: usize, sets: Option<(Speci
     for k in 0..n {
         dish.spec[k] = if k < walkers { 0 } else { OWN };
     }
-    Garden { dish, tasks: Vec::new(), tend: Tend::default(), roads: 0, fed: 0.0, cut: 0, own_ate: 0.0, enemy_ate: 0.0 }
+    Garden { dish, tasks: Vec::new(), tend: Tend::default(), roads: 0, fed: 0.0, cut: 0, own_ate: 0.0, enemy_ate: 0.0, turned_own: 0, turned_enemy: 0 }
 }
 
 impl Garden {
+    /// The toolkit's det cord (`kit::Tool::Cord`) on the garden: blasts of
+    /// `cord_r` every `cord_every` dish cells from `a` to `b` (fine-cell
+    /// points), each killing every walker in it, the player's too, and
+    /// leaving its crater, so one cut tool serves both moulds (the
+    /// designer's review of #132: Cut's disc of radius 3 moved nothing
+    /// against 23,000 cells). Returns (the player's, the enemy's) killed;
+    /// the caller pays `cord_price` a dish cell from the bank.
+    pub fn cord(&mut self, a: (f32, f32), b: (f32, f32), r: &KitRules, tps: u32) -> (usize, usize) {
+        let d = &mut self.dish;
+        let s = d.p.scale as f32;
+        let before = |d: &BigDish| (0..d.walkers.len()).filter(|&k| d.lives(k)).fold((0usize, 0usize), |(o, e), k| if d.spec[k] == OWN { (o + 1, e) } else { (o, e + 1) });
+        let (o0, e0) = before(d);
+        d.enable_alarm(r.alarm_keep);
+        let len = (a.0 - b.0).hypot(a.1 - b.1);
+        let n = (len / (r.cord_every * s)).ceil().max(1.0) as usize;
+        let steps = (r.crater_secs * tps as f32 * d.p.substeps as f32).round().min(u16::MAX as f32) as u16;
+        for j in 0..=n {
+            let f = j as f32 / n as f32;
+            let p = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
+            d.strike(p.0 / s, p.1 / s, r.cord_r, r.blast_alarm, 2.0 * r.cord_r);
+            d.scorch_disc(p.0, p.1, r.cord_r * s, steps);
+        }
+        let (o1, e1) = before(d);
+        (o0.saturating_sub(o1), e0.saturating_sub(e1))
+    }
+
     /// Sets soldier `k`'s task.
     pub fn set_task(&mut self, k: usize, t: Task) {
         if self.tasks.len() <= k {
@@ -402,8 +433,23 @@ impl World for Garden {
     fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut {
         let shots = self.shots(&f.shots, f.slime, f.crater);
         squad::smell(&mut self.dish, &f.units);
+        let mut was = Vec::new();
         for _ in 0..ticks {
+            if self.dish.p.species_convert > 0.0 {
+                was.clear();
+                was.extend((0..self.dish.walkers.len()).map(|k| if self.dish.lives(k) { self.dish.spec[k] } else { u8::MAX }));
+            }
             self.dish.tick();
+            for (k, &s) in was.iter().enumerate() {
+                let now = self.dish.spec[k];
+                if s != u8::MAX && now != s && self.dish.lives(k) {
+                    if now == OWN {
+                        self.turned_own += 1;
+                    } else if s == OWN {
+                        self.turned_enemy += 1;
+                    }
+                }
+            }
             if !self.dish.took.is_empty() {
                 for k in 0..self.dish.walkers.len() {
                     let t = self.dish.took[k] as f64;
@@ -594,5 +640,21 @@ mod tests {
         assert!(plain.dish.scorch.is_empty(), "crater 0 lays none");
         g.shots(&shot, slime, 40);
         assert_eq!(g.dish.scorch[at], 40, "the crater on the strike");
+    }
+
+    /// A det cord across both moulds kills walkers of each and craters
+    /// its line.
+    #[test]
+    fn a_cord_cuts_both_moulds() {
+        let mut g = garden();
+        for _ in 0..30 {
+            g.dish.tick();
+        }
+        let pick = |g: &Garden, own: bool| (0..g.dish.walkers.len()).find(|&k| g.dish.lives(k) && (g.dish.spec[k] == OWN) == own).map(|k| (g.dish.walkers[k].0, g.dish.walkers[k].1)).unwrap();
+        let (a, b) = (pick(&g, true), pick(&g, false));
+        let (own, enemy) = g.cord(a, b, &KitRules::default(), 15);
+        assert!(own > 0 && enemy > 0, "own {own} enemy {enemy}");
+        let i = a.1 as usize * g.dish.w + a.0 as usize;
+        assert!(g.dish.scorch[i] > 0, "the line is cratered");
     }
 }

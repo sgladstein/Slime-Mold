@@ -1,0 +1,27 @@
+== race-201-232-partial: 24 seeds (201-232) from 2 files
+  provenance: harness larderworld, commit 9f5e4a402, seeds 201-216 (16), cap 900 s, settings hash da5a589e614253bd
+  provenance: harness larderworld, commit 9f5e4a402, seeds 225-232 (8), cap 900 s, settings hash da5a589e614253bd
+  mean: idle -0.320, random -1.276, farm +0.295, ring +0.297, turtle +0.335, killzone +0.288, guard +0.335, pumps +0.323, army +0.393
+  random wipes the mould on 1 of 24
+  best plan on a seed (ties dropped): farm 0, ring 0, turtle 1, killzone 0, guard 7, pumps 2, army 13
+  paired by seed, sign test, Holm over 20:
+        farm vs idle  : 24 higher,  0 lower, p 0.0000, holds
+        farm vs random: 23 higher,  1 lower, p 0.0000, holds
+        ring vs idle  : 24 higher,  0 lower, p 0.0000, holds
+        ring vs random: 23 higher,  1 lower, p 0.0000, holds
+      turtle vs idle  : 24 higher,  0 lower, p 0.0000, holds
+      turtle vs random: 23 higher,  1 lower, p 0.0000, holds
+    killzone vs idle  : 24 higher,  0 lower, p 0.0000, holds
+    killzone vs random: 23 higher,  1 lower, p 0.0000, holds
+       guard vs idle  : 24 higher,  0 lower, p 0.0000, holds
+       guard vs random: 23 higher,  1 lower, p 0.0000, holds
+       pumps vs idle  : 24 higher,  0 lower, p 0.0000, holds
+       pumps vs random: 23 higher,  1 lower, p 0.0000, holds
+        army vs idle  : 24 higher,  0 lower, p 0.0000, holds
+        army vs random: 23 higher,  1 lower, p 0.0000, holds
+        ring vs army  :  1 higher, 23 lower, p 0.0000, holds
+      turtle vs army  :  2 higher, 22 lower, p 0.0000, holds
+    killzone vs army  :  0 higher, 24 lower, p 0.0000, holds
+       guard vs army  :  8 higher, 15 lower, p 0.2100
+       pumps vs army  :  3 higher, 21 lower, p 0.0003, holds
+        farm vs army  :  1 higher, 23 lower, p 0.0000, holds
