@@ -160,8 +160,11 @@ play 5,000 walkers today; the GPU was built for 100,000. A threshold
 written as a walker count (for example a look's walkers in a 5 x 5 window,
 or a sound's kills per shot) breaks at the larger scale. The game publishes
 one density, walkers per open cell at the start (Larder thread, on
-`Game`), and a new count-based threshold is written as a multiple of it
-(technical lead review, 11-12).
+`Game`), and a new count-based threshold is written as a function of it,
+measured at two scales, not assumed in proportion (technical lead review,
+11-12). The sound thread found kills a shot grow about 1.9 times for 10
+times the walkers (35 at 5,000, 66 at 50,000, one rush), so its heavy-shot
+threshold scales with density to the power 0.3.
 
 **No slower mould clock.** The Larder thread dropped it (11-12 04:49Z):
 the graphics thread timed a 3x slower clock and the hole still refilled in
