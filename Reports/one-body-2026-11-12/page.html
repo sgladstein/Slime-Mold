@@ -40,6 +40,27 @@ code{font-family:var(--mono);font-size:12.5px}
 </section>
 
 <section>
+<h2>Films in the game's own look</h2>
+<p class="lede">Added 14:55Z, after you saw specks. These are the Larder World window's own pictures (the GPU engine and its shading, on the Fork map, recorded without a window), one frame every 2 game seconds, played at 8x. One rule set is today's and the other is sharing + hunger. A and B are drawn at random per pair, and the key is in the repo, not on this page.</p>
+<h3>Idle squad, whole map, 4 minutes</h3>
+<div class="figs">
+<figure><img src="img/film-idle-all-A.gif" alt="Mould A grows over the Fork map for 4 minutes" width="600" height="372"><figcaption><b>A</b><span>14,073 walkers at 4:00</span><span>all 4 soldiers dead</span></figcaption></figure>
+<figure><img src="img/film-idle-all-B.gif" alt="Mould B grows over the Fork map for 4 minutes" width="600" height="372"><figcaption><b>B</b><span>3,855 walkers at 4:00</span><span>4 soldiers alive</span></figcaption></figure>
+</div>
+<h3>The same rounds, close in on the squad</h3>
+<div class="figs">
+<figure><img src="img/film-idle-near-A.gif" alt="Mould A reaching the squad, close view" width="560" height="350"><figcaption><b>A</b><span>14,073 walkers at 4:00</span></figcaption></figure>
+<figure><img src="img/film-idle-near-B.gif" alt="Mould B reaching the squad, close view" width="560" height="350"><figcaption><b>B</b><span>3,855 walkers at 4:00</span></figcaption></figure>
+</div>
+<h3>Rush hand (the squad attacks the core), until the squad falls</h3>
+<div class="figs">
+<figure><img src="img/film-rush-all-A.gif" alt="Mould A against a rushing squad" width="600" height="372"><figcaption><b>A</b><span>squad wiped at 2:43</span><span>4,694 walkers</span><span>1,545 killed by shots</span></figcaption></figure>
+<figure><img src="img/film-rush-all-B.gif" alt="Mould B against a rushing squad" width="600" height="372"><figcaption><b>B</b><span>squad wiped at 2:22</span><span>7,061 walkers</span><span>1,508 killed by shots</span></figcaption></figure>
+</div>
+<p>In both, the mould reaches out as broken dotted lines: clumps of walkers strung along a trail, not one sheet. That is the "specks" you saw, and neither rule set removes it. Sharing + hunger fills the trunks and the crystals more, but its far edges are just as dotted. To play it yourself on the desktop: <code>cargo run --release --bin larder-world -- energy_flow=0.05 hunger_scent=8</code>; leave the two keys off for today's rules.</p>
+</section>
+
+<section>
 <h2>What a cut does</h2>
 <p>I ringed off a hunk of the body away from any crystal: every walker on a ring 4 dish cells wide was killed and its trail cleared.</p>
 <div class="films">

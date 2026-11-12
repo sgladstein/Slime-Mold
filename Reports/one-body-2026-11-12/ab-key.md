@@ -10,3 +10,6 @@ base = today's race world; H = energy_flow 0.05 + hunger_scent 8. Pictures at 30
 - seed 7: B = H
 - seed 8: A = H
 - seed 8: B = base
+
+
+Game-look films (14:55Z): idle A = sharing + hunger, idle B = today; rush A = today, rush B = sharing + hunger.
