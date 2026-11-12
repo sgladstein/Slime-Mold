@@ -16,7 +16,9 @@
 //! **none** (back to the larder), **sow** (Feed at the front), **shoot**
 //! (Free fire at the front), **road** (Road 15 cells past the front, into
 //! the enemy), **cut** (Cut at the front: the player's own line should
-//! fall back, a check that the measure sees a move). The front is the
+//! fall back, a check that the measure sees a move), **cord** (added after
+//! the first front run: one det cord, the toolkit's, 16 dish cells across
+//! the line 6 past the front, `Garden::cord`). The front is the
 //! player's cell (own trail over 1 and over the enemy's) nearest the
 //! enemy's core. **Deciding measure, named before the run:** the player's
 //! cells (own trail over 1 and over the enemy's) 20 s after the branch,
@@ -60,6 +62,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 
 use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
+use slime_mould::mould::kit::KitRules;
 use slime_mould::mould::own_mould::{garden_world, Garden, Task, OWN};
 
 const RESERVE: f32 = 600.0;
@@ -74,6 +77,9 @@ struct Opts {
     threads: usize,
     look: Option<String>,
     every: u32,
+    /// The enemy drawn to the player's mould: its `species_avoid_of` is
+    /// -hunt (0: blind, as in the first censuses).
+    hunt: f32,
 }
 
 fn opts() -> Opts {
@@ -85,6 +91,7 @@ fn opts() -> Opts {
         threads: 4,
         look: None,
         every: 60,
+        hunt: 0.0,
     };
     for a in std::env::args().skip(1) {
         let Some((k, v)) = a.split_once('=') else { continue };
@@ -104,6 +111,7 @@ fn opts() -> Opts {
             "threads" => o.threads = v.parse().unwrap(),
             "look" => o.look = Some(v.to_string()),
             "every" => o.every = v.parse().unwrap(),
+            "hunt" => o.hunt = v.parse().unwrap(),
             "at" | "arms" => {}
             _ => panic!("unknown key {k}"),
         }
@@ -282,6 +290,8 @@ struct Out {
     roads: u64,
     fed: f32,
     cut: u32,
+    /// Walkers converted to the player's mould / to the enemy.
+    turned: (u64, u64),
 }
 
 /// Called with the game and its second (`look=`).
@@ -289,7 +299,7 @@ type Look<'a> = &'a mut dyn FnMut(&Game<Garden>, u32);
 
 fn play(o: &Opts, seed: u64, hand: &str, mut look: Option<Look>) -> Out {
     let rules = Rules { cap: o.cap, ..Rules::default() };
-    let mut g = Game::new(garden_world(seed, 2, o.walkers, None), rules, seed);
+    let mut g = Game::new(world(o, seed), rules, seed);
     let start_own = g.world.counts_by_side().0;
     let start: f64 = g.world.dish.charge.iter().map(|&c| c as f64).sum();
     let mut h = Hand::default();
@@ -323,7 +333,7 @@ fn play(o: &Opts, seed: u64, hand: &str, mut look: Option<Look>) -> Out {
         Some(End::MouldWiped(_)) => "enemy wiped",
         _ => "cap",
     };
-    Out { share, own, enemy, soldiers: g.alive(), end, roads: g.world.roads, fed: g.world.fed, cut: g.world.cut }
+    Out { share, own, enemy, soldiers: g.alive(), end, roads: g.world.roads, fed: g.world.fed, cut: g.world.cut, turned: (g.world.turned_own, g.world.turned_enemy) }
 }
 
 fn picture(g: &Game<Garden>) -> image::RgbaImage {
@@ -376,6 +386,16 @@ fn sign_p(a: usize, b: usize) -> f64 {
     (2.0 * tail / 2f64.powi(n as i32)).min(1.0)
 }
 
+/// The garden, with the enemy hunting the player's mould at `o.hunt`.
+fn world(o: &Opts, seed: u64) -> Garden {
+    let mut w = garden_world(seed, 2, o.walkers, None);
+    if o.hunt != 0.0 {
+        let n = w.dish.p.species as usize;
+        w.dish.p.species_avoid_of = (0..n).map(|s| if s == 0 { -o.hunt } else { 0.0 }).collect();
+    }
+    w
+}
+
 /// The player's and the enemy's cells: trail over 1 and over the other's.
 fn cells(g: &Game<Garden>) -> (usize, usize) {
     let d = &g.world.dish;
@@ -419,7 +439,7 @@ fn front_of(g: &Game<Garden>, past: f32) -> (f32, f32) {
 /// One arm of the front probe: (cells at the branch, at +20 s, at +40 s).
 fn front_arm(o: &Opts, seed: u64, arm: &str, at: f32) -> [(usize, usize); 3] {
     let rules = Rules { cap: at + 41.0, ..Rules::default() };
-    let mut g = Game::new(garden_world(seed, 2, o.walkers, None), rules, seed);
+    let mut g = Game::new(world(o, seed), rules, seed);
     let start_own = g.world.counts_by_side().0;
     let mut h = Hand::default();
     while g.end.is_none() && g.time() < at {
@@ -438,6 +458,7 @@ fn front_arm(o: &Opts, seed: u64, arm: &str, at: f32) -> [(usize, usize); 3] {
             "shoot" => (to, Task::None, Stance::Free),
             "road" => (to, Task::Road, Stance::Defend),
             "cut" => (to, Task::Cut, Stance::Defend),
+            "cord" => (to, Task::None, Stance::Defend),
             _ => panic!("unknown arm {arm}"),
         };
         g.apply(Cmd::Order(k, Order::Move(dest.0, dest.1)));
@@ -446,7 +467,37 @@ fn front_arm(o: &Opts, seed: u64, arm: &str, at: f32) -> [(usize, usize); 3] {
     }
     let t0 = g.time();
     let mut slot = 1;
+    // The cord arm: once soldier 0 is within the toolkit's reach, one det
+    // cord across the line, 6 dish cells past the front and 16 long,
+    // square to the way to the enemy's core (`Garden::cord`).
+    let kit = KitRules::default();
+    let mut cord = arm == "cord";
     while g.end.is_none() && slot < 3 {
+        if cord {
+            let sc = g.world.scale();
+            let c = g.core;
+            let (dx, dy) = (c.0 - to.0, c.1 - to.1);
+            let r = dx.hypot(dy).max(1e-3);
+            let (ux, uy) = (dx / r, dy / r);
+            let mid = (to.0 + ux * 6.0 * sc, to.1 + uy * 6.0 * sc);
+            let s0 = g.soldiers[0];
+            if !s0.alive {
+                cord = false;
+            } else if (s0.x - mid.0).hypot(s0.y - mid.1) <= kit.reach * sc {
+                let (a, b) = ((mid.0 - uy * 8.0 * sc, mid.1 + ux * 8.0 * sc), (mid.0 + uy * 8.0 * sc, mid.1 - ux * 8.0 * sc));
+                let price = kit.cord_price * 16.0;
+                if g.bank >= price {
+                    g.bank -= price;
+                    g.spent += price;
+                    let tps = g.rules.tps;
+                    let (own, enemy) = g.world.cord(a, b, &kit, tps);
+                    eprintln!("cord seed {seed}: fired at {:.1} s, killed own {own}, enemy {enemy}", g.time());
+                } else {
+                    eprintln!("cord seed {seed}: bank {:.0} under {price}", g.bank);
+                }
+                cord = false;
+            }
+        }
         farm(&mut g, &[0, 1]);
         g.step();
         if g.time() >= t0 + 20.0 * slot as f32 {
@@ -545,7 +596,7 @@ fn main() {
         front(&o);
         return;
     }
-    println!("garden: cap {} s, walkers {} a side, hands {:?}, seeds {:?}", o.cap, o.walkers, o.hands, o.seeds);
+    println!("garden: cap {} s, walkers {} a side, hunt {}, hands {:?}, seeds {:?}", o.cap, o.walkers, o.hunt, o.hands, o.seeds);
     if let Some(dir) = o.look.clone() {
         std::fs::create_dir_all(&dir).unwrap();
         for &seed in &o.seeds {
@@ -593,8 +644,10 @@ fn main() {
         let roads = o.seeds.iter().map(|&s| get(h, s).roads as f64).sum::<f64>() / n;
         let fed = o.seeds.iter().map(|&s| get(h, s).fed as f64).sum::<f64>() / n;
         let cut = o.seeds.iter().map(|&s| get(h, s).cut as f64).sum::<f64>() / n;
+        let to_own = o.seeds.iter().map(|&s| get(h, s).turned.0 as f64).sum::<f64>() / n;
+        let to_enemy = o.seeds.iter().map(|&s| get(h, s).turned.1 as f64).sum::<f64>() / n;
         println!(
-            "{name:>7}: median share {:.3} ({:.3}-{:.3}), mean own {own:.0} enemy {enemy:.0} soldiers {soldiers:.1}, squad wiped {wiped}; road frames {roads:.0}, fed {fed:.0}, cut {cut:.0}",
+            "{name:>7}: median share {:.3} ({:.3}-{:.3}), mean own {own:.0} enemy {enemy:.0} soldiers {soldiers:.1}, squad wiped {wiped}; road frames {roads:.0}, fed {fed:.0}, cut {cut:.0}; turned to own {to_own:.0}, to enemy {to_enemy:.0}",
             sh[sh.len() / 2],
             sh[0],
             sh[sh.len() - 1]

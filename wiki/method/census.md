@@ -2,14 +2,25 @@
 title: The census (how a change is judged)
 kind: method
 status: current
-updated: 2026-11-12T17:35Z
-sources: [Reports/gpu-readout-2026-11-12.md, Reports/gpu-plan-2026-11-10.md, Reports/larder-m2-2026-11-11.md, Reports/gpu-sandbox-2026-11-11.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md, Reports/pixel-physics-review-2026-11-10.md]
+updated: 2026-11-12T17:45Z
+sources: [Reports/testing-practice-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/gpu-plan-2026-11-10.md, Reports/larder-m2-2026-11-11.md, Reports/gpu-sandbox-2026-11-11.md, Reports/mould-probe-2026-11-07.md, Reports/mould-review-2-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-keep-alive-2026-11-10.md, Reports/mould-scratch-2026-11-10/README.md, Reports/pixel-physics-review-2026-11-10.md]
 code: [mouldprobe, state_hash, every_dish_replays_bit_for_bit, Dish::step_cost, HJIT, HLAG, STOPAT, NOWATER, INVAR, WARDEN]
 ---
 
 # The census (how a change is judged)
 
 ## Now
+
+**When a census runs (owner's card, 2026-11-12 17:26Z).** Build first,
+balance later: a census is not a gate for a feature, a look or a controls
+fix; those land on tests plus a GIF or a playable build, with smoke checks
+(idle doesn't win, no game over in under a minute, no soft lock). A census
+answers strategy questions only: player AI, a change to a shared default
+every thread measures against, dominance before a milestone or playtest,
+mission difficulty, an owner question. Name the question and the runner time
+first; over about an hour needs the owner's OK. A clash with a look or
+feature is a tuning note, never a veto
+([review](../../Reports/testing-practice-2026-11-12.md)).
 
 Every dish and every change is judged by **scripted hands over paired
 seeds**, with `examples/mouldprobe.rs` (`cargo build --release --example
