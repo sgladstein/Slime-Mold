@@ -1,0 +1,4 @@
+trunk-g|sensor_angle=22.5 sensor_offset=27 keep=0.97
+trunk-h|sensor_angle=22.5 sensor_offset=27 keep=0.97 energy_flow=0.05
+trunk-i|sensor_angle=22.5 sensor_offset=27 keep=0.97 blocked_deposit=1
+drift-flow|sensor_angle=90 keep=0.93 blocked_deposit=1 energy_flow=0.05

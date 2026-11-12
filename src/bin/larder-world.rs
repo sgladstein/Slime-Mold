@@ -1938,8 +1938,13 @@ mod tests {
         while app.mission.as_ref().unwrap().verdict.is_none() && app.game.as_ref().unwrap().time() < 120.0 {
             app.step(step);
         }
-        let v = app.mission.as_ref().unwrap().verdict.expect("lost at the 1:00 cap");
-        assert_eq!(v.cause, slime_mould::mould::campaign::Cause::Cap);
+        // Since the Drifter is a real tier (the campaign tiers PR, #115),
+        // Landfall's mould is slower and fewer and never reaches the idle
+        // squad, which then has no food, no shot and an empty bank: Stuck
+        // ends it before the cap. Either is the lost mission this tests.
+        let v = app.mission.as_ref().unwrap().verdict.expect("lost by the 1:00 cap");
+        use slime_mould::mould::campaign::Cause;
+        assert!(matches!(v.cause, Cause::Cap | Cause::Stuck), "{v:?}");
         assert_eq!(v.stars, 0);
         app.prepare();
         assert_eq!(app.model(None, None).end.map(|e| e.0).as_deref(), Some("Mission lost"));

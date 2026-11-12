@@ -1,0 +1,5 @@
+# The chosen tiers by name (src/mould/tiers.rs), seed 1, for the page.
+plain|
+drifter|tier=drifter
+sprawler|tier=sprawler
+trunk|tier=trunk
