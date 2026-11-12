@@ -422,6 +422,7 @@ const BAR: u32 = 4u;
 const GLYPH: u32 = 5u;
 const LINE: u32 = 6u;
 const SOLDIER: u32 = 7u;
+const BUILDING: u32 = 8u;
 
 // ---- The soldier ----
 //
@@ -440,12 +441,13 @@ fn cover(sd: f32, aa: f32) -> f32 { return clamp(0.5 - sd / aa, 0.0, 1.0); }
 
 // One texel of the atlas, premultiplied.
 fn texel(x: i32, y: i32) -> vec4<f32> {
-    let c = atlas[u32(clamp(y, 0, 159)) * 512u + u32(clamp(x, 0, 511))];
+    let c = atlas[u32(clamp(y, 0, 159)) * 1536u + u32(clamp(x, 0, 1535))];
     let a = f32(c >> 24u) / 255.0;
     return vec4<f32>(unpack(c) * a, a);
 }
 
-// Tile `k` (0 body, 1 helmet, 2 flash, 3 dead) at point `p` in radii
+// Tile `k` (0 body, 1 helmet, 2 flash, 3 dead; 4-11 the buildings, each
+// body then lamp: turret, lure, pump, outpost) at point `p` in radii
 // (-2..2 across the tile), bilinear, from the 128 px or the 32 px row.
 fn sprite(k: u32, p: vec2<f32>, small: bool) -> vec4<f32> {
     var size = 128.0; var oy = 0.0;
@@ -501,6 +503,39 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
     }
     if (out.w <= 0.0) { return vec4<f32>(0.0); }
     return vec4<f32>(out.xyz / out.w, out.w);
+}
+
+// A building (`Marks::building`, the sprite atlas's tiles 4-11, drawn from
+// src/world/sprites/buildings.svg in soldier A's style), with the soldier's
+// cast shadow. What changes on it is the game's state, nothing else: it
+// rises from its foot as it is built (the unbuilt part a faint ghost), it
+// darkens and greys as its health goes, and its lamp is lit only while it
+// works (a turret firing, a lure laying scent, a pump drawing charge).
+fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool) -> vec4<f32> {
+    let aa = 1.0 / max(r, 1.0);
+    let l = normalize(LIGHT);
+    let p = d / r;
+    let small = r < 12.0;
+    let k = 4u + 2u * min(kind, 3u);
+    var body = sprite(k, p, small);
+    // Built from the foot (screen down) up: above the line, a ghost.
+    let up = p.y >= 1.1 - 2.2 * built;
+    if (!up) { body = body * 0.3; }
+    // Hurt: darker and greyer with the health gone.
+    let grey = dot(body.xyz, vec3<f32>(0.3, 0.59, 0.11));
+    let hurt = 1.0 - health;
+    body = vec4<f32>(mix(body.xyz, vec3<f32>(grey), 0.6 * hurt) * (1.0 - 0.5 * hurt), body.w);
+    let sh = sd_ellipse(p, vec2<f32>(-l.x, -l.y) * 0.3, vec2<f32>(1.0, 1.0));
+    var out = vec4<f32>(0.0, 0.0, 0.0, 0.32 * cover(sh, aa * 2.5) * max(built, 0.3));
+    out = pm_over(out, body);
+    if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, p, small)); }
+    if (out.w <= 0.0) { return vec4<f32>(0.0); }
+    return vec4<f32>(out.xyz / out.w, out.w);
+}
+
+fn building_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
+    let extra = marks[b + 11u];
+    return building(d, r, u32(bitcast<f32>(marks[b + 9u])), f32(extra & 255u) / 255.0, f32((extra >> 8u) & 255u) / 255.0, (extra & 65536u) != 0u);
 }
 
 // Marks claim pixels: each covered pixel keeps the highest mark index that
@@ -570,8 +605,8 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
     var y0 = floor(s.y - h.y);
     var x1 = ceil(s.x + h.x);
     var y1 = ceil(s.y + h.y);
-    if (shape == SOLDIER) {
-        // Rifle and flash reach past the radius.
+    if (shape == SOLDIER || shape == BUILDING) {
+        // Rifle, barrels and flash reach past the radius.
         x0 = floor(s.x - 2.0 * h.x); x1 = ceil(s.x + 2.0 * h.x);
         y0 = floor(s.y - 2.0 * h.x); y1 = ceil(s.y + 2.0 * h.x);
     }
@@ -606,6 +641,8 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
             on = abs(d.x) <= h.x + 0.5 && abs(d.y) <= h.y + 0.5 && (abs(d.x) >= h.x - 0.5 || abs(d.y) >= h.y - 0.5);
         } else if (shape == SOLDIER) {
             on = soldier_at(b, d, h.x).w > 0.004;
+        } else if (shape == BUILDING) {
+            on = building_at(b, d, h.x).w > 0.004;
         } else if (shape == GLYPH) {
             let gx = u32(floor((qx - floor(s.x)) / h.x));
             let gy = u32(floor((qy - floor(s.y)) / h.x));
@@ -647,6 +684,10 @@ fn compose(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (marks[b + 6u] == SOLDIER && !in_minimap(x, y)) {
             let d = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5) - anchor(b);
             let f = soldier_at(b, d, half(b).x);
+            c = c * (1.0 - f.w) + f.xyz * f.w;
+        } else if (marks[b + 6u] == BUILDING && !in_minimap(x, y)) {
+            let d = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5) - anchor(b);
+            let f = building_at(b, d, half(b).x);
             c = c * (1.0 - f.w) + f.xyz * f.w;
         } else {
             let a = f32(col >> 24u) / 255.0;
