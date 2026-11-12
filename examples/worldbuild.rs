@@ -78,7 +78,7 @@ fn main() {
     let k = more.min(less);
     let mut p = 0.0f64;
     for i in 0..=k {
-        p += (1..=i).fold(1.0f64, |acc, j| acc * (n - j + 1) as f64 / j as f64) / 2f64.powi(n as i32);
+        p += (1..=i).fold(1.0f64, |acc, j| acc * (n - j + 1) as f64 / j as f64) / 2f64.powi(n);
     }
     println!("lure on against off at {secs} s: more walkers near it on {more}, fewer on {less} (two-sided sign test p {:.4})", (2.0 * p).min(1.0));
 }
