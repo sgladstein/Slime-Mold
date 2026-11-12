@@ -1,0 +1,74 @@
+seed 1 nogrow t   5.0s  tube  2674.2  loops    1  width 6.42  reach  165.4  piles 21/23  strays 0.006  crystals 0.999  ms/tick 5.16
+seed 1 nogrow t   5.0s  joined 0,2,9,11,19,21 body 2176.5
+seed 1 nogrow t   5.0s  contrast 3.97
+seed 1 nogrow t   5.0s  extent r50 33.1 r90 71.4
+seed 1 nogrow t  10.0s  tube  3444.2  loops    1  width 6.03  reach  186.0  piles 23/23  strays 0.011  crystals 0.999  ms/tick 5.04
+seed 1 nogrow t  10.0s  joined 0,1,2,8,9,19,21,22 body 2517.0
+seed 1 nogrow t  10.0s  contrast 4.53
+seed 1 nogrow t  10.0s  extent r50 36.5 r90 87.6
+seed 1 nogrow t  15.0s  tube  3822.5  loops    2  width 6.13  reach  184.4  piles 23/23  strays 0.007  crystals 0.998  ms/tick 5.14
+seed 1 nogrow t  15.0s  joined 0,1,2,5,8,9,19,21,22 body 2806.0
+seed 1 nogrow t  15.0s  contrast 4.08
+seed 1 nogrow t  15.0s  extent r50 39.4 r90 134.9
+seed 1 nogrow t  20.0s  tube  4152.2  loops    1  width 6.33  reach  184.4  piles 23/23  strays 0.011  crystals 0.997  ms/tick 5.17
+seed 1 nogrow t  20.0s  joined 0,1,2,5,8,9,12,17,19,21,22 body 3004.2
+seed 1 nogrow t  20.0s  contrast 4.12
+seed 1 nogrow t  20.0s  extent r50 42.3 r90 146.3
+seed 1 nogrow t  25.0s  tube  4056.8  loops    2  width 6.32  reach  183.7  piles 23/23  strays 0.006  crystals 0.996  ms/tick 5.10
+seed 1 nogrow t  25.0s  joined 0,1,2,5,8,9,11,12,17,19,21,22 body 3167.8
+seed 1 nogrow t  25.0s  contrast 3.77
+seed 1 nogrow t  25.0s  extent r50 44.8 r90 157.9
+seed 1 nogrow t  30.0s  tube  4471.8  loops    0  width 5.92  reach  186.5  piles 23/23  strays 0.001  crystals 0.995  ms/tick 5.06
+seed 1 nogrow t  30.0s  joined 0,1,2,5,8,9,12,17,19,21,22 body 3081.8
+seed 1 nogrow t  30.0s  contrast 4.03
+seed 1 nogrow t  30.0s  extent r50 46.6 r90 186.4
+seed 1 nogrow t  35.0s  tube  4392.2  loops    1  width 6.50  reach  183.1  piles 23/23  strays 0.001  crystals 0.994  ms/tick 5.01
+seed 1 nogrow t  35.0s  joined 0,1,2,5,8,9,12,17,19,21,22 body 3139.2
+seed 1 nogrow t  35.0s  contrast 3.65
+seed 1 nogrow t  35.0s  extent r50 49.0 r90 194.9
+seed 1 nogrow t  40.0s  tube  4467.2  loops    1  width 6.52  reach  184.5  piles 23/23  strays 0.002  crystals 0.993  ms/tick 5.00
+seed 1 nogrow t  40.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,21,22 body 4393.2
+seed 1 nogrow t  40.0s  contrast 3.89
+seed 1 nogrow t  40.0s  extent r50 52.5 r90 210.6
+seed 1 nogrow t  45.0s  tube  4428.0  loops    0  width 6.50  reach  182.7  piles 23/23  strays 0.001  crystals 0.992  ms/tick 5.02
+seed 1 nogrow t  45.0s  joined 1,4,5,6,7,8,12,13,15,17,18,22 body 2445.0
+seed 1 nogrow t  45.0s  contrast 3.85
+seed 1 nogrow t  45.0s  extent r50 52.8 r90 212.8
+seed 1 nogrow t  50.0s  tube  4541.5  loops    5  width 6.48  reach  184.7  piles 23/23  strays 0.006  crystals 0.991  ms/tick 5.05
+seed 1 nogrow t  50.0s  joined 0,1,2,4,5,6,7,8,9,12,13,15,17,18,19,21,22 body 4331.8
+seed 1 nogrow t  50.0s  contrast 3.87
+seed 1 nogrow t  50.0s  extent r50 52.1 r90 230.9
+seed 1 nogrow t  55.0s  tube  4507.5  loops    1  width 6.40  reach  183.1  piles 23/23  strays 0.001  crystals 0.990  ms/tick 5.07
+seed 1 nogrow t  55.0s  joined 1,4,5,6,7,8,12,13,15,17,18,22 body 2556.5
+seed 1 nogrow t  55.0s  contrast 3.84
+seed 1 nogrow t  55.0s  extent r50 55.0 r90 234.1
+seed 1 nogrow t  60.0s  tube  4645.0  loops    2  width 6.28  reach  186.4  piles 23/23  strays 0.002  crystals 0.990  ms/tick 5.08
+seed 1 nogrow t  60.0s  joined 1,4,5,6,7,8,12,13,15,17,18,22 body 2762.8
+seed 1 nogrow t  60.0s  contrast 4.13
+seed 1 nogrow t  60.0s  extent r50 56.0 r90 230.6
+seed 1 nogrow t  65.0s  tube  4630.8  loops    2  width 5.97  reach  183.6  piles 23/23  strays 0.005  crystals 0.989  ms/tick 5.08
+seed 1 nogrow t  65.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,21,22 body 4455.5
+seed 1 nogrow t  65.0s  contrast 4.09
+seed 1 nogrow t  65.0s  extent r50 58.9 r90 235.4
+seed 1 nogrow t  70.0s  tube  4655.2  loops    1  width 5.91  reach  184.3  piles 23/23  strays 0.001  crystals 0.989  ms/tick 5.09
+seed 1 nogrow t  70.0s  joined 0,1,2,4,5,6,7,8,9,11,12,13,15,17,18,19,21,22 body 4494.5
+seed 1 nogrow t  70.0s  contrast 4.09
+seed 1 nogrow t  70.0s  extent r50 68.0 r90 237.2
+seed 1 nogrow t  75.0s  tube  4621.8  loops    1  width 5.76  reach  183.8  piles 23/23  strays 0.001  crystals 0.988  ms/tick 5.12
+seed 1 nogrow t  75.0s  joined 1,4,5,6,7,8,11,12,13,15,17,18,22 body 2733.8
+seed 1 nogrow t  75.0s  contrast 4.08
+seed 1 nogrow t  75.0s  extent r50 83.3 r90 239.4
+seed 1 nogrow t  80.0s  tube  4593.8  loops    1  width 5.87  reach  185.3  piles 23/23  strays 0.006  crystals 0.987  ms/tick 5.10
+seed 1 nogrow t  80.0s  joined 1,4,5,6,7,8,12,13,15,17,18,22 body 2566.5
+seed 1 nogrow t  80.0s  contrast 3.94
+seed 1 nogrow t  80.0s  extent r50 102.5 r90 240.2
+seed 1 nogrow t  85.0s  tube  4807.0  loops    1  width 6.00  reach  183.1  piles 23/23  strays 0.001  crystals 0.987  ms/tick 5.08
+seed 1 nogrow t  85.0s  joined 0,1,2,4,5,6,7,8,9,12,13,15,17,18,19,21,22 body 4454.0
+seed 1 nogrow t  85.0s  contrast 4.14
+seed 1 nogrow t  85.0s  extent r50 107.6 r90 240.5
+seed 1 nogrow t  90.0s  tube  4790.2  loops    0  width 5.88  reach  184.9  piles 23/23  strays 0.001  crystals 0.986  ms/tick 5.07
+seed 1 nogrow t  90.0s  joined 1,4,5,6,7,8,12,13,15,17,18,22 body 2754.8
+seed 1 nogrow t  90.0s  contrast 4.07
+seed 1 nogrow t  90.0s  extent r50 112.6 r90 241.1
+seed 1 nogrow firsts 0:0:0.57:0.0 1:73:0.67:1.0 2:52:0.93:0.3 3:164:0.87:4.5 4:46:0.88:0.3 5:122:0.42:2.0 6:67:0.98:0.7 7:126:0.55:2.2 8:85:0.11:1.7 9:35:0.54:0.1 10:171:0.80:7.3 11:35:0.30:0.7 12:102:0.75:1.3 13:96:0.85:1.4 14:184:1.01:8.4 15:72:0.80:1.1 16:149:0.89:2.4 17:128:0.66:2.0 18:108:0.61:1.9 19:41:0.90:0.2 20:77:1.23:3.1 21:28:0.52:0.0 22:71:0.33:1.4
+seed 1 nogrow hash=cda286f87d8599b4

@@ -1,0 +1,92 @@
+seed 1 gfexp30 t   5.0s  tube  4297.5  loops   34  width 3.38  reach  186.3  piles 12/12  strays 0.053  crystals 0.950  ms/tick 33.69
+seed 1 gfexp30 t   5.0s  joined 4,7,9 body 1781.5
+seed 1 gfexp30 t   5.0s  alive 34800  energy 4.880  born 31800  starved 0  grass -0.000
+seed 1 gfexp30 t   5.0s  contrast 3.60
+seed 1 gfexp30 t   5.0s  extent r50 0.7 r90 266.1
+seed 1 gfexp30 t  10.0s  tube  8115.2  loops   88  width 4.17  reach  194.6  piles 12/12  strays 0.051  crystals 0.807  ms/tick 44.73
+seed 1 gfexp30 t  10.0s  joined 0,1,2,3,4,5,6,7,9,10,11 body 7407.5
+seed 1 gfexp30 t  10.0s  alive 77439  energy 8.435  born 74465  starved 26  grass -0.000
+seed 1 gfexp30 t  10.0s  contrast 3.49
+seed 1 gfexp30 t  10.0s  extent r50 238.2 r90 382.4
+seed 1 gfexp30 t  15.0s  tube  7679.8  loops   58  width 5.34  reach  194.8  piles 12/12  strays 0.025  crystals 0.657  ms/tick 51.60
+seed 1 gfexp30 t  15.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 7670.2
+seed 1 gfexp30 t  15.0s  alive 80000  energy 14.537  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  15.0s  contrast 3.01
+seed 1 gfexp30 t  15.0s  extent r50 241.8 r90 383.2
+seed 1 gfexp30 t  20.0s  tube  7106.9  loops   58  width 5.16  reach  194.8  piles 12/12  strays 0.034  crystals 0.507  ms/tick 56.08
+seed 1 gfexp30 t  20.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 7105.8
+seed 1 gfexp30 t  20.0s  alive 80000  energy 20.915  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  20.0s  contrast 3.10
+seed 1 gfexp30 t  20.0s  extent r50 241.7 r90 382.3
+seed 1 gfexp30 t  25.0s  tube  6822.9  loops   55  width 5.49  reach  195.3  piles 12/12  strays 0.031  crystals 0.357  ms/tick 58.70
+seed 1 gfexp30 t  25.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6786.3
+seed 1 gfexp30 t  25.0s  alive 80000  energy 27.290  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  25.0s  contrast 3.09
+seed 1 gfexp30 t  25.0s  extent r50 241.8 r90 381.4
+seed 1 gfexp30 t  30.0s  tube  6687.6  loops   53  width 5.65  reach  194.8  piles 12/12  strays 0.028  crystals 0.207  ms/tick 60.58
+seed 1 gfexp30 t  30.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6687.0
+seed 1 gfexp30 t  30.0s  alive 80000  energy 33.663  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  30.0s  contrast 3.17
+seed 1 gfexp30 t  30.0s  extent r50 241.7 r90 380.7
+seed 1 gfexp30 t  35.0s  tube  6637.5  loops   42  width 6.50  reach  195.1  piles 12/12  strays 0.019  crystals 0.061  ms/tick 60.43
+seed 1 gfexp30 t  35.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6637.4
+seed 1 gfexp30 t  35.0s  alive 80000  energy 39.872  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  35.0s  contrast 2.77
+seed 1 gfexp30 t  35.0s  extent r50 241.6 r90 380.1
+seed 1 gfexp30 t  40.0s  tube  6844.9  loops    8  width 8.93  reach  194.8  piles 12/12  strays 0.000  crystals 0.000  ms/tick 59.24
+seed 1 gfexp30 t  40.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6844.9
+seed 1 gfexp30 t  40.0s  alive 80000  energy 42.292  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  40.0s  contrast 2.15
+seed 1 gfexp30 t  40.0s  extent r50 241.9 r90 379.1
+seed 1 gfexp30 t  45.0s  tube  6773.4  loops    7  width 9.25  reach  194.8  piles 12/12  strays 0.000  crystals 0.000  ms/tick 57.00
+seed 1 gfexp30 t  45.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6773.4
+seed 1 gfexp30 t  45.0s  alive 80000  energy 42.006  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  45.0s  contrast 2.15
+seed 1 gfexp30 t  45.0s  extent r50 242.0 r90 377.7
+seed 1 gfexp30 t  50.0s  tube  6750.3  loops    6  width 9.32  reach  191.9  piles 12/12  strays 0.000  crystals 0.000  ms/tick 55.39
+seed 1 gfexp30 t  50.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6750.3
+seed 1 gfexp30 t  50.0s  alive 80000  energy 41.706  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  50.0s  contrast 2.19
+seed 1 gfexp30 t  50.0s  extent r50 242.0 r90 376.6
+seed 1 gfexp30 t  55.0s  tube  6742.3  loops    6  width 9.19  reach  188.1  piles 12/12  strays 0.000  crystals 0.000  ms/tick 55.36
+seed 1 gfexp30 t  55.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6725.4
+seed 1 gfexp30 t  55.0s  alive 80000  energy 41.406  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  55.0s  contrast 2.17
+seed 1 gfexp30 t  55.0s  extent r50 242.0 r90 375.9
+seed 1 gfexp30 t  60.0s  tube  6734.6  loops    6  width 9.18  reach  185.4  piles 12/12  strays 0.000  crystals 0.000  ms/tick 56.88
+seed 1 gfexp30 t  60.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6695.2
+seed 1 gfexp30 t  60.0s  alive 80000  energy 41.106  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  60.0s  contrast 2.21
+seed 1 gfexp30 t  60.0s  extent r50 241.6 r90 375.0
+seed 1 gfexp30 t  65.0s  tube  6728.5  loops    6  width 9.09  reach  183.1  piles 12/12  strays 0.000  crystals 0.000  ms/tick 62.36
+seed 1 gfexp30 t  65.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6728.5
+seed 1 gfexp30 t  65.0s  alive 80000  energy 40.806  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  65.0s  contrast 2.19
+seed 1 gfexp30 t  65.0s  extent r50 241.3 r90 374.2
+seed 1 gfexp30 t  70.0s  tube  6729.9  loops    6  width 9.14  reach  182.8  piles 12/12  strays 0.000  crystals 0.000  ms/tick 63.56
+seed 1 gfexp30 t  70.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6722.9
+seed 1 gfexp30 t  70.0s  alive 80000  energy 40.506  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  70.0s  contrast 2.18
+seed 1 gfexp30 t  70.0s  extent r50 241.0 r90 373.6
+seed 1 gfexp30 t  75.0s  tube  6700.9  loops    6  width 9.17  reach  182.3  piles 12/12  strays 0.000  crystals 0.000  ms/tick 63.74
+seed 1 gfexp30 t  75.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6700.9
+seed 1 gfexp30 t  75.0s  alive 80000  energy 40.206  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  75.0s  contrast 2.21
+seed 1 gfexp30 t  75.0s  extent r50 240.7 r90 372.8
+seed 1 gfexp30 t  80.0s  tube  6672.1  loops    5  width 9.18  reach  182.1  piles 12/12  strays 0.000  crystals 0.000  ms/tick 64.04
+seed 1 gfexp30 t  80.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6635.1
+seed 1 gfexp30 t  80.0s  alive 80000  energy 39.906  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  80.0s  contrast 2.21
+seed 1 gfexp30 t  80.0s  extent r50 240.6 r90 372.3
+seed 1 gfexp30 t  85.0s  tube  6667.1  loops    4  width 9.18  reach  181.8  piles 12/12  strays 0.000  crystals 0.000  ms/tick 64.21
+seed 1 gfexp30 t  85.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6633.2
+seed 1 gfexp30 t  85.0s  alive 80000  energy 39.606  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  85.0s  contrast 2.16
+seed 1 gfexp30 t  85.0s  extent r50 240.1 r90 371.8
+seed 1 gfexp30 t  90.0s  tube  6667.9  loops    4  width 9.05  reach  181.6  piles 12/12  strays 0.000  crystals 0.000  ms/tick 64.30
+seed 1 gfexp30 t  90.0s  joined 0,1,2,3,4,5,6,7,8,9,10,11 body 6604.1
+seed 1 gfexp30 t  90.0s  alive 80000  energy 39.306  born 77172  starved 172  grass -0.000
+seed 1 gfexp30 t  90.0s  contrast 2.16
+seed 1 gfexp30 t  90.0s  extent r50 239.9 r90 371.1
+seed 1 gfexp30 firsts 0:72:0.57:0.0 1:54:0.67:2.1 2:96:0.87:5.0 3:94:0.88:4.6 4:51:0.42:1.1 5:59:0.55:2.8 6:76:0.68:2.3 7:13:0.11:0.0 8:99:0.80:3.2 9:37:0.30:0.6 10:59:0.75:1.3 11:65:0.85:1.5
+seed 1 gfexp30 hash=dee28a2ba3c0449a

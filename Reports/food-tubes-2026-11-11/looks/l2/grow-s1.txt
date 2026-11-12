@@ -1,0 +1,74 @@
+seed 1 grow t   5.0s  tube   930.6  loops   13  width 3.68  reach  102.7  piles 4/12  strays 0.062  crystals 0.978  ms/tick 18.66
+seed 1 grow t   5.0s  alive 8923  energy 8.807  born 5923  starved 0  grass -0.000
+seed 1 grow t   5.0s  contrast 3.49
+seed 1 grow t   5.0s  extent r50 0.7 r90 29.1
+seed 1 grow t  10.0s  tube   766.1  loops    7  width 3.51  reach  103.1  piles 4/12  strays 0.053  crystals 0.940  ms/tick 21.76
+seed 1 grow t  10.0s  alive 7741  energy 27.053  born 7054  starved 2313  grass -0.000
+seed 1 grow t  10.0s  contrast 3.65
+seed 1 grow t  10.0s  extent r50 0.7 r90 38.8
+seed 1 grow t  15.0s  tube   735.5  loops   10  width 3.47  reach  103.3  piles 4/12  strays 0.065  crystals 0.903  ms/tick 22.33
+seed 1 grow t  15.0s  alive 7853  energy 43.358  born 8659  starved 3806  grass -0.000
+seed 1 grow t  15.0s  contrast 3.68
+seed 1 grow t  15.0s  extent r50 0.7 r90 51.7
+seed 1 grow t  20.0s  tube   723.6  loops   13  width 3.35  reach  103.8  piles 4/12  strays 0.084  crystals 0.865  ms/tick 23.87
+seed 1 grow t  20.0s  alive 8092  energy 58.268  born 10166  starved 5074  grass -0.000
+seed 1 grow t  20.0s  contrast 3.63
+seed 1 grow t  20.0s  extent r50 0.7 r90 65.0
+seed 1 grow t  25.0s  tube   739.8  loops   12  width 3.43  reach  103.6  piles 4/12  strays 0.069  crystals 0.828  ms/tick 24.69
+seed 1 grow t  25.0s  alive 8244  energy 73.079  born 11736  starved 6492  grass -0.000
+seed 1 grow t  25.0s  contrast 3.52
+seed 1 grow t  25.0s  extent r50 0.7 r90 76.6
+seed 1 grow t  30.0s  tube   756.4  loops    6  width 3.92  reach  103.7  piles 4/12  strays 0.045  crystals 0.790  ms/tick 23.53
+seed 1 grow t  30.0s  alive 8373  energy 87.591  born 13149  starved 7776  grass -0.000
+seed 1 grow t  30.0s  contrast 3.57
+seed 1 grow t  30.0s  extent r50 0.7 r90 114.5
+seed 1 grow t  35.0s  tube   790.9  loops    3  width 4.23  reach  103.4  piles 4/12  strays 0.036  crystals 0.756  ms/tick 22.74
+seed 1 grow t  35.0s  alive 8744  energy 97.547  born 14863  starved 9119  grass -0.000
+seed 1 grow t  35.0s  contrast 3.37
+seed 1 grow t  35.0s  extent r50 0.7 r90 125.9
+seed 1 grow t  40.0s  tube   858.4  loops    6  width 4.94  reach  104.0  piles 4/12  strays 0.027  crystals 0.750  ms/tick 22.02
+seed 1 grow t  40.0s  alive 9576  energy 90.862  born 17065  starved 10489  grass -0.000
+seed 1 grow t  40.0s  contrast 3.29
+seed 1 grow t  40.0s  extent r50 0.7 r90 140.9
+seed 1 grow t  45.0s  tube   896.6  loops    4  width 4.94  reach  104.3  piles 4/12  strays 0.025  crystals 0.750  ms/tick 21.44
+seed 1 grow t  45.0s  alive 10067  energy 86.104  born 19089  starved 12022  grass -0.000
+seed 1 grow t  45.0s  contrast 3.12
+seed 1 grow t  45.0s  extent r50 0.7 r90 149.1
+seed 1 grow t  50.0s  tube   914.9  loops    5  width 5.02  reach  104.1  piles 4/12  strays 0.028  crystals 0.750  ms/tick 20.98
+seed 1 grow t  50.0s  alive 10378  energy 83.196  born 21050  starved 13672  grass -0.000
+seed 1 grow t  50.0s  contrast 3.25
+seed 1 grow t  50.0s  extent r50 0.7 r90 156.2
+seed 1 grow t  55.0s  tube   937.2  loops   10  width 4.76  reach  104.1  piles 4/12  strays 0.037  crystals 0.750  ms/tick 20.98
+seed 1 grow t  55.0s  alive 10771  energy 79.833  born 23249  starved 15478  grass -0.000
+seed 1 grow t  55.0s  contrast 3.23
+seed 1 grow t  55.0s  extent r50 0.7 r90 162.8
+seed 1 grow t  60.0s  tube   933.9  loops   11  width 4.69  reach  104.4  piles 4/12  strays 0.048  crystals 0.750  ms/tick 20.75
+seed 1 grow t  60.0s  alive 10890  energy 78.631  born 25384  starved 17494  grass -0.000
+seed 1 grow t  60.0s  contrast 3.14
+seed 1 grow t  60.0s  extent r50 0.7 r90 168.1
+seed 1 grow t  65.0s  tube   932.1  loops   11  width 4.27  reach  104.3  piles 4/12  strays 0.051  crystals 0.750  ms/tick 20.49
+seed 1 grow t  65.0s  alive 10922  energy 78.071  born 27461  starved 19539  grass -0.000
+seed 1 grow t  65.0s  contrast 3.34
+seed 1 grow t  65.0s  extent r50 0.7 r90 171.7
+seed 1 grow t  70.0s  tube   946.9  loops   10  width 4.61  reach  104.4  piles 4/12  strays 0.047  crystals 0.750  ms/tick 20.50
+seed 1 grow t  70.0s  alive 11006  energy 77.144  born 29636  starved 21630  grass -0.000
+seed 1 grow t  70.0s  contrast 3.30
+seed 1 grow t  70.0s  extent r50 0.7 r90 176.6
+seed 1 grow t  75.0s  tube   942.3  loops   10  width 4.84  reach  104.5  piles 4/12  strays 0.040  crystals 0.750  ms/tick 20.42
+seed 1 grow t  75.0s  alive 11028  energy 76.661  born 31738  starved 23710  grass -0.000
+seed 1 grow t  75.0s  contrast 3.30
+seed 1 grow t  75.0s  extent r50 0.7 r90 206.2
+seed 1 grow t  80.0s  tube   958.4  loops    8  width 4.72  reach  104.5  piles 4/12  strays 0.041  crystals 0.750  ms/tick 20.40
+seed 1 grow t  80.0s  alive 11135  energy 75.599  born 33730  starved 25595  grass -0.000
+seed 1 grow t  80.0s  contrast 3.33
+seed 1 grow t  80.0s  extent r50 0.7 r90 220.3
+seed 1 grow t  85.0s  tube   946.6  loops   10  width 4.62  reach  104.5  piles 4/12  strays 0.043  crystals 0.750  ms/tick 20.41
+seed 1 grow t  85.0s  alive 11009  energy 76.135  born 35751  starved 27742  grass -0.000
+seed 1 grow t  85.0s  contrast 3.12
+seed 1 grow t  85.0s  extent r50 0.7 r90 225.9
+seed 1 grow t  90.0s  tube   939.3  loops    9  width 4.93  reach  104.4  piles 4/12  strays 0.034  crystals 0.750  ms/tick 20.25
+seed 1 grow t  90.0s  alive 10828  energy 77.078  born 37669  starved 29841  grass -0.000
+seed 1 grow t  90.0s  contrast 3.24
+seed 1 grow t  90.0s  extent r50 0.7 r90 228.3
+seed 1 grow firsts 0:72:0.57:0.0 1:54:0.67:-1.0 2:96:0.87:-1.0 3:94:0.88:-1.0 4:51:0.42:-1.0 5:59:0.55:-1.0 6:76:0.68:-1.0 7:13:0.11:0.0 8:99:0.80:-1.0 9:37:0.30:0.6 10:59:0.75:-1.0 11:65:0.85:1.5
+seed 1 grow hash=f3ec8bf2f9f766eb

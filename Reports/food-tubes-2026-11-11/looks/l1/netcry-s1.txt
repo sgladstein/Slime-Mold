@@ -1,0 +1,38 @@
+seed 1 netcry t   5.0s  tube  4320.8  loops   57  width 4.84  reach  172.1  piles 9/12  strays 0.008  crystals 0.961  ms/tick 13.55
+seed 1 netcry t   5.0s  contrast 2.14
+seed 1 netcry t   5.0s  extent r50 143.8 r90 198.8
+seed 1 netcry t  10.0s  tube  3744.5  loops   40  width 4.82  reach  171.8  piles 9/12  strays 0.012  crystals 0.913  ms/tick 13.92
+seed 1 netcry t  10.0s  contrast 2.31
+seed 1 netcry t  10.0s  extent r50 146.1 r90 203.5
+seed 1 netcry t  15.0s  tube  3403.9  loops   34  width 4.78  reach  172.1  piles 9/12  strays 0.019  crystals 0.862  ms/tick 14.03
+seed 1 netcry t  15.0s  contrast 2.41
+seed 1 netcry t  15.0s  extent r50 144.8 r90 205.1
+seed 1 netcry t  20.0s  tube  3253.8  loops   28  width 5.12  reach  171.6  piles 9/12  strays 0.014  crystals 0.810  ms/tick 14.19
+seed 1 netcry t  20.0s  contrast 2.45
+seed 1 netcry t  20.0s  extent r50 142.3 r90 206.3
+seed 1 netcry t  25.0s  tube  3121.9  loops   26  width 5.13  reach  171.8  piles 9/12  strays 0.015  crystals 0.758  ms/tick 14.32
+seed 1 netcry t  25.0s  contrast 2.40
+seed 1 netcry t  25.0s  extent r50 140.2 r90 207.7
+seed 1 netcry t  30.0s  tube  3040.2  loops   23  width 5.13  reach  171.8  piles 9/12  strays 0.016  crystals 0.705  ms/tick 14.47
+seed 1 netcry t  30.0s  contrast 2.49
+seed 1 netcry t  30.0s  extent r50 138.6 r90 208.8
+seed 1 netcry t  35.0s  tube  3039.3  loops   17  width 5.56  reach  172.1  piles 9/12  strays 0.010  crystals 0.654  ms/tick 14.55
+seed 1 netcry t  35.0s  contrast 2.30
+seed 1 netcry t  35.0s  extent r50 137.2 r90 209.4
+seed 1 netcry t  40.0s  tube  2987.4  loops   14  width 5.94  reach  171.6  piles 9/12  strays 0.006  crystals 0.622  ms/tick 14.59
+seed 1 netcry t  40.0s  contrast 2.18
+seed 1 netcry t  40.0s  extent r50 135.6 r90 210.3
+seed 1 netcry t  45.0s  tube  2932.4  loops   12  width 6.04  reach  172.1  piles 9/12  strays 0.004  crystals 0.592  ms/tick 14.60
+seed 1 netcry t  45.0s  contrast 2.23
+seed 1 netcry t  45.0s  extent r50 133.9 r90 212.1
+seed 1 netcry t  50.0s  tube  2894.8  loops   12  width 6.11  reach  171.8  piles 9/12  strays 0.005  crystals 0.562  ms/tick 14.60
+seed 1 netcry t  50.0s  contrast 2.22
+seed 1 netcry t  50.0s  extent r50 131.7 r90 213.6
+seed 1 netcry t  55.0s  tube  2882.0  loops   10  width 6.26  reach  172.1  piles 9/12  strays 0.003  crystals 0.531  ms/tick 14.63
+seed 1 netcry t  55.0s  contrast 2.19
+seed 1 netcry t  55.0s  extent r50 130.1 r90 214.5
+seed 1 netcry t  60.0s  tube  2856.0  loops   10  width 6.24  reach  172.1  piles 9/12  strays 0.004  crystals 0.501  ms/tick 14.63
+seed 1 netcry t  60.0s  contrast 2.19
+seed 1 netcry t  60.0s  extent r50 128.8 r90 215.6
+seed 1 netcry firsts 0:72:0.57:0.0 1:54:0.67:0.0 2:96:0.87:-1.0 3:94:0.88:-1.0 4:51:0.42:0.0 5:59:0.55:0.1 6:76:0.68:-1.0 7:13:0.11:0.0 8:99:0.80:1.5 9:37:0.30:0.0 10:59:0.75:0.1 11:65:0.85:0.3
+seed 1 netcry hash=feb7814e041ade46

@@ -92,6 +92,9 @@
 //! end a `firsts` line lists each pile as index:distance from the start
 //! (dish cells):radius fraction (1 at the wall):seconds to first reach
 //! (0 at the start, -1 never).
+//! `joined=1` adds a line at each report: the piles on the mould's main
+//! body (the largest 4-connected piece of tube) and that body's area in
+//! dish cells (`joined`, 2026-11-11).
 
 use std::time::Instant;
 
@@ -290,6 +293,65 @@ fn bodies(d: &BigDish, min: usize) -> (usize, usize) {
     (n, big)
 }
 
+/// The mould's body and the food it joins (`joined=1`, 2026-11-11, for the
+/// owner's ask that the mould "connect a network" to food as Physarum
+/// does): the largest 4-connected piece of agar with trail over the tube
+/// cut, its size (fine cells), and the piles with a cell on it. Reached
+/// (`firsts`) says a tube once touched a pile; joined says the pile is on
+/// the main body now, so a wave that passes and fades no longer counts.
+fn joined(d: &BigDish) -> (Vec<usize>, usize) {
+    let (w, h) = (d.w, d.h);
+    let tube: Vec<bool> = d.trail.iter().zip(&d.agar).map(|(&v, &a)| a && v > d.p.tube).collect();
+    let mut label = vec![0u32; w * h];
+    let (mut best, mut best_size, mut next) = (0u32, 0usize, 0u32);
+    let mut stack = Vec::new();
+    for start in 0..w * h {
+        if label[start] != 0 || !tube[start] {
+            continue;
+        }
+        next += 1;
+        label[start] = next;
+        stack.push(start);
+        let mut size = 0usize;
+        while let Some(i) = stack.pop() {
+            size += 1;
+            let (x, y) = (i % w, i / w);
+            for (ok, j) in [(x > 0, i.wrapping_sub(1)), (x + 1 < w, i + 1), (y > 0, i.wrapping_sub(w)), (y + 1 < h, i + w)] {
+                if ok && tube[j] && label[j] == 0 {
+                    label[j] = next;
+                    stack.push(j);
+                }
+            }
+        }
+        if size > best_size {
+            (best, best_size) = (next, size);
+        }
+    }
+    let s = d.p.scale as f32;
+    let r = d.p.pile_r * s;
+    let n = r.ceil() as i32;
+    let mut on = Vec::new();
+    for (pi, &(px, py)) in d.piles.iter().enumerate() {
+        let (cx, cy) = (px * s, py * s);
+        'pile: for dy in -n..=n {
+            for dx in -n..=n {
+                if !d.in_pile(dx as f32, dy as f32, r) {
+                    continue;
+                }
+                let (x, y) = (cx + dx as f32, cy + dy as f32);
+                if x < 0.0 || y < 0.0 || x >= w as f32 || y >= h as f32 {
+                    continue;
+                }
+                if best > 0 && label[y as usize * w + x as usize] == best {
+                    on.push(pi);
+                    break 'pile;
+                }
+            }
+        }
+    }
+    (on, best_size)
+}
+
 /// Mixed walkers (`mix_share`): the shared trail in dim grey on the soft
 /// curve, and where the walkers of each kind stand, the first amber and the
 /// second teal, each as 1 - exp(-count / mean count a cell) over the block.
@@ -389,6 +451,8 @@ fn main() {
     let (mut strike, mut strike_x, mut strike_y, mut strike_r, mut strike_alarm, mut strike_alarm_r) = (Vec::<f32>::new(), W as f32 / 2.0, H as f32 / 2.0, 10.0f32, 50.0f32, 0.0f32);
     // Print the life line (below) even with the life cycle off, for controls.
     let mut lifeline = false;
+    // Print the joined line (see `joined`).
+    let mut joined_line = false;
     let mut overrides: Vec<(String, String)> = Vec::new();
     for arg in std::env::args().skip(1) {
         let (k, v) = arg.split_once('=').unwrap_or_else(|| panic!("expected key=value, got {arg}"));
@@ -398,6 +462,7 @@ fn main() {
             "seeds" => seeds = v.split(',').map(|s| s.parse().unwrap()).collect(),
             "seconds" => seconds = v.parse().unwrap(),
             "report" => report = v.parse().unwrap(),
+            "joined" => joined_line = v == "1",
             "threads" => threads = v.parse().unwrap(),
             "gif" => gif = Some(v.into()),
             "frames" => frames = Some(v.into()),
@@ -695,6 +760,12 @@ fn main() {
                     d.crystals_left(),
                     spent * 1e3 / d.ticks as f64
                 );
+                if joined_line {
+                    let (on, body) = joined(&d);
+                    let list: Vec<String> = on.iter().map(|i| i.to_string()).collect();
+                    let s2 = (d.p.scale * d.p.scale) as f32;
+                    println!("seed {seed} {name} t {:5.1}s  joined {} body {:.1}", m.seconds, if list.is_empty() { "-".to_string() } else { list.join(",") }, body as f32 / s2);
+                }
                 if !d.energy.is_empty() {
                     // Growth: living walkers, their mean energy, births and
                     // starvings so far, and the grass left (mean over agar).

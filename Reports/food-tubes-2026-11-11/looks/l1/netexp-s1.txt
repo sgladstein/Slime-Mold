@@ -1,0 +1,38 @@
+seed 1 netexp t   5.0s  tube  6014.6  loops   79  width 2.28  reach  195.1  piles 12/12  strays 0.435  crystals 1.000  ms/tick 12.48
+seed 1 netexp t   5.0s  contrast 3.52
+seed 1 netexp t   5.0s  extent r50 144.0 r90 283.8
+seed 1 netexp t  10.0s  tube  8551.3  loops  104  width 2.71  reach  193.6  piles 12/12  strays 0.012  crystals 1.000  ms/tick 11.75
+seed 1 netexp t  10.0s  contrast 3.17
+seed 1 netexp t  10.0s  extent r50 149.0 r90 286.9
+seed 1 netexp t  15.0s  tube  6328.8  loops   64  width 3.18  reach  189.3  piles 12/12  strays 0.022  crystals 1.000  ms/tick 11.47
+seed 1 netexp t  15.0s  contrast 2.66
+seed 1 netexp t  15.0s  extent r50 151.4 r90 283.1
+seed 1 netexp t  20.0s  tube  5705.0  loops   53  width 3.29  reach  187.6  piles 12/12  strays 0.024  crystals 1.000  ms/tick 11.38
+seed 1 netexp t  20.0s  contrast 2.68
+seed 1 netexp t  20.0s  extent r50 156.1 r90 284.0
+seed 1 netexp t  25.0s  tube  5225.4  loops   47  width 3.32  reach  186.7  piles 12/12  strays 0.024  crystals 1.000  ms/tick 11.40
+seed 1 netexp t  25.0s  contrast 2.77
+seed 1 netexp t  25.0s  extent r50 159.1 r90 284.5
+seed 1 netexp t  30.0s  tube  4955.9  loops   52  width 3.32  reach  182.6  piles 12/12  strays 0.040  crystals 1.000  ms/tick 11.43
+seed 1 netexp t  30.0s  contrast 2.69
+seed 1 netexp t  30.0s  extent r50 163.0 r90 286.0
+seed 1 netexp t  35.0s  tube  4733.9  loops   53  width 3.30  reach  181.3  piles 12/12  strays 0.046  crystals 1.000  ms/tick 11.46
+seed 1 netexp t  35.0s  contrast 2.70
+seed 1 netexp t  35.0s  extent r50 168.0 r90 286.3
+seed 1 netexp t  40.0s  tube  4631.9  loops   46  width 3.37  reach  179.4  piles 12/12  strays 0.039  crystals 1.000  ms/tick 11.49
+seed 1 netexp t  40.0s  contrast 2.71
+seed 1 netexp t  40.0s  extent r50 172.0 r90 287.3
+seed 1 netexp t  45.0s  tube  4595.7  loops   49  width 3.43  reach  189.0  piles 12/12  strays 0.043  crystals 1.000  ms/tick 11.41
+seed 1 netexp t  45.0s  contrast 2.75
+seed 1 netexp t  45.0s  extent r50 175.1 r90 289.4
+seed 1 netexp t  50.0s  tube  4482.2  loops   44  width 3.37  reach  194.8  piles 12/12  strays 0.044  crystals 1.000  ms/tick 11.37
+seed 1 netexp t  50.0s  contrast 2.70
+seed 1 netexp t  50.0s  extent r50 178.0 r90 291.1
+seed 1 netexp t  55.0s  tube  4389.6  loops   44  width 3.40  reach  195.3  piles 12/12  strays 0.046  crystals 1.000  ms/tick 11.33
+seed 1 netexp t  55.0s  contrast 2.80
+seed 1 netexp t  55.0s  extent r50 181.1 r90 291.9
+seed 1 netexp t  60.0s  tube  4220.2  loops   43  width 3.43  reach  184.2  piles 12/12  strays 0.046  crystals 1.000  ms/tick 11.30
+seed 1 netexp t  60.0s  contrast 2.75
+seed 1 netexp t  60.0s  extent r50 184.0 r90 293.3
+seed 1 netexp firsts 0:72:0.57:0.0 1:54:0.67:0.1 2:96:0.87:1.8 3:94:0.88:1.4 4:51:0.42:0.1 5:59:0.55:0.3 6:76:0.68:1.3 7:13:0.11:0.0 8:99:0.80:1.6 9:37:0.30:0.1 10:59:0.75:0.3 11:65:0.85:0.5
+seed 1 netexp hash=f5ff0e1b408ca4d8

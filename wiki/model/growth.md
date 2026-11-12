@@ -2,8 +2,8 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-11T21:10Z
-sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
+updated: 2026-11-12T00:40Z
+sources: [Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
 code: [BigParams::upkeep, BigParams::energy_flow, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
 ---
 
@@ -32,6 +32,13 @@ On crystals the size stops near 20,000 whatever the charge: the crystals'
 area sets the intake and the charge only how long it lasts; grass under
 the crystals swamps them
 ([mould shape](../../Reports/mould-shape-2026-11-11.md), *On crystals*).
+From a small blob on the home crystal (the Larder race start) the network
+with growth explores, then joins the crystals with tubes one after another:
+a median 19 of 22 on its main body at 60 s, against 2 for the food-reach
+droplets, 16 of 16 seeds. Without growth the small start still makes tubes
+(12-15 joined at 90 s against 11-21, 3 seeds, too few to separate); growth
+adds a mould that gets bigger and a finer mesh
+([food tubes](../../Reports/food-tubes-2026-11-11.md)).
 
 ## Owner's word
 
@@ -62,3 +69,4 @@ the crystals swamps them
 - [growth](../../Reports/growth-2026-11-11.md), all sections.
 - [mould shape](../../Reports/mould-shape-2026-11-11.md), grass and crystals, size on crystals.
 - [Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md), W0.
+- [food tubes](../../Reports/food-tubes-2026-11-11.md): the race start joins crystals with tubes.
