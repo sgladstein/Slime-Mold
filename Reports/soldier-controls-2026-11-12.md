@@ -137,3 +137,55 @@ buildings census found best on every tier; army, the same food on
 soldiers, is now the top mean. Raising is labour and risk the player
 spends, as the owner chose; on by default. Turtle's loss is significant
 before correction only (8 comparisons: Bonferroni 0.006).
+
+### Part 2 at the full bar (seeds 5-36, 201-232 and two maps)
+
+Census at main a8669bd, cap 900, all ten hands (raw:
+`census-122-race-5-36.txt`, `census-122-race-201-232.txt`,
+`census-122-fork.txt`, `census-122-nest.txt`). On the race world every plan
+beats idle 32-0 on both seed blocks, and random 30-2 (5-36) and 24-8 or
+better (201-232), all under Holm. On the Nest map (seeds 5-20) wall, ring,
+turtle, guard and pumps beat idle 16-0 or 15-1; farm (11-5) and army (12-4)
+beat it but not significantly, and **killzone loses to idle 0-16**: a finding
+for the buildings thread, not a controls bug (the hand sits its turrets
+where the Nest's mould is not). The Fork run was stopped at seed 17 under
+the owner's new testing rule (17:26Z, census is not a gate): every plan
+beat idle and random 13-0 on the seeds it finished.
+
+## Part 3: soldiers can't stand on a crystal (2026-11-12)
+
+The owner, 14:43Z: soldiers "also shouldn't be able to stand on top of the
+crystal". The Larder thread takes the other half of that message (heavy
+slowdown in thick slime).
+
+- `Rules::crystal_solid` (on): a crystal with charge left is ground a
+  soldier can't stand on (`Game::standable`). Walking, the straight-line
+  check (`walk_line`) and the distance maps use it; the line of fire
+  (`clear_line`) does not, so shots still fly over crystals.
+- A goal on a crystal (a harvest order, a move click, a larder or ghost
+  placed on one) moves to just past its rim on the soldier's side
+  (`Game::rim`, `RIM` 1 dish cell). Harvest, banking and building reach
+  count from that rim (`Game::reach`). Spawns step outward from the larder
+  until they are off its crystal. A soldier caught on one walks straight out.
+- The solid disc holds the charge left: radius × √(charge / start charge).
+  The first version used the full radius, and a harvester ate the rim (its
+  take disc reaches 4 dish cells in) and then could not reach the middle:
+  the dry-crystal test banked nothing. Now the soldiers eat in from the edge
+  and step in after it, which is what the picture shows (bites out of the
+  hexagons, soldiers at the edge: `crystal-rim.gif`, farm hand, seed 5,
+  0-45 s, a frame a second).
+
+Tests: `soldiers_stand_round_a_crystal_not_on_it` (spawns off the crystal,
+no soldier on a solid disc over 40 s, a mover stops at the rim, the
+harvester banks, and with the rule off the mover reaches the middle). The
+cost per step: one `crystals()` copy, and a disc check per soldier move and
+per distance-map cell when a map is built (every 30 s).
+
+Smoke check (not a gate, under the owner's 17:26Z rule), race seeds 5-15,
+on against off (raw `census-solid-on.txt`, `census-solid-off.txt`, stopped
+part way): no game ends in the first minute; idle loses every seed (mean
+-0.34 either way); random is wiped on most seeds either way. Harvests are
+about even (farm 49.5k against 49.9k). Scores run a little lower with the
+rule on for most plans (ring 1-9, pumps 0-10, farm 3-7, wall 5-5, army
+3-7): walking round crystals costs time. Balance later, by the owner's
+rule; on by default since the owner asked for it.
