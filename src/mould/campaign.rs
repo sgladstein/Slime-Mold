@@ -54,7 +54,15 @@ pub enum Goal {
     /// `secs` game seconds in a row (mission 3: keep the mould in the Rim).
     /// With no leak allowed (the first census) no hand ever held the Rim for
     /// a second: a few walkers always stray.
-    Contain { rect: (f32, f32, f32, f32), secs: f32, leak: f32 },
+    ///
+    /// With `body` above 0 a leak is what the player sees instead: no 4 x 4
+    /// bin outside holds `body` walkers or more (thick mould; the drawn body
+    /// is trail times `1 - exp(-walkers near / 6)`, so a thin trail of 1-3 a
+    /// bin barely shows). The share must still be under `leak` (1 turns that
+    /// off). On the Sprawler (census v6) every hand had 46% outside; the
+    /// wall-the-gaps hand cut it to 17% with no thick bin (design review,
+    /// 07:22Z: pick between the two rules on the Sprawler's numbers).
+    Contain { rect: (f32, f32, f32, f32), secs: f32, leak: f32, body: u32 },
     /// Walkers fall to `frac` of their peak (mission 4: starve it).
     Shrink(f32),
     /// The squad's share of the charge taken reaches `frac` (mission 8).
@@ -138,7 +146,8 @@ impl Mission {
                         ("squad", [x]) => Goal::Squad { n: *x as usize, crystals: 0 },
                         ("squad", [x, k]) => Goal::Squad { n: *x as usize, crystals: *k as usize },
                         ("clear" | "retake", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs, retake: k == "retake" },
-                        ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak },
+                        ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: 0 },
+                        ("contain", [x0, y0, x1, y1, secs, leak, body]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: *body as u32 },
                         ("shrink", [f]) => Goal::Shrink(*f),
                         ("take", [f]) => Goal::Take(*f),
                         _ => return Err(err(format!("bad goal `{rest}`"))),
@@ -273,6 +282,8 @@ pub struct Tracker {
     pub count: Option<u32>,
     /// Contain goals: the share of the walkers outside the region now.
     pub outside: Option<f32>,
+    /// Contain goals with `body`: bins outside with thick mould now.
+    pub thick: Option<u32>,
     peak: usize,
     lost: usize,
     last: Snapshot,
@@ -333,6 +344,7 @@ impl Tracker {
             touched: vec![],
             count: None,
             outside: None,
+            thick: None,
             peak: g.mould.max(g.start_mould),
             lost: 0,
             last: snap(g, 0.0),
@@ -385,13 +397,21 @@ impl Tracker {
                 self.held = if clear >= *need { self.held + dt } else { 0.0 };
                 Some((self.held / secs).min(1.0))
             }
-            Goal::Contain { rect, secs, leak } => {
+            Goal::Contain { rect, secs, leak, body } => {
                 let grid = grid?;
                 let (x0, y0, x1, y1) = (rect.0 * fine, rect.1 * fine, rect.2 * fine, rect.3 * fine);
-                let out = walkers_where(grid, size, |px, py| px < x0 || px > x1 || py < y0 || py > y1);
+                let outside = |px: f32, py: f32| px < x0 || px > x1 || py < y0 || py > y1;
+                let out = walkers_where(grid, size, outside);
+                let gw = size.0.div_ceil(BIN);
+                let thick = if *body > 0 {
+                    grid.iter().enumerate().filter(|&(i, &n)| n >= *body && outside(((i % gw) * BIN) as f32 + BIN as f32 / 2.0, ((i / gw) * BIN) as f32 + BIN as f32 / 2.0)).count() as u32
+                } else {
+                    0
+                };
                 self.count = Some(out);
                 self.outside = Some(out as f32 / g.mould.max(1) as f32);
-                self.held = if out as f32 <= leak * g.mould.max(1) as f32 { self.held + dt } else { 0.0 };
+                self.thick = Some(thick);
+                self.held = if out as f32 <= leak * g.mould.max(1) as f32 && thick == 0 { self.held + dt } else { 0.0 };
                 Some((self.held / secs).min(1.0))
             }
         }
@@ -511,6 +531,10 @@ impl Tracker {
     pub fn progress_line(&self) -> String {
         let says = &self.mission.says;
         match (self.bar, &self.mission.goal, self.outside) {
+            (Some(b), Goal::Contain { body, .. }, _) if *body > 0 => match self.thick {
+                Some(0) | None => format!("{says} ({:.0}%)", 100.0 * b),
+                Some(n) => format!("{says} ({:.0}%; thick mould outside in {n} places)", 100.0 * b),
+            },
             (Some(b), Goal::Contain { leak, .. }, Some(o)) => format!("{says} ({:.0}%; {:.1}% outside, {:.0}% allowed)", 100.0 * b, 100.0 * o, 100.0 * leak),
             (Some(b), _, _) => format!("{says} ({:.0}%)", 100.0 * b),
             // Said, not hidden (design review, 05:38Z): a world with no
@@ -589,6 +613,8 @@ mod tests {
         assert_eq!(c.goal, Goal::Clear { crystals: (1..=8).collect(), need: 6, secs: 60.0, retake: false });
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal retake 1 60 1")).unwrap();
         assert!(matches!(c.goal, Goal::Clear { retake: true, .. }));
+        let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60 1 16")).unwrap();
+        assert!(matches!(c.goal, Goal::Contain { body: 16, .. }));
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60")).is_err(), "contain needs its leak");
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 3 60 1 2")).is_err());
     }
@@ -727,6 +753,12 @@ mod tests {
         // The goal line says how much is outside against the allowance.
         let line = tr.progress_line();
         assert!(line.contains("% outside, 2% allowed"), "{line}");
+        // The thick-mould rule: share off (1), no bin outside with 16+.
+        let mut g = small(Rules::default());
+        let mut tr = Tracker::new(mission("goal contain 0 0 8 8 10 1 16"), &g);
+        assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none());
+        assert!(tr.thick.unwrap() > 0, "thick bins outside: {:?}", tr.thick);
+        assert!(tr.progress_line().contains("thick mould outside in"), "{}", tr.progress_line());
     }
 
     /// An idle squad takes no charge: `take` stays at 0 (its bar starts from
