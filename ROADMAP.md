@@ -197,6 +197,20 @@ seeds 5-12: turtle lower 7/8, guard and pumps 7/8, wall, ring and killzone
 even, farm and army unchanged. The full gate (seeds 5-36 and 201-232, two
 maps) is being re-run on the new baseline.
 
+**Census reset held: mould density (11-12 16:20Z, waits on the owner).**
+The one-body thread found that the owner's "specks" come from density.
+At today's 3-5% of open cells holding a walker the mould draws as beads,
+and at 15-20% it draws as smooth tubes. If the owner takes the dense mould,
+it lands as **one** PR in a slot the integration thread schedules between
+censuses, and every thread re-runs its baseline once afterwards. The rules
+then count mould mass, not walkers. The proposed names are
+`Rules::reference_density` (today's Fork density at 5k, a constant) and
+`Game::per_mass()` = `Game::density / reference_density` (1.0 today).
+Drain, a shot's kills, the larder steal and the score's mould size divide
+by it. The Larder thread owns the names. Route A (5x the walkers) or route
+B (a coarser grid) is the owner's choice, with the GPU thread's frame cost
+for both on the card.
+
 **Shot impact is a rule, through the crater field.** The owner turned down
 both drawn versions in the graphics thread's blind A/B (11-12 04:38Z:
 "Neither. Both of those look like stamps. Placed on the slime that fade.
