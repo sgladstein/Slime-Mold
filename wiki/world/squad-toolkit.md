@@ -2,9 +2,9 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12T20:41Z
+updated: 2026-11-12T22:15Z
 sources: [Reports/rounds-2026-11-12.md, Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
-code: [Burst, Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
+code: [squad::Burst, World::burst, Engine::burst, Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
 ---
 
 # The squad toolkit
@@ -12,8 +12,14 @@ code: [Burst, Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, B
 ## Now
 
 Six tools for the Larder world's squad, each built on one term of the
-mould's model (`mould::kit`, CPU world only): blast, mine, det cord, germ,
-sleep gas, and mask or reek on a soldier's smell. The crater a blast, cord
+mould's model (`mould::kit`): blast, mine, det cord, germ, sleep gas, and
+mask or reek on a soldier's smell. Every tool comes down to bursts
+(`squad::Burst`) that a world applies (`World::burst`): blast, cord and mine
+run on the GPU world too (the engine's strike lays the crater), germ and gas
+on the CPU only so far. A mine's trigger scales with `Game::density`. In
+the window (`larder-world`) E opens the tools page: blast, det cord and
+mine work; every soldier at the larder takes one tool, a selected one up
+to five. The crater a blast, cord
 or shot leaves (`BigDish::scorch_disc`; GPU binding 47 since #113, shared
 `scorch_keep` and `scorch_full`: 0 and 150 in the race world since PR 3b's
 cone, were 0.1 and 30, which earlier `kitplans` tables used) is the one
@@ -65,7 +71,8 @@ halves it: a per-mould dial.
 - Round 2 on a second map, and as `larderworld census` hands.
 - A tier where gas or the det cord is the best plan.
 - `germ_resist` as a tier key, if a campaign mould needs the germ answered.
-- The tools as `squad::Frame` bursts on the CPU and GPU, then in the window (step 2).
+- Germ and gas on the GPU world (contagion's sick upkeep and the gas field), so the window's germ and gas buttons work.
+- The tools in the game's replay (the kit sits outside `Game`).
 - The det cord once food flows (the one-body thread's `energy_flow`).
 
 ## Sources

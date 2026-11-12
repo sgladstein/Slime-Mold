@@ -183,6 +183,9 @@ pub struct GpuWorld {
     /// spent waiting for them (`frame_finish`).
     pub waits: u64,
     pub wait_ms: f64,
+    /// Walkers bursts have killed so far (`Engine::struck`), so `burst`
+    /// returns its own.
+    struck: u32,
 }
 
 impl GpuWorld {
@@ -203,7 +206,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0 };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0 };
         g.read_now();
         g
     }
@@ -456,6 +459,31 @@ impl World for GpuWorld {
         r.out
     }
 
+    /// The kill, clear, alarm and crater in the engine's strike passes (a
+    /// submit of its own, after any frame in flight), then one read-back for
+    /// the walkers killed: bursts are a player's tool uses, a few a second
+    /// at most, not a pass a frame. Gas and germ are not on the GPU yet
+    /// (`has_gas`, `has_germ`): the toolkit doesn't offer them here. The
+    /// alarm field turns on with the first alarm, as `BigDish::
+    /// enable_alarm` does.
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+        // A step in shares (`spread`) runs whole before the burst, so the
+        // burst lands between steps as on the CPU.
+        self.flush();
+        if b.alarm > 0.0 && self.s.alarm_keep <= 0.0 {
+            self.s.alarm_keep = k.alarm_keep;
+        }
+        if !(b.kill || b.alarm > 0.0 || b.crater > 0) {
+            return squad::BurstOut::default();
+        }
+        let r = if b.kill { b.r } else { 0.0 };
+        self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater);
+        let now = self.e.struck();
+        let killed = now.wrapping_sub(self.struck);
+        self.struck = now;
+        squad::BurstOut { killed, gassed: 0 }
+    }
+
     fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
         self.e.build_wall(&self.shared, &self.s, a.0, a.1, b.0, b.1, width);
         self.e.dish.build_wall(a.0, a.1, b.0, b.1, width);
@@ -618,6 +646,9 @@ mod tests {
         fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
             self.g.build_wall(a, b, width)
         }
+        fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+            self.g.burst(b, k)
+        }
         fn living(&self) -> usize {
             self.g.living()
         }
@@ -744,6 +775,56 @@ mod tests {
             assert_eq!(log, whole, "{shares} shares: the same steps");
             assert_eq!(h, hash, "{shares} shares: the same world at the end");
         }
+    }
+
+    /// **The squad toolkit runs on the GPU world** (2026-11-12): a kit blast
+    /// at the start kills the same walkers there as on the CPU race world
+    /// (the same mould, before any tick) and lays its crater; a det cord
+    /// lays one too; gas and germ are refused and not paid. Then, as the
+    /// game runs, a mine at the mould's home goes off from the frames' grid.
+    #[test]
+    fn the_kit_runs_on_the_gpu_world() {
+        use crate::mould::kit::{Kit, KitRules, Tool};
+        use crate::mould::larder_world::race_world;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let rules = Rules { cap: 30.0, ..Rules::default() };
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+        let home = gpu.world.crystals()[0].0;
+        assert_eq!(home, cpu.world.crystals()[0].0);
+        let free = KitRules { carry_max: 0, reach: 1_000.0, ..KitRules::default() };
+        let (mut kg, mut kc) = (Kit::new(free), Kit::new(free));
+        for g in [&mut gpu.bank, &mut cpu.bank] {
+            *g = 10_000.0;
+        }
+        assert!(kg.use_tool(&mut gpu, Tool::Blast(home)) && kc.use_tool(&mut cpu, Tool::Blast(home)));
+        // Within 1%: the kill test is a float distance (the GPU's sqrt, the
+        // CPU's hypot), so a walker on the rim can fall either way (113
+        // against 112 on seed 5). The crater is whole cells, so exact.
+        assert!(kc.killed[0] > 50 && kg.killed[0].abs_diff(kc.killed[0]) * 100 <= kc.killed[0], "the blast killed {} on the GPU, {} on the CPU", kg.killed[0], kc.killed[0]);
+        let cratered = |g: &Game<GpuWorld>| g.world.e.crater_of().iter().filter(|&&c| c > 0.0).count();
+        let after_blast = cratered(&gpu);
+        assert_eq!(after_blast, cpu.world.scorch.iter().filter(|&&c| c > 0).count(), "the blast's crater");
+        let bank = gpu.bank;
+        assert!(!kg.use_tool(&mut gpu, Tool::Germ(home)) && !kg.use_tool(&mut gpu, Tool::Gas(home)) && gpu.bank == bank, "germ and gas refused on the GPU");
+        let k = gpu.world.scale();
+        assert!(kg.use_tool(&mut gpu, Tool::Cord((home.0 + 20.0 * k, home.1 - 10.0 * k), (home.0 + 20.0 * k, home.1 + 10.0 * k))));
+        assert!(cratered(&gpu) > after_blast, "the cord's craters");
+        // A mine on a fresh world, on the mould's home: the frames' grid
+        // (one square a dish cell) sets it off.
+        let mut g2 = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        g2.bank = 10_000.0;
+        let mut km = Kit::new(free);
+        assert!(km.use_tool(&mut g2, Tool::Mine(home)));
+        let mut fired = 0;
+        while g2.end.is_none() && fired == 0 {
+            g2.world.mould_grid(scale);
+            g2.step();
+            fired = km.frame(&mut g2);
+        }
+        assert_eq!(fired, 1, "the mine (trigger {}) went off by {:.0} s", km.mine_trigger(&g2), g2.time());
+        eprintln!("GPU kit: blast {} killed, mine {} killed at {:.1} s", kg.killed[0], km.killed[1], g2.time());
     }
 
     /// The engine runs the CPU race world's mould: the same params, bar
