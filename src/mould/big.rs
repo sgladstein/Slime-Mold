@@ -509,16 +509,18 @@ pub struct BigParams {
     /// spread, so the memory stays where the hurt was. A sensor reads
     /// `scar_weight` x scar beside the trail (under 0 the mould learns to
     /// keep away from a place it was hit, over 0 to come back to it in
-    /// force), and the alarm term at that cell is divided by
-    /// 1 + `scar_habit` x scar, so a trick played again and again where the
-    /// mould is scarred moves it less each time (Physarum habituates to a
-    /// repeated harmless stimulus: Boisseau, Vogel and Dussutour 2016). The
-    /// alarm fades in about a second; the scar at keep 0.9999 lasts about
-    /// 40 game seconds at the world's two fine steps a tick.
+    /// force). The alarm fades in about a second; the scar at keep 0.9999
+    /// lasts about 40 game seconds at the world's two fine steps a tick.
+    ///
+    /// Tried and removed: habituation proper (Physarum stops answering a
+    /// repeated harmless stimulus; Boisseau, Vogel and Dussutour 2016), the
+    /// alarm term divided by 1 + h x scar, so a mould scarred at a place
+    /// stops fleeing fire there. With the flee alarm (weight -1) it killed
+    /// more in the last 8 of 16 strikes on 7 of 8 seeds (p 0.07, not
+    /// significant), and helps only the player (`Reports/dead-ends.md`).
     pub scar_keep: f32,
     pub scar_gain: f32,
     pub scar_weight: f32,
-    pub scar_habit: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
@@ -729,7 +731,6 @@ impl BigParams {
             scar_keep: 0.0,
             scar_gain: 0.0,
             scar_weight: 0.0,
-            scar_habit: 0.0,
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
@@ -1691,7 +1692,7 @@ impl BigDish {
                 } else if self.scar.is_empty() {
                     self.p.alarm_weight * self.alarm[i]
                 } else {
-                    self.p.alarm_weight * self.alarm[i] / (1.0 + self.p.scar_habit * self.scar[i]) + self.p.scar_weight * self.scar[i]
+                    self.p.alarm_weight * self.alarm[i] + self.p.scar_weight * self.scar[i]
                 };
                 self.trail_seen(i, sp) + self.scent_at(x + c * sso, y + s * sso) + g + al
             }
@@ -2951,6 +2952,34 @@ mod tests {
 
     fn small(scale: usize, substeps: usize) -> BigParams {
         BigParams { scale, substeps, walkers: 600 * scale * scale, seed: 3, ..BigParams::today() }
+    }
+
+    /// The scar (habituation): struck again and again at one spot, a mould
+    /// that reads its scar below 0 keeps away from it after the alarm has
+    /// faded, one that reads it above 0 crowds it, against the same alarm
+    /// with no scar; and with the scar off nothing is allocated.
+    #[test]
+    fn a_scar_remembers_where_the_mould_was_hurt() {
+        // Struck at the home pile (where the plain mould feeds) or at the
+        // dish centre (where it does not go).
+        let near = |home: bool, scar_keep: f32, scar_weight: f32| {
+            let p = BigParams { alarm_keep: 0.95, scar_keep, scar_gain: 0.05, scar_weight, piles: 1, ..small(1, 1) };
+            let mut d = BigDish::new(p);
+            let (cx, cy) = if home { d.piles[0] } else { (d.w as f32 / 2.0, d.h as f32 / 2.0) };
+            for t in 0..400 {
+                if t % 20 == 0 && t < 200 {
+                    d.strike(cx, cy, 4.0, 50.0, 8.0);
+                }
+                d.tick();
+            }
+            assert_eq!(d.scar.is_empty(), scar_keep == 0.0);
+            assert!(d.alarm.iter().cloned().fold(0.0, f32::max) < 1.0, "the alarm has faded");
+            (0..d.walkers.len()).filter(|&k| d.lives(k) && (d.walkers[k].0 - cx).hypot(d.walkers[k].1 - cy) <= 12.0).count()
+        };
+        let (plain, wary) = (near(true, 0.0, 0.0), near(true, 0.9999, -2.0));
+        assert!(wary * 2 < plain, "wary {wary} against {plain} at home");
+        let (plain, grudge) = (near(false, 0.0, 0.0), near(false, 0.9999, 2.0));
+        assert!(grudge > plain + 20, "grudge {grudge} against {plain} at the centre");
     }
 
     /// Threads split the field passes by rows; the dish must not care.

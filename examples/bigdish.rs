@@ -661,7 +661,6 @@ fn main() {
             "scar_keep" => p.scar_keep = f(),
             "scar_gain" => p.scar_gain = f(),
             "scar_weight" => p.scar_weight = f(),
-            "scar_habit" => p.scar_habit = f(),
             _ => panic!("unknown key {k}"),
         }
     }
