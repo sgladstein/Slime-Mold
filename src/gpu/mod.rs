@@ -21,7 +21,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use crate::mould::big::{BigDish, BigParams, SpeciesSet};
+use crate::mould::big::{BigDish, BigParams, SpeciesSet, LIFE_DEAD};
 use crate::mould::map::Map;
 use crate::mould::squad;
 use crate::mould::STEPS_PER_SECOND;
@@ -55,8 +55,18 @@ pub const DRAW_STARVE: u32 = 401;
 pub const DRAW_BIRTH: u32 = 402;
 pub const CLAIM_BIRTH: u32 = 403;
 
-/// Bytes in `Params` (172 words).
-pub const PARAMS_BYTES: usize = 688;
+/// The life cycle's (big.rs `DRAW_FRUIT` and on).
+pub const DRAW_FRUIT: u32 = 114;
+pub const DRAW_SLEEP: u32 = 115;
+pub const CLAIM_LAND: u32 = 116;
+pub const DRAW_SPORE_H: u32 = 117;
+pub const DRAW_SLEEP_DIE: u32 = 118;
+
+/// Bytes in `Params` (208 words).
+pub const PARAMS_BYTES: usize = 832;
+/// Where the strike's row sits in `Params` (`Engine::strike` writes it
+/// alone): the last.
+pub const STRIKE_AT: usize = 800;
 /// Where the squad's four words sit in `Params` (`set_squad` writes them
 /// alone). Fixed: the look's hits row and the species block (2026-11-11)
 /// come after them.
@@ -244,6 +254,33 @@ pub struct Settings {
     /// `s0.reach=40` and the like: a field left unset is the global one.
     /// Only with two species or more; all unset is off.
     pub sets: [SpeciesKnobs; MAX_SPECIES as usize],
+    /// The life cycle (`BigParams::spore_rate` and below, the tiers'
+    /// Sporer, Sleeper and Swarmer; each means what the `BigParams` field
+    /// of its name means): spores, dormancy and the alarm, all off at 0.
+    /// The alarm field is there only if `alarm_keep` is over 0 when the
+    /// dish is made, as on the CPU; the rest are live. Once any of spores
+    /// or dormancy is on, or a strike has landed (`Engine::strike`), the
+    /// walkers' life states stay on, as the CPU's do.
+    pub spore_rate: f32,
+    pub spore_scent: f32,
+    pub spore_alarm: f32,
+    pub spore_burst: f32,
+    pub spore_steps: u16,
+    pub spore_speed: f32,
+    pub spore_reach: f32,
+    pub spore_deposit: f32,
+    pub spore_land: f32,
+    pub spore_rest: u16,
+    pub sleep_rate: f32,
+    pub sleep_deposit: f32,
+    pub wake_scent: f32,
+    pub wake_alarm: f32,
+    pub wake_steps: u16,
+    pub sleep_rest: u16,
+    pub sleep_death: f32,
+    pub alarm_keep: f32,
+    pub alarm_weight: f32,
+    pub alarm_relay: f32,
     /// Growth (Larder World W0, `BigParams::upkeep`; 0 off): energy a
     /// walker pays a tick, what it starts with, what it divides at, what a
     /// division costs, the chance a tick that a walker at zero dies, and
@@ -351,6 +388,26 @@ impl Settings {
             mix_step: t.mix_step,
             mix_deposit: t.mix_deposit,
             sets: [SpeciesKnobs::default(); MAX_SPECIES as usize],
+            spore_rate: t.spore_rate,
+            spore_scent: t.spore_scent,
+            spore_alarm: t.spore_alarm,
+            spore_burst: t.spore_burst,
+            spore_steps: t.spore_steps,
+            spore_speed: t.spore_speed,
+            spore_reach: t.spore_reach,
+            spore_deposit: t.spore_deposit,
+            spore_land: t.spore_land,
+            spore_rest: t.spore_rest,
+            sleep_rate: t.sleep_rate,
+            sleep_deposit: t.sleep_deposit,
+            wake_scent: t.wake_scent,
+            wake_alarm: t.wake_alarm,
+            wake_steps: t.wake_steps,
+            sleep_rest: t.sleep_rest,
+            sleep_death: t.sleep_death,
+            alarm_keep: t.alarm_keep,
+            alarm_weight: t.alarm_weight,
+            alarm_relay: t.alarm_relay,
             upkeep: t.upkeep,
             start_energy: t.start_energy,
             birth_energy: t.birth_energy,
@@ -552,6 +609,30 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "mix_turn" => s.mix_turn = f()?,
         "mix_step" => s.mix_step = f()?,
         "mix_deposit" => s.mix_deposit = f()?,
+        // The life cycle.
+        "spore_rate" => s.spore_rate = f()?,
+        "spore_scent" => s.spore_scent = f()?,
+        "spore_alarm" => s.spore_alarm = f()?,
+        "spore_burst" => s.spore_burst = f()?,
+        "spore_steps" => s.spore_steps = int()?.min(65535) as u16,
+        "spore_speed" => s.spore_speed = f()?,
+        "spore_reach" => s.spore_reach = f()?,
+        "spore_deposit" => s.spore_deposit = f()?,
+        "spore_land" => s.spore_land = f()?,
+        "spore_rest" => s.spore_rest = int()?.min(65535) as u16,
+        "sleep_rate" => s.sleep_rate = f()?,
+        "sleep_deposit" => s.sleep_deposit = f()?,
+        "wake_scent" => s.wake_scent = f()?,
+        "wake_alarm" => s.wake_alarm = f()?,
+        "wake_steps" => s.wake_steps = int()?.min(65535) as u16,
+        "sleep_rest" => s.sleep_rest = int()?.min(65535) as u16,
+        "sleep_death" => s.sleep_death = f()?,
+        "alarm_keep" => s.alarm_keep = f()?,
+        "alarm_weight" => s.alarm_weight = f()?,
+        "alarm_relay" => s.alarm_relay = f()?,
+        // A mould tier's keys at once (`mould::tiers::Tier`, as
+        // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
+        "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of sporer, sleeper, swarmer"))?.settings(s)?,
         "upkeep" => s.upkeep = f()?,
         "start_energy" => s.start_energy = f()?,
         "birth_energy" => s.birth_energy = f()?,
@@ -646,6 +727,26 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         // With the global limit off the caller's `crowd` says nothing of
         // whether one can hold; `Engine::new` passes its own.
         species_sets: species_sets(s, crowd || !s.crowd),
+        spore_rate: s.spore_rate,
+        spore_scent: s.spore_scent,
+        spore_alarm: s.spore_alarm,
+        spore_burst: s.spore_burst,
+        spore_steps: s.spore_steps,
+        spore_speed: s.spore_speed,
+        spore_reach: s.spore_reach,
+        spore_deposit: s.spore_deposit,
+        spore_land: s.spore_land,
+        spore_rest: s.spore_rest,
+        sleep_rate: s.sleep_rate,
+        sleep_deposit: s.sleep_deposit,
+        wake_scent: s.wake_scent,
+        wake_alarm: s.wake_alarm,
+        wake_steps: s.wake_steps,
+        sleep_rest: s.sleep_rest,
+        sleep_death: s.sleep_death,
+        alarm_keep: s.alarm_keep,
+        alarm_weight: s.alarm_weight,
+        alarm_relay: s.alarm_relay,
         upkeep: s.upkeep,
         start_energy: s.start_energy,
         birth_energy: s.birth_energy,
@@ -740,9 +841,21 @@ pub const HARVEST: usize = 26;
 /// Conversion's square (`species_convert_r`): each species' trail summed
 /// along each cell's row, before `convert`.
 pub const ROWS: usize = 27;
+/// The life cycle (`BigParams::spore_rate` and below), after the move:
+/// timers, fruiting, dormancy and waking (`fate`), then the spores' flight
+/// (`fly`) and landing (`alight`). A strike (`Engine::strike`) is `hit`
+/// (its cells) and `kill` (its walkers).
+pub const FATE: usize = 28;
+pub const FLY: usize = 29;
+pub const ALIGHT: usize = 30;
+pub const HIT: usize = 31;
+pub const KILL: usize = 32;
+/// A squad shot's alarm (`squad::SHOT_ALARM`), after `cut`, with the alarm
+/// field on.
+pub const SHOUT: usize = 33;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 28] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows",
+pub const PASSES: [&str; 34] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout",
 ];
 
 impl Shared {
@@ -890,6 +1003,12 @@ pub struct Engine {
     /// From the last `write_params`: whether the species have their own
     /// settings (`Settings::per_species`).
     pub per: bool,
+    /// The life cycle: whether the walkers' life states are on (once on,
+    /// on for good: a spore holds no cell, so switching them off would
+    /// lose it), and whether the dish has the alarm field (`alarm_keep`
+    /// over 0 when it was made, as the CPU's `alarm`).
+    pub cycles: bool,
+    pub alarmed: bool,
 }
 
 impl Engine {
@@ -952,10 +1071,14 @@ impl Engine {
         let counters: Vec<u32> = if d.sick.is_empty() { vec![0; n as usize] } else { d.sick.iter().map(|&c| c as u32).collect() };
         let sick = buf("sick", &u32_bytes(&counters), storage);
         let sdep = zeros("sdep", blocks * cells as usize * 4);
-        let gdep = zeros("gdep", cells as usize * 4);
-        let germ = [zeros("germ0", cells as usize * 4), zeros("germ1", cells as usize * 4)];
+        // The life cycle's share of them (always there, as a strike can
+        // switch it on): the germ fields' second block is the alarm,
+        // `gdep`'s second and third the relays and the dormant a cell, and
+        // `bdep`'s third and fourth halves spores' and sleepers' deposits.
+        let gdep = zeros("gdep", 3 * cells as usize * 4);
+        let germ = [zeros("germ0", 2 * cells as usize * 4), zeros("germ1", 2 * cells as usize * 4)];
         let edep = zeros("edep", 2 * blocks * cells as usize * 4);
-        let bdep = zeros("bdep", 2 * blocks * cells as usize * 4);
+        let bdep = zeros("bdep", 4 * blocks * cells as usize * 4);
         let species = [zeros("species0", nsp as usize * cells as usize * 4), zeros("species1", nsp as usize * cells as usize * 4)];
         let age = zeros("age", n as usize * 4);
         // Grass starts full on the agar (the CPU's, made only with grazing
@@ -991,6 +1114,7 @@ impl Engine {
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
         };
         let groups = [group(true), group(false)];
+        let (cycles, alarmed) = (!d.life.is_empty(), !d.alarm.is_empty());
         let mut e = Engine {
             device: device.clone(),
             queue: queue.clone(),
@@ -1052,6 +1176,8 @@ impl Engine {
             jumps: false,
             crowd: false,
             per: false,
+            cycles,
+            alarmed,
         };
         e.lay_food(s.food);
         e
@@ -1123,8 +1249,13 @@ impl Engine {
         self.queue.write_buffer(&self.reached, 0, &u32_bytes(&reached));
         let counters: Vec<u32> = if d.sick.is_empty() { vec![0; self.n as usize] } else { d.sick.iter().map(|&c| c as u32).collect() };
         self.queue.write_buffer(&self.sick, 0, &u32_bytes(&counters));
-        let germ = if d.germ.is_empty() { vec![0.0; self.cells as usize] } else { d.germ.clone() };
+        let mut germ = if d.germ.is_empty() { vec![0.0; self.cells as usize] } else { d.germ.clone() };
+        germ.extend(if d.alarm.is_empty() { vec![0.0; self.cells as usize] } else { d.alarm.clone() });
         self.queue.write_buffer(&self.germ[side], 0, &f32_bytes(&germ));
+        // The life states come with the spec words below; a dish that has
+        // them switches them on here.
+        self.cycles |= !d.life.is_empty();
+        self.alarmed |= !d.alarm.is_empty();
         assert_eq!(d.species_trail.len(), self.nsp as usize, "a dish with this engine's species");
         if self.nsp > 0 {
             let fields: Vec<f32> = d.species_trail.iter().flatten().copied().collect();
@@ -1238,7 +1369,7 @@ impl Engine {
         b.extend(u32_bytes(&[world, self.npiles, self.npc, 0]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
         debug_assert_eq!(b.len(), SQUAD_AT);
-        b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), 0]));
+        b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), squad::SHOT_ALARM.to_bits()]));
         b.extend(u32_bytes(&[self.n_hits, 0, 0, 0]));
         // The species block (2026-11-11): whether each species has its own
         // settings, the walker kinds, conversion's square; the second
@@ -1256,6 +1387,23 @@ impl Engine {
             b.extend(f32_bytes(&[t.sensor_angle, t.sensor_offset, t.rotate_angle, t.step, sso, t.deposit, t.keep, t.blocked_deposit, t.graze_weight]));
             b.extend(u32_bytes(&[t.crowd as u32, t.explore_steps as u32, 0]));
         }
+        // The life cycle: on for good once spores or dormancy are, as the
+        // CPU's states (a strike switches it on too); the alarm field once
+        // `alarm_keep` is over 0, cleared when it comes (on the CPU it is
+        // made with the dish).
+        self.cycles |= s.spore_rate > 0.0 || s.spore_burst > 0.0 || s.sleep_rate > 0.0;
+        if s.alarm_keep > 0.0 && !self.alarmed {
+            for g in &self.germ {
+                self.queue.write_buffer(g, self.cells as u64 * 4, &vec![0u8; self.cells as usize * 4]);
+            }
+            self.alarmed = true;
+        }
+        b.extend(u32_bytes(&[self.cycles as u32, self.alarmed as u32, stream(seed, DRAW_FRUIT), stream(seed, DRAW_SLEEP)]));
+        b.extend(u32_bytes(&[stream(seed, CLAIM_LAND), stream(seed, DRAW_SPORE_H), s.spore_steps as u32, s.spore_rest as u32, s.wake_steps as u32, s.sleep_rest as u32, stream(seed, DRAW_SLEEP_DIE), 0]));
+        b.extend(f32_bytes(&[s.spore_rate, s.spore_scent, s.spore_alarm, s.spore_burst, s.step * s.spore_speed, s.spore_reach, s.spore_deposit, s.spore_land]));
+        b.extend(f32_bytes(&[s.sleep_rate, s.sleep_deposit, s.wake_scent, s.wake_alarm, s.alarm_keep, s.alarm_weight, s.alarm_relay, s.sleep_death]));
+        debug_assert_eq!(b.len(), STRIKE_AT);
+        b.extend([0u8; 32]);
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         self.converts = s.convert > 0.0 && self.nsp > 0;
@@ -1269,7 +1417,9 @@ impl Engine {
             || s.size_spread > 0.0
             || s.sensor_r > 0
             || graze != 0.0
-            || self.grows;
+            || self.grows
+            || self.cycles
+            || self.alarmed;
         self.queue.write_buffer(&self.params, 0, &b);
         self.jumps = s.respawn > 0.0 || pull > 0.0;
         self.crowd = crowd > 0 || sets.iter().any(|t| t.crowd > 0);
@@ -1326,6 +1476,9 @@ impl Engine {
             let mut pre = Vec::new();
             if nshots > 0 {
                 pre.extend([(SHOTS, nshots.div_ceil(256)), (STRIKE, self.n.div_ceil(256)), (CUT, nshots)]);
+                if self.alarmed {
+                    pre.push((SHOUT, 1));
+                }
             }
             if nunits > 0 {
                 pre.push((SMELL, 1));
@@ -1368,6 +1521,14 @@ impl Engine {
         // move), then eating; both before growth, which eats what they give.
         if self.walled {
             tick.push((WALLS, cells));
+        }
+        // The life cycle, as the CPU's `life_step` after the move and the
+        // wall bites, before eating. The move's claims are still in
+        // `claim`; a spore's landing claim never meets one, since every
+        // claimed cell now holds its winner and the engine's crowd limit is
+        // at most 1 (with a limit of 2 they would need clearing first).
+        if self.cycles {
+            tick.extend([(FATE, n), (FLY, n), (ALIGHT, n)]);
         }
         if self.npc > 0 {
             let pc = self.npc.div_ceil(256);
@@ -1449,6 +1610,10 @@ impl Engine {
             self.dish.energy = e.iter().take(self.n as usize).map(|&v| v.max(0.0)).collect();
         }
         self.dish.ticks = self.done;
+        // The life states, so the measure leaves the dead out.
+        if self.cycles {
+            (self.dish.life, self.dish.life_t) = self.life_of();
+        }
         // The Larder World: the crystals as the GPU holds them, so the
         // measure's crystal share left is the GPU's.
         if self.npiles > 0 {
@@ -1470,11 +1635,14 @@ impl Engine {
     }
 
     /// The living walkers now, with growth on (a read-back of the energy;
-    /// a dead slot holds -1). With growth off, every walker.
+    /// a dead slot holds -1) and without the struck dead (life cycle).
+    /// With both off, every walker.
     pub fn alive(&self) -> usize {
+        let dead = if self.cycles { self.life_of().0.iter().filter(|&&l| l == LIFE_DEAD).count() } else { 0 };
         if !self.grows {
-            return self.n as usize;
+            return self.n as usize - dead;
         }
+        // With growth a struck walker's slot is empty, so not counted twice.
         floats(&read_back(&self.device, &self.queue, &self.energy)).iter().take(self.n as usize).filter(|&&v| v >= 0.0).count()
     }
 
@@ -1550,6 +1718,43 @@ impl Engine {
         self.queue.submit([enc.finish()]);
     }
 
+    /// The player's attack, as the CPU's `BigDish::strike` (the tiers'
+    /// test of how each mould answers it; dish cells): within `r` of
+    /// (`x`, `y`) the trail (each species' too) is cleared and every
+    /// walker on the ground dies (spores in flight are missed; with growth
+    /// the slot is freed), and within `alarm_r` `alarm` is added to the
+    /// alarm field if the dish has one. With `r` 0 it is only a shock.
+    /// Switches the life states on. Runs on its own, between ticks;
+    /// `struck` reads back the walkers killed so far.
+    #[allow(clippy::too_many_arguments)]
+    pub fn strike(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, alarm: f32, alarm_r: f32) {
+        let k = self.dish.p.scale as f32;
+        self.cycles = true;
+        self.write_params(s, Hand::default(), 0);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, alarm, alarm_r * k, 0.0, 0.0, 0.0]));
+        self.run(shared, &[(HIT, self.cells.div_ceil(256)), (KILL, self.n.div_ceil(256))]);
+    }
+
+    /// Walkers killed by strikes (`strike`) since the dish was made or
+    /// injected.
+    pub fn struck(&self) -> u32 {
+        let st = read_back(&self.device, &self.queue, &self.wstat);
+        u32::from_le_bytes(st[12..16].try_into().unwrap())
+    }
+
+    /// Each slot's life state and timer (the CPU's `life`, `life_t`), read
+    /// back from the `spec` words.
+    pub fn life_of(&self) -> (Vec<u8>, Vec<u16>) {
+        let w: Vec<u32> = read_back(&self.device, &self.queue, &self.spec).chunks_exact(4).take(self.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+        (w.iter().map(|&w| ((w >> 9) & 3) as u8).collect(), w.iter().map(|&w| (w >> 16) as u16).collect())
+    }
+
+    /// The alarm field now (zeros without one).
+    pub fn alarm_of(&self) -> Vec<f32> {
+        let g = floats(&read_back(&self.device, &self.queue, &self.germ[(self.done % 2) as usize]));
+        g[self.cells as usize..2 * self.cells as usize].to_vec()
+    }
+
     /// The squad's frame (Larder World W2a; `squad.rs` has the CPU twins and
     /// the order): the next `record` runs its shots, strikes and smell before
     /// its first tick, and its reads and harvest after its last. Shots need
@@ -1562,7 +1767,7 @@ impl Engine {
         self.queue.write_buffer(&self.kills, 0, &[0u8; squad::SHOTS_MAX * 4]);
         self.squad = (nunits, nshots, f.slime);
         self.squad_due = true;
-        self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), 0]));
+        self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), squad::SHOT_ALARM.to_bits()]));
     }
 
     /// The last squad frame's results (`set_squad`), read back.
@@ -1591,21 +1796,23 @@ impl Engine {
 
 /// The living walkers a cell of a CPU dish (its `occ`).
 pub fn occupancy(d: &BigDish) -> Vec<u32> {
-    let mut occ = vec![0u32; d.w * d.h];
-    for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
-        if d.lives(k) {
-            occ[y as usize * d.w + x as usize] += 1;
-        }
-    }
-    occ
+    // The CPU's own counts: with the life cycle spores and the dead hold
+    // no cell, so counting the living walkers' places (as before
+    // 2026-11-11) counted every spore in flight too.
+    d.occupancy().iter().map(|&c| c as u32).collect()
 }
 
 /// Each slot's energy as the GPU keeps it: -1 for an empty slot (0s with
 /// growth off, never read).
-/// Each slot's `spec` word: its species (0 with none), and with the mix on
-/// its kind in bit 8.
+/// Each slot's `spec` word: its species (0 with none), with the mix on its
+/// kind in bit 8, and with the life cycle its state in bits 9-10 and its
+/// timer in bits 16-31 (engine.wgsl's `L_*`).
 pub fn spec_words(d: &BigDish) -> Vec<u32> {
-    (0..d.walkers.len()).map(|k| d.spec.get(k).map_or(0, |&c| c as u32) | d.kind.get(k).map_or(0, |&c| (c as u32) << 8)).collect()
+    (0..d.walkers.len())
+        .map(|k| {
+            d.spec.get(k).map_or(0, |&c| c as u32) | d.kind.get(k).map_or(0, |&c| (c as u32) << 8) | d.life.get(k).map_or(0, |&c| (c as u32) << 9) | d.life_t.get(k).map_or(0, |&c| (c as u32) << 16)
+        })
+        .collect()
 }
 
 pub fn energies(d: &BigDish) -> Vec<f32> {

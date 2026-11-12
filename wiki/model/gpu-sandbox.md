@@ -2,9 +2,9 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-11T22:10Z
-sources: [Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/species-gpu-2026-11-11.md]
-code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost]
+updated: 2026-11-12T01:00Z
+sources: [Reports/gpu-sandbox-2026-11-11.md, Reports/jenson-looks-2026-11-11.md, Reports/outside-rules-2026-11-11.md, Reports/creatures-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
+code: [BigParams::species, BigParams::graze_weight, BigParams::species_boost, BigParams::spore_rate, BigParams::sleep_death, Engine::strike]
 ---
 
 # The GPU sandbox (phase 3)
@@ -83,7 +83,12 @@ caught. On the GTX 1070 they cost nothing off; two species pay 0.05 ms a
 frame more, the second kind 0.12-0.19 ms, and the square of radius 8 1.3 ms
 of a 2.3 ms frame at 100,000 walkers
 ([species on the GPU](../../Reports/species-gpu-2026-11-11.md), *Cost*). The
-tiers' life cycle is the next port.
+tiers' life cycle followed (11-12): spores, dormancy and dying asleep, the
+alarm field, the player's strike (`Engine::strike`) and the squad shots'
+alarm, under the CPU's keys, off by default, with no new binding. One GPU
+tick matches one CPU tick on 18 dishes (the three tiers among them) and
+the squad's frame on four ([life cycle on the
+GPU](../../Reports/life-gpu-2026-11-11.md)).
 
 Three facts bind the design:
 
@@ -99,3 +104,4 @@ Three facts bind the design:
 
 - [gpu-sandbox-2026-11-11.md](../../Reports/gpu-sandbox-2026-11-11.md): the sandbox, its controls and presets, the twin tests and timings.
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species settings on the GPU, their twin test, planted bugs and cost.
+- [life-gpu-2026-11-11.md](../../Reports/life-gpu-2026-11-11.md): the tiers' life cycle on the GPU, its twin tests, planted bugs and cost.

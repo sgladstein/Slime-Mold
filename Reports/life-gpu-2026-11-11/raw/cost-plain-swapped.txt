@@ -1,0 +1,9 @@
+== order swapped, round 1
+plain new:  wall ms a frame of 2 ticks and the drawing, 300 frames: median 34.336, worst 52.184; GPU ms ticks 29.539, drawing 4.559
+plain base: wall ms a frame of 2 ticks and the drawing, 300 frames: median 34.187, worst 47.986; GPU ms ticks 29.304, drawing 4.578
+== order swapped, round 2
+plain new:  wall ms a frame of 2 ticks and the drawing, 300 frames: median 31.429, worst 40.048; GPU ms ticks 25.930, drawing 4.804
+plain base: wall ms a frame of 2 ticks and the drawing, 300 frames: median 33.891, worst 53.311; GPU ms ticks 29.842, drawing 4.675
+== order swapped, round 3
+plain new:  wall ms a frame of 2 ticks and the drawing, 300 frames: median 33.227, worst 43.492; GPU ms ticks 28.273, drawing 4.908
+plain base: wall ms a frame of 2 ticks and the drawing, 300 frames: median 34.380, worst 54.332; GPU ms ticks 29.785, drawing 4.886

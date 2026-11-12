@@ -2,9 +2,9 @@
 title: The life cycle and the mould's answer to attack (Sporer, Sleeper, Swarmer)
 kind: mechanism
 status: open
-updated: 2026-11-12T00:10Z
-sources: [Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, research/sources/jones-adamatzky-2012.md, research/sources/jones-2015-survey.md]
-code: [BigParams::spore_rate, BigParams::spore_scent, BigParams::spore_burst, BigParams::spore_alarm, BigParams::spore_steps, BigParams::spore_speed, BigParams::spore_reach, BigParams::spore_deposit, BigParams::spore_land, BigParams::spore_rest, BigParams::sleep_rate, BigParams::sleep_deposit, BigParams::wake_scent, BigParams::wake_alarm, BigParams::wake_steps, BigParams::sleep_rest, BigParams::sleep_death, BigParams::alarm_keep, BigParams::alarm_weight, BigParams::alarm_relay, BigDish::strike, BigDish::life, BigDish::life_t, BigDish::alarm, BigDish::life_counts, LIFE_SPORE, LIFE_DORMANT, LIFE_DEAD, Tier, SHOT_ALARM]
+updated: 2026-11-12T01:00Z
+sources: [Reports/life-gpu-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, research/sources/jones-adamatzky-2012.md, research/sources/jones-2015-survey.md]
+code: [BigParams::spore_rate, BigParams::spore_scent, BigParams::spore_burst, BigParams::spore_alarm, BigParams::spore_steps, BigParams::spore_speed, BigParams::spore_reach, BigParams::spore_deposit, BigParams::spore_land, BigParams::spore_rest, BigParams::sleep_rate, BigParams::sleep_deposit, BigParams::wake_scent, BigParams::wake_alarm, BigParams::wake_steps, BigParams::sleep_rest, BigParams::sleep_death, BigParams::alarm_keep, BigParams::alarm_weight, BigParams::alarm_relay, BigDish::strike, BigDish::life, BigDish::life_t, BigDish::alarm, BigDish::life_counts, LIFE_SPORE, LIFE_DORMANT, LIFE_DEAD, Tier, SHOT_ALARM, Engine::strike, Engine::life_of, Engine::alarm_of, shout]
 ---
 
 # The life cycle and the mould's answer to attack (Sporer, Sleeper, Swarmer)
@@ -15,7 +15,12 @@ On the CPU big dish (`src/mould/big.rs`) each walker can be ordinary, a
 spore, dormant or dead. The player's strike (`BigDish::strike`) and, with
 the alarm field on, the squad's shots (`squad::shots`, `SHOT_ALARM`) lay
 an alarm. All off by default. `mould::tiers::Tier` names three tiers' keys
-for the game; on the GPU it refuses until the port lands.
+for the game. The GPU engine runs every rule under the same keys
+(`Tier::settings`), the shots' alarm and `sleep_death` too, and matches
+the CPU exactly: every walker, state and timer on 18 dishes over four
+ticks, the three tiers among them, with every field within 1e-6
+([life cycle on the GPU](../../Reports/life-gpu-2026-11-11.md), *The twin
+test*).
 
 - **Swarmer** (`alarm_weight` +3): floods where it is hit. Holds in the
   Larder world (8 of 8). A modifier any mould could carry.
@@ -49,7 +54,7 @@ costs +31% a step on one core. Tables: [the report](../../Reports/mould-tiers-20
 
 - The counters as plans against random and idle hands, with shot-sized and sustained fire, in the world (W2b, with the player AI); [the reviews](../../Reports/mould-tiers-review-2026-11-11.md).
 - Life-cycle fields per species, for mixes; species conversion still takes dormant walkers and spores.
-- The GPU port: every rule's doc comment in `BigParams` is the spec; the GPU thread owns births and upkeep.
+- The GPU port's cost on the GTX 1070 (the software GPU's is in [the GPU report](../../Reports/life-gpu-2026-11-11.md), *Cost*), and the tiers on the panel.
 - With [growth](growth.md) on, spores and the dormant pay no upkeep (the dormant die at `sleep_death` instead) and the struck free their slots.
 - A tier that splits or migrates as a body.
 - A Sporer that matters in the world: fruiting set off by a crystal running low, with a visible delay, and spores that carry energy (review 1).
@@ -58,6 +63,7 @@ costs +31% a step on one core. Tables: [the report](../../Reports/mould-tiers-20
 ## Sources
 
 - [mould-tiers report](../../Reports/mould-tiers-2026-11-11.md), all sections.
+- [life cycle on the GPU](../../Reports/life-gpu-2026-11-11.md): the port to `gpu::Engine`, its twin tests, planted bugs and cost.
 - [The two reviews](../../Reports/mould-tiers-review-2026-11-11.md) (2026-11-11 evening).
 - [Jones and Adamatzky 2012](../../research/sources/jones-adamatzky-2012.md): blocked walkers keep heading, light as a push.
 - [Jones 2015 survey](../../research/sources/jones-2015-survey.md): the sclerotium and fruiting.

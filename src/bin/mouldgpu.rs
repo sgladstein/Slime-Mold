@@ -1669,6 +1669,32 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     &s.sets[..s.fields() as usize]
                 );
             }
+            // The life cycle (2026-11-11).
+            if s.spore_rate > 0.0 || s.spore_burst > 0.0 || s.sleep_rate > 0.0 || s.alarm_keep > 0.0 {
+                println!(
+                    "   life: spores rate {} over scent {} burst {} over alarm {}, {} steps at {}x, reach {} lay {} land over {} rest {}; dormant rate {} lay {} wake over scent {} or alarm {}, awake {} rest {} die {}; alarm keep {} weight {} relay {}",
+                    s.spore_rate,
+                    s.spore_scent,
+                    s.spore_burst,
+                    s.spore_alarm,
+                    s.spore_steps,
+                    s.spore_speed,
+                    s.spore_reach,
+                    s.spore_deposit,
+                    s.spore_land,
+                    s.spore_rest,
+                    s.sleep_rate,
+                    s.sleep_deposit,
+                    s.wake_scent,
+                    s.wake_alarm,
+                    s.wake_steps,
+                    s.sleep_rest,
+                    s.sleep_death,
+                    s.alarm_keep,
+                    s.alarm_weight,
+                    s.alarm_relay
+                );
+            }
         }
         e.write_params(s, Hand::default(), s.ticks);
         let mut st = timestamps.then(|| Stamps::new(&device, &queue));
@@ -1775,6 +1801,10 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             println!("dish at {:.1}s: tube {:.1}  loops {}  width {:.2}  reach {:.1}  piles {}/{}  strays {:.3}{sick}", mm.seconds, mm.tube_area, mm.loops, mm.width, mm.reach, mm.reached, e.dish.piles.len(), mm.strays);
             if !course.is_empty() {
                 println!("sick every 0.5 s: {}", course.join(" "));
+            }
+            if e.cycles {
+                // `measure` read the states back into the dish.
+                println!("life: walkers, spores, dormant, dead {:?}", e.dish.life_counts());
             }
             if e.npiles > 0 || e.walled {
                 let (_, bites, broken) = e.world_counts();
@@ -2050,7 +2080,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use slime_mould::mould::big::{BigDish, BigParams};
+    use slime_mould::mould::big::{BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE};
+    use slime_mould::mould::tiers::Tier;
 
     #[test]
     fn every_panel_character_can_be_drawn() {
@@ -2686,6 +2717,166 @@ mod tests {
         assert!(off == 0, "{off} row sums off, worst {worst:.1e}");
     }
 
+    /// **The life cycle's twin test** (2026-11-11, the tiers' Sporer,
+    /// Sleeper and Swarmer on the GPU): each dish warmed on the CPU, struck
+    /// on the CPU part way where the walkers are thickest (dead walkers, a
+    /// wound, alarm), then struck on both from the same state (GPU
+    /// `Engine::strike` against `BigDish::strike`, compared before any
+    /// tick) and four ticks on both (the later ones meet what the earlier
+    /// left in the counts and claims). Compared: every walker, the trail, scent, species and alarm fields,
+    /// every slot's life state, timer, energy, age and sick counter, each
+    /// cell's count, the grass, the germ and the crystals' charge.
+    /// Strengthened after the first round of planted bugs (13 of 60
+    /// missed): four ticks, not two; the grass, the germ and a tight charge
+    /// check; the strike's counts, lives and species fields checked before
+    /// the tick re-injects them; a wall beside the strike on the crystal
+    /// dish; a burst that lands all at once. Then (2026-11-12, after the
+    /// tiers thread's PR #85) the three tiers as `Tier::settings` sets them,
+    /// dormant walkers that die asleep (`sleep_death`), and every field
+    /// within 1e-6 (the trail at 1e-4 missed a planted bug in round 2).
+    #[test]
+    fn the_life_cycle_matches_the_cpu_for_four_ticks() {
+        const TICKS: u32 = 4;
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let with = |mut s: Settings, keys: &[(&str, &str)]| {
+            for (k, v) in keys {
+                set(&mut s, k, v).unwrap();
+            }
+            s
+        };
+        // Rates for a test: spores that fly 20 ticks and rest 10, walkers
+        // that doze at 5% a tick (big.rs `life_cycle_threads_change_nothing`).
+        let spores: &[(&str, &str)] = &[("spore_rate", "0.01"), ("spore_scent", "-1"), ("spore_steps", "20"), ("spore_reach", "8"), ("spore_land", "1"), ("spore_deposit", "0.2"), ("spore_rest", "10")];
+        let sleep: &[(&str, &str)] = &[("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_deposit", "0.3"), ("alarm_keep", "0.95"), ("alarm_relay", "20"), ("wake_alarm", "1"), ("alarm_weight", "2"), ("sleep_rest", "10"), ("wake_steps", "10")];
+        let burst: &[(&str, &str)] = &[("spore_burst", "0.5"), ("spore_alarm", "1"), ("spore_steps", "20"), ("spore_reach", "8"), ("alarm_keep", "0.98")];
+        let both = [spores, sleep].concat();
+        let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
+        let mix = |s: Settings| Settings { mix_share: 0.3, mix_reach: 3.0, mix_angle: 0.5, mix_turn: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..s };
+        let tier = |t: Tier, mut s: Settings| {
+            t.settings(&mut s).unwrap();
+            s
+        };
+        let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
+        // Dormant walkers that die asleep, at 2% a tick so four ticks see it.
+        let dying = [sleep, &[("sleep_death", "0.02")]].concat();
+        let dishes = [
+            ("spores, one a cell", with(small(0), spores)),
+            ("spores, no limit", with(small(3), spores)),
+            ("a burst of spores after a strike", with(small(0), burst)),
+            // The t = 30 strike's burst lands at once in the first compared
+            // tick (fruit at 30, ten ticks of flight, no landing on scent),
+            // two species with their own crowd limits, so landings meet in
+            // a cell and species 1's ignore the limit.
+            ("a burst landing at once, two species with their own crowd limits", with(Settings { species: 2, ..small(0) }, &[("spore_burst", "1"), ("spore_alarm", "1"), ("spore_steps", "10"), ("spore_reach", "8"), ("spore_land", "0"), ("alarm_keep", "0.98"), ("s1.crowd", "0")])),
+            ("dormancy, alarm and relays", with(small(0), sleep)),
+            ("skittish: alarm only, the states from the strike", with(small(0), &[("alarm_keep", "0.98"), ("alarm_weight", "-10")])),
+            ("both, two species with their own crowd limits, mixed", mix(with(Settings { species: 2, ..small(0) }, &[&both[..], &[("s1.crowd", "0"), ("s1.step", "1.5")]].concat()))),
+            ("both, growth on crystals", with(hungry(crystals.clone()), &both)),
+            ("both, growth on grass", with(hungry(Settings { graze: 10.0, ..small(0) }), &both)),
+            ("both, cap, explorers, contagion", with(Settings { cap: 100, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..small(3) }, &both)),
+            ("both, respawn", with(Settings { respawn: 0.01, ..small(0) }, &both)),
+            ("dormancy, dying asleep", with(small(0), &dying)),
+            // The dying's counters (explorers age, the sick count down), and
+            // with no crowd limit the capped share of a cell they leave to
+            // ordinary walkers (round 3 missed the dying counted dormant on
+            // the one-a-cell dish, where no walker shares their cell).
+            ("dormancy, dying asleep, no limit, cap, explorers, contagion", with(Settings { cap: 100, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..small(3) }, &dying)),
+            ("both, dying asleep, growth on grass", with(hungry(Settings { graze: 10.0, ..small(0) }), &[&both[..], &[("sleep_death", "0.02")]].concat())),
+            ("the Sporer (Tier::settings)", tier(Tier::Sporer, small(0))),
+            ("the Sleeper", tier(Tier::Sleeper, small(0))),
+            ("the Sleeper, growth on crystals", tier(Tier::Sleeper, hungry(crystals.clone()))),
+            ("the Swarmer", tier(Tier::Swarmer, small(0))),
+        ];
+        let u32s = |b: &wgpu::Buffer, n: usize| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+        for (name, s) in dishes {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            let k = cpu.p.scale as f32;
+            // The strike's place: the middle of the living walkers.
+            let middle = |d: &BigDish| {
+                let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+                for (j, &(wx, wy, _)) in d.walkers.iter().enumerate() {
+                    if d.lives(j) {
+                        (x, y, m) = (x + wx, y + wy, m + 1.0);
+                    }
+                }
+                (x / m / k, y / m / k)
+            };
+            for t in 0..40 {
+                if t == 30 {
+                    let (x, y) = middle(&cpu);
+                    cpu.strike(x, y, 6.0, 50.0, 20.0);
+                }
+                cpu.tick();
+            }
+            assert!(!cpu.life.is_empty(), "{name}: life states on");
+            // The strike on both, from the same state, on an ordinary
+            // walker (so it kills one at least).
+            let j = (0..cpu.walkers.len()).find(|&j| cpu.lives(j) && cpu.life[j] == 0).expect("an ordinary walker");
+            let (x, y) = (cpu.walkers[j].0 / k, cpu.walkers[j].1 / k);
+            // A wall beside it on the world dish: the strike's alarm must
+            // stay off the wall.
+            if s.crystal > 0.0 {
+                cpu.build_wall(x - 6.0, y + 3.0, x + 6.0, y + 3.0, 1.0);
+            }
+            e.inject(&cpu);
+            let killed = cpu.strike(x, y, 4.0, 30.0, 12.0);
+            e.strike(&shared, &s, x, y, 4.0, 30.0, 12.0);
+            let side = (e.done % 2) as usize;
+            let struck_trail = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
+            let struck_alarm = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
+            let struck_life = e.life_of().0.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
+            let gpu_killed = e.struck();
+            // What the next tick's inject would hide: the strike's counts,
+            // lives and each species' trail.
+            let struck_occ = u32s(&e.occ, cpu.agar.len()).iter().zip(cpu.occupancy()).filter(|(a, b)| **a != **b as u32).count();
+            let struck_lives = if cpu.energy.is_empty() { 0 } else { floats(&read_back(&device, &queue, &e.energy)).iter().take(cpu.walkers.len()).enumerate().filter(|&(j, v)| (*v >= 0.0) != cpu.lives(j)).count() };
+            let struck_species = if e.nsp > 0 { l1(&floats(&read_back(&device, &queue, &e.species[side])), &cpu.species_trail.iter().flatten().copied().collect::<Vec<f32>>()) } else { 0.0 };
+            assert!(struck_occ == 0 && struck_lives == 0 && struck_species <= 1e-6, "{name}: after the strike {struck_occ} counts and {struck_lives} lives off, species L1 {struck_species:.1e}");
+            assert!(killed > 0 && gpu_killed as usize == killed && struck_life == 0, "{name}: the strike killed {gpu_killed} on the GPU, {killed} on the CPU; {struck_life} states off");
+            assert!(struck_trail <= 1e-6 && struck_alarm <= 1e-6, "{name}: after the strike trail L1 {struck_trail:.1e}, alarm L1 {struck_alarm:.1e}");
+            // Two ticks on both (`twin` injects the CPU's state again, the
+            // strike's included).
+            let n = cpu.walkers.len();
+            let before = cpu.life_counts();
+            let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, TICKS);
+            let side = (e.done % 2) as usize;
+            let (life, timer) = e.life_of();
+            let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
+            let timer_off = timer.iter().zip(&cpu.life_t).enumerate().filter(|&(j, (a, b))| cpu.lives(j) && a != b).count();
+            let la = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
+            let lsp = if e.nsp > 0 { l1(&floats(&read_back(&device, &queue, &e.species[side])), &cpu.species_trail.iter().flatten().copied().collect::<Vec<f32>>()) } else { 0.0 };
+            let occ = u32s(&e.occ, cpu.agar.len());
+            let occ_off = occ.iter().zip(cpu.occupancy()).filter(|(a, b)| **a != **b as u32).count();
+            // Energy in living slots only: a struck walker's slot keeps its
+            // energy on the CPU (unread until a birth halves its parent's
+            // into it) and holds -1 on the GPU.
+            let living = |v: &[f32]| -> Vec<f32> { (0..n).filter(|&j| cpu.lives(j)).map(|j| v[j]).collect() };
+            let le = if cpu.energy.is_empty() { 0.0 } else { l1(&living(&floats(&read_back(&device, &queue, &e.energy))), &living(&cpu.energy)) };
+            let alarm_sum: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
+            let lives_off = if cpu.energy.is_empty() { 0 } else { floats(&read_back(&device, &queue, &e.energy)).iter().take(n).enumerate().filter(|&(j, v)| (*v >= 0.0) != cpu.lives(j)).count() };
+            let lc = if cpu.charge.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.charge)), &cpu.charge) };
+            let lg = if cpu.grass.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass) };
+            let lgerm = if cpu.germ.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.germ[side]))[..cpu.germ.len()], &cpu.germ) };
+            let ages_off = if cpu.age.is_empty() { 0 } else { u32s(&e.age, n).iter().zip(&cpu.age).enumerate().filter(|&(j, (g, c))| cpu.lives(j) && *g != *c as u32).count() };
+            let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick, n).iter().zip(&cpu.sick).enumerate().filter(|&(j, (g, c))| cpu.lives(j) && *g != *c as u32).count() };
+            let after = cpu.life_counts();
+            eprintln!(
+                "{name}: {n} slots, states before {before:?} (walkers, spores, dormant, dead), after {after:?}; struck {killed}; {moved} moved, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, species L1 {lsp:.1e}, alarm L1 {la:.1e} (alarm in all {alarm_sum:.0}); {life_off} states and {timer_off} timers off; {occ_off} counts off; energy L1 {le:.1e}, {lives_off} lives off, charge L1 {lc:.1e}, grass L1 {lg:.1e}, germ L1 {lgerm:.1e}; {ages_off} ages and {sick_off} sick counters off"
+            );
+            assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
+            assert!(lt <= 1e-6 && ls <= 1e-6 && lsp <= 1e-6 && la <= 1e-6, "{name}: trail {lt:.1e}, scent {ls:.1e}, species {lsp:.1e}, alarm {la:.1e}");
+            assert!(life_off * 1000 <= n && timer_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {life_off} states, {timer_off} timers, {occ_off} counts off");
+            assert!(le <= 1e-3 && lives_off * 1000 <= n && lc <= 1e-6, "{name}: energy {le:.1e}, {lives_off} lives, charge {lc:.1e}");
+            assert!(lg <= 1e-6 && lgerm <= 1e-6, "{name}: grass {lg:.1e}, germ {lgerm:.1e}");
+            assert!(ages_off * 1000 <= n && sick_off * 1000 <= n, "{name}: {ages_off} ages, {sick_off} sick counters off");
+            if s.sleep_death >= 0.01 && s.upkeep == 0.0 {
+                assert!(after[3] > before[3], "{name}: dormant walkers die asleep: dead {} then {}", before[3], after[3]);
+            }
+        }
+    }
+
     /// The plain pipelines (the outside rules compiled out) give the dish the
     /// full ones give with every rule off, bit for bit. The full ones are
     /// forced by keeping blocked headings with a reset every tick, which
@@ -3122,101 +3313,198 @@ mod tests {
         use slime_mould::mould::squad::{self, Frame, ShotIn, UnitIn};
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
-        let s = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, wall_hp: 1000.0, ..small(0) };
+        let base = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, wall_hp: 1000.0, ..small(0) };
+        // And with the life cycle (2026-11-11): shots miss spores in flight
+        // and kill the dormant, and a struck walker is dead.
+        let life = with_life(base.clone());
+        // And the tiers (2026-11-12, PR #85's shot alarm): with the alarm
+        // field on, a hit lays `squad::SHOT_ALARM` within twice its radius.
+        // The Swarmer has the field and no states (no spores, no dormancy,
+        // no strike), the dish an alarm that needed the states missed.
+        let tier = |t: Tier, mut s: Settings| {
+            t.settings(&mut s).unwrap();
+            s
+        };
+        let (sleeper, swarmer) = (tier(Tier::Sleeper, base.clone()), tier(Tier::Swarmer, base.clone()));
+        for (name, s) in [("plain", base), ("spores and dormancy", life), ("the Sleeper", sleeper), ("the Swarmer, the alarm and no states", swarmer)] {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            for t in 0..60 {
+                if t == 20 {
+                    cpu.build_wall(70.0, 40.0, 70.0, 120.0, 2.0);
+                }
+                cpu.tick();
+            }
+            let (w, h) = (cpu.w, cpu.h);
+            let k = SCALE as f32;
+            let slime = squad::slime_trail(s.knee);
+            let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
+            let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+            let pile = |p: usize| (cpu.piles[p].0 * k, cpu.piles[p].1 * k);
+            let unit = |at: (f32, f32), take: f32| UnitIn { x: at.0, y: at.1, touch: 3.0, sight: 30.0, take_r: 4.0, take, smell_r: 2.0, smell: 0.5 };
+            // Two units on one small patch of crystal 3, asking more than it
+            // holds, so the second gets what the first left.
+            let patch = |take: f32| UnitIn { take_r: 1.5, ..unit(pile(3), take) };
+            let mut units = vec![unit(t, 0.0), patch(3000.0), patch(3000.0)];
+            units.extend((5..10).map(|p| unit(pile(p), 100.0)));
+            // Units that see only a few blocks, so which block's centre is in
+            // sight decides where they aim.
+            units.extend((0..6).map(|q| UnitIn { sight: 2.5 + q as f32, ..unit((t.0 + 3.0 * q as f32 - 7.0, t.1 + 2.0), 0.0) }));
+            // Shots from each crystal toward the thickest mould, and two across
+            // the wall at x = 140 (fine cells), one of them from beside it.
+            let mut shots: Vec<ShotIn> = (0..12).map(|p| ShotIn { from: pile(p), to: t, r: 3.0 }).collect();
+            shots.push(ShotIn { from: (120.0, 160.0), to: (190.0, 160.0), r: 3.0 });
+            // A shot that meets the wall before any slime: from a clear cell
+            // beside it, across it.
+            let clear = (60..250)
+                .flat_map(|y| (120..138).map(move |x| (x as f32 + 0.5, y as f32 + 0.5)))
+                .find(|&(x, y)| {
+                    let p = squad::path(w, h, (x, y), (x + 30.0, y));
+                    let stop = p.iter().position(|&i| !cpu.agar[i as usize]);
+                    stop.is_some_and(|n| p[..n].iter().all(|&i| cpu.trail[i as usize] < slime))
+                })
+                .expect("a clear way to the wall");
+            shots.push(ShotIn { from: clear, to: (clear.0 + 30.0, clear.1), r: 2.0 });
+            // A unit on the first wall cell that shot meets, so its smell disc
+            // covers wall and agar (it must land only on the agar). One beside
+            // the clear cell missed a planted bug: the wall was out of reach.
+            let p = squad::path(w, h, clear, (clear.0 + 30.0, clear.1));
+            let wall = p.into_iter().find(|&i| !cpu.agar[i as usize]).unwrap() as usize;
+            units.push(UnitIn { smell_r: 4.0, ..unit(((wall % w) as f32 + 0.5, (wall / w) as f32 + 0.5), 0.0) });
+            // The same shot twice: a walker in both strikes dies once, counted
+            // for the first.
+            let again = shots.len();
+            shots.push(shots[0]);
+            // A shot from the cell of a walker that starved in the mould, so its
+            // strike covers an empty slot (which must stay out of the count).
+            let starved = (0..cpu.walkers.len())
+                .map(|k| (k, cpu.walkers[k]))
+                .find(|&(k, (x, y, _))| !cpu.lives(k) && cpu.trail[y as usize * w + x as usize] >= slime)
+                .expect("a slot that starved in the mould");
+            let (sx, sy, _) = starved.1;
+            shots.push(ShotIn { from: (sx, sy), to: t, r: 3.0 });
+            // A radius that is not a whole number: its alarm's squared radius
+            // (r2 of 5, 25) is not four times its strike's (r2 of 2.5, 6).
+            shots.push(ShotIn { from: pile(12), to: t, r: 2.5 });
+            // With the life cycle, shots from slime beside spores in flight,
+            // whose strikes cover them (they must be missed).
+            if !cpu.life.is_empty() {
+                let slimy = |x: i64, y: i64| x >= 0 && y >= 0 && (x as usize) < w && (y as usize) < h && cpu.agar[y as usize * w + x as usize] && cpu.trail[y as usize * w + x as usize] >= slime;
+                let beside: Vec<(f32, f32)> = (0..cpu.walkers.len())
+                    .filter(|&k| cpu.lives(k) && cpu.life[k] == LIFE_SPORE)
+                    .filter_map(|k| {
+                        let (x, y) = (cpu.walkers[k].0 as i64, cpu.walkers[k].1 as i64);
+                        (-2..=2).flat_map(|dy| (-2..=2).map(move |dx| (x + dx, y + dy))).find(|&(x, y)| slimy(x, y)).map(|(x, y)| (x as f32 + 0.5, y as f32 + 0.5))
+                    })
+                    .take(8)
+                    .collect();
+                shots.extend(beside.into_iter().map(|from| ShotIn { from, to: t, r: 4.0 }));
+            }
+            let f = Frame { units, shots, slime };
+            e.inject(&cpu);
+            e.set_squad(&f);
+            run(&mut e, &shared, &s, 1, Hand::default());
+            let (before, at) = (cpu.life.clone(), cpu.walkers.clone());
+            let cpu_out = squad::frame(&mut cpu, &f, 1);
+            let gpu_out = e.squad_out();
+            let kills: u32 = cpu_out.shots.iter().map(|q| q.killed).sum();
+            assert_eq!(cpu_out.shots[again].hit, cpu_out.shots[0].hit, "the repeated shot hits where the first did");
+            assert_eq!(cpu_out.shots[again].killed, 0, "and kills nothing the first did not");
+            let walled = f.shots.iter().zip(&cpu_out.shots).filter(|(q, o)| o.hit.is_none() && squad::path(w, h, q.from, q.to).iter().any(|&i| !cpu.agar[i as usize])).count();
+            let took: Vec<f32> = cpu_out.units.iter().map(|u| u.took).collect();
+            eprintln!(
+                "squad, {name}: {} shots, {} hit, {kills} killed, {walled} stopped by a wall; touching {:?}; took {took:?}",
+                f.shots.len(),
+                cpu_out.shots.iter().filter(|q| q.hit.is_some()).count(),
+                cpu_out.units.iter().map(|u| u.touching).collect::<Vec<_>>()
+            );
+            assert_eq!(gpu_out, cpu_out, "the squad's outputs");
+            assert!(kills > 0 && walled > 0, "shots kill, and a wall stops one");
+            assert!(cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some() && cpu_out.units[0].dense > 0, "the unit in the mould is touched and aims at walkers it counts");
+            assert!(took[1] == 3000.0 && took[2] > 0.0 && took[2] < 3000.0 && took[3..].iter().any(|&t| t > 0.0), "units harvest; the second on a patch gets what the first left");
+            // The world after the frame.
+            let gpu = walkers_of(&e);
+            let energy = floats(&read_back(&device, &queue, &e.energy));
+            let lives_off = (0..cpu.walkers.len()).filter(|&k| (energy[k] >= 0.0) != cpu.lives(k)).count();
+            let off = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).filter(|&k| {
+                let (g, c) = (gpu[k], cpu.walkers[k]);
+                (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3
+            }).count();
+            let side = (e.done % 2) as usize;
+            let lt = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
+            let ls = l1(&floats(&read_back(&device, &queue, &e.scent[side])), &cpu.scent);
+            let (lc, _, _, agar_off, ground_off) = world_off(&e, &cpu);
+            // The alarm the shots laid, spread one tick (0 without the field).
+            let la = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
+            let alarm_sum: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
+            eprintln!("squad world, {name}: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}, alarm L1 {la:.1e} (in all {alarm_sum:.0}); {agar_off} agar and {ground_off} ground off");
+            assert_eq!(lives_off, 0, "the same walkers die");
+            assert!(off * 1000 <= cpu.walkers.len(), "{off} walkers off");
+            assert!(lt <= 1e-6 && ls <= 1e-6 && lc <= 1e-6 && la <= 1e-6, "trail L1 {lt:.2e}, scent L1 {ls:.2e}, charge L1 {lc:.2e}, alarm L1 {la:.2e}");
+            assert!(cpu.alarm.is_empty() || alarm_sum > 100.0 * squad::SHOT_ALARM as f64, "the shots lay the alarm: {alarm_sum:.0} in all");
+            assert!(agar_off == 0 && ground_off == 0);
+            if !before.is_empty() {
+                // Spores in a struck disc are missed, the dormant in one die.
+                let struck = |k: usize| {
+                    let (x, y, _) = at[k];
+                    f.shots.iter().zip(&cpu_out.shots).any(|(q, o)| o.hit.is_some_and(|(hx, hy)| (x.floor() + 0.5 - hx).hypot(y.floor() + 0.5 - hy) <= q.r))
+                };
+                let missed = (0..before.len()).filter(|&k| cpu.lives(k) && before[k] == LIFE_SPORE && struck(k)).count();
+                let slept = (0..before.len()).filter(|&k| before[k] == LIFE_DORMANT && cpu.life[k] == LIFE_DEAD).count();
+                let (st, tm) = e.life_of();
+                // Every slot's, the emptied ones' too (a shot one is dead).
+                let states_off = (0..before.len()).filter(|&k| st[k] != cpu.life[k] || tm[k] != cpu.life_t[k]).count();
+                let count = |l: u8| (0..before.len()).filter(|&k| cpu.lives(k) && before[k] == l).count();
+                eprintln!("squad life: {} spores, {} dormant at the frame; {missed} spores in a struck disc missed, {slept} dormant killed; {states_off} states or timers off", count(LIFE_SPORE), count(LIFE_DORMANT));
+                assert!((missed > 0) == (s.spore_rate > 0.0) && slept > 0, "shots meet spores (if any fly) and the dormant");
+                assert_eq!(states_off, 0, "life states and timers");
+            }
+        }
+    }
+
+    /// The alarm field alone (the Swarmer's, 2026-11-12): no spores, no
+    /// dormancy and no strike, so no life states, and nothing else that
+    /// needs the outside pipelines. The field must still spread and the
+    /// walkers sense it, as on the CPU, which makes the field with the dish;
+    /// a squad shot's alarm (`squad::SHOT_ALARM`) lands on such a dish.
+    /// Alarm laid straight into the CPU's field round the thickest trail,
+    /// then four ticks on both.
+    #[test]
+    fn an_alarm_without_the_states_matches_the_cpu() {
+        use slime_mould::mould::squad;
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let mut s = small(0);
+        Tier::Swarmer.settings(&mut s).unwrap();
         let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
         let mut cpu = e.dish.clone();
-        for t in 0..60 {
-            if t == 20 {
-                cpu.build_wall(70.0, 40.0, 70.0, 120.0, 2.0);
-            }
+        for _ in 0..30 {
             cpu.tick();
         }
         let (w, h) = (cpu.w, cpu.h);
-        let k = SCALE as f32;
-        let slime = squad::slime_trail(s.knee);
         let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
-        let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
-        let pile = |p: usize| (cpu.piles[p].0 * k, cpu.piles[p].1 * k);
-        let unit = |at: (f32, f32), take: f32| UnitIn { x: at.0, y: at.1, touch: 3.0, sight: 30.0, take_r: 4.0, take, smell_r: 2.0, smell: 0.5 };
-        // Two units on one small patch of crystal 3, asking more than it
-        // holds, so the second gets what the first left.
-        let patch = |take: f32| UnitIn { take_r: 1.5, ..unit(pile(3), take) };
-        let mut units = vec![unit(t, 0.0), patch(3000.0), patch(3000.0)];
-        units.extend((5..10).map(|p| unit(pile(p), 100.0)));
-        // Units that see only a few blocks, so which block's centre is in
-        // sight decides where they aim.
-        units.extend((0..6).map(|q| UnitIn { sight: 2.5 + q as f32, ..unit((t.0 + 3.0 * q as f32 - 7.0, t.1 + 2.0), 0.0) }));
-        // Shots from each crystal toward the thickest mould, and two across
-        // the wall at x = 140 (fine cells), one of them from beside it.
-        let mut shots: Vec<ShotIn> = (0..12).map(|p| ShotIn { from: pile(p), to: t, r: 3.0 }).collect();
-        shots.push(ShotIn { from: (120.0, 160.0), to: (190.0, 160.0), r: 3.0 });
-        // A shot that meets the wall before any slime: from a clear cell
-        // beside it, across it.
-        let clear = (60..250)
-            .flat_map(|y| (120..138).map(move |x| (x as f32 + 0.5, y as f32 + 0.5)))
-            .find(|&(x, y)| {
-                let p = squad::path(w, h, (x, y), (x + 30.0, y));
-                let stop = p.iter().position(|&i| !cpu.agar[i as usize]);
-                stop.is_some_and(|n| p[..n].iter().all(|&i| cpu.trail[i as usize] < slime))
-            })
-            .expect("a clear way to the wall");
-        shots.push(ShotIn { from: clear, to: (clear.0 + 30.0, clear.1), r: 2.0 });
-        // A unit on the first wall cell that shot meets, so its smell disc
-        // covers wall and agar (it must land only on the agar). One beside
-        // the clear cell missed a planted bug: the wall was out of reach.
-        let p = squad::path(w, h, clear, (clear.0 + 30.0, clear.1));
-        let wall = p.into_iter().find(|&i| !cpu.agar[i as usize]).unwrap() as usize;
-        units.push(UnitIn { smell_r: 4.0, ..unit(((wall % w) as f32 + 0.5, (wall / w) as f32 + 0.5), 0.0) });
-        // The same shot twice: a walker in both strikes dies once, counted
-        // for the first.
-        shots.push(shots[0]);
-        // A shot from the cell of a walker that starved in the mould, so its
-        // strike covers an empty slot (which must stay out of the count).
-        let starved = (0..cpu.walkers.len())
-            .map(|k| (k, cpu.walkers[k]))
-            .find(|&(k, (x, y, _))| !cpu.lives(k) && cpu.trail[y as usize * w + x as usize] >= slime)
-            .expect("a slot that starved in the mould");
-        let (sx, sy, _) = starved.1;
-        shots.push(ShotIn { from: (sx, sy), to: t, r: 3.0 });
-        let f = Frame { units, shots, slime };
-        e.inject(&cpu);
-        e.set_squad(&f);
-        run(&mut e, &shared, &s, 1, Hand::default());
-        let cpu_out = squad::frame(&mut cpu, &f, 1);
-        let gpu_out = e.squad_out();
-        let kills: u32 = cpu_out.shots.iter().map(|q| q.killed).sum();
-        let n = f.shots.len();
-        assert_eq!(cpu_out.shots[n - 2].hit, cpu_out.shots[0].hit, "the repeated shot hits where the first did");
-        assert_eq!(cpu_out.shots[n - 2].killed, 0, "and kills nothing the first did not");
-        let walled = f.shots.iter().zip(&cpu_out.shots).filter(|(q, o)| o.hit.is_none() && squad::path(w, h, q.from, q.to).iter().any(|&i| !cpu.agar[i as usize])).count();
-        let took: Vec<f32> = cpu_out.units.iter().map(|u| u.took).collect();
-        eprintln!(
-            "squad: {} shots, {} hit, {kills} killed, {walled} stopped by a wall; touching {:?}; took {took:?}",
-            f.shots.len(),
-            cpu_out.shots.iter().filter(|q| q.hit.is_some()).count(),
-            cpu_out.units.iter().map(|u| u.touching).collect::<Vec<_>>()
-        );
-        assert_eq!(gpu_out, cpu_out, "the squad's outputs");
-        assert!(kills > 0 && walled > 0, "shots kill, and a wall stops one");
-        assert!(cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some() && cpu_out.units[0].dense > 0, "the unit in the mould is touched and aims at walkers it counts");
-        assert!(took[1] == 3000.0 && took[2] > 0.0 && took[2] < 3000.0 && took[3..].iter().any(|&t| t > 0.0), "units harvest; the second on a patch gets what the first left");
-        // The world after the frame.
-        let gpu = walkers_of(&e);
-        let energy = floats(&read_back(&device, &queue, &e.energy));
-        let lives_off = (0..cpu.walkers.len()).filter(|&k| (energy[k] >= 0.0) != cpu.lives(k)).count();
-        let off = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).filter(|&k| {
-            let (g, c) = (gpu[k], cpu.walkers[k]);
-            (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3
-        }).count();
-        let side = (e.done % 2) as usize;
-        let lt = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
-        let ls = l1(&floats(&read_back(&device, &queue, &e.scent[side])), &cpu.scent);
-        let (lc, _, _, agar_off, ground_off) = world_off(&e, &cpu);
-        eprintln!("squad world: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}; {agar_off} agar and {ground_off} ground off");
-        assert_eq!(lives_off, 0, "the same walkers die");
-        assert!(off * 1000 <= cpu.walkers.len(), "{off} walkers off");
-        assert!(lt <= 1e-4 && ls <= 1e-6 && lc <= 1e-6, "trail L1 {lt:.2e}, scent L1 {ls:.2e}, charge L1 {lc:.2e}");
-        assert!(agar_off == 0 && ground_off == 0);
+        for c in squad::disc(w, h, (thick % w) as i64, (thick / w) as i64, 400) {
+            if cpu.agar[c] {
+                cpu.alarm[c] += squad::SHOT_ALARM;
+            }
+        }
+        let laid: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
+        let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 4);
+        let la = l1(&e.alarm_of(), &cpu.alarm);
+        let left: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
+        eprintln!("the alarm alone: {} walkers, {moved} moved, {off} off; alarm laid {laid:.0}, {left:.0} after four ticks; trail L1 {lt:.1e}, scent L1 {ls:.1e}, alarm L1 {la:.1e}; states {}, outside pipelines {}", cpu.walkers.len(), e.cycles, e.outside);
+        assert!(cpu.life.is_empty() && !e.cycles && e.outside, "the field without the states, on the outside pipelines");
+        assert!(off == 0 && lt <= 1e-6 && ls <= 1e-6 && la <= 1e-6, "{off} walkers off; trail {lt:.1e}, scent {ls:.1e}, alarm {la:.1e}");
+    }
+
+    /// `s` with spores and dormancy on, both frequent: a spore every hundred
+    /// ticks a walker in the mould, flights of 20 ticks, a doze in twenty
+    /// where the scent is under 50.
+    fn with_life(mut s: Settings) -> Settings {
+        for (k, v) in [("spore_rate", "0.01"), ("spore_scent", "-1"), ("spore_steps", "20"), ("spore_reach", "8"), ("spore_land", "1"), ("spore_rest", "10"), ("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_rest", "10"), ("wake_steps", "10")] {
+            set(&mut s, k, v).unwrap();
+        }
+        s
     }
 
     /// A wall built on the GPU (`Engine::build_wall`) against the same wall
@@ -3234,12 +3522,21 @@ mod tests {
         // and empty slots keep stale places under the wall (before
         // 2026-11-11 the GPU moved those too).
         let hungry = Settings { crystal: 0.0, upkeep: 0.03, starve: 0.2, birth_energy: 0.6, graze: 10.0, graze_regrow: 0.0, capacity: 3 * w.walkers / 2, ..w.clone() };
-        for (name, s) in [("one a cell", w.clone()), ("no limit", Settings { crowd: false, ..w.clone() }), ("sealed", Settings { wall_scent: 0.0, ..w }), ("growth, empty slots under the wall", hungry)] {
+        // With the life cycle: spores in flight and the struck dead stay
+        // where they are under a new wall (the CPU skips them), the dormant
+        // are moved out.
+        let life = with_life(w.clone());
+        for (name, s) in [("one a cell", w.clone()), ("no limit", Settings { crowd: false, ..w.clone() }), ("sealed", Settings { wall_scent: 0.0, ..w }), ("growth, empty slots under the wall", hungry), ("spores, dormant and the dead", life)] {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
+            let cycles = s.spore_rate > 0.0;
             // Long enough with growth for walkers to starve (a walker's
             // energy lasts about 30 ticks at this upkeep).
-            for _ in 0..if s.upkeep > 0.0 { 150 } else { 40 } {
+            for t in 0..if s.upkeep > 0.0 { 150 } else { 40 } {
+                if cycles && t == 30 {
+                    // The dead under the wall to come.
+                    cpu.strike(57.5, 80.0, 5.0, 0.0, 0.0);
+                }
                 cpu.tick();
             }
             e.inject(&cpu);
@@ -3257,8 +3554,12 @@ mod tests {
             let walled: Vec<usize> = (0..cpu.agar.len()).filter(|&i| cpu.wall[i]).collect();
             let left_on = walled.iter().filter(|&&i| trail[i] != 0.0 || scent[i] != 0.0 || charge[i] != 0.0).count();
             let gpu = walkers_of(&e);
-            // Living slots only (growth); the empty ones keep stale places.
-            let living: Vec<bool> = (0..gpu.len()).map(|k| cpu.lives(k)).collect();
+            // Slots that hold a cell only: the empty ones (growth), spores and
+            // the dead keep their places.
+            let living: Vec<bool> = (0..gpu.len()).map(|k| cpu.lives(k) && (cpu.life.is_empty() || !matches!(cpu.life[k], LIFE_SPORE | LIFE_DEAD))).collect();
+            let kinds = |l: u8| (0..gpu.len()).filter(|&k| cpu.lives(k) && cpu.life.get(k) == Some(&l) && !cpu.agar[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize]).count();
+            let (spores_under, dead_under) = (kinds(LIFE_SPORE), kinds(LIFE_DEAD));
+            let dormant_out = (0..gpu.len()).filter(|&k| cpu.lives(k) && cpu.life.get(k) == Some(&LIFE_DORMANT) && cpu.walkers[k] != e.dish.walkers[k]).count();
             let empty_under = (0..gpu.len()).filter(|&k| !living[k] && !cpu.agar[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize]).count();
             let inside = |ws: &[(f32, f32, f32)], ag: &[bool]| ws.iter().zip(&living).filter(|&(&(x, y, _), &l)| l && !ag[y as usize * cpu.w + x as usize]).count();
             let (gpu_inside, cpu_inside) = (inside(&gpu, &agar), inside(&cpu.walkers, &cpu.agar));
@@ -3277,6 +3578,10 @@ mod tests {
             eprintln!("{name}: {cells} cells walled, {} walkers; {moved_cpu} moved out on the CPU, {moved_gpu} on the GPU; {cpu_inside} and {gpu_inside} left inside; {agar_off} agar and {ground_off} ground cells off, {left_on} walled cells with trail, scent or charge, {occ_off} counts off, {crowded} cells over the limit; {empty_under} empty slots under the wall, {stale_moved} of them moved", gpu.len());
             if s.upkeep > 0.0 {
                 assert!(empty_under > 0, "{name}: empty slots under the wall");
+            }
+            if cycles {
+                eprintln!("{name}: under the wall {spores_under} spores and {dead_under} dead stay, {dormant_out} dormant moved out");
+                assert!(dead_under > 0 && dormant_out > 0, "{name}: the dead stay under the wall and the dormant move");
             }
             assert_eq!(stale_moved, 0, "{name}: an empty slot moved");
             assert!(cells > 0 && moved_cpu > 0, "{name}: the wall covers walkers");

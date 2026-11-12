@@ -13,10 +13,11 @@
 //! number here changes the creature, not the model, so a playtest can tune
 //! it without touching `big.rs`.
 //!
-//! The GPU engine has none of the life-cycle rules yet (the GPU thread is
-//! porting them). [`Tier::settings`] passes each key through `gpu::set`, so
-//! it refuses with the missing key's name until the port lands, and works
-//! unchanged once the GPU takes the CPU names.
+//! The GPU engine runs every life-cycle rule under the CPU's names (the
+//! port, `Reports/life-gpu-2026-11-11.md`, 2026-11-12, with `sleep_death`
+//! and the shot alarm). [`Tier::settings`] passes each key through
+//! `gpu::set`; before the port it refused with the missing key's name, and
+//! it still would for a key a later tier adds before the GPU takes it.
 
 use super::big::BigParams;
 
@@ -97,9 +98,9 @@ impl Tier {
     }
 
     /// Sets the tier's keys on the GPU engine's settings, or names the first
-    /// key the GPU does not take yet. Today that is every tier: spores,
-    /// dormancy and the alarm field are CPU-only until the GPU life-cycle
-    /// port, so a GPU game must refuse the tier rather than run without it.
+    /// key the GPU does not take. Since the GPU life-cycle port it takes
+    /// every key of the three tiers; a GPU game must still refuse a tier
+    /// that names a key it lacks rather than run without it.
     #[cfg(not(target_arch = "wasm32"))]
     pub fn settings(self, s: &mut crate::gpu::Settings) -> Result<(), String> {
         // Set on a copy, so a refusal leaves `s` as it was.
@@ -204,19 +205,27 @@ mod tests {
         assert!(dying * 4 < free, "sleepers that can die fade: {dying} against {free}");
     }
 
+    /// Every tier runs on the GPU engine, and its settings make the same
+    /// dish parameters as `Tier::apply` on the CPU's (each key reaches its
+    /// `BigParams` field through `gpu::big_params`). Before the GPU port this
+    /// test checked that the GPU refused each tier, naming it, and left its
+    /// settings alone.
     #[cfg(not(target_arch = "wasm32"))]
     #[test]
-    fn the_gpu_refuses_a_tier_it_cannot_run_and_keeps_its_settings() {
-        let mut s = crate::gpu::Settings::big_dish();
-        let before = format!("{s:?}");
+    fn the_gpu_takes_every_tier_as_the_cpu_does() {
         for t in Tier::ALL {
-            match t.settings(&mut s) {
-                Ok(()) => {}
-                Err(e) => {
-                    assert!(e.contains(t.name()), "{e}");
-                    assert_eq!(format!("{s:?}"), before, "a refused tier changed the settings");
-                }
-            }
+            let mut s = crate::gpu::Settings::big_dish();
+            let before = format!("{s:?}");
+            t.settings(&mut s).unwrap_or_else(|e| panic!("{e}"));
+            assert_ne!(format!("{s:?}"), before, "{} changed nothing", t.name());
+            let mut want = crate::gpu::big_params(&crate::gpu::Settings::big_dish(), 1, false);
+            t.apply(&mut want);
+            assert_eq!(format!("{:?}", crate::gpu::big_params(&s, 1, false)), format!("{want:?}"), "{}", t.name());
+            // The sandbox's `tier=` key sets the same.
+            let mut by_key = crate::gpu::Settings::big_dish();
+            crate::gpu::set(&mut by_key, "tier", t.name()).unwrap();
+            assert_eq!(format!("{by_key:?}"), format!("{s:?}"), "tier={}", t.name());
         }
+        assert!(crate::gpu::set(&mut crate::gpu::Settings::big_dish(), "tier", "trunk").is_err());
     }
 }
