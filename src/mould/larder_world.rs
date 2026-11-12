@@ -267,9 +267,15 @@ pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
 /// fire into the densest walkers, killing about 1,200 in 30 s, while the
 /// holes around them don't refill and the body never comes for them;
 /// farm and strike fight at the network's edge. With soldiers at the
-/// core smelling like a lure the hub closes over them (seeds 201-208:
-/// random wiped the mould on none, against 4 without the pull, and lost
-/// its squad on 6), while strike's 30 soldiers still took the core on 3.
+/// core smelling like a lure the hub closes over them. Over both seed
+/// blocks (race 5-36 and 201-232, 15-minute games, against the same code
+/// at pull 0): random took the core on 5 of 64 games (18 without) and
+/// wiped the mould on 5 (18 without); every plan beats random 29-3 or
+/// better on each block, all under Holm (201-232 had none without); farm,
+/// wall, fort and idle play the same within chance; strike, the planned
+/// core attack, still takes it on 12 (13 without) and scores higher on
+/// 45 of 64 (17 lower); and a rush that fails to take it loses its squad
+/// on 8 of the 10 failures on 201-232.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Core {
     pub kind: CoreKind,
@@ -353,7 +359,11 @@ pub struct Rules {
     /// The core's pull (`Core::pull` for a mould with no tier of its own):
     /// a soldier within twice `core_r` of the core smells like a lure,
     /// this many times its own scent over `BuildRules::lure_r`, so the
-    /// body comes for a squad at its core. 0 is off. See `Core`.
+    /// body comes for a squad at its core. 0 is off. 8, a lure's own
+    /// strength (`BuildRules::lure_smell`), since 2026-11-12: on seeds
+    /// 201-208 pull 4 still let random take the core on 2 and pull 16 cut
+    /// strike's takes to 2 of 8, where 8 left random none and strike its
+    /// 3. See `Core` for the census.
     pub core_pull: f32,
     /// The cap, game seconds (owner, 04:04Z: 15 minutes).
     pub cap: f32,
@@ -454,7 +464,7 @@ impl Default for Rules {
             aim_min: 1,
             core_r: 5.0,
             core_secs: 5.0,
-            core_pull: 0.0,
+            core_pull: 8.0,
             cap: 900.0,
             start_bank: 2000.0,
             squad: 4,

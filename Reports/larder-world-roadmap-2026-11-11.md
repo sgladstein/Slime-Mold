@@ -663,3 +663,49 @@ None of the looks changes the fight beyond chance, so the choice is the owner's 
 
 **Cost.** On software Vulkan the crater adds 0.03 ms a step (13.54/13.56 against 13.60/13.57 ms). The GTX 1070's figure is open.
 
+
+## Core defence: the body comes for a squad at its core, 2026-11-12
+
+**Why.** With craters on (#113) the random hand wiped the plain mould on 11 of race seeds 201-232 and no plan beat it after Holm. The integration thread and both reviewers ruled (11:16-11:22Z) that the craters stay on and core defence comes next, ahead of the economy. The game designer's bar: a deliberate core attack beats random; random's core wipes fall to about 1 in 10; a failed attack costs the squad; the core depends on the tier. The technical lead's gate: every plan beats random after Holm on both seed blocks.
+
+**Looked first** (race seed 204, the random hand, frames every 5-10 s; [core/hub-s204-counts.txt](larder-world-roadmap-2026-11-11/core/hub-s204-counts.txt)). The race world's starting disc of 5,000 walkers settles to about 2,000 by 30 s and then grows (idle reaches 8,582 by 330 s). Random's soldiers, sent one at a time on Attack, walk into the hub in the first minute and fire into its densest walkers: 1,187 killed by 60 s, while the holes round them don't refill and the body never comes for them. The mould falls to 80 walkers by 240 s, the core falls at 244 s and the last walker dies at 302 s. Farm and strike fight at the network's edge near the larder and leave the hub alone, so their moulds grow (to 4,664 and 5,038 by 330 s).
+
+**What.** `larder_world::Core { kind, secs, pull }`, the tiers thread's shape, read once by `Game::with_tier` from `Tier::core` (None for every tier for now; the tiers thread fills its own). The plain mould's is `Core::of(&rules)`: fixed, `Rules::core_secs`, and the new `Rules::core_pull`, default 8.
+- **The pull**: a soldier within twice `core_r` of the core lays `pull` times its own scent over a lure's reach (`BuildRules::lure_r`), so the body is drawn onto a squad at its core through the scent it already follows. Nothing is drawn, and no new GPU row: the soldier's scent goes through the squad frame on both engines. 8 is a lure's own strength (`lure_smell`).
+- **`CoreKind::Headless`**: nothing to hold, so only a wipe ends the mould (for the Sprawler). The Trunk's regrowing core and the Drifter's migrating one need births to restart or move on both engines, and a migrating core needs to know where the body is on the GPU, so they come later.
+- Census rows now say when the core fell (`core fell at T s`).
+
+**The strength** (seeds 201-208, random, strike and rush; raw [core/sweep-pull0-201-208.txt](larder-world-roadmap-2026-11-11/core/sweep-pull0-201-208.txt) and the `sweep-pull4`, `-pull8`, `-pull16` files):
+
+| pull | random: core taken, mould wiped | strike: core taken, mean score | rush: core taken |
+| --- | --- | --- | --- |
+| 0 | 4, 4 | 3, +0.755 | 6 |
+| 4 | 2, 1 | 3, +0.961 | 6 |
+| **8** | **0, 0** | **3, +0.744** | 6 |
+| 16 | 1, 1 | 2, +0.578 | 6 |
+
+**The census** (both seed blocks, seven hands, 15-minute games; the baseline is the same code at pull 0, 089167b, main through #124 with craters and #122's build time; the pull at 85b56fb with `core_pull=8`; raw [core/census-core0-race-*.txt](larder-world-roadmap-2026-11-11/core/census-core0-race-5-20.txt) and [core/census-pull8-race-*.txt](larder-world-roadmap-2026-11-11/core/census-pull8-race-5-20.txt), each block in two files; runners 1-4, sha256 checked):
+
+| | race 5-36, pull 0 | race 5-36, pull 8 | race 201-232, pull 0 | race 201-232, pull 8 |
+| --- | --- | --- | --- | --- |
+| farm, wall, fort against random | 25-7, hold | 30-2, hold | 19-13, 19-13, 20-12 | 29-3, hold |
+| strike against random | 27-5, holds | 31-1, holds | 22-10, p 0.05 | 29-3, holds |
+| rush against random | 19-13 | 24-8, holds | 15-17 | 25-7, holds |
+| every plan against idle | 32-0, hold | 32-0, hold | 32-0, hold | 32-0, hold |
+| random takes the core | 7 | 2 | 11 | 3 |
+| **random wipes the mould** | **7** | **2** | **11** | **3** |
+| random's squad wiped | 23 | 29 | 17 | 26 |
+| strike takes the core / wipes the mould | 7 / 4 | 5 / 4 | 6 / 4 | 7 / 5 |
+| rush takes the core / squad wiped | 18 / 9 | 12 / 13 | 19 / 8 | 22 / 8 |
+
+- **Every plan beats random after Holm on both blocks** (Holm over 10), the technical lead's gate; on 201-232 none did without the pull.
+- **Random's core wipes: 5 of 64** (18 without), 1 in 13. Paired on and off (Holm over 7), random scores lower on 27 and 28 of 32 (both hold), and more walkers stand near its soldiers (201-232: 24 up, 7 down, p 0.003, holds): the mould comes for them.
+- **Farm, wall, fort and idle play the same within chance** (idle identically: its soldiers never near the core).
+- **The planned attack still lands**: strike takes the core on 12 of 64 (13 without) and scores higher on 45 of 64, 17 lower (201-232: 24-6, p 0.001, holds).
+- **A failed attack costs the squad**: on 201-232 the rush failed to take the core on 10 seeds and lost its squad on 8 of them; on 5-36 it failed on 20 and lost the squad on 12.
+- **Not met**: strike doesn't pay for a failed attack, since it farms behind it and rebuys to 30 soldiers; it beats farm 22-10 and 21-10 (p 0.05 and 0.07) and wall 26-6 on both blocks (holds; 21-11 and 20-10 without the pull). Food still doesn't bind, which is the economy PR's job (PR 4: running costs).
+- **The core depends on the tier**: `Tier::core` is in; the tiers thread fills its values (the Sprawler headless, the Grudge's pull) after this merges.
+
+**Cost.** No new pass: a pulling soldier lays its scent over a 12-cell disc instead of 4 (about 450 fine cells a frame each, a handful of soldiers at most), on both engines. The GPU twin (`a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu`, seed 3, 30 s of attack at pull 8) kills 1,509 on the CPU and 1,527 on the GPU (1,224 without the pull).
+
+**Pictures**: the hub on seed 204 at 40, 45, 50 and 60 s without and with the pull ([core/hub-s204-off-40s.jpg](larder-world-roadmap-2026-11-11/core/hub-s204-off-40s.jpg) to `-on-60s.jpg`), on the crater page.

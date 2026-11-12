@@ -3884,7 +3884,12 @@ mod tests {
         use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules { cap: 30.0, crater: 10.0, ..Rules::default() };
+        // The crater alone: the core's pull (on by default since the core
+        // defence, `Rules::core_pull`) draws this attacking squad's mould
+        // down to 730 walkers by 30 s, under the 8% bound's reach; the
+        // pull's own twin plays both together
+        // (`a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu`).
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { crater: 0.0, ..rules }, seed);
@@ -3929,7 +3934,7 @@ mod tests {
         use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules { cap: 30.0, core_pull: 8.0, ..Rules::default() };
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { core_pull: 0.0, ..rules }, seed);
