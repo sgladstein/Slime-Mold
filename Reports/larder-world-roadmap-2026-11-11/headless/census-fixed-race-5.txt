@@ -1,0 +1,36 @@
+larderworld the race world, scale 2 walkers 5000 cap 900 s, tps 15, seeds [5]; on the CPU; tier none; flee 0 (default); rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 0.0, hp: 100.0, drain: 1.0, touch: 1.5, wade: 6.0, smell: 0.5, smell_r: 2.0, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, core_pull: 8.0, cap: 900.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, build: BuildRules { max: 40, gap: 2.5, raise: 8.0, turret_cost: 500.0, turret_hp: 300.0, turret_range: 15.0, turret_every: 0.5, lure_cost: 300.0, lure_hp: 150.0, lure_smell: 8.0, lure_r: 6.0, lure_burn: 2.0, pump_cost: 500.0, pump_hp: 200.0, pump_rate: 5.0, pump_smell: 0.0, outpost_cost: 400.0, outpost_hp: 300.0, outpost_hoard: 0.25, touch: 2.0 }, overrun: 0.0, reserve: 0.0, seek: true, crater: 10.0, spread: 0.0 }
+provenance: harness larderworld, commit d5323dc44, seeds 5-5 (1), cap 900 s, settings hash 98769c1d8eff016c
+  rush seed  5: squad wiped at   288 s, score -1.679; soldiers  0, mould   1078, bank    400, harvested      0, stolen   400, shots   742, killed   2884, crystals left 0.998; 2.54 ms a tick, think 0 us mean, 0 at most; score1 -1.679; near 30, touched at 15 s, stuck 0 s
+random seed  5: squad wiped at   243 s, score -1.730; soldiers  0, mould   4670, bank      0, harvested    300, stolen   103, shots   571, killed   2361, crystals left 0.977; 3.89 ms a tick, think 0 us mean, 0 at most; score1 -1.730; near 139, touched at 26 s, stuck 12 s
+  farm seed  5:         cap at   900 s, score +0.319; soldiers  8, mould   2427, bank  52146, harvested  56414, stolen   269, shots  3078, killed  10735, crystals left 0.130; 3.71 ms a tick, think 0 us mean, 0 at most; score1 -0.214; near 85, touched at 46 s, stuck 0 s
+  idle seed  5:         cap at   900 s, score -0.328; soldiers  2, mould   9520, bank   1139, harvested      0, stolen   861, shots   862, killed   2343, crystals left 0.936; 5.01 ms a tick, think 0 us mean, 0 at most; score1 -0.500; near 3, touched at 325 s, stuck 0 s
+  wall seed  5:         cap at   900 s, score +0.316; soldiers  8, mould   2467, bank  48814, harvested  54704, stolen   171, shots  2991, killed  12211, crystals left 0.130; 4.40 ms a tick, think 0 us mean, 0 at most; score1 +0.000; near 112, touched at 118 s, stuck 0 s
+  fort seed  5:         cap at   900 s, score +0.249; soldiers 20, mould   4224, bank  35047, harvested  42014, stolen     7, shots  2409, killed   3092, crystals left 0.358; 6.65 ms a tick, think 213 us mean, 325 at most; score1 -0.300; near 10, touched at 35 s, stuck 0 s
+strike seed  5:         cap at   900 s, score +0.432; soldiers 30, mould    646, bank  36313, harvested  48314, stolen     1, shots 13568, killed  26958, crystals left 0.251; 10.18 ms a tick, think 184 us mean, 1387 at most; score1 +0.167; near 30, touched at 35 s, stuck 0 s
+
+by hand (mean score; ends):
+    idle: mean -0.328; mould wiped 0, cap 1, squad wiped 0; near 3 walkers, first touch 325 s; stuck 0 s a game, 0 games stuck a minute or more
+  random: mean -1.730; mould wiped 0, cap 0, squad wiped 1; near 139 walkers, first touch 26 s; stuck 12 s a game, 0 games stuck a minute or more
+    farm: mean +0.319; mould wiped 0, cap 1, squad wiped 0; near 85 walkers, first touch 46 s; stuck 0 s a game, 0 games stuck a minute or more
+    rush: mean -1.679; mould wiped 0, cap 0, squad wiped 1; near 30 walkers, first touch 15 s; stuck 0 s a game, 0 games stuck a minute or more
+    wall: mean +0.316; mould wiped 0, cap 1, squad wiped 0; near 112 walkers, first touch 118 s; stuck 0 s a game, 0 games stuck a minute or more
+    fort: mean +0.249; mould wiped 0, cap 1, squad wiped 0; near 10 walkers, first touch 35 s; stuck 0 s a game, 0 games stuck a minute or more
+  strike: mean +0.432; mould wiped 0, cap 1, squad wiped 0; near 30 walkers, first touch 35 s; stuck 0 s a game, 0 games stuck a minute or more
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 12):
+      farm vs idle: 1 higher, 0 lower, p 1.0000
+    farm vs random: 1 higher, 0 lower, p 1.0000
+      rush vs idle: 0 higher, 1 lower, p 1.0000
+    rush vs random: 1 higher, 0 lower, p 1.0000
+      wall vs idle: 1 higher, 0 lower, p 1.0000
+    wall vs random: 1 higher, 0 lower, p 1.0000
+      fort vs idle: 1 higher, 0 lower, p 1.0000
+    fort vs random: 1 higher, 0 lower, p 1.0000
+      fort vs farm: 0 higher, 1 lower, p 1.0000
+    strike vs idle: 1 higher, 0 lower, p 1.0000
+  strike vs random: 1 higher, 0 lower, p 1.0000
+    strike vs farm: 1 higher, 0 lower, p 1.0000
+
+real	3m7.534s
+user	7m6.850s
+sys	0m0.337s

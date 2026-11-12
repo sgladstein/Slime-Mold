@@ -2,9 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T21:25Z
+updated: 2026-11-12T21:30Z
 sources: [Reports/soldier-controls-2026-11-12.md, Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Rules::crystal_solid, Game::standable, Game::rim, Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Engine::record_share, crowd_holds, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core, Rules::wade, race_params]
+code: [Rules::crystal_solid, Game::standable, Game::rim, Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Engine::record_share, crowd_holds, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core, Rules::wade, race_params, CoreKind::Regrow, Game::mould_ate, World::start_births]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -121,8 +121,15 @@ games (18 without) and every plan beats random after Holm on both
 within chance; strike still takes the core on 12 (13 without) and a rush
 that fails loses its squad on 8 of 10 (201-232). The core is a `Core
 { kind, secs, pull }` a tier can set (`Tier::core`, read by
-`Game::with_tier`): `Fixed` or `Headless` (only a wipe ends it); the
-Trunk's regrowing and the Drifter's migrating cores come later. Strike
+`Game::with_tier`): `Fixed`, `Headless` (only a wipe ends it) or
+`Regrow { starve_secs }`, built for the Trunk: a fallen core grows back
+unless the mould eats nothing from any crystal in the `starve_secs` after
+it falls (`Game::mould_ate`, `World::start_births`; [report, *A core that
+grows back*](../../Reports/larder-world-roadmap-2026-11-11.md)). The
+Drifter's migrating core comes later. The core rule is not what holds
+farm, wall and fort to the cap: without it (`core=headless`, race 5-20)
+they stalemate in 16 of 16 games as with it, and the player wins 2 of
+112 games instead of 6. Strike
 still beats farm about 2 to 1 because food doesn't bind. **Wading, and
 the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
 *Wading, and the cone crater by default*](../../Reports/larder-world-roadmap-2026-11-11.md)):
@@ -132,8 +139,8 @@ the race world's crater is the cone (look 3; `scorch_cone`, full 150, keep
 walkers touching, a fifth with 12). Over both blocks random wipes the
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
-random's killing. The crater's time (10 s, or 6 or 3) waits on the
-owner's pick. Next, running costs. Off by default for other threads:
+random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the
+owner's pick (17:29Z) from clips of the squad firing into the thick body. Next, running costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)

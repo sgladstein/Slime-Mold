@@ -44,6 +44,9 @@
 //! Holm over every comparison made. Each row also prints `score1`, W2b's
 //! score (`Game::score_w2b`: the crystals counted at the cap), to pair with
 //! older censuses. `home_dry=1` turns on `Rules::home_dry`. `seek=0` turns off `Rules::seek` (a harvester back from a dry crystal walks on to the next safe one). `solid=0` turns off `Rules::crystal_solid` (soldiers may stand on a crystal).
+//! `regrow=S` gives the mould a regrowing core (`CoreKind::Regrow`, starve
+//! window S seconds) and adds `core grew back N` to a row where it did;
+//! `core=headless` (or `fixed`) sets the core's kind.
 //!
 //! **Hands** (fixed rules; settings named here):
 //! - **idle**: never gives an order. The soldiers stand at the larder on
@@ -88,7 +91,7 @@ use slime_mould::gpu::block_on;
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::mould::big::BigDish;
 use slime_mould::mould::big::BigParams;
-use slime_mould::mould::larder_world::{race_params, Cmd, End, Game, Kind, Order, Rules, Stance, World, FLEE_KEEP};
+use slime_mould::mould::larder_world::{race_params, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World, FLEE_KEEP};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
@@ -133,6 +136,8 @@ struct Row {
     /// then), if it did: the core-defence census (11-12) asks whether the
     /// core falls, and when, as well as whether the mould is wiped.
     core_at: Option<f32>,
+    /// Times a regrowing core grew back (`Game::core_regrows`).
+    core_regrows: u32,
     /// Stuck seconds (design review, 2026-11-12: no soft lock): soldiers
     /// alive, none fired or took food that second, and the bank cannot buy
     /// a soldier. The owner's playtest hit this when shots cost food.
@@ -179,6 +184,17 @@ struct Mould {
     /// world's 0.005 when unset); 0.004 holds the one-body mould near
     /// today's size (Reports/one-body-2026-11-12.md, *Matched size*).
     crystal_eat: Option<f32>,
+    /// `regrow=S`: the core grows back unless the mould eats nothing in
+    /// the S seconds after it falls (`CoreKind::Regrow`), over the tier's
+    /// core or the plain one, so the tiers thread can tune a tier's
+    /// `starve_secs` without a rebuild.
+    regrow: Option<f32>,
+    /// `core=fixed|headless`: the core's kind over the tier's or the plain
+    /// one (integration, 11-12 17:10Z, from the one-body thread's review: a
+    /// held core stops births, and with it the plans end games only by the
+    /// core; `core=headless` measures each plan's decisive-end rate
+    /// without it). `regrow=` wins if both are given.
+    core: Option<CoreKind>,
     /// `flow_loss=`: the share of shared food lost per hop
     /// (`BigParams::flow_loss`), CPU only so far.
     flow_loss: f32,
@@ -189,6 +205,17 @@ struct Mould {
 }
 
 impl Mould {
+    /// The game for these settings: its tier's core, then `regrow=`.
+    fn game<W: World>(&self, world: W, rules: Rules, seed: u64) -> Game<W> {
+        let mut g = Game::new(world, rules, seed).with_tier(self.tier);
+        if let Some(kind) = self.core {
+            g.core_rule.kind = kind;
+        }
+        if let Some(starve_secs) = self.regrow {
+            g.core_rule.kind = CoreKind::Regrow { starve_secs };
+        }
+        g
+    }
     /// The alarm's keep and weight these settings give, from `(keep, weight)`.
     fn alarm(&self, (keep, weight): (f32, f32)) -> (f32, f32) {
         let (mut k, w) = match self.flee {
@@ -289,6 +316,14 @@ fn main() {
             // (`Rules::crater`).
             "crater" => rules.crater = v.parse().unwrap(),
             "core_pull" => rules.core_pull = v.parse().unwrap(),
+            "regrow" => m.regrow = Some(v.parse().unwrap()),
+            "core" => {
+                m.core = Some(match v {
+                    "fixed" => CoreKind::Fixed,
+                    "headless" => CoreKind::Headless,
+                    _ => panic!("core=fixed or headless (regrow=S for a regrowing core)"),
+                })
+            }
             // `wade=W`: walkers touching a soldier that halve its speed
             // (`Rules::wade`; 0 is off).
             "wade" => rules.wade = v.parse().unwrap(),
@@ -425,7 +460,7 @@ fn main() {
                     println!(
                         "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s{}",
                         if engines.len() > 1 { format!(" {}", engine_name(*on_gpu)) } else { String::new() },
-                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck, r.core_at.map_or(String::new(), |t| format!(", core fell at {t:.0} s"))
+                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck, r.core_at.map_or(String::new(), |t| format!(", core fell at {t:.0} s")) + &if r.core_regrows > 0 { format!(", core grew back {}", r.core_regrows) } else { String::new() }
                     );
                     out.lock().unwrap()[j] = r;
                 }
@@ -622,7 +657,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, ha
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),
         };
-        return play_on(Game::new(world, rules, seed).with_tier(mould.tier), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
+        return play_on(mould.game(world, rules, seed), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
     }
     let mut p = race_params(seed, scale, walkers);
     mould.apply(&mut p);
@@ -636,7 +671,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, ha
         counts(g, hand, seed);
     };
     let near = |d: &BigDish, live: &[(f32, f32)], r: f32| Some((0..d.walkers.len()).filter(|&k| d.lives(k) && live.iter().any(|&(x, y)| (d.walkers[k].0 - x).hypot(d.walkers[k].1 - y) <= r)).count());
-    play_on(Game::new(world, rules, seed).with_tier(mould.tier), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
+    play_on(mould.game(world, rules, seed), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
 }
 
 /// Living walkers within a radius (fine cells) of any of the points, where
@@ -765,6 +800,7 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
         near: near_sum / near_n.max(1) as f64,
         touch_at: touch_at.unwrap_or(g.rules.cap),
         core_at: g.core_down.map(|t| t as f32 / g.rules.tps as f32),
+        core_regrows: g.core_regrows,
         // Counted by the game since 2026-11-12 (`Game::stuck`), the same
         // test the census ran here (it can count the round's last second,
         // which the plan never saw).
