@@ -62,8 +62,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (220 words).
-pub const PARAMS_BYTES: usize = 880;
+/// Bytes in `Params` (224 words).
+pub const PARAMS_BYTES: usize = 896;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`).
 pub const BODY_AT: usize = 848;
@@ -72,6 +72,9 @@ pub const BODY_AT: usize = 848;
 /// whether the crater counts down at all). `set_squad` writes its last two
 /// words alone, as it does the squad's.
 pub const CRATER_AT: usize = 864;
+/// Where the lone step's row sits in `Params` (2026-11-12, after the
+/// crater's: `lone_step`, `lone_floor`, `lone_r`; `BigParams::lone_step`).
+pub const LONE_AT: usize = 880;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
@@ -349,6 +352,11 @@ pub struct Settings {
     pub energy_flow: f32,
     pub hunger_scent: f32,
     pub hunger_at: f32,
+    /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
+    /// radius `body_r`): a walker with few others round it moves slower.
+    pub lone_step: f32,
+    pub lone_floor: f32,
+    pub lone_r: u8,
     /// The crater's cut, length of full bite and cone (`BigParams::
     /// scorch_keep`, `scorch_full`, `scorch_cone`), for the look A/B of a
     /// shot's hole (`larder-world scorch_cone=1 ...`).
@@ -474,6 +482,9 @@ impl Settings {
             energy_flow: t.energy_flow,
             hunger_scent: t.hunger_scent,
             hunger_at: t.hunger_at,
+            lone_step: t.lone_step,
+            lone_floor: t.lone_floor,
+            lone_r: t.body_r,
             scorch_keep: t.scorch_keep,
             scorch_full: t.scorch_full,
             scorch_cone: t.scorch_cone,
@@ -706,6 +717,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "energy_flow" => s.energy_flow = f()?,
         "hunger_scent" => s.hunger_scent = f()?,
         "hunger_at" => s.hunger_at = f()?,
+        "lone_step" => s.lone_step = f()?,
+        "lone_floor" => s.lone_floor = f()?,
+        "lone_r" | "body_r" => s.lone_r = f()? as u8,
         "scorch_keep" => s.scorch_keep = f()?,
         "scorch_full" => s.scorch_full = int()?.clamp(1, 65535) as u16,
         "scorch_cone" => s.scorch_cone = b()?,
@@ -825,6 +839,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         energy_flow: s.energy_flow,
         hunger_scent: s.hunger_scent,
         hunger_at: s.hunger_at,
+        lone_step: s.lone_step,
+        lone_floor: s.lone_floor,
+        body_r: s.lone_r,
         scorch_keep: s.scorch_keep,
         scorch_full: s.scorch_full,
         scorch_cone: s.scorch_cone,
@@ -1528,6 +1545,9 @@ impl Engine {
         assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
+        assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
+        b.extend(f32_bytes(&[s.lone_step, s.lone_floor]));
+        b.extend(u32_bytes(&[s.lone_r as u32, 0]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
         assert_eq!(b.len(), PARAMS_BYTES, "Params is not PARAMS_BYTES long");

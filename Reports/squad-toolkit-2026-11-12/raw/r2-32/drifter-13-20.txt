@@ -1,0 +1,64 @@
+drifter random 13 +1.878 mould wiped
+drifter farm 13 +0.295 cap
+drifter idle 13 -0.122 cap
+drifter randkit 13 +1.578 mould wiped
+drifter quiet 13 +0.369 cap
+drifter loud 13 +0.290 cap
+drifter random 14 +1.893 mould wiped
+drifter idle 14 -0.084 cap
+drifter siege 13 +0.367 cap
+drifter farm 14 +0.371 cap
+drifter randkit 14 +1.798 mould wiped
+drifter loud 14 +1.725 mould wiped
+drifter quiet 14 +0.410 cap
+drifter idle 15 -0.079 cap
+drifter plague 13 +0.364 cap
+drifter siege 14 +0.416 cap
+drifter randkit 15 +1.727 mould wiped
+drifter random 15 +1.707 mould wiped
+drifter farm 15 +0.373 cap
+drifter plague 14 +0.483 cap
+drifter loud 15 +1.803 mould wiped
+drifter quiet 15 +0.370 cap
+drifter idle 16 -0.196 cap
+drifter random 16 +1.987 mould wiped
+drifter randkit 16 +1.443 mould wiped
+drifter loud 16 +1.870 mould wiped
+drifter farm 16 +0.363 cap
+drifter quiet 16 +0.349 cap
+drifter siege 15 +0.419 cap
+drifter siege 16 +0.367 cap
+drifter plague 15 +0.441 cap
+drifter idle 17 -0.100 cap
+drifter random 17 +1.942 mould wiped
+drifter randkit 17 -1.084 squad wiped
+drifter loud 17 +1.808 mould wiped
+drifter plague 16 +0.393 cap
+drifter farm 17 +0.423 cap
+drifter quiet 17 +0.423 cap
+drifter random 18 +1.862 mould wiped
+drifter idle 18 -0.164 cap
+drifter randkit 18 +1.878 mould wiped
+drifter farm 18 +0.420 cap
+drifter loud 18 +1.650 mould wiped
+drifter plague 17 +0.496 cap
+drifter quiet 18 +0.303 cap
+drifter idle 19 -0.093 cap
+drifter random 19 +1.587 mould wiped
+drifter siege 17 +0.423 cap
+drifter siege 18 +0.425 cap
+drifter loud 19 +1.723 mould wiped
+drifter farm 19 +0.410 cap
+drifter randkit 19 +1.652 mould wiped
+drifter quiet 19 +0.410 cap
+drifter plague 18 +0.370 cap
+drifter idle 20 -0.255 cap
+drifter siege 19 +0.370 cap
+drifter farm 20 +0.326 cap
+drifter random 20 +1.703 mould wiped
+drifter loud 20 +1.667 mould wiped
+drifter plague 19 +0.472 cap
+drifter quiet 20 +0.294 cap
+drifter siege 20 +0.328 cap
+drifter randkit 20 +0.495 cap
+drifter plague 20 +0.440 cap

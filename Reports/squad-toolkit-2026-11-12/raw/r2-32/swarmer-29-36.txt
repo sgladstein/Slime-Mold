@@ -1,0 +1,64 @@
+swarmer randkit 29 -1.753 squad wiped
+swarmer random 29 -1.640 squad wiped
+swarmer loud 29 +1.667 mould wiped
+swarmer farm 29 +0.232 cap
+swarmer quiet 29 +0.126 cap
+swarmer idle 29 -0.314 cap
+swarmer random 30 -1.501 squad wiped
+swarmer plague 29 +1.825 mould wiped
+swarmer siege 29 +0.238 cap
+swarmer randkit 30 -1.426 squad wiped
+swarmer idle 30 -0.344 cap
+swarmer farm 30 +0.218 cap
+swarmer loud 30 +0.367 cap
+swarmer quiet 30 +0.154 cap
+swarmer random 31 -1.408 squad wiped
+swarmer randkit 31 -1.678 squad wiped
+swarmer siege 30 +0.217 cap
+swarmer idle 31 -0.216 cap
+swarmer farm 31 +0.224 cap
+swarmer loud 31 +0.441 cap
+swarmer quiet 31 +0.213 cap
+swarmer plague 30 +1.455 mould wiped
+swarmer siege 31 +0.179 cap
+swarmer random 32 -1.569 squad wiped
+swarmer farm 32 +0.177 cap
+swarmer plague 31 +1.512 mould wiped
+swarmer quiet 32 +0.170 cap
+swarmer idle 32 -0.346 cap
+swarmer loud 32 +0.233 cap
+swarmer randkit 32 -1.324 squad wiped
+swarmer siege 32 +0.146 cap
+swarmer random 33 -1.546 squad wiped
+swarmer idle 33 -0.391 cap
+swarmer farm 33 +0.166 cap
+swarmer plague 32 +1.602 mould wiped
+swarmer loud 33 +1.515 mould wiped
+swarmer quiet 33 +0.019 cap
+swarmer siege 33 +0.111 cap
+swarmer random 34 -1.576 squad wiped
+swarmer randkit 34 -1.647 squad wiped
+swarmer farm 34 +0.225 cap
+swarmer idle 34 -0.366 cap
+swarmer quiet 34 +0.226 cap
+swarmer plague 33 +1.357 mould wiped
+swarmer loud 34 +0.494 cap
+swarmer randkit 33 +1.547 mould wiped
+swarmer random 35 -1.542 squad wiped
+swarmer randkit 35 -1.240 squad wiped
+swarmer siege 34 +0.249 cap
+swarmer idle 35 -0.317 cap
+swarmer loud 35 +0.476 cap
+swarmer farm 35 +0.100 cap
+swarmer quiet 35 +0.111 cap
+swarmer plague 34 +1.408 mould wiped
+swarmer random 36 -1.319 squad wiped
+swarmer siege 35 +0.105 cap
+swarmer randkit 36 -1.683 squad wiped
+swarmer farm 36 +0.281 cap
+swarmer loud 36 +1.682 mould wiped
+swarmer quiet 36 +0.210 cap
+swarmer idle 36 -0.334 cap
+swarmer siege 36 +0.284 cap
+swarmer plague 35 +1.293 mould wiped
+swarmer plague 36 +1.550 mould wiped

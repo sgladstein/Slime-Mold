@@ -106,6 +106,10 @@ struct Params {
     // shot's hit sets the countdown on its struck agar cells to at least
     // `crater`, or with the cone (bit 1) fewer steps toward the rim.
     scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
+    // Lone step (2026-11-12, `BigParams::lone_step`): a walker with n other
+    // walkers in the square of radius `lone_r` round its cell, as the step
+    // began, steps x clamp(n / `lone`, `lfloor`, 1). 0 off.
+    lone: f32, lfloor: f32, lone_r: u32, _l0: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -556,6 +560,17 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         h += ra;
     } else if (fr < fl) {
         h -= ra;
+    }
+    if (P.lone > 0.0) {
+        // `occ` is as the step began here: `walk` moves walkers after.
+        let cx = i32(here % P.w); let cy = i32(here / P.w); let r = i32(P.lone_r);
+        var n = 0u;
+        for (var y = max(cy - r, 0); y <= min(cy + r, i32(P.h) - 1); y++) {
+            for (var x = max(cx - r, 0); x <= min(cx + r, i32(P.w) - 1); x++) {
+                n += atomicLoad(&occ[u32(y) * P.w + u32(x)]);
+            }
+        }
+        st *= clamp(f32(max(n, 1u) - 1u) / P.lone, min(P.lfloor, 1.0), 1.0);
     }
     let nx = wk.x + cos(h) * st;
     let ny = wk.y + sin(h) * st;
