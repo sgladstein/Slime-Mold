@@ -249,6 +249,18 @@ pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
         terrain_rock: 0.2,
         terrain_wet: 0.2,
         upkeep: 0.001,
+        // The shot's crater as a cone (the owner's pick of three blind
+        // looks, 2026-11-12 14:41Z, "I think 3 is best"): a hit bites
+        // fully at its middle and less toward its rim (`scorch_cone`,
+        // `scorch_full` 150), and the bite holds no trail (`scorch_keep`
+        // 0), so the hole has a soft shadow where the flat disc drew a dark
+        // rim. On the 8-seed hole test it played as the flat disc did (hole
+        // 54 dish cells at 20 s against 60, 2 larger, 5 smaller, p 0.45).
+        // The toolkit's blasts keep their flat disc but share keep and
+        // full.
+        scorch_cone: true,
+        scorch_full: 150,
+        scorch_keep: 0.0,
         seed,
         ..BigParams::today()
     }
@@ -351,6 +363,17 @@ pub struct Rules {
     pub drain: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
+    /// Wading (the owner, 2026-11-12 14:42Z: "soldiers should be heavily
+    /// slowed down if they try to run into the thick slime"): a soldier
+    /// with this many walkers touching it walks at half speed, and slower
+    /// as more press on it, speed / (1 + (touching / wade)²). A walker or
+    /// two at a tendril barely slow it (2 touching: 90%); the middle of a
+    /// body holds it to a fifth (12 touching, as a rush meets on race seeds
+    /// 1-4, where touching runs 0 to 26). The read is the frame's touch
+    /// count, the same on both engines, so the GPU needs nothing new. 0 is
+    /// off. Touching walkers count `Rules::mass` each, so a denser mould
+    /// (the owner's 25,000-walker shapes, mass 0.2) needs 30 for half speed.
+    pub wade: f32,
     /// A soldier's scent, as a share of a full pile's, laid on the agar
     /// within `smell_r` dish cells of it.
     pub smell: f32,
@@ -455,7 +478,8 @@ pub struct Rules {
     /// wider patch at the same kills a second may read as gunfire.
     pub spread: f32,
     /// How much one walker counts in a fight: a walker touching a soldier,
-    /// a building or the larder does `mass` times `drain` (or `steal`).
+    /// a building or the larder does `mass` times `drain` (or `steal`), and
+    /// counts `mass` towards wading (`Rules::wade`).
     /// 1 (the default) is today's 5,000-walker mould. A denser mould is
     /// the same body cut into more, smaller walkers, so it plays at
     /// 5,000 / its walkers at scale 2 (`Rules::mass_for`); without that the 25,000-walker
@@ -490,6 +514,7 @@ impl Default for Rules {
             hp: 100.0,
             drain: 1.0,
             touch: 1.5,
+            wade: 6.0,
             smell: 0.5,
             smell_r: 2.0,
             harvest: 30.0,
@@ -1138,7 +1163,14 @@ impl<W: World> Game<W> {
         };
         let (dx, dy) = (g.0 - s.x, g.1 - s.y);
         let d = dx.hypot(dy).max(1e-6);
-        let step = (self.rules.speed * self.s() * dt).min(d);
+        // Thick slime holds a soldier back (`Rules::wade`).
+        let wade = if self.rules.wade > 0.0 {
+            let x = s.touching as f32 * self.rules.mass / self.rules.wade;
+            1.0 / (1.0 + x * x)
+        } else {
+            1.0
+        };
+        let step = (self.rules.speed * self.s() * dt * wade).min(d);
         let (nx, ny) = (s.x + dx / d * step, s.y + dy / d * step);
         let to = if self.world.open(nx, ny) {
             Some((nx, ny))
@@ -1878,6 +1910,31 @@ mod tests {
         };
         assert_eq!(hold(CoreKind::Fixed), (true, false), "held 5 s: the core falls and births stop");
         assert_eq!(hold(CoreKind::Headless), (false, true), "no core to hold");
+    }
+
+    /// Wading (`Rules::wade`): with 6 walkers touching a soldier walks at
+    /// half speed, with 12 at a fifth; open ground and `wade` 0 at full.
+    #[test]
+    fn thick_slime_slows_a_soldier() {
+        let moved = |touching: u32, wade: f32| {
+            let mut g = small(1);
+            g.rules.wade = wade;
+            let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
+            let sc = g.s();
+            // A goal well past one step, on open ground beside the larder.
+            let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (x + 6.0 * sc * a.cos(), y + 6.0 * sc * a.sin())).find(|&p| g.clear_line((x, y), p)).expect("open ground by the larder");
+            g.soldiers[0].order = Order::Move(to.0, to.1);
+            g.soldiers[0].touching = touching;
+            g.walk(0, 1.0 / g.rules.tps as f32);
+            (g.soldiers[0].x - x).hypot(g.soldiers[0].y - y)
+        };
+        let free = moved(0, 6.0);
+        assert!(free > 0.0, "it walked");
+        for (touching, share) in [(2, 0.9), (6, 0.5), (12, 0.2)] {
+            let d = moved(touching, 6.0);
+            assert!((d / free - share).abs() < 0.01, "{touching} touching: {d} against {free}");
+        }
+        assert_eq!(moved(12, 0.0), free, "wade 0 is off");
     }
 
     /// A tier with no core of its own keeps the rules' (`Core::of`).
