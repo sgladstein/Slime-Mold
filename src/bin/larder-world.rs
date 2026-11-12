@@ -57,8 +57,12 @@
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
 //! `holes=1` also times how long each hit's hole stays open.
-//! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]`
-//! times the window's frame without a window (`bench`).
+//! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]
+//! [sound=PATH] [fast=1]` times the window's frame without a window
+//! (`bench`), a mission's too; `hand=every` presses every command on the
+//! card each game second (`press_every`), and `sound=` (empty: no file)
+//! puts the round's sound on tape. The CI smoke tests play every mission
+//! and `hand=every` through it for 60 game seconds.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -436,7 +440,22 @@ impl App {
 
     fn hud_events(&mut self, events: Vec<HudEvent>, event_loop: &ActiveEventLoop) {
         for ev in events {
-            let sel = self.living(&self.controls.selected);
+            match self.hud_event(ev) {
+                Ok(true) => event_loop.exit(),
+                Ok(false) => {}
+                Err(e) => return self.fail(event_loop, e),
+            }
+        }
+    }
+
+    /// What one HUD event does to the game and the window; true to quit.
+    /// Apart from `hud_events` (2026-11-12) so the smoke test's hand can
+    /// press every command on the card as a player does (`press_every`).
+    fn hud_event(&mut self, ev: HudEvent) -> Result<bool, String> {
+        let sel = self.living(&self.controls.selected);
+        // (The block keeps the arms where they stood inside the loop, so
+        // the threads adding commands merge without re-indenting.)
+        {
             match ev {
                 HudEvent::SelectOnly(k) => {
                     self.controls.selected = vec![k];
@@ -459,14 +478,12 @@ impl App {
                 }
                 HudEvent::Menu(MenuItem::Resume) => self.paused = self.menu_paused,
                 HudEvent::Menu(MenuItem::Restart) => {
-                    if let Err(e) = self.start() {
-                        return self.fail(event_loop, e);
-                    }
+                    self.start()?;
                     self.paused = false;
                 }
                 HudEvent::Menu(MenuItem::Quit) => {
                     self.save_replay();
-                    event_loop.exit();
+                    return Ok(true);
                 }
                 HudEvent::Command { id } => match id {
                     STOP => self.order_all(&sel, |_| Order::Hold),
@@ -497,7 +514,7 @@ impl App {
                 // A then click: on the core's ring, attack the core; else
                 // attack-move there.
                 HudEvent::Point { id: ATTACK, at } => {
-                    let Some(g) = &self.game else { continue };
+                    let Some(g) = &self.game else { return Ok(false) };
                     let on_core = (at.0 - g.core.0).hypot(at.1 - g.core.1) <= g.rules.core_r * g.world.scale() * 1.5;
                     self.order_all(&sel, |_| if on_core { Order::Attack } else { Order::Fight(at.0, at.1) });
                 }
@@ -514,6 +531,7 @@ impl App {
                 _ => {}
             }
         }
+        Ok(false)
     }
 
     fn next_idle(&self, after: Option<usize>) -> Option<usize> {
@@ -535,9 +553,7 @@ impl App {
             l.flash = (l.flash - dt).max(0.0);
         }
         // A bought soldier (by the card or a replay) joins the notes.
-        for s in &g.soldiers[self.looks.len()..] {
-            self.looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
-        }
+        join_looks(g, &mut self.looks);
         let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
         // A step runs on the GPU while the window draws (2026-11-12): it
         // begins below and finishes on a later frame, as soon as its results
@@ -592,9 +608,7 @@ impl App {
         let t = g.time();
         // A soldier the game made inside these steps (`Rules::reserve`'s
         // free recruit) joins the notes too.
-        for s in &g.soldiers[self.looks.len()..] {
-            self.looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
-        }
+        join_looks(g, &mut self.looks);
         for (k, s) in g.soldiers.iter().enumerate() {
             let l = &mut self.looks[k];
             let (dx, dy) = (s.x - l.at.0, s.y - l.at.1);
@@ -1504,12 +1518,25 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     Ok(())
 }
 
+/// Notes for the soldiers the game made since the last call: one bought
+/// (by the card or a replay) or the reserve's free recruit
+/// (`Rules::reserve`), which `finish_step` makes.
+fn join_looks(g: &Game<GpuWorld>, looks: &mut Vec<Look>) {
+    for s in &g.soldiers[looks.len()..] {
+        looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
+    }
+}
+
 /// The last step's shots as tracers, and their soldiers' flashes and
-/// facing (before the next step walks them on).
-fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &mut [Look], listener: Option<&mut WorldListener>) {
+/// facing (before the next step walks them on). A recruit made in one step
+/// of a frame can fire in the next step of the same frame (fast forward, or
+/// a slow frame), before the frame's own `join_looks`, so its note joins
+/// here (2026-11-12, after #114's panic on a recruit with no note).
+fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &mut Vec<Look>, listener: Option<&mut WorldListener>) {
     if let Some(l) = listener {
         l.shots(&g.last_shots);
     }
+    join_looks(g, looks);
     for s in &g.last_shots {
         tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
         if let Some(k) = g.soldiers.iter().position(|q| q.alive && (q.x - s.from.0).abs() < 1e-3 && (q.y - s.from.1).abs() < 1e-3) {
@@ -1517,6 +1544,22 @@ fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &mut [Look],
             looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
         }
     }
+}
+
+/// The bench's settings (`-- bench=SECS` and the keys after it).
+struct Bench {
+    secs: f32,
+    hand: String,
+    fps: f32,
+    screen: (u32, u32),
+    stamps: bool,
+    grid: usize,
+    /// `sound=PATH`: the round's sound on tape (`App::tape`), heard each
+    /// frame as the window hears it, and written to PATH unless it is
+    /// empty.
+    sound: Option<String>,
+    /// `fast=1`: the window's fast forward, four game steps a step's time.
+    fast: bool,
 }
 
 /// **The window's frame time without a window** (`-- bench=SECS`,
@@ -1531,14 +1574,29 @@ fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &mut [Look],
 /// alone, the read-backs and waits a step, and with timestamps the GPU's
 /// ms a step's ticks (`stamps=0` leaves them off). `grid=BIN` asks for the
 /// mould grid in squares of BIN dish cells every game step, as the
-/// campaign's goals do.
-fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps: bool, grid: usize) -> Result<(), String> {
-    let (device, queue) = gpu().ok_or("no GPU adapter")?;
-    let mut app = offscreen(args, screen, &device, &queue)?;
-    let stamped = stamps && device.features().contains(wgpu::Features::TIMESTAMP_QUERY);
+/// campaign's goals do. `hand=` is `rush`, `farm`, a player AI style
+/// (`larder_world_ai`: boom, claim, late, fort, strike), or `every`
+/// (`press_every`). A mission's verdict ends the run as the game's end
+/// does, and a few frames of the end screen follow, untimed. Returns the
+/// last line it prints (the round at its end), for the smoke test.
+fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<String, String> {
+    let (secs, hand, fps, screen, grid) = (b.secs, b.hand.as_str(), b.fps, b.screen, b.grid);
+    let mut app = offscreen(args, screen, device, queue)?;
+    let stamped = b.stamps && device.features().contains(wgpu::Features::TIMESTAMP_QUERY);
     if stamped {
-        app.game.as_mut().unwrap().world.stamps = Some(slime_mould::gpu::Stamps::new(&device, &queue));
+        app.game.as_mut().unwrap().world.stamps = Some(slime_mould::gpu::Stamps::new(device, queue));
     }
+    if b.sound.is_some() {
+        app.tape = Some((VoiceBank::new(48_000, app.args.seed), Vec::new()));
+    }
+    app.fast = b.fast;
+    let mut ai = match hand {
+        "rush" | "farm" | "every" => None,
+        _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
+    };
+    // The tape's ear: on the squad, at the window's opening zoom (as the
+    // headless run's).
+    let span = app.camera.span();
     let dt = 1.0 / fps;
     let mut last_sec = u64::MAX;
     // Each frame: total, step, prepare, record, GPU tail (ms); and whether
@@ -1547,24 +1605,16 @@ fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps
     let mut rows: Vec<Row> = Vec::new();
     let (reads0, steps0) = (slime_mould::gpu::reads(), app.steps);
     let ms = |t: Instant| t.elapsed().as_secs_f64() * 1e3;
-    while app.game.as_ref().is_some_and(|g| g.time() < secs && g.end.is_none()) {
-        let t0 = Instant::now();
-        let g = app.game.as_mut().unwrap();
-        // Whole steps: the hand plans on the step that crossed the second
-        // once it has finished, as it did before the split (a step left
-        // running would hand it the last step's bank and crystals).
-        let sec = g.settled_ticks() / g.rules.tps as u64;
-        if sec != last_sec {
-            last_sec = sec;
-            plan(g, hand);
+    let over = |app: &App| app.game.as_ref().is_none_or(|g| g.end.is_some()) || app.mission.as_ref().is_some_and(|m| m.verdict.is_some());
+    // One frame as the window draws it: the game's steps, the sound, the
+    // HUD and marks, the view and canvas; the GPU waited for.
+    let frame = |app: &mut App, t0: Instant, step: f64| -> Result<[f64; 5], String> {
+        if let Some(g) = app.game.as_ref().filter(|_| app.tape.is_some()) {
+            let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+            let n = alive.len().max(1) as f32;
+            let centre = if alive.is_empty() { g.larder } else { (alive.iter().map(|p| p.0).sum::<f32>() / n, alive.iter().map(|p| p.1).sum::<f32>() / n) };
+            app.hear(dt, Ear { centre, half: (span.0 / 2.0, span.1 / 2.0) });
         }
-        let before = app.steps;
-        app.step(dt);
-        if grid > 0 && app.steps > before {
-            // As the campaign's goals ask (2026-11-12): once a game step.
-            std::hint::black_box(app.game.as_ref().unwrap().world.mould_grid(grid));
-        }
-        let step = ms(t0);
         let t1 = Instant::now();
         app.prepare();
         let prep = ms(t1);
@@ -1577,10 +1627,45 @@ fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps
         let rec = ms(t2);
         let t3 = Instant::now();
         device.poll(wgpu::PollType::Wait { submission_index: Some(index), timeout: None }).map_err(|e| format!("poll: {e}"))?;
-        rows.push(([ms(t0), step, prep, rec, ms(t3)], app.steps > before));
+        Ok([ms(t0), step, prep, rec, ms(t3)])
+    };
+    while app.game.as_ref().is_some_and(|g| g.time() < secs) && !over(&app) {
+        let t0 = Instant::now();
+        // Whole steps: the hand plans on the step that crossed the second
+        // once it has finished, as it did before the split (a step left
+        // running would hand it the last step's bank and crystals).
+        let sec = app.game.as_ref().map_or(0, |g| g.settled_ticks() / g.rules.tps as u64);
+        if sec != last_sec {
+            last_sec = sec;
+            if hand == "every" {
+                press_every(&mut app, sec)?;
+            } else {
+                let g = app.game.as_mut().unwrap();
+                match ai.as_mut() {
+                    Some(h) => {
+                        h.play(g);
+                    }
+                    None => plan(g, hand),
+                }
+            }
+        }
+        let before = app.steps;
+        app.step(dt);
+        if grid > 0 && app.steps > before {
+            // As the campaign's goals ask (2026-11-12): once a game step.
+            std::hint::black_box(app.game.as_ref().unwrap().world.mould_grid(grid));
+        }
+        let step = ms(t0);
+        rows.push((frame(&mut app, t0, step)?, app.steps > before));
     }
     // The last step's results, so the counts below are the whole game's.
     app.settle();
+    if over(&app) {
+        for _ in 0..3 {
+            app.step(dt);
+            frame(&mut app, Instant::now(), 0.0)?;
+        }
+    }
     let g = app.game.as_ref().unwrap();
     let steps = (app.steps - steps0).max(1);
     let q = |pick: &dyn Fn(&Row) -> Option<f64>, at: f64| {
@@ -1598,6 +1683,11 @@ fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps
     let e = &g.world.e;
     let keys: String = app.args.keys.iter().map(|(k, v)| format!(" {k}={v}")).collect();
     let keys = if grid > 0 { format!("{keys}; the mould grid in squares of {grid} each step") } else { keys };
+    let keys = match (&app.args.mission, b.fast) {
+        (Some(m), f) => format!("{keys}; mission {m}{}", if f { ", fast forward" } else { "" }),
+        (None, true) => format!("{keys}; fast forward"),
+        (None, false) => keys,
+    };
     println!("larder-world bench: {} seed {}, {} x {} cells, {} slots, scale {} walkers {}{keys}; hand {hand}, {:.0} game s at {fps} frames a second, screen {}x{}", app.name, app.args.seed, e.dish.w, e.dish.h, e.n, app.args.scale, app.args.walkers, g.time(), screen.0, screen.1);
     println!("  {} frames, {} game steps; {:.2} read-backs a step, {:.2} waits a step ({:.2} ms a step waiting)", rows.len(), steps, (slime_mould::gpu::reads() - reads0) as f64 / steps as f64, g.world.waits as f64 / steps as f64, g.world.wait_ms / steps as f64);
     for (only, tag) in [(false, "every frame"), (true, "frames with a step")] {
@@ -1609,7 +1699,57 @@ fn bench(args: Args, secs: f32, hand: &str, fps: f32, screen: (u32, u32), stamps
     } else {
         println!("  GPU: no timestamps on this adapter");
     }
-    println!("  t {:.0} s: mould {}, soldiers {}, harvested {:.0}, shots {}, killed {}{}", g.time(), g.mould, g.alive(), g.harvested, g.shots, g.killed, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+    if let (Some(path), Some((bank, tape))) = (&b.sound, app.tape.as_ref()) {
+        let rms = (tape.iter().map(|v| v * v).sum::<f32>() / tape.len().max(1) as f32).sqrt();
+        println!("  sound: {:.1} s on tape, rms {:.4}, {} grains", tape.len() as f32 / 2.0 / bank.sample_rate() as f32, rms, bank.stats.grains);
+        if !path.is_empty() {
+            slime_mould::wav::write(Path::new(path), tape, 2, bank.sample_rate()).map_err(|e| format!("{path}: {e}"))?;
+            println!("  {path}");
+        }
+    }
+    let verdict = app.mission.as_ref().and_then(|m| m.verdict).map_or(String::new(), |v| format!(", mission: {} star{} ({:?})", v.stars, if v.stars == 1 { "" } else { "s" }, v.cause));
+    let last = format!("  t {:.0} s: mould {}, soldiers {}, harvested {:.0}, shots {}, killed {}{}{verdict}", g.time(), g.mould, g.alive(), g.harvested, g.shots, g.killed, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+    println!("{last}");
+    Ok(last)
+}
+
+/// `hand=every`, the smoke test's hand (2026-11-12): once a game second,
+/// every command the HUD's card shows ready, pressed through the window's
+/// own `hud_event` as a player's click would send it, starting one further
+/// along the card each second (so each second ends on another order), with
+/// the whole squad selected and the larder every other second, aimed by
+/// turns at the squad's middle, a crystal, the core and the larder (a line
+/// runs across the aim). A command a thread adds to the card is pressed
+/// with the rest, by its target.
+fn press_every(app: &mut App, sec: u64) -> Result<(), String> {
+    let Some(g) = app.game.as_ref() else { return Ok(()) };
+    let sc = g.world.scale();
+    let alive: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
+    let n = alive.len().max(1) as f32;
+    let mid = if alive.is_empty() { g.larder } else { (alive.iter().map(|&k| g.soldiers[k].x).sum::<f32>() / n, alive.iter().map(|&k| g.soldiers[k].y).sum::<f32>() / n) };
+    let cs = g.world.crystals();
+    let crystal = cs.get(sec as usize % cs.len().max(1)).map_or(g.core, |c| c.0);
+    let aims = [mid, crystal, g.core, g.larder];
+    let (w, h) = app.camera.world;
+    let inside = |p: (f32, f32)| (p.0.clamp(0.0, w - 1.0), p.1.clamp(0.0, h - 1.0));
+    app.larder_sel = sec % 2 == 1;
+    app.hud_event(HudEvent::Idle)?;
+    app.controls.selected = alive;
+    let cmds = app.model(None, None).commands;
+    for i in 0..cmds.len() {
+        let k = (i + sec as usize) % cmds.len();
+        let c = &cmds[k];
+        let at = aims[k % aims.len()];
+        let ev = match c.target {
+            _ if !c.ready => HudEvent::NotReady { id: c.id },
+            Target::Instant => HudEvent::Command { id: c.id },
+            Target::Point { .. } | Target::Area { .. } => HudEvent::Point { id: c.id, at },
+            Target::Line { .. } => HudEvent::Line { id: c.id, from: inside((at.0 - 4.0 * sc, at.1 - 2.0 * sc)), to: inside((at.0 + 4.0 * sc, at.1 - 2.0 * sc)) },
+        };
+        if app.hud_event(ev)? {
+            break;
+        }
+    }
     Ok(())
 }
 
@@ -1667,7 +1807,7 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
-    let (mut bench_secs, mut fps, mut stamps, mut grid) = (None::<f32>, 60.0f32, true, 0usize);
+    let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast) = (None::<f32>, 60.0f32, true, 0usize, false);
     let mut holes = false;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
@@ -1686,6 +1826,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "fps" => fps = v.parse()?,
             "stamps" => stamps = v != "0",
             "grid" => grid = v.parse()?,
+            "fast" => fast = v != "0",
             "holes" => holes = v != "0",
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
@@ -1694,12 +1835,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes; bench, fps, stamps, grid)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, voice, mission; look, hand, at, screen, sound, holes; bench, fps, stamps, grid, fast)").into()),
             },
         }
     }
     if let Some(secs) = bench_secs {
-        return Ok(bench(args, secs, &hand, fps, screen, stamps, grid)?);
+        let (device, queue) = gpu().ok_or("no GPU adapter")?;
+        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast }, &device, &queue)?;
+        return Ok(());
     }
     if let Some(dir) = look {
         return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes)?);
@@ -1768,5 +1911,82 @@ mod tests {
         assert_eq!(v.stars, 0);
         app.prepare();
         assert_eq!(app.model(None, None).end.map(|e| e.0).as_deref(), Some("Mission lost"));
+    }
+
+    /// A GPU for the smoke tests, which skip without one, except in CI:
+    /// there `MOULDGPU_TEST_GPU=1` (Mesa's software Vulkan), and a missing
+    /// adapter fails them rather than letting them pass unrun.
+    fn smoke_gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
+        let g = gpu();
+        assert!(g.is_some() || std::env::var("MOULDGPU_TEST_GPU").map_or(true, |v| v != "1"), "MOULDGPU_TEST_GPU=1 but no GPU adapter");
+        g
+    }
+
+    /// One smoke round: 60 game seconds through the bench, which does each
+    /// frame what the window does (the steps through its accumulator, left
+    /// running while it draws; the sound on tape; the HUD, marks, view and
+    /// canvas drawn), at 24 frames a second so some steps finish when ready
+    /// and the rest when the next is due, then the end screen. Scale 1 (a
+    /// 256 x 160 dish, 1,250 walkers): 5-9 s a round on software Vulkan,
+    /// against 20-24 s at scale 2 (2026-11-12).
+    fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
+        let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from) };
+        let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast };
+        let t0 = Instant::now();
+        let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
+        eprintln!("smoke {mission:?} {hand}{}: {last} ({:.1} s)", if fast { " fast" } else { "" }, t0.elapsed().as_secs_f32());
+        last
+    }
+
+    /// **The window's loop does not panic on any mission** (CI smoke test,
+    /// 2026-11-12: the integration thread and the technical lead asked for
+    /// it after #114's window panic, a reserve recruit with no note, reached
+    /// main, as nothing in CI ran the window's own loop). Every mission file
+    /// plays 60 game seconds with a player AI style, a different one each
+    /// (`larder_world_ai`), every other one in fast forward, so frames hold
+    /// two or three steps (where the recruit's panic lived).
+    #[test]
+    fn the_window_plays_every_mission() {
+        let Some((device, queue)) = smoke_gpu() else { return };
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-campaign-2026-11-12/missions");
+        let mut names: Vec<String> = std::fs::read_dir(&dir).unwrap().filter_map(|e| e.ok()?.file_name().to_str()?.strip_suffix(".txt").map(String::from)).collect();
+        names.sort();
+        assert!(names.len() >= 3, "the missions in {}: {names:?}", dir.display());
+        let styles = ["boom", "claim", "strike", "fort", "late"];
+        for (i, name) in names.iter().enumerate() {
+            let last = smoke(&device, &queue, Some(name), styles[i % styles.len()], i % 2 == 1);
+            assert!(last.contains("t "), "{name}: {last}");
+        }
+    }
+
+    /// **Every command on the card, pressed every game second, does not
+    /// panic the window** (the same smoke test's other half): `hand=every`
+    /// presses each ready command through the window's own `hud_event`, and
+    /// the unready ones as the HUD sends them, with the squad selected and
+    /// aimed in turn at the squad, a crystal, the core and the larder. A
+    /// command a thread adds to the card is pressed with the rest. The
+    /// squad fires (free fire is on the card), and the round's sound is on
+    /// tape.
+    #[test]
+    fn the_window_takes_every_command() {
+        let Some((device, queue)) = smoke_gpu() else { return };
+        let last = smoke(&device, &queue, None, "every", false);
+        assert!(!last.contains("shots 0,"), "the pressed squad fired: {last}");
+    }
+
+    /// A recruit's first shot in the same frame it joined (fast forward,
+    /// or a slow frame holding several steps): its tracer and flash need a
+    /// note, which `shot_marks` now makes itself.
+    #[test]
+    fn a_shot_from_a_soldier_with_no_note_yet_draws() {
+        let Some((device, queue)) = gpu() else { return };
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None }, (320, 200), &device, &queue).unwrap();
+        let g = app.game.as_mut().unwrap();
+        let s = *g.soldiers.last().unwrap();
+        g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0 }];
+        app.looks.clear();
+        shot_marks(app.game.as_ref().unwrap(), &mut app.tracers, &mut app.looks, None);
+        assert_eq!(app.looks.len(), app.game.as_ref().unwrap().soldiers.len());
+        assert!(app.looks.last().unwrap().flash > 0.0, "the shot's flash on its soldier");
     }
 }
