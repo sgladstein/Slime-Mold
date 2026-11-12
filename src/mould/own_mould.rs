@@ -365,6 +365,13 @@ impl World for Garden {
         self.dish.ticks
     }
 
+    /// For rules timed in fine steps (`Rules::crater`). The garden's own
+    /// `shots` do not lay the crater yet (merged with the crater PR, #113,
+    /// 2026-11-12): `Frame::crater` is ignored here.
+    fn fine_steps(&self) -> u32 {
+        self.dish.p.substeps as u32
+    }
+
     /// `squad::frame` with the species test: shots and reads see the
     /// enemy only; smell, ticks and harvest as the squad's. Counts what
     /// each side ate.

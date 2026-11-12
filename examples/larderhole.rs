@@ -39,6 +39,16 @@
 //!   slower or faster mould, as the graphics thread timed it).
 //! - `tier:NAME`: a mould tier (`mould::tiers`), after the parts before it:
 //!   `flee:1+tier:sporer` is the Sporer on a mould that flees gunfire.
+//! - `crater:S[:F[:K]]`: each hit lays S game seconds of crater on its
+//!   strike's cells (`Rules::crater`, the squad toolkit's scorch field),
+//!   biting at full strength for its last F fine steps
+//!   (`BigParams::scorch_full`, default 30) and keeping K of the trail a
+//!   fine step there (`scorch_keep`, default 0.1).
+//! - `cone`: a shot's crater as a cone (`BigParams::scorch_cone`): fewer
+//!   steps toward the strike's rim, for a soft edge with `crater:10:300`.
+//! - `aim:R:E:S`: strike radius R dish cells, E game seconds between a
+//!   soldier's shots, aim spread S dish cells (`Rules::strike`,
+//!   `shot_every`, `spread`): a scattered smaller strike.
 use slime_mould::mould::big::{BigDish, BigParams};
 use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
 use slime_mould::mould::tiers::Tier;
@@ -63,6 +73,9 @@ enum Part {
     Swarm,
     Clock(u32),
     Tier(Tier),
+    Crater(f32, Option<u16>, Option<f32>),
+    Cone,
+    Aim(f32, f32, f32),
 }
 
 impl Arm {
@@ -81,6 +94,12 @@ impl Arm {
                     }
                     "swarm" => Part::Swarm,
                     "clock" => Part::Clock(it.next().unwrap().parse().unwrap()),
+                    "crater" => Part::Crater(it.next().unwrap().parse().unwrap(), it.next().map(|v| v.parse().unwrap()), it.next().map(|v| v.parse().unwrap())),
+                    "cone" => Part::Cone,
+                    "aim" => {
+                        let mut v = || it.next().expect("aim:R:E:S").parse().unwrap();
+                        Part::Aim(v(), v(), v())
+                    }
                     "tier" => {
                         let n = it.next().unwrap();
                         Part::Tier(Tier::from_name(n).unwrap_or_else(|| panic!("no tier {n}")))
@@ -102,12 +121,34 @@ impl Arm {
                 Part::Swarm => Tier::from_name("swarmer").unwrap().apply(p),
                 Part::Clock(n) => p.substeps = n as usize,
                 Part::Tier(t) => t.apply(p),
+                Part::Cone => p.scorch_cone = true,
+                Part::Aim(..) => {}
+                Part::Crater(_, f, k) => {
+                    if let Some(f) = f {
+                        p.scorch_full = f;
+                    }
+                    if let Some(k) = k {
+                        p.scorch_keep = k;
+                    }
+                }
             }
         }
     }
-    /// Only the alarm's pull changes: holding fire, it plays base's game.
+    /// The game's rules for this arm.
+    fn rules(&self, mut r: Rules) -> Rules {
+        for part in &self.0 {
+            match *part {
+                Part::Crater(s, ..) => r.crater = s,
+                Part::Aim(strike, every, spread) => (r.strike, r.shot_every, r.spread) = (strike, every, spread),
+                _ => {}
+            }
+        }
+        r
+    }
+    /// Only what a hit does changes (the alarm's pull, the crater):
+    /// holding fire, it plays base's game.
     fn alarm_only(&self) -> bool {
-        self.0.iter().all(|p| matches!(p, Part::Base | Part::Off | Part::Flee(..) | Part::Swarm))
+        self.0.iter().all(|p| matches!(p, Part::Base | Part::Off | Part::Flee(..) | Part::Swarm | Part::Crater(..) | Part::Cone | Part::Aim(..)))
     }
 }
 
@@ -160,6 +201,7 @@ fn main() {
             "smell_r" => rules.smell_r = v.parse().unwrap(),
             "strike" => rules.strike = v.parse().unwrap(),
             "shot_every" => rules.shot_every = v.parse().unwrap(),
+            "spread" => rules.spread = v.parse().unwrap(),
             "look" => look = Some(v.into()),
             "every" => every = v.parse().unwrap(),
             "arms" => {
@@ -345,6 +387,7 @@ fn place(g: &Game<BigDish>, n: usize) -> Option<Line> {
 fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: bool, grow: f32, fire: f32, rest: f32, n: usize, look: Option<(&str, &str, f32)>) -> Run {
     let mut p = race_params(seed, scale, walkers);
     arm.apply(&mut p);
+    let rules = arm.rules(rules);
     let mut world = BigDish::new(p);
     world.threads = 1;
     let mut g = Game::new(world, rules, seed);

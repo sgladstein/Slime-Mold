@@ -153,6 +153,12 @@ struct Mould {
     /// `flee_keep=K`: the alarm field's keep a fine step for the plain
     /// mould (`FLEE_KEEP`, 0.98); a tier's own keep wins.
     flee_keep: Option<f32>,
+    /// `scorch_full=F` and `scorch_keep=K`: the crater's strength
+    /// (`BigParams::scorch_full`, `scorch_keep`), for `crater=S`.
+    scorch_full: Option<u16>,
+    scorch_keep: Option<f32>,
+    /// `scorch_cone=1`: a shot's crater as a cone (`BigParams::scorch_cone`).
+    scorch_cone: bool,
     /// One body (2026-11-12, Reports/one-body-2026-11-12.md):
     /// `energy_flow=` (food shared between touching walkers) and
     /// `hunger_scent=` (a hungry walker follows food harder), 0 off. Both
@@ -180,6 +186,13 @@ impl Mould {
         if let Some(t) = self.tier {
             t.apply(p);
         }
+        if let Some(f) = self.scorch_full {
+            p.scorch_full = f;
+        }
+        if let Some(k) = self.scorch_keep {
+            p.scorch_keep = k;
+        }
+        p.scorch_cone |= self.scorch_cone;
     }
 }
 
@@ -234,9 +247,18 @@ fn main() {
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             "flee" => m.flee = Some(v.parse().unwrap()),
             "flee_keep" => m.flee_keep = Some(v.parse().unwrap()),
+            // `crater=S`: game seconds of crater each hit lays
+            // (`Rules::crater`).
+            "crater" => rules.crater = v.parse().unwrap(),
+            "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
+            "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
+            "scorch_cone" => m.scorch_cone = v == "1",
             "energy_flow" => m.energy_flow = v.parse().unwrap(),
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "strike" => rules.strike = v.parse().unwrap(),
+            "shot_every" => rules.shot_every = v.parse().unwrap(),
+            // `spread=C`: aim spread, dish cells at the target (`Rules::spread`).
+            "spread" => rules.spread = v.parse().unwrap(),
             "home_dry" => rules.home_dry = v == "1",
             "pump_rate" => rules.build.pump_rate = v.parse().unwrap(),
             "pump_cost" => rules.build.pump_cost = v.parse().unwrap(),
@@ -274,13 +296,17 @@ fn main() {
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
     println!(
-        "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; tier {}; flee {}{}; rules {rules:?}",
+        "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; tier {}; flee {}{}{}; rules {rules:?}",
         rules.cap,
         rules.tps,
         seeds,
         m.tier.map_or("none", |t| t.name()),
         m.flee.map_or("0 (default)".to_string(), |w| w.to_string()),
-        m.flee_keep.map_or(String::new(), |k| format!(", keep {k}"))
+        m.flee_keep.map_or(String::new(), |k| format!(", keep {k}")),
+        match (m.scorch_full, m.scorch_keep, m.scorch_cone) {
+            (None, None, false) => String::new(),
+            (f, k, c) => format!("; scorch full {f:?} keep {k:?} cone {c}"),
+        }
     );
     // The census's provenance (2026-11-12, game integration; the technical
     // lead found three harnesses' tables disagreeing overnight with no way
@@ -380,7 +406,7 @@ fn engine_name(on_gpu: bool) -> &'static str {
     }
 }
 
-/// A GPU device with the adapter's limits (the engine binds 46 buffers).
+/// A GPU device with the adapter's limits (the engine binds 48 buffers).
 fn gpu() -> (wgpu::Device, wgpu::Queue) {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
     let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");

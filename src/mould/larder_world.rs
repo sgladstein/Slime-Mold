@@ -102,6 +102,9 @@ pub trait World {
     fn stop_births(&mut self);
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
+    /// Fine steps a tick (`BigParams::substeps`), for rules timed in
+    /// fine-step fields (`Rules::crater`).
+    fn fine_steps(&self) -> u32;
     fn hash(&self) -> u64;
     /// Walkers on each `bin` x `bin` square of fine cells, row by row (the
     /// tube a player sees on screen, coarsened), for the player AI's eyes
@@ -175,6 +178,10 @@ impl World for BigDish {
 
     fn food_deposit(&self) -> f32 {
         self.p.food_deposit
+    }
+
+    fn fine_steps(&self) -> u32 {
+        self.p.substeps as u32
     }
 
     fn hash(&self) -> u64 {
@@ -337,6 +344,37 @@ pub struct Rules {
     /// to the soldier, any crystal) cost wall 14 of 16 (p 0.004) and was
     /// replaced (`Reports/dead-ends.md`).
     pub seek: bool,
+    /// **The hole under fire**: game seconds of crater (`squad::Frame::
+    /// crater`, the squad toolkit's scorch field) each hit lays on its
+    /// strike's cells, so sustained fire carves a hole the mould can't
+    /// re-knit until the fire stops (owner, 11-12 04:39Z). 0 is off. A
+    /// walker standing in a crater still stops a shot (`squad::shots`).
+    /// 10: on the race world (seeds 1-8), four soldiers firing for 20 s
+    /// left a median hole of 60 dish cells against 29 with none (8 of 8
+    /// larger), hits landed 5.3 dish cells out instead of 3.8, kills rose
+    /// from 163 to 741, and 79% of the hole was left 5 s after the last
+    /// shot; 1 and 3 s gave +2 and +5, 30 s less (kills halve once the
+    /// near rim is empty). A strike (the toolkit's `scorch_keep` 0.1,
+    /// `scorch_full` 30) bites at full strength until the last second.
+    /// Gate (race 5-36, the Fork and the Rim 5-20): farm, wall, fort and
+    /// strike beat idle 32-0 and random 24-8 or better, all under Holm;
+    /// strike no longer beats farm (20-12, p 0.22; 28-4 without craters).
+    /// Before the walker stop, shots flew over walkers in the holes and
+    /// the rush hand's squad was wiped on 22 of 32 seeds (9 with it, 7
+    /// without craters). Random wiped the mould on 7 of 32 race seeds
+    /// against 2 without craters (5-0 by seed, p 0.06). Why a crater and
+    /// not a flee: the mould turning from gunfire made a bigger hole but
+    /// let random hold the core (`Reports/dead-ends.md`); the crater
+    /// changes only the struck cells.
+    pub crater: f32,
+    /// Aim spread, dish cells at the target: each shot's line turns by a
+    /// uniform angle that moves its aim up to this far to either side of
+    /// the target. 0 (the default) aims dead on and draws no random
+    /// number, so games stay as they were. A look switch for the owner's
+    /// A/B (game designer, 11-12): a fixed-radius strike repeated on one
+    /// target reads as a round stamp; a smaller strike scattered over a
+    /// wider patch at the same kills a second may read as gunfire.
+    pub spread: f32,
 }
 
 impl Default for Rules {
@@ -375,6 +413,8 @@ impl Default for Rules {
             overrun: 0.0,
             reserve: 0.0,
             seek: true,
+            crater: 10.0,
+            spread: 0.0,
         }
     }
 }
@@ -1268,7 +1308,13 @@ impl<W: World> Game<W> {
                     let d = dx.hypot(dy).max(0.1);
                     let reach = r.range * sc;
                     if d <= reach + 4.0 {
-                        shots.push(ShotIn { from: (s.x, s.y), to: (s.x + dx / d * reach, s.y + dy / d * reach), r: strike });
+                        let (mut ux, mut uy) = (dx / d, dy / d);
+                        if r.spread > 0.0 {
+                            let a = ((self.rng.f32() * 2.0 - 1.0) * r.spread * sc / d).atan();
+                            let (sn, cs) = a.sin_cos();
+                            (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
+                        }
+                        shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
                         self.soldiers[k].ready = t + self.secs(r.shot_every);
                         self.bank -= r.price;
                         self.spent += r.price;
@@ -1307,8 +1353,11 @@ impl<W: World> Game<W> {
         who.push(Who::Larder);
         from.push(None);
         // Turrets, lures and pumps: units that do not move (`buildings`).
+        // A turret's hits lay the crater too, through the same frame (the
+        // buildings thread's call, 11-12 07:46Z: one rule for every shot).
         self.building_units(&mut units, &mut shots, &mut who, &mut from, dt);
-        let f = Frame { units, shots, slime: squad::slime_trail(6.0) };
+        let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
+        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, who, from, out });
     }
@@ -1860,6 +1909,9 @@ mod tests {
         fn food_deposit(&self) -> f32 {
             World::food_deposit(&self.d)
         }
+        fn fine_steps(&self) -> u32 {
+            World::fine_steps(&self.d)
+        }
         fn hash(&self) -> u64 {
             World::hash(&self.d)
         }
@@ -2259,5 +2311,45 @@ mod tests {
         // Every pick is on the squad's side: nearer the larder than the core.
         let d = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).hypot(a.1 - b.1);
         assert!(d(c, g.larder) < d(c, g.core));
+    }
+
+    /// An aim spread (`Rules::spread`) turns each shot's line from dead on
+    /// by at most the spread at the target; with none, nothing is drawn, so
+    /// the same frame fires the same lines.
+    #[test]
+    fn an_aim_spread_turns_the_shots_within_the_spread() {
+        let (mut a, mut b) = (small(3), small(3));
+        b.rules.spread = 2.5;
+        for g in [&mut a, &mut b] {
+            for k in 0..g.soldiers.len() {
+                g.apply(Cmd::Order(k, Order::Attack));
+            }
+        }
+        let mut turned = 0;
+        for _ in 0..15 * 60 {
+            // A shot aims where its soldier's last read put the target.
+            let aims: Vec<_> = a.soldiers.iter().map(|s| s.aim).collect();
+            a.step();
+            b.step();
+            if !a.last_shots.is_empty() {
+                // The first volley: the same soldiers fire from the same
+                // places, each line as long, turned by up to the spread.
+                assert_eq!(a.last_shots.len(), b.last_shots.len());
+                let sc = a.s();
+                for (p, q) in a.last_shots.iter().zip(&b.last_shots) {
+                    assert_eq!(p.from, q.from);
+                    let (u, v) = ((p.to.0 - p.from.0, p.to.1 - p.from.1), (q.to.0 - q.from.0, q.to.1 - q.from.1));
+                    assert!((u.0.hypot(u.1) - v.0.hypot(v.1)).abs() < 1e-3, "as long");
+                    let turn = (u.0 * v.1 - u.1 * v.0).atan2(u.0 * v.0 + u.1 * v.1).abs();
+                    let k = a.soldiers.iter().position(|s| (s.x, s.y) == p.from).expect("its soldier");
+                    let at = aims[k].expect("its target");
+                    let d = (at.0 - p.from.0).hypot(at.1 - p.from.1).max(0.1);
+                    assert!(turn <= (2.5 * sc / d).atan() + 1e-4, "turned {turn} at {d}");
+                    turned += (turn > 1e-4) as u32;
+                }
+                break;
+            }
+        }
+        assert!(turned > 0, "the spread turned some shot");
     }
 }
