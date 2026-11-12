@@ -675,6 +675,14 @@ None of the looks changes the fight beyond chance, so the choice is the owner's 
 - **`CoreKind::Headless`**: nothing to hold, so only a wipe ends the mould (for the Sprawler). The Trunk's regrowing core and the Drifter's migrating one need births to restart or move on both engines, and a migrating core needs to know where the body is on the GPU, so they come later.
 - Census rows now say when the core fell (`core fell at T s`).
 
+**In play** (for the owner to judge as a behaviour, not only as a gate fix). The mould now rallies to its core when it is touched there. The hub stays quiet while soldiers work the network's edge. Once one walks within two core radii (10 dish cells) of the core, the walkers there turn and pour onto it, and the fight moves to the soldier. On seed 204, random's seven soldiers walk into the hub at about 40 s:
+- **With the pull**, the body closes on them. Three die between 45 and 50 s, the killing stops at about 1,290 walkers, and the mould holds at about 820, then grows again.
+- **Without it**, all seven keep firing (1,392 killed by 75 s). The mould dwindles until the core falls at 244 s.
+
+A lone soldier, or a trickle of them, now dies at the core; only a squad that brings enough fire at once (strike) takes it. This is the owner's playtest point 3 ("the slime mostly ignored my soldiers") answered in one place, the core, not everywhere. Answering it everywhere was the flee rule's failure, which handed random the core.
+
+A note on the constants. Tonight's pattern was a feel rule that helped random (the flee, then the crater), followed by a counter-rule, and each counter adds a number every later census leans on. This one is a new key, `Rules::core_pull`, but its value is a lure's own strength over a lure's own reach (`lure_smell` 8, `lure_r` 6), so it adds no new magnitude. `core_pull=0` turns it off.
+
 **The strength** (seeds 201-208, random, strike and rush; raw [core/sweep-pull0-201-208.txt](larder-world-roadmap-2026-11-11/core/sweep-pull0-201-208.txt) and the `sweep-pull4`, `-pull8`, `-pull16` files):
 
 | pull | random: core taken, mould wiped | strike: core taken, mean score | rush: core taken |
@@ -706,6 +714,10 @@ None of the looks changes the fight beyond chance, so the choice is the owner's 
 - **Not met**: strike doesn't pay for a failed attack, since it farms behind it and rebuys to 30 soldiers; it beats farm 22-10 and 21-10 (p 0.05 and 0.07) and wall 26-6 on both blocks (holds; 21-11 and 20-10 without the pull). Food still doesn't bind, which is the economy PR's job (PR 4: running costs).
 - **The core depends on the tier**: `Tier::core` is in; the tiers thread fills its values (the Sprawler headless, the Grudge's pull) after this merges.
 
-**Cost.** No new pass: a pulling soldier lays its scent over a 12-cell disc instead of 4 (about 450 fine cells a frame each, a handful of soldiers at most), on both engines. The GPU twin (`a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu`, seed 3, 30 s of attack at pull 8) kills 1,509 on the CPU and 1,527 on the GPU (1,224 without the pull).
+**Cost.** No new pass: a pulling soldier lays its scent over a 12-cell disc instead of 4 (about 450 fine cells a frame each, a handful of soldiers at most), on both engines. The GPU twin (`a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu`, seed 3, 30 s of attack at pull 8) kills 1,509 on the CPU and 1,527 on the GPU (1,224 without the pull). Its moulds at 30 s are 11% apart (730 and 815 walkers), so the bound is 8% or 100 walkers. The technical lead asked whether that gap is chaos or a rule the engines play differently, so `twin_gap_over_seeds_is_chaos` (ignored, about 200 s) plays seeds 3-10, each on the CPU, on the GPU, and on the CPU again with one walker more (5,001, same map):
+- **At pull 8**: the mean gap from the CPU at 30 s is 176 walkers on the GPU and 213 with one walker more. The GPU is above the CPU on 4 seeds and below on 4. Mean kills are 1,469 on the CPU, 1,514 on the GPU and 1,554 with one walker more.
+- **At pull 0**: the gaps are 107 and 164, again 4 above and 4 below. Seed 7 is 35% apart (1,044 walkers on the CPU, 1,408 on the GPU), so seed 3 passing the 8% bound at pull 0 is luck.
+
+At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad shoots the mould down, and it is no bigger than the CPU's own spread.
 
 **Pictures**: the hub on seed 204 at 40, 45, 50 and 60 s without and with the pull ([core/hub-s204-off-40s.jpg](larder-world-roadmap-2026-11-11/core/hub-s204-off-40s.jpg) to `-on-60s.jpg`), on the crater page.

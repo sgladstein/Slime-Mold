@@ -3887,8 +3887,10 @@ mod tests {
         // The crater alone: the core's pull (on by default since the core
         // defence, `Rules::core_pull`) draws this attacking squad's mould
         // down to 730 walkers by 30 s, under the 8% bound's reach; the
-        // pull's own twin plays both together
-        // (`a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu`).
+        // pull's own twin plays both together, the shipped defaults
+        // (`a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu`),
+        // and `twin_gap_over_seeds_is_chaos` shows the gap at 30 s is the
+        // CPU's own spread on either rule.
         let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
@@ -3919,6 +3921,70 @@ mod tests {
             assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the craters changed the CPU's game");
+    }
+
+    /// **Is the twins' gap chaos?** (the technical lead's question on the
+    /// core defence, 2026-11-12). The race twins compare one seed at 30 s
+    /// of attack, after the squad has shot the mould from 5,000 walkers to
+    /// under 1,000, where any small difference is amplified. This plays
+    /// seeds 3-10 at the shipped defaults (crater 10 s, pull 8) and with the
+    /// pull off, on the CPU, the GPU, and the CPU again with one walker
+    /// more (5,001, same map and crystals): the noise floor. Measured
+    /// 2026-11-12 (software Vulkan), the mould at 30 s, mean gap from the
+    /// CPU over 8 seeds:
+    /// - pull 8: GPU 176 walkers, one more walker 213; the GPU above the
+    ///   CPU on 4, below on 4; kills mean 1,469 CPU, 1,514 GPU, 1,554 one
+    ///   more walker.
+    /// - pull 0: GPU 107, one more walker 164; 4 above, 4 below (seed 7:
+    ///   1,044 CPU, 1,408 GPU, 1,258 one more walker, 35% apart, so the 8%
+    ///   bound holds on seed 3 at pull 0 by luck).
+    /// - at 15 s, before the fire, all within 70 walkers.
+    ///
+    /// So the gap grows with the fire and is no bigger than the CPU's own
+    /// spread; the twins' floor of 100 walkers rests on this. Ignored
+    /// (about 200 s): `cargo test --release --bin mouldgpu
+    /// twin_gap_over_seeds_is_chaos -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn twin_gap_over_seeds_is_chaos() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (scale, walkers) = (2, 5_000);
+        for pull in [8.0f32, 0.0] {
+            let (mut gap, mut floor, mut above) = (0.0f64, 0.0f64, 0u32);
+            let seeds = 3..=10u64;
+            let n = seeds.clone().count() as f64;
+            for seed in seeds {
+                let rules = Rules { cap: 30.0, crater: 10.0, core_pull: pull, ..Rules::default() };
+                let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+                let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+                let mut alt = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers + 1)), rules, seed);
+                for g in [&mut cpu.log, &mut gpu.log, &mut alt.log] {
+                    g.clear();
+                }
+                for k in 0..cpu.soldiers.len() {
+                    assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)) && alt.apply(Cmd::Order(k, Order::Attack)));
+                }
+                let mut row = String::new();
+                while cpu.end.is_none() {
+                    cpu.step();
+                    gpu.step();
+                    alt.step();
+                    if cpu.world.ticks() % 75 == 0 {
+                        row += &format!(" {}s:{}/{}/{}", cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living(), alt.world.living());
+                    }
+                }
+                let (c, g, a) = (cpu.world.living() as f64, gpu.world.living() as f64, alt.world.living() as f64);
+                gap += (g - c).abs() / n;
+                floor += (a - c).abs() / n;
+                above += (g > c) as u32;
+                eprintln!("pull {pull} seed {seed}: killed CPU {} GPU {} one more walker {}; living CPU/GPU/one more:{row}", cpu.killed, gpu.killed, alt.killed);
+            }
+            eprintln!("pull {pull}: mould at 30 s, mean gap from the CPU: GPU {gap:.0}, one more walker {floor:.0}; GPU above on {above} of {n}");
+            assert!(gap <= 1.25 * floor, "pull {pull}: the GPU's gap {gap:.0} is past the CPU's own spread {floor:.0}");
+            assert!((2..=6).contains(&above), "pull {pull}: the GPU leans one way, above on {above} of {n}");
+        }
     }
 
     /// **The core's pull** (`Core::pull`, core defence, 2026-11-12) on the
@@ -3962,6 +4028,10 @@ mod tests {
         // 8%, or 100 walkers once the pulled mould is under 1,250: by 30 s
         // the drawn hub has fed the squad's fire down to 730 walkers on the
         // CPU and 815 on the GPU (seed 3), 11% apart on kills 1.2% apart.
+        // The floor is chaos, not a rule the engines differ on: over seeds
+        // 3-10 the CPU with one walker more lands further from itself (213
+        // walkers on average at 30 s) than the GPU does (176), and the GPU
+        // is above on 4 seeds, below on 4 (`twin_gap_over_seeds_is_chaos`).
         for &(t, a, b, _) in &sizes {
             let (a, b) = (a as f64, b as f64);
             assert!((a - b).abs() <= (0.08 * a).max(100.0), "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
