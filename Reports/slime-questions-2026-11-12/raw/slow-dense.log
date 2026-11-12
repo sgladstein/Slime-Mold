@@ -1,0 +1,145 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+/tmp/claude-0/qs/slow-dense/fork-idle-002s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-002s-near.png
+  CPU: ground field 1.66 ms (once a game second), model and HUD 0.046 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-004s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-004s-near.png
+  CPU: ground field 2.21 ms (once a game second), model and HUD 0.219 ms a frame
+  t 4 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-006s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-006s-near.png
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.041 ms a frame
+  t 6 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-008s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-008s-near.png
+  CPU: ground field 4.93 ms (once a game second), model and HUD 0.052 ms a frame
+  t 8 s: mould 25001, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-010s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-010s-near.png
+  CPU: ground field 2.52 ms (once a game second), model and HUD 0.041 ms a frame
+  t 10 s: mould 25002, soldiers 4, bank 2000, harvested 0, shots 2, killed 10, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-012s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-012s-near.png
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.038 ms a frame
+  t 12 s: mould 24959, soldiers 4, bank 2000, harvested 0, shots 7, killed 63, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-014s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-014s-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.037 ms a frame
+  t 14 s: mould 24917, soldiers 4, bank 1998, harvested 0, shots 14, killed 124, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-016s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-016s-near.png
+  CPU: ground field 2.27 ms (once a game second), model and HUD 0.040 ms a frame
+  t 16 s: mould 24898, soldiers 4, bank 1996, harvested 0, shots 20, killed 161, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-018s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-018s-near.png
+  CPU: ground field 2.90 ms (once a game second), model and HUD 0.057 ms a frame
+  t 18 s: mould 24886, soldiers 4, bank 1996, harvested 0, shots 25, killed 195, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-020s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-020s-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.036 ms a frame
+  t 20 s: mould 24868, soldiers 4, bank 1993, harvested 0, shots 32, killed 244, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-022s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-022s-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.039 ms a frame
+  t 22 s: mould 24878, soldiers 4, bank 1989, harvested 0, shots 36, killed 260, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-024s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-024s-near.png
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.039 ms a frame
+  t 24 s: mould 24907, soldiers 4, bank 1988, harvested 0, shots 39, killed 275, took 0%, crystals left 0.998; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-026s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-026s-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.035 ms a frame
+  t 26 s: mould 24912, soldiers 4, bank 1986, harvested 0, shots 44, killed 303, took 0%, crystals left 0.998; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-028s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-028s-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.035 ms a frame
+  t 28 s: mould 24940, soldiers 4, bank 1983, harvested 0, shots 49, killed 324, took 0%, crystals left 0.998; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-030s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-030s-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.033 ms a frame
+  t 30 s: mould 24922, soldiers 4, bank 1975, harvested 0, shots 57, killed 375, took 0%, crystals left 0.998; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-032s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-032s-near.png
+  CPU: ground field 1.84 ms (once a game second), model and HUD 0.035 ms a frame
+  t 32 s: mould 24960, soldiers 4, bank 1971, harvested 0, shots 62, killed 392, took 0%, crystals left 0.998; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-034s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-034s-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.036 ms a frame
+  t 34 s: mould 24982, soldiers 4, bank 1967, harvested 0, shots 67, killed 414, took 0%, crystals left 0.998; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-036s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-036s-near.png
+  CPU: ground field 4.52 ms (once a game second), model and HUD 0.033 ms a frame
+  t 36 s: mould 25024, soldiers 4, bank 1965, harvested 0, shots 72, killed 423, took 0%, crystals left 0.997; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-038s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-038s-near.png
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.033 ms a frame
+  t 38 s: mould 25065, soldiers 4, bank 1962, harvested 0, shots 78, killed 442, took 0%, crystals left 0.997; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-040s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-040s-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.047 ms a frame
+  t 40 s: mould 25088, soldiers 4, bank 1961, harvested 0, shots 83, killed 465, took 0%, crystals left 0.997; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-042s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-042s-near.png
+  CPU: ground field 1.71 ms (once a game second), model and HUD 0.037 ms a frame
+  t 42 s: mould 25120, soldiers 4, bank 1957, harvested 0, shots 90, killed 496, took 0%, crystals left 0.997; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-044s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-044s-near.png
+  CPU: ground field 1.65 ms (once a game second), model and HUD 0.038 ms a frame
+  t 44 s: mould 25144, soldiers 4, bank 1957, harvested 0, shots 96, killed 515, took 0%, crystals left 0.997; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-046s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-046s-near.png
+  CPU: ground field 5.09 ms (once a game second), model and HUD 0.039 ms a frame
+  t 46 s: mould 25165, soldiers 4, bank 1957, harvested 0, shots 102, killed 543, took 0%, crystals left 0.996; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-048s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-048s-near.png
+  CPU: ground field 3.58 ms (once a game second), model and HUD 0.039 ms a frame
+  t 48 s: mould 25209, soldiers 4, bank 1957, harvested 0, shots 107, killed 557, took 0%, crystals left 0.996; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-050s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-050s-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.036 ms a frame
+  t 50 s: mould 25234, soldiers 4, bank 1955, harvested 0, shots 107, killed 557, took 0%, crystals left 0.996; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-052s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-052s-near.png
+  CPU: ground field 1.94 ms (once a game second), model and HUD 0.036 ms a frame
+  t 52 s: mould 25236, soldiers 4, bank 1954, harvested 0, shots 114, killed 597, took 0%, crystals left 0.996; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-054s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-054s-near.png
+  CPU: ground field 2.52 ms (once a game second), model and HUD 0.045 ms a frame
+  t 54 s: mould 25252, soldiers 4, bank 1950, harvested 0, shots 120, killed 610, took 0%, crystals left 0.995; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-056s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-056s-near.png
+  CPU: ground field 1.65 ms (once a game second), model and HUD 0.033 ms a frame
+  t 56 s: mould 25269, soldiers 4, bank 1949, harvested 0, shots 126, killed 631, took 0%, crystals left 0.995; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-058s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-058s-near.png
+  CPU: ground field 2.26 ms (once a game second), model and HUD 0.046 ms a frame
+  t 58 s: mould 25274, soldiers 4, bank 1948, harvested 0, shots 130, killed 648, took 0%, crystals left 0.995; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-060s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-060s-near.png
+  CPU: ground field 1.81 ms (once a game second), model and HUD 0.033 ms a frame
+  t 60 s: mould 25290, soldiers 4, bank 1944, harvested 0, shots 137, killed 669, took 0%, crystals left 0.995; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-070s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-070s-near.png
+  CPU: ground field 1.99 ms (once a game second), model and HUD 0.035 ms a frame
+  t 70 s: mould 25357, soldiers 4, bank 1934, harvested 0, shots 164, killed 721, took 0%, crystals left 0.993; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-080s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-080s-near.png
+  CPU: ground field 1.90 ms (once a game second), model and HUD 0.039 ms a frame
+  t 80 s: mould 25418, soldiers 4, bank 1928, harvested 0, shots 188, killed 776, took 0%, crystals left 0.992; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-090s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-090s-near.png
+  CPU: ground field 2.37 ms (once a game second), model and HUD 0.052 ms a frame
+  t 90 s: mould 5512, soldiers 4, bank 1922, harvested 0, shots 208, killed 804, took 0%, crystals left 0.991; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-100s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-100s-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.032 ms a frame
+  t 100 s: mould 2905, soldiers 4, bank 1920, harvested 0, shots 215, killed 812, took 0%, crystals left 0.989; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-110s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-110s-near.png
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.036 ms a frame
+  t 110 s: mould 2931, soldiers 4, bank 1920, harvested 0, shots 215, killed 812, took 0%, crystals left 0.988; squad at 256.0,112.5
+/tmp/claude-0/qs/slow-dense/fork-idle-120s-all.png
+/tmp/claude-0/qs/slow-dense/fork-idle-120s-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.033 ms a frame
+  t 120 s: mould 3025, soldiers 4, bank 1920, harvested 0, shots 215, killed 812, took 0%, crystals left 0.987; squad at 256.0,112.5
