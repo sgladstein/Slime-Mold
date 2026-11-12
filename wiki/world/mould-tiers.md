@@ -4,7 +4,7 @@ kind: design
 status: open
 updated: 2026-11-12T14:39Z
 sources: [Reports/mould-tiers-campaign-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
-code: [BigParams::scar_keep, BigParams::scar_weight, BigDish::scar, BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier, Tier::core, Core]
+code: [BigParams::scar_keep, BigParams::scar_weight, BigDish::scar, BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier, Tier::core, Core, CoreKind::Regrow]
 ---
 
 # The mould tiers (difficulty ladder)
@@ -44,6 +44,11 @@ the whole body defends (`Rules::core_pull` 8). Headless is built.
 
 - Each tier's core: Sprawler Headless, Trunk Regrow, Drifter Migrate,
   Grudge a stronger pull (the tiers thread, after the core PR).
+  `CoreKind::Regrow { starve_secs }` is built (2026-11-12, both engines):
+  a fallen core grows back unless the mould eats nothing in the
+  `starve_secs` after it falls, the whole body's eating read from the
+  crystals; the tiers thread tunes the Trunk's window (from about 30 s)
+  with the census's `regrow=S` key.
 
 - The census of the new tiers, re-run after shot craters (#113). Before craters (held-out 201-216): Grudge is the hardest (every plan lower than on plain, 16 of 16; random loses its squad 15 of 16); strike is the best plan on every tier, so the best plan does not change between tiers yet; the Sprawler now explores 200 steps (at 400 everything wiped it); the toolkit's blast plan wins every tier ([report](../../Reports/mould-tiers-campaign-2026-11-12.md), *The census*). Still to come: the Drifter, the rest of Wary, turrets (turtle, guard) against Grudge and Wary.
 - Candidate tiers from review 2 ([the reviews](../../Reports/mould-tiers-review-2026-11-11.md)), most promising first: supply lines (traffic-made arteries that carry food; cut one to starve the far end; the one body thread's shared food), clans that fuse or fight along a scar, a mould that learns the rhythm of fire, a pacemaker heartbeat, day and night light, a nomad that avoids its own slime, two foods. Each has a first experiment there.

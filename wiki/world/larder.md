@@ -4,7 +4,7 @@ kind: design
 status: open
 updated: 2026-11-12T14:55Z
 sources: [Reports/soldier-controls-2026-11-12.md, Reports/larder-buildings-2026-11-12.md, Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core]
+code: [Game::build, Game::raise, Game::raise_secs, Game::drop_offs, BuildRules, squad::UNITS_MAX, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings, Rules::crater, squad::Frame::crater, Core, CoreKind, Rules::core_pull, Game::with_tier, Tier::core, CoreKind::Regrow, Game::mould_ate, World::start_births]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -121,8 +121,12 @@ games (18 without) and every plan beats random after Holm on both
 within chance; strike still takes the core on 12 (13 without) and a rush
 that fails loses its squad on 8 of 10 (201-232). The core is a `Core
 { kind, secs, pull }` a tier can set (`Tier::core`, read by
-`Game::with_tier`): `Fixed` or `Headless` (only a wipe ends it); the
-Trunk's regrowing and the Drifter's migrating cores come later. Strike
+`Game::with_tier`): `Fixed`, `Headless` (only a wipe ends it) or
+`Regrow { starve_secs }`, built for the Trunk: a fallen core grows back
+unless the mould eats nothing from any crystal in the `starve_secs` after
+it falls (`Game::mould_ate`, `World::start_births`; [report, *A core that
+grows back*](../../Reports/larder-world-roadmap-2026-11-11.md)). The
+Drifter's migrating core comes later. Strike
 still beats farm about 2 to 1 because food doesn't bind. Next, running
 costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
