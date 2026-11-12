@@ -1215,6 +1215,12 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32)) -
         println!("  CPU: ground field {ground_ms:.2} ms (once a game second), model and HUD {:.3} ms a frame", t0.elapsed().as_secs_f64() * 1e3 / 20.0);
         let g = app.game.as_ref().unwrap();
         println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
+        for b in &g.buildings {
+            println!("    {} at ({:.0}, {:.0}): hp {:.0} / {:.0}, built {:.1}, {}{}", b.kind.name(), b.at.0, b.at.1, b.hp, b.max_hp, b.built, if b.alive { "standing" } else { "worn down" }, if b.working { ", working" } else { "" });
+        }
+        if !g.buildings.is_empty() {
+            println!("    pumped {:.0} food, lures burnt {:.0}", g.pumped, g.lured);
+        }
     }
     Ok(())
 }
@@ -1242,6 +1248,40 @@ fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, queue: &wgpu
 
 /// The headless run's hand, once a game second.
 fn plan(g: &mut Game<GpuWorld>, hand: &str) {
+    // `build`: farm, with a pump on the larder's crystal, two turrets on
+    // the road to the core and a lure past them (the look at buildings).
+    if hand == "build" && g.time() > 1.0 {
+        let sc = g.world.scale();
+        let (c, l) = (g.core, g.larder);
+        let (dx, dy) = (c.0 - l.0, c.1 - l.1);
+        let d = dx.hypot(dy).max(1.0);
+        let (ux, uy) = (dx / d, dy / d);
+        let mut wants = vec![(Kind::Turret, (l.0 + ux * 7.0 * sc - uy * 4.0 * sc, l.1 + uy * 7.0 * sc + ux * 4.0 * sc)), (Kind::Turret, (l.0 + ux * 7.0 * sc + uy * 4.0 * sc, l.1 + uy * 7.0 * sc - ux * 4.0 * sc)), (Kind::Lure, (l.0 + ux * 13.0 * sc, l.1 + uy * 13.0 * sc))];
+        // The pump on the nearest big crystal (half the biggest's charge or
+        // more; the Fork's nearest is a small one a pump drains in 5 s).
+        let cs = g.world.crystals();
+        let big = cs.iter().map(|c| c.1).fold(0.0f32, f32::max) * 0.5;
+        if let Some(cc) = cs.iter().skip(1).filter(|c| c.1 >= big).map(|c| c.0).min_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1))) {
+            wants.insert(0, (Kind::Pump, cc));
+            // Soldier 0 harvests it, so the pump is in a soldier's reach.
+            if g.soldiers[0].alive && g.soldiers[0].order == Order::Hold {
+                g.apply(Cmd::Order(0, Order::Clear(cc.0, cc.1)));
+            }
+        }
+        for (kind, p) in wants {
+            if g.buildings.iter().any(|b| b.kind == kind && (b.at.0 - p.0).hypot(b.at.1 - p.1) < 3.0 * sc) {
+                continue;
+            }
+            let at = (0..=12).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
+                let a = k as f32 / 12.0 * std::f32::consts::TAU;
+                (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
+            }).find(|q| g.build_blocked(kind, *q).is_none());
+            if let Some(at) = at {
+                g.apply(Cmd::Build(kind, at));
+            }
+        }
+    }
+    let hand = if hand == "build" { "farm" } else { hand };
     if g.time() > 0.5 && hand == "farm" && g.bank >= 1200.0 {
         g.apply(Cmd::Buy);
     }

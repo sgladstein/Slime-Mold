@@ -118,6 +118,18 @@ pub struct BuildRules {
     pub lure_hp: f32,
     /// The lure's scent, as a multiple of a soldier's (`Rules::smell`, a
     /// share of a full pile's), over a disc of `lure_r` dish cells.
+    ///
+    /// 8 over 6 cells (`examples/worldbuild.rs`, 2026-11-12, race world at
+    /// scale 2, 5,000 walkers, the lure 0.35 of the way from the core, 8
+    /// seeds, on against off): walkers within 8 cells of it at 20 s were
+    /// more on 8 of 8 (p 0.008; 26-93 against 7-34), and the mould then
+    /// wore the lure down on 3 of 8 seeds within the minute, after which
+    /// the crowd thinned. The first numbers, 2 over 3 cells, drew more on 7
+    /// of 8 at 20 s with 1 tie but by a few walkers (1-42 against 0-34),
+    /// too few to see on screen. The measure named before the run, the
+    /// count at 60 s, was not significant for either (6-2 and 7-1, p 0.29
+    /// and 0.07): by then a strong lure is eaten. A lure is bait the mould
+    /// takes, not a standing beacon.
     pub lure_smell: f32,
     pub lure_r: f32,
     /// Food a second a lure burns while on.
@@ -147,8 +159,8 @@ impl Default for BuildRules {
             turret_every: 0.5,
             lure_cost: 300.0,
             lure_hp: 150.0,
-            lure_smell: 2.0,
-            lure_r: 3.0,
+            lure_smell: 8.0,
+            lure_r: 6.0,
             lure_burn: 2.0,
             pump_cost: 500.0,
             pump_hp: 200.0,
