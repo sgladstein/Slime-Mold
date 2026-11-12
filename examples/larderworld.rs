@@ -6,6 +6,7 @@
 //! cargo run --release --example larderworld -- look=DIR seeds=1 hands=farm [every=60]
 //! cargo run --release --example larderworld -- census map=fork ...
 //! cargo run --release --example larderworld -- census gpu=both seeds=1-32 threads=1 ...
+//! cargo run --release --example larderworld -- census energy_flow=0.05 hunger_scent=8 ...   # one body
 //! ```
 //!
 //! **The one census entry point** (2026-11-12, game integration): a
@@ -158,6 +159,12 @@ struct Mould {
     scorch_keep: Option<f32>,
     /// `scorch_cone=1`: a shot's crater as a cone (`BigParams::scorch_cone`).
     scorch_cone: bool,
+    /// One body (2026-11-12, Reports/one-body-2026-11-12.md):
+    /// `energy_flow=` (food shared between touching walkers) and
+    /// `hunger_scent=` (a hungry walker follows food harder), 0 off. Both
+    /// engines.
+    energy_flow: f32,
+    hunger_scent: f32,
 }
 
 impl Mould {
@@ -175,6 +182,7 @@ impl Mould {
     }
     fn apply(&self, p: &mut BigParams) {
         (p.alarm_keep, p.alarm_weight) = self.alarm((p.alarm_keep, p.alarm_weight));
+        (p.energy_flow, p.hunger_scent) = (self.energy_flow, self.hunger_scent);
         if let Some(t) = self.tier {
             t.apply(p);
         }
@@ -245,6 +253,8 @@ fn main() {
             "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
             "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
             "scorch_cone" => m.scorch_cone = v == "1",
+            "energy_flow" => m.energy_flow = v.parse().unwrap(),
+            "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "strike" => rules.strike = v.parse().unwrap(),
             "shot_every" => rules.shot_every = v.parse().unwrap(),
             // `spread=C`: aim spread, dish cells at the target (`Rules::spread`).
@@ -278,6 +288,9 @@ fn main() {
     }
     if let Some(c) = cap {
         rules.cap = c;
+    }
+    if (m.energy_flow, m.hunger_scent) != (0.0, 0.0) {
+        println!("one body: energy_flow {} hunger_scent {}", m.energy_flow, m.hunger_scent);
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
@@ -548,6 +561,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, han
     if let Some((device, queue)) = gpu {
         let mut s = race_settings(seed, scale, walkers);
         (s.alarm_keep, s.alarm_weight) = mould.alarm((s.alarm_keep, s.alarm_weight));
+        (s.energy_flow, s.hunger_scent) = (mould.energy_flow, mould.hunger_scent);
         let world = match map {
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),
