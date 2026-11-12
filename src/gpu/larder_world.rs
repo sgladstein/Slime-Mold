@@ -28,7 +28,8 @@
 //! and `frame_finish` split a frame so the window draws while the GPU runs
 //! it (`Game::begin_step`, `finish_step`).
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
+use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -121,8 +122,9 @@ struct Readout {
     ready: Arc<AtomicBool>,
     /// Copied into and asked for, not yet taken (`GpuWorld::frame_finish`).
     busy: bool,
-    /// The submission that fills it, to wait for that one alone.
-    sub: Option<wgpu::SubmissionIndex>,
+    /// The submission that fills it, to wait for that one alone (in a
+    /// cell: a frame's last share may be sent from `&self`, `flush`).
+    sub: RefCell<Option<wgpu::SubmissionIndex>>,
 }
 
 /// What a readout holds, unpacked.
@@ -157,6 +159,26 @@ pub struct GpuWorld {
     /// GPU timestamps of each frame's ticks and drawing (`Stamps`: index 0
     /// to 1 the ticks, 1 to 2 the drawing), if the caller sets them.
     pub stamps: Option<Stamps>,
+    /// While Some, every pass of each frame with ticks is timed on its own
+    /// (`Engine::record_timed`), and the frame waits for its stamps: the
+    /// bench's `passes=N` (2026-11-12). A frame's passes in order, GPU ms
+    /// each.
+    pub profile: Option<Vec<Vec<(&'static str, f64)>>>,
+    /// Over how many frames a step's ticks spread (2026-11-12; 0 and 1
+    /// record them all at `frame_start`, as before). With n, the step is
+    /// recorded at `frame_start` in up to n shares of its engine ticks
+    /// (`Engine::record_share`): the first, with the squad's start, is
+    /// sent at once, one more at each `frame_more`, and the last carries
+    /// the squad's end and the readout. Each share ends with the drawing,
+    /// so the window shows the mould every frame, not every step. The
+    /// passes and their order are the whole step's, so the game is the
+    /// same (`a_step_in_shares_is_the_same_game`); only when the GPU runs
+    /// them moves. At scale 8 a step is 8 engine ticks, about 17 ms on the
+    /// 1070; at 60 frames a second (4 a step) the window spreads it over
+    /// 4, 2 ticks a frame. No frame timestamps while a step is in shares.
+    pub spread: u32,
+    /// The running step's shares not yet sent; the last fills the readout.
+    later: RefCell<VecDeque<wgpu::CommandBuffer>>,
     /// Frames whose results were not in when asked for, and the real ms
     /// spent waiting for them (`frame_finish`).
     pub waits: u64,
@@ -180,8 +202,8 @@ impl GpuWorld {
     fn of(e: Engine, shared: Shared, s: Settings, scale: usize) -> Self {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: None };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, waits: 0, wait_ms: 0.0 };
+        let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0 };
         g.read_now();
         g
     }
@@ -215,6 +237,7 @@ impl GpuWorld {
     /// The mould grid summed on the CPU from the cells' walkers read back
     /// (`occ`), as `BigDish`'s: the first ask, before a frame has summed it.
     fn grid_now(&self, bin: usize) -> Vec<u32> {
+        self.flush();
         let (w, h) = (self.e.dish.w, self.e.dish.h);
         let gw = w.div_ceil(bin);
         let mut out = vec![0u32; gw * h.div_ceil(bin)];
@@ -230,22 +253,57 @@ impl GpuWorld {
     /// Submits `enc` and asks for the readout it fills.
     fn submit(&mut self, enc: wgpu::CommandEncoder) {
         assert!(!self.ro.busy, "a frame's readout is still out (frame_finish first)");
-        self.ro.sub = Some(self.e.queue.submit([enc.finish()]));
-        let ready = Arc::clone(&self.ro.ready);
-        self.ro.buf.map_async(wgpu::MapMode::Read, .., move |r| {
-            if r.is_ok() {
-                ready.store(true, Ordering::Release);
-            }
-        });
         self.ro.busy = true;
+        self.send(enc.finish(), true);
+    }
+
+    /// Submits a frame's share; the `last` fills the readout, which is then
+    /// asked for.
+    fn send(&self, cb: wgpu::CommandBuffer, last: bool) {
+        let index = self.e.queue.submit([cb]);
+        if last {
+            *self.ro.sub.borrow_mut() = Some(index);
+            let ready = Arc::clone(&self.ro.ready);
+            self.ro.buf.map_async(wgpu::MapMode::Read, .., move |r| {
+                if r.is_ok() {
+                    ready.store(true, Ordering::Release);
+                }
+            });
+        }
+    }
+
+    /// Sends the running step's shares not yet sent: before the results
+    /// are taken, and before a read-back of the engine's own buffers
+    /// (which would otherwise see the step half run).
+    fn flush(&self) {
+        let mut later = self.later.borrow_mut();
+        while let Some(cb) = later.pop_front() {
+            self.send(cb, later.is_empty());
+        }
+    }
+
+    /// The running step's next share sent, if it has one left (`spread`):
+    /// the window calls this once a frame while a step runs.
+    pub fn frame_more(&mut self) {
+        let next = self.later.borrow_mut().pop_front();
+        if let Some(cb) = next {
+            let last = self.later.borrow().is_empty();
+            self.send(cb, last);
+        }
+    }
+
+    /// The running step's shares still to send.
+    pub fn shares_left(&self) -> usize {
+        self.later.borrow().len()
     }
 
     /// Takes the readout, waiting for it if it is not in yet.
     fn take(&mut self) -> Read {
         assert!(self.ro.busy, "no frame running");
+        self.flush();
         if !self.frame_ready() {
             let t0 = Instant::now();
-            let index = self.ro.sub.take();
+            let index = self.ro.sub.borrow_mut().take();
             self.e.device.poll(wgpu::PollType::Wait { submission_index: index, timeout: None }).expect("poll");
             self.waits += 1;
             self.wait_ms += t0.elapsed().as_secs_f64() * 1e3;
@@ -255,7 +313,7 @@ impl GpuWorld {
         self.ro.buf.unmap();
         self.ro.ready.store(false, Ordering::Release);
         self.ro.busy = false;
-        self.ro.sub = None;
+        *self.ro.sub.borrow_mut() = None;
         if let Some(st) = self.stamps.as_mut() {
             st.poll();
         }
@@ -336,9 +394,40 @@ impl World for GpuWorld {
         let fresh = matches!(&self.grid, Some((b, _, _)) if *b == self.want.get());
         self.e.grid = self.grid_square(!fresh || t0 / GRID_EVERY != t1 / GRID_EVERY);
         self.e.write_params(&self.s, Hand::default(), n);
+        if n > 0 && self.profile.is_some() {
+            let t = self.e.record_timed(&self.shared, n, self.s.curve == Curve::Soft);
+            self.profile.as_mut().unwrap().push(t);
+            let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world readout") });
+            self.record_readout(&mut enc);
+            self.submit(enc);
+            return None;
+        }
+        let soft = self.s.curve == Curve::Soft;
+        let shares = self.spread.clamp(1, n.max(1));
+        if shares > 1 {
+            assert!(!self.ro.busy, "a frame's readout is still out (frame_finish first)");
+            self.ro.busy = true;
+            let mut sent = 0;
+            for k in 0..shares {
+                let ticks = n * (k + 1) / shares - sent;
+                sent += ticks;
+                let last = k + 1 == shares;
+                let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world share") });
+                self.e.record_share(&self.shared, &mut enc, ticks, (k == 0, last), soft, None);
+                if last {
+                    self.record_readout(&mut enc);
+                }
+                if k == 0 {
+                    self.send(enc.finish(), false);
+                } else {
+                    self.later.borrow_mut().push_back(enc.finish());
+                }
+            }
+            return None;
+        }
         let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world") });
         let qs = self.stamps.as_ref().and_then(|st| st.take());
-        self.e.record(&self.shared, &mut enc, n, self.s.curve == Curve::Soft, qs);
+        self.e.record(&self.shared, &mut enc, n, soft, qs);
         let stamped = qs.is_some() && n > 0;
         if stamped {
             self.stamps.as_ref().unwrap().resolve(&mut enc);
@@ -351,8 +440,12 @@ impl World for GpuWorld {
         None
     }
 
-    /// Checks the GPU without blocking.
+    /// Checks the GPU without blocking (never ready while shares wait to
+    /// be sent).
     fn frame_ready(&self) -> bool {
+        if !self.later.borrow().is_empty() {
+            return false;
+        }
         let _ = self.e.device.poll(wgpu::PollType::Poll);
         self.ro.ready.load(Ordering::Acquire)
     }
@@ -421,6 +514,7 @@ impl World for GpuWorld {
     /// The walkers, trail and energy read back, hashed (a replay's check;
     /// it waits for the GPU, so the game calls it only at the end).
     fn hash(&self) -> u64 {
+        self.flush();
         let side = (self.e.done % 2) as usize;
         let mut h = 0xcbf2_9ce4_8422_2325u64;
         for buf in [&self.e.walkers, &self.e.trail[side], &self.e.energy] {
@@ -589,6 +683,59 @@ mod tests {
             assert_eq!(c.sums as u64, 1 + c.frames as u64 / GRID_EVERY, "{name}: the grid summed once a game second");
             assert!(c.frames > 100 && c.hits > 0 && c.touched > 0, "{name}: the squad fought ({} frames, {} hits, {} touches)", c.frames, c.hits, c.touched);
             assert!(tier.is_none() || c.dead > 0, "{name}: walkers died asleep");
+        }
+    }
+
+    /// **A step in shares is the same game** (`GpuWorld::spread`,
+    /// 2026-11-12): one round, each step 4 engine ticks (scale 2, two game
+    /// ticks a step), played with the ticks recorded whole, in 2 shares
+    /// and in 4. The shares are sent one a `frame_more`, with 0 to 3 calls
+    /// between steps by turns (so some steps finish with shares unsent,
+    /// which `frame_finish` sends), and a first mould-grid ask and a hash
+    /// fall mid-step (their read-backs send the rest). Every step's counts
+    /// and the hash at the end match the whole steps'.
+    #[test]
+    fn a_step_in_shares_is_the_same_game() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 2, 5_000);
+        let rules = Rules { cap: 20.0, frame_ticks: 2, ..Rules::default() };
+        let play = |shares: u32| {
+            let mut g = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+            g.spread = shares;
+            let mut game = Game::new(g, rules, seed);
+            for k in 0..game.soldiers.len() {
+                game.apply(Cmd::Order(k, Order::Attack));
+            }
+            let (mut log, mut split) = (Vec::new(), 0);
+            let mut n = 0u32;
+            while game.end.is_none() && game.time() < 20.0 {
+                game.begin_step();
+                split = split.max(game.world.shares_left());
+                for _ in 0..n % 4 {
+                    game.world.frame_more();
+                }
+                if n == 9 {
+                    std::hint::black_box(game.world.mould_grid(8));
+                }
+                if n % 13 == 5 {
+                    std::hint::black_box(game.world.hash());
+                }
+                game.finish_step();
+                log.push((game.world.ticks(), game.mould, game.world.living(), game.harvested.to_bits(), game.shots, game.killed, game.alive()));
+                n += 1;
+            }
+            (log, game.world.hash(), split)
+        };
+        let (whole, hash, split) = play(1);
+        assert_eq!(split, 0, "whole steps leave no shares");
+        let (shots, killed) = (whole.last().unwrap().4, whole.last().unwrap().5);
+        eprintln!("shares: {} steps, {shots} shots, {killed} killed, hash {hash:016x}", whole.len());
+        assert!(whole.len() > 100 && shots > 0 && killed > 0, "the squad fought ({} steps, {shots} shots, {killed} killed)", whole.len());
+        for shares in [2, 4] {
+            let (log, h, split) = play(shares);
+            assert_eq!(split as u32, shares - 1, "{shares} shares: the later ones wait for frame_more");
+            assert_eq!(log, whole, "{shares} shares: the same steps");
+            assert_eq!(h, hash, "{shares} shares: the same world at the end");
         }
     }
 

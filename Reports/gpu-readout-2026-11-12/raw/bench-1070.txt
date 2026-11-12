@@ -1,0 +1,146 @@
+# GTX 1070 (Scott-Desktop, driver 582.66), main at 71ed0f9, 2026-11-12 ~14:35Z, over Remote Control.
+# Each line twice in turn; no other larder-world.exe running. "==" lines are labels.
+== larder-world.exe bench=20 hand=farm scale=2 walkers=5000  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.02 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.67 p95 2.74 max 13.88; step  p50 0.02 p95 0.48 max 11.66; prepare  p50 0.11 p95 0.22 max 3.78; record  p50 0.09 p95 0.17 max 1.71; GPU tail  p50 0.44 p95 1.94 max 2.94
+  frames with a step (300 of them), ms: frame p50 2.47 p95 3.45 max 13.88; step  p50 0.43 p95 1.21 max 11.66; prepare  p50 0.11 p95 0.20 max 0.94; record  p50 0.09 p95 0.14 max 1.52; GPU tail  p50 1.77 p95 2.14 max 2.94
+  GPU (timestamps, median of 300 steps): the step's ticks 0.39 ms, its drawing 0.89 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+== larder-world.exe bench=20 hand=farm scale=2 walkers=5000  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.03 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.71 p95 3.49 max 17.16; step  p50 0.02 p95 0.60 max 12.17; prepare  p50 0.12 p95 0.54 max 6.34; record  p50 0.10 p95 0.27 max 12.51; GPU tail  p50 0.42 p95 1.93 max 16.80
+  frames with a step (300 of them), ms: frame p50 2.42 p95 4.58 max 14.48; step  p50 0.45 p95 1.49 max 12.17; prepare  p50 0.11 p95 0.31 max 2.14; record  p50 0.10 p95 0.22 max 3.13; GPU tail  p50 1.71 p95 2.40 max 13.48
+  GPU (timestamps, median of 300 steps): the step's ticks 0.39 ms, its drawing 0.84 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+== larder-world.exe bench=20 hand=farm scale=2 walkers=5000 alarm_keep=0.98 alarm_weight=-1  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000 alarm_keep=0.98 alarm_weight=-1; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.03 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.69 p95 3.08 max 76.09; step  p50 0.02 p95 0.53 max 14.14; prepare  p50 0.11 p95 0.32 max 9.62; record  p50 0.10 p95 0.22 max 2.33; GPU tail  p50 0.42 p95 1.94 max 75.67
+  frames with a step (300 of them), ms: frame p50 2.46 p95 3.60 max 51.06; step  p50 0.44 p95 1.13 max 14.14; prepare  p50 0.11 p95 0.23 max 1.17; record  p50 0.10 p95 0.19 max 1.58; GPU tail  p50 1.76 p95 2.35 max 49.44
+  GPU (timestamps, median of 300 steps): the step's ticks 0.42 ms, its drawing 0.83 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+== larder-world.exe bench=20 hand=farm scale=2 walkers=5000 alarm_keep=0.98 alarm_weight=-1  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000 alarm_keep=0.98 alarm_weight=-1; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.07 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.63 p95 2.70 max 13.51; step  p50 0.01 p95 0.48 max 11.49; prepare  p50 0.11 p95 0.23 max 3.66; record  p50 0.09 p95 0.17 max 3.80; GPU tail  p50 0.41 p95 1.89 max 2.49
+  frames with a step (300 of them), ms: frame p50 2.41 p95 3.11 max 13.51; step  p50 0.43 p95 0.97 max 11.49; prepare  p50 0.11 p95 0.16 max 0.71; record  p50 0.09 p95 0.15 max 1.67; GPU tail  p50 1.78 p95 2.11 max 2.49
+  GPU (timestamps, median of 300 steps): the step's ticks 0.43 ms, its drawing 0.84 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+== larder-world.exe bench=20 hand=farm scale=2 walkers=5000 grid=4  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; the mould grid in squares of 4 each step; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 0.00 waits a step (0.03 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.62 p95 2.68 max 13.49; step  p50 0.01 p95 0.45 max 11.43; prepare  p50 0.10 p95 0.21 max 3.45; record  p50 0.08 p95 0.16 max 1.40; GPU tail  p50 0.41 p95 1.85 max 2.83
+  frames with a step (300 of them), ms: frame p50 2.37 p95 3.24 max 13.49; step  p50 0.41 p95 1.16 max 11.43; prepare  p50 0.10 p95 0.17 max 1.33; record  p50 0.09 p95 0.15 max 1.21; GPU tail  p50 1.74 p95 2.06 max 2.83
+  GPU (timestamps, median of 300 steps): the step's ticks 0.39 ms, its drawing 0.85 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+== larder-world.exe bench=20 hand=farm scale=2 walkers=5000 grid=4  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; the mould grid in squares of 4 each step; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 0.00 waits a step (0.03 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.64 p95 2.68 max 13.84; step  p50 0.01 p95 0.48 max 11.82; prepare  p50 0.11 p95 0.19 max 3.60; record  p50 0.08 p95 0.17 max 1.64; GPU tail  p50 0.41 p95 1.88 max 2.44
+  frames with a step (300 of them), ms: frame p50 2.38 p95 3.10 max 13.84; step  p50 0.42 p95 0.93 max 11.82; prepare  p50 0.11 p95 0.15 max 0.68; record  p50 0.09 p95 0.13 max 1.31; GPU tail  p50 1.75 p95 2.09 max 2.44
+  GPU (timestamps, median of 300 steps): the step's ticks 0.39 ms, its drawing 0.85 ms
+  t 20 s: mould 2690, soldiers 11, buildings 0, harvested 1953, shots 1, killed 1
+== larder-world.exe bench=20 hand=farm scale=4 walkers=20000  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.04 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.67 p95 8.42 max 14.65; step  p50 0.02 p95 0.71 max 7.89; prepare  p50 0.10 p95 0.16 max 10.84; record  p50 0.09 p95 0.16 max 2.25; GPU tail  p50 0.44 p95 7.05 max 9.32
+  frames with a step (300 of them), ms: frame p50 7.49 p95 9.00 max 14.65; step  p50 0.68 p95 1.38 max 7.89; prepare  p50 0.10 p95 0.15 max 0.68; record  p50 0.10 p95 0.12 max 0.55; GPU tail  p50 6.57 p95 8.00 max 9.32
+  GPU (timestamps, median of 300 steps): the step's ticks 2.31 ms, its drawing 3.01 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+== larder-world.exe bench=20 hand=farm scale=4 walkers=20000  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.03 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.66 p95 8.52 max 38.93; step  p50 0.02 p95 0.71 max 7.98; prepare  p50 0.10 p95 0.17 max 33.98; record  p50 0.09 p95 0.16 max 1.35; GPU tail  p50 0.44 p95 7.09 max 37.71
+  frames with a step (300 of them), ms: frame p50 7.48 p95 9.31 max 38.93; step  p50 0.68 p95 1.39 max 7.98; prepare  p50 0.10 p95 0.15 max 0.59; record  p50 0.09 p95 0.12 max 0.85; GPU tail  p50 6.57 p95 8.20 max 37.71
+  GPU (timestamps, median of 300 steps): the step's ticks 2.31 ms, its drawing 3.03 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+== larder-world.exe bench=20 hand=farm scale=4 walkers=20000 alarm_keep=0.98 alarm_weight=-1  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000 alarm_keep=0.98 alarm_weight=-1; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.03 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.68 p95 8.70 max 13.87; step  p50 0.02 p95 0.75 max 6.86; prepare  p50 0.10 p95 0.21 max 11.43; record  p50 0.09 p95 0.16 max 1.36; GPU tail  p50 0.44 p95 7.35 max 9.58
+  frames with a step (300 of them), ms: frame p50 7.74 p95 9.40 max 13.87; step  p50 0.68 p95 1.30 max 6.86; prepare  p50 0.10 p95 0.16 max 0.86; record  p50 0.09 p95 0.13 max 0.67; GPU tail  p50 6.82 p95 8.38 max 9.58
+  GPU (timestamps, median of 300 steps): the step's ticks 2.56 ms, its drawing 3.04 ms
+  t 20 s: mould 5243, soldiers 12, buildings 0, harvested 2345, shots 12, killed 2
+== larder-world.exe bench=20 hand=farm scale=4 walkers=20000 alarm_keep=0.98 alarm_weight=-1  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000 alarm_keep=0.98 alarm_weight=-1; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.04 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.67 p95 8.66 max 14.60; step  p50 0.02 p95 0.71 max 7.60; prepare  p50 0.10 p95 0.17 max 10.21; record  p50 0.09 p95 0.16 max 1.36; GPU tail  p50 0.44 p95 7.33 max 9.57
+  frames with a step (300 of them), ms: frame p50 7.71 p95 9.15 max 14.60; step  p50 0.68 p95 1.11 max 7.60; prepare  p50 0.10 p95 0.15 max 0.63; record  p50 0.09 p95 0.12 max 0.55; GPU tail  p50 6.81 p95 8.24 max 9.57
+  GPU (timestamps, median of 300 steps): the step's ticks 2.57 ms, its drawing 3.05 ms
+  t 20 s: mould 5243, soldiers 12, buildings 0, harvested 2345, shots 12, killed 2
+== larder-world.exe bench=20 hand=farm scale=4 walkers=20000 grid=4  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000; the mould grid in squares of 4 each step; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 0.00 waits a step (0.04 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.70 p95 8.44 max 14.81; step  p50 0.02 p95 0.78 max 9.97; prepare  p50 0.10 p95 0.18 max 10.14; record  p50 0.09 p95 0.16 max 1.94; GPU tail  p50 0.45 p95 7.12 max 12.83
+  frames with a step (300 of them), ms: frame p50 7.54 p95 9.18 max 14.81; step  p50 0.70 p95 1.33 max 9.97; prepare  p50 0.10 p95 0.16 max 0.63; record  p50 0.09 p95 0.13 max 0.92; GPU tail  p50 6.58 p95 8.05 max 12.83
+  GPU (timestamps, median of 300 steps): the step's ticks 2.31 ms, its drawing 3.05 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+== larder-world.exe bench=20 hand=farm scale=4 walkers=20000 grid=4  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000; the mould grid in squares of 4 each step; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 0.00 waits a step (0.04 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.67 p95 8.36 max 13.98; step  p50 0.02 p95 0.75 max 10.79; prepare  p50 0.11 p95 0.19 max 10.58; record  p50 0.09 p95 0.16 max 1.46; GPU tail  p50 0.44 p95 7.00 max 9.42
+  frames with a step (300 of them), ms: frame p50 7.50 p95 9.07 max 13.98; step  p50 0.69 p95 1.29 max 10.79; prepare  p50 0.10 p95 0.17 max 1.11; record  p50 0.09 p95 0.14 max 0.54; GPU tail  p50 6.55 p95 8.00 max 9.42
+  GPU (timestamps, median of 300 steps): the step's ticks 2.31 ms, its drawing 3.04 ms
+  t 20 s: mould 5241, soldiers 12, buildings 0, harvested 2345, shots 24, killed 4
+== larder-world.exe bench=20 hand=farm scale=8 walkers=100000  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.07 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.90 p95 35.84 max 37.22; step  p50 0.02 p95 1.28 max 3.93; prepare  p50 0.10 p95 0.18 max 32.67; record  p50 0.10 p95 0.16 max 1.34; GPU tail  p50 0.55 p95 34.38 max 35.34
+  frames with a step (300 of them), ms: frame p50 34.45 p95 36.19 max 37.22; step  p50 1.20 p95 1.87 max 3.93; prepare  p50 0.10 p95 0.20 max 1.07; record  p50 0.10 p95 0.14 max 0.47; GPU tail  p50 32.88 p95 34.72 max 35.34
+  GPU (timestamps, median of 300 steps): the step's ticks 17.93 ms, its drawing 11.45 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+== larder-world.exe bench=20 hand=farm scale=8 walkers=100000  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.05 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.90 p95 35.96 max 37.20; step  p50 0.02 p95 1.29 max 4.62; prepare  p50 0.10 p95 0.18 max 35.55; record  p50 0.09 p95 0.17 max 1.34; GPU tail  p50 0.55 p95 34.55 max 35.55
+  frames with a step (300 of them), ms: frame p50 34.57 p95 36.38 max 37.20; step  p50 1.21 p95 1.89 max 4.62; prepare  p50 0.10 p95 0.14 max 0.67; record  p50 0.09 p95 0.11 max 0.30; GPU tail  p50 33.03 p95 34.96 max 35.55
+  GPU (timestamps, median of 300 steps): the step's ticks 18.00 ms, its drawing 11.49 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+== larder-world.exe bench=20 hand=farm scale=8 walkers=100000 alarm_keep=0.98 alarm_weight=-1  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000 alarm_keep=0.98 alarm_weight=-1; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.05 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.91 p95 38.01 max 39.55; step  p50 0.02 p95 1.26 max 4.52; prepare  p50 0.10 p95 0.19 max 32.11; record  p50 0.09 p95 0.17 max 1.33; GPU tail  p50 0.56 p95 36.58 max 37.93
+  frames with a step (300 of them), ms: frame p50 36.86 p95 38.80 max 39.55; step  p50 1.21 p95 1.84 max 4.52; prepare  p50 0.10 p95 0.14 max 1.12; record  p50 0.09 p95 0.12 max 0.84; GPU tail  p50 35.29 p95 37.23 max 37.93
+  GPU (timestamps, median of 300 steps): the step's ticks 20.14 ms, its drawing 11.49 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+== larder-world.exe bench=20 hand=farm scale=8 walkers=100000 alarm_keep=0.98 alarm_weight=-1  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000 alarm_keep=0.98 alarm_weight=-1; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.07 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.90 p95 38.03 max 65.94; step  p50 0.03 p95 1.29 max 4.32; prepare  p50 0.10 p95 0.19 max 32.75; record  p50 0.09 p95 0.17 max 1.35; GPU tail  p50 0.55 p95 36.57 max 64.35
+  frames with a step (300 of them), ms: frame p50 36.92 p95 38.78 max 65.94; step  p50 1.22 p95 1.95 max 4.32; prepare  p50 0.10 p95 0.15 max 0.87; record  p50 0.10 p95 0.13 max 0.54; GPU tail  p50 35.34 p95 37.19 max 64.35
+  GPU (timestamps, median of 300 steps): the step's ticks 20.12 ms, its drawing 11.49 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+== larder-world.exe bench=20 hand=farm scale=8 walkers=100000 grid=4  (run 1)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; the mould grid in squares of 4 each step; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 0.00 waits a step (0.05 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.91 p95 36.00 max 43.89; step  p50 0.02 p95 1.37 max 43.03; prepare  p50 0.11 p95 0.17 max 34.43; record  p50 0.09 p95 0.18 max 2.35; GPU tail  p50 0.56 p95 34.45 max 35.66
+  frames with a step (300 of them), ms: frame p50 34.70 p95 36.51 max 43.89; step  p50 1.28 p95 1.94 max 43.03; prepare  p50 0.10 p95 0.16 max 1.02; record  p50 0.09 p95 0.16 max 0.56; GPU tail  p50 33.00 p95 34.97 max 35.66
+  GPU (timestamps, median of 300 steps): the step's ticks 18.01 ms, its drawing 11.49 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0
+== larder-world.exe bench=20 hand=farm scale=8 walkers=100000 grid=4  (run 2)
+larder-world: NVIDIA GeForce GTX 1070
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; the mould grid in squares of 4 each step; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 0.00 waits a step (0.05 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 0.90 p95 36.04 max 47.71; step  p50 0.02 p95 1.38 max 42.40; prepare  p50 0.11 p95 0.18 max 32.96; record  p50 0.10 p95 0.16 max 1.63; GPU tail  p50 0.56 p95 34.51 max 45.05
+  frames with a step (300 of them), ms: frame p50 34.73 p95 36.76 max 47.71; step  p50 1.28 p95 2.00 max 42.40; prepare  p50 0.10 p95 0.17 max 0.64; record  p50 0.10 p95 0.16 max 0.51; GPU tail  p50 33.02 p95 34.89 max 45.05
+  GPU (timestamps, median of 300 steps): the step's ticks 18.00 ms, its drawing 11.49 ms
+  t 20 s: mould 15723, soldiers 12, buildings 0, harvested 2100, shots 0, killed 0

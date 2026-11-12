@@ -42,7 +42,7 @@ work; a thread working on one directly may change it.
 - [Larder World maps](world/maps.md): designed worlds from a picture and an item list (WM1 loader, CPU and GPU); five maps each drawn for a different plan.
 - [The Larder player AI](world/player-ai.md): plays soldiers through the player's commands, one brain per side; on the Larder world four of five styles beat the scripted farm 15-16/16 held out.
 - [The player's own mould](world/own-mould.md): gardeners (owner, 11-12); soldiers grow a second species that fights the enemy by conversion; forms trade eating for fighting.
-- [The mould tiers](world/mould-tiers.md): the difficulty ladder; Drifter, Sprawler, Trunk (the campaign), Sporer, Sleeper, Swarmer, and Wary and Grudge, which remember where they were shot.
+- [The mould tiers](world/mould-tiers.md): the difficulty ladder; Drifter, Sprawler, Trunk (the campaign), Sporer, Sleeper, Swarmer, and Grudge, which remembers where it was shot.
 - [The world camera and UI](world/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls and the game UI over a world bigger than the screen; view 0.3-0.4 ms, UI 0.1 ms on the 1070.
 - [The squad toolkit](world/squad-toolkit.md): six tools from the mould's model (blast and crater, mine, det cord, germ, sleep gas, smell); with tools carried, the best plan changes by tier.
 
