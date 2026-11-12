@@ -246,6 +246,9 @@ impl App {
             v.set_world(&e.frame, size);
             v.set_look(&e.look, &ground, &e.walkers, e.n);
             v.set_alive(e.grows.then_some(&e.energy));
+            // The body's walkers a cell, from the start's living walkers
+            // (the look's `body`; a growing world has ten slots a walker).
+            v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
             // On the larder, at zoom 4 or the whole map if that is closer
             // (the minimap shows the rest).
             self.camera = Camera::new(size, v.screen);

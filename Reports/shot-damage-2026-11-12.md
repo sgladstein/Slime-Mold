@@ -44,6 +44,21 @@ The picture showed none of it, for three reasons:
 
 Slowing the clock 3× barely lengthens a hole. Holes fill from the rim, by diffusion and by walkers stepping in. What the owner asked for (a hole that grows under sustained fire and doesn't refill) needs a rule: ground the mould avoids or can't enter after a hit. That rule is the Larder thread's, and the look will draw it from that rule's own field.
 
+**On the GTX 1070** (1920 x 1080, `worldlook seconds=4`, view GPU ms, median of 21; six runs alternating main 19a8765 with 32d8cd8, the 25-read `body()`):
+
+| Run | Build | Look z1 / z2 / z4 | Plain z1 |
+|---|---|---|---|
+| 1 | main | 1.336 / 0.914 / 0.764 | 0.311 |
+| 2 | 32d8cd8 | 1.686 / 0.883 / 0.689 | 0.287 |
+| 3 | main | 1.192 / 0.769 / 0.672 | 0.288 |
+| 4 | 32d8cd8 | 1.683 / 0.883 / 0.689 | 0.287 |
+| 5 | main | 1.303 / 0.883 / 0.764 | 0.307 |
+| 6 | 32d8cd8 | 1.684 / 0.886 / 0.690 | 0.287 |
+
+Matched fast runs (3 against 2, 4, 6): +0.49 ms at zoom 1, +0.11 at zoom 2, +0.02 at zoom 4. Answer: the prep pass loads walker counts once into a 20 x 20 workgroup tile (the 16 x 16 cells and a 2-cell rim), so each cell sums from the tile; the picture is unchanged (the same frame differs only in the HUD's alert text). Its 1070 time is in the next section once run.
+
+**Density** (tech lead review, 04:48Z): `BODY_N` was calibrated at 5000 walkers on 512 x 320. It now scales with the world's living walkers a cell, which the game sets once from the start (`View::set_body_density`; 0 keeps the calibration). The slot count would not do: a growing world has ten slots a walker. Hole times at higher counts (`holes=1`, rush, 0-16 s): 50,000 walkers at scale 2, 18 hits, median 0.20 s; 100,000 at scale 4, 25 hits, 3 refilled and 22 still open at 16 s (the strike killed only 20 walkers there: a scale-4 strike is a smaller share of a cell, worth a look by the Larder thread).
+
 **Not measured yet.**
 - The 1070 frame cost of `body()`: 25 look reads per shown cell in the prep pass.
 - Whether a hit should last longer than 0.2 s. That is a rule change (trail refill, cut pieces, food flow) and belongs to the Larder thread, which plans to make cut-off pieces starve.

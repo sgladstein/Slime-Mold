@@ -15,7 +15,7 @@ struct V {
     // look and ground fields, with every walker a speck; 0 the frame only.
     // lives 1: `alive` holds each walker's energy, and a slot below 0 (empty
     // or dead) draws no speck (`View::set_alive`).
-    shade: u32, n_walk: u32, lives: u32, _l1: u32,
+    shade: u32, n_walk: u32, lives: u32, body_density: f32,
     // The rectangle of cells `prep` works out (origin ox, oy; rw x rh):
     // the cells the screen shows and a margin of 4 for the slope, shadow
     // and blend samples.
@@ -141,18 +141,20 @@ const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
 // playtest, 04:13Z: "visually it didn't impact much"); with the walkers in
 // it, a patch they died in is thin until living ones come back. `BODY_N`
 // is the walkers in that window that make a body two-thirds thick: in a
-// rush on the fork map (5000 walkers) the median cell with trail of 0.5 or
-// more had 14 near it, the tenth percentile 4.
+// rush on the fork map (5000 walkers on 512 x 320 cells, `BODY_DENSITY`
+// walkers a cell) the median cell with trail of 0.5 or more had 14 near
+// it, the tenth percentile 4. It scales with the world's living walkers a
+// cell (`View::set_body_density`; 0 keeps the calibration), so a world
+// with ten times the walkers does not saturate to the trail again and a
+// sparse one does not read thin (tech lead review of #93, 04:48Z).
 const BODY_N: f32 = 6.0;
+const BODY_DENSITY: f32 = 5000.0 / (512.0 * 320.0);
 
-fn body(ix: i32, iy: i32) -> f32 {
-    var n = 0u;
-    for (var dy = -2; dy <= 2; dy++) {
-        for (var dx = -2; dx <= 2; dx++) {
-            n += (look[cidx(ix + dx, iy + dy)] >> 8u) & 255u;
-        }
-    }
-    return byte(look[cidx(ix, iy)], 0u) * (1.0 - exp(-f32(n) / BODY_N));
+// The body from `n`, the walkers on the 5 x 5 cells round (ix, iy).
+fn body(ix: i32, iy: i32, n: u32) -> f32 {
+    var n0 = BODY_N;
+    if (P.body_density > 0.0) { n0 = BODY_N * max(P.body_density / BODY_DENSITY, 0.05); }
+    return byte(look[cidx(ix, iy)], 0u) * (1.0 - exp(-f32(n) / n0));
 }
 
 // A cell's height in cells: off the world is rock.
@@ -273,14 +275,31 @@ fn mc(ix: i32, iy: i32) -> Mat {
 }
 
 // Works out each shown cell's height and material once a frame (a thread
-// a cell of the rectangle).
+// a cell of the rectangle). The walkers for `body` come through a 20 x 20
+// tile in workgroup memory (the 16 x 16 cells and a 2-cell rim), loaded once:
+// reading the 25 cells from the look for each cell cost the 1070 about
+// 0.5 ms at zoom 1 (1920 x 1080; 1.19 -> 1.68 ms, matched fast runs).
+var<workgroup> crowd: array<u32, 400>;
+
 @compute @workgroup_size(16, 16)
-fn prep(@builtin(global_invocation_id) gid: vec3<u32>) {
+fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation_id) lid: vec3<u32>, @builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
+    let bx = P.ox + i32(wid.x * 16u) - 2;
+    let by = P.oy + i32(wid.y * 16u) - 2;
+    for (var k = li; k < 400u; k += 256u) {
+        crowd[k] = (look[cidx(bx + i32(k % 20u), by + i32(k / 20u))] >> 8u) & 255u;
+    }
+    workgroupBarrier();
     if (gid.x >= P.rw || gid.y >= P.rh) { return; }
     let ix = P.ox + i32(gid.x); let iy = P.oy + i32(gid.y);
     let i = gid.y * P.rw + gid.x;
+    var n = 0u;
+    for (var dy = 0u; dy < 5u; dy++) {
+        for (var dx = 0u; dx < 5u; dx++) {
+            n += crowd[(lid.y + dy) * 20u + lid.x + dx];
+        }
+    }
     // (`cidx` clamps, so `body` is safe off the world, where both ignore it.)
-    let th = body(ix, iy);
+    let th = body(ix, iy, n);
     hcell[i] = cell_height(ix, iy, th);
     mcell[i] = mat_pack(cell_mat(ix, iy, th));
 }
