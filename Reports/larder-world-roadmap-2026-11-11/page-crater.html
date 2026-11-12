@@ -56,7 +56,7 @@ code { font-size: 0.88em; }
   <header style="display:grid;gap:10px">
     <h1>Craters under fire</h1>
     <p class="lede">You asked for a group of soldiers firing on the slime to carve a bigger and bigger hole that doesn't refill while they shoot. Now each hit leaves a crater in the simulation. For 10 game seconds, the cells it struck keep only a tenth of their trail each step, so the mould can't refill them. The next shots fly over the empty hole into the body behind it, so steady fire digs in. A walker that wanders into a crater still stops a shot, so the mould can't hide in its own hole. When the shooting stops, the craters run out and the mould grows back over about 10 seconds. Nothing is drawn on top. The hole you see is the trail that isn't there.</p>
-    <p class="lede">The earlier try, where the mould turned away from gunfire, made a bigger hole. It also let the random player win by parking on the mould's core, so it stays off. The crater doesn't change where the mould goes anywhere else. The full census says it holds: every plan beats idle and random play on 32 race-world seeds, the Fork and the Rim. On a second set of 32 race seeds the margin over random play is gone, though: random wiped the mould on 11 of them, against 5 without craters. The craters stay on, and the mould defending its core is the next change.</p>
+    <p class="lede">The earlier try, where the mould turned away from gunfire, made a bigger hole. It also let the random player win by parking on the mould's core, so it stays off. The crater doesn't change where the mould goes anywhere else. The full census says it holds: every plan beats idle and random play on 32 race-world seeds, the Fork and the Rim. On a second set of 32 race seeds the margin over random play is gone, though: random wiped the mould on 11 of them, against 5 without craters. The craters stay on, and the mould now defends its core: soldiers in its hub draw the whole body onto them, and random play wipes the mould on 5 of 64 games instead of 18 (last section).</p>
   </header>
 
   <section>
@@ -192,6 +192,32 @@ code { font-size: 0.88em; }
   </section>
 
   <section>
-    <p class="counts">Raw counts: <code>crater/clips-s1.txt</code>, <code>crater/clips-s3.txt</code>, <code>crater/window-counts.txt</code>, <code>crater/hole-1-8-full30-keep01.txt</code>, <code>crater/hole-1-8-keep05-full300.txt</code>, <code>crater/census-race-5-12.txt</code>, <code>crater/census-stop-*.txt</code>, <code>crater/census-crater-race-2*.txt</code>, <code>crater/census-nocrater-race-2*.txt</code>, <code>crater/hole-1-8-looks.txt</code>, <code>crater/hole-1-8-aim-rate.txt</code> in the repo's <code>Reports/larder-world-roadmap-2026-11-11/</code>. Code: PR #113.</p>
+    <h2>The mould now defends its core</h2>
+    <p>The random player wins by sending soldiers one at a time into the mould's hub in the first minute. They fire into the densest part, and the holes around them stay open, so the body never comes for them. Now a soldier close to the core smells like a lure: it lays eight times its own scent over a lure's reach. The mould follows that scent as it follows food, so the hub closes over a squad that stands in it. Nothing is drawn. The pictures are the hub on race seed 204, with random play, at the same seconds.</p>
+    <div class="strip">
+      <span class="lab">without</span>
+      <figure><img src="core/hub-s204-off-40s.jpg" alt="The hub at 40 s, without the defence"><div class="counts">40 s · mould 1,892 · 7 soldiers</div></figure>
+      <figure><img src="core/hub-s204-off-45s.jpg" alt="The hub at 45 s, without the defence"><div class="counts">45 s · mould 1,373 · 7 soldiers</div></figure>
+      <figure><img src="core/hub-s204-off-50s.jpg" alt="The hub at 50 s, without the defence"><div class="counts">50 s · mould 1,106 · 7 soldiers</div></figure>
+      <figure><img src="core/hub-s204-off-60s.jpg" alt="The hub at 60 s, without the defence"><div class="counts">60 s · mould 844 · 7 soldiers</div></figure>
+      <span class="lab on">with</span>
+      <figure><img src="core/hub-s204-on-40s.jpg" alt="The hub at 40 s, with the defence"><div class="counts">40 s · mould 1,897 · 7 soldiers</div></figure>
+      <figure><img src="core/hub-s204-on-45s.jpg" alt="The hub at 45 s, with the defence"><div class="counts">45 s · mould 1,281 · 7 soldiers</div></figure>
+      <figure><img src="core/hub-s204-on-50s.jpg" alt="The hub at 50 s, with the defence"><div class="counts">50 s · mould 874 · <b>4</b> soldiers</div></figure>
+      <figure><img src="core/hub-s204-on-60s.jpg" alt="The hub at 60 s, with the defence"><div class="counts">60 s · mould 818 · <b>4</b> soldiers</div></figure>
+    </div>
+    <p class="note">The white dots on the hub's crystal are soldiers, and the dark discs are craters. Without the defence they keep firing from inside their holes. The mould is down to 80 walkers by 4 minutes, and the core falls at 244 s. The last walker dies at 302 s. With it, the mould pours into the hub and loses walkers doing it, but it kills three of the soldiers by 50 s and closes over the crystal. That mould is alive at 15 minutes with 8,620 walkers.</p>
+    <div class="scroll"><table>
+      <tr><th>64 games, both seed sets</th><th>without the defence</th><th>with it</th></tr>
+      <tr><td>random wipes the mould</td><td>18</td><td class="w">5</td></tr>
+      <tr><td>every plan beats random, after correction</td><td>on one set of seeds</td><td class="w">on both</td></tr>
+      <tr><td>strike, the planned core attack, takes the core</td><td>13</td><td>12</td></tr>
+      <tr><td>a rush that fails to take it loses its squad (seeds 201-232)</td><td></td><td>8 of 10</td></tr>
+    </table></div>
+    <p class="note">Farm, wall, fort and idle play the same games, within chance. Strike still takes the core about as often as before and scores a little higher. It still wins too often, because its farm keeps paying when an attack fails. That's the economy change, which comes next.</p>
+  </section>
+
+  <section>
+    <p class="counts">Raw counts: <code>crater/clips-s1.txt</code>, <code>crater/clips-s3.txt</code>, <code>crater/window-counts.txt</code>, <code>crater/hole-1-8-full30-keep01.txt</code>, <code>crater/hole-1-8-keep05-full300.txt</code>, <code>crater/census-race-5-12.txt</code>, <code>crater/census-stop-*.txt</code>, <code>crater/census-crater-race-2*.txt</code>, <code>crater/census-nocrater-race-2*.txt</code>, <code>core/*.txt</code>, <code>crater/hole-1-8-looks.txt</code>, <code>crater/hole-1-8-aim-rate.txt</code> in the repo's <code>Reports/larder-world-roadmap-2026-11-11/</code>. Code: PR #113.</p>
   </section>
 </main>

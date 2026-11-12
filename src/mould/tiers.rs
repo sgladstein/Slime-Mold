@@ -160,6 +160,28 @@ impl Tier {
         }
     }
 
+    /// The tier's core (`larder_world::Core`), or None for the plain
+    /// mould's (`Core::of(&rules)`: fixed, `Rules::core_secs`,
+    /// `Rules::core_pull`). Every tier is None for now; the tiers thread
+    /// fills in its own (the Sprawler headless, the Grudge's pull) once the
+    /// core-defence PR is in. Read once, by `Game::with_tier`.
+    pub fn core(self) -> Option<super::larder_world::Core> {
+        use super::larder_world::{Core, CoreKind, Rules};
+        let plain = Core::of(&Rules::default());
+        match self {
+            // No core: births go on wherever a walker is fed, so only a
+            // wipe ends it, and a strike on its start takes nothing (the
+            // campaign's mission 3 contains it with walls). Dev seeds 1-4,
+            // craters on: strike +0.96 mean against farm +0.94 and wall
+            // +0.91, level; random lost its squad on 2.
+            Tier::Sprawler => Some(Core { kind: CoreKind::Headless, pull: 0.0, ..plain }),
+            // The whole body converges on soldiers at its core: random's
+            // squad wiped on 4 of 4 dev seeds (at 8 too).
+            Tier::Grudge => Some(Core { pull: GRUDGE_PULL, ..plain }),
+            _ => None,
+        }
+    }
+
     /// Sets the tier's keys on CPU big-dish parameters (other fields are
     /// left as they are).
     pub fn apply(self, p: &mut BigParams) {
@@ -183,6 +205,9 @@ impl Tier {
         Ok(())
     }
 }
+
+/// The Grudge's core pull: twice the plain mould's (`Rules::core_pull` 8).
+pub const GRUDGE_PULL: f32 = 16.0;
 
 /// The keys a tier may set, by their CPU names (angles in degrees). Public
 /// so a census can try a candidate's keys over a tier (`larderworld
@@ -269,6 +294,13 @@ mod tests {
         assert!(on(Tier::Swarmer).alarm_weight > 0.0 && on(Tier::Swarmer).sleep_rate == 0.0);
         assert!((on(Tier::Drifter).sensor_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-6, "degrees become radians");
         assert!(on(Tier::Sprawler).explore_steps > 0 && on(Tier::Sprawler).explore_spread > 0.0);
+        {
+            use crate::mould::larder_world::{Core, CoreKind, Rules};
+            let plain = Core::of(&Rules::default());
+            assert_eq!(Tier::Sprawler.core().map(|c| c.kind), Some(CoreKind::Headless));
+            assert!(Tier::Grudge.core().is_some_and(|c| c.kind == CoreKind::Fixed && c.pull > plain.pull));
+            assert!(Tier::Trunk.core().is_none() && Tier::Drifter.core().is_none());
+        }
         assert!(on(Tier::Grudge).scar_weight > 0.0 && on(Tier::Grudge).alarm_weight > 0.0);
         assert!(on(Tier::Trunk).sensor_angle < BigParams::today().sensor_angle && on(Tier::Trunk).keep > BigParams::today().keep);
         // Every tier with an alarm rule keeps its alarm (a field that decays

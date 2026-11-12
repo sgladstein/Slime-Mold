@@ -606,6 +606,8 @@ The hole test on seeds 1-8 with the walker stop ([crater/hole-1-8-looks.txt](lar
 
 None of the looks changes the fight beyond chance, so the choice is the owner's eye. In the window (the Fork, seed 1, rush hand) the scattered holes come out as chains of small bites and the cone's as smaller holes with a soft shadow in place of the dark rim. In all three the fresh hole's inside is red-brown because the fight is on the Fork's clay disc; holes off the clay are grey-olive like a natural hole. The graphics thread rendered all three up close at zoom 6 and 16 (`/mnt/project-files/crater-ab/`). The page shows them blind as looks 1-3; the key is [crater/look-key.md](larder-world-roadmap-2026-11-11/crater/look-key.md), with the window's counts in [crater/look-window-counts.txt](larder-world-roadmap-2026-11-11/crater/look-window-counts.txt).
 
+**The looks in motion** (2026-11-12 14:40Z; the owner: "I need to see videos/gifs of the craters to tell"). The same three looks and the game without craters, rendered as clips: the Fork, seed 1, rush hand, every game tick from 7 to 19 s, from a still camera (the look mode's new `centre=X,Y`, so the view no longer pans with the squad or jumps to the larder when it dies). The four play in step on [Crater Looks in Motion](https://claude.ai/artifact/HzgDT3XPLX59Ba621tVH2H), with each frame's counts under its clip, at 1×, ½× or ¼×. These runs include the core's pull, so the squad dies at about 16 s (17-19 s with `core_pull=0`), and the last 3 s show each hole after the fire stops. Clips, posters and the runs' t lines are in [crater/clips/](larder-world-roadmap-2026-11-11/crater/clips/L2.txt); same key as the stills.
+
 **The gate, first look** (race seeds 5-12, 15-minute games, crater 10; raw [crater/census-race-5-12.txt](larder-world-roadmap-2026-11-11/crater/census-race-5-12.txt)):
 - farm, wall and strike each beat idle and random 8-0, and all hold under Holm.
 - Random wiped no mould, and its squad was wiped on 4.
@@ -663,3 +665,69 @@ None of the looks changes the fight beyond chance, so the choice is the owner's 
 
 **Cost.** On software Vulkan the crater adds 0.03 ms a step (13.54/13.56 against 13.60/13.57 ms). The GTX 1070's figure is open.
 
+
+## Core defence: the body comes for a squad at its core, 2026-11-12
+
+**Why.** With craters on (#113) the random hand wiped the plain mould on 11 of race seeds 201-232 and no plan beat it after Holm. The integration thread and both reviewers ruled (11:16-11:22Z) that the craters stay on and core defence comes next, ahead of the economy. The game designer's bar: a deliberate core attack beats random; random's core wipes fall to about 1 in 10; a failed attack costs the squad; the core depends on the tier. The technical lead's gate: every plan beats random after Holm on both seed blocks.
+
+**Looked first** (race seed 204, the random hand, frames every 5-10 s; [core/hub-s204-counts.txt](larder-world-roadmap-2026-11-11/core/hub-s204-counts.txt)). The race world's starting disc of 5,000 walkers settles to about 2,000 by 30 s and then grows (idle reaches 8,582 by 330 s). Random's soldiers, sent one at a time on Attack, walk into the hub in the first minute and fire into its densest walkers: 1,187 killed by 60 s, while the holes round them don't refill and the body never comes for them. The mould falls to 80 walkers by 240 s, the core falls at 244 s and the last walker dies at 302 s. Farm and strike fight at the network's edge near the larder and leave the hub alone, so their moulds grow (to 4,664 and 5,038 by 330 s).
+
+**What.** `larder_world::Core { kind, secs, pull }`, the tiers thread's shape, read once by `Game::with_tier` from `Tier::core` (None for every tier for now; the tiers thread fills its own). The plain mould's is `Core::of(&rules)`: fixed, `Rules::core_secs`, and the new `Rules::core_pull`, default 8.
+- **The pull**: a soldier within twice `core_r` of the core lays `pull` times its own scent over a lure's reach (`BuildRules::lure_r`), so the body is drawn onto a squad at its core through the scent it already follows. Nothing is drawn, and no new GPU row: the soldier's scent goes through the squad frame on both engines. 8 is a lure's own strength (`lure_smell`).
+- **`CoreKind::Headless`**: nothing to hold, so only a wipe ends the mould (for the Sprawler). The Trunk's regrowing core and the Drifter's migrating one need births to restart or move on both engines, and a migrating core needs to know where the body is on the GPU, so they come later.
+- Census rows now say when the core fell (`core fell at T s`).
+
+**In play** (for the owner to judge as a behaviour, not only as a gate fix). The mould now rallies to its core when it is touched there. The hub stays quiet while soldiers work the network's edge. Once one walks within two core radii (10 dish cells) of the core, the walkers there turn and pour onto it, and the fight moves to the soldier. On seed 204, random's seven soldiers walk into the hub at about 40 s:
+- **With the pull**, the body closes on them. Three die between 45 and 50 s, the killing stops at about 1,290 walkers, and the mould holds at about 820, then grows again.
+- **Without it**, all seven keep firing (1,392 killed by 75 s). The mould dwindles until the core falls at 244 s.
+
+A lone soldier, or a trickle of them, now dies at the core; only a squad that brings enough fire at once (strike) takes it. This is the owner's playtest point 3 ("the slime mostly ignored my soldiers") answered in one place, the core, not everywhere. Answering it everywhere was the flee rule's failure, which handed random the core.
+
+A note on the constants. Tonight's pattern was a feel rule that helped random (the flee, then the crater), followed by a counter-rule, and each counter adds a number every later census leans on. This one is a new key, `Rules::core_pull`, but its value is a lure's own strength over a lure's own reach (`lure_smell` 8, `lure_r` 6), so it adds no new magnitude. `core_pull=0` turns it off.
+
+**The strength** (seeds 201-208, random, strike and rush; raw [core/sweep-pull0-201-208.txt](larder-world-roadmap-2026-11-11/core/sweep-pull0-201-208.txt) and the `sweep-pull4`, `-pull8`, `-pull16` files):
+
+| pull | random: core taken, mould wiped | strike: core taken, mean score | rush: core taken |
+| --- | --- | --- | --- |
+| 0 | 4, 4 | 3, +0.755 | 6 |
+| 4 | 2, 1 | 3, +0.961 | 6 |
+| **8** | **0, 0** | **3, +0.744** | 6 |
+| 16 | 1, 1 | 2, +0.578 | 6 |
+
+**The census** (both seed blocks, seven hands, 15-minute games; the baseline is the same code at pull 0, 089167b, main through #124 with craters and #122's build time; the pull at 85b56fb with `core_pull=8`; raw [core/census-core0-race-*.txt](larder-world-roadmap-2026-11-11/core/census-core0-race-5-20.txt) and [core/census-pull8-race-*.txt](larder-world-roadmap-2026-11-11/core/census-pull8-race-5-20.txt), each block in two files; runners 1-4, sha256 checked):
+
+| | race 5-36, pull 0 | race 5-36, pull 8 | race 201-232, pull 0 | race 201-232, pull 8 |
+| --- | --- | --- | --- | --- |
+| farm, wall, fort against random | 25-7, hold | 30-2, hold | 19-13, 19-13, 20-12 | 29-3, hold |
+| strike against random | 27-5, holds | 31-1, holds | 22-10, p 0.05 | 29-3, holds |
+| rush against random | 19-13 | 24-8, holds | 15-17 | 25-7, holds |
+| every plan against idle | 32-0, hold | 32-0, hold | 32-0, hold | 32-0, hold |
+| random takes the core | 7 | 2 | 11 | 3 |
+| **random wipes the mould** | **7** | **2** | **11** | **3** |
+| random's squad wiped | 23 | 29 | 17 | 26 |
+| strike takes the core / wipes the mould | 7 / 4 | 5 / 4 | 6 / 4 | 7 / 5 |
+| rush takes the core / squad wiped | 18 / 9 | 12 / 13 | 19 / 8 | 22 / 8 |
+
+- **Every plan beats random after Holm on both blocks** (Holm over 10), the technical lead's gate; on 201-232 none did without the pull.
+- **Random's core wipes: 5 of 64** (18 without), 1 in 13. Paired on and off (Holm over 7), random scores lower on 27 and 28 of 32 (both hold), and more walkers stand near its soldiers (201-232: 24 up, 7 down, p 0.003, holds): the mould comes for them.
+- **Farm, wall, fort and idle play the same within chance** (idle identically: its soldiers never near the core).
+- **The planned attack still lands**: strike takes the core on 12 of 64 (13 without) and scores higher on 45 of 64, 17 lower (201-232: 24-6, p 0.001, holds).
+- **A failed attack costs the squad**: on 201-232 the rush failed to take the core on 10 seeds and lost its squad on 8 of them; on 5-36 it failed on 20 and lost the squad on 12.
+- **Not met**: strike doesn't pay for a failed attack, since it farms behind it and rebuys to 30 soldiers; it beats farm 22-10 and 21-10 (p 0.05 and 0.07) and wall 26-6 on both blocks (holds; 21-11 and 20-10 without the pull). Food still doesn't bind, which is the economy PR's job (PR 4: running costs).
+- **The core depends on the tier**: `Tier::core` is in; the tiers thread fills its values (the Sprawler headless, the Grudge's pull) after this merges.
+
+**The maps** (the technical lead's ask: the Fork and the Rim, seeds 5-20, the same seven hands at ecaa5d2 with `core_pull=8` and `0`; raw [core/census-pull8-fork-5-20.txt](larder-world-roadmap-2026-11-11/core/census-pull8-fork-5-20.txt) and the `core0-fork`, `pull8-rim` and `core0-rim` files; runners 1-4, sha256 checked):
+- **Random never takes the core or wipes the mould on either map**, with or without the pull (0 of 32 both ways); its squad is wiped on all 32.
+- **Rim**: every plan beats random after Holm (over 10) either way: farm, wall, fort and strike 16-0, rush 15-1 with the pull and 16-0 without.
+- **Fork**: farm, wall, fort and strike beat random 16-0 either way. **The rush loses to random 16-0 with the pull and 15-1 without** (both hold): on the Fork the rush's squad dies at the core on all 16 seeds whatever the pull, so the gate's "every plan beats random" fails there for the rush, and the map, not the pull, is why. Strike wipes the mould on 16 of 16 (15 without), takes the core on 7 (10), and scores higher with the pull on 12 seeds, lower on 1 (p 0.003, holds, median +0.003).
+- Paired on and off (Holm over 7), nothing else changes on either map: farm, wall, fort and idle play identically, since their soldiers never stand at the core.
+
+So the pull does no harm off the race world. Strike's dominance on the Fork is the economy PR's to answer, with the tiers' cores.
+
+**Cost.** No new pass: a pulling soldier lays its scent over a 12-cell disc instead of 4 (about 450 fine cells a frame each, a handful of soldiers at most), on both engines. The GPU twin (`a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu`, seed 3, 30 s of attack at pull 8) kills 1,509 on the CPU and 1,527 on the GPU (1,224 without the pull). Its moulds at 30 s are 11% apart (730 and 815 walkers), so the bound is 8% or 100 walkers. The technical lead asked whether that gap is chaos or a rule the engines play differently, so `twin_gap_over_seeds_is_chaos` (ignored, about 200 s) plays seeds 3-10, each on the CPU, on the GPU, and on the CPU again with one walker more (5,001, same map):
+- **At pull 8**: the mean gap from the CPU at 30 s is 176 walkers on the GPU and 213 with one walker more. The GPU is above the CPU on 4 seeds and below on 4. Mean kills are 1,469 on the CPU, 1,514 on the GPU and 1,554 with one walker more.
+- **At pull 0**: the gaps are 107 and 164, again 4 above and 4 below. Seed 7 is 35% apart (1,044 walkers on the CPU, 1,408 on the GPU), so seed 3 passing the 8% bound at pull 0 is luck.
+
+At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad shoots the mould down, and it is no bigger than the CPU's own spread.
+
+**Pictures**: the hub on seed 204 at 40, 45, 50 and 60 s without and with the pull ([core/hub-s204-off-40s.jpg](larder-world-roadmap-2026-11-11/core/hub-s204-off-40s.jpg) to `-on-60s.jpg`), on the crater page.
