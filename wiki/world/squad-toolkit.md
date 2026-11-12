@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12T22:15Z
+updated: 2026-11-12T22:35Z
 sources: [Reports/rounds-2026-11-12.md, Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [squad::Burst, World::burst, Engine::burst, Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
 ---
@@ -48,7 +48,8 @@ this toolkit's burst list, not a new system. First census
 germ, on its own or as plague, beats no round 8/0 on plain, Swarmer and Sporer
 and the Sleeper ignores every round, so the best loadout does not yet vary by
 tier. Germ resistance 10 on the Swarmer and Sporer cancels it (4 seeds), 3
-halves it: a per-mould dial.
+halves it: a per-mould dial. Rounds now cast through `World::burst`, so they play in
+the `larder-world` window (`rounds=`, Y; gas and germ wait for the GPU port).
 
 ## Owner's word
 
