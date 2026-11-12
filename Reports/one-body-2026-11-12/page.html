@@ -69,6 +69,12 @@ code{font-family:var(--mono);font-size:12.5px}
 <figure><img src="img/film-idle-near-dense.gif" alt="25,000 walkers, close on the squad" width="560" height="350"><figcaption><b>25,000 walkers, close</b></figcaption></figure>
 <figure><img src="img/film-idle-near-trail-base.gif" alt="Today with the trail drawn alone, close on the squad" width="560" height="350"><figcaption><b>Today, trail alone, close</b></figcaption></figure>
 </div>
+<h3>Two ways to get that density: more walkers (A, above) or a coarser grid (B)</h3>
+<div class="figs">
+<figure><img src="img/film-idle-all-coarse.gif" alt="Today's 5,000 walkers on a grid half as fine each way" width="600" height="372"><figcaption><b>B: today's walkers, coarser grid</b><span>(<code>scale=1</code>: 256 × 160 cells instead of 512 × 320)</span><span>2,491 walkers at 1:00, 10,872 at 2:00, 991 at 4:00</span><span>squad alive</span></figcaption></figure>
+<figure><img src="img/film-idle-near-coarse.gif" alt="Coarser grid, close on the squad" width="560" height="350"><figcaption><b>B, close</b></figcaption></figure>
+</div>
+<p>B is just as smooth but blockier close up, and its size swings hard. The game's rules weren't rescaled for the coarser grid, so the squad's shots cut it back from 10,872 to 991. Both need the rules rescaled before they can be compared fairly.</p>
 <p>At Jones-like density (about 15-20% of cells holding a walker, against today's 3-5%), the mould is smooth continuous tubes with no specks. Drawing the trail alone at today's density still shows beads, so the picture isn't the cause: the trail itself is beaded when walkers are this sparse. The cost: that mould killed the idle squad in 78 s. The game's damage, kills and drain all count walkers, so they would have to be scaled down per walker to keep today's difficulty.</p>
 </section>
 
