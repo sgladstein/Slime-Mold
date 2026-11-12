@@ -105,7 +105,7 @@
 //! strike_alarm_r=` and `bait=T1,T2 bait_x= bait_y= bait_r=`; `lifeline=1`
 //! prints the life line with the life cycle off; `style=life` draws it.
 //!
-//! `tier=sporer|sleeper|swarmer` sets a mould tier's life-cycle keys
+//! `tier=NAME` (drifter, sprawler, trunk, sporer, sleeper, swarmer) sets a mould tier's keys
 //! (`mould::tiers`); `strike_pile=N` and `bait_pile=N` aim the player's
 //! strike or bait at the food pile Nth nearest home (0: home).
 
@@ -223,7 +223,8 @@ fn picture(d: &BigDish, style: &str, knee: f32, down: usize) -> image::RgbaImage
 /// grey on the soft curve; where ordinary walkers stand in amber, dormant
 /// walkers in violet and spores in white, each as 1 - exp(-count / twice
 /// the mean count a cell of all living walkers) over the block; and the
-/// alarm in red, full at 10 x `wake_alarm` (or 10). All of it is data: walker
+/// alarm in red, full at 10 x `wake_alarm` (or 10); the scar
+/// (`scar_keep`) in dim blue, full at its peak. All of it is data: walker
 /// counts and fields, no outline drawn. The dead are not drawn.
 fn life_picture(d: &BigDish, down: usize) -> image::RgbaImage {
     let refv = pct(&d.trail, 0.999).max(1e-6);
@@ -250,10 +251,11 @@ fn life_picture(d: &BigDish, down: usize) -> image::RgbaImage {
     let cells = d.agar.iter().filter(|&&a| a).count().max(1) as f32;
     let mean = (living as f32 / cells * (down * down) as f32).max(1e-3);
     let aref = 10.0 * if d.p.wake_alarm > 0.0 { d.p.wake_alarm } else { 1.0 };
+    let sref = d.scar.iter().cloned().fold(1e-6, f32::max);
     let mut img = image::RgbaImage::new(iw, ih);
     for py in 0..ih {
         for px in 0..iw {
-            let (mut v, mut al) = (0.0f32, 0.0f32);
+            let (mut v, mut al, mut sc) = (0.0f32, 0.0f32, 0.0f32);
             for dy in 0..down {
                 for dx in 0..down {
                     let i = (py as usize * down + dy) * d.w + px as usize * down + dx;
@@ -261,14 +263,19 @@ fn life_picture(d: &BigDish, down: usize) -> image::RgbaImage {
                     if !d.alarm.is_empty() {
                         al = al.max(d.alarm[i]);
                     }
+                    if !d.scar.is_empty() {
+                        sc = sc.max(d.scar[i]);
+                    }
                 }
             }
+            // The scar (habituation) in dim blue, full at `sref`.
+            let sb = (sc / sref).clamp(0.0, 1.0).sqrt();
             let g = 0.35 * (v / refv).clamp(0.0, 1.0).powf(0.6);
             let i = (py * iw + px) as usize;
             let [a, b, sp] = [0, 1, 2].map(|s| 1.0 - (-c[s][i] / (2.0 * mean)).exp());
             let r = (al / aref).clamp(0.0, 1.0).sqrt();
             let col = |ca: f32, cb: f32, cs: f32, cr: f32| (255.0 * g + ca * a + cb * b + cs * sp + cr * r).min(255.0) as u8;
-            img.put_pixel(px, py, image::Rgba([col(255.0, 140.0, 255.0, 200.0), col(170.0, 90.0, 255.0, 0.0), col(60.0, 255.0, 255.0, 0.0), 255]));
+            img.put_pixel(px, py, image::Rgba([col(255.0, 140.0, 255.0, 200.0), col(170.0, 90.0, 255.0, 0.0), (col(60.0, 255.0, 255.0, 0.0) as f32 + 140.0 * sb).min(255.0) as u8, 255]));
         }
     }
     img
@@ -471,7 +478,7 @@ fn main() {
     let mut lifeline = false;
     // Print the joined line (see `joined`).
     let mut joined_line = false;
-    // `tier=sporer|sleeper|swarmer` (`mould::tiers`): the tier's keys, set
+    // `tier=NAME` (`mould::tiers`): the tier's keys, set
     // after the preset and before every other key, so `tier=sporer
     // spore_rate=0.0001` tries a faster Sporer.
     let mut tier = None::<Tier>;
@@ -511,7 +518,7 @@ fn main() {
             "bait_r" => bait_r = v.parse().unwrap(),
             "at" => at = v.split(',').map(|s| s.parse().unwrap()).collect(),
             "lifeline" => lifeline = v != "0",
-            "tier" => tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("tier={v}: one of sporer, sleeper, swarmer"))),
+            "tier" => tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("tier={v}: one of {}", Tier::ALL.map(|t| t.name()).join(", ")))),
             "strike_pile" => strike_pile = Some(v.parse().unwrap()),
             "bait_pile" => bait_pile = Some(v.parse().unwrap()),
             _ => overrides.push((k.into(), v.into())),
@@ -651,6 +658,10 @@ fn main() {
             "alarm_keep" => p.alarm_keep = f(),
             "alarm_weight" => p.alarm_weight = f(),
             "alarm_relay" => p.alarm_relay = f(),
+            "scar_keep" => p.scar_keep = f(),
+            "scar_gain" => p.scar_gain = f(),
+            "scar_weight" => p.scar_weight = f(),
+            "scar_habit" => p.scar_habit = f(),
             _ => panic!("unknown key {k}"),
         }
     }
@@ -1023,6 +1034,12 @@ fn main() {
                         rim2 as f64 / n,
                         rim10 as f64 / n
                     );
+                    if !d.scar.is_empty() {
+                        // Habituation: the scar's peak, and its sum within
+                        // twice strike_r of the strike point.
+                        let sum: f32 = (0..d.h).flat_map(|y| (0..d.w).map(move |x| (x, y))).filter(|&(x, y)| (x as f32 / s - strike_x).hypot(y as f32 / s - strike_y) <= 2.0 * strike_r).map(|(x, y)| d.scar[y * d.w + x]).sum();
+                        println!("seed {seed} {name} t {:5.1}s  scar max {:.2} near {:.0}", m.seconds, d.scar.iter().cloned().fold(0.0, f32::max), sum);
+                    }
                 }
                 if !d.kind.is_empty() {
                     // Mixed walkers: for each kind, the share of its walkers

@@ -500,6 +500,25 @@ pub struct BigParams {
     pub alarm_keep: f32,
     pub alarm_weight: f32,
     pub alarm_relay: f32,
+    /// **Habituation** (off when `scar_keep` is 0; needs the alarm field;
+    /// added 2026-11-12 for the Larder ladder, review 2's "a mould that
+    /// learns": `Reports/mould-tiers-campaign-2026-11-12.md`). A scar field
+    /// on the fine grid remembers where the mould was hurt and how often:
+    /// each fine step, after the alarm spreads, every agar cell's scar
+    /// becomes scar x `scar_keep` + `scar_gain` x alarm. It does not
+    /// spread, so the memory stays where the hurt was. A sensor reads
+    /// `scar_weight` x scar beside the trail (under 0 the mould learns to
+    /// keep away from a place it was hit, over 0 to come back to it in
+    /// force), and the alarm term at that cell is divided by
+    /// 1 + `scar_habit` x scar, so a trick played again and again where the
+    /// mould is scarred moves it less each time (Physarum habituates to a
+    /// repeated harmless stimulus: Boisseau, Vogel and Dussutour 2016). The
+    /// alarm fades in about a second; the scar at keep 0.9999 lasts about
+    /// 40 game seconds at the world's two fine steps a tick.
+    pub scar_keep: f32,
+    pub scar_gain: f32,
+    pub scar_weight: f32,
+    pub scar_habit: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
@@ -707,6 +726,10 @@ impl BigParams {
             alarm_keep: 0.0,
             alarm_weight: 0.0,
             alarm_relay: 0.0,
+            scar_keep: 0.0,
+            scar_gain: 0.0,
+            scar_weight: 0.0,
+            scar_habit: 0.0,
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
@@ -811,6 +834,8 @@ pub struct BigDish {
     pub life_t: Vec<u16>,
     /// The alarm field (`alarm_keep` > 0) on the fine grid, else empty.
     pub alarm: Vec<f32>,
+    /// The scar field (`scar_keep` > 0 with the alarm on), else empty.
+    pub scar: Vec<f32>,
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
@@ -1011,6 +1036,7 @@ impl BigDish {
             life: Vec::new(),
             life_t: Vec::new(),
             alarm: Vec::new(),
+            scar: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
             pile_rs: Vec::new(),
@@ -1083,6 +1109,9 @@ impl BigDish {
         }
         if d.p.alarm_keep > 0.0 {
             d.alarm = vec![0.0; w * h];
+            if d.p.scar_keep > 0.0 {
+                d.scar = vec![0.0; w * h];
+            }
         }
         if d.p.species > 1 {
             d.species_trail = vec![vec![0.0; w * h]; d.p.species as usize];
@@ -1657,7 +1686,13 @@ impl BigDish {
         match self.cell(x + c * so, y + s * so) {
             Some(i) if self.agar[i] => {
                 let g = if self.grass.is_empty() { 0.0 } else { gw * self.grass[i] };
-                let al = if self.alarm.is_empty() { 0.0 } else { self.p.alarm_weight * self.alarm[i] };
+                let al = if self.alarm.is_empty() {
+                    0.0
+                } else if self.scar.is_empty() {
+                    self.p.alarm_weight * self.alarm[i]
+                } else {
+                    self.p.alarm_weight * self.alarm[i] / (1.0 + self.p.scar_habit * self.scar[i]) + self.p.scar_weight * self.scar[i]
+                };
                 self.trail_seen(i, sp) + self.scent_at(x + c * sso, y + s * sso) + g + al
             }
             _ => -1.0e6,
@@ -2674,6 +2709,14 @@ impl BigDish {
             if !self.alarm.is_empty() {
                 spread(&self.agar, &self.alarm, &mut self.scratch, self.w, self.h, self.p.alarm_keep, self.threads);
                 std::mem::swap(&mut self.alarm, &mut self.scratch);
+                if !self.scar.is_empty() {
+                    let (keep, gain) = (self.p.scar_keep, self.p.scar_gain);
+                    for ((c, &a), &ag) in self.scar.iter_mut().zip(&self.alarm).zip(&self.agar) {
+                        if ag {
+                            *c = *c * keep + gain * a;
+                        }
+                    }
+                }
             }
             if !self.p.scent_coarse {
                 self.scent_step();
@@ -2855,7 +2898,7 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(self.species_trail.iter().flatten()) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.scar).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
         for &c in self.spec.iter().chain(&self.kind) {

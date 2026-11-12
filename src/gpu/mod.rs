@@ -640,7 +640,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "alarm_relay" => s.alarm_relay = f()?,
         // A mould tier's keys at once (`mould::tiers::Tier`, as
         // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
-        "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of sporer, sleeper, swarmer"))?.settings(s)?,
+        "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of {}", crate::mould::tiers::Tier::ALL.map(|t| t.name()).join(", ")))?.settings(s)?,
         "upkeep" => s.upkeep = f()?,
         "start_energy" => s.start_energy = f()?,
         "birth_energy" => s.birth_energy = f()?,

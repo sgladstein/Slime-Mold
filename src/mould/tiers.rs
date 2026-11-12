@@ -1,6 +1,14 @@
-//! Named mould tiers for the Larder World ladder (Sporer, Sleeper,
-//! Swarmer): each is a set of the big dish's life-cycle keys, so the game
-//! asks for `Tier::Sporer` instead of copying a dozen numbers from a report.
+//! Named mould tiers for the Larder World ladder (Drifter, Sprawler, Trunk,
+//! Sporer, Sleeper, Swarmer): each is a set of the big dish's keys, so the
+//! game asks for `Tier::Sporer` instead of copying a dozen numbers from a
+//! report.
+//!
+//! The Drifter, Sprawler and Trunk (2026-11-12, for the campaign's missions
+//! 1-4; `Reports/mould-tiers-campaign-2026-11-12.md`) are shapes, not life
+//! cycles: each sets the walk (sensor angle and reach, step, trail kept,
+//! explorers, what a packed walker lays) on rules both engines already run,
+//! so no new GPU row. Angles are in degrees, as `examples/bigdish.rs` and
+//! `gpu::set` take them; `Tier::apply` turns them into the CPU's radians.
 //!
 //! The tiers and their counters come from `Reports/mould-tiers-2026-11-11.md`
 //! (each beat its control on 8 of 8 paired seeds on the 20,000-walker dish)
@@ -21,13 +29,42 @@
 
 use super::big::BigParams;
 
-/// A rung of the mould ladder that needs the life cycle.
+/// A rung of the mould ladder.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Tier {
+    /// Droplets: round bodies that sit on crystals and crawl between them
+    /// on faint threads (sensors 90 degrees apart, trail kept 0.93, a packed
+    /// walker lays its trail where it stands). Slow to spread. Counter: any
+    /// squad; shoot a body off its crystal. Mission 1-2's mould.
+    Drifter,
+    /// Explorers: each walker first walks away from trail for up to 800
+    /// fine steps, then joins the network, so the mould throws a fast, thin
+    /// mesh over the whole map with few walkers in it (step 1.5, reach 18,
+    /// trail kept 0.8). Counter: walls; chasing it loses. Mission 3's.
+    Sprawler,
+    /// Long straight cords (sensors 22.5 degrees apart reading 18 fine
+    /// cells out, trail kept 0.95) that hold a few big bodies together and
+    /// re-form round a hole, since the trail outlasts it. Counter: starve
+    /// it (cut a cord; the one body thread's shared food, `energy_flow`, is
+    /// what makes a cut piece starve, and joins this tier once the GPU runs
+    /// it). Mission 4's.
+    Trunk,
     /// Fed walkers fruit into spores that fly to new food; struck, it
     /// scatters spores (`spore_burst`). Counter: starve it, and don't
     /// strike it near untaken food.
     Sporer,
+    /// Habituation, the avoiding answer: a scar field remembers where the
+    /// mould was shot (the alarm, kept about 40 s) and it keeps away from
+    /// a place hurt again and again, long after the alarm has faded; shots
+    /// laid there move it a little (alarm weight -1). Counter: burn a road
+    /// clear once and it stays clear; but it will not come where you wait.
+    Wary,
+    /// Habituation, the swarming answer: the same scar, read the other way,
+    /// with the Swarmer's alarm: each shot at one place brings more of it
+    /// back there (kills a strike rose 16 to 306 over 16 strikes, seed 1).
+    /// Counter: move; don't fire twice from one spot, or make it a kill
+    /// zone.
+    Grudge,
     /// A dormant crust that wakes in a wave and rushes a wound, then is deaf
     /// for 5 s (`sleep_rest`). Counter: bait it, then strike.
     Sleeper,
@@ -41,10 +78,15 @@ pub enum Tier {
 const SPORE: [(&str, &str); 4] = [("spore_scent", "1"), ("spore_reach", "36"), ("spore_land", "1"), ("spore_deposit", "0.2")];
 
 impl Tier {
-    pub const ALL: [Tier; 3] = [Tier::Sporer, Tier::Sleeper, Tier::Swarmer];
+    pub const ALL: [Tier; 8] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Wary, Tier::Grudge];
 
     pub fn name(self) -> &'static str {
         match self {
+            Tier::Drifter => "drifter",
+            Tier::Sprawler => "sprawler",
+            Tier::Trunk => "trunk",
+            Tier::Wary => "wary",
+            Tier::Grudge => "grudge",
             Tier::Sporer => "sporer",
             Tier::Sleeper => "sleeper",
             Tier::Swarmer => "swarmer",
@@ -56,9 +98,23 @@ impl Tier {
     }
 
     /// The tier as `key=value` pairs, with the CPU's key names (the ones
-    /// `examples/bigdish.rs` takes).
+    /// `examples/bigdish.rs` takes; angles in degrees).
     pub fn keys(self) -> Vec<(&'static str, &'static str)> {
         match self {
+            // Chosen by eye on the race world, seed 1, from 15 candidates
+            // (`Reports/mould-tiers-campaign-2026-11-12/`, look.sh). Grazing
+            // (graze_weight 10) was the first Drifter: grass fed it to the
+            // 50,000-slot cap in 15 s, a flood, not a crawl. Step 0.6 held
+            // 3 crystals in 60 s, too still to reach a squad.
+            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1")],
+            // Explorers alone (keep 0.9, step 1) starved to 250 walkers by
+            // 60 s and let go of every crystal; the faster step and longer
+            // reach keep a mesh on 14 of 23.
+            Tier::Sprawler => vec![("explore_steps", "400"), ("explore_spread", "1"), ("keep", "0.8"), ("step", "1.5"), ("sensor_offset", "18")],
+            // Reach 27 with keep 0.97 drew the widest cords but stopped
+            // growing at about 1,900 walkers; crowd 0 starved (1,000); two
+            // trail passes thicken them further but the GPU has no such key.
+            Tier::Trunk => vec![("sensor_angle", "22.5"), ("sensor_offset", "18"), ("keep", "0.95")],
             // 1e-5: at 1e-4 it took all 7 piles by 10 s on 6 of 8 seeds,
             // too fast for the owner's rule (14:59Z, no mould takes the map
             // in about 10 s). Struck, 5% of the fed walkers in the alarm
@@ -86,6 +142,12 @@ impl Tier {
                 ("sleep_death", "0.0001"),
             ],
             Tier::Swarmer => vec![("alarm_keep", "0.98"), ("alarm_weight", "3")],
+            // The scar: keep 0.9999 a fine step, gain 0.01 of the alarm, so
+            // 16 strikes 2 s apart leave a peak of about 250 that halves in
+            // about 40 s; read at -0.5 / +0.5 beside trail and scent
+            // (`Reports/mould-tiers-campaign-2026-11-12.md`, *Habituation*).
+            Tier::Wary => vec![("alarm_keep", "0.98"), ("alarm_weight", "-1"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "-0.5")],
+            Tier::Grudge => vec![("alarm_keep", "0.98"), ("alarm_weight", "3"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "0.5")],
         }
     }
 
@@ -93,7 +155,7 @@ impl Tier {
     /// left as they are).
     pub fn apply(self, p: &mut BigParams) {
         for (k, v) in self.keys() {
-            set_life(p, k, v).unwrap_or_else(|e| panic!("tier {}: {e}", self.name()));
+            set_key(p, k, v).unwrap_or_else(|e| panic!("tier {}: {e}", self.name()));
         }
     }
 
@@ -113,11 +175,22 @@ impl Tier {
     }
 }
 
-/// The life-cycle keys a tier may set, by their CPU names.
-fn set_life(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
+/// The keys a tier may set, by their CPU names (angles in degrees).
+fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
     let f = || v.parse::<f32>().map_err(|e| format!("{key}={v}: {e}"));
     let n = || v.parse::<u16>().map_err(|e| format!("{key}={v}: {e}"));
     match key {
+        // The walk.
+        "sensor_angle" => p.sensor_angle = f()?.to_radians(),
+        "rotate_angle" => p.rotate_angle = f()?.to_radians(),
+        "sensor_offset" => p.sensor_offset = f()?,
+        "step" => p.step = f()?,
+        "keep" => p.keep = f()?,
+        "blocked_deposit" => p.blocked_deposit = f()?,
+        "explore_steps" => p.explore_steps = n()?,
+        "explore_spread" => p.explore_spread = f()?,
+        "explore_deposit" => p.explore_deposit = f()?,
+        // The life cycle.
         "spore_rate" => p.spore_rate = f()?,
         "spore_scent" => p.spore_scent = f()?,
         "spore_alarm" => p.spore_alarm = f()?,
@@ -138,7 +211,11 @@ fn set_life(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "alarm_keep" => p.alarm_keep = f()?,
         "alarm_weight" => p.alarm_weight = f()?,
         "alarm_relay" => p.alarm_relay = f()?,
-        _ => return Err(format!("{key} is not a life-cycle key")),
+        "scar_keep" => p.scar_keep = f()?,
+        "scar_gain" => p.scar_gain = f()?,
+        "scar_weight" => p.scar_weight = f()?,
+        "scar_habit" => p.scar_habit = f()?,
+        _ => return Err(format!("{key} is not a tier key")),
     }
     Ok(())
 }
@@ -146,6 +223,13 @@ fn set_life(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Whether the GPU engine runs the tier yet: every tier but the two
+    /// habituation tiers, whose scar field waits for its GPU port (a new
+    /// binding, through the integration thread's Params queue).
+    fn on_gpu(t: Tier) -> bool {
+        !t.keys().iter().any(|(k, _)| k.starts_with("scar_"))
+    }
 
     #[test]
     fn names_round_trip_and_every_key_sets() {
@@ -155,7 +239,7 @@ mod tests {
             t.apply(&mut p);
             assert_ne!(format!("{p:?}"), format!("{:?}", BigParams::today()), "{} changed nothing", t.name());
         }
-        assert_eq!(Tier::from_name("trunk"), None);
+        assert_eq!(Tier::from_name("hunter"), None);
     }
 
     #[test]
@@ -168,9 +252,13 @@ mod tests {
         assert!(on(Tier::Sporer).spore_rate > 0.0 && on(Tier::Sporer).spore_burst > 0.0);
         assert!(on(Tier::Sleeper).sleep_rate > 0.0 && on(Tier::Sleeper).sleep_rest > 0);
         assert!(on(Tier::Swarmer).alarm_weight > 0.0 && on(Tier::Swarmer).sleep_rate == 0.0);
+        assert!((on(Tier::Drifter).sensor_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-6, "degrees become radians");
+        assert!(on(Tier::Sprawler).explore_steps > 0 && on(Tier::Sprawler).explore_spread > 0.0);
+        assert!(on(Tier::Wary).scar_weight < 0.0 && on(Tier::Grudge).scar_weight > 0.0 && on(Tier::Grudge).alarm_weight > 0.0);
+        assert!(on(Tier::Trunk).sensor_angle < BigParams::today().sensor_angle && on(Tier::Trunk).keep > BigParams::today().keep);
         // Every tier with an alarm rule keeps its alarm (a field that decays
         // in one step does nothing).
-        for t in Tier::ALL {
+        for t in [Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Wary, Tier::Grudge] {
             let p = on(t);
             assert!(p.alarm_keep > 0.5, "{}", t.name());
         }
@@ -216,6 +304,12 @@ mod tests {
         for t in Tier::ALL {
             let mut s = crate::gpu::Settings::big_dish();
             let before = format!("{s:?}");
+            if !on_gpu(t) {
+                let e = t.settings(&mut s).unwrap_err();
+                assert!(e.contains("scar_keep"), "{e}");
+                assert_eq!(format!("{s:?}"), before, "a refusal leaves the settings alone");
+                continue;
+            }
             t.settings(&mut s).unwrap_or_else(|e| panic!("{e}"));
             assert_ne!(format!("{s:?}"), before, "{} changed nothing", t.name());
             let mut want = crate::gpu::big_params(&crate::gpu::Settings::big_dish(), 1, false);
@@ -226,6 +320,25 @@ mod tests {
             crate::gpu::set(&mut by_key, "tier", t.name()).unwrap();
             assert_eq!(format!("{by_key:?}"), format!("{s:?}"), "tier={}", t.name());
         }
-        assert!(crate::gpu::set(&mut crate::gpu::Settings::big_dish(), "tier", "trunk").is_err());
+        assert!(crate::gpu::set(&mut crate::gpu::Settings::big_dish(), "tier", "hunter").is_err());
+    }
+
+    /// The race world's GPU settings with a tier make its CPU params with
+    /// the same tier (bar the fine steps a tick), so a campaign mission's
+    /// mould is the same creature in the window and in the census.
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn each_tier_on_the_gpu_race_world_is_the_cpus() {
+        use crate::gpu::larder_world::{engine_params, race_settings};
+        for t in Tier::ALL.into_iter().filter(|&t| on_gpu(t)) {
+            for (seed, scale, walkers) in [(1, 2, 5_000), (3, 4, 20_000)] {
+                let mut cpu = crate::mould::larder_world::race_params(seed, scale, walkers);
+                t.apply(&mut cpu);
+                let mut s = race_settings(seed, scale, walkers);
+                t.settings(&mut s).unwrap_or_else(|e| panic!("{e}"));
+                let gpu = BigParams { substeps: cpu.substeps, ..engine_params(&s, scale) };
+                assert_eq!(format!("{gpu:?}"), format!("{cpu:?}"), "{} seed {seed} scale {scale}", t.name());
+            }
+        }
     }
 }
