@@ -136,8 +136,8 @@ the race world's crater is the cone (look 3; `scorch_cone`, full 150, keep
 walkers touching, a fifth with 12). Over both blocks random wipes the
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
-random's killing. The crater's time (10 s, or 6, 3 or 1, filmed with
-the squad firing into the thick body) waits on the owner's pick. Next, running costs. Off by default for other threads:
+random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the
+owner's pick (17:29Z) from clips of the squad firing into the thick body. Next, running costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)

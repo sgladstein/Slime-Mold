@@ -478,6 +478,17 @@ pub struct Rules {
     /// not a flee: the mould turning from gunfire made a bigger hole but
     /// let random hold the core (`Reports/dead-ends.md`); the crater
     /// changes only the struck cells.
+    ///
+    /// **4.5 s since 2026-11-12, the owner's pick** (17:29Z: "Can we do
+    /// 4.5 s? I am thinking between the 3 and 6"), after clips of the
+    /// cone crater (PR 3b) with the squad firing into the thick ring on
+    /// the core crystal (`larder-world hand=volley`): at 10 s the hole
+    /// was still pocked 4 s after the fire stopped (15:18Z: "3 fills in
+    /// too slow still", said of a flat-crater clip), at 3 s it closed in
+    /// about 2 s, at 1 s it looked like none. Set on the clips and the
+    /// tests, with no census (the owner's 17:26Z testing rule: a census
+    /// is not a gate for a look). Any time works, not just whole seconds:
+    /// the countdown is in fine steps (`World::fine_steps` a tick).
     pub crater: f32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
@@ -527,7 +538,7 @@ impl Default for Rules {
             overrun: 0.0,
             reserve: 0.0,
             seek: true,
-            crater: 10.0,
+            crater: 4.5,
             spread: 0.0,
         }
     }

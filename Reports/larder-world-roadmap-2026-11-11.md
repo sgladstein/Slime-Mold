@@ -787,14 +787,14 @@ At 15 s, before the fire, all are within 70 walkers. The gap grows as the squad 
 
 **The crater's time in the cone.** A **volley** hand (`larder-world look=DIR hand=volley`): the squad of 9 stands off from the thick ring on the core crystal, burns a line across it from 22 to 34 s and stops, so the hole can be watched filling. Clips at 10, 6, 3 and 1 s and none (`crater/clips/V*`), the stand and rush clips re-rendered with the cone (T, R, W), on the page's first three sections.
 
-| crater | 10 s | 6 s | 3 s | 1 s | none |
-| --- | --- | --- | --- | --- | --- |
-| volley: walkers killed by 46 s | 923 | 768 | 541 | 418 | 309 |
-| stand at the edge: killed by 40 s | 486 | 525 | 401 | 272 | 237 |
-| rush: killed by 19 s (squad wiped in each) | 1,289 | 1,335 | 1,368 | 1,352 | 1,409 |
+| crater | 10 s | 6 s | 4.5 s | 3 s | 1 s | none |
+| --- | --- | --- | --- | --- | --- | --- |
+| volley: walkers killed by 46 s | 923 | 768 | 604 | 541 | 418 | 309 |
+| stand at the edge: killed by 40 s | 486 | 525 | | 401 | 272 | 237 |
+| rush: killed by 19 s (squad wiped in each) | 1,289 | 1,335 | | 1,368 | 1,352 | 1,409 |
 
 - What the volley clips show: at 10 s the ring's front is cleared and pocked holes are still there 4 s after firing stops; at 6 s fewer holes are left; at 3 s the notch is small and closes in about 2 s; at 1 s it looks almost like no craters, even under fire.
 - The rush's kills don't follow the crater time: its squad is wiped inside the body in every clip, and llvmpipe runs in parallel are not bit-repeatable (two clips with the same settings killed 1,289 and 1,300).
-- The time waits on the owner's pick, and lands on the tests and a clip: the 6 and 3 s gates were stopped under the owner's testing rule (17:26Z: build first, balance later; a census is not a gate for a look).
+- **The owner picked 4.5 s** (17:29Z: "Can we do 4.5 s? I am thinking between the 3 and 6"), now `Rules::crater`'s default; its volley clip (`V45`) is on the page between 6 and 3 s. It lands on the tests and the clip: the 6 and 3 s gates were stopped under the owner's testing rule (17:26Z: build first, balance later; a census is not a gate for a look). The countdown is in fine steps, so any time works, not only whole seconds.
 
 **Cost.** One comparison a tick while a core is down, on the CPU; the eating sum is over the crystals the game already reads. Nothing on the GPU.
