@@ -500,6 +500,26 @@ Without the field, shooting leaves no more hole than holding fire: the hits land
 
 With the flee on, random beats farm, wall and rush 13-3 each (p 0.021); farm and wall still beat idle 16-0. Random's Attack orders send soldiers onto the core; a mould that turns from their fire no longer overruns them, they hold the core, and a mould without births starves (12 of its games end with the mould wiped by 900 s, most between 360 and 490 s, with only 1,000-2,000 walkers shot). The first touch comes later: farm 12 later and 2 earlier (median +36 s, p 0.013), idle +47 s, wall +15.5 s, rush 12-1 (p 0.003, survives Holm), fort and strike +16.5 s each (13-2, p 0.007, both survive); walkers near farm and wall fall on 14 of 16 (survive Holm), and farm and wall kill less on 16 of 16. Toggling the flee alone at the current code reproduces both censuses row for row (random, seeds 6-7). A stronger soldier scent does not save it: with scent 4 over 4 dish cells and the flee on, random wiped the mould on 13 of 16 ([census-flee-smell4-race-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-smell4-race-5-20.txt), runner 2). On the Rim with the flee on, random still lost (its squad wiped on 11 of 16, farm and wall over it 16-0, [census-flee-rim-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-flee-rim-5-20.txt), runner 4), so the soft core depends on how open the map leaves it. So the flee answers the owner's point 2 by undoing point 3 and handing the game to random. It stays an opt-in. The game designer's review, on the core: any rule that keeps the mould off soldiers turns the core into a free win, so a later flee, or the Wary tier's habituation, must keep the mould defending its core (soldiers on the core smelling far stronger, or the alarm at the core pulling for every tier), tested against random first.
 
+**The gate on this PR's head** (f92175e: free shots, scent 0.5 over 2 dish cells, #102's seek, no flee; 15-minute games; raw files from runners 1-4 through git, fort and strike local: [census-gate-race-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-race-5-20.txt), [census-gate-race-21-36.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-race-21-36.txt), [census-gate-race-5-36-fort-strike.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-race-5-36-fort-strike.txt), [census-gate-fork-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-fork-5-20.txt), [census-gate-rim-5-20.txt](larder-world-roadmap-2026-11-11/playtest/census-gate-rim-5-20.txt)). Measure named before the run: each plan against idle and random, paired by seed, sign test, Holm within each world; the median paired difference beside each count.
+
+| world, seeds | hand | mean score | ends | against idle | against random |
+| --- | --- | --- | --- | --- | --- |
+| race, 5-36 | farm | +0.223 | 32 at the cap | 32-0, +0.565 | 30-2, +1.749 |
+| | wall | +0.212 | 32 at the cap | 32-0, +0.552 | 30-2, +1.742 |
+| | fort | +0.202 | 32 at the cap | 32-0, +0.546 | 30-2, +1.734 |
+| | strike | +0.826 | 9 mould wiped | 32-0, +0.784 | 31-1, +1.920 |
+| | rush | -0.344 | 7 squad wiped | 24-8, +0.272 (p 0.007) | 28-4, +1.192 |
+| | idle | -0.342 | 32 at the cap | | |
+| | random | -1.123 | 25 squad wiped, 2 mould wiped | | |
+| Fork, 5-20 | farm / wall | +0.352 / +0.353 | 16 at the cap | 16-0 each, +1.955 / +1.957 | 16-0 each, +1.876 / +1.881 |
+| | rush | -1.756 | 15 squad wiped | 1-15 | 1-15 |
+| | idle / random | -1.498 / -1.423 | 15 squad wiped each | | |
+| Rim, 5-20 | farm / wall | +0.047 / +0.061 | 16 at the cap | 16-0 each, +0.347 / +0.358 | 16-0 each, +1.684 / +1.678 |
+| | rush | -1.530 | 16 squad wiped | 0-16 | 9-7 (p 0.80) |
+| | idle / random | -0.295 / -1.176 | 16 at the cap / 10 squad wiped | | |
+
+Every plan beats idle and random on all three worlds and survives Holm; the rush is the one hand that loses on the maps, as before. Two findings for the next PRs. Random wiped the mould on 2 of 32 race seeds (the tiers thread saw 2 of 4 on held-out seeds 201-204 at the same code, so about 4 in 36; with shots at 10 food it was 0 of 16). And strike dominates: it beats farm 28-4, wall 29-3 and fort 31-1 (each p < 0.0001), while every plan ends with 20,000-50,000 food in the bank, so food does not bind (the buildings census found the same with turrets: more guns at the crystals wins however they are bought). The economy is PR 3, running costs first (the game designer: everything alive eats), with a spend-everything hand as the fair comparison (technical lead).
+
 **Next for the hole (PR 2).** Shots lay the squad toolkit's crater (`BigDish::scorch_disc`, the one crater writer): the cells a hit clears stay closed to the mould for a few seconds, so sustained fire digs in and the hole closes once firing stops, with no change to where the mould goes elsewhere. Its gate's random and idle rows run beside the hole and first-touch measures (technical lead's review), not after them.
 
 **Free shots and the scent** (seeds 5-20, 15-minute games, before the flee default; raw in [playtest/](larder-world-roadmap-2026-11-11/playtest/): `census-5-20-price10.txt` local, `census-5-20-free.txt` and `census-5-20-free-smell4.txt` from runners 1 and 2 at a9eb09d).

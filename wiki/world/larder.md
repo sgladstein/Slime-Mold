@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T06:26Z
+updated: 2026-11-12T07:05Z
 sources: [Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
 code: [Tracker, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
@@ -87,8 +87,10 @@ the shots lay read at -1, `larder_world::FLEE_WEIGHT`, an opt-in) carves
 the hole the owner asked for, 102 dish cells after 20 s of four soldiers'
 fire against 29 ([page](https://claude.ai/artifact/5wQ3xSk8pBN6uig1rxKd4R)),
 but as the default it failed the gate: random held the core, which the
-mould no longer defended, and wiped the mould on 12 of 16 seeds. Next, the
-hole from the toolkit's crater. Off by default for other threads:
+mould no longer defended, and wiped the mould on 12 of 16 seeds. Without
+it the gate holds on the race world (32 seeds), the Fork and the Rim, but
+strike beats every plan (farm 28-4) with food left unspent. Next, the hole
+from the toolkit's crater, then running costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)
