@@ -1,0 +1,52 @@
+mission 2y-shrink (First contact): "Cut the mould down to half its size", map fork, tier drifter , seeds 1-4, scale 2, walkers 5000
+on the CPU
+  idle s1: Goal 20s 3*
+  idle s3: Goal 20s 3*
+  idle s2: Goal 20s 3*
+  idle s4: Goal 20s 3*
+  random s2: Goal 20s 3*
+  random s3: Goal 20s 3*
+  random s4: Goal 20s 3*
+  random s1: Goal 20s 3*
+  claim s1: Goal 20s 3*
+  claim s3: Goal 20s 3*
+  claim s2: Goal 20s 3*
+  claim s4: Goal 20s 3*
+  strike s1: Goal 20s 3*
+  strike s3: Goal 20s 3*
+  strike s2: Goal 20s 3*
+  strike s4: Goal 20s 3*
+  hold+claim s1: Goal 20s 3*
+  hold+claim s3: Goal 20s 3*
+  hold+claim s2: Goal 20s 3*
+  hold+claim s4: Goal 20s 3*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+claim        1  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+claim        2  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+claim        3  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+claim        4  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+hold+claim    1  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+hold+claim    2  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+hold+claim    3  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+hold+claim    4  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+idle         1  Goal          20      3 1.00    80%    80%    0%    0%    0%                            16    0   16       19      4         0      0  inf/-inf  0/0/0 0  [0]
+idle         2  Goal          20      3 1.00    80%    80%    0%    0%    0%                            16    0   16       19      4         0      0  inf/-inf  0/0/0 0  [0]
+idle         3  Goal          20      3 1.00    80%    80%    0%    0%    0%                            16    0   16       19      4         0      0  inf/-inf  0/0/0 0  [0]
+idle         4  Goal          20      3 1.00    80%    80%    0%    0%    0%                            16    0   16       19      4         0      0  inf/-inf  0/0/0 0  [0]
+random       1  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   16       19      5         0     44  inf/-inf  0/0/0 0  [0]
+random       2  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   16       19      6         0      0  inf/-inf  0/0/0 0  [0]
+random       3  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   16       19      4         0      0  inf/-inf  0/0/0 0  [0]
+random       4  Goal          20      3 1.00    20%    20%    0%    0%    0%                             4    0   12       19      5         0    305  inf/-inf  0/0/0 0  [0]
+strike       1  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+strike       2  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+strike       3  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+strike       4  Goal          20      3 1.00     0%     0%    0%    0%    0%                             0    0   10       19     11      1500      0  inf/-inf  0/0/0 0  [0]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  claim     4/4  stars 3  best 1.00  dead 0%  stuck 0 s  stall 10 s
+  hold+claim 4/4  stars 3  best 1.00  dead 0%  stuck 0 s  stall 10 s
+  idle      4/4  stars 3  best 1.00  dead 80%  stuck 0 s  stall 16 s
+  random    4/4  stars 3  best 1.00  dead 5%  stuck 0 s  stall 16 s
+  strike    4/4  stars 3  best 1.00  dead 0%  stuck 0 s  stall 10 s
+11 s
