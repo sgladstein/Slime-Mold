@@ -5,7 +5,19 @@
 //! cargo run --release --example larderworld -- census seeds=1-16 [scale=2 walkers=5000 hands=idle,random,farm,rush,wall cap=600 threads=4]
 //! cargo run --release --example larderworld -- look=DIR seeds=1 hands=farm [every=60]
 //! cargo run --release --example larderworld -- census map=fork ...
+//! cargo run --release --example larderworld -- census gpu=both seeds=1-32 threads=1 ...
 //! ```
+//!
+//! **On the GPU engine** (`gpu=1`, or `gpu=both` for each game on both;
+//! 2026-11-12, the technical lead review): the same hands, seeds and rules
+//! on `gpu::larder_world::GpuWorld`, the engine the window plays. The two
+//! run the same rules (the twin tests) but add floats in other orders, so
+//! one seed's games part after a few seconds; what must agree is the spread
+//! of outcomes. With `both` each hand's scores on the two are compared by a
+//! two-sided Mann-Whitney test (Holm over the hands), and the paired sign
+//! tests are printed for each engine, so a plan that wins on the CPU and
+//! not on the GPU shows. A GPU game makes its own device on each thread;
+//! on software Vulkan use `threads=1` (it already uses every core).
 //!
 //! The game is `mould::larder_world` on the CPU race world
 //! (`larder_world::race_world`): 23 crystals that run dry, rock, wet
@@ -23,7 +35,7 @@
 //! seed, each plan against idle and against random, two-sided sign test,
 //! Holm over every comparison made. Each row also prints `score1`, W2b's
 //! score (`Game::score_w2b`: the crystals counted at the cap), to pair with
-//! older censuses. `home_dry=1` turns on `Rules::home_dry`.
+//! older censuses. `home_dry=1` turns on `Rules::home_dry`. `seek=0` turns off `Rules::seek` (a harvester back from a dry crystal walks on to the next safe one).
 //!
 //! **Hands** (fixed rules; settings named here):
 //! - **idle**: never gives an order. The soldiers stand at the larder on
@@ -63,6 +75,9 @@
 //!   boom, claim, late, fort, strike, with knobs after a colon
 //!   (`claim:claim_at=200+keep=4`). Each is also paired with farm, the
 //!   best scripted hand.
+use pixels::wgpu;
+use slime_mould::gpu::block_on;
+use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::mould::big::BigDish;
 use slime_mould::mould::larder_world::{race_params, Cmd, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::larder_world_ai;
@@ -109,6 +124,8 @@ fn main() {
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
     let mut rules = Rules::default();
     let mut map = None::<(String, Map)>;
+    // The engines each game runs on: false the CPU big dish, true the GPU.
+    let mut engines = vec![false];
     for a in std::env::args().skip(1) {
         if a == "census" {
             census = true;
@@ -137,6 +154,15 @@ fn main() {
             "turret_cost" => rules.build.turret_cost = v.parse().unwrap(),
             "turret_every" => rules.build.turret_every = v.parse().unwrap(),
             "tier" => TIER.set(Tier::from_name(v).unwrap_or_else(|| panic!("unknown tier {v}"))).unwrap(),
+            "seek" => rules.seek = v == "1",
+            "gpu" => {
+                engines = match v {
+                    "0" => vec![false],
+                    "1" => vec![true],
+                    "both" => vec![false, true],
+                    _ => panic!("gpu=0, 1 or both"),
+                }
+            }
             "map" => {
                 let path = std::path::Path::new(v);
                 let dir = match path.parent() {
@@ -154,13 +180,15 @@ fn main() {
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let world = format!("{world}, tier {}", TIER.get().map_or("plain", |t| t.name()));
-    println!("larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; rules {rules:?}", rules.cap, rules.tps, seeds);
+    let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
+    println!("larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; rules {rules:?}", rules.cap, rules.tps, seeds);
     let map = map.as_ref().map(|(_, m)| m);
     if let Some(dir) = look {
+        assert!(engines == [false], "look= draws the CPU world only");
         std::fs::create_dir_all(&dir).expect("look dir");
         for &seed in &seeds {
             for hand in &hands {
-                let r = play(seed, scale, walkers, rules, hand, map, Some((&dir, every)));
+                let r = play(seed, scale, walkers, rules, hand, map, Some((&dir, every)), None);
                 println!("{hand} seed {seed}: {} at {:.0} s, score {:+.3}", r.end, r.t, r.score);
             }
         }
@@ -170,31 +198,164 @@ fn main() {
         eprintln!("census or look=DIR");
         return;
     }
-    // Every (seed, hand) game on `threads` threads.
-    let jobs: Vec<(u64, String)> = seeds.iter().flat_map(|&s| hands.iter().map(move |h| (s, h.clone()))).collect();
+    // Every (seed, hand, engine) game on `threads` threads, each thread with
+    // its own GPU device once it plays a GPU game.
+    let mut jobs: Vec<(u64, String, bool)> = Vec::new();
+    for &s in &seeds {
+        for h in &hands {
+            for &g in &engines {
+                jobs.push((s, h.clone(), g));
+            }
+        }
+    }
     let next = std::sync::atomic::AtomicUsize::new(0);
     let out = std::sync::Mutex::new(vec![Row::default(); jobs.len()]);
     std::thread::scope(|sc| {
         for _ in 0..threads {
-            sc.spawn(|| loop {
-                let j = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                if j >= jobs.len() {
-                    break;
+            sc.spawn(|| {
+                let mut dev: Option<(wgpu::Device, wgpu::Queue)> = None;
+                loop {
+                    let j = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    if j >= jobs.len() {
+                        break;
+                    }
+                    let (seed, hand, on_gpu) = &jobs[j];
+                    if *on_gpu && dev.is_none() {
+                        dev = Some(gpu());
+                    }
+                    let r = play(*seed, scale, walkers, rules, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
+                    println!(
+                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}",
+                        if engines.len() > 1 { format!(" {}", engine_name(*on_gpu)) } else { String::new() },
+                        r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1
+                    );
+                    out.lock().unwrap()[j] = r;
                 }
-                let (seed, hand) = &jobs[j];
-                let r = play(*seed, scale, walkers, rules, hand, map, None);
-                println!(
-                    "{hand:>6} seed {seed:>2}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}",
-                    r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1
-                );
-                out.lock().unwrap()[j] = r;
             });
         }
     });
     let out = out.into_inner().unwrap();
-    let get = |seed: u64, hand: &str| out[jobs.iter().position(|(s, h)| *s == seed && h == hand).unwrap()].clone();
+    for &on_gpu in &engines {
+        if engines.len() > 1 {
+            println!("\n==== on {} ====", engine_name(on_gpu));
+        }
+        let get = |seed: u64, hand: &str| out[jobs.iter().position(|(s, h, g)| *s == seed && h == hand && *g == on_gpu).unwrap()].clone();
+        report(&hands, &seeds, &get);
+    }
+    if engines.len() > 1 {
+        let get = |seed: u64, hand: &str, g: bool| out[jobs.iter().position(|(s, h, e)| *s == seed && h == hand && *e == g).unwrap()].clone();
+        compare(&hands, &seeds, &get);
+    }
+}
+
+fn engine_name(on_gpu: bool) -> &'static str {
+    if on_gpu {
+        "the GPU engine"
+    } else {
+        "the CPU"
+    }
+}
+
+/// A GPU device with the adapter's limits (the engine binds 46 buffers).
+fn gpu() -> (wgpu::Device, wgpu::Queue) {
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");
+    eprintln!("larderworld: GPU {}", adapter.get_info().name);
+    block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("larderworld"), required_limits: adapter.limits(), ..Default::default() })).expect("GPU device")
+}
+
+/// **The two engines' spreads** (`gpu=both`): each hand's scores on the
+/// CPU against the GPU engine, a two-sided Mann-Whitney test with ties
+/// shared, Holm over the hands; the medians and the median paired
+/// difference beside it (pairs only share a start: games part within
+/// seconds).
+fn compare(hands: &[String], seeds: &[u64], get: &dyn Fn(u64, &str, bool) -> Row) {
+    println!("\nCPU against GPU, by hand (score: median CPU, median GPU, median GPU - CPU by seed; Mann-Whitney two-sided, Holm over {}):", hands.len());
+    let mut tests = Vec::new();
+    for h in hands {
+        let a: Vec<f64> = seeds.iter().map(|&s| get(s, h, false).score as f64).collect();
+        let b: Vec<f64> = seeds.iter().map(|&s| get(s, h, true).score as f64).collect();
+        let d: Vec<f64> = a.iter().zip(&b).map(|(x, y)| y - x).collect();
+        tests.push((h.clone(), median(&a), median(&b), median(&d), mann_whitney_p(&a, &b)));
+    }
+    let holds = holm(&tests.iter().map(|t| t.4).collect::<Vec<_>>());
+    for (i, (h, ma, mb, md, p)) in tests.iter().enumerate() {
+        println!("  {h:>16}: CPU {ma:+.3}, GPU {mb:+.3}, difference {md:+.3}; p {p:.4}{}", if holds[i] { ", differs" } else { "" });
+    }
+    let ends = |g: bool, b: &str| -> usize { hands.iter().map(|h| seeds.iter().filter(|&&s| get(s, h, g).end == b).count()).sum() };
+    println!("  ends, CPU / GPU: mould wiped {} / {}, cap {} / {}, squad wiped {} / {}", ends(false, "mould wiped"), ends(true, "mould wiped"), ends(false, "cap"), ends(true, "cap"), ends(false, "squad wiped"), ends(true, "squad wiped"));
+}
+
+fn median(v: &[f64]) -> f64 {
+    let mut v = v.to_vec();
+    v.sort_by(f64::total_cmp);
+    match v.len() {
+        0 => 0.0,
+        n if n % 2 == 1 => v[n / 2],
+        n => (v[n / 2 - 1] + v[n / 2]) / 2.0,
+    }
+}
+
+/// Two-sided Mann-Whitney U test, normal approximation with the tie
+/// correction and a continuity correction (fine from about 8 a side).
+fn mann_whitney_p(a: &[f64], b: &[f64]) -> f64 {
+    let (n1, n2) = (a.len() as f64, b.len() as f64);
+    let mut all: Vec<(f64, bool)> = a.iter().map(|&x| (x, false)).chain(b.iter().map(|&x| (x, true))).collect();
+    all.sort_by(|x, y| x.0.total_cmp(&y.0));
+    let n = all.len();
+    let (mut r1, mut ties) = (0.0, 0.0);
+    let mut i = 0;
+    while i < n {
+        let mut j = i;
+        while j + 1 < n && all[j + 1].0 == all[i].0 {
+            j += 1;
+        }
+        let rank = (i + j) as f64 / 2.0 + 1.0;
+        let t = (j - i + 1) as f64;
+        ties += t * t * t - t;
+        r1 += all[i..=j].iter().filter(|x| !x.1).count() as f64 * rank;
+        i = j + 1;
+    }
+    let u = r1 - n1 * (n1 + 1.0) / 2.0;
+    let mean = n1 * n2 / 2.0;
+    let nn = n1 + n2;
+    let var = n1 * n2 / 12.0 * ((nn + 1.0) - ties / (nn * (nn - 1.0)));
+    if var <= 0.0 {
+        return 1.0;
+    }
+    let z = ((u - mean).abs() - 0.5).max(0.0) / var.sqrt();
+    (2.0 * (1.0 - normal_cdf(z))).min(1.0)
+}
+
+fn normal_cdf(z: f64) -> f64 {
+    // Abramowitz and Stegun 7.1.26 for erf, |error| under 1.5e-7.
+    let x = z / std::f64::consts::SQRT_2;
+    let t = 1.0 / (1.0 + 0.327_591_1 * x.abs());
+    let y = 1.0 - (((((1.061_405_429 * t - 1.453_152_027) * t) + 1.421_413_741) * t - 0.284_496_736) * t + 0.254_829_592) * t * (-x * x).exp();
+    0.5 * (1.0 + if x >= 0.0 { y } else { -y })
+}
+
+/// Holm's step-down at 0.05: which of `ps` hold.
+fn holm(ps: &[f64]) -> Vec<bool> {
+    let mut order: Vec<usize> = (0..ps.len()).collect();
+    order.sort_by(|&a, &b| ps[a].total_cmp(&ps[b]));
+    let m = ps.len();
+    let mut holds = vec![false; m];
+    for (rank, &i) in order.iter().enumerate() {
+        if ps[i] * (m - rank) as f64 <= 0.05 {
+            holds[i] = true;
+        } else {
+            break;
+        }
+    }
+    holds
+}
+
+/// One engine's census: each hand's mean and ends, then each plan paired by
+/// seed against idle, random and farm (sign test, Holm).
+fn report(hands: &[String], seeds: &[u64], get: &dyn Fn(u64, &str) -> Row) {
     println!("\nby hand (mean score; ends):");
-    for h in &hands {
+    for h in hands {
         let rows: Vec<Row> = seeds.iter().map(|&s| get(s, h)).collect();
         let mean = rows.iter().map(|r| r.score).sum::<f32>() / rows.len() as f32;
         let ends = |b: &str| rows.iter().filter(|r| r.end == b).count();
@@ -211,7 +372,7 @@ fn main() {
                 continue;
             }
             let (mut w, mut l) = (0, 0);
-            for &s in &seeds {
+            for &s in seeds {
                 let (a, b) = (get(s, h).score, get(s, base).score);
                 if a > b {
                     w += 1;
@@ -240,7 +401,20 @@ fn main() {
     }
 }
 
-fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>) -> Row {
+/// One game: on the CPU big dish, or with `gpu` on the GPU engine
+/// (`GpuWorld`, the race world's settings and the same map).
+#[allow(clippy::too_many_arguments)]
+fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>, gpu: Option<&(wgpu::Device, wgpu::Queue)>) -> Row {
+    if let Some((device, queue)) = gpu {
+        // A tier changes the CPU dish's Params; the GPU world takes Settings.
+        assert!(TIER.get().is_none(), "tier= runs on the CPU only (gpu=0)");
+        let s = race_settings(seed, scale, walkers);
+        let world = match map {
+            Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
+            None => GpuWorld::new(device, queue, s, scale),
+        };
+        return play_on(Game::new(world, rules, seed), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum());
+    }
     let mut p = race_params(seed, scale, walkers);
     if let Some(t) = TIER.get() {
         t.apply(&mut p);
@@ -250,7 +424,21 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
         None => BigDish::new(p),
     };
     world.threads = 1;
-    let mut g = Game::new(world, rules, seed);
+    let draw = |g: &Game<BigDish>, path: &str| {
+        picture(g, path);
+        counts(g, hand, seed);
+    };
+    play_on(Game::new(world, rules, seed), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum())
+}
+
+/// Pictures: the folder, game seconds between them, and what draws one.
+type Look<'a, W> = (&'a str, f32, &'a dyn Fn(&Game<W>, &str));
+
+/// `play`'s game run to its end with `hand`, on any world; with `look`, a
+/// picture every so many game seconds and at the end. `full` is the
+/// crystals' full charge (`pile_full`: the GPU world's from its CPU mirror,
+/// which builds the same walls).
+fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>>, full: &dyn Fn(&W) -> f32) -> Row {
     let start = std::time::Instant::now();
     let mut shot = -1.0f32;
     let mut farmed: Vec<usize> = Vec::new();
@@ -258,11 +446,10 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
     let (mut think_us, mut think_sum, mut thinks) = (0.0f64, 0.0f64, 0u32);
     let end = g.play(|g| {
         let t = g.time();
-        if let Some((dir, every)) = look {
+        if let Some((dir, every, draw)) = look {
             if t - shot >= every || shot < 0.0 {
                 shot = t;
-                picture(g, &format!("{dir}/{hand}-s{seed}-{:04.0}s.png", t));
-                counts(g, hand, seed);
+                draw(g, &format!("{dir}/{hand}-s{seed}-{:04.0}s.png", t));
             }
         }
         match hand {
@@ -325,12 +512,11 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
             }
         }
     });
-    if let Some((dir, _)) = look {
-        picture(&g, &format!("{dir}/{hand}-s{seed}-end-{:04.0}s.png", g.time()));
-        counts(&g, hand, seed);
+    if let Some((dir, _, draw)) = look {
+        draw(&g, &format!("{dir}/{hand}-s{seed}-end-{:04.0}s.png", g.time()));
     }
     let ms = start.elapsed().as_secs_f64() * 1000.0 / g.world.ticks().max(1) as f64;
-    let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / g.world.pile_full.iter().sum::<f32>().max(1.0);
+    let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / full(&g.world).max(1.0);
     Row {
         score: g.score().expect("ended"),
         score1: g.score_w2b().expect("ended"),
@@ -353,7 +539,7 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, hand: &str, map: 
     }
 }
 
-fn random_hand(g: &mut Game<BigDish>) {
+fn random_hand<W: World>(g: &mut Game<W>) {
     if !(g.time() as u64).is_multiple_of(5) {
         return;
     }
@@ -364,7 +550,7 @@ fn random_hand(g: &mut Game<BigDish>) {
     }
     let (w, h) = g.world.size();
     let k = live[g.rng.below(live.len() as u32) as usize];
-    let point = |g: &mut Game<BigDish>| loop {
+    let point = |g: &mut Game<W>| loop {
         let p = (g.rng.f32() * w as f32, g.rng.f32() * h as f32);
         if g.world.open(p.0, p.1) {
             break p;
@@ -399,10 +585,33 @@ fn random_hand(g: &mut Game<BigDish>) {
         let l = 5.0 * g.world.scale();
         g.apply(Cmd::Wall((m.0 - l * b.cos(), m.1 - l * b.sin()), (m.0 + l * b.cos(), m.1 + l * b.sin())));
     }
+    // Buildings are in random's pool too (the technical lead, 11-12: a
+    // random hand that cannot place a turret is no control for the hands
+    // that do): a turret, lure or outpost somewhere in the chosen soldier's
+    // build reach, wherever it wanders (the core too), or a pump on a
+    // random crystal; and now and then a lure switched. Failed placements
+    // (no food, no ground) are simply lost, as a random click would be.
+    if g.rng.below(4) == 0 {
+        let s = g.soldiers[k];
+        let kind = [Kind::Turret, Kind::Lure, Kind::Pump, Kind::Outpost][g.rng.below(4) as usize];
+        let at = if kind == Kind::Pump {
+            let cs = g.world.crystals();
+            cs[g.rng.below(cs.len() as u32) as usize].0
+        } else {
+            let r = g.rules.build.touch * g.world.scale() * g.rng.f32();
+            let a = g.rng.f32() * std::f32::consts::TAU;
+            (s.x + r * a.cos(), s.y + r * a.sin())
+        };
+        g.apply(Cmd::Build(kind, at));
+    }
+    if !g.buildings.is_empty() && g.rng.below(8) == 0 {
+        let b = g.rng.below(g.buildings.len() as u32) as usize;
+        g.apply(Cmd::Toggle(b));
+    }
 }
 
 /// Crystals with charge, nearest the larder first (the core last of all).
-fn by_distance(g: &Game<BigDish>) -> Vec<(f32, f32)> {
+fn by_distance<W: World>(g: &Game<W>) -> Vec<(f32, f32)> {
     let l = g.larder;
     // A crystal under one frame's full ask is dry: the soldier the game
     // sent home from it (`Rules::home_dry`) is not sent back for crumbs.
@@ -413,7 +622,7 @@ fn by_distance(g: &Game<BigDish>) -> Vec<(f32, f32)> {
     cs
 }
 
-fn farm_hand(g: &mut Game<BigDish>, farmed: &mut Vec<usize>) {
+fn farm_hand<W: World>(g: &mut Game<W>, farmed: &mut Vec<usize>) {
     let cs = by_distance(g);
     if g.bank > g.rules.soldier_cost + RESERVE && g.alive() < FARM_MAX {
         g.apply(Cmd::Buy);
@@ -449,7 +658,7 @@ fn farm_hand(g: &mut Game<BigDish>, farmed: &mut Vec<usize>) {
     }
 }
 
-fn rush_hand(g: &mut Game<BigDish>) {
+fn rush_hand<W: World>(g: &mut Game<W>) {
     while g.bank > g.rules.soldier_cost + RESERVE && g.alive() < g.rules.max_squad {
         if !g.apply(Cmd::Buy) {
             break;
@@ -464,12 +673,12 @@ fn rush_hand(g: &mut Game<BigDish>) {
 
 /// A building of `kind` at `at`, if the bank holds its price over
 /// `RESERVE` (the farm hand's spare) and it can go there now.
-fn spare_build(g: &mut Game<BigDish>, kind: Kind, at: (f32, f32)) -> bool {
+fn spare_build<W: World>(g: &mut Game<W>, kind: Kind, at: (f32, f32)) -> bool {
     g.bank >= g.build_price(kind, at) + RESERVE && g.build_blocked(kind, at).is_none() && g.apply(Cmd::Build(kind, at))
 }
 
 /// An open cell within 3 dish cells of `p`, nearest first.
-fn open_by(g: &Game<BigDish>, p: (f32, f32)) -> Option<(f32, f32)> {
+fn open_by<W: World>(g: &Game<W>, p: (f32, f32)) -> Option<(f32, f32)> {
     let s = g.world.scale();
     (0..=6).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
         let a = k as f32 / 12.0 * std::f32::consts::TAU;
@@ -477,11 +686,11 @@ fn open_by(g: &Game<BigDish>, p: (f32, f32)) -> Option<(f32, f32)> {
     }).find(|q| g.world.open(q.0, q.1))
 }
 
-fn alive_kind(g: &Game<BigDish>, kind: Kind) -> usize {
+fn alive_kind<W: World>(g: &Game<W>, kind: Kind) -> usize {
     g.buildings.iter().filter(|b| b.alive && b.kind == kind).count()
 }
 
-fn ring_hand(g: &mut Game<BigDish>) {
+fn ring_hand<W: World>(g: &mut Game<W>) {
     if g.time() < 5.0 || alive_kind(g, Kind::Turret) >= RING_N {
         return;
     }
@@ -502,7 +711,7 @@ fn ring_hand(g: &mut Game<BigDish>) {
 
 /// The turtle's two halves can be played alone: `pumps` (pumps, no
 /// turrets) and `guard` (a turret by each farmed crystal, no pumps).
-fn turtle_hand(g: &mut Game<BigDish>, pumps: bool, turrets: bool) {
+fn turtle_hand<W: World>(g: &mut Game<W>, pumps: bool, turrets: bool) {
     let s = g.world.scale();
     let sites: Vec<(f32, f32)> = g.soldiers.iter().filter(|q| q.alive).filter_map(|q| match q.order {
         Order::Clear(x, y) => g.crystal_at((x, y)).map(|(_, c)| c),
@@ -531,7 +740,7 @@ fn turtle_hand(g: &mut Game<BigDish>, pumps: bool, turrets: bool) {
     }
 }
 
-fn zone_hand(g: &mut Game<BigDish>) {
+fn zone_hand<W: World>(g: &mut Game<W>) {
     if g.time() < 5.0 {
         return;
     }
@@ -563,7 +772,7 @@ fn zone_hand(g: &mut Game<BigDish>) {
 
 /// A wall across the core-to-larder line, `WALL_AT` of the way to the
 /// larder, built by sending soldier 0 there first if it is out of range.
-fn wall_road(g: &mut Game<BigDish>) {
+fn wall_road<W: World>(g: &mut Game<W>) {
     let (c, l) = (g.core, g.larder);
     let m = (c.0 + (l.0 - c.0) * WALL_AT, c.1 + (l.1 - c.1) * WALL_AT);
     let (dx, dy) = (l.0 - c.0, l.1 - c.1);

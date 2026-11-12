@@ -30,6 +30,7 @@ struct Row {
     phase_dead: [f32; 4],
     longest_dead: u32,
     longest_stuck: u32,
+    longest_stall: u32,
     decided: usize,
     alive: usize,
     harvested: f32,
@@ -87,10 +88,10 @@ fn main() {
     });
     let mut rows = rows.into_inner().unwrap();
     rows.sort_by(|a, b| a.hand.cmp(&b.hand).then(a.seed.cmp(&b.seed)));
-    println!("\nhand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck  decided  alive harvested killed  count least/most");
+    println!("\nhand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most");
     for r in &rows {
         println!(
-            "{:<9} {:>4}  {:<10} {:>5.0}  {:>5} {:>4.2}  {:>4.0}%  {:>4.0}% {:>4.0}% {:>4.0}% {:>4.0}%                          {:>4} {:>4}         {:>5}  {:>5} {:>9.0} {:>6}  {:.3}/{:.3}",
+            "{:<9} {:>4}  {:<10} {:>5.0}  {:>5} {:>4.2}  {:>4.0}%  {:>4.0}% {:>4.0}% {:>4.0}% {:>4.0}%                          {:>4} {:>4} {:>4}    {:>5}  {:>5} {:>9.0} {:>6}  {:.3}/{:.3}",
             r.hand,
             r.seed,
             r.cause,
@@ -104,6 +105,7 @@ fn main() {
             100.0 * r.phase_dead[3],
             r.longest_dead,
             r.longest_stuck,
+            r.longest_stall,
             r.decided,
             r.alive,
             r.harvested,
@@ -112,7 +114,7 @@ fn main() {
             r.count.1
         );
     }
-    println!("\nby hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run");
+    println!("\nby hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall");
     let mut names: Vec<&str> = rows.iter().map(|r| r.hand.as_str()).collect();
     names.dedup();
     for h in names {
@@ -121,12 +123,13 @@ fn main() {
         stars.sort();
         let met = rs.iter().filter(|r| r.cause == "Goal").count();
         println!(
-            "  {h:<9} {met}/{}  stars {}  best {:.2}  dead {:.0}%  stuck {} s",
+            "  {h:<9} {met}/{}  stars {}  best {:.2}  dead {:.0}%  stuck {} s  stall {} s",
             rs.len(),
             stars[stars.len() / 2],
             rs.iter().map(|r| r.best).sum::<f32>() / rs.len() as f32,
             100.0 * rs.iter().map(|r| r.dead).sum::<f32>() / rs.len() as f32,
-            rs.iter().map(|r| r.longest_stuck).max().unwrap_or(0)
+            rs.iter().map(|r| r.longest_stuck).max().unwrap_or(0),
+            rs.iter().map(|r| r.longest_stall).max().unwrap_or(0)
         );
     }
 }
@@ -176,6 +179,7 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, wal
         phase_dead: [share(0), share(1), share(2), share(3)],
         longest_dead: tr.longest_dead,
         longest_stuck: tr.longest_stuck,
+        longest_stall: tr.longest_stall,
         decided: decided_at(&tr.bars, v.stars),
         alive: g.alive(),
         harvested: g.harvested,

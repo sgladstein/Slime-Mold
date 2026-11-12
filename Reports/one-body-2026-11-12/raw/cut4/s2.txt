@@ -1,0 +1,26 @@
+cutprobe race world scale 2 walkers 5000, grow 150 s, follow 90 s, 3 cuts a seed, seeds [2]
+arms: [("base", []), ("A", [("lone_upkeep", "5"), ("energy_flow", "0.05"), ("hunger_scent", "4")]), ("L3", [("lone_upkeep", "3"), ("energy_flow", "0.05"), ("hunger_scent", "4")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 2 grown | alive 6455 parts1% 4 lcs 0.72 lone 0.01 rms 49.3 | crystals eaten from 5 of 23
+base 2 0 | 304 15 1 | 1.00 1.01 0.98 10.3 1.93 | 90 rejoin+fed 15 3.4 react 24 | 6455 7.67
+base 2 1 | 484 15 1 | 0.98 1.00 0.97 8.0 1.46 | 90 rejoin+fed 9 3.1 react 80 | 6455 7.67
+base 2 2 | 485 15 1 | 0.97 1.00 0.99 7.5 1.40 | 90 rejoin+fed 32 4.7 react 32 | 6455 7.67
+A 2 grown | alive 3320 parts1% 1 lcs 0.98 lone 0.01 rms 24.6 | crystals eaten from 2 of 23
+A 2 0 | 101 50 1 | 0.17 5.09 0.52 25.6 37.10 | 22 rejoin+fed 2 54.9 react 3 | 3320 13.03
+A 2 1 | 202 35 1 | 0.64 4.48 0.55 24.4 13.33 | 31 rejoin+fed 3 17.1 react 2 | 3320 13.03
+A 2 2 | 149 15 1 | 0.20 9.08 0.31 22.2 49.74 | 14 rejoin+fed 2 21.0 react 3 | 3320 13.03
+L3 2 grown | alive 5968 parts1% 1 lcs 0.99 lone 0.01 rms 36.4 | crystals eaten from 3 of 23
+L3 2 0 | 167 15 1 | 0.98 1.00 0.99 5.0 1.80 | 90 rejoin+fed 13 0.5 react -1 | 5968 10.60
+L3 2 1 | 100 25 1 | 0.71 8.96 0.41 24.3 12.52 | 90 rejoin+fed 4 66.1 react 3 | 5968 10.60
+L3 2 2 | 830 25 1 | 1.00 1.00 0.99 12.7 1.70 | 90 rejoin+fed 22 6.0 react 56 | 5968 10.60
+
+summary (mean over cuts)
+base: cuts 3 n0 424 lcs20 0.98 frag 1.00 lcs 0.98 rms20 8.6 compact20 1.60 life 90 moved 3.7 fates {"rejoin+fed": 3}
+A: cuts 3 n0 151 lcs20 0.34 frag 6.22 lcs 0.46 rms20 24.1 compact20 33.39 life 22 moved 31.0 fates {"rejoin+fed": 3}
+  vs base: lcs20 better 0 worse 3, p 0.2500
+  vs base: life better 0 worse 3, p 0.2500
+  vs base: compact20 better 0 worse 3, p 0.2500
+L3: cuts 3 n0 366 lcs20 0.89 frag 3.65 lcs 0.80 rms20 14.0 compact20 5.34 life 90 moved 24.2 fates {"rejoin+fed": 3}
+  vs base: lcs20 better 1 worse 2, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 1 worse 2, p 1.0000
