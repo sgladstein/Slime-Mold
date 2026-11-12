@@ -1,0 +1,145 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+/tmp/claude-0/glook/on/pure-on/fork-idle-002s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-002s-near.png
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.050 ms a frame
+  t 2 s: mould 24951, soldiers 4, bank 1998, harvested 0, shots 5, killed 49, took 0%, crystals left 1.000; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-004s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-004s-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.047 ms a frame
+  t 4 s: mould 25286, soldiers 4, bank 1990, harvested 0, shots 13, killed 89, took 0%, crystals left 1.000; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-006s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-006s-near.png
+  CPU: ground field 3.11 ms (once a game second), model and HUD 0.089 ms a frame
+  t 6 s: mould 25542, soldiers 4, bank 1953, harvested 0, shots 21, killed 220, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-008s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-008s-near.png
+  CPU: ground field 1.91 ms (once a game second), model and HUD 0.050 ms a frame
+  t 8 s: mould 25815, soldiers 4, bank 1899, harvested 0, shots 29, killed 380, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-010s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-010s-near.png
+  CPU: ground field 2.62 ms (once a game second), model and HUD 0.071 ms a frame
+  t 10 s: mould 26210, soldiers 4, bank 1847, harvested 0, shots 37, killed 534, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-012s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-012s-near.png
+  CPU: ground field 3.04 ms (once a game second), model and HUD 0.091 ms a frame
+  t 12 s: mould 26522, soldiers 4, bank 1793, harvested 0, shots 45, killed 727, took 0%, crystals left 0.999; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-014s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-014s-near.png
+  CPU: ground field 1.81 ms (once a game second), model and HUD 0.048 ms a frame
+  t 14 s: mould 26963, soldiers 4, bank 1744, harvested 0, shots 53, killed 844, took 0%, crystals left 0.998; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-016s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-016s-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.036 ms a frame
+  t 16 s: mould 27337, soldiers 4, bank 1708, harvested 0, shots 61, killed 1010, took 0%, crystals left 0.998; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-018s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-018s-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.037 ms a frame
+  t 18 s: mould 27746, soldiers 4, bank 1680, harvested 0, shots 69, killed 1191, took 0%, crystals left 0.997; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-020s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-020s-near.png
+  CPU: ground field 2.52 ms (once a game second), model and HUD 0.052 ms a frame
+  t 20 s: mould 28090, soldiers 4, bank 1635, harvested 0, shots 77, killed 1367, took 0%, crystals left 0.997; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-022s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-022s-near.png
+  CPU: ground field 2.18 ms (once a game second), model and HUD 0.057 ms a frame
+  t 22 s: mould 28496, soldiers 2, bank 1592, harvested 0, shots 83, killed 1520, took 0%, crystals left 0.996; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-024s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-024s-near.png
+  CPU: ground field 1.96 ms (once a game second), model and HUD 0.040 ms a frame
+  t 24 s: mould 28931, soldiers 2, bank 1532, harvested 0, shots 87, killed 1612, took 0%, crystals left 0.996; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-026s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-026s-near.png
+  CPU: ground field 1.86 ms (once a game second), model and HUD 0.040 ms a frame
+  t 26 s: mould 29454, soldiers 2, bank 1460, harvested 0, shots 91, killed 1692, took 0%, crystals left 0.995; squad at 256.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-028s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-028s-near.png
+  CPU: ground field 1.85 ms (once a game second), model and HUD 0.052 ms a frame
+  t 28 s: mould 29929, soldiers 1, bank 1430, harvested 0, shots 94, killed 1754, took 0%, crystals left 0.994; squad at 262.0,112.5
+/tmp/claude-0/glook/on/pure-on/fork-idle-030s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-030s-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.047 ms a frame
+  t 30 s: mould 30402, soldiers 0, bank 1420, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.994
+/tmp/claude-0/glook/on/pure-on/fork-idle-032s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-032s-near.png
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.048 ms a frame
+  t 32 s: mould 30890, soldiers 0, bank 1405, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.993
+/tmp/claude-0/glook/on/pure-on/fork-idle-034s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-034s-near.png
+  CPU: ground field 2.42 ms (once a game second), model and HUD 0.065 ms a frame
+  t 34 s: mould 31325, soldiers 0, bank 1387, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.993
+/tmp/claude-0/glook/on/pure-on/fork-idle-036s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-036s-near.png
+  CPU: ground field 1.90 ms (once a game second), model and HUD 0.049 ms a frame
+  t 36 s: mould 31726, soldiers 0, bank 1364, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.992
+/tmp/claude-0/glook/on/pure-on/fork-idle-038s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-038s-near.png
+  CPU: ground field 1.86 ms (once a game second), model and HUD 0.046 ms a frame
+  t 38 s: mould 32135, soldiers 0, bank 1294, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.991
+/tmp/claude-0/glook/on/pure-on/fork-idle-040s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-040s-near.png
+  CPU: ground field 2.61 ms (once a game second), model and HUD 0.066 ms a frame
+  t 40 s: mould 32585, soldiers 0, bank 1146, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.991
+/tmp/claude-0/glook/on/pure-on/fork-idle-042s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-042s-near.png
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.045 ms a frame
+  t 42 s: mould 33057, soldiers 0, bank 944, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.990
+/tmp/claude-0/glook/on/pure-on/fork-idle-044s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-044s-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.050 ms a frame
+  t 44 s: mould 33443, soldiers 0, bank 735, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.990
+/tmp/claude-0/glook/on/pure-on/fork-idle-046s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-046s-near.png
+  CPU: ground field 1.71 ms (once a game second), model and HUD 0.045 ms a frame
+  t 46 s: mould 33802, soldiers 0, bank 521, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989
+/tmp/claude-0/glook/on/pure-on/fork-idle-048s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-048s-near.png
+  CPU: ground field 2.40 ms (once a game second), model and HUD 0.108 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-050s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-050s-near.png
+  CPU: ground field 2.67 ms (once a game second), model and HUD 0.107 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-052s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-052s-near.png
+  CPU: ground field 2.38 ms (once a game second), model and HUD 0.107 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-054s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-054s-near.png
+  CPU: ground field 2.36 ms (once a game second), model and HUD 0.105 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-056s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-056s-near.png
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.102 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-058s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-058s-near.png
+  CPU: ground field 1.66 ms (once a game second), model and HUD 0.070 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-060s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-060s-near.png
+  CPU: ground field 1.66 ms (once a game second), model and HUD 0.068 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-070s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-070s-near.png
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.067 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-080s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-080s-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.067 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-090s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-090s-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.067 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-100s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-100s-near.png
+  CPU: ground field 1.80 ms (once a game second), model and HUD 0.068 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-110s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-110s-near.png
+  CPU: ground field 2.38 ms (once a game second), model and HUD 0.100 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
+/tmp/claude-0/glook/on/pure-on/fork-idle-120s-all.png
+/tmp/claude-0/glook/on/pure-on/fork-idle-120s-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.064 ms a frame
+  t 47 s: mould 34034, soldiers 0, bank 398, harvested 0, shots 96, killed 1773, took 0%, crystals left 0.989, ended: squad wiped
