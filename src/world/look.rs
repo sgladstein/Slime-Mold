@@ -64,13 +64,18 @@ pub struct Fields<'a> {
     /// or 0 plain), in byte 0's high nibble: the view draws each kind as its
     /// own ground under the mould.
     pub soil: &'a [u8],
+    /// Each crystal cell's depth (`crystal_depth` of `crystal`), worked
+    /// out once by a caller whose crystals keep their cells; empty: worked
+    /// out here every call. It is most of `ground`'s cost (the Larder
+    /// world, 2026-11-12: 3.9-6.1 ms a rebuild on the cloud CPU).
+    pub depth: &'a [u8],
 }
 
 /// The ground field for a `w`-wide world of `cells` cells. Off the agar
 /// and not a wall is rock (the rim of a dish is rock too).
 pub fn ground(w: usize, cells: usize, f: &Fields) -> Vec<u32> {
     let at = |v: &[bool], i: usize| v.get(i).copied().unwrap_or(false);
-    let depth = crystal_depth(w, cells, f.crystal);
+    let depth = if f.depth.len() == cells { f.depth.to_vec() } else { crystal_depth(w, cells, f.crystal) };
     let mut g: Vec<u32> = (0..cells)
         .map(|i| {
             if at(f.wall, i) {
@@ -168,7 +173,7 @@ pub fn ground_buffer(device: &pixels::wgpu::Device, queue: &pixels::wgpu::Queue,
 /// nearest cell that is not of the same crystal), scaled so each crystal's
 /// deepest cell is 255; 0 outside crystals. Exact distances to each
 /// crystal's rim cells, so a round crystal stands as a round cone.
-fn crystal_depth(w: usize, cells: usize, crystal: &[u16]) -> Vec<u8> {
+pub fn crystal_depth(w: usize, cells: usize, crystal: &[u16]) -> Vec<u8> {
     let mut out = vec![0u8; cells];
     if crystal.is_empty() || w == 0 {
         return out;
@@ -257,5 +262,15 @@ mod tests {
         assert_eq!(depth(4, 4), 255);
         assert!(depth(4, 2) < depth(4, 3) && depth(4, 3) < 255);
         assert_eq!(depth(0, 0), 0);
+    }
+
+    #[test]
+    fn a_given_depth_draws_the_same_ground() {
+        let w = 9;
+        let crystal: Vec<u16> = (0..81usize).map(|i| if (i % 9).abs_diff(4) + (i / 9).abs_diff(4) < 4 { 1 } else { 0 }).collect();
+        let depth = crystal_depth(w, 81, &crystal);
+        let a = ground(w, 81, &Fields { crystal: &crystal, ..Default::default() });
+        let b = ground(w, 81, &Fields { crystal: &crystal, depth: &depth, ..Default::default() });
+        assert_eq!(a, b);
     }
 }
