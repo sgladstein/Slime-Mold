@@ -96,6 +96,7 @@ use std::time::Instant;
 use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::gpu::{block_on, read_back};
+use slime_mould::mould::kit::{Kit, KitRules, Tool};
 use slime_mould::mould::larder_world::{Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
@@ -137,6 +138,30 @@ const PUMP: u32 = 14;
 const OUTPOST: u32 = 15;
 const LURES: u32 = 16;
 const BACK: u32 = 17;
+// The tools page (E, 2026-11-12): the squad toolkit (`mould::kit`), each
+// tool a burst the GPU world applies (`World::burst`).
+const TOOLS_PAGE: u32 = 18;
+const T_BLAST: u32 = 19;
+const T_CORD: u32 = 20;
+const T_MINE: u32 = 21;
+const T_GERM: u32 = 22;
+const T_GAS: u32 = 23;
+const T_BACK: u32 = 24;
+
+/// Between two steps: every living soldier at the larder takes one tool
+/// (`KitRules::carry_each`), a selected one as many as it may hold
+/// (`carry_max`; each costs carry, `tool_weight`, so a loaded soldier
+/// harvests less: the carry rule, round 2), and mines with enough mould on
+/// them go off.
+fn kit_between(kit: &mut Kit, g: &mut Game<GpuWorld>, selected: &[usize]) {
+    for k in 0..g.soldiers.len() {
+        let n = if selected.contains(&k) { kit.rules.carry_max } else { kit.rules.carry_each };
+        if g.soldiers[k].alive && kit.held(k) < n {
+            kit.restock(g, k, n);
+        }
+    }
+    kit.frame(g);
+}
 
 /// The building a build-page command places.
 fn build_kind(id: u32) -> Option<Kind> {
@@ -303,6 +328,10 @@ struct App {
     saved: bool,
     /// The command card shows the build page (Q).
     build_page: bool,
+    /// The squad toolkit (`mould::kit`) and whether the card shows its page
+    /// (E). Tools are not in the game's replay (the kit is outside `Game`).
+    kit: Kit,
+    tools_page: bool,
     /// The mission being played, and the last game second it followed.
     mission: Option<Tracker>,
     mission_sec: u64,
@@ -364,6 +393,8 @@ impl App {
             report_at: Instant::now(),
             saved: false,
             build_page: false,
+            kit: Kit::new(KitRules::default()),
+            tools_page: false,
             mission: None,
             mission_sec: 0,
             speaker: None,
@@ -445,6 +476,7 @@ impl App {
             (rules.strike, rules.shot_every, rules.spread) = (strike, every, spread);
         }
         let game = Game::new(world, rules, a.seed).with_tier(core_tier);
+        self.kit = Kit::new(KitRules::default());
         self.mission = mission.map(|m| Tracker::new(m, &game));
         self.mission_sec = 0;
         let e = &game.world.e;
@@ -641,6 +673,8 @@ impl App {
                     }
                     BUILD_PAGE => self.build_page = true,
                     BACK => self.build_page = false,
+                    TOOLS_PAGE => self.tools_page = true,
+                    T_BACK => self.tools_page = false,
                     LURES => {
                         if let Some(g) = self.game.as_mut() {
                             let lures: Vec<usize> = (0..g.buildings.len()).filter(|&k| g.buildings[k].alive && g.buildings[k].kind == Kind::Lure).collect();
@@ -682,6 +716,16 @@ impl App {
                         }
                     }
                 }
+                HudEvent::Point { id: id @ (T_BLAST | T_MINE | T_GERM | T_GAS), at } => {
+                    let tool = match id {
+                        T_BLAST => Tool::Blast(at),
+                        T_MINE => Tool::Mine(at),
+                        T_GERM => Tool::Germ(at),
+                        _ => Tool::Gas(at),
+                    };
+                    self.use_tool(tool);
+                }
+                HudEvent::Line { id: T_CORD, from, to } => self.use_tool(Tool::Cord(from, to)),
                 HudEvent::Line { id: BURN, from, to } => self.burn(&sel, from, to),
                 HudEvent::Line { id: WALL, from, to } => {
                     if let Some(g) = self.game.as_mut() {
@@ -698,6 +742,37 @@ impl App {
             }
         }
         Ok(false)
+    }
+
+    /// Uses a toolkit tool now, between steps (a running step finishes
+    /// first, as a command does), and says why not if it can't.
+    fn use_tool(&mut self, t: Tool) {
+        let Some(g) = self.game.as_mut() else { return };
+        if g.in_flight() {
+            g.finish_step();
+            kit_between(&mut self.kit, g, &self.controls.selected);
+        }
+        let k = &self.kit;
+        let at = match t {
+            Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) => p,
+            Tool::Cord(a, b) => ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0),
+            Tool::Smell(..) => return,
+        };
+        let held = g.soldiers.iter().enumerate().any(|(i, s)| s.alive && k.held(i) > 0);
+        let near = k.in_reach(g, at);
+        let r = k.rules;
+        if !self.kit.use_tool(g, t) {
+            let why = if !held {
+                "No soldier holds a tool: soldiers take them at the larder".to_string()
+            } else if !near {
+                format!("Too far: a soldier holding a tool must be within {:.0} cells", r.reach)
+            } else if matches!(t, Tool::Cord(..)) {
+                format!("A cord is at most {:.0} cells long, and needs the food", r.cord_max)
+            } else {
+                "Not enough food, or not on open ground".to_string()
+            };
+            self.hud.alert(&why, None, theme::WARN);
+        }
     }
 
     fn next_idle(&self, after: Option<usize>) -> Option<usize> {
@@ -729,6 +804,7 @@ impl App {
         // verdict the census steps no more, so neither does this.
         if g.in_flight() && g.step_ready() && !mission_over {
             g.finish_step();
+            kit_between(&mut self.kit, g, &self.controls.selected);
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
         } else if g.in_flight() {
@@ -750,6 +826,7 @@ impl App {
         while self.owed >= step && g.end.is_none() {
             if g.in_flight() {
                 g.finish_step();
+                kit_between(&mut self.kit, g, &self.controls.selected);
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
                 if g.end.is_some() {
@@ -1098,6 +1175,7 @@ impl App {
                     ("Range".into(), format!("{:.0} cells", r.range)),
                     ("A shot".into(), if r.price > 0.0 { format!("{:.0} food", r.price) } else { format!("free, one every {:.1} s", r.shot_every) }),
                     ("Mould on it".into(), format!("{}", s.touching)),
+                    ("Tools held".into(), format!("{} / {}", self.kit.held(k), self.kit.rules.carry_max)),
                 ],
                 note: None,
             });
@@ -1182,6 +1260,31 @@ impl App {
             about: "Turrets, lures, pumps and outposts.".into(),
             ..Command::new(BUILD_PAGE, (2, 2), Icon::Turret, "Build", KeyCode::KeyQ)
         });
+        cmds.push(Command {
+            about: "The squad's tools: blast, det cord, mine, germ, sleep gas. Every soldier at the larder picks one up; a selected soldier there takes up to five, and each one held costs carry.".into(),
+            ..Command::new(TOOLS_PAGE, (2, 3), Icon::Grenade, "Tools", KeyCode::KeyE)
+        });
+        if self.tools_page {
+            let k = &self.kit;
+            let kr = k.rules;
+            let held: u32 = (0..g.soldiers.len()).filter(|&i| g.soldiers[i].alive).map(|i| k.held(i)).sum();
+            let tool = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, target: Target, price: f32, works: bool, about: String| Command {
+                target,
+                cost: Some(format!("{price:.0}")),
+                ready: works && held > 0 && g.bank >= price,
+                why_not: if !works { Some("Not on the GPU world yet".into()) } else if held == 0 { Some("No soldier holds a tool; they take them at the larder".into()) } else { need(price) },
+                about,
+                ..Command::new(id, slot, icon, name, key)
+            };
+            cmds = vec![
+                tool(T_BLAST, (0, 0), Icon::Grenade, "Blast", KeyCode::KeyB, Target::Point { radius: kr.blast_r * sc }, kr.blast_price, true, format!("Kills the mould within {:.0} cells and leaves a crater it can't hold trail in for {:.0} s. The blast's alarm wakes and stirs the mould nearby. Thrown by a soldier holding a tool within {:.0} cells.", kr.blast_r, kr.crater_secs, kr.reach)),
+                tool(T_CORD, (0, 1), Icon::Burn, "Det cord", KeyCode::KeyC, Target::Line { width: 2.0 * kr.cord_r * sc }, kr.cord_price, true, format!("A line of small blasts, each with its crater: a cut the mould can't knit for {:.0} s. {:.0} food a cell, at most {:.0} cells.", kr.crater_secs, kr.cord_price, kr.cord_max)),
+                tool(T_MINE, (0, 2), Icon::Target, "Mine", KeyCode::KeyD, Target::Point { radius: kr.mine_r * sc }, kr.mine_price, true, format!("Goes off as a blast when {} walkers stand within {:.0} cells of it.", k.mine_trigger(g), kr.mine_r)),
+                tool(T_GERM, (1, 0), Icon::Spore, "Germ", KeyCode::KeyG, Target::Point { radius: kr.germ_r * sc }, kr.germ_price, g.world.has_germ(), format!("Makes the mould within {:.0} cells sick; sickness travels along its tubes and starves what it passes.", kr.germ_r)),
+                tool(T_GAS, (1, 1), Icon::Pause, "Sleep gas", KeyCode::KeyS, Target::Point { radius: kr.gas_r * sc }, kr.gas_price, g.world.has_gas(), format!("Puts the mould within {:.0} cells to sleep for {:.0} s: it doesn't eat or bite. A blast or gunfire nearby wakes it.", kr.gas_r, kr.gas_secs)),
+                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(T_BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyE) },
+            ];
+        }
         if self.build_page {
             let b = r.build;
             let lures = g.buildings.iter().filter(|q| q.alive && q.kind == Kind::Lure).count();
@@ -1264,6 +1367,7 @@ impl App {
             ("Tab".into(), "Four times faster, or back".into()),
             ("N".into(), "Start the next map".into()),
             ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
+            ("E".into(), "Tools page: blast, det cord, mine (germ and gas not on the GPU yet); E again goes back".into()),
         ];
         m
     }
@@ -2498,13 +2602,46 @@ mod tests {
         assert!(wounded > 0, "no wound in the look after {} shots", g.shots);
         app.prepare();
         let m = app.model(None, None);
-        // The soldiers' nine, the rally point and the build page's key (Q).
-        assert_eq!(m.commands.len(), 11);
+        // The soldiers' nine, the rally point, the build page's key (Q) and
+        // the tools page's (E).
+        assert_eq!(m.commands.len(), 12);
         assert!(m.end.is_none());
         // The build page: turret, lure, pump, outpost, the lures' switch, back.
         app.build_page = true;
         let m = app.model(None, None);
         assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Lure", "Pump", "Outpost", "Lures on/off", "Back"]);
+    }
+
+    /// **The tools page works in the window** (2026-11-12): soldiers take
+    /// tools at the larder between steps, the page lists the five, germ and
+    /// gas are greyed out on the GPU world, a blast thrown near a soldier
+    /// is paid, spends a held tool and leaves a crater, and a det cord
+    /// does too.
+    #[test]
+    fn the_window_uses_the_tools() {
+        let Some((device, queue)) = gpu() else { return };
+        let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, wade: None }, (320, 200), &device, &queue).unwrap();
+        for _ in 0..10 {
+            app.step(1.0 / 15.0);
+        }
+        let held: u32 = (0..app.game.as_ref().unwrap().soldiers.len()).map(|k| app.kit.held(k)).sum();
+        assert!(held > 0, "soldiers took tools at the larder");
+        app.tools_page = true;
+        let m = app.model(None, None);
+        assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Blast", "Det cord", "Mine", "Germ", "Sleep gas", "Back"]);
+        assert!(m.commands[0].ready && !m.commands[3].ready && !m.commands[4].ready, "blast ready, germ and gas not on the GPU");
+        let g = app.game.as_mut().unwrap();
+        g.bank = 10_000.0;
+        let s = g.soldiers[0];
+        let k = g.world.scale();
+        app.use_tool(Tool::Blast((s.x + 10.0 * k, s.y)));
+        app.use_tool(Tool::Cord((s.x - 10.0 * k, s.y + 8.0 * k), (s.x + 10.0 * k, s.y + 8.0 * k)));
+        let g = app.game.as_ref().unwrap();
+        assert_eq!((app.kit.uses[0], app.kit.uses[2]), (1, 1), "the blast and the cord were used");
+        assert!(g.bank < 10_000.0, "and paid");
+        let cratered = g.world.e.crater_of().iter().filter(|&&c| c > 0.0).count();
+        assert!(cratered > 0, "the blast left a crater");
+        assert_eq!((0..g.soldiers.len()).map(|k| app.kit.held(k)).sum::<u32>(), held - 2, "two held tools spent");
     }
 
     /// A campaign mission plays its own map and rules, shows its goal as the

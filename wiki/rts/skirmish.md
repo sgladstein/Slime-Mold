@@ -3,8 +3,33 @@ title: The field skirmish (playable demo)
 kind: prototype
 status: open
 updated: 2026-11-11
-sources: [Reports/rts-research-2026-11-10.md, Reports/rts-skirmish-2026-11-10.md, Reports/rts-design-2026-11-10/field/README.md]
-code: [skirmish::FIELD, skirmish::Habit, skirmish::Plan, skirmish::Rules, skirmish::Skirmish, skirmish::Verb, skirmish::TITHES, skirmish::late_food, skirmish::late_count, skirmish::Strike, skirmish::StrikeLog, Dish::tithe, Dish::beacons, Dish::plant, Dish::fortify, Skirmish::set, Skirmish::winner, Skirmish::points, Params::fight_fed, Params::upkeep_size, Params::hold, Params::supply]
+sources:
+  - Reports/rts-design-2026-11-10/field/README.md
+  - Reports/rts-research-2026-11-10.md
+  - Reports/rts-skirmish-2026-11-10.md
+code:
+  - Dish::beacons
+  - Dish::fortify
+  - Dish::plant
+  - Dish::tithe
+  - Params::fight_fed
+  - Params::hold
+  - Params::supply
+  - Params::upkeep_size
+  - Skirmish::points
+  - Skirmish::set
+  - Skirmish::winner
+  - skirmish::FIELD
+  - skirmish::Habit
+  - skirmish::Plan
+  - skirmish::Rules
+  - skirmish::Skirmish
+  - skirmish::Strike
+  - skirmish::StrikeLog
+  - skirmish::TITHES
+  - skirmish::Verb
+  - skirmish::late_count
+  - skirmish::late_food
 ---
 
 # The field skirmish (playable demo)

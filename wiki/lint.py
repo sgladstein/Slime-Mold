@@ -75,21 +75,31 @@ def pages():
 
 
 def frontmatter(text):
-    """The `---` block as a dict; `[a, b]` values become lists."""
+    """The `---` block as a dict. `sources:` and `code:` are YAML block
+    lists, one `  - entry` a line (inline `[a, b]` still parses, so lint can
+    report it); the key `_inline` lists keys written inline."""
     if not text.startswith("---\n"):
         return {}
     end = text.find("\n---\n", 4)
     if end < 0:
         return {}
-    out = {}
+    out = {"_inline": []}
+    key = None
     for line in text[4:end].splitlines():
+        if line.startswith("  - ") and key is not None:
+            if not isinstance(out.get(key), list):
+                out[key] = []
+            out[key].append(line[4:].strip().strip("`"))
+            continue
         if ":" not in line or line.startswith(" "):
             continue
         k, v = line.split(":", 1)
+        key = k.strip()
         v = v.strip()
         if v.startswith("[") and v.endswith("]"):
             v = [x.strip().strip("`") for x in v[1:-1].split(",") if x.strip()]
-        out[k.strip()] = v
+            out["_inline"].append(key)
+        out[key] = v
     return out
 
 
@@ -171,6 +181,22 @@ def main():
         for k in REQUIRED:
             if k not in fm:
                 errors.append(f"{rel}: frontmatter has no `{k}`")
+        # Merge-friendly frontmatter (integration thread with the technical
+        # lead, 2026-11-12 21:35Z): `updated` carried minutes and `sources:`
+        # was one line, so any two PRs touching a page conflicted there, and
+        # green PRs waited a CI cycle each (#143 three times). A date-only
+        # `updated` and sorted one-per-line lists merge cleanly; the
+        # same-commit rule below still catches a page left behind its source,
+        # which the same-day time check used to.
+        upd = fm.get("updated", "")
+        if upd and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", upd):
+            errors.append(f"{rel}: `updated: {upd}` must be a date, YYYY-MM-DD")
+        for k in ("sources", "code"):
+            if k in fm.get("_inline", []):
+                errors.append(f"{rel}: `{k}:` must be a block list, one `  - entry` a line")
+            v = fm.get(k)
+            if isinstance(v, list) and v != sorted(v):
+                errors.append(f"{rel}: `{k}:` entries must be sorted")
         for sym in fm.get("code", []) or []:
             name = re.split(r"::|\.", sym)[-1]
             if not re.search(r"\b" + re.escape(name) + r"\b", corpus):

@@ -2,9 +2,23 @@
 title: Larder World maps
 kind: design
 status: open
-updated: 2026-11-12T20:41Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md]
-code: [Rules::home_dry, Map::load, Map::of_dish, BigDish::with_map, Engine::with_map, GpuWorld::with_map, World::landing, BigDish::pile_rs, BigDish::pile_fill, BigDish::homes, build_wall_hp, ground_bits]
+updated: 2026-11-12
+sources:
+  - Reports/larder-maps-2026-11-11.md
+  - Reports/larder-world-roadmap-2026-11-11.md
+code:
+  - BigDish::homes
+  - BigDish::pile_fill
+  - BigDish::pile_rs
+  - BigDish::with_map
+  - Engine::with_map
+  - GpuWorld::with_map
+  - Map::load
+  - Map::of_dish
+  - Rules::home_dry
+  - World::landing
+  - build_wall_hp
+  - ground_bits
 ---
 
 # Larder World maps
