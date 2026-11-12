@@ -2,8 +2,8 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-12T08:00Z
-sources: [Reports/shot-damage-2026-11-12.md, CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
+updated: 2026-11-12T17:06Z
+sources: [Reports/shot-damage-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md, CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md]
 code: [Params::pieces]
 ---
 
@@ -17,6 +17,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-12 14:41-14:43 | The crater is look 3, the cone (soft-edged; `scorch_cone`, the race world's default since PR 3b). Soldiers are heavily slowed in thick slime (`Rules::wade`, the Larder thread), and can't stand on a crystal (the controls thread). The owner expected soldiers standing and shooting into the slime, not craters under their feet while running through it. Then (15:18Z) look 3 "fills in too slow": shorter crater times (6 s, 3 s) are on the page for the owner's pick, open | "I think 3 is best, but I was more expecting soliders standing shooting into slime. Not running through slime leaving craters under their feet"; "soliders should be heavily slowed down if they try to run into the thick slime"; "also shouldn't be able to stand on top of the crystal"; "Is there an option between 3 and no craters? 3 fills in too slow still," | [Larder World](world/larder.md), [report, *Wading, and the cone crater by default*](../Reports/larder-world-roadmap-2026-11-11.md) |
 | 2026-11-12 04:38-04:39 | Shot impact is a real hole in the simulation, not a drawn hit: a squad's sustained fire carves a growing hole that does not refill while it lasts (first built as the mould turning from the shots' alarm, which failed the census gate; then shots that lay the crater, PR 2) | "Neither. Both of those look like stamps. Placed on the slime that fade." ... "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at" | [Larder](world/larder.md) |
 | 2026-11-12 04:46, card | No Scorcher building: scorch is only the crater that blasts, det cord and shots leave (the squad toolkit's crater field) | card ("Drop it, scorch is the crater") | [roadmap, *Larder World: shared rules and merge order*](../ROADMAP.md) |
 | 2026-11-12 04:45 | The player's own mould is a second species the soldiers grow (feed, lay roads for, cut), fighting the enemy mould by conversion; not a mould-only mode or a bought ally | Card: "Gardeners: soldiers grow it" | [Own mould](world/own-mould.md) |

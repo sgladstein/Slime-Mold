@@ -1,0 +1,64 @@
+sporer random 21 -1.229 squad wiped
+sporer farm 21 +0.163 cap
+sporer randkit 21 -1.433 squad wiped
+sporer loud 21 +0.068 cap
+sporer idle 21 -0.403 cap
+sporer quiet 21 +0.021 cap
+sporer siege 21 +0.161 cap
+sporer random 22 -1.518 squad wiped
+sporer randkit 22 -1.510 squad wiped
+sporer idle 22 -0.383 cap
+sporer farm 22 +0.015 cap
+sporer loud 22 +0.013 cap
+sporer quiet 22 +0.019 cap
+sporer plague 21 +1.313 mould wiped
+sporer random 23 -1.363 squad wiped
+sporer siege 22 +0.028 cap
+sporer randkit 23 -1.661 squad wiped
+sporer idle 23 -0.417 cap
+sporer farm 23 +0.071 cap
+sporer loud 23 +0.045 cap
+sporer plague 22 +0.493 cap
+sporer quiet 23 +0.072 cap
+sporer random 24 -1.585 squad wiped
+sporer siege 23 +0.181 cap
+sporer idle 24 -0.417 cap
+sporer farm 24 +0.147 cap
+sporer loud 24 +0.182 cap
+sporer randkit 24 +1.930 mould wiped
+sporer quiet 24 +0.094 cap
+sporer plague 23 +1.203 mould wiped
+sporer siege 24 +0.107 cap
+sporer random 25 -1.538 squad wiped
+sporer randkit 25 -1.432 squad wiped
+sporer idle 25 -0.397 cap
+sporer farm 25 +0.054 cap
+sporer loud 25 +0.106 cap
+sporer quiet 25 +0.112 cap
+sporer siege 25 +0.108 cap
+sporer plague 24 +1.203 mould wiped
+sporer random 26 -1.516 squad wiped
+sporer randkit 26 -1.588 squad wiped
+sporer idle 26 -0.403 cap
+sporer plague 25 +1.502 mould wiped
+sporer farm 26 +0.056 cap
+sporer loud 26 +0.083 cap
+sporer quiet 26 +0.027 cap
+sporer siege 26 +0.139 cap
+sporer random 27 -1.381 squad wiped
+sporer randkit 27 -1.612 squad wiped
+sporer idle 27 -0.347 cap
+sporer farm 27 +0.128 cap
+sporer loud 27 +0.106 cap
+sporer plague 26 +0.498 cap
+sporer quiet 27 +0.002 cap
+sporer plague 27 +1.842 mould wiped
+sporer siege 27 +0.154 cap
+sporer random 28 -1.368 squad wiped
+sporer farm 28 +0.105 cap
+sporer idle 28 -0.357 cap
+sporer randkit 28 +1.933 mould wiped
+sporer loud 28 +0.123 cap
+sporer quiet 28 +0.100 cap
+sporer siege 28 +0.088 cap
+sporer plague 28 +0.498 cap

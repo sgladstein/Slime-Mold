@@ -1,0 +1,38 @@
+cutprobe race world scale 2 walkers 5000, grow 300 s, follow 120 s, 0 cuts a seed, seeds [1, 2, 3, 4, 5, 6, 7, 8]
+arms: [("base", []), ("L2", [("lone_step", "2"), ("body_r", "2")]), ("L3f5", [("lone_step", "3"), ("body_r", "2"), ("lone_floor", "0.5")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 1 grown | alive 7525 parts1% 6 lcs 0.89 lone 0.01 rms 54.3 | crystals eaten from 6 of 23
+L2 1 grown | alive 3624 parts1% 2 lcs 0.71 lone 0.02 rms 68.7 | crystals eaten from 3 of 23
+L3f5 1 grown | alive 5155 parts1% 3 lcs 0.79 lone 0.01 rms 60.6 | crystals eaten from 4 of 23
+base 2 grown | alive 10350 parts1% 1 lcs 0.98 lone 0.00 rms 55.5 | crystals eaten from 9 of 23
+L2 2 grown | alive 6877 parts1% 1 lcs 0.97 lone 0.01 rms 45.3 | crystals eaten from 6 of 23
+L3f5 2 grown | alive 7748 parts1% 3 lcs 0.95 lone 0.01 rms 50.1 | crystals eaten from 7 of 23
+base 3 grown | alive 6363 parts1% 2 lcs 0.92 lone 0.01 rms 51.3 | crystals eaten from 5 of 23
+L2 3 grown | alive 3230 parts1% 2 lcs 0.48 lone 0.01 rms 33.6 | crystals eaten from 3 of 23
+L3f5 3 grown | alive 7029 parts1% 1 lcs 1.00 lone 0.00 rms 50.5 | crystals eaten from 6 of 23
+base 4 grown | alive 4252 parts1% 5 lcs 0.55 lone 0.01 rms 63.0 | crystals eaten from 3 of 23
+L2 4 grown | alive 2645 parts1% 4 lcs 0.90 lone 0.03 rms 40.1 | crystals eaten from 2 of 23
+L3f5 4 grown | alive 3329 parts1% 1 lcs 0.94 lone 0.01 rms 46.5 | crystals eaten from 2 of 23
+base 5 grown | alive 8558 parts1% 1 lcs 0.99 lone 0.00 rms 77.9 | crystals eaten from 8 of 23
+L2 5 grown | alive 2268 parts1% 4 lcs 0.86 lone 0.03 rms 45.0 | crystals eaten from 1 of 23
+L3f5 5 grown | alive 4473 parts1% 5 lcs 0.70 lone 0.01 rms 86.7 | crystals eaten from 3 of 23
+base 6 grown | alive 5544 parts1% 2 lcs 0.95 lone 0.01 rms 42.4 | crystals eaten from 4 of 23
+L2 6 grown | alive 3192 parts1% 1 lcs 0.93 lone 0.02 rms 47.8 | crystals eaten from 2 of 23
+L3f5 6 grown | alive 2029 parts1% 6 lcs 0.84 lone 0.03 rms 44.5 | crystals eaten from 1 of 23
+base 7 grown | alive 9706 parts1% 3 lcs 0.81 lone 0.01 rms 63.9 | crystals eaten from 8 of 23
+L2 7 grown | alive 5015 parts1% 2 lcs 0.94 lone 0.01 rms 55.2 | crystals eaten from 4 of 23
+L3f5 7 grown | alive 5667 parts1% 3 lcs 0.91 lone 0.01 rms 58.1 | crystals eaten from 5 of 23
+base 8 grown | alive 8963 parts1% 1 lcs 0.96 lone 0.00 rms 60.9 | crystals eaten from 7 of 23
+L2 8 grown | alive 8206 parts1% 1 lcs 0.98 lone 0.01 rms 51.1 | crystals eaten from 7 of 23
+L3f5 8 grown | alive 9439 parts1% 1 lcs 0.97 lone 0.01 rms 54.1 | crystals eaten from 8 of 23
+
+summary (mean over cuts)
+base: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+L2: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
+L3f5: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000

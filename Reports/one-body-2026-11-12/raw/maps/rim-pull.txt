@@ -1,0 +1,122 @@
+cutprobe race world scale 2 walkers 5000, grow 120 s, follow 60 s, 3 cuts a seed, seeds [1, 2, 3, 4, 5, 6]
+arms: [("base", []), ("P2", [("body_pull", "2"), ("body_r", "3"), ("body_lone", "8")]), ("P5", [("body_pull", "5"), ("body_r", "3"), ("body_lone", "8")]), ("P5H", [("body_pull", "5"), ("body_r", "3"), ("body_lone", "8"), ("energy_flow", "0.05"), ("hunger_scent", "8")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 1 grown | alive 6235 parts1% 4 lcs 0.94 lone 0.00 rms 26.9 | crystals eaten from 3 of 11
+cut base 1 0 at fine cell (272, 240)
+base 1 0 | 25 25 0 | 0.37 8.87 0.33 50.9 46.61 | 60 crystal 2 58.8 react 2 | 6235 5.67
+cut base 1 1 at fine cell (156, 40)
+base 1 1 | 20 20 0 | 0.33 8.38 0.34 34.0 40.16 | 60 crystal 3 23.5 react 4 | 6235 5.67
+P2 1 grown | alive 5883 parts1% 1 lcs 0.96 lone 0.01 rms 22.9 | crystals eaten from 3 of 11
+cut P2 1 0 at fine cell (276, 232)
+P2 1 0 | 26 26 0 | 0.18 6.49 0.49 33.3 26.76 | 60 crystal 2 45.5 react 1 | 5883 6.92
+P5 1 grown | alive 5854 parts1% 1 lcs 0.96 lone 0.01 rms 22.9 | crystals eaten from 3 of 11
+P5H 1 grown | alive 12646 parts1% 1 lcs 1.00 lone 0.00 rms 31.7 | crystals eaten from 4 of 11
+cut P5H 1 0 at fine cell (276, 232)
+P5H 1 0 | 237 237 0 | 0.63 2.67 0.72 35.7 11.13 | 60 crystal 2 26.7 react 3 | 12646 10.31
+cut P5H 1 1 at fine cell (264, 72)
+P5H 1 1 | 60 60 0 | 0.75 3.18 0.66 35.4 17.57 | 60 crystal 2 28.6 react 2 | 12646 10.31
+cut P5H 1 2 at fine cell (300, 292)
+P5H 1 2 | 51 51 0 | 0.25 8.43 0.30 33.9 23.78 | 60 crystal 2 7.4 react 2 | 12646 10.31
+base 2 grown | alive 5822 parts1% 2 lcs 0.96 lone 0.00 rms 21.8 | crystals eaten from 3 of 11
+P2 2 grown | alive 5932 parts1% 1 lcs 0.96 lone 0.00 rms 23.3 | crystals eaten from 3 of 11
+cut P2 2 0 at fine cell (380, 48)
+P2 2 0 | 19 23 0 | 0.29 7.51 0.37 20.2 24.60 | 60 crystal 2 5.8 react 2 | 5932 6.89
+P5 2 grown | alive 5879 parts1% 1 lcs 0.96 lone 0.01 rms 23.0 | crystals eaten from 3 of 11
+cut P5 2 0 at fine cell (272, 236)
+P5 2 0 | 29 29 0 | 0.43 6.31 0.44 36.7 28.39 | 60 crystal 2 40.4 react 3 | 5879 7.02
+P5H 2 grown | alive 11801 parts1% 1 lcs 0.98 lone 0.00 rms 27.6 | crystals eaten from 3 of 11
+cut P5H 2 0 at fine cell (264, 76)
+P5H 2 0 | 107 107 0 | 0.77 2.05 0.76 33.3 13.08 | 60 crystal 2 30.4 react 2 | 11801 10.09
+cut P5H 2 1 at fine cell (132, 40)
+P5H 2 1 | 32 32 0 | 0.42 13.62 0.28 35.7 31.19 | 60 crystal 2 57.0 react 1 | 11801 10.09
+cut P5H 2 2 at fine cell (308, 24)
+P5H 2 2 | 26 26 0 | 0.26 10.80 0.31 38.4 37.03 | 60 crystal 2 18.5 react 2 | 11801 10.09
+base 3 grown | alive 6020 parts1% 2 lcs 0.95 lone 0.00 rms 24.7 | crystals eaten from 3 of 11
+cut base 3 0 at fine cell (272, 236)
+base 3 0 | 28 30 0 | 0.37 8.16 0.37 43.0 39.38 | 60 crystal 2 35.1 react 3 | 6020 6.24
+cut base 3 1 at fine cell (268, 72)
+base 3 1 | 26 26 0 | 0.26 7.41 0.43 61.0 49.00 | 60 crystal 2 55.2 react 3 | 6020 6.24
+cut base 3 2 at fine cell (192, 32)
+base 3 2 | 25 25 0 | 0.20 9.30 0.36 32.7 32.78 | 60 crystal 2 57.4 react 2 | 6020 6.24
+P2 3 grown | alive 6011 parts1% 2 lcs 0.97 lone 0.00 rms 23.6 | crystals eaten from 3 of 11
+cut P2 3 0 at fine cell (272, 232)
+P2 3 0 | 37 37 0 | 0.22 6.25 0.57 42.4 31.34 | 60 crystal 2 38.2 react 2 | 6011 6.70
+P5 3 grown | alive 5878 parts1% 1 lcs 0.96 lone 0.01 rms 23.3 | crystals eaten from 3 of 11
+cut P5 3 0 at fine cell (268, 72)
+P5 3 0 | 21 21 0 | 0.21 6.77 0.48 30.4 31.16 | 60 crystal 2 33.3 react 2 | 5878 7.11
+cut P5 3 1 at fine cell (272, 240)
+P5 3 1 | 19 20 0 | 0.19 7.38 0.42 35.2 38.55 | 60 crystal 2 39.1 react 1 | 5878 7.11
+P5H 3 grown | alive 12291 parts1% 1 lcs 0.99 lone 0.00 rms 34.2 | crystals eaten from 3 of 11
+cut P5H 3 0 at fine cell (272, 232)
+P5H 3 0 | 170 170 0 | 0.44 2.79 0.59 41.5 14.55 | 60 crystal 2 21.0 react 3 | 12291 10.56
+cut P5H 3 1 at fine cell (172, 40)
+P5H 3 1 | 38 38 0 | 0.57 9.28 0.33 38.4 36.42 | 60 crystal 3 13.3 react 2 | 12291 10.56
+cut P5H 3 2 at fine cell (332, 36)
+P5H 3 2 | 34 34 0 | 0.26 14.38 0.24 39.6 34.05 | 60 crystal 2 19.8 react 3 | 12291 10.56
+base 4 grown | alive 5997 parts1% 1 lcs 0.96 lone 0.01 rms 24.3 | crystals eaten from 3 of 11
+cut base 4 0 at fine cell (272, 240)
+base 4 0 | 25 25 0 | 0.22 7.49 0.35 43.7 36.50 | 60 crystal 2 36.8 react 2 | 5997 5.80
+P2 4 grown | alive 5933 parts1% 1 lcs 0.98 lone 0.00 rms 23.0 | crystals eaten from 3 of 11
+cut P2 4 0 at fine cell (268, 72)
+P2 4 0 | 25 25 0 | 0.24 8.16 0.37 55.1 48.06 | 60 crystal 2 38.9 react 2 | 5933 8.35
+P5 4 grown | alive 5924 parts1% 1 lcs 0.95 lone 0.01 rms 24.6 | crystals eaten from 3 of 11
+cut P5 4 0 at fine cell (272, 240)
+P5 4 0 | 23 23 0 | 0.50 7.93 0.35 58.4 55.33 | 60 crystal 2 43.1 react 2 | 5924 7.16
+P5H 4 grown | alive 12867 parts1% 1 lcs 0.98 lone 0.00 rms 33.3 | crystals eaten from 4 of 11
+cut P5H 4 0 at fine cell (272, 236)
+P5H 4 0 | 124 124 0 | 0.20 5.08 0.33 46.9 18.76 | 60 crystal 2 11.8 react 3 | 12867 10.24
+cut P5H 4 1 at fine cell (268, 68)
+P5H 4 1 | 111 111 0 | 0.33 2.56 0.72 28.9 12.21 | 60 crystal 2 35.9 react 3 | 12867 10.24
+cut P5H 4 2 at fine cell (196, 24)
+P5H 4 2 | 32 32 0 | 0.19 12.52 0.28 32.2 28.50 | 60 crystal 2 20.7 react 2 | 12867 10.24
+base 5 grown | alive 6148 parts1% 1 lcs 0.95 lone 0.00 rms 24.5 | crystals eaten from 3 of 11
+cut base 5 0 at fine cell (176, 140)
+base 5 0 | 29 30 0 | 0.41 6.02 0.54 16.8 13.18 | 60 crystal 2 36.0 react 1 | 6148 6.36
+cut base 5 1 at fine cell (184, 32)
+base 5 1 | 23 23 0 | 0.33 8.48 0.32 16.2 19.15 | 60 crystal 2 27.6 react 3 | 6148 6.36
+P2 5 grown | alive 5928 parts1% 1 lcs 0.96 lone 0.01 rms 23.5 | crystals eaten from 3 of 11
+cut P2 5 0 at fine cell (336, 36)
+P2 5 0 | 29 29 0 | 0.20 13.20 0.22 40.1 44.96 | 60 crystal 3 39.4 react 4 | 5928 7.04
+cut P2 5 1 at fine cell (272, 236)
+P2 5 1 | 24 25 0 | 0.17 9.59 0.37 44.2 45.26 | 60 crystal 2 29.4 react 3 | 5928 7.04
+P5 5 grown | alive 5818 parts1% 1 lcs 0.97 lone 0.01 rms 21.5 | crystals eaten from 3 of 11
+cut P5 5 0 at fine cell (208, 24)
+P5 5 0 | 22 22 0 | 0.29 6.49 0.41 14.2 17.27 | 60 crystal 2 28.1 react 2 | 5818 6.38
+P5H 5 grown | alive 12355 parts1% 2 lcs 0.96 lone 0.00 rms 33.0 | crystals eaten from 3 of 11
+cut P5H 5 0 at fine cell (276, 232)
+P5H 5 0 | 177 177 0 | 0.53 3.20 0.61 41.3 13.67 | 60 crystal 2 20.8 react 3 | 12355 9.66
+cut P5H 5 1 at fine cell (268, 72)
+P5H 5 1 | 81 81 0 | 0.36 3.03 0.60 38.0 18.43 | 60 crystal 2 30.8 react 3 | 12355 9.66
+cut P5H 5 2 at fine cell (304, 292)
+P5H 5 2 | 30 30 0 | 0.37 12.21 0.27 31.4 28.75 | 60 crystal 2 12.5 react 3 | 12355 9.66
+base 6 grown | alive 6090 parts1% 2 lcs 0.93 lone 0.01 rms 26.8 | crystals eaten from 3 of 11
+cut base 6 0 at fine cell (276, 236)
+base 6 0 | 24 24 0 | 0.27 7.92 0.41 49.1 48.31 | 60 crystal 2 46.4 react 3 | 6090 4.80
+cut base 6 1 at fine cell (272, 76)
+base 6 1 | 21 23 0 | 0.33 6.95 0.50 25.1 24.20 | 60 crystal 2 28.6 react 2 | 6090 4.80
+P2 6 grown | alive 5979 parts1% 1 lcs 0.96 lone 0.01 rms 24.7 | crystals eaten from 3 of 11
+P5 6 grown | alive 5873 parts1% 1 lcs 0.96 lone 0.01 rms 24.1 | crystals eaten from 3 of 11
+cut P5 6 0 at fine cell (272, 236)
+P5 6 0 | 23 23 0 | 0.19 11.07 0.28 47.3 51.71 | 60 crystal 2 28.2 react 1 | 5873 5.99
+P5H 6 grown | alive 12780 parts1% 1 lcs 0.98 lone 0.00 rms 33.1 | crystals eaten from 4 of 11
+cut P5H 6 0 at fine cell (276, 232)
+P5H 6 0 | 266 266 0 | 0.68 2.02 0.74 39.1 12.24 | 60 crystal 2 25.3 react 2 | 12780 9.63
+cut P5H 6 1 at fine cell (176, 140)
+P5H 6 1 | 257 257 0 | 0.86 1.30 0.92 24.8 8.25 | 60 crystal 2 35.0 react 2 | 12780 9.63
+cut P5H 6 2 at fine cell (212, 296)
+P5H 6 2 | 48 48 0 | 0.19 9.07 0.27 34.1 24.67 | 60 crystal 2 3.3 react 1 | 12780 9.63
+
+summary (mean over cuts)
+base: cuts 10 n0 25 lcs20 0.31 frag 7.90 lcs 0.39 rms20 37.3 compact20 34.93 life 60 moved 40.5 fates {"crystal": 10}
+P2: cuts 6 n0 27 lcs20 0.22 frag 8.53 lcs 0.40 rms20 39.2 compact20 36.83 life 60 moved 32.9 fates {"crystal": 6}
+  vs base: lcs20 better 1 worse 4, p 0.3750
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 2 worse 3, p 1.0000
+P5: cuts 6 n0 23 lcs20 0.30 frag 7.66 lcs 0.40 rms20 37.0 compact20 37.07 life 60 moved 35.4 fates {"crystal": 6}
+  vs base: lcs20 better 1 worse 4, p 0.3750
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 2 worse 3, p 1.0000
+P5H: cuts 18 n0 104 lcs20 0.45 frag 6.57 lcs 0.50 rms20 36.0 compact20 21.35 life 60 moved 23.3 fates {"crystal": 18}
+  vs base: lcs20 better 9 worse 1, p 0.0215
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 8 worse 2, p 0.1094
