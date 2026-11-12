@@ -2,8 +2,8 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12
-sources: [Reports/squad-toolkit-2026-11-12.md]
+updated: 2026-11-12T08:00Z
+sources: [Reports/squad-toolkit-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
 code: [Kit, KitRules, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
 ---
 
@@ -16,7 +16,12 @@ mould's model (`mould::kit`, CPU world only): blast, mine, det cord, germ,
 sleep gas, and mask or reek on a soldier's smell. The crater a blast or cord
 leaves (`BigDish::scorch_disc`, trail fades fast and fades out) is the one
 scorch in the game. With the crater a blast's hole holds 82 walkers at 10 s
-against 188 without, of 370 (8 of 8 seeds). The germ kills about three
+against 188 without, of 370 (8 of 8 seeds). Since the Larder thread's PR 2
+the crater is on the GPU too (binding 47) and the squad's shots lay it
+(`Rules::crater`, 10 game seconds a hit), with shared defaults
+`scorch_keep` 0.1 and `scorch_full` 30 (were 0.5 and 300; this thread's
+probes found blasts and the cord no worse:
+[report, *The hole under fire*](../../Reports/larder-world-roadmap-2026-11-11.md)). The germ kills about three
 quarters of the mould once sickness costs energy, while steering-only
 contagion does nothing. Sleep gas stops a crystal being eaten, and a blast
 nearby wakes most sleepers. Mines are weak, and the det cord starves nothing

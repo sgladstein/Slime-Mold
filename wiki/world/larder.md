@@ -2,9 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12T07:45Z
+updated: 2026-11-12T08:00Z
 sources: [Reports/gpu-readout-2026-11-12.md, Reports/larder-campaign-2026-11-12.md, Reports/life-gpu-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/larder-maps-2026-11-11.md, Reports/mould-shooter-2026-11-11.md, Reports/larder-m1-2026-11-11.md, Reports/larder-m2-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-build-plan-2026-11-11.md, Reports/rts-research-2026-11-10.md, research/sources/creeper-world-2025.md]
-code: [Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
+code: [Rules::crater, squad::Frame::crater, Tracker, Game::begin_step, Game::settled_ticks, GpuWorld::frame_start, Engine::record_count, Game::take_share, Rules::home_dry, View::set_alive, BigParams::sand_keep, Dish::fire, Params::pieces, Params::wound, Params::light_weight, Dish::step_cost, Engine::set_squad, squad::frame, larder_world::Game, distance_map, GpuWorld, race_settings]
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -89,8 +89,14 @@ fire against 29 ([page](https://claude.ai/artifact/5wQ3xSk8pBN6uig1rxKd4R)),
 but as the default it failed the gate: random held the core, which the
 mould no longer defended, and wiped the mould on 12 of 16 seeds. Without
 it the gate holds on the race world (32 seeds), the Fork and the Rim, but
-strike beats every plan (farm 28-4) with food left unspent. Next, the hole
-from the toolkit's crater, then running costs. Off by default for other threads:
+strike beats every plan (farm 28-4) with food left unspent. **The hole
+from the crater** (PR 2, [report, *The hole under fire*](../../Reports/larder-world-roadmap-2026-11-11.md)):
+each hit lays the toolkit's crater on its strike disc for `Rules::crater`
+10 game seconds (CPU and GPU), where the trail keeps a tenth a step, so
+four soldiers' fire carves a hole 28 dish cells larger than without it
+after 20 s (8 of 8 seeds), the hits reach 9.7 dish cells in instead of
+3.8, and the hole closes over about 10 s once firing stops. Next, running
+costs. Off by default for other threads:
 `Rules::overrun`, `Rules::reserve`, `Game::stuck`, `Game::density`.
 
 ## Small-dish milestones (M1-M3)

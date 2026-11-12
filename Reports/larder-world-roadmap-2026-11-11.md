@@ -520,7 +520,7 @@ With the flee on, random beats farm, wall and rush 13-3 each (p 0.021); farm and
 
 Every plan beats idle and random on all three worlds and survives Holm; the rush is the one hand that loses on the maps, as before. Two findings for the next PRs. Random wiped the mould on 2 of 32 race seeds (the tiers thread saw 2 of 4 on held-out seeds 201-204 at the same code, so about 4 in 36; with shots at 10 food it was 0 of 16). And strike dominates: it beats farm 28-4, wall 29-3 and fort 31-1 (each p < 0.0001), while every plan ends with 20,000-50,000 food in the bank, so food does not bind (the buildings census found the same with turrets: more guns at the crystals wins however they are bought). The economy is PR 3, running costs first (the game designer: everything alive eats), with a spend-everything hand as the fair comparison (technical lead).
 
-**Next for the hole (PR 2).** Shots lay the squad toolkit's crater (`BigDish::scorch_disc`, the one crater writer): the cells a hit clears stay closed to the mould for a few seconds, so sustained fire digs in and the hole closes once firing stops, with no change to where the mould goes elsewhere. Its gate's random and idle rows run beside the hole and first-touch measures (technical lead's review), not after them.
+**Next for the hole (PR 2, now #113: *The hole under fire*, below).** Shots lay the squad toolkit's crater (`BigDish::scorch_disc`, the one crater writer): the cells a hit clears stay closed to the mould for a few seconds, so sustained fire digs in and the hole closes once firing stops, with no change to where the mould goes elsewhere. Its gate's random and idle rows run beside the hole and first-touch measures (technical lead's review), not after them.
 
 **Free shots and the scent** (seeds 5-20, 15-minute games, before the flee default; raw in [playtest/](larder-world-roadmap-2026-11-11/playtest/): `census-5-20-price10.txt` local, `census-5-20-free.txt` and `census-5-20-free-smell4.txt` from runners 1 and 2 at a9eb09d).
 
@@ -538,3 +538,62 @@ Every plan beats idle and random on all three worlds and survives Holm; the rush
 Free shots take the rush from 16 losses to 15 games at the cap with the mould cut from 5,000 walkers to under 600 on 12 of them; it never wipes the mould, probably because the last stragglers lay too little trail to stop a shot (not yet checked). The gate holds. Scent 4 brings the mould to the squad sooner but makes random play stronger.
 
 **Cost** (of the opt-in). The alarm field is one 3 x 3 mean over the agar a fine step, and one more read at each sensor. On the CPU it first added 2.0 ms to a 5.4 ms game tick (farm seed 1, 120 s, one thread, three rounds each: 5.37/5.42/5.34 against 7.33/7.77/7.39 ms). The mean is now branchless (`spread_rows`: each neighbour adds its value times its agar mask, in the old order, so the result is bit for bit the old one; test `the_branchless_spread_matches_the_first_one_bit_for_bit`), which takes one pass on the race world's 512 x 320 grid from 0.65 to 0.24 ms on one thread (best of 30, interleaved); the germ's spread gets the same. On the GPU the field has its own switch (`alarm_on`), apart from the life states (`cyc`): the flee runs no `fate`, `fly` or `alight`, only the mean inside the scent pass, the sensor read and the one-workgroup `shout` on frames with shots, and the Larder World already runs the outside pipelines for growth. The life-gpu report's software-Vulkan run had the Swarmer (the alarm alone) at 38-39 ms a frame against 40 for the outside pipelines with every rule off; the GPU thread's one pair on the Larder World at 5,000 walkers was 15.16 ms a step without it and 15.64 with it. The GTX 1070's figure is open.
+
+## The hole under fire: shots lay the crater, 2026-11-12
+
+**Why.** The owner's bar (04:39Z, above): "A group of soldiers shooting the slime should start carving out a bigger and bigger hole that doesn't refill while being shot at". The flee made that hole and failed the gate, so this try closes the ground instead of moving the mould: no change to where the mould goes anywhere else.
+
+**What is built** (PR #113).
+- **Each hit lays the squad toolkit's crater** (`BigDish::scorch`, the one crater field, [squad toolkit](squad-toolkit-2026-11-12.md)) on the agar cells of its strike disc, for `Rules::crater` game seconds: 10 by default, and 0 is off.
+  - `squad::Frame::crater` carries it in fine steps (`World::fine_steps`).
+  - A cell keeps `scorch_keep` of its trail each fine step while its countdown is fresh, so the mould cannot refill it.
+  - A shot stops at the first cell that reads as slime, so the next shots fly over the crater into the body behind it, and steady fire digs in.
+  - When firing stops, the countdowns run out and the mould grows back.
+  - Nothing is drawn: the hole is the trail that isn't there.
+- **Shared defaults** `scorch_keep` 0.1 and `scorch_full` 30 (were 0.5 and 300).
+  - The toolkit thread agreed (06:57Z).
+  - Their probes found blasts and the det cord no worse: a blast's disc is the same at 20 s, and the cord's trail is 67 against 137.
+- **GPU**:
+  - Binding 47 is a 2-channel f32 damage memory. Block 0 is the crater countdown; block 1 is kept for the tiers thread's scar.
+  - The Params row at `CRATER_AT` 864 holds [scorch_keep, scorch_full, crater steps, scorched], so `PARAMS_BYTES` is 880 and `BINDINGS` 48, as the integration thread assigned.
+  - The `cut` pass lays the crater on the struck agar cells. The `trail` pass cuts the trail and each species' field under it, and counts down.
+- **Tools**:
+  - `larder-world crater=S`
+  - `larderworld crater= scorch_full= scorch_keep=`
+  - `larderhole crater:S[:F[:K]]`
+
+**Deciding measures, named before the runs.**
+- For the hole: the hole test's hole after 20 s of fire, each arm paired against no crater by seed, sign test, Holm over the arms.
+- For the default: the census gate, each plan against idle and random, with random's mould wipes beside it. This is the test the flee failed.
+
+**The hole** (seeds 1-8, the hole test of *Playtest fixes*; raw files [crater/hole-1-8-keep05-full300.txt](larder-world-roadmap-2026-11-11/crater/hole-1-8-keep05-full300.txt) at the toolkit's first keep and full, and [crater/hole-1-8-full30-keep01.txt](larder-world-roadmap-2026-11-11/crater/hole-1-8-full30-keep01.txt)). Medians:
+
+| crater (keep, full) | hole at 5 / 10 / 20 s of fire | hits land from the squad | left 5 s after the last shot | killed in 20 s | against none at 20 s |
+| --- | --- | --- | --- | --- | --- |
+| none | 42 / 33 / 29 | 3.8 dish cells out | 98% | 163 | |
+| 1 s (0.5, 300) | 36 / 38 / 31 | 4.3 | 90% | 154 | 5 larger, 2 smaller, +2, p 0.45 |
+| 3 s (0.5, 300) | 41 / 42 / 41 | 4.6 | 88% | 269 | 6-2, +5, p 0.29 |
+| 10 s (0.5, 300) | 50 / 55 / 54 | 6.4 | 70% | 670 | 8-0, +15, p 0.008, holds |
+| 10 s (0.5, 30) | 50 / 49 / 72 | 6.4 | 75% | 786 | 8-0, +19, p 0.008, holds |
+| **10 s (0.1, 30), the default** | **47 / 55 / 67** | **9.7** | **77%** | **791** | **8-0, +28, p 0.008, holds** |
+| 30 s (0.1, 30) | 47 / 55 / 50 | 10.0 | 98% | 431 | 6-2, +10, p 0.29 |
+
+- With the crater the hole grows under fire, and the hits land 10 dish cells from the squad instead of 4: without it the mould closes up to the squad as fast as it is shot.
+- The hole closes over about 10 s once firing stops: at 30 s it is back to 30 cells, against 26 without.
+- Craters of 30 s make a smaller hole. Once the near rim is empty, more shots fly long, and kills halve.
+- Of 32 soldiers, 31 lived through the default arm (32 without craters).
+- Seed 1 is the weak case: 43 against 40 cells at 20 s. There the craters let the hits land 13.5 dish cells from the squad, against 4.1, and kill 633 walkers against 163, most of them past the hole the count measures ([crater/clips-s1.txt](larder-world-roadmap-2026-11-11/crater/clips-s1.txt), [crater/clips-s3.txt](larder-world-roadmap-2026-11-11/crater/clips-s3.txt)).
+
+**In the window** ([page](https://claude.ai/artifact/AcRm3aeB97YLpWobtmABhs), `page-crater.html`; [crater/window-counts.txt](larder-world-roadmap-2026-11-11/crater/window-counts.txt)).
+- On the Fork, the rush hand at 13 s killed 1,098 walkers with craters against 974 without, in 31 shots each.
+- The window shows each crater's hole as the strike's round disc. Near a crystal, the bare soil inside is tinted red-brown by the crystal's scent (the look's soil colour, not a drawn mark).
+- **A ragged edge was tried and dropped.** Each cell got fewer steps toward the disc's rim, and a hashed share of them (the same whole numbers on both engines; the GPU took the longest crater a cell was given with an atomic max). In the window the holes came out smaller but no less round, because the trail's spread smooths cell-scale noise away. An edge irregular at the disc's own scale (a strike shape that isn't a disc) was not tried.
+
+**The gate, first look** (race seeds 5-12, 15-minute games, crater 10; raw [crater/census-race-5-12.txt](larder-world-roadmap-2026-11-11/crater/census-race-5-12.txt)):
+- farm, wall and strike each beat idle and random 8-0, and all hold under Holm.
+- Random wiped no mould, and its squad was wiped on 4.
+- Strike no longer beats every plan: it loses to farm 3-5, against 28-4 on 32 seeds without craters, because farm and wall now dig into the mould around their crystals too.
+- The 32-seed gate (race 5-36, the Fork and the Rim, runners 1-4, at 189ab71) is below once it lands.
+
+**Cost.** On software Vulkan the crater adds 0.03 ms a step (13.54/13.56 against 13.60/13.57 ms). The GTX 1070's figure is open.
+

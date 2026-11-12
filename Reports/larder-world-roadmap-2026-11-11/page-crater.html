@@ -1,0 +1,137 @@
+<title>Craters Under Fire</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* One reading column. Each row is one game moment played twice, without and with craters, side by side: pictures from the engine's own drawing, counts under each. Colours follow the world: mould amber, crystal cyan. */
+:root {
+  --bg: #f3f5f6; --fg: #182024; --muted: #56646b; --line: #d5dde0;
+  --panel: #ffffff; --amber: #a86a12; --cyan: #127a93; --win: #2f7d4a; --loss: #a8402c;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; --win: #7fd19a; --loss: #f0937e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; --win: #7fd19a; --loss: #f0937e; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1060px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.3rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+section { display: grid; gap: 14px; }
+.pair { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.strip { display: grid; grid-template-columns: 7.5rem repeat(4, 1fr); gap: 8px; align-items: start; }
+.strip .lab { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 4px; }
+.strip .lab.on { color: var(--amber); }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; align-content: start; }
+figure video, figure img { width: 100%; border-radius: 4px; border: 1px solid var(--line); display: block; background: #111a1f; }
+.counts { font-size: 0.88rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.counts b { color: var(--fg); font-weight: 600; }
+.tag { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.tag.off { color: var(--muted); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.92rem; min-width: 640px; }
+th, td { text-align: left; padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.82rem; }
+td.w { color: var(--win); font-weight: 600; }
+td.l { color: var(--loss); font-weight: 600; }
+.note { font-size: 0.9rem; color: var(--muted); border-left: 2px solid var(--line); padding-left: 12px; }
+.ask { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 14px 16px; display: grid; gap: 6px; }
+.ask b { font-family: var(--display); }
+code { font-size: 0.88em; }
+@media (max-width: 760px) {
+  .pair { grid-template-columns: 1fr; }
+  .strip { grid-template-columns: repeat(2, 1fr); }
+  .strip .lab { grid-column: 1 / -1; }
+}
+</style>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>Craters under fire</h1>
+    <p class="lede">You asked for a group of soldiers firing on the slime to carve a bigger and bigger hole that doesn't refill while they shoot. Now each hit leaves a crater in the simulation. For 10 game seconds, the cells it struck keep only a tenth of their trail each step, so the mould can't refill them. The next shots fly over the hole into the body behind it, so steady fire digs in. When the shooting stops, the craters run out and the mould grows back over about 10 seconds. Nothing is drawn on top. The hole you see is the trail that isn't there.</p>
+    <p class="lede">The earlier try, where the mould turned away from gunfire, made a bigger hole. It also let the random player win by parking on the mould's core, so it stays off. The crater doesn't change where the mould goes anywhere else, so it shouldn't open that hole. The full census, now running, is the test of that.</p>
+  </header>
+
+  <section>
+    <h2>In the game window</h2>
+    <p>These are pictures from the window, drawn by the GPU engine on the Fork. The "rush" hand sends all four soldiers at the mould's core. The same game is played twice, once without craters and once with them, and the pictures are taken at the same seconds.</p>
+    <div class="strip">
+      <span class="lab">no craters</span>
+      <figure><img src="crater/window-before-07s.jpg" alt="7 s, no craters"><div class="counts">7 s · <b>9</b> killed · 7 shots</div></figure>
+      <figure><img src="crater/window-before-09s.jpg" alt="9 s, no craters"><div class="counts">9 s · <b>135</b> killed · 15 shots</div></figure>
+      <figure><img src="crater/window-before-11s.jpg" alt="11 s, no craters"><div class="counts">11 s · <b>579</b> killed · 23 shots</div></figure>
+      <figure><img src="crater/window-before-13s.jpg" alt="13 s, no craters"><div class="counts">13 s · <b>974</b> killed · mould 4,376</div></figure>
+      <span class="lab on">craters</span>
+      <figure><img src="crater/window-crater-07s.jpg" alt="7 s, craters"><div class="counts">7 s · <b>6</b> killed · 7 shots</div></figure>
+      <figure><img src="crater/window-crater-09s.jpg" alt="9 s, craters"><div class="counts">9 s · <b>129</b> killed · 15 shots</div></figure>
+      <figure><img src="crater/window-crater-11s.jpg" alt="11 s, craters"><div class="counts">11 s · <b>598</b> killed · 23 shots</div></figure>
+      <figure><img src="crater/window-crater-13s.jpg" alt="13 s, craters"><div class="counts">13 s · <b>1,098</b> killed · mould 4,219</div></figure>
+    </div>
+    <p class="note">Each crater is the round disc a hit strikes, so a fresh hole starts round. Near a crystal, the bare ground inside the hole shows red-brown: that's the soil tinted by the crystal's scent, the same colour the ground has there with no mould on it. I also tried a ragged edge, with fewer crater steps toward a disc's rim and a random share per cell. It made the holes smaller but no less round, because the trail's spread smooths away anything a single cell does. So it isn't in. If these still read as stamps to you, that's the thing to tell me.</p>
+  </section>
+
+  <section>
+    <h2>A squad holding its ground, seed 1</h2>
+    <p>This is the hole test, on the CPU's race world, played the same way as the earlier holes page. The mould grows for 60 s. Then four soldiers (the white squares) are set down 8 cells from its edge. They fire for 20 s and then stop. The clips run at three frames per game second.</p>
+    <div class="pair">
+      <figure><span class="tag off">no craters</span>
+        <video src="crater/before-s1.mp4" poster="crater/before-s1.jpg" autoplay muted loop playsinline aria-label="Seed 1 without craters: the mould closes over each hit at once"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>43 / 36 / 40</b> cells<br>5 s after the last shot: 39 · hits land 4.1 cells away · 163 walkers killed</div></figure>
+      <figure><span class="tag">craters</span>
+        <video src="crater/crater-s1.mp4" poster="crater/crater-s1.jpg" autoplay muted loop playsinline aria-label="Seed 1 with craters"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>47 / 38 / 43</b> cells<br>5 s after the last shot: 48 · hits land 13.5 cells away · 633 killed</div></figure>
+    </div>
+    <p class="counts">The squad's range held 139 cells of mould when it was set down. With the squad holding fire, the mould's own drift leaves 36 / 33 / 28. On this seed the hole hardly grows in cells: the craters let the hits land 13.5 cells from the squad instead of 4, and the squad kills four times as many walkers. Most of what it cuts lies past the hole the count measures.</p>
+  </section>
+
+  <section>
+    <h2>Seed 3</h2>
+    <div class="pair">
+      <figure><span class="tag off">no craters</span>
+        <video src="crater/before-s3.mp4" poster="crater/before-s3.jpg" autoplay muted loop playsinline aria-label="Seed 3 without craters"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>42 / 33 / 28</b> cells<br>5 s after the last shot: 25 · hits land 3.8 cells away · 138 killed</div></figure>
+      <figure><span class="tag">craters</span>
+        <video src="crater/crater-s3.mp4" poster="crater/crater-s3.jpg" autoplay muted loop playsinline aria-label="Seed 3 with craters"></video>
+        <div class="counts">hole at 5 / 10 / 20 s: <b>54 / 63 / 86</b> cells<br>5 s after the last shot: 53 · hits land 9.6 cells away · 584 killed</div></figure>
+    </div>
+    <p class="counts">130 cells of mould in range at the start; holding fire leaves 33 / 40 / 17. Here the squad stands on a crystal and fires across a tube, and the hole grows the whole 20 s.</p>
+  </section>
+
+  <section>
+    <h2>Over 8 games</h2>
+    <p>Each row is the median over seeds 1-8, each game played as in the clips. The hole counts cells within the squad's range that held mould when the squad was set down and are empty now. The last column pairs each setting against no craters, seed by seed, at 20 s of fire.</p>
+    <div class="scroll"><table>
+      <tr><th></th><th>hole at 5 / 10 / 20 s of fire</th><th>hits land from the squad</th><th>5 s after the last shot</th><th>killed in 20 s</th><th>against no craters at 20 s</th></tr>
+      <tr><td>no craters</td><td>42 / 33 / 29</td><td>3.8 cells</td><td>98% left</td><td>163</td><td></td></tr>
+      <tr><td><b>craters, 10 s (now on)</b></td><td class="w">47 / 55 / 67</td><td>9.7 cells</td><td>77% left</td><td>791</td><td class="w">8 of 8 larger, +28 cells, p 0.008</td></tr>
+      <tr><td>the toolkit's first crater, 10 s</td><td>50 / 55 / 54</td><td>6.4</td><td>70%</td><td>670</td><td>8 of 8, +15</td></tr>
+      <tr><td>craters, 30 s</td><td>47 / 55 / 50</td><td>10.0</td><td>98%</td><td>431</td><td>6 of 8, +10, p 0.29</td></tr>
+      <tr><td>craters, 1 s or 3 s</td><td>36-41 / 38-42 / 31-41</td><td>4.3-4.6</td><td>88-90%</td><td>154-269</td><td>+2 and +5, not significant</td></tr>
+    </table></div>
+    <p class="note">The setting that ships cuts harder than the toolkit's first crater: a tenth of the trail is kept each step, not half. The toolkit's blasts and det cord use the same field and checked that the change doesn't hurt them. Craters that last 30 s make a smaller hole: once the near rim is empty, more shots fly long, and kills halve. Of the 32 soldiers across the 8 games, 31 lived (32 without craters).</p>
+  </section>
+
+  <section>
+    <h2>Does it still play fair</h2>
+    <p>The test that sank the turn-away rule was the random player. Here are 8 race-world games of 15 minutes each, with craters on, each plan paired against idle and random play on the same seeds.</p>
+    <div class="scroll"><table>
+      <tr><th>hand</th><th>mean score</th><th>ends</th><th>against idle</th><th>against random</th></tr>
+      <tr><td>farm</td><td>+0.318</td><td>8 at the 15-minute cap</td><td class="w">8-0, +0.663</td><td class="w">8-0, +1.131</td></tr>
+      <tr><td>wall</td><td>+0.312</td><td>8 at the cap</td><td class="w">8-0, +0.678</td><td class="w">8-0, +1.145</td></tr>
+      <tr><td>strike</td><td>+0.260</td><td>8 at the cap</td><td class="w">8-0, +0.616</td><td class="w">8-0, +1.105</td></tr>
+      <tr><td>idle</td><td>-0.518</td><td>6 at the cap, 2 squads wiped</td><td></td><td></td></tr>
+      <tr><td>random</td><td>-0.769</td><td>4 at the cap, 4 squads wiped, <b>no mould wiped</b></td><td></td><td></td></tr>
+    </table></div>
+    <p class="note">Strike no longer beats every plan. Without craters it beat farm on 28 of 32 seeds; with them it loses to farm 3-5 on these 8. That's because farm and wall now dig into the mould around their crystals too. The full gate, 32 race seeds plus the Fork and the Rim, is running now, and this page gets its numbers when it lands.</p>
+  </section>
+
+  <section>
+    <p class="counts">Raw counts: <code>crater/clips-s1.txt</code>, <code>crater/clips-s3.txt</code>, <code>crater/window-counts.txt</code>, <code>crater/hole-1-8-full30-keep01.txt</code>, <code>crater/hole-1-8-keep05-full300.txt</code>, <code>crater/census-race-5-12.txt</code> in the repo's <code>Reports/larder-world-roadmap-2026-11-11/</code>. Code: PR #113.</p>
+  </section>
+</main>
