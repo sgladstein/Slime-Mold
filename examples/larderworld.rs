@@ -176,6 +176,13 @@ struct Mould {
     /// world's 0.005 when unset); 0.004 holds the one-body mould near
     /// today's size (Reports/one-body-2026-11-12.md, *Matched size*).
     crystal_eat: Option<f32>,
+    /// `flow_loss=`: the share of shared food lost per hop
+    /// (`BigParams::flow_loss`), CPU only so far.
+    flow_loss: f32,
+    /// `upkeep=`: a walker's energy cost a step (the race world's 0.001
+    /// when unset); 0.0002 keeps about 25,000 walkers alive, the density
+    /// at which the mould stops looking like specks (one-body report).
+    upkeep: Option<f32>,
 }
 
 impl Mould {
@@ -194,8 +201,12 @@ impl Mould {
     fn apply(&self, p: &mut BigParams) {
         (p.alarm_keep, p.alarm_weight) = self.alarm((p.alarm_keep, p.alarm_weight));
         (p.energy_flow, p.hunger_scent) = (self.energy_flow, self.hunger_scent);
+        p.flow_loss = self.flow_loss;
         if let Some(e) = self.crystal_eat {
             p.crystal_eat = e;
+        }
+        if let Some(u) = self.upkeep {
+            p.upkeep = u;
         }
         if let Some(t) = self.tier {
             t.apply(p);
@@ -259,6 +270,10 @@ fn main() {
             "aim_min" => rules.aim_min = v.parse().unwrap(),
             "price" => rules.price = v.parse().unwrap(),
             "smell" => rules.smell = v.parse().unwrap(),
+            // `drain=`: soldier health lost a second per touching walker
+            // (`Rules::drain`); a denser mould wants less a walker.
+            "drain" => rules.drain = v.parse().unwrap(),
+            "upkeep" => m.upkeep = Some(v.parse().unwrap()),
             "smell_r" => rules.smell_r = v.parse().unwrap(),
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             "flee" => m.flee = Some(v.parse().unwrap()),
@@ -274,6 +289,7 @@ fn main() {
             "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
             "scorch_cone" => m.scorch_cone = Some(v == "1"),
             "energy_flow" => m.energy_flow = v.parse().unwrap(),
+            "flow_loss" => m.flow_loss = v.parse().unwrap(),
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "crystal_eat" => m.crystal_eat = Some(v.parse().unwrap()),
             "strike" => rules.strike = v.parse().unwrap(),
@@ -312,7 +328,7 @@ fn main() {
         rules.cap = c;
     }
     if (m.energy_flow, m.hunger_scent) != (0.0, 0.0) || m.crystal_eat.is_some() {
-        println!("one body: energy_flow {} hunger_scent {} crystal_eat {:?}", m.energy_flow, m.hunger_scent, m.crystal_eat);
+        println!("one body: energy_flow {} hunger_scent {} crystal_eat {:?} flow_loss {}", m.energy_flow, m.hunger_scent, m.crystal_eat, m.flow_loss);
     }
     let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
     let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
@@ -584,8 +600,12 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: Mould, han
         let mut s = race_settings(seed, scale, walkers);
         (s.alarm_keep, s.alarm_weight) = mould.alarm((s.alarm_keep, s.alarm_weight));
         (s.energy_flow, s.hunger_scent) = (mould.energy_flow, mould.hunger_scent);
+        assert!(mould.flow_loss == 0.0, "flow_loss is CPU only so far");
         if let Some(e) = mould.crystal_eat {
             s.crystal_eat = e;
+        }
+        if let Some(u) = mould.upkeep {
+            s.upkeep = u;
         }
         let world = match map {
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),

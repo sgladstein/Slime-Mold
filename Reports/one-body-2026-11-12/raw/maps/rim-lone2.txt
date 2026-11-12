@@ -1,0 +1,62 @@
+cutprobe race world scale 2 walkers 5000, grow 120 s, follow 60 s, 3 cuts a seed, seeds [1, 2, 3, 4, 5, 6]
+arms: [("base", []), ("L2", [("lone_step", "2"), ("body_r", "2")]), ("L3f5", [("lone_step", "3"), ("body_r", "2"), ("lone_floor", "0.5")]), ("L4f5", [("lone_step", "4"), ("body_r", "2"), ("lone_floor", "0.5")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+base 1 grown | alive 6235 parts1% 4 lcs 0.94 lone 0.00 rms 26.9 | crystals eaten from 3 of 11
+cut base 1 0 at fine cell (272, 240)
+base 1 0 | 25 25 0 | 0.37 8.87 0.33 50.9 46.61 | 60 crystal 2 58.8 react 2 | 6235 5.26
+cut base 1 1 at fine cell (156, 40)
+base 1 1 | 20 20 0 | 0.33 8.38 0.34 34.0 40.16 | 60 crystal 3 23.5 react 4 | 6235 5.26
+L2 1 grown | alive 5572 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L3f5 1 grown | alive 5550 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L4f5 1 grown | alive 5503 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+base 2 grown | alive 5822 parts1% 2 lcs 0.96 lone 0.00 rms 21.8 | crystals eaten from 3 of 11
+L2 2 grown | alive 5536 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L3f5 2 grown | alive 5515 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L4f5 2 grown | alive 5543 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+base 3 grown | alive 6020 parts1% 2 lcs 0.95 lone 0.00 rms 24.7 | crystals eaten from 3 of 11
+cut base 3 0 at fine cell (272, 236)
+base 3 0 | 28 30 0 | 0.37 8.16 0.37 43.0 39.38 | 60 crystal 2 35.1 react 3 | 6020 6.51
+cut base 3 1 at fine cell (268, 72)
+base 3 1 | 26 26 0 | 0.26 7.41 0.43 61.0 49.00 | 60 crystal 2 55.2 react 3 | 6020 6.51
+cut base 3 2 at fine cell (192, 32)
+base 3 2 | 25 25 0 | 0.20 9.30 0.36 32.7 32.78 | 60 crystal 2 57.4 react 2 | 6020 6.51
+L2 3 grown | alive 5525 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L3f5 3 grown | alive 5562 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L4f5 3 grown | alive 5509 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+base 4 grown | alive 5997 parts1% 1 lcs 0.96 lone 0.01 rms 24.3 | crystals eaten from 3 of 11
+cut base 4 0 at fine cell (272, 240)
+base 4 0 | 25 25 0 | 0.22 7.49 0.35 43.7 36.50 | 60 crystal 2 36.8 react 2 | 5997 5.77
+L2 4 grown | alive 5520 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L3f5 4 grown | alive 5527 parts1% 1 lcs 1.00 lone 0.00 rms 17.1 | crystals eaten from 3 of 11
+L4f5 4 grown | alive 5556 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+base 5 grown | alive 6148 parts1% 1 lcs 0.95 lone 0.00 rms 24.5 | crystals eaten from 3 of 11
+cut base 5 0 at fine cell (176, 140)
+base 5 0 | 29 30 0 | 0.41 6.02 0.54 16.8 13.18 | 60 crystal 2 36.0 react 1 | 6148 6.51
+cut base 5 1 at fine cell (184, 32)
+base 5 1 | 23 23 0 | 0.33 8.48 0.32 16.2 19.15 | 60 crystal 2 27.6 react 3 | 6148 6.51
+L2 5 grown | alive 5502 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L3f5 5 grown | alive 5510 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L4f5 5 grown | alive 5541 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+base 6 grown | alive 6090 parts1% 2 lcs 0.93 lone 0.01 rms 26.8 | crystals eaten from 3 of 11
+cut base 6 0 at fine cell (276, 236)
+base 6 0 | 24 24 0 | 0.27 7.92 0.41 49.1 48.31 | 60 crystal 2 46.4 react 3 | 6090 6.24
+cut base 6 1 at fine cell (272, 76)
+base 6 1 | 21 23 0 | 0.33 6.95 0.50 25.1 24.20 | 60 crystal 2 28.6 react 2 | 6090 6.24
+L2 6 grown | alive 5507 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L3f5 6 grown | alive 5534 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+L4f5 6 grown | alive 5533 parts1% 1 lcs 1.00 lone 0.00 rms 17.2 | crystals eaten from 3 of 11
+
+summary (mean over cuts)
+base: cuts 10 n0 25 lcs20 0.31 frag 7.90 lcs 0.39 rms20 37.3 compact20 34.93 life 60 moved 40.5 fates {"crystal": 10}
+L2: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
+L3f5: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000
+L4f5: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs base: lcs20 better 0 worse 0, p 1.0000
+  vs base: life better 0 worse 0, p 1.0000
+  vs base: compact20 better 0 worse 0, p 1.0000

@@ -1,0 +1,64 @@
+sprawler random 5 -1.669 squad wiped
+sprawler randkit 5 -1.521 squad wiped
+sprawler farm 5 +0.124 cap
+sprawler idle 5 -1.171 squad wiped
+sprawler loud 5 +0.128 cap
+sprawler quiet 5 +0.005 cap
+sprawler idle 6 -1.277 squad wiped
+sprawler siege 5 +0.129 cap
+sprawler random 6 +0.364 cap
+sprawler farm 6 +0.175 cap
+sprawler loud 6 +1.380 mould wiped
+sprawler plague 5 +1.322 mould wiped
+sprawler quiet 6 +0.049 cap
+sprawler randkit 6 +1.580 mould wiped
+sprawler random 7 -1.617 squad wiped
+sprawler idle 7 -1.499 squad wiped
+sprawler randkit 7 -1.634 squad wiped
+sprawler siege 6 +0.194 cap
+sprawler plague 6 +1.450 mould wiped
+sprawler farm 7 +0.169 cap
+sprawler loud 7 +0.215 cap
+sprawler quiet 7 -0.005 cap
+sprawler siege 7 +0.171 cap
+sprawler random 8 -1.600 squad wiped
+sprawler idle 8 -0.420 cap
+sprawler farm 8 +0.150 cap
+sprawler plague 7 +1.472 mould wiped
+sprawler loud 8 +0.151 cap
+sprawler randkit 8 +1.747 mould wiped
+sprawler idle 9 -1.384 squad wiped
+sprawler quiet 8 -0.007 cap
+sprawler siege 8 +0.153 cap
+sprawler farm 9 +0.489 cap
+sprawler loud 9 +1.517 mould wiped
+sprawler plague 8 +1.425 mould wiped
+sprawler random 9 +1.533 mould wiped
+sprawler quiet 9 +0.132 cap
+sprawler siege 9 +0.488 cap
+sprawler random 10 -1.654 squad wiped
+sprawler randkit 10 -1.746 squad wiped
+sprawler idle 10 -0.411 cap
+sprawler farm 10 +0.208 cap
+sprawler loud 10 +1.542 mould wiped
+sprawler plague 9 +1.503 mould wiped
+sprawler randkit 9 +1.832 mould wiped
+sprawler quiet 10 +0.039 cap
+sprawler idle 11 -0.385 cap
+sprawler siege 10 +0.218 cap
+sprawler random 11 +1.742 mould wiped
+sprawler plague 10 +1.702 mould wiped
+sprawler farm 11 +0.487 cap
+sprawler loud 11 +1.362 mould wiped
+sprawler randkit 11 +1.807 mould wiped
+sprawler quiet 11 +0.100 cap
+sprawler random 12 -1.181 squad wiped
+sprawler siege 11 +0.217 cap
+sprawler idle 12 -0.398 cap
+sprawler farm 12 +0.489 cap
+sprawler loud 12 +1.415 mould wiped
+sprawler quiet 12 +0.088 cap
+sprawler randkit 12 +1.688 mould wiped
+sprawler plague 11 +1.345 mould wiped
+sprawler siege 12 +0.488 cap
+sprawler plague 12 +1.332 mould wiped

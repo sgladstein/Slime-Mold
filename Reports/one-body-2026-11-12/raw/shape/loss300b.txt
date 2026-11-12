@@ -1,0 +1,26 @@
+cutprobe race world scale 2 walkers 5000, grow 300 s, follow 120 s, 0 cuts a seed, seeds [1, 2, 3, 4, 5, 6, 7, 8]
+arms: [("Hl02", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("flow_loss", "0.02")]), ("Hl05", [("energy_flow", "0.05"), ("hunger_scent", "8"), ("flow_loss", "0.05")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+Hl02 1 grown | alive 14771 parts1% 1 lcs 1.00 lone 0.00 rms 77.8 | crystals eaten from 7 of 23
+Hl05 1 grown | alive 8854 parts1% 3 lcs 0.57 lone 0.01 rms 81.9 | crystals eaten from 5 of 23
+Hl02 2 grown | alive 20245 parts1% 1 lcs 0.99 lone 0.00 rms 64.8 | crystals eaten from 12 of 23
+Hl05 2 grown | alive 12608 parts1% 2 lcs 0.78 lone 0.00 rms 68.2 | crystals eaten from 8 of 23
+Hl02 3 grown | alive 12612 parts1% 2 lcs 0.94 lone 0.00 rms 57.8 | crystals eaten from 7 of 23
+Hl05 3 grown | alive 10132 parts1% 1 lcs 0.97 lone 0.00 rms 56.6 | crystals eaten from 7 of 23
+Hl02 4 grown | alive 13443 parts1% 1 lcs 0.99 lone 0.00 rms 64.8 | crystals eaten from 10 of 23
+Hl05 4 grown | alive 6594 parts1% 3 lcs 0.78 lone 0.01 rms 66.5 | crystals eaten from 4 of 23
+Hl02 5 grown | alive 18995 parts1% 1 lcs 1.00 lone 0.00 rms 64.6 | crystals eaten from 13 of 23
+Hl05 5 grown | alive 13997 parts1% 1 lcs 1.00 lone 0.00 rms 64.1 | crystals eaten from 11 of 23
+Hl02 6 grown | alive 15252 parts1% 2 lcs 0.97 lone 0.00 rms 56.6 | crystals eaten from 10 of 23
+Hl05 6 grown | alive 11823 parts1% 2 lcs 0.95 lone 0.00 rms 57.6 | crystals eaten from 10 of 23
+Hl02 7 grown | alive 17882 parts1% 2 lcs 0.93 lone 0.00 rms 60.4 | crystals eaten from 10 of 23
+Hl05 7 grown | alive 15807 parts1% 2 lcs 0.94 lone 0.00 rms 63.0 | crystals eaten from 11 of 23
+Hl02 8 grown | alive 16865 parts1% 1 lcs 0.98 lone 0.00 rms 64.5 | crystals eaten from 12 of 23
+Hl05 8 grown | alive 12274 parts1% 1 lcs 0.98 lone 0.00 rms 63.4 | crystals eaten from 11 of 23
+
+summary (mean over cuts)
+Hl02: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+Hl05: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+  vs Hl02: lcs20 better 0 worse 0, p 1.0000
+  vs Hl02: life better 0 worse 0, p 1.0000
+  vs Hl02: compact20 better 0 worse 0, p 1.0000

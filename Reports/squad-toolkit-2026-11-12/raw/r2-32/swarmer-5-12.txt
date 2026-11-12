@@ -1,0 +1,64 @@
+swarmer random 5 -1.438 squad wiped
+swarmer farm 5 +0.197 cap
+swarmer randkit 5 -1.494 squad wiped
+swarmer loud 5 +0.458 cap
+swarmer quiet 5 +0.119 cap
+swarmer siege 5 +0.204 cap
+swarmer idle 5 -0.333 cap
+swarmer random 6 -1.575 squad wiped
+swarmer idle 6 -0.267 cap
+swarmer plague 5 +1.540 mould wiped
+swarmer randkit 6 -1.486 squad wiped
+swarmer farm 6 +0.202 cap
+swarmer loud 6 +1.633 mould wiped
+swarmer quiet 6 +0.196 cap
+swarmer siege 6 +0.201 cap
+swarmer random 7 -1.585 squad wiped
+swarmer idle 7 -0.342 cap
+swarmer farm 7 +0.175 cap
+swarmer loud 7 +0.300 cap
+swarmer quiet 7 +0.087 cap
+swarmer siege 7 +0.157 cap
+swarmer plague 6 +1.218 mould wiped
+swarmer random 8 -1.708 squad wiped
+swarmer randkit 8 -1.640 squad wiped
+swarmer randkit 7 +1.322 mould wiped
+swarmer idle 8 -0.319 cap
+swarmer plague 7 +1.407 mould wiped
+swarmer farm 8 +0.121 cap
+swarmer loud 8 +0.149 cap
+swarmer quiet 8 +0.140 cap
+swarmer siege 8 +0.130 cap
+swarmer random 9 +0.139 cap
+swarmer randkit 9 -1.380 squad wiped
+swarmer idle 9 -0.268 cap
+swarmer farm 9 +0.224 cap
+swarmer quiet 9 +0.152 cap
+swarmer loud 9 +0.268 cap
+swarmer siege 9 +0.205 cap
+swarmer plague 8 +1.312 mould wiped
+swarmer random 10 -1.699 squad wiped
+swarmer randkit 10 -1.627 squad wiped
+swarmer idle 10 -0.312 cap
+swarmer farm 10 +0.170 cap
+swarmer loud 10 +0.210 cap
+swarmer quiet 10 +0.107 cap
+swarmer siege 10 +0.153 cap
+swarmer random 11 -1.303 squad wiped
+swarmer idle 11 -0.316 cap
+swarmer plague 9 +0.485 cap
+swarmer randkit 11 -1.600 squad wiped
+swarmer farm 11 +0.222 cap
+swarmer quiet 11 +0.169 cap
+swarmer loud 11 +0.283 cap
+swarmer siege 11 +0.203 cap
+swarmer plague 10 +0.309 cap
+swarmer random 12 -1.683 squad wiped
+swarmer randkit 12 -1.591 squad wiped
+swarmer idle 12 -0.332 cap
+swarmer loud 12 +1.708 mould wiped
+swarmer farm 12 +0.255 cap
+swarmer plague 11 +1.505 mould wiped
+swarmer quiet 12 +0.169 cap
+swarmer siege 12 +0.254 cap
+swarmer plague 12 +1.443 mould wiped
