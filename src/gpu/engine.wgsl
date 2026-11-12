@@ -1898,9 +1898,14 @@ fn harvest(@builtin(local_invocation_index) li: u32) {
             }
             hc[k] = c;
             workgroupBarrier();
+            // Only the stretch's own cells (a box narrower than 256 leaves
+            // the rest at 0): over all 256 the pass took 0.49 ms a step at
+            // 5k walkers on the 1070, against 0.09 for the one-thread pass
+            // (harvest1), and 1.33 against 0.77 at 100k (2026-11-12).
+            let n = u32(min(256, cx + r - xs + 1));
             if (li == 0u) {
                 var rem = hrem;
-                for (var j = 0u; j < 256u && rem > 0.0; j++) {
+                for (var j = 0u; j < n && rem > 0.0; j++) {
                     let cj = hc[j];
                     if (cj > 0.0) {
                         let t = min(cj, rem);
