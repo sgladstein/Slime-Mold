@@ -226,14 +226,9 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
     let mut tr = Tracker::new(m.clone(), &g);
     // `gaps+STYLE`: the Rim's wall plan (one soldier walls each gap of the
     // ring, then STYLE plays everyone); the mission 3 verb's own hand.
-    // `hold+STYLE`: mission 2's plan (`campaign::hold_reached`).
     let (gaps, style) = match hand.strip_prefix("gaps+") {
         Some(st) => (true, st),
         None => (false, hand),
-    };
-    let (hold, style) = match style.strip_prefix("hold+") {
-        Some(st) => (true, st),
-        None => (false, style),
     };
     let mut ai = larder_world_ai::Hand::named(style, &g);
     let mut walled = [false; 4];
@@ -244,7 +239,6 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
         match hand {
             "random" => random_hand(&mut g),
             _ if gaps && walled.iter().any(|w| !w) && g.time() < 120.0 => campaign::wall_rim_gaps(&mut g, &mut walled),
-            _ if hold && campaign::hold_reached(&mut g, reached) => {}
             _ => {
                 ai.as_mut().unwrap_or_else(|| panic!("unknown hand {hand}")).play(&mut g);
             }
