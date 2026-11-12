@@ -126,6 +126,34 @@ pub trait World {
     fn tend(&mut self, _soldiers: &[Soldier], _bank: f32, _ticks: u32) -> f32 {
         0.0
     }
+    /// A squad toolkit burst (`squad::Burst`), now, between frames: the
+    /// kill, clear, alarm and crater on every world; gas and germ only
+    /// where `has_gas` and `has_germ` say so (a world without them leaves
+    /// those parts out, and the toolkit doesn't sell them there).
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut;
+    /// Whether `burst`'s gas and germ parts work on this world.
+    fn has_gas(&self) -> bool {
+        false
+    }
+    fn has_germ(&self) -> bool {
+        false
+    }
+    /// Walkers holding a cell within `r` fine cells of `at` (fine cells),
+    /// for a mine's trigger. The default sums the mould grid's squares of
+    /// one dish cell whose centre is in reach (the GPU world's, from the
+    /// frame's readout); 0 with no grid.
+    fn walkers_in(&self, at: (f32, f32), r: f32) -> u32 {
+        let bin = (self.scale() as usize).max(1);
+        let Some(g) = self.mould_grid(bin) else { return 0 };
+        let (w, _) = self.size();
+        let gw = w.div_ceil(bin);
+        let b = bin as f32;
+        g.iter()
+            .enumerate()
+            .filter(|&(i, _)| ((((i % gw) as f32 + 0.5) * b - at.0).hypot((((i / gw) as f32 + 0.5) * b) - at.1)) <= r)
+            .map(|(_, &n)| n)
+            .sum()
+    }
 }
 
 impl World for BigDish {
@@ -190,6 +218,39 @@ impl World for BigDish {
 
     fn calm(&self, at: &[(f32, f32)], r: f32) -> Vec<u32> {
         self.gassed_near(at, r)
+    }
+
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+        squad::burst(self, b, k)
+    }
+
+    fn has_gas(&self) -> bool {
+        true
+    }
+
+    fn has_germ(&self) -> bool {
+        true
+    }
+
+    /// Exact: the cells within `r` (the mine count `Kit::frame` used
+    /// before the toolkit ran on both worlds).
+    fn walkers_in(&self, at: (f32, f32), r: f32) -> u32 {
+        let occ = self.occupancy();
+        let n = r.ceil() as i64;
+        let mut c = 0u32;
+        for dy in -n..=n {
+            for dx in -n..=n {
+                if ((dx * dx + dy * dy) as f32) > r * r {
+                    continue;
+                }
+                let (cx, cy) = (at.0 as i64 + dx, at.1 as i64 + dy);
+                if cx < 0 || cy < 0 || cx as usize >= self.w || cy as usize >= self.h {
+                    continue;
+                }
+                c += occ[cy as usize * self.w + cx as usize] as u32;
+            }
+        }
+        c
     }
 
     fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
@@ -2355,6 +2416,9 @@ mod tests {
         fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
             assert!(self.out.is_none(), "a wall built while a frame runs");
             World::build_wall(&mut self.d, a, b, width)
+        }
+        fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+            World::burst(&mut self.d, b, k)
         }
         fn living(&self) -> usize {
             World::living(&self.d)

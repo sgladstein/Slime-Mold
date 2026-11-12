@@ -476,6 +476,12 @@ impl World for Garden {
         self.dish.build_wall(a.0, a.1, b.0, b.1, width);
     }
 
+    /// On the shared dish, both sides alike (a blast doesn't ask whose
+    /// walker it is).
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+        squad::burst(&mut self.dish, b, k)
+    }
+
     /// The enemy's walkers: to the game, the mould.
     fn living(&self) -> usize {
         self.counts_by_side().1

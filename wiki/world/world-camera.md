@@ -2,9 +2,41 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-12T21:59Z
-sources: [Reports/shot-damage-2026-11-12.md, Reports/soldier-controls-2026-11-12.md, Reports/world-camera-2026-11-11.md, Reports/world-ui-2026-11-11.md, Reports/world-look-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
-code: [Cmd::Queue, Cmd::Rally, Order::Fight, Game::seek, Camera::wheel, Camera::set_inset, View::record, Controls::button, UiCommand, Marks::label, MAX_ZOOM, MAX_MARKS, Hud::draw, Hud::aim, HudEvent, CanvasPass, Squad::model, View::set_look, Engine::set_hits, Marks::soldier, MAX_HITS, first_hit, SPRITES, View::set_alive, View::set_body_density, Marks::building]
+updated: 2026-11-12
+sources:
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/shot-damage-2026-11-12.md
+  - Reports/soldier-controls-2026-11-12.md
+  - Reports/world-camera-2026-11-11.md
+  - Reports/world-look-2026-11-11.md
+  - Reports/world-ui-2026-11-11.md
+code:
+  - Camera::set_inset
+  - Camera::wheel
+  - CanvasPass
+  - Cmd::Queue
+  - Cmd::Rally
+  - Controls::button
+  - Engine::set_hits
+  - Game::seek
+  - Hud::aim
+  - Hud::draw
+  - HudEvent
+  - MAX_HITS
+  - MAX_MARKS
+  - MAX_ZOOM
+  - Marks::building
+  - Marks::label
+  - Marks::soldier
+  - Order::Fight
+  - SPRITES
+  - Squad::model
+  - UiCommand
+  - View::record
+  - View::set_alive
+  - View::set_body_density
+  - View::set_look
+  - first_hit
 ---
 
 # The world camera and UI

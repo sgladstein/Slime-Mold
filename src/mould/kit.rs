@@ -1,8 +1,15 @@
 //! **The squad toolkit** (2026-11-12, the owner's "all six together" on
 //! the toolkit thread): six tools for the Larder world's squad, each built
 //! on one term of the mould's model, so what a tool does is a change in the
-//! simulation the picture draws, not an effect painted over it. CPU world
-//! only so far (`Game<BigDish>`); the GPU world has none of them yet.
+//! simulation the picture draws, not an effect painted over it.
+//!
+//! **On every world** (2026-11-12, the technical lead: port now, retune
+//! later): each tool comes down to bursts (`squad::Burst`), which a world
+//! applies (`World::burst`). The blast, mine and det cord run on the CPU
+//! and the GPU world alike (the GPU's strike passes lay the crater too);
+//! germ and gas need `World::has_germ` and `has_gas`, the CPU world's
+//! only so far, and are refused (not paid) elsewhere. Until then every
+//! tool called `BigDish` itself, so none ran on the GPU.
 //!
 //! The model in one line: walkers read the trail ahead with three sensors,
 //! turn to the strongest, step and lay trail; trail spreads and fades;
@@ -35,8 +42,8 @@
 //!
 //! Every tool is paid from the bank and must be used within `reach` of a
 //! living soldier, so tools are part of the squad's play, not a cursor's.
-use super::big::BigDish;
 use super::larder_world::{Game, World};
+use super::squad::{Burst, BurstRules};
 
 #[derive(Clone, Copy, Debug)]
 pub struct KitRules {
@@ -86,6 +93,14 @@ pub struct KitRules {
     pub restock_r: f32,
     /// The alarm's keep, when a tool turns the alarm on.
     pub alarm_keep: f32,
+    /// The density `mine_trigger` was set at: a mine's trigger is
+    /// `mine_trigger` x the game's density (`Game::density`, walkers per
+    /// open cell at the start) over this, so a mine means the same share of
+    /// mould at 5,000 walkers or 100,000 (the technical lead, 2026-11-12:
+    /// write walker counts against density). The race world's, measured
+    /// over seeds 1-36 at scale 2 and 5,000 walkers (so the
+    /// trigger is 38 to 42 by seed there, where it was 40 on every seed).
+    pub mine_density: f32,
 }
 
 impl Default for KitRules {
@@ -126,9 +141,14 @@ impl Default for KitRules {
             tool_weight: 50.0,
             restock_r: 6.0,
             alarm_keep: 0.95,
+            mine_density: MINE_DENSITY,
         }
     }
 }
+
+/// The race world's density (`Game::density`) at scale 2 and 5,000 walkers,
+/// seeds 1-36 (0.0337 to 0.0368, mean 0.0349; `the_mine_trigger_follows_density`).
+pub const MINE_DENSITY: f32 = 0.035;
 
 /// A tool use; points in fine cells, as soldiers' are.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -200,13 +220,13 @@ impl Kit {
 
     /// Whether a living soldier is within `reach` of `p` (with the carry
     /// rule, one holding a tool).
-    pub fn in_reach(&self, g: &Game<BigDish>, p: (f32, f32)) -> bool {
+    pub fn in_reach<W: World>(&self, g: &Game<W>, p: (f32, f32)) -> bool {
         self.user(g, p).is_some()
     }
 
     /// The nearest living soldier within reach of `p` that may use a tool.
-    fn user(&self, g: &Game<BigDish>, p: (f32, f32)) -> Option<usize> {
-        let r = self.rules.reach * g.world.p.scale as f32;
+    fn user<W: World>(&self, g: &Game<W>, p: (f32, f32)) -> Option<usize> {
+        let r = self.rules.reach * g.world.scale();
         (0..g.soldiers.len())
             .filter(|&k| {
                 let s = g.soldiers[k];
@@ -226,9 +246,9 @@ impl Kit {
     /// Soldier `k` takes tools at the larder up to `n` held (and
     /// `carry_max`); returns whether it is close enough. Nothing is paid
     /// here: a tool is paid when used.
-    pub fn restock(&mut self, g: &mut Game<BigDish>, k: usize, n: u32) -> bool {
+    pub fn restock<W: World>(&mut self, g: &mut Game<W>, k: usize, n: u32) -> bool {
         let s = g.soldiers[k];
-        let r = self.rules.restock_r * g.world.p.scale as f32;
+        let r = self.rules.restock_r * g.world.scale();
         if !s.alive || (s.x - g.larder.0).hypot(s.y - g.larder.1) > r {
             return false;
         }
@@ -243,13 +263,15 @@ impl Kit {
     /// Uses a tool if the bank holds its price and a soldier is in reach
     /// (cord: of its middle, at most `cord_max` long). Returns whether it
     /// was used. Logs nothing in the game's replay (CPU prototype).
-    pub fn use_tool(&mut self, g: &mut Game<BigDish>, t: Tool) -> bool {
-        let s = g.world.p.scale as f32;
+    pub fn use_tool<W: World>(&mut self, g: &mut Game<W>, t: Tool) -> bool {
+        let s = g.world.scale();
         let price = self.price(t);
         if g.bank < price {
             return false;
         }
         let ok = match t {
+            Tool::Germ(_) if !g.world.has_germ() => false,
+            Tool::Gas(_) if !g.world.has_gas() => false,
             Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) => self.in_reach(g, p) && g.world.open(p.0, p.1),
             Tool::Cord(a, b) => (a.0 - b.0).hypot(a.1 - b.1) <= self.rules.cord_max * s && self.in_reach(g, ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
             Tool::Smell(k, _) => g.soldiers.get(k).is_some_and(|x| x.alive),
@@ -273,9 +295,10 @@ impl Kit {
         self.uses[i] += 1;
         self.spent[i] += price;
         let r = self.rules;
+        let br = self.burst_rules(g);
         match t {
             Tool::Blast(p) => {
-                self.killed[i] += self.bang(&mut g.world, g.rules.tps, p, r.blast_r, r.crater_r);
+                self.killed[i] += self.bang(g, p, r.blast_r, r.crater_r);
             }
             Tool::Mine(p) => self.mines.push(p),
             Tool::Cord(a, b) => {
@@ -284,81 +307,98 @@ impl Kit {
                 for j in 0..=n {
                     let f = j as f32 / n as f32;
                     let p = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
-                    self.killed[i] += self.bang(&mut g.world, g.rules.tps, p, r.cord_r, r.cord_r);
+                    self.killed[i] += self.bang(g, p, r.cord_r, r.cord_r);
                 }
             }
             Tool::Germ(p) => {
-                let d = &mut g.world;
-                let tps = (g.rules.tps as f32) * d.p.substeps as f32;
-                if d.sick.is_empty() {
-                    d.p.sick_steps = (r.sick_secs * tps).round().max(1.0) as u16;
-                    d.p.immune_steps = (r.immune_secs * tps).round().min(u16::MAX as f32 - d.p.sick_steps as f32) as u16;
-                    d.p.sick_upkeep = r.sick_upkeep;
-                    d.p.sick_catch = r.sick_catch;
-                    d.p.sick_deposit = r.sick_deposit;
-                    d.p.sick_keep = r.sick_keep;
-                    d.enable_contagion();
-                }
-                d.infect(p.0 / s, p.1 / s, r.germ_r);
+                g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.germ_r, germ: true, ..Burst::default() }, &br);
             }
             Tool::Gas(p) => {
-                let d = &mut g.world;
-                d.enable_alarm(r.alarm_keep);
-                d.p.gas_death = r.gas_death;
-                let steps = (r.gas_secs * g.rules.tps as f32 * d.p.substeps as f32).round().min(u16::MAX as f32) as u16;
-                self.gassed += d.gas(p.0, p.1, r.gas_r * s, steps);
+                let steps = (r.gas_secs * self.fine_tps(g)).round().min(u16::MAX as f32) as u16;
+                self.gassed += g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.gas_r, gas: steps, ..Burst::default() }, &br).gassed as usize;
             }
             Tool::Smell(k, m) => g.soldiers[k].smell = m,
         }
         true
     }
 
-    /// One blast: kill, clear, alarm, crater. Fine-cell point, dish-cell radii.
-    fn bang(&mut self, d: &mut BigDish, tps: u32, p: (f32, f32), r: f32, crater: f32) -> usize {
-        let s = d.p.scale as f32;
-        d.enable_alarm(self.rules.alarm_keep);
-        let killed = d.strike(p.0 / s, p.1 / s, r, self.rules.blast_alarm, 2.0 * r);
-        let steps = (self.rules.crater_secs * tps as f32 * d.p.substeps as f32).round().min(u16::MAX as f32) as u16;
-        d.scorch_disc(p.0, p.1, crater * s, steps);
-        self.bangs.push(Bang { at: p, r: r * s, tick: d.ticks, killed });
+    /// Fine steps a game second.
+    fn fine_tps<W: World>(&self, g: &Game<W>) -> f32 {
+        g.rules.tps as f32 * g.world.fine_steps() as f32
+    }
+
+    /// The bursts' shared settings, from these rules.
+    fn burst_rules<W: World>(&self, g: &Game<W>) -> BurstRules {
+        let r = &self.rules;
+        let fine = self.fine_tps(g);
+        let sick_steps = (r.sick_secs * fine).round().max(1.0) as u16;
+        BurstRules {
+            alarm_keep: r.alarm_keep,
+            gas_death: r.gas_death,
+            sick_steps,
+            immune_steps: (r.immune_secs * fine).round().min(u16::MAX as f32 - sick_steps as f32) as u16,
+            sick_upkeep: r.sick_upkeep,
+            sick_catch: r.sick_catch,
+            sick_deposit: r.sick_deposit,
+            sick_keep: r.sick_keep,
+        }
+    }
+
+    /// One blast: kill, clear, alarm, crater, as one burst. Fine-cell
+    /// point, dish-cell radii.
+    fn bang<W: World>(&mut self, g: &mut Game<W>, p: (f32, f32), r: f32, crater: f32) -> usize {
+        let s = g.world.scale();
+        let steps = (self.rules.crater_secs * self.fine_tps(g)).round().min(u16::MAX as f32) as u16;
+        let b = Burst { at: (p.0 / s, p.1 / s), r, kill: true, alarm: self.rules.blast_alarm, alarm_r: 2.0 * r, crater: steps, crater_r: crater, ..Burst::default() };
+        let br = self.burst_rules(g);
+        let killed = g.world.burst(&b, &br).killed as usize;
+        self.bangs.push(Bang { at: p, r: r * s, tick: g.world.ticks(), killed });
         killed
     }
 
     /// Before each game step: mines with `mine_trigger` walkers within
     /// `mine_r` go off. Returns the mines that went off.
-    pub fn frame(&mut self, g: &mut Game<BigDish>) -> usize {
+    pub fn frame<W: World>(&mut self, g: &mut Game<W>) -> usize {
         if self.mines.is_empty() {
             return 0;
         }
         let r = self.rules;
-        let s = g.world.p.scale as f32;
-        let rr = r.mine_r * s;
-        let occ = g.world.occupancy().to_vec();
-        let w = g.world.w;
-        let mut fired = Vec::new();
-        for (m, &(x, y)) in self.mines.iter().enumerate() {
-            let n = rr.ceil() as i64;
-            let mut c = 0u32;
-            for dy in -n..=n {
-                for dx in -n..=n {
-                    if ((dx * dx + dy * dy) as f32) > rr * rr {
-                        continue;
-                    }
-                    let (cx, cy) = (x as i64 + dx, y as i64 + dy);
-                    if cx < 0 || cy < 0 || cx as usize >= w || cy as usize >= g.world.h {
-                        continue;
-                    }
-                    c += occ[cy as usize * w + cx as usize] as u32;
-                }
-            }
-            if c >= r.mine_trigger {
-                fired.push(m);
-            }
-        }
+        let rr = r.mine_r * g.world.scale();
+        let trigger = self.mine_trigger(g);
+        let fired: Vec<usize> = (0..self.mines.len()).filter(|&m| g.world.walkers_in(self.mines[m], rr) >= trigger).collect();
         for &m in fired.iter().rev() {
             let p = self.mines.remove(m);
-            self.killed[1] += self.bang(&mut g.world, g.rules.tps, p, r.blast_r, r.crater_r);
+            self.killed[1] += self.bang(g, p, r.blast_r, r.crater_r);
         }
         fired.len()
+    }
+
+    /// Walkers that set a mine off in this game: `mine_trigger` at
+    /// `mine_density`, in proportion to the game's density.
+    pub fn mine_trigger<W: World>(&self, g: &Game<W>) -> u32 {
+        let r = &self.rules;
+        if r.mine_density <= 0.0 {
+            return r.mine_trigger;
+        }
+        ((r.mine_trigger as f32 * g.density / r.mine_density).round() as u32).max(1)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mould::larder_world::{race_world, Rules};
+
+    /// A mine means the same share of mould at any walker count: 40 at the
+    /// race world's 5,000 walkers, four times that at 20,000.
+    #[test]
+    fn the_mine_trigger_follows_density() {
+        let kit = Kit::new(KitRules::default());
+        let a = Game::new(race_world(5, 2, 5_000), Rules::default(), 5);
+        let b = Game::new(race_world(5, 2, 20_000), Rules::default(), 5);
+        assert!((a.density / MINE_DENSITY - 1.0).abs() < 0.06, "density {}", a.density);
+        assert_eq!(kit.mine_trigger(&a), 40);
+        let (ta, tb) = (kit.mine_trigger(&a) as f32, kit.mine_trigger(&b) as f32);
+        assert!((tb / ta - 4.0).abs() < 0.1, "{ta} then {tb}");
     }
 }
