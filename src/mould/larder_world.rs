@@ -673,6 +673,7 @@ impl Cmd {
                     "lure" => Kind::Lure,
                     "pump" => Kind::Pump,
                     "outpost" => Kind::Outpost,
+                    "siren" => Kind::Siren,
                     "wall" => Kind::Wall { to: (f(4)?, f(5)?) },
                     _ => return None,
                 };
@@ -769,6 +770,8 @@ pub struct Game<W: World> {
     pub lured: f32,
     pub pumped: f32,
     pub lost_buildings: u32,
+    /// Calls the sirens made (`Kind::Siren`).
+    pub sirens: u32,
     /// The squad's base, fine cells: where bought soldiers stand and carried
     /// food goes.
     pub larder: (f32, f32),
@@ -900,6 +903,7 @@ impl<W: World> Game<W> {
             lured: 0.0,
             pumped: 0.0,
             lost_buildings: 0,
+            sirens: 0,
             larder,
             core,
             core_down: None,

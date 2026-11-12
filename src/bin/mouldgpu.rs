@@ -4053,6 +4053,47 @@ mod tests {
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the pull changed the CPU's game");
     }
 
+    /// **A siren on the engine as on the CPU** (2026-11-12): its calls go
+    /// through `World::burst`, so the GPU world turns its alarm field on and
+    /// lays the call as the CPU does. Same calls on both over 20 s, no
+    /// walker killed by a call, and the moulds within the race twin's 8%.
+    #[test]
+    fn a_siren_calls_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_world, BuildRules, Cmd, Game, Kind, Rules, Stance, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 20.0, start_bank: 1e6, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() };
+        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        // Between the bases, on open ground.
+        let p = (0.6 * cpu.larder.0 + 0.4 * cpu.core.0, 0.6 * cpu.larder.1 + 0.4 * cpu.core.1);
+        let w: &dyn World = &cpu.world;
+        let at = (0..60).flat_map(|r| (0..16).map(move |k| (r, k))).map(|(r, k)| {
+            let a = k as f32 / 16.0 * std::f32::consts::TAU;
+            (p.0 + r as f32 * a.cos(), p.1 + r as f32 * a.sin())
+        }).find(|q| w.open(q.0, q.1)).expect("open ground");
+        for g in [&mut cpu.soldiers[0], &mut gpu.soldiers[0]] {
+            (g.x, g.y, g.stance) = (at.0, at.1, Stance::HoldFire);
+        }
+        assert!(cpu.apply(Cmd::Build(Kind::Siren, at)) && gpu.apply(Cmd::Build(Kind::Siren, at)));
+        let mut sizes = Vec::new();
+        while cpu.end.is_none() {
+            cpu.step();
+            gpu.step();
+            if cpu.world.ticks() % 75 == 0 {
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
+            }
+        }
+        eprintln!("siren: calls {} / {}, living CPU, GPU {sizes:?}", cpu.sirens, gpu.sirens);
+        assert!(cpu.sirens >= 5 && gpu.sirens == cpu.sirens, "calls {} on the GPU, {} on the CPU", gpu.sirens, cpu.sirens);
+        assert!(!cpu.world.alarm.is_empty(), "the CPU's alarm field is on");
+        for &(t, a, b) in &sizes {
+            let (a, b) = (a as f64, b as f64);
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+        }
+    }
+
     /// **Buildings on the engine as on the CPU** (turret, lure, pump: units
     /// that do not move in the squad frame, `larder_world::buildings`). A
     /// pump on the larder's crystal banks the same food on both and a lure

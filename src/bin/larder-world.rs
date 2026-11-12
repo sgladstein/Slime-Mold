@@ -119,6 +119,7 @@ const PUMP: u32 = 14;
 const OUTPOST: u32 = 15;
 const LURES: u32 = 16;
 const BACK: u32 = 17;
+const SIREN: u32 = 18;
 
 /// The building a build-page command places.
 fn build_kind(id: u32) -> Option<Kind> {
@@ -127,6 +128,7 @@ fn build_kind(id: u32) -> Option<Kind> {
         LURE => Some(Kind::Lure),
         PUMP => Some(Kind::Pump),
         OUTPOST => Some(Kind::Outpost),
+        SIREN => Some(Kind::Siren),
         _ => None,
     }
 }
@@ -582,7 +584,7 @@ impl App {
                     BACK => self.build_page = false,
                     LURES => {
                         if let Some(g) = self.game.as_mut() {
-                            let lures: Vec<usize> = (0..g.buildings.len()).filter(|&k| g.buildings[k].alive && g.buildings[k].kind == Kind::Lure).collect();
+                            let lures: Vec<usize> = (0..g.buildings.len()).filter(|&k| g.buildings[k].alive && matches!(g.buildings[k].kind, Kind::Lure | Kind::Siren)).collect();
                             // All on if any is off, else all off.
                             let on = lures.iter().any(|&k| !g.buildings[k].on);
                             for k in lures {
@@ -868,11 +870,14 @@ impl App {
                 Kind::Lure => 1,
                 Kind::Pump => 2,
                 Kind::Outpost => 3,
+                // The lure's lamp, lit on each call, until the graphics
+                // thread draws a siren of its own.
+                Kind::Siren => 1,
                 _ => continue,
             };
             let half = g.rules.build.touch * sc * 0.7;
             // A lure switched off is not working.
-            let working = b.working && (b.kind != Kind::Lure || b.on);
+            let working = b.working && (!matches!(b.kind, Kind::Lure | Kind::Siren) || b.on);
             self.marks.building(b.at, half, kind, if b.up() { 1.0 } else { b.built }, b.hp / b.max_hp.max(1.0), working);
             let below = (half * zoom).max(2.0) + 5.0;
             self.marks.bar(b.at, below, (7.0, 1.0), b.hp / b.max_hp.max(1.0), [90, 220, 110, 255], [70, 30, 30, 255]);
@@ -990,6 +995,7 @@ impl App {
                         Kind::Lure => "building a lure",
                         Kind::Pump => "building a pump",
                         Kind::Outpost => "building an outpost",
+                        Kind::Siren => "building a siren",
                         Kind::Wall { .. } => "building a wall",
                     },
                     None => "building",
@@ -1092,12 +1098,12 @@ impl App {
             },
         ];
         cmds.push(Command {
-            about: "Turrets, lures, pumps and outposts.".into(),
+            about: "Turrets, lures, pumps, outposts and sirens.".into(),
             ..Command::new(BUILD_PAGE, (2, 2), Icon::Turret, "Build", KeyCode::KeyQ)
         });
         if self.build_page {
             let b = r.build;
-            let lures = g.buildings.iter().filter(|q| q.alive && q.kind == Kind::Lure).count();
+            let lures = g.buildings.iter().filter(|q| q.alive && matches!(q.kind, Kind::Lure | Kind::Siren)).count();
             let room = g.standing() < b.max;
             let place = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, cost: f32, about: String| Command {
                 target: Target::Point { radius: b.touch * sc },
@@ -1112,7 +1118,8 @@ impl App {
                 place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, format!("Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Burns {:.0} food a second while on.", b.lure_burn)),
                 place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("On a crystal: draws {:.0} food a second into the bank with no carriers. The mould smells the crystal.", b.pump_rate)),
                 place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
-                Command { ready: lures > 0, why_not: Some("No lures".into()), about: "Switch every lure on, or every lure off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures on/off", KeyCode::KeyJ) },
+                place(SIREN, (1, 1), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
+                Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
                 Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
             ];
         }
@@ -1360,6 +1367,7 @@ fn building_colour(k: Kind) -> Option<[u8; 4]> {
         Kind::Lure => Some([255, 196, 90, 255]),
         Kind::Pump => Some([90, 220, 230, 255]),
         Kind::Outpost => Some([214, 196, 150, 255]),
+        Kind::Siren => Some([255, 120, 120, 255]),
         Kind::Wall { .. } => None,
     }
 }
@@ -2131,14 +2139,25 @@ fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, queue: &wgpu
 /// The headless run's hand, once a game second.
 fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // `build`: farm, with a pump on the larder's crystal, two turrets on
-    // the road to the core and a lure past them (the look at buildings).
-    if hand == "build" && g.time() > 1.0 {
+    // the road to the core and a lure past them (the look at buildings);
+    // `siren` the same with a siren in the lure's place (a tier's look).
+    if (hand == "build" || hand == "siren") && g.time() > 1.0 {
         let sc = g.world.scale();
         let (c, l) = (g.core, g.larder);
         let (dx, dy) = (c.0 - l.0, c.1 - l.1);
         let d = dx.hypot(dy).max(1.0);
         let (ux, uy) = (dx / d, dy / d);
         let mut wants = vec![(Kind::Turret, (l.0 + ux * 7.0 * sc - uy * 4.0 * sc, l.1 + uy * 7.0 * sc + ux * 4.0 * sc)), (Kind::Turret, (l.0 + ux * 7.0 * sc + uy * 4.0 * sc, l.1 + uy * 7.0 * sc - ux * 4.0 * sc)), (Kind::Lure, (l.0 + ux * 13.0 * sc, l.1 + uy * 13.0 * sc))];
+        // The siren 0.6 of the way to the core, in the stem the Fork's mould
+        // comes up, where its call reaches the mould.
+        if hand == "siren" {
+            let p = (l.0 + dx * 0.42, l.1 + dy * 0.42);
+            wants[2] = (Kind::Siren, p);
+            // Soldier 2 walks there so the siren is in a builder's reach.
+            if !g.buildings.iter().any(|b| b.kind == Kind::Siren) && g.soldiers.len() > 2 && g.soldiers[2].alive && g.soldiers[2].order != Order::Move(p.0, p.1) {
+                g.apply(Cmd::Order(2, Order::Move(p.0, p.1)));
+            }
+        }
         // The pump on the nearest big crystal (half the biggest's charge or
         // more; the Fork's nearest is a small one a pump drains in 5 s).
         let cs = g.world.crystals();
@@ -2162,8 +2181,18 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
                 g.apply(Cmd::Build(kind, at));
             }
         }
+        // Buildings rise over time (`BuildRules::raise`): soldier 1, or
+        // soldier 0 alone, raises the first ghost, then farms again.
+        if let Some(b) = g.buildings.iter().position(|b| b.alive && !b.up()) {
+            let k = if g.soldiers.len() > 1 { 1 } else { 0 };
+            if g.soldiers[k].alive && !matches!(g.soldiers[k].order, Order::Build(_)) {
+                g.apply(Cmd::Order(k, Order::Build(b)));
+            }
+        } else if let Some(k) = (0..g.soldiers.len()).find(|&k| matches!(g.soldiers[k].order, Order::Build(_))) {
+            g.apply(Cmd::Order(k, Order::Hold));
+        }
     }
-    let hand = if hand == "build" { "farm" } else { hand };
+    let hand = if hand == "build" || hand == "siren" { "farm" } else { hand };
     if g.time() > 0.5 && hand == "farm" && g.bank >= 1200.0 {
         g.apply(Cmd::Buy);
     }
@@ -2293,7 +2322,7 @@ mod tests {
         // The build page: turret, lure, pump, outpost, the lures' switch, back.
         app.build_page = true;
         let m = app.model(None, None);
-        assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Lure", "Pump", "Outpost", "Lures on/off", "Back"]);
+        assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Lure", "Pump", "Outpost", "Siren", "Lures, sirens on/off", "Back"]);
     }
 
     /// A campaign mission plays its own map and rules, shows its goal as the

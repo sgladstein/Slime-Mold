@@ -817,7 +817,7 @@ fn random_hand<W: World>(g: &mut Game<W>) {
     // (no food, no ground) are simply lost, as a random click would be.
     if g.rng.below(4) == 0 {
         let s = g.soldiers[k];
-        let kind = [Kind::Turret, Kind::Lure, Kind::Pump, Kind::Outpost][g.rng.below(4) as usize];
+        let kind = [Kind::Turret, Kind::Lure, Kind::Pump, Kind::Outpost, Kind::Siren][g.rng.below(5) as usize];
         let at = if kind == Kind::Pump {
             let cs = g.world.crystals();
             cs[g.rng.below(cs.len() as u32) as usize].0
