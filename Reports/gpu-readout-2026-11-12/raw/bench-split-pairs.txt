@@ -1,0 +1,48 @@
+== pair 1: main a90c71e (whole steps)
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 1.00 waits a step (14.79 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 27.12 p95 43.63 max 55.83; step  p50 0.00 p95 16.14 max 26.20; prepare  p50 0.16 p95 0.24 max 2.45; record  p50 0.12 p95 0.16 max 0.36; GPU tail  p50 24.54 p95 28.80 max 48.92
+  frames with a step (300 of them), ms: frame p50 39.89 p95 45.97 max 55.83; step  p50 15.26 p95 17.60 max 26.20; prepare  p50 0.15 p95 1.32 max 2.45; record  p50 0.12 p95 0.16 max 0.23; GPU tail  p50 24.33 p95 28.78 max 40.44
+  GPU: no timestamps on this adapter
+  t 20 s: mould 2701, soldiers 11, harvested 1953, shots 3, killed 4
+== pair 1: split (settled bench, ground between steps)
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.05 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 27.48 p95 44.07 max 58.35; step  p50 0.03 p95 0.49 max 12.10; prepare  p50 0.17 p95 0.26 max 2.29; record  p50 0.14 p95 16.27 max 26.88; GPU tail  p50 25.07 p95 30.18 max 45.90
+  frames with a step (300 of them), ms: frame p50 40.71 p95 49.45 max 58.35; step  p50 0.41 p95 0.58 max 12.10; prepare  p50 0.14 p95 0.31 max 1.04; record  p50 15.27 p95 18.14 max 26.88; GPU tail  p50 24.64 p95 30.48 max 34.65
+  GPU: no timestamps on this adapter
+  t 20 s: mould 2701, soldiers 11, harvested 1953, shots 3, killed 4
+== pair 1: split, grid=4 every step
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; the mould grid in squares of 4 each step; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 0.00 waits a step (0.05 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 27.47 p95 44.30 max 56.45; step  p50 0.04 p95 0.51 max 19.18; prepare  p50 0.17 p95 0.27 max 2.25; record  p50 0.14 p95 16.09 max 29.73; GPU tail  p50 25.08 p95 30.23 max 45.35
+  frames with a step (300 of them), ms: frame p50 40.38 p95 49.63 max 56.45; step  p50 0.43 p95 0.62 max 19.18; prepare  p50 0.14 p95 0.36 max 2.01; record  p50 15.32 p95 19.26 max 29.73; GPU tail  p50 24.60 p95 29.85 max 36.17
+  GPU: no timestamps on this adapter
+  t 20 s: mould 2701, soldiers 11, harvested 1953, shots 3, killed 4
+== pair 2: main a90c71e (whole steps)
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 1.00 waits a step (15.10 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 27.38 p95 44.06 max 72.35; step  p50 0.00 p95 16.31 max 48.72; prepare  p50 0.16 p95 0.25 max 2.18; record  p50 0.12 p95 0.18 max 0.67; GPU tail  p50 24.85 p95 30.59 max 45.64
+  frames with a step (300 of them), ms: frame p50 40.23 p95 48.94 max 72.35; step  p50 15.38 p95 18.95 max 48.72; prepare  p50 0.15 p95 1.27 max 2.18; record  p50 0.12 p95 0.18 max 0.67; GPU tail  p50 24.45 p95 31.34 max 42.32
+  GPU: no timestamps on this adapter
+  t 20 s: mould 2701, soldiers 11, harvested 1953, shots 3, killed 4
+== pair 2: split (settled bench, ground between steps)
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.00 waits a step (0.05 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 27.23 p95 41.41 max 53.30; step  p50 0.02 p95 0.44 max 8.55; prepare  p50 0.16 p95 0.24 max 2.19; record  p50 0.13 p95 15.54 max 25.38; GPU tail  p50 24.27 p95 28.72 max 38.90
+  frames with a step (300 of them), ms: frame p50 38.97 p95 44.78 max 53.30; step  p50 0.39 p95 0.53 max 8.55; prepare  p50 0.13 p95 0.22 max 2.19; record  p50 14.47 p95 17.10 max 25.38; GPU tail  p50 23.57 p95 28.16 max 32.64
+  GPU: no timestamps on this adapter
+  t 20 s: mould 2701, soldiers 11, harvested 1953, shots 3, killed 4
+== pair 2: split, grid=4 every step
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits)
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, scale 2 walkers 5000; the mould grid in squares of 4 each step; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.07 read-backs a step, 0.00 waits a step (0.05 ms a step waiting)
+  every frame (1200 of them), ms: frame p50 27.28 p95 42.78 max 54.65; step  p50 0.03 p95 0.46 max 21.80; prepare  p50 0.16 p95 0.25 max 3.05; record  p50 0.13 p95 15.78 max 22.84; GPU tail  p50 24.55 p95 29.12 max 48.34
+  frames with a step (300 of them), ms: frame p50 39.65 p95 46.02 max 54.65; step  p50 0.41 p95 0.59 max 21.80; prepare  p50 0.13 p95 0.26 max 1.12; record  p50 14.84 p95 17.10 max 22.84; GPU tail  p50 23.94 p95 28.49 max 34.68
+  GPU: no timestamps on this adapter
+  t 20 s: mould 2701, soldiers 11, harvested 1953, shots 3, killed 4
