@@ -2821,8 +2821,14 @@ mod tests {
                 cpu.build_wall(x - 6.0, y + 3.0, x + 6.0, y + 3.0, 1.0);
             }
             e.inject(&cpu);
+            // As a toolkit burst (2026-11-12): the strike lays a crater of
+            // its own radius too (`Engine::burst`, the CPU's strike then
+            // `scorch_disc`), which must match cell for cell.
             let killed = cpu.strike(x, y, 4.0, 30.0, 12.0);
-            e.strike(&shared, &s, x, y, 4.0, 30.0, 12.0);
+            cpu.scorch_disc(x * k, y * k, 5.0 * k, 300);
+            e.burst(&shared, &s, x, y, 4.0, 30.0, 12.0, 5.0, 300);
+            let crater_off = e.crater_of().iter().zip(&cpu.scorch).filter(|(a, b)| **a != **b as f32).count();
+            assert!(cpu.scorch.contains(&300) && crater_off == 0, "{name}: the burst's crater, {crater_off} cells off");
             let side = (e.done % 2) as usize;
             let struck_trail = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
             let struck_alarm = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };

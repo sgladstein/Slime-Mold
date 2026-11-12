@@ -2,9 +2,31 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12T20:50Z
-sources: [Reports/mould-tiers-campaign-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, Reports/first-reach-2026-11-11.md, Reports/species-sets-2026-11-11.md, Reports/species-gpu-2026-11-11.md, Reports/life-gpu-2026-11-11.md]
-code: [BigParams::scar_keep, BigParams::scar_weight, BigDish::scar, BigParams::species_sets, BigParams::graze_weight, BigParams::explore_spread, BigParams::species_convert, BigParams::spore_rate, BigParams::sleep_rate, BigParams::alarm_weight, Tier, Tier::core, Core, CoreKind::Regrow]
+updated: 2026-11-12
+sources:
+  - Reports/first-reach-2026-11-11.md
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/life-gpu-2026-11-11.md
+  - Reports/mould-tiers-2026-11-11.md
+  - Reports/mould-tiers-campaign-2026-11-12.md
+  - Reports/mould-tiers-review-2026-11-11.md
+  - Reports/species-gpu-2026-11-11.md
+  - Reports/species-sets-2026-11-11.md
+code:
+  - BigDish::scar
+  - BigParams::alarm_weight
+  - BigParams::explore_spread
+  - BigParams::graze_weight
+  - BigParams::scar_keep
+  - BigParams::scar_weight
+  - BigParams::sleep_rate
+  - BigParams::species_convert
+  - BigParams::species_sets
+  - BigParams::spore_rate
+  - Core
+  - CoreKind::Regrow
+  - Tier
+  - Tier::core
 ---
 
 # The mould tiers (difficulty ladder)

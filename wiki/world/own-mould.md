@@ -2,9 +2,24 @@
 title: The player's own mould (gardeners)
 kind: design
 status: open
-updated: 2026-11-12T20:50Z
-sources: [Reports/player-mould-2026-11-12.md, Reports/species-gpu-2026-11-11.md, Reports/species-sets-2026-11-11.md]
-code: [GpuWorld::garden, garden_settings, WORLD_GARDEN, BigParams::species_avoid_of, own_mould::Garden::cord, BigParams::species_cap, own_mould::Garden, World::tend, BigParams::species_convert_per, BigParams::species_convert, BigParams::species_convert_r, SpeciesSet]
+updated: 2026-11-12
+sources:
+  - Reports/player-mould-2026-11-12.md
+  - Reports/species-gpu-2026-11-11.md
+  - Reports/species-sets-2026-11-11.md
+code:
+  - BigParams::species_avoid_of
+  - BigParams::species_cap
+  - BigParams::species_convert
+  - BigParams::species_convert_per
+  - BigParams::species_convert_r
+  - GpuWorld::garden
+  - SpeciesSet
+  - WORLD_GARDEN
+  - World::tend
+  - garden_settings
+  - own_mould::Garden
+  - own_mould::Garden::cord
 ---
 
 # The player's own mould (gardeners)
@@ -15,12 +30,12 @@ The owner chose **gardeners** (2026-11-12 04:45Z): the player owns a second
 species in the Larder world, which the soldiers grow (feed, roads, cut), and
 it fights the enemy mould by conversion. It is built on the CPU
 (`own_mould.rs`) and on the GPU, where it plays in the window with
-`larder-world own=1` (off by default; Sow and Road on the command card,
-`hand=sow`). Sowing grows it, a road pushes it forward, fire with craters
+`larder-world own=1` (off by default; Sow on the command card, Road and the
+det cord on the tools page, `hand=sow`). Sowing grows it, a road pushes it forward, fire with craters
 burns the enemy back; the enemy is not yet smaller for long. Until
 `species_cap` is on the GPU the two moulds share one birth pool, so the
 enemy can crowd the player's mould out; that is a missing rule, not
-balance. Next: the det cord through `World::burst`, `species_cap` on the
+balance. Next: `species_cap` on the
 GPU, an attacker's edge in conversion. Detail below
 ([report](../../Reports/player-mould-2026-11-12.md), window
 [page](https://claude.ai/artifact/SLmH8k3C797UCo3949RcMn)).
@@ -51,7 +66,7 @@ feeding in one spot does nothing; farming alone starves it. The enemy is not
 smaller: the two blind species meet along one front and hold it
 ([page](https://claude.ai/artifact/7Z4b4NB1JG1H7QEf9TrUer)). Each side may hold at most half the slots (`species_cap`), and a taken enemy core stops only the enemy's births; on the same seeds that changed nothing yet (the sides never neared it). Shots lay craters as in the one-mould game. **The front** (32 seeds, two soldiers for 20 s where the moulds meet): a road past the front pushes the player's ground forward (+886 cells, 27/4), sowing thickens it (+609, 25/6), fire with craters burns the enemy's back (-396, 24/7); all three hold under Holm. Without craters fire took nothing. One det cord (the toolkit's, `Garden::cord`, 16 cells across the line) takes about what 20 s of fire does at first (-289 enemy cells) but does not hold (10/21, p 0.07). **An enemy that hunts the player's mould feeds it** (`species_avoid_of`, CPU, off): about 7,000 walkers change sides each way in a sown game already, and with the pull net turning flips to the player under every hand (27/3, 30/2, 29/3); so the fight is not short of contact but symmetric, and hunting needs an attacker's edge to be a threat. A **front hand** (sow2 plus a front team of two that reads the line every 20 s and picks fire, sow or road) leaves the enemy smaller than sow2 on 6 of 8 seeds ([page](https://claude.ai/artifact/Rv4ZqMJ1hQDnJKiVcAXihx), GIF). All of this is 2,500 walkers a side on the CPU dish; only the direction should carry to the GPU.
 
-**On the GPU and in the window** (`larder-world own=1`, off by default; the plain game stays hash-identical): the player's mould is species 3 on the engine (world bit `GARDEN` 32). Shots stop only at the enemy's trail, strike and cut spare species 3, the thick-slime slowdown counts only enemy walkers, and eat runs over every cell. Sow (E) and Road (Y) are on the command card; `hand=sow` plays it. Cut becomes the det cord through `World::burst`. Until `species_cap` is on the GPU the two moulds share one birth pool, so the enemy can crowd the player's mould out; that is a missing rule, not balance. 1070 twin and timing runs are booked.
+**On the GPU and in the window** (`larder-world own=1`, off by default; the plain game stays hash-identical): the player's mould is species 3 on the engine (world bit `GARDEN` 32). Shots stop only at the enemy's trail, the squad's strike and cut spare species 3, the thick-slime slowdown counts only enemy walkers, and eat runs over every cell. Sow (W) is on the command card and Road (Y) on the tools page (E), beside the det cord (C), which takes both moulds alike on both engines: the player's cut. `hand=sow` plays it. Until `species_cap` is on the GPU the two moulds share one birth pool, so the enemy can crowd the player's mould out; that is a missing rule, not balance. 1070 twin and timing runs are booked.
 
 ## Owner's word
 

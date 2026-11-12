@@ -111,6 +111,94 @@ pub struct Frame {
     pub crater: u16,
 }
 
+/// **A burst** (the squad toolkit, 2026-11-12): one area effect at a point,
+/// what every toolkit tool and every round's payload comes down to (a
+/// blast, each charge of a det cord, a mine going off, a germ, a cloud of
+/// gas). Centre and radii in dish cells, times in fine steps, so a burst
+/// means the same ground at any scale and any walker count: the radii are
+/// space, not walkers. Agreed with the rounds thread (11-12 16:15Z), whose
+/// `rounds::Burst` had these fields first.
+///
+/// Why one struct: each tool used to call `BigDish` directly, so none of
+/// them could run on the GPU world. A burst is what a `World` applies
+/// (`World::burst`), on the CPU (`burst` below) and on the GPU (the
+/// engine's strike, which lays the crater too since this change).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Burst {
+    pub at: (f32, f32),
+    /// The kill and clear radius (0 with `kill`: a shock only).
+    pub r: f32,
+    pub kill: bool,
+    /// Alarm laid on the agar within `alarm_r` (0: none).
+    pub alarm: f32,
+    pub alarm_r: f32,
+    /// Fine steps of crater within `crater_r` (0: none). A kit blast's
+    /// crater (7) is wider than its kill (6).
+    pub crater: u16,
+    pub crater_r: f32,
+    /// Fine steps of sleep gas within `r` (0: none).
+    pub gas: u16,
+    /// Infects the walkers within `r`.
+    pub germ: bool,
+}
+
+/// What a burst needs from the rules that is not its own: the alarm field's
+/// keep (turned on by the first alarm), gas's death chance, and contagion's
+/// settings (turned on by the first germ), times in fine steps.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct BurstRules {
+    pub alarm_keep: f32,
+    pub gas_death: f32,
+    pub sick_steps: u16,
+    pub immune_steps: u16,
+    pub sick_upkeep: f32,
+    pub sick_catch: f32,
+    pub sick_deposit: f32,
+    pub sick_keep: f32,
+}
+
+/// What a burst did.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct BurstOut {
+    pub killed: u32,
+    pub gassed: u32,
+}
+
+/// A burst on the CPU, in the order a kit blast always ran (`Kit::bang`
+/// before 2026-11-12): the alarm field on, the strike (kill, clear,
+/// alarm), the crater; then gas, then germ.
+pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
+    let s = d.p.scale as f32;
+    let mut out = BurstOut::default();
+    if b.alarm > 0.0 {
+        d.enable_alarm(k.alarm_keep);
+    }
+    if b.kill || b.alarm > 0.0 {
+        out.killed = d.strike(b.at.0, b.at.1, if b.kill { b.r } else { 0.0 }, b.alarm, b.alarm_r) as u32;
+    }
+    if b.crater > 0 {
+        d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);
+    }
+    if b.gas > 0 {
+        d.enable_alarm(k.alarm_keep);
+        d.p.gas_death = k.gas_death;
+        out.gassed = d.gas(b.at.0 * s, b.at.1 * s, b.r * s, b.gas) as u32;
+    }
+    if b.germ {
+        if d.sick.is_empty() {
+            d.p.sick_steps = k.sick_steps;
+            d.p.immune_steps = k.immune_steps;
+            d.p.sick_upkeep = k.sick_upkeep;
+            d.p.sick_catch = k.sick_catch;
+            d.p.sick_deposit = k.sick_deposit;
+            d.p.sick_keep = k.sick_keep;
+            d.enable_contagion();
+        }
+        d.infect(b.at.0, b.at.1, b.r);
+    }
+    out
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct UnitOut {
     /// Walkers on the cells within `touch`.

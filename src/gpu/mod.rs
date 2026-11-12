@@ -1989,10 +1989,21 @@ impl Engine {
     /// `struck` reads back the walkers killed so far.
     #[allow(clippy::too_many_arguments)]
     pub fn strike(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, alarm: f32, alarm_r: f32) {
+        self.burst(shared, s, x, y, r, alarm, alarm_r, 0.0, 0);
+    }
+
+    /// A strike that also lays a crater of `steps` fine steps within
+    /// `crater_r` dish cells (the squad toolkit's burst, `squad::Burst`; the
+    /// CPU's `strike` then `scorch_disc`), in the same two passes: the
+    /// `hit` pass writes the damage memory's first block (binding 47) as it
+    /// clears the trail. From then on the trail pass counts the crater down.
+    #[allow(clippy::too_many_arguments)]
+    pub fn burst(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, alarm: f32, alarm_r: f32, crater_r: f32, steps: u16) {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
+        self.scorched |= steps > 0;
         self.write_params(s, Hand::default(), 0);
-        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, alarm, alarm_r * k, 0.0, 0.0, 0.0]));
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, alarm, alarm_r * k, crater_r * k, steps as f32, 0.0]));
         self.run(shared, &[(HIT, self.cells.div_ceil(256)), (KILL, self.n.div_ceil(256))]);
     }
 

@@ -436,10 +436,13 @@ the plain game is hash-identical (all twin tests unchanged).
   Params row or binding (BINDINGS stays 48).
 - **World.** `GpuWorld::garden` (refuses a grazing world, with a test: the
   own count shares the graze counter), `garden_settings`, `counts_by_side`,
-  `World::tend` building the same Road/Feed discs as the CPU. Cut is not
-  wired on the GPU yet; it becomes the det cord through `World::burst` (#159).
-- **Window.** Sow (E) and Road (Y) on the command card toggle the task on the
-  selected soldiers; the top bar shows the own count and labels the enemy.
+  `World::tend` building the same Road/Feed discs as the CPU. Cut is the
+  toolkit's det cord (#159, `World::burst`): a burst takes both moulds alike,
+  on both engines (`Garden::burst`, `Garden::cord`), so it can shape the
+  player's mould as well as cut the enemy's.
+- **Window.** Sow (W) on the command card and Road (Y) on the tools page (E)
+  toggle the task on the selected soldiers (main's card had one free slot
+  once the tools page landed); the det cord is on the tools page too (C); the top bar shows the own count and labels the enemy.
   `hand=sow` plays it (soldiers 0-1 sow or road between the larder and a
   crystal, the rest farm). Tests: GPU garden starts as the CPU garden; shots
   spare the player's mould (a line through green hits amber); Road and Feed
