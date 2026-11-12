@@ -12,7 +12,7 @@
 //! mould, and the output says so.
 
 use slime_mould::mould::big::BigDish;
-use slime_mould::mould::campaign::{decided_at, Mission, Tracker, BIN};
+use slime_mould::mould::campaign::{decided_at, Goal, Mission, Tracker, BIN};
 use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
@@ -34,6 +34,9 @@ struct Row {
     alive: usize,
     harvested: f32,
     killed: u32,
+    /// The goal's count over the round (crystals clear, or the share of
+    /// walkers outside a contain goal's region): its least and its most.
+    count: (f32, f32),
 }
 
 fn main() {
@@ -84,10 +87,10 @@ fn main() {
     });
     let mut rows = rows.into_inner().unwrap();
     rows.sort_by(|a, b| a.hand.cmp(&b.hand).then(a.seed.cmp(&b.seed)));
-    println!("\nhand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck  decided  alive harvested killed");
+    println!("\nhand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck  decided  alive harvested killed  count least/most");
     for r in &rows {
         println!(
-            "{:<9} {:>4}  {:<10} {:>5.0}  {:>5} {:>4.2}  {:>4.0}%  {:>4.0}% {:>4.0}% {:>4.0}% {:>4.0}%                          {:>4} {:>4}         {:>5}  {:>5} {:>9.0} {:>6}",
+            "{:<9} {:>4}  {:<10} {:>5.0}  {:>5} {:>4.2}  {:>4.0}%  {:>4.0}% {:>4.0}% {:>4.0}% {:>4.0}%                          {:>4} {:>4}         {:>5}  {:>5} {:>9.0} {:>6}  {:.3}/{:.3}",
             r.hand,
             r.seed,
             r.cause,
@@ -104,7 +107,9 @@ fn main() {
             r.decided,
             r.alive,
             r.harvested,
-            r.killed
+            r.killed,
+            r.count.0,
+            r.count.1
         );
     }
     println!("\nby hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run");
@@ -137,6 +142,7 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, wal
     let mut tr = Tracker::new(m.clone(), &g);
     let mut ai = larder_world_ai::Hand::named(hand, &g);
     let tps = g.rules.tps as u64;
+    let mut count = (f32::INFINITY, f32::NEG_INFINITY);
     let v = loop {
         match hand {
             "random" => random_hand(&mut g),
@@ -149,7 +155,12 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, wal
             g.step();
         }
         let grid = g.world.mould_grid(BIN);
-        if let Some(v) = tr.second(&g, grid.as_deref(), 1.0) {
+        let v = tr.second(&g, grid.as_deref(), 1.0);
+        if let Some(c) = tr.count {
+            let c = if matches!(m.goal, Goal::Contain { .. }) { c as f32 / g.mould.max(1) as f32 } else { c as f32 };
+            count = (count.0.min(c), count.1.max(c));
+        }
+        if let Some(v) = v {
             break v;
         }
     };
@@ -169,6 +180,7 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, wal
         alive: g.alive(),
         harvested: g.harvested,
         killed: g.killed,
+        count,
     }
 }
 

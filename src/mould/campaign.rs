@@ -39,10 +39,17 @@ pub enum Goal {
     Squad(usize),
     /// At least `need` of these crystals (map order) have no walker on them
     /// for `secs` game seconds in a row (missions 2, 5, 7).
-    Clear { crystals: Vec<usize>, need: usize, secs: f32 },
-    /// No walker outside this rectangle (map cells) for `secs` game seconds
-    /// in a row (mission 3: keep the mould in the Rim).
-    Contain { rect: (f32, f32, f32, f32), secs: f32 },
+    ///
+    /// With `retake`, a crystal counts only once the mould has been on it:
+    /// the first census (2026-11-12) found the Fork's west crystal "clear"
+    /// from the start, so every hand, idle included (best 0.22-0.87), filled
+    /// the bar before the mould arrived, and the mission taught nothing.
+    Clear { crystals: Vec<usize>, need: usize, secs: f32, retake: bool },
+    /// At most `leak` of the walkers outside this rectangle (map cells) for
+    /// `secs` game seconds in a row (mission 3: keep the mould in the Rim).
+    /// With no leak allowed (the first census) no hand ever held the Rim for
+    /// a second: a few walkers always stray.
+    Contain { rect: (f32, f32, f32, f32), secs: f32, leak: f32 },
     /// Walkers fall to `frac` of their peak (mission 4: starve it).
     Shrink(f32),
     /// The squad's share of the charge taken reaches `frac` (mission 8).
@@ -80,7 +87,8 @@ impl Mission {
     /// One item a line; `#` starts a comment. Lines: `name WORDS`, `says
     /// WORDS`, `map NAME`, `tier NAME`, `verbs NAME...`, `rule KEY VALUE`,
     /// `bonus lose N` | `bonus stolen F`, and one goal: `goal squad N`,
-    /// `goal clear NEED SECS C...`, `goal contain X0 Y0 X1 Y1 SECS`, `goal
+    /// `goal clear NEED SECS C...` (or `retake`: only crystals the mould has
+    /// been on), `goal contain X0 Y0 X1 Y1 SECS LEAK`, `goal
     /// shrink F`, `goal take F`.
     pub fn parse(text: &str) -> Result<Mission, String> {
         let (mut name, mut says, mut map, mut tier, mut goal, mut verbs, mut bonus, mut rules) = (None, None, None, None, None, vec![], None, vec![]);
@@ -123,8 +131,8 @@ impl Mission {
                     let v = nums(v)?;
                     goal = Some(match (k, v.as_slice()) {
                         ("squad", [x]) => Goal::Squad(*x as usize),
-                        ("clear", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs },
-                        ("contain", [x0, y0, x1, y1, secs]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs },
+                        ("clear" | "retake", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs, retake: k == "retake" },
+                        ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak },
                         ("shrink", [f]) => Goal::Shrink(*f),
                         ("take", [f]) => Goal::Take(*f),
                         _ => return Err(err(format!("bad goal `{rest}`"))),
@@ -233,6 +241,11 @@ pub struct Tracker {
     pub longest_stuck: u32,
     overrun_run: u32,
     held: f32,
+    /// Crystals the mould has been on (for `retake`).
+    touched: Vec<bool>,
+    /// The goal's count this second, for the HUD and the census: crystals
+    /// clear, or walkers outside the region.
+    pub count: Option<u32>,
     peak: usize,
     lost: usize,
     last: Snapshot,
@@ -288,6 +301,8 @@ impl Tracker {
             longest_stuck: 0,
             overrun_run: 0,
             held: 0.0,
+            touched: vec![],
+            count: None,
             peak: g.mould.max(g.start_mould),
             lost: 0,
             last: snap(g, 0.0),
@@ -312,25 +327,30 @@ impl Tracker {
                 Some(((peak - g.mould as f32) / (peak * (1.0 - f))).clamp(0.0, 1.0))
             }
             Goal::Take(f) => Some((g.take_share() / f).min(1.0)),
-            Goal::Clear { crystals, need, secs } => {
+            Goal::Clear { crystals, need, secs, retake } => {
                 let grid = grid?;
                 let cs = g.world.crystals();
-                let clear = crystals
-                    .iter()
-                    .filter(|&&c| c < cs.len())
-                    .filter(|&&c| {
-                        let ((x, y), r) = (cs[c].0, g.world.crystal_r(c));
-                        walkers_where(grid, size, |px, py| (px - x).hypot(py - y) <= r) == 0
-                    })
-                    .count();
+                self.touched.resize(cs.len(), false);
+                let mut clear = 0;
+                for &c in crystals.iter().filter(|&&c| c < cs.len()) {
+                    let ((x, y), r) = (cs[c].0, g.world.crystal_r(c));
+                    let on = walkers_where(grid, size, |px, py| (px - x).hypot(py - y) <= r);
+                    if on > 0 {
+                        self.touched[c] = true;
+                    } else if !retake || self.touched[c] {
+                        clear += 1;
+                    }
+                }
+                self.count = Some(clear as u32);
                 self.held = if clear >= *need { self.held + dt } else { 0.0 };
                 Some((self.held / secs).min(1.0))
             }
-            Goal::Contain { rect, secs } => {
+            Goal::Contain { rect, secs, leak } => {
                 let grid = grid?;
                 let (x0, y0, x1, y1) = (rect.0 * fine, rect.1 * fine, rect.2 * fine, rect.3 * fine);
                 let out = walkers_where(grid, size, |px, py| px < x0 || px > x1 || py < y0 || py > y1);
-                self.held = if out == 0 { self.held + dt } else { 0.0 };
+                self.count = Some(out);
+                self.held = if out as f32 <= leak * g.mould.max(1) as f32 { self.held + dt } else { 0.0 };
                 Some((self.held / secs).min(1.0))
             }
         }
@@ -508,7 +528,10 @@ mod tests {
         assert!(Mission::parse(&LANDFALL.replace("rule price 0", "rule prise 0")).is_err());
         assert!(Mission::parse(&format!("{LANDFALL}goal take 0.6\n")).is_err());
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 6 60 1 2 3 4 5 6 7 8")).unwrap();
-        assert_eq!(c.goal, Goal::Clear { crystals: (1..=8).collect(), need: 6, secs: 60.0 });
+        assert_eq!(c.goal, Goal::Clear { crystals: (1..=8).collect(), need: 6, secs: 60.0, retake: false });
+        let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal retake 1 60 1")).unwrap();
+        assert!(matches!(c.goal, Goal::Clear { retake: true, .. }));
+        assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60")).is_err(), "contain needs its leak");
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 3 60 1 2")).is_err());
     }
 
