@@ -1,0 +1,11 @@
+kitplans tiers=sleeper hands=farm,loud,quiet,plague,siege carry=5 tool_weight=50 threads=4 at 2b1fbf4 (runner B)
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                        sleeper
+    farm   +0.262 (0/8/0)     
+    loud   +0.828 (3/5/0)     
+   quiet   +0.264 (0/8/0)     
+  plague   +0.479 (0/8/0)     
+   siege   +0.274 (0/8/0)     
+
+gate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p):
+   sleeper: best loud (+0.828); farm 0/8 p 0.008, quiet 0/8 p 0.008, plague 2/6 p 0.289, siege 0/8 p 0.008

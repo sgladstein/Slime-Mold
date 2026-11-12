@@ -1,0 +1,3 @@
+./target/release/examples/cutprobe map=fork seeds=1-6 grow=120 after=60 cuts=3 ring=8 cutw=4 alone=1 unfed=8 arm=base: arm=H:energy_flow=0.05+hunger_scent=8 arm=Hr:energy_flow=0.05+hunger_scent=8+hunger_reach=3+hunt_at=0.3 > /tmp/claude-0/hunt/fork-b.txt 2>&1
+./target/release/examples/cutprobe map=rim seeds=1-6 grow=120 after=60 cuts=3 ring=8 cutw=4 alone=1 unfed=8 arm=base: arm=H:energy_flow=0.05+hunger_scent=8 arm=Hr:energy_flow=0.05+hunger_scent=8+hunger_reach=3+hunt_at=0.3 > /tmp/claude-0/hunt/rim-b.txt 2>&1
+./target/release/examples/cutprobe map=flats seeds=1-6 grow=120 after=60 cuts=3 ring=8 cutw=4 alone=1 unfed=8 arm=base: arm=H:energy_flow=0.05+hunger_scent=8 arm=Hr:energy_flow=0.05+hunger_scent=8+hunger_reach=3+hunt_at=0.3 > /tmp/claude-0/hunt/flats-b.txt 2>&1

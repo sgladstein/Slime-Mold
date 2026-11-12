@@ -1,0 +1,11 @@
+kitplans tiers=sporer hands=farm,loud,quiet,plague,siege carry=5 tool_weight=50 threads=4 at 2b1fbf4 (runner C)
+payoff table (mean score; ends mould wiped / cap / squad wiped):
+                         sporer
+    farm   +0.100 (0/8/0)     
+    loud   -0.432 (1/3/4)     
+   quiet   +0.094 (0/8/0)     
+  plague   +1.061 (5/3/0)     
+   siege   +0.119 (0/8/0)     
+
+gate 2, per tier: the best plan by mean, and each plan against it (higher / lower, p):
+    sporer: best plague (+1.061); farm 0/8 p 0.008, loud 1/7 p 0.070, quiet 0/8 p 0.008, siege 0/8 p 0.008
