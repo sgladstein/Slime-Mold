@@ -456,9 +456,16 @@ pub struct Rules {
     /// harvest unspent, and strike won by banking behind a 30-soldier army
     /// it never paid to keep (integration, 11-12 17:10Z, from the one-body
     /// thread's slime-enemy review). An army now costs its keep: farm's 8
-    /// soldiers eat 16 a second of the about 59 they bank, and 30 eat 60.
-    /// Paid each step; what the bank can't pay, the squad goes hungry for
-    /// (`Rules::hunger`). 0 is off.
+    /// soldiers eat 8 a second of the about 55 they bank, and strike's 30
+    /// eat 30. Paid each step; what the bank can't pay, the squad goes
+    /// hungry for (`Rules::hunger`). 0 is off.
+    ///
+    /// 1, from smoke runs on race seeds 5-8 (11-12 20:20Z): at 1 idle's
+    /// squad starves by 570-600 s on all 4, farm and fort hold to the cap,
+    /// and strike wins 2, loses 1 and stalemates 1 (it had stalemated all
+    /// 4). At 2 idle starves by 340-350 s, but strike starves its 30
+    /// soldiers on 3 of 4 and fort on 1: an army costing 4.5 times its
+    /// price over a game was too steep for a first default.
     pub ration: f32,
     /// Hit points a game second every soldier loses while the bank can't
     /// pay the rations (a share of it for a part-paid step; `Game::hungry`).
@@ -560,7 +567,7 @@ impl Default for Rules {
             build: BuildRules::default(),
             overrun: 20.0,
             reserve: 0.0,
-            ration: 2.0,
+            ration: 1.0,
             hunger: 1.0,
             seek: true,
             crater: 4.5,
@@ -2523,7 +2530,8 @@ mod tests {
     fn rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes() {
         let mut g = small(1);
         let n = g.alive() as f32;
-        assert!(n >= 1.0 && g.rules.ration == 2.0 && g.rules.hunger == 1.0);
+        assert!(n >= 1.0 && g.rules.ration == 1.0 && g.rules.hunger == 1.0);
+        g.rules.ration = 2.0;
         let hp = g.soldiers[0].hp;
         // Paid in full: the bank pays, nobody hungers.
         g.bank = 3.0 * n;
