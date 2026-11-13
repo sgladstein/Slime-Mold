@@ -43,7 +43,10 @@ All rulings, quoted and timed: `wiki/decisions.md` (standing) and
 ## How threads work
 
 - **Each thread merges its own PRs** (2026-11-10): once both CI jobs are
-  green on the exact head, with a merge commit. Docs-only PRs (`Reports/`,
+  green on the exact head, with a merge commit. That head must contain
+  current main: if main moved since your last CI run, merge main in and
+  wait for green again (11-13; #165 and #174 were each green alone and
+  together broke main). Docs-only PRs (`Reports/`,
   `handoff/`, `research/`, `wiki/`, `*.md`) skip the build jobs; skipped is
   green, but the wiki lint still runs.
 - **Long runs may use up to 4 Haiku runner threads** (2026-11-10), asked for
