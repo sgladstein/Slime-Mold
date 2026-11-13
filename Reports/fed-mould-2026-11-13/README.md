@@ -442,54 +442,53 @@ news: a walker whose news is older than `wither_lag` (5 s) is cut off.
 
 **Films (the window, Fork, seed 1, farm hand, software Vulkan; page
 https://claude.ai/artifact/SRxAj8nri2iGAsvE4DFGbP, source `panic-page/`).**
-Labelled, not blind: it shows a behaviour the owner asked for. Filmed
-after merging #197 (wading counts every walker), with `panic=0` for today
-and the new default for scared; logs in [`raw/panic/window/`](raw/panic/window/README.md) (`c7-*`,
-`b7-*`, `p4-*`; the same scenes before #197 are `c6-*`, `b6-*`, `p3-*`,
-with the same story).
+Labelled, not blind: it shows a behaviour the owner asked for. Filmed on
+main after #197 (wading counts every walker) and #198 (a unit aims only at
+slime it can see), with `panic=0` for today and the new default for
+scared; logs in [`raw/panic/window/`](raw/panic/window/README.md)
+(`c8-*`, `b8-*`, `p5-*`). Earlier takes: `c7-*`, `b7-*`, `p4-*` after #197
+only, `c6-*`, `b6-*`, `p3-*` before it. Before #198 a soldier aimed at the
+densest slime in sight even through a wall and then held fire, so in
+those takes the soldiers inside the ring aimed at the body outside it and
+never shot the few walkers on them (the Larder thread traced it): three of
+the four died, and the window's farm squad fell to 1 by 1:50 against 12.
+#198 ends that.
 - **Charge.** `cut=150,365,240,24 cutsquad=365,256,150,4`: a held ring
   round a stretch of tube with no crystal, and four soldiers set down
   inside it, 34 cells from the tube. Walkers inside the ring at the cut,
-  +5, +6, +7, +10, +20, +30 s: today 123, 127, 126, 123, 113, 90, 53 (the
-  four soldiers live); scared 110, 76, 41, 11, 8, 7, 5 (soldiers 4, 4, 4,
-  3, 3, 3, 1). The scared piece gathers and turns at +5 s and reaches the
-  soldiers at +6 s; their 6 shots kill 94 walkers; the last ~10 sit on
-  the soldiers, no more shots are fired, and three soldiers are dead by
-  +25 s. At 34 cells the visible tell is about a second: a walker's own
-  pace covers most of the gap during the lean.
+  +5, +6, +7, +10, +12, +20 s: today 138, 150, 146, 143, 138, 113, 0;
+  scared 112, 37, 4, 1, 0, 0, 0. The scared piece curls toward the
+  soldiers at about +4 s (its news was already a little old at the cut),
+  runs at them from +5 s and is shot down by +7 s, with one soldier lost
+  (the squad 30 to 29). At 34 cells the visible tell is about a second.
+  Today's piece stays, grows a little and drifts; from +12 s the part
+  within range is shot away.
 - **Bolt.** `cut=150,386,239,22,8,16`, no soldiers: a ring held 8 s round
   a piece of tube near a crystal. The scared piece bunches on the ring's
   crystal side and, when it opens, pours into the crystal's lobe, leaving
   its ground empty; today's joins back up where it stands. Walkers inside
-  at 0, +5, +8 (opens), +9, +12, +20, +30 s: today 252, 271, 268, 289,
-  265, 220, 189; scared 199, 214, 211, 186, 160, 104, 50.
-- The rule acts before the cut, so each pair's rounds differ by 2:30
-  (18,512 walkers today, 22,825 scared; the charge scene's scared squad
-  had one soldier left and was made up to four).
+  at 0, +5, +8 (opens), +9, +12, +20, +30 s: today 284, 307, 303, 317,
+  254, 197, 241; scared 200, 215, 211, 189, 143, 75, 26.
+- The rule acts before the cut, so each pair's rounds differ a little by
+  2:30 (18,623 walkers today, 18,143 scared).
 
 **Counters (the designer's second point).** A charge: shoot it before it
-closes (four soldiers' shots stopped 94 of about 105; more guns or more
-range wins). A run for a crystal: a wall in its way stops it (a wall reads
+closes (four soldiers standing their ground shot the whole piece down and
+lost one; fewer guns or a bigger piece gets through). A run for a crystal: a wall in its way stops it (a wall reads
 as far worse to its sensors, and it bites it as any walker does); a squad
 on its route makes it charge instead; if it reaches the crystal it eats,
 calms and breeds there.
 
-**What it changes before any cut.** The squad's own shots knock small
-bits off, and those charge it now. Few walkers are scared at once: a CPU
-game on Fork (farm hand, seed 1, `larderworld look=`, every 10 s to 2:30)
-has 0-16 scared of 13,000-27,000, yet its squad is 4 at 2:30 against 8
-without (`raw/panic/window/cpu-fork-farm-*.log`). In the window (Fork,
-seed 1, farm, after #197; `p4-*.log`) soldiers today at 1:00, 1:20, 1:40,
-1:50, 2:00, 2:30: 19, 13, 12, 12, 10, 14; scared 17, 10, 6, 2, 1, 1. The
-scared round's farm hand stops harvesting at 1:50 (6,262 food against
-11,430 by 2:30) with about 1,000 in the bank, under its 1,200 buying
-line, so it never rebuilds; a player could still buy two soldiers. One
-round, so a tuning note, not a measure; but this is the biggest change
-the rule makes, and it makes standing and shooting costlier, which the
-owner's rulings treat as the safe play. Knobs if play finds it too much:
-a shorter `panic_r` (20 dish cells reaches past a gun's 15), or only
-pieces above a size panicking (not built). Before #197 the same round
-had 3 soldiers against 0 at 2:00 (`p3-*.log`).
+**What it changes before any cut.** Bits the squad's own shots knock off
+can charge it. Few walkers are scared at once: a CPU game on Fork (farm
+hand, seed 1, `larderworld look=`, every 10 s to 2:30, on main after
+#198) has 0-11 scared of 13,000-27,000, and its squad is 7 at 2:30
+against 8 without (`raw/panic/window/cpu-fork-farm-*.log`). In the window
+(Fork, seed 1, farm, `p5-*.log`) soldiers today at 1:00, 1:20, 1:40,
+1:50, 2:00, 2:30: 19, 18, 20, 25, 27, 33; scared 19, 16, 19, 19, 24, 30;
+food harvested by 2:30 15,455 today against 15,132. One round, so a
+tuning note. Before #198 the same round lost its squad (1 against 12 at
+1:50, `p4-*.log`), because soldiers could not shoot the bits on them.
 
 **Smoke** (CPU race world, C's keys with
 `panic` 2, seeds 1-4, cap 5:00; `raw/smoke/panic2-cap300.txt` against
@@ -525,11 +524,8 @@ tick against 23.7-26.2 ms.
   `larderworld look=DIR` prints `scared` beside each picture.
 
 **Next, if play asks for it:** a slower lean (the tell is short when
-soldiers are close), a shorter reach or a size floor (above). Seen in the
-charge film: no shot is fired at the ~10 walkers sitting on the soldiers,
-though the owner ruled (11-13 16:15Z, #197) that a soldier rushed while
-standing still must be able to shoot what reaches it; passed to the
-thread that owns soldiers' fire.
+soldiers are close), a shorter `panic_r` (20 dish cells reaches past a
+gun's 15), or only pieces above a size panicking (not built).
 
 ## Tests
 

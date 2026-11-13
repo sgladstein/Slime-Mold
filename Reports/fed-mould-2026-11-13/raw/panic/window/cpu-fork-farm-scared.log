@@ -1,20 +1,20 @@
 larderworld map fork, scale 2 walkers 25000 cap 150 s, tps 15, seeds [1]; on the CPU; tier none; flee 0 (default); rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, bullet_speed: 45.0, split_n: 3, split_fan: 0.5, split_range: 6.0, split_r: 0.7, pierce_gap: 2.0, price: 0.0, hp: 100.0, drain: 2.0, touch: 1.5, wade: 6.0, smell: 0.5, smell_r: 2.0, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, core_pull: 8.0, cap: 150.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, build: BuildRules { max: 40, gap: 2.5, raise: 8.0, turret_cost: 500.0, turret_hp: 300.0, turret_range: 15.0, turret_every: 0.5, lure_cost: 300.0, lure_hp: 150.0, lure_smell: 8.0, lure_r: 6.0, lure_burn: 2.0, pump_cost: 500.0, pump_hp: 200.0, pump_rate: 5.0, pump_smell: 0.0, outpost_cost: 400.0, outpost_hp: 300.0, outpost_hoard: 0.25, siren_cost: 300.0, siren_hp: 150.0, siren_every: 4.0, siren_alarm: 150.0, siren_r: 15.0, siren_keep: 0.95, touch: 2.0, drain: 1.0, anywhere: true }, overrun: 20.0, reserve: 0.0, ration: 1.0, hunger: 1.0, seek: true, crater: 4.5, sink: 1.0, spread: 0.0, crystal_solid: true, mass: 0.2, broken: 0.03, broken_starve: 50.0 }
-provenance: harness larderworld, commit 5cb9e82f4, seeds 1-1 (1), cap 150 s, settings hash 726c63be93efa5e8
+provenance: harness larderworld, commit aee6c078b, seeds 1-1 (1), cap 150 s, settings hash 726c63be93efa5e8
 keys [("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")]
   farm seed 1 at 0 s: mould 25000, scared 0, soldiers 4, bank 2000, harvested 0, killed 0, crystals left 1.000; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 10 s: mould 24717, scared 2, soldiers 7, bank 698, harvested 0, killed 302, crystals left 0.960; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 20 s: mould 24566, scared 0, soldiers 8, bank 1681, harvested 1500, killed 675, crystals left 0.904; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 30 s: mould 24778, scared 2, soldiers 8, bank 2677, harvested 3000, killed 954, crystals left 0.862; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 40 s: mould 24976, scared 2, soldiers 8, bank 3487, harvested 3900, killed 1367, crystals left 0.825; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 50 s: mould 25504, scared 0, soldiers 8, bank 3998, harvested 4500, killed 1594, crystals left 0.789; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 60 s: mould 26180, scared 7, soldiers 8, bank 5116, harvested 5700, killed 1731, crystals left 0.774; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 70 s: mould 26882, scared 4, soldiers 8, bank 5535, harvested 6600, killed 2037, crystals left 0.745; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 80 s: mould 27370, scared 8, soldiers 8, bank 5353, harvested 6900, killed 2478, crystals left 0.716; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 90 s: mould 15876, scared 4, soldiers 8, bank 5372, harvested 7800, killed 2787, crystals left 0.703; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 100 s: mould 13752, scared 4, soldiers 8, bank 4790, harvested 8100, killed 3372, crystals left 0.684; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 110 s: mould 14555, scared 11, soldiers 8, bank 4306, harvested 8100, killed 3654, crystals left 0.681; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 120 s: mould 15485, scared 9, soldiers 8, bank 2626, harvested 8100, killed 4435, crystals left 0.672; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 130 s: mould 16710, scared 16, soldiers 6, bank 2843, harvested 8400, killed 5138, crystals left 0.666; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 140 s: mould 18133, scared 7, soldiers 8, bank 765, harvested 8400, killed 5664, crystals left 0.661; buildings placed 0, standing 0, lost 0
-  farm seed 1 at 150 s: mould 19388, scared 3, soldiers 4, bank 703, harvested 8400, killed 6648, crystals left 0.651; buildings placed 0, standing 0, lost 0
-farm seed 1: cap at 150 s, score +0.239
+  farm seed 1 at 10 s: mould 24716, scared 0, soldiers 7, bank 697, harvested 0, killed 303, crystals left 0.960; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 20 s: mould 24564, scared 6, soldiers 8, bank 1689, harvested 1500, killed 670, crystals left 0.904; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 30 s: mould 24723, scared 2, soldiers 8, bank 2386, harvested 2700, killed 979, crystals left 0.861; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 40 s: mould 24941, scared 1, soldiers 8, bank 3197, harvested 3600, killed 1444, crystals left 0.824; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 50 s: mould 25402, scared 0, soldiers 8, bank 3709, harvested 4200, killed 1741, crystals left 0.788; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 60 s: mould 26068, scared 10, soldiers 8, bank 4828, harvested 5400, killed 1879, crystals left 0.773; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 70 s: mould 26749, scared 2, soldiers 8, bank 4847, harvested 6300, killed 2173, crystals left 0.745; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 80 s: mould 27228, scared 11, soldiers 8, bank 4666, harvested 6600, killed 2638, crystals left 0.717; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 90 s: mould 15760, scared 1, soldiers 8, bank 5085, harvested 7500, killed 2981, crystals left 0.698; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 100 s: mould 13566, scared 5, soldiers 8, bank 4904, harvested 7800, killed 3628, crystals left 0.678; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 110 s: mould 14132, scared 7, soldiers 8, bank 5418, harvested 8400, killed 3933, crystals left 0.670; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 120 s: mould 14994, scared 3, soldiers 7, bank 4834, harvested 8700, killed 4322, crystals left 0.664; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 130 s: mould 16185, scared 3, soldiers 8, bank 4350, harvested 8700, killed 4756, crystals left 0.661; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 140 s: mould 17593, scared 4, soldiers 8, bank 3065, harvested 8700, killed 5303, crystals left 0.650; buildings placed 0, standing 0, lost 0
+  farm seed 1 at 150 s: mould 19102, scared 2, soldiers 7, bank 2978, harvested 8700, killed 5883, crystals left 0.642; buildings placed 0, standing 0, lost 0
+farm seed 1: cap at 150 s, score +0.243

@@ -1,0 +1,235 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.101 ms a frame
+  t 147 s: mould 18422, soldiers 33, bank 645, harvested 15455, shots 1962, killed 4607, took 95%, crystals left 0.449; squad at 274.8,118.0
+  squad: touching 0.0 mean, 1 most; health 79 mean
+  CPU: ground field 2.19 ms (once a game second), model and HUD 0.048 ms a frame
+  t 148 s: mould 18422, soldiers 33, bank 627, harvested 15455, shots 1983, killed 4619, took 95%, crystals left 0.449; squad at 275.4,118.2
+  squad: touching 0.0 mean, 1 most; health 79 mean
+  CPU: ground field 2.27 ms (once a game second), model and HUD 0.063 ms a frame
+  t 148 s: mould 18523, soldiers 33, bank 612, harvested 15455, shots 1993, killed 4627, took 95%, crystals left 0.449; squad at 275.4,118.2
+  squad: touching 0.1 mean, 1 most; health 78 mean
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.044 ms a frame
+  t 149 s: mould 18523, soldiers 33, bank 594, harvested 15455, shots 2013, killed 4643, took 95%, crystals left 0.448; squad at 275.9,118.3
+  squad: touching 0.1 mean, 1 most; health 78 mean
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.044 ms a frame
+  t 149 s: mould 18623, soldiers 33, bank 579, harvested 15455, shots 2016, killed 4646, took 95%, crystals left 0.448; squad at 275.9,118.3
+  squad: touching 0.2 mean, 2 most; health 78 mean
+  CPU: ground field 1.98 ms (once a game second), model and HUD 0.048 ms a frame
+  t 150 s: mould 18623, soldiers 33, bank 561, harvested 15455, shots 2042, killed 4655, took 95%, crystals left 0.448; squad at 276.4,118.5
+  squad: touching 0.2 mean, 1 most; health 78 mean
+  CPU: ground field 2.11 ms (once a game second), model and HUD 0.047 ms a frame
+  t 150 s: mould 18717, soldiers 33, bank 546, harvested 15455, shots 2046, killed 4662, took 95%, crystals left 0.448; squad at 276.4,118.5
+  squad: touching 0.3 mean, 2 most; health 78 mean
+  cut t 150.0 s: ring of 3020 fine cells round (386, 239) r 22; 280 walkers inside
+  cut t 150 s: 284 walkers inside (1.01 of the cut's)
+  CPU: ground field 0.85 ms (once a game second), model and HUD 0.043 ms a frame
+  t 151 s: mould 18717, soldiers 33, bank 528, harvested 15455, shots 2061, killed 4675, took 95%, crystals left 0.448; squad at 276.9,118.6
+  squad: touching 0.1 mean, 1 most; health 78 mean
+  cut t 151 s: 296 walkers inside (1.06 of the cut's)
+  CPU: ground field 1.46 ms (once a game second), model and HUD 0.069 ms a frame
+  t 151 s: mould 18802, soldiers 33, bank 513, harvested 15455, shots 2073, killed 4689, took 95%, crystals left 0.448; squad at 276.9,118.6
+  squad: touching 0.0 mean, 0 most; health 78 mean
+  CPU: ground field 0.93 ms (once a game second), model and HUD 0.046 ms a frame
+  t 152 s: mould 18802, soldiers 33, bank 495, harvested 15455, shots 2081, killed 4694, took 95%, crystals left 0.448; squad at 277.4,118.7
+  squad: touching 0.2 mean, 1 most; health 78 mean
+  cut t 152 s: 304 walkers inside (1.09 of the cut's)
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.043 ms a frame
+  t 152 s: mould 18890, soldiers 33, bank 480, harvested 15455, shots 2095, killed 4709, took 95%, crystals left 0.448; squad at 277.4,118.7
+  squad: touching 0.1 mean, 1 most; health 77 mean
+  CPU: ground field 0.99 ms (once a game second), model and HUD 0.058 ms a frame
+  t 153 s: mould 18890, soldiers 33, bank 462, harvested 15455, shots 2112, killed 4723, took 95%, crystals left 0.448; squad at 277.7,118.9
+  squad: touching 0.2 mean, 2 most; health 77 mean
+  cut t 153 s: 307 walkers inside (1.10 of the cut's)
+  CPU: ground field 0.96 ms (once a game second), model and HUD 0.041 ms a frame
+  t 153 s: mould 18984, soldiers 33, bank 447, harvested 15455, shots 2123, killed 4727, took 95%, crystals left 0.447; squad at 277.7,118.9
+  squad: touching 0.0 mean, 0 most; health 77 mean
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.044 ms a frame
+  t 154 s: mould 18984, soldiers 33, bank 429, harvested 15455, shots 2132, killed 4737, took 95%, crystals left 0.447; squad at 272.0,116.0
+  squad: touching 0.0 mean, 1 most; health 77 mean
+  cut t 154 s: 307 walkers inside (1.10 of the cut's)
+  CPU: ground field 1.34 ms (once a game second), model and HUD 0.046 ms a frame
+  t 154 s: mould 19070, soldiers 33, bank 414, harvested 15455, shots 2145, killed 4748, took 95%, crystals left 0.447; squad at 266.9,113.4
+  squad: touching 0.2 mean, 2 most; health 77 mean
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.050 ms a frame
+  t 155 s: mould 19070, soldiers 33, bank 396, harvested 15455, shots 2156, killed 4759, took 95%, crystals left 0.447; squad at 261.2,110.5
+  squad: touching 0.1 mean, 2 most; health 77 mean
+  cut t 155 s: 307 walkers inside (1.10 of the cut's)
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.050 ms a frame
+  t 155 s: mould 19161, soldiers 33, bank 381, harvested 15455, shots 2164, killed 4768, took 95%, crystals left 0.447; squad at 256.0,108.1
+  squad: touching 0.0 mean, 1 most; health 77 mean
+  CPU: ground field 1.24 ms (once a game second), model and HUD 0.052 ms a frame
+  t 156 s: mould 19161, soldiers 33, bank 363, harvested 15455, shots 2168, killed 4778, took 95%, crystals left 0.447; squad at 249.9,105.7
+  squad: touching 0.1 mean, 1 most; health 77 mean
+  cut t 156 s: 307 walkers inside (1.10 of the cut's)
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.045 ms a frame
+  t 156 s: mould 19255, soldiers 33, bank 348, harvested 15455, shots 2179, killed 4781, took 95%, crystals left 0.447; squad at 244.1,104.4
+  squad: touching 0.0 mean, 1 most; health 77 mean
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.046 ms a frame
+  t 157 s: mould 19255, soldiers 33, bank 330, harvested 15455, shots 2193, killed 4789, took 95%, crystals left 0.447; squad at 237.1,104.0
+  squad: touching 0.0 mean, 1 most; health 77 mean
+  cut t 157 s: 307 walkers inside (1.10 of the cut's)
+  CPU: ground field 1.08 ms (once a game second), model and HUD 0.040 ms a frame
+  t 157 s: mould 19354, soldiers 33, bank 315, harvested 15455, shots 2202, killed 4795, took 95%, crystals left 0.447; squad at 230.6,104.3
+  squad: touching 0.1 mean, 1 most; health 77 mean
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.059 ms a frame
+  t 158 s: mould 19354, soldiers 33, bank 297, harvested 15455, shots 2216, killed 4812, took 95%, crystals left 0.446; squad at 223.3,104.8
+  squad: touching 0.2 mean, 1 most; health 77 mean
+  cut t 158 s: 303 walkers inside (1.08 of the cut's)
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.050 ms a frame
+  t 158 s: mould 19444, soldiers 33, bank 282, harvested 15455, shots 2223, killed 4820, took 95%, crystals left 0.446; squad at 216.8,105.2
+  squad: touching 0.0 mean, 0 most; health 77 mean
+  cut t 158.0 s: the ring opens (3020 cells back on the agar)
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.050 ms a frame
+  t 159 s: mould 19444, soldiers 33, bank 264, harvested 15455, shots 2228, killed 4827, took 95%, crystals left 0.446; squad at 209.4,105.7
+  squad: touching 0.1 mean, 2 most; health 77 mean
+  cut t 159 s: 317 walkers inside (1.13 of the cut's)
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.046 ms a frame
+  t 159 s: mould 19546, soldiers 33, bank 248, harvested 15455, shots 2239, killed 4830, took 95%, crystals left 0.446; squad at 205.2,105.0
+  squad: touching 0.0 mean, 1 most; health 76 mean
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.044 ms a frame
+  t 160 s: mould 19546, soldiers 33, bank 231, harvested 15455, shots 2244, killed 4838, took 95%, crystals left 0.446; squad at 202.2,102.5
+  squad: touching 0.1 mean, 1 most; health 76 mean
+  cut t 160 s: 299 walkers inside (1.07 of the cut's)
+  CPU: ground field 1.63 ms (once a game second), model and HUD 0.043 ms a frame
+  t 160 s: mould 19659, soldiers 33, bank 215, harvested 15455, shots 2252, killed 4848, took 95%, crystals left 0.446; squad at 200.0,99.4
+  squad: touching 0.1 mean, 3 most; health 76 mean
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.062 ms a frame
+  t 161 s: mould 19659, soldiers 33, bank 198, harvested 15455, shots 2267, killed 4862, took 95%, crystals left 0.446; squad at 197.8,95.1
+  squad: touching 0.1 mean, 1 most; health 76 mean
+  cut t 161 s: 272 walkers inside (0.97 of the cut's)
+  CPU: ground field 1.14 ms (once a game second), model and HUD 0.041 ms a frame
+  t 161 s: mould 19755, soldiers 33, bank 182, harvested 15455, shots 2278, killed 4870, took 95%, crystals left 0.446; squad at 195.6,91.8
+  squad: touching 0.3 mean, 4 most; health 76 mean
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.043 ms a frame
+  t 162 s: mould 19755, soldiers 33, bank 165, harvested 15455, shots 2290, killed 4883, took 95%, crystals left 0.446; squad at 192.7,89.3
+  squad: touching 0.2 mean, 1 most; health 76 mean
+  cut t 162 s: 254 walkers inside (0.91 of the cut's)
+  CPU: ground field 1.24 ms (once a game second), model and HUD 0.043 ms a frame
+  t 162 s: mould 19856, soldiers 33, bank 149, harvested 15455, shots 2306, killed 4893, took 95%, crystals left 0.445; squad at 189.3,88.2
+  squad: touching 0.2 mean, 1 most; health 76 mean
+  CPU: ground field 1.15 ms (once a game second), model and HUD 0.041 ms a frame
+  t 163 s: mould 19856, soldiers 33, bank 132, harvested 15455, shots 2318, killed 4905, took 95%, crystals left 0.445; squad at 183.2,88.7
+  squad: touching 0.1 mean, 1 most; health 76 mean
+  cut t 163 s: 236 walkers inside (0.84 of the cut's)
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.051 ms a frame
+  t 163 s: mould 19952, soldiers 33, bank 116, harvested 15455, shots 2328, killed 4913, took 95%, crystals left 0.445; squad at 178.6,90.2
+  squad: touching 0.1 mean, 1 most; health 75 mean
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.044 ms a frame
+  t 164 s: mould 19952, soldiers 33, bank 98, harvested 15455, shots 2338, killed 4923, took 95%, crystals left 0.445; squad at 175.6,93.3
+  squad: touching 0.1 mean, 1 most; health 75 mean
+  cut t 164 s: 224 walkers inside (0.80 of the cut's)
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.049 ms a frame
+  t 164 s: mould 20055, soldiers 33, bank 83, harvested 15455, shots 2348, killed 4941, took 95%, crystals left 0.445; squad at 175.1,97.2
+  squad: touching 0.1 mean, 1 most; health 75 mean
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.048 ms a frame
+  t 165 s: mould 20055, soldiers 33, bank 65, harvested 15455, shots 2354, killed 4947, took 95%, crystals left 0.445; squad at 176.1,102.0
+  squad: touching 0.1 mean, 1 most; health 75 mean
+  cut t 165 s: 213 walkers inside (0.76 of the cut's)
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.043 ms a frame
+  t 165 s: mould 20159, soldiers 33, bank 50, harvested 15455, shots 2365, killed 4959, took 95%, crystals left 0.445; squad at 177.3,106.1
+  squad: touching 0.1 mean, 1 most; health 75 mean
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.043 ms a frame
+  t 166 s: mould 20159, soldiers 33, bank 32, harvested 15455, shots 2376, killed 4968, took 94%, crystals left 0.445; squad at 179.2,110.7
+  squad: touching 0.2 mean, 3 most; health 75 mean
+  cut t 166 s: 210 walkers inside (0.75 of the cut's)
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.043 ms a frame
+  t 166 s: mould 20263, soldiers 33, bank 17, harvested 15455, shots 2392, killed 4981, took 94%, crystals left 0.445; squad at 181.5,114.5
+  squad: touching 0.1 mean, 1 most; health 75 mean
+  CPU: ground field 1.20 ms (once a game second), model and HUD 0.043 ms a frame
+  t 167 s: mould 20263, soldiers 33, bank 0, harvested 15455, shots 2398, killed 4989, took 94%, crystals left 0.444; squad at 184.1,118.8
+  squad: touching 0.2 mean, 2 most; health 75 mean
+  cut t 167 s: 210 walkers inside (0.75 of the cut's)
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.050 ms a frame
+  t 167 s: mould 20361, soldiers 33, bank 0, harvested 15455, shots 2414, killed 5005, took 94%, crystals left 0.444; squad at 186.7,122.5
+  squad: touching 0.2 mean, 1 most; health 74 mean
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.052 ms a frame
+  t 168 s: mould 20361, soldiers 33, bank 0, harvested 15455, shots 2424, killed 5019, took 94%, crystals left 0.444; squad at 189.5,126.8
+  squad: touching 0.1 mean, 1 most; health 73 mean
+  cut t 168 s: 200 walkers inside (0.71 of the cut's)
+  CPU: ground field 1.15 ms (once a game second), model and HUD 0.044 ms a frame
+  t 168 s: mould 20461, soldiers 33, bank 0, harvested 15455, shots 2438, killed 5035, took 94%, crystals left 0.444; squad at 191.8,130.2
+  squad: touching 0.0 mean, 1 most; health 73 mean
+  CPU: ground field 1.55 ms (once a game second), model and HUD 0.050 ms a frame
+  t 169 s: mould 20461, soldiers 33, bank 0, harvested 15455, shots 2451, killed 5042, took 94%, crystals left 0.444; squad at 193.5,132.9
+  squad: touching 0.3 mean, 2 most; health 72 mean
+  cut t 169 s: 190 walkers inside (0.68 of the cut's)
+  CPU: ground field 1.10 ms (once a game second), model and HUD 0.053 ms a frame
+  t 169 s: mould 20545, soldiers 33, bank 0, harvested 15455, shots 2467, killed 5064, took 94%, crystals left 0.444; squad at 194.2,133.9
+  squad: touching 0.1 mean, 1 most; health 72 mean
+  CPU: ground field 1.65 ms (once a game second), model and HUD 0.050 ms a frame
+  t 170 s: mould 20545, soldiers 33, bank 0, harvested 15455, shots 2476, killed 5076, took 94%, crystals left 0.444; squad at 194.4,134.4
+  squad: touching 0.2 mean, 2 most; health 71 mean
+  cut t 170 s: 197 walkers inside (0.70 of the cut's)
+  CPU: ground field 1.09 ms (once a game second), model and HUD 0.048 ms a frame
+  t 170 s: mould 20654, soldiers 33, bank 0, harvested 15455, shots 2498, killed 5086, took 94%, crystals left 0.444; squad at 194.4,134.4
+  squad: touching 0.1 mean, 2 most; health 70 mean
+  CPU: ground field 1.16 ms (once a game second), model and HUD 0.048 ms a frame
+  t 171 s: mould 20654, soldiers 33, bank 0, harvested 15455, shots 2504, killed 5097, took 94%, crystals left 0.444; squad at 194.7,134.8
+  squad: touching 0.1 mean, 1 most; health 70 mean
+  cut t 171 s: 201 walkers inside (0.72 of the cut's)
+  CPU: ground field 1.56 ms (once a game second), model and HUD 0.073 ms a frame
+  t 171 s: mould 20728, soldiers 33, bank 0, harvested 15455, shots 2524, killed 5116, took 94%, crystals left 0.443; squad at 194.7,134.8
+  squad: touching 0.1 mean, 1 most; health 69 mean
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.053 ms a frame
+  t 172 s: mould 20728, soldiers 32, bank 0, harvested 15455, shots 2533, killed 5121, took 94%, crystals left 0.443; squad at 196.4,134.9
+  squad: touching 0.2 mean, 3 most; health 71 mean
+  cut t 172 s: 197 walkers inside (0.70 of the cut's)
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.067 ms a frame
+  t 172 s: mould 20822, soldiers 32, bank 0, harvested 15455, shots 2548, killed 5141, took 94%, crystals left 0.443; squad at 196.4,134.9
+  squad: touching 0.1 mean, 1 most; health 70 mean
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.057 ms a frame
+  t 173 s: mould 20822, soldiers 32, bank 0, harvested 15455, shots 2557, killed 5155, took 94%, crystals left 0.443; squad at 196.7,135.3
+  squad: touching 0.1 mean, 1 most; health 69 mean
+  cut t 173 s: 201 walkers inside (0.72 of the cut's)
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.051 ms a frame
+  t 173 s: mould 20917, soldiers 32, bank 0, harvested 15455, shots 2565, killed 5159, took 94%, crystals left 0.443; squad at 196.7,135.3
+  squad: touching 0.3 mean, 2 most; health 69 mean
+  CPU: ground field 1.40 ms (once a game second), model and HUD 0.046 ms a frame
+  t 174 s: mould 20917, soldiers 32, bank 0, harvested 15455, shots 2586, killed 5187, took 94%, crystals left 0.443; squad at 196.9,135.6
+  squad: touching 0.2 mean, 1 most; health 68 mean
+  cut t 174 s: 200 walkers inside (0.71 of the cut's)
+  CPU: ground field 1.37 ms (once a game second), model and HUD 0.046 ms a frame
+  t 174 s: mould 20994, soldiers 32, bank 0, harvested 15455, shots 2594, killed 5205, took 94%, crystals left 0.443; squad at 196.9,135.6
+  squad: touching 0.2 mean, 2 most; health 68 mean
+  CPU: ground field 1.12 ms (once a game second), model and HUD 0.042 ms a frame
+  t 175 s: mould 20994, soldiers 32, bank 0, harvested 15455, shots 2614, killed 5217, took 94%, crystals left 0.443; squad at 197.1,136.0
+  squad: touching 0.1 mean, 2 most; health 67 mean
+  cut t 175 s: 197 walkers inside (0.70 of the cut's)
+  CPU: ground field 1.20 ms (once a game second), model and HUD 0.052 ms a frame
+  t 175 s: mould 21078, soldiers 32, bank 0, harvested 15455, shots 2623, killed 5236, took 94%, crystals left 0.443; squad at 197.1,136.0
+  squad: touching 0.1 mean, 1 most; health 66 mean
+  CPU: ground field 1.13 ms (once a game second), model and HUD 0.041 ms a frame
+  t 176 s: mould 21078, soldiers 32, bank 0, harvested 15455, shots 2636, killed 5241, took 94%, crystals left 0.442; squad at 197.4,136.3
+  squad: touching 0.3 mean, 3 most; health 65 mean
+  cut t 176 s: 209 walkers inside (0.75 of the cut's)
+  CPU: ground field 1.15 ms (once a game second), model and HUD 0.043 ms a frame
+  t 176 s: mould 21170, soldiers 31, bank 0, harvested 15455, shots 2648, killed 5260, took 94%, crystals left 0.442; squad at 194.7,137.0
+  squad: touching 0.1 mean, 2 most; health 67 mean
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.060 ms a frame
+  t 177 s: mould 21170, soldiers 31, bank 0, harvested 15455, shots 2659, killed 5273, took 94%, crystals left 0.442; squad at 194.9,137.3
+  squad: touching 0.2 mean, 3 most; health 66 mean
+  cut t 177 s: 207 walkers inside (0.74 of the cut's)
+  CPU: ground field 1.48 ms (once a game second), model and HUD 0.044 ms a frame
+  t 177 s: mould 21244, soldiers 31, bank 0, harvested 15455, shots 2677, killed 5291, took 94%, crystals left 0.442; squad at 194.9,137.3
+  squad: touching 0.3 mean, 2 most; health 65 mean
+  CPU: ground field 1.51 ms (once a game second), model and HUD 0.044 ms a frame
+  t 178 s: mould 21244, soldiers 31, bank 0, harvested 15455, shots 2689, killed 5305, took 94%, crystals left 0.442; squad at 195.2,137.7
+  squad: touching 0.3 mean, 2 most; health 65 mean
+  cut t 178 s: 225 walkers inside (0.80 of the cut's)
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.048 ms a frame
+  t 178 s: mould 21319, soldiers 31, bank 0, harvested 15455, shots 2708, killed 5324, took 94%, crystals left 0.442; squad at 195.2,137.7
+  squad: touching 0.1 mean, 1 most; health 64 mean
+  CPU: ground field 1.24 ms (once a game second), model and HUD 0.039 ms a frame
+  t 179 s: mould 21319, soldiers 31, bank 0, harvested 15455, shots 2717, killed 5336, took 94%, crystals left 0.442; squad at 195.4,138.0
+  squad: touching 0.3 mean, 2 most; health 63 mean
+  cut t 179 s: 231 walkers inside (0.82 of the cut's)
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.039 ms a frame
+  t 179 s: mould 21416, soldiers 31, bank 0, harvested 15455, shots 2735, killed 5349, took 94%, crystals left 0.442; squad at 195.4,138.0
+  squad: touching 0.1 mean, 1 most; health 63 mean
+  CPU: ground field 1.37 ms (once a game second), model and HUD 0.043 ms a frame
+  t 180 s: mould 21416, soldiers 31, bank 0, harvested 15455, shots 2742, killed 5360, took 94%, crystals left 0.442; squad at 195.6,138.3
+  squad: touching 0.2 mean, 1 most; health 62 mean
+  cut t 180 s: 241 walkers inside (0.86 of the cut's)
+  CPU: ground field 2.52 ms (once a game second), model and HUD 0.078 ms a frame
+  t 180 s: mould 21494, soldiers 31, bank 0, harvested 15455, shots 2762, killed 5376, took 94%, crystals left 0.441; squad at 195.6,138.3
+  squad: touching 0.1 mean, 1 most; health 61 mean

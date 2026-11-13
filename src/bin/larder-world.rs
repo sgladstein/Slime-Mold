@@ -357,10 +357,11 @@ fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'static st
     // or else the nearest crystal with food, at its own pace for 1.5 s (the
     // tell) and then twice it; the bite is unchanged. On the CPU race world
     // the scores are unchanged (smoke, 4 seeds x 3 hands); in the window
-    // (Fork seed 1, farm) the farm squad is down to 1 by 1:50 against 12,
-    // since bits the squad's own shots knock off now charge it: the rule's
-    // biggest effect, kept on for the owner's playtest (`panic=0` turns it
-    // off). The report's *A cut-off part panics* has the films.
+    // (Fork seed 1, farm) the squad has 30 soldiers at 2:30 against 33, as
+    // bits its own shots knock off charge it and are shot (#198). Before
+    // #198 soldiers could not shoot the bits on them and it fell to 1.
+    // `panic=0` turns it off. The report's *A cut-off part panics* has
+    // the films.
     const C: [(&str, &str); 5] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")];
     Some(match name {
         "a" => (5_000, &[]),
