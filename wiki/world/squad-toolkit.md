@@ -76,6 +76,9 @@ tier. Germ resistance 10 on the Swarmer and Sporer cancels it (4 seeds), 3
 halves it: a per-mould dial. Rounds now cast through `World::burst`, so they play in
 the `larder-world` window (`rounds=`, H; gas and germ wait for the GPU port). On Flats, blast and
 trap keep a soldier alive to 32 s where plain shots lose the squad by 24 s.
+Since 11-13 shots fly as bullets (`Rules::bullet_speed` 45 dish cells a
+second; 0 gives back the ray), and the flight cards pierce and split ride on
+every bullet; they are game state, so both engines play them alike.
 
 ## Owner's word
 
