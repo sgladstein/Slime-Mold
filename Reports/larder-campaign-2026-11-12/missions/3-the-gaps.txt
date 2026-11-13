@@ -11,7 +11,7 @@
 # to the cap but held the Rim 4:42-8:00 at best, never 10:00, and every hand that
 # did not wall held 2:12 at most. So: rations off, bite 0.5, hold 5:00.
 name The gaps
-says Keep the mould inside the Rim for 5:00
+says Wall the gaps: keep the mould inside the Rim for 5:00
 map rim
 tier sprawler
 verbs move harvest buy stance fire wall
