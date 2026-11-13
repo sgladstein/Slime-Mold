@@ -64,6 +64,10 @@ pub const PANIC_LEFT: f32 = 0.02;
 pub const PANIC_LEAN_MAX: u32 = 127;
 /// The piles a panicking walker looks over: the GPU's `MAX_PILES`.
 pub const PANIC_PILES: usize = 64;
+/// The slowest lean (`BigParams::panic_creep`): a leaning walker always
+/// moves, so `panics` stays true through the lean. The GPU reads the
+/// clamped value from `Params`.
+pub const PANIC_CREEP_MIN: f32 = 0.01;
 const CLAIM_BIRTH: u32 = 403;
 const DRAW_MIX: u32 = 113;
 const DRAW_FRUIT: u32 = 114;
@@ -543,6 +547,20 @@ pub struct BigParams {
     pub panic: f32,
     pub panic_r: f32,
     pub panic_lean: u32,
+    /// **The lean's pace** (`panic_creep`, times a walker's step, at least
+    /// `PANIC_CREEP_MIN`; 2026-11-13, the game designer's review of the
+    /// last-stand film): during `panic_lean` a cut-off walker creeps toward
+    /// its target at this share of its pace, then bolts at `panic`. Why: a
+    /// walker's straight-line pace is a dish cell a tick (15 a game second),
+    /// half again a soldier's 10, so a lean at its own pace was already a
+    /// charge a squad could not outrun, and at 24-34 cells the piece landed
+    /// within the lean (the film's tell was about a second). The designer
+    /// asked for "you saw it coming, and lost because you stayed", not "it
+    /// was over before you looked". At 0.5 (the default; 1 was #200's
+    /// lean) the last-stand film's piece pulls into a blob and slides for
+    /// about 3 s before it lands, against about 1.5 s; at 0.25 it barely
+    /// moved before it bolted, so the wind-up hardly showed.
+    pub panic_creep: f32,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -989,6 +1007,7 @@ impl BigParams {
             panic: 0.0,
             panic_r: 20.0,
             panic_lean: 45,
+            panic_creep: 0.5,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -1875,7 +1894,7 @@ impl BigDish {
         if age > lag + self.p.panic_lean.min(PANIC_LEAN_MAX) as u64 {
             self.p.panic
         } else if age > lag {
-            1.0
+            self.p.panic_creep.max(PANIC_CREEP_MIN)
         } else {
             0.0
         }
@@ -4349,6 +4368,14 @@ mod tests {
         let far = run(BigParams { panic_r: 0.5, ..wide }, true, Some(at), &nearest);
         eprintln!("unit out of reach, to a crystal: {:.1} -> {:.1}", far.0, far.1);
         assert!(far.1 < far.0 - 4.0, "with the unit out of reach it runs for a crystal");
+        // The lean's pace (`panic_creep`): with a lean longer than the 30
+        // ticks, walkers creep at a quarter of their pace for all of them,
+        // and close on the crystal, but less than at their own pace.
+        let leaning = BigParams { panic: 2.0, panic_lean: PANIC_LEAN_MAX, ..stale.clone() };
+        let own = run(BigParams { panic_creep: 1.0, ..leaning.clone() }, true, None, &nearest);
+        let creep = run(BigParams { panic_creep: 0.25, ..leaning }, true, None, &nearest);
+        eprintln!("leaning to a crystal: {:.1} -> {:.1} at its own pace, {:.1} -> {:.1} at a quarter", own.0, own.1, creep.0, creep.1);
+        assert!(creep.1 < creep.0 - 1.0 && creep.1 > own.1 + 2.0, "a creeping walker closes on its crystal, slower");
     }
 
     #[test]

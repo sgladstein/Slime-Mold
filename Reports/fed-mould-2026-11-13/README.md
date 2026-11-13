@@ -484,6 +484,46 @@ the four died, and the window's farm squad fell to 1 by 1:50 against 12.
   2:30 (18,623 walkers today, 18,143 scared). Each arm plays the same
   round in every scene up to its cut.
 
+**The wind-up creeps (`panic_creep`, 11-13, the game designer's review of
+the last stand).** Their note: four soldiers dead in 2 s is "faster than a
+player can react", so a cut made on purpose "can feel like a trap"; aim
+for "you saw it coming, and lost because you stayed". They offered a
+1-1.5 s wind-up or a charge at 1.5x. Measured first: a cut-off walker
+heading straight moves a dish cell a tick (15 a game second), a soldier 10
+(`Rules::speed`), so the lean at the walker's own pace was already half
+again a soldier's speed, and a 1.5x charge still could not be outrun. At
+24-34 cells the piece landed within the lean, which is why the tell read
+as about a second. So the lean got its own pace: `panic_creep` (times the
+walker's step, at least `PANIC_CREEP_MIN` 0.01; both engines; GPU
+`Params` word 488, claimed in ROADMAP; twins exact with 0.5 in both twin
+cases), **0.5 by default**.
+- **Last stand with the creep** (`s2-p.log`, `panic_creep=0.5`, same
+  staging): the piece pulls into a blob from about +4 s and slides at the
+  soldiers until it lands at about +7.5 s, against about +5.5 to +7 at its
+  own pace. Walkers in the ring at 0, +5, +6, +7, +8, +10, +20 s: 245,
+  257, 257, 214, 120, 26, 17; squad 32, 32, 32, 32, 31, 29, 28 (the four
+  die one by one from +8 to +12 s while shooting most of it). At 0.25
+  (`s3-p.log`) the piece barely moved before it bolted (205 walkers, shot
+  to 8 by +9 s, two soldiers lost), so the wind-up hardly showed: 0.5 is
+  the pick. Its round differs a little before the cut, as above, so its
+  piece is bigger (245 against 163).
+- **Charge scene with the creep** (`c9-p.log`): in that round the piece
+  inside the ring was a thinner tube (153 walkers) and the soldiers shot it
+  away as it crept (139, 87, 64, 45, 37, 16, 5 at +1 to +7 s), one soldier
+  lost. Not filmed for the page.
+- **Smoke** (`raw/smoke/panic2-creep05-cap300.txt`, as below with
+  `panic_creep` 0.5): idle -0.333 on 4 of 4, farm +0.120 (+0.119 at own
+  pace), strike +0.124 (+0.116); all 12 games to the cap.
+- **Uncut C at 3:00** (`raw/panic/creep/uncut-seed1.txt` to `-seed4.txt`):
+  49,993, 50,000, 49,884, 49,994 walkers and 15, 14, 13, 14 crystals eaten
+  from, against today's 49,995, 50,000, 49,949, 49,998 and 15, 13, 13, 15,
+  and the own-pace lean's 49,992, 50,000, 48,492, 49,922 and 14, 13, 12,
+  14. The creep takes back most of what the lean cost (seed 3 within
+  0.13%), since a far explorer that goes stale for a moment creeps rather
+  than runs.
+- Not tested: whether a squad that pulls back in time gets clear (a
+  soldier walks faster than the creep and slower than the bolt).
+
 **Counters (the designer's second point).** A charge: shoot it before it
 closes, with guns enough for its size (four soldiers shot a 112-walker
 piece down and lost one; two against it both died; four against a

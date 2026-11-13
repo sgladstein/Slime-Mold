@@ -126,8 +126,13 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   ... It should be more reckless", no stronger attack): a walker with no
   news of food for the lag heads straight for the nearest squad unit
   within `panic_r` (20 dish cells), else the nearest crystal with food,
-  at its own pace for `panic_lean` (1.5 s, the tell) and then at twice
-  it; it calms once it hears news. In the window four soldiers 34 cells
+  creeping at `panic_creep` (0.5) of its pace for `panic_lean` (1.5 s,
+  the tell) and then at twice it; it calms once it hears news. The creep
+  came from the game designer's review of the last stand: a walker
+  heading straight already moves 15 cells a second to a soldier's 10, so
+  a lean at its own pace was a charge; at half pace the piece bunches and
+  slides for about 3 s before it lands, against about 1.5 s, and uncut C
+  is back within 0.13% of today on 4 of 4 seeds. In the window four soldiers 34 cells
   from a cut piece were charged 5 s after the cut and shot it down,
   losing one; with none near, the piece pours into a crystal's lobe.
   Smoke scores unchanged; the window's farm squad has 30 soldiers at 2:30

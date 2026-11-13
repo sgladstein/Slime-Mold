@@ -341,8 +341,9 @@ Claimed: #183, #193; then 360 `wither` (f32), 364 `s_wither` and 732
 `wclock` (withering's lag, check interval and spread parity), the
 slime-enemy thread's withering PR #195 (11-13); then 460 `panic_r2` (u32)
 and 484 `panic` (f32), `wclock` bits 25-31 (the lean) and `Pile`'s spare
-word (`centre`), the slime-enemy thread's panic PR (11-13). Still spare:
-**188**, **228/232/236**, **488/492**, **828** (seven).
+word (`centre`), the slime-enemy thread's panic PR (11-13); then 488
+`panic_creep` (f32, the lean's pace), the slime-enemy thread's creep PR
+(11-13). Still spare: **188**, **228/232/236**, **492**, **828** (six).
 
 ## Keeping this page true
 
