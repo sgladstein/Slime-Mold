@@ -128,34 +128,53 @@ use winit::window::{Window, WindowId};
 /// The designed maps (`Reports/larder-maps-2026-11-11.md`, v2), N's order.
 const MAPS: [&str; 5] = ["fork", "nest", "rim", "flats", "passes"];
 
-// Command ids (the HUD echoes them back).
-const ATTACK: u32 = 1;
-const STOP: u32 = 2;
-const HARVEST: u32 = 3;
-const BURN: u32 = 4;
-const HOLD_FIRE: u32 = 5;
-const DEFEND: u32 = 6;
-const FREE: u32 = 7;
-const BUY: u32 = 8;
-const WALL: u32 = 9;
-const RALLY: u32 = 10;
-// The build page (Q): turret, lure, pump, outpost, the lures' switch, back.
-const BUILD_PAGE: u32 = 11;
-const TURRET: u32 = 12;
-const LURE: u32 = 13;
-const PUMP: u32 = 14;
-const OUTPOST: u32 = 15;
-const LURES: u32 = 16;
-const BACK: u32 = 17;
-// The tools page (E, 2026-11-12): the squad toolkit (`mould::kit`), each
-// tool a burst the GPU world applies (`World::burst`).
-const TOOLS_PAGE: u32 = 18;
-const T_BLAST: u32 = 19;
-const T_CORD: u32 = 20;
-const T_MINE: u32 = 21;
-const T_GERM: u32 = 22;
-const T_GAS: u32 = 23;
-const T_BACK: u32 = 24;
+// Command ids (the HUD echoes them back). One table holds every id, so two
+// threads adding a button can't both take the same number without the
+// `command_ids_are_one_registry` test failing (technical lead, 11-13: the
+// siren landed on 27 because SOW and ROAD had taken 25 and 26 by hand).
+// Append new ids at the end; the test wants them to run 1, 2, 3, ...
+macro_rules! commands {
+    ($($name:ident = $id:expr),* $(,)?) => {
+        $(const $name: u32 = $id;)*
+        #[cfg(test)]
+        const COMMANDS: &[(&str, u32)] = &[$((stringify!($name), $name)),*];
+    };
+}
+commands! {
+    ATTACK = 1,
+    STOP = 2,
+    HARVEST = 3,
+    BURN = 4,
+    HOLD_FIRE = 5,
+    DEFEND = 6,
+    FREE = 7,
+    BUY = 8,
+    WALL = 9,
+    RALLY = 10,
+    // The build page (Q): turret, lure, pump, outpost, the lures' switch, back.
+    BUILD_PAGE = 11,
+    TURRET = 12,
+    LURE = 13,
+    PUMP = 14,
+    OUTPOST = 15,
+    LURES = 16,
+    BACK = 17,
+    // The tools page (E, 2026-11-12): the squad toolkit (`mould::kit`), each
+    // tool a burst the GPU world applies (`World::burst`).
+    TOOLS_PAGE = 18,
+    T_BLAST = 19,
+    T_CORD = 20,
+    T_MINE = 21,
+    T_GERM = 22,
+    T_GAS = 23,
+    T_BACK = 24,
+    // The player's own mould (`own=1`): the selected soldiers sow it (Feed as
+    // they walk) or lay its road.
+    SOW = 25,
+    ROAD = 26,
+    // The build page's siren (#160).
+    SIREN = 27,
+}
 
 /// Between two steps: every living soldier at the larder takes one tool
 /// (`KitRules::carry_each`), a selected one as many as it may hold
@@ -171,11 +190,6 @@ fn kit_between(kit: &mut Kit, g: &mut Game<GpuWorld>, selected: &[usize]) {
     }
     kit.frame(g);
 }
-// The player's own mould (`own=1`): the selected soldiers sow it (Feed as
-// they walk) or lay its road.
-const SOW: u32 = 25;
-const ROAD: u32 = 26;
-const SIREN: u32 = 27;
 
 /// The building a build-page command places.
 fn build_kind(id: u32) -> Option<Kind> {
@@ -2778,6 +2792,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn command_ids_are_one_registry() {
+        // Unique and 1..=n, so a clash or a gap fails here, not in play.
+        for (i, &(name, id)) in COMMANDS.iter().enumerate() {
+            assert_eq!(id as usize, i + 1, "{name} is {id}; command ids run 1, 2, 3, ... in the table");
+        }
+        // Every building the build page places has exactly one command (the
+        // wall is drawn with WALL, a two-click line, not a build_kind).
+        use Kind as K;
+        for kind in [K::Turret, K::Lure, K::Pump, K::Outpost, K::Siren] {
+            let ids: Vec<&str> = COMMANDS.iter().filter(|&&(_, id)| build_kind(id) == Some(kind)).map(|&(n, _)| n).collect();
+            assert_eq!(ids.len(), 1, "{} has commands {ids:?}", kind.name());
+        }
+    }
+
     use super::*;
 
     /// Every shape on the shapes page (`shape=`) is engine keys the race
