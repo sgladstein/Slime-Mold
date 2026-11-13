@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12
+updated: 2026-11-13
 sources:
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
@@ -73,7 +73,8 @@ this toolkit's burst list, not a new system. First census
 germ, on its own or as plague, beats no round 8/0 on plain, Swarmer and Sporer
 and the Sleeper ignores every round, so the best loadout does not yet vary by
 tier. Germ resistance 10 on the Swarmer and Sporer cancels it (4 seeds), 3
-halves it: a per-mould dial.
+halves it: a per-mould dial. Rounds now cast through `World::burst`, so they play in
+the `larder-world` window (`rounds=`, H; gas and germ wait for the GPU port).
 
 ## Owner's word
 
