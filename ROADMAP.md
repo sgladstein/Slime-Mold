@@ -308,7 +308,7 @@ sums and counts in one buffer); the crater (PR 2) holds binding 47 (two
 blocks: the crater countdown, and a second block kept for the tiers' scar)
 and the row at `CRATER_AT` 864; the one body thread's lone step holds
 `LONE_AT` 880 (so 896 bytes; no binding, it reads `occ`), and the tiers'
-scar row goes after it. Binding 48 is food's news (`wither`, the
+scar row goes after it. Binding 48 is food's news (`wither`, #195, the
 slime-enemy thread, 11-13: a word a walker, then three blocks of cells);
 the next free binding is 49. New
 passes append after the last; whoever merges second renumbers. The GPU
@@ -333,7 +333,7 @@ same week.
 
 Claimed: #183, #193; then 360 `wither` (f32), 364 `s_wither` and 732
 `wclock` (withering's lag, check interval and spread parity), the
-slime-enemy thread's withering PR (11-13).
+slime-enemy thread's withering PR #195 (11-13).
 
 ## Keeping this page true
 
