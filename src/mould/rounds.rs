@@ -29,21 +29,23 @@
 //! plain. The fire rate is untouched (shots stay free, owner 11-12): the
 //! budget is the recharge and the four slots, not food per shot.
 //!
-//! **Bursts.** A cast compiles to a list of `Burst`s (centre, radius,
-//! kill, alarm, crater, gas, germ), the shape of the toolkit's planned
-//! `squad::Frame` burst list (ROADMAP, *Area effects*). Until that list is
-//! built this module applies them on the CPU world with the same
-//! `BigDish` calls `Kit` makes; then they move onto the frame and the GPU
-//! gets rounds for free. CPU world only (`Game<BigDish>`), soldiers only
-//! (turret rounds later).
+//! **Bursts.** A cast compiles to a list of `squad::Burst`s (centre,
+//! radius, kill, alarm, crater, gas, germ), applied by `World::burst`, so
+//! rounds run on either world. Until 2026-11-12 evening this module had its
+//! own `Burst` and a CPU-only `apply` with the same fields (agreed with the
+//! squad toolkit thread so the switch was an import). On a world without
+//! gas or germ (`World::has_gas`, `has_germ`; the GPU world until the
+//! toolkit ports them) those payloads are not cast and cost nothing,
+//! counted in `Rounds::unsupported`. Soldiers only (turret rounds later).
 //!
 //! **Caps** (technical lead): at most `PENDING_MAX` lodged casts at once
 //! (a new one past the cap is dropped and counted in `Rounds::dropped`),
 //! and at most `scatter_n` bursts a cast, so one frame casts at most a
 //! burst list of soldiers x `scatter_n`.
-use super::big::BigDish;
 use super::kit::KitRules;
 use super::larder_world::{Game, World};
+pub use super::squad::Burst;
+use super::squad::BurstRules;
 
 /// Most lodged casts (Delay and Thick) waiting at once.
 pub const PENDING_MAX: usize = 64;
@@ -168,30 +170,6 @@ impl Default for RoundRules {
     }
 }
 
-/// One area effect, in the fields of the toolkit's planned
-/// `squad::Burst` (agreed with the squad toolkit thread, 11-12 16:15Z, so
-/// the switch to it is an import): centre and radii in dish cells, times
-/// in fine steps.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Burst {
-    pub at: (f32, f32),
-    /// The kill and clear radius (0 with `kill`: a shock only).
-    pub r: f32,
-    pub kill: bool,
-    /// Alarm laid on the agar within `alarm_r` (0: none).
-    pub alarm: f32,
-    pub alarm_r: f32,
-    /// Fine steps of crater within `crater_r` (0: none). `crater_r` is
-    /// beside the planned fields because a kit blast's crater (7) is wider
-    /// than its kill (6).
-    pub crater: u16,
-    pub crater_r: f32,
-    /// Fine steps of sleep gas within `r` (0: none).
-    pub gas: u16,
-    /// Infects the walkers within `r`.
-    pub germ: bool,
-}
-
 /// A payload with what its modifiers and trigger made of it.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Cast {
@@ -262,42 +240,29 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
         .collect()
 }
 
-/// Applies one burst on the CPU world, with the calls `Kit::use_tool`
-/// makes for the same tool, so a blast burst and a kit blast leave the
-/// same dish (`a_blast_burst_is_a_kit_blast`). Returns the walkers killed.
-pub fn apply(d: &mut BigDish, b: &Burst, tps: u32, k: &KitRules) -> usize {
-    let s = d.p.scale as f32;
-    let mut killed = 0;
-    if b.kill {
-        // As `Kit::bang`: the alarm field on (the tools' alarm_keep), then
-        // the strike, then the crater.
-        if b.alarm > 0.0 {
-            d.enable_alarm(k.alarm_keep);
-        }
-        killed = d.strike(b.at.0, b.at.1, b.r, b.alarm, b.alarm_r);
-        if b.crater > 0 {
-            d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);
-        }
+/// The bursts' shared settings from the toolkit's rules, as `Kit` makes
+/// them; `fine` fine steps a game second.
+pub fn burst_rules(k: &KitRules, fine: f32) -> BurstRules {
+    let sick_steps = (k.sick_secs * fine).round().max(1.0) as u16;
+    BurstRules {
+        alarm_keep: k.alarm_keep,
+        gas_death: k.gas_death,
+        sick_steps,
+        immune_steps: (k.immune_secs * fine).round().min(u16::MAX as f32 - sick_steps as f32) as u16,
+        sick_upkeep: k.sick_upkeep,
+        sick_catch: k.sick_catch,
+        sick_deposit: k.sick_deposit,
+        sick_keep: k.sick_keep,
     }
-    if b.gas > 0 {
-        d.enable_alarm(k.alarm_keep);
-        d.p.gas_death = k.gas_death;
-        d.gas(b.at.0 * s, b.at.1 * s, b.r * s, b.gas);
+}
+
+/// Whether a world can cast this payload.
+fn castable<W: World>(w: &W, p: Card) -> bool {
+    match p {
+        Card::Gas => w.has_gas(),
+        Card::Germ => w.has_germ(),
+        _ => true,
     }
-    if b.germ {
-        if d.sick.is_empty() {
-            let fine = tps as f32 * d.p.substeps as f32;
-            d.p.sick_steps = (k.sick_secs * fine).round().max(1.0) as u16;
-            d.p.immune_steps = (k.immune_secs * fine).round().min(u16::MAX as f32 - d.p.sick_steps as f32) as u16;
-            d.p.sick_upkeep = k.sick_upkeep;
-            d.p.sick_catch = k.sick_catch;
-            d.p.sick_deposit = k.sick_deposit;
-            d.p.sick_keep = k.sick_keep;
-            d.enable_contagion();
-        }
-        d.infect(b.at.0, b.at.1, b.r);
-    }
-    killed
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -342,6 +307,8 @@ pub struct Rounds {
     pub spent: f32,
     pub dropped: u32,
     pub broke: u32,
+    /// Casts skipped because this world has no gas or germ yet.
+    pub unsupported: u32,
     pub pops: Vec<Pop>,
 }
 
@@ -368,7 +335,7 @@ impl Rounds {
     /// step casts its gun's next cast, and lodged casts that are due go
     /// off. A shot is a soldier's when it left from where that soldier
     /// stands (turret shots leave from their building).
-    pub fn after_step(&mut self, g: &mut Game<BigDish>) {
+    pub fn after_step<W: World>(&mut self, g: &mut Game<W>) {
         let t = g.world.ticks();
         let tps = g.rules.tps;
         if !self.casts.is_empty() {
@@ -382,22 +349,25 @@ impl Rounds {
                     continue;
                 }
                 let c = self.casts[self.guns[k].next];
-                if g.bank < c.price {
+                if !castable(&g.world, c.payload) {
+                    self.unsupported += 1;
+                } else if g.bank < c.price {
                     self.broke += 1;
                     continue;
-                }
-                g.bank -= c.price;
-                g.spent += c.price;
-                self.spent += c.price;
-                self.cast[slot(c.payload)] += 1;
-                match c.trigger {
-                    None => self.fire(g, &c, hit),
-                    Some(tr) => {
-                        if self.pending.len() >= PENDING_MAX {
-                            self.dropped += 1;
-                        } else {
-                            let secs = if tr == Card::Delay { self.rules.delay_secs } else { self.rules.thick_secs };
-                            self.pending.push(Pending { cast: c, at: hit, due: t + (secs * tps as f32).round() as u64 });
+                } else {
+                    g.bank -= c.price;
+                    g.spent += c.price;
+                    self.spent += c.price;
+                    self.cast[slot(c.payload)] += 1;
+                    match c.trigger {
+                        None => self.fire(g, &c, hit),
+                        Some(tr) => {
+                            if self.pending.len() >= PENDING_MAX {
+                                self.dropped += 1;
+                            } else {
+                                let secs = if tr == Card::Delay { self.rules.delay_secs } else { self.rules.thick_secs };
+                                self.pending.push(Pending { cast: c, at: hit, due: t + (secs * tps as f32).round() as u64 });
+                            }
                         }
                     }
                 }
@@ -412,26 +382,14 @@ impl Rounds {
         if self.pending.is_empty() {
             return;
         }
-        let s = g.world.p.scale as f32;
-        let rr = self.rules.thick_r * s;
-        let occ = g.world.occupancy().to_vec();
-        let (w, h) = (g.world.w, g.world.h);
-        let near = |p: (f32, f32)| {
-            let n = rr.ceil() as i64;
-            let mut c = 0u32;
-            for dy in -n..=n {
-                for dx in -n..=n {
-                    let (x, y) = (p.0 as i64 + dx, p.1 as i64 + dy);
-                    if ((dx * dx + dy * dy) as f32) <= rr * rr && x >= 0 && y >= 0 && (x as usize) < w && (y as usize) < h {
-                        c += occ[y as usize * w + x as usize] as u32;
-                    }
-                }
-            }
-            c
-        };
+        // Thick: walkers within `thick_r` dish cells, by the world's own
+        // count (exact on the CPU, the frame's mould grid on the GPU; until
+        // 2026-11-12 evening a scan of the CPU occupancy here).
+        let rr = self.rules.thick_r * g.world.scale();
+        let near = |w: &W, p: (f32, f32)| w.walkers_in(p, rr);
         let mut go = Vec::new();
         self.pending.retain(|p| {
-            let fire = t >= p.due || (p.cast.trigger == Some(Card::Thick) && near(p.at) >= self.rules.thick_n);
+            let fire = t >= p.due || (p.cast.trigger == Some(Card::Thick) && near(&g.world, p.at) >= self.rules.thick_n);
             if fire {
                 go.push(*p);
             }
@@ -442,13 +400,13 @@ impl Rounds {
         }
     }
 
-    fn fire(&mut self, g: &mut Game<BigDish>, c: &Cast, at: (f32, f32)) {
-        let s = g.world.p.scale as f32;
-        let tps = g.rules.tps;
+    fn fire<W: World>(&mut self, g: &mut Game<W>, c: &Cast, at: (f32, f32)) {
+        let s = g.world.scale();
         let t = g.world.ticks();
-        let fine = tps as f32 * g.world.p.substeps as f32;
+        let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
+        let k = burst_rules(&self.rules.kit, fine);
         for b in bursts(c, at, &self.rules, s, fine) {
-            let killed = apply(&mut g.world, &b, tps, &self.rules.kit);
+            let killed = g.world.burst(&b, &k).killed as usize;
             self.killed += killed;
             g.killed += killed as u32;
             self.pops.push(Pop { burst: b, payload: c.payload, tick: t, killed });
@@ -487,6 +445,7 @@ mod tests {
         assert!(loud[0].alarm > 0.0);
     }
 
+    use crate::mould::big::BigDish;
     use crate::mould::kit::{Kit, Tool};
     use crate::mould::larder_world::{race_params, Rules};
 
@@ -514,7 +473,8 @@ mod tests {
         let r = RoundRules { kit: kit.rules, ..RoundRules::default() };
         let fine = b.rules.tps as f32 * b.world.p.substeps as f32;
         let c = casts(&[Card::Blast], &r)[0];
-        let killed: usize = bursts(&c, p, &r, b.world.p.scale as f32, fine).iter().map(|x| apply(&mut b.world, x, b.rules.tps, &r.kit)).sum();
+        let k = burst_rules(&r.kit, fine);
+        let killed: usize = bursts(&c, p, &r, b.world.p.scale as f32, fine).iter().map(|x| b.world.burst(x, &k).killed as usize).sum();
         assert_eq!(killed, kit.killed[0]);
         // The larder smells of the bank, so both pay the price.
         b.bank -= c.price;
