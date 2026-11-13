@@ -240,6 +240,12 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "energy_flow" => p.energy_flow = f()?,
         // Lossy sharing: food fades as it travels (both engines since 11-13).
         "flow_loss" => p.flow_loss = f()?,
+        // A part cut off from its food withers (`BigParams::wither` and its
+        // clock; both engines since 11-13).
+        "wither" => p.wither = f()?,
+        "wither_lag" => p.wither_lag = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
+        "wither_every" => p.wither_every = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.max(1),
+        "wither_reach" => p.wither_reach = v.parse::<u8>().map_err(|e| format!("{key}={v}: {e}"))?.max(1),
         "hunger_scent" => p.hunger_scent = f()?,
         // Walker slots (a census plays the window's dense shapes on the CPU:
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).

@@ -54,6 +54,8 @@ pub const DRAW_KEEP: u32 = 111;
 pub const DRAW_STARVE: u32 = 401;
 pub const DRAW_BIRTH: u32 = 402;
 pub const CLAIM_BIRTH: u32 = 403;
+/// A cut-off walker's withering (big.rs `DRAW_WITHER`).
+pub const DRAW_WITHER: u32 = 404;
 
 /// The life cycle's (big.rs `DRAW_FRUIT` and on).
 pub const DRAW_FRUIT: u32 = 114;
@@ -360,6 +362,16 @@ pub struct Settings {
     /// and a part cut off from every crystal starves in about half a
     /// minute instead of staying whole for minutes. 0 off.
     pub flow_loss: f32,
+    /// A part cut off from its food withers (2026-11-13,
+    /// `BigParams::wither` and its clock, `wither_every`, `wither_lag`,
+    /// `wither_reach`): news of food travels through the body and each
+    /// walker carries the last it heard; one that has heard none for
+    /// `wither_lag` steps dies with chance `wither` at each check. 0 off;
+    /// needs growth.
+    pub wither: f32,
+    pub wither_every: u32,
+    pub wither_lag: u32,
+    pub wither_reach: u8,
     /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
     /// radius `body_r`): a walker with few others round it moves slower.
     pub lone_step: f32,
@@ -496,6 +508,10 @@ impl Settings {
             hunger_scent: t.hunger_scent,
             hunger_at: t.hunger_at,
             flow_loss: t.flow_loss,
+            wither: t.wither,
+            wither_every: t.wither_every,
+            wither_lag: t.wither_lag,
+            wither_reach: t.wither_reach,
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
@@ -734,6 +750,10 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "hunger_scent" => s.hunger_scent = f()?,
         "hunger_at" => s.hunger_at = f()?,
         "flow_loss" => s.flow_loss = f()?,
+        "wither" => s.wither = f()?,
+        "wither_every" => s.wither_every = int()?.clamp(1, 255),
+        "wither_lag" => s.wither_lag = int()?.min(0xFFFF),
+        "wither_reach" => s.wither_reach = int()?.clamp(1, 255) as u8,
         "lone_step" => s.lone_step = f()?,
         "lone_floor" => s.lone_floor = f()?,
         "lone_r" | "body_r" => s.lone_r = f()? as u8,
@@ -859,6 +879,10 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         hunger_scent: s.hunger_scent,
         hunger_at: s.hunger_at,
         flow_loss: s.flow_loss,
+        wither: s.wither,
+        wither_every: s.wither_every,
+        wither_lag: s.wither_lag,
+        wither_reach: s.wither_reach,
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,
@@ -907,7 +931,7 @@ pub struct Shared {
     pub plain: Vec<wgpu::ComputePipeline>,
 }
 
-pub const BINDINGS: u32 = 48;
+pub const BINDINGS: u32 = 49;
 /// The most shot hits a frame (`Engine::set_hits`).
 pub const MAX_HITS: usize = 256;
 pub const SENSE: usize = 0;
@@ -972,9 +996,18 @@ pub const HARVEST1: usize = 39;
 pub const TEND: usize = 40;
 pub const OWNCLEAR: usize = 41;
 pub const OWNCOUNT: usize = 42;
+/// A part cut off from its food withers (`Settings::wither`, binding 48):
+/// each walker's news into its cell (`ngather`), spread through the body
+/// `wither_reach` times (`nspread` from the gathered block, then `nab` and
+/// `nba` turn about), and each walker takes its cell's (`nhear`).
+pub const NGATHER: usize = 43;
+pub const NSPREAD: usize = 44;
+pub const NAB: usize = 45;
+pub const NBA: usize = 46;
+pub const NHEAR: usize = 47;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 43] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount",
+pub const PASSES: [&str; 48] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear",
 ];
 
 impl Shared {
@@ -1061,6 +1094,13 @@ pub struct Engine {
     /// CPU clears them, since a cell its winner holds may still take a fed
     /// walker's child.
     pub fed_packs: bool,
+    /// Food's news (binding 48, `Settings::wither`): the step each slot
+    /// last heard of food, then three blocks of cells (gathered, and the
+    /// spread's two turns). `withers` while its passes run (growth and
+    /// `wither` on); `reach` its spread's passes.
+    pub news: wgpu::Buffer,
+    pub withers: bool,
+    pub reach: u32,
     /// The damage memory (binding 47, the squad toolkit's layout): the
     /// crater countdown a cell in fine steps (whole numbers in f32; the
     /// CPU's `BigDish::scorch`), then the tiers thread's scar, unused so
@@ -1305,11 +1345,12 @@ impl Engine {
         let look = zeros("look", cells as usize * 4);
         let body = zeros("body", 2 * cells as usize * 4);
         let crater = zeros("crater", 2 * cells as usize * 4);
+        let news = buf("news", &u32_bytes(&news_words(&d, cells as usize)), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
                 &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
-                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look, &body, &crater,
+                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look, &body, &crater, &news,
             ];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
@@ -1344,6 +1385,9 @@ impl Engine {
             body,
             energy_flows: false,
             fed_packs: false,
+            news,
+            withers: false,
+            reach: 1,
             crater,
             crater_steps: 0,
             scorched: false,
@@ -1495,6 +1539,8 @@ impl Engine {
         self.ground_world = ground_bits(d);
         assert_eq!(d.kind.is_empty(), self.kinds == 1, "a dish with this engine's mix");
         self.queue.write_buffer(&self.spec, 0, &u32_bytes(&spec_words(d)));
+        self.queue.write_buffer(&self.news, 0, &u32_bytes(&news_words(d, self.cells as usize)));
+        self.withers = self.grows && d.p.wither > 0.0;
         self.done = d.steps;
         self.dish = d.clone();
         self.dropped.clear();
@@ -1562,7 +1608,11 @@ impl Engine {
         let upkeep = if self.grows { s.upkeep.max(f32::MIN_POSITIVE) } else { 0.0 };
         b.extend(f32_bytes(&[upkeep, s.birth_energy, s.birth_cost, s.starve]));
         let mask = self.n.max(2).next_power_of_two() - 1;
-        b.extend(u32_bytes(&[stream(seed, DRAW_STARVE), stream(seed, DRAW_BIRTH), stream(seed, CLAIM_BIRTH), mask, 0, 0]));
+        b.extend(u32_bytes(&[stream(seed, DRAW_STARVE), stream(seed, DRAW_BIRTH), stream(seed, CLAIM_BIRTH), mask]));
+        // Withering's chance and draw borrow the growth row's two spare
+        // words (360, 364; the slime-enemy thread, 2026-11-13).
+        b.extend(f32_bytes(&[s.wither]));
+        b.extend(u32_bytes(&[stream(seed, DRAW_WITHER)]));
         // The Larder World: what the dish was made with (crystals, terrain,
         // full charge and health), what has been built (walls), and the
         // rates as set now.
@@ -1622,7 +1672,7 @@ impl Engine {
             self.alarmed = true;
         }
         b.extend(u32_bytes(&[self.cycles as u32, self.alarmed as u32, stream(seed, DRAW_FRUIT), stream(seed, DRAW_SLEEP)]));
-        b.extend(u32_bytes(&[stream(seed, CLAIM_LAND), stream(seed, DRAW_SPORE_H), s.spore_steps as u32, s.spore_rest as u32, s.wake_steps as u32, s.sleep_rest as u32, stream(seed, DRAW_SLEEP_DIE), 0]));
+        b.extend(u32_bytes(&[stream(seed, CLAIM_LAND), stream(seed, DRAW_SPORE_H), s.spore_steps as u32, s.spore_rest as u32, s.wake_steps as u32, s.sleep_rest as u32, stream(seed, DRAW_SLEEP_DIE), wither_clock(s)]));
         b.extend(f32_bytes(&[s.spore_rate, s.spore_scent, s.spore_alarm, s.spore_burst, s.step * s.spore_speed, s.spore_reach, s.spore_deposit, s.spore_land]));
         b.extend(f32_bytes(&[s.sleep_rate, s.sleep_deposit, s.wake_scent, s.wake_alarm, s.alarm_keep, s.alarm_weight, s.alarm_relay, s.sleep_death]));
         assert_eq!(b.len(), STRIKE_AT, "Params rows before the strike row moved");
@@ -1641,6 +1691,17 @@ impl Engine {
         b.extend(u32_bytes(&[s.lone_r as u32, s.fed_crowd as u32]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
+        // Switching withering on starts every walker as if it heard of food
+        // now, as the CPU's first `hear_food` does: a mould is not cut off
+        // at its first step.
+        let withers = self.grows && s.wither > 0.0;
+        if withers && !self.withers {
+            let mut words = vec![self.done as u32 + 1; self.n as usize];
+            words.resize(self.n as usize + 3 * self.cells as usize, 0);
+            self.queue.write_buffer(&self.news, 0, &u32_bytes(&words));
+        }
+        self.withers = withers;
+        self.reach = s.wither_reach.max(1) as u32;
         self.flows = s.crystal_flow > 0.0 || s.crystal_regrow > 0.0;
         assert_eq!(b.len(), PARAMS_BYTES, "Params is not PARAMS_BYTES long");
         self.converts = s.convert > 0.0 && self.nsp > 0;
@@ -1827,6 +1888,17 @@ impl Engine {
                 tick.extend([(PILESUM, self.npiles), (FLOW, pc)]);
             }
             tick.push((PILESUM, self.npiles));
+        }
+        // Food's news, as the CPU's `hear_food` after `eat_crystals` and
+        // before `live_and_die`: gathered, spread `reach` times (the first
+        // from the gathered block, then the two others in turn; `nhear`
+        // reads the last written and clears the gathered block).
+        if self.withers {
+            tick.extend([(NGATHER, n), (NSPREAD, cells)]);
+            for r in 1..self.reach {
+                tick.push((if r % 2 == 1 { NAB } else { NBA }, cells));
+            }
+            tick.push((NHEAR, n));
         }
         // One body's flow, as the CPU's `flow_energy` after `eat_crystals`
         // and before `live_and_die` (`life` clears its sums).
@@ -2205,6 +2277,25 @@ pub fn spec_words(d: &BigDish) -> Vec<u32> {
             d.spec.get(k).map_or(0, |&c| c as u32) | d.kind.get(k).map_or(0, |&c| (c as u32) << 8) | d.life.get(k).map_or(0, |&c| (c as u32) << 9) | d.life_t.get(k).map_or(0, |&c| (c as u32) << 16)
         })
         .collect()
+}
+
+/// Food's news a CPU dish starts the GPU's with (binding 48): each slot's
+/// step it last heard of food (`BigDish::news`), or the next step for all
+/// before its first `hear_food`, as the CPU starts them; then the three
+/// blocks of cells, clear.
+pub fn news_words(d: &BigDish, cells: usize) -> Vec<u32> {
+    let mut words: Vec<u32> = if d.news.len() == d.walkers.len() { d.news.iter().map(|&t| t as u32).collect() } else { vec![d.steps as u32 + 1; d.walkers.len()] };
+    words.resize(d.walkers.len() + 3 * cells, 0);
+    words
+}
+
+/// Withering's clock in one word (the life-cycle row's spare word 732,
+/// borrowed by the slime-enemy thread, 2026-11-13): `wither_lag` in the
+/// low 16 bits, `wither_every` in the next 8, and whether the spread ends
+/// in its second block (`wither_reach` even) in bit 24.
+pub fn wither_clock(s: &Settings) -> u32 {
+    let reach = s.wither_reach.max(1) as u32;
+    s.wither_lag.min(0xFFFF) | (s.wither_every.clamp(1, 255) << 16) | ((reach.is_multiple_of(2) as u32) << 24)
 }
 
 pub fn energies(d: &BigDish) -> Vec<f32> {

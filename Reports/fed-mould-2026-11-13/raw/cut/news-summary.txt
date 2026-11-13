@@ -1,0 +1,24 @@
+news-c-shared cuts 12 tick ms 19.91
+  alive share 5s 1.00 10s 1.00 15s 1.00 20s 1.00 30s 1.00 45s 0.93 60s 0.84 90s 0.83 120s 0.83
+  max 5 s drop: mean 0.09 max 0.57
+  grown s1:49995/15 s2:50000/13 s3:49949/13 s4:49998/15
+news-n01 cuts 12 tick ms 28.84
+  alive share 5s 1.00 10s 0.90 15s 0.82 20s 0.74 30s 0.61 45s 0.41 60s 0.28 90s 0.15 120s 0.08
+  max 5 s drop: mean 0.14 max 0.34
+  grown s1:49995/15 s2:50000/13 s3:49949/13 s4:49998/15
+  vs news-c-shared: smaller 0 bigger 0, p 1.000; change +0.0 +0.0 +0.0 +0.0%
+news-n02 cuts 12 tick ms 24.64
+  alive share 5s 1.00 10s 0.81 15s 0.66 20s 0.54 30s 0.36 45s 0.18 60s 0.09 90s 0.03 120s 0.01
+  max 5 s drop: mean 0.19 max 0.21
+  grown s1:49995/15 s2:50000/13 s3:49949/13 s4:49998/15
+  vs news-c-shared: smaller 0 bigger 0, p 1.000; change +0.0 +0.0 +0.0 +0.0%
+news-n03 cuts 12 tick ms 25.33
+  alive share 5s 1.00 10s 0.73 15s 0.54 20s 0.40 30s 0.22 45s 0.08 60s 0.03 90s 0.00 120s 0.00
+  max 5 s drop: mean 0.27 max 0.29
+  grown s1:49995/15 s2:50000/13 s3:49949/13 s4:49998/15
+  vs news-c-shared: smaller 0 bigger 0, p 1.000; change +0.0 +0.0 +0.0 +0.0%
+news-loss05 cuts 12 tick ms 22.99
+  alive share 5s 0.99 10s 0.97 15s 0.92 20s 0.86 30s 0.65 45s 0.28 60s 0.21 90s 0.00 120s 0.00
+  max 5 s drop: mean 0.62 max 0.77
+  grown s1:38638/13 s2:39549/13 s3:37001/12 s4:39115/14
+  vs news-c-shared: smaller 4 bigger 0, p 0.125; change -22.7 -20.9 -25.9 -21.8%

@@ -106,8 +106,16 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   together (held ring cuts: 10 of 12 whole at 2:00 on the CPU; +75 s in
   the window). `BigParams::flow_loss` 0.05 (food fades as it travels; on
   the GPU too since 11-13, `eloss`) kills it in 35-50 s, still at once,
-  and leaves C about 30% smaller; 0.2 shrinks C to a fifth. Off; a blind
-  A/B awaits the owner ([fed mould, *Cutting it off*](../../Reports/fed-mould-2026-11-13/README.md)).
+  and leaves C about 30% smaller; 0.2 shrinks C to a fifth.
+  **`BigParams::wither`** (11-13, both engines, off; 0.02 the lead) makes
+  a cut-off part thin steadily instead: news of food travels through the
+  body two cells a step and each walker carries the last it heard; one
+  with none for 5 s dies with chance 0.02 twice a second. A held ring cut
+  leaves 81% of the piece at 10 s, 54% at 20 s and 9% at 60 s (never more
+  than 21% gone in 5 s), and uncut C is the same to the walker on 4 of 4
+  seeds. Withering on food income (C fell to 15-29k) and news kept only in
+  cells (C 2-16% smaller) were rejected. A blind A/B of the three awaits
+  the owner ([fed mould, *A cut-off part withers*](../../Reports/fed-mould-2026-11-13/README.md)).
   The one-body page's 25,000-walker films ran with one walker a cell off
   (corrected 11-12 17:10Z); the 5,000-walker game and the CPU numbers here
   are unaffected ([slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)).

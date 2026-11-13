@@ -3,10 +3,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
 <style>
-/* Blind A/B (2026-11-13, the slime-enemy thread): shape C on Fork, seed 1,
-   farm hand, a held ring cut at 2:30 round a stretch of tube with no
-   crystal, under two food rules. The key is in the report's README, not
-   on this page. Colours follow the world: mould amber, crystal cyan. */
+/* Blind A/B/C (2026-11-13, the slime-enemy thread; second version of this
+   page): shape C on Fork, seed 1, farm hand, a held ring cut at 2:30 round
+   a stretch of tube with no crystal, under three food rules, all filmed on
+   one build. The key is in the report's README, not on this page. Colours
+   follow the world: mould amber, crystal cyan. */
 :root {
   --bg: #f3f5f6; --fg: #182024; --muted: #56646b; --line: #d5dde0;
   --panel: #ffffff; --amber: #a86a12; --cyan: #127a93;
@@ -21,19 +22,19 @@
   --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; color-scheme: dark }
 body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
-main { max-width: 1080px; margin: 0 auto; display: grid; gap: 34px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 34px; }
 h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
 h1 { font-size: 1.9rem; }
 h2 { font-size: 1.2rem; }
 p { margin: 0; max-width: 68ch; }
 .lede { color: var(--muted); }
 header, section { display: grid; gap: 12px; }
-.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.trio { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; align-content: start; }
 figure video { width: 100%; max-width: 100%; aspect-ratio: 560 / 480; border-radius: 4px; border: 1px solid var(--line); display: block; background: #111a1f; }
 .tag { font-family: var(--display); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
-.scroll { overflow-x: auto; }
-table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.9rem; width: 100%; min-width: 280px; }
+.scroll { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.9rem; width: 100%; min-width: 300px; }
 th, td { text-align: right; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); }
 th:first-child, td:first-child { text-align: left; }
 th { font-family: var(--display); font-weight: 500; color: var(--muted); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
@@ -45,9 +46,9 @@ code { font-size: 0.9em; }
 
 <main>
   <header>
-    <span class="tag">Shape C · blind A/B</span>
+    <span class="tag">Shape C · blind A/B/C</span>
     <h1>Does cutting it off from its crystals pay?</h1>
-    <p class="lede">At 2:30 a ring is cut round a stretch of C's tube between two crystals, and held for the rest of the round, so the piece inside has no food. Both films show the same round: shape C on Fork, seed 1, with the same farm hand and the same cut. They differ in one food rule only. The key is kept off this page.</p>
+    <p class="lede">At 2:30 a ring is cut round a stretch of C's tube between two crystals and held for the rest of the round, so the piece inside has no food. All three films show the same round: shape C on Fork, seed 1, with the same farm hand and the same cut. They differ in one food rule only. The key is kept off this page.</p>
   </header>
 
   <section class="ask">
@@ -56,69 +57,77 @@ code { font-size: 0.9em; }
       <li>In which film does cutting the piece off look worth doing?</li>
       <li>Which mould do you want as the default?</li>
     </ul>
-    <p class="note">Answer with the film number.</p>
+    <p class="note">Answer with the letter. This page showed two films before. Both are filmed again here on today's build, as two of these three, in a new order.</p>
   </section>
 
   <section>
     <h2>The cut, from 2:26 to 4:00</h2>
     <p class="note">The camera is held still on the cut, at zoom 4. There is a frame every 2 game seconds, played at 6 frames a second. The grey ring is the cut: those cells are taken out of the ground, so nothing crosses them.</p>
-    <div class="pair">
+    <div class="trio">
       <figure>
-        <span class="tag">Film 1</span>
-        <video src="film1.mp4" poster="film1.jpg" controls loop muted playsinline preload="metadata"></video>
-        <div class="scroll"><table>
-          <tr><th>After the cut</th><th>Walkers inside</th></tr>
-          <tr><td>0 s</td><td>242</td></tr>
-          <tr><td>35 s</td><td>259</td></tr>
-          <tr><td>45 s</td><td>259</td></tr>
-          <tr><td>75 s</td><td>259</td></tr>
-          <tr><td>80 s</td><td>58</td></tr>
-          <tr><td>90 s</td><td>2</td></tr>
-        </table></div>
+        <span class="tag">Film A</span>
+        <video src="filmA.mp4" poster="filmA.jpg" controls loop muted playsinline preload="metadata"></video>
       </figure>
       <figure>
-        <span class="tag">Film 2</span>
-        <video src="film2.mp4" poster="film2.jpg" controls loop muted playsinline preload="metadata"></video>
-        <div class="scroll"><table>
-          <tr><th>After the cut</th><th>Walkers inside</th></tr>
-          <tr><td>0 s</td><td>146</td></tr>
-          <tr><td>35 s</td><td>157</td></tr>
-          <tr><td>40 s</td><td>46</td></tr>
-          <tr><td>45 s</td><td>9</td></tr>
-          <tr><td>50 s</td><td>2</td></tr>
-          <tr><td>60 s</td><td>0</td></tr>
-        </table></div>
+        <span class="tag">Film B</span>
+        <video src="filmB.mp4" poster="filmB.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+      <figure>
+        <span class="tag">Film C</span>
+        <video src="filmC.mp4" poster="filmC.jpg" controls loop muted playsinline preload="metadata"></video>
       </figure>
     </div>
+    <p class="note">The stills are at 3:20, 50 seconds after the cut.</p>
+  </section>
+
+  <section>
+    <h2>Walkers inside the ring</h2>
+    <div class="scroll"><table>
+      <tr><th>After the cut</th><th>Film A</th><th>Film B</th><th>Film C</th></tr>
+      <tr><td>0 s</td><td>146</td><td>244</td><td>272</td></tr>
+      <tr><td>10 s</td><td>158</td><td>234</td><td>289</td></tr>
+      <tr><td>20 s</td><td>158</td><td>148</td><td>289</td></tr>
+      <tr><td>25 s</td><td>158</td><td>120</td><td>289</td></tr>
+      <tr><td>30 s</td><td>90</td><td>90</td><td>289</td></tr>
+      <tr><td>35 s</td><td>13</td><td>80</td><td>289</td></tr>
+      <tr><td>40 s</td><td>2</td><td>67</td><td>289</td></tr>
+      <tr><td>50 s</td><td>0</td><td>50</td><td>289</td></tr>
+      <tr><td>60 s</td><td>0</td><td>39</td><td>289</td></tr>
+      <tr><td>70 s</td><td>0</td><td>21</td><td>289</td></tr>
+      <tr><td>80 s</td><td>0</td><td>14</td><td>18</td></tr>
+      <tr><td>90 s</td><td>0</td><td>2</td><td>1</td></tr>
+    </table></div>
+    <p class="note">Counted from the engine's own fields each game second. The piece can grow a little just after the cut, as its walkers breed into room left by the cut.</p>
   </section>
 
   <section>
     <h2>The whole mould in the same rounds</h2>
     <div class="scroll"><table>
       <tr><th></th><th>Walkers at 2:30</th><th>Walkers at 4:00</th><th>Mould on screen at 4:00</th></tr>
-      <tr><td>Film 1</td><td>18,917</td><td>27,326</td><td>12.7%</td></tr>
-      <tr><td>Film 2</td><td>13,736</td><td>18,007</td><td>9.3%</td></tr>
+      <tr><td>Film A</td><td>14,689</td><td>18,108</td><td>9.5%</td></tr>
+      <tr><td>Film B</td><td>19,781</td><td>28,372</td><td>13.5%</td></tr>
+      <tr><td>Film C</td><td>19,852</td><td>28,254</td><td>12.9%</td></tr>
     </table></div>
-    <p class="note">For comparison, C before it shared its food covered 6.7% of the screen at 4:00 on this map and seed (the earlier film page).</p>
   </section>
 
   <section>
     <h2>The same test on 12 cuts</h2>
-    <p class="note">On the CPU world (seeds 1 to 4, 3 cuts each, held rings round thick parts of the body with no crystal near, cut at 3:00), the share of the piece's walkers still alive after the cut:</p>
+    <p class="note">On the CPU world: seeds 1 to 4, 3 cuts each, held rings round thick parts of the body with no crystal near, cut at 3:00. The share of the piece's walkers still alive after the cut, the most it lost in any 5 seconds, and the whole mould's walkers at the cut on the four seeds.</p>
     <div class="scroll"><table>
-      <tr><th></th><th>10 s</th><th>30 s</th><th>45 s</th><th>60 s</th><th>90 s</th><th>120 s</th></tr>
-      <tr><td>Film 1's rule</td><td>100%</td><td>100%</td><td>93%</td><td>85%</td><td>84%</td><td>84%</td></tr>
-      <tr><td>Film 2's rule</td><td>97%</td><td>65%</td><td>28%</td><td>21%</td><td>1%</td><td>1%</td></tr>
+      <tr><th></th><th>10 s</th><th>20 s</th><th>30 s</th><th>45 s</th><th>60 s</th><th>90 s</th><th>Most lost in 5 s</th><th>Mould at 3:00</th></tr>
+      <tr><td>Film A's rule</td><td>97%</td><td>86%</td><td>65%</td><td>28%</td><td>21%</td><td>0%</td><td>77%</td><td>37,001-39,549</td></tr>
+      <tr><td>Film B's rule</td><td>81%</td><td>54%</td><td>36%</td><td>18%</td><td>9%</td><td>3%</td><td>21%</td><td>49,949-50,000</td></tr>
+      <tr><td>Film C's rule</td><td>100%</td><td>100%</td><td>100%</td><td>93%</td><td>84%</td><td>83%</td><td>57%</td><td>49,949-50,000</td></tr>
     </table></div>
+    <p class="note">Film B's and film C's moulds at 3:00 match to the walker on every seed.</p>
   </section>
 
   <section>
     <h2>How these were made</h2>
     <ul>
-      <li>The window's own picture, from <code>larder-world look=DIR hand=farm seed=1 cut=150,386,239,22</code> on software Vulkan. The ring is 6 world cells wide, 22 out from its centre.</li>
-      <li>"Walkers inside" counts the walkers inside the ring each second, from the engine's own fields.</li>
-      <li>"Mould on screen" is the share of the map's pixels drawn as mould, counted from the whole-map frames.</li>
-      <li>In both films the piece stays whole for a while, then dies within about 10 seconds. It does not thin out gradually.</li>
+      <li>The window's own picture, from <code>larder-world look=DIR hand=farm seed=1 cut=150,386,239,22</code> on software Vulkan, all three on one build. The ring is 6 world cells wide, 22 out from its centre.</li>
+      <li>"Mould on screen" is the share of the map's pixels drawn as mould in the whole-map frame.</li>
+      <li>The rules act before the cut too, so the rounds differ a little: the piece's size at the cut and the squad are not the same in each film.</li>
     </ul>
   </section>
 </main>

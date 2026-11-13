@@ -1,0 +1,102 @@
+cutprobe race world scale 2 walkers 25000, grow 180 s, follow 120 s, 3 cuts a seed, seeds [1, 2, 3, 4]
+arms: [("c-shared", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05")]), ("c-h150", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.03"), ("wither_lag", "150")]), ("c-h75", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.03"), ("wither_lag", "75")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+c-shared 1 grown | alive 49995 parts1% 1 lcs 1.00 lone 0.00 rms 61.4 | crystals eaten from 15 of 23
+cut c-shared 1 0 at fine cell (120, 92)
+c-shared 1 0 | 797 797 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49995 17.60
+cut c-shared 1 1 at fine cell (124, 240)
+c-shared 1 1 | 790 790 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49995 17.60
+cut c-shared 1 2 at fine cell (60, 88)
+c-shared 1 2 | 790 790 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49995 17.60
+c-h150 1 grown | alive 43264 parts1% 1 lcs 1.00 lone 0.00 rms 57.0 | crystals eaten from 11 of 23
+cut c-h150 1 0 at fine cell (64, 92)
+c-h150 1 0 | 797 797 0 | 0.99 1.64 0.84 12.1 3.43 | 69 rejoin 28 98.2 react 27 | 43264 19.30
+cut c-h150 1 1 at fine cell (124, 84)
+c-h150 1 1 | 787 787 0 | 1.00 2.64 0.75 5.7 1.63 | 41 crystal 93 105.9 react 50 | 43264 19.30
+cut c-h150 1 2 at fine cell (124, 240)
+c-h150 1 2 | 784 784 0 | 1.00 3.52 0.71 7.9 2.08 | 47 crystal 9 7.8 react 51 | 43264 19.30
+c-h75 1 grown | alive 43436 parts1% 1 lcs 1.00 lone 0.00 rms 57.2 | crystals eaten from 11 of 23
+cut c-h75 1 0 at fine cell (120, 92)
+c-h75 1 0 | 796 796 0 | 1.00 3.16 0.73 3.7 1.11 | 38 rejoin 98 63.8 react 62 | 43436 18.94
+cut c-h75 1 1 at fine cell (60, 88)
+c-h75 1 1 | 793 793 0 | 1.00 2.22 0.84 3.9 1.19 | 39 crystal 61 13.5 react 47 | 43436 18.94
+cut c-h75 1 2 at fine cell (192, 84)
+c-h75 1 2 | 784 784 0 | 0.99 1.95 0.78 8.0 2.43 | 43 crystal 6 37.2 react 59 | 43436 18.94
+c-shared 2 grown | alive 50000 parts1% 1 lcs 1.00 lone 0.00 rms 57.8 | crystals eaten from 13 of 23
+cut c-shared 2 0 at fine cell (56, 120)
+c-shared 2 0 | 792 792 0 | 1.00 1.00 1.00 5.6 1.00 | 120 alive 120 0.0 react -1 | 50000 18.36
+cut c-shared 2 1 at fine cell (144, 84)
+c-shared 2 1 | 777 777 0 | 1.00 1.00 1.00 5.6 1.00 | 120 alive 120 0.1 react -1 | 50000 18.36
+cut c-shared 2 2 at fine cell (104, 232)
+c-shared 2 2 | 770 770 0 | 1.00 2.42 0.52 5.6 1.00 | 65 crystal 51 81.9 react 54 | 50000 18.36
+c-h150 2 grown | alive 48970 parts1% 1 lcs 0.99 lone 0.00 rms 53.7 | crystals eaten from 12 of 23
+cut c-h150 2 0 at fine cell (64, 124)
+c-h150 2 0 | 797 797 0 | 0.98 9.36 0.56 17.3 4.51 | 49 crystal 11 97.9 react 30 | 48970 21.00
+cut c-h150 2 1 at fine cell (144, 84)
+c-h150 2 1 | 790 790 0 | 0.97 10.44 0.52 18.5 5.17 | 48 crystal 15 30.4 react 21 | 48970 21.00
+cut c-h150 2 2 at fine cell (108, 232)
+c-h150 2 2 | 778 778 0 | 0.97 7.98 0.47 14.2 4.11 | 44 rejoin 27 55.2 react 33 | 48970 21.00
+c-h75 2 grown | alive 49828 parts1% 1 lcs 1.00 lone 0.00 rms 55.3 | crystals eaten from 13 of 23
+cut c-h75 2 0 at fine cell (56, 120)
+c-h75 2 0 | 797 797 0 | 0.92 11.38 0.45 33.3 9.52 | 47 crystal 3 84.8 react 13 | 49828 20.64
+cut c-h75 2 1 at fine cell (144, 84)
+c-h75 2 1 | 786 786 0 | 0.93 12.11 0.47 21.3 6.19 | 47 crystal 9 50.7 react 18 | 49828 20.64
+cut c-h75 2 2 at fine cell (108, 232)
+c-h75 2 2 | 774 774 0 | 0.95 12.61 0.42 18.6 5.72 | 44 crystal 10 44.8 react 22 | 49828 20.64
+c-shared 3 grown | alive 49949 parts1% 1 lcs 1.00 lone 0.00 rms 60.0 | crystals eaten from 13 of 23
+cut c-shared 3 0 at fine cell (60, 212)
+c-shared 3 0 | 797 797 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49949 17.26
+cut c-shared 3 1 at fine cell (164, 192)
+c-shared 3 1 | 796 796 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49949 17.26
+cut c-shared 3 2 at fine cell (196, 128)
+c-shared 3 2 | 795 795 0 | 1.00 1.00 1.00 5.6 1.00 | 120 alive 120 0.0 react -1 | 49949 17.26
+c-h150 3 grown | alive 45815 parts1% 1 lcs 1.00 lone 0.00 rms 47.6 | crystals eaten from 11 of 23
+cut c-h150 3 0 at fine cell (48, 220)
+c-h150 3 0 | 797 797 0 | 1.00 3.01 0.74 3.9 1.07 | 46 rejoin 39 113.6 react 23 | 45815 20.59
+cut c-h150 3 1 at fine cell (196, 128)
+c-h150 3 1 | 797 797 0 | 0.98 3.04 0.75 9.0 2.50 | 43 crystal 30 43.4 react 31 | 45815 20.59
+cut c-h150 3 2 at fine cell (164, 192)
+c-h150 3 2 | 796 796 0 | 0.99 3.69 0.72 7.0 1.78 | 46 rejoin 63 78.8 react 45 | 45815 20.59
+c-h75 3 grown | alive 46011 parts1% 1 lcs 1.00 lone 0.00 rms 48.1 | crystals eaten from 12 of 23
+cut c-h75 3 0 at fine cell (60, 212)
+c-h75 3 0 | 797 797 0 | 1.00 2.88 0.75 5.6 1.70 | 40 alive 120 15.8 react 62 | 46011 19.97
+cut c-h75 3 1 at fine cell (164, 192)
+c-h75 3 1 | 797 797 0 | 1.00 5.65 0.64 4.4 1.20 | 48 crystal 34 26.3 react 38 | 46011 19.97
+cut c-h75 3 2 at fine cell (44, 128)
+c-h75 3 2 | 797 797 0 | 1.00 2.34 0.80 4.3 1.12 | 46 alive 120 8.6 react 29 | 46011 19.97
+c-shared 4 grown | alive 49998 parts1% 1 lcs 1.00 lone 0.00 rms 59.7 | crystals eaten from 15 of 23
+cut c-shared 4 0 at fine cell (68, 204)
+c-shared 4 0 | 797 797 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49998 16.86
+cut c-shared 4 1 at fine cell (144, 76)
+c-shared 4 1 | 793 793 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49998 16.86
+cut c-shared 4 2 at fine cell (180, 188)
+c-shared 4 2 | 772 772 0 | 1.00 2.74 0.43 5.5 1.00 | 49 crystal 31 51.7 react 38 | 49998 16.86
+c-h150 4 grown | alive 43616 parts1% 1 lcs 1.00 lone 0.00 rms 50.2 | crystals eaten from 11 of 23
+cut c-h150 4 0 at fine cell (36, 200)
+c-h150 4 0 | 797 797 0 | 1.00 1.11 0.97 7.1 1.89 | 46 alive 120 4.9 react 107 | 43616 18.99
+cut c-h150 4 1 at fine cell (80, 260)
+c-h150 4 1 | 795 795 0 | 1.00 3.37 0.71 4.3 1.14 | 45 rejoin 100 75.9 react 59 | 43616 18.99
+cut c-h150 4 2 at fine cell (144, 76)
+c-h150 4 2 | 789 789 0 | 1.00 1.64 0.85 4.1 1.17 | 46 alive 120 26.9 react 33 | 43616 18.99
+c-h75 4 grown | alive 41934 parts1% 1 lcs 1.00 lone 0.00 rms 49.3 | crystals eaten from 10 of 23
+cut c-h75 4 0 at fine cell (80, 260)
+c-h75 4 0 | 797 797 0 | 1.00 1.45 0.89 4.2 1.14 | 44 starve 110 3.6 react 70 | 41934 18.60
+cut c-h75 4 1 at fine cell (36, 200)
+c-h75 4 1 | 797 797 0 | 0.99 2.79 0.75 9.0 2.62 | 43 crystal 8 71.2 react 42 | 41934 18.60
+cut c-h75 4 2 at fine cell (144, 76)
+c-h75 4 2 | 792 792 0 | 1.00 1.14 0.96 3.7 1.12 | 43 starve 112 4.6 react 26 | 41934 18.60
+
+summary (mean over cuts)
+c-shared: cuts 12 n0 789 lcs20 1.00 frag 1.26 lcs 0.91 rms20 5.6 compact20 1.00 life 110 moved 11.2 fates {"alive": 10, "crystal": 2}
+c-h150: cuts 12 n0 792 lcs20 0.99 frag 4.29 lcs 0.71 rms20 9.3 compact20 2.54 life 48 moved 61.6 fates {"alive": 2, "crystal": 5, "rejoin": 5}
+  vs c-shared: lcs20 better 0 worse 9, p 0.0039
+  vs c-shared: life better 0 worse 12, p 0.0005
+  vs c-shared: compact20 better 0 worse 12, p 0.0005
+c-h75: cuts 12 n0 792 lcs20 0.98 frag 4.97 lcs 0.71 rms20 10.0 compact20 2.92 life 44 moved 35.4 fates {"alive": 2, "crystal": 7, "rejoin": 1, "starve": 2}
+  vs c-shared: lcs20 better 0 worse 8, p 0.0078
+  vs c-shared: life better 0 worse 12, p 0.0005
+  vs c-shared: compact20 better 0 worse 12, p 0.0005
+
+real	37m1.825s
+user	34m42.152s
+sys	4m19.685s

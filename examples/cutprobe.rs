@@ -60,6 +60,10 @@ fn set(p: &mut BigParams, k: &str, v: &str) {
     match k {
         "energy_flow" => p.energy_flow = f(),
         "flow_loss" => p.flow_loss = f(),
+        "wither" => p.wither = f(),
+        "wither_every" => p.wither_every = f() as u32,
+        "wither_lag" => p.wither_lag = f() as u32,
+        "wither_reach" => p.wither_reach = f() as u8,
         "blocked_keep" => p.blocked_keep = f() != 0.0,
         "blocked_reset" => p.blocked_reset = f(),
         "blocked_retry" => p.blocked_retry = f() as u8,
@@ -461,17 +465,33 @@ fn sample(d: &BigDish, tag: &[u8], t: f32) -> Sample {
 
 /// New slots alive since the last tick take the tag of a tagged walker on
 /// or beside their cell (a child lands beside its parent).
-fn tag_births(d: &BigDish, tag: &mut [u8], was: &mut [bool], grid: &mut [u8]) {
+fn tag_births(d: &BigDish, tag: &mut [u8], was: &mut [bool], last: &mut [usize], grid: &mut [u8]) {
     let w = d.w;
+    // A slot that died and was born again within one tick (a fine step or
+    // two) is a new walker, though it lives at both samples: it shows as a
+    // jump of more than `JUMP` fine cells. Without this a cut piece's slot
+    // freed by a death and taken by a birth in the main body kept the
+    // piece's tag (2026-11-13: under `wither` the "piece" reached crystals
+    // and moved 60-80 cells).
+    const JUMP: usize = 4;
+    let jump: Vec<bool> = (0..d.walkers.len())
+        .map(|k| {
+            let i = cell_of(d, k);
+            let (a, b) = (i % w, last[k] % w);
+            let (c, e) = (i / w, last[k] / w);
+            d.lives(k) && (a.abs_diff(b) > JUMP || c.abs_diff(e) > JUMP)
+        })
+        .collect();
+    let jumped = |k: usize| jump[k];
     grid.iter_mut().for_each(|g| *g = 0);
     for k in 0..d.walkers.len() {
-        if holds(d, k) && was[k] && tag[k] > 0 {
+        if holds(d, k) && was[k] && tag[k] > 0 && !jumped(k) {
             grid[cell_of(d, k)] = tag[k];
         }
     }
     for k in 0..d.walkers.len() {
         let now = d.lives(k);
-        if now && !was[k] {
+        if now && (!was[k] || jumped(k)) {
             let i = cell_of(d, k);
             let (x, y) = ((i % w) as i64, (i / w) as i64);
             let mut t = 0;
@@ -489,6 +509,9 @@ fn tag_births(d: &BigDish, tag: &mut [u8], was: &mut [bool], grid: &mut [u8]) {
             tag[k] = if t == 0 { 2 } else { t };
         }
         was[k] = now;
+        if now {
+            last[k] = cell_of(d, k);
+        }
     }
 }
 
@@ -573,6 +596,7 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone:
         }
     }
     let mut was: Vec<bool> = (0..d.walkers.len()).map(|k| d.lives(k)).collect();
+    let mut last: Vec<usize> = (0..d.walkers.len()).map(|k| if d.lives(k) { cell_of(&d, k) } else { 0 }).collect();
     let mut grid = vec![0u8; w * h];
     // Fed: some of its walkers stand on crystal with charge at the cut.
     let fed0 = !d.charge.is_empty() && (0..d.walkers.len()).any(|k| tag[k] == 1 && holds(&d, k) && d.pile_of[cell_of(&d, k)] > 0 && d.charge[cell_of(&d, k)] > 0.0);
@@ -607,7 +631,7 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone:
             }
         }
         d.tick();
-        tag_births(&d, &mut tag, &mut was, &mut grid);
+        tag_births(&d, &mut tag, &mut was, &mut last, &mut grid);
         // A film (`CUTPROBE_FILM=1`): a frame every third of a game second.
         if let Some((dir, name)) = &look {
             if std::env::var("CUTPROBE_FILM").is_ok() && tk.is_multiple_of(TPS / 3) {

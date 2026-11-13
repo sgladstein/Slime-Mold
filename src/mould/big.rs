@@ -52,6 +52,8 @@ const CLAIM_RETRY: u32 = 112;
 /// Growth (`upkeep`): past CLAIM_RETRY's 255 rounds, so no stream is shared.
 const DRAW_STARVE: u32 = 401;
 const DRAW_BIRTH: u32 = 402;
+/// A part cut off from its food withers (`BigParams::wither`).
+const DRAW_WITHER: u32 = 404;
 const CLAIM_BIRTH: u32 = 403;
 const DRAW_MIX: u32 = 113;
 const DRAW_FRUIT: u32 = 114;
@@ -466,6 +468,36 @@ pub struct BigParams {
     /// a cut far arm starves while the fed core lives, and each cut is
     /// seen to pay off.
     pub flow_loss: f32,
+    /// **A part cut off from its food withers** (2026-11-13, the
+    /// slime-enemy thread; 0 is off, needs growth; 0.02 is the lead).
+    /// Food's news travels through the body: a walker that took crystal
+    /// this step hears it now; each cell holding walkers starts from the
+    /// latest news its walkers carry and takes the latest of the eight
+    /// round it, `wither_reach` times over (a cell with none stays 0); then
+    /// each walker carries its cell's news on, and a child its parent's.
+    /// Every `wither_every` steps each ordinary walker whose news is more
+    /// than `wither_lag` steps old dies with chance `wither`, whatever it
+    /// holds. Why: with shared food (`energy_flow`) a part cut off from
+    /// every crystal pools its energy and runs it down together, so it
+    /// stays whole for 75 s or more and then dies at once
+    /// (Reports/fed-mould-2026-11-13/README.md, *Cutting it off*), a
+    /// delayed yes/no the player cannot read. At 0.02 (every 15 steps, lag
+    /// 150) a held ring cut leaves 81% of the piece at 10 s, 54% at 20 s
+    /// and 9% at 60 s, never losing more than 21% in 5 s, while uncut C is
+    /// the same to the walker at 3:00 on 4 of 4 seeds: a body joined to
+    /// its crystals hears of food within the lag (*A cut-off part
+    /// withers*). Tried and rejected (Reports/dead-ends.md): withering when
+    /// a walker's food in over a second fell short of its upkeep (the fed
+    /// body lives on its store between meals as a cut piece does, so C fell
+    /// to 15-29k walkers from 50k); news kept only in cells, so a lone
+    /// explorer heard nothing (C 2-16% smaller). `flow_loss` 0.05 shortened
+    /// the wait but still died at once and cost C 30% of its size. News,
+    /// not energy, tells a part joined to food from a part cut off. With
+    /// the life cycle on, a landing spore keeps the news it fruited with.
+    pub wither: f32,
+    pub wither_every: u32,
+    pub wither_lag: u32,
+    pub wither_reach: u8,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -905,6 +937,10 @@ impl BigParams {
             capacity: 0,
             energy_flow: 0.0,
             flow_loss: 0.0,
+            wither: 0.0,
+            wither_every: 15,
+            wither_lag: 150,
+            wither_reach: 2,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -1078,6 +1114,15 @@ pub struct BigDish {
     /// take one out of its pile: its `pile_of` is then 0).
     pub pile_cells: Vec<u32>,
     pub took: Vec<f32>,
+    /// The step each fine cell last heard of food through the body
+    /// (`BigParams::wither`), and each walker's own; empty while off.
+    pub heard: Vec<u64>,
+    pub news: Vec<u64>,
+    /// The cells holding walkers at the last `hear_food`, and the spread's
+    /// scratch: only those cells are touched, so the pass costs walkers,
+    /// not the dish's area (outside them both fields are 0).
+    heard_cells: Vec<usize>,
+    heard_was: Vec<u64>,
     pub eaten: f64,
     /// Terrain (`terrain_rock` or `terrain_wet` > 0), else empty: rock and
     /// wet a fine cell.
@@ -1284,6 +1329,10 @@ impl BigDish {
             pile_full: Vec::new(),
             pile_cells: Vec::new(),
             took: Vec::new(),
+            heard: Vec::new(),
+            news: Vec::new(),
+            heard_cells: Vec::new(),
+            heard_was: Vec::new(),
             eaten: 0.0,
             rock: Vec::new(),
             wet: Vec::new(),
@@ -2372,6 +2421,9 @@ impl BigDish {
             }
         }
         self.eat_crystals();
+        if self.p.wither > 0.0 && !self.energy.is_empty() {
+            self.hear_food();
+        }
         if self.p.energy_flow > 0.0 && !self.energy.is_empty() {
             self.flow_energy();
         }
@@ -2535,6 +2587,65 @@ impl BigDish {
     /// (`active`) share: a spore or a dormant walker keeps its energy, as
     /// it pays no upkeep (`live_and_die`), so each cell counts its own
     /// sharers rather than `occ`.
+    fn hear_food(&mut self) {
+        let (w, h, now) = (self.w, self.h, self.steps + 1);
+        if self.news.len() != self.walkers.len() {
+            // Every walker starts as if it heard food now: a mould is not
+            // cut off at its first step.
+            self.news = vec![now; self.walkers.len()];
+        }
+        if self.heard.len() != w * h {
+            self.heard = vec![0; w * h];
+            self.heard_was = vec![0; w * h];
+            self.heard_cells.clear();
+        }
+        // Last step's cells back to 0, so a cell with no walker is 0.
+        for &i in &self.heard_cells {
+            self.heard[i] = 0;
+            self.heard_was[i] = 0;
+        }
+        self.heard_cells.clear();
+        for k in 0..self.walkers.len() {
+            if !self.active(k) {
+                continue;
+            }
+            if !self.took.is_empty() && self.took[k] > 0.0 {
+                self.news[k] = now;
+            }
+            let (x, y, _) = self.walkers[k];
+            let i = self.cell(x, y).expect("walker inside the dish");
+            // News is at least 1, so a cell with walkers is never 0.
+            if self.heard[i] == 0 {
+                self.heard_cells.push(i);
+            }
+            self.heard[i] = self.heard[i].max(self.news[k]);
+        }
+        for _ in 0..self.p.wither_reach.max(1) {
+            for &i in &self.heard_cells {
+                self.heard_was[i] = self.heard[i];
+            }
+            for &i in &self.heard_cells {
+                let (x, y) = ((i % w) as i64, (i / w) as i64);
+                let mut best = self.heard_was[i];
+                for (dx, dy) in [(1i64, 0i64), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)] {
+                    let (nx, ny) = (x + dx, y + dy);
+                    if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
+                        continue;
+                    }
+                    best = best.max(self.heard_was[ny as usize * w + nx as usize]);
+                }
+                self.heard[i] = best;
+            }
+        }
+        for k in 0..self.walkers.len() {
+            if self.active(k) {
+                let (x, y, _) = self.walkers[k];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                self.news[k] = self.news[k].max(self.heard[i]);
+            }
+        }
+    }
+
     fn flow_energy(&mut self) {
         let d = self.p.energy_flow as f64;
         let keep = 1.0 - (self.p.flow_loss as f64).clamp(0.0, 1.0);
@@ -2605,9 +2716,24 @@ impl BigDish {
         // A parent's crowd limit is its species' (`species_sets`) if set.
         let crowd_of = |d: &Self, k: usize| if p.species_sets.is_empty() { p.crowd } else { p.species_sets[d.sp_of(k)].crowd };
         let n = self.walkers.len();
+        let check = !self.news.is_empty() && self.steps.is_multiple_of(p.wither_every.max(1) as u64);
         for k in 0..n {
             if !self.active(k) {
                 continue;
+            }
+            // A part cut off from its food withers (`wither`): at each
+            // check, a walker that has not heard of food for `wither_lag`
+            // steps may die, whatever it still holds.
+            if check && self.steps + 1 > self.news[k] + p.wither_lag as u64 {
+                let (x, y, _) = self.walkers[k];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                if unit(keyed(seed, t, DRAW_WITHER, k as u32)) < p.wither {
+                    self.occ[i] -= 1;
+                    self.alive[k] = false;
+                    self.energy[k] = 0.0;
+                    self.starved += 1;
+                    continue;
+                }
             }
             // Its crystal take this step (`took`, Larder World) counts as
             // food like its grass share.
@@ -2695,6 +2821,10 @@ impl BigDish {
             let half = ((self.energy[k] - p.birth_cost) * 0.5).max(0.0);
             self.energy[k] = half;
             self.energy[b] = half;
+            // A child knows what its parent heard (`wither`).
+            if !self.news.is_empty() {
+                self.news[b] = self.news[k];
+            }
             self.alive[b] = true;
             self.occ[j] += 1;
             self.walkers[b] = (nx, ny, unit(keyed(seed, t, DRAW_BIRTH, k as u32 | 0x8000_0000)) * TAU);
@@ -3956,6 +4086,66 @@ mod tests {
 
     /// `energy_flow` keeps energy (pairs give what they take), evens it out
     /// and leaves empty slots alone.
+    /// Food's news (`wither`, 2026-11-13): it travels `wither_reach` cells
+    /// a step through cells holding walkers, a walker carries it on, and a
+    /// gap of one empty cell stops it. A row of walkers at x = 5, 6, 7, 8
+    /// and 10, the first eating: two steps' spread reaches 6 and 7 at once,
+    /// 8 the step after (from 7's news), and 10 never.
+    #[test]
+    fn food_news_travels_through_the_body_and_not_across_a_gap() {
+        let p = BigParams { upkeep: 0.01, capacity: 1200, wither: 0.5, wither_reach: 2, ..small(1, 1) };
+        let mut d = BigDish::new(p);
+        let n = d.walkers.len();
+        for k in 0..n {
+            d.alive[k] = false;
+        }
+        let row = [5.5f32, 6.5, 7.5, 8.5, 10.5];
+        for (k, &x) in row.iter().enumerate() {
+            d.alive[k] = true;
+            d.walkers[k] = (x, 5.5, 0.0);
+        }
+        d.news = vec![1; n];
+        d.took = vec![0.0; n];
+        d.took[0] = 0.01;
+        let now = d.steps + 1;
+        d.hear_food();
+        assert_eq!(&d.news[..5], &[now, now, now, 1, 1], "two cells a step");
+        d.took[0] = 0.0;
+        d.hear_food();
+        assert_eq!(&d.news[..5], &[now, now, now, now, 1], "carried on, and not across the gap");
+        // The cells hold news only where walkers stand.
+        let held = d.heard.iter().filter(|&&v| v > 0).count();
+        assert_eq!(held, 5, "five cells hold walkers");
+    }
+
+    /// Withering (`wither`) left at 0 changes nothing, and on it thins a
+    /// mould whose news has gone stale while one fed now keeps its walkers.
+    #[test]
+    fn a_walker_without_news_withers() {
+        let grow = BigParams { upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, ..small(2, 1) };
+        let run = |p: BigParams, stale: bool| {
+            let mut d = BigDish::new(p);
+            for _ in 0..40 {
+                d.tick();
+            }
+            if stale && !d.news.is_empty() {
+                d.news.iter_mut().for_each(|t| *t = 1);
+            }
+            let before = d.alive.iter().filter(|&&a| a).count();
+            for _ in 0..20 {
+                d.tick();
+            }
+            (before, d.alive.iter().filter(|&&a| a).count(), d.hash())
+        };
+        let base = run(grow.clone(), false);
+        let off = run(BigParams { wither: 0.0, wither_lag: 5, ..grow.clone() }, false);
+        assert_eq!(base.2, off.2, "wither 0 changes nothing");
+        let fresh = run(BigParams { wither: 0.2, wither_every: 1, wither_lag: 10_000, ..grow.clone() }, false);
+        let stale = run(BigParams { wither: 0.2, wither_every: 1, wither_lag: 10, ..grow.clone() }, true);
+        assert_eq!(fresh.2, base.2, "news that never goes stale kills no one");
+        assert!(stale.1 * 3 < fresh.1 * 2, "a mould whose news is stale withers: {} walkers left against {}", stale.1, fresh.1);
+    }
+
     #[test]
     fn energy_flow_keeps_and_evens() {
         let p = BigParams { upkeep: 0.01, energy_flow: 0.1, capacity: 1200, ..small(1, 1) };

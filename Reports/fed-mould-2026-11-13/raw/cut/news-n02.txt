@@ -1,0 +1,38 @@
+cutprobe race world scale 2 walkers 25000, grow 180 s, follow 120 s, 3 cuts a seed, seeds [1, 2, 3, 4]
+arms: [("n02", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.02"), ("wither_lag", "150")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+n02 1 grown | alive 49995 parts1% 1 lcs 1.00 lone 0.00 rms 61.4 | crystals eaten from 15 of 23
+cut n02 1 0 at fine cell (120, 92)
+n02 1 0 | 797 797 0 | 1.00 1.16 0.97 4.3 1.07 | 59 alive 120 0.8 react -1 | 49995 22.18
+cut n02 1 1 at fine cell (124, 240)
+n02 1 1 | 790 790 0 | 1.00 1.17 0.97 4.4 1.08 | 61 alive 120 0.7 react -1 | 49995 22.18
+cut n02 1 2 at fine cell (60, 88)
+n02 1 2 | 790 790 0 | 1.00 1.12 0.98 4.8 1.14 | 62 alive 120 1.0 react -1 | 49995 22.18
+n02 2 grown | alive 50000 parts1% 1 lcs 1.00 lone 0.00 rms 57.8 | crystals eaten from 13 of 23
+cut n02 2 0 at fine cell (56, 120)
+n02 2 0 | 792 792 0 | 1.00 1.13 0.98 4.7 1.14 | 64 alive 120 1.7 react 119 | 50000 24.92
+cut n02 2 1 at fine cell (144, 84)
+n02 2 1 | 777 777 0 | 1.00 1.06 0.99 4.6 1.11 | 62 alive 120 3.4 react 33 | 50000 24.92
+cut n02 2 2 at fine cell (104, 232)
+n02 2 2 | 770 770 0 | 1.00 1.04 0.99 4.2 1.05 | 53 starve 67 1.9 react 25 | 50000 24.92
+n02 3 grown | alive 49949 parts1% 1 lcs 1.00 lone 0.00 rms 60.0 | crystals eaten from 13 of 23
+cut n02 3 0 at fine cell (60, 212)
+n02 3 0 | 797 797 0 | 1.00 1.01 1.00 4.5 1.07 | 62 alive 120 1.8 react -1 | 49949 26.01
+cut n02 3 1 at fine cell (164, 192)
+n02 3 1 | 796 796 0 | 1.00 1.12 0.98 4.8 1.12 | 64 alive 120 3.2 react 120 | 49949 26.01
+cut n02 3 2 at fine cell (196, 128)
+n02 3 2 | 795 795 0 | 1.00 1.25 0.96 4.8 1.14 | 65 alive 120 0.7 react -1 | 49949 26.01
+n02 4 grown | alive 49998 parts1% 1 lcs 1.00 lone 0.00 rms 59.7 | crystals eaten from 15 of 23
+cut n02 4 0 at fine cell (68, 204)
+n02 4 0 | 797 797 0 | 1.00 1.21 0.96 4.5 1.13 | 57 alive 120 0.4 react 99 | 49998 25.45
+cut n02 4 1 at fine cell (144, 76)
+n02 4 1 | 793 793 0 | 1.00 1.08 0.99 4.6 1.12 | 60 alive 120 4.0 react 34 | 49998 25.45
+cut n02 4 2 at fine cell (180, 188)
+n02 4 2 | 772 772 0 | 1.00 1.00 1.00 4.3 1.06 | 40 starve 49 3.8 react 36 | 49998 25.45
+
+summary (mean over cuts)
+n02: cuts 12 n0 789 lcs20 1.00 frag 1.11 lcs 0.98 rms20 4.5 compact20 1.10 life 59 moved 2.0 fates {"alive": 10, "starve": 2}
+
+real	15m13.581s
+user	12m44.890s
+sys	1m21.664s

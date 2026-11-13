@@ -3256,7 +3256,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 15] = [
+        let dishes: [(&str, Settings, Build); 17] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3297,14 +3297,30 @@ mod tests {
             // fades with distance from the crystals. 0.2, four times the
             // value on trial, so a sign or clamp slip shows in the L1.
             ("lossy flow: shared food fades as it travels", Settings { energy_flow: 0.05, flow_loss: 0.2, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            // A part cut off from its food withers (2026-11-13, the
+            // slime-enemy thread): news of food spread twice a step (the
+            // spread ends in its second turn's block) and three times (it
+            // runs all three turn passes and ends in the first), checked
+            // every step with a 4-step lag and even odds, so the twin tick
+            // withers some walkers and spares those the news reaches. Half
+            // the walkers' news is set stale before the tick (below).
+            ("wither: news spread twice", Settings { wither: 0.5, wither_every: 1, wither_lag: 4, wither_reach: 2, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            ("wither: news spread three times", Settings { wither: 0.5, wither_every: 1, wither_lag: 4, wither_reach: 3, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
+            // Withering: the news is made in the warm-up, but with a lag no
+            // walker reaches, so the mould grows as it would; the twin tick
+            // has the dish's own 4-step lag.
+            if s.wither > 0.0 {
+                cpu.p.wither_lag = 100_000;
+            }
             for t in 0..60 {
                 build(&mut cpu, t);
                 cpu.tick();
             }
+            cpu.p.wither_lag = s.wither_lag;
             // Soil: every walker fed to breed (birth energy 1), so children
             // aim at barren cells, where none may land, as at the rest. (Not
             // fed, no child was born in the tick, and a planted bug that let
@@ -3323,10 +3339,31 @@ mod tests {
                     }
                 }
             }
+            if s.wither > 0.0 {
+                assert_eq!(cpu.news.len(), cpu.walkers.len(), "{name}: the warm-up made the news");
+                for k in (0..cpu.walkers.len()).step_by(2) {
+                    cpu.news[k] = 1;
+                }
+            }
             let n = cpu.walkers.len();
             let was: Vec<bool> = (0..n).map(|k| cpu.lives(k)).collect();
             let (broken, bitten, eaten, births) = (cpu.broken, cpu.wall_hits, cpu.eaten, cpu.births);
+            let starved = cpu.starved;
             let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            // Withering: the same slots die, and every living walker carries
+            // the same news (whole numbers, so exactly).
+            if s.wither > 0.0 {
+                assert!(e.withers, "{name}: the news passes run");
+                let words: Vec<u32> = read_back(&device, &queue, &e.news).chunks(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+                let gpu_alive: Vec<bool> = floats(&read_back(&device, &queue, &e.energy)).iter().map(|&v| v >= 0.0).collect();
+                let lives_off = (0..n).filter(|&k| gpu_alive[k] != cpu.lives(k)).count();
+                let news_off = (0..n).filter(|&k| cpu.lives(k) && words[k] as u64 != cpu.news[k]).count();
+                let heard_now = (0..n).filter(|&k| cpu.lives(k) && k % 2 == 0 && cpu.news[k] > 1).count();
+                let left = words[n..n + e.cells as usize].iter().filter(|&&v| v != 0).count();
+                eprintln!("{name}: {} died in the tick on the CPU, {lives_off} slots live or die apart, {news_off} news off; {heard_now} stale walkers heard again", cpu.starved - starved);
+                assert!(cpu.starved > starved && heard_now > 0, "{name}: the tick withers some stale walkers and the news reaches others");
+                assert_eq!((lives_off, news_off, left), (0, 0, 0), "{name}: slots, news and the gathered block left");
+            }
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
             let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
             let (lc, took_off, lh, agar_off, ground_off) = world_off(&e, &cpu, &fresh);
