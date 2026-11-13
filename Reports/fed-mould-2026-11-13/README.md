@@ -395,7 +395,154 @@ The mould at 5:00 is 49,935-50,000 walkers, as before. A CPU tick takes
 24-26 ms against 18-20 ms without (the news pass; the window runs it on
 the GPU, 2.1 ms a tick on software Vulkan).
 
+## A cut-off part panics (11-13)
+
+The owner, 15:53-15:57Z, as an inspiration ("if possible"): "it would be
+interesting if it got more aggressive when cut off. It needed to get back
+to the core", then "It shouldn't have a stronger attack but it should act
+more like a scared animal. Either run away back to the main body or go
+right for the soliders. It should be more reckless", and "I understand
+that is a complicated behavior that might not be possible just letting you
+know my inspriation". The game designer's review (16:18Z) asked for a tell
+from the simulation 1-2 s before a response ("A sudden charge with no
+warning will feel like the game cheating") and a counter for each.
+
+**The rule (`BigParams::panic`, `panic_r`, `panic_lean`; both engines; off
+in `BigParams`, on at 2 in the window's shape C).** It reads withering's
+news: a walker whose news is older than `wither_lag` (5 s) is cut off.
+- **Target.** The nearest squad unit (soldier, larder or building, from
+  `BigDish::threats`) within `panic_r` (20 dish cells; 40 fine cells at
+  scale 2); else the nearest crystal pile with more than `PANIC_LEFT`
+  (2%) of its charge left, measured to the pile's centre cell
+  (`Pile.centre`). Distances are whole fine cells, ties to the first, so
+  both engines pick the same target.
+- **The tell, then the run.** For `panic_lean` steps (45, 1.5 s) the
+  walker steers straight at its target at its own pace; after that at
+  `panic` times it (2). Its sensors read only the direction to the target
+  (a wall reads as far worse), with no wander, no random flip and no lone
+  step. Its bite is unchanged.
+- **Calming.** A walker joined to the fed body hears news and never
+  panics; a scared one that eats at a crystal or touches the fed body
+  hears it again and goes back to normal.
+- **Rejected first:** the lean starting 1.5 s *before* the lag (so the
+  run began at 5 s). It changed uncut C on the CPU race world (cut probe,
+  seeds 1-4, 3:00): seed 3 46,941 walkers against 49,949 and 11 crystals
+  eaten from against 13 (seeds 1, 2 and 4 within 21 walkers), since far
+  explorers go stale for a moment and leaned. Starting the lean at the lag
+  mostly fixed it: uncut C at 3:00 (`raw/panic/uncut-seed1.txt` to
+  `-seed4.txt`) has 49,992, 50,000, 48,492 and 49,922 walkers against
+  49,995, 50,000, 49,949 and 49,998 (seed 3 2.9% smaller, inside the 5%
+  bar withering used), but it has eaten from one crystal fewer on 3 of 4
+  seeds (14, 13, 12, 14 of 23 against 15, 13, 13, 15): a far explorer
+  that goes stale turns back for a crystal instead of exploring on. All
+  12 cuts of that probe (thin cuts across a
+  tip, 4 dish cells wide) rejoined at 12 s in both arms
+  (`raw/panic/wound10-lean-before-lag.txt`), so the films below use held
+  rings.
+
+**Films (the window, Fork, seed 1, farm hand, software Vulkan; page
+https://claude.ai/artifact/SRxAj8nri2iGAsvE4DFGbP, source `panic-page/`).**
+Labelled, not blind: it shows a behaviour the owner asked for. Filmed on
+main after #197 (wading counts every walker) and #198 (a unit aims only at
+slime it can see), with `panic=0` for today and the new default for
+scared; logs in [`raw/panic/window/`](raw/panic/window/README.md)
+(`c8-*`, `b8-*`, `p5-*`). Earlier takes: `c7-*`, `b7-*`, `p4-*` after #197
+only, `c6-*`, `b6-*`, `p3-*` before it. Before #198 a soldier aimed at the
+densest slime in sight even through a wall and then held fire, so in
+those takes the soldiers inside the ring aimed at the body outside it and
+never shot the few walkers on them (the Larder thread traced it): three of
+the four died, and the window's farm squad fell to 1 by 1:50 against 12.
+#198 ends that.
+- **Charge.** `cut=150,365,240,24 cutsquad=365,256,150,4`: a held ring
+  round a stretch of tube with no crystal, and four soldiers set down
+  inside it, 34 cells from the tube. Walkers inside the ring at the cut,
+  +5, +6, +7, +10, +12, +20 s: today 138, 150, 146, 143, 138, 113, 0;
+  scared 112, 37, 4, 1, 0, 0, 0. The scared piece curls toward the
+  soldiers at about +4 s (its news was already a little old at the cut),
+  runs at them from +5 s and is shot down by +7 s, with one soldier lost
+  (the squad 30 to 29). At 34 cells the visible tell is about a second.
+  Today's piece stays, grows a little and drifts; from +12 s the part
+  within range is shot away.
+- **Bolt.** `cut=150,386,239,22,8,16`, no soldiers: a ring held 8 s round
+  a piece of tube near a crystal. The scared piece bunches on the ring's
+  crystal side and, when it opens, pours into the crystal's lobe, leaving
+  its ground empty; today's joins back up where it stands. Walkers inside
+  at 0, +5, +8 (opens), +9, +12, +20, +30 s: today 284, 307, 303, 317,
+  254, 197, 241; scared 200, 215, 211, 189, 143, 75, 26.
+- The rule acts before the cut, so each pair's rounds differ a little by
+  2:30 (18,623 walkers today, 18,143 scared).
+
+**Counters (the designer's second point).** A charge: shoot it before it
+closes (four soldiers standing their ground shot the whole piece down and
+lost one; fewer guns or a bigger piece gets through). A run for a crystal: a wall in its way stops it (a wall reads
+as far worse to its sensors, and it bites it as any walker does); a squad
+on its route makes it charge instead; if it reaches the crystal it eats,
+calms and breeds there.
+
+**What it changes before any cut.** Bits the squad's own shots knock off
+can charge it. Few walkers are scared at once: a CPU game on Fork (farm
+hand, seed 1, `larderworld look=`, every 10 s to 2:30, on main after
+#198) has 0-11 scared of 13,000-27,000, and its squad is 7 at 2:30
+against 8 without (`raw/panic/window/cpu-fork-farm-*.log`). In the window
+(Fork, seed 1, farm, `p5-*.log`) soldiers today at 1:00, 1:20, 1:40,
+1:50, 2:00, 2:30: 19, 18, 20, 25, 27, 33; scared 19, 16, 19, 19, 24, 30;
+food harvested by 2:30 15,455 today against 15,132. One round, so a
+tuning note. Before #198 the same round lost its squad (1 against 12 at
+1:50, `p4-*.log`), because soldiers could not shoot the bits on them.
+
+**Smoke** (CPU race world, C's keys with
+`panic` 2, seeds 1-4, cap 5:00; `raw/smoke/panic2-cap300.txt` against
+`wither01-cap300.txt`): idle -0.333 on 4 of 4 (as before), farm +0.119
+(+0.119), strike +0.116 (+0.114); paired by seed, farm 1 higher, 1 lower,
+2 tied, strike 2 higher, 2 tied. All 12 games run to the cap, none stuck;
+the mould at 5:00 49,906-50,000; idle's squad keeps 3-4 soldiers and
+farm's 7-8, as before.
+
+**Cost.** A calm walker reads its news word and compares it (withering
+already keeps it); only a scared one searches up to 96 units and 64 piles.
+GPU on software Vulkan (`mouldgpu look=DIR`, 50,000 walkers at scale 2,
+crystals, shared food, withering 0.01; two runs each, uncut so few
+walkers are scared): `sense` 2.27 and 2.11 ms without, 1.86 and 2.15 ms
+with; whole ticks 25.0 and 25.2 ms against 25.4 and 25.7 ms; the dish at
+40 s the same to the walker. No measurable cost; the GTX 1070's figure
+waits for the owner's go-ahead on timing. CPU (the smoke): 23.3-25.6 ms a
+tick against 23.7-26.2 ms.
+
+**Built for it:**
+- CPU: `BigParams::panic`, `panic_r`, `panic_lean`; `BigDish::threats`
+  (fine cells, set by `squad::frame` from the frame's units), `panics`,
+  `panic_haste`, `pile_centre`; the news pass runs when either `wither` or
+  `panic` is on.
+- GPU: `Params` stays 896 bytes: `panic_r2` (460, the squared reach in
+  fine cells) and `panic` (484) take the species row's spare words, the
+  lean takes `wclock` bits 25-31, and `Pile`'s spare word is `centre`.
+  Claimed in `ROADMAP.md`. `Engine::unblock` puts cells back on the agar.
+- Keys `panic`, `panic_r`, `panic_lean` for the window, the census and
+  the cut probe. `larder-world look=DIR cut=T,X,Y,R[,HOLD[,WIDTH]]
+  cutsquad=X,Y[,T[,N]]` stages the scenes (a ring that opens after HOLD;
+  N soldiers set down and kept there, made up from the larder if short).
+  `larderworld look=DIR` prints `scared` beside each picture.
+
+**Next, if play asks for it:** a slower lean (the tell is short when
+soldiers are close), a shorter `panic_r` (20 dish cells reaches past a
+gun's 15), or only pieces above a size panicking (not built).
+
 ## Tests
+
+- **Panic, GPU twins.** `the_world_matches_the_cpu_for_one_tick` gains
+  "panic: cut-off walkers run for a crystal" (4-step lag, a 2-step lean;
+  every other walker's news stale, every fourth inside the lean): 4,518
+  walkers scared in the tick, some leaning and some running, the farthest
+  moved 2.00 fine cells (twice the step), 0 of 15,000 walkers off.
+  `the_squad_matches_the_cpu_for_one_frame` gains "plain, a cut-off part
+  charges the squad" (`panic_r` 10, stale walkers round the squad): 0
+  slots and 0 walkers off, walkers charging. Both run on the final rule.
+- **Panic, CPU.** `a_cut_off_walker_runs_for_a_crystal_or_a_unit`: panic
+  changes nothing while news is fresh (same hash); with stale news the
+  walkers' mean distance to a crystal falls from 87.5 to 77.7 cells in 30
+  ticks (87.3 without panic); with a unit in reach they close on it
+  (164.8 to 157.5, against 164.8), and with `panic_r` 0.5 they run for a
+  crystal instead.
 
 - **Withering, GPU twin.** `the_world_matches_the_cpu_for_one_tick` gains
   two cases, news spread twice and three times a step (so every news

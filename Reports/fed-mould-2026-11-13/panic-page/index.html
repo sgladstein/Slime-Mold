@@ -1,0 +1,135 @@
+<title>Scared Mould</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* A cut-off part of shape C panics (2026-11-13, the slime-enemy thread).
+   Two staged scenes in the window on Fork, seed 1, farm hand, each filmed
+   with today's C and with the scared rule on, on one build. Labelled, not
+   blind: the page shows a behaviour the owner asked for, not a pick between
+   looks. Colours follow the world: mould amber, crystal cyan. */
+:root {
+  --bg: #f3f5f6; --fg: #182024; --muted: #56646b; --line: #d5dde0;
+  --panel: #ffffff; --amber: #a86a12; --cyan: #127a93; --red: #b2402a;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; --red: #f08a72; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; --red: #f08a72; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 34px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.2rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+header, section { display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; align-content: start; }
+figure video { width: 100%; max-width: 100%; border-radius: 4px; border: 1px solid var(--line); display: block; background: #111a1f; }
+.charge video { aspect-ratio: 560 / 480; }
+.bolt video { aspect-ratio: 720 / 480; }
+.tag { font-family: var(--display); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.tag.scared { color: var(--red); }
+.scroll { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.9rem; width: 100%; min-width: 300px; }
+th, td { text-align: right; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--display); font-weight: 500; color: var(--muted); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+ul { margin: 0; padding-left: 1.2rem; max-width: 68ch; display: grid; gap: 6px; }
+.ask { border-left: 3px solid var(--cyan); padding: 4px 0 4px 14px; display: grid; gap: 8px; }
+.note { color: var(--muted); font-size: 0.9rem; }
+code { font-size: 0.9em; }
+</style>
+
+<main>
+  <header>
+    <span class="tag">Shape C · cut off and scared</span>
+    <h1>A cut-off part panics</h1>
+    <p class="lede">You asked for a cut-off part to "act more like a scared animal. Either run away back to the main body or go right for the soliders. It should be more reckless", with no stronger attack. A part that has heard no news of food for 5 seconds now heads straight for the nearest soldier or building within 20 cells, or else the nearest crystal that still has food. For the first 1.5 seconds it goes at its own pace, which is the warning you can see. Then it runs at twice its pace. Its bite is the same as before.</p>
+  </header>
+
+  <section class="ask">
+    <h2>What to look at</h2>
+    <ul>
+      <li>Does the charge read as a scared animal going for the soldiers?</li>
+      <li>It is on in shape C now, so the window plays it. <code>larder-world -- panic=0</code> plays C without it.</li>
+    </ul>
+  </section>
+
+  <section class="charge">
+    <h2>1. Soldiers nearby: it charges</h2>
+    <p class="note">At 2:30 a held ring is cut round a stretch of tube with no crystal inside, and four soldiers are set down inside the ring, 34 cells from the tube. Left is today's C; right is the scared rule. One frame every half game second, played at 6 frames a second (3 times real speed).</p>
+    <div class="pair">
+      <figure>
+        <span class="tag">Today</span>
+        <video src="charge-today.mp4" poster="charge-today.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+      <figure>
+        <span class="tag scared">Scared</span>
+        <video src="charge-scared.mp4" poster="charge-scared.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+    </div>
+    <div class="scroll"><table>
+      <tr><th>After the cut</th><th>0 s</th><th>5 s</th><th>6 s</th><th>7 s</th><th>10 s</th><th>12 s</th><th>20 s</th></tr>
+      <tr><td>Today: walkers in the ring</td><td>138</td><td>150</td><td>146</td><td>143</td><td>138</td><td>113</td><td>0</td></tr>
+      <tr><td>Scared: walkers in the ring</td><td>112</td><td>37</td><td>4</td><td>1</td><td>0</td><td>0</td><td>0</td></tr>
+    </table></div>
+    <p class="note">The scared piece gathers and turns toward the soldiers at about 4 seconds, and runs at them from 5. The soldiers shoot it down as it comes, and it is gone 2 seconds later, with one soldier lost (the squad went from 30 to 29 at that moment). At this distance the warning is short, about a second. Today's piece stays where it was cut, grows a little, and drifts. When part of it comes within range at about 12 seconds, it is shot away over the next 8.</p>
+  </section>
+
+  <section class="bolt">
+    <h2>2. No soldiers near: it runs for a crystal</h2>
+    <p class="note">The same round with no soldiers set down. At 2:30 a ring is cut round a piece of tube near the crystal and held for 8 seconds, then opened.</p>
+    <div class="pair">
+      <figure>
+        <span class="tag">Today</span>
+        <video src="bolt-today.mp4" poster="bolt-today.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+      <figure>
+        <span class="tag scared">Scared</span>
+        <video src="bolt-scared.mp4" poster="bolt-scared.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+    </div>
+    <div class="scroll"><table>
+      <tr><th>After the cut</th><th>0 s</th><th>5 s</th><th>8 s (opens)</th><th>9 s</th><th>12 s</th><th>20 s</th><th>30 s</th></tr>
+      <tr><td>Today: walkers inside</td><td>284</td><td>307</td><td>303</td><td>317</td><td>254</td><td>197</td><td>241</td></tr>
+      <tr><td>Scared: walkers inside</td><td>200</td><td>215</td><td>211</td><td>189</td><td>143</td><td>75</td><td>26</td></tr>
+    </table></div>
+    <p class="note">The scared piece bunches on the side of the ring nearest the crystal. When the ring opens it pours into the crystal's lobe, and the ground where it was is left empty: an eighth of it is still there at 30 seconds. Today's piece joins back up where it stands. A scared piece calms once it hears of food again, either by eating at a crystal or by touching the fed body.</p>
+  </section>
+
+  <section>
+    <h2>How to beat it</h2>
+    <ul>
+      <li><strong>A charge:</strong> shoot it before it closes. Four soldiers standing their ground shot the whole piece down and lost one of their own. Fewer guns, or a bigger piece, and it gets through.</li>
+      <li><strong>A run for a crystal:</strong> a wall in its way stops it, and it bites the wall. A squad on its route makes it charge instead. If it reaches the crystal, it feeds, calms and regrows there.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What it changes before any cut</h2>
+    <p class="note">Bits the squad's own shots knock off can charge the squad too. Only a few walkers are scared at any moment: 0 to 11 in a CPU game on Fork, out of 13,000 to 27,000. Now that soldiers aim only at slime they can see, they shoot those bits as they come, so the squad loses little. In the window (Fork, seed 1, the farm hand) it has 30 soldiers at 2:30, against 33 without the rule. On the CPU world (4 seeds; idle, farm and strike hands; 5:00 each) the scores barely move. The idle hand still loses every game, and all 12 games run the full 5 minutes.</p>
+    <div class="scroll"><table>
+      <tr><th>Window, seed 1</th><th>1:00</th><th>1:20</th><th>1:40</th><th>1:50</th><th>2:00</th><th>2:30</th></tr>
+      <tr><td>Today: soldiers</td><td>19</td><td>18</td><td>20</td><td>25</td><td>27</td><td>33</td></tr>
+      <tr><td>Scared: soldiers</td><td>19</td><td>16</td><td>19</td><td>19</td><td>24</td><td>30</td></tr>
+      <tr><td>Today: food harvested</td><td>5,745</td><td>6,645</td><td>8,603</td><td>11,303</td><td>12,503</td><td>15,455</td></tr>
+      <tr><td>Scared: food harvested</td><td>5,745</td><td>6,345</td><td>7,980</td><td>9,780</td><td>11,280</td><td>15,132</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>How these were made</h2>
+    <ul>
+      <li>The window's own picture, on software Vulkan, all four films on one build (today's main, after the wading change and soldiers aiming only at slime they can see): <code>larder-world look=DIR hand=farm seed=1 cut=150,365,240,24 cutsquad=365,256,150,4</code> (scene 1) and <code>cut=150,386,239,22,8,16</code> (scene 2), each with <code>panic=0</code> (today) and the new default.</li>
+      <li>The scenes are staged: the ring and the soldiers' places are set by the command, not played.</li>
+      <li>The rule acts before the cut too, so each pair's rounds differ a little by 2:30: the mould has 18,623 walkers today against 18,143 scared.</li>
+    </ul>
+  </section>
+</main>
