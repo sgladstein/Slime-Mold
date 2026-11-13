@@ -100,4 +100,17 @@ None. One multiply fewer in the walk.
 
 **Cost.** On the CPU, `squad::read` for 40 units on the edge of C's body (shape C at 240 s, seeds 1 and 2, the same dish at either commit since the squad held fire) took 111-120 µs a frame before and 120-139 µs after (four timings each): about a tenth more, a quarter of a microsecond a unit, under 0.1% of a 22 ms CPU tick. The line is walked only for a block that beats the best so far. The probe is [`raw/aimcost.rs`](larder-wading-2026-11-13/raw/aimcost.rs) (copy it into `examples/` to run it), output in [`raw/aim-cost/`](larder-wading-2026-11-13/raw/aim-cost/). The GPU's `units` pass walks the same lines; its 1070 timing waits for the owner's go on timing runs, and the twin there checks only that it passes.
 
-**Smoke games.** Running on shape C (the wading smoke's command, default `wade`); the results land here before the merge.
+**Smoke games** (the wading smoke's command at the default `wade`, so the same settings hash as its `wade=6` arm; [`smoke-c-aim.txt`](larder-wading-2026-11-13/raw/smoke-c-aim.txt)):
+
+| Hand | Aims that see | Aims through walls (`wade=6` above) |
+|---|---|---|
+| idle | cap 3/4 at -0.333, wiped once at 586 s; 792-1,309 shots | cap 2/4, wiped at 586 and 599 s; 122-1,309 shots |
+| random | wiped 4/4 at 70-114 s | wiped 4/4 at 69-114 s |
+| farm | cap 4/4, +0.074 to +0.089; 23,661-33,107 killed | cap 4/4, +0.073 to +0.096; 20,900-28,911 killed |
+| strike | cap 2/4 (+0.068, +0.074), wiped at 436 and 526 s | cap 2/4, wiped at 446 and 516 s |
+| rush | wiped 3/4 at 122-215 s, cap once | the same |
+
+- **The checks pass.** Idle never wins (-0.333 at best). The shortest game is 70 s. Every game ends in a wipe or at the cap. Farm beats idle and random on 4 of 4 seeds.
+- Idle's squad stands at the larder on Defend, and on seed 5 it fired 792 shots against 122 and held to the cap. Farm kills more (seeds 5 and 7: 33,107 and 31,849 against 26,322 and 28,911). Every other score moves by 0.017 or less.
+
+**A test that leaned on the old aim.** `a_step_in_halves_plays_as_a_whole_one` gasses the mould round the first soldier touched and needs a gassed walker by a soldier afterwards. With aims that see, the first touch on seed 5 was one walker on an attack-moving soldier, which walked on from the five walkers the gas slept. The test now gasses at three walkers on a soldier: it sleeps 12, and 4 are still on a soldier at the first read.

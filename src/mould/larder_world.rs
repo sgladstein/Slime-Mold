@@ -3050,8 +3050,11 @@ mod tests {
             }
             // Sleep gas on the mould round the first soldier it touches
             // (the squad toolkit): the gassed walkers come off the touch in
-            // `finish_step`.
-            if let (0, Some(k)) = (gassed, a.soldiers.iter().position(|s| s.alive && s.touching > 0)) {
+            // `finish_step`. With 3 walkers on it, not 1: once aims had to
+            // see their slime (2026-11-13), the first touch on seed 5 was one
+            // walker on an attack-moving soldier, which walked on from the 5
+            // it slept and left no calm touch to read; at 3 it is in the body.
+            if let (0, Some(k)) = (gassed, a.soldiers.iter().position(|s| s.alive && s.touching >= 3)) {
                 b.finish_step();
                 let (x, y) = (a.soldiers[k].x, a.soldiers[k].y);
                 let r = 4.0 * a.rules.touch * a.world.scale();
