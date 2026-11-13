@@ -102,12 +102,14 @@ Hunger makes a walker that has eaten its crystal dry follow the scent (food and 
 
 **Why.** The campaign thread sent a note after #171 (a1f9865). First contact is headless and the soldiers wade. In that mission, random wiped the Drifter on 2 of 4 seeds, and the Drifter left home only when provoked. Hunger 16 was the arm rejected above for growing to the plain mould's size. A bigger mould that roams is now what the mission wants.
 
-**Run.** First contact, seeds 1-4, with the default `campaign` example. Raw output is in `raw/drifter3/`.
+**Run.** First contact, seeds 1-4, with the default `campaign` example. Raw output is in `raw/drifter3/`. The run was repeated on main 2ade1d4, after #174 changed the drain and the default shape, and the bottom two rows of the table come from that run. The goal there is "below a tenth".
 
 | | idle best | random best | random squad wiped | claim best | strike best | crystals reached (claim) |
 |---|---|---|---|---|---|---|
 | hunger 8 (was) | 0.05 | 0.28 | 0/4 | 0.09 | 0.45 | home only, 3 of 4 |
 | **hunger 16 (kept)** | 0.05 | 0.19 | 2/4 | 0.09 | 0.33 | 4 crystals on 2 of 4 |
+| hunger 8, after #174 (2ade1d4) | 0.06 | 0.31 | 0/4 | 0.10 | 0.50 | home only, 3 of 4 |
+| **hunger 16, after #174** | 0.06 | 0.21 | 2/4 | 0.10 | 0.37 | 6-9 crystals on 3 of 4 |
 
 **What it changes.**
 - Every hand now meets a mould that leaves home: idle reaches a second crystal on 2 of 4 seeds, and random reaches 5-8 crystals on 3 of 4.
