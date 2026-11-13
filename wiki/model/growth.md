@@ -132,7 +132,12 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   heading straight already moves 15 cells a second to a soldier's 10, so
   a lean at its own pace was a charge; at half pace the piece bunches and
   slides for about 3 s before it lands, against about 1.5 s, and uncut C
-  is back within 0.13% of today on 4 of 4 seeds. In the window four soldiers 34 cells
+  is back within 0.13% of today on 4 of 4 seeds. A charge at a unit gives
+  up after `panic_dash` (15 steps, 0.5 s) and creeps on; a run for a
+  crystal keeps its bolt. On the retreat probe a unit that pulls back half
+  a second late from 24 cells gets clear on 5 of 6 seeds (0 of 6 when the
+  charge never gives up), and one that stands is caught on 5 of 6 either
+  way. In the window four soldiers 34 cells
   from a cut piece were charged 5 s after the cut and shot it down,
   losing one; with none near, the piece pours into a crystal's lobe.
   Smoke scores unchanged; the window's farm squad has 30 soldiers at 2:30

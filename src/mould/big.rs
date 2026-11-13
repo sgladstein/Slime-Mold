@@ -68,6 +68,8 @@ pub const PANIC_PILES: usize = 64;
 /// moves, so `panics` stays true through the lean. The GPU reads the
 /// clamped value from `Params`.
 pub const PANIC_CREEP_MIN: f32 = 0.01;
+/// The longest dash (`BigParams::panic_dash`), steps.
+pub const PANIC_DASH_MAX: u32 = 0xFFFF;
 const CLAIM_BIRTH: u32 = 403;
 const DRAW_MIX: u32 = 113;
 const DRAW_FRUIT: u32 = 114;
@@ -561,6 +563,18 @@ pub struct BigParams {
     /// about 3 s before it lands, against about 1.5 s; at 0.25 it barely
     /// moved before it bolted, so the wind-up hardly showed.
     pub panic_creep: f32,
+    /// **The charge gives up** (`panic_dash`, steps; 0 never; 2026-11-13,
+    /// the game designer's follow-up): a walker charging a unit bolts at
+    /// `panic` for this many steps after its lean, then creeps on at
+    /// `panic_creep`; a run for a crystal keeps the bolt. Why: a squad that
+    /// pulls back when the lean starts could never get clear, as the bolt
+    /// (twice a walker's 15 cells a second) outruns a soldier's 10 and a
+    /// unit stays the target out to `panic_r`; the retreat probe caught the
+    /// pulling-back unit on most seeds at 16-32 fine cells
+    /// (`examples/retreatprobe.rs`). With a short dash a squad that stands
+    /// is still reached (lean and dash cover more than `panic_r`) and one
+    /// that pulls back in time outwalks the creep.
+    pub panic_dash: u32,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -1008,6 +1022,7 @@ impl BigParams {
             panic_r: 20.0,
             panic_lean: 45,
             panic_creep: 0.5,
+            panic_dash: 15,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -1904,7 +1919,7 @@ impl BigDish {
     /// of the nearest unit within `panic_r` (ties to the first), else of
     /// the nearest crystal with more than `PANIC_LEFT` left; whole cells,
     /// so the GPU picks the same.
-    fn panic_target(&self, cx: i64, cy: i64) -> Option<(f32, f32)> {
+    fn panic_target(&self, cx: i64, cy: i64) -> Option<(f32, f32, bool)> {
         let r = self.p.panic_r * self.p.scale as f32;
         let r2 = (r.max(0.0) * r.max(0.0)).floor() as i64;
         let mut best: Option<(i64, i64, i64)> = None;
@@ -1914,6 +1929,7 @@ impl BigDish {
                 best = Some((d2, ux, uy));
             }
         }
+        let unit = best.is_some();
         if best.is_none() && !self.charge.is_empty() {
             for j in 0..self.piles.len().min(PANIC_PILES) {
                 if self.crystal_left(j) <= PANIC_LEFT {
@@ -1927,7 +1943,19 @@ impl BigDish {
                 }
             }
         }
-        best.map(|(_, x, y)| (x as f32 + 0.5, y as f32 + 0.5))
+        best.map(|(_, x, y)| (x as f32 + 0.5, y as f32 + 0.5, unit))
+    }
+
+    /// Walker `k`'s haste charging a unit (`panic_dash`): `haste` (its
+    /// `panic_haste`) through the lean and the dash, then `panic_creep`.
+    fn panic_charge(&self, k: usize, haste: f32) -> f32 {
+        let dash = self.p.panic_dash.min(PANIC_DASH_MAX) as u64;
+        let age = (self.steps + 1).saturating_sub(self.news[k]);
+        if dash > 0 && age > self.p.wither_lag as u64 + self.p.panic_lean.min(PANIC_LEAN_MAX) as u64 + dash {
+            self.p.panic_creep.max(PANIC_CREEP_MIN)
+        } else {
+            haste
+        }
     }
 
     pub fn crystal_left(&self, pi: usize) -> f32 {
@@ -2333,10 +2361,10 @@ impl BigDish {
             // how far each sensor points toward it, `panic` times as fast.
             let haste = self.panic_haste(k);
             let scared = if haste > 0.0 { self.panic_target(x.floor() as i64, y.floor() as i64) } else { None };
-            if scared.is_some() {
-                st *= haste;
+            if let Some((_, _, unit)) = scared {
+                st *= if unit { self.panic_charge(k, haste) } else { haste };
             }
-            if let (true, Some((tx, ty))) = (look, scared) {
+            if let (true, Some((tx, ty, _))) = (look, scared) {
                 let read = |a: f32| {
                     let (c, s) = (a.cos(), a.sin());
                     match self.cell(x + c * so, y + s * so) {
@@ -4365,7 +4393,7 @@ mod tests {
         eprintln!("to the unit: {:.1} -> {:.1} panicking, {:.1} -> {:.1} not", charge.0, charge.1, stay.0, stay.1);
         assert!(charge.1 < charge.0 - 4.0 && charge.1 < stay.1 - 4.0, "a cut-off walker in reach charges the unit");
         // Out of reach, the unit is ignored.
-        let far = run(BigParams { panic_r: 0.5, ..wide }, true, Some(at), &nearest);
+        let far = run(BigParams { panic_r: 0.5, ..wide.clone() }, true, Some(at), &nearest);
         eprintln!("unit out of reach, to a crystal: {:.1} -> {:.1}", far.0, far.1);
         assert!(far.1 < far.0 - 4.0, "with the unit out of reach it runs for a crystal");
         // The lean's pace (`panic_creep`): with a lean longer than the 30
@@ -4376,6 +4404,16 @@ mod tests {
         let creep = run(BigParams { panic_creep: 0.25, ..leaning }, true, None, &nearest);
         eprintln!("leaning to a crystal: {:.1} -> {:.1} at its own pace, {:.1} -> {:.1} at a quarter", own.0, own.1, creep.0, creep.1);
         assert!(creep.1 < creep.0 - 1.0 && creep.1 > own.1 + 2.0, "a creeping walker closes on its crystal, slower");
+        // The dash (`panic_dash`): charging the unit, a walker whose dash
+        // has run out creeps; one whose charge never gives up keeps the
+        // bolt. A run for a crystal keeps the bolt either way.
+        let charging = BigParams { panic_lean: 0, panic_creep: 0.25, ..wide.clone() };
+        let bolt = run(BigParams { panic_dash: 0, ..charging.clone() }, true, Some(at), &to_unit);
+        let gives_up = run(BigParams { panic_dash: 1, ..charging.clone() }, true, Some(at), &to_unit);
+        eprintln!("to the unit: {:.1} -> {:.1} never giving up, {:.1} -> {:.1} giving up after a step", bolt.0, bolt.1, gives_up.0, gives_up.1);
+        assert!(gives_up.1 < gives_up.0 - 1.0 && gives_up.1 > bolt.1 + 2.0, "a charge that gives up creeps on, slower");
+        let to_crystal = run(BigParams { panic_dash: 1, panic_r: 0.5, ..charging }, true, Some(at), &nearest);
+        assert!(to_crystal.1 < to_crystal.0 - 4.0, "a run for a crystal keeps its bolt");
     }
 
     #[test]

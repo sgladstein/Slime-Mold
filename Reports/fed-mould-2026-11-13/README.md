@@ -522,7 +522,58 @@ cases), **0.5 by default**.
   0.13%), since a far explorer that goes stale for a moment creeps rather
   than runs.
 - Not tested: whether a squad that pulls back in time gets clear (a
-  soldier walks faster than the creep and slower than the bolt).
+  soldier walks faster than the creep and slower than the bolt). Tested
+  next, below.
+
+**The charge gives up (`panic_dash`, 11-13, the game designer's
+follow-up).** Their check: "one scripted squad that orders a pull-back
+when the lean starts. If it gets clear on most seeds, a player who reacts
+is rewarded"; if not, slow the landing or "let the charge give up after a
+few cells". `examples/retreatprobe.rs` (CPU race world, C's keys, grown 90
+s; per seed a piece of 260-320 walkers at least 40 fine cells from every
+crystal's centre, every other walker killed so no news reaches it, its
+news set to run out at 0 s; a unit `D0` fine cells beyond its edge that
+stands, or walks straight away at a soldier's 10 dish cells a second from
+0 s or 0.5 s; caught is a living walker within the soldier's touch within
+10 s; the unit is not slowed by rock or walkers and does not shoot).
+Deciding measure, named before the run: caught or clear, 6 seeds a cell
+(`raw/panic/retreat/`).
+
+| Caught of 6 | stands | pulls back at 0 s | pulls back at 0.5 s |
+|---|---|---|---|
+| 16 cells, charge never gives up | 5 | 6 | 6 |
+| 16 cells, gives up after 15 steps | 5 | 1 | 4 |
+| 24 cells, never gives up | 5 | 4 | 6 |
+| 24 cells, gives up after 15 steps | 5 | 0 | 1 |
+| 32 cells, never gives up | 5 | 0 | 5 |
+| 32 cells, gives up after 15 steps | 5 | 0 | 0 |
+
+So with the creep alone a squad that reacts half a second late is caught
+almost always, as the bolt (30 dish cells a second) outruns it and a unit
+stays the target out to `panic_r`. **The charge now gives up:**
+`panic_dash` (steps; 0 never; both engines; GPU `Params` word 492, a u32,
+claimed in ROADMAP), **15 by default (0.5 s)**: a walker charging a unit
+bolts at `panic` for that long after its lean, then creeps on at
+`panic_creep`; a run for a crystal keeps its bolt. Paired by seed, giving
+up clears the half-second pull-back at 24 cells on 5 of 6 seeds where the
+charge that never gives up caught it on all 6 (sign test p 0.06, 6 seeds),
+and the squad that stands is caught on the same 5 of 6 (the sixth piece
+stopped 6 cells short). The lean and the dash cover 52 fine cells, more than
+`panic_r`'s 40, so a squad that stays within reach is always reached. A
+charge that gave up, with its unit out of reach, runs for a crystal: in
+the seed-1 film the piece turns and streams to the nearest one. Films
+(the page's scene 4: `retreatprobe seeds=1 look=DIR look_d0=24`, and with
+`keys=panic_dash:0`; seed 1, a 291-walker piece, 24 cells): standing is
+caught at 1.60 s; pulling back half a second late is caught at 2.53 s when
+the charge never gives up and clear with the dash (closest 14.4 fine
+cells). Smoke (`raw/smoke/panic2-dash15-cap300.txt`, as the creep's
+with `panic_dash` 15, 9:53 on 4 threads): idle -0.333 on 4 of 4, farm
++0.119 (+0.120 without the dash), strike +0.125 (+0.124); all 12 games to
+the cap. Twins
+exact with the dash on (both panic twin cases, 0 walkers off); a CPU
+test: charging a unit with the dash at one step closes 1.6 fine cells in
+30 ticks against 9.9 with no limit, while a run for a crystal keeps its
+bolt.
 
 **Counters (the designer's second point).** A charge: shoot it before it
 closes, with guns enough for its size (four soldiers shot a 112-walker

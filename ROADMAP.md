@@ -343,7 +343,9 @@ slime-enemy thread's withering PR #195 (11-13); then 460 `panic_r2` (u32)
 and 484 `panic` (f32), `wclock` bits 25-31 (the lean) and `Pile`'s spare
 word (`centre`), the slime-enemy thread's panic PR (11-13); then 488
 `panic_creep` (f32, the lean's pace), the slime-enemy thread's creep PR
-(11-13). Still spare: **188**, **228/232/236**, **492**, **828** (six).
+(11-13); then 492 `panic_dash` (u32, the charge's dash), the slime-enemy
+thread's dash PR (11-13). Still spare: **188**, **228/232/236**, **828**
+(five).
 
 ## Keeping this page true
 

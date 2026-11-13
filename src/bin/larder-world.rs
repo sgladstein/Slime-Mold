@@ -357,7 +357,9 @@ fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'static st
     // or else the nearest crystal with food, creeping at half its pace for
     // 1.5 s (the tell; `panic_creep` 0.5, the BigParams default since the
     // game designer's review of the last-stand film, 11-13) and then twice
-    // its pace; the bite is unchanged. On the CPU race world
+    // its pace, for 0.5 s at a unit before it creeps again (`panic_dash`
+    // 15, so a squad that pulls back in time gets clear); the bite is
+    // unchanged. On the CPU race world
     // the scores are unchanged (smoke, 4 seeds x 3 hands); in the window
     // (Fork seed 1, farm) the squad has 30 soldiers at 2:30 against 33, as
     // bits its own shots knock off charge it and are shot (#198). Before
