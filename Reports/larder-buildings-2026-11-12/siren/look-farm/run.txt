@@ -1,0 +1,9 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+Reports/larder-buildings-2026-11-12/siren/look-farm/fork-farm-060s-all.png
+Reports/larder-buildings-2026-11-12/siren/look-farm/fork-farm-060s-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.032 ms a frame
+  t 60 s: mould 1399, soldiers 20, bank 1046, harvested 5446, shots 62, killed 55, took 98%, crystals left 0.762; squad at 214.7,96.5
+Reports/larder-buildings-2026-11-12/siren/look-farm/fork-farm-090s-all.png
+Reports/larder-buildings-2026-11-12/siren/look-farm/fork-farm-090s-near.png
+  CPU: ground field 2.51 ms (once a game second), model and HUD 0.040 ms a frame
+  t 90 s: mould 1399, soldiers 25, bank 1144, harvested 7544, shots 119, killed 88, took 98%, crystals left 0.701; squad at 284.4,97.7

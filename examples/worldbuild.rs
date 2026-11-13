@@ -10,13 +10,20 @@
 //! seed. **Deciding measure, named before the run:** walkers within
 //! `R` dish cells of the lure at `secs` game seconds, lure on against off,
 //! sign test. Printed every 10 s as well, with the lure's food burnt.
-use slime_mould::mould::larder_world::{race_world, Cmd, Game, Kind, Rules, Stance, World};
+use slime_mould::mould::big::BigDish;
+use slime_mould::mould::larder_world::{race_params, Cmd, Game, Kind, Rules, Stance, World};
+use slime_mould::mould::tiers::Tier;
 
 const R: f32 = 8.0;
 
 fn main() {
     let (mut seeds, mut scale, mut walkers, mut at, mut secs) = ((1u64..=8).collect::<Vec<_>>(), 2usize, 5_000usize, 0.35f32, 60u32);
     let mut rules = Rules { start_bank: 1e6, ..Rules::default() };
+    // Placed whole: this asks what the building does, not how it rises.
+    rules.build.raise = 0.0;
+    // `kind=siren tier=swarmer`: the siren on a tier that answers the alarm
+    // (2026-11-12); the lure by default.
+    let (mut kind, mut tier) = (Kind::Lure, None::<Tier>);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
         match k {
@@ -30,16 +37,23 @@ fn main() {
             "secs" => secs = v.parse().unwrap(),
             "lure_smell" => rules.build.lure_smell = v.parse().unwrap(),
             "lure_r" => rules.build.lure_r = v.parse().unwrap(),
+            "kind" => kind = if v == "siren" { Kind::Siren } else { Kind::Lure },
+            "tier" => tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             _ => panic!("unknown {k}"),
         }
     }
     println!("worldbuild: lure smell {} (x a soldier's), radius {} dish cells", rules.build.lure_smell, rules.build.lure_r);
-    println!("worldbuild: lure {at} of the way from the core to the larder, walkers within {R} dish cells, scale {scale}, walkers {walkers}, {secs} s");
+    println!("worldbuild: {} on tier {}", kind.name(), tier.map_or("plain", |t| t.name()));
+    println!("worldbuild: placed {at} of the way from the core to the larder, walkers within {R} dish cells, scale {scale}, walkers {walkers}, {secs} s");
     let (mut more, mut less) = (0, 0);
     for &seed in &seeds {
         let mut row = Vec::new();
         for on in [true, false] {
-            let mut g = Game::new(race_world(seed, scale, walkers), rules, seed);
+            let mut p = race_params(seed, scale, walkers);
+            if let Some(t) = tier {
+                t.apply(&mut p);
+            }
+            let mut g = Game::new(BigDish::new(p), rules, seed);
             let s = g.world.scale();
             let (c, l) = (g.core, g.larder);
             let p = (c.0 + (l.0 - c.0) * at, c.1 + (l.1 - c.1) * at);
@@ -50,7 +64,7 @@ fn main() {
             g.soldiers[0].x = site.0;
             g.soldiers[0].y = site.1;
             g.apply(Cmd::Stance(0, Stance::HoldFire));
-            assert!(g.apply(Cmd::Build(Kind::Lure, site)));
+            assert!(g.apply(Cmd::Build(kind, site)));
             if !on {
                 g.apply(Cmd::Toggle(0));
             }
@@ -65,7 +79,7 @@ fn main() {
                     near.push(n);
                 }
             }
-            println!("  seed {seed} lure {}: near the lure every 10 s {near:?}; burnt {:.0} food; mould {}", if on { "on " } else { "off" }, g.lured, g.world.living());
+            println!("  seed {seed} {} {}: near it every 10 s {near:?}; burnt {:.0} food; calls {}; mould {}", kind.name(), if on { "on " } else { "off" }, g.lured, g.sirens, g.world.living());
             row.push(*near.last().unwrap());
         }
         if row[0] > row[1] {
@@ -80,5 +94,5 @@ fn main() {
     for i in 0..=k {
         p += (1..=i).fold(1.0f64, |acc, j| acc * (n - j + 1) as f64 / j as f64) / 2f64.powi(n);
     }
-    println!("lure on against off at {secs} s: more walkers near it on {more}, fewer on {less} (two-sided sign test p {:.4})", (2.0 * p).min(1.0));
+    println!("on against off at {secs} s: more walkers near it on {more}, fewer on {less} (two-sided sign test p {:.4})", (2.0 * p).min(1.0));
 }
