@@ -314,6 +314,24 @@ thread's readout buffer and living-walker pass add no `Params` row. The layout a
 `Engine::write_params` run in release builds, so a slipped row fails every
 GPU test instead of moving every offset after it.
 
+**Spare `Params` words (11-13 04:30Z, technical lead).** `PARAMS_BYTES` is
+still 896: #183 (`fed_full`, `fed_crowd`) and #193 (`flow_loss` as `eloss`)
+spent padding words instead of growing the struct. The words still spare in
+`struct Params` (`src/gpu/engine.wgsl`), by byte offset: **188** `_p0`
+(u32), **228/232/236** `_p1`-`_p3` (f32), **360/364** `_r0`/`_r1` (u32),
+**460** `_k0` (u32), **484/488/492** `_k1`-`_k3` (f32), **732** `_l1`
+(u32), **828** `_l5` (f32): twelve in all. Each `Set` (the four species
+blocks at 496) also has `_p` at +44, a per-species word. To use one, a
+thread claims it here (offset, name, thread, PR) in its PR, and renames it
+in the WGSL and in `Engine::write_params` in the same commit. A word sits
+inside an older row, so the row's comment should say who borrowed it.
+When the list runs out, **one** planned PR grows `Params` by a whole
+16-byte row (896-911) and updates the
+length asserts, booked through this thread so two PRs don't grow it in the
+same week.
+
+Claimed: none yet beyond #183 and #193.
+
 ## Keeping this page true
 
 - A thread that passes a gate, opens or merges a PR for a step, or changes
