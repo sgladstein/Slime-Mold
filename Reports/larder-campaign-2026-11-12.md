@@ -329,5 +329,22 @@ stuck or capped and none broke the Drifter (strike best 0.50, stuck by
 joins the mission rule keys): strike 4/4 at 7:27-8:53 with 2 stars,
 random 0/4 (best 0.47), claim 0/4 (0.27), boom and idle 0/4 (0.07).
 Upkeep is a later mission's lesson. The tiers thread's #180 (Drifter
-hunger 8 to 16) is next; First contact gets one more check after it.
+hunger 8 to 16) followed (census v12c, a1a7156): strike 4/4 at 7:10-7:43
+with 2-3 stars, random 2/4 at 11:32-13:18 (a tuning note; it lost its
+squad or capped on the other two), claim 0/4 but its bar now reaches
+0.49 since the Drifter comes out to its crystals, boom and idle 0/4
+(0.08).
+
+**The gaps re-tuned the same night (census v12, ab7a819, seeds 1-4).**
+On main the walled squad (gaps+claim) was wiped by 2:22-8:52 and held at
+best 0.30 of 10:00; claim, random and idle were wiped or overrun by 2:09-
+6:17. Rations off alone: walls lived to 13:46-14:58 but best 0.49-0.83;
+a 3000 bank on top was worse (best 0.19); rations off with the bite at
+0.5 (`rule drain 0.5`): walls lived to the cap and held 4:42-8:00 at best,
+never 10:00. So the mission is now "Keep the mould inside the Rim for
+5:00" with rations off and bite 0.5: walls 3/4 at 5:00 with 2 stars (the
+fourth held 4:42), claim, random and idle 0/4 (best 0.43, 0.42, 0.35:
+the thick mould is out by about 2:00). The `#[ignore]`d plan test now
+counts The gaps in held seconds; it passes on main, and so does the CI
+smoke test.
 

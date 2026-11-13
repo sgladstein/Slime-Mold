@@ -17,6 +17,8 @@
 # them strike starved stuck by 12:56-14:09 and no hand met it (strike best 0.50);
 # without them strike 4/4 at 7:27-8:53, random 0/4 (best 0.47), claim 0.27, idle 0.07.
 # Upkeep is a later mission's lesson, not first contact's.
+# After #180 (Drifter hunger 16, v12c on a1a7156): strike 4/4 at 7:10-7:43, random
+# 2/4 at 11:32-13:18 (a tuning note), claim 0/4 best 0.49, boom and idle 0/4 (0.08).
 name First contact
 says Break the Drifter: cut it below a tenth of its size
 map fork
