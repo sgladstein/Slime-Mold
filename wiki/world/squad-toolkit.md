@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-13T02:20Z
+updated: 2026-11-13
 sources:
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
