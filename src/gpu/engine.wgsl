@@ -1982,13 +1982,31 @@ fn smell(@builtin(local_invocation_index) li: u32) {
     }
 }
 
+// Whether every cell after the first on the line from (cx, cy) to (tx, ty)
+// is agar: max(|dx|, |dy|) whole-cell steps, offsets truncated toward zero
+// (`squad::sees`, the same cells). A unit aims only at a block it sees
+// (2026-11-13): through a wall the game held the shot, so a squad beside a
+// wall with thicker slime behind it fired at nothing in front.
+fn sees(cx: i32, cy: i32, tx: i32, ty: i32) -> bool {
+    let dx = tx - cx;
+    let dy = ty - cy;
+    let n = max(max(abs(dx), abs(dy)), 1);
+    for (var k = 1; k <= n; k++) {
+        let x = cx + dx * k / n;
+        let y = cy + dy * k / n;
+        if (agar[u32(y) * P.w + u32(x)] == 0u) { return false; }
+    }
+    return true;
+}
+
 var<workgroup> rsum: array<u32, 256>;
 var<workgroup> rbest: array<u32, 256>;
 var<workgroup> rbi: array<u32, 256>;
 
 // Each unit's walkers within `touch`, and the 4 x 4 block with the most
-// walkers whose centre is within `sight` (ties to the first, row-major). A
-// workgroup a unit: each thread takes every 256th cell of the touch disc's
+// walkers whose centre is within `sight` and that it sees (`sees`; ties to
+// the first, row-major; the line is walked only for a block that would
+// beat the thread's best, which picks the same block). A workgroup a unit: each thread takes every 256th cell of the touch disc's
 // box and every 256th block of the sight's, in row-major order (so its own
 // best is its first), then the threads reduce: the sums add, and the best
 // block is the most walkers, ties to the lower index, as one thread
@@ -2038,7 +2056,7 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
                     n += enemy_occ(u32(y * w + x));
                 }
             }
-            if (n > best) { best = n; bi = u32(by * nbw + bx); }
+            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1))) { best = n; bi = u32(by * nbw + bx); }
         }
     }
     rsum[li] = touching;
@@ -2159,7 +2177,8 @@ fn smell1(@builtin(global_invocation_id) gid: vec3<u32>) {
 }
 
 // Each unit's walkers within `touch`, and the 4 x 4 block with the most
-// walkers whose centre is within `sight` (ties to the first, row-major).
+// walkers whose centre is within `sight` and that it sees (ties to the
+// first, row-major).
 @compute @workgroup_size(64)
 fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
     let u = gid.x;
@@ -2200,7 +2219,7 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
                     n += atomicLoad(&occ[u32(y * w + x)]);
                 }
             }
-            if (n > best) { best = n; bi = u32(by * nbw + bx); }
+            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1))) { best = n; bi = u32(by * nbw + bx); }
         }
     }
     SQ.uout[u].touching = touching;
