@@ -2,8 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-12
+updated: 2026-11-13
 sources:
+  - Reports/fed-mould-2026-11-13/README.md
   - Reports/gpu-readout-2026-11-12.md
   - Reports/larder-build-plan-2026-11-11.md
   - Reports/larder-buildings-2026-11-12.md
@@ -22,6 +23,7 @@ sources:
   - Reports/species-gpu-2026-11-11.md
   - research/sources/creeper-world-2025.md
 code:
+  - BigParams::fed_crowd
   - BigParams::sand_keep
   - BuildRules
   - Cmd::Send
@@ -198,7 +200,7 @@ owner's no-king ruling (2026-11-12 20:21Z: "remove the king rule ...
 Headless"; [dead end](../../Reports/dead-ends.md)). The core rule is not what holds
 farm, wall and fort to the cap: without it (`core=headless`, race 5-20)
 they stalemate in 16 of 16 games as with it, and the player wins 2 of
-112 games instead of 6. **No king since 2026-11-12 20:21Z** (owner: "remove the king rule ... Headless"): `Core::of` is `Headless`, so every mould, tiers included, makes walkers while it has food, and holding its home stops nothing; the home keeps its pull (the Sprawler's is 0), and the window shows no core ring. A walker hits for `Rules::mass` (5,000 / the start walkers at scale 2; 1 by default), so a denser mould is the same body cut finer; the owner's shape playtest (`larder-world -- shape=a..e`) uses it ([report](../../Reports/slime-questions-2026-11-12/README.md)). **The broken mould** (2026-11-12, after the owner's D playtest): under 3% of its peak walkers its upkeep is 50 times (`Rules::broken`, `broken_starve`), so stragglers off food die within about 25 s instead of growing it back, and the window says so ([report, *Stragglers*](../../Reports/slime-questions-2026-11-12/README.md)). Strike
+112 games instead of 6. **No king since 2026-11-12 20:21Z** (owner: "remove the king rule ... Headless"): `Core::of` is `Headless`, so every mould, tiers included, makes walkers while it has food, and holding its home stops nothing; the home keeps its pull (the Sprawler's is 0), and the window shows no core ring. A walker hits for `Rules::mass` (5,000 / the start walkers at scale 2; 1 by default), so a denser mould is the same body cut finer; the owner's shape playtest (`larder-world -- shape=a..e`) uses it ([report](../../Reports/slime-questions-2026-11-12/README.md)). **The broken mould** (2026-11-12, after the owner's D playtest): under 3% of its peak walkers its upkeep is 50 times (`Rules::broken`, `broken_starve`), so stragglers off food die within about 25 s instead of growing it back, and the window says so ([report, *Stragglers*](../../Reports/slime-questions-2026-11-12/README.md)). **Shape C shares its food** in the window since 2026-11-13 (`energy_flow` 0.05, the one-body rule; the owner, 22:22Z: "I cannot tell if it is getting stronger by holding the crystals"): fed walkers along the network breed where there is room, so the body swells round the crystals it holds (Fork seed 1, 5:00: 45,237 walkers and 17.1% of the screen against 13,956 and 7.0%). Packing fed walkers two a cell (`BigParams::fed_crowd`, both engines, off) added walkers but not picture, as the look's thickness is full at about one walker a cell ([report and blind A/B](../../Reports/fed-mould-2026-11-13/README.md)). Strike
 still beats farm about 2 to 1 because food doesn't bind. **Wading, and
 the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
 *Wading, and the cone crater by default*](../../Reports/larder-world-roadmap-2026-11-11.md)):
