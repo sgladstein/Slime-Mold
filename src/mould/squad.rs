@@ -526,6 +526,9 @@ pub fn block_centre(w: usize, b: usize) -> (f32, f32) {
 
 /// A whole frame on the CPU: shots, smell, `ticks` ticks, reads, harvest.
 pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
+    // The units a panicking walker may charge (`BigParams::panic`): the
+    // cells the GPU's squad buffer holds (`pack`).
+    d.threats = f.units.iter().take(UNITS_MAX).map(|u| cell_of(d.w, d.h, u.x, u.y)).collect();
     let shots = shots(d, &f.shots, f.slime, f.crater, f.sink);
     smell(d, &f.units);
     for _ in 0..ticks {

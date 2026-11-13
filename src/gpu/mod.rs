@@ -121,6 +121,7 @@ pub const MAX_SPECIES: u8 = 4;
 /// Piles the GPU tracks (the dish's seven and food dropped with F); F does
 /// nothing once they are all used.
 pub const MAX_PILES: usize = 64;
+const _: () = assert!(MAX_PILES == crate::mould::big::PANIC_PILES, "a panicking walker looks over the same piles on both engines");
 
 /// The wall counters' first bytes (`Engine::wstat`): bites, broken cells,
 /// the eviction's moves, the struck, the living walkers, three spare. The
@@ -372,6 +373,17 @@ pub struct Settings {
     pub wither_every: u32,
     pub wither_lag: u32,
     pub wither_reach: u8,
+    /// A cut-off part panics (2026-11-13, `BigParams::panic`, `panic_r`):
+    /// a walker whose news is older than `wither_lag` runs for the nearest
+    /// unit within `panic_r` dish cells, else the nearest crystal with food
+    /// left, `panic` times as fast, by its sensors' direction alone. 0 off;
+    /// needs growth.
+    pub panic: f32,
+    pub panic_r: f32,
+    /// Steps after the lag runs out that a cut-off walker leans: steers
+    /// for its target at its own pace before it bolts
+    /// (`BigParams::panic_lean`, at most 127).
+    pub panic_lean: u32,
     /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
     /// radius `body_r`): a walker with few others round it moves slower.
     pub lone_step: f32,
@@ -512,6 +524,9 @@ impl Settings {
             wither_every: t.wither_every,
             wither_lag: t.wither_lag,
             wither_reach: t.wither_reach,
+            panic: t.panic,
+            panic_r: t.panic_r,
+            panic_lean: t.panic_lean,
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
@@ -754,6 +769,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "wither_every" => s.wither_every = int()?.clamp(1, 255),
         "wither_lag" => s.wither_lag = int()?.min(0xFFFF),
         "wither_reach" => s.wither_reach = int()?.clamp(1, 255) as u8,
+        "panic" => s.panic = f()?,
+        "panic_r" => s.panic_r = f()?,
+        "panic_lean" => s.panic_lean = int()?.min(127),
         "lone_step" => s.lone_step = f()?,
         "lone_floor" => s.lone_floor = f()?,
         "lone_r" | "body_r" => s.lone_r = f()? as u8,
@@ -883,6 +901,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         wither_every: s.wither_every,
         wither_lag: s.wither_lag,
         wither_reach: s.wither_reach,
+        panic: s.panic,
+        panic_r: s.panic_r,
+        panic_lean: s.panic_lean,
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,
@@ -1540,7 +1561,7 @@ impl Engine {
         assert_eq!(d.kind.is_empty(), self.kinds == 1, "a dish with this engine's mix");
         self.queue.write_buffer(&self.spec, 0, &u32_bytes(&spec_words(d)));
         self.queue.write_buffer(&self.news, 0, &u32_bytes(&news_words(d, self.cells as usize)));
-        self.withers = self.grows && d.p.wither > 0.0;
+        self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.done = d.steps;
         self.dish = d.clone();
         self.dropped.clear();
@@ -1649,8 +1670,15 @@ impl Engine {
         // kind's multipliers; then a set a species (`Set` in engine.wgsl),
         // each with its scent reach as the CPU takes it (`scent_offset`, or
         // the species' own sensor reach when that is 0).
-        b.extend(u32_bytes(&[!sets.is_empty() as u32, self.kinds, s.convert_r, 0]));
-        b.extend(f32_bytes(&[s.mix_reach, s.mix_angle, s.mix_turn, s.mix_step, s.mix_deposit, 0.0, 0.0, 0.0]));
+        // A cut-off part's panic borrows the row's spare words 460 (the
+        // charge's squared radius, fine cells, as the CPU's
+        // `panic_target`) and 484 (the haste; 0 off, and off without
+        // growth, as no news runs then): the slime-enemy thread, 11-13.
+        let pr = s.panic_r * self.dish.p.scale as f32;
+        let panic_r2 = (pr.max(0.0) * pr.max(0.0)).floor() as u32;
+        let panic = if self.grows { s.panic } else { 0.0 };
+        b.extend(u32_bytes(&[!sets.is_empty() as u32, self.kinds, s.convert_r, panic_r2]));
+        b.extend(f32_bytes(&[s.mix_reach, s.mix_angle, s.mix_turn, s.mix_step, s.mix_deposit, panic, 0.0, 0.0]));
         for sp in 0..MAX_SPECIES as usize {
             let Some(t) = sets.get(sp) else {
                 b.extend([0u8; 48]);
@@ -1694,7 +1722,8 @@ impl Engine {
         // Switching withering on starts every walker as if it heard of food
         // now, as the CPU's first `hear_food` does: a mould is not cut off
         // at its first step.
-        let withers = self.grows && s.wither > 0.0;
+        // The news runs for panic too (`BigParams::panic`).
+        let withers = self.grows && (s.wither > 0.0 || s.panic > 0.0);
         if withers && !self.withers {
             let mut words = vec![self.done as u32 + 1; self.n as usize];
             words.resize(self.n as usize + 3 * self.cells as usize, 0);
@@ -1742,6 +1771,18 @@ impl Engine {
         for &i in cells {
             if i < self.dish.agar.len() {
                 self.dish.agar[i] = false;
+            }
+        }
+        let agar: Vec<u32> = self.dish.agar.iter().map(|&a| a as u32).collect();
+        self.queue.write_buffer(&self.agar, 0, &u32_bytes(&agar));
+    }
+
+    /// Puts `cells` back on the agar (a held cut that ends, `larder-world
+    /// cut=T,X,Y,R,HOLD`): the caller passes only cells `block` took off.
+    pub fn unblock(&mut self, cells: &[usize]) {
+        for &i in cells {
+            if i < self.dish.agar.len() {
+                self.dish.agar[i] = true;
             }
         }
         let agar: Vec<u32> = self.dish.agar.iter().map(|&a| a as u32).collect();
@@ -2295,7 +2336,8 @@ pub fn news_words(d: &BigDish, cells: usize) -> Vec<u32> {
 /// in its second block (`wither_reach` even) in bit 24.
 pub fn wither_clock(s: &Settings) -> u32 {
     let reach = s.wither_reach.max(1) as u32;
-    s.wither_lag.min(0xFFFF) | (s.wither_every.clamp(1, 255) << 16) | ((reach.is_multiple_of(2) as u32) << 24)
+    // Bits 25-31: a cut-off part's lean (`panic_lean`, 2026-11-13).
+    s.wither_lag.min(0xFFFF) | (s.wither_every.clamp(1, 255) << 16) | ((reach.is_multiple_of(2) as u32) << 24) | (s.panic_lean.min(crate::mould::big::PANIC_LEAN_MAX) << 25)
 }
 
 pub fn energies(d: &BigDish) -> Vec<f32> {
@@ -2392,6 +2434,8 @@ pub fn world_data(d: &BigDish) -> WorldData {
             piles[p * 8] = start[p];
             piles[p * 8 + 1] = end[p] - start[p];
         }
+        // The pile's centre, a panicking walker's target (`pile_centre`).
+        piles[p * 8 + 3] = d.pile_centre(p);
         piles[p * 8 + 4] = d.pile_charge[p].to_bits();
         piles[p * 8 + 5] = d.crystal_left(p).to_bits();
         piles[p * 8 + 6] = d.pile_fill[p].to_bits();

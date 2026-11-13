@@ -3256,7 +3256,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 17] = [
+        let dishes: [(&str, Settings, Build); 18] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3306,6 +3306,13 @@ mod tests {
             // the walkers' news is set stale before the tick (below).
             ("wither: news spread twice", Settings { wither: 0.5, wither_every: 1, wither_lag: 4, wither_reach: 2, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             ("wither: news spread three times", Settings { wither: 0.5, wither_every: 1, wither_lag: 4, wither_reach: 3, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            // A cut-off part panics (2026-11-13, the slime-enemy thread):
+            // the news runs without withering, and the stale half runs for
+            // the nearest crystal with food left, twice as fast, by the way
+            // its sensors point; a quarter whose news is 5 steps old leans
+            // (past the lag of 4, within its lean of 2: steers there at its
+            // own pace). The squad's charge is in the squad twin.
+            ("panic: cut-off walkers run for a crystal", Settings { panic: 2.0, panic_lean: 2, wither_lag: 4, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3313,7 +3320,8 @@ mod tests {
             // Withering: the news is made in the warm-up, but with a lag no
             // walker reaches, so the mould grows as it would; the twin tick
             // has the dish's own 4-step lag.
-            if s.wither > 0.0 {
+            let news = s.wither > 0.0 || s.panic > 0.0;
+            if news {
                 cpu.p.wither_lag = 100_000;
             }
             for t in 0..60 {
@@ -3339,12 +3347,21 @@ mod tests {
                     }
                 }
             }
-            if s.wither > 0.0 {
+            if news {
                 assert_eq!(cpu.news.len(), cpu.walkers.len(), "{name}: the warm-up made the news");
                 for k in (0..cpu.walkers.len()).step_by(2) {
                     cpu.news[k] = 1;
                 }
+                if s.panic > 0.0 {
+                    for k in (1..cpu.walkers.len()).step_by(4) {
+                        cpu.news[k] = cpu.steps + 1 - 5;
+                    }
+                }
             }
+            // The walkers that panic in the tick, and where the living were.
+            let scared = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panics(k)).count();
+            let leaning = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panic_haste(k) == 1.0).count();
+            let start = cpu.walkers.clone();
             let n = cpu.walkers.len();
             let was: Vec<bool> = (0..n).map(|k| cpu.lives(k)).collect();
             let (broken, bitten, eaten, births) = (cpu.broken, cpu.wall_hits, cpu.eaten, cpu.births);
@@ -3352,7 +3369,7 @@ mod tests {
             let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
             // Withering: the same slots die, and every living walker carries
             // the same news (whole numbers, so exactly).
-            if s.wither > 0.0 {
+            if news {
                 assert!(e.withers, "{name}: the news passes run");
                 let words: Vec<u32> = read_back(&device, &queue, &e.news).chunks(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
                 let gpu_alive: Vec<bool> = floats(&read_back(&device, &queue, &e.energy)).iter().map(|&v| v >= 0.0).collect();
@@ -3360,8 +3377,17 @@ mod tests {
                 let news_off = (0..n).filter(|&k| cpu.lives(k) && words[k] as u64 != cpu.news[k]).count();
                 let heard_now = (0..n).filter(|&k| cpu.lives(k) && k % 2 == 0 && cpu.news[k] > 1).count();
                 let left = words[n..n + e.cells as usize].iter().filter(|&&v| v != 0).count();
-                eprintln!("{name}: {} died in the tick on the CPU, {lives_off} slots live or die apart, {news_off} news off; {heard_now} stale walkers heard again", cpu.starved - starved);
-                assert!(cpu.starved > starved && heard_now > 0, "{name}: the tick withers some stale walkers and the news reaches others");
+                eprintln!("{name}: {} died in the tick on the CPU, {lives_off} slots live or die apart, {news_off} news off; {heard_now} stale walkers heard again; {scared} panicked", cpu.starved - starved);
+                assert!(heard_now > 0, "{name}: the news reaches some stale walkers");
+                assert!(s.wither <= 0.0 || cpu.starved > starved, "{name}: the tick withers some stale walkers");
+                assert_eq!(scared > 0, s.panic > 0.0, "{name}: stale walkers panic only with panic on");
+                assert_eq!(leaning > 0, s.panic > 0.0, "{name}: {leaning} walkers lean");
+                if s.panic > 0.0 {
+                    // A panicking walker steps twice as far as its own step.
+                    let far = (0..n).filter(|&k| cpu.lives(k) && k % 2 == 0).map(|k| (cpu.walkers[k].0 - start[k].0).hypot(cpu.walkers[k].1 - start[k].1)).fold(0.0f32, f32::max);
+                    eprintln!("{name}: the farthest a stale walker went in the tick, {far:.2} fine cells (step {}, {} substeps)", s.step, cpu.p.substeps);
+                    assert!(far > 1.5 * s.step, "{name}: a panicking walker's step is longer than its own");
+                }
                 assert_eq!((lives_off, news_off, left), (0, 0, 0), "{name}: slots, news and the gathered block left");
             }
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
@@ -3572,6 +3598,10 @@ mod tests {
         // And the cone (`BigParams::scorch_cone`, the look A/B): fewer steps
         // toward the strike's rim, the same whole numbers on both.
         let cone = Settings { scorch_cone: true, ..base.clone() };
+        // And a cut-off part's panic (2026-11-13, the slime-enemy thread):
+        // half the walkers' news is stale (below), and those within 10 dish
+        // cells of a unit charge it, the rest run for a crystal.
+        let scared = Settings { panic: 2.0, panic_r: 10.0, panic_lean: 2, wither_lag: 4, ..base.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
@@ -3584,15 +3614,32 @@ mod tests {
             ("plain, cone craters", cone.clone(), 20, 0.0),
             ("plain, shots that sink", base, 20, 1.0),
             ("cone craters, a sink of 1.5", cone, 20, 1.5),
+            ("plain, a cut-off part charges the squad", scared, 0, 0.0),
         ];
         for (name, s, crater, sink) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
+            // Panic: the warm-up makes the news with a lag no walker
+            // reaches, then half the walkers' news goes stale.
+            if s.panic > 0.0 {
+                cpu.p.wither_lag = 100_000;
+            }
             for t in 0..60 {
                 if t == 20 {
                     cpu.build_wall(70.0, 40.0, 70.0, 120.0, 2.0);
                 }
                 cpu.tick();
+            }
+            if s.panic > 0.0 {
+                cpu.p.wither_lag = s.wither_lag;
+                for k in (0..cpu.walkers.len()).step_by(2) {
+                    cpu.news[k] = 1;
+                }
+                // A quarter lean (news 5 steps old: past the lag of 4,
+                // within its lean of 2).
+                for k in (1..cpu.walkers.len()).step_by(4) {
+                    cpu.news[k] = cpu.steps + 1 - 5;
+                }
             }
             let (w, h) = (cpu.w, cpu.h);
             let k = SCALE as f32;
@@ -3682,6 +3729,19 @@ mod tests {
                     .collect();
                 shots.extend(beside.into_iter().map(|from| ShotIn { from, to: t, r: 4.0 }));
             }
+            // The stale walkers that will charge a unit (within `panic_r`).
+            let r2 = squad::r2(s.panic_r * k) as i64;
+            let charging = (0..cpu.walkers.len())
+                .filter(|&q| s.panic > 0.0 && cpu.lives(q) && cpu.panics(q))
+                .filter(|&q| {
+                    let (x, y) = (cpu.walkers[q].0.floor() as i64, cpu.walkers[q].1.floor() as i64);
+                    units.iter().any(|u| {
+                        let (ux, uy) = squad::cell_of(w, h, u.x, u.y);
+                        (ux - x) * (ux - x) + (uy - y) * (uy - y) <= r2
+                    })
+                })
+                .count();
+            assert_eq!(charging > 0, s.panic > 0.0, "{name}: {charging} stale walkers charge a unit");
             let f = Frame { units, shots, slime, crater, sink };
             e.inject(&cpu);
             e.set_squad(&f);

@@ -1,0 +1,18 @@
+cutprobe race world scale 2 walkers 25000, grow 180 s, follow 10 s, 1 cuts a seed, seeds [3]
+arms: [("today", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01")]), ("panic2", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+today 3 grown | alive 49949 parts1% 1 lcs 1.00 lone 0.00 rms 60.0 | crystals eaten from 13 of 23
+panic2 3 grown | alive 48492 parts1% 1 lcs 1.00 lone 0.00 rms 56.0 | crystals eaten from 12 of 23
+cut panic2 3 0 at fine cell (437, 280)
+panic2 3 0 | 650 50 1 | 0.00 1.00 0.97 0.0 0.00 | 10 rejoin+fed 2 2.2 react -1 | 48492 23.30
+
+summary (mean over cuts)
+today: cuts 0 n0 -0 lcs20 -0.00 frag -0.00 lcs -0.00 rms20 -0.0 compact20 -0.00 life -0 moved -0.0 fates {}
+panic2: cuts 1 n0 650 lcs20 0.00 frag 1.00 lcs 0.97 rms20 0.0 compact20 0.00 life 10 moved 2.2 fates {"rejoin+fed": 1}
+  vs today: lcs20 better 0 worse 0, p 1.0000
+  vs today: life better 0 worse 0, p 1.0000
+  vs today: compact20 better 0 worse 0, p 1.0000
+
+real	2m9.138s
+user	1m58.759s
+sys	0m17.753s

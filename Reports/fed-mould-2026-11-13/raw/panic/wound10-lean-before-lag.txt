@@ -1,0 +1,70 @@
+cutprobe race world scale 2 walkers 25000, grow 180 s, follow 60 s, 3 cuts a seed, seeds [1, 2, 3, 4]
+arms: [("today", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01")]), ("panic2", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+today 1 grown | alive 49995 parts1% 1 lcs 1.00 lone 0.00 rms 61.4 | crystals eaten from 15 of 23
+cut today 1 0 at fine cell (120, 92)
+today 1 0 | 797 797 0 | 1.00 1.00 1.00 6.8 1.28 | 60 rejoin 12 0.8 react -1 | 49995 23.63
+cut today 1 1 at fine cell (124, 240)
+today 1 1 | 790 790 0 | 1.00 1.00 1.00 6.5 1.24 | 60 rejoin 12 1.8 react -1 | 49995 23.63
+cut today 1 2 at fine cell (60, 88)
+today 1 2 | 790 790 0 | 1.00 1.00 1.00 6.9 1.29 | 60 rejoin 12 1.3 react -1 | 49995 23.63
+panic2 1 grown | alive 49996 parts1% 1 lcs 1.00 lone 0.00 rms 60.8 | crystals eaten from 15 of 23
+cut panic2 1 0 at fine cell (120, 92)
+panic2 1 0 | 795 795 0 | 1.00 1.00 1.00 6.8 1.29 | 60 rejoin 12 1.2 react -1 | 49996 26.94
+cut panic2 1 1 at fine cell (60, 88)
+panic2 1 1 | 792 792 0 | 1.00 1.00 1.00 7.1 1.33 | 60 rejoin 12 1.3 react -1 | 49996 26.94
+cut panic2 1 2 at fine cell (124, 256)
+panic2 1 2 | 786 786 0 | 0.99 1.00 1.00 6.6 1.25 | 60 rejoin 12 1.9 react -1 | 49996 26.94
+today 2 grown | alive 50000 parts1% 1 lcs 1.00 lone 0.00 rms 57.8 | crystals eaten from 13 of 23
+cut today 2 0 at fine cell (56, 120)
+today 2 0 | 792 792 0 | 1.00 1.00 1.00 6.8 1.28 | 60 rejoin 12 1.0 react -1 | 50000 25.63
+cut today 2 1 at fine cell (144, 84)
+today 2 1 | 777 777 0 | 1.00 1.00 1.00 6.5 1.24 | 60 rejoin 12 1.9 react -1 | 50000 25.63
+cut today 2 2 at fine cell (104, 232)
+today 2 2 | 770 770 0 | 0.99 1.00 1.00 6.7 1.28 | 60 rejoin 12 1.6 react -1 | 50000 25.63
+panic2 2 grown | alive 50000 parts1% 1 lcs 1.00 lone 0.00 rms 57.5 | crystals eaten from 13 of 23
+cut panic2 2 0 at fine cell (56, 120)
+panic2 2 0 | 795 795 0 | 1.00 1.00 1.00 7.1 1.32 | 60 rejoin 12 1.2 react -1 | 50000 26.14
+cut panic2 2 1 at fine cell (144, 84)
+panic2 2 1 | 787 787 0 | 1.00 1.00 1.00 6.6 1.24 | 60 rejoin 12 2.4 react -1 | 50000 26.14
+cut panic2 2 2 at fine cell (104, 232)
+panic2 2 2 | 769 769 0 | 1.00 1.00 0.99 6.4 1.22 | 60 rejoin 12 2.5 react -1 | 50000 26.14
+today 3 grown | alive 49949 parts1% 1 lcs 1.00 lone 0.00 rms 60.0 | crystals eaten from 13 of 23
+cut today 3 0 at fine cell (60, 212)
+today 3 0 | 797 797 0 | 1.00 1.00 1.00 6.0 1.13 | 60 rejoin 12 0.9 react -1 | 49949 26.16
+cut today 3 1 at fine cell (164, 192)
+today 3 1 | 796 796 0 | 1.00 1.00 1.00 6.7 1.26 | 60 rejoin 12 1.2 react -1 | 49949 26.16
+cut today 3 2 at fine cell (196, 128)
+today 3 2 | 795 795 0 | 1.00 1.00 1.00 7.5 1.40 | 60 rejoin 12 1.7 react -1 | 49949 26.16
+panic2 3 grown | alive 46941 parts1% 1 lcs 0.99 lone 0.00 rms 51.6 | crystals eaten from 11 of 23
+cut panic2 3 0 at fine cell (48, 220)
+panic2 3 0 | 797 797 0 | 1.00 1.00 1.00 6.1 1.10 | 60 rejoin 12 2.6 react -1 | 46941 22.23
+cut panic2 3 1 at fine cell (164, 192)
+panic2 3 1 | 797 797 0 | 1.00 1.00 1.00 7.0 1.12 | 60 rejoin 12 0.8 react -1 | 46941 22.23
+cut panic2 3 2 at fine cell (196, 128)
+panic2 3 2 | 797 797 0 | 1.00 1.00 1.00 7.3 1.29 | 60 rejoin 12 1.8 react -1 | 46941 22.23
+today 4 grown | alive 49998 parts1% 1 lcs 1.00 lone 0.00 rms 59.7 | crystals eaten from 15 of 23
+cut today 4 0 at fine cell (68, 204)
+today 4 0 | 797 797 0 | 1.00 1.00 1.00 7.4 1.41 | 60 rejoin 12 2.5 react -1 | 49998 24.35
+cut today 4 1 at fine cell (144, 76)
+today 4 1 | 793 793 0 | 1.00 1.00 1.00 6.2 1.16 | 60 rejoin 12 2.2 react -1 | 49998 24.35
+cut today 4 2 at fine cell (180, 188)
+today 4 2 | 772 772 0 | 1.00 1.00 0.98 6.3 1.21 | 60 rejoin 12 1.3 react -1 | 49998 24.35
+panic2 4 grown | alive 49977 parts1% 1 lcs 1.00 lone 0.00 rms 58.3 | crystals eaten from 14 of 23
+cut panic2 4 0 at fine cell (44, 196)
+panic2 4 0 | 797 797 0 | 1.00 1.00 1.00 6.8 1.29 | 60 rejoin 12 0.3 react -1 | 49977 25.32
+cut panic2 4 1 at fine cell (76, 256)
+panic2 4 1 | 792 792 0 | 1.00 1.00 1.00 6.5 1.23 | 60 rejoin 12 1.7 react -1 | 49977 25.32
+cut panic2 4 2 at fine cell (136, 72)
+panic2 4 2 | 792 792 0 | 1.00 1.00 1.00 6.3 1.17 | 60 rejoin 12 3.9 react 18 | 49977 25.32
+
+summary (mean over cuts)
+today: cuts 12 n0 789 lcs20 1.00 frag 1.00 lcs 1.00 rms20 6.7 compact20 1.26 life 60 moved 1.5 fates {"rejoin": 12}
+panic2: cuts 12 n0 791 lcs20 1.00 frag 1.00 lcs 1.00 rms20 6.7 compact20 1.24 life 60 moved 1.8 fates {"rejoin": 12}
+  vs today: lcs20 better 7 worse 4, p 0.5488
+  vs today: life better 0 worse 0, p 1.0000
+  vs today: compact20 better 7 worse 5, p 0.7744
+
+real	21m0.791s
+user	18m5.717s
+sys	2m18.527s

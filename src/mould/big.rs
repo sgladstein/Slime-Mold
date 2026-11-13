@@ -54,6 +54,16 @@ const DRAW_STARVE: u32 = 401;
 const DRAW_BIRTH: u32 = 402;
 /// A part cut off from its food withers (`BigParams::wither`).
 const DRAW_WITHER: u32 = 404;
+/// A panicking walker (`BigParams::panic`) runs for a crystal only while
+/// it has more than this share of its charge left, so a part cut off on a
+/// crystal that has run dry runs for another. The GPU's `PANIC_LEFT` is the
+/// same.
+pub const PANIC_LEFT: f32 = 0.02;
+/// The longest lean (`BigParams::panic_lean`), steps: the GPU keeps it in
+/// seven bits of `wclock`.
+pub const PANIC_LEAN_MAX: u32 = 127;
+/// The piles a panicking walker looks over: the GPU's `MAX_PILES`.
+pub const PANIC_PILES: usize = 64;
 const CLAIM_BIRTH: u32 = 403;
 const DRAW_MIX: u32 = 113;
 const DRAW_FRUIT: u32 = 114;
@@ -498,6 +508,39 @@ pub struct BigParams {
     pub wither_every: u32,
     pub wither_lag: u32,
     pub wither_reach: u8,
+    /// **A cut-off part panics** (2026-11-13, the slime-enemy thread; 0 is
+    /// off, needs growth). An ordinary walker whose news of food
+    /// (`wither`'s, above; the news runs with either on) is more than
+    /// `wither_lag` steps old runs: the nearest unit of the squad's frame
+    /// within `panic_r` dish cells (`BigDish::threats`, a soldier, a
+    /// building or the larder), else the nearest crystal with more than
+    /// `PANIC_LEFT` of its charge left, is its target. Its three sensors
+    /// read only how far each points toward the target (a wall still reads
+    /// as a wall), so trail, scent and alarm no longer steer it, and its
+    /// step is `panic` times as long (1 steers without the haste) and does
+    /// not slow for being alone (`lone_step`). Its bite is unchanged. Once
+    /// it touches the body again it hears of food and calms. Why: the
+    /// owner, 11-13 15:53-15:57Z, asked that a cut-off part "act more like
+    /// a scared animal. Either run away back to the main body or go right
+    /// for the soliders. It should be more reckless", and that it not "have
+    /// a stronger attack". A crystal with food stands for the main body,
+    /// which grows over the crystals it holds; one the mould does not hold
+    /// is food found. Walkers joined to the body never panic, so it changes
+    /// nothing for them. **The lean** (`panic_lean`, steps, at most
+    /// `PANIC_LEAN_MAX`): for that long after the lag runs out the walker
+    /// steers for its target at its own pace, so the piece slides toward
+    /// where it will go before it bolts; the game designer's review (11-13
+    /// 16:18Z): a response needs "a tell that comes from the simulation,
+    /// about 1-2 s before it happens ... A sudden charge with no warning will
+    /// feel like the game cheating". 45 steps is 1.5 game s. (A lean that
+    /// began 45 steps before the lag, the first version, reached walkers of
+    /// the joined body far from food: exploring tips turned back, and uncut C
+    /// at 3:00 reached 11 crystals of 23 against 13 on race seed 3, 46,941
+    /// walkers against 49,949. From the lag on, a walker would wither as it
+    /// is, and withering left uncut C the same to the walker.)
+    pub panic: f32,
+    pub panic_r: f32,
+    pub panic_lean: u32,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -941,6 +984,9 @@ impl BigParams {
             wither_every: 15,
             wither_lag: 150,
             wither_reach: 2,
+            panic: 0.0,
+            panic_r: 20.0,
+            panic_lean: 45,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -1118,6 +1164,10 @@ pub struct BigDish {
     /// (`BigParams::wither`), and each walker's own; empty while off.
     pub heard: Vec<u64>,
     pub news: Vec<u64>,
+    /// The squad's units this frame (`squad::frame` sets them), fine cells
+    /// as `squad::cell_of` gives them: what a panicking walker may charge
+    /// (`BigParams::panic`).
+    pub threats: Vec<(i64, i64)>,
     /// The cells holding walkers at the last `hear_food`, and the spread's
     /// scratch: only those cells are touched, so the pass costs walkers,
     /// not the dish's area (outside them both fields are 0).
@@ -1331,6 +1381,7 @@ impl BigDish {
             took: Vec::new(),
             heard: Vec::new(),
             news: Vec::new(),
+            threats: Vec::new(),
             heard_cells: Vec::new(),
             heard_was: Vec::new(),
             eaten: 0.0,
@@ -1794,6 +1845,70 @@ impl BigDish {
     }
 
     /// The share of a pile's crystal left (1 with crystals off).
+    /// Pile `pi`'s centre as a fine cell, packed `x | y << 16` (what a
+    /// panicking walker runs for; the GPU's `Pile::centre` holds the same
+    /// word).
+    pub fn pile_centre(&self, pi: usize) -> u32 {
+        let s = self.p.scale as f32;
+        let (x, y) = self.piles[pi];
+        let cx = ((x * s).floor() as i64).clamp(0, self.w as i64 - 1) as u32;
+        let cy = ((y * s).floor() as i64).clamp(0, self.h as i64 - 1) as u32;
+        cx | cy << 16
+    }
+
+    /// Whether walker `k` panics this step (`BigParams::panic`): an
+    /// ordinary walker whose news is more than `wither_lag` steps old.
+    pub fn panics(&self, k: usize) -> bool {
+        self.panic_haste(k) > 0.0
+    }
+
+    /// Walker `k`'s haste this step: 0 calm; 1 while it leans (news more
+    /// than `wither_lag` steps old); `panic` once its news is more than
+    /// `wither_lag` + `panic_lean` old.
+    pub fn panic_haste(&self, k: usize) -> f32 {
+        if self.p.panic <= 0.0 || self.news.is_empty() {
+            return 0.0;
+        }
+        let (age, lag) = ((self.steps + 1).saturating_sub(self.news[k]), self.p.wither_lag as u64);
+        if age > lag + self.p.panic_lean.min(PANIC_LEAN_MAX) as u64 {
+            self.p.panic
+        } else if age > lag {
+            1.0
+        } else {
+            0.0
+        }
+    }
+
+    /// Where a panicking walker on fine cell (`cx`, `cy`) runs: the centre
+    /// of the nearest unit within `panic_r` (ties to the first), else of
+    /// the nearest crystal with more than `PANIC_LEFT` left; whole cells,
+    /// so the GPU picks the same.
+    fn panic_target(&self, cx: i64, cy: i64) -> Option<(f32, f32)> {
+        let r = self.p.panic_r * self.p.scale as f32;
+        let r2 = (r.max(0.0) * r.max(0.0)).floor() as i64;
+        let mut best: Option<(i64, i64, i64)> = None;
+        for &(ux, uy) in self.threats.iter().take(crate::mould::squad::UNITS_MAX) {
+            let d2 = (ux - cx) * (ux - cx) + (uy - cy) * (uy - cy);
+            if d2 <= r2 && best.is_none_or(|b| d2 < b.0) {
+                best = Some((d2, ux, uy));
+            }
+        }
+        if best.is_none() && !self.charge.is_empty() {
+            for j in 0..self.piles.len().min(PANIC_PILES) {
+                if self.crystal_left(j) <= PANIC_LEFT {
+                    continue;
+                }
+                let c = self.pile_centre(j);
+                let (px, py) = ((c & 0xFFFF) as i64, (c >> 16) as i64);
+                let d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+                if best.is_none_or(|b| d2 < b.0) {
+                    best = Some((d2, px, py));
+                }
+            }
+        }
+        best.map(|(_, x, y)| (x as f32 + 0.5, y as f32 + 0.5))
+    }
+
     pub fn crystal_left(&self, pi: usize) -> f32 {
         if self.pile_full.is_empty() || self.pile_full[pi] <= 0.0 {
             return 1.0;
@@ -2193,7 +2308,31 @@ impl BigDish {
                     ra *= p.sick_turn;
                 }
             }
-            if look {
+            // A cut-off walker panics (`panic`): it runs for its target, by
+            // how far each sensor points toward it, `panic` times as fast.
+            let haste = self.panic_haste(k);
+            let scared = if haste > 0.0 { self.panic_target(x.floor() as i64, y.floor() as i64) } else { None };
+            if scared.is_some() {
+                st *= haste;
+            }
+            if let (true, Some((tx, ty))) = (look, scared) {
+                let read = |a: f32| {
+                    let (c, s) = (a.cos(), a.sin());
+                    match self.cell(x + c * so, y + s * so) {
+                        Some(i) if self.agar[i] => c * (tx - x) + s * (ty - y),
+                        _ => -1.0e6,
+                    }
+                };
+                let (f, fl, fr) = (read(h), read(h - sa), read(h + sa));
+                if f > fl && f > fr {
+                } else if f < fl && f < fr {
+                    h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 { ra } else { -ra };
+                } else if fl < fr {
+                    h += ra;
+                } else if fr < fl {
+                    h -= ra;
+                }
+            } else if look {
                 let sw = if p.hunger_scent > 0.0 && !self.energy.is_empty() {
                     1.0 + p.hunger_scent * self.hunger(k)
                 } else {
@@ -2240,7 +2379,7 @@ impl BigDish {
                     h -= ra;
                 }
             }
-            if p.lone_step > 0.0 && !body.is_empty() {
+            if p.lone_step > 0.0 && !body.is_empty() && scared.is_none() {
                 let near = body[here].saturating_sub(1) as f32;
                 st *= (near / p.lone_step).clamp(p.lone_floor.min(1.0), 1.0);
             }
@@ -2421,7 +2560,7 @@ impl BigDish {
             }
         }
         self.eat_crystals();
-        if self.p.wither > 0.0 && !self.energy.is_empty() {
+        if (self.p.wither > 0.0 || self.p.panic > 0.0) && !self.energy.is_empty() {
             self.hear_food();
         }
         if self.p.energy_flow > 0.0 && !self.energy.is_empty() {
@@ -2716,7 +2855,7 @@ impl BigDish {
         // A parent's crowd limit is its species' (`species_sets`) if set.
         let crowd_of = |d: &Self, k: usize| if p.species_sets.is_empty() { p.crowd } else { p.species_sets[d.sp_of(k)].crowd };
         let n = self.walkers.len();
-        let check = !self.news.is_empty() && self.steps.is_multiple_of(p.wither_every.max(1) as u64);
+        let check = p.wither > 0.0 && !self.news.is_empty() && self.steps.is_multiple_of(p.wither_every.max(1) as u64);
         for k in 0..n {
             if !self.active(k) {
                 continue;
@@ -4144,6 +4283,70 @@ mod tests {
         let stale = run(BigParams { wither: 0.2, wither_every: 1, wither_lag: 10, ..grow.clone() }, true);
         assert_eq!(fresh.2, base.2, "news that never goes stale kills no one");
         assert!(stale.1 * 3 < fresh.1 * 2, "a mould whose news is stale withers: {} walkers left against {}", stale.1, fresh.1);
+    }
+
+    #[test]
+    fn a_cut_off_walker_runs_for_a_crystal_or_a_unit() {
+        let grow = BigParams { upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, ..small(2, 1) };
+        // From a grown mould, its home crystal eaten bare (so a crystal to
+        // run for lies away from the packed mould), 30 ticks with every
+        // walker's news held stale (`stale`); the mean distance of the
+        // walkers living at the start to `to` (fine cells) before and after.
+        let run = |p: BigParams, stale: bool, threat: Option<(i64, i64)>, to: &dyn Fn(&BigDish, f32, f32) -> f32| {
+            let mut d = BigDish::new(p);
+            for _ in 0..40 {
+                d.tick();
+            }
+            for i in 0..d.charge.len() {
+                if d.pile_of[i] == 1 {
+                    d.charge[i] = 0.0;
+                }
+            }
+            d.pile_charge[0] = 0.0;
+            d.threats = threat.into_iter().collect();
+            let who: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k)).collect();
+            let mean = |d: &BigDish| who.iter().map(|&k| to(d, d.walkers[k].0, d.walkers[k].1)).sum::<f32>() / who.len() as f32;
+            let before = mean(&d);
+            for _ in 0..30 {
+                if stale && !d.news.is_empty() {
+                    d.news.iter_mut().for_each(|t| *t = 1);
+                }
+                d.tick();
+            }
+            (before, mean(&d), d.hash())
+        };
+        // The nearest crystal with food left (all but the home crystal).
+        let nearest = |d: &BigDish, x: f32, y: f32| {
+            (1..d.piles.len())
+                .map(|j| {
+                    let c = d.pile_centre(j);
+                    ((c & 0xFFFF) as f32 + 0.5 - x).hypot((c >> 16) as f32 + 0.5 - y)
+                })
+                .fold(f32::MAX, f32::min)
+        };
+        // Joined to its food, no walker panics: panic changes nothing.
+        let base = run(grow.clone(), false, None, &nearest);
+        let calm = run(BigParams { panic: 2.0, ..grow.clone() }, false, None, &nearest);
+        assert_eq!(base.2, calm.2, "a body that hears of food never panics");
+        // Cut off, it runs for the nearest crystal with food, and with a
+        // unit in reach for the unit instead.
+        let stale = BigParams { wither_lag: 5, ..grow.clone() };
+        let still = run(stale.clone(), true, None, &nearest);
+        let runs = run(BigParams { panic: 2.0, ..stale.clone() }, true, None, &nearest);
+        eprintln!("to a crystal: {:.1} -> {:.1} panicking, {:.1} -> {:.1} not", runs.0, runs.1, still.0, still.1);
+        assert!(runs.1 < runs.0 - 4.0 && runs.1 < still.1 - 4.0, "a cut-off walker runs for a crystal");
+        let d0 = BigDish::new(grow.clone());
+        let at = (d0.w as i64 / 2, d0.h as i64 / 4);
+        let to_unit = move |_: &BigDish, x: f32, y: f32| (at.0 as f32 + 0.5 - x).hypot(at.1 as f32 + 0.5 - y);
+        let wide = BigParams { panic: 2.0, panic_r: 1_000.0, ..stale.clone() };
+        let stay = run(BigParams { panic: 0.0, ..wide.clone() }, true, Some(at), &to_unit);
+        let charge = run(wide.clone(), true, Some(at), &to_unit);
+        eprintln!("to the unit: {:.1} -> {:.1} panicking, {:.1} -> {:.1} not", charge.0, charge.1, stay.0, stay.1);
+        assert!(charge.1 < charge.0 - 4.0 && charge.1 < stay.1 - 4.0, "a cut-off walker in reach charges the unit");
+        // Out of reach, the unit is ignored.
+        let far = run(BigParams { panic_r: 0.5, ..wide }, true, Some(at), &nearest);
+        eprintln!("unit out of reach, to a crystal: {:.1} -> {:.1}", far.0, far.1);
+        assert!(far.1 < far.0 - 4.0, "with the unit out of reach it runs for a crystal");
     }
 
     #[test]

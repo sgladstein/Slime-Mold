@@ -59,9 +59,13 @@
 //! `holes=1` also times how long each hit's hole stays open; `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
-//! `cut=T,X,Y,R` takes a ring 6 world units wide, R out round (X, Y), out
-//! of the ground at game second T and holds it, and prints the walkers
-//! inside each second (does a part cut off from its crystals wither?).
+//! `cut=T,X,Y,R[,HOLD[,WIDTH]]` takes a ring WIDTH world units wide (6), R
+//! out round (X, Y), out of the ground at game second T and holds it (for
+//! HOLD seconds, then puts it back), and prints the walkers inside each
+//! second (does a part cut off from its crystals wither, or panic?);
+//! `cutsquad=X,Y[,T[,N]]` after it sets N of the squad (all; bought first
+//! if the squad is short) down there at game second T (the cut's) and
+//! keeps them there.
 //! `hand=volley` fires the squad into the thick body from 22 to 34 s,
 //! then holds fire and steps back (`volley`); `hand=edge` stands in the
 //! same place on free fire instead.
@@ -340,7 +344,18 @@ fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'static st
     // have to playtest." At 0.01 a held ring cut on the CPU leaves 74% of
     // the piece at 20 s, 41% at 45 s and 15% at 90 s
     // (Reports/fed-mould-2026-11-13/README.md, *A cut-off part withers*).
-    const C: [(&str, &str); 4] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01")];
+    // A cut-off part also panics (`BigParams::panic` 2, 2026-11-13). The
+    // owner, 15:57Z: "It shouldn't have a stronger attack but it should act
+    // more like a scared animal. Either run away back to the main body or
+    // go right for the soliders. It should be more reckless." A walker with
+    // no news for 5 s heads straight for the nearest unit within 20 cells,
+    // or else the nearest crystal with food, at its own pace for 1.5 s (the
+    // tell) and then twice it; the bite is unchanged. On the CPU race world
+    // the scores are unchanged (smoke, 4 seeds x 3 hands); in the window
+    // (Fork seed 1, farm) the farm squad is gone by 2:00 against 3 alive,
+    // since bits the squad's own shots cut off now charge it. The report's
+    // *A cut-off part panics* has the films.
+    const C: [(&str, &str); 5] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")];
     Some(match name {
         "a" => (5_000, &[]),
         "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),
@@ -2002,16 +2017,33 @@ impl ApplicationHandler for App {
     }
 }
 
+/// `cut=T,X,Y,R[,HOLD[,WIDTH]]` and `cutsquad=X,Y[,T[,N]]` (the slime-enemy
+/// thread, 2026-11-13): a ring WIDTH world units wide (6) from R out round
+/// (X, Y) taken off the ground at game second T for HOLD seconds (for
+/// good), and where N of the squad (all) are set down at game second T (the
+/// cut's) and stay, whatever the hand orders (does a cut-off part charge
+/// it?).
+#[derive(Clone, Copy, Debug)]
+struct Cut {
+    t: f32,
+    x: f32,
+    y: f32,
+    r: f32,
+    hold: f32,
+    width: f32,
+    squad: Option<(f32, f32, f32, usize)>,
+}
+
 /// **No window** (`look=DIR`): the round played by a simple hand, with the
 /// window's whole picture (the look, marks and HUD) saved at the game
 /// seconds in `at`, and the counts beside each printed: what the window
 /// shows, checkable where there is no screen (the cloud's software
 /// Vulkan). Hands: `rush` (all attack the core), `farm` (all harvest the
 /// crystal nearest the larder, buying soldiers from 1,200 food), `idle`.
-// One more than clippy's seven: the look's options are plain values from
+// Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<(f32, f32, f32, f32)>) -> Result<(), String> {
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -2044,6 +2076,12 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     // printed against their count at the cut.
     let mut cut_inside: Option<(Vec<usize>, u32)> = None;
     let mut cut_sec = u64::MAX;
+    // With HOLD (`cut=T,X,Y,R,HOLD`), the ring's agar cells go back on the
+    // agar HOLD game seconds after the cut, so a piece that has gone stale
+    // inside can leave (does a cut-off part panic?).
+    let mut ring_back: Option<(f32, Vec<usize>)> = None;
+    // The soldiers `cutsquad=` set down, kept there.
+    let mut squad_set: Option<Vec<usize>> = None;
     let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
     for &t in at {
         // A mission's verdict stops the steps, as the game's end does.
@@ -2059,24 +2097,69 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
                     None => plan(g, hand),
                 }
             }
-            if let (Some((ct, cx, cy, cr)), None) = (cut, cut_inside.as_ref()) {
+            if let (Some(Cut { t: ct, x: cx, y: cy, r: cr, width: cw, .. }), None) = (cut, cut_inside.as_ref()) {
                 let g = app.game.as_mut().unwrap();
                 if g.time() >= ct {
                     let (w, h) = (g.world.e.dish.w, g.world.e.dish.h);
                     let (mut ring, mut core) = (Vec::new(), Vec::new());
                     for i in 0..w * h {
                         let d = ((i % w) as f32 + 0.5 - cx).hypot((i / w) as f32 + 0.5 - cy);
-                        if d > cr && d <= cr + 6.0 {
+                        if d > cr && d <= cr + cw {
                             ring.push(i);
                         } else if d <= cr {
                             core.push(i);
                         }
                     }
+                    if let Some(c) = cut.filter(|c| c.hold.is_finite()) {
+                        let agar: Vec<usize> = ring.iter().copied().filter(|&i| g.world.e.dish.agar[i]).collect();
+                        ring_back = Some((g.time() + c.hold, agar));
+                    }
+
                     g.world.e.block(&ring);
                     let n0 = inside(&read_back(&device, &queue, &g.world.e.look), &core);
                     println!("  cut t {:.1} s: ring of {} fine cells round ({cx}, {cy}) r {cr}; {n0} walkers inside", g.time(), ring.len());
                     cut_inside = Some((core, n0.max(1)));
                 }
+            }
+            // `cutsquad=X,Y[,T[,N]]`: at T the first N living soldiers (a
+            // squad short of N is made up first) are set down in a row there (a staged scene, as the ring is: a
+            // squad walking there through C's body dies on the way); from
+            // then every one of them not near it is sent back, after the
+            // hand's orders, so it stays. The rest stay with the hand.
+            if let Some((sx, sy, st, n)) = cut.and_then(|c| c.squad) {
+                let g = app.game.as_mut().unwrap();
+                if g.time() >= st && squad_set.is_none() {
+                    // With N given, a squad short of N is made up first,
+                    // bought at the larder with food the scene adds.
+                    if n != usize::MAX {
+                        while g.alive() < n.min(g.rules.max_squad) {
+                            g.bank += g.rules.soldier_cost;
+                            if !g.buy() {
+                                break;
+                            }
+                        }
+                    }
+                    let set: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).take(n).collect();
+                    let sc = g.world.scale();
+                    for (j, &k) in set.iter().enumerate() {
+                        (g.soldiers[k].x, g.soldiers[k].y) = (sx + (j as f32 - (set.len() as f32 - 1.0) / 2.0) * 1.5 * sc, sy);
+                    }
+                    squad_set = Some(set);
+                }
+                if let Some(set) = squad_set.as_ref() {
+                    for &k in set {
+                        let near = (g.soldiers[k].x - sx).hypot(g.soldiers[k].y - sy) < 2.0 * g.world.scale();
+                        if g.soldiers[k].alive && !near && g.soldiers[k].order != Order::Move(sx, sy) {
+                            g.apply(Cmd::Order(k, Order::Move(sx, sy)));
+                        }
+                    }
+                }
+            }
+            if ring_back.as_ref().is_some_and(|(at, _)| app.game.as_ref().is_some_and(|g| g.time() >= *at)) {
+                let (_, cells) = ring_back.take().unwrap();
+                let g = app.game.as_mut().unwrap();
+                g.world.e.unblock(&cells);
+                println!("  cut t {:.1} s: the ring opens ({} cells back on the agar)", g.time(), cells.len());
             }
             app.step(step);
             // Whole steps here (the window leaves a step running while it
@@ -2915,10 +2998,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 centre = Some((*x, *y, zoom.first().copied().unwrap_or(6.0)));
             }
             "cut" => {
-                // `cut=T,X,Y,R`: a held ring cut in the no-window round.
+                // `cut=T,X,Y,R[,HOLD]`: a held ring cut in the no-window
+                // round, held HOLD game seconds (for good without it).
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
-                let [t, x, y, r] = w.as_slice() else { return Err("cut=T,X,Y,R".into()) };
-                cut = Some((*t, *x, *y, *r));
+                let [t, x, y, r, more @ ..] = w.as_slice() else { return Err("cut=T,X,Y,R[,HOLD[,WIDTH]]".into()) };
+                let squad = cut.and_then(|c: Cut| c.squad);
+                cut = Some(Cut { t: *t, x: *x, y: *y, r: *r, hold: more.first().copied().unwrap_or(f32::INFINITY), width: more.get(1).copied().unwrap_or(6.0), squad });
+            }
+            "cutsquad" => {
+                // `cutsquad=X,Y[,T[,N]]` (after `cut=`): N soldiers (all)
+                // are set down there at T (the cut's time) and stay.
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [x, y, more @ ..] = w.as_slice() else { return Err("cutsquad=X,Y[,T[,N]]".into()) };
+                let c = cut.as_mut().ok_or("cutsquad= needs cut= first")?;
+                c.squad = Some((*x, *y, more.first().copied().unwrap_or(c.t), more.get(1).map_or(usize::MAX, |&n| n as usize)));
             }
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;

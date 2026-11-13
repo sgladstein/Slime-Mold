@@ -72,9 +72,12 @@ struct Params {
     // walker kinds (`mix_share`: 2 with the mix on, a walker's kind in bit
     // 8 of its `spec` word), conversion's square (`species_convert_r`), and
     // the second kind's multipliers (`mix_*`).
-    per: u32, kinds: u32, conv_r: u32, _k0: u32,
+    // Two spare words of this row are a cut-off part's panic (11-13, the
+    // slime-enemy thread, `BigParams::panic`): `panic_r2` the charge's
+    // squared radius in fine cells, `panic` the haste (0 off).
+    per: u32, kinds: u32, conv_r: u32, panic_r2: u32,
     mreach: f32, mangle: f32, mturn: f32, mstep: f32,
-    mdep: f32, _k1: f32, _k2: f32, _k3: f32,
+    mdep: f32, panic: f32, _k2: f32, _k3: f32,
     sets: array<Set, 4>,
     // The life cycle (2026-11-11, `BigParams::spore_rate` and below: the
     // tiers' Sporer, Sleeper and Swarmer, Reports/mould-tiers-2026-11-11.md).
@@ -135,7 +138,9 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // (the CPU's `crystal_left`; 1 for a pile with no crystal left to hold).
 // `full` is the pile's charge a full cell (`BigDish::pile_fill`: a map
 // gives each crystal its own, else every pile's is `crystal_charge`).
-struct Pile { start: u32, count: u32, cells: u32, _p: u32, sum: f32, left: f32, full: f32, _b: f32 };
+// `centre`: the pile's centre as a fine cell, x | y << 16 (`BigDish::
+// pile_centre`), where a panicking walker runs.
+struct Pile { start: u32, count: u32, cells: u32, centre: u32, sum: f32, left: f32, full: f32, _b: f32 };
 // A wall being built (`Engine::build_wall`): the segment and its half
 // width in fine cells, the health it starts with, the box of cells the
 // `build` pass covers, whether it lets scent through, and how far a
@@ -509,6 +514,58 @@ fn pow0(v: f32, e: f32) -> f32 {
     return pow(v, e);
 }
 
+// A cut-off part panics (`BigParams::panic`, the CPU's `panic_haste` and
+// `panic_target`): a walker whose news is older than the lag runs for the
+// nearest unit of the squad within `panic_r2` (ties to the first), else
+// for the nearest crystal with more than `PANIC_LEFT` of its charge left;
+// whole cells, so both engines pick the same. For `wclock`'s lean (bits
+// 25-31) after the lag runs out it steers there at its own pace (haste
+// 1), then `panic` times as fast. (x, y, haste); (-1, -1, 0) when calm.
+const PANIC_LEFT: f32 = 0.02;
+fn panic_to(k: u32, here: u32) -> vec3<f32> {
+    if (P.panic <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let heard = atomicLoad(&news[k]);
+    // The age of its news (S.t + 1 is never before it).
+    let age = S.t + 1u - min(heard, S.t + 1u);
+    let lag = P.wclock & 0xFFFFu;
+    let lean = (P.wclock >> 25u) & 0x7Fu;
+    var haste = 0.0;
+    if (age > lag + lean) { haste = P.panic; } else if (age > lag) { haste = 1.0; }
+    if (haste <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let cx = i32(here % P.w);
+    let cy = i32(here / P.w);
+    var best = -1;
+    var bx = 0;
+    var by = 0;
+    for (var u = 0u; u < P.nunits; u++) {
+        let dx = i32(SQ.units[u].x) - cx;
+        let dy = i32(SQ.units[u].y) - cy;
+        let d2 = dx * dx + dy * dy;
+        if (u32(d2) <= P.panic_r2 && (best < 0 || d2 < best)) { best = d2; bx = i32(SQ.units[u].x); by = i32(SQ.units[u].y); }
+    }
+    if (best < 0 && world(CRYSTALS)) {
+        for (var p = 0u; p < P.npiles; p++) {
+            if (piles[p].left <= PANIC_LEFT) { continue; }
+            let c = piles[p].centre;
+            let px = i32(c & 0xFFFFu);
+            let py = i32(c >> 16u);
+            let d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+            if (best < 0 || d2 < best) { best = d2; bx = px; by = py; }
+        }
+    }
+    if (best < 0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    return vec3<f32>(f32(bx) + 0.5, f32(by) + 0.5, haste);
+}
+
+// A panicking walker's sensor: how far heading `a` points toward the
+// target `g`; a wall is still a wall.
+fn panic_at(x: f32, y: f32, a: f32, so: f32, g: vec3<f32>) -> f32 {
+    let c = cos(a); let s = sin(a);
+    let i = cell(x + c * so, y + s * so);
+    if (i == NONE || agar[i] == 0u) { return -1.0e6; }
+    return c * (g.x - x) + s * (g.y - y);
+}
+
 @compute @workgroup_size(256)
 fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -591,20 +648,33 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     // floored at 0, from the energy as the tick began.
     var sw = 1.0;
     if (growth() && P.hscent > 0.0 && P.hat > 0.0) { sw = 1.0 + P.hscent * max(1.0 - energy[k] / P.hat, 0.0); }
-    var f = sense_at(wk.x, wk.y, h, so, sso, sp, gw, sw);
-    var fl = sense_at(wk.x, wk.y, h - sa, so, sso, sp, gw, sw);
-    var fr = sense_at(wk.x, wk.y, h + sa, so, sso, sp, gw, sw);
-    // Explorers steer to the lowest reading; a wall stays a wall.
-    if (ex) {
-        if (f > -1.0e5) { f = -f; }
-        if (fl > -1.0e5) { fl = -fl; }
-        if (fr > -1.0e5) { fr = -fr; }
+    // A cut-off walker panics: its sensors read only the way to its
+    // target, and its step is `panic` times as long (the CPU's order:
+    // after the sick walker's changes).
+    let goal = panic_to(k, here);
+    let scared = goal.x >= 0.0;
+    if (scared) { st *= goal.z; }
+    var f: f32; var fl: f32; var fr: f32;
+    if (scared) {
+        f = panic_at(wk.x, wk.y, h, so, goal);
+        fl = panic_at(wk.x, wk.y, h - sa, so, goal);
+        fr = panic_at(wk.x, wk.y, h + sa, so, goal);
+    } else {
+        f = sense_at(wk.x, wk.y, h, so, sso, sp, gw, sw);
+        fl = sense_at(wk.x, wk.y, h - sa, so, sso, sp, gw, sw);
+        fr = sense_at(wk.x, wk.y, h + sa, so, sso, sp, gw, sw);
+        // Explorers steer to the lowest reading; a wall stays a wall.
+        if (ex) {
+            if (f > -1.0e5) { f = -f; }
+            if (fl > -1.0e5) { fl = -fl; }
+            if (fr > -1.0e5) { fr = -fr; }
+        }
     }
-    if (P.wander > 0.0 && unit(keyed(P.s_wander, t, k | 0x80000000u)) < P.wander) {
+    if (!scared && P.wander > 0.0 && unit(keyed(P.s_wander, t, k | 0x80000000u)) < P.wander) {
         h = unit(keyed(P.s_wander, t, k | 0x40000000u)) * TAU;
-    } else if (P.sfloor > 0.0 && max(max(f, fl), fr) < P.sfloor) {
+    } else if (!scared && P.sfloor > 0.0 && max(max(f, fl), fr) < P.sfloor) {
         if ((keyed(P.s_wander, t, k) & 1u) == 0u) { h += ra; } else { h -= ra; }
-    } else if (chance() > 0.0) {
+    } else if (!scared && chance() > 0.0) {
         // The chance turn: a side by a draw, then toward it with chance
         // g^e / (f^e + g^e), readings floored at 0 (the CPU's `chance_exp`).
         let left = (keyed(P.s_chance, t, k) & 1u) == 0u;
@@ -623,7 +693,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     } else if (fr < fl) {
         h -= ra;
     }
-    if (P.lone > 0.0) {
+    if (P.lone > 0.0 && !scared) {
         // `occ` is as the step began here: `walk` moves walkers after.
         let cx = i32(here % P.w); let cy = i32(here / P.w); let r = i32(P.lone_r);
         var n = 0u;
@@ -957,7 +1027,7 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     // with its timer at 0.
     if (nsp() > 0u || mixes() || cycles()) { spec[b] = spec[k] & 0x1FFu; }
     // A child knows what its parent heard (`wither`).
-    if (P.wither > 0.0) { atomicStore(&news[b], atomicLoad(&news[k])); }
+    if (P.wither > 0.0 || P.panic > 0.0) { atomicStore(&news[b], atomicLoad(&news[k])); }
 }
 
 // Conversion (PR #56), after the move and its deposit, before any jump: a
