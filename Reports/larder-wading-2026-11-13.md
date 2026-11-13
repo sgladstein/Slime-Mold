@@ -59,7 +59,23 @@ Built and measured, not merged ([patch](larder-wading-2026-11-13/raw/arming-not-
 
 ## Smoke games
 
-Running at the time of the first commit (CPU, shape C's keys without withering, race seeds 5-8, five hands, `wade=6` against `wade=30`); results land here before the merge.
+CPU census on the race world, shape C's keys without withering, seeds 5-8, cap 600 s, five hands, the new rule (`wade=6`) against the old count on C (`wade=30`):
+
+```
+larderworld census seeds=5-8 walkers=25000 upkeep=0.0002 keys=capacity:50000+energy_flow:0.05 hands=idle,random,farm,strike,rush cap=600 threads=4 wade=6|30
+```
+
+| Hand | Now (`wade=6`) | Before (`wade=30`) |
+|---|---|---|
+| idle | wiped on 2 seeds (586, 599 s), held to the cap on 2 at -0.333; never wins | the same games |
+| random | wiped 4/4 at 69-114 s | wiped 4/4 at 72-114 s |
+| farm | cap 4/4, +0.073 to +0.096 | cap 3/4 (+0.071 to +0.083), wiped once at 595 s |
+| strike | cap 2/4 (+0.063, +0.073), wiped at 446 and 516 s | cap 3/4 (+0.040 to +0.079), wiped at 468 s |
+| rush | wiped 3/4 at 121-215 s, cap once at -0.333 | wiped 3/4 at 137-214 s, cap once at -0.333 |
+
+- **The checks pass.** Idle never wins (below 0 on every seed). The shortest game is 69 s (random). Every game ends in a wipe or at the cap. Farm beats idle and random on 4 of 4 seeds in both arms.
+- **Paired by seed, now against before:** farm 3 higher, 1 lower; strike 0 higher, 4 lower (p 0.125; nothing survives Holm over five hands); rush 1-2 and a tie; random within 0.01. Idle soldiers never walk into the slime, so idle plays the same games. Strike walks its squad into the body, and the slowdown costs it; that is a tuning note for the balance pass, not a reason to hold the rule (build first, balance later).
+- One binary for both arms, built from this PR's code before it was rebased onto #196 (which only turns withering on in the window). The provenance lines read 23601fc2b+dirty and 30c2fe515+dirty because the census reads the checkout's HEAD as it runs, and the rebase landed between the arms. 15 and 13 minutes on 4 threads. Raw: [`smoke-c-wade6.txt`](larder-wading-2026-11-13/raw/smoke-c-wade6.txt), [`smoke-c-wade30.txt`](larder-wading-2026-11-13/raw/smoke-c-wade30.txt).
 
 ## Cost
 

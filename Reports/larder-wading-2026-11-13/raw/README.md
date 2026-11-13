@@ -19,4 +19,5 @@ the squad lines (walkers touching, health) at each saved frame.
   neither. `new-n10.txt` there was first run with rations and overrun on,
   which ended seeds 1, 2 and 4 before the order; it was rerun without.
 - `arming-not-merged.patch`: the dropped rule against main 23601fc.
-- `smoke-c-wade*.txt`: the smoke games (`examples/larderworld.rs census`).
+- `smoke-c-wade6.txt`, `smoke-c-wade30.txt`: the smoke games
+  (`examples/larderworld.rs census`; the command is in the report).
