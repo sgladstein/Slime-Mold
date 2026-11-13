@@ -35,7 +35,8 @@ figure video { width: 100%; max-width: 100%; border-radius: 4px; border: 1px sol
 .charge video { aspect-ratio: 560 / 480; }
 .bolt video { aspect-ratio: 720 / 480; }
 .stand video { aspect-ratio: 540 / 480; }
-.stand .pair { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.stand .pair, .retreat .pair { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.retreat video { aspect-ratio: 640 / 480; }
 .tag { font-family: var(--display); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
 .tag.scared { color: var(--red); }
 .scroll { overflow-x: auto; min-width: 0; }
@@ -53,8 +54,8 @@ code { font-size: 0.9em; }
   <header>
     <span class="tag">Shape C · cut off and scared</span>
     <h1>A cut-off part panics</h1>
-    <p class="lede">You asked for a cut-off part to "act more like a scared animal. Either run away back to the main body or go right for the soliders. It should be more reckless", with no stronger attack. A part that has heard no news of food for 5 seconds now heads straight for the nearest soldier or building within 20 cells, or else the nearest crystal that still has food. For the first 1.5 seconds it creeps toward its target at half its pace, which is the warning you can see. Then it runs at twice its pace. Its bite is the same as before.</p>
-    <p class="note">The half-pace creep is new since scenes 1 and 2 were filmed. In those films the warning was at the piece's own pace, which is already faster than a soldier walks. Scene 3 shows both versions.</p>
+    <p class="lede">You asked for a cut-off part to "act more like a scared animal. Either run away back to the main body or go right for the soliders. It should be more reckless", with no stronger attack. A part that has heard no news of food for 5 seconds now heads straight for the nearest soldier or building within 20 cells, or else the nearest crystal that still has food. For the first 1.5 seconds it creeps toward its target at half its pace, which is the warning you can see. Then it runs at twice its pace. A charge at a soldier or building runs for half a second and then creeps again, so a squad that pulls back in time gets away. Its bite is the same as before.</p>
+    <p class="note">The half-pace creep is new since scenes 1 and 2 were filmed. In those films the warning was at the piece's own pace, which is already faster than a soldier walks. Scene 3 shows both versions. Scene 4 is new: the charge now gives up after half a second, and a unit that pulls back gets clear.</p>
   </header>
 
   <section class="ask">
@@ -62,6 +63,7 @@ code { font-size: 0.9em; }
     <ul>
       <li>Does the charge read as a scared animal going for the soldiers? Scene 3 is a bigger piece that gets through.</li>
       <li>In scene 3, do you see the charge coming in time with the creep (right) and not without it (middle)?</li>
+      <li>In scene 4, does pulling back feel like the right answer to the creep?</li>
       <li>It is on in shape C now, so the window plays it. <code>larder-world -- panic=0</code> plays C without it.</li>
     </ul>
   </section>
@@ -138,10 +140,39 @@ code { font-size: 0.9em; }
     <p class="note">The game designer's review: at that speed "it was over before you looked", when it should be "you saw it coming, and lost because you stayed". A cut-off walker heading straight goes 15 cells a second and a soldier 10, so even the warning at its own pace was a charge. With the half-pace creep (right), the piece pulls into a blob from about 4 seconds and slides at the soldiers for about 3 seconds before it lands. Held in place, they shoot most of it (245 walkers down to 26 by 10 seconds) and die one by one over 4 seconds. At a quarter pace (not shown) the piece barely moved before it bolted, so the warning hardly showed. (At its own pace, two soldiers in scene 1's smaller ring also lost to its 112-walker piece, both dead by 6 seconds; not filmed.)</p>
   </section>
 
+  <section class="retreat">
+    <h2>4. Pull back when it leans</h2>
+    <p class="note">The game designer asked whether a squad that pulls back when the lean starts can get clear. Not if the charge never stops: the bolt goes 30 cells a second, three times a soldier's walk. So a charge at a unit now runs for half a second and then creeps again. These films are the CPU dish, not the window. Each one is a 291-walker piece with the rest of the mould removed, so the first half second shows the old trail fading. The white square is one unit, 24 cells beyond the piece's edge, and the grey ring is its touch. It stands, or walks away at a soldier's pace from half a second in. Real time, 15 frames a second.</p>
+    <div class="pair">
+      <figure>
+        <span class="tag scared">Stands: caught 1.6 s</span>
+        <video src="retreat-stands.mp4" poster="retreat-stands.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+      <figure>
+        <span class="tag scared">Pulls back, never gives up: caught 2.5 s</span>
+        <video src="retreat-nodash.mp4" poster="retreat-nodash.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+      <figure>
+        <span class="tag">Pulls back, gives up (now): clear</span>
+        <video src="retreat-dash.mp4" poster="retreat-dash.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+    </div>
+    <div class="scroll"><table>
+      <tr><th>Caught, of 6 seeds</th><th>Stands</th><th>Pulls back at once</th><th>Pulls back 0.5 s late</th></tr>
+      <tr><td>16 cells, never gives up</td><td>5</td><td>6</td><td>6</td></tr>
+      <tr><td>16 cells, gives up (now)</td><td>5</td><td>1</td><td>4</td></tr>
+      <tr><td>24 cells, never gives up</td><td>5</td><td>4</td><td>6</td></tr>
+      <tr><td>24 cells, gives up (now)</td><td>5</td><td>0</td><td>1</td></tr>
+      <tr><td>32 cells, never gives up</td><td>5</td><td>0</td><td>5</td></tr>
+      <tr><td>32 cells, gives up (now)</td><td>5</td><td>0</td><td>0</td></tr>
+    </table></div>
+    <p class="note">A unit that stays put is caught on 5 of 6 seeds either way (the sixth piece stopped 6 cells short). At 24 cells, pulling back half a second late now gets clear on 5 of 6 seeds, against none when the charge never gives up. Closer than that, a late pull-back is still caught, as it should be. A charge that gave up, with nothing in reach, runs for a crystal instead: in the right film the piece turns and streams to the nearest one. The unit here is a bare point: no rock or walkers slow it and it does not shoot, so this measures speed alone.</p>
+  </section>
+
   <section>
     <h2>How to beat it</h2>
     <ul>
-      <li><strong>A charge:</strong> shoot it before it closes, with enough guns for its size. With the first rule, four soldiers shot a 112-walker piece down and lost one of their own; two against the same piece both died, and four against a 163-walker piece all died. With the creep, four held soldiers shot a 245-walker piece down to 26 but died one by one; the 3 seconds of creep are the window to pull back or fortify (not tested yet; a soldier walks faster than the creep, slower than the bolt).</li>
+      <li><strong>A charge:</strong> shoot it before it closes, with enough guns for its size. With the first rule, four soldiers shot a 112-walker piece down and lost one of their own; two against the same piece both died, and four against a 163-walker piece all died. With the creep, four held soldiers shot a 245-walker piece down to 26 but died one by one; the 3 seconds of creep are the window to pull back. The charge gives up half a second into its run, so a squad that pulls back as the piece leans gets clear (scene 4).</li>
       <li><strong>A run for a crystal:</strong> a wall in its way stops it, and it bites the wall. A squad on its route makes it charge instead. If it reaches the crystal, it feeds, calms and regrows there.</li>
     </ul>
   </section>
@@ -164,6 +195,7 @@ code { font-size: 0.9em; }
       <li>The window's own picture, on software Vulkan, all six films on today's main (after the wading change and soldiers aiming only at slime they can see; each arm plays the same round in every scene up to the cut): <code>larder-world look=DIR hand=farm seed=1 cut=150,365,240,24 cutsquad=365,256,150,4</code> (scene 1), <code>cut=150,386,239,22,8,16</code> (scene 2) and <code>cut=150,365,240,32 cutsquad=365,264,150,4</code> (scene 3), each with <code>panic=0</code> (today) and the rule. Scenes 1 and 2 and scene 3's middle film used the first rule (<code>panic_creep=1</code>); scene 3's right film used the half-pace creep, the default now.</li>
       <li>The creep acts before the cut too, so its round differs a little by 2:30, and its cut-off piece is bigger (245 walkers against 163). Re-shot with the creep, scene 1's piece was thinner in that round and was shot away as it crept, with one soldier lost (counts in the report).</li>
       <li>The scenes are staged: the ring and the soldiers' places are set by the command, not played.</li>
+      <li>Scene 4 is the CPU dish's own picture, from the retreat probe, seed 1: <code>cargo run --release --example retreatprobe -- seeds=1 look=DIR look_d0=24</code>, and again with <code>keys=panic_dash:0</code> for the charge that never gives up. The table is <code>seeds=1-6</code> with each setting.</li>
       <li>The rule acts before the cut too, so each pair's rounds differ a little by 2:30: the mould has 18,623 walkers today against 18,143 scared.</li>
     </ul>
   </section>

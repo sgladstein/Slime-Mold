@@ -1,0 +1,71 @@
+retreatprobe: race world scale 2, 25000 walkers, grow 90 s, keys [("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")] then [("panic_dash", "0")]
+seed 1: piece of 291 walkers round (72, 178), edge 10.1 fine cells; away along (1.00, -0.10)
+  D0 16: stands               caught at 1.00 s; closest 2.9; 287 scared at the end
+  D0 16: pulls back at 0 s    caught at 2.60 s; closest 1.5; 1 scared at the end
+  D0 16: pulls back at 0.5 s  caught at 2.33 s; closest 0.8; 59 scared at the end
+  D0 24: stands               caught at 1.60 s; closest 0.1; 282 scared at the end
+  D0 24: pulls back at 0 s    caught at 3.93 s; closest 2.4; 4 scared at the end
+  D0 24: pulls back at 0.5 s  caught at 2.53 s; closest 1.4; 4 scared at the end
+  D0 32: stands               caught at 1.73 s; closest 1.2; 282 scared at the end
+  D0 32: pulls back at 0 s    clear; closest 32.8; 0 scared at the end
+  D0 32: pulls back at 0.5 s  caught at 4.87 s; closest 2.4; 4 scared at the end
+seed 2: piece of 275 walkers round (133, 103), edge 10.0 fine cells; away along (0.91, 0.42)
+  D0 16: stands               caught at 0.93 s; closest 2.9; 270 scared at the end
+  D0 16: pulls back at 0 s    caught at 2.13 s; closest 1.6; 171 scared at the end
+  D0 16: pulls back at 0.5 s  caught at 1.87 s; closest 1.8; 265 scared at the end
+  D0 24: stands               caught at 1.53 s; closest 2.6; 265 scared at the end
+  D0 24: pulls back at 0 s    caught at 2.33 s; closest 1.4; 25 scared at the end
+  D0 24: pulls back at 0.5 s  caught at 2.07 s; closest 1.7; 233 scared at the end
+  D0 32: stands               caught at 1.73 s; closest 0.3; 265 scared at the end
+  D0 32: pulls back at 0 s    clear; closest 32.4; 0 scared at the end
+  D0 32: pulls back at 0.5 s  caught at 2.27 s; closest 1.4; 45 scared at the end
+seed 3: piece of 299 walkers round (121, 208), edge 10.3 fine cells; away along (0.94, -0.34)
+  D0 16: stands               caught at 0.93 s; closest 3.0; 296 scared at the end
+  D0 16: pulls back at 0 s    caught at 2.20 s; closest 0.9; 167 scared at the end
+  D0 16: pulls back at 0.5 s  caught at 1.87 s; closest 2.9; 291 scared at the end
+  D0 24: stands               caught at 1.53 s; closest 2.9; 291 scared at the end
+  D0 24: pulls back at 0 s    caught at 2.40 s; closest 1.7; 34 scared at the end
+  D0 24: pulls back at 0.5 s  caught at 2.07 s; closest 2.9; 229 scared at the end
+  D0 32: stands               caught at 1.73 s; closest 0.6; 281 scared at the end
+  D0 32: pulls back at 0 s    clear; closest 32.7; 0 scared at the end
+  D0 32: pulls back at 0.5 s  caught at 2.33 s; closest 1.5; 46 scared at the end
+seed 4: piece of 314 walkers round (108, 118), edge 10.0 fine cells; away along (0.96, 0.27)
+  D0 16: stands               caught at 1.27 s; closest 2.7; 311 scared at the end
+  D0 16: pulls back at 0 s    caught at 3.20 s; closest 2.3; 9 scared at the end
+  D0 16: pulls back at 0.5 s  caught at 1.93 s; closest 2.2; 276 scared at the end
+  D0 24: stands               caught at 1.60 s; closest 1.9; 291 scared at the end
+  D0 24: pulls back at 0 s    caught at 3.00 s; closest 1.7; 9 scared at the end
+  D0 24: pulls back at 0.5 s  caught at 3.33 s; closest 2.4; 43 scared at the end
+  D0 32: stands               caught at 1.73 s; closest 1.4; 242 scared at the end
+  D0 32: pulls back at 0 s    clear; closest 32.6; 0 scared at the end
+  D0 32: pulls back at 0.5 s  caught at 3.00 s; closest 2.9; 12 scared at the end
+seed 5: piece of 280 walkers round (36, 170), edge 10.1 fine cells; away along (1.00, -0.04)
+  D0 16: stands               clear; closest 5.7; 243 scared at the end
+  D0 16: pulls back at 0 s    caught at 2.20 s; closest 2.6; 207 scared at the end
+  D0 16: pulls back at 0.5 s  caught at 2.00 s; closest 0.8; 274 scared at the end
+  D0 24: stands               clear; closest 5.8; 1 scared at the end
+  D0 24: pulls back at 0 s    clear; closest 9.7; 0 scared at the end
+  D0 24: pulls back at 0.5 s  caught at 2.13 s; closest 2.3; 239 scared at the end
+  D0 32: stands               clear; closest 3.7; 2 scared at the end
+  D0 32: pulls back at 0 s    clear; closest 23.0; 0 scared at the end
+  D0 32: pulls back at 0.5 s  clear; closest 7.1; 0 scared at the end
+seed 6: piece of 262 walkers round (27, 174), edge 10.6 fine cells; away along (1.00, -0.06)
+  D0 16: stands               caught at 1.13 s; closest 2.5; 260 scared at the end
+  D0 16: pulls back at 0 s    caught at 4.40 s; closest 2.8; 0 scared at the end
+  D0 16: pulls back at 0.5 s  caught at 3.93 s; closest 2.5; 2 scared at the end
+  D0 24: stands               caught at 1.60 s; closest 1.3; 255 scared at the end
+  D0 24: pulls back at 0 s    clear; closest 27.1; 0 scared at the end
+  D0 24: pulls back at 0.5 s  caught at 4.93 s; closest 2.7; 0 scared at the end
+  D0 32: stands               caught at 2.13 s; closest 1.9; 252 scared at the end
+  D0 32: pulls back at 0 s    clear; closest 35.1; 0 scared at the end
+  D0 32: pulls back at 0.5 s  caught at 5.40 s; closest 2.7; 0 scared at the end
+by distance and reaction (caught / clear over 6 seeds):
+  D0 16 pulls back at 0 s    caught 6, clear 0
+  D0 16 pulls back at 0.5 s  caught 6, clear 0
+  D0 16 stands               caught 5, clear 1
+  D0 24 pulls back at 0 s    caught 4, clear 2
+  D0 24 pulls back at 0.5 s  caught 6, clear 0
+  D0 24 stands               caught 5, clear 1
+  D0 32 pulls back at 0 s    caught 0, clear 6
+  D0 32 pulls back at 0.5 s  caught 5, clear 1
+  D0 32 stands               caught 5, clear 1

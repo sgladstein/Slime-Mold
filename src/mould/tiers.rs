@@ -250,6 +250,7 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "panic_r" => p.panic_r = f()?,
         "panic_lean" => p.panic_lean = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(127),
         "panic_creep" => p.panic_creep = f()?,
+        "panic_dash" => p.panic_dash = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
         "hunger_scent" => p.hunger_scent = f()?,
         // Walker slots (a census plays the window's dense shapes on the CPU:
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).
