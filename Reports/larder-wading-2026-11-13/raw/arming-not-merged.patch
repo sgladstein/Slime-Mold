@@ -1,0 +1,335 @@
+--- a/src/mould/larder_world.rs	2026-11-13 16:15:58.498096370 +0000
++++ b/src/mould/larder_world.rs	2026-11-13 16:15:58.503432655 +0000
+@@ -484,8 +484,12 @@
+     /// body holds it to a fifth (12 touching, as a rush meets on race seeds
+     /// 1-4, where touching runs 0 to 26). The read is the frame's touch
+     /// count, the same on both engines, so the GPU needs nothing new. 0 is
+-    /// off. Touching walkers count `Rules::mass` each, so a denser mould
+-    /// (the owner's 25,000-walker shapes, mass 0.2) needs 30 for half speed.
++    /// off. Every walker counts whole, at any `Rules::mass`, since
++    /// 2026-11-13 (the owner, 15:55Z, of shape C: "why are they not way
++    /// slowing down. I thought we implemented that"): counted at C's mass
++    /// of 0.2 a walker, half speed took 30 touching, which a soldier
++    /// shooting its own feet clear never met (`Rules::arming`). The video
++    /// the owner remembered working was the 5,000-walker mould, mass 1.
+     pub wade: f32,
+     /// A soldier's scent, as a share of a full pile's, laid on the agar
+     /// within `smell_r` dish cells of it.
+@@ -638,6 +642,22 @@
+     /// (its first name): the mould's bite is its damage to soldiers
+     /// (`drain`).
+     pub sink: f32,
++    /// A soldier's bullet can't strike until it has flown past the
++    /// soldier's own touch circle and one blast radius (`touch` +
++    /// `strike`, 4 dish cells by default), so its blast never takes the
++    /// walkers touching the soldier who fired it. On since 2026-11-13: the
++    /// owner, 15:55Z, of shape C: "why are they not way slowing down" and
++    /// "Running into the thickest part of the enemy should be very
++    /// deadly". A soldier in the slime hit the first slime on its line,
++    /// at its own feet, and the blast and its crater kept the walkers
++    /// touching it away, so they neither slowed (`wade`) nor bit
++    /// (`drain`) it, and walking in killed the most a shot. The bullet is
++    /// drawn from the soldier; its first leg flies the extra distance at
++    /// once and the engines trace only the part past it, so neither engine
++    /// changes. Squadmates' blasts can still clear a soldier's walkers.
++    /// Turret shots and split pieces strike at once. False is the old rule
++    /// (`arming=0` on the window and the example).
++    pub arming: bool,
+     /// Aim spread, dish cells at the target: each shot's line turns by a
+     /// uniform angle that moves its aim up to this far to either side of
+     /// the target. 0 (the default) aims dead on and draws no random
+@@ -653,11 +673,11 @@
+     /// `Game::rim`). Shots still fly over crystals.
+     pub crystal_solid: bool,
+     /// How much one walker counts in a fight: a walker touching a building
+-    /// or the larder does `mass` times `BuildRules::drain` (or `steal`),
+-    /// and counts `mass` towards wading (`Rules::wade`). Not a soldier's
+-    /// health: a walker's bite (`drain`) is whole at any count since
+-    /// 2026-11-12, when shape C's 0.2 a walker let 40 soldiers stand in its
+-    /// thickest part and lose none.
++    /// or the larder does `mass` times `BuildRules::drain` (or `steal`).
++    /// Not a soldier's: a walker's bite (`drain`) is whole at any count
++    /// since 2026-11-12, when shape C's 0.2 a walker let 40 soldiers stand
++    /// in its thickest part and lose none, and its hold on a soldier's
++    /// legs (`wade`) since 2026-11-13.
+     /// 1 (the default) is today's 5,000-walker mould. A denser mould is
+     /// the same body cut into more, smaller walkers, so it plays at
+     /// 5,000 / its walkers at scale 2 (`Rules::mass_for`); without that the 25,000-walker
+@@ -741,6 +761,7 @@
+             seek: true,
+             crater: 4.5,
+             sink: 1.0,
++            arming: true,
+             spread: 0.0,
+             crystal_solid: true,
+             mass: 1.0,
+@@ -986,6 +1007,9 @@
+     /// Times it splits where it finally lands (`Rules::split_n`); its
+     /// pieces split one fewer time and do not pierce.
+     pub split: u8,
++    /// Fine cells it flies before it can strike (`Rules::arming`): set
++    /// when a soldier fires it, flown in its first leg, then 0.
++    pub arm: f32,
+ }
+ 
+ /// What every soldier's bullet carries when fired: the rounds' flight
+@@ -1110,6 +1134,9 @@
+     /// Each of `f.shots`: who fired it and whether it was fired this
+     /// frame; with bullets, leg q is `bullets[q]`'s.
+     by: Vec<(Option<usize>, bool)>,
++    /// Where each of `f.shots` is drawn from: its bullet, before an arming
++    /// stretch (`Rules::arming`) the traced leg skips.
++    drawn: Vec<(f32, f32)>,
+     /// Shots fired this frame.
+     fired: u32,
+     who: Vec<Who>,
+@@ -1550,7 +1577,7 @@
+         let d = dx.hypot(dy).max(1e-6);
+         // Thick slime holds a soldier back (`Rules::wade`).
+         let wade = if self.rules.wade > 0.0 {
+-            let x = s.touching as f32 * self.rules.mass / self.rules.wade;
++            let x = s.touching as f32 / self.rules.wade;
+             1.0 / (1.0 + x * x)
+         } else {
+             1.0
+@@ -1834,11 +1861,36 @@
+     /// newest are dropped) and each bullet's leg is one frame's flight,
+     /// ended early at the first wall or rock (`World::open`, checked a fine
+     /// cell at a time, so a bullet never jumps a thin wall). Returns the
+-    /// legs and, for each, who fired it and whether it was fired now.
+-    fn fly(&mut self, fired: Vec<ShotIn>, by: &[Option<usize>], dt: f32) -> (Vec<ShotIn>, Vec<(Option<usize>, bool)>) {
++    /// legs and, for each, who fired it, whether it was fired now, and
++    /// where it is drawn from. A soldier's shot is not live until it has
++    /// flown its arming distance (`Rules::arming`): a bullet's first leg
++    /// flies that much further and the leg handed to the engines starts
++    /// past it, while the drawn leg starts at the bullet; a ray starts
++    /// past it.
++    fn fly(&mut self, fired: Vec<ShotIn>, by: &[Option<usize>], dt: f32) -> (Vec<ShotIn>, Vec<(Option<usize>, bool)>, Vec<(f32, f32)>) {
+         let r = self.rules;
++        let touch = r.touch * self.s();
++        let arm = |b: Option<usize>, s: &ShotIn| if r.arming && b.is_some() { touch + s.r } else { 0.0 };
+         if r.bullet_speed <= 0.0 {
+-            return (fired, by.iter().map(|&b| (b, true)).collect());
++            let drawn = fired.iter().map(|s| s.from).collect();
++            let legs = fired
++                .iter()
++                .zip(by)
++                .map(|(s, &b)| {
++                    let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
++                    let d = dx.hypot(dy).max(1e-3);
++                    let a = arm(b, s).min(d);
++                    // The armed stretch is flown a fine cell at a time, as
++                    // a bullet's is: a wall in it ends the ray there.
++                    let n = a.ceil() as u32;
++                    let stop = (1..=n).map(|j| (j as f32).min(a)).map(|t| (s.from.0 + dx / d * t, s.from.1 + dy / d * t)).find(|p| !self.world.open(p.0, p.1));
++                    match stop {
++                        Some(p) => ShotIn { from: p, to: p, r: s.r },
++                        None => ShotIn { from: (s.from.0 + dx / d * a, s.from.1 + dy / d * a), ..*s },
++                    }
++                })
++                .collect();
++            return (legs, by.iter().map(|&b| (b, true)).collect(), drawn);
+         }
+         for (s, &b) in fired.iter().zip(by) {
+             if self.bullets.len() >= squad::SHOTS_MAX {
+@@ -1848,30 +1900,39 @@
+             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
+             let d = dx.hypot(dy).max(1e-3);
+             let m = if b.is_some() { self.bullet_mods } else { BulletMods::default() };
+-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split });
++            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split, arm: arm(b, s) });
+         }
+         let leg = r.bullet_speed * self.s() * dt;
+         let mut legs = Vec::with_capacity(self.bullets.len());
+         let mut who = Vec::with_capacity(self.bullets.len());
++        let mut drawn = Vec::with_capacity(self.bullets.len());
+         for b in &mut self.bullets {
+-            let len = leg.min(b.left);
++            let arm = b.arm.min(b.left);
++            let len = (leg + arm).min(b.left);
+             let mut to = (b.at.0 + b.dir.0 * len, b.at.1 + b.dir.1 * len);
++            let mut flown = len;
+             let n = len.ceil() as u32;
+             for j in 1..=n {
+                 let t = (j as f32).min(len);
+                 let p = (b.at.0 + b.dir.0 * t, b.at.1 + b.dir.1 * t);
+                 if !self.world.open(p.0, p.1) {
+                     to = p;
++                    flown = t;
+                     // Nothing left past the wall: the leg ends on it and
+                     // the bullet with it (`landed`).
+                     b.left = t;
+                     break;
+                 }
+             }
+-            legs.push(ShotIn { from: b.at, to, r: b.r });
++            // Traced from past the arming distance; a wall inside it leaves
++            // the one cell on the wall, which strikes nothing.
++            let live = arm.min(flown);
++            b.arm = 0.0;
++            legs.push(ShotIn { from: (b.at.0 + b.dir.0 * live, b.at.1 + b.dir.1 * live), to, r: b.r });
+             who.push((b.by, b.fresh));
++            drawn.push(b.at);
+         }
+-        (legs, who)
++        (legs, who, drawn)
+     }
+ 
+     /// After a frame with bullets: a bullet that hit is spent, and the rest
+@@ -1901,7 +1962,9 @@
+                     b.pierce -= 1;
+                     let gap = r.pierce_gap * b.r + 1.0;
+                     let at = (h.0 + b.dir.0 * gap, h.1 + b.dir.1 * gap);
+-                    b.left -= (at.0 - l.from.0).hypot(at.1 - l.from.1);
++                    // From the bullet, not the traced leg, which starts
++                    // past an arming stretch (`Rules::arming`).
++                    b.left -= (at.0 - b.at.0).hypot(at.1 - b.at.1);
+                     b.at = at;
+                     return b.left > 1e-3;
+                 }
+@@ -1913,12 +1976,12 @@
+                         let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
+                         let dir = (a.cos(), a.sin());
+                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
+-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1 });
++                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, arm: 0.0 });
+                     }
+                 }
+                 return false;
+             }
+-            let len = (l.to.0 - l.from.0).hypot(l.to.1 - l.from.1);
++            let len = (l.to.0 - b.at.0).hypot(l.to.1 - b.at.1);
+             b.at = l.to;
+             b.left -= len;
+             b.left > 1e-3
+@@ -2065,11 +2128,11 @@
+         self.building_units(&mut units, &mut shots, &mut who, &mut from, dt);
+         shooters.resize(shots.len(), None);
+         let fired = shots.len() as u32;
+-        let (shots, by) = self.fly(shots, &shooters, dt);
++        let (shots, by, drawn) = self.fly(shots, &shooters, dt);
+         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
+         let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink };
+         let out = self.world.frame_start(&f, r.frame_ticks);
+-        self.flight = Some(Flight { t, f, by, fired, who, from, out });
++        self.flight = Some(Flight { t, f, by, drawn, fired, who, from, out });
+     }
+ 
+     /// The second half of `step`: the frame's results, waited for if the
+@@ -2077,13 +2140,13 @@
+     /// (kills, harvest, touches, theft, the core, the end). Nothing when no
+     /// step is running.
+     pub fn finish_step(&mut self) {
+-        let Some(Flight { t, f, by, fired, who, from, out }) = self.flight.take() else { return };
++        let Some(Flight { t, f, by, drawn, fired, who, from, out }) = self.flight.take() else { return };
+         let out = out.unwrap_or_else(|| self.world.frame_finish());
+         let r = self.rules;
+         let sc = self.s();
+         let dt = r.frame_ticks as f32 / r.tps as f32;
+         self.shots += fired;
+-        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired }).collect();
++        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).zip(&drawn).map(|(((i, o), &(by, fired)), &from)| Shot { from, to: i.to, hit: o.hit, killed: o.killed, by, fired }).collect();
+         self.landed(&f.shots, &out.shots);
+         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
+         // Gassed mould sleeps and does not bite (the squad toolkit's sleep
+@@ -2485,7 +2548,7 @@
+         let from = g.soldiers[0];
+         let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40).map(|_| ShotIn { from: (from.x, from.y), to: (from.x + 10.0 * sc, from.y), r: 1.0 }).collect();
+         let by = vec![Some(0); many.len()];
+-        let (legs, who) = g.fly(many, &by, 1.0 / 15.0);
++        let (legs, who, _) = g.fly(many, &by, 1.0 / 15.0);
+         assert_eq!((legs.len(), who.len(), g.bullets.len()), (squad::SHOTS_MAX, squad::SHOTS_MAX, squad::SHOTS_MAX));
+         assert_eq!(g.bullets_dropped, 40);
+         // A leg ends at the first closed cell on its way, and the bullet
+@@ -2494,12 +2557,53 @@
+         let (w, h) = g.world.size();
+         let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.open(x, y) && g.world.open(x - 3.0, y) && g.world.open(x - 2.0, y) && g.world.open(x - 1.0, y) && x > 4.0).expect("a wall or rock cell with open ground west of it");
+         let start = (wall.0 - 3.0, wall.1);
+-        let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[None], 1.0);
++        let (legs, _, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[None], 1.0);
+         assert!((legs[0].to.0 - wall.0).abs() <= 1.0, "leg {:?} wall {:?}", legs[0], wall);
+         g.landed(&legs, &[squad::ShotOut { hit: None, killed: 0 }]);
+         assert!(g.bullets.is_empty(), "the bullet flew on past the wall");
+     }
+ 
++    /// Arming (`Rules::arming`): a soldier's bullet is drawn from the
++    /// soldier but traced only past its touch circle and a blast radius,
++    /// so its blast can't reach the walkers touching it; the range left
++    /// counts from the soldier. A turret's shot and `arming` off strike
++    /// from the first cell; so does a ray, past the same stretch.
++    #[test]
++    fn a_soldiers_own_blast_spares_the_walkers_touching_it() {
++        let mut g = small(1);
++        let sc = g.s();
++        let s = g.soldiers[0];
++        let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (s.x + 15.0 * sc * a.cos(), s.y + 15.0 * sc * a.sin())).find(|&p| g.clear_line((s.x, s.y), p)).expect("open ground by the larder");
++        let shot = ShotIn { from: (s.x, s.y), to, r: 2.5 * sc };
++        let d = |p: (f32, f32)| (p.0 - s.x).hypot(p.1 - s.y);
++        let arm = g.rules.touch * sc + shot.r;
++        let leg = g.rules.bullet_speed * sc / 15.0;
++        let (legs, _, drawn) = g.fly(vec![shot], &[Some(0)], 1.0 / 15.0);
++        assert!((d(legs[0].from) - arm).abs() < 1e-3, "traced from {} cells, arming {arm}", d(legs[0].from));
++        assert!((d(legs[0].to) - (arm + leg)).abs() < 1e-3, "the first leg flies its arming stretch too");
++        assert_eq!(drawn[0], (s.x, s.y), "drawn from the soldier");
++        // Every cell the blast can take is outside the touch circle.
++        assert!(d(legs[0].from) - shot.r >= g.rules.touch * sc - 1e-3);
++        g.landed(&legs, &[squad::ShotOut { hit: None, killed: 0 }]);
++        assert_eq!(g.bullets[0].arm, 0.0, "armed once");
++        assert!((g.bullets[0].left - (d(to) - arm - leg)).abs() < 1e-3, "range spent from the soldier: {}", g.bullets[0].left);
++        let (legs, _, drawn) = g.fly(Vec::new(), &[], 1.0 / 15.0);
++        assert_eq!(legs[0].from, drawn[0], "later legs are traced whole");
++        // A turret's shot, and the old rule.
++        g.bullets.clear();
++        let (legs, _, _) = g.fly(vec![shot], &[None], 1.0 / 15.0);
++        assert_eq!(legs[0].from, shot.from, "a turret strikes at once");
++        g.bullets.clear();
++        g.rules.arming = false;
++        let (legs, _, _) = g.fly(vec![shot], &[Some(0)], 1.0 / 15.0);
++        assert_eq!(legs[0].from, shot.from, "arming off");
++        // Rays (bullet_speed 0) start past the stretch.
++        g.bullets.clear();
++        (g.rules.arming, g.rules.bullet_speed) = (true, 0.0);
++        let (legs, _, drawn) = g.fly(vec![shot], &[Some(0)], 1.0 / 15.0);
++        assert!((d(legs[0].from) - arm).abs() < 1e-3 && legs[0].to == to && drawn[0] == shot.from, "{:?}", legs[0]);
++    }
++
+     #[test]
+     fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
+         let mut g = small(1);
+@@ -2507,7 +2611,7 @@
+         let r = g.rules;
+         let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0 };
+         let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
+-        let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1 };
++        let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, arm: 0.0 };
+         // Pierce: on past the hit by the gap, one pierce fewer, range spent
+         // to there; the split waits for the bullet's last hit.
+         g.bullets = vec![b];
+@@ -2543,7 +2647,7 @@
+         // Pieces go to the end in their parents' order until the buffer
+         // is full, the rest are counted, never more than `SHOTS_MAX` fly.
+         let mut g = small(1);
+-        let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2 };
++        let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, arm: 0.0 };
+         g.bullets = (0..squad::SHOTS_MAX).map(b).collect();
+         let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0 }).collect();
+         // Every second one hits; the others fly on and keep their places.
+@@ -2695,6 +2799,18 @@
+             assert!((d / free - share).abs() < 0.01, "{touching} touching: {d} against {free}");
+         }
+         assert_eq!(moved(12, 0.0), free, "wade 0 is off");
++        // Whole walkers at any density (2026-11-13): shape C's mass of 0.2
++        // once needed 30 touching for half speed.
++        let mut g = small(1);
++        g.rules.mass = 0.2;
++        let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
++        let sc = g.s();
++        let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (x + 6.0 * sc * a.cos(), y + 6.0 * sc * a.sin())).find(|&p| g.clear_line((x, y), p)).expect("open ground by the larder");
++        g.soldiers[0].order = Order::Move(to.0, to.1);
++        g.soldiers[0].touching = 6;
++        g.walk(0, 1.0 / g.rules.tps as f32);
++        let d = (g.soldiers[0].x - x).hypot(g.soldiers[0].y - y);
++        assert!((d / free - 0.5).abs() < 0.01, "mass 0.2, 6 touching: {d} against {free}");
+     }
+ 
+     /// A tier with no core of its own keeps the rules' (`Core::of`).
