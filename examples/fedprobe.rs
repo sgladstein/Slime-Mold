@@ -24,7 +24,9 @@
 //! nothing leave the mould about as big, holding them does not make it
 //! stronger, whatever the screen shows); crystals reached; the share of
 //! living walkers within twice a crystal's radius of one, and their mean
-//! energy against the rest's (where the food sits).
+//! energy against the rest's (where the food sits). At the end: walkers
+//! over open cells, and the share boxed in (no free neighbour, so the
+//! one-a-cell rule lets them neither step nor breed).
 
 use std::sync::mpsc;
 
@@ -38,6 +40,10 @@ struct Row {
     /// Mean trail on cells within twice a crystal's radius of one, and on
     /// the rest of the cells holding walkers.
     trail: (f32, f32),
+    /// At the end: living walkers over open cells, and the share of living
+    /// walkers whose eight neighbouring cells are all full or not agar (the
+    /// one-a-cell rule lets them neither step nor breed).
+    packed: (f32, f32),
     series: Vec<(f32, usize, usize, f32, f32, f32)>,
 }
 
@@ -86,6 +92,31 @@ fn image(d: &BigDish) -> image::RgbaImage {
     img
 }
 
+fn packed(d: &BigDish) -> (f32, f32) {
+    let occ = d.occupancy();
+    let open = d.agar.iter().filter(|&&a| a).count().max(1);
+    let (mut live, mut boxed) = (0usize, 0usize);
+    for k in 0..d.walkers.len() {
+        if !d.lives(k) {
+            continue;
+        }
+        live += 1;
+        let (x, y) = (d.walkers[k].0 as i64, d.walkers[k].1 as i64);
+        let free = (-1..=1i64).flat_map(|dy| (-1..=1i64).map(move |dx| (dx, dy))).filter(|&(dx, dy)| (dx, dy) != (0, 0)).any(|(dx, dy)| {
+            let (nx, ny) = (x + dx, y + dy);
+            if nx < 0 || ny < 0 || nx >= d.w as i64 || ny >= d.h as i64 {
+                return false;
+            }
+            let j = ny as usize * d.w + nx as usize;
+            d.agar[j] && occ[j] == 0
+        });
+        if !free {
+            boxed += 1;
+        }
+    }
+    (live as f32 / open as f32, boxed as f32 / live.max(1) as f32)
+}
+
 fn trail_split(d: &BigDish) -> (f32, f32) {
     let near: Vec<((f32, f32), f32)> = d.crystals().iter().enumerate().map(|(c, x)| (x.0, 2.0 * d.crystal_r(c))).collect();
     let occ = d.occupancy();
@@ -121,7 +152,7 @@ fn run(seed: u64, arm: usize, eat: Option<f32>, crowd: u8, full: f32, flow: f32,
     let rules = Rules { mass: Rules::mass_for(walkers, 2), ..Rules::default() };
     let mut g = Game::new(BigDish::new(p), rules, seed);
     let start: Vec<f32> = g.world.crystals().iter().map(|c| c.1).collect();
-    let mut row = Row { seed, arm, trail: (0.0, 0.0), series: Vec::new() };
+    let mut row = Row { seed, arm, trail: (0.0, 0.0), packed: (0.0, 0.0), series: Vec::new() };
     let mut next = 30.0;
     while g.time() < until && g.end.is_none() {
         g.step();
@@ -132,6 +163,7 @@ fn run(seed: u64, arm: usize, eat: Option<f32>, crowd: u8, full: f32, flow: f32,
         }
     }
     row.trail = trail_split(&g.world);
+    row.packed = packed(&g.world);
     if let Some(dir) = look {
         image(&g.world).save(format!("{dir}/s{seed}-eat{name}-crowd{crowd}.png")).expect("png");
     }
@@ -181,7 +213,7 @@ fn main() {
     let mut rows: Vec<Row> = Vec::new();
     for r in rx {
         let series = r.series.iter().map(|(t, n, c, sh, on, off)| format!("{t:.0}s {n} ({c} reached, {:.0}% near, energy {on:.2} near / {off:.2} off)", sh * 100.0)).collect::<Vec<_>>().join("; ");
-        println!("seed {:>2} {}: {series}; trail at the end {:.2} near crystals / {:.2} elsewhere ({:.1}x)", r.seed, label(r.arm), r.trail.0, r.trail.1, r.trail.0 / r.trail.1.max(1e-6));
+        println!("seed {:>2} {}: {series}; trail at the end {:.2} near crystals / {:.2} elsewhere ({:.1}x); walkers {:.1}% of open cells, {:.1}% of them boxed in", r.seed, label(r.arm), r.trail.0, r.trail.1, r.trail.0 / r.trail.1.max(1e-6), 100.0 * r.packed.0, 100.0 * r.packed.1);
         rows.push(r);
     }
     for h in hs {

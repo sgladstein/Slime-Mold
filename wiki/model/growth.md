@@ -97,7 +97,9 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   1, 5:00: 17.1% of the screen against 7.0%;
   [fed mould](../../Reports/fed-mould-2026-11-13/README.md)).
   `BigParams::fed_crowd` (a fed walker packs more to a cell; both engines,
-  off) added walkers but not picture.
+  off) added walkers but not picture. At the peak its 50,000 slots fill
+  at most 34.8% of a map's open cells at scale 2 (a test holds it to
+  half); inside the body 66-83% of walkers are boxed in (59-66% before).
   The one-body page's 25,000-walker films ran with one walker a cell off
   (corrected 11-12 17:10Z); the 5,000-walker game and the CPU numbers here
   are unaffected ([slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)).

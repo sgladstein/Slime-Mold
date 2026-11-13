@@ -127,6 +127,39 @@ threads. Raw output: `raw/smoke/shared-food-cap300.txt`.
 `examples/larderworld.rs` reads C's slots through `keys=capacity:N`.
 `tiers::set_key` gained `capacity` and `fed_crowd` for this.
 
+## One walker a cell at the peak (tech lead on #183)
+
+The tech lead's note on #183: `gpu::crowd_holds` checks only the start
+walkers, and C now grows to its slots. Near one walker per open cell, the
+one-a-cell rule would quietly start to matter.
+
+**Across the map, C stays well under the limit.**
+- C's 50,000 slots fill at most 34.8% of the open cells at scale 2. That
+  is the noise world's 143,604 cells.
+- The designed maps fill 32.5-34.4%.
+- The slots stop its growth well before the cells run out.
+- `shape_c_at_its_peak_fills_at_most_half_of_any_map` (in
+  `src/bin/larder-world.rs`) now holds this to half, the same bound
+  `crowd_holds` sets on the start.
+
+**Inside the body, the rule binds, and it already did.**
+`examples/fedprobe.rs` now measures, at the end of a run, the share of
+living walkers boxed in: all eight of their neighbouring cells are full
+or not agar, so the rule lets them neither step nor breed. On the CPU
+race world, idle squad, at 5:00, seeds 1-4 (raw: `raw/peak/`):
+
+| | walkers / open cells | boxed in |
+|---|---|---|
+| C as it was | 16.3-28.6% | 58.8-65.9% |
+| C with shared food | 34.6-35.7% | 66.4-83.3% |
+
+With shared food, more walkers are boxed in on 4 of 4 seeds (sign test
+p 0.125, the floor for 4 seeds). Most of C has always been a packed
+sheet, and that is the look the owner picked. Sharing the food makes the
+sheet fuller, and the slots cap it. A look that drew walkers a cell
+above one would make the packing visible (`fed_crowd` is waiting on
+that).
+
 ## Tests
 
 - **GPU twin.** `the_world_matches_the_cpu_for_one_tick` gains the case
