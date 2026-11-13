@@ -2796,6 +2796,46 @@ mod tests {
         assert_eq!((Rules::mass_for(5_000, 2), Rules::mass_for(1_250, 1), Rules::mass_for(25_000, 2)), (1.0, 1.0, 0.2));
     }
 
+    /// **Shape C's peak against one walker a cell** (tech lead on #183,
+    /// 2026-11-13): `gpu::crowd_holds` checks only the start walkers, and
+    /// C now grows from 25,000 to its 50,000 slots within about 5 minutes
+    /// (shared food). Near one walker an open cell, the one-a-cell rule
+    /// would refuse births and block steps everywhere, not just inside the
+    /// body, without a word. So every map the window plays at scale 2 must
+    /// hold C's slots in at most half its open cells, the bound
+    /// `crowd_holds` sets on the start. At 2026-11-13 the worst is the
+    /// noise world, 34.8% (143,604 open cells); the designed maps 32.5-34.4%.
+    /// Inside the body the rule binds by design: that is C's sheet, and
+    /// what kept a fed mould's food from showing until it was shared
+    /// (`Reports/fed-mould-2026-11-13/`). No GPU needed.
+    #[test]
+    fn shape_c_at_its_peak_fills_at_most_half_of_any_map() {
+        use slime_mould::gpu::agar_cells;
+        use slime_mould::mould::big::BigDish;
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let (walkers, keys) = shape_keys("c").unwrap();
+        let mut s = race_settings(1, 2, walkers);
+        for (k, v) in keys {
+            slime_mould::gpu::set(&mut s, k, v).unwrap();
+        }
+        assert_eq!(s.capacity, 50_000, "C's slots");
+        let mut worst = (0.0f32, String::new());
+        for name in ["noise", "fork", "nest", "rim", "flats", "passes"] {
+            let agar = if name == "noise" {
+                agar_cells(&s, 2, BigDish::new)
+            } else {
+                let m = Map::load(&dir, name).unwrap();
+                agar_cells(&s, 2, |q| BigDish::with_map(q, &m))
+            };
+            let full = s.capacity as f32 / agar as f32;
+            eprintln!("{name}: {agar} open cells at scale 2, C's 50,000 slots fill {:.1}%", 100.0 * full);
+            if full > worst.0 {
+                worst = (full, name.to_string());
+            }
+        }
+        assert!(worst.0 <= 0.5, "{}: C's slots fill {:.1}% of its open cells", worst.1, 100.0 * worst.0);
+    }
+
     /// The default mould is shape C, under the keys the command line gave.
     #[test]
     fn the_default_is_shape_c_under_given_keys() {
