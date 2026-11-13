@@ -91,6 +91,11 @@
 //! count 1 each); `mass=M` sets it. Its bite on a soldier
 //! (`Rules::drain`, 2 a second) is whole at any count since 2026-11-12:
 //! the owner walked 40 soldiers into C's thickest part and lost none.
+//! **C shares its food** since 2026-11-13 (`energy_flow` 0.05, the one
+//! body thread's rule): the owner could not tell it grew stronger by
+//! holding crystals, and now its body swells round the crystals it holds
+//! (on Fork about 2.4 times the mould on screen at 5:00); `energy_flow=0`
+//! plays C as it was.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -239,10 +244,25 @@ struct Args {
 /// walkers. The films held one walker a cell with `capacity=50000`.
 fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'static str)])> {
     const DENSE: [(&str, &str); 2] = [("upkeep", "0.0002"), ("capacity", "50000")];
+    // C shares its crystals' food through the body (`energy_flow`, the one
+    // body thread's 0.05; 2026-11-13, the slime-enemy thread). Why: the
+    // owner, 22:22Z, playing C: "I cannot tell if it is getting stronger by
+    // holding the crystals." It was: with crystals that feed nothing C dies
+    // by 2:00 (CPU, 4 seeds). But what it ate stayed with the walkers on the
+    // crystals, whose cells were full, so it bred few walkers and the
+    // screen showed nothing (`examples/fedprobe.rs`). With the food shared,
+    // walkers along the network breed where there is room, and the body
+    // swells round the crystals it holds: on Fork seed 1 (farm hand, the
+    // window on software Vulkan) 45,237 walkers at 5:00 against 13,956, and
+    // mould on 17.1% of the map's screen against 7.0% (1:45 8.9% against
+    // 4.6%). Tried first: fed walkers packing two a cell
+    // (`BigParams::fed_crowd` 1): 21,053 walkers but 7.6% of the screen, as
+    // the look's thickness is full at one walker a cell.
+    const C: [(&str, &str); 3] = [DENSE[0], DENSE[1], ("energy_flow", "0.05")];
     Some(match name {
         "a" => (5_000, &[]),
         "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),
-        "c" => (25_000, &DENSE),
+        "c" => (25_000, &C),
         "d" => (25_000, &[DENSE[0], DENSE[1], ("sensor_angle", "22.5"), ("sensor_offset", "5")]),
         "e" => (25_000, &[DENSE[0], DENSE[1], ("step", "0.15"), ("trail_scale", "0.02"), ("step_by", "0.85:2")]),
         _ => return None,

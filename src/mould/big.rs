@@ -466,6 +466,36 @@ pub struct BigParams {
     /// a cut far arm starves while the fed core lives, and each cut is
     /// seen to pay off.
     pub flow_loss: f32,
+    /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
+    /// is off, needs growth and a crowd limit). A walker holding `fed_full`
+    /// energy or more may step or be born into a cell holding up to
+    /// `crowd + fed_crowd` walkers, so the mould round the crystals it eats
+    /// grows denser (more walkers to a cell, more trail, more bite) and the
+    /// energy it hoards there becomes walkers. Why: the owner, 22:22Z,
+    /// playing shape C: "I cannot tell if it is getting stronger by holding
+    /// the crystals." It is: with crystals that feed nothing C dies by 2:00
+    /// (1,631 walkers at 5:00 on 4 seeds, against 36,053), and walkers near
+    /// a crystal it eats hold 20 times the energy of the rest (6.0 to 0.3
+    /// at 5:00, seed 1); but at one a cell the cells round a crystal are
+    /// full, so that energy became no walkers and the screen showed none of
+    /// it (`examples/fedprobe.rs`). With 1 (and `fed_full` 2) C holds
+    /// 45,621 walkers at 4:00 against 31,859 (4 of 4 seeds more), most
+    /// of them on the crystals' side of the network. **But it does not
+    /// read, so it is off** (kept as an option): in the window on Fork,
+    /// seed 1, farm hand, 21,053 walkers at 5:00 against 13,956, yet mould
+    /// on 7.6% of the screen against 7.0%, since the look's thickness is
+    /// full at about one walker a cell. Shape C shares its food instead
+    /// (`energy_flow` 0.05: 17.1% of the screen). Re-test when the look
+    /// shows walkers a cell above one.
+    ///
+    /// Tried first and not taken: **a fed walker lays more trail** (1 +
+    /// k x min(energy / full, 1) times). At k 6 the trail round the
+    /// crystals went from 0.7 to 1.2-1.6 times the rest's, but the brighter
+    /// tubes drew the mould onto the crystals and it bred less: 25,545
+    /// walkers at 4:00 against 31,859 (4 of 4 fewer); k 2 changed the
+    /// picture little (0.9-1.1) and still cost walkers (28,960).
+    pub fed_crowd: u8,
+    pub fed_full: f32,
     /// **Hunger** (2026-11-12, the one-body thread; 0 is off, needs growth).
     /// A walker's scent reading is multiplied by 1 + `hunger_scent` x its
     /// hunger, where hunger is 1 - energy / `hunger_at` (0 at or above
@@ -875,6 +905,8 @@ impl BigParams {
             capacity: 0,
             energy_flow: 0.0,
             flow_loss: 0.0,
+            fed_crowd: 0,
+            fed_full: 2.0,
             hunger_scent: 0.0,
             hunger_at: 1.0,
             hunger_reach: 0.0,
@@ -1948,6 +1980,16 @@ impl BigDish {
     }
 
     /// Lay `amount` of trail on cell `j` for walker `k` (and its species).
+    /// Walker k's crowd limit: `base`, or `base + fed_crowd` while it holds
+    /// `fed_full` energy or more (`BigParams::fed_crowd`).
+    fn fed_crowd(&self, base: u8, k: usize) -> u8 {
+        if base > 0 && self.p.fed_crowd > 0 && !self.energy.is_empty() && self.energy[k] >= self.p.fed_full {
+            base + self.p.fed_crowd
+        } else {
+            base
+        }
+    }
+
     fn lay(&mut self, k: usize, j: usize, amount: f32) {
         let amount = if !self.kind.is_empty() && self.kind[k] == 1 { amount * self.p.mix_deposit } else { amount };
         self.trail[j] += amount;
@@ -2024,7 +2066,7 @@ impl BigDish {
             }
             let sp = if nsp > 1 { self.spec[k] as usize } else { 0 };
             let set = sets[if per { sp } else { 0 }];
-            let crowd = set.crowd;
+            let crowd = self.fed_crowd(set.crowd, k);
             let (x, y, mut h) = self.walkers[k];
             let here = self.cell(x, y).expect("walker inside the dish");
             if life_on {
@@ -2196,7 +2238,7 @@ impl BigDish {
             let mut tries: Vec<(u32, u32, u32, f32, f32, f32, f32)> = Vec::new();
             let mut still: Vec<(u32, f32, f32)> = Vec::new();
             for &(k, h, st) in &blocked {
-                let crowd = sets[if per { self.sp_of(k as usize) } else { 0 }].crowd;
+                let crowd = self.fed_crowd(sets[if per { self.sp_of(k as usize) } else { 0 }].crowd, k as usize);
                 let (x, y, _) = self.walkers[k as usize];
                 let here = self.cell(x, y).expect("walker inside the dish");
                 let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
@@ -2635,7 +2677,7 @@ impl BigDish {
             let (dx, dy) = NEXT[(keyed(seed, t, DRAW_BIRTH, k as u32) % 8) as usize];
             let (nx, ny) = (x + dx, y + dy);
             let Some(j) = self.cell(nx, ny) else { continue };
-            let crowd = crowd_of(self, k);
+            let crowd = self.fed_crowd(crowd_of(self, k), k);
             if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) || (!self.soil.is_empty() && self.soil[j] == SOIL_BARREN) {
                 continue;
             }
