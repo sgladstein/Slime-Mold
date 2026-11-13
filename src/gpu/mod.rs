@@ -91,6 +91,8 @@ pub const WORLD_TERRAIN: u32 = 8;
 /// The dish has soil (`BigDish::soil`, WM3): the trail, life and breed
 /// passes read a cell's kind from its ground word.
 pub const WORLD_SOIL: u32 = 16;
+/// The gardeners' world (`own_mould`; the shader's `GARDEN`): species 3 is the player's.
+pub const WORLD_GARDEN: u32 = 32;
 /// A cell's `ground` bits (engine.wgsl): its crystal's pile (index + 1) in
 /// the low byte, then wet, wall, a wall that lets scent through, rock, and
 /// the soil kind in bits 12-15 (the map's G byte is bits 8-15, so its high
@@ -944,9 +946,15 @@ pub const COUNT: usize = 36;
 pub const SMELL1: usize = 37;
 pub const UNITS1: usize = 38;
 pub const HARVEST1: usize = 39;
+/// The gardeners (`own_mould`, world bit `WORLD_GARDEN`): the tend entries
+/// before the shots, and the player's walkers a cell counted into `gcount`
+/// before the shots and before the reads.
+pub const TEND: usize = 40;
+pub const OWNCLEAR: usize = 41;
+pub const OWNCOUNT: usize = 42;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 40] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1",
+pub const PASSES: [&str; 43] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount",
 ];
 
 impl Shared {
@@ -1038,6 +1046,13 @@ pub struct Engine {
     pub crater: wgpu::Buffer,
     pub crater_steps: u32,
     pub scorched: bool,
+    /// The gardeners' world (`GpuWorld::garden`): species 3 is the player's
+    /// own mould, which the squad's passes leave alone, and eating runs on
+    /// every cell. `tends` is this frame's tend entries (`squad::TEND`),
+    /// `ntend` how many the params say.
+    pub garden: bool,
+    pub tends: Vec<[u32; 8]>,
+    pub ntend: u32,
     /// The Larder World (engine.wgsl's bindings 34-41): ground bits, crystal
     /// charge, wall health, the bites walls took this tick, the crystal
     /// cells pile by pile, each pile's run and sums, the wall counters, and
@@ -1068,6 +1083,8 @@ pub struct Engine {
     pub sq: wgpu::Buffer,
     pub kills: wgpu::Buffer,
     pub squad: (u32, u32, f32),
+    /// The squad frame's sink, squared (`squad::Frame::sink`; 0 off).
+    pub shot_sink: f32,
     pub squad_due: bool,
     /// The squad's unit passes on one thread, as before 2026-11-12
     /// (`smell1`, `units1`, `harvest1`), to compare the two on a GPU.
@@ -1164,6 +1181,13 @@ impl Engine {
         Self::made(device, queue, shared, s, scale, |p| BigDish::with_map(p, m))
     }
 
+    /// The engine on the dish `make` builds from the settings' params: a
+    /// designed world with its own start, such as the gardeners'
+    /// (`own_mould::garden_dish`), whose walkers' species the dish sets.
+    pub fn made_with(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> Self {
+        Self::made(device, queue, shared, s, scale, make)
+    }
+
     fn made(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> Self {
         let agar_cells = agar_cells(s, scale, &make);
         let crowd_ok = crowd_holds(s.walkers, agar_cells);
@@ -1250,7 +1274,7 @@ impl Engine {
         let grid_max = d.w.div_ceil(g) * d.h.div_ceil(g);
         let wstat = zeros("wstat", WSTAT_BYTES + 4 * grid_max);
         let wb = zeros("wall build", 48);
-        let sq = zeros("squad", squad::WORDS * 4);
+        let sq = zeros("squad", squad::ALL * 4);
         let kills = zeros("kills", squad::SHOTS_MAX * 4);
         let hits = zeros("hits", MAX_HITS * 16);
         let look = zeros("look", cells as usize * 4);
@@ -1297,6 +1321,9 @@ impl Engine {
             crater,
             crater_steps: 0,
             scorched: false,
+            garden: false,
+            tends: Vec::new(),
+            ntend: 0,
             ground,
             charge,
             health,
@@ -1313,6 +1340,7 @@ impl Engine {
             sq,
             kills,
             squad: (0, 0, 0.0),
+            shot_sink: 0.0,
             squad_due: false,
             squad_one: false,
             squad_on: false,
@@ -1526,6 +1554,9 @@ impl Engine {
             world |= WORLD_TERRAIN;
         }
         world |= self.ground_world;
+        if self.garden {
+            world |= WORLD_GARDEN;
+        }
         b.extend(u32_bytes(&[world, self.npiles, self.npc, self.grid]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
         // Real asserts, not debug ones (2026-11-12, game integration): six
@@ -1536,7 +1567,7 @@ impl Engine {
         // ("Larder World: shared rules and merge order").
         assert_eq!(b.len(), SQUAD_AT, "Params rows before the squad row moved");
         b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), squad::SHOT_ALARM.to_bits()]));
-        b.extend(u32_bytes(&[self.n_hits, 0, 0, 0]));
+        b.extend(u32_bytes(&[self.n_hits, self.ntend, (squad::TEND - squad::PATH) as u32, self.shot_sink.to_bits()]));
         // The species block (2026-11-11): whether each species has its own
         // settings, the walker kinds, conversion's square; the second
         // kind's multipliers; then a set a species (`Set` in engine.wgsl),
@@ -1686,6 +1717,15 @@ impl Engine {
         let mut out = Vec::new();
         if open && due {
             let s = side(self.done);
+            // The gardeners' tend entries first (the CPU's `World::tend`
+            // runs before the frame), then the player's walkers counted for
+            // the shots' walker-in-a-crater stop.
+            if self.garden {
+                if self.ntend > 0 {
+                    out.push((TEND, 1, s));
+                }
+                out.extend([(OWNCLEAR, self.cells.div_ceil(256), s), (OWNCOUNT, self.n.div_ceil(256), s)]);
+            }
             if nshots > 0 {
                 out.extend([(SHOTS, nshots.div_ceil(256), s), (STRIKE, self.n.div_ceil(256), s), (CUT, nshots, s)]);
                 if self.alarmed {
@@ -1706,6 +1746,9 @@ impl Engine {
         let ticked = start..out.len();
         let s = side(self.done);
         if close && due && nunits > 0 {
+            if self.garden {
+                out.extend([(OWNCLEAR, self.cells.div_ceil(256), s), (OWNCOUNT, self.n.div_ceil(256), s)]);
+            }
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
             if self.squad_one {
                 out.extend([(UNITS1, squad::UNITS_MAX.div_ceil(64) as u32, s), (HARVEST1, 1, s)]);
@@ -1741,7 +1784,8 @@ impl Engine {
         }
         if self.npc > 0 {
             let pc = self.npc.div_ceil(256);
-            tick.push((EAT, pc));
+            // A garden eats on every cell (fed charge lies off the crystals).
+            tick.push((EAT, if self.garden { cells } else { pc }));
             if self.flows {
                 tick.extend([(PILESUM, self.npiles), (FLOW, pc)]);
             }
@@ -1988,6 +2032,19 @@ impl Engine {
         g[..self.cells as usize].to_vec()
     }
 
+    /// Species `sp`'s trail a cell now, read back (the CPU's
+    /// `species_trail[sp]`).
+    pub fn species_trail_of(&self, sp: usize) -> Vec<f32> {
+        let g = floats(&read_back(&self.device, &self.queue, &self.species[(self.done % 2) as usize]));
+        let c = self.cells as usize;
+        g[sp * c..(sp + 1) * c].to_vec()
+    }
+
+    /// Each cell's charge now, read back (the CPU's `charge`).
+    pub fn charge_of(&self) -> Vec<f32> {
+        floats(&read_back(&self.device, &self.queue, &self.charge))[..self.cells as usize].to_vec()
+    }
+
     pub fn alarm_of(&self) -> Vec<f32> {
         let g = floats(&read_back(&self.device, &self.queue, &self.germ[(self.done % 2) as usize]));
         g[self.cells as usize..2 * self.cells as usize].to_vec()
@@ -2005,7 +2062,8 @@ impl Engine {
     pub fn record_count(&self, shared: &Shared, enc: &mut wgpu::CommandEncoder) {
         let (gw, gh) = self.grid_size();
         assert!(gw * gh <= self.grid_max(), "a mould grid square under a dish cell");
-        enc.clear_buffer(&self.wstat, 16, Some(4));
+        // Words 4 (the living) and 5 (the player's own mould's, in a garden).
+        enc.clear_buffer(&self.wstat, 16, Some(8));
         if gw * gh > 0 {
             enc.clear_buffer(&self.wstat, WSTAT_BYTES as u64, Some(4 * (gw * gh) as u64));
         }
@@ -2039,10 +2097,22 @@ impl Engine {
         assert!(f.shots.is_empty() || self.grows, "shots kill by emptying slots: growth must be on");
         let (words, nunits, nshots) = squad::pack(self.dish.w, self.dish.h, f);
         self.queue.write_buffer(&self.sq, 0, &u32_bytes(&words));
+        // The gardeners' entries (`GpuWorld::tend` set them; taken here, so
+        // a frame without tending writes none).
+        let tends = std::mem::take(&mut self.tends);
+        assert!(tends.len() <= squad::TEND_MAX, "{} tend entries", tends.len());
+        if !tends.is_empty() {
+            let flat: Vec<u32> = tends.iter().flatten().copied().collect();
+            self.queue.write_buffer(&self.sq, (squad::TEND * 4) as u64, &u32_bytes(&flat));
+        }
+        self.ntend = tends.len() as u32;
         self.queue.write_buffer(&self.kills, 0, &[0u8; squad::SHOTS_MAX * 4]);
         self.squad = (nunits, nshots, f.slime);
         self.squad_due = true;
         self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), squad::SHOT_ALARM.to_bits()]));
+        // The sink squared, as `squad::sink_r2` multiplies it (0 off).
+        self.shot_sink = if f.sink > 0.0 { f.sink * f.sink } else { 0.0 };
+        self.queue.write_buffer(&self.params, SQUAD_AT as u64 + 28, &u32_bytes(&[self.shot_sink.to_bits()]));
         self.crater_steps = f.crater as u32;
         self.scorched |= f.crater > 0;
         self.queue.write_buffer(&self.params, CRATER_AT as u64 + 8, &u32_bytes(&[(f.crater as f32).to_bits(), self.crater_flags()]));

@@ -178,6 +178,12 @@ pub struct BuildRules {
     /// How near the mould must be to wear a building, dish cells (its
     /// footprint).
     pub touch: f32,
+    /// Health a walker touching a building takes a game second, times
+    /// `Rules::mass`. 1, what soldiers and buildings shared (`Rules::drain`)
+    /// until soldiers' bite went to 2 a walker whatever the mass
+    /// (2026-11-12, the owner: walking into the slime "should be very
+    /// deadly"); buildings were not part of that ask.
+    pub drain: f32,
     /// A building may be placed anywhere, not only within a soldier's
     /// range (`Rules::range`): the window sends the selected soldiers, or
     /// with none selected the nearest free one (`Cmd::Send`), to walk
@@ -216,6 +222,7 @@ impl Default for BuildRules {
             siren_r: 15.0,
             siren_keep: 0.95,
             touch: 2.0,
+            drain: 1.0,
             anywhere: true,
         }
     }
@@ -460,7 +467,7 @@ impl<W: World> Game<W> {
         }
         let bd = &mut self.buildings[k];
         if u.touching > 0 {
-            bd.hp -= r.drain * r.mass * u.touching as f32 * dt;
+            bd.hp -= r.build.drain * r.mass * u.touching as f32 * dt;
             if bd.hp <= 0.0 {
                 bd.hp = 0.0;
                 bd.alive = false;

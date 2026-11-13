@@ -13,6 +13,7 @@ sources:
   - Reports/larder-m2-2026-11-11.md
   - Reports/larder-m3-2026-11-11.md
   - Reports/larder-maps-2026-11-11.md
+  - Reports/larder-shot-sink-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/life-gpu-2026-11-11.md
   - Reports/mould-shooter-2026-11-11.md
@@ -50,12 +51,15 @@ code:
   - Params::light_weight
   - Params::pieces
   - Params::wound
+  - Rules::broken
   - Rules::core_pull
   - Rules::crater
   - Rules::crystal_solid
+  - Rules::drain
   - Rules::home_dry
   - Rules::hunger
   - Rules::ration
+  - Rules::sink
   - Rules::wade
   - Tier::core
   - Tracker
@@ -66,8 +70,10 @@ code:
   - race_params
   - race_settings
   - squad::Frame::crater
+  - squad::Frame::sink
   - squad::UNITS_MAX
   - squad::frame
+  - squad::sink
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -87,7 +93,7 @@ rules on the world, on the CPU and the engine; WM1, designed
 **Playable:** `cargo run --release --bin larder-world -- map=fork` (W2c's first cut: the real rules on the GPU world, on a map). `mouldgpu`'s Q squad is the UI's stand-in, with no rules. **Smoke tests (CI, 2026-11-12):** `the_window_plays_every_mission` and `the_window_takes_every_command` play every mission file and `hand=every` (each command on the card pressed each game second) for 60 game seconds through `larder-world -- bench`, at scale 1 with the sound on tape, on CI's software Vulkan; a new mission file or card command is covered without a new test. Keep them green.
 **On the 1070** (2026-11-12): with a step's ticks spread over the frames until the next, the Fork at scale 8 and 100,000 walkers draws every frame in 5.5 ms (p95 6.62 against 20.39), under W2c's 10 ms; the squad's unit passes are no longer a cost ([report, *On the GTX 1070*](../../Reports/gpu-readout-2026-11-12.md)). The GPU keeps the one-walker-a-cell rule while the start walkers are at most half the agar, as the CPU census does, and says when it drops it (`gpu::crowd_holds`; [report, *Two GPU fixes*](../../Reports/gpu-readout-2026-11-12.md)). The census on both engines (`larderworld census gpu=both`, `campaign gpu=both`) finds no bias over 32 seeds and five hands; the Rim mission's leak on the GPU is open (3 of 4 seeds hold, against 4 of 4 on the CPU). The maps' soil plays on the GPU since 2026-11-12. A stalemate now scores the charge taken and the mould's size (score v2).
 **Buildings, built 2026-11-12** ([report](../../Reports/larder-buildings-2026-11-12.md), [page](https://claude.ai/artifact/Xutp7S9tyPoz4ghxhaCSrj)): turret, lure, pump, outpost and wall as one `Building` type, each a still unit of the squad frame (one pass on both engines, twin-tested; `squad::UNITS_MAX` 64 to 96). The window's build page is Q. Placed as ghosts that soldiers raise (`Order::Build`, `BuildRules::raise` 8 s for a lone builder; idle soldiers in range take one up; [controls report](../../Reports/soldier-controls-2026-11-12.md)): the turret plans pay most for it. A building may be ordered anywhere (owner, 22:06Z; `BuildRules::anywhere`): with nobody selected the nearest free soldier walks out (`Cmd::Send`) and goes back to its order after, and the ghost stays faint with a bar and the seconds left until it stands (`Game::raise_left`; [controls report, part 4](../../Reports/soldier-controls-2026-11-12.md), [page](https://claude.ai/artifact/JX94pzk5N7T9Ec7EGMWbGa)). Soldiers can't stand on a crystal with charge left (owner, 14:43Z; `Rules::crystal_solid`): they harvest, bank and build from its rim, and the solid disc shrinks with the charge so they eat in from the edge ([controls report, part 3](../../Reports/soldier-controls-2026-11-12.md)). On the baseline with craters, 8 s builds and core defence (main 9f5e4a4), buying soldiers beats building on the race world (army best on 22 of 32 seeds), while ring and guard turrets are best on the nest, where army falls below idle: the best plan changes with the map. No scorcher (owner, 04:46Z). The siren (2026-11-12) calls with the alarm through the toolkit's burst: a Swarmer floods to it (8 of 8 seeds at 20 s), the plain mould ignores it.
-**Campaign (W5), designed and approved 2026-11-12 04:44Z, not built:** eight missions on the v2 maps, each one verb against one tier, shown to the player as a goal sentence and bar with one to three stars, with a no-soft-lock rule and a dead-time measure; only unlocked verbs carry between missions ([design](../../Reports/larder-campaign-2026-11-12.md)). The mission layer (`mould::campaign`) and missions 1-3 are built: `larder-world -- mission=1-landfall` plays one, and `examples/campaign.rs` is its census ([report, *The mission layer, built*](../../Reports/larder-campaign-2026-11-12.md)). Tuned on the plain mould (four seeds): the AI meets missions 1-3 in 2:31-2:48, 1:42-5:31 and 10:00-11:41, idle and random never; mission 3 does not yet need walls, and missions 2-3 are scored on both engines since the GPU world reads its mould grid (#101) ([report, *Missions 1-3 tuned*](../../Reports/larder-campaign-2026-11-12.md)). In the window the Rim mould trails out the north-east gap by 5:00 on seed 1 ([pictures](https://claude.ai/artifact/Pu2j5ComXhUPTAMv4MyMRJ)), yet the GPU census holds that seed (peak leak 0.050, inside the 5% allowance): the trail is 2-5% of the walkers spread thin (at most 3 in a 4 x 4 bin), so the goal line now says the share outside against the 5% allowed ([report, *What the player sees outside the Rim*](../../Reports/larder-campaign-2026-11-12.md)). On the real tiers with craters (census v8, seeds 1-8): Landfall the AI 40/40, idle and random 0; First contact now asks to retake the Drifter's home crystal, which never leaves it (strike 8/8 by wiping it, the rest 0); The gaps uses a thick-mould leak rule (no 4 x 4 bin outside with 16+ walkers), and walling the gaps holds 24/24 while every other hand holds 0/56 ([report, *Missions 1-3 on the real tiers*](../../Reports/larder-campaign-2026-11-12.md)). On the 1070 at 32 seeds both engines agree on The gaps: walls hold 32/32 on each, every other hand 0/32; the GPU wipes an unwalled squad slightly sooner (claim 24-8, p 0.007, median 25 s), and on Landfall too (claim 32/32 at 1:08 on both, idle and random 0) ([report, *The gaps and Landfall on the CPU and the 1070*](../../Reports/larder-campaign-2026-11-12.md)). On the drifting, headless Drifter (#133, #143, #164) First contact is now "Wipe out the Drifter" (`goal shrink 0`, peak counted after 1:00): strike 4/4 at 7:17-8:01, random 2/4 (a Drifter tuning note), claim and idle 0 with bars at 0.33 and 0.06; goals about crystals it took never started, because it leaves home only when provoked ([report, *First contact on the drifting, headless Drifter*](../../Reports/larder-campaign-2026-11-12.md)).
+**Campaign (W5), designed and approved 2026-11-12 04:44Z, not built:** eight missions on the v2 maps, each one verb against one tier, shown to the player as a goal sentence and bar with one to three stars, with a no-soft-lock rule and a dead-time measure; only unlocked verbs carry between missions ([design](../../Reports/larder-campaign-2026-11-12.md)). The mission layer (`mould::campaign`) and missions 1-3 are built: `larder-world -- mission=1-landfall` plays one, and `examples/campaign.rs` is its census ([report, *The mission layer, built*](../../Reports/larder-campaign-2026-11-12.md)). Tuned on the plain mould (four seeds): the AI meets missions 1-3 in 2:31-2:48, 1:42-5:31 and 10:00-11:41, idle and random never; mission 3 does not yet need walls, and missions 2-3 are scored on both engines since the GPU world reads its mould grid (#101) ([report, *Missions 1-3 tuned*](../../Reports/larder-campaign-2026-11-12.md)). In the window the Rim mould trails out the north-east gap by 5:00 on seed 1 ([pictures](https://claude.ai/artifact/Pu2j5ComXhUPTAMv4MyMRJ)), yet the GPU census holds that seed (peak leak 0.050, inside the 5% allowance): the trail is 2-5% of the walkers spread thin (at most 3 in a 4 x 4 bin), so the goal line now says the share outside against the 5% allowed ([report, *What the player sees outside the Rim*](../../Reports/larder-campaign-2026-11-12.md)). On the real tiers with craters (census v8, seeds 1-8): Landfall the AI 40/40, idle and random 0; First contact now asks to retake the Drifter's home crystal, which never leaves it (strike 8/8 by wiping it, the rest 0); The gaps uses a thick-mould leak rule (no 4 x 4 bin outside with 16+ walkers), and walling the gaps holds 24/24 while every other hand holds 0/56 ([report, *Missions 1-3 on the real tiers*](../../Reports/larder-campaign-2026-11-12.md)). On the 1070 at 32 seeds both engines agree on The gaps: walls hold 32/32 on each, every other hand 0/32; the GPU wipes an unwalled squad slightly sooner (claim 24-8, p 0.007, median 25 s), and on Landfall too (claim 32/32 at 1:08 on both, idle and random 0) ([report, *The gaps and Landfall on the CPU and the 1070*](../../Reports/larder-campaign-2026-11-12.md)). On the drifting, headless Drifter (#133, #143, #164) First contact is now "Break the Drifter: cut it below a tenth of its size" (`goal shrink 0.1`, peak counted after 1:00, so no straggler hunt); measured as a wipe (`shrink 0`), strike 4/4 at 7:17-8:01, random 2/4 (a Drifter tuning note), claim and idle 0 with bars at 0.33 and 0.06; goals about crystals it took never started, because it leaves home only when provoked ([report, *First contact on the drifting, headless Drifter*](../../Reports/larder-campaign-2026-11-12.md)).
 
 ## Larder World so far
 
@@ -192,14 +198,14 @@ owner's no-king ruling (2026-11-12 20:21Z: "remove the king rule ...
 Headless"; [dead end](../../Reports/dead-ends.md)). The core rule is not what holds
 farm, wall and fort to the cap: without it (`core=headless`, race 5-20)
 they stalemate in 16 of 16 games as with it, and the player wins 2 of
-112 games instead of 6. **No king since 2026-11-12 20:21Z** (owner: "remove the king rule ... Headless"): `Core::of` is `Headless`, so every mould, tiers included, makes walkers while it has food, and holding its home stops nothing; the home keeps its pull (the Sprawler's is 0), and the window shows no core ring. A walker hits for `Rules::mass` (5,000 / the start walkers at scale 2; 1 by default), so a denser mould is the same body cut finer; the owner's shape playtest (`larder-world -- shape=a..e`) uses it ([report](../../Reports/slime-questions-2026-11-12/README.md)). Strike
+112 games instead of 6. **No king since 2026-11-12 20:21Z** (owner: "remove the king rule ... Headless"): `Core::of` is `Headless`, so every mould, tiers included, makes walkers while it has food, and holding its home stops nothing; the home keeps its pull (the Sprawler's is 0), and the window shows no core ring. A walker hits for `Rules::mass` (5,000 / the start walkers at scale 2; 1 by default), so a denser mould is the same body cut finer; the owner's shape playtest (`larder-world -- shape=a..e`) uses it ([report](../../Reports/slime-questions-2026-11-12/README.md)). **The broken mould** (2026-11-12, after the owner's D playtest): under 3% of its peak walkers its upkeep is 50 times (`Rules::broken`, `broken_starve`), so stragglers off food die within about 25 s instead of growing it back, and the window says so ([report, *Stragglers*](../../Reports/slime-questions-2026-11-12/README.md)). Strike
 still beats farm about 2 to 1 because food doesn't bind. **Wading, and
 the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
 *Wading, and the cone crater by default*](../../Reports/larder-world-roadmap-2026-11-11.md)):
 the race world's crater is the cone (look 3; `scorch_cone`, full 150, keep
 0; the toolkit's blasts stay flat), and a soldier walks at
 `speed / (1 + (touching / wade)²)` (`Rules::wade` 6: half speed with 6
-walkers touching, a fifth with 12; each counts `Rules::mass`). Over both blocks random wipes the
+walkers touching, a fifth with 12; each counts `Rules::mass`). **A walker's bite on a soldier is 2 health a second at any walker count** since 2026-11-12 (`Rules::drain`; the owner: walking into the slime "should be very deadly"); was 1 x `mass`, which let 40 soldiers stand in C's thickest part and lose none in 60 s ([report, *Thick slime*](../../Reports/slime-questions-2026-11-12/README.md)); buildings keep 1 x `mass` (`BuildRules::drain`). Over both blocks random wipes the
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
 random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the
@@ -213,7 +219,16 @@ and says when the bank runs dry inside a minute. `Rules::overrun` 20 s is on. On
 harvest unspent (80% before) and strike 17% (64%), and strike beats farm
 12-4, not under Holm (26-6 before). Next, buildings' running costs and
 the player AI's feeding. Off by default for other threads:
-`Rules::reserve`, `Game::stuck`, `Game::density`.
+`Rules::reserve`, `Game::stuck`, `Game::density`. **Shots sink in**
+([report](../../Reports/larder-shot-sink-2026-11-12.md), [page](https://claude.ai/artifact/4iJTF66gpSNoJxnLgUtyiG)):
+a hit's blast is centred on the last slime along the shot's line within
+`Rules::sink` strike radii (1) of the first slime it met, not on that
+first cell, so fire from outside a body strikes slime all round, while
+against a strand it stays on the strand (`squad::sink`, both engines, to
+the bit). The owner's 22:06Z playtest found a squad standing in one spot
+"barely" hurt a large mass that walking in destroyed; on shape C a squad
+standing still on free fire now kills 20.3 a shot (12.6 before), walking
+in 47.9 (42.0), so the gap is 2.4 times, down from 3.3.
 
 ## Small-dish milestones (M1-M3)
 

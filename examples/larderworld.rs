@@ -301,7 +301,8 @@ fn main() {
             // walker through `Rules::mass` (below), so leave this at 1 for
             // density.
             "drain" => rules.drain = v.parse().unwrap(),
-            // `mass=M`: one walker's fight weight (`Rules::mass`); by
+            // `mass=M`: one walker's weight on buildings, the larder and
+            // wading (`Rules::mass`; not its bite on a soldier); by
             // default it follows the start walkers a cell, as in the window
             // (`Rules::mass_for`: 1 at 5,000 walkers on scale 2).
             "mass" => mass = Some(v.parse().unwrap()),
@@ -314,6 +315,7 @@ fn main() {
             // `crater=S`: game seconds of crater each hit lays
             // (`Rules::crater`).
             "crater" => rules.crater = v.parse().unwrap(),
+            "sink" => rules.sink = v.parse().unwrap(),
             "ration" => rules.ration = v.parse().unwrap(),
             "hunger" => rules.hunger = v.parse().unwrap(),
             "overrun" => rules.overrun = v.parse().unwrap(),

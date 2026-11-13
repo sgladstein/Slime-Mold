@@ -1,0 +1,149 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+./volley-b1/fork-volley-022s-all.png
+./volley-b1/fork-volley-022s-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.040 ms a frame
+  t 22 s: mould 24423, soldiers 9, bank 0, harvested 0, shots 160, killed 1356, took 0%, crystals left 0.998; squad at 265.4,209.9
+./volley-b1/fork-volley-22500ms-all.png
+./volley-b1/fork-volley-22500ms-near.png
+  CPU: ground field 1.63 ms (once a game second), model and HUD 0.036 ms a frame
+  t 23 s: mould 24423, soldiers 9, bank 0, harvested 0, shots 160, killed 1356, took 0%, crystals left 0.998; squad at 264.5,217.0
+./volley-b1/fork-volley-023s-all.png
+./volley-b1/fork-volley-023s-near.png
+  CPU: ground field 7.56 ms (once a game second), model and HUD 0.209 ms a frame
+  t 23 s: mould 24503, soldiers 9, bank 0, harvested 0, shots 160, killed 1356, took 0%, crystals left 0.998; squad at 263.9,221.7
+./volley-b1/fork-volley-23500ms-all.png
+./volley-b1/fork-volley-23500ms-near.png
+  CPU: ground field 1.88 ms (once a game second), model and HUD 0.041 ms a frame
+  t 24 s: mould 24503, soldiers 9, bank 0, harvested 0, shots 160, killed 1356, took 0%, crystals left 0.998; squad at 263.1,226.8
+./volley-b1/fork-volley-024s-all.png
+./volley-b1/fork-volley-024s-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.036 ms a frame
+  t 24 s: mould 24615, soldiers 9, bank 0, harvested 0, shots 160, killed 1356, took 0%, crystals left 0.998; squad at 262.4,231.4
+./volley-b1/fork-volley-24500ms-all.png
+./volley-b1/fork-volley-24500ms-near.png
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.037 ms a frame
+  t 25 s: mould 24615, soldiers 9, bank 0, harvested 0, shots 160, killed 1356, took 0%, crystals left 0.998; squad at 261.7,236.6
+./volley-b1/fork-volley-025s-all.png
+./volley-b1/fork-volley-025s-near.png
+  CPU: ground field 1.93 ms (once a game second), model and HUD 0.044 ms a frame
+  t 25 s: mould 24709, soldiers 9, bank 0, harvested 0, shots 160, killed 1356, took 0%, crystals left 0.998; squad at 261.0,241.0
+./volley-b1/fork-volley-25500ms-all.png
+./volley-b1/fork-volley-25500ms-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.041 ms a frame
+  t 26 s: mould 24709, soldiers 9, bank 0, harvested 0, shots 165, killed 1609, took 0%, crystals left 0.998; squad at 260.0,246.8
+./volley-b1/fork-volley-026s-all.png
+./volley-b1/fork-volley-026s-near.png
+  CPU: ground field 2.46 ms (once a game second), model and HUD 0.050 ms a frame
+  t 26 s: mould 24376, soldiers 9, bank 0, harvested 0, shots 169, killed 1788, took 0%, crystals left 0.998; squad at 258.6,254.7
+./volley-b1/fork-volley-26500ms-all.png
+./volley-b1/fork-volley-26500ms-near.png
+  CPU: ground field 12.58 ms (once a game second), model and HUD 0.037 ms a frame
+  t 27 s: mould 24376, soldiers 9, bank 0, harvested 0, shots 174, killed 1955, took 0%, crystals left 0.998; squad at 258.2,260.9
+./volley-b1/fork-volley-027s-all.png
+./volley-b1/fork-volley-027s-near.png
+  CPU: ground field 2.03 ms (once a game second), model and HUD 0.038 ms a frame
+  t 27 s: mould 24204, soldiers 9, bank 0, harvested 0, shots 178, killed 2060, took 0%, crystals left 0.998; squad at 258.4,261.5
+./volley-b1/fork-volley-27500ms-all.png
+./volley-b1/fork-volley-27500ms-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.066 ms a frame
+  t 28 s: mould 24204, soldiers 9, bank 0, harvested 0, shots 183, killed 2196, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-028s-all.png
+./volley-b1/fork-volley-028s-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.036 ms a frame
+  t 28 s: mould 24123, soldiers 9, bank 0, harvested 0, shots 187, killed 2266, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-28500ms-all.png
+./volley-b1/fork-volley-28500ms-near.png
+  CPU: ground field 8.65 ms (once a game second), model and HUD 0.037 ms a frame
+  t 29 s: mould 24123, soldiers 9, bank 0, harvested 0, shots 192, killed 2340, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-029s-all.png
+./volley-b1/fork-volley-029s-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.038 ms a frame
+  t 29 s: mould 24111, soldiers 9, bank 0, harvested 0, shots 196, killed 2441, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-29500ms-all.png
+./volley-b1/fork-volley-29500ms-near.png
+  CPU: ground field 1.80 ms (once a game second), model and HUD 0.037 ms a frame
+  t 30 s: mould 24111, soldiers 9, bank 0, harvested 0, shots 201, killed 2541, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-030s-all.png
+./volley-b1/fork-volley-030s-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.040 ms a frame
+  t 30 s: mould 24073, soldiers 9, bank 0, harvested 0, shots 205, killed 2597, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-30500ms-all.png
+./volley-b1/fork-volley-30500ms-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.037 ms a frame
+  t 31 s: mould 24073, soldiers 9, bank 0, harvested 0, shots 210, killed 2700, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-031s-all.png
+./volley-b1/fork-volley-031s-near.png
+  CPU: ground field 1.71 ms (once a game second), model and HUD 0.039 ms a frame
+  t 31 s: mould 23993, soldiers 9, bank 0, harvested 0, shots 214, killed 2853, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-31500ms-all.png
+./volley-b1/fork-volley-31500ms-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.038 ms a frame
+  t 32 s: mould 23993, soldiers 9, bank 0, harvested 0, shots 219, killed 2960, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-032s-all.png
+./volley-b1/fork-volley-032s-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.036 ms a frame
+  t 32 s: mould 23983, soldiers 9, bank 0, harvested 0, shots 223, killed 3017, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-32500ms-all.png
+./volley-b1/fork-volley-32500ms-near.png
+  CPU: ground field 1.81 ms (once a game second), model and HUD 0.036 ms a frame
+  t 33 s: mould 23983, soldiers 9, bank 0, harvested 0, shots 228, killed 3113, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-033s-all.png
+./volley-b1/fork-volley-033s-near.png
+  CPU: ground field 1.85 ms (once a game second), model and HUD 0.039 ms a frame
+  t 33 s: mould 23997, soldiers 9, bank 0, harvested 0, shots 232, killed 3144, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-33500ms-all.png
+./volley-b1/fork-volley-33500ms-near.png
+  CPU: ground field 1.88 ms (once a game second), model and HUD 0.040 ms a frame
+  t 34 s: mould 23997, soldiers 9, bank 0, harvested 0, shots 237, killed 3232, took 0%, crystals left 0.997; squad at 258.4,261.5
+./volley-b1/fork-volley-034s-all.png
+./volley-b1/fork-volley-034s-near.png
+  CPU: ground field 1.97 ms (once a game second), model and HUD 0.038 ms a frame
+  t 34 s: mould 24003, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996; squad at 258.4,261.5
+./volley-b1/fork-volley-34500ms-all.png
+./volley-b1/fork-volley-34500ms-near.png
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.039 ms a frame
+  t 35 s: mould 24003, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996; squad at 257.2,252.6
+./volley-b1/fork-volley-035s-all.png
+./volley-b1/fork-volley-035s-near.png
+  CPU: ground field 2.07 ms (once a game second), model and HUD 0.039 ms a frame
+  t 35 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996; squad at 256.6,247.3
+./volley-b1/fork-volley-35500ms-all.png
+./volley-b1/fork-volley-35500ms-near.png
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.092 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996; squad at 256.3,244.3
+./volley-b1/fork-volley-036s-all.png
+./volley-b1/fork-volley-036s-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.068 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./volley-b1/fork-volley-36500ms-all.png
+./volley-b1/fork-volley-36500ms-near.png
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.069 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./volley-b1/fork-volley-037s-all.png
+./volley-b1/fork-volley-037s-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.071 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./volley-b1/fork-volley-37500ms-all.png
+./volley-b1/fork-volley-37500ms-near.png
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.067 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./volley-b1/fork-volley-038s-all.png
+./volley-b1/fork-volley-038s-near.png
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.068 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./volley-b1/fork-volley-38500ms-all.png
+./volley-b1/fork-volley-38500ms-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.068 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./volley-b1/fork-volley-039s-all.png
+./volley-b1/fork-volley-039s-near.png
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.068 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./volley-b1/fork-volley-39500ms-all.png
+./volley-b1/fork-volley-39500ms-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.071 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./volley-b1/fork-volley-040s-all.png
+./volley-b1/fork-volley-040s-near.png
+  CPU: ground field 1.65 ms (once a game second), model and HUD 0.068 ms a frame
+  t 36 s: mould 24143, soldiers 9, bank 0, harvested 0, shots 241, killed 3271, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1

@@ -1,0 +1,149 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+./edge-b0/fork-edge-022s-all.png
+./edge-b0/fork-edge-022s-near.png
+  CPU: ground field 1.66 ms (once a game second), model and HUD 0.035 ms a frame
+  t 22 s: mould 24571, soldiers 9, bank 0, harvested 0, shots 163, killed 1193, took 0%, crystals left 0.998; squad at 265.5,209.9
+./edge-b0/fork-edge-22500ms-all.png
+./edge-b0/fork-edge-22500ms-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.036 ms a frame
+  t 23 s: mould 24571, soldiers 9, bank 0, harvested 0, shots 166, killed 1299, took 0%, crystals left 0.998; squad at 264.1,217.5
+./edge-b0/fork-edge-023s-all.png
+./edge-b0/fork-edge-023s-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.038 ms a frame
+  t 23 s: mould 24322, soldiers 9, bank 0, harvested 0, shots 172, killed 1519, took 0%, crystals left 0.998; squad at 262.5,225.0
+./edge-b0/fork-edge-23500ms-all.png
+./edge-b0/fork-edge-23500ms-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.038 ms a frame
+  t 24 s: mould 24322, soldiers 9, bank 0, harvested 0, shots 175, killed 1634, took 0%, crystals left 0.998; squad at 260.9,232.6
+./edge-b0/fork-edge-024s-all.png
+./edge-b0/fork-edge-024s-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.037 ms a frame
+  t 24 s: mould 24056, soldiers 9, bank 0, harvested 0, shots 181, killed 1876, took 0%, crystals left 0.998; squad at 259.6,239.9
+./edge-b0/fork-edge-24500ms-all.png
+./edge-b0/fork-edge-24500ms-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.036 ms a frame
+  t 25 s: mould 24056, soldiers 9, bank 0, harvested 0, shots 184, killed 2007, took 0%, crystals left 0.998; squad at 257.9,247.2
+./edge-b0/fork-edge-025s-all.png
+./edge-b0/fork-edge-025s-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.039 ms a frame
+  t 25 s: mould 23746, soldiers 9, bank 0, harvested 0, shots 190, killed 2287, took 0%, crystals left 0.998; squad at 256.6,254.1
+./edge-b0/fork-edge-25500ms-all.png
+./edge-b0/fork-edge-25500ms-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.041 ms a frame
+  t 26 s: mould 23746, soldiers 9, bank 0, harvested 0, shots 193, killed 2413, took 0%, crystals left 0.998; squad at 256.2,259.1
+./edge-b0/fork-edge-026s-all.png
+./edge-b0/fork-edge-026s-near.png
+  CPU: ground field 1.72 ms (once a game second), model and HUD 0.038 ms a frame
+  t 26 s: mould 23575, soldiers 9, bank 0, harvested 0, shots 199, killed 2553, took 0%, crystals left 0.998; squad at 256.4,259.9
+./edge-b0/fork-edge-26500ms-all.png
+./edge-b0/fork-edge-26500ms-near.png
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.036 ms a frame
+  t 27 s: mould 23575, soldiers 9, bank 0, harvested 0, shots 202, killed 2627, took 0%, crystals left 0.998; squad at 256.4,259.9
+./edge-b0/fork-edge-027s-all.png
+./edge-b0/fork-edge-027s-near.png
+  CPU: ground field 14.44 ms (once a game second), model and HUD 0.387 ms a frame
+  t 27 s: mould 23504, soldiers 9, bank 0, harvested 0, shots 208, killed 2710, took 0%, crystals left 0.998; squad at 256.4,259.9
+./edge-b0/fork-edge-27500ms-all.png
+./edge-b0/fork-edge-27500ms-near.png
+  CPU: ground field 1.62 ms (once a game second), model and HUD 0.036 ms a frame
+  t 28 s: mould 23504, soldiers 9, bank 0, harvested 0, shots 211, killed 2746, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-028s-all.png
+./edge-b0/fork-edge-028s-near.png
+  CPU: ground field 1.93 ms (once a game second), model and HUD 0.041 ms a frame
+  t 28 s: mould 23506, soldiers 9, bank 0, harvested 0, shots 217, killed 2823, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-28500ms-all.png
+./edge-b0/fork-edge-28500ms-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.036 ms a frame
+  t 29 s: mould 23506, soldiers 9, bank 0, harvested 0, shots 220, killed 2860, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-029s-all.png
+./edge-b0/fork-edge-029s-near.png
+  CPU: ground field 2.23 ms (once a game second), model and HUD 0.040 ms a frame
+  t 29 s: mould 23514, soldiers 9, bank 0, harvested 0, shots 226, killed 2913, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-29500ms-all.png
+./edge-b0/fork-edge-29500ms-near.png
+  CPU: ground field 2.31 ms (once a game second), model and HUD 0.067 ms a frame
+  t 30 s: mould 23514, soldiers 9, bank 0, harvested 0, shots 229, killed 2942, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-030s-all.png
+./edge-b0/fork-edge-030s-near.png
+  CPU: ground field 1.97 ms (once a game second), model and HUD 0.041 ms a frame
+  t 30 s: mould 23518, soldiers 9, bank 0, harvested 0, shots 235, killed 3003, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-30500ms-all.png
+./edge-b0/fork-edge-30500ms-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.037 ms a frame
+  t 31 s: mould 23518, soldiers 9, bank 0, harvested 0, shots 238, killed 3050, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-031s-all.png
+./edge-b0/fork-edge-031s-near.png
+  CPU: ground field 1.72 ms (once a game second), model and HUD 0.036 ms a frame
+  t 31 s: mould 23506, soldiers 9, bank 0, harvested 0, shots 244, killed 3119, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-31500ms-all.png
+./edge-b0/fork-edge-31500ms-near.png
+  CPU: ground field 1.84 ms (once a game second), model and HUD 0.037 ms a frame
+  t 32 s: mould 23506, soldiers 9, bank 0, harvested 0, shots 247, killed 3163, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-032s-all.png
+./edge-b0/fork-edge-032s-near.png
+  CPU: ground field 2.14 ms (once a game second), model and HUD 0.039 ms a frame
+  t 32 s: mould 23493, soldiers 9, bank 0, harvested 0, shots 253, killed 3250, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-32500ms-all.png
+./edge-b0/fork-edge-32500ms-near.png
+  CPU: ground field 1.63 ms (once a game second), model and HUD 0.037 ms a frame
+  t 33 s: mould 23493, soldiers 9, bank 0, harvested 0, shots 256, killed 3278, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-033s-all.png
+./edge-b0/fork-edge-033s-near.png
+  CPU: ground field 2.12 ms (once a game second), model and HUD 0.050 ms a frame
+  t 33 s: mould 23507, soldiers 9, bank 0, harvested 0, shots 262, killed 3340, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-33500ms-all.png
+./edge-b0/fork-edge-33500ms-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.037 ms a frame
+  t 34 s: mould 23507, soldiers 9, bank 0, harvested 0, shots 265, killed 3391, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-034s-all.png
+./edge-b0/fork-edge-034s-near.png
+  CPU: ground field 1.72 ms (once a game second), model and HUD 0.050 ms a frame
+  t 34 s: mould 23516, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.997; squad at 256.4,259.9
+./edge-b0/fork-edge-34500ms-all.png
+./edge-b0/fork-edge-34500ms-near.png
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.041 ms a frame
+  t 35 s: mould 23516, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996; squad at 256.4,249.4
+./edge-b0/fork-edge-035s-all.png
+./edge-b0/fork-edge-035s-near.png
+  CPU: ground field 1.94 ms (once a game second), model and HUD 0.036 ms a frame
+  t 35 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996; squad at 256.4,244.1
+./edge-b0/fork-edge-35500ms-all.png
+./edge-b0/fork-edge-35500ms-near.png
+  CPU: ground field 1.92 ms (once a game second), model and HUD 0.044 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996; squad at 256.4,244.1
+./edge-b0/fork-edge-036s-all.png
+./edge-b0/fork-edge-036s-near.png
+  CPU: ground field 1.97 ms (once a game second), model and HUD 0.074 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./edge-b0/fork-edge-36500ms-all.png
+./edge-b0/fork-edge-36500ms-near.png
+  CPU: ground field 3.00 ms (once a game second), model and HUD 0.076 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./edge-b0/fork-edge-037s-all.png
+./edge-b0/fork-edge-037s-near.png
+  CPU: ground field 2.14 ms (once a game second), model and HUD 0.088 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./edge-b0/fork-edge-37500ms-all.png
+./edge-b0/fork-edge-37500ms-near.png
+  CPU: ground field 1.98 ms (once a game second), model and HUD 0.077 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./edge-b0/fork-edge-038s-all.png
+./edge-b0/fork-edge-038s-near.png
+  CPU: ground field 2.14 ms (once a game second), model and HUD 0.073 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./edge-b0/fork-edge-38500ms-all.png
+./edge-b0/fork-edge-38500ms-near.png
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.105 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./edge-b0/fork-edge-039s-all.png
+./edge-b0/fork-edge-039s-near.png
+  CPU: ground field 1.90 ms (once a game second), model and HUD 0.074 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./edge-b0/fork-edge-39500ms-all.png
+./edge-b0/fork-edge-39500ms-near.png
+  CPU: ground field 4.25 ms (once a game second), model and HUD 0.148 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
+./edge-b0/fork-edge-040s-all.png
+./edge-b0/fork-edge-040s-near.png
+  CPU: ground field 2.03 ms (once a game second), model and HUD 0.076 ms a frame
+  t 36 s: mould 23634, soldiers 9, bank 0, harvested 0, shots 271, killed 3459, took 0%, crystals left 0.996, ended: larder overrun; squad at 256.4,244.1
