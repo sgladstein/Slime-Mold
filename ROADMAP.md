@@ -246,7 +246,10 @@ mass), adds the broken mould (`Rules::broken`) and makes the window's
 mould shape C (25,000 walkers; the census harness stays at 5,000). No
 rerun is due for any of them. Under *build first,
 balance later* the next scheduled balance pass starts from e425fed or
-later, and older rows stay as history.
+later, and older rows stay as history. It includes a wall-fort hand: since
+#198 a unit aims only at slime it can see, and a squad standing by a wall
+killed 486 walkers in 26 s against 261, so walls plus guns may bring back
+the fort plan that once dominated (design review, 11-13).
 
 **Census reset held: mould density (11-12 16:20Z; the owner took the
 dense mould for play, 22:19Z).** The window plays shape C, 25,000 walkers
