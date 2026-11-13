@@ -1728,7 +1728,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     .collect();
                 let shots: Vec<ShotIn> = if e.grows { units.iter().zip(&aims).filter_map(|(u, a)| a.map(|to| ShotIn { from: (u.x, u.y), to, r: 3.0 })).collect() } else { Vec::new() };
                 fired += shots.len() as u64;
-                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee), crater: 0 });
+                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee), crater: 0, sink: 0.0 });
             }
             // GPU time on every tenth frame (the read back waits).
             let stamp = st.as_ref().filter(|_| f % 10 == 5);
@@ -3400,7 +3400,7 @@ mod tests {
                 UnitIn { x: at.0.clamp(0.0, w as f32 - 1.0), y: at.1.clamp(0.0, h as f32 - 1.0), touch: 3.0, sight: 30.0, take_r: 3.0, take: if i % 3 == 0 { 50.0 } else { 0.0 }, smell_r: 2.0, smell: 0.5 }
             })
             .collect();
-        let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0 };
+        let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0 };
         e.inject(&cpu);
         e.set_squad(&f);
         run(&mut e, &shared, &s, 1, Hand::default());
@@ -3500,8 +3500,20 @@ mod tests {
         // And the cone (`BigParams::scorch_cone`, the look A/B): fewer steps
         // toward the strike's rim, the same whole numbers on both.
         let cone = Settings { scorch_cone: true, ..base.clone() };
-        let cases = [("plain", base.clone(), 0), ("spores and dormancy", life, 0), ("the Sleeper", sleeper, 0), ("the Swarmer, the alarm and no states", swarmer, 0), ("plain, shots that lay craters", base, 20), ("plain, cone craters", cone, 20)];
-        for (name, s, crater) in cases {
+        // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
+        // the line to the last slime within the sink's reach, at one strike
+        // radius and at 1.5 (a reach that is not the strike's own r2).
+        let cases = [
+            ("plain", base.clone(), 0, 0.0),
+            ("spores and dormancy", life, 0, 0.0),
+            ("the Sleeper", sleeper, 0, 0.0),
+            ("the Swarmer, the alarm and no states", swarmer, 0, 1.0),
+            ("plain, shots that lay craters", base.clone(), 20, 0.0),
+            ("plain, cone craters", cone.clone(), 20, 0.0),
+            ("plain, shots that sink", base, 20, 1.0),
+            ("cone craters, a sink of 1.5", cone, 20, 1.5),
+        ];
+        for (name, s, crater, sink) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             for t in 0..60 {
@@ -3598,12 +3610,17 @@ mod tests {
                     .collect();
                 shots.extend(beside.into_iter().map(|from| ShotIn { from, to: t, r: 4.0 }));
             }
-            let f = Frame { units, shots, slime, crater };
+            let f = Frame { units, shots, slime, crater, sink };
             e.inject(&cpu);
             e.set_squad(&f);
             run(&mut e, &shared, &s, 1, Hand::default());
             let (before, at) = (cpu.life.clone(), cpu.walkers.clone());
+            // Where the shots would land without the sink, to check it moves
+            // some of them.
+            let edge = squad::shots(&mut cpu.clone(), &f.shots, slime, crater, 0.0);
             let cpu_out = squad::frame(&mut cpu, &f, 1);
+            let sunk = edge.iter().zip(&cpu_out.shots).filter(|(a, b)| a.hit != b.hit).count();
+            assert_eq!(sunk > 0, sink > 0.0, "{name}: {sunk} hits sunk by the sink");
             let gpu_out = e.squad_out();
             let kills: u32 = cpu_out.shots.iter().map(|q| q.killed).sum();
             assert_eq!(cpu_out.shots[again].hit, cpu_out.shots[0].hit, "the repeated shot hits where the first did");
@@ -4125,7 +4142,15 @@ mod tests {
         // 1346 against 1505 at 30 s at the core).
         // The old bite (1 a walker), as the craters twin: at 2 the squad
         // dies by 20 s and the engines part on who died when.
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, crystal_solid: false, drain: 1.0, ..Rules::default() };
+        // The sink off (`Rules::sink`, 2026-11-12) for the same reason: with
+        // it seed 3 parted the moulds 10% at 25 s (1,388 GPU, 1,260 CPU),
+        // while over seeds 3-10 with the sink on the GPU's gap at 30 s (104
+        // walkers, pull 8; 84 at pull 0) stays under the CPU's own spread
+        // with one walker more (142; 126), above on 4 of 8
+        // (`twin_gap_over_seeds_is_chaos`, which plays the default rules).
+        // The sink itself is twinned to the bit in one frame
+        // (`the_squad_matches_the_cpu_for_one_frame`).
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, crystal_solid: false, drain: 1.0, sink: 0.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { core_pull: 0.0, ..rules }, seed);
