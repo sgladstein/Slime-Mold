@@ -1,0 +1,38 @@
+cutprobe race world scale 2 walkers 25000, grow 180 s, follow 120 s, 3 cuts a seed, seeds [1, 2, 3, 4]
+arms: [("loss05", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05"), ("flow_loss", "0.05")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+loss05 1 grown | alive 38638 parts1% 1 lcs 1.00 lone 0.00 rms 60.3 | crystals eaten from 13 of 23
+cut loss05 1 0 at fine cell (124, 80)
+loss05 1 0 | 763 763 0 | 1.00 1.21 0.95 2.8 1.34 | 22 starve 34 0.8 react 32 | 38638 17.13
+cut loss05 1 1 at fine cell (64, 92)
+loss05 1 1 | 760 760 0 | 1.00 1.05 0.99 5.5 1.00 | 33 starve 43 3.5 react 41 | 38638 17.13
+cut loss05 1 2 at fine cell (192, 84)
+loss05 1 2 | 747 747 0 | 1.00 1.06 0.98 5.5 1.00 | 84 starve 104 3.8 react 94 | 38638 17.13
+loss05 2 grown | alive 39549 parts1% 1 lcs 1.00 lone 0.00 rms 62.1 | crystals eaten from 13 of 23
+cut loss05 2 0 at fine cell (36, 116)
+loss05 2 0 | 784 784 0 | 1.00 1.08 0.99 5.6 1.00 | 47 starve 60 2.7 react 57 | 39549 22.61
+cut loss05 2 1 at fine cell (144, 84)
+loss05 2 1 | 720 720 0 | 1.00 1.08 0.98 5.4 1.02 | 34 starve 51 4.6 react 32 | 39549 22.61
+cut loss05 2 2 at fine cell (212, 160)
+loss05 2 2 | 699 699 0 | 1.00 1.15 0.96 5.4 1.02 | 66 starve 82 3.7 react 80 | 39549 22.61
+loss05 3 grown | alive 37001 parts1% 1 lcs 1.00 lone 0.00 rms 48.6 | crystals eaten from 12 of 23
+cut loss05 3 0 at fine cell (196, 128)
+loss05 3 0 | 789 789 0 | 1.00 1.27 0.94 5.6 1.00 | 33 starve 49 3.6 react 45 | 37001 25.39
+cut loss05 3 1 at fine cell (164, 192)
+loss05 3 1 | 779 779 0 | 1.00 1.16 0.95 5.6 1.00 | 45 starve 64 1.3 react 59 | 37001 25.39
+cut loss05 3 2 at fine cell (56, 216)
+loss05 3 2 | 742 742 0 | 1.00 1.08 0.98 2.9 1.31 | 23 starve 39 2.5 react 16 | 37001 25.39
+loss05 4 grown | alive 39115 parts1% 1 lcs 1.00 lone 0.00 rms 59.5 | crystals eaten from 14 of 23
+cut loss05 4 0 at fine cell (32, 200)
+loss05 4 0 | 787 787 0 | 1.00 1.03 0.99 5.6 1.00 | 45 starve 60 4.8 react 54 | 39115 26.82
+cut loss05 4 1 at fine cell (80, 260)
+loss05 4 1 | 775 775 0 | 1.00 1.12 0.97 5.6 1.00 | 78 starve 91 3.1 react 87 | 39115 26.82
+cut loss05 4 2 at fine cell (144, 76)
+loss05 4 2 | 695 695 0 | 1.00 1.05 0.99 5.4 1.02 | 40 starve 61 3.4 react 49 | 39115 26.82
+
+summary (mean over cuts)
+loss05: cuts 12 n0 753 lcs20 1.00 frag 1.11 lcs 0.97 rms20 5.1 compact20 1.06 life 46 moved 3.2 fates {"starve": 12}
+
+real	10m5.654s
+user	6m42.231s
+sys	1m6.544s

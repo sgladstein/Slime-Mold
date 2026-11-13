@@ -42,9 +42,12 @@ struct Params {
     graze_regrow: f32, boost: f32, upkeep: f32, birth_at: f32,
     // Growth (Larder World W0, `BigParams::upkeep`, 0 off): births cost
     // `birth_cost`; a walker at zero energy dies with chance `starve` a
-    // step; a child takes slot k ^ (a keyed draw & `bmask`).
+    // step; a child takes slot k ^ (a keyed draw & `bmask`). `wither` and
+    // `s_wither` (the row's spare words, borrowed by the slime-enemy
+    // thread 2026-11-13): a walker that has heard of no food for its lag
+    // dies with chance `wither` at each check (`life`; clock in `wclock`).
     birth_cost: f32, starve: f32, s_starve: u32, s_birth: u32,
-    s_bclaim: u32, bmask: u32, _r0: u32, _r1: u32,
+    s_bclaim: u32, bmask: u32, wither: f32, s_wither: u32,
     // The Larder World (W1b, 2026-11-11: `BigParams`' crystals, terrain and
     // walls), off while `world` is 0. Its bits: CRYSTALS, WETS (wet ground,
     // or rubble a broken wall leaves), WALLS (a wall has been built),
@@ -82,9 +85,13 @@ struct Params {
     // block, its relays and the cells' dormant walkers `gdep`'s second and
     // third, and spores' and sleepers' deposits `bdep`'s third and fourth.
     // `sleep_death` (PR #85) is a dormant walker's chance a tick of dying.
+    // `wclock` (the row's spare word, borrowed by the slime-enemy thread
+    // 2026-11-13) is withering's: its lag in steps (low 16 bits), the steps
+    // between checks (next 8) and whether the news spread ends in its
+    // second block (bit 24; `Engine::wither_clock`).
     cyc: u32, alarm_on: u32, s_fruit: u32, s_sleep: u32,
     s_land: u32, s_spore_h: u32, spore_steps: u32, spore_rest: u32,
-    wake_steps: u32, sleep_rest: u32, s_sleep_die: u32, _l1: u32,
+    wake_steps: u32, sleep_rest: u32, s_sleep_die: u32, wclock: u32,
     spore_rate: f32, spore_scent: f32, spore_alarm: f32, spore_burst: f32,
     spore_st: f32, spore_reach: f32, spore_dep: f32, spore_land: f32,
     sleep_rate: f32, sleep_dep: f32, wake_scent: f32, wake_alarm: f32,
@@ -243,6 +250,12 @@ struct Squad { units: array<SqUnit, 96>, uout: array<SqUnitOut, 96>, shots: arra
 // lost harvest's adds on the GTX 1070 (`Reports/dead-ends.md`): two cones
 // meeting on a cell could keep the smaller.
 @group(0) @binding(47) var<storage, read_write> crater: array<atomic<u32>>;
+// Food's news (`Settings::wither`, the CPU's `BigDish::news` and `heard`,
+// 2026-11-13): the step each slot last heard of food, `P.n` words; then
+// three blocks of cells: the latest news the walkers on each cell carry
+// (`ngather`, cleared by `nhear`), and the spread's two turns (`nspread`,
+// `nab`, `nba`), each written whole by the pass that writes it.
+@group(0) @binding(48) var<storage, read_write> news: array<atomic<u32>>;
 
 fn crater_at(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&crater[i])); }
 fn crater_set(i: u32, v: f32) { atomicStore(&crater[i], bitcast<u32>(v)); }
@@ -739,6 +752,17 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // One body's sums are read (`egain`); clear them for the next tick.
     // Every cell `esum` added to holds an ordinary walker, which runs here.
     if (P.eflow > 0.0) { atomicStore(&body[i], 0u); atomicStore(&body[P.w * P.h + i], 0u); }
+    // A part cut off from its food withers (`wither`, before the upkeep as
+    // on the CPU): at each check a walker that has heard of no food for
+    // its lag may die, whatever it still holds.
+    if (P.wither > 0.0 && S.t % max((P.wclock >> 16u) & 0xFFu, 1u) == 0u && S.t + 1u > atomicLoad(&news[k]) + (P.wclock & 0xFFFFu)) {
+        if (unit(keyed(P.s_wither, S.t, k)) < P.wither) {
+            atomicSub(&occ[i], 1u);
+            atomicStore(&claim[i], NONE);
+            energy[k] = -1.0;
+            return;
+        }
+    }
     let n = f32(atomicLoad(&occ[i]));
     var g = 0.0;
     if (eats(k)) { g = min(grass[i] / n, P.graze_eat); }
@@ -806,6 +830,76 @@ fn egain(@builtin(global_invocation_id) gid: vec3<u32>) {
 // The CPU's order round a cell.
 const NEIGH8 = array<vec2<i32>, 8>(vec2(1, 0), vec2(1, 1), vec2(0, 1), vec2(-1, 1), vec2(-1, 0), vec2(-1, -1), vec2(0, -1), vec2(1, -1));
 
+// Food's news (`wither`, the CPU's `hear_food`), after eating and before
+// `life`. `ngather`: a walker that took crystal this step (its cell's
+// `share`) hears it now, and each cell gets the latest news its walkers
+// carry (at least 1, so a cell with walkers is never 0). Then `nspread`
+// and its turns: a cell with walkers takes the latest of its own and the
+// eight round it, a cell with none stays 0, `wither_reach` times. Then
+// `nhear`: each walker takes its cell's news if later than its own.
+// Whole numbers and a max, so the order the threads run in changes
+// nothing.
+@compute @workgroup_size(256)
+fn ngather(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !ordinary(k)) { return; }
+    let wk = walkers[k];
+    let i = cell(wk.x, wk.y);
+    if (share[i] > 0.0) { atomicStore(&news[k], S.t + 1u); }
+    atomicMax(&news[P.n + i], atomicLoad(&news[k]));
+}
+
+// One turn of the spread, from block `src` into block `dst` of the cells'
+// blocks (0 the gathered one, 1 and 2 the turns'), a thread a cell.
+fn nturn(i: u32, src: u32, dst: u32) {
+    let c = P.w * P.h;
+    let v = atomicLoad(&news[P.n + src * c + i]);
+    var best = v;
+    if (v > 0u) {
+        let x = i32(i % P.w); let y = i32(i / P.w);
+        for (var q = 0u; q < 8u; q++) {
+            let d = NEIGH8[q];
+            let nx = x + d.x; let ny = y + d.y;
+            if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
+            best = max(best, atomicLoad(&news[P.n + src * c + u32(ny) * P.w + u32(nx)]));
+        }
+    }
+    atomicStore(&news[P.n + dst * c + i], best);
+}
+
+@compute @workgroup_size(256)
+fn nspread(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x >= P.w * P.h) { return; }
+    nturn(gid.x, 0u, 1u);
+}
+
+@compute @workgroup_size(256)
+fn nab(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x >= P.w * P.h) { return; }
+    nturn(gid.x, 1u, 2u);
+}
+
+@compute @workgroup_size(256)
+fn nba(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x >= P.w * P.h) { return; }
+    nturn(gid.x, 2u, 1u);
+}
+
+@compute @workgroup_size(256)
+fn nhear(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !ordinary(k)) { return; }
+    let wk = walkers[k];
+    let i = cell(wk.x, wk.y);
+    let c = P.w * P.h;
+    // The spread ends in its second turn's block with an even reach.
+    let last = select(1u, 2u, ((P.wclock >> 24u) & 1u) == 1u);
+    atomicMax(&news[k], atomicLoad(&news[P.n + last * c + i]));
+    // The gathered block was read by `nspread` only; every cell with news
+    // in it holds a walker that runs here, so it is clear for next step.
+    atomicStore(&news[P.n + i], 0u);
+}
+
 // The slot a parent's child takes this tick: k xor one keyed mask, so each
 // empty slot has one parent.
 fn child_of(k: u32, t: u32) -> u32 {
@@ -862,6 +956,8 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     // The child is its parent's species and kind, and an ordinary walker
     // with its timer at 0.
     if (nsp() > 0u || mixes() || cycles()) { spec[b] = spec[k] & 0x1FFu; }
+    // A child knows what its parent heard (`wither`).
+    if (P.wither > 0.0) { atomicStore(&news[b], atomicLoad(&news[k])); }
 }
 
 // Conversion (PR #56), after the move and its deposit, before any jump: a

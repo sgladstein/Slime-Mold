@@ -216,11 +216,12 @@ x (1 - `flow_loss`). Parts far from a crystal hold little in reserve.
 - **In both, the piece dies all at once.** Once its pooled energy runs
   out, it is gone within about 10 s. It does not thin out gradually.
 
-**Page:** https://claude.ai/artifact/W3ZnFFGTNoD8XYWjGzrSRZ (source
-`cut-page/`). It is a blind A/B, and the key is below.
+**Page:** https://claude.ai/artifact/W3ZnFFGTNoD8XYWjGzrSRZ. Version 1
+(source `cut-page/v1/`) was a blind A/B; version 2, with withering, is
+below.
 
-**The key:** Film 1 is today's C (shared food). Film 2 is C with
-`flow_loss` 0.05. To play film 2: `larder-world -- flow_loss=0.05`.
+**The key to version 1:** Film 1 is today's C (shared food). Film 2 is C
+with `flow_loss` 0.05. To play film 2: `larder-world -- flow_loss=0.05`.
 Nothing changed in the default; the owner's answer on the decision card
 decides it.
 
@@ -242,7 +243,153 @@ idle/farm/strike, cap 5:00; `raw/smoke/fading-food-cap300.txt`; 341 s on 3 threa
 - `cut=` in the window's no-window mode.
 - `flow_loss` in `tiers::set_key` and `capacity` in the cut probe.
 
+## A cut-off part withers: food's news (11-13)
+
+The game designer's review of the cut test asked for a cut piece that
+falls steadily, with "roughly half gone by mid-window and no cliff", and
+an uncut C the same size as today ("retune the numbers instead of
+shrinking C"). Both rules on the page's first version fail that: the piece is whole and
+then gone at once. Three rules were tried on the CPU. The deciding
+measures, named before the third run: the piece about half gone by 20-30 s
+with no 5 s drop much over 0.2 of it, and uncut C at 3:00 within about 5%
+of today's, paired by seed.
+
+**The rule kept (`BigParams::wither`, off by default; both engines).**
+News of food travels through the body. A walker that takes crystal hears
+it now. Each step, each cell holding walkers starts from the latest news
+its walkers carry and takes the latest of the eight cells round it, twice
+over (`wither_reach` 2), so news crosses two cells a step through cells
+holding walkers and stops at an empty one. Each walker then carries its
+cell's news on. Every 15 steps (`wither_every`, twice a game second), a
+walker whose news is more than 150 steps old (`wither_lag`, 5 game
+seconds) dies with chance `wither`, whatever energy it holds. A child
+carries its parent's news.
+
+**Held ring cuts as before** (CPU race world, C's keys, seeds 1-4, 3 cuts
+each at 3:00, `raw/cut/news-*.txt`, `news-*-series.csv`, summary in
+`news-summary.txt` from `raw/cut/summ.py`). The share of the piece left:
+
+| | 10 s | 15 s | 20 s | 30 s | 45 s | 60 s | 90 s | largest 5 s drop | C at 3:00 |
+|---|---|---|---|---|---|---|---|---|---|
+| shared food (today) | 1.00 | 1.00 | 1.00 | 1.00 | 0.93 | 0.84 | 0.83 | 0.57 | 49,949-50,000 |
+| `wither` 0.01 | 0.90 | 0.82 | 0.74 | 0.61 | 0.41 | 0.28 | 0.15 | 0.34 | the same |
+| `wither` 0.02 | 0.81 | 0.66 | 0.54 | 0.36 | 0.18 | 0.09 | 0.03 | 0.21 | the same |
+| `wither` 0.03 | 0.73 | 0.54 | 0.40 | 0.22 | 0.08 | 0.03 | 0.00 | 0.29 | the same |
+| `flow_loss` 0.05 (rerun) | 0.97 | 0.92 | 0.86 | 0.65 | 0.28 | 0.21 | 0.00 | 0.77 | 37,001-39,549 |
+
+- The piece thins steadily and stays one lump: its largest part holds
+  all its walkers at 20 s (`lcs20` 1.00) and it stays round
+  (`compact20` 1.03-1.17) and in place (moves 0.4-4.6 dish cells).
+- Its life (to under 10% of the walkers at the cut) is shorter than
+  today's on 12 of 12 cuts at 0.02 and at 0.03 (sign test p 0.0005):
+  40-65 s at 0.02, 39-45 s at 0.03. At 0.01 the last tenth lingers
+  (42-120 s; shorter on 7 of 12, none longer).
+- **Uncut C is unchanged to the walker** on 4 of 4 seeds (49,995,
+  50,000, 49,949, 49,998) and eats from the same crystals (15, 13, 13,
+  15 of 23). A body joined to its crystals always hears of food within
+  the lag, so nothing in it withers.
+- 0.02 meets both measures (half gone at 20 s, largest drop 0.21) and is
+  the lead. 0.03 falls faster than asked. 0.01 is half gone at about
+  40 s, nearer "half by mid-window", but slow enough that a piece can
+  also run out of its pooled energy first: one cut lost 34% in 5 s.
+- `flow_loss` 0.05, run again with the probe's fix below, reads as
+  before: 86% left at 20 s, then a cliff (mean largest 5 s drop
+  0.62), and C 21-26% smaller at 3:00 (4 of 4).
+
+**Tried first and rejected** (both in `Reports/dead-ends.md`):
+- *Withering when a walker's food in fails.* A walker whose food in over a
+  second (crystal plus net sharing) did not cover half its upkeep withered
+  at 0.02 a check. A cut piece thinned (53% at 20 s), but the fed body
+  lives on its store between meals as much as a cut piece does: C fell to
+  15-29k walkers at 3:00 (4 of 4) and reached 5-13 crystals of 23
+  (`raw/cut/wither.txt`).
+- *News kept only in cells.* The same news, but no walker carried it, so a
+  lone explorer whose cell held no one else heard nothing and withered.
+  C at 3:00 was 2-16% smaller (4 of 4) and ate from 10-13 crystals
+  (`raw/cut/heard.txt`).
+
+**A fix to the cut probe** (`examples/cutprobe.rs`). It tags the piece's
+walkers and gives a newborn its neighbour's tag. A slot that died and was
+born again within one tick kept the old tag, so once walkers died in the
+piece, main-body births in their slots counted as the piece (under the
+cell-news rule the "piece" reached crystals and moved 60-80 cells). A slot
+that jumps more than 4 fine cells in a tick is now tagged as a birth. The
+runs above use the fix. Today's C reads the same with it (it loses no
+walker until its cliff), and the sizes of C at 3:00 never used the tags.
+`flow_loss` 0.05 run again with the fix reads the same to two places.
+The piece curves of the two rejected rules, where walkers died all
+through the piece, read somewhat high; their rejections rest on C's size
+and stand.
+
+**In the window** (Fork, seed 1, farm hand, the same held ring at 2:30,
+`cut=150,386,239,22`; all three rules filmed again on one build, since
+the earlier films came from an older one; `raw/cut/film-news02.log`,
+`film-today.log`, `film-loss2.log`). Walkers inside the ring:
+
+| after the cut | 0 s | 10 s | 20 s | 25 s | 30 s | 40 s | 50 s | 60 s | 70 s | 80 s | 90 s |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| shared food (today) | 272 | 289 | 289 | 289 | 289 | 289 | 289 | 289 | 289 | 18 | 1 |
+| `flow_loss` 0.05 | 146 | 158 | 158 | 158 | 90 | 2 | 0 | 0 | 0 | 0 | 0 |
+| `wither` 0.02 | 244 | 234 | 148 | 120 | 90 | 67 | 50 | 39 | 21 | 14 | 2 |
+
+- With withering the piece fades over about a minute, half gone at
+  +25 s; the other two are whole and then gone within about 10 s.
+- The whole mould at 4:00: 28,254 walkers and 12.9% of the screen today,
+  28,372 and 13.5% with withering, 18,108 and 9.5% with fading food.
+  The rules act before the cut too (withering on bits the squad's shots
+  cut off), so the rounds differ a little.
+
+**Page (version 2):** https://claude.ai/artifact/W3ZnFFGTNoD8XYWjGzrSRZ
+(source `cut-page/`; version 1's two films in `cut-page/v1/`). A blind
+A/B/C. **The key:** Film A is fading food (`flow_loss` 0.05), Film B is
+withering (`wither` 0.02), Film C is today's C. To play B:
+`larder-world -- wither=0.02`; A: `larder-world -- flow_loss=0.05`.
+
+**Built for it:**
+- CPU: `BigParams::wither`, `wither_every`, `wither_lag`, `wither_reach`;
+  `BigDish::news` (a step a walker) and `heard` (a step a cell, nonzero
+  only where walkers stand). The pass touches only cells holding walkers.
+- GPU: binding 48 `news` (a word a slot, then three blocks of cells:
+  gathered, and the spread's two turns), passes `ngather`, `nspread`,
+  `nab`, `nba` and `nhear` after eating, the withering in `life`, and the
+  child's news in `born`. `Params` stays 896 bytes: `wither` and
+  `s_wither` take the growth row's spare words (360, 364) and the clock
+  takes the life-cycle row's (732, `wclock`: lag, check interval, and
+  which block the spread ends in). Claimed in `ROADMAP.md`.
+- Keys: `wither`, `wither_every`, `wither_lag`, `wither_reach` for the
+  window, the census (`tiers::set_key`) and the cut probe.
+- With the life cycle on, a spore that lands keeps the news it had when
+  it fruited, so one that lands far from food withers after the lag.
+  No tier uses withering yet; a tier that does should decide that.
+
+**Cost.** GPU on software Vulkan (`mouldgpu look=DIR`, 50,000 walkers at
+scale 2 with crystals and shared food, median of 11 ticks): the four news
+passes take 2.14 ms a tick (`ngather` 0.71, `nspread` 0.44, `nab` 0.44,
+`nhear` 0.55) against 10.8 ms for the rest of the tick; one body's `esum`
+and `egain`, the same shape of work, take 1.3 ms. The GTX 1070's figure
+waits for the owner's go-ahead on timing runs. On the CPU world (cut
+probe, seed 1, 50,000 walkers, each run alone) a tick takes 22.8 ms with
+withering against 18.4 ms without: the news pass walks every walker three
+times and every cell holding one twice a step. It only runs with
+`wither` on.
+
 ## Tests
+
+- **Withering, GPU twin.** `the_world_matches_the_cpu_for_one_tick` gains
+  two cases, news spread twice and three times a step (so every news
+  pass runs and the spread ends in each block). The warm-up makes the
+  news with a lag no walker reaches; every other walker's news is set
+  stale before the tick, which has a 4-step lag, checks every step and
+  even odds. Result: 2,005 and 1,967 walkers die in the tick, 0 slots
+  live or die apart, 0 of the living walkers' news differs, 645 and 667
+  stale walkers heard again, and the gathered block is clear after. With
+  the spread's last block read wrong (planted), 10 slots and 137 news
+  differ and the test fails.
+- **Withering, CPU.** `food_news_travels_through_the_body_and_not_across_a_gap`
+  (a row of walkers: news crosses two cells a step, is carried on, and
+  stops at an empty cell) and `a_walker_without_news_withers` (0 changes
+  nothing, news that never goes stale kills no one, stale news thins the
+  mould).
 
 - **GPU twin.** `the_world_matches_the_cpu_for_one_tick` gains the case
   "fed crowd: a fed walker packs two to a cell". Every other walker is
