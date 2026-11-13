@@ -37,8 +37,9 @@ use std::time::Instant;
 use super::{read_back, Curve, Engine, Hand, Settings, Shared, Stamps, Start, MAX_PILES, WSTAT_BYTES};
 use pixels::wgpu;
 use crate::mould::big::BigParams;
-use crate::mould::larder_world::{race_params, World};
+use crate::mould::larder_world::{race_params, Soldier, World};
 use crate::mould::map::Map;
+use crate::mould::own_mould::{self, Task, Tend};
 use crate::mould::squad::{self, Frame, FrameOut, SHOTS_MAX, UNITS_MAX};
 
 /// The CPU race world's settings on the engine (`larder_world::race_params`).
@@ -84,6 +85,11 @@ pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
         energy_flow: p.energy_flow,
         hunger_scent: p.hunger_scent,
         hunger_at: p.hunger_at,
+        // The crater's shape, as the CPU's race world sets it (the cone,
+        // `race_params`).
+        scorch_keep: p.scorch_keep,
+        scorch_full: p.scorch_full,
+        scorch_cone: p.scorch_cone,
         seed,
         ..Settings::big_dish()
     }
@@ -129,6 +135,8 @@ struct Read {
     sums: Vec<(f32, u32)>,
     broken: u32,
     living: u32,
+    /// The player's own mould's living walkers (a garden's; 0 otherwise).
+    own: u32,
     /// The mould grid, if the frame summed one.
     grid: Option<Vec<u32>>,
 }
@@ -143,6 +151,10 @@ pub struct GpuWorld {
     /// The crystals and the living walkers as of the last frame's readout.
     crystals: Vec<((f32, f32), f32)>,
     living: usize,
+    /// The gardeners' state (`GpuWorld::garden`), None in the plain game.
+    pub garden: Option<GpuGarden>,
+    /// The player's own mould's living walkers at the last readout.
+    own: usize,
     /// Wall cells broken as of the mirror's last agar read.
     broken: u32,
     ro: Readout,
@@ -178,9 +190,68 @@ pub struct GpuWorld {
     /// spent waiting for them (`frame_finish`).
     pub waits: u64,
     pub wait_ms: f64,
+    /// Walkers bursts have killed so far (`Engine::struck`), so `burst`
+    /// returns its own.
+    struck: u32,
+}
+
+/// The gardeners on the GPU world (`own_mould`'s `Garden`, 2026-11-12):
+/// the soldiers' tasks and what they did.
+#[derive(Clone, Debug, Default)]
+pub struct GpuGarden {
+    pub tasks: Vec<Task>,
+    pub tend: Tend,
+    pub roads: u64,
+    pub fed: f32,
+}
+
+impl GpuGarden {
+    pub fn set_task(&mut self, k: usize, t: Task) {
+        if self.tasks.len() <= k {
+            self.tasks.resize(k + 1, Task::None);
+        }
+        self.tasks[k] = t;
+    }
+}
+
+/// The garden's settings: the race world's for both moulds' walkers, with
+/// four species slots, the enemy blind to the player's trail and conversion
+/// as the CPU garden's (`own_mould::garden_world`). The CPU weighs
+/// conversion by presence (`species_convert_per`), which the engine lacks;
+/// with both moulds laying the same deposit it compares the same sums.
+pub fn garden_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
+    Settings { species: own_mould::SPECIES, avoid: 0.0, convert: own_mould::CONVERT, convert_r: own_mould::CONVERT_R, ..race_settings(seed, scale, 2 * walkers) }
 }
 
 impl GpuWorld {
+    /// **The gardeners' world on the GPU**: `own_mould::garden_world`'s
+    /// start (the same map and walkers), with the squad's passes seeing
+    /// the enemy alone and the soldiers' tasks as tend entries. `s` is
+    /// `garden_settings` with any changes; a grazing world is refused (the
+    /// player's walkers a cell are counted into the grazing count).
+    pub fn garden(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, seed: u64, scale: usize, walkers: usize) -> Result<Self, String> {
+        if s.graze != 0.0 {
+            return Err(format!("a garden can't graze (graze {}): its count of the player's walkers uses the grazing count", s.graze));
+        }
+        if s.species != own_mould::SPECIES {
+            return Err(format!("a garden runs {} species slots, not {}", own_mould::SPECIES, s.species));
+        }
+        let m = own_mould::garden_map(seed, scale, walkers);
+        let shared = Shared::new(device);
+        let mut e = Engine::made_with(device, queue, &shared, &s, scale, |p| own_mould::garden_dish(p, &m, walkers));
+        e.garden = true;
+        let mut g = Self::of(e, shared, s, scale);
+        g.garden = Some(GpuGarden::default());
+        g.read_now();
+        Ok(g)
+    }
+
+    /// The player's own mould's and the enemy's living walkers (a garden's;
+    /// the player's is 0 in the plain game).
+    pub fn counts_by_side(&self) -> (usize, usize) {
+        (self.own, self.living - self.own)
+    }
+
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, scale: usize) -> Self {
         let shared = Shared::new(device);
         let e = Engine::new(device, queue, &shared, &s, scale);
@@ -198,7 +269,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0 };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0 };
         g.read_now();
         g
     }
@@ -325,7 +396,7 @@ impl GpuWorld {
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], grid }
+        Read { out, sums, broken: st[1], living: st[4], own: st[5], grid }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -334,6 +405,7 @@ impl GpuWorld {
         let k = self.e.dish.p.scale as f32;
         self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
         self.living = r.living as usize;
+        self.own = r.own as usize;
         if let Some(g) = r.grid.take() {
             self.grid = Some((self.e.grid as usize, self.ticks(), g));
         }
@@ -451,6 +523,31 @@ impl World for GpuWorld {
         r.out
     }
 
+    /// The kill, clear, alarm and crater in the engine's strike passes (a
+    /// submit of its own, after any frame in flight), then one read-back for
+    /// the walkers killed: bursts are a player's tool uses, a few a second
+    /// at most, not a pass a frame. Gas and germ are not on the GPU yet
+    /// (`has_gas`, `has_germ`): the toolkit doesn't offer them here. The
+    /// alarm field turns on with the first alarm, as `BigDish::
+    /// enable_alarm` does.
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+        // A step in shares (`spread`) runs whole before the burst, so the
+        // burst lands between steps as on the CPU.
+        self.flush();
+        if b.alarm > 0.0 && self.s.alarm_keep <= 0.0 {
+            self.s.alarm_keep = k.alarm_keep;
+        }
+        if !(b.kill || b.alarm > 0.0 || b.crater > 0) {
+            return squad::BurstOut::default();
+        }
+        let r = if b.kill { b.r } else { 0.0 };
+        self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater);
+        let now = self.e.struck();
+        let killed = now.wrapping_sub(self.struck);
+        self.struck = now;
+        squad::BurstOut { killed, gassed: 0 }
+    }
+
     fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
         self.e.build_wall(&self.shared, &self.s, a.0, a.1, b.0, b.1, width);
         self.e.dish.build_wall(a.0, a.1, b.0, b.1, width);
@@ -458,9 +555,50 @@ impl World for GpuWorld {
         self.read_now();
     }
 
-    /// The living walkers at the last frame's end (its readout's count).
+    /// The living walkers at the last frame's end (its readout's count);
+    /// in a garden the enemy's alone (to the game, the mould).
     fn living(&self) -> usize {
-        self.living
+        self.living - self.own
+    }
+
+    /// The gardeners' tasks (`own_mould::Garden::tend`), as tend entries
+    /// the frame's `tend` pass applies before its shots; the food spent.
+    /// Road and Feed as on the CPU; Cut is the det cord here (a burst), so
+    /// a Cut task does nothing.
+    fn tend(&mut self, soldiers: &[Soldier], bank: f32, ticks: u32) -> f32 {
+        let Some(g) = self.garden.as_mut() else { return 0.0 };
+        let d = &self.e.dish;
+        let (w, h) = (d.w, d.h);
+        let s = d.p.scale as f32;
+        let secs = ticks as f32 / g.tend.tps as f32;
+        let r2 = squad::r2(g.tend.r * s);
+        let mut spent = 0.0;
+        for (k, so) in soldiers.iter().enumerate() {
+            let t = g.tasks.get(k).copied().unwrap_or_default();
+            if !so.alive || !matches!(t, Task::Road | Task::Feed) || self.e.tends.len() >= squad::TEND_MAX {
+                continue;
+            }
+            let (cx, cy) = squad::cell_of(w, h, so.x, so.y);
+            let cells = squad::disc(w, h, cx, cy, r2).filter(|&i| d.agar[i]).count();
+            match t {
+                Task::Road => {
+                    let a = g.tend.road * secs;
+                    self.e.tends.push([cx as u32, cy as u32, 1, r2, a.to_bits(), 0, 0, 0]);
+                    g.roads += 1;
+                }
+                _ => {
+                    let cost = (g.tend.feed * secs).min((bank - spent).max(0.0));
+                    if cost <= 0.0 || cells == 0 {
+                        continue;
+                    }
+                    let each = cost * g.tend.charge / cells as f32;
+                    self.e.tends.push([cx as u32, cy as u32, 2, r2, 0, each.to_bits(), 0, 0]);
+                    g.fed += cost;
+                    spent += cost;
+                }
+            }
+        }
+        spent
     }
 
     fn crystals(&self) -> Vec<((f32, f32), f32)> {
@@ -483,6 +621,15 @@ impl World for GpuWorld {
 
     fn stop_births(&mut self) {
         self.s.birth_energy = f32::INFINITY;
+    }
+
+    /// Written to the GPU with the next step's params, as births are.
+    fn upkeep(&self) -> f32 {
+        self.s.upkeep
+    }
+
+    fn set_upkeep(&mut self, up: f32) {
+        self.s.upkeep = up;
     }
 
     fn food_deposit(&self) -> f32 {
@@ -609,6 +756,9 @@ mod tests {
         fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
             self.g.build_wall(a, b, width)
         }
+        fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+            self.g.burst(b, k)
+        }
         fn living(&self) -> usize {
             self.g.living()
         }
@@ -626,6 +776,12 @@ mod tests {
         }
         fn stop_births(&mut self) {
             self.g.stop_births()
+        }
+        fn upkeep(&self) -> f32 {
+            self.g.upkeep()
+        }
+        fn set_upkeep(&mut self, up: f32) {
+            self.g.set_upkeep(up)
         }
         fn food_deposit(&self) -> f32 {
             self.g.food_deposit()
@@ -734,6 +890,56 @@ mod tests {
         }
     }
 
+    /// **The squad toolkit runs on the GPU world** (2026-11-12): a kit blast
+    /// at the start kills the same walkers there as on the CPU race world
+    /// (the same mould, before any tick) and lays its crater; a det cord
+    /// lays one too; gas and germ are refused and not paid. Then, as the
+    /// game runs, a mine at the mould's home goes off from the frames' grid.
+    #[test]
+    fn the_kit_runs_on_the_gpu_world() {
+        use crate::mould::kit::{Kit, KitRules, Tool};
+        use crate::mould::larder_world::race_world;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let rules = Rules { cap: 30.0, ..Rules::default() };
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+        let home = gpu.world.crystals()[0].0;
+        assert_eq!(home, cpu.world.crystals()[0].0);
+        let free = KitRules { carry_max: 0, reach: 1_000.0, ..KitRules::default() };
+        let (mut kg, mut kc) = (Kit::new(free), Kit::new(free));
+        for g in [&mut gpu.bank, &mut cpu.bank] {
+            *g = 10_000.0;
+        }
+        assert!(kg.use_tool(&mut gpu, Tool::Blast(home)) && kc.use_tool(&mut cpu, Tool::Blast(home)));
+        // Within 1%: the kill test is a float distance (the GPU's sqrt, the
+        // CPU's hypot), so a walker on the rim can fall either way (113
+        // against 112 on seed 5). The crater is whole cells, so exact.
+        assert!(kc.killed[0] > 50 && kg.killed[0].abs_diff(kc.killed[0]) * 100 <= kc.killed[0], "the blast killed {} on the GPU, {} on the CPU", kg.killed[0], kc.killed[0]);
+        let cratered = |g: &Game<GpuWorld>| g.world.e.crater_of().iter().filter(|&&c| c > 0.0).count();
+        let after_blast = cratered(&gpu);
+        assert_eq!(after_blast, cpu.world.scorch.iter().filter(|&&c| c > 0).count(), "the blast's crater");
+        let bank = gpu.bank;
+        assert!(!kg.use_tool(&mut gpu, Tool::Germ(home)) && !kg.use_tool(&mut gpu, Tool::Gas(home)) && gpu.bank == bank, "germ and gas refused on the GPU");
+        let k = gpu.world.scale();
+        assert!(kg.use_tool(&mut gpu, Tool::Cord((home.0 + 20.0 * k, home.1 - 10.0 * k), (home.0 + 20.0 * k, home.1 + 10.0 * k))));
+        assert!(cratered(&gpu) > after_blast, "the cord's craters");
+        // A mine on a fresh world, on the mould's home: the frames' grid
+        // (one square a dish cell) sets it off.
+        let mut g2 = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        g2.bank = 10_000.0;
+        let mut km = Kit::new(free);
+        assert!(km.use_tool(&mut g2, Tool::Mine(home)));
+        let mut fired = 0;
+        while g2.end.is_none() && fired == 0 {
+            g2.world.mould_grid(scale);
+            g2.step();
+            fired = km.frame(&mut g2);
+        }
+        assert_eq!(fired, 1, "the mine (trigger {}) went off by {:.0} s", km.mine_trigger(&g2), g2.time());
+        eprintln!("GPU kit: blast {} killed, mine {} killed at {:.1} s", kg.killed[0], km.killed[1], g2.time());
+    }
+
     /// The engine runs the CPU race world's mould: the same params, bar
     /// the fine steps a tick, which the GPU world makes up by running
     /// `scale` engine ticks a game tick.
@@ -784,5 +990,103 @@ mod tests {
             }
         }
         assert!(checked > 6 * 6 * 3, "only {checked} cases");
+    }
+
+    /// **The gardeners on the GPU** (2026-11-12): the GPU garden starts as
+    /// the CPU's (the same map, the same walkers a side), and to the game
+    /// the mould is the enemy alone.
+    #[test]
+    fn the_gpu_garden_starts_as_the_cpu_garden() {
+        use crate::mould::own_mould::garden_world;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 1_000);
+        let gpu = GpuWorld::garden(&device, &queue, garden_settings(seed, scale, walkers), seed, scale, walkers).unwrap();
+        let cpu = garden_world(seed, scale, walkers, None);
+        assert_eq!(gpu.counts_by_side(), cpu.counts_by_side());
+        assert_eq!(gpu.e.dish.landing, cpu.dish.landing);
+        let game = Game::new(gpu, Rules::default(), seed);
+        assert_eq!(game.mould, walkers, "the game's mould is the enemy's");
+        // The plain world has no player's mould.
+        let plain = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        assert_eq!(plain.counts_by_side(), (0, walkers));
+    }
+
+    /// A grazing world is refused, with a reason, not run wrong.
+    #[test]
+    fn a_garden_refuses_a_grazing_world() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let s = Settings { graze: 1.0, ..garden_settings(5, 1, 500) };
+        let e = GpuWorld::garden(&device, &queue, s, 5, 1, 500).err().expect("refused");
+        assert!(e.contains("graze"), "{e}");
+    }
+
+    /// Shots fly over the player's mould and strike the enemy's alone, on
+    /// both engines: a shot from the larder across the player's mould hits
+    /// nothing; one into the enemy's home kills only the enemy's walkers.
+    #[test]
+    fn gpu_garden_shots_spare_the_players_mould() {
+        use crate::mould::own_mould::garden_world;
+        use crate::mould::squad::ShotIn;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 1_000);
+        let mut gpu = GpuWorld::garden(&device, &queue, garden_settings(seed, scale, walkers), seed, scale, walkers).unwrap();
+        let mut cpu = garden_world(seed, scale, walkers, None);
+        let l = cpu.landing().unwrap();
+        let home = cpu.crystals()[0].0;
+        // A few ticks so both moulds lay trail.
+        let f0 = Frame { slime: 1.0, ..Frame::default() };
+        let _ = gpu.frame(&f0, 15);
+        let _ = cpu.frame(&f0, 15);
+        assert_eq!(gpu.counts_by_side().0, cpu.counts_by_side().0);
+        let over = Frame { shots: vec![ShotIn { from: l, to: (l.0 + 12.0, l.1), r: 3.0 }], slime: 1.0, ..Frame::default() };
+        // The line does cross the player's slime (else this proves nothing).
+        let (w, h) = cpu.size();
+        let crossed = squad::path(w, h, l, (l.0 + 12.0, l.1)).iter().filter(|&&i| cpu.dish.species_trail[crate::mould::own_mould::OWN as usize][i as usize] >= 1.0).count();
+        assert!(crossed > 0, "the shot's line crosses no slime of the player's");
+        let (g, c) = (gpu.frame(&over, 0), cpu.frame(&over, 0));
+        assert_eq!(g.shots[0].hit, None, "the GPU's shot stopped on the player's mould");
+        assert_eq!(c.shots[0].hit, None, "the CPU's shot stopped on the player's mould");
+        let own = gpu.counts_by_side().0;
+        let into = Frame { shots: vec![ShotIn { from: (home.0 - 30.0, home.1), to: home, r: 3.0 }], slime: 1.0, ..Frame::default() };
+        let (g, c) = (gpu.frame(&into, 0), cpu.frame(&into, 0));
+        assert!(g.shots[0].killed > 0 && c.shots[0].killed > 0, "kills: GPU {}, CPU {}", g.shots[0].killed, c.shots[0].killed);
+        assert_eq!(g.shots[0].hit, c.shots[0].hit, "the same hit cell");
+        assert_eq!(gpu.counts_by_side().0, own, "the player's mould untouched");
+    }
+
+    /// Road lays the player's trail and Feed spreads charge from the bank
+    /// where the soldier stands, the same on both engines.
+    #[test]
+    fn gpu_garden_road_and_feed_as_the_cpu() {
+        use crate::mould::own_mould::{garden_world, Task, OWN};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 1_000);
+        let mut gpu = Game::new(GpuWorld::garden(&device, &queue, garden_settings(seed, scale, walkers), seed, scale, walkers).unwrap(), Rules::default(), seed);
+        let mut cpu = Game::new(garden_world(seed, scale, walkers, None), Rules::default(), seed);
+        // Soldier 0 lays a road, soldier 1 feeds, standing still.
+        gpu.world.garden.as_mut().unwrap().set_task(0, Task::Road);
+        gpu.world.garden.as_mut().unwrap().set_task(1, Task::Feed);
+        cpu.world.set_task(0, Task::Road);
+        cpu.world.set_task(1, Task::Feed);
+        gpu.bank = 1_000.0;
+        cpu.bank = 1_000.0;
+        let c0g: f64 = gpu.world.e.charge_of().iter().map(|&c| c as f64).sum();
+        let c0c: f64 = cpu.world.dish.charge.iter().map(|&c| c as f64).sum();
+        gpu.step();
+        cpu.step();
+        let fed = gpu.world.garden.as_ref().unwrap().fed;
+        assert!((fed - cpu.world.fed).abs() < 1e-3 && fed > 0.0, "fed: GPU {fed}, CPU {}", cpu.world.fed);
+        assert_eq!(gpu.world.garden.as_ref().unwrap().roads, cpu.world.roads);
+        let s0 = gpu.soldiers[0];
+        let (w, h) = gpu.world.size();
+        let (cx, cy) = squad::cell_of(w, h, s0.x, s0.y);
+        let i = cy as usize * w + cx as usize;
+        let own = gpu.world.e.species_trail_of(OWN as usize);
+        assert!(own[i] > 1.0, "the road's trail: {}", own[i]);
+        // The charge laid less what was eaten: both gained about the feed.
+        let c1g: f64 = gpu.world.e.charge_of().iter().map(|&c| c as f64).sum();
+        let c1c: f64 = cpu.world.dish.charge.iter().map(|&c| c as f64).sum();
+        let (dg, dc) = (c1g - c0g, c1c - c0c);
+        assert!((dg - dc).abs() < 0.02 * dc.abs().max(100.0), "charge change: GPU {dg:.1}, CPU {dc:.1}");
     }
 }

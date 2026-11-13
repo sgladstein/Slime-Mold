@@ -14,7 +14,10 @@
 //!    (`Frame::crater`), or at the first cell off the agar (a wall or
 //!    rock). The owner,
 //!    2026-11-11 16:48Z: "Gun fire should hit the first slime in its
-//!    path". Every hit then strikes: the living walkers on cells within its
+//!    path". With `Frame::sink` the blast then sinks in (`sink`): it is
+//!    centred on the last cell along the line, within the sink's reach of
+//!    that first one and before the agar ends, that still stops a shot.
+//!    Every hit then strikes: the living walkers on cells within its
 //!    radius die (`BigDish::kill`; a walker in two shots' discs counts for
 //!    the first), and the trail there is cleared. Every shot reads the
 //!    trail before any strike, so shots in one frame don't see each other.
@@ -109,6 +112,105 @@ pub struct Frame {
     /// the mould from the squad. On the GPU the `cut` pass lays it into the
     /// damage memory (binding 47).
     pub crater: u16,
+    /// How far past the first slime a shot's blast is centred, in strike
+    /// radii (`sink`; 0 centres it on the first slime cell, as before).
+    /// Why (owner, 2026-11-12 22:06Z): "if I keep my group of soliders in
+    /// one spot and have them fire on a large group of mold it barely seems
+    /// to do damage, but if I move them into the mold, they destroy it
+    /// easily". A blast centred on the body's edge spends about half its
+    /// disc on the open ground in front of it; a squad inside the body
+    /// strikes slime all round. Asked whether to centre the blast inside the
+    /// slime (23:14Z): "Yes". On the GPU the `shots` pass sinks it the same
+    /// way, from `Params::shot_sink` (this squared).
+    pub sink: f32,
+}
+
+/// **A burst** (the squad toolkit, 2026-11-12): one area effect at a point,
+/// what every toolkit tool and every round's payload comes down to (a
+/// blast, each charge of a det cord, a mine going off, a germ, a cloud of
+/// gas). Centre and radii in dish cells, times in fine steps, so a burst
+/// means the same ground at any scale and any walker count: the radii are
+/// space, not walkers. Agreed with the rounds thread (11-12 16:15Z), whose
+/// `rounds::Burst` had these fields first.
+///
+/// Why one struct: each tool used to call `BigDish` directly, so none of
+/// them could run on the GPU world. A burst is what a `World` applies
+/// (`World::burst`), on the CPU (`burst` below) and on the GPU (the
+/// engine's strike, which lays the crater too since this change).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Burst {
+    pub at: (f32, f32),
+    /// The kill and clear radius (0 with `kill`: a shock only).
+    pub r: f32,
+    pub kill: bool,
+    /// Alarm laid on the agar within `alarm_r` (0: none).
+    pub alarm: f32,
+    pub alarm_r: f32,
+    /// Fine steps of crater within `crater_r` (0: none). A kit blast's
+    /// crater (7) is wider than its kill (6).
+    pub crater: u16,
+    pub crater_r: f32,
+    /// Fine steps of sleep gas within `r` (0: none).
+    pub gas: u16,
+    /// Infects the walkers within `r`.
+    pub germ: bool,
+}
+
+/// What a burst needs from the rules that is not its own: the alarm field's
+/// keep (turned on by the first alarm), gas's death chance, and contagion's
+/// settings (turned on by the first germ), times in fine steps.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct BurstRules {
+    pub alarm_keep: f32,
+    pub gas_death: f32,
+    pub sick_steps: u16,
+    pub immune_steps: u16,
+    pub sick_upkeep: f32,
+    pub sick_catch: f32,
+    pub sick_deposit: f32,
+    pub sick_keep: f32,
+}
+
+/// What a burst did.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct BurstOut {
+    pub killed: u32,
+    pub gassed: u32,
+}
+
+/// A burst on the CPU, in the order a kit blast always ran (`Kit::bang`
+/// before 2026-11-12): the alarm field on, the strike (kill, clear,
+/// alarm), the crater; then gas, then germ.
+pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
+    let s = d.p.scale as f32;
+    let mut out = BurstOut::default();
+    if b.alarm > 0.0 {
+        d.enable_alarm(k.alarm_keep);
+    }
+    if b.kill || b.alarm > 0.0 {
+        out.killed = d.strike(b.at.0, b.at.1, if b.kill { b.r } else { 0.0 }, b.alarm, b.alarm_r) as u32;
+    }
+    if b.crater > 0 {
+        d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);
+    }
+    if b.gas > 0 {
+        d.enable_alarm(k.alarm_keep);
+        d.p.gas_death = k.gas_death;
+        out.gassed = d.gas(b.at.0 * s, b.at.1 * s, b.r * s, b.gas) as u32;
+    }
+    if b.germ {
+        if d.sick.is_empty() {
+            d.p.sick_steps = k.sick_steps;
+            d.p.immune_steps = k.immune_steps;
+            d.p.sick_upkeep = k.sick_upkeep;
+            d.p.sick_catch = k.sick_catch;
+            d.p.sick_deposit = k.sick_deposit;
+            d.p.sick_keep = k.sick_keep;
+            d.enable_contagion();
+        }
+        d.infect(b.at.0, b.at.1, b.r);
+    }
+    out
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -191,9 +293,51 @@ pub fn path(w: usize, h: usize, from: (f32, f32), to: (f32, f32)) -> Vec<u32> {
     cells
 }
 
+/// The sink's squared reach in whole cells for a strike of squared radius
+/// `r2`: floor(sink² x r2) in f32, as the GPU's `shots` pass computes it
+/// from `Params::shot_sink` (sink², sent as f32), so both agree to the bit.
+pub fn sink_r2(sink: f32, r2: u32) -> u32 {
+    if sink <= 0.0 {
+        return 0;
+    }
+    (sink * sink * r2 as f32).floor() as u32
+}
+
+/// **The sink** (`Frame::sink`): where a shot that first met slime at
+/// `cells[j]` centres its blast. From there it looks on along its line, cell
+/// by cell, while the cells are on the agar and within `reach2` (squared,
+/// whole cells) of `cells[j]`, and takes the last one that `stops` (the
+/// shot's own test: slime, or a walker in a crater). So against a thick
+/// body the blast lands its reach inside and strikes slime all round, while
+/// against a thin strand it stays on the strand: a blast centred on the
+/// empty ground past a strand would take less of it than one on its edge.
+/// Shape D, CPU, a squad standing 9 cells off the core (the probe in
+/// `Reports/larder-shot-sink-2026-11-12.md`): a reach of one strike radius
+/// took 12-16 walkers a shot against 11-13 at the edge, and hits on fresh
+/// slime about twice as many (16-20 against 8-12); on shape A's thinner
+/// arms it made no difference.
+pub fn sink(w: usize, cells: &[u32], j: usize, reach2: u32, agar: &[bool], stops: impl Fn(usize) -> bool) -> u32 {
+    let hit = cells[j];
+    if reach2 == 0 {
+        return hit;
+    }
+    let (hx, hy) = ((hit as usize % w) as i64, (hit as usize / w) as i64);
+    let mut at = hit;
+    for &c in &cells[j + 1..] {
+        let (dx, dy) = ((c as usize % w) as i64 - hx, (c as usize / w) as i64 - hy);
+        if !agar[c as usize] || dx * dx + dy * dy > reach2 as i64 {
+            break;
+        }
+        if stops(c as usize) {
+            at = c;
+        }
+    }
+    at
+}
+
 /// Step 1: the shots (see the module's comment). Returns each shot's hit
 /// and kills.
-pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16) -> Vec<ShotOut> {
+pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f32) -> Vec<ShotOut> {
     let (w, h) = (d.w, d.h);
     let shots = &shots[..shots.len().min(SHOTS_MAX)];
     let mut used = 0;
@@ -203,18 +347,19 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16) -> Vec<
             let cells = path(w, h, s.from, s.to);
             let cells = &cells[..cells.len().min(PATH_MAX - used)];
             used += cells.len();
-            for &i in cells {
+            // A crater holds no trail, so a walker standing in one is what
+            // the shot meets there. Without this, shots flew over walkers in
+            // the hole to the slime past it, while those walkers drained the
+            // squad: the rush hand's squad was wiped on 12 of 16 race seeds
+            // (1 of 16 without craters), and the GPU shots pass reads the
+            // same.
+            let stops = |i: usize| d.trail[i] >= slime || (!d.scorch.is_empty() && d.scorch[i] > 0 && d.occupancy()[i] > 0);
+            for (j, &i) in cells.iter().enumerate() {
                 if !d.agar[i as usize] {
                     return NONE;
                 }
-                // A crater holds no trail, so a walker standing in one is
-                // what the shot meets there. Without this, shots flew over
-                // walkers in the hole to the slime past it, while those
-                // walkers drained the squad: the rush hand's squad was
-                // wiped on 12 of 16 race seeds (1 of 16 without craters),
-                // and the GPU shots pass reads the same.
-                if d.trail[i as usize] >= slime || (!d.scorch.is_empty() && d.scorch[i as usize] > 0 && d.occupancy()[i as usize] > 0) {
-                    return i;
+                if stops(i as usize) {
+                    return self::sink(w, cells, j, sink_r2(sink, r2(s.r.min(R_MAX))), &d.agar, stops);
                 }
             }
             NONE
@@ -381,7 +526,7 @@ pub fn block_centre(w: usize, b: usize) -> (f32, f32) {
 
 /// A whole frame on the CPU: shots, smell, `ticks` ticks, reads, harvest.
 pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
-    let shots = shots(d, &f.shots, f.slime, f.crater);
+    let shots = shots(d, &f.shots, f.slime, f.crater, f.sink);
     smell(d, &f.units);
     for _ in 0..ticks {
         d.tick();
@@ -405,6 +550,13 @@ pub const S_IN: usize = U_OUT + UNITS_MAX * 4;
 pub const S_OUT: usize = S_IN + SHOTS_MAX * 4;
 pub const PATH: usize = S_OUT + SHOTS_MAX * 4;
 pub const WORDS: usize = PATH + PATH_MAX;
+/// The gardeners' tend entries (`own_mould`; the GPU's `tend` pass), after
+/// the shots' cells: eight words each (fine cell x, y, the task, the disc's
+/// squared radius, Road's trail and Feed's charge a cell, two unused), at
+/// most one a unit. The buffer is `ALL` words.
+pub const TEND: usize = WORDS;
+pub const TEND_MAX: usize = UNITS_MAX;
+pub const ALL: usize = TEND + 8 * TEND_MAX;
 
 /// A frame as the GPU's squad buffer holds it (outputs zeroed), with its
 /// unit and shot counts.
@@ -522,7 +674,7 @@ mod tests {
         let cells = path(w, h, from, (tx, ty));
         let first = cells.iter().map(|&i| i as usize).take_while(|&i| d.agar[i]).find(|&i| d.trail[i] >= slime).expect("the line reaches slime");
         assert_ne!(first, thick, "this line meets thinner slime first");
-        let out = shots(&mut d, &[ShotIn { from, to: (tx, ty), r: 3.0 }], slime, 0);
+        let out = shots(&mut d, &[ShotIn { from, to: (tx, ty), r: 3.0 }], slime, 0, 0.0);
         let hit = out[0].hit.expect("the line reaches slime");
         assert_eq!(((first % w) as f32 + 0.5, (first / w) as f32 + 0.5), hit);
         assert!(out[0].killed > 0, "walkers die where it hits");
@@ -544,7 +696,7 @@ mod tests {
         let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
         let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
         // A shot that starts on slime hits its first cell.
-        let out = shots(&mut d, &[ShotIn { from: at, to: (at.0 + 5.0, at.1), r: 3.0 }], slime_trail(3.0), 0);
+        let out = shots(&mut d, &[ShotIn { from: at, to: (at.0 + 5.0, at.1), r: 3.0 }], slime_trail(3.0), 0, 0.0);
         let hit = out[0].hit.expect("it starts on slime");
         let (hx, hy) = (hit.0 as i64, hit.1 as i64);
         let near: Vec<usize> = disc(w, h, hx, hy, r2(SHOT_ALARM_R * 3.0)).collect();
@@ -567,9 +719,9 @@ mod tests {
         let shot = ShotIn { from: at, to: (at.0 + 12.0, at.1), r: 2.0 };
         // Without a crater no field appears.
         let mut plain = d.clone();
-        shots(&mut plain, &[shot], slime, 0);
+        shots(&mut plain, &[shot], slime, 0, 0.0);
         assert!(plain.scorch.is_empty(), "crater 0 lays none");
-        let out = shots(&mut d, &[shot], slime, 90);
+        let out = shots(&mut d, &[shot], slime, 90, 0.0);
         let hit = out[0].hit.expect("it starts on slime");
         let (hx, hy) = (hit.0 as i64, hit.1 as i64);
         let cells: Vec<usize> = disc(w, h, hx, hy, r2(2.0)).collect();
@@ -578,7 +730,7 @@ mod tests {
             assert_eq!(d.scorch[i], want, "cell {i}");
         }
         // A longer crater keeps the longer; a shorter one does not cut it.
-        shots(&mut d, &[shot], slime, 30);
+        shots(&mut d, &[shot], slime, 30, 0.0);
         assert!(cells.iter().all(|&i| !d.agar[i] || d.scorch[i] == 90));
         // With the struck cells' trail held under slime, a second shot down
         // the same line lands farther on: the hole deepens.
@@ -586,12 +738,12 @@ mod tests {
         for _ in 0..4 {
             a.tick();
         }
-        let next = shots(&mut a, &[shot], slime, 90)[0].hit;
+        let next = shots(&mut a, &[shot], slime, 90, 0.0)[0].hit;
         let mut b = plain.clone();
         for _ in 0..4 {
             b.tick();
         }
-        let again = shots(&mut b, &[shot], slime, 0)[0].hit;
+        let again = shots(&mut b, &[shot], slime, 0, 0.0)[0].hit;
         let far = |h: Option<(f32, f32)>| h.map_or(f32::INFINITY, |(x, _)| x - at.0);
         assert!(far(next) > far(again), "crater {next:?} against none {again:?}");
     }
@@ -607,7 +759,7 @@ mod tests {
         let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
         let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
         let shot = ShotIn { from: at, to: (at.0 + 12.0, at.1), r: 2.0 };
-        let out = shots(&mut d, &[shot], slime_trail(3.0), 90);
+        let out = shots(&mut d, &[shot], slime_trail(3.0), 90, 0.0);
         let (hx, hy) = out[0].hit.map(|(x, y)| (x as i64, y as i64)).expect("it starts on slime");
         let r2 = r2(2.0);
         let cells: Vec<usize> = disc(w, h, hx, hy, r2).collect();
@@ -617,6 +769,48 @@ mod tests {
             assert_eq!(d.scorch[i], want, "cell {i}");
         }
         assert_eq!(d.scorch[hy as usize * w + hx as usize], 90, "all of them at the hit");
+    }
+
+    /// The sink (`Frame::sink`): the blast is centred on the last slime
+    /// along the line within its reach of the first slime it met, and never
+    /// past the agar. Against a strand it stays on the strand.
+    #[test]
+    fn a_hit_sinks_its_blast_to_the_last_slime_within_reach() {
+        let mut d = world();
+        let (w, h) = (d.w, d.h);
+        let slime = slime_trail(3.0);
+        // A clear agar row, 30 cells long, with no walkers on it.
+        let (x0, y) = (0..h)
+            .flat_map(|y| (0..w.saturating_sub(30)).map(move |x| (x, y)))
+            .find(|&(x, y)| (x..x + 30).all(|x| d.agar[y * w + x]))
+            .expect("a row of agar");
+        for x in x0..x0 + 30 {
+            d.trail[y * w + x] = 0.0;
+        }
+        let at = |x: usize| y * w + x;
+        let shot = ShotIn { from: (x0 as f32 + 0.5, y as f32 + 0.5), to: (x0 as f32 + 29.5, y as f32 + 0.5), r: 3.0 };
+        let hit_x = |d: &BigDish, sink: f32| shots(&mut d.clone(), &[shot], slime, 0, sink)[0].hit.map(|(x, _)| x as usize);
+        // A strand one cell wide at x0 + 10: the blast stays on it.
+        d.trail[at(x0 + 10)] = 2.0 * slime;
+        assert_eq!(hit_x(&d, 0.0), Some(x0 + 10));
+        assert_eq!(hit_x(&d, 1.0), Some(x0 + 10), "the blast stays on a strand");
+        // Slime two and four cells on: the sink of one strike radius (r2 9)
+        // reaches the first, not the second; a sink of 1.5 (r2 20) both.
+        d.trail[at(x0 + 12)] = 2.0 * slime;
+        d.trail[at(x0 + 14)] = 2.0 * slime;
+        assert_eq!(hit_x(&d, 0.0), Some(x0 + 10), "no sink: the edge");
+        assert_eq!(hit_x(&d, 1.0), Some(x0 + 12));
+        assert_eq!(hit_x(&d, 1.5), Some(x0 + 14));
+        assert_eq!((sink_r2(1.0, 9), sink_r2(1.5, 9), sink_r2(0.0, 9), sink_r2(-1.0, 9)), (9, 20, 0, 0));
+        // A wall between stops the sink: the cells past it are not reached.
+        d.agar[at(x0 + 11)] = false;
+        assert_eq!(hit_x(&d, 1.5), Some(x0 + 10), "the sink does not cross off the agar");
+        d.agar[at(x0 + 11)] = true;
+        // A thick body: the blast sinks one strike radius in.
+        for x in x0 + 10..x0 + 30 {
+            d.trail[at(x)] = 2.0 * slime;
+        }
+        assert_eq!(hit_x(&d, 1.0), Some(x0 + 13), "one strike radius in");
     }
 
     /// A walker that wanders into a crater stops the next shot there, though
@@ -632,7 +826,7 @@ mod tests {
         let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
         let line = path(w, h, at, (at.0 + 12.0, at.1));
         let shot = ShotIn { from: at, to: (at.0 + 12.0, at.1), r: 2.0 };
-        shots(&mut d, &[shot], slime, 900);
+        shots(&mut d, &[shot], slime, 900, 0.0);
         // Tick until a living walker stands on a crater cell of the line
         // before any slime on it, then shoot again.
         let first = |d: &BigDish| -> Option<(usize, bool)> {
@@ -656,7 +850,7 @@ mod tests {
         }
         let i = found.expect("a walker steps into the crater on the line");
         assert!(d.trail[i] < slime, "the cell holds no slime");
-        let hit = shots(&mut d, &[shot], slime, 900)[0].hit.expect("the shot meets the walker");
+        let hit = shots(&mut d, &[shot], slime, 900, 0.0)[0].hit.expect("the shot meets the walker");
         assert_eq!((hit.0 as usize, hit.1 as usize), (i % w, i / w), "it stops at the walker in the crater");
     }
 }

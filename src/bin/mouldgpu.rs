@@ -1728,7 +1728,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     .collect();
                 let shots: Vec<ShotIn> = if e.grows { units.iter().zip(&aims).filter_map(|(u, a)| a.map(|to| ShotIn { from: (u.x, u.y), to, r: 3.0 })).collect() } else { Vec::new() };
                 fired += shots.len() as u64;
-                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee), crater: 0 });
+                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee), crater: 0, sink: 0.0 });
             }
             // GPU time on every tenth frame (the read back waits).
             let stamp = st.as_ref().filter(|_| f % 10 == 5);
@@ -2821,8 +2821,14 @@ mod tests {
                 cpu.build_wall(x - 6.0, y + 3.0, x + 6.0, y + 3.0, 1.0);
             }
             e.inject(&cpu);
+            // As a toolkit burst (2026-11-12): the strike lays a crater of
+            // its own radius too (`Engine::burst`, the CPU's strike then
+            // `scorch_disc`), which must match cell for cell.
             let killed = cpu.strike(x, y, 4.0, 30.0, 12.0);
-            e.strike(&shared, &s, x, y, 4.0, 30.0, 12.0);
+            cpu.scorch_disc(x * k, y * k, 5.0 * k, 300);
+            e.burst(&shared, &s, x, y, 4.0, 30.0, 12.0, 5.0, 300);
+            let crater_off = e.crater_of().iter().zip(&cpu.scorch).filter(|(a, b)| **a != **b as f32).count();
+            assert!(cpu.scorch.contains(&300) && crater_off == 0, "{name}: the burst's crater, {crater_off} cells off");
             let side = (e.done % 2) as usize;
             let struck_trail = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
             let struck_alarm = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
@@ -3171,7 +3177,10 @@ mod tests {
     /// dish: (crystal charge L1, or infinite if any charge is below 0;
     /// walkers whose crystal take is off by more than 1e-6, wall health L1,
     /// cells whose agar differs, cells whose ground bits differ).
-    fn world_off(e: &Engine, cpu: &BigDish) -> (f64, usize, f64, usize, usize) {
+    /// `fresh`: walkers born in the twin tick, left out of the take check
+    /// (a child took nothing, but a fed parent's child can land on a crystal
+    /// cell another walker shares, whose share the GPU keeps by the cell).
+    fn world_off(e: &Engine, cpu: &BigDish, fresh: &[bool]) -> (f64, usize, f64, usize, usize) {
         let (device, queue) = (&e.device, &e.queue);
         let wd = world_data(cpu);
         let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(device, queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
@@ -3183,7 +3192,7 @@ mod tests {
         let took_off = if cpu.took.is_empty() {
             0
         } else {
-            (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).filter(|&k| {
+            (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && !fresh.get(k).copied().unwrap_or(false)).filter(|&k| {
                 let (x, y, _) = cpu.walkers[k];
                 (share[y as usize * cpu.w + x as usize] - cpu.took[k]).abs() > 1e-6
             }).count()
@@ -3247,7 +3256,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 13] = [
+        let dishes: [(&str, Settings, Build); 14] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3278,6 +3287,11 @@ mod tests {
             // so some walkers are blocked and crowded.
             ("one body: food shared, hunger", Settings { energy_flow: 0.05, hunger_scent: 8.0, hunger_at: 1.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             ("lone step: a walker with few others round it slows", Settings { lone_step: 3.0, lone_floor: 0.3, lone_r: 2, ..grow(w(small(0))) }, walls),
+            // A fed mould packs tighter (2026-11-12, the slime-enemy
+            // thread): every other walker is fed to 3 before the tick
+            // (below), so fed and unfed ones step and breed side by side,
+            // two a cell for the fed.
+            ("fed crowd: a fed walker packs two to a cell", Settings { fed_crowd: 1, fed_full: 2.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3297,11 +3311,20 @@ mod tests {
                     }
                 }
             }
+            if name.starts_with("fed crowd") {
+                for k in (0..cpu.walkers.len()).step_by(2) {
+                    if cpu.lives(k) {
+                        cpu.energy[k] = 3.0;
+                    }
+                }
+            }
             let n = cpu.walkers.len();
+            let was: Vec<bool> = (0..n).map(|k| cpu.lives(k)).collect();
             let (broken, bitten, eaten, births) = (cpu.broken, cpu.wall_hits, cpu.eaten, cpu.births);
             let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
-            let (lc, took_off, lh, agar_off, ground_off) = world_off(&e, &cpu);
+            let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
+            let (lc, took_off, lh, agar_off, ground_off) = world_off(&e, &cpu, &fresh);
             let (_, hits, gpu_broken) = e.world_counts();
             // Growth: what the walkers ate turned into energy; and no grass
             // where the CPU has none (crystals on, grazing off).
@@ -3338,6 +3361,19 @@ mod tests {
                 eprintln!("{name}: living walkers on sand, clay, barren, plain {kinds:?}; {births} born in the tick");
                 assert!(kinds.iter().all(|&c| c > 0) && births > 0, "{name}: walkers on every kind of soil {kinds:?}, {births} born");
                 assert!(e.ground_world & WORLD_SOIL != 0, "{name}: soil on");
+            }
+            // The fed pack: cells holding two walkers after the tick, on
+            // each side (the CPU's from its walkers, the GPU's from `occ`).
+            if s.fed_crowd > 0 {
+                let mut held = vec![0u16; cpu.w * cpu.h];
+                for k in (0..n).filter(|&k| cpu.lives(k)) {
+                    held[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize] += 1;
+                }
+                let occ = read_back(&device, &queue, &e.occ).chunks(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect::<Vec<_>>();
+                let (two, gpu_two) = (held.iter().filter(|&&c| c == 2).count(), occ.iter().filter(|&&c| c == 2).count());
+                eprintln!("{name}: {two} cells hold two walkers on the CPU, {gpu_two} on the GPU; {births} born in the tick");
+                assert!(two > 0 && held.iter().all(|&c| c <= 2), "{name}: fed walkers pack two to a cell, never three");
+                assert_eq!(two, gpu_two, "{name}: cells holding two");
             }
             assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
             assert!(lt <= 1e-4 && ls <= 1e-6, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}");
@@ -3394,7 +3430,7 @@ mod tests {
                 UnitIn { x: at.0.clamp(0.0, w as f32 - 1.0), y: at.1.clamp(0.0, h as f32 - 1.0), touch: 3.0, sight: 30.0, take_r: 3.0, take: if i % 3 == 0 { 50.0 } else { 0.0 }, smell_r: 2.0, smell: 0.5 }
             })
             .collect();
-        let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0 };
+        let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0 };
         e.inject(&cpu);
         e.set_squad(&f);
         run(&mut e, &shared, &s, 1, Hand::default());
@@ -3405,6 +3441,69 @@ mod tests {
         eprintln!("squad cap: {n} units; past 64, {} touch, {} aim, {} took", past.iter().filter(|u| u.touching > 0).count(), past.iter().filter(|u| u.target.is_some()).count(), past.iter().filter(|u| u.took > 0.0).count());
         assert_eq!(gpu_out, cpu_out, "every unit's outputs, the last 32 too");
         assert!(cpu_out.units[n - 1].touching > 0 && past.iter().any(|u| u.took > 0.0) && past.iter().all(|u| u.target.is_some()), "units past 64 touch, aim and harvest");
+    }
+
+    /// **Solid crystals on both engines** (`Rules::crystal_solid`, the
+    /// tech lead's ask after #153 turned the rule off in the flee, crater and
+    /// core twins): the race world, seed 3, the squad holding fire and sent
+    /// onto the larder's crystal. Each tick for 3 game seconds (they reach
+    /// the rim in about 1) every soldier stands at the same place on both
+    /// engines, to the bit, and none stands on a solid crystal. `planted`
+    /// plays the GPU game without the rule, which the twin must catch.
+    fn crystal_twin(planted: bool) -> Result<usize, String> {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
+        let Some((device, queue)) = test_gpu() else { return Ok(0) };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 10.0, crater: 0.0, ..Rules::default() };
+        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+        let gpu_rules = Rules { crystal_solid: !planted, ..rules };
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), gpu_rules, seed);
+        let (i, c) = cpu.crystal_at(cpu.larder).expect("the larder sits on a crystal");
+        for k in 0..cpu.soldiers.len() {
+            assert!(cpu.apply(Cmd::Stance(k, Stance::HoldFire)) && gpu.apply(Cmd::Stance(k, Stance::HoldFire)));
+            assert!(cpu.apply(Cmd::Order(k, Order::Move(c.0, c.1))) && gpu.apply(Cmd::Order(k, Order::Move(c.0, c.1))));
+        }
+        let mut ticks = 0;
+        while ticks < 3 * rules.tps as usize {
+            cpu.step();
+            gpu.step();
+            ticks += 1;
+            for (k, (a, b)) in cpu.soldiers.iter().zip(&gpu.soldiers).enumerate() {
+                if (a.x.to_bits(), a.y.to_bits()) != (b.x.to_bits(), b.y.to_bits()) {
+                    return Err(format!("tick {ticks}: soldier {k} at {:?} on the CPU, {:?} on the GPU", (a.x, a.y), (b.x, b.y)));
+                }
+                // Judged by the CPU game's crystals (the rule's own ground).
+                for (name, s) in [("CPU", a), ("GPU", b)] {
+                    if !cpu.standable(s.x, s.y) {
+                        return Err(format!("tick {ticks}: soldier {k} on a crystal on the {name} at {:?}", (s.x, s.y)));
+                    }
+                }
+            }
+        }
+        // They got there: every soldier at the rim, not stuck on the way.
+        let rim = cpu.world.crystal_r(i) + 3.0 * scale as f32;
+        let near = cpu.soldiers.iter().filter(|s| (s.x - c.0).hypot(s.y - c.1) <= rim).count();
+        eprintln!("crystal twin: {ticks} ticks, {near} of {} soldiers within {rim} fine cells of the centre", cpu.soldiers.len());
+        if near < cpu.soldiers.len() {
+            return Err(format!("only {near} of {} soldiers reached the rim", cpu.soldiers.len()));
+        }
+        Ok(ticks)
+    }
+
+    #[test]
+    fn solid_crystals_hold_the_squad_alike_on_both_engines() {
+        let r = crystal_twin(false);
+        assert!(r.is_ok(), "{}", r.unwrap_err());
+    }
+
+    #[test]
+    fn the_crystal_twin_catches_an_engine_without_the_rule() {
+        let r = crystal_twin(true);
+        if test_gpu().is_some() {
+            assert!(r.is_err(), "the twin missed a GPU game that ignores solid crystals");
+            eprintln!("planted: {}", r.unwrap_err());
+        }
     }
 
     #[test]
@@ -3431,8 +3530,20 @@ mod tests {
         // And the cone (`BigParams::scorch_cone`, the look A/B): fewer steps
         // toward the strike's rim, the same whole numbers on both.
         let cone = Settings { scorch_cone: true, ..base.clone() };
-        let cases = [("plain", base.clone(), 0), ("spores and dormancy", life, 0), ("the Sleeper", sleeper, 0), ("the Swarmer, the alarm and no states", swarmer, 0), ("plain, shots that lay craters", base, 20), ("plain, cone craters", cone, 20)];
-        for (name, s, crater) in cases {
+        // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
+        // the line to the last slime within the sink's reach, at one strike
+        // radius and at 1.5 (a reach that is not the strike's own r2).
+        let cases = [
+            ("plain", base.clone(), 0, 0.0),
+            ("spores and dormancy", life, 0, 0.0),
+            ("the Sleeper", sleeper, 0, 0.0),
+            ("the Swarmer, the alarm and no states", swarmer, 0, 1.0),
+            ("plain, shots that lay craters", base.clone(), 20, 0.0),
+            ("plain, cone craters", cone.clone(), 20, 0.0),
+            ("plain, shots that sink", base, 20, 1.0),
+            ("cone craters, a sink of 1.5", cone, 20, 1.5),
+        ];
+        for (name, s, crater, sink) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             for t in 0..60 {
@@ -3529,12 +3640,17 @@ mod tests {
                     .collect();
                 shots.extend(beside.into_iter().map(|from| ShotIn { from, to: t, r: 4.0 }));
             }
-            let f = Frame { units, shots, slime, crater };
+            let f = Frame { units, shots, slime, crater, sink };
             e.inject(&cpu);
             e.set_squad(&f);
             run(&mut e, &shared, &s, 1, Hand::default());
             let (before, at) = (cpu.life.clone(), cpu.walkers.clone());
+            // Where the shots would land without the sink, to check it moves
+            // some of them.
+            let edge = squad::shots(&mut cpu.clone(), &f.shots, slime, crater, 0.0);
             let cpu_out = squad::frame(&mut cpu, &f, 1);
+            let sunk = edge.iter().zip(&cpu_out.shots).filter(|(a, b)| a.hit != b.hit).count();
+            assert_eq!(sunk > 0, sink > 0.0, "{name}: {sunk} hits sunk by the sink");
             let gpu_out = e.squad_out();
             let kills: u32 = cpu_out.shots.iter().map(|q| q.killed).sum();
             assert_eq!(cpu_out.shots[again].hit, cpu_out.shots[0].hit, "the repeated shot hits where the first did");
@@ -3563,7 +3679,7 @@ mod tests {
             let side = (e.done % 2) as usize;
             let lt = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
             let ls = l1(&floats(&read_back(&device, &queue, &e.scent[side])), &cpu.scent);
-            let (lc, _, _, agar_off, ground_off) = world_off(&e, &cpu);
+            let (lc, _, _, agar_off, ground_off) = world_off(&e, &cpu, &[]);
             // The alarm the shots laid, spread one tick (0 without the field).
             let la = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
             let alarm_sum: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
@@ -3705,7 +3821,7 @@ mod tests {
             let seg = (45.0, 60.0, 70.0, 100.0, 4.0);
             let cells = cpu.build_wall(seg.0, seg.1, seg.2, seg.3, seg.4);
             e.build_wall(&shared, &s, seg.0, seg.1, seg.2, seg.3, seg.4);
-            let (_, _, _, agar_off, ground_off) = world_off(&e, &cpu);
+            let (_, _, _, agar_off, ground_off) = world_off(&e, &cpu, &[]);
             let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
             let agar: Vec<bool> = u32s(&e.agar).iter().map(|&a| a != 0).collect();
             let side = (e.done % 2) as usize;
@@ -3869,8 +3985,12 @@ mod tests {
         let (seed, scale, walkers) = (3, 2, 5_000);
         // The flee alone: since 2026-11-12 shots lay craters by default,
         // which have their own twin (`a_squad_laying_craters_...`); with
-        // both, seed 3's moulds part by 13% at 25 s.
-        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
+        // both, seed 3's moulds part by 13% at 25 s. Solid crystals
+        // (`Rules::crystal_solid`, game layer only, the same on both
+        // engines) are off too: with them the squad starts off the larder's
+        // crystal and seed 3's moulds part by 9.7% at 25 s (1930 against
+        // 1760), past the race twin's 8%.
+        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, ..Rules::default() };
         let flee = || {
             let mut p = race_params(seed, scale, walkers);
             (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
@@ -3928,7 +4048,15 @@ mod tests {
         // (`a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu`),
         // and `twin_gap_over_seeds_is_chaos` shows the gap at 30 s is the
         // CPU's own spread on either rule.
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, ..Rules::default() };
+        // Solid crystals off (`Rules::crystal_solid`, game layer only, the
+        // same on both engines), as in the flee twin: they move where the
+        // squad starts and stands, and seed 3's chaos then parts the moulds
+        // past 8% (11-12 CI: 1992 GPU against 1788 CPU at 25 s with craters,
+        // 1346 against 1505 at 30 s at the core).
+        // The old bite (1 a walker): at the game's 2 (2026-11-12) the squad
+        // dies by 20 s and the engines part on who died when, not on the
+        // craters this test is about.
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { crater: 0.0, ..rules }, seed);
@@ -3993,7 +4121,7 @@ mod tests {
             let seeds = 3..=10u64;
             let n = seeds.clone().count() as f64;
             for seed in seeds {
-                let rules = Rules { cap: 30.0, crater: 10.0, core_pull: pull, ..Rules::default() };
+                let rules = Rules { cap: 30.0, crater: 10.0, core_pull: pull, crystal_solid: false, ..Rules::default() };
                 let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
                 let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
                 let mut alt = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers + 1)), rules, seed);
@@ -4037,7 +4165,22 @@ mod tests {
         use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, ..Rules::default() };
+        // Solid crystals off (`Rules::crystal_solid`, game layer only, the
+        // same on both engines), as in the flee twin: they move where the
+        // squad starts and stands, and seed 3's chaos then parts the moulds
+        // past 8% (11-12 CI: 1992 GPU against 1788 CPU at 25 s with craters,
+        // 1346 against 1505 at 30 s at the core).
+        // The old bite (1 a walker), as the craters twin: at 2 the squad
+        // dies by 20 s and the engines part on who died when.
+        // The sink off (`Rules::sink`, 2026-11-12) for the same reason: with
+        // it seed 3 parted the moulds 10% at 25 s (1,388 GPU, 1,260 CPU),
+        // while over seeds 3-10 with the sink on the GPU's gap at 30 s (104
+        // walkers, pull 8; 84 at pull 0) stays under the CPU's own spread
+        // with one walker more (142; 126), above on 4 of 8
+        // (`twin_gap_over_seeds_is_chaos`, which plays the default rules).
+        // The sink itself is twinned to the bit in one frame
+        // (`the_squad_matches_the_cpu_for_one_frame`).
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, crystal_solid: false, drain: 1.0, sink: 0.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { core_pull: 0.0, ..rules }, seed);
@@ -4076,6 +4219,47 @@ mod tests {
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the pull changed the CPU's game");
     }
 
+    /// **A siren on the engine as on the CPU** (2026-11-12): its calls go
+    /// through `World::burst`, so the GPU world turns its alarm field on and
+    /// lays the call as the CPU does. Same calls on both over 20 s, no
+    /// walker killed by a call, and the moulds within the race twin's 8%.
+    #[test]
+    fn a_siren_calls_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_world, BuildRules, Cmd, Game, Kind, Rules, Stance, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 20.0, start_bank: 1e6, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() };
+        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        // Between the bases, on open ground.
+        let p = (0.6 * cpu.larder.0 + 0.4 * cpu.core.0, 0.6 * cpu.larder.1 + 0.4 * cpu.core.1);
+        let w: &dyn World = &cpu.world;
+        let at = (0..60).flat_map(|r| (0..16).map(move |k| (r, k))).map(|(r, k)| {
+            let a = k as f32 / 16.0 * std::f32::consts::TAU;
+            (p.0 + r as f32 * a.cos(), p.1 + r as f32 * a.sin())
+        }).find(|q| w.open(q.0, q.1)).expect("open ground");
+        for g in [&mut cpu.soldiers[0], &mut gpu.soldiers[0]] {
+            (g.x, g.y, g.stance) = (at.0, at.1, Stance::HoldFire);
+        }
+        assert!(cpu.apply(Cmd::Build(Kind::Siren, at)) && gpu.apply(Cmd::Build(Kind::Siren, at)));
+        let mut sizes = Vec::new();
+        while cpu.end.is_none() {
+            cpu.step();
+            gpu.step();
+            if cpu.world.ticks() % 75 == 0 {
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
+            }
+        }
+        eprintln!("siren: calls {} / {}, living CPU, GPU {sizes:?}", cpu.sirens, gpu.sirens);
+        assert!(cpu.sirens >= 5 && gpu.sirens == cpu.sirens, "calls {} on the GPU, {} on the CPU", gpu.sirens, cpu.sirens);
+        assert!(!cpu.world.alarm.is_empty(), "the CPU's alarm field is on");
+        for &(t, a, b) in &sizes {
+            let (a, b) = (a as f64, b as f64);
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+        }
+    }
+
     /// **Buildings on the engine as on the CPU** (turret, lure, pump: units
     /// that do not move in the squad frame, `larder_world::buildings`). A
     /// pump on the larder's crystal banks the same food on both and a lure
@@ -4088,7 +4272,9 @@ mod tests {
         use slime_mould::mould::larder_world::{race_world, Cmd, Game, Kind, Rules, Stance, World};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules { cap: 20.0, start_bank: 1e6, ..Rules::default() };
+        // The old bite (1 a walker): at the game's 2 the builder dies before
+        // the turret stands, and it never fires on either engine.
+        let rules = Rules { cap: 20.0, start_bank: 1e6, drain: 1.0, ..Rules::default() };
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let near = |g: &Game<_>, p: (f32, f32)| -> (f32, f32) {

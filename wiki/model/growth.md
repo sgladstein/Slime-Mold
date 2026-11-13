@@ -2,9 +2,34 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-12T17:20Z
-sources: [Reports/one-body-2026-11-12.md, Reports/slime-enemy-review-2026-11-12.md, Reports/growth-2026-11-11.md, Reports/mould-shape-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md, Reports/food-tubes-2026-11-11.md]
-code: [BigParams::upkeep, BigParams::energy_flow, BigParams::hunger_scent, BigParams::lone_upkeep, BigParams::lone_step, BigParams::flow_loss, BigParams::tether, BigParams::start_energy, BigParams::birth_energy, BigParams::birth_cost, BigParams::starve, BigParams::capacity, BigDish::alive, BigDish::energy, DRAW_STARVE, DRAW_BIRTH, CLAIM_BIRTH]
+updated: 2026-11-13
+sources:
+  - Reports/fed-mould-2026-11-13/README.md
+  - Reports/food-tubes-2026-11-11.md
+  - Reports/growth-2026-11-11.md
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/mould-shape-2026-11-11.md
+  - Reports/one-body-2026-11-12.md
+  - Reports/slime-enemy-review-2026-11-12.md
+code:
+  - BigDish::alive
+  - BigDish::energy
+  - BigParams::birth_cost
+  - BigParams::birth_energy
+  - BigParams::capacity
+  - BigParams::energy_flow
+  - BigParams::fed_crowd
+  - BigParams::flow_loss
+  - BigParams::hunger_scent
+  - BigParams::lone_step
+  - BigParams::lone_upkeep
+  - BigParams::start_energy
+  - BigParams::starve
+  - BigParams::tether
+  - BigParams::upkeep
+  - CLAIM_BIRTH
+  - DRAW_BIRTH
+  - DRAW_STARVE
 ---
 
 # Growth and starving on the big dish
@@ -65,6 +90,16 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   hold it together (dead end). In the Larder census (race 16 seeds) H keeps the
   planned gate (farm, wall beat idle and random) but rush stops winning and
   every hand scores lower; kept off by default for the owner's call.
+  **On in the window's shape C since 2026-11-13** (0.05 alone, no hunger;
+  the race world's default stays off): the food a dense mould eats on its
+  crystals reaches walkers along the network, which breed where there is
+  room, so the body visibly swells round the crystals it holds (Fork seed
+  1, 5:00: 17.1% of the screen against 7.0%;
+  [fed mould](../../Reports/fed-mould-2026-11-13/README.md)).
+  `BigParams::fed_crowd` (a fed walker packs more to a cell; both engines,
+  off) added walkers but not picture. At the peak its 50,000 slots fill
+  at most 34.8% of a map's open cells at scale 2 (a test holds it to
+  half); inside the body 66-83% of walkers are boxed in (59-66% before).
   The one-body page's 25,000-walker films ran with one walker a cell off
   (corrected 11-12 17:10Z); the 5,000-walker game and the CPU numbers here
   are unaffected ([slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)).

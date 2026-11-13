@@ -98,6 +98,25 @@ On mission 2 the Drifter never left its home crystal, so the player never met it
 
 Hunger makes a walker that has eaten its crystal dry follow the scent (food and soldiers) harder, and the longer reach lets it smell the next one; neither alone moves it. The stronger arms reach the squad sooner but grow to the plain mould's size. The kept Drifter touches an idle squad on 3 of 4 by 9:04 at the latest; seed 1 never. Returning to a lost crystal within 2 minutes is not measured yet. On the GPU (software Vulkan) it stays within 8% of the CPU over 20 s (`the_campaign_tiers_run_on_the_engine_as_on_the_cpu`).
 
+## The Drifter at hunger 16 (11-12, 23:00Z)
+
+**Why.** The campaign thread sent a note after #171 (a1f9865). First contact is headless and the soldiers wade. In that mission, random wiped the Drifter on 2 of 4 seeds, and the Drifter left home only when provoked. Hunger 16 was the arm rejected above for growing to the plain mould's size. A bigger mould that roams is now what the mission wants.
+
+**Run.** First contact, seeds 1-4, with the default `campaign` example. Raw output is in `raw/drifter3/`. The run was repeated on main 2ade1d4, after #174 changed the drain and the default shape, and the bottom two rows of the table come from that run. The goal there is "below a tenth".
+
+| | idle best | random best | random squad wiped | claim best | strike best | crystals reached (claim) |
+|---|---|---|---|---|---|---|
+| hunger 8 (was) | 0.05 | 0.28 | 0/4 | 0.09 | 0.45 | home only, 3 of 4 |
+| **hunger 16 (kept)** | 0.05 | 0.19 | 2/4 | 0.09 | 0.33 | 4 crystals on 2 of 4 |
+| hunger 8, after #174 (2ade1d4) | 0.06 | 0.31 | 0/4 | 0.10 | 0.50 | home only, 3 of 4 |
+| **hunger 16, after #174** | 0.06 | 0.21 | 2/4 | 0.10 | 0.37 | 6-9 crystals on 3 of 4 |
+
+**What it changes.**
+- Every hand now meets a mould that leaves home: idle reaches a second crystal on 2 of 4 seeds, and random reaches 5-8 crystals on 3 of 4.
+- Random's best cut falls from 0.28 to 0.19.
+- No hand met `shrink 0` within this run's 900 s on either arm. The campaign thread's longer rounds (strike 4/4 at 7:17-8:01) were not reproduced here, so the mission's timing needs its own re-run.
+- Smoke checks pass: idle doesn't win, no round ends in under a minute, and nothing soft-locks beyond the run's own Stuck rule.
+
 ## Records at 702c59b, with craters (11-12)
 
 These are records, not a gate. Under the owner's rule (PR #150, *build first, balance later*), a census does not hold a merge. Random's wipe count is a target for later tuning. Rows: `raw/census/drifter-v2-702c59b/` and `raw/census/trunk-702c59b/`, with census.py output in `summary.txt`.

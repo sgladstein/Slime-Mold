@@ -200,3 +200,33 @@ makes the census a strategy question, not a gate. Summaries from
   7 of 8 (p 0.07 each, not significant at 8 seeds), and the killzone squad
   still dies. So the best plan does change with the map: soldiers in the
   open, turrets in the nest's narrow ground.
+
+## The siren (batch 2)
+
+A building that calls, every `siren_every` (4) seconds while on, with
+`siren_alarm` (150, three hits' worth) over `siren_r` (15) dish cells,
+through the squad toolkit's burst (`World::burst`, kill off): the alarm
+field keeps one writer, on the CPU and the GPU. The mould tiers answer it
+as they answer gunfire: a Sleeper wakes, a Sporer bursts, a Swarmer floods
+in. The plain mould has no alarm sense and ignores it, so on the plain
+mould it is a building that does nothing; the build page says so. Cost 300,
+150 health; J switches lures and sirens.
+
+- Tests: `a_siren_calls_with_the_alarm_every_few_seconds_while_on` (calls
+  at 0, 4 and 8 s, the alarm on its cell, none when off, no kill) and the
+  GPU twin `a_siren_calls_on_the_engine_as_on_the_cpu` (5 calls on both in
+  20 s, moulds within 8% at every 5 s).
+- **Does it call a Swarmer?** `worldbuild seeds=1-8 kind=siren
+  tier=swarmer secs=30`, the siren 0.35 of the way from the core, on
+  against off, walkers within 8 dish cells. At 20 s more on 8 of 8 (p
+  0.008): 10-174 walkers against 0-34. By 30 s the mould has worn some
+  sirens down (4-5 calls of 8 on three seeds), as with the lure. On the
+  plain mould the same run is identical on and off, to the walker (the
+  control). Raw: `siren/worldbuild-*.txt`.
+- **The look** (`larder-world map=fork tier=swarmer look=DIR hand=siren`,
+  the siren 0.42 of the way to the core above the fork's V, against
+  `hand=farm`): with the siren the Swarmer's column runs straight up the
+  stem and spreads under the V towards it; without it the column climbs
+  the left arm towards the squad. Pictures in `siren/look*/`. A siren
+  placed in the stem itself (0.6 of the way) was worn down as a ghost
+  before it rose.

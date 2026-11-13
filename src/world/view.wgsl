@@ -519,9 +519,12 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     let small = r < 12.0;
     let k = 4u + 2u * min(kind, 4u);
     var body = sprite(k, p, small);
-    // Built from the foot (screen down) up: above the line, a ghost.
+    // Built from the foot (screen down) up: above the line, a ghost. The
+    // risen part stays faint too until the building stands, so a ghost
+    // reads as one at a glance (owner's playtest 2026-11-12: "a faint
+    // building ... that fills in as it builds").
     let up = p.y >= 1.1 - 2.2 * built;
-    if (!up) { body = body * 0.3; }
+    if (!up) { body = body * 0.25; } else if (built < 1.0) { body = body * 0.6; }
     // Hurt: darker and greyer with the health gone.
     let grey = dot(body.xyz, vec3<f32>(0.3, 0.59, 0.11));
     let hurt = 1.0 - health;

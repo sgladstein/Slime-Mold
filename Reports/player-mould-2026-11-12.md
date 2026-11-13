@@ -416,3 +416,41 @@ lead's sizes; the final count is the owner's).
 - Cut's reach (radius 3) is too small to see; one det cord takes about what fire does but does not hold.
 - Cut was never used by a planned hand; random cut 5,899 walkers and lost.
 - The GPU port, after the toolkit's and one body's rows.
+
+## The GPU port and the window (own=1)
+
+The garden now runs on the GPU engine and plays in the larder-world window
+(`larder-world own=1`; [page](https://claude.ai/artifact/SLmH8k3C797UCo3949RcMn), seed 1 at 3:00: own 4,522, enemy 4,153). Off by default: without `own=1` no new pass runs and
+the plain game is hash-identical (all twin tests unchanged).
+
+- **Engine.** World bit `GARDEN = 32`; the player's mould is species 3 on the
+  per-species trail (`sp_in`), the enemy species 0. Shots stop at the
+  enemy's trail only (`enemy_trail` = trail minus species 3), so fire flies
+  through green and stops at the first amber cell; strike skips species 3
+  walkers; cut keeps species 3's trail; soldiers' slowdown counts enemy
+  walkers only (`enemy_occ` = occupancy minus the per-cell own count). Eat
+  runs over every cell in a garden (the GPU's pile-only eat could not feed
+  the player's mould). New passes `tend` (Road and Feed entries, written in a
+  tail after the squad path, `squad::TEND`), `ownclear` and `owncount`.
+  Conversion uses the engine's own `convert` (1.2 at radius 4). No new
+  Params row or binding (BINDINGS stays 48).
+- **World.** `GpuWorld::garden` (refuses a grazing world, with a test: the
+  own count shares the graze counter), `garden_settings`, `counts_by_side`,
+  `World::tend` building the same Road/Feed discs as the CPU. Cut is the
+  toolkit's det cord (#159, `World::burst`): a burst takes both moulds alike,
+  on both engines (`Garden::burst`, `Garden::cord`), so it can shape the
+  player's mould as well as cut the enemy's.
+- **Window.** Sow (W) on the command card and Road (Y) on the tools page (E)
+  toggle the task on the selected soldiers (main's card had one free slot
+  once the tools page landed); the det cord is on the tools page too (C); the top bar shows the own count and labels the enemy.
+  `hand=sow` plays it (soldiers 0-1 sow or road between the larder and a
+  crystal, the rest farm). Tests: GPU garden starts as the CPU garden; shots
+  spare the player's mould (a line through green hits amber); Road and Feed
+  as the CPU; the window smoke test runs every command for 60 s.
+- **Not yet on the GPU: `species_cap`.** Until it lands, both moulds draw
+  births from one shared pool, so the enemy can crowd the player's mould out
+  of it. A garden that loses ground late is that, not balance.
+- **Cost.** On llvmpipe (software Vulkan, not a timing) `tend`, `ownclear`
+  and `owncount` cost 0.2-0.5 ms a step each. 1070 timing at 5k and 20k
+  walkers in all, with the garden's all-cells eat as its own number, is
+  booked on the PC; the twin tests with `own` on and off are booked too.

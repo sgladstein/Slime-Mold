@@ -111,7 +111,16 @@ impl Tier {
             // or 16 touched 1-2 of 4; keep 0.9 or hunger 16 grew it to the
             // plain mould's size), with 3,700-12,900 walkers at 900 s
             // against plain's 11,400-13,600.
-            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1"), ("hunger_scent", "8"), ("hunger_at", "1"), ("sensor_offset", "18")],
+            // Then hunger 16 (11-12 23:00Z, campaign note on First contact,
+            // headless, after #143's wading: random wiped hunger 8 on 2 of 4,
+            // and it left home only when provoked). On First contact seeds
+            // 1-4 at a1f9865, hunger 16 reaches 1-4 more crystals for every
+            // hand (idle 2 of 4 reach a second, claim reaches 4 on 2 of 4),
+            // random's best bar falls 0.28 -> 0.19 and random loses its
+            // squad on 2 of 4 (0 before); strike 0.45 -> 0.33, idle 0.05
+            // both. It grows bigger, as the rejected arm said; that is now
+            // the point.
+            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1"), ("hunger_scent", "16"), ("hunger_at", "1"), ("sensor_offset", "18")],
             // Explorers alone (keep 0.9, step 1) starved to 250 walkers by
             // 60 s and let go of every crystal; the faster step and longer
             // reach keep a mesh on 14 of 23. Explore 400 steps held about
@@ -161,19 +170,21 @@ impl Tier {
     }
 
     /// The tier's core (`larder_world::Core`), or None for the plain
-    /// mould's (`Core::of(&rules)`: fixed, `Rules::core_secs`,
-    /// `Rules::core_pull`). Every tier is None for now; the tiers thread
-    /// fills in its own (the Sprawler headless, the Grudge's pull) once the
-    /// core-defence PR is in. Read once, by `Game::with_tier`.
+    /// mould's (`Core::of(&rules)`: headless, `Rules::core_pull`). Every
+    /// mould is headless since the owner's 2026-11-12 20:21Z ruling ("remove
+    /// the king rule ... Headless"), so the Sprawler differs only in pulling
+    /// nothing and the Grudge only in pulling harder. Read once, by
+    /// `Game::with_tier`.
     pub fn core(self) -> Option<super::larder_world::Core> {
         use super::larder_world::{Core, CoreKind, Rules};
         let plain = Core::of(&Rules::default());
         match self {
-            // No core: births go on wherever a walker is fed, so only a
-            // wipe ends it, and a strike on its start takes nothing (the
-            // campaign's mission 3 contains it with walls). Dev seeds 1-4,
-            // craters on: strike +0.96 mean against farm +0.94 and wall
-            // +0.91, level; random lost its squad on 2.
+            // No core and no pull: births go on wherever a walker is fed,
+            // so only a wipe ends it, and its start draws nothing onto a
+            // squad there (the campaign's mission 3 contains it with
+            // walls). Measured when the plain mould still had a fixed core:
+            // dev seeds 1-4, craters on: strike +0.96 mean against farm
+            // +0.94 and wall +0.91, level; random lost its squad on 2.
             Tier::Sprawler => Some(Core { kind: CoreKind::Headless, pull: 0.0, ..plain }),
             // The whole body converges on soldiers at its core: random's
             // squad wiped on 4 of 4 dev seeds (at 8 too).
@@ -228,6 +239,11 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "scent_offset" => p.scent_offset = f()?,
         "energy_flow" => p.energy_flow = f()?,
         "hunger_scent" => p.hunger_scent = f()?,
+        // Walker slots (a census plays the window's dense shapes on the CPU:
+        // `keys=capacity:50000`, slime-enemy thread 2026-11-13).
+        "capacity" => p.capacity = v.parse::<usize>().map_err(|e| format!("{key}={v}: {e}"))?,
+        // A fed walker packs `fed_crowd` more to a cell (`BigParams::fed_crowd`).
+        "fed_crowd" => p.fed_crowd = v.parse::<u8>().map_err(|e| format!("{key}={v}: {e}"))?,
         "hunger_at" => p.hunger_at = f()?,
         "explore_spread" => p.explore_spread = f()?,
         "explore_deposit" => p.explore_deposit = f()?,
@@ -298,7 +314,7 @@ mod tests {
             use crate::mould::larder_world::{Core, CoreKind, Rules};
             let plain = Core::of(&Rules::default());
             assert_eq!(Tier::Sprawler.core().map(|c| c.kind), Some(CoreKind::Headless));
-            assert!(Tier::Grudge.core().is_some_and(|c| c.kind == CoreKind::Fixed && c.pull > plain.pull));
+            assert!(Tier::Grudge.core().is_some_and(|c| c.kind == CoreKind::Headless && c.pull > plain.pull));
             assert!(Tier::Trunk.core().is_none() && Tier::Drifter.core().is_none());
         }
         assert!(on(Tier::Grudge).scar_weight > 0.0 && on(Tier::Grudge).alarm_weight > 0.0);

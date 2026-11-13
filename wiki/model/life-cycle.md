@@ -2,9 +2,49 @@
 title: The life cycle and the mould's answer to attack (Sporer, Sleeper, Swarmer)
 kind: mechanism
 status: open
-updated: 2026-11-12T17:20Z
-sources: [Reports/larder-world-roadmap-2026-11-11.md, Reports/life-gpu-2026-11-11.md, Reports/mould-tiers-2026-11-11.md, Reports/mould-tiers-review-2026-11-11.md, research/sources/jones-adamatzky-2012.md, research/sources/jones-2015-survey.md]
-code: [BigParams::spore_rate, BigParams::spore_scent, BigParams::spore_burst, BigParams::spore_alarm, BigParams::spore_steps, BigParams::spore_speed, BigParams::spore_reach, BigParams::spore_deposit, BigParams::spore_land, BigParams::spore_rest, BigParams::sleep_rate, BigParams::sleep_deposit, BigParams::wake_scent, BigParams::wake_alarm, BigParams::wake_steps, BigParams::sleep_rest, BigParams::sleep_death, BigParams::alarm_keep, BigParams::alarm_weight, BigParams::alarm_relay, BigDish::strike, BigDish::life, BigDish::life_t, BigDish::alarm, BigDish::life_counts, LIFE_SPORE, LIFE_DORMANT, LIFE_DEAD, Tier, SHOT_ALARM, Engine::strike, Engine::life_of, Engine::alarm_of, shout]
+updated: 2026-11-12
+sources:
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/life-gpu-2026-11-11.md
+  - Reports/mould-tiers-2026-11-11.md
+  - Reports/mould-tiers-review-2026-11-11.md
+  - research/sources/jones-2015-survey.md
+  - research/sources/jones-adamatzky-2012.md
+code:
+  - BigDish::alarm
+  - BigDish::life
+  - BigDish::life_counts
+  - BigDish::life_t
+  - BigDish::strike
+  - BigParams::alarm_keep
+  - BigParams::alarm_relay
+  - BigParams::alarm_weight
+  - BigParams::sleep_death
+  - BigParams::sleep_deposit
+  - BigParams::sleep_rate
+  - BigParams::sleep_rest
+  - BigParams::spore_alarm
+  - BigParams::spore_burst
+  - BigParams::spore_deposit
+  - BigParams::spore_land
+  - BigParams::spore_rate
+  - BigParams::spore_reach
+  - BigParams::spore_rest
+  - BigParams::spore_scent
+  - BigParams::spore_speed
+  - BigParams::spore_steps
+  - BigParams::wake_alarm
+  - BigParams::wake_scent
+  - BigParams::wake_steps
+  - Engine::alarm_of
+  - Engine::life_of
+  - Engine::strike
+  - LIFE_DEAD
+  - LIFE_DORMANT
+  - LIFE_SPORE
+  - SHOT_ALARM
+  - Tier
+  - shout
 ---
 
 # The life cycle and the mould's answer to attack (Sporer, Sleeper, Swarmer)

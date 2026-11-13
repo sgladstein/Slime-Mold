@@ -28,3 +28,148 @@ films in `img/`, run scripts and logs in `raw/`).
   2:00) are new (`raw/front.sh`, `raw/*-dense.log`); `front-mesh.gif`,
   `front-sheet.gif` and `front-today.gif` are copies of the one-body page's
   `film-idle-all-pure-on`, `film-idle-all-dense-on` and `film-idle-all-B`.
+
+## The owner's answers (20:21Z), built
+
+"1) remove the king rule. As long as the slime has food/crystal energy it
+can make walkers. Headless. 2) I will playtest the shapes. Not sure what it
+best from these."
+
+- **Headless for every mould.** `Core::of` is `CoreKind::Headless`, so the
+  plain mould and every tier (the Grudge keeps its pull of 16, the Sprawler
+  its 0) make walkers while they have food; holding the home stops nothing.
+  The home keeps its pull (8): the pull was what stopped random walking into
+  the hub (random wiped the plain mould 11 of 32 with craters, 5 of 64 with
+  the pull), and it is a draw, not a weak spot. The window drops the core
+  ring and reads "Wipe out the mould, or out-harvest it and cut it down by
+  15:00".
+- **Smoke checks** (`raw/headless-smoke.txt`; `larderworld census
+  seeds=1-8 hands=idle,random,farm,rush,strike cap=900`, CPU race world,
+  10 min on 4 cores). The mould was wiped in 0 of 40 games (before: core
+  taken by rush 34 of 64, strike 12, random 5, in the census above). Idle
+  reaches the cap 8 of 8 (mean score -0.34); farm (+0.26) and the strike AI
+  (+0.33) beat idle and random 8-0 each (sign test p 0.008); strike beats
+  farm 8-0. Random loses its squad 7 of 8, the rush 4 of 8; the shortest
+  game ends at 2:46 (a rush squad wiped). Idle and farm stand still for 0 s.
+  Tuning notes, not vetoes: no hand wipes the mould in 15 minutes now, so
+  every game is a stalemate scored at the cap; the review's escalation
+  (`Rules::overrun`) and a mould that starves when its crystals are held
+  are the next levers.
+- **The shapes as keys** (`larder-world -- shape=a|b|c|d|e`, the films on
+  the page) and **walker mass** (`Rules::mass`, `Rules::mass_for`: a walker
+  hits for 5,000 / the start walkers at scale 2, so 0.2 at 25,000; the
+  window and the census harness follow the walkers by default, `mass=`
+  sets it). Idle squad on the Fork with both on (`raw/shapes/`, software
+  Vulkan): A alive at 4:00 (3,855 walkers); B wiped at 2:50, was 0:47
+  (48,617 walkers, the mesh never starves at upkeep 0.00001); C alive at
+  4:00, was wiped at 1:56 (29,137 at 1:00, 10,869 at 2:00, 13,406 at 4:00);
+  D alive at 4:00 (28,841, 14,733, 16,140); E alive at 4:00, but starves
+  to 3,033 by 2:00.
+
+## The owner plays D and C (22:01-22:17Z)
+
+- **D:** "defeated mold d in 8:35, harvested 28k food, score of 2.43. First
+  try." ... "I just harvested crystals until i got 40 soliders and hunted
+  it down." The bots' 0-of-40 wipes (above) said nothing about a person.
+- **C:** "I defeated c in 5:51 with a score of 2.61. C is a better slime
+  than D".
+- Notes on D (22:06Z, relayed): fire from one spot barely hurts a big body
+  while walking in destroys it (the Larder thread owns the crater rule and
+  is on it); "after killing almost all the mold, having the kill the few
+  random stragglers spread across the map to win is annoying"; "There are
+  still clearly lone walkers moving around"; building from afar went to a
+  new thread.
+
+## Stragglers: the broken mould
+
+`examples/loneprobe.rs`: shape D on the CPU race world (scale 2), idle
+squad, 4 seeds; at 180 s a sweep kills every walker within twice a
+crystal's radius of one and all but 2% of the rest (the owner's endgame:
+crystals held, stragglers everywhere else), then follows the remnant to
+300 s.
+
+- **A lone walker's own upkeep** (`BigParams::lone_upkeep`, the one-body
+  dead end, re-tested because the front is now a sheet): the share of
+  lone walkers at 180 s is 1.0% off, 1.2% at 3x, 1.4% at 10x; 10x reaches
+  15.5 crystals by 180 s against 19.5 (fewer on 4 of 4). Rejected
+  (`raw/lone/lone-upkeep-d.txt`; its sweep lines are the first sweep,
+  which kept 2% of every walker, crystals too, and bred back to 3,000 in
+  5 s).
+- **The broken mould** (`Rules::broken` 0.03, `broken_starve` 50): under
+  3% of its peak walkers the mould's upkeep is 50 times, and given back
+  once it is over the line. After the sweep, without it the remnant
+  (187-304 walkers at +5 s) finds food and grows back to 9,751-23,807 by
+  300 s; with it the remnant is 90-135 at +5 s, 22-37 at +10 s, 3-10 at
+  +15 s and gone by +25-30 s, on 4 of 4 seeds (`raw/lone/broken-off-d.txt`,
+  `raw/lone/broken-on-d.txt`). A walker on a crystal still eats, so a
+  remnant left on food can breed the mould back over the line.
+- **Smoke** (8 race seeds, cap 15:00, today's 5,000 walkers, rule on,
+  `raw/lone/smoke-broken.txt`): idle never wins (farm and strike beat it
+  8-0, p 0.008), no game ends inside a minute (the soonest, a rush
+  squad wiped at 2:32), and no hand wipes the mould, so the rule never fires there; rush
+  stood stuck a minute in 1 game of 8 (2 before).
+- **On C**, the new default (`raw/lone/broken-on-c.txt`,
+  `raw/lone/broken-off-c.txt`): without the rule the remnant (151-207 at
+  +5 s) grows to 5,828 walkers on average by 300 s; with it, 63-96 at +5 s
+  and gone by +15-20 s, 4 of 4.
+
+## The owner's next answers (22:19-22:22Z)
+
+C is the default slime: "C is better how it looks, the shape it takes,
+how it networks the crystals". A round in the window with no `shape=`,
+`walkers=` or `mission=` plays C, its keys under any given; `shape=a`
+plays the old 5,000 walkers, and a mission keeps its own mould. At the
+default scale (2) on Fork the engine keeps its crowd limit (the bench
+prints "one walker a cell", not the over-half-the-agar warning). The window
+runs only on the GPU; on the CPU world the probes' 25,000-47,000 walkers
+cost about 11 ms a tick on one core (`loneprobe`, 54,000 ticks in 581 s),
+against 3-5 ms at 5,000 (the smoke). The 1070's frame cost for A, C and D
+is booked after the PC's held jobs. On thick
+slime: "more. walking directly into the enemy should be very deadly"
+(against the quarter of 40 this thread proposed). A cut-the-network rule
+waits: "what is going on with the slime is unclear to the player ... I
+cannot tell if it is getting stronger by holding the crystals. Right now
+it is mostly moving around and I kill it." The broken mould: "no
+objections".
+
+## Thick slime: the bite
+
+The owner, 22:18Z, playing C: "I can walk my group of soliders into the
+thickest part of the slime and kill most of the slime and harvest the
+whole crystal without losing a single soldier (the whole game)".
+`examples/thickprobe.rs`: C on the CPU race world (scale 2), 40 soldiers
+held harmless at the larder while it grows for 240 s, then ordered on
+their default stance into its thickest part (the 13 x 13-cell block
+holding the most walkers that a soldier can stand on) and followed 60 s.
+Deciding measure: soldiers lost of 40, race seeds 1-4.
+
+| a walker's bite, health a second | lost of 40 (seeds 1-4) | mean |
+|---|---|---|
+| 0.2 (`drain` 1 x `mass` 0.2, the old rule) | 0, 0, 0, 0 | 0 |
+| 1.0 | 25, 0, 4, 18 | 11.8 |
+| **2.0 (the new default)** | 38, 15, 26, 35 | **28.5** |
+| 4.0 | 39, 39, 28, 38 | 36.0 |
+
+(`raw/thick/move-c.txt`, a plain move in.) An attack-move stops at the
+first slime and fires from its edge: at 2.0 it loses 8, 16, 0 and 17
+(mean 10.2), and at 20 a walker 31.8 (`raw/thick/fight-c.txt`), so how you
+go in now matters: walking into the middle costs most of the squad,
+fighting at the edge about a quarter. 2.0 loses more than the old
+rule on 4 of 4 seeds (sign test p 0.125, the floor for 4). The touching
+explains the old zero: a soldier there is touched on about a third of its
+frames, mostly by 1 to 4 walkers and by 20 or more on about 1%, and at
+0.2 a walker that never adds up to 100 health in 60 s. So the bite is
+whole at any walker count (`Rules::drain` 2, `Rules::mass` no longer
+shrinks it): a soldier on the edge of the slime lives, one in the middle
+dies in seconds. The old 5,000-walker mould (shape A, mass 1) bites twice
+what it did. Buildings keep 1 x mass (`BuildRules::drain`), since the ask
+was about soldiers. Missions keep the bite they were tuned on, 1 a walker
+(`campaign::MISSION_DRAIN`; a mission file's `rule drain N` sets its own):
+at 2 the claim hand's walled squad on The gaps was wiped at 2:05, so the
+campaign thread retunes them. Smoke at the new bite (8 race seeds, cap 15:00, the old
+5,000 walkers where the bite doubled, `raw/thick/smoke-bite.txt`): idle
+never wins (farm and strike beat it 8-0, p 0.008), the soonest end is a
+squad wiped at 1:57, nothing stands stuck a minute, and strike now wipes
+the mould on 2 of 8 (0 before; a tuning note). The mould grew through all of it (about 35,000 at the
+order to 36,000-39,000 after), and holds more where the squad dies sooner.
+

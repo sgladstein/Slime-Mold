@@ -3,7 +3,20 @@ title: How RTS games are designed (outside research)
 kind: design
 status: current
 updated: 2026-11-11
-sources: [Reports/rts-research-2026-11-10.md, research/sources/sirlin-balancing-2014.md, research/sources/johnson-water-finds-a-crack-2011.md, research/sources/browder-sc2-esport-2011.md, research/sources/shelley-design-by-playing-2007.md, research/sources/meier-interesting-decisions-2012.md, research/sources/leblanc-feedback-2009.md, research/sources/czarnecki-spinning-tops-2020.md, research/sources/alphastar-2019.md, research/sources/chung-on-coh-2017.md, research/sources/sahui-endgames-2010.md, research/sources/tooth-and-tail.md, research/sources/creeper-world-2025.md]
+sources:
+  - Reports/rts-research-2026-11-10.md
+  - research/sources/alphastar-2019.md
+  - research/sources/browder-sc2-esport-2011.md
+  - research/sources/chung-on-coh-2017.md
+  - research/sources/creeper-world-2025.md
+  - research/sources/czarnecki-spinning-tops-2020.md
+  - research/sources/johnson-water-finds-a-crack-2011.md
+  - research/sources/leblanc-feedback-2009.md
+  - research/sources/meier-interesting-decisions-2012.md
+  - research/sources/sahui-endgames-2010.md
+  - research/sources/shelley-design-by-playing-2007.md
+  - research/sources/sirlin-balancing-2014.md
+  - research/sources/tooth-and-tail.md
 ---
 
 # How RTS games are designed (outside research)

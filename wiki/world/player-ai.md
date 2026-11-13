@@ -2,9 +2,23 @@
 title: The Larder player AI
 kind: tool
 status: current
-updated: 2026-11-12T17:50Z
-sources: [Reports/plan-matrix-2026-11-12.md, Reports/larder-world-tiers-2026-11-12.md, Reports/larder-world-ai-2026-11-12.md, Reports/larder-ai-2026-11-11.md, Reports/larder-m3-2026-11-11.md, Reports/larder-world-roadmap-2026-11-11.md]
-code: [Brain, Style, Side, View, RandomHand, set_rule, Game::apply, mould_grid]
+updated: 2026-11-12
+sources:
+  - Reports/larder-ai-2026-11-11.md
+  - Reports/larder-m3-2026-11-11.md
+  - Reports/larder-world-ai-2026-11-12.md
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/larder-world-tiers-2026-11-12.md
+  - Reports/plan-matrix-2026-11-12.md
+code:
+  - Brain
+  - Game::apply
+  - RandomHand
+  - Side
+  - Style
+  - View
+  - mould_grid
+  - set_rule
 ---
 
 # The Larder player AI
@@ -12,6 +26,8 @@ code: [Brain, Style, Side, View, RandomHand, set_rule, Game::apply, mould_grid]
 ## Now
 
 The player AI plays Larder's soldier side for automated playtests. It gives only the player's commands (`Cmd` through `Game::apply`), so every AI round is a replay. It reads only what a player sees (a `View`), and it commands a `Side`, so a second soldier team later is a second brain.
+
+**Under rations** (#170; [report](../../Reports/ai-rations-2026-11-12.md)): the brain buys a soldier only while the army's rations fit its income (averaged over 60 s, 80% of it) and the food left on crystals the mould is not near for the next 5 minutes; when the rations outrun the income and the bank is nearly out, every soldier farms. Smoke check on race 5-12: before #174 the strike lost 1 game instead of 2 and claim 0 instead of 1; on main after #174 it rarely binds (strike 2 and 2, claim 2 and 1). With headless moulds (#164) the strike attacks the hub for the rest of the game, as no core falls.
 
 **On the Larder world** (`src/mould/larder_world_ai.rs`, [report](../../Reports/larder-world-ai-2026-11-12.md), [page](https://claude.ai/artifact/BuPV981PmqpXkDhxTnadzs)) it has five styles on knobs: boom, claim, late, fort and strike. It sees the mould through `World::mould_grid` (the CPU world bins its occupancy; the GPU world sums it on the GPU since #101). It skips crystals under one frame's ask, which the dry-crystal rule sends a carrier home from. On held-out seeds 21-36 of the CPU race world, every style beats idle and random on 16 of 16. Boom, claim, late and fort beat the scripted farm hand on 15 or 16 of 16. Strike is the gamble: it wiped the mould once and lost to farm on five seeds. (W2b's score; under score v2 strike beats farm 14-2 on seeds 5-20, [roadmap report](../../Reports/larder-world-roadmap-2026-11-11.md), *Score v2*).
 
@@ -45,6 +61,7 @@ The small-dish AI (`src/mould/larder_ai.rs`, [report](../../Reports/larder-ai-20
 
 ## Sources
 
+- [ai-rations-2026-11-12.md](../../Reports/ai-rations-2026-11-12.md).
 - [plan-matrix-2026-11-12.md](../../Reports/plan-matrix-2026-11-12.md).
 - [larder-world-tiers-2026-11-12.md](../../Reports/larder-world-tiers-2026-11-12.md).
 - [larder-world-ai-2026-11-12.md](../../Reports/larder-world-ai-2026-11-12.md).

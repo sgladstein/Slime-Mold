@@ -137,3 +137,108 @@ buildings census found best on every tier; army, the same food on
 soldiers, is now the top mean. Raising is labour and risk the player
 spends, as the owner chose; on by default. Turtle's loss is significant
 before correction only (8 comparisons: Bonferroni 0.006).
+
+### Part 2 at the full bar (seeds 5-36, 201-232 and two maps)
+
+Census at main a8669bd, cap 900, all ten hands (raw:
+`census-122-race-5-36.txt`, `census-122-race-201-232.txt`,
+`census-122-fork.txt`, `census-122-nest.txt`). On the race world every plan
+beats idle 32-0 on both seed blocks, and random 30-2 (5-36) and 24-8 or
+better (201-232), all under Holm. On the Nest map (seeds 5-20) wall, ring,
+turtle, guard and pumps beat idle 16-0 or 15-1; farm (11-5) and army (12-4)
+beat it but not significantly, and **killzone loses to idle 0-16**: a finding
+for the buildings thread, not a controls bug (the hand sits its turrets
+where the Nest's mould is not). The Fork run was stopped at seed 17 under
+the owner's new testing rule (17:26Z, census is not a gate): every plan
+beat idle and random 13-0 on the seeds it finished.
+
+## Part 3: soldiers can't stand on a crystal (2026-11-12)
+
+The owner, 14:43Z: soldiers "also shouldn't be able to stand on top of the
+crystal". The Larder thread takes the other half of that message (heavy
+slowdown in thick slime).
+
+- `Rules::crystal_solid` (on): a crystal with charge left is ground a
+  soldier can't stand on (`Game::standable`). Walking, the straight-line
+  check (`walk_line`) and the distance maps use it; the line of fire
+  (`clear_line`) does not, so shots still fly over crystals.
+- A goal on a crystal (a harvest order, a move click, a larder or ghost
+  placed on one) moves to just past its rim on the soldier's side
+  (`Game::rim`, `RIM` 1 dish cell). Harvest, banking and building reach
+  count from that rim (`Game::reach`). Spawns step outward from the larder
+  until they are off its crystal. A soldier caught on one walks straight out.
+- The solid disc holds the charge left: radius × √(charge / start charge).
+  The first version used the full radius, and a harvester ate the rim (its
+  take disc reaches 4 dish cells in) and then could not reach the middle:
+  the dry-crystal test banked nothing. Now the soldiers eat in from the edge
+  and step in after it, which is what the picture shows (bites out of the
+  hexagons, soldiers at the edge: `crystal-rim.gif`, farm hand, seed 5,
+  0-45 s, a frame a second).
+
+Tests: `soldiers_stand_round_a_crystal_not_on_it` (spawns off the crystal,
+no soldier on a solid disc over 40 s, a mover stops at the rim, the
+harvester banks, and with the rule off the mover reaches the middle). The
+cost per step: one `crystals()` copy, and a disc check per soldier move and
+per distance-map cell when a map is built (every 30 s).
+
+Smoke check (not a gate, under the owner's 17:26Z rule), race seeds 5-15,
+on against off (raw `census-solid-on.txt`, `census-solid-off.txt`, stopped
+part way): no game ends in the first minute; idle loses every seed (mean
+-0.34 either way); random is wiped on most seeds either way. Harvests are
+about even (farm 49.5k against 49.9k). Scores run a little lower with the
+rule on for most plans (ring 1-9, pumps 0-10, farm 3-7, wall 5-5, army
+3-7): walking round crystals costs time. Balance later, by the owner's
+rule; on by default since the owner asked for it.
+
+**The rule on both engines** (tech lead's ask after #153): to get CI green,
+#153 turned the rule off in three long GPU twins (flee, craters, core).
+There, seed 3's moulds parted by 9.7-12% once the squad moved. A short twin
+now checks the rule itself. `solid_crystals_hold_the_squad_alike_on_both_engines`
+runs race seed 3 with the squad holding fire and ordered onto the larder's
+crystal. Every soldier is at the same place on both engines, to the bit,
+for all 45 ticks. None stands on a solid crystal, and all four reach the
+rim. The planted copy (`the_crystal_twin_catches_an_engine_without_the_rule`)
+plays the GPU game without the rule, and the twin catches it at tick 1. So
+the rule acts the same on both engines. The long twins' drift is the
+mould's float drift amplified by a squad that stands elsewhere.
+
+## Part 4: build anywhere (2026-11-12 22:06Z)
+
+The owner's playtest note: "having to be near a the build location to build
+is annoying. If I try to build far away, it should let me and then the
+solider moves automatically to that location to build. There should be a
+faint building with a progress bar that fills in as it builds so I can tell
+how long until it is complete".
+
+- `BuildRules::anywhere` (on): a building may be placed anywhere on open
+  ground while any soldier lives. Off restores the old rule (within
+  `Rules::range` of a live soldier; both ends of a wall).
+- `Cmd::Send(b)` (`send B` in a replay), `Game::send`: the window sends it
+  when a build is ordered with no soldier selected. The nearest idle soldier
+  goes; if none is idle, the nearest one not already building, whose order
+  goes to the front of its queue so it returns to it.
+- `Game::raising` and `Game::raise_left`: the window's label beside each
+  ghost's bar, the seconds left at the rate it rises now, "on the way" while
+  its builders walk, "no builder" when nobody is sent. The bar spans the
+  building on screen (10-40 pixels each side). A wall ghost, which drew
+  nothing before it was whole, is a dashed line with the same bar.
+- The ghost is faint all over until it stands (view.wgsl: the unbuilt part
+  at 0.25, the risen part at 0.6). Builders of a building (not a wall) stand
+  at its edge, `BuildRules::touch` + 1 dish cells from it, so a lone builder
+  no longer hides it.
+
+Look: `larder-world look=DIR hand=far centre=253,166,14` (the Fork, seed
+1; `hand=far` orders a turret halfway to the core and a wall before it at
+2 s, both out of every soldier's range, with nobody selected). Turret built
+0.0, 0.2, 0.5, 0.7, 1.0 and wall 0.1, 0.3, 0.6, 0.8, 1.0 at 5, 7, 9, 11, 13
+s (one builder each, raise 8 s). Clip and page:
+`soldier-controls-2026-11-12/build-anywhere.gif`, `build-anywhere.html`;
+t lines in `build-anywhere-t-lines.txt`.
+
+Tests: `a_build_far_away_sends_a_soldier_who_then_goes_back_to_work`,
+`an_idle_soldier_is_sent_before_a_busy_one`; the range tests now set
+`anywhere` off for the old refusal. No census, under the owner's 17:26Z
+rule: placing anywhere changes what the AI and the census hands may choose
+(`build_blocked` no longer refuses far sites), to be weighed at the next
+balance pass. The cost per frame: one `raising` pass over the soldiers per
+ghost on screen.

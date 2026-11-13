@@ -100,6 +100,11 @@ pub trait World {
     fn open(&self, x: f32, y: f32) -> bool;
     /// The mould's core is taken: no more births.
     fn stop_births(&mut self);
+    /// The mould's upkeep a fine step (`BigParams::upkeep`; 0 with growth
+    /// off), and setting it: the broken mould (`Rules::broken`) starves its
+    /// stragglers by raising it, and gives it back when the mould recovers.
+    fn upkeep(&self) -> f32;
+    fn set_upkeep(&mut self, up: f32);
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
@@ -125,6 +130,34 @@ pub trait World {
     /// nothing.
     fn tend(&mut self, _soldiers: &[Soldier], _bank: f32, _ticks: u32) -> f32 {
         0.0
+    }
+    /// A squad toolkit burst (`squad::Burst`), now, between frames: the
+    /// kill, clear, alarm and crater on every world; gas and germ only
+    /// where `has_gas` and `has_germ` say so (a world without them leaves
+    /// those parts out, and the toolkit doesn't sell them there).
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut;
+    /// Whether `burst`'s gas and germ parts work on this world.
+    fn has_gas(&self) -> bool {
+        false
+    }
+    fn has_germ(&self) -> bool {
+        false
+    }
+    /// Walkers holding a cell within `r` fine cells of `at` (fine cells),
+    /// for a mine's trigger. The default sums the mould grid's squares of
+    /// one dish cell whose centre is in reach (the GPU world's, from the
+    /// frame's readout); 0 with no grid.
+    fn walkers_in(&self, at: (f32, f32), r: f32) -> u32 {
+        let bin = (self.scale() as usize).max(1);
+        let Some(g) = self.mould_grid(bin) else { return 0 };
+        let (w, _) = self.size();
+        let gw = w.div_ceil(bin);
+        let b = bin as f32;
+        g.iter()
+            .enumerate()
+            .filter(|&(i, _)| ((((i % gw) as f32 + 0.5) * b - at.0).hypot((((i / gw) as f32 + 0.5) * b) - at.1)) <= r)
+            .map(|(_, &n)| n)
+            .sum()
     }
 }
 
@@ -176,6 +209,14 @@ impl World for BigDish {
         self.p.birth_energy = f32::INFINITY;
     }
 
+    fn upkeep(&self) -> f32 {
+        self.p.upkeep
+    }
+
+    fn set_upkeep(&mut self, up: f32) {
+        self.p.upkeep = up;
+    }
+
     fn food_deposit(&self) -> f32 {
         self.p.food_deposit
     }
@@ -190,6 +231,39 @@ impl World for BigDish {
 
     fn calm(&self, at: &[(f32, f32)], r: f32) -> Vec<u32> {
         self.gassed_near(at, r)
+    }
+
+    fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+        squad::burst(self, b, k)
+    }
+
+    fn has_gas(&self) -> bool {
+        true
+    }
+
+    fn has_germ(&self) -> bool {
+        true
+    }
+
+    /// Exact: the cells within `r` (the mine count `Kit::frame` used
+    /// before the toolkit ran on both worlds).
+    fn walkers_in(&self, at: (f32, f32), r: f32) -> u32 {
+        let occ = self.occupancy();
+        let n = r.ceil() as i64;
+        let mut c = 0u32;
+        for dy in -n..=n {
+            for dx in -n..=n {
+                if ((dx * dx + dy * dy) as f32) > r * r {
+                    continue;
+                }
+                let (cx, cy) = (at.0 as i64 + dx, at.1 as i64 + dy);
+                if cx < 0 || cy < 0 || cx as usize >= self.w || cy as usize >= self.h {
+                    continue;
+                }
+                c += occ[cy as usize * self.w + cx as usize] as u32;
+            }
+        }
+        c
     }
 
     fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
@@ -249,6 +323,18 @@ pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
         terrain_rock: 0.2,
         terrain_wet: 0.2,
         upkeep: 0.001,
+        // The shot's crater as a cone (the owner's pick of three blind
+        // looks, 2026-11-12 14:41Z, "I think 3 is best"): a hit bites
+        // fully at its middle and less toward its rim (`scorch_cone`,
+        // `scorch_full` 150), and the bite holds no trail (`scorch_keep`
+        // 0), so the hole has a soft shadow where the flat disc drew a dark
+        // rim. On the 8-seed hole test it played as the flat disc did (hole
+        // 54 dish cells at 20 s against 60, 2 larger, 5 smaller, p 0.45).
+        // The toolkit's blasts keep their flat disc but share keep and
+        // full.
+        scorch_cone: true,
+        scorch_full: 150,
+        scorch_keep: 0.0,
         seed,
         ..BigParams::today()
     }
@@ -257,8 +343,19 @@ pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
 /// What the mould's core is, and what it does while a squad holds it
 /// (core defence, PR 3, 2026-11-12; the shape is the tiers thread's, so
 /// each tier can say its own through `Tier::core`). A mould with no tier
-/// of its own gets `Core::of(&rules)`: fixed, `Rules::core_secs`,
-/// `Rules::core_pull`.
+/// of its own gets `Core::of(&rules)`: headless, with `Rules::core_pull`.
+///
+/// **No king by default** (owner, 2026-11-12 20:21Z: "remove the king rule.
+/// As long as the slime has food/crystal energy it can make walkers.
+/// Headless."). Before, a squad that held the core clear for 5 s stopped
+/// births on the whole map for good; in the 64-seed race census that was
+/// the only way any plan crippled the mould (rush took it 34 times, strike
+/// 12; farm, wall and fort reached the cap 64 of 64), so the best plan was
+/// always to walk at the core (slime-enemy review,
+/// `Reports/slime-enemy-review-2026-11-12.md`). `CoreKind::Fixed` stays
+/// for a tier that wants one fatal weak spot. The pull stays: the mould
+/// still closes over soldiers at its home, which is what kept random from
+/// walking into the hub (below).
 ///
 /// Why a pull: with craters on (#113) the random hand wiped the plain
 /// mould on 11 of 32 race seeds (201-232; 5 of 32 without craters) and no
@@ -285,7 +382,8 @@ pub struct Core {
     /// A soldier within twice `Rules::core_r` of the core lays this many
     /// times its own scent over `BuildRules::lure_r` (a lure's reach): the
     /// body is drawn onto a squad at its core through the scent it already
-    /// follows, nothing drawn. 0 is none.
+    /// follows, nothing drawn. 0 is none. A headless core pulls too (since
+    /// headless became the default); the Sprawler sets 0.
     pub pull: f32,
 }
 
@@ -294,19 +392,26 @@ pub struct Core {
 pub enum CoreKind {
     /// Held clear for `Core::secs`, it falls for good: births stop.
     Fixed,
-    /// No core: nothing to hold, so only a wipe ends the mould (the
-    /// tiers thread's Sprawler). The Trunk's regrowing core and the
-    /// Drifter's migrating one are to come: both need births to restart
-    /// or move on both engines, and a migrating core needs to know where
-    /// the body is on the GPU, which the GPU world can't read back cheaply
-    /// yet.
+    /// No core: nothing to hold, so only a wipe ends the mould; births go
+    /// on wherever a walker is fed. The default since 2026-11-12 20:21Z
+    /// (`Core::of`); first the tiers thread's Sprawler. The Drifter's
+    /// migrating core is to come: it needs to know where the body is on
+    /// the GPU, which the GPU world can't read back cheaply yet.
+    ///
+    /// A third kind, `Regrow { starve_secs }`, was built and merged in
+    /// PR #163 (the tiers thread's Trunk: the core falls, and grows back
+    /// unless the whole body eats nothing for `starve_secs`), then taken
+    /// out: the owner's no-king ruling (2026-11-12 20:21Z, "remove the
+    /// king rule ... Headless") left no tier to use it. Its code is in
+    /// #163's merge if a core comes back (`Reports/dead-ends.md`).
     Headless,
 }
 
 impl Core {
-    /// The core of a mould with no tier of its own.
+    /// The core of a mould with no tier of its own: headless, so taking
+    /// its home stops nothing; it still pulls (`Core::pull`).
     pub fn of(r: &Rules) -> Core {
-        Core { kind: CoreKind::Fixed, secs: r.core_secs, pull: r.core_pull }
+        Core { kind: CoreKind::Headless, secs: r.core_secs, pull: r.core_pull }
     }
 }
 
@@ -333,10 +438,35 @@ pub struct Rules {
     /// (M3's), against 30 food a second a harvester takes.
     pub price: f32,
     pub hp: f32,
-    /// Health a walker touching a soldier takes a game second.
+    /// Health a walker touching a soldier takes a game second: its bite,
+    /// whatever the mould's walker count (`Rules::mass` does not shrink
+    /// it). 2 since 2026-11-12 (the owner, 22:18Z, playing shape C: "I can
+    /// walk my group of soliders into the thickest part of the slime and
+    /// kill most of the slime and harvest the whole crystal without losing
+    /// a single soldier"; 22:22Z: "walking directly into the enemy should
+    /// be very deadly"). Was 1 x `mass`, 0.2 a walker at C's 25,000: 40
+    /// soldiers walked into C's thickest part at 240 s lost none in 60 s
+    /// on race seeds 1-4 (`examples/thickprobe.rs`); at 2 a walker they
+    /// lose 26 to 35 of 40 (the report's *Thick slime*). A walker touches
+    /// a soldier on about a third of its frames there (most 1-4 walkers,
+    /// 20 or more on 1%), so a soldier on the edge lives and one in the
+    /// middle dies in seconds. Buildings keep their own
+    /// (`BuildRules::drain`). Today's 5,000-walker mould (shape A, mass 1)
+    /// bites twice what it did.
     pub drain: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
+    /// Wading (the owner, 2026-11-12 14:42Z: "soldiers should be heavily
+    /// slowed down if they try to run into the thick slime"): a soldier
+    /// with this many walkers touching it walks at half speed, and slower
+    /// as more press on it, speed / (1 + (touching / wade)²). A walker or
+    /// two at a tendril barely slow it (2 touching: 90%); the middle of a
+    /// body holds it to a fifth (12 touching, as a rush meets on race seeds
+    /// 1-4, where touching runs 0 to 26). The read is the frame's touch
+    /// count, the same on both engines, so the GPU needs nothing new. 0 is
+    /// off. Touching walkers count `Rules::mass` each, so a denser mould
+    /// (the owner's 25,000-walker shapes, mass 0.2) needs 30 for half speed.
+    pub wade: f32,
     /// A soldier's scent, as a share of a full pile's, laid on the agar
     /// within `smell_r` dish cells of it.
     pub smell: f32,
@@ -390,8 +520,12 @@ pub struct Rules {
     /// **Larder overrun** (campaign thread, the owner's pick 2026-11-12
     /// 04:44Z): the round is lost (`End::Overrun`) once the mould has held
     /// the larder (a walker within its 3 dish cells) with the bank under 1
-    /// food for this many game seconds straight. 0, the default, is off; a
-    /// campaign mission turns it on.
+    /// food for this many game seconds straight. 0 is off. **20 s by
+    /// default since PR 4** (the economy; integration, 11-12 17:10Z: the
+    /// owner ruled on 11-11 that an idle player should lose, and idle
+    /// survived 46 of 48 games): with `Rules::ration` an idle squad's bank
+    /// runs dry, and a mould at the larder then takes the round. Before PR
+    /// 4 a campaign mission turned it on.
     pub overrun: f32,
     /// **Reserve recruit** (the same pick): while fewer than 2 soldiers live
     /// and the bank can't buy one, the larder makes a free soldier after
@@ -399,6 +533,32 @@ pub struct Rules {
     /// With it on, a wiped squad is no loss while a recruit can still come.
     /// 0, the default, is off.
     pub reserve: f32,
+    /// **Rations** (PR 4, the economy): food a game second each live
+    /// soldier eats from the bank (`Game::eaten`). Why: food didn't bind.
+    /// Farm, wall and fort ended 15-minute games with 83-85% of their
+    /// harvest unspent, and strike won by banking behind a 30-soldier army
+    /// it never paid to keep (integration, 11-12 17:10Z, from the one-body
+    /// thread's slime-enemy review). An army now costs its keep: farm's 8
+    /// soldiers eat 8 a second of the about 55 they bank, and strike's 30
+    /// eat 30. Paid each step; what the bank can't pay, the squad goes
+    /// hungry for (`Rules::hunger`). 0 is off.
+    ///
+    /// 1, from smoke runs on race seeds 5-8 (11-12 20:20Z): at 1 idle's
+    /// squad starves by 570-600 s on all 4, farm and fort hold to the cap,
+    /// and strike wins 2, loses 1 and stalemates 1 (it had stalemated all
+    /// 4). At 2 idle starves by 340-350 s, but strike starves its 30
+    /// soldiers on 3 of 4 and fort on 1: an army costing 4.5 times its
+    /// price over a game was too steep for a first default.
+    pub ration: f32,
+    /// Hit points a game second every soldier loses while the bank can't
+    /// pay the rations (a share of it for a part-paid step; `Game::hungry`).
+    /// Hunger costs only hit points: a starving soldier walks, fires and
+    /// harvests at full speed, so a farm that runs dry recovers as soon as
+    /// a carrier banks, and the need falls as the squad shrinks. Slowing
+    /// hungry soldiers would spiral (slower carriers bank less, so starve
+    /// more; integration's check, 19:59Z). At 1 a full-health soldier
+    /// lasts 100 s of an empty bank.
+    pub hunger: f32,
     /// A carrier back from a dry crystal with nothing queued walks on to
     /// the nearest crystal with charge left (`Game::seek`), the mould's
     /// home excepted, rather than holding at the larder (owner, 11-12
@@ -431,7 +591,33 @@ pub struct Rules {
     /// not a flee: the mould turning from gunfire made a bigger hole but
     /// let random hold the core (`Reports/dead-ends.md`); the crater
     /// changes only the struck cells.
+    ///
+    /// **4.5 s since 2026-11-12, the owner's pick** (17:29Z: "Can we do
+    /// 4.5 s? I am thinking between the 3 and 6"), after clips of the
+    /// cone crater (PR 3b) with the squad firing into the thick ring on
+    /// the core crystal (`larder-world hand=volley`): at 10 s the hole
+    /// was still pocked 4 s after the fire stopped (15:18Z: "3 fills in
+    /// too slow still", said of a flat-crater clip), at 3 s it closed in
+    /// about 2 s, at 1 s it looked like none. Set on the clips and the
+    /// tests, with no census (the owner's 17:26Z testing rule: a census
+    /// is not a gate for a look). Any time works, not just whole seconds:
+    /// the countdown is in fine steps (`World::fine_steps` a tick).
     pub crater: f32,
+    /// How far into the slime a shot's blast is centred, in strike radii
+    /// (`squad::Frame::sink`): on along the shot's line from the first
+    /// slime it meets, to the last slime within this many radii. 1 since
+    /// 2026-11-12: the owner, playing shape D (22:06Z), found a squad
+    /// standing off a large mass "barely seems to do damage, but if I move
+    /// them into the mold, they destroy it easily", and said "Yes" (23:14Z)
+    /// to centring the blast inside the slime. A blast centred on the
+    /// body's edge spent about half its disc on open ground. 0 is the edge
+    /// hit as before (`sink=0` on the window and the example). On shape C
+    /// a squad standing still on free fire went from 12.6 kills a shot to
+    /// 20.3, walking in from 42.0 to 47.9
+    /// (`Reports/larder-shot-sink-2026-11-12.md`). Named sink, not bite
+    /// (its first name): the mould's bite is its damage to soldiers
+    /// (`drain`).
+    pub sink: f32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
     /// the target. 0 (the default) aims dead on and draws no random
@@ -440,6 +626,51 @@ pub struct Rules {
     /// target reads as a round stamp; a smaller strike scattered over a
     /// wider patch at the same kills a second may read as gunfire.
     pub spread: f32,
+    /// Soldiers walk round a crystal with charge left, not over it (owner,
+    /// 11-12 14:43Z: "shouldn't be able to stand on top of the crystal"):
+    /// they harvest from its rim, bank at the rim of a larder that sits on
+    /// one, and a goal inside one moves to its rim (`Game::standable`,
+    /// `Game::rim`). Shots still fly over crystals.
+    pub crystal_solid: bool,
+    /// How much one walker counts in a fight: a walker touching a building
+    /// or the larder does `mass` times `BuildRules::drain` (or `steal`),
+    /// and counts `mass` towards wading (`Rules::wade`). Not a soldier's
+    /// health: a walker's bite (`drain`) is whole at any count since
+    /// 2026-11-12, when shape C's 0.2 a walker let 40 soldiers stand in its
+    /// thickest part and lose none.
+    /// 1 (the default) is today's 5,000-walker mould. A denser mould is
+    /// the same body cut into more, smaller walkers, so it plays at
+    /// 5,000 / its walkers at scale 2 (`Rules::mass_for`); without that the 25,000-walker
+    /// sheet, mesh and trunk shapes wiped an idle squad on the Fork in
+    /// 0:47 to 1:56 (`Reports/slime-questions-2026-11-12/`), which is the
+    /// walker count, not the shape. Shots are unchanged: a crater kills
+    /// the walkers in its cells, so a denser body already loses more to
+    /// each one. Agreed with the Larder thread (11-12, reference density
+    /// over density); first set by the owner's shape playtest (20:21Z).
+    pub mass: f32,
+    /// The broken mould (owner, 2026-11-12 22:06-22:07Z, playing shape D:
+    /// "after killing almost all the mold, having the kill the few random
+    /// stragglers spread across the map to win is annoying"; "There are
+    /// still clearly lone walkers moving around"): once the mould falls
+    /// under `broken` times its peak walkers, its upkeep is `broken_starve`
+    /// times (`World::set_upkeep`), so its stragglers off food starve in a
+    /// second or two, while any on a crystal still eat and can breed it
+    /// back over the line, which gives the upkeep back. 0 is off. Why not a
+    /// lone walker's own upkeep (`BigParams::lone_upkeep`): at 25,000
+    /// walkers only about 1% are alone at any time, 3 and 10 times did not
+    /// lower that, and 10 cost the spread (15.5 crystals at 180 s against
+    /// 19.5, 4 of 4 seeds; `examples/loneprobe.rs`).
+    pub broken: f32,
+    pub broken_starve: f32,
+}
+
+impl Rules {
+    /// The fight weight of one walker in a mould that starts with
+    /// `walkers` on a world of `scale` (`Rules::mass`): today's density,
+    /// 5,000 at scale 2 (1,250 at scale 1, 20,000 at 4), counts 1 each.
+    pub fn mass_for(walkers: usize, scale: usize) -> f32 {
+        (1_250 * scale * scale) as f32 / walkers.max(1) as f32
+    }
 }
 
 impl Default for Rules {
@@ -453,8 +684,9 @@ impl Default for Rules {
             shot_every: 1.0,
             price: 0.0,
             hp: 100.0,
-            drain: 1.0,
+            drain: 2.0,
             touch: 1.5,
+            wade: 6.0,
             smell: 0.5,
             smell_r: 2.0,
             harvest: 30.0,
@@ -476,11 +708,18 @@ impl Default for Rules {
             steal: 1.0,
             home_dry: true,
             build: BuildRules::default(),
-            overrun: 0.0,
+            overrun: 20.0,
             reserve: 0.0,
+            ration: 1.0,
+            hunger: 1.0,
             seek: true,
-            crater: 10.0,
+            crater: 4.5,
+            sink: 1.0,
             spread: 0.0,
+            crystal_solid: true,
+            mass: 1.0,
+            broken: 0.03,
+            broken_starve: 50.0,
         }
     }
 }
@@ -489,6 +728,10 @@ pub use super::larder::{End, Order, Stance};
 
 /// Game seconds between rebuilds of the walking maps.
 const PATHS_EVERY: f32 = 30.0;
+
+/// How far past a solid crystal's rim a soldier stands to harvest or
+/// bank, dish cells (`Rules::crystal_solid`).
+const RIM: f32 = 1.0;
 
 /// Walking maps: for each goal cell, every open cell's distance to it
 /// (`distance_map`), built when a soldier first needs it and dropped when a
@@ -583,6 +826,11 @@ pub enum Cmd {
     /// The larder's rally point (`Game::rally`): what a bought soldier is
     /// first ordered to do; `Order::Hold` clears it.
     Rally(Order),
+    /// Send a builder to ghost `b` (`Game::send`): the nearest idle
+    /// soldier, else the nearest one not already building, which goes
+    /// back to its order once the building stands. What a build order with
+    /// no soldier selected does, so a ghost placed far away still rises.
+    Send(usize),
 }
 
 impl Cmd {
@@ -597,6 +845,7 @@ impl Cmd {
             Cmd::Toggle(k) => format!("toggle {k}"),
             Cmd::Queue(k, o) => format!("queue{}", &super::larder::Cmd::Order(k, o).to_line()["order".len()..]),
             Cmd::Rally(o) => format!("rally{}", &super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
+            Cmd::Send(b) => format!("send {b}"),
         }
     }
 
@@ -606,12 +855,14 @@ impl Cmd {
         match *w.first()? {
             "wall" => return Some(Cmd::Wall((f(1)?, f(2)?), (f(3)?, f(4)?))),
             "toggle" => return Some(Cmd::Toggle(w.get(1)?.parse().ok()?)),
+            "send" => return Some(Cmd::Send(w.get(1)?.parse().ok()?)),
             "build" => {
                 let kind = match *w.get(1)? {
                     "turret" => Kind::Turret,
                     "lure" => Kind::Lure,
                     "pump" => Kind::Pump,
                     "outpost" => Kind::Outpost,
+                    "siren" => Kind::Siren,
                     "wall" => Kind::Wall { to: (f(4)?, f(5)?) },
                     _ => return None,
                 };
@@ -697,6 +948,11 @@ pub struct Game<W: World> {
     pub spent: f32,
     pub harvested: f32,
     pub stolen: f32,
+    /// Food the squad has eaten (`Rules::ration`).
+    pub eaten: f32,
+    /// The bank couldn't pay the last step's rations: the squad is losing
+    /// hit points (`Rules::hunger`).
+    pub hungry: bool,
     pub shots: u32,
     pub killed: u32,
     pub walls: u32,
@@ -708,6 +964,8 @@ pub struct Game<W: World> {
     pub lured: f32,
     pub pumped: f32,
     pub lost_buildings: u32,
+    /// Calls the sirens made (`Kind::Siren`).
+    pub sirens: u32,
     /// The squad's base, fine cells: where bought soldiers stand and carried
     /// food goes.
     pub larder: (f32, f32),
@@ -741,6 +999,11 @@ pub struct Game<W: World> {
     pub last_shots: Vec<Shot>,
     /// Walkers alive at the last count (once a game second).
     pub mould: usize,
+    /// The most walkers the mould has had at a count (`Rules::broken`).
+    pub peak: usize,
+    /// When the mould broke (`Rules::broken`), and the upkeep it had then,
+    /// given back if it recovers; None while it is whole.
+    pub broken: Option<(u64, f32)>,
     /// Each crystal's charge at the start and the charge the squad took
     /// from it, so the cap's share can tell the mould's eating from ours.
     start_charge: Vec<f32>,
@@ -758,6 +1021,11 @@ pub struct Game<W: World> {
     pub cap_held: Option<f32>,
     /// Walking round rock and walls (`Paths`).
     paths: Paths,
+    /// Crystals with charge left, centre and radius, fine cells: the ground
+    /// soldiers can't stand on (`Rules::crystal_solid`), kept each step.
+    solid: Vec<((f32, f32), f32)>,
+    /// Each crystal's charge at the start, for the shrinking solid disc.
+    crystal_full: Vec<f32>,
     pub rng: Rng,
     pub log: Vec<(u64, Cmd)>,
     /// The larder's rally point: the order a bought soldier starts with
@@ -832,6 +1100,8 @@ impl<W: World> Game<W> {
             spent: 0.0,
             harvested: 0.0,
             stolen: 0.0,
+            eaten: 0.0,
+            hungry: false,
             shots: 0,
             killed: 0,
             walls: 0,
@@ -839,6 +1109,7 @@ impl<W: World> Game<W> {
             lured: 0.0,
             pumped: 0.0,
             lost_buildings: 0,
+            sirens: 0,
             larder,
             core,
             core_down: None,
@@ -854,17 +1125,23 @@ impl<W: World> Game<W> {
             end: None,
             last_shots: Vec::new(),
             mould,
+            peak: mould,
+            broken: None,
             start_charge,
             taken,
             start_mould: mould,
             density,
             cap_held: None,
             paths: Paths::default(),
+            solid: Vec::new(),
+            crystal_full: Vec::new(),
             rng: Rng::new(seed ^ 0x001a_2de2_501d),
             log: Vec::new(),
             flight: None,
             rally: Order::Hold,
         };
+        g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
+        g.solid = g.solid_now();
         for k in 0..rules.squad {
             let a = k as f32 / rules.squad.max(1) as f32 * std::f32::consts::TAU;
             g.add_soldier(a);
@@ -886,9 +1163,13 @@ impl<W: World> Game<W> {
     }
 
     fn add_soldier(&mut self, a: f32) {
-        let r = 3.0 * self.s();
-        let (x, y) = (self.larder.0 + r * a.cos(), self.larder.1 + r * a.sin());
-        let (x, y) = if self.world.open(x, y) { (x, y) } else { self.larder };
+        // Round the larder, out past a crystal it sits on.
+        let sc = self.s();
+        let (x, y) = (0..30)
+            .map(|n| (3.0 + n as f32) * sc)
+            .map(|r| (self.larder.0 + r * a.cos(), self.larder.1 + r * a.sin()))
+            .find(|&(x, y)| self.standable(x, y))
+            .unwrap_or(self.larder);
         self.soldiers.push(Soldier {
             x,
             y,
@@ -959,6 +1240,7 @@ impl<W: World> Game<W> {
             Cmd::Wall(a, b) => self.wall(a, b),
             Cmd::Build(kind, at) => self.build(kind, at),
             Cmd::Toggle(k) => self.toggle(k),
+            Cmd::Send(b) => self.send(b).is_some(),
             Cmd::Rally(o) => {
                 self.rally = o;
                 true
@@ -1019,6 +1301,66 @@ impl<W: World> Game<W> {
     /// Where soldier `k` is walking to now, fine cells, if anywhere.
     fn goal(&self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
+        self.goal_raw(k).map(|g| self.rim(g, (s.x, s.y)))
+    }
+
+    fn solid_now(&self) -> Vec<((f32, f32), f32)> {
+        if !self.rules.crystal_solid {
+            return Vec::new();
+        }
+        // A disc holding the charge left: soldiers take from the rim
+        // (`squad`'s take disc reaches 4 dish cells in), so it shrinks as
+        // they eat in and they step in after it. A fixed disc left a
+        // crystal's middle out of reach once its rim was eaten.
+        let min = self.s();
+        self.world
+            .crystals()
+            .iter()
+            .enumerate()
+            .filter(|(_, c)| c.1 > 0.0)
+            .map(|(i, c)| {
+                let full = self.crystal_full.get(i).copied().unwrap_or(c.1).max(c.1);
+                (c.0, self.world.crystal_r(i) * (c.1 / full.max(1e-6)).sqrt())
+            })
+            .filter(|&(_, r)| r >= min)
+            .collect()
+    }
+
+    /// The crystal (charge left) whose disc holds `p`, if crystals are
+    /// solid (`Rules::crystal_solid`): its centre and radius.
+    fn solid_at(&self, p: (f32, f32)) -> Option<((f32, f32), f32)> {
+        self.solid.iter().copied().find(|&(c, r)| (c.0 - p.0).hypot(c.1 - p.1) < r)
+    }
+
+    /// How near `p` a soldier must stand to work at it, fine cells: `near`
+    /// dish cells, or from the rim if `p` is on a solid crystal (a larder,
+    /// outpost or ghost placed on one).
+    fn reach(&self, p: (f32, f32), near: f32) -> f32 {
+        let sc = self.s();
+        self.solid_at(p).map_or(near * sc, |(_, r)| (r + (RIM + 2.0) * sc).max(near * sc))
+    }
+
+    /// Ground a soldier may stand on: open, and not on a crystal with
+    /// charge left (`Rules::crystal_solid`).
+    pub fn standable(&self, x: f32, y: f32) -> bool {
+        self.world.open(x, y) && self.solid_at((x, y)).is_none()
+    }
+
+    /// `p`, or if it is on a solid crystal, the point just past that
+    /// crystal's rim on the side toward `from`.
+    pub fn rim(&self, p: (f32, f32), from: (f32, f32)) -> (f32, f32) {
+        let Some((c, r)) = self.solid_at(p) else { return p };
+        let (dx, dy) = (from.0 - c.0, from.1 - c.1);
+        let d = dx.hypot(dy);
+        let (ux, uy) = if d > 1e-3 { (dx / d, dy / d) } else { (1.0, 0.0) };
+        let out = r + RIM * self.s();
+        (c.0 + ux * out, c.1 + uy * out)
+    }
+
+    /// Where soldier `k`'s order points, before a crystal moves it to its
+    /// rim (`goal`).
+    fn goal_raw(&self, k: usize) -> Option<(f32, f32)> {
+        let s = self.soldiers[k];
         let sc = self.s();
         let off = |p: (f32, f32)| {
             let o = slot(k);
@@ -1027,7 +1369,26 @@ impl<W: World> Game<W> {
         match s.order {
             Order::Hold => None,
             Order::Move(x, y) | Order::Fight(x, y) => Some(off((x, y))),
-            Order::Build(b) => self.site(k, b).map(off),
+            Order::Build(b) => {
+                let p = self.site(k, b)?;
+                let q = off(p);
+                // A builder stands at the building's edge, not on it, so the
+                // rising ghost and its bar stay in sight (2026-11-12, the
+                // build-anywhere look: a lone builder hid its turret). Walls
+                // keep the point on the line nearest the soldier.
+                if matches!(self.buildings[b].kind, Kind::Wall { .. }) {
+                    return Some(q);
+                }
+                let edge = (self.rules.build.touch + 1.0) * sc;
+                let (dx, dy) = (q.0 - p.0, q.1 - p.1);
+                if dx.hypot(dy) >= edge {
+                    return Some(q);
+                }
+                let (fx, fy) = if dx.hypot(dy) > 1e-3 { (dx, dy) } else { (s.x - p.0, s.y - p.1) };
+                let d = fx.hypot(fy);
+                let (ux, uy) = if d > 1e-3 { (fx / d, fy / d) } else { (1.0, 0.0) };
+                Some((p.0 + ux * edge, p.1 + uy * edge))
+            }
             Order::Clear(x, y) => {
                 if s.homing {
                     Some(off(self.drop_off((s.x, s.y))))
@@ -1052,6 +1413,13 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// Whether a soldier can walk straight from `a` to `b`: every cell on
+    /// the line standable (`standable`; `clear_line` is the line of fire).
+    fn walk_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
+        let (w, h) = self.world.size();
+        squad::path(w, h, a, b).into_iter().all(|i| self.standable((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
+    }
+
     /// Whether every cell on the line from `a` to `b` is open ground.
     pub fn clear_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
         let (w, h) = self.world.size();
@@ -1071,7 +1439,12 @@ impl<W: World> Game<W> {
         if d < 0.5 || self.engaged(k) {
             return;
         }
-        let g = if self.clear_line((s.x, s.y), g) {
+        // Caught on a crystal (a larder or ghost placed by one, a crystal
+        // grown back): straight out to its near rim first, over anything.
+        let caught = self.solid_at((s.x, s.y)).is_some();
+        let g = if caught {
+            self.rim((s.x, s.y), (s.x, s.y))
+        } else if self.walk_line((s.x, s.y), g) {
             g
         } else {
             let now = self.world.ticks();
@@ -1083,8 +1456,7 @@ impl<W: World> Game<W> {
             let (w, h) = self.world.size();
             let gi = cell(w, h, g);
             if !self.paths.maps.contains_key(&gi) {
-                let world = &self.world;
-                let map = distance_map(w, h, gi, |i| world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5));
+                let map = distance_map(w, h, gi, |i| self.standable((i % w) as f32 + 0.5, (i / w) as f32 + 0.5));
                 self.paths.maps.insert(gi, map);
             }
             let map = &self.paths.maps[&gi];
@@ -1102,13 +1474,21 @@ impl<W: World> Game<W> {
         };
         let (dx, dy) = (g.0 - s.x, g.1 - s.y);
         let d = dx.hypot(dy).max(1e-6);
-        let step = (self.rules.speed * self.s() * dt).min(d);
+        // Thick slime holds a soldier back (`Rules::wade`).
+        let wade = if self.rules.wade > 0.0 {
+            let x = s.touching as f32 * self.rules.mass / self.rules.wade;
+            1.0 / (1.0 + x * x)
+        } else {
+            1.0
+        };
+        let step = (self.rules.speed * self.s() * dt * wade).min(d);
         let (nx, ny) = (s.x + dx / d * step, s.y + dy / d * step);
-        let to = if self.world.open(nx, ny) {
+        let ok = |x: f32, y: f32| if caught { self.world.open(x, y) } else { self.standable(x, y) };
+        let to = if ok(nx, ny) {
             Some((nx, ny))
-        } else if self.world.open(nx, s.y) {
+        } else if ok(nx, s.y) {
             Some((nx, s.y))
-        } else if self.world.open(s.x, ny) {
+        } else if ok(s.x, ny) {
             Some((s.x, ny))
         } else {
             None
@@ -1187,14 +1567,77 @@ impl<W: World> Game<W> {
                     self.soldiers[k].order = Order::Hold;
                 }
             }
-            Some(p) => {
-                let o = slot(k);
-                if (p.0 - s.x).hypot(p.1 - s.y) <= BUILD_REACH * sc + o.0.hypot(o.1) * sc {
+            Some(_) => {
+                if self.at_site(k, b) {
                     let secs = self.raise_secs(b);
                     self.raise(b, if secs > 0.0 { dt / secs } else { 1.0 });
                 }
             }
         }
+    }
+
+    /// Soldier `k` is close enough to ghost `b` to raise it.
+    fn at_site(&self, k: usize, b: usize) -> bool {
+        let Some(p) = self.site(k, b) else { return false };
+        let s = self.soldiers[k];
+        let o = slot(k);
+        (p.0 - s.x).hypot(p.1 - s.y) <= self.reach(p, BUILD_REACH) + o.0.hypot(o.1) * self.s()
+    }
+
+    /// Ghost `b`'s builders: (raising it now, ordered to it in all). The
+    /// window's progress label reads it.
+    pub fn raising(&self, b: usize) -> (usize, usize) {
+        let mut n = (0, 0);
+        for (k, s) in self.soldiers.iter().enumerate() {
+            if s.alive && s.order == Order::Build(b) {
+                n.1 += 1;
+                n.0 += self.at_site(k, b) as usize;
+            }
+        }
+        n
+    }
+
+    /// Seconds until ghost `b` stands at the rate it rises now (builders
+    /// add up); None while nobody is raising it, or once it stands.
+    pub fn raise_left(&self, b: usize) -> Option<f32> {
+        let bd = self.buildings.get(b).filter(|bd| bd.alive && bd.built < 1.0)?;
+        let (now, _) = self.raising(b);
+        (now > 0).then(|| (1.0 - bd.built) * self.raise_secs(b) / now as f32)
+    }
+
+    /// Send a builder to ghost `b` (`Cmd::Send`): the nearest idle soldier
+    /// (holding, nothing queued), else the nearest live one not already
+    /// building, whose order goes to the front of its queue so it returns
+    /// to it (a full queue drops its last). The soldier sent, or None if
+    /// `b` is not a ghost or nobody can go.
+    ///
+    /// Why both: the owner's playtest (2026-11-12 22:06Z) asked that a
+    /// build ordered anywhere send a soldier there by itself. Idle
+    /// soldiers first so a harvest isn't broken when one is free; a busy
+    /// one second so the order is never silently dropped.
+    pub fn send(&mut self, b: usize) -> Option<usize> {
+        self.buildings.get(b).filter(|bd| bd.alive && bd.built < 1.0)?;
+        let at = self.buildings[b].at;
+        let d = |s: &Soldier| (s.x - at.0).hypot(s.y - at.1);
+        let pick = |idle: bool| {
+            (0..self.soldiers.len())
+                .filter(|&k| {
+                    let s = &self.soldiers[k];
+                    s.alive && !matches!(s.order, Order::Build(_)) && (!idle || (s.order == Order::Hold && s.queued == 0))
+                })
+                .min_by(|&x, &y| d(&self.soldiers[x]).total_cmp(&d(&self.soldiers[y])))
+        };
+        let k = pick(true).or_else(|| pick(false))?;
+        let s = &mut self.soldiers[k];
+        if s.order != Order::Hold {
+            let n = (s.queued as usize).min(QUEUE - 1);
+            s.queue.copy_within(0..n, 1);
+            s.queue[0] = s.order;
+            s.queued = n as u8 + 1;
+        }
+        s.order = Order::Build(b);
+        s.homing = false;
+        Some(k)
     }
 
     /// Soldier `k` takes the next order in its queue, if it has one.
@@ -1326,6 +1769,7 @@ impl<W: World> Game<W> {
         if self.end.is_some() {
             return;
         }
+        self.solid = self.solid_now();
         let r = self.rules;
         let sc = self.s();
         let t = self.world.ticks();
@@ -1361,7 +1805,7 @@ impl<W: World> Game<W> {
             if let Order::Clear(x, y) = s.order {
                 if s.homing {
                     let home = self.drop_off((s.x, s.y));
-                    if (s.x - home.0).hypot(s.y - home.1) <= 3.0 * sc + 1.5 * (k as f32).sqrt() * sc {
+                    if (s.x - home.0).hypot(s.y - home.1) <= self.reach(home, 3.0) + 1.5 * (k as f32).sqrt() * sc {
                         self.bank += s.carry;
                         self.harvested += s.carry;
                         self.soldiers[k].carry = 0.0;
@@ -1375,7 +1819,9 @@ impl<W: World> Game<W> {
                 } else if s.carry >= r.carry - s.load {
                     self.soldiers[k].homing = true;
                 } else if let Some((i, c)) = self.crystal_at((x, y)) {
-                    if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + 1.0 * sc {
+                    // From its rim (`Rules::crystal_solid`), with the slot's room.
+                    let room = if self.rules.crystal_solid { RIM + 1.0 } else { 1.0 };
+                    if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + room * sc {
                         take = (r.harvest * dt).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
                         at_crystal = Some(i);
                     }
@@ -1401,7 +1847,7 @@ impl<W: World> Game<W> {
                 }
             }
             let pull = self.core_rule.pull;
-            let pulls = pull > 0.0 && self.core_rule.kind != CoreKind::Headless && (s.x - self.core.0).hypot(s.y - self.core.1) <= 2.0 * r.core_r * sc;
+            let pulls = pull > 0.0 && (s.x - self.core.0).hypot(s.y - self.core.1) <= 2.0 * r.core_r * sc;
             units.push(UnitIn {
                 x: s.x,
                 y: s.y,
@@ -1438,7 +1884,7 @@ impl<W: World> Game<W> {
         // buildings thread's call, 11-12 07:46Z: one rule for every shot).
         self.building_units(&mut units, &mut shots, &mut who, &mut from, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
-        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater };
+        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, who, from, out });
     }
@@ -1518,7 +1964,7 @@ impl<W: World> Game<W> {
                     }
                 }
                 Who::Larder => {
-                    let take = (r.steal * u.touching as f32 * dt).min(self.bank.max(0.0));
+                    let take = (r.steal * r.mass * u.touching as f32 * dt).min(self.bank.max(0.0));
                     self.bank -= take;
                     self.stolen += take;
                     self.larder_touch = u.touching;
@@ -1533,9 +1979,61 @@ impl<W: World> Game<W> {
         if now / r.tps as u64 != t / r.tps as u64 {
             self.mould = self.world.living();
             self.count_stuck();
+            self.check_broken();
         }
+        self.feed(dt);
         self.campaign_rules(now - t);
         self.check_end();
+    }
+
+    /// Once a game second, at the count: the broken mould (`Rules::broken`).
+    fn check_broken(&mut self) {
+        let r = self.rules;
+        self.peak = self.peak.max(self.mould);
+        if r.broken <= 0.0 {
+            return;
+        }
+        let under = (self.mould as f32) < r.broken * self.peak as f32;
+        match (under, self.broken) {
+            (true, None) => {
+                let up = self.world.upkeep();
+                self.world.set_upkeep(up * r.broken_starve);
+                self.broken = Some((self.world.ticks(), up));
+            }
+            (false, Some((_, up))) => {
+                self.world.set_upkeep(up);
+                self.broken = None;
+            }
+            _ => {}
+        }
+    }
+
+    /// `Rules::ration` and `Rules::hunger`: every live soldier eats from
+    /// the bank; for what it can't pay, the squad loses hit points.
+    fn feed(&mut self, dt: f32) {
+        let r = self.rules;
+        let alive = self.alive();
+        self.hungry = false;
+        if r.ration <= 0.0 || alive == 0 {
+            return;
+        }
+        let need = r.ration * alive as f32 * dt;
+        let paid = need.min(self.bank.max(0.0));
+        self.bank -= paid;
+        self.eaten += paid;
+        let short = 1.0 - paid / need;
+        if short <= 1e-6 {
+            return;
+        }
+        self.hungry = true;
+        for s in self.soldiers.iter_mut().filter(|s| s.alive) {
+            s.hp -= r.hunger * short * dt;
+            if s.hp <= 0.0 {
+                s.alive = false;
+                s.hp = 0.0;
+                s.carry = 0.0;
+            }
+        }
     }
 
     /// Once a game second: `Game::stuck`.
@@ -1802,23 +2300,26 @@ mod tests {
 
     /// The core's pull (`Core::pull`): a soldier within twice `core_r` of
     /// the core lays `pull` times its scent over a lure's reach; one far
-    /// from it lays its own; a headless core pulls nothing.
+    /// from it lays its own; a headless core pulls the same (the default
+    /// since 11-12 20:21Z), and a pull of 0 pulls nothing.
     #[test]
     fn a_soldier_at_the_core_smells_like_a_lure() {
-        let units = |kind: CoreKind| {
+        let units = |kind: CoreKind, pull: f32| {
             let mut g = Game::new(race_world(1, 1, 1_000), Rules { core_pull: 8.0, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, 1);
-            g.core_rule.kind = kind;
+            (g.core_rule.kind, g.core_rule.pull) = (kind, pull);
             let sc = g.s();
             (g.soldiers[0].x, g.soldiers[0].y) = (g.core.0 + g.rules.core_r * sc, g.core.1);
             g.begin_step();
             let f = &g.flight.as_ref().expect("a frame in flight").f;
             (f.units[0].smell, f.units[0].smell_r, f.units[1].smell, f.units[1].smell_r, g.rules, sc)
         };
-        let (near, near_r, far, far_r, r, sc) = units(CoreKind::Fixed);
-        assert!(far > 0.0 && (near - 8.0 * far).abs() <= 1e-3 * near, "near the core {near}, far {far}");
-        assert_eq!((near_r, far_r), (r.build.lure_r * sc, r.smell_r * sc));
-        let (near, near_r, far, _, _, _) = units(CoreKind::Headless);
-        assert_eq!((near, near_r), (far, r.smell_r * sc), "a headless core pulls nothing");
+        for kind in [CoreKind::Fixed, CoreKind::Headless] {
+            let (near, near_r, far, far_r, r, sc) = units(kind, 8.0);
+            assert!(far > 0.0 && (near - 8.0 * far).abs() <= 1e-3 * near, "{kind:?}: near the core {near}, far {far}");
+            assert_eq!((near_r, far_r), (r.build.lure_r * sc, r.smell_r * sc));
+        }
+        let (near, near_r, far, _, r, sc) = units(CoreKind::Headless, 0.0);
+        assert_eq!((near, near_r), (far, r.smell_r * sc), "a pull of 0 pulls nothing");
     }
 
     /// A fixed core falls once held clear for `Core::secs` (births stop);
@@ -1841,15 +2342,78 @@ mod tests {
         assert_eq!(hold(CoreKind::Headless), (false, true), "no core to hold");
     }
 
+    /// Wading (`Rules::wade`): with 6 walkers touching a soldier walks at
+    /// half speed, with 12 at a fifth; open ground and `wade` 0 at full.
+    #[test]
+    fn thick_slime_slows_a_soldier() {
+        let moved = |touching: u32, wade: f32| {
+            let mut g = small(1);
+            g.rules.wade = wade;
+            let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
+            let sc = g.s();
+            // A goal well past one step, on open ground beside the larder.
+            let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (x + 6.0 * sc * a.cos(), y + 6.0 * sc * a.sin())).find(|&p| g.clear_line((x, y), p)).expect("open ground by the larder");
+            g.soldiers[0].order = Order::Move(to.0, to.1);
+            g.soldiers[0].touching = touching;
+            g.walk(0, 1.0 / g.rules.tps as f32);
+            (g.soldiers[0].x - x).hypot(g.soldiers[0].y - y)
+        };
+        let free = moved(0, 6.0);
+        assert!(free > 0.0, "it walked");
+        for (touching, share) in [(2, 0.9), (6, 0.5), (12, 0.2)] {
+            let d = moved(touching, 6.0);
+            assert!((d / free - share).abs() < 0.01, "{touching} touching: {d} against {free}");
+        }
+        assert_eq!(moved(12, 0.0), free, "wade 0 is off");
+    }
+
     /// A tier with no core of its own keeps the rules' (`Core::of`).
     #[test]
     fn a_tier_without_a_core_keeps_the_rules_core() {
         let r = Rules { core_pull: 3.0, core_secs: 7.0, ..Rules::default() };
         for t in super::super::tiers::Tier::ALL {
             let g = Game::new(race_world(1, 1, 1_000), r, 1).with_tier(Some(t));
-            assert_eq!(g.core_rule, t.core().unwrap_or(Core { kind: CoreKind::Fixed, secs: 7.0, pull: 3.0 }), "{}", t.name());
+            assert_eq!(g.core_rule, t.core().unwrap_or(Core { kind: CoreKind::Headless, secs: 7.0, pull: 3.0 }), "{}", t.name());
         }
         assert_eq!(Game::new(race_world(1, 1, 1_000), r, 1).with_tier(None).core_rule, Core::of(&r));
+    }
+
+    /// The broken mould (`Rules::broken`): under 3% of its peak, its upkeep
+    /// is 50 times, and it gets its upkeep back once it is over the line.
+    #[test]
+    fn a_broken_mould_starves_until_it_grows_back() {
+        let mut g = small(1);
+        let up = g.world.upkeep();
+        assert!(up > 0.0 && g.broken.is_none());
+        g.peak = g.mould * 100;
+        g.check_broken();
+        assert_eq!((g.broken.map(|b| b.1), g.world.upkeep()), (Some(up), up * g.rules.broken_starve));
+        g.check_broken();
+        assert_eq!(g.world.upkeep(), up * g.rules.broken_starve, "it starves once, not 50 x 50");
+        g.peak = g.mould;
+        g.check_broken();
+        assert_eq!((g.broken, g.world.upkeep()), (None, up));
+        let mut off = small(1);
+        off.rules.broken = 0.0;
+        off.peak = off.mould * 100;
+        off.check_broken();
+        assert_eq!((off.broken, off.world.upkeep()), (None, up));
+    }
+
+    /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
+    /// mould's home stops nothing, and births go on.
+    #[test]
+    fn taking_the_plain_moulds_home_stops_nothing() {
+        let mut g = small(1);
+        assert_eq!(g.core_rule.kind, CoreKind::Headless);
+        for k in 0..g.soldiers.len() {
+            (g.soldiers[k].x, g.soldiers[k].y) = g.core;
+            (g.soldiers[k].touching, g.soldiers[k].aim) = (0, None);
+        }
+        for _ in 0..=g.secs(g.core_rule.secs) * 2 {
+            g.check_core();
+        }
+        assert!(g.core_down.is_none() && g.world.p.birth_energy.is_finite());
     }
 
     #[test]
@@ -1878,8 +2442,10 @@ mod tests {
         assert!(g.harvested >= g.rules.carry, "banked {} in 30 s", g.harvested);
         // Equal to f32 rounding (with `Rules::home_dry` a carrier banks
         // part loads).
-        let books = g.rules.start_bank + g.harvested - g.spent - g.stolen;
-        assert!((g.bank - books).abs() < 0.01, "bank {} books {books}", g.bank);
+        // Rations come off the bank every step, so the f32 rounding is
+        // a few hundredths over 30 s (0.03; 0.01 held before them).
+        let books = g.rules.start_bank + g.harvested - g.spent - g.stolen - g.eaten;
+        assert!((g.bank - books).abs() < 0.1, "bank {} books {books}", g.bank);
         // From the cells: the pile's total is summed a tick late (the next
         // tick's eating), and the frame's last take is after the ticks.
         let d = &g.world;
@@ -1887,6 +2453,44 @@ mod tests {
         let gone = before - now as f32;
         let held = (g.harvested + g.soldiers[0].carry) * g.rules.charge;
         assert!(gone >= held * 0.999, "the crystal lost {gone}, the squad holds {held}");
+    }
+
+    #[test]
+    fn soldiers_stand_round_a_crystal_not_on_it() {
+        // Owner, 11-12 14:43Z: soldiers "shouldn't be able to stand on top
+        // of the crystal". They start outside the larder's crystal, a move
+        // onto a crystal stops at its rim, and harvesters still bank.
+        let mut g = small(2);
+        let (_, c) = g.crystal_at(g.larder).unwrap();
+        let sc = g.s();
+        for s in &g.soldiers {
+            assert!(g.standable(s.x, s.y), "spawned on the crystal at {:?}", (s.x, s.y));
+        }
+        g.apply(Cmd::Stance(0, Stance::HoldFire));
+        g.apply(Cmd::Stance(1, Stance::HoldFire));
+        g.apply(Cmd::Order(0, Order::Move(c.0, c.1)));
+        g.apply(Cmd::Order(1, Order::Clear(c.0, c.1)));
+        for _ in 0..(g.rules.tps * 40) {
+            g.step();
+            for s in g.soldiers.iter().filter(|s| s.alive) {
+                assert!(g.solid_at((s.x, s.y)).is_none(), "a soldier on a crystal at {:?}", (s.x, s.y));
+            }
+        }
+        let s = g.soldiers[0];
+        let (_, r) = g.solid_at(c).expect("the crystal still has charge");
+        let d = (s.x - c.0).hypot(s.y - c.1);
+        assert!(d >= r && d <= r + 3.0 * sc, "the mover stands {d} from the centre, rim {r}");
+        assert!(g.harvested > 0.0, "nothing banked from the rim");
+        // With the rule off the mover walks onto the crystal's middle.
+        let mut w = small(2);
+        w.rules.crystal_solid = false;
+        w.apply(Cmd::Stance(0, Stance::HoldFire));
+        w.apply(Cmd::Order(0, Order::Move(c.0, c.1)));
+        for _ in 0..(w.rules.tps * 40) {
+            w.step();
+        }
+        let s = w.soldiers[0];
+        assert!((s.x - c.0).hypot(s.y - c.1) < 2.0 * sc, "off, it stands {} from the centre", (s.x - c.0).hypot(s.y - c.1));
     }
 
     #[test]
@@ -2021,6 +2625,9 @@ mod tests {
             assert!(self.out.is_none(), "a wall built while a frame runs");
             World::build_wall(&mut self.d, a, b, width)
         }
+        fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
+            World::burst(&mut self.d, b, k)
+        }
         fn living(&self) -> usize {
             World::living(&self.d)
         }
@@ -2038,6 +2645,12 @@ mod tests {
         }
         fn stop_births(&mut self) {
             World::stop_births(&mut self.d)
+        }
+        fn upkeep(&self) -> f32 {
+            World::upkeep(&self.d)
+        }
+        fn set_upkeep(&mut self, up: f32) {
+            World::set_upkeep(&mut self.d, up)
         }
         fn food_deposit(&self) -> f32 {
             World::food_deposit(&self.d)
@@ -2220,6 +2833,8 @@ mod tests {
     #[test]
     fn stuck_seconds_count_a_squad_that_can_do_nothing() {
         let mut g = small(1);
+        // Rations off: they would eat the bank this test buys with.
+        g.rules.ration = 0.0;
         g.bank = 0.0;
         for k in 0..g.soldiers.len() {
             g.apply(Cmd::Stance(k, Stance::HoldFire));
@@ -2237,9 +2852,10 @@ mod tests {
     }
 
     #[test]
-    fn the_campaign_switches_are_off_by_default_and_do_what_they_say() {
+    fn the_campaign_switches_do_what_they_say() {
+        // The reserve is off by default; the overrun is on since PR 4.
         let r = Rules::default();
-        assert!(r.overrun == 0.0 && r.reserve == 0.0);
+        assert!(r.overrun == 20.0 && r.reserve == 0.0);
         // Overrun: the larder held with the bank empty for 2 s ends the round.
         let mut g = small(1);
         g.rules.overrun = 2.0;
@@ -2281,6 +2897,102 @@ mod tests {
     }
 
     #[test]
+    fn rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes() {
+        let mut g = small(1);
+        let n = g.alive() as f32;
+        assert!(n >= 1.0 && g.rules.ration == 1.0 && g.rules.hunger == 1.0);
+        g.rules.ration = 2.0;
+        let hp = g.soldiers[0].hp;
+        // Paid in full: the bank pays, nobody hungers.
+        g.bank = 3.0 * n;
+        g.feed(1.0);
+        assert!((g.bank - n).abs() < 1e-4 && (g.eaten - 2.0 * n).abs() < 1e-4 && !g.hungry);
+        assert_eq!(g.soldiers[0].hp, hp);
+        // Half paid: the bank empties and each soldier loses half of a
+        // second's hunger.
+        g.feed(1.0);
+        assert!(g.bank.abs() < 1e-4 && g.hungry);
+        assert!((g.soldiers[0].hp - (hp - 0.5)).abs() < 1e-4, "{}", g.soldiers[0].hp);
+        // A carrier banks: the squad eats again (no spiral: hunger costs
+        // only hit points, so harvesters keep their speed).
+        g.bank = 300.0;
+        g.feed(1.0);
+        assert!(!g.hungry && (g.soldiers[0].hp - (hp - 0.5)).abs() < 1e-4);
+        // Starved long enough, a soldier dies, and the need falls with the
+        // squad.
+        g.bank = 0.0;
+        g.feed(hp);
+        assert_eq!(g.alive(), 0);
+        assert!(!g.soldiers[0].alive && g.soldiers[0].carry == 0.0);
+        g.feed(1.0);
+        assert!(!g.hungry, "nobody left to feed");
+        // Off at 0.
+        let mut g = small(1);
+        g.rules.ration = 0.0;
+        g.bank = 0.0;
+        g.feed(10.0);
+        assert!(!g.hungry && g.eaten == 0.0);
+    }
+
+    /// A starving squad can feed itself (the design review, 11-12 21:51Z:
+    /// a squad that slowly dies on an empty bank and can do nothing about
+    /// it is the playtest's soft lock again). Hunger costs only hit points,
+    /// so starving harvesters walk and take step for step as fed ones do,
+    /// and a carrier's trip home pays the rations again. A reserve recruit
+    /// on an empty bank comes in whole and can do the same.
+    #[test]
+    fn a_starving_squad_harvests_as_a_fed_one_and_feeds_itself() {
+        let sent = |hunger: f32| {
+            let mut g = small(7);
+            (g.rules.hunger, g.rules.overrun, g.bank) = (hunger, 0.0, 0.0);
+            let target = g.seek(0, None).expect("a crystal with charge");
+            for k in 0..g.soldiers.len() {
+                g.apply(Cmd::Order(k, Order::Clear(target.0, target.1)));
+            }
+            g
+        };
+        // Same rations, so the same bank; only the hunger differs.
+        let (mut fed, mut starving) = (sent(0.0), sent(1.0));
+        let at = |g: &Game<BigDish>| g.soldiers.iter().map(|s| (s.x, s.y, s.carry)).collect::<Vec<_>>();
+        let (mut hungry, mut ate_again) = (false, false);
+        for _ in 0..(starving.rules.tps * 60) {
+            fed.step();
+            starving.step();
+            if fed.alive() != starving.alive() {
+                break;
+            }
+            assert_eq!(at(&fed), at(&starving), "at {:.1} s", starving.time());
+            assert_eq!(fed.harvested, starving.harvested);
+            hungry |= starving.hungry;
+            ate_again |= hungry && !starving.hungry;
+        }
+        assert!(hungry && ate_again && starving.harvested > 0.0, "it starved, banked a load and ate again");
+        assert!(starving.soldiers.iter().zip(&fed.soldiers).any(|(s, f)| s.alive && s.hp < f.hp), "and the hunger showed on its health");
+        // The reserve: a wiped squad on an empty bank gets a recruit at full
+        // health, who harvests and pays its own ration.
+        let mut g = small(7);
+        (g.rules.reserve, g.rules.overrun, g.bank) = (10.0, 0.0, 0.0);
+        for s in g.soldiers.iter_mut() {
+            (s.alive, s.hp) = (false, 0.0);
+        }
+        while g.alive() == 0 && g.time() < 12.0 {
+            g.step();
+        }
+        assert!(g.end.is_none() && g.alive() == 1, "a recruit came");
+        let k = g.soldiers.iter().position(|s| s.alive).unwrap();
+        assert_eq!(g.soldiers[k].hp, g.rules.hp, "whole");
+        let target = g.seek(k, None).expect("a crystal with charge");
+        g.apply(Cmd::Order(k, Order::Clear(target.0, target.1)));
+        let t0 = g.time();
+        let mut fed_itself = false;
+        while g.time() < t0 + 60.0 && g.soldiers[k].alive {
+            g.step();
+            fed_itself |= g.bank > 0.0 && !g.hungry;
+        }
+        assert!(fed_itself && g.soldiers[k].alive, "the recruit banked food and ate");
+    }
+
+    #[test]
     fn density_holds_from_small_worlds_to_big_ones() {
         // The same world at twice the scale has four times the open cells;
         // with four times the walkers its density is the same.
@@ -2318,7 +3030,11 @@ mod tests {
         let mut g = small(4);
         let (x, y) = g.larder;
         let far = (g.core.0, g.core.1 + 30.0);
+        // With `BuildRules::anywhere` (the default) a far wall is a ghost a
+        // soldier walks to; the old rule wants both ends in range.
+        g.rules.build.anywhere = false;
         assert!(!g.apply(Cmd::Wall(far, (far.0, far.1 + 10.0))), "a wall far from every soldier");
+        g.rules.build.anywhere = true;
         let bank = g.bank;
         assert!(g.apply(Cmd::Wall((x - 10.0, y - 5.0), (x - 10.0, y + 5.0))));
         assert!((bank - g.bank - g.wall_price((x - 10.0, y - 5.0), (x - 10.0, y + 5.0))).abs() < 1e-3);
