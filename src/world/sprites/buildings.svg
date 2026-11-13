@@ -84,7 +84,7 @@
  </g>
 
  <!-- Siren (PR #160, `Kind::Siren`): an alarm pole on a round foot, two horns
-      back to back across it, a red lens on top. Lit on the frame it calls:
+      back to back across it, a red lens on top. Lit while it is on (calling every 4 s):
       the lens and two arcs of sound off each horn. -->
  <g id="siren">
   <circle cx="0" cy="0" r="0.72" fill="url(#pad)" stroke="#2a2622" stroke-width="0.06"/>

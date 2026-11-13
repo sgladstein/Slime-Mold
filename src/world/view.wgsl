@@ -511,7 +511,7 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
 // rises from its foot as it is built (the unbuilt part a faint ghost), it
 // darkens and greys as its health goes, and its lamp is lit only while it
 // works (a turret firing, a lure laying scent, a pump drawing charge, a
-// siren on the frame it calls).
+// siren while it is on).
 fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);

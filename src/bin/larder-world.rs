@@ -1120,9 +1120,9 @@ impl App {
                 Kind::Lure => 1,
                 Kind::Pump => 2,
                 Kind::Outpost => 3,
-                // The lure's lamp, lit on each call, until the graphics
-                // thread draws a siren of its own.
-                Kind::Siren => 1,
+                // Its own sprite (#161): the horns, and the lens and sound
+                // arcs lit while it is on.
+                Kind::Siren => 4,
                 _ => continue,
             };
             let half = g.rules.build.touch * sc * 0.7;
