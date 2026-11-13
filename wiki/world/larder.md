@@ -15,6 +15,7 @@ sources:
   - Reports/larder-m3-2026-11-11.md
   - Reports/larder-maps-2026-11-11.md
   - Reports/larder-shot-sink-2026-11-12.md
+  - Reports/larder-wading-2026-11-13.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/life-gpu-2026-11-11.md
   - Reports/mould-shooter-2026-11-11.md
@@ -207,7 +208,7 @@ the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
 the race world's crater is the cone (look 3; `scorch_cone`, full 150, keep
 0; the toolkit's blasts stay flat), and a soldier walks at
 `speed / (1 + (touching / wade)²)` (`Rules::wade` 6: half speed with 6
-walkers touching, a fifth with 12; each counts `Rules::mass`). **A walker's bite on a soldier is 2 health a second at any walker count** since 2026-11-12 (`Rules::drain`; the owner: walking into the slime "should be very deadly"); was 1 x `mass`, which let 40 soldiers stand in C's thickest part and lose none in 60 s ([report, *Thick slime*](../../Reports/slime-questions-2026-11-12/README.md)); buildings keep 1 x `mass` (`BuildRules::drain`). Over both blocks random wipes the
+walkers touching, a fifth with 12). **Every walker counts whole** toward wading since 2026-11-13 (the owner, 15:55Z, of shape C: "why are they not way slowing down"; [report](../../Reports/larder-wading-2026-11-13.md), [page](https://claude.ai/artifact/DKoWuDZja5GGeMTUuJFLMR)): counted at C's mass of 0.2, a soldier with 12 walkers on it walked at 86% and with 26 at 57%; now 20% and 5%. Walking in was already deadly since the bite below (eight soldiers dead 5-7 s after contact); the slowed squad lives about 2 s longer because it gets less deep. A rule keeping a soldier's blast off its own touch circle was dropped (the owner, 16:15Z: a soldier rushed while standing still must be able to shoot what reaches it; [dead end](../../Reports/dead-ends.md)). A soldier's aim is the densest slime in sight found with no wall check, and a shot with no clear line is not fired, so a squad by a wall can fire rarely (seen in the page's standing clip; next). **A walker's bite on a soldier is 2 health a second at any walker count** since 2026-11-12 (`Rules::drain`; the owner: walking into the slime "should be very deadly"); was 1 x `mass`, which let 40 soldiers stand in C's thickest part and lose none in 60 s ([report, *Thick slime*](../../Reports/slime-questions-2026-11-12/README.md)); buildings keep 1 x `mass` (`BuildRules::drain`). Over both blocks random wipes the
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
 random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the

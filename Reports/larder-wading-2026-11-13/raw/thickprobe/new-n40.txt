@@ -1,0 +1,8 @@
+thickprobe shape c, seeds [1, 2, 3, 4], drain x [1.0] (default 2 hp/s a walker, hp 100, mass 0.2), squad 40, into the thickest part at 240 s by attack-move for 60 s; arming true, wade 6; CPU race world scale 2, 25,000 walkers
+seed  3 drain x1   : mould 22651 at the order; arrived never; first death none; lost +10s 0 +20s 0 +30s 0 +40s 0 +50s 0 +60s 0; killed 9904, mould left 22115; touching mean 0.5, most 7; soldier-frames touched 0/1-4/5-9/10-19/20+ [23515, 12430, 55, 0, 0]
+seed  2 drain x1   : mould 38836 at the order; arrived never; first death +2.0 s; lost +10s 3 +20s 8 +30s 11 +40s 14 +50s 22 +60s 27; killed 7937, mould left 40897; touching mean 1.1, most 29; soldier-frames touched 0/1-4/5-9/10-19/20+ [16659, 7166, 603, 234, 301]
+seed  4 drain x1   : mould 39605 at the order; arrived never; first death +2.0 s; lost +10s 11 +20s 14 +30s 14 +40s 15 +50s 15 +60s 15; killed 5742, mould left 43645; touching mean 0.8, most 29; soldier-frames touched 0/1-4/5-9/10-19/20+ [20777, 2700, 352, 377, 303]
+seed  1 drain x1   : mould 39936 at the order; arrived never; first death +1.8 s; lost +10s 14 +20s 15 +30s 15 +40s 15 +50s 16 +60s 18; killed 3474, mould left 42768; touching mean 0.9, most 29; soldier-frames touched 0/1-4/5-9/10-19/20+ [19418, 2257, 395, 491, 369]
+
+summary, soldiers lost of 40 at +60 s:
+  drain x1   : lost [18, 27, 0, 15] (mean 15.0); killed 6764, mould left 37356 of 35257; touching mean 0.8

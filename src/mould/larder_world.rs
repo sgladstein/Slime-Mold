@@ -484,8 +484,12 @@ pub struct Rules {
     /// body holds it to a fifth (12 touching, as a rush meets on race seeds
     /// 1-4, where touching runs 0 to 26). The read is the frame's touch
     /// count, the same on both engines, so the GPU needs nothing new. 0 is
-    /// off. Touching walkers count `Rules::mass` each, so a denser mould
-    /// (the owner's 25,000-walker shapes, mass 0.2) needs 30 for half speed.
+    /// off. Every walker counts whole, at any `Rules::mass`, since
+    /// 2026-11-13 (the owner, 15:55Z, of shape C: "why are they not way
+    /// slowing down. I thought we implemented that"): counted at C's mass
+    /// of 0.2 a walker, half speed took 30 touching, and a soldier with 26
+    /// on it in C's body still walked at 57% (now 5%). The video the owner
+    /// remembered working was the 5,000-walker mould, mass 1.
     pub wade: f32,
     /// A soldier's scent, as a share of a full pile's, laid on the agar
     /// within `smell_r` dish cells of it.
@@ -653,11 +657,11 @@ pub struct Rules {
     /// `Game::rim`). Shots still fly over crystals.
     pub crystal_solid: bool,
     /// How much one walker counts in a fight: a walker touching a building
-    /// or the larder does `mass` times `BuildRules::drain` (or `steal`),
-    /// and counts `mass` towards wading (`Rules::wade`). Not a soldier's
-    /// health: a walker's bite (`drain`) is whole at any count since
-    /// 2026-11-12, when shape C's 0.2 a walker let 40 soldiers stand in its
-    /// thickest part and lose none.
+    /// or the larder does `mass` times `BuildRules::drain` (or `steal`).
+    /// Not a soldier's: a walker's bite (`drain`) is whole at any count
+    /// since 2026-11-12, when shape C's 0.2 a walker let 40 soldiers stand
+    /// in its thickest part and lose none, and its hold on a soldier's
+    /// legs (`wade`) since 2026-11-13.
     /// 1 (the default) is today's 5,000-walker mould. A denser mould is
     /// the same body cut into more, smaller walkers, so it plays at
     /// 5,000 / its walkers at scale 2 (`Rules::mass_for`); without that the 25,000-walker
@@ -1550,7 +1554,7 @@ impl<W: World> Game<W> {
         let d = dx.hypot(dy).max(1e-6);
         // Thick slime holds a soldier back (`Rules::wade`).
         let wade = if self.rules.wade > 0.0 {
-            let x = s.touching as f32 * self.rules.mass / self.rules.wade;
+            let x = s.touching as f32 / self.rules.wade;
             1.0 / (1.0 + x * x)
         } else {
             1.0
@@ -2695,6 +2699,18 @@ mod tests {
             assert!((d / free - share).abs() < 0.01, "{touching} touching: {d} against {free}");
         }
         assert_eq!(moved(12, 0.0), free, "wade 0 is off");
+        // Whole walkers at any density (2026-11-13): shape C's mass of 0.2
+        // once needed 30 touching for half speed.
+        let mut g = small(1);
+        g.rules.mass = 0.2;
+        let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
+        let sc = g.s();
+        let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (x + 6.0 * sc * a.cos(), y + 6.0 * sc * a.sin())).find(|&p| g.clear_line((x, y), p)).expect("open ground by the larder");
+        g.soldiers[0].order = Order::Move(to.0, to.1);
+        g.soldiers[0].touching = 6;
+        g.walk(0, 1.0 / g.rules.tps as f32);
+        let d = (g.soldiers[0].x - x).hypot(g.soldiers[0].y - y);
+        assert!((d / free - 0.5).abs() < 0.01, "mass 0.2, 6 touching: {d} against {free}");
     }
 
     /// A tier with no core of its own keeps the rules' (`Core::of`).
