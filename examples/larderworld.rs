@@ -296,10 +296,9 @@ fn main() {
             "aim_min" => rules.aim_min = v.parse().unwrap(),
             "price" => rules.price = v.parse().unwrap(),
             "smell" => rules.smell = v.parse().unwrap(),
-            // `drain=`: soldier health lost a second per touching walker
-            // (`Rules::drain`). A denser mould already counts less a
-            // walker through `Rules::mass` (below), so leave this at 1 for
-            // density.
+            // `drain=`: soldier health lost a second for each walker on it
+            // (`Rules::drain`), whole at any mass since #174, so a dense
+            // mould bites harder; `mass=` (below) does not change it.
             "drain" => rules.drain = v.parse().unwrap(),
             // `mass=M`: one walker's weight on buildings and the larder
             // (`Rules::mass`; not its bite on a soldier or, since

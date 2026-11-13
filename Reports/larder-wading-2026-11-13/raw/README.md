@@ -15,7 +15,7 @@ the squad lines (walkers touching, health) at each saved frame.
   and push hands, `h2-` hold at 277,155, `pl-` the push to its wipe, `r-w6`
   the rush with wading alone.
 - `clip-hold-seen.txt`, `clip-hold-seen-sink0.txt`: the same stand with
-  aims only at slime a unit can see (the PR after #197), sink 1 and 0;
+  aims only at slime a unit can see (#198), sink 1 and 0;
   `preview-near-s0/1.txt` a stand nearer the channel, sink 0 and 1.
 - `aimcost.rs`: the CPU cost probe for the aim's sight check (copy into
   `examples/` to build); `aim-cost/` its output (`before.txt`, `after.txt`, `alternating.txt`)

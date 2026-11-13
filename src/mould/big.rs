@@ -428,7 +428,9 @@ pub struct BigParams {
     /// and a parent finds an empty slot as often as slots are empty. (A
     /// first try cycled m through the single bits; with the living in the
     /// first slots most masks paired the living with each other, so a small
-    /// mould could breed only about one step in five.)
+    /// mould could breed only about one step in five.) Each walker pays
+    /// `upkeep` whole: the dish has no mass (`larder_world::Rules::mass` is
+    /// the game's weight on buildings and the larder).
     pub upkeep: f32,
     pub start_energy: f32,
     pub birth_energy: f32,

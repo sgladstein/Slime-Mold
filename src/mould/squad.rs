@@ -353,7 +353,7 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
             // the hole to the slime past it, while those walkers drained the
             // squad: the rush hand's squad was wiped on 12 of 16 race seeds
             // (1 of 16 without craters), and the GPU shots pass reads the
-            // same.
+            // same. Presence (any living walker, at any mass); elsewhere the trail, not a count.
             let stops = |i: usize| d.trail[i] >= slime || (!d.scorch.is_empty() && d.scorch[i] > 0 && d.occupancy()[i] > 0);
             for (j, &i) in cells.iter().enumerate() {
                 if !d.agar[i as usize] {
@@ -382,6 +382,7 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
         }
         let (x, y, _) = d.walkers[k];
         let c = y as usize * w + x as usize;
+        // Whole walkers: a blast kills every living one in its disc, and the kills are counted whole.
         if let Some(q) = (0..shots.len()).find(|&q| inside(c, q)) {
             d.kill(k);
             killed[q] += 1;
@@ -487,6 +488,7 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
         .iter()
         .map(|u| {
             let (cx, cy) = cell_of(w, h, u.x, u.y);
+            // Whole walkers; the game weighs them per rule (`larder_world::Rules::mass`).
             let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32).sum();
             let s2 = r2(u.sight) as i64;
             let r = isqrt(r2(u.sight)) + 2;
@@ -499,6 +501,7 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
                     if mx * mx + my * my > s2 {
                         continue;
                     }
+                    // Whole walkers: the aim goes where the most are, at any mass.
                     let mut n = 0u32;
                     for y in (by as usize * BIN)..((by as usize + 1) * BIN).min(h) {
                         for x in (bx as usize * BIN)..((bx as usize + 1) * BIN).min(w) {

@@ -184,7 +184,10 @@ impl View {
         v
     }
 
-    /// Walkers within `r` fine cells of `c`, by grid square centres.
+    /// Walkers within `r` fine cells of `c`, by grid square centres. Whole
+    /// walkers, not `Rules::mass`: the thresholds read against it (`dare`,
+    /// `HELD`, `wall_alarm`) were set on the 5,000-walker mould, so on C's
+    /// 25,000 they trip at about a fifth of the body's thickness.
     pub fn mass(&self, c: (f32, f32), r: f32) -> u32 {
         let Some(grid) = &self.grid else { return 0 };
         let b = self.bin as f32;
@@ -482,6 +485,7 @@ impl Brain {
         }
         // Pull back the hurt.
         for u in &v.units {
+            // Presence (any walker on it) and health, so mass doesn't apply.
             if st.retreat > 0.0 && u.touching > 0 && u.hp < st.retreat * v.rules.hp && !self.hurt.contains(&u.k) {
                 self.hurt.push(u.k);
                 out.push(Cmd::Order(u.k, Order::Move(v.home.0, v.home.1)));

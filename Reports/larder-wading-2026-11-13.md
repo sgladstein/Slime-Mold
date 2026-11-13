@@ -42,7 +42,7 @@ Two new look hands, both buying the squad to eight at once with 400 food kept: `
 | Blast sunk one radius in (default) | 47 | 261 | 5.6 | 50 |
 
 - One seed and one stand, a picture, not a census.
-- **The squad fires rarely**: about 50 shots in 26 s from eight soldiers that could fire about 200. A soldier's aim is the densest block of walkers within its sight (`squad` frame, `UnitOut::target`, both engines), found with no wall check. `Game::target` then drops the shot when a wall or rock blocks the line (`clear_line`). The densest slime in sight was beyond the right-hand wall, so the slime in front went unshot. Fixed in the next PR (*Aims that see*, below).
+- **The squad fires rarely**: about 50 shots in 26 s from eight soldiers that could fire about 200. A soldier's aim is the densest block of walkers within its sight (`squad` frame, `UnitOut::target`, both engines), found with no wall check. `Game::target` then drops the shot when a wall or rock blocks the line (`clear_line`). The densest slime in sight was beyond the right-hand wall, so the slime in front went unshot. Fixed in #198 (*Aims that see*, below).
 
 ## Tried and dropped: a soldier's blast kept off its own touch circle
 
@@ -81,7 +81,7 @@ larderworld census seeds=5-8 walkers=25000 upkeep=0.0002 keys=capacity:50000+ene
 
 None. One multiply fewer in the walk.
 
-## Aims that see (the PR after #197)
+## Aims that see (#198)
 
 **The rule.** A unit's aim is the densest block within its sight **that it can see**: every cell on the line from the unit's cell to the block's centre cell is agar (`squad::sees`, `squad::block_cell`; WGSL `sees` in the `units` and `units1` passes). The line is whole-cell steps, `max(|dx|, |dy|)` of them, each offset truncated toward zero, in integers so both engines walk the same cells. It is walked only for a block that would beat the best so far, which picks the same block as walking every one. Soldiers, turrets and the garden's read all use it.
 
