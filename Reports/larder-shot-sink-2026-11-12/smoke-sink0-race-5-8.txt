@@ -1,0 +1,42 @@
+larderworld the race world, scale 2 walkers 5000 cap 900 s, tps 15, seeds [5, 6, 7, 8]; on the CPU; tier none; flee 0 (default); rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, price: 0.0, hp: 100.0, drain: 1.0, touch: 1.5, wade: 6.0, smell: 0.5, smell_r: 2.0, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, core_pull: 8.0, cap: 900.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, build: BuildRules { max: 40, gap: 2.5, raise: 8.0, turret_cost: 500.0, turret_hp: 300.0, turret_range: 15.0, turret_every: 0.5, lure_cost: 300.0, lure_hp: 150.0, lure_smell: 8.0, lure_r: 6.0, lure_burn: 2.0, pump_cost: 500.0, pump_hp: 200.0, pump_rate: 5.0, pump_smell: 0.0, outpost_cost: 400.0, outpost_hp: 300.0, outpost_hoard: 0.25, touch: 2.0, anywhere: true }, overrun: 20.0, reserve: 0.0, ration: 1.0, hunger: 1.0, seek: true, crater: 4.5, bite: 0.0, spread: 0.0, crystal_solid: true, mass: 1.0 }
+provenance: harness larderworld, commit 60557ab64+dirty, seeds 5-8 (4), cap 900 s, settings hash 3abeb0aed5056707
+  rush seed  5: squad wiped at   124 s, score -1.862; soldiers  0, mould   1779, bank    400, harvested      0, stolen   116, shots   213, killed   2011, crystals left 0.998; 2.60 ms a tick, think 0 us mean, 0 at most; score1 -1.862; near 120, touched at 14 s, stuck 0 s; eaten 284
+random seed  5: squad wiped at   180 s, score -1.800; soldiers  0, mould   4979, bank      0, harvested    300, stolen    10, shots   367, killed   2107, crystals left 0.989; 4.11 ms a tick, think 0 us mean, 0 at most; score1 -1.800; near 138, touched at 26 s, stuck 21 s; eaten 590
+  idle seed  5: squad wiped at   584 s, score -1.351; soldiers  0, mould   7242, bank      0, harvested      0, stolen    64, shots   441, killed    516, crystals left 0.969; 4.53 ms a tick, think 0 us mean, 0 at most; score1 -1.351; near 1, touched at 275 s, stuck 71 s; eaten 1936
+  idle seed  6: squad wiped at   597 s, score -1.337; soldiers  0, mould   5506, bank      0, harvested      0, stolen    14, shots   227, killed    206, crystals left 0.975; 3.84 ms a tick, think 0 us mean, 0 at most; score1 -1.337; near 0, touched at 155 s, stuck 143 s; eaten 1986
+random seed  6: squad wiped at   258 s, score -1.714; soldiers  0, mould   2547, bank      0, harvested   3000, stolen    20, shots   482, killed   2016, crystals left 0.943; 3.78 ms a tick, think 0 us mean, 0 at most; score1 -1.714; near 145, touched at 21 s, stuck 6 s; eaten 980
+  rush seed  6: squad wiped at   149 s, score -1.834; soldiers  0, mould    334, bank      0, harvested      0, stolen    66, shots   464, killed   2480, crystals left 0.999; 2.66 ms a tick, think 0 us mean, 0 at most; score1 -1.834; near 44, touched at 15 s, stuck 57 s; eaten 734
+  farm seed  5:         cap at   900 s, score +0.280; soldiers  8, mould   3031, bank  24232, harvested  45314, stolen   716, shots  4168, killed  28001, crystals left 0.239; 4.76 ms a tick, think 0 us mean, 0 at most; score1 -0.357; near 318, touched at 36 s, stuck 0 s; eaten 7168
+  farm seed  6:         cap at   900 s, score +0.247; soldiers  8, mould   4007, bank  27557, harvested  47714, stolen   588, shots  3219, killed  28035, crystals left 0.205; 4.17 ms a tick, think 0 us mean, 0 at most; score1 -0.500; near 428, touched at 35 s, stuck 0 s; eaten 7168
+random seed  7: squad wiped at   103 s, score -1.885; soldiers  0, mould   2513, bank      0, harvested      0, stolen     5, shots   225, killed   1971, crystals left 0.993; 3.15 ms a tick, think 0 us mean, 0 at most; score1 -1.885; near 231, touched at 20 s, stuck 7 s; eaten 195
+  idle seed  7: squad wiped at   522 s, score -1.420; soldiers  0, mould  11159, bank      0, harvested      0, stolen   329, shots   889, killed   2142, crystals left 0.954; 5.51 ms a tick, think 0 us mean, 0 at most; score1 -1.420; near 7, touched at 30 s, stuck 9 s; eaten 1671
+  rush seed  7: squad wiped at    58 s, score -1.936; soldiers  0, mould    876, bank    397, harvested      0, stolen    45, shots   292, killed   2367, crystals left 0.999; 2.67 ms a tick, think 0 us mean, 0 at most; score1 -1.936; near 103, touched at 11 s, stuck 0 s; eaten 358
+strike seed  5:         cap at   900 s, score +0.401; soldiers 30, mould   1063, bank  12794, harvested  50414, stolen    38, shots 13715, killed  23559, crystals left 0.211; 8.50 ms a tick, think 173 us mean, 394 at most; score1 +0.167; near 30, touched at 36 s, stuck 0 s; eaten 25982
+strike seed  6:         cap at   900 s, score +0.283; soldiers 30, mould   3287, bank   1574, harvested  47714, stolen   104, shots 14220, killed  31457, crystals left 0.259; 6.26 ms a tick, think 192 us mean, 908 at most; score1 -0.167; near 74, touched at 28 s, stuck 0 s; eaten 26036
+random seed  8: squad wiped at   208 s, score -1.769; soldiers  0, mould   5547, bank    281, harvested   2526, stolen    15, shots   409, killed   2841, crystals left 0.942; 4.33 ms a tick, think 0 us mean, 0 at most; score1 -1.769; near 177, touched at 12 s, stuck 0 s; eaten 729
+strike seed  7: larder overrun at   778 s, score -1.135; soldiers 27, mould   1342, bank      0, harvested  41414, stolen    53, shots 12176, killed  49549, crystals left 0.336; 4.33 ms a tick, think 185 us mean, 331 at most; score1 -1.135; near 91, touched at 34 s, stuck 0 s; eaten 21361
+  idle seed  8: squad wiped at   592 s, score -1.343; soldiers  0, mould   7981, bank      0, harvested      0, stolen    33, shots  1122, killed   1076, crystals left 0.958; 4.59 ms a tick, think 0 us mean, 0 at most; score1 -1.343; near 2, touched at 32 s, stuck 16 s; eaten 1967
+  farm seed  7:         cap at   900 s, score +0.169; soldiers  8, mould   6396, bank  21513, harvested  45314, stolen   642, shots  4325, killed  49715, crystals left 0.217; 5.03 ms a tick, think 0 us mean, 0 at most; score1 -0.417; near 671, touched at 15 s, stuck 0 s; eaten 7162
+strike seed  8: squad wiped at   783 s, score -1.130; soldiers  0, mould   7034, bank    123, harvested  26114, stolen    54, shots  5677, killed  23509, crystals left 0.540; 4.57 ms a tick, think 192 us mean, 613 at most; score1 -1.130; near 116, touched at 16 s, stuck 13 s; eaten 14738
+  rush seed  8:         cap at   900 s, score -0.348; soldiers  0, mould  11424, bank    469, harvested      0, stolen    51, shots   206, killed   2207, crystals left 0.922; 5.18 ms a tick, think 0 us mean, 0 at most; score1 -0.500; near 224, touched at 12 s, stuck 0 s; eaten 280
+  farm seed  8:         cap at   900 s, score +0.152; soldiers  8, mould   6775, bank  10609, harvested  35114, stolen   145, shots  3709, killed  36383, crystals left 0.350; 5.80 ms a tick, think 0 us mean, 0 at most; score1 -0.417; near 458, touched at 16 s, stuck 0 s; eaten 7162
+
+by hand (mean score; ends):
+    idle: mean -1.363; mould wiped 0, cap 0, squad wiped 4; near 3 walkers, first touch 123 s; stuck 60 s a game, 2 games stuck a minute or more
+  random: mean -1.792; mould wiped 0, cap 0, squad wiped 4; near 173 walkers, first touch 20 s; stuck 8 s a game, 0 games stuck a minute or more
+    farm: mean +0.212; mould wiped 0, cap 4, squad wiped 0; near 469 walkers, first touch 26 s; stuck 0 s a game, 0 games stuck a minute or more
+    rush: mean -1.495; mould wiped 0, cap 1, squad wiped 3; near 123 walkers, first touch 13 s; stuck 14 s a game, 0 games stuck a minute or more
+  strike: mean -0.395; mould wiped 0, cap 2, squad wiped 1; near 78 walkers, first touch 28 s; stuck 3 s a game, 0 games stuck a minute or more
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 7):
+      farm vs idle: 4 higher, 0 lower, p 0.1250
+    farm vs random: 4 higher, 0 lower, p 0.1250
+      rush vs idle: 1 higher, 3 lower, p 0.6250
+    rush vs random: 1 higher, 3 lower, p 0.6250
+    strike vs idle: 4 higher, 0 lower, p 0.1250
+  strike vs random: 4 higher, 0 lower, p 0.1250
+    strike vs farm: 2 higher, 2 lower, p 1.0000
+
+real	3m56.621s
+user	14m12.173s
+sys	0m0.580s

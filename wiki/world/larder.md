@@ -13,6 +13,7 @@ sources:
   - Reports/larder-m2-2026-11-11.md
   - Reports/larder-m3-2026-11-11.md
   - Reports/larder-maps-2026-11-11.md
+  - Reports/larder-shot-sink-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/life-gpu-2026-11-11.md
   - Reports/mould-shooter-2026-11-11.md
@@ -58,6 +59,7 @@ code:
   - Rules::home_dry
   - Rules::hunger
   - Rules::ration
+  - Rules::sink
   - Rules::wade
   - Tier::core
   - Tracker
@@ -68,8 +70,10 @@ code:
   - race_params
   - race_settings
   - squad::Frame::crater
+  - squad::Frame::sink
   - squad::UNITS_MAX
   - squad::frame
+  - squad::sink
 ---
 
 # Larder, the mould as the enemy (Larder World)
@@ -215,7 +219,16 @@ and says when the bank runs dry inside a minute. `Rules::overrun` 20 s is on. On
 harvest unspent (80% before) and strike 17% (64%), and strike beats farm
 12-4, not under Holm (26-6 before). Next, buildings' running costs and
 the player AI's feeding. Off by default for other threads:
-`Rules::reserve`, `Game::stuck`, `Game::density`.
+`Rules::reserve`, `Game::stuck`, `Game::density`. **Shots sink in**
+([report](../../Reports/larder-shot-sink-2026-11-12.md), [page](https://claude.ai/artifact/4iJTF66gpSNoJxnLgUtyiG)):
+a hit's blast is centred on the last slime along the shot's line within
+`Rules::sink` strike radii (1) of the first slime it met, not on that
+first cell, so fire from outside a body strikes slime all round, while
+against a strand it stays on the strand (`squad::sink`, both engines, to
+the bit). The owner's 22:06Z playtest found a squad standing in one spot
+"barely" hurt a large mass that walking in destroyed; on shape C a squad
+standing still on free fire now kills 20.3 a shot (12.6 before), walking
+in 47.9 (42.0), so the gap is 2.4 times, down from 3.3.
 
 ## Small-dish milestones (M1-M3)
 
