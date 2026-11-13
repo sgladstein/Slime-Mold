@@ -334,7 +334,8 @@ impl Garden {
             .collect()
     }
 
-    /// `squad::read` on the enemy's walkers only.
+    /// `squad::read` on the enemy's walkers only (and only blocks it can
+    /// see, `squad::sees`).
     fn read(&self, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
         let d = &self.dish;
         let (w, h) = (d.w, d.h);
@@ -344,6 +345,7 @@ impl Garden {
             .iter()
             .map(|u| {
                 let (cx, cy) = cell_of(w, h, u.x, u.y);
+                // Whole walkers, as `squad::read`; the game weighs them per rule.
                 let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32).sum();
                 let s2 = r2(u.sight) as i64;
                 let r = squad::isqrt(r2(u.sight)) + 2;
@@ -362,7 +364,7 @@ impl Garden {
                                 n += occ[y * w + x] as u32;
                             }
                         }
-                        if n > best.0 {
+                        if n > best.0 && squad::sees(w, &d.agar, (cx, cy), squad::block_cell(w, h, bx, by)) {
                             best = (n, Some((by * nbw + bx) as usize));
                         }
                     }

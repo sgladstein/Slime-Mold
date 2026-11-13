@@ -506,7 +506,8 @@ pub struct Rules {
     /// it. 1 (any): on rush seed 2 over 200 s, 1 wasted 1 shot of 200 and
     /// killed 1,600 walkers, 2 killed 1,486 and 4 killed 1,452, once the
     /// sight check stopped shots into rock (before it, 104 of 200 shots
-    /// hit nothing at 1 and 2 of 199 at 4).
+    /// hit nothing at 1 and 2 of 199 at 4). Whole walkers, not by mass:
+    /// at 1 it is presence, the same at any mass.
     pub aim_min: u32,
     pub core_r: f32,
     pub core_secs: f32,
@@ -1554,6 +1555,7 @@ impl<W: World> Game<W> {
         let d = dx.hypot(dy).max(1e-6);
         // Thick slime holds a soldier back (`Rules::wade`).
         let wade = if self.rules.wade > 0.0 {
+            // Whole walkers: every one on a soldier holds its legs at any mass (owner, 11-13 15:55Z).
             let x = s.touching as f32 / self.rules.wade;
             1.0 / (1.0 + x * x)
         } else {
@@ -1799,6 +1801,7 @@ impl<W: World> Game<W> {
             Stance::HoldFire => None,
             Stance::Free => Some(aim),
             Stance::Defend => {
+                // Presence, any walker at any mass: one on a soldier is one to shoot.
                 let mut ok = s.touching > 0 || near((s.x, s.y), self.rules.defend * sc);
                 if let Order::Clear(x, y) = s.order {
                     if let Some((i, c)) = self.crystal_at((x, y)) {
@@ -2093,6 +2096,7 @@ impl<W: World> Game<W> {
         // Gassed mould sleeps and does not bite (the squad toolkit's sleep
         // gas): its walkers are taken off each unit's touch.
         let calm = self.world.calm(&f.units.iter().map(|u| (u.x, u.y)).collect::<Vec<_>>(), r.touch * sc);
+        // Whole walkers off whole walkers: what each is worth is decided below, per rule.
         let out = FrameOut { units: out.units.iter().zip(&calm).map(|(u, &c)| UnitOut { touching: u.touching.saturating_sub(c), ..*u }).collect(), ..out };
         let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };
         let mut empty = Vec::new();
@@ -2143,6 +2147,7 @@ impl<W: World> Game<W> {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
                         }
+                        // Whole walkers: each bites `drain` at any mass, so walking into a thick body is very deadly (owner 11-12 22:22Z, #174).
                         s.hp -= r.drain * u.touching as f32 * dt;
                         if s.hp <= 0.0 {
                             s.alive = false;
@@ -2152,6 +2157,7 @@ impl<W: World> Game<W> {
                     }
                 }
                 Who::Larder => {
+                    // By mass: a body over the larder eats what the 5,000-walker mould's did, so C's 25,000 don't empty the bank five times as fast.
                     let take = (r.steal * r.mass * u.touching as f32 * dt).min(self.bank.max(0.0));
                     self.bank -= take;
                     self.stolen += take;
@@ -2181,6 +2187,7 @@ impl<W: World> Game<W> {
         if r.broken <= 0.0 {
             return;
         }
+        // A ratio of whole walkers to the peak's, so the same at any mass.
         let under = (self.mould as f32) < r.broken * self.peak as f32;
         match (under, self.broken) {
             (true, None) => {
@@ -2239,6 +2246,7 @@ impl<W: World> Game<W> {
     /// `Rules::overrun` and `Rules::reserve`, each off at 0.
     fn campaign_rules(&mut self, ticks: u64) {
         let r = self.rules;
+        // Presence: any walker on the larder holds it, at any mass.
         let held = self.larder_touch > 0;
         if r.overrun > 0.0 {
             self.held_ticks = if held && self.bank < 1.0 { self.held_ticks + ticks } else { 0 };
@@ -2267,7 +2275,7 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let r = self.rules.core_r * sc;
         let on = self.soldiers.iter().any(|s| s.alive && (s.x - self.core.0).hypot(s.y - self.core.1) <= r);
-        // No walker near: the touch of the soldiers on it reads 0.
+        // No walker near: the touch of the soldiers on it reads 0 (presence, so mass doesn't apply).
         let clear = on && self.soldiers.iter().filter(|s| s.alive && (s.x - self.core.0).hypot(s.y - self.core.1) <= r).all(|s| s.touching == 0 && s.aim.is_none_or(|a| (a.0 - self.core.0).hypot(a.1 - self.core.1) > 2.0 * r));
         if clear {
             self.core_clear += self.rules.frame_ticks as u64;
@@ -2316,6 +2324,7 @@ impl<W: World> Game<W> {
             let cr = self.world.crystal_r(i);
             let eaten = self.start_charge[i] - charge - self.taken[i] > 0.01 * self.start_charge[i];
             let on: Vec<&Soldier> = self.soldiers.iter().filter(|s| s.alive && (s.x - c.0).hypot(s.y - c.1) <= cr + 2.0 * self.s()).collect();
+            // Presence: a crystal is held while no walker at all is on its soldiers.
             if !on.is_empty() && on.iter().all(|s| s.touching == 0) {
                 ours += 1;
             } else if on.is_empty() && eaten {
@@ -2367,6 +2376,7 @@ impl<W: World> Game<W> {
     pub fn score(&self) -> Option<f32> {
         self.end.map(|e| match e {
             End::Cap(took) => {
+                // A ratio of whole walkers to the start's, so the same at any mass.
                 let m = self.mould as f32 / self.start_mould.max(1) as f32;
                 0.5 * (took - 0.5) + 0.25 * (1.0 - m) / (1.0 + m)
             }
@@ -2935,11 +2945,22 @@ mod tests {
         d: BigDish,
         out: Option<FrameOut>,
         polls: std::cell::Cell<u32>,
+        /// Every unit reads this many walkers on it (`None`: the dish's).
+        touch: Option<u32>,
+    }
+
+    impl Later {
+        fn touched(&self, mut o: FrameOut) -> FrameOut {
+            if let Some(n) = self.touch {
+                o.units.iter_mut().for_each(|u| u.touching = n);
+            }
+            o
+        }
     }
 
     fn later(seed: u64) -> Game<Later> {
         // As `small`'s rules (buildings whole when placed).
-        Game::new(Later { d: race_world(seed, 1, 1_000), out: None, polls: Default::default() }, Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
+        Game::new(Later { d: race_world(seed, 1, 1_000), out: None, polls: Default::default(), touch: None }, Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
     }
 
     impl World for Later {
@@ -2953,7 +2974,8 @@ mod tests {
             World::ticks(&self.d)
         }
         fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut {
-            World::frame(&mut self.d, f, ticks)
+            let o = World::frame(&mut self.d, f, ticks);
+            self.touched(o)
         }
         fn frame_start(&mut self, f: &Frame, ticks: u32) -> Option<FrameOut> {
             assert!(self.out.is_none(), "a frame already running");
@@ -2961,7 +2983,8 @@ mod tests {
             None
         }
         fn frame_finish(&mut self) -> FrameOut {
-            self.out.take().expect("a frame running")
+            let o = self.out.take().expect("a frame running");
+            self.touched(o)
         }
         fn frame_ready(&self) -> bool {
             self.polls.set(self.polls.get() + 1);
@@ -3015,6 +3038,66 @@ mod tests {
         }
     }
 
+    /// **Each rule that reads the walkers on a unit, at mass 1 and 0.2**
+    /// (the integration thread's audit, 2026-11-13; `Rules::mass` is 0.2 for
+    /// shape C's 25,000 walkers). Ten walkers on every unit for two frames:
+    /// - whole: a soldier's bite (`drain`), and its wading in the second
+    ///   frame (`wade`: 10 on it is 1 / (1 + (10/6)²) of its open stride);
+    /// - by mass: the larder's and an outpost's steal, and a turret's wear;
+    /// - presence: the larder held (any walker at all);
+    /// - the AI's reads of the body (`larder_world_ai::View`) are whole
+    ///   walkers, the same at either mass.
+    #[test]
+    fn walkers_count_whole_on_soldiers_and_by_mass_on_the_larder_and_buildings() {
+        use crate::mould::larder_world_ai::{Side, View};
+        let n = 10u32;
+        let run = |mass: f32, touch: u32| {
+            let mut g = later(1);
+            (g.rules.mass, g.rules.ration, g.rules.overrun) = (mass, 0.0, 0.0);
+            let open = |g: &Game<Later>, p: (f32, f32)| {
+                (0..40 * 16)
+                    .map(|i| {
+                        let a = (i % 16) as f32 / 16.0 * std::f32::consts::TAU;
+                        (p.0 + (i / 16) as f32 * a.cos(), p.1 + (i / 16) as f32 * a.sin())
+                    })
+                    .find(|q| g.world.open(q.0, q.1))
+                    .expect("open ground")
+            };
+            let (t, o) = (open(&g, (g.larder.0 + 8.0, g.larder.1)), open(&g, (g.larder.0 - 8.0, g.larder.1)));
+            assert!(g.build(Kind::Turret, t) && g.build(Kind::Outpost, o));
+            let to = (g.core.0, g.core.1);
+            g.apply(Cmd::Order(0, Order::Move(to.0, to.1)));
+            g.world.touch = Some(touch);
+            let v = View::of(&g, &Side::whole(&g));
+            let body: Vec<u32> = v.crystals.iter().flat_map(|c| [c.on, c.near]).collect();
+            g.step();
+            let at = (g.soldiers[0].x, g.soldiers[0].y);
+            g.step();
+            let stride = (g.soldiers[0].x - at.0).hypot(g.soldiers[0].y - at.1);
+            (g.soldiers.iter().map(|s| s.hp).collect::<Vec<_>>(), stride, g.stolen, g.buildings[0].hp, g.buildings[0].max_hp, g.larder_touch, body)
+        };
+        let r = Rules::default();
+        let dt = r.frame_ticks as f32 / r.tps as f32;
+        let (_, open_stride, ..) = run(1.0, 0);
+        assert!(open_stride > 0.0, "the soldier walks");
+        let mut bodies = Vec::new();
+        for mass in [1.0f32, 0.2] {
+            let (hp, stride, stolen, turret, max, held, body) = run(mass, n);
+            let bite = 2.0 * r.drain * n as f32 * dt;
+            assert!(hp.iter().all(|&h| (r.hp - h - bite).abs() < 1e-3), "mass {mass}: whole bite {bite}, health {hp:?}");
+            let slow = open_stride / (1.0 + (n as f32 / r.wade).powi(2));
+            assert!((stride - slow).abs() < 0.02 * open_stride, "mass {mass}: whole wading, stride {stride} against {slow}");
+            // The larder and the outpost, two frames each.
+            let steal = 2.0 * 2.0 * r.steal * mass * n as f32 * dt;
+            assert!((stolen - steal).abs() < 1e-3, "mass {mass}: stolen {stolen} against {steal}");
+            let wear = 2.0 * r.build.drain * mass * n as f32 * dt;
+            assert!((max - turret - wear).abs() < 1e-3, "mass {mass}: turret wear {} against {wear}", max - turret);
+            assert_eq!(held, n, "the larder reads them, held at any mass");
+            bodies.push(body);
+        }
+        assert_eq!(bodies[0], bodies[1], "the AI reads whole walkers at either mass");
+    }
+
     /// **A step in halves plays as a whole one** (2026-11-12): the window
     /// begins a step, draws, and finishes it on a later frame; a command
     /// in between finishes it first. On a world that holds results back
@@ -3050,8 +3133,11 @@ mod tests {
             }
             // Sleep gas on the mould round the first soldier it touches
             // (the squad toolkit): the gassed walkers come off the touch in
-            // `finish_step`.
-            if let (0, Some(k)) = (gassed, a.soldiers.iter().position(|s| s.alive && s.touching > 0)) {
+            // `finish_step`. With 3 walkers on it, not 1: once aims had to
+            // see their slime (2026-11-13), the first touch on seed 5 was one
+            // walker on an attack-moving soldier, which walked on from the 5
+            // it slept and left no calm touch to read; at 3 it is in the body.
+            if let (0, Some(k)) = (gassed, a.soldiers.iter().position(|s| s.alive && s.touching >= 3)) {
                 b.finish_step();
                 let (x, y) = (a.soldiers[k].x, a.soldiers[k].y);
                 let r = 4.0 * a.rules.touch * a.world.scale();

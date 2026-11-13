@@ -147,6 +147,8 @@ const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
 // cell (`View::set_body_density`; 0 keeps the calibration), so a world
 // with ten times the walkers does not saturate to the trail again and a
 // sparse one does not read thin (tech lead review of #93, 04:48Z).
+// Whole walkers against a window scaled by living density (linear, as
+// `Rules::mass` is), so C's body reads as thick as the 5,000-walker one's.
 const BODY_N: f32 = 6.0;
 const BODY_DENSITY: f32 = 5000.0 / (512.0 * 320.0);
 

@@ -217,7 +217,8 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
 pub struct UnitOut {
     /// Walkers on the cells within `touch`.
     pub touching: u32,
-    /// The centre of the block with the most walkers within `sight`.
+    /// The centre of the block with the most walkers within `sight` that
+    /// the unit can see: every cell on the line to it is agar (`sees`).
     pub target: Option<(f32, f32)>,
     /// Charge harvested.
     pub took: f32,
@@ -352,7 +353,7 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
             // the hole to the slime past it, while those walkers drained the
             // squad: the rush hand's squad was wiped on 12 of 16 race seeds
             // (1 of 16 without craters), and the GPU shots pass reads the
-            // same.
+            // same. Presence (any living walker, at any mass); elsewhere the trail, not a count.
             let stops = |i: usize| d.trail[i] >= slime || (!d.scorch.is_empty() && d.scorch[i] > 0 && d.occupancy()[i] > 0);
             for (j, &i) in cells.iter().enumerate() {
                 if !d.agar[i as usize] {
@@ -381,6 +382,7 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
         }
         let (x, y, _) = d.walkers[k];
         let c = y as usize * w + x as usize;
+        // Whole walkers: a blast kills every living one in its disc, and the kills are counted whole.
         if let Some(q) = (0..shots.len()).find(|&q| inside(c, q)) {
             d.kill(k);
             killed[q] += 1;
@@ -453,9 +455,31 @@ pub fn smell(d: &mut BigDish, units: &[UnitIn]) {
     }
 }
 
+/// Whether every cell after the first on the line from `from` to `to` is
+/// agar: `max(|dx|, |dy|)` whole-cell steps, each offset truncated toward
+/// zero, in integers so the GPU's `sees` walks the same cells.
+pub fn sees(w: usize, agar: &[bool], from: (i64, i64), to: (i64, i64)) -> bool {
+    let (dx, dy) = (to.0 - from.0, to.1 - from.1);
+    let n = dx.abs().max(dy.abs()).max(1);
+    (1..=n).all(|k| agar[((from.1 + dy * k / n) as usize) * w + (from.0 + dx * k / n) as usize])
+}
+
+/// The centre cell of block (`bx`, `by`), held inside the world, as `read`
+/// looks at it (`sees`).
+pub fn block_cell(w: usize, h: usize, bx: i64, by: i64) -> (i64, i64) {
+    ((bx * BIN as i64 + BIN as i64 / 2).min(w as i64 - 1), (by * BIN as i64 + BIN as i64 / 2).min(h as i64 - 1))
+}
+
 /// Step 4's reads: each unit's walkers within `touch`, the block it aims
 /// at (the block index, row-major, `BIN` cells a side) and that block's
-/// walkers.
+/// walkers. The block is the one with the most walkers among those it can
+/// see (`sees`, 2026-11-13): before, the densest within `sight` was taken
+/// through walls and rock, and `larder_world::Game::target` then held the
+/// shot for its blocked line, so a squad beside a wall with thicker slime
+/// behind it fired at nothing in front (eight soldiers at a channel mouth
+/// on the Fork fired about 50 shots in 26 s; `Reports/larder-wading-2026-11-13.md`).
+/// The line is checked only for a block that would beat the best so far,
+/// which picks the same block as checking every one.
 pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
     let (w, h) = (d.w, d.h);
     let occ = d.occupancy();
@@ -464,6 +488,7 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
         .iter()
         .map(|u| {
             let (cx, cy) = cell_of(w, h, u.x, u.y);
+            // Whole walkers; the game weighs them per rule (`larder_world::Rules::mass`).
             let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32).sum();
             let s2 = r2(u.sight) as i64;
             let r = isqrt(r2(u.sight)) + 2;
@@ -476,13 +501,14 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
                     if mx * mx + my * my > s2 {
                         continue;
                     }
+                    // Whole walkers: the aim goes where the most are, at any mass.
                     let mut n = 0u32;
                     for y in (by as usize * BIN)..((by as usize + 1) * BIN).min(h) {
                         for x in (bx as usize * BIN)..((bx as usize + 1) * BIN).min(w) {
                             n += occ[y * w + x] as u32;
                         }
                     }
-                    if n > best.0 {
+                    if n > best.0 && sees(w, &d.agar, (cx, cy), block_cell(w, h, bx, by)) {
                         best = (n, Some((by * nbw + bx) as usize));
                     }
                 }
@@ -654,6 +680,44 @@ mod tests {
             d.tick();
         }
         d
+    }
+
+    /// A unit aims at the densest block it can see (`sees`): a wall across
+    /// the line to its first aim turns it to another block, one it sees.
+    #[test]
+    fn a_unit_aims_only_at_slime_it_can_see() {
+        let mut d = world();
+        let (w, h) = (d.w, d.h);
+        let unit = |i: usize| UnitIn { x: (i % w) as f32 + 0.5, y: (i / w) as f32 + 0.5, touch: 3.0, sight: 30.0, take_r: 0.0, take: 0.0, smell_r: 0.0, smell: 0.0 };
+        let aim = |d: &BigDish, i: usize| read(d, &[unit(i)])[0];
+        // A unit on open agar whose aim is at least 10 cells off.
+        let (at, first) = (0..w * h)
+            .step_by(7)
+            .filter(|&i| d.agar[i])
+            .find_map(|i| {
+                let (_, b, n) = aim(&d, i);
+                let b = b?;
+                let c = block_centre(w, b);
+                (n > 0 && ((i % w) as f32 - c.0).hypot((i / w) as f32 - c.1) >= 10.0).then_some((i, b))
+            })
+            .expect("a unit with slime in sight");
+        let from = ((at % w) as i64, (at / w) as i64);
+        let nbw = w.div_ceil(BIN) as i64;
+        let to = block_cell(w, h, first as i64 % nbw, first as i64 / nbw);
+        assert!(sees(w, &d.agar, from, to));
+        // Wall off the middle of that line.
+        let (dx, dy) = (to.0 - from.0, to.1 - from.1);
+        let n = dx.abs().max(dy.abs());
+        let mid = ((from.1 + dy * (n / 2) / n) as usize) * w + (from.0 + dx * (n / 2) / n) as usize;
+        d.agar[mid] = false;
+        assert!(!sees(w, &d.agar, from, to));
+        let (_, b, _) = aim(&d, at);
+        assert_ne!(b, Some(first), "aimed through the wall");
+        if let Some(b) = b {
+            assert!(sees(w, &d.agar, from, block_cell(w, h, b as i64 % nbw, b as i64 / nbw)), "the new aim is seen");
+        }
+        d.agar[mid] = true;
+        assert_eq!(aim(&d, at).1, Some(first), "open again, the first aim");
     }
 
     #[test]

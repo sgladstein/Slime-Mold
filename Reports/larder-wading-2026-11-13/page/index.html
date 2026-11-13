@@ -82,7 +82,24 @@ code { font-size: 0.9em; background: var(--panel); border: 1px solid var(--line)
       <tr><td>Blast on the first slime</td><td class="n">58</td><td class="n">271</td><td class="n">4.7</td><td class="n">44</td></tr>
       <tr><td>Blast sunk one radius in</td><td class="n">47</td><td class="n">261</td><td class="n up">5.6</td><td class="n">50</td></tr>
     </table></div>
-    <p class="note">The squad fires rarely here: about 50 shots in 26 seconds from eight soldiers, which could fire about 200. A soldier aims at the densest slime it can see, and the engine finds that spot without checking for walls. Most likely the densest slime they see is the lobe on the far side of the right-hand wall, so the shot is called off for a blocked line and the slime in front of them goes unshot. That is a fix of its own, and it comes next. It also means this stand barely tests the sink.</p>
+    <p class="note">This squad fired rarely: about 50 shots in 26 seconds from eight soldiers that could fire about 200. A soldier aimed at the densest slime in sight, found without checking for walls, and here that was behind the right-hand wall, so the shot was called off and the slime in front went unshot. That is fixed below.</p>
+  </section>
+
+  <section>
+    <h2>Aiming only at slime it can see</h2>
+    <p>The same stand, sink on. On the left, the old aim, picked through the wall. On the right, a soldier aims at the densest slime it can see, with a clear line to it, on both engines. Turrets aim the same way.</p>
+    <figure>
+      <video src="aim.mp4" poster="aim.jpg" controls muted loop playsinline preload="metadata"></video>
+    </figure>
+    <div class="scroll"><table>
+      <tr><th>Standing still, 4 to 30 s</th><th>Shots</th><th>Killed</th><th>A shot</th><th>Health at 30 s</th></tr>
+      <tr><td>Before: aims through the wall</td><td class="n">47</td><td class="n">261</td><td class="n">5.6</td><td class="n">50</td></tr>
+      <tr><td>Now: aims it can see</td><td class="n up">198</td><td class="n up">486</td><td class="n">2.5</td><td class="n up">78</td></tr>
+    </table></div>
+    <ul>
+      <li><b>It fires at its full rate</b> and kills almost twice as many. It shoots the slime coming at it, which is thinner, so fewer a shot, and ends healthier because that slime never reaches it.</li>
+      <li><b>The sink still isn't tested here:</b> the thick body in the channel is just out of range (about 43 world units against 30). In this stand the sink makes no difference (2.6 a shot with it off). In a stand nearer the body it raised kills a shot from 4.7 to 5.3.</li>
+    </ul>
   </section>
 
   <section>

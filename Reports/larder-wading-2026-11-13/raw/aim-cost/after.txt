@@ -1,0 +1,2 @@
+seed 1: 35326 walkers at 240 s, 40 units on the body's edge (49736 candidate cells); squad::read 121.3 us a frame (3.03 us a unit); 40 aim, dense sum 599
+seed 2: 38169 walkers at 240 s, 40 units on the body's edge (54345 candidate cells); squad::read 120.3 us a frame (3.01 us a unit); 40 aim, dense sum 632

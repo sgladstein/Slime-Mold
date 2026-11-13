@@ -460,6 +460,7 @@ impl<W: World> Game<W> {
             self.harvested += food;
             self.pumped += food;
         }
+        // By mass, as the larder's steal: the bank's loss follows the body's cover, not its walker count.
         if up && bd.kind == Kind::Outpost && u.touching > 0 {
             let take = (r.steal * r.mass * u.touching as f32 * dt).min(self.bank.max(0.0));
             self.bank -= take;
@@ -467,6 +468,7 @@ impl<W: World> Game<W> {
         }
         let bd = &mut self.buildings[k];
         if u.touching > 0 {
+            // By mass (`BuildRules::drain` 1 x mass, #174): a building outlasts a thick body for a while; walls go "slowly" (owner, 11-11 15:24Z).
             bd.hp -= r.build.drain * r.mass * u.touching as f32 * dt;
             if bd.hp <= 0.0 {
                 bd.hp = 0.0;
