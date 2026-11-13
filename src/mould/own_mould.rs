@@ -345,6 +345,7 @@ impl Garden {
             .iter()
             .map(|u| {
                 let (cx, cy) = cell_of(w, h, u.x, u.y);
+                // Whole walkers, as `squad::read`; the game weighs them per rule.
                 let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32).sum();
                 let s2 = r2(u.sight) as i64;
                 let r = squad::isqrt(r2(u.sight)) + 2;

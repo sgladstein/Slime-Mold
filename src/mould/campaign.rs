@@ -404,6 +404,7 @@ impl Tracker {
                 if self.peak == 0 {
                     return Some(0.0);
                 }
+                // A share of the mould's own peak in whole walkers, so the same goal at any mass.
                 let peak = self.peak as f32;
                 Some(((peak - g.mould as f32) / (peak * (1.0 - f))).clamp(0.0, 1.0))
             }
@@ -476,6 +477,7 @@ impl Tracker {
         // 05:38Z).
         self.moulds.push(g.mould);
         let ago = self.moulds.len().saturating_sub(31);
+        // Whole walkers against whole walkers 30 s ago: mass-free.
         let shrinking = g.mould < self.moulds[ago];
         let banked = g.harvested > self.last.harvested + 1e-3;
         let rising = b > self.last.bar + 1e-4;

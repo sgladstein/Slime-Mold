@@ -265,7 +265,8 @@ then count mould mass, not walkers (agreed with the Larder thread,
 Drain and steal (larder_world.rs and buildings.rs) and `Rules::wade`
 multiply by it. (As built: `Rules::mass` since #164; the bite on a
 soldier counts whole walkers since #174, and wading since 2026-11-13,
-`Reports/larder-wading-2026-11-13.md`.) The score's size term (a ratio), the touching tests and the
+`Reports/larder-wading-2026-11-13.md`; every reader is marked whole, by
+mass or presence since the 11-13 audit, listed on the wiki's Larder page.) The score's size term (a ratio), the touching tests and the
 calm subtraction stay as they are. `killed` stays a stat. The reset sets the
 constant in the same commit as the new baseline, because a Fork-at-5k
 constant is not 1.0 on other maps or at the GPU's 100k. Sound's touch curve
