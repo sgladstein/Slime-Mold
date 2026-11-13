@@ -111,7 +111,16 @@ impl Tier {
             // or 16 touched 1-2 of 4; keep 0.9 or hunger 16 grew it to the
             // plain mould's size), with 3,700-12,900 walkers at 900 s
             // against plain's 11,400-13,600.
-            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1"), ("hunger_scent", "8"), ("hunger_at", "1"), ("sensor_offset", "18")],
+            // Then hunger 16 (11-12 23:00Z, campaign note on First contact,
+            // headless, after #143's wading: random wiped hunger 8 on 2 of 4,
+            // and it left home only when provoked). On First contact seeds
+            // 1-4 at a1f9865, hunger 16 reaches 1-4 more crystals for every
+            // hand (idle 2 of 4 reach a second, claim reaches 4 on 2 of 4),
+            // random's best bar falls 0.28 -> 0.19 and random loses its
+            // squad on 2 of 4 (0 before); strike 0.45 -> 0.33, idle 0.05
+            // both. It grows bigger, as the rejected arm said; that is now
+            // the point.
+            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1"), ("hunger_scent", "16"), ("hunger_at", "1"), ("sensor_offset", "18")],
             // Explorers alone (keep 0.9, step 1) starved to 250 walkers by
             // 60 s and let go of every crystal; the faster step and longer
             // reach keep a mesh on 14 of 23. Explore 400 steps held about
