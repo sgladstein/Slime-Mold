@@ -92,6 +92,8 @@ fn set(p: &mut BigParams, k: &str, v: &str) {
         "lone_upkeep" => p.lone_upkeep = f(),
         "lone_r" => p.lone_r = f() as u8,
         "tether_hold" => p.tether_hold = f(),
+        // Walker slots, as shape C's `capacity` 50,000 (11-13).
+        "capacity" => p.capacity = v.parse().unwrap_or_else(|_| panic!("{k}={v}")),
         _ => panic!("unknown key {k}"),
     }
 }

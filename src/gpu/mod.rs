@@ -355,6 +355,11 @@ pub struct Settings {
     pub energy_flow: f32,
     pub hunger_scent: f32,
     pub hunger_at: f32,
+    /// Lossy sharing (2026-11-13, `BigParams::flow_loss`): what a cell takes
+    /// in `egain` arrives x 1 - `flow_loss`, so food fades as it travels
+    /// and a part cut off from every crystal starves in about half a
+    /// minute instead of staying whole for minutes. 0 off.
+    pub flow_loss: f32,
     /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
     /// radius `body_r`): a walker with few others round it moves slower.
     pub lone_step: f32,
@@ -490,6 +495,7 @@ impl Settings {
             energy_flow: t.energy_flow,
             hunger_scent: t.hunger_scent,
             hunger_at: t.hunger_at,
+            flow_loss: t.flow_loss,
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
@@ -727,6 +733,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "energy_flow" => s.energy_flow = f()?,
         "hunger_scent" => s.hunger_scent = f()?,
         "hunger_at" => s.hunger_at = f()?,
+        "flow_loss" => s.flow_loss = f()?,
         "lone_step" => s.lone_step = f()?,
         "lone_floor" => s.lone_floor = f()?,
         "lone_r" | "body_r" => s.lone_r = f()? as u8,
@@ -851,6 +858,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         energy_flow: s.energy_flow,
         hunger_scent: s.hunger_scent,
         hunger_at: s.hunger_at,
+        flow_loss: s.flow_loss,
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,
@@ -1620,8 +1628,9 @@ impl Engine {
         assert_eq!(b.len(), STRIKE_AT, "Params rows before the strike row moved");
         b.extend([0u8; 32]);
         // Soil (WM3, 2026-11-12): the dish's own rates, as the CPU reads
-        // them from its `BigParams` (read only with `WORLD_SOIL`).
-        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, 0.0]));
+        // them from its `BigParams` (read only with `WORLD_SOIL`); the last
+        // word, spare until 11-13, is one body's lossy sharing (`eloss`).
+        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, s.flow_loss]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
         b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, s.fed_full]));
         assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");

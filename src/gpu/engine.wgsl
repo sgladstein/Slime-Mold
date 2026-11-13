@@ -97,8 +97,11 @@ struct Params {
     kar: f32, kcr: f32, kcs: f32, _l5: f32,
     // Soil (WM3, 2026-11-12; `BigParams::sand_keep` and on), read with
     // `world(SOIL)`: the trail on sand and on clay is x these after the
-    // spread, and on barren ground upkeep is x `barren_up`.
-    sand_keep: f32, clay_keep: f32, barren_up: f32, _s0: f32,
+    // spread, and on barren ground upkeep is x `barren_up`. The row's last
+    // word is one body's `eloss` (2026-11-13, `BigParams::flow_loss`; the
+    // row had a spare word, so Params keeps its size): in `egain` what a
+    // cell takes from a richer neighbour arrives x 1 - `eloss`.
+    sand_keep: f32, clay_keep: f32, barren_up: f32, eloss: f32,
     // One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
@@ -758,7 +761,11 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
 // its cell; `egain` moves each walker's energy by `eflow` x the sum over
 // the eight cells round its own that hold walkers of (their mean - its
 // cell's mean), over its cell's count, floored at 0. Pairs give and take
-// alike, so energy is kept (to the fixed point's rounding). Only
+// alike, so energy is kept (to the fixed point's rounding), unless
+// `eloss` (the CPU's `flow_loss`, 2026-11-13): then what a cell takes from
+// a richer neighbour arrives x 1 - `eloss` while the giver pays in full, so
+// food has a reach and a part cut off from every crystal holds little in
+// reserve (Reports/fed-mould-2026-11-13/README.md, *Cutting it off*). Only
 // dispatched with growth and `energy_flow` on.
 @compute @workgroup_size(256)
 fn esum(@builtin(global_invocation_id) gid: vec3<u32>) {
@@ -789,7 +796,10 @@ fn egain(@builtin(global_invocation_id) gid: vec3<u32>) {
         let nx = x + d.x; let ny = y + d.y;
         if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
         let j = u32(ny) * P.w + u32(nx);
-        if (atomicLoad(&body[c + j]) > 0u) { f += emean(j) - m; }
+        if (atomicLoad(&body[c + j]) > 0u) {
+            let df = emean(j) - m;
+            f += select(df, df * (1.0 - clamp(P.eloss, 0.0, 1.0)), df > 0.0);
+        }
     }
     energy[k] = max(energy[k] + P.eflow * f / f32(atomicLoad(&body[c + i])), 0.0);
 }

@@ -238,6 +238,8 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         // Food and the body (the one-body thread's switches, both engines).
         "scent_offset" => p.scent_offset = f()?,
         "energy_flow" => p.energy_flow = f()?,
+        // Lossy sharing: food fades as it travels (both engines since 11-13).
+        "flow_loss" => p.flow_loss = f()?,
         "hunger_scent" => p.hunger_scent = f()?,
         // Walker slots (a census plays the window's dense shapes on the CPU:
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).

@@ -101,6 +101,13 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   off) added walkers but not picture. At the peak its 50,000 slots fill
   at most 34.8% of a map's open cells at scale 2 (a test holds it to
   half); inside the body 66-83% of walkers are boxed in (59-66% before).
+  **Cut off from every crystal** (11-13), a part of it stays whole for
+  75 s or more and then dies at once, as its shared energy runs down
+  together (held ring cuts: 10 of 12 whole at 2:00 on the CPU; +75 s in
+  the window). `BigParams::flow_loss` 0.05 (food fades as it travels; on
+  the GPU too since 11-13, `eloss`) kills it in 35-50 s, still at once,
+  and leaves C about 30% smaller; 0.2 shrinks C to a fifth. Off; a blind
+  A/B awaits the owner ([fed mould, *Cutting it off*](../../Reports/fed-mould-2026-11-13/README.md)).
   The one-body page's 25,000-walker films ran with one walker a cell off
   (corrected 11-12 17:10Z); the 5,000-walker game and the CPU numbers here
   are unaffected ([slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)).
