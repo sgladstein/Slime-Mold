@@ -10,6 +10,12 @@ Page: https://claude.ai/artifact/HwcxYxZWdzPdttXgLXn2q1 (source
 `page/index.html`; films and posters in `page/`). It is a blind A/B, and
 the key is below, not on the page.
 
+**The owner's answer (2026-11-13 02:39Z): "Definitely film 1."** Film 1
+is C sharing its food, so that is where the owner saw the mould grow
+stronger from its crystals, and it stays the window's default. The
+cut-the-network rule, parked at 22:22Z because feeding did not read, can
+now be judged on this mould.
+
 ## Is it getting stronger? Yes, but you can't see it
 
 `examples/fedprobe.rs` runs shape C on the CPU race world (scale 2, 25,000
