@@ -1,0 +1,9 @@
+cutprobe race world scale 2 walkers 25000, grow 180 s, follow 10 s, 1 cuts a seed, seeds [4]
+arms: [("creep05", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("panic_creep", "0.5")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+creep05 4 grown | alive 49994 parts1% 1 lcs 1.00 lone 0.00 rms 59.2 | crystals eaten from 14 of 23
+cut creep05 4 0 at fine cell (308, 82)
+creep05 4 0 | 247 15 1 | 0.00 1.00 0.98 0.0 0.00 | 10 rejoin+fed 2 2.8 react -1 | 49994 67.31
+
+summary (mean over cuts)
+creep05: cuts 1 n0 247 lcs20 0.00 frag 1.00 lcs 0.98 rms20 0.0 compact20 0.00 life 10 moved 2.8 fates {"rejoin+fed": 1}

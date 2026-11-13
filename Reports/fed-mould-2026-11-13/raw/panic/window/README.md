@@ -15,6 +15,9 @@ shape C's new default (`panic` 2):
   cutsquad=365,264,150,4 centre=365,238,6`: a bigger ring and four soldiers.
 - `g1-p.log`: scene 1 with two soldiers (`cutsquad=365,256,150,2`), scared
   only, not filmed for the page.
+- `s2-p.log`, `s3-p.log`: the last stand with the lean creeping at half and
+  a quarter pace (`panic_creep=0.5`, `0.25`); `s2` is the page's right film.
+- `c9-p.log`: scene 1 with `panic_creep=0.5`, not filmed for the page.
 
 Earlier takes of the same: `c7-*`, `b7-*`, `p4-*` after #197 only;
 `c6-*`, `b6-*`, `p3-*` (no cut, every 5 s from 0:20 to 2:00) before #197,

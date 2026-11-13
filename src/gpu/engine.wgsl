@@ -77,7 +77,7 @@ struct Params {
     // squared radius in fine cells, `panic` the haste (0 off).
     per: u32, kinds: u32, conv_r: u32, panic_r2: u32,
     mreach: f32, mangle: f32, mturn: f32, mstep: f32,
-    mdep: f32, panic: f32, _k2: f32, _k3: f32,
+    mdep: f32, panic: f32, panic_creep: f32, _k3: f32,
     sets: array<Set, 4>,
     // The life cycle (2026-11-11, `BigParams::spore_rate` and below: the
     // tiers' Sporer, Sleeper and Swarmer, Reports/mould-tiers-2026-11-11.md).
@@ -519,8 +519,8 @@ fn pow0(v: f32, e: f32) -> f32 {
 // nearest unit of the squad within `panic_r2` (ties to the first), else
 // for the nearest crystal with more than `PANIC_LEFT` of its charge left;
 // whole cells, so both engines pick the same. For `wclock`'s lean (bits
-// 25-31) after the lag runs out it steers there at its own pace (haste
-// 1), then `panic` times as fast. (x, y, haste); (-1, -1, 0) when calm.
+// 25-31) after the lag runs out it steers there at `panic_creep` of its
+// pace (the CPU clamps it above 0), then `panic` times as fast. (x, y, haste); (-1, -1, 0) when calm.
 const PANIC_LEFT: f32 = 0.02;
 fn panic_to(k: u32, here: u32) -> vec3<f32> {
     if (P.panic <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
@@ -530,7 +530,7 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
     let lag = P.wclock & 0xFFFFu;
     let lean = (P.wclock >> 25u) & 0x7Fu;
     var haste = 0.0;
-    if (age > lag + lean) { haste = P.panic; } else if (age > lag) { haste = 1.0; }
+    if (age > lag + lean) { haste = P.panic; } else if (age > lag) { haste = P.panic_creep; }
     if (haste <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
     let cx = i32(here % P.w);
     let cy = i32(here / P.w);

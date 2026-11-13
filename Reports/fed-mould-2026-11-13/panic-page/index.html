@@ -35,6 +35,7 @@ figure video { width: 100%; max-width: 100%; border-radius: 4px; border: 1px sol
 .charge video { aspect-ratio: 560 / 480; }
 .bolt video { aspect-ratio: 720 / 480; }
 .stand video { aspect-ratio: 540 / 480; }
+.stand .pair { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .tag { font-family: var(--display); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
 .tag.scared { color: var(--red); }
 .scroll { overflow-x: auto; min-width: 0; }
@@ -52,13 +53,15 @@ code { font-size: 0.9em; }
   <header>
     <span class="tag">Shape C · cut off and scared</span>
     <h1>A cut-off part panics</h1>
-    <p class="lede">You asked for a cut-off part to "act more like a scared animal. Either run away back to the main body or go right for the soliders. It should be more reckless", with no stronger attack. A part that has heard no news of food for 5 seconds now heads straight for the nearest soldier or building within 20 cells, or else the nearest crystal that still has food. For the first 1.5 seconds it goes at its own pace, which is the warning you can see. Then it runs at twice its pace. Its bite is the same as before.</p>
+    <p class="lede">You asked for a cut-off part to "act more like a scared animal. Either run away back to the main body or go right for the soliders. It should be more reckless", with no stronger attack. A part that has heard no news of food for 5 seconds now heads straight for the nearest soldier or building within 20 cells, or else the nearest crystal that still has food. For the first 1.5 seconds it creeps toward its target at half its pace, which is the warning you can see. Then it runs at twice its pace. Its bite is the same as before.</p>
+    <p class="note">The half-pace creep is new since scenes 1 and 2 were filmed. In those films the warning was at the piece's own pace, which is already faster than a soldier walks. Scene 3 shows both versions.</p>
   </header>
 
   <section class="ask">
     <h2>What to look at</h2>
     <ul>
       <li>Does the charge read as a scared animal going for the soldiers? Scene 3 is a bigger piece that gets through.</li>
+      <li>In scene 3, do you see the charge coming in time with the creep (right) and not without it (middle)?</li>
       <li>It is on in shape C now, so the window plays it. <code>larder-world -- panic=0</code> plays C without it.</li>
     </ul>
   </section>
@@ -107,31 +110,38 @@ code { font-size: 0.9em; }
 
   <section class="stand">
     <h2>3. A bigger piece: a last stand</h2>
-    <p class="note">The same round with a bigger ring (radius 32 against 24), so more tube is cut off, and four soldiers set down inside it, 24 cells below its middle. Left is today's C; right is the scared rule. Same frame rate as above.</p>
+    <p class="note">The same round with a bigger ring (radius 32 against 24), so more tube is cut off, and four soldiers set down inside it, 24 cells below its middle. Left is C without the rule. Middle is the rule as first built, with the warning at the piece's own pace. Right is the rule now, which creeps at half pace for the warning. Same frame rate as above.</p>
     <div class="pair">
       <figure>
-        <span class="tag">Today</span>
+        <span class="tag">Without the rule</span>
         <video src="stand-today.mp4" poster="stand-today.jpg" controls loop muted playsinline preload="metadata"></video>
       </figure>
       <figure>
-        <span class="tag scared">Scared</span>
+        <span class="tag scared">Scared, own pace</span>
         <video src="stand-scared.mp4" poster="stand-scared.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+      <figure>
+        <span class="tag scared">Scared, creeps first (now)</span>
+        <video src="stand-creep.mp4" poster="stand-creep.jpg" controls loop muted playsinline preload="metadata"></video>
       </figure>
     </div>
     <div class="scroll"><table>
       <tr><th>After the cut</th><th>0 s</th><th>5 s</th><th>6 s</th><th>7 s</th><th>8 s</th><th>10 s</th><th>20 s</th></tr>
-      <tr><td>Today: walkers in the ring</td><td>228</td><td>243</td><td>243</td><td>240</td><td>237</td><td>231</td><td>194</td></tr>
-      <tr><td>Today: soldiers</td><td>33</td><td>33</td><td>33</td><td>33</td><td>33</td><td>33</td><td>33</td></tr>
-      <tr><td>Scared: walkers in the ring</td><td>163</td><td>176</td><td>153</td><td>95</td><td>100</td><td>98</td><td>81</td></tr>
-      <tr><td>Scared: soldiers</td><td>30</td><td>30</td><td>30</td><td>28</td><td>26</td><td>26</td><td>26</td></tr>
+      <tr><td>Without: walkers in the ring</td><td>228</td><td>243</td><td>243</td><td>240</td><td>237</td><td>231</td><td>194</td></tr>
+      <tr><td>Without: soldiers</td><td>33</td><td>33</td><td>33</td><td>33</td><td>33</td><td>33</td><td>33</td></tr>
+      <tr><td>Own pace: walkers in the ring</td><td>163</td><td>176</td><td>153</td><td>95</td><td>100</td><td>98</td><td>81</td></tr>
+      <tr><td>Own pace: soldiers</td><td>30</td><td>30</td><td>30</td><td>28</td><td>26</td><td>26</td><td>26</td></tr>
+      <tr><td>Creeps first: walkers in the ring</td><td>245</td><td>257</td><td>257</td><td>214</td><td>120</td><td>26</td><td>17</td></tr>
+      <tr><td>Creeps first: soldiers</td><td>32</td><td>32</td><td>32</td><td>32</td><td>31</td><td>29</td><td>28</td></tr>
     </table></div>
-    <p class="note">The scared piece pulls together at about 5 seconds and throws itself down at the soldiers. They shoot about 60 walkers out of it as it comes, but the rest lands on them, and all four die within 2 seconds. What is left spreads round the inside of the ring and lives on. Today's piece stays on its tube, and the four soldiers live. With two soldiers in the smaller ring of scene 1 (not filmed), the 112-walker piece also got through and killed both by 6 seconds.</p>
+    <p class="note">At its own pace (middle), the scared piece pulls together at about 5 seconds and throws itself down at the soldiers. They shoot about 60 walkers out of it as it comes, but the rest lands on them, and all four die within 2 seconds. What is left spreads round the inside of the ring and lives on. From the first visible move to the landing is about a second and a half. Without the rule the piece stays on its tube, and the four soldiers live.</p>
+    <p class="note">The game designer's review: at that speed "it was over before you looked", when it should be "you saw it coming, and lost because you stayed". A cut-off walker heading straight goes 15 cells a second and a soldier 10, so even the warning at its own pace was a charge. With the half-pace creep (right), the piece pulls into a blob from about 4 seconds and slides at the soldiers for about 3 seconds before it lands. Held in place, they shoot most of it (245 walkers down to 26 by 10 seconds) and die one by one over 4 seconds. At a quarter pace (not shown) the piece barely moved before it bolted, so the warning hardly showed. (At its own pace, two soldiers in scene 1's smaller ring also lost to its 112-walker piece, both dead by 6 seconds; not filmed.)</p>
   </section>
 
   <section>
     <h2>How to beat it</h2>
     <ul>
-      <li><strong>A charge:</strong> shoot it before it closes, with enough guns for its size. Four soldiers shot a 112-walker piece down and lost one of their own. Two soldiers against the same piece both died, and four against a 163-walker piece all died.</li>
+      <li><strong>A charge:</strong> shoot it before it closes, with enough guns for its size. With the first rule, four soldiers shot a 112-walker piece down and lost one of their own; two against the same piece both died, and four against a 163-walker piece all died. With the creep, four held soldiers shot a 245-walker piece down to 26 but died one by one; the 3 seconds of creep are the window to pull back or fortify (not tested yet; a soldier walks faster than the creep, slower than the bolt).</li>
       <li><strong>A run for a crystal:</strong> a wall in its way stops it, and it bites the wall. A squad on its route makes it charge instead. If it reaches the crystal, it feeds, calms and regrows there.</li>
     </ul>
   </section>
@@ -151,7 +161,8 @@ code { font-size: 0.9em; }
   <section>
     <h2>How these were made</h2>
     <ul>
-      <li>The window's own picture, on software Vulkan, all six films on today's main (after the wading change and soldiers aiming only at slime they can see; each arm plays the same round in every scene up to the cut): <code>larder-world look=DIR hand=farm seed=1 cut=150,365,240,24 cutsquad=365,256,150,4</code> (scene 1), <code>cut=150,386,239,22,8,16</code> (scene 2) and <code>cut=150,365,240,32 cutsquad=365,264,150,4</code> (scene 3), each with <code>panic=0</code> (today) and the new default.</li>
+      <li>The window's own picture, on software Vulkan, all six films on today's main (after the wading change and soldiers aiming only at slime they can see; each arm plays the same round in every scene up to the cut): <code>larder-world look=DIR hand=farm seed=1 cut=150,365,240,24 cutsquad=365,256,150,4</code> (scene 1), <code>cut=150,386,239,22,8,16</code> (scene 2) and <code>cut=150,365,240,32 cutsquad=365,264,150,4</code> (scene 3), each with <code>panic=0</code> (today) and the rule. Scenes 1 and 2 and scene 3's middle film used the first rule (<code>panic_creep=1</code>); scene 3's right film used the half-pace creep, the default now.</li>
+      <li>The creep acts before the cut too, so its round differs a little by 2:30, and its cut-off piece is bigger (245 walkers against 163). Re-shot with the creep, scene 1's piece was thinner in that round and was shot away as it crept, with one soldier lost (counts in the report).</li>
       <li>The scenes are staged: the ring and the soldiers' places are set by the command, not played.</li>
       <li>The rule acts before the cut too, so each pair's rounds differ a little by 2:30: the mould has 18,623 walkers today against 18,143 scared.</li>
     </ul>

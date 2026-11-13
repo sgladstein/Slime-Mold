@@ -3310,9 +3310,10 @@ mod tests {
             // the news runs without withering, and the stale half runs for
             // the nearest crystal with food left, twice as fast, by the way
             // its sensors point; a quarter whose news is 5 steps old leans
-            // (past the lag of 4, within its lean of 2: steers there at its
-            // own pace). The squad's charge is in the squad twin.
-            ("panic: cut-off walkers run for a crystal", Settings { panic: 2.0, panic_lean: 2, wither_lag: 4, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            // (past the lag of 4, within its lean of 2: steers there at
+            // half its pace, `panic_creep`). The squad's charge is in the
+            // squad twin.
+            ("panic: cut-off walkers run for a crystal", Settings { panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3360,7 +3361,8 @@ mod tests {
             }
             // The walkers that panic in the tick, and where the living were.
             let scared = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panics(k)).count();
-            let leaning = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panic_haste(k) == 1.0).count();
+            let creep = cpu.p.panic_creep.max(slime_mould::mould::big::PANIC_CREEP_MIN);
+            let leaning = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panic_haste(k) == creep).count();
             let start = cpu.walkers.clone();
             let n = cpu.walkers.len();
             let was: Vec<bool> = (0..n).map(|k| cpu.lives(k)).collect();
@@ -3606,7 +3608,7 @@ mod tests {
         // And a cut-off part's panic (2026-11-13, the slime-enemy thread):
         // half the walkers' news is stale (below), and those within 10 dish
         // cells of a unit charge it, the rest run for a crystal.
-        let scared = Settings { panic: 2.0, panic_r: 10.0, panic_lean: 2, wither_lag: 4, ..base.clone() };
+        let scared = Settings { panic: 2.0, panic_r: 10.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, ..base.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).

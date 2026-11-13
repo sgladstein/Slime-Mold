@@ -384,6 +384,8 @@ pub struct Settings {
     /// for its target at its own pace before it bolts
     /// (`BigParams::panic_lean`, at most 127).
     pub panic_lean: u32,
+    /// The lean's pace, times a walker's step (`BigParams::panic_creep`).
+    pub panic_creep: f32,
     /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
     /// radius `body_r`): a walker with few others round it moves slower.
     pub lone_step: f32,
@@ -527,6 +529,7 @@ impl Settings {
             panic: t.panic,
             panic_r: t.panic_r,
             panic_lean: t.panic_lean,
+            panic_creep: t.panic_creep,
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
@@ -772,6 +775,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "panic" => s.panic = f()?,
         "panic_r" => s.panic_r = f()?,
         "panic_lean" => s.panic_lean = int()?.min(127),
+        "panic_creep" => s.panic_creep = f()?,
         "lone_step" => s.lone_step = f()?,
         "lone_floor" => s.lone_floor = f()?,
         "lone_r" | "body_r" => s.lone_r = f()? as u8,
@@ -904,6 +908,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         panic: s.panic,
         panic_r: s.panic_r,
         panic_lean: s.panic_lean,
+        panic_creep: s.panic_creep,
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,
@@ -1673,12 +1678,13 @@ impl Engine {
         // A cut-off part's panic borrows the row's spare words 460 (the
         // charge's squared radius, fine cells, as the CPU's
         // `panic_target`) and 484 (the haste; 0 off, and off without
-        // growth, as no news runs then): the slime-enemy thread, 11-13.
+        // growth, as no news runs then), and 488 the lean's pace
+        // (`panic_creep`, clamped as the CPU's): the slime-enemy thread, 11-13.
         let pr = s.panic_r * self.dish.p.scale as f32;
         let panic_r2 = (pr.max(0.0) * pr.max(0.0)).floor() as u32;
         let panic = if self.grows { s.panic } else { 0.0 };
         b.extend(u32_bytes(&[!sets.is_empty() as u32, self.kinds, s.convert_r, panic_r2]));
-        b.extend(f32_bytes(&[s.mix_reach, s.mix_angle, s.mix_turn, s.mix_step, s.mix_deposit, panic, 0.0, 0.0]));
+        b.extend(f32_bytes(&[s.mix_reach, s.mix_angle, s.mix_turn, s.mix_step, s.mix_deposit, panic, s.panic_creep.max(crate::mould::big::PANIC_CREEP_MIN), 0.0]));
         for sp in 0..MAX_SPECIES as usize {
             let Some(t) = sets.get(sp) else {
                 b.extend([0u8; 48]);

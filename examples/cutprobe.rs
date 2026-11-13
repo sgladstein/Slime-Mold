@@ -67,6 +67,7 @@ fn set(p: &mut BigParams, k: &str, v: &str) {
         "panic" => p.panic = f(),
         "panic_r" => p.panic_r = f(),
         "panic_lean" => p.panic_lean = f() as u32,
+        "panic_creep" => p.panic_creep = f(),
         "blocked_keep" => p.blocked_keep = f() != 0.0,
         "blocked_reset" => p.blocked_reset = f(),
         "blocked_retry" => p.blocked_retry = f() as u8,
