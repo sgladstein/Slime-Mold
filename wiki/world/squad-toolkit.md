@@ -2,9 +2,34 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-12T22:35Z
-sources: [Reports/rounds-2026-11-12.md, Reports/flashes-of-chaos-guns-2026-11-12.md, Reports/squad-toolkit-2026-11-12.md, Reports/squad-toolkit-round2-2026-11-12.md, Reports/larder-world-roadmap-2026-11-11.md]
-code: [squad::Burst, World::burst, Engine::burst, Kit, KitRules, KitRules::carry_max, Kit::restock, Soldier::load, BigParams::germ_resist, Tool, BigParams::scorch_keep, BigParams::scorch_full, BigParams::sick_upkeep, BigParams::gas_death, BigDish::scorch_disc, BigDish::gas, BigDish::gassed_near, Soldier::smell, World::calm]
+updated: 2026-11-13
+sources:
+  - Reports/flashes-of-chaos-guns-2026-11-12.md
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/rounds-2026-11-12.md
+  - Reports/squad-toolkit-2026-11-12.md
+  - Reports/squad-toolkit-round2-2026-11-12.md
+code:
+  - BigDish::gas
+  - BigDish::gassed_near
+  - BigDish::scorch_disc
+  - BigParams::gas_death
+  - BigParams::germ_resist
+  - BigParams::scorch_full
+  - BigParams::scorch_keep
+  - BigParams::sick_upkeep
+  - Burst
+  - Engine::burst
+  - Kit
+  - Kit::restock
+  - KitRules
+  - KitRules::carry_max
+  - Soldier::load
+  - Soldier::smell
+  - Tool
+  - World::burst
+  - World::calm
+  - squad::Burst
 ---
 
 # The squad toolkit

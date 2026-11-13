@@ -1,0 +1,149 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+./stand-b0/fork-stand-022s-all.png
+./stand-b0/fork-stand-022s-near.png
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.050 ms a frame
+  t 22 s: mould 25067, soldiers 4, bank 1872, harvested 0, shots 88, killed 710, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-22500ms-all.png
+./stand-b0/fork-stand-22500ms-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.040 ms a frame
+  t 23 s: mould 25067, soldiers 4, bank 1869, harvested 0, shots 92, killed 738, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-023s-all.png
+./stand-b0/fork-stand-023s-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.038 ms a frame
+  t 23 s: mould 25102, soldiers 4, bank 1866, harvested 0, shots 92, killed 738, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-23500ms-all.png
+./stand-b0/fork-stand-23500ms-near.png
+  CPU: ground field 1.95 ms (once a game second), model and HUD 0.038 ms a frame
+  t 24 s: mould 25102, soldiers 4, bank 1863, harvested 0, shots 96, killed 777, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-024s-all.png
+./stand-b0/fork-stand-024s-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.038 ms a frame
+  t 24 s: mould 25168, soldiers 4, bank 1860, harvested 0, shots 96, killed 777, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-24500ms-all.png
+./stand-b0/fork-stand-24500ms-near.png
+  CPU: ground field 1.85 ms (once a game second), model and HUD 0.043 ms a frame
+  t 25 s: mould 25168, soldiers 4, bank 1858, harvested 0, shots 100, killed 807, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-025s-all.png
+./stand-b0/fork-stand-025s-near.png
+  CPU: ground field 1.93 ms (once a game second), model and HUD 0.037 ms a frame
+  t 25 s: mould 25226, soldiers 4, bank 1856, harvested 0, shots 100, killed 807, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-25500ms-all.png
+./stand-b0/fork-stand-25500ms-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.041 ms a frame
+  t 26 s: mould 25226, soldiers 4, bank 1853, harvested 0, shots 104, killed 845, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-026s-all.png
+./stand-b0/fork-stand-026s-near.png
+  CPU: ground field 1.86 ms (once a game second), model and HUD 0.038 ms a frame
+  t 26 s: mould 25286, soldiers 4, bank 1850, harvested 0, shots 104, killed 845, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-26500ms-all.png
+./stand-b0/fork-stand-26500ms-near.png
+  CPU: ground field 1.75 ms (once a game second), model and HUD 0.040 ms a frame
+  t 27 s: mould 25286, soldiers 4, bank 1847, harvested 0, shots 108, killed 866, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-027s-all.png
+./stand-b0/fork-stand-027s-near.png
+  CPU: ground field 2.05 ms (once a game second), model and HUD 0.038 ms a frame
+  t 27 s: mould 25361, soldiers 4, bank 1845, harvested 0, shots 108, killed 866, took 0%, crystals left 0.998; squad at 258.0,116.4
+./stand-b0/fork-stand-27500ms-all.png
+./stand-b0/fork-stand-27500ms-near.png
+  CPU: ground field 2.03 ms (once a game second), model and HUD 0.038 ms a frame
+  t 28 s: mould 25361, soldiers 4, bank 1842, harvested 0, shots 112, killed 902, took 0%, crystals left 0.997; squad at 258.0,116.4
+./stand-b0/fork-stand-028s-all.png
+./stand-b0/fork-stand-028s-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.039 ms a frame
+  t 28 s: mould 25433, soldiers 4, bank 1839, harvested 0, shots 112, killed 902, took 0%, crystals left 0.997; squad at 258.0,116.4
+./stand-b0/fork-stand-28500ms-all.png
+./stand-b0/fork-stand-28500ms-near.png
+  CPU: ground field 1.84 ms (once a game second), model and HUD 0.038 ms a frame
+  t 29 s: mould 25433, soldiers 4, bank 1836, harvested 0, shots 116, killed 928, took 0%, crystals left 0.997; squad at 258.0,116.4
+./stand-b0/fork-stand-029s-all.png
+./stand-b0/fork-stand-029s-near.png
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.038 ms a frame
+  t 29 s: mould 25503, soldiers 4, bank 1833, harvested 0, shots 116, killed 928, took 0%, crystals left 0.997; squad at 258.0,116.4
+./stand-b0/fork-stand-29500ms-all.png
+./stand-b0/fork-stand-29500ms-near.png
+  CPU: ground field 1.88 ms (once a game second), model and HUD 0.038 ms a frame
+  t 30 s: mould 25503, soldiers 4, bank 1831, harvested 0, shots 120, killed 962, took 0%, crystals left 0.997; squad at 258.0,116.4
+./stand-b0/fork-stand-030s-all.png
+./stand-b0/fork-stand-030s-near.png
+  CPU: ground field 2.21 ms (once a game second), model and HUD 0.039 ms a frame
+  t 30 s: mould 25581, soldiers 4, bank 1828, harvested 0, shots 120, killed 962, took 0%, crystals left 0.997; squad at 258.0,116.4
+./stand-b0/fork-stand-30500ms-all.png
+./stand-b0/fork-stand-30500ms-near.png
+  CPU: ground field 1.86 ms (once a game second), model and HUD 0.040 ms a frame
+  t 31 s: mould 25581, soldiers 4, bank 1826, harvested 0, shots 124, killed 980, took 0%, crystals left 0.997; squad at 257.8,116.7
+./stand-b0/fork-stand-031s-all.png
+./stand-b0/fork-stand-031s-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.037 ms a frame
+  t 31 s: mould 25681, soldiers 4, bank 1824, harvested 0, shots 124, killed 980, took 0%, crystals left 0.997; squad at 257.8,117.0
+./stand-b0/fork-stand-31500ms-all.png
+./stand-b0/fork-stand-31500ms-near.png
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.036 ms a frame
+  t 32 s: mould 25681, soldiers 4, bank 1821, harvested 0, shots 128, killed 997, took 0%, crystals left 0.997; squad at 257.8,117.0
+./stand-b0/fork-stand-032s-all.png
+./stand-b0/fork-stand-032s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.036 ms a frame
+  t 32 s: mould 25771, soldiers 4, bank 1819, harvested 0, shots 128, killed 997, took 0%, crystals left 0.997; squad at 257.8,117.0
+./stand-b0/fork-stand-32500ms-all.png
+./stand-b0/fork-stand-32500ms-near.png
+  CPU: ground field 5.69 ms (once a game second), model and HUD 0.040 ms a frame
+  t 33 s: mould 25771, soldiers 4, bank 1816, harvested 0, shots 132, killed 1015, took 0%, crystals left 0.997; squad at 257.8,117.0
+./stand-b0/fork-stand-033s-all.png
+./stand-b0/fork-stand-033s-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.042 ms a frame
+  t 33 s: mould 25838, soldiers 4, bank 1814, harvested 0, shots 132, killed 1015, took 0%, crystals left 0.997; squad at 257.8,117.0
+./stand-b0/fork-stand-33500ms-all.png
+./stand-b0/fork-stand-33500ms-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.038 ms a frame
+  t 34 s: mould 25838, soldiers 4, bank 1812, harvested 0, shots 136, killed 1027, took 0%, crystals left 0.997; squad at 257.8,117.0
+./stand-b0/fork-stand-034s-all.png
+./stand-b0/fork-stand-034s-near.png
+  CPU: ground field 1.62 ms (once a game second), model and HUD 0.039 ms a frame
+  t 34 s: mould 25953, soldiers 4, bank 1810, harvested 0, shots 136, killed 1027, took 0%, crystals left 0.997; squad at 257.8,117.0
+./stand-b0/fork-stand-34500ms-all.png
+./stand-b0/fork-stand-34500ms-near.png
+  CPU: ground field 1.48 ms (once a game second), model and HUD 0.037 ms a frame
+  t 35 s: mould 25953, soldiers 4, bank 1807, harvested 0, shots 140, killed 1036, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-035s-all.png
+./stand-b0/fork-stand-035s-near.png
+  CPU: ground field 1.56 ms (once a game second), model and HUD 0.239 ms a frame
+  t 35 s: mould 26072, soldiers 4, bank 1805, harvested 0, shots 140, killed 1036, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-35500ms-all.png
+./stand-b0/fork-stand-35500ms-near.png
+  CPU: ground field 1.55 ms (once a game second), model and HUD 0.037 ms a frame
+  t 36 s: mould 26072, soldiers 4, bank 1803, harvested 0, shots 144, killed 1055, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-036s-all.png
+./stand-b0/fork-stand-036s-near.png
+  CPU: ground field 5.54 ms (once a game second), model and HUD 0.036 ms a frame
+  t 36 s: mould 26145, soldiers 4, bank 1801, harvested 0, shots 144, killed 1055, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-36500ms-all.png
+./stand-b0/fork-stand-36500ms-near.png
+  CPU: ground field 1.57 ms (once a game second), model and HUD 0.037 ms a frame
+  t 37 s: mould 26145, soldiers 4, bank 1798, harvested 0, shots 148, killed 1069, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-037s-all.png
+./stand-b0/fork-stand-037s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.036 ms a frame
+  t 37 s: mould 26278, soldiers 4, bank 1796, harvested 0, shots 148, killed 1069, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-37500ms-all.png
+./stand-b0/fork-stand-37500ms-near.png
+  CPU: ground field 5.67 ms (once a game second), model and HUD 0.040 ms a frame
+  t 38 s: mould 26278, soldiers 4, bank 1794, harvested 0, shots 152, killed 1081, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-038s-all.png
+./stand-b0/fork-stand-038s-near.png
+  CPU: ground field 1.60 ms (once a game second), model and HUD 0.039 ms a frame
+  t 38 s: mould 26366, soldiers 4, bank 1792, harvested 0, shots 152, killed 1081, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-38500ms-all.png
+./stand-b0/fork-stand-38500ms-near.png
+  CPU: ground field 6.65 ms (once a game second), model and HUD 0.041 ms a frame
+  t 39 s: mould 26366, soldiers 4, bank 1790, harvested 0, shots 156, killed 1093, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-039s-all.png
+./stand-b0/fork-stand-039s-near.png
+  CPU: ground field 5.60 ms (once a game second), model and HUD 0.038 ms a frame
+  t 39 s: mould 26474, soldiers 4, bank 1788, harvested 0, shots 156, killed 1093, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-39500ms-all.png
+./stand-b0/fork-stand-39500ms-near.png
+  CPU: ground field 1.45 ms (once a game second), model and HUD 0.038 ms a frame
+  t 40 s: mould 26474, soldiers 4, bank 1785, harvested 0, shots 160, killed 1104, took 0%, crystals left 0.996; squad at 257.8,117.0
+./stand-b0/fork-stand-040s-all.png
+./stand-b0/fork-stand-040s-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.038 ms a frame
+  t 40 s: mould 26594, soldiers 4, bank 1783, harvested 0, shots 160, killed 1104, took 0%, crystals left 0.995; squad at 257.8,117.0

@@ -59,7 +59,11 @@ struct Params {
     // hit lays with the alarm field on (`squad::SHOT_ALARM`).
     nunits: u32, nshots: u32, slime: f32, shot_alarm: f32,
     // The look's hits (`Engine::set_hits`, the world look's stand-in fight).
-    nhits: u32, _h0: u32, _h1: u32, _h2: u32,
+    // The player's own mould (`own_mould`, world bit GARDEN): its tend
+    // entries this frame and where they start in `SQ.path` (`squad::TEND`).
+    // Then the shots' sink (`squad::Frame::sink`, squared; 0 off): a hit's
+    // blast sinks up to floor(`shot_sink` x its strike's r2) along its line.
+    nhits: u32, ntend: u32, tend_at: u32, shot_sink: f32,
     // The species block (2026-11-11, the creature thread's species on the
     // GPU): whether each species uses its own `sets` entry (`per`), the
     // walker kinds (`mix_share`: 2 with the mix on, a walker's kind in bit
@@ -98,8 +102,10 @@ struct Params {
     // One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
-    // hungry walker weighs the scent 1 + `hscent` x its hunger.
-    eflow: f32, hscent: f32, hat: f32, _b0: f32,
+    // hungry walker weighs the scent 1 + `hscent` x its hunger. A walker
+    // with `fed_full` energy or more steps and breeds under the crowd limit
+    // + `fed_crowd` (`BigParams::fed_crowd`, the lone row's last; `crowd_for`).
+    eflow: f32, hscent: f32, hat: f32, fed_full: f32,
     // The crater (2026-11-12, `BigParams::scorch_keep`, `scorch_full`;
     // `squad::Frame::crater`): while a cell's countdown runs, its trail is
     // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
@@ -111,7 +117,7 @@ struct Params {
     // Lone step (2026-11-12, `BigParams::lone_step`): a walker with n other
     // walkers in the square of radius `lone_r` round its cell, as the step
     // began, steps x clamp(n / `lone`, `lfloor`, 1). 0 off.
-    lone: f32, lfloor: f32, lone_r: u32, _l0: u32,
+    lone: f32, lfloor: f32, lone_r: u32, fed_crowd: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -263,6 +269,15 @@ fn conv_r() -> u32 { if (OUTSIDE) { return P.conv_r; } return 0u; }
 // With `per` the globals `explore`, `bshare` and `graze_w` are switches
 // only (on if any species has one).
 fn crowd_of(sp: u32) -> u32 { if (per()) { return P.sets[sp].crowd; } return P.crowd; }
+// Walker k's crowd limit where it steps or breeds: its species' (`sp`), or
+// that + `fed_crowd` while it holds `fed_full` energy or more (the CPU's
+// `fed_crowd`; a species with no limit keeps none). Claims still follow the
+// species' own limit (`walk`, `born`), as on the CPU.
+fn crowd_for(k: u32, sp: u32) -> u32 {
+    let c = crowd_of(sp);
+    if (c > 0u && P.fed_crowd > 0u && growth() && energy[k] >= P.fed_full) { return c + P.fed_crowd; }
+    return c;
+}
 fn deposit_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].deposit; } return P.deposit; }
 fn keep_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].keep; } return P.keep; }
 fn bshare_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].bdep; } return bshare(); }
@@ -312,12 +327,32 @@ const WETS: u32 = 2u;
 const WALLS: u32 = 4u;
 const TERRAIN: u32 = 8u;
 const SOIL: u32 = 16u;
+// The gardeners' world (`own_mould`, 2026-11-12): the player's own mould is
+// species `OWN_SP`, and the squad's passes see the enemy alone: a shot stops
+// at the enemy's trail (the trail less the player's), strikes only the
+// enemy's walkers and clears only its trail, and a unit's reads count the
+// enemy's walkers (`occ` less the player's, counted into `gcount`, which
+// only a grazing world uses: `GpuWorld::garden` refuses one). Eating runs
+// on every cell, so charge the gardeners spread on open ground is eaten as
+// the CPU's eat does (on the CPU any cell's charge is food).
+const GARDEN: u32 = 32u;
+const OWN_SP: u32 = 3u;
 const PILE_BITS: u32 = 0xFFu;
 const WET: u32 = 0x100u;
 const WALL: u32 = 0x200u;
 const SCENT_WALL: u32 = 0x400u;
 const ROCK: u32 = 0x800u;
 fn world(b: u32) -> bool { return (P.world & b) != 0u; }
+fn garden() -> bool { return world(GARDEN); }
+// The enemy's trail and walkers on cell i (all of them outside a garden).
+fn enemy_trail(i: u32) -> f32 {
+    if (garden()) { return trail_in[i] - sp_in[OWN_SP * P.w * P.h + i]; }
+    return trail_in[i];
+}
+fn enemy_occ(i: u32) -> u32 {
+    if (garden()) { return atomicLoad(&occ[i]) - atomicLoad(&gcount[i]); }
+    return atomicLoad(&occ[i]);
+}
 // A cell's soil kind (the ground word's bits 12-15; big.rs `SOIL_SAND`
 // and on), 0 (plain) with the dish's soil off.
 const SOIL_SAND: u32 = 1u;
@@ -590,7 +625,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (there != NONE) {
         if (there == here) {
             aim = there;
-        } else if (agar[there] != 0u && (crowd_of(sp) == 0u || atomicLoad(&occ[there]) < crowd_of(sp))) {
+        } else if (agar[there] != 0u && (crowd_for(k, sp) == 0u || atomicLoad(&occ[there]) < crowd_for(k, sp))) {
             aim = there;
             if (crowd_of(sp) > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
         }
@@ -789,8 +824,9 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (!ordinary(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
     let at = birth_spot(k, t);
     let j = cell(at.x, at.y);
-    // The parent's species' crowd limit (`crowd_of`).
-    let cr = crowd_of(species_of(k));
+    // The parent's species' crowd limit, + `fed_crowd` if it is fed
+    // (`crowd_for`).
+    let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3).
     if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN) { return; }
     if (cr > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }
@@ -1404,15 +1440,21 @@ fn walls(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn eat(@builtin(global_invocation_id) gid: vec3<u32>) {
     let q = gid.x;
-    if (q >= P.npc) { return; }
-    let i = pcell[q];
+    // In a garden every cell (a thread each), else the crystal cells.
+    var i = q;
+    if (garden()) {
+        if (q >= P.w * P.h) { return; }
+    } else {
+        if (q >= P.npc) { return; }
+        i = pcell[q];
+    }
     var t = 0.0;
     let n = atomicLoad(&occ[i]);
     // With the life cycle a dormant walker counts in n, as on the CPU, but
     // takes nothing (only ordinary walkers eat).
     var eaters = n;
     if (cycles()) { eaters = n - atomicLoad(&gdep[2u * P.w * P.h + i]); }
-    if ((ground[i] & PILE_BITS) != 0u && n > 0u) {
+    if (((ground[i] & PILE_BITS) != 0u || garden()) && n > 0u) {
         var c = charge[i];
         t = min(P.eat, c / f32(n));
         if (t > 0.0) {
@@ -1617,23 +1659,44 @@ fn isqrt(r2: u32) -> i32 {
     return r;
 }
 
+// Whether a shot stops at cell i: slime, or a walker in a crater (which
+// holds no trail; `squad::shots`).
+fn stops(i: u32) -> bool {
+    return enemy_trail(i) >= P.slime || ((P.scorched & 1u) != 0u && crater_at(i) > 0.0 && enemy_occ(i) > 0u);
+}
+
 // Each shot walks its cells and stops at the first off the agar (a wall or
 // rock: no hit) or the first that looks like slime (the hit), or a walker
 // in a crater (2026-11-12). The owner, 2026-11-11 16:48Z: "Gun fire should
-// hit the first slime in its path".
+// hit the first slime in its path". With the sink (`shot_sink`, 2026-11-12)
+// the blast then sinks in: on along the line while the cells are agar and
+// within the sink's reach of the first hit, to the last that stops a shot
+// (`squad::sink`).
 @compute @workgroup_size(256)
 fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
     let q = gid.x;
     if (q >= P.nshots) { return; }
     let s = SQ.shots[q];
     var hit = NONE;
-    for (var m = 0u; m < s.count; m++) {
+    var m = 0u;
+    for (; m < s.count; m++) {
         let i = SQ.path[s.start + m];
         if (agar[i] == 0u) { break; }
-        if (trail_in[i] >= P.slime) { hit = i; break; }
-        // A walker in a crater (which holds no trail) is what the shot
-        // meets there (`squad::shots`).
-        if ((P.scorched & 1u) != 0u && crater_at(i) > 0.0 && atomicLoad(&occ[i]) > 0u) { hit = i; break; }
+        if (stops(i)) { hit = i; break; }
+    }
+    if (hit != NONE && P.shot_sink > 0.0) {
+        let reach2 = u32(floor(P.shot_sink * f32(s.r2)));
+        let hx = i32(hit % P.w);
+        let hy = i32(hit / P.w);
+        var deep = hit;
+        for (var n = m + 1u; n < s.count; n++) {
+            let c = SQ.path[s.start + n];
+            let dx = i32(c % P.w) - hx;
+            let dy = i32(c / P.w) - hy;
+            if (agar[c] == 0u || u32(dx * dx + dy * dy) > reach2) { break; }
+            if (stops(c)) { deep = c; }
+        }
+        hit = deep;
     }
     SQ.sout[q].hit = hit;
 }
@@ -1658,6 +1721,8 @@ fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
     // walker is dead as well as gone (the CPU's `kill`).
     let st = state(k);
     if (st == L_SPORE || st == L_DEAD) { return; }
+    // In a garden the player's walkers are not struck (`Garden::shots`).
+    if (garden() && species_of(k) == OWN_SP) { return; }
     let wk = walkers[k];
     let c = cell(wk.x, wk.y);
     for (var q = 0u; q < P.nshots; q++) {
@@ -1691,10 +1756,20 @@ fn cut(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) l
         // game's shots cut here, not in the trail pass, so without this
         // the window showed the cut but no wound (W2c, 2026-11-12). Two
         // strikes on one cell may race on it; only the picture differs.
-        let cut = u32(bright(trail_in[i]) * 255.0);
+        let cut = u32(bright(enemy_trail(i)) * 255.0);
         let had = (look[i] >> 16u) & 255u;
         look[i] = (look[i] & 0xFF00FFFFu) | (max(had, cut) << 16u);
-        trail_in[i] = 0.0;
+        if (garden()) {
+            // Only the enemy's trail goes: every species' but the player's,
+            // and the shared trail down to the player's.
+            let c = P.w * P.h;
+            for (var s = 0u; s < nsp(); s++) {
+                if (s != OWN_SP) { sp_in[s * c + i] = 0.0; }
+            }
+            trail_in[i] = sp_in[OWN_SP * c + i];
+        } else {
+            trail_in[i] = 0.0;
+        }
         // The crater (`squad::Frame::crater`) on the struck agar cells, the
         // longer of the two. Without the cone every shot in a frame writes
         // the same steps.
@@ -1830,7 +1905,7 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
         let x = cx + dx;
         let y = cy + dy;
         if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
-        touching += atomicLoad(&occ[u32(y * w + x)]);
+        touching += enemy_occ(u32(y * w + x));
     }
     let b = 4;
     let nbw = (w + b - 1) / b;
@@ -1854,7 +1929,7 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
             var n = 0u;
             for (var y = by * b; y < min((by + 1) * b, h); y++) {
                 for (var x = bx * b; x < min((bx + 1) * b, w); x++) {
-                    n += atomicLoad(&occ[u32(y * w + x)]);
+                    n += enemy_occ(u32(y * w + x));
                 }
             }
             if (n > best) { best = n; bi = u32(by * nbw + bx); }
@@ -2272,6 +2347,9 @@ fn hit(@builtin(global_invocation_id) gid: vec3<u32>) {
     let dy = f32(i32(i / P.w) - i32(P.ky));
     let d2 = dx * dx + dy * dy;
     if (P.kr > 0.0 && d2 <= P.kr * P.kr) {
+        // A burst takes both moulds alike in a garden too, as the CPU's
+        // (`Garden::burst`, `Garden::cord`): the det cord is the player's
+        // cut, for shaping their own mould as well as the enemy's.
         trail_in[i] = 0.0;
         for (var s = 0u; s < P.nsp; s++) { sp_in[s * c + i] = 0.0; }
     }
@@ -2316,7 +2394,11 @@ fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn count(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
-    if (k < P.n && energy[k] >= 0.0 && ((spec[k] >> 9u) & 3u) != L_DEAD) { atomicAdd(&wstat[4], 1u); }
+    if (k < P.n && energy[k] >= 0.0 && ((spec[k] >> 9u) & 3u) != L_DEAD) {
+        atomicAdd(&wstat[4], 1u);
+        // The player's own mould's share of them, in a garden.
+        if (garden() && species_of(k) == OWN_SP) { atomicAdd(&wstat[5], 1u); }
+    }
     let g = P.grid;
     if (g > 0u && k < P.w * P.h) {
         let o = atomicLoad(&occ[k]);
@@ -2325,4 +2407,62 @@ fn count(@builtin(global_invocation_id) gid: vec3<u32>) {
             atomicAdd(&wstat[8u + (k / P.w / g) * gw + (k % P.w) / g], o);
         }
     }
+}
+
+// ---------------------------------------------- the gardeners (own_mould)
+// `Garden::do_task` on the GPU, before the frame's shots as the CPU's
+// `World::tend` runs before its frame: each tend entry (`squad::TEND`, eight
+// words: fine cell x, y, the task, the disc's squared radius, the trail a
+// Road lays on each agar cell, the charge a Feed spreads on each) on the
+// agar of its disc. One workgroup, entries in order, each cell one
+// thread's (`owned_from`), so overlapping discs add in the CPU's order.
+// Cut is not here: on the GPU the cut tool is the det cord, a burst.
+@compute @workgroup_size(256)
+fn tend(@builtin(local_invocation_index) li: u32) {
+    let tx = i32(li % 16u);
+    let ty = i32(li / 16u);
+    let c = P.w * P.h;
+    for (var j = 0u; j < P.ntend; j++) {
+        let b = P.tend_at + 8u * j;
+        let cx = i32(SQ.path[b]);
+        let cy = i32(SQ.path[b + 1u]);
+        let task = SQ.path[b + 2u];
+        let r2 = SQ.path[b + 3u];
+        let road = bitcast<f32>(SQ.path[b + 4u]);
+        let feed = bitcast<f32>(SQ.path[b + 5u]);
+        let r = isqrt(r2);
+        for (var y = owned_from(cy - r, ty); y <= cy + r; y += 16) {
+            for (var x = owned_from(cx - r, tx); x <= cx + r; x += 16) {
+                let dx = x - cx;
+                let dy = y - cy;
+                if (x >= 0 && y >= 0 && x < i32(P.w) && y < i32(P.h) && u32(dx * dx + dy * dy) <= r2) {
+                    let i = u32(y) * P.w + u32(x);
+                    if (agar[i] == 0u) { continue; }
+                    if (task == 1u) {
+                        sp_in[OWN_SP * c + i] += road;
+                        trail_in[i] += road;
+                    } else if (task == 2u) {
+                        charge[i] += feed;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// The player's walkers a cell into `gcount` (cleared first, `ownclear`):
+// living, not a spore or dead, as `Garden::enemy_occ` leaves them out.
+@compute @workgroup_size(256)
+fn ownclear(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x < P.w * P.h) { atomicStore(&gcount[gid.x], 0u); }
+}
+
+@compute @workgroup_size(256)
+fn owncount(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k) || species_of(k) != OWN_SP) { return; }
+    let st = state(k);
+    if (st == L_SPORE || st == L_DEAD) { return; }
+    let wk = walkers[k];
+    atomicAdd(&gcount[cell(wk.x, wk.y)], 1u);
 }

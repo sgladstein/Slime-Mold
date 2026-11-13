@@ -1,0 +1,117 @@
+<title>Fed Mould A/B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Blind A/B (2026-11-13, the slime-enemy thread): shape C on Fork, seed 1,
+   the same farm hand, under two food rules. The key is in the report's
+   README, not on this page. Colours follow the world: mould amber,
+   crystal cyan. */
+:root {
+  --bg: #f3f5f6; --fg: #182024; --muted: #56646b; --line: #d5dde0;
+  --panel: #ffffff; --amber: #a86a12; --cyan: #127a93;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1080px; margin: 0 auto; display: grid; gap: 34px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.2rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+header, section { display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; align-content: start; }
+figure video { width: 100%; aspect-ratio: 960 / 600; border-radius: 4px; border: 1px solid var(--line); display: block; background: #111a1f; }
+.tag { font-family: var(--display); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.9rem; width: 100%; min-width: 300px; }
+th, td { text-align: right; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--display); font-weight: 500; color: var(--muted); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+ul { margin: 0; padding-left: 1.2rem; max-width: 68ch; display: grid; gap: 6px; }
+.ask { border-left: 3px solid var(--cyan); padding: 4px 0 4px 14px; display: grid; gap: 8px; }
+.note { color: var(--muted); font-size: 0.9rem; }
+code { font-size: 0.9em; }
+</style>
+
+<main>
+  <header>
+    <span class="tag">Shape C · blind A/B</span>
+    <h1>Can you see it getting stronger from its crystals?</h1>
+    <p class="lede">You asked, after playing C: "I cannot tell if it is getting stronger by holding the crystals." Below are two films of the same round. Both are shape C on Fork, seed 1, with the same farm hand and the same 5 minutes. They differ in one food rule only. The key is kept off this page.</p>
+  </header>
+
+  <section class="ask">
+    <h2>Two questions</h2>
+    <ul>
+      <li>In which film can you see the mould grow stronger where it holds crystals?</li>
+      <li>Which mould do you want as the default in the window?</li>
+    </ul>
+    <p class="note">Answer with the film number. The game you play now (no <code>shape=</code>) is one of the two, so a playtest also answers the second question.</p>
+  </section>
+
+  <section>
+    <h2>The whole map</h2>
+    <div class="pair">
+      <figure>
+        <span class="tag">Film 1</span>
+        <video src="film1-all.mp4" poster="film1-all.jpg" controls loop muted playsinline preload="metadata"></video>
+        <div class="scroll"><table>
+          <tr><th>Time</th><th>Walkers</th><th>Mould on screen</th><th>Soldiers</th></tr>
+          <tr><td>1:00</td><td>27,687</td><td>16.8%</td><td>18</td></tr>
+          <tr><td>2:00</td><td>22,737</td><td>10.1%</td><td>6</td></tr>
+          <tr><td>3:00</td><td>31,282</td><td>12.3%</td><td>1</td></tr>
+          <tr><td>4:00</td><td>39,164</td><td>15.1%</td><td>0</td></tr>
+          <tr><td>5:00</td><td>45,237</td><td>17.1%</td><td>0</td></tr>
+        </table></div>
+      </figure>
+      <figure>
+        <span class="tag">Film 2</span>
+        <video src="film2-all.mp4" poster="film2-all.jpg" controls loop muted playsinline preload="metadata"></video>
+        <div class="scroll"><table>
+          <tr><th>Time</th><th>Walkers</th><th>Mould on screen</th><th>Soldiers</th></tr>
+          <tr><td>1:00</td><td>27,601</td><td>17.0%</td><td>16</td></tr>
+          <tr><td>2:00</td><td>10,406</td><td>5.5%</td><td>3</td></tr>
+          <tr><td>3:00</td><td>12,573</td><td>6.6%</td><td>0</td></tr>
+          <tr><td>4:00</td><td>13,379</td><td>6.7%</td><td>0</td></tr>
+          <tr><td>5:00</td><td>13,956</td><td>7.0%</td><td>0</td></tr>
+        </table></div>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Close up, west of the walls</h2>
+    <p class="note">The camera is held still on the crystals left of the Fork's walls, at zoom 4.</p>
+    <div class="pair">
+      <figure>
+        <span class="tag">Film 1</span>
+        <video src="film1-near.mp4" poster="film1-near.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+      <figure>
+        <span class="tag">Film 2</span>
+        <video src="film2-near.mp4" poster="film2-near.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>How these were made</h2>
+    <ul>
+      <li>The window's own picture, from <code>larder-world look=DIR hand=farm seed=1</code> on software Vulkan. There is a frame every 5 game seconds from 0:20 to 5:00, played at 6 frames a second.</li>
+      <li>The farm hand buys soldiers and harvests the crystal nearest the larder. Its squad is gone by 3:00 in one film and by 3:45 in the other. The idle hand loses its squad at about 1:45 in both.</li>
+      <li>"Mould on screen" is the share of the map's pixels drawn as mould, counted from the frames.</li>
+      <li>The films were made before the shot sink (#181) reached main. That changes how shots hit, not how the mould feeds.</li>
+      <li>A third rule was tried and is not shown: fed walkers packing two to a cell. It gave 21,053 walkers at 5:00, but only 7.6% mould on screen, because the drawn thickness is already full at about one walker a cell.</li>
+    </ul>
+  </section>
+</main>

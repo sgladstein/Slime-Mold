@@ -2,9 +2,19 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-12T20:50Z
-sources: [Reports/shot-damage-2026-11-12.md, CLAUDE.md, HANDOFF.md, Reports/mould-sound-2026-11-10.md, Reports/rts-design-2026-11-10.md, Reports/mould-review-thread-handoff-2026-11-10.md, Reports/mould-real-world-2026-11-09.md, Reports/larder-world-roadmap-2026-11-11.md]
-code: [Params::pieces]
+updated: 2026-11-12
+sources:
+  - CLAUDE.md
+  - HANDOFF.md
+  - Reports/larder-shot-sink-2026-11-12.md
+  - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/mould-real-world-2026-11-09.md
+  - Reports/mould-review-thread-handoff-2026-11-10.md
+  - Reports/mould-sound-2026-11-10.md
+  - Reports/rts-design-2026-11-10.md
+  - Reports/shot-damage-2026-11-12.md
+code:
+  - Params::pieces
 ---
 
 # The owner's decided choices about the games
@@ -17,6 +27,10 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-12 23:14 | A shot's blast is centred inside the slime, not on its edge: one strike radius on along the shot's line from the first slime it meets (`Rules::sink` 1), so a squad standing outside a body takes a full bite | On a squad standing in one spot (22:06Z): "it barely seems to do damage, but if I move them into the mold, they destroy it easily"; asked "A possible fix is to centre the blast one blast-width inside the slime, so shots from outside take a full bite. Want me to try it?": "Yes" | [Larder World](world/larder.md), [report](../Reports/larder-shot-sink-2026-11-12.md) |
+| 2026-11-12 22:22 | Walking a squad straight into thick slime is very deadly (more than the quarter of 40 this thread proposed for C's thickest part). The broken-mould straggler rule stands. A cut-the-network rule waits: the player can't yet see whether the mould grows stronger from the crystals it holds, so that has to read on screen first | "1) more. walking directly into the enemy should be very deadly. 2) maybe, honestly what is going on with the slime is unclear to the player so that makes this type of strategy not attractive at the moment. I cannot tell if it is getting stronger by holding the crystals. Right now it is mostly moving around and I kill it. 3) no" ... "3) I mean no objections" | [Larder](world/larder.md) |
+| 2026-11-12 22:19 | Shape C (a sheet with trunks, 25,000 walkers grown from home) is the window's default mould, after playing D and C (beat D in 8:35, C in 5:51) | "C is a better slime than D" ... "C is better how it looks, the shape it takes, how it networks the crystals" | [Larder](world/larder.md) |
+| 2026-11-12 22:06 | A building may be ordered anywhere: a soldier walks there by itself and builds it, and a faint ghost with a filling progress bar shows how long until it stands (`BuildRules::anywhere` on, `Cmd::Send`, `Game::raise_left`) | "having to be near a the build location to build is annoying. If I try to build far away, it should let me and then the solider moves automatically to that location to build. There should be a faint building with a progress bar that fills in as it builds so I can tell how long until it is complete" | [Larder World](world/larder.md), [report, *Part 4: build anywhere*](../Reports/soldier-controls-2026-11-12.md) |
 | 2026-11-12 20:21 | No king rule: every mould is headless. Births go on while the mould has food or crystal energy; holding its home stops nothing, so only a wipe or the cap ends a round (the home still pulls the body onto soldiers there). Owner will playtest the shapes (sheet, mesh, trunks) before one is picked | "remove the king rule. As long as the slime has food/crystal energy it can make walkers. Headless." ... "I will playtest the shapes. Not sure what it best from these." | [Larder](world/larder.md), [mould tiers](world/mould-tiers.md) |
 | 2026-11-12 17:29 | Each hit's crater lasts 4.5 s (`Rules::crater`, was 10), picked from cone clips of the squad firing into the thick ring on the core crystal at 10, 6, 3 and 1 s and none; set on the clips and the tests, with no census (the owner's 17:26Z testing rule) | "show me 1 second. also in these videos they were mostly shooting at individuals so it was hard to evaluate until the end when they shot at the core of slime" (16:55Z); "Can we do 4.5 s? I am thinking between the 3 and 6? Or should it be an integer" | [Larder World](world/larder.md), [report, *A core that grows back, and the crater's time in the cone*](../Reports/larder-world-roadmap-2026-11-11.md) |
 | 2026-11-12 14:41-14:43 | The crater is look 3, the cone (soft-edged; `scorch_cone`, the race world's default since PR 3b). Soldiers are heavily slowed in thick slime (`Rules::wade`, the Larder thread), and can't stand on a crystal (the controls thread). The owner expected soldiers standing and shooting into the slime, not craters under their feet while running through it. Then (15:18Z) look 3 "fills in too slow": shorter crater times went on the page for the owner's pick (4.5 s, 17:29Z, the row above) | "I think 3 is best, but I was more expecting soliders standing shooting into slime. Not running through slime leaving craters under their feet"; "soliders should be heavily slowed down if they try to run into the thick slime"; "also shouldn't be able to stand on top of the crystal"; "Is there an option between 3 and no craters? 3 fills in too slow still," | [Larder World](world/larder.md), [report, *Wading, and the cone crater by default*](../Reports/larder-world-roadmap-2026-11-11.md) |

@@ -3,8 +3,20 @@ title: The lesson and the three puzzle dishes
 kind: dish
 status: paused
 updated: 2026-11-10
-sources: [Reports/mould-probe-2026-11-07.md, Reports/mould-review-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md]
-code: [Lesson, Lesson::dish_with, Dish::best_join, Dish::storm_at, Params::stray_reach, Params::stray_grace, Params::oats_grace, STRAY_REACH, Route]
+sources:
+  - Reports/mould-probe-2026-11-07.md
+  - Reports/mould-review-2026-11-10.md
+  - Reports/mould-wild-one-2026-11-10.md
+code:
+  - Dish::best_join
+  - Dish::storm_at
+  - Lesson
+  - Lesson::dish_with
+  - Params::oats_grace
+  - Params::stray_grace
+  - Params::stray_reach
+  - Route
+  - STRAY_REACH
 ---
 
 # The lesson and the three puzzle dishes

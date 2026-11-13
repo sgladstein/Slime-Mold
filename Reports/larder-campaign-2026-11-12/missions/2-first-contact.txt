@@ -1,12 +1,30 @@
 # Mission 2: fire and stances against the Drifter. Crystal 0 is the Fork's stem, the
-# mould's home (512, 600). Retargeted 2026-11-12 (census v7): the real Drifter (tiers
-# PR #115) never left its home crystal in 15:00 with any hand on seeds 1-4, so the old
-# goal (retake the west fork, crystal 1) could never start; only a wipe met it.
+# mould's home (512, 600).
+# History: "take back the west fork" (v1-v6) could never start, as the Drifter never
+# left home; "drive it off its home crystal and hold it" (v7-v9) was met only by
+# strike's wipe. Since tiers #133 the Drifter drifts, but only when provoked, and since
+# #164 every mould is headless. Census v10-v11 (seeds 1-4): a plain retake of any crystal
+# it reached was met by random fire on 2 of 4 seeds by 2:49, and with a soldier
+# required on the crystal (`goal hold`) no AI plan met it. So the lesson is the fight
+# itself: wipe the mould out. The bar is the share cut from its peak after the first
+# minute (`shrink 0`): strike 4/4 at 7:17-8:01, random 2/4 (a tuning note for the
+# Drifter, not a veto), claim best 0.33, idle 0.06 (census v11, before #164 merged).
+# Then 0.1, not 0 (designer, 22:58Z): with headless moulds a wipe means hunting the
+# last stragglers, which the owner called tedious in the shape D playtest; the
+# mission ends when the fight is won. A bar of b on `shrink 0` is the mould at 1-b of
+# its peak, so the v11 rounds that reached 0.9 meet it (random's best was 0.86 mean).
+# Rations off (`rule ration 0`, census v12 on e425fed after #170 and #174): with
+# them strike starved stuck by 12:56-14:09 and no hand met it (strike best 0.50);
+# without them strike 4/4 at 7:27-8:53, random 0/4 (best 0.47), claim 0.27, idle 0.07.
+# Upkeep is a later mission's lesson, not first contact's.
+# After #180 (Drifter hunger 16, v12c on a1a7156): strike 4/4 at 7:10-7:43, random
+# 2/4 at 11:32-13:18 (a tuning note), claim 0/4 best 0.49, boom and idle 0/4 (0.08).
 name First contact
-says Drive the mould off its home crystal and hold it for 60 s
+says Break the Drifter: cut it below a tenth of its size
 map fork
 tier drifter
 verbs move harvest buy stance fire
 rule price 0
+rule ration 0
 bonus lose 2
-goal retake 1 60 0
+goal shrink 0.1

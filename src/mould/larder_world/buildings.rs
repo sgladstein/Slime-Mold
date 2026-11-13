@@ -36,7 +36,7 @@
 //! the world, at full health, when it is whole.
 
 use super::{Game, Shot, World};
-use crate::mould::squad::{ShotIn, UnitIn, UnitOut};
+use crate::mould::squad::{Burst, BurstRules, ShotIn, UnitIn, UnitOut};
 
 /// What a building is. A wall carries its far end (fine cells); its near
 /// end is the building's `at`.
@@ -49,6 +49,15 @@ pub enum Kind {
     /// bank as the larder does, at `outpost_hoard` of its strength, and
     /// walkers touching it steal from the bank as at the larder.
     Outpost,
+    /// An alarm on a pole: while on, every `siren_every` seconds it lays
+    /// `siren_alarm` over `siren_r` dish cells through the squad toolkit's
+    /// burst (`World::burst`, no kill, the alarm field's one writer). The
+    /// mould tiers answer the alarm (`mould::tiers`): a Sleeper wakes, a
+    /// Sporer bursts its spores, a Swarmer floods the place. The plain mould
+    /// has no alarm sense and ignores it. A way to call the mould where the
+    /// player wants it (a turret line, away from a crystal) or to wake a
+    /// Sleeper on the player's own clock.
+    Siren,
     Wall { to: (f32, f32) },
 }
 
@@ -59,6 +68,7 @@ impl Kind {
             Kind::Lure => "lure",
             Kind::Pump => "pump",
             Kind::Outpost => "outpost",
+            Kind::Siren => "siren",
             Kind::Wall { .. } => "wall",
         }
     }
@@ -74,14 +84,15 @@ pub struct Building {
     /// 0 a ghost, 1 whole; it acts only when whole.
     pub built: f32,
     pub alive: bool,
-    /// A lure that is on (the player's switch); every other kind ignores it.
+    /// A lure or siren that is on (the player's switch); every other kind
+    /// ignores it.
     pub on: bool,
     /// Doing its job this frame: a turret that fired, a lure laying scent,
     /// a pump that drew charge. For the window's marks.
     pub working: bool,
     /// The pump's crystal.
     pub crystal: Option<usize>,
-    /// Tick of a turret's next shot.
+    /// Tick of a turret's next shot or a siren's next call.
     pub(super) ready: u64,
     /// What it read last frame.
     pub touching: u32,
@@ -152,9 +163,34 @@ pub struct BuildRules {
     pub outpost_hp: f32,
     /// The outpost's bank smell as a share of the larder's (`Rules::hoard`).
     pub outpost_hoard: f32,
+    pub siren_cost: f32,
+    pub siren_hp: f32,
+    /// Seconds between a siren's calls.
+    pub siren_every: f32,
+    /// The alarm a call lays (`squad::SHOT_ALARM` is one hit's) over
+    /// `siren_r` dish cells, and the alarm field's keep if no tier has
+    /// turned it on (the toolkit's 0.95). First numbers: three hits' alarm
+    /// over a turret's reach, every 4 s, a call loud and wide enough that a
+    /// Swarmer's flood is seen across the screen.
+    pub siren_alarm: f32,
+    pub siren_r: f32,
+    pub siren_keep: f32,
     /// How near the mould must be to wear a building, dish cells (its
     /// footprint).
     pub touch: f32,
+    /// Health a walker touching a building takes a game second, times
+    /// `Rules::mass`. 1, what soldiers and buildings shared (`Rules::drain`)
+    /// until soldiers' bite went to 2 a walker whatever the mass
+    /// (2026-11-12, the owner: walking into the slime "should be very
+    /// deadly"); buildings were not part of that ask.
+    pub drain: f32,
+    /// A building may be placed anywhere, not only within a soldier's
+    /// range (`Rules::range`): the window sends the selected soldiers, or
+    /// with none selected the nearest free one (`Cmd::Send`), to walk
+    /// there and raise it. Owner's playtest, 2026-11-12 22:06Z: "having
+    /// to be near the build location to build is annoying". Off is the
+    /// old rule, for replays and census hands that relied on it.
+    pub anywhere: bool,
 }
 
 impl Default for BuildRules {
@@ -179,7 +215,15 @@ impl Default for BuildRules {
             outpost_cost: 400.0,
             outpost_hp: 300.0,
             outpost_hoard: 0.25,
+            siren_cost: 300.0,
+            siren_hp: 150.0,
+            siren_every: 4.0,
+            siren_alarm: 150.0,
+            siren_r: 15.0,
+            siren_keep: 0.95,
             touch: 2.0,
+            drain: 1.0,
+            anywhere: true,
         }
     }
 }
@@ -204,6 +248,7 @@ impl<W: World> Game<W> {
             Kind::Lure => b.lure_cost,
             Kind::Pump => b.pump_cost,
             Kind::Outpost => b.outpost_cost,
+            Kind::Siren => b.siren_cost,
             Kind::Wall { to } => self.wall_price(at, to),
         }
     }
@@ -219,11 +264,15 @@ impl<W: World> Game<W> {
         if self.bank < self.build_price(kind, at) {
             return Some("not enough food");
         }
-        if !self.reachable(at) {
+        if self.rules.build.anywhere {
+            if !self.soldiers.iter().any(|s| s.alive) {
+                return Some("no soldier to build it");
+            }
+        } else if !self.reachable(at) {
             return Some("no soldier in range");
         }
         if let Kind::Wall { to } = kind {
-            return (!self.reachable(to)).then_some("no soldier in range");
+            return (!self.rules.build.anywhere && !self.reachable(to)).then_some("no soldier in range");
         }
         if !self.world.open(at.0, at.1) {
             return Some("not open ground");
@@ -262,6 +311,7 @@ impl<W: World> Game<W> {
             Kind::Lure => b.lure_hp,
             Kind::Pump => b.pump_hp,
             Kind::Outpost => b.outpost_hp,
+            Kind::Siren => b.siren_hp,
             Kind::Wall { .. } => self.world_wall_hp(),
         };
         let crystal = if kind == Kind::Pump { self.pump_crystal(at) } else { None };
@@ -299,10 +349,10 @@ impl<W: World> Game<W> {
         }
     }
 
-    /// Switch lure `k` on or off. True if it is a lure.
+    /// Switch lure or siren `k` on or off. True if it is one.
     pub fn toggle(&mut self, k: usize) -> bool {
         match self.buildings.get_mut(k) {
-            Some(b) if b.alive && b.kind == Kind::Lure => {
+            Some(b) if b.alive && matches!(b.kind, Kind::Lure | Kind::Siren) => {
                 b.on = !b.on;
                 true
             }
@@ -371,6 +421,17 @@ impl<W: World> Game<W> {
                         crystal = Some(c);
                     }
                 }
+                Kind::Siren => {
+                    // Before the frame starts, so the world is idle: the
+                    // call goes through the burst, the alarm's one writer.
+                    if bd.on && bd.ready <= t {
+                        let burst = Burst { at: (bd.at.0 / sc, bd.at.1 / sc), alarm: b.siren_alarm, alarm_r: b.siren_r, ..Burst::default() };
+                        self.world.burst(&burst, &BurstRules { alarm_keep: b.siren_keep, ..BurstRules::default() });
+                        self.buildings[k].ready = t + self.secs(b.siren_every);
+                        self.buildings[k].working = true;
+                        self.sirens += 1;
+                    }
+                }
                 Kind::Outpost => {
                     u.smell_r = 3.0 * sc;
                     u.smell = self.world.food_deposit() * r.hoard * b.outpost_hoard * self.bank.max(0.0) / 10_000.0 * r.frame_ticks as f32;
@@ -406,7 +467,7 @@ impl<W: World> Game<W> {
         }
         let bd = &mut self.buildings[k];
         if u.touching > 0 {
-            bd.hp -= r.drain * r.mass * u.touching as f32 * dt;
+            bd.hp -= r.build.drain * r.mass * u.touching as f32 * dt;
             if bd.hp <= 0.0 {
                 bd.hp = 0.0;
                 bd.alive = false;
@@ -471,7 +532,10 @@ mod tests {
     fn a_building_needs_a_soldier_near_food_and_room() {
         let mut g = small(1);
         let far = open_near(&g, g.core);
+        assert_eq!(g.build_blocked(Kind::Turret, far), None, "anywhere: a soldier walks there");
+        g.rules.build.anywhere = false;
         assert_eq!(g.build_blocked(Kind::Turret, far), Some("no soldier in range"));
+        g.rules.build.anywhere = true;
         let at = open_near(&g, (g.larder.0 + 8.0, g.larder.1));
         let bank = g.bank;
         assert!(g.apply(Cmd::Build(Kind::Turret, at)));
@@ -525,6 +589,40 @@ mod tests {
     }
 
     #[test]
+    fn a_siren_calls_with_the_alarm_every_few_seconds_while_on() {
+        let run = |on: bool| {
+            let mut g = small(4);
+            let at = open_near(&g, (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1));
+            stand(&mut g, at);
+            assert!(g.apply(Cmd::Build(Kind::Siren, at)));
+            if !on {
+                assert!(g.apply(Cmd::Toggle(0)));
+            }
+            let mould = g.world.living();
+            for _ in 0..(g.rules.tps * 9) {
+                g.step();
+            }
+            let i = at.1 as usize * g.world.w + at.0 as usize;
+            (g.sirens, g.world.alarm.get(i).copied().unwrap_or(0.0), g.world.alarm.len(), mould)
+        };
+        // Calls at 0, 4 and 8 s; the plain mould has no alarm until then.
+        let (calls, alarm, len, _) = run(true);
+        assert_eq!(calls, 3);
+        assert!(len > 0 && alarm > 0.0, "the siren's alarm on its cell: {alarm}");
+        let (calls, _, len, _) = run(false);
+        assert_eq!((calls, len), (0, 0), "a siren switched off calls nothing and turns no alarm on");
+        // It kills nothing: the call is a burst with no kill.
+        let mut g = small(4);
+        let at = open_near(&g, g.core);
+        stand(&mut g, at);
+        let before = g.world.living();
+        assert!(g.build(Kind::Siren, at));
+        g.begin_step();
+        assert_eq!(g.world.living(), before, "the call killed walkers");
+        assert!(Cmd::parse(&Cmd::Build(Kind::Siren, at).to_line()) == Some(Cmd::Build(Kind::Siren, at)));
+    }
+
+    #[test]
     fn a_lure_burns_food_and_lays_scent_while_on() {
         let run = |on: bool| {
             let mut g = small(4);
@@ -559,7 +657,8 @@ mod tests {
         }
         let want = 10.0 * g.rules.build.pump_rate;
         assert!((g.pumped - want).abs() < 0.05 * want, "pumped {} in 10 s", g.pumped);
-        assert!(g.bank > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
+        // The squad's rations (`Rules::ration`) come out of the same bank.
+        assert!(g.bank + g.eaten > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
         assert!(g.take_share() > 0.5, "the pump's take is the squad's");
     }
 
@@ -712,5 +811,56 @@ mod tests {
         assert!(g.buildings[0].up(), "raised by the idle squad");
         assert!(g.world.wall.iter().any(|&w| w), "its cells are in the world once whole");
         assert_eq!(Cmd::parse(&Cmd::Order(2, Order::Build(7)).to_line()), Some(Cmd::Order(2, Order::Build(7))));
+    }
+
+    #[test]
+    fn a_build_far_away_sends_a_soldier_who_then_goes_back_to_work() {
+        let mut g = small(14);
+        g.rules.build.raise = 2.0;
+        // Every soldier busy: walking away from the site.
+        let (x, y) = g.larder;
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Move(x - 6.0, y)));
+        }
+        let far = open_near(&g, ((x + g.core.0) / 2.0, (y + g.core.1) / 2.0));
+        assert!(!g.reachable(far), "the site is out of every soldier's range");
+        assert!(g.apply(Cmd::Build(Kind::Turret, far)));
+        assert_eq!(g.raising(0), (0, 0));
+        assert_eq!(g.raise_left(0), None, "nobody raising it yet");
+        assert_eq!(Cmd::parse(&Cmd::Send(0).to_line()), Some(Cmd::Send(0)));
+        assert!(g.apply(Cmd::Send(0)));
+        let k = (0..g.soldiers.len()).find(|&k| g.soldiers[k].order == Order::Build(0)).expect("one soldier sent");
+        assert_eq!(g.raising(0), (0, 1), "on the way");
+        assert_eq!((g.soldiers[k].queued, g.soldiers[k].queue[0]), (1, Order::Move(x - 6.0, y)), "its walk is kept for after");
+        let mut seen = None;
+        for _ in 0..(g.rules.tps * 120) {
+            g.step();
+            if seen.is_none() {
+                seen = g.raise_left(0);
+            }
+            if g.buildings[0].up() {
+                break;
+            }
+        }
+        let left = seen.expect("a time left showed while it rose");
+        assert!(left > 0.0 && left <= 2.0, "{left}");
+        assert!(g.buildings[0].up(), "it walked there and raised it");
+        g.step();
+        assert_eq!(g.soldiers[k].order, Order::Move(x - 6.0, y), "then back to its order");
+        assert!(!g.apply(Cmd::Send(0)), "nothing to send to once it stands");
+    }
+
+    #[test]
+    fn an_idle_soldier_is_sent_before_a_busy_one() {
+        let mut g = small(15);
+        g.rules.build.raise = 2.0;
+        let (x, y) = g.larder;
+        for k in 1..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Move(x - 6.0, y)));
+        }
+        let at = open_near(&g, (x + 8.0, y));
+        assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+        assert_eq!(g.send(0), Some(0), "soldier 0 is the only idle one");
+        assert_eq!(g.soldiers[0].queued, 0, "an idle soldier has nothing to go back to");
     }
 }

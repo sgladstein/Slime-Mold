@@ -111,16 +111,12 @@ pub struct Garden {
 /// `walkers` each; both the race mould's settings unless `sets` names
 /// them (enemy, player). Conversion over a square of 4 by presence.
 pub fn garden_world(seed: u64, scale: usize, walkers: usize, sets: Option<(SpeciesSet, SpeciesSet)>) -> Garden {
-    let mut m = Map::of_dish(&race_world(seed, scale, walkers));
-    let home = m.items.crystals[0];
-    let far = *m.items.crystals.iter().max_by(|a, b| (a.x - home.x).hypot(a.y - home.y).total_cmp(&(b.x - home.x).hypot(b.y - home.y))).expect("a crystal");
-    m.items.moulds = vec![(home.x, home.y), (far.x, far.y)];
-    m.items.landing = Some((far.x, far.y));
+    let m = garden_map(seed, scale, walkers);
     let mut p: BigParams = race_params(seed, scale, 2 * walkers);
     p.species = SPECIES;
     p.species_avoid = 0.0;
-    p.species_convert = 1.2;
-    p.species_convert_r = 4;
+    p.species_convert = CONVERT;
+    p.species_convert_r = CONVERT_R;
     p.species_convert_per = true;
     // Half the slots a side; the unused species 1 and 2 hold none.
     let half = p.capacity.max(p.walkers) / 2;
@@ -128,14 +124,38 @@ pub fn garden_world(seed: u64, scale: usize, walkers: usize, sets: Option<(Speci
     let base = SpeciesSet::from_params(&p);
     let (e, o) = sets.unwrap_or((base, base));
     p.species_sets = (0..SPECIES).map(|s| if s == OWN { o } else if s == 0 { e } else { base }).collect();
-    let mut dish = BigDish::with_map(p, &m);
-    // The map's starts share the walkers in order (`place_walkers`): the
-    // first home's are the enemy's, the second's the player's.
+    let dish = garden_dish(p, &m, walkers);
+    Garden { dish, tasks: Vec::new(), tend: Tend::default(), roads: 0, fed: 0.0, cut: 0, own_ate: 0.0, enemy_ate: 0.0, turned_own: 0, turned_enemy: 0 }
+}
+
+/// Conversion between the two moulds: a walker joins the other side where
+/// its trail over a square of `CONVERT_R` outweighs its own `CONVERT` times.
+pub const CONVERT: f32 = 1.2;
+pub const CONVERT_R: u32 = 4;
+
+/// The garden's map: the race world of `seed` with the enemy on its home
+/// crystal and the player's mould on the crystal farthest from it, where the
+/// larder lands. Both engines start from it (`garden_dish`).
+pub fn garden_map(seed: u64, scale: usize, walkers: usize) -> Map {
+    let mut m = Map::of_dish(&race_world(seed, scale, walkers));
+    let home = m.items.crystals[0];
+    let far = *m.items.crystals.iter().max_by(|a, b| (a.x - home.x).hypot(a.y - home.y).total_cmp(&(b.x - home.x).hypot(b.y - home.y))).expect("a crystal");
+    m.items.moulds = vec![(home.x, home.y), (far.x, far.y)];
+    m.items.landing = Some((far.x, far.y));
+    m
+}
+
+/// The garden's dish on `m` with params `p` (the CPU's own, or the GPU's
+/// from its settings, `gpu::Engine::made_with`): the map's starts share the
+/// walkers in order (`place_walkers`), so the first `walkers` are the
+/// enemy's (species 0), the rest the player's (`OWN`).
+pub fn garden_dish(p: BigParams, m: &Map, walkers: usize) -> BigDish {
+    let mut dish = BigDish::with_map(p, m);
     let n = dish.walkers.len();
     for k in 0..n {
         dish.spec[k] = if k < walkers { 0 } else { OWN };
     }
-    Garden { dish, tasks: Vec::new(), tend: Tend::default(), roads: 0, fed: 0.0, cut: 0, own_ate: 0.0, enemy_ate: 0.0, turned_own: 0, turned_enemy: 0 }
+    dish
 }
 
 impl Garden {
@@ -215,7 +235,7 @@ impl Garden {
     /// `squad::shots` for the garden: a shot stops at the first cell whose
     /// enemy trail looks like slime, so it flies over the player's mould,
     /// and strikes the enemy's walkers and trail only.
-    fn shots(&mut self, shots: &[ShotIn], slime: f32, crater: u16) -> Vec<ShotOut> {
+    fn shots(&mut self, shots: &[ShotIn], slime: f32, crater: u16, sink: f32) -> Vec<ShotOut> {
         let (w, h) = (self.dish.w, self.dish.h);
         let shots = &shots[..shots.len().min(SHOTS_MAX)];
         let mut used = 0;
@@ -227,14 +247,16 @@ impl Garden {
                 let cells = path(w, h, s.from, s.to);
                 let cells = &cells[..cells.len().min(PATH_MAX - used)];
                 used += cells.len();
-                for &i in cells {
+                // As `squad::shots`: an enemy walker standing in a crater
+                // stops the shot though the crater holds no trail.
+                let stops = |i: usize| self.enemy_trail(i) >= slime || (!occ.is_empty() && self.dish.scorch[i] > 0 && occ[i] > 0);
+                for (j, &i) in cells.iter().enumerate() {
                     if !self.dish.agar[i as usize] {
                         return NONE;
                     }
-                    // As `squad::shots`: an enemy walker standing in a
-                    // crater stops the shot though the crater holds no trail.
-                    if self.enemy_trail(i as usize) >= slime || (!occ.is_empty() && self.dish.scorch[i as usize] > 0 && occ[i as usize] > 0) {
-                        return i;
+                    if stops(i as usize) {
+                        // The sink (`squad::sink`), on the enemy's slime.
+                        return squad::sink(w, cells, j, squad::sink_r2(sink, r2(s.r.min(R_MAX))), &self.dish.agar, stops);
                     }
                 }
                 NONE
@@ -431,7 +453,7 @@ impl World for Garden {
     /// enemy only; smell, ticks and harvest as the squad's. Counts what
     /// each side ate.
     fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut {
-        let shots = self.shots(&f.shots, f.slime, f.crater);
+        let shots = self.shots(&f.shots, f.slime, f.crater, f.sink);
         squad::smell(&mut self.dish, &f.units);
         let mut was = Vec::new();
         for _ in 0..ticks {
@@ -504,16 +526,21 @@ impl World for Garden {
     }
 
     /// The enemy's births stop (its cap goes to 0); the player's mould
-    /// keeps growing. Gives back the cap it had.
-    fn stop_births(&mut self) -> f32 {
-        self.dish.p.species_cap.get_mut(0).map_or(0.0, |c| std::mem::replace(c, 0) as f32)
-    }
-
-    fn start_births(&mut self, was: f32) {
+    /// keeps growing.
+    fn stop_births(&mut self) {
         if let Some(c) = self.dish.p.species_cap.get_mut(0) {
-            *c = was as usize;
+            *c = 0;
         }
     }
+
+    /// One upkeep feeds both species, so the broken mould (`Rules::broken`)
+    /// would starve the player's mould with the enemy's: the garden keeps
+    /// its upkeep (the rule does nothing here).
+    fn upkeep(&self) -> f32 {
+        self.dish.p.upkeep
+    }
+
+    fn set_upkeep(&mut self, _up: f32) {}
 
     fn food_deposit(&self) -> f32 {
         self.dish.p.food_deposit
@@ -641,10 +668,10 @@ mod tests {
         let to = ((at % w) as f32 + 0.5, (at / w) as f32 + 0.5);
         let shot = [ShotIn { from: to, to, r: 2.0 }];
         let mut plain = g.clone();
-        let out = plain.shots(&shot, slime, 0);
+        let out = plain.shots(&shot, slime, 0, 0.0);
         assert!(out[0].hit.is_some(), "{out:?}");
         assert!(plain.dish.scorch.is_empty(), "crater 0 lays none");
-        g.shots(&shot, slime, 40);
+        g.shots(&shot, slime, 40, 0.0);
         assert_eq!(g.dish.scorch[at], 40, "the crater on the strike");
     }
 

@@ -2,9 +2,21 @@
 title: Sensor angle and reach
 kind: mechanism
 status: current
-updated: 2026-11-12T22:05Z
-sources: [Reports/mould-review-2026-11-10.md, Reports/mould-wild-one-2026-11-10.md, Reports/mould-probe-2026-11-07.md, handoff/project-memory/mould-depth-2026-11-09.md, Reports/slime-enemy-review-2026-11-12.md, Reports/slime-questions-2026-11-12/README.md]
-code: [Params::sensor_angle, Params::rotate_angle, Params::sensor_offset, Params::settle_seconds, Params::explore_angle, Dish::sensor_angle_now]
+updated: 2026-11-12
+sources:
+  - Reports/mould-probe-2026-11-07.md
+  - Reports/mould-review-2026-11-10.md
+  - Reports/mould-wild-one-2026-11-10.md
+  - Reports/slime-enemy-review-2026-11-12.md
+  - Reports/slime-questions-2026-11-12/README.md
+  - handoff/project-memory/mould-depth-2026-11-09.md
+code:
+  - Dish::sensor_angle_now
+  - Params::explore_angle
+  - Params::rotate_angle
+  - Params::sensor_angle
+  - Params::sensor_offset
+  - Params::settle_seconds
 ---
 
 # Sensor angle and reach
@@ -31,9 +43,9 @@ against 12-13 at 45 degrees, tubes 7 cells wide against 17.6 (CPU, 2 seeds;
 In the game look grown from the core on Fork (25,000 walkers) it goes from
 a sheet to a mesh near the core with trunks out to the crystals, then mostly
 trunks by 2:00 (one seed; [two questions page](../../Reports/slime-questions-2026-11-12/README.md)).
-Not a default: the owner playtests the shapes first (11-12 20:21Z);
-`larder-world -- shape=d` plays this one, with a walker's hit scaled to the
-density (`Rules::mass`).
+Not a default: the owner played D and C and picked C, today's 45 degrees
+(11-12 22:19Z: "C is better how it looks, the shape it takes, how it
+networks the crystals"); `larder-world -- shape=d` still plays this one.
 
 Each dish sets its own angle (`level.rs` `sensor_deg`). **Explore, then
 settle** (`settle_seconds`, easing from `explore_angle` to `sensor_angle`)

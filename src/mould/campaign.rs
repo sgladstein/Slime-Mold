@@ -49,7 +49,14 @@ pub enum Goal {
     /// the first census (2026-11-12) found the Fork's west crystal "clear"
     /// from the start, so every hand, idle included (best 0.22-0.87), filled
     /// the bar before the mould arrived, and the mission taught nothing.
-    Clear { crystals: Vec<usize>, need: usize, secs: f32, retake: bool },
+    ///
+    /// With `guard` (`goal hold`, which is also `retake`) a crystal counts
+    /// only while a living soldier stands on it (within `GUARD` of its
+    /// edge): the Drifter drifts since tiers #133, and on the plain retake
+    /// random fire met First contact on 2 of 4 seeds by 2:49 (census v10),
+    /// chasing the mould off a crystal and walking away; holding means
+    /// standing there.
+    Clear { crystals: Vec<usize>, need: usize, secs: f32, retake: bool, guard: bool },
     /// At most `leak` of the walkers outside this rectangle (map cells) for
     /// `secs` game seconds in a row (mission 3: keep the mould in the Rim).
     /// With no leak allowed (the first census) no hand ever held the Rim for
@@ -63,7 +70,11 @@ pub enum Goal {
     /// wall-the-gaps hand cut it to 17% with no thick bin (design review,
     /// 07:22Z: pick between the two rules on the Sprawler's numbers).
     Contain { rect: (f32, f32, f32, f32), secs: f32, leak: f32, body: u32 },
-    /// Walkers fall to `frac` of their peak (mission 4: starve it).
+    /// Walkers fall to `frac` of their peak (mission 4: starve it; `shrink
+    /// 0` is a wipe, mission 2). The peak counts from `SHRINK_FROM`: a new
+    /// mould halves by itself in its first 40 s as walkers starve, and
+    /// counted from the start `shrink 0.5` was met by every hand, idle
+    /// included, at 0:20 (census v11).
     Shrink(f32),
     /// The squad's share of the charge taken reaches `frac` (mission 8).
     Take(f32),
@@ -101,7 +112,7 @@ impl Mission {
     /// WORDS`, `map NAME`, `tier NAME`, `verbs NAME...`, `rule KEY VALUE`,
     /// `bonus lose N` | `bonus stolen F`, and one goal: `goal squad N [K]`,
     /// `goal clear NEED SECS C...` (or `retake`: only crystals the mould has
-    /// been on), `goal contain X0 Y0 X1 Y1 SECS LEAK`, `goal
+    /// been on; `hold`: retake, and a soldier stands on it), `goal contain X0 Y0 X1 Y1 SECS LEAK`, `goal
     /// shrink F`, `goal take F`.
     pub fn parse(text: &str) -> Result<Mission, String> {
         let (mut name, mut says, mut map, mut tier, mut goal, mut verbs, mut bonus, mut rules) = (None, None, None, None, None, vec![], None, vec![]);
@@ -145,7 +156,7 @@ impl Mission {
                     goal = Some(match (k, v.as_slice()) {
                         ("squad", [x]) => Goal::Squad { n: *x as usize, crystals: 0 },
                         ("squad", [x, k]) => Goal::Squad { n: *x as usize, crystals: *k as usize },
-                        ("clear" | "retake", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs, retake: k == "retake" },
+                        ("clear" | "retake" | "hold", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs, retake: k != "clear", guard: k == "hold" },
                         ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: 0 },
                         ("contain", [x0, y0, x1, y1, secs, leak, body]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: *body as u32 },
                         ("shrink", [f]) => Goal::Shrink(*f),
@@ -176,6 +187,7 @@ impl Mission {
         // still set either (0 turns it off).
         r.overrun = OVERRUN_END;
         r.reserve = RESERVE;
+        r.drain = MISSION_DRAIN;
         for (k, v) in &self.rules {
             match k.as_str() {
                 "price" => r.price = *v,
@@ -186,6 +198,8 @@ impl Mission {
                 "smell" => r.smell = *v,
                 "overrun" => r.overrun = *v,
                 "reserve" => r.reserve = *v,
+                "drain" => r.drain = *v,
+                "ration" => r.ration = *v,
                 _ => unreachable!("parse checks the keys"),
             }
         }
@@ -193,15 +207,29 @@ impl Mission {
     }
 }
 
-const RULE_KEYS: [&str; 8] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve"];
+const RULE_KEYS: [&str; 10] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve", "drain", "ration"];
+
+/// A walker's bite on a soldier in a mission (`Rules::drain`) unless its
+/// file sets one (`rule drain N`): 1, the bite the missions were tuned on.
+/// Free play's went to 2 on 2026-11-12 (the owner: walking into the slime
+/// "should be very deadly"); at 2 the claim hand's walled squad on The gaps
+/// was wiped at 2:05, so the missions keep theirs until the campaign
+/// thread retunes them.
+pub const MISSION_DRAIN: f32 = 1.0;
 
 /// Seconds from the design: a stuck or overrun run this long ends the
 /// mission; two stars need the goal before `TWO_STARS`.
 pub const STUCK_END: f32 = 30.0;
 pub const OVERRUN_END: f32 = 30.0;
+/// `hold`: a soldier within this many dish cells of a crystal's edge holds
+/// it. Soldiers stand at its rim, not on it, since crystals turned solid
+/// (#153, `Rules::crystal_solid`), and spread round a goal by slot.
+pub const GUARD: f32 = 5.0;
 /// `Rules::reserve` for a mission: a free recruit every 20 game seconds
 /// while fewer than two soldiers live and the bank can't buy one.
 pub const RESERVE: f32 = 20.0;
+/// `shrink`: game seconds before the peak starts counting (`Goal::Shrink`).
+pub const SHRINK_FROM: f32 = 60.0;
 pub const TWO_STARS: f32 = 720.0;
 /// The arc's phase edges, game seconds (landing, contact, pressure, climax).
 pub const PHASES: [f32; 3] = [120.0, 360.0, 660.0];
@@ -345,7 +373,7 @@ impl Tracker {
             count: None,
             outside: None,
             thick: None,
-            peak: g.mould.max(g.start_mould),
+            peak: 0,
             lost: 0,
             last: snap(g, 0.0),
         }
@@ -373,13 +401,16 @@ impl Tracker {
                 Some(squad.min(at.len() as f32 / *crystals as f32).min(1.0))
             }
             Goal::Shrink(f) => {
-                let peak = self.peak.max(1) as f32;
+                if self.peak == 0 {
+                    return Some(0.0);
+                }
+                let peak = self.peak as f32;
                 Some(((peak - g.mould as f32) / (peak * (1.0 - f))).clamp(0.0, 1.0))
             }
             // From an even share: `take_share` is 0.5 before any charge is
             // gone, which as share / f showed 83% of a 60% goal at 0:00.
             Goal::Take(f) => Some(((g.take_share() - 0.5) / (f - 0.5).max(1e-3)).clamp(0.0, 1.0)),
-            Goal::Clear { crystals, need, secs, retake } => {
+            Goal::Clear { crystals, need, secs, retake, guard } => {
                 let grid = grid?;
                 let cs = g.world.crystals();
                 self.touched.resize(cs.len(), false);
@@ -389,7 +420,7 @@ impl Tracker {
                     let on = walkers_where(grid, size, |px, py| (px - x).hypot(py - y) <= r);
                     if on > 0 {
                         self.touched[c] = true;
-                    } else if !retake || self.touched[c] {
+                    } else if (!retake || self.touched[c]) && (!guard || g.soldiers.iter().any(|s| s.alive && (s.x - x).hypot(s.y - y) <= r + GUARD * g.world.scale())) {
                         clear += 1;
                     }
                 }
@@ -424,7 +455,9 @@ impl Tracker {
             return self.verdict;
         }
         let t = g.time();
-        self.peak = self.peak.max(g.mould);
+        if g.time() >= SHRINK_FROM {
+            self.peak = self.peak.max(g.mould);
+        }
         let alive = g.alive();
         self.lost += self.last.alive.saturating_sub(alive);
         let bar = self.bar_now(g, grid, dt);
@@ -647,7 +680,9 @@ mod tests {
         assert!(Mission::parse(&LANDFALL.replace("rule price 0", "rule prise 0")).is_err());
         assert!(Mission::parse(&format!("{LANDFALL}goal take 0.6\n")).is_err());
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 6 60 1 2 3 4 5 6 7 8")).unwrap();
-        assert_eq!(c.goal, Goal::Clear { crystals: (1..=8).collect(), need: 6, secs: 60.0, retake: false });
+        assert_eq!(c.goal, Goal::Clear { crystals: (1..=8).collect(), need: 6, secs: 60.0, retake: false, guard: false });
+        let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal hold 1 60 1 2")).unwrap();
+        assert!(matches!(c.goal, Goal::Clear { retake: true, guard: true, .. }));
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal retake 1 60 1")).unwrap();
         assert!(matches!(c.goal, Goal::Clear { retake: true, .. }));
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60 1 16")).unwrap();
@@ -772,6 +807,36 @@ mod tests {
         let mut tr = Tracker::new(mission(&format!("goal retake 1 10 {home}")), &g);
         assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none());
         assert_eq!(tr.best, 0.0, "the home crystal stays the mould's");
+
+        // `hold`: a crystal counts only with a soldier on it. On a crystal
+        // the mould never reached (guard alone, retake off) the squad
+        // walked onto it fills the bar; walked the other way it does not.
+        let held = |g: &Game<crate::mould::big::BigDish>, near: usize| {
+            let mut m = mission(&format!("goal hold 1 20 {near}"));
+            if let Goal::Clear { retake, .. } = &mut m.goal {
+                *retake = false;
+            }
+            Tracker::new(m, g)
+        };
+        let mut g = small(Rules::default());
+        let (near, _) = near_and_home(&g);
+        let at = g.world.crystals()[near].0;
+        let mut tr = held(&g, near);
+        let v = follow(&mut g, &mut tr, 40.0, |g| {
+            for s in g.soldiers.iter_mut() {
+                s.order = Order::Move(at.0, at.1);
+            }
+        });
+        assert_eq!(v.map(|v| v.cause), Some(Cause::Goal), "a soldier on the crystal holds it");
+        let mut g = small(Rules::default());
+        let mut tr = held(&g, near);
+        // The larder is on that crystal: walk well clear of it.
+        let away = (at.0 - 120.0, at.1);
+        assert!(follow(&mut g, &mut tr, 40.0, |g| {
+            for s in g.soldiers.iter_mut() {
+                s.order = Order::Move(away.0, away.1);
+            }
+        }).is_none(), "nobody on it, not held: best {}", tr.best);
     }
 
     /// `contain` fills over the whole world and never in a corner; the leak
@@ -799,15 +864,19 @@ mod tests {
     }
 
     /// An idle squad takes no charge: `take` stays at 0 (its bar starts from
-    /// an even share). (`shrink` is not tested idle: on the race world the
-    /// mould halves by itself in the first 40 s as walkers starve, best 0.50;
-    /// mission 4's numbers must allow for that.)
+    /// an even share). `shrink` counts its peak from `SHRINK_FROM`, after the
+    /// new mould has halved by itself (best 0.50 at 40 s when it counted
+    /// from the start), so an idle squad's bar is still empty at 40 s.
     #[test]
     fn take_stays_empty_for_idle() {
         let mut g = small(Rules::default());
         let mut tr = Tracker::new(mission("goal take 0.6"), &g);
         assert!(follow(&mut g, &mut tr, 40.0, |_| {}).is_none());
         assert!(tr.best < 0.05, "best {}", tr.best);
+        let mut g = small(Rules::default());
+        let mut tr = Tracker::new(mission("goal shrink 0.5"), &g);
+        assert!(follow(&mut g, &mut tr, 40.0, |_| {}).is_none());
+        assert_eq!(tr.best, 0.0);
     }
 
     /// A squad that has no food and pays for shots is stuck: after 30 s the
@@ -892,12 +961,13 @@ mod tests {
             (v, tr.best)
         };
         // The four rounds side by side: 105 s on a 4-core box (140 one
-        // after another); First contact's 6:19 is the long pole.
+        // after another); First contact's wipe (7:17-8:01 on headless
+        // moulds, census v11) is the long pole.
         let [m1, m2, walls, open] = std::thread::scope(|sc| {
             let play = &play;
             [
                 sc.spawn(move || play("1-landfall", "claim", false, 200.0)),
-                sc.spawn(move || play("2-first-contact", "strike", false, 420.0)),
+                sc.spawn(move || play("2-first-contact", "strike", false, 540.0)),
                 sc.spawn(move || play("3-the-gaps", "claim", true, 180.0)),
                 sc.spawn(move || play("3-the-gaps", "claim", false, 180.0)),
             ]
@@ -905,8 +975,11 @@ mod tests {
         });
         assert!(m1.0.is_some_and(|v| v.cause == Cause::Goal), "Landfall, claim: {:?}", m1.0);
         assert!(m2.0.is_some_and(|v| v.cause == Cause::Goal), "First contact, strike: {:?}", m2.0);
-        assert!(walls.0.is_none() && walls.1 >= 0.25, "The gaps, walls: {:?} best {}", walls.0, walls.1);
-        assert!(open.1 < 0.2, "The gaps without walls held: best {}", open.1);
+        // In held seconds of The gaps' 5:00 (300 s since census v12): walls
+        // hold 150 s or more of the 180, no walls under 120 (103 s on seed 1,
+        // when the thick mould first gets out).
+        assert!(walls.0.is_none() && walls.1 * 300.0 >= 150.0, "The gaps, walls: {:?} best {}", walls.0, walls.1);
+        assert!(open.1 * 300.0 < 120.0, "The gaps without walls held: best {}", open.1);
     }
 
 

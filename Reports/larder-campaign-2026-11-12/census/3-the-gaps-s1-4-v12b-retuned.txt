@@ -1,0 +1,43 @@
+mission 3-the-gaps (The gaps): "Keep the mould inside the Rim for 5:00", map rim, tier sprawler , seeds 1-4, scale 2, walkers 5000
+on the CPU
+  idle s3: Overrun 504s 0*
+  idle s2: Overrun 554s 0*
+  idle s4: Overrun 606s 0*
+  idle s1: Overrun 627s 0*
+  random s2: SquadWiped 190s 0*
+  random s1: SquadWiped 257s 0*
+  random s4: SquadWiped 193s 0*
+  random s3: SquadWiped 238s 0*
+  claim s1: SquadWiped 651s 0*
+  gaps+claim s1: Goal 300s 2*
+  claim s3: SquadWiped 872s 0*
+  claim s2: Cap 900s 0*
+  claim s4: Cap 900s 0*
+  gaps+claim s2: Goal 300s 2*
+  gaps+claim s3: Goal 300s 2*
+  gaps+claim s4: Cap 900s 1*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+claim        1  SquadWiped   651      0 0.34    50%     4%   68%   54%    0%                           107    0  165        0      0      4500  14812  0.000/0.453  2134/457/80 648  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        2  Cap          900      0 0.43    45%     0%   18%   51%   85%                            75   17  180        0      1      4200  14105  0.000/0.456  2098/471/82 896  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        3  SquadWiped   872      0 0.36    27%     0%   35%   36%   18%                            22    0  160        0      0      5400  16394  0.000/0.455  2006/461/77 867  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+claim        4  Cap          900      0 0.38    40%     2%   22%   31%   89%                            39   14  114        0      1      4200  15361  0.000/0.462  2109/473/81 898  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    1  Goal         300      2 1.00     0%     0%    0%    0%    0%                             0    0    0      299     11      3900   3670  0.000/0.180  820/53/0 296  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    2  Goal         300      2 1.00     0%     0%    0%    0%    0%                             0    1    0      299      9      3300   3318  0.000/0.178  796/44/0 297  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    3  Goal         300      2 1.00     0%     0%    0%    0%    0%                             0    1    0      299     15      5100   2665  0.000/0.182  790/77/0 294  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gaps+claim    4  Cap          900      1 0.94    12%     0%   11%   26%    3%                            37    1   70      900      2      7500  15067  0.000/0.341  1368/300/53 897  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         1  Overrun      627      0 0.35    69%     7%   95%   74%    0%                           231    2  231        0      1         0   7589  0.000/0.469  2167/490/79 624  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         2  Overrun      554      0 0.32    69%    13%   95%   71%    0%                           178    2  178        0      1         0   7195  0.000/0.464  2115/467/80 552  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         3  Overrun      504      0 0.33    66%    15%   99%   54%    0%                           253    1  253        0      2         0   6563  0.000/0.464  2088/464/80 498  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         4  Overrun      606      0 0.31    74%    16%  100%   77%    0%                           249    2  249        0      1         0   7446  0.000/0.466  2158/478/79 604  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       1  SquadWiped   257      0 0.42     3%     0%    6%    0%    0%                             5    0  119        0      0       900   8105  0.000/0.406  1788/325/50 255  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       2  SquadWiped   190      0 0.29    10%     0%   26%    0%    0%                            17    1   76        0      0         0   6522  0.000/0.419  1838/365/40 187  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       3  SquadWiped   238      0 0.28     4%     5%    3%    0%    0%                             4   11  132        0      0       300   5144  0.000/0.403  1769/338/55 233  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       4  SquadWiped   193      0 0.36     6%     0%   16%    0%    0%                             4    9   77        0      0       300   6612  0.000/0.423  1862/357/51 189  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  claim     0/4  stars 0  best 0.38  dead 40%  stuck 17 s  stall 180 s
+  gaps+claim 3/4  stars 2  best 0.98  dead 3%  stuck 1 s  stall 70 s
+  idle      0/4  stars 0  best 0.33  dead 70%  stuck 2 s  stall 253 s
+  random    0/4  stars 0  best 0.34  dead 6%  stuck 11 s  stall 132 s
+286 s

@@ -1,0 +1,37 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+Reports/larder-buildings-2026-11-12/siren/look/fork-siren-030s-all.png
+Reports/larder-buildings-2026-11-12/siren/look/fork-siren-030s-near.png
+  CPU: ground field 1.85 ms (once a game second), model and HUD 0.033 ms a frame
+  t 30 s: mould 1508, soldiers 5, bank 587, harvested 787, shots 13, killed 11, took 96%, crystals left 0.950; squad at 232.0,137.0
+    turret at (248, 126): hp 300 / 300, built 1.0, standing
+    turret at (264, 126): hp 300 / 300, built 1.0, standing
+    siren at (254, 188): hp 141 / 150, built 0.9, standing
+    pump at (91, 30): hp 20 / 200, built 0.0, standing
+    pumped 0 food, lures burnt 0
+Reports/larder-buildings-2026-11-12/siren/look/fork-siren-045s-all.png
+Reports/larder-buildings-2026-11-12/siren/look/fork-siren-045s-near.png
+  CPU: ground field 1.80 ms (once a game second), model and HUD 0.034 ms a frame
+  t 45 s: mould 1397, soldiers 7, bank 988, harvested 1988, shots 20, killed 14, took 97%, crystals left 0.914; squad at 217.6,105.6
+    turret at (248, 126): hp 300 / 300, built 1.0, standing
+    turret at (264, 126): hp 300 / 300, built 1.0, standing
+    siren at (254, 188): hp 150 / 150, built 1.0, standing
+    pump at (91, 30): hp 88 / 200, built 0.4, standing
+    pumped 0 food, lures burnt 0
+Reports/larder-buildings-2026-11-12/siren/look/fork-siren-060s-all.png
+Reports/larder-buildings-2026-11-12/siren/look/fork-siren-060s-near.png
+  CPU: ground field 1.59 ms (once a game second), model and HUD 0.033 ms a frame
+  t 60 s: mould 1578, soldiers 9, bank 885, harvested 2685, shots 24, killed 22, took 97%, crystals left 0.882; squad at 256.5,109.9
+    turret at (248, 126): hp 300 / 300, built 1.0, standing
+    turret at (264, 126): hp 300 / 300, built 1.0, standing
+    siren at (254, 188): hp 150 / 150, built 1.0, standing
+    pump at (91, 30): hp 198 / 200, built 1.0, standing, working
+    pumped 51 food, lures burnt 0
+Reports/larder-buildings-2026-11-12/siren/look/fork-siren-090s-all.png
+Reports/larder-buildings-2026-11-12/siren/look/fork-siren-090s-near.png
+  CPU: ground field 1.75 ms (once a game second), model and HUD 0.037 ms a frame
+  t 90 s: mould 1453, soldiers 14, bank 1192, harvested 4992, shots 58, killed 329, took 97%, crystals left 0.806; squad at 190.7,88.8
+    turret at (248, 126): hp 300 / 300, built 1.0, standing
+    turret at (264, 126): hp 300 / 300, built 1.0, standing
+    siren at (254, 188): hp 150 / 150, built 1.0, standing
+    pump at (91, 30): hp 198 / 200, built 1.0, standing, working
+    pumped 201 food, lures burnt 0

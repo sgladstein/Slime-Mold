@@ -277,3 +277,85 @@ end times 12-11 paired, p 1). The engines agree on every seed here too.
 First contact was not re-run: its goal changes when the Drifter drifts,
 and it gets a smoke check then (owner's testing rule, 17:26Z: name the
 question, and anything over about an hour needs the owner's OK).
+
+### First contact on the drifting, headless Drifter (census v10-v11)
+
+Tiers #133 made the Drifter drift (hunger scent), #143 made soldiers wade
+in thick slime, and #164 (the owner, 20:21Z: no king rule) makes every
+mould headless. The old goal, "drive it off its home crystal and hold it
+60 s", was met only by strike's wipe. Question for each run: does a goal
+that teaches fire get met by a plan, and not by idle or random? CPU,
+seeds 1-4, about 20 min a run; raw files in
+`larder-campaign-2026-11-12/census/` (v10 on main a56f644 / fc4a718, v11
+with #164 merged in locally).
+
+| Goal tried | idle | random | claim | strike | other |
+|---|---|---|---|---|---|
+| retake home, hold 60 s (old; v10) | 0/4 | 0/4 | 0/4 | 4/4 (wipe) | boom, fort 0/4 |
+| retake any crystal it reached, 60 s (v10) | 0/4 | 2/4, by 1:35-2:49 | 2/4, at 14:17-14:53 | 4/4 | boom, fort 0/4 |
+| same, a soldier on it (`goal hold`; v10, v11) | 0/4 | 0/4 (v10), 3/4 (v11) | 0/4 | 4/4 | hold+claim, hold+boom 0/4 |
+| cut to half its size, from the start (v11) | 4/4 at 0:20 | 4/4 | 4/4 | 4/4 | |
+| **wipe it out, bar from its peak after 1:00 (`shrink 0`; v11)** | 0/4, best 0.06 | 2/4 at 10:00-11:49 | 0/4, best 0.33 | 4/4 at 7:17-8:01 | boom 0/4 |
+
+Two things decide it. Since #143 the Drifter leaves home only when
+soldiers come close (claim's games: it reached no crystal but its own on
+4 of 4 seeds), so any goal about crystals it has taken waits on the
+player provoking it, and an AI hand written to stand on such a crystal
+(`hold+STYLE`) never got the chance. And a new mould halves by itself in
+its first 40 s, so a shrink counted from the start fills for idle. Mission
+2 now says "Wipe out the Drifter" (`goal shrink 0`), with the peak counted
+from `SHRINK_FROM` (60 s): the bar is the share of the mould cut away,
+which spreads the hands (strike 1.00, random 0.86, claim 0.33, idle 0.06).
+Random wipes the headless Drifter on 2 of 4 seeds; that is a tuning note
+for the Drifter (the tiers thread already calls it gentle), not a veto.
+Then the designer (22:58Z): with every mould headless a wipe means
+hunting the last stragglers, which the owner called tedious in the shape
+D playtest. The goal is now "Break the Drifter: cut it below a tenth of
+its size" (`shrink 0.1`), so the mission ends when the fight is won;
+strike's goal comes at or before its wipe, and the times above were not
+re-measured. On main after the Larder economy PR (#170: rations, the
+overrun on) strike no longer breaks the Drifter on seed 1: bar 0.51 at
+15:00, two soldiers left (the `#[ignore]`d plan test fails there for
+that reason, before and after this change). #174 doubles the bite next,
+so First contact is re-tuned after it lands rather than twice. `goal hold` stays in the mission format, tested, for a mould that comes
+back; `hold+STYLE` was dropped with no mission to use it. The `#[ignore]`d
+plan test now gives First contact's strike 9:00.
+
+**Re-tuned after the economy (#170) and shapes (#174) PRs (census v12,
+e425fed, seeds 1-4, 20 min a run).** #174 keeps missions on their own
+bite (`campaign::MISSION_DRAIN` 1). With #170's rations every hand got
+stuck or capped and none broke the Drifter (strike best 0.50, stuck by
+12:56-14:09). Mission 2 now turns rations off (`rule ration 0`; `ration`
+joins the mission rule keys): strike 4/4 at 7:27-8:53 with 2 stars,
+random 0/4 (best 0.47), claim 0/4 (0.27), boom and idle 0/4 (0.07).
+Upkeep is a later mission's lesson. The tiers thread's #180 (Drifter
+hunger 8 to 16) followed (census v12c, a1a7156): strike 4/4 at 7:10-7:43
+with 2-3 stars, random 2/4 at 11:32-13:18 (a tuning note; it lost its
+squad or capped on the other two), claim 0/4 but its bar now reaches
+0.49 since the Drifter comes out to its crystals, boom and idle 0/4
+(0.08).
+
+**The gaps re-tuned the same night (census v12, ab7a819, seeds 1-4).**
+On main the walled squad (gaps+claim) was wiped by 2:22-8:52 and held at
+best 0.30 of 10:00; claim, random and idle were wiped or overrun by 2:09-
+6:17. Rations off alone: walls lived to 13:46-14:58 but best 0.49-0.83;
+a 3000 bank on top was worse (best 0.19); rations off with the bite at
+0.5 (`rule drain 0.5`): walls lived to the cap and held 4:42-8:00 at best,
+never 10:00. So the mission is now "Keep the mould inside the Rim for
+5:00" with rations off and bite 0.5: walls 3/4 at 5:00 with 2 stars (the
+fourth held 4:42), claim, random and idle 0/4 (best 0.43, 0.42, 0.35:
+the thick mould is out by about 2:00). The `#[ignore]`d plan test now
+counts The gaps in held seconds; it passes on main, and so does the CI
+smoke test.
+
+
+**Design review of the re-tune (01:33Z).** Rations off in missions 2-3
+is good onboarding (one thing at a time). Two follow-ups for the ladder,
+taken: (1) rations are now the main economy pressure, so a mission must
+teach them on purpose, most likely 4 ("keep a squad fed while you hold a
+crystal", the ration on the HUD), before the player meets upkeep in a
+skirmish; (2) walls being the only plan that wins The gaps is fine for a
+teaching mission if the goal names them, so it now reads "Wall the gaps:
+keep the mould inside the Rim for 5:00". From mission 4 on, at least two
+plans should win each mission (the several-strategies bar). Random's 2/4
+on First contact is acceptable for mission 2.
