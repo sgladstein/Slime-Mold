@@ -212,7 +212,7 @@ const FLASH: f32 = 0.07;
 /// the ground the look shades.
 const GROUND_EVERY: f32 = 1.0;
 
-/// The loadouts Y cycles through (`mould::rounds`): a name and its cards,
+/// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
 const LOADOUTS: [(&str, &str); 13] = [
@@ -411,7 +411,7 @@ struct App {
     /// (E). Tools are not in the game's replay (the kit is outside `Game`).
     kit: Kit,
     /// The squad's round (`mould::rounds`, after Flashes of Chaos's ammo
-    /// cards; 2026-11-12): `rounds=` at the start, Y cycles `LOADOUTS`.
+    /// cards; 2026-11-12): `rounds=` at the start, H cycles `LOADOUTS`.
     rounds: Rounds,
     round: usize,
     tools_page: bool,
@@ -1628,7 +1628,7 @@ impl App {
                     self.fail(event_loop, e);
                 }
             }
-            KeyCode::KeyY => {
+            KeyCode::KeyH => {
                 // The next loadout this world can cast (the GPU world has
                 // no gas or germ yet), kept for the next game too.
                 let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
