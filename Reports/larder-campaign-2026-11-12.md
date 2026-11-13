@@ -348,3 +348,14 @@ the thick mould is out by about 2:00). The `#[ignore]`d plan test now
 counts The gaps in held seconds; it passes on main, and so does the CI
 smoke test.
 
+
+**Design review of the re-tune (01:33Z).** Rations off in missions 2-3
+is good onboarding (one thing at a time). Two follow-ups for the ladder,
+taken: (1) rations are now the main economy pressure, so a mission must
+teach them on purpose, most likely 4 ("keep a squad fed while you hold a
+crystal", the ration on the HUD), before the player meets upkeep in a
+skirmish; (2) walls being the only plan that wins The gaps is fine for a
+teaching mission if the goal names them, so it now reads "Wall the gaps:
+keep the mould inside the Rim for 5:00". From mission 4 on, at least two
+plans should win each mission (the several-strategies bar). Random's 2/4
+on First contact is acceptable for mission 2.
