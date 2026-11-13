@@ -185,6 +185,17 @@ units pass) with a test at the cap in its first PR. A turret-ring hand joins the
 shots plus turrets could bring back the held ring of fire that once beat
 every plan (game designer review).
 
+**Green means green with current main** (integration thread, 11-13
+00:05Z, at the technical lead's request). #165 (own mould, new `Args::own`)
+and #174 (a test building `Args`) were each green on their own heads and
+merged minutes apart, and main failed to build (E0063) until #181 carried
+`own: false`. Before merging, a thread checks that its head contains
+current main; if main moved since its last CI run, it merges main in and
+waits for green again. That costs a CI cycle only when main moved, and the
+sorted wiki frontmatter (#167) keeps those merges clean. GitHub's "require
+branches to be up to date" setting on main would enforce it; that is the
+owner's setting to turn on, if they want it.
+
 **Merge order on `src/mould/larder_world.rs` and `squad.rs`.**
 
 1. Larder thread: free shots, soldier scent (PR #106)
