@@ -3990,7 +3990,13 @@ mod tests {
         // engines) are off too: with them the squad starts off the larder's
         // crystal and seed 3's moulds part by 9.7% at 25 s (1930 against
         // 1760), past the race twin's 8%.
-        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, ..Rules::default() };
+        // Rays, not bullets (`Rules::bullet_speed`, 11-13): bullets are game
+        // state, the same code on both engines, and this twin is the flee
+        // rule's. With bullets seed 3 fires 76 / 76 shots and kills 1030 /
+        // 1020, but once the fleeing mould collapses (25-30 s) the moulds
+        // part by 15.6% (920 against 1064), past the 8%; shots landing a
+        // few frames later give the chaos more room.
+        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, ..Rules::default() };
         let flee = || {
             let mut p = race_params(seed, scale, walkers);
             (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
