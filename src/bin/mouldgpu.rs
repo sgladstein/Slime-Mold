@@ -3177,7 +3177,10 @@ mod tests {
     /// dish: (crystal charge L1, or infinite if any charge is below 0;
     /// walkers whose crystal take is off by more than 1e-6, wall health L1,
     /// cells whose agar differs, cells whose ground bits differ).
-    fn world_off(e: &Engine, cpu: &BigDish) -> (f64, usize, f64, usize, usize) {
+    /// `fresh`: walkers born in the twin tick, left out of the take check
+    /// (a child took nothing, but a fed parent's child can land on a crystal
+    /// cell another walker shares, whose share the GPU keeps by the cell).
+    fn world_off(e: &Engine, cpu: &BigDish, fresh: &[bool]) -> (f64, usize, f64, usize, usize) {
         let (device, queue) = (&e.device, &e.queue);
         let wd = world_data(cpu);
         let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(device, queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
@@ -3189,7 +3192,7 @@ mod tests {
         let took_off = if cpu.took.is_empty() {
             0
         } else {
-            (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).filter(|&k| {
+            (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && !fresh.get(k).copied().unwrap_or(false)).filter(|&k| {
                 let (x, y, _) = cpu.walkers[k];
                 (share[y as usize * cpu.w + x as usize] - cpu.took[k]).abs() > 1e-6
             }).count()
@@ -3253,7 +3256,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 13] = [
+        let dishes: [(&str, Settings, Build); 14] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3284,6 +3287,11 @@ mod tests {
             // so some walkers are blocked and crowded.
             ("one body: food shared, hunger", Settings { energy_flow: 0.05, hunger_scent: 8.0, hunger_at: 1.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             ("lone step: a walker with few others round it slows", Settings { lone_step: 3.0, lone_floor: 0.3, lone_r: 2, ..grow(w(small(0))) }, walls),
+            // A fed mould packs tighter (2026-11-12, the slime-enemy
+            // thread): every other walker is fed to 3 before the tick
+            // (below), so fed and unfed ones step and breed side by side,
+            // two a cell for the fed.
+            ("fed crowd: a fed walker packs two to a cell", Settings { fed_crowd: 1, fed_full: 2.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3303,11 +3311,20 @@ mod tests {
                     }
                 }
             }
+            if name.starts_with("fed crowd") {
+                for k in (0..cpu.walkers.len()).step_by(2) {
+                    if cpu.lives(k) {
+                        cpu.energy[k] = 3.0;
+                    }
+                }
+            }
             let n = cpu.walkers.len();
+            let was: Vec<bool> = (0..n).map(|k| cpu.lives(k)).collect();
             let (broken, bitten, eaten, births) = (cpu.broken, cpu.wall_hits, cpu.eaten, cpu.births);
             let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
-            let (lc, took_off, lh, agar_off, ground_off) = world_off(&e, &cpu);
+            let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
+            let (lc, took_off, lh, agar_off, ground_off) = world_off(&e, &cpu, &fresh);
             let (_, hits, gpu_broken) = e.world_counts();
             // Growth: what the walkers ate turned into energy; and no grass
             // where the CPU has none (crystals on, grazing off).
@@ -3344,6 +3361,19 @@ mod tests {
                 eprintln!("{name}: living walkers on sand, clay, barren, plain {kinds:?}; {births} born in the tick");
                 assert!(kinds.iter().all(|&c| c > 0) && births > 0, "{name}: walkers on every kind of soil {kinds:?}, {births} born");
                 assert!(e.ground_world & WORLD_SOIL != 0, "{name}: soil on");
+            }
+            // The fed pack: cells holding two walkers after the tick, on
+            // each side (the CPU's from its walkers, the GPU's from `occ`).
+            if s.fed_crowd > 0 {
+                let mut held = vec![0u16; cpu.w * cpu.h];
+                for k in (0..n).filter(|&k| cpu.lives(k)) {
+                    held[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize] += 1;
+                }
+                let occ = read_back(&device, &queue, &e.occ).chunks(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect::<Vec<_>>();
+                let (two, gpu_two) = (held.iter().filter(|&&c| c == 2).count(), occ.iter().filter(|&&c| c == 2).count());
+                eprintln!("{name}: {two} cells hold two walkers on the CPU, {gpu_two} on the GPU; {births} born in the tick");
+                assert!(two > 0 && held.iter().all(|&c| c <= 2), "{name}: fed walkers pack two to a cell, never three");
+                assert_eq!(two, gpu_two, "{name}: cells holding two");
             }
             assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
             assert!(lt <= 1e-4 && ls <= 1e-6, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}");
@@ -3649,7 +3679,7 @@ mod tests {
             let side = (e.done % 2) as usize;
             let lt = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
             let ls = l1(&floats(&read_back(&device, &queue, &e.scent[side])), &cpu.scent);
-            let (lc, _, _, agar_off, ground_off) = world_off(&e, &cpu);
+            let (lc, _, _, agar_off, ground_off) = world_off(&e, &cpu, &[]);
             // The alarm the shots laid, spread one tick (0 without the field).
             let la = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
             let alarm_sum: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
@@ -3791,7 +3821,7 @@ mod tests {
             let seg = (45.0, 60.0, 70.0, 100.0, 4.0);
             let cells = cpu.build_wall(seg.0, seg.1, seg.2, seg.3, seg.4);
             e.build_wall(&shared, &s, seg.0, seg.1, seg.2, seg.3, seg.4);
-            let (_, _, _, agar_off, ground_off) = world_off(&e, &cpu);
+            let (_, _, _, agar_off, ground_off) = world_off(&e, &cpu, &[]);
             let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
             let agar: Vec<bool> = u32s(&e.agar).iter().map(|&a| a != 0).collect();
             let side = (e.done % 2) as usize;
