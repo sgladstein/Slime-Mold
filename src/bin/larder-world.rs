@@ -2902,7 +2902,7 @@ mod tests {
     /// The default mould is shape C, under the keys the command line gave.
     #[test]
     fn the_default_is_shape_c_under_given_keys() {
-        let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None };
+        let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0 };
         default_shape(&mut args);
         assert_eq!(args.walkers, 25_000);
         let mut s = race_settings(1, 2, args.walkers);
@@ -3082,11 +3082,11 @@ mod tests {
     #[test]
     fn the_window_plays_the_players_own_mould() {
         let Some((device, queue)) = smoke_gpu() else { return };
-        let args = Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None };
+        let args = Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None, round: 0 };
         let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true };
         let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("own=1: {e}"));
         assert!(last.contains("t "), "{last}");
-        let app = offscreen(Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None }, (320, 200), &device, &queue).unwrap();
+        let app = offscreen(Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None, round: 0 }, (320, 200), &device, &queue).unwrap();
         let g = app.game.as_ref().unwrap();
         assert_eq!(g.world.counts_by_side(), (625, 625));
         assert_eq!(g.mould, 625, "the game's mould is the enemy's");
