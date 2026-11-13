@@ -204,6 +204,23 @@ fn build_kind(id: u32) -> Option<Kind> {
     }
 }
 
+/// The sprite a building draws with (`Marks::building`: atlas tiles 4 + 2k
+/// for the body, 5 + 2k for the lamp). Another hand-numbered registry, so
+/// `command_ids_are_one_registry` checks these too: distinct, 0, 1, 2, ...
+fn sprite_kind(k: Kind) -> Option<u32> {
+    match k {
+        Kind::Turret => Some(0),
+        Kind::Lure => Some(1),
+        Kind::Pump => Some(2),
+        Kind::Outpost => Some(3),
+        // Its own sprite (#161): the horns, and the lens and sound arcs lit
+        // while it is on.
+        Kind::Siren => Some(4),
+        // Drawn as a line, not a sprite.
+        Kind::Wall { .. } => None,
+    }
+}
+
 /// How long a shot's ray and its muzzle flash show, real seconds (the world
 /// look's fight: `examples/worldlook.rs`).
 const TRACER: f32 = 0.1;
@@ -1177,16 +1194,7 @@ impl App {
             if building_colour(b.kind).is_none() {
                 continue;
             }
-            let kind = match b.kind {
-                Kind::Turret => 0,
-                Kind::Lure => 1,
-                Kind::Pump => 2,
-                Kind::Outpost => 3,
-                // Its own sprite (#161): the horns, and the lens and sound
-                // arcs lit while it is on.
-                Kind::Siren => 4,
-                _ => continue,
-            };
+            let Some(kind) = sprite_kind(b.kind) else { continue };
             let half = g.rules.build.touch * sc * 0.7;
             // A lure switched off is not working.
             let working = b.working && (!matches!(b.kind, Kind::Lure | Kind::Siren) || b.on);
@@ -2892,10 +2900,15 @@ mod tests {
         // Every building the build page places has exactly one command (the
         // wall is drawn with WALL, a two-click line, not a build_kind).
         use Kind as K;
-        for kind in [K::Turret, K::Lure, K::Pump, K::Outpost, K::Siren] {
+        let placed = [K::Turret, K::Lure, K::Pump, K::Outpost, K::Siren];
+        for kind in placed {
             let ids: Vec<&str> = COMMANDS.iter().filter(|&&(_, id)| build_kind(id) == Some(kind)).map(|&(n, _)| n).collect();
             assert_eq!(ids.len(), 1, "{} has commands {ids:?}", kind.name());
         }
+        // ... and exactly one sprite, the sprites running 0, 1, 2, ... (#161).
+        let mut sprites: Vec<u32> = placed.iter().map(|&k| sprite_kind(k).unwrap_or_else(|| panic!("{} has no sprite", k.name()))).collect();
+        sprites.sort();
+        assert_eq!(sprites, (0..placed.len() as u32).collect::<Vec<_>>(), "building sprite kinds clash or skip");
     }
 
     use super::*;

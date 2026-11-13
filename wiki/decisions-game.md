@@ -2,10 +2,11 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-12
+updated: 2026-11-13
 sources:
   - CLAUDE.md
   - HANDOFF.md
+  - Reports/fed-mould-2026-11-13/README.md
   - Reports/larder-shot-sink-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/mould-real-world-2026-11-09.md
@@ -27,6 +28,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-13 02:39 | Shape C shares its food (`energy_flow` 0.05 in the window's C keys): in the blind A/B the owner saw the mould grow stronger where it holds crystals in the film with sharing, and kept it as the default | Asked "In which film can you see the mould grow stronger where it holds crystals?" and "Which mould do you want as the default in the window?": "Definitely film 1" (film 1 was C sharing its food) | [Larder World](world/larder.md), [report](../Reports/fed-mould-2026-11-13/README.md) |
 | 2026-11-12 23:14 | A shot's blast is centred inside the slime, not on its edge: one strike radius on along the shot's line from the first slime it meets (`Rules::sink` 1), so a squad standing outside a body takes a full bite | On a squad standing in one spot (22:06Z): "it barely seems to do damage, but if I move them into the mold, they destroy it easily"; asked "A possible fix is to centre the blast one blast-width inside the slime, so shots from outside take a full bite. Want me to try it?": "Yes" | [Larder World](world/larder.md), [report](../Reports/larder-shot-sink-2026-11-12.md) |
 | 2026-11-12 22:22 | Walking a squad straight into thick slime is very deadly (more than the quarter of 40 this thread proposed for C's thickest part). The broken-mould straggler rule stands. A cut-the-network rule waits: the player can't yet see whether the mould grows stronger from the crystals it holds, so that has to read on screen first | "1) more. walking directly into the enemy should be very deadly. 2) maybe, honestly what is going on with the slime is unclear to the player so that makes this type of strategy not attractive at the moment. I cannot tell if it is getting stronger by holding the crystals. Right now it is mostly moving around and I kill it. 3) no" ... "3) I mean no objections" | [Larder](world/larder.md) |
 | 2026-11-12 22:19 | Shape C (a sheet with trunks, 25,000 walkers grown from home) is the window's default mould, after playing D and C (beat D in 8:35, C in 5:51) | "C is a better slime than D" ... "C is better how it looks, the shape it takes, how it networks the crystals" | [Larder](world/larder.md) |
