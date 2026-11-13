@@ -431,6 +431,26 @@ pub struct Rules {
     pub strike: f32,
     /// Game seconds between one soldier's shots.
     pub shot_every: f32,
+    /// How fast a shot flies, dish cells a game second; 0 is the instant
+    /// ray every shot was until 2026-11-13. Why (owner, 11-13 02:37Z):
+    /// "Would it look better if the round was a moving bullet instead of a
+    /// ray? I suspect it would", and yes to building it. A bullet is game
+    /// state (`Game::bullets`), not a drawing: each frame it flies one leg,
+    /// which the engines trace exactly as they traced a whole ray (stop at
+    /// the first slime, strike there), so neither engine changed and the
+    /// mould can grow into a bullet's path or leave it before it lands.
+    pub bullet_speed: f32,
+    /// What a split bullet makes (`Bullet::split`, the rounds' `split`
+    /// card): `split_n` bullets fanned `split_fan` radians either side of
+    /// the parent's heading, each `split_range` dish cells long with
+    /// `split_r` of its strike radius. Pierce (`Bullet::pierce`) carries a
+    /// bullet `pierce_gap` strike radii past its hit, so the next leg does
+    /// not land in the same hole.
+    pub split_n: u8,
+    pub split_fan: f32,
+    pub split_range: f32,
+    pub split_r: f32,
+    pub pierce_gap: f32,
     /// Food a shot costs. 0 since 2026-11-12: the owner's playtest (04:13Z)
     /// ran the bank dry with soldiers left, who could then neither fight
     /// nor harvest past the mould ("energy required for shooting isn't
@@ -682,6 +702,12 @@ impl Default for Rules {
             range: 15.0,
             strike: 2.5,
             shot_every: 1.0,
+            bullet_speed: 45.0,
+            split_n: 3,
+            split_fan: 0.5,
+            split_range: 6.0,
+            split_r: 0.7,
+            pierce_gap: 2.0,
             price: 0.0,
             hp: 100.0,
             drain: 2.0,
@@ -938,6 +964,36 @@ pub struct Shot {
     pub to: (f32, f32),
     pub hit: Option<(f32, f32)>,
     pub killed: u32,
+    /// The soldier that fired it (None: a turret).
+    pub by: Option<usize>,
+    /// Fired this frame (a bullet's first leg, or an instant ray): the
+    /// muzzle flash and the gunshot's sound; later legs are flight.
+    pub fired: bool,
+}
+
+/// A shot in flight (`Rules::bullet_speed`): where it is, its heading, the
+/// fine cells of its range left, its strike radius, and who fired it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Bullet {
+    pub at: (f32, f32),
+    pub dir: (f32, f32),
+    pub left: f32,
+    pub r: f32,
+    pub by: Option<usize>,
+    pub fresh: bool,
+    /// Slime hits it flies on through (each one strikes as a shot does).
+    pub pierce: u8,
+    /// Times it splits where it finally lands (`Rules::split_n`); its
+    /// pieces split one fewer time and do not pierce.
+    pub split: u8,
+}
+
+/// What every soldier's bullet carries when fired: the rounds' flight
+/// cards (`rounds::Rounds::arm`). Turret shots carry none.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BulletMods {
+    pub pierce: u8,
+    pub split: u8,
 }
 
 pub struct Game<W: World> {
@@ -953,6 +1009,7 @@ pub struct Game<W: World> {
     /// The bank couldn't pay the last step's rations: the squad is losing
     /// hit points (`Rules::hunger`).
     pub hungry: bool,
+    /// Shots fired (with bullets, once a bullet, not once a leg).
     pub shots: u32,
     pub killed: u32,
     pub walls: u32,
@@ -997,6 +1054,15 @@ pub struct Game<W: World> {
     pub end: Option<End>,
     /// The last frame's shots, for the window's tracers.
     pub last_shots: Vec<Shot>,
+    /// Shots in flight (`Rules::bullet_speed`), oldest first; at most
+    /// `squad::SHOTS_MAX`, and a shot fired past that is dropped (the
+    /// newest go: the old ones are about to land).
+    pub bullets: Vec<Bullet>,
+    /// The flight cards on soldiers' bullets, and bullets a split could
+    /// not add past `squad::SHOTS_MAX` (dropped, newest first, as fired
+    /// shots are).
+    pub bullet_mods: BulletMods,
+    pub bullets_dropped: u32,
     /// Walkers alive at the last count (once a game second).
     pub mould: usize,
     /// The most walkers the mould has had at a count (`Rules::broken`).
@@ -1041,6 +1107,11 @@ pub struct Game<W: World> {
 struct Flight {
     t: u64,
     f: Frame,
+    /// Each of `f.shots`: who fired it and whether it was fired this
+    /// frame; with bullets, leg q is `bullets[q]`'s.
+    by: Vec<(Option<usize>, bool)>,
+    /// Shots fired this frame.
+    fired: u32,
     who: Vec<Who>,
     from: Vec<Option<usize>>,
     out: Option<FrameOut>,
@@ -1124,6 +1195,9 @@ impl<W: World> Game<W> {
             reserve_ticks: 0,
             end: None,
             last_shots: Vec::new(),
+            bullets: Vec::new(),
+            bullet_mods: BulletMods::default(),
+            bullets_dropped: 0,
             mould,
             peak: mould,
             broken: None,
@@ -1754,6 +1828,110 @@ impl<W: World> Game<W> {
         self.flight.as_ref().map_or_else(|| self.world.ticks(), |f| f.t)
     }
 
+    /// This frame's shots as the engines trace them. With
+    /// `Rules::bullet_speed` 0 they are the fired rays as they were. Else
+    /// the fired shots join `bullets` (past `squad::SHOTS_MAX` in flight the
+    /// newest are dropped) and each bullet's leg is one frame's flight,
+    /// ended early at the first wall or rock (`World::open`, checked a fine
+    /// cell at a time, so a bullet never jumps a thin wall). Returns the
+    /// legs and, for each, who fired it and whether it was fired now.
+    fn fly(&mut self, fired: Vec<ShotIn>, by: &[Option<usize>], dt: f32) -> (Vec<ShotIn>, Vec<(Option<usize>, bool)>) {
+        let r = self.rules;
+        if r.bullet_speed <= 0.0 {
+            return (fired, by.iter().map(|&b| (b, true)).collect());
+        }
+        for (s, &b) in fired.iter().zip(by) {
+            if self.bullets.len() >= squad::SHOTS_MAX {
+                self.bullets_dropped += 1;
+                continue;
+            }
+            let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
+            let d = dx.hypot(dy).max(1e-3);
+            let m = if b.is_some() { self.bullet_mods } else { BulletMods::default() };
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split });
+        }
+        let leg = r.bullet_speed * self.s() * dt;
+        let mut legs = Vec::with_capacity(self.bullets.len());
+        let mut who = Vec::with_capacity(self.bullets.len());
+        for b in &mut self.bullets {
+            let len = leg.min(b.left);
+            let mut to = (b.at.0 + b.dir.0 * len, b.at.1 + b.dir.1 * len);
+            let n = len.ceil() as u32;
+            for j in 1..=n {
+                let t = (j as f32).min(len);
+                let p = (b.at.0 + b.dir.0 * t, b.at.1 + b.dir.1 * t);
+                if !self.world.open(p.0, p.1) {
+                    to = p;
+                    // Nothing left past the wall: the leg ends on it and
+                    // the bullet with it (`landed`).
+                    b.left = t;
+                    break;
+                }
+            }
+            legs.push(ShotIn { from: b.at, to, r: b.r });
+            who.push((b.by, b.fresh));
+        }
+        (legs, who)
+    }
+
+    /// After a frame with bullets: a bullet that hit is spent, and the rest
+    /// fly on from the end of their leg until their range runs out. A
+    /// piercing bullet flies on from `pierce_gap` strike radii past its
+    /// hit; a splitting one, once spent on slime, leaves `split_n` pieces
+    /// fanned round its heading. Pieces join the end of the list in the
+    /// order their parents stood, and past `squad::SHOTS_MAX` the rest are
+    /// dropped (counted), so the cap and the order are the same on every
+    /// world and every run.
+    fn landed(&mut self, legs: &[ShotIn], out: &[squad::ShotOut]) {
+        let r = self.rules;
+        if r.bullet_speed <= 0.0 {
+            return;
+        }
+        let sc = self.s();
+        let mut pieces = Vec::new();
+        let mut k = 0;
+        self.bullets.retain_mut(|b| {
+            let q = k;
+            k += 1;
+            let (Some(l), Some(o)) = (legs.get(q), out.get(q)) else { return false };
+            b.fresh = false;
+            if let Some(h) = o.hit {
+                // On a wall a leg ends with no hit; only slime gets here.
+                if b.pierce > 0 {
+                    b.pierce -= 1;
+                    let gap = r.pierce_gap * b.r + 1.0;
+                    let at = (h.0 + b.dir.0 * gap, h.1 + b.dir.1 * gap);
+                    b.left -= (at.0 - l.from.0).hypot(at.1 - l.from.1);
+                    b.at = at;
+                    return b.left > 1e-3;
+                }
+                if b.split > 0 {
+                    let n = r.split_n.max(1) as i32;
+                    let a0 = b.dir.1.atan2(b.dir.0);
+                    let rr = b.r * r.split_r;
+                    for j in 0..n {
+                        let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
+                        let dir = (a.cos(), a.sin());
+                        let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1 });
+                    }
+                }
+                return false;
+            }
+            let len = (l.to.0 - l.from.0).hypot(l.to.1 - l.from.1);
+            b.at = l.to;
+            b.left -= len;
+            b.left > 1e-3
+        });
+        for p in pieces {
+            if self.bullets.len() >= squad::SHOTS_MAX {
+                self.bullets_dropped += 1;
+            } else {
+                self.bullets.push(p);
+            }
+        }
+    }
+
     /// Whether `finish_step` would return without waiting on the world.
     pub fn step_ready(&self) -> bool {
         self.flight.as_ref().is_none_or(|f| f.out.is_some() || self.world.frame_ready())
@@ -1779,6 +1957,7 @@ impl<W: World> Game<W> {
         let mut who = Vec::new();
         let mut from = Vec::new();
         let mut shots = Vec::new();
+        let mut shooters: Vec<Option<usize>> = Vec::new();
         for k in 0..self.soldiers.len() {
             if !self.soldiers[k].alive {
                 continue;
@@ -1840,6 +2019,7 @@ impl<W: World> Game<W> {
                             (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
                         }
                         shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
+                        shooters.push(Some(k));
                         self.soldiers[k].ready = t + self.secs(r.shot_every);
                         self.bank -= r.price;
                         self.spent += r.price;
@@ -1883,10 +2063,13 @@ impl<W: World> Game<W> {
         // A turret's hits lay the crater too, through the same frame (the
         // buildings thread's call, 11-12 07:46Z: one rule for every shot).
         self.building_units(&mut units, &mut shots, &mut who, &mut from, dt);
+        shooters.resize(shots.len(), None);
+        let fired = shots.len() as u32;
+        let (shots, by) = self.fly(shots, &shooters, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
         let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink };
         let out = self.world.frame_start(&f, r.frame_ticks);
-        self.flight = Some(Flight { t, f, who, from, out });
+        self.flight = Some(Flight { t, f, by, fired, who, from, out });
     }
 
     /// The second half of `step`: the frame's results, waited for if the
@@ -1894,13 +2077,14 @@ impl<W: World> Game<W> {
     /// (kills, harvest, touches, theft, the core, the end). Nothing when no
     /// step is running.
     pub fn finish_step(&mut self) {
-        let Some(Flight { t, f, who, from, out }) = self.flight.take() else { return };
+        let Some(Flight { t, f, by, fired, who, from, out }) = self.flight.take() else { return };
         let out = out.unwrap_or_else(|| self.world.frame_finish());
         let r = self.rules;
         let sc = self.s();
         let dt = r.frame_ticks as f32 / r.tps as f32;
-        self.shots += f.shots.len() as u32;
-        self.last_shots = f.shots.iter().zip(&out.shots).map(|(i, o)| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed }).collect();
+        self.shots += fired;
+        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired }).collect();
+        self.landed(&f.shots, &out.shots);
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
         // Gassed mould sleeps and does not bite (the squad toolkit's sleep
         // gas): its walkers are taken off each unit's touch.
@@ -2257,6 +2441,152 @@ mod tests {
     fn small(seed: u64) -> Game<BigDish> {
         // Buildings whole when placed (raising has its own tests).
         Game::new(race_world(seed, 1, 1_000), Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
+    }
+
+    #[test]
+    fn bullets_fly_over_frames_and_land_later() {
+        // A bullet's first leg is fired, later legs fly on from where the
+        // last ended, and a hit ends it; nothing flies past its range.
+        let mut g = small(3);
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Attack));
+        }
+        let range = g.rules.range * g.s();
+        let (mut fired, mut flown, mut late_hits) = (0, 0, 0);
+        for _ in 0..(40 * g.rules.tps) {
+            let before = g.bullets.clone();
+            g.step();
+            for s in &g.last_shots {
+                if s.fired {
+                    fired += 1;
+                } else {
+                    flown += 1;
+                    late_hits += s.hit.is_some() as u32;
+                    // A later leg starts where a bullet in flight was.
+                    assert!(before.iter().any(|b| b.at == s.from), "a leg from nowhere: {s:?}");
+                }
+            }
+            assert!(g.bullets.len() <= squad::SHOTS_MAX);
+            assert!(g.bullets.iter().all(|b| b.left > 0.0 && b.left <= range + 1.0 && !b.fresh));
+            if g.end.is_some() {
+                break;
+            }
+        }
+        assert!(fired > 0 && flown > 0 && late_hits > 0, "fired {fired} flown {flown} late hits {late_hits}");
+        assert_eq!(g.shots, fired, "shots counts bullets fired, not legs");
+    }
+
+    #[test]
+    fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
+        let mut g = small(1);
+        let sc = g.s();
+        // Past `SHOTS_MAX` in flight the newest are dropped, so a frame
+        // never hands the engines more legs than they take.
+        let from = g.soldiers[0];
+        let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40).map(|_| ShotIn { from: (from.x, from.y), to: (from.x + 10.0 * sc, from.y), r: 1.0 }).collect();
+        let by = vec![Some(0); many.len()];
+        let (legs, who) = g.fly(many, &by, 1.0 / 15.0);
+        assert_eq!((legs.len(), who.len(), g.bullets.len()), (squad::SHOTS_MAX, squad::SHOTS_MAX, squad::SHOTS_MAX));
+        assert_eq!(g.bullets_dropped, 40);
+        // A leg ends at the first closed cell on its way, and the bullet
+        // with it.
+        g.bullets.clear();
+        let (w, h) = g.world.size();
+        let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.open(x, y) && g.world.open(x - 3.0, y) && g.world.open(x - 2.0, y) && g.world.open(x - 1.0, y) && x > 4.0).expect("a wall or rock cell with open ground west of it");
+        let start = (wall.0 - 3.0, wall.1);
+        let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[None], 1.0);
+        assert!((legs[0].to.0 - wall.0).abs() <= 1.0, "leg {:?} wall {:?}", legs[0], wall);
+        g.landed(&legs, &[squad::ShotOut { hit: None, killed: 0 }]);
+        assert!(g.bullets.is_empty(), "the bullet flew on past the wall");
+    }
+
+    #[test]
+    fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
+        let mut g = small(1);
+        let sc = g.s();
+        let r = g.rules;
+        let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0 };
+        let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
+        let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1 };
+        // Pierce: on past the hit by the gap, one pierce fewer, range spent
+        // to there; the split waits for the bullet's last hit.
+        g.bullets = vec![b];
+        g.landed(&[leg(b.at)], &[hit((52.0, 50.0))]);
+        let gap = r.pierce_gap * 2.0 + 1.0;
+        assert_eq!(g.bullets.len(), 1);
+        let p = g.bullets[0];
+        assert_eq!((p.pierce, p.split, p.fresh), (0, 1, false));
+        assert!((p.at.0 - (52.0 + gap)).abs() < 1e-4 && (p.left - (30.0 - 2.0 - gap)).abs() < 1e-4, "{p:?}");
+        // Split: the spent bullet goes, `split_n` pieces fan round its
+        // heading from the hit, each `split_range` long and smaller.
+        g.landed(&[leg(p.at)], &[hit((60.0, 50.0))]);
+        assert_eq!(g.bullets.len(), r.split_n as usize);
+        for (j, q) in g.bullets.iter().enumerate() {
+            assert_eq!((q.split, q.pierce, q.by, q.fresh), (0, 0, Some(0), false));
+            assert!((q.left - r.split_range * sc).abs() < 1e-4 && (q.r - 2.0 * r.split_r).abs() < 1e-4);
+            let a = q.dir.1.atan2(q.dir.0);
+            assert!(a.abs() <= r.split_fan + 1e-4 && q.at.0 > 60.0, "piece {j} {q:?}");
+        }
+        assert!(g.bullets[0].dir.1 < 0.0 && g.bullets[r.split_n as usize - 1].dir.1 > 0.0, "fanned both ways");
+        // A piece that hits makes nothing more, and a miss on a wall (no
+        // hit) never splits.
+        let n = g.bullets.len();
+        let legs: Vec<ShotIn> = g.bullets.iter().map(|q| leg(q.at)).collect();
+        let outs: Vec<squad::ShotOut> = (0..n).map(|i| if i == 0 { hit(legs[0].from) } else { squad::ShotOut { hit: None, killed: 0 } }).collect();
+        g.landed(&legs, &outs);
+        assert_eq!(g.bullets.len(), n - 1);
+    }
+
+    #[test]
+    fn split_pieces_cap_at_the_shot_buffer_in_order() {
+        // The flood: a full buffer of splitting bullets all hit at once.
+        // Pieces go to the end in their parents' order until the buffer
+        // is full, the rest are counted, never more than `SHOTS_MAX` fly.
+        let mut g = small(1);
+        let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2 };
+        g.bullets = (0..squad::SHOTS_MAX).map(b).collect();
+        let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0 }).collect();
+        // Every second one hits; the others fly on and keep their places.
+        let outs: Vec<squad::ShotOut> = (0..legs.len()).map(|i| squad::ShotOut { hit: (i % 2 == 0).then_some(legs[i].to), killed: 0 }).collect();
+        g.landed(&legs, &outs);
+        let kept = squad::SHOTS_MAX / 2;
+        let n = g.rules.split_n as usize;
+        assert_eq!(g.bullets.len(), squad::SHOTS_MAX);
+        assert_eq!(g.bullets_dropped as usize, kept * n - (squad::SHOTS_MAX - kept));
+        assert!(g.bullets[..kept].iter().enumerate().all(|(i, q)| q.split == 2 && q.at.0 == 10.0 + (2 * i + 1) as f32 + 1.0));
+        // The pieces after them are the first parents' pieces, in order.
+        for (j, q) in g.bullets[kept..].iter().enumerate() {
+            let parent = 2 * (j / n);
+            assert_eq!((q.split, q.by), (1, Some(parent % 4)), "piece {j}");
+        }
+    }
+
+    #[test]
+    fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
+        // In a real fight: pieces and pierced legs land hits of their own,
+        // the buffer is never overrun, and the same seed plays the same.
+        let run = |mods: BulletMods| {
+            let mut g = small(3);
+            g.bullet_mods = mods;
+            for k in 0..g.soldiers.len() {
+                g.apply(Cmd::Order(k, Order::Attack));
+            }
+            let mut later = 0u32;
+            for _ in 0..(30 * g.rules.tps) {
+                g.step();
+                assert!(g.bullets.len() <= squad::SHOTS_MAX);
+                later += g.last_shots.iter().filter(|s| !s.fired && s.hit.is_some()).count() as u32;
+                if g.end.is_some() {
+                    break;
+                }
+            }
+            (g.shots, later, g.killed, g.mould)
+        };
+        let both = BulletMods { pierce: 1, split: 2 };
+        let a = run(both);
+        assert_eq!(a, run(both), "the same seed played twice");
+        let plain = run(BulletMods::default());
+        assert!(a.1 > plain.1, "later hits: mods {a:?} plain {plain:?}");
     }
 
     #[test]

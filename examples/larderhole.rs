@@ -474,7 +474,7 @@ fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: 
         g.step();
         tick += 1;
         for s in &g.last_shots {
-            shots += 1;
+            shots += s.fired as u32;
             if let Some(h) = s.hit {
                 hit_sum += (h.0 - centre.0).hypot(h.1 - centre.1) / sc;
                 hits += 1;

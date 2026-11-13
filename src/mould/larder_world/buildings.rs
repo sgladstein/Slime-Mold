@@ -484,9 +484,10 @@ impl<W: World> Game<W> {
     }
 
     /// The turrets' shots of the last frame, for the window's tracers (they
-    /// are in `last_shots` with the soldiers'; this picks theirs out).
+    /// are in `last_shots` with the soldiers'; a shot no soldier fired is a
+    /// turret's, which also finds a turret bullet's later legs).
     pub fn turret_shots(&self) -> impl Iterator<Item = &Shot> {
-        self.last_shots.iter().filter(move |s| self.buildings.iter().any(|b| b.kind == Kind::Turret && b.at == s.from))
+        self.last_shots.iter().filter(|s| s.by.is_none())
     }
 }
 
