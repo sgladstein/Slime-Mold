@@ -381,6 +381,11 @@ const LEAN_SECS: f32 = 60.0;
 /// The share of the crystals' food left that a brain counts on banking
 /// before the cap; the mould eats the rest.
 const LEFT_SHARE: f32 = 0.5;
+/// Game seconds ahead (or to the cap, if sooner) that the bank and that
+/// food must feed the army. Until the cap, the campaign's Landfall (8
+/// soldiers, 4,000 banked, 45 a second coming in, little food left on
+/// its small crystals) stopped buying short of the 12 its goal asks.
+const LEFT_SECS: f32 = 300.0;
 
 /// **The AI player.** Call `play` once a game second, before the step.
 pub struct Brain {
@@ -443,15 +448,19 @@ impl Brain {
         // bought 30 whatever the bank could feed, and under rations (#170)
         // its army starved on 3 of 16 headless race games (5-20; the
         // fight-feel thread, 11-12 22:58Z).
-        // The income is now's; the crystals run dry and the mould takes
+        // For its first `INCOME_TAU` the brain has no income to go by, so
+        // it buys on the bank alone, as before: gated from the start, the
+        // claim was too slow to win the campaign's Landfall in 200 s
+        // (`campaign::tests`). The income is now's; the crystals run dry and the mould takes
         // them, so the army is also held to what the bank and a share of
-        // the food on crystals the mould is not near can feed until the cap.
+        // the food on crystals the mould is not near can feed for the next
+        // `LEFT_SECS`.
         let left: f32 = v.crystals.iter().filter(|c| c.near < st.dare).map(|c| c.charge).sum::<f32>() / v.rules.charge;
-        let to_cap = (self.cap - v.t).max(1.0);
+        let to_cap = (self.cap - v.t).clamp(1.0, LEFT_SECS);
         let feeds = |size: usize, bank: f32| {
             let spare = (bank - v.rules.soldier_cost - st.reserve - v.ammo(size + 1, st.ammo)).max(0.0);
             let need = (size + 1) as f32 * v.rules.ration;
-            v.rules.ration <= 0.0 || (need <= FEED_SHARE * self.income + spare / FEED_HORIZON && need <= (spare + LEFT_SHARE * left) / to_cap)
+            v.rules.ration <= 0.0 || v.t < INCOME_TAU || (need <= FEED_SHARE * self.income + spare / FEED_HORIZON && need <= (spare + LEFT_SHARE * left) / to_cap)
         };
         let mut bank = v.bank;
         let mut size = n;
