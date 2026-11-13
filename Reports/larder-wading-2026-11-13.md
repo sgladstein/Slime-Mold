@@ -57,24 +57,7 @@ Built and measured, not merged ([patch](larder-wading-2026-11-13/raw/arming-not-
   - The CPU thick probe (`examples/thickprobe.rs`, race world, 240 s of growth, then the squad attack-moved into C's thickest part, seeds 1-4): 40 soldiers lost 18, 27, 0 and 15 with it, against 4, 14, 0 and 15 with neither; first deaths at about 2 s against 16-23 s. 10 soldiers lost 4, 3, 2 and 3 against 3, 2, 5 and 3. Raw in [`raw/thickprobe/`](larder-wading-2026-11-13/raw/thickprobe/) (`new` is arming with wading, `old` neither).
 - The probe now has a `wade=` key, and no rations or overrun. A squad held at the larder for 240 s otherwise lost the round before the order on seeds 1, 2 and 4.
 
-## Aims that see (the PR after #197)
-
-**The rule.** A unit's aim is the densest block within its sight **that it can see**: every cell on the line from the unit's cell to the block's centre cell is agar (`squad::sees`, `squad::block_cell`; WGSL `sees` in the `units` and `units1` passes). The line is whole-cell steps, `max(|dx|, |dy|)` of them, each offset truncated toward zero, in integers so both engines walk the same cells. It is walked only for a block that would beat the best so far, which picks the same block as walking every one. Soldiers, turrets and the garden's read all use it.
-
-**The stand again** (`hand=hold@318,148`, 4-30 s, sink 1):
-
-| | Shots | Killed | A shot | Health at 30 s |
-|---|---|---|---|---|
-| Before: aims through walls | 47 | 261 | 5.6 | 50 |
-| Now: aims it can see | 198 | 486 | 2.5 | 78 |
-
-- The squad fires at its full rate (8 soldiers, one shot a second each) and kills almost twice as many. It shoots the slime that comes at it, which is thinner, so fewer a shot. It ends healthier because that slime never reaches it.
-- The thick body in the channel is out of range from there (about 43 world units against 30). So this stand still does not test the sink: with sink 0 it fires 195 and kills 512 (2.6 a shot). Raw: [`clip-hold-seen.txt`](larder-wading-2026-11-13/raw/clip-hold-seen.txt), [`clip-hold-seen-sink0.txt`](larder-wading-2026-11-13/raw/clip-hold-seen-sink0.txt).
-- A stand nearer the channel (`hold@322,166`; the squad stopped at 289.5, 138, on the V's arm and by the larder) gave 4.7 kills a shot with sink 0 and 5.3 with sink 1 (182 and 190 shots). Raw: [`preview-near-s0.txt`](larder-wading-2026-11-13/raw/preview-near-s0.txt), [`preview-near-s1.txt`](larder-wading-2026-11-13/raw/preview-near-s1.txt).
-
-**Tests.** `a_unit_aims_only_at_slime_it_can_see` (squad.rs) walls off the middle of a unit's line to its aim. The aim must move to a block it sees, and come back when the wall goes. The GPU's squad twins pass on llvmpipe, `the_squad_matches_the_cpu_for_one_frame` to the bit. `the_squad_frame_holds_its_cap_on_the_gpu` now expects no aim from the six units the clamp puts in the world's rock border (they see nothing); it still checks that every unit on agar past 64 aims.
-
-## Smoke games
+## Smoke games (wading)
 
 CPU census on the race world, shape C's keys without withering, seeds 5-8, cap 600 s, five hands, the new rule (`wade=6`) against the old count on C (`wade=30`):
 
@@ -94,6 +77,27 @@ larderworld census seeds=5-8 walkers=25000 upkeep=0.0002 keys=capacity:50000+ene
 - **Paired by seed, now against before:** farm 3 higher, 1 lower; strike 0 higher, 4 lower (p 0.125; nothing survives Holm over five hands); rush 1-2 and a tie; random within 0.01. Idle soldiers never walk into the slime, so idle plays the same games. Strike walks its squad into the body, and the slowdown costs it; that is a tuning note for the balance pass, not a reason to hold the rule (build first, balance later).
 - One binary for both arms, built from this PR's code before it was rebased onto #196 (which only turns withering on in the window). The provenance lines read 23601fc2b+dirty and 30c2fe515+dirty because the census reads the checkout's HEAD as it runs, and the rebase landed between the arms. 15 and 13 minutes on 4 threads. Raw: [`smoke-c-wade6.txt`](larder-wading-2026-11-13/raw/smoke-c-wade6.txt), [`smoke-c-wade30.txt`](larder-wading-2026-11-13/raw/smoke-c-wade30.txt).
 
-## Cost
+## Cost (wading)
 
 None. One multiply fewer in the walk.
+
+## Aims that see (the PR after #197)
+
+**The rule.** A unit's aim is the densest block within its sight **that it can see**: every cell on the line from the unit's cell to the block's centre cell is agar (`squad::sees`, `squad::block_cell`; WGSL `sees` in the `units` and `units1` passes). The line is whole-cell steps, `max(|dx|, |dy|)` of them, each offset truncated toward zero, in integers so both engines walk the same cells. It is walked only for a block that would beat the best so far, which picks the same block as walking every one. Soldiers, turrets and the garden's read all use it.
+
+**The stand again** (`hand=hold@318,148`, 4-30 s, sink 1):
+
+| | Shots | Killed | A shot | Health at 30 s |
+|---|---|---|---|---|
+| Before: aims through walls | 47 | 261 | 5.6 | 50 |
+| Now: aims it can see | 198 | 486 | 2.5 | 78 |
+
+- The squad fires at its full rate (8 soldiers, one shot a second each) and kills almost twice as many. It shoots the slime that comes at it, which is thinner, so fewer a shot. It ends healthier because that slime never reaches it.
+- The thick body in the channel is out of range from there (about 43 world units against 30). So this stand still does not test the sink: with sink 0 it fires 195 and kills 512 (2.6 a shot). Raw: [`clip-hold-seen.txt`](larder-wading-2026-11-13/raw/clip-hold-seen.txt), [`clip-hold-seen-sink0.txt`](larder-wading-2026-11-13/raw/clip-hold-seen-sink0.txt).
+- A stand nearer the channel (`hold@322,166`; the squad stopped at 289.5, 138, on the V's arm and by the larder) gave 4.7 kills a shot with sink 0 and 5.3 with sink 1 (182 and 190 shots). Raw: [`preview-near-s0.txt`](larder-wading-2026-11-13/raw/preview-near-s0.txt), [`preview-near-s1.txt`](larder-wading-2026-11-13/raw/preview-near-s1.txt).
+
+**Tests.** `a_unit_aims_only_at_slime_it_can_see` (squad.rs) walls off the middle of a unit's line to its aim. The aim must move to a block it sees, and come back when the wall goes. The GPU's squad twins pass on llvmpipe, `the_squad_matches_the_cpu_for_one_frame` to the bit. `the_squad_frame_holds_its_cap_on_the_gpu` now expects no aim from the six units the clamp puts in the world's rock border (they see nothing); it still checks that every unit on agar past 64 aims.
+
+**Cost.** On the CPU, `squad::read` for 40 units on the edge of C's body (shape C at 240 s, seeds 1 and 2, the same dish at either commit since the squad held fire) took 111-120 µs a frame before and 120-139 µs after (four timings each): about a tenth more, a quarter of a microsecond a unit, under 0.1% of a 22 ms CPU tick. The line is walked only for a block that beats the best so far. The probe is [`raw/aimcost.rs`](larder-wading-2026-11-13/raw/aimcost.rs) (copy it into `examples/` to run it), output in [`raw/aim-cost/`](larder-wading-2026-11-13/raw/aim-cost/). The GPU's `units` pass walks the same lines; its 1070 timing waits for the owner's go on timing runs, and the twin there checks only that it passes.
+
+**Smoke games.** Running on shape C (the wading smoke's command, default `wade`); the results land here before the merge.

@@ -1,0 +1,6 @@
+# aimcost seeds=1 n=40 reps=1000, run one after the other, new old new old
+# (before.txt and after.txt ran the two binaries at the same time, seeds 1-2)
+new seed 1: 35326 walkers at 240 s, 40 units on the body's edge (49736 candidate cells); squad::read 121.8 us a frame
+old seed 1: 35326 walkers at 240 s, 40 units on the body's edge (49736 candidate cells); squad::read 120.3 us a frame
+new seed 1: 35326 walkers at 240 s, 40 units on the body's edge (49736 candidate cells); squad::read 138.8 us a frame
+old seed 1: 35326 walkers at 240 s, 40 units on the body's edge (49736 candidate cells); squad::read 110.6 us a frame
