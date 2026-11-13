@@ -74,7 +74,8 @@ germ, on its own or as plague, beats no round 8/0 on plain, Swarmer and Sporer
 and the Sleeper ignores every round, so the best loadout does not yet vary by
 tier. Germ resistance 10 on the Swarmer and Sporer cancels it (4 seeds), 3
 halves it: a per-mould dial. Rounds now cast through `World::burst`, so they play in
-the `larder-world` window (`rounds=`, H; gas and germ wait for the GPU port).
+the `larder-world` window (`rounds=`, H; gas and germ wait for the GPU port). On Flats, blast and
+trap keep a soldier alive to 32 s where plain shots lose the squad by 24 s.
 
 ## Owner's word
 

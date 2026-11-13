@@ -45,6 +45,20 @@ ul{margin:0;padding-left:1.2em;max-width:68ch;display:flex;flex-direction:column
 </div>
 
 <section>
+  <h2>In the game window: four loadouts, one fight</h2>
+  <p>The GPU game (<code>larder-world -- map=flats rounds=NAME hand=rush</code>), seed 1, 8 to 32 s, same camera. Each round's craters and kill holes are the mould itself. Plain shots lose the squad by 24 s; blast and trap keep one soldier to 32 s.</p>
+  <figure><img src="gifs/flats-four-loadouts.gif" alt="Four loadouts side by side on the Flats map, 8 to 32 seconds" width="800" height="330"><figcaption><div class="wrap"><table>
+    <thead><tr><th>Loadout</th><th>Soldiers 8 / 16 / 24 / 32 s</th><th>Mould at 24 s</th><th>Casts by 32 s</th><th>Food spent</th></tr></thead>
+    <tbody>
+      <tr><td>plain</td><td>4 / 1 / 0 / 0</td><td>25,654</td><td>0</td><td>0</td></tr>
+      <tr><td>blast</td><td>4 / 4 / 1 / 1</td><td>23,297</td><td>20</td><td>1,200</td></tr>
+      <tr><td>trap (thick, wide, blast)</td><td>4 / 4 / 1 / 1</td><td>21,481</td><td>14</td><td>840</td></tr>
+      <tr><td>shock (scatter, blast, wide, blast)</td><td>4 / 4 / 0 / 0</td><td>22,522</td><td>16</td><td>960</td></tr>
+    </tbody></table></div></figcaption></figure>
+  <p class="muted">One seed, a look and not a test. The default mould grew to about 25,000 walkers on 11-13, so on the Fork map every loadout loses the squad within 20 s; the Flats map is where the difference shows.</p>
+</section>
+
+<section>
   <h2>What the census says</h2>
   <ul>
     <li><b>The germ wins on every tier except the Sleeper.</b> Germ and plague (germ, delay, blast) beat no round 8 of 8 seeds on the plain mould, the Swarmer and the Sporer, and roughly double the score. With 8 seeds the best possible sign test is p 0.0078, which does not survive Holm over 9 comparisons, so these are strong but uncorrected.</li>
