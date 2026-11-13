@@ -128,11 +128,11 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   within `panic_r` (20 dish cells), else the nearest crystal with food,
   at its own pace for `panic_lean` (1.5 s, the tell) and then at twice
   it; it calms once it hears news. In the window four soldiers 34 cells
-  from a cut piece were charged 6 s after the cut, shot 111 of it and
-  were drained by the last ~15 within 25 s; with none near, the piece
-  streams to a crystal. Smoke scores unchanged; in the window the farm
-  squad is gone by 2:00 (3 alive today), as bits its shots cut off charge
-  it. A lean starting before the lag was rejected (uncut C 6% smaller on
+  from a cut piece were charged 6 s after the cut, shot 94 of it and
+  lost three to the last ~10 within 25 s; with none near, the piece
+  pours into a crystal's lobe. Smoke scores unchanged; in the window the
+  farm squad is down to 1 by 1:50 (12 without), as bits its shots knock
+  off charge it, the rule's biggest effect. A lean starting before the lag was rejected (uncut C 6% smaller on
   one seed); at the lag uncut C is within 2.9% on 4 of 4 seeds but has
   eaten from one crystal fewer on 3 of them ([fed mould, *A cut-off part panics*](../../Reports/fed-mould-2026-11-13/README.md);
   [films](https://claude.ai/artifact/SRxAj8nri2iGAsvE4DFGbP)).

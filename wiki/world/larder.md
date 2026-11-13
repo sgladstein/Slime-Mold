@@ -232,6 +232,11 @@ the bit). The owner's 22:06Z playtest found a squad standing in one spot
 "barely" hurt a large mass that walking in destroyed; on shape C a squad
 standing still on free fire now kills 20.3 a shot (12.6 before), walking
 in 47.9 (42.0), so the gap is 2.4 times, down from 3.3.
+Since 11-13 a part of shape C cut off from its crystals panics (`panic`
+2): it charges a soldier or building within 20 dish cells, or runs for a
+crystal. Bits a squad's own shots knock off charge it too, so standing
+fire costs more: in the window the farm squad is down to 1 by 1:50 (12
+without) ([fed mould, *A cut-off part panics*](../../Reports/fed-mould-2026-11-13/README.md)).
 
 ## Small-dish milestones (M1-M3)
 
