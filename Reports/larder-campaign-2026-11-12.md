@@ -320,3 +320,14 @@ that reason, before and after this change). #174 doubles the bite next,
 so First contact is re-tuned after it lands rather than twice. `goal hold` stays in the mission format, tested, for a mould that comes
 back; `hold+STYLE` was dropped with no mission to use it. The `#[ignore]`d
 plan test now gives First contact's strike 9:00.
+
+**Re-tuned after the economy (#170) and shapes (#174) PRs (census v12,
+e425fed, seeds 1-4, 20 min a run).** #174 keeps missions on their own
+bite (`campaign::MISSION_DRAIN` 1). With #170's rations every hand got
+stuck or capped and none broke the Drifter (strike best 0.50, stuck by
+12:56-14:09). Mission 2 now turns rations off (`rule ration 0`; `ration`
+joins the mission rule keys): strike 4/4 at 7:27-8:53 with 2 stars,
+random 0/4 (best 0.47), claim 0/4 (0.27), boom and idle 0/4 (0.07).
+Upkeep is a later mission's lesson. The tiers thread's #180 (Drifter
+hunger 8 to 16) is next; First contact gets one more check after it.
+

@@ -5,11 +5,18 @@
 # idle at 17-33%). On the real Sprawler (census v6, tiers PR #115) every hand had 46% outside,
 # so the leak is now thick mould: no 4 x 4 bin outside with 16+ walkers, share off (1);
 # walling the gaps holds 24/24 and no other hand holds (v8, with craters).
+# Re-tuned 2026-11-13 (census v12, main ab7a819, seeds 1-4) after #143 wading,
+# #170 rations, #174 and #181 shots sink: the walled squad was wiped by 2:22-8:52
+# (with rations) and by 13:46-14:58 without them; with the bite halved too it lived
+# to the cap but held the Rim 4:42-8:00 at best, never 10:00, and every hand that
+# did not wall held 2:12 at most. So: rations off, bite 0.5, hold 5:00.
 name The gaps
-says Keep the mould inside the Rim for 10:00
+says Keep the mould inside the Rim for 5:00
 map rim
 tier sprawler
 verbs move harvest buy stance fire wall
 rule price 0
+rule ration 0
+rule drain 0.5
 bonus stolen 0
-goal contain 296 104 728 536 600 1 16
+goal contain 296 104 728 536 300 1 16

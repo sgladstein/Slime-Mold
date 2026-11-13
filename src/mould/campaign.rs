@@ -199,6 +199,7 @@ impl Mission {
                 "overrun" => r.overrun = *v,
                 "reserve" => r.reserve = *v,
                 "drain" => r.drain = *v,
+                "ration" => r.ration = *v,
                 _ => unreachable!("parse checks the keys"),
             }
         }
@@ -206,7 +207,7 @@ impl Mission {
     }
 }
 
-const RULE_KEYS: [&str; 9] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve", "drain"];
+const RULE_KEYS: [&str; 10] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve", "drain", "ration"];
 
 /// A walker's bite on a soldier in a mission (`Rules::drain`) unless its
 /// file sets one (`rule drain N`): 1, the bite the missions were tuned on.
@@ -974,8 +975,11 @@ mod tests {
         });
         assert!(m1.0.is_some_and(|v| v.cause == Cause::Goal), "Landfall, claim: {:?}", m1.0);
         assert!(m2.0.is_some_and(|v| v.cause == Cause::Goal), "First contact, strike: {:?}", m2.0);
-        assert!(walls.0.is_none() && walls.1 >= 0.25, "The gaps, walls: {:?} best {}", walls.0, walls.1);
-        assert!(open.1 < 0.2, "The gaps without walls held: best {}", open.1);
+        // In held seconds of The gaps' 5:00 (300 s since census v12): walls
+        // hold 150 s or more of the 180, no walls under 120 (103 s on seed 1,
+        // when the thick mould first gets out).
+        assert!(walls.0.is_none() && walls.1 * 300.0 >= 150.0, "The gaps, walls: {:?} best {}", walls.0, walls.1);
+        assert!(open.1 * 300.0 < 120.0, "The gaps without walls held: best {}", open.1);
     }
 
 
