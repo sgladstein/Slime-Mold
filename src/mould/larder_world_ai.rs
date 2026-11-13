@@ -121,6 +121,9 @@ pub struct View {
     pub home: (f32, f32),
     pub core: (f32, f32),
     pub core_down: bool,
+    /// Food banked from harvest over the game (`Game::harvested`), for the
+    /// brain's income (`Brain::income`).
+    pub harvested: f32,
     pub units: Vec<UnitView>,
     pub crystals: Vec<CrystalView>,
     /// Walkers alive, as the screen's count shows.
@@ -152,6 +155,7 @@ impl View {
             home: side.home,
             core: g.core,
             core_down: g.core_down.is_some(),
+            harvested: g.harvested,
             units,
             crystals: Vec::new(),
             mould: g.mould,
@@ -362,6 +366,27 @@ const WALL_OUT: f32 = 8.0;
 /// Game seconds before the same crystal gets another wall.
 const WALL_EVERY: f32 = 60.0;
 
+/// Game seconds the brain's income average looks back over.
+const INCOME_TAU: f32 = 60.0;
+/// The share of its income a brain spends on rations: the rest is margin
+/// for a crystal running dry or a carrier eaten on the way home.
+const FEED_SHARE: f32 = 0.8;
+/// Game seconds of rations the spare bank (above the price, the reserve
+/// and the ammo) may pay for an army its income can't yet feed: the
+/// opening buys, before the first carrier banks.
+const FEED_HORIZON: f32 = 120.0;
+/// A brain whose income can't pay the rations and whose bank holds less
+/// than this many seconds of them sends every soldier to farm.
+const LEAN_SECS: f32 = 60.0;
+/// The share of the crystals' food left that a brain counts on banking
+/// before the cap; the mould eats the rest.
+const LEFT_SHARE: f32 = 0.5;
+/// Game seconds ahead (or to the cap, if sooner) that the bank and that
+/// food must feed the army. Until the cap, the campaign's Landfall (8
+/// soldiers, 4,000 banked, 45 a second coming in, little food left on
+/// its small crystals) stopped buying short of the 12 its goal asks.
+const LEFT_SECS: f32 = 300.0;
+
 /// **The AI player.** Call `play` once a game second, before the step.
 pub struct Brain {
     pub style: Style,
@@ -374,11 +399,15 @@ pub struct Brain {
     striking: bool,
     /// The cap, for a claim timed from it (negative `claim_at`).
     cap: f32,
+    /// Food banked from harvest a game second, averaged over `INCOME_TAU`,
+    /// and the last (time, harvested) it was read at.
+    income: f32,
+    seen: Option<(f32, f32)>,
 }
 
 impl Brain {
     pub fn new(style: Style, side: Side) -> Brain {
-        Brain { style, side, hurt: Vec::new(), walled: Vec::new(), walls: 0, striking: false, cap: 0.0 }
+        Brain { style, side, hurt: Vec::new(), walled: Vec::new(), walls: 0, striking: false, cap: 0.0, income: 0.0, seen: None }
     }
 
     /// Look, decide, and give the commands on `g`. Returns how many it gave.
@@ -405,11 +434,37 @@ impl Brain {
         let sc = v.scale;
         let mut out = Vec::new();
         let n = v.units.len();
+        if let Some((t0, h0)) = self.seen {
+            let dt = v.t - t0;
+            if dt > 0.0 {
+                let a = (dt / INCOME_TAU).min(1.0);
+                self.income += a * ((v.harvested - h0) / dt - self.income);
+            }
+        }
+        self.seen = Some((v.t, v.harvested));
         // Buy while the bank keeps the reserve and fire for the bigger
-        // squad.
+        // squad, and the income can feed it (`Rules::ration`): a soldier
+        // eats `ration` a second whatever it does. Before, the strike
+        // bought 30 whatever the bank could feed, and under rations (#170)
+        // its army starved on 3 of 16 headless race games (5-20; the
+        // fight-feel thread, 11-12 22:58Z).
+        // For its first `INCOME_TAU` the brain has no income to go by, so
+        // it buys on the bank alone, as before: gated from the start, the
+        // claim was too slow to win the campaign's Landfall in 200 s
+        // (`campaign::tests`). The income is now's; the crystals run dry and the mould takes
+        // them, so the army is also held to what the bank and a share of
+        // the food on crystals the mould is not near can feed for the next
+        // `LEFT_SECS`.
+        let left: f32 = v.crystals.iter().filter(|c| c.near < st.dare).map(|c| c.charge).sum::<f32>() / v.rules.charge;
+        let to_cap = (self.cap - v.t).clamp(1.0, LEFT_SECS);
+        let feeds = |size: usize, bank: f32| {
+            let spare = (bank - v.rules.soldier_cost - st.reserve - v.ammo(size + 1, st.ammo)).max(0.0);
+            let need = (size + 1) as f32 * v.rules.ration;
+            v.rules.ration <= 0.0 || v.t < INCOME_TAU || (need <= FEED_SHARE * self.income + spare / FEED_HORIZON && need <= (spare + LEFT_SHARE * left) / to_cap)
+        };
         let mut bank = v.bank;
         let mut size = n;
-        while size < st.buy_to.min(v.rules.max_squad) && bank - v.rules.soldier_cost >= st.reserve + v.ammo(size + 1, st.ammo) {
+        while size < st.buy_to.min(v.rules.max_squad) && bank - v.rules.soldier_cost >= st.reserve + v.ammo(size + 1, st.ammo) && feeds(size, bank) {
             out.push(Cmd::Buy);
             bank -= v.rules.soldier_cost;
             size += 1;
@@ -426,12 +481,17 @@ impl Brain {
         if !self.striking && v.t >= st.strike_at && free.len() >= st.strike_army {
             self.striking = true;
         }
+        // Lean: the rations outrun the income and the bank is nearly out,
+        // so the strike and the claim wait and every soldier farms.
+        let upkeep = v.rules.ration * n as f32;
+        let lean = upkeep > self.income && v.bank < upkeep * LEAN_SECS;
+        let striking = self.striking && !lean;
         // The strike: all but `keep` attack the core, those already
         // attacking first, then the nearest to it. (The first version sent
         // everyone: with no farmers left the bank ran dry mid-strike, and
         // on seeds 1-4 three of four squads ended with one soldier or none.)
         let mut striker = vec![false; free.len()];
-        if self.striking && !v.core_down {
+        if striking && !v.core_down {
             let mut by: Vec<usize> = (0..free.len()).collect();
             by.sort_by(|&a, &b| (free[b].order == Order::Attack).cmp(&(free[a].order == Order::Attack)).then(dist(free[a].at, v.core).total_cmp(&dist(free[b].at, v.core))));
             for &j in by.iter().take(free.len().saturating_sub(st.keep)) {
@@ -441,7 +501,7 @@ impl Brain {
                 }
             }
         }
-        let claiming = v.t >= claim_at || (self.striking && v.core_down);
+        let claiming = !lean && (v.t >= claim_at || (striking && v.core_down));
         // Farm the nearest crystals the mould is not near, the core last.
         let mut farmable: Vec<&CrystalView> = v.crystals.iter().filter(|c| dist(c.at, v.core) > 1.0 && c.near < st.dare).collect();
         farmable.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
@@ -449,7 +509,7 @@ impl Brain {
         // Crystals the mould holds, nearest home first, for the claim.
         let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| c.on >= HELD).collect();
         held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
-        let farmers = if claiming || self.striking { st.keep.min(free.len()) } else { free.len() };
+        let farmers = if claiming || striking { st.keep.min(free.len()) } else { free.len() };
         // Soldiers keep a job they hold if it is still wanted, so the
         // squad doesn't walk back and forth between thinks.
         let mut used = striker.clone();
