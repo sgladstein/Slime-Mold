@@ -236,7 +236,10 @@ Since 11-13 a part of shape C cut off from its crystals panics (`panic`
 2): it charges a soldier or building within 20 dish cells, or runs for a
 crystal. Bits a squad's own shots knock off charge it too, and are shot
 as they come: in the window the farm squad has 30 soldiers at 2:30
-against 33 without ([fed mould, *A cut-off part panics*](../../Reports/fed-mould-2026-11-13/README.md)).
+against 33 without. Those bits are mostly lone walkers and make 4-6% of
+the squad's bites (CPU, 2 seeds; losses 26 and 24 against 25 and 25), so
+panic has no size floor. Four soldiers shoot a 112-walker charge down; a
+163-walker piece kills all four in 2 s ([fed mould, *A cut-off part panics*](../../Reports/fed-mould-2026-11-13/README.md)).
 
 ## Small-dish milestones (M1-M3)
 
