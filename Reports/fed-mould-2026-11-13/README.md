@@ -469,12 +469,25 @@ the four died, and the window's farm squad fell to 1 by 1:50 against 12.
   its ground empty; today's joins back up where it stands. Walkers inside
   at 0, +5, +8 (opens), +9, +12, +20, +30 s: today 284, 307, 303, 317,
   254, 197, 241; scared 200, 215, 211, 189, 143, 75, 26.
+- **Last stand** (11-13, after #200; the technical lead asked for one).
+  `cut=150,365,240,32 cutsquad=365,264,150,4`: the charge with a bigger
+  ring and four soldiers 24 cells below its middle (`s1-*.log`). Walkers
+  in the ring at 0, +5, +6, +7, +8, +10, +20 s: today 228, 243, 243, 240,
+  237, 231, 194, squad 33 throughout; scared 163, 176, 153, 95, 100, 98,
+  81, squad 30, 30, 30, 28, 26, 26, 26. The scared piece is shot down by
+  about 60 walkers as it comes, lands, and kills all four in 2 s; the
+  rest spreads round the ring. With two soldiers in scene 1's ring
+  (`cutsquad=365,256,150,2`, `g1-p.log`, not filmed) the 112-walker
+  piece also gets through: 112, 67, 17 walkers at 0, +5, +6 s, and both
+  soldiers dead at +6 s.
 - The rule acts before the cut, so each pair's rounds differ a little by
-  2:30 (18,623 walkers today, 18,143 scared).
+  2:30 (18,623 walkers today, 18,143 scared). Each arm plays the same
+  round in every scene up to its cut.
 
 **Counters (the designer's second point).** A charge: shoot it before it
-closes (four soldiers standing their ground shot the whole piece down and
-lost one; fewer guns or a bigger piece gets through). A run for a crystal: a wall in its way stops it (a wall reads
+closes, with guns enough for its size (four soldiers shot a 112-walker
+piece down and lost one; two against it both died; four against a
+163-walker piece all died). A run for a crystal: a wall in its way stops it (a wall reads
 as far worse to its sensors, and it bites it as any walker does); a squad
 on its route makes it charge instead; if it reaches the crystal it eats,
 calms and breeds there.
@@ -489,6 +502,36 @@ against 8 without (`raw/panic/window/cpu-fork-farm-*.log`). In the window
 food harvested by 2:30 15,455 today against 15,132. One round, so a
 tuning note. Before #198 the same round lost its squad (1 against 12 at
 1:50, `p4-*.log`), because soldiers could not shoot the bits on them.
+
+**Slivers (the technical lead, 11-13 18:30Z).** Their question: farming
+cuts off slivers all the time, so do the squad's losses come from a stream
+of tiny scared pieces at twice the pace? If so, a size floor on panic.
+`larderworld slivers=1` (CPU world, Fork, farm hand, 25,000 walkers, C's
+keys, cap 5:00, on main after #198 and #200) reads every squad frame. It
+groups the scared walkers into fragments (cells within 2 of each other,
+food news's reach), splits each soldier's bites between calm walkers and
+scared ones by fragment size, and shares each death out by the bites the
+soldier took over its life. Raw output: [`raw/panic/slivers/`](raw/panic/slivers/).
+
+| Seed 1 / seed 2 | scared | today |
+|---|---|---|
+| End | squad wiped 4:27 / cap, 2 left | cap, 0 left / overrun 4:52, 1 left |
+| Soldiers lost | 26 / 24 | 25 / 25 |
+| Bites from scared walkers | 3.9% / 5.7% | 0 / 0 |
+| ... from fragments of 1 | 3.0% / 3.7% | |
+| ... from fragments of 2-4 | 0.9% / 1.8% | |
+| ... from fragments of 5 or more | 0.0% / 0.2% | |
+| Deaths credited to scared walkers | 1.0 / 1.4 | |
+| Most scared at once; biggest fragment | 16; 13 / 24; 9 | |
+| Scared walker-seconds (singletons) | 806 (675) / 1,331 (1,000) | |
+
+So the slivers are real: almost every scared walker in play is alone, or
+in a group of up to 4, and those slivers make nearly all of the scared
+bites. But scared walkers make 4-6% of the squad's bites; the fed body
+makes the rest. The squad loses the same (26 and 24 soldiers against 25
+and 25). A size floor would take off about one death in 25 here, so it is
+not built; it stays in *Next* if play shows lone scared walkers as noise.
+The window's 30 against 33 soldiers at 2:30 (`p5-*.log`) is one round.
 
 **Smoke** (CPU race world, C's keys with
 `panic` 2, seeds 1-4, cap 5:00; `raw/smoke/panic2-cap300.txt` against

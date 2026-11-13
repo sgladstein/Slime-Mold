@@ -34,6 +34,7 @@ figure { margin: 0; display: grid; gap: 8px; min-width: 0; align-content: start;
 figure video { width: 100%; max-width: 100%; border-radius: 4px; border: 1px solid var(--line); display: block; background: #111a1f; }
 .charge video { aspect-ratio: 560 / 480; }
 .bolt video { aspect-ratio: 720 / 480; }
+.stand video { aspect-ratio: 540 / 480; }
 .tag { font-family: var(--display); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
 .tag.scared { color: var(--red); }
 .scroll { overflow-x: auto; min-width: 0; }
@@ -57,7 +58,7 @@ code { font-size: 0.9em; }
   <section class="ask">
     <h2>What to look at</h2>
     <ul>
-      <li>Does the charge read as a scared animal going for the soldiers?</li>
+      <li>Does the charge read as a scared animal going for the soldiers? Scene 3 is a bigger piece that gets through.</li>
       <li>It is on in shape C now, so the window plays it. <code>larder-world -- panic=0</code> plays C without it.</li>
     </ul>
   </section>
@@ -104,17 +105,40 @@ code { font-size: 0.9em; }
     <p class="note">The scared piece bunches on the side of the ring nearest the crystal. When the ring opens it pours into the crystal's lobe, and the ground where it was is left empty: an eighth of it is still there at 30 seconds. Today's piece joins back up where it stands. A scared piece calms once it hears of food again, either by eating at a crystal or by touching the fed body.</p>
   </section>
 
+  <section class="stand">
+    <h2>3. A bigger piece: a last stand</h2>
+    <p class="note">The same round with a bigger ring (radius 32 against 24), so more tube is cut off, and four soldiers set down inside it, 24 cells below its middle. Left is today's C; right is the scared rule. Same frame rate as above.</p>
+    <div class="pair">
+      <figure>
+        <span class="tag">Today</span>
+        <video src="stand-today.mp4" poster="stand-today.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+      <figure>
+        <span class="tag scared">Scared</span>
+        <video src="stand-scared.mp4" poster="stand-scared.jpg" controls loop muted playsinline preload="metadata"></video>
+      </figure>
+    </div>
+    <div class="scroll"><table>
+      <tr><th>After the cut</th><th>0 s</th><th>5 s</th><th>6 s</th><th>7 s</th><th>8 s</th><th>10 s</th><th>20 s</th></tr>
+      <tr><td>Today: walkers in the ring</td><td>228</td><td>243</td><td>243</td><td>240</td><td>237</td><td>231</td><td>194</td></tr>
+      <tr><td>Today: soldiers</td><td>33</td><td>33</td><td>33</td><td>33</td><td>33</td><td>33</td><td>33</td></tr>
+      <tr><td>Scared: walkers in the ring</td><td>163</td><td>176</td><td>153</td><td>95</td><td>100</td><td>98</td><td>81</td></tr>
+      <tr><td>Scared: soldiers</td><td>30</td><td>30</td><td>30</td><td>28</td><td>26</td><td>26</td><td>26</td></tr>
+    </table></div>
+    <p class="note">The scared piece pulls together at about 5 seconds and throws itself down at the soldiers. They shoot about 60 walkers out of it as it comes, but the rest lands on them, and all four die within 2 seconds. What is left spreads round the inside of the ring and lives on. Today's piece stays on its tube, and the four soldiers live. With two soldiers in the smaller ring of scene 1 (not filmed), the 112-walker piece also got through and killed both by 6 seconds.</p>
+  </section>
+
   <section>
     <h2>How to beat it</h2>
     <ul>
-      <li><strong>A charge:</strong> shoot it before it closes. Four soldiers standing their ground shot the whole piece down and lost one of their own. Fewer guns, or a bigger piece, and it gets through.</li>
+      <li><strong>A charge:</strong> shoot it before it closes, with enough guns for its size. Four soldiers shot a 112-walker piece down and lost one of their own. Two soldiers against the same piece both died, and four against a 163-walker piece all died.</li>
       <li><strong>A run for a crystal:</strong> a wall in its way stops it, and it bites the wall. A squad on its route makes it charge instead. If it reaches the crystal, it feeds, calms and regrows there.</li>
     </ul>
   </section>
 
   <section>
     <h2>What it changes before any cut</h2>
-    <p class="note">Bits the squad's own shots knock off can charge the squad too. Only a few walkers are scared at any moment: 0 to 11 in a CPU game on Fork, out of 13,000 to 27,000. Now that soldiers aim only at slime they can see, they shoot those bits as they come, so the squad loses little. In the window (Fork, seed 1, the farm hand) it has 30 soldiers at 2:30, against 33 without the rule. On the CPU world (4 seeds; idle, farm and strike hands; 5:00 each) the scores barely move. The idle hand still loses every game, and all 12 games run the full 5 minutes.</p>
+    <p class="note">Bits the squad's own shots knock off can charge the squad too. Only a few walkers are scared at any moment: at most 16 and 24 in two CPU games on Fork, out of 13,000 to 38,000, and most of them alone. Those scared walkers make 4 to 6% of the bites on the squad (the fed body makes the rest), and the squad loses as many soldiers with the rule as without (26 and 24, against 25 and 25). Now that soldiers aim only at slime they can see, they shoot those bits as they come, so the squad loses little. In the window (Fork, seed 1, the farm hand) it has 30 soldiers at 2:30, against 33 without the rule. On the CPU world (4 seeds; idle, farm and strike hands; 5:00 each) the scores barely move. The idle hand still loses every game, and all 12 games run the full 5 minutes.</p>
     <div class="scroll"><table>
       <tr><th>Window, seed 1</th><th>1:00</th><th>1:20</th><th>1:40</th><th>1:50</th><th>2:00</th><th>2:30</th></tr>
       <tr><td>Today: soldiers</td><td>19</td><td>18</td><td>20</td><td>25</td><td>27</td><td>33</td></tr>
@@ -127,7 +151,7 @@ code { font-size: 0.9em; }
   <section>
     <h2>How these were made</h2>
     <ul>
-      <li>The window's own picture, on software Vulkan, all four films on one build (today's main, after the wading change and soldiers aiming only at slime they can see): <code>larder-world look=DIR hand=farm seed=1 cut=150,365,240,24 cutsquad=365,256,150,4</code> (scene 1) and <code>cut=150,386,239,22,8,16</code> (scene 2), each with <code>panic=0</code> (today) and the new default.</li>
+      <li>The window's own picture, on software Vulkan, all six films on today's main (after the wading change and soldiers aiming only at slime they can see; each arm plays the same round in every scene up to the cut): <code>larder-world look=DIR hand=farm seed=1 cut=150,365,240,24 cutsquad=365,256,150,4</code> (scene 1), <code>cut=150,386,239,22,8,16</code> (scene 2) and <code>cut=150,365,240,32 cutsquad=365,264,150,4</code> (scene 3), each with <code>panic=0</code> (today) and the new default.</li>
       <li>The scenes are staged: the ring and the soldiers' places are set by the command, not played.</li>
       <li>The rule acts before the cut too, so each pair's rounds differ a little by 2:30: the mould has 18,623 walkers today against 18,143 scared.</li>
     </ul>

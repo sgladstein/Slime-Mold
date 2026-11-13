@@ -11,6 +11,10 @@ shape C's new default (`panic` 2):
 - `b8-t.log`, `b8-p.log`: the bolt scene, `cut=150,386,239,22,8,16
   centre=386,232,5`.
 - `p5-t.log`, `p5-p.log`: no cut, frames every 10 s from 0:30 to 2:30.
+- `s1-t.log`, `s1-p.log`: the last stand (11-13, after #200), `cut=150,365,240,32
+  cutsquad=365,264,150,4 centre=365,238,6`: a bigger ring and four soldiers.
+- `g1-p.log`: scene 1 with two soldiers (`cutsquad=365,256,150,2`), scared
+  only, not filmed for the page.
 
 Earlier takes of the same: `c7-*`, `b7-*`, `p4-*` after #197 only;
 `c6-*`, `b6-*`, `p3-*` (no cut, every 5 s from 0:20 to 2:00) before #197,

@@ -4,6 +4,7 @@
 //! ```text
 //! cargo run --release --example larderworld -- census seeds=1-16 [scale=2 walkers=5000 hands=idle,random,farm,rush,wall cap=600 threads=4]
 //! cargo run --release --example larderworld -- look=DIR seeds=1 hands=farm [every=60]
+//! cargo run --release --example larderworld -- slivers=1 seeds=1 map=fork walkers=25000 keys=...+panic:2   # what scared walkers bite
 //! cargo run --release --example larderworld -- census map=fork ...
 //! cargo run --release --example larderworld -- census gpu=both seeds=1-32 threads=1 ...
 //! cargo run --release --example larderworld -- census energy_flow=0.05 hunger_scent=8 ...   # one body
@@ -269,6 +270,7 @@ fn main() {
     let (mut scale, mut walkers, mut threads, mut cap) = (2usize, 5_000usize, 4usize, None::<f32>);
     let mut hands: Vec<String> = ["idle", "random", "farm", "rush", "wall"].iter().map(|s| s.to_string()).collect();
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
+    let mut sliver = false;
     let mut rules = Rules::default();
     let mut mass = None::<f32>;
     let mut m = Mould::default();
@@ -292,6 +294,7 @@ fn main() {
             "cap" => cap = Some(v.parse().unwrap()),
             "hands" => hands = v.split(',').map(String::from).collect(),
             "look" => look = Some(v.into()),
+            "slivers" => sliver = v == "1",
             "every" => every = v.parse().unwrap(),
             "aim_min" => rules.aim_min = v.parse().unwrap(),
             "price" => rules.price = v.parse().unwrap(),
@@ -420,6 +423,12 @@ fn main() {
     }
     assert!((m.tier.is_none() && m.keys.is_empty()) || engines == [false], "tier= and keys= play on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
+    if sliver {
+        for &seed in &seeds {
+            slivers(seed, scale, walkers, rules, &m, map);
+        }
+        return;
+    }
     if let Some(dir) = look {
         assert!(engines == [false], "look= draws the CPU world only");
         std::fs::create_dir_all(&dir).expect("look dir");
@@ -1088,6 +1097,189 @@ fn wall_road<W: World>(g: &mut Game<W>) {
             }
         }
     }
+}
+
+/// `slivers=1` (11-13, the technical lead's check on `BigParams::panic`):
+/// one farm game a seed on the CPU world, read at every squad frame. Each
+/// scared walker (`BigDish::panics`) is put in a fragment: the scared
+/// walkers' cells joined when within 2 cells (food news's reach), its size
+/// the scared walkers in it. A soldier's bite each frame is its touching
+/// walkers (`squad::read`'s disc), split into calm walkers and scared ones
+/// by their fragment's size; a soldier's death is shared out by the bites it
+/// took over its life. The question: do the squad's losses come from a
+/// stream of tiny scared slivers (a size floor would fix it) or from real
+/// cut-off parts?
+fn slivers(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, map: Option<&Map>) {
+    use slime_mould::mould::squad::{cell_of, disc, r2};
+    use std::collections::HashMap;
+    // Fragment sizes: 1, 2-4, 5-9, 10-24, 25-99, 100+; 0 is calm walkers.
+    const EDGES: [usize; 5] = [2, 5, 10, 25, 100];
+    const NAMES: [&str; 7] = ["calm", "1", "2-4", "5-9", "10-24", "25-99", "100+"];
+    let bucket = |n: usize| 1 + EDGES.iter().filter(|&&e| n >= e).count();
+    let mut p = race_params(seed, scale, walkers);
+    mould.apply(&mut p);
+    let mut world = match map {
+        Some(m) => BigDish::with_map(p, m),
+        None => BigDish::new(p),
+    };
+    world.threads = 1;
+    let mut g = mould.game(world, rules, seed);
+    let mut farmed: Vec<usize> = Vec::new();
+    let tps = g.rules.tps as u64;
+    let sc = g.world.scale();
+    let touch2 = r2(g.rules.touch * sc);
+    let mut last = u64::MAX;
+    let mut life: Vec<[f64; 7]> = Vec::new();
+    let mut was: Vec<bool> = Vec::new();
+    let (mut bites, mut deaths) = ([0f64; 7], [0f64; 7]);
+    let mut uncredited = 0u32;
+    // Scared walker-seconds by fragment size, sampled once a second, and the
+    // largest fragment seen.
+    let (mut held, mut biggest, mut most) = ([0f64; 7], 0usize, 0usize);
+    let mut lines = Vec::new();
+    while g.end.is_none() {
+        // `Game::step` is one squad frame, so this reads every frame.
+        let sec = g.world.ticks() / tps;
+        let new_sec = sec != last;
+        {
+            let d = &g.world;
+            let (w, h) = (d.w, d.h);
+            let scared: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k) && d.panics(k)).collect();
+            // Union-find over the scared walkers' cells.
+            let mut cells: HashMap<(i64, i64), usize> = HashMap::new();
+            let mut at: Vec<(i64, i64)> = Vec::with_capacity(scared.len());
+            for &k in &scared {
+                let c = cell_of(w, h, d.walkers[k].0, d.walkers[k].1);
+                at.push(c);
+                let n = cells.len();
+                cells.entry(c).or_insert(n);
+            }
+            let mut parent: Vec<usize> = (0..cells.len()).collect();
+            fn root(p: &mut [usize], mut i: usize) -> usize {
+                while p[i] != i {
+                    p[i] = p[p[i]];
+                    i = p[i];
+                }
+                i
+            }
+            for (&(x, y), &i) in &cells {
+                for dy in -2..=2 {
+                    for dx in -2..=2 {
+                        if let Some(&j) = cells.get(&(x + dx, y + dy)) {
+                            let (a, b) = (root(&mut parent, i), root(&mut parent, j));
+                            parent[a] = b;
+                        }
+                    }
+                }
+            }
+            let mut size = vec![0usize; cells.len()];
+            for c in &at {
+                let r = root(&mut parent, cells[c]);
+                size[r] += 1;
+            }
+            let of: Vec<usize> = at.iter().map(|c| size[root(&mut parent, cells[c])]).collect();
+            if new_sec {
+                for &n in &of {
+                    held[bucket(n)] += 1.0;
+                }
+                biggest = biggest.max(of.iter().copied().max().unwrap_or(0));
+                most = most.max(scared.len());
+                if sec.is_multiple_of(10) {
+                    let mut hist = [0usize; 7];
+                    let mut seen = std::collections::HashSet::new();
+                    for c in &at {
+                        let r = root(&mut parent, cells[c]);
+                        if seen.insert(r) {
+                            hist[bucket(size[r])] += 1;
+                        }
+                    }
+                    lines.push(format!(
+                        "  {sec:>3} s: scared {:>4} in {:>3} fragments (1: {}, 2-4: {}, 5-9: {}, 10-24: {}, 25-99: {}, 100+: {}); soldiers {}",
+                        scared.len(),
+                        seen.len(),
+                        hist[1],
+                        hist[2],
+                        hist[3],
+                        hist[4],
+                        hist[5],
+                        hist[6],
+                        g.soldiers.iter().filter(|s| s.alive).count()
+                    ));
+                }
+            }
+            {
+                let occ = d.occupancy();
+                while life.len() < g.soldiers.len() {
+                    life.push([0.0; 7]);
+                    was.push(true);
+                }
+                for (q, s) in g.soldiers.iter().enumerate() {
+                    if !s.alive {
+                        continue;
+                    }
+                    let (cx, cy) = cell_of(w, h, s.x, s.y);
+                    let all: u32 = disc(w, h, cx, cy, touch2).map(|i| occ[i] as u32).sum();
+                    let mut b = [0f64; 7];
+                    let mut n_scared = 0u32;
+                    for (j, &(x, y)) in at.iter().enumerate() {
+                        if (x - cx).pow(2) + (y - cy).pow(2) <= touch2 as i64 {
+                            b[bucket(of[j])] += 1.0;
+                            n_scared += 1;
+                        }
+                    }
+                    b[0] = all.saturating_sub(n_scared) as f64;
+                    for i in 0..7 {
+                        life[q][i] += b[i];
+                        bites[i] += b[i];
+                    }
+                }
+            }
+        }
+        // The hand thinks once a game second, as `Game::play` has it.
+        if new_sec {
+            farm_hand(&mut g, &mut farmed);
+            last = sec;
+        }
+        g.step();
+        while was.len() < g.soldiers.len() {
+            life.push([0.0; 7]);
+            was.push(true);
+        }
+        for q in 0..g.soldiers.len() {
+            if was[q] && !g.soldiers[q].alive {
+                let sum: f64 = life[q].iter().sum();
+                if sum > 0.0 {
+                    for i in 0..7 {
+                        deaths[i] += life[q][i] / sum;
+                    }
+                } else {
+                    uncredited += 1;
+                }
+            }
+            was[q] = g.soldiers[q].alive;
+        }
+    }
+    println!("slivers seed {seed}: {:?} at {:.0} s, soldiers {}, mould {}", g.end, g.time(), g.alive(), g.world.living());
+    for l in lines {
+        println!("{l}");
+    }
+    let tb: f64 = bites.iter().sum();
+    let td: f64 = deaths.iter().sum();
+    let th: f64 = held.iter().sum();
+    println!("  most scared at once {most}, biggest fragment {biggest}; scared walker-seconds {th:.0}");
+    println!("  {:>6} {:>12} {:>8} {:>10} {:>8} {:>12}", "size", "bite-frames", "share", "deaths", "share", "scared-secs");
+    for i in 0..7 {
+        println!(
+            "  {:>6} {:>12.0} {:>7.1}% {:>10.2} {:>7.1}% {:>12.0}",
+            NAMES[i],
+            bites[i],
+            100.0 * bites[i] / tb.max(1.0),
+            deaths[i],
+            100.0 * deaths[i] / td.max(1e-9),
+            held[i]
+        );
+    }
+    println!("  deaths {:.0} credited, {uncredited} with no bite (not the mould)", td);
 }
 
 /// The world as the engine draws it, with each live soldier as a white
