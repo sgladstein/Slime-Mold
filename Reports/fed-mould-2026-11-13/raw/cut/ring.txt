@@ -1,0 +1,70 @@
+cutprobe race world scale 2 walkers 25000, grow 180 s, follow 120 s, 3 cuts a seed, seeds [1, 2, 3, 4]
+arms: [("c-old", [("upkeep", "0.0002"), ("capacity", "50000")]), ("c-shared", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+c-old 1 grown | alive 31209 parts1% 1 lcs 1.00 lone 0.00 rms 60.6 | crystals eaten from 14 of 23
+cut c-old 1 0 at fine cell (64, 92)
+c-old 1 0 | 592 592 0 | 0.99 2.98 0.82 16.7 4.14 | 84 crystal 4 104.3 react 34 | 31209 11.10
+cut c-old 1 1 at fine cell (188, 80)
+c-old 1 1 | 492 492 0 | 1.00 1.00 1.00 4.5 1.14 | 103 alive 120 0.6 react -1 | 31209 11.10
+cut c-old 1 2 at fine cell (124, 84)
+c-old 1 2 | 475 475 0 | 1.00 1.02 1.00 4.3 1.15 | 94 alive 120 1.1 react -1 | 31209 11.10
+c-shared 1 grown | alive 49995 parts1% 1 lcs 1.00 lone 0.00 rms 61.4 | crystals eaten from 15 of 23
+cut c-shared 1 0 at fine cell (120, 92)
+c-shared 1 0 | 797 797 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49995 16.92
+cut c-shared 1 1 at fine cell (124, 240)
+c-shared 1 1 | 790 790 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49995 16.92
+cut c-shared 1 2 at fine cell (60, 88)
+c-shared 1 2 | 790 790 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49995 16.92
+c-old 2 grown | alive 30384 parts1% 1 lcs 1.00 lone 0.00 rms 68.2 | crystals eaten from 13 of 23
+cut c-old 2 0 at fine cell (36, 116)
+c-old 2 0 | 578 578 0 | 1.00 1.09 0.98 4.4 1.15 | 79 alive 120 1.5 react -1 | 30384 10.58
+cut c-old 2 1 at fine cell (212, 156)
+c-old 2 1 | 541 541 0 | 1.00 1.83 0.93 4.6 1.16 | 84 alive 120 5.1 react 101 | 30384 10.58
+cut c-old 2 2 at fine cell (216, 84)
+c-old 2 2 | 370 370 0 | 1.00 1.92 0.90 3.7 1.12 | 88 crystal 90 37.9 react 61 | 30384 10.58
+c-shared 2 grown | alive 50000 parts1% 1 lcs 1.00 lone 0.00 rms 57.8 | crystals eaten from 13 of 23
+cut c-shared 2 0 at fine cell (56, 120)
+c-shared 2 0 | 792 792 0 | 1.00 1.00 1.00 5.6 1.00 | 120 alive 120 0.0 react -1 | 50000 17.66
+cut c-shared 2 1 at fine cell (144, 84)
+c-shared 2 1 | 777 777 0 | 1.00 1.00 1.00 5.6 1.00 | 120 alive 120 0.1 react -1 | 50000 17.66
+cut c-shared 2 2 at fine cell (104, 232)
+c-shared 2 2 | 770 770 0 | 1.00 2.42 0.52 5.6 1.00 | 65 crystal 51 81.9 react 54 | 50000 17.66
+c-old 3 grown | alive 23107 parts1% 1 lcs 1.00 lone 0.00 rms 45.5 | crystals eaten from 12 of 23
+cut c-old 3 0 at fine cell (200, 132)
+c-old 3 0 | 658 658 0 | 1.00 1.22 0.96 4.7 1.12 | 82 alive 120 1.3 react -1 | 23107 10.37
+cut c-old 3 1 at fine cell (164, 192)
+c-old 3 1 | 484 484 0 | 1.00 1.15 0.97 3.7 1.14 | 74 alive 120 3.4 react 120 | 23107 10.37
+cut c-old 3 2 at fine cell (116, 80)
+c-old 3 2 | 445 445 0 | 1.00 1.12 0.99 4.4 1.17 | 92 alive 120 2.9 react 46 | 23107 10.37
+c-shared 3 grown | alive 49949 parts1% 1 lcs 1.00 lone 0.00 rms 60.0 | crystals eaten from 13 of 23
+cut c-shared 3 0 at fine cell (60, 212)
+c-shared 3 0 | 797 797 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49949 17.47
+cut c-shared 3 1 at fine cell (164, 192)
+c-shared 3 1 | 796 796 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49949 17.47
+cut c-shared 3 2 at fine cell (196, 128)
+c-shared 3 2 | 795 795 0 | 1.00 1.00 1.00 5.6 1.00 | 120 alive 120 0.0 react -1 | 49949 17.47
+c-old 4 grown | alive 33121 parts1% 1 lcs 1.00 lone 0.00 rms 71.2 | crystals eaten from 14 of 23
+cut c-old 4 0 at fine cell (76, 256)
+c-old 4 0 | 688 688 0 | 1.00 1.06 0.99 4.8 1.10 | 86 alive 120 0.9 react -1 | 33121 10.68
+cut c-old 4 1 at fine cell (36, 196)
+c-old 4 1 | 629 629 0 | 1.00 1.47 0.95 4.6 1.19 | 92 rejoin 98 18.5 react 89 | 33121 10.68
+cut c-old 4 2 at fine cell (232, 276)
+c-old 4 2 | 599 599 0 | 1.00 1.02 1.00 4.6 1.09 | 96 alive 120 1.7 react -1 | 33121 10.68
+c-shared 4 grown | alive 49998 parts1% 1 lcs 1.00 lone 0.00 rms 59.7 | crystals eaten from 15 of 23
+cut c-shared 4 0 at fine cell (68, 204)
+c-shared 4 0 | 797 797 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49998 17.14
+cut c-shared 4 1 at fine cell (144, 76)
+c-shared 4 1 | 793 793 0 | 1.00 1.00 1.00 5.6 0.99 | 120 alive 120 0.0 react -1 | 49998 17.14
+cut c-shared 4 2 at fine cell (180, 188)
+c-shared 4 2 | 772 772 0 | 1.00 2.74 0.43 5.5 1.00 | 49 crystal 31 51.7 react 38 | 49998 17.14
+
+summary (mean over cuts)
+c-old: cuts 12 n0 546 lcs20 1.00 frag 1.41 lcs 0.96 rms20 5.4 compact20 1.39 life 88 moved 14.9 fates {"alive": 9, "crystal": 2, "rejoin": 1}
+c-shared: cuts 12 n0 789 lcs20 1.00 frag 1.26 lcs 0.91 rms20 5.6 compact20 1.00 life 110 moved 11.2 fates {"alive": 10, "crystal": 2}
+  vs c-old: lcs20 better 3 worse 0, p 0.2500
+  vs c-old: life better 10 worse 2, p 0.0386
+  vs c-old: compact20 better 12 worse 0, p 0.0005
+
+real	18m13.881s
+user	17m41.494s
+sys	1m51.772s

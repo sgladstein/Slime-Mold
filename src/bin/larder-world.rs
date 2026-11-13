@@ -59,6 +59,9 @@
 //! `holes=1` also times how long each hit's hole stays open; `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
+//! `cut=T,X,Y,R` takes a ring 6 world units wide, R out round (X, Y), out
+//! of the ground at game second T and holds it, and prints the walkers
+//! inside each second (does a part cut off from its crystals wither?).
 //! `hand=volley` fires the squad into the thick body from 22 to 34 s,
 //! then holds fire and steps back (`volley`); `hand=edge` stands in the
 //! same place on free fire instead.
@@ -1993,7 +1996,7 @@ impl ApplicationHandler for App {
 // One more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>) -> Result<(), String> {
+fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<(f32, f32, f32, f32)>) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -2017,6 +2020,16 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
     type Hole = ((f32, f32), u64, f32, Option<u64>);
     let mut holes: Vec<Hole> = Vec::new();
     let mut prev_lk: Vec<u8> = Vec::new();
+    // `cut=T,X,Y,R` (2026-11-13, the slime-enemy thread: does a part cut
+    // off from every crystal wither?): at game time T, a ring 6 world cells
+    // wide (the fine grid, as `centre=` and the squad's places) from R out
+    // round (X, Y) goes off the agar for the rest of the round (`Engine::block`, as a wall the game built but
+    // with no health), so the cut is held. Each game second after, the
+    // walkers inside the ring (the look's walker count, channel 1) are
+    // printed against their count at the cut.
+    let mut cut_inside: Option<(Vec<usize>, u32)> = None;
+    let mut cut_sec = u64::MAX;
+    let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
     for &t in at {
         // A mission's verdict stops the steps, as the game's end does.
         while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
@@ -2031,11 +2044,41 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
                     None => plan(g, hand),
                 }
             }
+            if let (Some((ct, cx, cy, cr)), None) = (cut, cut_inside.as_ref()) {
+                let g = app.game.as_mut().unwrap();
+                if g.time() >= ct {
+                    let (w, h) = (g.world.e.dish.w, g.world.e.dish.h);
+                    let (mut ring, mut core) = (Vec::new(), Vec::new());
+                    for i in 0..w * h {
+                        let d = ((i % w) as f32 + 0.5 - cx).hypot((i / w) as f32 + 0.5 - cy);
+                        if d > cr && d <= cr + 6.0 {
+                            ring.push(i);
+                        } else if d <= cr {
+                            core.push(i);
+                        }
+                    }
+                    g.world.e.block(&ring);
+                    let n0 = inside(&read_back(&device, &queue, &g.world.e.look), &core);
+                    println!("  cut t {:.1} s: ring of {} fine cells round ({cx}, {cy}) r {cr}; {n0} walkers inside", g.time(), ring.len());
+                    cut_inside = Some((core, n0.max(1)));
+                }
+            }
             app.step(step);
             // Whole steps here (the window leaves a step running while it
             // draws): the pictures, the holes and the tape read the game as
             // they did before the step split.
             app.settle();
+            if let Some((core, n0)) = cut_inside.as_ref() {
+                let g = app.game.as_ref().unwrap();
+                // A step can run several ticks, so a second is counted when
+                // it starts, not on a tick that is a multiple of `tps`.
+                let sec = g.time().floor() as u64;
+                if sec != cut_sec {
+                    cut_sec = sec;
+                    let n = inside(&read_back(&device, &queue, &g.world.e.look), core);
+                    println!("  cut t {sec} s: {n} walkers inside ({:.2} of the cut's)", n as f32 / *n0 as f32);
+                }
+            }
             // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:
             // "maybe part of the issue is the slime/walkers move to fast").
             // The drawn body (the view's `body`: trail x living walkers in
@@ -2797,6 +2840,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut holes = false;
     let mut centre = None;
+    let mut cut = None;
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
     let mut chosen = false;
@@ -2855,6 +2899,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let [x, y, zoom @ ..] = w.as_slice() else { return Err("centre=X,Y[,ZOOM]".into()) };
                 centre = Some((*x, *y, zoom.first().copied().unwrap_or(6.0)));
             }
+            "cut" => {
+                // `cut=T,X,Y,R`: a held ring cut in the no-window round.
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [t, x, y, r] = w.as_slice() else { return Err("cut=T,X,Y,R".into()) };
+                cut = Some((*t, *x, *y, *r));
+            }
             "screen" => {
                 let (w, h) = v.split_once('x').ok_or("screen=WxH")?;
                 screen = (w.parse()?, h.parse()?);
@@ -2862,7 +2912,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, centre; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, centre, cut; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
@@ -2879,7 +2929,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     if let Some(dir) = look {
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

@@ -1,0 +1,58 @@
+cutprobe race world scale 2 walkers 25000, grow 180 s, follow 120 s, 3 cuts a seed, seeds [1, 2, 3, 4]
+arms: [("c-old", [("upkeep", "0.0002"), ("capacity", "50000")]), ("c-shared", [("upkeep", "0.0002"), ("capacity", "50000"), ("energy_flow", "0.05")])]
+arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms
+c-old 1 grown | alive 31209 parts1% 1 lcs 1.00 lone 0.00 rms 60.6 | crystals eaten from 14 of 23
+cut c-old 1 0 at fine cell (475, 243)
+c-old 1 0 | 137 15 1 | 0.93 1.15 0.96 12.8 2.90 | 120 rejoin+fed 12 13.7 react 20 | 31209 10.94
+cut c-old 1 1 at fine cell (474, 219)
+c-old 1 1 | 190 15 1 | 1.00 1.00 0.99 5.6 1.26 | 120 rejoin+fed 2 10.4 react 41 | 31209 10.94
+cut c-old 1 2 at fine cell (474, 195)
+c-old 1 2 | 363 15 1 | 1.00 1.01 0.99 15.7 2.92 | 120 rejoin+fed 3 13.8 react 18 | 31209 10.94
+c-shared 1 grown | alive 49995 parts1% 1 lcs 1.00 lone 0.00 rms 61.4 | crystals eaten from 15 of 23
+cut c-shared 1 0 at fine cell (473, 240)
+c-shared 1 0 | 219 15 1 | 0.81 2.82 0.65 22.7 7.66 | 120 rejoin+fed 9 30.6 react 8 | 49995 17.10
+cut c-shared 1 1 at fine cell (461, 216)
+c-shared 1 1 | 1740 35 1 | 0.96 1.31 0.94 19.5 2.33 | 120 rejoin+fed 8 11.3 react 27 | 49995 17.10
+c-old 2 grown | alive 30384 parts1% 1 lcs 1.00 lone 0.00 rms 68.2 | crystals eaten from 13 of 23
+cut c-old 2 0 at fine cell (488, 197)
+c-old 2 0 | 724 25 1 | 1.00 1.07 0.99 7.3 1.14 | 120 rejoin+fed 17 5.9 react 104 | 30384 11.38
+cut c-old 2 1 at fine cell (453, 218)
+c-old 2 1 | 995 15 1 | 0.95 1.61 0.86 13.3 1.90 | 120 rejoin+fed 7 13.0 react 39 | 30384 11.38
+cut c-old 2 2 at fine cell (437, 222)
+c-old 2 2 | 1220 15 1 | 0.98 1.07 0.97 13.5 1.60 | 120 rejoin+fed 20 9.1 react 14 | 30384 11.38
+c-shared 2 grown | alive 50000 parts1% 1 lcs 1.00 lone 0.00 rms 57.8 | crystals eaten from 13 of 23
+cut c-shared 2 0 at fine cell (477, 196)
+c-shared 2 0 | 103 15 1 | 0.92 2.12 0.77 7.0 3.42 | 120 rejoin+fed 9 12.3 react 24 | 50000 17.99
+cut c-shared 2 1 at fine cell (456, 210)
+c-shared 2 1 | 302 15 1 | 1.00 1.00 0.99 5.5 1.59 | 120 rejoin+fed 8 1.4 react -1 | 50000 17.99
+cut c-shared 2 2 at fine cell (437, 221)
+c-shared 2 2 | 366 15 1 | 0.89 1.93 0.78 17.1 4.48 | 120 rejoin+fed 9 11.1 react 7 | 50000 17.99
+c-old 3 grown | alive 23107 parts1% 1 lcs 1.00 lone 0.00 rms 45.5 | crystals eaten from 12 of 23
+cut c-old 3 0 at fine cell (271, 11)
+c-old 3 0 | 752 15 1 | 1.00 1.08 0.99 7.9 1.37 | 120 rejoin+fed 16 4.1 react 47 | 23107 10.22
+cut c-old 3 1 at fine cell (242, 34)
+c-old 3 1 | 1141 15 1 | 0.99 1.00 0.99 9.4 1.39 | 120 rejoin+fed 17 1.3 react -1 | 23107 10.22
+c-shared 3 grown | alive 49949 parts1% 1 lcs 1.00 lone 0.00 rms 60.0 | crystals eaten from 13 of 23
+c-old 4 grown | alive 33121 parts1% 1 lcs 1.00 lone 0.00 rms 71.2 | crystals eaten from 14 of 23
+cut c-old 4 0 at fine cell (461, 52)
+c-old 4 0 | 172 15 1 | 1.00 1.54 0.94 4.5 1.07 | 120 rejoin+fed 19 1.6 react 23 | 33121 10.29
+cut c-old 4 1 at fine cell (423, 54)
+c-old 4 1 | 235 15 1 | 0.76 1.22 0.94 14.8 3.17 | 120 rejoin+fed 2 8.5 react 6 | 33121 10.29
+c-shared 4 grown | alive 49998 parts1% 1 lcs 1.00 lone 0.00 rms 59.7 | crystals eaten from 15 of 23
+cut c-shared 4 0 at fine cell (322, 211)
+c-shared 4 0 | 410 50 1 | 0.69 2.88 0.56 21.8 5.40 | 120 rejoin+fed 2 9.1 react 64 | 49998 17.38
+cut c-shared 4 1 at fine cell (446, 150)
+c-shared 4 1 | 534 35 1 | 0.81 1.48 0.73 19.8 4.30 | 120 rejoin+fed 2 3.0 react 56 | 49998 17.38
+cut c-shared 4 2 at fine cell (306, 210)
+c-shared 4 2 | 870 35 1 | 0.87 1.33 0.80 23.1 3.92 | 120 rejoin+fed 2 3.4 react 46 | 49998 17.38
+
+summary (mean over cuts)
+c-old: cuts 10 n0 593 lcs20 0.96 frag 1.18 lcs 0.96 rms20 10.5 compact20 1.87 life 120 moved 8.1 fates {"rejoin+fed": 10}
+c-shared: cuts 8 n0 568 lcs20 0.87 frag 1.86 lcs 0.78 rms20 17.1 compact20 4.14 life 120 moved 10.3 fates {"rejoin+fed": 8}
+  vs c-old: lcs20 better 2 worse 5, p 0.4531
+  vs c-old: life better 0 worse 0, p 1.0000
+  vs c-old: compact20 better 1 worse 6, p 0.1250
+
+real	14m48.914s
+user	14m28.133s
+sys	1m30.903s

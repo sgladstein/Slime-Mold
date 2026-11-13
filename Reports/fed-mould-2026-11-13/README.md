@@ -166,6 +166,82 @@ sheet fuller, and the slots cap it. A look that drew walkers a cell
 above one would make the packing visible (`fed_crowd` is waiting on
 that).
 
+## Cutting it off from its crystals (11-13)
+
+The owner parked a cut-the-network rule at 22:22Z ("I cannot tell if it
+is getting stronger by holding the crystals"). With sharing picked, the
+question is whether a part cut off from every crystal now withers where
+the player can see it.
+
+**Today's C does not wither when cut off.** It stays whole for a minute
+or more, then dies all at once.
+- `examples/cutprobe.rs` cut a held ring (`wound=120`, a gap 4 dish cells
+  wide) round thick parts of the body with no crystal within 4 dish cells
+  (`ring=8 unfed=1`). This was on the CPU race world at 3:00, seeds 1-4,
+  3 cuts each, with C's keys (`raw/cut/ring.txt`, `ring-series.csv`).
+- **C as it was** thinned out steadily: 59% of the piece was left at
+  30 s, 26% at 60 s and 8% at 90 s.
+- **C with shared food** kept every walker for the full 2 minutes in 10
+  of 12 cuts. The shared energy evens out, so the whole piece runs down
+  together, from 0.8-1.3 a walker at the cut. The 2 cuts that started at
+  0.2-0.3 went from whole at 30 s to 5-15% at 60 s.
+- Cutting across a tip instead (`raw/cut/held.txt`) cuts nothing off.
+  C's tips sit on crystals and the body flows round the wound (every cut
+  `rejoin+fed`).
+
+**Food that fades as it travels** (`BigParams::flow_loss`, the one-body
+thread's lossy sharing): what a cell takes from a richer neighbour arrives
+x (1 - `flow_loss`). Parts far from a crystal hold little in reserve.
+- On the CPU, ring cuts as above (`raw/cut/loss.txt`, `loss-series.csv`).
+  The share of the piece left at 10, 30, 45, 60 and 90 s:
+
+| | 10 s | 30 s | 45 s | 60 s | 90 s | C at 3:00 (walkers, seeds 1-4) |
+|---|---|---|---|---|---|---|
+| shared food (today) | 1.00 | 1.00 | 0.93 | 0.85 | 0.84 | 49,949-50,000 |
+| + `flow_loss` 0.05 | 0.97 | 0.65 | 0.28 | 0.21 | 0.01 | 37,001-39,549 |
+| + `flow_loss` 0.2 | 0.69 | 0.42 | 0.27 | 0.22 | 0.08 | 8,594-13,888 |
+
+- Against today's, the piece's life (to under 10%) is shorter on 11 of 12
+  cuts at both strengths (sign test p 0.006). At 0.2 the mould is a
+  fifth of its size, so it is out.
+- **In the window** (Fork, seed 1, farm hand, a held ring cut at 2:30
+  with `cut=150,386,239,22` round a stretch of tube between two
+  crystals; `raw/cut/film-*.log`):
+  - Today's C: 242 walkers inside at the cut, whole at +75 s, 58 at
+    +80 s, gone by +90 s.
+  - With `flow_loss` 0.05: 146 inside, whole at +35 s, 46 at +40 s, gone
+    by +50 s.
+  - The mould at 4:00: 27,326 walkers and 12.7% of the screen today,
+    against 18,007 and 9.3% with the loss. C as it was had 6.7%.
+- **In both, the piece dies all at once.** Once its pooled energy runs
+  out, it is gone within about 10 s. It does not thin out gradually.
+
+**Page:** https://claude.ai/artifact/W3ZnFFGTNoD8XYWjGzrSRZ (source
+`cut-page/`). It is a blind A/B, and the key is below.
+
+**The key:** Film 1 is today's C (shared food). Film 2 is C with
+`flow_loss` 0.05. To play film 2: `larder-world -- flow_loss=0.05`.
+Nothing changed in the default; the owner's answer on the decision card
+decides it.
+
+**Smoke** (CPU race world, C's keys plus `flow_loss` 0.05, seeds 1-4,
+idle/farm/strike, cap 5:00; `raw/smoke/fading-food-cap300.txt`; 341 s on 3 threads):
+- Every game ran to the 5:00 cap, so none ended in under a minute.
+- Idle doesn't win: its mean score is -0.329, against farm +0.144 and
+  strike +0.140, each higher on 4 of 4 seeds.
+- No game was stuck for a minute or more.
+- The idle hand's mould reaches 43,532-49,977 walkers by 5:00, and the
+  hands' 37,856-44,923. So the slots still bind for an unchecked mould.
+
+**Built for it:**
+- The GPU's `egain` takes `eloss` (the soil row's spare word, so Params
+  keeps its 896 bytes).
+- `Settings::flow_loss` and the `flow_loss` key.
+- A twin case "lossy flow" at 0.2, with energy L1 1.1e-6. With the GPU
+  ignoring the loss it fails at 4.3e-3.
+- `cut=` in the window's no-window mode.
+- `flow_loss` in `tiers::set_key` and `capacity` in the cut probe.
+
 ## Tests
 
 - **GPU twin.** `the_world_matches_the_cpu_for_one_tick` gains the case

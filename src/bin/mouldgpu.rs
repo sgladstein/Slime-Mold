@@ -3256,7 +3256,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 14] = [
+        let dishes: [(&str, Settings, Build); 15] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3292,6 +3292,11 @@ mod tests {
             // (below), so fed and unfed ones step and breed side by side,
             // two a cell for the fed.
             ("fed crowd: a fed walker packs two to a cell", Settings { fed_crowd: 1, fed_full: 2.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            // Lossy sharing (2026-11-13, the slime-enemy thread): what a
+            // cell takes from a richer neighbour arrives short, so food
+            // fades with distance from the crystals. 0.2, four times the
+            // value on trial, so a sign or clamp slip shows in the L1.
+            ("lossy flow: shared food fades as it travels", Settings { energy_flow: 0.05, flow_loss: 0.2, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
