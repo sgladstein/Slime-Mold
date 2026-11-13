@@ -14,6 +14,9 @@ the squad lines (walkers touching, health) at each saved frame.
   `idle-` four idle soldiers, `p-hold`/`p-push` the hold (at the larder)
   and push hands, `h2-` hold at 277,155, `pl-` the push to its wipe, `r-w6`
   the rush with wading alone.
+- `clip-hold-seen.txt`, `clip-hold-seen-sink0.txt`: the same stand with
+  aims only at slime a unit can see (the PR after #197), sink 1 and 0;
+  `preview-near-s0/1.txt` a stand nearer the channel, sink 0 and 1.
 - `thickprobe/`: `examples/thickprobe.rs` on the CPU race world, seeds 1-4,
   drain x1, squads of 10 and 40; `new` is arming with wading whole, `old`
   neither. `new-n10.txt` there was first run with rations and overrun on,

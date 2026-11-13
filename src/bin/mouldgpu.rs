@@ -3482,7 +3482,12 @@ mod tests {
         let past: Vec<_> = cpu_out.units[64..].iter().collect();
         eprintln!("squad cap: {n} units; past 64, {} touch, {} aim, {} took", past.iter().filter(|u| u.touching > 0).count(), past.iter().filter(|u| u.target.is_some()).count(), past.iter().filter(|u| u.took > 0.0).count());
         assert_eq!(gpu_out, cpu_out, "every unit's outputs, the last 32 too");
-        assert!(cpu_out.units[n - 1].touching > 0 && past.iter().any(|u| u.took > 0.0) && past.iter().all(|u| u.target.is_some()), "units past 64 touch, aim and harvest");
+        // A unit aims only at slime it sees (`squad::sees`, 2026-11-13): the
+        // six of the spiral that the clamp puts in the world's rock border
+        // see nothing, so every unit past 64 on agar aims.
+        let on_agar = |u: &UnitIn| cpu.agar[u.y as usize * w + u.x as usize];
+        assert!(cpu_out.units[n - 1].touching > 0 && past.iter().any(|u| u.took > 0.0) && past.iter().zip(&f.units[64..]).all(|(u, i)| u.target.is_some() || !on_agar(i)), "units past 64 touch, aim and harvest");
+        assert!(past.iter().filter(|u| u.target.is_some()).count() >= 20, "most past 64 aim");
     }
 
     /// **Solid crystals on both engines** (`Rules::crystal_solid`, the

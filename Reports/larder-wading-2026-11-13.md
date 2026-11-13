@@ -42,7 +42,7 @@ Two new look hands, both buying the squad to eight at once with 400 food kept: `
 | Blast sunk one radius in (default) | 47 | 261 | 5.6 | 50 |
 
 - One seed and one stand, a picture, not a census.
-- **The squad fires rarely**: about 50 shots in 26 s from eight soldiers that could fire about 200. A soldier's aim is the densest block of walkers within its sight (`squad` frame, `UnitOut::target`, both engines), found with no wall check. `Game::target` then drops the shot when a wall or rock blocks the line (`clear_line`). The likely cause: the densest slime in sight is the lobe beyond the right-hand wall, so the slime in front goes unshot. Not yet checked by a probe. It is the next fix, and this stand barely tests the sink until then.
+- **The squad fires rarely**: about 50 shots in 26 s from eight soldiers that could fire about 200. A soldier's aim is the densest block of walkers within its sight (`squad` frame, `UnitOut::target`, both engines), found with no wall check. `Game::target` then drops the shot when a wall or rock blocks the line (`clear_line`). The densest slime in sight was beyond the right-hand wall, so the slime in front went unshot. Fixed in the next PR (*Aims that see*, below).
 
 ## Tried and dropped: a soldier's blast kept off its own touch circle
 
@@ -56,6 +56,23 @@ Built and measured, not merged ([patch](larder-wading-2026-11-13/raw/arming-not-
   - Eight standing at the larder on free fire: health 21 at 60 s with it, 19 with neither.
   - The CPU thick probe (`examples/thickprobe.rs`, race world, 240 s of growth, then the squad attack-moved into C's thickest part, seeds 1-4): 40 soldiers lost 18, 27, 0 and 15 with it, against 4, 14, 0 and 15 with neither; first deaths at about 2 s against 16-23 s. 10 soldiers lost 4, 3, 2 and 3 against 3, 2, 5 and 3. Raw in [`raw/thickprobe/`](larder-wading-2026-11-13/raw/thickprobe/) (`new` is arming with wading, `old` neither).
 - The probe now has a `wade=` key, and no rations or overrun. A squad held at the larder for 240 s otherwise lost the round before the order on seeds 1, 2 and 4.
+
+## Aims that see (the PR after #197)
+
+**The rule.** A unit's aim is the densest block within its sight **that it can see**: every cell on the line from the unit's cell to the block's centre cell is agar (`squad::sees`, `squad::block_cell`; WGSL `sees` in the `units` and `units1` passes). The line is whole-cell steps, `max(|dx|, |dy|)` of them, each offset truncated toward zero, in integers so both engines walk the same cells. It is walked only for a block that would beat the best so far, which picks the same block as walking every one. Soldiers, turrets and the garden's read all use it.
+
+**The stand again** (`hand=hold@318,148`, 4-30 s, sink 1):
+
+| | Shots | Killed | A shot | Health at 30 s |
+|---|---|---|---|---|
+| Before: aims through walls | 47 | 261 | 5.6 | 50 |
+| Now: aims it can see | 198 | 486 | 2.5 | 78 |
+
+- The squad fires at its full rate (8 soldiers, one shot a second each) and kills almost twice as many. It shoots the slime that comes at it, which is thinner, so fewer a shot. It ends healthier because that slime never reaches it.
+- The thick body in the channel is out of range from there (about 43 world units against 30). So this stand still does not test the sink: with sink 0 it fires 195 and kills 512 (2.6 a shot). Raw: [`clip-hold-seen.txt`](larder-wading-2026-11-13/raw/clip-hold-seen.txt), [`clip-hold-seen-sink0.txt`](larder-wading-2026-11-13/raw/clip-hold-seen-sink0.txt).
+- A stand nearer the channel (`hold@322,166`; the squad stopped at 289.5, 138, on the V's arm and by the larder) gave 4.7 kills a shot with sink 0 and 5.3 with sink 1 (182 and 190 shots). Raw: [`preview-near-s0.txt`](larder-wading-2026-11-13/raw/preview-near-s0.txt), [`preview-near-s1.txt`](larder-wading-2026-11-13/raw/preview-near-s1.txt).
+
+**Tests.** `a_unit_aims_only_at_slime_it_can_see` (squad.rs) walls off the middle of a unit's line to its aim. The aim must move to a block it sees, and come back when the wall goes. The GPU's squad twins pass on llvmpipe, `the_squad_matches_the_cpu_for_one_frame` to the bit. `the_squad_frame_holds_its_cap_on_the_gpu` now expects no aim from the six units the clamp puts in the world's rock border (they see nothing); it still checks that every unit on agar past 64 aims.
 
 ## Smoke games
 
