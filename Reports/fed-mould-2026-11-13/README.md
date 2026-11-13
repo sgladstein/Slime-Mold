@@ -373,6 +373,28 @@ withering against 18.4 ms without: the news pass walks every walker three
 times and every cell holding one twice a step. It only runs with
 `wither` on.
 
+**The owner's pick, and the default (11-13 15:51-15:57Z).** Answering the
+A/B/C: "B is the best but still too fast." Then: "Lets just double it and
+call it good. I will have to playtest." So the window's shape C now
+carries `wither` 0.01 (`shape_keys` in `src/bin/larder-world.rs`; the
+engine default stays 0, so no other dish, tier or census changes);
+`larder-world -- wither=0` plays C without it. On the CPU cuts above, 0.01
+leaves 90% of a cut piece at 10 s, 74% at 20 s, 41% at 45 s and 15% at
+90 s; one cut of 12 lost 34% in 5 s near the end, as its pooled energy ran
+out first. Asked in the same minutes, as an inspiration ("if possible"):
+"It shouldn't have a stronger attack but it should act more like a scared
+animal. Either run away back to the main body or go right for the
+soliders. It should be more reckless." That is the next piece of work.
+
+**Smoke at 0.01** (CPU race world, C's keys with `wither` 0.01, seeds
+1-4, cap 5:00, idle, farm and strike; `raw/smoke/wither01-cap300.txt`,
+against `shared-food-cap300.txt` without it). Idle does not win (-0.333 on
+4 of 4, as before); farm +0.119 (+0.120 before), strike +0.114 (+0.116).
+All 12 games run to the cap; none ends under a minute and none is stuck.
+The mould at 5:00 is 49,935-50,000 walkers, as before. A CPU tick takes
+24-26 ms against 18-20 ms without (the news pass; the window runs it on
+the GPU, 2.1 ms a tick on software Vulkan).
+
 ## Tests
 
 - **Withering, GPU twin.** `the_world_matches_the_cpu_for_one_tick` gains
