@@ -45,6 +45,28 @@ ul{margin:0;padding-left:1.2em;max-width:68ch;display:flex;flex-direction:column
 </div>
 
 <section>
+  <h2>Shots that fly (11-13)</h2>
+  <p>Every shot is now a bullet that crosses the ground at 45 cells a second, instead of a ray that lands the moment it is fired. It is game state, not a drawing: each frame the bullet flies one leg, and the engine checks that leg for slime exactly as it checked the whole ray, so the mould can grow into a bullet's path or move out of it before it lands. Left, today's rays; right, bullets. Same seed, Flats map, the squad standing and firing (<code>hand=stand</code>), 10 to 13 s, one frame every 1/15 s.</p>
+  <figure><img src="gifs/rays-vs-bullets.gif" alt="Rays on the left, bullets on the right, the same squad firing on the Flats map" width="1000" height="250"><figcaption><div class="wrap"><table>
+    <thead><tr><th>Shots</th><th>Fired by 60 s</th><th>Walkers killed by 30 / 60 s</th></tr></thead>
+    <tbody>
+      <tr><td>rays (<code>bullet=0</code>)</td><td>212</td><td>295 / 646</td></tr>
+      <tr><td>bullets (<code>bullet=45</code>, the default)</td><td>212</td><td>257 / 598</td></tr>
+    </tbody></table></div></figcaption></figure>
+  <p>Then the two flight cards. <b>Pierce</b> flies on through one more slime hit (each hit strikes). <b>Split</b> breaks the bullet where it lands into three pieces fanned ahead, each 6 cells long; two split cards and the pieces split again. Both work through bullets, so they play the same on either engine.</p>
+  <figure><img src="gifs/flight-cards.gif" alt="Four panels: plain, pierce, split and shrapnel bullets from the same squad" width="1000" height="500"><figcaption><div class="wrap"><table>
+    <thead><tr><th>Loadout</th><th>Cards</th><th>Walkers killed by 30 / 60 s</th><th>Food spent by 60 s</th></tr></thead>
+    <tbody>
+      <tr><td>plain</td><td>none</td><td>257 / 598</td><td>0</td></tr>
+      <tr><td>pierce</td><td>pierce, pierce</td><td>320 / 653</td><td>0</td></tr>
+      <tr><td>split</td><td>split</td><td>375 / 749</td><td>0</td></tr>
+      <tr><td>shrapnel</td><td>split, split, blast</td><td>375 / 648</td><td>1,800 (bank empty)</td></tr>
+      <tr><td>lance</td><td>pierce, split, blast</td><td>329 / 606</td><td>1,800 (bank empty)</td></tr>
+    </tbody></table></div></figcaption></figure>
+  <p class="muted">One seed (1), a look and not a test. Kill counts swing from seed to seed: on the CPU world over 40 s, seed 2 had rays 507 and bullets 236, seed 3 had 161 and 185. The blast loadouts empty the 1,800 food bank by 60 s, which is why they fall behind plain split. Try them in the window with <code>larder-world -- rounds=split</code>, or press H to cycle loadouts.</p>
+</section>
+
+<section>
   <h2>In the game window: four loadouts, one fight</h2>
   <p>The GPU game (<code>larder-world -- map=flats rounds=NAME hand=rush</code>), seed 1, 8 to 32 s, same camera. Each round's craters and kill holes are the mould itself. Plain shots lose the squad by 24 s; blast and trap keep one soldier to 32 s.</p>
   <figure><img src="gifs/flats-four-loadouts.gif" alt="Four loadouts side by side on the Flats map, 8 to 32 seconds" width="800" height="330"><figcaption><div class="wrap"><table>

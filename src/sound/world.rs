@@ -254,7 +254,10 @@ impl WorldListener {
     /// step: the window runs several a drawn frame and each overwrites the
     /// last's shots.
     pub fn shots(&mut self, shots: &[Shot]) {
-        self.pending.extend_from_slice(shots);
+        // With bullets (`Rules::bullet_speed`) a shot is several legs: the
+        // crack is the leg it was fired on, the impact the leg it landed
+        // on, and the legs between are silent.
+        self.pending.extend(shots.iter().filter(|s| s.fired || s.hit.is_some()));
     }
 
     /// What should sound after this drawn frame. `dt` is wall-clock seconds
@@ -280,7 +283,7 @@ impl WorldListener {
                 ky += h.1 * s.killed as f32;
             }
         }
-        self.stats.shots += shots.len() as u64;
+        self.stats.shots += shots.iter().filter(|s| s.fired).count() as u64;
         self.stats.kills += killed as u64;
         // The heaviest shots are the ones heard; a stable sort keeps the
         // order the game fired them among equals.
@@ -292,9 +295,11 @@ impl WorldListener {
         for (j, &i) in order.iter().take(voiced).enumerate() {
             let s = shots[i];
             let delay = gap * j as f32;
-            let (pan, gain) = ear.place(s.from);
-            out.push(SoundCmd::Grain { kind: GrainKind::Crack, pan, gain: 0.4 * gain, delay });
-            self.stats.voiced += 1;
+            if s.fired {
+                let (pan, gain) = ear.place(s.from);
+                out.push(SoundCmd::Grain { kind: GrainKind::Crack, pan, gain: 0.4 * gain, delay });
+                self.stats.voiced += 1;
+            }
             if let Some(h) = s.hit {
                 let w = kill_weight(s.killed, self.full);
                 let (pan, gain) = ear.place(h);
@@ -635,7 +640,7 @@ mod tests {
         let g = small(1);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let shot = |killed| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed };
+        let shot = |killed| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed, by: None, fired: true };
         let impact = |cmds: Vec<SoundCmd>| {
             cmds.into_iter().find_map(|c| match c {
                 SoundCmd::Impact { weight, gain, .. } => Some((weight, gain)),
@@ -659,7 +664,7 @@ mod tests {
         let g = small(1);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let shots: Vec<Shot> = (0..20).map(|k| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed: k }).collect();
+        let shots: Vec<Shot> = (0..20).map(|k| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed: k, by: None, fired: true }).collect();
         l.shots(&shots);
         let cmds = l.hear(&g, ear, 1.0 / 60.0, false);
         let cracks = cmds.iter().filter(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Crack, .. })).count();

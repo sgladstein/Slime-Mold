@@ -46,7 +46,7 @@ fn main() {
         for f in 0..60 {
             if f == 0 && k != i32::MIN {
                 let hit = (k >= 0).then_some((100.0, 100.0));
-                l.shots(&[Shot { from: (40.0, 100.0), to: (110.0, 100.0), hit, killed: k.max(0) as u32 }]);
+                l.shots(&[Shot { from: (40.0, 100.0), to: (110.0, 100.0), hit, killed: k.max(0) as u32, by: None, fired: true }]);
                 if i < kills.len() {
                     println!("{:>4.1} s: {}", samples.len() as f32 / 2.0 / 48_000.0, if k < 0 { "stopped by rock: crack only".to_string() } else { format!("{k} killed, weight {:.2}", kill_weight(k as u32, full)) });
                 }

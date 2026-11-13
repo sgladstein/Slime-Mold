@@ -3995,7 +3995,13 @@ mod tests {
         // engines) are off too: with them the squad starts off the larder's
         // crystal and seed 3's moulds part by 9.7% at 25 s (1930 against
         // 1760), past the race twin's 8%.
-        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, ..Rules::default() };
+        // Rays, not bullets (`Rules::bullet_speed`, 11-13): bullets are game
+        // state, the same code on both engines, and this twin is the flee
+        // rule's. With bullets seed 3 fires 76 / 76 shots and kills 1030 /
+        // 1020, but once the fleeing mould collapses (25-30 s) the moulds
+        // part by 15.6% (920 against 1064), past the 8%; shots landing a
+        // few frames later give the chaos more room.
+        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, ..Rules::default() };
         let flee = || {
             let mut p = race_params(seed, scale, walkers);
             (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
@@ -4031,6 +4037,60 @@ mod tests {
             assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the alarm changed the CPU's game");
+    }
+
+    /// **Bullets on the engine as on the CPU** (the technical lead on #191,
+    /// 11-13): shots fly as bullets (`Rules::bullet_speed`) with pierce and
+    /// split on, and every frame the CPU dish is loaded into the engine
+    /// first (`Engine::inject`), so both trace the same legs through the
+    /// same slime: each frame's legs (from, to, hit cell, kills, shooter,
+    /// firing) and the bullets in flight after it must match exactly. The
+    /// flight is game code shared by both worlds; this pins that the
+    /// engine's trace of a leg is the CPU's. Craters are off because the
+    /// crater field is not injected. The planted check: the same run with
+    /// the GPU's game flying bullets one cell a second slower must part.
+    #[test]
+    fn bullets_that_pierce_and_split_fly_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_world, BulletMods, Cmd, Game, Order, Rules};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
+        let twin = |gpu_speed: f32| -> (Result<(), String>, u32, u32, u32) {
+            let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules { bullet_speed: gpu_speed, ..rules }, seed);
+            let mods = BulletMods { pierce: 1, split: 1 };
+            cpu.bullet_mods = mods;
+            gpu.bullet_mods = mods;
+            for k in 0..cpu.soldiers.len() {
+                assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)));
+            }
+            let (mut legs, mut pieces, mut hits) = (0, 0, 0);
+            while cpu.end.is_none() && cpu.time() < 16.0 {
+                gpu.world.e.inject(&cpu.world);
+                cpu.step();
+                gpu.step();
+                if cpu.last_shots != gpu.last_shots {
+                    let i = cpu.last_shots.iter().zip(&gpu.last_shots).position(|(a, b)| a != b);
+                    return (Err(format!("{:.2} s: legs differ at {i:?} of {} / {}: {:?} against {:?}", cpu.time(), cpu.last_shots.len(), gpu.last_shots.len(), i.map(|i| cpu.last_shots[i]), i.map(|i| gpu.last_shots[i]))), legs, pieces, hits);
+                }
+                if cpu.bullets != gpu.bullets {
+                    return (Err(format!("{:.2} s: bullets in flight differ", cpu.time())), legs, pieces, hits);
+                }
+                legs += cpu.last_shots.len() as u32;
+                hits += cpu.last_shots.iter().filter(|s| s.hit.is_some()).count() as u32;
+                // Pieces are the only bullets with no split left (mods split 1).
+                pieces += cpu.bullets.iter().filter(|b| b.split == 0).count() as u32;
+            }
+            (Ok(()), legs, pieces, hits)
+        };
+        let (same, legs, pieces, hits) = twin(rules.bullet_speed);
+        eprintln!("bullet twin: {legs} legs, {hits} hits, {pieces} piece-frames in flight; {same:?}");
+        same.unwrap();
+        assert!(legs > 50 && hits > 10 && pieces > 0, "the squad fired, hit, and split: {legs} legs, {hits} hits, {pieces} pieces");
+        let (planted, ..) = twin(rules.bullet_speed - 1.0);
+        eprintln!("planted (GPU game 1 cell/s slower): {planted:?}");
+        assert!(planted.is_err(), "the twin catches bullets flying at the wrong speed");
     }
 
     /// **Shots that lay the crater** (`Rules::crater`, 2026-11-12, the
