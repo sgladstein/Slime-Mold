@@ -102,8 +102,10 @@ struct Params {
     // One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
-    // hungry walker weighs the scent 1 + `hscent` x its hunger.
-    eflow: f32, hscent: f32, hat: f32, _b0: f32,
+    // hungry walker weighs the scent 1 + `hscent` x its hunger. A walker
+    // with `fed_full` energy or more steps and breeds under the crowd limit
+    // + `fed_crowd` (`BigParams::fed_crowd`, the lone row's last; `crowd_for`).
+    eflow: f32, hscent: f32, hat: f32, fed_full: f32,
     // The crater (2026-11-12, `BigParams::scorch_keep`, `scorch_full`;
     // `squad::Frame::crater`): while a cell's countdown runs, its trail is
     // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
@@ -115,7 +117,7 @@ struct Params {
     // Lone step (2026-11-12, `BigParams::lone_step`): a walker with n other
     // walkers in the square of radius `lone_r` round its cell, as the step
     // began, steps x clamp(n / `lone`, `lfloor`, 1). 0 off.
-    lone: f32, lfloor: f32, lone_r: u32, _l0: u32,
+    lone: f32, lfloor: f32, lone_r: u32, fed_crowd: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -267,6 +269,15 @@ fn conv_r() -> u32 { if (OUTSIDE) { return P.conv_r; } return 0u; }
 // With `per` the globals `explore`, `bshare` and `graze_w` are switches
 // only (on if any species has one).
 fn crowd_of(sp: u32) -> u32 { if (per()) { return P.sets[sp].crowd; } return P.crowd; }
+// Walker k's crowd limit where it steps or breeds: its species' (`sp`), or
+// that + `fed_crowd` while it holds `fed_full` energy or more (the CPU's
+// `fed_crowd`; a species with no limit keeps none). Claims still follow the
+// species' own limit (`walk`, `born`), as on the CPU.
+fn crowd_for(k: u32, sp: u32) -> u32 {
+    let c = crowd_of(sp);
+    if (c > 0u && P.fed_crowd > 0u && growth() && energy[k] >= P.fed_full) { return c + P.fed_crowd; }
+    return c;
+}
 fn deposit_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].deposit; } return P.deposit; }
 fn keep_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].keep; } return P.keep; }
 fn bshare_of(sp: u32) -> f32 { if (per()) { return P.sets[sp].bdep; } return bshare(); }
@@ -614,7 +625,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (there != NONE) {
         if (there == here) {
             aim = there;
-        } else if (agar[there] != 0u && (crowd_of(sp) == 0u || atomicLoad(&occ[there]) < crowd_of(sp))) {
+        } else if (agar[there] != 0u && (crowd_for(k, sp) == 0u || atomicLoad(&occ[there]) < crowd_for(k, sp))) {
             aim = there;
             if (crowd_of(sp) > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
         }
@@ -813,8 +824,9 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (!ordinary(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
     let at = birth_spot(k, t);
     let j = cell(at.x, at.y);
-    // The parent's species' crowd limit (`crowd_of`).
-    let cr = crowd_of(species_of(k));
+    // The parent's species' crowd limit, + `fed_crowd` if it is fed
+    // (`crowd_for`).
+    let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3).
     if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN) { return; }
     if (cr > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }

@@ -1,0 +1,115 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 1.55 ms (once a game second), model and HUD 0.036 ms a frame
+  t 20 s: mould 24929, soldiers 8, bank 1110, harvested 924, shots 107, killed 680, took 94%, crystals left 0.929; squad at 259.0,118.5
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.041 ms a frame
+  t 25 s: mould 25276, soldiers 11, bank 1004, harvested 2070, shots 138, killed 795, took 95%, crystals left 0.906; squad at 255.6,101.2
+  CPU: ground field 2.23 ms (once a game second), model and HUD 0.053 ms a frame
+  t 30 s: mould 25651, soldiers 12, bank 846, harvested 2370, shots 187, killed 937, took 96%, crystals left 0.867; squad at 257.6,89.9
+  CPU: ground field 0.84 ms (once a game second), model and HUD 0.041 ms a frame
+  t 35 s: mould 26044, soldiers 14, bank 1857, harvested 4245, shots 242, killed 1117, took 96%, crystals left 0.837; squad at 242.9,110.2
+  CPU: ground field 0.99 ms (once a game second), model and HUD 0.039 ms a frame
+  t 40 s: mould 26538, soldiers 16, bank 978, harvested 4245, shots 282, killed 1232, took 96%, crystals left 0.819; squad at 204.1,135.0
+  CPU: ground field 0.93 ms (once a game second), model and HUD 0.040 ms a frame
+  t 45 s: mould 27184, soldiers 17, bank 797, harvested 4545, shots 287, killed 1244, took 95%, crystals left 0.806; squad at 201.0,137.2
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.039 ms a frame
+  t 50 s: mould 27905, soldiers 17, bank 1309, harvested 5145, shots 303, killed 1279, took 95%, crystals left 0.797; squad at 191.7,127.2
+  CPU: ground field 1.46 ms (once a game second), model and HUD 0.034 ms a frame
+  t 55 s: mould 28640, soldiers 19, bank 1016, harvested 5745, shots 337, killed 1459, took 95%, crystals left 0.785; squad at 197.8,117.4
+  CPU: ground field 1.63 ms (once a game second), model and HUD 0.043 ms a frame
+  t 60 s: mould 29318, soldiers 17, bank 924, harvested 5745, shots 368, killed 1860, took 94%, crystals left 0.763; squad at 198.4,114.9
+  CPU: ground field 0.92 ms (once a game second), model and HUD 0.043 ms a frame
+  t 65 s: mould 30038, soldiers 13, bank 842, harvested 5745, shots 396, killed 2329, took 94%, crystals left 0.748; squad at 189.3,127.7
+  CPU: ground field 0.98 ms (once a game second), model and HUD 0.044 ms a frame
+  t 70 s: mould 30859, soldiers 11, bank 1077, harvested 6045, shots 421, killed 2723, took 94%, crystals left 0.737; squad at 178.6,132.8
+  CPU: ground field 1.01 ms (once a game second), model and HUD 0.041 ms a frame
+  t 75 s: mould 31906, soldiers 6, bank 1035, harvested 6045, shots 435, killed 3038, took 93%, crystals left 0.731; squad at 186.5,142.2
+  CPU: ground field 0.92 ms (once a game second), model and HUD 0.038 ms a frame
+  t 80 s: mould 33129, soldiers 6, bank 1004, harvested 6045, shots 444, killed 3204, took 92%, crystals left 0.728; squad at 186.5,142.2
+  CPU: ground field 0.91 ms (once a game second), model and HUD 0.037 ms a frame
+  t 85 s: mould 29717, soldiers 4, bank 982, harvested 6045, shots 453, killed 3370, took 92%, crystals left 0.726; squad at 192.3,140.6
+  CPU: ground field 1.02 ms (once a game second), model and HUD 0.039 ms a frame
+  t 90 s: mould 23538, soldiers 4, bank 961, harvested 6045, shots 463, killed 3516, took 91%, crystals left 0.723; squad at 192.3,140.6
+  CPU: ground field 0.85 ms (once a game second), model and HUD 0.044 ms a frame
+  t 95 s: mould 22798, soldiers 4, bank 940, harvested 6045, shots 473, killed 3653, took 90%, crystals left 0.720; squad at 192.3,140.6
+  CPU: ground field 0.95 ms (once a game second), model and HUD 0.046 ms a frame
+  t 100 s: mould 23457, soldiers 2, bank 926, harvested 6045, shots 483, killed 3800, took 89%, crystals left 0.718; squad at 206.6,132.1
+  CPU: ground field 0.92 ms (once a game second), model and HUD 0.035 ms a frame
+  t 105 s: mould 24578, soldiers 2, bank 916, harvested 6045, shots 490, killed 3869, took 88%, crystals left 0.715; squad at 181.0,93.3
+  CPU: ground field 0.93 ms (once a game second), model and HUD 0.054 ms a frame
+  t 110 s: mould 25817, soldiers 1, bank 910, harvested 6045, shots 495, killed 3891, took 87%, crystals left 0.712; squad at 266.5,119.5
+  CPU: ground field 0.85 ms (once a game second), model and HUD 0.049 ms a frame
+  t 115 s: mould 26988, soldiers 1, bank 905, harvested 6045, shots 499, killed 3907, took 86%, crystals left 0.709; squad at 266.5,119.5
+  CPU: ground field 0.82 ms (once a game second), model and HUD 0.047 ms a frame
+  t 120 s: mould 28184, soldiers 1, bank 900, harvested 6045, shots 504, killed 3925, took 86%, crystals left 0.706; squad at 266.5,119.5
+  CPU: ground field 0.83 ms (once a game second), model and HUD 0.037 ms a frame
+  t 125 s: mould 29372, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 85%, crystals left 0.703
+  CPU: ground field 1.05 ms (once a game second), model and HUD 0.041 ms a frame
+  t 130 s: mould 30543, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 84%, crystals left 0.700
+  CPU: ground field 0.90 ms (once a game second), model and HUD 0.035 ms a frame
+  t 135 s: mould 31710, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 83%, crystals left 0.697
+  CPU: ground field 0.97 ms (once a game second), model and HUD 0.045 ms a frame
+  t 140 s: mould 32921, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 82%, crystals left 0.694
+  CPU: ground field 0.94 ms (once a game second), model and HUD 0.040 ms a frame
+  t 145 s: mould 34026, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 82%, crystals left 0.691
+  CPU: ground field 0.90 ms (once a game second), model and HUD 0.036 ms a frame
+  t 150 s: mould 35106, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 81%, crystals left 0.688
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.041 ms a frame
+  t 155 s: mould 36126, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 80%, crystals left 0.685
+  CPU: ground field 1.02 ms (once a game second), model and HUD 0.037 ms a frame
+  t 160 s: mould 37140, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 79%, crystals left 0.682
+  CPU: ground field 0.91 ms (once a game second), model and HUD 0.041 ms a frame
+  t 165 s: mould 38128, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 79%, crystals left 0.679
+  CPU: ground field 0.88 ms (once a game second), model and HUD 0.035 ms a frame
+  t 170 s: mould 39125, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 78%, crystals left 0.676
+  CPU: ground field 0.88 ms (once a game second), model and HUD 0.040 ms a frame
+  t 175 s: mould 40085, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 77%, crystals left 0.673
+  CPU: ground field 0.97 ms (once a game second), model and HUD 0.041 ms a frame
+  t 180 s: mould 41038, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 76%, crystals left 0.671
+  CPU: ground field 0.96 ms (once a game second), model and HUD 0.038 ms a frame
+  t 185 s: mould 41966, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 76%, crystals left 0.668
+  CPU: ground field 0.87 ms (once a game second), model and HUD 0.036 ms a frame
+  t 190 s: mould 42833, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 75%, crystals left 0.665
+  CPU: ground field 0.92 ms (once a game second), model and HUD 0.042 ms a frame
+  t 195 s: mould 43639, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 74%, crystals left 0.662
+  CPU: ground field 0.88 ms (once a game second), model and HUD 0.040 ms a frame
+  t 200 s: mould 44507, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 74%, crystals left 0.659
+  CPU: ground field 0.99 ms (once a game second), model and HUD 0.038 ms a frame
+  t 205 s: mould 45347, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 73%, crystals left 0.656
+  CPU: ground field 0.86 ms (once a game second), model and HUD 0.037 ms a frame
+  t 210 s: mould 46267, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 73%, crystals left 0.653
+  CPU: ground field 1.01 ms (once a game second), model and HUD 0.036 ms a frame
+  t 215 s: mould 47079, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 72%, crystals left 0.650
+  CPU: ground field 0.83 ms (once a game second), model and HUD 0.037 ms a frame
+  t 220 s: mould 47871, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 71%, crystals left 0.647
+  CPU: ground field 0.97 ms (once a game second), model and HUD 0.038 ms a frame
+  t 225 s: mould 48665, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 71%, crystals left 0.644
+  CPU: ground field 0.98 ms (once a game second), model and HUD 0.044 ms a frame
+  t 230 s: mould 49380, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 70%, crystals left 0.641
+  CPU: ground field 0.92 ms (once a game second), model and HUD 0.039 ms a frame
+  t 235 s: mould 49836, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 70%, crystals left 0.638
+  CPU: ground field 0.89 ms (once a game second), model and HUD 0.035 ms a frame
+  t 240 s: mould 49972, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 69%, crystals left 0.635
+  CPU: ground field 0.99 ms (once a game second), model and HUD 0.039 ms a frame
+  t 245 s: mould 49990, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 68%, crystals left 0.632
+  CPU: ground field 0.96 ms (once a game second), model and HUD 0.045 ms a frame
+  t 250 s: mould 49994, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 68%, crystals left 0.629
+  CPU: ground field 0.86 ms (once a game second), model and HUD 0.038 ms a frame
+  t 255 s: mould 49995, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 67%, crystals left 0.626
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.052 ms a frame
+  t 260 s: mould 49996, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 67%, crystals left 0.623
+  CPU: ground field 0.98 ms (once a game second), model and HUD 0.041 ms a frame
+  t 265 s: mould 49991, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 66%, crystals left 0.621
+  CPU: ground field 0.90 ms (once a game second), model and HUD 0.038 ms a frame
+  t 270 s: mould 49997, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 66%, crystals left 0.618
+  CPU: ground field 0.98 ms (once a game second), model and HUD 0.041 ms a frame
+  t 275 s: mould 49994, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 65%, crystals left 0.615
+  CPU: ground field 0.82 ms (once a game second), model and HUD 0.034 ms a frame
+  t 280 s: mould 49997, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 65%, crystals left 0.612
+  CPU: ground field 0.83 ms (once a game second), model and HUD 0.036 ms a frame
+  t 285 s: mould 49998, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 64%, crystals left 0.609
+  CPU: ground field 0.82 ms (once a game second), model and HUD 0.035 ms a frame
+  t 290 s: mould 49997, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 64%, crystals left 0.606
+  CPU: ground field 0.90 ms (once a game second), model and HUD 0.035 ms a frame
+  t 295 s: mould 49998, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 63%, crystals left 0.603
+  CPU: ground field 0.98 ms (once a game second), model and HUD 0.041 ms a frame
+  t 300 s: mould 49998, soldiers 0, bank 899, harvested 6045, shots 505, killed 3929, took 63%, crystals left 0.600
