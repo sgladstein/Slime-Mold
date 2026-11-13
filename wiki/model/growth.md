@@ -95,7 +95,8 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   crystals reaches walkers along the network, which breed where there is
   room, so the body visibly swells round the crystals it holds (Fork seed
   1, 5:00: 17.1% of the screen against 7.0%;
-  [fed mould](../../Reports/fed-mould-2026-11-13/README.md)).
+  [fed mould](../../Reports/fed-mould-2026-11-13/README.md)). The owner
+  picked it in the blind A/B (11-13 02:39Z: "Definitely film 1").
   `BigParams::fed_crowd` (a fed walker packs more to a cell; both engines,
   off) added walkers but not picture. At the peak its 50,000 slots fill
   at most 34.8% of a map's open cells at scale 2 (a test holds it to
