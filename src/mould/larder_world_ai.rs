@@ -186,8 +186,7 @@ impl View {
 
     /// Walkers within `r` fine cells of `c`, by grid square centres. Whole
     /// walkers, not `Rules::mass`: the thresholds read against it (`dare`,
-    /// `HELD`, `wall_alarm`) were set on the 5,000-walker mould, so on C's
-    /// 25,000 they trip at about a fifth of the body's thickness.
+    /// `HELD`, `wall_alarm`) compare them through `View::weigh`.
     pub fn mass(&self, c: (f32, f32), r: f32) -> u32 {
         let Some(grid) = &self.grid else { return 0 };
         let b = self.bin as f32;
@@ -225,6 +224,17 @@ impl View {
             }
         }
         (n > 0).then(|| ((sx / n as f32, sy / n as f32), n))
+    }
+
+    /// `n` walkers counted at the 5,000-walker mould's weight
+    /// (`Rules::mass`), which every walker threshold in a `Style` and
+    /// `HELD` was tuned on: shape C's 25,000 walkers weigh 0.2 each, so
+    /// whole counts tripped those thresholds at a fifth of the body's
+    /// thickness and made the brain timid on C (integration, from the
+    /// Larder thread's walker-count audit, #199). 1 at 5,000, so the
+    /// census harness plays the same.
+    pub fn weigh(&self, n: u32) -> f32 {
+        n as f32 * self.rules.mass
     }
 
     /// Food the bank must keep to arm `n` soldiers for `secs` game seconds.
@@ -458,7 +468,7 @@ impl Brain {
         // them, so the army is also held to what the bank and a share of
         // the food on crystals the mould is not near can feed for the next
         // `LEFT_SECS`.
-        let left: f32 = v.crystals.iter().filter(|c| c.near < st.dare).map(|c| c.charge).sum::<f32>() / v.rules.charge;
+        let left: f32 = v.crystals.iter().filter(|c| v.weigh(c.near) < st.dare as f32).map(|c| c.charge).sum::<f32>() / v.rules.charge;
         let to_cap = (self.cap - v.t).clamp(1.0, LEFT_SECS);
         let feeds = |size: usize, bank: f32| {
             let spare = (bank - v.rules.soldier_cost - st.reserve - v.ammo(size + 1, st.ammo)).max(0.0);
@@ -507,11 +517,11 @@ impl Brain {
         }
         let claiming = !lean && (v.t >= claim_at || (striking && v.core_down));
         // Farm the nearest crystals the mould is not near, the core last.
-        let mut farmable: Vec<&CrystalView> = v.crystals.iter().filter(|c| dist(c.at, v.core) > 1.0 && c.near < st.dare).collect();
+        let mut farmable: Vec<&CrystalView> = v.crystals.iter().filter(|c| dist(c.at, v.core) > 1.0 && v.weigh(c.near) < st.dare as f32).collect();
         farmable.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
         farmable.truncate(st.farm);
         // Crystals the mould holds, nearest home first, for the claim.
-        let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| c.on >= HELD).collect();
+        let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| v.weigh(c.on) >= HELD as f32).collect();
         held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
         let farmers = if claiming || striking { st.keep.min(free.len()) } else { free.len() };
         // Soldiers keep a job they hold if it is still wanted, so the
@@ -619,7 +629,7 @@ impl Brain {
             // the mould has come near has just left `farmable` (`dare`),
             // and that is when it needs the wall.
             let clearing: Vec<(f32, f32)> = v.units.iter().filter_map(|u| if let Order::Clear(x, y) = u.order { Some((x, y)) } else { None }).collect();
-            for c in v.crystals.iter().filter(|c| clearing.iter().any(|&p| dist(p, c.at) < 1.0) && c.near >= st.wall_alarm && c.on < HELD) {
+            for c in v.crystals.iter().filter(|c| clearing.iter().any(|&p| dist(p, c.at) < 1.0) && v.weigh(c.near) >= st.wall_alarm as f32 && v.weigh(c.on) < HELD as f32) {
                 if self.walled.iter().any(|w| w.0 == c.i && v.t - w.1 < WALL_EVERY) {
                     continue;
                 }
