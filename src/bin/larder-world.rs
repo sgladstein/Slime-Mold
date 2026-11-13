@@ -98,7 +98,10 @@
 //! body thread's rule): the owner could not tell it grew stronger by
 //! holding crystals, and now its body swells round the crystals it holds
 //! (on Fork about 2.4 times the mould on screen at 5:00); `energy_flow=0`
-//! plays C as it was.
+//! plays C as it was. **A cut-off part of C withers** since 2026-11-13
+//! (`wither` 0.01): one that has heard no news of food for 5 s thins over
+//! a minute or two (the owner's pick, "double it" from 0.02); `wither=0`
+//! plays it without.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -325,7 +328,19 @@ fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'static st
     // 4.6%). Tried first: fed walkers packing two a cell
     // (`BigParams::fed_crowd` 1): 21,053 walkers but 7.6% of the screen, as
     // the look's thickness is full at one walker a cell.
-    const C: [(&str, &str); 3] = [DENSE[0], DENSE[1], ("energy_flow", "0.05")];
+    // A part cut off from every crystal withers (`BigParams::wither` 0.01,
+    // 2026-11-13). Why: with the food shared, a cut-off part pooled its
+    // energy, stayed whole for 75 s or more and then died at once, so a cut
+    // read as nothing happening. With withering a part that has heard no
+    // news of food for 5 s thins steadily while the body joined to its
+    // crystals keeps every walker (uncut C the same to the walker on 4 of
+    // 4 CPU seeds). The owner, 11-13 15:51Z, on the blind A/B/C: "B is the
+    // best but still too fast" (B was 0.02, half the piece gone at about
+    // 25 s), then 15:53Z: "Lets just double it and call it good. I will
+    // have to playtest." At 0.01 a held ring cut on the CPU leaves 74% of
+    // the piece at 20 s, 41% at 45 s and 15% at 90 s
+    // (Reports/fed-mould-2026-11-13/README.md, *A cut-off part withers*).
+    const C: [(&str, &str); 4] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01")];
     Some(match name {
         "a" => (5_000, &[]),
         "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),
