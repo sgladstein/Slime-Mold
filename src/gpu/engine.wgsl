@@ -2020,6 +2020,7 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
     let cy = i32(un.y);
     let w = i32(P.w);
     let h = i32(P.h);
+    // Whole walkers, as `squad::read`; the game weighs them per rule (`Rules::mass`).
     var touching = 0u;
     let r = isqrt(un.touch2);
     let side = u32(2 * r + 1);
@@ -2188,6 +2189,7 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
     let cy = i32(un.y);
     let w = i32(P.w);
     let h = i32(P.h);
+    // Whole walkers, as `squad::read`; the game weighs them per rule (`Rules::mass`).
     var touching = 0u;
     let r = isqrt(un.touch2);
     for (var dy = -r; dy <= r; dy++) {

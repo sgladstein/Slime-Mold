@@ -51,7 +51,8 @@ use super::{AlertKind, GrainKind, SoundCmd, TextureKind};
 /// 1.9 times for 10 times the walkers, so the full weight follows density
 /// to the power `DENSITY_LAW` (0.3). In proportion, all 18 of the 50,000
 /// rush's shots were light. The starting count, not the living one, so a
-/// mould thinned by the squad does sound thinner.
+/// mould thinned by the squad does sound thinner. Kills count whole; the
+/// weight scales by density by its own law, not by `Rules::mass` (linear).
 pub const FULL_KILL: f32 = 80.0;
 /// Walkers a dish cell where `FULL_KILL` was measured.
 pub const REF_DENSITY: f32 = 5_000.0 / (256.0 * 160.0);
@@ -359,6 +360,7 @@ impl WorldListener {
         }
         let touch_at = if touching > 0 { (tx / touching as f32, ty / touching as f32) } else { ear.centre };
         let (touch_pan, touch_gain) = ear.place(touch_at);
+        // Whole walkers, as the bite (`Rules::drain`): the creep is as loud as the harm, at any mass.
         let (rate, level) = density(touching as f32, 2.0, 20.0, 0.25);
         out.push(SoundCmd::Texture { kind: TextureKind::Creep, rate, level: level * touch_gain, pan: touch_pan, spread: 0.3 });
         self.stats.touching = touching;
