@@ -52,7 +52,7 @@
 //! whole body (its size, hunger, eating, flinching at gunfire); K turns
 //! just that off and on, `voice=0` starts without it.
 //!
-//! `-- look=DIR [hand=rush|stand|volley|edge|farm|far|idle] [at=5,30,60] [screen=1280x800]
+//! `-- look=DIR [hand=rush|stand|volley|edge|hold|push|farm|far|idle] [at=5,30,60] [screen=1280x800]
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
@@ -64,7 +64,12 @@
 //! inside each second (does a part cut off from its crystals wither?).
 //! `hand=volley` fires the squad into the thick body from 22 to 34 s,
 //! then holds fire and steps back (`volley`); `hand=edge` stands in the
-//! same place on free fire instead.
+//! same place on free fire instead. `hand=hold` buys four more soldiers
+//! at once and stands all eight at the larder on free fire, so they fire
+//! into the mould as it comes and never walk in (`hand=hold@X,Y` stands
+//! them at X, Y instead, world units as `centre=`); `hand=push` buys the
+//! same eight and from 3 s walks them into the body on the core
+//! (`Order::Attack`, the rush's order).
 //! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]
 //! [sound=PATH] [fast=1] [passes=N]` times the window's frame without a
 //! window (`bench`), a mission's too, and with `passes=` each GPU pass of
@@ -2207,6 +2212,13 @@ fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), w
             println!("  t {:.0} s: own mould {} (green), enemy {}", g.time(), g.world.counts_by_side().0, g.mould);
         }
         println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())), squad.map_or(String::new(), |(x, y)| format!("; squad at {x:.1},{y:.1}")));
+        // What holds the live soldiers (2026-11-13, for the wading and
+        // arming clips): walkers touching them, and their health.
+        let live: Vec<_> = g.soldiers.iter().filter(|s| s.alive).collect();
+        if !live.is_empty() {
+            let n = live.len() as f32;
+            println!("  squad: touching {:.1} mean, {} most; health {:.0} mean", live.iter().map(|s| s.touching as f32).sum::<f32>() / n, live.iter().map(|s| s.touching).max().unwrap_or(0), live.iter().map(|s| s.hp).sum::<f32>() / n);
+        }
         for b in &g.buildings {
             println!("    {} at ({:.0}, {:.0}): hp {:.0} / {:.0}, built {:.1}, {}{}", b.kind.name(), b.at.0, b.at.1, b.hp, b.max_hp, b.built, if b.alive { "standing" } else { "worn down" }, if b.working { ", working" } else { "" });
         }
@@ -2761,6 +2773,34 @@ fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     }
     if hand == "volley" || hand == "edge" {
         volley(g, hand == "edge");
+        return;
+    }
+    // `hold` and `push` (2026-11-13, the wading and arming clips; the owner,
+    // 15:55Z: "this is really hard to judge when the soliders are just
+    // running into the slime"): eight soldiers, bought at once with 400
+    // food kept for rations, either stand at the larder on free fire as
+    // the mould comes up the stem, or walk into the body from 3 s.
+    // `hold@X,Y` stands them at (X, Y) instead, world units as `centre=`.
+    let post = hand.strip_prefix("hold@").and_then(|p| p.split_once(',')).and_then(|(x, y)| Some((x.parse::<f32>().ok()?, y.parse::<f32>().ok()?)));
+    let hand = if post.is_some() { "hold" } else { hand };
+    if hand == "hold" || hand == "push" {
+        while g.time() < 1.0 && g.soldiers.len() < 8 && g.bank >= g.rules.soldier_cost {
+            g.apply(Cmd::Buy);
+        }
+        for k in 0..g.soldiers.len() {
+            if !g.soldiers[k].alive {
+                continue;
+            }
+            if hand == "hold" && g.soldiers[k].stance != Stance::Free {
+                g.apply(Cmd::Stance(k, Stance::Free));
+            }
+            if let (Some(p), true) = (post, g.time() >= 1.0 && g.soldiers[k].order == Order::Hold) {
+                g.apply(Cmd::Order(k, Order::Move(p.0, p.1)));
+            }
+            if hand == "push" && g.time() >= 3.0 && g.soldiers[k].order == Order::Hold {
+                g.apply(Cmd::Order(k, Order::Attack));
+            }
+        }
         return;
     }
     // `sow` (own=1): farm, and soldiers 0 and 1 walk from the larder to a

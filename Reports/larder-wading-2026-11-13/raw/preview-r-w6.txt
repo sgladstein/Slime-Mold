@@ -1,0 +1,11 @@
+  t 4 s: mould 24912, soldiers 4, bank 1981, harvested 0, shots 13, killed 88, took 0%, crystals left 1.000; squad at 285.3,161.3
+  squad: touching 0.0 mean, 0 most; health 96 mean
+  t 6 s: mould 24754, soldiers 4, bank 1965, harvested 0, shots 21, killed 246, took 0%, crystals left 1.000; squad at 275.4,184.6
+  squad: touching 6.5 mean, 9 most; health 86 mean
+  t 8 s: mould 24424, soldiers 4, bank 1940, harvested 0, shots 29, killed 585, took 0%, crystals left 0.999; squad at 271.0,202.7
+  squad: touching 3.8 mean, 7 most; health 60 mean
+  t 9 s: mould 24255, soldiers 4, bank 1923, harvested 0, shots 33, killed 756, took 0%, crystals left 0.999; squad at 268.9,213.5
+  squad: touching 8.0 mean, 9 most; health 49 mean
+  t 10 s: mould 24109, soldiers 4, bank 1903, harvested 0, shots 37, killed 904, took 0%, crystals left 0.999; squad at 268.2,219.8
+  squad: touching 10.5 mean, 11 most; health 29 mean
+  t 12 s: mould 23928, soldiers 0, bank 1865, harvested 0, shots 43, killed 1105, took 0%, crystals left 0.999

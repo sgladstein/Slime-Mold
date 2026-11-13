@@ -1,0 +1,100 @@
+<title>Wading Into Slime</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Wading (Rules::wade, 2026-11-13): side-by-side clips from the current
+   game, shape C on the Fork, seed 1. Colours follow the world, as on the
+   crater and sink pages: mould amber, crystal cyan. */
+:root {
+  --bg: #f3f5f6; --fg: #182024; --muted: #56646b; --line: #d5dde0;
+  --panel: #ffffff; --amber: #a86a12; --cyan: #127a93; --up: #2f7a3a; --down: #a2382c;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; --up: #8fd69a; --down: #f09a8c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b1114; --fg: #e3eaec; --muted: #93a3aa; --line: #22303a;
+  --panel: #111a1f; --amber: #e2a95a; --cyan: #8cebff; --up: #8fd69a; --down: #f09a8c; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1040px; margin: 0 auto; display: grid; gap: 34px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.2rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+header, section { display: grid; gap: 12px; min-width: 0; }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure video { width: 100%; max-width: 100%; aspect-ratio: 1288 / 344; border-radius: 4px; border: 1px solid var(--line); display: block; background: #111a1f; }
+.tag { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.92rem; min-width: 520px; }
+th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--display); font-weight: 500; color: var(--muted); font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; }
+td.n { text-align: right; padding-right: 16px; }
+.up { color: var(--up); font-weight: 600; }
+.down { color: var(--down); font-weight: 600; }
+ul { margin: 0; padding-left: 1.2rem; max-width: 68ch; display: grid; gap: 6px; }
+code { font-size: 0.9em; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+.note { font-size: 0.9rem; color: var(--muted); border-left: 2px solid var(--line); padding-left: 12px; max-width: 68ch; }
+</style>
+
+<main>
+  <header>
+    <span class="tag">Larder World · shape C · the Fork, seed 1</span>
+    <h1>Wading into thick slime</h1>
+    <p class="lede">Soldiers in thick slime now slow right down. The slowdown counted each walker at shape C's weight of 0.2, which was meant to keep the 25,000-walker mould from overwhelming buildings and the larder. So 30 walkers had to be on a soldier before it slowed to half speed. Now every walker counts whole, as it already did for the bite. Both clips are from today's game. The clips I showed you before were cut on a build from before the bite doubled (PR #174), which is why that squad walked in unharmed.</p>
+  </header>
+
+  <section>
+    <h2>Walking into the body</h2>
+    <p>Eight soldiers leave the larder at 3 s and walk into the body toward the core. On the left the slowdown counts walkers at 0.2 each (the old rule); on the right every walker counts. Played at twice game speed, with the squad's counts above each side.</p>
+    <figure>
+      <video src="push.mp4" poster="push.jpg" controls muted loop playsinline preload="metadata"></video>
+    </figure>
+    <div class="scroll"><table>
+      <tr><th>Walking in</th><th>At 10 s</th><th>At 12 s</th><th>Squad wiped</th></tr>
+      <tr><td>Before: walkers at 0.2</td><td>8 soldiers, health 65, 12.9 walkers on each</td><td>3 soldiers, health 24, 19.0 on each</td><td class="n">13 s</td></tr>
+      <tr><td>Now: walkers whole</td><td>8 soldiers, health 75, 7.5 on each</td><td>8 soldiers, health 46, 17.0 on each</td><td class="n">15 s</td></tr>
+    </table></div>
+    <ul>
+      <li><b>It is deadly either way.</b> From the first walkers on them at about 8 s, both squads are dead within 5 to 7 seconds. The bite is 2 health a second for each walker on a soldier, out of 100, so 15 walkers kill a soldier in about 3 seconds.</li>
+      <li><b>Now they slow down.</b> By 12 s the slowed squad is about 25 world units short of where the old one got. That is why it dies 2 seconds later: it never gets as deep, so fewer walkers reach it.</li>
+    </ul>
+    <div class="scroll"><table>
+      <tr><th>Walkers on a soldier</th><th>2</th><th>6</th><th>12</th><th>20</th><th>26</th></tr>
+      <tr><td>Speed before (counted at 0.2)</td><td class="n">100%</td><td class="n">96%</td><td class="n">86%</td><td class="n">69%</td><td class="n">57%</td></tr>
+      <tr><td>Speed now (counted whole)</td><td class="n">90%</td><td class="n">50%</td><td class="n down">20%</td><td class="n down">8%</td><td class="n down">5%</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Standing at the edge and firing in</h2>
+    <p>The same eight soldiers walk to the mouth of the right-hand channel, at the edge of the thick slime, and stand there on free fire from 6 s. They never walk in. On the left the blast lands on the first slime it meets (the rule before PR #181); on the right it sinks one blast radius in (the default now). Wading makes no difference here, since few walkers reach them.</p>
+    <figure>
+      <video src="hold.mp4" poster="hold.jpg" controls muted loop playsinline preload="metadata"></video>
+    </figure>
+    <div class="scroll"><table>
+      <tr><th>Standing still, 4 to 30 s</th><th>Shots</th><th>Killed</th><th>A shot</th><th>Health at 30 s</th></tr>
+      <tr><td>Blast on the first slime</td><td class="n">58</td><td class="n">271</td><td class="n">4.7</td><td class="n">44</td></tr>
+      <tr><td>Blast sunk one radius in</td><td class="n">47</td><td class="n">261</td><td class="n up">5.6</td><td class="n">50</td></tr>
+    </table></div>
+    <p class="note">The squad fires rarely here: about 50 shots in 26 seconds from eight soldiers, which could fire about 200. A soldier aims at the densest slime it can see, and the engine finds that spot without checking for walls. Most likely the densest slime they see is the lobe on the far side of the right-hand wall, so the shot is called off for a blocked line and the slime in front of them goes unshot. That is a fix of its own, and it comes next. It also means this stand barely tests the sink.</p>
+  </section>
+
+  <section>
+    <h2>What I tried and dropped</h2>
+    <ul>
+      <li><b>Keeping a soldier's own blast off the walkers on it.</b> I thought a soldier in the slime blasted its own feet clear. On today's game that isn't what keeps a squad alive: walking in, 16 to 28 walkers sit on each soldier anyway. You also pointed out that a soldier rushed while standing still could never shoot what reached it. So it is not in, and the code is kept in the report as a patch.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Try it</h2>
+    <p><code>cargo run --release --bin larder-world -- shape=c</code> has the slowdown on. Add <code>wade=30</code> to feel the old rule on shape C, or <code>wade=0</code> to turn it off. The new look hands are <code>hand=push</code> (walk eight in) and <code>hand=hold@X,Y</code> (stand eight at a place).</p>
+    <p class="note">Clips from <code>larder-world look=DIR map=fork shape=c hand=push|hold@318,148 [wade=30] [sink=0]</code> on software Vulkan (llvmpipe), frames every half game second played at twice game speed, the near view at <code>centre=262,190,4</code> (walking in) and <code>300,185,4</code> (standing). Counts from the game's own lines at each frame. Sources in the repo under <code>Reports/larder-wading-2026-11-13/</code>.</p>
+  </section>
+</main>

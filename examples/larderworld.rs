@@ -301,8 +301,9 @@ fn main() {
             // walker through `Rules::mass` (below), so leave this at 1 for
             // density.
             "drain" => rules.drain = v.parse().unwrap(),
-            // `mass=M`: one walker's weight on buildings, the larder and
-            // wading (`Rules::mass`; not its bite on a soldier); by
+            // `mass=M`: one walker's weight on buildings and the larder
+            // (`Rules::mass`; not its bite on a soldier or, since
+            // 2026-11-13, its hold on a soldier's legs); by
             // default it follows the start walkers a cell, as in the window
             // (`Rules::mass_for`: 1 at 5,000 walkers on scale 2).
             "mass" => mass = Some(v.parse().unwrap()),

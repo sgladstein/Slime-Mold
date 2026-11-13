@@ -5,7 +5,7 @@
 //! losing a single soldier (the whole game)").
 //!
 //! ```text
-//! cargo run --release --example thickprobe -- [seeds=1-4 shape=c drain=1,2,4,8 n=40 at=240 for=60 order=fight threads=4]
+//! cargo run --release --example thickprobe -- [seeds=1-4 shape=c drain=1,2,4,8 n=40 at=240 for=60 order=fight threads=4 wade=6]
 //! ```
 //!
 //! The CPU race world (`larder_world::race_world`, scale 2) with one of the
@@ -74,7 +74,7 @@ fn thickest(g: &Game<BigDish>) -> (f32, f32) {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn run(seed: u64, shape: &str, drain: f32, n: usize, at: f32, secs: f32, fight: bool) -> Row {
+fn run(seed: u64, shape: &str, drain: f32, n: usize, at: f32, secs: f32, fight: bool, wade: f32) -> Row {
     let walkers = 25_000;
     let mut p = race_params(seed, 2, walkers);
     p.upkeep = 0.0002;
@@ -83,7 +83,11 @@ fn run(seed: u64, shape: &str, drain: f32, n: usize, at: f32, secs: f32, fight: 
         p.sensor_angle = 22.5f32.to_radians();
         p.sensor_offset = 5.0;
     }
-    let rules = Rules { mass: Rules::mass_for(walkers, 2), squad: n, max_squad: n.max(40), ..Rules::default() };
+    // No rations and no overrun (both later than the first runs): a squad
+    // held at the larder for 240 s would otherwise starve, or lose the
+    // round to the mould at the larder before the order (seeds 1, 2 and
+    // 4 with 10 soldiers, 2026-11-13). The probe measures the bite.
+    let rules = Rules { mass: Rules::mass_for(walkers, 2), squad: n, max_squad: n.max(40), wade, ration: 0.0, overrun: 0.0, ..Rules::default() };
     let base = rules.drain;
     let mut g = Game::new(BigDish::new(p), rules, seed);
     g.rules.drain = 0.0;
@@ -144,6 +148,7 @@ fn run(seed: u64, shape: &str, drain: f32, n: usize, at: f32, secs: f32, fight: 
 fn main() {
     let (mut seeds, mut shape, mut drains, mut n) = ((1u64..=4).collect::<Vec<_>>(), "c".to_string(), vec![1.0f32, 2.0, 4.0, 8.0], 40usize);
     let (mut at, mut secs, mut fight, mut threads) = (240.0f32, 60.0f32, true, 4usize);
+    let mut wade = Rules::default().wade;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
         match k {
@@ -158,12 +163,13 @@ fn main() {
             "for" => secs = v.parse().unwrap(),
             "order" => fight = v == "fight",
             "threads" => threads = v.parse().unwrap(),
+            "wade" => wade = v.parse().unwrap(),
             _ => panic!("unknown {k}"),
         }
     }
     let r = Rules::default();
     println!(
-        "thickprobe shape {shape}, seeds {seeds:?}, drain x {drains:?} (default {} hp/s a walker, hp {}, mass {}), squad {n}, into the thickest part at {at} s by {} for {secs} s; CPU race world scale 2, 25,000 walkers",
+        "thickprobe shape {shape}, seeds {seeds:?}, drain x {drains:?} (default {} hp/s a walker, hp {}, mass {}), squad {n}, into the thickest part at {at} s by {} for {secs} s; wade {wade}; CPU race world scale 2, 25,000 walkers",
         r.drain,
         r.hp,
         Rules::mass_for(25_000, 2),
@@ -178,7 +184,7 @@ fn main() {
         hs.push(std::thread::spawn(move || loop {
             let job = queue.lock().unwrap().pop();
             let Some((s, d)) = job else { break };
-            tx.send(run(s, &shape, d, n, at, secs, fight)).unwrap();
+            tx.send(run(s, &shape, d, n, at, secs, fight, wade)).unwrap();
         }));
     }
     drop(tx);
