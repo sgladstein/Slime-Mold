@@ -1,0 +1,20 @@
+worldbuild: lure smell 8 (x a soldier's), radius 6 dish cells
+worldbuild: siren on tier plain
+worldbuild: placed 0.35 of the way from the core to the larder, walkers within 8 dish cells, scale 2, walkers 5000, 30 s
+  seed 1 siren on : near it every 10 s [1, 0, 0]; burnt 0 food; calls 8; mould 1772
+  seed 1 siren off: near it every 10 s [1, 0, 0]; burnt 0 food; calls 0; mould 1772
+  seed 2 siren on : near it every 10 s [2, 13, 7]; burnt 0 food; calls 8; mould 2211
+  seed 2 siren off: near it every 10 s [2, 13, 7]; burnt 0 food; calls 0; mould 2211
+  seed 3 siren on : near it every 10 s [7, 7, 11]; burnt 0 food; calls 8; mould 2250
+  seed 3 siren off: near it every 10 s [7, 7, 11]; burnt 0 food; calls 0; mould 2250
+  seed 4 siren on : near it every 10 s [9, 29, 18]; burnt 0 food; calls 8; mould 1479
+  seed 4 siren off: near it every 10 s [9, 29, 18]; burnt 0 food; calls 0; mould 1479
+  seed 5 siren on : near it every 10 s [29, 34, 35]; burnt 0 food; calls 8; mould 2509
+  seed 5 siren off: near it every 10 s [29, 34, 35]; burnt 0 food; calls 0; mould 2509
+  seed 6 siren on : near it every 10 s [4, 11, 12]; burnt 0 food; calls 8; mould 2006
+  seed 6 siren off: near it every 10 s [4, 11, 12]; burnt 0 food; calls 0; mould 2006
+  seed 7 siren on : near it every 10 s [1, 11, 30]; burnt 0 food; calls 8; mould 2175
+  seed 7 siren off: near it every 10 s [1, 11, 30]; burnt 0 food; calls 0; mould 2175
+  seed 8 siren on : near it every 10 s [0, 8, 8]; burnt 0 food; calls 8; mould 2328
+  seed 8 siren off: near it every 10 s [0, 8, 8]; burnt 0 food; calls 0; mould 2328
+on against off at 30 s: more walkers near it on 0, fewer on 0 (two-sided sign test p 1.0000)
