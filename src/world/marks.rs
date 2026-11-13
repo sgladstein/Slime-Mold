@@ -38,9 +38,9 @@ pub enum Shape {
     /// flash (0-255), bit 8 dead. Drawn and lit in the view's shader.
     Soldier = 7,
     /// A top-down building `hw` across its footprint radius (world cells
-    /// with `WORLD`): kind `fill` (0 turret, 1 lure, 2 pump, 3 outpost),
+    /// with `WORLD`): kind `fill` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren),
     /// `extra` bits 0-7 how built (0-255), 8-15 its health share, bit 16
-    /// working (its lamp lit). The sprite atlas's tiles 4-11.
+    /// working (its lamp lit). The sprite atlas's tiles 4-13.
     Building = 8,
 }
 
@@ -187,7 +187,7 @@ impl Marks {
         self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, ..Mark::new(Shape::Soldier, at, (r, r), colour) });
     }
 
-    /// A building of kind `kind` (0 turret, 1 lure, 2 pump, 3 outpost) at
+    /// A building of kind `kind` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren) at
     /// `at`, footprint radius `r` world cells: `built` and `health` 0-1,
     /// `working` lights its lamp. Everything it shows is the game's state:
     /// it rises from its foot as it is built, darkens as it is hurt.

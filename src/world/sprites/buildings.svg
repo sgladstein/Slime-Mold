@@ -11,9 +11,10 @@
   <radialGradient id="olive" cx="-0.3" cy="-0.4" r="0.9" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7b8458"/><stop offset="1" stop-color="#3f4429"/></radialGradient>
   <radialGradient id="pad" cx="-0.4" cy="-0.5" r="1.5" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8a8274"/><stop offset="1" stop-color="#4e4840"/></radialGradient>
   <radialGradient id="sand" cx="0.35" cy="0.3" r="0.8" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#c8b48a"/><stop offset="1" stop-color="#8a7656"/></radialGradient>
-  <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#fff6d0"/><stop offset="0.35" stop-color="#ffc040"/><stop offset="1" stop-color="#ff9020" stop-opacity="0"/></radialGradient>
-  <radialGradient id="bait" cx="0" cy="0" r="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#f4ffd8"/><stop offset="0.4" stop-color="#b8e05a"/><stop offset="1" stop-color="#7ab030" stop-opacity="0"/></radialGradient>
-  <radialGradient id="charge" cx="0" cy="0" r="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#eaffff"/><stop offset="0.4" stop-color="#5ce0e8"/><stop offset="1" stop-color="#20a0b0" stop-opacity="0"/></radialGradient>
+  <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#fff6d0"/><stop offset="0.35" stop-color="#ffc040"/><stop offset="1" stop-color="#ff9020" stop-opacity="0"/></radialGradient>
+  <radialGradient id="bait" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#f4ffd8"/><stop offset="0.4" stop-color="#b8e05a"/><stop offset="1" stop-color="#7ab030" stop-opacity="0"/></radialGradient>
+  <radialGradient id="call" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#fff0e0"/><stop offset="0.35" stop-color="#ff5a3c"/><stop offset="1" stop-color="#d02020" stop-opacity="0"/></radialGradient>
+  <radialGradient id="charge" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#eaffff"/><stop offset="0.4" stop-color="#5ce0e8"/><stop offset="1" stop-color="#20a0b0" stop-opacity="0"/></radialGradient>
  </defs>
 
  <!-- Turret: an octagonal concrete base, a round head with twin barrels toward +x. -->
@@ -80,5 +81,26 @@
  </g>
  <g id="outpost-lit">
   <circle cx="0.62" cy="-0.38" r="0.24" fill="url(#glow)"/>
+ </g>
+
+ <!-- Siren (PR #160, `Kind::Siren`): an alarm pole on a round foot, two horns
+      back to back across it, a red lens on top. Lit while it is on (calling every 4 s):
+      the lens and two arcs of sound off each horn. -->
+ <g id="siren">
+  <circle cx="0" cy="0" r="0.72" fill="url(#pad)" stroke="#2a2622" stroke-width="0.06"/>
+  <path d="M 0.18 -0.14 L 0.95 -0.42 L 0.95 0.42 L 0.18 0.14 Z" fill="url(#steel)" stroke="#1d2022" stroke-width="0.05" stroke-linejoin="round"/>
+  <path d="M -0.18 -0.14 L -0.95 -0.42 L -0.95 0.42 L -0.18 0.14 Z" fill="url(#steel)" stroke="#1d2022" stroke-width="0.05" stroke-linejoin="round"/>
+  <ellipse cx="0.95" cy="0" rx="0.08" ry="0.42" fill="#2a2e30"/>
+  <ellipse cx="-0.95" cy="0" rx="0.08" ry="0.42" fill="#2a2e30"/>
+  <circle cx="0" cy="0" r="0.3" fill="url(#olive)" stroke="#23261a" stroke-width="0.05"/>
+  <circle cx="0" cy="0" r="0.15" fill="#6a2a22" stroke="#2a1410" stroke-width="0.03"/>
+ </g>
+ <g id="siren-lit">
+  <circle cx="0" cy="0" r="0.42" fill="url(#call)"/>
+  <circle cx="0" cy="0" r="0.13" fill="#ffd8c8"/>
+  <g fill="none" stroke="#ff6040" stroke-linecap="round" stroke-width="0.09" opacity="0.9">
+   <path d="M 1.2 -0.5 Q 1.42 0 1.2 0.5"/><path d="M 1.48 -0.75 Q 1.8 0 1.48 0.75" opacity="0.6"/>
+   <path d="M -1.2 -0.5 Q -1.42 0 -1.2 0.5"/><path d="M -1.48 -0.75 Q -1.8 0 -1.48 0.75" opacity="0.6"/>
+  </g>
  </g>
 </svg>

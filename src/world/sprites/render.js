@@ -1,8 +1,8 @@
 // Renders the sprite layers to sprites.png, the atlas the view samples
 // (src/world/view.rs, `SPRITES`): 128 px tiles in the top row, the same at
 // 32 px in the row below (for small figures, so they don't shimmer).
-// Tiles 0-3 are soldier.svg's body, helmet, flash and dead; 4-11 are
-// buildings.svg's turret, lure, pump and outpost, each body then its lamp
+// Tiles 0-3 are soldier.svg's body, helmet, flash and dead; 4-13 are
+// buildings.svg's turret, lure, pump, outpost and siren, each body then its lamp
 // (`*-lit`). Run: node src/world/sprites/render.js from the repo root (needs
 // Playwright's Chromium).
 const { chromium } = require('playwright');
@@ -13,6 +13,7 @@ const TILES = [
   ['soldier.svg', 'body'], ['soldier.svg', 'helmet'], ['soldier.svg', 'flash'], ['soldier.svg', 'dead'],
   ['buildings.svg', 'turret'], ['buildings.svg', 'turret-lit'], ['buildings.svg', 'lure'], ['buildings.svg', 'lure-lit'],
   ['buildings.svg', 'pump'], ['buildings.svg', 'pump-lit'], ['buildings.svg', 'outpost'], ['buildings.svg', 'outpost-lit'],
+  ['buildings.svg', 'siren'], ['buildings.svg', 'siren-lit'],
 ];
 const W = TILES.length * 128;
 (async () => {
