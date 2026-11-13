@@ -315,6 +315,7 @@ fn main() {
             // `crater=S`: game seconds of crater each hit lays
             // (`Rules::crater`).
             "crater" => rules.crater = v.parse().unwrap(),
+            "sink" => rules.sink = v.parse().unwrap(),
             "ration" => rules.ration = v.parse().unwrap(),
             "hunger" => rules.hunger = v.parse().unwrap(),
             "overrun" => rules.overrun = v.parse().unwrap(),
