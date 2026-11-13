@@ -131,7 +131,12 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   from a cut piece were charged 5 s after the cut and shot it down,
   losing one; with none near, the piece pours into a crystal's lobe.
   Smoke scores unchanged; the window's farm squad has 30 soldiers at 2:30
-  against 33 (bits its shots knock off charge it, and are shot). A lean starting before the lag was rejected (uncut C 6% smaller on
+  against 33 (bits its shots knock off charge it, and are shot). Those
+  bits are slivers: on the CPU world (Fork, farm, seeds 1-2, 5:00) at
+  most 16-24 walkers are scared at once, mostly alone, they make 4-6% of
+  the squad's bites, and it loses 26 and 24 soldiers against 25 and 25,
+  so no size floor. A bigger cut piece (163 walkers) charging four
+  soldiers kills all four in 2 s (the last-stand film). A lean starting before the lag was rejected (uncut C 6% smaller on
   one seed); at the lag uncut C is within 2.9% on 4 of 4 seeds but has
   eaten from one crystal fewer on 3 of them ([fed mould, *A cut-off part panics*](../../Reports/fed-mould-2026-11-13/README.md);
   [films](https://claude.ai/artifact/SRxAj8nri2iGAsvE4DFGbP)).
