@@ -295,6 +295,13 @@ pub(super) fn squads_hand(g: &mut Game<GpuWorld>) {
     if std::env::var("SQ_DEBUG").is_ok() {
         eprintln!("t {t:.1} q {q} n {} mid {m:?} dest {:?} fire {:?} sight {:?} fired {fired:?} split {split:?} back {back:?}", g.members(q).len(), g.squads[q].dest, g.squads[q].fire, sight(g, q));
     }
+    // A squad that never got to fire still splits by 20 s, so the film
+    // shows two squads (and the squad panel's two rows) whatever held it.
+    if fired.is_none() && split.is_none() && t >= 20.0 {
+        let sc = g.world.scale();
+        g.apply(Cmd::Split(q as u8, (m.0 + 10.0 * sc, m.1)));
+        return;
+    }
     match (fired, split, back) {
         (None, ..) if t >= 1.0 => {
             // Fire once sent and either arrived or bitten by more than a

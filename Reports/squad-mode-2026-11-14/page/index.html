@@ -84,9 +84,22 @@ th { color: var(--muted); font-weight: 600; }
     </div>
   </section>
 
+  <section class="film">
+    <img src="squad-panel-crop.png" alt="The squad panel: Squad 1 with 4 soldiers holding and a plus button, Squad 2 with 4 soldiers lit as commanding, and Split X and Combine G buttons">
+    <div style="display:grid; gap:10px; min-width:0">
+      <h2>The squad panel</h2>
+      <p class="note">Top right in squad mode. Each row is a squad: its hotkey, its soldiers and what it is doing. The one you command is lit. Click a row to take command of it; the + on another row brings that squad into yours. <b>Split</b> sends the front half off as a new squad you command; <b>Combine</b> brings the nearest squad in, however far. A button that can't act is greyed, and its tooltip says why.</p>
+      <p class="note">Fork, seed 1, 24 s, 1600x900: the squad of 8 split into two squads of 4. The model and HUD together take 0.1 ms a frame.</p>
+    </div>
+  </section>
+
+  <section>
+    <img src="squad-panel-24s.jpg" alt="The whole screen at 24 s with the squad panel at the top right" style="width:100%; border-radius:6px; border:1px solid var(--line)">
+  </section>
+
   <section style="display:grid; gap:8px">
     <h2>Crystals without the larder <span class="pill">drain or guard</span></h2>
     <p>Squad mode has no larder. A squad <b>guarding</b> a crystal (standing by it, with at most 8 walkers on it) earns 1/120 of the crystal's remaining charge every second, and that never uses the crystal up, so guarding pays more in the long run. A squad <b>draining</b> a crystal banks its charge as it takes it, nothing is carried, and the crystal is gone for the slime too. Guarded crystals get a green ring.</p>
-    <p class="note">Not built yet: a short call-in delay for bought soldiers, the HUD's squad list and moving the card's letter keys off WASD (in this mode the squad keys win: X splits rather than setting Defend, and G merges rather than harvesting). The numbers (2x fire rate, 1.4x strike, the 120 s guard, 0.75 squad pace) are first guesses, to be retuned after you play it.</p>
+    <p class="note">Not built yet: a short call-in delay for bought soldiers and moving the card's letter keys off WASD (in this mode the squad keys win: X splits rather than setting Defend, and G merges rather than harvesting). The numbers (2x fire rate, 1.4x strike, the 120 s guard, 0.75 squad pace) are first guesses, to be retuned after you play it.</p>
   </section>
 </main>

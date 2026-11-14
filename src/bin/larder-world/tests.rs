@@ -407,3 +407,31 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     assert_eq!(app.game.as_ref().unwrap().time(), 0.0, "a fresh round");
     assert!(app.in_menu(), "still on the menu");
 }
+
+/// The squad panel (owner, 2026-11-14 08:22Z) in a squad-mode window: Split
+/// makes a second row and commands it, a row click commands that squad,
+/// Combine brings the other in. Skips with no GPU (CI).
+#[test]
+fn the_squad_panel_splits_switches_and_combines() {
+    let Some((device, queue)) = gpu() else { return };
+    let args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: true };
+    let mut app = offscreen(args, (1280, 720), &device, &queue).unwrap();
+    let rows = |app: &App| app.model(None, None).squads.expect("a squad panel in squad mode").rows;
+    let r = rows(&app);
+    assert_eq!(r.len(), 1);
+    assert!(r[0].active && r[0].soldiers >= 2, "{r:?}");
+    let all = r[0].soldiers;
+    app.hud_event(HudEvent::SquadSplit).unwrap();
+    let r = rows(&app);
+    assert_eq!((r.len(), r[0].soldiers + r[1].soldiers), (2, all), "{r:?}");
+    assert!(r[1].active && !r[0].active, "the new half is commanded: {r:?}");
+    app.hud_event(HudEvent::Squad(0)).unwrap();
+    assert!(rows(&app)[0].active);
+    app.hud_event(HudEvent::SquadCombine).unwrap();
+    let r = rows(&app);
+    assert_eq!((r.len(), r[0].soldiers), (1, all), "{r:?}");
+    // The RTS round has no panel.
+    let rts = Args { squads: false, ..app.args.clone() };
+    let app = offscreen(rts, (640, 400), &device, &queue).unwrap();
+    assert!(app.model(None, None).squads.is_none());
+}

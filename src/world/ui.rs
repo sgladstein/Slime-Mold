@@ -263,6 +263,36 @@ pub struct Loadout {
     pub cycle: Option<(u32, KeyCode)>,
 }
 
+/// One squad on the squad panel (`SquadPanel::rows`).
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct SquadRow {
+    /// Its hotkey ("1").
+    pub key: String,
+    /// "Squad 1".
+    pub name: String,
+    pub soldiers: usize,
+    /// A short state after the count ("line", "guarding").
+    pub note: Option<String>,
+    /// The squad you command.
+    pub active: bool,
+}
+
+/// The squad mode's panel (owner, 2026-11-14 08:22Z: "list each squad with
+/// the number of soliders and its hotkey, you can click to take command.
+/// There should also be buttons, to combine, to split"). A row click sends
+/// `HudEvent::Squad(row)`, its + sends `HudEvent::SquadInto(row)` (that
+/// squad joins yours), and the two buttons `SquadSplit` and `SquadCombine`.
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct SquadPanel {
+    pub rows: Vec<SquadRow>,
+    /// The buttons' keys ("X"), shown on them.
+    pub split_key: Option<String>,
+    pub combine_key: Option<String>,
+    /// Why a button would do nothing now (greyed, the reason its tooltip).
+    pub split_off: Option<String>,
+    pub combine_off: Option<String>,
+}
+
 /// What the game shows this frame.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Model {
@@ -299,6 +329,8 @@ pub struct Model {
     pub main_menu: bool,
     /// The gun's cards, drawn as a strip on the selection panel's top edge.
     pub loadout: Option<Loadout>,
+    /// The squad mode's squads, a panel at the top right.
+    pub squads: Option<SquadPanel>,
 }
 
 /// One building as the view sees it (`Model::buildings`).
@@ -348,6 +380,13 @@ pub enum HudEvent {
     Menu(MenuItem),
     /// A command was pressed that is not ready; the hud shows why.
     NotReady { id: u32 },
+    /// The squad panel: take command of the squad on row `r`.
+    Squad(usize),
+    /// The squad panel: the squad on row `r` joins the one you command.
+    SquadInto(usize),
+    /// The squad panel's Split and Combine buttons.
+    SquadSplit,
+    SquadCombine,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -363,6 +402,11 @@ enum Hit {
     Back,
     /// The loadout panel's swap button.
     Cycle,
+    /// The squad panel's row, its +, and its two buttons.
+    Squad(usize),
+    SquadInto(usize),
+    SquadSplit,
+    SquadCombine,
 }
 
 #[derive(Clone, Debug)]
@@ -659,6 +703,10 @@ impl Hud {
             Hit::Group(g) => out.push(HudEvent::Group(g)),
             Hit::Idle => out.push(HudEvent::Idle),
             Hit::Cycle => out.extend(self.cycle.map(|id| HudEvent::Command { id })),
+            Hit::Squad(r) => out.push(HudEvent::Squad(r)),
+            Hit::SquadInto(r) => out.push(HudEvent::SquadInto(r)),
+            Hit::SquadSplit => out.push(HudEvent::SquadSplit),
+            Hit::SquadCombine => out.push(HudEvent::SquadCombine),
             Hit::MenuButton => {
                 self.menu = Some(MenuPage::Main);
                 out.push(HudEvent::Menu(MenuItem::Opened));
@@ -826,6 +874,9 @@ impl Hud {
             (Some(l), Some((k, r))) => self.loadout_tip(l, r, k == usize::MAX - 1, c, s),
             _ => {}
         }
+        if let Some(p) = &m.squads {
+            self.squad_panel(p, c, s);
+        }
         self.alerts_draw(c, world, s);
         self.ghost(m, cam, c, world, s);
         if let (Some(h), Some(p), None) = (&m.hover, self.hover, self.targeting) {
@@ -836,6 +887,93 @@ impl Hud {
             self.end_screen(title, lines, m.main_menu, c, s);
         } else if let Some(page) = self.menu {
             self.menu_draw(page, m, c, s);
+        }
+    }
+
+    /// The squad panel (`Model::squads`), at the top right under the bar:
+    /// a row a squad (hotkey, name, soldiers, state; the one you command
+    /// lit), a + on the others to bring them into yours, and Split and
+    /// Combine under them.
+    fn squad_panel(&mut self, p: &SquadPanel, c: &mut Canvas, s: f32) {
+        let sw = c.screen.0 as f32;
+        let pad = 10.0 * s;
+        let row_h = 30.0 * s;
+        let w = 250.0 * s;
+        let head = 24.0 * s;
+        let buttons = 32.0 * s;
+        let h = pad + head + p.rows.len().max(1) as f32 * (row_h + 4.0 * s) + 6.0 * s + buttons + pad;
+        let r = Rect::new(sw - 8.0 * s - w, self.top + 12.0 * s, w, h);
+        self.glass(r, 12.0 * s, c, s);
+        c.text(Weight::SemiBold, 13.0 * s, (r.x + pad, r.y + pad + 14.0 * s), Align::Left, "Squads", TEXT);
+        c.text(Weight::Medium, 11.0 * s, (r.right() - pad, r.y + pad + 14.0 * s), Align::Right, "click to command", FAINT);
+        let mut y = r.y + pad + head;
+        let mut tip: Option<(String, (f32, f32))> = None;
+        if p.rows.is_empty() {
+            c.text(Weight::Medium, 12.0 * s, (r.x + pad, y + 19.0 * s), Align::Left, "No squads", MUTED);
+            y += row_h + 4.0 * s;
+        }
+        for (i, q) in p.rows.iter().enumerate() {
+            let row = Rect::new(r.x + pad, y, w - 2.0 * pad, row_h);
+            let plus = Rect::new(row.right() - row_h, row.y + 3.0 * s, row_h - 6.0 * s, row_h - 6.0 * s);
+            let hot = self.hover.is_some_and(|h| row.contains(h));
+            let on_plus = !q.active && self.hover.is_some_and(|h| plus.contains(h));
+            let (t, b) = if hot && !on_plus { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+            c.panel(row, 7.0 * s, t, b, if q.active { 1.5 * s } else { 1.0 }, if q.active { ACCENT } else { EDGE });
+            self.hits.push((row, Hit::Squad(i)));
+            // The hotkey in a keycap, the name, then a soldier and the count.
+            let cap = Rect::new(row.x + 6.0 * s, row.y + 5.0 * s, 20.0 * s, row_h - 10.0 * s);
+            c.panel(cap, 4.0 * s, [58, 68, 82, 255], [40, 48, 58, 255], 1.0, EDGE);
+            c.text(Weight::SemiBold, 12.0 * s, (cap.x + cap.w / 2.0, cap.y + 14.5 * s), Align::Centre, &q.key, if q.active { ACCENT } else { TEXT });
+            let nx = cap.right() + 8.0 * s;
+            let nw = c.text(Weight::SemiBold, 13.0 * s, (nx, row.y + 19.5 * s), Align::Left, &q.name, if q.active { ACCENT } else { TEXT });
+            let ix = nx + nw + 10.0 * s;
+            c.icon(Icon::Soldier, (ix, row.y + 8.0 * s), 14.0 * s, MUTED);
+            let cw = c.text(Weight::SemiBold, 12.5 * s, (ix + 17.0 * s, row.y + 19.5 * s), Align::Left, &format!("{}", q.soldiers), TEXT);
+            let right = if q.active { row.right() - 8.0 * s } else { plus.x - 6.0 * s };
+            let state = if q.active { Some("commanding".to_string()) } else { q.note.clone() };
+            if let Some(n) = state {
+                let left = ix + 17.0 * s + cw + 8.0 * s;
+                c.text_fit(Weight::Medium, 11.0 * s, (right, row.y + 19.0 * s), Align::Right, &n, (right - left).max(0.0), if q.active { ACCENT } else { MUTED });
+            }
+            if !q.active {
+                let (t, b) = if on_plus { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
+                c.panel(plus, 5.0 * s, t, b, 1.0, EDGE);
+                c.text(Weight::SemiBold, 15.0 * s, (plus.x + plus.w / 2.0, plus.y + plus.h / 2.0 + 5.5 * s), Align::Centre, "+", if on_plus { GOOD } else { MUTED });
+                self.hits.push((plus, Hit::SquadInto(i)));
+                if on_plus {
+                    tip = Some((format!("{} joins the squad you command", q.name), (plus.x - 120.0 * s, plus.bottom() + 4.0 * s)));
+                }
+            }
+            if hot && !on_plus && !q.active {
+                tip = Some((format!("Command {} (key {})", q.name, q.key), (row.x, row.bottom() + 4.0 * s)));
+            }
+            y += row_h + 4.0 * s;
+        }
+        y += 2.0 * s;
+        let bw = (w - 2.0 * pad - 8.0 * s) / 2.0;
+        for (k, (label, key, off, hit, about)) in [("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: half the squad you command becomes a new squad, and you command it"), ("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad joins the one you command")].into_iter().enumerate() {
+            let b = Rect::new(r.x + pad + k as f32 * (bw + 8.0 * s), y, bw, buttons);
+            let hot = self.hover.is_some_and(|h| b.contains(h));
+            let (t, bt) = if hot && off.is_none() { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+            c.panel(b, 8.0 * s, t, bt, 1.0, EDGE);
+            self.hits.push((b, if off.is_none() { hit } else { Hit::Panel }));
+            let ink = if off.is_some() { FAINT } else { TEXT };
+            let text = match key {
+                Some(k) => format!("{label}  {k}"),
+                None => label.to_string(),
+            };
+            c.text(Weight::SemiBold, 13.0 * s, (b.x + b.w / 2.0, b.y + 20.5 * s), Align::Centre, &text, ink);
+            if hot {
+                let why = match off {
+                    Some(o) => o.clone(),
+                    None => about.to_string(),
+                };
+                tip = Some((why, (b.x.min(sw - 8.0 * s - 330.0 * s), b.bottom() + 4.0 * s)));
+            }
+        }
+        if let Some((t, at)) = tip {
+            let wt = c.atlas.measure(Weight::Medium, 12.0 * s, &t) + 16.0 * s;
+            self.tip_small(&t, (at.0.min(sw - 8.0 * s - wt).max(8.0 * s), at.1), c, s);
         }
     }
 
@@ -1718,6 +1856,44 @@ mod tests {
         assert!(r.c.len() > before, "the card's tooltip adds to the canvas");
         assert!(r.click(Button::Left, true).0);
         assert_eq!(r.click(Button::Left, false), (true, vec![]));
+    }
+
+    #[test]
+    fn the_squad_panel_commands_a_squad_brings_one_in_and_splits_and_combines() {
+        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, note: Some("holding".into()), active };
+        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None };
+        for screen in [(1920, 1080), (1280, 720), (640, 360), (3840, 2160)] {
+            let mut r = Rig::new(screen);
+            r.m.squads = Some(panel.clone());
+            r.draw();
+            let find = |r: &Rig, h: Hit| r.hud.hits.iter().rev().find(|(_, x)| *x == h).map(|(b, _)| *b).unwrap_or_else(|| panic!("{screen:?}: no {h:?}"));
+            let press = |r: &mut Rig, b: Rect| {
+                r.at((b.x + b.w / 2.0, b.y + b.h / 2.0));
+                r.draw();
+                assert!(r.click(Button::Left, true).0);
+                r.click(Button::Left, false)
+            };
+            // Each row is on screen, under the top bar.
+            for i in 0..3 {
+                let b = find(&r, Hit::Squad(i));
+                assert!(b.y >= r.hud.top && b.right() <= screen.0 as f32 && b.x >= 0.0, "{screen:?}: row {i} at {b:?}");
+            }
+            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadInto(0)), "the squad you command has no +");
+            let b = find(&r, Hit::Squad(1));
+            // Left of the +, so the row itself.
+            assert_eq!(press(&mut r, Rect::new(b.x, b.y, b.w / 3.0, b.h)), (true, vec![HudEvent::Squad(1)]));
+            let b = find(&r, Hit::SquadInto(2));
+            assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadInto(2)]));
+            let b = find(&r, Hit::SquadSplit);
+            assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadSplit]));
+            let b = find(&r, Hit::SquadCombine);
+            assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadCombine]));
+            // A button that would do nothing is greyed and takes the click
+            // for nothing.
+            r.m.squads = Some(SquadPanel { combine_off: Some("No other squad".into()), ..panel.clone() });
+            r.draw();
+            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadCombine));
+        }
     }
 
     #[test]

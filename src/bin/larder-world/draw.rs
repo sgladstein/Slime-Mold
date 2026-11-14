@@ -716,6 +716,7 @@ impl App {
         ];
         m.main_menu = self.base.is_some();
         m.loadout = Some(self.loadout(g, &sel));
+        m.squads = self.squad_panel();
         m
     }
 

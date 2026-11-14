@@ -96,10 +96,36 @@ before. All 51 `larder_world` tests pass, the 9 old ones unchanged.
 | 37 s (control back) | 316 | 2,778 | 460 | 23,626 |
 | 66 s | 584 | 4,680 | 482 | 27,200 |
 
+## The squad panel (owner 08:22Z)
+
+"The squad menu needs to be totally fixed. It needs to list each squad with
+the number of soliders and its hotkey, you can click to take command. There
+should also be buttons, to combine, to split."
+
+A panel at the top right in squad mode (`ui::SquadPanel`, built by
+`App::squad_panel` in `src/bin/larder-world/squadmode.rs`):
+
+- A row a live squad, in hotkey order (row r is key r + 1, as the digit keys
+  pick): keycap, name, soldiers, and its state (formation if not blob;
+  firing, moving or holding). The squad you command is lit, "commanding".
+- A click on a row takes command of it. The + on another row brings that
+  squad into yours (`Cmd::Merge`).
+- Split (X): the front half, the way the squad faces, becomes a new squad
+  and you command it. Combine (G): the nearest other squad joins yours,
+  however far (the G key keeps its 24-cell reach). A button that can't act
+  (a squad of one, 16 squads, no other squad) is greyed with the reason as
+  its tooltip.
+- Cost: inside the HUD's "model and HUD 0.098 ms a frame" on llvmpipe
+  (Fork, 1600x900, two squads).
+
+Still `page/squad-panel-24s.jpg` and `page/squad-panel-crop.png`: `larder-world
+mode=squads look=DIR hand=squads at=24 screen=1600x900`. On main 68870d0 the
+film's squad sticks at the inside of the Fork's V wall from 14 s (the bug
+sweep's stuck anchor), so the hand now splits by 20 s whatever held it.
+
 ## Open
 
-- A call-in delay for bought soldiers (answer 10), a squad list in the HUD,
-  and moving the command card's letters off the squad keys (X, G and the
+- A call-in delay for bought soldiers (answer 10), and moving the command card's letters off the squad keys (X, G and the
   WASD letters on the card are dead in this mode).
 - Retune the numbers after a playtest: the rate and strike boost, the guard
   rate, the pace, the merge reach.
