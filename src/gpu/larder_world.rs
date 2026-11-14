@@ -614,14 +614,15 @@ impl World for GpuWorld {
             }
         }
         // Fire in the plants, after the strike and crater as on the CPU
-        // (`squad::burst`): a burn lights its disc, a blast a ring two
-        // dish cells past its crater.
+        // (`squad::burst`): a share of a burn's disc, a smaller share of a
+        // blast's out to a dish cell past its crater.
         let mut lights = Vec::new();
+        let p = &self.e.dish.p;
         if b.burn {
-            lights.push((b.at.0, b.at.1, b.r));
+            lights.push((b.at.0, b.at.1, b.r, p.fire_light_burn));
         }
         if b.crater > 0 {
-            lights.push((b.at.0, b.at.1, b.crater_r + 2.0));
+            lights.push((b.at.0, b.at.1, b.crater_r + 1.0, p.fire_light_blast));
         }
         self.e.ignite(&self.shared, &lights);
         // An explosion's fling (`Engine::fling`, 11-14), after the kill as

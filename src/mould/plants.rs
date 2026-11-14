@@ -232,6 +232,11 @@ pub struct Fire {
     /// Out of fuel, a cell's heat is kept x `ember` a step: a glowing tail
     /// of embers behind the front. Was 0.5 (gone in a few steps).
     pub ember: f32,
+    /// Heat follows the fuel left: a cell tops out at its plants /
+    /// `full` (at most 1), so a fresh front burns hottest and the inside
+    /// dims to embers as it eats (graphics lead 11-14 20:10Z: the band was
+    /// the same brightness through its depth).
+    pub full: f32,
     /// Below this many plants a burning cell dies down (heat halves a step)
     /// and a cell can't catch.
     pub fuel: f32,
@@ -291,7 +296,7 @@ pub fn fire_step(
                 let eat = (f.eat * heat * slow).min(p);
                 plant[i] = p - eat;
                 ate = eat;
-                let top = 1.0 - f.cool * m;
+                let top = (1.0 - f.cool * m) * (p / f.full).min(1.0);
                 to[i] = if p - eat < f.fuel {
                     heat * f.ember
                 } else if dice < f.out * (m * m) {
@@ -642,7 +647,8 @@ mod tests {
         smoulder: 0.75,
         cool: 0.4,
         flicker: 0.35,
-        ember: 0.9,
+        ember: 0.95,
+        full: 0.8,
         fuel: 0.05,
         damp: 1.0,
         char_gain: 1.0,

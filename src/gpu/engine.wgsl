@@ -3146,7 +3146,7 @@ fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
 // condensing block, `PLANT_HEAD` words of numbers (`plant_words` in
 // mod.rs: the rates a plant step, fire's, char's, each plant kind's cap,
 // pace, dry and burn, up to four lights for `ignite`, and in word 45 the
-// fire steps run), then eight blocks a cell: the soil's capacity (0 on
+// fire steps run, 46-48 flicker, ember and full), then eight blocks a cell: the soil's capacity (0 on
 // crystals, rock, rim), the plant kind, the plants (A current, B the
 // step's out), fire's heat (A, B), the char and the moisture. Absent when the dish has no plants (the passes don't run).
 // Every `plant_every` game ticks, after the tick's passes, as the CPU's
@@ -3154,7 +3154,9 @@ fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
 // (heat A to B, eating plants B, char in place), `pcopy` (B to A) and
 // `firekill` (walkers on hot cells die as `strike` kills them). The
 // numbers are the CPU's, summed in the same order.
-const PLANT_HEAD: u32 = 48u;
+const PLANT_HEAD: u32 = 64u;
+// (Word 49 on: up to three lights for `ignite`, four words each; words
+// 32-44 held them, three words each, until 11-14.)
 fn plant_base() -> u32 { return dense_base() + DENSE_HEAD + P.n + P.w * P.h; }
 fn pw(o: u32) -> u32 { return atomicLoad(&news[plant_base() + o]); }
 fn pf(o: u32) -> f32 { return bitcast<f32>(pw(o)); }
@@ -3240,7 +3242,7 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
         let eat = min(pf(5u) * heat * slow, p);
         pset(PB_B, i, p - eat);
         ate = eat;
-        let top = 1.0 - pf(15u) * m;
+        let top = (1.0 - pf(15u) * m) * min(p / pf(48u), 1.0);
         if (p - eat < pf(7u)) { to = heat * pf(47u); }
         else if (dice < pf(13u) * (m * m)) { to = 0.0; }
         else { to = min(heat + pf(4u), top) * (1.0 - pf(46u) * dice); }
@@ -3298,10 +3300,13 @@ fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h || agar[i] == 0u || pwet(i) || pget(PB_A, i) < pf(7u)) { return; }
     let x = i32(i % P.w); let y = i32(i / P.w);
-    for (var q = 0u; q < min(pw(32u), 4u); q++) {
-        let cx = pf(33u + 3u * q); let cy = pf(34u + 3u * q); let r = pf(35u + 3u * q);
+    // Lights from word 49: x, y, r and the share of cells lit (by the
+    // chance `plants::roll` keyed as `BigDish::ignite` keys it).
+    let dice = froll(i, pw(45u) ^ 0x1617u);
+    for (var q = 0u; q < min(pw(49u), 3u); q++) {
+        let cx = pf(50u + 4u * q); let cy = pf(51u + 4u * q); let r = pf(52u + 4u * q);
         let dx = f32(x - i32(floor(cx))); let dy = f32(y - i32(floor(cy)));
-        if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r) { pset(PB_FA, i, 1.0); return; }
+        if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r && dice < pf(53u + 4u * q)) { pset(PB_FA, i, 1.0); return; }
     }
 }
 

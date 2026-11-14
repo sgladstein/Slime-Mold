@@ -2245,17 +2245,18 @@ impl Engine {
     /// Lights the plants within `r` dish cells of (`x`, `y`) (dish cells),
     /// as the CPU's `BigDish::ignite`; nothing without plants. Runs on its
     /// own, between ticks.
-    pub fn ignite(&mut self, shared: &Shared, lights: &[(f32, f32, f32)]) {
+    pub fn ignite(&mut self, shared: &Shared, lights: &[(f32, f32, f32, f32)]) {
         if !self.plants || lights.is_empty() {
             return;
         }
         let k = self.dish.p.scale as f32;
-        for chunk in lights.chunks(4) {
+        for chunk in lights.chunks(3) {
+            // The count in word 49, then x, y, r and the share lit from 50.
             let mut w = vec![chunk.len() as u32];
-            for &(x, y, r) in chunk {
-                w.extend([(x * k).to_bits(), (y * k).to_bits(), (r * k).to_bits()]);
+            for &(x, y, r, share) in chunk {
+                w.extend([(x * k).to_bits(), (y * k).to_bits(), (r * k).to_bits(), share.to_bits()]);
             }
-            self.queue.write_buffer(&self.news, self.plant_at + 4 * 32, &u32_bytes(&w));
+            self.queue.write_buffer(&self.news, self.plant_at + 4 * 49, &u32_bytes(&w));
             self.run(shared, &[(IGNITE, self.cells.div_ceil(256))]);
         }
         // Kills mark the dead as the CPU's do (its kill makes `life`).
@@ -2827,7 +2828,7 @@ impl Engine {
 /// numbers, then seven blocks a cell (soil capacity, 0 on crystals; kind;
 /// plants A and B; fire A and B; char), or none without plants. Rates are
 /// a plant step's, as the CPU's `plant_rates` and `fire_rates` give them.
-pub const PLANT_HEAD: usize = 48;
+pub const PLANT_HEAD: usize = 64;
 pub fn plant_words(d: &BigDish) -> Vec<u32> {
     let mut w = vec![0u32; PLANT_HEAD];
     if d.plant.is_empty() {
@@ -2847,6 +2848,8 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     w[45] = d.fire_steps;
     // Words 46-47: fire's flicker and ember keep.
     (w[46], w[47]) = (p.fire_flicker.to_bits(), p.fire_ember.to_bits());
+    // Word 48: the plants at which a fire can burn at full heat.
+    w[48] = p.fire_full.to_bits();
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));

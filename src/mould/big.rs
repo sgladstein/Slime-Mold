@@ -1033,6 +1033,12 @@ pub struct BigParams {
     /// look better".
     pub fire_flicker: f32,
     pub fire_ember: f32,
+    /// Plants at which fire burns at full heat (`plants::Fire::full`).
+    pub fire_full: f32,
+    /// The share of cells a burn (scorch round) and a blast light
+    /// (`squad::burst`, `ignite`).
+    pub fire_light_burn: f32,
+    pub fire_light_blast: f32,
     pub fire_fuel: f32,
     pub fire_damp: f32,
     pub fire_kill: f32,
@@ -1264,7 +1270,10 @@ impl BigParams {
             fire_smoulder: 0.75,
             fire_cool: 0.4,
             fire_flicker: 0.35,
-            fire_ember: 0.9,
+            fire_ember: 0.95,
+            fire_full: 0.8,
+            fire_light_burn: 0.4,
+            fire_light_blast: 0.12,
             fire_fuel: 0.05,
             fire_damp: 3.0,
             fire_kill: 0.5,
@@ -1824,7 +1833,7 @@ impl BigDish {
     }
 
     fn fire_rates(&self) -> crate::mould::plants::Fire {
-        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, spread: self.p.fire_spread, out: self.p.fire_out, smoulder: self.p.fire_smoulder, cool: self.p.fire_cool, flicker: self.p.fire_flicker, ember: self.p.fire_ember, fuel: self.p.fire_fuel, damp: self.p.fire_damp, char_gain: self.p.char_gain, char_keep: self.p.char_keep, char_clear: self.p.char_clear }
+        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, spread: self.p.fire_spread, out: self.p.fire_out, smoulder: self.p.fire_smoulder, cool: self.p.fire_cool, flicker: self.p.fire_flicker, ember: self.p.fire_ember, full: self.p.fire_full, fuel: self.p.fire_fuel, damp: self.p.fire_damp, char_gain: self.p.char_gain, char_keep: self.p.char_keep, char_clear: self.p.char_clear }
     }
 
     /// Fire's step, after the plants' (they grow, then burn), then the
@@ -1863,9 +1872,10 @@ impl BigDish {
     }
 
     /// Lights the plants within `r` dish cells of (`x`, `y`) (dish cells):
-    /// every cell there with fuel starts at full heat. Returns cells lit; 0
-    /// on a world without plants.
-    pub fn ignite(&mut self, x: f32, y: f32, r: f32) -> usize {
+    /// a `share` of the cells there with fuel (by `plants::roll`, keyed on
+    /// the fire steps) starts at full heat. Returns cells lit; 0 on a world
+    /// without plants.
+    pub fn ignite(&mut self, x: f32, y: f32, r: f32, share: f32) -> usize {
         if self.plant.is_empty() {
             return 0;
         }
@@ -1884,7 +1894,8 @@ impl BigDish {
                     continue;
                 }
                 let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) else { continue };
-                if self.agar[i] && self.plant[i] >= self.p.fire_fuel && (self.wet.is_empty() || !self.wet[i]) {
+                let lit_here = crate::mould::plants::roll(i as u32, self.fire_steps ^ 0x1617) < share;
+                if self.agar[i] && self.plant[i] >= self.p.fire_fuel && (self.wet.is_empty() || !self.wet[i]) && lit_here {
                     self.fire[i] = 1.0;
                     lit += 1;
                 }

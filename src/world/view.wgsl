@@ -251,12 +251,32 @@ fn plant_look(ix: i32, iy: i32) -> PlantLook {
 // only heat near 1 turns yellow, capped below the slime's own highlight
 // (graphics lead's review 18:20Z: a yellow-white ribbon competed with the
 // slime's gold; before that a white line).
+// Most of a band is orange (luminance about 120, under the slime's
+// highlight and the soldiers' and bullets' light); yellow only over heat
+// 0.9, the fresh front (the engine's heat follows the fuel left, so the
+// front is hottest and the inside dims to embers). Graphics lead 11-14
+// 20:10Z: with yellow from 0.7 the band read near white in grey.
 fn flame(h: f32) -> vec3<f32> {
-    let ember = vec3<f32>(110.0, 34.0, 8.0);
-    let orange = vec3<f32>(225.0, 100.0, 22.0);
-    let yellow = vec3<f32>(250.0, 170.0, 60.0);
+    let ember = vec3<f32>(100.0, 30.0, 8.0);
+    let orange = vec3<f32>(215.0, 92.0, 20.0);
+    let yellow = vec3<f32>(245.0, 160.0, 55.0);
     let k = pow(clamp(h, 0.0, 1.0), 1.5);
-    return select(mix(orange, yellow, (k - 0.7) / 0.3), mix(ember, orange, k / 0.7), k < 0.7) * smoothstep(0.0, 0.15, h);
+    return select(mix(orange, yellow, (k - 0.85) / 0.15), mix(ember, orange, k / 0.85), k < 0.85) * smoothstep(0.0, 0.15, h);
+}
+
+// Fire's heat at world point (`x`, `y`) in cells: the cubic B-spline of
+// the 4 x 4 cells round it, as `cells_height` samples the height.
+fn heat_at(x: f32, y: f32) -> f32 {
+    if (P.plant_at == 0u) { return 0.0; }
+    let fx = x - 0.5; let fy = y - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let wx = bspline(fx - floor(fx)); let wy = bspline(fy - floor(fy));
+    var h = 0.0;
+    for (var j = 0; j < 4; j++) {
+        let r = wx.x * plant_heat(cidx(ix - 1, iy - 1 + j)) + wx.y * plant_heat(cidx(ix, iy - 1 + j)) + wx.z * plant_heat(cidx(ix + 1, iy - 1 + j)) + wx.w * plant_heat(cidx(ix + 2, iy - 1 + j));
+        h += wy[j] * r;
+    }
+    return h;
 }
 
 // How tall the land's full elevation stands, in cells: about a fat tube's
@@ -725,12 +745,16 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // flicker and embers (`plants::Fire::flicker`, `ember`) show cell by
     // cell inside the glow (owner 11-14 19:26Z, "The fire should also look
     // better": with the halo alone a front read as a soft orange smear).
+    // Here the halo (3 x 3 Gaussian) only, dimmed; `prep` lays the heat
+    // itself over it, sampled with the slime height's cubic B-spline at the
+    // fine cell (graphics lead 11-14 20:10Z: nearest-cell heat showed the
+    // flicker as squares). The ground under a flame darkens toward ash, so
+    // the light is the glow alone: lit albedo plus glow saturated the band
+    // to near white in grey (same review).
     let fh = pl.heat;
-    let hc = plant_heat(i);
-    if (fh > 0.0 || hc > 0.0) {
-        let f = max(flame(hc), 0.75 * flame(fh));
-        m.glow = max(m.glow, f);
-        m.albedo = mix(m.albedo, f, 0.35 * max(fh, hc));
+    if (fh > 0.0) {
+        m.glow = max(m.glow, 0.6 * flame(fh));
+        m.albedo = mix(m.albedo, CHAR_RGB * 0.6, 0.6 * min(fh * 2.0, 1.0));
     }
     return m;
 }
@@ -947,6 +971,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
         m1.body = wide;
         m1.glow += ABSORB_RGB * 0.45 * flash;
+        m1.glow = max(m1.glow, flame(heat_at(wx, wy)));
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -970,6 +995,8 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss;
     }
     mt.glow += ABSORB_RGB * 0.45 * flash;
+    // The fire itself, smooth at the fine cell (`heat_at`).
+    mt.glow = max(mt.glow, flame(heat_at(wx, wy)));
     hcell[i] = h;
     mcell[i] = mat_pack(mt);
 }

@@ -244,13 +244,17 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
         d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);
     }
     // Fire in the plants (`BigDish::ignite`, 2026-11-14): a burn (the
-    // scorch round's line) lights what it touches; a blast lights a ring
-    // two dish cells past its crater, whose own cells the scorch strips.
+    // scorch round's line) lights a share of what it touches; a blast a
+    // smaller share out to a dish cell past its crater. Since #288 a blast
+    // round blasts every other shot, and lighting the whole ring two cells
+    // past every crater kept a squad's front on fire (gun thread, 11-14
+    // 20:14Z; the owner: "each bullet that hit has a huge wave that goes
+    // out"); a few sparks catch or don't by the ground's moisture.
     if b.burn {
-        d.ignite(b.at.0, b.at.1, b.r);
+        d.ignite(b.at.0, b.at.1, b.r, d.p.fire_light_burn);
     }
     if b.crater > 0 {
-        d.ignite(b.at.0, b.at.1, b.crater_r + 2.0);
+        d.ignite(b.at.0, b.at.1, b.crater_r + 1.0, d.p.fire_light_blast);
     }
     if let Some((r, rr, inv)) = b.fling_ring(s) {
         d.p.fling_speed = k.fling_speed;
