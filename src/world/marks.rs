@@ -43,6 +43,12 @@ pub enum Shape {
     /// 5 larder), `extra` bits 0-7 how built (0-255), 8-15 its health share,
     /// bit 16 working (its lamp lit). The sprite atlas's tiles 4-15.
     Building = 8,
+    /// Something bright in flight (a bullet), drawn along this frame's
+    /// travel: head at the anchor, tail at (`hw`, `hh`), a world point;
+    /// `fill` the core's radius in pixels; `colour` its glow (alpha the
+    /// glow's strength), `colour2` its hot core. Added to the world as
+    /// light (`view.wgsl`, `streak_at`), not painted over it.
+    Streak = 9,
 }
 
 /// `hw` and `hh` are world cells (scaled by the zoom, at least 2 pixels)
@@ -223,6 +229,12 @@ impl Marks {
         self.push(Mark { offset, colour2: (bits as u32).to_le_bytes(), extra: (bits >> 32) as u32, ..Mark::new(Shape::Glyph, at, (scale, scale), colour) });
     }
 
+    /// A streak from `tail` to `head` (world points), its core `core_px`
+    /// pixels across the radius: see `Shape::Streak`.
+    pub fn streak(&mut self, head: (f32, f32), tail: (f32, f32), core_px: f32, glow: Rgba, core: Rgba) {
+        self.push(Mark { colour2: core, fill: core_px, ..Mark::new(Shape::Streak, head, tail, glow) });
+    }
+
     /// A soldier at `at`, `r` world cells across the radius, facing
     /// `facing` radians, `flash` 0-1 the muzzle flash of a shot this
     /// moment (0 none). Also a dot on the minimap.
@@ -279,6 +291,17 @@ mod tests {
         let bits = u32::from_le_bytes(m.list[0].colour2) as u64 | (m.list[0].extra as u64) << 32;
         assert!(bits.count_ones() >= 7 && bits < 1 << 35);
         assert_eq!(m.words().len(), 2 * MARK_WORDS);
+    }
+
+    #[test]
+    fn a_streak_carries_its_tail_core_and_colours() {
+        let mut m = Marks::default();
+        m.streak((10.0, 4.0), (7.0, 4.0), 2.5, [255, 120, 40, 210], [255, 236, 190, 255]);
+        let w = m.words();
+        assert_eq!(w[6], Shape::Streak as u32);
+        assert_eq!((f32::from_bits(w[4]), f32::from_bits(w[5])), (7.0, 4.0), "the tail is a world point");
+        assert_eq!(f32::from_bits(w[9]), 2.5, "the core's radius in pixels");
+        assert_eq!(w[8], u32::from_le_bytes([255, 236, 190, 255]));
     }
 
     #[test]
