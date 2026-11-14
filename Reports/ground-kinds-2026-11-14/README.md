@@ -72,3 +72,28 @@ logs `raw/idle.log`, `raw/rush.log`, GIFs by `raw/make_gifs.py`.
   `cell_height`. The editor's own colours already differ (`ground_rgb`).
 - Player-built bridges, and an ability to jump water, are not built.
 - `deep_step` 0.4 is a first number for play, not measured.
+
+## River v2 and the look (2026-11-14, 18:01-19:11Z)
+
+The owner at 18:01Z, on v1: "This needs a lot of work visually. It is just
+a blue curved line on the map. It doesn't look professional." Split with
+the terrain-look thread: it writes the materials, this thread the shape.
+
+- **Shape** (`raw/make_river.py` v2, commit 04b0ec9c): a course and width
+  that wander (two sines plus noise); a deep channel (65,778 map cells)
+  inside a ragged shallow margin (47,531 wet cells); sand and clay banks of
+  varying width, clay favouring the outside of bends; two long fords where
+  the deep channel breaks for 64 cells, with wet sand bars; a pond with a
+  deep middle; a shallow creek; four rock outcrops; a 24-wide plank bridge
+  (3,264 cells) on sand abutments. The script checks the landing reaches
+  every crystal and the nest on foot before writing.
+- **Look** (terrain-look thread, its own PR, view.wgsl only):
+  deep water darkens from its edge to its middle at the pixel, a shallow
+  margin shows the bed, a waterline and damp bank; all water a step darker
+  than ground; the bridge a plank deck with rails, posts and a shadow on
+  the water. llvmpipe about +12.5 ms on this map (82 to 94.5); not yet
+  timed on the 1070. Before and after:
+  [River Look](https://claude.ai/artifact/EUtwNmz986oPhghQLioRhv).
+- A first `cargo fmt` here rewrote 120 files (the tree isn't fmt-clean at
+  `max_width` 120); undone by hand before the PR merged. Don't run
+  `cargo fmt` over this repo.
