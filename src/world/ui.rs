@@ -372,6 +372,10 @@ pub struct Model {
     /// The game has a start menu: the menu and the end screen offer "Main
     /// menu" (`MenuItem::MainMenu`).
     pub main_menu: bool,
+    /// The end screen's first button carries on (`MenuItem::Continue`)
+    /// under this label, instead of "Play again" (a roguelike run: the
+    /// shop, or the run's end).
+    pub carry_on: Option<String>,
     /// The gun's cards, drawn as a strip on the selection panel's top edge.
     pub loadout: Option<Loadout>,
     /// The squad mode's squads, a panel at the top right.
@@ -404,6 +408,9 @@ pub enum MenuItem {
     Restart,
     /// Back to the start menu (`Model::main_menu`).
     MainMenu,
+    /// The end screen's first button when the game names one
+    /// (`Model::carry_on`: a run's "On to the shop").
+    Continue,
     Quit,
 }
 
@@ -942,7 +949,7 @@ impl Hud {
         }
         self.end = m.end.is_some();
         if let Some((title, lines)) = &m.end {
-            self.end_screen(title, lines, m.main_menu, c, s);
+            self.end_screen(title, lines, m.main_menu, m.carry_on.as_deref(), c, s);
         } else if let Some(page) = self.menu {
             self.menu_draw(page, m, c, s);
         }
@@ -1780,7 +1787,7 @@ impl Hud {
         }
     }
 
-    fn end_screen(&mut self, title: &str, lines: &[String], main_menu: bool, c: &mut Canvas, s: f32) {
+    fn end_screen(&mut self, title: &str, lines: &[String], main_menu: bool, carry_on: Option<&str>, c: &mut Canvas, s: f32) {
         let w = 420.0 * s;
         let bh = 42.0 * s;
         let buttons = if main_menu { 3.0 } else { 2.0 };
@@ -1793,7 +1800,10 @@ impl Hud {
             y += 22.0 * s;
         }
         y += 10.0 * s;
-        self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s);
+        match carry_on {
+            Some(label) => self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), label, Hit::Menu(MenuItem::Continue), true, c, s),
+            None => self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s),
+        }
         let mut y = y + bh + 10.0 * s;
         if main_menu {
             self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Main menu", Hit::Menu(MenuItem::MainMenu), false, c, s);
@@ -2210,6 +2220,26 @@ mod tests {
                 r.at((b.x + 4.0, b.y + 4.0));
                 r.click(Button::Left, true);
                 assert_eq!(r.click(Button::Left, false).1, vec![HudEvent::Menu(MenuItem::MainMenu)]);
+            }
+        }
+    }
+
+    /// A run's end screen carries on (to the shop) in place of Play again.
+    #[test]
+    fn the_end_screen_carries_on_when_the_game_names_it() {
+        for carry in [None, Some("On to the shop")] {
+            let mut r = Rig::new((1600, 900));
+            r.m.carry_on = carry.map(str::to_string);
+            r.m.end = Some(("Planet 1 freed".into(), vec![]));
+            r.draw();
+            let has = |r: &Rig, h: Hit| r.hud.hits.iter().find(|(_, x)| *x == h).map(|(b, _)| *b);
+            assert_eq!(has(&r, Hit::Menu(MenuItem::Restart)).is_some(), carry.is_none());
+            if let Some(b) = has(&r, Hit::Menu(MenuItem::Continue)) {
+                r.at((b.x + 4.0, b.y + 4.0));
+                r.click(Button::Left, true);
+                assert_eq!(r.click(Button::Left, false).1, vec![HudEvent::Menu(MenuItem::Continue)]);
+            } else {
+                assert!(carry.is_none());
             }
         }
     }

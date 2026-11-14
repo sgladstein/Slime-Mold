@@ -200,6 +200,9 @@ impl Card {
     }
 }
 
+/// A bullet's leg this step: from, to (its hit or the leg's end).
+type Leg = ((f32, f32), (f32, f32));
+
 /// A squad's own cards (`Squad::deck`; owner 11-14 16:46Z, "The squad owns
 /// the gun"): up to `MAX_SLOTS`, held as a value so a squad, a split half
 /// and a replay line (`Cmd::Load`) carry it. A squad with none fires the
@@ -786,7 +789,7 @@ impl Rounds {
         let gas = g.world.has_gas();
         let mut of: Vec<Option<[u8; 4]>> = vec![None; g.squads.len()];
         let mut any = [0u8; 4];
-        let legs: Vec<((f32, f32), (f32, f32), [u8; 4])> = g
+        let legs: Vec<(Leg, [u8; 4])> = g
             .last_shots
             .iter()
             .filter_map(|s| s.by.map(|k| (s, g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
@@ -801,7 +804,7 @@ impl Rounds {
                 for (a, b) in any.iter_mut().zip(n) {
                     *a = (*a).max(b);
                 }
-                (s.from, s.hit.unwrap_or(s.to), n)
+                ((s.from, s.hit.unwrap_or(s.to)), n)
             })
             .collect();
         if any == [0; 4] {
@@ -813,7 +816,7 @@ impl Rounds {
         let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
         let mut burned = 0;
         let n = any;
-        for (from, to, legn) in legs {
+        for ((from, to), legn) in legs {
             if legn == [0; 4] {
                 continue;
             }

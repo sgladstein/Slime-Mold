@@ -130,9 +130,11 @@ Cards cost budget (`Card::cost`, gun budget 10, capacity at loadout, owner 15:34
 `smother` (wipes food scent) added and `range` made 2x a card ([report](../../Reports/gun-budget-2026-11-14.md)).
 Since 16:46Z (owner) **the squad owns the gun** (`mould::guns`, [report](../../Reports/guns-2026-11-14.md)): a
 `Gun` is range, rate, spread, bullets a shot, budget and slots, rolled (`Gun::roll(seed, depth)`) round one of four
-kinds (rifle, the old gun; carbine; long gun; scattergun), 1 in 12 lucky, better and with bigger budgets on deeper
-planets; `Squad::gun` (`Game::gun`, `Cmd::Arm`, `gun=` and Shift+H in the window), none being the standard rifle
-of the game's `Rules`; `rounds::fit_gun` and `guns::Loadout` (a squad's gun and cards between planets).
+kinds (rifle, the old gun; carbine; long gun; scattergun), luck in each roll (17:32Z; about 1 gun in 12 grades
+lucky), better and with bigger budgets on deeper planets; `Squad::gun` (`Game::gun`, `Cmd::Arm`, `gun=` and Shift+H
+in the window), none being the standard rifle of the game's `Rules`; each squad's own cards (`Squad::deck`,
+`Cmd::Load`, H in the squad mode), none being the army's round; a split's new half takes the rifle and the army's
+round; `rounds::fit_gun` and `guns::Loadout` (a squad's gun and cards between planets).
 The `range` flight card (11-14 08:39Z, owner's ask) stretches every soldier's sight and
 reach by `Rules::range_card` (1 of `Rules::range` a copy since the 15:06Z notes' "2-4x
 distance", was 0.5), through `Game::gun_range`: 48 cells with one, 72 with two; building
