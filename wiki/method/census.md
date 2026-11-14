@@ -2,8 +2,9 @@
 title: The census (how a change is judged)
 kind: method
 status: current
-updated: 2026-11-12
+updated: 2026-11-14
 sources:
+  - Reports/census-shape-c-2026-11-14/README.md
   - Reports/gpu-plan-2026-11-10.md
   - Reports/gpu-readout-2026-11-12.md
   - Reports/gpu-sandbox-2026-11-11.md
@@ -42,6 +43,13 @@ mission difficulty, an owner question. Name the question and the runner time
 first; over about an hour needs the owner's OK. A clash with a look or
 feature is a tuning note, never a veto
 ([review](../../Reports/testing-practice-2026-11-12.md)).
+
+**Larder World's census plays shape C** since 2026-11-14 (cloud plan D1):
+`larderworld census` with no `shape=`, `walkers=` or `scale=` plays the
+window's mould at census size (scale 1, 6,250 walkers, four times the
+crystal charge a cell), which agreed with full size on the 4-seed check and
+runs about nine times faster; `shape=c` is full size, `shape=a` the old
+5,000-walker census ([report](../../Reports/census-shape-c-2026-11-14/README.md)).
 
 Every dish and every change is judged by **scripted hands over paired
 seeds**, with `examples/mouldprobe.rs` (`cargo build --release --example
