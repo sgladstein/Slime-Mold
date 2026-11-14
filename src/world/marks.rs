@@ -36,12 +36,14 @@ pub enum Shape {
     /// A top-down soldier `hw` across the radius (world cells with
     /// `WORLD`): facing `fill` radians (0 east, clockwise on screen, as
     /// `atan2(dy, dx)`), the team's colour, `extra` bits 0-7 the muzzle
-    /// flash (0-255), bit 8 dead. Drawn and lit in the view's shader.
+    /// flash (0-255), bit 8 dead, bits 9-16 its carried load (0-255 of a
+    /// full one), bits 17-24 the pulse of a take from a crystal. Drawn and lit in the view's shader.
     Soldier = 7,
     /// A top-down building `hw` across its footprint radius (world cells
     /// with `WORLD`): kind `fill` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren,
     /// 5 larder), `extra` bits 0-7 how built (0-255), 8-15 its health share,
-    /// bit 16 working (its lamp lit). The sprite atlas's tiles 4-15.
+    /// bit 16 working (its lamp lit), bits 17-24 a flare of its lamp. The
+    /// sprite atlas's tiles 4-15.
     Building = 8,
     /// Something bright in flight (a bullet), drawn along this frame's
     /// travel: head at the anchor, tail at (`hw`, `hh`), a world point;
@@ -239,7 +241,16 @@ impl Marks {
     /// `facing` radians, `flash` 0-1 the muzzle flash of a shot this
     /// moment (0 none). Also a dot on the minimap.
     pub fn soldier(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool) {
-        let extra = (flash.clamp(0.0, 1.0) * 255.0).round() as u32 | if alive { 0 } else { 256 };
+        self.soldier_working(at, r, facing, colour, flash, alive, 0.0, 0.0);
+    }
+
+    /// A soldier as `soldier`, with `carry` 0-1 its load (cyan charge in
+    /// its pack and a glow that grows with it) and `take` 0-1 the pulse at
+    /// its hands while it takes from a crystal.
+    #[allow(clippy::too_many_arguments)]
+    pub fn soldier_working(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool, carry: f32, take: f32) {
+        let byte = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let extra = byte(flash) | if alive { 0 } else { 256 } | byte(carry) << 9 | byte(take) << 17;
         self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, ..Mark::new(Shape::Soldier, at, (r, r), colour) });
     }
 
@@ -248,9 +259,16 @@ impl Marks {
     /// `working` lights its lamp. Everything it shows is the game's state:
     /// it rises from its foot as it is built, darkens as it is hurt.
     pub fn building(&mut self, at: (f32, f32), r: f32, kind: u32, built: f32, health: f32, working: bool) {
+        self.building_pulse(at, r, kind, built, health, working, 0.0);
+    }
+
+    /// A building as `building`, its lamp flaring by `pulse` 0-1 (the
+    /// larder's cells as a load is banked).
+    #[allow(clippy::too_many_arguments)]
+    pub fn building_pulse(&mut self, at: (f32, f32), r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32) {
         let b = (built.clamp(0.0, 1.0) * 255.0).round() as u32;
         let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
-        let extra = b | h << 8 | (working as u32) << 16;
+        let extra = b | h << 8 | (working as u32) << 16 | ((pulse.clamp(0.0, 1.0) * 255.0).round() as u32) << 17;
         self.push(Mark { flags: WORLD | MINIMAP, fill: kind as f32, extra, ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
     }
 
