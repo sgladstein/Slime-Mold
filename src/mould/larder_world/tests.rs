@@ -1692,6 +1692,94 @@ fn a_soldier_holding_tools_goes_to_the_crystal_it_is_sent_to() {
     assert!(!g.soldiers[0].homing, "home with nothing to bank");
 }
 
+/// Owner's playtest (2026-11-14 08:01Z): "My unit got stuck and cannot
+/// move anymore". A squad steered into rock or the map's edge sent its
+/// anchor on in, more than `LEAD` ahead of soldiers who could not follow,
+/// and the anchor then waited for them for good: steered back the other
+/// way it moved 0 cells (15 of 32 squads, 8 headings on seeds 1-4, 25 s).
+#[test]
+fn a_squad_steered_into_rock_or_the_edge_comes_back_out() {
+    let mut stuck = Vec::new();
+    for seed in 1..4u64 {
+        for dir in 0..8 {
+            let mut g = squads(seed);
+            for _ in 0..4 {
+                g.apply(Cmd::Buy);
+            }
+            g.apply(Cmd::Active(0));
+            off_the_crystal(&mut g);
+            let sc = g.s();
+            let a = dir as f32 * std::f32::consts::FRAC_PI_4;
+            let d = (a.cos(), a.sin());
+            let frames = |s: u32, g: &Game<BigDish>| s * g.rules.tps / g.rules.frame_ticks;
+            g.apply(Cmd::Steer(0, d));
+            for _ in 0..frames(20, &g) {
+                g.step();
+            }
+            let pressed = g.middle(0).unwrap();
+            assert!(g.squads[0].anchor.is_some_and(|p| g.world.open(p.0, p.1)), "seed {seed} heading {dir}: the anchor left the ground");
+            g.apply(Cmd::Steer(0, (-d.0, -d.1)));
+            for _ in 0..frames(4, &g) {
+                g.step();
+            }
+            let back = g.middle(0).unwrap();
+            let moved = (back.0 - pressed.0).hypot(back.1 - pressed.1) / sc;
+            if moved < 5.0 {
+                stuck.push((seed, dir, moved));
+            }
+        }
+    }
+    assert!(stuck.is_empty(), "squads that did not come back (seed, heading, cells): {stuck:?}");
+}
+
+/// Owner's playtest (2026-11-14 08:01Z): "The soldiers are constantly
+/// shuffeling around in their formation". A formation turned with the
+/// controlled squad's facing, which follows the cursor, and ranked its
+/// places by soldier index: the cursor circling a resting blob walked its 8
+/// soldiers 850 cells in 5 s over seeds 1-4, and a death 241 (a wedge
+/// 216). Now a blob doesn't turn and every soldier takes the nearest free
+/// place: 0 and 35 (a wedge's death 48). A line or wedge still turns to
+/// face the cursor, as it should.
+#[test]
+fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
+    for f in [Formation::Blob, Formation::Wedge] {
+        let (mut circling, mut death) = (0.0, 0.0);
+        for seed in 1..5u64 {
+            let mut g = squads(seed);
+            for _ in 0..4 {
+                g.apply(Cmd::Buy);
+            }
+            g.apply(Cmd::Active(0));
+            g.apply(Cmd::Formation(0, f));
+            off_the_crystal(&mut g);
+            let sc = g.s();
+            let frames = 5 * g.rules.tps / g.rules.frame_ticks;
+            let m = g.middle(0).unwrap();
+            let walked = |g: &mut Game<BigDish>, face: bool| {
+                let mut w = 0.0;
+                for i in 0..frames {
+                    if face {
+                        let a = i as f32 / 75.0 * std::f32::consts::TAU;
+                        g.apply(Cmd::Face(0, (m.0 + 20.0 * sc * a.cos(), m.1 + 20.0 * sc * a.sin())));
+                    }
+                    let before: Vec<_> = g.soldiers.iter().map(|s| (s.x, s.y)).collect();
+                    g.step();
+                    w += g.soldiers.iter().zip(&before).filter(|(s, _)| s.alive).map(|(s, b)| (s.x - b.0).hypot(s.y - b.1)).sum::<f32>();
+                }
+                w / sc
+            };
+            if f == Formation::Blob {
+                circling += walked(&mut g, true);
+            }
+            let k = g.members(0)[0];
+            g.soldiers[k].alive = false;
+            death += walked(&mut g, false);
+        }
+        assert!(circling < 1.0, "{f:?}: the cursor circling walked the squad {circling} cells");
+        assert!(death < 100.0, "{f:?}: a death walked the squad {death} cells");
+    }
+}
+
 /// The `Range` card (owner, 2026-11-14 08:39Z): slime between the plain
 /// range and the stretched one is out of reach without the card and in
 /// reach with it, and a fired leg is as long as the stretched range.

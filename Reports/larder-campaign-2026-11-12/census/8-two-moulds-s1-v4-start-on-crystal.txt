@@ -1,0 +1,122 @@
+mission 8-two-moulds (Two moulds): "Grow your mould to 60% of all the slime and hold it for a minute", map passes, tier swarmer , seeds 1-1, scale 2, walkers 5000
+on the CPU
+    idle s1 t 30: own 1261 enemy 2442 soldiers 4 bank 2000 killed 0 buildings 0
+    random s1 t 30: own 1703 enemy 2450 soldiers 4 bank 1500 killed 0 buildings 0
+    sow+boom s1 t 30: own 1072 enemy 1764 soldiers 7 bank 400 killed 597 buildings 0
+    boom s1 t 30: own 1292 enemy 1778 soldiers 8 bank 600 killed 626 buildings 0
+    idle s1 t 60: own 1094 enemy 4028 soldiers 4 bank 2000 killed 0 buildings 0
+    sow+boom s1 t 60: own 1405 enemy 2625 soldiers 9 bank 480 killed 759 buildings 0
+    random s1 t 60: own 2111 enemy 3995 soldiers 5 bank 200 killed 281 buildings 0
+    boom s1 t 60: own 1376 enemy 2717 soldiers 12 bank 400 killed 962 buildings 0
+    idle s1 t 90: own 1104 enemy 4999 soldiers 4 bank 2000 killed 0 buildings 0
+    sow+boom s1 t 90: own 2287 enemy 3335 soldiers 8 bank 880 killed 1330 buildings 0
+    boom s1 t 90: own 1545 enemy 3445 soldiers 13 bank 500 killed 1216 buildings 0
+    random s1 t 90: own 1701 enemy 4701 soldiers 4 bank 260 killed 861 buildings 0
+    idle s1 t 120: own 1147 enemy 5712 soldiers 4 bank 2000 killed 0 buildings 0
+    sow+boom s1 t 120: own 2644 enemy 3413 soldiers 9 bank 740 killed 1772 buildings 0
+    boom s1 t 120: own 689 enemy 3415 soldiers 15 bank 500 killed 1572 buildings 0
+    idle s1 t 150: own 1096 enemy 5926 soldiers 4 bank 2000 killed 0 buildings 0
+    random s1 t 120: own 3088 enemy 4346 soldiers 5 bank 0 killed 1719 buildings 0
+    sow+boom s1 t 150: own 2932 enemy 3554 soldiers 10 bank 480 killed 2059 buildings 0
+    boom s1 t 150: own 649 enemy 3432 soldiers 16 bank 600 killed 1891 buildings 0
+    idle s1 t 180: own 1108 enemy 6074 soldiers 4 bank 2000 killed 0 buildings 0
+    sow+boom s1 t 180: own 3039 enemy 3751 soldiers 11 bank 460 killed 2359 buildings 0
+    boom s1 t 180: own 1412 enemy 3250 soldiers 17 bank 700 killed 3395 buildings 0
+    random s1 t 150: own 4505 enemy 5377 soldiers 5 bank 0 killed 2109 buildings 0
+    idle s1 t 210: own 1136 enemy 6028 soldiers 4 bank 2000 killed 0 buildings 0
+    sow+boom s1 t 210: own 3714 enemy 3550 soldiers 11 bank 600 killed 2947 buildings 0
+    boom s1 t 210: own 2311 enemy 3516 soldiers 20 bank 400 killed 4092 buildings 0
+    random s1 t 180: own 5491 enemy 5421 soldiers 5 bank 0 killed 2637 buildings 0
+    idle s1 t 240: own 1133 enemy 6123 soldiers 4 bank 2000 killed 0 buildings 0
+    sow+boom s1 t 240: own 4048 enemy 3645 soldiers 12 bank 500 killed 3266 buildings 0
+    boom s1 t 240: own 2525 enemy 3570 soldiers 20 bank 900 killed 5480 buildings 0
+    idle s1 t 270: own 1135 enemy 6150 soldiers 4 bank 2000 killed 0 buildings 0
+    random s1 t 210: own 5001 enemy 5640 soldiers 5 bank 0 killed 4220 buildings 0
+    sow+boom s1 t 270: own 4982 enemy 2941 soldiers 12 bank 500 killed 4243 buildings 0
+    boom s1 t 270: own 2685 enemy 3770 soldiers 20 bank 800 killed 5848 buildings 0
+    idle s1 t 300: own 1168 enemy 6096 soldiers 4 bank 2000 killed 0 buildings 0
+    random s1 t 240: own 5394 enemy 5504 soldiers 5 bank 0 killed 5889 buildings 0
+    sow+boom s1 t 300: own 4817 enemy 3350 soldiers 13 bank 500 killed 4243 buildings 0
+    idle s1 t 330: own 1147 enemy 6222 soldiers 4 bank 2000 killed 0 buildings 0
+    boom s1 t 300: own 3157 enemy 3455 soldiers 20 bank 1300 killed 6160 buildings 0
+    idle s1 t 360: own 1143 enemy 6344 soldiers 4 bank 2000 killed 0 buildings 0
+    sow+boom s1 t 330: own 4839 enemy 3449 soldiers 15 bank 480 killed 4243 buildings 0
+    boom s1 t 330: own 3527 enemy 2493 soldiers 20 bank 2200 killed 7211 buildings 0
+    random s1 t 270: own 5671 enemy 5824 soldiers 4 bank 0 killed 6580 buildings 0
+    idle s1 t 390: own 1156 enemy 6416 soldiers 4 bank 2000 killed 0 buildings 0
+    sow+boom s1 t 360: own 4819 enemy 3472 soldiers 15 bank 580 killed 4243 buildings 0
+    boom s1 t 360: own 3888 enemy 2474 soldiers 20 bank 2800 killed 7211 buildings 0
+    random s1 t 300: own 4094 enemy 6216 soldiers 3 bank 0 killed 7255 buildings 0
+    idle s1 t 420: own 1154 enemy 6378 soldiers 4 bank 2000 killed 0 buildings 0
+    boom s1 t 390: own 3931 enemy 2457 soldiers 20 bank 2800 killed 7211 buildings 0
+    sow+boom s1 t 390: own 4908 enemy 3389 soldiers 16 bank 480 killed 4243 buildings 0
+  boom s1: Goal 396s 2*
+    idle s1 t 450: own 1166 enemy 6490 soldiers 4 bank 2000 killed 0 buildings 0
+    random s1 t 330: own 3489 enemy 6584 soldiers 3 bank 0 killed 7389 buildings 0
+    bait+boom s1 t 30: own 985 enemy 1772 soldiers 7 bank 100 killed 604 buildings 0
+    idle s1 t 480: own 1182 enemy 6516 soldiers 4 bank 2000 killed 0 buildings 0
+    random s1 t 360: own 3847 enemy 6126 soldiers 3 bank 0 killed 7392 buildings 0
+    sow+boom s1 t 420: own 5442 enemy 3114 soldiers 17 bank 480 killed 4321 buildings 0
+    bait+boom s1 t 60: own 1219 enemy 2614 soldiers 7 bank 100 killed 604 buildings 0
+    idle s1 t 510: own 1178 enemy 6517 soldiers 4 bank 2000 killed 0 buildings 0
+    random s1 t 390: own 3585 enemy 6401 soldiers 2 bank 0 killed 7944 buildings 0
+    bait+boom s1 t 90: own 2075 enemy 3243 soldiers 7 bank 100 killed 604 buildings 0
+    idle s1 t 540: own 1145 enemy 6419 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s1 t 120: own 2496 enemy 3287 soldiers 7 bank 100 killed 604 buildings 0
+    sow+boom s1 t 450: own 5808 enemy 2926 soldiers 19 bank 500 killed 4321 buildings 0
+  sow+boom s1: Goal 456s 2*
+    random s1 t 420: own 3874 enemy 6584 soldiers 1 bank 0 killed 8223 buildings 0
+    idle s1 t 570: own 1175 enemy 6570 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s1 t 150: own 2671 enemy 3323 soldiers 7 bank 100 killed 604 buildings 0
+    idle s1 t 600: own 1226 enemy 6616 soldiers 4 bank 2000 killed 0 buildings 0
+    random s1 t 450: own 3933 enemy 6154 soldiers 2 bank 0 killed 8231 buildings 0
+    bait+boom s1 t 180: own 2910 enemy 3391 soldiers 7 bank 400 killed 604 buildings 0
+    idle s1 t 630: own 1206 enemy 6570 soldiers 4 bank 2000 killed 0 buildings 0
+  random s1: Stuck 472s 0*
+    idle s1 t 660: own 1200 enemy 6561 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s1 t 210: own 3451 enemy 3465 soldiers 7 bank 100 killed 604 buildings 0
+    idle s1 t 690: own 1210 enemy 6549 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s1 t 720: own 1184 enemy 6568 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s1 t 240: own 3706 enemy 3473 soldiers 7 bank 100 killed 604 buildings 0
+    idle s1 t 750: own 1210 enemy 6632 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s1 t 780: own 1211 enemy 6587 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s1 t 270: own 3775 enemy 3502 soldiers 7 bank 100 killed 604 buildings 0
+    idle s1 t 810: own 1198 enemy 6672 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s1 t 840: own 1227 enemy 6697 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s1 t 300: own 3734 enemy 3529 soldiers 7 bank 100 killed 604 buildings 0
+    idle s1 t 870: own 1218 enemy 6730 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s1 t 900: own 1222 enemy 6823 soldiers 4 bank 2000 killed 0 buildings 0
+  idle s1: Cap 900s 0*
+    bait+boom s1 t 330: own 3745 enemy 3533 soldiers 7 bank 100 killed 604 buildings 0
+    bait+boom s1 t 360: own 3783 enemy 3622 soldiers 7 bank 100 killed 604 buildings 0
+    bait+boom s1 t 390: own 3800 enemy 3602 soldiers 7 bank 100 killed 604 buildings 0
+    bait+boom s1 t 420: own 3861 enemy 3654 soldiers 7 bank 100 killed 604 buildings 0
+    bait+boom s1 t 450: own 3795 enemy 3663 soldiers 7 bank 100 killed 604 buildings 0
+    bait+boom s1 t 480: own 3688 enemy 3707 soldiers 7 bank 100 killed 604 buildings 0
+    bait+boom s1 t 510: own 4526 enemy 3820 soldiers 6 bank 100 killed 893 buildings 0
+    bait+boom s1 t 540: own 4154 enemy 3642 soldiers 6 bank 100 killed 893 buildings 0
+    bait+boom s1 t 570: own 4327 enemy 3581 soldiers 6 bank 100 killed 893 buildings 0
+    bait+boom s1 t 600: own 4204 enemy 3611 soldiers 6 bank 100 killed 893 buildings 0
+    bait+boom s1 t 630: own 4212 enemy 3506 soldiers 6 bank 100 killed 893 buildings 0
+    bait+boom s1 t 660: own 3894 enemy 3767 soldiers 6 bank 100 killed 893 buildings 0
+    bait+boom s1 t 690: own 4146 enemy 3563 soldiers 6 bank 100 killed 893 buildings 0
+    bait+boom s1 t 720: own 4301 enemy 3572 soldiers 6 bank 100 killed 893 buildings 0
+    bait+boom s1 t 750: own 4287 enemy 3480 soldiers 5 bank 100 killed 1257 buildings 0
+    bait+boom s1 t 780: own 4581 enemy 3111 soldiers 5 bank 100 killed 1257 buildings 0
+    bait+boom s1 t 810: own 5181 enemy 2576 soldiers 5 bank 100 killed 1408 buildings 0
+    bait+boom s1 t 840: own 5279 enemy 2561 soldiers 5 bank 100 killed 1408 buildings 0
+  bait+boom s1: Goal 840s 1*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+bait+boom    1  Goal         840      1 1.00     4%     0%    2%    4%    9%                             4   19   26      840      5     13200   1408  967.000/5404.000  0/0/0 0  []
+boom         1  Goal         396      2 1.00     0%     0%    0%    0%    0%                             0    0   22      395     20     11400   7211  520.000/5042.000  0/0/0 0  []
+idle         1  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0  156        0      4         0      0  1081.000/5020.000  0/0/0 0  []
+random       1  Stuck        472      0 0.19    17%     4%   22%   18%    0%                             9   30   73        0      2       600   8231  1680.000/5748.000  0/0/0 0  []
+sow+boom     1  Goal         456      2 1.00     0%     0%    0%    0%    0%                             0    0   17      455     19     11100   4460  1056.000/5963.000  0/0/0 0  []
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  bait+boom 1/1  stars 1  best 1.00  dead 4%  stuck 19 s  stall 26 s
+  boom      1/1  stars 2  best 1.00  dead 0%  stuck 0 s  stall 22 s
+  idle      0/1  stars 0  best 0.00  dead 100%  stuck 0 s  stall 156 s
+  random    0/1  stars 0  best 0.19  dead 17%  stuck 30 s  stall 73 s
+  sow+boom  1/1  stars 2  best 1.00  dead 0%  stuck 0 s  stall 17 s

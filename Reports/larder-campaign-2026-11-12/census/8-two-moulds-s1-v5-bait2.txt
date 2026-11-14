@@ -1,0 +1,39 @@
+mission 8-two-moulds (Two moulds): "Grow your mould to 60% of all the slime and hold it for a minute", map passes, tier swarmer , seeds 1-1, scale 2, walkers 5000
+on the CPU
+    bait+boom s1 t 30: own 958 enemy 1833 soldiers 7 bank 100 killed 561 buildings 0
+    bait+boom s1 t 60: own 1067 enemy 2624 soldiers 7 bank 400 killed 561 buildings 1
+    bait+boom s1 t 90: own 1412 enemy 3238 soldiers 8 bank 480 killed 561 buildings 1
+    bait+boom s1 t 120: own 2246 enemy 3266 soldiers 8 bank 580 killed 561 buildings 1
+    bait+boom s1 t 150: own 3742 enemy 3448 soldiers 10 bank 480 killed 781 buildings 1
+    bait+boom s1 t 180: own 4040 enemy 3473 soldiers 8 bank 880 killed 1302 buildings 1
+    bait+boom s1 t 210: own 4054 enemy 3523 soldiers 9 bank 480 killed 1762 buildings 1
+    bait+boom s1 t 240: own 4470 enemy 3322 soldiers 9 bank 480 killed 1945 buildings 1
+    bait+boom s1 t 270: own 4445 enemy 3129 soldiers 9 bank 480 killed 2370 buildings 1
+    bait+boom s1 t 300: own 4264 enemy 3310 soldiers 10 bank 580 killed 3223 buildings 1
+    bait+boom s1 t 330: own 4574 enemy 3260 soldiers 13 bank 420 killed 3223 buildings 1
+    bait+boom s1 t 360: own 4120 enemy 3527 soldiers 12 bank 720 killed 3882 buildings 1
+    bait+boom s1 t 390: own 4269 enemy 3759 soldiers 12 bank 600 killed 4273 buildings 1
+    bait+boom s1 t 420: own 4302 enemy 3496 soldiers 13 bank 500 killed 5674 buildings 1
+    bait+boom s1 t 450: own 4650 enemy 3555 soldiers 13 bank 580 killed 6034 buildings 1
+    bait+boom s1 t 480: own 4295 enemy 3805 soldiers 12 bank 580 killed 6295 buildings 1
+    bait+boom s1 t 510: own 4376 enemy 3858 soldiers 12 bank 580 killed 6757 buildings 1
+    bait+boom s1 t 540: own 4457 enemy 3688 soldiers 13 bank 700 killed 6757 buildings 1
+    bait+boom s1 t 570: own 4554 enemy 3654 soldiers 14 bank 480 killed 6757 buildings 1
+    bait+boom s1 t 600: own 4911 enemy 3567 soldiers 14 bank 580 killed 6779 buildings 1
+    bait+boom s1 t 630: own 4757 enemy 3751 soldiers 14 bank 580 killed 7047 buildings 1
+    bait+boom s1 t 660: own 4826 enemy 3616 soldiers 15 bank 580 killed 7047 buildings 1
+    bait+boom s1 t 690: own 4721 enemy 3640 soldiers 16 bank 480 killed 7047 buildings 1
+    bait+boom s1 t 720: own 4307 enemy 3602 soldiers 16 bank 480 killed 7047 buildings 1
+    bait+boom s1 t 750: own 4899 enemy 3590 soldiers 15 bank 580 killed 7301 buildings 1
+    bait+boom s1 t 780: own 4868 enemy 3516 soldiers 14 bank 580 killed 7703 buildings 1
+    bait+boom s1 t 810: own 4840 enemy 3298 soldiers 14 bank 580 killed 7703 buildings 1
+    bait+boom s1 t 840: own 4727 enemy 3413 soldiers 14 bank 580 killed 7703 buildings 1
+    bait+boom s1 t 870: own 4793 enemy 3276 soldiers 14 bank 580 killed 7703 buildings 1
+    bait+boom s1 t 900: own 4691 enemy 3447 soldiers 14 bank 580 killed 7703 buildings 1
+  bait+boom s1: Cap 900s 1*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+bait+boom    1  Cap          900      1 0.54    10%     0%    1%    2%   36%                             9    7   22      900     14     13200   7703  946.000/5040.000  0/0/0 0  []
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  bait+boom 0/1  stars 1  best 0.54  dead 10%  stuck 7 s  stall 22 s

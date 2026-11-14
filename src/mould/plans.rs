@@ -207,8 +207,109 @@ pub fn cut<W: World>(g: &mut Game<W>, cutters: usize) {
     }
 }
 
+/// How many soldiers sow (`sow`), and the bank a sower keeps before it
+/// spends on Feed (below it, it lays a road, which is free).
+pub const SOWERS: usize = 2;
+pub const SOW_KEEP: f32 = 600.0;
+
+/// **Sow your mould as a moving front** (mission 8's first plan, after
+/// `examples/garden.rs`'s sow2): the `sowers` oldest live soldiers walk
+/// from the larder to the nearest crystal with charge that has no enemy on
+/// it and back, on Feed while the bank is over `SOW_KEEP` (charge sown thin
+/// along the way, which the player's mould eats and grows on) and Road
+/// below it (free; the mould follows it). A sower's leg is read off its
+/// order, so the plan keeps no state: at its target it turns for home, at
+/// home for the target, and any other order (the farming hand's) sends it
+/// out. Only where the player has a mould (`World::own_living`).
+pub fn sow<W: World>(g: &mut Game<W>, sowers: usize) {
+    use super::own_mould::Task;
+    if g.world.own_living() == 0 {
+        return;
+    }
+    let s = g.world.scale();
+    let home = g.larder;
+    let grid = g.world.mould_grid(BIN);
+    let gw = g.world.size().0.div_ceil(BIN);
+    let clean = |c: (f32, f32), r: f32| match &grid {
+        Some(gr) => {
+            let (bx0, bx1) = (((c.0 - r) / BIN as f32).max(0.0) as usize, ((c.0 + r) / BIN as f32) as usize);
+            let (by0, by1) = (((c.1 - r) / BIN as f32).max(0.0) as usize, ((c.1 + r) / BIN as f32) as usize);
+            !(by0..=by1).any(|by| (bx0..=bx1.min(gw - 1)).any(|bx| gr.get(by * gw + bx).is_some_and(|&n| n > 0)))
+        }
+        None => true,
+    };
+    let cs = g.world.crystals();
+    let target = by_distance(g).into_iter().filter(|&c| (c.0 - home.0).hypot(c.1 - home.1) > 4.0 * s).find(|&c| {
+        let i = cs.iter().position(|q| q.0 == c).unwrap_or(0);
+        clean(c, g.world.crystal_r(i))
+    });
+    let Some(to) = target else { return };
+    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive && !matches!(g.soldiers[k].order, Order::Build(_))).take(sowers).collect();
+    let task = if g.bank > SOW_KEEP { Task::Feed } else { Task::Road };
+    for k in live {
+        let q = g.soldiers[k];
+        let at = |p: (f32, f32)| (q.x - p.0).hypot(q.y - p.1) < 3.0 * s;
+        let next = match q.order {
+            Order::Move(x, y) if (x, y) == home && !at(home) => home,
+            Order::Move(x, y) if (x, y) == home => to,
+            Order::Move(x, y) if !at((x, y)) => (x, y),
+            Order::Move(..) => home,
+            _ => to,
+        };
+        if q.order != Order::Move(next.0, next.1) {
+            g.apply(Cmd::Order(k, Order::Move(next.0, next.1)));
+        }
+        g.world.set_task(k, task);
+    }
+}
+
+/// The bait plan's lures over a game: one standing at a time, and no more
+/// than this many built (each is a price paid).
+pub const BAIT_MAX: usize = 3;
+
+/// **Bait the flood away** (mission 8's second plan; the designer's note,
+/// 11-14: "lure the flood away from your front while your mould takes the
+/// valley"): `sow`, and one lure on open ground with no mould on it, round
+/// the enemy's core (12 to 24 dish cells out) on the side farthest from
+/// the larder, so the enemy's food scent pulls it home and away from the
+/// player's front. The lure goes before the hand's reserve: kept over it
+/// (400 for boom) none was ever built (census v3). The first version stood
+/// it 6 cells past the core on the larder's line, inside the enemy: it was
+/// eaten as it went up, 300 food each time, and the bank sat at 100 for ten
+/// minutes (census v4, seed 1).
+pub fn bait<W: World>(g: &mut Game<W>, sowers: usize) {
+    sow(g, sowers);
+    let lures = g.buildings.iter().filter(|b| b.kind == Kind::Lure).count();
+    if g.world.own_living() == 0 || g.time() < 5.0 || alive_kind(g, Kind::Lure) > 0 || lures >= BAIT_MAX {
+        return;
+    }
+    let s = g.world.scale();
+    let (c, l) = (g.core, g.larder);
+    let grid = g.world.mould_grid(BIN);
+    let gw = g.world.size().0.div_ceil(BIN);
+    let clean = |p: (f32, f32)| match &grid {
+        Some(gr) => {
+            let r = 3.0 * s;
+            let (bx0, bx1) = (((p.0 - r) / BIN as f32).max(0.0) as usize, ((p.0 + r) / BIN as f32) as usize);
+            let (by0, by1) = (((p.1 - r) / BIN as f32).max(0.0) as usize, ((p.1 + r) / BIN as f32) as usize);
+            !(by0..=by1).any(|by| (bx0..=bx1.min(gw - 1)).any(|bx| gr.get(by * gw + bx).is_some_and(|&n| n > 0)))
+        }
+        None => true,
+    };
+    let spots = (0..16).flat_map(|k| [12.0f32, 18.0, 24.0].map(move |r| (k, r))).map(|(k, r)| {
+        let a = k as f32 / 16.0 * std::f32::consts::TAU;
+        (c.0 + r * s * a.cos(), c.1 + r * s * a.sin())
+    });
+    let far = |p: &(f32, f32)| (p.0 - l.0).hypot(p.1 - l.1);
+    let best = spots.filter(|&p| g.world.open(p.0, p.1) && clean(p)).max_by(|a, b| far(a).total_cmp(&far(b)));
+    if let Some(at) = best {
+        spare_build(g, Kind::Lure, at, 0.0);
+    }
+}
+
 /// A plan by name, for the censuses' `PLAN+STYLE` hands: `ring`, `pumps`,
-/// `guard`, `turtle`, `zone`, `cut` (three cutters), or None.
+/// `guard`, `turtle`, `zone`, `cut` (three cutters), `sow` (two sowers),
+/// `bait` (sow and a lure behind the enemy), or None.
 pub fn named(name: &str) -> Option<Plan> {
     Some(match name {
         "ring" => Plan::Ring,
@@ -217,6 +318,8 @@ pub fn named(name: &str) -> Option<Plan> {
         "turtle" => Plan::Turtle { pumps: true, turrets: true },
         "zone" => Plan::Zone,
         "cut" => Plan::Cut(3),
+        "sow" => Plan::Sow(SOWERS),
+        "bait" => Plan::Bait(SOWERS),
         _ => return None,
     })
 }
@@ -227,6 +330,8 @@ pub enum Plan {
     Turtle { pumps: bool, turrets: bool },
     Zone,
     Cut(usize),
+    Sow(usize),
+    Bait(usize),
 }
 
 impl Plan {
@@ -237,6 +342,8 @@ impl Plan {
             Plan::Turtle { pumps, turrets } => turtle(g, pumps, turrets, reserve),
             Plan::Zone => zone(g, reserve),
             Plan::Cut(n) => cut(g, n),
+            Plan::Sow(n) => sow(g, n),
+            Plan::Bait(n) => bait(g, n),
         }
     }
 }

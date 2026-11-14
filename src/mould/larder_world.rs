@@ -293,6 +293,11 @@ pub struct Game<W: World> {
     pub squads: Vec<Squad>,
     /// The squad the player controls (`Cmd::Active`), if any.
     pub active: Option<usize>,
+    /// Each soldier's place in its squad's formation (`Game::rank_squad`),
+    /// and the squad's size when they were matched: a squad whose size has
+    /// changed since ranks its members by index until it is matched again.
+    pub(super) ranks: Vec<u16>,
+    pub(super) ranked: [u16; SQUADS_MAX],
     /// Crystals guarded at the last count (`Rules::larder` off), and what
     /// guarding has paid in all.
     pub guarded: Vec<usize>,
@@ -390,6 +395,8 @@ impl<W: World> Game<W> {
             rally: Order::Hold,
             squads: vec![Squad::default(); SQUADS_MAX],
             active: None,
+            ranks: Vec::new(),
+            ranked: [0; SQUADS_MAX],
             guarded: Vec::new(),
             guard_paid: 0.0,
         };

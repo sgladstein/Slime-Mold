@@ -21,6 +21,7 @@ use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
 use pixels::wgpu;
 
 use super::icons::Icon;
+pub use super::settings::UiSize;
 
 pub const SHADER: &str = include_str!("canvas.wgsl");
 
@@ -55,7 +56,7 @@ pub enum Weight {
     SemiBold,
 }
 
-static MEDIUM: &[u8] = include_bytes!("../../assets/fonts/Inter-Medium.otf");
+static MEDIUM: &[u8] = crate::hud::INTER_MEDIUM;
 static SEMIBOLD: &[u8] = include_bytes!("../../assets/fonts/Inter-SemiBold.otf");
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -300,11 +301,14 @@ pub struct Canvas {
     prims: Vec<Prim>,
     pub atlas: Atlas,
     pub screen: (u32, u32),
+    /// The UI's size (the player's and the window's DPI): the HUD and the
+    /// start menu lay out in `ui.px(screen)` pixels a unit.
+    pub ui: UiSize,
 }
 
 impl Canvas {
     pub fn new(screen: (u32, u32)) -> Self {
-        Canvas { prims: Vec::new(), atlas: Atlas::new(), screen }
+        Canvas { prims: Vec::new(), atlas: Atlas::new(), screen, ui: UiSize::default() }
     }
 
     /// Starts a frame (and empties the atlas if the last frame filled it).
