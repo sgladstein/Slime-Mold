@@ -121,7 +121,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("Right click", "Move; on a crystal, harvest it"),
         ("Shift + order", "Queue it after the current orders"),
         ("Ctrl + 1-9, 1-9", "Make a group, select it (twice: look)"),
-        ("Wheel, middle drag", "Zoom, pan; arrows and the screen edge pan"),
+        ("Wheel, middle drag", "Zoom, pan; arrows, the screen edge and WASD while paused pan"),
         ("A, click", "Attack-move; on the core, attack it"),
         ("S", "Stop"),
         ("G", "Harvest"),

@@ -86,6 +86,37 @@ pub(super) fn turret_state<W: World>(g: &Game<W>, b: &Building) -> u32 {
     }
 }
 
+/// An order line from `from` through each order's point: the first as a
+/// line, each queued one (Shift) a fainter line ending in a small ring, so a
+/// queue of moves reads as the whole path. Red for fighting (attack-move,
+/// the core), white else. `homing`: the first order is a harvest carrying
+/// home, so it heads for the larder. A first order closer than a dish
+/// cell (a squad settling where it was let go) draws nothing.
+fn order_chain(marks: &mut Marks, g: &Game<GpuWorld>, from: (f32, f32), orders: impl Iterator<Item = (Order, bool)>, homing: bool, sc: f32) {
+    let mut from = from;
+    for (n, (o, queued)) in orders.enumerate() {
+        let to = match o {
+            Order::Move(x, y) | Order::Fight(x, y) => Some((x, y)),
+            Order::Clear(..) if n == 0 && homing => Some(g.larder),
+            Order::Clear(x, y) => Some((x, y)),
+            Order::Attack => Some(g.core),
+            Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
+            Order::Build(b) => g.buildings.get(b).map(|b| b.at),
+            Order::Hold => None,
+        };
+        let Some(to) = to else { continue };
+        if n == 0 && !queued && (to.0 - from.0).hypot(to.1 - from.1) < sc {
+            continue;
+        }
+        let later = n > 0 || queued;
+        let a = if later { 150 } else { 210 };
+        let colour = if matches!(o, Order::Attack | Order::Fight(..)) { [255, 110, 110, a] } else { [255, 255, 255, a - 20] };
+        marks.line(from, to, 2.0, colour);
+        marks.ring(to, if later { 1.0 } else { 1.4 } * sc, colour);
+        from = to;
+    }
+}
+
 /// Turret `k` (`Marks::turret`), drawn `half` world units, and the light
 /// of its shot at the muzzle, as a soldier's lights the ground.
 fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook], g: &Game<GpuWorld>, k: usize, half: f32) {
@@ -401,30 +432,33 @@ impl App {
             if let Order::Burn(a, b) = s.order {
                 self.marks.line(a, b, 4.0, [255, 150, 60, 200]);
             }
-            if self.controls.selected.contains(&k) {
-                // The order, then the queue (Shift) as a chain of lines,
-                // fainter down the queue; red for fighting, white else.
-                let mut from = (s.x, s.y);
+            // In the squad mode the squad's own line is drawn below, one
+            // for the squad rather than one per soldier.
+            if self.controls.selected.contains(&k) && !g.rules.squads {
                 let orders = std::iter::once(s.order).chain(s.queue[..s.queued as usize].iter().copied());
-                for (n, o) in orders.enumerate() {
-                    let to = match o {
-                        Order::Move(x, y) | Order::Fight(x, y) => Some((x, y)),
-                        Order::Clear(..) if n == 0 && s.homing => Some(g.larder),
-                        Order::Clear(x, y) => Some((x, y)),
-                        Order::Attack => Some(g.core),
-                        Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
-                        Order::Build(b) => g.buildings.get(b).map(|b| b.at),
-                        Order::Hold => None,
-                    };
-                    let Some(to) = to else { continue };
-                    let a = if n == 0 { 120 } else { 80 };
-                    let colour = if matches!(o, Order::Attack | Order::Fight(..)) { [255, 110, 110, a] } else { [255, 255, 255, a - 30] };
-                    self.marks.line(from, to, 2.0, colour);
-                    if n > 0 {
-                        self.marks.ring(to, 1.0 * sc, colour);
-                    }
-                    from = to;
-                }
+                order_chain(&mut self.marks, g, (s.x, s.y), orders.map(|o| (o, false)), s.homing, sc);
+            }
+        }
+        // The controlled squad's order and its queue (Shift), and those of
+        // the squads linked to it, as one chain each (owner's playtest,
+        // 2026-11-14 20:12Z and 20:15Z: "there should be a line showing
+        // where the selected squad is moving ... same with attack move and
+        // other commands ... if I set up three moves, I should see the full
+        // path"). Before, a squad sent somewhere drew nothing: its soldiers
+        // hold no order of their own while the squad moves (`Squad::dest`),
+        // and a drain drew a line from every soldier.
+        if let Some(q) = g.active.filter(|_| g.rules.squads) {
+            for r in g.linked(q) {
+                let (Some(mid), sq) = (g.middle(r), &g.squads[r]) else { continue };
+                let lead = g.members(r).first().map(|&k| g.soldiers[k].order);
+                let now = match (sq.dest, sq.work, lead) {
+                    (Some((x, y)), _, _) if sq.steer == (0.0, 0.0) => Some(if sq.fight { Order::Fight(x, y) } else { Order::Move(x, y) }),
+                    (None, Some(o), _) => Some(o),
+                    (None, None, Some(o @ (Order::Attack | Order::Burn(..)))) => Some(o),
+                    _ => None,
+                };
+                let orders = now.map(|o| (o, false)).into_iter().chain(sq.queue[..sq.queued as usize].iter().map(|&o| (o, true)));
+                order_chain(&mut self.marks, g, mid, orders, false, sc);
             }
         }
         // A shot's line, only while shots are rays: with bullets flying
