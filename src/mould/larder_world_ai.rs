@@ -277,6 +277,14 @@ pub struct Style {
     /// soldiers attack the core; once it is down they claim.
     pub strike_at: f32,
     pub strike_army: usize,
+    /// The strike's target: false walks on the core (`Order::Attack`);
+    /// true cuts the body off its crystals, each striker attack-moving
+    /// (`Order::Fight`) to the point `CUT_AT` of the way from the core to
+    /// one of the `claims` mould-held crystals nearest home, in turn. Why:
+    /// no mould has a king since 2026-11-12 20:21Z, so the core stops
+    /// nothing, and a piece cut off its food withers and panics (the cloud
+    /// plan's C4, 11-14).
+    pub cut: bool,
     /// A soldier below this share of full health with mould touching walks
     /// home and stays (health never comes back). 0 never pulls back.
     pub retreat: f32,
@@ -303,6 +311,7 @@ impl Style {
         wall_alarm: 10,
         strike_at: f32::INFINITY,
         strike_army: 20,
+        cut: false,
         retreat: 0.0,
     };
 
@@ -329,8 +338,13 @@ impl Style {
     /// and died within 36 s); after the core falls, claim.
     pub const STRIKE: Style = Style { name: "strike", buy_to: 30, strike_at: 360.0, keep: 8, ..Style::BOOM };
 
-    pub fn presets() -> [Style; 5] {
-        [Style::BOOM, Style::CLAIM, Style::LATE, Style::FORT, Style::STRIKE]
+    /// **Cut**: the strike's army and timing, aimed at the roads between
+    /// the body and the crystals it holds instead of at its home
+    /// (`Style::cut`).
+    pub const CUT: Style = Style { name: "cut", cut: true, ..Style::STRIKE };
+
+    pub fn presets() -> [Style; 6] {
+        [Style::BOOM, Style::CLAIM, Style::LATE, Style::FORT, Style::STRIKE, Style::CUT]
     }
 
     /// A preset by name, with knobs after a colon: `claim:claim_at=200+keep=4`
@@ -364,6 +378,7 @@ impl Style {
             "wall_alarm" => self.wall_alarm = u,
             "strike_at" => self.strike_at = v,
             "strike_army" => self.strike_army = n,
+            "cut" => self.cut = v != 0.0,
             "retreat" => self.retreat = v,
             _ => return false,
         }
@@ -391,6 +406,10 @@ const FEED_HORIZON: f32 = 120.0;
 /// A brain whose income can't pay the rations and whose bank holds less
 /// than this many seconds of them sends every soldier to farm.
 const LEAN_SECS: f32 = 60.0;
+/// How far from the core towards a held crystal a cut stands, as a share
+/// of the way: the middle of the road, away from the hub's pull and from
+/// the crystal's own thick mat.
+const CUT_AT: f32 = 0.5;
 /// The share of the crystals' food left that a brain counts on banking
 /// before the cap; the mould eats the rest.
 const LEFT_SHARE: f32 = 0.5;
@@ -505,7 +524,36 @@ impl Brain {
         // everyone: with no farmers left the bank ran dry mid-strike, and
         // on seeds 1-4 three of four squads ended with one soldier or none.)
         let mut striker = vec![false; free.len()];
-        if striking && !v.core_down {
+        // Cut points: the roads from the core to the held crystals nearest
+        // home. With none held, a cut strikes the core as the strike does.
+        let cuts: Vec<(f32, f32)> = if st.cut {
+            let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| v.weigh(c.on) >= HELD as f32 && dist(c.at, v.core) > 1.0).collect();
+            held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
+            held.iter().take(st.claims.max(1)).map(|c| (v.core.0 + CUT_AT * (c.at.0 - v.core.0), v.core.1 + CUT_AT * (c.at.1 - v.core.1))).collect()
+        } else {
+            Vec::new()
+        };
+        if striking && !v.core_down && !cuts.is_empty() {
+            let on_cut = |o: Order| matches!(o, Order::Fight(x, y) if cuts.iter().any(|&c| dist(c, (x, y)) < 1.0));
+            let mut by: Vec<usize> = (0..free.len()).collect();
+            by.sort_by(|&a, &b| on_cut(free[b].order).cmp(&on_cut(free[a].order)).then(dist(free[a].at, v.core).total_cmp(&dist(free[b].at, v.core))));
+            let mut count = vec![0usize; cuts.len()];
+            let chosen: Vec<usize> = by.iter().copied().take(free.len().saturating_sub(st.keep)).collect();
+            // Those already on a cut stay on it; the rest go to the cut
+            // with the fewest.
+            for &j in &chosen {
+                striker[j] = true;
+                if let Order::Fight(x, y) = free[j].order {
+                    if let Some(i) = cuts.iter().position(|&c| dist(c, (x, y)) < 1.0) {
+                        count[i] += 1;
+                        continue;
+                    }
+                }
+                let i = (0..cuts.len()).min_by_key(|&i| count[i]).unwrap();
+                count[i] += 1;
+                out.push(Cmd::Order(free[j].k, Order::Fight(cuts[i].0, cuts[i].1)));
+            }
+        } else if striking && !v.core_down {
             let mut by: Vec<usize> = (0..free.len()).collect();
             by.sort_by(|&a, &b| (free[b].order == Order::Attack).cmp(&(free[a].order == Order::Attack)).then(dist(free[a].at, v.core).total_cmp(&dist(free[b].at, v.core))));
             for &j in by.iter().take(free.len().saturating_sub(st.keep)) {
