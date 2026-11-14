@@ -3180,6 +3180,14 @@ const PB_FA: u32 = 4u;
 const PB_FB: u32 = 5u;
 const PB_CHAR: u32 = 6u;
 const PB_MOIST: u32 = 7u;
+// Block 8: how fresh each cell's fire is, 1 when it catches and x
+// FRESH_KEEP a fire step while it burns, so the view can draw the
+// advancing edge hottest (graphics lead 11-14 21:26Z: "the advancing
+// edge should be the brightest line on screen"). The heat itself
+// flickers step to step, so its rise is noise, not the front. The view
+// reads it; the game does not, and the CPU keeps no copy.
+const PB_FRESH: u32 = 8u;
+const FRESH_KEEP: f32 = 0.85;
 // A cell's chance this fire step, 0-1 (`plants::roll`).
 fn froll(i: u32, t: u32) -> f32 {
     var h = (i * 0x9E3779B1u) ^ (t * 0x85EBCA77u);
@@ -3246,6 +3254,7 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     var ate = 0.0;
     if (wet) {
         to = 0.0;
+        pset(PB_FRESH, i, 0.0);
     } else if (heat > 0.0) {
         let slow = 1.0 - pf(14u) * m;
         let eat = min(pf(5u) * heat * slow, p);
@@ -3256,6 +3265,7 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
         else if (dice < pf(13u) * (m * m)) { to = 0.0; }
         else { to = min(heat + pf(4u), top) * (1.0 - pf(46u) * dice); }
         if (to < 0.01) { to = 0.0; }
+        pset(PB_FRESH, i, select(0.0, pget(PB_FRESH, i) * FRESH_KEEP, to > 0.0));
     } else {
         let x = i % P.w; let y = i / P.w;
         var n = 0.0;
@@ -3266,6 +3276,7 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
         let burn = pf(28u + (atomicLoad(&news[pblk(PB_KIND, i)]) & 3u));
         let dry = 1.0 - m;
         if (p >= pf(7u) && dice < pf(6u) * (n * 0.25) * p * burn * dry) { to = pf(4u); }
+        pset(PB_FRESH, i, select(0.0, 1.0, to > 0.0));
     }
     pset(PB_FB, i, to);
     let ch = pget(PB_CHAR, i);
@@ -3315,7 +3326,7 @@ fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
     for (var q = 0u; q < min(pw(49u), 3u); q++) {
         let cx = pf(50u + 4u * q); let cy = pf(51u + 4u * q); let r = pf(52u + 4u * q);
         let dx = f32(x - i32(floor(cx))); let dy = f32(y - i32(floor(cy)));
-        if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r && dice < pf(53u + 4u * q)) { pset(PB_FA, i, 1.0); return; }
+        if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r && dice < pf(53u + 4u * q)) { pset(PB_FA, i, 1.0); pset(PB_FRESH, i, 1.0); return; }
     }
 }
 
