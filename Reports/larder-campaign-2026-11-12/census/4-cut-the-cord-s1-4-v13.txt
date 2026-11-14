@@ -1,0 +1,51 @@
+mission 4-cut-the-cord (Cut the cord): "Starve the Trunk: cut its cords until it is a fifth of its size", map fork, tier trunk , seeds 1-4, scale 2, walkers 5000
+on the CPU
+  idle s1: Stuck 451s 0*
+  idle s2: SquadWiped 593s 0*
+  idle s4: SquadWiped 601s 0*
+  random s2: SquadWiped 268s 0*
+  idle s3: SquadWiped 617s 0*
+  random s1: SquadWiped 654s 0*
+  random s3: Stuck 524s 1*
+  random s4: Cap 900s 0*
+  boom s1: Cap 900s 0*
+  boom s2: Cap 900s 0*
+  boom s3: Cap 900s 0*
+  strike:strike_at=180+strike_army=10+buy_to=14 s1: Goal 468s 3*
+  strike:strike_at=180+strike_army=10+buy_to=14 s2: Goal 396s 3*
+  strike:strike_at=180+strike_army=10+buy_to=14 s4: Goal 327s 3*
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 s1: Goal 284s 3*
+  strike:strike_at=180+strike_army=10+buy_to=14 s3: Goal 517s 3*
+  boom s4: Cap 900s 0*
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 s4: Goal 266s 3*
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 s2: Goal 431s 3*
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 s3: Goal 473s 3*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+boom         1  Cap          900      0 0.06    20%     0%   10%   13%   49%                             7    0    6        0     20     22874    112  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+boom         2  Cap          900      0 0.07    18%     0%    8%   11%   46%                             7    0    5        0     20     23474    105  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 7, 8, 9]
+boom         3  Cap          900      0 0.08    21%     0%   14%   14%   49%                             7    0    6        0     20     22874    131  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+boom         4  Cap          900      0 0.07    20%     0%    9%   12%   50%                             8    0    8        0     20     23174    142  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=10+buy_to=14    1  Goal         284      3 1.00     0%     0%    0%    0%    0%                             0    0    5      283     14     12674  10650  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=10+buy_to=14    2  Goal         431      3 1.00     0%     0%    0%    0%    0%                             0    0    3      430     14     18674  20832  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=10+buy_to=14    3  Goal         473      3 1.00     0%     0%    0%    0%    0%                             1    0    6      472     14     19274  24113  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=10+buy_to=14    4  Goal         266      3 1.00     0%     0%    0%    0%    0%                             0    0    6      265     14     14174   9360  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+idle         1  Stuck        451      0 0.08    45%    45%   42%   53%    0%                             6   30    6        0      4         0    331  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+idle         2  SquadWiped   593      0 0.10    44%    49%   45%   41%    0%                             8   27    8        0      0         0    586  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+idle         3  SquadWiped   617      0 0.07    49%    53%   45%   52%    0%                            10   22    8        0      0         0    280  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+idle         4  SquadWiped   601      0 0.07    48%    36%   53%   48%    0%                            12    7   12        0      0         0    434  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+random       1  SquadWiped   654      0 0.71     3%     0%    5%    3%    0%                            11   18   15      300      0      4244  15066  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+random       2  SquadWiped   268      0 0.41     3%     0%    5%    0%    0%                             4   28    9        0      0       900   5204  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+random       3  Stuck        524      1 0.90     2%     0%    0%    7%    0%                             4   30   11      524      2      2700  13904  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+random       4  Cap          900      0 0.42     0%     3%    0%    0%    0%                             4    0   12        0      9     20062  17301  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=10+buy_to=14    1  Goal         468      3 1.00     1%     0%    2%    0%    0%                             3    0    5      467     14     18674  24252  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=10+buy_to=14    2  Goal         396      3 1.00     0%     0%    0%    0%    0%                             1    0    3      395     14     17774  18718  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 7, 8, 9]
+strike:strike_at=180+strike_army=10+buy_to=14    3  Goal         517      3 1.00     1%     0%    2%    1%    0%                             3    0    5      516     14     20474  26811  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=10+buy_to=14    4  Goal         327      3 1.00     1%     0%    1%    0%    0%                             2    0    6      326     14     15974  13764  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  boom      0/4  stars 0  best 0.07  dead 20%  stuck 0 s  stall 8 s
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 4/4  stars 3  best 1.00  dead 0%  stuck 0 s  stall 6 s
+  idle      0/4  stars 0  best 0.08  dead 47%  stuck 30 s  stall 12 s
+  random    0/4  stars 0  best 0.61  dead 2%  stuck 30 s  stall 15 s
+  strike:strike_at=180+strike_army=10+buy_to=14 4/4  stars 3  best 1.00  dead 1%  stuck 0 s  stall 6 s
