@@ -60,7 +60,8 @@
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
-//! `holes=1` also times how long each hit's hole stays open; `centre=X,Y[,ZOOM]`
+//! `holes=1` also times how long each hit's hole stays open; `bank=N` starts
+//! the round with N food banked (films of rounds); `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
 //! `hover=X,Y` puts the cursor there (screen pixels), so the picture shows
@@ -87,7 +88,7 @@
 //! card each game second (`press_every`), and `sound=` (empty: no file)
 //! puts the round's sound on tape. The CI smoke tests play every mission
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
-//! long a hit's crater lasts (`Rules::crater`, 10 game seconds; 0 is off);
+//! long a hit's crater lasts (`Rules::crater`, 2 game seconds; 0 is off);
 //! `aim=STRIKE,EVERY,SPREAD` sets the shot's strike, fire rate and aim
 //! spread (`Rules::spread`); `core_pull=P` how strongly soldiers near the
 //! mould's core draw it (`Rules::core_pull`; 0 is off); `wade=W` how many
@@ -139,7 +140,7 @@ use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::team_colour;
 use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target};
-use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, View};
+use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
@@ -392,6 +393,9 @@ struct App {
     depth: Vec<u8>,
     looks: Vec<Look>,
     tracers: Vec<Tracer>,
+    /// This frame's point lights (bullets, bursts, muzzles, lodged casts),
+    /// filled with the marks (`draw.rs`).
+    lights: Vec<Light>,
     paused: bool,
     menu_paused: bool,
     fast: bool,
@@ -487,6 +491,7 @@ impl App {
             depth: Vec::new(),
             looks: Vec::new(),
             tracers: Vec::new(),
+            lights: Vec::new(),
             paused: false,
             menu_paused: false,
             fast: false,
@@ -940,6 +945,7 @@ impl App {
         if let Some(v) = self.view.as_mut() {
             v.minimap_box = self.hud.minimap_box;
             v.set_marks(&self.marks);
+            v.set_lights(&self.lights);
         }
     }
 
@@ -995,6 +1001,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut holes = false;
+    let mut bank = None;
     let mut centre = None;
     let mut hover = None;
     let mut cut = None;
@@ -1067,6 +1074,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let (x, y) = v.split_once(',').ok_or("hover=X,Y")?;
                 hover = Some((x.parse()?, y.parse()?));
             }
+            // `bank=N`: the no-window round starts with N food in the bank
+            // (films of rounds, whose casts are paid from it).
+            "bank" => bank = Some(v.parse::<f32>()?),
             "centre" => {
                 // `centre=X,Y[,ZOOM]`: the near view's place and zoom (6).
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
@@ -1115,7 +1125,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(page_named);
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, page, hover)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, page, hover)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

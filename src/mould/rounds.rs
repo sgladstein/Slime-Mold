@@ -109,6 +109,22 @@ impl Card {
         }
     }
 
+    /// What the card does, in a line (the HUD's loadout panel).
+    pub fn about(self) -> &'static str {
+        match self {
+            Card::Blast => "Payload: kills the mould in a disc, leaves a crater and lays alarm",
+            Card::Gas => "Payload: puts the mould in a disc to sleep; sleepers in gas may die",
+            Card::Germ => "Payload: infects the mould in a disc; the sickness spreads through it",
+            Card::Wide => "Modifier: the next payload reaches 1.6 times as far",
+            Card::Scatter => "Modifier: the next payload lands as three smaller ones round the hit",
+            Card::Quiet => "Modifier: the next payload lays no alarm",
+            Card::Delay => "Trigger: the next payload lodges and goes off 3 s later",
+            Card::Thick => "Trigger: the next payload lodges until the mould is thick round it",
+            Card::Pierce => "Flight: every bullet flies on through one slime hit",
+            Card::Split => "Flight: every bullet splits where it lands",
+        }
+    }
+
     pub fn from_name(s: &str) -> Option<Card> {
         Card::ALL.into_iter().find(|c| c.name() == s)
     }
@@ -360,6 +376,32 @@ impl Rounds {
     /// Lodged casts waiting.
     pub fn waiting(&self) -> usize {
         self.pending.len()
+    }
+
+    /// The round's casts, left to right.
+    pub fn casts(&self) -> &[Cast] {
+        &self.casts
+    }
+
+    /// What soldier `k`'s next hit casts, and whether its gun is still
+    /// recharging at tick `t` (a hit then casts nothing). None when the
+    /// round has no payload.
+    pub fn next_cast(&self, k: usize, t: u64) -> Option<(Cast, bool)> {
+        let g = self.guns.get(k).copied().unwrap_or_default();
+        self.casts.get(g.next).map(|&c| (c, g.ready > t))
+    }
+
+    /// Soldier `k`'s gun: the index (into `casts`) of the cast its next
+    /// hit makes, and the tick its recharge ends (0 or past: ready).
+    pub fn gun(&self, k: usize) -> Option<(usize, u64)> {
+        let g = self.guns.get(k).copied().unwrap_or_default();
+        (!self.casts.is_empty()).then_some((g.next, g.ready))
+    }
+
+    /// Lodged casts: what, where (fine cells), and the tick each goes off
+    /// by.
+    pub fn lodged(&self) -> impl Iterator<Item = (Cast, (f32, f32), u64)> + '_ {
+        self.pending.iter().map(|p| (p.cast, p.at, p.due))
     }
 
     /// After each `Game::step`: each soldier's shot that hit slime this

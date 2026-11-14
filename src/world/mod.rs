@@ -34,4 +34,4 @@ pub use controls::{Button, Controls, UiCommand, Unit};
 pub use marks::{Mark, Marks, Shape};
 pub use canvas::{Canvas, CanvasPass};
 pub use ui::{Hud, HudEvent, Model};
-pub use view::View;
+pub use view::{Light, View};

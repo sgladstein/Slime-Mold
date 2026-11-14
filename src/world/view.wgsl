@@ -8,7 +8,8 @@
 struct V {
     sw: u32, sh: u32, stride: u32, ww: u32,
     wh: u32, n_marks: u32, mask: u32, overlay: u32,
-    cx: f32, cy: f32, zoom: f32, _p: f32,
+    // n_lights: the point lights this frame (`lights`, `View::set_lights`).
+    cx: f32, cy: f32, zoom: f32, n_lights: u32,
     // The minimap's rectangle on screen (mw 0: none).
     mx: u32, my: u32, mw: u32, mh: u32,
     // The look (`View::set_look`): 1 shades the world from the engine's
@@ -52,6 +53,15 @@ struct V {
 @group(0) @binding(12) var<storage, read_write> hcell: array<f32>;
 @group(0) @binding(13) var<storage, read_write> mcell: array<vec2<u32>>;
 @group(0) @binding(14) var<storage, read> alive: array<f32>;
+// Point lights (`View::set_lights`, 2026-11-14; binding 20, after the
+// graphics thread's 15-19): two vec4s each, (x, y,
+// reach, lift) in world cells and (r, g, b, strength) in colour units.
+// They are things that give off light in the game (a bullet in flight,
+// a burst for its first tenth of a second, a muzzle as it fires), and
+// they light the world's own relief in `shaded`: the mould's height and
+// gloss catch them, bare agar dimly, as Noita lights its world from a
+// spell's light (Reports/noita-spell-look-2026-11-14.md).
+@group(0) @binding(20) var<storage, read> lights: array<vec4<f32>>;
 
 fn unpack(c: u32) -> vec3<f32> {
     return vec3<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u));
@@ -347,6 +357,25 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
     let spec = pow(max(dot(n, half_v), 0.0), 28.0) * m.gloss;
     var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec * 0.7 + m.glow;
+    // Each point light on this surface: diffuse on its albedo, a highlight
+    // by its gloss, falling to nothing at the light's reach. The surface's
+    // own height is in `to`, so a tube's flank toward a bullet lights and
+    // the far flank stays dark.
+    for (var j = 0u; j < P.n_lights; j++) {
+        let a = lights[2u * j];
+        let lc = lights[2u * j + 1u];
+        let to = vec3<f32>(a.x - x, a.y - y, a.w - h);
+        let d2 = dot(to.xy, to.xy);
+        let rr = a.z * a.z;
+        if (d2 >= rr) { continue; }
+        let fall = 1.0 - d2 / rr;
+        let att = fall * fall * lc.w;
+        let ld = normalize(to);
+        let diff = max(dot(n, ld), 0.0);
+        let hv = normalize(ld + vec3<f32>(0.0, 0.0, 1.0));
+        let sp = pow(max(dot(n, hv), 0.0), 24.0) * (0.15 + m.gloss);
+        c += (m.albedo * (lc.xyz / 255.0) * diff * 1.6 + lc.xyz * sp * 0.9) * att;
+    }
     return c;
 }
 
@@ -425,6 +454,7 @@ const GLYPH: u32 = 5u;
 const LINE: u32 = 6u;
 const SOLDIER: u32 = 7u;
 const BUILDING: u32 = 8u;
+const STREAK: u32 = 9u;
 
 // ---- The soldier ----
 //
@@ -606,6 +636,20 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
         }
         return;
     }
+    if (shape == STREAK) {
+        let e = to_screen(bitcast<f32>(marks[b + 4u]), bitcast<f32>(marks[b + 5u]));
+        let rr = 3.0 * fill;
+        let lo = max(min(s, e) - vec2<f32>(rr), vec2<f32>(0.0));
+        let hi = min(max(s, e) + vec2<f32>(rr), vec2<f32>(f32(P.sw) - 1.0, f32(P.sh) - 1.0));
+        if (hi.x < lo.x || hi.y < lo.y) { return; }
+        let w = u32(hi.x - lo.x) + 1u;
+        let total = w * (u32(hi.y - lo.y) + 1u);
+        for (var j = t0; j < total; j += 64u * SPLIT) {
+            let q = floor(lo) + vec2<f32>(f32(j % w), f32(j / w));
+            if (streak_at(b, q + vec2<f32>(0.5)).x > 0.004) { claim(i32(q.x), i32(q.y), k, false); }
+        }
+        return;
+    }
     let h = half(b);
     var x0 = floor(s.x - h.x);
     var y0 = floor(s.y - h.y);
@@ -661,6 +705,26 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
     }
 }
 
+// A streak (`Marks::streak`): something bright in flight drawn along the
+// way it moved this frame, as Noita draws a fast particle along its
+// velocity (`draw_as_long`). The anchor is its head, (hw, hh) its tail in
+// world cells, `fill` its core's radius in pixels. Returns (glow, core) at
+// screen point p: a halo three cores wide and a hot core, both brightest
+// at the head and gone at the tail, added to the world (light, not paint).
+fn streak_at(b: u32, p: vec2<f32>) -> vec2<f32> {
+    let head = anchor(b);
+    let tail = to_screen(bitcast<f32>(marks[b + 4u]), bitcast<f32>(marks[b + 5u]));
+    let r = max(bitcast<f32>(marks[b + 9u]), 0.5);
+    let ab = head - tail;
+    let l2 = max(dot(ab, ab), 1e-6);
+    let t = clamp(dot(p - tail, ab) / l2, 0.0, 1.0);
+    let d = distance(p, tail + ab * t);
+    let along = t * t;
+    let halo = exp(-(d * d) / (2.0 * r * r * 2.2)) * along;
+    let core = clamp(r - d + 0.5, 0.0, 1.0) * mix(0.35, 1.0, along);
+    return vec2<f32>(select(halo, 0.0, d > 3.0 * r), core);
+}
+
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
     return soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u);
@@ -687,7 +751,11 @@ fn compose(@builtin(global_invocation_id) gid: vec3<u32>) {
             let d = f32(x) + 0.5 - anchor(b).x;
             if (d + h.x > bitcast<f32>(marks[b + 9u]) * 2.0 * h.x) { col = marks[b + 8u]; }
         }
-        if (marks[b + 6u] == SOLDIER && !in_minimap(x, y)) {
+        if (marks[b + 6u] == STREAK && !in_minimap(x, y)) {
+            let g = streak_at(b, vec2<f32>(f32(x) + 0.5, f32(y) + 0.5));
+            let a = f32(col >> 24u) / 255.0;
+            c = c + unpack(col) * g.x * a + unpack(marks[b + 8u]) * g.y;
+        } else if (marks[b + 6u] == SOLDIER && !in_minimap(x, y)) {
             let d = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5) - anchor(b);
             let f = soldier_at(b, d, half(b).x);
             c = c * (1.0 - f.w) + f.xyz * f.w;
