@@ -82,7 +82,7 @@ fn shape_c_at_its_peak_fills_at_most_half_of_any_map() {
 /// The default mould is shape C, under the keys the command line gave.
 #[test]
 fn the_default_is_shape_c_under_given_keys() {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false };
     default_shape(&mut args);
     assert_eq!(args.walkers, 25_000);
     let mut s = race_settings(1, 2, args.walkers);
@@ -101,7 +101,7 @@ fn the_default_is_shape_c_under_given_keys() {
 #[test]
 fn the_window_plays_the_real_game() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, (640, 400), &device, &queue).unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false }, (640, 400), &device, &queue).unwrap();
     let step = 1.0 / 15.0;
     // Shots fly as bullets (11-13): a tracer for every leg flown, and
     // the legs that were firings are the shots.
@@ -143,7 +143,7 @@ fn the_window_plays_the_real_game() {
 #[test]
 fn the_window_uses_the_tools() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, (320, 200), &device, &queue).unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false }, (320, 200), &device, &queue).unwrap();
     for _ in 0..10 {
         app.step(1.0 / 15.0);
     }
@@ -174,7 +174,7 @@ fn the_window_uses_the_tools() {
 #[test]
 fn a_mission_shows_its_goal_and_its_end() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, (640, 400), &device, &queue).unwrap();
+    let mut app = offscreen(Args { map: None, seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: Some("1-landfall".into()), crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false }, (640, 400), &device, &queue).unwrap();
     assert_eq!(app.name, "flats");
     assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
     app.prepare();
@@ -217,7 +217,7 @@ fn smoke_gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
 /// 256 x 160 dish, 1,250 walkers): 5-9 s a round on software Vulkan,
 /// against 20-24 s at scale 2 (2026-11-12).
 fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
-    let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
+    let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false };
     let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast, passes: 0, settle: false, squad1: false, spread: true, view: None };
     let t0 = Instant::now();
     let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
@@ -271,11 +271,11 @@ fn the_window_takes_every_command() {
 #[test]
 fn the_window_plays_the_players_own_mould() {
     let Some((device, queue)) = smoke_gpu() else { return };
-    let args = Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
+    let args = Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false };
     let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true, view: None };
     let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("own=1: {e}"));
     assert!(last.contains("t "), "{last}");
-    let app = offscreen(Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, (320, 200), &device, &queue).unwrap();
+    let app = offscreen(Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false }, (320, 200), &device, &queue).unwrap();
     let g = app.game.as_ref().unwrap();
     assert_eq!(g.world.counts_by_side(), (625, 625));
     assert_eq!(g.mould, 625, "the game's mould is the enemy's");
@@ -287,7 +287,7 @@ fn the_window_plays_the_players_own_mould() {
 #[test]
 fn a_shot_from_a_soldier_with_no_note_yet_draws() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, (320, 200), &device, &queue).unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false }, (320, 200), &device, &queue).unwrap();
     let g = app.game.as_mut().unwrap();
     let s = *g.soldiers.last().unwrap();
     g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0, by: Some(g.soldiers.len() - 1), fired: true }];
@@ -302,7 +302,7 @@ fn a_shot_from_a_soldier_with_no_note_yet_draws() {
 #[test]
 fn the_menu_plays_the_command_lines_rounds() {
     use slime_mould::world::start::StartEvent;
-    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
+    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false };
     let mut cli = bare.clone();
     default_shape(&mut cli);
     let mut menu = start_menu(&bare);
@@ -370,7 +370,7 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
 fn the_opening_camera_frames_the_larder_above_the_bottom_panels() {
     let Some((device, queue)) = gpu() else { return };
     for screen in [(1280, 800), (1920, 1080)] {
-        let app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, screen, &device, &queue).unwrap();
+        let app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false }, screen, &device, &queue).unwrap();
         let g = app.game.as_ref().unwrap();
         let (top, bottom) = Hud::insets(screen, app.canvas.as_ref().unwrap().ui);
         let y = app.camera.to_screen(g.larder).1;
@@ -386,7 +386,7 @@ fn the_opening_camera_frames_the_larder_above_the_bottom_panels() {
 fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     use slime_mould::world::start::Page;
     let Some((device, queue)) = gpu() else { return };
-    let base = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
+    let base = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false };
     let mut app = offscreen(base.clone(), (640, 400), &device, &queue).unwrap();
     app.base = Some((base.clone(), true));
     app.menu = Some(start_menu(&base));
@@ -416,7 +416,7 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
 #[test]
 fn the_squad_panel_splits_switches_and_combines() {
     let Some((device, queue)) = gpu() else { return };
-    let args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: true };
+    let args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: true, run: None, dev: false };
     let mut app = offscreen(args, (1280, 720), &device, &queue).unwrap();
     let rows = |app: &App| app.model(None, None).squads.expect("a squad panel in squad mode").rows;
     let r = rows(&app);
@@ -460,7 +460,7 @@ fn the_squad_panel_splits_switches_and_combines() {
 }
 
 fn squad_args(squads: bool) -> Args {
-    Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads }
+    Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads, run: None, dev: false }
 }
 
 /// **A step a command finishes keeps its shots** (bug sweep, 2026-11-14,
@@ -672,7 +672,7 @@ fn the_minimap_sends_the_squad_where_it_shows() {
 #[test]
 fn a_turret_faces_its_shot_and_its_lamp_is_the_game_state() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, (320, 200), &device, &queue).unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false }, (320, 200), &device, &queue).unwrap();
     let g = app.game.as_mut().unwrap();
     let at = (g.larder.0 + 6.0, g.larder.1);
     g.bank += g.build_price(Kind::Turret, at);
@@ -706,7 +706,7 @@ fn a_turret_faces_its_shot_and_its_lamp_is_the_game_state() {
 #[test]
 fn a_step_shows_a_siren_call_a_bank_at_an_outpost_and_a_bite() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, (320, 200), &device, &queue).unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false }, (320, 200), &device, &queue).unwrap();
     let g = app.game.as_mut().unwrap();
     let home = g.larder;
     let mut stand = |kind: Kind, at: (f32, f32)| {
@@ -742,6 +742,107 @@ fn a_step_shows_a_siren_call_a_bank_at_an_outpost_and_a_bite() {
     app.game.as_mut().unwrap().soldiers[0].hp -= 0.6 * FLINCH_HP;
     step_notes(app.game.as_ref().unwrap(), &mut app.blooks, &mut app.looks, &mut banked);
     assert!(app.looks[0].flinch == FLINCH && app.looks[0].bite.abs() < 1e-4, "flinch {} from {}", app.looks[0].flinch, app.looks[0].bite);
+}
+
+fn run_base() -> Args {
+    Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false }
+}
+
+/// A run's level plays as a mission would: the tier's own mould (no shape
+/// C keys), no sandbox map, the level's seed and walkers, and the run; the
+/// sandbox after it is no run.
+#[test]
+fn the_menu_starts_a_runs_level_like_a_mission() {
+    use slime_mould::world::start::StartEvent;
+    let base = run_base();
+    let menu = start_menu(&base);
+    let mut r = Run::new(9);
+    r.depth = 3;
+    let a = run_args(&base, &menu, &r);
+    let l = r.level();
+    assert_eq!((a.map.as_deref(), a.mission.as_deref(), a.own, a.seed, a.keys.len()), (None, None, false, l.seed, 0));
+    assert_eq!(a.walkers, (1250.0 * l.walkers).round() as usize);
+    assert_eq!(a.run.as_ref().map(|r| r.depth), Some(3));
+    let mut cli = base.clone();
+    cli.run = Some(r);
+    assert!(round_args(&cli, false, &menu, &StartEvent::Sandbox).run.is_none(), "the sandbox is not a run");
+    // The shop page shows what the run sells, by group.
+    let shop = shop_of(&Run::new(1));
+    assert!(shop.heading.starts_with("Planet 1 of 8"), "{}", shop.heading);
+    assert!(shop.rows.iter().any(|row| row.group == "Buildings" && row.name == "Turrets"));
+}
+
+/// **A run in the window** (needs a GPU; the cloud's software Vulkan runs
+/// it): planet 1 is Flats with the Drifter and its goal, locked buildings
+/// show locked, a won level carries on to the shop with its points, a
+/// buy and the next planet land on planet 2 with the upgrade in its rules,
+/// and a lost level ends the run on the main menu.
+#[test]
+fn a_run_plays_a_planet_then_the_shop_then_the_next() {
+    use slime_mould::mould::campaign::{Cause, Verdict};
+    use slime_mould::mould::run::{reward, ITEMS};
+    use slime_mould::world::start::{Page, StartEvent};
+    let Some((device, queue)) = gpu() else { return };
+    let base = run_base();
+    let mut a = base.clone();
+    a.run = Some(Run::new(1));
+    let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
+    app.base = Some((base.clone(), true));
+    // Planet 1 of the run's seed, the level generator's (#277).
+    assert_eq!(app.name, "planet:1:1");
+    app.prepare();
+    let m = app.model(None, None);
+    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Beat the slime")), "{:?}", m.objective);
+    // Turrets are on the build page; walls are owned from the start.
+    let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
+    assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
+    app.build_page = true;
+    let m = app.model(None, None);
+    let turret = m.commands.iter().find(|c| c.id == TURRET).unwrap();
+    assert!(!turret.ready && turret.why_not.as_deref().is_some_and(|w| w.starts_with("Locked")));
+    app.build_page = false;
+    // A won level: the end screen carries on to the shop.
+    let win = Verdict { cause: Cause::Goal, at: 300.0, stars: 2, best: 1.0 };
+    app.mission.as_mut().unwrap().verdict = Some(win);
+    let m = app.model(None, None);
+    assert_eq!(m.carry_on.as_deref(), Some("On to the shop"));
+    app.carry_on().unwrap();
+    assert!(app.in_menu());
+    let menu = app.menu.as_ref().unwrap();
+    assert_eq!(menu.page, Page::Shop);
+    assert!(menu.run_live);
+    assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points)), Some((2, reward(1, 2))));
+    // Buy armour, then land.
+    let hp = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == ITEMS[0].name).unwrap();
+    app.menu_event(StartEvent::Buy(hp)).unwrap();
+    assert_eq!(app.run.as_ref().unwrap().level_of("hp"), 1);
+    app.menu_event(StartEvent::NextLevel).unwrap();
+    assert!(!app.in_menu());
+    assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));
+    assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
+    assert_eq!(app.name, "planet:2:1");
+    // A lost level ends the run.
+    app.mission.as_mut().unwrap().verdict = Some(Verdict { stars: 0, cause: Cause::SquadWiped, ..win });
+    assert_eq!(app.model(None, None).carry_on.as_deref(), Some("End the run"));
+    app.carry_on().unwrap();
+    let menu = app.menu.as_ref().unwrap();
+    assert!(app.run.is_none() && !menu.run_live && menu.page == Page::Main);
+    assert!(menu.notice.as_deref().is_some_and(|n| n.starts_with("The run ended on planet 2")), "{:?}", menu.notice);
+}
+
+/// **A run's level does not panic the window's loop** (the smoke test's
+/// pattern): planet 3, every command pressed every game second, its
+/// locked ones too, for 60 game seconds.
+#[test]
+fn the_window_plays_a_runs_planet() {
+    let Some((device, queue)) = smoke_gpu() else { return };
+    let mut args = run_base();
+    let mut r = Run::new(4);
+    r.depth = 3;
+    args.run = Some(r);
+    let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true, view: None };
+    let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("run: {e}"));
+    assert!(last.contains("t "), "{last}");
 }
 
 /// Every test loadout H cycles fits a default gun's budget (owner's card,

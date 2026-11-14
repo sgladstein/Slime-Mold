@@ -76,6 +76,7 @@ pub mod plans;
 pub mod play;
 pub mod render;
 pub mod rounds;
+pub mod run;
 pub mod skirmish;
 pub mod squad;
 pub mod tiers;
