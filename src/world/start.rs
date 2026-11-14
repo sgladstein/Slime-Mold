@@ -123,12 +123,15 @@ pub struct ShopRow {
     pub bars: Vec<(String, f32, String)>,
     /// A card's budget cost, as pips.
     pub cost: u32,
+    /// A rolled bullet's set (slug, needle, buckshot), as a glyph in the
+    /// card's corner, as the HUD's loadout strip badges it.
+    pub badge: Option<Icon>,
 }
 
 impl ShopRow {
     /// A row with the plain look; the game sets the rest.
     pub fn new(group: &str, area: ShopArea, icon: Icon, name: &str) -> Self {
-        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0 }
+        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None }
     }
 }
 
@@ -949,6 +952,10 @@ impl StartMenu {
         c.rrect(Rect::new(r.x + 6.0 * s, r.y + 5.0 * s, r.w - 12.0 * s, 4.0 * s), 2.0 * s, with_alpha(row.tint, 0.9 * dim));
         let ic = 28.0 * s;
         c.icon(row.icon, (r.x + (r.w - ic) / 2.0, r.y + 18.0 * s), ic, with_alpha(row.tint, dim));
+        if let Some(b) = row.badge {
+            let bs = 14.0 * s;
+            c.icon(b, (r.right() - bs - 5.0 * s, r.y + 13.0 * s), bs, with_alpha(TEXT, 0.85 * dim.max(0.6)));
+        }
         c.text_fit(Weight::SemiBold, 11.0 * s, (r.x + r.w / 2.0, r.y + 62.0 * s), Align::Centre, &row.name, r.w - 8.0 * s, with_alpha(TEXT, dim.max(0.6)));
         let d = 5.0 * s;
         for k in 0..row.cost.min(6) {
