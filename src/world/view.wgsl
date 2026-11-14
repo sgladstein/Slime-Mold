@@ -574,7 +574,13 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     let body_c = mix(vivid * shade_th, DENSE_RGB * shade_th, dense * (1.0 - cut));
     let gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
     let film = 1.0 - exp(-14.0 * th);
-    let opaque = smoothstep(0.08, 0.55, th);
+    // Opaque from a third of full thickness (was 0.08 to 0.55). The fork's
+    // start crystal stands on a disc of clay; the body over it was only
+    // about half opaque, so the clay showed through as a flat orange-red
+    // disc with the map patch's own edge (art director, 11-14, via the
+    // crystals thread). The ground now shows through the frontier's thin
+    // film only, where its thickness grades it.
+    let opaque = smoothstep(0.05, 0.35, th);
     m.albedo = mix(mix(soil, gel, film), body_c, opaque * 0.95);
     m.glow = vec3<f32>(0.0);
     m.gloss = mix((0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut), 0.95, dense * (1.0 - cut));

@@ -54,3 +54,12 @@ darkest pixel within 1.5 cells of a lone walker: 60.5 against bare ground
 Cost (llvmpipe, `bench=20 hand=farm seed=1`, 1280 x 800, builds
 alternated): frame p50 main 59.2 and 64.6 ms, now 58.4 and 60.6 ms, within
 the machine's noise. 1070 timing waits for the PC.
+
+## Follow-up: the clay disc (2026-11-14, art director via the crystals thread)
+
+A soft orange-red disc round the fork's start crystal was the map's clay
+patch (ground bits 4-6 = 2) showing through a body only about half opaque:
+`opaque` ran from 0.08 to 0.55 of thickness. It now runs from 0.05 to 0.35,
+so the ground shows only through the frontier's thin film. Zoom 6, 0:40,
+idle hand: green/red inside against outside 0.59 / 0.67 before, 0.61 / 0.66
+now. Ruled out with debug builds: walker news, specks, the engine colour.
