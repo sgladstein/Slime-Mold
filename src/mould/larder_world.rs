@@ -402,6 +402,7 @@ impl<W: World> Game<W> {
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
         g.solid = g.solid_now();
+        g.keep_panic_reach();
         for k in 0..rules.squad {
             let a = k as f32 / rules.squad.max(1) as f32 * std::f32::consts::TAU;
             g.add_soldier(a);
