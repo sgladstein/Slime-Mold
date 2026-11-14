@@ -1,0 +1,22 @@
+start 19:09:50Z free KB 2707548 gpu 4,6,4,3,4 % C free GB 52
+fetch exit=0
+worktree add exit=0
+head=f4c140a9d42c7389900fc317ec5e30c6f5b37273
+build exit=0 19:11:49Z free KB 3061064
+run 1 (bench=30 seed=1 map=planet:3:1) start 19:11:54Z gpu 3,3,3,3,4 % card 139 MHz, 405 MHz, 32, 9.41 W free KB 3055756 edge 0
+run 1 exit=0 19:12:03Z
+run 2 (bench=30 seed=1 map=planet:5:1:2) start 19:12:09Z gpu 1,1,1,1,1 % card 1987 MHz, 4006 MHz, 35, 43.98 W free KB 3011788 edge 0
+run 2 exit=0 19:12:16Z
+run 3 (bench=30 seed=1 map=planet:7:1:4) start 19:12:21Z gpu 1,1,1,1,1 % card 1974 MHz, 4006 MHz, 37, 43.51 W free KB 3001712 edge 0
+run 3 exit=0 19:12:30Z
+run 4 (bench=30 seed=1 map=planet:8:1:6) start 19:12:35Z gpu 1,1,1,1,1 % card 1974 MHz, 4006 MHz, 39, 43.84 W free KB 3007528 edge 0
+run 4 exit=0 19:12:56Z
+run 5 (bench=30 seed=1 spread=0 map=planet:3:1) start 19:13:02Z gpu 1,1,1,1,1 % card 1974 MHz, 4006 MHz, 41, 43.84 W free KB 2854124 edge 0
+run 5 exit=0 19:13:08Z
+run 6 (bench=30 seed=1 spread=0 map=planet:5:1:2) start 19:13:13Z gpu 1,1,1,1,1 % card 1974 MHz, 4006 MHz, 42, 44.72 W free KB 2870728 edge 0
+run 6 exit=0 19:13:20Z
+run 7 (bench=30 seed=1 spread=0 map=planet:7:1:4) start 19:13:26Z gpu 1,1,1,1,1 % card 1974 MHz, 4006 MHz, 44, 45.05 W free KB 2871920 edge 0
+run 7 exit=0 19:13:34Z
+run 8 (bench=30 seed=1 spread=0 map=planet:8:1:6) start 19:13:39Z gpu 1,1,1,1,1 % card 1012 MHz, 3802 MHz, 44, 29.13 W free KB 2880008 edge 0
+run 8 exit=0 19:14:01Z
+ALL DONE 19:14:01Z

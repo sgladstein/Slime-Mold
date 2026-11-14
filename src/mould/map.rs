@@ -350,7 +350,7 @@ pub fn river(ford: bool, bridge: bool) -> Map {
         landing: Some((300.0, 500.0)),
         walls: Vec::new(),
     };
-    Map { w: MAP_W, h: MAP_H, ground, items }
+    Map { w: MAP_W, h: MAP_H, ground, plants: Vec::new(), items }
 }
 
 #[cfg(test)]
