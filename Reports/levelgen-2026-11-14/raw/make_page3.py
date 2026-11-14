@@ -127,6 +127,17 @@ sheet = """<section class=band id=sheet>
   <div class=sheets><figure><img src="sheet/sheet.png" alt="Planets 1-8, seeds 1-3, false colour" loading="lazy"><figcaption>False colour</figcaption></figure><figure><img src="sheet/sheet-grey.png" alt="The same, grey" loading="lazy"><figcaption>The same, grey</figcaption></figure></div>
 </section>"""
 
+# The grey thumbnail test in the game (graphics lead): seed 1 of each planet
+# at 1 s, before and after the terrain thread's soil materials (#281, #286),
+# from PAGE/grey/ (the sheets are made by the step in the report, *Seen*).
+if (page / "grey" / "sheet-after.png").exists():
+    sheet += """<section class=band id=grey>
+  <h2>In the game, in grey</h2>
+  <p class=lede>The art direction's test: each biome recognisable from a small grey thumbnail. Seed 1 of planets 1-8 at one second, in the game, 266 x 164 each: first as filmed for this page, then with the terrain thread's new soil materials (sand ripples, cracked clay, ash on barren), which reached main as this page was made.</p>
+  <div class=sheets><figure><img src="grey/sheet-before.png" alt="Seed 1 of planets 1-8 in grey, before the soil materials" loading="lazy"><figcaption>Round 3, before the soil materials</figcaption></figure><figure><img src="grey/sheet-after.png" alt="The same with the soil materials" loading="lazy"><figcaption>Round 3 with the soil materials</figcaption></figure></div>
+  <figure class=wide><img src="grey/sheet-after-colour.png" alt="The same in colour" loading="lazy"><figcaption>The same in colour. Rows: planets 1-4, then 5-8.</figcaption></figure>
+</section>"""
+
 nav = "".join(f'<a href="#planet-{d}"><span>{d}</span>{b}</a>' for d, (b, _, _) in enumerate(BIOMES, start=1))
 
 CSS_TEXT = """<style>
@@ -185,6 +196,9 @@ th { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 
 .greys figure, .sheets figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
 .greys img, .sheets img { width: 100%; height: auto; display: block; border-radius: 3px; }
 .greys figcaption, .sheets figcaption { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.wide { margin: 0; display: grid; gap: 4px; }
+.wide img { width: 100%; height: auto; display: block; border-radius: 3px; }
+.wide figcaption { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .sheets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 20px; }
 ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 72ch; }
 .dials { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; max-width: none; }
