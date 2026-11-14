@@ -56,9 +56,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 r.pick(slime_mould::mould::run::Pick::Gun(1));
                 // A fresh offer, one more card (the gun is full: it goes
                 // in the bag), and a fresh offer again.
-                r.restock();
+                // Fresh draws (dev mode's redraw, so they differ).
+                let reroll = |r: &mut Run| {
+                    let dev = std::mem::replace(&mut r.dev, true);
+                    r.pick(slime_mould::mould::run::Pick::DevReroll);
+                    r.dev = dev;
+                };
+                reroll(&mut r);
                 r.pick(slime_mould::mould::run::Pick::Offer(0));
-                r.restock();
+                reroll(&mut r);
                 for p in [r.shop().iter().find(|x| x.name == "Armour").map(|x| x.pick), r.shop().iter().find(|x| x.name == "Turrets").map(|x| x.pick)].into_iter().flatten() {
                     r.pick(p);
                 }

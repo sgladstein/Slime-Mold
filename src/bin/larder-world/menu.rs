@@ -228,6 +228,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     s.tint = kind.colour(draw::payload_colour(c));
                     s.cost = c.cost();
                     s.about = format!("{}, budget {}. {}", kind.label(), c.cost(), row.about.replacen(c.about(), &words, 1));
+                    if let rounds::Card::Ammo(a) = c {
+                        // A rolled bullet: its set as a badge, its numbers.
+                        s.badge = Some(draw::ammo_icon(a.set));
+                        s.about = format!("{}: {}. {}", a.title(), a.line(), row.about.replacen(c.about(), &words, 1));
+                    }
                 }
                 Face::Gun(g) => {
                     s.icon = draw::gun_icon(g.kind);

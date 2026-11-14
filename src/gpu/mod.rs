@@ -66,8 +66,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (228 words).
-pub const PARAMS_BYTES: usize = 928;
+/// Bytes in `Params` (232 words).
+pub const PARAMS_BYTES: usize = 944;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -85,6 +85,10 @@ pub const LONE_AT: usize = 880;
 pub const FLING_AT: usize = 896;
 /// The breakaway row (`BigParams::roam`, 11-14).
 pub const ROAM_AT: usize = 912;
+/// The ground row (new ground kinds, 11-14; Params grew from 928 to 944):
+/// deep water's step (`BigParams::deep_step`), then three words kept for
+/// the next ground kinds.
+pub const GROUND_AT: usize = 928;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
@@ -1942,6 +1946,8 @@ impl Engine {
         let land = (crate::mould::big::ROAM_LAND * sc).floor() as u32;
         b.extend(u32_bytes(&[roam, far, land]));
         b.extend(f32_bytes(&[s.roam_share]));
+        assert_eq!(b.len(), GROUND_AT, "Params rows before the ground row moved");
+        b.extend(f32_bytes(&[t.deep_step, 0.0, 0.0, 0.0]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food

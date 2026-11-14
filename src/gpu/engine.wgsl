@@ -158,6 +158,11 @@ struct Params {
     // off), how far its crystal must be and how near it lands, in whole
     // fine cells, and the share of choices sent.
     roam: u32, roam_far: u32, roam_land: u32, roam_share: f32,
+    // The ground row (new ground kinds, 11-14; Params grew from 928 to
+    // 944): a walker's step in deep water is x `deep_step` on top of
+    // `wet_step` (`BigParams::deep_step`). Three words kept for the next
+    // ground kinds.
+    deep_step: f32, _g1: f32, _g2: f32, _g3: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -459,6 +464,8 @@ fn enemy_occ(i: u32) -> u32 {
 const SOIL_SAND: u32 = 1u;
 const SOIL_CLAY: u32 = 2u;
 const SOIL_BARREN: u32 = 3u;
+// Deep water (big.rs `SOIL_DEEP`): a slow step, no births.
+const SOIL_DEEP: u32 = 4u;
 fn soil(i: u32) -> u32 {
     if (!world(SOIL)) { return 0u; }
     return (ground[i] >> 12u) & 15u;
@@ -719,6 +726,8 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Wet ground and rubble: a shorter step (`wet_step`), where the CPU
     // takes it, after the size and before the trail-set settings.
     if (world(WETS) && (ground[here] & WET) != 0u) { st *= P.wet_step; }
+    // Deep water: x `deep_step` more, after the wet step as on the CPU.
+    if (soil(here) == SOIL_DEEP) { st *= P.deep_step; }
     if (P.ss > 0.0) {
         let v = min(trail_in[here] * P.ss, 1.0);
         so = so + P.om_a * pow0(v, P.om_e);
@@ -1135,8 +1144,8 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     // The parent's species' crowd limit, + `fed_crowd` if it is fed
     // (`crowd_for`).
     let cr = crowd_for(k, species_of(k));
-    // No child lands on barren ground (WM3).
-    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN) { return; }
+    // No child lands on barren ground (WM3) or in deep water.
+    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP) { return; }
     if (cr > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }
     icell[k] = j;
 }
