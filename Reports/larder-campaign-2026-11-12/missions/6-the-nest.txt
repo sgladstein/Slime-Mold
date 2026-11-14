@@ -1,7 +1,14 @@
+# Mission 6: the Sleeper in its walled nest. Seed-1 probes (2026-11-14): with rations
+# on every hand was stuck out of food by 3:02-7:44 (the Nest's outer crystals hold 160-192),
+# and the best cut was to 0.38 of the peak, so rations are off and the goal is half.
+# Census v13 (seeds 1-4, CPU): a strike from 2:00 with eight (strike:strike_at=120+
+# strike_army=8+buy_to=12) wins 4/4 at 5:07-9:29; with turrets by the farmed crystals
+# (guard+strike) 3/4 at 4:44-5:35; boom 0/4 (best 0.25), idle 0/4 (0.24), random 0/4.
 name The nest
-says Break the nest: cut the Sleeper to a third of its size
+says Break the nest: cut the Sleeper to half its size
 map nest
 tier sleeper
 verbs move harvest buy stance fire wall cut turret strike
+rule ration 0
 bonus lose 4
-goal shrink 0.33
+goal shrink 0.5

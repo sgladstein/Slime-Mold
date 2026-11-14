@@ -76,8 +76,12 @@ pub enum Goal {
     /// counted from the start `shrink 0.5` was met by every hand, idle
     /// included, at 0:20 (census v11).
     Shrink(f32),
-    /// The squad's share of the charge taken reaches `frac` (mission 8).
-    Take(f32),
+    /// The squad's share of the charge taken reaches `frac` (mission 8),
+    /// held for `secs` game seconds in a row (`goal take F SECS`; 0, or
+    /// `goal take F`, is met the second it is reached). The hold came with
+    /// Spore season (2026-11-14): a share met at once was met at 0:41-0:51
+    /// by every hand that farmed, before the Sporer had spread.
+    Take(f32, f32),
 }
 
 /// A bonus that earns the third star (never a time: the design review,
@@ -160,7 +164,8 @@ impl Mission {
                         ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: 0 },
                         ("contain", [x0, y0, x1, y1, secs, leak, body]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: *body as u32 },
                         ("shrink", [f]) => Goal::Shrink(*f),
-                        ("take", [f]) => Goal::Take(*f),
+                        ("take", [f]) => Goal::Take(*f, 0.0),
+                        ("take", [f, secs]) => Goal::Take(*f, *secs),
                         _ => return Err(err(format!("bad goal `{rest}`"))),
                     });
                 }
@@ -253,6 +258,9 @@ pub const GUARD: f32 = 5.0;
 pub const RESERVE: f32 = 20.0;
 /// `shrink`: game seconds before the peak starts counting (`Goal::Shrink`).
 pub const SHRINK_FROM: f32 = 60.0;
+/// `take`: the share of the map's starting charge that must be gone (eaten
+/// or harvested) before the bar counts (`Goal::Take`).
+pub const TAKE_FROM: f32 = 0.1;
 pub const TWO_STARS: f32 = 720.0;
 /// The arc's phase edges, game seconds (landing, contact, pressure, climax).
 pub const PHASES: [f32; 3] = [120.0, 360.0, 660.0];
@@ -325,6 +333,8 @@ pub struct Tracker {
     pub longest_stall: u32,
     /// Walkers each game second, for "shrinking over 30 s".
     moulds: Vec<usize>,
+    /// The map's charge at the start (`take`'s floor).
+    start_charge: f32,
     held: f32,
     /// Crystals the mould has been on (for `retake`).
     touched: Vec<bool>,
@@ -399,6 +409,7 @@ impl Tracker {
             peak: 0,
             lost: 0,
             last: snap(g, 0.0),
+            start_charge: g.world.crystals().iter().map(|c| c.1).sum(),
         }
     }
 
@@ -433,7 +444,25 @@ impl Tracker {
             }
             // From an even share: `take_share` is 0.5 before any charge is
             // gone, which as share / f showed 83% of a 60% goal at 0:00.
-            Goal::Take(f) => Some(((g.take_share() - 0.5) / (f - 0.5).max(1e-3)).clamp(0.0, 1.0)),
+            // ... and only once `TAKE_FROM` of the map's charge is gone: the
+            // first crystal a squad harvests is 100% of a charge nobody else
+            // has touched, so Spore season (`take 0.3`, 2026-11-14) was met
+            // at 0:02 by every hand that farmed (seed 1).
+            Goal::Take(f, secs) => {
+                let left: f32 = g.world.crystals().iter().map(|c| c.1).sum();
+                if self.start_charge - left < TAKE_FROM * self.start_charge {
+                    self.held = 0.0;
+                    return Some(0.0);
+                }
+                let share = ((g.take_share() - 0.5) / (f - 0.5).max(1e-3)).clamp(0.0, 1.0);
+                if *secs <= 0.0 {
+                    return Some(share);
+                }
+                // Held: the bar is the seconds held while the share is met,
+                // and half the share's progress toward it while it is not.
+                self.held = if share >= 1.0 { self.held + dt } else { 0.0 };
+                Some(if share >= 1.0 { 0.5 + 0.5 * (self.held / secs).min(1.0) } else { 0.5 * share })
+            }
             Goal::Clear { crystals, need, secs, retake, guard } => {
                 let grid = grid?;
                 let cs = g.world.crystals();
@@ -714,6 +743,8 @@ mod tests {
         assert!(matches!(c.goal, Goal::Contain { body: 16, .. }));
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60")).is_err(), "contain needs its leak");
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 3 60 1 2")).is_err());
+        assert_eq!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal take 0.6")).unwrap().goal, Goal::Take(0.6, 0.0));
+        assert_eq!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal take 0.6 300")).unwrap().goal, Goal::Take(0.6, 300.0));
     }
 
     #[test]
@@ -910,6 +941,36 @@ mod tests {
         assert_eq!(tr.best, 0.0);
     }
 
+    /// A held take goal is not met while the share is only reached: a
+    /// farming squad leads the charge race at once (Spore season's `take
+    /// 0.6` was met at 0:41-0:51 by every farming hand), but `take 0.6 300`
+    /// needs five minutes of it, and nothing counts before `TAKE_FROM` of
+    /// the map's charge is gone.
+    #[test]
+    fn a_held_take_waits() {
+        use crate::mould::larder_world_ai::Hand;
+        let mut g = small(Rules::default());
+        let start: f32 = g.world.crystals().iter().map(|c| c.1).sum();
+        let mut tr = Tracker::new(mission("goal take 0.6 300"), &g);
+        let mut ai = Hand::named("boom", &g).unwrap();
+        let tps = g.rules.tps as u64;
+        while g.time() < 90.0 {
+            ai.play(&mut g);
+            let s = g.world.ticks() / tps;
+            while g.world.ticks() / tps == s && g.end.is_none() {
+                g.step();
+            }
+            let grid = g.world.mould_grid(BIN);
+            let v = tr.second(&g, grid.as_deref(), 1.0);
+            assert!(v.is_none(), "met at {v:?}");
+            let left: f32 = g.world.crystals().iter().map(|c| c.1).sum();
+            if start - left < TAKE_FROM * start {
+                assert_eq!(tr.bar, Some(0.0), "the bar counts before a tenth is gone");
+            }
+        }
+        assert!(tr.best <= 0.75, "a minute and a half is at most 0.5 + 0.5 x 90 / 300: {}", tr.best);
+    }
+
     /// A squad that has no food and pays for shots is stuck: after 30 s the
     /// mission ends on Stuck (the owner's playtest, 04:13Z).
     #[test]
@@ -1013,6 +1074,61 @@ mod tests {
         assert!(open.1 * 300.0 < 120.0, "The gaps without walls held: best {}", open.1);
     }
 
+
+    /// **Missions 4-7's plans still win** (2026-11-14, cloud plan C3: each
+    /// mission has two winning plans in census v13, seeds 1-4,
+    /// `Reports/larder-campaign-2026-11-12.md`): one plan a mission on seed
+    /// 1, its census time quoted, with a building or cutting plan from
+    /// `mould::plans` where the mission's verb has one. `#[ignore]`d with
+    /// the other full one (rounds of 7:00-9:00, four side by side):
+    /// `cargo test --release -- --ignored plans_still_win`.
+    #[test]
+    #[ignore]
+    fn missions_4_to_7_plans_still_win() {
+        use crate::mould::big::BigDish;
+        use crate::mould::larder_world::race_params;
+        use crate::mould::larder_world_ai::{Hand, Style};
+        use crate::mould::map::Map;
+        use crate::mould::plans;
+        use crate::mould::tiers::Tier;
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let play = |name: &str, plan: &str, style: &str, secs: f32| -> Option<Verdict> {
+            let m = Mission::parse(&std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"))).unwrap()).unwrap();
+            let map = Map::load(&root.join("Reports/larder-maps-2026-11-11/maps"), &m.map).unwrap();
+            let mut p = race_params(1, 2, 5000);
+            if let Some(t) = m.tier.as_deref().and_then(Tier::from_name) {
+                t.apply(&mut p);
+            }
+            let mut g = Game::new(BigDish::with_map(p, &map), m.rules(Rules::default()), 1);
+            let mut tr = Tracker::new(m, &g);
+            let mut ai = Hand::named(style, &g).unwrap();
+            let reserve = Style::named(style).unwrap().reserve;
+            let plan = plans::named(plan);
+            follow(&mut g, &mut tr, secs, |g| {
+                ai.play(g);
+                if let Some(p) = plan {
+                    p.play(g, reserve);
+                }
+            })
+        };
+        let rounds = std::thread::scope(|sc| {
+            let play = &play;
+            [
+                // Census v13 seed 1: Goal at 4:44.
+                sc.spawn(move || ("Cut the cord, cut+strike", play("4-cut-the-cord", "cut", "strike:strike_at=180+strike_army=10+buy_to=14", 420.0))),
+                // 5:28.
+                sc.spawn(move || ("Kill zone, zone+claim", play("5-kill-zone", "zone", "claim:claim_at=120+buy_to=10", 480.0))),
+                // 6:16.
+                sc.spawn(move || ("The nest, strike", play("6-the-nest", "", "strike:strike_at=120+strike_army=8+buy_to=12", 540.0))),
+                // 5:47 (turrets by the farmed crystals; plain boom 5:50).
+                sc.spawn(move || ("Spore season, guard+boom", play("7-spore-season", "guard", "boom:buy_to=8", 420.0))),
+            ]
+            .map(|h| h.join().unwrap())
+        });
+        for (what, v) in rounds {
+            assert!(v.is_some_and(|v| v.cause == Cause::Goal), "{what}: {v:?}");
+        }
+    }
 
     /// The quick CI check (11.8 s on 4 cores; seed 1, measured
     /// 2026-11-12: walls standing by 0:50, bar 0.23 at 2:20 with no thick

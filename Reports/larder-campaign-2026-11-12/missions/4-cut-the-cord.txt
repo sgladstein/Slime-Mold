@@ -1,3 +1,11 @@
+# Mission 4: the Trunk on the Fork, the mission that teaches rations (the design review:
+# rations stay on here, so a squad must be fed while it fights). Census v13 (2026-11-14,
+# seeds 1-4, CPU): a strike from 3:00 with ten (strike:strike_at=180+strike_army=10+buy_to=14)
+# wins 4/4 at 5:27-8:37 and with three cutters burning the cords to each farmed crystal
+# (cut+strike) 4/4 at 4:26-7:53, all 3 stars; boom 0/4 (best 0.07), idle 0/4 (0.08, wiped or
+# stuck 7:31-10:17), random 0/4 (0.61). Farming with cuts alone (cut+boom) never shrank it
+# (seed 1, best 0.08), and the one-body keys (energy_flow 0.05, wither 0.01) made it bigger,
+# so the strike only reached 0.83: the Trunk keeps its keys.
 name Cut the cord
 says Starve the Trunk: cut its cords until it is a fifth of its size
 map fork
