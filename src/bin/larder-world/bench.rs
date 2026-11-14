@@ -154,6 +154,10 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
         (false, false) => "the crowd limit OFF (walkers over half the agar)",
     };
     println!("larder-world bench: {} seed {}, {} x {} cells, {} slots, {crowd}, scale {} walkers {}{keys}; hand {hand}, {:.0} game s at {fps} frames a second, screen {}x{}", app.name, app.args.seed, e.dish.w, e.dish.h, e.n, app.args.scale, app.args.walkers, g.time(), screen.0, screen.1);
+    // Storage buffers made so far, the engine's and the view's (the cell
+    // budget as planets grow: levelgen report, *Bigger planets*).
+    let bytes = slime_mould::gpu::buffer_bytes() as f64;
+    println!("  GPU buffers: {:.1} MB for {} x {} cells ({:.0} bytes a cell), the biggest {:.1} MB", bytes / 1e6, e.dish.w, e.dish.h, bytes / (e.dish.w * e.dish.h) as f64, slime_mould::gpu::biggest_buffer() as f64 / 1e6);
     println!("  {} frames, {} game steps; {:.2} read-backs a step, {:.2} waits a step ({:.2} ms a step waiting); steps finished once in {}, when the next was due {}", rows.len(), steps, (slime_mould::gpu::reads() - reads0) as f64 / steps as f64, g.world.waits as f64 / steps as f64, g.world.wait_ms / steps as f64, app.finished.0, app.finished.1);
     for (only, tag) in [(false, "every frame"), (true, "frames with a step")] {
         println!("  {tag} ({} of them), ms: {}; step {}; prepare {}; record {}; GPU tail {}", rows.iter().filter(|r| !only || r.1).count(), line("frame", 0, only), line("", 1, only), line("", 2, only), line("", 3, only), line("", 4, only));

@@ -25,7 +25,7 @@
 //! **Undo** keeps whole maps (640 KiB each, at most `UNDO` of them): an
 //! action is a stroke or one click, so a handful of steps is a few MiB.
 
-use super::map::{Crystal, Items, Map, Wall, G_ROCK, G_WET, MAP_H, MAP_W};
+use super::map::{Crystal, Map, Wall, G_ROCK, G_WET, MAP_H, MAP_W};
 
 /// Undo steps kept.
 pub const UNDO: usize = 40;
@@ -151,9 +151,9 @@ impl Mirror {
         }
     }
 
-    /// The mirrored point, if the mirror is on.
-    pub fn of(self, p: (f32, f32)) -> Option<(f32, f32)> {
-        let (w, h) = (MAP_W as f32, MAP_H as f32);
+    /// The mirrored point on a map `size` map cells, if the mirror is on.
+    pub fn of(self, p: (f32, f32), size: (usize, usize)) -> Option<(f32, f32)> {
+        let (w, h) = (size.0 as f32, size.1 as f32);
         match self {
             Mirror::Off => None,
             Mirror::X => Some((w - p.0, p.1)),
@@ -182,9 +182,19 @@ impl Editor {
         Editor { map, tool: Tool::Paint(Brush::Sand), radius: 16.0, crystal_r: CRYSTAL_R, charge: CRYSTAL_CHARGE, mirror: Mirror::Off, dirty: false, undo: Vec::new(), redo: Vec::new() }
     }
 
-    /// A blank map: plain open ground, no items.
+    /// A blank map the designed maps' size: plain open ground, no items.
     pub fn blank() -> Map {
-        Map { ground: vec![0; MAP_W * MAP_H], items: Items::default() }
+        Map::blank(MAP_W, MAP_H)
+    }
+
+    /// The map's size, map cells.
+    pub fn map_size(&self) -> (usize, usize) {
+        (self.map.w, self.map.h)
+    }
+
+    /// `p` moved onto the map.
+    fn clamp(&self, p: (f32, f32)) -> (f32, f32) {
+        (p.0.clamp(0.0, self.map.w as f32 - 1.0), p.1.clamp(0.0, self.map.h as f32 - 1.0))
     }
 
     /// Call before each action (a stroke's first stamp, a click): keeps the
@@ -215,7 +225,7 @@ impl Editor {
     /// The point and its mirror image, if any.
     fn both(&self, p: (f32, f32)) -> Vec<(f32, f32)> {
         let mut v = vec![p];
-        v.extend(self.mirror.of(p));
+        v.extend(self.mirror.of(p, self.map_size()));
         v
     }
 
@@ -223,13 +233,14 @@ impl Editor {
     pub fn stamp(&mut self, brush: Brush, p: (f32, f32)) {
         let r = self.radius.max(0.5);
         for (cx, cy) in self.both(p) {
-            let (x0, x1) = (((cx - r).floor().max(0.0)) as usize, ((cx + r).ceil().max(0.0) as usize).min(MAP_W));
-            let (y0, y1) = (((cy - r).floor().max(0.0)) as usize, ((cy + r).ceil().max(0.0) as usize).min(MAP_H));
+            let (mw, mh) = self.map_size();
+            let (x0, x1) = (((cx - r).floor().max(0.0)) as usize, ((cx + r).ceil().max(0.0) as usize).min(mw));
+            let (y0, y1) = (((cy - r).floor().max(0.0)) as usize, ((cy + r).ceil().max(0.0) as usize).min(mh));
             for y in y0..y1 {
                 for x in x0..x1 {
                     let (dx, dy) = (x as f32 + 0.5 - cx, y as f32 + 0.5 - cy);
                     if dx * dx + dy * dy <= r * r {
-                        let g = &mut self.map.ground[y * MAP_W + x];
+                        let g = &mut self.map.ground[y * mw + x];
                         *g = brush.apply(*g);
                     }
                 }
@@ -251,7 +262,7 @@ impl Editor {
     /// The click's item for the item tools (Crystal, Mould, Landing,
     /// Erase); paint and wall tools act through `stroke` and `wall`.
     pub fn click(&mut self, p: (f32, f32)) {
-        let p = clamp(p);
+        let p = self.clamp(p);
         match self.tool {
             Tool::Crystal => {
                 for (x, y) in self.both(p) {
@@ -275,12 +286,12 @@ impl Editor {
 
     /// A wall from `a` to `b` (and its mirror), `WALL_THICK` wide.
     pub fn wall(&mut self, a: (f32, f32), b: (f32, f32)) {
-        let (a, b) = (clamp(a), clamp(b));
+        let (a, b) = (self.clamp(a), self.clamp(b));
         if (b.0 - a.0).hypot(b.1 - a.1) < 1.0 {
             return;
         }
         self.map.items.walls.push(Wall { a, b, thick: WALL_THICK, hp: WALL_HP });
-        if let (Some(ma), Some(mb)) = (self.mirror.of(a), self.mirror.of(b)) {
+        if let (Some(ma), Some(mb)) = (self.mirror.of(a, self.map_size()), self.mirror.of(b, self.map_size())) {
             self.map.items.walls.push(Wall { a: ma, b: mb, thick: WALL_THICK, hp: WALL_HP });
         }
     }
@@ -368,10 +379,10 @@ impl Editor {
 
     /// The G byte under map point `p`, if it is on the map.
     pub fn ground_at(&self, p: (f32, f32)) -> Option<u8> {
-        if p.0 < 0.0 || p.1 < 0.0 || p.0 >= MAP_W as f32 || p.1 >= MAP_H as f32 {
+        if p.0 < 0.0 || p.1 < 0.0 || p.0 >= self.map.w as f32 || p.1 >= self.map.h as f32 {
             return None;
         }
-        Some(self.map.ground[p.1 as usize * MAP_W + p.0 as usize])
+        Some(self.map.ground[p.1 as usize * self.map.w + p.0 as usize])
     }
 
     /// The ground under `p` in words, for the status line.
@@ -392,10 +403,6 @@ impl Editor {
         };
         format!("{soil}{kind}")
     }
-}
-
-fn clamp(p: (f32, f32)) -> (f32, f32) {
-    (p.0.clamp(0.0, MAP_W as f32 - 1.0), p.1.clamp(0.0, MAP_H as f32 - 1.0))
 }
 
 pub fn segment_distance(p: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
@@ -443,10 +450,11 @@ pub struct EditView {
 }
 
 impl EditView {
-    /// The whole map in the rectangle `(x, y, w, h)` of the screen.
-    pub fn fit(rect: (f32, f32, f32, f32)) -> Self {
-        let zoom = (rect.2 / MAP_W as f32).min(rect.3 / MAP_H as f32);
-        let (mw, mh) = (MAP_W as f32 * zoom, MAP_H as f32 * zoom);
+    /// The whole map, `map` map cells, in the rectangle `(x, y, w, h)` of
+    /// the screen.
+    pub fn fit(rect: (f32, f32, f32, f32), map: (usize, usize)) -> Self {
+        let zoom = (rect.2 / map.0 as f32).min(rect.3 / map.1 as f32);
+        let (mw, mh) = (map.0 as f32 * zoom, map.1 as f32 * zoom);
         let sx = rect.0 + (rect.2 - mw) / 2.0;
         let sy = rect.1 + (rect.3 - mh) / 2.0;
         EditView { origin: (-sx / zoom, -sy / zoom), zoom }
@@ -515,7 +523,7 @@ pub fn draw(ed: &Editor, view: &EditView, frame: &mut [u8], size: (u32, u32), o:
         let my = view.origin.1 + (sy as f32 + 0.5) / view.zoom;
         for sx in 0..w {
             let mx = view.origin.0 + (sx as f32 + 0.5) / view.zoom;
-            let c = if mx >= 0.0 && my >= 0.0 && (mx as usize) < MAP_W && (my as usize) < MAP_H { lut[ed.map.ground[my as usize * MAP_W + mx as usize] as usize] } else { [14, 16, 18] };
+            let c = if mx >= 0.0 && my >= 0.0 && (mx as usize) < ed.map.w && (my as usize) < ed.map.h { lut[ed.map.ground[my as usize * ed.map.w + mx as usize] as usize] } else { [14, 16, 18] };
             let i = (sy * w + sx) * 4;
             frame[i..i + 4].copy_from_slice(&[c[0], c[1], c[2], 255]);
         }
@@ -547,12 +555,13 @@ pub fn draw(ed: &Editor, view: &EditView, frame: &mut [u8], size: (u32, u32), o:
     match ed.mirror {
         Mirror::Off => {}
         Mirror::X => {
-            let a = view.to_screen((MAP_W as f32 / 2.0, 0.0));
-            let b = view.to_screen((MAP_W as f32 / 2.0, MAP_H as f32));
+            let (mw, mh) = (ed.map.w as f32, ed.map.h as f32);
+            let a = view.to_screen((mw / 2.0, 0.0));
+            let b = view.to_screen((mw / 2.0, mh));
             line(frame, size, a, b, 0.6, [255, 255, 255, 90]);
         }
         Mirror::Turn => {
-            let c = view.to_screen((MAP_W as f32 / 2.0, MAP_H as f32 / 2.0));
+            let c = view.to_screen((ed.map.w as f32 / 2.0, ed.map.h as f32 / 2.0));
             ring(frame, size, c, 6.0, [255, 255, 255, 140]);
         }
     }
@@ -803,7 +812,7 @@ mod tests {
         assert_eq!(ed.erase((340.0, 300.0)), Some("crystal"));
         assert_eq!(ed.erase((360.0, 300.0)), Some("mould start"));
         assert_eq!(ed.erase((510.0, 250.0)), Some("wall"));
-        assert_eq!(ed.map.items, Items::default());
+        assert_eq!(ed.map.items, crate::mould::map::Items::default());
     }
 
     #[test]
@@ -869,7 +878,7 @@ mod tests {
 
     #[test]
     fn the_view_fits_and_zooms_about_the_cursor() {
-        let v = EditView::fit((300.0, 0.0, 1024.0, 640.0));
+        let v = EditView::fit((300.0, 0.0, 1024.0, 640.0), (MAP_W, MAP_H));
         assert_eq!(v.to_screen((0.0, 0.0)), (300.0, 0.0));
         assert_eq!(v.to_map((300.0 + 512.0, 320.0)), (512.0, 320.0));
         let mut v = v;
