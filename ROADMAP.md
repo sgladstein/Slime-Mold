@@ -38,6 +38,8 @@ is done.
 
 ### Now: the Larder World game (11-12)
 
+While the owner can't playtest and the 1070 is busy (11-14), the work to run in the cloud, what waits, and the picks the reviewers settle are in [`Reports/cloud-plan-2026-11-14.md`](Reports/cloud-plan-2026-11-14.md).
+
 Every row edits or reads the same game; who owns which shared piece, and
 the merge order, are in *Larder World: shared rules and merge order*, below.
 
