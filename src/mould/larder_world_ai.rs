@@ -298,6 +298,10 @@ pub struct Style {
     /// `f32::INFINITY` never.
     pub spend: f32,
     pub turrets: usize,
+    /// Cut-and-take only: once this many crystals are taken, the strikers
+    /// stop cutting and attack the core (take plus a strike, the
+    /// designer's take_strike, 11-14). `usize::MAX` never.
+    pub core_after: usize,
     /// A soldier below this share of full health with mould touching walks
     /// home and stays (health never comes back). 0 never pulls back.
     pub retreat: f32,
@@ -328,6 +332,7 @@ impl Style {
         take: false,
         spend: f32::INFINITY,
         turrets: 0,
+        core_after: usize::MAX,
         retreat: 0.0,
     };
 
@@ -363,8 +368,34 @@ impl Style {
     /// squad and turrets on the crystals it takes.
     pub const TAKE: Style = Style { name: "take", take: true, spend: 2.0, turrets: 8, ..Style::STRIKE };
 
-    pub fn presets() -> [Style; 7] {
-        [Style::BOOM, Style::CLAIM, Style::LATE, Style::FORT, Style::STRIKE, Style::CUT, Style::TAKE]
+    /// Take plus one specialty each (the designer, 11-14 04:27Z, after the
+    /// tier matrix had take best on 7 of 8 columns and the plans that
+    /// never attack only stalemate): so a plan "best somewhere" says which
+    /// specialty wins on which tier. **Take-fort**: walls across the roads
+    /// into what it holds.
+    pub const TAKE_FORT: Style = Style { name: "take_fort", walls: 8, ..Style::TAKE };
+    /// **Take-boom**: the take started later, at 10:00, with the full army.
+    pub const TAKE_BOOM: Style = Style { name: "take_boom", strike_at: 600.0, strike_army: 36, ..Style::TAKE };
+    /// **Take-claim**: holds what it takes with turrets, not soldiers: twice
+    /// the turrets and four farmers kept back instead of eight.
+    pub const TAKE_CLAIM: Style = Style { name: "take_claim", turrets: 16, keep: 4, ..Style::TAKE };
+    /// **Take-strike**: two crystals taken, then the army walks on the core.
+    pub const TAKE_STRIKE: Style = Style { name: "take_strike", core_after: 2, ..Style::TAKE };
+
+    pub fn presets() -> [Style; 11] {
+        [
+            Style::BOOM,
+            Style::CLAIM,
+            Style::LATE,
+            Style::FORT,
+            Style::STRIKE,
+            Style::CUT,
+            Style::TAKE,
+            Style::TAKE_FORT,
+            Style::TAKE_BOOM,
+            Style::TAKE_CLAIM,
+            Style::TAKE_STRIKE,
+        ]
     }
 
     /// A preset by name, with knobs after a colon: `claim:claim_at=200+keep=4`
@@ -402,6 +433,7 @@ impl Style {
             "take" => self.take = v != 0.0,
             "spend" => self.spend = v,
             "turrets" => self.turrets = n,
+            "core_after" => self.core_after = n,
             "retreat" => self.retreat = v,
             _ => return false,
         }
@@ -578,7 +610,10 @@ impl Brain {
                     self.taking = None;
                 }
             }
-            if self.taking.is_none() {
+            if self.taken.len() >= st.core_after {
+                // Cut enough: the cuts end and the strike walks on the core.
+                self.taking = None;
+            } else if self.taking.is_none() {
                 let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| v.weigh(c.on) >= HELD as f32 && dist(c.at, v.core) > 1.0 && !self.taken.contains(&c.i)).collect();
                 held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
                 self.taking = held.first().map(|c| c.i);
@@ -886,6 +921,21 @@ mod tests {
         assert_eq!((s.keep, s.claim_free, s.claim_at), (3, true, -90.0));
         assert!(Style::named("late:nonsense=3").is_none());
         assert!(Style::named("nobody").is_none());
+    }
+
+    #[test]
+    fn each_take_specialty_is_take_plus_one_knob() {
+        let t = Style::TAKE;
+        assert_eq!(Style::named("take_fort").unwrap().walls, 8);
+        let b = Style::named("take_boom").unwrap();
+        assert_eq!((b.strike_at, b.strike_army), (600.0, 36));
+        let c = Style::named("take_claim").unwrap();
+        assert_eq!((c.turrets, c.keep), (16, 4));
+        assert_eq!(Style::named("take_strike").unwrap().core_after, 2);
+        for s in [Style::TAKE_FORT, Style::TAKE_BOOM, Style::TAKE_CLAIM, Style::TAKE_STRIKE] {
+            assert!(s.take && s.spend == t.spend, "{} is a take", s.name);
+        }
+        assert_eq!(Style::named("take:core_after=1").unwrap().core_after, 1);
     }
 
     #[test]

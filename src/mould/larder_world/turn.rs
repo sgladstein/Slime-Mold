@@ -34,7 +34,8 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let t = self.world.ticks();
         let dt = r.frame_ticks as f32 / r.tps as f32;
-        let strike = (r.strike * sc).min(squad::R_MAX);
+        // Steered and sent squads move their anchors first (`squads`).
+        self.squad_turn(dt);
         let mut units = Vec::new();
         let mut who = Vec::new();
         let mut from = Vec::new();
@@ -94,12 +95,19 @@ impl<W: World> Game<W> {
                     }
                 }
             }
-            if s.ready <= t && self.bank >= r.price {
-                if let Some(at) = self.target(k) {
+            let q = s.squad as usize;
+            let strike = self.strike_of(q);
+            // A volleying squad fires every member at its point at once and
+            // nothing else; the others fire on their own clocks.
+            let volley = self.volley(k, t);
+            let firing = self.squads[q].fire.is_some();
+            if (volley.is_some() || (!firing && s.ready <= t)) && self.bank >= r.price {
+                let aim = if firing { volley } else { self.target(k) };
+                if let Some(at) = aim {
                     let (dx, dy) = (at.0 - s.x, at.1 - s.y);
                     let d = dx.hypot(dy).max(0.1);
                     let reach = r.range * sc;
-                    if d <= reach + 4.0 {
+                    if volley.is_some() || d <= reach + 4.0 {
                         let (mut ux, mut uy) = (dx / d, dy / d);
                         if r.spread > 0.0 {
                             let a = ((self.rng.f32() * 2.0 - 1.0) * r.spread * sc / d).atan();
@@ -108,7 +116,7 @@ impl<W: World> Game<W> {
                         }
                         shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
                         shooters.push(Some(k));
-                        self.soldiers[k].ready = t + self.secs(r.shot_every);
+                        self.soldiers[k].ready = t + self.shot_gap(q);
                         self.bank -= r.price;
                         self.spent += r.price;
                     }
@@ -129,12 +137,15 @@ impl<W: World> Game<W> {
             who.push(Who::Soldier(k));
             from.push(at_crystal);
         }
+        self.volley_done(t);
         // The player's own mould's gardeners (`own_mould`; nothing here
         // unless the world has one).
         let tended = self.world.tend(&self.soldiers, self.bank, r.frame_ticks);
         self.bank -= tended;
         self.spent += tended;
-        // The larder: smells of the bank, and reads who touches it.
+        // The larder: smells of the bank, and reads who touches it (none
+        // without one, `Rules::larder`).
+        if r.larder {
         units.push(UnitIn {
             x: self.larder.0,
             y: self.larder.1,
@@ -147,6 +158,7 @@ impl<W: World> Game<W> {
         });
         who.push(Who::Larder);
         from.push(None);
+        }
         // Turrets, lures and pumps: units that do not move (`buildings`).
         // A turret's hits lay the crater too, through the same frame (the
         // buildings thread's call, 11-12 07:46Z: one rule for every shot).
@@ -198,6 +210,12 @@ impl<W: World> Game<W> {
                     s.aim = u.target;
                     s.dense = u.dense;
                     s.carry += u.took / r.charge;
+                    if !r.larder {
+                        // Drained straight into the bank: nothing to carry.
+                        self.bank += s.carry;
+                        self.harvested += s.carry;
+                        s.carry = 0.0;
+                    }
                     // A crystal run dry sends its carrier home with what it
                     // has (`Rules::home_dry`, on): the frame gave under half
                     // its ask and the whole crystal holds less than one
@@ -221,7 +239,7 @@ impl<W: World> Game<W> {
                             if s.carry > 0.0 {
                                 s.homing = true;
                                 s.dry = true;
-                            } else if r.seek || s.queued > 0 {
+                            } else if r.seek || s.queued > 0 || !r.larder {
                                 // Empty-handed at a dry crystal (sent to
                                 // one, or it ran dry on the first take):
                                 // on at once, nothing to bank.
@@ -258,6 +276,7 @@ impl<W: World> Game<W> {
         let now = self.world.ticks();
         if now / r.tps as u64 != t / r.tps as u64 {
             self.mould = self.world.living();
+            self.guard_pay();
             self.count_stuck();
             self.check_broken();
         }
@@ -314,6 +333,35 @@ impl<W: World> Game<W> {
                 s.hp = 0.0;
                 s.carry = 0.0;
             }
+        }
+    }
+
+    /// Once a game second, with no larder (`Rules::larder`): every crystal
+    /// with charge left, a live soldier standing by it (not draining it)
+    /// and no more than `Rules::guard_walkers` walkers on it pays a `Rules::guard`-th of the charge it has
+    /// left: a crystal half drained guards for half, one drained dry (it
+    /// keeps crumbs) for nothing.
+    pub(super) fn guard_pay(&mut self) {
+        let r = self.rules;
+        self.guarded.clear();
+        if r.larder || r.guard <= 0.0 {
+            return;
+        }
+        let sc = self.s();
+        let cs = self.world.crystals();
+        for (i, &(c, charge)) in cs.iter().enumerate() {
+            if charge <= 0.0 {
+                continue;
+            }
+            let cr = self.world.crystal_r(i);
+            let by = |s: &Soldier| s.alive && !matches!(s.order, Order::Clear(..)) && (s.x - c.0).hypot(s.y - c.1) <= cr + (RIM + 4.0) * sc;
+            if !self.soldiers.iter().any(by) || self.world.walkers_in(c, cr + sc) > r.guard_walkers {
+                continue;
+            }
+            let pay = charge / r.charge / r.guard;
+            self.bank += pay;
+            self.guard_paid += pay;
+            self.guarded.push(i);
         }
     }
 

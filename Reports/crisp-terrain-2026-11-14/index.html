@@ -1,0 +1,87 @@
+<title>Crisp Rock Edges</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column of zoom levels, before above after, the numbers beside. */
+:root {
+  --bg: #eef0f2; --panel: #ffffff; --fg: #1d2228; --muted: #5b6570; --rule: #d3d8dd; --accent: #1b8fa6;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #12161a; --panel: #1a2026; --fg: #e3e8ec; --muted: #9aa6b1; --rule: #2c353d; --accent: #4cc3d9; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #12161a; --panel: #1a2026; --fg: #e3e8ec; --muted: #9aa6b1; --rule: #2c353d; --accent: #4cc3d9; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; display: block; }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+td, th { padding: 6px 14px 6px 0; text-align: left; border-bottom: 1px solid var(--rule); }
+.tbl { overflow-x: auto; }
+code { font-family: var(--mono); font-size: 0.85em; }
+</style>
+
+<div class="wrap">
+  <div class="lede">
+    <span class="tag">Larder World · fork map · llvmpipe · 2026-11-14</span>
+    <h1>Crisp rock edges</h1>
+    <p>Rock, walls and rubble are whole cells in the simulation. They were drawn as cells too, so their edges stepped every cell and carried a dark band a cell wide. Now the view works out each edge at the screen pixel from a smooth field of the cells, so every zoom gets a one-pixel antialiased edge and a short soft shadow. The terrain is the same cells; only the drawing changed.</p>
+    <p class="muted">Each pair is the same round (rush hand, seed 1) from 2 to 8 game seconds, before on the left and after on the right. The camera holds still on the left ridge.</p>
+  </div>
+
+  <section>
+    <h2>Zoom 24</h2>
+    <div class="pair">
+      <figure><img src="before-z24.gif" alt="Before at zoom 24: stepped rock edge"><figcaption>Before: a step every 24 px, dark band along both sides</figcaption></figure>
+      <figure><img src="after-z24.gif" alt="After at zoom 24: smooth rock edge"><figcaption>After: smooth edge, one-pixel antialiasing, shadow on the side away from the light</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Zoom 12</h2>
+    <div class="pair">
+      <figure><img src="before-z12.gif" alt="Before at zoom 12"><figcaption>Before</figcaption></figure>
+      <figure><img src="after-z12.gif" alt="After at zoom 12"><figcaption>After</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Zoom 6 (the window's opening zoom)</h2>
+    <div class="pair">
+      <figure><img src="before-z6.gif" alt="Before at zoom 6"><figcaption>Before</figcaption></figure>
+      <figure><img src="after-z6.gif" alt="After at zoom 6"><figcaption>After</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Zoom 1 (the whole map)</h2>
+    <div class="pair">
+      <figure><img src="before-z1.gif" alt="Before at zoom 1"><figcaption>Before: the map's rim drawn as a bevelled frame</figcaption></figure>
+      <figure><img src="after-z1.gif" alt="After at zoom 1"><figcaption>After: the rim is flat rock with the same soft edge as the ridges</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it costs</h2>
+    <div class="tbl"><table>
+      <tr><th>Build</th><th>GPU tail p50, ms a frame</th><th>p95</th></tr>
+      <tr><td>Before (main)</td><td>37.1-38.0</td><td>44.4-47.6</td></tr>
+      <tr><td>Edges worked out a pixel at a time</td><td>54.6</td><td>66.7</td></tr>
+      <tr><td>Shipped: smoothing once a cell in <code>prep</code>, far cells skipped</td><td>47.0-49.0</td><td>58.2-60.1</td></tr>
+    </table></div>
+    <p class="muted">Larder World bench, 8 game seconds, idle hand, 1280 x 800, on the cloud's software Vulkan (llvmpipe), which runs shaders on the CPU. The GTX 1070 timing waits until the PC is free.</p>
+  </section>
+
+  <section>
+    <h2>Not in this change</h2>
+    <p>The crystals' hexagons come from the slime thread's next PR; this thread then makes them show their charge. The open ground's colour (dark, cool, low saturation) is the next step after that.</p>
+  </section>
+</div>

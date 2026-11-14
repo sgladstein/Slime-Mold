@@ -157,6 +157,8 @@ mod headless;
 mod bench;
 mod hands;
 mod menu;
+mod squadmode;
+use squadmode::SquadInput;
 // The moved modules' functions, reached as before from here and from each
 // other.
 use args::*;
@@ -313,6 +315,8 @@ const LOADOUTS: [(&str, &str); 20] = [
 
 #[derive(Clone)]
 struct Args {
+    /// `mode=squads`: the squad mode (`squadmode`, `Rules::squads`).
+    squads: bool,
     /// None: the race world from noise.
     map: Option<String>,
     seed: u64,
@@ -401,6 +405,8 @@ struct App {
     view: Option<View>,
     camera: Camera,
     controls: Controls,
+    /// The squad mode's input (`mode=squads`), None in the RTS round.
+    sq: Option<SquadInput>,
     hud: Hud,
     canvas: Option<Canvas>,
     canvas_pass: Option<CanvasPass>,
@@ -508,6 +514,7 @@ impl App {
             view: None,
             camera: Camera::new((512, 320), (1280, 800)),
             controls: Controls::new(0),
+            sq: None,
             hud: Hud::new(),
             canvas: None,
             canvas_pass: None,
@@ -643,7 +650,20 @@ impl App {
         if let Some([strike, every, spread]) = a.aim {
             (rules.strike, rules.shot_every, rules.spread) = (strike, every, spread);
         }
-        let game = Game::new(world, rules, a.seed).with_tier(core_tier);
+        rules.squads = a.squads;
+        if a.squads {
+            // No larder: drain or guard (`Rules::larder`); a harvesting
+            // squad doesn't scatter to the next crystal by itself, and
+            // there is no larder to overrun.
+            rules.larder = false;
+            rules.seek = false;
+            rules.overrun = 0.0;
+        }
+        let mut game = Game::new(world, rules, a.seed).with_tier(core_tier);
+        self.sq = a.squads.then(SquadInput::new);
+        if a.squads {
+            game.apply(Cmd::Active(0));
+        }
         self.kit = Kit::new(KitRules::default());
         self.rounds = Rounds::new(rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(), RoundRules::default());
         self.mission = mission.map(|m| Tracker::new(m, &game));
@@ -669,6 +689,13 @@ impl App {
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
             v.set_crystals(&gems, &e.dish.pile_of);
+            // Their charge live from the engine, so a crystal sinks, dims
+            // and greys where it is taken, and glows where it is being
+            // taken (the owner's playtest, 04:53Z: "harvesting crystals
+            // could look way better").
+            if !e.dish.pile_fill.is_empty() {
+                v.set_charge(Some((&e.charge, &e.dish.pile_fill)));
+            }
             // The body's walkers a cell, from the start's living walkers
             // (the look's `body`; a growing world has ten slots a walker).
             v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
@@ -930,6 +957,7 @@ impl App {
         self.last_frame = Instant::now();
         if !self.in_menu() {
             self.controls.update(&mut self.camera, dt);
+            self.squad_frame(dt);
         }
         self.step(dt);
         // The dish under the menu plays on: a round it ends starts again.
@@ -978,6 +1006,9 @@ impl App {
     /// The frame's ground, marks, HUD and canvas, ready to record.
     fn prepare(&mut self) {
         self.refresh_ground();
+        if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
+            v.set_time(g.time());
+        }
         self.marks();
         let minimap = self.view.as_ref().is_some_and(|v| v.minimap) && !self.camera.sees_all();
         let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
@@ -1059,7 +1090,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1089,6 +1120,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 chosen = true;
             }
             "mission" => args.mission = Some(v.to_string()),
+            "mode" => {
+                args.squads = match v {
+                    "squads" => true,
+                    "rts" => false,
+                    _ => return Err("mode=squads|rts".into()),
+                }
+            }
             "crater" => args.crater = Some(v.parse()?),
             "core_pull" => args.core_pull = Some(v.parse()?),
             "bullet" => args.bullet = Some(v.parse()?),
