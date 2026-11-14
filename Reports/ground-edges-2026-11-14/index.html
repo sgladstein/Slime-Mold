@@ -1,0 +1,114 @@
+<title>Crisp Ground Edges</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column; before beside after, then the closer zoom notes. */
+:root {
+  --bg: #eef1f2; --panel: #ffffff; --fg: #1c2327; --muted: #58656c; --rule: #d1d8dc; --accent: #168a9e;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; }
+p, li { max-width: 68ch; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.pair { display: grid; grid-template-columns: 1fr; gap: 12px; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; display: block; }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.85em; }
+</style>
+
+
+<div class="wrap">
+  <div class="lede">
+    <span class="tag">Larder World · planets 1-5 and the River · seed 1 · llvmpipe · 2026-11-14</span>
+    <h1>Crisp ground edges at close zoom</h1>
+    <p>You asked for crisp edges between grounds at close zoom. Every boundary between grounds is now drawn at the pixel, not from the cells. That covers sand, clay, ash, plain soil, water, meadow, jungle, reeds and scrub. Each boundary is a smooth curve, antialiased over about a pixel, at any zoom up to 24 pixels a cell. The picture is still the data: each boundary is where two kinds' smooth shares in the map are equal, so no outline is painted on.</p>
+    <p>Four other things were making the ground look pixelated. These are fixed too:</p>
+    <ul>
+      <li>Reeds and other plants stood one cell at a time, so a row of reeds along a bank cast a string of dark beads. Their height is now smoothed the same way as their colour.</li>
+      <li>On plant patches and high ground, the ground's own look (ripples, cracks, crisp edges) was switched off. The shader read their height as a thick slime film. The slime's own height is now kept separately.</li>
+      <li>Ash grains were squares on the cell grid. They are round now.</li>
+      <li>Clay plates were mottled with small squares. Each plate now has one shade.</li>
+    </ul>
+    <p class="muted">Each pair below is the same frame, 3 s into the game with no input. Before is main at #285 (5168e103); after is this change. Fire blur is the plants thread's work.</p>
+  </div>
+
+  <section>
+    <h2>Meadow at zoom 24 (the closest zoom)</h2>
+    <div class="pair">
+      <figure><img src="meadow-z24-before.png" alt="Before: the meadow patch fades into the sand over two or three cells, and the water's corners show the cells' steps."><figcaption>Before: the meadow patch fades into the sand over two or three cells, and the water's corners show the cells' steps.</figcaption></figure>
+      <figure><img src="meadow-z24-after.png" alt="After: the meadow's edge is a clean curve a pixel wide; the sand ripples run right up to it."><figcaption>After: the meadow's edge is a clean curve a pixel wide; the sand ripples run right up to it.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Meadow at zoom 12</h2>
+    <div class="pair">
+      <figure><img src="meadow-z12-before.png" alt="Before: a row of dark beads along each bank, and soft, blotchy patch edges."><figcaption>Before: a row of dark beads along each bank, and soft, blotchy patch edges.</figcaption></figure>
+      <figure><img src="meadow-z12-after.png" alt="After: smooth banks, crisp meadow and reed edges, and sand ripples on the high ground (they were switched off there)."><figcaption>After: smooth banks, crisp meadow and reed edges, and sand ripples on the high ground (they were switched off there).</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Fen at zoom 12</h2>
+    <div class="pair">
+      <figure><img src="fen-z12-before.png" alt="Before: the reed bed is a hard stair of squares with a dark stepped shadow."><figcaption>Before: the reed bed is a hard stair of squares with a dark stepped shadow.</figcaption></figure>
+      <figure><img src="fen-z12-after.png" alt="After: the same shape in the map, drawn as a smooth outline with rounded corners."><figcaption>After: the same shape in the map, drawn as a smooth outline with rounded corners.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Jungle at zoom 12</h2>
+    <div class="pair">
+      <figure><img src="jungle-z12-before.png" alt="Before: the jungle edge is a stair of squares, and the clay under it is hidden."><figcaption>Before: the jungle edge is a stair of squares, and the clay under it is hidden.</figcaption></figure>
+      <figure><img src="jungle-z12-after.png" alt="After: a smooth jungle edge; the clay's plates show at the patch's edge."><figcaption>After: a smooth jungle edge; the clay's plates show at the patch's edge.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Barrens at zoom 12</h2>
+    <div class="pair">
+      <figure><img src="barrens-z12-before.png" alt="Before: the ash grains are small squares on the cell grid, which read as pixels."><figcaption>Before: the ash grains are small squares on the cell grid, which read as pixels.</figcaption></figure>
+      <figure><img src="barrens-z12-after.png" alt="After: round grains in clumps."><figcaption>After: round grains in clumps.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Dunes at zoom 12</h2>
+    <div class="pair">
+      <figure><img src="dunes-z12-before.png" alt="Before: the waterline is a dark beaded stair."><figcaption>Before: the waterline is a dark beaded stair.</figcaption></figure>
+      <figure><img src="dunes-z12-after.png" alt="After: a smooth waterline and damp bank."><figcaption>After: a smooth waterline and damp bank.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>River at zoom 12</h2>
+    <div class="pair">
+      <figure><img src="river-z12-before.png" alt="Before: the reed beds' edges are stepped and soft."><figcaption>Before: the reed beds' edges are stepped and soft.</figcaption></figure>
+      <figure><img src="river-z12-after.png" alt="After: crisp reed beds and banks; the clay's colour and plates show on its bank."><figcaption>After: crisp reed beds and banks; the clay's colour and plates show on its bank.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Meadow at zoom 6 (the old default)</h2>
+    <div class="pair">
+      <figure><img src="meadow-z6-before.png" alt="Before."><figcaption>Before.</figcaption></figure>
+      <figure><img src="meadow-z6-after.png" alt="After: the same picture, a little crisper; nothing is lost at the wider zoom."><figcaption>After: the same picture, a little crisper; nothing is lost at the wider zoom.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cost</h2>
+    <p>On the cloud's software GPU (llvmpipe), on the River at 1280x800 and zoom 6, the frame's GPU time went from 96-100 ms to 116-118 ms (three alternating rounds, median +18 ms). Most of that is the plants' density read over the 4 x 4 cells round each pixel. The first cut cost +38 ms; storing the bare ground's colour per cell in the prep pass halved it. The 1070 ran every frame under 2.6 ms at the 11-14 batch, so this is well inside its budget; it has not been timed there yet.</p>
+  </section>
+</div>
