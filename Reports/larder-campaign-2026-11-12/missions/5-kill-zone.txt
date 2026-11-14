@@ -1,0 +1,13 @@
+# Mission 5: the Swarmer on the Flats; the middle crystals are 1, 2 and 3 (the three
+# 27-radius piles between the landing and the swarm's home). Census v13 (2026-11-14, seeds
+# 1-4, CPU): claiming from 2:00 with ten (claim:claim_at=120+buy_to=10) wins 4/4 at 3:52-6:49,
+# with a kill zone (two turrets and a lure on the road, zone+claim) 4/4 at 4:12-6:51; boom
+# 1/4, idle 0/4 (stuck 7:27-11:55), random 0/4. On seed 1 a ring of turrets with the claim
+# won too (4:24), and turrets by the farmed crystals with it did not (0.75).
+name Kill zone
+says Drive the swarm off the three middle crystals for a minute
+map flats
+tier swarmer
+verbs move harvest buy stance fire wall cut turret
+bonus lose 4
+goal retake 3 60 1 2 3
