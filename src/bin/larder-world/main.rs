@@ -4,6 +4,10 @@
 //! world look (#69) and played with the world's camera, controls and UI
 //! (#63, #80).
 //!
+//! `cargo run --release --bin larder-world` opens on the **start menu**
+//! (`menu.rs`, 2026-11-14): sandbox, the campaign, options, keys, over a
+//! live sandbox round; `menu=1` opens it with the command line's values
+//! preset. Any other command line starts its round at once, as before:
 //! `cargo run --release --bin larder-world [-- map=fork seed=1]`
 //! (`map=` rim, fork, flats, nest, passes, or `noise` for the race world
 //! the censuses measured; `walkers=` and `scale=` as `larderworld`'s;
@@ -147,12 +151,15 @@ mod events;
 mod headless;
 mod bench;
 mod hands;
+mod menu;
 // The moved modules' functions, reached as before from here and from each
 // other.
 use args::*;
 use bench::*;
 use draw::*;
 use hands::*;
+use menu::*;
+use slime_mould::world::start::StartMenu;
 use headless::*;
 
 /// The designed maps (`Reports/larder-maps-2026-11-11.md`, v2), N's order.
@@ -282,6 +289,7 @@ const LOADOUTS: [(&str, &str); 17] = [
     ("ambush", "quiet+delay+wide+blast"),
 ];
 
+#[derive(Clone)]
 struct Args {
     /// None: the race world from noise.
     map: Option<String>,
@@ -442,6 +450,15 @@ struct App {
     tape: Option<(VoiceBank, Vec<f32>)>,
     /// Listener time a frame, microseconds, since the last report.
     hear_us: Vec<f32>,
+    /// The start menu, while it is up (`menu.rs`), over a live sandbox
+    /// round; and, while a round it started plays, the menu kept for Main
+    /// menu (on the options as they were left).
+    menu: Option<StartMenu>,
+    parked: Option<StartMenu>,
+    /// The command line's round before the default shape, and whether it
+    /// chose the mould (`shape=`, `walkers=`): what the menu's picks build
+    /// on. None in the headless runs, which have no menu to go back to.
+    base: Option<(Args, bool)>,
     result: Result<(), String>,
 }
 
@@ -502,6 +519,9 @@ impl App {
             sound_on: true,
             tape: None,
             hear_us: Vec::new(),
+            menu: None,
+            parked: None,
+            base: None,
             result: Ok(()),
         }
     }
@@ -842,8 +862,16 @@ impl App {
         let t0 = Instant::now();
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
-        self.controls.update(&mut self.camera, dt);
+        if !self.in_menu() {
+            self.controls.update(&mut self.camera, dt);
+        }
         self.step(dt);
+        // The dish under the menu plays on: a round it ends starts again.
+        if self.in_menu() && self.game.as_ref().is_some_and(|g| g.end.is_some()) {
+            if let Err(e) = self.open_menu() {
+                return self.fail(event_loop, e);
+            }
+        }
         let ear = self.ear();
         self.hear(dt, ear);
         self.prepare();
@@ -890,6 +918,19 @@ impl App {
         let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
         let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
         let model = self.model(hover, ghost);
+        if let (Some(c), Some(menu)) = (self.canvas.as_mut(), self.menu.as_mut()) {
+            // The start menu instead of the HUD, over the whole map.
+            c.clear();
+            menu.draw(c);
+            if let Some(cp) = self.canvas_pass.as_mut() {
+                cp.upload(c);
+            }
+            if let Some(v) = self.view.as_mut() {
+                v.minimap_box = None;
+                v.set_marks(&self.marks);
+            }
+            return;
+        }
         if let Some(c) = self.canvas.as_mut() {
             c.clear();
             self.hud.draw(&model, &self.controls, &self.camera, minimap, c, &mut self.marks);
@@ -961,6 +1002,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
     let mut chosen = false;
+    // `menu=1` opens the start menu with the command line's values preset,
+    // `menu=0` never; with no arguments at all the window opens on it.
+    // With `look=`, `menu=PAGE` films that page over the round.
+    let mut menu_flag: Option<String> = None;
+    let bare = std::env::args().len() == 1;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -996,6 +1042,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
             }
             "look" => look = Some(v.to_string()),
+            "menu" => {
+                if v != "0" && page_named(v).is_none() {
+                    return Err("menu=0|1|main|campaign|options|keys".into());
+                }
+                menu_flag = Some(v.to_string());
+            }
             "hand" => hand = v.to_string(),
             "rounds" => args.round = LOADOUTS.iter().position(|l| l.0 == v || l.1 == v).ok_or_else(|| format!("rounds=: one of {}", LOADOUTS.map(|l| l.0).join(", ")))?,
             "sound" => wav = Some(v.to_string()),
@@ -1046,6 +1098,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     // The own mould's garden (`own=1`, #165) keeps its own walkers, as a
     // mission keeps its mould: its two species start at twice `walkers`.
+    let base = args.clone();
     if !chosen && args.mission.is_none() && !args.own {
         default_shape(&mut args);
     }
@@ -1057,12 +1110,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     if let Some(dir) = look {
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut)?);
+        let page = menu_flag.as_deref().and_then(page_named);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, page)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = App::new(args);
     app.spread = spread;
+    if menu_flag.as_deref() != Some("0") {
+        if bare || menu_flag.is_some() {
+            app.menu = Some(start_menu(&base));
+        }
+        app.base = Some((base, chosen));
+    }
     event_loop.run_app(&mut app)?;
     app.result.map_err(|e| e.into())
 }
