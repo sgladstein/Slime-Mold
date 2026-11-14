@@ -28,6 +28,7 @@
 //! level follows `count^0.4` (`listen::density`).
 
 pub mod listen;
+pub mod pieces;
 pub mod synth;
 pub mod world;
 
@@ -89,11 +90,14 @@ pub enum TextureKind {
     Feed = 1,
     /// The mould dying of hunger: walkers starved per second.
     Starve = 2,
+    /// Larder World: a cut-off piece withering, walkers it loses a second
+    /// (`world::WorldListener`, from the mould grid).
+    Wither = 3,
 }
 
 impl TextureKind {
-    pub const COUNT: usize = 3;
-    pub const ALL: [TextureKind; 3] = [TextureKind::Creep, TextureKind::Feed, TextureKind::Starve];
+    pub const COUNT: usize = 4;
+    pub const ALL: [TextureKind; 4] = [TextureKind::Creep, TextureKind::Feed, TextureKind::Starve, TextureKind::Wither];
 
     /// The grain one of this texture's events is made of.
     pub fn grain(self) -> GrainKind {
@@ -101,6 +105,7 @@ impl TextureKind {
             TextureKind::Creep => GrainKind::Squelch,
             TextureKind::Feed => GrainKind::Slurp,
             TextureKind::Starve => GrainKind::Crackle,
+            TextureKind::Wither => GrainKind::Wilt,
         }
     }
 }
@@ -138,10 +143,19 @@ pub enum GrainKind {
     Heart,
     /// Larder World: a soldier hurt by the walkers on it.
     Hurt,
+    /// Larder World: a bullet flying past (`Game::bullets`).
+    Zip,
+    /// Larder World: a cut-off piece's tell, as it leans toward a soldier
+    /// before it charges.
+    Snarl,
+    /// Larder World: the mould torn in two (a new cut-off piece).
+    Tear,
+    /// Larder World: a withering piece, a soft dry fizz.
+    Wilt,
 }
 
 impl GrainKind {
-    pub const ALL: [GrainKind; 14] = [
+    pub const ALL: [GrainKind; 18] = [
         GrainKind::Squelch,
         GrainKind::Slurp,
         GrainKind::Crackle,
@@ -156,6 +170,10 @@ impl GrainKind {
         GrainKind::Splat,
         GrainKind::Heart,
         GrainKind::Hurt,
+        GrainKind::Zip,
+        GrainKind::Snarl,
+        GrainKind::Tear,
+        GrainKind::Wilt,
     ];
 }
 
@@ -173,6 +191,8 @@ pub enum AlertKind {
     Died,
     /// Larder World: one soldier fell (two low notes, short of `Died`).
     Fallen,
+    /// Larder World: a siren calling (`Game::sirens`), a two-tone wail.
+    Siren,
 }
 
 /// What the game thread tells the voice bank. **Textures carry absolute
@@ -199,7 +219,10 @@ pub enum SoundCmd {
     /// every frame like a texture: `level` 0 ..= 1, `pitch` Hz of its sub
     /// tone, `breath` swells a second, `rough` 0 ..= 1 (strain: hunger),
     /// `bright` 0 ..= 1 (its noise band opens while it eats).
-    Body { level: f32, pitch: f32, breath: f32, rough: f32, bright: f32, pan: f32 },
+    ///
+    /// `slot` 0 is the main body; 1 ..= 3 are cut-off pieces, each a
+    /// fainter, higher copy (`synth::BODY_VOICES`).
+    Body { slot: u8, level: f32, pitch: f32, breath: f32, rough: f32, bright: f32, pan: f32 },
     /// Fade every texture out (paused, a card up) or back in. One-shots
     /// still sound, so a tool used while paused still answers.
     Hush(bool),

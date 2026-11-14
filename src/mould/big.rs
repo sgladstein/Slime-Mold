@@ -3742,7 +3742,10 @@ impl BigDish {
         let mut n = 0;
         for k in 0..self.walkers.len() {
             let (wx, wy, _) = self.walkers[k];
-            if self.lives(k) && matches!(self.life[k], LIFE_WALKER | LIFE_DORMANT) && (wx - x).hypot(wy - y) <= r {
+            // Squared, as the engine's `gas` pass tests it (11-14), so both
+            // gas the same walkers.
+            let (dx, dy) = (wx - x, wy - y);
+            if self.lives(k) && matches!(self.life[k], LIFE_WALKER | LIFE_DORMANT) && dx * dx + dy * dy <= r * r {
                 self.life[k] = LIFE_DORMANT;
                 self.life_t[k] = 0;
                 self.gassed[k] = steps;
@@ -3765,7 +3768,8 @@ impl BigDish {
             }
             let (wx, wy, _) = self.walkers[k];
             for (o, &(x, y)) in out.iter_mut().zip(at) {
-                if (wx - x).hypot(wy - y) <= r {
+                let (dx, dy) = (wx - x, wy - y);
+                if dx * dx + dy * dy <= r * r {
                     *o += 1;
                 }
             }

@@ -25,6 +25,7 @@ pub mod demo;
 pub mod icons;
 pub mod look;
 pub mod marks;
+pub mod start;
 pub mod ui;
 pub mod view;
 
