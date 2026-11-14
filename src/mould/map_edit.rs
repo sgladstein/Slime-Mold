@@ -425,7 +425,7 @@ impl Editor {
         }
         if it.landing.is_some_and(deep) {
             out.push("the landing is in deep water".to_string());
-        } else {
+        } else if !it.landing.is_some_and(rock) {
             // Every map beatable by any strategy (owner, 2026-11-14): the
             // squad must reach every crystal and nest on foot.
             for (what, i) in self.map.cut_off() {

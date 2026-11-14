@@ -1,0 +1,11 @@
+# River (new ground kinds, 2026-11-14): deep water across the middle,
+# fords at x 170-229 and 794-853, a bridge at x 496-527.
+landing 512 110
+mould 512 560
+crystal 512 590 34 384
+crystal 300 180 26 384
+crystal 724 180 26 384
+crystal 300 470 26 384
+crystal 724 470 26 384
+crystal 90 220 22 256
+crystal 934 430 22 256
