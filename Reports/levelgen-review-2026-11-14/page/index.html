@@ -1,0 +1,60 @@
+<title>Planet Art Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one column of findings, each a frame from the game beside its note; dark like the game's own HUD. */
+:root {
+  color-scheme: dark;
+  --bg: #0f1318; --panel: #181d24; --line: #2a313b;
+  --fg: #ecf0f4; --muted: #929ca8; --slime: #e2a64a; --energy: #80e0ff; --bad: #f26262;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, sans-serif;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+h1 { font-family: var(--display); font-size: 2.1rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.25rem; margin: 0 0 6px; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.rule { border-left: 3px solid var(--slime); padding-left: 14px; font-family: var(--display); font-size: 1.15rem; }
+.finding { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: start;
+  border-top: 1px solid var(--line); padding-top: 24px; }
+.finding img { width: 100%; border-radius: 4px; border: 1px solid var(--line); display: block; }
+.cap { font-size: 0.82rem; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+.n { color: var(--slime); font-family: var(--display); font-weight: 700; margin-right: 6px; }
+.owner { color: var(--energy); font-size: 0.9rem; margin-top: 8px; }
+ul { margin: 6px 0 0; padding-left: 18px; }
+li { margin: 3px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+td, th { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+.tbl { overflow-x: auto; }
+@media (max-width: 700px) { .finding { grid-template-columns: 1fr; } }
+</style>
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <h1>Procedural planets: art review</h1>
+    <p class="lede">The roguelike's eight generated planets from PR #277 (branch at 9bb43c8), two seeds each, whole map at 0:10 with nobody playing. Software Vulkan, 1280 × 800 window, shrunk here. The level generation thread's own page has the two-minute films.</p>
+    <p class="rule">The test: a planet's biome should be clear from a small grey thumbnail, before you read its name.</p>
+  </header>
+  <section class="finding">
+    <div><img src="planets-grey.jpg" alt="Sixteen planet maps in greyscale, four by four"><div class="cap">Grey. Rows: Barrens and Marsh, Canyon and Dunes, Claypan and Thicket, Spires and Core.</div></div>
+    <div><h2><span class="n">1</span>Most biomes look the same</h2>
+      <p>Barrens, Canyon, Claypan and Spires are all dark ground with mid-grey patches and short grey sticks. Marsh's water has the same brightness as the ground. Only Dunes, and Thicket and Core with their rings, stand apart.</p>
+      <p class="cap">Layout: level generation thread. Ground materials: terrain thread.</p></div>
+  </section>
+  <section class="finding">
+    <div><img src="planets-colour.jpg" alt="The same sixteen planet maps in colour"><div class="cap">Colour, same frames.</div></div>
+    <div><h2><span class="n">2</span>What changes</h2>
+      <ul>
+        <li><b>One signature shape per biome</b> at zoom 1: Barrens in wide bands, Canyon with long unbroken ridges and real passes (its rock is short stubs now), Spires with many pillars, Marsh with big pools, Claypan mostly clay.</li>
+        <li><b>Dunes</b>: the clay islands are exact circles that read as holes, and the sand is brighter than rock.</li>
+        <li><b>Soft rock</b>: the pale gate bars and the perfectly round rings read as UI. They should look grown, with a wobble and varied thickness.</li>
+        <li><b>Ground materials</b> from the soil field: sand ripples, clay cracks, ash on barren ground, gloss on water, and raised rock lit from the top left. This also fills the flat, empty ground at zoom 6.</li>
+      </ul>
+      <p class="owner">Barrens on planet 1 does read as plain ground; the bands and the ash material fix that.</p>
+      <p class="cap">Kept: the nests, the crystals (cyan hexagons on every planet) and the landing marker read well.</p></div>
+  </section>
+</div>

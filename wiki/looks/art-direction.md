@@ -8,6 +8,7 @@ sources:
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/dark-ground-2026-11-14/README.md
+  - Reports/levelgen-review-2026-11-14/README.md
 code:
   - theme
 ---
@@ -92,7 +93,9 @@ did. The first review (11-14) found the slime out of focus, cell staircases on e
 
 - The review's ten issues and who has each: [review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*.
 - The 1070 cost of the new looks (waits for the PC).
+- Procedural planets: each biome must read from a grey thumbnail; layout per biome and soil materials are open ([planet review](../../Reports/levelgen-review-2026-11-14/README.md)).
 
 ## Sources
 
 - [Art review 2026-11-14](../../Reports/art-review-2026-11-14/README.md).
+- [Planet art review 2026-11-14](../../Reports/levelgen-review-2026-11-14/README.md).
