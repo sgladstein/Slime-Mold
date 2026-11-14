@@ -7,6 +7,7 @@ sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
+  - Reports/dark-ground-2026-11-14/README.md
 code:
   - theme
 ---
@@ -42,6 +43,7 @@ one new one are on it.
    species its own hue; crystals the only cyan (`theme::ENERGY` family);
    your team cream and olive with one accent colour; danger red
    (`theme::BAD`) for warnings only. A new colour needs a role nobody has.
+   The ground follows this since 11-14 (slate, flat luma 38; [dark ground](../../Reports/dark-ground-2026-11-14/README.md)).
 4. **Sharp at every zoom, 1 to 24.** Hard shapes have exact edges worked
    out at the screen pixel and antialiased over one pixel; no cell stair is
    visible at any zoom. The slime's edge is where its walker density falls
