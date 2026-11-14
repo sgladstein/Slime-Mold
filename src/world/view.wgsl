@@ -40,6 +40,9 @@ struct V {
     // fine grid's second half (the condensing weights) starts.
     // `shalf` where the specks' second half (the streaks) starts.
     dense_at: u32, ripe_at: u32, fhalf: u32, shalf: u32,
+    // The engine's alarm field (`View::set_alarm`, 11-14): which germ field
+    // is current (0 or 1), and the alarm that reads full (0: not shown).
+    alarm_side: u32, alarm_full: f32, _a0: u32, _a1: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -107,6 +110,11 @@ struct V {
 // byte 2 the kind, byte 3 its value (a wall's health; rock's elevation).
 // Binding 23 (20 is the lights, 21, 22 and 24 the live charge).
 @group(0) @binding(23) var<storage, read_write> tcell: array<u32>;
+// The engine's two germ fields (`View::set_alarm`, 11-14; bindings agreed
+// with the slime-look thread): three blocks of cells each, germ, alarm,
+// gas; `alarm_side` says which is current.
+@group(0) @binding(25) var<storage, read> germ0: array<f32>;
+@group(0) @binding(26) var<storage, read> germ1: array<f32>;
 
 fn unpack(c: u32) -> vec3<f32> {
     return vec3<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u));
@@ -674,6 +682,21 @@ fn look_scent(x: f32, y: f32) -> f32 {
     return mix(a, b, ty);
 }
 
+// The engine's alarm on cell (ix, iy) (the germ fields' second block).
+fn alarm_cell(ix: i32, iy: i32) -> f32 {
+    let i = P.ww * P.wh + cidx(ix, iy);
+    if (P.alarm_side == 0u) { return germ0[i]; }
+    return germ1[i];
+}
+
+// The alarm at (x, y), bilinear.
+fn alarm_at(x: f32, y: f32) -> f32 {
+    let fx = x - 0.5; let fy = y - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let tx = fx - f32(ix); let ty = fy - f32(iy);
+    return mix(mix(alarm_cell(ix, iy), alarm_cell(ix + 1, iy), tx), mix(alarm_cell(ix, iy + 1), alarm_cell(ix + 1, iy + 1), tx), ty);
+}
+
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
     var t = 0.0;
@@ -939,6 +962,22 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let hv = normalize(ld + vec3<f32>(0.0, 0.0, 1.0));
         let sp = pow(max(dot(n, hv), 0.0), 24.0) * (0.15 + m.gloss);
         c += (m.albedo * (lc.xyz / 255.0) * diff * 1.6 + lc.xyz * sp * 0.9) * att;
+    }
+    // The alarm field (a siren's call, a shot's alarm; 11-14): a pale cool
+    // haze by its strength and a brighter front where it falls off (its
+    // slope), so a call is the engine's field spreading and fading as the
+    // engine spreads and decays it. Pale, not red: red is a bolting walker
+    // and the cut-off rim (the slime-look thread).
+    // Where the field is under 1% of full, nothing is drawn and its slope
+    // is not sampled: five bilinear samples everywhere cost llvmpipe 10% of
+    // the frame (86.7 -> 95.3 ms GPU tail, 11-14).
+    let a = select(0.0, alarm_at(x, y), P.alarm_full > 0.0);
+    if (a > 0.01 * P.alarm_full) {
+        let gx = alarm_at(x + 1.0, y) - alarm_at(x - 1.0, y);
+        let gy = alarm_at(x, y + 1.0) - alarm_at(x, y - 1.0);
+        let fill = 1.0 - exp(-a / (0.5 * P.alarm_full));
+        let front = 1.0 - exp(-length(vec2<f32>(gx, gy)) / (0.12 * P.alarm_full));
+        c += ALARM_RGB * (0.10 * fill + 0.45 * front);
     }
     let k1 = gem_near(x, y);
     if (k1 > 0u) {
@@ -1643,6 +1682,7 @@ const LAMP_DRY: vec3<f32> = vec3<f32>(240.0, 64.0, 52.0);
 const LAMP_IDLE: vec3<f32> = vec3<f32>(70.0, 72.0, 60.0);
 const CALL_RED: vec3<f32> = vec3<f32>(255.0, 90.0, 60.0);
 const BITE_HOT: vec3<f32> = vec3<f32>(255.0, 120.0, 72.0);
+const ALARM_RGB: vec3<f32> = vec3<f32>(200.0, 214.0, 240.0);
 
 fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32, facing: f32, state: u32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);

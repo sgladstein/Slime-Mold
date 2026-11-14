@@ -353,25 +353,16 @@ impl App {
                     // A mini larder: its cells and lamp flare as a carrier
                     // banks a load there.
                     Kind::Outpost => self.marks.building_pulse(b.at, half, kind, built, health, working, n.bank / BANKED),
-                    // A call from its real burst: the lamp and horns flare,
-                    // and a ring runs out to the alarm's reach
-                    // (`BuildRules::siren_r`) and fades, with a red light.
+                    // A call: the lamp and horns flare red with a red light
+                    // for `SIREN_CALL`; the call itself is the engine's alarm
+                    // field, which the view draws spreading and fading
+                    // (`View::set_alarm`; before, rings timed from the call
+                    // ran out to `siren_r`, a drawn effect).
                     Kind::Siren => {
                         let f = n.call / SIREN_CALL;
                         self.marks.building_pulse(b.at, half, kind, built, health, f > 0.0, f);
                         if f > 0.0 {
-                            let reach = g.rules.build.siren_r * sc;
-                            // Two rings, the second a third of the call
-                            // behind, each easing out to the reach.
-                            for lag in [0.0, 0.3] {
-                                if 1.0 - f < lag {
-                                    continue;
-                                }
-                                let t = (1.0 - f - lag) / (1.0 - lag);
-                                let rr = half + (reach - half) * (1.0 - (1.0 - t) * (1.0 - t));
-                                self.marks.ring(b.at, rr, [255, 96, 64, (230.0 * (1.0 - t)) as u8]);
-                            }
-                            glows.push(Light { at: b.at, reach: reach * 0.6, lift: 4.0, colour: [255.0, 90.0, 60.0], strength: 1.2 * f });
+                            glows.push(Light { at: b.at, reach: g.rules.build.siren_r * sc * 0.6, lift: 4.0, colour: [255.0, 90.0, 60.0], strength: 1.2 * f });
                         }
                     }
                     _ => self.marks.building(b.at, half, kind, built, health, working),

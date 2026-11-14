@@ -12,6 +12,7 @@ sources:
   - Reports/panic-look-2026-11-14/README.md
   - Reports/sharp-slime-2026-11-14/README.md
   - Reports/shot-damage-2026-11-12.md
+  - Reports/siren-alarm-2026-11-14/README.md
   - Reports/slime-material-2026-11-14/README.md
   - Reports/slime-over-crystals-2026-11-14/README.md
   - Reports/slime-sheen-2026-11-14/README.md
@@ -65,6 +66,7 @@ code:
   - UiSize::px
   - View::fine
   - View::record
+  - View::set_alarm
   - View::set_alive
   - View::set_body_density
   - View::set_crystals
@@ -154,8 +156,10 @@ buildings show their work too, all soldier-scale: a burning lure lights the
 engine's real scent field green (a scent light, `Light` with lift below 0), a
 pump turns its hose into its crystal with a charge line as bright as its draw
 (`Marks::building_facing`, `Building::drew`), an outpost is a mini larder that
-flares when a load is banked there, and a siren's real call sends rings out to
-its alarm reach. A soldier the slime bites flinches every 3 hp of damage, the
+flares when a load is banked there, and a siren's real call shows as the
+engine's alarm field itself, a pale front spreading and fading
+(`View::set_alarm`, bindings 25-26;
+[siren alarm](../../Reports/siren-alarm-2026-11-14/README.md)). A soldier the slime bites flinches every 3 hp of damage, the
 bitten side flushing hot (`Marks::soldier_bitten`;
 [building looks](../../Reports/building-looks-2026-11-14/README.md))
 ([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md), [harvest](../../Reports/units-read-2026-11-14/harvest.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the

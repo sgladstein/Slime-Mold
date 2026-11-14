@@ -782,6 +782,11 @@ impl App {
             if !e.dish.pile_fill.is_empty() {
                 v.set_charge(Some((&e.charge, &e.dish.pile_fill)));
             }
+            // The engine's alarm field, so a siren's call (and a shot's
+            // alarm) is the field itself spreading and fading (the art
+            // director, 11-14: not rings timed from the call); full at a
+            // siren's call.
+            v.set_alarm(Some([&e.germ[0], &e.germ[1]]), game.rules.build.siren_alarm);
             // The body's walkers a cell, from the start's living walkers
             // (the look's `body`; a growing world has ten slots a walker).
             v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
@@ -1150,6 +1155,7 @@ impl App {
         self.refresh_ground();
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
+            v.set_alarm_side((g.world.e.done % 2) as u32);
         }
         self.marks();
         let minimap = self.view.as_ref().is_some_and(|v| v.minimap) && !self.camera.sees_all();
