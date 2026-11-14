@@ -84,17 +84,12 @@ th { color: var(--muted); font-weight: 600; }
     </div>
   </section>
 
-  <section class="film">
-    <img src="squad-panel-crop.png" alt="The squad panel: Squad 1 with 4 soldiers holding and a plus button, Squad 2 with 4 soldiers lit as commanding, and Split X and Combine G buttons">
-    <div style="display:grid; gap:10px; min-width:0">
-      <h2>The squad panel</h2>
-      <p class="note">Top right in squad mode. Each row is a squad: its hotkey, its soldiers and what it is doing. The one you command is lit. Click a row to take command of it; the + on another row brings that squad into yours. <b>Split</b> sends the front half off as a new squad you command; <b>Combine</b> brings the nearest squad in, however far. A button that can't act is greyed, and its tooltip says why.</p>
-      <p class="note">Fork, seed 1, 24 s, 1600x900: the squad of 8 split into two squads of 4. The model and HUD together take 0.1 ms a frame.</p>
-    </div>
-  </section>
-
-  <section>
-    <img src="squad-panel-24s.jpg" alt="The whole screen at 24 s with the squad panel at the top right" style="width:100%; border-radius:6px; border:1px solid var(--line)">
+  <section style="display:grid; gap:10px">
+    <h2>The squads, a tile each</h2>
+    <img src="squad-tiles-crop.png" alt="The bottom middle panel in squad mode: 2 squads, commanding Squad 2 with 4 soldiers; tile 1 with 4 soldiers, a health bar and a plus button; tile 2 outlined in blue; Split X and Combine G buttons at the right of the header line" style="width:100%; border-radius:6px; border:1px solid var(--line)">
+    <p class="note">In squad mode the bottom middle panel shows a tile per squad, where the RTS round shows a card per soldier. A tile has the squad's hotkey, its soldiers and their health; the squad you command is outlined. Click a tile to command that squad; the + on a tile brings that squad into yours. <b>Split</b> sends the front half off as a new squad you command, and <b>Combine</b> brings the nearest squad in, however far. A button that can't act is greyed, and its tooltip says why. Hovering a tile says what the squad is doing (holding, moving or firing).</p>
+    <p class="note">Fork, seed 1, 24 s, 1600x900: the squad of 8 split into two squads of 4. The model and HUD together take 0.06 ms a frame on software Vulkan.</p>
+    <img src="squad-tiles-24s.jpg" alt="The whole screen at 24 s in squad mode" style="width:100%; border-radius:6px; border:1px solid var(--line)">
   </section>
 
   <section style="display:grid; gap:8px">

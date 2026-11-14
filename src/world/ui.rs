@@ -33,7 +33,7 @@ use std::time::{Duration, Instant};
 use winit::keyboard::KeyCode;
 
 use super::camera::Camera;
-use super::canvas::{Align, Canvas, Rect, Rgba, Weight};
+use super::canvas::{Align, Canvas, Rect, Rgba, UiSize, Weight};
 use super::controls::{Button, Controls};
 use super::icons::Icon;
 use super::marks::{Mark, Marks, Shape, MINIMAP};
@@ -68,15 +68,34 @@ use theme::*;
 const CELL: f32 = 42.0;
 const CELL_GAP: f32 = 5.0;
 const CARD_PAD: f32 = 8.0;
+/// The command card's grid. 4 x 3 until the owner's ask of 11-14 08:33Z
+/// ("re-arrange the bottom menu to be one row for the squad and two rows
+/// for the other buttons so the whole thing is wider but shorter"): 6 x 2,
+/// the 4 x 3 slots read in order (`card_slot`), so the bar went from 160
+/// to 113 units at 1080 lines (15% to 10% of the screen).
+const CARD_COLS: u8 = 6;
+const CARD_ROWS: u8 = 2;
+/// The minimap keeps the bar's old height (152 units) in the corner,
+/// standing above the shorter bar, so it does not shrink with it.
+const MINIMAP_H: f32 = 3.0 * CELL + 2.0 * CELL_GAP + 2.0 * CARD_PAD;
+
+/// The loadout strip's width: its slots, the name and state, and Swap.
+fn loadout_w(l: &Loadout, s: f32) -> f32 {
+    let slots = l.slots.max(l.cards.len()).max(1) as f32;
+    2.0 * 6.0 * s + slots * 34.0 * s + (slots - 1.0) * 4.0 * s + 8.0 * s + 112.0 * s + if l.cycle.is_some() { 26.0 * s + 6.0 * s } else { 0.0 }
+}
+
+/// A command's place on the 6 x 2 card from its 4 x 3 `slot` (row, col):
+/// the twelve slots in reading order, wrapped at six.
+fn card_slot(slot: (u8, u8)) -> (u8, u8) {
+    let k = slot.0.min(2) * 4 + slot.1.min(3);
+    (k / CARD_COLS, k % CARD_COLS)
+}
 /// The selection panel's height with nothing selected.
 const COLLAPSED: f32 = 40.0;
 
-/// Pixels a UI unit for a screen this tall: 1 at 1080 lines, in steps of
-/// 0.05, so a window dragged through every size rasterizes a few sets of
-/// glyph sizes, not one a pixel.
-fn ui_scale(sh: f32) -> f32 {
-    ((sh / 1080.0).clamp(0.7, 2.4) * 20.0).round() / 20.0
-}
+// Pixels a UI unit: `UiSize::px` (`settings`), the height's share of 1080
+// lines with the window's DPI and the player's size over it (11-14).
 
 /// Health's colour: green, then amber below 60%, red below 30%.
 pub fn health_colour(f: f32) -> Rgba {
@@ -271,13 +290,19 @@ pub struct SquadRow {
     /// "Squad 1".
     pub name: String,
     pub soldiers: usize,
+    /// Its soldiers' mean health, 0 to 1.
+    pub hp: f32,
     /// A short state after the count ("line", "guarding").
     pub note: Option<String>,
     /// The squad you command.
     pub active: bool,
 }
 
-/// The squad mode's panel (owner, 2026-11-14 08:22Z: "list each squad with
+/// The squad mode's squads, drawn in the selection panel's place as a
+/// tile a squad, as the soldiers' cards are in the RTS round (owner,
+/// 08:48Z: "This is supposed to replace the bottom middle menu each squad
+/// should be a tile how each solider is now"; a first cut at 08:40Z was a
+/// separate panel at the top right). Asked for at 2026-11-14 08:22Z: "list each squad with
 /// the number of soliders and its hotkey, you can click to take command.
 /// There should also be buttons, to combine, to split"). A row click sends
 /// `HudEvent::Squad(row)`, its + sends `HudEvent::SquadInto(row)` (that
@@ -798,7 +823,7 @@ impl Hud {
     /// view).
     pub fn draw(&mut self, m: &Model, controls: &Controls, cam: &Camera, minimap: bool, c: &mut Canvas, world: &mut Marks) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        let s = ui_scale(sh);
+        let s = c.ui.px(c.screen);
         self.scale = s;
         self.world = cam.world;
         self.hits.clear();
@@ -821,8 +846,8 @@ impl Hud {
         // the selection panel left of that, all one height.
         let cell = CELL * s;
         let gap = CELL_GAP * s;
-        let card_w = 4.0 * cell + 3.0 * gap + 2.0 * pad;
-        let (_, inset_bottom) = Hud::insets(c.screen);
+        let card_w = CARD_COLS as f32 * cell + (CARD_COLS - 1) as f32 * gap + 2.0 * pad;
+        let (_, inset_bottom) = Hud::insets(c.screen, c.ui);
         let panel_h = inset_bottom - 8.0 * s;
         let base = sh - 8.0 * s;
         let top_of = base - panel_h;
@@ -832,10 +857,11 @@ impl Hud {
         self.minimap_box = None;
         self.minimap = None;
         if minimap {
-            let ih = panel_h - 2.0 * pad;
+            let mm_h = (MINIMAP_H * s).max(panel_h);
+            let ih = mm_h - 2.0 * pad;
             // (min then max, not `clamp`, which panics in a narrow window.)
             let iw = (ih * cam.world.0 / cam.world.1).min((360.0 * s).min(sw * 0.25)).max(ih * 0.6);
-            let f = Rect::new(right - iw - 2.0 * pad, top_of, iw + 2.0 * pad, panel_h);
+            let f = Rect::new(right - iw - 2.0 * pad, base - mm_h, iw + 2.0 * pad, mm_h);
             let bx = ((f.x + pad).round() as u32, (f.y + pad).round() as u32, iw.round() as u32, ih.round() as u32);
             let mm = super::view::minimap_in((cam.world.0 as usize, cam.world.1 as usize), bx);
             self.minimap_box = Some(bx);
@@ -853,12 +879,19 @@ impl Hud {
             right = f.x - 8.0 * s;
         }
         let card = Rect::new(right - card_w, top_of, card_w, panel_h);
-        let sel_w = (600.0 * s).min(card.x - 16.0 * s);
-        let sel = Rect::new(card.x - 8.0 * s - sel_w, top_of, sel_w, panel_h);
+        // The gun cards' panel at the bar's far left (owner, 08:46Z: "gun/card
+        // menu should go on the far left to fill the rest of the screen"),
+        // the selection panel filling the row between it and the command
+        // card (one card row tall, owner 08:33Z). Where that leaves the
+        // selection under 240 units the strip goes back over the panels.
+        let gun_w = m.loadout.as_ref().map(|l| loadout_w(l, s));
+        let gun = gun_w.map(|w| Rect::new(8.0 * s, top_of, w, panel_h)).filter(|g| card.x - 8.0 * s - (g.right() + 8.0 * s) >= 240.0 * s);
+        let left = gun.map_or(8.0 * s, |g| g.right() + 8.0 * s);
+        let sel = Rect::new(left, top_of, (card.x - 8.0 * s - left).max(0.0), panel_h);
         // With nothing selected the selection panel collapses to a strip
         // along the bottom (the art director, 11-14 02:34Z: a full-height
         // panel that only said "Nothing selected").
-        let empty = m.info.is_none() && m.selection.is_empty();
+        let empty = m.info.is_none() && m.selection.is_empty() && m.squads.is_none();
         // The loadout strip (about 312 units wide) takes the rest of the row.
         let sel_drawn = if empty { Rect::new(sel.x, base - COLLAPSED * s, (sel.w - 320.0 * s).clamp(150.0 * s, 330.0 * s).min(sel.w), COLLAPSED * s) } else { sel };
 
@@ -867,15 +900,12 @@ impl Hud {
         // Before the command card, so the card's tooltips cover it; its
         // own card tooltip after.
         self.cycle = m.loadout.as_ref().and_then(|l| l.cycle.map(|c| c.0));
-        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, sel, empty, card, c, s));
+        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, gun, sel, empty, card, c, s));
         self.command_card(m, card, c, s);
         match (&m.loadout, tip) {
             (Some(l), Some((k, r))) if k < l.cards.len() => self.card_tip(&l.cards[k], r, c, s),
             (Some(l), Some((k, r))) => self.loadout_tip(l, r, k == usize::MAX - 1, c, s),
             _ => {}
-        }
-        if let Some(p) = &m.squads {
-            self.squad_panel(p, c, s);
         }
         self.alerts_draw(c, world, s);
         self.ghost(m, cam, c, world, s);
@@ -887,93 +917,6 @@ impl Hud {
             self.end_screen(title, lines, m.main_menu, c, s);
         } else if let Some(page) = self.menu {
             self.menu_draw(page, m, c, s);
-        }
-    }
-
-    /// The squad panel (`Model::squads`), at the top right under the bar:
-    /// a row a squad (hotkey, name, soldiers, state; the one you command
-    /// lit), a + on the others to bring them into yours, and Split and
-    /// Combine under them.
-    fn squad_panel(&mut self, p: &SquadPanel, c: &mut Canvas, s: f32) {
-        let sw = c.screen.0 as f32;
-        let pad = 10.0 * s;
-        let row_h = 30.0 * s;
-        let w = 250.0 * s;
-        let head = 24.0 * s;
-        let buttons = 32.0 * s;
-        let h = pad + head + p.rows.len().max(1) as f32 * (row_h + 4.0 * s) + 6.0 * s + buttons + pad;
-        let r = Rect::new(sw - 8.0 * s - w, self.top + 12.0 * s, w, h);
-        self.glass(r, 12.0 * s, c, s);
-        c.text(Weight::SemiBold, 13.0 * s, (r.x + pad, r.y + pad + 14.0 * s), Align::Left, "Squads", TEXT);
-        c.text(Weight::Medium, 11.0 * s, (r.right() - pad, r.y + pad + 14.0 * s), Align::Right, "click to command", FAINT);
-        let mut y = r.y + pad + head;
-        let mut tip: Option<(String, (f32, f32))> = None;
-        if p.rows.is_empty() {
-            c.text(Weight::Medium, 12.0 * s, (r.x + pad, y + 19.0 * s), Align::Left, "No squads", MUTED);
-            y += row_h + 4.0 * s;
-        }
-        for (i, q) in p.rows.iter().enumerate() {
-            let row = Rect::new(r.x + pad, y, w - 2.0 * pad, row_h);
-            let plus = Rect::new(row.right() - row_h, row.y + 3.0 * s, row_h - 6.0 * s, row_h - 6.0 * s);
-            let hot = self.hover.is_some_and(|h| row.contains(h));
-            let on_plus = !q.active && self.hover.is_some_and(|h| plus.contains(h));
-            let (t, b) = if hot && !on_plus { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
-            c.panel(row, 7.0 * s, t, b, if q.active { 1.5 * s } else { 1.0 }, if q.active { ACCENT } else { EDGE });
-            self.hits.push((row, Hit::Squad(i)));
-            // The hotkey in a keycap, the name, then a soldier and the count.
-            let cap = Rect::new(row.x + 6.0 * s, row.y + 5.0 * s, 20.0 * s, row_h - 10.0 * s);
-            c.panel(cap, 4.0 * s, [58, 68, 82, 255], [40, 48, 58, 255], 1.0, EDGE);
-            c.text(Weight::SemiBold, 12.0 * s, (cap.x + cap.w / 2.0, cap.y + 14.5 * s), Align::Centre, &q.key, if q.active { ACCENT } else { TEXT });
-            let nx = cap.right() + 8.0 * s;
-            let nw = c.text(Weight::SemiBold, 13.0 * s, (nx, row.y + 19.5 * s), Align::Left, &q.name, if q.active { ACCENT } else { TEXT });
-            let ix = nx + nw + 10.0 * s;
-            c.icon(Icon::Soldier, (ix, row.y + 8.0 * s), 14.0 * s, MUTED);
-            let cw = c.text(Weight::SemiBold, 12.5 * s, (ix + 17.0 * s, row.y + 19.5 * s), Align::Left, &format!("{}", q.soldiers), TEXT);
-            let right = if q.active { row.right() - 8.0 * s } else { plus.x - 6.0 * s };
-            let state = if q.active { Some("commanding".to_string()) } else { q.note.clone() };
-            if let Some(n) = state {
-                let left = ix + 17.0 * s + cw + 8.0 * s;
-                c.text_fit(Weight::Medium, 11.0 * s, (right, row.y + 19.0 * s), Align::Right, &n, (right - left).max(0.0), if q.active { ACCENT } else { MUTED });
-            }
-            if !q.active {
-                let (t, b) = if on_plus { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
-                c.panel(plus, 5.0 * s, t, b, 1.0, EDGE);
-                c.text(Weight::SemiBold, 15.0 * s, (plus.x + plus.w / 2.0, plus.y + plus.h / 2.0 + 5.5 * s), Align::Centre, "+", if on_plus { GOOD } else { MUTED });
-                self.hits.push((plus, Hit::SquadInto(i)));
-                if on_plus {
-                    tip = Some((format!("{} joins the squad you command", q.name), (plus.x - 120.0 * s, plus.bottom() + 4.0 * s)));
-                }
-            }
-            if hot && !on_plus && !q.active {
-                tip = Some((format!("Command {} (key {})", q.name, q.key), (row.x, row.bottom() + 4.0 * s)));
-            }
-            y += row_h + 4.0 * s;
-        }
-        y += 2.0 * s;
-        let bw = (w - 2.0 * pad - 8.0 * s) / 2.0;
-        for (k, (label, key, off, hit, about)) in [("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: half the squad you command becomes a new squad, and you command it"), ("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad joins the one you command")].into_iter().enumerate() {
-            let b = Rect::new(r.x + pad + k as f32 * (bw + 8.0 * s), y, bw, buttons);
-            let hot = self.hover.is_some_and(|h| b.contains(h));
-            let (t, bt) = if hot && off.is_none() { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
-            c.panel(b, 8.0 * s, t, bt, 1.0, EDGE);
-            self.hits.push((b, if off.is_none() { hit } else { Hit::Panel }));
-            let ink = if off.is_some() { FAINT } else { TEXT };
-            let text = match key {
-                Some(k) => format!("{label}  {k}"),
-                None => label.to_string(),
-            };
-            c.text(Weight::SemiBold, 13.0 * s, (b.x + b.w / 2.0, b.y + 20.5 * s), Align::Centre, &text, ink);
-            if hot {
-                let why = match off {
-                    Some(o) => o.clone(),
-                    None => about.to_string(),
-                };
-                tip = Some((why, (b.x.min(sw - 8.0 * s - 330.0 * s), b.bottom() + 4.0 * s)));
-            }
-        }
-        if let Some((t, at)) = tip {
-            let wt = c.atlas.measure(Weight::Medium, 12.0 * s, &t) + 16.0 * s;
-            self.tip_small(&t, (at.0.min(sw - 8.0 * s - wt).max(8.0 * s), at.1), c, s);
         }
     }
 
@@ -1105,6 +1048,10 @@ impl Hud {
         }
 
         let inner = r.inset(pad);
+        if let Some(p) = &m.squads {
+            self.squad_tiles(p, inner, c, s);
+            return;
+        }
         if let Some(info) = &m.info {
             self.info_draw(info, inner, c, s);
             return;
@@ -1176,6 +1123,94 @@ impl Hud {
         }
     }
 
+    /// The squad mode's middle panel (`Model::squads`): a header line with
+    /// the squad count and who you command, Split and Combine at its right
+    /// end, and a tile a squad the size of a soldier's card (wider, for the
+    /// count): its hotkey, soldiers, their health, and a + that brings it
+    /// into the squad you command. The one you command is outlined.
+    fn squad_tiles(&mut self, p: &SquadPanel, inner: Rect, c: &mut Canvas, s: f32) {
+        let mine = p.rows.iter().find(|q| q.active);
+        let n = p.rows.len();
+        let head = if n == 1 { "1 squad".to_string() } else { format!("{n} squads") };
+        let hw = c.text(Weight::SemiBold, 15.0 * s, (inner.x, inner.y + 14.0 * s), Align::Left, &head, TEXT);
+        // The buttons from the right end of the header line.
+        let bh = 22.0 * s;
+        let mut bx = inner.right();
+        let mut tip: Option<(String, Rect)> = None;
+        for (label, key, off, hit, about) in [("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad joins the one you command"), ("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it")] {
+            let text = match key {
+                Some(k) => format!("{label}  {k}"),
+                None => label.to_string(),
+            };
+            let w = c.atlas.measure(Weight::SemiBold, 12.5 * s, &text) + 20.0 * s;
+            bx -= w;
+            let b = Rect::new(bx, inner.y, w, bh);
+            bx -= 6.0 * s;
+            let hot = self.hover.is_some_and(|h| b.contains(h));
+            let (t, bt) = if hot && off.is_none() { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+            c.panel(b, 6.0 * s, t, bt, 1.0, EDGE);
+            self.hits.push((b, if off.is_none() { hit } else { Hit::Panel }));
+            c.text(Weight::SemiBold, 12.5 * s, (b.x + b.w / 2.0, b.y + 15.5 * s), Align::Centre, &text, if off.is_some() { FAINT } else { TEXT });
+            if hot {
+                tip = Some((off.clone().unwrap_or_else(|| about.to_string()), b));
+            }
+        }
+        if let Some(q) = mine {
+            let sub = format!("commanding {}, {} soldiers", q.name, q.soldiers);
+            let left = inner.x + hw + 12.0 * s;
+            c.text_fit(Weight::Medium, 12.5 * s, (left, inner.y + 14.0 * s), Align::Left, &sub, (bx - left - 6.0 * s).max(0.0), MUTED);
+        }
+        let ch = 54.0 * s;
+        let cw = 72.0 * s;
+        let cgap = 7.0 * s;
+        let top = inner.y + 26.0 * s;
+        let cols = ((inner.w + cgap) / (cw + cgap)).floor().max(1.0) as usize;
+        let rows = ((inner.bottom() - top + cgap) / (ch + cgap)).floor().max(1.0) as usize;
+        let room = cols * rows;
+        for (k, q) in p.rows.iter().enumerate() {
+            if k >= room {
+                break;
+            }
+            let (i, j) = (k % cols, k / cols);
+            let cell = Rect::new(inner.x + i as f32 * (cw + cgap), top + j as f32 * (ch + cgap), cw, ch);
+            if k == room - 1 && n > room {
+                c.rrect(cell, 8.0 * s, [255, 255, 255, 14]);
+                c.text(Weight::SemiBold, 14.0 * s, (cell.x + cw / 2.0, cell.y + ch / 2.0 + 5.0 * s), Align::Centre, &format!("+{}", n - room + 1), MUTED);
+                break;
+            }
+            let plus = Rect::new(cell.right() - 21.0 * s, cell.y + 4.0 * s, 17.0 * s, 17.0 * s);
+            let on_plus = !q.active && self.hover.is_some_and(|h| plus.contains(h));
+            let hot = self.hover.is_some_and(|h| cell.contains(h)) && !on_plus;
+            let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+            c.panel(cell, 8.0 * s, t, b, if q.active { 2.0 * s } else { 1.0 }, if q.active { ACCENT } else { EDGE });
+            self.hits.push((cell, Hit::Squad(k)));
+            // The hotkey, top left; the soldiers, big; their health along the foot.
+            c.text(Weight::SemiBold, 12.0 * s, (cell.x + 7.0 * s, cell.y + 15.0 * s), Align::Left, &q.key, if q.active { ACCENT } else { MUTED });
+            let ink = if q.active { ACCENT } else { TEXT };
+            c.icon(Icon::Soldier, (cell.x + 8.0 * s, cell.y + 19.0 * s), 20.0 * s, ink);
+            c.text(Weight::SemiBold, 17.0 * s, (cell.x + 32.0 * s, cell.y + 36.0 * s), Align::Left, &format!("{}", q.soldiers), ink);
+            c.bar(Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s), q.hp, health_colour(q.hp), TRACK);
+            if !q.active {
+                let (t, b) = if on_plus { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
+                c.panel(plus, 4.0 * s, t, b, 1.0, EDGE);
+                c.text(Weight::SemiBold, 13.0 * s, (plus.x + plus.w / 2.0, plus.y + 13.0 * s), Align::Centre, "+", if on_plus { GOOD } else { MUTED });
+                self.hits.push((plus, Hit::SquadInto(k)));
+            }
+            let state = q.note.as_deref().unwrap_or("");
+            if on_plus {
+                tip = Some((format!("{} joins the squad you command", q.name), plus));
+            } else if hot {
+                let what = if q.active { format!("{}: {} soldiers, {state}. You command it", q.name, q.soldiers) } else { format!("{}: {} soldiers, {state}. Click to command it (key {})", q.name, q.soldiers, q.key) };
+                tip = Some((what, cell));
+            }
+        }
+        if let Some((t, at)) = tip {
+            let sw = c.screen.0 as f32;
+            let w = c.atlas.measure(Weight::Medium, 12.0 * s, &t) + 16.0 * s;
+            self.tip_small(&t, (at.x.min(sw - 8.0 * s - w).max(8.0 * s), at.y - 30.0 * s), c, s);
+        }
+    }
+
     fn chip(&mut self, r: Rect, hit: Hit, on: bool, c: &mut Canvas, s: f32) {
         let hot = self.hover.is_some_and(|p| r.contains(p));
         c.shadow(r, r.h / 2.0, 10.0 * s, 2.0 * s, SHADOW);
@@ -1223,17 +1258,18 @@ impl Hud {
         let cell = CELL * s;
         let gap = CELL_GAP * s;
         let x0 = r.x + pad;
-        let y0 = r.bottom() - pad - 3.0 * cell - 2.0 * gap;
+        let y0 = r.bottom() - pad - CARD_ROWS as f32 * cell - (CARD_ROWS - 1) as f32 * gap;
         // Empty slots, faintly, so the grid reads as a grid.
-        for j in 0..3 {
-            for i in 0..4 {
+        for j in 0..CARD_ROWS {
+            for i in 0..CARD_COLS {
                 let b = Rect::new(x0 + i as f32 * (cell + gap), y0 + j as f32 * (cell + gap), cell, cell);
                 c.rrect(b, 10.0 * s, [255, 255, 255, 8]);
             }
         }
         let mut tip = None;
         for (k, cmd) in m.commands.iter().enumerate() {
-            let (row, col) = (cmd.slot.0.min(2) as f32, cmd.slot.1.min(3) as f32);
+            let (row, col) = card_slot(cmd.slot);
+            let (row, col) = (row as f32, col as f32);
             let b = Rect::new(x0 + col * (cell + gap), y0 + row * (cell + gap), cell, cell);
             let hot = self.hover.is_some_and(|p| b.contains(p));
             let down = hot && self.pressed == Some(Hit::Command(k));
@@ -1288,20 +1324,23 @@ impl Hud {
     /// 140-pixel box over the command card with each card's name under its
     /// glyph. Returns the hovered card (or `usize::MAX` for the name and
     /// state, whose tooltip is the whole loadout) and its rectangle.
-    fn loadout_draw(&mut self, l: &Loadout, sel: Rect, collapsed: bool, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
+    #[allow(clippy::too_many_arguments)]
+    fn loadout_draw(&mut self, l: &Loadout, panel: Option<Rect>, sel: Rect, collapsed: bool, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
         let pad = 6.0 * s;
         let cell = 34.0 * s;
         let gap = 4.0 * s;
         let slots = l.slots.max(l.cards.len()).max(1);
         let info_w = 112.0 * s;
         let swap = 26.0 * s;
-        let w = 2.0 * pad + slots as f32 * cell + (slots - 1) as f32 * gap + 8.0 * s + info_w + if l.cycle.is_some() { swap + 6.0 * s } else { 0.0 };
+        let w = loadout_w(l, s);
         let h = 2.0 * pad + cell + 5.0 * s;
-        // On the selection panel's top edge at its right; where the window
-        // is too narrow for one, on the command card's.
-        // With the selection panel collapsed, at the bottom of its place,
-        // right of the collapsed strip.
-        let r = if collapsed && sel.w >= w + 158.0 * s {
+        // Its own panel at the bar's far left (11-14 08:46Z), the strip
+        // centred in it; else, as before, on the selection panel's top edge
+        // at its right, or the command card's where the window is too
+        // narrow; with the selection collapsed, at the bottom of its place.
+        let r = if let Some(p) = panel {
+            Rect::new(p.x, p.y + (p.h - h) / 2.0, p.w, h)
+        } else if collapsed && sel.w >= w + 158.0 * s {
             Rect::new(sel.right() - w, sel.bottom() - h, w, h)
         } else {
             let on = if sel.w >= 120.0 * s && sel.w >= w + 150.0 * s { sel } else { card };
@@ -1310,7 +1349,10 @@ impl Hud {
         if r.y < self.top + 8.0 * s {
             return None;
         }
-        self.glass(r, 10.0 * s, c, s);
+        match panel {
+            Some(p) => self.glass(p, 12.0 * s, c, s),
+            None => self.glass(r, 10.0 * s, c, s),
+        }
         let mut tip = None;
         let y = r.y + pad;
         for i in 0..slots {
@@ -1653,6 +1695,7 @@ impl Hud {
                     ("Space".into(), "Look at the newest alert".into()),
                     ("Esc".into(), "Cancel placing, or this menu".into()),
                     ("F1 or ?".into(), "This key card".into()),
+                    ("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text".into()),
                 ];
                 for cmd in &m.commands {
                     if let Some(k) = key_name(cmd.key) {
@@ -1708,9 +1751,9 @@ impl Hud {
     /// top bar; the bottom panels' height), as `draw` lays them out: for a
     /// camera made before the HUD has drawn, so it can centre in the band
     /// the panels leave (the opening view on the squad).
-    pub fn insets(screen: (u32, u32)) -> (f32, f32) {
-        let s = ui_scale(screen.1 as f32);
-        let panel_h = 3.0 * CELL * s + 2.0 * CELL_GAP * s + 2.0 * CARD_PAD * s;
+    pub fn insets(screen: (u32, u32), ui: UiSize) -> (f32, f32) {
+        let s = ui.px(screen);
+        let panel_h = CARD_ROWS as f32 * CELL * s + (CARD_ROWS - 1) as f32 * CELL_GAP * s + 2.0 * CARD_PAD * s;
         (8.0 * s + 38.0 * s, panel_h + 8.0 * s)
     }
 
@@ -1858,9 +1901,49 @@ mod tests {
         assert_eq!(r.click(Button::Left, false), (true, vec![]));
     }
 
+    /// The 4 x 3 slots land on twelve different places of the 6 x 2 card,
+    /// in reading order.
     #[test]
-    fn the_squad_panel_commands_a_squad_brings_one_in_and_splits_and_combines() {
-        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, note: Some("holding".into()), active };
+    fn the_command_card_is_six_by_two_in_reading_order() {
+        let places: Vec<(u8, u8)> = (0..3).flat_map(|r| (0..4).map(move |c| card_slot((r, c)))).collect();
+        assert_eq!(places[0], (0, 0));
+        assert_eq!(places[5], (0, 5));
+        assert_eq!(places[6], (1, 0));
+        assert_eq!(places[11], (1, 5));
+        let mut sorted = places.clone();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(sorted.len(), 12);
+    }
+
+    /// The UI size (owner, 11-14 08:07Z): at every step on every screen the
+    /// HUD's panels and buttons stay on the screen, and it grows with the
+    /// size until `UiSize::px`'s cap.
+    #[test]
+    fn every_ui_size_keeps_the_hud_on_screen() {
+        for screen in [(1280, 800), (1600, 900), (1920, 1080), (2560, 1440)] {
+            let mut last = 0.0;
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                r.m.selection = vec![Card { id: 0, icon: Icon::Soldier, team: 0, hp: 1.0, badge: None }; 3];
+                r.m.loadout = Some(loadout());
+                r.draw();
+                assert!(r.hud.scale >= last, "{screen:?} at {user}: {} after {last}", r.hud.scale);
+                last = r.hud.scale;
+                let (sw, sh) = (screen.0 as f32 + 0.5, screen.1 as f32 + 0.5);
+                for (b, h) in &r.hud.hits {
+                    assert!(b.x >= -0.5 && b.y >= -0.5 && b.right() <= sw && b.bottom() <= sh, "{screen:?} at {user}: {h:?} {b:?} off the screen");
+                }
+                assert!(screen.1 as f32 - r.hud.bottom <= screen.1 as f32 * 0.34, "{screen:?} at {user}: the bottom bar is too tall");
+            }
+            assert!(last > Rig::new(screen).hud.scale * 1.3, "{screen:?}: the biggest size grows the HUD");
+        }
+    }
+
+    #[test]
+    fn squad_tiles_command_a_squad_bring_one_in_and_split_and_combine() {
+        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active };
         let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None };
         for screen in [(1920, 1080), (1280, 720), (640, 360), (3840, 2160)] {
             let mut r = Rig::new(screen);
@@ -1873,15 +1956,15 @@ mod tests {
                 assert!(r.click(Button::Left, true).0);
                 r.click(Button::Left, false)
             };
-            // Each row is on screen, under the top bar.
+            // Each squad is a tile in the bottom bar's middle panel.
             for i in 0..3 {
                 let b = find(&r, Hit::Squad(i));
-                assert!(b.y >= r.hud.top && b.right() <= screen.0 as f32 && b.x >= 0.0, "{screen:?}: row {i} at {b:?}");
+                assert!(b.y >= r.hud.bottom && b.bottom() <= screen.1 as f32 && b.right() <= screen.0 as f32 && b.x >= 0.0, "{screen:?}: tile {i} at {b:?}");
             }
             assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadInto(0)), "the squad you command has no +");
             let b = find(&r, Hit::Squad(1));
-            // Left of the +, so the row itself.
-            assert_eq!(press(&mut r, Rect::new(b.x, b.y, b.w / 3.0, b.h)), (true, vec![HudEvent::Squad(1)]));
+            // Left of the +, so the tile itself.
+            assert_eq!(press(&mut r, Rect::new(b.x, b.y + b.h / 2.0, b.w / 3.0, b.h / 2.0)), (true, vec![HudEvent::Squad(1)]));
             let b = find(&r, Hit::SquadInto(2));
             assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadInto(2)]));
             let b = find(&r, Hit::SquadSplit);
@@ -1903,8 +1986,10 @@ mod tests {
             r.m.selection = vec![Card { id: 0, icon: Icon::Soldier, team: 0, hp: 1.0, badge: None }];
             r.draw();
             let share = (screen.1 as f32 - r.hud.bottom) / screen.1 as f32;
-            assert!(share <= 0.152, "{screen:?}: the bar is {:.1}% of the screen", share * 100.0);
-            assert!((Hud::insets(r.c.screen).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
+            // 15% before the owner's 08:33Z ask (one squad row, two command
+            // rows); 10.5% after.
+            assert!(share <= 0.11, "{screen:?}: the bar is {:.1}% of the screen", share * 100.0);
+            assert!((Hud::insets(r.c.screen, r.c.ui).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen, r.c.ui).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
             // With nothing selected, no panel reaches above the collapsed
             // strip except the command card and minimap.
             let full = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale).count();

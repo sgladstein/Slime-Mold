@@ -1,0 +1,76 @@
+<title>Dark Cool Ground</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+:root {
+  --bg: #eef1f2; --fg: #1c2327; --muted: #58656c; --rule: #d1d8dc; --accent: #168a9e;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111619; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #111619; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; display: block; }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+td, th { padding: 6px 14px 6px 0; text-align: left; border-bottom: 1px solid var(--rule); }
+.tbl { overflow-x: auto; }
+</style>
+<div class="wrap">
+  <div class="lede">
+    <span class="tag">Larder World · all five maps · rush hand · llvmpipe · 2026-11-14</span>
+    <h1>Dark, cool ground</h1>
+    <p>The open ground is now the darkest thing on screen, a cool slate, so the gold slime and the cyan crystals are the only colour. Before, the ground was an olive-brown that read as sand beside the slime, and sand soil was brighter than a thin slime film. Only the bare ground's colours changed. The soils still read apart, and the engine's scent and species tints still lie over them.</p>
+    <p class="muted">Before is main; after is this change. Same round, same frame.</p>
+  </div>
+  <section>
+    <h2>Zoom 6, passes map, 20 to 32 s</h2>
+    <div class="pair">
+      <figure><img src="before-z6.gif" alt="Before, zoom 6"><figcaption>Before: olive ground</figcaption></figure>
+      <figure><img src="after-z6.gif" alt="After, zoom 6"><figcaption>After: slate ground, the slime the brightest warm thing</figcaption></figure>
+    </div>
+  </section>
+  <section>
+    <h2>Passes: clay, plain and sand</h2>
+    <div class="pair">
+      <figure><img src="passes-before.jpg" alt="Passes before"><figcaption>Before: sand (bottom) brighter than thin slime, clay a saturated brick</figcaption></figure>
+      <figure><img src="passes-after.jpg" alt="Passes after"><figcaption>After: the three bands still read apart, all darker than the rock</figcaption></figure>
+    </div>
+    <div class="pair">
+      <figure><img src="passes-after-grey.jpg" alt="Passes after, in grey"><figcaption>Grey check: ground darkest, then rock, slime and crystals lightest</figcaption></figure>
+      <div class="tbl"><table>
+        <tr><th>Ground</th><th>Luma before</th><th>after</th></tr>
+        <tr><td>Plain (flat)</td><td>53</td><td>38</td></tr>
+        <tr><td>Sand</td><td>133</td><td>67</td></tr>
+        <tr><td>Clay</td><td>67</td><td>43</td></tr>
+        <tr><td>Barren</td><td>76</td><td>50</td></tr>
+        <tr><td>Wet</td><td>41</td><td>27</td></tr>
+        <tr><td>Rock (unchanged)</td><td>70-117</td><td>70-117</td></tr>
+      </table></div>
+    </div>
+  </section>
+  <section>
+    <h2>The other maps</h2>
+    <div class="pair">
+      <figure><img src="fork-before.jpg" alt="Fork before"><figcaption>Fork, before</figcaption></figure>
+      <figure><img src="fork-after.jpg" alt="Fork after"><figcaption>Fork, after</figcaption></figure>
+      <figure><img src="nest-before.jpg" alt="Nest before"><figcaption>Nest, before</figcaption></figure>
+      <figure><img src="nest-after.jpg" alt="Nest after"><figcaption>Nest, after</figcaption></figure>
+      <figure><img src="flats-before.jpg" alt="Flats before"><figcaption>Flats, before</figcaption></figure>
+      <figure><img src="flats-after.jpg" alt="Flats after"><figcaption>Flats, after</figcaption></figure>
+      <figure><img src="rim-before.jpg" alt="Rim before"><figcaption>Rim, before</figcaption></figure>
+      <figure><img src="rim-after.jpg" alt="Rim after"><figcaption>Rim, after</figcaption></figure>
+    </div>
+    <p class="muted">Cost: none (constants only).</p>
+  </section>
+</div>

@@ -102,26 +102,33 @@ before. All 51 `larder_world` tests pass, the 9 old ones unchanged.
 the number of soliders and its hotkey, you can click to take command. There
 should also be buttons, to combine, to split."
 
-A panel at the top right in squad mode (`ui::SquadPanel`, built by
-`App::squad_panel` in `src/bin/larder-world/squadmode.rs`):
+Then (08:48Z): "This is supposed to replace the bottom middle menu each
+squad should be a tile how each solider is now". The first cut, a panel at
+the top right, was replaced before it merged. In squad mode the bottom bar's
+middle panel (laid out by #250) shows the squads (`ui::SquadPanel`, drawn by
+`Hud::squad_tiles`, built by `App::squad_panel` in
+`src/bin/larder-world/squadmode.rs`):
 
-- A row a live squad, in hotkey order (row r is key r + 1, as the digit keys
-  pick): keycap, name, soldiers, and its state (formation if not blob;
-  firing, moving or holding). The squad you command is lit, "commanding".
-- A click on a row takes command of it. The + on another row brings that
+- A tile a live squad, in hotkey order (tile r is key r + 1, as the digit
+  keys pick), the size of a soldier's card but wider: hotkey, soldiers,
+  their mean health. The squad you command is outlined. Hovering says its
+  state (formation if not blob; firing, moving or holding).
+- A click on a tile takes command of it. The + on another tile brings that
   squad into yours (`Cmd::Merge`).
-- Split (X): the front half, the way the squad faces, becomes a new squad
-  and you command it. Combine (G): the nearest other squad joins yours,
-  however far (the G key keeps its 24-cell reach). A button that can't act
-  (a squad of one, 16 squads, no other squad) is greyed with the reason as
-  its tooltip.
-- Cost: inside the HUD's "model and HUD 0.098 ms a frame" on llvmpipe
-  (Fork, 1600x900, two squads).
+- The header line: how many squads, which you command, and Split and
+  Combine at its right end. Split: the front half, the way the squad faces,
+  becomes a new squad and you command it. Combine: the nearest other squad
+  joins yours, however far (the key keeps its 24-cell reach). A button that
+  can't act (a squad of one, 16 squads, no other squad) is greyed with the
+  reason as its tooltip.
+- Cost: model and HUD 0.062 ms a frame on llvmpipe (Fork, 1600x900, two
+  squads).
 
-Still `page/squad-panel-24s.jpg` and `page/squad-panel-crop.png`: `larder-world
-mode=squads look=DIR hand=squads at=24 screen=1600x900`. On main 68870d0 the
-film's squad sticks at the inside of the Fork's V wall from 14 s (the bug
-sweep's stuck anchor), so the hand now splits by 20 s whatever held it.
+Stills `page/squad-tiles-24s.jpg` and `page/squad-tiles-crop.png`:
+`larder-world mode=squads look=DIR hand=squads at=24 screen=1600x900`. On
+main 68870d0 the film's squad stuck at the inside of the Fork's V wall from
+14 s (the bug sweep's stuck anchor, #252), so the hand now splits by 20 s
+whatever held it.
 
 ## Open
 

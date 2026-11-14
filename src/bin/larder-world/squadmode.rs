@@ -310,7 +310,8 @@ fn digit(code: KeyCode) -> Option<usize> {
     [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9].iter().position(|&k| k == code)
 }
 
-/// The squad panel (`ui::SquadPanel`, owner 2026-11-14 08:22Z): a row a
+/// The squad tiles (`ui::SquadPanel`, owner 2026-11-14 08:22Z and 08:48Z,
+/// in the bottom middle panel's place): a tile a
 /// live squad in hotkey order (row `r` is `live_squads()[r]`, key `r + 1`,
 /// as the digit keys pick), and Split and Combine.
 impl App {
@@ -328,7 +329,7 @@ impl App {
                     note.push(sq.formation.name().to_string());
                 }
                 note.push(if sq.fire.is_some() { "firing" } else if sq.steer != (0.0, 0.0) || sq.dest.is_some_and(|d| g.middle(q).is_some_and(|m| (m.0 - d.0).hypot(m.1 - d.1) > 4.0 * g.world.scale())) { "moving" } else { "holding" }.to_string());
-                SquadRow { key: if i < 9 { format!("{}", i + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), note: Some(note.join(", ")), active: g.active == Some(q) }
+                SquadRow { key: if i < 9 { format!("{}", i + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q) }
             })
             .collect();
         let mine = g.active.map_or(0, |q| g.members(q).len());
