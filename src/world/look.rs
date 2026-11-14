@@ -74,27 +74,26 @@ pub struct Fields<'a> {
 /// The ground field for a `w`-wide world of `cells` cells. Off the agar
 /// and not a wall is rock (the rim of a dish is rock too).
 pub fn ground(w: usize, cells: usize, f: &Fields) -> Vec<u32> {
-    let at = |v: &[bool], i: usize| v.get(i).copied().unwrap_or(false);
     let depth = if f.depth.len() == cells { f.depth.to_vec() } else { crystal_depth(w, cells, f.crystal) };
-    let mut g: Vec<u32> = (0..cells)
-        .map(|i| {
-            if at(f.wall, i) {
-                code(Ground::Wall, f.wall_share.get(i).copied().unwrap_or(1.0))
-            } else if f.crystal.get(i).copied().unwrap_or(0) > 0 {
-                code(Ground::Crystal, f.charge_share.get(i).copied().unwrap_or(1.0))
-            } else if at(f.rock, i) || (!f.agar.is_empty() && !at(f.agar, i)) {
-                code(Ground::Rock, 1.0)
-            } else if at(f.wet, i) {
-                code(Ground::Wet, 1.0)
-            } else {
-                code(Ground::Agar, 0.0)
-            }
-        })
-        .collect();
-    for (i, (c, d)) in g.iter_mut().zip(depth).enumerate() {
-        *c |= (d as u32) << 16 | (f.elev.get(i).copied().unwrap_or(0) as u32) << 24 | ((f.soil.get(i).copied().unwrap_or(0) & 7) as u32) << 4;
-    }
-    g
+    (0..cells).map(|i| cell(f, i, depth[i])).collect()
+}
+
+/// One cell of `ground`, with its crystal depth `depth` (no `FAR` mark):
+/// Larder World rebuilds the cells a new wall covers with it alone.
+pub fn cell(f: &Fields, i: usize, depth: u8) -> u32 {
+    let at = |v: &[bool], i: usize| v.get(i).copied().unwrap_or(false);
+    let c = if at(f.wall, i) {
+        code(Ground::Wall, f.wall_share.get(i).copied().unwrap_or(1.0))
+    } else if f.crystal.get(i).copied().unwrap_or(0) > 0 {
+        code(Ground::Crystal, f.charge_share.get(i).copied().unwrap_or(1.0))
+    } else if at(f.rock, i) || (!f.agar.is_empty() && !at(f.agar, i)) {
+        code(Ground::Rock, 1.0)
+    } else if at(f.wet, i) {
+        code(Ground::Wet, 1.0)
+    } else {
+        code(Ground::Agar, 0.0)
+    };
+    c | (depth as u32) << 16 | (f.elev.get(i).copied().unwrap_or(0) as u32) << 24 | ((f.soil.get(i).copied().unwrap_or(0) & 7) as u32) << 4
 }
 
 /// Byte 0's top bit: no hard terrain (rock, wall, rubble, or the world's
@@ -140,6 +139,54 @@ pub fn mark_far(w: usize, codes: &mut [u32]) {
             let c = &mut codes[y * w + x];
             *c = if n == 0 { *c | FAR } else { *c & !FAR };
             n = n + at(y as isize + r as isize + 1) - at(y as isize - r as isize);
+        }
+    }
+}
+
+/// `mark_far` for the cells in columns `x0..x1` and rows `y0..y1` only,
+/// as `mark_far` over the whole world would set them: a new wall changes
+/// the mark within `FAR_REACH` of its cells, so Larder World re-marks a box
+/// round it instead of the world (the technical lead, 2026-11-14: a whole
+/// rebuild at 6x a planet's area is the 25-32 ms hitch the timed refresh
+/// lost). Counts over the box grown by the reach, so it costs the box.
+pub fn mark_far_box(w: usize, codes: &mut [u32], (x0, x1): (usize, usize), (y0, y1): (usize, usize)) {
+    if w == 0 {
+        return;
+    }
+    let h = codes.len() / w;
+    let (x1, y1) = (x1.min(w), y1.min(h));
+    if x0 >= x1 || y0 >= y1 {
+        return;
+    }
+    let r = FAR_REACH as isize;
+    // Hard cells (the world's edge too) over the box grown by r, summed
+    // from the top left: `sum` is (bw + 1) x (bh + 1).
+    let (gx0, gy0) = (x0 as isize - r, y0 as isize - r);
+    let (bw, bh) = ((x1 - x0) as isize + 2 * r, (y1 - y0) as isize + 2 * r);
+    let hard = |x: isize, y: isize| -> u32 {
+        if x < 0 || y < 0 || x >= w as isize || y >= h as isize {
+            1
+        } else {
+            matches!(codes[y as usize * w + x as usize] & 15, 2..=4) as u32
+        }
+    };
+    let stride = (bw + 1) as usize;
+    let mut sum = vec![0u32; stride * (bh + 1) as usize];
+    for y in 0..bh {
+        let mut row = 0;
+        for x in 0..bw {
+            row += hard(gx0 + x, gy0 + y);
+            sum[(y + 1) as usize * stride + (x + 1) as usize] = sum[y as usize * stride + (x + 1) as usize] + row;
+        }
+    }
+    // The square of side 2r + 1 round each box cell, in grown-box terms.
+    let side = (2 * r + 1) as usize;
+    for y in y0..y1 {
+        for x in x0..x1 {
+            let (ax, ay) = (x - x0, y - y0);
+            let n = sum[(ay + side) * stride + ax + side] + sum[ay * stride + ax] - sum[ay * stride + ax + side] - sum[(ay + side) * stride + ax];
+            let c = &mut codes[y * w + x];
+            *c = if n == 0 { *c | FAR } else { *c & !FAR };
         }
     }
 }
@@ -319,6 +366,30 @@ mod tests {
         codes[10 * w + 12] = code(Ground::Agar, 0.0);
         mark_far(w, &mut codes);
         assert!(far(&codes, 12, 10) && far(&codes, 8, 10));
+    }
+
+    /// A box re-marked round a changed cell (grown by the reach) gives
+    /// what marking the whole world gives, at the world's edges too.
+    #[test]
+    fn far_in_a_box_matches_far_everywhere() {
+        let (w, h) = (37, 29);
+        // Scattered rock and walls, from a fixed little generator.
+        let mut seed = 12345u32;
+        let mut next = || {
+            seed = seed.wrapping_mul(1_103_515_245).wrapping_add(12_345);
+            seed >> 16
+        };
+        let mut codes: Vec<u32> = (0..w * h).map(|_| if next() % 23 == 0 { code(Ground::Rock, 1.0) } else { code(Ground::Agar, 0.0) }).collect();
+        mark_far(w, &mut codes);
+        for (x, y, kind) in [(18, 14, Ground::Wall), (1, 2, Ground::Rubble), (35, 27, Ground::Wall), (18, 14, Ground::Agar), (0, 0, Ground::Wet)] {
+            let i = y * w + x;
+            codes[i] = code(kind, 1.0) | (codes[i] & FAR);
+            let r = FAR_REACH;
+            mark_far_box(w, &mut codes, (x.saturating_sub(r), x + r + 1), (y.saturating_sub(r), y + r + 1));
+            let mut whole = codes.clone();
+            mark_far(w, &mut whole);
+            assert_eq!(codes, whole, "after ({x}, {y}) became {kind:?}");
+        }
     }
 
     #[test]

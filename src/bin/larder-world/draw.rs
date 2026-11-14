@@ -39,6 +39,10 @@ pub(super) fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f3
     codes
 }
 
+/// The side of the tiles a new wall's cells are grouped in, to re-mark
+/// the ground's `look::FAR` bit round them (`refresh_ground`).
+const WALL_TILE: usize = 32;
+
 /// The cells a timed ground refresh can change (`App::refresh_ground`):
 /// the crystals' (their charge) and the walls' (their health), row-major,
 /// gathered on the GPU and read back alone (`gpu::Gather`). Everything
@@ -265,17 +269,46 @@ impl App {
         let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_secs_f64() * 1e3;
         let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
-        let any_wall = e.dish.wall.iter().any(|&w| w);
+        let d = &e.dish;
+        let any_wall = d.wall.iter().any(|&w| w);
+        let cells = d.w * d.h;
+        let is_wall = |i: usize| d.wall.get(i).copied().unwrap_or(false);
         let read;
-        if g.walls != self.ground_walls || self.codes.len() != e.dish.w * e.dish.h {
-            // A wall went up (the dish's own cells changed): every cell.
+        if self.codes.len() != cells || self.wall_mask.len() != cells {
+            // A new world: every cell.
             let charge = floats(read_back(&e.device, &e.queue, &e.charge));
             let health = any_wall.then(|| floats(read_back(&e.device, &e.queue, &e.health)));
             read = ms(t0);
             self.codes = ground_codes(g, &self.depth, Some(&charge), health.as_deref());
             e.queue.write_buffer(buf, 0, &self.codes.iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
             self.live = live_cells(g, &self.live);
+            self.wall_mask = (0..cells).map(is_wall).collect();
         } else {
+            // A wall went up (technical lead, 2026-11-14: rebuilding every
+            // cell for it was the 25-32 ms hitch at 6x a planet's area, and
+            // the AI and the player both raise walls in play): its cells
+            // join the gathered ones, and the 32-cell tiles it touches are
+            // re-marked (`mark_far_box`), each grown by the mark's reach.
+            let mut tiles: Vec<(usize, usize)> = Vec::new();
+            if g.walls != self.ground_walls {
+                let changed: Vec<usize> = (0..cells).filter(|&i| is_wall(i) != self.wall_mask[i]).collect();
+                if !changed.is_empty() {
+                    for &i in &changed {
+                        self.wall_mask[i] = is_wall(i);
+                    }
+                    self.live = live_cells(g, &self.live);
+                    tiles = changed.iter().map(|&i| ((i % d.w) / WALL_TILE, (i / d.w) / WALL_TILE)).collect();
+                    tiles.sort_unstable();
+                    tiles.dedup();
+                    // A cell that stopped being a wall (the CPU dish's
+                    // rubble; the GPU's walls wear to rubble but stay
+                    // walls) and holds no crystal: its code from the dish.
+                    let f = look::Fields { agar: &d.agar, rock: &d.rock, wet: &d.wet, wall: &d.wall, crystal: &d.pile_of, soil: &d.soil, ..Default::default() };
+                    for &i in changed.iter().filter(|&&i| !is_wall(i) && d.pile_of.get(i).copied().unwrap_or(0) == 0) {
+                        self.codes[i] = look::cell(&f, i, self.depth.get(i).copied().unwrap_or(0));
+                    }
+                }
+            }
             // Once a game second: only the crystal and wall cells, read
             // back alone, and only the runs where a code changed written
             // (technical lead, 2026-11-14: the whole field read back and
@@ -284,14 +317,10 @@ impl App {
             let (charge, health) = self.live.gather.as_ref().map_or((Vec::new(), Vec::new()), |q| q.read(&e.device, &e.queue, &e.charge, &e.health));
             let (charge, health) = (floats(charge), any_wall.then(|| floats(health)));
             read = ms(t0);
+            let write = |codes: &[u32], a: usize, b: usize| e.queue.write_buffer(buf, a as u64 * 4, &codes[a..b].iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
             // Rows of changed cells written as runs: a crystal eaten
             // changes a few rows of it, not the buffer.
             let mut run: Option<(usize, usize)> = None;
-            let flush = |run: Option<(usize, usize)>, codes: &[u32]| {
-                if let Some((a, b)) = run {
-                    e.queue.write_buffer(buf, a as u64 * 4, &codes[a..b].iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
-                }
-            };
             for (k, &i) in self.live.cells.iter().enumerate() {
                 let i = i as usize;
                 let c = live_code(g, &self.depth, i, self.codes[i], charge[k], health.as_ref().map(|h| h[k]));
@@ -302,12 +331,26 @@ impl App {
                 run = match run {
                     Some((a, b)) if b == i => Some((a, i + 1)),
                     _ => {
-                        flush(run, &self.codes);
+                        if let Some((a, b)) = run {
+                            write(&self.codes, a, b);
+                        }
                         Some((i, i + 1))
                     }
                 };
             }
-            flush(run, &self.codes);
+            if let Some((a, b)) = run {
+                write(&self.codes, a, b);
+            }
+            // The new wall's tiles, marked again and written row by row.
+            let r = look::FAR_REACH;
+            for &(tx, ty) in &tiles {
+                let xs = ((tx * WALL_TILE).saturating_sub(r), ((tx + 1) * WALL_TILE + r).min(d.w));
+                let ys = ((ty * WALL_TILE).saturating_sub(r), ((ty + 1) * WALL_TILE + r).min(d.h));
+                look::mark_far_box(d.w, &mut self.codes, xs, ys);
+                for y in ys.0..ys.1 {
+                    write(&self.codes, y * d.w + xs.0, y * d.w + xs.1);
+                }
+            }
         }
         (self.ground_at, self.ground_walls) = (t, g.walls);
         let (n, sum, most, most_read) = self.ground_cost;
