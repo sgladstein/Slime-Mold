@@ -777,6 +777,13 @@ impl App {
                     }
                     None => Map::load(&dir, &name)?,
                 };
+                // A run's walkers go on the planet's open cells
+                // (`run::open_scale`), not its whole area.
+                let mut s = s;
+                if a.run.is_some() {
+                    s.walkers = ((s.walkers as f32) * slime_mould::mould::run::open_scale(&m)).round().max(1.0) as _;
+                    walkers = s.walkers;
+                }
                 // Plants (11-14): the stand-in on a map without its own,
                 // until levelgen writes each biome's (`plants=0` off).
                 if s.plants {

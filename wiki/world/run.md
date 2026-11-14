@@ -8,14 +8,17 @@ sources:
 code:
   - LADDER
   - PLANETS
+  - REF_OPEN
   - Run::carried
   - Run::gun
   - Run::level
   - Run::rules
   - Run::shop
+  - ammo_price
   - gun_price
   - reward
   - run_args
+  - shells_at
   - shop_of
   - shop_plan
   - shrink_goal
@@ -38,7 +41,7 @@ cards (the HUD's icons, in the carried gun's slots, the bag, for sale). The
 run starts with the average rifle and carries one gun (`Run::carried`,
 the gun thread's `guns::Gun`); two guns rolled for the coming planet are on
 sale each shop, priced by `gun_price`, and the carried gun's budget and
-slots hold the cards. Walkers scale with depth and the planet's area. Locked buildings and tools show
+slots hold the cards. Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). Locked buildings and tools show
 locked on the command card. Dev mode adds rows to jump planets, add points
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
