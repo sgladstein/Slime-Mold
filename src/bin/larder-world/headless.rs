@@ -12,10 +12,13 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, booms: &[(f32, f32, f32)], menu_page: Option<slime_mould::world::start::Page>) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], menu_page: Option<slime_mould::world::start::Page>) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
+    if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
+        g.bank = b;
+    }
     // `menu=PAGE`: the start menu's page drawn over the round, as the
     // window shows it (the menu's pictures).
     if let Some(p) = menu_page {

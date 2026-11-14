@@ -60,7 +60,8 @@
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
-//! `holes=1` also times how long each hit's hole stays open; `centre=X,Y[,ZOOM]`
+//! `holes=1` also times how long each hit's hole stays open; `bank=N` starts
+//! the round with N food banked (films of rounds); `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
 //! `cut=T,X,Y,R[,HOLD[,WIDTH]]` takes a ring WIDTH world units wide (6), R
@@ -137,9 +138,9 @@ use slime_mould::sound::world::{Ear, WorldListener};
 use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
-use slime_mould::world::marks::team_colour;
+use slime_mould::world::marks::{team_colour, SLASH, STANDING, WALKING};
 use slime_mould::world::ui::{theme, Card, Command, Ghost, Info, MenuItem, Model, Resource, Site, Target};
-use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, View};
+use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
@@ -316,9 +317,6 @@ struct Args {
     /// The mould's voice at the start (`voice=0` turns it off; K in the
     /// window).
     voice: bool,
-    /// `bank=F`: food in the larder at the start (`Rules::start_bank`), so
-    /// a film of rounds (which cost food) can stage a fight (11-14).
-    bank: Option<f32>,
     /// `crater=S`: game seconds of crater a hit lays (`Rules::crater`; 0
     /// turns the hole under fire off, to compare).
     crater: Option<f32>,
@@ -405,6 +403,9 @@ struct App {
     depth: Vec<u8>,
     looks: Vec<Look>,
     tracers: Vec<Tracer>,
+    /// This frame's point lights (bullets, bursts, muzzles, lodged casts),
+    /// filled with the marks (`draw.rs`).
+    lights: Vec<Light>,
     paused: bool,
     menu_paused: bool,
     fast: bool,
@@ -500,6 +501,7 @@ impl App {
             depth: Vec::new(),
             looks: Vec::new(),
             tracers: Vec::new(),
+            lights: Vec::new(),
             paused: false,
             menu_paused: false,
             fast: false,
@@ -602,9 +604,6 @@ impl App {
         let mut rules = mission.as_ref().map_or_else(Rules::default, |m| m.rules(Rules::default()));
         if let Some(c) = a.crater {
             rules.crater = c;
-        }
-        if let Some(b) = a.bank {
-            rules.start_bank = b;
         }
         if let Some(p) = a.core_pull {
             rules.core_pull = p;
@@ -973,6 +972,7 @@ impl App {
         if let Some(v) = self.view.as_mut() {
             v.minimap_box = self.hud.minimap_box;
             v.set_marks(&self.marks);
+            v.set_lights(&self.lights);
         }
     }
 
@@ -1023,11 +1023,12 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, bank: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut holes = false;
+    let mut bank = None;
     let mut centre = None;
     let mut cut = None;
     let mut booms: Vec<(f32, f32, f32)> = Vec::new();
@@ -1051,7 +1052,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "mission" => args.mission = Some(v.to_string()),
             "crater" => args.crater = Some(v.parse()?),
-            "bank" => args.bank = Some(v.parse()?),
             "core_pull" => args.core_pull = Some(v.parse()?),
             "bullet" => args.bullet = Some(v.parse()?),
             "own" => {
@@ -1096,6 +1096,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "squad1" => squad1 = v != "0",
             "spread" => spread = v != "0",
             "holes" => holes = v != "0",
+            // `bank=N`: the no-window round starts with N food in the bank
+            // (films of rounds, whose casts are paid from it).
+            "bank" => bank = Some(v.parse::<f32>()?),
             "centre" => {
                 // `centre=X,Y[,ZOOM]`: the near view's place and zoom (6).
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
@@ -1152,7 +1155,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(page_named);
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, &booms, page)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, page)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

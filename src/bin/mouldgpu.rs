@@ -2892,7 +2892,7 @@ mod tests {
             let (r, rr) = (4.0f32, 10.0f32);
             let inv = 1.0 / ((rr * k) * (rr * k) - (r * k) * (r * k));
             let killed = cpu.strike(x, y, r, 30.0, 2.0 * r);
-            e.burst(&shared, &s, x, y, r, 30.0, 2.0 * r, 0.0, 0);
+            e.burst(&shared, &s, x, y, r, 30.0, 2.0 * r, 0.0, 0, 0.0);
             let n_cpu = cpu.fling(x * k, y * k, r * k, rr * k, STEPS, inv);
             let g = Settings { fling_speed: gpu_speed, ..s.clone() };
             let n_gpu = e.fling(&shared, &g, x, y, r, rr, STEPS, inv);
@@ -3036,7 +3036,7 @@ mod tests {
             // `scorch_disc`), which must match cell for cell.
             let killed = cpu.strike(x, y, 4.0, 30.0, 12.0);
             cpu.scorch_disc(x * k, y * k, 5.0 * k, 300);
-            e.burst(&shared, &s, x, y, 4.0, 30.0, 12.0, 5.0, 300);
+            e.burst(&shared, &s, x, y, 4.0, 30.0, 12.0, 5.0, 300, 0.0);
             let crater_off = e.crater_of().iter().zip(&cpu.scorch).filter(|(a, b)| **a != **b as f32).count();
             assert!(cpu.scorch.contains(&300) && crater_off == 0, "{name}: the burst's crater, {crater_off} cells off");
             let side = (e.done % 2) as usize;
@@ -3292,6 +3292,9 @@ mod tests {
             ("hungry, no limit, Jenson's", hungry(small(3))),
             ("hungry, species converting, explorers, contagion, respawn", Settings { species: 2, convert: 1.2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, respawn: 0.01, ..hungry(small(0)) }),
             ("hungry, cap, grazing off", Settings { cap: 100, graze: 0.0, ..hungry(small(3)) }),
+            // The toolkit's germ (2026-11-14): the sick pay `sick_upkeep`
+            // times the upkeep, long sick so the warm-up leaves some sick.
+            ("hungry, the sick pay five times the upkeep", Settings { sick: 400, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, sick_upkeep: 5.0, ..hungry(small(0)) }),
             // Every other walker set starving and the rest set to breed
             // (below), with room in the slots: births land in cells freed
             // by deaths in the same tick, some of them claimed by the
@@ -3364,7 +3367,11 @@ mod tests {
             let specs_off = if cpu.spec.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.spec).filter(|(g, c)| *g & 0xFF != **c as u32).count() };
             // A child is its parent's kind (`mix_share`, bit 8).
             let kinds_off = if cpu.kind.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.kind).filter(|(g, c)| *g >> 8 != **c as u32).count() };
-            let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick).iter().zip(&cpu.sick).filter(|(g, c)| **g != **c as u32).count() };
+            // Living slots only: a dead slot's counter is never read (a
+            // birth there sets it to 0), and the CPU counts it down while
+            // the GPU leaves it (seen with `sick` 400, 2026-11-14: 73 dead
+            // slots one apart, every living one exact).
+            let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick).iter().zip(&cpu.sick).enumerate().filter(|(k, (g, c))| cpu.lives(*k) && **g != **c as u32).count() };
             let occ: Vec<u32> = read_back(&device, &queue, &e.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
             let occ_off = occ.iter().zip(occupancy(&cpu)).filter(|(g, c)| **g != *c).count();
             let alive = cpu.alive.iter().filter(|&&a| a).count();
