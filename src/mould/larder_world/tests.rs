@@ -169,7 +169,7 @@ fn the_walking_map_goes_round_a_wall_through_its_gap() {
     let mut at = start;
     let mut steps = 0;
     while at != goal && steps < 100 {
-        let next = downhill(w, h, &map, at);
+        let next = downhill(w, h, &map, at, true);
         assert!(open(next) && next != at, "every step is open and goes downhill");
         at = next;
         steps += 1;

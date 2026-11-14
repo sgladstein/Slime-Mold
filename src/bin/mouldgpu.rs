@@ -4404,7 +4404,9 @@ mod tests {
         // a game-layer walk rule the same on both engines, but it moves
         // where each soldier stands, and seed 3's chaos then parted the
         // moulds past the bound (896 GPU against 1014 CPU at 30 s).
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, elbow: 0.0, ..Rules::default() };
+        // Wall corners (`Rules::corners`, 2026-11-14) off for the same
+        // reason: 951 GPU against 1049 CPU at 30 s with them on.
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, elbow: 0.0, corners: false, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { crater: 0.0, ..rules }, seed);

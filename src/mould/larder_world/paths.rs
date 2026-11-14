@@ -61,8 +61,9 @@ pub fn distance_map(w: usize, h: usize, goal: usize, open: impl Fn(usize) -> boo
 }
 
 /// The neighbour of `i` nearest the goal on `map` (`i` itself at the goal,
-/// or when no neighbour is nearer).
-pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize) -> usize {
+/// or when no neighbour is nearer); with `corners` (`Rules::corners`) a
+/// diagonal only past two open side cells.
+pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize, corners: bool) -> usize {
     let (x, y) = ((i % w) as i64, (i / w) as i64);
     let mut best = i;
     for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
@@ -74,7 +75,7 @@ pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize) -> usize {
         // A diagonal only past two open side cells, as `distance_map` walks
         // (2026-11-14): a step cutting a wall's corner was blocked in
         // `Game::walk`, and a soldier at a wall's end stood there for good.
-        if dx != 0 && dy != 0 && (map[y as usize * w + nx as usize] == u32::MAX || map[ny as usize * w + x as usize] == u32::MAX) {
+        if corners && dx != 0 && dy != 0 && (map[y as usize * w + nx as usize] == u32::MAX || map[ny as usize * w + x as usize] == u32::MAX) {
             continue;
         }
         if map[j] < map[best] {
@@ -347,7 +348,7 @@ impl<W: World> Game<W> {
             // rather than zig-zagging cell to cell.
             let mut at = cell(w, h, (s.x, s.y));
             for _ in 0..3 {
-                at = downhill(w, h, map, at);
+                at = downhill(w, h, map, at, self.rules.corners);
             }
             if at == gi {
                 g

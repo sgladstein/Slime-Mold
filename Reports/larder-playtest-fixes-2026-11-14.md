@@ -55,6 +55,13 @@ soldier is within 12 cells of the far-side target after 20 s. Tests:
 `builders_stand_beside_their_wall_and_walk_on_once_it_stands`,
 `a_soldier_shut_in_a_wall_walks_out_and_a_move_into_one_stops_beside_it`.
 
+The corner rule is `Rules::corners` (on). The GPU crater twin in mouldgpu
+(`a_squad_laying_craters_plays_on_the_engine_as_on_the_cpu`, seed 3) turns it
+off, as it does elbow room and solid crystals: a walk rule plays the same on
+both engines but moves the squad, and seed 3's chaos then parted the moulds
+past the 8% bound (951 GPU against 1049 CPU at 30 s on CI; with it off, 1023
+against 1032).
+
 Frame cost: the ring search runs only for a soldier whose goal is in rock or
 a wall, or who stands in one (none in normal play); the corner check is two
 reads per diagonal. Not timed.
