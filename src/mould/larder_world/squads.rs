@@ -181,6 +181,10 @@ pub struct Squad {
     /// The squad it is linked through (`Cmd::Link`), the lowest id of its
     /// link; `NO_LINK` alone.
     pub link: u8,
+    /// Its gun (owner 11-14 16:46Z: "The squad owns the gun"); None fires
+    /// the standard rifle (`Gun::standard`), so a game that hands out no
+    /// guns plays as before. Read it through `Game::gun`.
+    pub gun: Option<Gun>,
 }
 
 /// Orders a squad holds queued.
@@ -204,15 +208,17 @@ impl Default for Squad {
             queue: [Order::Hold; SQUAD_QUEUE],
             queued: 0,
             link: NO_LINK,
+            gun: None,
         }
     }
 }
 
 impl Squad {
     /// A new squad made from this one (a split, a soldier joining a free
-    /// id): its formation and settings, nothing it was doing, no link.
+    /// id): its formation, settings and gun (each half of a split fires
+    /// what it fired), nothing it was doing, no link.
     fn offshoot(&self) -> Squad {
-        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, ..Squad::default() }
+        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, gun: self.gun, ..Squad::default() }
     }
 }
 
@@ -617,10 +623,11 @@ impl<W: World> Game<W> {
         }
     }
 
-    /// Ticks between squad `q`'s shots: the controlled squad's are
+    /// Ticks between squad `q`'s shots: its gun's (`Gun::rate`; the
+    /// standard rifle's is `Rules::shot_every`), the controlled squad's
     /// `LeadRules::rate` times as often.
     pub(super) fn shot_gap(&self, q: usize) -> u64 {
-        let every = self.rules.shot_every / if self.leads(q) { self.rules.lead.rate.max(0.01) } else { 1.0 };
+        let every = self.gun(q).every() / if self.leads(q) { self.rules.lead.rate.max(0.01) } else { 1.0 };
         // The rounds' `Rate` cards (11-14): x (1 + rate_card) a card.
         let every = every / (1.0 + self.rules.rate_card * self.bullet_mods.rate as f32).max(0.01);
         self.secs(every).max(1)

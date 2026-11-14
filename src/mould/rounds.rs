@@ -64,8 +64,11 @@ use super::squad::BurstRules;
 
 /// Most lodged casts (Delay and Thick) waiting at once.
 pub const PENDING_MAX: usize = 64;
-/// Most cards a round holds.
+/// Cards the standard rifle holds (`guns::Gun::standard`); a rolled gun
+/// holds its own `Gun::slots`, up to `MAX_SLOTS`.
 pub const SLOTS: usize = 4;
+/// Most cards any gun holds (`guns::SLOTS_MAX`): what a round reads.
+pub const MAX_SLOTS: usize = super::guns::SLOTS_MAX as usize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Card {
@@ -203,7 +206,7 @@ pub fn parse(s: &str) -> Option<Vec<Card>> {
         return Some(Vec::new());
     }
     let v: Option<Vec<Card>> = s.split('+').map(Card::from_name).collect();
-    v.filter(|v| v.len() <= SLOTS)
+    v.filter(|v| v.len() <= MAX_SLOTS)
 }
 
 /// A round's cost against a gun's budget (`Card::cost`). A `Thrift`
@@ -236,10 +239,21 @@ pub struct Over {
 }
 
 /// The cards, if they fit a gun of `budget`: their cost within it and at
-/// most `SLOTS` of them.
+/// most `SLOTS` of them (the standard rifle's slots).
 pub fn fit(round: Vec<Card>, budget: u32) -> Result<Vec<Card>, Over> {
+    fit_in(round, budget, SLOTS)
+}
+
+/// The cards, if they fit `gun` (owner 11-14 16:46Z: "Each gun defines
+/// the budget and slot count"): cost within its budget, no more cards
+/// than its slots.
+pub fn fit_gun(round: Vec<Card>, gun: &super::guns::Gun) -> Result<Vec<Card>, Over> {
+    fit_in(round, gun.budget, gun.slots as usize)
+}
+
+fn fit_in(round: Vec<Card>, budget: u32, slots: usize) -> Result<Vec<Card>, Over> {
     let c = cost(&round);
-    if c <= budget && round.len() <= SLOTS {
+    if c <= budget && round.len() <= slots.min(MAX_SLOTS) {
         Ok(round)
     } else {
         Err(Over { cost: c, budget, cards: round.len() })
@@ -367,7 +381,7 @@ pub struct Cast {
 pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
     let mut out = Vec::new();
     let (mut wide, mut scatter, mut quiet, mut trigger) = (0, false, false, None);
-    for &c in round.iter().take(SLOTS) {
+    for &c in round.iter().take(MAX_SLOTS) {
         match c {
             Card::Wide => wide += 1,
             Card::Scatter => scatter = true,
@@ -394,14 +408,14 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
 /// `pierce` one more slime hit flown through, each `split` one more
 /// generation of pieces.
 pub fn flight(round: &[Card]) -> BulletMods {
-    let n = |k: Card| round.iter().take(SLOTS).filter(|&&c| c == k).count() as u8;
+    let n = |k: Card| round.iter().take(MAX_SLOTS).filter(|&&c| c == k).count() as u8;
     BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate) }
 }
 
 /// The round's trail cards as every soldier bullet lays them: copies of
 /// `Scorch`, `Bait`, `Mist` and `Smother`.
 pub fn trails(round: &[Card]) -> [u8; 4] {
-    let n = |k: Card| round.iter().take(SLOTS).filter(|&&c| c == k).count() as u8;
+    let n = |k: Card| round.iter().take(MAX_SLOTS).filter(|&&c| c == k).count() as u8;
     [n(Card::Scorch), n(Card::Bait), n(Card::Mist), n(Card::Smother)]
 }
 
@@ -434,7 +448,7 @@ pub fn trail_bursts(n: [u8; 4], from: (f32, f32), to: (f32, f32), r: &RoundRules
 
 /// Game seconds a round recharges after its last cast.
 pub fn recharge(round: &[Card], r: &RoundRules) -> f32 {
-    r.recharge + round.iter().take(SLOTS).map(|c| c.weight(r)).sum::<f32>()
+    r.recharge + round.iter().take(MAX_SLOTS).map(|c| c.weight(r)).sum::<f32>()
 }
 
 /// The bursts one cast makes at `at` (fine cells); `scale` fine cells a
@@ -846,9 +860,9 @@ mod tests {
         let mut g = Game::new(BigDish::new(race_params(1, 1, 500)), Rules::default(), 1);
         Rounds::new(round, r).arm(&mut g);
         assert_eq!(g.bullet_mods, BulletMods { pierce: 1, split: 2, reach: 0, rate: 0 });
-        assert_eq!(g.gun_range(), g.rules.range);
+        assert_eq!(g.gun_range(0), g.rules.range);
         Rounds::new(parse("range+blast").unwrap(), r).arm(&mut g);
-        assert!((g.gun_range() - g.rules.range * (1.0 + g.rules.range_card)).abs() < 1e-4, "one Range card stretches the reach");
+        assert!((g.gun_range(0) - g.rules.range * (1.0 + g.rules.range_card)).abs() < 1e-4, "one Range card stretches the reach");
     }
 
     #[test]
@@ -862,7 +876,11 @@ mod tests {
         // Cards after the last payload do nothing but still weigh.
         assert_eq!(casts(&parse("blast+quiet").unwrap(), &r).len(), 1);
         assert!(recharge(&parse("blast+quiet").unwrap(), &r) > recharge(&parse("blast").unwrap(), &r));
-        assert!(parse("blast+blast+blast+blast+blast").is_none());
+        // A round reads up to `MAX_SLOTS` (a rolled gun's most, 6); the
+        // rifle's 4 is `fit`'s to check.
+        assert!(parse("blast+blast+blast+blast+blast+blast+blast").is_none());
+        let five = parse("blast+blast+blast+blast+blast").unwrap();
+        assert_eq!(fit(five, 99).err().map(|o| o.cards), Some(5));
         assert_eq!(name(&round), "wide+blast+thick+gas");
     }
 

@@ -76,6 +76,7 @@ use buildings::Who;
 use super::big::{BigDish, BigParams, LIFE_DEAD};
 use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
 use super::Rng;
+pub use super::guns::Gun;
 
 pub use super::larder::{End, Order, Stance};
 
@@ -436,13 +437,38 @@ impl<W: World> Game<W> {
         self.world.scale()
     }
 
-    /// How far a soldier sees and fires, dish cells: `Rules::range`
+    /// How far squad `q`'s soldiers see and fire, dish cells: its gun's
+    /// range (`Gun::range`; the standard rifle's is `Rules::range`)
     /// stretched by the rounds' `Range` cards (owner, 2026-11-14 08:39Z:
     /// "there should be a range modifer card too"). Free fire, aims, the
     /// burn line's stand-off and the squad mode's volleys all read this;
     /// building reach and turrets keep `Rules::range` and `turret_range`.
-    pub fn gun_range(&self) -> f32 {
-        self.rules.range * (1.0 + self.rules.range_card * self.bullet_mods.reach as f32)
+    pub fn gun_range(&self, q: usize) -> f32 {
+        self.gun(q).range * (1.0 + self.rules.range_card * self.bullet_mods.reach as f32)
+    }
+
+    /// The farthest any live squad fires (`gun_range`), or the standard
+    /// rifle's with none: what the mould's panic reach reads.
+    pub fn gun_range_max(&self) -> f32 {
+        self.live_squads().into_iter().map(|q| self.gun_range(q)).fold(None, |m: Option<f32>, r| Some(m.map_or(r, |m| m.max(r)))).unwrap_or_else(|| self.gun_range(SQUADS_MAX))
+    }
+
+    /// Squad `q`'s gun (owner 11-14 16:46Z: "The squad owns the gun"): its
+    /// own if it was armed (`arm`), else the standard rifle at these rules.
+    pub fn gun(&self, q: usize) -> Gun {
+        self.squads.get(q).and_then(|s| s.gun).unwrap_or_else(|| Gun::standard(&self.rules))
+    }
+
+    /// Squad `q` takes `gun` (`Cmd::Arm`); `None` gives back the standard
+    /// rifle. Its soldiers fire it from their next shot.
+    pub fn arm(&mut self, q: usize, gun: Option<Gun>) -> bool {
+        match self.squads.get_mut(q) {
+            Some(s) => {
+                s.gun = gun;
+                true
+            }
+            None => false,
+        }
     }
 
     fn add_soldier(&mut self, a: f32) {

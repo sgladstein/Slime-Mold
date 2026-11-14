@@ -328,8 +328,8 @@ fn a_scared_piece_sees_past_the_guns() {
         g.step();
         g.bullet_mods.reach = 1;
     }
-    assert!(g.gun_range() > 36.0);
-    assert_eq!(g.world.p.panic_r, g.gun_range() + g.rules.panic_margin, "a range card moves it too");
+    assert!(g.gun_range(0) > 36.0);
+    assert_eq!(g.world.p.panic_r, g.gun_range(0) + g.rules.panic_margin, "a range card moves it too");
     let mut keep = race_world(1, 1, 1_000);
     keep.p.panic_r = 7.0;
     let g = Game::new(keep, Rules { panic_margin: -1.0, ..Rules::default() }, 1);
@@ -1546,6 +1546,9 @@ fn squad_commands_round_trip_as_lines() {
         Cmd::Unlink(3),
         Cmd::Cover(1, Cover::More),
         Cmd::Cover(1, Cover::Never),
+        Cmd::Arm(2, None),
+        Cmd::Arm(1, Some(Gun::roll(11, 3))),
+        Cmd::Arm(0, Some(crate::mould::guns::GunKind::Scatter.average())),
     ];
     for c in cs {
         assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
@@ -1845,7 +1848,7 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
     }
     assert!(!g.engaged(0), "30 cells is past the plain range");
     g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
-    assert!((g.gun_range() - 48.0).abs() < 1e-4, "one card doubles the range (owner: 2-4x)");
+    assert!((g.gun_range(0) - 48.0).abs() < 1e-4, "one card doubles the range (owner: 2-4x)");
     assert!(g.engaged(0), "one Range card reaches 48 cells");
     // Fired legs: free fire with the card flies out to 48 cells.
     let mut g = small(3);
@@ -1853,7 +1856,7 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
     for k in 0..g.soldiers.len() {
         g.apply(Cmd::Order(k, Order::Attack));
     }
-    let reach = g.gun_range() * g.s();
+    let reach = g.gun_range(0) * g.s();
     let mut longest: f32 = 0.0;
     for _ in 0..(30 * g.rules.tps) {
         g.step();
@@ -2288,4 +2291,93 @@ fn a_resting_soldier_by_a_held_crystal_heals_for_food() {
     let hp = g.soldiers[k].hp;
     assert!(g.guarded.is_empty());
     assert!(hp > 55.0 && hp < 70.0, "rested 10 s away from a held crystal: {hp} hp");
+}
+
+// Guns (owner 2026-11-14 16:46Z: "The squad owns the gun. Each gun defines
+// the budget and slot count and range, spread, rate of fire as actual
+// numbers").
+
+/// A squad with no gun of its own fires the standard rifle, which is the
+/// game's own rules, so a game that hands out no guns plays as before.
+#[test]
+fn an_unarmed_squad_fires_the_standard_rifle_of_its_rules() {
+    let mut g = squads(1);
+    g.apply(Cmd::Active(u8::MAX));
+    g.rules.range = 30.0;
+    g.rules.shot_every = 0.5;
+    assert_eq!(g.gun(0), Gun::standard(&g.rules));
+    assert_eq!(g.gun_range(0), 30.0);
+    assert_eq!(g.shot_gap(0), g.secs(0.5).max(1));
+}
+
+/// Each squad fires its own gun: range, rate, spread and bullets a shot;
+/// a split half keeps the gun, and `Cmd::Arm` gives it back.
+#[test]
+fn each_squad_fires_its_own_gun_and_a_split_half_keeps_it() {
+    use crate::mould::guns::GunKind;
+    let mut g = squads(2);
+    for _ in 0..3 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(u8::MAX));
+    let (carbine, long) = (GunKind::Carbine.average(), GunKind::Long.average());
+    assert!(g.apply(Cmd::Arm(0, Some(carbine))));
+    assert_eq!((g.gun(0), g.gun_range(0)), (carbine, 15.0));
+    let m = g.middle(0).unwrap();
+    let b = g.split(0, (m.0 + 30.0, m.1)).expect("a split");
+    assert_eq!(g.gun(b), carbine, "the split half carries the gun it had");
+    g.apply(Cmd::Arm(b as u8, Some(long)));
+    assert_eq!(g.gun_range(b), 40.0);
+    assert!(g.shot_gap(0) * 4 <= g.shot_gap(b), "the carbine fires 4.4 times as often as the long gun: {} against {}", g.shot_gap(0), g.shot_gap(b));
+    assert_eq!(g.gun_range_max(), 40.0, "the mould's panic reach reads the farthest gun");
+    g.apply(Cmd::Arm(b as u8, None));
+    assert_eq!(g.gun(b), Gun::standard(&g.rules));
+    assert!(!g.apply(Cmd::Arm(SQUADS_MAX as u8, Some(long))), "no squad there");
+}
+
+/// The scattergun fires its `shots` bullets a shot, fanned by its spread:
+/// a soldier's shot leaves as that many legs.
+#[test]
+fn a_scattergun_fires_a_fan_of_bullets_a_shot() {
+    use crate::mould::guns::GunKind;
+    let fired = |shots: Option<u32>| {
+        let mut g = small(3);
+        if let Some(n) = shots {
+            let gun = Gun { shots: n, range: g.rules.range, ..GunKind::Scatter.average() };
+            g.arm(0, Some(gun));
+        }
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Attack));
+        }
+        let (mut legs, mut shooters) = (0, 0);
+        let mut dirs: Vec<(f32, f32)> = Vec::new();
+        for _ in 0..(20 * g.rules.tps / g.rules.frame_ticks) {
+            g.step();
+            // This frame's first legs, by soldier: one shot each a frame
+            // (a soldier fires at most once a frame at these rates).
+            let fresh: Vec<&Shot> = g.last_shots.iter().filter(|s| s.fired && s.by.is_some()).collect();
+            legs += fresh.len();
+            let mut by: Vec<usize> = fresh.iter().filter_map(|s| s.by).collect();
+            by.sort();
+            by.dedup();
+            shooters += by.len();
+            dirs.extend(fresh.iter().map(|s| {
+                let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
+                let d = dx.hypot(dy).max(1e-3);
+                (dx / d, dy / d)
+            }));
+            if g.end.is_some() {
+                break;
+            }
+        }
+        (legs, shooters, dirs)
+    };
+    let (legs1, shooters1, _) = fired(None);
+    assert!(shooters1 > 0 && legs1 <= shooters1 + shooters1 / 10, "the rifle: one bullet a shot ({legs1} legs, {shooters1} shots)");
+    let (legs4, shooters4, dirs) = fired(Some(4));
+    assert!(shooters4 > 0, "the scattergun fired");
+    assert!(legs4 >= 3 * shooters4, "four bullets a shot (some dropped at the cap or a wall): {legs4} legs from {shooters4} shots");
+    let mut d = dirs.clone();
+    d.dedup_by(|a, b| (a.0 - b.0).abs() < 1e-4 && (a.1 - b.1).abs() < 1e-4);
+    assert!(d.len() > dirs.len() / 2, "the fan's bullets fly apart");
 }

@@ -31,6 +31,23 @@ impl App {
         self.hud.alert(&what, None, theme::ACCENT);
     }
 
+    /// A test gun for the controlled squad (squad 0 in the RTS round):
+    /// Shift+H rolls the next kind (rifle, carbine, long gun, scattergun
+    /// in turn) for this planet's depth, a new roll each press, so a
+    /// playtest sees the kinds and how far their rolls stray. Goes through
+    /// `Cmd::Arm`, so the replay keeps it.
+    pub(super) fn next_gun(&mut self) {
+        let Some(g) = self.game.as_mut() else { return };
+        let q = g.active.unwrap_or(0);
+        let n = self.gun_rolls;
+        self.gun_rolls += 1;
+        let kind = GunKind::ALL[n as usize % GunKind::ALL.len()];
+        let gun = Gun::roll_kind(kind, self.args.seed.wrapping_mul(1_000_003) ^ n as u64, self.planet_depth);
+        g.apply(Cmd::Arm(q as u8, Some(gun)));
+        let what = format!("Gun: {}, {}", draw::capital(&gun.title()), gun.line());
+        self.hud.alert(&what, None, theme::ACCENT);
+    }
+
     pub(super) fn living(&self, ids: &[usize]) -> Vec<usize> {
         let Some(g) = &self.game else { return Vec::new() };
         ids.iter().copied().filter(|&k| g.soldiers.get(k).is_some_and(|s| s.alive)).collect()
@@ -365,6 +382,7 @@ impl App {
                     self.fail(event_loop, e);
                 }
             }
+            KeyCode::KeyH if self.shift => self.next_gun(),
             KeyCode::KeyH => self.next_round(),
             KeyCode::KeyM => {
                 if let Some(v) = self.view.as_mut() {

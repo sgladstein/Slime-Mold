@@ -111,16 +111,22 @@ impl<W: World> Game<W> {
                 if let Some(at) = aim {
                     let (dx, dy) = (at.0 - s.x, at.1 - s.y);
                     let d = dx.hypot(dy).max(0.1);
-                    let reach = self.gun_range() * sc;
+                    let reach = self.gun_range(q) * sc;
                     if volley.is_some() || d <= reach + 4.0 {
-                        let (mut ux, mut uy) = (dx / d, dy / d);
-                        if r.spread > 0.0 {
-                            let a = ((self.rng.f32() * 2.0 - 1.0) * r.spread * sc / d).atan();
-                            let (sn, cs) = a.sin_cos();
-                            (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
+                        // The squad's gun (`Game::gun`): its spread, and its
+                        // bullets a shot, each turned on its own (the
+                        // scattergun's fan; the standard rifle fires one).
+                        let gun = self.gun(q);
+                        for _ in 0..gun.shots.max(1) {
+                            let (mut ux, mut uy) = (dx / d, dy / d);
+                            if gun.spread > 0.0 {
+                                let a = ((self.rng.f32() * 2.0 - 1.0) * gun.spread * sc / d).atan();
+                                let (sn, cs) = a.sin_cos();
+                                (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
+                            }
+                            shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
+                            shooters.push(Some(k));
                         }
-                        shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
-                        shooters.push(Some(k));
                         // A worker of a squad shoots less often (`CoverRules::work_fire`).
                         let gap = self.shot_gap(q);
                         let gap = if r.squads && self.working(k) { ((gap as f32 / r.cover.work_fire.max(0.01)).round() as u64).max(1) } else { gap };
@@ -137,7 +143,7 @@ impl<W: World> Game<W> {
                 x: s.x,
                 y: s.y,
                 touch: r.touch * sc,
-                sight: self.gun_range() * sc,
+                sight: self.gun_range(q) * sc,
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
                 smell_r: if pulls { r.build.lure_r.max(r.smell_r) * sc } else { r.smell_r * sc },
@@ -303,7 +309,7 @@ impl<W: World> Game<W> {
     /// (`gun_range`, which the rounds' `Range` cards stretch).
     pub(super) fn keep_panic_reach(&mut self) {
         if self.rules.panic_margin >= 0.0 {
-            self.world.set_panic_r(self.gun_range() + self.rules.panic_margin);
+            self.world.set_panic_r(self.gun_range_max() + self.rules.panic_margin);
         }
     }
 

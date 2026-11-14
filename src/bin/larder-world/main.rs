@@ -132,6 +132,23 @@ use slime_mould::mould::own_mould::Task;
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::kit::{Kit, KitRules, Tool};
 use slime_mould::mould::rounds::{self, RoundRules, Rounds};
+use slime_mould::mould::guns::{Gun, GunKind};
+
+/// The gun `gun=` names: a kind's average at `depth` (`rifle`, `carbine`,
+/// `long`, `scatter`), `KIND:SEED` one of that kind rolled, `roll` or
+/// `roll:SEED` any kind rolled (the seed defaults to the game's).
+fn gun_of(spec: &str, seed: u64, depth: u32) -> Result<Gun, String> {
+    let (what, s) = match spec.split_once(':') {
+        Some((w, s)) => (w, Some(s.parse::<u64>().map_err(|_| format!("gun={spec}: the seed is a number"))?)),
+        None => (spec, None),
+    };
+    let seed = s.unwrap_or(seed);
+    if what == "roll" {
+        return Ok(Gun::roll(seed, depth));
+    }
+    let kind = GunKind::parse(what).ok_or_else(|| format!("gun={spec}: rifle, carbine, long, scatter or roll"))?;
+    Ok(if s.is_some() { Gun::roll_kind(kind, seed, depth) } else { kind.average_at(depth) })
+}
 use slime_mould::mould::larder_world::{TURRET_MUZZLE, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
@@ -366,6 +383,11 @@ struct Args {
     /// (`Rules::strike`, `shot_every`, `spread`): the look A/B of a
     /// scattered smaller strike against the round one.
     aim: Option<[f32; 3]>,
+    /// `gun=KIND`, `gun=KIND:SEED`, `gun=roll` or `gun=roll:SEED`: the gun
+    /// the first squad starts with (`mould::guns`): a kind's average
+    /// (rifle, carbine, long, scatter), or one rolled for the planet's
+    /// depth (`map=planet:DEPTH`, else 1). None: the standard rifle.
+    gun: Option<String>,
     /// `core_pull=P`: how many times its own scent a soldier near the core
     /// lays (`Rules::core_pull`, the core defence; 0 turns it off, to
     /// compare). A tier's own core (`Tier::core`) wins.
@@ -553,6 +575,10 @@ struct App {
     /// cards; 2026-11-12): `rounds=` at the start, H cycles `LOADOUTS`.
     rounds: Rounds,
     round: usize,
+    /// The planet's depth this game (`map=planet:DEPTH`, else 1), and the
+    /// test guns rolled so far (Shift+H).
+    planet_depth: u32,
+    gun_rolls: u32,
     tools_page: bool,
     /// The mission being played, and the last game second it followed.
     mission: Option<Tracker>,
@@ -584,6 +610,8 @@ impl App {
         App {
             name: args.map.clone().unwrap_or_else(|| "noise".into()),
             round: args.round,
+            planet_depth: 1,
+            gun_rolls: 0,
             args,
             window: None,
             pixels: None,
@@ -698,6 +726,9 @@ impl App {
         let mut walkers = s.walkers;
         let own = a.own || mission.as_ref().is_some_and(|m| m.own);
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
+        // The planet's depth (`map=planet:DEPTH`), what a rolled gun
+        // (`gun=roll`, Shift+H) is rolled for.
+        let mut depth = 1;
         let world = match &map_name {
             None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
             Some(name) => {
@@ -709,7 +740,11 @@ impl App {
                 // `planet`, `planet:DEPTH` or `planet:DEPTH:SEED`: a
                 // generated planet (`mould::levelgen`), from `seed=`.
                 let m = match slime_mould::mould::levelgen::spec(&name, a.seed) {
-                    Some(made) => made?.1,
+                    Some(made) => {
+                        let (p, m) = made?;
+                        depth = p.depth;
+                        m
+                    }
                     None => Map::load(&dir, &name)?,
                 };
                 if own {
@@ -758,6 +793,12 @@ impl App {
         self.sq = a.squads.then(SquadInput::new);
         if a.squads {
             game.apply(Cmd::Active(0));
+        }
+        self.planet_depth = depth;
+        if let Some(spec) = &a.gun {
+            // Every soldier starts in squad 0; a split or a new squad
+            // carries the gun on (`Squad::offshoot`).
+            game.apply(Cmd::Arm(0, Some(gun_of(spec, a.seed, depth)?)));
         }
         self.kit = Kit::new(KitRules::default());
         self.rounds = Rounds::new(rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(), RoundRules::default());
@@ -1266,7 +1307,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, gun: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1328,6 +1369,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
+            }
+            "gun" => {
+                gun_of(v, 1, 1)?;
+                args.gun = Some(v.to_string());
             }
             "look" => look = Some(v.to_string()),
             // `ui=150%` or `ui=1.5`: the UI's size this run (`uisize`).

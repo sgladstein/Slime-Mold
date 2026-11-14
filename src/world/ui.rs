@@ -280,6 +280,10 @@ pub struct Loadout {
     /// The command that swaps the loadout, and its key: the panel's
     /// button sends `HudEvent::Command` with it.
     pub cycle: Option<(u32, KeyCode)>,
+    /// The gun the cards are in (`mould::guns`): its icon, its name
+    /// ("Lucky carbine") and its numbers, shown by the name and in the
+    /// tooltip. None draws the strip as before.
+    pub gun: Option<(Icon, String, String)>,
 }
 
 /// One squad on the squad panel (`SquadPanel::rows`).
@@ -1437,7 +1441,14 @@ impl Hud {
         }
         // The name and the state.
         let tx = r.x + pad + cards_w + 8.0 * s;
-        c.text_fit(Weight::SemiBold, 13.0 * s, (tx, y + 14.0 * s), Align::Left, &l.name, info_w, TEXT);
+        // The gun's icon ahead of the name, the name after it.
+        let gx = if let Some((icon, ..)) = &l.gun {
+            c.icon(*icon, (tx, y + 1.5 * s), 16.0 * s, MUTED);
+            19.0 * s
+        } else {
+            0.0
+        };
+        c.text_fit(Weight::SemiBold, 13.0 * s, (tx + gx, y + 14.0 * s), Align::Left, &l.name, info_w - gx, TEXT);
         let (state, col) = if l.cards.is_empty() {
             ("Plain shots".to_string(), MUTED)
         } else if ready {
@@ -1469,6 +1480,9 @@ impl Hud {
     /// guns ready, the recharge, and how to swap.
     fn loadout_tip(&mut self, l: &Loadout, b: Rect, swap: bool, c: &mut Canvas, s: f32) {
         let mut lines = vec![l.whose.clone()];
+        if let Some((_, title, numbers)) = &l.gun {
+            lines.push(format!("{title}: {numbers}"));
+        }
         if let Some(n) = &l.note {
             lines.push(n.clone());
         } else if !l.cards.is_empty() {
@@ -1489,7 +1503,7 @@ impl Hud {
         c.shadow(r, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
         c.panel(r, 10.0 * s, [34, 40, 49, 248], [24, 29, 36, 250], 1.0, EDGE);
         let mut y = r.y + 26.0 * s;
-        c.icon(Icon::Rifle, (r.x + 14.0 * s, y - 14.0 * s), 16.0 * s, MUTED);
+        c.icon(l.gun.as_ref().map_or(Icon::Rifle, |g| g.0), (r.x + 14.0 * s, y - 14.0 * s), 16.0 * s, MUTED);
         c.text(Weight::SemiBold, 15.0 * s, (r.x + 38.0 * s, y), Align::Left, &l.name, TEXT);
         y += 22.0 * s;
         for t in &lines {
@@ -1925,6 +1939,7 @@ mod tests {
             charging: 0.4,
             note: None,
             cycle: Some((NOW + 10, KeyCode::KeyH)),
+            gun: None,
         }
     }
 
