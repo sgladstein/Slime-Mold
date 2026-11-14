@@ -1,0 +1,12 @@
+runner note: build A; round 2; command lw-A.exe map=fork bench=30 hand=farm centre=175,215,1; idle samples 0,0,0,0,0 % (check under 10%); card 1961 MHz, 4006 MHz, 51, 45.83 W
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1388 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, PhoneExperienceHost.exe, SystemSettings.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+  view: zoom 1 at 175,215
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 98.4 MB for 512 x 320 cells (600 bytes a cell), the biggest 16.7 MB
+  1800 frames, 450 game steps; 0.06 read-backs a step, 0.00 waits a step (0.01 ms a step waiting); steps finished once in 449, when the next was due 0
+  every frame (1800 of them), ms: frame p50 6.26 p95 6.64 max 24.00; step  p50 0.04 p95 0.63 max 18.02; prepare  p50 0.11 p95 0.14 max 4.16; record  p50 0.10 p95 0.14 max 1.40; GPU tail  p50 5.72 p95 6.19 max 6.44
+  frames with a step (450 of them), ms: frame p50 6.51 p95 6.95 max 24.00; step  p50 0.60 p95 0.72 max 18.02; prepare  p50 0.11 p95 0.14 max 0.70; record  p50 0.12 p95 0.14 max 1.24; GPU tail  p50 5.68 p95 5.77 max 5.89
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 30 s: mould 24760, soldiers 11, buildings 0, harvested 2357, shots 193, killed 986
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1591 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, PhoneExperienceHost.exe, SystemSettings.exe

@@ -1,0 +1,65 @@
+start 22:23:38Z free KB 3214448 gpu 0,0,0,0,0 % edge 0
+builds kept from 22:19-22:20Z try (A 2b1a851c, B 004b7cb59de7)
+warmup start 22:23:38Z card 139 MHz, 405 MHz, 27, 6.51 W
+warmup exit=0 22:23:51Z card 1987 MHz, 4006 MHz, 33, 43.16 W
+r1-fork1-A start 22:23:56Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 32, 42.39 W
+r1-fork1-A exit=0 22:24:09Z
+r1-fork1-B start 22:24:14Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 36, 43.46 W
+r1-fork1-B exit=0 22:24:27Z
+r1-fork2-A start 22:24:32Z gpu 0,0,0,0,0 % card 822 MHz, 810 MHz, 37, 8.40 W
+r1-fork2-A exit=0 22:24:41Z
+r1-fork2-B start 22:24:46Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 40, 43.94 W
+r1-fork2-B exit=0 22:24:52Z
+r1-fork3-A start 22:24:57Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 41, 44.18 W
+r1-fork3-A exit=0 22:25:05Z
+r1-fork3-B start 22:25:10Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 43, 43.56 W
+r1-fork3-B exit=0 22:25:15Z
+r1-aonly1-A start 22:25:20Z gpu 0,0,0,0,0 % card 835 MHz, 810 MHz, 43, 8.74 W
+r1-aonly1-A exit=0 22:25:33Z
+r1-aonly2-A start 22:25:38Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 47, 44.28 W
+r1-aonly2-A exit=0 22:25:47Z
+r1-aonly3-A start 22:25:52Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 48, 44.76 W
+r1-aonly3-A exit=0 22:26:00Z
+r1-aonly4-A start 22:26:05Z gpu 0,0,0,0,0 % card 999 MHz, 3802 MHz, 49, 30.06 W
+r1-aonly4-A exit=0 22:26:14Z
+r2-fork1-A start 22:26:19Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 51, 45.83 W
+r2-fork1-A exit=0 22:26:32Z
+r2-fork1-B start 22:26:38Z gpu 0,0,0,0,0 % card 1949 MHz, 4006 MHz, 54, 45.59 W
+r2-fork1-B exit=0 22:26:47Z
+r2-fork2-A start 22:26:53Z gpu 0,0,0,0,0 % card 999 MHz, 3802 MHz, 55, 30.41 W
+r2-fork2-A exit=0 22:27:02Z
+r2-fork2-B start 22:27:07Z gpu 0,0,0,0,0 % card 1949 MHz, 4006 MHz, 57, 46.31 W
+r2-fork2-B exit=0 22:27:12Z
+r2-fork3-A start 22:27:18Z gpu 0,0,0,0,0 % card 1949 MHz, 4006 MHz, 57, 46.31 W
+r2-fork3-A exit=0 22:27:26Z
+r2-fork3-B start 22:27:31Z gpu 0,0,0,0,0 % card 1949 MHz, 4006 MHz, 58, 46.65 W
+r2-fork3-B exit=0 22:27:36Z
+r2-aonly1-A start 22:27:41Z gpu 0,0,0,0,0 % card 1012 MHz, 3802 MHz, 57, 30.65 W
+r2-aonly1-A exit=0 22:27:54Z
+r2-aonly2-A start 22:27:59Z gpu 0,0,0,0,0 % card 1936 MHz, 4006 MHz, 60, 47.14 W
+r2-aonly2-A exit=0 22:28:08Z
+r2-aonly3-A start 22:28:13Z gpu 0,0,0,0,0 % card 1936 MHz, 4006 MHz, 61, 47.38 W
+r2-aonly3-A exit=0 22:28:21Z
+r2-aonly4-A start 22:28:26Z gpu 0,0,0,0,0 % card 1012 MHz, 3802 MHz, 60, 31.21 W
+r2-aonly4-A exit=0 22:28:35Z
+r3-fork1-A start 22:28:40Z gpu 0,0,0,0,0 % card 1936 MHz, 4006 MHz, 61, 47.38 W
+r3-fork1-A exit=0 22:28:54Z
+r3-fork1-B start 22:28:59Z gpu 0,0,0,0,0 % card 1936 MHz, 4006 MHz, 62, 47.72 W
+r3-fork1-B exit=0 22:29:09Z
+r3-fork2-A start 22:29:15Z gpu 3,1,1,2,1 % card 1025 MHz, 3802 MHz, 61, 31.13 W
+r3-fork2-A exit=0 22:29:24Z
+r3-fork2-B start 22:29:30Z gpu 2,1,2,1,1 % card 1936 MHz, 4006 MHz, 63, 48.27 W
+r3-fork2-B exit=0 22:29:35Z
+r3-fork3-A start 22:29:41Z gpu 1,2,1,1,1 % card 1936 MHz, 4006 MHz, 62, 48.58 W
+r3-fork3-A exit=0 22:29:50Z
+r3-fork3-B start 22:29:55Z gpu 2,1,1,1,1 % card 1936 MHz, 4006 MHz, 62, 48.08 W
+r3-fork3-B exit=0 22:30:00Z
+r3-aonly1-A start 22:30:05Z gpu 1,1,1,1,1 % card 1025 MHz, 3802 MHz, 60, 30.80 W
+r3-aonly1-A exit=0 22:30:19Z
+r3-aonly2-A start 22:30:25Z gpu 1,1,1,1,1 % card 1936 MHz, 4006 MHz, 62, 47.93 W
+r3-aonly2-A exit=0 22:30:34Z
+r3-aonly3-A start 22:30:39Z gpu 1,1,1,1,1 % card 1936 MHz, 4006 MHz, 63, 48.26 W
+r3-aonly3-A exit=0 22:30:48Z
+r3-aonly4-A start 22:30:53Z gpu 1,1,1,1,0 % card 746 MHz, 810 MHz, 61, 11.89 W
+r3-aonly4-A exit=0 22:31:02Z
+ALL DONE 22:31:02Z

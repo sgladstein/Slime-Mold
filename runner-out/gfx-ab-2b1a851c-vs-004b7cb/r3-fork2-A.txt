@@ -1,0 +1,12 @@
+runner note: build A; round 3; command lw-A.exe map=fork bench=30 hand=farm centre=175,215,6; idle samples 3,1,1,2,1 % (check under 10%); card 1025 MHz, 3802 MHz, 61, 31.13 W
+larder-world machine at the start: RAM 2.8 GB free of 8.0; GPU memory 1456 MB in use of 8192, 1% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, StartMenuExperienceHost.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, PhoneExperienceHost.exe, SystemSettings.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+  view: zoom 6 at 175,215
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 98.4 MB for 512 x 320 cells (600 bytes a cell), the biggest 16.7 MB
+  1800 frames, 450 game steps; 0.06 read-backs a step, 0.00 waits a step (0.02 ms a step waiting); steps finished once in 449, when the next was due 0
+  every frame (1800 of them), ms: frame p50 4.08 p95 5.06 max 38.61; step  p50 0.05 p95 0.78 max 19.18; prepare  p50 0.14 p95 0.24 max 4.82; record  p50 0.13 p95 0.23 max 2.83; GPU tail  p50 3.44 p95 4.09 max 37.57
+  frames with a step (450 of them), ms: frame p50 4.36 p95 5.47 max 38.61; step  p50 0.68 p95 1.30 max 19.18; prepare  p50 0.14 p95 0.22 max 0.69; record  p50 0.14 p95 0.24 max 1.52; GPU tail  p50 3.36 p95 3.80 max 37.57
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 30 s: mould 24760, soldiers 11, buildings 0, harvested 2357, shots 193, killed 986
+  machine at the end: RAM 2.7 GB free of 8.0; GPU memory 1681 MB in use of 8192, 1% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, StartMenuExperienceHost.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, PhoneExperienceHost.exe, SystemSettings.exe
