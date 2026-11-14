@@ -583,7 +583,7 @@ impl App {
             ("Tab".into(), "Four times faster, or back".into()),
             ("N".into(), "Start the next map".into()),
             ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
-            ("E".into(), "Tools page: blast, det cord, mine (germ and gas not on the GPU yet); E again goes back".into()),
+            ("E".into(), "Tools page: blast, det cord, mine, sleep gas (germ not on the GPU yet); E again goes back".into()),
         ];
         m
     }

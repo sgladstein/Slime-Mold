@@ -2,11 +2,12 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-13
+updated: 2026-11-14
 sources:
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/rounds-2026-11-12.md
+  - Reports/sleep-gas-gpu-2026-11-14.md
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
 code:
@@ -20,6 +21,8 @@ code:
   - BigParams::sick_upkeep
   - Burst
   - Engine::burst
+  - Engine::calm
+  - Engine::gas
   - Kit
   - Kit::restock
   - KitRules
@@ -40,8 +43,9 @@ Six tools for the Larder world's squad, each built on one term of the
 mould's model (`mould::kit`): blast, mine, det cord, germ, sleep gas, and
 mask or reek on a soldier's smell. Every tool comes down to bursts
 (`squad::Burst`) that a world applies (`World::burst`): blast, cord and mine
-run on the GPU world too (the engine's strike lays the crater), germ and gas
-on the CPU only so far. A mine's trigger scales with `Game::density`. In
+run on the GPU world too (the engine's strike lays the crater), and since
+11-14 the sleep gas ([report](../../Reports/sleep-gas-gpu-2026-11-14.md));
+the germ is on the CPU only so far. A mine's trigger scales with `Game::density`. In
 the window (`larder-world`) E opens the tools page: blast, det cord and
 mine work; every soldier at the larder takes one tool, a selected one up
 to five. The crater a blast, cord
@@ -102,7 +106,7 @@ exact bullet twin in `mouldgpu` checks the engine's trace of each leg).
 - Round 2 on a second map, and as `larderworld census` hands.
 - A tier where gas or the det cord is the best plan.
 - `germ_resist` as a tier key, if a campaign mould needs the germ answered.
-- Germ and gas on the GPU world (contagion's sick upkeep and the gas field), so the window's germ and gas buttons work.
+- The germ on the GPU world (contagion's sick upkeep), so the window's germ button works (the squad toolkit thread, cloud plan C5; gas landed 11-14).
 - The tools in the game's replay (the kit sits outside `Game`).
 - The det cord once food flows (the one-body thread's `energy_flow`).
 
