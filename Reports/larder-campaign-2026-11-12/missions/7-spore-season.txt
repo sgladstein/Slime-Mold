@@ -20,6 +20,11 @@
 # Census v14 (seeds 1-4, CPU): pumps with twelve farming (pumps+boom:buy_to=12) 3/4 at
 # 2:50-10:20, pumps and turrets (turtle+boom) 2/4 at 6:10-11:51, pumps with eight 2/4;
 # farming alone 0/4 (best 0.63), idle 0/4 (0.20), random 0/4 (wiped or overrun by 2:56-3:55).
+# After elbow room (#227; census v15, main 30bf05e0) no plan is reliable: pumps and turrets
+# with eight (turtle+boom) 2/4 at 3:46-12:25, farming alone 2/4, pumps with eight 1/4, pumps
+# with twelve 0/4 (best 0.20), turrets alone 0/4; idle and random still 0/4. A tuning note:
+# the larder is going (squad-controls rework), which changes the economy pumps feed, so the
+# mission is re-tuned after that lands rather than now.
 name Spore season
 says Keep the spores off your two home crystals for a minute
 map rim

@@ -454,3 +454,21 @@ farming alone never does. It is the hardest mission so far for the AI
 ("I have easily beat the game in all my playtests"). The held `take` goal
 stays in the code for mission 8.
 
+### After elbow room (census v15, 2026-11-14)
+
+Elbow room (#227: living soldiers keep 1.6 touch radii apart, a census
+baseline break by its own note) spread the strike armies, and the plans
+of v13 stopped winning: Cut the cord's strike and cut+strike with ten fell
+to 0/4 (best 0.89 and 0.63), The nest's strike with eight to 1/2. Retuned
+by the plans' numbers, not the missions': Cut the cord's plans strike with
+fourteen (strike 4/4 at 4:07-5:36, cut+strike 4/4 at 4:39-5:57), The
+nest's with twelve (strike 4/4 at 3:40-4:29, turrets+strike 4/4 at
+4:06-4:57). Kill zone's plans still win (2/2, 6:07-8:12).
+
+Spore season is now a coin toss for every plan: pumps and turrets 2/4,
+farming alone 2/4, pumps with eight 1/4, pumps with twelve 0/4 (it was
+3/4); idle and random 0/4. The pump no longer decides it. Since the
+larder is going (the squad-controls rework: crystals become the squad's
+when taken), which changes the economy the pumps feed, Spore season is
+re-tuned after that lands. Raw output: `census/*-v15*.txt`.
+
