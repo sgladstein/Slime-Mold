@@ -220,9 +220,9 @@ commands! {
 
 /// Between two steps: every living soldier at the larder takes one tool
 /// (`KitRules::carry_each`), a selected one as many as it may hold
-/// (`carry_max`; each costs carry, `tool_weight`, so a loaded soldier
-/// harvests less: the carry rule, round 2), and mines with enough mould on
-/// them go off.
+/// (`carry_max`; each would cost carry, `tool_weight`, but that is 0 since
+/// 2026-11-14: loaded soldiers looked as if they refused harvest orders),
+/// and mines with enough mould on them go off.
 fn kit_between(kit: &mut Kit, g: &mut Game<GpuWorld>, selected: &[usize]) {
     for k in 0..g.soldiers.len() {
         let n = if selected.contains(&k) { kit.rules.carry_max } else { kit.rules.carry_each };
