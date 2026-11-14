@@ -1778,6 +1778,8 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
         assert!(circling < 1.0, "{f:?}: the cursor circling walked the squad {circling} cells");
         assert!(death < 100.0, "{f:?}: a death walked the squad {death} cells");
     }
+}
+
 // Building (2026-11-14, owner 08:10Z: queue builds; start raising once in
 // range instead of walking to the ghost; keep the soldiers on one side of
 // a turret raised by the enemy).

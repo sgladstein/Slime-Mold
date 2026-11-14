@@ -473,9 +473,25 @@ impl EditView {
     }
 }
 
-/// The panel's width, logical pixels (the screen is drawn at `ui` screen
-/// pixels a logical one, 2 for the crisp font).
+/// The panel's width, logical pixels (the screen is drawn at `2 * ui` screen
+/// pixels a logical one, `Overlay::ui` the UI size; 2 for the crisp font
+/// it was laid out for).
 pub const PANEL: i32 = 150;
+/// The status line's height at UI size 1, screen pixels (two of the
+/// panel's text rows).
+pub const STATUS: f32 = 36.0;
+
+/// The panel's width and the status line's height on screen at UI size `ui`.
+pub fn chrome(ui: f32) -> (f32, f32) {
+    (PANEL as f32 * 2.0 * ui, STATUS * ui)
+}
+
+/// A label with the top of its capitals' box (7 logical rows, as the
+/// crisp font's) at `top`, screen pixels, at UI size `ui` (Inter, 11-14:
+/// the crisp font only doubles).
+fn label(frame: &mut [u8], size: (u32, u32), ui: f32, top: (f32, f32), text: &str, colour: [u8; 4]) {
+    crate::hud::draw_text_inter(frame, size, (top.0, top.1 + 12.5 * ui), 15.0 * ui, text, colour);
+}
 
 /// What the window shows besides the map: the cursor, a drag in progress,
 /// the map's name and the last message.
@@ -485,6 +501,8 @@ pub struct Overlay<'a> {
     pub wall_from: Option<(f32, f32)>,
     pub name: &'a str,
     pub message: &'a str,
+    /// The UI size (`world::settings::UiSize`; 1 is the panel as it was).
+    pub ui: f32,
 }
 
 /// Draws the editor into an RGBA frame `size` pixels big: the map in `view`,
@@ -517,13 +535,13 @@ pub fn draw(ed: &Editor, view: &EditView, frame: &mut [u8], size: (u32, u32), o:
         let s = view.to_screen(m);
         disc(frame, size, s, 9.0, [0, 0, 0, 255]);
         disc(frame, size, s, 7.0, [232, 168, 40, 255]);
-        crate::hud::draw_text_crisp(frame, size, ((s.0 / 2.0) as i32 + 6, (s.1 / 2.0) as i32 - 3), &format!("M{}", i + 1), [255, 220, 140, 255]);
+        label(frame, size, o.ui, (s.0 + 12.0, s.1 - 7.0 * o.ui), &format!("M{}", i + 1), [255, 220, 140, 255]);
     }
     if let Some(l) = it.landing {
         let s = view.to_screen(l);
         rect(frame, size, (s.0 - 9.0, s.1 - 9.0), (18.0, 18.0), [0, 0, 0, 255]);
         rect(frame, size, (s.0 - 7.0, s.1 - 7.0), (14.0, 14.0), [90, 170, 255, 255]);
-        crate::hud::draw_text_crisp(frame, size, ((s.0 / 2.0) as i32 + 6, (s.1 / 2.0) as i32 - 3), "SQUAD", [180, 215, 255, 255]);
+        label(frame, size, o.ui, (s.0 + 12.0, s.1 - 7.0 * o.ui), "SQUAD", [180, 215, 255, 255]);
     }
     // The mirror's line or centre.
     match ed.mirror {
@@ -557,20 +575,24 @@ pub fn draw(ed: &Editor, view: &EditView, frame: &mut [u8], size: (u32, u32), o:
 }
 
 fn panel(ed: &Editor, frame: &mut [u8], size: (u32, u32), o: &Overlay) {
-    use crate::hud::draw_text_crisp as text;
+    // Laid out on the crisp font's logical lattice (`u` screen pixels a
+    // logical one), so at UI size 1 every row sits where it always has.
+    let (k, u) = (o.ui, 2.0 * o.ui);
+    let text = |frame: &mut [u8], at: (i32, i32), s: &str, c: [u8; 4]| label(frame, size, k, (at.0 as f32 * u, at.1 as f32 * u), s, c);
     let (w, h) = (size.0 as f32, size.1 as f32);
-    rect(frame, size, (0.0, 0.0), (PANEL as f32 * 2.0, h), [20, 24, 28, 235]);
-    rect(frame, size, (0.0, h - 36.0), (w, 36.0), [20, 24, 28, 235]);
+    let (pw, sh) = chrome(k);
+    rect(frame, size, (0.0, 0.0), (pw, h), [20, 24, 28, 235]);
+    rect(frame, size, (0.0, h - sh), (w, sh), [20, 24, 28, 235]);
     let (white, dim, accent, warn) = ([235, 235, 230, 255], [150, 156, 160, 255], [120, 220, 230, 255], [255, 170, 110, 255]);
     let mut y = 8;
-    text(frame, size, (8, y), "MAP EDITOR", accent);
+    text(frame, (8, y), "MAP EDITOR", accent);
     y += 12;
-    text(frame, size, (8, y), o.name, if ed.dirty { warn } else { dim });
+    text(frame, (8, y), o.name, if ed.dirty { warn } else { dim });
     y += 16;
     for (tool, key) in Tool::ALL {
         let on = tool == ed.tool;
         if on {
-            rect(frame, size, (4.0, y as f32 * 2.0 - 4.0), (PANEL as f32 * 2.0 - 8.0, 22.0), [50, 70, 80, 255]);
+            rect(frame, size, (4.0 * k, y as f32 * u - 4.0 * k), (pw - 8.0 * k, 22.0 * k), [50, 70, 80, 255]);
         }
         let swatch = match tool {
             Tool::Paint(b) => {
@@ -584,9 +606,9 @@ fn panel(ed: &Editor, frame: &mut [u8], size: (u32, u32), o: &Overlay) {
             Tool::Erase => None,
         };
         if let Some(c) = swatch {
-            rect(frame, size, (16.0, y as f32 * 2.0), (14.0, 14.0), c);
+            rect(frame, size, (16.0 * k, y as f32 * u), (14.0 * k, 14.0 * k), c);
         }
-        text(frame, size, (20, y), &format!("{key}  {}", tool.name()), if on { white } else { dim });
+        text(frame, (20, y), &format!("{key}  {}", tool.name()), if on { white } else { dim });
         y += 12;
     }
     y += 6;
@@ -595,36 +617,36 @@ fn panel(ed: &Editor, frame: &mut [u8], size: (u32, u32), o: &Overlay) {
         Tool::Paint(_) => format!("brush r {} [ ]", ed.radius),
         _ => String::new(),
     };
-    text(frame, size, (8, y), &size_line, dim);
+    text(frame, (8, y), &size_line, dim);
     y += 12;
-    text(frame, size, (8, y), &format!("mirror {} (X)", ed.mirror.name()), dim);
+    text(frame, (8, y), &format!("mirror {} (X)", ed.mirror.name()), dim);
     y += 18;
-    for line in ["CTRL+S save", "CTRL+Z undo", "CTRL+Y redo", "ENTER save + play", "F fit view", "WHEEL zoom", "RIGHT drag pan", "N new blank map"] {
-        text(frame, size, (8, y), line, dim);
+    for line in ["CTRL+S save", "CTRL+Z undo", "CTRL+Y redo", "ENTER save + play", "F fit view", "WHEEL zoom", "RIGHT drag pan", "N new blank map", "CTRL +/- UI size"] {
+        text(frame, (8, y), line, dim);
         y += 11;
     }
     y += 8;
     let it = &ed.map.items;
-    text(frame, size, (8, y), &format!("{} crystals", it.crystals.len()), dim);
+    text(frame, (8, y), &format!("{} crystals", it.crystals.len()), dim);
     y += 11;
-    text(frame, size, (8, y), &format!("{} mould starts", it.moulds.len()), dim);
+    text(frame, (8, y), &format!("{} mould starts", it.moulds.len()), dim);
     y += 11;
-    text(frame, size, (8, y), &format!("{} walls", it.walls.len()), dim);
+    text(frame, (8, y), &format!("{} walls", it.walls.len()), dim);
     y += 14;
     let problems = ed.problems();
     if problems.is_empty() {
-        text(frame, size, (8, y), "ready to play", accent);
+        text(frame, (8, y), "ready to play", accent);
     } else {
         for p in &problems {
-            text(frame, size, (8, y), p, warn);
+            text(frame, (8, y), p, warn);
             y += 11;
         }
     }
     // The status line: what is under the cursor, then the last message.
     let at = o.cursor.map(|c| format!("{} {}  {}", c.0 as i32, c.1 as i32, ed.describe(c))).unwrap_or_default();
-    let sy = (h as i32 - 36) / 2 + 4;
-    text(frame, size, (PANEL + 8, sy), &at, dim);
-    text(frame, size, (PANEL + 160, sy), o.message, white);
+    let sy = ((h - sh) / u) as i32 + 4;
+    text(frame, (PANEL + 8, sy), &at, dim);
+    text(frame, (PANEL + 160, sy), o.message, white);
 }
 
 /// Blends `c` (its alpha) over pixel (x, y).

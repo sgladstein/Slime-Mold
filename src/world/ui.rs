@@ -33,7 +33,7 @@ use std::time::{Duration, Instant};
 use winit::keyboard::KeyCode;
 
 use super::camera::Camera;
-use super::canvas::{Align, Canvas, Rect, Rgba, Weight};
+use super::canvas::{Align, Canvas, Rect, Rgba, UiSize, Weight};
 use super::controls::{Button, Controls};
 use super::icons::Icon;
 use super::marks::{Mark, Marks, Shape, MINIMAP};
@@ -68,15 +68,34 @@ use theme::*;
 const CELL: f32 = 42.0;
 const CELL_GAP: f32 = 5.0;
 const CARD_PAD: f32 = 8.0;
+/// The command card's grid. 4 x 3 until the owner's ask of 11-14 08:33Z
+/// ("re-arrange the bottom menu to be one row for the squad and two rows
+/// for the other buttons so the whole thing is wider but shorter"): 6 x 2,
+/// the 4 x 3 slots read in order (`card_slot`), so the bar went from 160
+/// to 113 units at 1080 lines (15% to 10% of the screen).
+const CARD_COLS: u8 = 6;
+const CARD_ROWS: u8 = 2;
+/// The minimap keeps the bar's old height (152 units) in the corner,
+/// standing above the shorter bar, so it does not shrink with it.
+const MINIMAP_H: f32 = 3.0 * CELL + 2.0 * CELL_GAP + 2.0 * CARD_PAD;
+
+/// The loadout strip's width: its slots, the name and state, and Swap.
+fn loadout_w(l: &Loadout, s: f32) -> f32 {
+    let slots = l.slots.max(l.cards.len()).max(1) as f32;
+    2.0 * 6.0 * s + slots * 34.0 * s + (slots - 1.0) * 4.0 * s + 8.0 * s + 112.0 * s + if l.cycle.is_some() { 26.0 * s + 6.0 * s } else { 0.0 }
+}
+
+/// A command's place on the 6 x 2 card from its 4 x 3 `slot` (row, col):
+/// the twelve slots in reading order, wrapped at six.
+fn card_slot(slot: (u8, u8)) -> (u8, u8) {
+    let k = slot.0.min(2) * 4 + slot.1.min(3);
+    (k / CARD_COLS, k % CARD_COLS)
+}
 /// The selection panel's height with nothing selected.
 const COLLAPSED: f32 = 40.0;
 
-/// Pixels a UI unit for a screen this tall: 1 at 1080 lines, in steps of
-/// 0.05, so a window dragged through every size rasterizes a few sets of
-/// glyph sizes, not one a pixel.
-fn ui_scale(sh: f32) -> f32 {
-    ((sh / 1080.0).clamp(0.7, 2.4) * 20.0).round() / 20.0
-}
+// Pixels a UI unit: `UiSize::px` (`settings`), the height's share of 1080
+// lines with the window's DPI and the player's size over it (11-14).
 
 /// Health's colour: green, then amber below 60%, red below 30%.
 pub fn health_colour(f: f32) -> Rgba {
@@ -750,7 +769,7 @@ impl Hud {
     /// view).
     pub fn draw(&mut self, m: &Model, controls: &Controls, cam: &Camera, minimap: bool, c: &mut Canvas, world: &mut Marks) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        let s = ui_scale(sh);
+        let s = c.ui.px(c.screen);
         self.scale = s;
         self.world = cam.world;
         self.hits.clear();
@@ -773,8 +792,8 @@ impl Hud {
         // the selection panel left of that, all one height.
         let cell = CELL * s;
         let gap = CELL_GAP * s;
-        let card_w = 4.0 * cell + 3.0 * gap + 2.0 * pad;
-        let (_, inset_bottom) = Hud::insets(c.screen);
+        let card_w = CARD_COLS as f32 * cell + (CARD_COLS - 1) as f32 * gap + 2.0 * pad;
+        let (_, inset_bottom) = Hud::insets(c.screen, c.ui);
         let panel_h = inset_bottom - 8.0 * s;
         let base = sh - 8.0 * s;
         let top_of = base - panel_h;
@@ -784,10 +803,11 @@ impl Hud {
         self.minimap_box = None;
         self.minimap = None;
         if minimap {
-            let ih = panel_h - 2.0 * pad;
+            let mm_h = (MINIMAP_H * s).max(panel_h);
+            let ih = mm_h - 2.0 * pad;
             // (min then max, not `clamp`, which panics in a narrow window.)
             let iw = (ih * cam.world.0 / cam.world.1).min((360.0 * s).min(sw * 0.25)).max(ih * 0.6);
-            let f = Rect::new(right - iw - 2.0 * pad, top_of, iw + 2.0 * pad, panel_h);
+            let f = Rect::new(right - iw - 2.0 * pad, base - mm_h, iw + 2.0 * pad, mm_h);
             let bx = ((f.x + pad).round() as u32, (f.y + pad).round() as u32, iw.round() as u32, ih.round() as u32);
             let mm = super::view::minimap_in((cam.world.0 as usize, cam.world.1 as usize), bx);
             self.minimap_box = Some(bx);
@@ -805,8 +825,15 @@ impl Hud {
             right = f.x - 8.0 * s;
         }
         let card = Rect::new(right - card_w, top_of, card_w, panel_h);
-        let sel_w = (600.0 * s).min(card.x - 16.0 * s);
-        let sel = Rect::new(card.x - 8.0 * s - sel_w, top_of, sel_w, panel_h);
+        // The gun cards' panel at the bar's far left (owner, 08:46Z: "gun/card
+        // menu should go on the far left to fill the rest of the screen"),
+        // the selection panel filling the row between it and the command
+        // card (one card row tall, owner 08:33Z). Where that leaves the
+        // selection under 240 units the strip goes back over the panels.
+        let gun_w = m.loadout.as_ref().map(|l| loadout_w(l, s));
+        let gun = gun_w.map(|w| Rect::new(8.0 * s, top_of, w, panel_h)).filter(|g| card.x - 8.0 * s - (g.right() + 8.0 * s) >= 240.0 * s);
+        let left = gun.map_or(8.0 * s, |g| g.right() + 8.0 * s);
+        let sel = Rect::new(left, top_of, (card.x - 8.0 * s - left).max(0.0), panel_h);
         // With nothing selected the selection panel collapses to a strip
         // along the bottom (the art director, 11-14 02:34Z: a full-height
         // panel that only said "Nothing selected").
@@ -819,7 +846,7 @@ impl Hud {
         // Before the command card, so the card's tooltips cover it; its
         // own card tooltip after.
         self.cycle = m.loadout.as_ref().and_then(|l| l.cycle.map(|c| c.0));
-        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, sel, empty, card, c, s));
+        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, gun, sel, empty, card, c, s));
         self.command_card(m, card, c, s);
         match (&m.loadout, tip) {
             (Some(l), Some((k, r))) if k < l.cards.len() => self.card_tip(&l.cards[k], r, c, s),
@@ -1085,17 +1112,18 @@ impl Hud {
         let cell = CELL * s;
         let gap = CELL_GAP * s;
         let x0 = r.x + pad;
-        let y0 = r.bottom() - pad - 3.0 * cell - 2.0 * gap;
+        let y0 = r.bottom() - pad - CARD_ROWS as f32 * cell - (CARD_ROWS - 1) as f32 * gap;
         // Empty slots, faintly, so the grid reads as a grid.
-        for j in 0..3 {
-            for i in 0..4 {
+        for j in 0..CARD_ROWS {
+            for i in 0..CARD_COLS {
                 let b = Rect::new(x0 + i as f32 * (cell + gap), y0 + j as f32 * (cell + gap), cell, cell);
                 c.rrect(b, 10.0 * s, [255, 255, 255, 8]);
             }
         }
         let mut tip = None;
         for (k, cmd) in m.commands.iter().enumerate() {
-            let (row, col) = (cmd.slot.0.min(2) as f32, cmd.slot.1.min(3) as f32);
+            let (row, col) = card_slot(cmd.slot);
+            let (row, col) = (row as f32, col as f32);
             let b = Rect::new(x0 + col * (cell + gap), y0 + row * (cell + gap), cell, cell);
             let hot = self.hover.is_some_and(|p| b.contains(p));
             let down = hot && self.pressed == Some(Hit::Command(k));
@@ -1150,20 +1178,23 @@ impl Hud {
     /// 140-pixel box over the command card with each card's name under its
     /// glyph. Returns the hovered card (or `usize::MAX` for the name and
     /// state, whose tooltip is the whole loadout) and its rectangle.
-    fn loadout_draw(&mut self, l: &Loadout, sel: Rect, collapsed: bool, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
+    #[allow(clippy::too_many_arguments)]
+    fn loadout_draw(&mut self, l: &Loadout, panel: Option<Rect>, sel: Rect, collapsed: bool, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
         let pad = 6.0 * s;
         let cell = 34.0 * s;
         let gap = 4.0 * s;
         let slots = l.slots.max(l.cards.len()).max(1);
         let info_w = 112.0 * s;
         let swap = 26.0 * s;
-        let w = 2.0 * pad + slots as f32 * cell + (slots - 1) as f32 * gap + 8.0 * s + info_w + if l.cycle.is_some() { swap + 6.0 * s } else { 0.0 };
+        let w = loadout_w(l, s);
         let h = 2.0 * pad + cell + 5.0 * s;
-        // On the selection panel's top edge at its right; where the window
-        // is too narrow for one, on the command card's.
-        // With the selection panel collapsed, at the bottom of its place,
-        // right of the collapsed strip.
-        let r = if collapsed && sel.w >= w + 158.0 * s {
+        // Its own panel at the bar's far left (11-14 08:46Z), the strip
+        // centred in it; else, as before, on the selection panel's top edge
+        // at its right, or the command card's where the window is too
+        // narrow; with the selection collapsed, at the bottom of its place.
+        let r = if let Some(p) = panel {
+            Rect::new(p.x, p.y + (p.h - h) / 2.0, p.w, h)
+        } else if collapsed && sel.w >= w + 158.0 * s {
             Rect::new(sel.right() - w, sel.bottom() - h, w, h)
         } else {
             let on = if sel.w >= 120.0 * s && sel.w >= w + 150.0 * s { sel } else { card };
@@ -1172,7 +1203,10 @@ impl Hud {
         if r.y < self.top + 8.0 * s {
             return None;
         }
-        self.glass(r, 10.0 * s, c, s);
+        match panel {
+            Some(p) => self.glass(p, 12.0 * s, c, s),
+            None => self.glass(r, 10.0 * s, c, s),
+        }
         let mut tip = None;
         let y = r.y + pad;
         for i in 0..slots {
@@ -1515,6 +1549,7 @@ impl Hud {
                     ("Space".into(), "Look at the newest alert".into()),
                     ("Esc".into(), "Cancel placing, or this menu".into()),
                     ("F1 or ?".into(), "This key card".into()),
+                    ("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text".into()),
                 ];
                 for cmd in &m.commands {
                     if let Some(k) = key_name(cmd.key) {
@@ -1570,9 +1605,9 @@ impl Hud {
     /// top bar; the bottom panels' height), as `draw` lays them out: for a
     /// camera made before the HUD has drawn, so it can centre in the band
     /// the panels leave (the opening view on the squad).
-    pub fn insets(screen: (u32, u32)) -> (f32, f32) {
-        let s = ui_scale(screen.1 as f32);
-        let panel_h = 3.0 * CELL * s + 2.0 * CELL_GAP * s + 2.0 * CARD_PAD * s;
+    pub fn insets(screen: (u32, u32), ui: UiSize) -> (f32, f32) {
+        let s = ui.px(screen);
+        let panel_h = CARD_ROWS as f32 * CELL * s + (CARD_ROWS - 1) as f32 * CELL_GAP * s + 2.0 * CARD_PAD * s;
         (8.0 * s + 38.0 * s, panel_h + 8.0 * s)
     }
 
@@ -1720,6 +1755,46 @@ mod tests {
         assert_eq!(r.click(Button::Left, false), (true, vec![]));
     }
 
+    /// The 4 x 3 slots land on twelve different places of the 6 x 2 card,
+    /// in reading order.
+    #[test]
+    fn the_command_card_is_six_by_two_in_reading_order() {
+        let places: Vec<(u8, u8)> = (0..3).flat_map(|r| (0..4).map(move |c| card_slot((r, c)))).collect();
+        assert_eq!(places[0], (0, 0));
+        assert_eq!(places[5], (0, 5));
+        assert_eq!(places[6], (1, 0));
+        assert_eq!(places[11], (1, 5));
+        let mut sorted = places.clone();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(sorted.len(), 12);
+    }
+
+    /// The UI size (owner, 11-14 08:07Z): at every step on every screen the
+    /// HUD's panels and buttons stay on the screen, and it grows with the
+    /// size until `UiSize::px`'s cap.
+    #[test]
+    fn every_ui_size_keeps_the_hud_on_screen() {
+        for screen in [(1280, 800), (1600, 900), (1920, 1080), (2560, 1440)] {
+            let mut last = 0.0;
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                r.m.selection = vec![Card { id: 0, icon: Icon::Soldier, team: 0, hp: 1.0, badge: None }; 3];
+                r.m.loadout = Some(loadout());
+                r.draw();
+                assert!(r.hud.scale >= last, "{screen:?} at {user}: {} after {last}", r.hud.scale);
+                last = r.hud.scale;
+                let (sw, sh) = (screen.0 as f32 + 0.5, screen.1 as f32 + 0.5);
+                for (b, h) in &r.hud.hits {
+                    assert!(b.x >= -0.5 && b.y >= -0.5 && b.right() <= sw && b.bottom() <= sh, "{screen:?} at {user}: {h:?} {b:?} off the screen");
+                }
+                assert!(screen.1 as f32 - r.hud.bottom <= screen.1 as f32 * 0.34, "{screen:?} at {user}: the bottom bar is too tall");
+            }
+            assert!(last > Rig::new(screen).hud.scale * 1.3, "{screen:?}: the biggest size grows the HUD");
+        }
+    }
+
     #[test]
     fn the_bottom_panels_cover_at_most_about_15_percent_and_collapse_when_empty() {
         for screen in [(1920, 1080), (1280, 800), (2560, 1440)] {
@@ -1727,8 +1802,10 @@ mod tests {
             r.m.selection = vec![Card { id: 0, icon: Icon::Soldier, team: 0, hp: 1.0, badge: None }];
             r.draw();
             let share = (screen.1 as f32 - r.hud.bottom) / screen.1 as f32;
-            assert!(share <= 0.152, "{screen:?}: the bar is {:.1}% of the screen", share * 100.0);
-            assert!((Hud::insets(r.c.screen).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
+            // 15% before the owner's 08:33Z ask (one squad row, two command
+            // rows); 10.5% after.
+            assert!(share <= 0.11, "{screen:?}: the bar is {:.1}% of the screen", share * 100.0);
+            assert!((Hud::insets(r.c.screen, r.c.ui).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen, r.c.ui).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
             // With nothing selected, no panel reaches above the collapsed
             // strip except the command card and minimap.
             let full = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale).count();

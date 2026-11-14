@@ -40,7 +40,8 @@ use std::sync::Arc;
 use pixels::{Pixels, PixelsBuilder, SurfaceTexture};
 use slime_mould::mould::larder_world::race_world;
 use slime_mould::mould::map::{Map, MAP_H, MAP_W};
-use slime_mould::mould::map_edit::{self, Brush, EditView, Editor, Mirror, Overlay, Tool, PANEL};
+use slime_mould::mould::map_edit::{self, Brush, EditView, Editor, Mirror, Overlay, Tool};
+use slime_mould::world::settings::{self, UiSize};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
@@ -49,8 +50,6 @@ use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
 const DESIGNED: &str = "Reports/larder-maps-2026-11-11/maps";
-/// The status line's height, screen pixels (two of the panel's text rows).
-const STATUS: f32 = 36.0;
 
 fn repo() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -71,10 +70,11 @@ fn open(spec: &str, seed: u64) -> Result<Map, String> {
 }
 
 /// The view that fits the whole map beside the panel and above the status
-/// line.
-fn fit(size: (u32, u32)) -> EditView {
-    let left = PANEL as f32 * 2.0 + 8.0;
-    EditView::fit((left, 8.0, (size.0 as f32 - left - 8.0).max(64.0), (size.1 as f32 - STATUS - 16.0).max(64.0)))
+/// line, at UI size `ui`.
+fn fit(size: (u32, u32), ui: f32) -> EditView {
+    let (panel, status) = map_edit::chrome(ui);
+    let left = panel + 8.0;
+    EditView::fit((left, 8.0, (size.0 as f32 - left - 8.0).max(64.0), (size.1 as f32 - status - 16.0).max(64.0)))
 }
 
 /// The font has no lower-case-only marks such as `_` or `\`; a message
@@ -104,13 +104,29 @@ struct App {
     message: String,
     /// N was pressed once on a changed map: a second N clears it.
     clear_armed: bool,
+    /// The UI's size (the saved or `ui=` size, the window's DPI scale).
+    ui: UiSize,
     result: Result<(), String>,
 }
 
 impl App {
-    fn new(ed: Editor, name: String, dir: PathBuf, play_keys: Vec<String>) -> Self {
+    fn new(ed: Editor, name: String, dir: PathBuf, play_keys: Vec<String>, user: f32) -> Self {
         let size = (1280, 800);
-        App { ed, name, dir, play_keys, view: fit(size), window: None, pixels: None, size, cursor: None, stroke: None, wall_from: None, pan: None, ctrl: false, message: "paint, place, then ENTER to play".into(), clear_armed: false, result: Ok(()) }
+        let ui = UiSize { user, dpi: 1.0 };
+        App { ed, name, dir, play_keys, view: fit(size, ui.fixed()), window: None, pixels: None, size, cursor: None, stroke: None, wall_from: None, pan: None, ctrl: false, message: "paint, place, then ENTER to play".into(), clear_armed: false, ui, result: Ok(()) }
+    }
+
+    /// Fits the view again, as F does (after a resize or a new UI size).
+    fn refit(&mut self) {
+        self.view = fit(self.size, self.ui.fixed());
+    }
+
+    /// Ctrl + and Ctrl - step the UI's size, saved for both binaries.
+    fn resize_ui(&mut self, by: i32) {
+        self.ui.user = settings::step(self.ui.user, by);
+        settings::save_ui(self.ui.user);
+        self.refit();
+        self.message = format!("UI size {}", settings::percent(self.ui.user));
     }
 
     fn map_point(&self, s: (f32, f32)) -> (f32, f32) {
@@ -118,7 +134,8 @@ impl App {
     }
 
     fn on_panel(&self, s: (f32, f32)) -> bool {
-        s.0 < PANEL as f32 * 2.0 || s.1 > self.size.1 as f32 - STATUS
+        let (panel, status) = map_edit::chrome(self.ui.fixed());
+        s.0 < panel || s.1 > self.size.1 as f32 - status
     }
 
     fn save(&mut self) -> bool {
@@ -166,7 +183,7 @@ impl App {
 
     fn redraw(&mut self) {
         let Some(p) = self.pixels.as_mut() else { return };
-        let o = Overlay { cursor: self.cursor.map(|c| self.view.to_map(c)), wall_from: self.wall_from, name: &self.name, message: &self.message };
+        let o = Overlay { cursor: self.cursor.map(|c| self.view.to_map(c)), wall_from: self.wall_from, name: &self.name, message: &self.message, ui: self.ui.fixed() };
         map_edit::draw(&self.ed, &self.view, p.frame_mut(), self.size, &o);
         if let Err(e) = p.render() {
             self.result = Err(format!("render failed: {e}"));
@@ -205,10 +222,12 @@ impl App {
             KeyCode::KeyY if self.ctrl => {
                 self.message = if self.ed.redo() { "redone".into() } else { "nothing to redo".into() };
             }
+            KeyCode::Equal | KeyCode::NumpadAdd if self.ctrl => self.resize_ui(1),
+            KeyCode::Minus | KeyCode::NumpadSubtract if self.ctrl => self.resize_ui(-1),
             KeyCode::BracketLeft | KeyCode::Minus => self.ed.size(-1),
             KeyCode::BracketRight | KeyCode::Equal => self.ed.size(1),
             KeyCode::KeyX => self.ed.mirror = self.ed.mirror.next(),
-            KeyCode::KeyF => self.view = fit(self.size),
+            KeyCode::KeyF => self.refit(),
             KeyCode::Enter | KeyCode::NumpadEnter | KeyCode::F5 => self.play(),
             KeyCode::KeyN => {
                 if self.ed.dirty && !self.clear_armed {
@@ -294,7 +313,8 @@ impl ApplicationHandler for App {
                 return event_loop.exit();
             }
         }
-        self.view = fit(self.size);
+        self.ui.dpi = window.scale_factor() as f32;
+        self.refit();
         self.window = Some(window);
     }
 
@@ -323,7 +343,11 @@ impl ApplicationHandler for App {
                     }
                 }
                 self.size = (size.width, size.height);
-                self.view = fit(self.size);
+                self.refit();
+            }
+            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                self.ui.dpi = scale_factor as f32;
+                self.refit();
             }
             WindowEvent::ModifiersChanged(m) => self.ctrl = m.state().control_key() || m.state().super_key(),
             WindowEvent::KeyboardInput { event, .. } => {
@@ -366,24 +390,24 @@ impl ApplicationHandler for App {
 }
 
 /// The window's picture of `ed`, without a window.
-fn picture(ed: &Editor, name: &str, message: &str, size: (u32, u32), cursor: Option<(f32, f32)>, wall_from: Option<(f32, f32)>) -> image::RgbaImage {
+fn picture(ed: &Editor, name: &str, message: &str, size: (u32, u32), cursor: Option<(f32, f32)>, wall_from: Option<(f32, f32)>, ui: f32) -> image::RgbaImage {
     let mut frame = vec![0u8; size.0 as usize * size.1 as usize * 4];
-    let view = fit(size);
-    map_edit::draw(ed, &view, &mut frame, size, &Overlay { cursor, wall_from, name, message });
+    let view = fit(size, ui);
+    map_edit::draw(ed, &view, &mut frame, size, &Overlay { cursor, wall_from, name, message, ui });
     image::RgbaImage::from_raw(size.0, size.1, frame).expect("frame size")
 }
 
 /// Draws a small mirrored map from blank, a frame a step, as a hand would
 /// (the cloud check's film: the editor's own drawing, step by step).
-fn demo(dir: &Path, name: &str, size: (u32, u32)) -> Result<(), String> {
+fn demo(dir: &Path, name: &str, size: (u32, u32), ui: f32) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     let mut ed = Editor::new(Editor::blank());
     ed.mirror = Mirror::Turn;
     let mut n = 0;
     let mut shot = |ed: &Editor, msg: &str, cursor: Option<(f32, f32)>| -> Result<(), String> {
-        let view = fit(size);
+        let view = fit(size, ui);
         let c = cursor.map(|p| view.to_screen(p));
-        let img = picture(ed, name, msg, size, c.map(|s| view.to_map(s)), None);
+        let img = picture(ed, name, msg, size, c.map(|s| view.to_map(s)), None, ui);
         img.save(dir.join(format!("frame-{n:03}.png"))).map_err(|e| e.to_string())?;
         n += 1;
         Ok(())
@@ -451,6 +475,7 @@ fn demo(dir: &Path, name: &str, size: (u32, u32)) -> Result<(), String> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (mut spec, mut name, mut dir, mut seed) = (None::<String>, None::<String>, None::<PathBuf>, 1u64);
     let (mut look, mut demo_dir, mut play_keys) = (None::<String>, None::<String>, Vec::new());
+    let mut ui = None;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -459,6 +484,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "dir" => dir = Some(PathBuf::from(v)),
             "look" => look = Some(v.to_string()),
             "demo" => demo_dir = Some(v.to_string()),
+            // `ui=150%`: the UI's size this run (passed on to the game too).
+            "ui" => {
+                ui = Some(settings::parse_size(v).ok_or("ui=PERCENT% (25% to 400%) or a factor such as 1.5")?);
+                play_keys.push(a.clone());
+            }
             "seed" => {
                 seed = v.parse()?;
                 play_keys.push(a.clone());
@@ -469,7 +499,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let size = (1280, 800);
     if let Some(d) = demo_dir {
-        demo(Path::new(&d), name.as_deref().unwrap_or("demo"), size)?;
+        // The pictures at `ui=` or 100%, never a size saved on this machine.
+        demo(Path::new(&d), name.as_deref().unwrap_or("demo"), size, ui.unwrap_or(1.0))?;
         return Ok(());
     }
     let map = match &spec {
@@ -481,13 +512,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(map.ground.len(), MAP_W * MAP_H);
     let ed = Editor::new(map);
     if let Some(path) = look {
-        picture(&ed, &name, "", size, None, None).save(&path)?;
+        picture(&ed, &name, "", size, None, None, ui.unwrap_or(1.0)).save(&path)?;
         println!("larder-edit: {path}");
         return Ok(());
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Wait);
-    let mut app = App::new(ed, name, dir, play_keys);
+    let mut app = App::new(ed, name, dir, play_keys, ui.unwrap_or_else(settings::saved_ui));
     event_loop.run_app(&mut app)?;
     app.result.map_err(Into::into)
 }
