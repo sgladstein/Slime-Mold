@@ -1,0 +1,7 @@
+C4, named before the run (2026-11-14 ~00:45Z). Shape C: larderworld census, walkers=25000 (mass 0.2), race world, cap 900 s, seeds 301-308 (unused).
+Hands: idle, random, boom, claim, fort, strike, cut (new: strikers attack-move to the middle of the road from the core to the 4 held crystals nearest home).
+Question (cloud plan C4): on shape C, does cut beat strike, and does anything beat walking in?
+M1: cut vs strike, paired by seed, sign test.
+M2: the best plan by median vs the runner-up, sign test; Holm over M1, M2 and every plan vs idle and vs random.
+M3: designer's gate (D3) for plain C: intended best cut, should-lose strike; idle loses; cut beats random on >= 6 of 8.
+Tier columns not run here: over the 1 h rule without the owner's OK (estimated before the run as ~8 machine-hours; the plain column took 15 min, so about 2 h).
