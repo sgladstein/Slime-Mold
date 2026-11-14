@@ -588,3 +588,28 @@ fn the_cards_burn_reaches_a_moving_squad() {
     let burning = g.members(q).iter().filter(|&&k| matches!(g.soldiers[k].order, Order::Burn(..))).count();
     assert_eq!(burning, g.members(q).len(), "every member of the squad burns the line half a second later");
 }
+
+/// **The minimap in the squad mode** (review after the bug sweep,
+/// 2026-11-14): a right click on it sends the squad where it shows, as in
+/// the RTS round, and a left click moves the camera, not a volley at the
+/// ground hidden behind the minimap.
+#[test]
+fn the_minimap_sends_the_squad_where_it_shows() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.squad_frame(1.0 / 60.0);
+    app.prepare();
+    let (x, y, w, h) = app.hud.minimap.expect("the HUD drew a minimap");
+    let c = (x as f32 + w as f32 * 0.8, y as f32 + h as f32 * 0.3);
+    app.controls.cursor = Some(c);
+    app.hud.moved(Some(c));
+    let shows = app.hud.on_minimap(c).unwrap();
+    assert!(!app.squad_button(Button::Left, true), "a left click on the minimap is the controls' (the camera)");
+    assert!(app.game.as_ref().unwrap().squads.iter().all(|q| q.fire.is_none()), "and fires nothing");
+    app.squad_button(Button::Left, false);
+    assert!(app.squad_button(Button::Right, true));
+    let g = app.game.as_ref().unwrap();
+    let d = g.squads[g.active.unwrap()].dest.expect("the squad was sent");
+    let sc = g.world.scale();
+    assert!((d.0 - shows.0).hypot(d.1 - shows.1) <= 8.0 * sc, "sent to {d:?}, the minimap shows {shows:?}");
+}

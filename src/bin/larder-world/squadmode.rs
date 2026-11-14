@@ -148,8 +148,18 @@ impl App {
         self.game.as_ref().and_then(|g| g.active).map(|q| q as u8)
     }
 
+    /// The world point under the cursor, or None over the HUD or the
+    /// minimap: the world behind them is hidden (review after the bug
+    /// sweep, 2026-11-14: a volley held over the bottom bar swung to the
+    /// ground behind it, and a click on the minimap fired at or sent the
+    /// squad to the ground behind the minimap).
     fn cursor_world(&self) -> Option<(f32, f32)> {
-        self.controls.cursor.and_then(|c| self.camera.world_at(c))
+        self.controls.cursor.filter(|&c| !self.hud.over(c)).and_then(|c| self.camera.world_at(c))
+    }
+
+    /// The world point the minimap shows under the cursor, if it is on it.
+    fn cursor_minimap(&self) -> Option<(f32, f32)> {
+        self.controls.cursor.and_then(|c| self.hud.on_minimap(c))
     }
 
     /// A key in the squad mode; true if it was the squad's. `first`: the
@@ -277,14 +287,19 @@ impl App {
         match b {
             // Shift + left drag is the box (the controls take it).
             Button::Left if self.shift && down => false,
+            // On the minimap: the controls move the camera there.
+            Button::Left if down && self.cursor_minimap().is_some() => false,
             Button::Left => {
                 let at = self.cursor_world();
                 let Some(q) = self.active() else { return true };
                 let sq = self.sq.as_mut().unwrap();
+                let was = sq.firing;
                 sq.firing = down && at.is_some();
                 sq.fire_at = if sq.firing { at } else { None };
                 let f = sq.fire_at;
-                if let Some(g) = self.game.as_mut() {
+                // (A release with nothing held sends nothing: a command
+                // finishes the step running on the GPU.)
+                if let Some(g) = self.game.as_mut().filter(|_| down || was) {
                     g.apply(Cmd::Fire(q, f));
                 }
                 // A release the controls began as a box still ends it.
@@ -292,7 +307,8 @@ impl App {
             }
             Button::Right => {
                 if down {
-                    if let (Some(at), Some(q)) = (self.cursor_world(), self.active()) {
+                    // On the minimap: where it shows, as in the RTS round.
+                    if let (Some(at), Some(q)) = (self.cursor_minimap().or_else(|| self.cursor_world()), self.active()) {
                         // On a crystal: stand by it and guard it; Ctrl drains it.
                         let o = match self.order_for(at) {
                             Order::Clear(x, y) if !self.ctrl => Order::Move(x, y),
@@ -382,6 +398,7 @@ impl App {
         if self.sq.is_none() || self.in_menu() {
             return;
         }
+        let at = self.cursor_world();
         let Some(g) = self.game.as_mut() else { return };
         // The screen edge does not pan: the cursor is the aim.
         self.controls.edge = false;
@@ -393,7 +410,6 @@ impl App {
             }
         }
         let q = g.active.unwrap();
-        let at = self.controls.cursor.and_then(|c| self.camera.world_at(c));
         let sq = self.sq.as_mut().unwrap();
         // Sent between steps (`SquadInput::aim`), not from here.
         if at.is_some() {
