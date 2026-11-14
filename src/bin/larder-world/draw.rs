@@ -366,7 +366,13 @@ impl App {
                 Resource {
                     icon: Icon::Crystal,
                     colour: theme::ENERGY,
-                    label: format!("Food: crystal charge carried home. The squad eats {:.0} a second; soldiers, shots and walls cost it", r.ration * g.alive() as f32),
+                    // Rations off by default since 2026-11-14 (owner): then the
+                    // label leaves out the squad's keep.
+                    label: if r.ration > 0.0 {
+                        format!("Food: crystal charge carried home. The squad eats {:.0} a second; soldiers, shots and walls cost it", r.ration * g.alive() as f32)
+                    } else {
+                        "Food: crystal charge carried home. Soldiers, walls and buildings cost it".to_string()
+                    },
                     value: format!("{:.0}", g.bank),
                     rate: rate.map(|v| match g.bank / -v {
                         dry if v < 0.0 && dry < 60.0 => format!("{v:+.0}/s, dry in {dry:.0} s"),
