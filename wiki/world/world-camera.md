@@ -79,11 +79,11 @@ pauses; again, or Esc, goes back to play). A start menu (`StartMenu`,
 screen, over a live dish: sandbox, the campaign's missions, an options
 page with each switch's default beside it, and the key card; the
 window opens on it when run with no arguments
-([report](../../Reports/start-menu-2026-11-14/README.md)). Above the
-command card a loadout panel (`ui::Loadout`, 2026-11-14) shows the squad's
-gun cards in their four slots, framed by kind, with the cast the shown
-soldier's next hit fires lit, the recharge, a tooltip per card and Swap (H,
-`NEXT_ROUND`) ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The game itself is `cargo run --release
+([report](../../Reports/start-menu-2026-11-14/README.md)). A one-row
+loadout strip (`ui::Loadout`, 2026-11-14) on the selection panel's top
+edge shows the squad's gun cards in their four slots, framed by kind, with
+the cast the shown soldier's next hit fires lit, the recharge, a tooltip
+per card and a swap button (H, `NEXT_ROUND`) ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The game itself is `cargo run --release
 --bin larder-world` (W2c,
 [report](../../Reports/larder-world-roadmap-2026-11-11.md)): the Larder
 rules on the GPU world through this camera, UI and look. The GPU sandbox's

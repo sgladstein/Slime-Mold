@@ -698,7 +698,7 @@ impl App {
             slots: rounds::SLOTS,
             recharge: rech,
             charging: lead.map_or(0.0, left).clamp(0.0, 1.0),
-            note: if rd.round.is_empty() { Some("no cards: Swap for a loadout".into()) } else { note },
+            note: if rd.round.is_empty() { Some("No cards: H or the button for a loadout".into()) } else { note },
             cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
         }
     }

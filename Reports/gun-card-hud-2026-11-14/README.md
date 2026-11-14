@@ -17,10 +17,17 @@ radius or delay shows in the tooltip.
 
 ## What it shows
 
-- **Where:** on the command card's top edge, bottom right, the same width.
-- **Header:** the loadout's name (Lull, Trap, ...), whose gun is shown
+- **Where:** a one-row strip, 50 pixels high at 1080 lines, on the
+  selection panel's top edge at its right (on the command card's when the
+  window is too narrow). The first cut, the same day, was a 140-pixel box
+  over the command card with each card's name under its glyph; the art
+  director's review (11-14 02:34Z) asked for a strip of card icons next to
+  the selection with the details in tooltips, since the bottom HUD is
+  already too tall.
+- **Beside the cards:** the loadout's name (Lull, Trap, ...) and its state,
+  and a button with its key, H. Hovering the name shows whose gun is shown
   ("Soldier 3"; with several selected the first of them, "Soldier 1 (of
-  4)"; with none, the first alive, "(squad)"), and a **Swap** button with its key, H. The button
+  4)"; with none, the first alive, "(squad)") and how many guns are ready. The button
   sends the new command `NEXT_ROUND` (28, at the end of the `commands!`
   table), which does what H does (`App::next_round`).
 - **Cards**, left to right in the gun's four slots (`rounds::SLOTS`), empty
@@ -29,21 +36,20 @@ radius or delay shows in the tooltip.
   own colour, modifiers blue, triggers amber, flight cards teal. A modifier
   or trigger's glyph takes the colour of the payload it goes with, so a
   cast reads as one colour; the payload colours match the bullets (blast
-  orange, gas violet, germ green). A payload shows its price a cast.
+  orange, gas violet, germ green).
 - **The next cast is lit:** the run of cards the shown soldier's next hit
   fires (its modifiers, trigger and payload; `rounds::casts`) glows with a
   notch above it. Cards after the last payload are dimmed: they only slow
   the recharge. Flight cards ride every bullet, so they are never lit as a
   cast and never dimmed.
-- **Recharge:** a bar that fills back up after the last cast, "Ready" or
-  "Recharging 1.2 s", and with several soldiers "4 of 6 guns ready,
-  recharge 5.0 s".
-- **Tooltips:** hovering a card shows its name, kind, price and what it
+- **Recharge:** a thin bar under the cards that fills back up after the
+  last cast, and "Ready" or "Recharging 1.2 s" beside them.
+- **Tooltips:** hovering a card shows its name, kind, price a cast and what it
   does with the round's own numbers (radius, delay, crowd size), and says
   when the world cannot cast it (germ on the GPU) or when it only slows
   the recharge.
-- **Plain shots:** with no cards the panel still shows, four empty slots
-  and "no cards: Swap for a loadout", so the loadouts can be found.
+- **Plain shots:** with no cards the strip still shows, four empty slots,
+  "Plain shots" and the H button, so the loadouts can be found.
 
 The HUD keeps no rules: the game fills `ui::Loadout` (`Model::loadout`)
 from `Rounds` each frame (`App::loadout`, `gun_cards` in the window's
@@ -60,5 +66,12 @@ from `Rounds` each frame (`App::loadout`, `gun_cards` in the window's
   flight cards, an uncastable payload, and every loadout H cycles.
 - Frame cost: the model and HUD layout went from 0.058-0.087 ms to
   0.070-0.114 ms a frame on the cloud CPU (3 runs each, `look=` with
-  `hand=rush rounds=trap at=15`, 1280x800), about 0.01 ms. The canvas pass
-  draws about 40 more primitives.
+  `hand=rush rounds=trap at=15`, 1280x800; measured on the first cut, the
+  strip draws less), about 0.01 ms.
+
+## Next
+
+The art director also asked (11-14 02:34Z) for a HUD layout pass after this
+lands: in play the HUD covers about 15% of the screen at most, collapses
+when nothing is selected, and the opening camera frames the squad above
+the bar. This thread takes it next.

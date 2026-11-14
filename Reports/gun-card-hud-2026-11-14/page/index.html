@@ -34,16 +34,16 @@ li + li { margin-top: 4px; }
 <main>
   <header>
     <h1>Gun card panel</h1>
-    <p class="lede">Larder World's HUD now shows the squad's gun cards, on the command card's top edge. Every picture is the real window, rendered without a screen on the cloud's software Vulkan (llvmpipe), on Fork at 1920 x 1080, with four soldiers standing their ground (<code>hand=stand bank=5000</code>).</p>
+    <p class="lede">Larder World's HUD now shows the squad's gun cards as a one-row strip on the selection panel's top edge, 50 pixels high at 1080 lines (the art director's review asked for a strip of card icons, not a tall box). Every picture is the real window, rendered without a screen on the cloud's software Vulkan (llvmpipe), on Fork at 1920 x 1080, with four soldiers standing their ground (<code>hand=stand bank=5000</code>).</p>
   </header>
 
   <section>
     <h2>How to read it</h2>
     <ul>
-      <li>The cards sit in the gun's four slots, left to right, in the order they fire. Empty slots stay empty.</li>
+      <li>The cards sit in the gun's four slots, left to right, in the order they fire. Empty slots stay empty. Beside them: the loadout's name and Ready or Recharging.</li>
       <li>The <b>lit cards</b> with a notch above them are the cast the shown soldier's next hit fires. A cast is any modifiers and trigger, then the payload they change.</li>
-      <li>The bar fills back up after the last cast. Under it: Ready or Recharging, and how many of the selected guns are ready.</li>
-      <li>Hover a card for what it does, with this round's numbers. <b>H</b> or the <b>Swap</b> button changes loadout.</li>
+      <li>The thin bar under the cards fills back up after the last cast.</li>
+      <li>Hover a card for what it does, its price and this round's numbers; hover the name for whose gun is shown and how many guns are ready. <b>H</b> or the <b>H</b> button changes loadout.</li>
     </ul>
     <div class="kinds" aria-label="Card frames">
       <span><i style="background:var(--payload)"></i>Payload: its own colour, the same as its bullets</span>
@@ -72,6 +72,10 @@ li + li { margin-top: 4px; }
       <figure>
         <img src="tooltip-gas.png" alt="Tooltip over the Gas card of the Lull loadout" loading="lazy">
         <figcaption><b>Lull</b> at 9 s, cursor on Gas: a payload shows its price, 150 food a cast. 14 casts, 78 killed.</figcaption>
+      </figure>
+      <figure>
+        <img src="tooltip-loadout.png" alt="Tooltip over the loadout's name" loading="lazy">
+        <figcaption><b>Lull</b> at 9 s, cursor on the name: soldier 1 of the 4 selected is shown, and how many of the 4 guns are ready.</figcaption>
       </figure>
     </div>
   </section>
@@ -102,7 +106,7 @@ li + li { margin-top: 4px; }
     <h2>The whole screen</h2>
     <figure>
       <img src="whole-screen-lance.png" alt="The full 1920 by 1080 window with the loadout panel above the command card" loading="lazy">
-      <figcaption>Lance at 9 s. The panel adds about 0.01 ms of CPU a frame for the model and HUD layout (0.070 to 0.114 ms against 0.058 to 0.087 ms, 3 runs each).</figcaption>
+      <figcaption>Lance at 9 s. The strip adds about 0.01 ms of CPU a frame for the model and HUD layout (0.070 to 0.114 ms against 0.058 to 0.087 ms, 3 runs each).</figcaption>
     </figure>
   </section>
 </main>
