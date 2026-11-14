@@ -1,11 +1,13 @@
-# River (new ground kinds, 2026-11-14): deep water across the middle,
-# fords at x 170-229 and 794-853, a bridge at x 496-527.
-landing 512 110
-mould 512 560
-crystal 512 590 34 384
-crystal 300 180 26 384
-crystal 724 180 26 384
-crystal 300 470 26 384
-crystal 724 470 26 384
-crystal 90 220 22 256
-crystal 934 430 22 256
+# River v2 (new ground kinds, 2026-11-14): a wandering river, deep channel
+# in a shallow margin, sand bars and clay cut-banks, fords at x ~215 and
+# ~820, a plank bridge at x 500-523, a pond and a creek.
+# Made by Reports/ground-kinds-2026-11-14/raw/make_river.py.
+landing 512 96
+mould 512 566
+crystal 512 592 34 384
+crystal 200 170 26 384
+crystal 470 110 24 384
+crystal 250 520 26 384
+crystal 800 520 26 384
+crystal 70 120 22 256
+crystal 960 470 22 256
