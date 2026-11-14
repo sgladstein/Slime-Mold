@@ -47,10 +47,10 @@ ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
   </section>
 
   <section>
-    <h2>Close up on the jungle fire</h2>
+    <h2>Close up at zoom 12</h2>
     <figure>
       <img src="fire-near.gif" alt="Zoomed in: a ragged ring of flickering orange cells around dark burnt ground with embers, creeping slowly outward.">
-      <figcaption>The same run from 1 to 45 s at zoom 6. Each cell's heat flickers step by step, embers glow behind the front for a few seconds, and damp patches don't burn.</figcaption>
+      <figcaption>The same run from 1 to 45 s at zoom 12. The flames are drawn per pixel from the smooth heat field in three crisp layers: deep red-orange, orange, and a yellow core where it is hottest. Each cell's heat flickers step by step, the band dims behind the front as the plants burn, and damp patches don't burn.</figcaption>
     </figure>
   </section>
 
@@ -60,9 +60,10 @@ ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
       <li><b>Speed.</b> On a strip of dry meadow, the front reached 11 cells at 10 s and 23 cells at 20 s. The first cut reached 50 and 100, a speed of 5 cells a second.</li>
       <li><b>Moisture.</b> At moisture 0.4 the front reached 6 cells at 10 s, and at 0.6 it reached 4. At 0.8 nothing burned. Damp cells catch less often, burn slower and cooler, and go out by chance, leaving unburnt patches.</li>
       <li><b>Where moisture comes from.</b> Each planet has a base and a spread for its biome, agreed with the level generator (for example Fen 0.5, River valley 0.3, Barrens 0.0). It is wetter within 8 cells of water or deep water, wetter in jungle and drier in scrub.</li>
+      <li><b>Shots.</b> A blast lights a few sparks (12% of the cells out to a cell past its crater), not a ring of fire on every hit. A scorch round lights 40% of its disc.</li>
       <li><b>Soldiers.</b> A soldier standing in fire loses 25 health a second at full heat, so about 4 s in the hottest flames kills.</li>
       <li><b>Slime.</b> Thick slime still doesn't burn, so fire takes the slime's thin edge, not its body.</li>
-      <li><b>GPU match and cost.</b> The GPU matches the CPU exactly: plants, fire, char, kills, and the heat under a soldier. The llvmpipe frame on planet 2 is 60.3 ms at the median. The GTX 1070 has not been timed yet.</li>
+      <li><b>GPU match and cost.</b> The GPU matches the CPU exactly: plants, fire, char, kills, and the heat under a soldier. The llvmpipe frame on planet 2 is 58.8 ms at the median. The GTX 1070 has not been timed yet.</li>
     </ul>
   </section>
 </main>

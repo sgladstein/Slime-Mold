@@ -264,6 +264,29 @@ fn flame(h: f32) -> vec3<f32> {
     return select(mix(orange, yellow, (k - 0.85) / 0.15), mix(ember, orange, k / 0.85), k < 0.85) * smoothstep(0.0, 0.15, h);
 }
 
+// The flames' body from the smooth heat: a steep rise from heat 0.2 to
+// 0.3, so at the owner's deep zoom (24 px a cell; 11-14 20:21Z: "the fire
+// is blurry. The assumption should be that I am playing zoomed in") each
+// flame has a crisp edge, the B-spline's round lumps read as tongues, and
+// the colour inside still follows the heat. Below 0.2 only the halo's
+// spill shows (`cell_mat_c`), so embers glow dim and soft.
+// Three crisp layers by heat (contours of the one smooth field, each
+// edge 0.03 of heat wide, a pixel or two at zoom 24): deep red-orange from
+// 0.25, orange from 0.5, a yellow core over 0.8; the hottest is the
+// smallest. A wide smoothstep (0.2-0.3, the first cut) still read soft at
+// zoom 24 and the colours ran together.
+fn flame_body(h: f32) -> vec3<f32> {
+    let red = vec3<f32>(165.0, 48.0, 14.0);
+    let orange = vec3<f32>(215.0, 92.0, 20.0);
+    let yellow = vec3<f32>(245.0, 160.0, 55.0);
+    var c = mix(red, orange, smoothstep(0.485, 0.515, h));
+    c = mix(c, yellow, smoothstep(0.785, 0.815, h));
+    return c;
+}
+
+// How much of a pixel the flames cover (their outer edge, `flame_body`).
+fn flame_cover(h: f32) -> f32 { return smoothstep(0.235, 0.265, h); }
+
 // Fire's heat at world point (`x`, `y`) in cells: the cubic B-spline of
 // the 4 x 4 cells round it, as `cells_height` samples the height.
 fn heat_at(x: f32, y: f32) -> f32 {
@@ -753,7 +776,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // to near white in grey (same review).
     let fh = pl.heat;
     if (fh > 0.0) {
-        m.glow = max(m.glow, 0.6 * flame(fh));
+        m.glow = max(m.glow, 0.4 * flame(fh));
         m.albedo = mix(m.albedo, CHAR_RGB * 0.6, 0.6 * min(fh * 2.0, 1.0));
     }
     return m;
@@ -971,7 +994,6 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
         m1.body = wide;
         m1.glow += ABSORB_RGB * 0.45 * flash;
-        m1.glow = max(m1.glow, flame(heat_at(wx, wy)));
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -995,8 +1017,6 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss;
     }
     mt.glow += ABSORB_RGB * 0.45 * flash;
-    // The fire itself, smooth at the fine cell (`heat_at`).
-    mt.glow = max(mt.glow, flame(heat_at(wx, wy)));
     hcell[i] = h;
     mcell[i] = mat_pack(mt);
 }
@@ -1213,6 +1233,14 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
     let spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
     var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
+    // The fire's body, at this pixel (`flame_body` of the B-spline heat):
+    // worked out in `prep` per fine cell it stair-stepped at the owner's
+    // zoom 24 (11-14 20:21Z). Only where the halo glows (`m.glow`), so
+    // the 16 heat reads are spent only near a fire.
+    if (P.plant_at != 0u && m.glow.x > 2.0) {
+        let hf = heat_at(x, y);
+        c = mix(c, flame_body(hf), flame_cover(hf));
+    }
     // Each point light on this surface: diffuse on its albedo, a highlight
     // by its gloss, falling to nothing at the light's reach. The surface's
     // own height is in `to`, so a tube's flank toward a bullet lights and
