@@ -166,17 +166,25 @@ fn byte(v: u32, k: u32) -> f32 { return f32((v >> (8u * k)) & 255u) / 255.0; }
 // proposes it as the first new ground kind: slower uphill, wet hollows,
 // scent drifting down), so the height drawn is the height the mould feels.
 const ELEV: f32 = 5.0;
-// Bare ground: damp low loam to dry high soil, by elevation.
-const SOIL_LOW: vec3<f32> = vec3<f32>(30.0, 34.0, 28.0);
-const SOIL_HIGH: vec3<f32> = vec3<f32>(84.0, 74.0, 58.0);
+// Bare ground: damp low loam to dry high soil, by elevation. Dark, cool
+// and low in saturation since 2026-11-14 (art direction rules 2 and 3:
+// the ground is the darkest thing and slate, so the gold slime and the
+// cyan crystals are the only colour); before, (30,34,28) to (84,74,58),
+// an olive-brown whose middle (57,54,43) read as sand beside the slime.
+const SOIL_LOW: vec3<f32> = vec3<f32>(18.0, 22.0, 27.0);
+const SOIL_HIGH: vec3<f32> = vec3<f32>(52.0, 55.0, 58.0);
 // Soil kinds (byte 0's high nibble, `look::Fields::soil`; the mould's
 // `BigDish::soil`, Larder World maps): each changes the mould (sand: its
 // trail fades, and it spreads further; clay: its trail lasts, and it is
 // trapped; barren: no births, upkeep x 3; Reports/larder-maps-2026-11-11.md,
 // *Which ground the mould feels*), so each reads as its own ground.
-const SAND_RGB: vec3<f32> = vec3<f32>(150.0, 134.0, 92.0);
-const CLAY_RGB: vec3<f32> = vec3<f32>(104.0, 54.0, 38.0);
-const BARREN_RGB: vec3<f32> = vec3<f32>(78.0, 76.0, 72.0);
+// Each still dark and muted beside plain ground (35,38,42 flat), told
+// apart by value and a slight cast: sand paler and faintly warm, clay a
+// dull red-brown, barren a flat ash grey. Before 2026-11-14 sand was
+// (150,134,92), brighter than thin slime, and clay a saturated brick.
+const SAND_RGB: vec3<f32> = vec3<f32>(70.0, 68.0, 60.0);
+const CLAY_RGB: vec3<f32> = vec3<f32>(56.0, 38.0, 34.0);
+const BARREN_RGB: vec3<f32> = vec3<f32>(50.0, 50.0, 50.0);
 // Mould cut off from food fades towards this (`cell_mat`'s `cut`).
 const ASH_RGB: vec3<f32> = vec3<f32>(120.0, 112.0, 104.0);
 // The engine's colour for bare agar; what it adds above this (scent,
@@ -522,9 +530,9 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
     m.body = 0.0;
     m.gem = 0.0;
     if (kind == WET) {
-        // Standing water over the soil: dark blue-green, glossy; mould in
-        // it keeps its own colour.
-        m.albedo = mix(vec3<f32>(22.0, 46.0, 62.0) + tint * 0.4, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
+        // Standing water over the soil: dark blue-green, glossy (darker
+        // since 2026-11-14 with the ground); mould in it keeps its own colour.
+        m.albedo = mix(vec3<f32>(14.0, 30.0, 42.0) + tint * 0.4, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
         m.gloss = max(m.gloss, 0.75);
     } else if (kind == ROCK || kind == WALL || kind == RUBBLE) {
         // Under hard terrain, the soil: `terrain_over` lays the rock, wall

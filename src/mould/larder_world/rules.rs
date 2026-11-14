@@ -436,7 +436,10 @@ impl Default for Rules {
             tps: 15,
             frame_ticks: 1,
             speed: 10.0,
-            range: 15.0,
+            // 24 since 2026-11-14 08:08Z (owner's playtest: "gun range
+            // should be increased"); 15 before. Soldiers' sight and every
+            // shot's reach, mouse-aimed volleys included.
+            range: 24.0,
             strike: 2.5,
             shot_every: 1.0,
             bullet_speed: 45.0,
