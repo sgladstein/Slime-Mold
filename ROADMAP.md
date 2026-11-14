@@ -236,6 +236,20 @@ seeds 5-12: turtle lower 7/8, guard and pumps 7/8, wall, ring and killzone
 even, farm and army unchanged. The full gate (seeds 5-36 and 201-232, two
 maps) is being re-run on the new baseline.
 
+**Baseline break, 11-14: the census plays shape C (D1), and rations are off (#220).**
+`examples/larderworld.rs census` with no `shape=`, `walkers=` or `scale=` now
+plays shape C's keys (density, shared food, wither, panic) at census size:
+scale 1, 6,250 walkers (C's walkers per open cell), C's slots in proportion,
+and four times the charge a crystal cell (a scale-1 pile has a quarter of
+the cells). `shape=c` plays the window's full size, `shape=a` the old
+5,000-walker census. Checked on seeds 1-4, idle/farm/strike, cap 300: idle
+-0.333 on 4/4 at both sizes, strike ahead of farm on 4/4 at both, the mould
+at its slots by 5:00 at both, squads and banks alike (strike 30 soldiers,
+banks 14-28k census size against 16-24k); 37 s of runner time against 5 min
+28 s at full size. Without the charge fix census size flipped strike and
+farm. Rows from before this don't compare; threads re-baseline at their next
+census, no forced rerun.
+
 **Baseline breaks, 11-12 evening: #164, #169, #170 and #174.** Each of these
 changes what the hands can do or what ends a round, so census rows from
 either side of one don't compare. **#164** (cdccf127) makes every mould
@@ -331,7 +345,7 @@ GPU test instead of moving every offset after it.
 Settled by the technical lead, the game designer and the integration thread
 (tie-breaker) under the owner's 11-12 04:48Z rule:
 
-- **D1, census on shape C:** yes, one PR (integration). The census harness
+- **D1, census on shape C:** done 11-14 (see *Baseline break, 11-14*). Yes, one PR (integration). The census harness
   takes C's rules (density, mass, shared food, wither, panic, drain) on a
   census-sized map at the same walkers per open cell, so runner time stays
   about what it is now; `shape=` and `walkers=` keep the full size. The PR
