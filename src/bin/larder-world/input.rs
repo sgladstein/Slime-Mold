@@ -68,20 +68,35 @@ impl App {
     }
 
     /// The building just placed (the newest): the selected soldiers go to
-    /// raise it (Shift: after their orders). With none selected, the
-    /// nearest free soldier walks there, however far (`Cmd::Send`; owner's
-    /// playtest 2026-11-12: a build ordered anywhere sends a soldier).
+    /// raise it (Shift: after their orders, so Shift + clicks lay a build
+    /// queue they raise in turn). With none selected, the nearest free
+    /// soldier walks there, however far (`Cmd::Send`; owner's playtest
+    /// 2026-11-12: a build ordered anywhere sends a soldier), and with
+    /// Shift the soldier sent for the last one queues it instead, so one
+    /// builder works down the queue rather than each ghost taking another.
+    /// In the squad mode the controlled squad goes as a squad
+    /// (`Cmd::SquadOrder`, which also ends a move it was sent on; before,
+    /// that move took the build order back the next step).
     pub(super) fn builders(&mut self, sel: &[usize]) {
         let Some(g) = &self.game else { return };
         let Some(b) = g.buildings.len().checked_sub(1) else { return };
-        if g.buildings[b].built < 1.0 {
-            if self.living(sel).is_empty() {
-                if let Some(g) = self.game.as_mut() {
-                    g.apply(Cmd::Send(b));
-                }
-            } else if !self.squad_order(Order::Build(b)) {
-                self.order_all(sel, |_| Order::Build(b));
-            }
+        if g.buildings[b].built >= 1.0 {
+            return;
+        }
+        let squad = g.active.filter(|_| self.sq.is_some() && !self.shift);
+        let last = self.last_sent.filter(|&k| self.shift && g.soldiers.get(k).is_some_and(|s| s.alive && matches!(s.order, Order::Build(_))));
+        let picked = !self.living(sel).is_empty();
+        if picked && squad.is_none() {
+            return self.order_all(sel, |_| Order::Build(b));
+        }
+        let Some(g) = self.game.as_mut() else { return };
+        if let Some(q) = squad {
+            g.apply(Cmd::SquadOrder(q as u8, Order::Build(b)));
+        } else if let Some(k) = last {
+            g.apply(Cmd::Queue(k, Order::Build(b)));
+        } else if g.apply(Cmd::Send(b)) {
+            // The one soldier `send` put on it.
+            self.last_sent = (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive && g.soldiers[k].order == Order::Build(b));
         }
     }
 

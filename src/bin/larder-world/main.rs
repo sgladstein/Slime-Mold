@@ -452,6 +452,9 @@ struct App {
     owed: f32,
     last_frame: Instant,
     shift: bool,
+    /// The soldier the last build with nobody selected sent (`builders`):
+    /// Shift + another build queues on it.
+    last_sent: Option<usize>,
     ctrl: bool,
     /// The larder is selected (a click on it with no soldier picked): its
     /// card shows, and right click sets its rally point.
@@ -552,6 +555,7 @@ impl App {
             owed: 0.0,
             last_frame: Instant::now(),
             shift: false,
+            last_sent: None,
             ctrl: false,
             larder_sel: false,
             dry: Vec::new(),
