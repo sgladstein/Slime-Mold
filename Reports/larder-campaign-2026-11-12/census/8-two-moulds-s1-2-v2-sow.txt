@@ -1,0 +1,21 @@
+mission 8-two-moulds (Two moulds): "Grow your mould to 60% of all the slime and hold it for a minute", map passes, tier swarmer , seeds 1-2, scale 2, walkers 5000
+on the CPU
+  sow+strike s1: Goal 300s 2*
+  sow+boom s1: Goal 300s 2*
+  sow+claim s1: Goal 300s 2*
+  sow+boom s2: Goal 841s 1*
+  sow+strike s2: Cap 900s 0*
+  sow+claim s2: Cap 900s 1*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+sow+boom     1  Goal         300      2 1.00     0%     0%    0%    0%    0%                             0    0   17      299     15      8100   4725  347.000/5715.000  0/0/0 0  []
+sow+boom     2  Goal         841      1 1.00     5%     0%    1%   10%    7%                             6    0   17      841     19     12900   7481  386.000/5522.000  0/0/0 0  []
+sow+claim    1  Goal         300      2 1.00     0%     0%    0%    0%    0%                             0    0   17      299     15      8100   4725  347.000/5715.000  0/0/0 0  []
+sow+claim    2  Cap          900      1 0.99     7%     0%    1%   10%   12%                             6    0   17      891     19     12900   6692  386.000/5197.000  0/0/0 0  []
+sow+strike    1  Goal         300      2 1.00     0%     0%    0%    0%    0%                             0    0   17      299     15      8100   4725  347.000/5715.000  0/0/0 0  []
+sow+strike    2  Cap          900      0 0.36    13%     0%    1%   10%   33%                             9    0   17        0     19     12900   6737  386.000/5026.000  0/0/0 0  []
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  sow+boom  2/2  stars 2  best 1.00  dead 3%  stuck 0 s  stall 17 s
+  sow+claim 1/2  stars 2  best 1.00  dead 4%  stuck 0 s  stall 17 s
+  sow+strike 1/2  stars 2  best 0.68  dead 6%  stuck 0 s  stall 17 s

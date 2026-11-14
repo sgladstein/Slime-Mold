@@ -16,6 +16,7 @@ sources:
   - Reports/soldier-controls-2026-11-12.md
   - Reports/spent-crystals-2026-11-14/README.md
   - Reports/start-menu-2026-11-14/README.md
+  - Reports/ui-size-2026-11-14/README.md
   - Reports/units-read-2026-11-14/README.md
   - Reports/units-read-2026-11-14/followup.md
   - Reports/units-read-2026-11-14/harvest.md
@@ -55,6 +56,7 @@ code:
   - Squad::model
   - StartMenu
   - UiCommand
+  - UiSize::px
   - View::fine
   - View::record
   - View::set_alive
@@ -110,7 +112,7 @@ the cast the shown soldier's next hit fires lit, the recharge, a tooltip
 per card and a swap button (H, `NEXT_ROUND`); the same change cut the
 bottom panels from 20% of the screen to 15% (160 of 1080 pixels, 120 of
 800), collapses the selection panel when nothing is selected, and opens
-the camera in the band above them ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The game itself is `cargo run --release
+the camera in the band above them ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The whole UI, the map editor's panel included, lays out in `UiSize::px` pixels a unit (2026-11-14): the height's share of 1080 lines as before, with the window's DPI scale as a floor and the player's size (75% to 300%, Ctrl + / Ctrl -, the Options page, `ui=`) over it, capped so the bottom bar stays under a third of the screen, and saved in `settings.txt`; the same day the owner asked for a wider, shorter bottom bar, so the gun cards are a panel at its far left, the command card is 6 x 2 and the squad one row filling the middle, 113 of 1080 pixels (10.5%), the minimap standing at its old height in the corner ([report](../../Reports/ui-size-2026-11-14/README.md)). The game itself is `cargo run --release
 --bin larder-world` (W2c,
 [report](../../Reports/larder-world-roadmap-2026-11-11.md)): the Larder
 rules on the GPU world through this camera, UI and look. The GPU sandbox's
@@ -151,6 +153,8 @@ as lines.
 - 2026-11-11 14:06Z: "We should do a camera UI thread too as you suggested".
 - 2026-11-11 20:16Z: "We need to know about solider health, numbers, ways to control them, eventually we will have different weapons, upgrades, build walls (and probably other things in the future), menus, enemy info"; "make it look modern and professional."
 - 2026-11-14 01:49Z: "I also have no way to see what the gun cards are in the interface."
+- 2026-11-14 08:07Z: "We need an option to scale the UI/text etc, because they look too small on my screen."
+- 2026-11-14 08:33Z: "re-arrange the bottom menu to be one row for the squad and two rows for the other buttons so the whole thing is wider but shorter"; 08:46Z: "gun/card menu should go on the far left to fill the rest of the screen."
 - 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand."
 
 ## Open
@@ -158,7 +162,8 @@ as lines.
 - The owner's hands.
 - From the UI review: command pages when weapons and buildings outgrow the
   4 x 3 card, selectable buildings, a production queue, Shift-queued moves,
-  minimap unit blips, a settings menu.
+  minimap unit blips, a settings menu in play (the UI size is on the start
+  menu's Options and Ctrl + / Ctrl -).
 - Fog of war: the view has a visibility hook; the owner has not decided.
 
 ## Sources
@@ -166,3 +171,4 @@ as lines.
 - [World camera and UI](../../Reports/world-camera-2026-11-11.md).
 - [The game UI over the Larder world](../../Reports/world-ui-2026-11-11.md).
 - [The loadout panel](../../Reports/gun-card-hud-2026-11-14/README.md).
+- [UI and text size](../../Reports/ui-size-2026-11-14/README.md).

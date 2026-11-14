@@ -1,0 +1,339 @@
+mission 8-two-moulds (Two moulds): "Grow your mould to 60% of all the slime and hold it for a minute", map passes, tier swarmer , seeds 2-4, scale 2, walkers 5000
+on the CPU
+    sow+boom s4 t 30: own 1113 enemy 1828 soldiers 7 bank 400 killed 665 buildings 0
+    sow+boom s3 t 30: own 1130 enemy 1717 soldiers 7 bank 400 killed 734 buildings 0
+    sow+boom s2 t 30: own 1086 enemy 1592 soldiers 7 bank 400 killed 720 buildings 0
+    sow+boom s4 t 60: own 1286 enemy 2647 soldiers 8 bank 580 killed 733 buildings 0
+    sow+boom s2 t 60: own 1300 enemy 2401 soldiers 9 bank 480 killed 820 buildings 0
+    sow+boom s3 t 60: own 1247 enemy 2613 soldiers 8 bank 580 killed 779 buildings 0
+    sow+boom s4 t 90: own 1344 enemy 3294 soldiers 8 bank 580 killed 1318 buildings 0
+    sow+boom s3 t 90: own 1388 enemy 3201 soldiers 8 bank 580 killed 1349 buildings 0
+    sow+boom s2 t 90: own 1348 enemy 3063 soldiers 8 bank 580 killed 1433 buildings 0
+    sow+boom s4 t 120: own 1261 enemy 3360 soldiers 8 bank 880 killed 1971 buildings 0
+    sow+boom s3 t 120: own 1436 enemy 3349 soldiers 8 bank 480 killed 1887 buildings 0
+    sow+boom s2 t 120: own 1300 enemy 3241 soldiers 9 bank 780 killed 2002 buildings 0
+    sow+boom s4 t 150: own 1602 enemy 3292 soldiers 9 bank 480 killed 2594 buildings 0
+    sow+boom s2 t 150: own 1623 enemy 3294 soldiers 10 bank 520 killed 2670 buildings 0
+    sow+boom s3 t 150: own 2177 enemy 3311 soldiers 8 bank 480 killed 2467 buildings 0
+    sow+boom s4 t 180: own 2372 enemy 3426 soldiers 8 bank 900 killed 2983 buildings 0
+    sow+boom s2 t 180: own 2358 enemy 3303 soldiers 12 bank 500 killed 3456 buildings 0
+    sow+boom s3 t 180: own 2434 enemy 3463 soldiers 8 bank 480 killed 2782 buildings 0
+    sow+boom s4 t 210: own 2455 enemy 3560 soldiers 9 bank 580 killed 3305 buildings 0
+    sow+boom s2 t 210: own 3529 enemy 3430 soldiers 12 bank 600 killed 4054 buildings 0
+    sow+boom s3 t 210: own 2692 enemy 3714 soldiers 8 bank 580 killed 3070 buildings 0
+    sow+boom s4 t 240: own 2655 enemy 3356 soldiers 10 bank 700 killed 3774 buildings 0
+    sow+boom s2 t 240: own 3884 enemy 3660 soldiers 12 bank 500 killed 4342 buildings 0
+    sow+boom s3 t 240: own 2654 enemy 3343 soldiers 9 bank 580 killed 4192 buildings 0
+    sow+boom s4 t 270: own 3480 enemy 3495 soldiers 11 bank 740 killed 4370 buildings 0
+    sow+boom s2 t 270: own 4342 enemy 3558 soldiers 12 bank 600 killed 5070 buildings 0
+    sow+boom s3 t 270: own 3068 enemy 3419 soldiers 10 bank 480 killed 4192 buildings 0
+    sow+boom s4 t 300: own 4460 enemy 3508 soldiers 11 bank 580 killed 4380 buildings 0
+    sow+boom s2 t 300: own 4483 enemy 3681 soldiers 13 bank 500 killed 5251 buildings 0
+    sow+boom s4 t 330: own 4613 enemy 3379 soldiers 13 bank 560 killed 4380 buildings 0
+    sow+boom s3 t 300: own 3912 enemy 3591 soldiers 11 bank 500 killed 4773 buildings 0
+    sow+boom s2 t 330: own 4473 enemy 3646 soldiers 15 bank 440 killed 5251 buildings 0
+    sow+boom s4 t 360: own 4634 enemy 3364 soldiers 14 bank 640 killed 4380 buildings 0
+    sow+boom s2 t 360: own 4495 enemy 3679 soldiers 16 bank 600 killed 5251 buildings 0
+    sow+boom s3 t 330: own 4360 enemy 3571 soldiers 13 bank 480 killed 4773 buildings 0
+    sow+boom s4 t 390: own 5042 enemy 2984 soldiers 15 bank 500 killed 4380 buildings 0
+    sow+boom s2 t 390: own 4492 enemy 3695 soldiers 16 bank 600 killed 5251 buildings 0
+    sow+boom s3 t 360: own 4390 enemy 3571 soldiers 14 bank 600 killed 4773 buildings 0
+    sow+boom s4 t 420: own 4947 enemy 3330 soldiers 15 bank 600 killed 4614 buildings 0
+    sow+boom s3 t 390: own 4295 enemy 3523 soldiers 15 bank 720 killed 4773 buildings 0
+    sow+boom s2 t 420: own 4431 enemy 3669 soldiers 17 bank 600 killed 5251 buildings 0
+    sow+boom s4 t 450: own 5110 enemy 3279 soldiers 17 bank 580 killed 4614 buildings 0
+    sow+boom s3 t 420: own 4229 enemy 3624 soldiers 15 bank 600 killed 4773 buildings 0
+    sow+boom s4 t 480: own 5788 enemy 2458 soldiers 18 bank 620 killed 5317 buildings 0
+    sow+boom s2 t 450: own 4597 enemy 3649 soldiers 18 bank 600 killed 5251 buildings 0
+  sow+boom s4: Goal 505s 2*
+    sow+boom s3 t 450: own 4267 enemy 3636 soldiers 16 bank 600 killed 4773 buildings 0
+    sow+boom s2 t 480: own 4722 enemy 3768 soldiers 19 bank 500 killed 5304 buildings 0
+    bait+boom s2 t 30: own 948 enemy 1650 soldiers 7 bank 100 killed 608 buildings 1
+    bait+boom s2 t 60: own 1177 enemy 2377 soldiers 8 bank 480 killed 616 buildings 1
+    sow+boom s3 t 480: own 4877 enemy 3668 soldiers 17 bank 600 killed 4816 buildings 0
+    sow+boom s2 t 510: own 4619 enemy 4072 soldiers 17 bank 500 killed 5906 buildings 0
+    bait+boom s2 t 90: own 1872 enemy 3036 soldiers 10 bank 480 killed 618 buildings 1
+    sow+boom s2 t 540: own 4620 enemy 3904 soldiers 16 bank 600 killed 6303 buildings 0
+    sow+boom s3 t 510: own 4578 enemy 3724 soldiers 17 bank 600 killed 5089 buildings 0
+    bait+boom s2 t 120: own 2541 enemy 3571 soldiers 10 bank 780 killed 959 buildings 1
+    sow+boom s2 t 570: own 4716 enemy 3778 soldiers 17 bank 500 killed 6303 buildings 0
+    bait+boom s2 t 150: own 3009 enemy 3626 soldiers 11 bank 600 killed 1463 buildings 1
+    sow+boom s3 t 540: own 4704 enemy 3539 soldiers 18 bank 500 killed 5089 buildings 0
+    bait+boom s2 t 180: own 3751 enemy 3476 soldiers 12 bank 500 killed 2068 buildings 1
+    sow+boom s2 t 600: own 4674 enemy 3692 soldiers 17 bank 760 killed 6303 buildings 0
+    sow+boom s3 t 570: own 4599 enemy 3579 soldiers 19 bank 500 killed 5089 buildings 0
+    bait+boom s2 t 210: own 4056 enemy 3391 soldiers 12 bank 600 killed 2733 buildings 1
+    sow+boom s2 t 630: own 4668 enemy 3702 soldiers 17 bank 600 killed 6303 buildings 0
+    sow+boom s3 t 600: own 4683 enemy 3569 soldiers 19 bank 600 killed 5089 buildings 0
+    bait+boom s2 t 240: own 4147 enemy 3399 soldiers 13 bank 540 killed 3463 buildings 1
+    sow+boom s2 t 660: own 4607 enemy 3705 soldiers 18 bank 500 killed 6303 buildings 0
+    bait+boom s2 t 270: own 4040 enemy 3599 soldiers 13 bank 440 killed 3916 buildings 1
+    sow+boom s3 t 630: own 4681 enemy 3672 soldiers 20 bank 600 killed 5089 buildings 0
+    bait+boom s2 t 300: own 4351 enemy 3605 soldiers 14 bank 500 killed 4387 buildings 1
+    sow+boom s2 t 690: own 4533 enemy 3768 soldiers 18 bank 600 killed 6303 buildings 0
+    sow+boom s3 t 660: own 4598 enemy 3682 soldiers 20 bank 580 killed 5089 buildings 0
+    bait+boom s2 t 330: own 4350 enemy 3561 soldiers 16 bank 440 killed 4387 buildings 1
+    sow+boom s2 t 720: own 4460 enemy 3721 soldiers 18 bank 600 killed 6303 buildings 0
+    bait+boom s2 t 360: own 4300 enemy 3653 soldiers 17 bank 600 killed 4387 buildings 1
+    sow+boom s3 t 690: own 4828 enemy 3609 soldiers 20 bank 600 killed 5089 buildings 0
+    bait+boom s2 t 390: own 4279 enemy 3674 soldiers 18 bank 500 killed 4387 buildings 1
+    sow+boom s2 t 750: own 4421 enemy 3784 soldiers 19 bank 500 killed 6303 buildings 0
+    sow+boom s3 t 720: own 5566 enemy 3336 soldiers 20 bank 420 killed 5456 buildings 0
+    bait+boom s2 t 420: own 4189 enemy 3675 soldiers 19 bank 580 killed 4387 buildings 1
+    sow+boom s2 t 780: own 4324 enemy 3923 soldiers 18 bank 500 killed 6583 buildings 0
+    sow+boom s3 t 750: own 5152 enemy 3398 soldiers 20 bank 600 killed 6651 buildings 0
+    bait+boom s2 t 450: own 4327 enemy 3662 soldiers 20 bank 580 killed 4387 buildings 1
+    sow+boom s3 t 780: own 5677 enemy 2776 soldiers 20 bank 600 killed 8233 buildings 0
+    sow+boom s2 t 810: own 4177 enemy 3987 soldiers 18 bank 500 killed 6583 buildings 0
+    sow+boom s2 t 840: own 3979 enemy 3908 soldiers 18 bank 500 killed 6583 buildings 0
+    sow+boom s3 t 810: own 6031 enemy 2637 soldiers 20 bank 600 killed 8233 buildings 0
+    bait+boom s2 t 480: own 4309 enemy 3751 soldiers 20 bank 760 killed 4387 buildings 1
+  sow+boom s3: Goal 818s 1*
+    sow+boom s2 t 870: own 3886 enemy 3855 soldiers 18 bank 500 killed 6583 buildings 0
+    bait+boom s3 t 30: own 1061 enemy 1836 soldiers 7 bank 100 killed 625 buildings 1
+    bait+boom s2 t 510: own 4967 enemy 3863 soldiers 19 bank 600 killed 4841 buildings 1
+    sow+boom s2 t 900: own 3789 enemy 3965 soldiers 18 bank 500 killed 6589 buildings 0
+  sow+boom s2: Cap 900s 0*
+    bait+boom s3 t 60: own 1236 enemy 2581 soldiers 7 bank 580 killed 628 buildings 1
+    bait+boom s4 t 30: own 1052 enemy 1834 soldiers 7 bank 100 killed 628 buildings 1
+    bait+boom s2 t 540: own 4831 enemy 3776 soldiers 18 bank 500 killed 5356 buildings 1
+    bait+boom s3 t 90: own 2150 enemy 3219 soldiers 8 bank 480 killed 628 buildings 1
+    bait+boom s4 t 60: own 1212 enemy 2605 soldiers 7 bank 580 killed 630 buildings 1
+    bait+boom s2 t 570: own 5035 enemy 3881 soldiers 17 bank 600 killed 5625 buildings 1
+    bait+boom s3 t 120: own 2936 enemy 3326 soldiers 9 bank 600 killed 628 buildings 1
+    bait+boom s4 t 90: own 2146 enemy 3291 soldiers 8 bank 480 killed 630 buildings 1
+    bait+boom s2 t 600: own 5513 enemy 2718 soldiers 17 bank 900 killed 6437 buildings 1
+    bait+boom s4 t 120: own 2692 enemy 3316 soldiers 9 bank 780 killed 630 buildings 1
+    bait+boom s3 t 150: own 3916 enemy 3585 soldiers 9 bank 500 killed 990 buildings 1
+    bait+boom s2 t 630: own 5841 enemy 2568 soldiers 18 bank 500 killed 6645 buildings 1
+    bait+boom s4 t 150: own 3373 enemy 3608 soldiers 9 bank 480 killed 1006 buildings 1
+  bait+boom s2: Goal 635s 2*
+    bait+boom s3 t 180: own 4575 enemy 3112 soldiers 10 bank 480 killed 1435 buildings 1
+    idle s2 t 30: own 1287 enemy 2257 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s4 t 180: own 3815 enemy 3659 soldiers 8 bank 1180 killed 1496 buildings 1
+    idle s2 t 60: own 1088 enemy 3725 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s3 t 210: own 4715 enemy 2808 soldiers 10 bank 480 killed 1803 buildings 1
+    bait+boom s4 t 210: own 3945 enemy 3614 soldiers 9 bank 480 killed 1918 buildings 1
+    idle s2 t 90: own 1112 enemy 4564 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s3 t 240: own 4579 enemy 2959 soldiers 11 bank 420 killed 2187 buildings 1
+    bait+boom s4 t 240: own 4155 enemy 3723 soldiers 9 bank 700 killed 2180 buildings 1
+    idle s2 t 120: own 1090 enemy 4774 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 150: own 1091 enemy 4856 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s3 t 270: own 4356 enemy 3268 soldiers 10 bank 600 killed 2472 buildings 1
+    bait+boom s4 t 270: own 4115 enemy 3794 soldiers 9 bank 780 killed 2551 buildings 1
+    idle s2 t 180: own 1112 enemy 4939 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 210: own 1113 enemy 5013 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s4 t 300: own 4565 enemy 3203 soldiers 10 bank 480 killed 3270 buildings 1
+    bait+boom s3 t 300: own 5079 enemy 2472 soldiers 11 bank 600 killed 3007 buildings 1
+    idle s2 t 240: own 1096 enemy 5060 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s4 t 330: own 4484 enemy 3306 soldiers 12 bank 600 killed 3470 buildings 1
+    idle s2 t 270: own 1165 enemy 5057 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s3 t 330: own 5446 enemy 2461 soldiers 13 bank 580 killed 3007 buildings 1
+  bait+boom s3: Goal 333s 2*
+    bait+boom s4 t 360: own 4141 enemy 3311 soldiers 12 bank 500 killed 4073 buildings 1
+    idle s2 t 300: own 1154 enemy 5059 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 30: own 1266 enemy 2535 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 330: own 1145 enemy 5116 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s4 t 390: own 4493 enemy 2942 soldiers 12 bank 500 killed 5197 buildings 1
+    idle s3 t 60: own 1190 enemy 3839 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 360: own 1162 enemy 5141 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 90: own 1142 enemy 4560 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s4 t 420: own 4565 enemy 2880 soldiers 12 bank 600 killed 6582 buildings 1
+    idle s2 t 390: own 1131 enemy 5207 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 120: own 1096 enemy 4692 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 420: own 1164 enemy 5214 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 150: own 1145 enemy 4821 soldiers 4 bank 2000 killed 0 buildings 0
+    bait+boom s4 t 450: own 5369 enemy 2496 soldiers 14 bank 500 killed 7176 buildings 1
+    idle s2 t 450: own 1144 enemy 5178 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 180: own 1105 enemy 4818 soldiers 4 bank 2000 killed 0 buildings 0
+  bait+boom s4: Goal 468s 2*
+    idle s2 t 480: own 1179 enemy 5249 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 30: own 1307 enemy 2522 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 210: own 1138 enemy 4878 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 510: own 1144 enemy 5302 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 60: own 1068 enemy 3956 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 240: own 1098 enemy 4858 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 540: own 1135 enemy 5290 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 90: own 1131 enemy 4616 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 270: own 1144 enemy 4943 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 570: own 1166 enemy 5314 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 120: own 1109 enemy 4743 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 300: own 1118 enemy 4988 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 600: own 1172 enemy 5381 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 150: own 1095 enemy 4767 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 330: own 1083 enemy 5028 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 630: own 1193 enemy 5348 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 180: own 1135 enemy 4831 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 360: own 1171 enemy 5040 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 210: own 1134 enemy 5033 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 660: own 1201 enemy 5385 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 390: own 1073 enemy 5029 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 240: own 1117 enemy 5013 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 690: own 1180 enemy 5427 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 420: own 1140 enemy 5166 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 270: own 1117 enemy 5104 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 720: own 1157 enemy 5331 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 450: own 1153 enemy 5143 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 300: own 1194 enemy 5104 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 750: own 1186 enemy 5363 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 480: own 1146 enemy 5175 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 330: own 1168 enemy 5099 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 780: own 1183 enemy 5405 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 510: own 1132 enemy 5226 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 360: own 1137 enemy 5168 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 810: own 1179 enemy 5410 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 540: own 1152 enemy 5263 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 390: own 1142 enemy 5183 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 840: own 1172 enemy 5411 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 570: own 1213 enemy 5272 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 420: own 1160 enemy 5175 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 870: own 1213 enemy 5423 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 600: own 1146 enemy 5370 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 450: own 1175 enemy 5167 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s2 t 900: own 1207 enemy 5445 soldiers 4 bank 2000 killed 0 buildings 0
+  idle s2: Cap 900s 0*
+    idle s3 t 630: own 1167 enemy 5337 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 480: own 1148 enemy 5225 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 30: own 1309 enemy 2270 soldiers 7 bank 600 killed 0 buildings 0
+    idle s3 t 660: own 1173 enemy 5346 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 510: own 1164 enemy 5289 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 60: own 1772 enemy 3872 soldiers 7 bank 300 killed 223 buildings 0
+    idle s3 t 690: own 1161 enemy 5385 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 540: own 1139 enemy 5277 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 90: own 2676 enemy 4584 soldiers 7 bank 0 killed 690 buildings 0
+    idle s3 t 720: own 1227 enemy 5368 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 570: own 1163 enemy 5277 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 120: own 2818 enemy 4522 soldiers 7 bank 0 killed 691 buildings 0
+    idle s3 t 750: own 1180 enemy 5441 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 600: own 1131 enemy 5247 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 780: own 1151 enemy 5352 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 630: own 1155 enemy 5354 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 150: own 2999 enemy 4813 soldiers 6 bank 0 killed 693 buildings 0
+    idle s3 t 810: own 1161 enemy 5389 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 660: own 1121 enemy 5331 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 180: own 3056 enemy 4276 soldiers 5 bank 0 killed 1093 buildings 0
+    idle s3 t 840: own 1150 enemy 5388 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 690: own 1157 enemy 5319 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 210: own 3676 enemy 4015 soldiers 5 bank 0 killed 1554 buildings 0
+    idle s3 t 870: own 1188 enemy 5402 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 720: own 1180 enemy 5387 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s4 t 750: own 1202 enemy 5378 soldiers 4 bank 2000 killed 0 buildings 0
+    idle s3 t 900: own 1176 enemy 5432 soldiers 4 bank 2000 killed 0 buildings 0
+  idle s3: Cap 900s 0*
+    random s2 t 240: own 2950 enemy 4774 soldiers 5 bank 100 killed 1556 buildings 0
+    random s3 t 30: own 1268 enemy 2546 soldiers 7 bank 800 killed 0 buildings 0
+    idle s4 t 780: own 1179 enemy 5447 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 270: own 3030 enemy 4953 soldiers 5 bank 0 killed 1889 buildings 0
+    random s3 t 60: own 1049 enemy 3959 soldiers 8 bank 400 killed 30 buildings 0
+    idle s4 t 810: own 1157 enemy 5306 soldiers 4 bank 2000 killed 0 buildings 0
+    random s3 t 90: own 1062 enemy 4488 soldiers 9 bank 0 killed 1573 buildings 0
+    idle s4 t 840: own 1177 enemy 5395 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 300: own 3960 enemy 4672 soldiers 5 bank 0 killed 2958 buildings 0
+    random s3 t 120: own 903 enemy 4442 soldiers 9 bank 375 killed 3092 buildings 0
+    idle s4 t 870: own 1174 enemy 5458 soldiers 4 bank 2000 killed 0 buildings 0
+    random s2 t 330: own 4131 enemy 5767 soldiers 4 bank 12 killed 3247 buildings 0
+    random s3 t 150: own 923 enemy 5194 soldiers 10 bank 0 killed 3821 buildings 0
+    idle s4 t 900: own 1202 enemy 5425 soldiers 4 bank 2000 killed 0 buildings 0
+  idle s4: Cap 900s 0*
+    random s2 t 360: own 4912 enemy 6142 soldiers 4 bank 627 killed 3247 buildings 0
+    random s3 t 180: own 1125 enemy 5216 soldiers 10 bank 0 killed 4377 buildings 0
+    random s4 t 30: own 2566 enemy 1913 soldiers 5 bank 1400 killed 239 buildings 0
+    random s2 t 390: own 6725 enemy 5478 soldiers 4 bank 420 killed 3250 buildings 0
+    random s3 t 210: own 2319 enemy 4663 soldiers 9 bank 0 killed 4800 buildings 0
+    random s4 t 60: own 5739 enemy 2934 soldiers 6 bank 0 killed 474 buildings 0
+    random s2 t 420: own 6990 enemy 5642 soldiers 4 bank 120 killed 3253 buildings 0
+    random s4 t 90: own 9146 enemy 3435 soldiers 6 bank 0 killed 474 buildings 0
+    random s3 t 240: own 5337 enemy 4587 soldiers 9 bank 0 killed 5985 buildings 0
+  random s4: Goal 96s 2*
+    random s2 t 450: own 7318 enemy 5933 soldiers 4 bank 0 killed 3260 buildings 0
+    boom s2 t 30: own 1299 enemy 1587 soldiers 8 bank 600 killed 697 buildings 0
+    random s3 t 270: own 8657 enemy 4629 soldiers 9 bank 0 killed 8612 buildings 0
+    boom s2 t 60: own 1343 enemy 2421 soldiers 12 bank 400 killed 1002 buildings 0
+    random s2 t 480: own 6453 enemy 5874 soldiers 4 bank 0 killed 3260 buildings 0
+    boom s2 t 90: own 1418 enemy 2999 soldiers 13 bank 500 killed 1894 buildings 0
+    random s3 t 300: own 11999 enemy 5037 soldiers 9 bank 0 killed 10691 buildings 0
+  random s3: Goal 306s 2*
+    random s2 t 510: own 5688 enemy 5444 soldiers 4 bank 0 killed 3372 buildings 0
+    boom s2 t 120: own 1112 enemy 3402 soldiers 15 bank 500 killed 2345 buildings 0
+    boom s3 t 30: own 1276 enemy 1801 soldiers 8 bank 600 killed 591 buildings 0
+    random s2 t 540: own 5876 enemy 5476 soldiers 4 bank 0 killed 3584 buildings 0
+    boom s2 t 150: own 1733 enemy 3616 soldiers 16 bank 600 killed 2695 buildings 0
+    boom s3 t 60: own 1355 enemy 2574 soldiers 12 bank 400 killed 918 buildings 0
+    random s2 t 570: own 5670 enemy 5270 soldiers 3 bank 0 killed 3925 buildings 0
+    boom s2 t 180: own 2584 enemy 3246 soldiers 18 bank 700 killed 3884 buildings 0
+    boom s3 t 90: own 1445 enemy 3389 soldiers 13 bank 500 killed 1273 buildings 0
+    random s2 t 600: own 4808 enemy 5343 soldiers 3 bank 0 killed 3926 buildings 0
+    boom s2 t 210: own 3223 enemy 3166 soldiers 20 bank 400 killed 4306 buildings 0
+    boom s3 t 120: own 901 enemy 3539 soldiers 15 bank 500 killed 1586 buildings 0
+    random s2 t 630: own 4230 enemy 5537 soldiers 1 bank 0 killed 4751 buildings 0
+    boom s2 t 240: own 3432 enemy 2520 soldiers 20 bank 1300 killed 5567 buildings 0
+    boom s3 t 150: own 277 enemy 3627 soldiers 16 bank 600 killed 1981 buildings 0
+    random s2 t 660: own 4424 enemy 5703 soldiers 2 bank 0 killed 5035 buildings 0
+    boom s2 t 270: own 3038 enemy 2728 soldiers 20 bank 1600 killed 6801 buildings 0
+    boom s3 t 180: own 814 enemy 3183 soldiers 18 bank 700 killed 3845 buildings 0
+    random s2 t 690: own 5048 enemy 4993 soldiers 2 bank 0 killed 5396 buildings 0
+    boom s2 t 300: own 3820 enemy 2443 soldiers 20 bank 2500 killed 7580 buildings 0
+    boom s3 t 210: own 1802 enemy 3456 soldiers 20 bank 400 killed 4427 buildings 0
+    random s2 t 720: own 5388 enemy 4650 soldiers 2 bank 0 killed 5396 buildings 0
+    boom s2 t 330: own 3853 enemy 2442 soldiers 20 bank 3400 killed 7580 buildings 0
+    boom s3 t 240: own 2649 enemy 3358 soldiers 20 bank 900 killed 4996 buildings 0
+  random s2: Stuck 740s 0*
+    boom s4 t 30: own 1333 enemy 1788 soldiers 8 bank 600 killed 815 buildings 0
+  boom s2: Goal 357s 2*
+    boom s3 t 270: own 2988 enemy 3263 soldiers 20 bank 800 killed 5649 buildings 0
+    boom s4 t 60: own 1339 enemy 2848 soldiers 12 bank 400 killed 1472 buildings 0
+    boom s3 t 300: own 3109 enemy 3371 soldiers 20 bank 2000 killed 5651 buildings 0
+    boom s4 t 90: own 1554 enemy 3454 soldiers 13 bank 500 killed 2023 buildings 0
+    boom s3 t 330: own 2942 enemy 3397 soldiers 20 bank 2900 killed 6353 buildings 0
+    boom s4 t 120: own 1739 enemy 3577 soldiers 15 bank 500 killed 2379 buildings 0
+    boom s3 t 360: own 3086 enemy 3333 soldiers 20 bank 3400 killed 6482 buildings 0
+    boom s4 t 150: own 2271 enemy 3555 soldiers 16 bank 600 killed 2884 buildings 0
+    boom s3 t 390: own 3039 enemy 3314 soldiers 20 bank 3700 killed 7222 buildings 0
+    boom s4 t 180: own 2765 enemy 3559 soldiers 17 bank 700 killed 3252 buildings 0
+    boom s3 t 420: own 3056 enemy 3126 soldiers 20 bank 4000 killed 8719 buildings 0
+    boom s4 t 210: own 2775 enemy 3109 soldiers 19 bank 400 killed 4691 buildings 0
+    boom s3 t 450: own 3044 enemy 3237 soldiers 20 bank 4600 killed 9889 buildings 0
+    boom s4 t 240: own 2801 enemy 3126 soldiers 20 bank 900 killed 5511 buildings 0
+    boom s4 t 270: own 3798 enemy 2420 soldiers 20 bank 1500 killed 6468 buildings 0
+    boom s3 t 480: own 3110 enemy 3169 soldiers 20 bank 4900 killed 11462 buildings 0
+    boom s3 t 510: own 2782 enemy 3410 soldiers 20 bank 5200 killed 13072 buildings 0
+    boom s4 t 300: own 3856 enemy 2482 soldiers 20 bank 2100 killed 6468 buildings 0
+  boom s4: Goal 318s 2*
+    boom s3 t 540: own 2893 enemy 3354 soldiers 20 bank 5200 killed 14926 buildings 0
+    boom s3 t 570: own 3050 enemy 3573 soldiers 20 bank 5100 killed 15373 buildings 0
+    boom s3 t 600: own 2818 enemy 3683 soldiers 20 bank 5000 killed 16770 buildings 0
+    boom s3 t 630: own 2775 enemy 3576 soldiers 20 bank 5300 killed 17640 buildings 0
+    boom s3 t 660: own 2720 enemy 3582 soldiers 20 bank 5200 killed 19126 buildings 0
+    boom s3 t 690: own 3139 enemy 3689 soldiers 20 bank 4800 killed 19550 buildings 0
+    boom s3 t 720: own 2939 enemy 3595 soldiers 20 bank 5100 killed 19997 buildings 0
+    boom s3 t 750: own 3726 enemy 2551 soldiers 20 bank 5100 killed 21516 buildings 0
+    boom s3 t 780: own 3650 enemy 2593 soldiers 20 bank 5100 killed 21516 buildings 0
+    boom s3 t 810: own 3583 enemy 2592 soldiers 20 bank 5100 killed 21516 buildings 0
+    boom s3 t 840: own 3490 enemy 2627 soldiers 20 bank 5100 killed 21516 buildings 0
+    boom s3 t 870: own 3515 enemy 2659 soldiers 20 bank 5100 killed 21516 buildings 0
+    boom s3 t 900: own 3429 enemy 2614 soldiers 20 bank 5100 killed 21516 buildings 0
+  boom s3: Cap 900s 1*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+bait+boom    2  Goal         635      2 1.00     2%     0%    0%    3%    0%                             5    6   17      634     18     12000   6645  932.000/5900.000  0/0/0 0  []
+bait+boom    3  Goal         333      2 1.00     2%     6%    0%    0%    0%                             5   11   37      332     13      6000   3007  1059.000/5506.000  0/0/0 0  []
+bait+boom    4  Goal         468      2 1.00     0%     1%    0%    0%    0%                             1   11   28      467     14      8100   7176  1045.000/5759.000  0/0/0 0  []
+boom         2  Goal         357      2 1.00     0%     0%    0%    0%    0%                             0    0   13      356     20     10500   7580  1105.000/5037.000  0/0/0 0  []
+boom         3  Cap          900      1 0.53    10%     0%    0%    5%   30%                            12    0   31      900     20     14700  21516  253.000/5045.000  0/0/0 0  []
+boom         4  Goal         318      2 1.00     0%     0%    0%    0%    0%                             0    0   18      317     20      9900   6468  1292.000/5043.000  0/0/0 0  []
+idle         2  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0  194        0      4         0      0  1070.000/5019.000  0/0/0 0  []
+idle         3  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0  118        0      4         0      0  1069.000/5028.000  0/0/0 0  []
+idle         4  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0  187        0      4         0      0  1055.000/5013.000  0/0/0 0  []
+random       2  Stuck        740      0 0.37    15%     3%   10%   23%   20%                            26   30   69        0      2      2593   5396  1309.000/7470.000  0/0/0 0  []
+random       3  Goal         306      2 1.00    13%    28%    4%    0%    0%                            13    0   49      305      9      3218  11052  765.000/12529.000  0/0/0 0  []
+random       4  Goal          96      2 1.00     0%     0%    0%    0%    0%                             0   26   17       95      6       600    474  2292.000/9880.000  0/0/0 0  []
+sow+boom     2  Cap          900      0 0.33    15%     0%    0%   11%   44%                            12    0   17        0     18     12900   6589  1065.000/5028.000  0/0/0 0  []
+sow+boom     3  Goal         818      1 1.00     2%     0%    0%    4%    2%                             5    0   26      818     20     13200   8233  1121.000/6148.000  0/0/0 0  []
+sow+boom     4  Goal         505      2 1.00     1%     0%    1%    0%    0%                             1    0   22      504     19     10500   5317  1091.000/6022.000  0/0/0 0  []
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  bait+boom 3/3  stars 2  best 1.00  dead 1%  stuck 11 s  stall 37 s
+  boom      2/3  stars 2  best 0.84  dead 3%  stuck 0 s  stall 31 s
+  idle      0/3  stars 0  best 0.00  dead 100%  stuck 0 s  stall 194 s
+  random    2/3  stars 2  best 0.79  dead 9%  stuck 30 s  stall 69 s
+  sow+boom  2/3  stars 1  best 0.78  dead 6%  stuck 0 s  stall 26 s
