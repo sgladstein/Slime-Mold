@@ -2843,6 +2843,88 @@ mod tests {
         assert!(words > 50, "the twin catches a gas a step too long");
     }
 
+    /// **The gas cloud on the engine** (`Engine::lay_gas`, 11-14; the gun
+    /// rounds thread, after Noita's mists): from the same state a cloud
+    /// laid on both, then 40 ticks each with no re-inject. The cloud field
+    /// within 1e-6 on every cell, 0 off the agar; the walkers it puts to
+    /// sleep (over 50) the same, states off on at most 1 slot in 1000 as
+    /// in the gas twin, and the gas words exact on every slot both hold
+    /// dormant; the calm while the cloud lasts. Planted: a GPU cloud that
+    /// sleeps walkers over 0.3 (not 0.2), and one that keeps 0.1% more a
+    /// step, must each fail it.
+    #[test]
+    fn the_gas_cloud_matches_the_cpu() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let _ = &queue;
+        let mut sleepy = small(0);
+        for (k, v) in [("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_deposit", "0.3"), ("alarm_keep", "0.95"), ("alarm_relay", "20"), ("wake_alarm", "1"), ("alarm_weight", "2"), ("sleep_rest", "10"), ("wake_steps", "10")] {
+            set(&mut sleepy, k, v).unwrap();
+        }
+        const KEEP: f32 = 0.97;
+        const SLEEP: f32 = 0.2;
+        const LINGER: u16 = 15;
+        // (cloud cells off by over 1e-6, states off, gas words off, sleepers on the CPU) after each 10 ticks
+        let play = |name: &str, s: &Settings, gpu_sleep: f32, gpu_keep: f32| -> Vec<(usize, usize, usize, usize)> {
+            let mut e = Engine::new(&device, &queue, &shared, s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..20 {
+                cpu.tick();
+            }
+            e.inject(&cpu);
+            let k = cpu.p.scale as f32;
+            let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+            for (j, &(wx, wy, _)) in cpu.walkers.iter().enumerate() {
+                if cpu.lives(j) {
+                    (x, y, m) = (x + wx, y + wy, m + 1.0);
+                }
+            }
+            let (x, y) = (x / m / k, y / m / k);
+            (cpu.p.gas_keep, cpu.p.gas_sleep, cpu.p.gas_linger) = (KEEP, SLEEP, LINGER);
+            let g = Settings { gas_keep: gpu_keep, gas_sleep: gpu_sleep, gas_linger: LINGER, ..s.clone() };
+            cpu.lay_gas(x * k, y * k, 8.0 * k, 1.0);
+            e.lay_gas(&shared, &g, x, y, 8.0, 1.0);
+            let n = cpu.walkers.len();
+            let points = [(x * k, y * k), (x * k + 40.0 * k, y * k)];
+            let mut out = Vec::new();
+            for round in 0..4 {
+                run(&mut e, &shared, &g, 10, Hand::default());
+                for _ in 0..10 {
+                    cpu.tick();
+                }
+                let cloud = e.gas_cloud_of();
+                let cells_off = cloud.iter().zip(&cpu.gas_cloud).filter(|(a, b)| (*a - *b).abs() > 1e-6).count();
+                let walled = cloud.iter().zip(&cpu.agar).filter(|(v, a)| !**a && **v != 0.0).count();
+                assert_eq!(walled, 0, "{name}: cloud off the agar");
+                let (life, _) = e.life_of();
+                let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
+                let gw = e.gassed_of();
+                let gas_off = (0..n).filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && life[j] == 2 && gw[j] != cpu.gassed[j]).count();
+                let sleepers = (0..n).filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && cpu.gassed[j] > 0).count();
+                let top = cpu.gas_cloud.iter().cloned().fold(0.0f32, f32::max);
+                eprintln!("{name}, tick {}: cloud top {top:.3}, {cells_off} cells off, {life_off} of {n} states off, {gas_off} gas words off, {sleepers} gassed sleepers", 10 * (round + 1));
+                if round == 0 && gpu_sleep == SLEEP && gpu_keep == KEEP {
+                    let calm_gpu = e.calm(&shared, &points, 3.0 * k);
+                    let calm_cpu = cpu.gassed_near(&points, 3.0 * k);
+                    assert!(calm_cpu[0] > 0 && calm_gpu == calm_cpu, "{name}: calm {calm_gpu:?} on the GPU, {calm_cpu:?} on the CPU");
+                }
+                out.push((cells_off, life_off, gas_off, sleepers));
+            }
+            out
+        };
+        for (name, s) in [("plain (the cloud turns the states on)", small(0)), ("dormancy and alarm", sleepy.clone())] {
+            let rounds = play(name, &s, SLEEP, KEEP);
+            assert!(rounds[0].3 > 50, "{name}: the cloud put walkers to sleep");
+            for (r, &(cells, states, words, _)) in rounds.iter().enumerate() {
+                assert!(cells == 0 && states * 1000 <= s.walkers && words == 0, "{name}, round {r}: {cells} cells, {states} states, {words} gas words off");
+            }
+        }
+        let rounds = play("planted, sleeps over 0.3", &sleepy, 0.3, KEEP);
+        assert!(rounds.iter().any(|r| r.1 * 1000 > sleepy.walkers || r.2 > 10), "the twin catches a cloud that sleeps at the wrong level");
+        let rounds = play("planted, keeps more", &sleepy, SLEEP, KEEP * 1.001);
+        assert!(rounds.iter().any(|r| r.0 > 0), "the twin catches a cloud that keeps more");
+    }
+
     /// **An explosion's fling on the engine** (`Engine::fling`, the CPU's
     /// `BigDish::fling`; the gun rounds' `Bomb`, 11-14): from the same
     /// state, a kill of radius 4 and a ring out to 10 dish cells. Right
@@ -2942,6 +3024,73 @@ mod tests {
         let off = play("planted, fling speed 2", &dishes[0].1, 2.0);
         eprintln!("planted, fling speed 2: worst tick {off} walkers off");
         assert!(off > 50, "the twin catches a fling speed off");
+    }
+
+    /// **Bomb rounds in the game on the engine as on the CPU** (the gun
+    /// rounds' explosion, 11-14): the squad attacks with `bomb` rounds on
+    /// the CPU world. Whenever its rounds cast, the engine is loaded with
+    /// the CPU dish as it was just before (`Engine::inject`, which carries
+    /// the flung marks) and the same bursts go through `World::burst` on
+    /// the engine's world: each must fling the same walkers, and after
+    /// them every slot's state, timer and mark must match. Then two
+    /// frames of the game on the engine from there (injected each frame)
+    /// against the CPU's, and the flung marks still match within 1 in
+    /// 1000 (the flight on the engine in the game's own frame). The bombs
+    /// must have thrown some mould, and the flung must land on both.
+    #[test]
+    fn bomb_rounds_fling_the_same_mould_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_world, Cmd, Game, Order, Rules, World};
+        use slime_mould::mould::rounds::{burst_rules, parse, RoundRules, Rounds};
+        use slime_mould::mould::squad::{BurstRules, Frame};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
+        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        cpu.bank = 1.0e9;
+        for k in 0..cpu.soldiers.len() {
+            assert!(cpu.apply(Cmd::Order(k, Order::Attack)));
+        }
+        let rr = RoundRules::default();
+        let mut rc = Rounds::new(parse("bomb").unwrap(), rr);
+        let fine = rules.tps as f32 * cpu.world.fine_steps() as f32;
+        let k = BurstRules { fling_speed: rr.fling_speed, ..burst_rules(&rr.kit, fine) };
+        let (mut frames, mut checked, mut after_off) = (0, 0, 0);
+        while cpu.end.is_none() && cpu.time() < 30.0 {
+            cpu.step();
+            let pre = cpu.world.clone();
+            let n0 = rc.pops.len();
+            rc.after_step(&mut cpu);
+            frames += 1;
+            if rc.pops.len() == n0 {
+                continue;
+            }
+            gpu.world.e.inject(&pre);
+            for p in &rc.pops[n0..] {
+                let o = gpu.world.burst(&p.burst, &k);
+                assert_eq!(o.flung as usize, p.flung, "frame {frames}: walkers flung");
+            }
+            let (life, timer) = gpu.world.e.life_of();
+            let d = &cpu.world;
+            let off = (0..d.walkers.len()).filter(|&j| life[j] != d.life[j] || (d.lives(j) && timer[j] != d.life_t[j])).count();
+            let marks = gpu.world.e.flung_of().iter().zip(&d.flung).filter(|(a, b)| a != b).count();
+            assert!(off == 0 && marks == 0, "frame {frames}: after the bombs {off} states or timers and {marks} marks off");
+            checked += 1;
+            // Two frames on, each from the CPU's state.
+            let mut twin = cpu.world.clone();
+            for _ in 0..2 {
+                gpu.world.e.inject(&twin);
+                World::frame(&mut twin, &Frame::default(), 2);
+                gpu.world.frame(&Frame::default(), 2);
+                let m = gpu.world.e.flung_of().iter().zip(&twin.flung).filter(|(a, b)| a != b).count();
+                after_off = after_off.max(m);
+            }
+        }
+        let left = cpu.world.flung.iter().filter(|&&f| f).count();
+        eprintln!("bombs: {} cast, {} killed, {} flung in {frames} frames; {checked} casts checked on the engine, flung marks at most {after_off} off two frames on; {left} still flung at the end", rc.cast[3], rc.killed, rc.flung);
+        assert!(rc.cast[3] > 0 && rc.flung > 0 && checked > 0, "the bombs threw mould: {:?}, {} flung", rc.cast, rc.flung);
+        assert!(after_off * 1000 <= walkers, "{after_off} marks off in flight");
     }
 
     #[test]
@@ -4417,73 +4566,6 @@ mod tests {
         // The race world is thin where it first bites (8 walkers, seed 3).
         assert!(gassed > 0, "the gas caught the mould: {gassed}");
         assert!(hp.iter().sum::<f32>() > bare.iter().sum::<f32>(), "the gassed mould bit less: {hp:?} against {bare:?}");
-    }
-
-    /// **Bomb rounds in the game on the engine as on the CPU** (the gun
-    /// rounds' explosion, 11-14): the squad attacks with `bomb` rounds on
-    /// the CPU world. Whenever its rounds cast, the engine is loaded with
-    /// the CPU dish as it was just before (`Engine::inject`, which carries
-    /// the flung marks) and the same bursts go through `World::burst` on
-    /// the engine's world: each must fling the same walkers, and after
-    /// them every slot's state, timer and mark must match. Then two
-    /// frames of the game on the engine from there (injected each frame)
-    /// against the CPU's, and the flung marks still match within 1 in
-    /// 1000 (the flight on the engine in the game's own frame). The bombs
-    /// must have thrown some mould, and the flung must land on both.
-    #[test]
-    fn bomb_rounds_fling_the_same_mould_on_the_engine_as_on_the_cpu() {
-        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
-        use slime_mould::mould::larder_world::{race_world, Cmd, Game, Order, Rules, World};
-        use slime_mould::mould::rounds::{burst_rules, parse, RoundRules, Rounds};
-        use slime_mould::mould::squad::{BurstRules, Frame};
-        let Some((device, queue)) = test_gpu() else { return };
-        let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
-        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
-        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
-        cpu.bank = 1.0e9;
-        for k in 0..cpu.soldiers.len() {
-            assert!(cpu.apply(Cmd::Order(k, Order::Attack)));
-        }
-        let rr = RoundRules::default();
-        let mut rc = Rounds::new(parse("bomb").unwrap(), rr);
-        let fine = rules.tps as f32 * cpu.world.fine_steps() as f32;
-        let k = BurstRules { fling_speed: rr.fling_speed, ..burst_rules(&rr.kit, fine) };
-        let (mut frames, mut checked, mut after_off) = (0, 0, 0);
-        while cpu.end.is_none() && cpu.time() < 30.0 {
-            cpu.step();
-            let pre = cpu.world.clone();
-            let n0 = rc.pops.len();
-            rc.after_step(&mut cpu);
-            frames += 1;
-            if rc.pops.len() == n0 {
-                continue;
-            }
-            gpu.world.e.inject(&pre);
-            for p in &rc.pops[n0..] {
-                let o = gpu.world.burst(&p.burst, &k);
-                assert_eq!(o.flung as usize, p.flung, "frame {frames}: walkers flung");
-            }
-            let (life, timer) = gpu.world.e.life_of();
-            let d = &cpu.world;
-            let off = (0..d.walkers.len()).filter(|&j| life[j] != d.life[j] || (d.lives(j) && timer[j] != d.life_t[j])).count();
-            let marks = gpu.world.e.flung_of().iter().zip(&d.flung).filter(|(a, b)| a != b).count();
-            assert!(off == 0 && marks == 0, "frame {frames}: after the bombs {off} states or timers and {marks} marks off");
-            checked += 1;
-            // Two frames on, each from the CPU's state.
-            let mut twin = cpu.world.clone();
-            for _ in 0..2 {
-                gpu.world.e.inject(&twin);
-                World::frame(&mut twin, &Frame::default(), 2);
-                gpu.world.frame(&Frame::default(), 2);
-                let m = gpu.world.e.flung_of().iter().zip(&twin.flung).filter(|(a, b)| a != b).count();
-                after_off = after_off.max(m);
-            }
-        }
-        let left = cpu.world.flung.iter().filter(|&&f| f).count();
-        eprintln!("bombs: {} cast, {} killed, {} flung in {frames} frames; {checked} casts checked on the engine, flung marks at most {after_off} off two frames on; {left} still flung at the end", rc.cast[3], rc.killed, rc.flung);
-        assert!(rc.cast[3] > 0 && rc.flung > 0 && checked > 0, "the bombs threw mould: {:?}, {} flung", rc.cast, rc.flung);
-        assert!(after_off * 1000 <= walkers, "{after_off} marks off in flight");
     }
 
     /// **Bullets on the engine as on the CPU** (the technical lead on #191,

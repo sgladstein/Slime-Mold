@@ -320,9 +320,14 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
 /// fling's speed (`Rounds::fire`).
 pub fn burst_rules(k: &KitRules, fine: f32) -> BurstRules {
     let sick_steps = (k.sick_secs * fine).round().max(1.0) as u16;
+    let (gas_keep, gas_linger) = k.gas_cloud(fine);
     BurstRules {
         alarm_keep: k.alarm_keep,
         gas_death: k.gas_death,
+        gas_keep,
+        gas_dose: k.gas_dose,
+        gas_sleep: k.gas_sleep,
+        gas_linger,
         sick_steps,
         immune_steps: (k.immune_secs * fine).round().min(u16::MAX as f32 - sick_steps as f32) as u16,
         sick_upkeep: k.sick_upkeep,

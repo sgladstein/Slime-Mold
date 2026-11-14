@@ -180,6 +180,12 @@ impl Burst {
 pub struct BurstRules {
     pub alarm_keep: f32,
     pub gas_death: f32,
+    /// The gas cloud (`BigParams::gas_keep`; 0 none): a gas burst lays
+    /// `gas_dose` over its disc too.
+    pub gas_keep: f32,
+    pub gas_dose: f32,
+    pub gas_sleep: f32,
+    pub gas_linger: u16,
     pub sick_steps: u16,
     pub immune_steps: u16,
     pub sick_upkeep: f32,
@@ -222,6 +228,10 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
         d.enable_alarm(k.alarm_keep);
         d.p.gas_death = k.gas_death;
         out.gassed = d.gas(b.at.0 * s, b.at.1 * s, b.r * s, b.gas) as u32;
+        if k.gas_keep > 0.0 {
+            (d.p.gas_keep, d.p.gas_sleep, d.p.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
+            d.lay_gas(b.at.0 * s, b.at.1 * s, b.r * s, k.gas_dose);
+        }
     }
     if b.germ {
         if d.sick.is_empty() {
