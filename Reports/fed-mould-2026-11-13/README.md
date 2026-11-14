@@ -657,6 +657,24 @@ tick against 23.7-26.2 ms.
   N soldiers set down and kept there, made up from the larder if short).
   `larderworld look=DIR` prints `scared` beside each picture.
 
+**The reach follows the guns (11-14, the game designer's review of
+#249).** The gun's range went from 15 to 24 dish cells (the owner's
+playtest), and the charge's reach stayed at 20, so soldiers firing from
+21-24 cells sat outside it and could shoot a cut piece down with no risk.
+The game now keeps the world's `panic_r` at the gun's range plus
+`Rules::panic_margin` (5 dish cells, the first rule's 20 against 15),
+set at the start and once a game second (`Game::keep_panic_reach`,
+through `World::set_panic_r` on both engines), so it is 29 today and a
+range card will move it too. A test checks the start, a range change at
+the next count, and a negative margin leaving the world's own. Smoke
+(`raw/smoke/reach-margin5-cap300.txt` against `reach-r20-cap300.txt`,
+C's keys, 4 seeds x idle, farm, strike, 5:00, main 50947f98): idle
+-0.333 on 4 of 4 both ways; farm +0.120 both ways, strike +0.121 against
++0.120; every game to the cap, none stuck, and every game ends with the
+same soldiers. The farm squad has more walkers near it (201 against
+159) and is first touched sooner (29 s against 41). No frame cost: the
+unit search reads every unit whatever the reach.
+
 **Next, if play asks for it:** a slower lean (the tell is short when
 soldiers are close), a shorter `panic_r` (20 dish cells reaches past a
 gun's 15), or only pieces above a size panicking (not built).

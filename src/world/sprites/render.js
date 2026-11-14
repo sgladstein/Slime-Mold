@@ -3,7 +3,7 @@
 // 32 px in the row below (for small figures, so they don't shimmer).
 // Tiles 0-3 are soldier.svg's body, helmet, flash and dead; 4-15 are
 // buildings.svg's turret, lure, pump, outpost, siren and larder, each body then its lamp
-// (`*-lit`). Run: node src/world/sprites/render.js from the repo root (needs
+// (`*-lit`); 16 is the turret's head, which turns on its base. Run: node src/world/sprites/render.js from the repo root (needs
 // Playwright's Chromium).
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -14,6 +14,7 @@ const TILES = [
   ['buildings.svg', 'turret'], ['buildings.svg', 'turret-lit'], ['buildings.svg', 'lure'], ['buildings.svg', 'lure-lit'],
   ['buildings.svg', 'pump'], ['buildings.svg', 'pump-lit'], ['buildings.svg', 'outpost'], ['buildings.svg', 'outpost-lit'],
   ['buildings.svg', 'siren'], ['buildings.svg', 'siren-lit'], ['buildings.svg', 'larder'], ['buildings.svg', 'larder-lit'],
+  ['buildings.svg', 'turret-head'],
 ];
 const W = TILES.length * 128;
 (async () => {

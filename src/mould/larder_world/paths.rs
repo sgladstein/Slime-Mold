@@ -226,6 +226,25 @@ impl<W: World> Game<W> {
         (c.0 + ux * out, c.1 + uy * out)
     }
 
+    /// Soldier `k`'s place in its squad's formation round `p`, fine cells
+    /// (`squads`; it was M3's sunflower by soldier index, `slot(k)`, before
+    /// squads).
+    pub(super) fn place_at(&self, k: usize, p: (f32, f32)) -> (f32, f32) {
+        let o = self.place(k);
+        let sc = self.s();
+        let q = (p.0 + o.0 * sc, p.1 + o.1 * sc);
+        // A formation place in rock or past a wall: the point itself, so
+        // a squad squeezing past a wall is not stuck on places it can't
+        // stand on (seen on the Fork: a squad steered into the V wall
+        // stood still, its anchor waiting for members whose places were
+        // in the wall).
+        if self.rules.squads && !(self.standable(q.0, q.1) && self.walk_line(p, q)) {
+            p
+        } else {
+            q
+        }
+    }
+
     /// Where soldier `k`'s order points, before a crystal moves it to its
     /// rim (`goal`).
     pub(super) fn goal_raw(&self, k: usize) -> Option<(f32, f32)> {
@@ -233,56 +252,46 @@ impl<W: World> Game<W> {
         let sc = self.s();
         // Its place in its squad's formation (`squads`; it was M3's
         // sunflower by soldier index, `slot(k)`, before squads).
-        let place = self.place(k);
-        let squads = self.rules.squads;
-        let off = |p: (f32, f32)| {
-            let o = place;
-            let q = (p.0 + o.0 * sc, p.1 + o.1 * sc);
-            // A formation place in rock or past a wall: the point itself, so
-            // a squad squeezing past a wall is not stuck on places it can't
-            // stand on (seen on the Fork: a squad steered into the V wall
-            // stood still, its anchor waiting for members whose places were
-            // in the wall).
-            if squads && !(self.standable(q.0, q.1) && self.walk_line(p, q)) {
-                p
-            } else {
-                q
-            }
-        };
+        let off = |p: (f32, f32)| self.place_at(k, p);
         match s.order {
             Order::Hold => None,
             Order::Move(x, y) | Order::Fight(x, y) => Some(off((x, y))),
             Order::Build(b) => {
+                // Straight at the site until in reach (`BuildRules::reach`),
+                // then stand and raise it from there, on the side it came
+                // from: no place in a formation round the ghost, so a squad
+                // building a turret by the mould stays on its own side of it
+                // (owner, 2026-11-14 08:10Z). Before, each builder walked to
+                // its sunflower place round the ghost's edge, and half a
+                // squad walked round to the far side, toward the mould.
                 let p = self.site(k, b)?;
-                let q = off(p);
-                // A builder stands at the building's edge, not on it, so the
-                // rising ghost and its bar stay in sight (2026-11-12, the
-                // build-anywhere look: a lone builder hid its turret). Walls
-                // keep the point on the line nearest the soldier.
-                if let Kind::Wall { to } = self.buildings[b].kind {
-                    // Beside the line, on the soldier's side, half the
-                    // wall's width and a cell clear (2026-11-14, owner:
-                    // "soldier get stuck on the wall they build"): a builder
-                    // that stood on the line was shut inside its own wall
-                    // when it rose. The squad's slot spreads them along it.
+                let (near, far) = self.build_band(b, p);
+                let (dx, dy) = (s.x - p.0, s.y - p.1);
+                let d = dx.hypot(dy);
+                if d > far {
+                    return Some(p);
+                }
+                if d >= near {
+                    return None;
+                }
+                // Too near: out to the edge on its own side, so the rising
+                // ghost and its bar stay in sight (2026-11-12, the
+                // build-anywhere look: a lone builder hid its turret), and
+                // a wall's builder is not shut inside its own wall when it
+                // rises (2026-11-14, owner: "soldier get stuck on the wall
+                // they build"). A wall's nearest point makes the way out
+                // square to the line.
+                let (ux, uy) = if d > 1e-3 {
+                    (dx / d, dy / d)
+                } else if let Kind::Wall { to } = self.buildings[b].kind {
                     let at = self.buildings[b].at;
-                    let along = nearest_on(at, to, q);
-                    let (lx, ly) = (to.0 - at.0, to.1 - at.1);
-                    let l = lx.hypot(ly);
-                    let (nx, ny) = if l > 1e-3 { (-ly / l, lx / l) } else { (1.0, 0.0) };
-                    let side = if (s.x - along.0) * nx + (s.y - along.1) * ny >= 0.0 { 1.0 } else { -1.0 };
-                    let clear = (self.rules.wall_width / 2.0 + 1.0) * sc;
-                    return Some((along.0 + side * nx * clear, along.1 + side * ny * clear));
-                }
-                let edge = (self.rules.build.touch + 1.0) * sc;
-                let (dx, dy) = (q.0 - p.0, q.1 - p.1);
-                if dx.hypot(dy) >= edge {
-                    return Some(q);
-                }
-                let (fx, fy) = if dx.hypot(dy) > 1e-3 { (dx, dy) } else { (s.x - p.0, s.y - p.1) };
-                let d = fx.hypot(fy);
-                let (ux, uy) = if d > 1e-3 { (fx / d, fy / d) } else { (1.0, 0.0) };
-                Some((p.0 + ux * edge, p.1 + uy * edge))
+                    let l = (to.0 - at.0).hypot(to.1 - at.1).max(1e-3);
+                    (-(to.1 - at.1) / l, (to.0 - at.0) / l)
+                } else {
+                    (1.0, 0.0)
+                };
+                let out = near + 0.5 * sc;
+                Some((p.0 + ux * out, p.1 + uy * out))
             }
             Order::Clear(x, y) => {
                 if s.homing {

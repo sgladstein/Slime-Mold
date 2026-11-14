@@ -131,7 +131,7 @@ use slime_mould::mould::own_mould::Task;
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::kit::{Kit, KitRules, Tool};
 use slime_mould::mould::rounds::{self, RoundRules, Rounds};
-use slime_mould::mould::larder_world::{Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{TURRET_MUZZLE, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
@@ -140,7 +140,7 @@ use slime_mould::sound::world::{Ear, WorldListener};
 use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
-use slime_mould::world::marks::{team_colour, SLASH, STANDING, WALKING};
+use slime_mould::world::marks::{team_colour, SLASH, STANDING, TURRET_DRY, TURRET_IDLE, TURRET_TRACKING, WALKING};
 use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
@@ -161,7 +161,7 @@ mod squadmode;
 mod uisize;
 use uisize::*;
 use slime_mould::world::settings::{self, UiSize};
-use squadmode::SquadInput;
+use squadmode::{squad_card_key, squad_help, SquadInput};
 // The moved modules' functions, reached as before from here and from each
 // other.
 use args::*;
@@ -223,6 +223,9 @@ commands! {
     SIREN = 27,
     // The loadout panel's swap button (2026-11-14): the next loadout, as H.
     NEXT_ROUND = 28,
+    // The build page's cancel (2026-11-14, the build-flow thread): click a
+    // ghost to call it off for its whole price back (`Cmd::Unbuild`).
+    CANCEL_BUILD = 29,
 }
 
 /// Between two steps: every living soldier at the larder takes one tool
@@ -265,7 +268,7 @@ fn sprite_kind(k: Kind) -> Option<u32> {
         Kind::Pump => Some(2),
         Kind::Outpost => Some(3),
         // Its own sprite (#161): the horns, and the lens and sound arcs lit
-        // while it is on.
+        // as it calls.
         Kind::Siren => Some(4),
         // Drawn as a line, not a sprite.
         Kind::Wall { .. } => None,
@@ -276,6 +279,9 @@ fn sprite_kind(k: Kind) -> Option<u32> {
 /// look's fight: `examples/worldlook.rs`).
 const TRACER: f32 = 0.1;
 const FLASH: f32 = 0.07;
+/// How far a soldier walks (dish cells) before its figure turns to the way
+/// it is going (`App::step`).
+const TURN: f32 = 0.3;
 /// How long a take's pulse lasts at a harvester's hands, seconds: a step
 /// is 1/15 s, so a soldier taking every step glows steadily and one that
 /// stops fades in about a third of a second.
@@ -405,7 +411,53 @@ struct Look {
     take: f32,
     at: (f32, f32),
     alive: bool,
+    /// Its health and load at the last step seen (`step_notes`), the
+    /// damage the slime has done since its last flinch, the seconds left
+    /// of that flinch (`FLINCH` long) and the way the bite came from
+    /// (building looks, 11-14: "a flinch and a brief light where slime
+    /// bites, from the real damage").
+    hp: f32,
+    carry: f32,
+    hurt: f32,
+    flinch: f32,
+    bite: f32,
 }
+
+impl Look {
+    fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
+        Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0 }
+    }
+}
+
+/// What the window keeps of each building beside the game
+/// (`Game::buildings` by index): where a turret's head or a pump's hose
+/// points, the seconds left of a turret's last shot's kick and flash, of
+/// a siren's call (`SIREN_CALL`) and of an outpost's flare as a load is
+/// banked there (`BANKED`).
+#[derive(Clone, Copy, Default)]
+struct BuildingLook {
+    facing: f32,
+    shot: f32,
+    call: f32,
+    bank: f32,
+}
+
+/// How long a siren's call shows: its sound ring runs out to the alarm's
+/// reach (`BuildRules::siren_r`) in this long and fades.
+const SIREN_CALL: f32 = 0.7;
+/// The slime's damage to a soldier, hp, that makes one flinch: a soldier
+/// at the edge of a body flinches now and then, one wading in many times a
+/// second (each walker touching bites `Rules::drain` a second).
+const FLINCH_HP: f32 = 3.0;
+/// How long a flinch lasts, seconds.
+const FLINCH: f32 = 0.2;
+
+/// How long a turret's kick and muzzle flash last, seconds.
+const TURRET_SHOT: f32 = 0.16;
+/// How fast a turret's head turns toward its aim between shots, radians a
+/// second (it snaps to the shot's line when it fires, so the shot always
+/// leaves the barrels).
+const TURRET_TURN: f32 = 5.0;
 
 struct App {
     args: Args,
@@ -437,6 +489,7 @@ struct App {
     /// depth was most of each ground rebuild (3.9-6.1 ms on the cloud CPU).
     depth: Vec<u8>,
     looks: Vec<Look>,
+    blooks: Vec<BuildingLook>,
     tracers: Vec<Tracer>,
     /// This frame's point lights (bullets, bursts, muzzles, lodged casts),
     /// filled with the marks (`draw.rs`).
@@ -452,6 +505,9 @@ struct App {
     owed: f32,
     last_frame: Instant,
     shift: bool,
+    /// The soldier the last build with nobody selected sent (`builders`):
+    /// Shift + another build queues on it.
+    last_sent: Option<usize>,
     ctrl: bool,
     /// The larder is selected (a click on it with no soldier picked): its
     /// card shows, and right click sets its rally point.
@@ -469,16 +525,18 @@ struct App {
     hungry: bool,
     /// Bank samples (game second, bank) for the food rate.
     bank_log: std::collections::VecDeque<(f32, f32)>,
-    /// Seconds left of the larder's flare (`BANKED`), and the harvest
-    /// banked when it was last checked.
+    /// Seconds left of the larder's flare (`BANKED`), set by a carrier
+    /// banking there (`step_notes`).
     banked: f32,
-    harvested_seen: f32,
     /// Frame times (ms) since the last report, and when it was.
     frame_ms: Vec<f32>,
     steps: u32,
     /// Steps finished on a frame once their results were in, and those
     /// finished only when the next step was due (the bench prints both).
     finished: (u32, u32),
+    /// The game tick of the last step whose notes the window took (the
+    /// kit, the rounds' casts, the shots' marks; `App::catch_up`).
+    seen: u64,
     report_at: Instant,
     saved: bool,
     /// The command card shows the build page (Q).
@@ -540,6 +598,7 @@ impl App {
             ground_walls: 0,
             depth: Vec::new(),
             looks: Vec::new(),
+            blooks: Vec::new(),
             tracers: Vec::new(),
             lights: Vec::new(),
             paused: false,
@@ -549,6 +608,7 @@ impl App {
             owed: 0.0,
             last_frame: Instant::now(),
             shift: false,
+            last_sent: None,
             ctrl: false,
             larder_sel: false,
             dry: Vec::new(),
@@ -560,10 +620,10 @@ impl App {
             hungry: false,
             bank_log: Default::default(),
             banked: 0.0,
-            harvested_seen: 0.0,
             frame_ms: Vec::new(),
             steps: 0,
             finished: (0, 0),
+            seen: 0,
             report_at: Instant::now(),
             saved: false,
             build_page: false,
@@ -710,6 +770,10 @@ impl App {
             // (news is kept then).
             let ws = &game.world.s;
             v.set_news(e.withers.then_some((&e.news, &e.state)), ws.wither_lag, ws.panic_lean);
+            // Condensed walkers (11-14, `condense`): the body's copper and
+            // their double count, from the same buffer.
+            let dense = e.grows && ws.condense > 0;
+            v.set_dense(dense.then_some((&e.news, &e.state)), (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32, ws.condense);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
@@ -721,6 +785,11 @@ impl App {
             if !e.dish.pile_fill.is_empty() {
                 v.set_charge(Some((&e.charge, &e.dish.pile_fill)));
             }
+            // The engine's alarm field, so a siren's call (and a shot's
+            // alarm) is the field itself spreading and fading (the art
+            // director, 11-14: not rings timed from the call); full at a
+            // siren's call.
+            v.set_alarm(Some([&e.germ[0], &e.germ[1]]), game.rules.build.siren_alarm);
             // The body's walkers a cell, from the start's living walkers
             // (the look's `body`; a growing world has ten slots a walker).
             v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
@@ -738,7 +807,8 @@ impl App {
         }
         self.ground = Some(ground);
         (self.ground_at, self.ground_walls) = (0.0, 0);
-        self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
+        self.looks = game.soldiers.iter().map(Look::new).collect();
+        self.blooks.clear();
         self.tracers.clear();
         self.controls.selected.clear();
         self.controls.groups = Default::default();
@@ -746,7 +816,7 @@ impl App {
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.broken_told = false;
         self.bank_log.clear();
-        (self.banked, self.harvested_seen) = (0.0, 0.0);
+        self.banked = 0.0;
         let voice = self.listener.as_ref().is_none_or(|l| l.voice);
         self.listener = Some(WorldListener::new(&game));
         if let Some(l) = self.listener.as_mut() {
@@ -759,6 +829,7 @@ impl App {
             }
         }
         self.game = Some(game);
+        self.seen = 0;
         if let Some(tr) = &self.mission {
             self.name = tr.mission.map.clone();
         }
@@ -786,7 +857,6 @@ impl App {
     /// Steps the game for `dt` real seconds and keeps the window's notes
     /// (facing, flashes, tracers, alerts).
     fn step(&mut self, dt: f32) {
-        let Some(g) = self.game.as_mut() else { return };
         for t in &mut self.tracers {
             t.age += dt;
         }
@@ -794,13 +864,17 @@ impl App {
         for l in &mut self.looks {
             l.flash = (l.flash - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
+            l.flinch = (l.flinch - dt).max(0.0);
         }
+        for b in &mut self.blooks {
+            b.call = (b.call - dt).max(0.0);
+            b.bank = (b.bank - dt).max(0.0);
+        }
+        // A step a command finished since the last frame (`catch_up`).
+        self.catch_up();
+        let Some(g) = self.game.as_mut() else { return };
+        turn_turrets(g, &mut self.blooks, dt);
         self.banked = (self.banked - dt).max(0.0);
-        // A load banked since the last frame flares the larder's cells.
-        if g.harvested > self.harvested_seen + 0.5 {
-            self.banked = BANKED;
-        }
-        self.harvested_seen = g.harvested;
         // A bought soldier (by the card or a replay) joins the notes.
         join_looks(g, &mut self.looks);
         let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
@@ -816,6 +890,9 @@ impl App {
             self.rounds.after_step(g);
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+            turret_fired(g, &mut self.blooks);
+        step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
+            self.seen = g.world.ticks();
         } else if g.in_flight() {
             // Its next share of ticks (`GpuWorld::spread`).
             g.world.frame_more();
@@ -839,9 +916,16 @@ impl App {
                 self.rounds.after_step(g);
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+                turret_fired(g, &mut self.blooks);
+                step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
+                self.seen = g.world.ticks();
                 if g.end.is_some() {
                     break;
                 }
+            }
+            // The squad mode's aim, between whole steps (`SquadInput::aim`).
+            if let Some(sq) = self.sq.as_mut() {
+                sq.aim(g);
             }
             g.begin_step();
             self.owed -= step;
@@ -872,13 +956,31 @@ impl App {
         // A soldier the game made inside these steps (`Rules::reserve`'s
         // free recruit) joins the notes too.
         join_looks(g, &mut self.looks);
+        // Where each soldier's gun points between shots (bug sweep,
+        // 2026-11-14, after "the gun animation gets messed up"): in the
+        // squad mode the controlled squad's at the cursor, its aim, and a
+        // volleying squad's at its volley point; else the way it walks,
+        // once it has gone `TURN` since it last turned. Before, any move
+        // over 0.05 fine cells turned it, so the shoves of elbow room and a
+        // formation settling spun the guns between shots.
+        let cursor = self.sq.as_ref().and_then(|sq| sq.want);
+        let turn = TURN * g.world.scale();
         for (k, s) in g.soldiers.iter().enumerate() {
             let l = &mut self.looks[k];
+            let sq = g.squads.get(s.squad as usize).filter(|_| g.rules.squads);
+            let aim = sq.and_then(|sq| sq.fire).or_else(|| cursor.filter(|_| g.active == Some(s.squad as usize) && g.rules.squads));
             let (dx, dy) = (s.x - l.at.0, s.y - l.at.1);
-            if l.flash <= 0.0 && dx.hypot(dy) > 0.05 {
-                l.facing = dy.atan2(dx);
+            if let Some(p) = aim.filter(|_| s.alive) {
+                if l.flash <= 0.0 && (p.0 - s.x).hypot(p.1 - s.y) > 1e-3 {
+                    l.facing = (p.1 - s.y).atan2(p.0 - s.x);
+                }
+                l.at = (s.x, s.y);
+            } else if dx.hypot(dy) > turn {
+                if l.flash <= 0.0 {
+                    l.facing = dy.atan2(dx);
+                }
+                l.at = (s.x, s.y);
             }
-            l.at = (s.x, s.y);
             if l.alive && !s.alive {
                 self.hud.alert("A soldier has fallen", Some((s.x, s.y)), theme::BAD);
             }
@@ -933,15 +1035,38 @@ impl App {
     /// Finishes a step still running on the GPU and keeps its shots'
     /// marks (the headless pictures read whole steps).
     fn settle(&mut self) {
-        let Some(g) = self.game.as_mut() else { return };
-        if g.in_flight() {
+        self.catch_up();
+        if let Some(g) = self.game.as_mut().filter(|g| g.in_flight()) {
             g.finish_step();
-            // Rounds read the step's hits, so they cast here too (the
-            // headless looks settle every step). A step a command finishes
-            // (`Game::apply`) is not seen: its hits cast nothing.
-            self.rounds.after_step(g);
-            shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
         }
+        // The step's notes, as `step` takes them: rounds read its hits (the
+        // headless looks settle every step), and the kit restocks and sets
+        // off its mines. (Before the review after the bug sweep,
+        // 2026-11-14, this was a copy without `kit_between`, so no
+        // headless run ever ran the kit.)
+        self.catch_up();
+    }
+
+    /// The window's notes of a step a command finished: `Game::apply`
+    /// finishes a running step first, and before the bug sweep
+    /// (2026-11-14) the window never saw that step. Its bullets' legs,
+    /// muzzle flashes and facings were lost, its hits cast no round and
+    /// laid no trail, and the kit skipped it. In the squad mode the cursor
+    /// sent a command almost every frame (`Cmd::Face`, `Cmd::Fire`), so
+    /// most steps went unseen: the owner's playtest, 08:01Z, "the gun
+    /// animation gets messed up sometimes". Runs before the next step
+    /// begins, so the game is the same as when every step was seen.
+    fn catch_up(&mut self) {
+        let Some(g) = self.game.as_mut() else { return };
+        if g.in_flight() || g.world.ticks() <= self.seen {
+            return;
+        }
+        self.seen = g.world.ticks();
+        kit_between(&mut self.kit, g, &self.controls.selected);
+        self.rounds.after_step(g);
+        shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+        turret_fired(g, &mut self.blooks);
+        step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
     }
 
     /// Once a drawn frame, after the steps: what the round should sound
@@ -1033,12 +1158,22 @@ impl App {
         self.refresh_ground();
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
+            v.set_alarm_side((g.world.e.done % 2) as u32);
         }
         self.marks();
         let minimap = self.view.as_ref().is_some_and(|v| v.minimap) && !self.camera.sees_all();
         let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
         let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
         let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
+        // Placing a building: a faint ring where its builders will stand and
+        // raise it from (`BuildRules::reach`; 2026-11-14, the build-flow
+        // thread), so a turret by the slime can be placed with that ring
+        // on the near side of the ground the squad holds.
+        if let (Some((id, at, _)), Some(g)) = (ghost, self.game.as_ref()) {
+            if build_kind(id).is_some() {
+                self.marks.ring(at, g.rules.build.reach * g.world.scale(), [235, 220, 180, 110]);
+            }
+        }
         let model = self.model(hover, ghost);
         if let (Some(c), Some(menu)) = (self.canvas.as_mut(), self.menu.as_mut()) {
             // The start menu instead of the HUD, over the whole map.
@@ -1132,6 +1267,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut select = true;
     let mut cut = None;
     let mut booms: Vec<(f32, f32, f32)> = Vec::new();
+    let mut turrets: Vec<(Kind, (f32, f32))> = Vec::new();
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
     let mut chosen = false;
@@ -1233,6 +1369,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let squad = cut.and_then(|c: Cut| c.squad);
                 cut = Some(Cut { t: *t, x: *x, y: *y, r: *r, hold: more.first().copied().unwrap_or(f32::INFINITY), width: more.get(1).copied().unwrap_or(6.0), squad });
             }
+            "turret" | "lure" | "pump" | "outpost" | "siren" => {
+                // `turret=X,Y` (11-14, the turret films; the other kinds for
+                // the building looks): one standing whole at (X, Y) from the
+                // start, world units as `centre=` (paid for, not raised);
+                // repeat for more.
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [x, y] = w.as_slice() else { return Err(format!("{k}=X,Y").into()) };
+                let kind = match k { "turret" => Kind::Turret, "lure" => Kind::Lure, "pump" => Kind::Pump, "outpost" => Kind::Outpost, _ => Kind::Siren };
+                turrets.push((kind, (*x, *y)));
+            }
             "boom" => {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second
                 // T the squad's round goes off at (X, Y), world units as
@@ -1256,7 +1402,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select, turret, lure, pump, outpost, siren; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
@@ -1278,7 +1424,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(page_named);
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, page, hover, select)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

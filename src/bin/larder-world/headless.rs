@@ -12,12 +12,25 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
     if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
         g.bank = b;
+    }
+    // `turret=X,Y` and the other kinds: standing from the start (the
+    // building films).
+    if let Some(g) = app.game.as_mut() {
+        for &(kind, at) in turrets {
+            let n = g.buildings.len();
+            g.bank += g.build_price(kind, at);
+            if !g.build(kind, at) {
+                return Err(format!("{}={},{}: {}", kind.name(), at.0, at.1, g.build_blocked(kind, at).unwrap_or("blocked")));
+            }
+            let b = &mut g.buildings[n];
+            (b.built, b.hp) = (1.0, b.max_hp);
+        }
     }
     // `menu=PAGE`: the start menu's page drawn over the round, as the
     // window shows it (the menu's pictures).
@@ -247,6 +260,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             None => Vec::new(),
         };
         app.hud.moved(hover);
+        app.controls.cursor = hover;
+        // `hand=buildq` with `hover=`: the turret is being placed under the
+        // cursor (Q, then T), so the picture shows the placing ghost and its
+        // reach ring (2026-11-14, the build-flow thread).
+        if hand == "buildq" && hover.is_some() && app.hud.targeting().is_none() {
+            app.build_page = true;
+            app.prepare();
+            let _ = app.hud.key(KeyCode::KeyT, true, false, &mut app.camera);
+            app.controls.cursor = hover;
+        }
         // The HUD sets the camera's insets as it draws, and `fit` reads
         // them: without this the run's first "all" picture was zoomed in
         // past the world's edges (fit with no insets).
@@ -328,7 +351,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
 /// (`Rules::reserve`), which `finish_step` makes.
 pub(super) fn join_looks(g: &Game<GpuWorld>, looks: &mut Vec<Look>) {
     for s in &g.soldiers[looks.len()..] {
-        looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive });
+        looks.push(Look::new(s));
     }
 }
 
@@ -345,7 +368,8 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
     for s in &g.last_shots {
         // Each leg is where the bullet flew this frame (game state, not an
         // effect), so a bullet draws as a short streak moving out.
-        tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
+        let from = s.from;
+        tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
         if !s.fired {
             continue;
         }
@@ -365,5 +389,90 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
                 looks[k].facing = (c.0 .1 - t.at.1).atan2(c.0 .0 - t.at.0);
             }
         }
+    }
+}
+
+/// A note per building: a turret facing the mould's core when it is new,
+/// a pump its crystal's middle (its hose into the crystal it drains).
+fn join_turrets(g: &Game<GpuWorld>, turrets: &mut Vec<BuildingLook>) {
+    let cs = g.world.crystals();
+    for b in &g.buildings[turrets.len().min(g.buildings.len())..] {
+        let to = match b.crystal.and_then(|c| cs.get(c)) {
+            Some(c) if b.kind == Kind::Pump => c.0,
+            _ => g.core,
+        };
+        turrets.push(BuildingLook { facing: (to.1 - b.at.1).atan2(to.0 - b.at.0), ..BuildingLook::default() });
+    }
+}
+
+/// A turret that fired this step faces down its shot and kicks (turret
+/// look, owner's playtest 11-14 08:15Z): the shot is the game's, from the
+/// turret's own place.
+pub(super) fn turret_fired(g: &Game<GpuWorld>, turrets: &mut Vec<BuildingLook>) {
+    join_turrets(g, turrets);
+    for s in g.turret_shots().filter(|s| s.fired) {
+        // The game starts a turret's shot at its barrel tip
+        // (`TURRET_MUZZLE` touch radii out, less for mould at its foot).
+        let tip = TURRET_MUZZLE * g.rules.build.touch * g.world.scale() + 0.5;
+        if let Some(k) = g.buildings.iter().position(|b| b.kind == Kind::Turret && b.alive && (b.at.0 - s.from.0).hypot(b.at.1 - s.from.1) < tip) {
+            (turrets[k].facing, turrets[k].shot) = ((s.to.1 - s.from.1).atan2(s.to.0 - s.from.0), TURRET_SHOT);
+        }
+    }
+}
+
+/// Between shots a turret's head turns toward its aim (`Building::aim`,
+/// what it would shoot), at `TURRET_TURN`; with nothing in reach it holds.
+pub(super) fn turn_turrets(g: &Game<GpuWorld>, turrets: &mut Vec<BuildingLook>, dt: f32) {
+    join_turrets(g, turrets);
+    for (t, b) in turrets.iter_mut().zip(&g.buildings) {
+        t.shot = (t.shot - dt).max(0.0);
+        if let (Kind::Turret, Some(aim)) = (b.kind, b.aim) {
+            let want = (aim.1 - b.at.1).atan2(aim.0 - b.at.0);
+            let mut d = want - t.facing;
+            d = (d + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
+            t.facing += d.clamp(-TURRET_TURN * dt, TURRET_TURN * dt);
+        }
+    }
+}
+
+/// The window's notes of a step it saw (after `shot_marks` and
+/// `turret_fired`; building looks, 11-14): a siren that called starts its
+/// call; a carrier whose load went into a drop-off flares that outpost or
+/// the larder (before, the larder flared on any rise of the harvest, a
+/// pump's draw or a load banked at an outpost included); a soldier the
+/// slime bit takes the damage, and every `FLINCH_HP` of it flinches away
+/// from the bite.
+pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, looks: &mut Vec<Look>, banked: &mut f32) {
+    join_turrets(g, blooks);
+    join_looks(g, looks);
+    for (n, b) in blooks.iter_mut().zip(&g.buildings) {
+        if b.kind == Kind::Siren && b.working && b.on {
+            n.call = SIREN_CALL;
+        }
+    }
+    // Only banking empties a living soldier's pack, at the drop-off
+    // nearest it (`Game::drop_offs`, as the game's own `drop_off`).
+    let drops = g.drop_offs();
+    for (l, s) in looks.iter_mut().zip(&g.soldiers) {
+        if s.alive && l.carry > 0.0 && s.carry < l.carry * 0.5 {
+            let d = |p: &(f32, f32)| (p.0 - s.x).hypot(p.1 - s.y);
+            let home = drops.iter().min_by(|a, b| d(a).total_cmp(&d(b))).copied().unwrap_or(g.larder);
+            match g.buildings.iter().position(|b| b.kind == Kind::Outpost && b.up() && b.at == home) {
+                Some(k) => blooks[k].bank = BANKED,
+                None => *banked = BANKED,
+            }
+        }
+        if s.alive && s.touching > 0 && s.hp < l.hp {
+            l.hurt += l.hp - s.hp;
+            if l.hurt >= FLINCH_HP {
+                l.hurt = (l.hurt - FLINCH_HP).min(FLINCH_HP);
+                l.flinch = FLINCH;
+                // From the slime it would shoot (`Soldier::aim`, the densest
+                // mould in its sight), else from the mould's core.
+                let from = s.aim.unwrap_or(g.core);
+                l.bite = (from.1 - s.y).atan2(from.0 - s.x);
+            }
+        }
+        (l.hp, l.carry) = (s.hp, s.carry);
     }
 }

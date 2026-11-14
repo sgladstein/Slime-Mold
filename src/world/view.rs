@@ -26,16 +26,17 @@ pub const SHADER: &str = include_str!("view.wgsl");
 /// `sprites/render.js` (the owner's pick, 2026-11-11 16:48Z).
 pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
-/// Bytes in the uniform (20 words).
-const PARAMS_BYTES: usize = 128;
+/// Bytes in the uniform (40 words).
+const PARAMS_BYTES: usize = 160;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
 const MARGIN: u32 = 4;
 /// The bindings after the first twenty, in `bind`'s order: 20 the lights,
 /// then 21-24 the crystals' live charge, their heat (`drain`), the terrain
-/// cells (`tcell`) and the crystal cells listed.
-const BINDINGS_AFTER: [u32; 5] = [LIGHTS_BINDING, 21, 22, 23, 24];
+/// cells (`tcell`) and the crystal cells listed, and 25-26 the engine's two
+/// germ fields, whose second block is the alarm (`set_alarm`).
+const BINDINGS_AFTER: [u32; 7] = [LIGHTS_BINDING, 21, 22, 23, 24, 25, 26];
 
 /// The most point lights a frame (`View::set_lights`); `shaded` loops over
 /// them a pixel, so the cap bounds that loop.
@@ -47,7 +48,10 @@ const LIGHTS_BINDING: u32 = 20;
 /// A point light (`View::set_lights`): something in the game that gives
 /// off light, lighting the world's own relief. `at` and `reach` in world
 /// cells, `lift` its height above the ground in cells, `colour` 0-255 and
-/// `strength` (1 about a lamp's worth at its centre).
+/// `strength` (1 about a lamp's worth at its centre). A `lift` below 0 is
+/// a scent light (a burning lure's, 11-14): `-lift` high, lighting each
+/// spot only as far as the engine's scent there, so the glow is the scent
+/// field itself.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Light {
     pub at: (f32, f32),
@@ -107,6 +111,9 @@ pub struct View {
     look: wgpu::Buffer,
     ground: wgpu::Buffer,
     walkers: wgpu::Buffer,
+    /// Two screens of words: the walkers' specks (`draw_specks`), then the
+    /// absorbed walkers' streaks (`draw_absorbed`, 11-14), a buffer half of
+    /// their own so the specks' calm/lean/bolt fields keep their room.
     specks: wgpu::Buffer,
     /// Each walker's energy, when the world grows (`set_alive`): a slot
     /// below 0 is empty or dead and draws no speck.
@@ -124,6 +131,10 @@ pub struct View {
     /// those cut off from food), counted each frame by `draw_specks`.
     fgrid: wgpu::Buffer,
     news_on: bool,
+    /// Dense slime condenses (`set_dense`): where each walker's condensing
+    /// word starts in the bound `news` (words; 0 off).
+    dense_at: u32,
+    ripe_at: u32,
     lag: u32,
     lean: u32,
     /// The crystals drawn as hexagons (`set_crystals`): centres and radii,
@@ -139,6 +150,11 @@ pub struct View {
     charge: wgpu::Buffer,
     heat: wgpu::Buffer,
     gem_list: wgpu::Buffer,
+    /// The engine's germ fields, both sides (bindings 25-26; `set_alarm`),
+    /// which is current (`set_alarm_side`), and the alarm that reads full.
+    germ: [wgpu::Buffer; 2],
+    alarm_side: u32,
+    alarm_full: f32,
     n_list: u32,
     gem_words: Vec<f32>,
     live: std::cell::Cell<u32>,
@@ -192,7 +208,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro), entry(25, ro), entry(26, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -204,7 +220,7 @@ impl View {
         let vis = storage(device, "visibility", 16);
         let (stride, out, overlay, top) = Self::screen_buffers(device, screen);
         let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
-        let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 4);
+        let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 8);
         let atlas = Self::atlas(device, queue);
         let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
@@ -213,7 +229,8 @@ impl View {
         let fgrid = Self::fine_buffer(device, screen);
         let (gems, gem_cell) = (storage(device, "crystals", 16), storage(device, "crystal cells", 16));
         let (charge, heat, gem_list) = (storage(device, "charge", 16), storage(device, "crystal heat", 16), storage(device, "crystal list", 16));
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list]);
+        let germ = [storage(device, "germ 0", 16), storage(device, "germ 1", 16)];
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list, &germ[0], &germ[1]]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -236,6 +253,8 @@ impl View {
             state,
             fgrid,
             news_on: false,
+            dense_at: 0,
+            ripe_at: 0,
             lag: 0,
             lean: 0,
             gems,
@@ -244,6 +263,9 @@ impl View {
             charge,
             heat,
             gem_list,
+            germ,
+            alarm_side: 0,
+            alarm_full: 0.0,
             n_list: 0,
             gem_words: Vec::new(),
             live: std::cell::Cell::new(0),
@@ -271,10 +293,10 @@ impl View {
     }
 
     /// The soldier sprite atlas on the GPU: `SPRITES` decoded, a u32 RGBA
-    /// a texel, 2048 x 160 (16 tiles).
+    /// a texel, 2176 x 160 (17 tiles).
     fn atlas(dev: &wgpu::Device, queue: &wgpu::Queue) -> wgpu::Buffer {
         let img = image::load_from_memory(SPRITES).expect("sprites.png").to_rgba8();
-        assert_eq!(img.dimensions(), (2048, 160), "the atlas the view's shader expects");
+        assert_eq!(img.dimensions(), (2176, 160), "the atlas the view's shader expects");
         let b = storage(dev, "sprites", img.as_raw().len() as u64);
         queue.write_buffer(&b, 0, img.as_raw());
         b
@@ -298,9 +320,15 @@ impl View {
     /// `prep`'s fine cells, at most as many as `cell_buffers`' cells: the
     /// rectangle is the screen over the zoom and a margin, `fine` (at most
     /// a third of the zoom) cells each way.
+    /// Two grids of `fine_half` words: the walkers a fine cell (and the
+    /// cut-off ones), then the condensing weights (`set_dense`: condensed
+    /// and ripening in the low 16 bits, fresh absorptions above).
     fn fine_buffer(dev: &wgpu::Device, screen: (u32, u32)) -> wgpu::Buffer {
-        let n = (screen.0 + 2 * MARGIN + 2) as u64 * (screen.1 + 2 * MARGIN + 2) as u64;
-        storage(dev, "fine walkers", n * 4)
+        storage(dev, "fine walkers", Self::fine_half(screen) as u64 * 8)
+    }
+
+    fn fine_half(screen: (u32, u32)) -> u32 {
+        (screen.0 + 2 * MARGIN + 2) * (screen.1 + 2 * MARGIN + 2)
     }
 
     /// Fine cells a cell each way at zoom `zoom` (`prep`; 2026-11-14): one
@@ -311,14 +339,14 @@ impl View {
     }
 
     /// The bind group: `bufs` in binding order, 0-19 then `BINDINGS_AFTER`.
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 25]) -> wgpu::BindGroup {
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 27]) -> wgpu::BindGroup {
         let binding = |i: usize| if i < 20 { i as u32 } else { BINDINGS_AFTER[i - 20] };
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: binding(i), resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1]]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -447,11 +475,61 @@ impl View {
         }
     }
 
+    /// Shows the engine's alarm field (2026-11-14, the art director: a
+    /// siren's call drawn from the real field, not rings timed from the
+    /// call): `germ` the engine's two germ fields (`gpu::Engine::germ`),
+    /// whose second block of cells is the alarm, and `full` the alarm that
+    /// reads at full strength (a siren's `siren_alarm`). The view draws it
+    /// over the world as a faint red haze with a brighter front where the
+    /// field falls off, so a call spreads and fades as the engine spreads
+    /// and decays it, and a shot's alarm shows too. `None` hides it. Each
+    /// frame `set_alarm_side` says which side is current.
+    pub fn set_alarm(&mut self, germ: Option<[&wgpu::Buffer; 2]>, full: f32) {
+        match germ {
+            Some([a, b]) => {
+                self.germ = [a.clone(), b.clone()];
+                self.alarm_full = full.max(1e-3);
+            }
+            None => {
+                self.germ = [storage(&self.device, "germ 0", 16), storage(&self.device, "germ 1", 16)];
+                self.alarm_full = 0.0;
+            }
+        }
+        self.rebind();
+    }
+
+    /// Which germ field is current (`Engine::done` % 2), each frame.
+    pub fn set_alarm_side(&mut self, side: u32) {
+        self.alarm_side = side & 1;
+    }
+
     fn clear_charge(&mut self) {
         if self.live.get() != 0 {
             (self.charge, self.heat) = (storage(&self.device, "charge", 16), storage(&self.device, "crystal heat", 16));
             self.live.set(0);
         }
+    }
+
+    /// Shows which walkers have condensed (`BigParams::condense`, 11-14):
+    /// the engine's `news` and `state` (as `set_news` takes them; bind them
+    /// here too when the world does not wither) and the word each walker's
+    /// condensing word starts at (`gpu::Engine::dense_at` / 4 +
+    /// `gpu::DENSE_HEAD`). A condensed walker counts twice in the body (it
+    /// is two walkers' worth) and the mould round it takes the condensed
+    /// colour by the share of its walkers condensed; a ripening walker warms
+    /// toward it by its ripeness over `ripe_at` (the `condense` steps), and
+    /// a fresh one's speck flares. Call after `set_news`.
+    pub fn set_dense(&mut self, news: Option<(&wgpu::Buffer, &wgpu::Buffer)>, at: u32, ripe_at: u32) {
+        match news {
+            Some((n, s)) => {
+                if !self.news_on {
+                    (self.news, self.state) = (n.clone(), s.clone());
+                }
+                (self.dense_at, self.ripe_at) = (at, ripe_at);
+            }
+            None => self.dense_at = 0,
+        }
+        self.rebind();
     }
 
     /// The game's time in seconds, each frame (the crystals' `drain`
@@ -462,9 +540,10 @@ impl View {
     }
 
     fn clear_news(&mut self) {
-        if self.news_on {
+        if self.news_on || self.dense_at > 0 {
             (self.news, self.state) = (storage(&self.device, "news", 16), storage(&self.device, "state", 16));
             self.news_on = false;
+            self.dense_at = 0;
         }
     }
 
@@ -494,7 +573,7 @@ impl View {
     pub fn resize(&mut self, screen: (u32, u32)) {
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
         (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
-        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 4);
+        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 8);
         (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, screen);
         self.fgrid = Self::fine_buffer(&self.device, screen);
         self.has_overlay = false;
@@ -603,6 +682,12 @@ impl View {
         let dt = if live == 1 { (self.game_t - self.last_t.get()).max(0.0) } else { 0.0 };
         self.last_t.set(self.game_t);
         for v in [self.news_on as u32, self.lag, self.lean, self.n_gems, k, self.n_list * (live > 0) as u32, dt.to_bits(), live] {
+            b.extend(v.to_le_bytes());
+        }
+        for v in [self.dense_at, self.ripe_at, Self::fine_half(self.screen), self.stride * self.screen.1] {
+            b.extend(v.to_le_bytes());
+        }
+        for v in [self.alarm_side, self.alarm_full.to_bits(), 0, 0] {
             b.extend(v.to_le_bytes());
         }
         if live == 2 {
@@ -897,6 +982,67 @@ mod tests {
         assert_eq!(checked, 40);
     }
 
+    /// The engine's alarm field shows (`set_alarm`, 11-14): a disc of
+    /// alarm on the current germ side lifts the ground most at its edge,
+    /// where the field falls off, less inside, nothing far outside; the
+    /// other side or no alarm bound shows nothing.
+    #[test]
+    fn the_alarm_field_shows_its_front_on_the_current_side() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let (c, r, full) = ((32.0f32, 20.0f32), 10.0f32, 150.0f32);
+        let mut germ = vec![0.0f32; 3 * w * h];
+        for y in 0..h {
+            for x in 0..w {
+                if (x as f32 + 0.5 - c.0).hypot(y as f32 + 0.5 - c.1) <= r {
+                    germ[w * h + y * w + x] = full;
+                }
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let f32s = |v: &[f32]| v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>();
+        let look_b = buf("look", &vec![0u8; w * h * 4]);
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &[0u8; 16]);
+        let (live, empty) = (buf("germ live", &f32s(&germ)), buf("germ empty", &f32s(&vec![0.0; 3 * w * h])));
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 0);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on(c);
+        let frame = |view: &View| {
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        let lum = |pic: &image::RgbaImage, x: f32, y: f32| {
+            let (sx, sy) = cam.to_screen((x, y));
+            let p = pic.get_pixel(sx as u32, sy as u32).0;
+            p[0] as i32 + p[1] as i32 + p[2] as i32
+        };
+        let bare = frame(&view);
+        let spots = |pic: &image::RgbaImage| [lum(pic, c.0, c.1), lum(pic, c.0 + r, c.1), lum(pic, c.0 + r + 8.0, c.1)];
+        let [mid0, edge0, out0] = spots(&bare);
+        view.set_alarm(Some([&empty, &live]), full);
+        view.set_alarm_side(1);
+        let [mid, edge, out] = spots(&frame(&view));
+        assert!(edge > edge0 + 60 && edge > mid + 30, "the front lifts most: edge {edge0} -> {edge}, middle {mid}");
+        assert!(mid >= mid0 && (out - out0).abs() <= 6, "middle {mid0} -> {mid}, outside {out0} -> {out}");
+        view.set_alarm_side(0);
+        assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "the other side holds no alarm");
+        view.set_alarm(None, 0.0);
+        assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "none bound, none shown");
+    }
+
     /// A crystal shows its live charge (the owner's playtest, 2026-11-14
     /// 04:53Z: "harvesting crystals could look way better"): with the
     /// engine's charge bound, the full half is cyan and the drained half
@@ -1035,7 +1181,9 @@ mod tests {
     fn a_lone_walker_is_bright_and_the_body_stays_calm() {
         let Some((dev, q)) = test_gpu() else { return };
         let (w, h) = (64usize, 40usize);
-        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        // Agar, with the engine's mould colour round the lone walker (as the
+        // engine tints a cell with mould on it).
+        let px: Vec<u8> = (0..w * h).flat_map(|i| if (i % w).abs_diff(44) <= 2 && (i / w).abs_diff(20) <= 2 { [200u8, 160, 60, 255] } else { [12, 22, 26, 255] }).collect();
         let world = storage(&dev, "world", px.len() as u64);
         q.write_buffer(&world, 0, &px);
         // A body of 4 walkers a cell over x 4..20, and one walker alone at
@@ -1049,7 +1197,7 @@ mod tests {
                 }
             }
         }
-        look[20 * w + 44] = 60 | (1 << 8);
+        look[20 * w + 44] = 200 | (1 << 8);
         walk.extend([44.5f32, 20.5, 0.0, 0.0]);
         let buf = |label: &str, bytes: &[u8]| {
             let b = storage(&dev, label, bytes.len() as u64);
@@ -1076,6 +1224,19 @@ mod tests {
         };
         let (lone, bare) = (lum(44.5, 20.5), lum(52.5, 20.5));
         assert!(lone > bare + 90.0, "a lone walker {lone} on bare ground {bare}");
+        // And it is a point of light, not a dome (art director, 11-14
+        // 08:15Z: the frontier read as bubble wrap): no shaded flank or cast
+        // shadow on the side away from the light: the darkest pixel within
+        // 1.5 cells of it stays well above bare ground.
+        let mut lee = f32::MAX;
+        for j in 0..18 {
+            for i in 0..18 {
+                lee = lee.min(lum(43.0 + i as f32 / 6.0, 19.0 + j as f32 / 6.0));
+            }
+        }
+        // Flat, its film is lit all round it: 60.5 against bare 42.1, where
+        // the dome's shaded flank came down to 44.6 against 40.3.
+        assert!(lee > bare + 10.0, "the darkest pixel round a lone walker {lee} against bare ground {bare}");
         // In the body: the brightest and dimmest of a cell's pixels differ
         // by less than the lone walker stands above bare ground.
         let mut vals = Vec::new();

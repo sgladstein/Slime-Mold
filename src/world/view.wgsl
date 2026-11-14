@@ -33,6 +33,16 @@ struct V {
     // the game seconds since the last frame, and 0 off, 1 on, 2 a first
     // frame that only reads the charge.
     n_list: u32, dt: f32, live: u32,
+    // Dense slime condenses (`View::set_dense`, 11-14): the word in `news`
+    // where each walker's condensing word starts (0 off); `DENSE_BIT` marks
+    // a condensed walker (the engine's `dense_word`); `ripe_at` the steps
+    // a walker must be ripe to condense (`condense`); `fhalf` where the
+    // fine grid's second half (the condensing weights) starts.
+    // `shalf` where the specks' second half (the streaks) starts.
+    dense_at: u32, ripe_at: u32, fhalf: u32, shalf: u32,
+    // The engine's alarm field (`View::set_alarm`, 11-14): which germ field
+    // is current (0 or 1), and the alarm that reads full (0: not shown).
+    alarm_side: u32, alarm_full: f32, _a0: u32, _a1: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -54,9 +64,9 @@ struct V {
 @group(0) @binding(8) var<storage, read> ground: array<u32>;
 @group(0) @binding(9) var<storage, read> walkers: array<vec4<f32>>;
 @group(0) @binding(10) var<storage, read_write> specks: array<atomic<u32>>;
-// The sprites (`src/world/sprites/`): 2048 x 160 RGBA, sixteen 128 px
+// The sprites (`src/world/sprites/`): 2176 x 160 RGBA, seventeen 128 px
 // tiles (soldier body, helmet, flash, dead; six buildings, each body then
-// lamp) above the same at 32 px.
+// lamp; the turret's head) above the same at 32 px.
 @group(0) @binding(11) var<storage, read> atlas: array<u32>;
 // Each shown cell's height and material, worked out once a frame by `prep`
 // (rows `rw` apart from cell ox, oy). `base` reads these: a pixel needs 24
@@ -100,6 +110,11 @@ struct V {
 // byte 2 the kind, byte 3 its value (a wall's health; rock's elevation).
 // Binding 23 (20 is the lights, 21, 22 and 24 the live charge).
 @group(0) @binding(23) var<storage, read_write> tcell: array<u32>;
+// The engine's two germ fields (`View::set_alarm`, 11-14; bindings agreed
+// with the slime-look thread): three blocks of cells each, germ, alarm,
+// gas; `alarm_side` says which is current.
+@group(0) @binding(25) var<storage, read> germ0: array<f32>;
+@group(0) @binding(26) var<storage, read> germ1: array<f32>;
 
 fn unpack(c: u32) -> vec3<f32> {
     return vec3<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u));
@@ -187,6 +202,19 @@ const CLAY_RGB: vec3<f32> = vec3<f32>(56.0, 38.0, 34.0);
 const BARREN_RGB: vec3<f32> = vec3<f32>(50.0, 50.0, 50.0);
 // Mould cut off from food fades towards this (`cell_mat`'s `cut`).
 const ASH_RGB: vec3<f32> = vec3<f32>(120.0, 112.0, 104.0);
+// Condensed mould's colour (`cell_mat_c`'s `dense`): a deep bronze-brown,
+// the gold body gone darker and denser, told from the panic's amber and
+// the bolt's red by value and shine, not hue (art director, 11-14: the
+// first copper, 215,88,30, sat between the two and read as panic at zoom
+// 6). Its gloss is near full, so the highlight is tight and bright. A
+// condensed walker's mark in its word (the engine's `DENSE_BIT`), an
+// absorbed one's (`ABSORB_BIT`, its steps since in the low bits, for
+// `ABSORB_STEPS`), and the light of fresh absorptions (`prep`).
+const DENSE_RGB: vec3<f32> = vec3<f32>(92.0, 58.0, 34.0);
+const DENSE_BIT: u32 = 0x10000u;
+const ABSORB_BIT: u32 = 0x20000u;
+const ABSORB_STEPS: f32 = 15.0;
+const ABSORB_RGB: vec3<f32> = vec3<f32>(255.0, 232.0, 190.0);
 // The engine's colour for bare agar; what it adds above this (scent,
 // species, germ, grass tints) is laid over the soil.
 const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
@@ -356,11 +384,11 @@ fn gem_charge(k: u32, x: f32, y: f32) -> f32 { return gem_state(k, x, y).x; }
 
 // A spent crystal keeps this share of its height: a low stub of grey rock,
 // not a hole.
-const GEM_STUB: f32 = 0.15;
+const GEM_STUB: f32 = 0.1;
 // The most a mould film on a crystal covers it (`shaded`): a thick mat
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
-const GEM_FILM: f32 = 0.75;
+const GEM_FILM: f32 = 0.92;
 // The rate (share of a cell's full charge a game second) that lights a
 // cell half way.
 const GEM_HOT: f32 = 0.15;
@@ -481,13 +509,13 @@ fn colour_at(x: f32, y: f32) -> vec3<f32> {
     return c / ws;
 }
 
-fn cell_mat(ix: i32, iy: i32, th: f32, cut: f32) -> Mat {
-    return cell_mat_c(ix, iy, th, cut, cell_colour(ix, iy));
+fn cell_mat(ix: i32, iy: i32, th: f32, cut: f32, dense: f32) -> Mat {
+    return cell_mat_c(ix, iy, th, cut, dense, cell_colour(ix, iy));
 }
 
 // A cell's material with the engine's colour `c` (`cell_colour`, or the
 // smoothed `colour_at` for a fine cell).
-fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
+fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> Mat {
     var m: Mat;
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) {
         m.albedo = mix(SOIL_LOW, SOIL_HIGH, 0.5); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.body = 0.0; m.gem = 0.0;
@@ -537,14 +565,33 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
     // piece loses the push with its colour (`cut`). Every weight is a
     // smooth function of `th`, so no line is drawn where the film ends.
     let lum = dot(hue, vec3<f32>(0.299, 0.587, 0.114));
-    let vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut));
-    let body_c = vivid * (0.95 + 0.3 * smoothstep(0.3, 1.0, th));
-    let gel = soil * (0.55 + 0.7 * vivid / 255.0);
+    // The push eases off where the body is thickest (art director, 11-14
+    // 08:15Z: the soldiers and the bullet light must still win the value
+    // order), and the gel adds a little of the hue's own light, so a thin
+    // film stays above the darker ground (crystals thread, 11-14) in grey.
+    let thick = smoothstep(0.6, 1.0, th);
+    let vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut)) * (1.0 - 0.3 * thick);
+    // Condensed mould (11-14, the condense thread): where its walkers have
+    // condensed (`dense`, the share of the mass round the cell) the body
+    // turns deep bronze and holds near-full gloss, a harder, denser body,
+    // so the half of the cover it gave up and the strength it kept both
+    // show. The share is the fade, as the ash's is. It is mixed after the
+    // gold's saturation push: mixed into the hue before it, the push turned
+    // the bronze orange, the panic's colour.
+    let shade_th = 0.95 + 0.2 * smoothstep(0.3, 1.0, th);
+    let body_c = mix(vivid * shade_th, DENSE_RGB * shade_th, dense * (1.0 - cut));
+    let gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
     let film = 1.0 - exp(-14.0 * th);
-    let opaque = smoothstep(0.08, 0.55, th);
+    // Opaque from a third of full thickness (was 0.08 to 0.55). The fork's
+    // start crystal stands on a disc of clay; the body over it was only
+    // about half opaque, so the clay showed through as a flat orange-red
+    // disc with the map patch's own edge (art director, 11-14, via the
+    // crystals thread). The ground now shows through the frontier's thin
+    // film only, where its thickness grades it.
+    let opaque = smoothstep(0.05, 0.35, th);
     m.albedo = mix(mix(soil, gel, film), body_c, opaque * 0.95);
     m.glow = vec3<f32>(0.0);
-    m.gloss = (0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut);
+    m.gloss = mix((0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut), 0.95, dense * (1.0 - cut));
     m.body = 0.0;
     m.gem = 0.0;
     if (kind == WET) {
@@ -597,6 +644,8 @@ fn mc(ix: i32, iy: i32) -> Mat {
 // reading the 25 cells from the look for each cell cost the 1070 about
 // 0.5 ms at zoom 1 (1920 x 1080; 1.19 -> 1.68 ms, matched fast runs).
 var<workgroup> crowd: array<u32, 576>;
+// The fine grid's second half on the same tile (`set_dense`).
+var<workgroup> crowd2: array<u32, 576>;
 
 // The slime below the cell (2026-11-14, the owner's playtest, 01:49Z: "The
 // slime looks very blurry/out of focus"). Before, the body was one value a
@@ -622,6 +671,32 @@ const BODY_S: f32 = 1.1;
 // The trail (the look's byte 0) at (x, y): a Gaussian of the 4 x 4 cells
 // round, smooth in the position, so its slope has no crease at the cell
 // borders (bilinear did: square facets a cell wide in the shading).
+// The engine's scent at (x, y) (the look's byte 3, 1 - e^(-scent/60)),
+// bilinear over the four cells round it.
+fn look_scent(x: f32, y: f32) -> f32 {
+    let fx = x - 0.5; let fy = y - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let tx = fx - f32(ix); let ty = fy - f32(iy);
+    let a = mix(byte(look[cidx(ix, iy)], 3u), byte(look[cidx(ix + 1, iy)], 3u), tx);
+    let b = mix(byte(look[cidx(ix, iy + 1)], 3u), byte(look[cidx(ix + 1, iy + 1)], 3u), tx);
+    return mix(a, b, ty);
+}
+
+// The engine's alarm on cell (ix, iy) (the germ fields' second block).
+fn alarm_cell(ix: i32, iy: i32) -> f32 {
+    let i = P.ww * P.wh + cidx(ix, iy);
+    if (P.alarm_side == 0u) { return germ0[i]; }
+    return germ1[i];
+}
+
+// The alarm at (x, y), bilinear.
+fn alarm_at(x: f32, y: f32) -> f32 {
+    let fx = x - 0.5; let fy = y - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let tx = fx - f32(ix); let ty = fy - f32(iy);
+    return mix(mix(alarm_cell(ix, iy), alarm_cell(ix + 1, iy), tx), mix(alarm_cell(ix, iy + 1), alarm_cell(ix + 1, iy + 1), tx), ty);
+}
+
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
     var t = 0.0;
@@ -647,8 +722,13 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     for (var k = li; k < 576u; k += 256u) {
         let fx = bx + i32(k % 24u); let fy = by + i32(k / 24u);
         var v = 0u;
-        if (fx >= 0 && fy >= 0 && fx < i32(P.rw) && fy < i32(P.rh)) { v = atomicLoad(&fgrid[u32(fy) * P.rw + u32(fx)]); }
+        var v2 = 0u;
+        if (fx >= 0 && fy >= 0 && fx < i32(P.rw) && fy < i32(P.rh)) {
+            v = atomicLoad(&fgrid[u32(fy) * P.rw + u32(fx)]);
+            if (P.dense_at > 0u) { v2 = atomicLoad(&fgrid[P.fhalf + u32(fy) * P.rw + u32(fx)]); }
+        }
         crowd[k] = v;
+        crowd2[k] = v2;
     }
     workgroupBarrier();
     if (gid.x >= P.rw || gid.y >= P.rh) { return; }
@@ -662,6 +742,8 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     var ws = 0.0;
     var nb = 0.0;
     var wb = 0.0;
+    var dn = 0.0;
+    var ab = 0.0;
     // Gaussians are separable: nine weights a side each, not 81 exps.
     var g1: array<f32, 9>;
     var g2: array<f32, 9>;
@@ -677,6 +759,9 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
             let w = g1[dx] * g1[dy];
             n += w * c;
             m += w * f32(t >> 16u) / 15.0;
+            let t2 = crowd2[(lid.y + dy) * 24u + lid.x + dx];
+            dn += w * f32(t2 & 0xFFFFu) / 15.0;
+            ab += w * f32(t2 >> 16u);
             ws += w;
             let v = g2[dx] * g2[dy];
             nb += v * c;
@@ -684,6 +769,14 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         }
     }
     let cut_share = clamp(m / max(n, 1e-3), 0.0, 1.0);
+    // The share of the mould's mass round the cell that has condensed (a
+    // condensed walker counts two in `n`).
+    let dense_share = clamp(2.0 * dn / max(n, 1e-3), 0.0, 1.0);
+    // Fresh absorptions round the cell (the last 0.3 s, `draw_specks`)
+    // light it warm-white by how many (art director, 11-14: a big
+    // condensation flares, a trickle glints), a fine cell's worth of them
+    // near full; it cools into the condensed colour as they age out.
+    let flash = 1.0 - exp(-0.6 * ab / ws * kf * kf);
     // Walkers a cell here, as the 5 x 5 window `BODY_N` was set on: near
     // (the sharp count) and wide (the body's).
     var n0 = BODY_N;
@@ -702,7 +795,25 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // fine grid, while the wide share keeps them calm (all-sharp, at four
     // fine cells a cell, was lumpy squares).
     let dense = smoothstep(0.15, 0.45, wide) * 0.6;
-    let th = look_trail(wx, wy) * mix(near, wide, dense);
+    let th0 = look_trail(wx, wy) * mix(near, wide, dense);
+    // Condensed mould keeps tight, raised edges (art director, 11-14: it
+    // should read tougher at a glance): where it has condensed the
+    // thickness is pushed through a steep curve, so the body is a full,
+    // smooth plateau with a short edge (its highlight sits tight on the
+    // rim), and stands up to a half taller (`th_h`, the height only). Taking
+    // more of the sharp count instead made the inside lumpy and glittering.
+    let th = mix(th0, smoothstep(0.04, 0.3, th0), 0.45 * dense_share);
+    // The height's thickness comes in with the wide count (art director,
+    // 11-14 08:15Z: the thin frontier read as bubble wrap, each lone walker
+    // a dome with a cast shadow and a glint). A walker alone (wide about
+    // 0.4) is a point of light (its speck) on a flat film; the height
+    // rises as walkers gather, full in the body (wide 0.6 and up).
+    // Settled condensed mould keeps its veins (art director, 11-14
+    // follow-up: the plateau read as a flat plate): its height takes the
+    // raw thickness `th0`, veins and all, raised by up to 0.6, so the broad
+    // sheen runs over it as over dense wet metal; only its colour takes the
+    // plateau. The first cut fed the plateau to the height too.
+    let th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share) * smoothstep(0.3, 0.6, wide);
     // The hard terrain a whole cell (`tcell`), from the fine cell at the
     // cell's corner.
     if (gid.x % P.fine == 0u && gid.y % P.fine == 0u) {
@@ -715,9 +826,10 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     let tm = max(th, 0.4 * near);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
-        hcell[i] = cell_height(ix, iy, th);
-        var m1 = cell_mat(ix, iy, tm, cut_share);
+        hcell[i] = cell_height(ix, iy, th_h);
+        var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
         m1.body = wide;
+        m1.glow += ABSORB_RGB * 0.45 * flash;
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -736,10 +848,11 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         let wq = w4[q];
         if (wq <= 0.0) { continue; }
         let cx = ix + o[q].x; let cy = iy + o[q].y;
-        h += wq * cell_height(cx, cy, th);
-        let mq = cell_mat_c(cx, cy, tm, cut_share, cs);
+        h += wq * cell_height(cx, cy, th_h);
+        let mq = cell_mat_c(cx, cy, tm, cut_share, dense_share, cs);
         mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss;
     }
+    mt.glow += ABSORB_RGB * 0.45 * flash;
     hcell[i] = h;
     mcell[i] = mat_pack(mt);
 }
@@ -808,7 +921,18 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // A wet sheet: the glossier (thicker) the mould, the tighter and
     // brighter its highlight, so a raised vein carries a sharp white glint
     // along its lit flank and a thin film only a faint sheen.
-    let spec = pow(max(dot(n, half_v), 0.0), 16.0 + 64.0 * m.gloss) * m.gloss * (0.5 + 0.9 * m.gloss);
+    // The highlight takes its normal from the height sampled wider than
+    // the shading's (bilinear, four cheap samples) and a broad lobe (art director,
+    // 11-14 08:15Z: at the fine slope and exponent 16-80 the dense body
+    // glittered like crumpled gold foil): wet sheens along the veins, not
+    // one glint a walker clump.
+    // The spacing is some 9 screen pixels (1.5 cells at zoom 6, 0.75 at
+    // 12): a fixed 1.5 cells made zoom 12 read soft again.
+    let so = clamp(9.0 / P.zoom, 0.6, 1.5);
+    let sx = cells_height_lin(x + so, y) - cells_height_lin(x - so, y);
+    let sy = cells_height_lin(x, y + so) - cells_height_lin(x, y - so);
+    let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
+    let spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
     var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
     // Each point light on this surface: diffuse on its albedo, a highlight
     // by its gloss, falling to nothing at the light's reach. The surface's
@@ -817,17 +941,43 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     for (var j = 0u; j < P.n_lights; j++) {
         let a = lights[2u * j];
         let lc = lights[2u * j + 1u];
-        let to = vec3<f32>(a.x - x, a.y - y, a.w - h);
+        let to = vec3<f32>(a.x - x, a.y - y, abs(a.w) - h);
         let d2 = dot(to.xy, to.xy);
         let rr = a.z * a.z;
         if (d2 >= rr) { continue; }
         let fall = 1.0 - d2 / rr;
-        let att = fall * fall * lc.w;
+        var att = fall * fall * lc.w;
+        // A scent light (lift below 0, a burning lure's, 11-14): lit only
+        // as far as the engine's scent there (the look's byte 3), so what
+        // glows is the scent the lure really lays, spreading while it
+        // burns and fading as the field does once it stops.
+        // The scent glows a little of itself too, as the gas cloud does,
+        // so it shows on the dark bare ground the light alone barely lifts.
+        if (a.w < 0.0) {
+            att *= look_scent(x, y);
+            c += lc.xyz * att * 0.22;
+        }
         let ld = normalize(to);
         let diff = max(dot(n, ld), 0.0);
         let hv = normalize(ld + vec3<f32>(0.0, 0.0, 1.0));
         let sp = pow(max(dot(n, hv), 0.0), 24.0) * (0.15 + m.gloss);
         c += (m.albedo * (lc.xyz / 255.0) * diff * 1.6 + lc.xyz * sp * 0.9) * att;
+    }
+    // The alarm field (a siren's call, a shot's alarm; 11-14): a pale cool
+    // haze by its strength and a brighter front where it falls off (its
+    // slope), so a call is the engine's field spreading and fading as the
+    // engine spreads and decays it. Pale, not red: red is a bolting walker
+    // and the cut-off rim (the slime-look thread).
+    // Where the field is under 1% of full, nothing is drawn and its slope
+    // is not sampled: five bilinear samples everywhere cost llvmpipe 10% of
+    // the frame (86.7 -> 95.3 ms GPU tail, 11-14).
+    let a = select(0.0, alarm_at(x, y), P.alarm_full > 0.0);
+    if (a > 0.01 * P.alarm_full) {
+        let gx = alarm_at(x + 1.0, y) - alarm_at(x - 1.0, y);
+        let gy = alarm_at(x, y + 1.0) - alarm_at(x, y - 1.0);
+        let fill = 1.0 - exp(-a / (0.5 * P.alarm_full));
+        let front = 1.0 - exp(-length(vec2<f32>(gx, gy)) / (0.12 * P.alarm_full));
+        c += ALARM_RGB * (0.10 * fill + 0.45 * front);
     }
     let k1 = gem_near(x, y);
     if (k1 > 0u) {
@@ -842,15 +992,29 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         if (cover > 0.0) {
             let a = gems[k].z * 0.8660254;
             let depth = clamp(gi.x / a, 0.0, 1.0);
+            // Spent, it is worn stone (art director, 11-14: a dry crystal
+            // "reads like a UI block"): darker than the rock round it, matte,
+            // and stepped in three hexagonal terraces from its depth field,
+            // each step's riser (two pixels) tilted out so the light catches
+            // one side and shades the other, as a worn step pyramid. The
+            // steps come in as the charge goes, so a live crystal is clean
+            // glass. Before: a flat (84,88,92) grey, steps tried as dark
+            // seams alone read as a target.
+            let spent = 1.0 - v;
+            let tf = fract(depth * 3.0 + 0.5);
+            let tw = 2.0 * 3.0 / max(a * P.zoom, 1.0);
+            let riser = (1.0 - smoothstep(0.0, tw, min(tf, 1.0 - tf) * 2.0)) * spent;
             // The pyramid's face: height (0.6 + 9 depth) tall(v), so its
-            // slope is 9 tall(v) / a along the distance's gradient.
-            let s = 9.0 * gem_tall(v) / a;
+            // slope is 9 tall(v) / a along the distance's gradient; a riser
+            // adds a steep outward tilt.
+            let s = 9.0 * gem_tall(v) / a + 2.2 * riser;
             let gn = normalize(vec3<f32>(-s * gi.y, -s * gi.z, 1.0));
             var gs = 1.0 + 1.25 * (dot(gn, l) - l.z);
-            // Charged, it is glassy cyan lit from inside; spent, matte grey
-            // rock (the only cyan in the world is charge).
-            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.25 + 0.75 * v);
-            var alb = mix(vec3<f32>(84.0, 88.0, 92.0), vec3<f32>(30.0, 120.0, 140.0), v);
+            // Charged, it is glassy cyan lit from inside; spent, matte stone
+            // (the only cyan in the world is charge).
+            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v);
+            let worn = 0.6 + 0.3 * depth;
+            var alb = mix(vec3<f32>(66.0, 66.0, 64.0) * worn, vec3<f32>(30.0, 120.0, 140.0), v);
             let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould on a crystal grows over it (owner, 11-14 08:15Z: "slime
             // shouldn't go under crystals, they should grow over it but it
@@ -867,21 +1031,21 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // a mould that is draining it (`hot`, the same charge loss the
             // harvest glow shows) takes a cyan cast.
             let th = -log(1.0 - clamp(cells_height(x, y) * 0.2, 0.0, 0.999) * (1.0 - exp(-2.6))) / 2.6;
-            let film = GEM_FILM * (1.0 - exp(-25.0 * th));
+            let film = GEM_FILM * (1.0 - exp(-40.0 * th));
             let rock = alb * max(gs, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
             // The film is the slime as shaded off the crystal (its own
             // bumps, gloss and glint), tilted by the face it lies on.
             let lum = dot(c, vec3<f32>(0.299, 0.587, 0.114));
-            let fed = mix(c, vec3<f32>(0.45, 1.05, 1.2) * lum, clamp(0.35 * hot, 0.0, 0.35));
-            let on = fed * clamp(0.3 + 0.7 * gs, 0.3, 1.5);
+            let fed = mix(c, vec3<f32>(0.45, 1.05, 1.2) * lum, clamp(0.2 * hot, 0.0, 0.2));
+            let on = fed * clamp(0.5 + 0.5 * gs, 0.4, 1.4);
             // The silhouette stays crisp under the film: a dark line a pixel
             // and a half wide inside the hexagon's edge, where the faces
             // meet the ground (a hard shape's edge, art direction rule 4).
             let rim = 0.72 + 0.28 * smoothstep(0.0, 1.5, gi.x * P.zoom);
             // The charge's light comes up through the film, brightest deep in a
             // full crystal, so a covered crystal still glows cyan.
-            let through = glow * (1.0 - 0.3 * film) + vec3<f32>(20.0, 95.0, 115.0) * v * depth * film;
-            let gc = (mix(rock, on, film) + through) * rim;
+            let through = glow * (1.0 - 0.8 * film) + vec3<f32>(8.0, 40.0, 50.0) * v * depth * film;
+            let gc = mix(rock * rim, on, film) + through;
             c = mix(c, gc, cover);
         }
         if (cover < 1.0 && hot > 0.0) {
@@ -1056,13 +1220,85 @@ fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
     return mix(c, top, cov);
 }
 
+// An absorbed walker (the engine's `ABSORB_BIT`, 11-14; art director:
+// the turn should be an implosion, the absorbed half streaming into their
+// survivors, not vanishing). For `ABSORB_STEPS` (0.5 s) after it is
+// absorbed its slot still holds where it died and the steps since; it is
+// drawn as a short bright streak pulled from there toward the condensed
+// walkers round it: the centre of the engine's per-cell condensed count
+// (`dcount`, after the slots) in the 9 x 9 cells round, so it lands on its
+// survivors and the patch draws in as it thickens. It speeds up as it
+// goes (the square of its age) and dims. For its first 0.3 s it also
+// counts a fresh absorption in its fine cell (the grid's second half,
+// above bit 16) for `prep`'s warm-white flash. It adds nothing to the body.
+fn draw_absorbed(k: u32, dw: u32) {
+    let w = walkers[k];
+    if (!(w.x >= 0.0 && w.y >= 0.0 && w.x < f32(P.ww) && w.y < f32(P.wh))) { return; }
+    let age = f32(dw & 0xFFFFu);
+    let u = clamp(age / ABSORB_STEPS, 0.0, 1.0);
+    let cx = i32(floor(w.x)); let cy = i32(floor(w.y));
+    var pull = vec2<f32>(0.0);
+    var tot = 0.0;
+    let cells = P.dense_at + P.n_walk;
+    for (var dy = -4; dy <= 4; dy++) {
+        for (var dx = -4; dx <= 4; dx++) {
+            let x = cx + dx; let y = cy + dy;
+            if (x < 0 || y < 0 || x >= i32(P.ww) || y >= i32(P.wh)) { continue; }
+            let c = f32(news[cells + u32(y) * P.ww + u32(x)]);
+            pull += c * (vec2<f32>(f32(x), f32(y)) + 0.5 - vec2<f32>(w.x, w.y));
+            tot += c;
+        }
+    }
+    // At least a cell and a half: inside an even body the centre is
+    // close, and a pull that short drew a tick, not a stream.
+    if (tot > 0.0) { pull /= tot; }
+    let pl = length(pull);
+    if (pl > 1e-3) { pull *= max(pl, 1.5) / pl; }
+    let head = vec2<f32>(w.x, w.y) + pull * u * u;
+    let tail = vec2<f32>(w.x, w.y) + pull * max(u - 0.3, 0.0) * max(u - 0.3, 0.0);
+    if (age < 9.0) {
+        let kf = f32(P.fine);
+        let gx = i32(floor((w.x - f32(P.ox)) * kf));
+        let gy = i32(floor((w.y - f32(P.oy)) * kf));
+        if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], 1u << 16u); }
+    }
+    // The streak in screen pixels, tail to head, brightest at the head.
+    let a = (tail - vec2<f32>(P.cx, P.cy)) * P.zoom;
+    let b = (head - vec2<f32>(P.cx, P.cy)) * P.zoom;
+    let len = max(abs(b.x - a.x), abs(b.y - a.y));
+    let steps = clamp(i32(ceil(len)), 1, 48);
+    // The streak buffer (the specks' second half, `base`): up to 3 a pixel
+    // at the head, so a streak shows warm-white over the bright body, where
+    // a calm speck's light is all but off.
+    let bright = 3.0 * (1.0 - 0.6 * u);
+    let th = clamp(i32(P.zoom / 6.0), 1, 3);
+    for (var j = 0; j <= steps; j++) {
+        let f = f32(j) / f32(steps);
+        let q = mix(a, b, f);
+        let v = u32(round(bright * (0.35 + 0.65 * f)));
+        // A pixel wide per 6 of zoom (a hair at zoom 12 read as texture).
+        for (var ty = 0; ty < th; ty++) {
+            for (var tx = 0; tx < th; tx++) {
+                let px = i32(floor(q.x)) + tx; let py = i32(floor(q.y)) + ty;
+                if (px < 0 || py < 0 || px >= i32(P.sw) || py >= i32(P.sh)) { continue; }
+                atomicAdd(&specks[P.shalf + u32(py) * P.stride + u32(px)], v);
+            }
+        }
+    }
+}
+
 // Every walker a speck of light at its own position (one thread a walker),
 // counted a screen pixel; `base` adds and clears them.
 @compute @workgroup_size(256)
 fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n_walk) { return; }
-    if (P.lives != 0u && alive[k] < 0.0) { return; }
+    var dw = 0u;
+    if (P.dense_at > 0u) { dw = news[P.dense_at + k]; }
+    if (P.lives != 0u && alive[k] < 0.0) {
+        if ((dw & ABSORB_BIT) != 0u) { draw_absorbed(k, dw); }
+        return;
+    }
     let w = walkers[k];
     if (!(w.x >= 0.0 && w.y >= 0.0 && w.x < f32(P.ww) && w.y < f32(P.wh))) { return; }
     // A speck a walker, coloured by its news of food (C8, 2026-11-14): calm
@@ -1094,14 +1330,40 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
         bolt = u32(round(b * 15.0));
         cut = l;
     }
-    let add = select(1u, 0u, cut > 0.5) | (lean << 10u) | (bolt << 20u);
+    var add = select(1u, 0u, cut > 0.5) | (lean << 10u) | (bolt << 20u);
+    // Condensing (`set_dense`, 11-14), all of it read off the walker's
+    // word. A condensed walker is two walkers' worth: it counts twice in
+    // the body and 15 in the fine grid's second half (`dcnt`), which
+    // `prep` turns into the bronze's share. A ripening walker warms toward
+    // it as its ripeness climbs (up to 4, about half the bronze at the
+    // moment it condenses), so a body heats before it turns; one that
+    // stops being ripe cools again. For 0.4 s after it condenses its speck
+    // flares (`fresh`; 2 s at first read as noise, art director 11-14).
+    var fresh = 0u;
+    var dcnt = 0u;
+    if (P.dense_at > 0u) {
+        if ((dw & DENSE_BIT) != 0u) {
+            cnt += 15u;
+            dcnt = 15u;
+            let age = f32(dw & 0xFFFFu);
+            fresh = u32(round(4.0 * max(1.0 - age / 12.0, 0.0)));
+        } else if (P.ripe_at > 0u) {
+            let r = clamp(f32(dw & 0xFFFFu) / f32(P.ripe_at), 0.0, 1.0);
+            dcnt = u32(round(4.0 * r * r));
+        }
+    }
+    // The flare is calm brightness, which `base` lights as more walkers.
+    add += fresh;
     // The walker in its fine cell for `prep`'s body (and, above bit 16,
     // counted cut off for its ashen fade); before the screen test, as
     // `prep` reads a rim past it.
     let kf = f32(P.fine);
     let gx = i32(floor((w.x - f32(P.ox)) * kf));
     let gy = i32(floor((w.y - f32(P.oy)) * kf));
-    if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) { atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt); }
+    if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) {
+        atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt);
+        if (dcnt > 0u) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], dcnt); }
+    }
     let s = vec2<f32>((w.x - P.cx) * P.zoom, (w.y - P.cy) * P.zoom);
     let px = i32(floor(s.x)); let py = i32(floor(s.y));
     if (px < 0 || py < 0 || px >= i32(P.sw) || py >= i32(P.sh)) { return; }
@@ -1191,6 +1453,10 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             let per = 0.95 / (1.0 + (dens / 0.35) * (dens / 0.35));
             let lit = 1.0 - pow(1.0 - per, f32(n & 1023u));
             c = mix(c, vec3<f32>(255.0, 222.0, 130.0), lit * 0.92);
+            // An absorbed walker's streak (`draw_absorbed`) takes its
+            // warm-white outright, as the phases below do.
+            let hot = atomicExchange(&specks[P.shalf + y * P.stride + x], 0u);
+            c = mix(c, ABSORB_RGB, min(f32(hot) * 0.3, 0.9));
             // Cut-off walkers' specks take their phase's colour outright
             // (added light was lost on the bright body: no pixel of a
             // bolting piece read red on the first film).
@@ -1238,13 +1504,14 @@ fn cover(sd: f32, aa: f32) -> f32 { return clamp(0.5 - sd / aa, 0.0, 1.0); }
 
 // One texel of the atlas, premultiplied.
 fn texel(x: i32, y: i32) -> vec4<f32> {
-    let c = atlas[u32(clamp(y, 0, 159)) * 2048u + u32(clamp(x, 0, 2047))];
+    let c = atlas[u32(clamp(y, 0, 159)) * 2176u + u32(clamp(x, 0, 2175))];
     let a = f32(c >> 24u) / 255.0;
     return vec4<f32>(unpack(c) * a, a);
 }
 
 // Tile `k` (0 body, 1 helmet, 2 flash, 3 dead; 4-15 the buildings, each
-// body then lamp: turret, lure, pump, outpost, siren, larder) at point `p` in radii
+// body then lamp: turret, lure, pump, outpost, siren, larder; 16 the
+// turret's head) at point `p` in radii
 // (-2..2 across the tile), bilinear, from the 128 px or the 32 px row.
 fn sprite(k: u32, p: vec2<f32>, small: bool) -> vec4<f32> {
     var size = 128.0; var oy = 0.0;
@@ -1380,13 +1647,54 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
 // siren while it is on).
 // `pulse` 0-1 brightens the lamp for a moment: the larder's charge cells
 // as a carrier banks its load (harvest look, 11-14).
-fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32) -> vec4<f32> {
+//
+// The turret (kind 0; owner's playtest 11-14 08:15Z: "turrets need to look
+// better"): a base that stays put and a head (tile 16) turned to `facing`,
+// the game's aim, so the gun points at what it shoots. `pulse` is its shot:
+// the head kicks back along the barrels by up to 0.22 radii and the muzzle
+// flash (its lamp tile) shows, both fading with the pulse. `state` lights
+// the lamp on the head's back: 0 idle (dark, nothing in reach), 1 tracking
+// (amber, mould in reach and food to fire), 2 dry (red, and the head
+// greyed: the bank cannot pay for a shot). Every standing building gets
+// the soldier's rim toward the light (#227).
+fn turret_frame(q: vec2<f32>, ca: f32, sa: f32, recoil: f32) -> vec2<f32> {
+    return vec2<f32>(q.x * ca + q.y * sa + recoil, -q.x * sa + q.y * ca);
+}
+
+// The building's own texels at `q` (radii): its tile, and a turret's head
+// over its base.
+fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f32, recoil: f32, dry: bool) -> vec4<f32> {
+    // A pump (tile 8) turns whole, its hose into its crystal (11-14).
+    var body = sprite(k, select(q, turret_frame(q, ca, sa, 0.0), k == 8u), small);
+    if (turret) {
+        var head = sprite(16u, turret_frame(q, ca, sa, recoil), small);
+        if (dry) {
+            let g = dot(head.xyz, vec3<f32>(0.3, 0.59, 0.11));
+            head = vec4<f32>(mix(head.xyz, vec3<f32>(g), 0.75) * 0.8, head.w);
+        }
+        body = pm_over(body, head);
+    }
+    return body;
+}
+
+const LAMP_TRACK: vec3<f32> = vec3<f32>(255.0, 190.0, 80.0);
+const LAMP_DRY: vec3<f32> = vec3<f32>(240.0, 64.0, 52.0);
+const LAMP_IDLE: vec3<f32> = vec3<f32>(70.0, 72.0, 60.0);
+const CALL_RED: vec3<f32> = vec3<f32>(255.0, 90.0, 60.0);
+const BITE_HOT: vec3<f32> = vec3<f32>(255.0, 120.0, 72.0);
+const ALARM_RGB: vec3<f32> = vec3<f32>(200.0, 214.0, 240.0);
+
+fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32, facing: f32, state: u32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
     let p = d / r;
     let small = r < 12.0;
     let k = 4u + 2u * min(kind, 5u);
-    var body = sprite(k, p, small);
+    let turret = kind == 0u;
+    let ca = cos(facing); let sa = sin(facing);
+    let recoil = select(0.0, pulse * 0.22, turret);
+    let dry = turret && state == 2u && built >= 1.0;
+    var body = building_body(k, p, small, turret, ca, sa, recoil, dry);
     // The silhouette's edge, OUTLINE pixels out (eight taps): a dark
     // outline round a standing building, as round a soldier, so it parts
     // from the slime (art review 2026-11-14), and the cream line of a
@@ -1395,7 +1703,7 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     var grown = 0.0;
     for (var i = 0u; i < 8u; i++) {
         let a = f32(i) * 0.785398;
-        grown = max(grown, sprite(k, p + vec2<f32>(cos(a), sin(a)) * o, small).w);
+        grown = max(grown, building_body(k, p + vec2<f32>(cos(a), sin(a)) * o, small, turret, ca, sa, recoil, false).w);
     }
     let edge = clamp(grown - body.w, 0.0, 1.0);
     // Built from the foot (screen down) up (owner's playtest 2026-11-12:
@@ -1429,24 +1737,55 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
         out = pm_over(out, vec4<f32>(INK * edge, edge));
     }
     out = pm_over(out, body);
+    if (built >= 1.0) {
+        // The rim: inside the silhouette, where a pixel toward the light
+        // is outside it (the soldier's, #227).
+        let lp = vec2<f32>(l.x, l.y) / r * 1.2;
+        let rim = clamp(body.w - building_body(k, p + lp, small, turret, ca, sa, recoil, false).w, 0.0, 1.0) * 0.6;
+        out = vec4<f32>(mix(out.xyz, RIM * out.w, rim), out.w);
+    }
     if (built < 1.0) {
         let seam = clamp(1.0 - abs(p.y - line) * r / 1.2, 0.0, 1.0) * max(body.w, edge);
         out = pm_over(out, vec4<f32>(RIM * seam, seam));
     }
-    if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, p, small)); }
-    if (pulse > 0.0 && built >= 1.0) {
-        let lamp = sprite(k + 1u, p, small);
-        let g = pulse * 1.5;
-        out = vec4<f32>(out.xyz + lamp.xyz * g, min(out.w + lamp.w * g, 1.0));
-        // A halo round the lit cells.
-        let lit = sprite(k + 1u, p * 0.8, true).w;
-        out = vec4<f32>(out.xyz + CHARGE * lit * pulse * 0.5, min(out.w + lit * pulse * 0.5, 1.0));
-        // The whole store washed in charge light, on the body only (no
-        // new alpha, so it claims no neighbour's pixels): the lit cells
-        // alone were a few pixels at zoom 12 and lost under the carriers
-        // walking in (first film, 11-14).
-        let wash = pulse * exp(-dot(p, p) / 0.6) * 0.45;
-        out = vec4<f32>(out.xyz + CHARGE * wash * out.w, out.w);
+    if (turret) {
+        if (built >= 1.0) {
+            let ph = turret_frame(p, ca, sa, recoil);
+            // The lamp on the head's back.
+            let lc = select(select(LAMP_IDLE, LAMP_TRACK, state == 1u), LAMP_DRY, state == 2u);
+            let dl = length(ph - vec2<f32>(-0.46, 0.0));
+            let la = cover(dl - 0.11, aa * 2.0);
+            out = pm_over(out, vec4<f32>(lc * la, la));
+            if (state != 0u) {
+                let g = exp(-dl * dl / 0.02) * 0.5;
+                out = vec4<f32>(out.xyz + lc * g * out.w, out.w);
+            }
+            if (pulse > 0.0) {
+                out = pm_over(out, sprite(k + 1u, ph, small) * clamp(pulse * 1.5, 0.0, 1.0));
+            }
+        }
+    } else {
+        let ps = select(p, turret_frame(p, ca, sa, 0.0), k == 8u);
+        if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, ps, small)); }
+        if (pulse > 0.0 && built >= 1.0) {
+            let lamp = sprite(k + 1u, ps, small);
+            // A store (the larder, an outpost) flares charge cyan as a load
+            // is banked; a siren red as it calls (11-14: it went white-cyan
+            // in the store's colours), its lamp less blown out.
+            let store = kind == 3u || kind == 5u;
+            let tint = select(CALL_RED, CHARGE, store);
+            let g = pulse * select(0.8, 1.5, store);
+            out = vec4<f32>(out.xyz + lamp.xyz * g, min(out.w + lamp.w * g, 1.0));
+            // A halo round the lit cells.
+            let lit = sprite(k + 1u, ps * 0.8, true).w;
+            out = vec4<f32>(out.xyz + tint * lit * pulse * 0.5, min(out.w + lit * pulse * 0.5, 1.0));
+            // The whole store washed in charge light, on the body only (no
+            // new alpha, so it claims no neighbour's pixels): the lit cells
+            // alone were a few pixels at zoom 12 and lost under the carriers
+            // walking in (first film, 11-14).
+            let wash = pulse * exp(-dot(p, p) / 0.6) * 0.45;
+            out = vec4<f32>(out.xyz + tint * wash * out.w, out.w);
+        }
     }
     if (out.w <= 0.0) { return vec4<f32>(0.0); }
     return vec4<f32>(out.xyz / out.w, out.w);
@@ -1454,7 +1793,7 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
 
 fn building_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    return building(d, r, u32(bitcast<f32>(marks[b + 9u])), f32(extra & 255u) / 255.0, f32((extra >> 8u) & 255u) / 255.0, (extra & 65536u) != 0u, f32((extra >> 17u) & 255u) / 255.0);
+    return building(d, r, u32(bitcast<f32>(marks[b + 9u])), f32(extra & 255u) / 255.0, f32((extra >> 8u) & 255u) / 255.0, (extra & 65536u) != 0u, f32((extra >> 17u) & 255u) / 255.0, bitcast<f32>(marks[b + 8u]), (extra >> 25u) & 3u);
 }
 
 // Marks claim pixels: each covered pixel keeps the highest mark index that
@@ -1613,7 +1952,17 @@ fn streak_at(b: u32, p: vec2<f32>) -> vec2<f32> {
 
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    return soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
+    var f = soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
+    // A bite (`Marks::soldier_bitten`, 11-14): the side the slime bit from
+    // flushes hot, fading with the flinch, on the body only (no new alpha).
+    let w = marks[b + 8u];
+    let bite = f32(w & 255u) / 255.0;
+    if (bite > 0.0 && f.w > 0.0) {
+        let a = f32(w >> 8u) / 65535.0 * 6.2831853;
+        let side = clamp(dot(d / r, vec2<f32>(cos(a), sin(a))) * 1.4 + 0.3, 0.0, 1.0);
+        f = vec4<f32>(mix(f.xyz, BITE_HOT, bite * side * 0.75), f.w);
+    }
+    return f;
 }
 
 // Marks, then the overlay (premultiplied RGBA, screen-sized), over the

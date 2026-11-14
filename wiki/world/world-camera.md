@@ -4,6 +4,7 @@ kind: mechanism
 status: current
 updated: 2026-11-14
 sources:
+  - Reports/building-looks-2026-11-14/README.md
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/gun-card-hud-2026-11-14/README.md
@@ -11,10 +12,14 @@ sources:
   - Reports/panic-look-2026-11-14/README.md
   - Reports/sharp-slime-2026-11-14/README.md
   - Reports/shot-damage-2026-11-12.md
+  - Reports/siren-alarm-2026-11-14/README.md
   - Reports/slime-material-2026-11-14/README.md
   - Reports/slime-over-crystals-2026-11-14/README.md
+  - Reports/slime-sheen-2026-11-14/README.md
   - Reports/soldier-controls-2026-11-12.md
+  - Reports/spent-crystals-2026-11-14/README.md
   - Reports/start-menu-2026-11-14/README.md
+  - Reports/turret-look-2026-11-14/README.md
   - Reports/ui-size-2026-11-14/README.md
   - Reports/units-read-2026-11-14/README.md
   - Reports/units-read-2026-11-14/followup.md
@@ -42,13 +47,16 @@ code:
   - MAX_MARKS
   - MAX_ZOOM
   - Marks::building
+  - Marks::building_facing
   - Marks::building_pulse
   - Marks::health
   - Marks::icon
   - Marks::label
   - Marks::selected
   - Marks::soldier
+  - Marks::soldier_bitten
   - Marks::soldier_working
+  - Marks::turret
   - NEXT_ROUND
   - Order::Fight
   - SPRITES
@@ -58,6 +66,7 @@ code:
   - UiSize::px
   - View::fine
   - View::record
+  - View::set_alarm
   - View::set_alive
   - View::set_body_density
   - View::set_crystals
@@ -129,9 +138,9 @@ blind A/B: "Neither. Both of those look like stamps"): the drawn
 thickness counts the living walkers near each cell (`BODY_N`), so a hit
 shows as the hole it really makes, open about half a second
 ([shot damage](../../Reports/shot-damage-2026-11-12.md)). With growth, `View::set_alive` takes the walkers' energy so
-empty and dead slots draw no speck. With withering on, `View::set_news` reads each walker's news of food (2026-11-14, plan C8): a cut-off walker's speck is amber while it leans and red once it bolts, larger with the zoom, and the mould fades to ash by the share of nearby walkers cut off, so a starving piece greys before it thins ([starving mould](../../Reports/panic-look-2026-11-14/README.md)). Since 2026-11-14 (the owner's playtest: "the slime looks very blurry", "the crystals are pixelated") the body is worked out below the cell: walkers are counted where they are on fine cells (`View::fine`, two a cell from zoom 6), with a sharp Gaussian at the frontier and a wide one in the body, a B-spline height, and Gaussian trail and colour, so a straight edge at zoom 12 rises over about a cell (2.58 before); crystals are their exact hexagons (`View::set_crystals`), antialiased to a pixel; llvmpipe frame +18% ([sharp slime](../../Reports/sharp-slime-2026-11-14/README.md)). After the owner's playtest of it ("the middle still looks blurry", "single individual walkers should be brighter") every speck grows with the zoom and a calm walker's light falls with the square of the walkers a cell round it, so a lone explorer is a bright point and the body a calm grain; the body keeps 40% of the sharp count; the slope is capped at 0.7; the slime is vivid wet gold with tight glints over a gel film; grey, amber and red ramp with each walker's news age; llvmpipe frame +4% ([slime material](../../Reports/slime-material-2026-11-14/README.md)). Soldiers are an SVG sprite (the owner's
+empty and dead slots draw no speck. With withering on, `View::set_news` reads each walker's news of food (2026-11-14, plan C8): a cut-off walker's speck is amber while it leans and red once it bolts, larger with the zoom, and the mould fades to ash by the share of nearby walkers cut off, so a starving piece greys before it thins ([starving mould](../../Reports/panic-look-2026-11-14/README.md)). Since 2026-11-14 (the owner's playtest: "the slime looks very blurry", "the crystals are pixelated") the body is worked out below the cell: walkers are counted where they are on fine cells (`View::fine`, two a cell from zoom 6), with a sharp Gaussian at the frontier and a wide one in the body, a B-spline height, and Gaussian trail and colour, so a straight edge at zoom 12 rises over about a cell (2.58 before); crystals are their exact hexagons (`View::set_crystals`), antialiased to a pixel; llvmpipe frame +18% ([sharp slime](../../Reports/sharp-slime-2026-11-14/README.md)). After the owner's playtest of it ("the middle still looks blurry", "single individual walkers should be brighter") every speck grows with the zoom and a calm walker's light falls with the square of the walkers a cell round it, so a lone explorer is a bright point and the body a calm grain; the body keeps 40% of the sharp count; the slope is capped at 0.7; the slime is vivid wet gold with tight glints over a gel film; grey, amber and red ramp with each walker's news age; llvmpipe frame +4% ([slime material](../../Reports/slime-material-2026-11-14/README.md)). After the art director's notes the frontier is flat (height comes in with the wide count, so a lone walker is a point of light with no flank or shadow), the highlight takes its normal from a height sampled 9 / zoom cells apart (a broad sheen along the veins, not glitter), the thickest body is a little less saturated, and a walker on a crater or scorch line, where the engine's colour holds no mould, is drawn in the mould's gold rather than black; the body is opaque from a third of full thickness, so ground (the fork's clay disc) shows only through the thin film ([slime sheen](../../Reports/slime-sheen-2026-11-14/README.md)). Soldiers are an SVG sprite (the owner's
 pick of a blind A/B, 16:48Z) with facing, team helmet and muzzle flash;
-crystals are hexagons. Rock, walls and rubble are drawn at the screen pixel from a smooth field of their cells (`look::mark_far` skips cells far from any), with a one-pixel antialiased edge and a short soft shadow at every zoom ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md)). Crystals read the engine's charge per cell every frame (`View::set_charge`, `View::set_time`): each stands and glows by its charge, greys and sinks from the side being taken, and cells losing charge glow white-cyan, held about 0.35 game seconds; a dry crystal is a grey stub ([crystal harvest](../../Reports/crystal-harvest-2026-11-14/README.md)). Mould on a crystal grows over it as a film whose cover follows its thickness, lit by the faces, the charge glowing through (owner 11-14 08:15Z; [slime over crystals](../../Reports/slime-over-crystals-2026-11-14/README.md)). Since 11-14 every soldier can be counted at zoom 6
+crystals are hexagons. Rock, walls and rubble are drawn at the screen pixel from a smooth field of their cells (`look::mark_far` skips cells far from any), with a one-pixel antialiased edge and a short soft shadow at every zoom ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md)). Crystals read the engine's charge per cell every frame (`View::set_charge`, `View::set_time`): each stands and glows by its charge, greys and sinks from the side being taken, and cells losing charge glow white-cyan, held about 0.35 game seconds; a dry crystal is worn dark stone in three steps ([crystal harvest](../../Reports/crystal-harvest-2026-11-14/README.md), [spent crystals](../../Reports/spent-crystals-2026-11-14/README.md)). Mould on a crystal grows over it as a film whose cover follows its thickness, lit by the faces, the charge glowing through (owner 11-14 08:15Z; [slime over crystals](../../Reports/slime-over-crystals-2026-11-14/README.md)). Since 11-14 every soldier can be counted at zoom 6
 (elbow room `Rules::elbow`, outlined figures, `Marks::selected` with one
 ring round an overlapping group (`ring_groups`), hurt-only
 `Marks::health`, a dead pose), and buildings and the larder show their
@@ -139,7 +148,20 @@ state in the sprite (`Marks::building`, `Game::overrun_share`; a ghost's
 builder state is a sign, `Marks::icon`). Harvesting shows on the soldier:
 a taker (`Game::last_takes`) faces the crystal with a pulse at its hands, its
 pack fills cyan as it carries (`Marks::soldier_working`; no carry bar), and the
-larder flashes as a load is banked (`Marks::building_pulse`)
+larder flashes as a load is banked (`Marks::building_pulse`). A turret's head
+turns on its base to its aim and kicks with a muzzle flash as it fires, its
+lamp the game's state, and hovering one shows its reach (`Marks::turret`;
+[turret look](../../Reports/turret-look-2026-11-14/README.md)). The other
+buildings show their work too, all soldier-scale: a burning lure lights the
+engine's real scent field green (a scent light, `Light` with lift below 0), a
+pump turns its hose into its crystal with a charge line as bright as its draw
+(`Marks::building_facing`, `Building::drew`), an outpost is a mini larder that
+flares when a load is banked there, and a siren's real call shows as the
+engine's alarm field itself, a pale front spreading and fading
+(`View::set_alarm`, bindings 25-26;
+[siren alarm](../../Reports/siren-alarm-2026-11-14/README.md)). A soldier the slime bites flinches every 3 hp of damage, the
+bitten side flushing hot (`Marks::soldier_bitten`;
+[building looks](../../Reports/building-looks-2026-11-14/README.md))
 ([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md), [harvest](../../Reports/units-read-2026-11-14/harvest.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
 simulation uses height. One mark with a big box (a 480-pixel ring) cost the
 view 0.7 ms, since one workgroup walks a mark's whole box: draw big outlines

@@ -1,0 +1,9 @@
+larder-world machine at the start: RAM 14.7 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.01 waits a step (0.15 ms a step waiting); steps finished once in 299, when the next was due 0
+  every frame (1200 of them), ms: frame p50 64.55 p95 87.82 max 108.58; step  p50 0.14 p95 1.40 max 15.43; prepare  p50 0.18 p95 0.61 max 3.87; record  p50 2.22 p95 21.27 max 32.39; GPU tail  p50 57.00 p95 70.95 max 103.94
+  frames with a step (300 of them), ms: frame p50 75.01 p95 90.76 max 108.58; step  p50 0.58 p95 2.76 max 15.43; prepare  p50 0.15 p95 0.39 max 2.10; record  p50 16.50 p95 21.85 max 27.44; GPU tail  p50 56.96 p95 70.69 max 86.22
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 20 s: mould 24470, soldiers 9, buildings 0, harvested 1220, shots 112, killed 763
+  machine at the end: RAM 14.7 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs

@@ -34,7 +34,7 @@ should be visible though" and "100%". At 08:41Z they added: "Scorch actually bur
   for bait on a card at 09:02Z.
 - **Bait replaces Alarm.** `rounds::Card::Bait` (`bait`) lays food scent
   along the flight (`squad::Burst::bait`, `BigDish::lay_bait`, and on the
-  GPU the `baitlay` pass, 55). This is the field crystals, soldiers and lures
+  GPU the `baitlay` pass, 60). This is the field crystals, soldiers and lures
   smell of, so every mould follows it. The amount is `trail_bait` 40 x a
   soldier's frame of smell (400 at the race world's food deposit 20) per
   disc. The new loadouts are `bait` and `killzone` (bait+scorch). Because a

@@ -36,14 +36,23 @@ code { font-family: var(--mono); font-size: 0.85em; }
     <p class="muted">The left crystal on the fork map, 12 to 74 game seconds, as the mould reaches and covers it. Before is main.</p>
   </div>
   <section>
-    <h2>Zoom 6</h2>
+    <h2>Second pass, after "this still looks like the slime is under it"</h2>
+    <p>The mould on a crystal now covers up to 92% where it is thick, against 75% in the first pass. Its gold carries its own bumps and glints across the faces. The crystal's edge line now sits under the mould, not on top of it. Less cyan comes up through the film, so the mould reads as on top while the hexagon and a faint glow still show.</p>
+    <div class="pair">
+      <figure><img src="after2-z6.gif" alt="Second pass at zoom 6"><figcaption>Second pass, zoom 6, 12 to 74 s</figcaption></figure>
+      <figure><img src="after2-z12.gif" alt="Second pass at zoom 12"><figcaption>Second pass, zoom 12</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>First pass, zoom 6</h2>
     <div class="pair">
       <figure><img src="before-z6.gif" alt="Before at zoom 6"><figcaption>Before: the crystal drawn on top, the mould slides under it</figcaption></figure>
       <figure><img src="after-z6.gif" alt="After at zoom 6"><figcaption>After: the mould grows over it as a film; faces, glow and edge still read</figcaption></figure>
     </div>
   </section>
   <section>
-    <h2>Zoom 12</h2>
+    <h2>First pass, zoom 12</h2>
     <div class="pair">
       <figure><img src="after-z12.gif" alt="After at zoom 12"><figcaption>After: the film carries the slime's own bumps and glint</figcaption></figure>
       <div class="lede"><p class="muted">Cover = 0.75 (1 - e^(-25 th)) from the mould's thickness on each pixel. The mould's colour on crystal cells is now recovered from the engine's frame; before, the middle of a big crystal kept the engine's cyan and the mould there read pale. Cost: a few operations on crystal pixels only, not measurable on llvmpipe.</p></div>

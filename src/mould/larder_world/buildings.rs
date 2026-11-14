@@ -98,6 +98,10 @@ pub struct Building {
     pub touching: u32,
     pub aim: Option<(f32, f32)>,
     pub dense: u32,
+    /// Food a pump drew from its crystal last frame (0 for every other
+    /// kind): the window lights its draw line by it (building looks,
+    /// 11-14). Read only; no rule uses it.
+    pub drew: f32,
 }
 
 impl Building {
@@ -106,6 +110,11 @@ impl Building {
         self.alive && self.built >= 1.0
     }
 }
+
+/// How far out a turret's shot starts, in its touch radii: the tip of the
+/// barrels the window draws (`Marks::turret`, the head one touch radius
+/// with barrels to 1.7).
+pub const TURRET_MUZZLE: f32 = 1.7;
 
 /// The buildings' numbers. Distances in dish cells, times in game seconds,
 /// food from the bank, as `Rules`. First numbers for play, to be set by
@@ -193,6 +202,18 @@ pub struct BuildRules {
     /// to be near the build location to build is annoying". Off is the
     /// old rule, for replays and census hands that relied on it.
     pub anywhere: bool,
+    /// How near its site a builder raises from, dish cells: from the
+    /// building's middle, or for a wall from its line (plus a crystal's
+    /// rim for a ghost placed on one). A builder walks straight at the
+    /// site and stops the moment it is this near, on the side it came
+    /// from. Owner, 2026-11-14 08:10Z: "Right now soldiers center
+    /// themselves on the build spot but it would be best if they just
+    /// started building when they got in range", and building a turret by
+    /// the enemy, "keep my soldiers on one side". 6 (the turret's touch,
+    /// 2, plus 4): a squad of eight stands in an arc on its side. Before
+    /// it, 3 cells plus the soldier's place in its squad's sunflower round
+    /// the ghost, so a squad walked round to stand on every side.
+    pub reach: f32,
 }
 
 impl Default for BuildRules {
@@ -226,6 +247,7 @@ impl Default for BuildRules {
             touch: 2.0,
             drain: 1.0,
             anywhere: true,
+            reach: 6.0,
         }
     }
 }
@@ -319,7 +341,7 @@ impl<W: World> Game<W> {
         let crystal = if kind == Kind::Pump { self.pump_crystal(at) } else { None };
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0 });
+        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0 });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);
@@ -349,6 +371,40 @@ impl<W: World> Game<W> {
                 self.wall_cells(b.at, to);
             }
         }
+    }
+
+    /// Call off ghost `b` (`Cmd::Unbuild`): it is gone and its whole price
+    /// goes back to the bank, however far it had risen (owner, 2026-11-14:
+    /// "There should be no maintenance costs in this game", so a change of
+    /// mind costs only the builders' time). Its builders take their next
+    /// order (`build_turn`). The food returned, or None if `b` is not a
+    /// ghost (a standing building is not sold back).
+    pub fn unbuild(&mut self, b: usize) -> Option<f32> {
+        let bd = self.buildings.get(b).copied().filter(|bd| bd.alive && bd.built < 1.0)?;
+        let price = self.build_price(bd.kind, bd.at);
+        self.buildings[b].alive = false;
+        self.bank += price;
+        self.spent -= price;
+        Some(price)
+    }
+
+    /// The ghost nearest `p` within its footprint and a cell, if any (the
+    /// window's cancel click; a wall by its line).
+    pub fn ghost_at(&self, p: (f32, f32)) -> Option<usize> {
+        let r = (self.rules.build.touch + 1.0) * self.s();
+        let d = |bd: &Building| {
+            let q = match bd.kind {
+                Kind::Wall { to } => super::paths::nearest_on(bd.at, to, p),
+                _ => bd.at,
+            };
+            (q.0 - p.0).hypot(q.1 - p.1)
+        };
+        (0..self.buildings.len())
+            .filter(|&b| self.buildings[b].alive && self.buildings[b].built < 1.0)
+            .map(|b| (b, d(&self.buildings[b])))
+            .filter(|&(_, x)| x <= r)
+            .min_by(|a, b| a.1.total_cmp(&b.1))
+            .map(|(b, _)| b)
     }
 
     /// Switch lure or siren `k` on or off. True if it is one.
@@ -394,7 +450,15 @@ impl<W: World> Game<W> {
                             let d = dx.hypot(dy).max(0.1);
                             let reach = b.turret_range * sc;
                             if d <= reach + 4.0 && self.clear_line(bd.at, aim) {
-                                shots.push(ShotIn { from: bd.at, to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach), r: strike });
+                                // From the barrel tip, not the turret's middle
+                                // (art director, 11-14: the drawn head's barrels
+                                // reach 1.7 touch radii), capped at half the way
+                                // to the aim so mould at its foot is still hit.
+                                // The line was checked clear from the middle,
+                                // which covers the barrel.
+                                let m = (TURRET_MUZZLE * b.touch * sc).min(0.5 * d);
+                                let from = (bd.at.0 + dx / d * m, bd.at.1 + dy / d * m);
+                                shots.push(ShotIn { from, to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach), r: strike });
                                 self.buildings[k].ready = t + self.secs(b.turret_every);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
@@ -454,10 +518,12 @@ impl<W: World> Game<W> {
         bd.touching = u.touching;
         bd.aim = u.target;
         bd.dense = u.dense;
+        bd.drew = 0.0;
         let up = bd.up();
         if up && bd.kind == Kind::Pump && u.took > 0.0 {
             bd.working = true;
             let food = u.took / r.charge;
+            bd.drew = food;
             self.bank += food;
             self.harvested += food;
             self.pumped += food;
@@ -594,6 +660,30 @@ mod tests {
     }
 
     #[test]
+    fn a_turret_shot_leaves_from_its_barrel_tip() {
+        // The window draws the barrels to `TURRET_MUZZLE` touch radii; the
+        // shot starts there (art director, 11-14), on the line to its aim,
+        // and never past half the way, so mould at its foot is still hit.
+        let mut g = small(1);
+        let at = open_near(&g, (g.core.0 + 10.0, g.core.1));
+        stand(&mut g, at);
+        g.soldiers[0].stance = Stance::HoldFire;
+        assert!(g.build(Kind::Turret, at));
+        let tip = TURRET_MUZZLE * g.rules.build.touch * g.s();
+        let mut seen = 0;
+        for _ in 0..(g.rules.tps * 10) {
+            g.step();
+            for s in g.turret_shots().filter(|s| s.fired) {
+                let out = (s.from.0 - at.0).hypot(s.from.1 - at.1);
+                let along = ((s.from.0 - at.0) * (s.to.0 - at.0) + (s.from.1 - at.1) * (s.to.1 - at.1)) / ((s.to.0 - at.0).hypot(s.to.1 - at.1) * out.max(1e-6));
+                assert!(out <= tip + 1e-3 && out > 0.0 && along > 0.999, "from {out} out (tip {tip}), along {along}");
+                seen += 1;
+            }
+        }
+        assert!(seen > 3, "{seen} turret shots");
+    }
+
+    #[test]
     fn a_siren_calls_with_the_alarm_every_few_seconds_while_on() {
         let run = |on: bool| {
             let mut g = small(4);
@@ -684,10 +774,14 @@ mod tests {
         let charge = g.world.crystals()[c].1;
         assert!(g.build(Kind::Pump, centre) || g.build(Kind::Pump, open_near(&g, centre)));
         let bank = g.bank;
+        let mut drew = 0.0;
         for _ in 0..(g.rules.tps * 10) {
             g.step();
+            drew += g.buildings[0].drew;
         }
         let want = 10.0 * g.rules.build.pump_rate;
+        // `Building::drew`, the window's draw line, is the pump's take.
+        assert!((drew - g.pumped).abs() < 1e-3 * want, "drew {drew}, pumped {}", g.pumped);
         assert!((g.pumped - want).abs() < 0.05 * want, "pumped {} in 10 s", g.pumped);
         // The squad's rations (`Rules::ration`) come out of the same bank.
         assert!(g.bank + g.eaten > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
