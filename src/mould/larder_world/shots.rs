@@ -38,13 +38,14 @@ impl<W: World> Game<W> {
             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
             let d = dx.hypot(dy).max(1e-3);
             let m = b.map_or(BulletMods::default(), |k| self.mods(self.soldiers[k].squad as usize));
-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split, cast });
+            let speed = if cast > 0 { m.ammo.get(cast as usize - 1).map_or(1.0, |a| a.speed()) } else { 1.0 };
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split, cast, speed });
         }
         let leg = r.bullet_speed * self.s() * dt;
         let mut legs = Vec::with_capacity(self.bullets.len());
         let mut who = Vec::with_capacity(self.bullets.len());
         for b in &mut self.bullets {
-            let len = leg.min(b.left);
+            let len = (leg * b.speed).min(b.left);
             let mut to = (b.at.0 + b.dir.0 * len, b.at.1 + b.dir.1 * len);
             let n = len.ceil() as u32;
             for j in 1..=n {
@@ -103,7 +104,7 @@ impl<W: World> Game<W> {
                         let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0 });
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed });
                     }
                 }
                 return false;

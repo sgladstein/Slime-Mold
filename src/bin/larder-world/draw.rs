@@ -459,7 +459,8 @@ impl App {
             };
             let cast = b.by.and_then(|k| g.soldiers.get(k)).and_then(|s| self.rounds.cast_of(g, s.squad as usize, b.cast)).filter(castable);
             let look = card_look(cast.map(|c| c.payload));
-            let wide = rounds::RoundRules::default().wide.powi(cast.map_or(0, |c| c.wide) as i32);
+            // Wide, and the bullet's damage (`Ammo::reach`), widen it.
+            let wide = rounds::RoundRules::default().wide.powi(cast.map_or(0, |c| c.wide) as i32) * cast.map_or(1.0, |c| c.ammo.reach());
             let quiet = cast.is_some_and(|c| c.quiet);
             let core = (0.22 * sc * zoom).clamp(1.4, 5.0) * wide * if b.split > 0 { 1.3 } else { 1.0 } * if b.pierce > 0 { 0.8 } else { 1.0 };
             let len = travel * if b.pierce > 0 { 2.4 } else { 1.0 };
@@ -974,6 +975,8 @@ impl App {
         });
         let name = match LOADOUTS.iter().find(|(_, c)| rounds::parse(c).unwrap_or_default() == round) {
             Some((n, _)) => n.to_string(),
+            // Rolled bullets (Ctrl+H, a run's): their words are numbers.
+            None if round.iter().any(|c| matches!(c, rounds::Card::Ammo(_))) => "rolled bullets".into(),
             None => rounds::name(&round),
         };
         let whose = match (sel.len(), lead) {
@@ -1015,6 +1018,8 @@ pub(super) fn gun_icon(k: GunKind) -> Icon {
 /// A payload's colour in the panel: its bullets' glow (`card_look`), so a
 /// card and its shot in the world match.
 pub(super) fn payload_colour(c: rounds::Card) -> [u8; 4] {
+    // A rolled bullet in its payload's colour.
+    let c = c.ammo().map_or(c, |a| a.shell.card());
     let g = card_look(Some(c)).glow;
     [g[0], g[1], g[2], 255]
 }
@@ -1026,6 +1031,29 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
     use rounds::Card as C;
     let k = &r.kit;
     match c {
+        C::Plain => (Icon::Bullet, CardKind::Payload, "A plain bullet: its strike and nothing more, at the gun's own range and spread.".into()),
+        // A rolled bullet (owner 16:46Z): its payload's words after its
+        // numbers; its set's glyph when it is plain.
+        C::Ammo(a) => {
+            let (icon, words) = match a.shell {
+                rounds::Shell::Plain => (ammo_icon(a.set), "Its strike and nothing more.".to_string()),
+                s => {
+                    let (i, _, w) = card_face(s.card(), r, w);
+                    (i, w)
+                }
+            };
+            let d = format!(
+                "{}: damage {:.1} (a standard bullet's {:.0}: a hole {:.1} times as wide), {:.1}x speed, {:.1}x range, {:.1}x spread.",
+                a.title(),
+                a.damage(),
+                rounds::Ammo::standard(a.shell).damage(),
+                a.reach(),
+                a.speed(),
+                a.range(),
+                a.spread()
+            );
+            (icon, CardKind::Payload, format!("{d} {words}"))
+        }
         C::Blast => (Icon::Blast, CardKind::Payload, format!("Where the shot hits: kills the walkers within {:.0} cells, leaves a crater the mould shuns, and lays alarm.", k.blast_r)),
         C::Gas => (Icon::Gas, CardKind::Payload, format!("Where the shot hits: the walkers within {:.0} cells fall asleep where they are. Spares the squad.", k.gas_r)),
         C::Germ => (Icon::Germ, CardKind::Payload, format!("Where the shot hits: infects the walkers within {:.0} cells; the sickness spreads through the body.", k.germ_r)),
@@ -1047,6 +1075,17 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Rate => (Icon::Fast, CardKind::Flight, format!("Every soldier fires {:.0} times as often a card, volleys too.", 1.0 + w.rate_card)),
         C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less of the gun's budget. Does nothing in a fight.", rounds::THRIFT)),
         C::Smother => (Icon::Close, CardKind::Flight, format!("Every bullet wipes the food scent along its flight, {:.0} cells wide: the mould there loses the way to its food until the scent spreads back.", 2.0 * r.trail_r)),
+    }
+}
+
+/// A bullet set's glyph (`mould::bullets::Set`): the shop's and the
+/// loadout strip's.
+pub(super) fn ammo_icon(s: rounds::Set) -> Icon {
+    match s {
+        rounds::Set::Standard => Icon::Bullet,
+        rounds::Set::Slug => Icon::Slug,
+        rounds::Set::Needle => Icon::Needle,
+        rounds::Set::Buckshot => Icon::Buckshot,
     }
 }
 
@@ -1078,12 +1117,19 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
             (_, Some(p)) => payload_colour(p),
             (_, None) => [146, 156, 168, 255],
         };
-        if kind == CardKind::Payload && !castable(c) {
+        if kind == CardKind::Payload && !castable(c.ammo().map_or(c, |a| a.shell.card())) {
             about.push_str(" Not on this world yet: it casts nothing here.");
         }
+        // A rolled payload bullet's set in the corner (its glyph is its
+        // payload's); a plain one's glyph is already its set.
+        let badge = match c {
+            rounds::Card::Ammo(a) if a.shell != rounds::Shell::Plain => Some(ammo_icon(a.set)),
+            _ => None,
+        };
         out.push(GunCard {
             icon: Some(icon),
-            name: capital(c.name()),
+            badge,
+            name: c.title(),
             kind,
             colour,
             about,

@@ -67,6 +67,7 @@
 //! (a new one past the cap is dropped and counted in `Rounds::dropped`),
 //! and at most `scatter_n` bursts a cast, so one frame casts at most a
 //! burst list of soldiers x `scatter_n`.
+pub use super::bullets::{Ammo, Set, Shell};
 use super::kit::KitRules;
 use super::larder_world::{BulletMods, Game, World};
 pub use super::squad::Burst;
@@ -82,6 +83,12 @@ pub const MAX_SLOTS: usize = super::guns::SLOTS_MAX as usize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Card {
+    /// The standard plain bullet: its strike and nothing more (a payload,
+    /// since the payloads are bullets, owner 18:05Z).
+    Plain,
+    /// A rolled bullet (`bullets`): a payload, a set, damage and speed,
+    /// range and spread multipliers, and its own cost.
+    Ammo(Ammo),
     Blast,
     Bomb,
     Gas,
@@ -111,11 +118,12 @@ pub enum Kind {
 }
 
 impl Card {
-    pub const ALL: [Card; 18] = [Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother];
+    /// The fixed cards (not `Ammo`, which is rolled).
+    pub const ALL: [Card; 19] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother];
 
     pub fn kind(self) -> Kind {
         match self {
-            Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet => Kind::Modifier,
             Card::Delay | Card::Thick => Kind::Trigger,
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother => Kind::Flight,
@@ -123,8 +131,12 @@ impl Card {
         }
     }
 
+    /// Its kind's name (a rolled bullet's is "ammo"; `title` and `word`
+    /// give its own).
     pub fn name(self) -> &'static str {
         match self {
+            Card::Plain => "plain",
+            Card::Ammo(_) => "ammo",
             Card::Blast => "blast",
             Card::Bomb => "bomb",
             Card::Gas => "gas",
@@ -146,9 +158,40 @@ impl Card {
         }
     }
 
+    /// Its name to show: "Needle gas" for a rolled bullet, else its name.
+    pub fn title(self) -> String {
+        match self {
+            Card::Ammo(a) => a.title(),
+            c => {
+                let n = c.name();
+                n[..1].to_uppercase() + &n[1..]
+            }
+        }
+    }
+
+    /// Its text form in a round (`parse`, `name`): its name, or a rolled
+    /// bullet's `Ammo::word`.
+    pub fn word(self) -> String {
+        match self {
+            Card::Ammo(a) => a.word(),
+            c => c.name().to_string(),
+        }
+    }
+
+    /// The bullet it fires: a payload's standard one, a rolled bullet's
+    /// own. None for a card that is no bullet.
+    pub fn ammo(self) -> Option<Ammo> {
+        match self {
+            Card::Ammo(a) => Some(a),
+            c => Shell::of(c).map(Ammo::standard),
+        }
+    }
+
     /// What the card does, in a line (the HUD's loadout panel).
     pub fn about(self) -> &'static str {
         match self {
+            Card::Plain => "Bullet: a plain shot, its strike only",
+            Card::Ammo(_) => "Bullet: rolled, with its own damage, speed, range and spread",
             Card::Blast => "Payload: kills the mould in a disc, leaves a crater and lays alarm",
             Card::Gas => "Payload: puts the mould in a disc to sleep; sleepers in gas may die",
             Card::Germ => "Payload: infects the mould in a disc; the sickness spreads through it",
@@ -177,6 +220,8 @@ impl Card {
     /// the most, a card that changes every bullet next, a tweak least.
     pub fn cost(self) -> u32 {
         match self {
+            Card::Ammo(a) => a.cost as u32,
+            Card::Plain => 1,
             Card::Bomb | Card::Germ => 4,
             Card::Blast | Card::Gas | Card::Scorch | Card::Mist => 3,
             Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother => 2,
@@ -189,6 +234,7 @@ impl Card {
     /// out higher tiers deeper in (the roguelike thread's rewards).
     pub fn tier(self) -> u8 {
         match self {
+            Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ => 3,
             Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother => 2,
             _ => 1,
@@ -197,6 +243,12 @@ impl Card {
 
     pub fn from_name(s: &str) -> Option<Card> {
         Card::ALL.into_iter().find(|c| c.name() == s)
+    }
+
+    /// A card from its text form (`word`): a fixed card's name or a rolled
+    /// bullet's `ammo/...`.
+    pub fn from_word(s: &str) -> Option<Card> {
+        Card::from_name(s).or_else(|| Ammo::from_word(s).map(Card::Ammo))
     }
 }
 
@@ -236,7 +288,7 @@ pub fn parse(s: &str) -> Option<Vec<Card>> {
     if s == "none" || s.is_empty() {
         return Some(Vec::new());
     }
-    let v: Option<Vec<Card>> = s.split('+').map(Card::from_name).collect();
+    let v: Option<Vec<Card>> = s.split('+').map(Card::from_word).collect();
     v.filter(|v| v.len() <= MAX_SLOTS)
 }
 
@@ -295,7 +347,7 @@ pub fn name(round: &[Card]) -> String {
     if round.is_empty() {
         return "none".into();
     }
-    round.iter().map(|c| c.name()).collect::<Vec<_>>().join("+")
+    round.iter().map(|c| c.word()).collect::<Vec<_>>().join("+")
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -385,7 +437,12 @@ impl Default for RoundRules {
 /// A payload with what its modifiers and trigger made of it.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Cast {
+    /// What it casts where it hits: `Card::Plain` (nothing), `Blast`,
+    /// `Bomb`, `Gas` or `Germ`, a rolled bullet's by its shell.
     pub payload: Card,
+    /// The bullet that carries it: its damage and multipliers (a fixed
+    /// card's is its standard bullet).
+    pub ammo: Ammo,
     pub wide: u32,
     pub scatter: bool,
     pub quiet: bool,
@@ -405,8 +462,9 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Delay | Card::Thick => trigger = Some(c),
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift => {}
-            Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
-                out.push(Cast { payload: c, wide, scatter, quiet, trigger });
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
+                let ammo = c.ammo().unwrap_or_default();
+                out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger });
                 (wide, scatter, quiet, trigger) = (0, false, false, None);
             }
         }
@@ -421,8 +479,13 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
 pub fn flight(round: &[Card]) -> BulletMods {
     let cards = || round.iter().take(MAX_SLOTS);
     let n = |k: Card| cards().filter(|&&c| c == k).count() as u8;
-    let casts = cards().filter(|c| c.kind() == Kind::Payload).count() as u8;
-    BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate), casts }
+    let mut ammo = [Ammo::default(); MAX_SLOTS];
+    let mut casts = 0;
+    for (slot, a) in ammo.iter_mut().zip(cards().filter_map(|c| c.ammo())) {
+        *slot = a;
+        casts += 1;
+    }
+    BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate), casts, ammo }
 }
 
 /// The round's trail cards as every soldier bullet lays them: copies of
@@ -462,8 +525,12 @@ pub fn trail_bursts(n: [u8; 4], from: (f32, f32), to: (f32, f32), r: &RoundRules
 /// The bursts one cast makes at `at` (fine cells); `scale` fine cells a
 /// dish cell and `fine` fine steps a game second.
 pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -> Vec<Burst> {
+    if c.payload == Card::Plain {
+        return Vec::new();
+    }
     let k = &r.kit;
-    let f = r.wide.powi(c.wide as i32);
+    // Wide, and the bullet's damage (`Ammo::reach`: area as damage).
+    let f = r.wide.powi(c.wide as i32) * c.ammo.reach();
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
@@ -475,7 +542,8 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
             Burst { r: br, kill: true, alarm, alarm_r: 2.0 * br, crater: steps(r.bomb_crater_secs), crater_r: r.bomb_crater_r * f, fling: br * r.bomb_ring, fling_steps: steps(r.bomb_secs).max(1), ..none }
         }
         Card::Gas => Burst { r: k.gas_r * f, gas: steps(k.gas_secs), ..none },
-        _ => Burst { r: k.germ_r * f, germ: true, ..none },
+        Card::Germ => Burst { r: k.germ_r * f, germ: true, ..none },
+        _ => return Vec::new(),
     };
     if !c.scatter {
         return vec![one];
@@ -566,12 +634,14 @@ pub struct Rounds {
     pub pops: Vec<Pop>,
 }
 
-fn slot(p: Card) -> usize {
+/// A payload's place in `Rounds::cast`; plain bullets are not counted.
+fn slot(p: Card) -> Option<usize> {
     match p {
-        Card::Blast => 0,
-        Card::Gas => 1,
-        Card::Bomb => 3,
-        _ => 2,
+        Card::Blast => Some(0),
+        Card::Gas => Some(1),
+        Card::Germ => Some(2),
+        Card::Bomb => Some(3),
+        _ => None,
     }
 }
 
@@ -668,10 +738,12 @@ impl Rounds {
             }
             let cs = by_squad[q].get_or_insert_with(|| self.casts_of(g, q));
             let Some(&c) = cs.get(cast as usize - 1) else { continue };
+            // A plain bullet's strike was all it had (`Game::step`).
+            let Some(sl) = slot(c.payload) else { continue };
             if !castable(&g.world, c.payload) {
                 self.unsupported += 1;
             } else {
-                self.cast[slot(c.payload)] += 1;
+                self.cast[sl] += 1;
                 match c.trigger {
                     None => self.fire(g, &c, hit),
                     Some(tr) => {
@@ -711,8 +783,10 @@ impl Rounds {
     /// boom=`), the same bursts a hit there would cast.
     pub fn cast_at<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32)) {
         for c in self.casts.clone() {
-            self.cast[slot(c.payload)] += 1;
-            self.fire(g, &c, at);
+            if let Some(sl) = slot(c.payload) {
+                self.cast[sl] += 1;
+                self.fire(g, &c, at);
+            }
         }
     }
 
@@ -921,14 +995,17 @@ mod tests {
     fn flight_cards_ride_every_bullet_and_cast_nothing() {
         let r = RoundRules::default();
         let round = parse("pierce+split+split+blast").unwrap();
-        assert_eq!(flight(&round), BulletMods { pierce: 1, split: 2, reach: 0, rate: 0, casts: 1 });
-        assert_eq!(flight(&parse("range+range+pierce").unwrap()), BulletMods { pierce: 1, split: 0, reach: 2, rate: 0, casts: 0 });
+        let f = flight(&round);
+        assert_eq!((f.pierce, f.split, f.reach, f.rate, f.casts), (1, 2, 0, 0, 1));
+        assert_eq!(f.ammo[0], Ammo::standard(Shell::Blast), "the blast card fires a standard blast bullet");
+        let f = flight(&parse("range+range+pierce").unwrap());
+        assert_eq!((f.pierce, f.split, f.reach, f.rate, f.casts), (1, 0, 2, 0, 0));
         assert_eq!(casts(&round).len(), 1);
         assert_eq!(casts(&parse("split").unwrap()), vec![]);
         assert_eq!(flight(&parse("blast+wide+gas+quiet").unwrap()).casts as usize, casts(&parse("blast+wide+gas+quiet").unwrap()).len());
         let mut g = Game::new(BigDish::new(race_params(1, 1, 500)), Rules::default(), 1);
         Rounds::new(round, r).arm(&mut g);
-        assert_eq!(g.bullet_mods, BulletMods { pierce: 1, split: 2, reach: 0, rate: 0, casts: 1 });
+        assert_eq!(g.bullet_mods, flight(&parse("pierce+split+split+blast").unwrap()));
         assert_eq!(g.gun_range(0), g.rules.range);
         Rounds::new(parse("range+blast").unwrap(), r).arm(&mut g);
         assert!((g.gun_range(0) - g.rules.range * (1.0 + g.rules.range_card)).abs() < 1e-4, "one Range card stretches the reach");
@@ -1138,5 +1215,54 @@ mod tests {
         }
         assert!(free.cast[0] > 0, "an empty bank blasts");
         assert_eq!(p.bank, 0.0, "and pays nothing for it");
+    }
+
+    /// Rolled bullets (owner 16:46Z; payloads are bullets, 18:05Z): a
+    /// bullet card's damage widens the strike (area as damage) and its
+    /// payload's burst, its speed, range and spread scale the gun's, and
+    /// it writes and reads back as text in a round.
+    #[test]
+    fn a_bullet_cards_numbers_ride_its_shots() {
+        let slug = Ammo { shell: Shell::Plain, set: Set::Slug, depth: 1, damage: 200, speed: 50, range: 50, spread: 100, cost: 2 };
+        let fast = Ammo { shell: Shell::Blast, set: Set::Needle, depth: 1, damage: 400, speed: 200, range: 150, spread: 50, cost: 5 };
+        let round = vec![Card::Ammo(slug), Card::Wide, Card::Ammo(fast)];
+        assert_eq!(parse(&name(&round)), Some(round.clone()), "{}", name(&round));
+        assert_eq!(cost(&round), 2 + 2 + 5);
+        let c = casts(&round);
+        assert_eq!((c.len(), c[0].payload, c[1].payload, c[1].wide), (2, Card::Plain, Card::Blast, 1));
+        let r = RoundRules::default();
+        assert!(bursts(&c[0], (50.0, 50.0), &r, 2.0, 30.0).is_empty(), "a plain bullet casts nothing");
+        let b = bursts(&c[1], (50.0, 50.0), &r, 2.0, 30.0);
+        assert!((b[0].r - r.kit.blast_r * r.wide * 2.0).abs() < 1e-4, "damage 40: a blast twice as wide, then Wide: {}", b[0].r);
+        // In play: the slug's bullets fly at half speed, half range, with
+        // a wider strike; the blast needle's at twice the speed.
+        let mut g = game(2);
+        g.bank = 1.0e9;
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Attack));
+        }
+        g.apply(Cmd::Load(0, Some(Deck::new(&round))));
+        let strike = (g.rules.strike * g.world.scale()).min(crate::mould::squad::R_MAX);
+        let reach = g.gun_range(0) * g.world.scale();
+        let mut seen = [0; 2];
+        for _ in 0..15 * 20 {
+            g.step();
+            for b in g.bullets.iter().filter(|b| b.by.is_some()) {
+                match b.cast {
+                    1 => {
+                        seen[0] += 1;
+                        assert_eq!(b.speed, 0.5);
+                        assert!((b.r - (strike * 2f32.sqrt()).min(crate::mould::squad::R_MAX)).abs() < 1e-4 && b.r > strike, "a wider strike: {} against {strike}", b.r);
+                        assert!(b.left <= 0.5 * reach + 1e-3, "half the range: {} of {reach}", b.left);
+                    }
+                    2 => {
+                        seen[1] += 1;
+                        assert_eq!(b.speed, 2.0);
+                    }
+                    c => panic!("a plain bullet from a loaded squad: cast {c}"),
+                }
+            }
+        }
+        assert!(seen[0] > 0 && seen[1] > 0, "{seen:?}");
     }
 }

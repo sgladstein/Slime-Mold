@@ -199,18 +199,6 @@ impl Map {
         self.ground[y * self.w + x]
     }
 
-    /// The B byte (`plants::unpack`) under fine cell (`fx`, `fy`), sampled
-    /// as `ground_fine` samples the ground; 0 on a map with no plants.
-    pub fn plant_fine(&self, scale: usize, fx: usize, fy: usize) -> u8 {
-        if self.plants.is_empty() {
-            return 0;
-        }
-        let k = MAP_SCALE / scale as f32;
-        let x = (((fx as f32 + 0.5) * k) as usize).min(self.w - 1);
-        let y = (((fy as f32 + 0.5) * k) as usize).min(self.h - 1);
-        self.plants[y * self.w + x]
-    }
-
     /// What the squad can't walk to from its landing (owner, 2026-11-14:
     /// every map must stay beatable by any strategy, so water must never
     /// shut the squad off a crystal or a nest): each crystal with no
@@ -267,6 +255,18 @@ impl Map {
             }
         }
         out
+    }
+
+    /// The B byte (`plants::unpack`) under fine cell (`fx`, `fy`), sampled
+    /// as `ground_fine` samples the ground; 0 on a map with no plants.
+    pub fn plant_fine(&self, scale: usize, fx: usize, fy: usize) -> u8 {
+        if self.plants.is_empty() {
+            return 0;
+        }
+        let k = MAP_SCALE / scale as f32;
+        let x = (((fx as f32 + 0.5) * k) as usize).min(self.w - 1);
+        let y = (((fy as f32 + 0.5) * k) as usize).min(self.h - 1);
+        self.plants[y * self.w + x]
     }
 
     /// Map cells to dish cells.
@@ -350,7 +350,7 @@ pub fn river(ford: bool, bridge: bool) -> Map {
         landing: Some((300.0, 500.0)),
         walls: Vec::new(),
     };
-    Map { w: MAP_W, h: MAP_H, ground, plants: Vec::new(), items }
+    Map { w: MAP_W, h: MAP_H, ground, items, plants: Vec::new() }
 }
 
 #[cfg(test)]
