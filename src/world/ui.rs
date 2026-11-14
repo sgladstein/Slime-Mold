@@ -296,6 +296,14 @@ pub struct SquadRow {
     pub note: Option<String>,
     /// The squad you command.
     pub active: bool,
+    /// Close enough to the one you command to combine (its + shows; owner
+    /// 2026-11-14 15:06Z: combine "should only appear when squads overlap").
+    pub near: bool,
+    /// Linked with the one you command (`Cmd::Link`): they move and take
+    /// orders together, as one. Its corner unlinks it; a squad not linked
+    /// shows the link button only while `near` (owner 15:49Z: "you can
+    /// only link when touching").
+    pub linked: bool,
 }
 
 /// The squad mode's squads, drawn in the selection panel's place as a
@@ -316,6 +324,10 @@ pub struct SquadPanel {
     /// Why a button would do nothing now (greyed, the reason its tooltip).
     pub split_off: Option<String>,
     pub combine_off: Option<String>,
+    /// The squad you command's guards while it works ("some"), on the
+    /// Guards button, which cycles it (`HudEvent::SquadCover`).
+    pub cover: String,
+    pub cover_key: Option<String>,
 }
 
 /// What the game shows this frame.
@@ -356,6 +368,10 @@ pub struct Model {
     /// The game has a start menu: the menu and the end screen offer "Main
     /// menu" (`MenuItem::MainMenu`).
     pub main_menu: bool,
+    /// The end screen's first button carries on (`MenuItem::Continue`)
+    /// under this label, instead of "Play again" (a roguelike run: the
+    /// shop, or the run's end).
+    pub carry_on: Option<String>,
     /// The gun's cards, drawn as a strip on the selection panel's top edge.
     pub loadout: Option<Loadout>,
     /// The squad mode's squads, a panel at the top right.
@@ -388,6 +404,9 @@ pub enum MenuItem {
     Restart,
     /// Back to the start menu (`Model::main_menu`).
     MainMenu,
+    /// The end screen's first button when the game names one
+    /// (`Model::carry_on`: a run's "On to the shop").
+    Continue,
     Quit,
 }
 
@@ -413,9 +432,13 @@ pub enum HudEvent {
     Squad(usize),
     /// The squad panel: the squad on row `r` joins the one you command.
     SquadInto(usize),
-    /// The squad panel's Split and Combine buttons.
+    /// The squad panel: link the squad on row `r` with the one you command,
+    /// or unlink it.
+    SquadLink(usize),
+    /// The squad panel's Split, Combine and Guards buttons.
     SquadSplit,
     SquadCombine,
+    SquadCover,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -434,8 +457,10 @@ enum Hit {
     /// The squad panel's row, its +, and its two buttons.
     Squad(usize),
     SquadInto(usize),
+    SquadLink(usize),
     SquadSplit,
     SquadCombine,
+    SquadCover,
 }
 
 #[derive(Clone, Debug)]
@@ -736,6 +761,8 @@ impl Hud {
             Hit::SquadInto(r) => out.push(HudEvent::SquadInto(r)),
             Hit::SquadSplit => out.push(HudEvent::SquadSplit),
             Hit::SquadCombine => out.push(HudEvent::SquadCombine),
+            Hit::SquadLink(r) => out.push(HudEvent::SquadLink(r)),
+            Hit::SquadCover => out.push(HudEvent::SquadCover),
             Hit::MenuButton => {
                 self.menu = Some(MenuPage::Main);
                 out.push(HudEvent::Menu(MenuItem::Opened));
@@ -918,7 +945,7 @@ impl Hud {
         }
         self.end = m.end.is_some();
         if let Some((title, lines)) = &m.end {
-            self.end_screen(title, lines, m.main_menu, c, s);
+            self.end_screen(title, lines, m.main_menu, m.carry_on.as_deref(), c, s);
         } else if let Some(page) = self.menu {
             self.menu_draw(page, m, c, s);
         }
@@ -1141,7 +1168,13 @@ impl Hud {
         let bh = 22.0 * s;
         let mut bx = inner.right();
         let mut tip: Option<(String, Rect)> = None;
-        for (label, key, off, hit, about) in [("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad joins the one you command"), ("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it")] {
+        let guards = format!("Guards: {}", p.cover);
+        let none = None;
+        for (label, key, off, hit, about) in [
+            ("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad that overlaps yours joins it"),
+            ("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it"),
+            (guards.as_str(), &p.cover_key, &none, Hit::SquadCover, "Guards: how many of your squad defend while it harvests or builds with slime near (none, some, more); click to change"),
+        ] {
             let text = match key {
                 Some(k) => format!("{label}  {k}"),
                 None => label.to_string(),
@@ -1182,11 +1215,17 @@ impl Hud {
                 c.text(Weight::SemiBold, 14.0 * s, (cell.x + cw / 2.0, cell.y + ch / 2.0 + 5.0 * s), Align::Centre, &format!("+{}", n - room + 1), MUTED);
                 break;
             }
-            let plus = Rect::new(cell.right() - 21.0 * s, cell.y + 4.0 * s, 17.0 * s, 17.0 * s);
-            let on_plus = !q.active && self.hover.is_some_and(|h| plus.contains(h));
-            let hot = self.hover.is_some_and(|h| cell.contains(h)) && !on_plus;
+            // Top right: the link toggle; left of it, the + while the
+            // squad overlaps yours.
+            let link = Rect::new(cell.right() - 21.0 * s, cell.y + 4.0 * s, 17.0 * s, 17.0 * s);
+            let plus = Rect::new(link.x - 20.0 * s, link.y, 17.0 * s, 17.0 * s);
+            let can_link = !q.active && (q.near || q.linked);
+            let on_link = can_link && self.hover.is_some_and(|h| link.contains(h));
+            let on_plus = !q.active && q.near && self.hover.is_some_and(|h| plus.contains(h));
+            let hot = self.hover.is_some_and(|h| cell.contains(h)) && !on_plus && !on_link;
             let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
-            c.panel(cell, 8.0 * s, t, b, if q.active { 2.0 * s } else { 1.0 }, if q.active { ACCENT } else { EDGE });
+            let edge = if q.active { ACCENT } else if q.linked { alpha(ACCENT, 0.55) } else { EDGE };
+            c.panel(cell, 8.0 * s, t, b, if q.active || q.linked { 2.0 * s } else { 1.0 }, edge);
             self.hits.push((cell, Hit::Squad(k)));
             // The hotkey, top left; the soldiers, big; their health along the foot.
             c.text(Weight::SemiBold, 12.0 * s, (cell.x + 7.0 * s, cell.y + 15.0 * s), Align::Left, &q.key, if q.active { ACCENT } else { MUTED });
@@ -1194,14 +1233,22 @@ impl Hud {
             c.icon(Icon::Soldier, (cell.x + 8.0 * s, cell.y + 19.0 * s), 20.0 * s, ink);
             c.text(Weight::SemiBold, 17.0 * s, (cell.x + 32.0 * s, cell.y + 36.0 * s), Align::Left, &format!("{}", q.soldiers), ink);
             c.bar(Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s), q.hp, health_colour(q.hp), TRACK);
-            if !q.active {
+            if can_link {
+                let (t, b) = if on_link { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
+                c.panel(link, 4.0 * s, t, b, 1.0, if q.linked { alpha(ACCENT, 0.8) } else { EDGE });
+                c.icon(Icon::Group, (link.x + 2.0 * s, link.y + 2.0 * s), 13.0 * s, if q.linked { ACCENT } else if on_link { TEXT } else { MUTED });
+                self.hits.push((link, Hit::SquadLink(k)));
+            }
+            if !q.active && q.near {
                 let (t, b) = if on_plus { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
                 c.panel(plus, 4.0 * s, t, b, 1.0, EDGE);
                 c.text(Weight::SemiBold, 13.0 * s, (plus.x + plus.w / 2.0, plus.y + 13.0 * s), Align::Centre, "+", if on_plus { GOOD } else { MUTED });
                 self.hits.push((plus, Hit::SquadInto(k)));
             }
             let state = q.note.as_deref().unwrap_or("");
-            if on_plus {
+            if on_link {
+                tip = Some((if q.linked { format!("{} is linked with yours: click to unlink", q.name) } else { format!("Link {} with yours: they move and take orders together, each with its own guns and settings", q.name) }, link));
+            } else if on_plus {
                 tip = Some((format!("{} joins the squad you command", q.name), plus));
             } else if hot {
                 let what = if q.active { format!("{}: {} soldiers, {state}. You command it", q.name, q.soldiers) } else { format!("{}: {} soldiers, {state}. Click to command it (key {})", q.name, q.soldiers, q.key) };
@@ -1726,7 +1773,7 @@ impl Hud {
         }
     }
 
-    fn end_screen(&mut self, title: &str, lines: &[String], main_menu: bool, c: &mut Canvas, s: f32) {
+    fn end_screen(&mut self, title: &str, lines: &[String], main_menu: bool, carry_on: Option<&str>, c: &mut Canvas, s: f32) {
         let w = 420.0 * s;
         let bh = 42.0 * s;
         let buttons = if main_menu { 3.0 } else { 2.0 };
@@ -1739,7 +1786,10 @@ impl Hud {
             y += 22.0 * s;
         }
         y += 10.0 * s;
-        self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s);
+        match carry_on {
+            Some(label) => self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), label, Hit::Menu(MenuItem::Continue), true, c, s),
+            None => self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s),
+        }
         let mut y = y + bh + 10.0 * s;
         if main_menu {
             self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Main menu", Hit::Menu(MenuItem::MainMenu), false, c, s);
@@ -1950,8 +2000,8 @@ mod tests {
 
     #[test]
     fn squad_tiles_command_a_squad_bring_one_in_and_split_and_combine() {
-        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active };
-        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None };
+        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active, near: k == "3", linked: false };
+        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()) };
         for screen in [(1920, 1080), (1280, 720), (640, 360), (3840, 2160)] {
             let mut r = Rig::new(screen);
             r.m.squads = Some(panel.clone());
@@ -1968,7 +2018,13 @@ mod tests {
                 let b = find(&r, Hit::Squad(i));
                 assert!(b.y >= r.hud.bottom && b.bottom() <= screen.1 as f32 && b.right() <= screen.0 as f32 && b.x >= 0.0, "{screen:?}: tile {i} at {b:?}");
             }
-            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadInto(0)), "the squad you command has no +");
+            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadInto(0) && *h != Hit::SquadLink(0)), "the squad you command has no + or link");
+            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadInto(1)), "a squad that doesn't overlap yours has no +");
+            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadLink(1)), "a squad not touching yours can't be linked");
+            let b = find(&r, Hit::SquadLink(2));
+            assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadLink(2)]));
+            let b = find(&r, Hit::SquadCover);
+            assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadCover]));
             let b = find(&r, Hit::Squad(1));
             // Left of the +, so the tile itself.
             assert_eq!(press(&mut r, Rect::new(b.x, b.y + b.h / 2.0, b.w / 3.0, b.h / 2.0)), (true, vec![HudEvent::Squad(1)]));
@@ -2149,6 +2205,26 @@ mod tests {
                 r.at((b.x + 4.0, b.y + 4.0));
                 r.click(Button::Left, true);
                 assert_eq!(r.click(Button::Left, false).1, vec![HudEvent::Menu(MenuItem::MainMenu)]);
+            }
+        }
+    }
+
+    /// A run's end screen carries on (to the shop) in place of Play again.
+    #[test]
+    fn the_end_screen_carries_on_when_the_game_names_it() {
+        for carry in [None, Some("On to the shop")] {
+            let mut r = Rig::new((1600, 900));
+            r.m.carry_on = carry.map(str::to_string);
+            r.m.end = Some(("Planet 1 freed".into(), vec![]));
+            r.draw();
+            let has = |r: &Rig, h: Hit| r.hud.hits.iter().find(|(_, x)| *x == h).map(|(b, _)| *b);
+            assert_eq!(has(&r, Hit::Menu(MenuItem::Restart)).is_some(), carry.is_none());
+            if let Some(b) = has(&r, Hit::Menu(MenuItem::Continue)) {
+                r.at((b.x + 4.0, b.y + 4.0));
+                r.click(Button::Left, true);
+                assert_eq!(r.click(Button::Left, false).1, vec![HudEvent::Menu(MenuItem::Continue)]);
+            } else {
+                assert!(carry.is_none());
             }
         }
     }

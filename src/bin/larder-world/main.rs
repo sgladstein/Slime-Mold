@@ -134,6 +134,7 @@ use slime_mould::mould::kit::{Kit, KitRules, Tool};
 use slime_mould::mould::rounds::{self, RoundRules, Rounds};
 use slime_mould::mould::larder_world::{TURRET_MUZZLE, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
+use slime_mould::mould::run::{Ground as RunGround, Run};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
 use slime_mould::sound::synth::{VoiceBank, DEFAULT_MASTER};
@@ -296,7 +297,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 27] = [
+const LOADOUTS: [(&str, &str); 30] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -328,6 +329,10 @@ const LOADOUTS: [(&str, &str); 27] = [
     // a scent line every mould follows, here into a burning line.
     ("bait", "bait"),
     ("killzone", "bait+scorch"),
+    // The owner's notes (11-14 15:06Z): rate of fire, cost cut, scent.
+    ("rapid", "rate+rate+blast"),
+    ("thrift", "thrift+bomb+thrift+bomb"),
+    ("smother", "smother+smother"),
     ("mist", "mist"),
     ("firewall", "scorch+blast"),
     // Range (owner, 11-14 08:39Z: "there should be a range modifer card
@@ -391,6 +396,13 @@ struct Args {
     /// `bullet=SPEED`: dish cells a game second a shot flies
     /// (`Rules::bullet_speed`; 0 is the instant ray, to compare).
     bullet: Option<f32>,
+    /// A roguelike run's level (`mould::run`): this round plays the run's
+    /// current planet, with its upgrades. `run=SEED` starts a run on its
+    /// first planet; the start menu's Run does too.
+    run: Option<Run>,
+    /// `dev=1`: the run's shop has the dev rows (jump planets, points,
+    /// redraw cards); also the options page's Dev mode.
+    dev: bool,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -572,6 +584,9 @@ struct App {
     /// chose the mould (`shape=`, `walkers=`): what the menu's picks build
     /// on. None in the headless runs, which have no menu to go back to.
     base: Option<(Args, bool)>,
+    /// The roguelike run under way, between its levels too (`args.run` is
+    /// the level being played; this is the run itself, in the shop).
+    run: Option<Run>,
     result: Result<(), String>,
 }
 
@@ -580,6 +595,7 @@ impl App {
         App {
             name: args.map.clone().unwrap_or_else(|| "noise".into()),
             round: args.round,
+            run: args.run.clone(),
             args,
             window: None,
             pixels: None,
@@ -665,24 +681,32 @@ impl App {
         // The tier whose core the game plays (`Tier::core`, read by
         // `Game::with_tier`): the mission's, or a `tier=` key's (the last).
         let mut core_tier = None;
-        let mission = match &a.mission {
-            Some(name) => {
+        // A run's level is a mission the run writes (`run::Level`), its
+        // ground a hand-made map by name or, from the level generator, a
+        // made one.
+        let level = a.run.as_ref().map(Run::level);
+        let mission = match (&level, &a.mission) {
+            (Some(l), _) => Some(l.mission.clone()),
+            (None, Some(name)) => {
                 let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
-                let m = Mission::parse(&std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?)?;
-                // A ladder name not built yet (drifter, sprawler, trunk) plays
-                // the plain mould, and says so.
-                if let Some(t) = m.tier.as_deref() {
-                    match Tier::from_name(t) {
-                        Some(tier) => {
-                            tier.settings(&mut s)?;
-                            core_tier = Some(tier);
-                        }
-                        None => eprintln!("larder-world: tier {t} is not built yet; the plain mould plays"),
-                    }
-                }
-                Some(m)
+                Some(Mission::parse(&std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?)?)
             }
-            None => None,
+            (None, None) => None,
+        };
+        // A ladder name not built yet (drifter, sprawler, trunk) plays
+        // the plain mould, and says so.
+        if let Some(t) = mission.as_ref().and_then(|m| m.tier.as_deref()) {
+            match Tier::from_name(t) {
+                Some(tier) => {
+                    tier.settings(&mut s)?;
+                    core_tier = Some(tier);
+                }
+                None => eprintln!("larder-world: tier {t} is not built yet; the plain mould plays"),
+            }
+        }
+        let made = match level.map(|l| l.ground) {
+            Some(RunGround::Made(m)) => Some(m),
+            _ => None,
         };
         // Engine keys last, over the race world's and the mission's tier.
         for (k, v) in &a.keys {
@@ -695,6 +719,7 @@ impl App {
         let own = a.own || mission.as_ref().is_some_and(|m| m.own);
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
         let world = match &map_name {
+            _ if made.is_some() => GpuWorld::with_map(device, queue, s, a.scale, made.as_ref().expect("a made map")),
             None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
             Some(name) => {
                 let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
@@ -719,6 +744,10 @@ impl App {
             None => GpuWorld::new(device, queue, s, a.scale),
         };
         let mut rules = mission.as_ref().map_or_else(Rules::default, |m| m.rules(Rules::default()));
+        // The run's upgrades over the level's rules.
+        if let Some(r) = &a.run {
+            r.rules(&mut rules);
+        }
         if let Some(c) = a.crater {
             rules.crater = c;
         }
@@ -755,8 +784,18 @@ impl App {
         if a.squads {
             game.apply(Cmd::Active(0));
         }
-        self.kit = Kit::new(KitRules::default());
-        self.rounds = Rounds::new(rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(), RoundRules::default());
+        let mut kit = KitRules::default();
+        if let Some(r) = &a.run {
+            r.kit(&mut kit);
+        }
+        self.kit = Kit::new(kit);
+        // A run's gun is the cards it bought (`Run::gun`); H does not cycle it.
+        let gun = match &a.run {
+            Some(r) => r.gun(),
+            None => rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(),
+        };
+        let budget = a.run.as_ref().map_or(RoundRules::default().budget, Run::budget);
+        self.rounds = Rounds::new(gun, RoundRules { budget, ..RoundRules::default() });
         self.mission = mission.map(|m| Tracker::new(m, &game));
         self.mission_sec = 0;
         let e = &game.world.e;
@@ -1262,7 +1301,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1295,6 +1334,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 chosen = true;
             }
             "mission" => args.mission = Some(v.to_string()),
+            "run" => args.run = Some(Run::new(v.parse()?)),
+            "dev" => args.dev = v != "0",
             "mode" => {
                 args.squads = match v {
                     "squads" => true,
@@ -1330,7 +1371,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "ui" => ui = Some(settings::parse_size(v).ok_or("ui=PERCENT% (25% to 400%) or a factor such as 1.5")?),
             "menu" => {
                 if v != "0" && page_named(v).is_none() {
-                    return Err("menu=0|1|main|campaign|options|keys".into());
+                    return Err("menu=0|1|main|campaign|options|keys|shop".into());
                 }
                 menu_flag = Some(v.to_string());
             }
@@ -1418,7 +1459,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // saved on this machine; the window opens at the saved size.
     set_ui_user(ui.unwrap_or_else(|| if look.is_some() || bench_secs.is_some() { 1.0 } else { settings::saved_ui() }));
     let base = args.clone();
-    if !chosen && args.mission.is_none() && !args.own {
+    // A run keeps its tier's mould, as a mission does.
+    if let Some(r) = args.run.as_mut() {
+        r.dev = args.dev;
+        r.restock();
+    }
+    if !chosen && args.mission.is_none() && !args.own && args.run.is_none() {
         default_shape(&mut args);
     }
     if let Some(secs) = bench_secs {

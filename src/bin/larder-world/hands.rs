@@ -88,6 +88,9 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "squads" {
         return squads_hand(g);
     }
+    if hand == "squadwork" {
+        return squadwork_hand(g);
+    }
     // `build`: farm, with a pump on the larder's crystal, two turrets on
     // the road to the core and a lure past them (the look at buildings);
     // `siren` the same with a siren in the lure's place (a tier's look).
@@ -382,5 +385,76 @@ pub(super) fn squads_hand(g: &mut Game<GpuWorld>) {
             }
         }
         _ => {}
+    }
+}
+
+/// The look mode's `squadwork` hand (`mode=squads`): guards, links and
+/// queues (owner 2026-11-14 15:06Z).
+/// 1. eight soldiers sent to drain the slimed crystal nearest them: with
+///    slime near, a third stand guard on its side while the rest drain;
+/// 2. at 30 s the squad splits, the halves are linked, and one order sends
+///    both halfway to the nearest big crystal, with draining it queued.
+pub(super) fn squadwork_hand(g: &mut Game<GpuWorld>) {
+    let t = g.time();
+    let sc = g.world.scale();
+    while t < 1.0 && g.bank >= g.rules.soldier_cost && g.alive() < 8 {
+        if !g.apply(Cmd::Buy) {
+            break;
+        }
+    }
+    let Some(q) = g.active else { return };
+    let Some(m) = g.middle(q) else { return };
+    let cs = g.world.crystals();
+    // A big crystal (half the largest's charge or more), so the work lasts.
+    let big = cs.iter().skip(1).map(|c| c.1).fold(0.0, f32::max);
+    // The big crystal with the most slime within 30 cells, its own rim
+    // still clear (a crystal under the body can't be drained).
+    let pick = || {
+        cs.iter()
+            .enumerate()
+            .skip(1)
+            .filter(|&(i, c)| c.1 > 0.2 * big && g.world.walkers_in(c.0, g.world.crystal_r(i) + 2.0 * sc) < 50)
+            .max_by_key(|&(_, c)| g.world.walkers_in(c.0, 30.0 * sc))
+            .map(|(_, c)| c.0)
+    };
+    if std::env::var("SQ_DEBUG").is_ok() && t < 0.1 {
+        for (i, c) in cs.iter().enumerate() {
+            eprintln!("crystal {i} at {:?} charge {:.0} rim {} near {}", c.0, c.1, g.world.walkers_in(c.0, g.world.crystal_r(i) + 2.0 * sc), g.world.walkers_in(c.0, 30.0 * sc));
+        }
+    }
+    let ordered = g.log.iter().any(|(_, c)| matches!(c, Cmd::SquadOrder(..)));
+    let linked = g.log.iter().any(|(_, c)| matches!(c, Cmd::Link(..)));
+    if t >= 1.0 && !ordered {
+        if let Some(c) = pick() {
+            if std::env::var("SQ_NOCOVER").is_ok() {
+                g.apply(Cmd::Cover(q as u8, slime_mould::mould::larder_world::Cover::Never));
+            }
+            g.apply(Cmd::SquadOrder(q as u8, Order::Clear(c.0, c.1)));
+        }
+    } else if t >= 30.0 && !linked && g.apply(Cmd::Split(q as u8, (m.0 + 10.0 * sc, m.1))) {
+        let n = g.active.unwrap();
+        g.apply(Cmd::Link(q as u8, n as u8));
+        // Halfway to the biggest crystal on this side of the wall, then
+        // queued: drain it.
+        let far = cs.iter().skip(1).filter(|c| c.1 > 0.5 * big).map(|c| c.0).min_by(|a, b| (a.0 - m.0).hypot(a.1 - m.1).total_cmp(&(b.0 - m.0).hypot(b.1 - m.1))).unwrap_or(m);
+        let a = g.nearest_standable(((m.0 + far.0) / 2.0, (m.1 + far.1) / 2.0), 20.0 * sc).unwrap_or(m);
+        g.apply(Cmd::SquadOrder(n as u8, Order::Move(a.0, a.1)));
+        g.apply(Cmd::SquadQueue(n as u8, Order::Clear(far.0, far.1)));
+    }
+    if std::env::var("SQ_DEBUG").is_ok() {
+        let guards = g.members(q).iter().filter(|&&k| g.soldiers[k].cover).count();
+        eprintln!("t {t:.1} q {q} work {:?} guards {guards} queued {} linked {:?} healed {:.0}", g.squads[q].work, g.squads[q].queued, g.linked(q), g.healed);
+        if (t - 31.0).abs() < 0.05 || (t - 36.0).abs() < 0.05 {
+            for r in g.live_squads() {
+                let k0 = g.members(r)[0];
+                eprintln!("  squad {r} mid {:?} dest {:?} anchor {:?} steer {:?} work {:?} link {} k0 order {:?}", g.middle(r), g.squads[r].dest, g.squads[r].anchor, g.squads[r].steer, g.squads[r].work, g.squads[r].link, g.soldiers[k0].order);
+            }
+        }
+        if (t - 20.0).abs() < 0.05 {
+            for k in g.members(q) {
+                let s = &g.soldiers[k];
+                eprintln!("  k {k} at {:.0},{:.0} order {:?} cover {} queued {} hp {:.0}", s.x / sc, s.y / sc, s.order, s.cover, s.queued, s.hp);
+            }
+        }
     }
 }

@@ -846,6 +846,17 @@ impl App {
                 })
                 .collect();
         }
+        // A run's locks (`Run::has`): what its shop has not unlocked shows,
+        // dimmed, with where to get it.
+        if let Some(run) = &self.args.run {
+            for c in &mut cmds {
+                if run_lock(c.id).is_some_and(|k| !run.has(k)) {
+                    c.ready = false;
+                    c.why_not = Some("Locked: unlock it in the shop between planets".into());
+                    c.about = format!("Locked in this run (the shop sells it). {}", c.about);
+                }
+            }
+        }
         for c in &mut cmds {
             if c.ready {
                 c.why_not = None;
@@ -900,6 +911,16 @@ impl App {
         };
         if let Some(tr) = self.mission.as_ref().filter(|t| t.verdict.is_some()) {
             m.end = Some(mission_screen(tr, g));
+            if let (Some(r), Some(v), Some(end)) = (&self.args.run, tr.verdict, m.end.as_mut()) {
+                let last = r.depth >= slime_mould::mould::run::PLANETS;
+                let (label, line) = match (v.stars > 0, last) {
+                    (true, true) => ("The home world is free", format!("The run is won: {} planets", r.depth)),
+                    (true, false) => ("On to the shop", format!("+{} points for the shop ({} now)", slime_mould::mould::run::reward(r.depth, v.stars), r.points + slime_mould::mould::run::reward(r.depth, v.stars))),
+                    (false, _) => ("End the run", format!("The run ends on planet {}", r.depth)),
+                };
+                end.1.insert(1, line);
+                m.carry_on = Some(label.into());
+            }
         } else if let Some(end) = g.end {
             m.end = Some(end_screen(end, g));
         }
@@ -1007,10 +1028,14 @@ fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, CardKind, Str
         C::Split => (Icon::Split, CardKind::Flight, format!("Every bullet breaks into {split_n} pieces where it lands, fanned on past the hit.")),
         // Trails (2026-11-14): each reuses the glyph of the field it lays.
         C::Scorch => (Icon::Burn, CardKind::Flight, format!("Every bullet burns the mould along its flight, {:.0} cells wide, and leaves a line of crater for {:.0} s: a fire line the mould shuns.", 2.0 * r.trail_r, r.trail_crater_secs)),
-        C::Bait => (Icon::Crystal, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of food scent along its flight: every mould follows it, into your fire or a scorch line.", 2.0 * r.trail_r)),
+        C::Bait => (Icon::Bait, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of food scent along its flight: every mould follows it, into your fire or a scorch line.", 2.0 * r.trail_r)),
         C::Mist => (Icon::Gas, CardKind::Flight, format!("Every bullet leaves a thin gas cloud along its flight ({:.1} a disc): the mould that drifts into it sleeps.", r.trail_cloud)),
         // Range (owner, 11-14 08:39Z): reuses free fire's target glyph.
         C::Range => (Icon::Target, CardKind::Flight, format!("Every soldier sees and shoots {:.0}% further ({:.0} cells a card), mouse-aimed volleys too.", 100.0 * w.range_card, w.range * w.range_card)),
+        // The owner's notes (11-14 15:06Z): rate of fire, reduce cost, disrupt scent.
+        C::Rate => (Icon::Fast, CardKind::Flight, format!("Every soldier fires {:.0} times as often a card, volleys too.", 1.0 + w.rate_card)),
+        C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less of the gun's budget. Does nothing in a fight.", rounds::THRIFT)),
+        C::Smother => (Icon::Close, CardKind::Flight, format!("Every bullet wipes the food scent along its flight, {:.0} cells wide: the mould there loses the way to its food until the scent spreads back.", 2.0 * r.trail_r)),
     }
 }
 
@@ -1091,4 +1116,25 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
         _ => ([255, 200, 110], [255, 248, 222], [255.0, 214.0, 150.0]),
     };
     CardLook { glow, core: [core[0], core[1], core[2], 255], light }
+}
+
+/// The run's unlock (`mould::run::ITEMS`) a command needs, if any: the
+/// buildings and the tools the shop sells.
+pub(super) fn run_lock(id: u32) -> Option<&'static str> {
+    Some(match id {
+        WALL => "walls",
+        TURRET => "turret",
+        LURE => "lure",
+        LURES => return None,
+        PUMP => "pump",
+        OUTPOST => "outpost",
+        SIREN => "siren",
+        T_BLAST => "blast",
+        T_MINE => "mine",
+        T_CORD => "cord",
+        T_GAS => "gas",
+        // Never sold: the GPU world casts no germ yet.
+        T_GERM => "germ",
+        _ => return None,
+    })
 }

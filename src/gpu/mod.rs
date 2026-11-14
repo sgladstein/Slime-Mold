@@ -2389,10 +2389,10 @@ impl Engine {
     /// between ticks.
     /// Food scent laid within `r` of (`x`, `y`) (dish cells): the CPU's
     /// `BigDish::lay_bait` (the rounds' `Bait` trail, 11-14).
-    pub fn lay_scent(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, amount: f32) {
+    pub fn lay_scent(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, (keep, amount): (f32, f32)) {
         let k = self.dish.p.scale as f32;
         self.write_params(s, Hand::default(), 0);
-        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, amount, 0.0, 0.0, 0.0, 0.0]));
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, amount, keep, 0.0, 0.0, 0.0]));
         self.run(shared, &[(BAITLAY, self.cells.div_ceil(256))]);
     }
 

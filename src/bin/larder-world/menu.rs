@@ -12,7 +12,8 @@
 //! `look=DIR` films that page over the round (the pictures on the page).
 
 use super::*;
-use slime_mould::world::start::{Entry, Opt, Page, StartEvent, StartMenu};
+use slime_mould::mould::run::{self as run, Pick};
+use slime_mould::world::start::{Entry, Opt, Page, Shop, ShopRow, StartEvent, StartMenu};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
@@ -92,6 +93,9 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         let now = key_value(&base.keys, k).map_or(d.clone(), str::to_string);
         o.push(Opt::new(k, label, choices, &d, &now, note));
     }
+    // The run's dev mode (owner, 11-14 15:33Z): the shop's rows to jump
+    // planets, add points and redraw cards. A run's setting, not a round's.
+    o.push(Opt::new("dev", "Dev mode", &["off", "on"], "off", if base.dev { "on" } else { "off" }, "The run's shop gets rows to jump planets, add points and redraw the cards"));
     // The UI's size (owner, 11-14 08:07Z): turned here it takes effect at
     // once and is saved; not a round's setting, so `round_args` skips it.
     let sizes: Vec<String> = settings::STEPS.iter().map(|&v| settings::percent(v)).collect();
@@ -161,6 +165,42 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
     menu
 }
 
+/// The round a run's level plays: the options over the command line, as a
+/// mission takes them (the tier's own mould, not shape C; the engine keys
+/// only where moved off their default), the control mode the options
+/// pick, and the level's seed and walkers.
+pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
+    let mut a = round_args(base, true, menu, &StartEvent::Sandbox);
+    let level = r.level();
+    a.mission = None;
+    a.map = None;
+    a.own = false;
+    a.seed = level.seed;
+    a.walkers = ((base.walkers as f32) * level.walkers).round() as usize;
+    a.run = Some(r.clone());
+    a
+}
+
+/// The shop page's contents for run `r`.
+pub(super) fn shop_of(r: &Run) -> Shop {
+    let l = r.level();
+    let p = r.planet();
+    let gun = r.gun_text();
+    let mut lines = vec![
+        format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers),
+        format!("Gun: {} (budget {} of {})", if gun == "none" { "plain shots".to_string() } else { gun }, slime_mould::mould::rounds::cost(&r.gun()), r.budget()),
+    ];
+    if r.depth == run::PLANETS {
+        lines.push("The slime's home world: beat it and the run is won".into());
+    }
+    Shop {
+        heading: format!("{} next: {}", l.mission.name, l.mission.says),
+        lines,
+        purse: format!("{} points", r.points),
+        rows: r.shop().into_iter().map(|row| ShopRow { group: row.group.name().into(), name: row.name, about: row.about, price: row.price, state: row.state, ready: row.ready }).collect(),
+    }
+}
+
 /// A page by its `menu=` name.
 pub(super) fn page_named(name: &str) -> Option<Page> {
     Some(match name {
@@ -168,6 +208,7 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         "campaign" | "missions" => Page::Missions,
         "options" => Page::Options,
         "keys" => Page::Keys,
+        "shop" => Page::Shop,
         _ => return None,
     })
 }
@@ -181,6 +222,8 @@ pub(super) fn round_args(base: &Args, chosen: bool, menu: &StartMenu, pick: &Sta
     let val = |k: &str| menu.option(k).map(|o| o.value().to_string());
     // The engine keys the page owns: its value replaces the command line's.
     a.keys.retain(|(k, _)| !ENGINE_OPTS.contains(&k.as_str()));
+    // Not a run's level unless `run_args` makes it one.
+    a.run = None;
     match pick {
         StartEvent::Mission(i) => {
             a.mission = menu.missions.get(*i).map(|e| e.stem.clone());
@@ -289,6 +332,46 @@ impl App {
     pub(super) fn menu_event(&mut self, ev: StartEvent) -> Result<bool, String> {
         match ev {
             StartEvent::Quit => return Ok(true),
+            StartEvent::Run if self.run.is_some() => self.show_shop(),
+            StartEvent::Run | StartEvent::NextLevel => {
+                let Some((base, _)) = self.base.clone() else { return Ok(false) };
+                let mut r = self.run.take().unwrap_or_else(|| {
+                    // A new run on a new seed each time (the clock), so two
+                    // runs differ; `run=SEED` on the command line repeats one.
+                    let seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_secs());
+                    Run::new(seed)
+                });
+                let Some(menu) = self.menu.take() else { return Ok(false) };
+                r.dev = menu.option("dev").is_some_and(|o| o.value() == "on");
+                self.args = run_args(&base, &menu, &r);
+                self.run = Some(r);
+                self.round = self.args.round;
+                self.parked = Some(menu);
+                self.start()?;
+                self.paused = false;
+            }
+            StartEvent::Buy(i) => {
+                if let Some(r) = self.run.as_mut() {
+                    if let Some(row) = r.shop().get(i) {
+                        let p: Pick = row.pick;
+                        if !r.pick(p) {
+                            if let Some(m) = self.menu.as_mut() {
+                                m.notice = Some(format!("{}: {}", row.name, if row.ready { "can't be done" } else { "not enough points, or locked" }));
+                            }
+                        }
+                    }
+                }
+                self.show_shop();
+            }
+            StartEvent::EndRun => {
+                let line = self.run.take().map(|r| format!("Run given up on planet {}: {}", r.depth, r.line()));
+                if let Some(m) = self.menu.as_mut() {
+                    m.run_live = false;
+                    m.shop = None;
+                    m.notice = line;
+                    m.show(Page::Main);
+                }
+            }
             StartEvent::EditMaps => {
                 let note = match launch_editor() {
                     Ok(()) => "The map editor opened in its own window".to_string(),
@@ -315,6 +398,56 @@ impl App {
         Ok(false)
     }
 
+    /// The shop page, filled from the run (the menu up, its dish behind).
+    pub(super) fn show_shop(&mut self) {
+        let Some(r) = self.run.as_mut() else { return };
+        if let Some(m) = self.menu.as_mut() {
+            r.dev = m.option("dev").is_some_and(|o| o.value() == "on");
+            m.shop = Some(shop_of(r));
+            m.run_live = true;
+            if m.page != Page::Shop {
+                m.show(Page::Shop);
+            }
+        }
+    }
+
+    /// The end screen's carry-on in a run: the level's verdict goes to the
+    /// run (a win's points and the next planet; a loss ends it), then the
+    /// shop, or the main menu with the run's line when it is over. With
+    /// no menu (`menu=0`) the next planet starts at once.
+    pub(super) fn carry_on(&mut self) -> Result<(), String> {
+        let Some(v) = self.mission.as_ref().and_then(|t| t.verdict) else { return Ok(()) };
+        let Some(mut r) = self.args.run.clone() else { return Ok(()) };
+        if v.stars > 0 {
+            r.won(v.stars);
+        } else {
+            r.lost();
+        }
+        if self.base.is_none() {
+            if r.over {
+                println!("larder-world: the run is over: {}", r.line());
+                self.args.run = None;
+                self.run = None;
+                return Ok(());
+            }
+            self.args.seed = r.level().seed;
+            self.args.run = Some(r.clone());
+            self.run = Some(r);
+            return self.start();
+        }
+        let over = r.over.then(|| if r.victory() { format!("The home world is free: the run is won. {}", r.line()) } else { format!("The run ended on planet {}: {}", r.depth, r.line()) });
+        self.run = if r.over { None } else { Some(r) };
+        self.back_to_menu()?;
+        if let Some(m) = self.menu.as_mut() {
+            m.run_live = self.run.is_some();
+            m.notice = over;
+        }
+        if self.run.is_some() {
+            self.show_shop();
+        }
+        Ok(())
+    }
+
     /// Back to the start menu from play (the Esc menu's or the end
     /// screen's Main menu).
     pub(super) fn back_to_menu(&mut self) -> Result<(), String> {
@@ -322,6 +455,8 @@ impl App {
         self.menu = self.parked.take();
         if let Some(m) = self.menu.as_mut() {
             m.show(Page::Main);
+            m.run_live = self.run.is_some();
+            m.shop = None;
         }
         self.open_menu()
     }
