@@ -237,7 +237,6 @@ fn main() {
             "cap" => rules.cap = v.parse().unwrap(),
             "look" => look = Some(v.into()),
             "hand" => hand = v.into(),
-            "recharge" => rr.recharge = v.parse().unwrap(),
             "blast_price" => rr.kit.blast_price = v.parse().unwrap(),
             "gas_price" => rr.kit.gas_price = v.parse().unwrap(),
             "germ_price" => rr.kit.germ_price = v.parse().unwrap(),

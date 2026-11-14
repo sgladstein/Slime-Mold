@@ -436,10 +436,11 @@ impl App {
         }
         // Each bullet in flight (`Game::bullets`) as Noita draws a spell
         // (Reports/noita-spell-look-2026-11-14.md): a streak along this
-        // frame's travel (`draw_as_long`), in the colour of the payload its
-        // soldier's next hit casts (`Rounds::next_cast`; a plain shot, a
-        // turret's, or one fired while the gun recharges is pale gold),
-        // and a light that lights the real slime as it flies over it.
+        // frame's travel (`draw_as_long`), in the colour of the payload it
+        // carries (`Bullet::cast`, `Rounds::cast_of`; a plain shot, a
+        // turret's or a split piece is pale gold; until the recharge went,
+        // 18:05Z, it took its soldier's next cast), and a light that lights
+        // the real slime as it flies over it.
         // Its shape is its cards: wide is bigger, quiet dimmer, pierce a
         // long thin lance, split a fatter head, scatter three heads.
         // (Before 11-14: a 3-pixel disc and a line, the same for every
@@ -456,7 +457,7 @@ impl App {
                 rounds::Card::Germ => g.world.has_germ(),
                 _ => true,
             };
-            let cast = b.by.and_then(|k| self.rounds.next_cast(g, k, t)).filter(|&(c, charging)| !charging && castable(&c)).map(|(c, _)| c);
+            let cast = b.by.and_then(|k| g.soldiers.get(k)).and_then(|s| self.rounds.cast_of(g, s.squad as usize, b.cast)).filter(castable);
             let look = card_look(cast.map(|c| c.payload));
             let wide = rounds::RoundRules::default().wide.powi(cast.map_or(0, |c| c.wide) as i32);
             let quiet = cast.is_some_and(|c| c.quiet);
@@ -955,7 +956,7 @@ impl App {
 
     /// The loadout panel (`ui::Loadout`): the squad's round, with the gun
     /// of the one selected soldier (or the first selected, or the first
-    /// alive) lit at the cast its next hit fires.
+    /// alive) lit at the cast its next shot fires.
     fn loadout(&self, g: &Game<GpuWorld>, sel: &[usize]) -> Loadout {
         let rd = &self.rounds;
         let scope: Vec<usize> = if sel.is_empty() { (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect() } else { sel.to_vec() };
@@ -965,11 +966,7 @@ impl App {
         let q = g.active.or(lead.map(|k| g.soldiers[k].squad as usize)).unwrap_or(0);
         let gun = g.gun(q);
         let round = rd.cards_of(g, q);
-        let rech = rounds::recharge(&round, &rd.rules);
-        let tick = g.world.ticks();
-        let ticks = (rech * g.rules.tps as f32).max(1.0);
-        let left = |k: usize| rd.gun(g, k).map_or(0.0, |(_, ready)| ready.saturating_sub(tick) as f32 / ticks);
-        let next = lead.and_then(|k| rd.gun(g, k)).map(|(cast, _)| cast);
+        let next = lead.and_then(|k| rd.next(g, k));
         let cards = gun_cards(&round, &rd.rules, &g.rules, next, |c| match c {
             rounds::Card::Gas => g.world.has_gas(),
             rounds::Card::Germ => g.world.has_germ(),
@@ -987,25 +984,17 @@ impl App {
         };
         let own = g.squads.get(q).is_some_and(|s| s.deck.is_some());
         let whose = if own { format!("{whose}, squad {}'s own cards", q + 1) } else { whose };
-        let casting = !rounds::casts(&round, &rd.rules).is_empty();
-        let note = (casting && scope.len() > 1).then(|| {
-            let ready = scope.iter().filter(|&&k| left(k) <= 0.0).count();
-            format!("{ready} of {} guns ready, recharge {rech:.1} s", scope.len())
-        });
         Loadout {
             name: if round.is_empty() { "Plain".into() } else { capital(&name) },
             whose,
             cards,
             slots: (gun.slots as usize).max(1),
             gun: Some((gun_icon(gun.kind), capital(&gun.title()), gun.line())),
-            recharge: rech,
-            charging: lead.map_or(0.0, left).clamp(0.0, 1.0),
             // The budget (owner's card, 11-14 15:34Z) under the cards.
             note: if round.is_empty() {
                 Some("No cards: H or the button for a loadout".into())
             } else {
-                let spent = format!("Cost {} of {}", rounds::cost(&round), gun.budget);
-                Some(note.map_or(spent.clone(), |n| format!("{spent} · {n}")))
+                Some(format!("Cost {} of {}", rounds::cost(&round), gun.budget))
             },
             cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
         }
@@ -1090,13 +1079,16 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
             (_, Some(p)) => payload_colour(p),
             (_, None) => [146, 156, 168, 255],
         };
+        // A payload's bank price a hit, when casts pay (`RoundRules::pay`).
         let price = match c {
             C::Blast => Some(r.kit.blast_price),
             C::Gas => Some(r.kit.gas_price),
             C::Germ => Some(r.kit.germ_price),
             C::Bomb => Some(r.bomb_price),
             _ => None,
-        };
+        }
+        .map(|p| p * r.pay)
+        .filter(|&p| p > 0.0);
         if kind == CardKind::Payload && !castable(c) {
             about.push_str(" Not on this world yet: it casts nothing here.");
         }
@@ -1126,7 +1118,7 @@ pub(super) struct CardLook {
 }
 
 /// Each payload in its own colour, as each Noita spell is (blast hot
-/// orange, gas violet, germ acid green; none, a plain or recharging shot,
+/// orange, gas violet, germ acid green; none, a plain shot,
 /// pale gold).
 pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
     let (glow, core, light): ([u8; 3], [u8; 3], [f32; 3]) = match payload {

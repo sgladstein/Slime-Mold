@@ -46,7 +46,7 @@ impl App {
                 "Round".to_string()
             }
         };
-        let what = if cards == "none" { format!("{whose}: plain shots") } else { format!("{whose}: {name} ({}), recharge {:.1} s", cards.replace('+', ", "), rounds::recharge(&round, &self.rounds.rules)) };
+        let what = if cards == "none" { format!("{whose}: plain shots") } else { format!("{whose}: {name} ({}), a card a shot", cards.replace('+', ", ")) };
         self.hud.alert(&what, None, theme::ACCENT);
     }
 
