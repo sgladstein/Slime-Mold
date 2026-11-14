@@ -28,6 +28,9 @@ code:
   - BigParams::hunger_scent
   - BigParams::lone_step
   - BigParams::lone_upkeep
+  - BigParams::roam
+  - BigParams::roam_far
+  - BigParams::roam_share
   - BigParams::start_energy
   - BigParams::starve
   - BigParams::tether
@@ -82,7 +85,10 @@ its crystals in bronze lobes instead of covering the map; at a crowd of 16
 the tubes between crystals broke into beads
 ([condense](../../Reports/condense-2026-11-14/README.md)). The settled
 bronze keeps its veins under the sheen (luma 99; keep it at or under the
-bolt red's 105).
+bolt red's 105). **Breakaway** (`BigParams::roam`, off by default, needs
+condensing; owner 11-14 15:06Z): every `roam` steps a condensed piece may
+leave together for the nearest untouched crystal at least `roam_far` cells
+away, running like a panicking walker, and lands and feeds there.
 
 ## Owner's word
 

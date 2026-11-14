@@ -153,6 +153,11 @@ struct Params {
     // (low 16 bits) and its square's radius (high 16), and the stream of
     // the draw that splits the ripe (big.rs `DRAW_CONDENSE`).
     fling_dep: f32, condense: u32, ccrowd: u32, s_condense: u32,
+    // Condensed slime breaks away (`BigParams::roam`, 11-14; Params grew
+    // from 912 to 928 for this row): steps between chances to leave (0
+    // off), how far its crystal must be and how near it lands, in whole
+    // fine cells, and the share of choices sent.
+    roam: u32, roam_far: u32, roam_land: u32, roam_share: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -318,6 +323,12 @@ const DENSE_BIT: u32 = 0x10000u;
 // `ABSORB_STEPS` (the CPU's `ABSORBED`): only the view reads it.
 const ABSORB_BIT: u32 = 0x20000u;
 const ABSORB_STEPS: u32 = 15u;
+// A breakaway's mark and the crystal (pile) it runs for, bits 19-24 (the
+// CPU's `ROAM`, `ROAM_SHIFT`); it goes for crystals with `ROAM_FRESH` left.
+const ROAM_BIT: u32 = 0x40000u;
+const ROAM_SHIFT: u32 = 19u;
+const ROAM_FRESH: f32 = 0.8;
+fn roaming(k: u32) -> bool { return condenses() && P.roam > 0u && (dense_word(k) & ROAM_BIT) != 0u; }
 fn condenses() -> bool { return growth() && P.condense > 0u; }
 fn dense_base() -> u32 { return gas_base() + GAS_SLOTS + P.n; }
 fn dense_word(k: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + k]); }
@@ -593,6 +604,12 @@ fn pow0(v: f32, e: f32) -> f32 {
 // at a unit bolts only for `panic_dash` steps (0 always), then creeps again. (x, y, haste); (-1, -1, 0) when calm.
 const PANIC_LEFT: f32 = 0.02;
 fn panic_to(k: u32, here: u32) -> vec3<f32> {
+    // A breakaway (`roam`) runs for its crystal at its own pace, and
+    // does not panic.
+    if (roaming(k)) {
+        let c = piles[(dense_word(k) >> ROAM_SHIFT) & 63u].centre;
+        return vec3<f32>(f32(c & 0xFFFFu) + 0.5, f32(c >> 16u) + 0.5, 1.0);
+    }
     if (P.panic <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
     let heard = atomicLoad(&news[k]);
     // The age of its news (S.t + 1 is never before it).
@@ -900,7 +917,7 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // its lag may die, whatever it still holds.
     // A condensed walker breaks instead, keeping half its energy (`condense`).
     let dense = is_dense(k);
-    if (P.wither > 0.0 && S.t % max((P.wclock >> 16u) & 0xFFu, 1u) == 0u && S.t + 1u > atomicLoad(&news[k]) + (P.wclock & 0xFFFFu)) {
+    if (P.wither > 0.0 && S.t % max((P.wclock >> 16u) & 0xFFu, 1u) == 0u && S.t + 1u > atomicLoad(&news[k]) + (P.wclock & 0xFFFFu) && !roaming(k)) {
         if (unit(keyed(P.s_wither, S.t, k)) < P.wither) {
             if (dense) {
                 set_dense(k, 0u);
@@ -2994,7 +3011,40 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (!ordinary(k)) { return; }
     // A condensed walker's low bits count the steps since it condensed
     // (the look's fresh glow).
-    if ((wd & DENSE_BIT) != 0u) { set_dense(k, DENSE_BIT | min((wd & RIPE_BITS) + 1u, RIPE_BITS)); return; }
+    if ((wd & DENSE_BIT) != 0u) {
+        let age = min((wd & RIPE_BITS) + 1u, RIPE_BITS);
+        var nw = (wd & ~RIPE_BITS) | age;
+        // Breaking away (`roam`, the CPU's order): a breakaway lands near
+        // its crystal or when it runs dry; every `roam` steps a settled
+        // one may leave for the nearest fresh crystal far enough away.
+        if (P.roam > 0u) {
+            let wk = walkers[k];
+            let cx = i32(floor(wk.x)); let cy = i32(floor(wk.y));
+            if ((wd & ROAM_BIT) != 0u) {
+                let j = (wd >> ROAM_SHIFT) & 63u;
+                let c = piles[j].centre;
+                let dx = i32(c & 0xFFFFu) - cx; let dy = i32(c >> 16u) - cy;
+                let land = i32(P.roam_land);
+                if (dx * dx + dy * dy <= land * land || piles[j].left <= PANIC_LEFT) { nw = DENSE_BIT | age; }
+            } else if (age % P.roam == 0u && age < RIPE_BITS && world(CRYSTALS)) {
+                let far = i32(P.roam_far);
+                var best = -1;
+                var bj = 0u;
+                for (var p = 0u; p < min(P.npiles, 64u); p++) {
+                    if (piles[p].left < ROAM_FRESH) { continue; }
+                    let c = piles[p].centre;
+                    let px = i32(c & 0xFFFFu); let py = i32(c >> 16u);
+                    let d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+                    if (d2 >= far * far && (best < 0 || d2 < best)) { best = d2; bj = p; }
+                }
+                if (best >= 0 && unit(keyed(P.s_condense, S.t, 0x80000000u | bj)) < P.roam_share) {
+                    nw = DENSE_BIT | ROAM_BIT | (bj << ROAM_SHIFT) | age;
+                }
+            }
+        }
+        set_dense(k, nw);
+        return;
+    }
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
     var ripe = share[i] > 0.0;

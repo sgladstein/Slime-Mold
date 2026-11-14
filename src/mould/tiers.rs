@@ -255,6 +255,10 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "condense" => p.condense = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::RIPE),
         "condense_crowd" => p.condense_crowd = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
         "condense_r" => p.condense_r = v.parse::<u8>().map_err(|e| format!("{key}={v}: {e}"))?.clamp(1, 8),
+        // Condensed slime breaks away (`BigParams::roam`, both engines since 11-14).
+        "roam" => p.roam = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::RIPE),
+        "roam_far" => p.roam_far = f()?,
+        "roam_share" => p.roam_share = f()?,
         "hunger_scent" => p.hunger_scent = f()?,
         // Walker slots (a census plays the window's dense shapes on the CPU:
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).
