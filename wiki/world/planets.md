@@ -48,9 +48,8 @@ Each level of the roguelike run is a generated planet (`mould::levelgen`): `leve
 
 ## Open
 
-- A sparse ground refresh, then planets to 6x; the plants thread's moisture line; a three-agent adversarial review (owner, 19:12Z).
+- Planets to 6x once the 1070 times the sparse ground refresh (3.8 ms against 32 ms prepare max at 6x on software Vulkan; [report, *A sparse ground refresh*](../../Reports/levelgen-2026-11-14/README.md)); the plants thread's moisture line; a three-agent adversarial review (owner, 19:12Z).
 - Every strategy can win (owner, 17:02Z): a check that each nest has an open approach and a choke.
-- Planets bigger than today's: the 1070 timing at 1x, 2x, 4x and 6x, then `GROW_CAP` up.
 - Twists shown before landing; rare rescue planets (base ruins, stranded soldiers) with the run thread's rescue goal.
 - The owner's play.
 

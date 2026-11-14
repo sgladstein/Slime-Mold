@@ -3026,6 +3026,111 @@ pub fn read_back(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer)
     bytes
 }
 
+/// Chosen 4-byte words of two storage buffers gathered on the GPU into
+/// one small buffer and read back in one copy: Larder World's ground
+/// refresh reads its crystal and wall cells' charge and health this way,
+/// once a game second (2026-11-14: the whole charge buffer read back and
+/// a CPU pass over every cell took 23.6 ms at 4x a planet's area and
+/// 32.9 ms at 6x on the 1070). A copy per row of cells came first and was
+/// dropped: 2,914 copies at 6x took 17-21 ms on software Vulkan, nearly
+/// all of the refresh, where this one pass and one copy took 1.3-1.4 ms.
+pub struct Gather {
+    pipe: wgpu::ComputePipeline,
+    bgl: wgpu::BindGroupLayout,
+    idx: wgpu::Buffer,
+    out: wgpu::Buffer,
+    staging: wgpu::Buffer,
+    n: u32,
+}
+
+const GATHER: &str = r#"
+@group(0) @binding(0) var<storage, read> idx: array<u32>;
+@group(0) @binding(1) var<storage, read> a: array<u32>;
+@group(0) @binding(2) var<storage, read> b: array<u32>;
+@group(0) @binding(3) var<storage, read_write> out: array<u32>;
+
+@compute @workgroup_size(64)
+fn gather(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workgroups) groups: vec3<u32>) {
+    let n = arrayLength(&idx);
+    let i = id.x + id.y * groups.x * 64u;
+    if (i >= n) {
+        return;
+    }
+    out[i] = a[idx[i]];
+    out[n + i] = b[idx[i]];
+}
+"#;
+
+impl Gather {
+    /// A gather of the words at `cells` (none: None), with `old`'s
+    /// pipeline if there is one (a wall going up renews the cells, and a
+    /// pipeline built each time would cost the frame more).
+    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, cells: &[u32], old: Option<&Gather>) -> Option<Self> {
+        if cells.is_empty() {
+            return None;
+        }
+        let (pipe, bgl) = match old {
+            Some(o) => (o.pipe.clone(), o.bgl.clone()),
+            None => Self::pipeline(device),
+        };
+        let bytes = cells.len() as u64 * 4;
+        let idx = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gather cells"), size: bytes, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        queue.write_buffer(&idx, 0, &u32_bytes(cells));
+        let out = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gathered"), size: 2 * bytes, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+        let staging = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gathered read"), size: 2 * bytes, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        note_bytes(3 * bytes);
+        Some(Gather { pipe, bgl, idx, out, staging, n: cells.len() as u32 })
+    }
+
+    fn pipeline(device: &wgpu::Device) -> (wgpu::ComputePipeline, wgpu::BindGroupLayout) {
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("gather"), source: wgpu::ShaderSource::Wgsl(GATHER.into()) });
+        let entry = |binding: u32, read_only: bool| wgpu::BindGroupLayoutEntry {
+            binding,
+            visibility: wgpu::ShaderStages::COMPUTE,
+            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only }, has_dynamic_offset: false, min_binding_size: None },
+            count: None,
+        };
+        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("gather"), entries: &[entry(0, true), entry(1, true), entry(2, true), entry(3, false)] });
+        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("gather"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
+        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some("gather"), layout: Some(&layout), module: &module, entry_point: Some("gather"), compilation_options: Default::default(), cache: None });
+        (pipe, bgl)
+    }
+
+    /// `a`'s and `b`'s words at the cells, in the cells' order, waited for.
+    pub fn read(&self, device: &wgpu::Device, queue: &wgpu::Queue, a: &wgpu::Buffer, b: &wgpu::Buffer) -> (Vec<u8>, Vec<u8>) {
+        READS.with(|r| r.set(r.get() + 1));
+        let group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("gather"),
+            layout: &self.bgl,
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: self.idx.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 1, resource: a.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 2, resource: b.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 3, resource: self.out.as_entire_binding() },
+            ],
+        });
+        // Workgroups in rows of at most 65,535 (a dispatch's limit).
+        let groups = self.n.div_ceil(64);
+        let (gx, gy) = (groups.min(65_535), groups.div_ceil(65_535));
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("gather") });
+        {
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("gather"), timestamp_writes: None });
+            pass.set_pipeline(&self.pipe);
+            pass.set_bind_group(0, &group, &[]);
+            pass.dispatch_workgroups(gx, gy, 1);
+        }
+        let bytes = self.n as u64 * 4;
+        enc.copy_buffer_to_buffer(&self.out, 0, &self.staging, 0, 2 * bytes);
+        queue.submit([enc.finish()]);
+        self.staging.map_async(wgpu::MapMode::Read, .., |r| r.expect("map"));
+        device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
+        let all = self.staging.get_mapped_range(..).to_vec();
+        self.staging.unmap();
+        let (x, y) = all.split_at(bytes as usize);
+        (x.to_vec(), y.to_vec())
+    }
+}
+
 /// GPU timestamps read back without stalling: resolved into `read` on a
 /// frame when it is free, mapped, and picked up on a later frame.
 pub struct Stamps {

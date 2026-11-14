@@ -162,6 +162,17 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     for (only, tag) in [(false, "every frame"), (true, "frames with a step")] {
         println!("  {tag} ({} of them), ms: {}; step {}; prepare {}; record {}; GPU tail {}", rows.iter().filter(|r| !only || r.1).count(), line("frame", 0, only), line("", 1, only), line("", 2, only), line("", 3, only), line("", 4, only));
     }
+    // The one-off costs of a world's first frames (pipelines built,
+    // buffers first touched: a 327 ms step at 6x on the 1070, 11-14) left
+    // out, so a hitch in play shows as itself (the technical lead, 11-14).
+    let later = rows.get(fps.round() as usize..).unwrap_or(&[]);
+    let most = |i: usize| later.iter().map(|r| r.0[i]).fold(0.0f64, f64::max);
+    println!("  after the first game second ({} frames), ms: frame max {:.2}; step max {:.2}; prepare max {:.2}", later.len(), most(0), most(1), most(2));
+    // The ground refresh inside prepare (`refresh_ground`): its own time,
+    // and how much of it was the read-back waiting for the GPU's queue
+    // (steps in shares still running wait there too).
+    let (n, sum, most, most_read) = app.ground_cost;
+    println!("  ground refresh: {n} of them, ms: mean {:.2} max {most:.2}, of which the read-back at most {most_read:.2}; {} live cells", sum / n.max(1) as f64, app.live.cells.len());
     if let Some(st) = &g.world.stamps {
         let (sim, draw, _, n) = st.median();
         if n > 0 {

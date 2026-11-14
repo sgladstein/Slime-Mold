@@ -1738,7 +1738,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
 /// of 400 planets on the first attempt, one core world for 23 attempts.
 fn cut_fords(w: usize, h: usize, ground: &mut [u8], items: &Items, landing: (f32, f32)) {
     const FORD: f32 = 16.0;
-    if !ground.iter().any(|&g| g == G_DEEP) {
+    if !ground.contains(&G_DEEP) {
         return;
     }
     let targets: Vec<((f32, f32), f32)> = items.crystals.iter().map(|c| ((c.x, c.y), c.r)).chain(items.moulds.iter().map(|&q| (q, 8.0))).collect();

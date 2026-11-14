@@ -526,6 +526,13 @@ struct App {
     ground: Option<wgpu::Buffer>,
     ground_at: f32,
     ground_walls: u32,
+    /// The ground buffer's codes as last written, and the cells a timed
+    /// refresh reads (`refresh_ground`).
+    codes: Vec<u32>,
+    live: Live,
+    /// The timed and wall refreshes this game: how many, their summed
+    /// and longest ms, and the longest read-back (the bench prints them).
+    ground_cost: (u32, f64, f64, f64),
     /// Each crystal cell's depth in its crystal (`look::crystal_depth`),
     /// worked out once a world: the crystals keep their cells, and the
     /// depth was most of each ground rebuild (3.9-6.1 ms on the cloud CPU).
@@ -650,6 +657,9 @@ impl App {
             ground: None,
             ground_at: 0.0,
             ground_walls: 0,
+            codes: Vec::new(),
+            live: Live::default(),
+            ground_cost: (0, 0.0, 0.0, 0.0),
             depth: Vec::new(),
             looks: Vec::new(),
             blooks: Vec::new(),
@@ -878,6 +888,8 @@ impl App {
         self.depth = look::crystal_depth(e.dish.w, e.dish.w * e.dish.h, &e.dish.pile_of);
         let codes = ground_codes(&game, &self.depth, None, None);
         let ground = look::ground_buffer(device, queue, &codes);
+        self.live = live_cells(&game, &self.live);
+        self.codes = codes;
         if let Some(v) = self.view.as_mut() {
             v.set_world(&e.frame, size);
             v.set_look(&e.look, &ground, &e.walkers, e.n);
@@ -926,7 +938,7 @@ impl App {
             self.camera.centre_on(game.larder);
         }
         self.ground = Some(ground);
-        (self.ground_at, self.ground_walls) = (0.0, 0);
+        (self.ground_at, self.ground_walls, self.ground_cost) = (0.0, 0, (0, 0.0, 0.0, 0.0));
         self.looks = game.soldiers.iter().map(Look::new).collect();
         self.blooks.clear();
         self.tracers.clear();

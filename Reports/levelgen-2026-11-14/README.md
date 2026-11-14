@@ -420,16 +420,65 @@ at the owner's sizes (0.6, 0.8, 1.0, 1.4, 2.0), 6-8 at 2x until the
 refresh touches only the cells that change (next). Build time with
 everything: 172 ms median, 1.2 s at most.
 
+## A sparse ground refresh (20:00-21:00Z)
+
+The technical lead's fix for the 2x cap: the timed ground refresh now
+reads and rebuilds only the cells whose code can change between walls
+going up, the crystals' (charge) and the walls' (health). At world start
+and whenever a wall goes up it still rebuilds every cell, as before, and
+notes the crystal and wall cells (`live_cells`). Once a game second a
+compute pass gathers those cells' charge and health into one small buffer,
+one copy reads it back (`gpu::Gather`), `live_code` rebuilds those codes
+as `ground_codes` would, and only the runs of codes that changed are
+written. The look's own bits are kept (a crystal is never hard terrain,
+and a wall stays hard as it wears to rubble, so no cell's `FAR` mark moves).
+
+**Same picture.** 16 headless frames (planet 5 seed 1 rushing at 3, 9 and
+20 s; planet 6 seed 3 pressing every command at 5 and 15 s; the walled Nest
+map pressing every command at 6, 18 and 30 s; whole map and close up) from
+the merged code with and without the change: 15 byte-identical. The one
+other differs only in the top-left strip where the planet's toast fades by
+the wall clock, and two runs of the old build differ there too; it matches
+one of them exactly. A test (`the_sparse_ground_refresh_matches_a_whole_one`)
+plays the Nest map 16 game seconds with a worn and a broken wall cell set
+by hand, and every refresh's codes equal a whole rebuild from the same
+charge and health (6 refreshes on software Vulkan; the broken cell draws as
+rubble; crystals were eaten).
+
+**Timing** (software Vulkan in the cloud, so a CPU playing GPU; planet 8
+seed 1 at the area shown, `bench=20`, rush hand; the bench now prints the
+refresh's own time and its read-back, and the frame, step and prepare maxima
+after the first game second; [raw](raw/refresh-llvmpipe/README.md)):
+
+| Area | Live cells | Prepare max, old | A copy a row | Gathered | Refresh max | Its read-back |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4x | 26,371 | 25.0 ms | 14.2-14.5 ms | 3.40 ms | 2.64 ms | 1.44 ms |
+| 6x | 39,969 | 31.9-32.2 ms | 21.1-22.2 ms | 3.75 ms | 2.84 ms | 1.31 ms |
+
+**Rejected: a copy a row** (`copy_buffer_to_buffer` for each run of
+neighbouring cells, 1,801 runs at 4x and 2,914 at 6x): its read-back alone
+took up to 12.8 and 20.8 ms here, nearly all of the refresh. The gather is
+one dispatch and one copy whatever the cells' shape.
+
+**Still to do.** A wall going up still reads and rebuilds every cell (the
+old cost, at most once per wall). Planets stay at 2x until the 1070 times
+this build (the bench's new lines answer the technical lead's question on
+the one-off 327 ms step at 6x); then `GROW_CAP` goes to 6.
+
+**The river look in grey.** The ground thread's river look (#292) and the
+plants reached main, so the graphics lead's thumbnail test again, seed 1 of
+planets 1-8 at 1 s, 266 x 164 each (`raw/make_grey3.py`):
+`page3/grey/sheet-water.png` and `sheet-water-colour.png`.
+
 ## Next
 
-1. **A sparse ground refresh**, then planets to the owner's 6x; the
-   plants thread's `moisture` line in every planet; a three-agent
-   adversarial review (owner, 19:12Z and 19:32Z).
+1. **Planets to the owner's 6x** once the 1070 has timed the sparse
+   refresh; the plants thread's `moisture` line in every planet (#295); a
+   three-agent adversarial review (owner, 19:12Z and 19:32Z).
 2. **Every strategy can win**: the check that each nest has an open
    approach and a choke, after a short read on how StarCraft map
    generators score chokepoints and fairness (owner's question, 17:24Z).
-3. **Planets grow** past 2x once the refresh is sparse.
-4. **Twists** shown before landing (Flooded, Rich crystals, ...).
-5. **Rescue planets**, rare: base ruins and stranded soldiers as new map
+3. **Twists** shown before landing (Flooded, Rich crystals, ...).
+4. **Rescue planets**, rare: base ruins and stranded soldiers as new map
    items, with a rescue goal from the run thread.
-6. The owner's play.
+5. The owner's play.

@@ -114,6 +114,7 @@ for d, (biome, what, why) in enumerate(BIOMES, start=1):
 # The report's round-3 table, as it stands.
 txt = report.read_text()
 part = txt[txt.index("## Round 3"):]
+part = part[: part.find("\n## ", 3) if "\n## " in part[3:] else len(part)]  # that section only
 lines = [l for l in part.splitlines() if l.startswith("| ")]
 head = [c.strip() for c in lines[0].strip("|").split("|")]
 body = [[c.strip() for c in l.strip("|").split("|")] for l in lines[1:]]
@@ -136,6 +137,15 @@ if (page / "grey" / "sheet-after.png").exists():
   <p class=lede>The art direction's test: each biome recognisable from a small grey thumbnail. Seed 1 of planets 1-8 at one second, in the game, 266 x 164 each: first as filmed for this page, then with the terrain thread's new soil materials (sand ripples, cracked clay, ash on barren), which reached main as this page was made.</p>
   <div class=sheets><figure><img src="grey/sheet-before.png" alt="Seed 1 of planets 1-8 in grey, before the soil materials" loading="lazy"><figcaption>Round 3, before the soil materials</figcaption></figure><figure><img src="grey/sheet-after.png" alt="The same with the soil materials" loading="lazy"><figcaption>Round 3 with the soil materials</figcaption></figure></div>
   <figure class=wide><img src="grey/sheet-after-colour.png" alt="The same in colour" loading="lazy"><figcaption>The same in colour. Rows: planets 1-4, then 5-8.</figcaption></figure>
+</section>"""
+
+# Again once the ground thread's river look (#292) and the plants (#290)
+# reached main, with deep water and plants in the planets (make_grey3.py).
+if (page / "grey" / "sheet-water.png").exists():
+    sheet += """<section class=band id=water>
+  <h2>With deep water, bridges and plants, in grey</h2>
+  <p class=lede>The same test after the ground thread's river look (deep water darkening to its middle, plank bridges, water darker than ground) and the plants reached main, and the planets gained deep water, bridges and each biome's plants: seed 1 of planets 1-8 at one second, 266 x 164 each. Planets 5-8 are now twice today's area, drawn at the same width.</p>
+  <div class=sheets><figure><img src="grey/sheet-water.png" alt="Seed 1 of planets 1-8 in grey with deep water and plants" loading="lazy"><figcaption>Grey</figcaption></figure><figure><img src="grey/sheet-water-colour.png" alt="The same in colour" loading="lazy"><figcaption>Colour. Rows: planets 1-4, then 5-8.</figcaption></figure></div>
 </section>"""
 
 nav = "".join(f'<a href="#planet-{d}"><span>{d}</span>{b}</a>' for d, (b, _, _) in enumerate(BIOMES, start=1))
