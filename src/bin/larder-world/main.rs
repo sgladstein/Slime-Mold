@@ -280,7 +280,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 20] = [
+const LOADOUTS: [(&str, &str); 24] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -305,6 +305,12 @@ const LOADOUTS: [(&str, &str); 20] = [
     ("bomb", "bomb"),
     ("cluster", "scatter+bomb"),
     ("blowout", "wide+bomb"),
+    // Trails (11-14, Noita's burning and gunpowder trails; step 5 of the
+    // rounds' look): every bullet lays a real field along its flight.
+    ("scorch", "scorch+scorch"),
+    ("fence", "alarm"),
+    ("mist", "mist"),
+    ("firewall", "scorch+blast"),
 ];
 
 #[derive(Clone)]
