@@ -361,7 +361,9 @@ Settled by the technical lead, the game designer and the integration thread
   the integration branch, then a freeze of under 45 minutes on
   `larder_world.rs` and `larder-world.rs` (freeze held from 11-14 00:36Z).
   Moves only, one module per subsystem, no public renames; the test count
-  and the replay hash stay identical and the commit quotes both.
+  and the replay hash stay identical and the commit quotes both. Done 11-14:
+  356 tests the same, census rows and the 14 larderai replay logs
+  identical; `src/bin/mouldgpu.rs.orig` deleted.
 
 **Spare `Params` words (11-13 04:30Z, technical lead).** `PARAMS_BYTES` is
 still 896: #183 (`fed_full`, `fed_crowd`) and #193 (`flow_loss` as `eloss`)
