@@ -317,9 +317,12 @@ impl View {
 
     /// The cells `prep` works out: at zoom 1 or more the screen shows at
     /// most its own size in cells, plus the margin (`MARGIN` each side).
+    /// Cell heights hold three grids: the whole height, the mould's own
+    /// (`film_th` in the shader) and the bare ground's colour (`ground_est`;
+    /// 11-14).
     fn cell_buffers(dev: &wgpu::Device, screen: (u32, u32)) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let n = (screen.0 + 2 * MARGIN + 2) as u64 * (screen.1 + 2 * MARGIN + 2) as u64;
-        (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 16), storage(dev, "cell terrain", n * 4))
+        (storage(dev, "cell heights", n * 12), storage(dev, "cell materials", n * 16), storage(dev, "cell terrain", n * 4))
     }
 
     /// `prep`'s fine cells, at most as many as `cell_buffers`' cells: the
