@@ -42,6 +42,19 @@ pub enum Icon {
     Target,
     Spore,
     Group,
+    // The gun cards (`mould::rounds`, the loadout panel, 2026-11-14): one
+    // glyph a card, drawn for this game after the look of a spell deck.
+    Blast,
+    Gas,
+    Germ,
+    Bomb,
+    Wide,
+    Scatter,
+    Quiet,
+    Delay,
+    Thick,
+    Pierce,
+    Split,
 }
 
 impl Icon {
@@ -79,6 +92,26 @@ impl Icon {
             Icon::Target => &["O12 12 8", "O12 12 3"],
             Icon::Spore => &["O12 12 3", "O5 6 1.6", "O19 6 1.6", "O5 18 1.6", "O19 18 1.6", "O12 3 1.2", "O12 21 1.2"],
             Icon::Group => &["O8.5 8 3", "O16 9 2.5", "M2.5 19.5 C2.5 15.5 5 13.5 8.5 13.5 C12 13.5 14.5 15.5 14.5 19.5", "M15 13.5 C18.5 13.5 21.5 15 21.5 19"],
+            // A burst with a hot core.
+            Icon::Blast => &["M12 2 L14 8.5 L20.5 6 L16.5 11.5 L22 15 L15 15.5 L14.5 22 L11 16.5 L5.5 20.5 L7.5 14 L2 11.5 L8.5 9.5 L6.5 3.5 Z", "FO12 12.5 2.2"],
+            // A cloud and the wisps it trails.
+            Icon::Gas => &["M6.5 15 C3.5 15 3 10.5 6.5 10 C6.5 6 11.5 5 13 8 C14.5 5.5 19.5 6.5 19 10.5 C22 11 21.5 15 18.5 15 Z", "M5 18.5 L13 18.5", "M9 21.5 L19 21.5"],
+            // A cell with its spikes.
+            // A core and the mould it throws: dots flying straight out.
+            Icon::Bomb => &["FO12 12 3.5", "O12 12 6", "M12 1.5 L12 4", "M12 20 L12 22.5", "M1.5 12 L4 12", "M20 12 L22.5 12", "FO5 5 1.3", "FO19 5 1.3", "FO5 19 1.3", "FO19 19 1.3"],
+            Icon::Germ => &["O12 12 5", "FO10.5 11 1.2", "FO13.5 13.5 1", "M12 2.5 L12 7", "M12 17 L12 21.5", "M2.5 12 L7 12", "M17 12 L21.5 12", "M5.3 5.3 L8.5 8.5", "M15.5 15.5 L18.7 18.7", "M18.7 5.3 L15.5 8.5", "M8.5 15.5 L5.3 18.7"],
+            // Two arrows pushing out from a centre.
+            Icon::Wide => &["FO12 12 2.4", "M2.5 12 L8 12", "M5 9 L2.5 12 L5 15", "M21.5 12 L16 12", "M19 9 L21.5 12 L19 15", "M12 2.5 L12 6", "M12 18 L12 21.5"],
+            Icon::Scatter => &["FO12 12 2.3", "FO5 5.5 2", "FO19 6.5 2", "FO5.5 18.5 2", "FO18.5 18 2", "FO12 3 1.3", "FO21 12.5 1.3", "FO3 12 1.3"],
+            // A speaker, struck through: no alarm.
+            Icon::Quiet => &["M3.5 9 L7.5 9 L12.5 4.5 L12.5 19.5 L7.5 15 L3.5 15 Z", "M16 9 L21 15", "M21 9 L16 15"],
+            Icon::Delay => &["M6 3 L18 3", "M6 21 L18 21", "M7.5 3 C7.5 8.5 12 9.5 12 12 C12 14.5 7.5 15.5 7.5 21", "M16.5 3 C16.5 8.5 12 9.5 12 12 C12 14.5 16.5 15.5 16.5 21", "FM9.5 19.5 L12 16.5 L14.5 19.5 Z"],
+            // Feet on a plate: it waits for the mould to crowd it.
+            Icon::Thick => &["M2.5 19 L21.5 19", "M5.5 19 L5.5 15.5 L18.5 15.5 L18.5 19", "M12 3 L12 11", "M8.5 7.5 L12 11 L15.5 7.5", "FO5 5 1.4", "FO19 5 1.4"],
+            // A shot through a wall and on.
+            Icon::Pierce => &["M2 12 L21.5 12", "M17 7.5 L21.5 12 L17 16.5", "M9 4 L9 9", "M9 15 L9 20"],
+            // A shot that forks.
+            Icon::Split => &["M2 12 L10 12", "M10 12 L20.5 5", "M10 12 L21.5 12", "M10 12 L20.5 19", "M17 4 L20.5 5 L19 8.5", "M19 16 L20.5 19 L17 20"],
         }
     }
 }
@@ -187,7 +220,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");
