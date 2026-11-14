@@ -389,6 +389,11 @@ struct Args {
     /// (rifle, carbine, long, scatter), or one rolled for the planet's
     /// depth (`map=planet:DEPTH`, else 1). None: the standard rifle.
     gun: Option<String>,
+    /// `ammo=N`: the first squad starts with the Nth load of test bullets
+    /// (`input::bullet_load`, as Ctrl+H rolls them) for its gun. Or
+    /// `ammo=ROUND`: those cards, in `rounds::parse`'s text (rolled bullets
+    /// as `Ammo::word`), so a film can set each bullet's numbers.
+    ammo: Option<String>,
     /// `core_pull=P`: how many times its own scent a soldier near the core
     /// lays (`Rules::core_pull`, the core defence; 0 turns it off, to
     /// compare). A tier's own core (`Tier::core`) wins.
@@ -584,9 +589,10 @@ struct App {
     rounds: Rounds,
     round: usize,
     /// The planet's depth this game (`map=planet:DEPTH`, else 1), and the
-    /// test guns rolled so far (Shift+H).
+    /// test guns (Shift+H) and bullet loads (Ctrl+H) rolled so far.
     planet_depth: u32,
     gun_rolls: u32,
+    ammo_rolls: u32,
     tools_page: bool,
     /// The mission being played, and the last game second it followed.
     mission: Option<Tracker>,
@@ -623,6 +629,7 @@ impl App {
             round: args.round,
             planet_depth: 1,
             gun_rolls: 0,
+            ammo_rolls: 0,
             run: args.run.clone(),
             args,
             window: None,
@@ -826,8 +833,8 @@ impl App {
         }
         self.planet_depth = depth;
         if let Some(spec) = &a.gun {
-            // Every soldier starts in squad 0 (a split's new half takes
-            // the standard rifle, `Squad::offshoot`).
+            // Every soldier starts in squad 0 (both halves of a split
+            // copy its gun, `Squad::offshoot`).
             game.apply(Cmd::Arm(0, Some(gun_of(spec, a.seed, depth)?)));
         } else if let Some(r) = &a.run {
             // A run lands with the gun it carries (`Run::carried`).
@@ -845,6 +852,21 @@ impl App {
         };
         let budget = a.run.as_ref().map_or(RoundRules::default().budget, Run::budget);
         self.rounds = Rounds::new(gun, RoundRules { budget, ..RoundRules::default() });
+        if let Some(v) = &a.ammo {
+            let cards = match v.parse::<u32>() {
+                Ok(n) => {
+                    self.ammo_rolls = n + 1;
+                    input::bullet_load(&game.gun(0), a.seed, n, depth)
+                }
+                Err(_) => rounds::parse(v).unwrap_or_default(),
+            };
+            game.apply(Cmd::Load(0, Some(rounds::Deck::new(&cards))));
+            // Films and reports quote the load, so name it in the log.
+            for c in &cards {
+                let line = c.ammo().map_or(String::new(), |b| b.line());
+                eprintln!("ammo: {}: {line}", c.title());
+            }
+        }
         self.mission = mission.map(|m| Tracker::new(m, &game));
         self.mission_sec = 0;
         let e = &game.world.e;
@@ -1352,7 +1374,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1420,6 +1442,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "gun" => {
                 gun_of(v, 1, 1)?;
                 args.gun = Some(v.to_string());
+            }
+            "ammo" => {
+                if v.parse::<u32>().is_err() && rounds::parse(v).is_none() {
+                    return Err(format!("ammo=: a number, or a round such as ammo/plain/slug/0/160/60/90/60/6+blast (got {v})").into());
+                }
+                args.ammo = Some(v.to_string());
             }
             "look" => look = Some(v.to_string()),
             // `ui=150%` or `ui=1.5`: the UI's size this run (`uisize`).

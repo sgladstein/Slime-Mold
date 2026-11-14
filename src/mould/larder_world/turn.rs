@@ -121,7 +121,8 @@ impl<W: World> Game<W> {
                         // Every shot fires the next card in turn, at the
                         // gun's rate, and never stops to recharge (owner
                         // 18:05Z); a scattergun's fan all carry it.
-                        let n = self.mods(q).casts;
+                        let m = self.mods(q);
+                        let n = m.casts;
                         let cast = if n > 0 {
                             let c = s.next % n;
                             self.soldiers[k].next = (c + 1) % n;
@@ -129,14 +130,22 @@ impl<W: World> Game<W> {
                         } else {
                             0
                         };
+                        // The bullet it fires (`bullets::Ammo`): its damage
+                        // widens the strike (area as damage, up to the
+                        // engines' `squad::R_MAX`), its range and spread
+                        // times the gun's; its speed rides on the bullet.
+                        let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
+                        let hit_r = (strike * ammo.reach()).min(squad::R_MAX);
+                        let reach = reach * ammo.range();
+                        let spread = gun.spread * ammo.spread();
                         for _ in 0..gun.shots.max(1) {
                             let (mut ux, mut uy) = (dx / d, dy / d);
-                            if gun.spread > 0.0 {
-                                let a = ((self.rng.f32() * 2.0 - 1.0) * gun.spread * sc / d).atan();
+                            if spread > 0.0 {
+                                let a = ((self.rng.f32() * 2.0 - 1.0) * spread * sc / d).atan();
                                 let (sn, cs) = a.sin_cos();
                                 (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
                             }
-                            shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
+                            shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: hit_r });
                             shooters.push((Some(k), cast));
                         }
                         // A worker of a squad shoots less often (`CoverRules::work_fire`).
