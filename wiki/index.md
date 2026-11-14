@@ -34,6 +34,7 @@ work; a thread working on one directly may change it.
 ## Looks
 
 - [The simulation look](looks/simulation-look.md): the default; the mould drawn straight from trail, hunger and walkers; F7 the old tube look.
+- [Art direction](looks/art-direction.md): the style guide for Larder World's look (living light on dark ground); the 11-14 review's ten issues and which thread has each.
 - [Sound](looks/sound.md): on by default (S in the dish, O in Larder World); every sound a count off the game; Larder shots weigh their kills; the owner has not listened yet.
 
 ## Larder World
