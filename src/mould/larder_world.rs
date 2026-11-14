@@ -233,11 +233,6 @@ pub struct Game<W: World> {
     pub spent: f32,
     pub harvested: f32,
     pub stolen: f32,
-    /// Food the squad has eaten (`Rules::ration`).
-    pub eaten: f32,
-    /// The bank couldn't pay the last step's rations: the squad is losing
-    /// hit points (`Rules::hunger`).
-    pub hungry: bool,
     /// Shots fired (with bullets, once a bullet, not once a leg).
     pub shots: u32,
     pub killed: u32,
@@ -245,9 +240,7 @@ pub struct Game<W: World> {
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
     pub buildings: Vec<Building>,
-    /// Food burnt by lures, drawn by pumps, and buildings the mould wore
-    /// down.
-    pub lured: f32,
+    /// Food drawn by pumps, and buildings the mould wore down.
     pub pumped: f32,
     pub lost_buildings: u32,
     /// Calls the sirens made (`Kind::Siren`).
@@ -392,13 +385,10 @@ impl<W: World> Game<W> {
             spent: 0.0,
             harvested: 0.0,
             stolen: 0.0,
-            eaten: 0.0,
-            hungry: false,
             shots: 0,
             killed: 0,
             walls: 0,
             buildings: Vec::new(),
-            lured: 0.0,
             pumped: 0.0,
             lost_buildings: 0,
             sirens: 0,

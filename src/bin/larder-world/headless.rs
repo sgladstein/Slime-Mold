@@ -362,7 +362,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             println!("    {} at ({:.0}, {:.0}): hp {:.0} / {:.0}, built {:.1}, {}{}", b.kind.name(), b.at.0, b.at.1, b.hp, b.max_hp, b.built, if b.alive { "standing" } else { "worn down" }, if b.working { ", working" } else { "" });
         }
         if !g.buildings.is_empty() {
-            println!("    pumped {:.0} food, lures burnt {:.0}", g.pumped, g.lured);
+            println!("    pumped {:.0} food", g.pumped);
         }
     }
     if let (Some(path), Some((bank, tape))) = (wav, app.tape.as_ref()) {

@@ -320,7 +320,6 @@ impl<W: World> Game<W> {
             self.check_broken();
             self.keep_panic_reach();
         }
-        self.feed(dt);
         self.campaign_rules(now - t);
         self.check_end();
     }
@@ -354,34 +353,6 @@ impl<W: World> Game<W> {
                 self.broken = None;
             }
             _ => {}
-        }
-    }
-
-    /// `Rules::ration` and `Rules::hunger`: every live soldier eats from
-    /// the bank; for what it can't pay, the squad loses hit points.
-    pub(super) fn feed(&mut self, dt: f32) {
-        let r = self.rules;
-        let alive = self.alive();
-        self.hungry = false;
-        if r.ration <= 0.0 || alive == 0 {
-            return;
-        }
-        let need = r.ration * alive as f32 * dt;
-        let paid = need.min(self.bank.max(0.0));
-        self.bank -= paid;
-        self.eaten += paid;
-        let short = 1.0 - paid / need;
-        if short <= 1e-6 {
-            return;
-        }
-        self.hungry = true;
-        for s in self.soldiers.iter_mut().filter(|s| s.alive) {
-            s.hp -= r.hunger * short * dt;
-            if s.hp <= 0.0 {
-                s.alive = false;
-                s.hp = 0.0;
-                s.carry = 0.0;
-            }
         }
     }
 
