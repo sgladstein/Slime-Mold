@@ -6,12 +6,32 @@ use super::*;
 /// Game seconds between rebuilds of the walking maps.
 pub(super) const PATHS_EVERY: f32 = 30.0;
 
-/// Most walking maps kept at once; past it the cache starts again. A map
-/// is the whole world (512 x 320 fine cells, 655 KB, about 15 ms to build
-/// at the window's scale 2), and a squad's goals move with its anchor, so
-/// a squad pressed against rock could build a new one every step and keep
-/// them all for `PATHS_EVERY` (bug sweep, 2026-11-14).
+/// Most walking maps kept at once, and the most cells they hold together
+/// (64 MB of distances): past either the map read longest ago goes. A map
+/// is the whole world (512 x 320 fine cells at the window's scale 2, 655
+/// KB; 3.9 MB on a 6x planet), and a squad's goals move with its anchor,
+/// so a squad pressed against rock could build a new one every step and
+/// keep them all for `PATHS_EVERY` (bug sweep, 2026-11-14). The cache
+/// started again from empty at 48 before 11-14, when every soldier then
+/// built its map again at once.
 pub(super) const MAPS_MAX: usize = 48;
+const MAP_CELLS_MAX: usize = 16 << 20;
+
+/// Cells taken off a walking map's queue in one step (`MapBuild`), across
+/// the maps being built: a step's fixed cost, whatever the number of
+/// soldiers. About 4 ms on the cloud CPU; a 1x world's map is one step or
+/// two, a 6x planet's six or seven. Before 11-14 a soldier's new map was
+/// built whole in the step it was asked for, so a squad's new order cost
+/// a map a soldier in one step: a step's max on the 1070 grew from 22 ms
+/// at today's area to 210 ms at 6x (technical lead: "a fixed cost per
+/// frame, whatever the number of soldiers"). One whole map a step was
+/// tried first: 28 ms a step at 6x on the cloud CPU, still over a frame.
+pub(super) const MAP_POPS: usize = 1 << 17;
+
+/// How far from a soldier's goal another goal's walking map serves it,
+/// dish cells, when that goal is in a straight walk of its own: a squad's
+/// formation slots share one map instead of building one a slot.
+pub(super) const MAP_NEAR: f32 = 4.0;
 
 /// How far past a solid crystal's rim a soldier stands to harvest or
 /// bank, dish cells (`Rules::crystal_solid`).
@@ -30,41 +50,89 @@ pub(super) fn cell(w: usize, h: usize, p: (f32, f32)) -> usize {
 
 /// Distances to `goal` over open cells, 5 a side step and 7 a diagonal
 /// (a diagonal only when both side cells are open, so no corner is cut);
-/// `u32::MAX` where the goal cannot be reached.
+/// `u32::MAX` where the goal cannot be reached. Built whole (`MapBuild`
+/// builds one a slice at a time).
 pub fn distance_map(w: usize, h: usize, goal: usize, open: impl Fn(usize) -> bool) -> Vec<u32> {
-    use std::cmp::Reverse;
-    use std::collections::BinaryHeap;
-    let ok: Vec<bool> = (0..w * h).map(&open).collect();
-    let mut dist = vec![u32::MAX; w * h];
-    let mut heap = BinaryHeap::new();
-    dist[goal] = 0;
-    heap.push(Reverse((0u32, goal)));
-    while let Some(Reverse((d, i))) = heap.pop() {
-        if d > dist[i] {
-            continue;
-        }
-        let (x, y) = ((i % w) as i64, (i / w) as i64);
-        for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
-            let (nx, ny) = (x + dx, y + dy);
-            if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
-                continue;
-            }
-            let j = ny as usize * w + nx as usize;
-            if !ok[j] {
-                continue;
-            }
-            let diag = dx != 0 && dy != 0;
-            if diag && (!ok[y as usize * w + nx as usize] || !ok[ny as usize * w + x as usize]) {
-                continue;
-            }
-            let nd = d + if diag { 7 } else { 5 };
-            if nd < dist[j] {
-                dist[j] = nd;
-                heap.push(Reverse((nd, j)));
-            }
-        }
+    let mut b = MapBuild::new(w, h, goal, (0..w * h).map(&open).collect());
+    b.advance(w, h, usize::MAX);
+    b.map()
+}
+
+/// A walking map being built (`distance_map`), any number of cells at a
+/// time (`advance`), so a step can build a slice of one (`MAP_POPS`).
+/// Dijkstra over a ring of 8 buckets, one a distance mod 8 (steps cost at
+/// most 7, so the ring holds only distances `d` to `d + 7` and bucket
+/// `d % 8` only `d`), each cell taken in distance order with no heap: the
+/// same distances a binary heap gives (`heap_distance_map` in the tests),
+/// in about a third of the time on a 6x planet's world (11-14), where a
+/// soldier's new map was a step's 210 ms max on the 1070.
+pub struct MapBuild {
+    goal: usize,
+    ok: Vec<bool>,
+    dist: Vec<u32>,
+    ring: [Vec<usize>; 8],
+    pending: usize,
+    d: u32,
+}
+
+impl MapBuild {
+    /// A map to `goal` over the cells `ok` marks open.
+    pub fn new(w: usize, h: usize, goal: usize, ok: Vec<bool>) -> Self {
+        let mut dist = vec![u32::MAX; w * h];
+        let mut ring: [Vec<usize>; 8] = Default::default();
+        dist[goal] = 0;
+        ring[0].push(goal);
+        MapBuild { goal, ok, dist, ring, pending: 1, d: 0 }
     }
-    dist
+
+    /// The distances so far (all of them once `done`).
+    pub fn map(self) -> Vec<u32> {
+        self.dist
+    }
+
+    /// Whether every reachable cell has its distance.
+    pub fn done(&self) -> bool {
+        self.pending == 0
+    }
+
+    /// Take up to `pops` cells off the queue; how many were taken.
+    pub fn advance(&mut self, w: usize, h: usize, pops: usize) -> usize {
+        let mut n = 0;
+        while self.pending > 0 && n < pops {
+            let b = (self.d % 8) as usize;
+            let Some(i) = self.ring[b].pop() else {
+                self.d += 1;
+                continue;
+            };
+            self.pending -= 1;
+            n += 1;
+            if self.dist[i] != self.d {
+                continue;
+            }
+            let (x, y) = ((i % w) as i64, (i / w) as i64);
+            for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
+                let (nx, ny) = (x + dx, y + dy);
+                if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
+                    continue;
+                }
+                let j = ny as usize * w + nx as usize;
+                if !self.ok[j] {
+                    continue;
+                }
+                let diag = dx != 0 && dy != 0;
+                if diag && (!self.ok[y as usize * w + nx as usize] || !self.ok[ny as usize * w + x as usize]) {
+                    continue;
+                }
+                let nd = self.d + if diag { 7 } else { 5 };
+                if nd < self.dist[j] {
+                    self.dist[j] = nd;
+                    self.ring[(nd % 8) as usize].push(j);
+                    self.pending += 1;
+                }
+            }
+        }
+        n
+    }
 }
 
 /// The neighbour of `i` nearest the goal on `map` (`i` itself at the goal,
@@ -215,6 +283,159 @@ impl<W: World> Game<W> {
         self.world.open(x, y) && self.solid_at((x, y)).is_none()
     }
 
+    /// `standable` at every cell's middle, as a walking map reads it: open
+    /// ground, then each solid crystal's disc cleared over its own box, by
+    /// `solid_at`'s own test, so the same cells. Testing every crystal at
+    /// every cell made a walking map grow with the planet times its
+    /// crystals: a step's max on the 1070 was 22 ms at today's area and
+    /// 210 ms at 6x when a soldier needed a new map (11-14).
+    pub fn standable_cells(&self) -> Vec<bool> {
+        let (w, h) = self.world.size();
+        let mut ok = self.world.open_cells();
+        for &(c, r) in &self.solid {
+            let span = |m: f32, n: usize| ((m - r - 1.0).floor().max(0.0) as usize, ((m + r + 1.0).ceil().max(0.0) as usize).min(n));
+            let ((x0, x1), (y0, y1)) = (span(c.0, w), span(c.1, h));
+            for y in y0..y1 {
+                for x in x0..x1 {
+                    let p = (x as f32 + 0.5, y as f32 + 0.5);
+                    if (c.0 - p.0).hypot(c.1 - p.1) < r {
+                        ok[y * w + x] = false;
+                    }
+                }
+            }
+        }
+        ok
+    }
+
+    /// The walking map that leads to goal `g` (cell `gi`), by its key in
+    /// `Paths::maps`: `gi`'s own, or one to a goal within `near` fine cells
+    /// from which `g` is a straight walk. None while it is being built:
+    /// the goal is asked for (`pump_maps` builds it) and the caller waits.
+    pub(super) fn map_for(&mut self, gi: usize, g: (f32, f32), near: f32) -> Option<usize> {
+        let (w, _) = self.world.size();
+        let step = self.paths.step;
+        let mid = |k: usize| ((k % w) as f32 + 0.5, (k / w) as f32 + 0.5);
+        let by = |k: usize| {
+            let c = mid(k);
+            (c.0 - g.0).hypot(c.1 - g.1)
+        };
+        if self.rules.map_pops == usize::MAX {
+            // The old pace (`Rules::map_pops`): each goal's own map, built
+            // whole the step it is asked for.
+            if !self.paths.maps.contains_key(&gi) {
+                let (w, h) = self.world.size();
+                let ok = self.standable_cells();
+                let map = distance_map(w, h, gi, |i| ok[i]);
+                self.paths.maps.insert(gi, (map, step));
+            }
+            self.paths.maps.get_mut(&gi).expect("a built map").1 = step;
+            return Some(gi);
+        }
+        let close = |k: usize| k == gi || (by(k) <= near && self.walk_line(mid(k), g));
+        // The nearest built map, ties to the lower cell (the cache is a hash
+        // map: its order is not the same run to run).
+        let built = self
+            .paths
+            .maps
+            .keys()
+            .copied()
+            .filter(|&k| k == gi || by(k) <= near)
+            .min_by(|&a, &b| by(a).total_cmp(&by(b)).then(a.cmp(&b)))
+            .filter(|&k| close(k));
+        if let Some(k) = built {
+            self.paths.maps.get_mut(&k).expect("a built map").1 = step;
+            return Some(k);
+        }
+        if self.paths.building.as_ref().is_some_and(|b| close(b.goal)) {
+            return None;
+        }
+        match self.paths.asked.iter().position(|&(k, _)| close(k)) {
+            Some(i) => self.paths.asked[i].1 = step,
+            None => self.paths.asked.push((gi, step)),
+        }
+        None
+    }
+
+    /// Build walking maps for `MAP_POPS` cells: the one being built, then
+    /// at most one more started, goals asked for before maps gone stale.
+    /// Once at the start of each step. Every `PATHS_EVERY` (walls wear to
+    /// rubble, crystals are eaten) and when a wall goes up (`stale_maps`)
+    /// the maps go stale: each is rebuilt in turn and walked meanwhile, so
+    /// no soldier stands waiting for a map it had.
+    pub(super) fn pump_maps(&mut self) {
+        self.paths.step += 1;
+        let step = self.paths.step;
+        let now = self.world.ticks();
+        if now >= self.paths.at + self.secs(PATHS_EVERY) {
+            // Maps nobody walked since the last time go; the rest go stale.
+            let went = self.paths.went;
+            self.paths.maps.retain(|_, m| m.1 >= went);
+            self.stale_maps();
+            self.paths.at = now;
+            self.paths.went = step;
+        }
+        // An ask not made again last step is dropped: its soldier arrived,
+        // died, or moved its goal on.
+        self.paths.asked.retain(|&(_, t)| t + 1 >= step);
+        let (w, h) = self.world.size();
+        let mut pops = self.rules.map_pops;
+        let mut started = false;
+        loop {
+            if self.paths.building.is_none() {
+                if started {
+                    break;
+                }
+                let next = if self.paths.asked.is_empty() {
+                    // The stale map walked last first, ties to the lower cell.
+                    let maps = &self.paths.maps;
+                    let at = (0..self.paths.stale.len()).max_by_key(|&i| {
+                        let k = self.paths.stale[i];
+                        (maps.get(&k).map_or(0, |m| m.1), std::cmp::Reverse(k))
+                    });
+                    at.map(|i| self.paths.stale.swap_remove(i))
+                } else {
+                    Some(self.paths.asked.remove(0).0)
+                };
+                let Some(gi) = next else { break };
+                started = true;
+                self.paths.building = Some(MapBuild::new(w, h, gi, self.standable_cells()));
+            }
+            let b = self.paths.building.as_mut().expect("a map being built");
+            pops -= b.advance(w, h, pops);
+            if !b.done() {
+                break;
+            }
+            let b = self.paths.building.take().expect("a map being built");
+            let read = self.paths.maps.get(&b.goal).map_or(step, |m| m.1);
+            self.paths.stale.retain(|&k| k != b.goal);
+            self.paths.maps.insert(b.goal, (b.dist, read));
+            // Past the cache's size, the map read longest ago goes.
+            let most = (MAP_CELLS_MAX / (w * h).max(1)).clamp(4, MAPS_MAX);
+            while self.paths.maps.len() > most {
+                let maps = &self.paths.maps;
+                let old = maps.iter().map(|(&k, m)| (m.1, k)).min().expect("maps").1;
+                self.paths.maps.remove(&old);
+                self.paths.stale.retain(|&k| k != old);
+            }
+            if pops == 0 {
+                break;
+            }
+        }
+    }
+
+    /// Every walking map goes stale (a wall went up, or `PATHS_EVERY`):
+    /// each is rebuilt in turn by `pump_maps` and walked meanwhile; a map
+    /// being built starts again on the new ground.
+    pub(super) fn stale_maps(&mut self) {
+        let mut keys: Vec<usize> = self.paths.maps.keys().copied().collect();
+        keys.sort_unstable();
+        self.paths.stale = keys;
+        if let Some(b) = self.paths.building.take() {
+            let step = self.paths.step;
+            self.paths.asked.insert(0, (b.goal, step));
+        }
+    }
+
     /// `p`, or if it is on a solid crystal, the point just past that
     /// crystal's rim on the side toward `from`.
     pub fn rim(&self, p: (f32, f32), from: (f32, f32)) -> (f32, f32) {
@@ -362,26 +583,21 @@ impl<W: World> Game<W> {
         } else if self.walk_line((s.x, s.y), g) {
             g
         } else {
-            let now = self.world.ticks();
-            if now >= self.paths.at + self.secs(PATHS_EVERY) || self.paths.maps.len() >= MAPS_MAX {
-                // Walls wear to rubble: rebuild the maps now and then.
-                self.paths.maps.clear();
-                self.paths.at = now;
-            }
             let (w, h) = self.world.size();
             let gi = cell(w, h, g);
-            if !self.paths.maps.contains_key(&gi) {
-                let map = distance_map(w, h, gi, |i| self.standable((i % w) as f32 + 0.5, (i / w) as f32 + 0.5));
-                self.paths.maps.insert(gi, map);
-            }
-            let map = &self.paths.maps[&gi];
+            let Some(key) = self.map_for(gi, g, MAP_NEAR * self.s()) else {
+                // Its map is being built (`pump_maps`): wait for it.
+                return;
+            };
+            let map = &self.paths.maps[&key].0;
             // A few cells down the map, so the step heads along the path
             // rather than zig-zagging cell to cell.
             let mut at = cell(w, h, (s.x, s.y));
             for _ in 0..3 {
                 at = downhill(w, h, map, at, self.rules.corners);
             }
-            if at == gi {
+            // At the map's goal: the soldier's own is a straight walk on.
+            if at == key {
                 g
             } else {
                 ((at % w) as f32 + 0.5, (at / w) as f32 + 0.5)

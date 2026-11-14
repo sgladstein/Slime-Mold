@@ -135,7 +135,10 @@ view shades the world from the engine's look field (mould thickness,
 walkers, wounds) and a ground field (rock, walls by health, crystals by
 charge): height, light, gloss, a speck a walker. Its once-a-second refresh
 reads only the crystal and wall cells (`Gather`, 2026-11-14; [levelgen
-report](../../Reports/levelgen-2026-11-14/README.md), *A sparse ground refresh*). Shots (`Engine::set_hits`)
+report](../../Reports/levelgen-2026-11-14/README.md), *A sparse ground refresh*),
+and a wall going up rebuilds only the 32-cell tiles it touches, their `FAR`
+marks redone over each tile and its reach (`look::mark_far_box`; *Walking
+maps at 6x*). Shots (`Engine::set_hits`)
 stop at the first slime or rock on their line (`first_hit`) and cut there,
 leaving a fading burn. The view draws no wound (the owner, 04:38Z, on a
 blind A/B: "Neither. Both of those look like stamps"): the drawn

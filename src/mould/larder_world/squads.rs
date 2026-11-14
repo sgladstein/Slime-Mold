@@ -427,14 +427,14 @@ impl<W: World> Game<W> {
         }
         let (w, h) = self.world.size();
         let gi = cell(w, h, to);
-        if self.paths.maps.len() >= MAPS_MAX {
-            self.paths.maps.clear();
-        }
-        if !self.paths.maps.contains_key(&gi) {
-            let map = distance_map(w, h, gi, |i| self.standable((i % w) as f32 + 0.5, (i / w) as f32 + 0.5));
-            self.paths.maps.insert(gi, map);
-        }
-        let map = &self.paths.maps[&gi];
+        // A steered squad's `to` moves with it: a map to a point half a
+        // lead off serves it.
+        let near = if sent { MAP_NEAR * self.s() } else { lead / 2.0 };
+        let Some(key) = self.map_for(gi, to, near) else {
+            // Its map is being built (`pump_maps`): the anchor waits.
+            return from;
+        };
+        let map = &self.paths.maps[&key].0;
         let mut at = cell(w, h, from);
         if map[at] == u32::MAX {
             // The middle is on no walkable way to the point (it sits on a

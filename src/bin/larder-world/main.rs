@@ -534,6 +534,9 @@ struct App {
     /// refresh reads (`refresh_ground`).
     codes: Vec<u32>,
     live: Live,
+    /// The dish's wall cells as the ground last drew them: a wall going
+    /// up is the cells that differ.
+    wall_mask: Vec<bool>,
     /// The timed and wall refreshes this game: how many, their summed
     /// and longest ms, and the longest read-back (the bench prints them).
     ground_cost: (u32, f64, f64, f64),
@@ -661,6 +664,7 @@ impl App {
             ground_walls: 0,
             codes: Vec::new(),
             live: Live::default(),
+            wall_mask: Vec::new(),
             ground_cost: (0, 0.0, 0.0, 0.0),
             depth: Vec::new(),
             looks: Vec::new(),
@@ -894,6 +898,7 @@ impl App {
         let codes = ground_codes(&game, &self.depth, None, None);
         let ground = look::ground_buffer(device, queue, &codes);
         self.live = live_cells(&game, &self.live);
+        self.wall_mask = (0..codes.len()).map(|i| game.world.e.dish.wall.get(i).copied().unwrap_or(false)).collect();
         self.codes = codes;
         if let Some(v) = self.view.as_mut() {
             v.set_world(&e.frame, size);

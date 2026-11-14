@@ -30,6 +30,7 @@ impl<W: World> Game<W> {
             return;
         }
         self.solid = self.solid_now();
+        self.pump_maps();
         let r = self.rules;
         let sc = self.s();
         let t = self.world.ticks();

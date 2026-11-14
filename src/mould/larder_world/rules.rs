@@ -175,6 +175,16 @@ pub struct Rules {
     /// goes, and seed 3's chaos then parted the crater twin's moulds past
     /// its bound (951 GPU against 1049 CPU at 30 s).
     pub corners: bool,
+    /// Cells of walking map built a step (`paths::MAP_POPS`, 2026-11-14:
+    /// a fixed slice a step, so a 6x planet's new map no longer stalls one
+    /// step). `usize::MAX` is the old pace, kept for the engine twins in
+    /// mouldgpu: each goal's own map, built whole the step it is asked for.
+    /// A walk rule plays the same on both engines, but waiting a step or
+    /// two for a map moves where the squad goes, and seed 3's chaos then
+    /// parted the twins' moulds past their bound (crater twin 1585 GPU
+    /// against 1316 CPU at 25 s; core twin 1630 against 1467, and with
+    /// whole maps a step late 1573 kills against 1279).
+    pub map_pops: usize,
     /// Wading (the owner, 2026-11-12 14:42Z: "soldiers should be heavily
     /// slowed down if they try to run into the thick slime"): a soldier
     /// with this many walkers touching it walks at half speed, and slower
@@ -465,6 +475,7 @@ impl Default for Rules {
             touch: 1.5,
             elbow: 1.6,
             corners: true,
+            map_pops: super::paths::MAP_POPS,
             wade: 6.0,
             smell: 0.5,
             smell_r: 2.0,

@@ -180,6 +180,98 @@ fn the_walking_map_goes_round_a_wall_through_its_gap() {
     assert_eq!(sealed[start], u32::MAX);
 }
 
+/// The binary-heap Dijkstra `distance_map` was until 11-14, kept as the
+/// reference for the bucket ring that replaced it.
+fn heap_distance_map(w: usize, h: usize, goal: usize, open: impl Fn(usize) -> bool) -> Vec<u32> {
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+    let ok: Vec<bool> = (0..w * h).map(&open).collect();
+    let mut dist = vec![u32::MAX; w * h];
+    let mut heap = BinaryHeap::new();
+    dist[goal] = 0;
+    heap.push(Reverse((0u32, goal)));
+    while let Some(Reverse((d, i))) = heap.pop() {
+        if d > dist[i] {
+            continue;
+        }
+        let (x, y) = ((i % w) as i64, (i / w) as i64);
+        for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
+            let (nx, ny) = (x + dx, y + dy);
+            if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
+                continue;
+            }
+            let j = ny as usize * w + nx as usize;
+            let diag = dx != 0 && dy != 0;
+            if !ok[j] || (diag && (!ok[y as usize * w + nx as usize] || !ok[ny as usize * w + x as usize])) {
+                continue;
+            }
+            let nd = d + if diag { 7 } else { 5 };
+            if nd < dist[j] {
+                dist[j] = nd;
+                heap.push(Reverse((nd, j)));
+            }
+        }
+    }
+    dist
+}
+
+/// The bucket ring gives the heap's distances on mazes of every density,
+/// goals in the open, in a pocket and on rock.
+#[test]
+fn the_walking_map_ring_matches_the_heap() {
+    let mut seed = 7u64;
+    let mut next = || {
+        seed = seed.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1_442_695_040_888_963_407);
+        (seed >> 33) as usize
+    };
+    for (w, h, rock) in [(40, 25, 0), (40, 25, 5), (64, 48, 3), (31, 57, 2), (1, 9, 4)] {
+        let open: Vec<bool> = (0..w * h).map(|_| rock == 0 || next() % rock != 0).collect();
+        for _ in 0..6 {
+            let goal = next() % (w * h);
+            let ring = distance_map(w, h, goal, |i| open[i]);
+            assert_eq!(ring, heap_distance_map(w, h, goal, |i| open[i]), "{w} x {h}, one in {rock} rock, goal {goal}");
+            // Built a slice at a time, as `Game::pump_maps` does: the same map.
+            for pops in [1, 7, 100] {
+                let mut b = MapBuild::new(w, h, goal, open.clone());
+                let mut slices = 0;
+                while !b.done() {
+                    assert!(b.advance(w, h, pops) <= pops);
+                    slices += 1;
+                    assert!(slices <= 9 * w * h, "a build ends");
+                }
+                assert_eq!(b.map(), ring, "{pops} cells a slice");
+            }
+        }
+    }
+}
+
+/// The walking grid a map is built on is `standable` at each cell's
+/// middle, with crystals solid, at the start and as they are eaten.
+#[test]
+fn standable_cells_are_standable_at_each_middle() {
+    let mut g = small(2);
+    assert!(!g.solid.is_empty(), "crystals are solid");
+    for round in 0..3 {
+        let (w, h) = g.world.size();
+        let cells = g.standable_cells();
+        let each: Vec<bool> = (0..w * h).map(|i| g.standable((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).collect();
+        assert_eq!(cells, each, "round {round}");
+        let open: Vec<bool> = (0..w * h).map(|i| g.world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).collect();
+        assert_eq!(g.world.open_cells(), open, "the dish's own grid is `open` at each middle");
+        assert!(cells.iter().any(|&c| !c) && cells.iter().any(|&c| c));
+        for _ in 0..(g.rules.tps * 10) {
+            g.step();
+        }
+    }
+    // A planet with deep water: the dish's grid leaves it out as `open` does.
+    let m = (1..20).map(|seed| crate::mould::levelgen::level(seed, 4)).find(|m| m.ground.contains(&crate::mould::map::G_DEEP)).expect("a river valley with deep water");
+    let d = BigDish::with_map(race_params(1, 1, 1_000), &m);
+    let (w, h) = World::size(&d);
+    let open: Vec<bool> = (0..w * h).map(|i| World::open(&d, (i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).collect();
+    assert!((0..w * h).any(|i| d.deep(i)), "deep cells on the dish");
+    assert_eq!(World::open_cells(&d), open);
+}
+
 #[test]
 fn commands_round_trip_as_lines() {
     for c in [
@@ -2289,6 +2381,8 @@ fn soldiers_cross_deep_water_only_by_ford_or_bridge() {
         let dt = 1.0 / g.rules.tps as f32;
         let mut crossed_at = None;
         for _ in 0..(120 * g.rules.tps) {
+            // The step builds walking maps a slice at a time (`pump_maps`).
+            g.pump_maps();
             g.walk(0, dt);
             let s = g.soldiers[0];
             assert!(g.world.open(s.x, s.y), "soldier in deep water at ({}, {})", s.x, s.y);

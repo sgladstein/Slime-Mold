@@ -57,6 +57,14 @@ pub trait World {
     /// Open ground a soldier can stand on (agar: not rock, wall or rim, and
     /// not deep water, `big::SOIL_DEEP`). Buildings go only here too.
     fn open(&self, x: f32, y: f32) -> bool;
+    /// `open` at every cell's middle, row by row: the grid a walking map
+    /// is built on (`Game::standable_cells`). A world that holds its cells
+    /// reads them straight (7.6 ms through `open` at 6x a planet's area,
+    /// 2026-11-14).
+    fn open_cells(&self) -> Vec<bool> {
+        let (w, h) = self.size();
+        (0..w * h).map(|i| self.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).collect()
+    }
     /// Ground a shot flies over: open ground and deep water (shots fly over
     /// water; only rock, a wall or the rim stops them). The default is
     /// `open`, for a world with no deep water.
@@ -178,6 +186,10 @@ impl World for BigDish {
 
     fn open(&self, x: f32, y: f32) -> bool {
         self.cell_at(x, y).is_some_and(|i| self.agar[i] && !self.deep(i))
+    }
+
+    fn open_cells(&self) -> Vec<bool> {
+        (0..self.w * self.h).map(|i| self.agar[i] && !self.deep(i)).collect()
     }
 
     fn clear(&self, x: f32, y: f32) -> bool {

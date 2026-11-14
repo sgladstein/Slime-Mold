@@ -59,6 +59,7 @@ code:
   - Game::with_tier
   - GpuWorld
   - GpuWorld::frame_start
+  - MapBuild
   - Params::light_weight
   - Params::pieces
   - Params::wound
@@ -150,6 +151,12 @@ to match the CPU's fine steps; a GPU test plays both for 20 s and they stay
 within 8%. The first census found soldiers stuck behind rock firing into it
 (13 kills from 80 shots), so soldiers now walk on a distance map and fire
 only along a clear line (1,282 kills from 200 shots on the same seed).
+Since 2026-11-14 the maps are built a slice a step (`MapBuild`,
+`Game::pump_maps`: 131,072 cells a step, a 6x planet's map in six or
+seven steps), a soldier waits for a new one, a squad's slots share one, and
+a wall going up leaves the old maps walked until each is rebuilt: a game
+step's max at 6x went from 186 to 12 ms ([report, *Walking maps at
+6x*](../../Reports/levelgen-2026-11-14/README.md)).
 On held-out seeds 5-20 idle and random lose on 16 of 16 and farm and wall
 beat both 16-0; no hand wipes the mould, a farm holds 27-64% of the
 contested crystals at the cap, one wall adds nothing over farming, and a

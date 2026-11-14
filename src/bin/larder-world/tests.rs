@@ -915,8 +915,9 @@ fn every_test_loadout_fits_the_default_budget() {
 /// read-back and rebuild took 32.9 ms at 6x a planet's area on the 1070;
 /// the graphics lead's condition was a byte-identical ground). On the
 /// nest map (walls and crystals), with the squad rushing and wall cells
-/// worn and broken by hand, every refresh over 16 game seconds matches
-/// `ground_codes` from the same charge and health.
+/// worn and broken by hand and three walls raised at 6 s (across a crystal,
+/// on open ground, along the world's edge), every refresh over 16 game
+/// seconds matches `ground_codes` from the same charge and health.
 #[test]
 fn the_sparse_ground_refresh_matches_a_whole_one() {
     let Some((device, queue)) = gpu() else { return };
@@ -925,7 +926,9 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
     let walls: Vec<usize> = { let d = &app.game.as_ref().unwrap().world.e.dish; (0..d.w * d.h).filter(|&i| d.wall[i]).collect() };
     assert!(walls.len() > 10, "the nest map has walls");
     assert!(app.live.cells.len() > walls.len() && app.live.gather.is_some(), "crystal and wall cells live");
-    let (mut checked, mut worn, mut at) = (0, false, app.ground_at);
+    let (mut checked, mut worn, mut raised, mut at) = (0, false, false, app.ground_at);
+    let wall_cells = |app: &App| app.codes.iter().filter(|&&c| c & 0xF == look::Ground::Wall as u32).count();
+    let walls_before = wall_cells(&app);
     while app.game.as_ref().unwrap().time() < 16.0 {
         plan(app.game.as_mut().unwrap(), "rush");
         app.step(1.0 / 15.0);
@@ -937,6 +940,20 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
             e.queue.write_buffer(&e.health, walls[0] as u64 * 4, &(full * 0.4).to_le_bytes());
             e.queue.write_buffer(&e.health, walls[1] as u64 * 4, &0.0f32.to_le_bytes());
             worn = true;
+        }
+        if !raised && app.game.as_ref().unwrap().time() > 6.0 {
+            // Walls raised in play (technical lead, 11-14): across a
+            // crystal, on open ground beside it, and along the world's
+            // edge; only the tiles they touch are rebuilt.
+            use slime_mould::mould::larder_world::World as _;
+            app.settle();
+            let g = app.game.as_mut().unwrap();
+            let ((cx, cy), _) = g.world.crystals()[0];
+            g.world.build_wall((cx - 12.0, cy), (cx + 12.0, cy), 3.0);
+            g.world.build_wall((cx - 30.0, cy + 30.0), (cx - 30.0, cy + 60.0), 2.0);
+            g.world.build_wall((1.0, 5.0), (1.0, 40.0), 2.0);
+            g.walls += 3;
+            raised = true;
         }
         app.prepare();
         if app.ground_at != at {
@@ -954,6 +971,7 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
     assert!(checked >= 6, "{checked} refreshes checked");
     let g = app.game.as_ref().unwrap();
     assert_eq!(app.codes[walls[1]] & 0xF, look::Ground::Rubble as u32, "the broken wall cell drew as rubble");
+    assert!(raised && wall_cells(&app) > walls_before + 20, "the raised walls drew: {} wall cells, {walls_before} before", wall_cells(&app));
     let left: f32 = g.world.crystals().iter().map(|c| c.1).sum();
     assert!(left < app.charge0.iter().sum::<f32>(), "crystals were eaten, so charges changed: {left}");
 }

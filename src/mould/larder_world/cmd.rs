@@ -274,7 +274,7 @@ impl<W: World> Game<W> {
         self.walls += 1;
         let s = self.s();
         self.world.build_wall((a.0 / s, a.1 / s), (b.0 / s, b.1 / s), self.rules.wall_width);
-        self.paths.maps.clear();
+        self.stale_maps();
     }
 
     /// The crystal a point is inside (or nearest, within its radius plus 2
