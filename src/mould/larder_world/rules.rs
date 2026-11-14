@@ -154,6 +154,14 @@ pub struct Rules {
     /// pushed off its slots. It spreads a squad's drain over more ground, so it is a
     /// census baseline break, not a balance call.
     pub elbow: f32,
+    /// Walk round a wall's corner, not across it (`downhill`, 2026-11-14,
+    /// on): the step across was refused in `Game::walk`, so a soldier at a
+    /// wall's end stood still for good (the owner's "stuck on the wall").
+    /// Off is the old path, kept for the engine twins in mouldgpu: a walk
+    /// rule plays the same on both engines, but it moves where the squad
+    /// goes, and seed 3's chaos then parted the crater twin's moulds past
+    /// its bound (951 GPU against 1049 CPU at 30 s).
+    pub corners: bool,
     /// Wading (the owner, 2026-11-12 14:42Z: "soldiers should be heavily
     /// slowed down if they try to run into the thick slime"): a soldier
     /// with this many walkers touching it walks at half speed, and slower
@@ -416,6 +424,7 @@ impl Default for Rules {
             drain: 2.0,
             touch: 1.5,
             elbow: 1.6,
+            corners: true,
             wade: 6.0,
             smell: 0.5,
             smell_r: 2.0,
