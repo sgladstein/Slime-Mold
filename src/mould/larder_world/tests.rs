@@ -1273,3 +1273,125 @@ fn a_soldier_walking_to_a_burn_line_shoots_what_reaches_it() {
         assert!(g.target(0).is_none(), "Defend does not fire at far slime on the way");
     }
 }
+
+/// Owner's playtest (2026-11-14 04:46Z): "soldier get stuck on the wall
+/// they build". Builders stood on the wall's line, so the risen wall shut
+/// them in and the walking map from inside reached nothing; and one at a
+/// wall's end was stepped diagonally across its corner, which `walk` then
+/// refused, so it stood there for good. Now they stand beside it and step
+/// round its ends.
+#[test]
+fn builders_stand_beside_their_wall_and_walk_on_once_it_stands() {
+    let mut walled = 0;
+    for seed in 1..6 {
+        let mut g = Game::new(race_world(seed, 1, 1_000), Rules::default(), seed);
+        let (x, y) = g.larder;
+        let n = g.soldiers.len();
+        // Across the squad's way west, so builders come up to its line.
+        if !g.apply(Cmd::Wall((x - 12.0, y - 10.0), (x - 12.0, y + 10.0))) {
+            continue;
+        }
+        let w = g.buildings.len() - 1;
+        for k in 0..n {
+            g.apply(Cmd::Order(k, Order::Build(w)));
+        }
+        let mut t = 0;
+        while g.buildings[w].built < 1.0 && t < g.rules.tps * 60 {
+            g.step();
+            t += 1;
+        }
+        assert!(g.buildings[w].built >= 1.0, "seed {seed}: the wall rose");
+        walled += 1;
+        for (k, s) in g.soldiers.iter().enumerate() {
+            assert!(g.standable(s.x, s.y), "seed {seed}: builder {k} shut in its wall at ({}, {})", s.x, s.y);
+        }
+        // West past the wall, round its ends.
+        let to = (x - 25.0, y);
+        for k in 0..n {
+            g.apply(Cmd::Order(k, Order::Move(to.0, to.1)));
+        }
+        for _ in 0..(g.rules.tps * 20) {
+            g.step();
+        }
+        for (k, s) in g.soldiers.iter().enumerate() {
+            let d = (s.x - to.0).hypot(s.y - to.1);
+            assert!(d < 12.0, "seed {seed}: soldier {k} {d} cells short at ({}, {})", s.x, s.y);
+        }
+    }
+    assert!(walled >= 4, "{walled} of 5 seeds built the wall");
+}
+
+/// A soldier inside a wall (one that rose on it) walks out to the nearest
+/// ground and goes where it is sent; one sent into rock or a wall stops at
+/// the nearest ground instead of freezing where it stands.
+#[test]
+fn a_soldier_shut_in_a_wall_walks_out_and_a_move_into_one_stops_beside_it() {
+    let mut g = small(2);
+    let (x, y) = g.larder;
+    let at = (x - 12.0, y);
+    for k in 0..g.soldiers.len() {
+        g.apply(Cmd::Order(k, Order::Hold));
+    }
+    g.soldiers[0].x = at.0;
+    g.soldiers[0].y = at.1;
+    g.wall_cells((at.0, at.1 - 6.0), (at.0, at.1 + 6.0));
+    assert!(!g.world.open(at.0, at.1), "the soldier stands in the wall");
+    g.apply(Cmd::Order(0, Order::Move(x - 24.0, y)));
+    for _ in 0..(g.rules.tps * 15) {
+        g.step();
+    }
+    let s = g.soldiers[0];
+    assert!(g.standable(s.x, s.y) && (s.x - (x - 24.0)).hypot(s.y - y) < 4.0, "out and there: ({}, {})", s.x, s.y);
+    // Sent into the wall's middle: it ends beside it, not frozen.
+    let start = (s.x, s.y);
+    g.apply(Cmd::Order(0, Order::Move(at.0, at.1)));
+    for _ in 0..(g.rules.tps * 10) {
+        g.step();
+    }
+    let s = g.soldiers[0];
+    assert!(g.standable(s.x, s.y) && (s.x - at.0).hypot(s.y - at.1) < 4.0, "beside the wall: ({}, {}) from {start:?}", s.x, s.y);
+}
+
+/// Owner's playtest (2026-11-14 04:44Z): four soldiers sent to harvest a
+/// far crystal walked back to the larder while the rest went. They had
+/// been selected at the larder, so the window's kit gave each 5 tools,
+/// and at 50 carry a tool (`KitRules::tool_weight`) they were full after
+/// 50 food. Tools weigh nothing now, and nobody walks home empty-handed.
+#[test]
+fn a_soldier_holding_tools_goes_to_the_crystal_it_is_sent_to() {
+    use crate::mould::kit::{Kit, KitRules};
+    let mut g = small(3);
+    let home = g.larder;
+    let mut kit = Kit::new(KitRules::default());
+    g.soldiers[0].x = home.0 + 2.0;
+    g.soldiers[0].y = home.1 + 2.0;
+    assert!(kit.restock(&mut g, 0, kit.rules.carry_max));
+    assert_eq!(kit.held(0), 5);
+    // A part load from its last crystal.
+    g.soldiers[0].carry = 80.0;
+    let far = g
+        .world
+        .crystals()
+        .iter()
+        .map(|c| c.0)
+        .filter(|c| (c.0 - home.0).hypot(c.1 - home.1) > 30.0)
+        .min_by(|a, b| (a.0 - home.0).hypot(a.1 - home.1).total_cmp(&(b.0 - home.0).hypot(b.1 - home.1)))
+        .expect("a crystal away from the larder");
+    let d0 = (g.soldiers[0].x - far.0).hypot(g.soldiers[0].y - far.1);
+    g.apply(Cmd::Order(0, Order::Clear(far.0, far.1)));
+    for _ in 0..(g.rules.tps * 3) {
+        g.step();
+    }
+    let s = g.soldiers[0];
+    let d = (s.x - far.0).hypot(s.y - far.1);
+    assert!(!s.homing && d < d0 - 5.0, "walked {} toward the crystal, homing {}", d0 - d, s.homing);
+    // A load heavier than the whole carry: an empty soldier still goes out
+    // rather than shuttling to the larder and back.
+    let mut g = small(3);
+    g.soldiers[0].load = 2.0 * g.rules.carry;
+    g.apply(Cmd::Order(0, Order::Clear(far.0, far.1)));
+    for _ in 0..(g.rules.tps * 3) {
+        g.step();
+    }
+    assert!(!g.soldiers[0].homing, "home with nothing to bank");
+}

@@ -4626,7 +4626,10 @@ mod tests {
         let (seed, scale, walkers) = (3, 2, 5_000);
         // The old bite (1 a walker): at the game's 2 the builder dies before
         // the turret stands, and it never fires on either engine.
-        let rules = Rules { cap: 20.0, start_bank: 1e6, drain: 1.0, ..Rules::default() };
+        let mut rules = Rules { cap: 20.0, start_bank: 1e6, drain: 1.0, ..Rules::default() };
+        // A lure's burn is off by default (no upkeep, owner 2026-11-14); on
+        // here so the twin still checks the bank's share of it.
+        rules.build.lure_burn = 2.0;
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let near = |g: &Game<_>, p: (f32, f32)| -> (f32, f32) {
