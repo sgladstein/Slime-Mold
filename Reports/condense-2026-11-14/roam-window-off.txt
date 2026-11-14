@@ -1,0 +1,31 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/roam/on/fork-farm-020s-all.png
+/tmp/claude-0/roam/on/fork-farm-020s-near.png
+  CPU: ground field 3.52 ms (once a game second), model and HUD 0.063 ms a frame
+  t 20 s: mould 16993, soldiers 10, bank 984, harvested 1445, shots 110, killed 746, took 95%, crystals left 0.940; squad at 262.0,104.3
+  squad: touching 0.9 mean, 4 most; health 68 mean
+/tmp/claude-0/roam/on/fork-farm-030s-all.png
+/tmp/claude-0/roam/on/fork-farm-030s-near.png
+  CPU: ground field 5.53 ms (once a game second), model and HUD 0.089 ms a frame
+  t 30 s: mould 15756, soldiers 11, bank 1472, harvested 2345, shots 189, killed 957, took 97%, crystals left 0.865; squad at 257.6,97.8
+  squad: touching 0.0 mean, 0 most; health 67 mean
+/tmp/claude-0/roam/on/fork-farm-040s-all.png
+/tmp/claude-0/roam/on/fork-farm-040s-near.png
+  CPU: ground field 5.02 ms (once a game second), model and HUD 0.084 ms a frame
+  t 40 s: mould 16168, soldiers 17, bank 936, harvested 4212, shots 271, killed 1069, took 96%, crystals left 0.854; squad at 217.6,119.7
+  squad: touching 0.0 mean, 0 most; health 77 mean
+/tmp/claude-0/roam/on/fork-farm-060s-all.png
+/tmp/claude-0/roam/on/fork-farm-060s-near.png
+  CPU: ground field 5.14 ms (once a game second), model and HUD 0.087 ms a frame
+  t 60 s: mould 18422, soldiers 18, bank 1112, harvested 4812, shots 485, killed 2364, took 95%, crystals left 0.779; squad at 202.1,119.5
+  squad: touching 0.7 mean, 8 most; health 64 mean
+/tmp/claude-0/roam/on/fork-farm-120s-all.png
+/tmp/claude-0/roam/on/fork-farm-120s-near.png
+  CPU: ground field 2.70 ms (once a game second), model and HUD 0.055 ms a frame
+  t 120 s: mould 19316, soldiers 11, bank 1098, harvested 6012, shots 1081, killed 6324, took 89%, crystals left 0.709; squad at 222.8,117.6
+  squad: touching 0.2 mean, 1 most; health 49 mean
+/tmp/claude-0/roam/on/fork-farm-300s-all.png
+/tmp/claude-0/roam/on/fork-farm-300s-near.png
+  CPU: ground field 3.06 ms (once a game second), model and HUD 0.083 ms a frame
+  t 300 s: mould 26563, soldiers 2, bank 894, harvested 6254, shots 1992, killed 11576, took 75%, crystals left 0.655; squad at 220.3,109.5
+  squad: touching 0.0 mean, 0 most; health 63 mean

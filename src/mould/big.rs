@@ -70,6 +70,16 @@ pub const DENSE: u32 = 0x1_0000;
 /// birth into the slot clears it.
 pub const ABSORBED: u32 = 0x2_0000;
 pub const ABSORB_STEPS: u32 = 15;
+/// A condensed walker breaking away (`BigParams::roam`): its word holds
+/// `ROAM` and the crystal it runs for (its pile, bits `ROAM_SHIFT` up, 6
+/// bits, below `PANIC_PILES`) until it lands.
+pub const ROAM: u32 = 0x4_0000;
+pub const ROAM_SHIFT: u32 = 19;
+/// A crystal a breakaway runs for has at least this share of its charge
+/// left, so it goes for ground the mould has not eaten yet.
+pub const ROAM_FRESH: f32 = 0.8;
+/// A breakaway lands within this many dish cells of its crystal's centre.
+pub const ROAM_LAND: f32 = 3.0;
 /// A panicking walker (`BigParams::panic`) runs for a crystal only while
 /// it has more than this share of its charge left, so a part cut off on a
 /// crystal that has run dry runs for another. The GPU's `PANIC_LEFT` is the
@@ -619,6 +629,28 @@ pub struct BigParams {
     pub condense: u32,
     pub condense_crowd: u32,
     pub condense_r: u8,
+    /// **Condensed slime breaks away** (2026-11-14, the condense thread; 0
+    /// is off, needs `condense`). The owner, 15:06Z: "When slime condensed
+    /// it can become a separate entity that behaves different exploring
+    /// further, eating crystals." Every `roam` steps after it condensed, a
+    /// condensed walker picks the nearest crystal with at least
+    /// `ROAM_FRESH` of its charge left that is at least `roam_far` dish
+    /// cells away, and a keyed draw per crystal and step sends a
+    /// `roam_share` of those choices on their way: all the walkers that
+    /// condensed together and chose the same crystal go or stay together,
+    /// so a piece leaves as one body, not a spray. A breakaway runs for its
+    /// crystal as a panicking walker runs (its sensors read only the way
+    /// there, at its own pace, not slowed for being alone), neither
+    /// withers nor panics on the way, stays condensed (two lives, twice the
+    /// bite), and lands within `ROAM_LAND` cells of the crystal's centre,
+    /// or when the crystal runs dry; there it eats and the mould grows
+    /// from it as from any fed walker. Why this shape: condensing already
+    /// stops the slime filling the map, so the breakaway is what spreads
+    /// it, in dense, tough pieces that go for food the mould has not
+    /// reached, rather than a creeping film.
+    pub roam: u32,
+    pub roam_far: f32,
+    pub roam_share: f32,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -1095,6 +1127,9 @@ impl BigParams {
             condense: 0,
             condense_crowd: 20,
             condense_r: 2,
+            roam: 0,
+            roam_far: 30.0,
+            roam_share: 0.5,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -2018,6 +2053,39 @@ impl BigDish {
         cx | cy << 16
     }
 
+    /// The crystal (pile) breakaway walker `k` runs for (`BigParams::roam`).
+    pub fn roam_of(&self, k: usize) -> Option<usize> {
+        if self.p.roam == 0 || self.p.condense == 0 {
+            return None;
+        }
+        let w = *self.dense.get(k)?;
+        (w & ROAM != 0).then_some(((w >> ROAM_SHIFT) & 63) as usize)
+    }
+
+    /// The crystal a condensed walker on fine cell (`cx`, `cy`) would
+    /// break away for: the nearest with at least `ROAM_FRESH` left and at
+    /// least `roam_far` dish cells away (ties to the first); whole cells,
+    /// so the GPU picks the same.
+    fn roam_pick(&self, cx: i64, cy: i64) -> Option<usize> {
+        if self.charge.is_empty() {
+            return None;
+        }
+        let far = (self.p.roam_far.max(0.0) * self.p.scale as f32).floor() as i64;
+        let mut best: Option<(i64, usize)> = None;
+        for j in 0..self.piles.len().min(PANIC_PILES) {
+            if self.crystal_left(j) < ROAM_FRESH {
+                continue;
+            }
+            let c = self.pile_centre(j);
+            let (px, py) = ((c & 0xFFFF) as i64, (c >> 16) as i64);
+            let d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+            if d2 >= far * far && best.is_none_or(|b| d2 < b.0) {
+                best = Some((d2, j));
+            }
+        }
+        best.map(|b| b.1)
+    }
+
     /// Whether walker `k` panics this step (`BigParams::panic`): an
     /// ordinary walker whose news is more than `wither_lag` steps old.
     pub fn panics(&self, k: usize) -> bool {
@@ -2028,7 +2096,7 @@ impl BigDish {
     /// than `wither_lag` steps old); `panic` once its news is more than
     /// `wither_lag` + `panic_lean` old.
     pub fn panic_haste(&self, k: usize) -> f32 {
-        if self.p.panic <= 0.0 || self.news.is_empty() {
+        if self.p.panic <= 0.0 || self.news.is_empty() || self.roam_of(k).is_some() {
             return 0.0;
         }
         let (age, lag) = ((self.steps + 1).saturating_sub(self.news[k]), self.p.wither_lag as u64);
@@ -2486,8 +2554,14 @@ impl BigDish {
             // A cut-off walker panics (`panic`): it runs for its target, by
             // how far each sensor points toward it, `panic` times as fast.
             let haste = self.panic_haste(k);
-            let scared = if haste > 0.0 { self.panic_target(x.floor() as i64, y.floor() as i64) } else { None };
-            if let Some((_, _, unit)) = scared {
+            let mut scared = if haste > 0.0 { self.panic_target(x.floor() as i64, y.floor() as i64) } else { None };
+            // A breakaway (`roam`) runs for its crystal the same way, at
+            // its own pace.
+            if let Some(j) = self.roam_of(k) {
+                let c = self.pile_centre(j);
+                scared = Some(((c & 0xFFFF) as f32 + 0.5, (c >> 16) as f32 + 0.5, false));
+            }
+            if let (Some((_, _, unit)), true) = (scared, haste > 0.0) {
                 st *= if unit { self.panic_charge(k, haste) } else { haste };
             }
             if let (true, Some((tx, ty, _))) = (look, scared) {
@@ -3054,7 +3128,29 @@ impl BigDish {
                 // A condensed walker's low bits count the steps since it
                 // condensed (the look's fresh glow), up to `RIPE`.
                 if self.dense[k] & DENSE != 0 {
-                    self.dense[k] = DENSE | ((self.dense[k] & RIPE) + 1).min(RIPE);
+                    let age = ((self.dense[k] & RIPE) + 1).min(RIPE);
+                    self.dense[k] = (self.dense[k] & !RIPE) | age;
+                    // Breaking away (`roam`): a breakaway lands near its
+                    // crystal or when it runs dry; every `roam` steps a
+                    // settled one may leave.
+                    if p.roam > 0 {
+                        let (x, y, _) = self.walkers[k];
+                        let (cx, cy) = (x.floor() as i64, y.floor() as i64);
+                        if let Some(j) = self.roam_of(k) {
+                            let c = self.pile_centre(j);
+                            let (dx, dy) = ((c & 0xFFFF) as i64 - cx, (c >> 16) as i64 - cy);
+                            let land = (ROAM_LAND * p.scale as f32).floor() as i64;
+                            if dx * dx + dy * dy <= land * land || self.crystal_left(j) <= PANIC_LEFT {
+                                self.dense[k] = DENSE | age;
+                            }
+                        } else if age.is_multiple_of(p.roam) && age < RIPE {
+                            if let Some(j) = self.roam_pick(cx, cy) {
+                                if unit(keyed(seed, t, DRAW_CONDENSE, 0x8000_0000 | j as u32)) < p.roam_share {
+                                    self.dense[k] = DENSE | ROAM | (j as u32) << ROAM_SHIFT | age;
+                                }
+                            }
+                        }
+                    }
                     continue;
                 }
                 let (x, y, _) = self.walkers[k];
@@ -3072,7 +3168,7 @@ impl BigDish {
             // check, a walker that has not heard of food for `wither_lag`
             // steps may die, whatever it still holds; a condensed one
             // breaks instead, keeping half its energy.
-            if check && self.steps + 1 > self.news[k] + p.wither_lag as u64 {
+            if check && self.steps + 1 > self.news[k] + p.wither_lag as u64 && self.roam_of(k).is_none() {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 if unit(keyed(seed, t, DRAW_WITHER, k as u32)) < p.wither {
@@ -4700,6 +4796,53 @@ mod tests {
         assert!(on.1 > 0 && on.0 < base.0, "fewer walkers, some condensed: {} against {}", on.0, base.0);
         // Births stop at the slots' mass: past it by at most a step's births.
         assert!(on.3 <= on.7 + on.7 / 20, "mass within the {} slots: peak {}", on.7, on.3);
+    }
+
+    /// Condensed slime breaks away (`roam`, 2026-11-14): off (0) changes
+    /// nothing; on, condensed walkers leave together for a fresh crystal
+    /// far enough away, stay condensed on the way, and land at it.
+    #[test]
+    fn condensed_slime_breaks_away_for_a_far_crystal() {
+        let grow = BigParams { upkeep: 0.002, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, condense: 30, condense_crowd: 10, condense_r: 2, ..small(2, 1) };
+        let run = |p: BigParams| {
+            let mut d = BigDish::new(p);
+            let (mut left, mut landed, mut most) = (0usize, 0usize, 0usize);
+            let mut was: Vec<Option<usize>> = vec![None; d.walkers.len()];
+            for _ in 0..600 {
+                d.tick();
+                let mut now = 0;
+                for (k, w) in was.iter_mut().enumerate() {
+                    let r = if d.lives(k) { d.roam_of(k) } else { None };
+                    if r.is_some() {
+                        now += 1;
+                        assert!(d.is_dense(k), "a breakaway stays condensed");
+                    }
+                    match (*w, r) {
+                        (None, Some(_)) => left += 1,
+                        (Some(j), None) if d.lives(k) && d.is_dense(k) => {
+                            let c = d.pile_centre(j);
+                            let (x, y, _) = d.walkers[k];
+                            let (dx, dy) = ((c & 0xFFFF) as f32 - x, (c >> 16) as f32 - y);
+                            if (dx * dx + dy * dy).sqrt() < 2.0 * ROAM_LAND * d.p.scale as f32 + 2.0 {
+                                landed += 1;
+                            }
+                        }
+                        _ => {}
+                    }
+                    *w = r;
+                }
+                most = most.max(now);
+            }
+            (left, landed, most, d.hash(), d.piles.len())
+        };
+        let base = run(grow.clone());
+        let off = run(BigParams { roam: 0, roam_far: 5.0, roam_share: 1.0, ..grow.clone() });
+        assert_eq!(base.3, off.3, "roam 0 changes nothing");
+        let on = run(BigParams { roam: 60, roam_far: 10.0, roam_share: 1.0, ..grow.clone() });
+        eprintln!("breakaway: {} left, {} landed, at most {} on the way at once, {} crystals", on.0, on.1, on.2, on.4);
+        assert!(on.0 > 20, "condensed walkers break away: {}", on.0);
+        assert!(on.2 > 10, "they leave together: at most {} at once", on.2);
+        assert!(on.1 > 0, "breakaways land at their crystal");
     }
 
     /// A condensed walker has two lives: a shot (`hit`), a blast
