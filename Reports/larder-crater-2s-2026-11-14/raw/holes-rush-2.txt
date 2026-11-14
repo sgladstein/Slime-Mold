@@ -1,0 +1,11 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  holes: shots that hit 45 refilled 35 (still open 10); ticks to 80%: median 8 (0.53 s), q25 4, q75 37, max 289
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/r2/fork-rush-030s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/r2/fork-rush-030s-near.png
+  CPU: ground field 1.46 ms (once a game second), model and HUD 0.041 ms a frame
+  t 30 s: mould 24775, soldiers 0, bank 1520, harvested 0, shots 45, killed 1061, took 0%, crystals left 0.997
+  holes: shots that hit 45 refilled 35 (still open 10); ticks to 80%: median 8 (0.53 s), q25 4, q75 37, max 289
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/r2/fork-rush-060s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/r2/fork-rush-060s-near.png
+  CPU: ground field 1.86 ms (once a game second), model and HUD 0.047 ms a frame
+  t 60 s: mould 30102, soldiers 0, bank 861, harvested 0, shots 45, killed 1061, took 0%, crystals left 0.990
