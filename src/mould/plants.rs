@@ -205,9 +205,38 @@ pub struct Fire {
     pub heat: f32,
     /// Plants a burning cell eats a step, x its heat.
     pub eat: f32,
-    /// A cell catches when the mean of its neighbours' heat x its plants x
-    /// its kind's `burn` reaches this; it starts at `heat`.
-    pub catch: f32,
+    /// A cell catches by chance (owner 11-14 19:18Z: "Fire should spread
+    /// 5x slower. It shouldn't just be a wavefront"): a step's chance is
+    /// `spread` x the mean of its neighbours' heat x its plants x its
+    /// kind's `burn` x its dryness squared (1 - `moisture`); it starts at
+    /// `heat`. Before, it caught once that product (without moisture)
+    /// reached 0.08, so every front was an even ribbon 9 cells deep moving
+    /// 5 fine cells a second.
+    pub spread: f32,
+    /// A burning cell goes out (heat 0, its plants left for a later fire)
+    /// with chance `out` x moisture² a step: damp ground snuffs fires and
+    /// leaves unburnt patches (the owner: "Sometimes it should burn out in
+    /// areas").
+    pub out: f32,
+    /// Damp burns slower and longer: a cell eats x (1 - `smoulder` x
+    /// moisture) ("It should stay burning in some areas").
+    pub smoulder: f32,
+    /// ... and cooler: its heat tops out at 1 - `cool` x moisture, so a
+    /// damp fire glows dim, spreads less and (under `fire_kill`) kills less.
+    pub cool: f32,
+    /// A burning cell's heat a step is its rise x (1 - `flicker` x its
+    /// chance), so flames flicker cell by cell and step by step (owner
+    /// 11-14 19:26Z: "The fire should also look better"); the picture is
+    /// the heat field, so the flicker is the fire's own.
+    pub flicker: f32,
+    /// Out of fuel, a cell's heat is kept x `ember` a step: a glowing tail
+    /// of embers behind the front. Was 0.5 (gone in a few steps).
+    pub ember: f32,
+    /// Heat follows the fuel left: a cell tops out at its plants /
+    /// `full` (at most 1), so a fresh front burns hottest and the inside
+    /// dims to embers as it eats (graphics lead 11-14 20:10Z: the band was
+    /// the same brightness through its depth).
+    pub full: f32,
     /// Below this many plants a burning cell dies down (heat halves a step)
     /// and a cell can't catch.
     pub fuel: f32,
@@ -231,8 +260,10 @@ pub struct Fire {
 /// **Fire** (owner 11-14 17:29Z: "I like this but need to think hard about
 /// how hard fire hurts slime"): one plant step of the heat field, `from` to
 /// `to`, eating `plant` where it burns. Wet ground and slime (`trail` at or
-/// over `damp`) never catch and put a fire out. Only `+`, `*`, `/`, so the
-/// GPU matches. Returns cells burning after the step.
+/// over `damp`) never catch and put a fire out. `moist` is each cell's
+/// moisture (`moisture`, 0-1), and `tick` the fire steps run, which keys
+/// each cell's chance (`roll`). Only `+`, `*`, `/` and integer hashing, so
+/// the GPU matches. Returns cells burning after the step.
 #[allow(clippy::too_many_arguments)]
 pub fn fire_step(
     g: &Ground,
@@ -244,6 +275,8 @@ pub fn fire_step(
     char: &mut [f32],
     from: &[f32],
     to: &mut [f32],
+    moist: &[f32],
+    tick: u32,
 ) -> usize {
     let (w, h) = (g.w, g.h);
     let mut lit = 0;
@@ -253,17 +286,23 @@ pub fn fire_step(
             let wet = (!g.wet.is_empty() && g.wet[i]) || trail[i] >= f.damp || !g.agar[i];
             let heat = from[i];
             let p = plant[i];
+            let m = moist[i];
+            let dice = roll(i as u32, tick);
             let mut ate = 0.0;
             if wet {
                 to[i] = 0.0;
             } else if heat > 0.0 {
-                let eat = (f.eat * heat).min(p);
+                let slow = 1.0 - f.smoulder * m;
+                let eat = (f.eat * heat * slow).min(p);
                 plant[i] = p - eat;
                 ate = eat;
+                let top = (1.0 - f.cool * m) * (p / f.full).min(1.0);
                 to[i] = if p - eat < f.fuel {
-                    heat * 0.5
+                    heat * f.ember
+                } else if dice < f.out * (m * m) {
+                    0.0
                 } else {
-                    (heat + f.heat).min(1.0)
+                    (heat + f.heat).min(top) * (1.0 - f.flicker * dice)
                 };
                 if to[i] < 0.01 {
                     to[i] = 0.0;
@@ -281,7 +320,8 @@ pub fn fire_step(
                     }
                 }
                 let burn = r.kinds[kind[i] as usize & (KINDS - 1)].burn;
-                to[i] = if p >= f.fuel && n * 0.25 * p * burn >= f.catch {
+                let dry = 1.0 - m;
+                to[i] = if p >= f.fuel && dice < f.spread * (n * 0.25) * p * burn * dry {
                     f.heat
                 } else {
                     0.0
@@ -290,13 +330,81 @@ pub fn fire_step(
             if to[i] > 0.0 {
                 lit += 1;
             }
-            // Regrowth clears char only once the fire is out: cleared while
-            // it burned, a jungle's char came out at 0.2, a third of its fuel.
-            let clear = if to[i] > 0.0 { 0.0 } else { plant[i] * f.char_clear };
+            // Regrowth clears char only once the fire is out (cleared while
+            // it burned, a jungle's char came out at 0.2, a third of its
+            // fuel), and only plants over the embers' last `fuel` count:
+            // those cleared a burn in about 15 s, before `char_keep` faded it.
+            let clear = if to[i] > 0.0 { 0.0 } else { (plant[i] - f.fuel).max(0.0) * f.char_clear };
             char[i] = ((char[i] * f.char_keep + ate * f.char_gain).min(1.0) - clear).max(0.0);
         }
     }
     lit
+}
+
+/// A cell's chance this fire step, 0-1: an integer hash of the cell and
+/// the step, as engine.wgsl's `froll`.
+pub fn roll(i: u32, tick: u32) -> f32 {
+    let mut h = i.wrapping_mul(0x9E37_79B1) ^ tick.wrapping_mul(0x85EB_CA77);
+    h ^= h >> 15;
+    h = h.wrapping_mul(0x2C1B_3C6D);
+    h ^= h >> 12;
+    h = h.wrapping_mul(0x297A_2D39);
+    h ^= h >> 15;
+    (h >> 8) as f32 * (1.0 / 16_777_216.0)
+}
+
+/// **Moisture** (owner 11-14 19:18Z: "a heterogenous moisture field that
+/// affects how fast it spreads, how long it burns, and the chance of it
+/// going out"; 19:26Z: "should match where there are rivers/lakes, and
+/// change by biome"), 0.05-1 a cell, fixed for a map: the map's `base`
+/// (`Items::moisture`, by biome from levelgen) plus `spread` x two value
+/// noises (40 and 12 cells) about it, wetter within 8 cells of water
+/// (`water`: wet ground and deep water), jungle +0.15, scrub -0.15, reeds
+/// and water 1. Fire reads it (`fire_step`); nothing else yet.
+pub fn moisture(w: usize, h: usize, water: &[bool], kind: &[u8], seed: u32, base: f32, spread: f32) -> Vec<f32> {
+    // The distance to water, in cells (chamfer 1-1, two passes), to 8.
+    let mut d: Vec<u8> = (0..w * h).map(|i| if !water.is_empty() && water[i] { 0 } else { 8 }).collect();
+    for y in 0..h {
+        for x in 0..w {
+            let i = y * w + x;
+            if x > 0 {
+                d[i] = d[i].min(d[i - 1] + 1);
+            }
+            if y > 0 {
+                d[i] = d[i].min(d[i - w] + 1);
+            }
+        }
+    }
+    for y in (0..h).rev() {
+        for x in (0..w).rev() {
+            let i = y * w + x;
+            if x + 1 < w {
+                d[i] = d[i].min(d[i + 1] + 1);
+            }
+            if y + 1 < h {
+                d[i] = d[i].min(d[i + w] + 1);
+            }
+        }
+    }
+    (0..w * h)
+        .map(|i| {
+            let (x, y) = (i % w, i / w);
+            if d[i] == 0 || kind[i] == REEDS {
+                return 1.0;
+            }
+            let n = 0.5 * noise(x, y, 40, seed ^ 0x5EED_0001) + 0.3 * noise(x, y, 12, seed ^ 0x5EED_0002) + 0.2 * noise(x, y, 4, seed ^ 0x5EED_0003);
+            // The noise's middle half spans about 0.4-0.6, so x 2 x 2: a
+            // spread of 0.3 gives patches some 0.25 drier and wetter.
+            let mut m = base + spread * 4.0 * (n - 0.5);
+            m += 0.4 * (1.0 - d[i] as f32 / 8.0);
+            if kind[i] == JUNGLE {
+                m += 0.15;
+            } else if kind[i] == SCRUB {
+                m -= 0.15;
+            }
+            m.clamp(0.05, 1.0)
+        })
+        .collect()
 }
 
 fn hash(x: u32, y: u32, s: u32) -> u32 {
@@ -533,12 +641,18 @@ mod tests {
 
     const F: Fire = Fire {
         heat: 0.15,
-        eat: 0.05,
-        catch: 0.2,
+        eat: 0.012,
+        spread: 0.3,
+        out: 0.05,
+        smoulder: 0.75,
+        cool: 0.4,
+        flicker: 0.35,
+        ember: 0.95,
+        full: 0.8,
         fuel: 0.05,
         damp: 1.0,
         char_gain: 1.0,
-        char_keep: 0.999,
+        char_keep: 1.0,
         char_clear: 0.02,
     };
 
@@ -573,8 +687,12 @@ mod tests {
         let (mut a, mut b) = (vec![0.0; w * h], vec![0.0; w * h]);
         let mut ch = vec![0.0; w * h];
         a[w] = 1.0; // lit at (0, 1)
-        for _ in 0..400 {
-            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b);
+        // Dry ground (moisture 0): nothing goes out by chance.
+        let moist = vec![0.0; w * h];
+        let mut tick = 0;
+        for _ in 0..3000 {
+            tick += 1;
+            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick);
             std::mem::swap(&mut a, &mut b);
         }
         assert!(
@@ -584,11 +702,15 @@ mod tests {
             plant[w + 15]
         );
         assert!(plant[w + 25] > 0.7, "bare ground at x 20 stops it: {}", plant[w + 25]);
+        // x 10 burnt its 0.8 (char kept whole here, `char_keep` 1; the
+        // embers' last plants clear it slowly after).
+        assert!(ch[w + 10] > 0.5 && ch[w + 20] == 0.0 && ch[w + 25] == 0.0, "char where it burnt: {} {} {}", ch[w + 10], ch[w + 20], ch[w + 25]);
         // Lit beyond the bare line, it burns to the water and stops.
         a.fill(0.0);
         a[w + 21] = 1.0;
-        for _ in 0..400 {
-            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b);
+        for _ in 0..3000 {
+            tick += 1;
+            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick);
             std::mem::swap(&mut a, &mut b);
         }
         assert!(
@@ -599,8 +721,9 @@ mod tests {
         );
         a.fill(0.0);
         a[w + 31] = 1.0;
-        for _ in 0..400 {
-            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b);
+        for _ in 0..3000 {
+            tick += 1;
+            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick);
             std::mem::swap(&mut a, &mut b);
         }
         assert!(
@@ -610,18 +733,64 @@ mod tests {
             plant[w + 55]
         );
         assert!(a.iter().all(|&v| v == 0.0), "out");
-        // x 10 burnt in the first of the three runs, its 0.8 of plants since
-        // kept x 0.999 for about 1,000 steps.
-        assert!(ch[w + 10] > 0.2 && ch[w + 20] == 0.0 && ch[w + 55] == 0.0, "char where it burnt: {} {} {}", ch[w + 10], ch[w + 20], ch[w + 55]);
         // Reeds never catch.
         let reeds = vec![REEDS; w * h];
         let mut plant = vec![0.8; w * h];
         a.fill(0.0);
         a[w] = 1.0;
-        for _ in 0..100 {
-            fire_step(&g, &r, &F, &trail, &reeds, &mut plant, &mut ch, &a, &mut b);
+        for _ in 0..300 {
+            tick += 1;
+            fire_step(&g, &r, &F, &trail, &reeds, &mut plant, &mut ch, &a, &mut b, &moist, tick);
             std::mem::swap(&mut a, &mut b);
         }
         assert!(plant[w + 5] > 0.79, "reeds don't burn");
+    }
+
+    /// A meadow strip lit along its left edge at one moisture: where the
+    /// front is (cells) after 10 s and 20 s (150 steps a 10 s), cells
+    /// burning at 10 s, and the share of the strip that burnt by 60 s.
+    fn front(m: f32) -> (usize, usize, usize, f32) {
+        let (w, h) = (200, 9);
+        let cap = vec![1.0; w * h];
+        let agar = vec![true; w * h];
+        let g = Ground { w, h, cap: &cap, agar: &agar, pile_of: &[], wet: &[], scorch: &[] };
+        let r = Rates { kinds: KIND, ..R };
+        let kind = vec![MEADOW; w * h];
+        let trail = vec![0.0; w * h];
+        let moist = vec![m; w * h];
+        let mut plant = vec![1.0; w * h];
+        let mut ch = vec![0.0; w * h];
+        let (mut a, mut b) = (vec![0.0; w * h], vec![0.0; w * h]);
+        for y in 0..h {
+            a[y * w] = 1.0;
+        }
+        let (mut f10, mut f20, mut lit10) = (0, 0, 0);
+        for t in 1..=900u32 {
+            let lit = fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, t);
+            std::mem::swap(&mut a, &mut b);
+            let far = |a: &[f32]| (0..w * h).filter(|&i| a[i] > 0.0).map(|i| i % w).max().unwrap_or(0);
+            if t == 150 {
+                (f10, lit10) = (far(&a), lit);
+            }
+            if t == 300 {
+                f20 = far(&a);
+            }
+        }
+        let burnt = plant.iter().filter(|&&p| p < 0.5).count() as f32 / (w * h) as f32;
+        (f10, f20, lit10, burnt)
+    }
+
+    /// The owner (11-14 19:18Z): fire 5x slower than the first cut (5 cells
+    /// a second, an even ribbon), patchy, sometimes going out where damp.
+    #[test]
+    fn moisture_slows_fire_and_puts_it_out() {
+        for m in [0.0, 0.2, 0.4, 0.6, 0.8] {
+            let (f10, f20, lit, burnt) = front(m);
+            println!("moisture {m}: front {f10} at 10 s, {f20} at 20 s; {lit} burning at 10 s; {:.0}% burnt by 60 s", 100.0 * burnt);
+        }
+        let (dry10, dry20, _, dry_burnt) = front(0.2);
+        assert!((5..=20).contains(&dry10) && dry20 > dry10, "about a cell a second on dry ground: {dry10} {dry20}");
+        let (_, damp20, _, damp_burnt) = front(0.6);
+        assert!(damp20 < dry20 && damp_burnt < dry_burnt, "damp is slower and burns less: {damp20} {damp_burnt}");
     }
 }

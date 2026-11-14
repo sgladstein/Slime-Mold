@@ -688,6 +688,27 @@ fn the_minimap_sends_the_squad_where_it_shows() {
     assert!((d.0 - shows.0).hypot(d.1 - shows.1) <= 8.0 * sc, "sent to {d:?}, the minimap shows {shows:?}");
 }
 
+/// **A steady bottom bar** (owner, 11-14 20:19Z: "the bottom hud menu
+/// changes totally when you zoom in because of the minimap"): zoomed all
+/// the way out or in close, the minimap is drawn and every bottom panel
+/// is where it was.
+#[test]
+fn the_bottom_bar_and_minimap_stay_put_at_every_zoom() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (1280, 800), &device, &queue).unwrap();
+    let mut bars = Vec::new();
+    for zoom in [0.0f32, 24.0] {
+        let mid = (640.0, 400.0);
+        app.camera.zoom_to(zoom.max(app.camera.fit()), mid);
+        assert_eq!(app.camera.sees_all(), zoom == 0.0);
+        app.squad_frame(1.0 / 60.0);
+        app.prepare();
+        assert!(app.hud.minimap.is_some(), "zoom {zoom}: a minimap");
+        bars.push((app.hud.bottom, app.hud.minimap_box, app.hud.minimap));
+    }
+    assert_eq!(bars[0], bars[1], "the bar zoomed out and zoomed in");
+}
+
 /// A turret's look follows the game (owner's playtest 11-14 08:15Z:
 /// "turrets need to look better"): its shot turns the head down the shot's
 /// line and kicks it; between shots it turns toward its aim at
@@ -839,6 +860,16 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let hp = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == ITEMS[0].name).unwrap();
     app.menu_event(StartEvent::Buy(hp)).unwrap();
     assert_eq!(app.run.as_ref().unwrap().level_of("hp"), 1);
+    // A card dragged to the front of the gun (owner 20:32Z): the gun fires
+    // it first, and the shop is drawn again with it there.
+    app.run.as_mut().unwrap().cards = vec![(rounds::Card::Wide, true), (rounds::Card::Blast, true)];
+    let blast = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == "Blast").unwrap();
+    app.menu_event(StartEvent::Move(blast, 0)).unwrap();
+    assert_eq!(app.run.as_ref().unwrap().gun_text(), "blast+wide");
+    let shop = app.menu.as_ref().unwrap().shop.as_ref().unwrap();
+    let on: Vec<&str> = shop.rows.iter().filter(|r| r.on && r.area == slime_mould::world::start::ShopArea::Cards).map(|r| r.name.as_str()).collect();
+    assert_eq!(on, ["Blast", "Wide"]);
+    assert!(app.in_menu(), "a move is no pick of a round");
     app.menu_event(StartEvent::NextLevel).unwrap();
     assert!(!app.in_menu());
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));

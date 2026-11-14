@@ -668,11 +668,15 @@ impl View {
 
     /// The minimap's rectangle this frame, if drawn.
     pub fn minimap_rect(&self, cam: &Camera) -> Option<(u32, u32, u32, u32)> {
-        if !self.minimap || cam.sees_all() {
+        if !self.minimap {
             return None;
         }
+        // A HUD that frames the minimap shows it at every zoom (Larder
+        // World's bar, 11-14 20:19Z); unframed (mouldgpu) it hides once the
+        // whole world is on screen, as before.
         match self.minimap_box {
             Some(b) => Some(minimap_in(self.world, b)),
+            None if cam.sees_all() => None,
             None => minimap_rect(self.world, self.screen),
         }
     }

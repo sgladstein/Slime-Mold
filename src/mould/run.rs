@@ -300,6 +300,11 @@ pub enum Pick {
     Offer(usize),
     /// Owned card `i`: into the gun or out of it, free.
     Card(usize),
+    /// Owned card `i` into gun slot `slot` (0 the first the gun fires),
+    /// the cards from there on one slot later; from the bag only if it
+    /// fits (owner 20:32Z: "How do I actually build and adjust my guns ...
+    /// I don't see how to move cards around").
+    Move(usize, usize),
     /// Gun on offer `i`: bought, into the armory and carried.
     Gun(usize),
     /// Owned gun `i` carried instead, free.
@@ -463,28 +468,92 @@ impl Run {
         rounds::fit_gun(g, &self.carried()).is_ok()
     }
 
-    /// The cards in the gun fit it: the last bought come out first.
+    /// The cards in the gun fit it: the last card in the gun that is no
+    /// bullet comes out first, then the last bullet, so a smaller gun keeps
+    /// something to fire. (Before the gun had an order of its own, 11-14,
+    /// the last bought came out.)
     fn refit(&mut self) {
         while rounds::fit_gun(self.gun(), &self.carried()).is_err() {
-            match self.cards.iter().rposition(|c| c.1) {
+            let last = |bullet: bool| self.cards.iter().rposition(|c| c.1 && (c.0.kind() == Kind::Payload) == bullet);
+            match last(false).or_else(|| last(true)) {
                 Some(i) => self.cards[i].1 = false,
                 None => break,
             }
         }
     }
 
-    /// The gun: the cards in it, flight cards first, then the modifiers and
-    /// triggers, then the payloads, each in the order bought (as the
-    /// window's loadouts read: `pierce+split+blast`, `quiet+delay+wide+blast`).
+    /// The gun: the cards in it in the order they sit in `cards`, which is
+    /// the order it fires them (a modifier works on the bullet after it).
+    /// The player arranges it (`Pick::Move`); a card put in goes where
+    /// `put_in` places it. Until 11-14 the gun was sorted, flight cards
+    /// first, then the modifiers and triggers, then the payloads (#280),
+    /// and the player could not change it; once every shot fired the next
+    /// card in turn (#288) the owner asked how to move cards (20:32Z).
     pub fn gun(&self) -> Vec<Card> {
+        self.cards.iter().filter(|c| c.1).map(|c| c.0).collect()
+    }
+
+    /// Where a card goes into the gun when nobody says: after the cards
+    /// of its rank and before the first of a later one (flight cards,
+    /// then modifiers and triggers, then bullets), as the sorted gun put
+    /// it, so a bought `wide` still widens the first bullet. Returns
+    /// where it went.
+    fn put_in(&mut self, i: usize) -> usize {
         let rank = |c: Card| match c.kind() {
             Kind::Flight => 0,
             Kind::Modifier | Kind::Trigger => 1,
             Kind::Payload => 2,
         };
-        let mut g: Vec<Card> = self.cards.iter().filter(|c| c.1).map(|c| c.0).collect();
-        g.sort_by_key(|&c| rank(c));
-        g
+        let (c, _) = self.cards.remove(i);
+        let at = match self.cards.iter().position(|o| o.1 && rank(o.0) > rank(c)) {
+            Some(k) => k,
+            None => self.cards.iter().rposition(|o| o.1).map_or(self.cards.len(), |k| k + 1),
+        };
+        self.cards.insert(at, (c, true));
+        at
+    }
+
+    /// Offer `k` bought: straight into the gun when it fits the budget,
+    /// else into the bag. Returns where it went in `cards`, or None when
+    /// the points do not reach.
+    fn buy(&mut self, k: usize) -> Option<usize> {
+        let &c = self.offers.get(k)?;
+        let price = card_price(c);
+        if price > self.points {
+            return None;
+        }
+        self.points -= price;
+        self.offers.remove(k);
+        let room = self.fits(c);
+        self.cards.push((c, false));
+        let last = self.cards.len() - 1;
+        Some(if room { self.put_in(last) } else { last })
+    }
+
+    /// Offer `k` dragged from the shelf onto gun slot `slot`: bought and
+    /// put there, or in the bag when the gun has no room for it. False
+    /// when it can't be bought.
+    pub fn buy_into(&mut self, k: usize, slot: usize) -> bool {
+        let Some(i) = self.buy(k) else { return false };
+        self.move_to(i, slot);
+        true
+    }
+
+    /// Owned card `i` into gun slot `slot`, the rest after it moved on one;
+    /// a slot past the last card is the end.
+    fn move_to(&mut self, i: usize, slot: usize) -> bool {
+        let Some(&(c, on)) = self.cards.get(i) else { return false };
+        if !on && !self.fits(c) {
+            return false;
+        }
+        self.cards.remove(i);
+        let ons: Vec<usize> = self.cards.iter().enumerate().filter(|(_, o)| o.1).map(|(k, _)| k).collect();
+        let at = match ons.get(slot) {
+            Some(&k) => k,
+            None => ons.last().map_or(self.cards.len(), |&k| k + 1),
+        };
+        self.cards.insert(at, (c, true));
+        true
     }
 
     /// The gun as the window's loadout text (`rounds::parse` reads it).
@@ -583,16 +652,18 @@ impl Run {
         }
         for (i, &c) in self.offers.iter().enumerate() {
             let p = card_price(c);
-            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: c.about().into(), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Offer(i) });
+            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: format!("{} For sale: click to buy it (into the gun when it fits), or drag it onto a slot", c.about()), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Offer(i) });
         }
+        let mut slot = 0;
         for (i, &(c, on)) in self.cards.iter().enumerate() {
             let fits = self.fits(c);
+            slot += usize::from(on);
             rows.push(Row {
                 group: Group::Cards,
                 face: Face::Card(c),
                 on,
                 name: card_title(c),
-                about: if on { format!("{} In the gun: pick to take it out", c.about()) } else if fits { format!("{} In the bag: pick to put it in the gun", c.about()) } else { format!("{} In the bag: over the gun's budget or slots, take a card out first", c.about()) },
+                about: if on { format!("{} Slot {slot} of the gun, fired in turn: click to take it out, drag it to another slot (or Q and E) to move it", c.about()) } else if fits { format!("{} In the bag: click to put it in the gun, or drag it to a slot", c.about()) } else { format!("{} In the bag: over the gun's budget or slots, take a card out first", c.about()) },
                 price: String::new(),
                 state: if on { "in the gun".into() } else { "in the bag".into() },
                 ready: on || fits,
@@ -621,19 +692,7 @@ impl Run {
                 self.owned[i] += 1;
                 true
             }
-            Pick::Offer(i) => {
-                let Some(&c) = self.offers.get(i) else { return false };
-                let price = card_price(c);
-                if price > self.points {
-                    return false;
-                }
-                self.points -= price;
-                self.offers.remove(i);
-                // Straight into the gun when it fits the budget.
-                let room = self.fits(c);
-                self.cards.push((c, room));
-                true
-            }
+            Pick::Offer(i) => self.buy(i).is_some(),
             Pick::Gun(i) => {
                 let Some(&g) = self.gun_offers.get(i) else { return false };
                 let price = gun_price(&g);
@@ -672,14 +731,19 @@ impl Run {
             Pick::DevDepth(_) | Pick::DevPoints | Pick::DevReroll => false,
             Pick::Card(i) => {
                 let room = self.cards.get(i).is_some_and(|c| self.fits(c.0));
-                match self.cards.get_mut(i) {
-                    Some(c) if c.1 || room => {
-                        c.1 = !c.1;
+                match self.cards.get(i) {
+                    Some(c) if c.1 => {
+                        self.cards[i].1 = false;
+                        true
+                    }
+                    Some(_) if room => {
+                        self.put_in(i);
                         true
                     }
                     _ => false,
                 }
             }
+            Pick::Move(i, slot) => self.move_to(i, slot),
         }
     }
 
@@ -761,6 +825,56 @@ mod tests {
         assert_eq!(rules.hp, 1.5 * Rules::default().hp);
     }
 
+    /// The owner, 20:32Z: "How do I actually build and adjust my guns.
+    /// When I buy a card it goes into the gun but I don't see how to move
+    /// cards around." A card moves to any slot, the gun fires in slot
+    /// order, a bag card drops into a slot only if it fits, and the shop
+    /// numbers the slots.
+    #[test]
+    fn cards_move_to_any_slot_and_the_gun_fires_them_in_slot_order() {
+        let mut r = Run::new(3);
+        r.guns = vec![Gun { budget: 20, slots: 5, ..first_gun() }];
+        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Quiet, false)];
+        assert_eq!(r.gun_text(), "wide+blast+gas");
+        // Gas to the front: wide now widens the blast's next cast only
+        // after gas.
+        assert!(r.pick(Pick::Move(2, 0)));
+        assert_eq!(r.gun_text(), "gas+wide+blast");
+        // A slot past the end is the end; moving to its own slot changes nothing.
+        let wide = r.cards.iter().position(|c| c.0 == Card::Wide).unwrap();
+        assert!(r.pick(Pick::Move(wide, 9)));
+        assert_eq!(r.gun_text(), "gas+blast+wide");
+        let blast = r.cards.iter().position(|c| c.0 == Card::Blast).unwrap();
+        assert!(r.pick(Pick::Move(blast, 1)));
+        assert_eq!(r.gun_text(), "gas+blast+wide");
+        // From the bag straight into slot 1, the rest moved on.
+        let quiet = r.cards.iter().position(|c| c.0 == Card::Quiet).unwrap();
+        assert!(r.pick(Pick::Move(quiet, 1)));
+        assert_eq!(r.gun_text(), "gas+quiet+blast+wide");
+        assert_eq!(rounds::casts(&r.gun()).len(), 2, "gas, then quiet blast; the trailing wide waits for a bullet");
+        // A bag card that does not fit stays in the bag.
+        r.guns = vec![Gun { budget: 9, slots: 5, ..first_gun() }];
+        r.cards.push((Card::Bomb, false));
+        assert!(!r.pick(Pick::Move(r.cards.len() - 1, 0)) && r.gun_text() == "gas+quiet+blast+wide");
+        // The shop numbers the slots in firing order and says how to move.
+        let rows: Vec<Row> = r.shop().into_iter().filter(|row| row.on && matches!(row.pick, Pick::Card(_))).collect();
+        assert_eq!(rows.len(), 4);
+        assert!(rows[1].about.contains("Slot 2 of the gun") && rows[1].about.contains("drag it"), "{}", rows[1].about);
+        assert!(rows.iter().map(|row| row.name.clone()).eq(["Gas", "Quiet", "Blast", "Wide"].map(String::from)));
+        // A card for sale dragged onto slot 1: bought and put there; one
+        // the gun has no room for is bought into the bag.
+        r.guns = vec![Gun { budget: 20, slots: 6, ..first_gun() }];
+        (r.offers, r.points) = (vec![Card::Pierce, Card::Bomb], 10_000);
+        assert!(r.buy_into(0, 0));
+        assert_eq!(r.gun_text(), "pierce+gas+quiet+blast+wide");
+        r.guns = vec![Gun { budget: 9, slots: 6, ..first_gun() }];
+        let n = r.cards.len();
+        assert!(r.buy_into(0, 0) && r.offers.is_empty() && r.cards.len() == n + 1 && !r.cards[n].1, "bought into the bag");
+        r.points = 0;
+        r.offers = vec![Card::Wide];
+        assert!(!r.buy_into(0, 0) && r.offers.len() == 1, "no points, no card");
+    }
+
     #[test]
     fn cards_fill_the_gun_to_its_budget_and_get_better_deeper() {
         let mut r = Run::new(5);
@@ -776,27 +890,31 @@ mod tests {
         for _ in 0..3 {
             assert!(r.pick(Pick::Offer(0)));
         }
-        assert_eq!(r.gun_text(), "wide+blast");
-        assert!(!r.cards[2].1 && !r.pick(Pick::Card(2)), "over the budget");
-        assert!(r.pick(Pick::Card(1)) && r.pick(Pick::Card(2)), "wide out, thick in");
+        assert_eq!(r.gun_text(), "wide+blast", "a bought modifier goes in before the bullet");
+        let at = |r: &Run, c: Card| r.cards.iter().position(|o| o.0 == c).unwrap();
+        assert!(!r.cards[at(&r, Card::Thick)].1 && !r.pick(Pick::Card(at(&r, Card::Thick))), "over the budget");
+        assert!(r.pick(Pick::Card(at(&r, Card::Wide))) && r.pick(Pick::Card(at(&r, Card::Thick))), "wide out, thick in");
         assert_eq!(r.gun_text(), "thick+blast");
         // A bigger gun bought is carried, and holds all three.
         r.gun_offers = vec![Gun { budget: 7, slots: 4, ..first_gun() }];
         let before = r.points;
         assert!(r.pick(Pick::Gun(0)) && r.carry == 1 && r.budget() == 7);
         assert_eq!(r.points, before - gun_price(&r.carried()));
-        assert!(r.pick(Pick::Card(1)), "a bigger gun holds all three");
+        assert!(r.pick(Pick::Card(at(&r, Card::Wide))), "a bigger gun holds all three");
         assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok() && rounds::parse(&r.gun_text()).is_some(), "{}", r.gun_text());
-        // Back to the small gun: the last bought comes out (thick).
+        assert_eq!(r.gun_text(), "thick+wide+blast");
+        // Back to the small gun: the last card that is no bullet comes out
+        // (wide), so the gun keeps its blast.
         assert!(r.pick(Pick::Carry(0)) && !r.pick(Pick::Carry(0)));
-        assert_eq!(r.gun_text(), "wide+blast");
+        assert_eq!(r.gun_text(), "thick+blast");
         // Slots count too: three 1-cost cards and a fourth do not fit 3 slots.
         r.guns[0] = Gun { budget: 20, slots: 3, ..first_gun() };
         r.cards = vec![(Card::Thick, true), (Card::Quiet, true), (Card::Delay, true), (Card::Blast, false)];
         assert!(!r.fits(Card::Blast));
-        // Payloads go last.
+        // The gun fires its cards in the order they sit, which the player
+        // sets (`Pick::Move`).
         r.cards = vec![(Card::Blast, true), (Card::Wide, true), (Card::Pierce, true)];
-        assert_eq!(r.gun_text(), "pierce+wide+blast");
+        assert_eq!(r.gun_text(), "blast+wide+pierce");
         // The deep shops reach the bomb.
         let deep = (4..40).any(|d| {
             let mut r = Run::new(d);

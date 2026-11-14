@@ -285,6 +285,14 @@ impl<W: World> Game<W> {
                             }
                         }
                     }
+                    if u.heat > 0.0 {
+                        s.hp -= r.fire_hurt * u.heat * dt;
+                        if s.hp <= 0.0 {
+                            s.alive = false;
+                            s.hp = 0.0;
+                            s.carry = 0.0;
+                        }
+                    }
                     if u.touching > 0 {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);

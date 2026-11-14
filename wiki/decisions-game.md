@@ -8,6 +8,7 @@ sources:
   - HANDOFF.md
   - Reports/build-flow-2026-11-14/README.md
   - Reports/fed-mould-2026-11-13/README.md
+  - Reports/gun-order-2026-11-14.md
   - Reports/larder-crater-2s-2026-11-14.md
   - Reports/larder-playtest-fixes-2026-11-14.md
   - Reports/larder-shot-sink-2026-11-12.md
@@ -34,6 +35,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-14 20:32 | The player arranges the gun: it fires its slots left to right (`Run::gun` no longer sorts); in the run shop a card dragged onto a slot goes there (a card for sale is bought into it, `Run::buy_into`), onto the bag comes out, and Q and E move the focused card. A card put in without a slot still lands before the first bullet (`Run::put_in`) | "How do I actually build and adjust my guns. When I buy a card it goes into the gun but I don't see how to move cards around" | [run](world/run.md), [report](../Reports/gun-order-2026-11-14.md) |
 | 2026-11-14 20:22 | Every effect's light is the size of its damage: a bullet and its hit light their strike (`Bullet::r`, `Shot::r`), a burst its own radius (a bomb's kill core, not its throw ring); muzzles and embers 1 cell (`MUZZLE_LIGHT`) | "the blast light affect should only be the size of the damage. The same for all affects." | [squad toolkit](world/squad-toolkit.md), [report](../Reports/shot-lights-2026-11-14.md) |
 | 2026-11-14 20:03-20:09 | A bullet's hit must not send a big wave over the slime: shot lights cut to 2.5 cells (`SHOT_LIGHT`; a bullet's was 7) and a burst's to 1.5 radii (was 3). Fire from blasts in the new plants is the plants thread's to tune | "even the sniper which is just range and pierce send outs these big circular affects. It is not good."; "each bullet that hit has a huge wave that goes out. it is too much" | [squad toolkit](world/squad-toolkit.md), [report](../Reports/shot-lights-2026-11-14.md) |
 | 2026-11-14 18:05-18:38 | No recharge: a gun fires at its rate of fire, every shot carrying the next card in turn, and never stops or fires plain (`Soldier::next`, `Bullet::cast`). Payloads (blast, bomb, gas, germ) are bullets. Both halves of a split copy the gun and cards. Each stat of a rolled gun is a plain normal draw, with no separate lucky chance, and no gun is labelled lucky. The scattergun fires 2-6 bullets a shot. Firing a payload costs no bank; the bank only builds the gun (per-cast prices removed). | "Why does the gun have a recharge at all. That shouldn't be a thing. It has a rate of fire. It never has to stop to recharge or switch to regular bullets."; "Both halves get a copy of the gun."; "this should just come out of the normal distribution ... The luckiness of the gun depends on all those rolls, but the whole thing is a distribution"; "2-6 bullets per shot"; "Nothing needs to be labeled lucky"; "The bank is just to build the gun. How many and which cards." | [squad toolkit](world/squad-toolkit.md), [report](../Reports/no-recharge-2026-11-14.md) |
