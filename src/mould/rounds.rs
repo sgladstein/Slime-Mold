@@ -64,8 +64,11 @@ use super::squad::BurstRules;
 
 /// Most lodged casts (Delay and Thick) waiting at once.
 pub const PENDING_MAX: usize = 64;
-/// Most cards a round holds.
+/// Cards the standard rifle holds (`guns::Gun::standard`); a rolled gun
+/// holds its own `Gun::slots`, up to `MAX_SLOTS`.
 pub const SLOTS: usize = 4;
+/// Most cards any gun holds (`guns::SLOTS_MAX`): what a round reads.
+pub const MAX_SLOTS: usize = super::guns::SLOTS_MAX as usize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Card {
@@ -197,13 +200,44 @@ impl Card {
     }
 }
 
+/// A bullet's leg this step: from, to (its hit or the leg's end).
+type Leg = ((f32, f32), (f32, f32));
+
+/// A squad's own cards (`Squad::deck`; owner 11-14 16:46Z, "The squad owns
+/// the gun"): up to `MAX_SLOTS`, held as a value so a squad, a split half
+/// and a replay line (`Cmd::Load`) carry it. A squad with none fires the
+/// army's round (`Rounds::round`, the H loadout).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct Deck {
+    cards: [Option<Card>; MAX_SLOTS],
+}
+
+impl Deck {
+    /// The first `MAX_SLOTS` of `cards`.
+    pub fn new(cards: &[Card]) -> Deck {
+        let mut d = Deck::default();
+        for (slot, &c) in d.cards.iter_mut().zip(cards) {
+            *slot = Some(c);
+        }
+        d
+    }
+
+    pub fn cards(&self) -> Vec<Card> {
+        self.cards.iter().flatten().copied().collect()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cards[0].is_none()
+    }
+}
+
 /// A round written as `blast` or `quiet+gas+germ`.
 pub fn parse(s: &str) -> Option<Vec<Card>> {
     if s == "none" || s.is_empty() {
         return Some(Vec::new());
     }
     let v: Option<Vec<Card>> = s.split('+').map(Card::from_name).collect();
-    v.filter(|v| v.len() <= SLOTS)
+    v.filter(|v| v.len() <= MAX_SLOTS)
 }
 
 /// A round's cost against a gun's budget (`Card::cost`). A `Thrift`
@@ -236,10 +270,21 @@ pub struct Over {
 }
 
 /// The cards, if they fit a gun of `budget`: their cost within it and at
-/// most `SLOTS` of them.
+/// most `SLOTS` of them (the standard rifle's slots).
 pub fn fit(round: Vec<Card>, budget: u32) -> Result<Vec<Card>, Over> {
+    fit_in(round, budget, SLOTS)
+}
+
+/// The cards, if they fit `gun` (owner 11-14 16:46Z: "Each gun defines
+/// the budget and slot count"): cost within its budget, no more cards
+/// than its slots.
+pub fn fit_gun(round: Vec<Card>, gun: &super::guns::Gun) -> Result<Vec<Card>, Over> {
+    fit_in(round, gun.budget, gun.slots as usize)
+}
+
+fn fit_in(round: Vec<Card>, budget: u32, slots: usize) -> Result<Vec<Card>, Over> {
     let c = cost(&round);
-    if c <= budget && round.len() <= SLOTS {
+    if c <= budget && round.len() <= slots.min(MAX_SLOTS) {
         Ok(round)
     } else {
         Err(Over { cost: c, budget, cards: round.len() })
@@ -367,7 +412,7 @@ pub struct Cast {
 pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
     let mut out = Vec::new();
     let (mut wide, mut scatter, mut quiet, mut trigger) = (0, false, false, None);
-    for &c in round.iter().take(SLOTS) {
+    for &c in round.iter().take(MAX_SLOTS) {
         match c {
             Card::Wide => wide += 1,
             Card::Scatter => scatter = true,
@@ -394,14 +439,14 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
 /// `pierce` one more slime hit flown through, each `split` one more
 /// generation of pieces.
 pub fn flight(round: &[Card]) -> BulletMods {
-    let n = |k: Card| round.iter().take(SLOTS).filter(|&&c| c == k).count() as u8;
+    let n = |k: Card| round.iter().take(MAX_SLOTS).filter(|&&c| c == k).count() as u8;
     BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate) }
 }
 
 /// The round's trail cards as every soldier bullet lays them: copies of
 /// `Scorch`, `Bait`, `Mist` and `Smother`.
 pub fn trails(round: &[Card]) -> [u8; 4] {
-    let n = |k: Card| round.iter().take(SLOTS).filter(|&&c| c == k).count() as u8;
+    let n = |k: Card| round.iter().take(MAX_SLOTS).filter(|&&c| c == k).count() as u8;
     [n(Card::Scorch), n(Card::Bait), n(Card::Mist), n(Card::Smother)]
 }
 
@@ -434,7 +479,7 @@ pub fn trail_bursts(n: [u8; 4], from: (f32, f32), to: (f32, f32), r: &RoundRules
 
 /// Game seconds a round recharges after its last cast.
 pub fn recharge(round: &[Card], r: &RoundRules) -> f32 {
-    r.recharge + round.iter().take(SLOTS).map(|c| c.weight(r)).sum::<f32>()
+    r.recharge + round.iter().take(MAX_SLOTS).map(|c| c.weight(r)).sum::<f32>()
 }
 
 /// The bursts one cast makes at `at` (fine cells); `scale` fine cells a
@@ -593,19 +638,41 @@ impl Rounds {
         &self.casts
     }
 
-    /// What soldier `k`'s next hit casts, and whether its gun is still
-    /// recharging at tick `t` (a hit then casts nothing). None when the
-    /// round has no payload.
-    pub fn next_cast(&self, k: usize, t: u64) -> Option<(Cast, bool)> {
-        let g = self.guns.get(k).copied().unwrap_or_default();
-        self.casts.get(g.next).map(|&c| (c, g.ready > t))
+    /// The cards squad `q` fires: its own (`Squad::deck`, `Cmd::Load`) or
+    /// the army's round.
+    pub fn cards_of<W: World>(&self, g: &Game<W>, q: usize) -> Vec<Card> {
+        match g.squads.get(q).and_then(|s| s.deck) {
+            Some(d) => d.cards(),
+            None => self.round.clone(),
+        }
     }
 
-    /// Soldier `k`'s gun: the index (into `casts`) of the cast its next
-    /// hit makes, and the tick its recharge ends (0 or past: ready).
-    pub fn gun(&self, k: usize) -> Option<(usize, u64)> {
-        let g = self.guns.get(k).copied().unwrap_or_default();
-        (!self.casts.is_empty()).then_some((g.next, g.ready))
+    /// Squad `q`'s casts, left to right (`casts` of `cards_of`).
+    pub fn casts_of<W: World>(&self, g: &Game<W>, q: usize) -> Vec<Cast> {
+        match g.squads.get(q).and_then(|s| s.deck) {
+            Some(d) => casts(&d.cards(), &self.rules),
+            None => self.casts.clone(),
+        }
+    }
+
+    /// What soldier `k`'s next hit casts, and whether its gun is still
+    /// recharging at tick `t` (a hit then casts nothing). None when its
+    /// squad's cards have no payload.
+    pub fn next_cast<W: World>(&self, g: &Game<W>, k: usize, t: u64) -> Option<(Cast, bool)> {
+        let q = g.soldiers.get(k)?.squad as usize;
+        let ch = self.guns.get(k).copied().unwrap_or_default();
+        let cs = self.casts_of(g, q);
+        cs.get(if ch.next < cs.len() { ch.next } else { 0 }).map(|&c| (c, ch.ready > t))
+    }
+
+    /// Soldier `k`'s gun: the index (into its squad's `casts_of`) of the
+    /// cast its next hit makes, and the tick its recharge ends (0 or past:
+    /// ready). None when its squad's cards have no payload.
+    pub fn gun<W: World>(&self, g: &Game<W>, k: usize) -> Option<(usize, u64)> {
+        let q = g.soldiers.get(k)?.squad as usize;
+        let ch = self.guns.get(k).copied().unwrap_or_default();
+        let n = self.casts_of(g, q).len();
+        (n > 0).then_some((if ch.next < n { ch.next } else { 0 }, ch.ready))
     }
 
     /// Lodged casts: what, where (fine cells), and the tick each goes off
@@ -622,10 +689,14 @@ impl Rounds {
         self.lay_trails(g);
         let t = g.world.ticks();
         let tps = g.rules.tps;
-        if !self.casts.is_empty() {
+        // Each squad casts its own cards (`casts_of`): the army's round, or
+        // its own deck (`Cmd::Load`, the squad owns the gun, 11-14).
+        let own = g.squads.iter().any(|s| s.deck.is_some_and(|d| !d.is_empty()));
+        if !self.casts.is_empty() || own {
             if self.guns.len() < g.soldiers.len() {
                 self.guns.resize(g.soldiers.len(), Gun::default());
             }
+            let mut by_squad: Vec<Option<(Vec<Cast>, f32)>> = vec![None; g.squads.len()];
             // Each hit by the soldier that fired it (`Shot::by`; until the
             // shots flew as bullets, 11-13, matched by where it left from).
             let hits: Vec<(usize, (f32, f32))> = g.last_shots.iter().filter_map(|s| s.hit.zip(s.by)).map(|(h, k)| (k, h)).collect();
@@ -633,10 +704,23 @@ impl Rounds {
                 if k >= g.soldiers.len() || !g.soldiers[k].alive {
                     continue;
                 }
+                let q = g.soldiers[k].squad as usize;
+                if by_squad[q].is_none() {
+                    by_squad[q] = Some((self.casts_of(g, q), recharge(&self.cards_of(g, q), &self.rules)));
+                }
+                let (cs, rech) = by_squad[q].clone().unwrap_or_default();
+                if cs.is_empty() {
+                    continue;
+                }
+                // A soldier moved to a squad with fewer casts starts at
+                // its first.
+                if self.guns[k].next >= cs.len() {
+                    self.guns[k].next = 0;
+                }
                 if self.guns[k].ready > t {
                     continue;
                 }
-                let c = self.casts[self.guns[k].next];
+                let c = cs[self.guns[k].next];
                 if !castable(&g.world, c.payload) {
                     self.unsupported += 1;
                 } else if g.bank < c.price {
@@ -661,9 +745,9 @@ impl Rounds {
                 }
                 let gun = &mut self.guns[k];
                 gun.next += 1;
-                if gun.next == self.casts.len() {
+                if gun.next >= cs.len() {
                     gun.next = 0;
-                    gun.ready = t + (recharge(&self.round, &self.rules) * tps as f32).round() as u64;
+                    gun.ready = t + (rech * tps as f32).round() as u64;
                 }
             }
         }
@@ -701,11 +785,29 @@ impl Rounds {
     /// Every soldier bullet's leg this step lays the round's trails
     /// (`trail_bursts`), up to its hit. A gas trail needs a world with gas.
     fn lay_trails<W: World>(&mut self, g: &mut Game<W>) {
-        let mut n = trails(&self.round);
-        if !g.world.has_gas() {
-            n[2] = 0;
-        }
-        if n == [0; 4] {
+        // Each leg lays its squad's trails (`cards_of`).
+        let gas = g.world.has_gas();
+        let mut of: Vec<Option<[u8; 4]>> = vec![None; g.squads.len()];
+        let mut any = [0u8; 4];
+        let legs: Vec<(Leg, [u8; 4])> = g
+            .last_shots
+            .iter()
+            .filter_map(|s| s.by.map(|k| (s, g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
+            .map(|(s, q)| {
+                let n = *of[q].get_or_insert_with(|| {
+                    let mut n = trails(&self.cards_of(g, q));
+                    if !gas {
+                        n[2] = 0;
+                    }
+                    n
+                });
+                for (a, b) in any.iter_mut().zip(n) {
+                    *a = (*a).max(b);
+                }
+                ((s.from, s.hit.unwrap_or(s.to)), n)
+            })
+            .collect();
+        if any == [0; 4] {
             return;
         }
         let s = g.world.scale();
@@ -713,9 +815,12 @@ impl Rounds {
         let k = burst_rules(&self.rules.kit, fine);
         let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
         let mut burned = 0;
-        let legs: Vec<((f32, f32), (f32, f32))> = g.last_shots.iter().filter(|s| s.by.is_some()).map(|s| (s.from, s.hit.unwrap_or(s.to))).collect();
-        for (from, to) in legs {
-            for b in trail_bursts(n, from, to, &self.rules, s, fine, smell) {
+        let n = any;
+        for ((from, to), legn) in legs {
+            if legn == [0; 4] {
+                continue;
+            }
+            for b in trail_bursts(legn, from, to, &self.rules, s, fine, smell) {
                 burned += g.world.burst(&b, &k).killed as usize;
                 self.trailed += 1;
             }
@@ -834,6 +939,50 @@ mod tests {
         assert!(burned > 0 && killed > plain, "burned {burned}, killed {killed} vs plain {plain}");
     }
 
+    /// The squad owns the gun and its cards (owner 11-14 16:46Z): a squad
+    /// loaded with its own deck (`Cmd::Load`) casts and flies those cards
+    /// and no other squad does; a split's new half fires the army's round;
+    /// unloaded, a squad fires the army's round again.
+    #[test]
+    fn a_squad_with_its_own_cards_casts_them_and_the_army_does_not() {
+        use crate::mould::larder_world::{race_world, Cmd, Order};
+        let mut g = Game::new(race_world(1, 2, 5_000), Rules { squads: true, ..Rules::default() }, 1);
+        let rd = Rounds::new(Vec::new(), RoundRules::default());
+        assert!(g.apply(Cmd::Load(0, Some(Deck::new(&parse("pierce+range+blast").unwrap())))));
+        assert_eq!(rd.casts_of(&g, 0).len(), 1);
+        assert_eq!((g.mods(0).pierce, g.mods(0).reach), (1, 1));
+        assert!((g.gun_range(0) - 2.0 * g.rules.range).abs() < 1e-4, "its range card doubles its reach");
+        let m = g.middle(0).unwrap();
+        let b = g.split(0, (m.0 + 30.0, m.1)).expect("a split");
+        assert_eq!(rd.cards_of(&g, 0), parse("pierce+range+blast").unwrap(), "the half left behind keeps the cards");
+        assert!(rd.cards_of(&g, b).is_empty(), "the new half fires the army's round (plain here)");
+        assert!(g.apply(Cmd::Load(b as u8, Some(Deck::new(&parse("pierce+range+blast").unwrap())))));
+        assert!(g.apply(Cmd::Load(b as u8, None)));
+        assert!(rd.casts_of(&g, b).is_empty() && g.mods(b) == BulletMods::default(), "unloaded: the army's plain round");
+        assert_eq!(g.gun_range(b), g.rules.range);
+        // In play: squad 0's hits cast blasts; with no deck nobody's do.
+        let blasts = |own: bool| {
+            let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+            let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+            if own {
+                g.apply(Cmd::Load(0, Some(Deck::new(&[Card::Blast]))));
+            }
+            for k in 0..g.soldiers.len() {
+                g.apply(Cmd::Order(k, Order::Attack));
+            }
+            while g.time() < 15.0 && g.end.is_none() {
+                g.step();
+                rd.after_step(&mut g);
+            }
+            rd.cast[0]
+        };
+        assert_eq!(blasts(false), 0);
+        assert!(blasts(true) > 0, "the loaded squad blasts");
+        assert_eq!(Cmd::parse(&Cmd::Load(3, Some(Deck::new(&[Card::Wide, Card::Blast]))).to_line()), Some(Cmd::Load(3, Some(Deck::new(&[Card::Wide, Card::Blast])))));
+        assert_eq!(Cmd::parse(&Cmd::Load(3, None).to_line()), Some(Cmd::Load(3, None)));
+        assert_eq!(Cmd::parse(&Cmd::Load(1, Some(Deck::default())).to_line()), Some(Cmd::Load(1, Some(Deck::default()))), "an empty deck: plain, not the army's");
+    }
+
     #[test]
     fn flight_cards_ride_every_bullet_and_cast_nothing() {
         let r = RoundRules::default();
@@ -846,9 +995,9 @@ mod tests {
         let mut g = Game::new(BigDish::new(race_params(1, 1, 500)), Rules::default(), 1);
         Rounds::new(round, r).arm(&mut g);
         assert_eq!(g.bullet_mods, BulletMods { pierce: 1, split: 2, reach: 0, rate: 0 });
-        assert_eq!(g.gun_range(), g.rules.range);
+        assert_eq!(g.gun_range(0), g.rules.range);
         Rounds::new(parse("range+blast").unwrap(), r).arm(&mut g);
-        assert!((g.gun_range() - g.rules.range * (1.0 + g.rules.range_card)).abs() < 1e-4, "one Range card stretches the reach");
+        assert!((g.gun_range(0) - g.rules.range * (1.0 + g.rules.range_card)).abs() < 1e-4, "one Range card stretches the reach");
     }
 
     #[test]
@@ -862,7 +1011,11 @@ mod tests {
         // Cards after the last payload do nothing but still weigh.
         assert_eq!(casts(&parse("blast+quiet").unwrap(), &r).len(), 1);
         assert!(recharge(&parse("blast+quiet").unwrap(), &r) > recharge(&parse("blast").unwrap(), &r));
-        assert!(parse("blast+blast+blast+blast+blast").is_none());
+        // A round reads up to `MAX_SLOTS` (a rolled gun's most, 6); the
+        // rifle's 4 is `fit`'s to check.
+        assert!(parse("blast+blast+blast+blast+blast+blast+blast").is_none());
+        let five = parse("blast+blast+blast+blast+blast").unwrap();
+        assert_eq!(fit(five, 99).err().map(|o| o.cards), Some(5));
         assert_eq!(name(&round), "wide+blast+thick+gas");
     }
 

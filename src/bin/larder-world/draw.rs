@@ -155,7 +155,7 @@ pub(super) fn title_case(s: &str) -> String {
 }
 
 /// "trap" as "Trap".
-fn capital(s: &str) -> String {
+pub(super) fn capital(s: &str) -> String {
     let mut c = s.chars();
     c.next().map_or(String::new(), |f| f.to_uppercase().chain(c).collect())
 }
@@ -456,7 +456,7 @@ impl App {
                 rounds::Card::Germ => g.world.has_germ(),
                 _ => true,
             };
-            let cast = b.by.and_then(|k| self.rounds.next_cast(k, t)).filter(|&(c, charging)| !charging && castable(&c)).map(|(c, _)| c);
+            let cast = b.by.and_then(|k| self.rounds.next_cast(g, k, t)).filter(|&(c, charging)| !charging && castable(&c)).map(|(c, _)| c);
             let look = card_look(cast.map(|c| c.payload));
             let wide = rounds::RoundRules::default().wide.powi(cast.map_or(0, |c| c.wide) as i32);
             let quiet = cast.is_some_and(|c| c.quiet);
@@ -659,8 +659,9 @@ impl App {
                 stats: vec![
                     ("Carrying".into(), format!("{:.0} / {:.0}", s.carry, r.carry)),
                     ("Stance".into(), stance_name(s.stance).into()),
-                    ("Range".into(), format!("{:.0} cells", g.gun_range())),
-                    ("A shot".into(), if r.price > 0.0 { format!("{:.0} food", r.price) } else { format!("free, one every {:.1} s", r.shot_every) }),
+                    ("Gun".into(), g.gun(s.squad as usize).title()),
+                    ("Range".into(), format!("{:.0} cells", g.gun_range(s.squad as usize))),
+                    ("A shot".into(), if r.price > 0.0 { format!("{:.0} food", r.price) } else { format!("free, one every {:.1} s", g.gun(s.squad as usize).every()) }),
                     ("Mould on it".into(), format!("{}", s.touching)),
                     ("Tools held".into(), format!("{} / {}", self.kit.held(k), self.kit.rules.carry_max)),
                 ],
@@ -720,7 +721,7 @@ impl App {
             Command { target: Target::Line { width: r.strike * sc }, ready: any, why_not: no_sel(), about: "Stand by a line and keep firing along it, so the mould cannot cross.".into(), ..Command::new(BURN, (0, 3), Icon::Burn, "Burn a line", KeyCode::KeyF) },
             Command { ready: any, on: stance == Some(Stance::HoldFire), why_not: no_sel(), about: "Do not shoot at all.".into(), ..Command::new(HOLD_FIRE, (1, 0), Icon::Close, "Hold fire", KeyCode::KeyZ) },
             Command { ready: any, on: stance == Some(Stance::Defend), why_not: no_sel(), about: format!("Shoot only mould touching the soldier, within {:.0} cells, or on the crystal it is harvesting. The default.", r.defend), ..Command::new(DEFEND, (1, 1), Icon::Eye, "Defend", KeyCode::KeyX) },
-            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells.{}", g.gun_range(), if r.price > 0.0 { format!(" Every shot costs {:.0} food.", r.price) } else { String::new() }), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
+            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells.{}", g.gun_range(sel.first().map_or(0, |&k| g.soldiers[k].squad as usize)), if r.price > 0.0 { format!(" Every shot costs {:.0} food.", r.price) } else { String::new() }), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
             Command {
                 cost: Some(format!("{:.0}", r.soldier_cost)),
                 ready: g.bank >= r.soldier_cost && !full,
@@ -957,47 +958,68 @@ impl App {
     /// alive) lit at the cast its next hit fires.
     fn loadout(&self, g: &Game<GpuWorld>, sel: &[usize]) -> Loadout {
         let rd = &self.rounds;
-        let rech = rounds::recharge(&rd.round, &rd.rules);
         let scope: Vec<usize> = if sel.is_empty() { (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect() } else { sel.to_vec() };
         let lead = scope.first().copied();
+        // The squad owns the gun and its cards (owner 11-14 16:46Z): the
+        // controlled squad's, else the lead soldier's.
+        let q = g.active.or(lead.map(|k| g.soldiers[k].squad as usize)).unwrap_or(0);
+        let gun = g.gun(q);
+        let round = rd.cards_of(g, q);
+        let rech = rounds::recharge(&round, &rd.rules);
         let tick = g.world.ticks();
         let ticks = (rech * g.rules.tps as f32).max(1.0);
-        let left = |k: usize| rd.gun(k).map_or(0.0, |(_, ready)| ready.saturating_sub(tick) as f32 / ticks);
-        let next = lead.and_then(|k| rd.gun(k)).map(|(cast, _)| cast);
-        let cards = gun_cards(&rd.round, &rd.rules, &g.rules, next, |c| match c {
+        let left = |k: usize| rd.gun(g, k).map_or(0.0, |(_, ready)| ready.saturating_sub(tick) as f32 / ticks);
+        let next = lead.and_then(|k| rd.gun(g, k)).map(|(cast, _)| cast);
+        let cards = gun_cards(&round, &rd.rules, &g.rules, next, |c| match c {
             rounds::Card::Gas => g.world.has_gas(),
             rounds::Card::Germ => g.world.has_germ(),
             _ => true,
         });
-        let (lname, lcards) = LOADOUTS[self.round];
-        let name = if rounds::parse(lcards).unwrap_or_default() == rd.round { lname.to_string() } else { rounds::name(&rd.round) };
+        let name = match LOADOUTS.iter().find(|(_, c)| rounds::parse(c).unwrap_or_default() == round) {
+            Some((n, _)) => n.to_string(),
+            None => rounds::name(&round),
+        };
         let whose = match (sel.len(), lead) {
             (_, None) => "no soldiers".to_string(),
             (1, Some(k)) => format!("Soldier {}", k + 1),
             (0, Some(k)) => format!("Soldier {} (squad)", k + 1),
             (n, Some(k)) => format!("Soldier {} (of {n})", k + 1),
         };
-        let casting = !rounds::casts(&rd.round, &rd.rules).is_empty();
+        let own = g.squads.get(q).is_some_and(|s| s.deck.is_some());
+        let whose = if own { format!("{whose}, squad {}'s own cards", q + 1) } else { whose };
+        let casting = !rounds::casts(&round, &rd.rules).is_empty();
         let note = (casting && scope.len() > 1).then(|| {
             let ready = scope.iter().filter(|&&k| left(k) <= 0.0).count();
             format!("{ready} of {} guns ready, recharge {rech:.1} s", scope.len())
         });
         Loadout {
-            name: if rd.round.is_empty() { "Plain".into() } else { capital(&name) },
+            name: if round.is_empty() { "Plain".into() } else { capital(&name) },
             whose,
             cards,
-            slots: rounds::SLOTS,
+            slots: (gun.slots as usize).max(1),
+            gun: Some((gun_icon(gun.kind), capital(&gun.title()), gun.line())),
             recharge: rech,
             charging: lead.map_or(0.0, left).clamp(0.0, 1.0),
             // The budget (owner's card, 11-14 15:34Z) under the cards.
-            note: if rd.round.is_empty() {
+            note: if round.is_empty() {
                 Some("No cards: H or the button for a loadout".into())
             } else {
-                let spent = format!("Cost {} of {}", rounds::cost(&rd.round), rd.rules.budget);
+                let spent = format!("Cost {} of {}", rounds::cost(&round), gun.budget);
                 Some(note.map_or(spent.clone(), |n| format!("{spent} · {n}")))
             },
             cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
         }
+    }
+}
+
+/// A gun kind's icon (`mould::guns`): the HUD's loadout strip, and the
+/// run's shop (the roguelike thread draws guns with it).
+pub(super) fn gun_icon(k: GunKind) -> Icon {
+    match k {
+        GunKind::Rifle => Icon::Rifle,
+        GunKind::Carbine => Icon::Carbine,
+        GunKind::Long => Icon::LongGun,
+        GunKind::Scatter => Icon::Scattergun,
     }
 }
 

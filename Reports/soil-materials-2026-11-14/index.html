@@ -1,0 +1,79 @@
+<title>Planet Soil Materials</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column; before beside after, then the closer zoom notes. */
+:root {
+  --bg: #eef1f2; --panel: #ffffff; --fg: #1c2327; --muted: #58656c; --rule: #d1d8dc; --accent: #168a9e;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; }
+p, li { max-width: 68ch; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; display: block; }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.85em; }
+</style>
+
+
+<div class="wrap">
+  <div class="lede">
+    <span class="tag">Larder World · procedural planets · seed 1 · llvmpipe · 2026-11-14</span>
+    <h1>Planet soil materials</h1>
+    <p>The planets build their biomes from sand, clay, barren ground, water and rock, and drawn as flat colours they all looked alike. Each soil now has its own material, read from the soil field cell by cell: sand has wind ripples and long dune swells, clay dries into plates with dark cracks, barren ground is pale ash with a dry speckle, water is deep and dark with a smooth edge and a lighter shore, and rock stands raised with a lit rim toward the light.</p>
+    <p class="muted">Before is main's ground drawing; after is this change. Both run the planet generator from #277, seed 1. The texture fades out under the slime, so the slime stays the brightest, most detailed thing on screen.</p>
+  </div>
+
+  <section>
+    <h2>Grey thumbnails, whole map, 266 x 164</h2>
+    <p>Top row: Barrens, Marsh, Canyon, Dunes. Bottom row: Claypan, Thicket, Spires, Core.</p>
+    <figure><img src="thumbs-old.png" alt="Before: eight planets in grey"><figcaption>Before: flat soil colours</figcaption></figure>
+    <figure><img src="thumbs-new.png" alt="After: eight planets in grey"><figcaption>After: Barrens (pale ash patches), Marsh (darkest water), Canyon (bright rock), Dunes (diagonal swells) and Core now read apart. Claypan, Thicket and Spires are still close at this size, because clay cracks only show from about zoom 3.</figcaption></figure>
+  </section>
+
+  <section>
+    <h2>Marsh at zoom 6: the water's edge</h2>
+    <div class="pair">
+      <figure><img src="p2-old.gif" alt="Before: marsh water with a stepped cell edge"><figcaption>Before: the water's edge follows the cells in steps</figcaption></figure>
+      <figure><img src="p2-new.gif" alt="After: darker water with a smooth edge and a lighter shore"><figcaption>After: darker water, a smooth edge one pixel wide, a lighter shore, and the clay channel's cracks</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>The other soils at zoom 6</h2>
+    <div class="pair">
+      <figure><img src="p1-new.gif" alt="Barrens"><figcaption>Barrens: ash grey with a dry speckle</figcaption></figure>
+      <figure><img src="p3-new.gif" alt="Canyon"><figcaption>Canyon: raised rock lit from the top left, sand ripples between</figcaption></figure>
+      <figure><img src="p4-new.gif" alt="Dunes"><figcaption>Dunes: fine ripples on long swells, clay rings round the crystals</figcaption></figure>
+      <figure><img src="p5-new.gif" alt="Claypan"><figcaption>Claypan: dark clay plates and cracks</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cost</h2>
+    <p>On llvmpipe (Dunes, bench 8 s, idle hand, 1280 x 800, three alternating pairs), the GPU tail p50 goes from 74.3-75.5 ms to 80.3-81.6 ms. That is about 6 ms (8%), mostly reading the 16 cells round each ground pixel. It hasn't been timed on the GTX 1070 yet; that whole frame was under 2.6 ms p95 this morning.</p>
+  </section>
+  <section>
+    <h2>Follow-up: bent ripples, softer ash</h2>
+    <p>The sand ripples now bend and vary their spacing, and fade to flat sand below zoom 3, so they no longer read as a hatch or a moire. Barren ash is a step darker, with soft clumped grains in place of the speckle.</p>
+    <figure><img src="thumbs-v2.png" alt="Eight planets in grey after the follow-up"><figcaption>Grey thumbnails after the follow-up. Dunes reads as mottled swells, not stripes.</figcaption></figure>
+    <div class="pair">
+      <figure><img src="p1-v2.gif" alt="Barrens at zoom 6"><figcaption>Barrens: darker ash, clumped soft grains</figcaption></figure>
+      <figure><img src="p4-v2.gif" alt="Dunes at zoom 6"><figcaption>Dunes: bent ripples of varied spacing</figcaption></figure>
+    </div>
+    <p class="muted">Baking the soil once a cell was tried and saved nothing, because the cost is the texture arithmetic per pixel, so it was reverted. GPU tail p50 on llvmpipe, five rounds on Dunes: main 73.8 ms, #281 82.7 ms, this follow-up 83.4 ms.</p>
+  </section>
+</div>
