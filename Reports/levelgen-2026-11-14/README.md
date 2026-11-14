@@ -571,12 +571,82 @@ SPREAD` line (#295, agreed with the plants thread): meadow 0.25 0.3,
 barrens 0 0.2, fen 0.5 0.3, river valley 0.3 0.3, jungle 0.4 0.3,
 highlands 0.1 0.2, cave 0.35 0.2, core 0.2 0.35 (`Biome::moisture`).
 
+## The 1070 at 6x, and the gas press (22:50-23:20Z)
+
+The 1070 timed PR #306's head (d70b8d14) on planet:3:1, planet:5:1:2,
+planet:7:1:4 and planet:8:1:6 (1x, 2x, 4x, 6x; raw output on
+claude/project-thread-26drse @ 8e999bf5, `runner-out/levelgen-pr306-d70b8d14/`).
+With the rush hand, a game step's max after the first second was 5.29,
+5.77, 1.05 and 1.72 ms. Before the sliced maps it was 22, 70, 94 and
+210 ms. Prepare stayed under 4 ms everywhere.
+
+The every-command hand still missed the 8 ms bar. After the first second
+its step max was 37.84 ms at 6x and 18.48 ms at 2x. In frames that finish a
+game step the max was only 7.46 and 6.03 ms, so the time went in the other
+frames: the pressed commands, and the start of the next step.
+
+To find the slow one, each press was timed (bench.rs, not committed), at
+6x on llvmpipe. The gas tool took 114.93 ms and the blast 8.77 ms. Gas
+reads two counts back, the walkers gassed before and after its pass, and
+`calm` reads the gassed sleepers near each soldier once a step while gas
+lasts. All three copied the engine's whole `news` buffer to read a few
+words. That buffer holds three words a dish cell and three a walker, about
+47 MB at 6x. `read_back_range` now copies only the words read.
+
+| planet:8:1:6, `bench=4 hand=every`, llvmpipe | Before | After |
+| --- | --- | --- |
+| One gas press | 114.93 ms | 8.91 ms |
+| Step max after the first game second | 123.99 ms | 18.32 ms |
+
+The 18.32 ms that remains is the gas and blast presses in one frame, 8.9
+and 9.1 ms. Each is a pass over every dish cell (laying the cloud, the
+crater), which is slow on software Vulkan. A 1070 run of this build decides
+`GROW_CAP`.
+
+The same hand for 10 game seconds after the fix (`bench=10`,
+`raw/every-6x-gas-fix-llvmpipe.txt`): a step's p95 over every frame
+1.25 ms, max 17.39 ms (the same two presses); in frames that finish a step,
+max 10.67 ms.
+
+## The core world's arenas (23:00-23:40Z)
+
+The graphics lead found the core world too busy to read the way to each
+nest at zoom 1, and asked for a few large open arenas with hedges round
+the nests.
+
+`Recipe::arenas` is three on the 1024 x 640 map, and scales with area like
+the hedges. The arena sites are field regions more than 260 map cells from
+every nest and 160 from the landing, shuffled, at least `ARENA_APART` (190)
+apart. An arena region gets no fronts, outcrops, pillars or hedges. Every
+border to a neighbour opens, except a border to a nest's region, so the
+arena opens on all sides. Outside rocky rooms the core world now rings
+every nest (`ring` 1.0, was 0.6).
+
+The first version also cleared each arena's neighbours. With three arenas
+on a 15-region world, that cleared nearly every pillar (seed 3), so the map
+was open everywhere instead of in places.
+
+Planets 1-7 keep their pins; planet 8 and the 6x core world are new pins.
+Core worlds, seeds 1-50 (`raw/planets-core-1-50-before-arenas.txt`,
+`raw/planets-core-1-50-arenas.txt`):
+
+| | Before | After |
+| --- | --- | --- |
+| Rock, share of the map | 11.1% | 7.6% |
+| Soft-rock walls | 131 | 141 |
+| Charge reachable without breaking a wall | 93.5% | 94.6% |
+| First attempt passed its checks | 41 of 50 | 46 of 50 |
+
+The page [Core World Arenas](https://claude.ai/artifact/YXPyHxhBmaL1K92Mq8L1Bv)
+draws seeds 1-6 before and after from the map files (`page4/`, by
+`raw/make_page4.py`). The rest of each map changes too, because the arenas
+draw from the generator's dice.
+
 ## Next
 
-1. **Planets to the owner's 6x** once the 1070 has timed the walking maps;
-   a three-agent adversarial review (owner, 19:12Z and 19:32Z); the core
-   world's few large open arenas with hedges round the nests (graphics
-   lead).
+1. **Planets to the owner's 6x** once the 1070 has timed the gas fix; a
+   three-agent adversarial review (owner, 19:12Z and 19:32Z), held until
+   the owner says go (22:33Z).
 2. **Every strategy can win**: the check that each nest has an open
    approach and a choke, after a short read on how StarCraft map
    generators score chokepoints and fairness (owner's question, 17:24Z).

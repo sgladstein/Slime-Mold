@@ -1,0 +1,52 @@
+depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | failed attempts
+8 1 Quamar core [Rooms Dry Mixed fields] 0 191 | 22 14% 11% 32% 6% 0% 94 | 1042 1042 155 | 100% | 
+8 2 Lozo core [Ridges Streams Mixed jackpot] 0 466 | 23 7% 9% 33% 5% 12% 145 | 938 1240 64 | 100% | 
+8 3 Ulren core [Pillars Streams Mixed jackpot] 0 807 | 23 9% 8% 29% 4% 15% 156 | 743 1189 65 | 84% | 
+8 4 Zoremor core [Pillars Lakes Mixed veins] 0 250 | 23 9% 17% 31% 4% 11% 139 | 701 1305 96 | 76% | 
+8 5 Ixvek core [Rooms Rivers Mixed jackpot] 0 354 | 22 15% 22% 21% 4% 8% 89 | 910 1389 196 | 99% | 
+8 6 Vethix core [Outcrops Dry Mixed fields] 0 144 | 26 3% 23% 27% 6% 0% 163 | 792 1142 71 | 88% | 
+8 7 Zothunus core [Outcrops Pools Mixed fields] 0 179 | 23 4% 13% 27% 2% 35% 164 | 846 1240 80 | 100% | 
+8 8 Berskothor core [Rooms Streams Mixed jackpot] 0 280 | 23 14% 19% 18% 7% 6% 90 | 799 1498 64 | 100% | 
+8 9 Grimon core [Pillars Pools Mixed scattered] 0 214 | 36 8% 7% 33% 2% 28% 144 | 739 1276 68 | 100% | 
+8 10 Berssum core [Ridges Dry Mixed veins] 0 154 | 23 6% 22% 29% 7% 0% 159 | 799 1411 71 | 100% | 
+8 11 Ixkis core [Outcrops Rivers Mixed fields] 0 237 | 23 2% 22% 29% 5% 3% 158 | 797 1371 70 | 100% | 
+8 12 Orvizek core [Ridges Rivers Mixed richer-farther] 0 252 | 36 6% 24% 26% 5% 2% 159 | 732 1333 60 | 100% | 
+8 13 Avivae core [Pillars Streams Mixed scattered] 0 473 | 36 9% 16% 27% 6% 8% 121 | 894 1109 106 | 100% | 
+8 14 Orrrar core [Rooms Dry Mixed veins] 0 196 | 30 14% 11% 26% 5% 0% 110 | 895 1319 60 | 87% | 
+8 15 Orrrae core [Pillars Dry Mixed richer-farther] 0 243 | 36 7% 20% 29% 7% 0% 139 | 855 1243 60 | 100% | 
+8 16 Quasson core [Outcrops Rivers Mixed fields] 0 354 | 25 3% 26% 21% 7% 3% 157 | 772 1300 83 | 100% | 
+8 17 Zoskimon core [Rooms Rivers Mixed scattered] 0 222 | 36 16% 15% 27% 6% 4% 82 | 1304 1864 92 | 100% | 
+8 18 Yakis core [Ridges Streams Mixed fields] 0 390 | 23 9% 15% 33% 6% 10% 155 | 1301 1362 64 | 100% | 
+8 19 Muske core [Pillars Lakes Mixed richer-farther] 0 217 | 36 9% 13% 31% 3% 20% 145 | 761 1232 50 | 100% | 
+8 20 Grissaskis core [Ridges Streams Mixed jackpot] 0 300 | 23 7% 16% 27% 5% 7% 151 | 761 1204 54 | 100% | 
+8 21 Muthith core [Outcrops Rivers Mixed richer-farther] 0 256 | 36 5% 16% 32% 5% 8% 185 | 1052 1397 71 | 100% | 
+8 22 Quaskumen core [Rooms Dry Mixed veins] 0 194 | 23 14% 17% 30% 4% 0% 94 | 771 1317 64 | 100% | 
+8 23 Kassor core [Outcrops Lakes Mixed veins] 1 444 | 27 3% 10% 25% 2% 35% 178 | 736 1390 64 | 51% | only 36% of the charge is open without breaking soft rock
+8 24 Yamix core [Ridges Lakes Mixed jackpot] 0 269 | 23 6% 11% 29% 2% 34% 142 | 864 1312 68 | 60% | 
+8 25 Vedo core [Rooms Rivers Mixed jackpot] 0 279 | 23 14% 18% 23% 6% 4% 96 | 868 1360 60 | 88% | 
+8 26 Grirukek core [Pillars Lakes Mixed fields] 0 265 | 22 8% 9% 31% 5% 6% 141 | 907 1077 68 | 91% | 
+8 27 Yavek core [Outcrops Pools Mixed fields] 0 183 | 21 4% 12% 32% 2% 38% 168 | 924 1223 60 | 100% | 
+8 28 Ixne core [Outcrops Streams Mixed richer-farther] 0 363 | 36 4% 15% 29% 6% 7% 157 | 890 1416 60 | 100% | 
+8 29 Quama core [Rooms Lakes Mixed fields] 0 269 | 20 13% 8% 21% 3% 40% 74 | 778 1500 88 | 80% | 
+8 30 Lolix core [Outcrops Lakes Mixed fields] 0 241 | 23 2% 16% 29% 5% 18% 158 | 871 1255 68 | 100% | 
+8 31 Nenae core [Ridges Rivers Mixed jackpot] 0 251 | 23 5% 21% 25% 5% 4% 170 | 1279 1521 54 | 100% | 
+8 32 Zozethus core [Ridges Lakes Mixed veins] 0 234 | 24 8% 8% 29% 2% 26% 152 | 916 1000 80 | 100% | 
+8 33 Lossum core [Outcrops Lakes Mixed fields] 0 212 | 26 3% 8% 29% 4% 33% 150 | 965 1249 60 | 100% | 
+8 34 Kade core [Outcrops Streams Mixed richer-farther] 0 612 | 36 3% 19% 29% 5% 11% 173 | 888 1319 52 | 100% | 
+8 35 Yavum core [Ridges Pools Mixed veins] 1 361 | 19 8% 6% 29% 2% 36% 148 | 941 1399 64 | 100% | only 45% of the charge is open without breaking soft rock
+8 36 Drekokis core [Outcrops Pools Mixed fields] 0 172 | 25 3% 11% 31% 3% 31% 181 | 841 1164 69 | 100% | 
+8 37 Thanis core [Rooms Rivers Mixed scattered] 0 239 | 35 13% 17% 24% 5% 3% 76 | 1576 1716 197 | 100% | 
+8 38 Zozix core [Outcrops Streams Mixed veins] 0 570 | 16 4% 25% 24% 5% 12% 187 | 795 1240 65 | 100% | 
+8 39 Mussix core [Outcrops Streams Mixed jackpot] 0 551 | 23 5% 12% 26% 7% 12% 170 | 1063 1370 52 | 82% | 
+8 40 Somen core [Pillars Rivers Mixed scattered] 0 221 | 36 8% 19% 24% 8% 3% 149 | 867 1111 84 | 100% | 
+8 41 Sorre core [Rooms Rivers Mixed veins] 0 220 | 25 13% 22% 21% 4% 10% 87 | 962 1168 49 | 100% | 
+8 42 Grimith core [Rooms Pools Mixed fields] 0 178 | 21 13% 12% 26% 3% 23% 82 | 850 1430 110 | 100% | 
+8 43 Ixrrar core [Outcrops Pools Mixed scattered] 0 247 | 36 2% 10% 31% 2% 36% 160 | 851 1243 52 | 91% | 
+8 44 Verrenum core [Outcrops Dry Mixed fields] 0 154 | 22 4% 18% 36% 6% 0% 152 | 741 1060 56 | 100% | 
+8 45 Veskuko core [Pillars Lakes Mixed richer-farther] 1 430 | 36 8% 10% 28% 4% 26% 143 | 968 1326 60 | 99% | only 2% of the charge is open without breaking soft rock
+8 46 Vezon core [Ridges Rivers Mixed veins] 0 244 | 19 7% 24% 23% 6% 4% 168 | 1004 1212 75 | 100% | 
+8 47 Ixskon core [Outcrops Dry Mixed veins] 0 219 | 21 4% 16% 31% 6% 0% 166 | 860 1289 54 | 79% | 
+8 48 Berskor core [Pillars Rivers Mixed jackpot] 1 449 | 23 9% 18% 23% 7% 8% 136 | 1097 1524 72 | 91% | only 40% of the charge is open without breaking soft rock
+8 49 Zorriko core [Pillars Lakes Mixed scattered] 0 278 | 36 8% 14% 30% 4% 17% 153 | 1120 1120 55 | 85% | 
+8 50 Ixssamum core [Ridges Dry Mixed richer-farther] 0 165 | 36 7% 12% 32% 6% 0% 141 | 882 1376 92 | 100% | 
+50 planets, 294 ms each on average

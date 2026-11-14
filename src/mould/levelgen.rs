@@ -533,7 +533,17 @@ pub struct Recipe {
     pub hedges: usize,
     /// Rivers or streams, for `Water::Rivers` and `Water::Streams`.
     pub rivers: usize,
+    /// Open arenas (the core world): field regions with every border to
+    /// their neighbours open and no outcrops, fronts or hedges in them.
+    pub arenas: usize,
 }
+
+/// Open arenas on the core world (`Recipe::arenas`), on the 1024 x 640
+/// map and more on a bigger one at the same density: three, so the
+/// busiest world still has a few grounds to fight on in the open.
+const ARENAS: usize = 3;
+/// The least distance between two arenas' sites, map cells.
+const ARENA_APART: f32 = 190.0;
 
 impl Recipe {
     pub fn of(p: &Planet) -> Recipe {
@@ -583,6 +593,7 @@ impl Recipe {
             big: 2,
             ring: 0.0,
             hedges: 0,
+            arenas: 0,
             rivers: 0,
         };
         // Openness: the rock.
@@ -612,7 +623,10 @@ impl Recipe {
             // Fewer gates in rooms, where every pass is a tree's: a gate
             // there shuts all the rooms behind it (rooms with gates at
             // 0.35 left under half the charge open on 8 of 50 core worlds).
-            Biome::Core => Recipe { regions: rc.regions + 4, gate: if openness == O::Rooms { 0.1 } else { 0.35 }, ring: if openness == O::Rooms { 0.0 } else { 0.6 }, hedges: 5, nests: nests.max(3), small: 14, big: 3, ..rc },
+            // A few big open arenas, and a hedge round each nest unless the
+            // rooms wall it (graphics lead, 11-14: the core world was too
+            // busy to read the way to each nest at zoom 1).
+            Biome::Core => Recipe { regions: rc.regions + 4, gate: if openness == O::Rooms { 0.1 } else { 0.35 }, ring: if openness == O::Rooms { 0.0 } else { 1.0 }, hedges: 5, nests: nests.max(3), small: 14, big: 3, arenas: ARENAS, ..rc },
             _ => rc,
         };
         // Passes narrow with depth, to a floor a squad still walks through.
@@ -623,7 +637,7 @@ impl Recipe {
         // length, not the area.
         let area = (p.size.0 * p.size.1) as f32 / (MAP_W * MAP_H) as f32;
         let more = |n: usize, k: f32| (n as f32 * k + 0.5).floor() as usize;
-        Recipe { pass: (rc.pass.0 * narrow, rc.pass.1 * narrow), regions: more(rc.regions, area), small: more(rc.small, area), big: more(rc.big, area.sqrt()), hedges: more(rc.hedges, area), rivers: more(rc.rivers, area.sqrt()), ..rc }
+        Recipe { pass: (rc.pass.0 * narrow, rc.pass.1 * narrow), regions: more(rc.regions, area), small: more(rc.small, area), big: more(rc.big, area.sqrt()), hedges: more(rc.hedges, area), arenas: more(rc.arenas, area), rivers: more(rc.rivers, area.sqrt()), ..rc }
     }
 }
 
@@ -958,6 +972,39 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         };
     }
 
+    // Arenas (`Recipe::arenas`): field regions away from the nests and the
+    // landing, far apart, each cleared of outcrops, fronts, pillars and
+    // hedges, with every border to a neighbour open (none to a nest's
+    // region, whose ridges and ring stay), so the arena opens on all
+    // sides. Opening borders only joins more ground, so every check that
+    // held still holds. Clearing the neighbours too was tried first: with
+    // three arenas on a 15-region world nearly every pillar went
+    // (seed 3, 11-14), and the world was open everywhere, not in places.
+    let mut arena = vec![false; ns];
+    if rc.arenas > 0 {
+        let mut cand: Vec<usize> = (1 + nests.len()..ns).filter(|&k| nests.iter().all(|&q| dist(sites[k], q) > 260.0) && dist(sites[k], landing) > 160.0).collect();
+        for i in (1..cand.len()).rev() {
+            cand.swap(i, r.below(i + 1));
+        }
+        let apart = ARENA_APART;
+        let mut hubs: Vec<usize> = Vec::new();
+        for k in cand {
+            if hubs.len() < rc.arenas && hubs.iter().all(|&h| dist(sites[h], sites[k]) > apart) {
+                hubs.push(k);
+            }
+        }
+        for &hub in &hubs {
+            arena[hub] = true;
+            for e in edges.iter_mut() {
+                let other = if e.a == hub { e.b } else if e.b == hub { e.a } else { continue };
+                if (1..=nests.len()).contains(&other) {
+                    continue;
+                }
+                e.kind = Border::Open;
+            }
+        }
+    }
+
     // Each pass: a border cell mid-border, away from the map's edge. An
     // open border on the spanning tree gets one too, cut below like a
     // pass's: a short open border (a corner where three regions meet) was
@@ -1128,9 +1175,10 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                 let (s, u) = (along(at) + warp_x.at(x, y), across(at));
                 let wide = 0.85 + 0.3 * rough.at(x, y);
                 rock = fronts.iter().any(|f| (s - f.s).abs() < f.half * wide && !f.passes.iter().any(|&(pu, rad)| (u - pu).abs() < rad))
-                    && !nests.iter().chain([&landing]).any(|&q| dist(q, at) < 110.0);
+                    && !nests.iter().chain([&landing]).any(|&q| dist(q, at) < 110.0)
+                    && !arena[region[i] as usize];
             }
-            if !rock && border[i] > 30.0 && blobs.at(x, y) > rc.outcrop {
+            if !rock && border[i] > 30.0 && blobs.at(x, y) > rc.outcrop && !arena[region[i] as usize] {
                 rock = !sites.iter().any(|&s| dist(s, at) < 120.0);
             }
             if rock {
@@ -1619,7 +1667,8 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             break;
         }
         let c = (r.range(30.0, wf - 30.0), r.range(30.0, hf - 30.0));
-        if dist(c, landing) < 150.0 || nests.iter().any(|&q| dist(q, c) < 120.0) || items.crystals.iter().any(|k| dist((k.x, k.y), c) < k.r + 36.0) || pillars.iter().any(|&(q, _)| dist(q, c) < 46.0) {
+        let in_arena = arena[region[(c.1 as usize).min(h - 1) * w + (c.0 as usize).min(w - 1)] as usize];
+        if in_arena || dist(c, landing) < 150.0 || nests.iter().any(|&q| dist(q, c) < 120.0) || items.crystals.iter().any(|k| dist((k.x, k.y), c) < k.r + 36.0) || pillars.iter().any(|&(q, _)| dist(q, c) < 46.0) {
             continue;
         }
         pillars.push((c, r.range(7.0, 15.0)));
@@ -1727,6 +1776,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                         || edges.iter().any(|e| e.pass.is_some_and(|(c, rad)| dist(p, c) < rad + 30.0))
                         || items.crystals.iter().any(|c| dist((c.x, c.y), p) < c.r + 34.0)
                         || ground[p.1 as usize * w + p.0 as usize] & G_ROCK != 0
+                        || arena[region[p.1 as usize * w + p.0 as usize] as usize]
                 };
                 if blocked(at) || blocked(b) {
                     break;
@@ -2337,10 +2387,11 @@ mod tests {
     // Round 3 (dials and the new biome order, 2026-11-14), then plants in
     // the fingerprint, deep water, bridges and fords, and planets 4-8 at
     // up to 2x (`GROW_CAP`); then each biome's moisture line and plants
-    // that tell the biomes apart, their edges faded (11-14 22:30Z). Round
+    // that tell the biomes apart, their edges faded (11-14 22:30Z), and
+    // the core world's arenas and nest hedges (23:30Z). Round
     // 2's depths 3-8 had kept their pins through the tiled region scan,
     // which finds the same nearest sites as the full scan.
-    const PINNED: [u64; 8] = [0xd666b9438ccc867a, 0xe3cb0be0566fbfba, 0xea0723b2b040124d, 0xb1627ecda86170b9, 0xb4183e35b474ba49, 0x28119240444e1a15, 0xdba4d1b2f67c2781, 0x95aa0c28558beaaa];
+    const PINNED: [u64; 8] = [0xd666b9438ccc867a, 0xe3cb0be0566fbfba, 0xea0723b2b040124d, 0xb1627ecda86170b9, 0xb4183e35b474ba49, 0x28119240444e1a15, 0xdba4d1b2f67c2781, 0x6b3b05cfebb07976];
 
     /// The core world at the owner's 6x area, pinned too: the bigger maps
     /// run more of the generator's loops, on every machine the same.
@@ -2350,7 +2401,7 @@ mod tests {
         assert_eq!(print(&m), PINNED_BIG, "{:#x}", print(&m));
     }
 
-    const PINNED_BIG: u64 = 0x075ed85fc518f0bc;
+    const PINNED_BIG: u64 = 0x6a8d5a9e7fc09b42;
 
     /// Each planet's plants: the share of its map cells with any, and the
     /// mean density over all of them (plants are drawn as crowns sized by
