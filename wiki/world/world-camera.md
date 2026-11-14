@@ -9,6 +9,7 @@ sources:
   - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/gun-card-hud-2026-11-14/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/levelgen-2026-11-14/README.md
   - Reports/panic-look-2026-11-14/README.md
   - Reports/sharp-slime-2026-11-14/README.md
   - Reports/shot-damage-2026-11-12.md
@@ -39,6 +40,7 @@ code:
   - Game::last_takes
   - Game::overrun_share
   - Game::seek
+  - Gather
   - Hud::aim
   - Hud::draw
   - HudEvent
@@ -131,7 +133,9 @@ Q squad (`world::demo::Squad`) is a stand-in with no game rules.
 On by default ([world look](../../Reports/world-look-2026-11-11.md)): the
 view shades the world from the engine's look field (mould thickness,
 walkers, wounds) and a ground field (rock, walls by health, crystals by
-charge): height, light, gloss, a speck a walker. Shots (`Engine::set_hits`)
+charge): height, light, gloss, a speck a walker. Its once-a-second refresh
+reads only the crystal and wall cells (`Gather`, 2026-11-14; [levelgen
+report](../../Reports/levelgen-2026-11-14/README.md), *A sparse ground refresh*). Shots (`Engine::set_hits`)
 stop at the first slime or rock on their line (`first_hit`) and cut there,
 leaving a fading burn. The view draws no wound (the owner, 04:38Z, on a
 blind A/B: "Neither. Both of those look like stamps"): the drawn

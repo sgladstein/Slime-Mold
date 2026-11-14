@@ -26,18 +26,19 @@
 //! contested ones between, small ones scattered. A built planet is checked
 //! (`check`) and rebuilt from the next attempt's stream if it fails.
 
-use super::map::{Crystal, Items, Map, Wall, G_ROCK, G_WET, MAP_H, MAP_W};
+use super::map::{standable, Crystal, Items, Map, Wall, G_BRIDGE, G_DEEP, G_ROCK, G_WET, MAP_H, MAP_W};
 
 /// Soil kinds in the G byte's high nibble (`big::SOIL_*` << 4).
 pub const G_SAND: u8 = 0x10;
 pub const G_CLAY: u8 = 0x20;
 pub const G_BARREN: u8 = 0x30;
 
-/// Deep water: shallow wet for now. The ground thread's deep water (soil
-/// kind 4 with the wet bit, `map::G_DEEP` 0x41: soldiers cannot stand in
-/// it, the slime crawls through) replaces it once on main; the rivers'
-/// fords and the lakes' rims are already shallow, so the checks will hold.
-const DEEP: u8 = G_WET;
+/// Deep water, the ground thread's (soil kind 4 with the wet bit,
+/// `map::G_DEEP`): soldiers cannot stand in it, shots fly over, the slime
+/// crawls through. The rivers' fords and bridges and the lakes' rims are
+/// shallow or dry, and the walk checks (`walkable`, `map::standable`) see
+/// it, so a planet that water cuts off is rebuilt.
+const DEEP: u8 = G_DEEP;
 
 /// How many builds `generate` tries before it falls back to an open plan.
 pub const ATTEMPTS: u32 = 24;
@@ -125,16 +126,20 @@ pub struct Planet {
 /// Each planet's map area as a share of the designed maps' (1024 x 640):
 /// the owner's "first planet about 60% of today's map, today's size by
 /// planet 3 or 4, up to 6 the area for the core world" (2026-11-14 15:33Z).
-/// Past the core world, the core world's. `GROW_CAP` holds it at today's
-/// size for now.
+/// Past the core world, the core world's. `GROW_CAP` holds it at twice
+/// today's for now.
 pub const AREA: [f32; 8] = [0.6, 0.8, 1.0, 1.4, 2.0, 2.8, 4.0, 6.0];
 
-/// The biggest share `size_at` gives until the 1070 has timed the bigger
-/// worlds: the technical lead (2026-11-14 16:42Z), "Before the default
-/// changes, book one 1070 timing ... at 1x, 2x, 4x and 6x area". Smaller
-/// planets cost less than today's and need no timing. `planet:D:S:AREA`
-/// asks for any share up to `AREA_MAX` (that timing, and dev play).
-pub const GROW_CAP: f32 = 1.0;
+/// The biggest share `size_at` gives. The technical lead (2026-11-14
+/// 16:42Z): "Before the default changes, book one 1070 timing ... at 1x,
+/// 2x, 4x and 6x area". Timed 19:11Z (`raw/sizes-1070/`): the GPU step
+/// 0.63, 0.97, 1.50 and 2.11 ms and frame p95 at most 5.2 ms at every
+/// size, but the window's ground refresh (`refresh_ground`, once a game
+/// second: a charge read-back and every cell's code on the CPU) peaks at
+/// 4.6, 8.4, 23.6 and 32.9 ms, a dropped frame or two every second from
+/// 4x. So 2x (planets 5-8) until that refresh touches only the cells that
+/// change. `planet:D:S:AREA` asks for any share up to `AREA_MAX`.
+pub const GROW_CAP: f32 = 2.0;
 
 /// The biggest share a `planet:D:S:AREA` spec may ask for.
 pub const AREA_MAX: f32 = 6.0;
@@ -1167,6 +1172,10 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         s: f32,
         half: f32,
         fords: Vec<(f32, f32)>,
+        /// A bridge across the deep part (`G_BRIDGE`, the ground thread's
+        /// kind 5): where along the river and its half-width, a narrow
+        /// crossing to hold or wall off, away from the fords.
+        bridge: Option<(f32, f32)>,
     }
     let mut rivers: Vec<River> = Vec::new();
     let mut stream = vec![false; if rc.water == Water::Streams { n } else { 0 }];
@@ -1174,7 +1183,10 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         let k = rc.rivers;
         for j in 0..k {
             let s = span * (0.5 + (j as f32 - (k as f32 - 1.0) / 2.0) * 0.18 + r.range(-0.03, 0.03));
-            let half = r.range(20.0, 28.0);
+            // At least 40 map cells across (10-14 of the 256 x 160 grid the
+            // graphics lead counts in, 4 map cells each): at 34 the river
+            // read as a thin line at zoom 1 (graphics lead, 2026-11-14 18:56Z).
+            let half = r.range(22.0, 28.0);
             let room: Vec<f32> = (-300..300).map(|i| i as f32 * 8.0).filter(|&u| {
                 let q = at_line(s, u);
                 q.0 > 60.0 && q.1 > 60.0 && q.0 < wf - 60.0 && q.1 < hf - 60.0
@@ -1189,18 +1201,22 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                     }
                 }
             }
-            rivers.push(River { s, half, fords });
+            let far: Vec<f32> = room.iter().copied().filter(|&u| fords.iter().all(|f| (u - f.0).abs() > 180.0)).collect();
+            let bridge = (r.chance(0.5) && !far.is_empty()).then(|| (far[r.below(far.len())], r.range(6.0, 8.0)));
+            rivers.push(River { s, half, fords, bridge });
         }
     }
     if rc.water == Water::Streams {
         for _ in 0..rc.rivers {
             let from = (r.range(0.2, 0.8) * wf, r.range(0.2, 0.8) * hf);
             let dir = bend(perp, r.range(-0.6, 0.6));
-            let half = r.range(5.0, 9.0);
+            // At least 16 map cells across (4 of the graphics lead's grid
+            // cells); 8-12 was too thin to read (graphics lead, 18:56Z).
+            let half = r.range(9.0, 12.0);
             for d in [dir, (-dir.0, -dir.1)] {
                 let pts = wander(&mut r, wf, hf, from, d, 24.0, 0.25);
                 along_line(w, h, &pts, half * 1.3, |i, _, dd| {
-                    if dd < half * (0.8 + 0.4 * fine.at(i % w, i / w)) {
+                    if dd < half * (0.9 + 0.2 * fine.at(i % w, i / w)) {
                         stream[i] = true;
                     }
                 });
@@ -1331,8 +1347,10 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                 Water::Rivers => {
                     let (sa, u) = (along(at) + warp_x.at(x, y) * 1.6, across(at));
                     for rv in &rivers {
-                        let off = (sa - rv.s).abs() - rv.half * (0.85 + 0.3 * rough.at(x, y));
-                        if off < 0.0 {
+                        let off = (sa - rv.s).abs() - rv.half * (0.9 + 0.2 * rough.at(x, y));
+                        if off < 0.0 && rv.bridge.is_some_and(|(bu, bh)| (u - bu).abs() < bh) {
+                            soil = G_BRIDGE;
+                        } else if off < 0.0 {
                             let ford = rv.fords.iter().any(|&(fu, fr)| (u - fu).abs() < fr);
                             water = water.max(if off < -8.0 && !ford { 2 } else { 1 });
                         } else if off < 12.0 && soil == 0 {
@@ -1706,7 +1724,258 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         }
     }
 
-    Map { w, h, ground, plants: Vec::new(), items }
+    cut_fords(w, h, &mut ground, &items, landing);
+    let canopy = Field::new(w, h, |x, y| noise(7).fbm(x + 4111.0, y - 2377.0, 140.0));
+    let plants = sow(&Sow::of(p.biome, &rc), w, h, &ground, &items, landing, &canopy, &fine);
+    Map { w, h, ground, plants, items }
+}
+
+/// Fords where deep water cuts the squad off. For each crystal or nest the
+/// landing can't walk to but could if deep water were shallow, the
+/// shortest way there is made shallow (`G_WET`) `FORD` map cells either
+/// side, as a pass is cut through a ridge. What rock shuts off is left to
+/// `check`. Before this, deep lakes and rivers through rocky rooms shut 29
+/// of 400 planets on the first attempt, one core world for 23 attempts.
+fn cut_fords(w: usize, h: usize, ground: &mut [u8], items: &Items, landing: (f32, f32)) {
+    const FORD: f32 = 16.0;
+    if !ground.contains(&G_DEEP) {
+        return;
+    }
+    let targets: Vec<((f32, f32), f32)> = items.crystals.iter().map(|c| ((c.x, c.y), c.r)).chain(items.moulds.iter().map(|&q| (q, 8.0))).collect();
+    let mut skip = vec![false; targets.len()];
+    for _ in 0..12 {
+        let m = Map { w, h, ground: ground.to_vec(), plants: Vec::new(), items: items.clone() };
+        let (bw, bh, open) = walkable(&m, (w, h), false);
+        let d = walk_from(bw, bh, &open, landing);
+        let Some(t) = (0..targets.len()).find(|&t| !skip[t] && reach(bw, bh, &d, targets[t].0, targets[t].1) == u32::MAX) else { return };
+        // The same walk with deep water as ground.
+        let shallow = Map { ground: m.ground.iter().map(|&g| if g == G_DEEP { G_WET } else { g }).collect(), ..m };
+        let (_, _, open2) = walkable(&shallow, (w, h), false);
+        let d2 = walk_from(bw, bh, &open2, landing);
+        let (c, rad) = targets[t];
+        // The bin by the target nearest the landing, as `reach` reads it.
+        let mm = rad + 2.0 * BIN as f32 + 2.0;
+        let mut at = None;
+        for by in ((c.1 - mm) / BIN as f32).floor().max(0.0) as usize..=(((c.1 + mm) / BIN as f32) as usize).min(bh - 1) {
+            for bx in ((c.0 - mm) / BIN as f32).floor().max(0.0) as usize..=(((c.0 + mm) / BIN as f32) as usize).min(bw - 1) {
+                let p = ((bx * BIN) as f32 + 2.0, (by * BIN) as f32 + 2.0);
+                let i = by * bw + bx;
+                if dist(p, c) <= mm && d2[i] != u32::MAX && at.is_none_or(|j: usize| d2[i] < d2[j]) {
+                    at = Some(i);
+                }
+            }
+        }
+        let Some(mut i) = at else {
+            skip[t] = true;
+            continue;
+        };
+        // Down the walk to the landing, making the deep water shallow.
+        loop {
+            let p = ((i % bw * BIN) as f32 + 2.0, (i / bw * BIN) as f32 + 2.0);
+            let (x0, x1) = ((p.0 - FORD).max(0.0) as usize, ((p.0 + FORD) as usize).min(w - 1));
+            let (y0, y1) = ((p.1 - FORD).max(0.0) as usize, ((p.1 + FORD) as usize).min(h - 1));
+            for y in y0..=y1 {
+                for x in x0..=x1 {
+                    if ground[y * w + x] == G_DEEP && dist((x as f32 + 0.5, y as f32 + 0.5), p) <= FORD {
+                        ground[y * w + x] = G_WET;
+                    }
+                }
+            }
+            if d2[i] == 0 {
+                break;
+            }
+            let (x, y) = ((i % bw) as i32, (i / bw) as i32);
+            let next = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
+                .iter()
+                .map(|&(dx, dy)| (x + dx, y + dy))
+                .filter(|&(nx, ny)| nx >= 0 && ny >= 0 && nx < bw as i32 && ny < bh as i32)
+                .map(|(nx, ny)| ny as usize * bw + nx as usize)
+                .min_by_key(|&j| d2[j]);
+            match next {
+                Some(j) if d2[j] < d2[i] => i = j,
+                _ => break,
+            }
+        }
+        // A target the shallow walk still can't reach is the check's.
+        skip[t] = true;
+    }
+}
+
+/// How a biome's plants start (the plants thread's field, `plants::pack`;
+/// the B byte the map carries, 2026-11-14). On one canopy noise `n` (0-1,
+/// patches about 140 map cells across, ragged by the fine noise): bare
+/// below `bare`, `main` above it, jungle above `jungle` (over 1: never);
+/// reeds within `shore` map cells of the water's edge on both sides, so
+/// pools and rivers are fringed and their middles open; `sand` the kind on
+/// sand (`None` bare). Density runs from `thin` at `bare` to full `ramp`
+/// above it, so a patch thickens toward its middle (the graphics lead
+/// asked for density gradients, not flat fills, 18:20Z). The soil's own
+/// capacity caps it in the game: barren and deep water grow nothing.
+#[derive(Clone, Copy, Debug)]
+struct Sow {
+    bare: f32,
+    main: u8,
+    jungle: f32,
+    shore: f32,
+    sand: Option<u8>,
+    thin: f32,
+    ramp: f32,
+    /// Plain ground thick with growth (an oasis in the barrens).
+    lush: bool,
+}
+
+impl Sow {
+    fn of(b: Biome, rc: &Recipe) -> Sow {
+        use crate::mould::plants::{MEADOW, SCRUB};
+        let base = Sow { bare: 0.3, main: MEADOW, jungle: 0.78, shore: 10.0, sand: Some(SCRUB), thin: 0.35, ramp: 0.3, lush: false };
+        match b {
+            // Grass nearly everywhere, a few copses.
+            Biome::Meadow => Sow { bare: 0.25, jungle: 0.74, ..base },
+            // Thin scrub on what isn't barren; the oases green.
+            Biome::Barrens => Sow { bare: 0.42, main: SCRUB, jungle: 1.1, shore: 0.0, thin: 0.25, ramp: 0.4, lush: rc.soil == Soil::Oases, ..base },
+            // Reed beds round every pool and lake.
+            Biome::Fen => Sow { shore: 18.0, ..base },
+            // Reeds along the banks, scrub on the dunes.
+            Biome::Valley => Sow { shore: 14.0, jungle: 0.8, thin: 0.3, ..base },
+            // Canopy over most of it, meadow in the clearings.
+            Biome::Jungle => Sow { bare: 0.15, jungle: 0.3, shore: 8.0, thin: 0.4, ramp: 0.2, ..base },
+            // Sparse grass in the rooms.
+            Biome::Highlands => Sow { bare: 0.6, jungle: 1.1, shore: 6.0, thin: 0.25, ..base },
+            // A little growth in the caverns, reeds at the pools.
+            Biome::Caves => Sow { bare: 0.6, jungle: 1.1, shore: 6.0, sand: None, thin: 0.2, ..base },
+            Biome::Core => Sow { jungle: 0.62, ..base },
+        }
+    }
+}
+
+/// Map cells to the nearest cell where `to` holds, by a 3-4 chamfer (in
+/// thirds of a cell; `u16::MAX` where there is none).
+fn chamfer(w: usize, h: usize, to: impl Fn(usize) -> bool) -> Vec<u16> {
+    let mut d: Vec<u16> = (0..w * h).map(|i| if to(i) { 0 } else { u16::MAX }).collect();
+    let near = |d: &[u16], i: usize, c: u16| d[i].saturating_add(c);
+    for y in 0..h {
+        for x in 0..w {
+            let i = y * w + x;
+            let mut v = d[i];
+            if x > 0 {
+                v = v.min(near(&d, i - 1, 3));
+            }
+            if y > 0 {
+                v = v.min(near(&d, i - w, 3));
+                if x > 0 {
+                    v = v.min(near(&d, i - w - 1, 4));
+                }
+                if x + 1 < w {
+                    v = v.min(near(&d, i - w + 1, 4));
+                }
+            }
+            d[i] = v;
+        }
+    }
+    for y in (0..h).rev() {
+        for x in (0..w).rev() {
+            let i = y * w + x;
+            let mut v = d[i];
+            if x + 1 < w {
+                v = v.min(near(&d, i + 1, 3));
+            }
+            if y + 1 < h {
+                v = v.min(near(&d, i + w, 3));
+                if x + 1 < w {
+                    v = v.min(near(&d, i + w + 1, 4));
+                }
+                if x > 0 {
+                    v = v.min(near(&d, i + w - 1, 4));
+                }
+            }
+            d[i] = v;
+        }
+    }
+    d
+}
+
+/// The plants a map starts with, by `sow` (see `Sow`), as B bytes.
+#[allow(clippy::too_many_arguments)]
+fn sow(sw: &Sow, w: usize, h: usize, ground: &[u8], items: &Items, landing: (f32, f32), canopy: &Field, fine: &Field) -> Vec<u8> {
+    use crate::mould::plants::{pack, JUNGLE, REEDS};
+    let wet = |i: usize| ground[i] & G_WET != 0;
+    // Map cells to the water's edge, either side (one chamfer from the
+    // cells whose neighbour is the other kind); none on a dry planet.
+    let any_wet = sw.shore > 0.0 && ground.iter().any(|&g| g & G_WET != 0);
+    let to_edge = if any_wet {
+        chamfer(w, h, |i| {
+            let (x, y) = (i % w, i / w);
+            (x > 0 && wet(i - 1) != wet(i)) || (x + 1 < w && wet(i + 1) != wet(i)) || (y > 0 && wet(i - w) != wet(i)) || (y + 1 < h && wet(i + w) != wet(i))
+        })
+    } else {
+        Vec::new()
+    };
+    let ramp = |v: f32, from: f32, over: f32| ((v - from) / over).clamp(0.0, 1.0);
+    let mut out = vec![0u8; w * h];
+    for y in 0..h {
+        for x in 0..w {
+            let i = y * w + x;
+            let g = ground[i];
+            if g & G_ROCK != 0 {
+                continue;
+            }
+            let n = canopy.at(x, y) + (fine.at(x, y) - 0.5) * 0.14;
+            let soil = g >> 4;
+            // Deep water and bridges grow nothing (`plants::SOIL_CAP`).
+            if g == G_DEEP || g == G_BRIDGE {
+                continue;
+            }
+            if any_wet {
+                // Reeds: thickest at the water's edge, thinning out to
+                // `shore` on land and in the water both.
+                // Into the water only a few cells, so open water still
+                // reads (a full fringe hid the rivers' shallows).
+                let d = to_edge[i] as f32 / 3.0;
+                let reach = sw.shore * (0.7 + 0.6 * fine.at(x, y)) * if wet(i) { 0.35 } else { 1.0 };
+                if d <= reach {
+                    out[i] = pack(REEDS, 1.0 - 0.6 * d / reach.max(1.0));
+                    continue;
+                }
+            }
+            if wet(i) || soil == 3 {
+                continue;
+            }
+            let (bare, jungle) = if sw.lush && soil == 0 { (0.12, 0.6) } else { (sw.bare, sw.jungle) };
+            if n < bare {
+                continue;
+            }
+            out[i] = if soil == 1 {
+                match sw.sand {
+                    Some(k) => pack(k, sw.thin + (1.0 - sw.thin) * ramp(n, bare, sw.ramp)),
+                    None => 0,
+                }
+            } else if n >= jungle {
+                pack(JUNGLE, 0.5 + 0.5 * ramp(n, jungle, 0.15))
+            } else {
+                pack(if sw.lush && soil == 0 { crate::mould::plants::MEADOW } else { sw.main }, sw.thin + (1.0 - sw.thin) * ramp(n, bare, sw.ramp))
+            };
+        }
+    }
+    // A ragged clear patch where the squad lands, and nothing on a crystal
+    // (the game grows nothing there either). Each over its own box: over
+    // every cell and every crystal this pass was most of a planet's build.
+    let mut clear = |c: (f32, f32), reach: f32, inside: &dyn Fn(usize, usize, (f32, f32)) -> bool| {
+        let (x0, y0) = ((c.0 - reach).max(0.0) as usize, (c.1 - reach).max(0.0) as usize);
+        let (x1, y1) = (((c.0 + reach) as usize + 1).min(w), ((c.1 + reach) as usize + 1).min(h));
+        for y in y0..y1 {
+            for x in x0..x1 {
+                if inside(x, y, (x as f32 + 0.5, y as f32 + 0.5)) {
+                    out[y * w + x] = 0;
+                }
+            }
+        }
+    };
+    clear(landing, 50.0, &|x, y, at| dist(at, landing) < 30.0 + (fine.at(x, y) - 0.5) * 40.0);
+    for c in &items.crystals {
+        let q = (c.x, c.y);
+        clear(q, c.r + 2.0, &|_, _, at| dist(at, q) < c.r + 2.0);
+    }
+    out
 }
 
 // ---------------------------------------------------------------------
@@ -1724,7 +1993,7 @@ pub fn walkable(m: &Map, size: (usize, usize), walls: bool) -> (usize, usize, Ve
     let mut open = vec![true; bw * bh];
     for y in 0..h {
         for x in 0..w {
-            if m.ground[y * w + x] & G_ROCK != 0 {
+            if !standable(m.ground[y * w + x]) {
                 open[(y / BIN) * bw + x / BIN] = false;
             }
         }
@@ -1970,10 +2239,11 @@ mod tests {
     use crate::mould::big::BigDish;
     use crate::mould::larder_world::race_params;
 
-    /// FNV-1a over the ground and the item text: a planet's fingerprint.
+    /// FNV-1a over the ground, the plants and the item text: a planet's
+    /// fingerprint.
     fn print(m: &Map) -> u64 {
         let mut h = 0xcbf2_9ce4_8422_2325u64;
-        for b in m.ground.iter().copied().chain(m.items.text().into_bytes()) {
+        for b in m.ground.iter().copied().chain(m.plants.iter().copied()).chain(m.items.text().into_bytes()) {
             h = (h ^ b as u64).wrapping_mul(0x100_0000_01b3);
         }
         h
@@ -1997,10 +2267,12 @@ mod tests {
         assert_eq!(got, PINNED, "{got:#x?}");
     }
 
-    // Round 3 (dials and the new biome order, 2026-11-14). Round 2's
-    // depths 3-8 had kept their pins through the tiled region scan, which
-    // finds the same nearest sites as the full scan.
-    const PINNED: [u64; 8] = [0x95622705d4ab33f8, 0x8da237e6cb422583, 0x4dd1c750aa5db361, 0x2b249b76d96c3549, 0x81c6025cdcbc047f, 0x2299b3edb8c0642b, 0xf7ac30b4ab64805c, 0x44fa62d961f17019];
+    // Round 3 (dials and the new biome order, 2026-11-14), then plants in
+    // the fingerprint, deep water, bridges and fords, and planets 4-8 at
+    // up to 2x (`GROW_CAP`). Round 2's depths 3-8 had kept their pins
+    // through the tiled region scan, which finds the same nearest sites as
+    // the full scan.
+    const PINNED: [u64; 8] = [0xcd9eb867fac3322f, 0x994ec126bc931eba, 0xbc5df2aaa15113e2, 0xdfaa92ef45d1a174, 0xb9644a3f74b4e46f, 0x152db0909725a507, 0xb8f53c4c69603249, 0xfce5fb42e242613e];
 
     /// The core world at the owner's 6x area, pinned too: the bigger maps
     /// run more of the generator's loops, on every machine the same.
@@ -2010,7 +2282,7 @@ mod tests {
         assert_eq!(print(&m), PINNED_BIG, "{:#x}", print(&m));
     }
 
-    const PINNED_BIG: u64 = 0xffdd59373d98cf0a;
+    const PINNED_BIG: u64 = 0x034bef6b33578452;
 
     #[test]
     fn biomes_come_in_the_set_order_with_the_core_world_last() {

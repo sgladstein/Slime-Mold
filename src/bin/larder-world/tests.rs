@@ -910,6 +910,54 @@ fn every_test_loadout_fits_the_default_budget() {
     }
 }
 
+/// **The timed ground refresh reads only the crystal and wall cells and
+/// keeps the codes a whole-field rebuild makes** (2026-11-14: the whole
+/// read-back and rebuild took 32.9 ms at 6x a planet's area on the 1070;
+/// the graphics lead's condition was a byte-identical ground). On the
+/// nest map (walls and crystals), with the squad rushing and wall cells
+/// worn and broken by hand, every refresh over 16 game seconds matches
+/// `ground_codes` from the same charge and health.
+#[test]
+fn the_sparse_ground_refresh_matches_a_whole_one() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(Args { map: Some("nest".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None }, (320, 200), &device, &queue).unwrap();
+    let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
+    let walls: Vec<usize> = { let d = &app.game.as_ref().unwrap().world.e.dish; (0..d.w * d.h).filter(|&i| d.wall[i]).collect() };
+    assert!(walls.len() > 10, "the nest map has walls");
+    assert!(app.live.cells.len() > walls.len() && app.live.gather.is_some(), "crystal and wall cells live");
+    let (mut checked, mut worn, mut at) = (0, false, app.ground_at);
+    while app.game.as_ref().unwrap().time() < 16.0 {
+        plan(app.game.as_mut().unwrap(), "rush");
+        app.step(1.0 / 15.0);
+        if !worn && app.game.as_ref().unwrap().time() > 3.0 {
+            // A worn wall cell and a broken one: the refresh draws a
+            // share and rubble from health it reads alone.
+            let e = &app.game.as_ref().unwrap().world.e;
+            let full = e.dish.wall_health.get(walls[0]).copied().filter(|h| h.is_finite()).unwrap_or(400.0);
+            e.queue.write_buffer(&e.health, walls[0] as u64 * 4, &(full * 0.4).to_le_bytes());
+            e.queue.write_buffer(&e.health, walls[1] as u64 * 4, &0.0f32.to_le_bytes());
+            worn = true;
+        }
+        app.prepare();
+        if app.ground_at != at {
+            at = app.ground_at;
+            let g = app.game.as_ref().unwrap();
+            let e = &g.world.e;
+            let charge = floats(read_back(&e.device, &e.queue, &e.charge));
+            let health = floats(read_back(&e.device, &e.queue, &e.health));
+            assert_eq!(app.codes, ground_codes(g, &app.depth, Some(&charge), Some(&health)), "t {:.1} s", g.time());
+            checked += 1;
+        }
+    }
+    // A refresh waits up to a second for a frame between steps, so 16
+    // game seconds hold 6 to 16 of them (6 in 12 s on software Vulkan).
+    assert!(checked >= 6, "{checked} refreshes checked");
+    let g = app.game.as_ref().unwrap();
+    assert_eq!(app.codes[walls[1]] & 0xF, look::Ground::Rubble as u32, "the broken wall cell drew as rubble");
+    let left: f32 = g.world.crystals().iter().map(|c| c.1).sum();
+    assert!(left < app.charge0.iter().sum::<f32>(), "crystals were eaten, so charges changed: {left}");
+}
+
 /// **The squad's order lines** (owner's playtest, 2026-11-14 20:12Z and
 /// 20:15Z: "there should be a line showing where the selected squad is
 /// moving ... same with attack move and other commands ... if I set up
