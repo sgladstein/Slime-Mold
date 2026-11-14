@@ -378,6 +378,14 @@ pub struct Rules {
     /// lays a thin film nearly everywhere, so with 0 no crystal paid on
     /// the Fork.
     pub guard_walkers: u32,
+    /// Defenders while a squad works (`squads`, owner 2026-11-14 15:06Z):
+    /// some of a harvesting or building squad stand guard against nearby
+    /// slime while the rest work (`Game::cover_turn`).
+    pub cover: super::CoverRules,
+    /// Healing (owner 2026-11-14 15:06Z: "Units should be able to heal but
+    /// it cost energy, and requires units to be idle for bit, maybe only
+    /// near a captured crystal"): `Game::heal`.
+    pub heal: super::HealRules,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
     /// the target. 0 (the default) aims dead on and draws no random
@@ -503,6 +511,8 @@ impl Default for Rules {
             larder: true,
             guard: 120.0,
             guard_walkers: 8,
+            cover: super::CoverRules::default(),
+            heal: super::HealRules::default(),
             spread: 0.0,
             crystal_solid: true,
             mass: 1.0,

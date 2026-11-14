@@ -59,6 +59,7 @@ mod turn;
 mod score;
 mod shapes;
 mod squads;
+mod cover;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;
@@ -67,7 +68,8 @@ pub use raising::*;
 pub use rules::*;
 pub use world::*;
 pub use shapes::shape_keys;
-pub use squads::{Formation, LeadRules, Squad, SQUADS_MAX};
+pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
+pub use cover::{Cover, CoverRules, HealRules};
 pub use buildings::{BuildRules, Building, Kind, TURRET_MUZZLE};
 use buildings::Who;
 
@@ -125,6 +127,11 @@ pub struct Soldier {
     pub load: f32,
     /// Its squad (`squads`), an index into `Game::squads`.
     pub squad: u8,
+    /// Standing guard while the rest of its squad works (`Game::cover_turn`).
+    pub cover: bool,
+    /// Game seconds it has stood still, unbitten and not firing: it heals
+    /// once this reaches `HealRules::wait` (`Game::heal`).
+    pub rest: f32,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -302,6 +309,8 @@ pub struct Game<W: World> {
     /// guarding has paid in all.
     pub guarded: Vec<usize>,
     pub guard_paid: f32,
+    /// Health soldiers have healed resting by a held crystal (`HealRules`).
+    pub healed: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -398,6 +407,7 @@ impl<W: World> Game<W> {
             ranks: Vec::new(),
             ranked: [0; SQUADS_MAX],
             guarded: Vec::new(),
+            healed: 0.0,
             guard_paid: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
@@ -465,6 +475,8 @@ impl<W: World> Game<W> {
             smell: 1.0,
             load: 0.0,
             squad: 0,
+            cover: false,
+            rest: 0.0,
         });
     }
 
