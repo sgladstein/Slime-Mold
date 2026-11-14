@@ -171,8 +171,9 @@ impl App {
         }
         if g.rules.squads {
             // Each squad's number over its middle (the key that controls
-            // it), the controlled one bright.
-            for (n, q) in g.live_squads().into_iter().enumerate() {
+            // it: its id + 1, kept while it lives), the controlled one bright.
+            for q in g.live_squads() {
+                let n = q;
                 if let Some(m) = g.middle(q) {
                     let lit = g.active == Some(q);
                     let colour = if lit { [255, 255, 255, 255] } else { [200, 210, 220, 170] };
@@ -652,6 +653,12 @@ impl App {
                 Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
                 Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
             ];
+            // No Outpost without the larder (the squad mode): with nothing
+            // carried home its only effects were smelling of the bank and
+            // letting the mould eat from it (bug sweep's review, 11-14).
+            if !g.rules.larder {
+                cmds.retain(|c| c.id != OUTPOST);
+            }
             cmds.extend(rally.take());
         }
         // The squad mode: the card's letters off WASD (`squad_card_key`),
@@ -755,6 +762,7 @@ impl App {
         ] };
         m.main_menu = self.base.is_some();
         m.loadout = Some(self.loadout(g, &sel));
+        m.squads = self.squad_panel();
         m
     }
 

@@ -35,6 +35,7 @@
 
 use super::*;
 use slime_mould::mould::larder_world::{Formation, SQUADS_MAX};
+use slime_mould::world::ui::{SquadPanel, SquadRow};
 use slime_mould::world::ui::key_name;
 
 /// Squads whose middles are this close (dish cells) merge on `MERGE`.
@@ -227,9 +228,13 @@ impl App {
                 }
             }
             _ => {
+                // Stable keys: digit n is squad id n - 1 for as long as it
+                // lives, as an RTS control group (they once followed the
+                // live squads' order, so a squad's key changed whenever a
+                // lower one died, merged or split; bug sweep's review, 11-14).
                 let Some(n) = digit(code) else { return false };
-                if let Some(&o) = g.live_squads().get(n) {
-                    self.switch_to(o as u8);
+                if !g.members(n).is_empty() {
+                    self.switch_to(n as u8);
                 }
             }
         }
@@ -453,4 +458,79 @@ impl App {
 
 fn digit(code: KeyCode) -> Option<usize> {
     [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9].iter().position(|&k| k == code)
+}
+
+/// The squad tiles (`ui::SquadPanel`, owner 2026-11-14 08:22Z and 08:48Z,
+/// in the bottom middle panel's place): a tile a
+/// live squad in id order (row `r` is `live_squads()[r]`; its key is its
+/// id + 1, kept while it lives, as the digit keys pick), and Split and Combine.
+impl App {
+    pub(super) fn squad_panel(&self) -> Option<SquadPanel> {
+        self.sq.as_ref()?;
+        let g = self.game.as_ref()?;
+        let live = g.live_squads();
+        let rows = live
+            .iter()
+            .map(|&q| {
+                let sq = &g.squads[q];
+                let mut note = Vec::new();
+                if sq.formation != Formation::Blob {
+                    note.push(sq.formation.name().to_string());
+                }
+                note.push(if sq.fire.is_some() { "firing" } else if sq.steer != (0.0, 0.0) || sq.dest.is_some_and(|d| g.middle(q).is_some_and(|m| (m.0 - d.0).hypot(m.1 - d.1) > 4.0 * g.world.scale())) { "moving" } else { "holding" }.to_string());
+                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q) }
+            })
+            .collect();
+        let mine = g.active.map_or(0, |q| g.members(q).len());
+        Some(SquadPanel {
+            rows,
+            split_key: key_name(SPLIT),
+            combine_key: key_name(MERGE),
+            split_off: if mine < 2 {
+                Some("A squad of one can't split".into())
+            } else if g.free_squad().is_none() {
+                Some(format!("At most {SQUADS_MAX} squads"))
+            } else {
+                None
+            },
+            combine_off: (live.len() < 2).then(|| "No other squad to combine with".into()),
+        })
+    }
+
+    /// A squad panel event: command a squad, bring one in, split, combine.
+    pub(super) fn squad_panel_event(&mut self, ev: HudEvent) {
+        let Some(g) = self.game.as_mut() else { return };
+        let live = g.live_squads();
+        let Some(q) = g.active else { return };
+        match ev {
+            HudEvent::Squad(r) => {
+                if let Some(&o) = live.get(r) {
+                    self.switch_to(o as u8);
+                }
+            }
+            HudEvent::SquadInto(r) => {
+                if let Some(&o) = live.get(r).filter(|&&o| o != q) {
+                    g.apply(Cmd::Merge(q as u8, o as u8));
+                }
+            }
+            HudEvent::SquadSplit => {
+                // The front half (the way it faces) becomes the new squad.
+                let Some(m) = g.middle(q) else { return };
+                let f = g.squads[q].face;
+                let reach = 20.0 * g.world.scale();
+                if g.apply(Cmd::Split(q as u8, (m.0 + f.0 * reach, m.1 + f.1 * reach))) {
+                    self.steer_new_squad();
+                }
+            }
+            HudEvent::SquadCombine => {
+                // The nearest other squad, however far: it walks over.
+                let Some(m) = g.middle(q) else { return };
+                let other = live.iter().copied().filter(|&o| o != q).filter_map(|o| g.middle(o).map(|c| (o, (c.0 - m.0).hypot(c.1 - m.1)))).min_by(|a, b| a.1.total_cmp(&b.1));
+                if let Some((o, _)) = other {
+                    g.apply(Cmd::Merge(q as u8, o as u8));
+                }
+            }
+            _ => {}
+        }
+    }
 }
