@@ -90,9 +90,12 @@ impl ApplicationHandler for App {
                 let PhysicalKey::Code(code) = event.physical_key else { return };
                 let pressed = event.state == ElementState::Pressed;
                 // The start menu takes every key while it is up.
-                if let Some(m) = self.menu.as_mut() {
-                    let picks = if event.repeat && !matches!(code, KeyCode::ArrowUp | KeyCode::ArrowDown) { Vec::new() } else { m.key(code, pressed) };
-                    self.menu_events(picks, event_loop);
+                if self.in_menu() {
+                    let repeat = event.repeat && !matches!(code, KeyCode::ArrowUp | KeyCode::ArrowDown);
+                    match self.menu_input(|m| if repeat { Vec::new() } else { m.key(code, pressed) }) {
+                        Ok(picks) => self.menu_events(picks, event_loop),
+                        Err(e) => self.fail(event_loop, e),
+                    }
                     return;
                 }
                 // The game UI first: its command keys, Esc for its menu,
@@ -153,9 +156,11 @@ impl ApplicationHandler for App {
                     MouseButton::Middle => Button::Middle,
                     _ => return,
                 };
-                if let Some(m) = self.menu.as_mut() {
-                    let picks = m.button(b, down);
-                    self.menu_events(picks, event_loop);
+                if self.in_menu() {
+                    match self.menu_input(|m| m.button(b, down)) {
+                        Ok(picks) => self.menu_events(picks, event_loop),
+                        Err(e) => self.fail(event_loop, e),
+                    }
                     return;
                 }
                 let (took, events) = self.hud.button(b, down, &self.camera, self.shift);
