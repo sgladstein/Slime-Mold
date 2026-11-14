@@ -1717,6 +1717,30 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
         let gh = 1.0 - exp(-germ_in[2u * P.w * P.h + i] / max(2.0 * gas_sleep(), 1.0e-3));
         c += vec3<f32>(45.0, 22.0, 90.0) * gh;
     }
+    // Crater and alarm on the ground (owner, 2026-11-14 08:40Z, of the
+    // scorch and alarm trails: "They should be visible though" "100%"),
+    // the fields themselves, added as the gas is so the mould on them
+    // keeps its colour. Crater (`crater_at`, fine steps left) is an ember,
+    // full while at least `scorch_full` steps are left and fading as the
+    // count runs out: it is the burn Scorch leaves. Alarm (the germ
+    // fields' second block) is a sharp green (a yellow was lost on
+    // the gold mould, 11-14), faint as it spreads thin. On 11-12 04:38Z the owner turned
+    // down a dark char painted at every shot's hit; this is no paint: it
+    // is on exactly the cells the mould shuns or flees, for exactly as
+    // long, and gone when the field is.
+    if (P.world != 0u && agar[i] != 0u) {
+        if ((P.scorched & 1u) != 0u) {
+            let left = crater_at(i);
+            if (left > 0.0) {
+                let cf = min(left / max(P.scorch_full, 1.0), 1.0);
+                c += vec3<f32>(120.0, 36.0, 8.0) * cf;
+            }
+        }
+        if (P.alarm_keep > 0.0) {
+            let ah = 1.0 - exp(-germ_in[P.w * P.h + i] / 8.0);
+            c += vec3<f32>(30.0, 110.0, 40.0) * ah;
+        }
+    }
     // The look the view shades from (byte 2, the wound, is the trail pass's).
     let thick = u32(clamp(g, 0.0, 1.0) * 255.0);
     let crowd = min(atomicLoad(&occ[i]), 255u);
@@ -2902,6 +2926,20 @@ fn gaslay(@builtin(global_invocation_id) gid: vec3<u32>) {
     let dy = i32(i / P.w) - i32(P.ky);
     if (f32(dx * dx + dy * dy) > P.kr * P.kr) { return; }
     germ_in[2u * c + i] = germ_in[2u * c + i] + P.kalarm;
+}
+
+// **Bait laid** (`Engine::lay_scent`, the CPU's `BigDish::lay_bait`,
+// 11-14, the rounds' `Bait` trail): every agar cell `gaslay` would pick
+// gains the strike row's `kalarm` of food scent, in the field the next
+// tick reads, as the units' `smell` adds theirs.
+@compute @workgroup_size(256)
+fn baitlay(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    if (i >= P.w * P.h || agar[i] == 0u) { return; }
+    let dx = i32(i % P.w) - i32(P.kx);
+    let dy = i32(i / P.w) - i32(P.ky);
+    if (f32(dx * dx + dy * dy) > P.kr * P.kr) { return; }
+    scent_in[i] = scent_in[i] + P.kalarm;
 }
 
 // **Sleep in the cloud** (the CPU's `gas_sleepers`, at the end of a tick

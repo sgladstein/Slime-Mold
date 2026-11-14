@@ -1122,9 +1122,11 @@ pub const MASSCLEAR: usize = 56;
 pub const MASSCOUNT: usize = 57;
 pub const DCLEAR: usize = 58;
 pub const DCOUNT: usize = 59;
+/// Bait laid (11-14, `Engine::lay_scent`).
+pub const BAITLAY: usize = 60;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 60] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount",
+pub const PASSES: [&str; 61] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay",
 ];
 
 impl Shared {
@@ -2353,6 +2355,15 @@ impl Engine {
     /// every walker over `s.gas_sleep`, gassed `s.gas_linger` steps more
     /// (`gasp`, a pass a tick from the first cloud on). Runs on its own,
     /// between ticks.
+    /// Food scent laid within `r` of (`x`, `y`) (dish cells): the CPU's
+    /// `BigDish::lay_bait` (the rounds' `Bait` trail, 11-14).
+    pub fn lay_scent(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, amount: f32) {
+        let k = self.dish.p.scale as f32;
+        self.write_params(s, Hand::default(), 0);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, amount, 0.0, 0.0, 0.0, 0.0]));
+        self.run(shared, &[(BAITLAY, self.cells.div_ceil(256))]);
+    }
+
     pub fn lay_gas(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, dose: f32) {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
@@ -2500,6 +2511,11 @@ impl Engine {
     pub fn gas_cloud_of(&self) -> Vec<f32> {
         let g = floats(&read_back(&self.device, &self.queue, &self.germ[(self.done % 2) as usize]));
         g[2 * self.cells as usize..3 * self.cells as usize].to_vec()
+    }
+
+    /// The food scent now (the CPU's `scent`), read back.
+    pub fn scent_of(&self) -> Vec<f32> {
+        floats(&read_back(&self.device, &self.queue, &self.scent[(self.done % 2) as usize]))
     }
 
     pub fn alarm_of(&self) -> Vec<f32> {

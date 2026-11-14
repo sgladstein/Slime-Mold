@@ -4021,6 +4021,26 @@ impl BigDish {
     /// Lays `dose` of gas cloud on the agar cells within `r` of (`x`, `y`)
     /// (fine cells), at whole-cell offsets from the centre's cell as the
     /// strike's cells are (the engine's `gaslay`). Turns the cloud on.
+    /// Food scent laid on the agar within `r` of (`x`, `y`) (fine cells),
+    /// the cells chosen as `lay_gas` chooses them: the rounds' `Bait`
+    /// trail (2026-11-14). The GPU's `baitlay` adds the same.
+    pub fn lay_bait(&mut self, x: f32, y: f32, r: f32, amount: f32) {
+        let (cx, cy) = (x as i64, y as i64);
+        let n = r.max(0.0).ceil() as i64;
+        for dy in -n..=n {
+            for dx in -n..=n {
+                let (px, py) = (cx + dx, cy + dy);
+                if px < 0 || py < 0 || px >= self.w as i64 || py >= self.h as i64 {
+                    continue;
+                }
+                let i = py as usize * self.w + px as usize;
+                if ((dx * dx + dy * dy) as f32) <= r * r && self.agar[i] {
+                    self.scent[i] += amount;
+                }
+            }
+        }
+    }
+
     pub fn lay_gas(&mut self, x: f32, y: f32, r: f32, dose: f32) {
         self.enable_life();
         if self.gassed.is_empty() {

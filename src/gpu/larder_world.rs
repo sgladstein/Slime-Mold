@@ -582,6 +582,14 @@ impl World for GpuWorld {
     /// reach or turn, as there), and the strike's `kill` pass infects. The
     /// alarm field turns on with the first alarm or gas, as `BigDish::
     /// enable_alarm` does.
+    fn burned(&mut self) -> u32 {
+        self.flush();
+        let now = self.e.struck();
+        let n = now.wrapping_sub(self.struck);
+        self.struck = now;
+        n
+    }
+
     fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
         // A step in shares (`spread`) runs whole before the burst, so the
         // burst lands between steps as on the CPU.
@@ -590,11 +598,12 @@ impl World for GpuWorld {
             self.s.alarm_keep = k.alarm_keep;
         }
         let mut out = squad::BurstOut::default();
-        if b.kill || b.alarm > 0.0 || b.crater > 0 {
-            let r = if b.kill { b.r } else { 0.0 };
+        if b.kill || b.burn || b.alarm > 0.0 || b.crater > 0 {
+            let r = if b.kill || b.burn { b.r } else { 0.0 };
             self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, 0.0);
             // Only a kill moves the count: a shock or a crater alone (the
-            // rounds' trails, a burst a bullet a frame) skips the read-back.
+            // rounds' trails, a burst a bullet a frame) skips the read-back,
+            // and a burn waits for `burned`, once a frame.
             if b.kill {
                 let now = self.e.struck();
                 out.killed = now.wrapping_sub(self.struck);
@@ -616,6 +625,9 @@ impl World for GpuWorld {
                 (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
                 self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, k.gas_dose);
             }
+        }
+        if b.bait > 0.0 {
+            self.e.lay_scent(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.bait);
         }
         if b.cloud > 0.0 && k.gas_keep > 0.0 {
             (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
