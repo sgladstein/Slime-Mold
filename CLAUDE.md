@@ -42,13 +42,19 @@ All rulings, quoted and timed: `wiki/decisions.md` (standing) and
 
 ## How threads work
 
-- **Each thread merges its own PRs** (2026-11-10): once both CI jobs are
-  green on the exact head, with a merge commit. That head must contain
-  current main: if main moved since your last CI run, merge main in and
-  wait for green again (11-13; #165 and #174 were each green alone and
-  together broke main). Docs-only PRs (`Reports/`,
-  `handoff/`, `research/`, `wiki/`, `*.md`) skip the build jobs; skipped is
-  green, but the wiki lint still runs.
+- **Each thread merges its own PRs through the queue** (2026-11-10; queue
+  2026-11-14). Add the label `queue` to the PR:
+  `gh api repos/sgladstein/Slime-Mold/issues/N/labels -f 'labels[]=queue'`
+  (MCP `issue_write` `labels` replaces the PR's other labels; GraphQL, so
+  `gh pr merge --auto`, is blocked here). Don't merge main in by
+  hand to re-run CI: `.github/workflows/merge-queue.yml` merges up to five
+  queued PRs onto current main with merge commits, runs CI once on that
+  candidate and fast-forwards main when it is green, so what lands is what
+  was tested (11-13: #165 and #174 were each green alone and together broke
+  main). A conflict or a red PR gets its label removed and a comment: fix
+  it and label it again. Merging by hand still works but makes the queue
+  rebuild. Docs-only changes (`Reports/`, `handoff/`, `research/`, `wiki/`,
+  `*.md`) skip the build jobs; the wiki lint still runs.
 - **Long runs may use up to 4 Haiku runner threads** (2026-11-10), asked for
   through the coordinator. Runners make no decisions: they run exactly the
   commands given and send the raw output back.
