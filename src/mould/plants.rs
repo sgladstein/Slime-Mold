@@ -329,13 +329,13 @@ fn noise(x: usize, y: usize, cell: usize, s: u32) -> f32 {
 /// between; `share` of the cells start planted (1 full grown), full. A map
 /// that has plants keeps them.
 pub fn stand_in(m: &mut crate::mould::map::Map, seed: u32, share: f32) {
-    use crate::mould::map::{G_ROCK, G_WET, MAP_W};
+    use crate::mould::map::{G_ROCK, G_WET};
     if !m.plants.is_empty() {
         return;
     }
     m.plants = (0..m.ground.len())
         .map(|i| {
-            let (x, y) = (i % MAP_W, i / MAP_W);
+            let (x, y) = (i % m.w, i / m.w);
             let g = m.ground[i];
             if g & G_ROCK != 0 || unit(hash(x as u32, y as u32, seed ^ 77)) > share {
                 return 0;

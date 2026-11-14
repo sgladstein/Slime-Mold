@@ -211,6 +211,7 @@ pub fn dish_crystals(d: &crate::mould::big::BigDish) -> Vec<u16> {
 /// A ground buffer on the GPU from codes (`ground`), for `View::set_look`.
 pub fn ground_buffer(device: &pixels::wgpu::Device, queue: &pixels::wgpu::Queue, codes: &[u32]) -> pixels::wgpu::Buffer {
     use pixels::wgpu;
+    crate::gpu::note_bytes((codes.len() * 4).max(16) as u64);
     let b = device.create_buffer(&wgpu::BufferDescriptor { label: Some("ground"), size: (codes.len() * 4).max(16) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     queue.write_buffer(&b, 0, &crate::gpu::u32_bytes(codes));
     b

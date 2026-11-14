@@ -1,0 +1,18 @@
+depth seed name biome attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | failed attempts
+1 1 Dreskor barrens 0 95 | 16 3% 0% 0% 35% 0% 4 | 887 887 69 | 100% | 
+1 2 Yala barrens 0 88 | 16 5% 0% 0% 28% 0% 4 | 813 813 71 | 100% | 
+2 1 Uldum marsh 0 74 | 16 3% 0% 24% 0% 32% 0 | 819 819 58 | 100% | 
+2 2 Thathus marsh 0 85 | 16 3% 0% 31% 0% 17% 0 | 855 855 87 | 100% | 
+3 1 Drevix canyon 0 83 | 16 16% 24% 0% 0% 0% 0 | 908 908 105 | 100% | 
+3 2 Drevon canyon 0 81 | 16 17% 19% 0% 0% 0% 8 | 856 856 71 | 100% | 
+4 1 Nezanus dunes 0 88 | 22 2% 41% 43% 0% 0% 4 | 575 840 73 | 100% | 
+4 2 Ullukar dunes 0 91 | 22 3% 38% 42% 0% 0% 0 | 687 763 76 | 100% | 
+5 1 Yathek claypan 0 87 | 17 8% 0% 71% 0% 0% 0 | 672 800 60 | 100% | 
+5 2 Dreka claypan 0 96 | 17 8% 0% 74% 0% 0% 4 | 596 968 50 | 100% | 
+6 1 Nedarro thicket 0 61 | 17 5% 0% 56% 0% 0% 136 | 508 745 65 | 100% | 
+6 2 Karon thicket 0 58 | 17 5% 0% 53% 0% 0% 125 | 636 788 95 | 80% | 
+7 1 Vekum spires 0 59 | 17 9% 35% 19% 0% 0% 0 | 511 859 73 | 100% | 
+7 2 Lothaskar spires 0 59 | 17 11% 31% 15% 0% 0% 0 | 538 616 84 | 100% | 
+8 1 Quamar core 1 126 | 21 8% 13% 32% 3% 6% 64 | 516 872 52 | 100% | 2 of 3 nests placed
+8 2 Lozo core 0 63 | 21 8% 7% 39% 5% 8% 132 | 572 955 58 | 84% | 
+16 planets, 81 ms each on average

@@ -107,8 +107,40 @@ pub struct Planet {
     pub depth: u32,
     pub name: String,
     pub biome: Biome,
-    /// Map cells, as `MAP_W` x `MAP_H` (fixed until maps carry a size).
+    /// Map cells (`size_at`): 60% of the designed maps' area on planet 1,
+    /// six times it on the core world.
     pub size: (usize, usize),
+}
+
+/// Each planet's map area as a share of the designed maps' (1024 x 640):
+/// the owner's "first planet about 60% of today's map, today's size by
+/// planet 3 or 4, up to 6 the area for the core world" (2026-11-14 15:33Z).
+/// Past the core world, the core world's. `GROW_CAP` holds it at today's
+/// size for now.
+pub const AREA: [f32; 8] = [0.6, 0.8, 1.0, 1.4, 2.0, 2.8, 4.0, 6.0];
+
+/// The biggest share `size_at` gives until the 1070 has timed the bigger
+/// worlds: the technical lead (2026-11-14 16:42Z), "Before the default
+/// changes, book one 1070 timing ... at 1x, 2x, 4x and 6x area". Smaller
+/// planets cost less than today's and need no timing. `planet:D:S:AREA`
+/// asks for any share up to `AREA_MAX` (that timing, and dev play).
+pub const GROW_CAP: f32 = 1.0;
+
+/// The biggest share a `planet:D:S:AREA` spec may ask for.
+pub const AREA_MAX: f32 = 6.0;
+
+/// The map size at `depth`, map cells: `AREA`'s share of 1024 x 640 (at
+/// most `GROW_CAP`), the same shape.
+pub fn size_at(depth: u32) -> (usize, usize) {
+    size_of(AREA[(depth.clamp(1, AREA.len() as u32) - 1) as usize].min(GROW_CAP))
+}
+
+/// A map `area` times 1024 x 640's area, the same shape, each side a
+/// multiple of 16 map cells (4 dish cells).
+pub fn size_of(area: f32) -> (usize, usize) {
+    let k = area.sqrt();
+    let side = |v: usize| ((v as f32 * k / 16.0 + 0.5).floor() as usize).max(4) * 16;
+    (side(MAP_W), side(MAP_H))
 }
 
 /// The planet at `depth` (from 1) of the run with `seed`.
@@ -116,7 +148,7 @@ pub fn planet(seed: u64, depth: u32) -> Planet {
     let mut r = Rng::new(seed, depth, STREAM_PLANET);
     let biome = Biome::at(depth);
     let name = planet_name(&mut r);
-    Planet { seed, depth, name, biome, size: (MAP_W, MAP_H) }
+    Planet { seed, depth, name, biome, size: size_at(depth) }
 }
 
 /// The map of the planet at `depth` of the run with `seed`.
@@ -124,9 +156,10 @@ pub fn level(seed: u64, depth: u32) -> Map {
     generate(&planet(seed, depth))
 }
 
-/// A `map=` value naming a planet: `planet` (depth 1), `planet:DEPTH` or
-/// `planet:DEPTH:SEED`, the seed otherwise `seed` (the window's `seed=`).
-/// `None` when `s` names no planet.
+/// A `map=` value naming a planet: `planet` (depth 1), `planet:DEPTH`,
+/// `planet:DEPTH:SEED` or `planet:DEPTH:SEED:AREA`, the seed otherwise
+/// `seed` (the window's `seed=`) and the area (a share of today's map, to
+/// `AREA_MAX`) otherwise the depth's. `None` when `s` names no planet.
 pub fn spec(s: &str, seed: u64) -> Option<Result<(Planet, Map), String>> {
     Some(spec_planet(s, seed)?.map(|p| {
         let m = generate(&p);
@@ -142,8 +175,8 @@ pub fn spec_planet(s: &str, seed: u64) -> Option<Result<Planet, String>> {
     }
     let read = || -> Result<Planet, String> {
         let words: Vec<&str> = rest.split(':').skip(1).collect();
-        if words.len() > 2 {
-            return Err(format!("{s}: planet, planet:DEPTH or planet:DEPTH:SEED"));
+        if words.len() > 3 {
+            return Err(format!("{s}: planet, planet:DEPTH, planet:DEPTH:SEED or planet:DEPTH:SEED:AREA"));
         }
         let depth = match words.first() {
             Some(d) => d.parse::<u32>().map_err(|e| format!("{s}: depth {d:?}: {e}"))?,
@@ -156,7 +189,17 @@ pub fn spec_planet(s: &str, seed: u64) -> Option<Result<Planet, String>> {
             Some(v) => v.parse::<u64>().map_err(|e| format!("{s}: seed {v:?}: {e}"))?,
             None => seed,
         };
-        Ok(planet(seed, depth))
+        let p = planet(seed, depth);
+        match words.get(2) {
+            Some(v) => {
+                let area = v.parse::<f32>().map_err(|e| format!("{s}: area {v:?}: {e}"))?;
+                if !(0.25..=AREA_MAX).contains(&area) {
+                    return Err(format!("{s}: area {area} (a share of today's map) runs from 0.25 to {AREA_MAX}"));
+                }
+                Ok(Planet { size: size_of(area), ..p })
+            }
+            None => Ok(p),
+        }
     };
     Some(read())
 }
@@ -277,6 +320,19 @@ impl Field {
         Field { gw, v }
     }
 
+    /// The least and greatest value over cells `x0..x1` x `y0..y1`: the
+    /// samples `at` reads there bound it.
+    fn range(&self, x0: usize, y0: usize, x1: usize, y1: usize) -> (f32, f32) {
+        let (mut lo, mut hi) = (f32::MAX, f32::MIN);
+        for gy in y0 / STEP..=(y1 - 1) / STEP + 1 {
+            for gx in x0 / STEP..=(x1 - 1) / STEP + 1 {
+                let v = self.v[gy * self.gw + gx];
+                (lo, hi) = (lo.min(v), hi.max(v));
+            }
+        }
+        (lo, hi)
+    }
+
     fn at(&self, x: usize, y: usize) -> f32 {
         let (gx, gy, tx, ty) = (x / STEP, y / STEP, (x % STEP) as f32 / STEP as f32, (y % STEP) as f32 / STEP as f32);
         let i = gy * self.gw + gx;
@@ -304,14 +360,21 @@ pub struct Recipe {
     pub gate: f32,
     /// Ridge half-width, map cells (the noise thins and thickens it).
     pub ridge: f32,
+    /// How much the noise varies a ridge's width: its half-width runs from
+    /// `ridge * (1 - vary / 2)` to `ridge * (1 + vary / 2)`. Low keeps a
+    /// ridge whole; high breaks it into stubs.
+    pub ridge_vary: f32,
+    /// Long ridges right across the map, across the route, each with one or
+    /// two passes (the Canyon's): 0 for none.
+    pub fronts: usize,
     /// Pass radius range, map cells.
     pub pass: (f32, f32),
     /// Warp of the region borders, map cells.
     pub warp: f32,
     /// Outcrop (mesa) threshold on noise: higher is fewer, 2 none.
     pub outcrop: f32,
-    /// Spire threshold on a finer noise: small rock pillars, 2 none.
-    pub spires: f32,
+    /// Small rock pillars, for a 1024 x 640 map (scaled by area).
+    pub pillars: usize,
     /// Slime nests (mould starts).
     pub nests: usize,
     /// Small scattered crystals.
@@ -336,10 +399,12 @@ impl Recipe {
             loops: 0.4,
             gate: 0.15,
             ridge: 13.0,
+            ridge_vary: 1.3,
+            fronts: 0,
             pass: (24.0, 36.0),
             warp: 60.0,
             outcrop: 0.7,
-            spires: 2.0,
+            pillars: 0,
             nests,
             small: 12,
             big: 2,
@@ -351,14 +416,23 @@ impl Recipe {
         let r = match p.biome {
             Biome::Barrens => Recipe { front: 0.45, ..base },
             Biome::Marsh => Recipe { front: 0.4, ridge: 10.0, outcrop: 0.74, ..base },
-            Biome::Canyon => Recipe { regions: 13, open: 0.3, front: 0.9, loops: 0.35, gate: 0.2, ridge: 20.0, pass: (22.0, 32.0), outcrop: 0.66, ..base },
+            // Two long ridges across the route (three past the first round),
+            // whole and wide, and walls along it between fewer, bigger
+            // regions; no mesas, which read as debris (graphics lead,
+            // 2026-11-14: the first canyon's rock was "short stubs").
+            Biome::Canyon => Recipe { regions: 9, open: 0.55, front: 0.0, loops: 0.35, gate: 0.25, ridge: 18.0, ridge_vary: 0.5, fronts: 2 + (p.depth > CORE_DEPTH) as usize, pass: (22.0, 32.0), outcrop: 2.0, ..base },
             Biome::Dunes => Recipe { open: 0.85, front: 0.35, ridge: 11.0, small: 18, big: 1, outcrop: 0.74, ..base },
             Biome::Claypan => Recipe { ..base },
             Biome::Thicket => Recipe { front: 0.5, gate: 0.6, ring: 1.0, hedges: 9, ..base },
-            Biome::Spires => Recipe { open: 0.85, front: 0.3, ridge: 11.0, outcrop: 0.76, spires: 0.59, ..base },
+            Biome::Spires => Recipe { open: 0.85, front: 0.3, ridge: 11.0, outcrop: 0.78, pillars: 210, ..base },
             Biome::Core => Recipe { regions: 15, open: 0.6, front: 0.7, gate: 0.35, ring: 0.6, hedges: 5, nests: nests.max(3), small: 14, big: 3, ..base },
         };
-        Recipe { pass: (r.pass.0 * narrow, r.pass.1 * narrow), ..r }
+        // More of everything on a bigger map, at the same density: regions
+        // (so the same spacing), crystals, hedges. Big contested crystals
+        // grow with the route's length, not the area.
+        let area = (p.size.0 * p.size.1) as f32 / (MAP_W * MAP_H) as f32;
+        let more = |n: usize, k: f32| (n as f32 * k + 0.5).floor() as usize;
+        Recipe { pass: (r.pass.0 * narrow, r.pass.1 * narrow), regions: more(r.regions, area), small: more(r.small, area), big: more(r.big, area.sqrt()), hedges: more(r.hedges, area), ..r }
     }
 }
 
@@ -393,6 +467,36 @@ pub fn build(p: &Planet, attempt: u32) -> Map {
 fn unit(dx: f32, dy: f32) -> (f32, f32) {
     let l = len(dx, dy).max(1e-6);
     (dx / l, dy / l)
+}
+
+/// `v` turned by the angle whose tangent is `k` (a square root, no `cos`).
+fn bend(v: (f32, f32), k: f32) -> (f32, f32) {
+    unit(v.0 - k * v.1, v.1 + k * v.0)
+}
+
+/// Soft rock's health a cell, as the designed maps' walls.
+const HP: f32 = 400.0;
+
+/// Soft rock along `pts`, each piece its own thickness.
+fn hedge(r: &mut Rng, walls: &mut Vec<Wall>, pts: &[(f32, f32)]) {
+    for s in pts.windows(2) {
+        let thick = r.range(11.0, 21.0).round();
+        walls.push(Wall { a: (s[0].0.round(), s[0].1.round()), b: (s[1].0.round(), s[1].1.round()), thick, hp: HP });
+    }
+}
+
+/// `a` to `b` in `k` pieces, the inner points pushed sideways by a smooth
+/// wander of up to about `wobble` map cells.
+fn wobbly(r: &mut Rng, a: (f32, f32), b: (f32, f32), k: usize, wobble: f32) -> Vec<(f32, f32)> {
+    let nrm = unit(-(b.1 - a.1), b.0 - a.0);
+    let mut off = 0.0;
+    (0..=k)
+        .map(|i| {
+            let t = i as f32 / k as f32;
+            off = if i == 0 || i == k { 0.0 } else { off * 0.5 + r.range(-wobble, wobble) };
+            (a.0 + (b.0 - a.0) * t + nrm.0 * off, a.1 + (b.1 - a.1) * t + nrm.1 * off)
+        })
+        .collect()
 }
 
 fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
@@ -469,6 +573,8 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     let fine = Field::new(w, h, |x, y| nb.fbm(x - 911.0, y + 377.0, 26.0));
     let soil_a = Field::new(w, h, |x, y| na.fbm(x, y, 130.0));
     let soil_b = Field::new(w, h, |x, y| nw.fbm(x, y, 60.0));
+    // The Marsh's pools: one broad noise, so they are big and run together.
+    let pools = Field::new(w, h, |x, y| nw.fbm(x + 1733.0, y - 419.0, 210.0));
 
     // Warped Voronoi: each cell's region, the runner-up, and its distance
     // to their border.
@@ -476,23 +582,65 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     let mut region = vec![0u16; n];
     let mut second = vec![0u16; n];
     let mut border = vec![0f32; n];
-    for y in 0..h {
-        for x in 0..w {
-            let px = x as f32 + 0.5 + warp_x.at(x, y);
-            let py = y as f32 + 0.5 + warp_y.at(x, y);
-            let (mut d1, mut d2, mut i1, mut i2) = (f32::MAX, f32::MAX, 0usize, 0usize);
-            for (k, s) in sites.iter().enumerate() {
-                let d = (px - s.0) * (px - s.0) + (py - s.1) * (py - s.1);
-                if d < d1 {
-                    (d2, i2, d1, i1) = (d1, i1, d, k);
-                } else if d < d2 {
-                    (d2, i2) = (d, k);
+    // Tile by tile, only the sites that can be one of a cell's nearest two:
+    // the warped points of a tile lie in a box (the warp is bilinear, so its
+    // samples bound it; padded a cell for rounding), and a site whose
+    // nearest approach to the box is farther than the second-nearest
+    // site's farthest cannot be either. The candidates keep their order, so
+    // the result is the full scan's to the bit, ties included; on the core
+    // world (90 sites, 3.9 million cells) the full scan was most of a
+    // second.
+    const TILE: usize = 16;
+    let mut cand: Vec<usize> = Vec::with_capacity(ns);
+    let mut far: Vec<f32> = Vec::with_capacity(ns);
+    for ty in (0..h).step_by(TILE) {
+        for tx in (0..w).step_by(TILE) {
+            let (x1, y1) = ((tx + TILE).min(w), (ty + TILE).min(h));
+            let (wx0, wx1) = warp_x.range(tx, ty, x1, y1);
+            let (wy0, wy1) = warp_y.range(tx, ty, x1, y1);
+            let bx = (tx as f32 + 0.5 + wx0 - 1.0, (x1 - 1) as f32 + 0.5 + wx1 + 1.0);
+            let by = (ty as f32 + 0.5 + wy0 - 1.0, (y1 - 1) as f32 + 0.5 + wy1 + 1.0);
+            far.clear();
+            far.extend(sites.iter().map(|s| {
+                let dx = (s.0 - bx.0).abs().max((s.0 - bx.1).abs());
+                let dy = (s.1 - by.0).abs().max((s.1 - by.1).abs());
+                dx * dx + dy * dy
+            }));
+            let (mut f1, mut f2) = (f32::MAX, f32::MAX);
+            for &f in &far {
+                if f < f1 {
+                    (f2, f1) = (f1, f);
+                } else if f < f2 {
+                    f2 = f;
                 }
             }
-            let i = y * w + x;
-            region[i] = i1 as u16;
-            second[i] = i2 as u16;
-            border[i] = (d2 - d1) / (2.0 * dist(sites[i1], sites[i2]).max(1.0));
+            cand.clear();
+            cand.extend((0..ns).filter(|&k| {
+                let s = sites[k];
+                let dx = (bx.0 - s.0).max(0.0).max(s.0 - bx.1);
+                let dy = (by.0 - s.1).max(0.0).max(s.1 - by.1);
+                dx * dx + dy * dy <= f2
+            }));
+            for y in ty..y1 {
+                for x in tx..x1 {
+                    let px = x as f32 + 0.5 + warp_x.at(x, y);
+                    let py = y as f32 + 0.5 + warp_y.at(x, y);
+                    let (mut d1, mut d2, mut i1, mut i2) = (f32::MAX, f32::MAX, 0usize, 0usize);
+                    for &k in &cand {
+                        let s = sites[k];
+                        let d = (px - s.0) * (px - s.0) + (py - s.1) * (py - s.1);
+                        if d < d1 {
+                            (d2, i2, d1, i1) = (d1, i1, d, k);
+                        } else if d < d2 {
+                            (d2, i2) = (d, k);
+                        }
+                    }
+                    let i = y * w + x;
+                    region[i] = i1 as u16;
+                    second[i] = i2 as u16;
+                    border[i] = (d2 - d1) / (2.0 * dist(sites[i1], sites[i2]).max(1.0));
+                }
+            }
         }
     }
 
@@ -606,7 +754,47 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     // first try, left a wall of rock wherever the ridge ran wider than the
     // disc: on the canyon, 2 of 3 seeds' first attempts had a nest and
     // half the crystals shut off.)
-    let widest = rc.ridge * 1.65 + 6.0;
+    let widest = rc.ridge * (1.0 + rc.ridge_vary / 2.0) + 6.0;
+
+    // Fronts (the Canyon's): ridges right across the map, across the route,
+    // at even steps between the landing and the far nest, each with one or
+    // two passes. A front is a band in the route's coordinate (warped, so
+    // it meanders); a pass is a slot across it in the other coordinate.
+    let perp = (-axis.1, axis.0);
+    let along = |q: (f32, f32)| (q.0 - landing.0) * axis.0 + (q.1 - landing.1) * axis.1;
+    let across = |q: (f32, f32)| (q.0 - landing.0) * perp.0 + (q.1 - landing.1) * perp.1;
+    let at_line = |s: f32, u: f32| (landing.0 + axis.0 * s + perp.0 * u, landing.1 + axis.1 * s + perp.1 * u);
+    let span = along(first);
+    struct Front {
+        s: f32,
+        half: f32,
+        passes: Vec<(f32, f32)>,
+        gate: Option<usize>,
+    }
+    let mut fronts: Vec<Front> = Vec::new();
+    for k in 0..rc.fronts {
+        let s = span * ((k + 1) as f32 / (rc.fronts + 1) as f32 + r.range(-0.04, 0.04));
+        let half = rc.ridge * r.range(1.6, 1.9);
+        // Where on the line a pass can go: inside the map, clear of its rim.
+        let rad = r.range(rc.pass.0, rc.pass.1);
+        let room: Vec<f32> = (-300..300).map(|i| i as f32 * 8.0).filter(|&u| {
+            let q = at_line(s, u);
+            q.0 > rad + 40.0 && q.1 > rad + 40.0 && q.0 < wf - rad - 40.0 && q.1 < hf - rad - 40.0
+        }).collect();
+        if room.is_empty() {
+            continue;
+        }
+        let mut passes = vec![(room[r.below(room.len())], rad)];
+        if r.chance(0.5) {
+            let rad2 = r.range(rc.pass.0, rc.pass.1);
+            let far: Vec<f32> = room.iter().copied().filter(|&u| (u - passes[0].0).abs() > 200.0).collect();
+            if !far.is_empty() {
+                passes.push((far[r.below(far.len())], rad2));
+            }
+        }
+        let gate = (passes.len() == 2 && r.chance(rc.gate)).then_some(1);
+        fronts.push(Front { s, half, passes, gate });
+    }
     let frames: Vec<((f32, f32), (f32, f32))> = edges
         .iter()
         .map(|e| {
@@ -620,7 +808,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         for x in 0..w {
             let i = y * w + x;
             let at = (x as f32 + 0.5, y as f32 + 0.5);
-            let half = rc.ridge * (0.35 + 1.3 * rough.at(x, y));
+            let half = rc.ridge * (1.0 - rc.ridge_vary / 2.0 + rc.ridge_vary * rough.at(x, y));
             let mut rock = false;
             if border[i] < half {
                 let k = edge_of[region[i] as usize * ns + second[i] as usize];
@@ -638,7 +826,13 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                     };
                 }
             }
-            if !rock && border[i] > 30.0 && (blobs.at(x, y) > rc.outcrop || fine.at(x, y) > rc.spires) {
+            if !rock && !fronts.is_empty() {
+                let (s, u) = (along(at) + warp_x.at(x, y), across(at));
+                let wide = 0.85 + 0.3 * rough.at(x, y);
+                rock = fronts.iter().any(|f| (s - f.s).abs() < f.half * wide && !f.passes.iter().any(|&(pu, rad)| (u - pu).abs() < rad))
+                    && !nests.iter().chain([&landing]).any(|&q| dist(q, at) < 110.0);
+            }
+            if !rock && border[i] > 30.0 && blobs.at(x, y) > rc.outcrop {
                 rock = !sites.iter().any(|&s| dist(s, at) < 120.0);
             }
             if rock {
@@ -646,11 +840,35 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             }
         }
     }
-
     // Soil and water, by the biome, in patches that ignore the regions;
     // plain round the landing, clay under the nests where the biome holds
     // the slime there (as the designed maps do).
     let nest_clay = matches!(p.biome, Biome::Marsh | Biome::Dunes | Biome::Claypan | Biome::Thicket | Biome::Core);
+    // The Claypan's cracks: the borders of a jittered grid's Voronoi cells,
+    // `CRACK` map cells across (a mud crack's polygons), broken up by noise.
+    const CRACK: f32 = 110.0;
+    let (cgw, cgh) = ((wf / CRACK) as usize + 3, (hf / CRACK) as usize + 3);
+    let crack_pts: Vec<(f32, f32)> = if p.biome == Biome::Claypan {
+        (0..cgw * cgh).map(|k| (((k % cgw) as f32 - 1.0 + r.range(0.15, 0.85)) * CRACK, ((k / cgw) as f32 - 1.0 + r.range(0.15, 0.85)) * CRACK)).collect()
+    } else {
+        Vec::new()
+    };
+    let crack_at = |q: (f32, f32)| -> f32 {
+        let (gx, gy) = ((q.0 / CRACK) as usize + 1, (q.1 / CRACK) as usize + 1);
+        let (mut d1, mut d2, mut p1, mut p2) = (f32::MAX, f32::MAX, q, q);
+        for j in gy - 1..=gy + 1 {
+            for i in gx - 1..=gx + 1 {
+                let c = crack_pts[j * cgw + i];
+                let d = (q.0 - c.0) * (q.0 - c.0) + (q.1 - c.1) * (q.1 - c.1);
+                if d < d1 {
+                    (d2, p2, d1, p1) = (d1, p1, d, c);
+                } else if d < d2 {
+                    (d2, p2) = (d, c);
+                }
+            }
+        }
+        (d2 - d1) / (2.0 * dist(p1, p2).max(1.0))
+    };
     for y in 0..h {
         for x in 0..w {
             let i = y * w + x;
@@ -658,22 +876,25 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             let (a, b) = (soil_a.at(x, y), soil_b.at(x, y));
             let dl = dist(at, landing);
             let dn = nests.iter().map(|&q| dist(at, q)).fold(f32::MAX, f32::min);
-            // 0 at the landing, 1 at a nest.
-            let t = dl / (dl + dn).max(1.0);
             let mut soil = 0u8;
             let mut wet = false;
             match p.biome {
                 Biome::Barrens => {
-                    // Bands across the middle of the route.
-                    let band = if (0.25..0.75).contains(&t) { 0.12 } else { 0.0 };
-                    if a + band > 0.6 {
+                    // Three wide bands right across the route, meandering
+                    // and ragged. (Noise patches, the first try, read as
+                    // plain ground at zoom 1: graphics lead, 2026-11-14.)
+                    let s = (along(at) + warp_x.at(x, y)) / span.max(1.0);
+                    let half = 0.06 * (0.8 + 0.4 * a) + (fine.at(x, y) - 0.5) * 0.08;
+                    if [0.28, 0.5, 0.72].iter().any(|&c| (s - c).abs() < half) {
                         soil = G_BARREN;
                     }
                 }
                 Biome::Marsh => {
-                    if b > 0.6 {
+                    // Big pools that run together, on clay banks.
+                    let pool = pools.at(x, y) + (fine.at(x, y) - 0.5) * 0.12;
+                    if pool > 0.56 {
                         wet = true;
-                    } else if a > 0.55 {
+                    } else if pool > 0.5 || a > 0.62 {
                         soil = G_CLAY;
                     }
                 }
@@ -688,10 +909,10 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                     }
                 }
                 Biome::Claypan => {
-                    if a > 0.38 {
+                    // Clay nearly everywhere, cracked into polygons of plain
+                    // ground here and there.
+                    if a > 0.24 && !(b > 0.42 && crack_at(at) < 2.5 + 4.0 * fine.at(x, y)) {
                         soil = G_CLAY;
-                    } else if b > 0.66 {
-                        soil = G_BARREN;
                     }
                 }
                 Biome::Thicket => {
@@ -718,7 +939,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                     }
                 }
             }
-            let ragged = (b - 0.5) * 80.0;
+            let ragged = (b - 0.5) * 80.0 + (fine.at(x, y) - 0.5) * 110.0;
             if nest_clay && dn < 130.0 + ragged {
                 (soil, wet) = (G_CLAY, false);
             }
@@ -813,13 +1034,41 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             placed += 1;
         }
     }
+    // Pillars (the Spires'): many small ones, apart, each its own ragged
+    // disc, off the landing, the nests and the crystals. After the
+    // crystals, which would otherwise find no room between them.
+    let mut pillars: Vec<((f32, f32), f32)> = Vec::new();
+    let want = rc.pillars * n / (MAP_W * MAP_H);
+    for _ in 0..want * 30 {
+        if pillars.len() >= want {
+            break;
+        }
+        let c = (r.range(30.0, wf - 30.0), r.range(30.0, hf - 30.0));
+        if dist(c, landing) < 150.0 || nests.iter().any(|&q| dist(q, c) < 120.0) || items.crystals.iter().any(|k| dist((k.x, k.y), c) < k.r + 36.0) || pillars.iter().any(|&(q, _)| dist(q, c) < 46.0) {
+            continue;
+        }
+        pillars.push((c, r.range(7.0, 15.0)));
+    }
+    for &(c, rad) in &pillars {
+        let m = rad * 1.3;
+        for y in ((c.1 - m).max(0.0) as usize)..((c.1 + m) as usize).min(h) {
+            for x in ((c.0 - m).max(0.0) as usize)..((c.0 + m) as usize).min(w) {
+                if dist((x as f32 + 0.5, y as f32 + 0.5), c) < rad * (0.75 + 0.5 * fine.at(x, y)) {
+                    ground[y * w + x] = G_ROCK;
+                }
+            }
+        }
+    }
+
     // Dunes: clay islands under the crystals, as on the Flats.
     if p.biome == Biome::Dunes {
         for c in &items.crystals {
-            let m = c.r * 1.8;
-            for y in ((c.y - m).max(0.0) as usize)..((c.y + m) as usize).min(h) {
-                for x in ((c.x - m).max(0.0) as usize)..((c.x + m) as usize).min(w) {
-                    let d = dist((x as f32 + 0.5, y as f32 + 0.5), (c.x, c.y)) / m + (soil_b.at(x, y) - 0.5) * 0.6;
+            // Big and ragged: exact circles read as decals or holes
+            // (graphics lead, 2026-11-14).
+            let m = c.r * 2.4;
+            for y in ((c.y - m * 1.4).max(0.0) as usize)..((c.y + m * 1.4) as usize).min(h) {
+                for x in ((c.x - m * 1.4).max(0.0) as usize)..((c.x + m * 1.4) as usize).min(w) {
+                    let d = dist((x as f32 + 0.5, y as f32 + 0.5), (c.x, c.y)) / m + (soil_b.at(x, y) - 0.5) * 0.6 + (fine.at(x, y) - 0.5) * 1.2;
                     let i = y * w + x;
                     if d < 1.0 && ground[i] & G_ROCK == 0 {
                         ground[i] = (ground[i] & 0x0F) | G_CLAY;
@@ -829,10 +1078,11 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         }
     }
 
-    // Soft rock: gates across passes, rings round nests, hedges.
-    const THICK: f32 = 16.0;
-    const HP: f32 = 400.0;
-    let wall = |a: (f32, f32), b: (f32, f32)| Wall { a: (a.0.round(), a.1.round()), b: (b.0.round(), b.1.round()), thick: THICK, hp: HP };
+    // Soft rock: gates across passes, rings round nests, hedges. Each is a
+    // chain of short pieces that wobbles and changes thickness, so it reads
+    // as grown: one straight bar, the first try, read as UI, and perfect
+    // arcs as selection rings (graphics lead, 2026-11-14).
+    let inside = |p: (f32, f32), m: f32| p.0 > m && p.1 > m && p.0 < wf - m && p.1 < hf - m;
     for e in &edges {
         if e.kind != Border::Gate {
             continue;
@@ -842,27 +1092,49 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         let t = unit(-(sb.1 - sa.1), sb.0 - sa.0);
         // Across the slot, its ends in the ridge's rock.
         let half = rad + 8.0;
-        items.walls.push(wall((c.0 - t.0 * half, c.1 - t.1 * half), (c.0 + t.0 * half, c.1 + t.1 * half)));
+        let pts = wobbly(&mut r, (c.0 - t.0 * half, c.1 - t.1 * half), (c.0 + t.0 * half, c.1 + t.1 * half), 4, 5.0);
+        hedge(&mut r, &mut items.walls, &pts);
+    }
+    for f in &fronts {
+        let Some(g) = f.gate else { continue };
+        let (u, rad) = f.passes[g];
+        // The front's middle line at the pass, through the warp.
+        let mut s = f.s;
+        for _ in 0..3 {
+            let q = at_line(s, u);
+            let (x, y) = ((q.0.max(0.0) as usize).min(w - 1), (q.1.max(0.0) as usize).min(h - 1));
+            s = f.s - warp_x.at(x, y);
+        }
+        let half = rad + 8.0;
+        let pts = wobbly(&mut r, at_line(s, u - half), at_line(s, u + half), 4, 5.0);
+        hedge(&mut r, &mut items.walls, &pts);
     }
     // Turning a vector by fixed steps (constants, not `cos`, so every
     // machine turns it the same): 15 degrees.
     const C15: f32 = 0.965_925_8;
     const S15: f32 = 0.258_819_04;
     let turn = |v: (f32, f32), s: f32| (v.0 * C15 - v.1 * s, v.0 * s + v.1 * C15);
-    let inside = |p: (f32, f32), m: f32| p.0 > m && p.1 > m && p.0 < wf - m && p.1 < hf - m;
     for (k, &q) in nests.iter().enumerate() {
         if !r.chance(rc.ring) {
             continue;
         }
         let rad = items.crystals[k].r + 55.0;
         let to = unit(landing.0 - q.0, landing.1 - q.1);
+        // The radius wanders round the ring, smoothly.
+        let mut radii = [0.0f32; 24];
+        let mut off = 0.0;
+        for v in radii.iter_mut() {
+            off = off * 0.6 + r.range(-0.07, 0.07);
+            *v = rad * (1.0 + off);
+        }
         let mut v = (1.0f32, 0.0f32);
-        for _ in 0..24 {
+        for i in 0..24 {
             let u = turn(v, S15);
             let mid = unit(v.0 + u.0, v.1 + u.1);
-            let (a, b) = ((q.0 + v.0 * rad, q.1 + v.1 * rad), (q.0 + u.0 * rad, q.1 + u.1 * rad));
+            let (ra, rb) = (radii[i], radii[(i + 1) % 24]);
+            let (a, b) = ((q.0 + v.0 * ra, q.1 + v.1 * ra), (q.0 + u.0 * rb, q.1 + u.1 * rb));
             if mid.0 * to.0 + mid.1 * to.1 < 0.85 && inside(a, 8.0) && inside(b, 8.0) {
-                items.walls.push(wall(a, b));
+                hedge(&mut r, &mut items.walls, &[a, b]);
             }
             v = u;
         }
@@ -871,11 +1143,12 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         for _ in 0..60 {
             let mut at = (r.range(80.0, wf - 80.0), r.range(80.0, hf - 80.0));
             let mut dir = unit(r.range(-1.0, 1.0), r.range(-1.0, 1.0));
-            let bend = if r.chance(0.5) { S15 } else { -S15 };
-            let segs = 4 + r.below(4);
-            let mut line = Vec::new();
-            for _ in 0..segs {
-                let b = (at.0 + dir.0 * 34.0, at.1 + dir.1 * 34.0);
+            // A steady curve (7.5 degrees a piece) with a wander on it.
+            let curve = if r.chance(0.5) { 0.13 } else { -0.13 };
+            let pieces = 8 + r.below(8);
+            let mut pts = vec![at];
+            for _ in 0..pieces {
+                let b = (at.0 + dir.0 * 17.0, at.1 + dir.1 * 17.0);
                 let blocked = |p: (f32, f32)| {
                     !inside(p, 24.0)
                         || dist(p, landing) < 160.0
@@ -885,18 +1158,18 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                 if blocked(at) || blocked(b) {
                     break;
                 }
-                line.push(wall(at, b));
+                pts.push(b);
                 at = b;
-                dir = turn(dir, bend);
+                dir = bend(dir, curve + r.range(-0.2, 0.2));
             }
-            if line.len() >= 3 {
-                items.walls.extend(line);
+            if pts.len() >= 7 {
+                hedge(&mut r, &mut items.walls, &pts);
                 break;
             }
         }
     }
 
-    Map { ground, plants: Vec::new(), items }
+    Map { w, h, ground, plants: Vec::new(), items }
 }
 
 // ---------------------------------------------------------------------
@@ -1179,7 +1452,20 @@ mod tests {
         assert_eq!(got, PINNED, "{got:#x?}");
     }
 
-    const PINNED: [u64; 8] = [0x768679c392edeeb9, 0x01f5bd35bd682552, 0x72e0c58f347e1f48, 0x8aee4093df4aa029, 0xa1e95af23a78d5cd, 0x85334efd43cf8aa3, 0xde140c3db00cd880, 0xa7d1eb358eee1e58];
+    // Depths 3-8 (today's size under `GROW_CAP`) kept their round-2 pins
+    // through the tiled region scan, which finds the same nearest sites
+    // as the full scan; depths 1 and 2 are new, at 60% and 80% of the area.
+    const PINNED: [u64; 8] = [0xa2c197f14fe7fa44, 0x5d98173a8152f995, 0x895c6bd83729fb94, 0x541168edb6b5c412, 0xd371f7d68cb4c9ab, 0x87690491285c2bc8, 0x0d055ecd77802455, 0xf99757c24e1b2738];
+
+    /// The core world at the owner's 6x area, pinned too: the bigger maps
+    /// run more of the generator's loops, on every machine the same.
+    #[test]
+    fn a_big_planet_is_pinned() {
+        let (_, m) = spec("planet:8:1:6", 1).unwrap().unwrap();
+        assert_eq!(print(&m), PINNED_BIG, "{:#x}", print(&m));
+    }
+
+    const PINNED_BIG: u64 = 0x9902743b209a58ff;
 
     #[test]
     fn biomes_come_in_the_set_order_with_the_core_world_last() {
@@ -1205,11 +1491,28 @@ mod tests {
                 let m = generate(&p);
                 assert_eq!(print(&m), print(&build(&p, k)));
                 let s = stats(&p, &m);
-                assert!(s.crystals >= 12 && s.unreachable == 0, "seed {seed} depth {depth}: {s:?}");
+                // Planet 1 is 60% of today's area and carries that share
+                // of the small crystals (`Recipe::of`), so 11 and up.
+                assert!(s.crystals >= 10 && s.unreachable == 0, "seed {seed} depth {depth}: {s:?}");
             }
         }
         // Most planets pass on their first or second attempt.
         assert!(attempts <= 54 * 3, "{attempts} attempts for 54 planets");
+    }
+
+    /// Planets of every biome pass their checks at the owner's sizes, the
+    /// core world's 6x area included, not only at today's.
+    #[test]
+    fn bigger_planets_pass_their_checks() {
+        for depth in 1..=8 {
+            for area in [0.6, 2.0, 6.0] {
+                let p = Planet { size: size_of(area), ..planet(3, depth) };
+                let k = (0..ATTEMPTS).find(|&a| check(&p, &build(&p, a)).is_empty());
+                assert!(k.is_some(), "depth {depth} area {area}: {:?}", check(&p, &build(&p, 0)));
+                let s = stats(&p, &generate(&p));
+                assert!(s.unreachable == 0 && s.crystals as f32 >= 10.0 * area.min(1.0), "depth {depth} area {area}: {s:?}");
+            }
+        }
     }
 
     #[test]
@@ -1269,7 +1572,9 @@ mod tests {
         assert_eq!((p.seed, p.depth), (9, 4));
         assert!(spec("planet:0", 1).unwrap().is_err());
         assert!(spec("planet:x", 1).unwrap().is_err());
-        assert!(spec("planet:1:2:3", 1).unwrap().is_err());
+        assert!(spec("planet:1:2:3:4", 1).unwrap().is_err());
+        assert!(spec("planet:1:2:9", 1).unwrap().is_err());
+        assert_eq!(spec_planet("planet:3:9:2", 1).unwrap().unwrap().size, size_of(2.0));
         assert_eq!(spec_planet("planet:3:9", 1).unwrap().unwrap(), planet(9, 3));
     }
 

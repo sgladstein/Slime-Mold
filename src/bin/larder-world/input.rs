@@ -12,6 +12,11 @@ impl App {
     /// too since 11-14), kept for the next game too: H, or the loadout
     /// strip's button.
     pub(super) fn next_round(&mut self) {
+        // A run's gun is what its shop built.
+        if self.args.run.is_some() {
+            self.hud.alert("In a run the gun holds the cards you bought: change it in the shop between planets", None, theme::WARN);
+            return;
+        }
         let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
             rounds::Card::Gas => g.world.has_gas(),
             rounds::Card::Germ => g.world.has_germ(),
@@ -26,8 +31,44 @@ impl App {
         }
         self.round = i;
         let (name, cards) = LOADOUTS[i];
-        self.rounds = Rounds::new(rounds::parse(cards).unwrap_or_default(), RoundRules::default());
-        let what = if cards == "none" { "Round: plain shots".to_string() } else { format!("Round: {name} ({}), recharge {:.1} s", cards.replace('+', ", "), rounds::recharge(&self.rounds.round, &self.rounds.rules)) };
+        let round = rounds::parse(cards).unwrap_or_default();
+        // The squad owns the gun and its cards (owner 11-14 16:46Z): in the
+        // squad mode H loads the controlled squad's own (`Cmd::Load`); in
+        // the RTS round, the army's round as before.
+        let squad = self.game.as_ref().filter(|g| g.rules.squads).and_then(|g| g.active);
+        let whose = match (squad, self.game.as_mut()) {
+            (Some(q), Some(g)) => {
+                g.apply(Cmd::Load(q as u8, Some(rounds::Deck::new(&round))));
+                format!("Squad {} round", q + 1)
+            }
+            _ => {
+                self.rounds = Rounds::new(round.clone(), RoundRules::default());
+                "Round".to_string()
+            }
+        };
+        let what = if cards == "none" { format!("{whose}: plain shots") } else { format!("{whose}: {name} ({}), recharge {:.1} s", cards.replace('+', ", "), rounds::recharge(&round, &self.rounds.rules)) };
+        self.hud.alert(&what, None, theme::ACCENT);
+    }
+
+    /// A test gun for the controlled squad (squad 0 in the RTS round):
+    /// Shift+H rolls the next kind (rifle, carbine, long gun, scattergun
+    /// in turn) for this planet's depth, a new roll each press, so a
+    /// playtest sees the kinds and how far their rolls stray. Goes through
+    /// `Cmd::Arm`, so the replay keeps it.
+    pub(super) fn next_gun(&mut self) {
+        // A run's guns come from its shop (the roguelike thread).
+        if self.args.run.is_some() {
+            self.hud.alert("In a run the squad's gun is the one it carries: change it in the shop between planets", None, theme::WARN);
+            return;
+        }
+        let Some(g) = self.game.as_mut() else { return };
+        let q = g.active.unwrap_or(0);
+        let n = self.gun_rolls;
+        self.gun_rolls += 1;
+        let kind = GunKind::ALL[n as usize % GunKind::ALL.len()];
+        let gun = Gun::roll_kind(kind, self.args.seed.wrapping_mul(1_000_003) ^ n as u64, self.planet_depth);
+        g.apply(Cmd::Arm(q as u8, Some(gun)));
+        let what = format!("Gun: {}, {}", draw::capital(&gun.title()), gun.line());
         self.hud.alert(&what, None, theme::ACCENT);
     }
 
@@ -179,6 +220,7 @@ impl App {
                     self.paused = false;
                 }
                 HudEvent::Menu(MenuItem::MainMenu) => self.back_to_menu()?,
+                HudEvent::Menu(MenuItem::Continue) => self.carry_on()?,
                 HudEvent::Menu(MenuItem::Quit) => {
                     self.save_replay();
                     return Ok(true);
@@ -352,6 +394,7 @@ impl App {
         match code {
             KeyCode::KeyP | KeyCode::Pause => self.paused = !self.paused,
             KeyCode::Tab => self.fast = !self.fast,
+            KeyCode::KeyN if self.args.run.is_some() => self.hud.alert("In a run the next map is the next planet: beat this one", None, theme::WARN),
             KeyCode::KeyN => {
                 // On a generated planet, N rolls a new one at the same depth.
                 if self.args.map.as_deref().is_some_and(|m| slime_mould::mould::levelgen::spec_planet(m, 0).is_some()) {
@@ -365,6 +408,7 @@ impl App {
                     self.fail(event_loop, e);
                 }
             }
+            KeyCode::KeyH if self.shift => self.next_gun(),
             KeyCode::KeyH => self.next_round(),
             KeyCode::KeyM => {
                 if let Some(v) = self.view.as_mut() {

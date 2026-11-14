@@ -55,6 +55,11 @@ pub enum Icon {
     Thick,
     Pierce,
     Split,
+    // The gun kinds (`mould::guns`, 2026-11-14 16:46Z): the rifle is
+    // `Rifle` above.
+    Carbine,
+    LongGun,
+    Scattergun,
 }
 
 impl Icon {
@@ -112,6 +117,12 @@ impl Icon {
             Icon::Pierce => &["M2 12 L21.5 12", "M17 7.5 L21.5 12 L17 16.5", "M9 4 L9 9", "M9 15 L9 20"],
             // A shot that forks.
             Icon::Split => &["M2 12 L10 12", "M10 12 L20.5 5", "M10 12 L21.5 12", "M10 12 L20.5 19", "M17 4 L20.5 5 L19 8.5", "M19 16 L20.5 19 L17 20"],
+            // A short gun and two lines off its muzzle: fast and short.
+            Icon::Carbine => &["M3 13 L5 9.5 L16 9.5", "M5 9.5 L5 12.5 L9.5 12.5 L10.5 16.5 L12.5 16.5 L12 12.5 L16 12.5 L16 9.5", "M18.5 9.5 L22 9.5", "M18.5 12.5 L21 12.5"],
+            // A long barrel under a scope: slow and far.
+            Icon::LongGun => &["M1.5 15.5 L3.5 12 L22.5 12", "M3.5 12 L3.5 15 L9 15 L10 18.5 L12 18.5 L11.5 15 L15 15 L15 12", "M7 7.5 L13.5 7.5 L13.5 9.5 L7 9.5 Z", "M10 9.5 L10 12"],
+            // A wide muzzle and the fan of shot leaving it.
+            Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],
         }
     }
 }
@@ -220,7 +231,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");

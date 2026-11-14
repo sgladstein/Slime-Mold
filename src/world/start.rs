@@ -77,6 +77,33 @@ pub struct Entry {
     pub detail: String,
 }
 
+/// A row of the run's shop page (the game fills it: `mould::run::Run::shop`).
+#[derive(Clone, Debug, PartialEq)]
+pub struct ShopRow {
+    /// The heading it sits under (rows of one group come together).
+    pub group: String,
+    pub name: String,
+    pub about: String,
+    /// Its price, or empty.
+    pub price: String,
+    /// "2/4", "owned", "in the gun"...
+    pub state: String,
+    /// A pick does something now (bright), or not (dim).
+    pub ready: bool,
+}
+
+/// The run's shop, between two levels.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Shop {
+    /// "Planet 3 next: the Swarmer on the Rim".
+    pub heading: String,
+    /// Lines under it (the run so far, what the gun holds).
+    pub lines: Vec<String>,
+    /// The points to spend, as shown.
+    pub purse: String,
+    pub rows: Vec<ShopRow>,
+}
+
 /// What the player picked.
 #[derive(Clone, Debug, PartialEq)]
 pub enum StartEvent {
@@ -85,6 +112,14 @@ pub enum StartEvent {
     Mission(usize),
     /// Open the map editor (`larder-edit`, #209).
     EditMaps,
+    /// Start a roguelike run, or go back to the one under way.
+    Run,
+    /// Shop row `i` picked.
+    Buy(usize),
+    /// Land on the next planet.
+    NextLevel,
+    /// Give the run up.
+    EndRun,
     /// A round on a new generated planet (`mould::levelgen`).
     RandomPlanet,
     Quit,
@@ -96,12 +131,18 @@ pub enum Page {
     Missions,
     Options,
     Keys,
+    /// The run's shop.
+    Shop,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Hit {
     Panel,
     Sandbox,
+    Run,
+    Buy(usize),
+    Next,
+    EndRun,
     Campaign,
     Options,
     Keys,
@@ -130,6 +171,10 @@ pub struct StartMenu {
     /// A line the game wants shown on the main page (such as why the map
     /// editor did not start).
     pub notice: Option<String>,
+    /// The run's shop (the Shop page draws it).
+    pub shop: Option<Shop>,
+    /// A run is under way: the main page's Run row goes back to it.
+    pub run_live: bool,
     /// Which row the keyboard is on, on this page.
     pub focus: usize,
     /// The page the key card goes back to.
@@ -141,7 +186,7 @@ pub struct StartMenu {
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, focus: 0, keys_from: Page::Main, hover: None, pressed: None, hits: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, focus: 0, keys_from: Page::Main, hover: None, pressed: None, hits: Vec::new() }
     }
 
     /// The option named `key`.
@@ -165,10 +210,11 @@ impl StartMenu {
     /// The rows the keyboard walks on this page, top to bottom.
     fn rows(&self) -> Vec<Hit> {
         match self.page {
-            Page::Main => [Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Sandbox, Hit::Run, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => (0..self.options.len()).map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
+            Page::Shop => (0..self.shop.as_ref().map_or(0, |s| s.rows.len())).map(Hit::Buy).chain([Hit::Next, Hit::EndRun]).collect(),
         }
     }
 
@@ -182,6 +228,7 @@ impl StartMenu {
                 Page::Missions => Hit::Campaign,
                 Page::Options => Hit::Options,
                 Page::Keys => Hit::Keys,
+                Page::Shop => Hit::Run,
                 Page::Main => Hit::Sandbox,
             };
             self.focus = self.rows().iter().position(|&h| h == led).unwrap_or(0);
@@ -192,6 +239,10 @@ impl StartMenu {
     fn act(&mut self, h: Hit) -> Option<StartEvent> {
         match h {
             Hit::Sandbox => return Some(StartEvent::Sandbox),
+            Hit::Run => return Some(StartEvent::Run),
+            Hit::Buy(i) => return Some(StartEvent::Buy(i)),
+            Hit::Next => return Some(StartEvent::NextLevel),
+            Hit::EndRun => return Some(StartEvent::EndRun),
             Hit::Campaign => self.show(Page::Missions),
             Hit::Options => self.show(Page::Options),
             Hit::Keys => self.show(Page::Keys),
@@ -325,6 +376,7 @@ impl StartMenu {
             Page::Missions => "Campaign",
             Page::Options => "Options",
             Page::Keys => "Keys",
+            Page::Shop => "The run: spend your points, then land",
         };
         c.text(Weight::Medium, 16.0 * s, (x, 126.0 * s), Align::Left, sub, MUTED);
         let top = 160.0 * s;
@@ -335,12 +387,14 @@ impl StartMenu {
             Page::Missions => self.missions_page(c, x, top, w, s, focus),
             Page::Options => self.options_page(c, x, top, w, s, focus),
             Page::Keys => self.keys_page(c, x, top, w, s),
+            Page::Shop => self.shop_page(c, x, top, s, focus),
         }
         let hint = match self.page {
             Page::Main => "Up/Down and Enter, or click  ·  F1 or ? keys",
             Page::Missions => "1-9 or Enter starts a mission  ·  Esc back",
             Page::Options => "Left/Right change  ·  Backspace or click the row: default  ·  Esc back",
             Page::Keys => "Esc or F1 back",
+            Page::Shop => "Click or Enter buys  ·  bright rows you can afford  ·  Esc main menu (the run waits)",
         };
         c.text_fit(Weight::Medium, 12.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x, FAINT);
     }
@@ -382,6 +436,7 @@ impl StartMenu {
         let campaign = format!("{} missions, one new verb each", self.missions.len());
         let mut items: Vec<(&str, String, Hit, bool)> = vec![
             ("Sandbox", sandbox, Hit::Sandbox, true),
+            (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, false),
             ("Campaign", campaign, Hit::Campaign, false),
         ];
         if self.planets {
@@ -476,6 +531,92 @@ impl StartMenu {
         self.item(Rect::new(x + 152.0 * s, by, 200.0 * s, 42.0 * s), "All to defaults", "", Hit::ResetAll, false, focus == Some(Hit::ResetAll), c, s);
     }
 
+    fn shop_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) {
+        let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
+        let Some(shop) = self.shop.clone() else { return };
+        c.text_fit(Weight::SemiBold, 18.0 * s, (x, top + 14.0 * s), Align::Left, &shop.heading, sw - 2.0 * x, TEXT);
+        let mut y = top + 36.0 * s;
+        for l in &shop.lines {
+            c.text_fit(Weight::Medium, 13.0 * s, (x, y), Align::Left, l, sw - 2.0 * x, MUTED);
+            y += 19.0 * s;
+        }
+        c.text(Weight::SemiBold, 16.0 * s, (sw - x, top + 14.0 * s), Align::Right, &shop.purse, ACCENT);
+        // Rows in columns, a heading where the group changes; as many
+        // columns as the height needs, rows shrinking to fit.
+        let top = y + 6.0 * s;
+        let n = shop.rows.len();
+        // A column's heads: one per group, and one more where a column
+        // breaks mid-group (counted as a spare per column).
+        let groups = shop.rows.windows(2).filter(|w| w[0].group != w[1].group).count() + 1;
+        // Rows shrink, then the whole page, until every row fits.
+        let mut s = s;
+        let (mut rh, mut gap, mut head, mut room, mut k, mut foot);
+        loop {
+            foot = 92.0 * s;
+            gap = 6.0 * s;
+            head = 24.0 * s;
+            room = (sh - top - foot).max(30.0 * s);
+            let max_cols = ((sw - 2.0 * x) / (300.0 * s)).floor().max(1.0);
+            rh = 46.0 * s;
+            let per = |rh: f32, k: f32| ((room * k - (groups as f32 + k) * head) / (rh + gap)).floor();
+            k = 1.0;
+            while per(rh, k) < n as f32 && (k < max_cols || rh > 30.0 * s) {
+                if k < max_cols {
+                    k += 1.0;
+                } else {
+                    rh -= 2.0 * s;
+                }
+            }
+            if per(rh, k) >= n as f32 || s < 0.3 {
+                break;
+            }
+            s *= 0.9;
+        }
+        let cw = ((sw - 2.0 * x - (k - 1.0) * 14.0 * s) / k).min(420.0 * s);
+        let (mut cx, mut cy) = (x, top);
+        let mut last: Option<&str> = None;
+        for (i, row) in shop.rows.iter().enumerate() {
+            let new_head = last != Some(row.group.as_str());
+            let need = rh + if new_head { head } else { 0.0 };
+            if cy + need > top + room && cy > top {
+                cx += cw + 14.0 * s;
+                cy = top;
+            }
+            if new_head || cy == top {
+                c.text(Weight::SemiBold, 12.5 * s, (cx + 2.0 * s, cy + 16.0 * s), Align::Left, &row.group, FAINT);
+                cy += head;
+            }
+            last = Some(row.group.as_str());
+            let r = Rect::new(cx, cy, cw, rh);
+            let hot = focus == Some(Hit::Buy(i)) || self.hover.is_some_and(|p| r.contains(p));
+            // What the points buy now stands out; the rest sits back, dark.
+            let (t, b) = match (row.ready, hot) {
+                (true, false) => (BUTTON_TOP, BUTTON_BOTTOM),
+                (true, true) => (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM),
+                (false, false) => ([16, 20, 26, 200], [12, 15, 20, 200]),
+                (false, true) => ([26, 31, 38, 220], [20, 24, 30, 220]),
+            };
+            c.panel(r, 9.0 * s, t, b, 1.0, if row.ready { [120, 190, 250, 110] } else { [255, 255, 255, 14] });
+            if focus == Some(Hit::Buy(i)) {
+                c.outline(r.inset(-2.0 * s), 11.0 * s, 1.5 * s, ACCENT);
+            }
+            let pad = 12.0 * s;
+            let right = 90.0 * s;
+            let name_c = if row.ready { TEXT } else { FAINT };
+            c.text_fit(Weight::SemiBold, 14.0 * s, (r.x + pad, r.y + rh / 2.0 - 3.0 * s), Align::Left, &row.name, r.w - 2.0 * pad - right, name_c);
+            c.text_fit(Weight::Medium, 11.0 * s, (r.x + pad, r.y + rh / 2.0 + 12.0 * s), Align::Left, &row.about, r.w - 2.0 * pad - right, FAINT);
+            if !row.price.is_empty() {
+                c.text(Weight::SemiBold, 14.0 * s, (r.right() - pad, r.y + rh / 2.0 - 3.0 * s), Align::Right, &row.price, if row.ready { ACCENT } else { FAINT });
+            }
+            c.text_fit(Weight::Medium, 11.0 * s, (r.right() - pad, r.y + rh / 2.0 + 12.0 * s), Align::Right, &row.state, right - 8.0 * s, MUTED);
+            self.hits.push((r, Hit::Buy(i)));
+            cy += rh + gap;
+        }
+        let by = sh - foot + 4.0 * s;
+        self.item(Rect::new(x, by, 240.0 * s, 46.0 * s), "Land on the next planet", "", Hit::Next, true, focus == Some(Hit::Next), c, s);
+        self.item(Rect::new(x + 252.0 * s, by, 160.0 * s, 46.0 * s), "Give up the run", "", Hit::EndRun, false, focus == Some(Hit::EndRun), c, s);
+    }
+
     fn keys_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32) {
         let sh = c.screen.1 as f32;
         let rows = self.keys.clone();
@@ -551,6 +692,8 @@ mod tests {
         let mut m = menu();
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Sandbox]);
         m.key(KeyCode::ArrowDown, true);
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Run], "the run is second");
+        m.key(KeyCode::ArrowDown, true);
         assert!(m.key(KeyCode::Enter, true).is_empty());
         assert_eq!(m.page, Page::Missions);
         assert_eq!(m.key(KeyCode::Digit2, true), vec![StartEvent::Mission(1)]);
@@ -558,10 +701,75 @@ mod tests {
         m.key(KeyCode::ArrowDown, true);
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Mission(1)]);
         m.key(KeyCode::Escape, true);
-        assert_eq!((m.page, m.focus), (Page::Main, 1), "back on the campaign row");
+        assert_eq!((m.page, m.focus), (Page::Main, 2), "back on the campaign row");
+        m.key(KeyCode::ArrowUp, true);
         m.key(KeyCode::ArrowUp, true);
         m.key(KeyCode::ArrowUp, true);
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Quit], "up from the top wraps to quit");
+    }
+
+    fn shop(n: usize) -> Shop {
+        let rows = (0..n).map(|i| ShopRow { group: ["Squad", "Buildings", "Gun"][i * 3 / n.max(1)].into(), name: format!("Thing {i}"), about: "Does it".into(), price: format!("{}", 100 + i), state: "0/3".into(), ready: i % 2 == 0 }).collect();
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows }
+    }
+
+    /// Every shop row, and the two buttons, are on screen and clickable at
+    /// every size, with as many rows as the run's shop has and more.
+    #[test]
+    fn the_shop_fits_and_its_rows_pick() {
+        for screen in [(1280, 720), (1600, 900), (1920, 1080)] {
+            for user in crate::world::settings::STEPS {
+                for n in [5, 30, 40] {
+                    let mut m = menu();
+                    m.shop = Some(shop(n));
+                    m.show(Page::Shop);
+                    let mut c = Canvas::new(screen);
+                    c.ui.user = user;
+                    m.draw(&mut c);
+                    let mut rects: Vec<Rect> = Vec::new();
+                    for h in (0..n).map(Hit::Buy).chain([Hit::Next, Hit::EndRun]) {
+                        let r = m.rect_of(h).unwrap_or_else(|| panic!("{screen:?} {user} {n}: {h:?} not drawn"));
+                        assert!(r.bottom() <= screen.1 as f32 + 0.5 && r.right() <= screen.0 as f32 + 0.5 && r.x >= 0.0, "{screen:?} at {user}, {n} rows: {h:?} {r:?} off screen");
+                        assert!(rects.iter().all(|q| !(q.x < r.right() && r.x < q.right() && q.y < r.bottom() && r.y < q.bottom())), "{screen:?} at {user}, {n} rows: {h:?} overlaps");
+                        rects.push(r);
+                    }
+                }
+            }
+        }
+        let mut m = menu();
+        m.shop = Some(shop(6));
+        m.show(Page::Shop);
+        let mut c = Canvas::new((1280, 800));
+        assert_eq!(click(&mut m, &mut c, Hit::Buy(3)), vec![StartEvent::Buy(3)]);
+        assert_eq!(click(&mut m, &mut c, Hit::Next), vec![StartEvent::NextLevel]);
+        assert_eq!(click(&mut m, &mut c, Hit::EndRun), vec![StartEvent::EndRun]);
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Buy(0)]);
+        m.key(KeyCode::Escape, true);
+        assert_eq!((m.page, m.rows()[m.focus]), (Page::Main, Hit::Run));
+    }
+
+    /// The main page with every row (Run, Random planet, Edit maps: eight)
+    /// stays on screen at every size and UI scale, with the game's eleven
+    /// options (whose page sets the scale for every page).
+    #[test]
+    fn the_full_main_page_fits() {
+        for screen in [(1280, 720), (1600, 900), (1920, 1080)] {
+            for user in crate::world::settings::STEPS {
+                let mut m = menu();
+                while m.options.len() < 11 {
+                    let k = format!("o{}", m.options.len());
+                    m.options.push(Opt::new(&k, &k, &["0", "1"], "0", "0", ""));
+                }
+                (m.planets, m.edit_maps, m.run_live) = (true, true, true);
+                let mut c = Canvas::new(screen);
+                c.ui.user = user;
+                m.draw(&mut c);
+                for h in m.rows() {
+                    let r = m.rect_of(h).unwrap_or_else(|| panic!("{h:?} not drawn"));
+                    assert!(r.bottom() <= screen.1 as f32 - 30.0, "{screen:?} at {user}: {h:?} {r:?} reaches the hint line");
+                }
+            }
+        }
     }
 
     /// "Random planet" (the roguelike's planets, 2026-11-14) shows only
@@ -575,12 +783,13 @@ mod tests {
         assert!(m.rect_of(Hit::RandomPlanet).is_none());
         m.planets = true;
         assert_eq!(click(&mut m, &mut c, Hit::RandomPlanet), vec![StartEvent::RandomPlanet]);
-        assert_eq!(m.rows()[2], Hit::RandomPlanet);
+        assert_eq!(m.rows()[3], Hit::RandomPlanet, "after Sandbox, Run and Campaign");
         let y = |m: &StartMenu, h: Hit| m.rect_of(h).unwrap().y;
         assert!(y(&m, Hit::Campaign) < y(&m, Hit::RandomPlanet) && y(&m, Hit::RandomPlanet) < y(&m, Hit::Options));
         m.focus = 0;
-        m.key(KeyCode::ArrowDown, true);
-        m.key(KeyCode::ArrowDown, true);
+        for _ in 0..3 {
+            m.key(KeyCode::ArrowDown, true);
+        }
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::RandomPlanet]);
     }
 
