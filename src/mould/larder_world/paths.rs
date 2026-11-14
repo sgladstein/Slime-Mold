@@ -10,6 +10,11 @@ pub(super) const PATHS_EVERY: f32 = 30.0;
 /// bank, dish cells (`Rules::crystal_solid`).
 pub(super) const RIM: f32 = 1.0;
 
+/// How far from a goal in rock or a wall `Game::goal` looks for ground,
+/// and how far a soldier shut in a wall looks for a way out
+/// (`Game::walk`), dish cells.
+pub(super) const GOAL_SEARCH: f32 = 8.0;
+
 pub(super) fn cell(w: usize, h: usize, p: (f32, f32)) -> usize {
     let x = (p.0.max(0.0) as usize).min(w - 1);
     let y = (p.1.max(0.0) as usize).min(h - 1);
@@ -56,8 +61,9 @@ pub fn distance_map(w: usize, h: usize, goal: usize, open: impl Fn(usize) -> boo
 }
 
 /// The neighbour of `i` nearest the goal on `map` (`i` itself at the goal,
-/// or when no neighbour is nearer).
-pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize) -> usize {
+/// or when no neighbour is nearer); with `corners` (`Rules::corners`) a
+/// diagonal only past two open side cells.
+pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize, corners: bool) -> usize {
     let (x, y) = ((i % w) as i64, (i / w) as i64);
     let mut best = i;
     for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
@@ -66,6 +72,12 @@ pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize) -> usize {
             continue;
         }
         let j = ny as usize * w + nx as usize;
+        // A diagonal only past two open side cells, as `distance_map` walks
+        // (2026-11-14): a step cutting a wall's corner was blocked in
+        // `Game::walk`, and a soldier at a wall's end stood there for good.
+        if corners && dx != 0 && dy != 0 && (map[y as usize * w + nx as usize] == u32::MAX || map[ny as usize * w + x as usize] == u32::MAX) {
+            continue;
+        }
         if map[j] < map[best] {
             best = j;
         }
@@ -107,8 +119,51 @@ impl<W: World> Game<W> {
 
     /// Where soldier `k` is walking to now, fine cells, if anywhere.
     pub(super) fn goal(&self, k: usize) -> Option<(f32, f32)> {
+        self.goal_ground(k).map(|g| g.0)
+    }
+
+    /// `goal`, and whether it was moved off rock or a wall onto ground.
+    pub(super) fn goal_ground(&self, k: usize) -> Option<((f32, f32), bool)> {
         let s = self.soldiers[k];
-        self.goal_raw(k).map(|g| self.rim(g, (s.x, s.y)))
+        let g = self.rim(self.goal_raw(k)?, (s.x, s.y));
+        // A goal in rock or a wall (a click on one, or a squad slot past a
+        // wall's edge) is the nearest ground a soldier can stand on. Before
+        // (2026-11-14), the walking map from a walled-in goal reached no
+        // cell, so the soldier froze where it stood.
+        if self.standable(g.0, g.1) {
+            return Some((g, false));
+        }
+        Some(self.nearest_standable(g, GOAL_SEARCH * self.s()).map_or((g, false), |q| (q, true)))
+    }
+
+    /// The centre of the standable cell nearest `p` within `r` fine cells,
+    /// if any (rings of cells outward, so the first ring with one wins).
+    pub fn nearest_standable(&self, p: (f32, f32), r: f32) -> Option<(f32, f32)> {
+        let (w, h) = self.world.size();
+        let (cx, cy) = (p.0.floor() as i64, p.1.floor() as i64);
+        let mut best: Option<((f32, f32), f32)> = None;
+        for ring in 0..=(r.ceil() as i64) {
+            for dy in -ring..=ring {
+                for dx in -ring..=ring {
+                    if dx.abs().max(dy.abs()) != ring {
+                        continue;
+                    }
+                    let (x, y) = (cx + dx, cy + dy);
+                    if x < 0 || y < 0 || x >= w as i64 || y >= h as i64 {
+                        continue;
+                    }
+                    let q = (x as f32 + 0.5, y as f32 + 0.5);
+                    let d = (q.0 - p.0).hypot(q.1 - p.1);
+                    if d <= r + 0.71 && self.standable(q.0, q.1) && best.is_none_or(|b| d < b.1) {
+                        best = Some((q, d));
+                    }
+                }
+            }
+            if best.is_some() {
+                break;
+            }
+        }
+        best.map(|b| b.0)
     }
 
     pub(super) fn solid_now(&self) -> Vec<((f32, f32), f32)> {
@@ -183,8 +238,20 @@ impl<W: World> Game<W> {
                 // rising ghost and its bar stay in sight (2026-11-12, the
                 // build-anywhere look: a lone builder hid its turret). Walls
                 // keep the point on the line nearest the soldier.
-                if matches!(self.buildings[b].kind, Kind::Wall { .. }) {
-                    return Some(q);
+                if let Kind::Wall { to } = self.buildings[b].kind {
+                    // Beside the line, on the soldier's side, half the
+                    // wall's width and a cell clear (2026-11-14, owner:
+                    // "soldier get stuck on the wall they build"): a builder
+                    // that stood on the line was shut inside its own wall
+                    // when it rose. The squad's slot spreads them along it.
+                    let at = self.buildings[b].at;
+                    let along = nearest_on(at, to, q);
+                    let (lx, ly) = (to.0 - at.0, to.1 - at.1);
+                    let l = lx.hypot(ly);
+                    let (nx, ny) = if l > 1e-3 { (-ly / l, lx / l) } else { (1.0, 0.0) };
+                    let side = if (s.x - along.0) * nx + (s.y - along.1) * ny >= 0.0 { 1.0 } else { -1.0 };
+                    let clear = (self.rules.wall_width / 2.0 + 1.0) * sc;
+                    return Some((along.0 + side * nx * clear, along.1 + side * ny * clear));
                 }
                 let edge = (self.rules.build.touch + 1.0) * sc;
                 let (dx, dy) = (q.0 - p.0, q.1 - p.1);
@@ -240,16 +307,26 @@ impl<W: World> Game<W> {
     /// soldiers stood 50 cells short of the core behind rock for the
     /// whole game, firing 196 of 200 shots into the rock.)
     pub(super) fn walk(&mut self, k: usize, dt: f32) {
-        let Some(g) = self.goal(k) else { return };
+        let Some((g, moved)) = self.goal_ground(k) else { return };
         let s = self.soldiers[k];
         let d = (g.0 - s.x).hypot(g.1 - s.y);
-        if d < 0.5 || self.engaged(k) {
+        // A goal moved off rock is one cell for every slot that fell in the
+        // rock: near it is there, or those soldiers would shove for it
+        // against their elbow room (`elbow_room`) without end.
+        let there = if moved { (self.rules.elbow * self.rules.touch * self.s()).max(0.5) } else { 0.5 };
+        if d < there || self.engaged(k) {
             return;
         }
         // Caught on a crystal (a larder or ghost placed by one, a crystal
         // grown back): straight out to its near rim first, over anything.
         let caught = self.solid_at((s.x, s.y)).is_some();
-        let g = if caught {
+        // Shut in a wall or rock (a wall that rose on it, an old save):
+        // straight out to the nearest standable ground, over anything.
+        let shut = !caught && !self.world.open(s.x, s.y);
+        let out = if shut { self.nearest_standable((s.x, s.y), GOAL_SEARCH * self.s()) } else { None };
+        let g = if let Some(o) = out {
+            o
+        } else if caught {
             self.rim((s.x, s.y), (s.x, s.y))
         } else if self.walk_line((s.x, s.y), g) {
             g
@@ -271,7 +348,7 @@ impl<W: World> Game<W> {
             // rather than zig-zagging cell to cell.
             let mut at = cell(w, h, (s.x, s.y));
             for _ in 0..3 {
-                at = downhill(w, h, map, at);
+                at = downhill(w, h, map, at, self.rules.corners);
             }
             if at == gi {
                 g
@@ -283,7 +360,7 @@ impl<W: World> Game<W> {
         let d = dx.hypot(dy).max(1e-6);
         let step = (self.rules.speed * self.s() * dt * self.wade(k)).min(d);
         let (nx, ny) = (s.x + dx / d * step, s.y + dy / d * step);
-        let ok = |x: f32, y: f32| if caught { self.world.open(x, y) } else { self.standable(x, y) };
+        let ok = |x: f32, y: f32| if out.is_some() { true } else if caught { self.world.open(x, y) } else { self.standable(x, y) };
         let to = if ok(nx, ny) {
             Some((nx, ny))
         } else if ok(nx, s.y) {

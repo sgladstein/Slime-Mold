@@ -332,6 +332,50 @@ fn the_menu_plays_the_command_lines_rounds() {
     assert_eq!(a.keys.iter().filter(|k| k.0 == "wither").map(|k| k.1.as_str()).collect::<Vec<_>>(), vec!["0.01"], "reset to C's own");
 }
 
+#[test]
+fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
+    let r = RoundRules::default();
+    let cards = |s: &str, next| gun_cards(&rounds::parse(s).unwrap(), &r, 3, next, |c| c != rounds::Card::Germ);
+    let lit = |v: &[GunCard]| v.iter().map(|c| c.next).collect::<Vec<_>>();
+    // Two casts: quiet+gas, then quiet+blast; the second is next.
+    let lull = cards("quiet+gas+quiet+blast", Some(1));
+    assert_eq!(lit(&lull), [false, false, true, true]);
+    assert_eq!(lull.iter().map(|c| c.kind).collect::<Vec<_>>(), [CardKind::Modifier, CardKind::Payload, CardKind::Modifier, CardKind::Payload]);
+    // A modifier takes its payload's colour; the payload shows its price.
+    assert_eq!(lull[0].colour, lull[1].colour);
+    assert_ne!(lull[0].colour, lull[3].colour);
+    assert_eq!(lull[3].cost.as_deref(), Some(format!("{:.0}", r.kit.blast_price).as_str()));
+    // A card after the last payload casts nothing; flight cards ride every
+    // bullet, never lit as a cast and never idle.
+    let tail = cards("blast+quiet", Some(0));
+    assert_eq!((tail[0].next, tail[1].idle, tail[1].next), (true, true, false));
+    let lance = cards("pierce+split+blast", Some(0));
+    assert_eq!(lance.iter().map(|c| (c.next, c.idle)).collect::<Vec<_>>(), [(false, false), (false, false), (true, false)]);
+    // A payload this world cannot cast says so.
+    assert!(cards("germ", Some(0))[0].about.contains("Not on this world"));
+    // Every loadout H cycles through draws, each card with a glyph and words.
+    for (name, l) in LOADOUTS {
+        for c in cards(l, Some(0)) {
+            assert!(c.icon.is_some() && !c.about.is_empty() && !c.name.is_empty(), "{name}");
+        }
+    }
+}
+
+/// The opening view (the art director, 11-14: "the camera opens with the
+/// squad under it"): the larder is in the middle of the band between the
+/// top bar and the bottom panels, at the window's sizes.
+#[test]
+fn the_opening_camera_frames_the_larder_above_the_bottom_panels() {
+    let Some((device, queue)) = gpu() else { return };
+    for screen in [(1280, 800), (1920, 1080)] {
+        let app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None }, screen, &device, &queue).unwrap();
+        let g = app.game.as_ref().unwrap();
+        let (top, bottom) = Hud::insets(screen);
+        let y = app.camera.to_screen(g.larder).1;
+        assert!(y > top + 40.0 && y < screen.1 as f32 - bottom - 40.0, "{screen:?}: the larder at y {y:.0}, the band {top:.0}..{:.0}", screen.1 as f32 - bottom);
+    }
+}
+
 /// Turning the sandbox map (or the own mould) on the start menu starts the
 /// dish behind it again on that map (owner, 11-14 05:04Z); turning another
 /// option, or moving between rows, leaves the dish playing. Skips with no
