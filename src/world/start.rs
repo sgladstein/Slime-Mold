@@ -85,6 +85,8 @@ pub enum StartEvent {
     Mission(usize),
     /// Open the map editor (`larder-edit`, #209).
     EditMaps,
+    /// A round on a new generated planet (`mould::levelgen`).
+    RandomPlanet,
     Quit,
 }
 
@@ -104,6 +106,7 @@ enum Hit {
     Options,
     Keys,
     EditMaps,
+    RandomPlanet,
     Quit,
     Back,
     Mission(usize),
@@ -122,6 +125,8 @@ pub struct StartMenu {
     pub page: Page,
     /// The main page offers "Edit maps" (the game has an editor to start).
     pub edit_maps: bool,
+    /// The main page offers "Random planet" (the game makes planets).
+    pub planets: bool,
     /// A line the game wants shown on the main page (such as why the map
     /// editor did not start).
     pub notice: Option<String>,
@@ -136,7 +141,7 @@ pub struct StartMenu {
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, notice: None, focus: 0, keys_from: Page::Main, hover: None, pressed: None, hits: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, focus: 0, keys_from: Page::Main, hover: None, pressed: None, hits: Vec::new() }
     }
 
     /// The option named `key`.
@@ -160,7 +165,7 @@ impl StartMenu {
     /// The rows the keyboard walks on this page, top to bottom.
     fn rows(&self) -> Vec<Hit> {
         match self.page {
-            Page::Main => [Hit::Sandbox, Hit::Campaign, Hit::Options, Hit::Keys].into_iter().chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => (0..self.options.len()).map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -192,6 +197,7 @@ impl StartMenu {
             Hit::Keys => self.show(Page::Keys),
             Hit::Quit => return Some(StartEvent::Quit),
             Hit::EditMaps => return Some(StartEvent::EditMaps),
+            Hit::RandomPlanet => return Some(StartEvent::RandomPlanet),
             Hit::Back => self.back(),
             Hit::Mission(i) => return Some(StartEvent::Mission(i)),
             Hit::Turn(i, by) => self.options[i].turn(by),
@@ -377,9 +383,15 @@ impl StartMenu {
         let mut items: Vec<(&str, String, Hit, bool)> = vec![
             ("Sandbox", sandbox, Hit::Sandbox, true),
             ("Campaign", campaign, Hit::Campaign, false),
+        ];
+        if self.planets {
+            let depth = self.option("planet").map_or("1", |o| o.value());
+            items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false));
+        }
+        items.extend([
             ("Options", "The mould's and the squad's switches".into(), Hit::Options, false),
             ("Keys", "F1 or ? in the game too".into(), Hit::Keys, false),
-        ];
+        ]);
         if self.edit_maps {
             items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false));
         }
@@ -550,6 +562,26 @@ mod tests {
         m.key(KeyCode::ArrowUp, true);
         m.key(KeyCode::ArrowUp, true);
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Quit], "up from the top wraps to quit");
+    }
+
+    /// "Random planet" (the roguelike's planets, 2026-11-14) shows only
+    /// when the game makes planets, after the campaign, and the keyboard
+    /// walks to it in the order drawn.
+    #[test]
+    fn random_planet_shows_only_when_the_game_makes_planets() {
+        let mut m = menu();
+        let mut c = Canvas::new((1280, 800));
+        m.draw(&mut c);
+        assert!(m.rect_of(Hit::RandomPlanet).is_none());
+        m.planets = true;
+        assert_eq!(click(&mut m, &mut c, Hit::RandomPlanet), vec![StartEvent::RandomPlanet]);
+        assert_eq!(m.rows()[2], Hit::RandomPlanet);
+        let y = |m: &StartMenu, h: Hit| m.rect_of(h).unwrap().y;
+        assert!(y(&m, Hit::Campaign) < y(&m, Hit::RandomPlanet) && y(&m, Hit::RandomPlanet) < y(&m, Hit::Options));
+        m.focus = 0;
+        m.key(KeyCode::ArrowDown, true);
+        m.key(KeyCode::ArrowDown, true);
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::RandomPlanet]);
     }
 
     #[test]

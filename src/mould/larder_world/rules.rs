@@ -91,8 +91,13 @@ pub struct Rules {
     /// How far a soldier sees and fires, dish cells.
     pub range: f32,
     /// What each `Range` gun card adds, as a fraction of `range`
-    /// (`Game::gun_range`): 0.5 makes one card 36 cells, two 48.
+    /// (`Game::gun_range`). 1 since 2026-11-14 15:40Z (the owner's notes:
+    /// "2-4x distance or rate of fire"): one card 48 cells, two 72, three
+    /// 96; 0.5 before (36, 48).
     pub range_card: f32,
+    /// What each `Rate` gun card adds to how often a soldier fires: 1 is
+    /// twice as often with one card, three times with two.
+    pub rate_card: f32,
     /// Radius of a shot's strike, dish cells (at most `squad::R_MAX` fine).
     pub strike: f32,
     /// Game seconds between one soldier's shots.
@@ -378,6 +383,14 @@ pub struct Rules {
     /// lays a thin film nearly everywhere, so with 0 no crystal paid on
     /// the Fork.
     pub guard_walkers: u32,
+    /// Defenders while a squad works (`squads`, owner 2026-11-14 15:06Z):
+    /// some of a harvesting or building squad stand guard against nearby
+    /// slime while the rest work (`Game::cover_turn`).
+    pub cover: super::CoverRules,
+    /// Healing (owner 2026-11-14 15:06Z: "Units should be able to heal but
+    /// it cost energy, and requires units to be idle for bit, maybe only
+    /// near a captured crystal"): `Game::heal`.
+    pub heal: super::HealRules,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
     /// the target. 0 (the default) aims dead on and draws no random
@@ -454,7 +467,8 @@ impl Default for Rules {
             // should be increased"); 15 before. Soldiers' sight and every
             // shot's reach, mouse-aimed volleys included.
             range: 24.0,
-            range_card: 0.5,
+            range_card: 1.0,
+            rate_card: 1.0,
             strike: 2.5,
             shot_every: 1.0,
             bullet_speed: 45.0,
@@ -503,6 +517,8 @@ impl Default for Rules {
             larder: true,
             guard: 120.0,
             guard_walkers: 8,
+            cover: super::CoverRules::default(),
+            heal: super::HealRules::default(),
             spread: 0.0,
             crystal_solid: true,
             mass: 1.0,

@@ -134,6 +134,60 @@ main 68870d0 the film's squad stuck at the inside of the Fork's V wall from
 14 s (the bug sweep's stuck anchor, #252), so the hand now splits by 20 s
 whatever held it.
 
+## Guards, healing, queues and links (owner 15:06Z, answers 15:49Z)
+
+From the owner's notes (15:06Z) and answers (15:49Z):
+
+- **Guards while working** (`src/mould/larder_world/cover.rs`). A squad
+  told to drain (Ctrl + right click) or build works it (`Squad::work`; a
+  squad most of whose members took up the same work on their own counts
+  too). Once a game second, with 20 or more walkers within 30 cells of the
+  work and the squad's middle within those 30 cells, a share of it stands
+  guard: a third ("some", the default), half ("more") or none (the
+  **Guards** button on the squad panel, key **I**). Each guard takes its own
+  bearing on a small arc toward the slime (the walkers in twelve directions,
+  summed) and stands up to 8 cells out, stepping back toward the work until
+  the slime under its post is thin (4 walkers within 2 cells), so it never
+  stands in the body. It walks to its post and fights from it. With no
+  slime near, everyone works.
+  - Cost: the workers make up most of the guards' work. The squad's rate
+    falls by 0.6 x the guards' share: 3 of 8 on guard cost 22.5%, against
+    37.5% if they simply stopped. A first value of 0.2 (7.5%) "seems too small
+    to even notice a difference" (owner 15:49Z). Workers fire half as often.
+  - Film, first cut: guards were called out at the start of the walk and
+    attack-moved to their posts. They stopped at every slime in reach, and 5
+    of the 8 never reached the crystal by 20 s. Guards now wait until the
+    squad is there and walk to their posts.
+- **Healing** (`Game::heal`, squad mode). A soldier that has stood still,
+  unbitten and not firing, for 3 s heals for 0.25 food a point from the bank
+  (the energy that builds). By a crystal the player holds it heals fully in
+  10 s; anywhere else it takes a minute (owner 15:49Z).
+- **Squad queues.** Shift + right click queues a move, guard or drain
+  (`Cmd::SquadQueue`, up to 6). The squad starts the next one when it
+  arrives or its work ends. A plain order drops the queue.
+- **Combine only when touching.** The tile's + and **J** combine only a
+  squad whose soldiers overlap yours: the middles are no further apart than
+  the two spreads plus 4 cells. Before, any squad within 24 cells could be
+  combined.
+- **Links** (`Cmd::Link`, `Cmd::Unlink`). Two squads can be linked only while
+  they touch: use the link button on the tile's corner or **Ctrl + its
+  number**. Unlinking works anywhere. A link is commanded as one: moving,
+  steering, firing, facing and queuing one does the same to all, and a move
+  sends each to the point offset by where it stands in the link. You can't
+  pick one squad inside it, and the whole link gets the lead's faster,
+  stronger shots. Each squad keeps its own guns and settings; the Formation
+  and Guards keys set the whole link.
+
+Film `page/squad-work-1x.gif` (Fork, seed 1, llvmpipe):
+`larder-world mode=squads seed=1 look=DIR hand=squadwork at=1,1.25,...`.
+Eight soldiers drain crystal 1 at (165,150) with slime to its south, and 3
+stand guard. At 30 s the squad splits, the halves are linked, and one order
+sends both, with a second move queued.
+
+Costs: the guard check runs once a game second and reads the mould grid
+once (`World::mould_grid`, a GPU readback; not yet timed on the 1070).
+Healing and the work boost are a few comparisons a soldier a step.
+
 ## Open
 
 - A call-in delay for bought soldiers (answer 10).
