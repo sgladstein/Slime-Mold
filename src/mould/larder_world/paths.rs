@@ -6,6 +6,13 @@ use super::*;
 /// Game seconds between rebuilds of the walking maps.
 pub(super) const PATHS_EVERY: f32 = 30.0;
 
+/// Most walking maps kept at once; past it the cache starts again. A map
+/// is the whole world (512 x 320 fine cells, 655 KB, about 15 ms to build
+/// at the window's scale 2), and a squad's goals move with its anchor, so
+/// a squad pressed against rock could build a new one every step and keep
+/// them all for `PATHS_EVERY` (bug sweep, 2026-11-14).
+pub(super) const MAPS_MAX: usize = 48;
+
 /// How far past a solid crystal's rim a soldier stands to harvest or
 /// bank, dish cells (`Rules::crystal_solid`).
 pub(super) const RIM: f32 = 1.0;
@@ -346,7 +353,7 @@ impl<W: World> Game<W> {
             g
         } else {
             let now = self.world.ticks();
-            if now >= self.paths.at + self.secs(PATHS_EVERY) {
+            if now >= self.paths.at + self.secs(PATHS_EVERY) || self.paths.maps.len() >= MAPS_MAX {
                 // Walls wear to rubble: rebuild the maps now and then.
                 self.paths.maps.clear();
                 self.paths.at = now;
