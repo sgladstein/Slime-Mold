@@ -224,9 +224,23 @@ impl<W: World> Game<W> {
     pub(super) fn goal_raw(&self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
         let sc = self.s();
+        // Its place in its squad's formation (`squads`; it was M3's
+        // sunflower by soldier index, `slot(k)`, before squads).
+        let place = self.place(k);
+        let squads = self.rules.squads;
         let off = |p: (f32, f32)| {
-            let o = self.slot(k);
-            (p.0 + o.0 * sc, p.1 + o.1 * sc)
+            let o = place;
+            let q = (p.0 + o.0 * sc, p.1 + o.1 * sc);
+            // A formation place in rock or past a wall: the point itself, so
+            // a squad squeezing past a wall is not stuck on places it can't
+            // stand on (seen on the Fork: a squad steered into the V wall
+            // stood still, its anchor waiting for members whose places were
+            // in the wall).
+            if squads && !(self.standable(q.0, q.1) && self.walk_line(p, q)) {
+                p
+            } else {
+                q
+            }
         };
         match s.order {
             Order::Hold => None,

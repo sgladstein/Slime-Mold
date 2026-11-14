@@ -64,6 +64,17 @@ code { font-family: var(--mono); font-size: 0.9em; }
   </section>
 
   <section>
+    <h2>Trail cards</h2>
+    <p>Three new flight cards make every bullet leave a real field along its flight, as Noita's burning and gunpowder trails do. Scorch leaves a line of crater the mould will not cross while it lasts. Alarm leaves a line of alarm the mould flees. Mist leaves a thin gas cloud, the violet haze, which puts to sleep the mould that drifts into it. None of them kills or costs food. The CPU and GPU versions lay the same fields cell for cell.</p>
+    <p class="muted">Same scene, 0:19 to 0:22, each round on its own. The counts are at 0:22. With no round: mould 24,500, 750 killed, 138 shots.</p>
+    <div class="pair">
+      <figure><img src="trail-scorch.gif" alt="Scorch trail"><figcaption><span class="tag blast">Scorch + scorch</span><span class="counts">987 trail bursts · mould 24,603 · 774 killed · 144 shots</span></figcaption></figure>
+      <figure><img src="trail-fence.gif" alt="Alarm trail"><figcaption><span class="tag plain">Alarm</span><span class="counts">mould 24,590 · 737 killed · 137 shots</span></figcaption></figure>
+      <figure><img src="trail-mist.gif" alt="Mist trail: a violet haze in front of the squad"><figcaption><span class="tag gas">Mist</span><span class="counts">719 trail bursts · mould 24,365 · 1,019 killed · 103 shots</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
     <h2>Each card's look</h2>
     <p class="muted">The cards change the bullet itself. Wide makes it bigger, with a wider light. Scatter flies three heads. Pierce is a long thin lance. Quiet is dimmer. A lodged cast (delay or thick) glows where it waits, and a delay's glow swells as its fuse burns down.</p>
     <div class="pair">
@@ -83,6 +94,6 @@ code { font-family: var(--mono); font-size: 0.9em; }
       <li>Burst lights come from <code>Rounds::pops</code> (each burst's real centre and radius), at 3 radii for 0.12 s, brighter the more walkers it killed. Muzzle flashes and plain hits light up too.</li>
       <li>The grey ray line under each shot is gone while bullets fly. The bullet's own streak shows the path.</li>
     </ul>
-    <p class="muted">Next in this thread: trail cards that lay real fields along the flight. Two other threads cover explosion cards, which break the mould and throw it, and the loadout panel in the HUD.</p>
+    <p class="muted">Trail cards are the last step of this plan. Two other threads cover explosion cards, which break the mould and throw it, and the loadout panel in the HUD.</p>
   </section>
 </div>

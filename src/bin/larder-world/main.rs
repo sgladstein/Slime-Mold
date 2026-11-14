@@ -157,6 +157,8 @@ mod headless;
 mod bench;
 mod hands;
 mod menu;
+mod squadmode;
+use squadmode::SquadInput;
 // The moved modules' functions, reached as before from here and from each
 // other.
 use args::*;
@@ -271,6 +273,12 @@ fn sprite_kind(k: Kind) -> Option<u32> {
 /// look's fight: `examples/worldlook.rs`).
 const TRACER: f32 = 0.1;
 const FLASH: f32 = 0.07;
+/// How long a take's pulse lasts at a harvester's hands, seconds: a step
+/// is 1/15 s, so a soldier taking every step glows steadily and one that
+/// stops fades in about a third of a second.
+const TAKE: f32 = 0.3;
+/// How long the larder's cells flare when a load is banked, seconds.
+const BANKED: f32 = 0.6;
 /// Game seconds between read-backs of the crystals' and walls' cells for
 /// the ground the look shades.
 const GROUND_EVERY: f32 = 1.0;
@@ -278,7 +286,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 20] = [
+const LOADOUTS: [(&str, &str); 24] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -303,10 +311,18 @@ const LOADOUTS: [(&str, &str); 20] = [
     ("bomb", "bomb"),
     ("cluster", "scatter+bomb"),
     ("blowout", "wide+bomb"),
+    // Trails (11-14, Noita's burning and gunpowder trails; step 5 of the
+    // rounds' look): every bullet lays a real field along its flight.
+    ("scorch", "scorch+scorch"),
+    ("fence", "alarm"),
+    ("mist", "mist"),
+    ("firewall", "scorch+blast"),
 ];
 
 #[derive(Clone)]
 struct Args {
+    /// `mode=squads`: the squad mode (`squadmode`, `Rules::squads`).
+    squads: bool,
     /// None: the race world from noise.
     map: Option<String>,
     seed: u64,
@@ -374,6 +390,9 @@ struct Tracer {
 struct Look {
     facing: f32,
     flash: f32,
+    /// Seconds left of the pulse at its hands from its last take from a
+    /// crystal (`Game::last_takes`, `TAKE` long).
+    take: f32,
     at: (f32, f32),
     alive: bool,
 }
@@ -392,6 +411,8 @@ struct App {
     view: Option<View>,
     camera: Camera,
     controls: Controls,
+    /// The squad mode's input (`mode=squads`), None in the RTS round.
+    sq: Option<SquadInput>,
     hud: Hud,
     canvas: Option<Canvas>,
     canvas_pass: Option<CanvasPass>,
@@ -438,6 +459,10 @@ struct App {
     hungry: bool,
     /// Bank samples (game second, bank) for the food rate.
     bank_log: std::collections::VecDeque<(f32, f32)>,
+    /// Seconds left of the larder's flare (`BANKED`), and the harvest
+    /// banked when it was last checked.
+    banked: f32,
+    harvested_seen: f32,
     /// Frame times (ms) since the last report, and when it was.
     frame_ms: Vec<f32>,
     steps: u32,
@@ -495,6 +520,7 @@ impl App {
             view: None,
             camera: Camera::new((512, 320), (1280, 800)),
             controls: Controls::new(0),
+            sq: None,
             hud: Hud::new(),
             canvas: None,
             canvas_pass: None,
@@ -523,6 +549,8 @@ impl App {
             broke: false,
             hungry: false,
             bank_log: Default::default(),
+            banked: 0.0,
+            harvested_seen: 0.0,
             frame_ms: Vec::new(),
             steps: 0,
             finished: (0, 0),
@@ -637,7 +665,20 @@ impl App {
         if let Some([strike, every, spread]) = a.aim {
             (rules.strike, rules.shot_every, rules.spread) = (strike, every, spread);
         }
-        let game = Game::new(world, rules, a.seed).with_tier(core_tier);
+        rules.squads = a.squads;
+        if a.squads {
+            // No larder: drain or guard (`Rules::larder`); a harvesting
+            // squad doesn't scatter to the next crystal by itself, and
+            // there is no larder to overrun.
+            rules.larder = false;
+            rules.seek = false;
+            rules.overrun = 0.0;
+        }
+        let mut game = Game::new(world, rules, a.seed).with_tier(core_tier);
+        self.sq = a.squads.then(SquadInput::new);
+        if a.squads {
+            game.apply(Cmd::Active(0));
+        }
         self.kit = Kit::new(KitRules::default());
         self.rounds = Rounds::new(rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(), RoundRules::default());
         self.mission = mission.map(|m| Tracker::new(m, &game));
@@ -663,6 +704,13 @@ impl App {
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
             v.set_crystals(&gems, &e.dish.pile_of);
+            // Their charge live from the engine, so a crystal sinks, dims
+            // and greys where it is taken, and glows where it is being
+            // taken (the owner's playtest, 04:53Z: "harvesting crystals
+            // could look way better").
+            if !e.dish.pile_fill.is_empty() {
+                v.set_charge(Some((&e.charge, &e.dish.pile_fill)));
+            }
             // The body's walkers a cell, from the start's living walkers
             // (the look's `body`; a growing world has ten slots a walker).
             v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
@@ -680,7 +728,7 @@ impl App {
         }
         self.ground = Some(ground);
         (self.ground_at, self.ground_walls) = (0.0, 0);
-        self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
+        self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
         self.tracers.clear();
         self.controls.selected.clear();
         self.controls.groups = Default::default();
@@ -688,6 +736,7 @@ impl App {
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.broken_told = false;
         self.bank_log.clear();
+        (self.banked, self.harvested_seen) = (0.0, 0.0);
         let voice = self.listener.as_ref().is_none_or(|l| l.voice);
         self.listener = Some(WorldListener::new(&game));
         if let Some(l) = self.listener.as_mut() {
@@ -734,7 +783,14 @@ impl App {
         self.tracers.retain(|t| t.age < TRACER);
         for l in &mut self.looks {
             l.flash = (l.flash - dt).max(0.0);
+            l.take = (l.take - dt).max(0.0);
         }
+        self.banked = (self.banked - dt).max(0.0);
+        // A load banked since the last frame flares the larder's cells.
+        if g.harvested > self.harvested_seen + 0.5 {
+            self.banked = BANKED;
+        }
+        self.harvested_seen = g.harvested;
         // A bought soldier (by the card or a replay) joins the notes.
         join_looks(g, &mut self.looks);
         let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
@@ -916,6 +972,7 @@ impl App {
         self.last_frame = Instant::now();
         if !self.in_menu() {
             self.controls.update(&mut self.camera, dt);
+            self.squad_frame(dt);
         }
         self.step(dt);
         // The dish under the menu plays on: a round it ends starts again.
@@ -964,6 +1021,9 @@ impl App {
     /// The frame's ground, marks, HUD and canvas, ready to record.
     fn prepare(&mut self) {
         self.refresh_ground();
+        if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
+            v.set_time(g.time());
+        }
         self.marks();
         let minimap = self.view.as_ref().is_some_and(|v| v.minimap) && !self.camera.sees_all();
         let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
@@ -1042,10 +1102,16 @@ struct Bench {
     squad1: bool,
     /// `spread=0`: each step's ticks all on the step's frame (`App::spread`).
     spread: bool,
+    /// `centre=X,Y[,ZOOM]`: the camera's place and zoom for the timed run
+    /// (11-14, the technical lead): the view's cost is a screen pixel's
+    /// shading plus `prep`'s fine cells, which grow with the zoom (two a
+    /// cell each way from zoom 6), so the draw is timed at the opening zoom
+    /// and at `MAX_ZOOM` (24) over the body, not only where the window opens.
+    view: Option<(f32, f32, f32)>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1075,6 +1141,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 chosen = true;
             }
             "mission" => args.mission = Some(v.to_string()),
+            "mode" => {
+                args.squads = match v {
+                    "squads" => true,
+                    "rts" => false,
+                    _ => return Err("mode=squads|rts".into()),
+                }
+            }
             "crater" => args.crater = Some(v.parse()?),
             "core_pull" => args.core_pull = Some(v.parse()?),
             "bullet" => args.bullet = Some(v.parse()?),
@@ -1182,7 +1255,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(secs) = bench_secs {
         println!("larder-world machine at the start: {}", machine());
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
-        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread }, &device, &queue)?;
+        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread, view: centre }, &device, &queue)?;
         println!("  machine at the end: {}", machine());
         return Ok(());
     }

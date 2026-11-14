@@ -32,6 +32,10 @@ const PARAMS_BYTES: usize = 128;
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
 const MARGIN: u32 = 4;
+/// The bindings after the first twenty, in `bind`'s order: 20 the lights,
+/// then 21-24 the crystals' live charge, their heat (`drain`), the terrain
+/// cells (`tcell`) and the crystal cells listed.
+const BINDINGS_AFTER: [u32; 5] = [LIGHTS_BINDING, 21, 22, 23, 24];
 
 /// The most point lights a frame (`View::set_lights`); `shaded` loops over
 /// them a pixel, so the cap bounds that loop.
@@ -91,7 +95,7 @@ pub fn minimap_world(rect: (u32, u32, u32, u32), world: (usize, usize), at: (f32
 pub struct View {
     device: wgpu::Device,
     queue: wgpu::Queue,
-    pipes: [wgpu::ComputePipeline; 5],
+    pipes: [wgpu::ComputePipeline; 6],
     bgl: wgpu::BindGroupLayout,
     params: wgpu::Buffer,
     world_frame: wgpu::Buffer,
@@ -127,6 +131,20 @@ pub struct View {
     gems: wgpu::Buffer,
     gem_cell: wgpu::Buffer,
     n_gems: u32,
+    /// The crystals' live charge (`set_charge`): the engine's charge a cell
+    /// (binding 21), each crystal's full charge a cell (written into
+    /// `gems`' fourth word), the crystal cells listed (binding 24) and each
+    /// one's last charge and how fast it is being taken (binding 22,
+    /// `drain`). `live` 0 off, 1 on, 2 for a first frame that only reads.
+    charge: wgpu::Buffer,
+    heat: wgpu::Buffer,
+    gem_list: wgpu::Buffer,
+    n_list: u32,
+    gem_words: Vec<f32>,
+    live: std::cell::Cell<u32>,
+    /// Game seconds (`set_time`) now and at the last `record`.
+    game_t: f32,
+    last_t: std::cell::Cell<f32>,
     /// Living walkers a cell for the look's body (0: the calibration's).
     body_density: f32,
     /// The soldier sprites (`SPRITES`), RGBA a texel.
@@ -135,6 +153,8 @@ pub struct View {
     /// the `prep` pass (`view.wgsl`), sized for the screen at zoom 1.
     hcell: wgpu::Buffer,
     mcell: wgpu::Buffer,
+    /// Each shown cell's hard terrain, smoothed (`view.wgsl`, `tcell`).
+    tcell: wgpu::Buffer,
     n_walk: u32,
     shade: bool,
     /// The screen-sized result, rows `stride` pixels apart.
@@ -172,13 +192,13 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(&layout), module: &module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None })
         };
-        let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks"), pipe("prep")];
+        let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks"), pipe("prep"), pipe("drain")];
         let params = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view params"), size: PARAMS_BYTES as u64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let marks = storage(device, "marks", (MAX_MARKS * MARK_WORDS * 4) as u64);
         let vis = storage(device, "visibility", 16);
@@ -186,13 +206,14 @@ impl View {
         let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
         let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 4);
         let atlas = Self::atlas(device, queue);
-        let (hcell, mcell) = Self::cell_buffers(device, screen);
+        let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
         let lights = storage(device, "lights", (MAX_LIGHTS * 32) as u64);
         let (news, state) = (storage(device, "news", 16), storage(device, "state", 16));
         let fgrid = Self::fine_buffer(device, screen);
         let (gems, gem_cell) = (storage(device, "crystals", 16), storage(device, "crystal cells", 16));
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights]);
+        let (charge, heat, gem_list) = (storage(device, "charge", 16), storage(device, "crystal heat", 16), storage(device, "crystal list", 16));
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -220,10 +241,19 @@ impl View {
             gems,
             gem_cell,
             n_gems: 0,
+            charge,
+            heat,
+            gem_list,
+            n_list: 0,
+            gem_words: Vec::new(),
+            live: std::cell::Cell::new(0),
+            game_t: 0.0,
+            last_t: std::cell::Cell::new(0.0),
             body_density: 0.0,
             atlas,
             hcell,
             mcell,
+            tcell,
             n_walk: 0,
             shade: false,
             out,
@@ -260,9 +290,9 @@ impl View {
 
     /// The cells `prep` works out: at zoom 1 or more the screen shows at
     /// most its own size in cells, plus the margin (`MARGIN` each side).
-    fn cell_buffers(dev: &wgpu::Device, screen: (u32, u32)) -> (wgpu::Buffer, wgpu::Buffer) {
+    fn cell_buffers(dev: &wgpu::Device, screen: (u32, u32)) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let n = (screen.0 + 2 * MARGIN + 2) as u64 * (screen.1 + 2 * MARGIN + 2) as u64;
-        (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 8))
+        (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 8), storage(dev, "cell terrain", n * 4))
     }
 
     /// `prep`'s fine cells, at most as many as `cell_buffers`' cells: the
@@ -280,15 +310,15 @@ impl View {
         ((zoom / 3.0).floor() as u32).clamp(1, 2)
     }
 
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 21]) -> wgpu::BindGroup {
-        // In order from 0, but the last (the lights) at `LIGHTS_BINDING`.
-        let last = bufs.len() - 1;
-        let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: if i == last { LIGHTS_BINDING } else { i as u32 }, resource: b.as_entire_binding() }).collect();
+    /// The bind group: `bufs` in binding order, 0-19 then `BINDINGS_AFTER`.
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 25]) -> wgpu::BindGroup {
+        let binding = |i: usize| if i < 20 { i as u32 } else { BINDINGS_AFTER[i - 20] };
+        let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: binding(i), resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -301,6 +331,7 @@ impl View {
         self.clear_look();
         self.clear_news();
         self.n_gems = 0;
+        self.clear_charge();
         self.rebind();
     }
 
@@ -380,10 +411,54 @@ impl View {
         let g: Vec<f32> = gems.iter().flat_map(|&((x, y), r)| [x, y, r, 0.0]).collect();
         self.gems = storage(&self.device, "crystals", (g.len() * 4) as u64);
         self.queue.write_buffer(&self.gems, 0, &g.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        self.gem_words = g;
+        // The crystal cells listed, for `drain`.
+        let list: Vec<u32> = (0..w * h).filter(|&i| crystal[i] as usize >= 1 && crystal[i] as usize <= gems.len()).map(|i| i as u32).collect();
+        self.gem_list = storage(&self.device, "crystal list", (list.len() * 4) as u64);
+        self.queue.write_buffer(&self.gem_list, 0, &crate::gpu::u32_bytes(&list));
+        self.n_list = list.len() as u32;
+        self.clear_charge();
         self.gem_cell = storage(&self.device, "crystal cells", (near.len() * 4) as u64);
         self.queue.write_buffer(&self.gem_cell, 0, &crate::gpu::u32_bytes(&near));
         self.n_gems = gems.len() as u32;
         self.rebind();
+    }
+
+    /// The crystals drawn from their live charge (after `set_crystals`):
+    /// `charge` the engine's charge a cell (`Engine::charge`), `full` each
+    /// crystal's full charge a cell (`BigDish::pile_fill`). The look then
+    /// follows the charge every frame, not the ground's once a second: a
+    /// crystal sinks, dims and greys where it is taken, and a cell being
+    /// taken glows (`drain`, by the game seconds `set_time` gives). `None`
+    /// goes back to the ground's charge.
+    pub fn set_charge(&mut self, charge: Option<(&wgpu::Buffer, &[f32])>) {
+        match charge {
+            Some((buf, full)) if self.n_gems > 0 && full.len() * 4 == self.gem_words.len() => {
+                for (k, &f) in full.iter().enumerate() {
+                    self.gem_words[4 * k + 3] = f;
+                }
+                self.queue.write_buffer(&self.gems, 0, &self.gem_words.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+                self.charge = buf.clone();
+                self.heat = storage(&self.device, "crystal heat", (self.world.0 * self.world.1 * 8) as u64);
+                self.live.set(2);
+                self.rebind();
+            }
+            _ => self.clear_charge(),
+        }
+    }
+
+    fn clear_charge(&mut self) {
+        if self.live.get() != 0 {
+            (self.charge, self.heat) = (storage(&self.device, "charge", 16), storage(&self.device, "crystal heat", 16));
+            self.live.set(0);
+        }
+    }
+
+    /// The game's time in seconds, each frame (the crystals' `drain`
+    /// measures how fast charge goes in game time, so a paused or fast game
+    /// reads the same).
+    pub fn set_time(&mut self, t: f32) {
+        self.game_t = t;
     }
 
     fn clear_news(&mut self) {
@@ -420,7 +495,7 @@ impl View {
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
         (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
         self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 4);
-        (self.hcell, self.mcell) = Self::cell_buffers(&self.device, screen);
+        (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, screen);
         self.fgrid = Self::fine_buffer(&self.device, screen);
         self.has_overlay = false;
         self.rebind();
@@ -522,8 +597,16 @@ impl View {
         b.extend(oy.to_le_bytes());
         b.extend(rw.to_le_bytes());
         b.extend(rh.to_le_bytes());
-        for v in [self.news_on as u32, self.lag, self.lean, self.n_gems, k, 0, 0, 0] {
+        // The game seconds since the last frame, for `drain` (0 on a frame
+        // with no game time: the heat holds).
+        let live = self.live.get();
+        let dt = if live == 1 { (self.game_t - self.last_t.get()).max(0.0) } else { 0.0 };
+        self.last_t.set(self.game_t);
+        for v in [self.news_on as u32, self.lag, self.lean, self.n_gems, k, self.n_list * (live > 0) as u32, dt.to_bits(), live] {
             b.extend(v.to_le_bytes());
+        }
+        if live == 2 {
+            self.live.set(1);
         }
         self.queue.write_buffer(&self.params, 0, &b);
         let (gx, gy) = (self.screen.0.div_ceil(16), self.screen.1.div_ceil(16));
@@ -536,6 +619,9 @@ impl View {
         }
         if self.shade && cam.zoom >= 1.0 {
             passes.push((4, (rw.div_ceil(16), rh.div_ceil(16))));
+        }
+        if live > 0 && self.n_list > 0 {
+            passes.push((5, (self.n_list.div_ceil(256), 1)));
         }
         passes.push((0, (gx, gy)));
         if self.n_marks > 0 {
@@ -809,6 +895,82 @@ mod tests {
             checked += 1;
         }
         assert_eq!(checked, 40);
+    }
+
+    /// A crystal shows its live charge (the owner's playtest, 2026-11-14
+    /// 04:53Z: "harvesting crystals could look way better"): with the
+    /// engine's charge bound, the full half is cyan and the drained half
+    /// grey stone; charge taken between two frames lights the cells it
+    /// went from, and the light fades once the taking stops.
+    #[test]
+    fn a_crystal_shows_its_live_charge_and_where_it_is_taken() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let (c, r) = ((32.0f32, 20.0f32), 9.0f32);
+        let a = r * 3f32.sqrt() / 2.0;
+        let mut pile = vec![0u16; w * h];
+        let mut ground = vec![0u32; w * h];
+        let full = 100.0f32;
+        let mut charge = vec![0.0f32; w * h];
+        for y in 0..h {
+            for x in 0..w {
+                let (dx, dy) = ((x as f32 + 0.5 - c.0).abs(), (y as f32 + 0.5 - c.1).abs());
+                if a - dx.max(0.5 * dx + 0.8660254 * dy) >= 0.0 {
+                    pile[y * w + x] = 1;
+                    ground[y * w + x] = 5 | 255 << 8;
+                    // The left half drained dry, the right half full.
+                    charge[y * w + x] = if (x as f32) < c.0 { 0.0 } else { full };
+                }
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let f32s = |v: &[f32]| v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>();
+        let look_b = buf("look", &vec![0u8; w * h * 4]);
+        let ground_b = buf("ground", &crate::gpu::u32_bytes(&ground));
+        let walk_b = buf("walkers", &[0u8; 16]);
+        let charge_b = buf("charge", &f32s(&charge));
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 0);
+        view.set_crystals(&[(c, r)], &pile);
+        view.set_charge(Some((&charge_b, &[full])));
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on(c);
+        let frame = |view: &mut View, t: f32| {
+            view.set_time(t);
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        let at = |pic: &image::RgbaImage, x: f32, y: f32| {
+            let (sx, sy) = cam.to_screen((x, y));
+            let p = pic.get_pixel(sx as u32, sy as u32).0;
+            [p[0] as i32, p[1] as i32, p[2] as i32]
+        };
+        let pic = frame(&mut view, 0.0);
+        let (dry, wet) = (at(&pic, c.0 - 0.5 * a, c.1), at(&pic, c.0 + 0.5 * a, c.1));
+        assert!(wet[2] > wet[0] + 40, "the full half is cyan: {wet:?}");
+        assert!((dry[2] - dry[0]).abs() < 30, "the drained half is grey: {dry:?}");
+        // A quarter of the full half's charge taken in 0.1 game seconds.
+        let taken: Vec<f32> = charge.iter().enumerate().map(|(i, &v)| if (i % w) as f32 >= c.0 { v * 0.75 } else { v }).collect();
+        q.write_buffer(&charge_b, 0, &f32s(&taken));
+        let lit = frame(&mut view, 0.1);
+        let p = at(&lit, c.0 + 0.5 * a, c.1);
+        let before = at(&pic, c.0 + 0.5 * a, c.1);
+        assert!(p.iter().sum::<i32>() > before.iter().sum::<i32>() + 60, "taking lights it: {before:?} -> {p:?}");
+        // No more taking: two game seconds on, the light is gone.
+        let calm = frame(&mut view, 2.1);
+        let p2 = at(&calm, c.0 + 0.5 * a, c.1);
+        assert!(p2.iter().sum::<i32>() < p.iter().sum::<i32>() - 60, "the light fades: {p:?} -> {p2:?}");
     }
 
     /// The slime's edge is as sharp as its walkers (2026-11-14, the owner's

@@ -349,6 +349,32 @@ pub struct Rules {
     /// (its first name): the mould's bite is its damage to soldiers
     /// (`drain`).
     pub sink: f32,
+    /// The controlled squad's edge (`squads`, owner 2026-11-14 04:08Z:
+    /// "whoever you are actively controlling is stronger"; 04:18Z: faster
+    /// fire and harder hits, seen in the bullets and the holes).
+    pub lead: super::LeadRules,
+    /// The squad mode (`squads`, owner 2026-11-14 04:49Z: "a separate
+    /// mode for right now. Not erase the other game"): formations by
+    /// squad, the controlled squad's self-defence stance and bought
+    /// soldiers joining it. Off, the game plays as before (squad commands
+    /// still apply, but nothing sends them).
+    pub squads: bool,
+    /// The larder (on). Off (the squad mode, owner 2026-11-14 04:18Z: "get
+    /// rid of the whole larder system"), a crystal is *drained* or
+    /// *guarded* (owner's card 04:27Z): a soldier harvesting it banks the
+    /// charge as it takes it, nothing carried, until it runs dry for both
+    /// sides; and a crystal with soldiers standing by it and no walker on
+    /// it is guarded, paying `guard` into the bank without being used up
+    /// (owner 04:28Z: "guarding has to be more valuable in the long run").
+    /// No larder to rob or smell; bought soldiers start by the squad.
+    pub larder: bool,
+    /// Game seconds a guarded crystal takes to pay what draining it whole
+    /// would, and it goes on paying: past that, guarding is worth more.
+    pub guard: f32,
+    /// Walkers on a crystal (whole) that stop its guard paying: shape C
+    /// lays a thin film nearly everywhere, so with 0 no crystal paid on
+    /// the Fork.
+    pub guard_walkers: u32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
     /// the target. 0 (the default) aims dead on and draws no random
@@ -410,7 +436,10 @@ impl Default for Rules {
             tps: 15,
             frame_ticks: 1,
             speed: 10.0,
-            range: 15.0,
+            // 24 since 2026-11-14 08:08Z (owner's playtest: "gun range
+            // should be increased"); 15 before. Soldiers' sight and every
+            // shot's reach, mouse-aimed volleys included.
+            range: 24.0,
             strike: 2.5,
             shot_every: 1.0,
             bullet_speed: 45.0,
@@ -454,6 +483,11 @@ impl Default for Rules {
             seek: true,
             crater: 2.0,
             sink: 1.0,
+            lead: super::LeadRules::default(),
+            squads: false,
+            larder: true,
+            guard: 120.0,
+            guard_walkers: 8,
             spread: 0.0,
             crystal_solid: true,
             mass: 1.0,

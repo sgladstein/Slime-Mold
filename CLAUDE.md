@@ -98,6 +98,10 @@ in the same change, so the page outlives claude.ai.
 
 ## Commands
 
+The owner plays by double-clicking `play.cmd` (runs `play.ps1`: pull main,
+build `larder-world` and `larder-edit`, open the menu). Point them at it
+rather than at cargo commands.
+
 ```
 cargo test --release --locked
 cargo clippy --all-targets --release --locked -- -D warnings

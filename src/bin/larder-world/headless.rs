@@ -38,7 +38,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // through `larder_world_ai`, as the census does, so a campaign mission's
     // pictures show the hands its numbers were set on.
     let mut ai = match hand {
-        "rush" | "farm" | "stand" | "volley" | "edge" => None,
+        "rush" | "farm" | "stand" | "volley" | "edge" | "squads" => None,
         _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
     };
     // Each hit: where, its tick, the body there the tick before, and the
@@ -229,7 +229,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let g = app.game.as_ref().unwrap();
         let rd = &app.rounds;
         if !rd.round.is_empty() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {:.0} food spent, {} skipped for food, {} not on this world, {} lodged", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.spent, rd.broke, rd.unsupported, rd.waiting());
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {:.0} food spent, {} skipped for food, {} not on this world, {} lodged, {} trail bursts", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.spent, rd.broke, rd.unsupported, rd.waiting(), rd.trailed);
         }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames
@@ -238,8 +238,14 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // the larder when it dies).
         let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
         let squad = (!alive.is_empty()).then(|| (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32));
+        // The squad mode follows the controlled squad, as the window does.
+        let squad = g.active.and_then(|q| g.middle(q)).filter(|_| g.rules.squads).or(squad);
         let centre = fixed.map(|f| (f.0, f.1)).or(squad).unwrap_or(g.larder);
-        app.controls.selected = if select { (0..g.soldiers.len()).collect() } else { Vec::new() };
+        app.controls.selected = match g.active.filter(|_| g.rules.squads) {
+            Some(q) => g.members(q),
+            None if select => (0..g.soldiers.len()).collect(),
+            None => Vec::new(),
+        };
         app.hud.moved(hover);
         // The HUD sets the camera's insets as it draws, and `fit` reads
         // them: without this the run's first "all" picture was zoomed in
@@ -322,7 +328,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
 /// (`Rules::reserve`), which `finish_step` makes.
 pub(super) fn join_looks(g: &Game<GpuWorld>, looks: &mut Vec<Look>) {
     for s in &g.soldiers[looks.len()..] {
-        looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
+        looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive });
     }
 }
 
@@ -346,6 +352,18 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
         if let Some(k) = s.by.filter(|&k| k < looks.len() && g.soldiers.get(k).is_some_and(|q| q.alive)) {
             looks[k].flash = FLASH;
             looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+        }
+    }
+    // A harvester taking from a crystal turns to face it and its hands
+    // light (harvest look, 11-14); a shot this step still sets its facing
+    // above, as firing wins.
+    let cs = g.world.crystals();
+    for t in &g.last_takes {
+        if let (Some(k), Some(c)) = (t.by.filter(|&k| k < looks.len()), cs.get(t.crystal)) {
+            looks[k].take = TAKE;
+            if looks[k].flash <= 0.0 {
+                looks[k].facing = (c.0 .1 - t.at.1).atan2(c.0 .0 - t.at.0);
+            }
         }
     }
 }

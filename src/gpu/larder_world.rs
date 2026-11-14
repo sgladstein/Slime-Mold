@@ -593,9 +593,13 @@ impl World for GpuWorld {
         if b.kill || b.alarm > 0.0 || b.crater > 0 {
             let r = if b.kill { b.r } else { 0.0 };
             self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, 0.0);
-            let now = self.e.struck();
-            out.killed = now.wrapping_sub(self.struck);
-            self.struck = now;
+            // Only a kill moves the count: a shock or a crater alone (the
+            // rounds' trails, a burst a bullet a frame) skips the read-back.
+            if b.kill {
+                let now = self.e.struck();
+                out.killed = now.wrapping_sub(self.struck);
+                self.struck = now;
+            }
         }
         // An explosion's fling (`Engine::fling`, 11-14), after the kill as
         // on the CPU.
@@ -612,6 +616,10 @@ impl World for GpuWorld {
                 (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
                 self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, k.gas_dose);
             }
+        }
+        if b.cloud > 0.0 && k.gas_keep > 0.0 {
+            (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
+            self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.cloud);
         }
         // The germ last, as on the CPU: a burst of its own that kills,
         // clears and lays nothing, only infects within `r`.
