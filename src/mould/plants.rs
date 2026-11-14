@@ -216,6 +216,13 @@ pub struct Fire {
     /// it easy to wipe out the whole slime, so the body is its own
     /// firebreak and fire takes only its thin edge and stragglers.
     pub damp: f32,
+    /// Char (burnt ground, the graphics lead's ask 11-14 17:55Z: without
+    /// it burnt ground reads as bare ground): a cell's char is kept x
+    /// `char_keep` a step, gains heat x `char_gain`, up to 1, and loses
+    /// plants x `char_clear`, so regrowth clears it.
+    pub char_gain: f32,
+    pub char_keep: f32,
+    pub char_clear: f32,
 }
 
 /// **Fire** (owner 11-14 17:29Z: "I like this but need to think hard about
@@ -230,6 +237,7 @@ pub fn fire_step(
     trail: &[f32],
     kind: &[u8],
     plant: &mut [f32],
+    char: &mut [f32],
     from: &[f32],
     to: &mut [f32],
 ) -> usize {
@@ -240,12 +248,10 @@ pub fn fire_step(
             let i = y * w + x;
             let wet = (!g.wet.is_empty() && g.wet[i]) || trail[i] >= f.damp || !g.agar[i];
             let heat = from[i];
+            let p = plant[i];
             if wet {
                 to[i] = 0.0;
-                continue;
-            }
-            let p = plant[i];
-            if heat > 0.0 {
+            } else if heat > 0.0 {
                 let eat = (f.eat * heat).min(p);
                 plant[i] = p - eat;
                 to[i] = if p - eat < f.fuel {
@@ -278,6 +284,7 @@ pub fn fire_step(
             if to[i] > 0.0 {
                 lit += 1;
             }
+            char[i] = ((char[i] * f.char_keep + to[i] * f.char_gain).min(1.0) - plant[i] * f.char_clear).max(0.0);
         }
     }
     lit
@@ -463,6 +470,9 @@ mod tests {
         catch: 0.2,
         fuel: 0.05,
         damp: 1.0,
+        char_gain: 0.2,
+        char_keep: 0.999,
+        char_clear: 0.02,
     };
 
     /// A fire runs through dry plants and burns them out, stops at wet
@@ -494,9 +504,10 @@ mod tests {
             plant[y * w + 20] = 0.0; // bare at x 20
         }
         let (mut a, mut b) = (vec![0.0; w * h], vec![0.0; w * h]);
+        let mut ch = vec![0.0; w * h];
         a[w] = 1.0; // lit at (0, 1)
         for _ in 0..400 {
-            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &a, &mut b);
+            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b);
             std::mem::swap(&mut a, &mut b);
         }
         assert!(
@@ -510,7 +521,7 @@ mod tests {
         a.fill(0.0);
         a[w + 21] = 1.0;
         for _ in 0..400 {
-            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &a, &mut b);
+            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b);
             std::mem::swap(&mut a, &mut b);
         }
         assert!(
@@ -522,7 +533,7 @@ mod tests {
         a.fill(0.0);
         a[w + 31] = 1.0;
         for _ in 0..400 {
-            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &a, &mut b);
+            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b);
             std::mem::swap(&mut a, &mut b);
         }
         assert!(
@@ -532,13 +543,14 @@ mod tests {
             plant[w + 55]
         );
         assert!(a.iter().all(|&v| v == 0.0), "out");
+        assert!(ch[w + 10] > 0.3 && ch[w + 20] == 0.0 && ch[w + 55] == 0.0, "char where it burnt: {} {} {}", ch[w + 10], ch[w + 20], ch[w + 55]);
         // Reeds never catch.
         let reeds = vec![REEDS; w * h];
         let mut plant = vec![0.8; w * h];
         a.fill(0.0);
         a[w] = 1.0;
         for _ in 0..100 {
-            fire_step(&g, &r, &F, &trail, &reeds, &mut plant, &a, &mut b);
+            fire_step(&g, &r, &F, &trail, &reeds, &mut plant, &mut ch, &a, &mut b);
             std::mem::swap(&mut a, &mut b);
         }
         assert!(plant[w + 5] > 0.79, "reeds don't burn");

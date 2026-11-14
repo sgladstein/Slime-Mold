@@ -1021,6 +1021,10 @@ pub struct BigParams {
     pub fire_fuel: f32,
     pub fire_damp: f32,
     pub fire_kill: f32,
+    /// Char, burnt ground (`plants::Fire::char_gain` and on).
+    pub char_gain: f32,
+    pub char_keep: f32,
+    pub char_clear: f32,
     pub plant_cap: [f32; crate::mould::plants::SOIL_KINDS],
     pub plant_kinds: [crate::mould::plants::Kind; crate::mould::plants::KINDS],
     /// A rectangular world, three dish cells in from the edge, instead of
@@ -1240,6 +1244,9 @@ impl BigParams {
             fire_fuel: 0.05,
             fire_damp: 3.0,
             fire_kill: 0.5,
+            char_gain: 0.2,
+            char_keep: 0.999,
+            char_clear: 0.02,
             plant_cap: crate::mould::plants::SOIL_CAP,
             plant_kinds: crate::mould::plants::KIND,
             rect: false,
@@ -1399,6 +1406,9 @@ pub struct BigDish {
     /// burning after the last plant step, and walkers fire has killed.
     pub fire: Vec<f32>,
     fire_next: Vec<f32>,
+    /// Burnt ground a fine cell, 0-1 (`plants::Fire::char_gain`), made
+    /// with `fire`.
+    pub char: Vec<f32>,
     pub burning: usize,
     pub fire_killed: u64,
     /// Fire's kills the game has been told of (`World::burned`).
@@ -1631,6 +1641,7 @@ impl BigDish {
             plant_kind: Vec::new(),
             fire: Vec::new(),
             fire_next: Vec::new(),
+            char: Vec::new(),
             burning: 0,
             fire_killed: 0,
             fire_told: 0,
@@ -1761,13 +1772,15 @@ impl BigDish {
         let r = self.plant_rates();
         crate::mould::plants::step(&g, r, &self.plant, &mut self.scratch, &mut self.plant_kind);
         std::mem::swap(&mut self.plant, &mut self.scratch);
-        if self.burning > 0 {
+        // Once lit, fire steps every plant step (the char fades after the
+        // flames), as the GPU runs it.
+        if !self.fire.is_empty() {
             self.fire_tick();
         }
     }
 
     fn fire_rates(&self) -> crate::mould::plants::Fire {
-        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, catch: self.p.fire_catch, fuel: self.p.fire_fuel, damp: self.p.fire_damp }
+        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, catch: self.p.fire_catch, fuel: self.p.fire_fuel, damp: self.p.fire_damp, char_gain: self.p.char_gain, char_keep: self.p.char_keep, char_clear: self.p.char_clear }
     }
 
     /// Fire's step, after the plants' (they grow, then burn), then the
@@ -1775,7 +1788,7 @@ impl BigDish {
     fn fire_tick(&mut self) {
         let g = crate::mould::plants::Ground { w: self.w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &self.scorch };
         let (r, f) = (self.plant_rates(), self.fire_rates());
-        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &self.plant_kind, &mut self.plant, &self.fire, &mut self.fire_next);
+        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next);
         std::mem::swap(&mut self.fire, &mut self.fire_next);
         let kill = self.p.fire_kill;
         for k in 0..self.walkers.len() {
@@ -1814,6 +1827,7 @@ impl BigDish {
         if self.fire.is_empty() {
             self.fire = vec![0.0; self.w * self.h];
             self.fire_next = vec![0.0; self.w * self.h];
+            self.char = vec![0.0; self.w * self.h];
         }
         let s = self.p.scale as f32;
         let (cx, cy, rr) = (x * s, y * s, r * s);
@@ -4161,7 +4175,7 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.scar).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(&self.plant).chain(&self.fire).chain(self.species_trail.iter().flatten()) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.scar).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(&self.plant).chain(&self.fire).chain(&self.char).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
         for &c in self.spec.iter().chain(&self.kind).chain(&self.plant_kind) {

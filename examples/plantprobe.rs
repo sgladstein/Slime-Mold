@@ -99,6 +99,10 @@ fn still(d: &BigDish, path: &PathBuf) {
                 *v += (t - *v) * p;
             }
         }
+        if !d.char.is_empty() {
+            let k = 1.0 - 0.75 * d.char[i];
+            c = [c[0] * k, c[1] * k, c[2] * k];
+        }
         if !d.fire.is_empty() && d.fire[i] > 0.0 {
             let f = d.fire[i];
             for (v, t) in c.iter_mut().zip([255.0, 110.0, 20.0]) {
