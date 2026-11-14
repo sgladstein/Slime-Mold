@@ -663,6 +663,17 @@ const BODY_S: f32 = 1.1;
 // The trail (the look's byte 0) at (x, y): a Gaussian of the 4 x 4 cells
 // round, smooth in the position, so its slope has no crease at the cell
 // borders (bilinear did: square facets a cell wide in the shading).
+// The engine's scent at (x, y) (the look's byte 3, 1 - e^(-scent/60)),
+// bilinear over the four cells round it.
+fn look_scent(x: f32, y: f32) -> f32 {
+    let fx = x - 0.5; let fy = y - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let tx = fx - f32(ix); let ty = fy - f32(iy);
+    let a = mix(byte(look[cidx(ix, iy)], 3u), byte(look[cidx(ix + 1, iy)], 3u), tx);
+    let b = mix(byte(look[cidx(ix, iy + 1)], 3u), byte(look[cidx(ix + 1, iy + 1)], 3u), tx);
+    return mix(a, b, ty);
+}
+
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
     var t = 0.0;
@@ -907,12 +918,22 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     for (var j = 0u; j < P.n_lights; j++) {
         let a = lights[2u * j];
         let lc = lights[2u * j + 1u];
-        let to = vec3<f32>(a.x - x, a.y - y, a.w - h);
+        let to = vec3<f32>(a.x - x, a.y - y, abs(a.w) - h);
         let d2 = dot(to.xy, to.xy);
         let rr = a.z * a.z;
         if (d2 >= rr) { continue; }
         let fall = 1.0 - d2 / rr;
-        let att = fall * fall * lc.w;
+        var att = fall * fall * lc.w;
+        // A scent light (lift below 0, a burning lure's, 11-14): lit only
+        // as far as the engine's scent there (the look's byte 3), so what
+        // glows is the scent the lure really lays, spreading while it
+        // burns and fading as the field does once it stops.
+        // The scent glows a little of itself too, as the gas cloud does,
+        // so it shows on the dark bare ground the light alone barely lifts.
+        if (a.w < 0.0) {
+            att *= look_scent(x, y);
+            c += lc.xyz * att * 0.22;
+        }
         let ld = normalize(to);
         let diff = max(dot(n, ld), 0.0);
         let hv = normalize(ld + vec3<f32>(0.0, 0.0, 1.0));
@@ -1604,7 +1625,8 @@ fn turret_frame(q: vec2<f32>, ca: f32, sa: f32, recoil: f32) -> vec2<f32> {
 // The building's own texels at `q` (radii): its tile, and a turret's head
 // over its base.
 fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f32, recoil: f32, dry: bool) -> vec4<f32> {
-    var body = sprite(k, q, small);
+    // A pump (tile 8) turns whole, its hose into its crystal (11-14).
+    var body = sprite(k, select(q, turret_frame(q, ca, sa, 0.0), k == 8u), small);
     if (turret) {
         var head = sprite(16u, turret_frame(q, ca, sa, recoil), small);
         if (dry) {
@@ -1619,6 +1641,8 @@ fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f
 const LAMP_TRACK: vec3<f32> = vec3<f32>(255.0, 190.0, 80.0);
 const LAMP_DRY: vec3<f32> = vec3<f32>(240.0, 64.0, 52.0);
 const LAMP_IDLE: vec3<f32> = vec3<f32>(70.0, 72.0, 60.0);
+const CALL_RED: vec3<f32> = vec3<f32>(255.0, 90.0, 60.0);
+const BITE_HOT: vec3<f32> = vec3<f32>(255.0, 120.0, 72.0);
 
 fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32, facing: f32, state: u32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
@@ -1701,20 +1725,26 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
             }
         }
     } else {
-        if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, p, small)); }
+        let ps = select(p, turret_frame(p, ca, sa, 0.0), k == 8u);
+        if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, ps, small)); }
         if (pulse > 0.0 && built >= 1.0) {
-            let lamp = sprite(k + 1u, p, small);
-            let g = pulse * 1.5;
+            let lamp = sprite(k + 1u, ps, small);
+            // A store (the larder, an outpost) flares charge cyan as a load
+            // is banked; a siren red as it calls (11-14: it went white-cyan
+            // in the store's colours), its lamp less blown out.
+            let store = kind == 3u || kind == 5u;
+            let tint = select(CALL_RED, CHARGE, store);
+            let g = pulse * select(0.8, 1.5, store);
             out = vec4<f32>(out.xyz + lamp.xyz * g, min(out.w + lamp.w * g, 1.0));
             // A halo round the lit cells.
-            let lit = sprite(k + 1u, p * 0.8, true).w;
-            out = vec4<f32>(out.xyz + CHARGE * lit * pulse * 0.5, min(out.w + lit * pulse * 0.5, 1.0));
+            let lit = sprite(k + 1u, ps * 0.8, true).w;
+            out = vec4<f32>(out.xyz + tint * lit * pulse * 0.5, min(out.w + lit * pulse * 0.5, 1.0));
             // The whole store washed in charge light, on the body only (no
             // new alpha, so it claims no neighbour's pixels): the lit cells
             // alone were a few pixels at zoom 12 and lost under the carriers
             // walking in (first film, 11-14).
             let wash = pulse * exp(-dot(p, p) / 0.6) * 0.45;
-            out = vec4<f32>(out.xyz + CHARGE * wash * out.w, out.w);
+            out = vec4<f32>(out.xyz + tint * wash * out.w, out.w);
         }
     }
     if (out.w <= 0.0) { return vec4<f32>(0.0); }
@@ -1882,7 +1912,17 @@ fn streak_at(b: u32, p: vec2<f32>) -> vec2<f32> {
 
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    return soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
+    var f = soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
+    // A bite (`Marks::soldier_bitten`, 11-14): the side the slime bit from
+    // flushes hot, fading with the flinch, on the body only (no new alpha).
+    let w = marks[b + 8u];
+    let bite = f32(w & 255u) / 255.0;
+    if (bite > 0.0 && f.w > 0.0) {
+        let a = f32(w >> 8u) / 65535.0 * 6.2831853;
+        let side = clamp(dot(d / r, vec2<f32>(cos(a), sin(a))) * 1.4 + 0.3, 0.0, 1.0);
+        f = vec4<f32>(mix(f.xyz, BITE_HOT, bite * side * 0.75), f.w);
+    }
+    return f;
 }
 
 // Marks, then the overlay (premultiplied RGBA, screen-sized), over the

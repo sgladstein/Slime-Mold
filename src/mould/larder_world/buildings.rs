@@ -98,6 +98,10 @@ pub struct Building {
     pub touching: u32,
     pub aim: Option<(f32, f32)>,
     pub dense: u32,
+    /// Food a pump drew from its crystal last frame (0 for every other
+    /// kind): the window lights its draw line by it (building looks,
+    /// 11-14). Read only; no rule uses it.
+    pub drew: f32,
 }
 
 impl Building {
@@ -337,7 +341,7 @@ impl<W: World> Game<W> {
         let crystal = if kind == Kind::Pump { self.pump_crystal(at) } else { None };
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0 });
+        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0 });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);
@@ -514,10 +518,12 @@ impl<W: World> Game<W> {
         bd.touching = u.touching;
         bd.aim = u.target;
         bd.dense = u.dense;
+        bd.drew = 0.0;
         let up = bd.up();
         if up && bd.kind == Kind::Pump && u.took > 0.0 {
             bd.working = true;
             let food = u.took / r.charge;
+            bd.drew = food;
             self.bank += food;
             self.harvested += food;
             self.pumped += food;
@@ -768,10 +774,14 @@ mod tests {
         let charge = g.world.crystals()[c].1;
         assert!(g.build(Kind::Pump, centre) || g.build(Kind::Pump, open_near(&g, centre)));
         let bank = g.bank;
+        let mut drew = 0.0;
         for _ in 0..(g.rules.tps * 10) {
             g.step();
+            drew += g.buildings[0].drew;
         }
         let want = 10.0 * g.rules.build.pump_rate;
+        // `Building::drew`, the window's draw line, is the pump's take.
+        assert!((drew - g.pumped).abs() < 1e-3 * want, "drew {drew}, pumped {}", g.pumped);
         assert!((g.pumped - want).abs() < 0.05 * want, "pumped {} in 10 s", g.pumped);
         // The squad's rations (`Rules::ration`) come out of the same bank.
         assert!(g.bank + g.eaten > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);

@@ -680,15 +680,15 @@ fn a_turret_faces_its_shot_and_its_lamp_is_the_game_state() {
     let k = g.buildings.len() - 1;
     (g.buildings[k].built, g.buildings[k].hp) = (1.0, g.buildings[k].max_hp);
     g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: at, to: (at.0, at.1 + 5.0), hit: None, killed: 0, by: None, fired: true }];
-    app.turrets.clear();
-    turret_fired(app.game.as_ref().unwrap(), &mut app.turrets);
-    let t = app.turrets[k];
+    app.blooks.clear();
+    turret_fired(app.game.as_ref().unwrap(), &mut app.blooks);
+    let t = app.blooks[k];
     assert!((t.facing - std::f32::consts::FRAC_PI_2).abs() < 1e-4 && t.shot == TURRET_SHOT, "down its shot, kicking: {} {}", t.facing, t.shot);
     // Aim to the right: a tenth of a second turns it TURRET_TURN / 10.
     let g = app.game.as_mut().unwrap();
     (g.buildings[k].aim, g.buildings[k].dense) = (Some((at.0 + 5.0, at.1)), g.rules.aim_min);
-    turn_turrets(app.game.as_ref().unwrap(), &mut app.turrets, 0.1);
-    assert!((app.turrets[k].facing - (std::f32::consts::FRAC_PI_2 - TURRET_TURN * 0.1)).abs() < 1e-4);
+    turn_turrets(app.game.as_ref().unwrap(), &mut app.blooks, 0.1);
+    assert!((app.blooks[k].facing - (std::f32::consts::FRAC_PI_2 - TURRET_TURN * 0.1)).abs() < 1e-4);
     let g = app.game.as_mut().unwrap();
     assert_eq!(turret_state(g, &g.buildings[k]), TURRET_TRACKING);
     g.rules.price = 1.0;
@@ -696,4 +696,50 @@ fn a_turret_faces_its_shot_and_its_lamp_is_the_game_state() {
     assert_eq!(turret_state(g, &g.buildings[k]), TURRET_DRY);
     (g.bank, g.buildings[k].aim) = (10.0, None);
     assert_eq!(turret_state(g, &g.buildings[k]), TURRET_IDLE);
+}
+
+/// A step's notes for the building looks (11-14): a siren that called
+/// shows its call, a load banked at an outpost flares the outpost and not
+/// the larder (one banked at the larder flares the larder), and the slime's
+/// bite makes a soldier flinch from the side it came from once
+/// `FLINCH_HP` of damage is done.
+#[test]
+fn a_step_shows_a_siren_call_a_bank_at_an_outpost_and_a_bite() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, (320, 200), &device, &queue).unwrap();
+    let g = app.game.as_mut().unwrap();
+    let home = g.larder;
+    let mut stand = |kind: Kind, at: (f32, f32)| {
+        g.bank += g.build_price(kind, at);
+        assert!(g.build(kind, at), "{} at {at:?}: {:?}", kind.name(), g.build_blocked(kind, at));
+        let k = g.buildings.len() - 1;
+        (g.buildings[k].built, g.buildings[k].hp) = (1.0, g.buildings[k].max_hp);
+        k
+    };
+    let siren = stand(Kind::Siren, (home.0 + 6.0, home.1));
+    let post = stand(Kind::Outpost, (home.0 - 14.0, home.1));
+    let at = g.buildings[post].at;
+    (g.buildings[siren].working, g.buildings[siren].on) = (true, true);
+    (g.soldiers[0].x, g.soldiers[0].y, g.soldiers[0].carry) = (at.0 + 1.0, at.1, 0.0);
+    app.looks.clear();
+    join_looks(app.game.as_ref().unwrap(), &mut app.looks);
+    app.looks[0].carry = 5.0;
+    let mut banked = 0.0;
+    step_notes(app.game.as_ref().unwrap(), &mut app.blooks, &mut app.looks, &mut banked);
+    assert_eq!(app.blooks[siren].call, SIREN_CALL, "the siren's call");
+    assert!(app.blooks[post].bank == BANKED && banked == 0.0, "the outpost flares, not the larder: {} {banked}", app.blooks[post].bank);
+    let g = app.game.as_mut().unwrap();
+    (g.soldiers[0].x, g.soldiers[0].y) = g.larder;
+    app.looks[0].carry = 5.0;
+    step_notes(app.game.as_ref().unwrap(), &mut app.blooks, &mut app.looks, &mut banked);
+    assert_eq!(banked, BANKED, "a load at the larder flares the larder");
+    // Bitten from the right: under FLINCH_HP no flinch, past it one.
+    let g = app.game.as_mut().unwrap();
+    let s = &mut g.soldiers[0];
+    (s.touching, s.aim, s.hp) = (3, Some((s.x + 5.0, s.y)), app.looks[0].hp - 0.5 * FLINCH_HP);
+    step_notes(app.game.as_ref().unwrap(), &mut app.blooks, &mut app.looks, &mut banked);
+    assert_eq!(app.looks[0].flinch, 0.0, "a nibble under FLINCH_HP");
+    app.game.as_mut().unwrap().soldiers[0].hp -= 0.6 * FLINCH_HP;
+    step_notes(app.game.as_ref().unwrap(), &mut app.blooks, &mut app.looks, &mut banked);
+    assert!(app.looks[0].flinch == FLINCH && app.looks[0].bite.abs() < 1e-4, "flinch {} from {}", app.looks[0].flinch, app.looks[0].bite);
 }

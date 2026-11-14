@@ -255,9 +255,22 @@ impl Marks {
     /// its hands while it takes from a crystal.
     #[allow(clippy::too_many_arguments)]
     pub fn soldier_working(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool, carry: f32, take: f32) {
+        self.soldier_bitten(at, r, facing, colour, flash, alive, carry, take, 0.0, 0.0);
+    }
+
+    /// A soldier as `soldier_working`, `bite` 0-1 the slime's last bite
+    /// fading (building looks, 11-14: "a flinch and a brief light where
+    /// slime bites, from the real damage"), lit hot on the side it came
+    /// from, `toward` radians (screen frame, as `facing`). Both ride in
+    /// the second colour's word, which a soldier does not use: the bite a
+    /// byte, the angle 16 bits above it.
+    #[allow(clippy::too_many_arguments)]
+    pub fn soldier_bitten(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool, carry: f32, take: f32, bite: f32, toward: f32) {
         let byte = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u32;
         let extra = byte(flash) | if alive { 0 } else { 256 } | byte(carry) << 9 | byte(take) << 17;
-        self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, ..Mark::new(Shape::Soldier, at, (r, r), colour) });
+        let turn = toward.rem_euclid(std::f32::consts::TAU) / std::f32::consts::TAU;
+        let word = byte(bite) | ((turn * 65535.0).round() as u32) << 8;
+        self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, colour2: word.to_le_bytes(), ..Mark::new(Shape::Soldier, at, (r, r), colour) });
     }
 
     /// A building of kind `kind` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren, 5 larder) at
@@ -272,10 +285,19 @@ impl Marks {
     /// larder's cells as a load is banked).
     #[allow(clippy::too_many_arguments)]
     pub fn building_pulse(&mut self, at: (f32, f32), r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32) {
+        self.building_facing(at, r, kind, built, health, working, pulse, 0.0);
+    }
+
+    /// A building as `building_pulse`, turned to `facing` (radians): a
+    /// pump's hose into the crystal it drains (building looks, 11-14).
+    /// Only the pump turns; the facing rides in the second colour's word,
+    /// as the turret's does.
+    #[allow(clippy::too_many_arguments)]
+    pub fn building_facing(&mut self, at: (f32, f32), r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32, facing: f32) {
         let b = (built.clamp(0.0, 1.0) * 255.0).round() as u32;
         let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
         let extra = b | h << 8 | (working as u32) << 16 | ((pulse.clamp(0.0, 1.0) * 255.0).round() as u32) << 17;
-        self.push(Mark { flags: WORLD | MINIMAP, fill: kind as f32, extra, ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
+        self.push(Mark { flags: WORLD | MINIMAP, fill: kind as f32, extra, colour2: facing.to_bits().to_le_bytes(), ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
     }
 
     /// A turret (building kind 0) as `building`, its head turned to

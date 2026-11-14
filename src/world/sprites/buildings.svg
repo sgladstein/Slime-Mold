@@ -76,7 +76,7 @@
   <rect x="0.34" y="-0.06" width="1.22" height="0.12" rx="0.05" fill="#7ee8f0" opacity="0.8"/>
  </g>
 
- <!-- Outpost: a ring of sandbags round a square tent with a ridge. -->
+ <!-- Outpost: a ring of sandbags round a mini larder. -->
  <g id="outpost">
   <g fill="url(#sand)" stroke="#4a3e2a" stroke-width="0.04">
    <ellipse cx="0.95" cy="0" rx="0.13" ry="0.24"/>
@@ -88,17 +88,41 @@
    <ellipse cx="0" cy="-0.95" rx="0.24" ry="0.13"/>
    <ellipse cx="0.67" cy="-0.67" rx="0.13" ry="0.24" transform="rotate(-45 0.67 -0.67)"/>
   </g>
-  <rect x="-0.52" y="-0.52" width="1.04" height="1.04" rx="0.06" fill="url(#olive)" stroke="#23261a" stroke-width="0.05"/>
-  <path d="M -0.52 -0.52 L 0.52 0.52" stroke="#2c3020" stroke-width="0.07"/>
-  <path d="M -0.52 0.52 L 0 0 " stroke="#8a9466" stroke-width="0.04" opacity="0.7"/>
-  <circle cx="0.62" cy="-0.38" r="0.07" fill="#3a3a3a"/>
+  <!-- A mini larder (building looks, 11-14: the outpost banks loads as the
+       larder does): the larder's roof, rack and lamp at 0.55 inside the ring. -->
+  <g transform="translate(0 -0.1) scale(0.55)">
+  <rect x="-0.82" y="-0.82" width="1.64" height="1.64" rx="0.06" fill="#3a3528" stroke="#1a170f" stroke-width="0.07"/>
+  <polygon points="-0.78,-0.78 0.78,-0.78 0.3,-0.3 -0.3,-0.3" fill="#b9a77c"/>
+  <polygon points="-0.78,-0.78 -0.3,-0.3 -0.3,0.3 -0.78,0.78" fill="#a8966c"/>
+  <polygon points="0.78,-0.78 0.78,0.78 0.3,0.3 0.3,-0.3" fill="#76684a"/>
+  <polygon points="-0.78,0.78 -0.3,0.3 0.3,0.3 0.78,0.78" fill="#665a3f"/>
+  <rect x="-0.3" y="-0.3" width="0.6" height="0.6" fill="#8e7f5a"/>
+  <path d="M -0.78 -0.78 L -0.3 -0.3 M 0.78 -0.78 L 0.3 -0.3 M -0.78 0.78 L -0.3 0.3 M 0.78 0.78 L 0.3 0.3" stroke="#2e2a1e" stroke-width="0.04"/>
+  <rect x="-0.3" y="-0.3" width="0.6" height="0.6" fill="none" stroke="#2e2a1e" stroke-width="0.04"/>
+  <rect x="-0.62" y="0.86" width="1.24" height="0.3" rx="0.05" fill="#3d4244" stroke="#151819" stroke-width="0.04"/>
+  <g fill="#2a4a50" stroke="#101c1e" stroke-width="0.03">
+   <polygon points="-0.46,0.92 -0.36,0.92 -0.31,1.01 -0.36,1.1 -0.46,1.1 -0.51,1.01"/>
+   <polygon points="-0.15,0.92 -0.05,0.92 0,1.01 -0.05,1.1 -0.15,1.1 -0.2,1.01"/>
+   <polygon points="0.16,0.92 0.26,0.92 0.31,1.01 0.26,1.1 0.16,1.1 0.11,1.01"/>
+   <polygon points="0.42,0.92 0.52,0.92 0.57,1.01 0.52,1.1 0.42,1.1 0.37,1.01"/>
+  </g>
+   <circle cx="0.62" cy="0.62" r="0.09" fill="#3a3a3a"/>
+  </g>
  </g>
  <g id="outpost-lit">
-  <circle cx="0.62" cy="-0.38" r="0.24" fill="url(#glow)"/>
+  <g transform="translate(0 -0.1) scale(0.55)">
+  <g fill="#7ee8f0" stroke="#d8ffff" stroke-width="0.02">
+   <polygon points="-0.46,0.92 -0.36,0.92 -0.31,1.01 -0.36,1.1 -0.46,1.1 -0.51,1.01"/>
+   <polygon points="-0.15,0.92 -0.05,0.92 0,1.01 -0.05,1.1 -0.15,1.1 -0.2,1.01"/>
+   <polygon points="0.16,0.92 0.26,0.92 0.31,1.01 0.26,1.1 0.16,1.1 0.11,1.01"/>
+   <polygon points="0.42,0.92 0.52,0.92 0.57,1.01 0.52,1.1 0.42,1.1 0.37,1.01"/>
+  </g>
+  <circle cx="0.62" cy="0.62" r="0.24" fill="url(#glow)"/>
+  </g>
  </g>
 
  <!-- Siren (PR #160, `Kind::Siren`): an alarm pole on a round foot, two horns
-      back to back across it, a red lens on top. Lit while it is on (calling every 4 s):
+      back to back across it, a red lens on top. Lit as it calls (every 4 s while on):
       the lens and two arcs of sound off each horn. -->
  <g id="siren">
   <circle cx="0" cy="0" r="0.72" fill="url(#pad)" stroke="#2a2622" stroke-width="0.06"/>
