@@ -40,6 +40,19 @@ pub const MAP_SCALE: f32 = 4.0;
 /// The G byte's bits (the ground word's bits 8-15).
 pub const G_WET: u8 = 0x01;
 pub const G_ROCK: u8 = 0x08;
+/// Deep water's whole G byte: soil kind 4 (`big::SOIL_DEEP`) with the wet
+/// bit, so a build from before deep water plays it as wet (new ground
+/// kinds, 2026-11-14, agreed with the procedural levels thread).
+pub const G_DEEP: u8 = 0x41;
+/// A bridge's G byte: soil kind 5 (`big::SOIL_BRIDGE`), dry.
+pub const G_BRIDGE: u8 = 0x50;
+
+/// Whether a soldier can stand on a map cell's ground: not rock, not deep
+/// water. Walls (soft rock) are items and count as ground here, since a
+/// squad can shoot or blast through them.
+pub fn standable(g: u8) -> bool {
+    g & G_ROCK == 0 && g >> 4 != super::big::SOIL_DEEP
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Crystal {
@@ -186,6 +199,64 @@ impl Map {
         self.ground[y * self.w + x]
     }
 
+    /// What the squad can't walk to from its landing (owner, 2026-11-14:
+    /// every map must stay beatable by any strategy, so water must never
+    /// shut the squad off a crystal or a nest): each crystal with no
+    /// standable cell within its radius + `NEAR` that connects to the
+    /// landing by standable cells (4-neighbour, so a ford one diagonal
+    /// wide doesn't count), and each mould start with none within `NEAR`.
+    /// Empty with no landing. `("crystal", i)` or `("mould", i)`.
+    pub fn cut_off(&self) -> Vec<(&'static str, usize)> {
+        const NEAR: f32 = 8.0;
+        let Some(l) = self.items.landing else { return Vec::new() };
+        let (mw, mh) = (self.w, self.h);
+        let ok = |i: usize| standable(self.ground[i]);
+        let mut seen = vec![false; mw * mh];
+        let start = (l.1 as usize).min(mh - 1) * mw + (l.0 as usize).min(mw - 1);
+        let mut stack = vec![start];
+        seen[start] = true;
+        while let Some(i) = stack.pop() {
+            let (x, y) = (i % mw, i / mw);
+            let n = [
+                (x > 0).then(|| i - 1),
+                (x + 1 < mw).then(|| i + 1),
+                (y > 0).then(|| i - mw),
+                (y + 1 < mh).then(|| i + mw),
+            ];
+            for j in n.into_iter().flatten() {
+                if !seen[j] && ok(j) {
+                    seen[j] = true;
+                    stack.push(j);
+                }
+            }
+        }
+        let near = |c: (f32, f32), r: f32| {
+            let (x0, x1) = (
+                (c.0 - r).floor().max(0.0) as usize,
+                ((c.0 + r).ceil() as usize).min(mw - 1),
+            );
+            let (y0, y1) = (
+                (c.1 - r).floor().max(0.0) as usize,
+                ((c.1 + r).ceil() as usize).min(mh - 1),
+            );
+            (y0..=y1).any(|y| {
+                (x0..=x1).any(|x| seen[y * mw + x] && (x as f32 + 0.5 - c.0).hypot(y as f32 + 0.5 - c.1) <= r)
+            })
+        };
+        let mut out = Vec::new();
+        for (i, c) in self.items.crystals.iter().enumerate() {
+            if !near((c.x, c.y), c.r + NEAR) {
+                out.push(("crystal", i));
+            }
+        }
+        for (i, &m) in self.items.moulds.iter().enumerate() {
+            if !near(m, NEAR) {
+                out.push(("mould", i));
+            }
+        }
+        out
+    }
+
     /// The B byte (`plants::unpack`) under fine cell (`fx`, `fy`), sampled
     /// as `ground_fine` samples the ground; 0 on a map with no plants.
     pub fn plant_fine(&self, scale: usize, fx: usize, fy: usize) -> u8 {
@@ -243,9 +314,64 @@ impl Map {
     }
 }
 
+/// A test map: plain ground split top to bottom by a deep river (map x
+/// 480-543), with a shallow ford across it at y 280-359 if `ford` and a
+/// bridge at y 440-471 if `bridge`; the landing west of it at (300, 500),
+/// a crystal and the mould's start east of it.
+pub fn river(ford: bool, bridge: bool) -> Map {
+    let mut ground = vec![0u8; MAP_W * MAP_H];
+    for y in 0..MAP_H {
+        for x in 480..544 {
+            ground[y * MAP_W + x] = if ford && (280..360).contains(&y) {
+                G_WET
+            } else if bridge && (440..472).contains(&y) {
+                G_BRIDGE
+            } else {
+                G_DEEP
+            };
+        }
+    }
+    let items = Items {
+        crystals: vec![
+            Crystal {
+                x: 800.0,
+                y: 320.0,
+                r: 30.0,
+                charge: 384.0,
+            },
+            Crystal {
+                x: 300.0,
+                y: 200.0,
+                r: 20.0,
+                charge: 384.0,
+            },
+        ],
+        moulds: vec![(860.0, 320.0)],
+        landing: Some((300.0, 500.0)),
+        walls: Vec::new(),
+    };
+    Map { w: MAP_W, h: MAP_H, ground, items, plants: Vec::new() }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Deep water cuts the squad off what lies across it until a ford or a
+    /// bridge joins the banks (`Map::cut_off`, the editor's warning).
+    #[test]
+    fn deep_water_cuts_off_until_a_ford_or_bridge() {
+        assert_eq!(river(false, false).cut_off(), vec![("crystal", 0), ("mould", 0)]);
+        assert!(river(true, false).cut_off().is_empty());
+        assert!(river(false, true).cut_off().is_empty());
+        // Deep water loads wet (older builds' reading of the byte), with
+        // its soil kind, and is no soldier's ground; the bridge is dry.
+        let d = BigDish::with_map(crate::mould::larder_world::race_params(1, 2, 500), &river(false, true));
+        let at = |mx: usize, my: usize| (my / 2) * d.w + mx / 2;
+        assert!(d.wet[at(500, 100)] && d.deep(at(500, 100)) && d.agar[at(500, 100)]);
+        assert!(!d.wet[at(500, 450)] && d.soil[at(500, 450)] == crate::mould::big::SOIL_BRIDGE);
+        assert!(!standable(G_DEEP) && standable(G_BRIDGE) && standable(G_WET) && !standable(G_ROCK));
+    }
 
     #[test]
     fn items_parse_and_write_back() {

@@ -1,0 +1,151 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-005s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-005s-near.png
+  CPU: ground field 3.43 ms (once a game second), model and HUD 0.061 ms a frame
+  t 5 s: mould 25012, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-010s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-010s-near.png
+  CPU: ground field 5.72 ms (once a game second), model and HUD 0.098 ms a frame
+  t 10 s: mould 25126, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-015s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-015s-near.png
+  CPU: ground field 5.66 ms (once a game second), model and HUD 0.089 ms a frame
+  t 15 s: mould 25323, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.998; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-020s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-020s-near.png
+  CPU: ground field 3.78 ms (once a game second), model and HUD 0.053 ms a frame
+  t 20 s: mould 25551, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.997; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-025s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-025s-near.png
+  CPU: ground field 4.32 ms (once a game second), model and HUD 0.051 ms a frame
+  t 25 s: mould 25816, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.996; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-030s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-030s-near.png
+  CPU: ground field 3.44 ms (once a game second), model and HUD 0.052 ms a frame
+  t 30 s: mould 26051, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.995; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-035s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-035s-near.png
+  CPU: ground field 3.67 ms (once a game second), model and HUD 0.053 ms a frame
+  t 35 s: mould 26259, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.993; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-040s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-040s-near.png
+  CPU: ground field 5.63 ms (once a game second), model and HUD 0.082 ms a frame
+  t 40 s: mould 26453, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.992; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-045s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-045s-near.png
+  CPU: ground field 5.52 ms (once a game second), model and HUD 0.085 ms a frame
+  t 45 s: mould 26677, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.991; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-050s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-050s-near.png
+  CPU: ground field 3.84 ms (once a game second), model and HUD 0.064 ms a frame
+  t 50 s: mould 26886, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.990; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-055s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-055s-near.png
+  CPU: ground field 5.65 ms (once a game second), model and HUD 0.086 ms a frame
+  t 55 s: mould 27087, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.989; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-060s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-060s-near.png
+  CPU: ground field 4.44 ms (once a game second), model and HUD 0.075 ms a frame
+  t 60 s: mould 27323, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.988; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-065s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-065s-near.png
+  CPU: ground field 5.56 ms (once a game second), model and HUD 0.073 ms a frame
+  t 65 s: mould 27560, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.987; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-070s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-070s-near.png
+  CPU: ground field 3.74 ms (once a game second), model and HUD 0.053 ms a frame
+  t 70 s: mould 27807, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.986; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-075s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-075s-near.png
+  CPU: ground field 5.41 ms (once a game second), model and HUD 0.076 ms a frame
+  t 75 s: mould 28084, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.984; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-080s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-080s-near.png
+  CPU: ground field 5.11 ms (once a game second), model and HUD 0.054 ms a frame
+  t 80 s: mould 28375, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.983; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-085s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-085s-near.png
+  CPU: ground field 5.55 ms (once a game second), model and HUD 0.083 ms a frame
+  t 85 s: mould 27799, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.982; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-090s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-090s-near.png
+  CPU: ground field 3.61 ms (once a game second), model and HUD 0.052 ms a frame
+  t 90 s: mould 25513, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.980; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-095s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-095s-near.png
+  CPU: ground field 3.69 ms (once a game second), model and HUD 0.054 ms a frame
+  t 95 s: mould 24399, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.979; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-100s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-100s-near.png
+  CPU: ground field 3.54 ms (once a game second), model and HUD 0.051 ms a frame
+  t 100 s: mould 23826, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.978; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-105s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-105s-near.png
+  CPU: ground field 5.42 ms (once a game second), model and HUD 0.082 ms a frame
+  t 105 s: mould 23615, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.977; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-110s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-110s-near.png
+  CPU: ground field 4.65 ms (once a game second), model and HUD 0.077 ms a frame
+  t 110 s: mould 23505, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.975; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-115s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-115s-near.png
+  CPU: ground field 5.72 ms (once a game second), model and HUD 0.078 ms a frame
+  t 115 s: mould 23539, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.974; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-120s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-120s-near.png
+  CPU: ground field 5.68 ms (once a game second), model and HUD 0.084 ms a frame
+  t 120 s: mould 23673, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.973; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-125s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-125s-near.png
+  CPU: ground field 3.69 ms (once a game second), model and HUD 0.053 ms a frame
+  t 125 s: mould 23832, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.971; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-130s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-130s-near.png
+  CPU: ground field 5.54 ms (once a game second), model and HUD 0.084 ms a frame
+  t 130 s: mould 24051, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.970; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-135s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-135s-near.png
+  CPU: ground field 3.55 ms (once a game second), model and HUD 0.050 ms a frame
+  t 135 s: mould 24297, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.969; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-140s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-140s-near.png
+  CPU: ground field 4.94 ms (once a game second), model and HUD 0.078 ms a frame
+  t 140 s: mould 24562, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.968; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-145s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-145s-near.png
+  CPU: ground field 5.53 ms (once a game second), model and HUD 0.080 ms a frame
+  t 145 s: mould 24829, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.966; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-150s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/idle/Reports_ground-kinds-2026-11-14_maps_river-idle-150s-near.png
+  CPU: ground field 5.59 ms (once a game second), model and HUD 0.081 ms a frame
+  t 150 s: mould 25063, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.965; squad at 256.0,55.0
+  squad: touching 0.0 mean, 0 most; health 100 mean

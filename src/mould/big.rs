@@ -151,6 +151,29 @@ const DRAW_HOLD: u32 = 150;
 pub const SOIL_SAND: u8 = 1;
 pub const SOIL_CLAY: u8 = 2;
 pub const SOIL_BARREN: u8 = 3;
+/// Deep water (new ground kinds, 2026-11-14; owner 17:02Z "deep water stops
+/// soldiers, slime crawls slowly"): a map writes it with the wet bit, so a
+/// build from before it plays it as wet. The walker's step there is x
+/// `deep_step` on top of `wet_step`, and no child is born there; soldiers
+/// can't stand in it and buildings can't go on it (`World::open`), but
+/// shots fly over it (`World::clear`).
+pub const SOIL_DEEP: u8 = 4;
+/// A bridge: a deck over deep water, plain ground for walkers, soldiers and
+/// shots alike (a map writes it without the wet bit). Kinds 6-15 are free.
+pub const SOIL_BRIDGE: u8 = 5;
+
+impl BigDish {
+    /// Whether fine cell `i` is deep water (`SOIL_DEEP`).
+    pub fn deep(&self, i: usize) -> bool {
+        !self.soil.is_empty() && self.soil[i] == SOIL_DEEP
+    }
+
+    /// The fine cell under point (`x`, `y`), fine cells, if inside.
+    pub fn cell_at(&self, x: f32, y: f32) -> Option<usize> {
+        (x >= 0.0 && y >= 0.0 && (x as usize) < self.w && (y as usize) < self.h)
+            .then(|| y as usize * self.w + x as usize)
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct BigParams {
@@ -949,6 +972,11 @@ pub struct BigParams {
     pub sand_keep: f32,
     pub clay_keep: f32,
     pub barren_upkeep: f32,
+    /// A walker's step in deep water (`SOIL_DEEP`), x this on top of
+    /// `wet_step`: 0.4, so 0.2 of the plain step in all. A first number for
+    /// play: slow enough that a river is a line the squad can hold, fast
+    /// enough that the slime still crosses where no ford is.
+    pub deep_step: f32,
     /// Trail on a scorched cell (`BigDish::scorch_disc`, a blast's crater in
     /// the squad toolkit) is x this after each fine step's spread while the
     /// scorch lasts. Why a timed field and not a soil kind: a crater must
@@ -1233,6 +1261,7 @@ impl BigParams {
             sand_keep: 0.8,
             clay_keep: 1.05,
             barren_upkeep: 3.0,
+            deep_step: 0.4,
             scorch_keep: 0.1,
             scorch_full: 30,
             scorch_cone: false,
@@ -2007,7 +2036,8 @@ impl BigDish {
             if g & G_ROCK != 0 {
                 self.rock[i] = true;
                 self.agar[i] = false;
-            } else if g & G_WET != 0 && self.agar[i] {
+            } else if (g & G_WET != 0 || g >> 4 == SOIL_DEEP) && self.agar[i] {
+                // Deep water is wet whether or not the map set the bit.
                 self.wet[i] = true;
             }
         }
@@ -2753,6 +2783,9 @@ impl BigDish {
             let explorer = self.explores(k);
             if !self.wet.is_empty() && self.wet[here] {
                 st *= p.wet_step;
+            }
+            if !self.soil.is_empty() && self.soil[here] == SOIL_DEEP {
+                st *= p.deep_step;
             }
             if ss > 0.0 {
                 let v = (self.trail[here] * ss).min(1.0);
@@ -3503,7 +3536,7 @@ impl BigDish {
             let (nx, ny) = (x + dx, y + dy);
             let Some(j) = self.cell(nx, ny) else { continue };
             let crowd = self.fed_crowd(crowd_of(self, k), k);
-            if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) || (!self.soil.is_empty() && self.soil[j] == SOIL_BARREN) {
+            if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) || (!self.soil.is_empty() && matches!(self.soil[j], SOIL_BARREN | SOIL_DEEP)) {
                 continue;
             }
             if crowd > 0 {
@@ -5501,6 +5534,45 @@ mod tests {
             d.tick();
         }
         assert_eq!(d.hash(), plain.2);
+    }
+
+    /// Deep water (2026-11-14): the walker's step is x `deep_step` on top
+    /// of the wet step, and no child is born there, so a dish all deep
+    /// water spreads its trail less far and grows less than one all wet.
+    #[test]
+    fn deep_water_slows_and_drowns_births() {
+        let p = BigParams {
+            upkeep: 0.001,
+            capacity: 1200,
+            ..small(1, 1)
+        };
+        let run = |deep: bool| {
+            let mut d = BigDish::new(p.clone());
+            d.wet = vec![true; d.w * d.h];
+            if deep {
+                d.soil = vec![SOIL_DEEP; d.w * d.h];
+            }
+            let start = d.walkers.clone();
+            for _ in 0..30 {
+                d.tick();
+            }
+            // The first walkers' mean distance from where they began.
+            let gone = start
+                .iter()
+                .zip(&d.walkers)
+                .map(|(a, b)| (b.0 - a.0).hypot(b.1 - a.1))
+                .sum::<f32>()
+                / start.len() as f32;
+            (d.births, gone)
+        };
+        let (wet, deep) = (run(false), run(true));
+        assert!(wet.0 > 0 && deep.0 == 0, "births wet {} deep {}", wet.0, deep.0);
+        assert!(
+            deep.1 < wet.1 * 0.7,
+            "walkers went {} in deep water, {} in wet",
+            deep.1,
+            wet.1
+        );
     }
 
     #[test]

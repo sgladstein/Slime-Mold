@@ -191,8 +191,10 @@ use menu::*;
 use slime_mould::world::start::StartMenu;
 use headless::*;
 
-/// The designed maps (`Reports/larder-maps-2026-11-11.md`, v2), N's order.
-const MAPS: [&str; 5] = ["fork", "nest", "rim", "flats", "passes"];
+/// The designed maps (`Reports/larder-maps-2026-11-11.md`, v2), N's order;
+/// then the River, the first map with deep water (new ground kinds,
+/// 2026-11-14, `Reports/ground-kinds-2026-11-14/`): two fords and a bridge.
+const MAPS: [&str; 6] = ["fork", "nest", "rim", "flats", "passes", "river"];
 
 // Command ids (the HUD echoes them back). One table holds every id, so two
 // threads adding a button can't both take the same number without the

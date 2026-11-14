@@ -16,6 +16,11 @@
 //! soil, so painting rock away with wet or a soil brush gives back what
 //! lay under it only for the soil, not for its old wet.
 //!
+//! Deep water and bridge (new ground kinds, 2026-11-14) are whole cells:
+//! deep water is `G_DEEP` (soil 4 with the wet bit), a bridge `G_BRIDGE`
+//! (soil 5, dry). Over either, wet gives shallow water (a ford) and rock
+//! gives plain rock, so no cell is rock over deep water.
+//!
 //! **Mirror.** Most RTS maps are fair by symmetry, so the editor can draw
 //! each stroke and item twice: across the vertical centre line (`X`) or
 //! through the centre point (`Turn`, a half turn). The landing is one item
@@ -25,7 +30,7 @@
 //! **Undo** keeps whole maps (640 KiB each, at most `UNDO` of them): an
 //! action is a stroke or one click, so a handful of steps is a few MiB.
 
-use super::map::{Crystal, Map, Wall, G_ROCK, G_WET, MAP_H, MAP_W};
+use super::map::{Crystal, Map, Wall, G_BRIDGE, G_DEEP, G_ROCK, G_WET, MAP_H, MAP_W};
 
 /// Undo steps kept.
 pub const UNDO: usize = 40;
@@ -49,13 +54,18 @@ pub enum Brush {
     Barren,
     Rock,
     Wet,
+    Deep,
+    Bridge,
 }
 
 impl Brush {
-    pub const ALL: [Brush; 6] = [Brush::Plain, Brush::Sand, Brush::Clay, Brush::Barren, Brush::Rock, Brush::Wet];
+    pub const ALL: [Brush; 8] = [Brush::Plain, Brush::Sand, Brush::Clay, Brush::Barren, Brush::Rock, Brush::Wet, Brush::Deep, Brush::Bridge];
 
     /// The cell's G byte after this brush.
     pub fn apply(self, g: u8) -> u8 {
+        // Deep water and bridge are whole kinds, not a soil under wet or
+        // rock: painting over them starts from plain.
+        let g = if matches!(g >> 4, 4 | 5) { 0 } else { g };
         let soil = g & 0xF0;
         let wet = g & G_WET;
         match self {
@@ -65,6 +75,8 @@ impl Brush {
             Brush::Barren => 0x30 | wet,
             Brush::Rock => soil | G_ROCK,
             Brush::Wet => soil | G_WET,
+            Brush::Deep => G_DEEP,
+            Brush::Bridge => G_BRIDGE,
         }
     }
 
@@ -76,6 +88,8 @@ impl Brush {
             Brush::Barren => "barren",
             Brush::Rock => "rock",
             Brush::Wet => "wet",
+            Brush::Deep => "deep water",
+            Brush::Bridge => "bridge",
         }
     }
 }
@@ -93,13 +107,15 @@ pub enum Tool {
 impl Tool {
     /// The tools in the panel's order, with their keys (the window's
     /// digits and letters).
-    pub const ALL: [(Tool, &'static str); 11] = [
+    pub const ALL: [(Tool, &'static str); 13] = [
         (Tool::Paint(Brush::Plain), "1"),
         (Tool::Paint(Brush::Sand), "2"),
         (Tool::Paint(Brush::Clay), "3"),
         (Tool::Paint(Brush::Barren), "4"),
         (Tool::Paint(Brush::Rock), "5"),
         (Tool::Paint(Brush::Wet), "6"),
+        (Tool::Paint(Brush::Deep), "7"),
+        (Tool::Paint(Brush::Bridge), "8"),
         (Tool::Crystal, "C"),
         (Tool::Mould, "M"),
         (Tool::Landing, "L"),
@@ -366,6 +382,7 @@ impl Editor {
             out.push("no landing (L)".to_string());
         }
         let rock = |p: (f32, f32)| self.ground_at(p).is_some_and(|g| g & G_ROCK != 0);
+        let deep = |p: (f32, f32)| self.ground_at(p).is_some_and(|g| g >> 4 == 4);
         for (i, &m) in it.moulds.iter().enumerate() {
             if rock(m) {
                 out.push(format!("mould start {} is on rock", i + 1));
@@ -373,6 +390,18 @@ impl Editor {
         }
         if it.landing.is_some_and(rock) {
             out.push("the landing is on rock".to_string());
+        }
+        if it.landing.is_some_and(deep) {
+            out.push("the landing is in deep water".to_string());
+        } else if !it.landing.is_some_and(rock) {
+            // Every map beatable by any strategy (owner, 2026-11-14): the
+            // squad must reach every crystal and nest on foot.
+            for (what, i) in self.map.cut_off() {
+                out.push(format!(
+                    "{what} {} can't be walked to from the landing (deep water or rock)",
+                    i + 1
+                ));
+            }
         }
         out
     }
@@ -392,6 +421,8 @@ impl Editor {
             1 => "sand",
             2 => "clay",
             3 => "barren",
+            4 => return "deep water".into(),
+            5 => return "bridge".into(),
             _ => "plain",
         };
         let kind = if g & G_ROCK != 0 {
@@ -432,6 +463,11 @@ pub fn ground_rgb(g: u8) -> [u8; 3] {
         1 => [150, 134, 92],
         2 => [104, 54, 38],
         3 => [78, 76, 72],
+        // Deep water: dark and opaque, no soil showing (a stand-in until
+        // the view's own material, which the terrain thread writes).
+        4 => return [10, 26, 44],
+        // A bridge: weathered planks.
+        5 => return [112, 88, 60],
         _ => [57, 54, 43],
     };
     if g & G_WET != 0 {
@@ -759,6 +795,27 @@ mod tests {
         assert_eq!(Brush::Rock.apply(0x21), 0x20 | G_ROCK);
         assert_eq!(Brush::Wet.apply(0x18), 0x10 | G_WET);
         assert_eq!(Brush::Plain.apply(0x39), 0);
+        // Deep water and bridge are whole kinds; over them, wet is a ford
+        // and rock plain rock.
+        assert_eq!(Brush::Deep.apply(0x18), G_DEEP);
+        assert_eq!(Brush::Bridge.apply(G_DEEP), G_BRIDGE);
+        assert_eq!(Brush::Wet.apply(G_DEEP), G_WET);
+        assert_eq!(Brush::Rock.apply(G_DEEP), G_ROCK);
+        assert_eq!(Brush::Sand.apply(G_BRIDGE), 0x10);
+    }
+
+    /// The editor warns when water shuts the squad off a crystal or nest.
+    #[test]
+    fn the_editor_warns_of_a_crystal_across_deep_water() {
+        let ed = Editor::new(crate::mould::map::river(false, false));
+        let p = ed.problems();
+        assert!(
+            p.iter().any(|s| s.contains("crystal 1 can't be walked to"))
+                && p.iter().any(|s| s.contains("mould start 1") || s.contains("mould 1")),
+            "{p:?}"
+        );
+        assert!(Editor::new(crate::mould::map::river(true, false)).problems().is_empty());
+        assert_eq!(ed.describe((500.0, 10.0)), "deep water");
     }
 
     #[test]
