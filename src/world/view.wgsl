@@ -33,6 +33,11 @@ struct V {
     // the game seconds since the last frame, and 0 off, 1 on, 2 a first
     // frame that only reads the charge.
     n_list: u32, dt: f32, live: u32,
+    // Dense slime condenses (`View::set_dense`, 11-14): the word in `news`
+    // where each walker's condensing word starts (0 off); `DENSE_BIT` marks
+    // a condensed walker (the engine's `dense_word`); `ripe_at` the steps
+    // a walker must be ripe to condense (`condense`).
+    dense_at: u32, ripe_at: u32, _d2: u32, _d3: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -179,6 +184,12 @@ const CLAY_RGB: vec3<f32> = vec3<f32>(104.0, 54.0, 38.0);
 const BARREN_RGB: vec3<f32> = vec3<f32>(78.0, 76.0, 72.0);
 // Mould cut off from food fades towards this (`cell_mat`'s `cut`).
 const ASH_RGB: vec3<f32> = vec3<f32>(120.0, 112.0, 104.0);
+// Condensed mould's colour (`cell_mat_c`'s `dense`): a deep copper, the
+// gold body's colour gone denser, apart from the panic's red specks and
+// the gas's violet. A condensed walker's mark in its word (the engine's
+// `DENSE_BIT`).
+const DENSE_RGB: vec3<f32> = vec3<f32>(215.0, 88.0, 30.0);
+const DENSE_BIT: u32 = 0x10000u;
 // The engine's colour for bare agar; what it adds above this (scent,
 // species, germ, grass tints) is laid over the soil.
 const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
@@ -466,13 +477,13 @@ fn colour_at(x: f32, y: f32) -> vec3<f32> {
     return c / ws;
 }
 
-fn cell_mat(ix: i32, iy: i32, th: f32, cut: f32) -> Mat {
-    return cell_mat_c(ix, iy, th, cut, cell_colour(ix, iy));
+fn cell_mat(ix: i32, iy: i32, th: f32, cut: f32, dense: f32) -> Mat {
+    return cell_mat_c(ix, iy, th, cut, dense, cell_colour(ix, iy));
 }
 
 // A cell's material with the engine's colour `c` (`cell_colour`, or the
 // smoothed `colour_at` for a fine cell).
-fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
+fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> Mat {
     var m: Mat;
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) {
         m.albedo = mix(SOIL_LOW, SOIL_HIGH, 0.5); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.body = 0.0; m.gem = 0.0;
@@ -492,6 +503,12 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
     // walkers' news goes stale, before they wither: the share of stale
     // walkers is the fade, so a piece greys as it starves, not on a timer.
     hue = mix(hue, ASH_RGB, 0.75 * cut);
+    // Condensed mould (11-14, the condense thread): where its walkers have
+    // condensed (`dense`, the share of the mass round the cell) it turns a
+    // deep copper and holds more gloss, a harder, denser body, so the
+    // half of the cover it gave up and the strength it kept both show. The
+    // share is the fade, as the ash's is.
+    hue = mix(hue, DENSE_RGB, 0.8 * dense * (1.0 - cut));
     // Bare ground is soil by the land's elevation, with the engine's tints
     // over it; before 2026-11-11 19:29Z it was the engine's flat near-black.
     // Flat land (elevation 0, every map until the simulation uses height)
@@ -518,7 +535,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
     let opaque = smoothstep(0.08, 0.55, th);
     m.albedo = mix(mix(soil, gel, film), body_c, opaque * 0.95);
     m.glow = vec3<f32>(0.0);
-    m.gloss = (0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut);
+    m.gloss = (0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut) * (1.0 + 0.5 * dense);
     m.body = 0.0;
     m.gem = 0.0;
     if (kind == WET) {
@@ -636,6 +653,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     var ws = 0.0;
     var nb = 0.0;
     var wb = 0.0;
+    var dn = 0.0;
     // Gaussians are separable: nine weights a side each, not 81 exps.
     var g1: array<f32, 9>;
     var g2: array<f32, 9>;
@@ -647,10 +665,11 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     for (var dy = 0u; dy < 9u; dy++) {
         for (var dx = 0u; dx < 9u; dx++) {
             let t = crowd[(lid.y + dy) * 24u + lid.x + dx];
-            let c = f32(t & 0xFFFFu) / 15.0;
+            let c = f32(t & 0x3FFu) / 15.0;
             let w = g1[dx] * g1[dy];
             n += w * c;
             m += w * f32(t >> 16u) / 15.0;
+            dn += w * f32((t >> 10u) & 63u) / 15.0;
             ws += w;
             let v = g2[dx] * g2[dy];
             nb += v * c;
@@ -658,6 +677,9 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         }
     }
     let cut_share = clamp(m / max(n, 1e-3), 0.0, 1.0);
+    // The share of the mould's mass round the cell that has condensed (a
+    // condensed walker counts two in `n`).
+    let dense_share = clamp(2.0 * dn / max(n, 1e-3), 0.0, 1.0);
     // Walkers a cell here, as the 5 x 5 window `BODY_N` was set on: near
     // (the sharp count) and wide (the body's).
     var n0 = BODY_N;
@@ -690,7 +712,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
         hcell[i] = cell_height(ix, iy, th);
-        var m1 = cell_mat(ix, iy, tm, cut_share);
+        var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
         m1.body = wide;
         mcell[i] = mat_pack(m1);
         return;
@@ -711,7 +733,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         if (wq <= 0.0) { continue; }
         let cx = ix + o[q].x; let cy = iy + o[q].y;
         h += wq * cell_height(cx, cy, th);
-        let mq = cell_mat_c(cx, cy, tm, cut_share, cs);
+        let mq = cell_mat_c(cx, cy, tm, cut_share, dense_share, cs);
         mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss;
     }
     hcell[i] = h;
@@ -1044,7 +1066,29 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
         bolt = u32(round(b * 15.0));
         cut = l;
     }
-    let add = select(1u, 0u, cut > 0.5) | (lean << 10u) | (bolt << 20u);
+    var add = select(1u, 0u, cut > 0.5) | (lean << 10u) | (bolt << 20u);
+    // Condensing (`set_dense`, 11-14), all of it read off the walker's
+    // word. A condensed walker is two walkers' worth: it counts twice in
+    // the body and 15 in the fine grid's condensed weight (bits 10-15),
+    // which `prep` turns into the copper's share. A ripening walker warms
+    // toward it as its ripeness climbs (up to 4, about half the copper at
+    // the moment it condenses), so a body heats before it turns; one that
+    // stops being ripe cools again. For 2 s after it condenses its speck
+    // flares (`fresh`): the survivors spark as the absorbed vanish.
+    var fresh = 0u;
+    if (P.dense_at > 0u) {
+        let dw = news[P.dense_at + k];
+        if ((dw & DENSE_BIT) != 0u) {
+            cnt = (cnt & 0xFFFF0000u) + 30u + (15u << 10u);
+            let age = f32(dw & 0xFFFFu);
+            fresh = u32(round(5.0 * max(1.0 - age / 60.0, 0.0)));
+        } else if (P.ripe_at > 0u) {
+            let r = clamp(f32(dw & 0xFFFFu) / f32(P.ripe_at), 0.0, 1.0);
+            cnt += u32(round(4.0 * r * r)) << 10u;
+        }
+    }
+    // The flare is calm brightness, which `base` lights as more walkers.
+    add += fresh;
     // The walker in its fine cell for `prep`'s body (and, above bit 16,
     // counted cut off for its ashen fade); before the screen test, as
     // `prep` reads a rim past it.

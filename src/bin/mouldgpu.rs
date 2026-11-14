@@ -3623,7 +3623,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 18] = [
+        let dishes: [(&str, Settings, Build); 19] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3681,6 +3681,13 @@ mod tests {
             // half its pace, `panic_creep`). The squad's charge is in the
             // squad twin.
             ("panic: cut-off walkers run for a crystal", Settings { panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            // Dense slime condenses (2026-11-14, the condense thread): ripe
+            // on crystal or with 4 walkers round it, condensed after 3 steps
+            // ripe, so the warm-up condenses much of the mould and the
+            // freed slots stay empty; a third of the rest is set one step
+            // from condensing (below); and with withering at even odds
+            // some condensed walkers break in the tick.
+            ("condense: dense walkers ripen, condense and break", Settings { condense: 3, condense_crowd: 4, condense_r: 2, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3726,6 +3733,16 @@ mod tests {
                     }
                 }
             }
+            let dense_was = cpu.dense.clone();
+            if s.condense > 0 {
+                assert_eq!(cpu.dense.len(), cpu.walkers.len(), "{name}: the warm-up made the condensing words");
+                for k in (0..cpu.walkers.len()).step_by(3) {
+                    if cpu.lives(k) && !cpu.is_dense(k) {
+                        cpu.dense[k] = s.condense - 1;
+                    }
+                }
+            }
+            let (absorbed, condensed) = (cpu.absorbed, cpu.condensed);
             // The walkers that panic in the tick, and where the living were.
             let scared = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panics(k)).count();
             let creep = cpu.p.panic_creep.max(slime_mould::mould::big::PANIC_CREEP_MIN);
@@ -3758,6 +3775,16 @@ mod tests {
                     assert!(far > 1.5 * s.step, "{name}: a panicking walker's step is longer than its own");
                 }
                 assert_eq!((lives_off, news_off, left), (0, 0, 0), "{name}: slots, news and the gathered block left");
+            }
+            if s.condense > 0 {
+                assert!(e.condenses, "{name}: the condense passes run");
+                let gd = e.dense_of();
+                let dense_off = (0..n).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
+                let held = (0..n).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
+                let broke = (0..n).filter(|&k| cpu.lives(k) && was[k] && dense_was.get(k).is_some_and(|&d| d & slime_mould::mould::big::DENSE != 0) && !cpu.is_dense(k)).count();
+                eprintln!("{name}: {held} condensed; in the tick {} absorbed, {} condensed, {broke} broke; mass {} of {n}; {dense_off} words off", cpu.absorbed - absorbed, cpu.condensed - condensed, cpu.mass());
+                assert!(held > 0 && cpu.absorbed > absorbed && cpu.condensed > condensed && broke > 0, "{name}: walkers condense, are absorbed and break in the tick");
+                assert_eq!(dense_off, 0, "{name}: condensing words");
             }
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
             let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
@@ -3976,6 +4003,11 @@ mod tests {
         // half the walkers' news is stale (below), and those within 10 dish
         // cells of a unit charge it, the rest run for a crystal.
         let scared = Settings { panic: 2.0, panic_r: 10.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, ..base.clone() };
+        // And dense slime condensing (2026-11-14, the condense thread): half
+        // the living walkers are condensed before the frame (below), so a
+        // shot breaks some instead of killing them and a unit's touch
+        // counts them twice; ripening runs, too slowly to condense.
+        let dense = Settings { condense: 10_000, condense_crowd: 4, ..base.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
@@ -3989,6 +4021,7 @@ mod tests {
             ("plain, shots that sink", base, 20, 1.0),
             ("cone craters, a sink of 1.5", cone, 20, 1.5),
             ("plain, a cut-off part charges the squad", scared, 0, 0.0),
+            ("plain, condensed walkers take two shots and touch as two", dense, 0, 0.0),
         ];
         for (name, s, crater, sink) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4004,6 +4037,14 @@ mod tests {
                 }
                 cpu.tick();
             }
+            if s.condense > 0 {
+                for k in (0..cpu.walkers.len()).step_by(2) {
+                    if cpu.lives(k) {
+                        cpu.dense[k] = slime_mould::mould::big::DENSE;
+                    }
+                }
+            }
+            let dense_before = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
             if s.panic > 0.0 {
                 cpu.p.wither_lag = s.wither_lag;
                 for k in (0..cpu.walkers.len()).step_by(2) {
@@ -4162,6 +4203,19 @@ mod tests {
             eprintln!("squad world, {name}: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}, alarm L1 {la:.1e} (in all {alarm_sum:.0}); {agar_off} agar and {ground_off} ground off");
             assert_eq!(lives_off, 0, "the same walkers die");
             assert!(off * 1000 <= cpu.walkers.len(), "{off} walkers off");
+            // Condensing: the same walkers broke, and the touch counted them.
+            if s.condense > 0 {
+                assert!(e.condenses, "{name}: the condense passes run");
+                let gd = e.dense_of();
+                let dense_off = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
+                let dense_after = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
+                eprintln!("squad condense, {name}: {dense_before} condensed before the frame, {dense_after} after; {dense_off} words off");
+                assert!(dense_after < dense_before && dense_after > 0, "{name}: shots break some condensed walkers");
+                assert_eq!(dense_off, 0, "{name}: condensing words");
+                assert!(squad::dense_cells(&cpu).iter().any(|&n| n > 0), "{name}: condensed walkers hold cells");
+            } else {
+                assert_eq!(dense_before, 0);
+            }
             assert!(lt <= 1e-6 && ls <= 1e-6 && lc <= 1e-6 && la <= 1e-6, "trail L1 {lt:.2e}, scent L1 {ls:.2e}, charge L1 {lc:.2e}, alarm L1 {la:.2e}");
             assert!(cpu.alarm.is_empty() || alarm_sum > 100.0 * squad::SHOT_ALARM as f64, "the shots lay the alarm: {alarm_sum:.0} in all");
             assert!(agar_off == 0 && ground_off == 0);

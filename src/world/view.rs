@@ -26,8 +26,8 @@ pub const SHADER: &str = include_str!("view.wgsl");
 /// `sprites/render.js` (the owner's pick, 2026-11-11 16:48Z).
 pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
-/// Bytes in the uniform (20 words).
-const PARAMS_BYTES: usize = 128;
+/// Bytes in the uniform (36 words).
+const PARAMS_BYTES: usize = 144;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
@@ -124,6 +124,10 @@ pub struct View {
     /// those cut off from food), counted each frame by `draw_specks`.
     fgrid: wgpu::Buffer,
     news_on: bool,
+    /// Dense slime condenses (`set_dense`): where each walker's condensing
+    /// word starts in the bound `news` (words; 0 off).
+    dense_at: u32,
+    ripe_at: u32,
     lag: u32,
     lean: u32,
     /// The crystals drawn as hexagons (`set_crystals`): centres and radii,
@@ -236,6 +240,8 @@ impl View {
             state,
             fgrid,
             news_on: false,
+            dense_at: 0,
+            ripe_at: 0,
             lag: 0,
             lean: 0,
             gems,
@@ -457,14 +463,37 @@ impl View {
     /// The game's time in seconds, each frame (the crystals' `drain`
     /// measures how fast charge goes in game time, so a paused or fast game
     /// reads the same).
+    /// Shows which walkers have condensed (`BigParams::condense`, 11-14):
+    /// the engine's `news` and `state` (as `set_news` takes them; bind them
+    /// here too when the world does not wither) and the word each walker's
+    /// condensing word starts at (`gpu::Engine::dense_at` / 4 +
+    /// `gpu::DENSE_HEAD`). A condensed walker counts twice in the body (it
+    /// is two walkers' worth) and the mould round it takes the condensed
+    /// colour by the share of its walkers condensed; a ripening walker warms
+    /// toward it by its ripeness over `ripe_at` (the `condense` steps), and
+    /// a fresh one's speck flares. Call after `set_news`.
+    pub fn set_dense(&mut self, news: Option<(&wgpu::Buffer, &wgpu::Buffer)>, at: u32, ripe_at: u32) {
+        match news {
+            Some((n, s)) => {
+                if !self.news_on {
+                    (self.news, self.state) = (n.clone(), s.clone());
+                }
+                (self.dense_at, self.ripe_at) = (at, ripe_at);
+            }
+            None => self.dense_at = 0,
+        }
+        self.rebind();
+    }
+
     pub fn set_time(&mut self, t: f32) {
         self.game_t = t;
     }
 
     fn clear_news(&mut self) {
-        if self.news_on {
+        if self.news_on || self.dense_at > 0 {
             (self.news, self.state) = (storage(&self.device, "news", 16), storage(&self.device, "state", 16));
             self.news_on = false;
+            self.dense_at = 0;
         }
     }
 
@@ -603,6 +632,9 @@ impl View {
         let dt = if live == 1 { (self.game_t - self.last_t.get()).max(0.0) } else { 0.0 };
         self.last_t.set(self.game_t);
         for v in [self.news_on as u32, self.lag, self.lean, self.n_gems, k, self.n_list * (live > 0) as u32, dt.to_bits(), live] {
+            b.extend(v.to_le_bytes());
+        }
+        for v in [self.dense_at, self.ripe_at, 0, 0] {
             b.extend(v.to_le_bytes());
         }
         if live == 2 {

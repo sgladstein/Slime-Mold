@@ -676,6 +676,10 @@ impl App {
             // (news is kept then).
             let ws = &game.world.s;
             v.set_news(e.withers.then_some((&e.news, &e.state)), ws.wither_lag, ws.panic_lean);
+            // Condensed walkers (11-14, `condense`): the body's copper and
+            // their double count, from the same buffer.
+            let dense = e.grows && ws.condense > 0;
+            v.set_dense(dense.then_some((&e.news, &e.state)), (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32, ws.condense);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();

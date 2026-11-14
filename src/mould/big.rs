@@ -54,6 +54,15 @@ const DRAW_STARVE: u32 = 401;
 const DRAW_BIRTH: u32 = 402;
 /// A part cut off from its food withers (`BigParams::wither`).
 const DRAW_WITHER: u32 = 404;
+/// Dense slime condenses (`BigParams::condense`): which ripe walkers are
+/// absorbed and which hold the mass.
+const DRAW_CONDENSE: u32 = 405;
+/// A slot's condensing word (`BigDish::dense`): its ripeness, steps, in
+/// the low 16 bits, and `DENSE` once it has condensed (then the low bits
+/// count the steps since, for the look). The GPU's
+/// `dense_word` is the same.
+pub const RIPE: u32 = 0xFFFF;
+pub const DENSE: u32 = 0x1_0000;
 /// A panicking walker (`BigParams::panic`) runs for a crystal only while
 /// it has more than this share of its charge left, so a part cut off on a
 /// crystal that has run dry runs for another. The GPU's `PANIC_LEFT` is the
@@ -576,6 +585,33 @@ pub struct BigParams {
     /// is still reached (lean and dash cover more than `panic_r`) and one
     /// that pulls back in time outwalks the creep.
     pub panic_dash: u32,
+    /// **Dense slime condenses** (2026-11-14, the condense thread; 0 is
+    /// off, needs growth). The owner, 11-14 08:07Z: "if the slime gets to a
+    /// high enough density, concentration in an area or it stays near an
+    /// energy crystal long enough, it reabsorbs itself and reduces its
+    /// density/coverage by half but gets twice as strong and healthy. This
+    /// makes it more difficult and stops the slime from just filling the
+    /// map." An ordinary walker is *ripe* on a step when it took crystal
+    /// this step or the square of radius `condense_r` round its cell (its
+    /// own cell left out, `occ_round`) holds at least `condense_crowd`
+    /// walkers; its ripeness counts up a step while ripe and down while
+    /// not. At `condense` steps a keyed draw splits the ripe: half are
+    /// absorbed (they die where they stand, their slot freed) and half
+    /// condense, taking the absorbed one's place: a condensed walker is
+    /// two walkers' worth in every count that weighs the mould (`mass`).
+    /// It pays twice the upkeep and starts with twice its energy; births
+    /// stop while the mould's mass (living walkers plus the condensed)
+    /// reaches `capacity`, so the freed slots don't refill and the body
+    /// stays at half its cover; it has two lives, so whatever would kill
+    /// it (a shot, a blast, withering, starving) breaks it back into an
+    /// ordinary walker instead, which counts as a kill; and its bite and
+    /// its hold on a soldier's legs count twice (`squad::read`'s
+    /// touching). A child is an ordinary walker. So condensing makes no
+    /// mass: the body holds what it held on half the ground, and a shot
+    /// into it takes half as much.
+    pub condense: u32,
+    pub condense_crowd: u32,
+    pub condense_r: u8,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -1049,6 +1085,9 @@ impl BigParams {
             panic_lean: 45,
             panic_creep: 0.5,
             panic_dash: 15,
+            condense: 0,
+            condense_crowd: 20,
+            condense_r: 2,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -1231,6 +1270,13 @@ pub struct BigDish {
     /// (`BigParams::wither`), and each walker's own; empty while off.
     pub heard: Vec<u64>,
     pub news: Vec<u64>,
+    /// Condensing (`BigParams::condense`): each slot's word (`RIPE`,
+    /// `DENSE`), made with the first growth step it is on; empty while
+    /// off. A dead slot's word is stale until a birth clears it.
+    pub dense: Vec<u32>,
+    /// Walkers absorbed by condensing so far, and walkers that condensed.
+    pub absorbed: u64,
+    pub condensed: u64,
     /// The squad's units this frame (`squad::frame` sets them), fine cells
     /// as `squad::cell_of` gives them: what a panicking walker may charge
     /// (`BigParams::panic`).
@@ -1461,6 +1507,9 @@ impl BigDish {
             took: Vec::new(),
             heard: Vec::new(),
             news: Vec::new(),
+            dense: Vec::new(),
+            absorbed: 0,
+            condensed: 0,
             threats: Vec::new(),
             heard_cells: Vec::new(),
             heard_was: Vec::new(),
@@ -1593,6 +1642,30 @@ impl BigDish {
         if !self.life.is_empty() {
             self.life[k] = LIFE_DEAD;
         }
+    }
+
+    /// Whether slot `k` holds a condensed walker (`BigParams::condense`).
+    /// A dead slot's word is stale, so ask only of the living.
+    pub fn is_dense(&self, k: usize) -> bool {
+        self.dense.get(k).is_some_and(|&w| w & DENSE != 0)
+    }
+
+    /// A blow that would kill walker `k` (a shot or a blast): a condensed
+    /// walker breaks back into an ordinary one (`BigParams::condense`: it
+    /// has two lives), any other dies as `kill` kills it. True if it died.
+    pub fn hit(&mut self, k: usize) -> bool {
+        if self.is_dense(k) {
+            self.dense[k] = 0;
+            return false;
+        }
+        self.kill(k);
+        true
+    }
+
+    /// The mould's mass for births (`BigParams::condense`): living walkers,
+    /// a condensed one counting twice.
+    pub fn mass(&self) -> usize {
+        (0..self.walkers.len()).filter(|&k| self.lives(k)).map(|k| 1 + self.is_dense(k) as usize).sum()
     }
 
     fn cell(&self, x: f32, y: f32) -> Option<usize> {
@@ -2951,23 +3024,73 @@ impl BigDish {
         let crowd_of = |d: &Self, k: usize| if p.species_sets.is_empty() { p.crowd } else { p.species_sets[d.sp_of(k)].crowd };
         let n = self.walkers.len();
         let check = p.wither > 0.0 && !self.news.is_empty() && self.steps.is_multiple_of(p.wither_every.max(1) as u64);
+        // Dense slime condenses (`condense`): every ordinary walker's
+        // ripeness first, from the cells as the step's deaths find them,
+        // so no walker's death changes another's count (the GPU's `ripen`
+        // pass runs before `life`).
+        let condense = p.condense > 0;
+        if condense {
+            if self.dense.len() != n {
+                self.dense = vec![0; n];
+            }
+            let r = p.condense_r.max(1) as i64;
+            for k in 0..n {
+                if !self.active(k) {
+                    continue;
+                }
+                // A condensed walker's low bits count the steps since it
+                // condensed (the look's fresh glow), up to `RIPE`.
+                if self.dense[k] & DENSE != 0 {
+                    self.dense[k] = DENSE | ((self.dense[k] & RIPE) + 1).min(RIPE);
+                    continue;
+                }
+                let (x, y, _) = self.walkers[k];
+                let i = self.cell(x, y).expect("walker inside the dish");
+                let ripe = (!self.took.is_empty() && self.took[k] > 0.0) || self.occ_round(i, r) >= p.condense_crowd;
+                let was = self.dense[k] & RIPE;
+                self.dense[k] = if ripe { (was + 1).min(RIPE) } else { was.saturating_sub(1) };
+            }
+        }
         for k in 0..n {
             if !self.active(k) {
                 continue;
             }
             // A part cut off from its food withers (`wither`): at each
             // check, a walker that has not heard of food for `wither_lag`
-            // steps may die, whatever it still holds.
+            // steps may die, whatever it still holds; a condensed one
+            // breaks instead, keeping half its energy.
             if check && self.steps + 1 > self.news[k] + p.wither_lag as u64 {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 if unit(keyed(seed, t, DRAW_WITHER, k as u32)) < p.wither {
+                    if self.is_dense(k) {
+                        self.dense[k] = 0;
+                        self.energy[k] *= 0.5;
+                    } else {
+                        self.occ[i] -= 1;
+                        self.alive[k] = false;
+                        self.energy[k] = 0.0;
+                        self.starved += 1;
+                        continue;
+                    }
+                }
+            }
+            // Ripe long enough, it condenses: half the ripe are absorbed,
+            // half hold the mass (`condense`).
+            if condense && self.dense[k] & DENSE == 0 && self.dense[k] & RIPE >= p.condense.min(RIPE) {
+                if unit(keyed(seed, t, DRAW_CONDENSE, k as u32)) < 0.5 {
+                    let (x, y, _) = self.walkers[k];
+                    let i = self.cell(x, y).expect("walker inside the dish");
                     self.occ[i] -= 1;
                     self.alive[k] = false;
                     self.energy[k] = 0.0;
-                    self.starved += 1;
+                    self.dense[k] = 0;
+                    self.absorbed += 1;
                     continue;
                 }
+                self.dense[k] = DENSE;
+                self.energy[k] *= 2.0;
+                self.condensed += 1;
             }
             // Its crystal take this step (`took`, Larder World) counts as
             // food like its grass share.
@@ -2987,6 +3110,8 @@ impl BigDish {
                 }
             }
             let up = if !self.sick.is_empty() && self.sick[k] > p.immune_steps { up * p.sick_upkeep } else { up };
+            // A condensed walker is two walkers' worth and pays for both.
+            let up = if self.is_dense(k) { up * 2.0 } else { up };
             let e = self.energy[k] + took - up;
             if e > 0.0 {
                 self.energy[k] = e;
@@ -2994,6 +3119,11 @@ impl BigDish {
             }
             self.energy[k] = 0.0;
             if unit(keyed(seed, t, DRAW_STARVE, k as u32)) < p.starve {
+                // A condensed walker starving breaks instead (`condense`).
+                if self.is_dense(k) {
+                    self.dense[k] = 0;
+                    continue;
+                }
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 self.occ[i] -= 1;
@@ -3023,9 +3153,14 @@ impl BigDish {
             }
             h
         };
+        // Condensing (`condense`): no births while the mould's mass, a
+        // condensed walker counting twice, fills the slots, so the slots
+        // the absorbed left stay empty (a step's births can pass it by at
+        // most that step's parents, as with `species_cap`).
+        let full = condense && self.mass() >= n;
         for k in 0..n {
             let b = k ^ m;
-            if !self.active(k) || self.energy[k] < p.birth_energy || b >= n || self.alive[b] {
+            if full || !self.active(k) || self.energy[k] < p.birth_energy || b >= n || self.alive[b] {
                 continue;
             }
             if let Some(&c) = held.get(self.spec.get(k).copied().unwrap_or(0) as usize) {
@@ -3058,6 +3193,10 @@ impl BigDish {
             // A child knows what its parent heard (`wither`).
             if !self.news.is_empty() {
                 self.news[b] = self.news[k];
+            }
+            // A child is an ordinary walker, not ripe (`condense`).
+            if !self.dense.is_empty() {
+                self.dense[b] = 0;
             }
             self.alive[b] = true;
             self.occ[j] += 1;
@@ -3264,6 +3403,14 @@ impl BigDish {
             if !self.lives(k) || rr <= 0.0 || (wx - cx).hypot(wy - cy) > rr || matches!(self.life[k], LIFE_SPORE | LIFE_DEAD) {
                 continue;
             }
+            killed += 1;
+            // A condensed walker breaks into an ordinary one instead
+            // (`BigParams::condense`), counted as a kill: the blast took a
+            // walker's worth.
+            if self.is_dense(k) {
+                self.dense[k] = 0;
+                continue;
+            }
             let i = self.cell(wx, wy).expect("walker inside the dish");
             self.occ[i] -= 1;
             self.life[k] = LIFE_DEAD;
@@ -3271,7 +3418,6 @@ impl BigDish {
             if !self.alive.is_empty() {
                 self.alive[k] = false;
             }
-            killed += 1;
         }
         killed
     }
@@ -4487,6 +4633,75 @@ mod tests {
         let stale = run(BigParams { wither: 0.2, wither_every: 1, wither_lag: 10, ..grow.clone() }, true);
         assert_eq!(fresh.2, base.2, "news that never goes stale kills no one");
         assert!(stale.1 * 3 < fresh.1 * 2, "a mould whose news is stale withers: {} walkers left against {}", stale.1, fresh.1);
+    }
+
+    /// Dense slime condenses (`condense`, 2026-11-14): off it changes
+    /// nothing; on, a fed mould on its crystals ripens, about half the ripe
+    /// are absorbed and half condense, and the body ends with fewer walkers
+    /// than the same mould off while its mass (a condensed walker twice)
+    /// stays within the slots.
+    #[test]
+    fn dense_slime_condenses_to_half_its_walkers_at_its_mass() {
+        let grow = BigParams { upkeep: 0.002, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, ..small(2, 1) };
+        let run = |p: BigParams| {
+            let mut d = BigDish::new(p);
+            let mut peak = 0;
+            for _ in 0..400 {
+                d.tick();
+                peak = peak.max(d.mass());
+            }
+            let living = (0..d.walkers.len()).filter(|&k| d.lives(k)).count();
+            let dense = (0..d.walkers.len()).filter(|&k| d.lives(k) && d.is_dense(k)).count();
+            (living, dense, d.mass(), peak, d.absorbed, d.condensed, d.hash(), d.walkers.len())
+        };
+        let base = run(grow.clone());
+        let off = run(BigParams { condense: 0, condense_crowd: 3, condense_r: 1, ..grow.clone() });
+        assert_eq!(base.6, off.6, "condense 0 changes nothing");
+        let on = run(BigParams { condense: 30, condense_crowd: 10, condense_r: 2, ..grow.clone() });
+        eprintln!("off: {} walkers; on: {} walkers, {} condensed, mass {} (peak {}), {} absorbed, {} condensed in all", base.0, on.0, on.1, on.2, on.3, on.4, on.5);
+        assert!(on.5 > 50 && on.4 > 50, "walkers ripen and condense");
+        // A fair split: absorbed and condensed within a quarter of each other.
+        assert!(on.4 * 4 > on.5 * 3 && on.5 * 4 > on.4 * 3, "half absorbed, half condensed: {} and {}", on.4, on.5);
+        assert!(on.1 > 0 && on.0 < base.0, "fewer walkers, some condensed: {} against {}", on.0, base.0);
+        // Births stop at the slots' mass: past it by at most a step's births.
+        assert!(on.3 <= on.7 + on.7 / 20, "mass within the {} slots: peak {}", on.7, on.3);
+    }
+
+    /// A condensed walker has two lives: a shot (`hit`), a blast
+    /// (`strike`), withering and starving each break it back into an
+    /// ordinary walker, and only the next one kills it; a child is ordinary.
+    #[test]
+    fn a_condensed_walker_has_two_lives() {
+        let p = BigParams { upkeep: 0.01, capacity: 1200, condense: 30, ..small(1, 1) };
+        let mut d = BigDish::new(p);
+        d.tick();
+        assert_eq!(d.dense.len(), d.walkers.len(), "condensing made its words");
+        let k = (0..d.walkers.len()).find(|&k| d.lives(k)).unwrap();
+        d.dense[k] = DENSE;
+        assert_eq!(d.mass(), (0..d.walkers.len()).filter(|&q| d.lives(q)).count() + 1, "a condensed walker is two walkers' mass");
+        assert!(!d.hit(k) && d.lives(k) && !d.is_dense(k), "a shot breaks it");
+        assert!(d.hit(k) && !d.lives(k), "the second kills it");
+        // A blast: counted as a kill, and it lives on, ordinary.
+        let q = (0..d.walkers.len()).find(|&q| d.lives(q)).unwrap();
+        d.dense[q] = DENSE;
+        let (x, y, _) = d.walkers[q];
+        let killed = d.strike(x, y, 0.4, 0.0, 0.0);
+        assert!(killed >= 1 && d.lives(q) && !d.is_dense(q), "a blast breaks it: {killed} killed");
+        // Withering: news stale, chance 1, every step.
+        let mut w = BigDish::new(BigParams { upkeep: 0.01, capacity: 1200, condense: 30, wither: 1.0, wither_every: 1, wither_lag: 1, ..small(1, 1) });
+        for _ in 0..10 {
+            w.tick();
+        }
+        w.news.iter_mut().for_each(|t| *t = 1);
+        let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+        for &k in &living {
+            w.dense[k] = DENSE;
+        }
+        w.tick();
+        let (kept, broke) = (living.iter().filter(|&&k| w.lives(k)).count(), living.iter().filter(|&&k| w.lives(k) && !w.is_dense(k)).count());
+        assert!(kept == living.len() && broke == kept, "withering breaks every condensed walker first: {kept} of {} live, {broke} broken", living.len());
+        w.tick();
+        assert!(living.iter().all(|&k| !w.lives(k)), "and then kills them");
     }
 
     #[test]

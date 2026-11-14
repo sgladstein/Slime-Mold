@@ -147,7 +147,12 @@ struct Params {
     lone: f32, lfloor: f32, lone_r: u32, fed_crowd: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
-    fling_dep: f32, _f1: f32, _f2: f32, _f3: f32,
+    // Its three spare words are dense slime's condensing (11-14, the
+    // condense thread, `BigParams::condense`): the steps a walker must be
+    // ripe (0 off, and off without growth), the crowd that makes it ripe
+    // (low 16 bits) and its square's radius (high 16), and the stream of
+    // the draw that splits the ripe (big.rs `DRAW_CONDENSE`).
+    fling_dep: f32, condense: u32, ccrowd: u32, s_condense: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -298,6 +303,23 @@ const GAS_CALM: u32 = 392u;
 const GAS_SLOTS: u32 = 488u;
 fn gas_base() -> u32 { return P.n + 3u * P.w * P.h; }
 fn gas_word(i: u32) -> u32 { return atomicLoad(&news[gas_base() + i]); }
+// Dense slime condenses (`BigParams::condense`, 11-14, the condense
+// thread), in `news` after the sleep gas's slots, as the gas borrowed the
+// buffer: a header of `DENSE_HEAD` words (word 0 the mould's mass as
+// `life` leaves it, `masscount`, a condensed walker counting twice), each
+// slot's word (its ripeness in steps in `RIPE_BITS`, and `DENSE_BIT` once it
+// has condensed: the CPU's `BigDish::dense`), then a word a cell: the
+// condensed walkers holding it at the frame's reads (`dcount`, for
+// `units`). A dead slot's word is stale until `born` clears it.
+const DENSE_HEAD: u32 = 4u;
+const RIPE_BITS: u32 = 0xFFFFu;
+const DENSE_BIT: u32 = 0x10000u;
+fn condenses() -> bool { return growth() && P.condense > 0u; }
+fn dense_base() -> u32 { return gas_base() + GAS_SLOTS + P.n; }
+fn dense_word(k: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + k]); }
+fn set_dense(k: u32, v: u32) { atomicStore(&news[dense_base() + DENSE_HEAD + k], v); }
+fn is_dense(k: u32) -> bool { return condenses() && (dense_word(k) & DENSE_BIT) != 0u; }
+fn dense_cell(i: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + i]); }
 fn gassed_at(k: u32, t: u32) -> bool { return t < gas_word(GAS_SLOTS + k); }
 fn gas_sleep() -> f32 { return bitcast<f32>(gas_word(5u)); }
 
@@ -872,13 +894,35 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A part cut off from its food withers (`wither`, before the upkeep as
     // on the CPU): at each check a walker that has heard of no food for
     // its lag may die, whatever it still holds.
+    // A condensed walker breaks instead, keeping half its energy (`condense`).
+    let dense = is_dense(k);
     if (P.wither > 0.0 && S.t % max((P.wclock >> 16u) & 0xFFu, 1u) == 0u && S.t + 1u > atomicLoad(&news[k]) + (P.wclock & 0xFFFFu)) {
         if (unit(keyed(P.s_wither, S.t, k)) < P.wither) {
+            if (dense) {
+                set_dense(k, 0u);
+                energy[k] = energy[k] * 0.5;
+            } else {
+                atomicSub(&occ[i], 1u);
+                atomicStore(&claim[i], NONE);
+                energy[k] = -1.0;
+                return;
+            }
+        }
+    }
+    // Ripe long enough (`ripen`), it condenses: half the ripe are
+    // absorbed, half hold the mass, twice the energy (`condense`).
+    var heavy = dense && is_dense(k);
+    if (condenses() && !dense && (dense_word(k) & RIPE_BITS) >= min(P.condense, RIPE_BITS)) {
+        if (unit(keyed(P.s_condense, S.t, k)) < 0.5) {
             atomicSub(&occ[i], 1u);
             atomicStore(&claim[i], NONE);
             energy[k] = -1.0;
+            set_dense(k, 0u);
             return;
         }
+        set_dense(k, DENSE_BIT);
+        energy[k] = energy[k] * 2.0;
+        heavy = true;
     }
     let n = f32(atomicLoad(&occ[i]));
     var g = 0.0;
@@ -889,9 +933,13 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A sick walker pays more (the CPU's `sick_upkeep`, after the barren
     // ground's factor as there): the toolkit's germ kills by hunger.
     if (P.sick_steps > 0u && sick[k] > P.immune) { up *= P.sick_up; }
+    // A condensed walker is two walkers' worth and pays for both.
+    if (heavy) { up *= 2.0; }
     let e = (energy[k] + g + share[i]) - up;
     if (e > 0.0) { energy[k] = e; return; }
     if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
+        // A condensed walker starving breaks instead (`condense`).
+        if (heavy) { set_dense(k, 0u); energy[k] = 0.0; return; }
         atomicSub(&occ[i], 1u);
         atomicStore(&claim[i], NONE);
         energy[k] = -1.0;
@@ -1046,6 +1094,9 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     let t = S.t;
     let b = child_of(k, t);
     if (!ordinary(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
+    // Condensing (`condense`): no births while the mould's mass fills the
+    // slots (`masscount`, as the pass began; the CPU's `mass`).
+    if (condenses() && atomicLoad(&news[dense_base()]) >= P.n) { return; }
     // A garden's birth caps (`species_cap`): a parent divides only while
     // its side held fewer than its cap as the pass began (`capcount`), as
     // the CPU's `held`; the enemy in word 6, the player's mould in 7.
@@ -1092,6 +1143,8 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (nsp() > 0u || mixes() || cycles()) { spec[b] = spec[k] & 0x1FFu; }
     // A child knows what its parent heard (`wither`).
     if (P.wither > 0.0 || P.panic > 0.0) { atomicStore(&news[b], atomicLoad(&news[k])); }
+    // A child is an ordinary walker, not ripe (`condense`).
+    if (condenses()) { set_dense(b, 0u); }
 }
 
 // Conversion (PR #56), after the move and its deposit, before any jump: a
@@ -1996,6 +2049,13 @@ fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
     let c = cell(wk.x, wk.y);
     for (var q = 0u; q < P.nshots; q++) {
         if (struck(c, q)) {
+            // A condensed walker breaks into an ordinary one instead
+            // (`BigDish::hit`), counted as a kill.
+            if (is_dense(k)) {
+                set_dense(k, 0u);
+                atomicAdd(&kills[q], 1u);
+                return;
+            }
             atomicSub(&occ[c], 1u);
             atomicStore(&claim[c], NONE);
             energy[k] = -1.0;
@@ -2194,6 +2254,8 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
         let y = cy + dy;
         if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
         touching += enemy_occ(u32(y * w + x));
+        // A condensed walker touches as two (`condense`; `dcount`).
+        if (condenses()) { touching += dense_cell(u32(y * w + x)); }
     }
     let b = 4;
     let nbw = (w + b - 1) / b;
@@ -2361,6 +2423,7 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
             let y = cy + dy;
             if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
             touching += atomicLoad(&occ[u32(y * w + x)]);
+            if (condenses()) { touching += dense_cell(u32(y * w + x)); }
         }
     }
     let b = 4;
@@ -2687,10 +2750,12 @@ fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
     // not, a spore too, as the CPU's `infect` takes every living slot.
     if (P.kir > 0.0 && P.sick_steps > 0u && d <= P.kir) { sick[k] = P.sick_steps + P.immune; }
     if (st == L_SPORE || P.kr <= 0.0 || d > P.kr) { return; }
+    // A condensed walker breaks instead (`BigDish::strike`), a kill's worth.
+    atomicAdd(&wstat[3], 1u);
+    if (is_dense(k)) { set_dense(k, 0u); return; }
     atomicSub(&occ[cell(wk.x, wk.y)], 1u);
     spec[k] = (w & 0xFFFF01FFu) | (L_DEAD << 9u);
     if (P.upkeep > 0.0) { energy[k] = -1.0; }
-    atomicAdd(&wstat[3], 1u);
 }
 
 // The living walkers (the CPU's `living`: a slot alive, with growth, and
@@ -2901,4 +2966,72 @@ fn fling(@builtin(global_invocation_id) gid: vec3<u32>) {
     spec[k] = (w & 0x1FFu) | (L_SPORE << 9u) | FLUNG | (tm << 16u);
     walkers[k] = vec4<f32>(wk.x, wk.y, atan2(dy, dx), 1.0);
     atomicAdd(&news[gas_base() + 3u], 1u);
+}
+
+// ---- Dense slime condenses (`BigParams::condense`, 11-14, the condense thread) ----
+// `ripen`, before `life`: each ordinary walker not yet condensed is ripe
+// this tick if its cell took crystal (`share`, as the news hears it) or
+// the square of radius `ccrowd >> 16` round its cell, its own cell left
+// out, holds at least `ccrowd & 0xFFFF` walkers (the CPU's `occ_round`);
+// its ripeness counts up while ripe and down while not. Nobody dies in
+// this pass, so every walker reads the cells as the CPU's first loop in
+// `live_and_die` does. `life` then condenses the ripe.
+@compute @workgroup_size(256)
+fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !ordinary(k)) { return; }
+    let wd = dense_word(k);
+    // A condensed walker's low bits count the steps since it condensed
+    // (the look's fresh glow).
+    if ((wd & DENSE_BIT) != 0u) { set_dense(k, DENSE_BIT | min((wd & RIPE_BITS) + 1u, RIPE_BITS)); return; }
+    let wk = walkers[k];
+    let i = cell(wk.x, wk.y);
+    var ripe = share[i] > 0.0;
+    if (!ripe) {
+        let r = i32(max(P.ccrowd >> 16u, 1u));
+        let cx = i32(i % P.w); let cy = i32(i / P.w);
+        var n = 0u;
+        for (var y = max(cy - r, 0); y <= min(cy + r, i32(P.h) - 1); y++) {
+            for (var x = max(cx - r, 0); x <= min(cx + r, i32(P.w) - 1); x++) {
+                if (x != cx || y != cy) { n += atomicLoad(&occ[u32(y) * P.w + u32(x)]); }
+            }
+        }
+        ripe = n >= (P.ccrowd & 0xFFFFu);
+    }
+    let was = wd & RIPE_BITS;
+    if (ripe) { set_dense(k, min(was + 1u, RIPE_BITS)); } else if (was > 0u) { set_dense(k, was - 1u); }
+}
+
+// The mould's mass before the births (the CPU's `mass`): `massclear`
+// clears the header's word 0 and `masscount` adds each living walker, a
+// condensed one twice, after `life`; `breed` reads it.
+@compute @workgroup_size(1)
+fn massclear() {
+    atomicStore(&news[dense_base()], 0u);
+}
+
+@compute @workgroup_size(256)
+fn masscount(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    atomicAdd(&news[dense_base()], select(1u, 2u, is_dense(k)));
+}
+
+// The condensed walkers on each cell for the frame's reads (the CPU's
+// `squad::dense_cells`): `dclear` a thread a cell, then `dcount` a thread
+// a slot, every living condensed walker that holds a cell (not a spore
+// or the dead), before `units`.
+@compute @workgroup_size(256)
+fn dclear(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x < P.w * P.h) { atomicStore(&news[dense_base() + DENSE_HEAD + P.n + gid.x], 0u); }
+}
+
+@compute @workgroup_size(256)
+fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k) || !is_dense(k)) { return; }
+    let st = state(k);
+    if (st == L_SPORE || st == L_DEAD) { return; }
+    let wk = walkers[k];
+    atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + cell(wk.x, wk.y)], 1u);
 }
