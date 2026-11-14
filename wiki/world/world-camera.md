@@ -4,6 +4,7 @@ kind: mechanism
 status: current
 updated: 2026-11-14
 sources:
+  - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/shot-damage-2026-11-12.md
   - Reports/soldier-controls-2026-11-12.md
@@ -39,6 +40,7 @@ code:
   - View::set_body_density
   - View::set_look
   - first_hit
+  - mark_far
 ---
 
 # The world camera and UI
@@ -96,7 +98,7 @@ shows as the hole it really makes, open about half a second
 ([shot damage](../../Reports/shot-damage-2026-11-12.md)). With growth, `View::set_alive` takes the walkers' energy so
 empty and dead slots draw no speck. Soldiers are an SVG sprite (the owner's
 pick of a blind A/B, 16:48Z) with facing, team helmet and muzzle flash;
-crystals are hexagons. Buildings (turret, lure, pump, outpost) are sprites in the same style (`Marks::building`): they rise as they are built, darken as they are hurt and light their lamp only while working ([world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
+crystals are hexagons. Rock, walls and rubble are drawn at the screen pixel from a smooth field of their cells (`look::mark_far` skips cells far from any), with a one-pixel antialiased edge and a short soft shadow at every zoom ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md)). Buildings (turret, lure, pump, outpost) are sprites in the same style (`Marks::building`): they rise as they are built, darken as they are hurt and light their lamp only while working ([world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
 simulation uses height. One mark with a big box (a 480-pixel ring) cost the
 view 0.7 ms, since one workgroup walks a mark's whole box: draw big outlines
 as lines.

@@ -32,6 +32,9 @@ const PARAMS_BYTES: usize = 96;
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
 const MARGIN: u32 = 4;
+/// The bindings after the first fifteen, in `bind`'s order: 23 the terrain
+/// cells (`tcell`; 15-22 are other threads' work in flight, 2026-11-14).
+const BINDINGS_AFTER: [u32; 1] = [23];
 
 /// The minimap's longest side, in pixels, and its margin from the corner.
 pub const MINIMAP_SIDE: u32 = 240;
@@ -96,6 +99,8 @@ pub struct View {
     /// the `prep` pass (`view.wgsl`), sized for the screen at zoom 1.
     hcell: wgpu::Buffer,
     mcell: wgpu::Buffer,
+    /// Each shown cell's hard terrain, smoothed (`view.wgsl`, `tcell`).
+    tcell: wgpu::Buffer,
     n_walk: u32,
     shade: bool,
     /// The screen-sized result, rows `stride` pixels apart.
@@ -133,7 +138,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(23, rw)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -147,9 +152,9 @@ impl View {
         let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
         let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 4);
         let atlas = Self::atlas(device, queue);
-        let (hcell, mcell) = Self::cell_buffers(device, screen);
+        let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive]);
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &tcell]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -170,6 +175,7 @@ impl View {
             atlas,
             hcell,
             mcell,
+            tcell,
             n_walk: 0,
             shade: false,
             out,
@@ -206,18 +212,20 @@ impl View {
 
     /// The cells `prep` works out: at zoom 1 or more the screen shows at
     /// most its own size in cells, plus the margin (`MARGIN` each side).
-    fn cell_buffers(dev: &wgpu::Device, screen: (u32, u32)) -> (wgpu::Buffer, wgpu::Buffer) {
+    fn cell_buffers(dev: &wgpu::Device, screen: (u32, u32)) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let n = (screen.0 + 2 * MARGIN + 2) as u64 * (screen.1 + 2 * MARGIN + 2) as u64;
-        (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 8))
+        (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 8), storage(dev, "cell terrain", n * 4))
     }
 
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 15]) -> wgpu::BindGroup {
-        let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
+    /// The bind group: `bufs` in binding order, 0-14 then `BINDINGS_AFTER`.
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 16]) -> wgpu::BindGroup {
+        let binding = |i: usize| if i < 15 { i as u32 } else { BINDINGS_AFTER[i - 15] };
+        let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: binding(i), resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.tcell]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -283,7 +291,7 @@ impl View {
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
         (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
         self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 4);
-        (self.hcell, self.mcell) = Self::cell_buffers(&self.device, screen);
+        (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, screen);
         self.has_overlay = false;
         self.rebind();
     }

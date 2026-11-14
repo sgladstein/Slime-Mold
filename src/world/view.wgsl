@@ -52,6 +52,13 @@ struct V {
 @group(0) @binding(12) var<storage, read_write> hcell: array<f32>;
 @group(0) @binding(13) var<storage, read_write> mcell: array<vec2<u32>>;
 @group(0) @binding(14) var<storage, read> alive: array<f32>;
+// Each shown cell's hard terrain (rock, wall, rubble), worked out by `prep`
+// for `terrain_over` (rows `rw` apart, as `hcell`): byte 0 the cells'
+// occupancy smoothed over 3 x 3 (1 2 1), byte 1 the height (0-4 cells),
+// byte 2 the kind, byte 3 its value (a wall's health; rock's elevation).
+// Binding 23: 15-22 are taken by other threads' work (the slime's crystals,
+// gun lights, live charge).
+@group(0) @binding(23) var<storage, read_write> tcell: array<u32>;
 
 fn unpack(c: u32) -> vec3<f32> {
     return vec3<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u));
@@ -161,7 +168,12 @@ fn body(ix: i32, iy: i32, n: u32) -> f32 {
 
 // A cell's height in cells: off the world is rock.
 fn cell_height(ix: i32, iy: i32, th: f32) -> f32 {
-    if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) { return 3.0; }
+    // Off the world, rock, walls and rubble stand at the land's height
+    // here: `terrain_over` draws them, edges and shadows, at the pixel
+    // (see *Hard terrain*). Their cell heights used to stand here, and the
+    // slope between a tall cell and the ground made a stepped bevel and a
+    // dark band a cell wide round every rock and wall at high zoom.
+    if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) { return 0.0; }
     let i = cidx(ix, iy);
     let g = ground[i];
     let kind = g & 15u;
@@ -169,10 +181,8 @@ fn cell_height(ix: i32, iy: i32, th: f32) -> f32 {
     // The land (byte 3, the map's elevation) under everything on it.
     let land = ELEV * byte(g, 3u);
     var h = 4.0 * pow(th, 0.65);
-    if (kind == ROCK) { h = 3.0; }
+    if (kind == ROCK || kind == WALL || kind == RUBBLE) { h = 0.0; }
     else if (kind == WET) { h = max(h - 0.3, 0.0); }
-    else if (kind == WALL) { h = 0.6 + 2.6 * v; }
-    else if (kind == RUBBLE) { h = 0.2 + 0.6 * v; }
     else if (kind == CRYSTAL) { h = max(h, (0.6 + 9.0 * byte(g, 2u)) * v); }
     return land + h;
 }
@@ -203,7 +213,7 @@ struct Mat { albedo: vec3<f32>, glow: vec3<f32>, gloss: f32, wound: f32, gem: f3
 fn cell_mat(ix: i32, iy: i32, th: f32) -> Mat {
     var m: Mat;
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) {
-        m.albedo = vec3<f32>(52.0, 54.0, 60.0); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.wound = 0.0; m.gem = 0.0;
+        m.albedo = mix(SOIL_LOW, SOIL_HIGH, 0.5); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.wound = 0.0; m.gem = 0.0;
         return m;
     }
     let i = cidx(ix, iy);
@@ -223,7 +233,7 @@ fn cell_mat(ix: i32, iy: i32, th: f32) -> Mat {
     // Flat land (elevation 0, every map until the simulation uses height)
     // is the middle of the range.
     var base = mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * byte(g, 3u));
-    let sk = (g >> 4u) & 15u;
+    let sk = (g >> 4u) & 7u;
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
     let soil = base + tint * 0.6;
     m.albedo = mix(soil, hue * (0.55 + 0.45 * th), clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
@@ -236,13 +246,12 @@ fn cell_mat(ix: i32, iy: i32, th: f32) -> Mat {
         // it keeps its own colour.
         m.albedo = mix(vec3<f32>(22.0, 46.0, 62.0) + tint * 0.4, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
         m.gloss = max(m.gloss, 0.75);
-    } else if (kind == ROCK) {
-        m.albedo = mix(vec3<f32>(70.0, 72.0, 76.0), vec3<f32>(118.0, 116.0, 110.0), byte(g, 3u)); m.gloss = 0.04;
-    } else if (kind == WALL) {
-        // Health is the wall's brightness as well as its height.
-        m.albedo = mix(vec3<f32>(70.0, 58.0, 48.0), vec3<f32>(168.0, 156.0, 132.0), v); m.gloss = 0.1;
-    } else if (kind == RUBBLE) {
-        m.albedo = vec3<f32>(92.0, 82.0, 70.0) * (0.7 + 0.3 * v); m.gloss = 0.05;
+    } else if (kind == ROCK || kind == WALL || kind == RUBBLE) {
+        // Under hard terrain, the soil: `terrain_over` lays the rock, wall
+        // or rubble over it with an edge of its own, so the cells next to
+        // it blend toward soil, not toward a grey cell (`ter_cell` has
+        // their colours).
+        m.gloss = 0.05;
     } else if (kind == CRYSTAL) {
         // The charge left is the glow, brightest deep inside; mould
         // feeding on it lies over it in its own colour.
@@ -304,6 +313,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     let th = body(ix, iy, n);
     hcell[i] = cell_height(ix, iy, th);
     mcell[i] = mat_pack(cell_mat(ix, iy, th));
+    tcell[i] = ter_prep(ix, iy);
 }
 
 fn mat_at(x: f32, y: f32) -> Mat {
@@ -348,6 +358,161 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let spec = pow(max(dot(n, half_v), 0.0), 28.0) * m.gloss;
     var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec * 0.7 + m.glow;
     return c;
+}
+
+// ---- Hard terrain: rock, walls, rubble ----
+//
+// The simulation's rock and walls are whole cells, and drawn as cells
+// they stepped every `zoom` pixels with a dark band a cell wide (the art
+// director's review, 2026-11-14: "drawn from the cell grid"). Here the
+// cells' occupancy is a smooth field, a cubic B-spline over the 4 x 4
+// cells round the point (`bc`: C2, so its outline has no corners a cell apart),
+// and the edge is where it crosses `TER_ISO`, worked out at the screen
+// pixel: the coverage is the signed distance to that crossing (the field
+// over its gradient) in pixels, so every zoom gets a one-pixel
+// antialiased edge. The B-spline of a straight run of cells crosses 0.5
+// on the cells' boundary; a lone cell or a one-cell diagonal comes out
+// rounder and thinner, so the level is 0.4, which puts a straight edge
+// about a tenth of a cell outside the cells. The height (rock 3, a wall by its health,
+// rubble low) and colour are the weighted means of the solid cells, so a
+// worn wall still sinks and dims cell by cell. A short soft shadow falls
+// away from the light; the old cast shadow came from cell heights three
+// cells toward the light and read as a black band.
+const TER_ISO: f32 = 0.4;
+// How far in from the edge the top bevels (cells), and the shadow's reach
+// a cell of the terrain's height.
+const TER_BEVEL: f32 = 0.9;
+const TER_SHADOW: f32 = 0.35;
+
+// A cell's own terrain, packed as `tcell` holds it (byte 0 left 255 for
+// solid, 0 open; `prep` smooths it). Off the world is rock, as before.
+fn ter_pack(ix: i32, iy: i32) -> u32 {
+    if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) { return 255u | (191u << 8u) | (ROCK << 16u); }
+    let g = ground[cidx(ix, iy)];
+    let kind = g & 15u;
+    let v = byte(g, 1u);
+    var h = 0.0;
+    var val = v;
+    if (kind == ROCK) { h = 3.0; val = byte(g, 3u); }
+    else if (kind == WALL) { h = 0.6 + 2.6 * v; }
+    else if (kind == RUBBLE) { h = 0.2 + 0.6 * v; }
+    else { return 0u; }
+    return 255u | (u32(h / 4.0 * 255.0 + 0.5) << 8u) | (kind << 16u) | (u32(val * 255.0 + 0.5) << 24u);
+}
+
+// The smoothed terrain cell for `prep`: its own kind, height and value, and
+// the 3 x 3 occupancy round it weighted 1 2 1 (x) 1 2 1. With the cubic
+// spline over these, a straight edge stays on the cells' boundary and the
+// maps' 2-cell staircases (their rock is drawn on the coarse grid) smooth
+// out; the spline alone left a notch every step at zoom 12 and 24, and
+// working the smoothing out a pixel at a time (four splines at +-0.75
+// cells) cost 7 ms a frame more on llvmpipe at 1280 x 800 (2026-11-14).
+fn ter_prep(ix: i32, iy: i32) -> u32 {
+    var occ = 0u;
+    for (var j = -1; j <= 1; j++) {
+        for (var i = -1; i <= 1; i++) {
+            if ((ter_pack(ix + i, iy + j) & 255u) != 0u) { occ += (2u - u32(abs(i))) * (2u - u32(abs(j))); }
+        }
+    }
+    let own = ter_pack(ix, iy);
+    return (own & 0xffffff00u) | ((occ * 255u + 8u) / 16u);
+}
+
+// A shown cell's terrain from its `tcell` word: colour and height (0: open).
+fn ter_cell(p: u32) -> vec4<f32> {
+    let kind = (p >> 16u) & 255u;
+    let v = byte(p, 3u);
+    let h = byte(p, 1u) * 4.0;
+    if (kind == ROCK) { return vec4<f32>(mix(vec3<f32>(70.0, 72.0, 76.0), vec3<f32>(118.0, 116.0, 110.0), v), h); }
+    // Health is the wall's brightness as well as its height.
+    if (kind == WALL) { return vec4<f32>(mix(vec3<f32>(70.0, 58.0, 48.0), vec3<f32>(168.0, 156.0, 132.0), v), h); }
+    if (kind == RUBBLE) { return vec4<f32>(vec3<f32>(92.0, 82.0, 70.0) * (0.7 + 0.3 * v), h); }
+    return vec4<f32>(0.0);
+}
+
+// Cubic B-spline weights (cells -1..2 round floor(x - 0.5)) and their
+// derivatives, at t = (x - 0.5) - floor(x - 0.5). The quadratic spline (3 x 3
+// cells) left a diagonal ridge's staircase as a scalloped edge at zoom 12
+// (2026-11-14); the cubic's 4 x 4 smooths it to a ripple under a pixel.
+fn bc(t: f32) -> vec4<f32> {
+    let s = 1.0 - t;
+    return vec4<f32>(s * s * s, 3.0 * t * t * t - 6.0 * t * t + 4.0, -3.0 * t * t * t + 3.0 * t * t + 3.0 * t + 1.0, t * t * t) / 6.0;
+}
+fn bcd(t: f32) -> vec4<f32> {
+    let s = 1.0 - t;
+    return vec4<f32>(-s * s, 3.0 * t * t - 4.0 * t, -3.0 * t * t + 2.0 * t + 1.0, t * t) * 0.5;
+}
+
+struct Ter { s: f32, grad: vec2<f32>, h: f32, albedo: vec3<f32> };
+
+// The terrain field at world point (x, y): occupancy, its gradient (per
+// cell), and the solid cells' mean height and colour.
+fn terrain(x: f32, y: f32) -> Ter {
+    var t: Ter;
+    t.s = 0.0; t.grad = vec2<f32>(0.0); t.h = 0.0; t.albedo = vec3<f32>(0.0);
+    var hw = 0.0;
+    let ux = x - 0.5; let uy = y - 0.5;
+    let ix = i32(floor(ux)); let iy = i32(floor(uy));
+    let fx = ux - floor(ux); let fy = uy - floor(uy);
+    let wx = bc(fx); let wy = bc(fy);
+    let dx = bcd(fx); let dy = bcd(fy);
+    for (var j = 0; j < 4; j++) {
+        for (var i = 0; i < 4; i++) {
+            let p = tcell[ridx(ix - 1 + i, iy - 1 + j)];
+            let o = byte(p, 0u);
+            if (o > 0.0) {
+                let w = wx[i] * wy[j];
+                t.s += w * o;
+                t.grad += o * vec2<f32>(dx[i] * wy[j], wx[i] * dy[j]);
+                // Height and colour from the solid cells themselves.
+                let c = ter_cell(p);
+                if (c.w > 0.0) { t.h += w * c.w; t.albedo += w * c.xyz; hw += w; }
+            }
+        }
+    }
+    if (hw > 0.0) { t.h /= hw; t.albedo /= hw; } else { t.h = 0.0; }
+    return t;
+}
+
+// The ground's colour `c` at world point (x, y) with the hard terrain over
+// it: the shadow it casts, then its top, lit, with an antialiased edge.
+fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
+    // No hard terrain within reach of this cell (`look::FAR`): nothing to
+    // draw, at the cost of one read.
+    if ((ground[cidx(i32(floor(x)), i32(floor(y)))] & 128u) != 0u) { return c0; }
+    let l = normalize(LIGHT);
+    let t = terrain(x, y);
+    var cov = 0.0;
+    var d = 0.0;
+    let gl = max(length(t.grad), 1e-4);
+    if (t.s > 0.0) {
+        // Signed distance to the edge in cells (inside positive), and the
+        // pixel's coverage.
+        d = (t.s - TER_ISO) / gl;
+        cov = clamp(0.5 + d * P.zoom, 0.0, 1.0);
+    }
+    var c = c0;
+    if (cov < 1.0) {
+        // The shadow on the ground: the terrain a short way toward the
+        // light, as far as its height casts; soft over about a cell.
+        let ld = normalize(l.xy);
+        let q = terrain(x + ld.x * 1.2, y + ld.y * 1.2);
+        if (q.s > 0.0) {
+            let reach = clamp(q.h * TER_SHADOW, 0.0, 1.0);
+            c *= 1.0 - 0.45 * reach * smoothstep(0.05, 0.6, q.s);
+        }
+    }
+    if (cov <= 0.0) { return c; }
+    // The top: flat, beveled down to the edge within TER_BEVEL, the bevel
+    // a little steeper the taller the terrain.
+    let inward = t.grad / gl;
+    let k = 1.0 - smoothstep(0.0, TER_BEVEL, d);
+    let n = normalize(vec3<f32>(-inward * k * (0.35 + 0.15 * t.h), 1.0));
+    let shade = 1.0 + 1.25 * (dot(n, l) - l.z);
+    let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
+    let spec = pow(max(dot(n, half_v), 0.0), 20.0) * 0.08;
+    let top = t.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec;
+    return mix(c, top, cov);
 }
 
 // Every walker a speck of light at its own position (one thread a walker),
@@ -400,6 +565,7 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (P.shade == 1u && P.zoom >= 1.0) {
             // Shaded from the fields, smooth between cells at any zoom.
             c = shaded(fx, fy, 1.5);
+            c = terrain_over(c, fx, fy);
             let n = atomicExchange(&specks[y * P.stride + x], 0u);
             c += vec3<f32>(255.0, 236.0, 180.0) * min(f32(n) * 0.012, 0.25);
         } else if (fx >= 0.0 && fy >= 0.0 && fx < f32(P.ww) && fy < f32(P.wh)) {

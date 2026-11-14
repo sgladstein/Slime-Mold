@@ -92,9 +92,56 @@ pub fn ground(w: usize, cells: usize, f: &Fields) -> Vec<u32> {
         })
         .collect();
     for (i, (c, d)) in g.iter_mut().zip(depth).enumerate() {
-        *c |= (d as u32) << 16 | (f.elev.get(i).copied().unwrap_or(0) as u32) << 24 | ((f.soil.get(i).copied().unwrap_or(0) & 15) as u32) << 4;
+        *c |= (d as u32) << 16 | (f.elev.get(i).copied().unwrap_or(0) as u32) << 24 | ((f.soil.get(i).copied().unwrap_or(0) & 7) as u32) << 4;
     }
     g
+}
+
+/// Byte 0's top bit: no hard terrain (rock, wall, rubble, or the world's
+/// edge) within `FAR_REACH` cells (`mark_far`). The view draws rock, walls
+/// and rubble at the screen pixel from a smooth field of the 4 x 4 cells
+/// round each point (`view.wgsl`, *Hard terrain*), which doubled the look's
+/// cost on llvmpipe (GPU tail 37 to 79 ms a frame at 1280 x 800,
+/// 2026-11-14) when every pixel worked it out; with the bit, a pixel far
+/// from terrain reads one cell and skips it. A caller that never marks
+/// still draws right, only slower. The soil kind keeps bits 4-6.
+pub const FAR: u32 = 1 << 7;
+/// The terrain field's reach: its spline (2 cells), the edge's box (0.75)
+/// and the shadow's offset (1.2), rounded up.
+pub const FAR_REACH: usize = 4;
+
+/// Sets `FAR` on each cell with no rock, wall or rubble within `FAR_REACH`
+/// cells (a square), and clears it elsewhere; the world's edge counts as
+/// rock. Call it last, after any kind is changed by hand (Larder World's
+/// rubble). Two running-count passes, so it costs the cells, not the reach.
+pub fn mark_far(w: usize, codes: &mut [u32]) {
+    if w == 0 {
+        return;
+    }
+    let h = codes.len() / w;
+    let r = FAR_REACH;
+    let hard = |c: u32| matches!(c & 15, 2..=4);
+    // Rows: how many hard cells within r along x (off the row counts).
+    let mut rows = vec![0u32; w * h];
+    for y in 0..h {
+        let row = &codes[y * w..(y + 1) * w];
+        let at = |x: isize| -> u32 { if x < 0 || x >= w as isize { 1 } else { hard(row[x as usize]) as u32 } };
+        let mut n: u32 = (-(r as isize)..=r as isize).map(at).sum();
+        for x in 0..w {
+            rows[y * w + x] = n;
+            n = n + at(x as isize + r as isize + 1) - at(x as isize - r as isize);
+        }
+    }
+    // Columns of the row counts.
+    for x in 0..w {
+        let at = |y: isize| -> u32 { if y < 0 || y >= h as isize { 1 } else { rows[y as usize * w + x] } };
+        let mut n: u32 = (-(r as isize)..=r as isize).map(at).sum();
+        for y in 0..h {
+            let c = &mut codes[y * w + x];
+            *c = if n == 0 { *c | FAR } else { *c & !FAR };
+            n = n + at(y as isize + r as isize + 1) - at(y as isize - r as isize);
+        }
+    }
 }
 
 /// Where a shot along a line ends (`first_hit`).
@@ -251,6 +298,26 @@ mod tests {
             s => panic!("{s:?}"),
         }
         assert_eq!(first_hit(w, h, (1.5, 0.5), (18.5, 0.5), mould, rock), Shot::Clear);
+    }
+
+    #[test]
+    fn far_marks_only_cells_with_no_terrain_in_reach() {
+        let (w, h) = (24, 20);
+        let mut codes = vec![0u32; w * h];
+        codes[10 * w + 12] = code(Ground::Wall, 1.0);
+        mark_far(w, &mut codes);
+        let far = |c: &[u32], x: usize, y: usize| c[y * w + x] & FAR != 0;
+        // The world's edge counts as rock; the wall at (12, 10) reaches 4.
+        assert!(!far(&codes, 3, 10) && !far(&codes, 12, 3) && far(&codes, 4, 10) && far(&codes, 12, 4) && far(&codes, 7, 10));
+        assert!(!far(&codes, 8, 10) && !far(&codes, 16, 14) && far(&codes, 17, 10) && far(&codes, 12, 15));
+        assert_eq!(codes[10 * w + 12] & 15, Ground::Wall as u32, "the kind is kept");
+        // Marking twice changes nothing; a wall gone clears its reach.
+        let once = codes.clone();
+        mark_far(w, &mut codes);
+        assert_eq!(codes, once);
+        codes[10 * w + 12] = code(Ground::Agar, 0.0);
+        mark_far(w, &mut codes);
+        assert!(far(&codes, 12, 10) && far(&codes, 8, 10));
     }
 
     #[test]
