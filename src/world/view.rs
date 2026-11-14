@@ -27,7 +27,7 @@ pub const SHADER: &str = include_str!("view.wgsl");
 pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
 /// Bytes in the uniform (20 words).
-const PARAMS_BYTES: usize = 112;
+const PARAMS_BYTES: usize = 128;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
@@ -112,15 +112,21 @@ pub struct View {
     n_lights: u32,
     lives: bool,
     /// Food's news (`set_news`): the engine's news (the step each walker
-    /// last heard of food) and state (the step now) buffers, the cut-off
-    /// walkers a world cell (cleared each frame), and the engine's lag
-    /// and lean in steps.
+    /// last heard of food) and state (the step now) buffers, and the
+    /// engine's lag and lean in steps.
     news: wgpu::Buffer,
     state: wgpu::Buffer,
-    cut: wgpu::Buffer,
+    /// The walkers a fine cell of `prep`'s rectangle (and, above bit 16,
+    /// those cut off from food), counted each frame by `draw_specks`.
+    fgrid: wgpu::Buffer,
     news_on: bool,
     lag: u32,
     lean: u32,
+    /// The crystals drawn as hexagons (`set_crystals`): centres and radii,
+    /// and each world cell's crystal (index + 1) near a footprint.
+    gems: wgpu::Buffer,
+    gem_cell: wgpu::Buffer,
+    n_gems: u32,
     /// Living walkers a cell for the look's body (0: the calibration's).
     body_density: f32,
     /// The soldier sprites (`SPRITES`), RGBA a texel.
@@ -166,7 +172,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(LIGHTS_BINDING, ro)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -183,8 +189,10 @@ impl View {
         let (hcell, mcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
         let lights = storage(device, "lights", (MAX_LIGHTS * 32) as u64);
-        let (news, state, cut) = (storage(device, "news", 16), storage(device, "state", 16), storage(device, "cut off", 16));
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &cut, &lights]);
+        let (news, state) = (storage(device, "news", 16), storage(device, "state", 16));
+        let fgrid = Self::fine_buffer(device, screen);
+        let (gems, gem_cell) = (storage(device, "crystals", 16), storage(device, "crystal cells", 16));
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -205,10 +213,13 @@ impl View {
             lives: false,
             news,
             state,
-            cut,
+            fgrid,
             news_on: false,
             lag: 0,
             lean: 0,
+            gems,
+            gem_cell,
+            n_gems: 0,
             body_density: 0.0,
             atlas,
             hcell,
@@ -254,7 +265,22 @@ impl View {
         (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 8))
     }
 
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 19]) -> wgpu::BindGroup {
+    /// `prep`'s fine cells, at most as many as `cell_buffers`' cells: the
+    /// rectangle is the screen over the zoom and a margin, `fine` (at most
+    /// a third of the zoom) cells each way.
+    fn fine_buffer(dev: &wgpu::Device, screen: (u32, u32)) -> wgpu::Buffer {
+        let n = (screen.0 + 2 * MARGIN + 2) as u64 * (screen.1 + 2 * MARGIN + 2) as u64;
+        storage(dev, "fine walkers", n * 4)
+    }
+
+    /// Fine cells a cell each way at zoom `zoom` (`prep`; 2026-11-14): one
+    /// below zoom 6, else 2. Four (from zoom 12) made the 9 x 9 window too
+    /// small for a Gaussian wide enough not to look lumpy: square blobs.
+    pub fn fine(zoom: f32) -> u32 {
+        ((zoom / 3.0).floor() as u32).clamp(1, 2)
+    }
+
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 21]) -> wgpu::BindGroup {
         // In order from 0, but the last (the lights) at `LIGHTS_BINDING`.
         let last = bufs.len() - 1;
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: if i == last { LIGHTS_BINDING } else { i as u32 }, resource: b.as_entire_binding() }).collect();
@@ -262,7 +288,7 @@ impl View {
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.cut, &self.lights]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -274,6 +300,7 @@ impl View {
         }
         self.clear_look();
         self.clear_news();
+        self.n_gems = 0;
         self.rebind();
     }
 
@@ -315,16 +342,53 @@ impl View {
         match news {
             Some((n, s)) => {
                 (self.news, self.state, self.news_on, self.lag, self.lean) = (n.clone(), s.clone(), true, lag, lean);
-                self.cut = storage(&self.device, "cut off", (self.world.0 * self.world.1 * 4) as u64);
             }
             None => self.clear_news(),
         }
         self.rebind();
     }
 
+    /// Draws the crystals as hexagons at screen resolution (2026-11-14):
+    /// each crystal's centre and circumradius in cells (the pointy-top
+    /// hexagon its footprint is cut from, `look::dish_crystals`), and
+    /// `crystal`, each world cell's crystal (index + 1, 0 none; the dish's
+    /// `pile_of`). The charge is still each cell's (the ground's). An empty
+    /// list draws them from the cells, as before; a restart (`set_world`)
+    /// drops them.
+    pub fn set_crystals(&mut self, gems: &[((f32, f32), f32)], crystal: &[u16]) {
+        let (w, h) = self.world;
+        if gems.is_empty() || crystal.len() != w * h {
+            self.n_gems = 0;
+            return;
+        }
+        // Each cell within one of a footprint names its crystal, so a pixel
+        // on a cell the hexagon's edge only cuts through still finds it.
+        let mut near = vec![0u32; w * h];
+        for y in 0..h {
+            for x in 0..w {
+                let k = crystal[y * w + x] as u32;
+                if k == 0 || k as usize > gems.len() {
+                    continue;
+                }
+                for yy in y.saturating_sub(1)..(y + 2).min(h) {
+                    for xx in x.saturating_sub(1)..(x + 2).min(w) {
+                        near[yy * w + xx] = k;
+                    }
+                }
+            }
+        }
+        let g: Vec<f32> = gems.iter().flat_map(|&((x, y), r)| [x, y, r, 0.0]).collect();
+        self.gems = storage(&self.device, "crystals", (g.len() * 4) as u64);
+        self.queue.write_buffer(&self.gems, 0, &g.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        self.gem_cell = storage(&self.device, "crystal cells", (near.len() * 4) as u64);
+        self.queue.write_buffer(&self.gem_cell, 0, &crate::gpu::u32_bytes(&near));
+        self.n_gems = gems.len() as u32;
+        self.rebind();
+    }
+
     fn clear_news(&mut self) {
         if self.news_on {
-            (self.news, self.state, self.cut) = (storage(&self.device, "news", 16), storage(&self.device, "state", 16), storage(&self.device, "cut off", 16));
+            (self.news, self.state) = (storage(&self.device, "news", 16), storage(&self.device, "state", 16));
             self.news_on = false;
         }
     }
@@ -357,6 +421,7 @@ impl View {
         (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
         self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 4);
         (self.hcell, self.mcell) = Self::cell_buffers(&self.device, screen);
+        self.fgrid = Self::fine_buffer(&self.device, screen);
         self.has_overlay = false;
         self.rebind();
     }
@@ -451,20 +516,20 @@ impl View {
         // The shown cells and a margin: what `prep` works out.
         let (ox, oy) = (cam.x.floor() as i32 - MARGIN as i32, cam.y.floor() as i32 - MARGIN as i32);
         let zoom = cam.zoom.max(1.0);
-        let (rw, rh) = ((self.screen.0 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2, (self.screen.1 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2);
+        let k = Self::fine(zoom);
+        let (rw, rh) = (((self.screen.0 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k, ((self.screen.1 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k);
         b.extend(ox.to_le_bytes());
         b.extend(oy.to_le_bytes());
         b.extend(rw.to_le_bytes());
         b.extend(rh.to_le_bytes());
-        for v in [self.news_on as u32, self.lag, self.lean, 0] {
+        for v in [self.news_on as u32, self.lag, self.lean, self.n_gems, k, 0, 0, 0] {
             b.extend(v.to_le_bytes());
         }
         self.queue.write_buffer(&self.params, 0, &b);
         let (gx, gy) = (self.screen.0.div_ceil(16), self.screen.1.div_ceil(16));
         let mut passes: Vec<(usize, (u32, u32))> = Vec::new();
-        let news = self.news_on && self.shade && cam.zoom >= 1.0;
-        if news {
-            enc.clear_buffer(&self.cut, 0, None);
+        if self.shade && cam.zoom >= 1.0 {
+            enc.clear_buffer(&self.fgrid, 0, None);
         }
         if self.shade && self.n_walk > 0 && cam.zoom >= 1.0 {
             passes.push((3, (self.n_walk.div_ceil(256), 1)));
@@ -671,5 +736,132 @@ mod tests {
         assert!(leaning[0] > 200 && leaning[1] > 120 && (leaning[2] as i32) < leaning[1] as i32 - 60, "a leaning walker is amber: {leaning:?}");
         let calm = at(&on, 16.5, 20.5);
         assert!((calm[0] as i32) < calm[1] as i32 + 100, "a calm walker is not red: {calm:?}");
+    }
+
+    /// Crystals at screen resolution (2026-11-14, the owner's playtest:
+    /// "The crystals are pixelated"): a pointy-top hexagon's edge, the
+    /// slanted ones too, falls where the hexagon is, to under a third of a
+    /// cell, not on the cells' staircase.
+    #[test]
+    fn crystals_are_their_hexagons_to_the_pixel() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let (c, r) = ((32.0f32, 20.0f32), 7.0f32);
+        let a = r * 3f32.sqrt() / 2.0;
+        let inside = |x: f32, y: f32| {
+            let (dx, dy) = ((x - c.0).abs(), (y - c.1).abs());
+            a - dx.max(0.5 * dx + 0.8660254 * dy)
+        };
+        let mut pile = vec![0u16; w * h];
+        let mut ground = vec![0u32; w * h];
+        for y in 0..h {
+            for x in 0..w {
+                if inside(x as f32 + 0.5, y as f32 + 0.5) >= 0.0 {
+                    pile[y * w + x] = 1;
+                    ground[y * w + x] = 5 | 255 << 8 | 128 << 16;
+                }
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &vec![0u8; w * h * 4]);
+        let ground_b = buf("ground", &crate::gpu::u32_bytes(&ground));
+        let walk_b = buf("walkers", &[0u8; 16]);
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 0);
+        view.set_crystals(&[(c, r)], &pile);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on(c);
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        let cyan = |x: f32, y: f32| {
+            let (sx, sy) = cam.to_screen((x, y));
+            let p = pic.get_pixel(sx as u32, sy as u32).0;
+            p[2] as i32 > p[0] as i32 + 10
+        };
+        // Across a slanted edge at many heights, and the vertical one: a
+        // third of a cell in is crystal, a third out is not.
+        let mut checked = 0;
+        for i in 0..40 {
+            let t = i as f32 / 40.0 * std::f32::consts::TAU;
+            let (ux, uy) = (t.cos(), t.sin());
+            // The edge along this ray from the centre: where `inside` is 0.
+            let (mut lo, mut hi) = (0.0f32, r * 1.2);
+            for _ in 0..40 {
+                let m = 0.5 * (lo + hi);
+                if inside(c.0 + ux * m, c.1 + uy * m) > 0.0 { lo = m } else { hi = m }
+            }
+            let at = |d: f32| (c.0 + ux * (lo + d), c.1 + uy * (lo + d));
+            let (xi, yi) = at(-0.33);
+            let (xo, yo) = at(0.33);
+            assert!(cyan(xi, yi), "inside the edge at angle {t:.2}: ({xi:.2}, {yi:.2})");
+            assert!(!cyan(xo, yo), "outside the edge at angle {t:.2}: ({xo:.2}, {yo:.2})");
+            checked += 1;
+        }
+        assert_eq!(checked, 40);
+    }
+
+    /// The slime's edge is as sharp as its walkers (2026-11-14, the owner's
+    /// playtest: "The slime looks very blurry/out of focus"): a body that
+    /// ends at a straight line rises from bare ground to body (10% to 90%)
+    /// within a cell and a half at zoom 12: 0.96 cells now, 2.58 with the
+    /// 5 x 5-cell window before.
+    #[test]
+    fn the_slime_edge_is_as_sharp_as_its_walkers() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|i| if i % w < 32 { [200u8, 160, 60, 255] } else { [12, 22, 26, 255] }).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for y in 0..h {
+            for x in 0..32 {
+                look[y * w + x] = 255 | (1 << 8);
+                walk.extend([x as f32 + 0.5, y as f32 + 0.5, 0.0, 0.0]);
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground, &walk_b, (walk.len() / 4) as u32);
+        view.set_body_density((walk.len() / 4) as f32 / (w * h) as f32);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((32.0, 20.0));
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        // The mean of a column's red over rows clear of specks, across the edge.
+        let col = |x: f32| {
+            let mut sum = 0.0;
+            for k in 0..10 {
+                let (sx, sy) = cam.to_screen((x, 15.2 + k as f32));
+                sum += pic.get_pixel(sx as u32, sy as u32).0[0] as f32;
+            }
+            sum / 10.0
+        };
+        let (body, bare) = (col(26.2), col(38.2));
+        assert!(body > bare + 40.0, "body {body} against bare {bare}");
+        let at = |share: f32| (0..200).map(|i| 26.0 + i as f32 * 0.06).find(|&x| col(x) < bare + share * (body - bare)).unwrap_or(38.0);
+        let width = at(0.1) - at(0.9);
+        assert!(width < 1.5, "the edge rises over {width:.2} cells (body {body}, bare {bare})");
     }
 }

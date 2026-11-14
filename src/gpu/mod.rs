@@ -324,6 +324,12 @@ pub struct Settings {
     /// A gassed sleeper's chance a tick of dying (`BigParams::gas_death`;
     /// the toolkit's `BurstRules` sets it with the first gas).
     pub gas_death: f32,
+    /// The gas cloud (`BigParams::gas_keep`, `gas_sleep`, `gas_linger`;
+    /// `Engine::lay_gas` lays it): its keep a step, the cloud a walker
+    /// sleeps over, and the steps it stays gassed after.
+    pub gas_keep: f32,
+    pub gas_sleep: f32,
+    pub gas_linger: u16,
     pub alarm_keep: f32,
     pub alarm_weight: f32,
     pub alarm_relay: f32,
@@ -514,6 +520,9 @@ impl Settings {
             sleep_rest: t.sleep_rest,
             sleep_death: t.sleep_death,
             gas_death: t.gas_death,
+            gas_keep: t.gas_keep,
+            gas_sleep: t.gas_sleep,
+            gas_linger: t.gas_linger,
             alarm_keep: t.alarm_keep,
             alarm_weight: t.alarm_weight,
             alarm_relay: t.alarm_relay,
@@ -760,6 +769,8 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "sleep_rest" => s.sleep_rest = int()?.min(65535) as u16,
         "sleep_death" => s.sleep_death = f()?,
         "gas_death" => s.gas_death = f()?,
+        "gas_keep" => s.gas_keep = f()?,
+        "gas_sleep" => s.gas_sleep = f()?,
         "alarm_keep" => s.alarm_keep = f()?,
         "alarm_weight" => s.alarm_weight = f()?,
         "alarm_relay" => s.alarm_relay = f()?,
@@ -900,6 +911,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         sleep_rest: s.sleep_rest,
         sleep_death: s.sleep_death,
         gas_death: s.gas_death,
+        gas_keep: s.gas_keep,
+        gas_sleep: s.gas_sleep,
+        gas_linger: s.gas_linger,
         alarm_keep: s.alarm_keep,
         alarm_weight: s.alarm_weight,
         alarm_relay: s.alarm_relay,
@@ -1065,9 +1079,11 @@ pub const CAPCOUNT: usize = 49;
 /// (`Engine::calm`).
 pub const GAS: usize = 50;
 pub const CALM: usize = 51;
+pub const GASLAY: usize = 52;
+pub const GASP: usize = 53;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 52] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm",
+pub const PASSES: [&str; 54] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp",
 ];
 
 impl Shared {
@@ -1166,6 +1182,14 @@ pub struct Engine {
     /// nothing once it has passed.
     pub gas_at: u64,
     pub gas_until: u64,
+    /// The gas cloud (`lay_gas`): on for good once laid (its keep is sent
+    /// and `gasp` runs every tick), the step `calm` must look until, and a
+    /// bound on the cloud's top at step `cloud_at`. A dish loaded with a
+    /// cloud is looked at for good (`u64::MAX`).
+    pub clouded: bool,
+    pub cloud_until: u64,
+    pub cloud_top: f32,
+    pub cloud_at: u64,
     pub withers: bool,
     pub reach: u32,
     /// The damage memory (binding 47, the squad toolkit's layout): the
@@ -1377,7 +1401,8 @@ impl Engine {
         // `gdep`'s second and third the relays and the dormant a cell, and
         // `bdep`'s third and fourth halves spores' and sleepers' deposits.
         let gdep = zeros("gdep", 3 * cells as usize * 4);
-        let germ = [zeros("germ0", 2 * cells as usize * 4), zeros("germ1", 2 * cells as usize * 4)];
+        // The third block (11-14) is the gas cloud.
+        let germ = [zeros("germ0", 3 * cells as usize * 4), zeros("germ1", 3 * cells as usize * 4)];
         let edep = zeros("edep", 2 * blocks * cells as usize * 4);
         let bdep = zeros("bdep", 4 * blocks * cells as usize * 4);
         let species = [zeros("species0", nsp as usize * cells as usize * 4), zeros("species1", nsp as usize * cells as usize * 4)];
@@ -1458,6 +1483,10 @@ impl Engine {
             news,
             gas_at: 4 * news_len as u64,
             gas_until: gas_until(&d),
+            clouded: false,
+            cloud_until: 0,
+            cloud_top: 0.0,
+            cloud_at: 0,
             withers: false,
             reach: 1,
             crater,
@@ -1581,11 +1610,17 @@ impl Engine {
         self.queue.write_buffer(&self.sick, 0, &u32_bytes(&counters));
         let mut germ = if d.germ.is_empty() { vec![0.0; self.cells as usize] } else { d.germ.clone() };
         germ.extend(if d.alarm.is_empty() { vec![0.0; self.cells as usize] } else { d.alarm.clone() });
+        germ.extend(if d.gas_cloud.is_empty() { vec![0.0; self.cells as usize] } else { d.gas_cloud.clone() });
         self.queue.write_buffer(&self.germ[side], 0, &f32_bytes(&germ));
         // The life states come with the spec words below; a dish that has
         // them switches them on here.
         self.cycles |= !d.life.is_empty();
         self.alarmed |= !d.alarm.is_empty();
+        // The cloud's linger is in the gas words below (`gas_words`).
+        if !d.gas_cloud.is_empty() {
+            self.clouded = true;
+            self.cloud_until = u64::MAX;
+        }
         assert_eq!(d.species_trail.len(), self.nsp as usize, "a dish with this engine's species");
         if self.nsp > 0 {
             let fields: Vec<f32> = d.species_trail.iter().flatten().copied().collect();
@@ -1653,7 +1688,10 @@ impl Engine {
             (infect, ix, iy, ir) = (1, w as f32 / 2.0, h as f32 / 2.0, s.seed_r);
             self.seeded = true;
         }
-        b.extend(u32_bytes(&[s.sick, s.immune, infect, 0]));
+        // The cloud's keep goes only once a cloud is laid (`clouded`), so
+        // no tick spreads an empty one.
+        let cloud_keep = if self.clouded { s.gas_keep } else { 0.0 };
+        b.extend(u32_bytes(&[s.sick, s.immune, infect, cloud_keep.to_bits()]));
         b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.sick_upkeep, s.gas_death, 0.0]));
         // The outside rules. Switching explorers on starts every walker's
         // stage again, so the switch shows (ages are only counted while on).
@@ -2032,6 +2070,9 @@ impl Engine {
             }
         }
         tick.extend([(TRAIL, cells), (SCENT, cells)]);
+        if self.clouded {
+            tick.push((GASP, n));
+        }
         tick
     }
 
@@ -2231,6 +2272,34 @@ impl Engine {
         self.gas_word(2).wrapping_sub(before)
     }
 
+    /// **The gas cloud**, as the CPU's `BigDish::lay_gas` (dish cells, as
+    /// `gas`): `dose` of cloud on each agar cell within `r` of (`x`, `y`),
+    /// which from the next tick spreads at `s.gas_keep` and puts to sleep
+    /// every walker over `s.gas_sleep`, gassed `s.gas_linger` steps more
+    /// (`gasp`, a pass a tick from the first cloud on). Runs on its own,
+    /// between ticks.
+    pub fn lay_gas(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, dose: f32) {
+        let k = self.dish.p.scale as f32;
+        self.cycles = true;
+        self.clouded = true;
+        self.write_params(s, Hand::default(), 0);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, dose, 0.0, 0.0, 0.0, 0.0]));
+        self.queue.write_buffer(&self.news, self.gas_at + 16, &u32_bytes(&[s.gas_linger as u32, s.gas_sleep.to_bits()]));
+        self.run(shared, &[(GASLAY, self.cells.div_ceil(256))]);
+        // How long `calm` must keep looking: the cloud's top can only fall
+        // by `gas_keep` a step once laid (a 3x3 mean never raises it), so
+        // from a bound on it, until it is under `gas_sleep`, then the
+        // linger.
+        let keep = s.gas_keep.clamp(0.0, 0.999_999);
+        let since = self.done.saturating_sub(self.cloud_at) as i32;
+        self.cloud_top = self.cloud_top * keep.powi(since.min(1 << 20)) + dose.max(0.0);
+        self.cloud_at = self.done;
+        if self.cloud_until != u64::MAX {
+            let left = if self.cloud_top <= s.gas_sleep || keep <= 0.0 { 0 } else { ((s.gas_sleep / self.cloud_top).ln() / keep.ln()).ceil() as u64 + 1 };
+            self.cloud_until = self.cloud_until.max(self.done + left + s.gas_linger as u64 + 1);
+        }
+    }
+
     fn gas_word(&self, i: usize) -> u32 {
         let b = read_back(&self.device, &self.queue, &self.news);
         let o = self.gas_at as usize + 4 * i;
@@ -2243,7 +2312,7 @@ impl Engine {
     /// run out (`gas_until`).
     pub fn calm(&self, shared: &Shared, at: &[(f32, f32)], r: f32) -> Vec<u32> {
         let n = at.len().min(squad::UNITS_MAX);
-        if self.done >= self.gas_until || n == 0 {
+        if self.done >= self.gas_until.max(self.cloud_until) || n == 0 {
             return vec![0; at.len()];
         }
         let mut words = vec![self.done as u32, n as u32, 0, 0];
@@ -2252,8 +2321,10 @@ impl Engine {
             words[GAS_HEAD + 4 * u..GAS_HEAD + 4 * u + 3].copy_from_slice(&[x.to_bits(), y.to_bits(), r.to_bits()]);
         }
         // Word 2 (walkers gassed so far) is kept.
+        // Words 2-7 (walkers gassed so far, the flung count, the cloud's
+        // linger and sleep level) are kept.
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&words[..2]));
-        self.queue.write_buffer(&self.news, self.gas_at + 12, &u32_bytes(&words[3..]));
+        self.queue.write_buffer(&self.news, self.gas_at + 4 * GAS_HEAD as u64, &u32_bytes(&words[GAS_HEAD..]));
         self.run(shared, &[(CALM, self.n.div_ceil(256))]);
         let b = read_back(&self.device, &self.queue, &self.news);
         let calm = self.gas_at as usize + 4 * (GAS_HEAD + 4 * squad::UNITS_MAX);
@@ -2319,6 +2390,12 @@ impl Engine {
     /// Each cell's charge now, read back (the CPU's `charge`).
     pub fn charge_of(&self) -> Vec<f32> {
         floats(&read_back(&self.device, &self.queue, &self.charge))[..self.cells as usize].to_vec()
+    }
+
+    /// The gas cloud now (the CPU's `gas_cloud`), read back.
+    pub fn gas_cloud_of(&self) -> Vec<f32> {
+        let g = floats(&read_back(&self.device, &self.queue, &self.germ[(self.done % 2) as usize]));
+        g[2 * self.cells as usize..3 * self.cells as usize].to_vec()
     }
 
     pub fn alarm_of(&self) -> Vec<f32> {
@@ -2452,14 +2529,16 @@ pub fn spec_words(d: &BigDish) -> Vec<u32> {
 /// blocks of cells, clear.
 /// Words before the slots in the sleep gas's words (after food's news,
 /// `engine.wgsl`'s `GAS_HEAD`, `GAS_UNITS`, `GAS_CALM`, `GAS_SLOTS`).
-pub const GAS_HEAD: usize = 4;
+pub const GAS_HEAD: usize = 8;
 pub const GAS_SLOTS: usize = GAS_HEAD + 5 * squad::UNITS_MAX;
 
-/// The sleep gas's buffer a CPU dish starts the GPU's with: a zero header
+/// The sleep gas's buffer a CPU dish starts the GPU's with: a header (zero but words 4 and 5, the cloud's linger and sleep level)
 /// and calm block, then each slot's step its gas runs out at (the dish's
 /// step plus its `gassed`; 0, never, where it has none).
 pub fn gas_words(d: &BigDish) -> Vec<u32> {
     let mut w = vec![0u32; GAS_SLOTS + d.walkers.len()];
+    w[4] = d.p.gas_linger as u32;
+    w[5] = d.p.gas_sleep.to_bits();
     for (k, &g) in d.gassed.iter().enumerate() {
         if g > 0 {
             w[GAS_SLOTS + k] = d.steps as u32 + g as u32;

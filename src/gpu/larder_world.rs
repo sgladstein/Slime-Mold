@@ -557,6 +557,11 @@ impl World for GpuWorld {
         if b.gas > 0 {
             self.s.gas_death = k.gas_death;
             out.gassed = self.e.gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.gas);
+            // The cloud after the gas, as `squad::burst` lays it.
+            if k.gas_keep > 0.0 {
+                (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
+                self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, k.gas_dose);
+            }
         }
         // The germ last, as on the CPU: a burst of its own that kills,
         // clears and lays nothing, only infects within `r`.
