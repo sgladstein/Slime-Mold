@@ -1187,3 +1187,49 @@ fn an_aim_spread_turns_the_shots_within_the_spread() {
     }
     assert!(turned > 0, "the spread turned some shot");
 }
+
+/// Elbow room (`Rules::elbow`, art review 2026-11-14): a squad stacked on
+/// one point fans out until every pair is the separation apart, never onto
+/// unstandable ground; a squad sent to one cell ends that far apart too;
+/// with the rule off a stack stays a stack.
+#[test]
+fn stacked_soldiers_step_apart_onto_open_ground() {
+    let spread = |elbow: f32, send: bool| {
+        let mut g = small(1);
+        g.rules.elbow = elbow;
+        while g.soldiers.len() < 8 {
+            g.bank = g.bank.max(g.rules.soldier_cost);
+            g.apply(Cmd::Buy);
+        }
+        let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
+        let sc = g.s();
+        let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (x + 12.0 * sc * a.cos(), y + 12.0 * sc * a.sin())).find(|&p| g.clear_line((x, y), p)).expect("open ground by the larder");
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Stance(k, Stance::HoldFire));
+            (g.soldiers[k].x, g.soldiers[k].y) = (x, y);
+            if send {
+                g.apply(Cmd::Order(k, Order::Move(to.0, to.1)));
+            }
+        }
+        for _ in 0..(g.rules.tps * 8) {
+            g.step();
+            for s in g.soldiers.iter().filter(|s| s.alive) {
+                assert!(g.standable(s.x, s.y), "a soldier on unstandable ground at {:?}", (s.x, s.y));
+            }
+        }
+        let live: Vec<_> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        assert!(live.len() >= 8, "the squad lived");
+        let mut near = f32::MAX;
+        for (i, a) in live.iter().enumerate() {
+            for b in &live[i + 1..] {
+                near = near.min((a.0 - b.0).hypot(a.1 - b.1));
+            }
+        }
+        near / (g.rules.touch * sc)
+    };
+    for send in [false, true] {
+        let near = spread(1.6, send);
+        assert!(near >= 1.6 * 0.95, "sent {send}: nearest pair {near} touch radii apart");
+    }
+    assert!(spread(0.0, false) < 0.01, "off, the stack stays");
+}

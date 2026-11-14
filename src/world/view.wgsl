@@ -41,8 +41,9 @@ struct V {
 @group(0) @binding(8) var<storage, read> ground: array<u32>;
 @group(0) @binding(9) var<storage, read> walkers: array<vec4<f32>>;
 @group(0) @binding(10) var<storage, read_write> specks: array<atomic<u32>>;
-// The soldier sprites (`src/world/sprites/`): 512 x 160 RGBA, four 128 px
-// tiles (body, helmet, flash, dead) above the same at 32 px.
+// The sprites (`src/world/sprites/`): 2048 x 160 RGBA, sixteen 128 px
+// tiles (soldier body, helmet, flash, dead; six buildings, each body then
+// lamp) above the same at 32 px.
 @group(0) @binding(11) var<storage, read> atlas: array<u32>;
 // Each shown cell's height and material, worked out once a frame by `prep`
 // (rows `rw` apart from cell ox, oy). `base` reads these: a pixel needs 24
@@ -443,13 +444,13 @@ fn cover(sd: f32, aa: f32) -> f32 { return clamp(0.5 - sd / aa, 0.0, 1.0); }
 
 // One texel of the atlas, premultiplied.
 fn texel(x: i32, y: i32) -> vec4<f32> {
-    let c = atlas[u32(clamp(y, 0, 159)) * 1792u + u32(clamp(x, 0, 1791))];
+    let c = atlas[u32(clamp(y, 0, 159)) * 2048u + u32(clamp(x, 0, 2047))];
     let a = f32(c >> 24u) / 255.0;
     return vec4<f32>(unpack(c) * a, a);
 }
 
-// Tile `k` (0 body, 1 helmet, 2 flash, 3 dead; 4-11 the buildings, each
-// body then lamp: turret, lure, pump, outpost) at point `p` in radii
+// Tile `k` (0 body, 1 helmet, 2 flash, 3 dead; 4-15 the buildings, each
+// body then lamp: turret, lure, pump, outpost, siren, larder) at point `p` in radii
 // (-2..2 across the tile), bilinear, from the 128 px or the 32 px row.
 fn sprite(k: u32, p: vec2<f32>, small: bool) -> vec4<f32> {
     var size = 128.0; var oy = 0.0;
@@ -479,11 +480,26 @@ fn pm_over(under: vec4<f32>, top: vec4<f32>) -> vec4<f32> {
 // the helmet tinted the team's colour, the muzzle flash while `flash` > 0
 // and the dead pose; the shadow is cast in screen space by the world's
 // light. Returns straight colour and alpha.
+//
+// Read at zoom 6 (art review 2026-11-14, rule 6: an olive figure on ochre
+// slime was lost): a living soldier has a dark outline a constant
+// OUTLINE pixels wide round its silhouette (body and helmet), which
+// parts it from the gold slime, and a cream rim light on the edges that
+// face the world's light, which parts it from the dark ground. The dead
+// get neither and no shadow: a flat grey shape lying on the ground.
+const OUTLINE: f32 = 1.5;
+// Sprite colours are 0-255, as the atlas's texels (`texel`).
+const RIM: vec3<f32> = vec3<f32>(250.0, 244.0, 222.0);
+const INK: vec3<f32> = vec3<f32>(14.0, 13.0, 10.0);
+
+// The living soldier's silhouette (body and helmet) at `p`, 0-1.
+fn silhouette(p: vec2<f32>, small: bool) -> f32 {
+    return max(sprite(0u, p, small).w, sprite(1u, p, small).w);
+}
+
 fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bool) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
-    let sh = sd_ellipse(d / r, vec2<f32>(-l.x, -l.y) * 0.32, vec2<f32>(0.78, 0.78));
-    var out = vec4<f32>(0.0, 0.0, 0.0, 0.38 * cover(sh, aa * 2.5));
     let ca = cos(ang); let sa = sin(ang);
     let s = d / r;
     let p = vec2<f32>(s.x * ca + s.y * sa, -s.x * sa + s.y * ca);
@@ -491,23 +507,41 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
     // averaged rather than aliased.
     let small = r < 12.0;
     if (dead) {
-        out = pm_over(out, sprite(3u, p, small));
-        let h = sprite(1u, p - vec2<f32>(-0.55, -0.75), small);
-        out = pm_over(out, vec4<f32>(h.xyz * team / 255.0 * 0.5, h.w));
-    } else {
-        out = pm_over(out, sprite(0u, p, small));
-        let h = sprite(1u, p, small);
-        out = pm_over(out, vec4<f32>(h.xyz * team / 255.0, h.w));
-        if (flash > 0.0) {
-            let f = sprite(2u, p, small) * clamp(flash * 1.5, 0.0, 1.0);
-            out = pm_over(out, f);
-        }
+        let c = sprite(3u, p, small);
+        if (c.w <= 0.0) { return vec4<f32>(0.0); }
+        return vec4<f32>(c.xyz / c.w, c.w * 0.92);
+    }
+    let sh = sd_ellipse(s, vec2<f32>(-l.x, -l.y) * 0.32, vec2<f32>(0.78, 0.78));
+    var out = vec4<f32>(0.0, 0.0, 0.0, 0.38 * cover(sh, aa * 2.5));
+    // The outline: the silhouette grown by OUTLINE pixels (eight taps, in
+    // the sprite's own frame so it turns with the figure).
+    let o = OUTLINE / r;
+    var grown = 0.0;
+    for (var i = 0u; i < 8u; i++) {
+        let a = f32(i) * 0.785398;
+        grown = max(grown, silhouette(p + vec2<f32>(cos(a), sin(a)) * o, small));
+    }
+    out = pm_over(out, vec4<f32>(INK * grown, grown));
+    let body = sprite(0u, p, small);
+    out = pm_over(out, body);
+    let h = sprite(1u, p, small);
+    out = pm_over(out, vec4<f32>(h.xyz * team / 255.0, h.w));
+    // The rim: inside the silhouette, where one pixel toward the light
+    // (screen space, turned into the sprite's frame) is outside it.
+    let ls = vec2<f32>(l.x, l.y) / r;
+    let lp = vec2<f32>(ls.x * ca + ls.y * sa, -ls.x * sa + ls.y * ca);
+    let inside = max(body.w, h.w);
+    let rim = clamp(inside - silhouette(p + lp * 1.2, small), 0.0, 1.0) * 0.75;
+    out = vec4<f32>(mix(out.xyz, RIM * out.w, rim), out.w);
+    if (flash > 0.0) {
+        let f = sprite(2u, p, small) * clamp(flash * 1.5, 0.0, 1.0);
+        out = pm_over(out, f);
     }
     if (out.w <= 0.0) { return vec4<f32>(0.0); }
     return vec4<f32>(out.xyz / out.w, out.w);
 }
 
-// A building (`Marks::building`, the sprite atlas's tiles 4-13, drawn from
+// A building (`Marks::building`, the sprite atlas's tiles 4-15, drawn from
 // src/world/sprites/buildings.svg in soldier A's style), with the soldier's
 // cast shadow. What changes on it is the game's state, nothing else: it
 // rises from its foot as it is built (the unbuilt part a faint ghost), it
@@ -519,21 +553,54 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     let l = normalize(LIGHT);
     let p = d / r;
     let small = r < 12.0;
-    let k = 4u + 2u * min(kind, 4u);
+    let k = 4u + 2u * min(kind, 5u);
     var body = sprite(k, p, small);
-    // Built from the foot (screen down) up: above the line, a ghost. The
-    // risen part stays faint too until the building stands, so a ghost
-    // reads as one at a glance (owner's playtest 2026-11-12: "a faint
-    // building ... that fills in as it builds").
-    let up = p.y >= 1.1 - 2.2 * built;
-    if (!up) { body = body * 0.25; } else if (built < 1.0) { body = body * 0.6; }
-    // Hurt: darker and greyer with the health gone.
+    // The silhouette's edge, OUTLINE pixels out (eight taps): a dark
+    // outline round a standing building, as round a soldier, so it parts
+    // from the slime (art review 2026-11-14), and the cream line of a
+    // ghost's plan.
+    let o = OUTLINE / r;
+    var grown = 0.0;
+    for (var i = 0u; i < 8u; i++) {
+        let a = f32(i) * 0.785398;
+        grown = max(grown, sprite(k, p + vec2<f32>(cos(a), sin(a)) * o, small).w);
+    }
+    let edge = clamp(grown - body.w, 0.0, 1.0);
+    // Built from the foot (screen down) up (owner's playtest 2026-11-12:
+    // "a faint building ... that fills in as it builds"). Above the line
+    // the plan: the body faint and its outline cream, so a ghost reads on
+    // the dark ground too (11-14: a ghost's faint dark body was lost
+    // there). Below it the risen part at nearly full colour, with a cream
+    // seam where it is rising, so the progress is in the sprite itself.
+    let line = 1.1 - 2.2 * built;
+    let up = p.y >= line;
+    if (built < 1.0) {
+        if (!up) { body = body * 0.22; } else { body = body * 0.85; }
+    }
+    // Hurt (art review 2026-11-14: buildings show their state in the
+    // sprite): darker and greyer with the health gone, and scorched, a
+    // share of its texels charred about half the health lost.
     let grey = dot(body.xyz, vec3<f32>(0.3, 0.59, 0.11));
-    let hurt = 1.0 - health;
-    body = vec4<f32>(mix(body.xyz, vec3<f32>(grey), 0.6 * hurt) * (1.0 - 0.5 * hurt), body.w);
+    // A ghost's low health is its progress, shown by the seam instead.
+    let hurt = select(0.0, 1.0 - health, built >= 1.0);
+    body = vec4<f32>(mix(body.xyz, vec3<f32>(grey), 0.6 * hurt) * (1.0 - 0.45 * hurt), body.w);
+    let cellp = floor(p * 9.0);
+    let n = fract(sin(dot(cellp, vec2<f32>(12.9898, 78.233))) * 43758.5453);
+    if (n < 0.55 * hurt) { body = vec4<f32>(body.xyz * 0.3, body.w); }
     let sh = sd_ellipse(p, vec2<f32>(-l.x, -l.y) * 0.3, vec2<f32>(1.0, 1.0));
     var out = vec4<f32>(0.0, 0.0, 0.0, 0.32 * cover(sh, aa * 2.5) * max(built, 0.3));
+    if (built >= 1.0) {
+        out = pm_over(out, vec4<f32>(INK * edge, edge));
+    } else if (!up) {
+        out = pm_over(out, vec4<f32>(RIM * edge * 0.7, edge * 0.7));
+    } else {
+        out = pm_over(out, vec4<f32>(INK * edge, edge));
+    }
     out = pm_over(out, body);
+    if (built < 1.0) {
+        let seam = clamp(1.0 - abs(p.y - line) * r / 1.2, 0.0, 1.0) * max(body.w, edge);
+        out = pm_over(out, vec4<f32>(RIM * seam, seam));
+    }
     if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, p, small)); }
     if (out.w <= 0.0) { return vec4<f32>(0.0); }
     return vec4<f32>(out.xyz / out.w, out.w);
@@ -639,8 +706,11 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
         if (shape == DISC) {
             on = length(d) <= h.x;
         } else if (shape == RING) {
+            // `fill` pixels wide (`Marks::ring_thin`), else 1.5.
             let r = length(d);
-            on = r <= h.x && r >= h.x - 1.5;
+            var wide = 1.5;
+            if (fill > 0.0) { wide = fill; }
+            on = r <= h.x && r >= h.x - wide;
         } else if (shape == RECT || shape == BAR) {
             on = abs(d.x) <= h.x && abs(d.y) <= h.y;
         } else if (shape == FRAME) {
