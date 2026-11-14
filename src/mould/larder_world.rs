@@ -82,12 +82,24 @@ pub use super::rounds::Deck;
 pub use super::larder::{End, Order, Stance};
 
 /// Walking maps: for each goal cell, every open cell's distance to it
-/// (`distance_map`), built when a soldier first needs it and dropped when a
-/// wall goes up or `PATHS_EVERY` passes.
+/// (`distance_map`) and the step it was last walked, asked for when a
+/// soldier first needs one (`Game::map_for`) and built a slice a step
+/// (`Game::pump_maps`).
 #[derive(Default)]
 struct Paths {
-    maps: std::collections::HashMap<usize, Vec<u32>>,
+    maps: std::collections::HashMap<usize, (Vec<u32>, u64)>,
+    /// The tick of the last `PATHS_EVERY` rebuild, and its step.
     at: u64,
+    went: u64,
+    /// Steps of the game so far, as `pump_maps` counts them.
+    step: u64,
+    /// Goal cells asked for, oldest first, each with the step it was last
+    /// asked at.
+    asked: Vec<(usize, u64)>,
+    /// The map being built.
+    building: Option<MapBuild>,
+    /// Built maps to build again (a wall went up, or `PATHS_EVERY`).
+    stale: Vec<usize>,
 }
 
 /// Orders a soldier can hold in its queue after the one it is doing.

@@ -762,6 +762,10 @@ impl World for GpuWorld {
         World::open(&self.e.dish, x, y)
     }
 
+    fn open_cells(&self) -> Vec<bool> {
+        World::open_cells(&self.e.dish)
+    }
+
     fn clear(&self, x: f32, y: f32) -> bool {
         World::clear(&self.e.dish, x, y)
     }
