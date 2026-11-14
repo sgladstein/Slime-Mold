@@ -85,7 +85,7 @@
 //! card each game second (`press_every`), and `sound=` (empty: no file)
 //! puts the round's sound on tape. The CI smoke tests play every mission
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
-//! long a hit's crater lasts (`Rules::crater`, 10 game seconds; 0 is off);
+//! long a hit's crater lasts (`Rules::crater`, 2 game seconds; 0 is off);
 //! `aim=STRIKE,EVERY,SPREAD` sets the shot's strike, fire rate and aim
 //! spread (`Rules::spread`); `core_pull=P` how strongly soldiers near the
 //! mould's core draw it (`Rules::core_pull`; 0 is off); `wade=W` how many

@@ -1,0 +1,17 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  holes: shots that hit 167 refilled 139 (still open 28); ticks to 80%: median 14 (0.93 s), q25 6, q75 31, max 166
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/e2/fork-edge-21900ms-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/e2/fork-edge-21900ms-near.png
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.038 ms a frame
+  t 22 s: mould 24328, soldiers 9, bank 0, harvested 0, shots 167, killed 1196, took 0%, crystals left 0.998; squad at 265.2,204.6
+  squad: touching 2.6 mean, 6 most; health 40 mean
+  holes: shots that hit 190 refilled 168 (still open 22); ticks to 80%: median 17 (1.13 s), q25 6, q75 34, max 166
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/e2/fork-edge-33900ms-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/e2/fork-edge-33900ms-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.072 ms a frame
+  t 25 s: mould 23621, soldiers 0, bank 0, harvested 0, shots 190, killed 1812, took 0%, crystals left 0.998, ended: squad wiped
+  holes: shots that hit 190 refilled 168 (still open 22); ticks to 80%: median 17 (1.13 s), q25 6, q75 34, max 166
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/e2/fork-edge-040s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/e2/fork-edge-040s-near.png
+  CPU: ground field 1.75 ms (once a game second), model and HUD 0.075 ms a frame
+  t 25 s: mould 23621, soldiers 0, bank 0, harvested 0, shots 190, killed 1812, took 0%, crystals left 0.998, ended: squad wiped
