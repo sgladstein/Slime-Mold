@@ -79,6 +79,10 @@ pub struct Items {
     pub moulds: Vec<(f32, f32)>,
     pub landing: Option<(f32, f32)>,
     pub walls: Vec<Wall>,
+    /// `moisture BASE SPREAD` (plants and levelgen threads, 11-14): the
+    /// map's ground moisture and how much it varies, for fire
+    /// (`plants::moisture`); None, the engine's 0.15 and 0.3.
+    pub moisture: Option<(f32, f32)>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -119,6 +123,10 @@ impl Items {
                     want(2)?;
                     it.landing = Some((v[0], v[1]));
                 }
+                "moisture" => {
+                    want(2)?;
+                    it.moisture = Some((v[0], v[1]));
+                }
                 "wall" => {
                     want(6)?;
                     it.walls.push(Wall { a: (v[0], v[1]), b: (v[2], v[3]), thick: v[4], hp: v[5] });
@@ -143,6 +151,9 @@ impl Items {
         }
         for w in &self.walls {
             out += &format!("wall {} {} {} {} {} {}\n", w.a.0, w.a.1, w.b.0, w.b.1, w.thick, w.hp);
+        }
+        if let Some((b, s)) = self.moisture {
+            out += &format!("moisture {b} {s}\n");
         }
         out
     }
@@ -309,7 +320,7 @@ impl Map {
         };
         let k = MAP_SCALE;
         let crystals = (0..d.piles.len()).map(|p| Crystal { x: d.piles[p].0 * k, y: d.piles[p].1 * k, r: d.pile_rs[p] * k, charge: d.pile_fill[p] }).collect();
-        let items = Items { crystals, moulds: d.homes.iter().map(|&(x, y)| (x * k, y * k)).collect(), landing: d.landing.map(|(x, y)| (x * k, y * k)), walls: Vec::new() };
+        let items = Items { crystals, moulds: d.homes.iter().map(|&(x, y)| (x * k, y * k)).collect(), landing: d.landing.map(|(x, y)| (x * k, y * k)), walls: Vec::new(), moisture: d.moisture_of };
         Map { w, h, ground, plants, items }
     }
 }
@@ -349,6 +360,7 @@ pub fn river(ford: bool, bridge: bool) -> Map {
         moulds: vec![(860.0, 320.0)],
         landing: Some((300.0, 500.0)),
         walls: Vec::new(),
+        moisture: None,
     };
     Map { w: MAP_W, h: MAP_H, ground, items, plants: Vec::new() }
 }

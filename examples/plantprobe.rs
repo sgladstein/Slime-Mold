@@ -159,7 +159,7 @@ fn main() -> Result<(), String> {
                 let mut lit = 0;
                 for k in 0..8 {
                     let a = k as f32 * std::f32::consts::FRAC_PI_4;
-                    lit += d.ignite(cx + 25.0 * a.cos(), cy + 25.0 * a.sin(), 3.0);
+                    lit += d.ignite(cx + 25.0 * a.cos(), cy + 25.0 * a.sin(), 3.0, 1.0);
                 }
                 let mut tr: Vec<f32> = live
                     .iter()
