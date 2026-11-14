@@ -5,8 +5,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 4 4" width="512" height="512">
  <defs>
   <radialGradient id="helm" cx="-0.25" cy="-0.3" r="0.6" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b8b8b8"/></radialGradient>
-  <radialGradient id="body" cx="-0.3" cy="-0.4" r="1.0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7b8458"/><stop offset="1" stop-color="#454a30"/></radialGradient>
-  <radialGradient id="deadbody" cx="-0.3" cy="-0.4" r="1.0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4a4f38"/><stop offset="1" stop-color="#2a2d1f"/></radialGradient>
+  <radialGradient id="body" cx="-0.3" cy="-0.4" r="1.0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#a3ad74"/><stop offset="1" stop-color="#596040"/></radialGradient>
+  <radialGradient id="deadbody" cx="-0.3" cy="-0.4" r="1.0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#6e6c64"/><stop offset="1" stop-color="#3a3935"/></radialGradient>
  </defs>
  <g id="body">
   <rect x="-0.72" y="-0.42" width="0.42" height="0.84" rx="0.12" fill="#3a3d28" stroke="#22241a" stroke-width="0.04"/>
@@ -26,11 +26,19 @@
   <ellipse cx="1.62" cy="0.3" rx="0.36" ry="0.2" fill="#ffb040"/>
   <ellipse cx="1.58" cy="0.3" rx="0.2" ry="0.1" fill="#fff8d8"/>
  </g>
+ <!-- Dead (art review 2026-11-14: the old pose, the live body turned 20
+      degrees, read as alive): flat on its back, limbs flung wide, no team
+      colour, the helmet rolled off and the rifle dropped away, all in
+      cold greys, so it reads as a corpse at zoom 6. The shader draws it
+      with no rim light and no shadow (it is lying on the ground). -->
  <g id="dead">
-  <rect x="-0.8" y="-0.3" width="0.42" height="0.8" rx="0.12" fill="#2b2d20" stroke="#18190f" stroke-width="0.04" transform="rotate(20)"/>
-  <ellipse cx="-0.1" cy="0.05" rx="0.42" ry="0.78" fill="url(#deadbody)" stroke="#1a1c12" stroke-width="0.05" transform="rotate(20)"/>
-  <path d="M -0.1 0.6 L -0.45 1.05" stroke="#3c412c" stroke-width="0.26" stroke-linecap="round"/>
-  <path d="M 0.1 -0.6 L 0.55 -0.9" stroke="#3c412c" stroke-width="0.24" stroke-linecap="round"/>
-  <rect x="0.5" y="0.55" width="1.2" height="0.15" rx="0.05" fill="#222225" transform="rotate(25 1 0.6)"/>
+  <path d="M -0.2 0.55 L -0.55 1.15" stroke="#4a4a46" stroke-width="0.24" stroke-linecap="round"/>
+  <path d="M 0.15 -0.55 L 0.75 -1.0" stroke="#4a4a46" stroke-width="0.22" stroke-linecap="round"/>
+  <path d="M -0.55 -0.2 L -1.25 -0.45 M -0.55 0.2 L -1.2 0.6" stroke="#3e3e3b" stroke-width="0.22" stroke-linecap="round"/>
+  <ellipse cx="-0.15" cy="0" rx="0.5" ry="0.7" fill="url(#deadbody)" stroke="#161614" stroke-width="0.06"/>
+  <circle cx="0.42" cy="0.02" r="0.22" fill="#8e8a80" stroke="#1a1a18" stroke-width="0.04"/>
+  <rect x="0.55" y="0.75" width="1.25" height="0.14" rx="0.05" fill="#26262a" stroke="#0e0e10" stroke-width="0.03" transform="rotate(-18 1.15 0.82)"/>
+  <ellipse cx="1.05" cy="-0.95" rx="0.3" ry="0.26" fill="#77746c" stroke="#1a1a18" stroke-width="0.05"/>
+  <path d="M 0.86 -1.0 A 0.22 0.2 0 0 1 1.2 -1.08" stroke="#a8a49a" stroke-width="0.04" fill="none"/>
  </g>
 </svg>

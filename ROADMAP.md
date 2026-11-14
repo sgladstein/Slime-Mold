@@ -250,6 +250,12 @@ banks 14-28k census size against 16-24k); 37 s of runner time against 5 min
 farm. Rows from before this don't compare; threads re-baseline at their next
 census, no forced rerun.
 
+**Baseline break, 11-14: elbow room** ([units read](Reports/units-read-2026-11-14/README.md)).
+Soldiers keep `Rules::elbow` 1.6 touch radii apart and the sunflower slots
+are 2.52 dish cells a ring (was 1.5), so a squad's drain spreads over more
+ground: wading, bite and crater stacking move. Census rows from either side
+don't compare; threads re-baseline at their next census.
+
 **Baseline breaks, 11-12 evening: #164, #169, #170 and #174.** Each of these
 changes what the hands can do or what ends a round, so census rows from
 either side of one don't compare. **#164** (cdccf127) makes every mould

@@ -72,12 +72,17 @@ impl<W: World> Game<W> {
         }
     }
 
-    /// Soldier `k` is close enough to ghost `b` to raise it.
+    /// Soldier `k` is close enough to ghost `b` to raise it. Plus elbow
+    /// room (`Rules::elbow`): two builders whose places by the ghost are
+    /// closer than that push each other apart, and without it the one
+    /// pushed back stood idle (two builders raised a turret in 56 ticks
+    /// against one's 61).
     pub(super) fn at_site(&self, k: usize, b: usize) -> bool {
         let Some(p) = self.site(k, b) else { return false };
         let s = self.soldiers[k];
-        let o = slot(k);
-        (p.0 - s.x).hypot(p.1 - s.y) <= self.reach(p, BUILD_REACH) + o.0.hypot(o.1) * self.s()
+        let o = self.slot(k);
+        let elbow = self.rules.elbow.max(0.0) * self.rules.touch;
+        (p.0 - s.x).hypot(p.1 - s.y) <= self.reach(p, BUILD_REACH) + (o.0.hypot(o.1) + elbow) * self.s()
     }
 
     /// Ghost `b`'s builders: (raising it now, ordered to it in all). The
