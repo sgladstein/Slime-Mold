@@ -5,6 +5,7 @@ status: open
 updated: 2026-11-14
 sources:
   - Reports/flashes-of-chaos-guns-2026-11-12.md
+  - Reports/gas-cloud-2026-11-14.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/noita-spell-look-2026-11-14.md
   - Reports/rounds-2026-11-12.md
@@ -15,8 +16,10 @@ sources:
 code:
   - BigDish::gas
   - BigDish::gassed_near
+  - BigDish::lay_gas
   - BigDish::scorch_disc
   - BigParams::gas_death
+  - BigParams::gas_keep
   - BigParams::germ_resist
   - BigParams::scorch_full
   - BigParams::scorch_keep
@@ -25,10 +28,12 @@ code:
   - Engine::burst
   - Engine::calm
   - Engine::gas
+  - Engine::lay_gas
   - Kit
   - Kit::restock
   - KitRules
   - KitRules::carry_max
+  - KitRules::gas_cloud
   - Soldier::load
   - Soldier::smell
   - Tool
@@ -93,7 +98,10 @@ bullets as lights on the real slime, blasts that fling live mould, gas as a
 drifting field, trail cards that lay real fields, and a loadout panel. Steps 1-2 are
 built ([films](../../Reports/rounds-look-2026-11-14/index.html)): each bullet is a streak
 in its payload's colour and a light on the real slime (`View::set_lights`), and a burst
-lights its area for 0.12 s; the simulation is unchanged.
+lights its area for 0.12 s; the simulation is unchanged. Step 4 is built on both engines
+([report](../../Reports/gas-cloud-2026-11-14.md)): a gas burst also lays a cloud
+(`BigDish::lay_gas`) that spreads and halves every `KitRules::gas_half` 4 s, is held by
+walls, and puts to sleep any walker on a cell over 0.2; the window shows it as a violet haze.
 
 ## Owner's word
 

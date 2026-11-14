@@ -25,13 +25,17 @@ struct Params {
     sm_e: f32, sfloor: f32, wander: f32, catch_at: f32,
     // Contagion: off while `sick_steps` is 0. `infect` makes every walker
     // within `ir` of (`ix`, `iy`) sick at the tick's start.
-    sick_steps: u32, immune: u32, infect: u32, _p0: u32,
+    // `gas_keep` (`_p0` until 11-14) is the gas cloud's keep a step
+    // (`BigParams::gas_keep`; the host sends 0 until a cloud is laid).
+    sick_steps: u32, immune: u32, infect: u32, gas_keep: f32,
     sick_dep: f32, sick_keep: f32, sick_speed: f32, sick_trail: f32,
     sick_reach: f32, sick_turn: f32, ix: f32, iy: f32,
     // Word 232 (`_p2` until 11-14) is the sleep gas's `gas_death`
     // (`BigParams::gas_death`, the gun rounds thread, C5): a gassed dormant
-    // walker's chance a tick of dying, if over `sleep_death`.
-    ir: f32, _p1: f32, gas_death: f32, _p3: f32,
+    // walker's chance a tick of dying, if over `sleep_death`. Word 231
+    // (`_p1` until 11-14) is the gas cloud's `gas_sleep`: a walker on a
+    // cell with more cloud than it sleeps (`gasp`).
+    ir: f32, gas_sleep: f32, gas_death: f32, _p3: f32,
     // The outside rules (`BigParams` of PR #55, Reports/outside-rules-2026-11-11.md),
     // all off at 0: species fields (`nsp`, 0 for none, else 2-4), cyclic
     // species, explorers (`explore` steps), blocked walkers' deposit share
@@ -276,11 +280,13 @@ struct Squad { units: array<SqUnit, 96>, uout: array<SqUnitOut, 96>, shots: arra
 // each point's calm count, then a word a slot: the step its gas runs out
 // at. The CPU counts its `gassed` down every step; here a slot is gassed
 // while the step is before its word, so no pass runs while nobody is
-// gassed. 0 is never gassed.
-const GAS_HEAD: u32 = 4u;
-const GAS_UNITS: u32 = 4u;
-const GAS_CALM: u32 = 388u;
-const GAS_SLOTS: u32 = 484u;
+// gassed. 0 is never gassed. Header word 3 is the explosion cards
+// thread's; word 4 (11-14) is the gas cloud's linger in steps (`gasp`),
+// written by the host with each cloud laid; 5-7 are spare.
+const GAS_HEAD: u32 = 8u;
+const GAS_UNITS: u32 = 8u;
+const GAS_CALM: u32 = 392u;
+const GAS_SLOTS: u32 = 488u;
 fn gas_base() -> u32 { return P.n + 3u * P.w * P.h; }
 fn gas_word(i: u32) -> u32 { return atomicLoad(&news[gas_base() + i]); }
 fn gassed_at(k: u32, t: u32) -> bool { return t < gas_word(GAS_SLOTS + k); }
@@ -1367,6 +1373,24 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
     }
     look[i] = (look[i] & 0xFF00FFFFu) | (wound << 16u);
+    // The gas cloud (the germ fields' third block, 11-14; the CPU's
+    // `gas_cloud`): the same 3x3 mean over the agar x `gas_keep`, 0 off the
+    // agar and on the rim, as `spread` does. Shots and the wipe leave it:
+    // the CPU's cut does not touch the cloud.
+    if (P.gas_keep > 0.0) {
+        var cl = 0.0;
+        if (agar[i] != 0u && x != 0u && y != 0u && x + 1u != P.w && y + 1u != P.h) {
+            var csum = 0.0; var cn = 0.0;
+            for (var dy = 0u; dy < 3u; dy++) {
+                for (var dx = 0u; dx < 3u; dx++) {
+                    let j = (y + dy - 1u) * P.w + x + dx - 1u;
+                    if (agar[j] != 0u) { csum += germ_in[2u * c + j]; cn += 1.0; }
+                }
+            }
+            cl = csum / cn * P.gas_keep;
+        }
+        germ_out[2u * c + i] = cl;
+    }
     if (gone) {
         trail_out[i] = 0.0;
         if (germs) { germ_out[i] = 0.0; }
@@ -1607,6 +1631,15 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (P.sick_steps > 0u && agar[i] != 0u) {
         let gs = sqrt(clamp(germ_in[i] / (4.0 * max(P.catch_at, 1.0e-6)), 0.0, 1.0));
         c = vec3<f32>(max(c.x, 255.0 * gs), c.y * (1.0 - 0.8 * gs), c.z * (1.0 - 0.8 * gs));
+    }
+    // The gas cloud (11-14) as a violet haze over the ground and the mould
+    // in it, the field itself: 40% strong where the cloud is at the level
+    // that puts a walker to sleep (`gas_sleep`), faint as it thins (at
+    // twice that, the first try, a volley's cloud washed the whole screen
+    // violet). Added, so the mould under it keeps its own colour too.
+    if (P.gas_keep > 0.0 && agar[i] != 0u) {
+        let gh = 1.0 - exp(-germ_in[2u * P.w * P.h + i] / max(2.0 * P.gas_sleep, 1.0e-3));
+        c += vec3<f32>(45.0, 22.0, 90.0) * gh;
     }
     // The look the view shades from (byte 2, the wound, is the trail pass's).
     let thick = u32(clamp(g, 0.0, 1.0) * 255.0);
@@ -2750,6 +2783,41 @@ fn gas(@builtin(global_invocation_id) gid: vec3<u32>) {
     spec[k] = (w & 0x1FFu) | (L_DORMANT << 9u);
     atomicStore(&news[gas_base() + GAS_SLOTS + k], gas_word(0u) + u32(P.kcs));
     atomicAdd(&news[gas_base() + 2u], 1u);
+}
+
+// **The gas cloud laid** (`Engine::lay_gas`, the CPU's `BigDish::lay_gas`,
+// 11-14): every agar cell at whole-cell offsets (dx, dy) from the cell of
+// (`kx`, `ky`) with dx^2 + dy^2 <= `kr`^2 gains the strike row's spare word
+// (`_l5`, the dose) of cloud, in the field the next tick reads.
+@compute @workgroup_size(256)
+fn gaslay(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    let c = P.w * P.h;
+    if (i >= c || agar[i] == 0u) { return; }
+    let dx = i32(i % P.w) - i32(P.kx);
+    let dy = i32(i / P.w) - i32(P.ky);
+    if (f32(dx * dx + dy * dy) > P.kr * P.kr) { return; }
+    germ_in[2u * c + i] = germ_in[2u * c + i] + P._l5;
+}
+
+// **Sleep in the cloud** (the CPU's `gas_sleepers`, at the end of a tick
+// with a cloud): every living ordinary or dormant walker on a cell with
+// more cloud than `gas_sleep` falls (or stays) dormant, timer 0, and is
+// gassed for at least the header's word 4 more steps. `scent` has moved
+// the step on, so S.t is the CPU's step after this one.
+@compute @workgroup_size(256)
+fn gasp(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let w = spec[k];
+    let st = (w >> 9u) & 3u;
+    if (st != L_WALKER && st != L_DORMANT) { return; }
+    let wk = walkers[k];
+    let c = P.w * P.h;
+    if (germ_out[2u * c + cell(wk.x, wk.y)] <= P.gas_sleep) { return; }
+    spec[k] = (w & 0x1FFu) | (L_DORMANT << 9u);
+    let o = gas_base() + GAS_SLOTS + k;
+    atomicMax(&news[o], S.t + gas_word(4u));
 }
 
 // **Calm** (the CPU's `BigDish::gassed_near`, which the game takes off a
