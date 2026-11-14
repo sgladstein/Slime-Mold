@@ -42,8 +42,8 @@
 //! rounds run on either world. Until 2026-11-12 evening this module had its
 //! own `Burst` and a CPU-only `apply` with the same fields (agreed with the
 //! squad toolkit thread so the switch was an import). On a world without
-//! gas or germ (`World::has_gas`, `has_germ`; the GPU world until the
-//! toolkit ports them) those payloads are not cast and cost nothing,
+//! gas or germ (`World::has_gas`, `has_germ`; the GPU world has the gas
+//! since 11-14, the germ to come) those payloads are not cast and cost nothing,
 //! counted in `Rounds::unsupported`. Soldiers only (turret rounds later).
 //!
 //! **Caps** (technical lead): at most `PENDING_MAX` lodged casts at once

@@ -2734,6 +2734,115 @@ mod tests {
     /// tiers thread's PR #85) the three tiers as `Tier::settings` sets them,
     /// dormant walkers that die asleep (`sleep_death`), and every field
     /// within 1e-6 (the trail at 1e-4 missed a planted bug in round 2).
+    /// **Sleep gas on the engine** (`Engine::gas`, 11-14; the cloud plan's
+    /// C5, gun rounds thread): from the same state, the same walkers fall
+    /// dormant and gassed on both, with the same steps left; then 40 ticks
+    /// on each with no re-inject (the gas is 30 steps): gassed sleepers
+    /// deaf to scent, dying at `gas_death`, the gas running out, births
+    /// clearing a slot's gas on the growth dish; the calm (`Engine::calm`,
+    /// the CPU's `gassed_near`) at three points. Walkers that move drift
+    /// a little between the engines over 40 ticks, so states may differ
+    /// on 1 slot in 1000 as in the life cycle's twin; the gas's own words
+    /// must match exactly on every slot both hold dormant. Two planted
+    /// bugs must fail it: the GPU's `gas_death` left at 0, and its gas a
+    /// step longer.
+    #[test]
+    fn sleep_gas_matches_the_cpu() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let with = |mut s: Settings, keys: &[(&str, &str)]| {
+            for (k, v) in keys {
+                set(&mut s, k, v).unwrap();
+            }
+            s
+        };
+        let sleep: &[(&str, &str)] = &[("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_deposit", "0.3"), ("alarm_keep", "0.95"), ("alarm_relay", "20"), ("wake_alarm", "1"), ("alarm_weight", "2"), ("sleep_rest", "10"), ("wake_steps", "10")];
+        let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
+        let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
+        const STEPS: u16 = 30;
+        const DEATH: f32 = 0.05;
+        // (states off after 10 ticks, gas words off just after the gas)
+        let play = |name: &str, s: &Settings, gpu_death: f32, gpu_steps: u16| -> (usize, usize) {
+            let mut e = Engine::new(&device, &queue, &shared, s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..20 {
+                cpu.tick();
+            }
+            e.inject(&cpu);
+            let k = cpu.p.scale as f32;
+            let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+            for (j, &(wx, wy, _)) in cpu.walkers.iter().enumerate() {
+                if cpu.lives(j) {
+                    (x, y, m) = (x + wx, y + wy, m + 1.0);
+                }
+            }
+            let (x, y) = (x / m / k, y / m / k);
+            cpu.p.gas_death = DEATH;
+            let g = Settings { gas_death: gpu_death, ..s.clone() };
+            let n_cpu = cpu.gas(x * k, y * k, 10.0 * k, STEPS);
+            let n_gpu = e.gas(&shared, &g, x, y, 10.0, gpu_steps);
+            let n = cpu.walkers.len();
+            let (life, _) = e.life_of();
+            let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
+            let words_off = e.gassed_of().iter().zip(&cpu.gassed).filter(|(a, b)| a != b).count();
+            assert!(n_cpu > 50 && n_gpu as usize == n_cpu && life_off == 0, "{name}: gassed {n_gpu} on the GPU, {n_cpu} on the CPU, {life_off} states off");
+            let mut states_after_10 = 0;
+            let points = [(x * k, y * k), (x * k + 5.0 * k, y * k), (x * k + 40.0 * k, y * k)];
+            // Dead asleep: counted dead, or with growth a freed slot.
+            let dead = |d: &BigDish| d.life_counts()[3] + d.starved as usize;
+            let dead0 = dead(&cpu);
+            for round in 0..4 {
+                run(&mut e, &shared, &g, 10, Hand::default());
+                for _ in 0..10 {
+                    cpu.tick();
+                }
+                let (life, _) = e.life_of();
+                let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
+                if round == 0 {
+                    states_after_10 = life_off;
+                    let calm_gpu = e.calm(&shared, &points, 3.0 * k);
+                    let calm_cpu = cpu.gassed_near(&points, 3.0 * k);
+                    if gpu_death == DEATH && gpu_steps == STEPS {
+                        assert!(calm_cpu[0] > 0 && calm_gpu == calm_cpu, "{name}: calm {calm_gpu:?} on the GPU, {calm_cpu:?} on the CPU");
+                    }
+                }
+                if gpu_death != DEATH || gpu_steps != STEPS {
+                    continue;
+                }
+                // The gas's words on every slot both hold dormant.
+                let gw = e.gassed_of();
+                let gas_off = (0..n).filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && life[j] == 2 && gw[j] != cpu.gassed[j]).count();
+                eprintln!("{name}, tick {}: {life_off} of {n} states off, {gas_off} gas words off; dead {:?}", 10 * (round + 1), cpu.life_counts());
+                assert!(life_off * 1000 <= n && gas_off == 0, "{name}, tick {}: {life_off} states, {gas_off} gas words off", 10 * (round + 1));
+            }
+            if gpu_death == DEATH && gpu_steps == STEPS {
+                assert!(dead(&cpu) > dead0, "{name}: the gas killed sleepers");
+                assert!(cpu.gassed.iter().all(|&g| g == 0) && e.gassed_of().iter().all(|&g| g == 0), "{name}: the gas ran out on both");
+                assert_eq!(e.calm(&shared, &points, 3.0 * k), vec![0, 0, 0], "{name}: no calm once the gas is out");
+            }
+            (states_after_10, words_off)
+        };
+        let dishes = [
+            ("plain (the gas turns the states on)", small(0)),
+            ("dormancy and alarm", with(small(0), sleep)),
+            ("dormancy, growth on crystals", with(hungry(crystals), sleep)),
+        ];
+        for (name, s) in &dishes {
+            let (states, words) = play(name, s, DEATH, STEPS);
+            assert_eq!(words, 0, "{name}: gas words off just after the gas");
+            assert!(states * 1000 <= s.walkers, "{name}");
+        }
+        // Planted: the GPU's gassed sleepers don't die, and its gas lasts a
+        // step longer.
+        let (s_name, s) = &dishes[1];
+        let (states, _) = play(s_name, s, 0.0, STEPS);
+        eprintln!("planted, no gas death: {states} states off after 10 ticks");
+        assert!(states * 1000 > s.walkers, "the twin catches gassed sleepers that don't die");
+        let (_, words) = play(s_name, s, DEATH, STEPS + 1);
+        eprintln!("planted, a step longer: {words} gas words off");
+        assert!(words > 50, "the twin catches a gas a step too long");
+    }
+
     #[test]
     fn the_life_cycle_matches_the_cpu_for_four_ticks() {
         const TICKS: u32 = 4;
@@ -4141,6 +4250,65 @@ mod tests {
             assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the alarm changed the CPU's game");
+    }
+
+    /// **A gassed mould on the engine as on the CPU** (the sleep gas in the
+    /// game, 11-14): the squad marches on the core; when the mould first
+    /// bites, a gas burst (`World::burst`, the toolkit's numbers) lands on
+    /// the bitten soldier on both worlds from the same state. Each frame the CPU dish is
+    /// loaded into the engine first (`Engine::inject`, which carries the
+    /// gas), so the frame's touching, after the calm (`World::calm`) takes
+    /// gassed sleepers off it, and the soldiers' health must match
+    /// exactly. The same run with no gas must hurt the squad more, so the
+    /// calm is doing something.
+    #[test]
+    fn a_gassed_mould_spares_the_squad_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::kit::KitRules;
+        use slime_mould::mould::larder_world::{race_world, Cmd, Game, Order, Rules, World};
+        use slime_mould::mould::rounds::burst_rules;
+        use slime_mould::mould::squad::Burst;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
+        let play = |gas: bool| -> (Vec<f32>, u32, u32) {
+            let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            assert!(gpu.world.has_gas(), "the engine's world has the gas");
+            for k in 0..cpu.soldiers.len() {
+                assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)));
+            }
+            let kit = KitRules::default();
+            let fine = rules.tps as f32 * cpu.world.fine_steps() as f32;
+            let br = burst_rules(&kit, fine);
+            let (mut gassed, mut frames) = (0, 0);
+            while cpu.end.is_none() && cpu.time() < 16.0 {
+                // Gas where it is bitten first.
+                let bitten = cpu.soldiers.iter().position(|s| s.alive && s.hp < rules.hp);
+                if let (true, 0, Some(k)) = (gas, gassed, bitten) {
+                    gpu.world.e.inject(&cpu.world);
+                    let s = cpu.world.scale();
+                    let at = (cpu.soldiers[k].x / s, cpu.soldiers[k].y / s);
+                    let b = Burst { at, r: kit.gas_r, gas: (kit.gas_secs * fine) as u16, ..Burst::default() };
+                    let (c, g) = (cpu.world.burst(&b, &br), gpu.world.burst(&b, &br));
+                    assert_eq!(g, c, "the burst on both");
+                    gassed = c.gassed;
+                }
+                gpu.world.e.inject(&cpu.world);
+                cpu.step();
+                gpu.step();
+                frames += 1;
+                let (a, b): (Vec<f32>, Vec<f32>) = (cpu.soldiers.iter().map(|s| s.hp).collect(), gpu.soldiers.iter().map(|s| s.hp).collect());
+                assert_eq!(a, b, "frame {frames} ({:.2} s): the squad's health", cpu.time());
+            }
+            (cpu.soldiers.iter().map(|s| s.hp).collect(), gassed, frames)
+        };
+        let (hp, gassed, frames) = play(true);
+        let (bare, ..) = play(false);
+        eprintln!("gassed {gassed} walkers; squad health at 16 s {hp:?}, with no gas {bare:?} ({frames} frames)");
+        // The race world is thin where it first bites (8 walkers, seed 3).
+        assert!(gassed > 0, "the gas caught the mould: {gassed}");
+        assert!(hp.iter().sum::<f32>() > bare.iter().sum::<f32>(), "the gassed mould bit less: {hp:?} against {bare:?}");
     }
 
     /// **Bullets on the engine as on the CPU** (the technical lead on #191,
