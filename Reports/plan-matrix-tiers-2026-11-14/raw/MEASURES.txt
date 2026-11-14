@@ -1,0 +1,11 @@
+Plan-by-tier matrix with soldiers needing no food. Named before the run (2026-11-14 02:25Z).
+Code: one sha from integration holding D1 (census on C's rules), #220 (rations off) and #213 (cut/take, bank spending). Every runner runs that sha.
+World: larderworld census, shape C (walkers=25000), race world, cap 900 s, seeds 301-308.
+Hands: idle, random, boom, claim, fort, strike, cut, take, boom:spend=2+turrets=8.
+Columns: plain C first (about 15 min), then the tiers drifter, sprawler, trunk, sporer, sleeper, swarmer, grudge (about 2 h, owner OK 01:05Z).
+
+DECIDING MEASURE (designer): on plain C, some plan wipes the mould on at least 4 of 8 seeds by the cap, while idle, random and strike lose.
+M2: per tier, the best plan by median vs the runner-up, paired by seed, sign test; Holm over every tier's M2 and every plan vs idle and vs random.
+M3: designer's D3 gates: no plan is best on more than half the tiers; every plan is best somewhere; idle loses everywhere; each tier's intended counter beats random on at least 6 of 8.
+D3 intended counter / should-lose: C cut / strike; Drifter strike / boom; Sprawler fort / strike; Trunk cut or claim / strike; Sporer claim untaken first / strike; Sleeper bait-then-strike (untested) / claim slowly; Swarmer fort or kill zone / repeated strikes; Grudge boom or claim spread / fort.
+A miss is a tuning note for the AI, tiers and integration threads, not a veto (testing rule, 2026-11-12).
