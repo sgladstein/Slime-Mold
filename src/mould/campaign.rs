@@ -1120,8 +1120,8 @@ mod tests {
                 sc.spawn(move || ("Kill zone, zone+claim", play("5-kill-zone", "zone", "claim:claim_at=120+buy_to=10", 480.0))),
                 // 3:40 (v15).
                 sc.spawn(move || ("The nest, strike", play("6-the-nest", "", "strike:strike_at=120+strike_army=12+buy_to=16", 360.0))),
-                // 3:46 (census v15 after elbow room: keep the spores off
-                // the two home crystals for a minute; pumps and turrets).
+                // 3:43 (census v16: keep the spores off the landing
+                // crystal for a minute; pumps and turrets).
                 sc.spawn(move || ("Spore season, turtle+boom", play("7-spore-season", "turtle", "boom:buy_to=8", 300.0))),
             ]
             .map(|h| h.join().unwrap())

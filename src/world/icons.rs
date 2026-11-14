@@ -47,6 +47,7 @@ pub enum Icon {
     Blast,
     Gas,
     Germ,
+    Bomb,
     Wide,
     Scatter,
     Quiet,
@@ -96,6 +97,8 @@ impl Icon {
             // A cloud and the wisps it trails.
             Icon::Gas => &["M6.5 15 C3.5 15 3 10.5 6.5 10 C6.5 6 11.5 5 13 8 C14.5 5.5 19.5 6.5 19 10.5 C22 11 21.5 15 18.5 15 Z", "M5 18.5 L13 18.5", "M9 21.5 L19 21.5"],
             // A cell with its spikes.
+            // A core and the mould it throws: dots flying straight out.
+            Icon::Bomb => &["FO12 12 3.5", "O12 12 6", "M12 1.5 L12 4", "M12 20 L12 22.5", "M1.5 12 L4 12", "M20 12 L22.5 12", "FO5 5 1.3", "FO19 5 1.3", "FO5 19 1.3", "FO19 19 1.3"],
             Icon::Germ => &["O12 12 5", "FO10.5 11 1.2", "FO13.5 13.5 1", "M12 2.5 L12 7", "M12 17 L12 21.5", "M2.5 12 L7 12", "M17 12 L21.5 12", "M5.3 5.3 L8.5 8.5", "M15.5 15.5 L18.7 18.7", "M18.7 5.3 L15.5 8.5", "M8.5 15.5 L5.3 18.7"],
             // Two arrows pushing out from a centre.
             Icon::Wide => &["FO12 12 2.4", "M2.5 12 L8 12", "M5 9 L2.5 12 L5 15", "M21.5 12 L16 12", "M19 9 L21.5 12 L19 15", "M12 2.5 L12 6", "M12 18 L12 21.5"],
@@ -217,7 +220,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");

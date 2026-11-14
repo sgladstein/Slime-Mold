@@ -64,8 +64,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (224 words).
-pub const PARAMS_BYTES: usize = 896;
+/// Bytes in `Params` (228 words).
+pub const PARAMS_BYTES: usize = 912;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -78,6 +78,9 @@ pub const CRATER_AT: usize = 864;
 /// crater's: `lone_step`, `lone_floor`, `lone_r`; `BigParams::lone_step`;
 /// then `fed_crowd`).
 pub const LONE_AT: usize = 880;
+/// Where the fling row sits in `Params` (11-14, after the lone step's:
+/// `fling_deposit`, then three spare words).
+pub const FLING_AT: usize = 896;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
@@ -324,6 +327,11 @@ pub struct Settings {
     /// A gassed sleeper's chance a tick of dying (`BigParams::gas_death`;
     /// the toolkit's `BurstRules` sets it with the first gas).
     pub gas_death: f32,
+    /// A flung walker's speed x `step` (`BigParams::fling_speed`; the
+    /// rounds' `BurstRules` sets it with the first fling).
+    pub fling_speed: f32,
+    /// A flung walker's trail a step x `deposit` (`BigParams::fling_deposit`).
+    pub fling_deposit: f32,
     /// The gas cloud (`BigParams::gas_keep`, `gas_sleep`, `gas_linger`;
     /// `Engine::lay_gas` lays it): its keep a step, the cloud a walker
     /// sleeps over, and the steps it stays gassed after.
@@ -520,6 +528,8 @@ impl Settings {
             sleep_rest: t.sleep_rest,
             sleep_death: t.sleep_death,
             gas_death: t.gas_death,
+            fling_speed: t.fling_speed,
+            fling_deposit: t.fling_deposit,
             gas_keep: t.gas_keep,
             gas_sleep: t.gas_sleep,
             gas_linger: t.gas_linger,
@@ -769,6 +779,8 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "sleep_rest" => s.sleep_rest = int()?.min(65535) as u16,
         "sleep_death" => s.sleep_death = f()?,
         "gas_death" => s.gas_death = f()?,
+        "fling_speed" => s.fling_speed = f()?,
+        "fling_deposit" => s.fling_deposit = f()?,
         "gas_keep" => s.gas_keep = f()?,
         "gas_sleep" => s.gas_sleep = f()?,
         "alarm_keep" => s.alarm_keep = f()?,
@@ -911,6 +923,8 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         sleep_rest: s.sleep_rest,
         sleep_death: s.sleep_death,
         gas_death: s.gas_death,
+        fling_speed: s.fling_speed,
+        fling_deposit: s.fling_deposit,
         gas_keep: s.gas_keep,
         gas_sleep: s.gas_sleep,
         gas_linger: s.gas_linger,
@@ -1081,9 +1095,11 @@ pub const GAS: usize = 50;
 pub const CALM: usize = 51;
 pub const GASLAY: usize = 52;
 pub const GASP: usize = 53;
+/// An explosion's fling (11-14, `Engine::fling`).
+pub const FLING: usize = 54;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 54] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp",
+pub const PASSES: [&str; 55] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling",
 ];
 
 impl Shared {
@@ -1692,7 +1708,7 @@ impl Engine {
         // no tick spreads an empty one.
         let cloud_keep = if self.clouded { s.gas_keep } else { 0.0 };
         b.extend(u32_bytes(&[s.sick, s.immune, infect, cloud_keep.to_bits()]));
-        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.sick_upkeep, s.gas_death, 0.0]));
+        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.sick_upkeep, s.gas_death, s.step * s.fling_speed]));
         // The outside rules. Switching explorers on starts every walker's
         // stage again, so the switch shows (ages are only counted while on).
         if s.explores() && !self.exploring {
@@ -1815,6 +1831,8 @@ impl Engine {
         assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
         b.extend(f32_bytes(&[s.lone_step, s.lone_floor]));
         b.extend(u32_bytes(&[s.lone_r as u32, s.fed_crowd as u32]));
+        assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
+        b.extend(f32_bytes(&[s.fling_deposit, 0.0, 0.0, 0.0]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2133,6 +2151,9 @@ impl Engine {
         // The life states, so the measure leaves the dead out.
         if self.cycles {
             (self.dish.life, self.dish.life_t) = self.life_of();
+            if !self.dish.flung.is_empty() {
+                self.dish.flung = self.flung_of();
+            }
         }
         // The Larder World: the crystals as the GPU holds them, so the
         // measure's crystal share left is the GPU's.
@@ -2371,6 +2392,35 @@ impl Engine {
         (w.iter().map(|&w| ((w >> 9) & 3) as u8).collect(), w.iter().map(|&w| (w >> 16) as u16).collect())
     }
 
+    /// Each slot's flung mark (the CPU's `flung`, engine.wgsl's `FLUNG`),
+    /// read back from the `spec` words.
+    pub fn flung_of(&self) -> Vec<bool> {
+        read_back(&self.device, &self.queue, &self.spec).chunks_exact(4).take(self.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap()) & 0x2000 != 0).collect()
+    }
+
+    /// **An explosion's fling** (the CPU's `BigDish::fling`; dish cells,
+    /// the gun rounds' `Bomb`, 11-14): every living ordinary or dormant
+    /// walker between `r` and `rr` of (`x`, `y`) leaves its cell and flies
+    /// straight out for up to `steps` fine steps at `s.fling_speed`, then
+    /// lands and lives on. `inv` is 1 / (`rr`² - `r`²) in fine cells
+    /// (`squad::Burst::fling_ring`). Switches the life states on. Runs on
+    /// its own, between ticks; returns the walkers flung (a read-back).
+    #[allow(clippy::too_many_arguments)]
+    pub fn fling(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32) -> u32 {
+        let k = self.dish.p.scale as f32;
+        self.cycles = true;
+        // So `measure` reads the marks back.
+        if self.dish.flung.is_empty() {
+            self.dish.flung = vec![false; self.n as usize];
+        }
+        self.write_params(s, Hand::default(), 0);
+        // The strike row as the `fling` pass reads it: `kalarm` holds `inv`.
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, inv, rr * k, 0.0, steps as f32, 0.0]));
+        let before = self.gas_word(3);
+        self.run(shared, &[(FLING, self.n.div_ceil(256))]);
+        self.gas_word(3).wrapping_sub(before)
+    }
+
     /// The alarm field now (zeros without one).
     /// The crater countdown a cell (the damage memory's first block), read
     /// back: the CPU's `BigDish::scorch`.
@@ -2518,7 +2568,7 @@ pub fn occupancy(d: &BigDish) -> Vec<u32> {
 pub fn spec_words(d: &BigDish) -> Vec<u32> {
     (0..d.walkers.len())
         .map(|k| {
-            d.spec.get(k).map_or(0, |&c| c as u32) | d.kind.get(k).map_or(0, |&c| (c as u32) << 8) | d.life.get(k).map_or(0, |&c| (c as u32) << 9) | d.life_t.get(k).map_or(0, |&c| (c as u32) << 16)
+            d.spec.get(k).map_or(0, |&c| c as u32) | d.kind.get(k).map_or(0, |&c| (c as u32) << 8) | d.life.get(k).map_or(0, |&c| (c as u32) << 9) | d.life_t.get(k).map_or(0, |&c| (c as u32) << 16) | d.flung.get(k).map_or(0, |&f| (f as u32) << 13)
         })
         .collect()
 }

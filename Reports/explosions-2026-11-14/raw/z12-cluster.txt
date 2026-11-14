@@ -1,0 +1,200 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  rounds t   20 s: 20 casts (blast, gas, germ, bomb [0, 0, 0, 20]), 227 walkers killed, 1097 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-19800ms-all.png
+OUT/z12-cluster/fork-idle-19800ms-near.png
+  CPU: ground field 2.12 ms (once a game second), model and HUD 0.177 ms a frame
+  t 20 s: mould 24559, soldiers 4, bank 703, harvested 0, shots 69, killed 660, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.2 mean, 1 most; health 56 mean
+  rounds t   20 s: 20 casts (blast, gas, germ, bomb [0, 0, 0, 20]), 227 walkers killed, 1097 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-19866ms-all.png
+OUT/z12-cluster/fork-idle-19866ms-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.407 ms a frame
+  t 20 s: mould 24559, soldiers 4, bank 703, harvested 0, shots 69, killed 664, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.5 mean, 1 most; health 56 mean
+  rounds t   20 s: 20 casts (blast, gas, germ, bomb [0, 0, 0, 20]), 227 walkers killed, 1097 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-19933ms-all.png
+OUT/z12-cluster/fork-idle-19933ms-near.png
+  CPU: ground field 1.07 ms (once a game second), model and HUD 0.232 ms a frame
+  t 20 s: mould 24559, soldiers 4, bank 703, harvested 0, shots 69, killed 664, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.5 mean, 1 most; health 56 mean
+  rounds t   20 s: 20 casts (blast, gas, germ, bomb [0, 0, 0, 20]), 227 walkers killed, 1097 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-020s-all.png
+OUT/z12-cluster/fork-idle-020s-near.png
+  CPU: ground field 0.95 ms (once a game second), model and HUD 0.043 ms a frame
+  t 20 s: mould 24567, soldiers 4, bank 703, harvested 0, shots 70, killed 664, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.2 mean, 1 most; health 56 mean
+  boom t 20.00 s at 175,215: 161 killed, 716 flung
+  rounds t   20 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20066ms-all.png
+OUT/z12-cluster/fork-idle-20066ms-near.png
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.047 ms a frame
+  t 20 s: mould 24567, soldiers 4, bank 702, harvested 0, shots 71, killed 839, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.5 mean, 1 most; health 56 mean
+  rounds t   20 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20133ms-all.png
+OUT/z12-cluster/fork-idle-20133ms-near.png
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.046 ms a frame
+  t 20 s: mould 24567, soldiers 4, bank 702, harvested 0, shots 71, killed 839, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.5 mean, 1 most; health 56 mean
+  rounds t   20 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20200ms-all.png
+OUT/z12-cluster/fork-idle-20200ms-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.212 ms a frame
+  t 20 s: mould 24567, soldiers 4, bank 702, harvested 0, shots 71, killed 844, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.5 mean, 1 most; health 56 mean
+  rounds t   20 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20266ms-all.png
+OUT/z12-cluster/fork-idle-20266ms-near.png
+  CPU: ground field 1.18 ms (once a game second), model and HUD 0.047 ms a frame
+  t 20 s: mould 24567, soldiers 4, bank 701, harvested 0, shots 71, killed 844, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.8 mean, 1 most; health 56 mean
+  rounds t   20 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20333ms-all.png
+OUT/z12-cluster/fork-idle-20333ms-near.png
+  CPU: ground field 19.80 ms (once a game second), model and HUD 0.048 ms a frame
+  t 20 s: mould 24567, soldiers 4, bank 701, harvested 0, shots 71, killed 844, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.8 mean, 1 most; health 56 mean
+  rounds t   20 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20400ms-all.png
+OUT/z12-cluster/fork-idle-20400ms-near.png
+  CPU: ground field 0.96 ms (once a game second), model and HUD 0.043 ms a frame
+  t 20 s: mould 24567, soldiers 4, bank 701, harvested 0, shots 71, killed 844, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.5 mean, 2 most; health 56 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20466ms-all.png
+OUT/z12-cluster/fork-idle-20466ms-near.png
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.045 ms a frame
+  t 21 s: mould 24567, soldiers 4, bank 700, harvested 0, shots 71, killed 844, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.0 mean, 4 most; health 55 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20533ms-all.png
+OUT/z12-cluster/fork-idle-20533ms-near.png
+  CPU: ground field 1.14 ms (once a game second), model and HUD 0.196 ms a frame
+  t 21 s: mould 24567, soldiers 4, bank 700, harvested 0, shots 71, killed 844, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.0 mean, 4 most; health 55 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20600ms-all.png
+OUT/z12-cluster/fork-idle-20600ms-near.png
+  CPU: ground field 1.17 ms (once a game second), model and HUD 0.047 ms a frame
+  t 21 s: mould 24567, soldiers 4, bank 700, harvested 0, shots 71, killed 844, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.8 mean, 1 most; health 55 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20666ms-all.png
+OUT/z12-cluster/fork-idle-20666ms-near.png
+  CPU: ground field 1.62 ms (once a game second), model and HUD 0.058 ms a frame
+  t 21 s: mould 24567, soldiers 4, bank 699, harvested 0, shots 73, killed 855, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.5 mean, 1 most; health 55 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20733ms-all.png
+OUT/z12-cluster/fork-idle-20733ms-near.png
+  CPU: ground field 1.10 ms (once a game second), model and HUD 0.145 ms a frame
+  t 21 s: mould 24567, soldiers 4, bank 699, harvested 0, shots 73, killed 855, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.5 mean, 1 most; health 55 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20800ms-all.png
+OUT/z12-cluster/fork-idle-20800ms-near.png
+  CPU: ground field 1.43 ms (once a game second), model and HUD 0.646 ms a frame
+  t 21 s: mould 24567, soldiers 4, bank 699, harvested 0, shots 73, killed 855, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.5 mean, 1 most; health 55 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20866ms-all.png
+OUT/z12-cluster/fork-idle-20866ms-near.png
+  CPU: ground field 7.90 ms (once a game second), model and HUD 0.285 ms a frame
+  t 21 s: mould 24567, soldiers 4, bank 698, harvested 0, shots 73, killed 855, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.2 mean, 2 most; health 55 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-20933ms-all.png
+OUT/z12-cluster/fork-idle-20933ms-near.png
+  CPU: ground field 3.82 ms (once a game second), model and HUD 0.045 ms a frame
+  t 21 s: mould 24567, soldiers 4, bank 698, harvested 0, shots 73, killed 855, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.2 mean, 2 most; health 55 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-021s-all.png
+OUT/z12-cluster/fork-idle-021s-near.png
+  CPU: ground field 1.48 ms (once a game second), model and HUD 0.058 ms a frame
+  t 21 s: mould 24419, soldiers 4, bank 698, harvested 0, shots 74, killed 855, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.8 mean, 2 most; health 55 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21066ms-all.png
+OUT/z12-cluster/fork-idle-21066ms-near.png
+  CPU: ground field 1.18 ms (once a game second), model and HUD 0.047 ms a frame
+  t 21 s: mould 24419, soldiers 4, bank 697, harvested 0, shots 75, killed 860, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.2 mean, 2 most; health 54 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21133ms-all.png
+OUT/z12-cluster/fork-idle-21133ms-near.png
+  CPU: ground field 1.12 ms (once a game second), model and HUD 0.043 ms a frame
+  t 21 s: mould 24419, soldiers 4, bank 697, harvested 0, shots 75, killed 860, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.2 mean, 2 most; health 54 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21200ms-all.png
+OUT/z12-cluster/fork-idle-21200ms-near.png
+  CPU: ground field 1.57 ms (once a game second), model and HUD 0.041 ms a frame
+  t 21 s: mould 24419, soldiers 4, bank 697, harvested 0, shots 75, killed 869, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.0 mean, 2 most; health 54 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21266ms-all.png
+OUT/z12-cluster/fork-idle-21266ms-near.png
+  CPU: ground field 1.05 ms (once a game second), model and HUD 0.046 ms a frame
+  t 21 s: mould 24419, soldiers 4, bank 696, harvested 0, shots 75, killed 869, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.5 mean, 2 most; health 54 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21333ms-all.png
+OUT/z12-cluster/fork-idle-21333ms-near.png
+  CPU: ground field 0.96 ms (once a game second), model and HUD 0.042 ms a frame
+  t 21 s: mould 24419, soldiers 4, bank 696, harvested 0, shots 75, killed 869, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.5 mean, 2 most; health 54 mean
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21400ms-all.png
+OUT/z12-cluster/fork-idle-21400ms-near.png
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.046 ms a frame
+  t 21 s: mould 24419, soldiers 4, bank 696, harvested 0, shots 75, killed 869, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.2 mean, 2 most; health 53 mean
+  rounds t   22 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21466ms-all.png
+OUT/z12-cluster/fork-idle-21466ms-near.png
+  CPU: ground field 2.43 ms (once a game second), model and HUD 0.106 ms a frame
+  t 22 s: mould 24419, soldiers 4, bank 695, harvested 0, shots 75, killed 869, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.5 mean, 4 most; health 53 mean
+  rounds t   22 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21533ms-all.png
+OUT/z12-cluster/fork-idle-21533ms-near.png
+  CPU: ground field 1.02 ms (once a game second), model and HUD 0.043 ms a frame
+  t 22 s: mould 24419, soldiers 4, bank 695, harvested 0, shots 75, killed 869, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 1.5 mean, 4 most; health 53 mean
+  rounds t   22 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 388 walkers killed, 1813 flung, 1200 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21600ms-all.png
+OUT/z12-cluster/fork-idle-21600ms-near.png
+  CPU: ground field 1.11 ms (once a game second), model and HUD 0.046 ms a frame
+  t 22 s: mould 24419, soldiers 4, bank 695, harvested 0, shots 75, killed 869, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 2.2 mean, 4 most; health 53 mean
+  rounds t   22 s: 22 casts (blast, gas, germ, bomb [0, 0, 0, 22]), 401 walkers killed, 1861 flung, 1260 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21666ms-all.png
+OUT/z12-cluster/fork-idle-21666ms-near.png
+  CPU: ground field 1.05 ms (once a game second), model and HUD 0.047 ms a frame
+  t 22 s: mould 24419, soldiers 4, bank 634, harvested 0, shots 77, killed 891, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 2.2 mean, 5 most; health 52 mean
+  rounds t   22 s: 22 casts (blast, gas, germ, bomb [0, 0, 0, 22]), 401 walkers killed, 1861 flung, 1260 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21733ms-all.png
+OUT/z12-cluster/fork-idle-21733ms-near.png
+  CPU: ground field 1.33 ms (once a game second), model and HUD 0.069 ms a frame
+  t 22 s: mould 24419, soldiers 4, bank 634, harvested 0, shots 77, killed 891, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 2.2 mean, 5 most; health 52 mean
+  rounds t   22 s: 22 casts (blast, gas, germ, bomb [0, 0, 0, 22]), 401 walkers killed, 1861 flung, 1260 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21800ms-all.png
+OUT/z12-cluster/fork-idle-21800ms-near.png
+  CPU: ground field 3.09 ms (once a game second), model and HUD 0.042 ms a frame
+  t 22 s: mould 24419, soldiers 4, bank 634, harvested 0, shots 77, killed 891, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 52 mean
+  rounds t   22 s: 22 casts (blast, gas, germ, bomb [0, 0, 0, 22]), 401 walkers killed, 1861 flung, 1260 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21866ms-all.png
+OUT/z12-cluster/fork-idle-21866ms-near.png
+  CPU: ground field 0.97 ms (once a game second), model and HUD 0.044 ms a frame
+  t 22 s: mould 24419, soldiers 4, bank 633, harvested 0, shots 77, killed 891, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.2 mean, 1 most; health 52 mean
+  rounds t   22 s: 22 casts (blast, gas, germ, bomb [0, 0, 0, 22]), 401 walkers killed, 1861 flung, 1260 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+OUT/z12-cluster/fork-idle-21933ms-all.png
+OUT/z12-cluster/fork-idle-21933ms-near.png
+  CPU: ground field 1.13 ms (once a game second), model and HUD 0.046 ms a frame
+  t 22 s: mould 24419, soldiers 4, bank 633, harvested 0, shots 77, killed 891, took 0%, crystals left 0.998; squad at 256.0,112.5
+  squad: touching 0.2 mean, 1 most; health 52 mean
