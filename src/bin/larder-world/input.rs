@@ -49,7 +49,10 @@ impl App {
     }
 
     /// In the squad mode, order `o` to the controlled squad as one; false
-    /// in the RTS round (or with no squad controlled).
+    /// in the RTS round (or with no squad controlled). Every order the
+    /// card gives goes this way there (drain, attack-move, burn, build):
+    /// given soldier by soldier, a squad on the move took them back at its
+    /// next step (`Game::squad_turn`; bug sweep, 2026-11-14).
     pub(super) fn squad_order(&mut self, o: Order) -> bool {
         let q = self.game.as_ref().filter(|g| g.rules.squads && self.sq.is_some()).and_then(|g| g.active);
         match (q, self.game.as_mut()) {
@@ -76,7 +79,7 @@ impl App {
                 if let Some(g) = self.game.as_mut() {
                     g.apply(Cmd::Send(b));
                 }
-            } else {
+            } else if !self.squad_order(Order::Build(b)) {
                 self.order_all(sel, |_| Order::Build(b));
             }
         }
@@ -111,7 +114,9 @@ impl App {
     /// A burn line shared out: each soldier keeps the whole line burning
     /// (`Order::Burn`) from its own place along it.
     pub(super) fn burn(&mut self, ids: &[usize], from: (f32, f32), to: (f32, f32)) {
-        self.order_all(ids, |_| Order::Burn(from, to));
+        if !self.squad_order(Order::Burn(from, to)) {
+            self.order_all(ids, |_| Order::Burn(from, to));
+        }
     }
 
     pub(super) fn hud_events(&mut self, events: Vec<HudEvent>, event_loop: &ActiveEventLoop) {
@@ -164,7 +169,6 @@ impl App {
                 }
                 HudEvent::Command { id } => match id {
                     NEXT_ROUND => self.next_round(),
-                    STOP if self.squad_order(Order::Hold) => {}
                     STOP => self.order_all(&sel, |_| Order::Hold),
                     HOLD_FIRE | DEFEND | FREE => {
                         let st = match id {
@@ -209,7 +213,8 @@ impl App {
                         if let Some(g) = self.game.as_mut() {
                             if g.apply(Cmd::Buy) {
                                 let s = *g.soldiers.last().unwrap();
-                                self.hud.alert("A soldier has joined at the larder", Some((s.x, s.y)), theme::GOOD);
+                                let what = if g.rules.squads { "A soldier has joined your squad" } else { "A soldier has joined at the larder" };
+                                self.hud.alert(what, Some((s.x, s.y)), theme::GOOD);
                             }
                         }
                     }

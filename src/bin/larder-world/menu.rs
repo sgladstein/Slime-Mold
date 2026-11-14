@@ -128,7 +128,10 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
     .collect();
     let mut squad = vec![("Squad mode".to_string(), "Options: Control, squads (or mode=squads)".to_string())];
     squad.extend(squad_help());
-    squad.push(("R, G, F, Z / X / C".into(), "The card for the squad: attack-move, drain, burn, stances".into()));
+    // The card's letters as `squad_card_key` moves them.
+    let k = |id: u32, key: KeyCode| squad_card_key(id, key).and_then(slime_mould::world::ui::key_name).unwrap_or_default();
+    squad.push((format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(BURN, KeyCode::KeyF)), "The card for the squad: attack-move, drain, burn".into()));
+    squad.push((format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
     if squads {
         squad.push(("RTS round".into(), "Options: Control, rts".into()));
         squad.into_iter().chain(rts).collect()

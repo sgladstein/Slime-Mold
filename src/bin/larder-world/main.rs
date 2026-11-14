@@ -961,15 +961,15 @@ impl App {
     /// marks (the headless pictures read whole steps).
     fn settle(&mut self) {
         self.catch_up();
-        let Some(g) = self.game.as_mut() else { return };
-        if g.in_flight() {
+        if let Some(g) = self.game.as_mut().filter(|g| g.in_flight()) {
             g.finish_step();
-            // Rounds read the step's hits, so they cast here too (the
-            // headless looks settle every step).
-            self.rounds.after_step(g);
-            shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
-            self.seen = g.world.ticks();
         }
+        // The step's notes, as `step` takes them: rounds read its hits (the
+        // headless looks settle every step), and the kit restocks and sets
+        // off its mines. (Before the review after the bug sweep,
+        // 2026-11-14, this was a copy without `kit_between`, so no
+        // headless run ever ran the kit.)
+        self.catch_up();
     }
 
     /// The window's notes of a step a command finished: `Game::apply`

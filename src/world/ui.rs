@@ -1544,11 +1544,7 @@ impl Hud {
             }
             MenuPage::Help => {
                 let mut rows: Vec<(String, String)> = if let Some(base) = &m.help_base {
-                    let mut b = base.clone();
-                    b.push(("Esc".into(), "Cancel placing, or this menu".into()));
-                    b.push(("F1 or ?".into(), "This key card".into()));
-                    b.push(("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text".into()));
-                    b
+                    base.clone()
                 } else { vec![
                     ("Left click / drag".into(), "Select soldiers".into()),
                     ("Right click".into(), "Move, or work the crystal or mould clicked".into()),
@@ -1557,10 +1553,11 @@ impl Hud {
                     ("Wheel, middle drag".into(), "Zoom, pan; the screen's edge scrolls".into()),
                     ("Minimap".into(), "Click to look there; right click to send".into()),
                     ("Space".into(), "Look at the newest alert".into()),
-                    ("Esc".into(), "Cancel placing, or this menu".into()),
-                    ("F1 or ?".into(), "This key card".into()),
-                    ("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text".into()),
                 ] };
+                // Every game's card ends the same.
+                rows.push(("Esc".into(), "Cancel placing, or this menu".into()));
+                rows.push(("F1 or ?".into(), "This key card".into()));
+                rows.push(("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text".into()));
                 for cmd in &m.commands {
                     if let Some(k) = key_name(cmd.key) {
                         rows.push((k, cmd.name.clone()));

@@ -682,7 +682,7 @@ impl App {
         if g.world.garden.is_some() {
             // The player's own mould beside the enemy's, in its colour.
             let own = g.world.counts_by_side().0;
-            m.resources.insert(3, Resource { icon: Icon::Mould, colour: [120, 230, 90, 255], label: "Your own mould (green): walkers alive. Sow it (W); lay its roads from the tools page (E, then Y); it converts enemy slime it outweighs".into(), value: thousands(own), rate: None });
+            m.resources.insert(3, Resource { icon: Icon::Mould, colour: [120, 230, 90, 255], label: format!("Your own mould (green): walkers alive. Sow it ({}); lay its roads from the tools page (E, then Y); it converts enemy slime it outweighs", if self.sq.is_some() { "U" } else { "W" }), value: thousands(own), rate: None });
         }
         m.commands = cmds;
         m.buildings = g

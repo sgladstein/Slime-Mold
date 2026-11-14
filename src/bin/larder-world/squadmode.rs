@@ -156,7 +156,10 @@ impl App {
     /// keys asked before the card's (WASD steering and Space); else the
     /// squad's own letters, asked after the card has passed on the key.
     pub(super) fn squad_key(&mut self, code: KeyCode, pressed: bool, repeat: bool, first: bool) -> bool {
-        if self.sq.is_none() || self.game.is_none() {
+        // Not once the round is over: the end screen takes every key (the
+        // review after the bug sweep, 2026-11-14: WASD still steered and
+        // logged commands after the end).
+        if self.sq.is_none() || self.game.as_ref().is_none_or(|g| g.end.is_some()) {
             return false;
         }
         if first {

@@ -120,10 +120,16 @@ impl Camera {
     /// bar).
     pub fn centre_on(&mut self, w: (f32, f32)) {
         let (sw, _) = self.span();
-        let band_mid = (self.inset.0 + (self.screen.1 - self.inset.0 - self.inset.1) / 2.0) / self.zoom;
         self.x = w.0 - sw / 2.0;
-        self.y = w.1 - band_mid;
+        self.y = w.1 - self.band_mid();
         self.clamp();
+    }
+
+    /// The middle of the band between the insets, world cells below the
+    /// view's top: one formula for `centre_on` and `focus`, so the one
+    /// stays the other's inverse.
+    fn band_mid(&self) -> f32 {
+        (self.inset.0 + (self.screen.1 - self.inset.0 - self.inset.1) / 2.0) / self.zoom
     }
 
     /// The world point `centre_on` puts in the middle of the band between
@@ -135,8 +141,7 @@ impl Camera {
     /// 2026-11-14).
     pub fn focus(&self) -> (f32, f32) {
         let (sw, _) = self.span();
-        let band_mid = (self.inset.0 + (self.screen.1 - self.inset.0 - self.inset.1) / 2.0) / self.zoom;
-        (self.x + sw / 2.0, self.y + band_mid)
+        (self.x + sw / 2.0, self.y + self.band_mid())
     }
 
     /// The world point at the screen's middle.

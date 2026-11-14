@@ -558,3 +558,33 @@ fn every_command_card_page_has_its_own_slots_and_keys() {
         }
     }
 }
+
+/// **The card's burn reaches a moving squad** (review after the bug sweep,
+/// 2026-11-14): given soldier by soldier, a squad steered with WASD took
+/// its own order back at its next step, so F + drag did nothing.
+#[test]
+fn the_cards_burn_reaches_a_moving_squad() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    let dt = 1.0 / 60.0;
+    app.squad_key(KeyCode::KeyD, true, false, true);
+    for _ in 0..30 {
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    let (from, to) = {
+        let g = app.game.as_ref().unwrap();
+        let m = g.active.and_then(|q| g.middle(q)).unwrap();
+        let sc = g.world.scale();
+        ((m.0 + 4.0 * sc, m.1 - 6.0 * sc), (m.0 + 4.0 * sc, m.1 + 6.0 * sc))
+    };
+    app.hud_event(HudEvent::Line { id: BURN, from, to }).unwrap();
+    for _ in 0..30 {
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    let g = app.game.as_ref().unwrap();
+    let q = g.active.unwrap();
+    let burning = g.members(q).iter().filter(|&&k| matches!(g.soldiers[k].order, Order::Burn(..))).count();
+    assert_eq!(burning, g.members(q).len(), "every member of the squad burns the line half a second later");
+}
