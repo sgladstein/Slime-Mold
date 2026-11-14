@@ -252,11 +252,9 @@ pub struct GunCard {
     pub colour: Rgba,
     /// What it does, for its tooltip.
     pub about: String,
-    /// A payload's price a cast ("40").
-    pub cost: Option<String>,
-    /// In the cast the gun's next hit fires: lit.
+    /// In the cast the gun's next shot fires: lit.
     pub next: bool,
-    /// After the last payload: it weighs on the recharge and casts nothing.
+    /// After the last payload: it casts nothing.
     pub idle: bool,
 }
 
@@ -271,11 +269,7 @@ pub struct Loadout {
     pub cards: Vec<GunCard>,
     /// Slots the gun has (empty ones are drawn empty).
     pub slots: usize,
-    /// The recharge after the last cast, seconds.
-    pub recharge: f32,
-    /// How much of it is still to go, 0 (ready) to 1 (just spent).
-    pub charging: f32,
-    /// A line under the cards ("3 of 5 guns ready"); the game's words.
+    /// A line under the cards ("Cost 7 of 10"); the game's words.
     pub note: Option<String>,
     /// The command that swaps the loadout, and its key: the panel's
     /// button sends `HudEvent::Command` with it.
@@ -1371,8 +1365,9 @@ impl Hud {
     }
 
     /// The loadout strip: the gun's cards as a row of glyphs in its slots,
-    /// left to right, the cast its next hit fires lit, the recharge as a
-    /// thin bar under them, the loadout's name and state, and Swap. It sits
+    /// left to right, the cast its next shot fires lit, the loadout's name
+    /// and state, and Swap. (Until the recharge went, owner 18:05Z, a thin
+    /// bar under the cards filled back up after the last cast.) It sits
     /// on the selection panel's top edge at the right (the art director,
     /// 11-14 02:34Z: a strip of card icons next to the selection, not a
     /// tall box; the details in a tooltip). Before that review it was a
@@ -1440,12 +1435,7 @@ impl Hud {
                 tip = Some((i, b));
             }
         }
-        // The recharge: a thin bar under the cards that fills back up.
         let cards_w = slots as f32 * cell + (slots - 1) as f32 * gap;
-        let ready = l.charging <= 0.0;
-        if !l.cards.is_empty() {
-            c.bar(Rect::new(r.x + pad, y + cell + 3.0 * s, cards_w, 2.5 * s), (1.0 - l.charging).clamp(0.0, 1.0), if ready { GOOD } else { WARN }, TRACK);
-        }
         // The name and the state.
         let tx = r.x + pad + cards_w + 8.0 * s;
         // The gun's icon ahead of the name, the name after it.
@@ -1456,14 +1446,8 @@ impl Hud {
             0.0
         };
         c.text_fit(Weight::SemiBold, 13.0 * s, (tx + gx, y + 14.0 * s), Align::Left, &l.name, info_w - gx, TEXT);
-        let (state, col) = if l.cards.is_empty() {
-            ("Plain shots".to_string(), MUTED)
-        } else if ready {
-            ("Ready".to_string(), GOOD)
-        } else {
-            (format!("Recharging {:.1} s", l.charging * l.recharge), WARN)
-        };
-        c.text_fit(Weight::Medium, 11.0 * s, (tx, y + 30.0 * s), Align::Left, &state, info_w, col);
+        let (state, col) = if l.cards.is_empty() { ("Plain shots", MUTED) } else { ("A card a shot", GOOD) };
+        c.text_fit(Weight::Medium, 11.0 * s, (tx, y + 30.0 * s), Align::Left, state, info_w, col);
         let words = Rect::new(tx - 4.0 * s, r.y, info_w + 4.0 * s, r.h);
         if tip.is_none() && self.hover.is_some_and(|p| words.contains(p)) {
             tip = Some((usize::MAX, words));
@@ -1483,8 +1467,8 @@ impl Hud {
         tip
     }
 
-    /// The loadout's own tooltip (over its name, or Swap): whose gun, the
-    /// guns ready, the recharge, and how to swap.
+    /// The loadout's own tooltip (over its name, or Swap): whose gun, its
+    /// numbers, the note, and how to swap.
     fn loadout_tip(&mut self, l: &Loadout, b: Rect, swap: bool, c: &mut Canvas, s: f32) {
         let mut lines = vec![l.whose.clone()];
         if let Some((_, title, numbers)) = &l.gun {
@@ -1492,8 +1476,9 @@ impl Hud {
         }
         if let Some(n) = &l.note {
             lines.push(n.clone());
-        } else if !l.cards.is_empty() {
-            lines.push(format!("Recharge {:.1} s after the last cast", l.recharge));
+        }
+        if !l.cards.is_empty() {
+            lines.push("Each shot fires the next card in turn".into());
         }
         if let Some((_, key)) = l.cycle {
             lines.push(match key_name(key) {
@@ -1542,19 +1527,13 @@ impl Hud {
         let kr = Rect::new(r.right() - 14.0 * s - kw, y - 15.0 * s, kw, 20.0 * s);
         c.rrect(kr, 5.0 * s, alpha(frame, 0.18));
         c.text(Weight::SemiBold, 10.5 * s, (kr.x + kw / 2.0, y - 1.0 * s), Align::Centre, &kind, frame);
-        if let Some(cost) = &k.cost {
-            let cw = c.atlas.measure(Weight::SemiBold, 12.0 * s, cost);
-            let cx = kr.x - 10.0 * s - cw;
-            c.icon(Icon::Crystal, (cx - 16.0 * s, y - 12.0 * s), 13.0 * s, ENERGY);
-            c.text(Weight::SemiBold, 12.0 * s, (cx, y - 1.0 * s), Align::Left, cost, ENERGY);
-        }
         y += 22.0 * s;
         for l in &lines {
             c.text(Weight::Medium, px, (r.x + 14.0 * s, y), Align::Left, l, MUTED);
             y += 18.0 * s;
         }
         if k.idle {
-            c.text_fit(Weight::SemiBold, 12.0 * s, (r.x + 14.0 * s, y + 4.0 * s), Align::Left, "After the last payload: it only slows the recharge", w - 28.0 * s, WARN);
+            c.text_fit(Weight::SemiBold, 12.0 * s, (r.x + 14.0 * s, y + 4.0 * s), Align::Left, "After the last payload: it does nothing", w - 28.0 * s, WARN);
         }
     }
 
@@ -1939,14 +1918,12 @@ mod tests {
     const WORLD_SPOT: (f32, f32) = (700.0, 400.0);
 
     fn loadout() -> Loadout {
-        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard { icon: Some(Icon::Blast), name: name.into(), kind, colour: [255, 150, 60, 255], about: format!("{name} does a thing to the mould where the shot lands, at length."), cost: (kind == CardKind::Payload).then(|| "60".into()), next, idle };
+        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard { icon: Some(Icon::Blast), name: name.into(), kind, colour: [255, 150, 60, 255], about: format!("{name} does a thing to the mould where the shot lands, at length."), next, idle };
         Loadout {
             name: "Lull".into(),
             whose: "Soldier 1".into(),
             cards: vec![card("Quiet", CardKind::Modifier, false, false), card("Gas", CardKind::Payload, false, false), card("Quiet", CardKind::Modifier, true, false), card("Blast", CardKind::Payload, true, false)],
             slots: 4,
-            recharge: 5.0,
-            charging: 0.4,
             note: None,
             cycle: Some((NOW + 10, KeyCode::KeyH)),
             gun: None,

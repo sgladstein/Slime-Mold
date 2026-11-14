@@ -49,7 +49,7 @@ fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
     // never hands the engines more legs than they take.
     let from = g.soldiers[0];
     let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40).map(|_| ShotIn { from: (from.x, from.y), to: (from.x + 10.0 * sc, from.y), r: 1.0 }).collect();
-    let by = vec![Some(0); many.len()];
+    let by = vec![(Some(0), 0); many.len()];
     let (legs, who) = g.fly(many, &by, 1.0 / 15.0);
     assert_eq!((legs.len(), who.len(), g.bullets.len()), (squad::SHOTS_MAX, squad::SHOTS_MAX, squad::SHOTS_MAX));
     assert_eq!(g.bullets_dropped, 40);
@@ -59,7 +59,7 @@ fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
     let (w, h) = g.world.size();
     let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.open(x, y) && g.world.open(x - 3.0, y) && g.world.open(x - 2.0, y) && g.world.open(x - 1.0, y) && x > 4.0).expect("a wall or rock cell with open ground west of it");
     let start = (wall.0 - 3.0, wall.1);
-    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[None], 1.0);
+    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[(None, 0)], 1.0);
     assert!((legs[0].to.0 - wall.0).abs() <= 1.0, "leg {:?} wall {:?}", legs[0], wall);
     g.landed(&legs, &[squad::ShotOut { hit: None, killed: 0 }]);
     assert!(g.bullets.is_empty(), "the bullet flew on past the wall");
@@ -72,7 +72,7 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     let r = g.rules;
     let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0 };
     let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
-    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1 };
+    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0 };
     // Pierce: on past the hit by the gap, one pierce fewer, range spent
     // to there; the split waits for the bullet's last hit.
     g.bullets = vec![b];
@@ -108,7 +108,7 @@ fn split_pieces_cap_at_the_shot_buffer_in_order() {
     // Pieces go to the end in their parents' order until the buffer
     // is full, the rest are counted, never more than `SHOTS_MAX` fly.
     let mut g = small(1);
-    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2 };
+    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0 };
     g.bullets = (0..squad::SHOTS_MAX).map(b).collect();
     let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0 }).collect();
     // Every second one hits; the others fly on and keep their places.
@@ -147,7 +147,7 @@ fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
         }
         (g.shots, later, g.killed, g.mould)
     };
-    let both = BulletMods { pierce: 1, split: 2, reach: 0, rate: 0 };
+    let both = BulletMods { pierce: 1, split: 2, ..BulletMods::default() };
     let a = run(both);
     assert_eq!(a, run(both), "the same seed played twice");
     let plain = run(BulletMods::default());
@@ -2311,10 +2311,10 @@ fn an_unarmed_squad_fires_the_standard_rifle_of_its_rules() {
 }
 
 /// Each squad fires its own gun: range, rate, spread and bullets a shot.
-/// A split half starts with the standard rifle (a gun is loot, not
-/// copied); merging hands a gun back; `Cmd::Arm` None returns the rifle.
+/// Both halves of a split carry a copy (owner 18:05Z); merging hands a gun
+/// to a squad without one; `Cmd::Arm` None returns the rifle.
 #[test]
-fn each_squad_fires_its_own_gun_and_a_split_does_not_copy_it() {
+fn each_squad_fires_its_own_gun_and_both_halves_of_a_split_copy_it() {
     use crate::mould::guns::GunKind;
     let mut g = squads(2);
     for _ in 0..3 {
@@ -2327,8 +2327,9 @@ fn each_squad_fires_its_own_gun_and_a_split_does_not_copy_it() {
     let m = g.middle(0).unwrap();
     let b = g.split(0, (m.0 + 30.0, m.1)).expect("a split");
     assert_eq!(g.gun(0), carbine, "the half left behind keeps the gun");
-    assert_eq!(g.gun(b), Gun::standard(&g.rules), "the new half takes the standard rifle");
+    assert_eq!(g.gun(b), carbine, "the new half carries a copy (owner 18:05Z)");
     g.apply(Cmd::Arm(b as u8, Some(long)));
+    assert_eq!(g.gun(0), carbine, "a copy: arming one half leaves the other's");
     assert_eq!(g.gun_range(b), 40.0);
     assert!(g.shot_gap(0) * 4 <= g.shot_gap(b), "the carbine fires 4.4 times as often as the long gun: {} against {}", g.shot_gap(0), g.shot_gap(b));
     assert_eq!(g.gun_range_max(), 40.0, "the mould's panic reach reads the farthest gun");
