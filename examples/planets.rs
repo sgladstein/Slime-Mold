@@ -1,7 +1,7 @@
 //! **Generated planets, written out and measured** (`mould::levelgen`, the
 //! roguelike run's levels, 2026-11-14).
 //!
-//! `cargo run --release --example planets -- [seeds=1-3] [depths=1-8] [out=DIR]`
+//! `cargo run --release --example planets -- [seeds=1-3] [depths=1-8] [out=DIR] [attempt=N]`
 //!
 //! For each seed and depth: the planet's card (name, biome), the attempt
 //! that passed its checks (and what the earlier ones failed on), its
@@ -23,20 +23,23 @@ fn range(v: &str) -> Result<Vec<u64>, String> {
 }
 
 fn main() -> Result<(), String> {
-    let (mut seeds, mut depths, mut out) = (vec![1, 2, 3], (1..=8).collect::<Vec<u64>>(), None::<PathBuf>);
+    let (mut seeds, mut depths, mut out, mut attempt) = (vec![1, 2, 3], (1..=8).collect::<Vec<u64>>(), None::<PathBuf>, None::<u32>);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or(format!("expected key=value, got {a}"))?;
         match k {
             "seeds" => seeds = range(v)?,
             "depths" => depths = range(v)?,
             "out" => out = Some(PathBuf::from(v)),
-            _ => return Err(format!("unknown key {k} (seeds, depths, out)")),
+            // Save this attempt's build, checked or not, in place of the
+            // planet (to look at why an attempt failed).
+            "attempt" => attempt = Some(v.parse().map_err(|e| format!("attempt {v}: {e}"))?),
+            _ => return Err(format!("unknown key {k} (seeds, depths, out, attempt)")),
         }
     }
     if let Some(d) = &out {
         std::fs::create_dir_all(d).map_err(|e| format!("{}: {e}", d.display()))?;
     }
-    println!("depth seed name biome attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | failed attempts");
+    println!("depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | failed attempts");
     let mut total = (0, 0.0f64);
     for &depth in &depths {
         for &seed in &seeds {
@@ -57,11 +60,16 @@ fn main() -> Result<(), String> {
                 why.push(problems.join("; "));
             }
             let s = levelgen::stats(&p, &m);
+            let rc = levelgen::Recipe::of(&p);
             let pc = |v: f32| format!("{:.0}%", v * 100.0);
             println!(
-                "{depth} {seed} {} {} {} {ms:.0} | {} {} {} {} {} {} {} | {} {} {} | {} | {}",
+                "{depth} {seed} {} {} [{:?} {:?} {:?} {}] {} {ms:.0} | {} {} {} {} {} {} {} | {} {} {} | {} | {}",
                 p.name,
-                p.biome.name(),
+                p.biome.name().replace(' ', "-"),
+                rc.openness,
+                rc.water,
+                rc.soil,
+                rc.pattern.name().replace(' ', "-"),
                 passed.map_or("fallback".into(), |a| a.to_string()),
                 s.crystals,
                 pc(s.rock),
@@ -77,6 +85,7 @@ fn main() -> Result<(), String> {
                 why.join(" / ")
             );
             if let Some(d) = &out {
+                let m = attempt.map_or(m, |a| levelgen::build(&p, a));
                 m.save(d, &format!("planet-{depth}-{seed}"))?;
             }
         }

@@ -40,7 +40,8 @@ impl<W: World> Game<W> {
         let mut who = Vec::new();
         let mut from = Vec::new();
         let mut shots = Vec::new();
-        let mut shooters: Vec<Option<usize>> = Vec::new();
+        // Who fired each shot, and the cast it carries (`Bullet::cast`).
+        let mut shooters: Vec<(Option<usize>, u8)> = Vec::new();
         // Elbow room first (`Rules::elbow`), so this frame's walk, touch
         // and shots all see the spread squad.
         self.elbow_room(dt);
@@ -117,15 +118,35 @@ impl<W: World> Game<W> {
                         // bullets a shot, each turned on its own (the
                         // scattergun's fan; the standard rifle fires one).
                         let gun = self.gun(q);
+                        // Every shot fires the next card in turn, at the
+                        // gun's rate, and never stops to recharge (owner
+                        // 18:05Z); a scattergun's fan all carry it.
+                        let m = self.mods(q);
+                        let n = m.casts;
+                        let cast = if n > 0 {
+                            let c = s.next % n;
+                            self.soldiers[k].next = (c + 1) % n;
+                            c + 1
+                        } else {
+                            0
+                        };
+                        // The bullet it fires (`bullets::Ammo`): its damage
+                        // widens the strike (area as damage, up to the
+                        // engines' `squad::R_MAX`), its range and spread
+                        // times the gun's; its speed rides on the bullet.
+                        let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
+                        let hit_r = (strike * ammo.reach()).min(squad::R_MAX);
+                        let reach = reach * ammo.range();
+                        let spread = gun.spread * ammo.spread();
                         for _ in 0..gun.shots.max(1) {
                             let (mut ux, mut uy) = (dx / d, dy / d);
-                            if gun.spread > 0.0 {
-                                let a = ((self.rng.f32() * 2.0 - 1.0) * gun.spread * sc / d).atan();
+                            if spread > 0.0 {
+                                let a = ((self.rng.f32() * 2.0 - 1.0) * spread * sc / d).atan();
                                 let (sn, cs) = a.sin_cos();
                                 (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
                             }
-                            shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
-                            shooters.push(Some(k));
+                            shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: hit_r });
+                            shooters.push((Some(k), cast));
                         }
                         // A worker of a squad shoots less often (`CoverRules::work_fire`).
                         let gap = self.shot_gap(q);
@@ -180,7 +201,7 @@ impl<W: World> Game<W> {
         // A turret's hits lay the crater too, through the same frame (the
         // buildings thread's call, 11-12 07:46Z: one rule for every shot).
         self.building_units(&mut units, &mut shots, &mut who, &mut from, dt);
-        shooters.resize(shots.len(), None);
+        shooters.resize(shots.len(), (None, 0));
         let fired = shots.len() as u32;
         let (shots, by) = self.fly(shots, &shooters, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
@@ -200,7 +221,7 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let dt = r.frame_ticks as f32 / r.tps as f32;
         self.shots += fired;
-        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired }).collect();
+        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired, cast))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired, cast }).collect();
         self.landed(&f.shots, &out.shots);
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
         // Gassed mould sleeps and does not bite (the squad toolkit's sleep

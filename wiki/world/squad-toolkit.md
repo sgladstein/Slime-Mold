@@ -11,7 +11,9 @@ sources:
   - Reports/gun-budget-2026-11-14.md
   - Reports/guns-2026-11-14.md
   - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/no-recharge-2026-11-14.md
   - Reports/noita-spell-look-2026-11-14.md
+  - Reports/rolled-bullets-2026-11-14.md
   - Reports/rounds-2026-11-12.md
   - Reports/rounds-look-2026-11-14/index.html
   - Reports/sleep-gas-gpu-2026-11-14.md
@@ -19,6 +21,8 @@ sources:
   - Reports/squad-toolkit-round2-2026-11-12.md
   - Reports/trail-cards-2026-11-14.md
 code:
+  - Ammo
+  - Ammo::roll
   - BigDish::fling
   - BigDish::gas
   - BigDish::gassed_near
@@ -32,6 +36,8 @@ code:
   - BigParams::scorch_full
   - BigParams::scorch_keep
   - BigParams::sick_upkeep
+  - Bullet::cast
+  - Bullet::speed
   - Burst
   - Engine::burst
   - Engine::calm
@@ -130,11 +136,21 @@ Cards cost budget (`Card::cost`, gun budget 10, capacity at loadout, owner 15:34
 `smother` (wipes food scent) added and `range` made 2x a card ([report](../../Reports/gun-budget-2026-11-14.md)).
 Since 16:46Z (owner) **the squad owns the gun** (`mould::guns`, [report](../../Reports/guns-2026-11-14.md)): a
 `Gun` is range, rate, spread, bullets a shot, budget and slots, rolled (`Gun::roll(seed, depth)`) round one of four
-kinds (rifle, the old gun; carbine; long gun; scattergun), luck in each roll (17:32Z; about 1 gun in 12 grades
-lucky), better and with bigger budgets on deeper planets; `Squad::gun` (`Game::gun`, `Cmd::Arm`, `gun=` and Shift+H
-in the window), none being the standard rifle of the game's `Rules`; each squad's own cards (`Squad::deck`,
-`Cmd::Load`, H in the squad mode), none being the army's round; a split's new half takes the rifle and the army's
-round; `rounds::fit_gun` and `guns::Loadout` (a squad's gun and cards between planets).
+kinds (rifle, the old gun; carbine; long gun; scattergun, 2-6 bullets a shot), each stat its own normal draw
+(18:07Z; no gun is labelled lucky, 18:18Z), better and with bigger budgets on deeper planets; `Squad::gun`
+(`Game::gun`, `Cmd::Arm`, `gun=` and Shift+H in the window), none being the standard rifle of the game's `Rules`;
+each squad's own cards (`Squad::deck`, `Cmd::Load`, H in the squad mode), none being the army's round; both halves
+of a split carry a copy of the gun and cards (18:05Z); `rounds::fit_gun` and `guns::Loadout` (a squad's gun and
+cards between planets). Since 18:05Z there is **no recharge** ([report](../../Reports/no-recharge-2026-11-14.md)):
+every shot carries the next cast in turn (`Soldier::next`, `Bullet::cast`) at the gun's rate of fire and casts it
+where it hits slime; payloads are bullets, free to fire (18:38Z: "The bank is just to build the gun. How many and
+which cards"; at the toolkit's prices eight soldiers on gas and blast spent a 2,000 bank in about 5 s).
+**Rolled bullets** (owner's 16:46Z spec, [report](../../Reports/rolled-bullets-2026-11-14.md)): a bullet card
+(`Card::Ammo`, `mould::bullets`) is a shell (plain or a payload), a set (standard, slug, needle, buckshot, each
+leaning the rolls) and damage plus 0.25-4x speed, range and spread multipliers, each its own normal draw; damage
+scales the strike's and the burst's radius as its square root (`Ammo::reach`); its cost (shell base × grade^1.5 ×
+luck) comes out of the gun's budget. `Ammo::roll(seed, depth)` is the shop's roll; the old payload cards and
+`Card::Plain` are the standard bullets.
 The `range` flight card (11-14 08:39Z, owner's ask) stretches every soldier's sight and
 reach by `Rules::range_card` (1 of `Rules::range` a copy since the 15:06Z notes' "2-4x
 distance", was 0.5), through `Game::gun_range`: 48 cells with one, 72 with two; building
