@@ -221,7 +221,7 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let dt = r.frame_ticks as f32 / r.tps as f32;
         self.shots += fired;
-        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired, cast))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired, cast }).collect();
+        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired, cast))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired, cast, r: i.r }).collect();
         self.landed(&f.shots, &out.shots);
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
         // Gassed mould sleeps and does not bite (the squad toolkit's sleep

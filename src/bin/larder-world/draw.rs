@@ -97,7 +97,7 @@ fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook
     if fl > 0.0 {
         let sc = g.world.scale();
         let m = (b.at.0 + look.facing.cos() * half * 1.8, b.at.1 + look.facing.sin() * half * 1.8);
-        lights.push(Light { at: m, reach: 1.5 * SHOT_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
+        lights.push(Light { at: m, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
     }
 }
 
@@ -474,13 +474,15 @@ impl App {
                     self.marks.streak(h, (h.0 - b.dir.0 * len * 0.6, h.1 - b.dir.1 * len * 0.6), core * 0.6, glow, look.core);
                 }
             }
-            // The bullet's own light: a small glow on the slime under it.
-            // It reached 7 cells at 0.9 until 11-14; with every shot
+            // The bullet's own light: its strike's disc (`Bullet::r`), what
+            // it kills (owner 20:22Z: "only the size of the damage. The same
+            // for all affects"). It reached 7 cells at 0.9 until 11-14, then
+            // 2.5 (#296); with every shot
             // carrying a card (no recharge, #288) and pierce flying on
             // through the body, each hit swept a disc 14 cells across over
             // the slime (owner 20:09Z: "each bullet that hit has a huge wave
             // that goes out. it is too much").
-            self.lights.push(Light { at: b.at, reach: SHOT_LIGHT * sc * wide, lift: 3.0, colour: look.light, strength: if quiet { 0.2 } else { 0.5 } });
+            self.lights.push(Light { at: b.at, reach: b.r, lift: 3.0, colour: look.light, strength: if quiet { 0.2 } else { 0.5 } });
         }
         // Turrets over the bullets, so a shot leaving the barrel tip
         // (`TURRET_MUZZLE`; mould at its foot is shot from nearer) comes
@@ -506,19 +508,22 @@ impl App {
             // A bomb's light reaches its throw ring and grows with the walkers
             // thrown, so the flash and the spray read as one (#225).
             let thrown = (p.flung as f32 / 400.0).min(1.0);
-            // 1.5 radii (was 3, after Noita's 8): every shot now casts, so a
-            // payload squad lit the whole front each volley (owner 20:09Z).
-            self.lights.push(Light { at, reach: 1.5 * p.burst.fling.max(p.burst.r) * sc, lift: 4.0, colour: look.light, strength: f * f * (1.0 + (p.killed as f32 / 200.0).min(1.0) + 0.5 * thrown) });
+            // Its own radius, what it kills, sleeps or sickens (owner 20:22Z:
+            // "the blast light affect should only be the size of the damage.
+            // The same for all affects"); a bomb's throw ring is not damage.
+            // Was 3 radii after Noita's 8, then 1.5 (#296): every shot now
+            // casts, so a payload squad lit the whole front each volley.
+            self.lights.push(Light { at, reach: p.burst.r * sc, lift: 4.0, colour: look.light, strength: f * f * (1.0 + (p.killed as f32 / 200.0).min(1.0) + 0.5 * thrown) });
         }
         // Plain hits (a shot with no cast) light their spot as the tracer
         // fades, and a muzzle lights round the soldier as it fires.
         for tr in self.tracers.iter().filter(|tr| tr.hit) {
-            self.lights.push(Light { at: tr.to, reach: SHOT_LIGHT * sc, lift: 3.0, colour: [255.0, 214.0, 150.0], strength: 0.5 * (1.0 - tr.age / TRACER) });
+            self.lights.push(Light { at: tr.to, reach: tr.r, lift: 3.0, colour: [255.0, 214.0, 150.0], strength: 0.5 * (1.0 - tr.age / TRACER) });
         }
         for (k, s) in g.soldiers.iter().enumerate() {
             let fl = self.looks.get(k).map_or(0.0, |l| l.flash / FLASH);
             if s.alive && fl > 0.0 {
-                self.lights.push(Light { at: (s.x, s.y), reach: SHOT_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.5 * fl });
+                self.lights.push(Light { at: (s.x, s.y), reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.5 * fl });
             }
             // A bite: a brief hot light on the side the slime bit from
             // (`step_notes`, from the real damage).
@@ -535,7 +540,7 @@ impl App {
             let left = due.saturating_sub(t) as f32 / tps;
             let f = if c.trigger == Some(rounds::Card::Delay) { 1.0 - (left / self.rounds.rules.delay_secs).clamp(0.0, 1.0) } else { 0.4 };
             self.marks.streak(at, at, (0.18 * sc * zoom).clamp(1.2, 4.0), [look.glow[0], look.glow[1], look.glow[2], (90.0 + 150.0 * f) as u8], look.core);
-            self.lights.push(Light { at, reach: 3.0 * sc, lift: 2.0, colour: look.light, strength: 0.3 + 0.7 * f });
+            self.lights.push(Light { at, reach: MUZZLE_LIGHT * sc, lift: 2.0, colour: look.light, strength: 0.3 + 0.7 * f });
         }
         // A soldier is drawn its touch wide (walkers that close drain it),
         // and at least 8 pixels across the radius, so it reads at any zoom
@@ -1151,11 +1156,15 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
 
 /// How long a burst lights the world, game seconds.
 const BURST_LIGHT: f32 = 0.12;
-/// How far a shot's lights reach, in cells: the bullet in flight, a plain
-/// hit, a soldier's muzzle (a turret's 1.5 times). Until 11-14 they were
-/// 7, 4, 5 and 6 cells, which over the slime read as a wave from every
-/// hit once every shot carried a card (owner 20:09Z: "it is too much").
-const SHOT_LIGHT: f32 = 2.5;
+/// How far a light with no damage of its own reaches, in cells: a
+/// soldier's or turret's muzzle, a lodged cast's ember. Every light that
+/// does damage reaches only as far as its damage: a bullet and a hit their
+/// strike (`Bullet::r`, `Shot::r`), a burst its radius (owner 20:22Z).
+/// Until 11-14 a bullet's lit 7 cells, a hit's 4, a muzzle's 5, a turret's
+/// 6 and a burst 3 radii, which over the slime read as a wave from every
+/// hit once every shot carried a card (owner 20:09Z: "it is too much");
+/// #296 cut them to 2.5 cells and 1.5 radii.
+const MUZZLE_LIGHT: f32 = 1.0;
 
 /// A payload's colours: the streak's glow and hot core, and its light.
 pub(super) struct CardLook {

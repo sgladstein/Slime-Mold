@@ -155,6 +155,9 @@ pub struct Shot {
     pub fired: bool,
     /// The cast it carries (`Bullet::cast`): 0 plain.
     pub cast: u8,
+    /// Its strike's radius, fine cells (`Bullet::r`): what the hit kills,
+    /// and so how far the window's light of it reaches (owner 20:22Z).
+    pub r: f32,
 }
 
 /// One take from a crystal in the last frame, as the window draws it

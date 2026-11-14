@@ -440,6 +440,9 @@ struct Tracer {
     to: (f32, f32),
     hit: bool,
     age: f32,
+    /// The strike's radius, fine cells (`Shot::r`): a hit lights only
+    /// what it kills (owner 20:22Z).
+    r: f32,
 }
 
 /// What the window keeps of each soldier beside the game: the way it
