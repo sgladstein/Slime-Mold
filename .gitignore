@@ -5,6 +5,3 @@ __pycache__/
 # player's knobs, written next to wherever the game was run from.
 /mould-tune.txt
 /.claude/settings.local.json
-
-# The window tests' replay dumps (larder-world writes them in the working folder).
-/larder-world-replay-planet-*.txt
