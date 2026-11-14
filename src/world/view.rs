@@ -33,6 +33,26 @@ const PARAMS_BYTES: usize = 128;
 /// blend (1) all fit in 4.
 const MARGIN: u32 = 4;
 
+/// The most point lights a frame (`View::set_lights`); `shaded` loops over
+/// them a pixel, so the cap bounds that loop.
+pub const MAX_LIGHTS: usize = 64;
+/// The lights' binding: 15-19 are the graphics thread's (#212 and its
+/// crystal work), so the lights sit after them.
+const LIGHTS_BINDING: u32 = 20;
+
+/// A point light (`View::set_lights`): something in the game that gives
+/// off light, lighting the world's own relief. `at` and `reach` in world
+/// cells, `lift` its height above the ground in cells, `colour` 0-255 and
+/// `strength` (1 about a lamp's worth at its centre).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Light {
+    pub at: (f32, f32),
+    pub reach: f32,
+    pub lift: f32,
+    pub colour: [f32; 3],
+    pub strength: f32,
+}
+
 /// The minimap's longest side, in pixels, and its margin from the corner.
 pub const MINIMAP_SIDE: u32 = 240;
 pub const MINIMAP_MARGIN: u32 = 8;
@@ -87,6 +107,9 @@ pub struct View {
     /// Each walker's energy, when the world grows (`set_alive`): a slot
     /// below 0 is empty or dead and draws no speck.
     alive: wgpu::Buffer,
+    /// This frame's point lights (`set_lights`), two vec4s each.
+    lights: wgpu::Buffer,
+    n_lights: u32,
     lives: bool,
     /// Food's news (`set_news`): the engine's news (the step each walker
     /// last heard of food) and state (the step now) buffers, and the
@@ -149,7 +172,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -165,10 +188,11 @@ impl View {
         let atlas = Self::atlas(device, queue);
         let (hcell, mcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
+        let lights = storage(device, "lights", (MAX_LIGHTS * 32) as u64);
         let (news, state) = (storage(device, "news", 16), storage(device, "state", 16));
         let fgrid = Self::fine_buffer(device, screen);
         let (gems, gem_cell) = (storage(device, "crystals", 16), storage(device, "crystal cells", 16));
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell]);
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -184,6 +208,8 @@ impl View {
             walkers,
             specks,
             alive,
+            lights,
+            n_lights: 0,
             lives: false,
             news,
             state,
@@ -254,13 +280,15 @@ impl View {
         ((zoom / 3.0).floor() as u32).clamp(1, 2)
     }
 
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 20]) -> wgpu::BindGroup {
-        let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 21]) -> wgpu::BindGroup {
+        // In order from 0, but the last (the lights) at `LIGHTS_BINDING`.
+        let last = bufs.len() - 1;
+        let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: if i == last { LIGHTS_BINDING } else { i as u32 }, resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -436,6 +464,19 @@ impl View {
         }
     }
 
+    /// This frame's point lights (past `MAX_LIGHTS` the rest are dropped):
+    /// they light the shaded world (`view.wgsl`, `shaded`), so only with
+    /// the look on.
+    pub fn set_lights(&mut self, lights: &[Light]) {
+        let n = lights.len().min(MAX_LIGHTS);
+        if n > 0 {
+            let words: Vec<f32> = lights[..n].iter().flat_map(|l| [l.at.0, l.at.1, l.reach, l.lift, l.colour[0], l.colour[1], l.colour[2], l.strength]).collect();
+            let bytes: Vec<u8> = words.iter().flat_map(|x| x.to_le_bytes()).collect();
+            self.queue.write_buffer(&self.lights, 0, &bytes);
+        }
+        self.n_lights = n as u32;
+    }
+
     /// This frame's marks.
     pub fn set_marks(&mut self, marks: &Marks) {
         let words = marks.words();
@@ -466,7 +507,7 @@ impl View {
         for v in [self.screen.0, self.screen.1, self.stride, self.world.0 as u32, self.world.1 as u32, self.n_marks, self.has_vis as u32, self.has_overlay as u32] {
             b.extend(v.to_le_bytes());
         }
-        for v in [cam.x, cam.y, cam.zoom, 0.0] {
+        for v in [cam.x, cam.y, cam.zoom, f32::from_bits(self.n_lights)] {
             b.extend(v.to_le_bytes());
         }
         for v in [mm.0, mm.1, mm.2, mm.3, self.shade as u32, self.n_walk, self.lives as u32, self.body_density.to_bits()] {

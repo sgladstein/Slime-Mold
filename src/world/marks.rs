@@ -43,6 +43,12 @@ pub enum Shape {
     /// 5 larder), `extra` bits 0-7 how built (0-255), 8-15 its health share,
     /// bit 16 working (its lamp lit). The sprite atlas's tiles 4-15.
     Building = 8,
+    /// Something bright in flight (a bullet), drawn along this frame's
+    /// travel: head at the anchor, tail at (`hw`, `hh`), a world point;
+    /// `fill` the core's radius in pixels; `colour` its glow (alpha the
+    /// glow's strength), `colour2` its hot core. Added to the world as
+    /// light (`view.wgsl`, `streak_at`), not painted over it.
+    Streak = 9,
 }
 
 /// `hw` and `hh` are world cells (scaled by the zoom, at least 2 pixels)
@@ -86,6 +92,12 @@ pub const TEAMS: [Rgba; 4] = [[245, 245, 240, 255], [110, 180, 255, 255], [255, 
 /// direction rule 3), over a dark ring (`Marks::selected`). Heavy yellow
 /// rings 1.5 pixels wide hid a soldier on gold slime (art review
 /// 2026-11-14) and were the slime's own hue.
+/// A striding figure, 5x7 (`Marks::icon`): a builder on the way.
+pub const WALKING: [u8; 7] = [0b00100, 0b01110, 0b10101, 0b00100, 0b01010, 0b01001, 0b10001];
+/// A standing figure; with `SLASH` over it, no builder sent.
+pub const STANDING: [u8; 7] = [0b00100, 0b01110, 0b10101, 0b00100, 0b01010, 0b01010, 0b01010];
+/// A slash corner to corner, drawn over `STANDING` in the warning colour.
+pub const SLASH: [u8; 7] = [0b00001, 0b00010, 0b00010, 0b00100, 0b01000, 0b01000, 0b10000];
 pub const SELECTED: Rgba = [250, 246, 228, 255];
 /// The dark under-ring that keeps a selection ring readable on bright slime.
 pub const SELECTED_INK: Rgba = [14, 13, 10, 200];
@@ -199,22 +211,28 @@ impl Marks {
             if c == ' ' {
                 continue;
             }
-            let rows = crate::hud::glyph_rows(c);
-            let mut bits = 0u64;
-            for (r, row) in rows.iter().enumerate() {
-                for col in 0..5 {
-                    if row >> (4 - col) & 1 == 1 {
-                        bits |= 1 << (r * 5 + col);
-                    }
+            self.icon(at, (offset.0 + i as f32 * advance, offset.1), crate::hud::glyph_rows(c), scale, colour);
+        }
+    }
+
+    /// One 5x7 picture (rows top down, bit 4 the left column), drawn as a
+    /// glyph: a small sign beside a building, such as `WALKING`.
+    pub fn icon(&mut self, at: (f32, f32), offset: (f32, f32), rows: [u8; 7], scale: f32, colour: Rgba) {
+        let mut bits = 0u64;
+        for (r, row) in rows.iter().enumerate() {
+            for col in 0..5 {
+                if row >> (4 - col) & 1 == 1 {
+                    bits |= 1 << (r * 5 + col);
                 }
             }
-            self.push(Mark {
-                offset: (offset.0 + i as f32 * advance, offset.1),
-                colour2: (bits as u32).to_le_bytes(),
-                extra: (bits >> 32) as u32,
-                ..Mark::new(Shape::Glyph, at, (scale, scale), colour)
-            });
         }
+        self.push(Mark { offset, colour2: (bits as u32).to_le_bytes(), extra: (bits >> 32) as u32, ..Mark::new(Shape::Glyph, at, (scale, scale), colour) });
+    }
+
+    /// A streak from `tail` to `head` (world points), its core `core_px`
+    /// pixels across the radius: see `Shape::Streak`.
+    pub fn streak(&mut self, head: (f32, f32), tail: (f32, f32), core_px: f32, glow: Rgba, core: Rgba) {
+        self.push(Mark { colour2: core, fill: core_px, ..Mark::new(Shape::Streak, head, tail, glow) });
     }
 
     /// A soldier at `at`, `r` world cells across the radius, facing
@@ -273,6 +291,17 @@ mod tests {
         let bits = u32::from_le_bytes(m.list[0].colour2) as u64 | (m.list[0].extra as u64) << 32;
         assert!(bits.count_ones() >= 7 && bits < 1 << 35);
         assert_eq!(m.words().len(), 2 * MARK_WORDS);
+    }
+
+    #[test]
+    fn a_streak_carries_its_tail_core_and_colours() {
+        let mut m = Marks::default();
+        m.streak((10.0, 4.0), (7.0, 4.0), 2.5, [255, 120, 40, 210], [255, 236, 190, 255]);
+        let w = m.words();
+        assert_eq!(w[6], Shape::Streak as u32);
+        assert_eq!((f32::from_bits(w[4]), f32::from_bits(w[5])), (7.0, 4.0), "the tail is a world point");
+        assert_eq!(f32::from_bits(w[9]), 2.5, "the core's radius in pixels");
+        assert_eq!(w[8], u32::from_le_bytes([255, 236, 190, 255]));
     }
 
     #[test]

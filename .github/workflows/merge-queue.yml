@@ -1,0 +1,174 @@
+# Our own merge queue (2026-11-14). WHY: with about ten threads merging, every
+# merge to main sent the other open PRs back to merge main in and re-run the
+# ~11 min CI, so PRs landed about one per 15 min and some went green four
+# times before landing. GitHub's merge queue would fix it, but GitHub offers it
+# only to repositories owned by an organization, and this one is owned by a
+# personal account (docs, "managing a merge queue", read 2026-11-14).
+#
+# HOW IT WORKS. A thread queues a PR by adding the label `queue`. This
+# workflow takes up to five queued PRs, oldest label first, merges each onto
+# current main with a merge commit ("Merge pull request #N ..."), runs the
+# normal CI (ci.yml, called as a reusable workflow) on that one candidate
+# commit, and if it is green pushes the candidate to main as a fast-forward.
+# GitHub marks each PR merged because its head is now on main. One 11 min run
+# lands the whole batch, and nobody re-merges main by hand.
+#
+# - A PR that conflicts with main or with a PR ahead of it is dropped from the
+#   batch: its label comes off and it gets a comment. Fix and re-label.
+# - A red batch of several PRs is retried one PR at a time (max=1), so a bad
+#   PR is found and unlabelled with a link to its failing run, and the rest
+#   still land.
+# - If main moved while CI ran (someone merged by hand), the push is refused
+#   as a non-fast-forward and the queue simply runs again on the new main.
+# - The push to main is made with GITHUB_TOKEN, so it starts no new workflow
+#   runs (GitHub's rule): main's own push CI does not run for queued merges.
+#   It does not need to, the exact commit was tested. Re-dispatching the queue
+#   uses workflow_dispatch, the one event GITHUB_TOKEN may start.
+#
+# Turning it off: delete this file. Nothing else depends on it; ci.yml's
+# workflow_call inputs are unused by every other event.
+name: Merge queue
+
+on:
+  # pull_request_target, not pull_request, so the queue logic always comes
+  # from main and a PR cannot change how it is merged. Only people with triage
+  # access can add a label, and the PR's code only ever runs inside ci.yml's
+  # jobs with a read-only token.
+  pull_request_target:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      max:
+        description: "PRs per batch"
+        default: "5"
+  # Backstop, in case a dispatch is lost. An empty queue costs ~10 s; the repo
+  # is public, so Actions minutes are free.
+  schedule:
+    - cron: "*/15 * * * *"
+
+# One queue run at a time. A later trigger waits rather than cancelling the
+# run under test; it reads the queue afresh when it starts.
+# A label other than `queue` gets a group of its own: in the shared group its
+# no-op run would replace a pending queue run (GitHub keeps one pending run
+# per group).
+concurrency:
+  group: ${{ (github.event_name == 'pull_request_target' && github.event.label.name != 'queue') && format('mq-ignore-{0}', github.run_id) || 'merge-queue' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build candidate
+    if: github.event_name != 'pull_request_target' || github.event.label.name == 'queue'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    outputs:
+      sha: ${{ steps.build.outputs.sha }}
+      base: ${{ steps.build.outputs.base }}
+      prs: ${{ steps.build.outputs.prs }}
+      count: ${{ steps.build.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - id: build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAX: ${{ inputs.max || '5' }}
+          R: ${{ github.repository }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          base=$(git rev-parse HEAD)
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          # Queued PRs, oldest `queue` label first.
+          : > queue.txt
+          for n in $(gh pr list -R "$R" --label queue --base main --state open --json number,isDraft --jq '.[] | select(.isDraft | not) | .number'); do
+            t=$(gh api "repos/$R/issues/$n/events" --paginate --jq '.[] | select(.event == "labeled" and .label.name == "queue") | .created_at' | tail -1)
+            echo "$t $n" >> queue.txt
+          done
+          sort queue.txt
+          prs=""; count=0
+          for n in $(sort queue.txt | awk '{print $2}'); do
+            [ "$count" -ge "$MAX" ] && break
+            title=$(gh pr view -R "$R" "$n" --json title --jq .title)
+            ref=$(gh pr view -R "$R" "$n" --json headRefName --jq .headRefName)
+            git fetch -q origin "pull/$n/head"
+            if git merge --no-ff -q -m "Merge pull request #$n from $ref" -m "$title" FETCH_HEAD; then
+              prs="$prs $n"; count=$((count + 1))
+            else
+              git merge --abort
+              gh pr edit -R "$R" "$n" --remove-label queue
+              gh pr comment -R "$R" "$n" --body "Merge queue: this PR does not merge cleanly onto main$( [ -n "$prs" ] && echo " plus the PRs ahead of it (#${prs# })" ). Merge main in, fix the conflicts and add the \`queue\` label again. ([run]($GITHUB_SERVER_URL/$R/actions/runs/$GITHUB_RUN_ID))"
+            fi
+          done
+          echo "prs=${prs# }" >> "$GITHUB_OUTPUT"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "candidate: ${prs:- (empty queue)}"
+          if [ "$count" -gt 0 ]; then
+            # The candidate needs a ref so ci.yml's checkout can fetch it.
+            git push -f origin HEAD:refs/heads/merge-queue/candidate
+          fi
+
+  ci:
+    name: CI
+    needs: build
+    if: needs.build.outputs.count > 0
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.build.outputs.sha }}
+      base: ${{ needs.build.outputs.base }}
+
+  land:
+    name: land or report
+    needs: [build, ci]
+    if: always() && needs.build.result == 'success' && needs.build.outputs.count > 0
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          R: ${{ github.repository }}
+          SHA: ${{ needs.build.outputs.sha }}
+          PRS: ${{ needs.build.outputs.prs }}
+          COUNT: ${{ needs.build.outputs.count }}
+          CI: ${{ needs.ci.result }}
+        run: |
+          run_url="$GITHUB_SERVER_URL/$R/actions/runs/$GITHUB_RUN_ID"
+          again() { gh workflow run merge-queue.yml -R "$R" --ref main -f max="$1"; }
+          if [ "$CI" = "success" ]; then
+            git fetch -q origin merge-queue/candidate
+            # Fast-forward only: refused if main moved while CI ran.
+            if git push origin "$SHA:refs/heads/main"; then
+              echo "landed: $PRS"
+            else
+              echo "main moved under the candidate; building again on the new main"
+            fi
+            again 5
+          elif [ "$CI" != "failure" ]; then
+            echo "CI ended as $CI (cancelled?); leaving the queue as it is"
+          elif [ "$COUNT" -gt 1 ]; then
+            echo "batch ($PRS) failed CI; retrying one PR at a time"
+            again 1
+          else
+            gh pr edit -R "$R" "$PRS" --remove-label queue
+            gh pr comment -R "$R" "$PRS" --body "Merge queue: CI failed on this PR merged onto current main ([run]($run_url)). Fix it and add the \`queue\` label again."
+            again 5
+          fi
