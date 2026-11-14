@@ -237,6 +237,13 @@ pub struct Rules {
     /// 4). At 2 idle starves by 340-350 s, but strike starves its 30
     /// soldiers on 3 of 4 and fort on 1: an army costing 4.5 times its
     /// price over a game was too steep for a first default.
+    ///
+    /// **0, off, since 2026-11-14** (owner, after a playtest, 01:49Z: "I
+    /// don't know when it was decided that I have to keep my solider fed or
+    /// they die, but that is bad. The whole game is just trying to harvest
+    /// crystals then I am have no time to attack the slime."). Food buys
+    /// soldiers, walls and buildings; it no longer keeps soldiers alive.
+    /// `ration=1` (window and census) plays the PR 4 economy.
     pub ration: f32,
     /// Hit points a game second every soldier loses while the bank can't
     /// pay the rations (a share of it for a part-paid step; `Game::hungry`).
@@ -290,6 +297,19 @@ pub struct Rules {
     /// tests, with no census (the owner's 17:26Z testing rule: a census
     /// is not a gate for a look). Any time works, not just whole seconds:
     /// the countdown is in fine steps (`World::fine_steps` a tick).
+    ///
+    /// **2 s since 2026-11-14, the owner's pick** (card, 01:05Z: "Shorter
+    /// craters, 2 s"), after playing shape C (11-12 22:18Z: "The craters
+    /// last too long"). The card's other choices were a crater that keeps
+    /// half the trail under it (`scorch_keep` 0.5, so thick mould closes
+    /// it soonest) and keeping 4.5 s. Two seconds answers "too long"
+    /// directly, and since aims see their slime (#198) a squad by a wall
+    /// fires about four times as often, so a hole under steady fire is
+    /// renewed before it closes. On shape C (the Fork, seed 1, three
+    /// hands) a hit's hole is back to 80% of its body in a median 0.5 to
+    /// 0.9 s, against 1.3 to 3.9 s at 4.5 s, and a shot kills 2-6% fewer
+    /// (`Reports/larder-crater-2s-2026-11-14.md`). Set from the card
+    /// with smoke checks, no census (the 17:26Z testing rule).
     pub crater: f32,
     /// How far into the slime a shot's blast is centred, in strike radii
     /// (`squad::Frame::sink`): on along the shot's line from the first
@@ -404,10 +424,10 @@ impl Default for Rules {
             build: BuildRules::default(),
             overrun: 20.0,
             reserve: 0.0,
-            ration: 1.0,
+            ration: 0.0,
             hunger: 1.0,
             seek: true,
-            crater: 4.5,
+            crater: 2.0,
             sink: 1.0,
             spread: 0.0,
             crystal_solid: true,
