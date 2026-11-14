@@ -743,3 +743,14 @@ fn a_step_shows_a_siren_call_a_bank_at_an_outpost_and_a_bite() {
     step_notes(app.game.as_ref().unwrap(), &mut app.blooks, &mut app.looks, &mut banked);
     assert!(app.looks[0].flinch == FLINCH && app.looks[0].bite.abs() < 1e-4, "flinch {} from {}", app.looks[0].flinch, app.looks[0].bite);
 }
+
+/// Every test loadout H cycles fits a default gun's budget (owner's card,
+/// 11-14 15:34Z): the presets stay playable as the budget lands.
+#[test]
+fn every_test_loadout_fits_the_default_budget() {
+    let b = RoundRules::default().budget;
+    for (name, cards) in LOADOUTS {
+        let r = rounds::parse(cards).unwrap_or_else(|| panic!("{name} parses"));
+        assert!(rounds::cost(&r) <= b, "{name} costs {} of {b}", rounds::cost(&r));
+    }
+}

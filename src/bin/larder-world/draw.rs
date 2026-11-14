@@ -952,7 +952,13 @@ impl App {
             slots: rounds::SLOTS,
             recharge: rech,
             charging: lead.map_or(0.0, left).clamp(0.0, 1.0),
-            note: if rd.round.is_empty() { Some("No cards: H or the button for a loadout".into()) } else { note },
+            // The budget (owner's card, 11-14 15:34Z) under the cards.
+            note: if rd.round.is_empty() {
+                Some("No cards: H or the button for a loadout".into())
+            } else {
+                let spent = format!("Cost {} of {}", rounds::cost(&rd.round), rd.rules.budget);
+                Some(note.map_or(spent.clone(), |n| format!("{spent} · {n}")))
+            },
             cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
         }
     }
@@ -984,8 +990,8 @@ fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, CardKind, Str
         C::Pierce => (Icon::Pierce, CardKind::Flight, "Every bullet flies on through one more slime hit, striking each.".into()),
         C::Split => (Icon::Split, CardKind::Flight, format!("Every bullet breaks into {split_n} pieces where it lands, fanned on past the hit.")),
         // Trails (2026-11-14): each reuses the glyph of the field it lays.
-        C::Scorch => (Icon::Burn, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of crater along its flight for {:.0} s: a fire line the mould shuns.", 2.0 * r.trail_r, r.trail_crater_secs)),
-        C::Alarm => (Icon::Alert, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of alarm along its flight: a fence the mould flees.", 2.0 * r.trail_r)),
+        C::Scorch => (Icon::Burn, CardKind::Flight, format!("Every bullet burns the mould along its flight, {:.0} cells wide, and leaves a line of crater for {:.0} s: a fire line the mould shuns.", 2.0 * r.trail_r, r.trail_crater_secs)),
+        C::Bait => (Icon::Crystal, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of food scent along its flight: every mould follows it, into your fire or a scorch line.", 2.0 * r.trail_r)),
         C::Mist => (Icon::Gas, CardKind::Flight, format!("Every bullet leaves a thin gas cloud along its flight ({:.1} a disc): the mould that drifts into it sleeps.", r.trail_cloud)),
         // Range (owner, 11-14 08:39Z): reuses free fire's target glyph.
         C::Range => (Icon::Target, CardKind::Flight, format!("Every soldier sees and shoots {:.0}% further ({:.0} cells a card), mouse-aimed volleys too.", 100.0 * w.range_card, w.range * w.range_card)),
@@ -1012,6 +1018,7 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
     let payload_of = |j: usize| round.iter().filter(|c| c.kind() == rounds::Kind::Payload).nth(j).copied();
     for (i, &c) in round.iter().enumerate() {
         let (icon, kind, mut about) = card_face(c, r, w);
+        about = format!("{about} Costs {} of the gun's budget.", c.cost());
         let flight = kind == CardKind::Flight;
         let idle = !flight && runs[i] >= payloads;
         let goes_with = if flight { None } else { payload_of(runs[i]) };

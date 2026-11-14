@@ -4,6 +4,7 @@ kind: tool
 status: open
 updated: 2026-11-14
 sources:
+  - Reports/burning-trails-2026-11-14.md
   - Reports/explosions-2026-11-14/README.md
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/gas-cloud-2026-11-14.md
@@ -113,6 +114,11 @@ walls, and puts to sleep any walker on a cell over 0.2; the window shows it as a
 Step 5 is built ([report](../../Reports/trail-cards-2026-11-14.md)): the flight cards scorch,
 alarm and mist lay crater, alarm or a thin gas cloud along every soldier bullet's flight,
 through `World::burst` on both engines.
+Since 11-14 08:41Z (owner) scorch also burns the walkers on its line (`Burst::burn`,
+`World::burned`), and the engine's draw shows crater as a fading ember and alarm as a
+green haze straight from the fields ([report](../../Reports/burning-trails-2026-11-14.md)).
+The default mould ignores alarm (`alarm_weight` 0), so on 09:02Z (owner's card) the alarm trail
+became `bait`: food scent along the flight (`Burst::bait`, GPU pass `baitlay` 60) that every mould follows.
 The `range` flight card (11-14 08:39Z, owner's ask) stretches every soldier's sight and
 reach by `Rules::range_card` (0.5 of `Rules::range`) a copy, through `Game::gun_range`:
 36 cells with one, 48 with two; building reach and turrets keep their own ranges.

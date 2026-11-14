@@ -134,9 +134,46 @@ warms from the crystal outward, turns at 10 s (24,871 walkers at 6 s,
 Page: [Dense slime condenses](https://claude.ai/artifact/7L9QoQxqnk9Cazt1qyFpvR) (source
 `page/`).
 
+## Breakaway (`BigParams::roam`, 11-14 afternoon)
+
+The owner, 15:06Z: "When slime condensed it can become a separate entity
+that behaves different exploring further, eating crystals." 15:21Z, on
+whether it is a new slime type or the same slime: "Not sure yet. There will
+probably be both in the future, but we need to start building and play
+testing and iterate." Built as the same slime, off by default (`roam=`, the
+start menu's Breakaway, needs Condense):
+
+- Every `roam` steps after it condensed (300, 10 s), a condensed walker
+  picks the nearest crystal with at least `ROAM_FRESH` (0.8) of its charge
+  left and at least `roam_far` (30) dish cells away. A keyed draw per crystal
+  and step sends a `roam_share` (0.5) of the choices, so walkers that
+  condensed together and chose the same crystal go or stay together.
+- On the way it steers as a panicking walker does (sensors read only the
+  way there, at its own pace, not slowed alone), stays condensed, and
+  neither withers nor panics. It lands within `ROAM_LAND` (3) cells of the
+  crystal's centre, or when the crystal runs dry, and eats there.
+- Tests: `big::tests::condensed_slime_breaks_away_for_a_far_crystal` (off:
+  the same hash; on: 2,026 left, 436 landed, up to 1,177 on the way at
+  once); GPU twin "roam: condensed walkers break away, run and land" (1,364
+  on the way, 58 left and 26 landed in the tick; 0 words and 0 positions
+  off).
+- GPU: Params grew a row, 912 to 928 (`ROAM_AT`: `roam`, `roam_far`,
+  `roam_land` in fine cells, `roam_share`); the word's `ROAM` bit 18 and its
+  crystal in bits 19-24. No new pass.
+- Window (Fork, seed 1, farm, condense 300; `roam-window-*.txt`):
+  condense only 18,422 / 19,316 / 26,563 walkers at 1:00 / 2:00 / 5:00 and
+  2 soldiers at 5:00; with breakaway 19,428 / 21,285 / 28,104 and none. The
+  pieces reach every far crystal by 1:00, and the farm hand harvests 4,654
+  against 6,254. Clip: `page/breakaway.mp4`.
+- On the way a piece stretches into a file of specks along the walls
+  rather than travelling as a blob; holding it together is the obvious
+  next step if the owner wants it to read as a creature.
+
 ## Open
 
 - The art director's review of the transformation (owner, 08:34Z).
 - The owner's playtest: whether 10 s ripe and a crowd of 20 condense too
   much or too little, and whether it should be on in shape C.
 - 1070 frame cost.
+- Breakaway: the owner's playtest; whether a piece should hold together as
+  a blob on the way; whether it becomes its own slime type later.

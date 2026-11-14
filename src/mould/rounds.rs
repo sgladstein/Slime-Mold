@@ -81,7 +81,7 @@ pub enum Card {
     Pierce,
     Split,
     Scorch,
-    Alarm,
+    Bait,
     Mist,
     Range,
 }
@@ -95,14 +95,14 @@ pub enum Kind {
 }
 
 impl Card {
-    pub const ALL: [Card; 15] = [Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Alarm, Card::Mist, Card::Range];
+    pub const ALL: [Card; 15] = [Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range];
 
     pub fn kind(self) -> Kind {
         match self {
             Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet => Kind::Modifier,
             Card::Delay | Card::Thick => Kind::Trigger,
-            Card::Pierce | Card::Split | Card::Scorch | Card::Alarm | Card::Mist | Card::Range => Kind::Flight,
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range => Kind::Flight,
         }
     }
 
@@ -120,7 +120,7 @@ impl Card {
             Card::Pierce => "pierce",
             Card::Split => "split",
             Card::Scorch => "scorch",
-            Card::Alarm => "alarm",
+            Card::Bait => "bait",
             Card::Mist => "mist",
             Card::Range => "range",
         }
@@ -140,10 +140,35 @@ impl Card {
             Card::Thick => "Trigger: the next payload lodges until the mould is thick round it",
             Card::Pierce => "Flight: every bullet flies on through one slime hit",
             Card::Split => "Flight: every bullet splits where it lands",
-            Card::Scorch => "Trail: every bullet leaves a line of crater the mould shuns",
-            Card::Alarm => "Trail: every bullet leaves a line of alarm the mould flees",
+            Card::Scorch => "Trail: every bullet burns the mould along its flight and leaves a line of crater it shuns",
+            Card::Bait => "Trail: every bullet leaves a line of food scent that every mould follows",
             Card::Mist => "Trail: every bullet leaves a thin gas cloud that puts the mould to sleep",
             Card::Range => "Flight: every soldier sees and shoots half as far again",
+        }
+    }
+
+    /// What the card takes of a gun's budget (`RoundRules::budget`; the
+    /// owner's notes, 11-14 15:06Z: "Each card should have a cost and guns
+    /// have x amount of bank to spend", and their card at 15:34Z: the
+    /// budget is a capacity checked when the gun is loaded, and equipped
+    /// cards fire on the recharge as before). A payload is the most, a
+    /// card that changes every bullet next, a tweak least.
+    pub fn cost(self) -> u32 {
+        match self {
+            Card::Bomb | Card::Germ => 4,
+            Card::Blast | Card::Gas | Card::Scorch | Card::Mist => 3,
+            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range => 2,
+            Card::Quiet | Card::Delay | Card::Thick => 1,
+        }
+    }
+
+    /// How rare the card is: 1 common, 2 uncommon, 3 rare. A run hands
+    /// out higher tiers deeper in (the roguelike thread's rewards).
+    pub fn tier(self) -> u8 {
+        match self {
+            Card::Bomb | Card::Germ => 3,
+            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist => 2,
+            _ => 1,
         }
     }
 
@@ -168,6 +193,31 @@ pub fn parse(s: &str) -> Option<Vec<Card>> {
     }
     let v: Option<Vec<Card>> = s.split('+').map(Card::from_name).collect();
     v.filter(|v| v.len() <= SLOTS)
+}
+
+/// A round's cost against a gun's budget (`Card::cost`).
+pub fn cost(round: &[Card]) -> u32 {
+    round.iter().map(|c| c.cost()).sum()
+}
+
+/// A set of cards that does not fit a gun: what it costs, the budget, and
+/// how many cards against `SLOTS`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Over {
+    pub cost: u32,
+    pub budget: u32,
+    pub cards: usize,
+}
+
+/// The cards, if they fit a gun of `budget`: their cost within it and at
+/// most `SLOTS` of them.
+pub fn fit(round: Vec<Card>, budget: u32) -> Result<Vec<Card>, Over> {
+    let c = cost(&round);
+    if c <= budget && round.len() <= SLOTS {
+        Ok(round)
+    } else {
+        Err(Over { cost: c, budget, cards: round.len() })
+    }
 }
 
 pub fn name(round: &[Card]) -> String {
@@ -211,17 +261,32 @@ pub struct RoundRules {
     pub bomb_crater_r: f32,
     pub bomb_crater_secs: f32,
     pub bomb_price: f32,
-    /// **Trails** (the flight cards `Scorch`, `Alarm`, `Mist`, 2026-11-14,
+    /// **Trails** (the flight cards `Scorch`, `Bait`, `Mist`, 2026-11-14,
     /// after Noita's burning and gunpowder trails: step 5 of
     /// `Reports/noita-spell-look-2026-11-14.md`): each soldier bullet's leg
     /// a frame lays bursts every `trail_r` along it, radius `trail_r` dish
     /// cells (x the square root of the copies of the card): crater for
-    /// `trail_crater_secs`, alarm `trail_alarm` x the blast's, or
-    /// `trail_cloud` of gas cloud. Free: the cards weigh on the recharge.
+    /// `trail_crater_secs`, food scent `trail_bait` x a soldier's frame of
+    /// smell, or `trail_cloud` of gas cloud. Free: the cards weigh on the
+    /// recharge.
+    ///
+    /// `Bait` replaced `Alarm` on 2026-11-14 (owner's card, 09:02Z): the
+    /// alarm trail laid `trail_alarm` 0.5 x a blast's alarm, which the
+    /// default mould ignores (`alarm_weight` 0); only the Sleeper, Swarmer
+    /// and Grudge walked to it, so on most maps the card did nothing.
     pub trail_r: f32,
     pub trail_crater_secs: f32,
-    pub trail_alarm: f32,
+    pub trail_bait: f32,
     pub trail_cloud: f32,
+    /// `Scorch` also burns: kills the walkers within its crater radius
+    /// along the flight (owner, 2026-11-14 08:41Z, after "how are scorch
+    /// and alarm different. It just makes a virtual wall for the slime?").
+    /// Off, scorch is the crater wall alone, as #244 built it.
+    pub trail_burn: bool,
+    /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
+    /// every test loadout the window's H cycles (the dearest, shock, is
+    /// 10). A run may grow it (the roguelike thread).
+    pub budget: u32,
     /// The toolkit's numbers for the payloads (radii, prices, crater).
     pub kit: KitRules,
 }
@@ -250,8 +315,10 @@ impl Default for RoundRules {
             bomb_price: 60.0,
             trail_r: 2.0,
             trail_crater_secs: 4.0,
-            trail_alarm: 0.5,
+            trail_bait: 40.0,
             trail_cloud: 0.4,
+            trail_burn: true,
+            budget: 10,
             kit: KitRules::default(),
         }
     }
@@ -281,7 +348,7 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
             Card::Quiet => quiet = true,
             Card::Delay | Card::Thick => trigger = Some(c),
             // Flight cards ride on every bullet, not on a cast (`flight`).
-            Card::Pierce | Card::Split | Card::Scorch | Card::Alarm | Card::Mist | Card::Range => {}
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range => {}
             Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
                 let price = match c {
                     Card::Blast => r.kit.blast_price,
@@ -306,20 +373,21 @@ pub fn flight(round: &[Card]) -> BulletMods {
 }
 
 /// The round's trail cards as every soldier bullet lays them: copies of
-/// `Scorch`, `Alarm` and `Mist`.
+/// `Scorch`, `Bait` and `Mist`.
 pub fn trails(round: &[Card]) -> [u8; 3] {
     let n = |k: Card| round.iter().take(SLOTS).filter(|&&c| c == k).count() as u8;
-    [n(Card::Scorch), n(Card::Alarm), n(Card::Mist)]
+    [n(Card::Scorch), n(Card::Bait), n(Card::Mist)]
 }
 
 /// The bursts a trail lays along one bullet leg from `from` to `to` (fine
 /// cells): a disc every `trail_r` from the leg's start, each with every
-/// trail the round has. None without trail cards.
-pub fn trail_bursts(n: [u8; 3], from: (f32, f32), to: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -> Vec<Burst> {
+/// trail the round has. None without trail cards. `smell` is a soldier's
+/// frame of food scent (`Rules::smell` x the world's `food_deposit` x
+/// `frame_ticks`), the bait's unit.
+pub fn trail_bursts(n: [u8; 3], from: (f32, f32), to: (f32, f32), r: &RoundRules, scale: f32, fine: f32, smell: f32) -> Vec<Burst> {
     if n == [0; 3] {
         return Vec::new();
     }
-    let k = &r.kit;
     let (a, b) = ((from.0 / scale, from.1 / scale), (to.0 / scale, to.1 / scale));
     let len = (b.0 - a.0).hypot(b.1 - a.1);
     let gap = r.trail_r.max(0.25);
@@ -327,13 +395,13 @@ pub fn trail_bursts(n: [u8; 3], from: (f32, f32), to: (f32, f32), r: &RoundRules
     let f = |c: u8| (c as f32).sqrt();
     let rr = r.trail_r * f(n[0].max(n[1]).max(n[2]));
     let crater = if n[0] > 0 { (r.trail_crater_secs * fine).round().clamp(0.0, u16::MAX as f32) as u16 } else { 0 };
-    let alarm = if n[1] > 0 { k.blast_alarm * r.trail_alarm * n[1] as f32 } else { 0.0 };
+    let bait = r.trail_bait * smell * n[1] as f32;
     let cloud = r.trail_cloud * n[2] as f32;
     (1..=discs)
         .map(|j| {
             let t = (j as f32 * gap).min(len) / len.max(1e-6);
             let at = (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t);
-            Burst { at, r: rr, crater, crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 }, alarm, alarm_r: if alarm > 0.0 { r.trail_r * f(n[1]) } else { 0.0 }, cloud, ..Burst::default() }
+            Burst { at, r: rr, burn: n[0] > 0 && r.trail_burn, crater, crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 }, bait, cloud, ..Burst::default() }
         })
         .collect()
 }
@@ -351,7 +419,7 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
-    let none = Burst { at, r: 0.0, kill: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, fling: 0.0, fling_steps: 0, cloud: 0.0 };
+    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, fling: 0.0, fling_steps: 0, cloud: 0.0 };
     let one = match c.payload {
         Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
         Card::Bomb => {
@@ -455,6 +523,8 @@ pub struct Rounds {
     pub unsupported: u32,
     /// Trail bursts laid (`trail_bursts`), all kinds.
     pub trailed: u32,
+    /// Walkers the `Scorch` trail burned (in `killed` too).
+    pub burned: usize,
     pub pops: Vec<Pop>,
 }
 
@@ -468,9 +538,16 @@ fn slot(p: Card) -> usize {
 }
 
 impl Rounds {
+    /// A gun with these cards, unchecked (the window's test loadouts).
     pub fn new(round: Vec<Card>, rules: RoundRules) -> Self {
         let casts = casts(&round, &rules);
         Rounds { rules, round, casts, ..Default::default() }
+    }
+
+    /// A gun with these cards if they fit `rules.budget` (`fit`): how a
+    /// run equips the cards a player owns.
+    pub fn build(round: Vec<Card>, rules: RoundRules) -> Result<Self, Over> {
+        fit(round, rules.budget).map(|r| Rounds::new(r, rules))
     }
 
     /// Puts the round's flight cards on the game's soldier bullets (also
@@ -608,13 +685,21 @@ impl Rounds {
         let s = g.world.scale();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
         let k = burst_rules(&self.rules.kit, fine);
+        let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
+        let mut burned = 0;
         let legs: Vec<((f32, f32), (f32, f32))> = g.last_shots.iter().filter(|s| s.by.is_some()).map(|s| (s.from, s.hit.unwrap_or(s.to))).collect();
         for (from, to) in legs {
-            for b in trail_bursts(n, from, to, &self.rules, s, fine) {
-                g.world.burst(&b, &k);
+            for b in trail_bursts(n, from, to, &self.rules, s, fine, smell) {
+                burned += g.world.burst(&b, &k).killed as usize;
                 self.trailed += 1;
             }
         }
+        if n[0] > 0 && self.rules.trail_burn {
+            burned += g.world.burned() as usize;
+        }
+        self.killed += burned;
+        self.burned += burned;
+        g.killed += burned as u32;
     }
 
     fn fire<W: World>(&mut self, g: &mut Game<W>, c: &Cast, at: (f32, f32)) {
@@ -637,22 +722,42 @@ impl Rounds {
 mod tests {
     use super::*;
 
+    /// The budget (owner's card, 11-14 15:34Z: capacity at loadout): a set
+    /// that costs more than the gun's budget, or has more than `SLOTS`
+    /// cards, is refused and says by how much; one that fits builds.
+    #[test]
+    fn a_gun_takes_only_the_cards_its_budget_holds() {
+        let r = RoundRules::default();
+        let ok = parse("scatter+blast+wide+blast").unwrap();
+        assert_eq!(cost(&ok), 10);
+        assert!(Rounds::build(ok, r).is_ok(), "10 fits a 10 budget");
+        let dear = vec![Card::Bomb, Card::Germ, Card::Blast];
+        assert_eq!(Rounds::build(dear.clone(), r).err(), Some(Over { cost: 11, budget: 10, cards: 3 }));
+        assert!(Rounds::build(dear, RoundRules { budget: 11, ..r }).is_ok(), "a bigger gun takes it");
+        let five = vec![Card::Quiet; 5];
+        assert_eq!(fit(five, 99).err().map(|o| o.cards), Some(5), "at most SLOTS cards");
+        assert!(Card::ALL.iter().all(|c| c.cost() >= 1 && (1..=3).contains(&c.tier())));
+    }
+
     #[test]
     fn trail_cards_lay_discs_along_the_leg_and_cast_nothing() {
         let r = RoundRules::default();
-        let round = parse("scorch+alarm+alarm+mist").unwrap();
+        let round = parse("scorch+bait+bait+mist").unwrap();
         assert!(casts(&round, &r).is_empty());
         assert_eq!(trails(&round), [1, 2, 1]);
         // A 9-dish-cell leg at scale 2: a disc every 2 cells, the last on the end.
-        let b = trail_bursts(trails(&round), (2.0, 4.0), (20.0, 4.0), &r, 2.0, 30.0);
+        let b = trail_bursts(trails(&round), (2.0, 4.0), (20.0, 4.0), &r, 2.0, 30.0, 1.0);
         assert_eq!(b.len(), 5);
         assert_eq!(b.last().unwrap().at, (10.0, 2.0));
         let one = b[0];
-        assert!(!one.kill && one.gas == 0 && one.fling == 0.0);
+        assert!(!one.kill && one.burn && one.gas == 0 && one.fling == 0.0, "scorch burns, counted later");
+        let cold = RoundRules { trail_burn: false, ..r };
+        assert!(!trail_bursts([1, 0, 0], (0.0, 0.0), (9.0, 0.0), &cold, 1.0, 30.0, 1.0)[0].burn);
+        assert!(!trail_bursts([0, 1, 1], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0)[0].burn, "only scorch burns");
         assert_eq!(one.crater, (r.trail_crater_secs * 30.0) as u16);
-        assert!((one.alarm - 2.0 * r.kit.blast_alarm * r.trail_alarm).abs() < 1e-4 && (one.alarm_r - r.trail_r * 2f32.sqrt()).abs() < 1e-5);
+        assert!((one.bait - 2.0 * r.trail_bait).abs() < 1e-4 && one.alarm == 0.0 && (one.r - r.trail_r * 2f32.sqrt()).abs() < 1e-5, "two baits: twice the scent, over the wider disc");
         assert!((one.cloud - r.trail_cloud).abs() < 1e-6 && one.crater_r == r.trail_r);
-        assert!(trail_bursts([0; 3], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0).is_empty());
+        assert!(trail_bursts([0; 3], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0).is_empty());
     }
 
     /// A mist round on the CPU world: the bullets' flight lays a real cloud
@@ -673,6 +778,30 @@ mod tests {
         assert!(rd.trailed > 0, "the squad's bullets laid a trail");
         assert!(g.world.gas_cloud.iter().any(|&v| v > 0.0), "the trail is a real cloud");
         assert_eq!((rd.cast, rd.spent), ([0; 4], 0.0), "a trail casts nothing and costs no food");
+    }
+
+    /// Scorch burns (owner, 2026-11-14 08:41Z): the slime on a scorch
+    /// bullet's flight dies, counted in the game's kills, and more dies
+    /// than the plain bullets alone kill on the same seed.
+    #[test]
+    fn a_scorch_round_burns_the_slime_on_the_line() {
+        use crate::mould::larder_world::{race_world, Cmd, Order};
+        let run = |round: &str| {
+            let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+            for k in 0..g.soldiers.len() {
+                assert!(g.apply(Cmd::Order(k, Order::Attack)));
+            }
+            let mut rd = Rounds::new(parse(round).unwrap(), RoundRules::default());
+            while g.time() < 20.0 && g.end.is_none() {
+                g.step();
+                rd.after_step(&mut g);
+            }
+            (rd.burned, g.killed)
+        };
+        let (burned, killed) = run("scorch");
+        let (none, plain) = run("none");
+        assert_eq!(none, 0);
+        assert!(burned > 0 && killed > plain, "burned {burned}, killed {killed} vs plain {plain}");
     }
 
     #[test]
