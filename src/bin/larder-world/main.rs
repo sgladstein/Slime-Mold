@@ -131,7 +131,7 @@ use slime_mould::mould::own_mould::Task;
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::kit::{Kit, KitRules, Tool};
 use slime_mould::mould::rounds::{self, RoundRules, Rounds};
-use slime_mould::mould::larder_world::{Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
@@ -140,7 +140,7 @@ use slime_mould::sound::world::{Ear, WorldListener};
 use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
-use slime_mould::world::marks::{team_colour, SLASH, STANDING, WALKING};
+use slime_mould::world::marks::{team_colour, SLASH, STANDING, TURRET_DRY, TURRET_IDLE, TURRET_TRACKING, WALKING};
 use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
@@ -397,6 +397,22 @@ struct Look {
     alive: bool,
 }
 
+/// What the window keeps of each turret beside the game (`Game::buildings`
+/// by index; other kinds keep one unused): where its head points and the
+/// seconds left of its last shot's kick and flash.
+#[derive(Clone, Copy)]
+struct TurretLook {
+    facing: f32,
+    shot: f32,
+}
+
+/// How long a turret's kick and muzzle flash last, seconds.
+const TURRET_SHOT: f32 = 0.16;
+/// How fast a turret's head turns toward its aim between shots, radians a
+/// second (it snaps to the shot's line when it fires, so the shot always
+/// leaves the barrels).
+const TURRET_TURN: f32 = 5.0;
+
 struct App {
     args: Args,
     window: Option<Arc<Window>>,
@@ -427,6 +443,7 @@ struct App {
     /// depth was most of each ground rebuild (3.9-6.1 ms on the cloud CPU).
     depth: Vec<u8>,
     looks: Vec<Look>,
+    turrets: Vec<TurretLook>,
     tracers: Vec<Tracer>,
     /// This frame's point lights (bullets, bursts, muzzles, lodged casts),
     /// filled with the marks (`draw.rs`).
@@ -530,6 +547,7 @@ impl App {
             ground_walls: 0,
             depth: Vec::new(),
             looks: Vec::new(),
+            turrets: Vec::new(),
             tracers: Vec::new(),
             lights: Vec::new(),
             paused: false,
@@ -720,6 +738,7 @@ impl App {
         self.ground = Some(ground);
         (self.ground_at, self.ground_walls) = (0.0, 0);
         self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
+        self.turrets.clear();
         self.tracers.clear();
         self.controls.selected.clear();
         self.controls.groups = Default::default();
@@ -776,6 +795,7 @@ impl App {
             l.flash = (l.flash - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
         }
+        turn_turrets(g, &mut self.turrets, dt);
         self.banked = (self.banked - dt).max(0.0);
         // A load banked since the last frame flares the larder's cells.
         if g.harvested > self.harvested_seen + 0.5 {
@@ -797,6 +817,7 @@ impl App {
             self.rounds.after_step(g);
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+            turret_fired(g, &mut self.turrets);
         } else if g.in_flight() {
             // Its next share of ticks (`GpuWorld::spread`).
             g.world.frame_more();
@@ -820,6 +841,7 @@ impl App {
                 self.rounds.after_step(g);
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+                turret_fired(g, &mut self.turrets);
                 if g.end.is_some() {
                     break;
                 }
@@ -922,6 +944,7 @@ impl App {
             // (`Game::apply`) is not seen: its hits cast nothing.
             self.rounds.after_step(g);
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+            turret_fired(g, &mut self.turrets);
         }
     }
 
@@ -1113,6 +1136,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut select = true;
     let mut cut = None;
     let mut booms: Vec<(f32, f32, f32)> = Vec::new();
+    let mut turrets: Vec<(f32, f32)> = Vec::new();
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
     let mut chosen = false;
@@ -1210,6 +1234,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let squad = cut.and_then(|c: Cut| c.squad);
                 cut = Some(Cut { t: *t, x: *x, y: *y, r: *r, hold: more.first().copied().unwrap_or(f32::INFINITY), width: more.get(1).copied().unwrap_or(6.0), squad });
             }
+            "turret" => {
+                // `turret=X,Y` (11-14, the turret films): a turret standing
+                // whole at (X, Y) from the start, world units as `centre=`
+                // (paid for, not raised); repeat for more.
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [x, y] = w.as_slice() else { return Err("turret=X,Y".into()) };
+                turrets.push((*x, *y));
+            }
             "boom" => {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second
                 // T the squad's round goes off at (X, Y), world units as
@@ -1233,7 +1265,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, centre, cut, hover, select; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, centre, cut, hover, select, turret; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
@@ -1252,7 +1284,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(page_named);
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, page, hover, select)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

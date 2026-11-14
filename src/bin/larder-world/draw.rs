@@ -70,6 +70,37 @@ pub(super) fn summary(g: &Game<GpuWorld>) -> String {
     format!("{} soldiers left, {:.0} food harvested, {} walkers killed with {} shots, {} walls", g.alive(), g.harvested, thousands(g.killed as usize), g.shots, g.walls)
 }
 
+/// A turret's lamp from the game's state: dark while rising or with no
+/// mould in reach, red when the bank can't pay for a shot (`Rules::price`;
+/// shots are free by default, so a turret is never dry then), amber when
+/// it has mould to shoot at (`Building::aim`, as `Game` fires).
+pub(super) fn turret_state<W: World>(g: &Game<W>, b: &Building) -> u32 {
+    if !b.up() {
+        TURRET_IDLE
+    } else if g.bank < g.rules.price {
+        TURRET_DRY
+    } else if b.aim.is_some() && b.dense >= g.rules.aim_min {
+        TURRET_TRACKING
+    } else {
+        TURRET_IDLE
+    }
+}
+
+/// Turret `k` (`Marks::turret`), drawn `half` world units, and the light
+/// of its shot at the muzzle, as a soldier's lights the ground.
+fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[TurretLook], g: &Game<GpuWorld>, k: usize, half: f32) {
+    let b = &g.buildings[k];
+    let look = looks.get(k).copied().unwrap_or(TurretLook { facing: 0.0, shot: 0.0 });
+    let built = if b.up() { 1.0 } else { b.built };
+    marks.turret(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, look.shot / TURRET_SHOT, turret_state(g, b));
+    let fl = look.shot / TURRET_SHOT;
+    if fl > 0.0 {
+        let sc = g.world.scale();
+        let m = (b.at.0 + look.facing.cos() * half * 1.8, b.at.1 + look.facing.sin() * half * 1.8);
+        lights.push(Light { at: m, reach: 6.0 * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.9 * fl });
+    }
+}
+
 /// A building's mark colour; None for walls, which the world draws.
 pub(super) fn building_colour(k: Kind) -> Option<[u8; 4]> {
     match k {
@@ -202,6 +233,25 @@ impl App {
         // lit while working. Their effects (a lure's scent, a pump's
         // dimming crystal, a turret's hits) are the simulation's own fields;
         // walls are ground. The bars stay as UI.
+        // A turret's reach (art director, 11-14): a faint dashed ring round
+        // the one under the cursor, and round the spot while placing one.
+        // Buildings can't be selected, so hovering stands in for that. A
+        // dashed ring of lines claims only its own pixels (one big ring
+        // mark walks its whole box: 0.7 ms at 480 pixels).
+        let cursor = self.controls.cursor.filter(|&p| !self.hud.over(p));
+        let placing = self.hud.targeting().filter(|t| t.0 == TURRET).and(cursor).and_then(|p| self.hud.aim(p, &self.camera));
+        let over = cursor.and_then(|p| self.camera.world_at(p)).and_then(|w| {
+            g.buildings.iter().find(|b| b.alive && b.kind == Kind::Turret && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|b| b.at)
+        });
+        for at in placing.into_iter().chain(over) {
+            let reach = g.rules.build.turret_range * sc;
+            let n = 72;
+            for i in 0..n {
+                let (a0, a1) = (i as f32 / n as f32 * std::f32::consts::TAU, (i as f32 + 0.5) / n as f32 * std::f32::consts::TAU);
+                self.marks.line((at.0 + reach * a0.cos(), at.1 + reach * a0.sin()), (at.0 + reach * a1.cos(), at.1 + reach * a1.sin()), 0.0, [240, 232, 200, 110]);
+            }
+        }
+        let mut turrets = Vec::new();
         for (k, b) in g.buildings.iter().enumerate() {
             if !b.alive {
                 continue;
@@ -244,10 +294,28 @@ impl App {
                 continue;
             }
             let Some(kind) = sprite_kind(b.kind) else { continue };
-            let half = g.rules.build.touch * sc * 0.7;
+            let mut half = g.rules.build.touch * sc * 0.7;
             // A lure switched off is not working.
             let working = b.working && (!matches!(b.kind, Kind::Lure | Kind::Siren) || b.on);
-            self.marks.building(b.at, half, kind, if b.up() { 1.0 } else { b.built }, b.hp / b.max_hp.max(1.0), working);
+            let built = if b.up() { 1.0 } else { b.built };
+            if b.kind == Kind::Turret {
+                // A gun that reads at zoom 6 as clearly as a soldier (owner's
+                // playtest 11-14 08:15Z: "turrets need to look better"; it
+                // was drawn 0.7 touch radii, smaller than a soldier's 1.15):
+                // its head turned to its aim, kicking as it fires, its lamp
+                // the game's state (mould in reach, or a bank too low to pay
+                // for a shot).
+                half = (g.rules.build.touch * sc).max(11.0 / zoom);
+                // A standing one is drawn after the bullets, with its bar,
+                // below; a ghost here, under its progress bar.
+                if b.up() {
+                    turrets.push((k, half));
+                    continue;
+                }
+                turret_mark(&mut self.marks, &mut self.lights, &self.turrets, g, k, half);
+            } else {
+                self.marks.building(b.at, half, kind, built, b.hp / b.max_hp.max(1.0), working);
+            }
             let below = (half * zoom).max(2.0) + 5.0;
             // Health once it stands (a ghost's lower hp is its progress,
             // shown by the bar below and the sprite's seam).
@@ -336,6 +404,14 @@ impl App {
                 }
             }
             self.lights.push(Light { at: b.at, reach: 7.0 * sc * wide, lift: 3.0, colour: look.light, strength: if quiet { 0.35 } else { 0.9 } });
+        }
+        // Turrets over the bullets, so a shot leaves from inside the
+        // barrels rather than lying over them (turret look, 11-14: a turret's
+        // bullet starts at its middle, the game's place for it).
+        for (k, half) in turrets {
+            turret_mark(&mut self.marks, &mut self.lights, &self.turrets, g, k, half);
+            let b = &g.buildings[k];
+            self.marks.health(b.at, (half * zoom).max(2.0) + 5.0, b.hp / b.max_hp.max(1.0));
         }
         // A burst lights the world for its first tenth of a second (Noita's
         // explosion light lasts 0.08 s at 8 radii), brighter the more it

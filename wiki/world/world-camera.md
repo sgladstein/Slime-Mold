@@ -14,6 +14,7 @@ sources:
   - Reports/slime-material-2026-11-14/README.md
   - Reports/soldier-controls-2026-11-12.md
   - Reports/start-menu-2026-11-14/README.md
+  - Reports/turret-look-2026-11-14/README.md
   - Reports/units-read-2026-11-14/README.md
   - Reports/units-read-2026-11-14/followup.md
   - Reports/units-read-2026-11-14/harvest.md
@@ -47,6 +48,7 @@ code:
   - Marks::selected
   - Marks::soldier
   - Marks::soldier_working
+  - Marks::turret
   - NEXT_ROUND
   - Order::Fight
   - SPRITES
@@ -136,7 +138,10 @@ state in the sprite (`Marks::building`, `Game::overrun_share`; a ghost's
 builder state is a sign, `Marks::icon`). Harvesting shows on the soldier:
 a taker (`Game::last_takes`) faces the crystal with a pulse at its hands, its
 pack fills cyan as it carries (`Marks::soldier_working`; no carry bar), and the
-larder flashes as a load is banked (`Marks::building_pulse`)
+larder flashes as a load is banked (`Marks::building_pulse`). A turret's head
+turns on its base to its aim and kicks with a muzzle flash as it fires, its
+lamp the game's state, and hovering one shows its reach (`Marks::turret`;
+[turret look](../../Reports/turret-look-2026-11-14/README.md))
 ([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md), [harvest](../../Reports/units-read-2026-11-14/harvest.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
 simulation uses height. One mark with a big box (a 480-pixel ring) cost the
 view 0.7 ms, since one workgroup walks a mark's whole box: draw big outlines

@@ -407,3 +407,36 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     assert_eq!(app.game.as_ref().unwrap().time(), 0.0, "a fresh round");
     assert!(app.in_menu(), "still on the menu");
 }
+
+/// A turret's look follows the game (owner's playtest 11-14 08:15Z:
+/// "turrets need to look better"): its shot turns the head down the shot's
+/// line and kicks it; between shots it turns toward its aim at
+/// `TURRET_TURN`; its lamp is red only when the bank can't pay for a shot.
+#[test]
+fn a_turret_faces_its_shot_and_its_lamp_is_the_game_state() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, (320, 200), &device, &queue).unwrap();
+    let g = app.game.as_mut().unwrap();
+    let at = (g.larder.0 + 6.0, g.larder.1);
+    g.bank += g.build_price(Kind::Turret, at);
+    assert!(g.build(Kind::Turret, at));
+    let k = g.buildings.len() - 1;
+    (g.buildings[k].built, g.buildings[k].hp) = (1.0, g.buildings[k].max_hp);
+    g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: at, to: (at.0, at.1 + 5.0), hit: None, killed: 0, by: None, fired: true }];
+    app.turrets.clear();
+    turret_fired(app.game.as_ref().unwrap(), &mut app.turrets);
+    let t = app.turrets[k];
+    assert!((t.facing - std::f32::consts::FRAC_PI_2).abs() < 1e-4 && t.shot == TURRET_SHOT, "down its shot, kicking: {} {}", t.facing, t.shot);
+    // Aim to the right: a tenth of a second turns it TURRET_TURN / 10.
+    let g = app.game.as_mut().unwrap();
+    (g.buildings[k].aim, g.buildings[k].dense) = (Some((at.0 + 5.0, at.1)), g.rules.aim_min);
+    turn_turrets(app.game.as_ref().unwrap(), &mut app.turrets, 0.1);
+    assert!((app.turrets[k].facing - (std::f32::consts::FRAC_PI_2 - TURRET_TURN * 0.1)).abs() < 1e-4);
+    let g = app.game.as_mut().unwrap();
+    assert_eq!(turret_state(g, &g.buildings[k]), TURRET_TRACKING);
+    g.rules.price = 1.0;
+    g.bank = 0.5;
+    assert_eq!(turret_state(g, &g.buildings[k]), TURRET_DRY);
+    (g.bank, g.buildings[k].aim) = (10.0, None);
+    assert_eq!(turret_state(g, &g.buildings[k]), TURRET_IDLE);
+}
