@@ -10,6 +10,7 @@ sources:
   - Reports/larder-build-plan-2026-11-11.md
   - Reports/larder-buildings-2026-11-12.md
   - Reports/larder-campaign-2026-11-12.md
+  - Reports/larder-crater-2s-2026-11-14.md
   - Reports/larder-economy-2026-11-12.md
   - Reports/larder-m1-2026-11-11.md
   - Reports/larder-m2-2026-11-11.md
@@ -209,11 +210,11 @@ the cone crater** (PR 3b, the owner's 14:41-14:43Z rulings; [report,
 the race world's crater is the cone (look 3; `scorch_cone`, full 150, keep
 0; the toolkit's blasts stay flat), and a soldier walks at
 `speed / (1 + (touching / wade)²)` (`Rules::wade` 6: half speed with 6
-walkers touching, a fifth with 12). **Every walker counts whole** toward wading since 2026-11-13 (the owner, 15:55Z, of shape C: "why are they not way slowing down"; [report](../../Reports/larder-wading-2026-11-13.md), [page](https://claude.ai/artifact/DKoWuDZja5GGeMTUuJFLMR)): counted at C's mass of 0.2, a soldier with 12 walkers on it walked at 86% and with 26 at 57%; now 20% and 5%. Walking in was already deadly since the bite below (eight soldiers dead 5-7 s after contact); the slowed squad lives about 2 s longer because it gets less deep. A rule keeping a soldier's blast off its own touch circle was dropped (the owner, 16:15Z: a soldier rushed while standing still must be able to shoot what reaches it; [dead end](../../Reports/dead-ends.md)). **A unit aims only at slime it can see** (#198): the densest block within its sight with every cell on the line to it agar (`squad::sees`, both engines, to the bit; soldiers, turrets and the garden). Before, the densest block was taken through walls and the game then held the shot, so eight soldiers at a channel mouth by a wall fired 47 shots in 26 s; now 198, killing 486 against 261 ([report, *Aims that see*](../../Reports/larder-wading-2026-11-13.md)). **A walker's bite on a soldier is 2 health a second at any walker count** since 2026-11-12 (`Rules::drain`; the owner: walking into the slime "should be very deadly"); was 1 x `mass`, which let 40 soldiers stand in C's thickest part and lose none in 60 s ([report, *Thick slime*](../../Reports/slime-questions-2026-11-12/README.md)); buildings keep 1 x `mass` (`BuildRules::drain`). Over both blocks random wipes the
+walkers touching, a fifth with 12). **Every walker counts whole** toward wading since 2026-11-13 (the owner, 15:55Z, of shape C: "why are they not way slowing down"; [report](../../Reports/larder-wading-2026-11-13.md), [page](https://claude.ai/artifact/DKoWuDZja5GGeMTUuJFLMR)): counted at C's mass of 0.2, a soldier with 12 walkers on it walked at 86% and with 26 at 57%; now 20% and 5%. Walking in was already deadly since the bite below (eight soldiers dead 5-7 s after contact); the slowed squad lives about 2 s longer because it gets less deep. A rule keeping a soldier's blast off its own touch circle was dropped (the owner, 16:15Z: a soldier rushed while standing still must be able to shoot what reaches it; [dead end](../../Reports/dead-ends.md)). **A unit aims only at slime it can see** (#198): the densest block within its sight with every cell on the line to it agar (`squad::sees`, both engines, to the bit; soldiers, turrets and the garden). Before, the densest block was taken through walls and the game then held the shot, so eight soldiers at a channel mouth by a wall fired 47 shots in 26 s; now 198, killing 486 against 261 ([report, *Aims that see*](../../Reports/larder-wading-2026-11-13.md)). **A soldier walking to a burn line shoots what reaches it** (2026-11-14): a burn point out of reach falls through to its own aim and stance, where it fired nothing before; on C the `volley` squad, wading short of its line, fired 0 shots after its order and now 22 ([report, *A burning soldier shoots what reaches it on the way*](../../Reports/larder-crater-2s-2026-11-14.md)). **A walker's bite on a soldier is 2 health a second at any walker count** since 2026-11-12 (`Rules::drain`; the owner: walking into the slime "should be very deadly"); was 1 x `mass`, which let 40 soldiers stand in C's thickest part and lose none in 60 s ([report, *Thick slime*](../../Reports/slime-questions-2026-11-12/README.md)); buildings keep 1 x `mass` (`BuildRules::drain`). Over both blocks random wipes the
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
-random's killing. Each hit's crater lasts 4.5 s (`Rules::crater`), the
-owner's pick (17:29Z) from clips of the squad firing into the thick body. **The economy** (PR 4; [report](../../Reports/larder-economy-2026-11-12.md)):
+random's killing. **Each hit's crater lasts 2 s** (`Rules::crater`) since 2026-11-14, the owner's card pick (01:05Z: "Shorter craters, 2 s", over a crater keeping half its trail and keeping 4.5 s), after playing C (11-12 22:18Z: "The craters last too long"); it was 4.5 s from the owner's 11-12 17:29Z pick from clips of the squad firing into the thick body. On C a hit's hole refills in a median 0.5 to 0.9 s against 1.3 to 3.9 s at 4.5 s, and a shot kills 2-6% fewer ([report](../../Reports/larder-crater-2s-2026-11-14.md)). **The economy** (PR 4; [report](../../Reports/larder-economy-2026-11-12.md)):
+**Rations are off since 2026-11-14** (owner, after a playtest: keeping soldiers fed turned the game into harvesting with no time to attack; `ration=1` plays them). With them on,
 every soldier eats `Rules::ration` 1 food a second from the bank, and an
 unpaid bank costs each soldier `Rules::hunger` 1 hit point a second (hit
 points only, so starving soldiers still harvest and a dry farm recovers;
@@ -246,6 +247,11 @@ the soldiers for about 3 s before it lands, against about 1.5 s, and a
 charge at a unit gives up after a 0.5 s dash (`panic_dash` 15), so a
 squad that pulls back in time gets clear (5 of 6 seeds at 24 cells,
 half a second late) and one that stands does not ([fed mould, *A cut-off part panics*](../../Reports/fed-mould-2026-11-13/README.md)).
+Taking crystals barely shrinks C: at its cap it eats three times its
+upkeep, so on one crystal of 23 it holds 50,000 walkers for two minutes
+before it falls (10,369 at six). Making size follow held food, and a
+higher collapse threshold, are parked by the owner's ruling below (11-14,
+[fed mould, *Does its size follow*](../../Reports/fed-mould-2026-11-13/README.md)).
 
 ## Small-dish milestones (M1-M3)
 

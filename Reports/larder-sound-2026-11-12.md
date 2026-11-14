@@ -147,6 +147,85 @@ and -23.6 dBFS. Listener 2.9-3.5 us a frame with it.
 copy a piece over about 200 walkers, a tear at the cut, at most 3-4 voices
 (the designer's plan; not built).
 
+## What is new: bullets, siren, blasts and the cut-off pieces (2026-11-14)
+
+The cloud plan's item C7 ([cloud-plan-2026-11-14.md](cloud-plan-2026-11-14.md)):
+sounds for what the game gained since the 11-12 build, from counts the game
+already has, recorded for the owner since they cannot playtest now. All on
+by default; the piece voices go with K.
+
+| Sound | Read from | Heard as |
+|---|---|---|
+| Zip | each fired `Shot`, while `Rules::bullet_speed` > 0 (at most 4 a frame) | a short high whizz at the flight's midpoint, delayed by half the flight; a turret's shot (no soldier) at half the level of a soldier's |
+| Siren | `Game::sirens` rising | a two-note wail (740 and 554 Hz, twice) panned to the working siren |
+| Blast | `Kit::bangs` (mines, thrown charges), passed in by `WorldListener::bangs` | a thud, an impact weighted by its kills, debris |
+| Tear | a piece settling (below) | a ripping noise where it is |
+| Snarl | a heard piece breaking up within 20 dish cells of a soldier (a scared piece's charge), or a piece's centre closing on one faster than 3 dish cells a second | a rising growl |
+| Withering | the walkers the pieces lose a second (`TextureKind::Wither`, full at 40 a second) | a dry fizz; a piece withering out is a soft puff |
+| Rejoin | a healthy piece gone next to a big part of the body | a double squelch |
+| Piece voice | up to three pieces (`SoundCmd::Body` slots 1-3), each from its walkers, its change and its approach | a fainter, higher copy of the body's drone, panned to the piece: strained and rough as it withers, quick and rising as it charges |
+
+**The pieces** (`sound::pieces`) are the 4-connected groups of the mould
+grid (`World::mould_grid`, one dish cell a square), of squares holding 2
+walkers or more, followed from readout to readout by centre and size. A
+group is a piece at 100 walkers (0.4% of the start) and under 10% of all
+walkers; it is torn once it has lasted 2 s, and stays the same piece if it
+drops off the grid for under 2.5 s. Each of those numbers came from the
+first recordings (Fork, seed 1, farm hand, shape C, llvmpipe), which got
+it wrong four ways:
+
+- A floor of 4% of the start (the designer's 200 of 5,000) is 1,000 at
+  shape C's 25,000: the staged ring's 220-walker part was never a piece.
+- The Fork's mould lies in two or three parts of about 8,000 walkers each,
+  apart on the grid; the smaller ones were "pieces", and a piece's match
+  jumping between them read as a 4,700-walker-a-second wither and a
+  60-cell-a-second charge (false snarls). Fixed by the 10% ceiling and by
+  matching only a group a third to three times the piece's size.
+- At twice the scale a square (the campaign's `BIN`), two squares side by
+  side span 8 fine cells, so the 6-wide ring left the piece joined to the
+  body; and the ring's cells kept 55-75 stranded walkers, one to a square,
+  for ten seconds. Fixed by one dish cell a square and the floor of 2.
+- A settle of 0.5 s heard 21 tears in 3 minutes, 16 of them back in the
+  body 1-3 s later (the GPU world's grid is a game second old). At 2 s
+  with the 2.5 s grace: 10 tears, 7 rejoins, 3 withered out.
+
+The charge could not be heard from the piece's centre: in the staged last
+stand (184 walkers in a held ring with four soldiers inside) the piece was
+seen settled once, at 156 walkers, and at the next readout its walkers
+were spread one to a square, running at the squad; its centre's approach
+never passed 1 dish cell a second. So the snarl sounds as the piece breaks
+up beside a soldier. It is the charge itself, not a warning before it; a
+true warning needs the walkers' stale-news count, which only the GPU has
+and no readout carries.
+
+**Measured** (headless, `larder-world look=DIR ... sound=FILE`, counts from
+the `heard (C7)` line):
+
+| Recording | Zips | Torn | Rejoined | Withered out | Charges | Listener |
+|---|---|---|---|---|---|---|
+| Farm, held ring r22 at 2:30 (to 3:00) | 2,199 | 10 | 7 | 3 | 2 | 23.0 us mean, 0.54 ms worst |
+| Farm, last stand r32 at 2:30 (to 2:55) | 2,219 | 10 | 7 | 4 | 3 | 21.4 us, 0.60 ms |
+| Rush (wiped at 1:20) | 47 | 7 | 4 | 1 | 1 | 21.8 us, 0.60 ms |
+
+The ring's tear comes 7 s after the cut (2:37), when the stranded walkers
+die off; a cut made by a wall or a crater has no such walkers. The listener
+went from about 6 us a frame (the same build with the pieces off) to
+21-23: the pieces ask for the grid four times a game second (asking every
+frame cost more on the CPU world, which sums its grid on each ask) and walk
+its 41,000 squares. The worst frames (0.5-0.6 ms) are first asks, which
+the GPU world reads back once. No new read-back after that: the GPU world
+packs the asked square into its readout once a game second. In a mission
+the window sets `WorldListener::piece_bin` to the campaign's `BIN`, so
+both askers share one packed grid (at the cost of not hearing cuts under 8
+fine cells wide); `World::walkers_in` (mines) asks one dish cell too.
+
+**Sound board** (`examples/c7sounds.rs`): each new sound alone at the
+listener's levels, 33 s; peak -1.1 dBFS (the siren), rejoin the quietest
+at -44 dBFS rms, a piece's voice -33. The siren hand did not get its siren
+built in 120 s on seed 1, so the siren is heard only on the board and in
+`a_siren_wails_and_a_blast_booms_once`. WAVs for the owner in the shared
+folder (`larder-sound-c7/`); MP3s on the page (version 3).
+
 ## Open
 
 - The owner's ears: does a big kill feel big, is the pulse help or noise,
@@ -157,5 +236,10 @@ copy a piece over about 200 walkers, a tear at the cut, at most 3-4 voices
   free shots may move the distribution. Re-measure with
   `larder-world look=DIR hand=rush at=120 sound=x.wav` and the kill centiles.
 - No hand builds walls, so the wall sound has only its unit path checked.
-- The squad toolkit's area effects (blasts, mines, siren; `Frame.bursts`,
-  planned) should get sounds from the same listener when they land.
+- The owner's ears on the new sounds: is the snarl readable, are the zips
+  too busy in a long fight, do the piece voices make a cut part a separate
+  creature or clutter.
+- A warning before a charge (the panic's 1.5 s lean) needs a count of
+  stale-news walkers from the GPU readout; not built.
+- The squad toolkit's GPU bursts (`Frame.bursts`) other than the kit's
+  bangs are not heard yet.

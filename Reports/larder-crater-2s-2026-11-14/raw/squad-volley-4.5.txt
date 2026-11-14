@@ -1,0 +1,36 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-015s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-015s-near.png
+  CPU: ground field 1.92 ms (once a game second), model and HUD 0.039 ms a frame
+  t 15 s: mould 24421, soldiers 9, bank 0, harvested 0, shots 119, killed 678, took 0%, crystals left 0.999; squad at 256.6,113.1
+  squad: touching 0.4 mean, 3 most; health 60 mean
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-019s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-019s-near.png
+  CPU: ground field 2.17 ms (once a game second), model and HUD 0.041 ms a frame
+  t 19 s: mould 24438, soldiers 9, bank 0, harvested 0, shots 143, killed 758, took 0%, crystals left 0.999; squad at 275.8,161.8
+  squad: touching 0.0 mean, 0 most; health 53 mean
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-021s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-021s-near.png
+  CPU: ground field 3.61 ms (once a game second), model and HUD 0.088 ms a frame
+  t 21 s: mould 24246, soldiers 9, bank 0, harvested 0, shots 161, killed 1023, took 0%, crystals left 0.998; squad at 269.3,187.6
+  squad: touching 1.9 mean, 3 most; health 42 mean
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-022s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-022s-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.243 ms a frame
+  t 22 s: mould 24007, soldiers 9, bank 0, harvested 0, shots 170, killed 1297, took 0%, crystals left 0.998; squad at 266.4,203.1
+  squad: touching 1.2 mean, 3 most; health 38 mean
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-22500ms-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-22500ms-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.042 ms a frame
+  t 23 s: mould 24007, soldiers 9, bank 0, harvested 0, shots 170, killed 1297, took 0%, crystals left 0.998; squad at 266.0,209.3
+  squad: touching 8.0 mean, 11 most; health 32 mean
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-023s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-023s-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.037 ms a frame
+  t 23 s: mould 24051, soldiers 9, bank 0, harvested 0, shots 170, killed 1297, took 0%, crystals left 0.998; squad at 265.8,211.2
+  squad: touching 13.8 mean, 17 most; health 19 mean
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-23500ms-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/w45/fork-volley-23500ms-near.png
+  CPU: ground field 2.01 ms (once a game second), model and HUD 0.046 ms a frame
+  t 24 s: mould 24051, soldiers 4, bank 0, harvested 0, shots 170, killed 1297, took 0%, crystals left 0.998; squad at 255.8,212.4
+  squad: touching 17.5 mean, 19 most; health 10 mean

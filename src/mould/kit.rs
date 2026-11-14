@@ -7,8 +7,9 @@
 //! later): each tool comes down to bursts (`squad::Burst`), which a world
 //! applies (`World::burst`). The blast, mine and det cord run on the CPU
 //! and the GPU world alike (the GPU's strike passes lay the crater too);
-//! germ and gas need `World::has_germ` and `has_gas`, the CPU world's
-//! only so far, and are refused (not paid) elsewhere. Until then every
+//! germ and gas need `World::has_germ` and `has_gas` (the CPU world's
+//! both, the GPU world's the gas since 11-14), and are refused (not paid)
+//! elsewhere. Until then every
 //! tool called `BigDish` itself, so none ran on the GPU.
 //!
 //! The model in one line: walkers read the trail ahead with three sensors,

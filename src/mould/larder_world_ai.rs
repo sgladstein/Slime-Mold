@@ -37,7 +37,7 @@
 //! was the mould turning small, and on the race world the mould only grows
 //! (no W2b hand ever got it below its start).
 
-use super::larder_world::{Cmd, Game, Order, Rules, Stance, World};
+use super::larder_world::{Cmd, Game, Kind, Order, Rules, Stance, World};
 
 /// Dish cells a side of one mould-grid square.
 pub const GRID: f32 = 4.0;
@@ -277,6 +277,27 @@ pub struct Style {
     /// soldiers attack the core; once it is down they claim.
     pub strike_at: f32,
     pub strike_army: usize,
+    /// The strike's target: false walks on the core (`Order::Attack`);
+    /// true cuts the body off its crystals, each striker attack-moving
+    /// (`Order::Fight`) to the point `CUT_AT` of the way from the core to
+    /// one of the `claims` mould-held crystals nearest home, in turn. Why:
+    /// no mould has a king since 2026-11-12 20:21Z, so the core stops
+    /// nothing, and a piece cut off its food withers and panics (the cloud
+    /// plan's C4, 11-14).
+    pub cut: bool,
+    /// Cut-and-take (the designer's plan for shape C, 11-14): cut one road
+    /// at a time, from the core to the held crystal nearest home; once the
+    /// mould no longer holds that crystal (the cut piece withered or
+    /// burnt out on the squad), it is taken: farmed with a turret, and
+    /// the cut moves to the next.
+    pub take: bool,
+    /// Spend the bank: past `spend` soldiers' price banked, buy to the
+    /// squad's most, not `buy_to`, and put a turret on each farmed
+    /// crystal, up to `turrets` (design review, 11-14: boom and fort ended
+    /// C games holding 10-33k food with 20 soldiers of 40).
+    /// `f32::INFINITY` never.
+    pub spend: f32,
+    pub turrets: usize,
     /// A soldier below this share of full health with mould touching walks
     /// home and stays (health never comes back). 0 never pulls back.
     pub retreat: f32,
@@ -303,6 +324,10 @@ impl Style {
         wall_alarm: 10,
         strike_at: f32::INFINITY,
         strike_army: 20,
+        cut: false,
+        take: false,
+        spend: f32::INFINITY,
+        turrets: 0,
         retreat: 0.0,
     };
 
@@ -329,8 +354,17 @@ impl Style {
     /// and died within 36 s); after the core falls, claim.
     pub const STRIKE: Style = Style { name: "strike", buy_to: 30, strike_at: 360.0, keep: 8, ..Style::BOOM };
 
-    pub fn presets() -> [Style; 5] {
-        [Style::BOOM, Style::CLAIM, Style::LATE, Style::FORT, Style::STRIKE]
+    /// **Cut**: the strike's army and timing, aimed at the roads between
+    /// the body and the crystals it holds instead of at its home
+    /// (`Style::cut`).
+    pub const CUT: Style = Style { name: "cut", cut: true, ..Style::STRIKE };
+
+    /// **Take**: cut-and-take (`Style::take`), spending the bank on the
+    /// squad and turrets on the crystals it takes.
+    pub const TAKE: Style = Style { name: "take", take: true, spend: 2.0, turrets: 8, ..Style::STRIKE };
+
+    pub fn presets() -> [Style; 7] {
+        [Style::BOOM, Style::CLAIM, Style::LATE, Style::FORT, Style::STRIKE, Style::CUT, Style::TAKE]
     }
 
     /// A preset by name, with knobs after a colon: `claim:claim_at=200+keep=4`
@@ -364,6 +398,10 @@ impl Style {
             "wall_alarm" => self.wall_alarm = u,
             "strike_at" => self.strike_at = v,
             "strike_army" => self.strike_army = n,
+            "cut" => self.cut = v != 0.0,
+            "take" => self.take = v != 0.0,
+            "spend" => self.spend = v,
+            "turrets" => self.turrets = n,
             "retreat" => self.retreat = v,
             _ => return false,
         }
@@ -391,6 +429,10 @@ const FEED_HORIZON: f32 = 120.0;
 /// A brain whose income can't pay the rations and whose bank holds less
 /// than this many seconds of them sends every soldier to farm.
 const LEAN_SECS: f32 = 60.0;
+/// How far from the core towards a held crystal a cut stands, as a share
+/// of the way: the middle of the road, away from the hub's pull and from
+/// the crystal's own thick mat.
+const CUT_AT: f32 = 0.5;
 /// The share of the crystals' food left that a brain counts on banking
 /// before the cap; the mould eats the rest.
 const LEFT_SHARE: f32 = 0.5;
@@ -416,11 +458,16 @@ pub struct Brain {
     /// and the last (time, harvested) it was read at.
     income: f32,
     seen: Option<(f32, f32)>,
+    /// Cut-and-take: the crystal being cut off, and those taken.
+    taking: Option<usize>,
+    taken: Vec<usize>,
+    /// Crystals given a turret.
+    turreted: Vec<usize>,
 }
 
 impl Brain {
     pub fn new(style: Style, side: Side) -> Brain {
-        Brain { style, side, hurt: Vec::new(), walled: Vec::new(), walls: 0, striking: false, cap: 0.0, income: 0.0, seen: None }
+        Brain { style, side, hurt: Vec::new(), walled: Vec::new(), walls: 0, striking: false, cap: 0.0, income: 0.0, seen: None, taking: None, taken: Vec::new(), turreted: Vec::new() }
     }
 
     /// Look, decide, and give the commands on `g`. Returns how many it gave.
@@ -429,9 +476,14 @@ impl Brain {
         let before = g.soldiers.len();
         let cmds = self.think(&View::of(g, &self.side));
         for &c in &cmds {
+            let b = g.buildings.len();
             let ok = g.apply(c);
             if ok && matches!(c, Cmd::Wall(..)) {
                 self.walls += 1;
+            }
+            // A turret is a ghost until a soldier raises it.
+            if ok && matches!(c, Cmd::Build(Kind::Turret, _)) && g.buildings.len() > b {
+                g.apply(Cmd::Send(b));
             }
         }
         if !self.side.whole {
@@ -477,7 +529,16 @@ impl Brain {
         };
         let mut bank = v.bank;
         let mut size = n;
-        while size < st.buy_to.min(v.rules.max_squad) && bank - v.rules.soldier_cost >= st.reserve + v.ammo(size + 1, st.ammo) && feeds(size, bank) {
+        // Tried and reverted: a rich bank bought to the squad's most (40).
+        // Under rations 40 soldiers eat 36,000 food over a game that
+        // harvests about 45,000, and on race seeds 1-4 at 25,000 walkers
+        // the army starved by 640-813 s on 3 of 4, with the income check
+        // on or off for the opening minute. The bank goes into turrets
+        // (below), which eat nothing. Without rations (the owner's playtest,
+        // 11-14 01:49Z: soldiers that starve are "bad") nothing stops a rich
+        // bank buying to the squad's most.
+        let buy_to = if v.rules.ration <= 0.0 && v.bank > st.spend * v.rules.soldier_cost { v.rules.max_squad } else { st.buy_to };
+        while size < buy_to.min(v.rules.max_squad) && bank - v.rules.soldier_cost >= st.reserve + v.ammo(size + 1, st.ammo) && feeds(size, bank) {
             out.push(Cmd::Buy);
             bank -= v.rules.soldier_cost;
             size += 1;
@@ -490,7 +551,8 @@ impl Brain {
                 out.push(Cmd::Order(u.k, Order::Move(v.home.0, v.home.1)));
             }
         }
-        let free: Vec<UnitView> = v.units.iter().copied().filter(|u| !self.hurt.contains(&u.k)).collect();
+        // A soldier raising a building finishes it before it takes a job.
+        let free: Vec<UnitView> = v.units.iter().copied().filter(|u| !self.hurt.contains(&u.k) && !matches!(u.order, Order::Build(_))).collect();
         let claim_at = if st.claim_at < 0.0 { self.cap + st.claim_at } else { st.claim_at };
         if !self.striking && v.t >= st.strike_at && free.len() >= st.strike_army {
             self.striking = true;
@@ -505,7 +567,53 @@ impl Brain {
         // everyone: with no farmers left the bank ran dry mid-strike, and
         // on seeds 1-4 three of four squads ended with one soldier or none.)
         let mut striker = vec![false; free.len()];
-        if striking && !v.core_down {
+        // Cut points: the roads from the core to the held crystals nearest
+        // home. With none held, a cut strikes the core as the strike does.
+        let road = |c: (f32, f32)| (v.core.0 + CUT_AT * (c.0 - v.core.0), v.core.1 + CUT_AT * (c.1 - v.core.1));
+        if st.take && striking {
+            let holds = |i: usize| v.crystals.iter().find(|c| c.i == i).is_some_and(|c| v.weigh(c.on) >= HELD as f32);
+            if let Some(i) = self.taking {
+                if !holds(i) {
+                    self.taken.push(i);
+                    self.taking = None;
+                }
+            }
+            if self.taking.is_none() {
+                let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| v.weigh(c.on) >= HELD as f32 && dist(c.at, v.core) > 1.0 && !self.taken.contains(&c.i)).collect();
+                held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
+                self.taking = held.first().map(|c| c.i);
+            }
+        }
+        let cuts: Vec<(f32, f32)> = if st.take {
+            self.taking.and_then(|i| v.crystals.iter().find(|c| c.i == i)).map(|c| vec![road(c.at)]).unwrap_or_default()
+        } else if st.cut {
+            let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| v.weigh(c.on) >= HELD as f32 && dist(c.at, v.core) > 1.0).collect();
+            held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
+            held.iter().take(st.claims.max(1)).map(|c| road(c.at)).collect()
+        } else {
+            Vec::new()
+        };
+        if striking && !v.core_down && !cuts.is_empty() {
+            let on_cut = |o: Order| matches!(o, Order::Fight(x, y) if cuts.iter().any(|&c| dist(c, (x, y)) < 1.0));
+            let mut by: Vec<usize> = (0..free.len()).collect();
+            by.sort_by(|&a, &b| on_cut(free[b].order).cmp(&on_cut(free[a].order)).then(dist(free[a].at, v.core).total_cmp(&dist(free[b].at, v.core))));
+            let mut count = vec![0usize; cuts.len()];
+            let chosen: Vec<usize> = by.iter().copied().take(free.len().saturating_sub(st.keep)).collect();
+            // Those already on a cut stay on it; the rest go to the cut
+            // with the fewest.
+            for &j in &chosen {
+                striker[j] = true;
+                if let Order::Fight(x, y) = free[j].order {
+                    if let Some(i) = cuts.iter().position(|&c| dist(c, (x, y)) < 1.0) {
+                        count[i] += 1;
+                        continue;
+                    }
+                }
+                let i = (0..cuts.len()).min_by_key(|&i| count[i]).unwrap();
+                count[i] += 1;
+                out.push(Cmd::Order(free[j].k, Order::Fight(cuts[i].0, cuts[i].1)));
+            }
+        } else if striking && !v.core_down {
             let mut by: Vec<usize> = (0..free.len()).collect();
             by.sort_by(|&a, &b| (free[b].order == Order::Attack).cmp(&(free[a].order == Order::Attack)).then(dist(free[a].at, v.core).total_cmp(&dist(free[b].at, v.core))));
             for &j in by.iter().take(free.len().saturating_sub(st.keep)) {
@@ -519,7 +627,26 @@ impl Brain {
         // Farm the nearest crystals the mould is not near, the core last.
         let mut farmable: Vec<&CrystalView> = v.crystals.iter().filter(|c| dist(c.at, v.core) > 1.0 && v.weigh(c.near) < st.dare as f32).collect();
         farmable.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
+        // Taken crystals are farmed first, whatever is near them: they
+        // were won for that.
+        let mut won: Vec<&CrystalView> = v.crystals.iter().filter(|c| self.taken.contains(&c.i)).collect();
+        won.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
+        farmable.retain(|c| !self.taken.contains(&c.i));
+        won.extend(farmable);
+        let mut farmable = won;
         farmable.truncate(st.farm);
+        // Turrets on farmed crystals, taken ones first, when the bank is
+        // rich enough to pay one.
+        if self.turreted.len() < st.turrets && v.bank > st.spend * v.rules.soldier_cost && bank >= v.rules.build.turret_cost + st.reserve {
+            if let Some(c) = farmable.iter().find(|c| !self.turreted.contains(&c.i)) {
+                // Between the crystal and the core, out of the carriers' way.
+                let d = dist(c.at, v.core).max(1.0);
+                let off = (c.r + 3.0 * sc).min(d * 0.5);
+                let at = (c.at.0 + (v.core.0 - c.at.0) / d * off, c.at.1 + (v.core.1 - c.at.1) / d * off);
+                self.turreted.push(c.i);
+                out.push(Cmd::Build(Kind::Turret, at));
+            }
+        }
         // Crystals the mould holds, nearest home first, for the claim.
         let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| v.weigh(c.on) >= HELD as f32).collect();
         held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
@@ -695,6 +822,20 @@ mod tests {
             g.step();
         }
         g
+    }
+
+    /// The tech lead (11-14, after C4's banks of 10-33k): a hand holding
+    /// many soldiers' worth of food buys within seconds. Boom buys to its
+    /// `buy_to`; with `spend` it also puts its turrets up.
+    #[test]
+    fn a_rich_hand_spends_its_bank() {
+        let rules = Rules { start_bank: 30_000.0, ..Rules::default() };
+        let boom = round("boom", 1, 5.0, rules);
+        assert_eq!(boom.alive(), Style::BOOM.buy_to, "boom with 30,000 banked has {} soldiers after 5 s", boom.alive());
+        let rich = round("boom:spend=2+turrets=3", 1, 60.0, rules);
+        let turrets = rich.buildings.iter().filter(|b| b.alive && b.kind == Kind::Turret).count();
+        assert_eq!(turrets, 3, "boom:spend=2+turrets=3 with 30,000 banked placed {turrets} turrets in 60 s");
+        assert!(rich.buildings.iter().any(|b| b.kind == Kind::Turret && b.built >= 1.0), "no turret raised in 60 s");
     }
 
     #[test]

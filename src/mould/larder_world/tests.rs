@@ -883,7 +883,9 @@ fn the_campaign_switches_do_what_they_say() {
 fn rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes() {
     let mut g = small(1);
     let n = g.alive() as f32;
-    assert!(n >= 1.0 && g.rules.ration == 1.0 && g.rules.hunger == 1.0);
+    // Off by default since 2026-11-14 (the owner's playtest); the rule
+    // still works when `ration=` turns it on.
+    assert!(n >= 1.0 && g.rules.ration == 0.0 && g.rules.hunger == 1.0);
     g.rules.ration = 2.0;
     let hp = g.soldiers[0].hp;
     // Paid in full: the bank pays, nobody hungers.
@@ -927,7 +929,8 @@ fn rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes() {
 fn a_starving_squad_harvests_as_a_fed_one_and_feeds_itself() {
     let sent = |hunger: f32| {
         let mut g = small(7);
-        (g.rules.hunger, g.rules.overrun, g.bank) = (hunger, 0.0, 0.0);
+        // Rations on (off by default since 2026-11-14): this tests them.
+        (g.rules.ration, g.rules.hunger, g.rules.overrun, g.bank) = (1.0, hunger, 0.0, 0.0);
         let target = g.seek(0, None).expect("a crystal with charge");
         for k in 0..g.soldiers.len() {
             g.apply(Cmd::Order(k, Order::Clear(target.0, target.1)));
@@ -954,7 +957,7 @@ fn a_starving_squad_harvests_as_a_fed_one_and_feeds_itself() {
     // The reserve: a wiped squad on an empty bank gets a recruit at full
     // health, who harvests and pays its own ration.
     let mut g = small(7);
-    (g.rules.reserve, g.rules.overrun, g.bank) = (10.0, 0.0, 0.0);
+    (g.rules.ration, g.rules.reserve, g.rules.overrun, g.bank) = (1.0, 10.0, 0.0, 0.0);
     for s in g.soldiers.iter_mut() {
         (s.alive, s.hp) = (false, 0.0);
     }
@@ -1183,4 +1186,44 @@ fn an_aim_spread_turns_the_shots_within_the_spread() {
         }
     }
     assert!(turned > 0, "the spread turned some shot");
+}
+
+/// A burning soldier fires along its line once the line is in reach, and
+/// while it still walks there it shoots what reaches it, by its own aim
+/// and stance (2026-11-14: on shape C the `volley` squad, short of its
+/// line, fired nothing for 2 s with up to 17 walkers on each soldier and
+/// died). Defend still holds fire at slime that is neither on it nor near.
+#[test]
+fn a_soldier_walking_to_a_burn_line_shoots_what_reaches_it() {
+    let mut g = small(1);
+    let sc = g.s();
+    let reach = g.rules.range * sc;
+    let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
+    let near = (x + 2.0 * sc, y);
+    assert!(g.clear_line((x, y), near), "open ground by the larder");
+    let set = |g: &mut Game<BigDish>, line: f32, touching: u32, aim: (f32, f32)| {
+        let s = &mut g.soldiers[0];
+        s.order = Order::Burn((x + line, y - sc), (x + line, y + sc));
+        s.stance = Stance::Defend;
+        s.touching = touching;
+        s.aim = Some(aim);
+        s.dense = 10;
+    };
+    // A line in reach: its points, whatever touches the soldier.
+    set(&mut g, 0.5 * reach, 3, near);
+    for _ in 0..5 {
+        let p = g.target(0).expect("a line in reach is fired at");
+        assert!((p.0 - (x + 0.5 * reach)).abs() < 1e-3, "{p:?}");
+    }
+    // A line far out of reach, walkers on the soldier: its own aim.
+    set(&mut g, 4.0 * reach, 3, near);
+    for _ in 0..5 {
+        assert_eq!(g.target(0), Some(near), "a soldier on its way shoots what reaches it");
+    }
+    // Far line, nothing on it and its densest slime far off: Defend holds.
+    let far = (x + 0.9 * reach, y);
+    if g.clear_line((x, y), far) {
+        set(&mut g, 4.0 * reach, 0, far);
+        assert!(g.target(0).is_none(), "Defend does not fire at far slime on the way");
+    }
 }

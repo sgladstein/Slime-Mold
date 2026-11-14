@@ -661,6 +661,40 @@ tick against 23.7-26.2 ms.
 soldiers are close), a shorter `panic_r` (20 dish cells reaches past a
 gun's 15), or only pieces above a size panicking (not built).
 
+## Does its size follow the crystals it holds? (11-14, parked)
+
+The game designer's review of the C4 strategy check (PR #213, where no
+AI plan wiped C in 15 minutes) offered two levers: size that follows the
+food on held crystals, and a collapse at 0.08-0.10 of peak against
+`Rules::broken` 0.03. The owner, 2026-11-14 01:08Z: "I have easily beat
+the game in all my playtests so I am not too concerned about the slime
+winning your automated test." Both are parked until a playtest says how,
+and the designer withdrew them. Nothing here changes the game.
+
+What was measured first (`examples/foodprobe.rs`, CPU race world, C's
+keys, seed 1, one seed; raw `raw/food/`): at 3:00 the body is at its
+50,000 cap, eats from all 23 crystals at about 1.88 a step each (a
+covered crystal's cells times `crystal_eat` 0.005) and so eats 29.8 a
+step against an upkeep of 10.0, three times what it pays, banking the
+rest (mean energy 1.49). One crystal feeds about 1.88 / 0.0002 = 9,400
+walkers, so the cap binds whenever it holds 6 or more. With every
+crystal emptied but the ones it eats most from:
+
+| Kept | +90 s | +2:30 | +4:00 | +6:00 |
+|---|---|---|---|---|
+| 1 of 23 (6% of its food) | 49,999 | 49,860 | 40,541 | 10,369 |
+| 4 of 23 (26%) | 49,999 | 49,999 | 49,437 | 46,955 |
+| 2 and 8 (to +90 s only) | 50,000 | | | |
+
+So size does follow food in the end, at about 9,400 walkers a crystal,
+but only below six crystals and after its store runs out: two minutes and
+more of nothing, then most of it goes in the next two minutes (the delay that
+withering answered for a cut piece). If play asks for "every crystal
+taken shrinks it", the levers are the ratio of food to upkeep (more
+upkeep or a capped intake a crystal, so 23 crystals feed about the cap)
+and a smaller store, and the owner's ruling says to make up the
+difficulty elsewhere.
+
 ## Tests
 
 - **Panic, GPU twins.** `the_world_matches_the_cpu_for_one_tick` gains

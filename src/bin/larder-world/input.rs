@@ -124,6 +124,7 @@ impl App {
                     self.start()?;
                     self.paused = false;
                 }
+                HudEvent::Menu(MenuItem::MainMenu) => self.back_to_menu()?,
                 HudEvent::Menu(MenuItem::Quit) => {
                     self.save_replay();
                     return Ok(true);
@@ -279,7 +280,7 @@ impl App {
             }
             KeyCode::KeyH => {
                 // The next loadout this world can cast (the GPU world has
-                // no gas or germ yet), kept for the next game too.
+                // no germ yet), kept for the next game too.
                 let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
                     rounds::Card::Gas => g.world.has_gas(),
                     rounds::Card::Germ => g.world.has_germ(),
