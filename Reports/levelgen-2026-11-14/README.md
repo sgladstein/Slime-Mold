@@ -358,7 +358,8 @@ bands, fen lakes, the valley's river, the jungle's hedges and rings, the
 highlands' rooms on cracked clay, the caverns, the core's mix.
 
 **After the graphics lead's review (18:56Z).** Round 3 accepted; the
-river and the streams too thin to read at zoom 1. Rivers now at least 40
+river and the streams too thin to read at zoom 1: rivers 10-14 cells of
+the 256 x 160 grid wide (4 map cells each), streams at least 4. Rivers now at least 40
 map cells across (half-width 22-28, edge noise ±10%; were 34 at the
 least), streams at least 16 (half-width 9-12; were 8). Width across each
 water's own course, medians on seeds 1-3 (`raw/medial.py`): river valley

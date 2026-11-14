@@ -1174,9 +1174,9 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         let k = rc.rivers;
         for j in 0..k {
             let s = span * (0.5 + (j as f32 - (k as f32 - 1.0) / 2.0) * 0.18 + r.range(-0.03, 0.03));
-            // At least 40 map cells across (about 10 px in a 266 px grey
-            // thumbnail): at 34 the river read as a thin line at zoom 1
-            // (graphics lead, 2026-11-14 18:56Z).
+            // At least 40 map cells across (10-14 of the 256 x 160 grid the
+            // graphics lead counts in, 4 map cells each): at 34 the river
+            // read as a thin line at zoom 1 (graphics lead, 2026-11-14 18:56Z).
             let half = r.range(22.0, 28.0);
             let room: Vec<f32> = (-300..300).map(|i| i as f32 * 8.0).filter(|&u| {
                 let q = at_line(s, u);
@@ -1199,8 +1199,8 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         for _ in 0..rc.rivers {
             let from = (r.range(0.2, 0.8) * wf, r.range(0.2, 0.8) * hf);
             let dir = bend(perp, r.range(-0.6, 0.6));
-            // At least 16 map cells across (4 px in a grey thumbnail); 8-12
-            // was too thin to read (graphics lead, 18:56Z).
+            // At least 16 map cells across (4 of the graphics lead's grid
+            // cells); 8-12 was too thin to read (graphics lead, 18:56Z).
             let half = r.range(9.0, 12.0);
             for d in [dir, (-dir.0, -dir.1)] {
                 let pts = wander(&mut r, wf, hf, from, d, 24.0, 0.25);
