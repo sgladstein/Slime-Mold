@@ -220,7 +220,12 @@ impl GpuGarden {
 /// conversion by presence (`species_convert_per`), which the engine lacks;
 /// with both moulds laying the same deposit it compares the same sums.
 pub fn garden_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
-    Settings { species: own_mould::SPECIES, avoid: 0.0, convert: own_mould::CONVERT, convert_r: own_mould::CONVERT_R, ..race_settings(seed, scale, 2 * walkers) }
+    let s = race_settings(seed, scale, 2 * walkers);
+    // Half the slots a side, as the CPU garden (`own_mould::garden_world`;
+    // on the GPU since 11-14, so a mission plays the same on both engines).
+    let half = s.capacity.max(s.walkers) / 2;
+    let species_cap = (0..own_mould::SPECIES as usize).map(|sp| if sp == 0 || sp == own_mould::OWN as usize { half } else { 0 }).collect();
+    Settings { species: own_mould::SPECIES, avoid: 0.0, convert: own_mould::CONVERT, convert_r: own_mould::CONVERT_R, species_cap, ..s }
 }
 
 impl GpuWorld {
@@ -636,6 +641,14 @@ impl World for GpuWorld {
     }
 
     fn stop_births(&mut self) {
+        // In a garden only the enemy's births stop (its cap goes to 0), as
+        // the CPU's `Garden::stop_births`; the player's mould keeps growing.
+        if self.garden.is_some() {
+            if let Some(c) = self.s.species_cap.get_mut(0) {
+                *c = 0;
+                return;
+            }
+        }
         self.s.birth_energy = f32::INFINITY;
     }
 
@@ -1028,6 +1041,60 @@ mod tests {
         // The plain world has no player's mould.
         let plain = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
         assert_eq!(plain.counts_by_side(), (0, walkers));
+    }
+
+    /// Each side keeps its own birth reserve on both engines
+    /// (`species_cap`, 11-14; the tech lead's ask for the campaign's
+    /// own-mould mission): with the enemy capped at its start, it stays
+    /// within a few dozen of the cap (conversion, not birth) while the
+    /// player's mould keeps its own; the two engines count the same each
+    /// frame; a
+    /// taken core (`stop_births`) stops only the enemy's births. Without
+    /// the cap the same enemy outgrows it (else this proves nothing).
+    #[test]
+    fn gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu() {
+        use crate::mould::own_mould::garden_world;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 1_000);
+        let f = Frame { slime: 1.0, ..Frame::default() };
+        let run = |cap: Option<usize>, stop: bool| {
+            let mut s = garden_settings(seed, scale, walkers);
+            let mut cpu = garden_world(seed, scale, walkers, None);
+            if let Some(c) = cap {
+                s.species_cap[0] = c;
+                cpu.dish.p.species_cap[0] = c;
+            }
+            let mut gpu = GpuWorld::garden(&device, &queue, s, seed, scale, walkers).unwrap();
+            if stop {
+                gpu.stop_births();
+                cpu.stop_births();
+            }
+            let mut most = 0;
+            for _ in 0..20 {
+                let _ = gpu.frame(&f, 15);
+                let _ = cpu.frame(&f, 15);
+                assert_eq!(gpu.counts_by_side(), cpu.counts_by_side(), "the engines part");
+                most = most.max(gpu.counts_by_side().1);
+            }
+            (gpu.counts_by_side(), most)
+        };
+        let ((own_free, _), most_free) = run(None, false);
+        assert!(most_free > walkers + 50, "the uncapped enemy grew only to {most_free}");
+        let ((own, _), most) = run(Some(walkers), false);
+        assert!(most <= walkers + walkers / 10, "capped at {walkers}, the enemy reached {most}");
+        // Seed 5 at 20 frames: free 1,116; capped 1,027; stopped 1,027 (the
+        // last few dozen came over by conversion, not birth: the player's
+        // mould fell from 1,000 to 980 in every run, as it isn't sown here).
+        assert!(most_free > most + 50, "the cap held nothing back ({most_free} free, {most} capped)");
+        assert!(own + 5 >= own_free, "the player's mould lost by the enemy's cap ({own} against {own_free})");
+        let ((own_stop, _), most_stop) = run(None, true);
+        assert!(most_stop <= walkers + walkers / 10, "with its births stopped the enemy reached {most_stop}");
+        // The cap's overshoot is bounded by one step's births (the count
+        // runs before them): what the capped enemy gained over the
+        // births-stopped one (conversion alike in both) is a step's parents
+        // at most; at seed 5 it is 0.
+        assert!(most <= most_stop + walkers / 20, "the capped enemy passed its cap by {} over the stopped one", most - most_stop.min(most));
+        assert!(own_stop + 5 >= own_free, "stopping the enemy's births stopped the player's ({own_stop})");
     }
 
     /// A grazing world is refused, with a reason, not run wrong.

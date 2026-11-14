@@ -4,7 +4,9 @@
 struct Set {
     sa: f32, so: f32, ra: f32, st: f32,
     sso: f32, deposit: f32, keep: f32, bdep: f32,
-    graze_w: f32, crowd: u32, explore: u32, _p: u32,
+    // `cap`: the species' birth cap (`BigParams::species_cap`, u32 max for
+    // none), read only in a garden; the set's spare word, 11-14.
+    graze_w: f32, crowd: u32, explore: u32, cap: u32,
 };
 struct Params {
     w: u32, h: u32, n: u32, crowd: u32,
@@ -1021,6 +1023,18 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     let t = S.t;
     let b = child_of(k, t);
     if (!ordinary(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
+    // A garden's birth caps (`species_cap`): a parent divides only while
+    // its side held fewer than its cap as the pass began (`capcount`), as
+    // the CPU's `held`; the enemy in word 6, the player's mould in 7.
+    // A side can pass its cap by at most one step's births (every parent
+    // in the step that read "under" divides), on both engines alike. Keep
+    // it so: an atomic counter here would make who is born depend on the
+    // order the threads run, and the twin with the CPU would break.
+    if (garden()) {
+        let sp = species_of(k);
+        let held = select(atomicLoad(&wstat[6]), atomicLoad(&wstat[7]), sp == OWN_SP);
+        if (held >= P.sets[sp].cap) { return; }
+    }
     let at = birth_spot(k, t);
     let j = cell(at.x, at.y);
     // The parent's species' crowd limit, + `fed_crowd` if it is fed
@@ -2688,6 +2702,23 @@ fn tend(@builtin(local_invocation_index) li: u32) {
 @compute @workgroup_size(256)
 fn ownclear(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gid.x < P.w * P.h) { atomicStore(&gcount[gid.x], 0u); }
+}
+
+// Each side's living walkers before a garden's births (`species_cap`,
+// 11-14), as the CPU counts `lives`: `capclear` clears words 6 and 7,
+// `capcount` adds the enemy (species 0) into 6 and the player's (3) into 7.
+@compute @workgroup_size(1)
+fn capclear() {
+    atomicStore(&wstat[6], 0u);
+    atomicStore(&wstat[7], 0u);
+}
+
+@compute @workgroup_size(256)
+fn capcount(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let sp = species_of(k);
+    if (sp == 0u) { atomicAdd(&wstat[6], 1u); } else if (sp == OWN_SP) { atomicAdd(&wstat[7], 1u); }
 }
 
 @compute @workgroup_size(256)
