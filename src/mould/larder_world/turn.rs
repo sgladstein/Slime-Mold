@@ -279,10 +279,19 @@ impl<W: World> Game<W> {
             self.guard_pay();
             self.count_stuck();
             self.check_broken();
+            self.keep_panic_reach();
         }
         self.feed(dt);
         self.campaign_rules(now - t);
         self.check_end();
+    }
+
+    /// A scared piece's reach, past the gun's range (`Rules::panic_margin`):
+    /// at the start and once a game second, so a range card moves it.
+    pub(super) fn keep_panic_reach(&mut self) {
+        if self.rules.panic_margin >= 0.0 {
+            self.world.set_panic_r(self.rules.range + self.rules.panic_margin);
+        }
     }
 
     /// Once a game second, at the count: the broken mould (`Rules::broken`).

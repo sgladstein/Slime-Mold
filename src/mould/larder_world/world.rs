@@ -63,6 +63,10 @@ pub trait World {
     /// stragglers by raising it, and gives it back when the mould recovers.
     fn upkeep(&self) -> f32;
     fn set_upkeep(&mut self, up: f32);
+    /// How far a scared walker sees a unit to charge (`BigParams::panic_r`,
+    /// dish cells): the game keeps it past the gun's range
+    /// (`Rules::panic_margin`). A world with no panic ignores it.
+    fn set_panic_r(&mut self, _r: f32) {}
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
@@ -173,6 +177,10 @@ impl World for BigDish {
 
     fn set_upkeep(&mut self, up: f32) {
         self.p.upkeep = up;
+    }
+
+    fn set_panic_r(&mut self, r: f32) {
+        self.p.panic_r = r;
     }
 
     fn food_deposit(&self) -> f32 {

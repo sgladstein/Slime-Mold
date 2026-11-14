@@ -39,7 +39,8 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // owner, 15:57Z: "It shouldn't have a stronger attack but it should act
     // more like a scared animal. Either run away back to the main body or
     // go right for the soliders. It should be more reckless." A walker with
-    // no news for 5 s heads straight for the nearest unit within 20 cells,
+    // no news for 5 s heads straight for the nearest unit within reach (5
+    // cells past the gun's range, `Rules::panic_margin`, since 11-14: 29),
     // or else the nearest crystal with food, creeping at half its pace for
     // 1.5 s (the tell; `panic_creep` 0.5, the BigParams default since the
     // game designer's review of the last-stand film, 11-13) and then twice
