@@ -12,6 +12,6 @@ says Break the nest: cut the Sleeper to half its size
 map nest
 tier sleeper
 verbs move harvest buy stance fire wall cut turret strike
-rule ration 0
+# (rations removed from the game 2026-11-14: no upkeep)
 bonus lose 4
 goal shrink 0.5

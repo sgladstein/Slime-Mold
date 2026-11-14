@@ -35,7 +35,7 @@ says Keep the spores off your landing crystal for a minute
 map rim
 tier sporer
 verbs move harvest buy stance fire wall cut turret strike pump
-rule ration 0
+# (rations removed from the game 2026-11-14: no upkeep)
 rule drain 0.5
 bonus stolen 0
 goal clear 1 60 5

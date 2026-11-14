@@ -413,9 +413,6 @@ struct Args {
     /// `sink=B`: how far into the slime a shot's blast is centred, in
     /// strike radii (`Rules::sink`; 0 centres it on the first slime cell).
     sink: Option<f32>,
-    /// `ration=R`: food a game second each soldier eats (`Rules::ration`;
-    /// 0, the default since 2026-11-14, is off; 1 plays the PR 4 economy).
-    ration: Option<f32>,
     /// `mass=M`: one walker's fight weight (`Rules::mass`); None follows the
     /// start walkers a cell (`Rules::mass_for`).
     mass: Option<f32>,
@@ -440,6 +437,9 @@ struct Tracer {
     to: (f32, f32),
     hit: bool,
     age: f32,
+    /// The strike's radius, fine cells (`Shot::r`): a hit lights only
+    /// what it kills (owner 20:22Z).
+    r: f32,
 }
 
 /// What the window keeps of each soldier beside the game: the way it
@@ -563,8 +563,6 @@ struct App {
     robbed_at: Option<f32>,
     stolen: f32,
     broke: bool,
-    /// `Game::hungry` last frame, to tell the player once when the squad starts starving.
-    hungry: bool,
     /// Bank samples (game second, bank) for the food rate.
     bank_log: std::collections::VecDeque<(f32, f32)>,
     /// Seconds left of the larder's flare (`BANKED`), set by a carrier
@@ -671,7 +669,6 @@ impl App {
             robbed_at: None,
             stolen: 0.0,
             broke: false,
-            hungry: false,
             bank_log: Default::default(),
             banked: 0.0,
             frame_ms: Vec::new(),
@@ -816,9 +813,6 @@ impl App {
         rules.mass = a.mass.unwrap_or(Rules::mass_for(walkers, a.scale));
         if let Some(w) = a.wade {
             rules.wade = w;
-        }
-        if let Some(b) = a.ration {
-            rules.ration = b;
         }
         if let Some(b) = a.sink {
             rules.sink = b;
@@ -1144,11 +1138,6 @@ impl App {
             self.hud.alert("Out of food: soldiers cannot fire", None, theme::BAD);
         }
         self.broke = broke;
-        // Rations (`Rules::ration`): told once each time the bank runs dry.
-        if g.hungry && !self.hungry {
-            self.hud.alert(&format!("Out of food: the squad is starving ({:.0} food a second to feed it)", g.rules.ration * g.alive() as f32), Some(g.larder), theme::BAD);
-        }
-        self.hungry = g.hungry;
         self.bank_log.push_back((t, g.bank));
         while self.bank_log.front().is_some_and(|&(t0, _)| t - t0 > 10.0) {
             self.bank_log.pop_front();
@@ -1233,6 +1222,9 @@ impl App {
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
         if !self.in_menu() {
+            // WASD pans only while paused (`Controls::wasd_pan`): set here
+            // too, so a key held through P stops panning as play resumes.
+            self.controls.wasd_pan &= self.paused && self.game.as_ref().is_some_and(|g| g.end.is_none());
             self.controls.update(&mut self.camera, dt);
             self.squad_frame(dt);
         }
@@ -1385,7 +1377,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1445,7 +1437,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "wade" => args.wade = Some(v.parse()?),
             "sink" => args.sink = Some(v.parse()?),
-            "ration" => args.ration = Some(v.parse()?),
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
@@ -1543,7 +1534,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select, turret, lure, pump, outpost, siren; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select, turret, lure, pump, outpost, siren; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }

@@ -244,7 +244,6 @@ impl Mission {
                 "overrun" => r.overrun = *v,
                 "reserve" => r.reserve = *v,
                 "drain" => r.drain = *v,
-                "ration" => r.ration = *v,
                 _ => unreachable!("parse checks the keys"),
             }
         }
@@ -252,7 +251,7 @@ impl Mission {
     }
 }
 
-const RULE_KEYS: [&str; 10] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve", "drain", "ration"];
+const RULE_KEYS: [&str; 9] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve", "drain"];
 
 /// A walker's bite on a soldier in a mission (`Rules::drain`) unless its
 /// file sets one (`rule drain N`): 1, the bite the missions were tuned on.

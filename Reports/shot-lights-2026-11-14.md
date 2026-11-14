@@ -40,3 +40,16 @@ Fork map, seed 1, eight soldiers holding from 0:17.5 to 0:18.7 at zoom 7, on llv
 ## Checks
 
 The window tests (29) and clippy pass. Frame cost is unchanged: the same number of lights, each over a smaller area.
+
+## Follow-up: each light the size of its damage (20:22Z)
+
+The owner, after #296: "the blast light affect should only be the size of the damage. The same for all affects."
+
+| light | #296 | now |
+|---|---|---|
+| bullet in flight | 2.5 cells × wide | its strike's radius (`Bullet::r`: 2.5 cells for a standard bullet, a rolled bullet's damage widens it) |
+| plain hit | 2.5 cells | its strike's radius (`Shot::r`, new) |
+| payload burst | 1.5 radii (a bomb's of its throw ring) | its own radius, a bomb's kill core |
+| soldier's or turret's muzzle, a lodged cast's ember | 2.5 or 3.75 cells, 3 cells | 1 cell (`MUZZLE_LIGHT`; no damage of their own) |
+
+The full suite (446 + 29 + 39) and clippy pass.
