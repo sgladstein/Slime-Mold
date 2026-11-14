@@ -97,6 +97,14 @@ state (`View::set_dense`):
   `bench-off.txt`, `bench-on.txt`): frame p50 63.6 ms off, 64.8 on (+1.9%),
   p95 83.0 and 86.0. The 1070 is not measured.
 
+**Follow-up (art director, 11-14 10:58Z):** the settled bronze read as a
+flat plate, because the plateau curve fed its height too. Now only its
+colour takes the plateau; its height takes the raw thickness, veins and
+all, raised by up to 0.6, so the slime-look thread's broad sheen (#263)
+runs over it like dense wet metal (`page/bronze-texture-before-after.png`,
+`page/bronze-texture.mp4`). Patch luma 84 before, 99 after, still under
+gold's 138 and amber's 185. No added samples. Approved by the art director (12:08Z), with a watch item: in grey it is now 99 against the bolt red's 105, told apart by hue and gloss, so later passes must not brighten the bronze.
+
 The zoom 12 clips (`page/turn-z12-1x.mp4`, `page/turn-z12-half.mp4`,
 `clip-z12.txt`): one patch by the home crystal from 9.0 to 11.8 s, every
 game step.
