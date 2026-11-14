@@ -96,10 +96,47 @@ before. All 51 `larder_world` tests pass, the 9 old ones unchanged.
 | 37 s (control back) | 316 | 2,778 | 460 | 23,626 |
 | 66 s | 584 | 4,680 | 482 | 27,200 |
 
+## The squad panel (owner 08:22Z)
+
+"The squad menu needs to be totally fixed. It needs to list each squad with
+the number of soliders and its hotkey, you can click to take command. There
+should also be buttons, to combine, to split."
+
+Then (08:48Z): "This is supposed to replace the bottom middle menu each
+squad should be a tile how each solider is now". The first cut, a panel at
+the top right, was replaced before it merged. In squad mode the bottom bar's
+middle panel (laid out by #250) shows the squads (`ui::SquadPanel`, drawn by
+`Hud::squad_tiles`, built by `App::squad_panel` in
+`src/bin/larder-world/squadmode.rs`):
+
+- A tile a live squad, in id order; its key is its id + 1 and stays while
+  the squad lives (the digit keys and the numbers over the squads agree; they
+  first followed the live squads' order, so a squad's key changed when a
+  lower one died, merged or split: the bug sweep's review). The size of a soldier's card but wider: hotkey, soldiers,
+  their mean health. The squad you command is outlined. Hovering says its
+  state (formation if not blob; firing, moving or holding).
+- A click on a tile takes command of it. The + on another tile brings that
+  squad into yours (`Cmd::Merge`).
+- The header line: how many squads, which you command, and Split and
+  Combine at its right end. Split: the front half, the way the squad faces,
+  becomes a new squad and you command it. Combine: the nearest other squad
+  joins yours, however far (the key keeps its 24-cell reach). A button that
+  can't act (a squad of one, 16 squads, no other squad) is greyed with the
+  reason as its tooltip.
+- No Outpost on the build page without the larder: with nothing carried
+  home it only smelt of the bank and let the mould eat from it.
+- Cost: model and HUD 0.062 ms a frame on llvmpipe (Fork, 1600x900, two
+  squads).
+
+Stills `page/squad-tiles-24s.jpg` and `page/squad-tiles-crop.png`:
+`larder-world mode=squads look=DIR hand=squads at=24 screen=1600x900`. On
+main 68870d0 the film's squad stuck at the inside of the Fork's V wall from
+14 s (the bug sweep's stuck anchor, #252), so the hand now splits by 20 s
+whatever held it.
+
 ## Open
 
-- A call-in delay for bought soldiers (answer 10) and a squad list in the
-  HUD.
+- A call-in delay for bought soldiers (answer 10).
 - Keys, after the owner's playtest (08:01Z; [bug sweep](../bug-sweep-2026-11-14.md)):
   the card's letters came second to the squad's, so G merged instead of
   harvesting and X split instead of defending, and the wheel switched

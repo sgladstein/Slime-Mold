@@ -51,7 +51,10 @@ impl<W: World> Game<W> {
             self.walk(k, dt);
             // A move that has arrived starts the next queued order (with
             // none queued it stays, as before: the window shows where).
-            if self.soldiers[k].queued > 0 {
+            // (Not while its squad is still being sent somewhere: its move
+            // there is the squad's, renewed every step.)
+            let sent = self.rules.squads && self.squads.get(self.soldiers[k].squad as usize).is_some_and(|q| q.dest.is_some());
+            if self.soldiers[k].queued > 0 && !sent {
                 let arrived = match self.soldiers[k].order {
                     Order::Hold => true,
                     Order::Move(..) | Order::Fight(..) => self.goal(k).is_none_or(|g| (g.0 - self.soldiers[k].x).hypot(g.1 - self.soldiers[k].y) <= 1.5 * sc),
@@ -287,10 +290,11 @@ impl<W: World> Game<W> {
     }
 
     /// A scared piece's reach, past the gun's range (`Rules::panic_margin`):
-    /// at the start and once a game second, so a range card moves it.
+    /// at the start and once a game second, so a range card moves it
+    /// (`gun_range`, which the rounds' `Range` cards stretch).
     pub(super) fn keep_panic_reach(&mut self) {
         if self.rules.panic_margin >= 0.0 {
-            self.world.set_panic_r(self.rules.range + self.rules.panic_margin);
+            self.world.set_panic_r(self.gun_range() + self.rules.panic_margin);
         }
     }
 

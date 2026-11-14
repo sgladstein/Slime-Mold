@@ -1,0 +1,149 @@
+  t 2 s: mould 24949, soldiers 8, bank 400, harvested 0, shots 7, killed 51, took 0%, crystals left 1.000; squad at 257.1,112.6
+  t 2 s: mould 24949, soldiers 8, bank 400, harvested 0, shots 8, killed 51, took 0%, crystals left 1.000; squad at 257.1,112.6
+  t 3 s: mould 24949, soldiers 8, bank 400, harvested 0, shots 10, killed 67, took 0%, crystals left 1.000; squad at 257.1,112.6
+  t 3 s: mould 24949, soldiers 8, bank 400, harvested 0, shots 12, killed 84, took 0%, crystals left 1.000; squad at 257.1,112.6
+  t 3 s: mould 24909, soldiers 8, bank 400, harvested 0, shots 14, killed 91, took 0%, crystals left 1.000; squad at 257.1,112.6
+  t 3 s: mould 24909, soldiers 8, bank 500, harvested 0, shots 16, killed 117, took 0%, crystals left 1.000; squad at 257.0,117.7
+    turret at (256, 168): hp 30 / 300, built 0.0, standing
+    turret at (238, 168): hp 30 / 300, built 0.0, standing
+    turret at (274, 168): hp 30 / 300, built 0.0, standing
+  t 4 s: mould 24909, soldiers 8, bank 500, harvested 0, shots 18, killed 133, took 0%, crystals left 1.000; squad at 257.0,122.8
+    turret at (256, 168): hp 30 / 300, built 0.0, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 4 s: mould 24909, soldiers 8, bank 499, harvested 0, shots 19, killed 139, took 0%, crystals left 1.000; squad at 256.8,127.6
+    turret at (256, 168): hp 30 / 300, built 0.0, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 4 s: mould 24828, soldiers 8, bank 499, harvested 0, shots 22, killed 172, took 0%, crystals left 1.000; squad at 256.8,131.1
+    turret at (256, 168): hp 30 / 300, built 0.0, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 4 s: mould 24828, soldiers 8, bank 499, harvested 0, shots 24, killed 196, took 0%, crystals left 1.000; squad at 256.7,135.8
+    turret at (256, 168): hp 30 / 300, built 0.0, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 5 s: mould 24828, soldiers 8, bank 499, harvested 0, shots 26, killed 200, took 0%, crystals left 1.000; squad at 256.6,140.7
+    turret at (256, 168): hp 29 / 300, built 0.0, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 5 s: mould 24828, soldiers 8, bank 498, harvested 0, shots 27, killed 211, took 0%, crystals left 1.000; squad at 256.5,145.4
+    turret at (256, 168): hp 31 / 300, built 0.0, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 5 s: mould 24772, soldiers 8, bank 498, harvested 0, shots 30, killed 228, took 0%, crystals left 1.000; squad at 256.4,149.0
+    turret at (256, 168): hp 47 / 300, built 0.1, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 5 s: mould 24772, soldiers 8, bank 497, harvested 0, shots 32, killed 245, took 0%, crystals left 1.000; squad at 256.4,152.9
+    turret at (256, 168): hp 83 / 300, built 0.2, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 6 s: mould 24772, soldiers 8, bank 496, harvested 0, shots 34, killed 261, took 0%, crystals left 1.000; squad at 256.3,156.1
+    turret at (256, 168): hp 136 / 300, built 0.4, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 6 s: mould 24772, soldiers 8, bank 495, harvested 0, shots 34, killed 261, took 0%, crystals left 1.000; squad at 256.4,158.5
+    turret at (256, 168): hp 205 / 300, built 0.7, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 6 s: mould 24709, soldiers 8, bank 495, harvested 0, shots 38, killed 291, took 0%, crystals left 1.000; squad at 256.5,159.3
+    turret at (256, 168): hp 259 / 300, built 0.9, standing
+    turret at (238, 168): hp 29 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 6 s: mould 24709, soldiers 8, bank 494, harvested 0, shots 40, killed 367, took 0%, crystals left 1.000; squad at 255.6,160.2
+    turret at (256, 168): hp 297 / 300, built 1.0, standing, working
+    turret at (238, 168): hp 31 / 300, built 0.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 7 s: mould 24709, soldiers 8, bank 493, harvested 0, shots 42, killed 378, took 0%, crystals left 1.000; squad at 251.8,162.0
+    turret at (256, 168): hp 297 / 300, built 1.0, standing
+    turret at (238, 168): hp 63 / 300, built 0.1, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 7 s: mould 24709, soldiers 8, bank 492, harvested 0, shots 44, killed 408, took 0%, crystals left 1.000; squad at 248.9,163.3
+    turret at (256, 168): hp 297 / 300, built 1.0, standing, working
+    turret at (238, 168): hp 121 / 300, built 0.3, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 7 s: mould 24578, soldiers 8, bank 490, harvested 0, shots 47, killed 422, took 0%, crystals left 1.000; squad at 247.3,163.9
+    turret at (256, 168): hp 297 / 300, built 1.0, standing
+    turret at (238, 168): hp 175 / 300, built 0.5, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 7 s: mould 24578, soldiers 8, bank 489, harvested 0, shots 48, killed 427, took 0%, crystals left 1.000; squad at 246.2,164.6
+    turret at (256, 168): hp 297 / 300, built 1.0, standing
+    turret at (238, 168): hp 247 / 300, built 0.8, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 8 s: mould 24578, soldiers 8, bank 488, harvested 0, shots 52, killed 450, took 0%, crystals left 0.999; squad at 245.8,165.0
+    turret at (256, 168): hp 296 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing, working
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 8 s: mould 24578, soldiers 8, bank 486, harvested 0, shots 54, killed 463, took 0%, crystals left 0.999; squad at 250.9,165.6
+    turret at (256, 168): hp 296 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 29 / 300, built 0.0, standing
+  t 8 s: mould 24510, soldiers 8, bank 485, harvested 0, shots 58, killed 494, took 0%, crystals left 0.999; squad at 254.6,166.0
+    turret at (256, 168): hp 296 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 36 / 300, built 0.0, standing
+  t 8 s: mould 24510, soldiers 8, bank 484, harvested 0, shots 60, killed 510, took 0%, crystals left 0.999; squad at 259.0,166.6
+    turret at (256, 168): hp 296 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 72 / 300, built 0.2, standing
+  t 9 s: mould 24510, soldiers 8, bank 482, harvested 0, shots 63, killed 537, took 0%, crystals left 0.999; squad at 262.0,167.0
+    turret at (256, 168): hp 296 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 130 / 300, built 0.4, standing
+  t 9 s: mould 24510, soldiers 8, bank 481, harvested 0, shots 65, killed 549, took 0%, crystals left 0.999; squad at 264.2,167.4
+    turret at (256, 168): hp 296 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 200 / 300, built 0.6, standing
+  t 9 s: mould 24460, soldiers 8, bank 480, harvested 0, shots 66, killed 553, took 0%, crystals left 0.999; squad at 264.8,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 254 / 300, built 0.8, standing
+  t 9 s: mould 24460, soldiers 8, bank 478, harvested 0, shots 68, killed 555, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing, working
+  t 10 s: mould 24460, soldiers 8, bank 477, harvested 0, shots 70, killed 566, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing
+  t 10 s: mould 24460, soldiers 8, bank 475, harvested 0, shots 74, killed 589, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing, working
+  t 10 s: mould 24426, soldiers 8, bank 474, harvested 0, shots 75, killed 595, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing, working
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing
+  t 10 s: mould 24426, soldiers 8, bank 472, harvested 0, shots 76, killed 599, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing
+  t 11 s: mould 24426, soldiers 8, bank 471, harvested 0, shots 79, killed 604, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing, working
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing
+  t 11 s: mould 24426, soldiers 8, bank 469, harvested 0, shots 81, killed 608, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing
+  t 11 s: mould 24403, soldiers 8, bank 468, harvested 0, shots 82, killed 628, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing
+  t 11 s: mould 24403, soldiers 8, bank 466, harvested 0, shots 84, killed 637, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing, working
+    turret at (274, 168): hp 299 / 300, built 1.0, standing
+  t 12 s: mould 24403, soldiers 8, bank 464, harvested 0, shots 85, killed 639, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing
+  t 12 s: mould 24403, soldiers 8, bank 462, harvested 0, shots 90, killed 656, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing, working
+    turret at (274, 168): hp 299 / 300, built 1.0, standing
+  t 12 s: mould 24385, soldiers 8, bank 461, harvested 0, shots 91, killed 664, took 0%, crystals left 0.999; squad at 265.3,167.6
+    turret at (256, 168): hp 295 / 300, built 1.0, standing
+    turret at (238, 168): hp 299 / 300, built 1.0, standing
+    turret at (274, 168): hp 299 / 300, built 1.0, standing

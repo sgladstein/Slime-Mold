@@ -408,6 +408,55 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     assert!(app.in_menu(), "still on the menu");
 }
 
+/// The squad panel (owner, 2026-11-14 08:22Z) in a squad-mode window: Split
+/// makes a second row and commands it, a row click commands that squad,
+/// Combine brings the other in. Skips with no GPU (CI).
+#[test]
+fn the_squad_panel_splits_switches_and_combines() {
+    let Some((device, queue)) = gpu() else { return };
+    let args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: true };
+    let mut app = offscreen(args, (1280, 720), &device, &queue).unwrap();
+    let rows = |app: &App| app.model(None, None).squads.expect("a squad panel in squad mode").rows;
+    let r = rows(&app);
+    assert_eq!(r.len(), 1);
+    assert!(r[0].active && r[0].soldiers >= 2, "{r:?}");
+    let all = r[0].soldiers;
+    app.hud_event(HudEvent::SquadSplit).unwrap();
+    let r = rows(&app);
+    assert_eq!((r.len(), r[0].soldiers + r[1].soldiers), (2, all), "{r:?}");
+    assert!(r[1].active && !r[0].active, "the new half is commanded: {r:?}");
+    app.hud_event(HudEvent::Squad(0)).unwrap();
+    assert!(rows(&app)[0].active);
+    app.hud_event(HudEvent::SquadCombine).unwrap();
+    let r = rows(&app);
+    assert_eq!((r.len(), r[0].soldiers), (1, all), "{r:?}");
+    // Stable keys (bug sweep's review, 11-14): a squad keeps its digit
+    // while it lives. Split twice (squads 1, 2, 3), fold squad 1 into 2:
+    // 2 and 3 keep their keys, and 1 picks nothing.
+    app.hud_event(HudEvent::SquadSplit).unwrap();
+    app.hud_event(HudEvent::SquadSplit).unwrap();
+    assert_eq!(app.game.as_ref().unwrap().live_squads(), vec![0, 1, 2]);
+    app.game.as_mut().unwrap().apply(Cmd::Merge(1, 0));
+    let keys: Vec<String> = rows(&app).iter().map(|r| r.key.clone()).collect();
+    assert_eq!(keys, ["2", "3"]);
+    let active = |app: &App| app.game.as_ref().unwrap().active;
+    assert!(app.squad_key(KeyCode::Digit3, true, false, false));
+    assert_eq!(active(&app), Some(2));
+    assert!(app.squad_key(KeyCode::Digit2, true, false, false));
+    assert_eq!(active(&app), Some(1));
+    app.squad_key(KeyCode::Digit1, true, false, false);
+    assert_eq!(active(&app), Some(1), "key 1's squad is gone");
+    // The build page has no Outpost without the larder.
+    app.build_page = true;
+    let cmds = app.model(None, None).commands;
+    assert!(cmds.iter().any(|c| c.name == "Turret") && !cmds.iter().any(|c| c.name == "Outpost"), "{:?}", cmds.iter().map(|c| &c.name).collect::<Vec<_>>());
+    app.build_page = false;
+    // The RTS round has no panel.
+    let rts = Args { squads: false, ..app.args.clone() };
+    let app = offscreen(rts, (640, 400), &device, &queue).unwrap();
+    assert!(app.model(None, None).squads.is_none());
+}
+
 fn squad_args(squads: bool) -> Args {
     Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads }
 }

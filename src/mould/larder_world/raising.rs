@@ -3,10 +3,6 @@
 
 use super::*;
 
-/// A builder raises from this near its site, dish cells (plus its slot
-/// in the squad's sunflower, as a harvester at a crystal).
-pub(super) const BUILD_REACH: f32 = 3.0;
-
 /// A wall's raise time counts once per this many dish cells of length.
 pub const WALL_RAISE_LEN: f32 = 10.0;
 
@@ -72,17 +68,33 @@ impl<W: World> Game<W> {
         }
     }
 
-    /// Soldier `k` is close enough to ghost `b` to raise it. Plus elbow
-    /// room (`Rules::elbow`): two builders whose places by the ghost are
-    /// closer than that push each other apart, and without it the one
-    /// pushed back stood idle (two builders raised a turret in 56 ticks
+    /// How near site `p` of building `b` a builder stands, fine cells:
+    /// (no nearer than this, raising from up to this). The far end is
+    /// `BuildRules::reach` (past a crystal's rim for a ghost on one); the
+    /// near end is a cell clear of the footprint (a wall: of half its
+    /// width), so the ghost stays in sight and a wall can't shut its
+    /// builder in.
+    pub(super) fn build_band(&self, b: usize, p: (f32, f32)) -> (f32, f32) {
+        let sc = self.s();
+        let far = self.reach(p, self.rules.build.reach);
+        let near = match self.buildings[b].kind {
+            Kind::Wall { .. } => (self.rules.wall_width / 2.0 + 1.0) * sc,
+            _ => (self.rules.build.touch + 1.0) * sc,
+        };
+        (near.min(0.5 * far), far)
+    }
+
+    /// Soldier `k` is close enough to ghost `b` to raise it: in reach
+    /// (`build_band`), plus elbow room (`Rules::elbow`), so a builder a
+    /// neighbour pushed a little back still raises (without it the one
+    /// pushed back stood idle: two builders raised a turret in 56 ticks
     /// against one's 61).
     pub(super) fn at_site(&self, k: usize, b: usize) -> bool {
         let Some(p) = self.site(k, b) else { return false };
         let s = self.soldiers[k];
-        let o = self.place(k);
-        let elbow = self.rules.elbow.max(0.0) * self.rules.touch;
-        (p.0 - s.x).hypot(p.1 - s.y) <= self.reach(p, BUILD_REACH) + (o.0.hypot(o.1) + elbow) * self.s()
+        let (_, far) = self.build_band(b, p);
+        let elbow = self.rules.elbow.max(0.0) * self.rules.touch * self.s();
+        (p.0 - s.x).hypot(p.1 - s.y) <= far + elbow
     }
 
     /// Ghost `b`'s builders: (raising it now, ordered to it in all). The

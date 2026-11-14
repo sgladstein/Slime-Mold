@@ -142,6 +142,41 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             g.apply(Cmd::Order(k, Order::Hold));
         }
     }
+    // `buildq` (2026-11-14, the build-flow thread's clips): eight soldiers
+    // at the larder; at 2 s every one is ordered to a turret 28 cells
+    // toward the core, then two more beside it are queued (Shift + clicks
+    // in the window), with the bank topped up to pay for all three. Shows
+    // where builders stand and the queue rising in turn.
+    if hand == "buildq" {
+        while g.time() < 1.0 && g.soldiers.len() < 8 && g.bank >= g.rules.soldier_cost {
+            g.apply(Cmd::Buy);
+        }
+        if g.time() > 2.0 && g.buildings.is_empty() {
+            g.bank = g.bank.max(2000.0);
+            let sc = g.world.scale();
+            let (c, l) = (g.core, g.larder);
+            let d = (c.0 - l.0).hypot(c.1 - l.1).max(1.0);
+            let (ux, uy) = ((c.0 - l.0) / d, (c.1 - l.1) / d);
+            for (i, side) in [0.0f32, 9.0, -9.0].into_iter().enumerate() {
+                let p = (l.0 + ux * 28.0 * sc - uy * side * sc, l.1 + uy * 28.0 * sc + ux * side * sc);
+                let at = (0..=12).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
+                    let a = k as f32 / 12.0 * std::f32::consts::TAU;
+                    (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
+                }).find(|q| g.build_blocked(Kind::Turret, *q).is_none());
+                let Some(at) = at else { continue };
+                if !g.apply(Cmd::Build(Kind::Turret, at)) {
+                    continue;
+                }
+                let b = g.buildings.len() - 1;
+                for k in 0..g.soldiers.len() {
+                    if g.soldiers[k].alive {
+                        g.apply(if i == 0 { Cmd::Order(k, Order::Build(b)) } else { Cmd::Queue(k, Order::Build(b)) });
+                    }
+                }
+            }
+        }
+        return;
+    }
     if hand == "volley" || hand == "edge" {
         volley(g, hand == "edge");
         return;
@@ -294,6 +329,13 @@ pub(super) fn squads_hand(g: &mut Game<GpuWorld>) {
     let near = |from: (f32, f32), want: bool| cs.iter().enumerate().skip(1).filter(|&(i, c)| c.1 > 0.0 && slimed[i] == want).map(|(_, c)| c.0).min_by(|a, b| (a.0 - from.0).hypot(a.1 - from.1).total_cmp(&(b.0 - from.0).hypot(b.1 - from.1)));
     if std::env::var("SQ_DEBUG").is_ok() {
         eprintln!("t {t:.1} q {q} n {} mid {m:?} dest {:?} fire {:?} sight {:?} fired {fired:?} split {split:?} back {back:?}", g.members(q).len(), g.squads[q].dest, g.squads[q].fire, sight(g, q));
+    }
+    // A squad that never got to fire still splits by 20 s, so the film
+    // shows two squads (and the squad panel's two rows) whatever held it.
+    if fired.is_none() && split.is_none() && t >= 20.0 {
+        let sc = g.world.scale();
+        g.apply(Cmd::Split(q as u8, (m.0 + 10.0 * sc, m.1)));
+        return;
     }
     match (fired, split, back) {
         (None, ..) if t >= 1.0 => {
