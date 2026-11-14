@@ -87,6 +87,24 @@ impl Biome {
         Biome::ALL.into_iter().find(|b| b.name() == s)
     }
 
+    /// The ground's moisture and how much it varies (`Items::moisture`, the
+    /// map's `moisture BASE SPREAD` line; `plants::moisture`), agreed with
+    /// the plants thread on 11-14: damp fens and jungle burn slowly and go
+    /// out, the dry barrens and highlands carry fire. A map without the
+    /// line plays at the engine's 0.15 and 0.3.
+    pub fn moisture(self) -> (f32, f32) {
+        match self {
+            Biome::Meadow => (0.25, 0.3),
+            Biome::Barrens => (0.0, 0.2),
+            Biome::Fen => (0.5, 0.3),
+            Biome::Valley => (0.3, 0.3),
+            Biome::Jungle => (0.4, 0.3),
+            Biome::Highlands => (0.1, 0.2),
+            Biome::Caves => (0.35, 0.2),
+            Biome::Core => (0.2, 0.35),
+        }
+    }
+
     /// The set order (owner, 2026-11-14 15:33Z "Set order"; 17:02Z, open
     /// and readable early, mazes and caves later, "That makes sense"), the
     /// core world last. Round 2's biomes (barrens, marsh, canyon, dunes,
@@ -1385,7 +1403,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     }
 
     // Crystals.
-    let mut items = Items { landing: Some(landing), ..Items::default() };
+    let mut items = Items { landing: Some(landing), moisture: Some(p.biome.moisture()), ..Items::default() };
     let clear = |ground: &[u8], items: &Items, c: (f32, f32), rad: f32, gap: f32| -> bool {
         if c.0 < rad + 24.0 || c.1 < rad + 24.0 || c.0 > wf - rad - 24.0 || c.1 > hf - rad - 24.0 {
             return false;
@@ -1811,6 +1829,13 @@ fn cut_fords(w: usize, h: usize, ground: &mut [u8], items: &Items, landing: (f32
 /// above it, so a patch thickens toward its middle (the graphics lead
 /// asked for density gradients, not flat fills, 18:20Z). The soil's own
 /// capacity caps it in the game: barren and deep water grow nothing.
+///
+/// Before 11-14 22:00Z every biome but the jungle was 25-60% bare by the
+/// canopy alone, so with plants drawn almost every planet was green edge
+/// to edge, Barrens, Cave and Highlands too (graphics lead on the plant
+/// thumbnails: plants should tell biomes apart). Now `clumps` sows on the
+/// fine noise (clumps about 20 map cells across, not 140-cell patches) and
+/// `soils` keeps the growth to the soils named.
 #[derive(Clone, Copy, Debug)]
 struct Sow {
     bare: f32,
@@ -1822,31 +1847,51 @@ struct Sow {
     ramp: f32,
     /// Plain ground thick with growth (an oasis in the barrens).
     lush: bool,
+    /// Sparse clumps: bare below `bare` on the fine noise instead.
+    clumps: bool,
+    /// The soil kinds (bit `1 << kind`) anything but reeds grows on.
+    soils: u8,
 }
 
 impl Sow {
     fn of(b: Biome, rc: &Recipe) -> Sow {
         use crate::mould::plants::{MEADOW, SCRUB};
-        let base = Sow { bare: 0.3, main: MEADOW, jungle: 0.78, shore: 10.0, sand: Some(SCRUB), thin: 0.35, ramp: 0.3, lush: false };
+        let base = Sow { bare: 0.3, main: MEADOW, jungle: 0.78, shore: 10.0, sand: Some(SCRUB), thin: 0.35, ramp: 0.3, lush: false, clumps: false, soils: 0xff };
         match b {
             // Grass nearly everywhere, a few copses.
             Biome::Meadow => Sow { bare: 0.25, jungle: 0.74, ..base },
-            // Thin scrub on what isn't barren; the oases green.
-            Biome::Barrens => Sow { bare: 0.42, main: SCRUB, jungle: 1.1, shore: 0.0, thin: 0.25, ramp: 0.4, lush: rc.soil == Soil::Oases, ..base },
+            // Scrub in sparse clumps; the oases green.
+            Biome::Barrens => Sow { bare: BARRENS_BARE, main: SCRUB, jungle: 1.1, shore: 0.0, thin: 0.25, ramp: 0.1, lush: rc.soil == Soil::Oases, clumps: true, ..base },
             // Reed beds round every pool and lake.
             Biome::Fen => Sow { shore: 18.0, ..base },
             // Reeds along the banks, scrub on the dunes.
             Biome::Valley => Sow { shore: 14.0, jungle: 0.8, thin: 0.3, ..base },
             // Canopy over most of it, meadow in the clearings.
             Biome::Jungle => Sow { bare: 0.15, jungle: 0.3, shore: 8.0, thin: 0.4, ramp: 0.2, ..base },
-            // Sparse grass in the rooms.
-            Biome::Highlands => Sow { bare: 0.6, jungle: 1.1, shore: 6.0, thin: 0.25, ..base },
-            // A little growth in the caverns, reeds at the pools.
-            Biome::Caves => Sow { bare: 0.6, jungle: 1.1, shore: 6.0, sand: None, thin: 0.2, ..base },
+            // Grass in patches on the clay only.
+            Biome::Highlands => Sow { bare: HIGHLANDS_BARE, jungle: 1.1, shore: 6.0, thin: 0.25, soils: 1 << 2, ..base },
+            // Reeds at the pools and a clump or two in the caverns.
+            Biome::Caves => Sow { bare: CAVES_BARE, jungle: 1.1, shore: 6.0, sand: None, thin: 0.2, ramp: 0.1, clumps: true, ..base },
             Biome::Core => Sow { jungle: 0.62, ..base },
         }
     }
 }
+
+/// The fine noise's level above which the Barrens grow a clump of scrub,
+/// and the Cave a clump of grass: about 12% and 3% of their ground (the
+/// graphics lead's 10-15% and "a little", 11-14). The Highlands' level
+/// on the canopy, on clay only.
+const BARRENS_BARE: f32 = 0.62;
+/// How far a plant patch's edge fades to nothing (`sow`): in the canopy
+/// noise (about 6 map cells, 3 of the game's fine cells), in the fine noise
+/// (`Sow::clumps`, steeper), and in map cells at the reeds' edge and past a
+/// crystal's or the landing's clearing.
+const FADE: f32 = 0.06;
+const FADE_CLUMPS: f32 = 0.15;
+const REED_FADE: f32 = 4.0;
+const CLEAR_FADE: f32 = 6.0;
+const CAVES_BARE: f32 = 0.7;
+const HIGHLANDS_BARE: f32 = 0.6;
 
 /// Map cells to the nearest cell where `to` holds, by a 3-4 chamfer (in
 /// thirds of a cell; `u16::MAX` where there is none).
@@ -1919,12 +1964,25 @@ fn sow(sw: &Sow, w: usize, h: usize, ground: &[u8], items: &Items, landing: (f32
             if g & G_ROCK != 0 {
                 continue;
             }
-            let n = canopy.at(x, y) + (fine.at(x, y) - 0.5) * 0.14;
             let soil = g >> 4;
+            let oasis = sw.lush && soil == 0;
+            let clumps = sw.clumps && !oasis;
+            let n = if clumps { fine.at(x, y) } else { canopy.at(x, y) + (fine.at(x, y) - 0.5) * 0.14 };
+            // Every edge fades to nothing over a few cells (`FADE`): a
+            // patch, a bed's edge where reeds or jungle start, a crystal's
+            // clearing. The view draws a patch's edge where its density
+            // crosses 0.2 between cells, so a ramp puts it between them and
+            // the edge runs smooth; a step from 0.4 to nothing put it on
+            // the cells' own staircase (terrain look thread at zoom 24,
+            // 11-14 22:15Z: Fen and Jungle beds in 1-cell steps every ~7).
+            // Where two kinds meet, both fade, leaving a seam a cell wide.
+            let fade = if clumps { FADE_CLUMPS } else { FADE };
             // Deep water and bridges grow nothing (`plants::SOIL_CAP`).
             if g == G_DEEP || g == G_BRIDGE {
                 continue;
             }
+            // How far past the reeds' reach, map cells (none: no reeds).
+            let mut past_reeds = f32::MAX;
             if any_wet {
                 // Reeds: thickest at the water's edge, thinning out to
                 // `shore` on land and in the water both.
@@ -1933,47 +1991,56 @@ fn sow(sw: &Sow, w: usize, h: usize, ground: &[u8], items: &Items, landing: (f32
                 let d = to_edge[i] as f32 / 3.0;
                 let reach = sw.shore * (0.7 + 0.6 * fine.at(x, y)) * if wet(i) { 0.35 } else { 1.0 };
                 if d <= reach {
-                    out[i] = pack(REEDS, 1.0 - 0.6 * d / reach.max(1.0));
+                    // (A fringe into the water is a few cells: it fades over
+                    // its outer half, or it broke into beads.)
+                    out[i] = pack(REEDS, (1.0 - 0.6 * d / reach.max(1.0)) * ramp(reach - d, 0.0, REED_FADE.min(0.5 * reach)));
                     continue;
                 }
+                past_reeds = d - reach;
             }
-            if wet(i) || soil == 3 {
+            if wet(i) || soil == 3 || sw.soils & (1 << soil.min(7)) == 0 {
                 continue;
             }
-            let (bare, jungle) = if sw.lush && soil == 0 { (0.12, 0.6) } else { (sw.bare, sw.jungle) };
+            let (bare, jungle) = if oasis { (0.12, 0.6) } else { (sw.bare, sw.jungle) };
             if n < bare {
                 continue;
             }
+            let edge = ramp(n, bare, fade) * ramp(past_reeds, 0.0, REED_FADE);
             out[i] = if soil == 1 {
                 match sw.sand {
-                    Some(k) => pack(k, sw.thin + (1.0 - sw.thin) * ramp(n, bare, sw.ramp)),
+                    Some(k) => pack(k, (sw.thin + (1.0 - sw.thin) * ramp(n, bare, sw.ramp)) * edge),
                     None => 0,
                 }
             } else if n >= jungle {
-                pack(JUNGLE, 0.5 + 0.5 * ramp(n, jungle, 0.15))
+                pack(JUNGLE, (0.5 + 0.5 * ramp(n, jungle, 0.15)) * ramp(n, jungle, fade) * ramp(past_reeds, 0.0, REED_FADE))
             } else {
-                pack(if sw.lush && soil == 0 { crate::mould::plants::MEADOW } else { sw.main }, sw.thin + (1.0 - sw.thin) * ramp(n, bare, sw.ramp))
+                let kind = if oasis { crate::mould::plants::MEADOW } else { sw.main };
+                pack(kind, (sw.thin + (1.0 - sw.thin) * ramp(n, bare, sw.ramp)) * edge * ramp(jungle - n, 0.0, fade))
             };
         }
     }
     // A ragged clear patch where the squad lands, and nothing on a crystal
-    // (the game grows nothing there either). Each over its own box: over
-    // every cell and every crystal this pass was most of a planet's build.
-    let mut clear = |c: (f32, f32), reach: f32, inside: &dyn Fn(usize, usize, (f32, f32)) -> bool| {
+    // (the game grows nothing there either), each fading in over `CLEAR_FADE`
+    // map cells past it. Each over its own box: over every cell and every
+    // crystal this pass was most of a planet's build.
+    let mut clear = |c: (f32, f32), reach: f32, keep: &dyn Fn(usize, usize, (f32, f32)) -> f32| {
         let (x0, y0) = ((c.0 - reach).max(0.0) as usize, (c.1 - reach).max(0.0) as usize);
         let (x1, y1) = (((c.0 + reach) as usize + 1).min(w), ((c.1 + reach) as usize + 1).min(h));
         for y in y0..y1 {
             for x in x0..x1 {
-                if inside(x, y, (x as f32 + 0.5, y as f32 + 0.5)) {
-                    out[y * w + x] = 0;
+                let k = keep(x, y, (x as f32 + 0.5, y as f32 + 0.5));
+                let b = &mut out[y * w + x];
+                if k < 1.0 && *b != 0 {
+                    let (kind, d) = crate::mould::plants::unpack(*b);
+                    *b = pack(kind, d * k);
                 }
             }
         }
     };
-    clear(landing, 50.0, &|x, y, at| dist(at, landing) < 30.0 + (fine.at(x, y) - 0.5) * 40.0);
+    clear(landing, 50.0 + CLEAR_FADE, &|x, y, at| ramp(dist(at, landing), 30.0 + (fine.at(x, y) - 0.5) * 40.0, CLEAR_FADE));
     for c in &items.crystals {
         let q = (c.x, c.y);
-        clear(q, c.r + 2.0, &|_, _, at| dist(at, q) < c.r + 2.0);
+        clear(q, c.r + 2.0 + CLEAR_FADE, &|_, _, at| ramp(dist(at, q), c.r + 2.0, CLEAR_FADE));
     }
     out
 }
@@ -2269,10 +2336,11 @@ mod tests {
 
     // Round 3 (dials and the new biome order, 2026-11-14), then plants in
     // the fingerprint, deep water, bridges and fords, and planets 4-8 at
-    // up to 2x (`GROW_CAP`). Round 2's depths 3-8 had kept their pins
-    // through the tiled region scan, which finds the same nearest sites as
-    // the full scan.
-    const PINNED: [u64; 8] = [0xcd9eb867fac3322f, 0x994ec126bc931eba, 0xbc5df2aaa15113e2, 0xdfaa92ef45d1a174, 0xb9644a3f74b4e46f, 0x152db0909725a507, 0xb8f53c4c69603249, 0xfce5fb42e242613e];
+    // up to 2x (`GROW_CAP`); then each biome's moisture line and plants
+    // that tell the biomes apart, their edges faded (11-14 22:30Z). Round
+    // 2's depths 3-8 had kept their pins through the tiled region scan,
+    // which finds the same nearest sites as the full scan.
+    const PINNED: [u64; 8] = [0xd666b9438ccc867a, 0xe3cb0be0566fbfba, 0xea0723b2b040124d, 0xb1627ecda86170b9, 0xb4183e35b474ba49, 0x28119240444e1a15, 0xdba4d1b2f67c2781, 0x95aa0c28558beaaa];
 
     /// The core world at the owner's 6x area, pinned too: the bigger maps
     /// run more of the generator's loops, on every machine the same.
@@ -2282,7 +2350,54 @@ mod tests {
         assert_eq!(print(&m), PINNED_BIG, "{:#x}", print(&m));
     }
 
-    const PINNED_BIG: u64 = 0x034bef6b33578452;
+    const PINNED_BIG: u64 = 0x075ed85fc518f0bc;
+
+    /// Each planet's plants: the share of its map cells with any, and the
+    /// mean density over all of them (plants are drawn as crowns sized by
+    /// density, PR #304), seeds 1-3.
+    fn plant_cover(d: u32) -> (f32, f32) {
+        let (mut n, mut any, mut sum) = (0usize, 0usize, 0.0f32);
+        for seed in 1..=3 {
+            let m = level(seed, d);
+            for &b in &m.plants {
+                let (_, dens) = crate::mould::plants::unpack(b);
+                n += 1;
+                any += (b != 0) as usize;
+                sum += if b != 0 { dens } else { 0.0 };
+            }
+            n += m.ground.len() - m.plants.len();
+        }
+        (any as f32 / n as f32, sum / n as f32)
+    }
+
+    /// Plants tell the biomes apart (graphics lead on the plant thumbnails,
+    /// 11-14 21:56Z: "almost every planet is green from edge to edge"):
+    /// bare biomes bare, lush ones lush, from about 5% to 80% cover.
+    #[test]
+    fn plants_tell_the_biomes_apart() {
+        let cover: Vec<(Biome, f32, f32)> = (1..=8).map(|d| {
+            let (c, m) = plant_cover(d);
+            (Biome::at(d), c, m)
+        }).collect();
+        for &(b, c, m) in &cover {
+            eprintln!("{:>12}: {:.1}% covered, mean density {:.3}", b.name(), 100.0 * c, m);
+        }
+        let of = |b: Biome| cover.iter().find(|x| x.0 == b).expect("every biome").1;
+        let barrens = of(Biome::Barrens);
+        assert!((0.06..0.2).contains(&barrens), "barrens: sparse scrub, {barrens}");
+        assert!(of(Biome::Caves) < 0.08, "cave: next to none, {}", of(Biome::Caves));
+        assert!(of(Biome::Highlands) < 0.4, "highlands: patches, {}", of(Biome::Highlands));
+        assert!(of(Biome::Meadow) > 0.6 && of(Biome::Jungle) > 0.6, "meadow and jungle lush: {cover:?}");
+        // On the highlands nothing but reeds grows off clay.
+        for seed in 1..=3 {
+            let m = level(seed, 6);
+            assert_eq!(planet(seed, 6).biome, Biome::Highlands);
+            for (i, &b) in m.plants.iter().enumerate() {
+                let (kind, _) = crate::mould::plants::unpack(b);
+                assert!(b == 0 || kind == crate::mould::plants::REEDS || m.ground[i] >> 4 == 2, "seed {seed} cell {i}: {b:#x} on {:#x}", m.ground[i]);
+            }
+        }
+    }
 
     #[test]
     fn biomes_come_in_the_set_order_with_the_core_world_last() {
