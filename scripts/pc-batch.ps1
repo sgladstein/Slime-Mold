@@ -4,6 +4,10 @@
 #
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1            # twins only
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1 -Timing    # twins, then timing
+#   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1 -DryRun    # first: print every step, run nothing
+#
+# Run -DryRun first (seconds, nothing built): nobody can parse-check this
+# file in the cloud, so a syntax slip shows there, not an hour into twins.
 #
 # -Timing only once the owner has said timing may run (booking.md): a timing
 # run needs the PC to itself, and the script checks that nothing else is on
@@ -28,6 +32,7 @@
 
 param(
     [switch]$Timing,
+    [switch]$DryRun,
     [string]$Commit = "origin/main",
     [string]$Repo = "C:\Users\Scott\Code\Slime Mold",
     [string]$Tree = "C:\Users\Scott\Code\sm-batch",
@@ -42,7 +47,7 @@ $ErrorActionPreference = "Continue"
 $ram = (Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB
 $disk = (Get-PSDrive C).Free / 1GB
 "free RAM {0:N1} GB, free C: {1:N1} GB" -f $ram, $disk
-if ($ram -lt 3 -or $disk -lt 8) { throw "Not enough free RAM (3 GB) or disk (8 GB): stop and report these two numbers." }
+if (-not $DryRun -and ($ram -lt 3 -or $disk -lt 8)) { throw "Not enough free RAM (3 GB) or disk (8 GB): stop and report these two numbers." }
 
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $dir = Join-Path $Out $stamp
@@ -53,6 +58,7 @@ New-Item -ItemType Directory -Force -Path $bins | Out-Null
 $env:MOULDGPU_TEST_GPU = "1"
 
 function Run([string]$name, [string]$cmd) {
+    if ($DryRun) { "dry: $name :: $cmd"; return }
     $file = Join-Path $dir "$name.txt"
     "== $name ($cmd) started $(Get-Date -Format o)" | Tee-Object -FilePath $file
     cmd /c "$cmd 2>&1" | Tee-Object -FilePath $file -Append | Out-Null
@@ -62,6 +68,7 @@ function Run([string]$name, [string]$cmd) {
 # A timing run: the card's clocks, temperature and power before it, then
 # the bench.
 function Time([string]$name, [string]$cmd) {
+    if ($DryRun) { "dry: $name :: card clocks, then $cmd"; return }
     $file = Join-Path $dir "$name.txt"
     "== card before: " + (nvidia-smi --query-gpu=clocks.gr,clocks.mem,temperature.gpu,power.draw --format=csv,noheader) | Set-Content $file
     $file2 = Join-Path $dir "$name-run.txt"
@@ -72,6 +79,7 @@ function Time([string]$name, [string]$cmd) {
 
 # A worktree at $sha (fresh), entered; returns its short sha.
 function At([string]$sha, [string]$path) {
+    if ($DryRun) { "dry: worktree $path at $sha" | Out-Host; return $sha }
     if (Test-Path $path) { git -C $Repo worktree remove --force $path }
     git -C $Repo worktree add --detach $path $sha | Out-Null
     Set-Location $path
@@ -79,14 +87,14 @@ function At([string]$sha, [string]$path) {
 }
 $shas = @()
 
-git -C $Repo fetch origin
+if (-not $DryRun) { git -C $Repo fetch origin }
 # Pin the batch to one sha, so the summary names exactly what ran.
 $Commit = (git -C $Repo rev-parse "$Commit^{commit}").Trim()
 $main = At $Commit $Tree
 $shas += "batch main $main"
 
 Run "build" "cargo build --release --locked --bins"
-Copy-Item "$env:CARGO_TARGET_DIR\release\larder-world.exe" "$bins\lw-main.exe"
+if (-not $DryRun) { Copy-Item "$env:CARGO_TARGET_DIR\release\larder-world.exe" "$bins\lw-main.exe" }
 
 # ---- Twins (compute; allowed whenever the PC is on and quiet) ----
 Run "twins-mouldgpu" "cargo test --release --locked --bin mouldgpu"
@@ -111,9 +119,9 @@ if ($Timing) {
         $s = At $sha "$Tree-$tag"
         $shas += "r7-$tag $s"
         Run "r7-$tag-build" "cargo build --release --locked --bin larder-world"
-        Copy-Item "$env:CARGO_TARGET_DIR\release\larder-world.exe" "$bins\lw-$tag.exe"
+        if (-not $DryRun) { Copy-Item "$env:CARGO_TARGET_DIR\release\larder-world.exe" "$bins\lw-$tag.exe" }
     }
-    Set-Location $Tree
+    if (-not $DryRun) { Set-Location $Tree }
 
     $busy = nvidia-smi --query-compute-apps=pid,process_name --format=csv,noheader
     if ($busy) {
@@ -121,7 +129,7 @@ if ($Timing) {
         Get-Content (Join-Path $dir "timing-refused.txt")
     } else {
         # Cool down after the test suites, so timing doesn't start hot.
-        Start-Sleep -Seconds 90
+        if (-not $DryRun) { Start-Sleep -Seconds 90 }
         $lw = "$bins\lw-main.exe"
         # Shapes A, C (the default) and D (shapes thread, job 12).
         Time "time-shape-a" "$lw shape=a bench=120"
@@ -158,7 +166,7 @@ if ($Timing) {
 # ---- What to send back ----
 Set-Location $Out
 $sum = Join-Path $dir "summary.txt"
-"batch $stamp, timing $Timing" | Set-Content $sum
+"batch $stamp, timing $Timing, dry run $DryRun" | Set-Content $sum
 "shas: " + ($shas -join "; ") | Add-Content $sum
 "driver: " + (nvidia-smi --query-gpu=name,driver_version --format=csv,noheader) | Add-Content $sum
 Get-ChildItem $dir -Filter "*.txt" | Where-Object { $_.Name -ne "summary.txt" } | Sort-Object Name | ForEach-Object {
@@ -169,6 +177,6 @@ Get-ChildItem $dir -Filter "*.txt" | Where-Object { $_.Name -ne "summary.txt" } 
 # The worktrees go; the shared target and the exes stay for a rerun (delete
 # "$Tree-target" and "$Tree-bins" to free the space).
 foreach ($p in "$Tree-pr208", "$Tree-before", "$Tree-after") {
-    if (Test-Path $p) { git -C $Repo worktree remove --force $p }
+    if (-not $DryRun -and (Test-Path $p)) { git -C $Repo worktree remove --force $p }
 }
 "Done. Send back: $sum"
