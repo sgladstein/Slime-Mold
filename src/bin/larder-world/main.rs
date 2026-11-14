@@ -1281,7 +1281,9 @@ impl App {
             v.set_alarm_side((g.world.e.done % 2) as u32);
         }
         self.marks();
-        let minimap = self.view.as_ref().is_some_and(|v| v.minimap) && !self.camera.sees_all();
+        // Always, zoomed out too, so the bottom bar never rearranges with the
+        // zoom (owner, 11-14 20:19Z); M still hides it.
+        let minimap = self.view.as_ref().is_some_and(|v| v.minimap);
         let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
         let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
         let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));

@@ -509,7 +509,17 @@ impl StartMenu {
         // The UI size (`UiSize::px`), held where the options page, the
         // tallest, would run off the bottom (at 150% on a 900-line window
         // its last rows, the UI size among them, did); at 100% it never is.
-        let s = c.ui.px(c.screen).min(sh / (330.0 + 62.0 * self.options.len() as f32));
+        // Each page is held by its own height: until 11-14 20:23Z every page
+        // was held by the options page's, so with a dozen options the main
+        // menu stopped growing past about 100% on a 1080-line screen and
+        // Ctrl + seemed to do nothing there (owner: "changing the UI zoom,
+        // doesn't change the main menu"). The main page and the campaign's
+        // list count their own rows (62 units and a 12 gap a row).
+        let held = match self.page {
+            Page::Main | Page::Missions => 330.0 + 74.0 * self.rows().len() as f32,
+            _ => 330.0 + 62.0 * self.options.len() as f32,
+        };
+        let s = c.ui.px(c.screen).min(sh / held);
         let s = (s * 20.0 + 1e-3).floor() / 20.0;
         self.hits.clear();
         // A shade down the left, fading out, so the panel reads over the
@@ -1275,6 +1285,25 @@ mod tests {
                     assert!(r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32, "{screen:?} at {user}: {h:?} {r:?}");
                 }
             }
+        }
+    }
+
+    /// The owner, 11-14 20:23Z: "changing the UI zoom, doesn't change the
+    /// main menu". The main page grows with the UI size and stays on screen.
+    #[test]
+    fn the_main_page_follows_the_ui_size() {
+        for screen in [(1280, 800), (1600, 900), (1920, 1080), (2560, 1440)] {
+            let size = |user: f32| {
+                let mut m = menu();
+                let mut c = Canvas::new(screen);
+                c.ui.user = user;
+                m.draw(&mut c);
+                let r = m.rect_of(Hit::Quit).unwrap();
+                assert!(r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32, "{screen:?} at {user}: {r:?}");
+                m.rect_of(Hit::Sandbox).unwrap().h
+            };
+            assert!(size(1.5) > size(1.0) * 1.2, "{screen:?}: 150% grows the main page");
+            assert!(size(0.75) < size(1.0), "{screen:?}: 75% shrinks it");
         }
     }
 

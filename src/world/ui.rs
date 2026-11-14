@@ -75,9 +75,21 @@ const CARD_PAD: f32 = 8.0;
 /// to 113 units at 1080 lines (15% to 10% of the screen).
 const CARD_COLS: u8 = 6;
 const CARD_ROWS: u8 = 2;
-/// The minimap keeps the bar's old height (152 units) in the corner,
-/// standing above the shorter bar, so it does not shrink with it.
-const MINIMAP_H: f32 = 3.0 * CELL + 2.0 * CELL_GAP + 2.0 * CARD_PAD;
+/// The bottom bar's size against the rest of the HUD. Until the owner's
+/// playtest of 11-14 20:19Z the bar drew at 1 and the minimap kept the
+/// bar's old height (152 units), standing above the shorter bar, and only
+/// showed once zoomed in, so zooming rearranged the whole bar ("the bottom
+/// hud menu changes totally when you zoom in ... The minimap should always
+/// be visible and everything could be made slightly small to fit in the
+/// same row with the same height"). Now the minimap is always in the row
+/// at the bar's height, and the gun cards, selection, squad tiles and
+/// command card draw at 92% so the row still fits: at the 200% UI size on
+/// 1920x1080 the selection keeps 300 units (at 1 it would have 160, under
+/// the 240 where the gun strip leaves its own panel).
+const BAR: f32 = 0.92;
+/// The minimap's widest, in bar units (a wide world's minimap stops here
+/// and is letterboxed in its frame).
+const MINIMAP_W: f32 = 300.0;
 
 /// The loadout strip's width: its slots, the name and state, and Swap.
 fn loadout_w(l: &Loadout, s: f32) -> f32 {
@@ -856,6 +868,9 @@ impl Hud {
     pub fn draw(&mut self, m: &Model, controls: &Controls, cam: &Camera, minimap: bool, c: &mut Canvas, world: &mut Marks) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
         let s = c.ui.px(c.screen);
+        // The bottom bar's unit (`BAR`); the top bar, alerts, tooltips and
+        // menus keep `s`.
+        let b = s * BAR;
         self.scale = s;
         self.world = cam.world;
         self.hits.clear();
@@ -872,34 +887,35 @@ impl Hud {
         }
         let now = Instant::now();
         self.alerts.retain(|a| now.duration_since(a.when) < ALERT_LIFE);
-        let pad = CARD_PAD * s;
+        let pad = CARD_PAD * b;
 
         // The minimap's frame (bottom right), the command card left of it,
-        // the selection panel left of that, all one height.
-        let cell = CELL * s;
-        let gap = CELL_GAP * s;
+        // the selection panel left of that, all one height, whatever the
+        // zoom (owner, 11-14 20:19Z).
+        let cell = CELL * b;
+        let gap = CELL_GAP * b;
         let card_w = CARD_COLS as f32 * cell + (CARD_COLS - 1) as f32 * gap + 2.0 * pad;
         let (_, inset_bottom) = Hud::insets(c.screen, c.ui);
-        let panel_h = inset_bottom - 8.0 * s;
-        let base = sh - 8.0 * s;
+        let panel_h = inset_bottom - 8.0 * b;
+        let base = sh - 8.0 * b;
         let top_of = base - panel_h;
         self.bottom = top_of;
-        let radius = 12.0 * s;
-        let mut right = sw - 8.0 * s;
+        let radius = 12.0 * b;
+        let mut right = sw - 8.0 * b;
         self.minimap_box = None;
         self.minimap = None;
         if minimap {
-            let mm_h = (MINIMAP_H * s).max(panel_h);
+            let mm_h = panel_h;
             let ih = mm_h - 2.0 * pad;
             // (min then max, not `clamp`, which panics in a narrow window.)
-            let iw = (ih * cam.world.0 / cam.world.1).min((360.0 * s).min(sw * 0.25)).max(ih * 0.6);
+            let iw = (ih * cam.world.0 / cam.world.1).min((MINIMAP_W * b).min(sw * 0.2)).max(ih * 0.6);
             let f = Rect::new(right - iw - 2.0 * pad, base - mm_h, iw + 2.0 * pad, mm_h);
             let bx = ((f.x + pad).round() as u32, (f.y + pad).round() as u32, iw.round() as u32, ih.round() as u32);
             let mm = super::view::minimap_in((cam.world.0 as usize, cam.world.1 as usize), bx);
             self.minimap_box = Some(bx);
             self.minimap = Some(mm);
             let hole = Rect::new(mm.0 as f32, mm.1 as f32, mm.2 as f32, mm.3 as f32);
-            c.shadow(f, radius, 16.0 * s, 4.0 * s, SHADOW);
+            c.shadow(f, radius, 16.0 * b, 4.0 * b, SHADOW);
             // A panel round the minimap, open over it (the minimap is the
             // view's, drawn before the canvas).
             c.panel_with_hole(f, radius, PANEL_TOP, PANEL_BOTTOM, 1.0, EDGE, hole);
@@ -908,7 +924,7 @@ impl Hud {
             for r in [Rect::new(f.x, f.y, f.w, hole.y - f.y), Rect::new(f.x, hole.bottom(), f.w, f.bottom() - hole.bottom()), Rect::new(f.x, f.y, hole.x - f.x, f.h), Rect::new(hole.right(), f.y, f.right() - hole.right(), f.h)] {
                 self.hits.push((r, Hit::Panel));
             }
-            right = f.x - 8.0 * s;
+            right = f.x - 8.0 * b;
         }
         let card = Rect::new(right - card_w, top_of, card_w, panel_h);
         // The gun cards' panel at the bar's far left (owner, 08:46Z: "gun/card
@@ -916,24 +932,24 @@ impl Hud {
         // the selection panel filling the row between it and the command
         // card (one card row tall, owner 08:33Z). Where that leaves the
         // selection under 240 units the strip goes back over the panels.
-        let gun_w = m.loadout.as_ref().map(|l| loadout_w(l, s));
-        let gun = gun_w.map(|w| Rect::new(8.0 * s, top_of, w, panel_h)).filter(|g| card.x - 8.0 * s - (g.right() + 8.0 * s) >= 240.0 * s);
-        let left = gun.map_or(8.0 * s, |g| g.right() + 8.0 * s);
-        let sel = Rect::new(left, top_of, (card.x - 8.0 * s - left).max(0.0), panel_h);
+        let gun_w = m.loadout.as_ref().map(|l| loadout_w(l, b));
+        let gun = gun_w.map(|w| Rect::new(8.0 * b, top_of, w, panel_h)).filter(|g| card.x - 8.0 * b - (g.right() + 8.0 * b) >= 240.0 * b);
+        let left = gun.map_or(8.0 * b, |g| g.right() + 8.0 * b);
+        let sel = Rect::new(left, top_of, (card.x - 8.0 * b - left).max(0.0), panel_h);
         // With nothing selected the selection panel collapses to a strip
         // along the bottom (the art director, 11-14 02:34Z: a full-height
         // panel that only said "Nothing selected").
         let empty = m.info.is_none() && m.selection.is_empty() && m.squads.is_none();
         // The loadout strip (about 312 units wide) takes the rest of the row.
-        let sel_drawn = if empty { Rect::new(sel.x, base - COLLAPSED * s, (sel.w - 320.0 * s).clamp(150.0 * s, 330.0 * s).min(sel.w), COLLAPSED * s) } else { sel };
+        let sel_drawn = if empty { Rect::new(sel.x, base - COLLAPSED * b, (sel.w - 320.0 * b).clamp(150.0 * b, 330.0 * b).min(sel.w), COLLAPSED * b) } else { sel };
 
         self.top_bar(m, c, s);
-        self.selection_panel(m, controls, sel_drawn, c, s);
+        self.selection_panel(m, controls, sel_drawn, c, b);
         // Before the command card, so the card's tooltips cover it; its
         // own card tooltip after.
         self.cycle = m.loadout.as_ref().and_then(|l| l.cycle.map(|c| c.0));
-        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, gun, sel, empty, card, c, s));
-        self.command_card(m, card, c, s);
+        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, gun, sel, empty, card, c, b));
+        self.command_card(m, card, c, b);
         match (&m.loadout, tip) {
             (Some(l), Some((k, r))) if k < l.cards.len() => self.card_tip(&l.cards[k], r, c, s),
             (Some(l), Some((k, r))) => self.loadout_tip(l, r, k == usize::MAX - 1, c, s),
@@ -1810,8 +1826,9 @@ impl Hud {
     /// the panels leave (the opening view on the squad).
     pub fn insets(screen: (u32, u32), ui: UiSize) -> (f32, f32) {
         let s = ui.px(screen);
-        let panel_h = CARD_ROWS as f32 * CELL * s + (CARD_ROWS - 1) as f32 * CELL_GAP * s + 2.0 * CARD_PAD * s;
-        (8.0 * s + 38.0 * s, panel_h + 8.0 * s)
+        let b = s * BAR;
+        let panel_h = CARD_ROWS as f32 * CELL * b + (CARD_ROWS - 1) as f32 * CELL_GAP * b + 2.0 * CARD_PAD * b;
+        (8.0 * s + 38.0 * s, panel_h + 8.0 * b)
     }
 
     /// Opens the menu on its controls page.
@@ -2054,10 +2071,10 @@ mod tests {
             assert!((Hud::insets(r.c.screen, r.c.ui).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen, r.c.ui).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
             // With nothing selected, no panel reaches above the collapsed
             // strip except the command card and minimap.
-            let full = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale).count();
+            let full = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 90.0 * r.hud.scale).count();
             r.m.selection.clear();
             r.draw();
-            let empty = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale).count();
+            let empty = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 90.0 * r.hud.scale).count();
             assert_eq!(empty + 1, full, "{screen:?}: the selection panel collapses");
         }
     }
