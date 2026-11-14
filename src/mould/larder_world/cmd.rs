@@ -50,6 +50,17 @@ pub enum Cmd {
     /// The player controls squad `q` (`u8::MAX`: none).
     Active(u8),
     Formation(u8, Formation),
+    /// Shift + a squad order: squad `q` does it after what it is doing
+    /// (`Squad::queue`); an idle squad starts it at once.
+    SquadQueue(u8, Order),
+    /// Links squads `a` and `b` (and whatever each is linked to): they move
+    /// and take orders together, each keeping its own guns and settings
+    /// (owner 2026-11-14 15:06Z, "join").
+    Link(u8, u8),
+    /// Squad `q` leaves its link.
+    Unlink(u8),
+    /// How many of squad `q` stand guard while it works (`Cover`).
+    Cover(u8, Cover),
 }
 
 impl Cmd {
@@ -76,6 +87,10 @@ impl Cmd {
             Cmd::Merge(a, b) => format!("merge {a} {b}"),
             Cmd::Active(q) => format!("active {q}"),
             Cmd::Formation(q, f) => format!("formation {q} {}", f.name()),
+            Cmd::SquadQueue(q, o) => format!("squeue {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
+            Cmd::Link(a, b) => format!("link {a} {b}"),
+            Cmd::Unlink(q) => format!("unlink {q}"),
+            Cmd::Cover(q, c) => format!("cover {q} {}", c.name()),
         }
     }
 
@@ -96,11 +111,15 @@ impl Cmd {
             "merge" => return Some(Cmd::Merge(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "active" => return Some(Cmd::Active(w.get(1)?.parse().ok()?)),
             "formation" => return Some(Cmd::Formation(w.get(1)?.parse().ok()?, Formation::parse(w.get(2)?)?)),
-            "sorder" => {
+            "link" => return Some(Cmd::Link(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
+            "unlink" => return Some(Cmd::Unlink(w.get(1)?.parse().ok()?)),
+            "cover" => return Some(Cmd::Cover(w.get(1)?.parse().ok()?, Cover::parse(w.get(2)?)?)),
+            v @ ("sorder" | "squeue") => {
                 let q: u8 = w.get(1)?.parse().ok()?;
                 let rest = w[2..].join(" ");
                 return match super::super::larder::Cmd::parse(&format!("order 0 {rest}"))? {
-                    super::super::larder::Cmd::Order(_, o) => Some(Cmd::SquadOrder(q, o)),
+                    super::super::larder::Cmd::Order(_, o) if v == "sorder" => Some(Cmd::SquadOrder(q, o)),
+                    super::super::larder::Cmd::Order(_, o) => Some(Cmd::SquadQueue(q, o)),
                     _ => None,
                 };
             }
@@ -185,7 +204,7 @@ impl<W: World> Game<W> {
                 self.rally = o;
                 true
             }
-            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) => self.squad_cmd(c),
+            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Cover(..) => self.squad_cmd(c),
             _ => false,
         }
     }
