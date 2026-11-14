@@ -158,6 +158,89 @@ pub fn garden_dish(p: BigParams, m: &Map, walkers: usize) -> BigDish {
     dish
 }
 
+/// **The garden on a designed map** (campaign mission 8, 2026-11-14): the
+/// map's mould starts are the enemy's and the crystal nearest its landing
+/// the player's mould's, with `walkers` a side rounded down to a multiple of the enemy's starts.
+/// The landing is listed once for each enemy start, so `place_walkers`'
+/// equal shares give both sides the same count (the second blob there
+/// draws on, so it widens the first rather than stacking on its points).
+/// Returns the map to build on and the walkers a side.
+pub fn garden_map_on(m: &Map, walkers: usize) -> Result<(Map, usize), String> {
+    let land = m.items.landing.ok_or("own mould: the map has no landing for the player's mould")?;
+    let starts: Vec<(f32, f32)> = m.items.moulds.clone();
+    if starts.is_empty() {
+        return Err("own mould: the map has no mould start for the enemy".into());
+    }
+    let k = starts.len();
+    let side = (walkers / k).max(1) * k;
+    // The player's mould starts on the crystal nearest the landing, as in
+    // `garden_world` (its larder crystal): started on the Passes' bare
+    // landing it starved from 5,000 to 240-520 walkers in its first 30 s
+    // (census v3, seed 1) before any hand could feed it, and only a hand
+    // that fed from the first second (random) kept it.
+    let own = m.items.crystals.iter().map(|c| (c.x, c.y)).min_by(|a, b| (a.0 - land.0).hypot(a.1 - land.1).total_cmp(&(b.0 - land.0).hypot(b.1 - land.1))).unwrap_or(land);
+    let mut m = m.clone();
+    m.items.moulds = starts.iter().copied().chain(std::iter::repeat_n(own, k)).collect();
+    Ok((m, side))
+}
+
+/// The garden's params over `p` (the race world's, a tier's keys on top):
+/// four species slots, conversion as `garden_world`, both sides `side`
+/// walkers, each capped at half the slots.
+pub fn garden_params(mut p: BigParams, side: usize) -> BigParams {
+    p.walkers = 2 * side;
+    p.species = SPECIES;
+    p.species_avoid = 0.0;
+    p.species_convert = CONVERT;
+    p.species_convert_r = CONVERT_R;
+    p.species_convert_per = true;
+    let half = p.capacity.max(p.walkers) / 2;
+    p.species_cap = (0..SPECIES).map(|s| if s == 0 || s == OWN { half } else { 0 }).collect();
+    p
+}
+
+/// The garden's dish on a map from `garden_map_on`: each walker's side is
+/// set **where it was placed** (the tech lead's review, 11-14): the
+/// player's if the start nearest it is the player's (the last), so a change to
+/// `place_walkers`' order or rounding cannot swap sides unseen. Refuses a
+/// start where a side is not `side` walkers, or is over its cap.
+pub fn garden_dish_on(p: BigParams, m: &Map, side: usize) -> Result<BigDish, String> {
+    let mut dish = BigDish::with_map(p, m);
+    let s = dish.p.scale as f32;
+    // The player's start is the last of the map's (`garden_map_on`).
+    let homes = dish.homes.clone();
+    let land = *homes.last().ok_or("own mould: no start")?;
+    let d2 = |w: (f32, f32), h: (f32, f32)| (w.0 - h.0 * s).powi(2) + (w.1 - h.1 * s).powi(2);
+    let mut n = [0usize; 2];
+    for k in 0..dish.walkers.len() {
+        let w = (dish.walkers[k].0, dish.walkers[k].1);
+        let near = homes.iter().copied().min_by(|a, b| d2(w, *a).total_cmp(&d2(w, *b))).unwrap_or(land);
+        let own = near == land;
+        dish.spec[k] = if own { OWN } else { 0 };
+        // Spare slots (dead, for births) take a side too but are not placed.
+        if dish.lives(k) {
+            n[own as usize] += 1;
+        }
+    }
+    let caps = (dish.p.species_cap.first().copied().unwrap_or(usize::MAX), dish.p.species_cap.get(OWN as usize).copied().unwrap_or(usize::MAX));
+    if n != [side, side] {
+        return Err(format!("own mould: placed {} enemy and {} own walkers, not {side} each", n[0], n[1]));
+    }
+    if n[0] > caps.0 || n[1] > caps.1 {
+        return Err(format!("own mould: placed {n:?} over the caps {caps:?}"));
+    }
+    Ok(dish)
+}
+
+/// `garden_world` on a designed map (mission 8): `p` the race world's
+/// params with any tier keys; `walkers` a side, rounded as
+/// `garden_map_on`.
+pub fn garden_on_map(p: BigParams, m: &Map, walkers: usize) -> Result<Garden, String> {
+    let (m, side) = garden_map_on(m, walkers)?;
+    let dish = garden_dish_on(garden_params(p, side), &m, side)?;
+    Ok(Garden { dish, tasks: Vec::new(), tend: Tend::default(), roads: 0, fed: 0.0, cut: 0, own_ate: 0.0, enemy_ate: 0.0, turned_own: 0, turned_enemy: 0 })
+}
+
 impl Garden {
     /// The toolkit's det cord (`kit::Tool::Cord`) on the garden: blasts of
     /// `cord_r` every `cord_every` dish cells from `a` to `b` (fine-cell
@@ -511,6 +594,14 @@ impl World for Garden {
         self.counts_by_side().1
     }
 
+    fn own_living(&self) -> usize {
+        self.counts_by_side().0
+    }
+
+    fn set_task(&mut self, k: usize, t: Task) {
+        Garden::set_task(self, k, t);
+    }
+
     fn crystals(&self) -> Vec<((f32, f32), f32)> {
         World::crystals(&self.dish)
     }
@@ -571,12 +662,57 @@ impl World for Garden {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::mould::larder_world::{Game, Order, Rules};
 
     fn garden() -> Garden {
         garden_world(5, 1, 600, None)
+    }
+
+    pub(crate) fn passes() -> Map {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        Map::load(&dir, "passes").unwrap()
+    }
+
+    /// **The garden on a designed map** (mission 8, 2026-11-14): on the
+    /// Passes (two mould starts) each side gets `walkers` rounded to a
+    /// multiple of two; the player's walkers are all by their start, the crystal by the landing, and the
+    /// enemy's by its starts, none at the other's; each side within its
+    /// cap. A map without a landing is refused.
+    #[test]
+    fn the_garden_goes_on_a_designed_map() {
+        let m = passes();
+        let p = race_params(3, 1, 1_000);
+        let g = garden_on_map(p.clone(), &m, 1_001).unwrap();
+        let (own, enemy) = g.counts_by_side();
+        assert_eq!((own, enemy), (1_000, 1_000), "rounded to a multiple of the two starts");
+        let d = &g.dish;
+        let s = d.p.scale as f32;
+        let land = *d.homes.last().unwrap();
+        let landing = d.landing.unwrap();
+        assert!((land.0 - landing.0).hypot(land.1 - landing.1) < 40.0, "the player's start is by the landing");
+        let near = |w: (f32, f32, f32), h: (f32, f32)| (w.0 - h.0 * s).hypot(w.1 - h.1 * s);
+        let enemy_starts: Vec<(f32, f32)> = m.items.moulds.iter().map(|&q| Map::dish(q)).collect();
+        for k in (0..d.walkers.len()).filter(|&k| d.lives(k)) {
+            let w = d.walkers[k];
+            let to_land = near(w, land);
+            let to_enemy = enemy_starts.iter().map(|&h| near(w, h)).fold(f32::MAX, f32::min);
+            if d.spec[k] == OWN {
+                assert!(to_land < to_enemy && to_land < 40.0 * s, "own walker {k} {to_land} from the landing");
+            } else {
+                assert_eq!(d.spec[k], 0);
+                assert!(to_enemy < to_land && to_enemy < 40.0 * s, "enemy walker {k} {to_enemy} from its start");
+            }
+        }
+        assert!(own <= d.p.species_cap[OWN as usize] && enemy <= d.p.species_cap[0]);
+        // The game's mould is the enemy's, and the larder lands on the landing.
+        let game = Game::new(g, Rules::default(), 3);
+        assert_eq!(game.mould, enemy);
+        assert_eq!(game.world.own_living(), own);
+        let mut bare = m.clone();
+        bare.items.landing = None;
+        assert!(garden_on_map(p, &bare, 1_000).is_err());
     }
 
     /// Each side starts on its own crystal with its share, and the game's

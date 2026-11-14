@@ -36,7 +36,7 @@ use std::time::Instant;
 
 use super::{read_back, Curve, Engine, Hand, Settings, Shared, Stamps, Start, MAX_PILES, WSTAT_BYTES};
 use pixels::wgpu;
-use crate::mould::big::BigParams;
+use crate::mould::big::{BigDish, BigParams};
 use crate::mould::larder_world::{race_params, Soldier, World};
 use crate::mould::map::Map;
 use crate::mould::own_mould::{self, Task, Tend};
@@ -221,9 +221,16 @@ impl GpuGarden {
 /// conversion by presence (`species_convert_per`), which the engine lacks;
 /// with both moulds laying the same deposit it compares the same sums.
 pub fn garden_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
-    let s = race_settings(seed, scale, 2 * walkers);
     // Half the slots a side, as the CPU garden (`own_mould::garden_world`;
     // on the GPU since 11-14, so a mission plays the same on both engines).
+    garden_settings_on(race_settings(seed, scale, 2 * walkers), walkers)
+}
+
+/// `garden_settings` over any race settings `s` (a map's, a tier's keys
+/// on top), with `side` walkers a side: what `own_mould::garden_params`
+/// does to the CPU's params.
+pub fn garden_settings_on(s: Settings, side: usize) -> Settings {
+    let s = Settings { walkers: 2 * side, ..s };
     let half = s.capacity.max(s.walkers) / 2;
     let species_cap = (0..own_mould::SPECIES as usize).map(|sp| if sp == 0 || sp == own_mould::OWN as usize { half } else { 0 }).collect();
     Settings { species: own_mould::SPECIES, avoid: 0.0, convert: own_mould::CONVERT, convert_r: own_mould::CONVERT_R, species_cap, ..s }
@@ -245,6 +252,41 @@ impl GpuWorld {
         let m = own_mould::garden_map(seed, scale, walkers);
         let shared = Shared::new(device);
         let mut e = Engine::made_with(device, queue, &shared, &s, scale, |p| own_mould::garden_dish(p, &m, walkers));
+        e.garden = true;
+        let mut g = Self::of(e, shared, s, scale);
+        g.garden = Some(GpuGarden::default());
+        g.read_now();
+        Ok(g)
+    }
+
+    /// **The garden on a designed map on the GPU** (campaign mission 8,
+    /// 2026-11-14): `own_mould::garden_on_map`'s start. `s` is the race
+    /// world's settings with any tier's keys; the garden's species slots,
+    /// conversion and caps go on top (`garden_settings_on`), with
+    /// `walkers` a side rounded as `own_mould::garden_map_on`.
+    pub fn garden_on_map(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, scale: usize, m: &Map, walkers: usize) -> Result<Self, String> {
+        if s.graze != 0.0 {
+            return Err(format!("a garden can't graze (graze {}): its count of the player's walkers uses the grazing count", s.graze));
+        }
+        let (m, side) = own_mould::garden_map_on(m, walkers)?;
+        let s = garden_settings_on(s, side);
+        let shared = Shared::new(device);
+        // `made_with` takes a dish, not a Result: a refused start is kept
+        // here and returned once the engine is built. Its first call is a
+        // one-walker probe of the agar (`agar_cells`), which is only a map.
+        let refused = RefCell::new(None);
+        let mut e = Engine::made_with(device, queue, &shared, &s, scale, |p| {
+            if p.walkers != 2 * side {
+                return BigDish::with_map(p, &m);
+            }
+            own_mould::garden_dish_on(p.clone(), &m, side).unwrap_or_else(|err| {
+                *refused.borrow_mut() = Some(err);
+                BigDish::with_map(p, &m)
+            })
+        });
+        if let Some(err) = refused.into_inner() {
+            return Err(err);
+        }
         e.garden = true;
         let mut g = Self::of(e, shared, s, scale);
         g.garden = Some(GpuGarden::default());
@@ -626,6 +668,16 @@ impl World for GpuWorld {
         self.living - self.own
     }
 
+    fn own_living(&self) -> usize {
+        self.own
+    }
+
+    fn set_task(&mut self, k: usize, t: Task) {
+        if let Some(gd) = self.garden.as_mut() {
+            gd.set_task(k, t);
+        }
+    }
+
     /// The gardeners' tasks (`own_mould::Garden::tend`), as tend entries
     /// the frame's `tend` pass applies before its shots; the food spent.
     /// Road and Feed as on the CPU; Cut is the det cord here (a burst), so
@@ -837,6 +889,12 @@ mod tests {
         }
         fn living(&self) -> usize {
             self.g.living()
+        }
+        fn own_living(&self) -> usize {
+            self.g.own_living()
+        }
+        fn set_task(&mut self, k: usize, t: Task) {
+            World::set_task(&mut self.g, k, t);
         }
         fn crystals(&self) -> Vec<((f32, f32), f32)> {
             self.g.crystals()
@@ -1200,6 +1258,40 @@ mod tests {
         // at most; at seed 5 it is 0.
         assert!(most <= most_stop + walkers / 20, "the capped enemy passed its cap by {} over the stopped one", most - most_stop.min(most));
         assert!(own_stop + 5 >= own_free, "stopping the enemy's births stopped the player's ({own_stop})");
+    }
+
+    /// **The garden on a designed map, both engines** (mission 8, the tech
+    /// lead's review, 11-14): on the Passes the GPU's dish starts as the
+    /// CPU's, walker for walker (positions and sides), and the two count
+    /// the same walkers a side each of the first frames. Planted: one
+    /// walker's side swapped on the CPU makes the count part at once, so
+    /// the check would see a swapped start.
+    #[test]
+    fn the_gpu_garden_on_a_map_starts_and_runs_as_the_cpu() {
+        use crate::mould::own_mould::{garden_on_map, OWN};
+        let Some((device, queue)) = test_gpu() else { return };
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let m = Map::load(&dir, "passes").unwrap();
+        let (seed, scale, walkers) = (3, 1, 1_000);
+        let mut gpu = GpuWorld::garden_on_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m, walkers).unwrap();
+        let mut cpu = garden_on_map(race_params(seed, scale, walkers), &m, walkers).unwrap();
+        let (g, c) = (&gpu.e.dish, &cpu.dish);
+        assert_eq!(g.walkers.len(), c.walkers.len());
+        assert_eq!(g.spec, c.spec, "each walker's side");
+        assert!(g.walkers.iter().zip(&c.walkers).all(|(a, b)| a == b), "each walker's place");
+        assert_eq!(g.landing, c.landing);
+        assert_eq!(gpu.counts_by_side(), (walkers, walkers));
+        assert_eq!(gpu.counts_by_side(), cpu.counts_by_side());
+        let f = Frame { slime: 1.0, ..Frame::default() };
+        for i in 0..5 {
+            let _ = gpu.frame(&f, 15);
+            let _ = cpu.frame(&f, 15);
+            assert_eq!(gpu.counts_by_side(), cpu.counts_by_side(), "frame {i}: the engines part");
+        }
+        // Planted: a swapped walker on one engine is seen.
+        let k = (0..cpu.dish.walkers.len()).find(|&k| cpu.dish.lives(k) && cpu.dish.spec[k] == OWN).unwrap();
+        cpu.dish.spec[k] = 0;
+        assert_ne!(gpu.counts_by_side(), cpu.counts_by_side(), "a swapped side went unseen");
     }
 
     /// A grazing world is refused, with a reason, not run wrong.
