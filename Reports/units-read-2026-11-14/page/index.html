@@ -81,9 +81,20 @@ code { font: 13px var(--mono); }
   </section>
 
   <section>
+    <h2>Harvesting that looks like work (farm hand, 0:12 to 0:17)</h2>
+    <p>6 to 9 soldiers, harvested 22 to 1222 in the clip. A soldier that takes this step faces the crystal and a pulse of charge light shows at its hands. Its pack fills with cyan from the foot up as it carries, with a tight glow, so a carrier walking home is the cyan one you can follow; the carry bar is gone. When a load is banked the larder's cells flare and the store washes cyan for 0.6 s. The crystal's own glow where it is drained comes from the crystals thread and is not in these films.</p>
+    <div class="pair">
+      <figure><img src="harvest/before-z12.gif" alt="Main: harvest at zoom 12"><figcaption>Main · zoom 12, carry shown only as a small bar</figcaption></figure>
+      <figure><img src="harvest/after-z12.gif" alt="This change: harvest at zoom 12"><figcaption>This change · zoom 12, packs fill cyan, hands pulse, larder flashes</figcaption></figure>
+      <figure><img src="harvest/after-z6.gif" alt="This change: harvest at zoom 6"><figcaption>This change · zoom 6</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
     <h2>Cost and what changed in the rules</h2>
     <ul>
       <li>llvmpipe, <code>bench=30 hand=volley</code>, 1280×800: GPU tail p50 37.6 → 40.2 ms, frame p50 47.0 → 49.9 ms (software Vulkan, the squad on screen; the 1070 timing waits for the PC).</li>
+      <li>Harvest look, paired <code>bench=30 hand=farm</code> run twice: GPU tail p50 48.2 → 46.3 and 45.4 → 45.1 ms, no measurable cost.</li>
       <li>Elbow room (<code>Rules::elbow</code> 1.6, 0 is off) and sunflower slots 2.52 dish cells a ring (was 1.5): a census baseline break, since the squad's drain spreads over more ground. Builders pushed aside still raise their building.</li>
     </ul>
   </section>

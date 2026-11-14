@@ -229,7 +229,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let g = app.game.as_ref().unwrap();
         let rd = &app.rounds;
         if !rd.round.is_empty() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {:.0} food spent, {} skipped for food, {} not on this world, {} lodged", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.spent, rd.broke, rd.unsupported, rd.waiting());
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {:.0} food spent, {} skipped for food, {} not on this world, {} lodged, {} trail bursts", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.spent, rd.broke, rd.unsupported, rd.waiting(), rd.trailed);
         }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames
@@ -328,7 +328,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
 /// (`Rules::reserve`), which `finish_step` makes.
 pub(super) fn join_looks(g: &Game<GpuWorld>, looks: &mut Vec<Look>) {
     for s in &g.soldiers[looks.len()..] {
-        looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive });
+        looks.push(Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive });
     }
 }
 
@@ -352,6 +352,18 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
         if let Some(k) = s.by.filter(|&k| k < looks.len() && g.soldiers.get(k).is_some_and(|q| q.alive)) {
             looks[k].flash = FLASH;
             looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+        }
+    }
+    // A harvester taking from a crystal turns to face it and its hands
+    // light (harvest look, 11-14); a shot this step still sets its facing
+    // above, as firing wins.
+    let cs = g.world.crystals();
+    for t in &g.last_takes {
+        if let (Some(k), Some(c)) = (t.by.filter(|&k| k < looks.len()), cs.get(t.crystal)) {
+            looks[k].take = TAKE;
+            if looks[k].flash <= 0.0 {
+                looks[k].facing = (c.0 .1 - t.at.1).atan2(c.0 .0 - t.at.0);
+            }
         }
     }
 }

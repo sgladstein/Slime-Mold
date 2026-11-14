@@ -159,7 +159,7 @@ impl App {
         // state: its charge cells lit while the bank holds food, darkening
         // as the mould holds it with the bank dry (the overrun count). The
         // faint ring is the ground a walker must reach to hold it.
-        self.marks.building(g.larder, 1.6 * sc, LARDER_SPRITE, 1.0, 1.0 - g.overrun_share(), g.bank >= 1.0);
+        self.marks.building_pulse(g.larder, 1.6 * sc, LARDER_SPRITE, 1.0, 1.0 - g.overrun_share(), g.bank >= 1.0, self.banked / BANKED);
         self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 90]);
         } else {
             // No larder (the squad mode): each guarded crystal's ring, the
@@ -385,19 +385,19 @@ impl App {
         let r = (g.rules.touch * sc * 1.15).max(10.0 / zoom);
         let order = g.soldiers.iter().enumerate().filter(|(_, s)| !s.alive).chain(g.soldiers.iter().enumerate().filter(|(_, s)| s.alive));
         for (k, s) in order {
-            let l = self.looks.get(k).copied().unwrap_or(Look { facing: 0.0, flash: 0.0, at: (s.x, s.y), alive: s.alive });
-            self.marks.soldier((s.x, s.y), r, l.facing, team_colour(0), l.flash / FLASH, s.alive);
+            let l = self.looks.get(k).copied().unwrap_or(Look { facing: 0.0, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive });
+            // The load as charge in its pack, the take as light at its
+            // hands (harvest look, 11-14; the carry bar is gone).
+            let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
+            self.marks.soldier_working((s.x, s.y), r, l.facing, team_colour(0), l.flash / FLASH, s.alive, carry, l.take / TAKE);
         }
         // The bars after every figure, so a neighbour never hides one.
         for s in &g.soldiers {
             if s.alive {
-                // Health only when hurt (art direction rule 6); a carried
-                // load always, under it.
+                // Health only when hurt (art direction rule 6).
                 let below = (r * zoom * 0.9).max(2.0) + 5.0;
                 self.marks.health((s.x, s.y), below, s.hp / g.rules.hp);
-                if s.carry > 0.0 {
-                    self.marks.bar((s.x, s.y), below + 4.0, (8.0, 1.0), s.carry / g.rules.carry, theme::ENERGY, [20, 40, 50, 255]);
-                }
+
             }
         }
         let units = self.units();
@@ -786,6 +786,10 @@ fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind
         C::Thick => (Icon::Thick, CardKind::Trigger, format!("The next payload lodges and waits until {} walkers crowd within {:.0} cells (at most {:.0} s): the mould sets off its own trap.", r.thick_n, r.thick_r, r.thick_secs)),
         C::Pierce => (Icon::Pierce, CardKind::Flight, "Every bullet flies on through one more slime hit, striking each.".into()),
         C::Split => (Icon::Split, CardKind::Flight, format!("Every bullet breaks into {split_n} pieces where it lands, fanned on past the hit.")),
+        // Trails (2026-11-14): each reuses the glyph of the field it lays.
+        C::Scorch => (Icon::Burn, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of crater along its flight for {:.0} s: a fire line the mould shuns.", 2.0 * r.trail_r, r.trail_crater_secs)),
+        C::Alarm => (Icon::Alert, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of alarm along its flight: a fence the mould flees.", 2.0 * r.trail_r)),
+        C::Mist => (Icon::Gas, CardKind::Flight, format!("Every bullet leaves a thin gas cloud along its flight ({:.1} a disc): the mould that drifts into it sleeps.", r.trail_cloud)),
     }
 }
 

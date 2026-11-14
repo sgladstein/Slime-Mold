@@ -14,6 +14,7 @@ sources:
   - Reports/sleep-gas-gpu-2026-11-14.md
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
+  - Reports/trail-cards-2026-11-14.md
 code:
   - BigDish::fling
   - BigDish::gas
@@ -109,6 +110,9 @@ lights its area for 0.12 s; the simulation is unchanged. Step 4 is built on both
 ([report](../../Reports/gas-cloud-2026-11-14.md)): a gas burst also lays a cloud
 (`BigDish::lay_gas`) that spreads and halves every `KitRules::gas_half` 4 s, is held by
 walls, and puts to sleep any walker on a cell over 0.2; the window shows it as a violet haze.
+Step 5 is built ([report](../../Reports/trail-cards-2026-11-14.md)): the flight cards scorch,
+alarm and mist lay crater, alarm or a thin gas cloud along every soldier bullet's flight,
+through `World::burst` on both engines.
 **Bomb rounds** (11-14, the owner's "Do we have explosions yet"): the
 `bomb` payload kills a small core (4 dish cells) and throws the live mould
 out to 2.5 times that straight outward, as real walkers in flight

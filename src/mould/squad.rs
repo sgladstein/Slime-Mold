@@ -161,6 +161,12 @@ pub struct Burst {
     /// on where it lands (`BigDish::fling`). 0: none.
     pub fling: f32,
     pub fling_steps: u16,
+    /// **Gas cloud only** (the rounds' `Mist` trail, 2026-11-14): this much
+    /// cloud laid on the agar within `r` (`BigDish::lay_gas`), with no gas
+    /// on the walkers there now: the cloud alone puts to sleep whoever
+    /// stands in it from the next step. Needs `BurstRules::gas_keep`. 0:
+    /// none.
+    pub cloud: f32,
 }
 
 impl Burst {
@@ -232,6 +238,10 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
             (d.p.gas_keep, d.p.gas_sleep, d.p.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
             d.lay_gas(b.at.0 * s, b.at.1 * s, b.r * s, k.gas_dose);
         }
+    }
+    if b.cloud > 0.0 && k.gas_keep > 0.0 {
+        (d.p.gas_keep, d.p.gas_sleep, d.p.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
+        d.lay_gas(b.at.0 * s, b.at.1 * s, b.r * s, b.cloud);
     }
     if b.germ {
         if d.sick.is_empty() {

@@ -12,6 +12,12 @@ distributing or using it needs the copyright holder's written permission.
 Third-party crates and the bundled font keep their own licences
 ([THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), [licenses/](licenses/)).
 
+**To play Larder World on Windows, double-click `play.cmd`** in the repo
+folder. It switches to main and pulls (skipped, with a note, if you have
+local changes or no network), builds the game and the map editor with
+cargo's progress bar, and opens the start menu. Extra arguments go to the
+game: `play.cmd map=nest mode=squads`.
+
 ```
 cargo run --release --bin mould            # the game: lesson, challenge dishes, free dishes, the endless dish
 cargo run --release --bin mould -- 3       # free dish seed 3   (-- 0 the lesson, -- d2 challenge dish 2, -- wander the Wanderer)
