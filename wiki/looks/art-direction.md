@@ -7,6 +7,7 @@ sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
+  - Reports/dark-ground-2026-11-14/README.md
 code:
   - theme
 ---
@@ -20,7 +21,7 @@ light on dark ground**. The slime is the brightest, warmest, most detailed
 thing on screen; the ground is dark and quiet; hard shapes (rock, walls,
 crystals) are crisp; your units are high-contrast and countable; light
 (muzzle, impact, crystal charge) only ever shows something the simulation
-did. The first review (11-14) found the slime out of focus, cell staircases on every hard shape, a squad you can't count and a HUD that hides the fight; by 68870d0 those are fixed, and what is open is flat ground with tint discs, a frontier that reads as pebbles, spent crystals as flat grey blocks and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
+did. The first review (11-14) found the slime out of focus, cell staircases on every hard shape, a squad you can't count and a HUD that hides the fight; by 68870d0 those are fixed, and the ground is dark and cool since #247; what is open is the tint discs, a frontier that reads as pebbles, spent crystals as flat grey blocks and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
 
 ## The rules
 
@@ -39,6 +40,7 @@ did. The first review (11-14) found the slime out of focus, cell staircases on e
    species its own hue; crystals the only cyan (`theme::ENERGY` family);
    your team cream and olive with one accent colour; danger red
    (`theme::BAD`) for warnings only. A new colour needs a role nobody has.
+   The ground follows this since 11-14 (slate, flat luma 38; [dark ground](../../Reports/dark-ground-2026-11-14/README.md)).
 4. **Sharp at every zoom, 1 to 24.** Hard shapes have exact edges worked
    out at the screen pixel and antialiased over one pixel; no cell stair is
    visible at any zoom. The slime's edge is where its walker density falls

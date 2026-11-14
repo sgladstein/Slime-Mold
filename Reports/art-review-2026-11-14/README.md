@@ -94,3 +94,5 @@ flat discs), spent crystals as flat grey hexagons, and 10 (the map editor,
 not yet reviewed). The owner's playtest of the sharp slime (04:50-04:58Z:
 blurry middle, dim lone walkers, harvesting) went to the slime, crystals
 and units threads and is in #241, #228 and #238.
+
+Later the same morning #247 (crystals thread) made the open ground dark and cool on all five maps, after these renders; the tint discs are still to check.
