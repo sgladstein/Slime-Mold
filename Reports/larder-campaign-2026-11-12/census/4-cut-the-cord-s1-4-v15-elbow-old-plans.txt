@@ -1,0 +1,24 @@
+mission 4-cut-the-cord (Cut the cord): "Starve the Trunk: cut its cords until it is a fifth of its size", map fork, tier trunk , seeds 1-4, scale 2, walkers 5000
+on the CPU
+  strike:strike_at=180+strike_army=10+buy_to=14 s4: Cap 900s 1*
+  strike:strike_at=180+strike_army=10+buy_to=14 s3: Cap 900s 1*
+  strike:strike_at=180+strike_army=10+buy_to=14 s1: Cap 900s 1*
+  strike:strike_at=180+strike_army=10+buy_to=14 s2: Cap 900s 1*
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 s2: Cap 900s 1*
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 s4: Cap 900s 1*
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 s3: Cap 900s 1*
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 s1: Cap 900s 1*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+cut+strike:strike_at=180+strike_army=10+buy_to=14    1  Cap          900      1 0.64     9%     0%    0%    2%   30%                            12    0   12      900     14     22500  30953  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=10+buy_to=14    2  Cap          900      1 0.60     9%     0%    1%    4%   27%                             7    0    8      900     14     15974  34026  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=10+buy_to=14    3  Cap          900      1 0.64     6%     0%    2%    5%   14%                             5    0   13      900     14     14383  29622  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=10+buy_to=14    4  Cap          900      1 0.62     7%     0%    0%    1%   23%                             4    0   11      900     14     23174  32764  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=10+buy_to=14    1  Cap          900      1 0.96     5%     0%    1%    0%   16%                             3    0    5      215     14     23100  45293  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=10+buy_to=14    2  Cap          900      1 0.88     7%     0%    0%    5%   18%                             3    0    4      220     14     23383  42087  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=10+buy_to=14    3  Cap          900      1 0.94     5%     0%    1%    0%   17%                             2    0    5      217     14     23774  42493  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=10+buy_to=14    4  Cap          900      1 0.78     8%     0%    1%    1%   29%                             4    0    8      900     14     23174  39000  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  cut+strike:strike_at=180+strike_army=10+buy_to=14 0/4  stars 1  best 0.63  dead 8%  stuck 0 s  stall 13 s
+  strike:strike_at=180+strike_army=10+buy_to=14 0/4  stars 1  best 0.89  dead 6%  stuck 0 s  stall 8 s

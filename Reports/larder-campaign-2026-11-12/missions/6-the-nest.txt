@@ -4,6 +4,9 @@
 # Census v13 (seeds 1-4, CPU): a strike from 2:00 with eight (strike:strike_at=120+
 # strike_army=8+buy_to=12) wins 4/4 at 5:07-9:29; with turrets by the farmed crystals
 # (guard+strike) 3/4 at 4:44-5:35; boom 0/4 (best 0.25), idle 0/4 (0.24), random 0/4.
+# After elbow room (#227; census v15): eight striking fell to 1/2 and with turrets 0/2; with
+# twelve (strike_at=120+strike_army=12+buy_to=16) strike 4/4 at 3:40-4:29 and guard+strike
+# 4/4 at 4:06-4:57. Kill zone's plans still win 2/2 (6:07-8:12).
 name The nest
 says Break the nest: cut the Sleeper to half its size
 map nest
