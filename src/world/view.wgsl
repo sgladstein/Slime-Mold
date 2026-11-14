@@ -217,7 +217,10 @@ const WET_RGB: vec3<f32> = vec3<f32>(5.0, 14.0, 22.0);
 const SOIL_DEEP: u32 = 4u;
 const SOIL_BRIDGE: u32 = 5u;
 const DEEP_RGB: vec3<f32> = vec3<f32>(1.0, 6.0, 14.0);
-const WOOD_RGB: vec3<f32> = vec3<f32>(104.0, 76.0, 50.0);
+// Weathered grey-brown, its value between rock and soft rock: gold is
+// the slime's hue (rule 3), and the first orange planks read as slime
+// beside its front at zoom 6 (art lead, 11-14 19:23Z).
+const WOOD_RGB: vec3<f32> = vec3<f32>(98.0, 90.0, 80.0);
 // Mould cut off from food fades towards this (`cell_mat`'s `cut`).
 const ASH_RGB: vec3<f32> = vec3<f32>(120.0, 112.0, 104.0);
 // Condensed mould's colour (`cell_mat_c`'s `dense`): a deep bronze-brown,
@@ -1126,9 +1129,9 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
             // texture faded off the deck.)
             let outn = -so.bg / gl;
             let facing = dot(outn, normalize(-LIGHT.xy));
-            wood = mix(wood, vec3<f32>(62.0, 44.0, 30.0), rail);
-            wood = mix(wood, vec3<f32>(128.0, 100.0, 70.0), post);
-            wood *= 1.0 + 0.45 * facing * rail;
+            wood = mix(wood, vec3<f32>(58.0, 53.0, 47.0), rail);
+            wood = mix(wood, vec3<f32>(118.0, 110.0, 99.0), post);
+            wood *= 1.0 + 0.25 * facing * rail;
             want = mix(want, wood, cb);
         }
         // Its shadow on the water, on the side away from the key light,

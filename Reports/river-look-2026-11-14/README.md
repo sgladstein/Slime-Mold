@@ -101,3 +101,12 @@ screen), and the depth rings about 4.
 
 The GTX 1070 timing is booked with the other pending looks. That whole
 frame was under 2.6 ms p95 this morning.
+
+## Follow-up: grey-brown planks (art lead, 19:23Z)
+
+At zoom 6 the first planks, (104,76,50), had the slime's hue and nearly its
+value, so beside the slime front the bridge read as slime (rule 3 keeps
+gold for the slime). The wood is now a weathered grey-brown, (98,90,80),
+with its value between rock and soft rock. The rails are (58,53,47), the
+posts (118,110,99), and the lit rail's lift is 25% (it was 45%). See
+`bridge-grey-z6.png`: the River at 6 s, rush hand, zoom 6.
