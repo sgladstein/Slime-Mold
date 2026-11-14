@@ -460,6 +460,25 @@ impl App {
                 }
                 self.show_shop();
             }
+            // A bullet card dragged (or Q/E) to another slot of the gun;
+            // one for sale is bought on the way.
+            StartEvent::Move(i, slot) => {
+                if let Some(r) = self.run.as_mut() {
+                    if let Some(row) = r.shop().get(i) {
+                        let done = match row.pick {
+                            Pick::Card(ci) => r.pick(Pick::Move(ci, slot)),
+                            Pick::Offer(k) => r.buy_into(k, slot),
+                            _ => true,
+                        };
+                        if !done {
+                            if let Some(m) = self.menu.as_mut() {
+                                m.notice = Some(format!("{}: over the gun's budget or slots, or not enough points", row.name));
+                            }
+                        }
+                    }
+                }
+                self.show_shop();
+            }
             StartEvent::EndRun => {
                 let line = self.run.take().map(|r| format!("Run given up on planet {}: {}", r.depth, r.line()));
                 if let Some(m) = self.menu.as_mut() {

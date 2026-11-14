@@ -839,6 +839,16 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let hp = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == ITEMS[0].name).unwrap();
     app.menu_event(StartEvent::Buy(hp)).unwrap();
     assert_eq!(app.run.as_ref().unwrap().level_of("hp"), 1);
+    // A card dragged to the front of the gun (owner 20:32Z): the gun fires
+    // it first, and the shop is drawn again with it there.
+    app.run.as_mut().unwrap().cards = vec![(rounds::Card::Wide, true), (rounds::Card::Blast, true)];
+    let blast = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == "Blast").unwrap();
+    app.menu_event(StartEvent::Move(blast, 0)).unwrap();
+    assert_eq!(app.run.as_ref().unwrap().gun_text(), "blast+wide");
+    let shop = app.menu.as_ref().unwrap().shop.as_ref().unwrap();
+    let on: Vec<&str> = shop.rows.iter().filter(|r| r.on && r.area == slime_mould::world::start::ShopArea::Cards).map(|r| r.name.as_str()).collect();
+    assert_eq!(on, ["Blast", "Wide"]);
+    assert!(app.in_menu(), "a move is no pick of a round");
     app.menu_event(StartEvent::NextLevel).unwrap();
     assert!(!app.in_menu());
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));
