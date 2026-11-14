@@ -33,7 +33,7 @@ use std::time::{Duration, Instant};
 use winit::keyboard::KeyCode;
 
 use super::camera::Camera;
-use super::canvas::{Align, Canvas, Rect, Rgba, Weight};
+use super::canvas::{Align, Canvas, Rect, Rgba, UiSize, Weight};
 use super::controls::{Button, Controls};
 use super::icons::Icon;
 use super::marks::{Mark, Marks, Shape, MINIMAP};
@@ -71,12 +71,8 @@ const CARD_PAD: f32 = 8.0;
 /// The selection panel's height with nothing selected.
 const COLLAPSED: f32 = 40.0;
 
-/// Pixels a UI unit for a screen this tall: 1 at 1080 lines, in steps of
-/// 0.05, so a window dragged through every size rasterizes a few sets of
-/// glyph sizes, not one a pixel.
-fn ui_scale(sh: f32) -> f32 {
-    ((sh / 1080.0).clamp(0.7, 2.4) * 20.0).round() / 20.0
-}
+// Pixels a UI unit: `UiSize::px` (`settings`), the height's share of 1080
+// lines with the window's DPI and the player's size over it (11-14).
 
 /// Health's colour: green, then amber below 60%, red below 30%.
 pub fn health_colour(f: f32) -> Rgba {
@@ -750,7 +746,7 @@ impl Hud {
     /// view).
     pub fn draw(&mut self, m: &Model, controls: &Controls, cam: &Camera, minimap: bool, c: &mut Canvas, world: &mut Marks) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        let s = ui_scale(sh);
+        let s = c.ui.px(c.screen);
         self.scale = s;
         self.world = cam.world;
         self.hits.clear();
@@ -774,7 +770,7 @@ impl Hud {
         let cell = CELL * s;
         let gap = CELL_GAP * s;
         let card_w = 4.0 * cell + 3.0 * gap + 2.0 * pad;
-        let (_, inset_bottom) = Hud::insets(c.screen);
+        let (_, inset_bottom) = Hud::insets(c.screen, c.ui);
         let panel_h = inset_bottom - 8.0 * s;
         let base = sh - 8.0 * s;
         let top_of = base - panel_h;
@@ -1515,6 +1511,7 @@ impl Hud {
                     ("Space".into(), "Look at the newest alert".into()),
                     ("Esc".into(), "Cancel placing, or this menu".into()),
                     ("F1 or ?".into(), "This key card".into()),
+                    ("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text".into()),
                 ];
                 for cmd in &m.commands {
                     if let Some(k) = key_name(cmd.key) {
@@ -1570,8 +1567,8 @@ impl Hud {
     /// top bar; the bottom panels' height), as `draw` lays them out: for a
     /// camera made before the HUD has drawn, so it can centre in the band
     /// the panels leave (the opening view on the squad).
-    pub fn insets(screen: (u32, u32)) -> (f32, f32) {
-        let s = ui_scale(screen.1 as f32);
+    pub fn insets(screen: (u32, u32), ui: UiSize) -> (f32, f32) {
+        let s = ui.px(screen);
         let panel_h = 3.0 * CELL * s + 2.0 * CELL_GAP * s + 2.0 * CARD_PAD * s;
         (8.0 * s + 38.0 * s, panel_h + 8.0 * s)
     }
@@ -1720,6 +1717,31 @@ mod tests {
         assert_eq!(r.click(Button::Left, false), (true, vec![]));
     }
 
+    /// The UI size (owner, 11-14 08:07Z): at every step on every screen the
+    /// HUD's panels and buttons stay on the screen, and it grows with the
+    /// size until `UiSize::px`'s cap.
+    #[test]
+    fn every_ui_size_keeps_the_hud_on_screen() {
+        for screen in [(1280, 800), (1600, 900), (1920, 1080), (2560, 1440)] {
+            let mut last = 0.0;
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                r.m.selection = vec![Card { id: 0, icon: Icon::Soldier, team: 0, hp: 1.0, badge: None }; 3];
+                r.m.loadout = Some(loadout());
+                r.draw();
+                assert!(r.hud.scale >= last, "{screen:?} at {user}: {} after {last}", r.hud.scale);
+                last = r.hud.scale;
+                let (sw, sh) = (screen.0 as f32 + 0.5, screen.1 as f32 + 0.5);
+                for (b, h) in &r.hud.hits {
+                    assert!(b.x >= -0.5 && b.y >= -0.5 && b.right() <= sw && b.bottom() <= sh, "{screen:?} at {user}: {h:?} {b:?} off the screen");
+                }
+                assert!(screen.1 as f32 - r.hud.bottom <= screen.1 as f32 * 0.34, "{screen:?} at {user}: the bottom bar is too tall");
+            }
+            assert!(last > Rig::new(screen).hud.scale * 1.3, "{screen:?}: the biggest size grows the HUD");
+        }
+    }
+
     #[test]
     fn the_bottom_panels_cover_at_most_about_15_percent_and_collapse_when_empty() {
         for screen in [(1920, 1080), (1280, 800), (2560, 1440)] {
@@ -1728,7 +1750,7 @@ mod tests {
             r.draw();
             let share = (screen.1 as f32 - r.hud.bottom) / screen.1 as f32;
             assert!(share <= 0.152, "{screen:?}: the bar is {:.1}% of the screen", share * 100.0);
-            assert!((Hud::insets(r.c.screen).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
+            assert!((Hud::insets(r.c.screen, r.c.ui).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen, r.c.ui).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
             // With nothing selected, no panel reaches above the collapsed
             // strip except the command card and minimap.
             let full = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale).count();

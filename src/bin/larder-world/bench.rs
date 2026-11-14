@@ -331,6 +331,8 @@ pub(super) fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, q
     let frame = device.create_buffer(&wgpu::BufferDescriptor { label: Some("no world"), size: 16, usage: wgpu::BufferUsages::STORAGE, mapped_at_creation: false });
     app.view = Some(View::new(device, queue, &frame, (1, 1), screen));
     app.canvas = Some(Canvas::new(screen));
+    // The UI size `ui=` gave (100% in the tests, which never set it).
+    app.canvas.as_mut().unwrap().ui.user = ui_user();
     app.canvas_pass = Some(CanvasPass::new(device, queue));
     app.gpu = Some((device.clone(), queue.clone()));
     app.start()?;
