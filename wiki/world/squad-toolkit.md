@@ -7,6 +7,7 @@ sources:
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/rounds-2026-11-12.md
+  - Reports/sleep-gas-gpu-2026-11-14.md
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
 code:
@@ -20,6 +21,8 @@ code:
   - BigParams::sick_upkeep
   - Burst
   - Engine::burst
+  - Engine::calm
+  - Engine::gas
   - Kit
   - Kit::restock
   - KitRules
@@ -41,11 +44,12 @@ mould's model (`mould::kit`): blast, mine, det cord, germ, sleep gas, and
 mask or reek on a soldier's smell. Every tool comes down to bursts
 (`squad::Burst`) that a world applies (`World::burst`): blast, cord and mine
 run on the GPU world too (the engine's strike lays the crater), and since
-11-14 the germ (the strike's `kill` pass infects; the `life` pass charges the
+11-14 the sleep gas ([report](../../Reports/sleep-gas-gpu-2026-11-14.md))
+and the germ (the strike's `kill` pass infects; the `life` pass charges the
 sick `sick_upkeep`: on race seed 5, 77 made sick and 449 of 2,123 left after
-20 s on both engines); gas is on the CPU only so far. A mine's trigger scales with `Game::density`. In
+20 s on both engines). A mine's trigger scales with `Game::density`. In
 the window (`larder-world`) E opens the tools page: blast, det cord and
-mine and germ work; every soldier at the larder takes one tool, a selected one up
+mine, germ and sleep gas work; every soldier at the larder takes one tool, a selected one up
 to five. The crater a blast, cord
 or shot leaves (`BigDish::scorch_disc`; GPU binding 47 since #113, shared
 `scorch_keep` and `scorch_full`: 0 and 150 in the race world since PR 3b's
@@ -76,7 +80,7 @@ germ, on its own or as plague, beats no round 8/0 on plain, Swarmer and Sporer
 and the Sleeper ignores every round, so the best loadout does not yet vary by
 tier. Germ resistance 10 on the Swarmer and Sporer cancels it (4 seeds), 3
 halves it: a per-mould dial. Rounds now cast through `World::burst`, so they play in
-the `larder-world` window (`rounds=`, H; gas waits for the GPU port, germ plays since 11-14). On Flats, blast and
+the `larder-world` window (`rounds=`, H; gas and germ play there since 11-14). On Flats, blast and
 trap keep a soldier alive to 32 s where plain shots lose the squad by 24 s.
 Since 11-13 shots fly as bullets (`Rules::bullet_speed` 45 dish cells a
 second; 0 gives back the ray), and the flight cards pierce and split ride on
@@ -104,7 +108,7 @@ exact bullet twin in `mouldgpu` checks the engine's trace of each leg).
 - Round 2 on a second map, and as `larderworld census` hands.
 - A tier where gas or the det cord is the best plan.
 - `germ_resist` as a tier key, if a campaign mould needs the germ answered.
-- Gas on the GPU world (the gun rounds thread, cloud plan C5), so the window's gas button works. The germ's 1070 twin is pending.
+- The germ's and the gas's 1070 twins are pending.
 - The tools in the game's replay (the kit sits outside `Game`).
 - The det cord once food flows (the one-body thread's `energy_flow`).
 

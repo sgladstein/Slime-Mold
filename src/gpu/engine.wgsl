@@ -30,7 +30,10 @@ struct Params {
     sick_steps: u32, immune: u32, infect: u32, _p0: u32,
     sick_dep: f32, sick_keep: f32, sick_speed: f32, sick_trail: f32,
     sick_reach: f32, sick_turn: f32, ix: f32, iy: f32,
-    ir: f32, sick_up: f32, _p2: f32, _p3: f32,
+    // Word 232 (`_p2` until 11-14) is the sleep gas's `gas_death`
+    // (`BigParams::gas_death`, the gun rounds thread, C5): a gassed dormant
+    // walker's chance a tick of dying, if over `sleep_death`.
+    ir: f32, sick_up: f32, gas_death: f32, _p3: f32,
     // The outside rules (`BigParams` of PR #55, Reports/outside-rules-2026-11-11.md),
     // all off at 0: species fields (`nsp`, 0 for none, else 2-4), cyclic
     // species, explorers (`explore` steps), blocked walkers' deposit share
@@ -267,6 +270,24 @@ struct Squad { units: array<SqUnit, 96>, uout: array<SqUnitOut, 96>, shots: arra
 // (`ngather`, cleared by `nhear`), and the spread's two turns (`nspread`,
 // `nab`, `nba`), each written whole by the pass that writes it.
 @group(0) @binding(48) var<storage, read_write> news: array<atomic<u32>>;
+// Sleep gas (`BigDish::gas`, the squad toolkit's, on the GPU 11-14; the
+// gun rounds thread, cloud plan C5), in `news` after its blocks (the
+// device's 48 storage buffers a stage are all bound, so it borrows the
+// slime-enemy thread's buffer, agreed in the ROADMAP's binding note):
+// a header of `GAS_HEAD` words (the step now, written by the host before
+// `gas` and `calm`; the points `calm` counts at; walkers gassed, summed
+// over every `gas`), each point's (x, y, r) as f32 bits four words apart,
+// each point's calm count, then a word a slot: the step its gas runs out
+// at. The CPU counts its `gassed` down every step; here a slot is gassed
+// while the step is before its word, so no pass runs while nobody is
+// gassed. 0 is never gassed.
+const GAS_HEAD: u32 = 4u;
+const GAS_UNITS: u32 = 4u;
+const GAS_CALM: u32 = 388u;
+const GAS_SLOTS: u32 = 484u;
+fn gas_base() -> u32 { return P.n + 3u * P.w * P.h; }
+fn gas_word(i: u32) -> u32 { return atomicLoad(&news[gas_base() + i]); }
+fn gassed_at(k: u32, t: u32) -> bool { return t < gas_word(GAS_SLOTS + k); }
 
 fn crater_at(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&crater[i])); }
 fn crater_set(i: u32, v: f32) { atomicStore(&crater[i], bitcast<u32>(v)); }
@@ -1048,6 +1069,8 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     walkers[b] = vec4<f32>(at, unit(keyed(P.s_birth, t, k | 0x80000000u)) * TAU, 0.0);
     if (explore() > 0u) { age[b] = 0u; }
     if (P.sick_steps > 0u) { sick[b] = 0u; }
+    // A child is not gassed (the CPU zeroes the slot's `gassed`).
+    atomicStore(&news[gas_base() + GAS_SLOTS + b], 0u);
     // The child is its parent's species and kind, and an ordinary walker
     // with its timer at 0.
     if (nsp() > 0u || mixes() || cycles()) { spec[b] = spec[k] & 0x1FFu; }
@@ -2396,6 +2419,14 @@ fn now_active(k: u32, at: u32, ill: bool, ex: bool) {
     if (P.sick_steps > 0u && ill) { atomicAdd(&gdep[at], 1u); }
 }
 
+// A dormant walker's death this tick: `sleep_death`, or while gassed the
+// larger of it and `gas_death` (the CPU's draw `DRAW_SLEEP_DIE` either way).
+fn dies_asleep(k: u32) -> bool {
+    var death = P.sleep_death;
+    if (gassed_at(k, S.t)) { death = max(P.gas_death, death); }
+    return death > 0.0 && unit(keyed(P.s_sleep_die, S.t, k)) < death;
+}
+
 fn ill_of(k: u32) -> bool { return P.sick_steps > 0u && sick[k] > P.immune; }
 fn ex_of(k: u32) -> bool { return explore() > 0u && explores(k); }
 
@@ -2429,7 +2460,7 @@ fn fate(@builtin(global_invocation_id) gid: vec3<u32>) {
         st = L_DORMANT;
         tm = P.sleep_rest;
         atomicAdd(&gdep[2u * c + here], 1u);
-    } else if (st == L_DORMANT && P.sleep_death > 0.0 && unit(keyed(P.s_sleep_die, S.t, k)) < P.sleep_death) {
+    } else if (st == L_DORMANT && dies_asleep(k)) {
         // It dies where it lies (`BigParams::sleep_death`, the CPU's draw
         // `DRAW_SLEEP_DIE`): its cell is freed, and its claim as a starving
         // walker's is (`life`), so a birth can take it this tick; with
@@ -2452,7 +2483,8 @@ fn fate(@builtin(global_invocation_id) gid: vec3<u32>) {
         atomicAdd(&bdep[blk(species_of(k), kind_of(k)) * c + here + 3u * nblk() * c], 1u);
         let ill = ill_of(k);
         let ex = ex_of(k);
-        if (scent_at(wk.x, wk.y) > P.wake_scent || (alarm_at(here) > P.wake_alarm && tm == 0u)) {
+        // A gassed walker is deaf to scent; only alarm wakes it.
+        if ((!gassed_at(k, S.t) && scent_at(wk.x, wk.y) > P.wake_scent) || (alarm_at(here) > P.wake_alarm && tm == 0u)) {
             st = L_WALKER;
             tm = P.wake_steps;
             if (alarms()) { atomicAdd(&gdep[c + here], 1u); }
@@ -2709,3 +2741,45 @@ fn owncount(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     atomicAdd(&gcount[cell(wk.x, wk.y)], 1u);
 }
+
+// **Sleep gas** (`Engine::gas`, the CPU's `BigDish::gas`): every living
+// ordinary or dormant walker within the strike row's radius `kr` of
+// (`kx`, `ky`), fine cells, falls dormant with its timer at 0 and is
+// gassed for `kcs` steps from the step now (the header's word 0). The
+// distance is squared on both sides, so the same walkers are in.
+@compute @workgroup_size(256)
+fn gas(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let w = spec[k];
+    let st = (w >> 9u) & 3u;
+    if (st != L_WALKER && st != L_DORMANT) { return; }
+    let wk = walkers[k];
+    let dx = wk.x - P.kx;
+    let dy = wk.y - P.ky;
+    if (dx * dx + dy * dy > P.kr * P.kr) { return; }
+    spec[k] = (w & 0x1FFu) | (L_DORMANT << 9u);
+    atomicStore(&news[gas_base() + GAS_SLOTS + k], gas_word(0u) + u32(P.kcs));
+    atomicAdd(&news[gas_base() + 2u], 1u);
+}
+
+// **Calm** (the CPU's `BigDish::gassed_near`, which the game takes off a
+// unit's `touching`): each gassed dormant walker within a point's r of it
+// counts for that point (the header's word 1 points, their counts cleared
+// by the host first). `GpuWorld::calm` runs it after a frame, only while
+// a gas lasts (`Engine::gas_until`).
+@compute @workgroup_size(256)
+fn calm(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k) || state(k) != L_DORMANT || !gassed_at(k, gas_word(0u))) { return; }
+    let wk = walkers[k];
+    let nu = gas_word(1u);
+    for (var u = 0u; u < nu; u++) {
+        let o = GAS_UNITS + 4u * u;
+        let dx = wk.x - bitcast<f32>(gas_word(o));
+        let dy = wk.y - bitcast<f32>(gas_word(o + 1u));
+        let r = bitcast<f32>(gas_word(o + 2u));
+        if (dx * dx + dy * dy <= r * r) { atomicAdd(&news[gas_base() + GAS_CALM + u], 1u); }
+    }
+}
+

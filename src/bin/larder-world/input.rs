@@ -278,8 +278,8 @@ impl App {
                 }
             }
             KeyCode::KeyH => {
-                // The next loadout this world can cast (the GPU world has
-                // no gas or germ yet), kept for the next game too.
+                // The next loadout this world can cast (every card on the
+                // GPU world too since 11-14), kept for the next game too.
                 let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
                     rounds::Card::Gas => g.world.has_gas(),
                     rounds::Card::Germ => g.world.has_germ(),

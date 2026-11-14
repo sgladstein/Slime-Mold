@@ -321,6 +321,9 @@ pub struct Settings {
     pub wake_steps: u16,
     pub sleep_rest: u16,
     pub sleep_death: f32,
+    /// A gassed sleeper's chance a tick of dying (`BigParams::gas_death`;
+    /// the toolkit's `BurstRules` sets it with the first gas).
+    pub gas_death: f32,
     pub alarm_keep: f32,
     pub alarm_weight: f32,
     pub alarm_relay: f32,
@@ -510,6 +513,7 @@ impl Settings {
             wake_steps: t.wake_steps,
             sleep_rest: t.sleep_rest,
             sleep_death: t.sleep_death,
+            gas_death: t.gas_death,
             alarm_keep: t.alarm_keep,
             alarm_weight: t.alarm_weight,
             alarm_relay: t.alarm_relay,
@@ -755,6 +759,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "wake_steps" => s.wake_steps = int()?.min(65535) as u16,
         "sleep_rest" => s.sleep_rest = int()?.min(65535) as u16,
         "sleep_death" => s.sleep_death = f()?,
+        "gas_death" => s.gas_death = f()?,
         "alarm_keep" => s.alarm_keep = f()?,
         "alarm_weight" => s.alarm_weight = f()?,
         "alarm_relay" => s.alarm_relay = f()?,
@@ -894,6 +899,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         wake_steps: s.wake_steps,
         sleep_rest: s.sleep_rest,
         sleep_death: s.sleep_death,
+        gas_death: s.gas_death,
         alarm_keep: s.alarm_keep,
         alarm_weight: s.alarm_weight,
         alarm_relay: s.alarm_relay,
@@ -1054,9 +1060,14 @@ pub const NBA: usize = 46;
 pub const NHEAR: usize = 47;
 pub const CAPCLEAR: usize = 48;
 pub const CAPCOUNT: usize = 49;
+/// Sleep gas (in binding 48 after food's news, 11-14): `gas` puts the walkers in a disc to
+/// sleep (`Engine::gas`), `calm` counts gassed sleepers near points
+/// (`Engine::calm`).
+pub const GAS: usize = 50;
+pub const CALM: usize = 51;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 50] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount",
+pub const PASSES: [&str; 52] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm",
 ];
 
 impl Shared {
@@ -1148,6 +1159,13 @@ pub struct Engine {
     /// spread's two turns). `withers` while its passes run (growth and
     /// `wither` on); `reach` its spread's passes.
     pub news: wgpu::Buffer,
+    /// Sleep gas, in `news` after its blocks from `gas_at` (bytes;
+    /// `engine.wgsl`'s `gas_base`): a header, the calm's points and
+    /// counts, then the step each slot's gas runs out at (`gas_words`).
+    /// `gas_until` is the last step any gas lasts to, so `calm` costs
+    /// nothing once it has passed.
+    pub gas_at: u64,
+    pub gas_until: u64,
     pub withers: bool,
     pub reach: u32,
     /// The damage memory (binding 47, the squad toolkit's layout): the
@@ -1394,7 +1412,10 @@ impl Engine {
         let look = zeros("look", cells as usize * 4);
         let body = zeros("body", 2 * cells as usize * 4);
         let crater = zeros("crater", 2 * cells as usize * 4);
-        let news = buf("news", &u32_bytes(&news_words(&d, cells as usize)), storage);
+        // Food's news, then the sleep gas's words (no binding of their
+        // own: the device's 48 storage buffers a stage are all bound).
+        let news_len = news_words(&d, cells as usize).len();
+        let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d)].concat()), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
@@ -1435,6 +1456,8 @@ impl Engine {
             energy_flows: false,
             fed_packs: false,
             news,
+            gas_at: 4 * news_len as u64,
+            gas_until: gas_until(&d),
             withers: false,
             reach: 1,
             crater,
@@ -1589,6 +1612,8 @@ impl Engine {
         assert_eq!(d.kind.is_empty(), self.kinds == 1, "a dish with this engine's mix");
         self.queue.write_buffer(&self.spec, 0, &u32_bytes(&spec_words(d)));
         self.queue.write_buffer(&self.news, 0, &u32_bytes(&news_words(d, self.cells as usize)));
+        self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&gas_words(d)));
+        self.gas_until = gas_until(d);
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.done = d.steps;
         self.dish = d.clone();
@@ -1629,7 +1654,7 @@ impl Engine {
             self.seeded = true;
         }
         b.extend(u32_bytes(&[s.sick, s.immune, infect, 0]));
-        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.sick_upkeep, 0.0, 0.0]));
+        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.sick_upkeep, s.gas_death, 0.0]));
         // The outside rules. Switching explorers on starts every walker's
         // stage again, so the switch shows (ages are only counted while on).
         if s.explores() && !self.exploring {
@@ -2185,6 +2210,64 @@ impl Engine {
         self.burst(shared, s, x, y, r, alarm, alarm_r, 0.0, 0, 0.0);
     }
 
+    /// **Sleep gas**, as the CPU's `BigDish::gas` (dish cells, the
+    /// squad toolkit's sleep gas on the engine, 11-14): every living
+    /// ordinary or dormant walker within `r` of (`x`, `y`) falls dormant
+    /// with its timer at 0, deaf to scent for `steps` fine steps (alarm
+    /// still wakes it), and while gassed dies asleep at `s.gas_death` if
+    /// that is over `sleep_death`. Switches the life states on. Runs on
+    /// its own, between ticks; returns the walkers gassed (a read-back).
+    pub fn gas(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, steps: u16) -> u32 {
+        let k = self.dish.p.scale as f32;
+        self.cycles = true;
+        self.write_params(s, Hand::default(), 0);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, 0.0]));
+        let before = self.gas_word(2);
+        self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
+        self.run(shared, &[(GAS, self.n.div_ceil(256))]);
+        if steps > 0 {
+            self.gas_until = self.gas_until.max(self.done + steps as u64);
+        }
+        self.gas_word(2).wrapping_sub(before)
+    }
+
+    fn gas_word(&self, i: usize) -> u32 {
+        let b = read_back(&self.device, &self.queue, &self.news);
+        let o = self.gas_at as usize + 4 * i;
+        u32::from_le_bytes(b[o..o + 4].try_into().unwrap())
+    }
+
+    /// For each point (fine cells, at most `squad::UNITS_MAX`), the gassed
+    /// dormant walkers within `r` of it now: the CPU's
+    /// `BigDish::gassed_near`. Zeros with no read-back once every gas has
+    /// run out (`gas_until`).
+    pub fn calm(&self, shared: &Shared, at: &[(f32, f32)], r: f32) -> Vec<u32> {
+        let n = at.len().min(squad::UNITS_MAX);
+        if self.done >= self.gas_until || n == 0 {
+            return vec![0; at.len()];
+        }
+        let mut words = vec![self.done as u32, n as u32, 0, 0];
+        words.resize(GAS_HEAD + 4 * squad::UNITS_MAX + squad::UNITS_MAX, 0);
+        for (u, &(x, y)) in at.iter().take(n).enumerate() {
+            words[GAS_HEAD + 4 * u..GAS_HEAD + 4 * u + 3].copy_from_slice(&[x.to_bits(), y.to_bits(), r.to_bits()]);
+        }
+        // Word 2 (walkers gassed so far) is kept.
+        self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&words[..2]));
+        self.queue.write_buffer(&self.news, self.gas_at + 12, &u32_bytes(&words[3..]));
+        self.run(shared, &[(CALM, self.n.div_ceil(256))]);
+        let b = read_back(&self.device, &self.queue, &self.news);
+        let calm = self.gas_at as usize + 4 * (GAS_HEAD + 4 * squad::UNITS_MAX);
+        let mut out: Vec<u32> = (0..n).map(|u| u32::from_le_bytes(b[calm + 4 * u..calm + 4 * u + 4].try_into().unwrap())).collect();
+        out.resize(at.len(), 0);
+        out
+    }
+
+    /// Fine steps of gas left each slot now (the CPU's `gassed`), read back.
+    pub fn gassed_of(&self) -> Vec<u16> {
+        let b = read_back(&self.device, &self.queue, &self.news);
+        b[self.gas_at as usize + GAS_SLOTS * 4..].chunks_exact(4).take(self.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap()).saturating_sub(self.done as u32).min(u16::MAX as u32) as u16).collect()
+    }
+
     /// A strike that also lays a crater of `steps` fine steps within
     /// `crater_r` dish cells (the squad toolkit's burst, `squad::Burst`; the
     /// CPU's `strike` then `scorch_disc`), in the same two passes: the
@@ -2367,6 +2450,29 @@ pub fn spec_words(d: &BigDish) -> Vec<u32> {
 /// step it last heard of food (`BigDish::news`), or the next step for all
 /// before its first `hear_food`, as the CPU starts them; then the three
 /// blocks of cells, clear.
+/// Words before the slots in the sleep gas's words (after food's news,
+/// `engine.wgsl`'s `GAS_HEAD`, `GAS_UNITS`, `GAS_CALM`, `GAS_SLOTS`).
+pub const GAS_HEAD: usize = 4;
+pub const GAS_SLOTS: usize = GAS_HEAD + 5 * squad::UNITS_MAX;
+
+/// The sleep gas's buffer a CPU dish starts the GPU's with: a zero header
+/// and calm block, then each slot's step its gas runs out at (the dish's
+/// step plus its `gassed`; 0, never, where it has none).
+pub fn gas_words(d: &BigDish) -> Vec<u32> {
+    let mut w = vec![0u32; GAS_SLOTS + d.walkers.len()];
+    for (k, &g) in d.gassed.iter().enumerate() {
+        if g > 0 {
+            w[GAS_SLOTS + k] = d.steps as u32 + g as u32;
+        }
+    }
+    w
+}
+
+/// The last step any of a dish's gas lasts to.
+fn gas_until(d: &BigDish) -> u64 {
+    d.steps + d.gassed.iter().copied().max().unwrap_or(0) as u64
+}
+
 pub fn news_words(d: &BigDish, cells: usize) -> Vec<u32> {
     let mut words: Vec<u32> = if d.news.len() == d.walkers.len() { d.news.iter().map(|&t| t as u32).collect() } else { vec![d.steps as u32 + 1; d.walkers.len()] };
     words.resize(d.walkers.len() + 3 * cells, 0);

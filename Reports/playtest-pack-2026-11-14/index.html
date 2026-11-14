@@ -1,0 +1,144 @@
+<title>Larder World Playtest Pack</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a play script as a timeline, films as figure pairs with their counts, picks as a numbered answer sheet. */
+:root {
+  --ground: #f3efe6; --panel: #fffdf8; --ink: #2a2318; --muted: #6d6252;
+  --slime: #b8741a; --crystal: #1f8fa8; --rule: #e2d9c8; --keybg: #efe7d6;
+  --warn: #a63d2a;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #1d1810; --panel: #262017; --ink: #efe6d4; --muted: #b3a58c;
+  --slime: #e3a04a; --crystal: #5cc6dc; --rule: #3b3223; --keybg: #352c1f; --warn: #ef8a72; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #1d1810; --panel: #262017; --ink: #efe6d4; --muted: #b3a58c;
+  --slime: #e3a04a; --crystal: #5cc6dc; --rule: #3b3223; --keybg: #352c1f; --warn: #ef8a72; color-scheme: dark }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 2.2rem; margin: 0 0 6px; }
+h2 { font-size: 1.35rem; margin: 44px 0 12px; padding-top: 18px; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.05rem; margin: 20px 0 6px; }
+p { margin: 8px 0; max-width: 68ch; }
+.lede { color: var(--muted); font-size: 1.02rem; }
+.build { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-size: .88rem; color: var(--muted); }
+.build b { color: var(--ink); font-weight: 600; }
+code, kbd { font-family: var(--mono); font-size: .86em; background: var(--keybg); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+kbd { border: 1px solid var(--rule); font-weight: 600; }
+pre { font-family: var(--mono); font-size: .85rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; overflow-x: auto; }
+.script { list-style: none; padding: 0; margin: 0; display: grid; gap: 0; }
+.script li { display: grid; grid-template-columns: 74px 1fr; gap: 14px; padding: 12px 0; border-bottom: 1px dashed var(--rule); }
+.script .t { font-family: var(--mono); font-size: .85rem; color: var(--slime); font-weight: 600; padding-top: 2px; font-variant-numeric: tabular-nums; }
+.script li > div { min-width: 0; }
+.script .look { color: var(--muted); font-size: .92rem; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--display); font-weight: 500; color: var(--muted); font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; }
+td:last-child { white-space: nowrap; color: var(--muted); font-family: var(--mono); font-size: .8rem; }
+figure { margin: 18px 0 26px; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 14px; }
+figure img { display: block; width: 100%; border-radius: 4px; }
+figcaption { margin-top: 10px; font-size: .9rem; }
+.counts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-family: var(--mono); font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.counts span b { color: var(--crystal); font-weight: 600; }
+.links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; padding: 0; list-style: none; }
+.links li { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; font-size: .9rem; }
+a { color: var(--crystal); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--slime); outline-offset: 2px; }
+.picks { counter-reset: pick; list-style: none; padding: 0; display: grid; gap: 12px; }
+.picks li { counter-increment: pick; display: grid; grid-template-columns: 34px 1fr; gap: 10px; }
+.picks li::before { content: counter(pick); font-family: var(--display); font-weight: 700; color: var(--panel); background: var(--slime); border-radius: 50%; width: 28px; height: 28px; display: grid; place-items: center; font-size: .9rem; }
+.picks li > div { min-width: 0; }
+.opts { color: var(--muted); font-size: .92rem; }
+.star { color: var(--slime); font-weight: 700; }
+.note { border-left: 3px solid var(--warn); padding: 4px 12px; color: var(--muted); font-size: .9rem; }
+</style>
+
+<div class="wrap">
+  <h1>Larder World playtest pack</h1>
+  <p class="lede">Everything that changed in the window since your last playtest (11-12), how to reach each change, a 15-minute route through it, and the questions only your hands can answer.</p>
+  <div class="build">
+    <span>Build: <b>main at 1e96f11</b> (11-14, after the file split, which changes no behaviour)</span>
+    <span>Run: <code>cargo run --release --bin larder-world</code></span>
+    <span>Made 2026-11-14</span>
+  </div>
+
+  <h2>What you get with no keys</h2>
+  <p>A plain start plays the Fork map against <b>shape C</b>: about 25,000 walkers grown from home into a sheet with trunks. Every change below is on by default. A key in the table turns one off, or picks another value, so you can feel the difference. Put keys after <code>--</code>, for example <code>cargo run --release --bin larder-world -- panic=0</code>.</p>
+
+  <h2>Since 11-12</h2>
+  <p class="opts">★ marks the three changes you asked for yourself.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>What changed</th><th>How to see it, or turn it off</th><th>PR</th></tr></thead>
+    <tbody>
+      <tr><td><span class="star" title="You asked for this">★</span> Shape C is the default slime, and it bites: each walker touching a soldier takes 2 health a second, out of 100, so ten walkers kill a soldier in 5 s</td><td><code>shape=a</code> plays the old 5,000 walkers; <code>shape=b|d|e</code> the other films</td><td>#174</td></tr>
+      <tr><td><span class="star" title="You asked for this">★</span> Soldiers wade: every walker on a soldier slows it, so walking into thick slime is slow and deadly</td><td>Walk straight in; <code>wade=0</code> off</td><td>#143 #197</td></tr>
+      <tr><td>Shots sink into the slime instead of stopping at its edge</td><td><code>sink=0</code> stops at the edge</td><td>#181</td></tr>
+      <tr><td>A soldier aims only at slime it can see, not through walls</td><td>Stand behind a wall</td><td>#198</td></tr>
+      <tr><td>C shares its food: its body swells round the crystals it holds</td><td><code>energy_flow=0</code> plays C as before</td><td>#183</td></tr>
+      <tr><td>A part cut off from every crystal withers over a minute or two (your "double it" pick)</td><td>Wall a piece off with <kbd>V</kbd>; <code>wither=0</code> off</td><td>#196</td></tr>
+      <tr><td>A cut-off part panics: a slow lean, then a dash at the nearest soldier (or a fed crystal), giving up after half a second</td><td><code>panic=0</code> off; <code>panic_creep=1</code> the old fast lean; <code>panic_dash=0</code> never gives up</td><td>#200 #202–#204</td></tr>
+      <tr><td>Bullets fly through the air (45 cells a second) instead of hitting at once</td><td><code>bullet=0</code> the instant ray</td><td>#191</td></tr>
+      <tr><td>Rounds: pierce, split, blast and others</td><td><kbd>H</kbd> cycles them in play; <code>rounds=NAME</code> starts with one; <code>map=flats</code> shows them best</td><td>#162</td></tr>
+      <tr><td><span class="star" title="You asked for this">★</span> Craters: a cone-shaped hole under fire; 4.5 s in this build, 2 s next (your pick, 01:05Z)</td><td><code>crater=2</code> plays your pick now</td><td>#143 #163</td></tr>
+      <tr><td>Your own mould: soldiers sow it and lay its road</td><td><code>own=1</code>; Sow and Road on the card</td><td>#165</td></tr>
+      <tr><td>Build anywhere: a soldier walks out to a far ghost, with a bar and the seconds left</td><td>Build page <kbd>Q</kbd></td><td>#169</td></tr>
+      <tr><td>The siren, a building that calls the mould with the alarm</td><td>Build page <kbd>Q</kbd></td><td>#160 #161</td></tr>
+      <tr><td>Economy: rations, and the mould can overrun the larder</td><td>Watch the food bar and its "dry in" seconds</td><td>#170</td></tr>
+      <tr><td>Campaign missions, re-tuned after the changes above</td><td><code>mission=1-landfall</code>, <code>mission=2-first-contact</code>, <code>mission=3-the-gaps</code></td><td>#171 #175 #185 #187</td></tr>
+      <tr><td>The Drifter tier leaves home unprovoked; the core grows back</td><td><code>tier=drifter</code></td><td>#180 #163</td></tr>
+      <tr><td>Sound: shots weigh their kills; the mould has a voice</td><td><kbd>O</kbd> all sound, <kbd>K</kbd> the voice</td><td>11-12</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>A 15-minute route</h2>
+  <ol class="script">
+    <li><span class="t">0:00</span><div><b>Plain start.</b> Harvest the nearest crystal and buy soldiers as food allows.<p class="look">Look for: C's body thickening round the crystals it holds, and the sheet joining crystals with trunks.</p></div></li>
+    <li><span class="t">3:00</span><div><b>Once you have about eight soldiers,</b> walk four straight into C's thickest part. Stand the other four at range and fire.<p class="look">Look for: the wading slowdown, the bite, shots sinking in, and the craters. Does walking in feel very deadly, as you asked?</p></div></li>
+    <li><span class="t">6:00</span><div><b>Cut a piece of C off its crystals.</b> Find a trunk whose far end holds no crystal (or only one you've harvested dry), and lay a short wall across it (<kbd>V</kbd>, 20 food a cell, so a 10-cell wall costs 200). Watch the piece thin. When it leans toward your squad, pull back. Next time, stand still instead.<p class="look">Look for: the lean, the charge, and whether pulling back in time gets you clear. Does it read as a scared animal? An arm that still holds a fed crystal won't wither, because it's still eating. If you can't find an unfed arm, the two films below show a full cut.</p></div></li>
+    <li><span class="t">9:00</span><div><b>Press <kbd>H</kbd></b> a few times and fire each round into the body.<p class="look">Look for: which rounds you can tell apart by eye.</p></div></li>
+    <li><span class="t">11:00</span><div><b>Restart with <code>tier=grudge</code>.</b> Fire from one spot for 30 s, then move.<p class="look">Look for: the Grudge's long-lasting alarm and scars, which make it come back to where it was hurt, and whether moving shakes it off.</p></div></li>
+    <li><span class="t">13:00</span><div><b>Restart with <code>own=1</code>.</b> Sow a patch and lay a road toward the enemy.<p class="look">Look for: whether your mould feels like yours and does something you can see.</p></div></li>
+    <li><span class="t">15:00</span><div><b>If there's time:</b> play two minutes of <code>mission=2-first-contact</code>, or replay 6:00 once with <code>panic=0</code> and once with <code>wither=0</code>.</div></li>
+  </ol>
+
+  <h2>Films, made on this build</h2>
+  <p>Headless runs on the cloud's software GPU (seed 1, Fork, farm hand). The camera is held still on the cut. Each film plays faster than the game: wither at 8 times, last stand at 2 times.</p>
+  <figure>
+    <img src="wither.gif" alt="A ring of wall cuts a piece of the slime off its crystals at 2:30; over the next minute the piece inside the ring thins out.">
+    <figcaption><b>Withering.</b> A ring is cut at 2:30 (<code>cut=150,386,239,22</code>). The piece has no news of food, holds for about 10 s, then thins steadily.</figcaption>
+    <div class="counts"><span>2:30 <b>220</b></span><span>+10 s <b>235</b></span><span>+20 s <b>214</b></span><span>+30 s <b>173</b></span><span>+40 s <b>144</b></span><span>+50 s <b>115</b></span><span>+60 s <b>90</b></span><span>+70 s <b>56</b> walkers inside</span></div>
+  </figure>
+  <figure>
+    <img src="stand.gif" alt="Four soldiers set down inside a cut ring at 2:30; the cut piece leans toward them, charges, and is gone within about fourteen seconds.">
+    <figcaption><b>Last stand.</b> A ring is cut at 2:30 with four soldiers set inside it (<code>cut=150,365,240,32 cutsquad=365,264,150,4</code>). The piece leans, then charges the soldiers and burns itself out on them.</figcaption>
+    <div class="counts"><span>+3 s <b>195</b></span><span>+7 s <b>109</b></span><span>+11 s <b>7</b></span><span>+14 s <b>0</b> walkers inside</span><span>soldiers 30 → <b>27</b> between +8 and +12 s</span></div>
+  </figure>
+  <h3>Earlier film pages, still current</h3>
+  <ul class="links">
+    <li><a href="https://claude.ai/artifact/DKoWuDZja5GGeMTUuJFLMR">Wading into slime</a><br>wading, edge sink, aims that see (11-13)</li>
+    <li><a href="https://claude.ai/artifact/HzgDT3XPLX59Ba621tVH2H">Crater looks in motion</a><br>the cone at 10, 6, 4.5, 3 and 1 s</li>
+    <li><a href="https://claude.ai/artifact/AcRm3aeB97YLpWobtmABhs">Craters under fire</a></li>
+    <li><a href="https://claude.ai/artifact/4iJTF66gpSNoJxnLgUtyiG">Shots that sink in</a><br>made before C's bite</li>
+  </ul>
+
+  <h2>Your picks</h2>
+  <p>Answer any of these in the project chat by number. A one-word answer is enough.</p>
+  <ol class="picks">
+    <li><div><b>How did you win?</b> You beat the game easily in every playtest. How did you win, how long did it take, and what would have stopped you?</div></li>
+    <li><div><b>More than one way to win?</b> Did you find more than one way to hold or win, or did one plan feel like the answer?</div></li>
+    <li><div><b>Withering pace.</b> A cut-off piece is about half gone in a minute. Faster, slower, or right?</div></li>
+    <li><div><b>Panic.</b> Does the charge read as a scared animal? Is the lean visible enough to react to?</div></li>
+    <li><div><b>Your own mould</b> (<code>own=1</code>). Keep going this way, or rethink?</div></li>
+    <li><div><b>Sound levels.</b> Too loud, too quiet, or fine? Is the voice welcome?</div></li>
+    <li><div><b>Specks.</b> On the 1070, does C still look like individual specks up close, or like a body?</div></li>
+    <li><div><b>Mission difficulty.</b> If you played mission 2, did it feel fair?</div></li>
+  </ol>
+  <p class="note">Crater length is settled (your pick, 01:05Z: 2 s), and lands in the next build. None of these picks blocks other work; they feed the next round of tuning.</p>
+</div>

@@ -532,43 +532,64 @@ impl World for GpuWorld {
     /// The kill, clear, alarm and crater in the engine's strike passes (a
     /// submit of its own, after any frame in flight), then one read-back for
     /// the walkers killed: bursts are a player's tool uses, a few a second
-    /// at most, not a pass a frame. Gas is not on the GPU yet (`has_gas`):
-    /// the toolkit doesn't offer it here. The alarm field turns on with the
-    /// first alarm, as `BigDish::enable_alarm` does, and contagion with the
-    /// first germ (its settings from `k`, as `squad::burst` sets the CPU's;
-    /// sickness changes no step, trail, reach or turn, as there).
-    /// The germ runs here (2026-11-14): the burst's `kill` pass infects,
-    /// and the `life` pass charges the sick `sick_upkeep`.
-    fn has_germ(&self) -> bool {
-        true
-    }
-
+    /// at most, not a pass a frame. Then the sleep gas (`Engine::gas`,
+    /// 11-14), in the CPU's order (`squad::burst`), and the germ (11-14):
+    /// contagion turns on with the first germ (its settings from `k`, as
+    /// `squad::burst` sets the CPU's; sickness changes no step, trail,
+    /// reach or turn, as there), and the strike's `kill` pass infects. The
+    /// alarm field turns on with the first alarm or gas, as `BigDish::
+    /// enable_alarm` does.
     fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
         // A step in shares (`spread`) runs whole before the burst, so the
         // burst lands between steps as on the CPU.
         self.flush();
-        if b.alarm > 0.0 && self.s.alarm_keep <= 0.0 {
+        if (b.alarm > 0.0 || b.gas > 0) && self.s.alarm_keep <= 0.0 {
             self.s.alarm_keep = k.alarm_keep;
         }
-        if b.germ && self.s.sick == 0 {
-            assert!(k.sick_steps > 0, "the germ needs sick_steps");
-            self.s.sick = k.sick_steps as u32;
-            self.s.immune = k.immune_steps as u32;
-            self.s.sick_upkeep = k.sick_upkeep;
-            self.s.catch_at = k.sick_catch;
-            self.s.germ = k.sick_deposit;
-            self.s.germ_keep = k.sick_keep;
+        let mut out = squad::BurstOut::default();
+        if b.kill || b.alarm > 0.0 || b.crater > 0 {
+            let r = if b.kill { b.r } else { 0.0 };
+            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, 0.0);
+            let now = self.e.struck();
+            out.killed = now.wrapping_sub(self.struck);
+            self.struck = now;
         }
-        let germ_r = if b.germ { b.r } else { 0.0 };
-        if !(b.kill || b.alarm > 0.0 || b.crater > 0 || germ_r > 0.0) {
-            return squad::BurstOut::default();
+        if b.gas > 0 {
+            self.s.gas_death = k.gas_death;
+            out.gassed = self.e.gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.gas);
         }
-        let r = if b.kill { b.r } else { 0.0 };
-        self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, germ_r);
-        let now = self.e.struck();
-        let killed = now.wrapping_sub(self.struck);
-        self.struck = now;
-        squad::BurstOut { killed, gassed: 0 }
+        // The germ last, as on the CPU: a burst of its own that kills,
+        // clears and lays nothing, only infects within `r`.
+        if b.germ {
+            if self.s.sick == 0 {
+                assert!(k.sick_steps > 0, "the germ needs sick_steps");
+                self.s.sick = k.sick_steps as u32;
+                self.s.immune = k.immune_steps as u32;
+                self.s.sick_upkeep = k.sick_upkeep;
+                self.s.catch_at = k.sick_catch;
+                self.s.germ = k.sick_deposit;
+                self.s.germ_keep = k.sick_keep;
+            }
+            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, 0.0, 0.0, 0.0, 0.0, 0, b.r);
+        }
+        out
+    }
+
+    /// The gassed sleepers near each point (`Engine::calm`; the CPU's
+    /// `gassed_near`): a pass and a read-back after the frame, only while
+    /// some gas lasts.
+    fn calm(&self, at: &[(f32, f32)], r: f32) -> Vec<u32> {
+        self.e.calm(&self.shared, at, r)
+    }
+
+    fn has_gas(&self) -> bool {
+        true
+    }
+
+    /// The germ runs here (2026-11-14): the burst's `kill` pass infects,
+    /// and the `life` pass charges the sick `sick_upkeep`.
+    fn has_germ(&self) -> bool {
+        true
     }
 
     fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
@@ -927,9 +948,9 @@ mod tests {
     /// **The squad toolkit runs on the GPU world** (2026-11-12): a kit blast
     /// at the start kills the same walkers there as on the CPU race world
     /// (the same mould, before any tick) and lays its crater; a det cord
-    /// lays one too; gas is refused and not paid. Then, as the game runs, a
-    /// mine at the mould's home goes off from the frames' grid. The germ
-    /// has its own test (`the_germ_runs_on_the_gpu_world`).
+    /// lays one too; the gas (11-14) is paid and sleeps the mould. Then, as
+    /// the game runs, a mine at the mould's home goes off from the frames'
+    /// grid. The germ has its own test (`the_germ_runs_on_the_gpu_world`).
     #[test]
     fn the_kit_runs_on_the_gpu_world() {
         use crate::mould::kit::{Kit, KitRules, Tool};
@@ -955,7 +976,8 @@ mod tests {
         let after_blast = cratered(&gpu);
         assert_eq!(after_blast, cpu.world.scorch.iter().filter(|&&c| c > 0).count(), "the blast's crater");
         let bank = gpu.bank;
-        assert!(!kg.use_tool(&mut gpu, Tool::Gas(home)) && gpu.bank == bank, "gas refused on the GPU");
+        // The sleep gas works since 11-14 (`Engine::gas`) and is paid.
+        assert!(kg.use_tool(&mut gpu, Tool::Gas(home)) && gpu.bank < bank && kg.gassed > 0, "the gas on the GPU: {} gassed", kg.gassed);
         let k = gpu.world.scale();
         assert!(kg.use_tool(&mut gpu, Tool::Cord((home.0 + 20.0 * k, home.1 - 10.0 * k), (home.0 + 20.0 * k, home.1 + 10.0 * k))));
         assert!(cratered(&gpu) > after_blast, "the cord's craters");
