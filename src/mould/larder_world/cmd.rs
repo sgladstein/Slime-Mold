@@ -284,7 +284,20 @@ impl<W: World> Game<W> {
             // Along the line in turn, five points.
             let t = (s.beat % 5) as f32 / 4.0;
             self.soldiers[k].beat += 1;
-            return Some((a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t));
+            let p = (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t);
+            // A point in reach (the shot's own test in `begin_step`) is
+            // fired at. One out of reach, while the soldier still walks to
+            // the line, falls through to its own aim and stance, so slime
+            // that reaches it on the way is shot (2026-11-14). Before, a
+            // burn point out of reach fired nothing: on shape C the
+            // `volley` squad, wading 50-60 cells short of its line with
+            // up to 17 walkers on each soldier, fired no shot after its
+            // burn order and died in 2 s (`Reports/larder-crater-2s-
+            // 2026-11-14.md`). The owner, 11-13 16:15Z: a soldier "standing
+            // still and gets rushed by walkers" must be able to kill them.
+            if (p.0 - s.x).hypot(p.1 - s.y) <= self.rules.range * sc + 4.0 {
+                return Some(p);
+            }
         }
         let aim = s.aim?;
         // Only at mould that shows as slime, and that the soldier can see
