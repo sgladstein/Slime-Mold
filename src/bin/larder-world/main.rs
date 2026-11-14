@@ -622,6 +622,12 @@ impl App {
         self.listener = Some(WorldListener::new(&game));
         if let Some(l) = self.listener.as_mut() {
             l.voice = voice && self.args.voice;
+            // A mission's tracker reads the mould grid at `BIN`: the
+            // pieces read the same square, so the GPU world packs one grid
+            // into its readout and never reads one back (cloud plan C7).
+            if self.mission.is_some() {
+                l.piece_bin = BIN;
+            }
         }
         self.game = Some(game);
         if let Some(tr) = &self.mission {
@@ -811,6 +817,8 @@ impl App {
             return;
         }
         let t0 = Instant::now();
+        // The kit's blasts (mines, thrown charges), heard where they went off.
+        l.bangs(&self.kit.bangs);
         let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
         self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
         if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
