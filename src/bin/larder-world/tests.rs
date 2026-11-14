@@ -300,7 +300,7 @@ fn a_shot_from_a_soldier_with_no_note_yet_draws() {
 #[test]
 fn the_menu_plays_the_command_lines_rounds() {
     use slime_mould::world::start::StartEvent;
-    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None };
+    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None };
     let mut cli = bare.clone();
     default_shape(&mut cli);
     let mut menu = start_menu(&bare);
