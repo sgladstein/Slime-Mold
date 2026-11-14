@@ -90,6 +90,9 @@ pub struct Rules {
     pub speed: f32,
     /// How far a soldier sees and fires, dish cells.
     pub range: f32,
+    /// What each `Range` gun card adds, as a fraction of `range`
+    /// (`Game::gun_range`): 0.5 makes one card 36 cells, two 48.
+    pub range_card: f32,
     /// Radius of a shot's strike, dish cells (at most `squad::R_MAX` fine).
     pub strike: f32,
     /// Game seconds between one soldier's shots.
@@ -419,6 +422,17 @@ pub struct Rules {
     /// 19.5, 4 of 4 seeds; `examples/loneprobe.rs`).
     pub broken: f32,
     pub broken_starve: f32,
+    /// **A scared piece's reach follows the guns** (2026-11-14, the game
+    /// designer's review of #249). A cut-off walker charges a unit within
+    /// `BigParams::panic_r` dish cells; the game keeps that at the gun's
+    /// `range` plus this many dish cells, once a game second, so range
+    /// cards move it too. Why: the rule was built with the reach 5 cells
+    /// past a gun's 15 (20); at the range of 24 (#249) soldiers firing from
+    /// 21-24 cells sat outside the trigger and shot a cut piece down with
+    /// no risk, so the last stand stopped being a threat. 5 keeps the
+    /// first rule's margin (29 at range 24). Negative leaves the world's
+    /// own `panic_r` (a test or a probe that sets it).
+    pub panic_margin: f32,
 }
 
 impl Rules {
@@ -440,6 +454,7 @@ impl Default for Rules {
             // should be increased"); 15 before. Soldiers' sight and every
             // shot's reach, mouse-aimed volleys included.
             range: 24.0,
+            range_card: 0.5,
             strike: 2.5,
             shot_every: 1.0,
             bullet_speed: 45.0,
@@ -493,6 +508,7 @@ impl Default for Rules {
             mass: 1.0,
             broken: 0.03,
             broken_starve: 50.0,
+            panic_margin: 5.0,
         }
     }
 }

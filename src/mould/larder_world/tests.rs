@@ -147,7 +147,7 @@ fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
         }
         (g.shots, later, g.killed, g.mould)
     };
-    let both = BulletMods { pierce: 1, split: 2 };
+    let both = BulletMods { pierce: 1, split: 2, reach: 0 };
     let a = run(both);
     assert_eq!(a, run(both), "the same seed played twice");
     let plain = run(BulletMods::default());
@@ -305,6 +305,26 @@ fn a_broken_mould_starves_until_it_grows_back() {
     off.peak = off.mould * 100;
     off.check_broken();
     assert_eq!((off.broken, off.world.upkeep()), (None, up));
+}
+
+/// A scared piece's reach follows the guns (`Rules::panic_margin`): set
+/// when the game starts and kept once a game second, so a longer range
+/// moves it; a negative margin leaves the world's own.
+#[test]
+fn a_scared_piece_sees_past_the_guns() {
+    let mut g = small(1);
+    assert_eq!(g.world.p.panic_r, g.rules.range + g.rules.panic_margin);
+    assert!(g.world.p.panic_r > g.rules.range);
+    g.rules.range = 36.0;
+    let t = g.world.ticks();
+    while g.world.ticks() < t + g.rules.tps as u64 {
+        g.step();
+    }
+    assert_eq!(g.world.p.panic_r, 36.0 + g.rules.panic_margin, "a range card moves it at the next count");
+    let mut keep = race_world(1, 1, 1_000);
+    keep.p.panic_r = 7.0;
+    let g = Game::new(keep, Rules { panic_margin: -1.0, ..Rules::default() }, 1);
+    assert_eq!(g.world.p.panic_r, 7.0);
 }
 
 /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
@@ -595,6 +615,9 @@ impl World for Later {
     }
     fn set_upkeep(&mut self, up: f32) {
         World::set_upkeep(&mut self.d, up)
+    }
+    fn set_panic_r(&mut self, r: f32) {
+        World::set_panic_r(&mut self.d, r)
     }
     fn food_deposit(&self) -> f32 {
         World::food_deposit(&self.d)
@@ -1778,4 +1801,47 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
         assert!(circling < 1.0, "{f:?}: the cursor circling walked the squad {circling} cells");
         assert!(death < 100.0, "{f:?}: a death walked the squad {death} cells");
     }
+}
+
+/// The `Range` card (owner, 2026-11-14 08:39Z): slime between the plain
+/// range and the stretched one is out of reach without the card and in
+/// reach with it, and a fired leg is as long as the stretched range.
+#[test]
+fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
+    let mut g = small(1);
+    let sc = g.s();
+    let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
+    let d = 1.25 * g.rules.range * sc;
+    let far = [(1.0, 0.0), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0), (0.7, 0.7), (-0.7, 0.7), (0.7, -0.7), (-0.7, -0.7)]
+        .into_iter()
+        .map(|(u, v): (f32, f32)| (x + u * d, y + v * d))
+        .find(|&p| g.clear_line((x, y), p))
+        .expect("an open line 30 cells out");
+    {
+        let s = &mut g.soldiers[0];
+        s.order = Order::Fight(far.0, far.1);
+        s.aim = Some(far);
+        s.dense = 50;
+    }
+    assert!(!g.engaged(0), "30 cells is past the plain range");
+    g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
+    assert!((g.gun_range() - 36.0).abs() < 1e-4);
+    assert!(g.engaged(0), "one Range card reaches 36 cells");
+    // Fired legs: free fire with the card flies out to 36 cells.
+    let mut g = small(3);
+    g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
+    for k in 0..g.soldiers.len() {
+        g.apply(Cmd::Order(k, Order::Attack));
+    }
+    let reach = g.gun_range() * g.s();
+    let mut longest: f32 = 0.0;
+    for _ in 0..(30 * g.rules.tps) {
+        g.step();
+        assert!(g.bullets.iter().all(|b| b.left <= reach + 1.0));
+        longest = g.bullets.iter().map(|b| b.left).fold(longest, f32::max);
+        if g.end.is_some() {
+            break;
+        }
+    }
+    assert!(longest > g.rules.range * g.s(), "a bullet flew past the plain range: {longest} of {reach}");
 }

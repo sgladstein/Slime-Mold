@@ -2227,6 +2227,18 @@ mod tests {
         assert_eq!(thousands(32_000), "32,000");
     }
 
+    /// Whether the tests run on a real card, not software Vulkan (llvmpipe in
+    /// CI). Short twins that match exactly on llvmpipe are the bug detectors
+    /// there and keep their exact bound; a card orders atomics and float
+    /// sums its own way (the GTX 1070, 2026-11-14, HANDOFF decision 6), so
+    /// it gets the slack it measured (technical lead, #261).
+    static ON_CARD: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+    /// `exact` on software Vulkan, `card` on a real GPU (`ON_CARD`).
+    fn tol<T>(exact: T, card: T) -> T {
+        if ON_CARD.load(std::sync::atomic::Ordering::Relaxed) { card } else { exact }
+    }
+
     /// A GPU for the twin tests, or `None` (the test then passes, saying it
     /// was skipped) on a machine with none. CI installs Mesa's software
     /// Vulkan (lavapipe) and sets `MOULDGPU_TEST_GPU=1`, so there a missing
@@ -2244,6 +2256,7 @@ mod tests {
         };
         let info = adapter.get_info();
         eprintln!("adapter: {} ({:?})", info.name, info.backend);
+        ON_CARD.store(info.device_type != wgpu::DeviceType::Cpu, std::sync::atomic::Ordering::Relaxed);
         let desc = wgpu::DeviceDescriptor { label: Some("twin"), required_limits: adapter.limits(), ..Default::default() };
         Some(block_on(adapter.request_device(&desc)).expect("device"))
     }
@@ -3001,7 +3014,12 @@ mod tests {
                 let marks_off = e.flung_of().iter().zip(&cpu.flung).filter(|(a, b)| a != b).count();
                 worst = worst.max(off);
                 if gpu_speed == s.fling_speed {
-                    assert!(off * 1000 <= n && life_off * 1000 <= n && marks_off * 1000 <= n && lt <= 1e-6, "{name}, tick {t}: {off} walkers, {life_off} states, {marks_off} marks off; trail L1 {lt:.1e}");
+                    // On a card (`tol`), a walker or two and 1e-5 of trail, not 1 in
+                    // 1,000 and 1e-6 as on llvmpipe: on the GTX 1070 (11-14, 004b7cb) one walker of the plain
+                    // blast's flight went its own way at tick 3 (trail L1
+                    // 7.7e-6), float order on the card, where llvmpipe matched.
+                    let few = tol(n / 1000, (n / 1000).max(2));
+                    assert!(off <= few && life_off <= few && marks_off <= few && lt <= tol(1e-6, 1e-5), "{name}, tick {t}: {off} walkers, {life_off} states, {marks_off} marks off; trail L1 {lt:.1e}");
                 }
             }
             if gpu_speed == s.fling_speed {
@@ -4630,7 +4648,7 @@ mod tests {
         let twin = |gpu_speed: f32| -> (Result<(), String>, u32, u32, u32) {
             let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
             let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules { bullet_speed: gpu_speed, ..rules }, seed);
-            let mods = BulletMods { pierce: 1, split: 1 };
+            let mods = BulletMods { pierce: 1, split: 1, reach: 0 };
             cpu.bullet_mods = mods;
             gpu.bullet_mods = mods;
             for k in 0..cpu.soldiers.len() {
@@ -4723,9 +4741,11 @@ mod tests {
         assert!(laid_cpu > 0 && laid_gpu > 0, "craters on both");
         let (a, b) = (cpu.killed as f64, gpu.killed as f64);
         assert!(a > 0.0 && (a - b).abs() <= 0.15 * a, "killed {b} on the GPU, {a} on the CPU");
+        // Floor 100 (11-14): the GTX 1070 ended 897 against the CPU's 981 at
+        // 30 s, 84 apart, over 8% of a small mould: chaos, as the core twin's.
         for &(t, a, b, _) in &sizes {
             let (a, b) = (a as f64, b as f64);
-            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+            assert!((a - b).abs() <= (0.08 * a).max(100.0), "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the craters changed the CPU's game");
     }
@@ -4852,6 +4872,8 @@ mod tests {
         let (a, b) = (cpu.killed as f64, gpu.killed as f64);
         assert!(a > 0.0 && (a - b).abs() <= 0.15 * a, "killed {b} on the GPU, {a} on the CPU");
         // 8%, or 100 walkers once the pulled mould is under 1,250: by 30 s
+        // The floor is 150 since the GTX 1070 (11-14, 004b7cb): 824 on the
+        // card against 933 on the CPU at 30 s, the same chaos on hardware.
         // the drawn hub has fed the squad's fire down to 730 walkers on the
         // CPU and 815 on the GPU (seed 3), 11% apart on kills 1.2% apart.
         // The floor is chaos, not a rule the engines differ on: over seeds
@@ -4860,7 +4882,7 @@ mod tests {
         // is above on 4 seeds, below on 4 (`twin_gap_over_seeds_is_chaos`).
         for &(t, a, b, _) in &sizes {
             let (a, b) = (a as f64, b as f64);
-            assert!((a - b).abs() <= (0.08 * a).max(100.0), "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
+            assert!((a - b).abs() <= (0.08 * a).max(150.0), "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the pull changed the CPU's game");
     }

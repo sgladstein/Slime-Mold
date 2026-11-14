@@ -1035,7 +1035,9 @@ mod tests {
     fn a_lone_walker_is_bright_and_the_body_stays_calm() {
         let Some((dev, q)) = test_gpu() else { return };
         let (w, h) = (64usize, 40usize);
-        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        // Agar, with the engine's mould colour round the lone walker (as the
+        // engine tints a cell with mould on it).
+        let px: Vec<u8> = (0..w * h).flat_map(|i| if (i % w).abs_diff(44) <= 2 && (i / w).abs_diff(20) <= 2 { [200u8, 160, 60, 255] } else { [12, 22, 26, 255] }).collect();
         let world = storage(&dev, "world", px.len() as u64);
         q.write_buffer(&world, 0, &px);
         // A body of 4 walkers a cell over x 4..20, and one walker alone at
@@ -1049,7 +1051,7 @@ mod tests {
                 }
             }
         }
-        look[20 * w + 44] = 60 | (1 << 8);
+        look[20 * w + 44] = 200 | (1 << 8);
         walk.extend([44.5f32, 20.5, 0.0, 0.0]);
         let buf = |label: &str, bytes: &[u8]| {
             let b = storage(&dev, label, bytes.len() as u64);
@@ -1076,6 +1078,19 @@ mod tests {
         };
         let (lone, bare) = (lum(44.5, 20.5), lum(52.5, 20.5));
         assert!(lone > bare + 90.0, "a lone walker {lone} on bare ground {bare}");
+        // And it is a point of light, not a dome (art director, 11-14
+        // 08:15Z: the frontier read as bubble wrap): no shaded flank or cast
+        // shadow on the side away from the light: the darkest pixel within
+        // 1.5 cells of it stays well above bare ground.
+        let mut lee = f32::MAX;
+        for j in 0..18 {
+            for i in 0..18 {
+                lee = lee.min(lum(43.0 + i as f32 / 6.0, 19.0 + j as f32 / 6.0));
+            }
+        }
+        // Flat, its film is lit all round it: 60.5 against bare 42.1, where
+        // the dome's shaded flank came down to 44.6 against 40.3.
+        assert!(lee > bare + 10.0, "the darkest pixel round a lone walker {lee} against bare ground {bare}");
         // In the body: the brightest and dimmest of a cell's pixels differ
         // by less than the lone walker stands above bare ground.
         let mut vals = Vec::new();

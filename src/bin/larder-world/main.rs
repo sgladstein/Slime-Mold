@@ -161,7 +161,7 @@ mod squadmode;
 mod uisize;
 use uisize::*;
 use slime_mould::world::settings::{self, UiSize};
-use squadmode::SquadInput;
+use squadmode::{squad_card_key, squad_help, SquadInput};
 // The moved modules' functions, reached as before from here and from each
 // other.
 use args::*;
@@ -276,6 +276,9 @@ fn sprite_kind(k: Kind) -> Option<u32> {
 /// look's fight: `examples/worldlook.rs`).
 const TRACER: f32 = 0.1;
 const FLASH: f32 = 0.07;
+/// How far a soldier walks (dish cells) before its figure turns to the way
+/// it is going (`App::step`).
+const TURN: f32 = 0.3;
 /// How long a take's pulse lasts at a harvester's hands, seconds: a step
 /// is 1/15 s, so a soldier taking every step glows steadily and one that
 /// stops fades in about a third of a second.
@@ -289,7 +292,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 24] = [
+const LOADOUTS: [(&str, &str); 26] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -320,6 +323,10 @@ const LOADOUTS: [(&str, &str); 24] = [
     ("fence", "alarm"),
     ("mist", "mist"),
     ("firewall", "scorch+blast"),
+    // Range (owner, 11-14 08:39Z: "there should be a range modifer card
+    // too"): every soldier sees and shoots half as far again a card.
+    ("long", "range+blast"),
+    ("sniper", "range+range+pierce"),
 ];
 
 #[derive(Clone)]
@@ -489,6 +496,9 @@ struct App {
     /// Steps finished on a frame once their results were in, and those
     /// finished only when the next step was due (the bench prints both).
     finished: (u32, u32),
+    /// The game tick of the last step whose notes the window took (the
+    /// kit, the rounds' casts, the shots' marks; `App::catch_up`).
+    seen: u64,
     report_at: Instant,
     saved: bool,
     /// The command card shows the build page (Q).
@@ -575,6 +585,7 @@ impl App {
             frame_ms: Vec::new(),
             steps: 0,
             finished: (0, 0),
+            seen: 0,
             report_at: Instant::now(),
             saved: false,
             build_page: false,
@@ -771,6 +782,7 @@ impl App {
             }
         }
         self.game = Some(game);
+        self.seen = 0;
         if let Some(tr) = &self.mission {
             self.name = tr.mission.map.clone();
         }
@@ -798,7 +810,6 @@ impl App {
     /// Steps the game for `dt` real seconds and keeps the window's notes
     /// (facing, flashes, tracers, alerts).
     fn step(&mut self, dt: f32) {
-        let Some(g) = self.game.as_mut() else { return };
         for t in &mut self.tracers {
             t.age += dt;
         }
@@ -807,6 +818,9 @@ impl App {
             l.flash = (l.flash - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
         }
+        // A step a command finished since the last frame (`catch_up`).
+        self.catch_up();
+        let Some(g) = self.game.as_mut() else { return };
         turn_turrets(g, &mut self.turrets, dt);
         self.banked = (self.banked - dt).max(0.0);
         // A load banked since the last frame flares the larder's cells.
@@ -830,6 +844,7 @@ impl App {
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
             turret_fired(g, &mut self.turrets);
+            self.seen = g.world.ticks();
         } else if g.in_flight() {
             // Its next share of ticks (`GpuWorld::spread`).
             g.world.frame_more();
@@ -854,9 +869,14 @@ impl App {
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
                 turret_fired(g, &mut self.turrets);
+                self.seen = g.world.ticks();
                 if g.end.is_some() {
                     break;
                 }
+            }
+            // The squad mode's aim, between whole steps (`SquadInput::aim`).
+            if let Some(sq) = self.sq.as_mut() {
+                sq.aim(g);
             }
             g.begin_step();
             self.owed -= step;
@@ -887,13 +907,31 @@ impl App {
         // A soldier the game made inside these steps (`Rules::reserve`'s
         // free recruit) joins the notes too.
         join_looks(g, &mut self.looks);
+        // Where each soldier's gun points between shots (bug sweep,
+        // 2026-11-14, after "the gun animation gets messed up"): in the
+        // squad mode the controlled squad's at the cursor, its aim, and a
+        // volleying squad's at its volley point; else the way it walks,
+        // once it has gone `TURN` since it last turned. Before, any move
+        // over 0.05 fine cells turned it, so the shoves of elbow room and a
+        // formation settling spun the guns between shots.
+        let cursor = self.sq.as_ref().and_then(|sq| sq.want);
+        let turn = TURN * g.world.scale();
         for (k, s) in g.soldiers.iter().enumerate() {
             let l = &mut self.looks[k];
+            let sq = g.squads.get(s.squad as usize).filter(|_| g.rules.squads);
+            let aim = sq.and_then(|sq| sq.fire).or_else(|| cursor.filter(|_| g.active == Some(s.squad as usize) && g.rules.squads));
             let (dx, dy) = (s.x - l.at.0, s.y - l.at.1);
-            if l.flash <= 0.0 && dx.hypot(dy) > 0.05 {
-                l.facing = dy.atan2(dx);
+            if let Some(p) = aim.filter(|_| s.alive) {
+                if l.flash <= 0.0 && (p.0 - s.x).hypot(p.1 - s.y) > 1e-3 {
+                    l.facing = (p.1 - s.y).atan2(p.0 - s.x);
+                }
+                l.at = (s.x, s.y);
+            } else if dx.hypot(dy) > turn {
+                if l.flash <= 0.0 {
+                    l.facing = dy.atan2(dx);
+                }
+                l.at = (s.x, s.y);
             }
-            l.at = (s.x, s.y);
             if l.alive && !s.alive {
                 self.hud.alert("A soldier has fallen", Some((s.x, s.y)), theme::BAD);
             }
@@ -948,16 +986,37 @@ impl App {
     /// Finishes a step still running on the GPU and keeps its shots'
     /// marks (the headless pictures read whole steps).
     fn settle(&mut self) {
-        let Some(g) = self.game.as_mut() else { return };
-        if g.in_flight() {
+        self.catch_up();
+        if let Some(g) = self.game.as_mut().filter(|g| g.in_flight()) {
             g.finish_step();
-            // Rounds read the step's hits, so they cast here too (the
-            // headless looks settle every step). A step a command finishes
-            // (`Game::apply`) is not seen: its hits cast nothing.
-            self.rounds.after_step(g);
-            shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
-            turret_fired(g, &mut self.turrets);
         }
+        // The step's notes, as `step` takes them: rounds read its hits (the
+        // headless looks settle every step), and the kit restocks and sets
+        // off its mines. (Before the review after the bug sweep,
+        // 2026-11-14, this was a copy without `kit_between`, so no
+        // headless run ever ran the kit.)
+        self.catch_up();
+    }
+
+    /// The window's notes of a step a command finished: `Game::apply`
+    /// finishes a running step first, and before the bug sweep
+    /// (2026-11-14) the window never saw that step. Its bullets' legs,
+    /// muzzle flashes and facings were lost, its hits cast no round and
+    /// laid no trail, and the kit skipped it. In the squad mode the cursor
+    /// sent a command almost every frame (`Cmd::Face`, `Cmd::Fire`), so
+    /// most steps went unseen: the owner's playtest, 08:01Z, "the gun
+    /// animation gets messed up sometimes". Runs before the next step
+    /// begins, so the game is the same as when every step was seen.
+    fn catch_up(&mut self) {
+        let Some(g) = self.game.as_mut() else { return };
+        if g.in_flight() || g.world.ticks() <= self.seen {
+            return;
+        }
+        self.seen = g.world.ticks();
+        kit_between(&mut self.kit, g, &self.controls.selected);
+        self.rounds.after_step(g);
+        shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
+        turret_fired(g, &mut self.turrets);
     }
 
     /// Once a drawn frame, after the steps: what the round should sound

@@ -578,7 +578,7 @@ impl App {
                 stats: vec![
                     ("Carrying".into(), format!("{:.0} / {:.0}", s.carry, r.carry)),
                     ("Stance".into(), stance_name(s.stance).into()),
-                    ("Range".into(), format!("{:.0} cells", r.range)),
+                    ("Range".into(), format!("{:.0} cells", g.gun_range())),
                     ("A shot".into(), if r.price > 0.0 { format!("{:.0} food", r.price) } else { format!("free, one every {:.1} s", r.shot_every) }),
                     ("Mould on it".into(), format!("{}", s.touching)),
                     ("Tools held".into(), format!("{} / {}", self.kit.held(k), self.kit.rules.carry_max)),
@@ -639,7 +639,7 @@ impl App {
             Command { target: Target::Line { width: r.strike * sc }, ready: any, why_not: no_sel(), about: "Stand by a line and keep firing along it, so the mould cannot cross.".into(), ..Command::new(BURN, (0, 3), Icon::Burn, "Burn a line", KeyCode::KeyF) },
             Command { ready: any, on: stance == Some(Stance::HoldFire), why_not: no_sel(), about: "Do not shoot at all.".into(), ..Command::new(HOLD_FIRE, (1, 0), Icon::Close, "Hold fire", KeyCode::KeyZ) },
             Command { ready: any, on: stance == Some(Stance::Defend), why_not: no_sel(), about: format!("Shoot only mould touching the soldier, within {:.0} cells, or on the crystal it is harvesting. The default.", r.defend), ..Command::new(DEFEND, (1, 1), Icon::Eye, "Defend", KeyCode::KeyX) },
-            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells.{}", r.range, if r.price > 0.0 { format!(" Every shot costs {:.0} food.", r.price) } else { String::new() }), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
+            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells.{}", g.gun_range(), if r.price > 0.0 { format!(" Every shot costs {:.0} food.", r.price) } else { String::new() }), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
             Command {
                 cost: Some(format!("{:.0}", r.soldier_cost)),
                 ready: g.bank >= r.soldier_cost && !full,
@@ -655,13 +655,21 @@ impl App {
                 about: "A wall the mould has to wear through, slowly. Both ends within a soldier's range; costs by its length.".into(),
                 ..Command::new(WALL, (2, 1), Icon::Wall, "Lay a wall", KeyCode::KeyV)
             },
-            Command {
-                target: Target::Point { radius: 2.0 * sc },
-                ready: true,
-                about: "Where bought soldiers go: on a crystal they start harvesting it, elsewhere they walk there. Also: select the larder and right-click.".into(),
-                ..Command::new(RALLY, (2, 2), Icon::Move, "Rally point", KeyCode::KeyR)
-            },
         ];
+        // The rally point at (1, 3), or on the build page with the larder's
+        // other places when sowing has that slot (own=1 fills the main
+        // page). It lay at (2, 2), under the Build button, so only R
+        // reached it (bug sweep, 2026-11-14).
+        let rally = Command {
+            target: Target::Point { radius: 2.0 * sc },
+            ready: true,
+            about: "Where bought soldiers go: on a crystal they start harvesting it, elsewhere they walk there. Also: select the larder and right-click.".into(),
+            ..Command::new(RALLY, if g.world.garden.is_some() { (1, 2) } else { (1, 3) }, Icon::Move, "Rally point", KeyCode::KeyR)
+        };
+        let mut rally = Some(rally);
+        if g.world.garden.is_none() {
+            cmds.extend(rally.take());
+        }
         // The player's own mould (own=1): Sow on the main page (the free slot),
         // Road on the tools page beside the det cord (main's slots are full).
         let mut road: Option<Command> = None;
@@ -721,6 +729,27 @@ impl App {
                 Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
                 Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
             ];
+            cmds.extend(rally.take());
+        }
+        // The squad mode: the card's letters off WASD (`squad_card_key`),
+        // its words for a game with no larder.
+        if self.sq.is_some() {
+            cmds = cmds
+                .into_iter()
+                .filter_map(|mut c| {
+                    c.key = squad_card_key(c.id, c.key)?;
+                    match c.id {
+                        HARVEST => {
+                            c.name = "Drain a crystal".into();
+                            c.about = "The squad drains the crystal into the bank, fast, until it is gone for both sides. Ctrl + right click does the same; a plain right click guards it instead.".into();
+                        }
+                        ATTACK => c.about = "Send the squad there, stopping to fire at any mould in reach on the way; on the core, attack it.".into(),
+                        BUY => c.about = "A new soldier joins the squad you control, at its side.".into(),
+                        _ => {}
+                    }
+                    Some(c)
+                })
+                .collect();
         }
         for c in &mut cmds {
             if c.ready {
@@ -730,7 +759,7 @@ impl App {
         if g.world.garden.is_some() {
             // The player's own mould beside the enemy's, in its colour.
             let own = g.world.counts_by_side().0;
-            m.resources.insert(3, Resource { icon: Icon::Mould, colour: [120, 230, 90, 255], label: "Your own mould (green): walkers alive. Sow it (W); lay its roads from the tools page (E, then Y); it converts enemy slime it outweighs".into(), value: thousands(own), rate: None });
+            m.resources.insert(3, Resource { icon: Icon::Mould, colour: [120, 230, 90, 255], label: format!("Your own mould (green): walkers alive. Sow it ({}); lay its roads from the tools page (E, then Y); it converts enemy slime it outweighs", if self.sq.is_some() { "U" } else { "W" }), value: thousands(own), rate: None });
         }
         m.commands = cmds;
         m.buildings = g
@@ -779,7 +808,17 @@ impl App {
         } else if let Some(end) = g.end {
             m.end = Some(end_screen(end, g));
         }
-        m.help = vec![
+        m.help = if self.sq.is_some() {
+            m.help_base = Some(squad_help());
+            vec![
+                ("Place a building".into(), "The squad walks there and raises it".into()),
+                ("P".into(), "Pause".into()),
+                ("Tab".into(), "Four times faster, or back".into()),
+                ("N".into(), "Start the next map".into()),
+                ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
+                ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
+            ]
+        } else { vec![
             ("Right click".into(), "Move there; on a crystal, harvest it".into()),
             ("Shift + order".into(), "Queue it after the soldiers' current orders".into()),
             ("Place a building".into(), "The selected soldiers walk there and raise it; idle soldiers nearby help".into()),
@@ -790,7 +829,7 @@ impl App {
             ("N".into(), "Start the next map".into()),
             ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
             ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
-        ];
+        ] };
         m.main_menu = self.base.is_some();
         m.loadout = Some(self.loadout(g, &sel));
         m
@@ -808,7 +847,7 @@ impl App {
         let ticks = (rech * g.rules.tps as f32).max(1.0);
         let left = |k: usize| rd.gun(k).map_or(0.0, |(_, ready)| ready.saturating_sub(tick) as f32 / ticks);
         let next = lead.and_then(|k| rd.gun(k)).map(|(cast, _)| cast);
-        let cards = gun_cards(&rd.round, &rd.rules, g.rules.split_n as usize, next, |c| match c {
+        let cards = gun_cards(&rd.round, &rd.rules, &g.rules, next, |c| match c {
             rounds::Card::Gas => g.world.has_gas(),
             rounds::Card::Germ => g.world.has_germ(),
             _ => true,
@@ -848,7 +887,8 @@ fn payload_colour(c: rounds::Card) -> [u8; 4] {
 
 /// A card's glyph, frame and words for the loadout panel, with the round's
 /// own numbers.
-fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind, String) {
+fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, CardKind, String) {
+    let split_n = w.split_n;
     use rounds::Card as C;
     let k = &r.kit;
     match c {
@@ -867,6 +907,8 @@ fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind
         C::Scorch => (Icon::Burn, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of crater along its flight for {:.0} s: a fire line the mould shuns.", 2.0 * r.trail_r, r.trail_crater_secs)),
         C::Alarm => (Icon::Alert, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of alarm along its flight: a fence the mould flees.", 2.0 * r.trail_r)),
         C::Mist => (Icon::Gas, CardKind::Flight, format!("Every bullet leaves a thin gas cloud along its flight ({:.1} a disc): the mould that drifts into it sleeps.", r.trail_cloud)),
+        // Range (owner, 11-14 08:39Z): reuses free fire's target glyph.
+        C::Range => (Icon::Target, CardKind::Flight, format!("Every soldier sees and shoots {:.0}% further ({:.0} cells a card), mouse-aimed volleys too.", 100.0 * w.range_card, w.range * w.range_card)),
     }
 }
 
@@ -874,7 +916,7 @@ fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind
 /// makes the cast `next` lit (a cast is the modifiers and trigger before a
 /// payload, and the payload), cards after the last payload idle. Flight
 /// cards ride every bullet, so they are never idle.
-pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, split_n: usize, next: Option<usize>, castable: impl Fn(rounds::Card) -> bool) -> Vec<GunCard> {
+pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next: Option<usize>, castable: impl Fn(rounds::Card) -> bool) -> Vec<GunCard> {
     use rounds::Card as C;
     let payloads = round.iter().filter(|c| c.kind() == rounds::Kind::Payload).count();
     let mut cast = 0;
@@ -889,7 +931,7 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, split_n: usize, 
     }
     let payload_of = |j: usize| round.iter().filter(|c| c.kind() == rounds::Kind::Payload).nth(j).copied();
     for (i, &c) in round.iter().enumerate() {
-        let (icon, kind, mut about) = card_face(c, r, split_n);
+        let (icon, kind, mut about) = card_face(c, r, w);
         let flight = kind == CardKind::Flight;
         let idle = !flight && runs[i] >= payloads;
         let goes_with = if flight { None } else { payload_of(runs[i]) };
